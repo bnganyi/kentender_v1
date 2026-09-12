@@ -38,7 +38,9 @@ def selectable_years() -> list[dict[str, Any]]:
 	today = getdate(nowdate())
 	dpp_state = site_configuration.get_dpp_submission_state()
 	open_year = dpp_state["fiscal_year"] if dpp_state.get("open") else ""
-	plan_years = set(frappe.get_all("Annual Plan", pluck="fiscal_year", limit_page_length=0))
+	plans = frappe.get_all("Annual Plan", fields=["fiscal_year", "active_version"], limit_page_length=0)
+	plan_years = {row.fiscal_year for row in plans}
+	active_years = {row.fiscal_year for row in plans if row.active_version}
 	dpp_years = set(frappe.get_all("Departmental Plan", pluck="fiscal_year", limit_page_length=0))
 	rows = frappe.get_all(
 		"Fiscal Year",
@@ -67,6 +69,7 @@ def selectable_years() -> list[dict[str, Any]]:
 				"is_past": end < today,
 				"intake_open": intake_open,
 				"has_open_plan": has_plan,
+				"has_active_plan": row.name in active_years,
 				"planning_open": bool(intake_open or has_plan or not (end < today)),
 			}
 		)
@@ -74,7 +77,10 @@ def selectable_years() -> list[dict[str, Any]]:
 
 
 def _default_year(options: list[dict[str, Any]]) -> str:
-	for key in ("intake_open", "has_open_plan", "is_current"):
+	# The year whose Annual Plan is in force is the planning year everyone
+	# works in; an intake flag alone (movable by an admin or a fixture) ranks
+	# below it so a stray flag cannot drag every user onto another year.
+	for key in ("has_active_plan", "intake_open", "has_open_plan", "is_current"):
 		hit = [row for row in options if row[key]]
 		if hit:
 			return hit[0]["id"]

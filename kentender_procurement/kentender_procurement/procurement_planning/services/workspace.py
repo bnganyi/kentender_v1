@@ -17,7 +17,9 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import cstr, flt, fmt_money
+import json
+
+from frappe.utils import cstr, flt, fmt_money, formatdate
 
 from kentender_core.services import site_configuration
 from kentender_procurement.procurement_planning.services import needs_intake, schedule
@@ -51,6 +53,54 @@ def _ou_label(ou: str) -> str:
 	return cstr(frappe.db.get_value("Organisation Unit", ou, "unit_name") or ou)
 
 
+def _date(value) -> str:
+	return formatdate(value, "d MMM yyyy") if value else ""
+
+
+def _count(n: int, noun: str) -> str:
+	return f"{n} {noun}{'' if n == 1 else 's'}"
+
+
+def _returned_on(version_name: str) -> str:
+	submission = frappe.db.get_value("Departmental Plan Version", version_name, "returned_from_submission")
+	if not submission:
+		return ""
+	decided = frappe.db.get_value(
+		"Departmental Plan Validation Decision", {"submission": submission, "decision": "Return to department"}, "decided_at"
+	)
+	return _date(decided)
+
+
+def _validation_line(task) -> str:
+	"""FU-15 — department · submission · requirements · value · submitted when, by whom."""
+	submission = frappe.db.get_value(
+		"Departmental Plan Submission", task.submission, ["submitted_by_user", "submitted_at", "entry_snapshots"], as_dict=True,
+	) or {}
+	snapshots = json.loads(submission.get("entry_snapshots") or "[]")
+	value = sum(flt(r.get("indicative_amount")) for r in snapshots if not cstr(r.get("not_proceeding_reason")).strip())
+	version_number = frappe.db.get_value("Departmental Plan Version", task.dpp_version, "version_number")
+	by = cstr(frappe.db.get_value("User", submission.get("submitted_by_user"), "full_name") or submission.get("submitted_by_user"))
+	return (
+		f"{_ou_label(task.organisation_unit)} · Submission {version_number} · {_count(len(snapshots), 'requirement')} · "
+		f"{_money(value)} · submitted {_date(submission.get('submitted_at'))} by {by}"
+	)
+
+
+def _plan_line(plan, version, value: float, requested_at) -> str:
+	"""FU-15 — plan · version · items · value · requested when."""
+	items = frappe.db.count("Annual Plan Item", {"plan_version": version.name, "item_state": ("!=", "Dissolved")})
+	return f"{plan.title} · Version {version.version_number} · {_count(items, 'item')} · {_money(value)} · requested {_date(requested_at)}"
+
+
+def _allocated_value(version_name: str) -> float:
+	return sum(
+		flt(r.indicative_amount)
+		for r in frappe.get_all(
+			"Plan Source Allocation", filters={"plan_version": version_name, "allocation_state": ("in", ("Draft", "Active"))}, fields=["indicative_amount"],
+		)
+	)
+
+
 ROOT_STATUS = {
 	"Draft": ("Draft", "attention"),
 	"Submitted": ("Awaiting validation", "attention"),
@@ -81,7 +131,12 @@ def _dpp_rows(fiscal_year: str, permitted_units: set[str] | None, window_open: b
 			limit_page_length=0,
 		)
 		status, kind = ROOT_STATUS.get(root.current_state, (root.current_state, "muted"))
-		if root.current_state in ("Draft", "Withdrawn") and not window_open:
+		# §4.3 — the root's state follows its current Version, so a Draft here
+		# is either a plan never submitted or an update open beside an
+		# accepted Version. Only the former can miss the window.
+		if root.current_state == "Draft" and root.current_accepted_version:
+			status, kind = "Accepted · update in progress", "attention"
+		elif root.current_state in ("Draft", "Withdrawn") and not window_open and not root.current_accepted_version:
 			status, kind = "Not submitted — window closed", "critical"
 		rows.append(
 			{
@@ -89,6 +144,8 @@ def _dpp_rows(fiscal_year: str, permitted_units: set[str] | None, window_open: b
 				"department": _ou_label(root.organisation_unit),
 				"organisation_unit": root.organisation_unit,
 				"version": version_number,
+				"version_name": version_name,
+				"state": root.current_state,
 				"requirements": len(entries),
 				"value": _money(sum(flt(e.indicative_amount) for e in entries if not cstr(e.not_proceeding_reason).strip())),
 				"status": status,
@@ -115,13 +172,12 @@ def _accepted_unallocated(fiscal_year: str) -> tuple[int, float, list[str]]:
 		fields=["name", "indicative_amount", "dpp_version"],
 		limit_page_length=0,
 	)
-	allocated = set(
-		frappe.get_all(
-			"Plan Source Allocation",
-			filters={"dpp_entry": ("in", [e.name for e in entries] or ("",)), "allocation_state": ("in", ("Draft", "Active"))},
-			pluck="dpp_entry",
-		)
-	)
+	from kentender_procurement.procurement_planning.services import plan_read
+
+	# §7.1 — an allocation pinned to an earlier copy of an unchanged entry
+	# claims the current copy too, so a DPP update does not re-offer sources
+	# the Plan already carries.
+	allocated = plan_read.allocated_current_entries(fiscal_year)
 	free = [e for e in entries if e.name not in allocated]
 	departments = sorted({_ou_label(unit_by_version[e.dpp_version]) for e in free})
 	return len(free), sum(flt(e.indicative_amount) for e in free), departments
@@ -135,13 +191,18 @@ def _not_included(fiscal_year: str, window_open: bool) -> dict[str, str] | None:
 		sources = needs_intake.current_accepted_sources(fiscal_year)
 	except Exception:
 		return None
-	covered = set(
-		frappe.get_all(
-			"Departmental Plan",
-			filters={"fiscal_year": fiscal_year, "current_state": ("in", ("Submitted", "Accepted", "Returned"))},
-			pluck="organisation_unit",
-		)
+	# A department with an accepted Version is covered whatever its current
+	# Version's state — an open update (§4.3) is not a missed window.
+	roots = frappe.get_all(
+		"Departmental Plan",
+		filters={"fiscal_year": fiscal_year},
+		fields=["organisation_unit", "current_state", "current_accepted_version"],
 	)
+	covered = {
+		r.organisation_unit
+		for r in roots
+		if r.current_state in ("Submitted", "Accepted", "Returned") or r.current_accepted_version
+	}
 	stranded = [s for s in sources if cstr(s.get("org_unit_id")) not in covered]
 	if not stranded:
 		return None
@@ -193,13 +254,23 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 		row = next((r for r in dpp_rows if r["organisation_unit"] == unit["id"]), None)
 		if row is None:
 			if window_open:
-				actionable.append(_action("Open departmental plan", unit["name"], "Open departmental plan", [PAGE, "open", unit["id"]]))
+				# the §5.1 "Open departmental plan" command — labelled as what it
+				# does for the user, never as "Open" beside a navigate button
+				actionable.append(
+					_action(
+						f"No departmental plan yet for {context.get('financial_year_label') or fy}",
+						unit["name"], "Start departmental plan", [PAGE, "open", unit["id"]],
+					)
+				)
 			continue
-		if row["status"] == "Draft":
-			actionable.append(_action("Continue departmental plan", f"{row['department']} · {row['requirements']} requirements", "Open", row["route"], "attention"))
-		elif row["status"] == "Returned":
-			actionable.append(_action("Correct and resubmit departmental plan", row["department"], "Open", row["route"], "critical"))
-		elif row["status"] == "Awaiting validation":
+		# FU-15 — every supporting line carries version, size and value
+		detail = f"{row['department']} · Submission {row['version']} · {_count(row['requirements'], 'requirement')} · {row['value']}"
+		if row["state"] == "Draft" and row["status_kind"] != "critical":
+			actionable.append(_action("Continue departmental plan", detail, "Continue", row["route"], "attention"))
+		elif row["state"] == "Returned":
+			returned = _returned_on(row["version_name"])
+			actionable.append(_action("Correct and resubmit departmental plan", f"{detail} · returned {returned}" if returned else detail, "Correct", row["route"], "critical"))
+		elif row["state"] == "Submitted":
 			waiting.append({"item": "Departmental plan awaiting validation", "scope": row["department"]})
 
 	plan = frappe.db.get_value(
@@ -217,14 +288,14 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 		for task in frappe.get_all(
 			"Departmental Plan Validation Task",
 			filters={"fiscal_year": fy, "status": "Open"},
-			fields=["name", "organisation_unit", "submission"],
+			fields=["name", "organisation_unit", "submission", "dpp_version"],
 			order_by="creation asc",
 			limit_page_length=0,
 		):
 			if authz.is_segregated(actor, authz.ACTION_DPP_VALIDATE, submission=task.submission):
 				waiting.append({"item": "Departmental plan awaiting validation by another Planner", "scope": _ou_label(task.organisation_unit)})
 				continue
-			actionable.append(_action("Validate departmental plan", _ou_label(task.organisation_unit), "Review", [PAGE, "dpp-review", task.name], "attention"))
+			actionable.append(_action("Validate departmental plan", _validation_line(task), "Review", [PAGE, "dpp-review", task.name], "attention"))
 		count, value, departments = _accepted_unallocated(fy)
 		if count and plan and open_version and open_version.version_status == "Draft":
 			plural = "entry" if count == 1 else "entries"
@@ -234,6 +305,19 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 					f"{' · '.join(departments)} · {_money(value)}",
 					"Open Annual Plan",
 					["annual-procurement-plan", plan.plan_reference],
+				)
+			)
+		elif count and plan and open_version and open_version.version_status == "Active" and not plan.open_successor_version:
+			# §5 "Active; no successor → Begin plan update": the Planner holds
+			# the command, so the workspace offers it rather than a waiting line
+			plural = "entry" if count == 1 else "entries"
+			actionable.append(
+				_action(
+					f"{count} accepted departmental {plural} not yet in the Active plan",
+					f"{' · '.join(departments)} · {_money(value)}",
+					"Prepare plan update",
+					["annual-procurement-plan", plan.plan_reference],
+					"attention",
 				)
 			)
 		elif count and plan and open_version and open_version.version_status != "Draft":
@@ -246,10 +330,10 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 			waiting.append({"item": "Publication was not acknowledged; a technical retry is pending", "scope": plan.title})
 
 	if plan and open_version and authz.has_site_role(ROLE_FINANCE_CONFIRMATION_OFFICER, actor):
-		for task in frappe.get_all("Plan Finance Task", filters={"plan_version": open_version.name, "status": "Open"}, fields=["name"]):
+		for task in frappe.get_all("Plan Finance Task", filters={"plan_version": open_version.name, "status": "Open"}, fields=["name", "plan_value", "creation"]):
 			if authz.is_segregated(actor, authz.ACTION_FINANCE_DECIDE, plan_version=open_version.name):
 				continue
-			actionable.append(_action("Confirm plan funding", plan.title, "Open Finance task", [PAGE, "finance", task.name]))
+			actionable.append(_action("Confirm plan funding", _plan_line(plan, open_version, flt(task.plan_value), task.creation), "Open Finance task", [PAGE, "finance", task.name]))
 
 	if plan and open_version:
 		for stage, role, action in (
@@ -259,12 +343,14 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 			if not authz.has_site_role(role, actor):
 				continue
 			for task in frappe.get_all(
-				"Plan Governance Task", filters={"plan_version": open_version.name, "stage": stage, "status": "Open"}, fields=["name"]
+				"Plan Governance Task", filters={"plan_version": open_version.name, "stage": stage, "status": "Open"}, fields=["name", "creation"]
 			):
 				if authz.is_segregated(actor, action, plan_version=open_version.name):
 					continue
 				headline = "Adopt the Annual Procurement Plan" if stage == "Accounting Officer adoption" else "Approve the Annual Procurement Plan"
-				actionable.append(_action(headline, plan.title, "Open decision", [PAGE, "review", task.name]))
+				actionable.append(
+					_action(headline, _plan_line(plan, open_version, _allocated_value(open_version.name), task.creation), "Open decision", [PAGE, "review", task.name])
+				)
 
 	health = None
 	if plan and plan.active_version:

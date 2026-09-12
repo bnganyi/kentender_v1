@@ -290,6 +290,45 @@ class TestBudgetLinesDraft(_BudgetLifecycleTestBase):
 		self.assertEqual(submit_result["code"], "BUDGET_NOT_READY")
 		self.assertTrue(any(b["code"] == "lines.total_mismatch" for b in submit_result["blockers"]))
 
+	def test_entity_wide_line_reloads_as_entity_wide_in_the_editor(self):
+		"""BUD-BR-007 / BUD-AC-009 — an Entity-wide line (no owner unit) is
+		stored as NULL but the editor contract must hand it back as the same
+		"" the save contract accepts and the picker's Entity-wide option
+		carries; a null left the reloaded picker matching no option
+		(2026-09-11, "owner scope lost on refresh")."""
+		self._as(self.officer)
+		result = contracts.save_budget_version_draft(
+			{
+				"fiscal_year": self._fresh_fy(),
+				"approval_reference": f"ENTITYWIDE-{self.suffix}",
+				"approval_date": add_days(nowdate(), -5),
+				"authorised_total": 60_000_000,
+				"approval_document": "/files/x.pdf",
+			}
+		)
+		self.assertTrue(result["ok"], result.get("errors"))
+		version = result["version"]["id"]
+		self._track("Procurement Budget Version", version)
+		self._track("Procurement Budget", result["budget"]["id"])
+
+		lines_result = lines_svc.save_budget_lines_draft(
+			{
+				"budget_version": version,
+				"lines": [
+					{"title": "Entity-wide line", "owner_org_unit": "", "funding_source": FUNDING_SOURCE, "approved_amount": 10_000_000},
+					{"title": "Unit line", "owner_org_unit": self.ou_dhp, "funding_source": FUNDING_SOURCE, "approved_amount": 50_000_000},
+				],
+			}
+		)
+		self.assertTrue(lines_result["ok"], lines_result.get("errors"))
+		for lv in frappe.get_all("Procurement Budget Line Version", filters={"budget_version": version}, pluck="budget_line"):
+			self._track("Procurement Budget Line", lv)
+
+		rows = {r["title"]: r for r in lines_svc.get_budget_version_lines_editor(version)["rows"]}
+		self.assertEqual(rows["Entity-wide line"]["owner_org_unit"], "")
+		self.assertEqual(rows["Entity-wide line"]["owner_org_unit_label"], "Entity-wide")
+		self.assertEqual(rows["Unit line"]["owner_org_unit"], self.ou_dhp)
+
 	def test_only_editable_line_fields_are_title_owner_funding_amount(self):
 		"""BUD-BR-006 / BUD-AC-006 — no classification/purpose/Strategy fields exist to set."""
 		self._as(self.officer)

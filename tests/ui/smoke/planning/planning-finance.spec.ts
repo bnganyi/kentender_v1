@@ -25,6 +25,19 @@ test.describe.configure({ mode: "serial", timeout: 180_000 });
 test.describe("PLN-UI-10 Plan funding confirmation", () => {
 	test.afterAll(() => restoreSite());
 
+	test("the Finance Confirmation Officer reaches the task from the Annual Plan record (FU-14)", async ({ page }) => {
+		const state = resetFixture<FinanceState & { plan_reference: string }>("reset_finance_fixture");
+		const errors = collectConsoleErrors(page);
+		await login(page, FINANCE, PASSWORD);
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
+		await expectReady(page, "plan");
+		await page.locator('[data-testid="pln-open-task"]').click();
+		await expectReady(page, "finance");
+		await expect(page).toHaveURL(new RegExp(`/procurement-planning/finance/${state.task}$`));
+		await expect(page.locator('[data-testid="fnt-badge"]')).toHaveText("Awaiting Finance");
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+
 	test("the Finance Confirmation Officer confirms the affordability statement and the workbench reads Confirmed", async ({ page }) => {
 		const state = resetFixture<FinanceState>("reset_finance_fixture");
 		const errors = collectConsoleErrors(page);

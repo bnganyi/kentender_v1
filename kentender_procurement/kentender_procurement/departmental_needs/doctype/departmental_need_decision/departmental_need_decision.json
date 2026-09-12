@@ -8,7 +8,7 @@
  "field_order": [
   "decision_id",
   "departmental_need",
-  "need_version",
+  "need_revision",
   "withdrawal_request",
   "action",
   "actor",
@@ -52,10 +52,10 @@
   },
   {
    "description": "The exact version this decision applies to. Empty for a withdrawal-request decision.",
-   "fieldname": "need_version",
+   "fieldname": "need_revision",
    "fieldtype": "Link",
-   "label": "Need Version",
-   "options": "Departmental Need Version",
+   "label": "Need Revision",
+   "options": "Departmental Need Revision",
    "read_only": 1,
    "search_index": 1
   },

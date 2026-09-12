@@ -16,6 +16,16 @@
 				</span>
 			</div>
 			<div class="pln-header-actions">
+				<!-- FU-14: the actor who holds the open task reaches it from the record -->
+				<button
+					v-if="plan.open_task"
+					type="button"
+					class="kt-btn kt-btn-primary"
+					data-testid="pln-open-task"
+					@click="$emit('open-task', plan.open_task.route)"
+				>
+					{{ plan.open_task.label }}
+				</button>
 				<button
 					v-if="plan.mutable && plan.unallocated_sources?.length"
 					type="button"
@@ -210,7 +220,7 @@ const props = defineProps({
 	errorSummary: String,
 });
 
-defineEmits(["open-form-dialog", "navigate", "back", "request-funding", "submit-consolidated", "confirm-splitting"]);
+defineEmits(["open-form-dialog", "navigate", "back", "request-funding", "submit-consolidated", "confirm-splitting", "open-task"]);
 
 const badgeClass = computed(() => {
 	const badge = props.plan.header?.badge;

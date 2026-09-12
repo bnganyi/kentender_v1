@@ -78,7 +78,7 @@ def save_need_draft(**kwargs: Any) -> dict[str, Any]:
 	return lifecycle.create_need(**args)
 
 
-submit_need_version = frappe.whitelist()(lifecycle.submit_need)
+submit_need_revision = frappe.whitelist()(lifecycle.submit_need)
 withdraw_unaccepted_need = frappe.whitelist()(lifecycle.withdraw_need)
 create_accepted_need_successor = frappe.whitelist()(lifecycle.create_accepted_need_successor)
 cancel_accepted_need_successor = frappe.whitelist()(lifecycle.cancel_accepted_need_successor)
@@ -94,18 +94,18 @@ project_need_planning_usage = frappe.whitelist()(project_planning_usage)
 
 
 @frappe.whitelist()
-def return_need_version(**kwargs: Any) -> dict[str, Any]:
+def return_need_revision(**kwargs: Any) -> dict[str, Any]:
 	"""Mark the submitted version Returned and create one copied correction Draft."""
 	return lifecycle.review_need(decision="return", **_command_args(kwargs))
 
 
 @frappe.whitelist()
-def accept_need_version(**kwargs: Any) -> dict[str, Any]:
+def accept_need_revision(**kwargs: Any) -> dict[str, Any]:
 	"""Accept the initial or successor version and publish lineage."""
 	return lifecycle.review_need(decision="accept", **_command_args(kwargs))
 
 
 @frappe.whitelist()
-def decline_need_version(**kwargs: Any) -> dict[str, Any]:
+def decline_need_revision(**kwargs: Any) -> dict[str, Any]:
 	"""Close the initial Need or successor without changing an accepted version."""
 	return lifecycle.review_need(decision="decline", **_command_args(kwargs))

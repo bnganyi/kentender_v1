@@ -186,6 +186,39 @@ def require_hopf(user: str | None = None, *, masked: bool = True) -> Assignment:
 	return require_site_role(ROLE_HEAD_OF_PROCUREMENT_FUNCTION, user, masked=masked)
 
 
+def require_department_task_access(
+	contributing_org_units: set[str], user: str | None = None, *, masked: bool = True
+) -> tuple[str, Assignment | None, str]:
+	"""KT-STD-001 §3A.6/AUTH-ADR-001 §8 — Department Approval task read
+	access. Administrator/System Manager (`is_technical`) and the site-wide
+	Auditor read in "oversight" mode — no assignment, every decision
+	capability False — never masked, and never attributed a certifying
+	HoD's own name. Granting Auditor oversight here matches how this module
+	already treats Auditor everywhere else it reads (`require_requisition_reader`'s
+	own `SITE_WIDE_ROLES` loop, `TENDER_SEAM_READER_ROLES`): a task read is
+	not a different kind of artifact from the Requisition it belongs to.
+	A Head of User Department covering one of the Requisition's contributing
+	departments reads as the "decider" who may certify or return it (§7.3);
+	anyone else is masked as not found exactly as `require_hod_for_any`
+	denies the command itself."""
+	principal = actor(user)
+	if is_technical(principal) or can_read_site(ROLE_AUDITOR, principal):
+		return "oversight", None, ""
+	assignment, matched_unit = require_hod_for_any(contributing_org_units, principal, masked=masked)
+	return "decider", assignment, matched_unit
+
+
+def require_procurement_task_access(user: str | None = None, *, masked: bool = True) -> tuple[str, Assignment | None]:
+	"""Procurement Authorisation task read access — the same oversight/
+	decider split as `require_department_task_access`, gated on the sole
+	authoriser `require_hopf` (§9.1/§9.1A) for the decider path."""
+	principal = actor(user)
+	if is_technical(principal) or can_read_site(ROLE_AUDITOR, principal):
+		return "oversight", None
+	assignment = require_hopf(principal, masked=masked)
+	return "decider", assignment
+
+
 def holds_any_requisition_responsibility(user: str | None = None) -> bool:
 	"""Page-level verdict resolved before anything renders (§3A.1)."""
 	principal = cstr(user or frappe.session.user)

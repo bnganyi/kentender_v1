@@ -8,7 +8,7 @@
  "field_order": [
   "review_task_id",
   "departmental_need",
-  "need_version",
+  "need_revision",
   "withdrawal_request",
   "task_type",
   "organisation_unit",
@@ -42,10 +42,10 @@
   },
   {
    "description": "Fixes the exact immutable content under review. Empty for a withdrawal task.",
-   "fieldname": "need_version",
+   "fieldname": "need_revision",
    "fieldtype": "Link",
-   "label": "Need Version",
-   "options": "Departmental Need Version",
+   "label": "Need Revision",
+   "options": "Departmental Need Revision",
    "read_only": 1,
    "search_index": 1
   },

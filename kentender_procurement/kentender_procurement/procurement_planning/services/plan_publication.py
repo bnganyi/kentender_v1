@@ -69,24 +69,24 @@ def _publish_usage_events(version, plan, *, event_suffix: str) -> None:
 	included = frappe.get_all(
 		"Plan Source Allocation",
 		filters={"plan_item": ("in", list(items_by_name) or ("",)), "source_origin": "Accepted Departmental Need", "allocation_state": "Active"},
-		fields=["plan_item", "need", "need_version"],
+		fields=["plan_item", "need", "need_revision"],
 	)
 	for row in included:
 		needs_usage.project_planning_usage(
-			departmental_need=row.need, accepted_version=row.need_version, usage="Fully included",
-			source_event_id=f"{event_suffix}:{row.need_version}:included", source_event_time=now_datetime(),
+			departmental_need=row.need, accepted_revision=row.need_revision, usage="Fully included",
+			source_event_id=f"{event_suffix}:{row.need_revision}:included", source_event_time=now_datetime(),
 			active_plan=plan.plan_reference, active_plan_item=items_by_name.get(row.plan_item, ""), user="Administrator",
 		)
 	removed_items = frappe.get_all("Annual Plan Item", filters={"plan_version": version.name, "item_state": "Removed in successor"}, pluck="name")
 	dropped = frappe.get_all(
 		"Plan Source Allocation",
 		filters={"plan_item": ("in", removed_items or ("",)), "source_origin": "Accepted Departmental Need"},
-		fields=["need", "need_version"],
+		fields=["need", "need_revision"],
 	)
 	for row in dropped:
 		needs_usage.project_planning_usage(
-			departmental_need=row.need, accepted_version=row.need_version, usage="Not included",
-			source_event_id=f"{event_suffix}:{row.need_version}:removed", source_event_time=now_datetime(), user="Administrator",
+			departmental_need=row.need, accepted_revision=row.need_revision, usage="Not included",
+			source_event_id=f"{event_suffix}:{row.need_revision}:removed", source_event_time=now_datetime(), user="Administrator",
 		)
 
 

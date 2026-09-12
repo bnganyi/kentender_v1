@@ -451,12 +451,14 @@ def get_department_approval_task(*, task: str, user: str | None = None) -> dict[
 	task_doc = frappe.get_doc("Requisition Task", task)
 	root = frappe.get_doc("Procurement Requisition", task_doc.requisition)
 	contributing_units = _contributing_units(root)
-	_assignment, matched_unit = authz.require_hod_for_any(contributing_units, actor, masked=True)
+	mode, _assignment, matched_unit = authz.require_department_task_access(contributing_units, actor, masked=True)
+	is_decider = mode == "decider"
 	version = frappe.get_doc("Requisition Version", task_doc.requisition_version)
 	package_version = frappe.get_doc("IT Equipment Requirement Package Version", version.package_version)
 	version_dict = _version_dict(version)
 	projection = eligibility_gateway.get_requisition_eligible_plan_item(root.plan_item_id)
 	report = validation.validate(version=version_dict, package=_package_dict(package_version), eligibility=projection)
+	task_open = task_doc.status == "Open" and root.current_state == "Awaiting Department Approval"
 	return {
 		"outcome": "OK", "task": {"task": task_doc.name, "status": task_doc.status, "record_version": task_doc.record_version, "task_token": task_doc.task_token},
 		"requisition": _requisition_summary(root),
@@ -464,10 +466,19 @@ def get_department_approval_task(*, task: str, user: str | None = None) -> dict[
 		"package": {**_package_dict(package_version), "package_version": package_version.name, "content_digest": package_version.content_digest},
 		"drawdown_context": _drawdown_context(version_dict, projection),
 		"prepared_by": _prepared_by(root),
-		"deciding_actor": _deciding_hod_label(actor, matched_unit),
+		# KT-STD-001 §3A.6 — an oversight reader (Administrator/System
+		# Manager/Auditor) never certified this and is never attributed the
+		# certifying HoD's own name.
+		"deciding_actor": _deciding_hod_label(actor, matched_unit) if is_decider else {},
 		"catalogue": {"characteristics": [{"key": c.key, "label": c.label} for c in catalogue.CHARACTERISTICS]},
 		"validation": report,
-		"can_act": task_doc.status == "Open" and root.current_state == "Awaiting Department Approval",
+		"can_act": task_open,
+		# §3A.6's decision capabilities: False for every oversight reader,
+		# regardless of task/root state — the decide commands
+		# (`send_for_department_approval` et al.) keep their own
+		# `require_hod_for_any` gate independently of this read.
+		"can_certify": is_decider and task_open,
+		"can_return": is_decider and task_open,
 	}
 
 
@@ -481,7 +492,8 @@ def get_procurement_authorisation_task(*, task: str, user: str | None = None) ->
 		authz.not_found()
 	task_doc = frappe.get_doc("Requisition Task", task)
 	root = frappe.get_doc("Procurement Requisition", task_doc.requisition)
-	authz.require_hopf(actor, masked=True)
+	mode, _assignment = authz.require_procurement_task_access(actor, masked=True)
+	is_decider = mode == "decider"
 	version = frappe.get_doc("Requisition Version", task_doc.requisition_version)
 	package_version = frappe.get_doc("IT Equipment Requirement Package Version", version.package_version)
 	projection = eligibility_gateway.get_requisition_eligible_plan_item(root.plan_item_id)
@@ -490,7 +502,17 @@ def get_procurement_authorisation_task(*, task: str, user: str | None = None) ->
 
 	sources_by_line = {s["plan_item_line_id"]: s for s in projection.get("sources", [])}
 	affordability = []
-	if not report["blocking_count"] and all(r.ok for r in compat) and projection.get("eligible"):
+	# Budget's `check_funding` is deliberately gated to Finance Confirmation
+	# Officer / Head of Procurement Function only (§8.2/§9.1/§12.6 — "Budget
+	# never trusts a caller's own route visibility as authority"), even
+	# though the call itself is non-mutating. That is Budget's own
+	# authority boundary, not a technical-read gap: only `is_decider` is
+	# about to act on this number, so only they need a live re-check.
+	# An oversight reader (KT-STD-001 §3A.6) sees the task read-only from
+	# `planning_availability` alone, with no live affordability probe
+	# (found 2026-09-12 — the probe raised `frappe.PermissionError`, which
+	# the pre-existing `except ValidationError` below never caught).
+	if is_decider and not report["blocking_count"] and all(r.ok for r in compat) and projection.get("eligible"):
 		try:
 			allocations = [
 				{"budget_line": sources_by_line[line.plan_item_line_id]["budget_line"], "plan_source_allocation": line.plan_item_line_id, "amount": line.requested_value}
@@ -510,7 +532,7 @@ def get_procurement_authorisation_task(*, task: str, user: str | None = None) ->
 				# title rendered a raw hash-like docname instead.
 				for row in affordability:
 					row["budget_line_label"] = cstr(frappe.db.get_value("Procurement Budget Line", row["budget_line"], "generated_reference") or row["budget_line"])
-		except frappe.ValidationError:
+		except (frappe.ValidationError, frappe.PermissionError):
 			affordability = []
 
 	remaining_quantity = sum(flt(s.get("remaining_quantity")) for s in projection.get("sources", []))
@@ -542,7 +564,13 @@ def get_procurement_authorisation_task(*, task: str, user: str | None = None) ->
 		"submitted_by": submitted_by,
 		"contributing_org_unit_labels": {u: _ou_label(u) for u in _contributing_units(root)},
 		"can_act": task_doc.status == "Open" and root.current_state == "Submitted to Procurement",
-		"can_change_lead_unit": len(_contributing_units(root)) > 1,
+		# §3A.6 — decision capabilities False for an oversight reader
+		# (Administrator/System Manager/Auditor); the decide commands
+		# (`authorise_requisition`, `change_lead_organisation_unit`) keep
+		# their own `require_hopf` gate independently of this read.
+		"can_authorise": is_decider and task_doc.status == "Open" and root.current_state == "Submitted to Procurement",
+		"can_return": is_decider and task_doc.status == "Open" and root.current_state == "Submitted to Procurement",
+		"can_change_lead_unit": is_decider and len(_contributing_units(root)) > 1,
 	}
 
 

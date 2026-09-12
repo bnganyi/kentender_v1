@@ -18,6 +18,9 @@ const rows = ref([]);
 const dialog = reactive({ kind: "", row: null, error: "" });
 
 const openRow = computed(() => rows.value.find((row) => row.needs_submission_open) || null);
+// CFG v0.9 §4.2 / CFG-BR-013 — departmental-plan intake is its own flag,
+// independent of needs intake, with the same one-year-at-a-time rule.
+const openPlanRow = computed(() => rows.value.find((row) => row.dpp_submission_open) || null);
 
 async function load({ quiet = false } = {}) {
 	if (!quiet) loading.value = true;
@@ -73,6 +76,18 @@ const closeIntake = ({ reason }) =>
 			dialog.row.fiscal_year, reason, dialog.row.expected_version
 		)
 	);
+const openPlanIntake = ({ closes_at, reason }) =>
+	run(() =>
+		siteConfigApi.openDppSubmission(
+			dialog.row.fiscal_year, closes_at, reason, dialog.row.expected_version
+		)
+	);
+const closePlanIntake = ({ reason }) =>
+	run(() =>
+		siteConfigApi.closeDppSubmission(
+			dialog.row.fiscal_year, reason, dialog.row.expected_version
+		)
+	);
 
 function openUomList() {
 	frappe.set_route("List", "UOM");
@@ -85,6 +100,14 @@ function intakeLabel(row) {
 	}
 	return __("Open");
 }
+
+function planIntakeLabel(row) {
+	if (!row.dpp_submission_open) return __("Closed");
+	if (row.dpp_submission_closes_label) {
+		return __("Open until {0}", [row.dpp_submission_closes_label]);
+	}
+	return __("Open");
+}
 </script>
 
 <template>
@@ -93,7 +116,7 @@ function intakeLabel(row) {
 			<div>
 				<h2 class="kt-section-title">{{ __("Financial years") }}</h2>
 				<p class="kt-muted">
-					{{ __("Financial years are shared with accounting. Needs submission may be open for one year at a time.") }}
+					{{ __("Financial years are shared with accounting. Needs submission and plan submission may each be open for one year at a time.") }}
 				</p>
 			</div>
 			<button
@@ -137,6 +160,7 @@ function intakeLabel(row) {
 							<th>{{ __("Period") }}</th>
 							<th>{{ __("Phase") }}</th>
 							<th>{{ __("Needs submission") }}</th>
+							<th>{{ __("Plan submission") }}</th>
 							<th>{{ __("Action") }}</th>
 						</tr>
 					</thead>
@@ -149,19 +173,39 @@ function intakeLabel(row) {
 								<span v-if="row.needs_submission_open" class="kt-status is-live">{{ intakeLabel(row) }}</span>
 								<span v-else class="kt-tag kt-tag-neutral">{{ __("Closed") }}</span>
 							</td>
-							<td>
-								<a
-									v-if="!row.needs_submission_open && !row.disabled"
-									href="#"
-									:data-testid="'kt-fy-open-' + row.fiscal_year"
-									@click.prevent="openDialog('open', row)"
-								>{{ __("Open needs submission") }}</a>
-								<a
-									v-else-if="row.needs_submission_open"
-									href="#"
-									:data-testid="'kt-fy-close-' + row.fiscal_year"
-									@click.prevent="openDialog('close', row)"
-								>{{ __("Close needs submission") }}</a>
+							<td :data-testid="'kt-fy-plan-' + row.fiscal_year">
+								<span v-if="row.dpp_submission_open" class="kt-status is-live">{{ planIntakeLabel(row) }}</span>
+								<span v-else class="kt-tag kt-tag-neutral">{{ __("Closed") }}</span>
+							</td>
+							<td class="kt-row-actions">
+								<div>
+									<a
+										v-if="!row.needs_submission_open && !row.disabled"
+										href="#"
+										:data-testid="'kt-fy-open-' + row.fiscal_year"
+										@click.prevent="openDialog('open', row)"
+									>{{ __("Open needs submission") }}</a>
+									<a
+										v-else-if="row.needs_submission_open"
+										href="#"
+										:data-testid="'kt-fy-close-' + row.fiscal_year"
+										@click.prevent="openDialog('close', row)"
+									>{{ __("Close needs submission") }}</a>
+								</div>
+								<div>
+									<a
+										v-if="!row.dpp_submission_open && !row.disabled"
+										href="#"
+										:data-testid="'kt-fy-open-plan-' + row.fiscal_year"
+										@click.prevent="openDialog('open-plan', row)"
+									>{{ __("Open plan submission") }}</a>
+									<a
+										v-else-if="row.dpp_submission_open"
+										href="#"
+										:data-testid="'kt-fy-close-plan-' + row.fiscal_year"
+										@click.prevent="openDialog('close-plan', row)"
+									>{{ __("Close plan submission") }}</a>
+								</div>
 							</td>
 						</tr>
 					</tbody>
@@ -201,6 +245,27 @@ function intakeLabel(row) {
 			:busy="busy"
 			:error="dialog.error"
 			@confirm="closeIntake"
+			@cancel="closeDialog"
+		/>
+		<IntakeDialog
+			v-if="dialog.kind === 'open-plan' && dialog.row"
+			mode="open"
+			purpose="plan"
+			:row="dialog.row"
+			:replaces="openPlanRow && openPlanRow.fiscal_year !== dialog.row.fiscal_year ? openPlanRow : null"
+			:busy="busy"
+			:error="dialog.error"
+			@confirm="openPlanIntake"
+			@cancel="closeDialog"
+		/>
+		<IntakeDialog
+			v-if="dialog.kind === 'close-plan' && dialog.row"
+			mode="close"
+			purpose="plan"
+			:row="dialog.row"
+			:busy="busy"
+			:error="dialog.error"
+			@confirm="closePlanIntake"
 			@cancel="closeDialog"
 		/>
 	</section>

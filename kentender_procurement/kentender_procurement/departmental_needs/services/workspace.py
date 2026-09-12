@@ -25,7 +25,7 @@ from kentender_procurement.departmental_needs.constants import (
 	STATE_WITHDRAWN,
 	TASK_OPEN,
 	TASK_WITHDRAWAL,
-	VERSION_CONTENT_FIELDS,
+	REVISION_CONTENT_FIELDS,
 )
 from kentender_procurement.departmental_needs.errors import fail
 from kentender_procurement.departmental_needs.services.context import fy_label, selectable_financial_years
@@ -34,7 +34,7 @@ from kentender_procurement.departmental_needs.services.permissions import (
 	can_view,
 	creation_contexts,
 	is_owner,
-	require_review_command,
+	require_review_read,
 	require_view,
 	scope_diagnostic,
 	viewing_contexts,
@@ -62,9 +62,9 @@ def _version_facts(version: str) -> dict[str, Any]:
 	if not version:
 		return {}
 	row = frappe.db.get_value(
-		"Departmental Need Version",
+		"Departmental Need Revision",
 		version,
-		["name", "version_number", "version_status", "content_hash", *VERSION_CONTENT_FIELDS],
+		["name", "revision_number", "revision_status", "content_hash", *REVISION_CONTENT_FIELDS],
 		as_dict=True,
 	)
 	if not row:
@@ -120,7 +120,9 @@ def _actions(doc, principal: str, profile: str) -> list[dict[str, str]]:
 	if profile == "owner" and doc.current_state in {STATE_DRAFT, STATE_RETURNED}:
 		# A Draft or Returned Need is by definition incomplete, so its own author
 		# lands straight in the editable form rather than a read-only preview.
-		return [{"code": "edit", "label": "Continue"}, {"code": "view", "label": "View"}]
+		# §12.1 — a Draft is continued, a Returned correction is corrected.
+		label = "Correct" if doc.current_state == STATE_RETURNED else "Continue"
+		return [{"code": "edit", "label": label}, {"code": "view", "label": "View"}]
 	return [{"code": "view", "label": "View"}] if profile != "none" else []
 
 
@@ -231,8 +233,8 @@ def get_workspace(
 			"organisation_unit",
 			"financial_year",
 			"current_state",
-			"current_version",
-			"current_accepted_version",
+			"current_revision",
+			"current_accepted_revision",
 			"record_version",
 		],
 		order_by="need_reference asc",
@@ -245,7 +247,7 @@ def get_workspace(
 		allowed, profile = can_view(doc, principal)
 		if not allowed or doc.current_state == STATE_WITHDRAWN:
 			continue
-		version = _version_facts(doc.current_version)
+		version = _version_facts(doc.current_revision)
 		title = cstr(version.get("title"))
 		if term and term not in title.lower() and term not in cstr(doc.need_reference).lower():
 			continue
@@ -310,7 +312,7 @@ def get_review_task(*, task: str, decision_token: str = "", user: str | None = N
 		[
 			"name",
 			"departmental_need",
-			"need_version",
+			"need_revision",
 			"withdrawal_request",
 			"task_type",
 			"status",
@@ -322,17 +324,20 @@ def get_review_task(*, task: str, decision_token: str = "", user: str | None = N
 	if not row:
 		fail("NDS_SCOPE_DENIED", "Review task not found.")
 	doc = frappe.get_doc("Departmental Need", row.departmental_need)
-	# §4.4 — the task is available to holders of the HoD role in the exact scope.
-	require_review_command(doc, principal)
+	# §4.4/§8 — an in-scope Head of User Department decides the task; a
+	# technical reader or Auditor only observes it (KT-STD-001 v1.5 §3A.6).
+	# The decide commands (`lifecycle.py`) still gate through
+	# `require_review_command` directly — this read model never widens them.
+	profile = require_review_read(doc, principal)
 	if decision_token and cstr(decision_token) != cstr(row.decision_token):
 		fail("NDS_STALE_WRITE", "This task was already decided. Reload and try again.")
-	version = _version_facts(row.need_version or doc.current_version)
+	version = _version_facts(row.need_revision or doc.current_revision)
 	withdrawal = None
 	if row.withdrawal_request:
 		withdrawal = frappe.db.get_value(
 			"Need Withdrawal Request",
 			row.withdrawal_request,
-			["name", "reason", "requested_by", "status", "accepted_version"],
+			["name", "reason", "requested_by", "status", "accepted_revision"],
 			as_dict=True,
 		)
 		withdrawal = dict(withdrawal) if withdrawal else None
@@ -349,17 +354,20 @@ def get_review_task(*, task: str, decision_token: str = "", user: str | None = N
 		"decision_token": row.decision_token,
 		"opened_at": str(row.opened_at or ""),
 		"need": doc.as_dict(no_nulls=True),
-		"version": version,
+		"revision": version,
 		"withdrawal_request": withdrawal,
 		"requester_label": frappe.db.get_value("User", doc.owner, "full_name") or doc.owner,
 		"scope": {
 			"organisation_unit": doc.organisation_unit,
 			"financial_year": doc.financial_year,
 		},
-		"permitted_decisions": decisions if row.status == TASK_OPEN else [],
+		# An "oversight" reader (technical or Auditor) never decides (§8): the
+		# control set is empty for them even while the task is open.
+		"permitted_decisions": decisions if row.status == TASK_OPEN and profile == "decider" else [],
 		# A maker never decides their own version, so the label set is empty for
 		# them even when the task is open (NDS-BR-006).
 		"maker_checker_blocked": is_owner(doc, principal),
+		"access_profile": profile,
 	}
 
 
@@ -389,13 +397,13 @@ def get_current_accepted_need(
 	require_view(doc, principal)
 	if cstr(expected_financial_year) and cstr(expected_financial_year) != doc.financial_year:
 		fail("NDS_CONTEXT_REQUIRED", "The Need does not belong to the expected financial year.")
-	if doc.current_state != STATE_ACCEPTED or not doc.current_accepted_version:
-		fail("NDS_NOT_ACCEPTED", "This Departmental Need has no current accepted version.")
-	version = frappe.get_doc("Departmental Need Version", doc.current_accepted_version)
+	if doc.current_state != STATE_ACCEPTED or not doc.current_accepted_revision:
+		fail("NDS_NOT_ACCEPTED", "This Departmental Need has no current accepted revision.")
+	version = frappe.get_doc("Departmental Need Revision", doc.current_accepted_revision)
 	if cstr(expected_content_hash) and cstr(expected_content_hash) != cstr(version.content_hash):
 		fail(
 			"NDS_SOURCE_STALE",
-			"The requested accepted version is no longer current. Refresh the source.",
+			"The requested accepted revision is no longer current. Refresh the source.",
 		)
 	unit_label = cstr(frappe.db.get_value("UOM", version.unit, "uom_name") or version.unit or "")
 	return {
@@ -403,8 +411,8 @@ def get_current_accepted_need(
 		"contract": "DepartmentalNeedAccepted.v2",
 		"need": doc.name,
 		"need_reference": doc.need_reference,
-		"accepted_version": version.name,
-		"version_number": version.version_number,
+		"accepted_revision": version.name,
+		"revision_number": version.revision_number,
 		"content_hash": version.content_hash,
 		"organisation_unit": doc.organisation_unit,
 		"financial_year": doc.financial_year,
@@ -479,8 +487,8 @@ def get_need(*, need: str, user: str | None = None) -> dict[str, Any]:
 		"need": doc.as_dict(no_nulls=True),
 		"scope_labels": _scope_labels(doc),
 		"accepted": accepted,
-		"current_version": _version_facts(doc.current_version),
-		"accepted_version": _version_facts(doc.current_accepted_version),
+		"current_revision": _version_facts(doc.current_revision),
+		"accepted_revision": _version_facts(doc.current_accepted_revision),
 		"latest_return": latest_return,
 		"author_label": frappe.db.get_value("User", doc.owner, "full_name") or doc.owner,
 		"planning_usage": planning_usage(doc.name),

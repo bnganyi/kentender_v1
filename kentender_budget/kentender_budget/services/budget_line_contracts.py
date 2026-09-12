@@ -15,7 +15,12 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
-from kentender_budget.services.budget_authorization import CAP_EDIT, require_budget_version_capability, require_budget_version_read_scope
+from kentender_budget.services.budget_authorization import (
+	CAP_EDIT,
+	has_budget_version_capability,
+	require_budget_version_capability,
+	require_budget_version_read_scope,
+)
 from kentender_budget.services.budget_contracts import (
 	_active_version,
 	_line_position,
@@ -173,6 +178,16 @@ def get_budget_version_lines_editor(budget_version: str) -> dict[str, Any]:
 
 	version = _resolve_budget_version(budget_version)
 	require_budget_version_read_scope(version)
+	# KT-STD-001 v1.5 §3A.6 — this is a read route open to a technical
+	# reader (Administrator/System Manager) via `require_budget_version_read_scope`
+	# above. `can_remove` per row must therefore reflect the caller's actual
+	# write capability, not only the line's own lock state, or a technical
+	# reader's read-only payload would carry a decision authority they do
+	# not have (caught live 2026-09-12 by the technical-read conformance
+	# gate). The Vue editor already re-checks this against its own
+	# `canEdit`; this closes the same gap at the server, which is where
+	# AGENTS.md requires every material action to be enforced.
+	may_edit = has_budget_version_capability(frappe.session.user, CAP_EDIT, version)
 	locked = _lines_previously_in_active(version)
 
 	rows = frappe.get_all(
@@ -200,12 +215,16 @@ def get_budget_version_lines_editor(budget_version: str) -> dict[str, Any]:
 			"budget_line": r.budget_line,
 			"budget_line_code": codes.get(r.budget_line, ""),
 			"title": r.title,
-			"owner_org_unit": r.owner_org_unit,
+			# Entity-wide is stored as NULL but travels as "" — the same value
+			# the save contract accepts and the editor's "Entity-wide" option
+			# carries. A null here left the <select> matching no option, so a
+			# reloaded Entity-wide line looked blank/unset (2026-09-11).
+			"owner_org_unit": r.owner_org_unit or "",
 			"owner_org_unit_label": _org_unit_label(r.owner_org_unit),
 			"funding_source": r.funding_source,
 			"approved_amount": flt(r.approved_amount),
 			"identity_locked": is_locked,
-			"can_remove": not is_locked,
+			"can_remove": may_edit and not is_locked,
 		}
 		if version.based_on_budget_version:
 			active_amount = 0.0

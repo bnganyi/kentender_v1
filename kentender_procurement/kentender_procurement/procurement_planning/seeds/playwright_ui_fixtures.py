@@ -227,6 +227,10 @@ def restore_site(*, commit: bool = True) -> dict[str, Any]:
 	nothing was moved."""
 	_guard()
 	frappe.set_user("Administrator")
+	# leave no Playwright plan behind: a fixture-year plan makes that year a
+	# selectable Financial Year for every real user of the site
+	_wipe()
+	_clear_context_preferences()
 	raw = frappe.defaults.get_global_default(PREVIOUS_FLAGS_KEY)
 	restored = {"dpp": [], "needs": []}
 	if raw:
@@ -372,10 +376,22 @@ def reset_all(*, commit: bool = True) -> dict[str, Any]:
 	return {"ok": True, "namespace": NS_PW, "fiscal_year": FY}
 
 
+def _pin_fixture_year() -> None:
+	"""The default year is the one whose Annual Plan is in force — on a seeded
+	site that is the §8 seed's year, not this world's. Each actor's remembered
+	planning year is therefore the fixture year, as a real user's would be
+	after one selection."""
+	from kentender_core.services import working_context
+
+	for email in (AUTHOR, HOD, PLANNER, FINANCE, ACCOUNTING_OFFICER, STATUTORY, AUDITOR, OUTSIDER):
+		working_context.select_module_fy("planning", FY, user=email, offered=[FY])
+
+
 def _reset(commit: bool) -> dict[str, Any]:
 	world = ensure_world(commit=False)
 	_wipe()
 	_clear_context_preferences()
+	_pin_fixture_year()
 	if commit:
 		frappe.db.commit()
 	return world

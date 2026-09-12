@@ -10,12 +10,22 @@ import { siteConfigApi } from "../data/siteConfigApi.js";
 
 const props = defineProps({
 	site: { type: Object, required: true },
+	onUpdated: { type: Function, default: null },
 });
-const emit = defineEmits(["configured", "updated"]);
+const emit = defineEmits(["configured"]);
 
-const busy = ref(false);
 const error = ref("");
 const notice = ref("");
+const { pending: busy, run } = kentender_core.desk_page.createCommandRunner(
+	{ ref },
+	{
+		onStart: () => {
+			error.value = "";
+			notice.value = "";
+		},
+		onError: (e) => (error.value = e.message),
+	}
+);
 
 const configured = computed(() => !!props.site?.configured);
 const pe = computed(() => props.site?.procuring_entity || null);
@@ -55,11 +65,8 @@ const canSubmit = computed(() => {
 	return dirty.value;
 });
 
-async function submit() {
-	busy.value = true;
-	error.value = "";
-	notice.value = "";
-	try {
+function submit() {
+	return run(async () => {
 		if (!configured.value) {
 			await siteConfigApi.configure({
 				pe_name: form.pe_name,
@@ -80,14 +87,14 @@ async function submit() {
 				},
 				pe.value?.expected_version
 			);
-			emit("updated");
+			// Await the parent's refresh before `run()` clears `busy` — otherwise
+			// a fast second Save reads `expected_version` off `pe`, which is a
+			// computed over the still-stale `site` prop until this resolves
+			// (RUN-CHG-001; confirmed live 2026-09-11).
+			if (props.onUpdated) await props.onUpdated();
 			notice.value = __("Changes saved.");
 		}
-	} catch (e) {
-		error.value = e.message;
-	} finally {
-		busy.value = false;
-	}
+	});
 }
 
 function fmt(value) {

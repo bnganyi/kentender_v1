@@ -62,7 +62,7 @@ ACCESSORS = frozenset(
 NEEDS_DOCTYPES = frozenset(
 	{
 		"Departmental Need",
-		"Departmental Need Version",
+		"Departmental Need Revision",
 		"Departmental Need Decision",
 		"Departmental Need Review Task",
 		"Departmental Need Event",
@@ -316,14 +316,14 @@ class DepartmentalNeedsArchitectureTest(IntegrationTestCase):
 		guilty = (
 			"import frappe\n"
 			'rows = frappe.get_all("Departmental Need", filters={})\n'
-			'one = frappe.db.get_value("Departmental Need Version", "x", "title")\n'
+			'one = frappe.db.get_value("Departmental Need Revision", "x", "title")\n'
 			'raw = frappe.db.sql("select name from `tabDepartmental Need`")\n'
 		)
 		self.assertEqual(
 			data_access_violations(guilty, NEEDS_DOCTYPES),
 			[
 				"get_all('Departmental Need')",
-				"get_value('Departmental Need Version')",
+				"get_value('Departmental Need Revision')",
 				"raw SQL on `tabDepartmental Need`",
 				"string naming `tabDepartmental Need`",
 			],

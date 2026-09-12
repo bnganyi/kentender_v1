@@ -306,3 +306,10 @@ class TestReturn(ValidationCase):
 			expected_record_version=root.record_version, idempotency_key=key(),
 		)
 		self.assertEqual(resubmitted["action"], "submitted")
+		# §4.5 — the corrected Submission's snapshot carries the correction's own version_number
+		resubmission = frappe.get_doc(
+			"Departmental Plan Submission", {"submission_reference": resubmitted["submission_reference"]}
+		)
+		self.assertEqual(resubmission.dpp_version, correction.name)
+		self.assertEqual(resubmission.submission_number, correction.version_number)
+		self.assertEqual(resubmission.submission_number, 2)

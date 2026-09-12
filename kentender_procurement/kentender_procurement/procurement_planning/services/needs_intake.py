@@ -10,7 +10,7 @@ runs only inside commands (invariant 1: reads create nothing): every current
 accepted Need in the exact PE/FY/OU appears exactly once as a read-only
 Need-origin entry in the Draft DPP Version, carrying the six Need facts;
 Planning adds only Budget Line and indicative amount, which survive a fact
-refresh from a successor accepted version.
+refresh from a successor accepted revision.
 """
 
 from __future__ import annotations
@@ -45,25 +45,25 @@ def current_accepted_sources(
 	)
 
 
-def need_version_number(need_version: str) -> int:
-	"""The version ordinal encoded in a Need Version's own deterministic id
-	(`{need_reference}-V{number:03d}`, set once at creation by
-	`departmental_needs.services.lifecycle._create_version` and never
-	renamed). Planning already legitimately holds this exact string — it is
-	the published event's own `accepted_version_id` (§7.1), pinned onto the
-	allocation/entry it sourced — so deriving a display number from it reads
-	no Needs table and needs no new contract surface; a fresh
-	`get_current_accepted_need` read would also be *wrong* here, since it
-	answers for the Need's current accepted version, not the pinned
-	(possibly since-superseded) one this reference line names."""
-	tail = cstr(need_version).rsplit("-V", 1)
+def need_revision_number(need_revision: str) -> int:
+	"""The revision ordinal encoded in a Need Revision's own deterministic id
+	(`{need_reference}-V{number:03d}` — the `-V` suffix is an opaque
+	identifier kept through the NDS-CHG-001 v1.10 §4.3 rename, set once at
+	creation and never renamed). Planning already legitimately holds this
+	exact string — it is the published event's own `accepted_version_id`
+	(§7.1 frozen wire key), pinned onto the allocation/entry it sourced — so
+	deriving a display number from it reads no Needs table and needs no new
+	contract surface; a fresh `get_current_accepted_need` read would also be
+	*wrong* here, since it answers for the Need's current accepted revision,
+	not the pinned (possibly since-superseded) one this reference line names."""
+	tail = cstr(need_revision).rsplit("-V", 1)
 	if len(tail) != 2 or not tail[1].isdigit():
 		return 0
 	return int(tail[1])
 
 
-def current_accepted_version_of(need: str, financial_year: str) -> str:
-	"""The Need's current accepted version through the published §8.1 contract,
+def current_accepted_revision_of(need: str, financial_year: str) -> str:
+	"""The Need's current accepted revision through the published §8.1 contract,
 	or "" when it has none / is out of scope. Never reads Needs tables (D5)."""
 	from kentender_procurement.departmental_needs.errors import DepartmentalNeedError
 	from kentender_procurement.departmental_needs.services.workspace import (
@@ -86,7 +86,7 @@ def current_accepted_version_of(need: str, financial_year: str) -> str:
 		)
 	except DepartmentalNeedError:
 		return ""
-	return cstr(payload.get("accepted_version"))
+	return cstr(payload.get("accepted_revision"))
 
 
 def _facts(payload: dict[str, Any]) -> dict[str, Any]:
@@ -104,10 +104,12 @@ def refresh_draft_entries(version_doc) -> dict[str, Any]:
 	"""Project every current accepted Need into a mutable Draft Version once.
 
 	- a new accepted Need gains a new Need-origin entry (funding empty);
-	- a successor accepted version refreshes the six facts and the pinned
-	  need_version, keeping the Planning-owned funding specification;
+	- a successor accepted revision refreshes the six facts and the pinned
+	  need_revision, keeping the Planning-owned funding specification;
 	- a withdrawn Need's unsubmitted entry is removed.
-	Direct entries are never touched. Idempotent by construction."""
+	Direct entries are never touched. Idempotent by construction.
+	Wire keys (`accepted_version_id`, `version_number`) are frozen per
+	NDS-CHG-001 v1.10 §7.1 — consumers read the keys, not the word."""
 	if version_doc.version_status not in ("Draft",):
 		return {"ok": False, "reason": "NOT_DRAFT"}
 	root = frappe.db.get_value(
@@ -121,7 +123,7 @@ def refresh_draft_entries(version_doc) -> dict[str, Any]:
 	existing = frappe.get_all(
 		"Departmental Plan Entry",
 		filters={"dpp_version": version_doc.name, "source_origin": NEED_ORIGIN},
-		fields=["name", "need", "need_version", "entry_id"],
+		fields=["name", "need", "need_revision", "entry_id"],
 		limit_page_length=0,
 	)
 	added, refreshed, removed = [], [], []
@@ -134,10 +136,11 @@ def refresh_draft_entries(version_doc) -> dict[str, Any]:
 			)
 			removed.append(row.entry_id)
 			continue
-		if cstr(row.need_version) != cstr(payload["accepted_version_id"]):
+		# `accepted_version_id` is a frozen wire key (NDS-CHG-001 v1.10 §7.1); it carries the accepted revision.
+		if cstr(row.need_revision) != cstr(payload["accepted_version_id"]):
 			entry = frappe.get_doc("Departmental Plan Entry", row.name)
 			entry.update(_facts(payload))
-			entry.need_version = payload["accepted_version_id"]
+			entry.need_revision = payload["accepted_version_id"]
 			entry.save(ignore_permissions=True)
 			refreshed.append(row.entry_id)
 	for payload in by_need.values():
@@ -150,7 +153,7 @@ def refresh_draft_entries(version_doc) -> dict[str, Any]:
 				"dpp_version": version_doc.name,
 				"source_origin": NEED_ORIGIN,
 				"need": payload["need_id"],
-				"need_version": payload["accepted_version_id"],
+				"need_revision": payload["accepted_version_id"],
 				"fixture_namespace": version_doc.fixture_namespace or root.fixture_namespace,
 				**_facts(payload),
 			}
@@ -161,7 +164,7 @@ def refresh_draft_entries(version_doc) -> dict[str, Any]:
 
 
 def coverage_gaps(version_doc) -> list[str]:
-	"""Need references whose current accepted version is not represented
+	"""Need references whose current accepted revision is not represented
 	exactly once on this Version — the §5.1 submission blocker."""
 	root = frappe.db.get_value(
 		"Departmental Plan",
@@ -173,10 +176,10 @@ def coverage_gaps(version_doc) -> list[str]:
 	rows = frappe.get_all(
 		"Departmental Plan Entry",
 		filters={"dpp_version": version_doc.name, "source_origin": NEED_ORIGIN},
-		fields=["need", "need_version"],
+		fields=["need", "need_revision"],
 		limit_page_length=0,
 	)
-	pinned = {cstr(row.need): cstr(row.need_version) for row in rows}
+	pinned = {cstr(row.need): cstr(row.need_revision) for row in rows}
 	gaps = []
 	for payload in sources:
 		need = cstr(payload["need_id"])

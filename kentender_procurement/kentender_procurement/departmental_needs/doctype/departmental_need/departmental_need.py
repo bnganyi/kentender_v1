@@ -5,7 +5,7 @@
 
 The root carries no requirement content; title, description, expected
 operational result, quantity, unit and required-by all live on
-`Departmental Need Version` (§4.3). OU and FY are immutable after creation.
+`Departmental Need Revision` (§4.3). OU and FY are immutable after creation.
 The site Procuring Entity is implicit (AUTH-ADR-001 v1.6 §1.1) — this
 DocType carries no `procuring_entity` field.
 """

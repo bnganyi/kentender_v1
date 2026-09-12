@@ -103,9 +103,11 @@ class TestGetDepartmentalPlan(DppReadCase):
 		self.assertEqual(author_view["header"]["badge"], "Ready to submit")
 		self.assertIsNone(author_view["readiness"])
 		self.assertFalse(author_view["can_submit"])  # author is not the HoD
+		self.assertIn("Head of User Department", author_view["submit_hint"])
 		frappe.set_user(fx.HOD)
 		hod_view = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
 		self.assertTrue(hod_view["can_submit"])
+		self.assertEqual(hod_view["submit_hint"], "")
 		self.assertTrue(hod_view["certification"]["show"])
 		self.assertIn(fx.OU_ALPHA_NAME, hod_view["certification"]["text"])
 		self.assertIn("FY 2101/02", hod_view["certification"]["text"])
@@ -186,7 +188,7 @@ class TestEntryEditorRead(DppReadCase):
 		self.assertEqual(entry["title"], "Test requirement")
 		self.assertEqual(entry["quantity_display"], "1 each")
 		self.assertEqual(entry["required_by_display"], "31 May 2102")
-		self.assertEqual(entry["need_reference_line"], "NEED-PLNT-0001 · Version 1")
+		self.assertEqual(entry["need_reference_line"], "NEED-PLNT-0001 · Revision 1")
 		self.assertEqual(result["currency"], "KES")
 		self.assertEqual(result["budget_lines"][0]["id"], fx.BUDGET_LINE)
 		self.assertIn("approved_display", result["budget_lines"][0])
@@ -205,6 +207,116 @@ class TestEntryEditorRead(DppReadCase):
 		with self.assertRaises(frappe.DoesNotExistError):
 			dpp_read.get_dpp_entry_editor(dpp_reference=opened["dpp_reference"])
 
+	def test_the_author_edits(self):
+		# Business actors are unchanged by the technical read-only path below.
+		opened = self.opened()
+		frappe.set_user(fx.AUTHOR)
+		result = dpp_read.get_dpp_entry_editor(dpp_reference=opened["dpp_reference"])
+		self.assertTrue(result["can_edit"])
+
+	def test_administrator_and_a_technical_reader_open_the_editor_read_only(self):
+		# KT-STD-001 v1.5 §3A.6 / AUTH-ADR-001 §8 — Administrator and a
+		# System-Manager-only user read every record and task read-only,
+		# never masked and never able to mutate.
+		opened = self.opened()
+		system_manager_only = "plnt.test.system-manager-only@example.test"
+		if not frappe.db.exists("User", system_manager_only):
+			frappe.get_doc(
+				{
+					"doctype": "User",
+					"email": system_manager_only,
+					"first_name": "System Manager Only",
+					"send_welcome_email": 0,
+					"user_type": "System User",
+					"enabled": 1,
+					"roles": [{"role": "System Manager"}],
+				}
+			).insert(ignore_permissions=True)
+		for reader in ("Administrator", system_manager_only):
+			with self.subTest(reader=reader):
+				frappe.set_user(reader)
+				result = dpp_read.get_dpp_entry_editor(dpp_reference=opened["dpp_reference"])
+				self.assertEqual(result["outcome"], "OK")
+				self.assertFalse(result["can_edit"])
+				# source facts and current values are still present
+				self.assertEqual(result["dpp_reference"], opened["dpp_reference"])
+				self.assertIn("budget_lines", result)
+				self.assertIn("units", result)
+
+	def test_an_unrelated_business_user_is_still_masked(self):
+		opened = self.opened()
+		frappe.set_user(fx.OUTSIDER)
+		with self.assertRaises(frappe.DoesNotExistError):
+			dpp_read.get_dpp_entry_editor(dpp_reference=opened["dpp_reference"])
+
+
+class TestAcceptedPlanUpdate(DppReadCase):
+	"""§5.1 'Accepted; change required → Create update' as the read model
+	offers it — the only route by which a Need accepted after the plan was
+	accepted can reach that plan."""
+
+	def accepted(self) -> str:
+		opened = self.opened()
+		frappe.set_user(fx.AUTHOR)
+		added = dpp_lifecycle.save_direct_requirement(
+			dpp_version=opened["current_version"], values=fx.direct_values(),
+			expected_record_version=opened["record_version"], idempotency_key=key(),
+		)
+		frappe.set_user(fx.HOD)
+		submitted = dpp_lifecycle.submit_departmental_plan(
+			dpp_version=opened["current_version"], certification_confirmed=True,
+			expected_record_version=added["record_version"], idempotency_key=key(),
+		)
+		task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
+		frappe.set_user(fx.PLANNER)
+		dpp_validation.accept_departmental_plan(
+			task=task.name, task_token=task.task_token, idempotency_key=key(),
+			classifications={added["entry_id"]: "Consulting services"},
+		)
+		return opened["dpp_reference"]
+
+	def test_accepted_plan_offers_create_update_to_the_department_only(self):
+		reference = self.accepted()
+		frappe.set_user(fx.AUTHOR)
+		view = dpp_read.get_departmental_plan(dpp_reference=reference)
+		self.assertEqual(view["header"]["badge"], "Accepted")
+		self.assertFalse(view["mutable"])
+		self.assertTrue(view["can_create_update"])
+		self.assertIsNone(view["update_notice"])
+		frappe.set_user(fx.HOD)
+		self.assertTrue(dpp_read.get_departmental_plan(dpp_reference=reference)["can_create_update"])
+		frappe.set_user(fx.PLANNER)
+		self.assertFalse(dpp_read.get_departmental_plan(dpp_reference=reference)["can_create_update"])
+
+	def test_a_need_accepted_later_is_named_and_the_update_carries_it(self):
+		reference = self.accepted()
+		patched = patch.object(needs_intake, "current_accepted_sources", return_value=[fx.accepted_source()])
+		patched.start()
+		self.addCleanup(patched.stop)
+		frappe.set_user(fx.AUTHOR)
+		view = dpp_read.get_departmental_plan(dpp_reference=reference)
+		self.assertEqual(view["update_notice"]["title"], "1 accepted need is not in this plan")
+		self.assertIn("NEED-PLNT-0001", view["update_notice"]["text"])
+
+		update = dpp_lifecycle.create_departmental_plan_update(
+			departmental_plan=reference, expected_record_version=view["record_version"], idempotency_key=key(),
+		)
+		self.assertEqual(update["action"], "update_created")
+		after = dpp_read.get_departmental_plan(dpp_reference=reference)
+		self.assertFalse(after["can_create_update"])
+		self.assertIsNone(after["update_notice"])
+		self.assertTrue(after["mutable"])
+		# the window gates only a first submission (§5.1) — say so on the update
+		fx.close_test_intake()
+		self.addCleanup(fx.open_test_intake)
+		self.assertEqual(
+			dpp_read.get_departmental_plan(dpp_reference=reference)["context"]["window"]["display"],
+			"Closed · corrections and updates may still be submitted",
+		)
+		self.assertEqual(after["version"]["version_number"], 2)
+		self.assertIn("Accepted Need · NEED-PLNT-0001", [row["source_label"] for row in after["entries"]])
+		self.assertEqual(after["header"]["badge"], "Draft")
+
 
 class TestValidationTaskRead(DppReadCase):
 	def submitted_task(self):
@@ -222,6 +334,18 @@ class TestValidationTaskRead(DppReadCase):
 		return frappe.get_doc(
 			"Departmental Plan Validation Task", {"task_reference": submitted["task"]}
 		), added
+
+	def test_the_record_offers_the_open_task_to_its_planner_only(self):
+		"""FU-14 — a Planner who reaches the submitted plan by its record route
+		gets the validation task from the record; the department does not."""
+		task, _ = self.submitted_task()
+		reference = frappe.db.get_value("Departmental Plan", frappe.db.get_value("Departmental Plan Version", task.dpp_version, "departmental_plan"), "dpp_reference")
+		frappe.set_user(fx.PLANNER)
+		view = dpp_read.get_departmental_plan(dpp_reference=reference)
+		self.assertEqual(view["header"]["badge"], "Awaiting validation")
+		self.assertEqual(view["open_task"], {"label": "Review submission", "route": ["procurement-planning", "dpp-review", task.name]})
+		frappe.set_user(fx.HOD)
+		self.assertIsNone(dpp_read.get_departmental_plan(dpp_reference=reference)["open_task"])
 
 	def test_task_read_serves_the_immutable_snapshot_not_live_rows(self):
 		task, added = self.submitted_task()

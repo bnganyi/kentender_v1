@@ -19,5 +19,5 @@ class DepartmentalPlanEntry(Document):
 			frappe.throw(_("Indicative amount cannot be negative."))
 		if self.source_origin == "Accepted Departmental Need" and not self.need:
 			frappe.throw(_("A Need-origin entry must reference its accepted Need."))
-		if self.source_origin == "Direct departmental requirement" and (self.need or self.need_version):
+		if self.source_origin == "Direct departmental requirement" and (self.need or self.need_revision):
 			frappe.throw(_("A direct entry must not reference a Need."))

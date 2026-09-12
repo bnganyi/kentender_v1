@@ -44,6 +44,21 @@ export const siteConfigApi = {
 			expected_version: expectedVersion || null,
 			idempotency_key: newIdempotencyKey("intake"),
 		}),
+	openDppSubmission: (fiscalYear, closesAt, reason, expectedVersion) =>
+		frappeCall(PREFIX + "open_dpp_submission", {
+			fiscal_year: fiscalYear,
+			closes_at: closesAt || null,
+			reason: reason || null,
+			expected_version: expectedVersion || null,
+			idempotency_key: newIdempotencyKey("plan-intake"),
+		}),
+	closeDppSubmission: (fiscalYear, reason, expectedVersion) =>
+		frappeCall(PREFIX + "close_dpp_submission", {
+			fiscal_year: fiscalYear,
+			reason: reason || null,
+			expected_version: expectedVersion || null,
+			idempotency_key: newIdempotencyKey("plan-intake"),
+		}),
 	repairRoot: () =>
 		frappeCall(PREFIX + "repair_organisation_root", {
 			idempotency_key: newIdempotencyKey("root"),

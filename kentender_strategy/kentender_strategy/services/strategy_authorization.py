@@ -26,7 +26,12 @@ from __future__ import annotations
 
 import frappe
 
-from kentender_core.services.authorization import PURPOSE_COMMAND, authorise_record
+from kentender_core.services.authorization import (
+	PURPOSE_COMMAND,
+	PURPOSE_READ,
+	authorise_record,
+	is_technical,
+)
 from kentender_core.services.responsibility_errors import fail
 from kentender_strategy.services.strategy_audit import list_events
 
@@ -37,11 +42,20 @@ CAP_APPROVE = "strategy.plan_version.approve"
 
 ROLE_STRATEGY_AUTHOR = "Strategy Author"
 ROLE_STRATEGY_APPROVER = "Strategy Approver"
+# The shared cross-module oversight-read business role (NDS-CHG-001 v1.6 /
+# BUD-CHG-001 v1.5 §7 / PLN-CHG-001 v1.12 §6), registered Site-wide. Strategy
+# does not own it, but reuses the same registered responsibility rather than
+# inventing a Strategy-local one.
+ROLE_AUDITOR = "Auditor"
 
 STRATEGY_GOVERNANCE_ROLES = (
 	ROLE_STRATEGY_AUTHOR,
 	ROLE_STRATEGY_APPROVER,
 )
+
+# §6/KT-STD-001 §3A.6 — every business responsibility whose holder may read
+# Strategy: the two governance roles plus the shared Auditor oversight role.
+STRATEGY_READ_ELIGIBLE_ROLES = (ROLE_STRATEGY_AUTHOR, ROLE_STRATEGY_APPROVER, ROLE_AUDITOR)
 
 _BUSINESS_ROLE_FOR_CAPABILITY = {
 	CAP_AUTHOR: ROLE_STRATEGY_AUTHOR,
@@ -173,3 +187,33 @@ def holds_approver_responsibility(user: str) -> bool:
 		organisation_unit="",
 		purpose=PURPOSE_COMMAND,
 	).allowed
+
+
+def holds_auditor_responsibility(user: str) -> bool:
+	"""An Enabled Site-wide Auditor assignment — the registered business
+	responsibility, never a bare Frappe Role membership test (a Role
+	projection alone grants nothing until an assignment exists, §9.1)."""
+	return authorise_record(
+		user=user,
+		business_role=ROLE_AUDITOR,
+		organisation_unit="",
+		purpose=PURPOSE_READ,
+	).allowed
+
+
+def holds_strategy_read_responsibility(user: str) -> bool:
+	"""KT-STD-001 §3A.6 / AUTH-ADR-001 §8 — the one Strategy read gate.
+
+	True for a technical reader (Administrator/System Manager — read
+	everything, mutate nothing) or for anyone holding an Active Site-wide
+	assignment for one of `STRATEGY_READ_ELIGIBLE_ROLES` (Auditor, Strategy
+	Author, Strategy Approver). Never a bare `frappe.get_roles()` test: a
+	Frappe Role projection alone is not a business responsibility."""
+	if is_technical(user):
+		return True
+	return any(
+		authorise_record(
+			user=user, business_role=role, organisation_unit="", purpose=PURPOSE_READ
+		).allowed
+		for role in STRATEGY_READ_ELIGIBLE_ROLES
+	)

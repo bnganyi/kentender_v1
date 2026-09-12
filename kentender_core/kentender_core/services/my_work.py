@@ -7,6 +7,7 @@ import frappe
 from frappe import _
 from frappe.utils import cint, cstr, get_datetime, now_datetime
 
+from kentender_core.services.authorization import is_technical
 from kentender_core.services.authorization_policy import ResourceContext, evaluate_capability
 from kentender_core.services.workflow_tasks import claim_task
 
@@ -143,8 +144,15 @@ def _provider_rows(user: str) -> dict[str, list[dict[str, Any]]]:
 	scope rather than the Workflow Task engine (e.g. Departmental Needs §4.4)
 	still surface here, so My Work stays the one operational queue. A provider
 	failure never breaks the queue for everything else.
+
+	KT-STD-001 v1.5 §3A.6 — a technical reader (Administrator/System Manager,
+	`kentender_core.services.authorization.is_technical`) decides nothing:
+	every provider is skipped for them, so their My Work is always empty
+	rather than a mix of other actors' operational queues.
 	"""
 	merged: dict[str, list[dict[str, Any]]] = {"assigned": [], "claimable": [], "waiting": []}
+	if is_technical(user):
+		return merged
 	for path in frappe.get_hooks("kt_my_work_providers") or []:
 		try:
 			rows = frappe.get_attr(path)(user=user) or {}

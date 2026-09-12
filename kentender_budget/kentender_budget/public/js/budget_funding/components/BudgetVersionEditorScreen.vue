@@ -170,10 +170,15 @@ async function loadDraft(opts) {
 		}
 		draft.value = data;
 		resetFormFromDraft();
-		orgUnits.value = (await listOrganisationUnits()).rows || [];
+		if (!orgUnits.value.length) orgUnits.value = (await listOrganisationUnits()).rows || [];
 		// A direct load landing on the Budget Lines tab must still fetch it —
-		// watch(tab) below only fires on a later client-side change.
-		if (tab.value === "lines") loadLines();
+		// watch(tab) below only fires on a later client-side change. Awaited,
+		// and skipped when the caller has just reloaded the lines itself: a
+		// second, fire-and-forget reload landing after the screen is already
+		// interactive replaced the rows the user had started editing (an Owner
+		// scope picked right after "Draft saved" silently reverted, then the
+		// next save sent the reverted value — "owner scope lost on save").
+		if (tab.value === "lines" && !(opts && opts.lines === false)) await loadLines();
 	} catch (e) {
 		if (e.httpStatus === 403) forbidden.value = true;
 		else if (/not found/i.test(e.message || "")) notFound.value = true;
@@ -183,9 +188,16 @@ async function loadDraft(opts) {
 	}
 }
 
+// Only the newest in-flight lines request may replace the editor state:
+// an older response arriving late would overwrite rows the user has edited
+// since (or a newer server state) with stale data.
+let linesRequest = 0;
 async function loadLines() {
 	if (!versionKey.value) return;
-	linesEditor.value = await getBudgetVersionLinesEditor(versionKey.value);
+	const request = ++linesRequest;
+	const data = await getBudgetVersionLinesEditor(versionKey.value);
+	if (request !== linesRequest) return;
+	linesEditor.value = data;
 	linesLoaded.value = true;
 }
 
@@ -252,12 +264,14 @@ async function saveDraft() {
 			setActingError(Object.values(result.errors || {}).join(" ") || __("Could not save."));
 			return;
 		}
+		let linesReloaded = false;
 		if (linesLoaded.value) {
 			const linesResult = await saveLinesOnly();
 			if (linesResult === false) return;
+			linesReloaded = true; // saveLinesOnly already refreshed the rows
 		}
 		frappe.show_alert({ message: __("Draft saved"), indicator: "green" });
-		await loadDraft({ quiet: true });
+		await loadDraft({ quiet: true, lines: !linesReloaded });
 	} catch (e) {
 		setActingError(e.message || String(e));
 	} finally {

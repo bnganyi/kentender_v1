@@ -56,7 +56,7 @@ AUDITOR = "naomi.chebet@moh.example.test"
 # owned; docname is the exact `uom_name`).
 UNITS = ("Programme", "Each")
 
-# §14.3 default Needs. Version status follows the root state. `unit_name` is
+# §14.3 default Needs. Revision status follows the root state. `unit_name` is
 # resolved against the author's real granted Organisation Units at build time.
 NEEDS = (
 	{
@@ -213,7 +213,7 @@ def _build_need(spec: dict, author_units: dict[str, str]) -> str:
 			f"Seed expected to generate {reference} but the command generated {need}. "
 			"Clear the Departmental Needs fixtures before reseeding (§14.7)."
 		)
-	_namespace(need, created["current_version"])
+	_namespace(need, created["current_revision"])
 
 	if spec["state"] == STATE_DRAFT:
 		return need
@@ -244,9 +244,9 @@ def _build_need(spec: dict, author_units: dict[str, str]) -> str:
 			idempotency_key=f"nds-seed:{reference}:{decision}",
 			reason=RETURN_REASON if decision == "return" else "",
 		)
-	if result.get("successor_version"):
-		# §14.3 — Version 2 is the server-created editable copy of the returned V1.
-		_namespace(need, result["successor_version"])
+	if result.get("successor_revision"):
+		# §14.3 — Revision 2 is the server-created editable copy of the returned V1.
+		_namespace(need, result["successor_revision"])
 	return need
 
 
@@ -254,7 +254,7 @@ def _namespace(need: str, version: str = "") -> None:
 	frappe.db.set_value("Departmental Need", need, "fixture_namespace", NS, update_modified=False)
 	if version:
 		frappe.db.set_value(
-			"Departmental Need Version", version, "fixture_namespace", NS, update_modified=False
+			"Departmental Need Revision", version, "fixture_namespace", NS, update_modified=False
 		)
 
 

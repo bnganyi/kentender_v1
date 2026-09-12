@@ -34,6 +34,19 @@ test.describe("PLN-UI-06 DPP validation", () => {
 	});
 	test.afterAll(() => restoreSite());
 
+	test("the planner reaches the review from the plan record, not only from the workspace (FU-14)", async ({ page }) => {
+		const errors = collectConsoleErrors(page);
+		await login(page, PLANNER, PASSWORD);
+		await gotoDpp(page, state.dpp_reference);
+		await expectReady(page, "dpp");
+		await expect(page.locator('[data-testid="dpp-badge"]')).toHaveText("Awaiting validation");
+		await page.locator('[data-testid="dpp-open-task"]').click();
+		await expectReady(page, "dpp-review");
+		await expect(page).toHaveURL(new RegExp(`/procurement-planning/dpp-review/${state.task}$`));
+		await expect(page.locator(".kt-page-title")).toHaveText(`Validate ${OU_NAME} departmental plan`);
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+
 	test("planner classifies every proceeding entry, accepts, and the workspace offers Ready to consolidate", async ({ page }) => {
 		const errors = collectConsoleErrors(page);
 		await login(page, PLANNER, PASSWORD);
@@ -121,7 +134,11 @@ test.describe("PLN-UI-06 DPP validation", () => {
 		await gotoPlanning(page, `/dpp-review/${state.task}`);
 		await expectReady(page, "dpp-review");
 		await expect(page.locator('[data-testid="pln-error"]')).toBeVisible();
+		await expect(page.locator('[data-testid="pln-error"] h3')).toHaveText("This record isn't available to you");
 		await expect(page.locator('[data-testid="dppv-accept"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="dppv-entries"]')).toHaveCount(0);
+		// masked reads are calm and single, never the raw platform 404 dialog
+		// stacked on the screen's own state (reported live 2026-09-11)
+		await expect(page.getByRole("dialog", { name: "Not found" })).toHaveCount(0);
 	});
 });

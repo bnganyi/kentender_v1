@@ -1,5 +1,5 @@
 <!-- NDS-UI-04 / NDS-UI-06 need detail (§12.4) — NDS-DES-05 submitted,
-     NDS-DES-07 accepted. The screen shows the exact version it was asked for
+     NDS-DES-07 accepted. The screen shows the exact revision it was asked for
      and never rewrites the requested one. -->
 <template>
 	<div>
@@ -7,7 +7,7 @@
 			<div>
 				<div class="kt-page-kicker" style="letter-spacing: 0.06em">{{ kicker }}</div>
 				<div style="display: flex; align-items: center; gap: 12px; margin-top: 4px">
-					<h1 class="kt-record-title">{{ shownVersion.title }}</h1>
+					<h1 class="kt-record-title">{{ shownRevision.title }}</h1>
 					<StatusPill :label="need.current_state || ''" />
 				</div>
 			</div>
@@ -28,19 +28,58 @@
 			</div>
 		</div>
 
-		<!-- §12.4 — a superseded accepted version stays readable and says so. -->
+		<!-- §12.4 — a superseded accepted revision stays readable and says so. -->
 		<div
-			v-if="isHistoricalVersion"
+			v-if="isHistoricalRevision"
 			class="kt-card kt-blueprint"
 			style="margin-bottom: 16px; padding: 18px 24px"
 		>
 			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
 			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<div class="kt-card-title" style="margin-bottom: 8px">This version has been superseded</div>
+			<div class="kt-card-title" style="margin-bottom: 8px">This revision has been superseded</div>
 			<p style="margin: 0; font-size: 14.5px">
-				Version {{ currentAcceptedNumber }} is now the current accepted version of this
+				Revision {{ currentAcceptedNumber }} is now the current accepted revision of this
 				need.
 			</p>
+		</div>
+
+		<!-- §12.1 — "Continue and Correct route to the actor's editable current
+		     revision." The detail route is where the return notification and
+		     the row's View land, so the author's own editable Draft/Returned
+		     Need offers that route here too; the server decides (actions
+		     carries `edit` only for the owner), the screen only renders it. -->
+		<div
+			v-if="editAction"
+			class="kt-card kt-blueprint"
+			style="margin-bottom: 16px; padding: 18px 24px"
+			data-testid="nds-detail-editable"
+		>
+			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+			<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+				<div>
+					<div class="kt-card-title" style="margin-bottom: 8px">
+						{{ isReturned ? "Returned for correction" : "Draft in progress" }}
+					</div>
+					<p v-if="isReturned && latestReturn" style="margin: 0 0 8px; font-size: 14.5px">
+						{{ latestReturn.reason }}
+					</p>
+					<p v-else-if="!isReturned" style="margin: 0; font-size: 14.5px">
+						This need has not been submitted for departmental review yet.
+					</p>
+					<div v-if="isReturned && latestReturn" style="font-size: 13px; color: var(--color-neutral-600)">
+						Returned by {{ latestReturn.actor_label }} · {{ latestReturn.occurred_label }}
+					</div>
+				</div>
+				<button
+					class="kt-btn kt-btn-primary"
+					style="flex: none"
+					data-testid="nds-detail-edit"
+					@click="$emit('edit')"
+				>
+					{{ editAction.label }}
+				</button>
+			</div>
 		</div>
 
 		<div
@@ -50,12 +89,29 @@
 		>
 			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
 			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<div class="kt-card-title" style="margin-bottom: 8px">Awaiting departmental review</div>
-			<p style="margin: 0 0 8px; font-size: 14.5px">
-				This version is read-only while it is in the department review queue.
-			</p>
-			<div style="font-size: 13px; color: var(--color-neutral-600)">
-				Submitted by {{ authorLabel }}
+			<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
+				<div>
+					<div class="kt-card-title" style="margin-bottom: 8px">Awaiting departmental review</div>
+					<p style="margin: 0 0 8px; font-size: 14.5px">
+						This revision is read-only while it is in the department review queue.
+					</p>
+					<div style="font-size: 13px; color: var(--color-neutral-600)">
+						Submitted by {{ authorLabel }}
+					</div>
+				</div>
+				<!-- §12.2 — the reviewer's decision lives on the task screen (NDS-UI-05);
+				     the server offers `review` only to the department reviewer who
+				     is not the author, so the detail route is never a dead end for
+				     the one person who has to act on it. -->
+				<button
+					v-if="reviewAction"
+					class="kt-btn kt-btn-primary"
+					style="flex: none"
+					data-testid="nds-detail-review"
+					@click="$emit('review', reviewAction)"
+				>
+					{{ reviewAction.label }}
+				</button>
 			</div>
 		</div>
 
@@ -72,7 +128,7 @@
 				<div>
 					<div class="kt-card-title" style="margin-bottom: 8px">An update is open</div>
 					<p style="margin: 0; font-size: 14.5px">
-						The accepted version below stays current until the update is accepted.
+						The accepted revision below stays current until the update is accepted.
 					</p>
 				</div>
 				<button
@@ -87,7 +143,7 @@
 		</div>
 
 		<ContextCard :items="contextItems" />
-		<RequirementCard :version="shownVersion" />
+		<RequirementCard :revision="shownRevision" />
 
 		<!-- §12.4 — Planning usage, with View Plan Item absent when not included. -->
 		<div v-if="showPlanning" class="kt-card kt-blueprint" style="padding: 20px 24px">
@@ -118,42 +174,52 @@ import { computed } from "vue";
 import ContextCard from "./ContextCard.vue";
 import RequirementCard from "./RequirementCard.vue";
 import StatusPill from "./StatusPill.vue";
-import { formatInstant, versionKicker } from "../data/format.js";
+import { formatInstant, revisionKicker } from "../data/format.js";
 
 const props = defineProps({
 	need: { type: Object, default: () => ({}) },
 	scopeLabels: { type: Object, default: () => ({}) },
-	version: { type: Object, default: () => ({}) },
-	acceptedVersion: { type: Object, default: () => ({}) },
+	revision: { type: Object, default: () => ({}) },
+	acceptedRevision: { type: Object, default: () => ({}) },
 	usage: { type: Object, default: () => ({}) },
 	authorLabel: { type: String, default: "" },
 	accessProfile: { type: String, default: "" },
+	// get_departmental_need().actions — the server's own list; `edit` is
+	// present only for the owner of a Draft/Returned Need.
+	actions: { type: Array, default: () => [] },
+	latestReturn: { type: Object, default: null },
 	acceptedByLabel: { type: String, default: "" },
 	acceptedAt: { type: String, default: "" },
 	// True while a withdrawal request is already open, which removes the
 	// Request withdrawal action (§12.4).
 	withdrawalOpen: Boolean,
-	// NDS-UI-06 pins an exact version in the route; NDS-UI-04 does not.
-	pinnedVersion: { type: Object, default: null },
+	// NDS-UI-06 pins an exact revision in the route; NDS-UI-04 does not.
+	pinnedRevision: { type: Object, default: null },
 });
-defineEmits(["create-update", "request-withdrawal", "view-plan-item", "open-successor"]);
+defineEmits(["create-update", "request-withdrawal", "view-plan-item", "open-successor", "edit", "review"]);
 
-const shownVersion = computed(
-	() => props.pinnedVersion || props.acceptedVersion?.name && props.acceptedVersion || props.version || {}
+const isReturned = computed(() => props.need.current_state === "Returned");
+const editAction = computed(() => (props.actions || []).find((a) => a.code === "edit") || null);
+const reviewAction = computed(
+	() => (props.actions || []).find((a) => a.code === "review" || a.code === "withdrawal") || null
 );
 
-const isHistoricalVersion = computed(
+const shownRevision = computed(
+	() => props.pinnedRevision || props.acceptedRevision?.name && props.acceptedRevision || props.revision || {}
+);
+
+const isHistoricalRevision = computed(
 	() =>
-		!!props.pinnedVersion &&
-		!!props.acceptedVersion?.name &&
-		props.pinnedVersion.name !== props.acceptedVersion.name
+		!!props.pinnedRevision &&
+		!!props.acceptedRevision?.name &&
+		props.pinnedRevision.name !== props.acceptedRevision.name
 );
 
-const currentAcceptedNumber = computed(() => props.acceptedVersion?.version_number || "");
+const currentAcceptedNumber = computed(() => props.acceptedRevision?.revision_number || "");
 
 const kicker = computed(() =>
-	versionKicker(props.need.need_reference, shownVersion.value, isAccepted.value ? "" : "")
-		.replace("VERSION", isAccepted.value ? "ACCEPTED VERSION" : "VERSION")
+	revisionKicker(props.need.need_reference, shownRevision.value, isAccepted.value ? "" : "")
+		.replace("REVISION", isAccepted.value ? "ACCEPTED REVISION" : "REVISION")
 );
 
 const isAccepted = computed(() => props.need.current_state === "Accepted for planning");
@@ -161,15 +227,15 @@ const isAccepted = computed(() => props.need.current_state === "Accepted for pla
 const openSuccessor = computed(
 	() =>
 		isAccepted.value &&
-		props.need.current_version &&
-		props.need.current_accepted_version &&
-		props.need.current_version !== props.need.current_accepted_version
+		props.need.current_revision &&
+		props.need.current_accepted_revision &&
+		props.need.current_revision !== props.need.current_accepted_revision
 );
 
 const canOpenSuccessor = computed(() => props.accessProfile === "owner");
 
 const ownerActions = computed(() => {
-	if (props.accessProfile !== "owner" || !isAccepted.value || isHistoricalVersion.value) return [];
+	if (props.accessProfile !== "owner" || !isAccepted.value || isHistoricalRevision.value) return [];
 	const available = [];
 	if (!openSuccessor.value) available.push({ code: "create-update", label: "Create update" });
 	if (!props.withdrawalOpen)
@@ -181,8 +247,8 @@ const showPlanning = computed(() => isAccepted.value);
 
 const planningMessage = computed(() =>
 	props.usage?.usage === "Fully included"
-		? "This accepted version is included in the Active Annual Procurement Plan."
-		: "This accepted version is not represented in an Active Plan."
+		? "This accepted revision is included in the Active Annual Procurement Plan."
+		: "This accepted revision is not represented in an Active Plan."
 );
 
 function label(field) {

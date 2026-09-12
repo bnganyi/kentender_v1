@@ -13,7 +13,7 @@
   "dpp_entry",
   "source_origin",
   "need",
-  "need_version",
+  "need_revision",
   "organisation_unit",
   "quantity",
   "unit",
@@ -85,10 +85,10 @@
    "read_only": 1
   },
   {
-   "fieldname": "need_version",
+   "fieldname": "need_revision",
    "fieldtype": "Link",
-   "label": "Need Version",
-   "options": "Departmental Need Version",
+   "label": "Need Revision",
+   "options": "Departmental Need Revision",
    "read_only": 1
   },
   {

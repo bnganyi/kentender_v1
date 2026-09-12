@@ -174,8 +174,8 @@ onUnmounted(() => {
 				<ProcuringEntityTab
 					v-if="activeTab === 'procuring-entity'"
 					:site="site"
+					:on-updated="refreshSite"
 					@configured="refreshSite"
-					@updated="refreshSite"
 				/>
 				<FiscalYearsTab v-else-if="activeTab === 'fiscal-years'" @changed="refreshSite" />
 				<OrganisationStructureTab

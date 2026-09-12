@@ -268,7 +268,7 @@ def _delete_need(need: str, deleted: dict[str, int]) -> None:
 		"Departmental Need Decision",
 		"Departmental Need Review Task",
 		"Need Withdrawal Request",
-		"Departmental Need Version",
+		"Departmental Need Revision",
 	):
 		if not frappe.db.exists("DocType", doctype) or not frappe.db.has_column(doctype, "departmental_need"):
 			continue

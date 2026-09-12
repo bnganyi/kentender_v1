@@ -99,11 +99,11 @@
 			<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
 			<p class="req-certification-statement">I confirm that this Requisition states the departments' operational need and minimum requirements and may be submitted to Procurement.</p>
 		</div>
-		<p class="req-table-caption">Decision by <strong>{{ actorName }}</strong>, {{ actorRoleLabel }} — certifying on behalf of {{ certifyingScope }}.</p>
+		<p v-if="actorName" class="req-table-caption">Decision by <strong>{{ actorName }}</strong>, {{ actorRoleLabel }} — certifying on behalf of {{ certifyingScope }}.</p>
 
 		<div class="req-actions">
-			<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending || !task.can_act" data-testid="req-task-return" @click="$emit('return')">Return for correction</button>
-			<button type="button" class="kt-btn kt-btn-primary" :disabled="pending || !task.can_act" data-testid="req-task-submit" @click="$emit('submit')">Submit to Procurement</button>
+			<button v-if="task.can_return" type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="req-task-return" @click="$emit('return')">Return for correction</button>
+			<button v-if="task.can_certify" type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="req-task-submit" @click="$emit('submit')">Submit to Procurement</button>
 		</div>
 	</div>
 </template>

@@ -49,6 +49,18 @@ kt_my_work_providers = [
 	"kentender_budget.services.budget_my_work_provider.my_work_rows",
 ]
 
+# AUTH-ADR-001 v1.8 §8/§9 / KT-STD-001 v1.5 §3A.6 — the shared Technical
+# search page/service and the technical-read conformance gate collect a
+# module's reference resolvers and read probes through these two hooks;
+# Budget never imports kentender_core's Technical search internals.
+kt_technical_reference_resolvers = [
+	"kentender_budget.services.technical_read.reference_resolvers",
+]
+
+kt_technical_read_probes = [
+	"kentender_budget.services.technical_read.read_probes",
+]
+
 after_migrate = "kentender_budget.install.after_migrate"
 before_tests = "kentender_budget.install.before_tests"
 

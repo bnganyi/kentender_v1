@@ -61,14 +61,14 @@ from kentender_procurement.departmental_needs.constants import (
 	TASK_OPEN,
 	TASK_SUCCESSOR_ACCEPTANCE,
 	TASK_WITHDRAWAL,
-	VERSION_ACCEPTED,
-	VERSION_CONTENT_FIELDS,
-	VERSION_DRAFT,
-	VERSION_NOT_TAKEN_FORWARD,
-	VERSION_RETURNED,
-	VERSION_SUBMITTED,
-	VERSION_SUPERSEDED,
-	VERSION_WITHDRAWN,
+	REVISION_ACCEPTED,
+	REVISION_CONTENT_FIELDS,
+	REVISION_DRAFT,
+	REVISION_NOT_TAKEN_FORWARD,
+	REVISION_RETURNED,
+	REVISION_SUBMITTED,
+	REVISION_SUPERSEDED,
+	REVISION_WITHDRAWN,
 	WITHDRAWAL_APPROVED,
 	WITHDRAWAL_AWAITING_CLEARANCE,
 	WITHDRAWAL_AWAITING_REVIEW,
@@ -169,8 +169,8 @@ def _state_hash(need, version=None) -> str:
 	payload = {
 		"current_state": cstr(need.current_state),
 		"record_version": cstr(need.record_version),
-		"current_version": cstr(need.current_version),
-		"current_accepted_version": cstr(need.current_accepted_version),
+		"current_revision": cstr(need.current_revision),
+		"current_accepted_revision": cstr(need.current_accepted_revision),
 	}
 	if version is not None:
 		payload["version"] = _content_payload(version)
@@ -178,7 +178,7 @@ def _state_hash(need, version=None) -> str:
 
 
 def _content_payload(version) -> dict[str, str]:
-	return {field: cstr(version.get(field)) for field in VERSION_CONTENT_FIELDS}
+	return {field: cstr(version.get(field)) for field in REVISION_CONTENT_FIELDS}
 
 
 def _content_hash(version) -> str:
@@ -210,7 +210,7 @@ def _record_decision(
 			"doctype": "Departmental Need Decision",
 			"decision_id": f"NDD-{uuid4().hex.upper()}",
 			"departmental_need": need.name,
-			"need_version": version or None,
+			"need_revision": version or None,
 			"withdrawal_request": withdrawal_request or None,
 			"action": action,
 			"actor": principal,
@@ -267,16 +267,16 @@ def _bump(need, target_state: str | None = None) -> None:
 
 
 def _current_version(need):
-	if not need.current_version:
-		fail("NDS_STATE_CONFLICT", "This Departmental Need has no current version.")
-	return frappe.get_doc("Departmental Need Version", need.current_version)
+	if not need.current_revision:
+		fail("NDS_STATE_CONFLICT", "This Departmental Need has no current revision.")
+	return frappe.get_doc("Departmental Need Revision", need.current_revision)
 
 
 def _next_version_number(need: str) -> int:
 	rows = frappe.get_all(
-		"Departmental Need Version",
+		"Departmental Need Revision",
 		filters={"departmental_need": need},
-		pluck="version_number",
+		pluck="revision_number",
 	)
 	return max([int(n or 0) for n in rows] or [0]) + 1
 
@@ -285,12 +285,12 @@ def _create_version(need, *, values: dict[str, Any], based_on: str = "") -> Any:
 	number = _next_version_number(need.name)
 	return frappe.get_doc(
 		{
-			"doctype": "Departmental Need Version",
-			"need_version_id": f"{need.need_reference}-V{number:03d}",
+			"doctype": "Departmental Need Revision",
+			"need_revision_id": f"{need.need_reference}-V{number:03d}",
 			"departmental_need": need.name,
-			"version_number": number,
-			"based_on_version": based_on or None,
-			"version_status": VERSION_DRAFT,
+			"revision_number": number,
+			"based_on_revision": based_on or None,
+			"revision_status": REVISION_DRAFT,
 			"fixture_namespace": need.fixture_namespace,
 			**values,
 		}
@@ -299,7 +299,7 @@ def _create_version(need, *, values: dict[str, Any], based_on: str = "") -> Any:
 
 def _set_version_status(version, status: str) -> None:
 	frappe.db.set_value(
-		"Departmental Need Version", version.name, "version_status", status, update_modified=False
+		"Departmental Need Revision", version.name, "revision_status", status, update_modified=False
 	)
 
 
@@ -307,25 +307,25 @@ def _open_successor(need) -> str:
 	"""The Need's open accepted-successor version, or "" when there is none (§5.2).
 
 	A successor exists exactly while the root points at a version other than its
-	current accepted one. Accept, decline and cancel all repoint `current_version`
+	current accepted one. Accept, decline and cancel all repoint `current_revision`
 	so the pointer alone answers "is a successor open?"; the status check below is
 	a second, independent guard against a stale pointer.
 	"""
-	if not need.current_accepted_version or not need.current_version:
+	if not need.current_accepted_revision or not need.current_revision:
 		return ""
-	if cstr(need.current_version) == cstr(need.current_accepted_version):
+	if cstr(need.current_revision) == cstr(need.current_accepted_revision):
 		return ""
 	status = frappe.db.get_value(
-		"Departmental Need Version", need.current_version, "version_status"
+		"Departmental Need Revision", need.current_revision, "revision_status"
 	)
-	return cstr(need.current_version) if status in OPEN_SUCCESSOR_STATUSES else ""
+	return cstr(need.current_revision) if status in OPEN_SUCCESSOR_STATUSES else ""
 
 
 def _require_open_successor(need):
 	successor = _open_successor(need)
 	if need.current_state != STATE_ACCEPTED or not successor:
 		fail("NDS_STATE_CONFLICT", "This Departmental Need has no open update.")
-	return frappe.get_doc("Departmental Need Version", successor)
+	return frappe.get_doc("Departmental Need Revision", successor)
 
 
 def _next_reference(financial_year: str) -> tuple[str, str]:
@@ -363,8 +363,8 @@ def _result(need, *, idempotent: bool = False, action: str = "", task: str = "")
 		"need": need.name,
 		"need_reference": need.need_reference,
 		"current_state": need.current_state,
-		"current_version": need.current_version or "",
-		"current_accepted_version": need.current_accepted_version or "",
+		"current_revision": need.current_revision or "",
+		"current_accepted_revision": need.current_accepted_revision or "",
 		"record_version": need.record_version,
 		"task": task or "",
 	}
@@ -379,7 +379,7 @@ def _open_task(need, *, task_type: str, version: str = "", withdrawal_request: s
 			"doctype": "Departmental Need Review Task",
 			"review_task_id": f"NDT-{uuid4().hex.upper()}",
 			"departmental_need": need.name,
-			"need_version": version or None,
+			"need_revision": version or None,
 			"withdrawal_request": withdrawal_request or None,
 			"task_type": task_type,
 			"organisation_unit": need.organisation_unit,
@@ -510,7 +510,7 @@ def create_need(
 	idempotency_key: str,
 	user: str | None = None,
 ) -> dict[str, Any]:
-	"""Save Draft Version 1 and generate the Need reference (§5.1).
+	"""Save Draft Revision 1 and generate the Need reference (§5.1).
 
 	The site Procuring Entity is implicit (AUTH-ADR-001 v1.6 §1.1) — there is
 	no `procuring_entity` argument.
@@ -549,7 +549,7 @@ def create_need(
 				required_by_date=required_by_date,
 			),
 		)
-		need.current_version = version.name
+		need.current_revision = version.name
 		need.save(ignore_permissions=True)
 		_record_decision(
 			need,
@@ -597,8 +597,8 @@ def update_need(
 		version, action = _current_version(doc), ACTION_SAVE_DRAFT
 	else:
 		fail("NDS_STATE_CONFLICT", "This Departmental Need is no longer editable.")
-	if version.version_status != VERSION_DRAFT:
-		fail("NDS_STATE_CONFLICT", "The current version is not editable.")
+	if version.revision_status != REVISION_DRAFT:
+		fail("NDS_STATE_CONFLICT", "The current revision is not editable.")
 	version.update(
 		_content_values(
 			title=title,
@@ -656,14 +656,14 @@ def submit_need(
 		target, task_type = STATE_SUBMITTED, TASK_INITIAL_ACCEPTANCE
 	else:
 		fail("NDS_STATE_CONFLICT", "This Departmental Need cannot be submitted.")
-	if version.version_status != VERSION_DRAFT:
-		fail("NDS_STATE_CONFLICT", "Only a Draft version may be submitted.")
+	if version.revision_status != REVISION_DRAFT:
+		fail("NDS_STATE_CONFLICT", "Only a Draft revision may be submitted.")
 	_validate_submission(doc, version)
 	content_hash = _content_hash(version)
 	frappe.db.set_value(
-		"Departmental Need Version",
+		"Departmental Need Revision",
 		version.name,
-		{"version_status": VERSION_SUBMITTED, "content_hash": content_hash},
+		{"revision_status": REVISION_SUBMITTED, "content_hash": content_hash},
 		update_modified=False,
 	)
 	_bump(doc, target)
@@ -723,31 +723,31 @@ def review_need(
 	if task_type == TASK_SUCCESSOR_ACCEPTANCE:
 		version = _require_open_successor(doc)
 		choices = {
-			"return": (ACTION_RETURN_SUCCESSOR, STATE_ACCEPTED, VERSION_RETURNED),
-			"accept": (ACTION_ACCEPT_SUCCESSOR, STATE_ACCEPTED, VERSION_ACCEPTED),
-			"decline": (ACTION_DECLINE_SUCCESSOR, STATE_ACCEPTED, VERSION_NOT_TAKEN_FORWARD),
+			"return": (ACTION_RETURN_SUCCESSOR, STATE_ACCEPTED, REVISION_RETURNED),
+			"accept": (ACTION_ACCEPT_SUCCESSOR, STATE_ACCEPTED, REVISION_ACCEPTED),
+			"decline": (ACTION_DECLINE_SUCCESSOR, STATE_ACCEPTED, REVISION_NOT_TAKEN_FORWARD),
 		}
 	elif task_type == TASK_INITIAL_ACCEPTANCE:
 		if doc.current_state != STATE_SUBMITTED:
 			fail("NDS_STATE_CONFLICT", "Only a Submitted Departmental Need may be reviewed.")
 		version = _current_version(doc)
 		choices = {
-			"return": (ACTION_RETURN, STATE_RETURNED, VERSION_RETURNED),
-			"accept": (ACTION_ACCEPT, STATE_ACCEPTED, VERSION_ACCEPTED),
-			"decline": (ACTION_DECLINE, STATE_NOT_TAKEN_FORWARD, VERSION_NOT_TAKEN_FORWARD),
+			"return": (ACTION_RETURN, STATE_RETURNED, REVISION_RETURNED),
+			"accept": (ACTION_ACCEPT, STATE_ACCEPTED, REVISION_ACCEPTED),
+			"decline": (ACTION_DECLINE, STATE_NOT_TAKEN_FORWARD, REVISION_NOT_TAKEN_FORWARD),
 		}
 	else:
 		fail("NDS_STATE_CONFLICT", "This task is not a Departmental Need acceptance decision.")
-	if version.version_status != VERSION_SUBMITTED:
-		fail("NDS_STATE_CONFLICT", "Only a Submitted version may be decided.")
+	if version.revision_status != REVISION_SUBMITTED:
+		fail("NDS_STATE_CONFLICT", "Only a Submitted revision may be decided.")
 	if decision not in choices:
 		fail("NDS_STATE_CONFLICT", "Select return, accept or decline.")
-	action, target, version_status = choices[decision]
+	action, target, revision_status = choices[decision]
 	prior = doc.current_state
 	# NDS-BR-011 — return and decline require a reason; accept collects none.
 	reason_text = _require_reason(reason) if action in REASON_REQUIRED_ACTIONS else ""
 	_consume_task(task, doc.name, task_type, decision_token)
-	_set_version_status(version, version_status)
+	_set_version_status(version, revision_status)
 	superseded, successor, earlier = "", "", None
 	if decision == "return":
 		# §5.1 / §5.2 / NDS-AC-011 — the submitted snapshot is preserved and a
@@ -756,21 +756,21 @@ def review_need(
 		copy = _create_version(
 			doc, values=_content_payload_for_copy(version), based_on=version.name
 		)
-		doc.current_version = copy.name
+		doc.current_revision = copy.name
 		successor = copy.name
 	elif decision == "accept":
 		# NDS-AC-017 — supersession, repointing and the published lineage all
 		# happen in this one transaction.
 		if task_type == TASK_SUCCESSOR_ACCEPTANCE:
-			superseded = cstr(doc.current_accepted_version)
-			earlier = frappe.get_doc("Departmental Need Version", superseded)
-			_set_version_status(earlier, VERSION_SUPERSEDED)
-		doc.current_accepted_version = version.name
-		doc.current_version = version.name
+			superseded = cstr(doc.current_accepted_revision)
+			earlier = frappe.get_doc("Departmental Need Revision", superseded)
+			_set_version_status(earlier, REVISION_SUPERSEDED)
+		doc.current_accepted_revision = version.name
+		doc.current_revision = version.name
 	elif task_type == TASK_SUCCESSOR_ACCEPTANCE:
 		# NDS-AC-018 — a declined successor leaves the earlier accepted version
 		# current, so the root pointer goes back to it.
-		doc.current_version = doc.current_accepted_version
+		doc.current_revision = doc.current_accepted_revision
 	_bump(doc, target)
 	_record_decision(
 		doc,
@@ -797,14 +797,14 @@ def review_need(
 			event = publish_accepted(doc, version)
 	notify_need_transition(doc, action=action)
 	result = _result(doc, action=action, task=task)
-	result["successor_version"] = successor
-	result["superseded_version"] = superseded
+	result["successor_revision"] = successor
+	result["superseded_revision"] = superseded
 	result["event_id"] = event
 	return result
 
 
 def _content_payload_for_copy(version) -> dict[str, Any]:
-	return {field: version.get(field) for field in VERSION_CONTENT_FIELDS}
+	return {field: version.get(field) for field in REVISION_CONTENT_FIELDS}
 
 
 def withdraw_need(
@@ -832,7 +832,7 @@ def withdraw_need(
 			"An accepted Departmental Need requires a governed withdrawal request.",
 		)
 	prior = doc.current_state
-	_set_version_status(_current_version(doc), VERSION_WITHDRAWN)
+	_set_version_status(_current_version(doc), REVISION_WITHDRAWN)
 	_bump(doc, STATE_WITHDRAWN)
 	_record_decision(
 		doc,
@@ -843,7 +843,7 @@ def withdraw_need(
 		principal=principal,
 		idempotency_key=idempotency_key,
 		assignment=assignment,
-		version=doc.current_version,
+		version=doc.current_revision,
 		before_hash=before_hash,
 	)
 	return _result(doc, action=ACTION_WITHDRAW)
@@ -870,18 +870,18 @@ def create_accepted_need_successor(
 	before_hash = _state_hash(doc)
 	_check_version(doc, expected_version)
 	assignment = require_author_command(doc, principal)
-	if doc.current_state != STATE_ACCEPTED or not doc.current_accepted_version:
+	if doc.current_state != STATE_ACCEPTED or not doc.current_accepted_revision:
 		fail("NDS_STATE_CONFLICT", "Only an Accepted for planning Need may be updated.")
 	if _open_successor(doc):
 		fail("NDS_OPEN_SUCCESSOR_EXISTS", "This Departmental Need already has an open update.")
 	# NDS-BR-003 — a successor may be proposed while the FY context is active;
 	# it is not gated on the Needs-submission flag.
 	selectable_financial_year(doc.financial_year)
-	accepted = frappe.get_doc("Departmental Need Version", doc.current_accepted_version)
+	accepted = frappe.get_doc("Departmental Need Revision", doc.current_accepted_revision)
 	copy = _create_version(
 		doc, values=_content_payload_for_copy(accepted), based_on=accepted.name
 	)
-	doc.current_version = copy.name
+	doc.current_revision = copy.name
 	_bump(doc)
 	_record_decision(
 		doc,
@@ -896,7 +896,7 @@ def create_accepted_need_successor(
 		before_hash=before_hash,
 	)
 	result = _result(doc, action=ACTION_CREATE_SUCCESSOR)
-	result["successor_version"] = copy.name
+	result["successor_revision"] = copy.name
 	return result
 
 
@@ -923,10 +923,10 @@ def cancel_accepted_need_successor(
 	_check_version(doc, expected_version)
 	assignment = require_author_command(doc, principal)
 	successor = _require_open_successor(doc)
-	if successor.version_status != VERSION_DRAFT:
+	if successor.revision_status != REVISION_DRAFT:
 		fail("NDS_STATE_CONFLICT", "Only a Draft update may be cancelled.")
-	_set_version_status(successor, VERSION_WITHDRAWN)
-	doc.current_version = doc.current_accepted_version
+	_set_version_status(successor, REVISION_WITHDRAWN)
+	doc.current_revision = doc.current_accepted_revision
 	_bump(doc)
 	_record_decision(
 		doc,
@@ -942,14 +942,14 @@ def cancel_accepted_need_successor(
 		before_hash=before_hash,
 	)
 	result = _result(doc, action=ACTION_CANCEL_SUCCESSOR)
-	result["cancelled_version"] = successor.name
+	result["cancelled_revision"] = successor.name
 	return result
 
 
 # --- §5.3 accepted withdrawal lifecycle ------------------------------------
 
 
-def check_withdrawal_dependency(need: str, accepted_version: str) -> dict[str, Any]:
+def check_withdrawal_dependency(need: str, accepted_revision: str) -> dict[str, Any]:
 	"""§8.1 `check_accepted_need_withdrawal_dependency` — no mutation.
 
 	Reads the §4.7 projection Planning maintains, never Planning's own tables:
@@ -959,7 +959,7 @@ def check_withdrawal_dependency(need: str, accepted_version: str) -> dict[str, A
 	only an Active Plan inclusion is, which is precisely what the projection
 	reports.
 	"""
-	detail = planning_usage_detail(cstr(need), cstr(accepted_version))
+	detail = planning_usage_detail(cstr(need), cstr(accepted_revision))
 	included = detail["usage"] == USAGE_FULL
 	# The token the reviewer's decision was taken against (§4.6).
 	fingerprint = hashlib.sha256(
@@ -975,7 +975,7 @@ def check_withdrawal_dependency(need: str, accepted_version: str) -> dict[str, A
 	).hexdigest()
 	return {
 		"need": cstr(need),
-		"accepted_version": cstr(accepted_version),
+		"accepted_revision": cstr(accepted_revision),
 		"included": included,
 		"active_plan": detail["active_plan"],
 		"active_plan_item": detail["active_plan_item"],
@@ -1013,13 +1013,13 @@ def request_withdrawal(
 			"NDS_WITHDRAWAL_ALREADY_OPEN",
 			"An open withdrawal request already exists for this Departmental Need.",
 		)
-	dependency = check_withdrawal_dependency(doc.name, doc.current_accepted_version)
+	dependency = check_withdrawal_dependency(doc.name, doc.current_accepted_revision)
 	request = frappe.get_doc(
 		{
 			"doctype": "Need Withdrawal Request",
 			"withdrawal_request_id": f"NDS-WDR-{uuid4().hex.upper()[:12]}",
 			"departmental_need": doc.name,
-			"accepted_version": doc.current_accepted_version,
+			"accepted_revision": doc.current_accepted_revision,
 			"requested_by": principal,
 			"reason": reason_text,
 			"status": WITHDRAWAL_AWAITING_REVIEW,
@@ -1090,7 +1090,7 @@ def decide_withdrawal(
 	request = _locked_withdrawal_request(task, doc.name)
 	if cstr(request.requested_by) == principal:
 		fail("NDS_MAKER_CHECKER", "You cannot decide your own withdrawal request.")
-	dependency = check_withdrawal_dependency(doc.name, request.accepted_version)
+	dependency = check_withdrawal_dependency(doc.name, request.accepted_revision)
 	prior_status = cstr(request.status)
 
 	if decision == "approve":
@@ -1103,20 +1103,20 @@ def decide_withdrawal(
 		_update_request(request, WITHDRAWAL_APPROVED, dependency)
 		# The accepted version and any open successor go with the Need: a
 		# Withdrawn Need cannot leave a live version behind it.
-		for version in filter(None, {doc.current_accepted_version, _open_successor(doc)}):
+		for version in filter(None, {doc.current_accepted_revision, _open_successor(doc)}):
 			frappe.db.set_value(
-				"Departmental Need Version",
+				"Departmental Need Revision",
 				version,
-				"version_status",
-				VERSION_WITHDRAWN,
+				"revision_status",
+				REVISION_WITHDRAWN,
 				update_modified=False,
 			)
 		action, target = ACTION_APPROVE_WITHDRAWAL, STATE_WITHDRAWN
 		reason_text = ""
 		withdrawn_event = publish_withdrawn(
 			doc,
-			version=frappe.get_doc("Departmental Need Version", doc.current_accepted_version)
-			if doc.current_accepted_version
+			version=frappe.get_doc("Departmental Need Revision", doc.current_accepted_revision)
+			if doc.current_accepted_revision
 			else None,
 			withdrawal_request=request.name,
 			decided_by=principal,

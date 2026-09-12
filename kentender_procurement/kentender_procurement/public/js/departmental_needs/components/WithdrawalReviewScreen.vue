@@ -8,7 +8,7 @@
 				WITHDRAWAL REVIEW · {{ request.name }}
 			</div>
 			<div style="display: flex; align-items: center; gap: 12px; margin-top: 4px">
-				<h1 class="kt-record-title">{{ version.title }}</h1>
+				<h1 class="kt-record-title">{{ revision.title }}</h1>
 				<StatusPill :label="request.status || 'Awaiting review'" />
 			</div>
 		</div>
@@ -28,7 +28,7 @@
 			<ReadonlyRow label="Reason" :value="request.reason" style="margin-top: 0" />
 		</div>
 
-		<RequirementCard :version="version" title="Accepted Need" />
+		<RequirementCard :revision="revision" title="Accepted Need" />
 
 		<div class="kt-card kt-blueprint" style="padding: 20px 24px">
 			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
@@ -66,13 +66,25 @@
 					Close
 				</button>
 			</template>
-			<template v-else-if="!makerCheckerBlocked">
+			<template v-else-if="!makerCheckerBlocked &amp;&amp; permitted.length">
 				<span></span>
 				<div style="display: flex; gap: 12px">
-					<button class="kt-btn-destructive" data-testid="nds-withdrawal-decline" :disabled="pending" @click="$emit('decline')">
+					<button
+						v-if="permitted.includes('decline')"
+						class="kt-btn-destructive"
+						data-testid="nds-withdrawal-decline"
+						:disabled="pending"
+						@click="$emit('decline')"
+					>
 						Decline withdrawal
 					</button>
-					<button class="kt-btn kt-btn-primary" data-testid="nds-withdrawal-approve" :disabled="pending" @click="$emit('approve')">
+					<button
+						v-if="permitted.includes('approve')"
+						class="kt-btn kt-btn-primary"
+						data-testid="nds-withdrawal-approve"
+						:disabled="pending"
+						@click="$emit('approve')"
+					>
 						Approve withdrawal
 					</button>
 				</div>
@@ -98,10 +110,14 @@ import { formatInstant } from "../data/format.js";
 
 const props = defineProps({
 	request: { type: Object, default: () => ({}) },
-	version: { type: Object, default: () => ({}) },
+	revision: { type: Object, default: () => ({}) },
 	dependency: { type: Object, default: () => ({}) },
 	requesterLabel: { type: String, default: "" },
 	requestedAt: { type: String, default: "" },
+	// KT-STD-001 §3A.6 — an "oversight" reader (technical or Auditor) never
+	// decides: the parent passes task.permitted_decisions, empty for them,
+	// so Approve/Decline never render even while the request is open.
+	permitted: { type: Array, default: () => [] },
 	makerCheckerBlocked: Boolean,
 	errorSummary: { type: String, default: "" },
 	pending: Boolean,

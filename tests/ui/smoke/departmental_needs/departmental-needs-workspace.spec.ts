@@ -96,6 +96,38 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
+	test("Create need opens blank after another need was open", async ({ page }) => {
+		/**
+		 * Reported live 2026-09-11: the create editor showed the previously
+		 * opened need's title, description and result. The root fed the editor
+		 * the shared `detail` payload, which entering /new never cleared — the
+		 * create editor must have no source revision at all.
+		 */
+		const errors = collectConsoleErrors(page);
+		await loginAsNdsFixtureAuthor(page);
+		await gotoNeeds(page, "");
+		await selectContext(page);
+		await expectScreen(page, "workspace");
+		await page
+			.locator(`[data-testid="nds-need-row"][data-reference="${NEED}"] [data-testid="nds-row-action"]`)
+			.click();
+		await expectScreen(page, "editor");
+		await expect(page.locator('[data-testid="nds-title"]')).not.toHaveValue("");
+
+		await page.locator('[data-testid="nds-editor-cancel"]').click();
+		await expectScreen(page, "detail");
+		await page.locator(".kt-rail-crumb-link", { hasText: "Departmental Needs" }).click();
+		await expectScreen(page, "workspace");
+		await page.locator('[data-testid="nds-create-need"]').click();
+		await expectScreen(page, "editor");
+		await expect(page).toHaveURL(/\/departmental-needs\/new$/);
+		for (const field of ["nds-title", "nds-description", "nds-result", "nds-quantity", "nds-required-by"]) {
+			await expect(page.locator(`[data-testid="${field}"]`)).toHaveValue("");
+		}
+		await expect(page.getByText("Returned for correction")).toHaveCount(0);
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+
 	test("a Draft opens in the editor and saves", async ({ page }) => {
 		const errors = collectConsoleErrors(page);
 		await loginAsNdsFixtureAuthor(page);
@@ -112,6 +144,42 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		await page.locator('[data-testid="nds-save-draft"]').click();
 
 		await expect(page.locator('[data-testid="nds-error-summary"]')).toHaveCount(0);
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+	test("Submit for review straight after Save draft is not refused as a stale write", async ({ page }) => {
+		/**
+		 * Regression (2026-09-11): the version stamp the next command carried
+		 * came from the post-save reload, which resolves after the buttons are
+		 * re-enabled. A Save draft followed at once by Submit for review (or a
+		 * second Save) sent the pre-save stamp and the server answered "This
+		 * Departmental Need changed after it was opened" with nobody else
+		 * editing. The stamp now comes from the save response itself; this
+		 * test widens the reload window so the old behaviour cannot pass.
+		 */
+		const errors = collectConsoleErrors(page);
+		await loginAsNdsFixtureAuthor(page);
+		await gotoNeeds(page, "");
+		await selectContext(page);
+		await expectScreen(page, "workspace");
+		await page
+			.locator(`[data-testid="nds-need-row"][data-reference="${NEED}"] [data-testid="nds-row-action"]`)
+			.click();
+		await expectScreen(page, "editor");
+
+		// Every editor reload now lands 1.5 s after the save it follows.
+		await page.route("**/api/method/*.get_departmental_need", async (route) => {
+			const response = await route.fetch();
+			await new Promise((resolve) => setTimeout(resolve, 1500));
+			await route.fulfill({ response });
+		});
+
+		await page.locator('[data-testid="nds-title"]').fill("County health records digitisation v3");
+		await page.locator('[data-testid="nds-save-draft"]').click();
+		await expect(page.locator('[data-testid="nds-save-draft"]')).toBeEnabled();
+		await page.locator('[data-testid="nds-submit"]').click();
+
+		await expect(page.locator('[data-testid="nds-error-summary"]')).toHaveCount(0);
+		await expect(page).toHaveURL(new RegExp(`/departmental-needs/${NEED}$`), { timeout: 30_000 });
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 	test("an unparseable typed date blocks the submit with a field error", async ({ page }) => {

@@ -132,25 +132,25 @@ def _record_version(need: str) -> int:
 
 
 def apply_planning_usage() -> dict[str, Any]:
-	"""Project NDS-MOH-2027-0001 Version 1 as Fully included in an Active Plan.
+	"""Project NDS-MOH-2027-0001 Revision 1 as Fully included in an Active Plan.
 
 	Used by NDS-DES-07 and NDS-DES-12. §14.4 is explicit that it is *not* loaded
 	into tests expecting the design-clock default of `Not included`, which is why
 	it is a separate profile rather than part of the default build.
 	"""
 	need = frappe.get_doc("Departmental Need", SUCCESSOR_NEED)
-	if not need.current_accepted_version:
-		frappe.throw(f"{SUCCESSOR_NEED} has no accepted version; apply the default profile first.")
+	if not need.current_accepted_revision:
+		frappe.throw(f"{SUCCESSOR_NEED} has no accepted revision; apply the default profile first.")
 	with _as(base.PLANNER):
 		result = project_planning_usage(
 			departmental_need=need.name,
-			accepted_version=need.current_accepted_version,
+			accepted_revision=need.current_accepted_revision,
 			usage=USAGE_FULL,
-			source_event_id=key("usage", need.name, need.current_accepted_version),
+			source_event_id=key("usage", need.name, need.current_accepted_revision),
 			active_plan=ACTIVE_PLAN,
 			active_plan_item=ACTIVE_PLAN_ITEM,
 		)
-	_namespace("Need Planning Usage Projection", need.current_accepted_version, NS_USAGE)
+	_namespace("Need Planning Usage Projection", need.current_accepted_revision, NS_USAGE)
 	return {"profile": "planning_usage", "usage": result["usage"], "plan_item": ACTIVE_PLAN_ITEM}
 
 
@@ -166,17 +166,17 @@ def reset_planning_usage() -> dict[str, Any]:
 
 
 def apply_successor() -> dict[str, Any]:
-	"""Copy Version 1 into Version 2 changing only the required-by date.
+	"""Copy Revision 1 into Revision 2 changing only the required-by date.
 
 	§14.5: acceptance emits the exact supersession event without altering
-	Version 1, which is asserted by the Phase 5 event tests rather than assumed
+	Revision 1, which is asserted by the Phase 5 event tests rather than assumed
 	here.
 	"""
 	need = frappe.get_doc("Departmental Need", SUCCESSOR_NEED)
-	version_one = need.current_accepted_version
-	if str(frappe.db.get_value("Departmental Need Version", version_one, "required_by_date")) == SUCCESSOR_REQUIRED_BY:
-		return {"profile": "successor", "idempotent": True, "accepted_version": version_one}
-	source = frappe.get_doc("Departmental Need Version", version_one)
+	version_one = need.current_accepted_revision
+	if str(frappe.db.get_value("Departmental Need Revision", version_one, "required_by_date")) == SUCCESSOR_REQUIRED_BY:
+		return {"profile": "successor", "idempotent": True, "accepted_revision": version_one}
+	source = frappe.get_doc("Departmental Need Revision", version_one)
 	with _as(base.AUTHOR):
 		opened = lifecycle.create_accepted_need_successor(
 			need=need.name,
@@ -209,43 +209,43 @@ def apply_successor() -> dict[str, Any]:
 			decision_token=token,
 			idempotency_key=key("successor", "accept", need.name, submitted["record_version"]),
 		)
-	_namespace("Departmental Need Version", opened["successor_version"], NS_SUCCESSOR)
+	_namespace("Departmental Need Revision", opened["successor_revision"], NS_SUCCESSOR)
 	return {
 		"profile": "successor",
-		"superseded_version": accepted["superseded_version"],
-		"accepted_version": opened["successor_version"],
+		"superseded_revision": accepted["superseded_revision"],
+		"accepted_revision": opened["successor_revision"],
 		"event_id": accepted["event_id"],
 	}
 
 
 def reset_successor() -> dict[str, Any]:
-	"""Return NDS-MOH-2027-0001 to its §14.3 single-version accepted state."""
+	"""Return NDS-MOH-2027-0001 to its §14.3 single-revision accepted state."""
 	versions = frappe.get_all(
-		"Departmental Need Version", filters={"fixture_namespace": NS_SUCCESSOR}, pluck="name"
+		"Departmental Need Revision", filters={"fixture_namespace": NS_SUCCESSOR}, pluck="name"
 	)
 	if not versions:
 		return {"profile": "successor", "removed": []}
 	need = frappe.get_doc("Departmental Need", SUCCESSOR_NEED)
 	original = frappe.db.get_value(
-		"Departmental Need Version",
-		{"departmental_need": need.name, "version_number": 1},
+		"Departmental Need Revision",
+		{"departmental_need": need.name, "revision_number": 1},
 		"name",
 	)
-	frappe.db.delete("Departmental Need Event", {"need_version": ("in", versions)})
-	frappe.db.delete("Departmental Need Event", {"superseded_version": ("in", versions)})
-	frappe.db.delete("Departmental Need Decision", {"need_version": ("in", versions)})
-	frappe.db.delete("Departmental Need Review Task", {"need_version": ("in", versions)})
-	frappe.db.delete("Need Planning Usage Projection", {"accepted_version": ("in", versions)})
-	frappe.db.delete("Departmental Need Version", {"name": ("in", versions)})
+	frappe.db.delete("Departmental Need Event", {"need_revision": ("in", versions)})
+	frappe.db.delete("Departmental Need Event", {"superseded_revision": ("in", versions)})
+	frappe.db.delete("Departmental Need Decision", {"need_revision": ("in", versions)})
+	frappe.db.delete("Departmental Need Review Task", {"need_revision": ("in", versions)})
+	frappe.db.delete("Need Planning Usage Projection", {"accepted_revision": ("in", versions)})
+	frappe.db.delete("Departmental Need Revision", {"name": ("in", versions)})
 	frappe.db.set_value(
-		"Departmental Need Version", original, "version_status", "Accepted", update_modified=False
+		"Departmental Need Revision", original, "revision_status", "Accepted", update_modified=False
 	)
 	frappe.db.set_value(
 		"Departmental Need",
 		need.name,
 		{
-			"current_version": original,
-			"current_accepted_version": original,
+			"current_revision": original,
+			"current_accepted_revision": original,
 			"current_state": STATE_ACCEPTED,
 		},
 		update_modified=False,
@@ -272,11 +272,11 @@ def apply_withdrawal(*, cleared: bool = False) -> dict[str, Any]:
 		with _as(base.PLANNER):
 			project_planning_usage(
 				departmental_need=need.name,
-				accepted_version=need.current_accepted_version,
+				accepted_revision=need.current_accepted_revision,
 				usage=USAGE_NOT_INCLUDED,
-				source_event_id=key("usage", "cleared", need.current_accepted_version),
+				source_event_id=key("usage", "cleared", need.current_accepted_revision),
 			)
-		_namespace("Need Planning Usage Projection", need.current_accepted_version, NS_USAGE)
+		_namespace("Need Planning Usage Projection", need.current_accepted_revision, NS_USAGE)
 	else:
 		apply_planning_usage()
 	existing = frappe.db.get_value(

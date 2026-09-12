@@ -82,14 +82,14 @@ DECISION_PERMISSIONS: list[dict] = [
 # One explicit mapping so a new doctype cannot silently inherit the wrong set.
 PERMISSIONS_BY_DOCTYPE: dict[str, list[dict]] = {
 	"Departmental Need": NEED_PERMISSIONS,
-	"Departmental Need Version": NEED_PERMISSIONS,
+	"Departmental Need Revision": NEED_PERMISSIONS,
 	"Need Withdrawal Request": NEED_PERMISSIONS,
 	"Departmental Need Review Task": REVIEW_TASK_PERMISSIONS,
 	"Departmental Need Decision": DECISION_PERMISSIONS,
 }
 
 STATES = "Draft\nSubmitted\nReturned\nAccepted for planning\nNot taken forward\nWithdrawn"
-VERSION_STATES = "Draft\nSubmitted\nReturned\nAccepted\nNot taken forward\nWithdrawn\nSuperseded"
+REVISION_STATES = "Draft\nSubmitted\nReturned\nAccepted\nNot taken forward\nWithdrawn\nSuperseded"
 
 SCHEMAS = (
 	{
@@ -102,24 +102,24 @@ SCHEMAS = (
 			_f("Organisation Unit", "organisation_unit", "Link", options="Organisation Unit", reqd=1, read_only=1, search_index=1),
 			_f("Financial Year", "financial_year", "Link", options="Fiscal Year", reqd=1, read_only=1, search_index=1),
 			_f("Current State", "current_state", "Select", options=STATES, default="Draft", reqd=1, read_only=1, in_list_view=1, search_index=1),
-			_f("Current Version", "current_version", "Link", options="Departmental Need Version", read_only=1, search_index=1),
-			_f("Current Accepted Version", "current_accepted_version", "Link", options="Departmental Need Version", read_only=1, search_index=1),
+			_f("Current Revision", "current_revision", "Link", options="Departmental Need Revision", read_only=1, search_index=1),
+			_f("Current Accepted Revision", "current_accepted_revision", "Link", options="Departmental Need Revision", read_only=1, search_index=1),
 			_f("Record Version", "record_version", "Int", default="0", reqd=1, read_only=1),
 			_f("Fixture Namespace", "fixture_namespace", hidden=1, read_only=1, search_index=1),
 		],
 	},
 	{
-		"name": "Departmental Need Version",
+		"name": "Departmental Need Revision",
 		"module": "Departmental Needs",
-		"autoname": "field:need_version_id",
+		"autoname": "field:need_revision_id",
 		"title_field": "title",
-		"search_fields": "need_version_id,title",
+		"search_fields": "need_revision_id,title",
 		"fields": [
-			_f("Need Version ID", "need_version_id", reqd=1, unique=1, read_only=1, in_list_view=1),
+			_f("Need Revision ID", "need_revision_id", reqd=1, unique=1, read_only=1, in_list_view=1),
 			_f("Departmental Need", "departmental_need", "Link", options="Departmental Need", reqd=1, read_only=1, search_index=1),
-			_f("Version Number", "version_number", "Int", reqd=1, read_only=1, in_list_view=1),
-			_f("Based On Version", "based_on_version", "Link", options="Departmental Need Version", read_only=1),
-			_f("Version Status", "version_status", "Select", options=VERSION_STATES, default="Draft", reqd=1, read_only=1, in_list_view=1, search_index=1),
+			_f("Revision Number", "revision_number", "Int", reqd=1, read_only=1, in_list_view=1),
+			_f("Based On Revision", "based_on_revision", "Link", options="Departmental Need Revision", read_only=1),
+			_f("Revision Status", "revision_status", "Select", options=REVISION_STATES, default="Draft", reqd=1, read_only=1, in_list_view=1, search_index=1),
 			_f("Title", "title", reqd=1, in_list_view=1),
 			_f("Description", "description", "Text"),
 			_f("Expected Operational Result", "expected_operational_result", "Text"),
@@ -138,7 +138,7 @@ SCHEMAS = (
 		"fields": [
 			_f("Review Task ID", "review_task_id", reqd=1, unique=1, read_only=1, in_list_view=1),
 			_f("Departmental Need", "departmental_need", "Link", options="Departmental Need", reqd=1, read_only=1, search_index=1, in_list_view=1),
-			_f("Need Version", "need_version", "Link", options="Departmental Need Version", read_only=1, search_index=1),
+			_f("Need Revision", "need_revision", "Link", options="Departmental Need Revision", read_only=1, search_index=1),
 			_f("Withdrawal Request", "withdrawal_request", "Link", options="Need Withdrawal Request", read_only=1, search_index=1),
 			_f("Task Type", "task_type", "Select", options="Initial acceptance\nSuccessor acceptance\nWithdrawal", reqd=1, read_only=1, in_list_view=1, search_index=1),
 			_f("Organisation Unit", "organisation_unit", "Link", options="Organisation Unit", reqd=1, read_only=1, search_index=1),
@@ -158,7 +158,7 @@ SCHEMAS = (
 		"fields": [
 			_f("Withdrawal Request ID", "withdrawal_request_id", reqd=1, unique=1, read_only=1, in_list_view=1),
 			_f("Departmental Need", "departmental_need", "Link", options="Departmental Need", reqd=1, read_only=1, search_index=1, in_list_view=1),
-			_f("Accepted Version", "accepted_version", "Link", options="Departmental Need Version", reqd=1, read_only=1, search_index=1),
+			_f("Accepted Revision", "accepted_revision", "Link", options="Departmental Need Revision", reqd=1, read_only=1, search_index=1),
 			_f("Requested By", "requested_by", "Link", options="User", reqd=1, read_only=1, search_index=1),
 			_f("Reason", "reason", "Small Text", reqd=1, read_only=1),
 			_f("Status", "status", "Select", options="Awaiting review\nAwaiting planning clearance\nApproved\nDeclined", default="Awaiting review", reqd=1, read_only=1, in_list_view=1, search_index=1),
@@ -175,7 +175,7 @@ SCHEMAS = (
 		"fields": [
 			_f("Decision ID", "decision_id", reqd=1, unique=1, read_only=1, in_list_view=1),
 			_f("Departmental Need", "departmental_need", "Link", options="Departmental Need", reqd=1, read_only=1, search_index=1),
-			_f("Need Version", "need_version", "Link", options="Departmental Need Version", read_only=1, search_index=1),
+			_f("Need Revision", "need_revision", "Link", options="Departmental Need Revision", read_only=1, search_index=1),
 			_f("Withdrawal Request", "withdrawal_request", "Link", options="Need Withdrawal Request", read_only=1, search_index=1),
 			_f("Action", "action", "Select", options="Create\nSave draft\nSubmit\nResubmit\nReturn for correction\nAccept for planning\nDo not take forward\nWithdraw\nCreate successor\nSave successor\nCancel successor\nSubmit successor\nReturn successor\nAccept successor\nDecline successor\nRequest withdrawal\nEvaluate withdrawal\nRe-evaluate withdrawal\nApprove withdrawal\nDecline withdrawal", reqd=1, read_only=1, in_list_view=1, search_index=1),
 			_f("Actor", "actor", "Link", options="User", reqd=1, read_only=1, search_index=1),

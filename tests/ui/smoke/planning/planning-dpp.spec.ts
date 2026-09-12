@@ -172,13 +172,45 @@ test.describe("PLN-UI-02..05 Departmental Procurement Plan", () => {
 		await expect(page.locator('[data-testid="dpp-entries"] .kt-btn-ghost')).toHaveCount(0);
 	});
 
-	test("a direct URL to a nonexistent plan fails closed on the load-error component", async ({ page }) => {
+	test("the department creates an update from its accepted plan and lands on the Draft successor (§5.1)", async ({ page }) => {
+		/**
+		 * The only route by which a Need accepted after the plan was accepted
+		 * reaches that plan. The command existed server-side but nothing in the
+		 * screen called it (reported live 2026-09-11).
+		 */
+		const state = resetFixture<DppState>("reset_accepted_fixture");
+		const errors = collectConsoleErrors(page);
+		await login(page, AUTHOR, PASSWORD);
+		await gotoDpp(page, state.dpp_reference);
+		await expectReady(page, "dpp");
+		await expect(page.locator('[data-testid="dpp-badge"]')).toHaveText("Accepted");
+		await expect(page.locator(".pln-quiet-ref")).toContainText("Submission 1");
+		await expect(page.locator('[data-testid="dpp-add-direct"]')).toHaveCount(0);
+
+		await page.locator('[data-testid="dpp-create-update"]').click();
+
+		// same route, now serving the copied Draft successor
+		await expect(page.locator(".pln-quiet-ref")).toContainText("Submission 2");
+		await expect(page.locator('[data-testid="dpp-badge"]')).toHaveText("Ready to submit");
+		await expect(page).toHaveURL(new RegExp(`/departmental-procurement-plan/${state.dpp_reference}$`));
+		await expect(page.locator('[data-testid="dpp-create-update"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="dpp-add-direct"]')).toBeVisible();
+		await expect(page.locator('[data-testid="dpp-entries"] tbody tr')).toHaveCount(2);
+		await expect(page.locator('[data-testid="dpp-error"]')).toHaveCount(0);
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+
+	test("a direct URL to a nonexistent plan masks as not-found, calmly and once (§9, §11.18)", async ({ page }) => {
 		await login(page, AUTHOR, PASSWORD);
 		await gotoDpp(page, "DPP-NOPE-0000-000");
 		await expectReady(page, "dpp");
 		const card = page.locator('[data-testid="pln-error"]');
-		await expect(card.locator("h3")).toHaveText("Procurement Planning could not be loaded");
-		await expect(card.locator("button")).toHaveText("Try again");
-		await expect(card).toContainText("Support reference: PLN-ERR-");
+		await expect(card.locator("h3")).toHaveText("This record isn't available to you");
+		await expect(card).toContainText("It may not exist, or you may not have access to it.");
+		await expect(card).not.toContainText("could not be loaded");
+		await expect(card).not.toContainText("Support reference");
+		await expect(page.getByRole("dialog", { name: "Not found" })).toHaveCount(0);
+		await card.locator('[data-testid="pln-not-found-back"]').click();
+		await expectReady(page, "workspace");
 	});
 });

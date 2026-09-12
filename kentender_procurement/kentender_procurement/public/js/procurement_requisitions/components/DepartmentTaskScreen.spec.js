@@ -36,6 +36,8 @@ const TASK = {
 	catalogue: { characteristics: [{ key: "electrical_compatibility", label: "Electrical compatibility" }, { key: "memory", label: "Memory" }] },
 	validation: { blocking_count: 0, warning_count: 1 },
 	can_act: true,
+	can_certify: true,
+	can_return: true,
 };
 
 function make(overrides = {}) {
@@ -99,9 +101,21 @@ describe("DepartmentTaskScreen — REQ-DES-08", () => {
 		expect(w.emitted("submit")).toBeTruthy();
 	});
 
-	it("disables both actions when can_act is false", () => {
-		const w = make({ can_act: false });
+	it("disables both actions while a command is pending", () => {
+		const w = mount(DepartmentTaskScreen, { props: { task: TASK, actorName: "Dr Peter Kimani", actorRoleLabel: "Head of User Department for Digital Health", pending: true } });
 		expect(w.find('[data-testid="req-task-return"]').attributes("disabled")).toBeDefined();
 		expect(w.find('[data-testid="req-task-submit"]').attributes("disabled")).toBeDefined();
+	});
+
+	// KT-STD-001 §3A.6 — an oversight reader (Administrator/System Manager/
+	// Auditor) gets `can_certify`/`can_return` both False from the server;
+	// the certification screen must hide the decision controls entirely,
+	// never merely disable them, and must not attribute the decision to a
+	// blank actor.
+	it("hides both decision controls and the Decision-by line for an oversight reader", () => {
+		const w = mount(DepartmentTaskScreen, { props: { task: { ...TASK, can_certify: false, can_return: false }, actorName: "", actorRoleLabel: "", pending: false } });
+		expect(w.find('[data-testid="req-task-return"]').exists()).toBe(false);
+		expect(w.find('[data-testid="req-task-submit"]').exists()).toBe(false);
+		expect(w.text()).not.toContain("Decision by");
 	});
 });

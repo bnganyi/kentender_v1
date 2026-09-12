@@ -21,36 +21,31 @@ from __future__ import annotations
 import frappe
 from frappe import _
 
+from kentender_core.services.authorization import is_technical
 from kentender_strategy.services.strategy_audit import list_events
 from kentender_strategy.services.strategy_authorization import (
 	CAP_APPROVE,
 	CAP_AUTHOR,
-	ROLE_STRATEGY_APPROVER,
-	ROLE_STRATEGY_AUTHOR,
 	has_plan_create_capability,
 	has_plan_version_capability,
 	holds_approver_responsibility,
+	holds_strategy_read_responsibility,
 )
 from kentender_strategy.services.strategy_readiness import get_version_readiness
 from kentender_strategy.services.strategy_reference import resolve_plan_name, resolve_version_name
 from kentender_strategy.services.strategy_transitions import available_actions
 
-# §6 — read access is produced by the actor's assignments: the two Strategy
-# governance responsibilities plus the registered Auditor business role.
-# Administrator/System Manager get technical read (AUTH-ADR-001 v1.6 §8).
-UNRESTRICTED_READ_ROLES = ("System Manager", "Auditor")
-_LIFECYCLE_ROLES = (ROLE_STRATEGY_AUTHOR, ROLE_STRATEGY_APPROVER)
-
 PAGE = "strategy"
 
 
 def _can_read() -> bool:
-	"""One site is one Procuring Entity, so read eligibility is a pure
-	assignment-projection check (the Frappe Roles exist only as projections
-	of Enabled Site-wide assignments, v1.6 §5.2) — no PE set, no working
-	context, no User Permission scope."""
-	roles = frappe.get_roles()
-	return any(r in roles for r in UNRESTRICTED_READ_ROLES + _LIFECYCLE_ROLES)
+	"""§6/KT-STD-001 §3A.6 — read eligibility is a pure assignment-projection
+	check (the Frappe Roles exist only as projections of Enabled Site-wide
+	assignments, v1.6 §5.2) — no PE set, no working context, no User
+	Permission scope — plus the AUTH-ADR-001 §8 technical-read allowance for
+	Administrator/System Manager. Delegates to the shared
+	`strategy_authorization` gate rather than testing bare Frappe Roles."""
+	return holds_strategy_read_responsibility(frappe.session.user)
 
 
 def _plan_dto(plan) -> dict:
@@ -270,6 +265,12 @@ def _my_work_versions() -> list[dict]:
 
 
 def get_strategy_tree(plan_version_id: str) -> dict:
+	# §6 — a whitelisted endpoint in its own right (not only reached via an
+	# already-gated caller), so it carries the same read gate; a non-reader
+	# gets a masked not-found rather than a Forbidden that would confirm the
+	# version exists. Technical readers always pass.
+	if not _can_read():
+		return {"not_found": True}
 	plan_version_id = resolve_version_name(plan_version_id) or plan_version_id
 	nodes = frappe.get_all(
 		"Strategy Node",
@@ -527,18 +528,25 @@ def get_version_review_overview(plan_version_id: str) -> dict:
 	version_name = resolve_version_name(plan_version_id)
 	if not version_name:
 		return {"not_found": True}
+	user = frappe.session.user
 	if not _can_read():
 		return {"forbidden": True}
 	version = frappe.get_doc("Strategic Plan Version", version_name)
 	plan = frappe.get_doc("Strategic Plan", version.plan_id)
 
-	user = frappe.session.user
-	# §12.4 — a direct task route requires an Active Strategy Approver
-	# assignment; a read-only user is denied rather than shown a disabled
-	# workflow form. The no-self-approval rule is a per-version command
-	# block, not an access rule: the submitter who also holds Approver may
-	# open the task and sees no decision actions on it.
-	if not holds_approver_responsibility(user):
+	# §12.4/STR-AC-021 — a direct task route requires an Active Strategy
+	# Approver assignment; a read-only business user without it — Auditor
+	# included — is denied rather than shown a disabled workflow form. The
+	# sole exception is KT-STD-001 §3A.6/AUTH-ADR-001 §8's technical reader:
+	# Administrator/System Manager open the same read-only overview instead,
+	# with every capability False below. Auditor is a universal *reader*
+	# elsewhere in this module (portfolio/workspace/tree/history) but STR-
+	# AC-021 draws the approval task's line at the Approver assignment, not
+	# at read access generally — Auditor does not bypass it. The
+	# no-self-approval rule stays a per-version command block, not an access
+	# rule: the submitter who also holds Approver may open the task and sees
+	# no decision actions on it.
+	if not is_technical(user) and not holds_approver_responsibility(user):
 		return {"forbidden": True, "reason": "approver_required"}
 	is_approver = has_plan_version_capability(user, CAP_APPROVE, version)
 
@@ -620,6 +628,10 @@ def diff_strategy_versions(base_version_id: str | None, compare_version_id: str)
 	`based_on_plan_version_id` and the submitted version (§12.4). When the
 	caller passes no base, the submitted version's own recorded baseline is
 	used; a first version has none and every item reads as new."""
+	# §6 — same masked-not-found read gate as get_strategy_tree; this is a
+	# whitelisted endpoint a non-reader could otherwise call directly.
+	if not _can_read():
+		return {"not_found": True}
 	compare_version_id = resolve_version_name(compare_version_id) or compare_version_id
 	base_version_id = resolve_version_name(base_version_id) if base_version_id else None
 	if not base_version_id:

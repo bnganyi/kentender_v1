@@ -189,8 +189,12 @@ def clear_kentender_mvp_v1_strategy(
 	deletion of the shared-register actor users (stable identities, owned by
 	kentender_core.seeds.site_setup, not this file)."""
 	deleted: dict[str, int] = {}
-	if not (include_canonical or include_playwright):
-		return {"ok": True, "deleted": deleted}
+	# The only namespace this seed owns is the canonical one; Playwright
+	# worlds build their own strategy without it. A caller that keeps the
+	# canonical rows (the Playwright purge) therefore has nothing to delete
+	# here — on 2026-09-11 this path removed the live site's Active strategy.
+	if not include_canonical:
+		return {"ok": True, "deleted": deleted, "skipped": "canonical strategy retained"}
 
 	plans = frappe.get_all("Strategic Plan", filters={"fixture_namespace": FIXTURE_NS}, pluck="name")
 	versions: list[str] = []

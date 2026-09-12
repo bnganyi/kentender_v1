@@ -60,7 +60,7 @@ def _entry_doc(dpp_entry: str, fiscal_year: str, plan_version: str = ""):
 	entry = frappe.db.get_value(
 		"Departmental Plan Entry",
 		dpp_entry,
-		["name", "entry_id", "dpp_version", "title", "description", "source_origin", "need", "need_version",
+		["name", "entry_id", "dpp_version", "title", "description", "source_origin", "need", "need_revision",
 		 "quantity", "unit", "required_by_date", "budget_line", "indicative_amount", "not_proceeding_reason"],
 		as_dict=True,
 	)
@@ -77,8 +77,9 @@ def _entry_doc(dpp_entry: str, fiscal_year: str, plan_version: str = ""):
 	# a live allocation in the version being formed into blocks re-use; rows
 	# on a returned predecessor or the Active plan are history, not a claim
 	# (a correction/successor copies its own allocations and releases them
-	# on dissolve)
-	live = {"dpp_entry": entry.name, "allocation_state": ("in", ("Draft", "Active"))}
+	# on dissolve). An allocation pinned to an earlier DPP copy of the same
+	# unchanged source is the same claim (§7.1).
+	live = {"dpp_entry": ("in", plan_read.same_source_lineage(entry.name)), "allocation_state": ("in", ("Draft", "Active"))}
 	if plan_version:
 		live["plan_version"] = plan_version
 	if frappe.db.exists("Plan Source Allocation", live):
@@ -141,7 +142,7 @@ def _create_item(*, version, plan, entries: list, combined: bool, reference: dic
 				"dpp_entry": entry.name,
 				"source_origin": entry.source_origin,
 				"need": entry.need or None,
-				"need_version": entry.need_version or None,
+				"need_revision": entry.need_revision or None,
 				"organisation_unit": entry.organisation_unit,
 				"quantity": flt(entry.quantity),
 				"unit": entry.unit,

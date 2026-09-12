@@ -10,8 +10,8 @@
   "organisation_unit",
   "financial_year",
   "current_state",
-  "current_version",
-  "current_accepted_version",
+  "current_revision",
+  "current_accepted_revision",
   "record_version",
   "fixture_namespace"
  ],
@@ -61,19 +61,19 @@
   },
   {
    "description": "Points to the newest Draft or decided version for display and editing.",
-   "fieldname": "current_version",
+   "fieldname": "current_revision",
    "fieldtype": "Link",
-   "label": "Current Version",
-   "options": "Departmental Need Version",
+   "label": "Current Revision",
+   "options": "Departmental Need Revision",
    "read_only": 1,
    "search_index": 1
   },
   {
    "description": "Points to the accepted version available to Planning. Empty until first acceptance.",
-   "fieldname": "current_accepted_version",
+   "fieldname": "current_accepted_revision",
    "fieldtype": "Link",
-   "label": "Current Accepted Version",
-   "options": "Departmental Need Version",
+   "label": "Current Accepted Revision",
+   "options": "Departmental Need Revision",
    "read_only": 1,
    "search_index": 1
   },

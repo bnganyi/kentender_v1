@@ -45,7 +45,7 @@ const NEED_EDITOR = {
 		required_by_display: "31 Aug 2027",
 		budget_line: "",
 		indicative_amount: null,
-		need_reference_line: "NDS-MOH-2027-0001 · Version 1",
+		need_reference_line: "NDS-MOH-2027-0001 · Revision 1",
 	},
 };
 
@@ -68,7 +68,7 @@ describe("DppEntryEditorScreen — PLN-DES-03 (Need funding)", () => {
 		expect(facts.text()).toContain("National digital health infrastructure upgrade");
 		expect(facts.text()).toContain("Priority health facilities can use secure");
 		expect(facts.text()).toContain("1 programme");
-		expect(facts.text()).toContain("NDS-MOH-2027-0001 · Version 1");
+		expect(facts.text()).toContain("NDS-MOH-2027-0001 · Revision 1");
 		// PLN-DES-03 order: Title, Description, Expected operational result,
 		// Quantity, Unit, Required by, Accepted Need
 		expect(facts.findAll("label").map((l) => l.text())).toEqual([

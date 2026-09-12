@@ -15,7 +15,8 @@ and §17):
 
 The Departmental Need root is reshaped to §4.2 in the same migration, so its
 existing rows cannot be carried forward: they hold requirement content that now
-belongs to ``Departmental Need Version``. §1.1 prohibits a migration or
+belongs to ``Departmental Need Revision`` (``Departmental Need Version`` until
+NDS-CHG-001 v1.9 renamed it). §1.1 prohibits a migration or
 compatibility path, so the seed/fixture rows are cleared and rebuilt from the
 §14 seed contract. This patch refuses to run if it finds a row it cannot
 account for as seed or test data.

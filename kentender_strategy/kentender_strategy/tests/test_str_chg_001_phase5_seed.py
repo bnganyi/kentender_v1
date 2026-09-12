@@ -16,6 +16,7 @@ from frappe.tests.utils import FrappeTestCase
 
 from kentender_strategy.seeds.kentender_mvp_v1_strategy import (
 	PLAN_TITLE,
+	clear_kentender_mvp_v1_strategy,
 	upsert_kentender_mvp_v1_strategy,
 )
 
@@ -38,6 +39,19 @@ class TestMohPlanSeed(FrappeTestCase):
 		self.assertTrue(again["moh"]["already_seeded"])
 		self.assertEqual(again["moh"]["plan"], plan)
 		self.assertEqual(frappe.db.count("Strategic Plan"), plans_before)
+
+	def test_a_playwright_purge_never_touches_the_canonical_plan(self):
+		"""`purge_kentender_playwright_data` calls this clear with
+		include_canonical=False; on 2026-09-11 it deleted the live site's Active
+		strategy anyway, stranding every Plan Item's objective."""
+		upsert_kentender_mvp_v1_strategy()
+		before = frappe.db.count("Strategic Plan")
+		out = clear_kentender_mvp_v1_strategy(include_canonical=False, include_playwright=True)
+		self.assertEqual(out["deleted"], {})
+		self.assertEqual(frappe.db.count("Strategic Plan"), before)
+		self.assertTrue(
+			frappe.db.exists("Strategy Node", {"title": OBJECTIVE_TITLE, "node_type": "Strategic Objective"})
+		)
 
 	def test_legacy_kisumu_world_is_absent(self):
 		"""The retired seed's second entity never appears on a v1.6 site."""

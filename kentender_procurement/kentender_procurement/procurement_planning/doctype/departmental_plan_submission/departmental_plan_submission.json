@@ -43,7 +43,7 @@
    "label": "Submission Number",
    "read_only": 1,
    "reqd": 1,
-   "description": "Generated sequence for the DPP root."
+   "description": "Equals the version_number of the Departmental Plan Version this snapshot certifies (PLN-CHG-001 v1.16 \u00a74.5)."
   },
   {
    "fieldname": "entry_snapshots",

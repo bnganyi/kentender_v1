@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatDate, formatInstant, quantityWithUnit, versionKicker } from "./format.js";
+import { formatDate, formatInstant, quantityWithUnit, revisionKicker } from "./format.js";
 
 /**
  * NDS-906 — the presentation helpers, unit-tested.
@@ -89,23 +89,23 @@ describe("quantityWithUnit", () => {
 	});
 });
 
-describe("versionKicker", () => {
-	it("joins reference and version in upper case", () => {
-		expect(versionKicker("NDS-MOH-2027-0001", { version_number: 1 })).toBe(
-			"NDS-MOH-2027-0001 · VERSION 1",
+describe("revisionKicker", () => {
+	it("joins reference and revision in upper case", () => {
+		expect(revisionKicker("NDS-MOH-2027-0001", { revision_number: 1 })).toBe(
+			"NDS-MOH-2027-0001 · REVISION 1",
 		);
 	});
 
 	it("prefixes the record kind when one is given", () => {
-		expect(versionKicker("NDS-MOH-2027-0001", { version_number: 2 }, "Accepted need")).toBe(
-			"ACCEPTED NEED · NDS-MOH-2027-0001 · VERSION 2",
+		expect(revisionKicker("NDS-MOH-2027-0001", { revision_number: 2 }, "Accepted need")).toBe(
+			"ACCEPTED NEED · NDS-MOH-2027-0001 · REVISION 2",
 		);
 	});
 
-	it("omits the version segment before the record has one", () => {
-		// A new Need has no version until first save (§12.3), so the kicker must
-		// not read "VERSION undefined".
-		expect(versionKicker("NDS-MOH-2027-0001", {})).toBe("NDS-MOH-2027-0001");
-		expect(versionKicker("", {})).toBe("");
+	it("omits the revision segment before the record has one", () => {
+		// A new Need has no revision until first save (§12.3), so the kicker must
+		// not read "REVISION undefined".
+		expect(revisionKicker("NDS-MOH-2027-0001", {})).toBe("NDS-MOH-2027-0001");
+		expect(revisionKicker("", {})).toBe("");
 	});
 });

@@ -52,7 +52,7 @@ EXCLUDED_ROLES = ("Budget Officer", "Accounting Officer")
 
 NDS_DOCTYPES = (
 	"Departmental Need",
-	"Departmental Need Version",
+	"Departmental Need Revision",
 	"Departmental Need Decision",
 	"Departmental Need Review Task",
 	"Need Withdrawal Request",
@@ -629,3 +629,80 @@ class ScopeDiagnosticTest(DepartmentalNeedsPermissionCase):
 		result = self.workspace_as(email)
 		self.assertEqual(result["outcome"], "NO_AUTHORISED_CONTEXT")
 		self.assertEqual(result["scope_diagnostic"], "unit_not_configured")
+
+
+# A disposable user holding System Manager only — no NDS business role at
+# all — so `is_technical` is the only thing that could possibly admit them.
+SYSTEM_MANAGER_ONLY_USER = "nds.test.system-manager-only@example.test"
+
+
+class TestTechnicalReaderReviewAccess(DepartmentalNeedsPermissionCase):
+	"""KT-STD-001 v1.5 §3A.6 / AUTH-ADR-001 §8 — Administrator and a
+	System-Manager-only user read every open review task with no decision
+	controls, and never gain the reviewer's command authority from it."""
+
+	def _ensure_system_manager_only_user(self) -> str:
+		if not frappe.db.exists("User", SYSTEM_MANAGER_ONLY_USER):
+			frappe.get_doc(
+				{
+					"doctype": "User",
+					"email": SYSTEM_MANAGER_ONLY_USER,
+					"first_name": "System Manager Only",
+					"send_welcome_email": 0,
+					"user_type": "System User",
+					"enabled": 1,
+					"roles": [{"role": "System Manager"}],
+				}
+			).insert(ignore_permissions=True)
+		return SYSTEM_MANAGER_ONLY_USER
+
+	def _open_task_for(self, need) -> str:
+		task = frappe.db.get_value(
+			"Departmental Need Review Task",
+			{"departmental_need": need.name, "status": "Open"},
+			"name",
+		)
+		self.assertTrue(task, "expected the seeded Submitted Need to carry an open review task")
+		return task
+
+	def test_administrator_reads_the_open_task_with_no_decision_actions(self):
+		task = self._open_task_for(self.hrmd_need())
+		result = workspace.get_review_task(task=task, user="Administrator")
+		self.assertTrue(result["ok"])
+		self.assertEqual(result["status"], "Open")
+		self.assertEqual(result["permitted_decisions"], [])
+		self.assertEqual(result["access_profile"], "oversight")
+
+	def test_system_manager_only_reads_the_open_task_with_no_decision_actions(self):
+		user = self._ensure_system_manager_only_user()
+		task = self._open_task_for(self.hrmd_need())
+		result = workspace.get_review_task(task=task, user=user)
+		self.assertTrue(result["ok"])
+		self.assertEqual(result["permitted_decisions"], [])
+		self.assertEqual(result["access_profile"], "oversight")
+
+	def test_the_decide_command_still_refuses_a_technical_reader(self):
+		user = self._ensure_system_manager_only_user()
+		for reader in ("Administrator", user):
+			with self.subTest(reader=reader):
+				with self.assertRaises(DepartmentalNeedError) as caught:
+					permissions.require_review_command(self.hrmd_need(), reader)
+				self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
+
+	def test_viewing_contexts_offers_units_even_when_none_is_active(self):
+		# §8 — a technical reader's offer must not depend on any business
+		# configuration fact, including whether any Organisation Unit is
+		# currently marked Active.
+		rows = frappe.get_all("Organisation Unit", fields=["name", "status"])
+		original = {row.name: row.status for row in rows}
+
+		def _restore():
+			for name, status in original.items():
+				frappe.db.set_value("Organisation Unit", name, "status", status, update_modified=False)
+
+		self.addCleanup(_restore)
+		for name in original:
+			frappe.db.set_value("Organisation Unit", name, "status", "Inactive", update_modified=False)
+		contexts = permissions.viewing_contexts("Administrator")
+		self.assertTrue(contexts)
+		self.assertIn(self.ou, {row["organisation_unit"] for row in contexts})

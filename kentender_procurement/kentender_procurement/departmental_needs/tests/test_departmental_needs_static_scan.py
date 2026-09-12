@@ -38,7 +38,7 @@ MODULE = pathlib.Path(lifecycle.__file__).parents[1]
 PERMITTED_DOCTYPES = frozenset(
 	{
 		"Departmental Need",
-		"Departmental Need Version",
+		"Departmental Need Revision",
 		"Departmental Need Decision",
 		"Departmental Need Review Task",
 		"Departmental Need Event",

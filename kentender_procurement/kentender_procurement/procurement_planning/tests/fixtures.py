@@ -195,6 +195,9 @@ def restore_site() -> None:
 	from kentender_core.seeds import site_setup
 
 	frappe.set_user("Administrator")
+	# the per-test wipe runs in setUp, so without this the last test's rows
+	# outlive the run and surface to real users as selectable years
+	wipe_planning_rows()
 	for year in _previous_open.get("dpp", []):
 		if year != FY_OPEN and frappe.db.exists("Fiscal Year", year) and not frappe.db.get_value("Fiscal Year", year, site_configuration.DPP_FLAG_OPEN):
 			site_configuration.open_dpp_submission(fiscal_year=year, reason="test cleanup: restore the previously open year")
@@ -301,17 +304,17 @@ def _link_targets() -> None:
 		).insert(ignore_permissions=True)
 	else:
 		frappe.db.set_value("Departmental Need", NEED, {"organisation_unit": OU_ALPHA, "financial_year": FY_OPEN}, update_modified=False)
-	if not frappe.db.exists("Departmental Need Version", NEED_V1):
+	if not frappe.db.exists("Departmental Need Revision", NEED_V1):
 		frappe.get_doc(
 			{
-				"doctype": "Departmental Need Version", "need_version_id": NEED_V1, "departmental_need": NEED,
-				"version_number": 1, "version_status": "Accepted", "title": "Test requirement",
+				"doctype": "Departmental Need Revision", "need_revision_id": NEED_V1, "departmental_need": NEED,
+				"revision_number": 1, "revision_status": "Accepted", "title": "Test requirement",
 				"description": "Procure and implement the test requirement.",
 				"expected_operational_result": "The department can operate the tested capability.",
 				"indicative_quantity": 1, "unit": UNIT, "required_by_date": "2102-05-31", "fixture_namespace": NS,
 			}
 		).insert(ignore_permissions=True)
-	frappe.db.set_value("Departmental Need", NEED, {"current_version": NEED_V1, "current_accepted_version": NEED_V1}, update_modified=False)
+	frappe.db.set_value("Departmental Need", NEED, {"current_revision": NEED_V1, "current_accepted_revision": NEED_V1}, update_modified=False)
 
 
 def _strategy_world() -> None:

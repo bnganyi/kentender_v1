@@ -20,7 +20,7 @@ from frappe.utils import cstr, flt, fmt_money, format_datetime, formatdate
 from kentender_core.services import site_configuration
 from kentender_procurement.procurement_planning.services import budget_gateway, needs_intake, references
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
-from kentender_procurement.procurement_planning.services.dpp_lifecycle import ATTESTATION, entry_is_complete
+from kentender_procurement.procurement_planning.services.dpp_lifecycle import ATTESTATION, _has_any_submission, entry_is_complete
 from kentender_procurement.procurement_planning.services.planning_roles import ROLE_AUDITOR, ROLE_PROCUREMENT_PLANNER
 
 NAIROBI = "Africa/Nairobi"
@@ -124,7 +124,7 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 			"Departmental Plan Entry",
 			filters={"dpp_version": version.name},
 			fields=[
-				"entry_id", "source_origin", "need", "need_version", "title", "description",
+				"entry_id", "source_origin", "need", "need_revision", "title", "description",
 				"expected_operational_result", "quantity", "unit", "required_by_date",
 				"budget_line", "indicative_amount", "not_proceeding_reason",
 			],
@@ -190,7 +190,43 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 	badge, badge_kind = BADGES.get(version.version_status if version else root.current_state, ("Draft", "attention"))
 	if mutable and ready:
 		badge, badge_kind = "Ready to submit", "live"
+	# §5.1 "Accepted; change required → Create update": the department's own
+	# actors, on an accepted plan with no open successor. An accepted plan never
+	# re-projects Needs itself (§5.3 inv. 1), so name the ones it is missing.
+	can_create_update = (
+		access in ("author", "hod")
+		and root.current_state == "Accepted"
+		and cstr(root.current_version) == cstr(root.current_accepted_version)
+	)
+	update_notice = None
+	if can_create_update:
+		gaps = needs_intake.coverage_gaps(version)
+		if gaps:
+			plural = "need is" if len(gaps) == 1 else "needs are"
+			update_notice = {
+				"title": f"{len(gaps)} accepted {plural} not in this plan",
+				"text": (
+					f"{', '.join(gaps)} accepted after this plan was accepted. "
+					"Create an update to carry it into a new draft version, fund it and resubmit."
+				),
+			}
 	attestation = ATTESTATION.format(department=labels["department_name"], financial_year=labels["financial_year"])
+	# §5.1 — the window gates only a first submission; a plan that has been
+	# submitted before may still send corrections and updates after close.
+	window = _window_display(root.fiscal_year)
+	if window["state"] == "Closed" and _has_any_submission(root):
+		window = {**window, "display": "Closed · corrections and updates may still be submitted"}
+	submit_hint = ""
+	if mutable and ready and access != "hod":
+		submit_hint = "Only the Head of User Department, or an acting head, can submit this plan."
+	# FU-14 — the record route never strands the actor who holds the open task
+	open_task = None
+	if access == "planner" and version and version.version_status == "Submitted":
+		task = frappe.db.get_value(
+			"Departmental Plan Validation Task", {"dpp_version": version.name, "status": "Open"}, ["name", "submission"], as_dict=True,
+		)
+		if task and not authz.is_segregated(actor, authz.ACTION_DPP_VALIDATE, submission=task.submission):
+			open_task = {"label": "Review submission", "route": ["procurement-planning", "dpp-review", task.name]}
 	return {
 		"outcome": "OK",
 		"access": access,
@@ -206,16 +242,18 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 		},
 		"header": {
 			"title": f"{labels['department_name']} departmental plan",
-			"reference_line": f"{root.dpp_reference} · Version {version.version_number}" if version else root.dpp_reference,
+			"reference_line": f"{root.dpp_reference} · Submission {version.version_number}" if version else root.dpp_reference,
 			"badge": badge,
 			"badge_kind": badge_kind,
 		},
 		"context": {
 			"department": labels["department"],
 			"financial_year": labels["financial_year"],
-			"window": _window_display(root.fiscal_year),
+			"window": window,
 		},
 		"readiness": readiness,
+		"submit_hint": submit_hint,
+		"open_task": open_task,
 		"entries": entries,
 		"totals_caption": totals_caption if entries else "",
 		"certification": {
@@ -226,6 +264,8 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 		},
 		"mutable": mutable,
 		"can_submit": mutable and ready and access == "hod",
+		"can_create_update": can_create_update,
+		"update_notice": update_notice,
 		"has_returned_issues": bool(issues_by_entry),
 	}
 
@@ -253,7 +293,11 @@ def get_dpp_entry_editor(*, dpp_reference: str, entry_id: str | None = None, use
 	actor = authz.actor(user)
 	root = _root(dpp_reference)
 	access = authz.require_dpp_read(root.organisation_unit, actor)
-	if access not in ("author", "hod"):
+	# KT-STD-001 v1.5 §3A.6 / AUTH-ADR-001 §8 — a technical reader or Auditor
+	# (`access == "oversight"`) reads this editor read-only; every other
+	# non-author/hod profile (e.g. a Planner) keeps the existing masked
+	# denial — this never widens who may reach the editor at all.
+	if access not in ("author", "hod", "oversight"):
 		authz.not_found()
 	labels = _labels(root)
 	version = frappe.get_doc("Departmental Plan Version", root.current_version)
@@ -263,6 +307,7 @@ def get_dpp_entry_editor(*, dpp_reference: str, entry_id: str | None = None, use
 		"record_version": int(root.record_version or 0),
 		"dpp_version": version.name,
 		"mutable": version.version_status == "Draft",
+		"can_edit": access in ("author", "hod"),
 		"context": {"department": labels["department"], "financial_year": labels["financial_year"]},
 		"budget_lines": _eligible_lines(root),
 		"currency": "KES",
@@ -288,7 +333,7 @@ def get_dpp_entry_editor(*, dpp_reference: str, entry_id: str | None = None, use
 			"indicative_amount": flt(entry.indicative_amount) or None,
 			"not_proceeding_reason": cstr(entry.not_proceeding_reason),
 			"need_reference_line": (
-				f"{entry.need} · Version {needs_intake.need_version_number(entry.need_version)}" if entry.need else ""
+				f"{entry.need} · Revision {needs_intake.need_revision_number(entry.need_revision)}" if entry.need else ""
 			),
 		}
 	units = frappe.get_all("UOM", filters={"enabled": 1}, fields=["name", "uom_name"], order_by="uom_name asc", limit_page_length=200)
@@ -347,7 +392,7 @@ def get_dpp_validation_task(*, task: str, user: str | None = None) -> dict[str, 
 		"header": {
 			"eyebrow": "DEPARTMENTAL PLAN REVIEW",
 			"title": f"Validate {labels['department_name']} departmental plan",
-			"reference_line": f"{root.dpp_reference} · Submitted Version {version.version_number}",
+			"reference_line": f"{root.dpp_reference} · Submission {version.version_number}",
 			"badge": "Awaiting validation" if task_doc.status == "Open" else "Completed",
 			"badge_kind": "pending" if task_doc.status == "Open" else "live",
 		},

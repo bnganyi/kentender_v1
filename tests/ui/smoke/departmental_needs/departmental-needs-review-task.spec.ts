@@ -28,7 +28,7 @@ test.describe("NDS-UI-05 review task", () => {
 		NEED = resetFixture<{ need: string }>("reset_review_task_fixture").need;
 	});
 
-	test("reviewer opens the task from My Work and sees the full submitted version", async ({
+	test("reviewer opens the task from My Work and sees the full submitted revision", async ({
 		page,
 	}) => {
 		/**
@@ -45,7 +45,7 @@ test.describe("NDS-UI-05 review task", () => {
 		await row.locator("[data-open]").click();
 
 		await expectScreen(page, "task");
-		// §12.5 — the complete submitted version, not a summary. Scoped to the
+		// §12.5 — the complete submitted revision, not a summary. Scoped to the
 		// shell: frappe keeps the previous page container (My Work, still
 		// holding the row title) in the DOM.
 		await expect(
@@ -93,7 +93,66 @@ test.describe("NDS-UI-05 review task", () => {
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
-	test("the author who submitted the version is offered no decision", async ({ page }) => {
+	test("a submitted Need offers its reviewer the decision route from the detail page", async ({ page }) => {
+		/**
+		 * Regression (2026-09-11): the Head of User Department opening the
+		 * record itself (breadcrumb, search, a shared link) saw "Awaiting
+		 * departmental review" and nothing to act on — the task screen was
+		 * reachable only from My Work and the workspace row. The server's own
+		 * actions list carries `review` for the reviewer; the detail renders it.
+		 */
+		const errors = collectConsoleErrors(page);
+		await loginAsNdsFixtureReviewer(page);
+		await gotoNeeds(page, `/${NEED}`);
+		await expectScreen(page, "detail");
+		const review = page.locator('[data-testid="nds-detail-review"]');
+		await expect(review).toHaveText("Review");
+		await review.click();
+		await expectScreen(page, "task");
+		await expect(page.locator('[data-testid="nds-decision-accept"]')).toBeVisible();
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+
+	test("a returned Need offers its author the correction route from the detail page", async ({ page }) => {
+		/**
+		 * Regression (2026-09-11): the return notification and the row's View
+		 * both land on the detail route, which showed a Returned Need with no
+		 * action at all — the author's only way back into the correction
+		 * editor was the workspace row. §12.1: "Correct routes to the actor's
+		 * editable current revision." The server's own actions list decides;
+		 * the detail screen renders it.
+		 */
+		const errors = collectConsoleErrors(page);
+		await loginAsNdsFixtureReviewer(page);
+		await gotoNeeds(page, "");
+		await selectContext(page);
+		await expectScreen(page, "workspace");
+		await page
+			.locator(
+				`[data-testid="nds-need-row"][data-reference="${NEED}"] [data-testid="nds-row-action"][data-action="review"]`,
+			)
+			.click();
+		await expectScreen(page, "task");
+		await page.locator('[data-testid="nds-decision-return"]').click();
+		await page.locator('[data-testid="nds-dialog-reason"]').fill("Quantity needs a basis");
+		await page.locator('[data-testid="nds-dialog-confirm"]').click();
+		await expect(page.locator('[data-testid="nds-dialog-reason"]')).toHaveCount(0);
+
+		await loginAsNdsFixtureAuthor(page);
+		await gotoNeeds(page, `/${NEED}`);
+		await expectScreen(page, "detail");
+		const card = page.locator('[data-testid="nds-detail-editable"]');
+		await expect(card).toContainText("Returned for correction");
+		await expect(card).toContainText("Quantity needs a basis");
+		const correct = page.locator('[data-testid="nds-detail-edit"]');
+		await expect(correct).toHaveText("Correct");
+		await correct.click();
+		await expectScreen(page, "editor");
+		await expect(page).toHaveURL(new RegExp(`/departmental-needs/${NEED}/edit$`));
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+
+	test("the author who submitted the revision is offered no decision", async ({ page }) => {
 		/**
 		 * NDS-AC-010 maker-checker, proved from the browser rather than only in
 		 * the service tests. §17 forbids inferring authority from a route: the

@@ -62,6 +62,10 @@ export function submitDepartmentalPlan(args) {
 	return frappeCall(`${BASE}.submit_departmental_plan`, args);
 }
 
+export function createDepartmentalPlanUpdate(args) {
+	return frappeCall(`${BASE}.create_departmental_plan_update`, args);
+}
+
 // --- validation ----------------------------------------------------------
 
 export function getDppValidationTask(task) {

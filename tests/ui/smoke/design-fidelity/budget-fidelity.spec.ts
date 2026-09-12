@@ -336,6 +336,61 @@ test.describe("Budget & Funding — design fidelity", () => {
 		await art.close();
 	});
 
+	// Regression (2026-09-11, "owner scope lost on save"): after Save draft the
+	// editor used to reload the Budget Lines twice — the second reload was
+	// fire-and-forget and landed after the screen was interactive again, so an
+	// Owner scope picked right after "Draft saved" was silently reverted to the
+	// server's rows and the next save sent the reverted value. The slower the
+	// round trip, the wider the window; this test widens it deliberately.
+	test("BUD-DES-03 — Owner scope picked right after a save is kept and persisted", async ({ page }) => {
+		const errors = collectPageErrors(page);
+		await loginAsBudgetOfficer(page);
+		await page.goto("/app/budget-funding/BUD-FIDELITY-DRAFT/version/1/edit/lines", {
+			waitUntil: "domcontentloaded",
+		});
+		await page.waitForSelector('[data-testid="bud-editor-lines-table"]', { timeout: 30_000 });
+
+		const ownerSelect = page.locator('[data-testid="bud-editor-lines-table"] tbody tr').first().locator("select").first();
+		const saveBtn = page.locator('[data-testid="bud-editor-save-btn"]').first();
+		const original = await ownerSelect.inputValue();
+		const candidates = (await ownerSelect.locator("option").evaluateAll((opts) => opts.map((o) => (o as HTMLOptionElement).value))).filter(
+			(v) => v && v !== original,
+		);
+		expect(candidates.length, "needs two alternative Organisation Units").toBeGreaterThanOrEqual(2);
+		const [first, second] = candidates;
+
+		// Every lines reload now takes 1.5 s longer than the save itself.
+		await page.route("**/api/method/kentender_budget.api.budget_api.get_budget_version_lines_editor", async (route) => {
+			const response = await route.fetch();
+			await new Promise((resolve) => setTimeout(resolve, 1500));
+			await route.fulfill({ response });
+		});
+
+		await ownerSelect.selectOption(first);
+		await saveBtn.click();
+		await expect(saveBtn).toBeDisabled();
+		await expect(saveBtn).toBeEnabled({ timeout: 30_000 });
+		await expect(ownerSelect).toHaveValue(first);
+
+		// The user's very next edit, made as soon as the screen is interactive.
+		await ownerSelect.selectOption(second);
+		await page.waitForTimeout(3000); // any stale reload would land in here
+		await expect(ownerSelect, "late reload must not revert the user's selection").toHaveValue(second);
+
+		await saveBtn.click();
+		await expect(saveBtn).toBeDisabled();
+		await expect(saveBtn).toBeEnabled({ timeout: 30_000 });
+		await page.reload({ waitUntil: "domcontentloaded" });
+		await page.waitForSelector('[data-testid="bud-editor-lines-table"]', { timeout: 30_000 });
+		await expect(ownerSelect).toHaveValue(second);
+
+		// Leave the shared fixture as the seed wrote it.
+		await ownerSelect.selectOption(original);
+		await saveBtn.click();
+		await expect(saveBtn).toBeEnabled({ timeout: 30_000 });
+		expect(errors, "console errors").toEqual([]);
+	});
+
 	// ---------------------------------------------------------------
 	// Active budget detail (/app/budget-funding/{code}[/tab]) — BUD-DES-04/04A/07
 	// ---------------------------------------------------------------
@@ -395,7 +450,12 @@ test.describe("Budget & Funding — design fidelity", () => {
 
 		const errors = collectPageErrors(page);
 		await loginAsBudgetOfficer(page);
-		await page.goto("/app/budget-funding/line/MOH-BL-HWD-2027", { waitUntil: "domcontentloaded" });
+		// The fixture budget's own reservation-free line. The canonical
+		// MOH-BL-HWD-2027 is no longer a valid "no reservation" target: the
+		// Requisitions canonical seed stage (SEED-OPS-001, 2026-09-09) reserves
+		// against it, and this gate must not depend on what downstream seeds do
+		// to the canonical world.
+		await page.goto("/app/budget-funding/line/BUD-FIDELITY-REVIEW-HWD", { waitUntil: "domcontentloaded" });
 		await page.waitForSelector('[data-testid="bud-line-reservations-empty"]', { timeout: 30_000 });
 
 		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-06");

@@ -20,9 +20,9 @@ from kentender_procurement.departmental_needs.constants import (
 	STATE_SUBMITTED,
 	USAGE_FULL,
 	USAGE_NOT_INCLUDED,
-	VERSION_ACCEPTED,
-	VERSION_SUBMITTED,
-	VERSION_SUPERSEDED,
+	REVISION_ACCEPTED,
+	REVISION_SUBMITTED,
+	REVISION_SUPERSEDED,
 )
 from kentender_procurement.departmental_needs.seeds import profiles
 from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
@@ -79,8 +79,8 @@ class SeedCase(IntegrationTestCase):
 	def need(self, reference: str):
 		return frappe.get_doc("Departmental Need", reference)
 
-	def current_version(self, reference: str):
-		return frappe.get_doc("Departmental Need Version", self.need(reference).current_version)
+	def current_revision(self, reference: str):
+		return frappe.get_doc("Departmental Need Revision", self.need(reference).current_revision)
 
 	def unit_name(self, organisation_unit: str) -> str:
 		return frappe.db.get_value("Organisation Unit", organisation_unit, "unit_name")
@@ -160,7 +160,7 @@ class TestDefaultNeeds(SeedCase):
 	def test_each_need_matches_its_specified_row(self):
 		for reference, (unit_label, quantity, required_by, state) in DEFAULT_NEEDS.items():
 			need = self.need(reference)
-			version = self.current_version(reference)
+			version = self.current_revision(reference)
 			self.assertEqual(self.unit_name(need.organisation_unit), unit_label, reference)
 			self.assertEqual(need.current_state, state, reference)
 			self.assertEqual(int(version.indicative_quantity), quantity, reference)
@@ -168,21 +168,21 @@ class TestDefaultNeeds(SeedCase):
 
 	def test_each_need_carries_its_exact_expected_operational_result(self):
 		for reference, expected in EXPECTED_RESULTS.items():
-			self.assertEqual(self.current_version(reference).expected_operational_result, expected)
+			self.assertEqual(self.current_revision(reference).expected_operational_result, expected)
 
 	def test_the_accepted_need_points_at_its_accepted_version(self):
 		need = self.need("NDS-MOH-2027-0001")
-		self.assertEqual(need.current_accepted_version, need.current_version)
+		self.assertEqual(need.current_accepted_revision, need.current_revision)
 		self.assertEqual(
 			frappe.db.get_value(
-				"Departmental Need Version", need.current_accepted_version, "version_status"
+				"Departmental Need Revision", need.current_accepted_revision, "revision_status"
 			),
-			VERSION_ACCEPTED,
+			REVISION_ACCEPTED,
 		)
 
 	def test_the_submitted_need_is_locked_and_hashed(self):
-		version = self.current_version("NDS-MOH-2027-0002")
-		self.assertEqual(version.version_status, VERSION_SUBMITTED)
+		version = self.current_revision("NDS-MOH-2027-0002")
+		self.assertEqual(version.revision_status, REVISION_SUBMITTED)
 		self.assertTrue(version.content_hash)
 
 	def test_every_need_is_owned_by_the_named_author(self):
@@ -229,14 +229,14 @@ class TestDefaultNeeds(SeedCase):
 	def test_reseeding_creates_nothing_new(self):
 		before = (
 			frappe.db.count("Departmental Need"),
-			frappe.db.count("Departmental Need Version"),
+			frappe.db.count("Departmental Need Revision"),
 			frappe.db.count("Departmental Need Decision"),
 			frappe.db.count("Departmental Need Event"),
 		)
 		upsert_departmental_needs()
 		after = (
 			frappe.db.count("Departmental Need"),
-			frappe.db.count("Departmental Need Version"),
+			frappe.db.count("Departmental Need Revision"),
 			frappe.db.count("Departmental Need Decision"),
 			frappe.db.count("Departmental Need Event"),
 		)
@@ -252,7 +252,7 @@ class TestDefaultNeeds(SeedCase):
 				{
 					"departmental_need": need.name,
 					"event_type": "DepartmentalNeedAccepted.v2",
-					"need_version": need.current_accepted_version,
+					"need_revision": need.current_accepted_revision,
 				},
 			)
 		)
@@ -265,7 +265,7 @@ class TestSelectableProfiles(SeedCase):
 		return frappe.get_all(
 			"Departmental Need",
 			filters={"fixture_namespace": NS},
-			fields=["name", "current_state", "current_version", "current_accepted_version"],
+			fields=["name", "current_state", "current_revision", "current_accepted_revision"],
 			order_by="name",
 		)
 
@@ -286,16 +286,16 @@ class TestSelectableProfiles(SeedCase):
 	def test_the_successor_profile_changes_only_the_required_by_date(self):
 		# §14.5 — Version 2 differs from Version 1 in one field.
 		need = self.need("NDS-MOH-2027-0001")
-		version_one = frappe.get_doc("Departmental Need Version", need.current_accepted_version)
+		version_one = frappe.get_doc("Departmental Need Revision", need.current_accepted_revision)
 		applied = profiles.apply_profile("successor")
-		version_two = frappe.get_doc("Departmental Need Version", applied["accepted_version"])
+		version_two = frappe.get_doc("Departmental Need Revision", applied["accepted_revision"])
 		self.assertEqual(str(version_two.required_by_date), profiles.SUCCESSOR_REQUIRED_BY)
 		for field in ("title", "description", "expected_operational_result", "unit"):
 			self.assertEqual(version_two.get(field), version_one.get(field), field)
 		self.assertEqual(version_two.indicative_quantity, version_one.indicative_quantity)
 		# Version 1 is superseded, not altered.
 		version_one.reload()
-		self.assertEqual(version_one.version_status, VERSION_SUPERSEDED)
+		self.assertEqual(version_one.revision_status, REVISION_SUPERSEDED)
 		self.assertEqual(str(version_one.required_by_date), "2027-08-31")
 
 	def test_resetting_the_successor_restores_the_default_fixture(self):
@@ -325,7 +325,7 @@ class TestSelectableProfiles(SeedCase):
 		self.assertEqual(planning_usage(need.name), USAGE_NOT_INCLUDED)
 		row = frappe.db.get_value(
 			"Need Planning Usage Projection",
-			need.current_accepted_version,
+			need.current_accepted_revision,
 			["active_plan", "active_plan_item"],
 			as_dict=True,
 		)

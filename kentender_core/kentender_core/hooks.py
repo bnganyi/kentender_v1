@@ -101,6 +101,10 @@ page_js = {
 	# frappe.require() (AGENTS.md §6.9). The former organisation-structure and
 	# user-responsibilities pages are removed without an alias (§12).
 	"system-setup": "public/js/system_setup_page.js",
+	# AUTH-ADR-001 §10/§12 — the technical-only, read-only cross-app record
+	# search. Roles empty on the Page; the screen gates in-page per KT-STD-001
+	# §3A.3 and this same convention.
+	"technical-search": "public/js/technical_search_page.js",
 	"user-operational-acc": "public/js/authorization_admin_pages.js",
 	"workflow-routing-rul": "public/js/authorization_admin_pages.js",
 	"access-diagnostic": "public/js/authorization_admin_pages.js",

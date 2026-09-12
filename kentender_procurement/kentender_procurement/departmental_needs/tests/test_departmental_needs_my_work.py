@@ -106,6 +106,14 @@ class TestMyWorkProvider(DepartmentalNeedsCommandCase):
 		self.submit(self.create())
 		self.assertEqual(self.assigned_for(AUTHOR), [])
 
+	def test_a_technical_reader_gets_no_rows_even_though_frappe_projects_every_role(self):
+		# KT-STD-001 v1.5 §3A.6 / AUTH-ADR-001 §8 — Administrator decides
+		# nothing, so My Work must stay empty even though `frappe.get_roles`
+		# projects every role (including Head of User Department) onto them,
+		# which would otherwise let the role check alone pass it through.
+		self.submit(self.create())
+		self.assertEqual(self.assigned_for("Administrator"), [])
+
 	def test_get_my_work_merges_the_provider_rows_for_a_role_assigned_reviewer(self):
 		# The reviewer holds no Operational Scope Assignment, so without the
 		# provider hook My Work would answer NO_ACTIVE_OPERATIONAL_ASSIGNMENT.

@@ -360,7 +360,7 @@ ITEM_COPY_FIELDS = (
 	"item_status",
 )
 ALLOCATION_COPY_FIELDS = (
-	"allocation_id", "dpp_entry", "source_origin", "need", "need_version", "organisation_unit",
+	"allocation_id", "dpp_entry", "source_origin", "need", "need_revision", "organisation_unit",
 	"quantity", "unit", "required_by_date", "budget_line", "indicative_amount",
 )
 

@@ -165,8 +165,8 @@ def accept_departmental_plan(
 
 	for row in snapshots:
 		if row.get("need"):
-			current = needs_intake.current_accepted_version_of(row["need"], task_doc.fiscal_year)
-			if current != cstr(row.get("need_version")):
+			current = needs_intake.current_accepted_revision_of(row["need"], task_doc.fiscal_year)
+			if current != cstr(row.get("need_revision")):
 				fail("PLN_SOURCE_UNAVAILABLE")
 
 	decision = _decide(
@@ -209,10 +209,10 @@ def _publish_not_proceeding(snapshots: list[dict[str, Any]], decision_name: str)
 			continue
 		needs_usage.project_planning_usage(
 			departmental_need=row["need"],
-			accepted_version=row["need_version"],
+			accepted_revision=row["need_revision"],
 			usage="Not proceeding",
 			not_proceeding_reason=reason,
-			source_event_id=f"{decision_name}:{row['need_version']}:not-proceeding",
+			source_event_id=f"{decision_name}:{row['need_revision']}:not-proceeding",
 			source_event_time=now_datetime(),
 			user="Administrator",
 		)

@@ -4,6 +4,7 @@ import { login } from "../../helpers/auth";
 import {
 	AUDITOR,
 	AUTHOR,
+	FY_LABEL,
 	NOBODY,
 	OUTSIDER,
 	OU_NAME,
@@ -31,7 +32,7 @@ test.describe("PLN-UI-01 Procurement Planning workspace", () => {
 	});
 	test.afterAll(() => restoreSite());
 
-	test("author is offered Open departmental plan, opens it and sees the live re-render", async ({ page }) => {
+	test("author is offered Start departmental plan, starts it and sees the live re-render", async ({ page }) => {
 		const errors = collectConsoleErrors(page);
 		await login(page, AUTHOR, PASSWORD);
 		await gotoPlanning(page);
@@ -49,14 +50,16 @@ test.describe("PLN-UI-01 Procurement Planning workspace", () => {
 		// The one offered action for an empty department while intake is open.
 		const rows = page.locator('[data-testid="pln-action-row"]');
 		await expect(rows).toHaveCount(1);
-		await expect(rows.first().locator(".pln-ready-headline")).toHaveText("Open departmental plan");
+		await expect(rows.first().locator(".pln-ready-headline")).toHaveText(`No departmental plan yet for ${FY_LABEL}`);
 		await expect(rows.first().locator(".pln-ready-sub")).toHaveText(OU_NAME);
+		await expect(page.locator('[data-testid="pln-work-action-0"]')).toHaveText("Start departmental plan");
 		await expect(page.locator('[data-testid="pln-count-label"]')).toHaveText("0 departmental plans");
 		await expect(page.locator('[data-testid="pln-schedule-health"]')).toHaveCount(0);
 
 		// A real §8.2 command from the button, then the interactive re-render.
 		await page.locator('[data-testid="pln-work-action-0"]').click();
 		await expect(rows.first().locator(".pln-ready-headline")).toHaveText("Continue departmental plan", { timeout: 30_000 });
+		await expect(page.locator('[data-testid="pln-work-action-0"]')).toHaveText("Continue");
 		const planRow = page.locator('[data-testid="pln-departmental-plans"] tbody tr');
 		await expect(planRow).toHaveCount(1);
 		await expect(planRow).toContainText(OU_NAME);

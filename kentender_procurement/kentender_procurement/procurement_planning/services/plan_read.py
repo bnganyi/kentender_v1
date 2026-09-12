@@ -150,8 +150,105 @@ def _accepted_entry_rows(fiscal_year: str) -> list[dict[str, Any]]:
 	return rows
 
 
+# --------------------------------------------------------------------------
+# Source lineage (§7.1). A DPP update copies every entry onto a new document
+# under the same stable entry_id. An allocation stays pinned to the document
+# it was formed from; whether that document still *is* the source depends
+# on the current accepted copy carrying the same facts and funding.
+# --------------------------------------------------------------------------
+
+ENTRY_SOURCE_FIELDS = (
+	"source_origin", "need", "need_revision", "title", "description", "expected_operational_result",
+	"quantity", "unit", "required_by_date", "budget_line", "indicative_amount", "not_proceeding_reason",
+)
+
+
+def _source_signature(entry) -> tuple:
+	return (
+		cstr(entry.source_origin), cstr(entry.need), cstr(entry.need_revision),
+		cstr(entry.title).strip(), cstr(entry.description).strip(), cstr(entry.expected_operational_result).strip(),
+		flt(entry.quantity), cstr(entry.unit), cstr(entry.required_by_date),
+		cstr(entry.budget_line), flt(entry.indicative_amount), cstr(entry.not_proceeding_reason).strip(),
+	)
+
+
+def _entry_source(dpp_entry: str):
+	return frappe.db.get_value("Departmental Plan Entry", dpp_entry, ["name", "entry_id", "dpp_version", *ENTRY_SOURCE_FIELDS], as_dict=True)
+
+
+def current_entry_for(dpp_entry: str) -> str:
+	"""The current accepted Version's document for this entry's stable
+	entry_id — `dpp_entry` itself when it is current, "" when the DPP has no
+	accepted Version or the entry is gone from it."""
+	entry = frappe.db.get_value("Departmental Plan Entry", dpp_entry, ["entry_id", "dpp_version"], as_dict=True)
+	if not entry:
+		return ""
+	root_name = frappe.db.get_value("Departmental Plan Version", entry.dpp_version, "departmental_plan")
+	current_accepted = cstr(frappe.db.get_value("Departmental Plan", root_name, "current_accepted_version"))
+	if not current_accepted:
+		return ""
+	if current_accepted == entry.dpp_version:
+		return dpp_entry
+	return cstr(frappe.db.get_value("Departmental Plan Entry", {"dpp_version": current_accepted, "entry_id": entry.entry_id}, "name"))
+
+
+def same_source(dpp_entry: str, other: str) -> bool:
+	"""Two documents of one entry_id are the same source when every fact
+	Planning consumes and the funding specification are identical."""
+	if dpp_entry == other:
+		return True
+	a, b = _entry_source(dpp_entry), _entry_source(other)
+	return bool(a and b and a.entry_id == b.entry_id and _source_signature(a) == _source_signature(b))
+
+
+def same_source_lineage(dpp_entry: str) -> list[str]:
+	"""Every document under the same DPP root carrying this entry_id with the
+	same facts and funding — the names an allocation may be pinned to."""
+	entry = _entry_source(dpp_entry)
+	if not entry:
+		return [dpp_entry]
+	root_name = frappe.db.get_value("Departmental Plan Version", entry.dpp_version, "departmental_plan")
+	versions = frappe.get_all("Departmental Plan Version", filters={"departmental_plan": root_name}, pluck="name")
+	candidates = frappe.get_all(
+		"Departmental Plan Entry",
+		filters={"dpp_version": ("in", versions), "entry_id": entry.entry_id},
+		fields=["name", "entry_id", "dpp_version", *ENTRY_SOURCE_FIELDS],
+	)
+	signature = _source_signature(entry)
+	return [row.name for row in candidates if _source_signature(row) == signature]
+
+
+def _with_current_copies(allocated: set[str]) -> set[str]:
+	"""An allocation pinned to a predecessor copy claims the current copy too
+	when nothing about the source changed; a changed source leaves the
+	current copy unallocated (§7.1 — correction, never an automatic move)."""
+	out = set(allocated)
+	for name in allocated:
+		current = current_entry_for(name)
+		if current and current != name and same_source(name, current):
+			out.add(current)
+	return out
+
+
 def _allocated_dpp_entries(plan_version: str) -> set[str]:
-	return set(frappe.get_all("Plan Source Allocation", filters={"plan_version": plan_version, "allocation_state": ("in", ("Draft", "Active"))}, pluck="dpp_entry"))
+	names = set(frappe.get_all("Plan Source Allocation", filters={"plan_version": plan_version, "allocation_state": ("in", ("Draft", "Active"))}, pluck="dpp_entry"))
+	return _with_current_copies(names)
+
+
+def allocated_current_entries(fiscal_year: str) -> set[str]:
+	"""Entries effectively allocated in any live Version of the year's Plan."""
+	plan = frappe.db.get_value("Annual Plan", {"fiscal_year": fiscal_year}, "name")
+	if not plan:
+		return set()
+	versions = frappe.get_all("Annual Plan Version", filters={"annual_plan": plan}, pluck="name")
+	names = set(
+		frappe.get_all(
+			"Plan Source Allocation",
+			filters={"plan_version": ("in", versions or ("",)), "allocation_state": ("in", ("Draft", "Active"))},
+			pluck="dpp_entry",
+		)
+	)
+	return _with_current_copies(names)
 
 
 def source_correction_required(dpp_entry: str) -> bool:
@@ -162,8 +259,10 @@ def source_correction_required(dpp_entry: str) -> bool:
 	current_accepted = frappe.db.get_value("Departmental Plan", root_name, "current_accepted_version")
 	if not current_accepted or current_accepted == entry.dpp_version:
 		return False
-	current_entry = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": current_accepted, "entry_id": entry.entry_id}, "name")
-	return current_entry != dpp_entry
+	current_entry = current_entry_for(dpp_entry)
+	if not current_entry:
+		return True
+	return not same_source(dpp_entry, current_entry)
 
 
 def resolve_item_doc_name(plan_item_id: str) -> str:
@@ -302,6 +401,27 @@ def _item_rows(plan_version: str) -> list[dict[str, Any]]:
 	return rows
 
 
+def _open_task_for(actor: str, version) -> dict[str, Any] | None:
+	"""FU-14 — the viewing actor's own open task on this Version, so the record
+	route is never a dead end for its decider. Same authority as the workspace."""
+	if authz.has_site_role(ROLE_FINANCE_CONFIRMATION_OFFICER, actor) and not authz.is_segregated(
+		actor, authz.ACTION_FINANCE_DECIDE, plan_version=version.name
+	):
+		task = frappe.db.get_value("Plan Finance Task", {"plan_version": version.name, "status": "Open"}, "name")
+		if task:
+			return {"label": "Open Finance task", "route": [PAGE, "finance", task]}
+	for stage, role, action in (
+		("Accounting Officer adoption", ROLE_ACCOUNTING_OFFICER, authz.ACTION_AO_DECIDE),
+		("Statutory approval", ROLE_PLAN_STATUTORY_APPROVER, authz.ACTION_STATUTORY_DECIDE),
+	):
+		if not authz.has_site_role(role, actor) or authz.is_segregated(actor, action, plan_version=version.name):
+			continue
+		task = frappe.db.get_value("Plan Governance Task", {"plan_version": version.name, "stage": stage, "status": "Open"}, "name")
+		if task:
+			return {"label": "Open decision", "route": [PAGE, "review", task]}
+	return None
+
+
 def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	plan = _plan_root(plan_reference)
@@ -335,6 +455,7 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 		},
 		"mutable": mutable,
 		"can_act": can_act,
+		"open_task": _open_task_for(actor, version),
 		"is_correction": bool(version.correction_of_plan_version),
 		"is_successor": bool(version.based_on_version),
 		"has_open_successor": bool(plan.open_successor_version),
@@ -477,7 +598,7 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 	allocations = frappe.get_all(
 		"Plan Source Allocation",
 		filters={"plan_item": item.name, "allocation_state": ("in", ("Draft", "Active"))},
-		fields=["name", "dpp_entry", "source_origin", "need", "need_version", "organisation_unit", "quantity", "unit", "required_by_date", "budget_line", "indicative_amount"],
+		fields=["name", "dpp_entry", "source_origin", "need", "need_revision", "organisation_unit", "quantity", "unit", "required_by_date", "budget_line", "indicative_amount"],
 		order_by="creation asc",
 	)
 	sources, value, correction_required = [], 0.0, False
@@ -496,8 +617,8 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 				"requirement": entry_title,
 				"department": _ou_label(allocation.organisation_unit),
 				"source_origin": allocation.source_origin,
-				"departmental_plan_line": f"{dpp_reference} · Version {dpp_version_number}",
-				"need_reference_line": f"{allocation.need} · Version {needs_intake.need_version_number(allocation.need_version)}" if allocation.need else "",
+				"departmental_plan_line": f"{dpp_reference} · Submission {dpp_version_number}",
+				"need_reference_line": f"{allocation.need} · Revision {needs_intake.need_revision_number(allocation.need_revision)}" if allocation.need else "",
 				"quantity_display": _quantity_display(allocation.quantity, allocation.unit),
 				"required_by_display": _date(allocation.required_by_date),
 				"budget_line": allocation.budget_line,

@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""NDS-CHG-001 v1.1 §4.3 — one version of the requirement.
+"""NDS-CHG-001 v1.1 §4.3 — one revision of the requirement.
 
 Draft content is mutable only until submission; submitted content is immutable
 (§4.3, §13). This controller enforces field shape and the immutability guard.
@@ -17,16 +17,16 @@ from frappe.utils import flt
 from kentender_procurement.departmental_needs.constants import (
 	DESCRIPTION_MAX,
 	DESCRIPTION_MIN,
-	MUTABLE_VERSION_STATUSES,
+	MUTABLE_REVISION_STATUSES,
 	QUANTITY_DECIMALS,
 	TITLE_MAX,
 	TITLE_MIN,
-	VERSION_CONTENT_FIELDS,
+	REVISION_CONTENT_FIELDS,
 )
 from kentender_procurement.departmental_needs.errors import fail
 
 
-class DepartmentalNeedVersion(Document):
+class DepartmentalNeedRevision(Document):
 	def validate(self):
 		self._guard_immutable_content()
 		self._validate_title()
@@ -35,17 +35,17 @@ class DepartmentalNeedVersion(Document):
 		self._validate_quantity()
 
 	def _guard_immutable_content(self):
-		"""A version that has left Draft never changes its requirement content."""
-		if self.is_new() or self.version_status in MUTABLE_VERSION_STATUSES:
+		"""A revision that has left Draft never changes its requirement content."""
+		if self.is_new() or self.revision_status in MUTABLE_REVISION_STATUSES:
 			return
 		before = self.get_doc_before_save()
 		if not before:
 			return
-		changed = [f for f in VERSION_CONTENT_FIELDS if self.get(f) != before.get(f)]
+		changed = [f for f in REVISION_CONTENT_FIELDS if self.get(f) != before.get(f)]
 		if changed:
 			fail(
 				"NDS_STATE_CONFLICT",
-				f"Version {self.need_version_id} is {self.version_status} and its content is immutable. "
+				f"Revision {self.need_revision_id} is {self.revision_status} and its content is immutable. "
 				f"Attempted to change: {', '.join(changed)}.",
 			)
 
@@ -75,4 +75,4 @@ class DepartmentalNeedVersion(Document):
 			)
 
 	def on_trash(self):
-		fail("NDS_STATE_CONFLICT", "Departmental Need Versions are retained permanently.")
+		fail("NDS_STATE_CONFLICT", "Departmental Need Revisions are retained permanently.")

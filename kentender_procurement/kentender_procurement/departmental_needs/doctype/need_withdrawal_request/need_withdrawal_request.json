@@ -8,7 +8,7 @@
  "field_order": [
   "withdrawal_request_id",
   "departmental_need",
-  "accepted_version",
+  "accepted_revision",
   "requested_by",
   "reason",
   "status",
@@ -39,10 +39,10 @@
   },
   {
    "description": "Fixes the version the requester asks to withdraw.",
-   "fieldname": "accepted_version",
+   "fieldname": "accepted_revision",
    "fieldtype": "Link",
-   "label": "Accepted Version",
-   "options": "Departmental Need Version",
+   "label": "Accepted Revision",
+   "options": "Departmental Need Revision",
    "read_only": 1,
    "reqd": 1,
    "search_index": 1

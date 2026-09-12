@@ -32,6 +32,8 @@ const TASK = {
 	submitted_by: { name: "Dr Peter Kimani", decided_at: "2027-03-08 09:00:00" },
 	contributing_org_unit_labels: { "OU-DHI": "Digital Health", "OU-HRMD": "Human Resources Management and Development" },
 	can_act: true,
+	can_authorise: true,
+	can_return: true,
 	can_change_lead_unit: true,
 };
 
@@ -95,9 +97,20 @@ describe("ProcurementTaskScreen — REQ-DES-09", () => {
 		expect(w.emitted("change-lead-unit")).toBeTruthy();
 	});
 
-	it("disables actions when can_act is false", () => {
-		const w = make({ can_act: false });
+	it("disables actions while a command is pending", () => {
+		const w = mount(ProcurementTaskScreen, { props: { task: TASK, pending: true } });
 		expect(w.find('[data-testid="req-task-return"]').attributes("disabled")).toBeDefined();
 		expect(w.find('[data-testid="req-task-authorise"]').attributes("disabled")).toBeDefined();
+	});
+
+	// KT-STD-001 §3A.6 — an oversight reader (Administrator/System Manager/
+	// Auditor) gets `can_authorise`/`can_return`/`can_change_lead_unit` all
+	// False from the server; the screen must hide the decision controls
+	// entirely, never merely disable them.
+	it("hides all decision controls for an oversight reader", () => {
+		const w = make({ can_authorise: false, can_return: false, can_change_lead_unit: false });
+		expect(w.find('[data-testid="req-task-return"]').exists()).toBe(false);
+		expect(w.find('[data-testid="req-task-authorise"]').exists()).toBe(false);
+		expect(w.find('[data-testid="req-change-lead-unit"]').exists()).toBe(false);
 	});
 });

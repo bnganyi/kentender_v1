@@ -331,6 +331,10 @@ class TestSubmission(PlanningCommandCase):
 		self.assertIn(fx.OU_ALPHA_NAME, submission.attestation_text)
 		self.assertIn("FY 2101/02", submission.attestation_text)
 		self.assertEqual(submission.submitted_by_user, fx.HOD)
+		# §4.5 — the certified snapshot carries the Submission's own version_number
+		version_number = frappe.db.get_value("Departmental Plan Version", submission.dpp_version, "version_number")
+		self.assertEqual(submission.submission_number, version_number)
+		self.assertEqual(submission.submission_number, 1)
 		task = frappe.get_doc(
 			"Departmental Plan Validation Task", {"submission": submission.name}
 		)

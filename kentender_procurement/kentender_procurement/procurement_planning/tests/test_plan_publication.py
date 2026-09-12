@@ -438,12 +438,12 @@ class TestNeedOriginUsagePublishing(PublicationCase):
 
 	def _wipe_need_fixture(self) -> None:
 		needs = frappe.get_all("Departmental Need", filters={"organisation_unit": fx.OU_ALPHA, "name": ("!=", fx.NEED)}, pluck="name")
-		versions = frappe.get_all("Departmental Need Version", filters={"departmental_need": ("in", needs or ("",))}, pluck="name")
+		versions = frappe.get_all("Departmental Need Revision", filters={"departmental_need": ("in", needs or ("",))}, pluck="name")
 		frappe.db.delete("Need Planning Usage Projection", {"name": ("in", versions or ("",))})
 		frappe.db.delete("Departmental Need Decision", {"departmental_need": ("in", needs or ("",))})
 		frappe.db.delete("Departmental Need Review Task", {"departmental_need": ("in", needs or ("",))})
 		frappe.db.delete("Departmental Need Event", {"departmental_need": ("in", needs or ("",))})
-		frappe.db.delete("Departmental Need Version", {"name": ("in", versions or ("",))})
+		frappe.db.delete("Departmental Need Revision", {"name": ("in", versions or ("",))})
 		frappe.db.delete("Departmental Need", {"name": ("in", needs or ("",))})
 
 	def _accepted_need(self, title: str) -> str:
@@ -479,7 +479,7 @@ class TestNeedOriginUsagePublishing(PublicationCase):
 
 	def test_activation_publishes_fully_included_then_removal_publishes_not_included(self):
 		need = self._accepted_need("Need-origin fixture requirement")
-		accepted_version = frappe.db.get_value("Departmental Need", need, "current_accepted_version")
+		accepted_version = frappe.db.get_value("Departmental Need", need, "current_accepted_revision")
 		opened, entries = self._dpp_with_needs([need])
 		entry_id = frappe.db.get_value("Departmental Plan Entry", entries[need], "entry_id")
 		funded = dpp_lifecycle.save_need_funding(
@@ -524,7 +524,7 @@ class TestNeedOriginUsagePublishing(PublicationCase):
 	def test_a_not_proceeding_need_reaches_departmental_needs_and_forms_no_item(self):
 		"""PLN-AC-092/093 — accounted for, excluded from totals, outcome published."""
 		need = self._accepted_need("Need the department reconsidered")
-		accepted_version = frappe.db.get_value("Departmental Need", need, "current_accepted_version")
+		accepted_version = frappe.db.get_value("Departmental Need", need, "current_accepted_revision")
 		opened, entries = self._dpp_with_needs([need])
 		entry_id = frappe.db.get_value("Departmental Plan Entry", entries[need], "entry_id")
 		frappe.set_user(fx.HOD)

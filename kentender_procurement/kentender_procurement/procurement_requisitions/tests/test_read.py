@@ -8,6 +8,7 @@ from __future__ import annotations
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_core.tests import v16_fixtures as core_fx
 from kentender_procurement.procurement_requisitions.services import authorise, draft_commands as cmd, lifecycle, read
 from kentender_procurement.procurement_requisitions.tests import fixtures as fx
 
@@ -18,6 +19,10 @@ class RequisitionReadCase(IntegrationTestCase):
 		super().setUpClass()
 		frappe.set_user("Administrator")
 		fx.ensure_world()
+		# KT-STD-001 §3A.6 — a System-Manager-only user, holding no
+		# Requisitions responsibility at all, proves the technical-read path
+		# is `is_technical` alone, never a coincidental business grant.
+		cls.technical = core_fx.user("req.technical", "Technical Test", roles=("System Manager",))
 		cls.addClassCleanup(fx.restore_site)
 
 	def setUp(self):
@@ -286,6 +291,48 @@ class TestGetDepartmentApprovalTask(RequisitionReadCase):
 		self.assertIn("Head of User Department for", result["deciding_actor"]["role"])
 		self.assertTrue(result["deciding_actor"]["name"])
 
+	def test_administrator_reads_the_task_with_every_decision_capability_false(self):
+		_prepared, sent = self._sent()
+		frappe.set_user("Administrator")
+		result = read.get_department_approval_task(task=sent["task"])
+		self.assertEqual(result["outcome"], "OK")
+		self.assertFalse(result["can_certify"])
+		self.assertFalse(result["can_return"])
+		self.assertEqual(result["deciding_actor"], {})
+
+	def test_a_system_manager_only_user_reads_the_task_with_every_decision_capability_false(self):
+		_prepared, sent = self._sent()
+		frappe.set_user(self.technical)
+		result = read.get_department_approval_task(task=sent["task"])
+		self.assertEqual(result["outcome"], "OK")
+		self.assertFalse(result["can_certify"])
+		self.assertFalse(result["can_return"])
+		self.assertEqual(result["deciding_actor"], {})
+
+	def test_an_auditor_reads_the_task_with_every_decision_capability_false(self):
+		_prepared, sent = self._sent()
+		frappe.set_user(fx.AUDITOR)
+		result = read.get_department_approval_task(task=sent["task"])
+		self.assertEqual(result["outcome"], "OK")
+		self.assertFalse(result["can_certify"])
+		self.assertFalse(result["can_return"])
+		self.assertEqual(result["deciding_actor"], {})
+
+	def test_technical_read_never_relaxes_the_decide_command_gate(self):
+		prepared, sent = self._sent()
+		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
+		for principal in (self.technical, fx.AUDITOR):
+			frappe.set_user(principal)
+			with self.assertRaises(frappe.DoesNotExistError):
+				lifecycle.submit_requisition_to_procurement(
+					requisition=prepared["requisition"], task=sent["task"],
+					expected_record_version=root.record_version, idempotency_key=fx.key(),
+				)
+			with self.assertRaises(frappe.DoesNotExistError):
+				lifecycle.return_to_department_author(
+					task=sent["task"], reason="A reason long enough to pass the control validation check.",
+					expected_record_version=root.record_version, idempotency_key=fx.key(),
+				)
 
 class TestGetProcurementAuthorisationTask(RequisitionReadCase):
 	def test_hopf_reads_the_submission_with_fresh_affordability(self):
@@ -347,6 +394,49 @@ class TestGetProcurementAuthorisationTask(RequisitionReadCase):
 		frappe.set_user(fx.AUTHOR)
 		with self.assertRaises(frappe.DoesNotExistError):
 			read.get_procurement_authorisation_task(task=submitted["task"])
+
+	def test_administrator_reads_the_task_with_every_decision_capability_false(self):
+		_prepared, submitted = self._submitted()
+		frappe.set_user("Administrator")
+		result = read.get_procurement_authorisation_task(task=submitted["task"])
+		self.assertEqual(result["outcome"], "OK")
+		self.assertFalse(result["can_authorise"])
+		self.assertFalse(result["can_return"])
+		self.assertFalse(result["can_change_lead_unit"])
+
+	def test_a_system_manager_only_user_reads_the_task_with_every_decision_capability_false(self):
+		_prepared, submitted = self._submitted()
+		frappe.set_user(self.technical)
+		result = read.get_procurement_authorisation_task(task=submitted["task"])
+		self.assertEqual(result["outcome"], "OK")
+		self.assertFalse(result["can_authorise"])
+		self.assertFalse(result["can_return"])
+		self.assertFalse(result["can_change_lead_unit"])
+
+	def test_an_auditor_reads_the_task_with_every_decision_capability_false(self):
+		_prepared, submitted = self._submitted()
+		frappe.set_user(fx.AUDITOR)
+		result = read.get_procurement_authorisation_task(task=submitted["task"])
+		self.assertEqual(result["outcome"], "OK")
+		self.assertFalse(result["can_authorise"])
+		self.assertFalse(result["can_return"])
+		self.assertFalse(result["can_change_lead_unit"])
+
+	def test_technical_read_never_relaxes_the_decide_command_gate(self):
+		prepared, submitted = self._submitted()
+		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
+		for principal in (self.technical, fx.AUDITOR):
+			frappe.set_user(principal)
+			with self.assertRaises(frappe.DoesNotExistError):
+				authorise.authorise_requisition(
+					requisition=prepared["requisition"], task=submitted["task"],
+					expected_record_version=root.record_version, idempotency_key=fx.key(),
+				)
+			with self.assertRaises(frappe.DoesNotExistError):
+				lifecycle.return_requisition_to_department(
+					task=submitted["task"], reason="A reason long enough to pass the control validation check.",
+					expected_record_version=root.record_version, idempotency_key=fx.key(),
+				)
 
 
 class TestGetAuthorisedRequisitionHandoff(RequisitionReadCase):

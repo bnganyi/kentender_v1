@@ -70,8 +70,8 @@
 		</div>
 
 		<div class="req-actions">
-			<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending || !task.can_act" data-testid="req-task-return" @click="$emit('return')">Return to department</button>
-			<button type="button" class="kt-btn kt-btn-primary" :disabled="pending || !task.can_act" data-testid="req-task-authorise" @click="$emit('authorise')">Authorise for Tender Preparation</button>
+			<button v-if="task.can_return" type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="req-task-return" @click="$emit('return')">Return to department</button>
+			<button v-if="task.can_authorise" type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="req-task-authorise" @click="$emit('authorise')">Authorise for Tender Preparation</button>
 		</div>
 	</div>
 </template>

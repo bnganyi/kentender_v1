@@ -108,6 +108,18 @@ label.
 
 ---
 
+## FU-08 — technical read is now centralised in KT-STD-001 (2026-09-11)
+
+**Status:** Open.
+**What:** Technical read is now stated once in KT-STD-001 v1.5 §3A.6 (11 Sep
+2026). At this module's next version: replace its own technical-read prose,
+roles-table row wording, Forbidden carve-out and any masking clause's silence
+about technical readers with a citation of §3A.6; update AUTH-ADR-001
+citations to v1.8.
+**Path:** STR-CHG-001's next revision.
+
+---
+
 ## Verifying a fix
 
 When a follow-up above is later addressed, do not delete the entry — mark it

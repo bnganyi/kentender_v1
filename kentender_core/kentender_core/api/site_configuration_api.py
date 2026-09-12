@@ -118,6 +118,41 @@ def close_needs_submission(
 
 
 @frappe.whitelist()
+def open_dpp_submission(
+	fiscal_year: str,
+	closes_at: str | None = None,
+	reason: str | None = None,
+	expected_version: str | None = None,
+	idempotency_key: str | None = None,
+) -> dict[str, Any]:
+	"""CFG v0.9 §4.2 / CFG-BR-013 — open departmental-plan intake for one year,
+	atomically closing any other; independent of the needs flag."""
+	return configuration.open_dpp_submission(
+		fiscal_year=fiscal_year,
+		closes_at=closes_at or "",
+		reason=reason or "",
+		expected_version=expected_version or "",
+		idempotency_key=idempotency_key or "",
+	)
+
+
+@frappe.whitelist()
+def close_dpp_submission(
+	fiscal_year: str,
+	reason: str | None = None,
+	expected_version: str | None = None,
+	idempotency_key: str | None = None,
+) -> dict[str, Any]:
+	"""CFG v0.9 §4.2 — close departmental-plan intake, audited."""
+	return configuration.close_dpp_submission(
+		fiscal_year=fiscal_year,
+		reason=reason or "",
+		expected_version=expected_version or "",
+		idempotency_key=idempotency_key or "",
+	)
+
+
+@frappe.whitelist()
 def set_fiscal_year_disabled(
 	fiscal_year: str, disabled: int | str | bool, expected_version: str | None = None
 ) -> dict[str, Any]:

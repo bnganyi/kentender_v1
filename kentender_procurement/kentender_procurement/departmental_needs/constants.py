@@ -24,35 +24,35 @@ NEED_STATES = frozenset(
 IMMUTABLE_NEED_SCOPE_FIELDS = ("organisation_unit", "financial_year")
 
 # --- Version statuses (§4.3) ----------------------------------------------
-VERSION_DRAFT = "Draft"
-VERSION_SUBMITTED = "Submitted"
-VERSION_RETURNED = "Returned"
-VERSION_ACCEPTED = "Accepted"
-VERSION_NOT_TAKEN_FORWARD = "Not taken forward"
-VERSION_WITHDRAWN = "Withdrawn"
-VERSION_SUPERSEDED = "Superseded"
+REVISION_DRAFT = "Draft"
+REVISION_SUBMITTED = "Submitted"
+REVISION_RETURNED = "Returned"
+REVISION_ACCEPTED = "Accepted"
+REVISION_NOT_TAKEN_FORWARD = "Not taken forward"
+REVISION_WITHDRAWN = "Withdrawn"
+REVISION_SUPERSEDED = "Superseded"
 
-VERSION_STATUSES = frozenset(
+REVISION_STATUSES = frozenset(
 	{
-		VERSION_DRAFT,
-		VERSION_SUBMITTED,
-		VERSION_RETURNED,
-		VERSION_ACCEPTED,
-		VERSION_NOT_TAKEN_FORWARD,
-		VERSION_WITHDRAWN,
-		VERSION_SUPERSEDED,
+		REVISION_DRAFT,
+		REVISION_SUBMITTED,
+		REVISION_RETURNED,
+		REVISION_ACCEPTED,
+		REVISION_NOT_TAKEN_FORWARD,
+		REVISION_WITHDRAWN,
+		REVISION_SUPERSEDED,
 	}
 )
 
 # Only a Draft may still have its requirement content edited (§4.3, §13).
-MUTABLE_VERSION_STATUSES = frozenset({VERSION_DRAFT})
+MUTABLE_REVISION_STATUSES = frozenset({REVISION_DRAFT})
 
 # A successor is "open" — and therefore blocks a second one (§5.2,
 # NDS_OPEN_SUCCESSOR_EXISTS) — until it is accepted, declined or withdrawn.
-OPEN_SUCCESSOR_STATUSES = frozenset({VERSION_DRAFT, VERSION_SUBMITTED, VERSION_RETURNED})
+OPEN_SUCCESSOR_STATUSES = frozenset({REVISION_DRAFT, REVISION_SUBMITTED, REVISION_RETURNED})
 
 # The six requester-entered values (§2.2, §4.3).
-VERSION_CONTENT_FIELDS = (
+REVISION_CONTENT_FIELDS = (
 	"title",
 	"description",
 	"expected_operational_result",

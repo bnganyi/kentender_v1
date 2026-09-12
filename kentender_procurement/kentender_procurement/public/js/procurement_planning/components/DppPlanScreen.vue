@@ -18,6 +18,16 @@
 				<button type="button" class="kt-btn kt-btn-secondary" @click="$emit('view-accepted-needs')">
 					View accepted needs
 				</button>
+				<!-- FU-14: the actor who holds the open task reaches it from the record -->
+				<button
+					v-if="plan.open_task"
+					type="button"
+					class="kt-btn kt-btn-primary"
+					data-testid="dpp-open-task"
+					@click="$emit('open-task', plan.open_task.route)"
+				>
+					{{ plan.open_task.label }}
+				</button>
 				<!-- PLN-DES-05: the HoD's ready plan carries Submit in the header;
 				     PLN-DES-02: a mutable draft carries Add direct requirement. -->
 				<button
@@ -38,6 +48,17 @@
 					@click="$emit('add-direct')"
 				>
 					Add direct requirement
+				</button>
+				<!-- §5.1: an accepted plan with no open successor takes an update. -->
+				<button
+					v-else-if="plan.can_create_update"
+					type="button"
+					class="kt-btn kt-btn-primary"
+					data-testid="dpp-create-update"
+					:disabled="pending"
+					@click="$emit('create-update')"
+				>
+					Create update
 				</button>
 			</div>
 		</div>
@@ -64,6 +85,12 @@
 		<div v-if="plan.readiness" class="pln-notice" data-testid="dpp-readiness">
 			<p class="pln-notice-title">{{ plan.readiness.title }}</p>
 			<p>{{ plan.readiness.text }}</p>
+		</div>
+
+		<!-- accepted Needs the accepted plan does not carry (amber) -->
+		<div v-if="plan.update_notice" class="pln-notice" data-testid="dpp-update-notice">
+			<p class="pln-notice-title">{{ plan.update_notice.title }}</p>
+			<p>{{ plan.update_notice.text }}</p>
 		</div>
 
 		<!-- error summary from a refused command -->
@@ -148,6 +175,7 @@
 		<div class="pln-footer-bar">
 			<button type="button" class="kt-btn kt-btn-ghost" @click="$emit('back')">Back to workspace</button>
 			<div class="pln-footer-actions">
+				<span v-if="plan.submit_hint" class="kt-muted" data-testid="dpp-submit-hint">{{ plan.submit_hint }}</span>
 				<button
 					v-if="plan.mutable"
 					type="button"
@@ -189,6 +217,8 @@ defineEmits([
 	"back",
 	"save-draft",
 	"submit",
+	"create-update",
+	"open-task",
 	"update:certified",
 ]);
 

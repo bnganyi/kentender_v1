@@ -59,6 +59,17 @@ function make(plan = PLAN) {
 	return mount(AnnualPlanScreen, { props: { plan, pending: false, errorSummary: "" } });
 }
 
+describe("AnnualPlanScreen — open task from the record (FU-14)", () => {
+	it("renders the holder's open task in the header and emits its route", async () => {
+		const w = make({ ...PLAN, open_task: { label: "Open Finance task", route: ["procurement-planning", "finance", "FNT-1"] } });
+		const button = w.find('[data-testid="pln-open-task"]');
+		expect(button.text()).toBe("Open Finance task");
+		await button.trigger("click");
+		expect(w.emitted("open-task")[0][0]).toEqual(["procurement-planning", "finance", "FNT-1"]);
+		expect(make(PLAN).find('[data-testid="pln-open-task"]').exists()).toBe(false);
+	});
+});
+
 describe("AnnualPlanScreen — PLN-DES-07", () => {
 	it("renders the header, the five-field strip with Reserved share and the unallocated row", () => {
 		const w = make();

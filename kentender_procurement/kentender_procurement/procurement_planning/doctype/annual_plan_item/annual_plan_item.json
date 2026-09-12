@@ -37,7 +37,6 @@
   "award_approval_buffer_days",
   "notification_buffer_days",
   "standstill_period_days",
-  "baseline_invitation_date",
   "baseline_bid_opening_date",
   "baseline_evaluation_completion_date",
   "baseline_award_approval_date",
@@ -279,12 +278,6 @@
    "fieldtype": "Int",
    "label": "Standstill Period (days)",
    "description": "Governed floor 14 (section 135(3))."
-  },
-  {
-   "fieldname": "baseline_invitation_date",
-   "fieldtype": "Date",
-   "label": "Baseline \u2014 Invitation or Advertisement",
-   "read_only": 1
   },
   {
    "fieldname": "baseline_bid_opening_date",

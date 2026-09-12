@@ -11,7 +11,7 @@ const DRAFT_PLAN = {
 	can_submit: false,
 	header: {
 		title: "Digital Health departmental plan",
-		reference_line: "DPP-MOH-DHI-2027-001 · Version 1",
+		reference_line: "DPP-MOH-DHI-2027-001 · Submission 1",
 		badge: "Draft",
 		badge_kind: "attention",
 	},
@@ -91,7 +91,7 @@ describe("DppPlanScreen — PLN-DES-02", () => {
 		const w = make(DRAFT_PLAN);
 		expect(w.find(".kt-page-kicker").text()).toBe("DEPARTMENTAL PROCUREMENT PLAN");
 		expect(w.find(".kt-page-title").text()).toBe("Digital Health departmental plan");
-		expect(w.find(".pln-quiet-ref").text()).toBe("DPP-MOH-DHI-2027-001 · Version 1");
+		expect(w.find(".pln-quiet-ref").text()).toBe("DPP-MOH-DHI-2027-001 · Submission 1");
 		expect(w.find('[data-testid="dpp-badge"]').text()).toBe("Draft");
 		const strip = w.find('[data-testid="dpp-context"]');
 		expect(strip.text()).toContain("Open until 30 Nov 2026, 23:59 EAT");
@@ -192,6 +192,31 @@ describe("DppPlanScreen — PLN-DES-05", () => {
 		);
 	});
 
+	it("routes the task holder to their open task from the record (FU-14)", async () => {
+		const submitted = {
+			...READY_PLAN, access: "planner", mutable: false, can_submit: false,
+			certification: { ...READY_PLAN.certification, show: false },
+			open_task: { label: "Review submission", route: ["procurement-planning", "dpp-review", "DPPV-1"] },
+		};
+		const w = make(submitted);
+		const button = w.find('[data-testid="dpp-open-task"]');
+		expect(button.text()).toBe("Review submission");
+		await button.trigger("click");
+		expect(w.emitted("open-task")[0][0]).toEqual(["procurement-planning", "dpp-review", "DPPV-1"]);
+		expect(make({ ...submitted, open_task: null }).find('[data-testid="dpp-open-task"]').exists()).toBe(false);
+	});
+
+	it("tells a non-HoD why the ready plan's Submit is disabled", () => {
+		const author = make({
+			...READY_PLAN, access: "author", can_submit: false,
+			certification: { ...READY_PLAN.certification, show: false },
+			submit_hint: "Only the Head of User Department, or an acting head, can submit this plan.",
+		});
+		expect(author.find('[data-testid="dpp-submit-hint"]').text()).toContain("Head of User Department");
+		expect(author.find('[data-testid="dpp-submit"]').attributes("disabled")).toBeDefined();
+		expect(make(READY_PLAN).find('[data-testid="dpp-submit-hint"]').exists()).toBe(false);
+	});
+
 	it("a non-mutable plan offers no editing affordances at all", () => {
 		const submitted = {
 			...READY_PLAN,
@@ -205,5 +230,48 @@ describe("DppPlanScreen — PLN-DES-05", () => {
 		expect(w.find('[data-testid="dpp-add-direct"]').exists()).toBe(false);
 		expect(w.find('[data-testid="dpp-submit"]').exists()).toBe(false);
 		expect(w.findAll('[data-testid="dpp-entries"] tbody tr button')).toHaveLength(0);
+	});
+});
+
+describe("DppPlanScreen — accepted plan update (§5.1)", () => {
+	const ACCEPTED_PLAN = {
+		...READY_PLAN,
+		mutable: false,
+		can_submit: false,
+		can_create_update: true,
+		update_notice: null,
+		certification: { ...READY_PLAN.certification, show: false },
+		entries: READY_PLAN.entries.map((row) => ({ ...row, action: "" })),
+		header: { ...READY_PLAN.header, badge: "Accepted", badge_kind: "live" },
+	};
+
+	it("carries Create update in the header and emits it", async () => {
+		const w = make(ACCEPTED_PLAN);
+		const button = w.find('[data-testid="dpp-create-update"]');
+		expect(button.text()).toBe("Create update");
+		expect(w.find('[data-testid="dpp-add-direct"]').exists()).toBe(false);
+		expect(w.find('[data-testid="dpp-update-notice"]').exists()).toBe(false);
+		await button.trigger("click");
+		expect(w.emitted("create-update")).toHaveLength(1);
+	});
+
+	it("names the accepted Needs the plan is missing", () => {
+		const w = make({
+			...ACCEPTED_PLAN,
+			update_notice: {
+				title: "1 accepted need is not in this plan",
+				text: "NDS-MOH-2027-0005 accepted after this plan was accepted.",
+			},
+		});
+		const notice = w.find('[data-testid="dpp-update-notice"]');
+		expect(notice.text()).toContain("1 accepted need is not in this plan");
+		expect(notice.text()).toContain("NDS-MOH-2027-0005");
+	});
+
+	it("is withheld from a planner and while the update is pending", () => {
+		const planner = make({ ...ACCEPTED_PLAN, access: "planner", can_create_update: false });
+		expect(planner.find('[data-testid="dpp-create-update"]').exists()).toBe(false);
+		const pending = make(ACCEPTED_PLAN, { pending: true });
+		expect(pending.find('[data-testid="dpp-create-update"]').attributes("disabled")).toBeDefined();
 	});
 });

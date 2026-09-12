@@ -74,6 +74,33 @@ function make(overrides = {}) {
 	});
 }
 
+describe("WorkspaceScreen — the Annual Plan is always reachable", () => {
+	it("routes the plan summary to the Annual Plan record", async () => {
+		const w = make();
+		await w.find('[data-testid="pln-plan-link"]').trigger("click");
+		expect(w.emitted("navigate")[0][0]).toEqual(["annual-procurement-plan", "PLN-MOH-2027"]);
+	});
+
+	it("offers Prepare plan update on an Active plan with entries not yet in it", async () => {
+		const w = make({ workspace: {
+			...WORKSPACE,
+			annual_plan: { plan_reference: "PLN-MOH-2027", summary: "Annual Plan · Active Version 1" },
+			actionable: [{
+				headline: "1 accepted departmental entry not yet in the Active plan",
+				supporting: "Digital Health · KES 100,000",
+				action: "Prepare plan update",
+				route: ["annual-procurement-plan", "PLN-MOH-2027"],
+				kind: "attention",
+			}],
+		} });
+		const card = w.find('[data-testid="pln-actionable"]');
+		expect(card.find(".kt-card-title").text()).toBe("Actions");
+		expect(card.text()).toContain("not yet in the Active plan");
+		await card.find("button").trigger("click");
+		expect(w.emitted("navigate")[0][0]).toEqual(["annual-procurement-plan", "PLN-MOH-2027"]);
+	});
+});
+
 describe("WorkspaceScreen — PLN-DES-01", () => {
 	it("renders the exact masthead copy with no header action button", () => {
 		const w = make();
@@ -169,7 +196,7 @@ describe("WorkspaceScreen — PLN-DES-01", () => {
 			"These are the accepted and pending plans behind the entry above."
 		);
 		expect(card.findAll("thead th").map((th) => th.text())).toEqual([
-			"Department", "Version", "Requirements", "Value", "Status", "",
+			"Department", "Submission", "Requirements", "Value", "Status", "",
 		]);
 		const rows = card.findAll("tbody tr");
 		expect(rows).toHaveLength(2);
@@ -220,9 +247,9 @@ describe("WorkspaceScreen — PLN-DES-01", () => {
 				...WORKSPACE,
 				actionable: [
 					{
-						headline: "Open departmental plan",
+						headline: "No departmental plan yet for FY 2027/28",
 						supporting: "Digital Health",
-						action: "Open departmental plan",
+						action: "Start departmental plan",
 						route: ["procurement-planning", "open", "OU-0001"],
 					},
 				],

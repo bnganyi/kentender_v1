@@ -21,11 +21,11 @@ from kentender_procurement.procurement_planning.services.planning_context import
 BASE = "kentender_procurement.procurement_planning.services.planning_context"
 
 
-def _year(id_, *, current=False, future=False, past=False, intake=False, plan=False):
+def _year(id_, *, current=False, future=False, past=False, intake=False, plan=False, active=False):
 	return {
 		"id": id_, "label": f"FY {id_}", "start_date": f"{id_[:4]}-07-01", "end_date": f"{int(id_[:4]) + 1}-06-30",
 		"is_current": current, "is_future": future, "is_past": past, "intake_open": intake, "has_open_plan": plan,
-		"planning_open": True,
+		"has_active_plan": active, "planning_open": True,
 	}
 
 
@@ -37,7 +37,14 @@ PERIODS = [
 
 
 class TestDefaultYear(TestCase):
-	def test_default_precedence_intake_open_then_open_plan_then_current_then_future(self) -> None:
+	def test_default_precedence_active_plan_then_intake_then_open_plan_then_current_then_future(self) -> None:
+		"""The year with the Annual Plan in force is the planning year; a
+		stray intake flag on another year (a fixture, an admin slip) must not
+		drag every user onto it (reported live 2026-09-11)."""
+		self.assertEqual(
+			_default_year([dict(PERIODS[0], intake_open=True), dict(PERIODS[1], has_open_plan=True, has_active_plan=True), PERIODS[2]]),
+			"2027-2028",
+		)
 		self.assertEqual(_default_year([dict(PERIODS[0], intake_open=True), PERIODS[1], PERIODS[2]]), "2026-2027")
 		self.assertEqual(_default_year([PERIODS[0], PERIODS[1], dict(PERIODS[2], has_open_plan=True)]), "2028-2029")
 		self.assertEqual(_default_year(PERIODS), "2027-2028")

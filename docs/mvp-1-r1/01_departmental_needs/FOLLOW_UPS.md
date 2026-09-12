@@ -699,3 +699,36 @@ untouched) for the same reason — see each module's own FOLLOW_UPS.
 **Fix.** None outstanding. No test in this repo hardcoded the old "My needs"
 string (confirmed by repo-wide grep before the edit), so nothing else needed
 updating; NDS-UI-01's next revision should simply record the corrected copy.
+
+## FU-22 — `DepartmentalNeedsPageRolesTest` contradicts the Page's empty role list (2026-09-11)
+
+`test_departmental_needs_navigation.DepartmentalNeedsPageRolesTest` asserts the
+`departmental-needs` Page names every §6 business role and none of the §1.1
+removed ones. Commit `b81f5ccc` (2026-09-05, graceful Forbidden panel, KT-STD-001
+§3A) emptied that Page's role list — the convention every KenTender Vue-in-Desk
+Page now follows: reaching Desk is the only gate, each module's contracts decide
+what a role may read or do, and a refusal renders as the in-page Forbidden state
+rather than the framework popup. Two of the three tests have failed since. The
+test, not the Page, is stale: rewrite it to assert the §3A behaviour (a removed
+role opening the Page gets the Forbidden state and no record data) or retire it.
+Found on 2026-09-11 while verifying the returned-Need correction route; left as is
+because the choice between the two is the module owner's.
+
+## FU-23 — the workspace has no Financial Year filter (2026-09-11)
+
+NDS-CHG-001 v1.10 §11.2 specifies a filter row of Search / Status / Financial
+Year (showing "All financial years") / Clear filters, and §12.1 names
+department and FY as optional filters; `WorkspaceScreen.vue` renders Search,
+Status and Clear filters only ("status is the only filter" in its own comment).
+Found on 2026-09-11 while auditing v1.9 against the build for v1.10; left open
+because a second-FY fixture does not exist on the canonical site yet, so the
+filter would ship untested.
+
+## FU-24 — technical read is now centralised in KT-STD-001 (2026-09-11)
+
+Technical read is now stated once in KT-STD-001 v1.5 §3A.6 (11 Sep 2026). At
+this module's next version: replace its own technical-read prose, roles-table
+row wording, Forbidden carve-out and any masking clause's silence about
+technical readers with a citation of §3A.6; update AUTH-ADR-001 citations to
+v1.8.
+
