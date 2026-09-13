@@ -1,7 +1,9 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.12 §7.4/§8/§8.2 — Requisition eligibility (Slice H).
+"""PLN-CHG-001 v1.18 §5.4.5/§5.4.6/§7.4/§8/§8.2 — Requisition eligibility,
+drawdown, scope lock and the correction-request lifecycle (Slice H; Phase
+2g execution, plan D9).
 
 `GetRequisitionEligiblePlanItem.v2` is the published, read-only contract
 Procurement Requisitions calls to decide whether — and how much of — a Plan
@@ -16,23 +18,31 @@ drawdown commands moved from a System-Manager placeholder gate (closing
 FU-07) to the Head of Procurement Function, the office REQ-CHG-001 v1.6
 §9.1A names as the sole authoriser of a Requisition's drawdown.
 
-§9's twenty-one error codes are Planning's own UI-facing vocabulary; a
-programmatic contract call from a sibling module is not a Planning screen,
-so `authorise_requisition_drawdown`'s balance/state failures raise a plain
-`frappe.ValidationError` instead of forcing an unrelated §9 code onto a
-condition the contract's own author never named one for (§9's own docstring:
-"an invented code is a defect in the caller") — the same reasoning
-`authz.not_found()` already uses to sit outside that closed set.
+`AuthoriseRequisitionDrawdown` locks the same stable `Plan Item` root
+(`services/scope_lock.guard`) that `ReceivePlanItemCorrectionRequest` and its
+dispositions lock, so a concurrently recorded correction hold and a racing
+authorisation cannot bypass each other (§4.10, PLN-RI-029); a first
+successful drawdown then permanently fixes the item's procurement scope
+under that same lock (§5.4.6). §8's codes cover every named condition this
+module raises (`PLN_ITEM_SCOPE_LOCKED`, `PLN_ITEM_AUTHORISATION_HELD`,
+`PLN_ALLOWANCE_EXCEEDED`, `PLN_CORRECTION_NOT_ACTIVE`); a residual
+precondition with no dedicated code (item not Active, funding not current,
+malformed allocation shape) still raises a plain `frappe.ValidationError` —
+REQ is expected to have already checked eligibility through the read
+contract above, so these are defensive, not user-facing, failures (the same
+reasoning `authz.not_found()` already uses to sit outside the closed set).
 """
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 import frappe
 from frappe.utils import cstr, flt, now_datetime
 
-from kentender_procurement.procurement_planning.services import envelope, plan_read
+from kentender_procurement.procurement_planning.errors import fail
+from kentender_procurement.procurement_planning.services import envelope, plan_read, scope_lock
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import (
 	DEPARTMENTAL_ROLES,
@@ -348,14 +358,15 @@ def authorise_requisition_drawdown(
 	idempotency_key: str,
 	user: str | None = None,
 ) -> dict[str, Any]:
-	"""§7.4/§8.2 — atomic: every requested allocation draws within its own
-	remaining balance, or none draw at all. `allocations` is
+	"""§7.4/§8.2/§5.4.6 — atomic: every requested allocation draws within its
+	own remaining balance, or none draw at all. `allocations` is
 	`[{"plan_source_allocation_id": ..., "quantity": ..., "amount": ...}, …]`.
 	`expected_record_version` is the Plan Item's own — §8.2's blanket rule
 	("all mutating commands require an expected record version"); it also
 	means a racing second drawdown against the same item must re-read the
 	freshly-consumed balance before it can proceed, on top of the per-
-	allocation row lock below."""
+	allocation row lock below. The first drawdown ever authorised against
+	the stable item permanently fixes its procurement scope (plan D9)."""
 	actor = authz.actor(user)
 	payload = {
 		"plan_item_id": plan_item_id, "requisition_reference": cstr(requisition_reference).strip(),
@@ -375,6 +386,13 @@ def authorise_requisition_drawdown(
 	envelope.check_record_version(item, expected_record_version)
 	if item.item_state != "Active" or frappe.db.get_value("Annual Plan Version", item.plan_version, "funding_state") != "Confirmed":
 		frappe.throw("This Plan Item is not currently eligible for a Requisition drawdown.")
+
+	# §5.4.5/PLN-RI-029 — recheck the hold under the same stable-item guard
+	# `ReceivePlanItemCorrectionRequest` records/disposes it with, so a
+	# concurrently recorded request cannot be bypassed by a stale read.
+	root = scope_lock.guard(item.plan_item_id)
+	if root.authorisation_hold:
+		fail("PLN_ITEM_AUTHORISATION_HELD", detail={"plan_item_id": item.plan_item_id, "open_requests": int(root.open_correction_requests or 0)})
 
 	# Validate every requested allocation first, and only write once the
 	# whole batch is known good — "every reservation or none" (§7.3's own
@@ -403,9 +421,14 @@ def authorise_requisition_drawdown(
 			drawn_qty + requested_qty > flt(allocation.quantity) + 1e-6
 			or drawn_amount + requested_amount > flt(allocation.indicative_amount) + 1e-6
 		):
-			frappe.throw(
-				f"The requested drawdown exceeds the remaining balance for source "
-				f"allocation {allocation.allocation_id}."
+			fail(
+				"PLN_ALLOWANCE_EXCEEDED",
+				f"The requested drawdown exceeds the remaining balance for source allocation {allocation.allocation_id}.",
+				detail={
+					"allocation_id": allocation.allocation_id,
+					"requested_quantity": requested_qty, "requested_amount": requested_amount,
+					"remaining_quantity": flt(allocation.quantity) - drawn_qty, "remaining_amount": flt(allocation.indicative_amount) - drawn_amount,
+				},
 			)
 		to_create.append((allocation, requested_qty, requested_amount))
 
@@ -424,6 +447,8 @@ def authorise_requisition_drawdown(
 			}
 		).insert(ignore_permissions=True)
 		created.append({"drawdown_reference": doc.name, "record_version": int(doc.record_version or 0)})
+
+	scope_lock.lock(root, requisition_reference=requisition_reference)
 
 	result = {"ok": True, "idempotent": False, "action": "recorded", "drawdown_references": created}
 	envelope.record_command(
@@ -496,11 +521,15 @@ def receive_plan_item_correction_request(
 	idempotency_key: str,
 	user: str | None = None,
 ) -> dict[str, Any]:
-	"""REQ-CHG-001 v1.6 §7.4A step 2/3 — the inbound half of a Requisition's
-	upstream-correction route: preserve the exact request as one immutable
-	row and surface it to the Procurement Planner as a My Work item. This
-	command performs no correction itself; Planning's own governed
-	correction/successor mechanism (§7.4A step 4) is a separate, later act."""
+	"""REQ-CHG-001 v1.6 §7.4A step 2/3 / PLN-RI-029 — the inbound half of a
+	Requisition's upstream-correction route: preserve the exact request as
+	one immutable row, hold new drawdown authorisations against the stable
+	item, and surface the request to the Procurement Planner as a My Work
+	item — recording the request and making the hold effective are atomic,
+	under the same stable-item guard `AuthoriseRequisitionDrawdown` rechecks
+	it against. This command performs no correction itself; Planning's own
+	governed correction/successor mechanism (§7.4A step 4) is a separate,
+	later act."""
 	actor = authz.actor(user)
 	payload = {
 		"plan_item_id": plan_item_id, "requisition_reference": cstr(requisition_reference).strip(),
@@ -525,16 +554,18 @@ def receive_plan_item_correction_request(
 	)
 	requested_role = _authorise_correction_requester(actor, contributing_org_units=contributing_org_units)
 
+	root = scope_lock.guard(item.plan_item_id)
 	doc = frappe.get_doc(
 		{
 			"doctype": "Plan Item Correction Request",
-			"plan_item": item.name, "plan_item_id": item.plan_item_id,
+			"plan_item": item.name, "plan_item_id": item.plan_item_id, "plan_version": item.plan_version,
 			"requisition_reference": requisition_reference, "requisition_version": requisition_version,
 			"reason": reason, "requested_by": actor, "requested_role": requested_role,
 			"requested_at": now_datetime(), "status": "Open", "idempotency_key": idempotency_key,
 			"fixture_namespace": cstr(item.fixture_namespace),
 		}
 	).insert(ignore_permissions=True)
+	scope_lock.recompute_hold(root)
 	result = {"ok": True, "idempotent": False, "correction_request": doc.name, "status": doc.status}
 	envelope.record_command(
 		idempotency_key=idempotency_key, command="ReceivePlanItemCorrectionRequest", payload=payload,
@@ -544,36 +575,170 @@ def receive_plan_item_correction_request(
 	return result
 
 
-def resolve_plan_item_correction_request(
-	*, correction_request: str, resolution_note: str, expected_record_version, idempotency_key: str, user: str | None = None,
-) -> dict[str, Any]:
-	"""§7.4A step 4 — the Procurement Planner records that Planning's own
-	governed correction/successor route has been applied. This command does
-	not itself edit the Plan Item; it closes the inbound request once the
-	real correction (a Plan successor, or a correction to a still-open
-	Version) has happened through Planning's ordinary commands."""
-	actor = authz.actor(user)
-	payload = {"correction_request": correction_request, "resolution_note": cstr(resolution_note).strip()}
-	replay = envelope.replay_or_none(idempotency_key, payload)
-	if replay:
-		return replay
-	authz.require_site_role(ROLE_PROCUREMENT_PLANNER, actor)
-
+def _authorise_disposition(actor: str, correction_request: str, expected_record_version):
+	"""Start/Resolve/Close without change share one Planner-only gate and
+	row lock; the role check runs before the existence/version check
+	(established precedent: a non-Planner is refused Not-found rather than
+	a version-mismatch that would disclose the record exists)."""
+	assignment = authz.require_site_role(ROLE_PROCUREMENT_PLANNER, actor)
 	if not correction_request or not frappe.db.exists("Plan Item Correction Request", correction_request):
 		authz.not_found()
 	doc = envelope.locked("Plan Item Correction Request", correction_request)
 	envelope.check_record_version(doc, expected_record_version)
-	if doc.status != "Open":
-		frappe.throw("This correction request has already been resolved.")
-	resolution_note = cstr(resolution_note).strip()
-	if len(resolution_note) < 10:
-		frappe.throw("A resolution note of at least 10 characters is required.")
+	return doc, assignment
 
-	envelope.bump(doc, status="Resolved", resolved_by=actor, resolved_at=now_datetime(), resolution_note=resolution_note)
-	result = {"ok": True, "idempotent": False, "action": "resolved", "correction_request": doc.name}
+
+def start_plan_item_correction(
+	*, correction_request: str, expected_record_version, idempotency_key: str, user: str | None = None,
+) -> dict[str, Any]:
+	"""§7.2 `StartPlanItemCorrection` — Open moves to In progress; the hold
+	remains in force (recomputed from the same Open-or-In-progress set)
+	while the Planner routes the actual edit to its true source owner (a
+	Need/DPP update, or a Plan successor for a Planning-owned fact). This
+	command never itself edits the Plan Item."""
+	actor = authz.actor(user)
+	payload = {"correction_request": correction_request}
+	replay = envelope.replay_or_none(idempotency_key, payload)
+	if replay:
+		return replay
+	doc, assignment = _authorise_disposition(actor, correction_request, expected_record_version)
+	if doc.status != "Open":
+		frappe.throw("Only an Open correction request can be started.")
+
+	disposition = frappe.get_doc(
+		{
+			"doctype": "Plan Item Correction Disposition", "correction_request": doc.name, "action": "Start",
+			"actor": actor, "authority_snapshot": authz.authority_snapshot(assignment), "disposed_at": now_datetime(),
+			"command_idempotency_key": idempotency_key, "fixture_namespace": cstr(doc.fixture_namespace),
+		}
+	).insert(ignore_permissions=True)
+	envelope.bump(doc, status="In progress")
+	result = {"ok": True, "idempotent": False, "action": "started", "correction_request": doc.name, "disposition": disposition.name}
 	envelope.record_command(
-		idempotency_key=idempotency_key, command="ResolvePlanItemCorrectionRequest", payload=payload,
-		result=result, document_type="Plan Item Correction Request", document_name=doc.name,
-		actor=actor, fixture_namespace=cstr(doc.fixture_namespace),
+		idempotency_key=idempotency_key, command="StartPlanItemCorrection", payload=payload, result=result,
+		document_type="Plan Item Correction Request", document_name=doc.name, actor=actor, fixture_namespace=cstr(doc.fixture_namespace),
+	)
+	return result
+
+
+def resolve_plan_item_correction_request(
+	*,
+	correction_request: str,
+	correcting_plan_version: str,
+	replacement_plan_item_id: str = "",
+	expected_record_version,
+	idempotency_key: str,
+	user: str | None = None,
+) -> dict[str, Any]:
+	"""§7.2/§5.4.5 `ResolvePlanItemCorrectionRequest` — allowed only once the
+	named correcting Plan Version is Active, and only once the disposition
+	identifies the replacement eligible lineage (`replacement_plan_item_id`
+	defaults to this same stable item — the ordinary case, since stable
+	identity carries into a successor per §5.4.4; a name is required only
+	when the correction reformed the item under a new identity). Notifies
+	Requisitions through the neutral `PlanItemCorrectionOutcome.v1` contract
+	so a fresh Draft may be started; the stopped Requisition Version is
+	never itself revived here."""
+	actor = authz.actor(user)
+	correcting_plan_version = cstr(correcting_plan_version).strip()
+	replacement_plan_item_id = cstr(replacement_plan_item_id).strip()
+	payload = {
+		"correction_request": correction_request, "correcting_plan_version": correcting_plan_version,
+		"replacement_plan_item_id": replacement_plan_item_id,
+	}
+	replay = envelope.replay_or_none(idempotency_key, payload)
+	if replay:
+		return replay
+	doc, assignment = _authorise_disposition(actor, correction_request, expected_record_version)
+	if doc.status not in ("Open", "In progress"):
+		frappe.throw("This correction request has already reached a final outcome.")
+	if not correcting_plan_version:
+		frappe.throw("Name the exact Active Plan Version that corrects this request.")
+	if frappe.db.get_value("Annual Plan Version", correcting_plan_version, "version_status") != "Active":
+		fail("PLN_CORRECTION_NOT_ACTIVE", detail={"correcting_plan_version": correcting_plan_version})
+
+	replacement_plan_item_id = replacement_plan_item_id or cstr(doc.plan_item_id)
+	if not frappe.db.exists(
+		"Annual Plan Item",
+		{"plan_item_id": replacement_plan_item_id, "plan_version": correcting_plan_version, "item_state": "Active"},
+	):
+		frappe.throw("Name the exact Active Plan Item on that Version that replaces this stable item's eligibility.")
+
+	root = scope_lock.guard(cstr(doc.plan_item_id))
+	lineage = {"replaced_plan_item": replacement_plan_item_id, "correcting_plan_version": correcting_plan_version}
+	disposition = frappe.get_doc(
+		{
+			"doctype": "Plan Item Correction Disposition", "correction_request": doc.name, "action": "Resolve",
+			"actor": actor, "authority_snapshot": authz.authority_snapshot(assignment), "disposed_at": now_datetime(),
+			"correcting_plan_version": correcting_plan_version, "replacement_lineage": json.dumps(lineage),
+			"command_idempotency_key": idempotency_key, "fixture_namespace": cstr(doc.fixture_namespace),
+		}
+	).insert(ignore_permissions=True)
+	envelope.bump(
+		doc, status="Resolved", resolved_by=actor, resolved_at=now_datetime(),
+		resolution_note=f"Resolved against {correcting_plan_version}.",
+	)
+	hold = scope_lock.recompute_hold(root)
+
+	from kentender_procurement.procurement_requisitions.services import lifecycle as req_lifecycle
+
+	req_lifecycle.receive_plan_item_correction_outcome(
+		requisition_reference=doc.requisition_reference, correction_request=doc.name, outcome="Resolved",
+		correcting_plan_version=correcting_plan_version, replacement_lineage=lineage,
+		idempotency_key=f"{idempotency_key}:req", user=actor,
+	)
+
+	result = {
+		"ok": True, "idempotent": False, "action": "resolved", "correction_request": doc.name,
+		"disposition": disposition.name, "replacement_plan_item_id": replacement_plan_item_id, "hold": hold,
+	}
+	envelope.record_command(
+		idempotency_key=idempotency_key, command="ResolvePlanItemCorrectionRequest", payload=payload, result=result,
+		document_type="Plan Item Correction Request", document_name=doc.name, actor=actor, fixture_namespace=cstr(doc.fixture_namespace),
+	)
+	return result
+
+
+def close_plan_item_correction_without_change(
+	*, correction_request: str, reason: str, expected_record_version, idempotency_key: str, user: str | None = None,
+) -> dict[str, Any]:
+	"""§7.2/§5.4.5 `ClosePlanItemCorrectionWithoutChange` — a reasoned
+	no-change outcome; it never itself revives or authorises the stopped
+	Requisition (REQ's own amendment defines the requester's permitted
+	follow-up for this outcome)."""
+	actor = authz.actor(user)
+	reason = cstr(reason).strip()
+	payload = {"correction_request": correction_request, "reason": reason}
+	replay = envelope.replay_or_none(idempotency_key, payload)
+	if replay:
+		return replay
+	doc, assignment = _authorise_disposition(actor, correction_request, expected_record_version)
+	if doc.status not in ("Open", "In progress"):
+		frappe.throw("This correction request has already reached a final outcome.")
+	if not (20 <= len(reason) <= 1000):
+		frappe.throw("A no-change reason of 20–1,000 characters is required.")
+
+	root = scope_lock.guard(cstr(doc.plan_item_id))
+	disposition = frappe.get_doc(
+		{
+			"doctype": "Plan Item Correction Disposition", "correction_request": doc.name, "action": "Close without change",
+			"actor": actor, "authority_snapshot": authz.authority_snapshot(assignment), "disposed_at": now_datetime(),
+			"reason": reason, "command_idempotency_key": idempotency_key, "fixture_namespace": cstr(doc.fixture_namespace),
+		}
+	).insert(ignore_permissions=True)
+	envelope.bump(doc, status="Closed without change", resolved_by=actor, resolved_at=now_datetime(), resolution_note=reason)
+	hold = scope_lock.recompute_hold(root)
+
+	from kentender_procurement.procurement_requisitions.services import lifecycle as req_lifecycle
+
+	req_lifecycle.receive_plan_item_correction_outcome(
+		requisition_reference=doc.requisition_reference, correction_request=doc.name, outcome="Closed without change",
+		reason=reason, idempotency_key=f"{idempotency_key}:req", user=actor,
+	)
+
+	result = {"ok": True, "idempotent": False, "action": "closed_without_change", "correction_request": doc.name, "disposition": disposition.name, "hold": hold}
+	envelope.record_command(
+		idempotency_key=idempotency_key, command="ClosePlanItemCorrectionWithoutChange", payload=payload, result=result,
+		document_type="Plan Item Correction Request", document_name=doc.name, actor=actor, fixture_namespace=cstr(doc.fixture_namespace),
 	)
 	return result

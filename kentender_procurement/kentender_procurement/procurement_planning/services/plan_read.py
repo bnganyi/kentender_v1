@@ -600,7 +600,16 @@ def _latest_publication(version_name: str) -> dict[str, Any] | None:
 	if not row:
 		return None
 	attempt_number = frappe.db.count("Publication Attempt", {"publication": row.name})
-	return {"publication": row.name, "result": row.publication_state, "attempt_number": attempt_number, "route": [PAGE, "publication", row.name]}
+	# §9.6 "Confirmed unpublished with material defect: Publication on hold;
+	# approved content retained" is a workspace-level label, not only a fact
+	# on the drill-in publication screen (`get_publication_task`) — a hold
+	# never changes `publication_state` itself (§5.5.2.3: "a hold is not a
+	# withdrawal"), so surface it here as its own field.
+	hold = frappe.db.get_value("Plan Publication Hold", {"plan_version": version_name, "hold_state": "Active"}, ["hold_kind", "reason"], as_dict=True)
+	return {
+		"publication": row.name, "result": row.publication_state, "attempt_number": attempt_number, "route": [PAGE, "publication", row.name],
+		"held": bool(hold), "hold_kind": hold.hold_kind if hold else "", "hold_reason": hold.reason if hold else "",
+	}
 
 
 def _drawn(allocations: list) -> tuple[float, float]:
@@ -687,6 +696,27 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 	delivery_days = readiness.item_delivery_days(item)
 	baseline_map = {f: item.get(f) for f in schedule.BASELINE_FIELDS}
 	lock = scope_lock.status(item.plan_item_id)
+	# §9.7's own domain-specific copy for these two passive states — computed
+	# here (not by the client) so every screen that reads this item shows the
+	# identical wording; `notices` is empty (never both messages compete —
+	# a locked item's own existing scope keeps drawing regardless of a hold).
+	notices = []
+	if lock["locked"]:
+		notices.append(
+			{
+				"kind": "scope_locked",
+				"heading": "Additional requirements need a separate Plan Item",
+				"text": "This Plan Item already has an authorised Requisition. Create a separate Plan Item for the additional requirement.",
+			}
+		)
+	if lock["held"]:
+		notices.append(
+			{
+				"kind": "correction_hold",
+				"heading": "New Requisition authorisations are on hold",
+				"text": "An unresolved correction request affects this Plan Item. Existing authorised proceedings are unchanged.",
+			}
+		)
 	combined = len(sources) > 1
 	mutable = item.item_state == "Draft" and version.version_status == "Draft" and can_act and version.funding_state != "Awaiting confirmation"
 	return {
@@ -716,6 +746,7 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 			"aggregation_reason": cstr(item.aggregation_reason),
 		},
 		"scope_lock": lock,
+		"notices": notices,
 		"classification": {
 			"strategic_objective": cstr(item.strategic_objective),
 			"objective_path": cstr(item.objective_path),

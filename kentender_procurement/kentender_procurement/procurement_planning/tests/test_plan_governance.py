@@ -306,16 +306,19 @@ class TestAdoptApproveChain(GovernanceCase):
 		self.assertEqual(snapshot.plan_version, version.name)
 		self.assertTrue(snapshot.content_digest)
 
-		# the worker runs inline on this bench (no RQ worker); Treasury evidence
-		# gates transmission (§5.5.2.2)
-		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		# the worker runs inline on this bench (no RQ worker) as a technical
+		# actor — `PublishAnnualPlan` is a system worker, never a business
+		# user action; Treasury evidence gates transmission (§5.5.2.2)
+		frappe.set_user("Administrator")
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			publication_pipeline.publish_annual_plan(plan_version=version.name, idempotency_key=key())
 		self.assertEqual(caught.exception.code, "PLN_TREASURY_EVIDENCE_REQUIRED")
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
 		treasury.record_treasury_submission(
 			plan_version=version.name, submitted_at="2101-11-01 09:00:00", channel="Email", destination="treasury@example.test",
 			dispatch_reference="MOH/APP/2101/001", exact_document_confirmed=True, idempotency_key=key(),
 		)
+		frappe.set_user("Administrator")
 		published = publication_pipeline.publish_annual_plan(plan_version=version.name, idempotency_key=key())
 		self.assertEqual(published["result"], "Acknowledged")
 		self.assertEqual(frappe.db.get_value("Annual Plan Version", version.name, "version_status"), "Active")

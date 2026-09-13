@@ -210,6 +210,7 @@ class TestActivationAndRetryPublication(PublicationCase):
 			publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=key())
 		self.assertEqual(caught.exception.code, "PLN_TREASURY_EVIDENCE_REQUIRED")
 		self.record_treasury(version_name)
+		frappe.set_user("Administrator")  # PublishAnnualPlan is a system worker, never a business user action
 		published = publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=key())
 		self.assertEqual(published["result"], "Acknowledged")
 		self.assertEqual(frappe.db.count("Funding Reservation"), reservations_before)  # PLN-AC-081
@@ -379,6 +380,41 @@ class TestTreasuryAndWithdrawal(PublicationCase):
 			publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=key())
 		self.assertEqual(caught.exception.code, "PLN_PUBLICATION_HELD")
 
+	def test_a_held_in_flight_attempt_is_distinct_from_its_indeterminate_result_on_the_plan_read(self):
+		"""PLN-CHG-001 v1.18 §9.6 (PLN18-211): "Confirmed unpublished with
+		material defect: Publication on hold" is a workspace-visible label,
+		not only a fact on the drill-in publication screen — a hold never
+		rewrites `publication_state` itself (§5.5.2.3), so `get_annual_plan`
+		must surface it as its own field."""
+		accepted, item_id = self.confirmed_item()
+		approved = self.approve(accepted["annual_plan"])
+		version_name = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
+		first = self.record_treasury(version_name)
+		destination = frappe.get_doc("Plan Publication", approved["publication"]).destination
+		frappe.db.set_value("Annual Plan Publication Destination", destination, "sandbox_outcome", "Indeterminate")
+		frappe.set_user("Administrator")
+		publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=key())
+
+		frappe.set_user(fx.PLANNER)
+		before = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		self.assertEqual(before["latest_publication"]["result"], "Indeterminate")
+		self.assertFalse(before["latest_publication"]["held"])
+
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		corrected = treasury.correct_treasury_submission_evidence(
+			prior_evidence=first["evidence"], reason="The dispatch reference was recorded incorrectly.",
+			submitted_at="2101-11-02 09:00:00", channel="Email", destination="treasury@example.test",
+			dispatch_reference="MOH/APP/2101/002", idempotency_key=key(),
+		)
+		self.assertTrue(corrected["hold"])
+
+		frappe.set_user(fx.PLANNER)
+		after = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		self.assertEqual(after["latest_publication"]["result"], "Indeterminate")  # unchanged by the hold
+		self.assertTrue(after["latest_publication"]["held"])
+		self.assertEqual(after["latest_publication"]["hold_kind"], "Accounting Officer correction request")
+		self.assertTrue(after["latest_publication"]["hold_reason"])
+
 	def test_withdrawal_requires_confirmed_unpublished_content(self):
 		accepted, item_id = self.confirmed_item()
 		approved = self.activate(accepted["annual_plan"])
@@ -404,6 +440,7 @@ class TestTreasuryAndWithdrawal(PublicationCase):
 		requested = treasury.request_plan_withdrawal(plan_version=version_name, reason="A material defect was found in the approved package.", idempotency_key=key())
 		self.assertTrue(requested["hold"])
 		self.assertTrue(requested["task"])
+		frappe.set_user("Administrator")
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=key())
 		self.assertEqual(caught.exception.code, "PLN_PUBLICATION_HELD")
@@ -555,16 +592,16 @@ class TestForecastCascade(PublicationCase):
 	def test_a_milestone_with_an_actual_is_never_proposed_and_actuals_are_never_typed(self):
 		accepted, item_id = self.active()
 		# the only writer of an actual is the inbound projection contract (§18)
-		schedule.record_tender_milestone_actual(plan_item_id=item_id, milestone="invitation", actual_date="2101-09-03", source_event_id="TPR-TEST-1")
+		schedule.record_tender_milestone_actual(plan_item_id=item_id, milestone="invitation", actual_date="2101-09-03", source_event_id="TPR-TEST-1", producer="tender_preparation")
 		# PLN-CHG-001 v1.18 §4.8 / plan D10: same value again is a no-op; a
 		# different value never overwrites unless it supersedes the earlier event
-		again = schedule.record_tender_milestone_actual(plan_item_id=item_id, milestone="invitation", actual_date="2101-09-03", source_event_id="TPR-TEST-1")
+		again = schedule.record_tender_milestone_actual(plan_item_id=item_id, milestone="invitation", actual_date="2101-09-03", source_event_id="TPR-TEST-1", producer="tender_preparation")
 		self.assertTrue(again["idempotent"])
 		with self.assertRaises(ProcurementPlanningError) as guarded:
-			schedule.record_tender_milestone_actual(plan_item_id=item_id, milestone="invitation", actual_date="2101-09-04", source_event_id="TPR-TEST-2")
+			schedule.record_tender_milestone_actual(plan_item_id=item_id, milestone="invitation", actual_date="2101-09-04", source_event_id="TPR-TEST-2", producer="tender_preparation")
 		self.assertEqual(guarded.exception.code, "PLN_ACTUAL_NOT_WRITABLE")
 		with self.assertRaises(ProcurementPlanningError) as guarded:
-			schedule.record_tender_milestone_actual(plan_item_id=item_id, milestone="invitation", actual_date="2101-09-04", source_event_id="")
+			schedule.record_tender_milestone_actual(plan_item_id=item_id, milestone="invitation", actual_date="2101-09-04", source_event_id="", producer="tender_preparation")
 		self.assertEqual(guarded.exception.code, "PLN_ACTUAL_NOT_WRITABLE")
 		frappe.set_user(fx.PLANNER)
 		item = plan_read.get_plan_item(plan_item_id=item_id)
@@ -587,14 +624,34 @@ class TestForecastCascade(PublicationCase):
 	def test_the_daily_nudge_raises_once_per_milestone_per_day(self):
 		accepted, item_id = self.active()
 		frappe.db.delete("Notification Log", {"for_user": fx.PLANNER})
+		item_name = plan_read.resolve_item_doc_name(item_id)
+		root = frappe.db.get_value("Annual Plan Item", item_name, "plan_item")
+		frappe.db.delete("Milestone Notice", {"plan_item": root})
 		first = schedule.check_approaching_milestones(today="2101-08-25")
 		self.assertIn((item_id, "invitation"), first["raised"])
 		count = frappe.db.count("Notification Log", {"for_user": fx.PLANNER, "email_header": ("like", f"pln:milestone:{item_id}:invitation:%")})
 		self.assertEqual(count, 1)
+		notice = frappe.get_doc("Milestone Notice", {"plan_item": root, "milestone": "invitation", "proceeding_id": "", "recipient": fx.PLANNER})
+		self.assertEqual(notice.notice_status, "Approaching")
+		self.assertEqual(len(json.loads(notice.history)), 1)
 		schedule.check_approaching_milestones(today="2101-08-25")
 		self.assertEqual(frappe.db.count("Notification Log", {"for_user": fx.PLANNER, "email_header": ("like", f"pln:milestone:{item_id}:invitation:%")}), 1)
+		self.assertEqual(frappe.db.count("Milestone Notice", {"plan_item": root, "milestone": "invitation", "proceeding_id": "", "recipient": fx.PLANNER}), 1)
+		notice.reload()
+		self.assertEqual(len(json.loads(notice.history)), 1)  # same status again — no duplicate history entry
 		self.assertEqual(frappe.db.count("Plan Governance Task", {"plan_version": accepted["annual_plan_version"], "status": "Open"}), 0)
-		self.assertEqual(schedule.check_approaching_milestones(today="2101-06-01")["raised"], [])
+		# PLN-CHG-001 v1.18 §5.5.1B: Overdue detection (added Phase 2g) now
+		# also flags every OTHER Active item on this shared site whose own
+		# forecast lies before this artificial "today" — assert this test's
+		# own item specifically, not the whole-site list.
+		self.assertNotIn((item_id, "invitation"), schedule.check_approaching_milestones(today="2101-06-01")["raised"])
+		schedule.check_approaching_milestones(today="2101-09-04")  # past the forecast date: Overdue
+		notice.reload()
+		self.assertEqual(notice.notice_status, "Overdue")
+		self.assertEqual(len(json.loads(notice.history)), 2)
+		schedule.record_tender_milestone_actual(plan_item_id=item_id, milestone="invitation", actual_date="2101-09-03", source_event_id="TPR-NUDGE-1", producer="tender_preparation")
+		notice.reload()
+		self.assertEqual(notice.notice_status, "Cleared")
 
 
 class TestBeginAndCancelPlanUpdate(PublicationCase):

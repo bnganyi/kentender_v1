@@ -146,6 +146,53 @@
 	padding: 20px;
 }
 
+/* U01's own breadcrumb line, above the masthead */
+.kt-pln .pln-breadcrumb {
+	font-size: 12px;
+	color: var(--color-neutral-700);
+	margin-bottom: 16px;
+}
+
+/* U01's own .fact/.facts-row (ported verbatim from the artboard's <style>
+ * block, PLN-CHG-001 v1.18 §10.2): a label-over-value pair, several laid
+ * out in a wrapping row beside the card's one action button. */
+.kt-pln .pln-fact {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+.kt-pln .pln-fact-val {
+	font-size: 14px;
+	font-weight: 600;
+}
+.kt-pln .pln-facts-row {
+	display: flex;
+	gap: 24px;
+	flex-wrap: wrap;
+}
+.kt-pln .kt-label {
+	font-size: 11px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--color-neutral-600);
+	margin-bottom: 2px;
+}
+
+/* the Annual Plan card's own block(s): U01-B stacks an Active block above a
+ * candidate block, divided by the same rule the artboard draws. */
+.kt-pln .pln-plan-block + .pln-plan-block {
+	margin-top: 12px;
+	padding-top: 12px;
+	border-top: 1px solid var(--color-divider);
+}
+.kt-pln .pln-plan-block-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+	gap: 16px;
+	flex-wrap: wrap;
+}
+
 /* PLN-DES table treatment (ported from the _ds .table rules) */
 .kt-pln .pln-table {
 	width: 100%;

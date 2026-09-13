@@ -135,15 +135,17 @@ def _governance_rows(user: str) -> list[dict[str, Any]]:
 
 
 def _correction_request_rows(user: str) -> list[dict[str, Any]]:
-	"""REQ-CHG-001 v1.6 §7.4A step 3 — every Open Plan Item Correction
-	Request is a Procurement Planner task; no segregation check applies
-	(the request names a Requisition-side actor, never a Planner)."""
+	"""REQ-CHG-001 v1.6 §7.4A step 3 / PLN-CHG-001 v1.18 §5.4.5 — every
+	Open or In progress Plan Item Correction Request is a Procurement
+	Planner task until a terminal disposition (Resolved / Closed without
+	change) is recorded; no segregation check applies (the request names a
+	Requisition-side actor, never a Planner)."""
 	if not authz.has_site_role(ROLE_PROCUREMENT_PLANNER, user):
 		return []
 	rows = []
 	for row in frappe.get_all(
 		"Plan Item Correction Request",
-		filters={"status": "Open"},
+		filters={"status": ("in", ("Open", "In progress"))},
 		fields=["name", "plan_item_id", "requisition_reference", "record_version", "creation"],
 		order_by="creation asc",
 		limit_page_length=0,

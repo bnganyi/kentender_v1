@@ -349,6 +349,21 @@ ui-demands-workspace-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/demands/demands-workspace.spec.ts
 
+# PLN-CHG-001 v1.18 — Phase 2 exit (PLN18-213): the whole Planning-owned
+# Python domain suite (every services/schema test, discovered dynamically —
+# new test files are picked up without editing this target), including the
+# rule-3 removed-concept scan (test_planning_v118_schema). Each test class's
+# own addClassCleanup(fx.restore_site) restores intake flags and wipes test
+# rows; the cross-module checkpoint (core, budget, NDS, strategy, REQ, TPR)
+# has no single shared gate across apps and is run as the sibling modules'
+# own suites (see the tracker's PLN18-213 evidence for the exact list).
+# test_planning_seed is excluded: it still drives the pre-v1.18 synchronous
+# publication shape and is Phase 4's own planning-seed-gate to close, not a
+# Phase 2 regression (tracker PLN18-209/210/213).
+planning-domain-gate:
+	cd $(BENCH_ROOT) && for m in $$(cd apps/kentender_v1/kentender_procurement/kentender_procurement/procurement_planning/tests && ls test_*.py | sed 's/\.py$$//' | grep -v '^test_planning_seed$$'); do \
+		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.procurement_planning.tests.$$m || exit 1; done
+
 # PLN-GATE-03 — workspace / register / empty builder (PLN-UI-01…03).
 # PLN-CHG-001 v1.2 — Planning gates are rebuilt slice by slice; each slice's
 # gate replaces its Stitch-era predecessor as its surface lands. Retired with

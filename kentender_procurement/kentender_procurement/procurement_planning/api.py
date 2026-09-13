@@ -508,12 +508,34 @@ def receive_plan_item_correction_request(
 
 
 @frappe.whitelist()
+def start_plan_item_correction(correction_request: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_requisition
+
+	return plan_requisition.start_plan_item_correction(
+		correction_request=correction_request, expected_record_version=expected_record_version, idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
 def resolve_plan_item_correction_request(
-	correction_request: str, resolution_note: str, expected_record_version, idempotency_key: str,
+	correction_request: str, correcting_plan_version: str, expected_record_version, idempotency_key: str, replacement_plan_item_id: str = "",
 ) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import plan_requisition
 
 	return plan_requisition.resolve_plan_item_correction_request(
-		correction_request=correction_request, resolution_note=resolution_note,
+		correction_request=correction_request, correcting_plan_version=correcting_plan_version,
+		replacement_plan_item_id=replacement_plan_item_id,
+		expected_record_version=expected_record_version, idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def close_plan_item_correction_without_change(
+	correction_request: str, reason: str, expected_record_version, idempotency_key: str,
+) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_requisition
+
+	return plan_requisition.close_plan_item_correction_without_change(
+		correction_request=correction_request, reason=reason,
 		expected_record_version=expected_record_version, idempotency_key=idempotency_key,
 	)

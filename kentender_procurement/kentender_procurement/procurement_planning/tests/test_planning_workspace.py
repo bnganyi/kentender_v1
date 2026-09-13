@@ -250,7 +250,18 @@ class TestWorkspace(WorkspaceCase):
 		frappe.db.set_value("Annual Plan", accepted["annual_plan"], {"active_version": accepted["annual_plan_version"], "open_successor_version": ""})
 
 		result = self.load(fx.PLANNER)
-		self.assertEqual(result["annual_plan"], {"plan_reference": accepted["annual_plan"], "summary": "Annual Plan · Active Version 1"})
+		self.assertEqual(result["annual_plan"]["plan_reference"], accepted["annual_plan"])
+		self.assertEqual(result["annual_plan"]["summary"], "Annual Plan · Active Version 1")
+		self.assertEqual(len(result["annual_plan"]["blocks"]), 1)
+		block = result["annual_plan"]["blocks"][0]
+		self.assertEqual(block["kind"], "active")
+		self.assertEqual(block["version_status"], "Active")
+		self.assertEqual(block["action"], "Prepare plan update")
+		self.assertEqual(block["action_kind"], "primary")
+		# a non-Planner reader gets the same facts but only a plain View link
+		auditor_block = self.load(fx.AUDITOR)["annual_plan"]["blocks"][0]
+		self.assertEqual(auditor_block["action"], "View Active Plan")
+		self.assertEqual(auditor_block["action_kind"], "secondary")
 		self.assertEqual(result["waiting"], [])
 		row = result["actionable"][0]
 		self.assertEqual(row["headline"], "1 accepted departmental entry not yet in the Active plan")
@@ -260,3 +271,97 @@ class TestWorkspace(WorkspaceCase):
 		self.assertEqual(row["kind"], "attention")
 		# an auditor reads the same summary but is offered nothing
 		self.assertEqual(self.load(fx.AUDITOR)["actionable"], [])
+
+
+class TestAnnualPlanCard(WorkspaceCase):
+	"""PLN-CHG-001 v1.18 §9.6 (U01) — the Annual Plan card's own structured
+	fact blocks and, at most, one Planner-discretionary command; every other
+	reader gets the same facts with a plain View link, or no block at all."""
+
+	def test_no_plan_yet_is_an_empty_block_list(self):
+		result = self.load(fx.PLANNER)
+		self.assertEqual(result["annual_plan"], {"plan_reference": "", "title": "", "summary": "", "blocks": []})
+
+	def test_an_initial_draft_offers_continue_plan_to_the_planner_only(self):
+		from kentender_procurement.procurement_planning.services import dpp_validation
+
+		submitted = self.submitted()
+		task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
+		entry_id = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": submitted["current_version"]}, "entry_id")
+		frappe.set_user(fx.PLANNER)
+		dpp_validation.accept_departmental_plan(
+			task=task.name, task_token=task.task_token, idempotency_key=key(),
+			classifications={entry_id: "Consulting services"},
+		)
+		result = self.load(fx.PLANNER)
+		self.assertEqual(len(result["annual_plan"]["blocks"]), 1)
+		block = result["annual_plan"]["blocks"][0]
+		self.assertEqual(block["kind"], "current")
+		self.assertEqual(block["version_status"], "Draft")
+		self.assertEqual(block["version_number"], 1)
+		self.assertEqual(block["funding_state"], "Not requested")
+		self.assertEqual(block["action"], "Continue Plan")
+		self.assertEqual(block["action_kind"], "primary")
+		self.assertEqual(block["route"], ["annual-procurement-plan", frappe.db.get_value("Annual Plan", {"fiscal_year": fx.FY_OPEN}, "plan_reference")])
+		# a non-Planner reader (e.g. the Auditor) sees the same facts but only a view link
+		auditor_block = self.load(fx.AUDITOR)["annual_plan"]["blocks"][0]
+		self.assertEqual(auditor_block["action"], "View")
+		self.assertEqual(auditor_block["action_kind"], "secondary")
+
+	def test_active_plus_a_draft_successor_is_two_blocks(self):
+		"""U01-B — the Active block offers View (never a discretionary
+		command over Active content) and the candidate block offers the
+		Planner's own Continue update."""
+		from kentender_procurement.procurement_planning.services import dpp_validation
+
+		submitted = self.submitted()
+		task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
+		entry_id = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": submitted["current_version"]}, "entry_id")
+		frappe.set_user(fx.PLANNER)
+		accepted = dpp_validation.accept_departmental_plan(
+			task=task.name, task_token=task.task_token, idempotency_key=key(),
+			classifications={entry_id: "Consulting services"},
+		)
+		frappe.db.set_value("Annual Plan Version", accepted["annual_plan_version"], "version_status", "Active")
+		frappe.db.set_value("Annual Plan", accepted["annual_plan"], "active_version", accepted["annual_plan_version"])
+		successor = frappe.copy_doc(frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"]))
+		successor.version_reference = f"{accepted['annual_plan']}-V2"
+		successor.version_number = 2
+		successor.version_status = "Draft"
+		successor.based_on_version = accepted["annual_plan_version"]
+		successor.insert(ignore_permissions=True)
+		frappe.db.set_value("Annual Plan", accepted["annual_plan"], "open_successor_version", successor.name)
+
+		result = self.load(fx.PLANNER)
+		blocks = result["annual_plan"]["blocks"]
+		self.assertEqual(len(blocks), 2)
+		active_block, candidate_block = blocks
+		self.assertEqual(active_block["kind"], "active")
+		self.assertEqual(active_block["version_status"], "Active")
+		self.assertEqual(active_block["action"], "View Active Plan")
+		self.assertEqual(active_block["action_kind"], "secondary")
+		self.assertEqual(candidate_block["kind"], "candidate")
+		self.assertEqual(candidate_block["version_status"], "Draft")
+		self.assertEqual(candidate_block["version_number"], 2)
+		self.assertEqual(candidate_block["action"], "Continue update")
+		self.assertEqual(candidate_block["action_kind"], "primary")
+
+	def test_a_candidate_awaiting_a_decision_offers_no_card_button(self):
+		"""U01-F — the decision lives on that actor's own governance task in
+		Your actions, never a second button on the Annual Plan card."""
+		from kentender_procurement.procurement_planning.services import dpp_validation
+
+		submitted = self.submitted()
+		task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
+		entry_id = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": submitted["current_version"]}, "entry_id")
+		frappe.set_user(fx.PLANNER)
+		accepted = dpp_validation.accept_departmental_plan(
+			task=task.name, task_token=task.task_token, idempotency_key=key(),
+			classifications={entry_id: "Consulting services"},
+		)
+		frappe.db.set_value("Annual Plan Version", accepted["annual_plan_version"], "version_status", "Awaiting Accounting Officer")
+		result = self.load(fx.PLANNER)
+		block = result["annual_plan"]["blocks"][0]
+		self.assertEqual(block["version_status"], "Awaiting Accounting Officer")
+		self.assertEqual(block["action"], "")
+		self.assertEqual(block["action_kind"], "")

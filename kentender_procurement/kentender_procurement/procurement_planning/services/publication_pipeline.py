@@ -119,7 +119,7 @@ def publish_annual_plan(*, plan_version: str, idempotency_key: str | None = None
 	"""§7.2 `PublishAnnualPlan` — the system worker. Gated on valid current
 	Treasury evidence and no active hold; sends the exact frozen manifest
 	under the publication's own stable identity (never a new package)."""
-	actor = cstr(user or frappe.session.user or "Administrator")
+	actor = authz.require_technical(user)
 	payload_key = {"plan_version": plan_version}
 	if idempotency_key:
 		replay = envelope.replay_or_none(idempotency_key, payload_key)
@@ -177,7 +177,7 @@ def receive_publication_acknowledgement(
 	"""§7.2 `ReceivePublicationAcknowledgement` — authenticated exact-package
 	correlation; duplicate event id is idempotent; a mismatched hash never
 	activates. Runs the activation predicates and switches once, or holds."""
-	actor = cstr(user or frappe.session.user or "Administrator")
+	actor = authz.require_technical(user)
 	event_id = cstr(event_id).strip()
 	if not event_id:
 		fail("PLN_ENTRY_INCOMPLETE", "An acknowledgement needs its adapter event id.", {"field": "event_id"})

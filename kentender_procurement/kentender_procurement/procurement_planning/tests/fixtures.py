@@ -269,6 +269,15 @@ def close_test_intake() -> None:
 def wipe_planning_rows() -> None:
 	"""Per-test isolation, scoped by the two test Fiscal Years (namespace
 	alone is not enough: rows created through the API carry no namespace)."""
+	# `Annual Plan Publication Destination` is shared site configuration, not
+	# test data scoped to a fiscal year, so it is never deleted here — but a
+	# test that drives it to Failed/Indeterminate to prove a recovery path
+	# and then errors before resetting it would otherwise leak that outcome
+	# into every later test's `activate()` call, in this file or any other
+	# (Phase 2f's `PublicationCase.setUp` fix covered only its own file;
+	# resetting it here covers every caller of `wipe_planning_rows`, current
+	# and future).
+	frappe.db.set_value("Annual Plan Publication Destination", {"active": 1}, "sandbox_outcome", "Acknowledge")
 	fys = (FY_OPEN, FY_CLOSED)
 	dpp_roots = frappe.get_all("Departmental Plan", filters={"fiscal_year": ("in", fys)}, pluck="name")
 	dpp_versions = frappe.get_all("Departmental Plan Version", filters={"departmental_plan": ("in", dpp_roots or ("",))}, pluck="name")

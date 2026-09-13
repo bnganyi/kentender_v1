@@ -360,41 +360,78 @@ def record_tender_milestone_actual(
 	coverage: list[dict[str, Any]] | None = None,
 	supersedes_event_id: str = "",
 ) -> dict[str, Any]:
-	"""§7.2 `RecordTenderMilestoneActual` — inbound only: the owning module's
-	authenticated event (PLN-CHG-001 v1.18 §4.8 envelope: producer, unique
-	event id, proceeding, producer sequence, optional correction linkage).
-	Never callable from a user-facing endpoint (PLN18-AC-120).
+	"""§7.2 `RecordTenderMilestoneActual` / §4.8 / §5.5.1A — inbound only: the
+	owning module's authenticated event envelope (producer, unique event id,
+	proceeding, producer sequence, optional correction linkage). Never
+	callable from a user-facing endpoint (PLN18-AC-120).
 
-	Guard (plan D10, closes TPR FU-05 on the Planning side): a repeated event
-	id is a no-op; an actual that already exists for this milestone is never
-	overwritten by a different value — a correction must name the event it
-	supersedes and arrives through the same producer. The per-proceeding
-	`Milestone Actual Event` store lands in Phase 2g; until then the guard
-	works on the item's recorded actual."""
+	A repeated `(producer, event_id)` is idempotent (plan D10; DB-unique
+	`pln_uniq_actual_event`). The never-overwrite guard is scoped to this
+	same proceeding (`proceeding_id`, "" counting as its own scope): two
+	different proceedings on the same item keep two independent actuals for
+	the same milestone (§5.5.1A's own example — 100 and 150 laptops, two
+	Tenders, two invitation dates, "both must remain visible") rather than
+	one ever silently overwriting the other. `Annual Plan Item.actual_*_date`
+	stays a best-effort last-recorded mirror for the single-proceeding
+	common case and every existing item-level reader (§8.3 reminders,
+	`schedule_rows`, the Requisition eligibility projection) — aggregating
+	it correctly across multiple proceedings is explicitly outside the MVP
+	(§5.5.1A); the per-proceeding `Milestone Actual Event`/`Proceeding
+	Coverage` store below is the fact of record. `coverage` rows (owner-
+	supplied) upsert this proceeding's own coverage projection."""
 	if milestone not in MILESTONES:
 		fail("PLN_SCHEDULE_INVALID", "Unknown milestone.")
-	if not cstr(source_event_id).strip():
+	source_event_id = cstr(source_event_id).strip()
+	producer = cstr(producer).strip()
+	if not source_event_id or not producer:
 		fail("PLN_ACTUAL_NOT_WRITABLE", "An actual date must arrive as an identified event from the process that recorded it.")
 	name = frappe.db.get_value("Annual Plan Item", {"plan_item_id": plan_item_id, "item_state": "Active"}, "name")
 	if not name:
 		fail("PLN_STALE_WRITE", "No Active Plan Item carries that id.")
-	existing = frappe.db.get_value("Annual Plan Item", name, f"actual_{milestone}_date")
-	if existing:
-		if getdate(existing) == getdate(actual_date):
-			return {"ok": True, "idempotent": True, "plan_item": plan_item_id, "milestone": milestone, "source_event_id": source_event_id, "proceeding_id": proceeding_id}
-		if not cstr(supersedes_event_id).strip():
+
+	from kentender_procurement.procurement_planning.services import actuals
+
+	item = frappe.get_doc("Annual Plan Item", name)
+	if frappe.db.exists("Milestone Actual Event", {"producer": producer, "event_id": source_event_id}):
+		return {"ok": True, "idempotent": True, "plan_item": plan_item_id, "milestone": milestone, "source_event_id": source_event_id, "proceeding_id": proceeding_id}
+
+	current_for_proceeding = actuals.proceeding_events(plan_item_id, cstr(proceeding_id).strip()).get(milestone)
+	if current_for_proceeding and getdate(current_for_proceeding.actual_date) != getdate(actual_date):
+		if cstr(supersedes_event_id).strip() != cstr(current_for_proceeding.event_id):
 			fail(
 				"PLN_ACTUAL_NOT_WRITABLE",
-				"Planning already carries a different actual date for this milestone; a correction must supersede the earlier event.",
-				{"plan_item_id": plan_item_id, "milestone": milestone, "existing": str(existing), "offered": str(getdate(actual_date))},
+				"This proceeding already carries a different actual date for this milestone; a correction must supersede that earlier event.",
+				{"plan_item_id": plan_item_id, "milestone": milestone, "proceeding_id": proceeding_id, "existing": str(current_for_proceeding.actual_date), "offered": str(getdate(actual_date))},
 			)
+
+	written = actuals.record_actual_event(
+		item=item, producer=producer, event_id=source_event_id, milestone=milestone, actual_date=actual_date,
+		proceeding_type=proceeding_type, proceeding_id=proceeding_id, producer_sequence=producer_sequence,
+		supersedes_event_id=supersedes_event_id,
+	)
 	frappe.db.set_value("Annual Plan Item", name, f"actual_{milestone}_date", getdate(actual_date), update_modified=False)
 	status = "Completed" if milestone == "delivery_completion" else "In progress"
 	frappe.db.set_value("Annual Plan Item", name, "item_status", status, update_modified=False)
+
+	from kentender_procurement.procurement_planning.services import notifications
+
+	notifications.clear_milestone_notice(plan_item_id=plan_item_id, milestone=milestone, proceeding_id="")
+	if proceeding_id:
+		notifications.clear_milestone_notice(plan_item_id=plan_item_id, milestone=milestone, proceeding_id=proceeding_id)
+
+	for row in coverage or []:
+		actuals.upsert_coverage(
+			item=item, proceeding_type=proceeding_type, proceeding_id=proceeding_id, allocation=cstr(row.get("allocation")),
+			requisition_reference=cstr(row.get("requisition_reference")), requisition_version=cstr(row.get("requisition_version")),
+			covered_quantity=row.get("covered_quantity"), covered_value=row.get("covered_value"),
+			authorisation_state=cstr(row.get("authorisation_state")), publication_state=cstr(row.get("publication_state")),
+			reversal_state=cstr(row.get("reversal_state")), last_event=written["event"],
+		)
+
 	return {
 		"ok": True, "idempotent": False, "plan_item": plan_item_id, "milestone": milestone, "source_event_id": source_event_id,
 		"producer": producer, "proceeding_id": proceeding_id, "proceeding_type": proceeding_type,
-		"producer_sequence": int(producer_sequence or 0), "supersedes_event_id": supersedes_event_id,
+		"producer_sequence": int(producer_sequence or 0), "supersedes_event_id": supersedes_event_id, "event": written["event"],
 	}
 
 
@@ -405,7 +442,13 @@ def record_tender_milestone_actual(
 
 def check_approaching_milestones(*, today=None) -> dict[str, Any]:
 	"""`CheckApproachingMilestones` — daily; one notification per approaching
-	milestone per day at most (PLN-AC-130); creates no task or state."""
+	milestone per day at most (PLN-AC-130), and one evolving `Milestone
+	Notice` per recipient/item/milestone (plan D11, §5.5.1B), covering the
+	pre-proceeding case the rule names first ("use the item's current
+	forecast or approved baseline if unrevised"). Following an in-flight
+	proceeding's own identified schedule once one exists is a further
+	integration this MVP defers — proceedings carry no forecast of their
+	own yet. Creates no task or state; a missed reminder blocks nothing."""
 	from kentender_procurement.procurement_planning.services import notifications
 
 	from kentender_core.services.procurement_settings import get_reminder_threshold_days
@@ -415,7 +458,7 @@ def check_approaching_milestones(*, today=None) -> dict[str, Any]:
 	items = frappe.get_all(
 		"Annual Plan Item",
 		filters={"item_state": "Active"},
-		fields=["name", "plan_item_id", "title", "plan_version", *FORECAST_FIELDS, *ACTUAL_FIELDS],
+		fields=["name", "plan_item", "plan_item_id", "title", "plan_version", "fixture_namespace", *FORECAST_FIELDS, *ACTUAL_FIELDS],
 		limit_page_length=0,
 	)
 	raised = []
@@ -427,8 +470,11 @@ def check_approaching_milestones(*, today=None) -> dict[str, Any]:
 			if not forecast:
 				continue
 			days = date_diff(getdate(forecast), today)
-			if 0 <= days <= threshold:
-				notifications.notify_approaching_milestone(item, m, forecast, days, today)
+			if days <= threshold:
+				status = "Overdue" if days < 0 else ("Due today" if days == 0 else "Approaching")
+				notifications.upsert_milestone_notice(item=item, milestone=m, proceeding_id="", due_date=forecast, status=status, evaluated_at=now_datetime())
+				if days >= 0:
+					notifications.notify_approaching_milestone(item, m, forecast, days, today)
 				raised.append((item.plan_item_id, m))
 			break  # only the next milestone with no actual (§8.3)
 	return {"raised": raised, "checked": len(items)}

@@ -101,6 +101,61 @@ def _allocated_value(version_name: str) -> float:
 	)
 
 
+# PLN-CHG-001 v1.18 §9.6 (U01) — the Annual Plan card's own fact rows and, at
+# most, one discretionary command button distinct from the "Your actions"
+# queue: a Planner-exercisable command when this actor holds it, a plain
+# "View" link for every other reader, and no button while the candidate
+# awaits a decision someone else's own task already carries (U01-F/U01-D).
+FUNDING_BADGE = {
+	"Not requested": "Not requested", "Awaiting confirmation": "Awaiting confirmation",
+	"Confirmed": "Confirmed", "Returned": "Returned", "Stale": "Stale",
+}
+
+
+def _plan_version_facts(version, *, route: list[str]) -> dict[str, Any]:
+	return {
+		"route": route,
+		"version_number": version.version_number,
+		"version_status": version.version_status,
+		"funding_state": FUNDING_BADGE.get(version.funding_state, cstr(version.funding_state)),
+		"plan_items": frappe.db.count("Annual Plan Item", {"plan_version": version.name, "item_state": ("!=", "Dissolved")}),
+		"value_display": _money(_allocated_value(version.name)),
+	}
+
+
+def _annual_plan_card(plan, active_version, open_version, *, is_planner: bool) -> list[dict[str, Any]]:
+	if not plan:
+		return []
+	route = ["annual-procurement-plan", plan.plan_reference]
+	blocks: list[dict[str, Any]] = []
+	has_distinct_candidate = bool(active_version and open_version and open_version.name != active_version.name)
+	if active_version:
+		block = {"kind": "active", **_plan_version_facts(active_version, route=route)}
+		if has_distinct_candidate:
+			block.update(action="View Active Plan", action_kind="secondary")
+		elif is_planner:
+			block.update(action="Prepare plan update", action_kind="primary")
+		else:
+			block.update(action="View Active Plan", action_kind="secondary")
+		blocks.append(block)
+	if open_version and (not active_version or has_distinct_candidate):
+		block = {"kind": "candidate" if active_version else "current", **_plan_version_facts(open_version, route=route)}
+		if not is_planner:
+			block.update(action="View", action_kind="secondary")
+		elif open_version.version_status == "Draft":
+			block.update(action="Continue Plan" if not active_version else "Continue update", action_kind="primary")
+		elif open_version.version_status == "Published — activation held":
+			block.update(action="View published Plan", action_kind="secondary")
+		else:
+			# Awaiting Accounting Officer / Awaiting statutory approval /
+			# Approved — publication pending / Publication failed / Withdrawn
+			# for correction: the decision or recovery lives on that actor's
+			# own task in "Your actions" (U01-F), never a second button here.
+			block.update(action="", action_kind="")
+		blocks.append(block)
+	return blocks
+
+
 ROOT_STATUS = {
 	"Draft": ("Draft", "attention"),
 	"Submitted": ("Awaiting validation", "attention"),
@@ -283,6 +338,12 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 			"Annual Plan Version", plan.open_successor_version or plan.active_version,
 			["name", "version_number", "version_status", "funding_state"], as_dict=True,
 		)
+	active_version_doc = None
+	if plan and plan.active_version:
+		active_version_doc = (
+			open_version if open_version and open_version.name == plan.active_version
+			else frappe.db.get_value("Annual Plan Version", plan.active_version, ["name", "version_number", "version_status", "funding_state"], as_dict=True)
+		)
 
 	if is_planner:
 		for task in frappe.get_all(
@@ -364,7 +425,12 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 		"outcome": "OK",
 		"context": context,
 		"window_open": window_open,
-		"annual_plan": {"plan_reference": plan.plan_reference if plan else "", "summary": plan_summary},
+		"annual_plan": {
+			"plan_reference": plan.plan_reference if plan else "",
+			"title": plan.title if plan else "",
+			"summary": plan_summary,
+			"blocks": _annual_plan_card(plan, active_version_doc, open_version, is_planner=is_planner),
+		},
 		"actionable": actionable,
 		"waiting": waiting,
 		"schedule_health": health,
