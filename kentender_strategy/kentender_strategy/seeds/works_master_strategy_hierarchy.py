@@ -203,11 +203,23 @@ def upsert_works_master_strategy_hierarchy(*_args: Any, **_kwargs: Any) -> dict[
 	)
 	target.insert(ignore_permissions=True)
 
+	# STR-CHG-001 v1.8 §5.1 — approval is permitted only when the version
+	# can become effective immediately, judged against the site date. This
+	# demo fixture is a plan approved for a 2031 start (the Budget and
+	# Procurement Works Master worlds live in FY 2031/32), so its approval
+	# runs under the fixture's own clock — the same frozen-clock seed
+	# discipline PLN-CHG-001 D19 adopted — never by relaxing the rule.
+	from unittest.mock import patch
+
 	try:
 		frappe.set_user(actors["author"])
 		transition_plan_version(version.name, "Submit for approval")
 		frappe.set_user(actors["approver"])
-		transition_plan_version(version.name, "Approve")
+		with patch(
+			"kentender_strategy.services.strategy_readiness.today",
+			return_value=frappe.utils.getdate(version.effective_from),
+		):
+			transition_plan_version(version.name, "Approve")
 	finally:
 		frappe.set_user("Administrator")
 

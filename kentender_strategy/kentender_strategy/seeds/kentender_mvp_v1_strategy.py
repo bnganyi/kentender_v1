@@ -237,44 +237,104 @@ def clear_kentender_mvp_v1_strategy(
 	return {"ok": True, "deleted": deleted}
 
 
-# --- STR-CHG-001 §14.4 isolated design/workflow fixture --------------------
-# Artboard-only (KT-STD-001 §8.7) — not part of the default seed above.
+# --- STR-CHG-001 v1.8 §14.4 isolated workflow and usability fixtures ------
+# Artboard-only (KT-STD-001 §8.7) — never part of the default seed above.
+# Every profile is a Version 2 of the §14.3 plan, created, edited and
+# submitted by Esther through the real commands, with the recorded event
+# instants corrected to the §14.4 clock (24 Nov 2026: created 13:10, Draft
+# saved 15:55, submitted 16:20 EAT). The only content change is the FY
+# 2027/28 target 80% → 85%; the applicability start changes in both
+# profiles and is always a comparison row of its own.
+
+PROFILE_FUTURE = "STR18-FX-FUTURE"
+PROFILE_IMMEDIATE = "STR18-FX-IMMEDIATE"
+PROFILE_EFFECTIVE_FROM = {PROFILE_FUTURE: "2027-07-01", PROFILE_IMMEDIATE: "2026-11-25"}
+PROFILE_EFFECTIVE_TO = "2028-06-30"
+V2_CREATED_AT = "2026-11-24 13:10:00"
+V2_DRAFT_SAVED_AT = "2026-11-24 15:55:00"
+V2_SUBMITTED_AT = "2026-11-24 16:20:00"
+V2_RETURNED_AT = "2026-11-25 11:20:00"
+RETURN_REASON = (
+	"Explain how the revised target will be measured and confirm the date these changes should take effect."
+)
+NEW_PLAN_TITLE = "Ministry of Health Strategic Plan 2028–2033 (Demo)"
+NEW_PLAN_PERIOD = ("2028-07-01", "2033-06-30")
 
 
-def seed_str_des_v2_fixture() -> dict[str, Any]:
-	"""§14.4 — an isolated Version 2 test fixture for the STR-DES-04..10
-	artboards, NOT part of the default upsert above. Reaches Submitted for
-	approval; the caller may transition it further and MUST tear it down
-	with teardown_str_des_v2_fixture().
-
-	Reuses create_strategy_successor_version (the same real command §8
-	exposes) to clone the full hierarchy rather than hand-cloning only the
-	indicator/target — a hand-clone left the indicator pointing at the V1
-	outcome node, which validate_performance_indicator correctly rejects as
-	a cross-version reference (found live while first building this
-	fixture, fixed by reuse instead of a second, narrower clone path)."""
+def _moh_plan_name() -> str:
 	moh_plan = frappe.db.get_value("Strategic Plan", {"title": PLAN_TITLE}, "name")
 	if not moh_plan:
-		frappe.throw(_("Seed the default MOH plan before creating the V2 fixture"))
+		frappe.throw(_("Seed the default MOH plan before creating a Version 2 fixture"))
+	return moh_plan
 
+
+def _v2_target(v2: str) -> tuple[str, str]:
+	indicator = frappe.db.get_value("Performance Indicator", {"plan_version_id": v2}, "name")
+	target = frappe.db.get_value("Performance Target", {"indicator_id": indicator}, "name")
+	return indicator, target
+
+
+def seed_str_des_v2_draft(
+	*, profile: str = PROFILE_IMMEDIATE, effective_from: str | None = None, target_by_date: bool = False
+) -> dict[str, Any]:
+	"""A Draft Version 2 in the named profile: successor created 13:10, the
+	FY 2027/28 target raised to 85% through save_strategy_structure_draft at
+	15:55, dates set by profile (or an explicit `effective_from`). With
+	`target_by_date`, the target is anchored to 30 Jun 2028 instead of the
+	financial year (STR18-FX-DATE-TARGET)."""
+	if profile not in PROFILE_EFFECTIVE_FROM:
+		frappe.throw(_("Unknown Strategy fixture profile {0}").format(profile))
+	moh_plan = _moh_plan_name()
 	out = _run_as(AUTHOR, create_strategy_successor_version, moh_plan)
 	v2 = out["name"]
-	frappe.db.set_value("Strategic Plan Version", v2, {"effective_from": "2027-07-01", "effective_to": "2028-06-30"})
-	_backdate_event(v2, "Successor Version Created", "2026-11-24 13:10:00")
+	_backdate_event(v2, "Successor Version Created", V2_CREATED_AT)
 
-	new_indicator = frappe.db.get_value("Performance Indicator", {"plan_version_id": v2}, "name")
-	new_target = frappe.db.get_value("Performance Target", {"indicator_id": new_indicator}, "name")
-	frappe.db.set_value("Performance Target", new_target, "target_value", 85)  # §14.4's only content change
+	# AGENTS.md §4.6 — narrow, documented fixture-only direct write: the
+	# profile's applicability dates are set without a second "Draft saved"
+	# event so the §11.9 evidence stays exactly three rows (created, saved,
+	# submitted). The domain validation still runs through the structure
+	# save below, which reloads and re-validates the version.
+	frappe.db.set_value(
+		"Strategic Plan Version",
+		v2,
+		{"effective_from": effective_from or PROFILE_EFFECTIVE_FROM[profile], "effective_to": PROFILE_EFFECTIVE_TO},
+		update_modified=False,
+	)
+	indicator, target = _v2_target(v2)
+	target_change = {"name": target, "comparison": "At least", "target_value": 85}
+	if target_by_date:
+		target_change.update({"fiscal_year": None, "target_by_date": PROFILE_EFFECTIVE_TO})
+	_run_as(AUTHOR, save_strategy_structure_draft, v2, targets=[target_change])
+	_backdate_event(v2, "Draft structure saved", V2_DRAFT_SAVED_AT)
+	return {"ok": True, "profile": profile, "plan": moh_plan, "plan_version": v2, "indicator": indicator, "target": target}
 
+
+def seed_str_des_v2_fixture(*, profile: str = PROFILE_IMMEDIATE, effective_from: str | None = None) -> dict[str, Any]:
+	"""§14.4 — Version 2 Submitted for approval by Esther at 16:20 in the
+	named profile (FUTURE: 1 Jul 2027 start, the negative approval example;
+	IMMEDIATE: 25 Nov 2026 start, the positive one). The caller MUST tear it
+	down with teardown_str_des_v2_fixture()."""
+	fixture = seed_str_des_v2_draft(profile=profile, effective_from=effective_from)
+	v2 = fixture["plan_version"]
 	_run_as(AUTHOR, transition_plan_version, v2, "Submit for approval")
-	_backdate_event(v2, "Submit for approval", "2026-11-24 16:20:00")
+	_backdate_event(v2, "Submit for approval", V2_SUBMITTED_AT)
+	return fixture
 
-	return {"ok": True, "plan_version": v2, "indicator": new_indicator, "target": new_target}
+
+def seed_str_des_v2_returned_fixture(*, effective_from: str | None = None) -> dict[str, Any]:
+	"""STR18-FX-RETURN — the immediate profile returned by Alfred at 25 Nov
+	2026 11:20 EAT with the exact §11.9 reason; the same version is Draft
+	again and Version 1 stays Current."""
+	fixture = seed_str_des_v2_fixture(profile=PROFILE_IMMEDIATE, effective_from=effective_from)
+	v2 = fixture["plan_version"]
+	_run_as(APPROVER, transition_plan_version, v2, "Return", reason=RETURN_REASON)
+	_backdate_event(v2, "Return", V2_RETURNED_AT)
+	return {**fixture, "profile": "STR18-FX-RETURN", "return_reason": RETURN_REASON}
 
 
 def teardown_str_des_v2_fixture(plan_version_id: str) -> None:
-	"""Removes an isolated V2 fixture created by seed_str_des_v2_fixture —
-	§14.4's own requirement: "must remove or roll it back after the test"."""
+	"""Removes an isolated V2 fixture — §14.4's own requirement: profiles
+	reset independently and never touch the default Version 1."""
 	for indicator in frappe.get_all("Performance Indicator", filters={"plan_version_id": plan_version_id}, pluck="name"):
 		for target in frappe.get_all("Performance Target", filters={"indicator_id": indicator}, pluck="name"):
 			frappe.delete_doc("Performance Target", target, force=1, ignore_permissions=True)

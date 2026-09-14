@@ -17,23 +17,28 @@
 .add-child:hover{border-color:var(--color-accent);color:var(--color-accent-700)}
 .btn-danger-outline{border:1px solid var(--status-critical);color:var(--status-critical);background:transparent}
 .btn-danger-outline:hover{background:var(--status-critical-bg)}
+.move-btn{font-size:12px;padding:4px 9px;border:1px solid var(--color-divider);background:transparent;color:var(--color-text);cursor:pointer;font-family:var(--font-heading)}
+.move-btn:disabled{color:var(--color-neutral-400);cursor:default}
 </style>
 </helmet>
-<dc-import name="Shell" breadcrumb="Home > Strategy Alignment > STR-MOH-2023-001 > Version 2 > Structure" hint-size="100%,900px">
+<dc-import name="Shell" breadcrumb="Home > Strategy Alignment > STR-MOH-2023-001 > Version 2 > Structure" hint-size="100%,920px">
 <div data-screen-label="STR-DES-04" style="max-width:1320px;margin:0 auto;padding:var(--space-8) var(--space-6)">
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-6)">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-4)">
     <div>
       <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent);margin-bottom:6px">STR-MOH-2023-001 &middot; VERSION 2</div>
+      <h1 style="font-size:28px;margin:0 0 4px">Edit plan</h1>
       <div style="display:flex;align-items:center;gap:var(--space-3)">
-        <h1 style="font-size:28px;margin:0">Strategy structure</h1>
-        <span class="kt-status is-draft">Draft</span>
+        <span style="font-size:15px;font-weight:600">Ministry of Health Strategic Plan (Demo)</span>
+        <span class="kt-status is-draft">Draft update</span>
       </div>
     </div>
     <div style="display:flex;gap:var(--space-2)">
-      <button type="button" class="btn btn-secondary">Save draft</button>
+      <button type="button" class="btn btn-secondary">Save changes</button>
       <button type="button" class="btn btn-primary">Submit for approval</button>
     </div>
   </div>
+
+  <div class="kt-notice is-info" style="margin-bottom:var(--space-6)">The current plan remains in use until these changes are approved.</div>
 
   <div style="display:flex;gap:var(--space-6);border-bottom:1px solid var(--color-divider);margin-bottom:var(--space-6)">
     <button type="button" style="background:none;border:none;border-bottom:2px solid transparent;color:var(--color-neutral-700);font-family:var(--font-heading);font-weight:600;font-size:14px;padding:0 0 10px;cursor:default">Overview</button>
@@ -43,9 +48,8 @@
 
   <div style="display:grid;grid-template-columns:42% 58%;gap:var(--space-6);align-items:start">
     <div class="card blueprint" style="padding:var(--space-6)">
-      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div class="kt-card-title" style="margin:0;padding-bottom:0;border-bottom:none">Plan hierarchy</div>
+        <div class="kt-card-title" style="margin:0;padding-bottom:0;border-bottom:none">Plan structure</div>
         <button type="button" class="add-child">Add pillar</button>
       </div>
       <div style="padding:7px 8px;border:1px solid transparent">
@@ -85,15 +89,15 @@
     </div>
 
     <div class="card blueprint" style="padding:var(--space-6)">
-      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <div class="kt-card-title" style="margin-bottom:4px">Strategic Objective</div>
-      <div style="font-size:12px;color:var(--color-neutral-700);margin-bottom:var(--space-4)">Pillar / Programme / Sub-programme / Strategic Objective</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">
-        <div class="field" style="grid-column:1 / -1"><label>Title</label><input class="input" value="Strengthen interoperable national digital health services" /></div>
-        <div class="field"><label>Display order</label><input class="input" type="number" value="1" /></div>
+      <div class="kt-card-title" style="margin-bottom:4px">Objective</div>
+      <div style="font-size:12px;color:var(--color-neutral-700);margin-bottom:var(--space-4)">Digital health systems / Health policy, standards and regulation / Digital health governance</div>
+      <div class="field"><label>Objective</label><input class="input" value="Strengthen interoperable national digital health services" /><div style="font-size:12px;color:var(--color-neutral-700);margin-top:4px">State what the plan aims to achieve.</div></div>
+      <div style="display:flex;gap:var(--space-2);margin-top:var(--space-4)">
+        <button type="button" class="move-btn">Move up</button>
+        <button type="button" class="move-btn" disabled>Move down</button>
       </div>
       <div style="display:flex;justify-content:space-between;gap:var(--space-3);margin-top:var(--space-6)">
-        <button type="button" class="btn btn-danger-outline">Delete node</button>
+        <button type="button" class="btn btn-danger-outline">Delete objective</button>
         <button type="button" class="btn btn-primary">Save changes</button>
       </div>
     </div>

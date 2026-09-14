@@ -15,9 +15,11 @@
 <div data-screen-label="STR-DES-08" style="max-width:1180px;margin:0 auto;padding:var(--space-8) var(--space-6) 120px">
   <div style="margin-bottom:var(--space-6)">
     <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent);margin-bottom:6px">STR-MOH-2023-001 &middot; VERSION 2</div>
-    <div style="display:flex;align-items:center;gap:var(--space-3)">
-      <h1 style="font-size:28px;margin:0">Approve strategic plan version</h1>
-      <span class="kt-status is-pending">Submitted for approval</span>
+    <h1 style="font-size:28px;margin:0 0 4px">Review plan changes</h1>
+    <div style="font-size:16px;font-weight:600;margin-bottom:6px">Ministry of Health Strategic Plan (Demo)</div>
+    <div style="display:flex;align-items:center;gap:var(--space-3);font-size:13px;color:var(--color-neutral-700)">
+      <span>Submitted by Esther Muthoni, 24 Nov 2026, 16:20 EAT</span>
+      <span class="kt-status is-pending">Awaiting approval</span>
     </div>
   </div>
 
@@ -29,20 +31,23 @@
   </div>
 
   <div class="card blueprint" style="padding:var(--space-4)">
-    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-    <div class="kt-card-title">Changes from Active Version 1</div>
+    <div class="kt-card-title">Changes from Version 1</div>
     <table class="table">
-      <thead><tr><th>Changed item</th><th>Active Version 1</th><th>Submitted Version 2</th></tr></thead>
+      <thead><tr><th>Item</th><th>Previous accepted baseline &middot; V1</th><th>Proposed &middot; V2</th></tr></thead>
       <tbody>
-        <tr><td>FY 2027/28 performance target</td><td>At least 80%</td><td>At least 85%</td></tr>
+        <tr><td><span class="tag tag-accent" style="margin-right:8px">Target</span>Target for FY 2027/28</td><td>At least 80%</td><td>At least 85%</td></tr>
+        <tr><td><span class="tag tag-accent-2" style="margin-right:8px">Date</span>Version effective from</td><td>1 Jul 2023</td><td>25 Nov 2026</td></tr>
       </tbody>
     </table>
-    <p style="font-size:13px;color:var(--color-neutral-700);margin:var(--space-3) 0 0">No other plan identity or structure items changed.</p>
+    <p style="font-size:13px;color:var(--color-neutral-700);margin:var(--space-3) 0 0">No other submitted identity, effective-date or structure values changed in this isolated fixture.</p>
   </div>
 </div>
-<div style="position:sticky;bottom:0;background:var(--color-surface);border-top:1px solid var(--color-divider);padding:var(--space-4) var(--space-6);display:flex;justify-content:flex-end;gap:var(--space-3)">
-  <button type="button" class="btn" style="border-color:var(--status-critical);color:var(--status-critical);background:transparent">Return</button>
-  <button type="button" class="btn btn-primary">Approve</button>
+<div style="position:sticky;bottom:0;background:var(--color-surface);border-top:1px solid var(--color-divider);padding:var(--space-4) var(--space-6);display:flex;align-items:center;justify-content:flex-end;gap:var(--space-4)">
+  <div style="font-size:12px;color:var(--color-neutral-700);max-width:480px;text-align:right">Approval replaces the current strategy version for new planning selections. Existing approved records keep their saved strategy details.</div>
+  <div style="display:flex;gap:var(--space-3);flex:none">
+    <button type="button" class="btn" style="border-color:var(--status-critical);color:var(--status-critical);background:transparent">Return for correction</button>
+    <button type="button" class="btn btn-primary">Approve changes and use plan</button>
+  </div>
 </div>
 </dc-import>
 </x-dc>

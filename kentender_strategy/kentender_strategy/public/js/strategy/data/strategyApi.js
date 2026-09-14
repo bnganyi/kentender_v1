@@ -1,9 +1,10 @@
 // Live data adapter for the Strategy Alignment page — STR-UI-01..04 read
 // contracts (kentender_strategy.api.strategy_ui_api) and the §8 command
-// contracts (kentender_strategy.api.strategy_consumer_api).
+// contracts (kentender_strategy.api.strategy_consumer_api). Every write
+// carries the attempt's idempotency key (§8.2, plan D6).
 import { frappeCall as call } from "../../strategy_shared/data/frappeCall.js";
 
-// --- STR-UI-01 Portfolio -----------------------------------------------------
+// --- STR-UI-01 Strategic plans ---------------------------------------------
 
 export const fetchPortfolio = (filters) =>
 	call("kentender_strategy.api.strategy_ui_api.get_strategy_portfolio", {
@@ -12,18 +13,19 @@ export const fetchPortfolio = (filters) =>
 		status: (filters && filters.status) || "",
 	});
 
-export const saveNewPlanDraft = (payload) =>
-	call("kentender_strategy.api.strategy_consumer_api.save_strategy_plan_draft", { payload });
+// --- STR-UI-02 / STR-UI-03 Plan workspace + structure editor ---------------
 
-// --- STR-UI-02 / STR-UI-03 Plan workspace + structure editor -----------------
+export const getPlanWorkspace = (planId, versionNumber) =>
+	call("kentender_strategy.api.strategy_ui_api.get_plan_workspace", {
+		plan_id: planId,
+		version_number: versionNumber || null,
+	});
 
-export const getPlanWorkspace = (planId) =>
-	call("kentender_strategy.api.strategy_ui_api.get_plan_workspace", { plan_id: planId });
-
-export const savePlanDraft = (payload, expectedVersion) =>
+export const savePlanDraft = (payload, expectedVersion, idempotencyKey) =>
 	call("kentender_strategy.api.strategy_consumer_api.save_strategy_plan_draft", {
 		payload,
 		expected_version: expectedVersion || null,
+		idempotency_key: idempotencyKey || null,
 	});
 
 export const getVersionHistory = (planVersionId) =>
@@ -37,9 +39,8 @@ export const getFiscalYears = (planId) =>
 	call("kentender_strategy.api.strategy_ui_api.list_available_fiscal_years", { plan_id: planId });
 
 // Performance Indicator.unit is a plain Data field (STR-CHG-001 §4.4 names no
-// catalogue), so this offers the distinct values already in use across every
-// plan as suggestions — an author picks a consistent existing unit or types a
-// genuinely new one.
+// catalogue, and §4.7 does not assume the UOM catalogue carries Percentage),
+// so this offers the distinct values already in use as suggestions.
 const COMMON_UNITS = ["Percentage", "Count", "Rate per 100,000 population", "Rate per 1,000 population", "Days", "Ratio"];
 export const getIndicatorUnits = () =>
 	call("frappe.client.get_list", {
@@ -54,7 +55,7 @@ export const getIndicatorUnits = () =>
 		return [...new Set([...COMMON_UNITS, ...used])].sort((a, b) => a.localeCompare(b));
 	});
 
-export const saveStructureDraft = (planVersionId, { nodes, indicators, targets, deletes, expectedVersion }) =>
+export const saveStructureDraft = (planVersionId, { nodes, indicators, targets, deletes, expectedVersion }, idempotencyKey) =>
 	call("kentender_strategy.api.strategy_consumer_api.save_strategy_structure_draft", {
 		plan_version_id: planVersionId,
 		nodes: nodes || [],
@@ -62,17 +63,20 @@ export const saveStructureDraft = (planVersionId, { nodes, indicators, targets, 
 		targets: targets || [],
 		deletes: deletes || [],
 		expected_version: expectedVersion || null,
+		idempotency_key: idempotencyKey || null,
 	});
 
-export const submitVersion = (planVersionId, expectedVersion) =>
+export const submitVersion = (planVersionId, expectedVersion, idempotencyKey) =>
 	call("kentender_strategy.api.strategy_consumer_api.submit_strategy_version", {
 		plan_version_id: planVersionId,
 		expected_version: expectedVersion || null,
+		idempotency_key: idempotencyKey || null,
 	});
 
-export const createSuccessorVersion = (planId) =>
+export const createSuccessorVersion = (planId, idempotencyKey) =>
 	call("kentender_strategy.api.strategy_consumer_api.create_strategy_successor_version", {
 		plan_id: planId,
+		idempotency_key: idempotencyKey || null,
 	});
 
 // --- STR-UI-04 Approval task -------------------------------------------------
@@ -86,15 +90,17 @@ export const diffStrategyVersions = (compareVersionId, baseVersionId) =>
 		base_version_id: baseVersionId || null,
 	});
 
-export const returnVersion = (planVersionId, reason, expectedVersion) =>
+export const returnVersion = (planVersionId, reason, expectedVersion, idempotencyKey) =>
 	call("kentender_strategy.api.strategy_consumer_api.return_strategy_version", {
 		plan_version_id: planVersionId,
 		reason,
 		expected_version: expectedVersion || null,
+		idempotency_key: idempotencyKey || null,
 	});
 
-export const approveVersion = (planVersionId, expectedVersion) =>
+export const approveVersion = (planVersionId, expectedVersion, idempotencyKey) =>
 	call("kentender_strategy.api.strategy_consumer_api.approve_strategy_version", {
 		plan_version_id: planVersionId,
 		expected_version: expectedVersion || null,
+		idempotency_key: idempotencyKey || null,
 	});

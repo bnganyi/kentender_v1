@@ -1,4 +1,7 @@
-# Strategy Alignment (STR-CHG-001 v1.7) — open follow-ups
+# Strategy Alignment (STR-CHG-001) — open follow-ups
+
+Register shared by the v1.7 correction pass (closed 6 September 2026) and the
+v1.8 usability correction (opened 14 September 2026, `STR-CHG-001_IMPLEMENTATION_TRACKER.md`).
 
 Items deliberately left open once implementation phases closed on 2026-09-06.
 Each entry is recorded because it is real, not because it is planned for a
@@ -9,7 +12,11 @@ and `docs/mvp-1-r1/04_planning/FOLLOW_UPS.md`.
 
 ## FU-01 — Design-fidelity gate against STR-DES-01..10 (STR-703, STR-AC-025)
 
-**Status:** Open.
+**Status:** Closed 2026-09-14 — `tests/ui/smoke/strategy/strategy-fidelity.spec.ts`
++ `make ui-strategy-fidelity-gate` (4 passed) assert the live routes against
+the v1.8 artboards STR-DES-01–09, STR-DES-05-AddTarget and STR-DES-06-Return
+using the shared landmark-subsequence helper. STR-DES-10 (state variants) is
+asserted by copy in `strategy-access.spec.ts`. Original entry kept below.
 **What:** `make ui-strategy-gate` proves rendering, copy, behaviour and the
 §10 routes in a real browser, but no automated check compares the three live
 screens against the approved `.dc.html` artboards the way System Setup's
@@ -40,7 +47,8 @@ hook (the pattern NDS adopted for review queues) once one exists for Strategy.
 **What:** `list_available_fiscal_years(plan_id)` offers every enabled ERPNext
 Fiscal Year overlapping the plan period. Frappe's test-record Fiscal Years
 (`_Test Fiscal Year 20xx`) satisfy that rule on `kentender.midas.com`, so the
-Add-target dialog lists them beside `2027-2028`.
+inline target editor (v1.8; formerly the Add-target dialog) lists them beside
+`FY 2027/28`. Observed again live on 2026-09-14.
 **Why it matters:** cosmetic on a dev site; a production site has no such
 rows. Filtering them by name would be a name-based special case (§17).
 **Path:** delete the test Fiscal Years from the dev site when they are no
@@ -105,6 +113,10 @@ on-screen label changed.
 hits that did exist were code comments, updated for accuracy alongside the
 label.
 **Path:** none outstanding.
+**v1.8 note (2026-09-14):** STR-CHG-001 v1.8 §11.1 names the tab "My work";
+the Project Owner reaffirmed the neutral convention on 14 September 2026 —
+the tab stays **Actions** (plan D3, conflict C1). The §11.1 Approval-tasks
+columns (Plan, Review, Submitted by, Submitted, Status, Review) render on it.
 
 ---
 
@@ -117,6 +129,61 @@ roles-table row wording, Forbidden carve-out and any masking clause's silence
 about technical readers with a citation of §3A.6; update AUTH-ADR-001
 citations to v1.8.
 **Path:** STR-CHG-001's next revision.
+**Resolution (2026-09-14, in progress):** the v1.8 build applies KT-STD-001
+v1.5 by owner direction (plan D4): technical read is implemented and tested
+as §3A.6, Strategy copy cites it. The document citation itself (v1.4 → v1.5,
+AUTH v1.7 → v1.8) is owed by the next STR-CHG-001 revision; recorded in the
+tracker as conflict C2.
+
+---
+
+## FU-09 — Corner registration marks in other apps' Vue markup (2026-09-14)
+
+**Status:** Open.
+**What:** The v1.8 Industry design system removes corner registration marks
+system-wide. `kt_industry_tokens.css` now hides `.kt-corner` everywhere and
+the Strategy SFCs no longer emit them, but ~91 Vue files in
+`kentender_core`, `kentender_procurement` and `kentender_budget` still carry
+`<i class="kt-corner …">` children. They render nothing; they are dead
+markup.
+**Why it matters:** cosmetic to source only; the rendered product is
+already correct. Cleaning them up touches files with uncommitted Planning
+work in the tree, so it is deferred rather than bundled into this cycle.
+**Path:** one mechanical pass (`sed`/codemod) per app once its own working
+tree is clean, plus removing the `.kt-corner` rule when the last emitter is
+gone.
+
+---
+
+## FU-10 — Sibling fidelity gates after the design-system re-tune (2026-09-14)
+
+**Status:** Closed 2026-09-14 — run once after the re-tune: `ui-budget-fidelity-gate`
+23 passed, `ui-system-setup-fidelity-gate` 17 passed; no drift. Original entry kept below.
+**What:** D2 changes table cell padding, row hover, header band and the
+accent for every Industry page. `ui-budget-fidelity-gate` and
+`ui-system-setup-fidelity-gate` measure geometry from their own module's
+older `_ds` render and may drift.
+**Path:** run both once at the v1.8 release gate; any drift is that module's
+follow-up (re-render its artboards on the v1.8 `_ds`), never a reason to
+fork tokens.
+
+---
+
+## FU-11 — Lost-response replay is proven server-side, not in a browser (2026-09-14)
+
+**Status:** Open.
+**What:** v1.8 §8.2 requires that a save, submission or decision whose
+response is lost is resolved by replaying the same attempt, never by a second
+attempt. The client keeps one idempotency key per attempt (`attempts.js`,
+`sessionStorage` across reload) and the server journal returns the original
+result on replay — proven by `TestIdempotentReplay` (Python) and by code
+review of `runAttempt`. No Playwright test yet injects a dropped response
+(`page.route` abort after the request reaches the server) to prove the
+browser half end to end; likewise access revocation mid-edit is not driven.
+**Why it matters:** STR18-AC-008/018 ask for observed recovery, not asserted
+recovery.
+**Path:** add a spec that routes `submit_strategy_version` to abort once and
+asserts one submission and one journal row; add an access-revocation case.
 
 ---
 

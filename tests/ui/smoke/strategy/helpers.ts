@@ -28,6 +28,18 @@ export const APPROVER = "alfred.ochieng@moh.example.test";
 export const AUDITOR = "naomi.chebet@moh.example.test";
 export const NOBODY = "samuel.otieno@moh.example.test";
 export const PLAN_TITLE = "Ministry of Health Strategic Plan (Demo)";
+// STR18-FX-NEW-PLAN (§14.4) — the browser-created plan carries the purge
+// prefix so every reset removes it.
+export const NEW_PLAN_TITLE = "Playwright — Ministry of Health Strategic Plan 2028–2033 (Demo)";
+export const RETURN_REASON =
+	"Explain how the revised target will be measured and confirm the date these changes should take effect.";
+
+/** 25 Nov 2026 → "25 Nov 2026" (the §11 date form). */
+export function dateLabel(iso: string): string {
+	const [y, m, d] = iso.split("-").map(Number);
+	const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+	return `${d} ${months[m - 1]} ${y}`;
+}
 
 export function bench(command: string): string {
 	try {
@@ -63,6 +75,9 @@ export interface DefaultFixture {
 export interface SuccessorFixture extends DefaultFixture {
 	v2: string;
 	v2_reference: string;
+	profile?: string;
+	effective_from?: string;
+	return_reason?: string;
 }
 
 /** Rebuild one fixture and return its ids — never hardcode a reference. */

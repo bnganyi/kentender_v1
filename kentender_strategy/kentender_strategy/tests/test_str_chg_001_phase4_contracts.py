@@ -13,7 +13,7 @@ from uuid import uuid4
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
-from kentender_strategy.tests.fixtures import ensure_fiscal_year
+from kentender_strategy.tests.fixtures import ensure_fiscal_year, pin_review_date
 
 from kentender_strategy.api import strategy_consumer_api as api
 from kentender_strategy.services import strategy_consumer as consumer
@@ -43,6 +43,7 @@ _PROFILE_ROLE = {
 
 class Phase4TestBase(FrappeTestCase):
 	def setUp(self):
+		pin_review_date(self)
 		ensure_fiscal_year(2040)
 		ensure_strategy_governance_roles()
 		self.suffix = uuid4().hex[:8]

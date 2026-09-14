@@ -37,7 +37,12 @@ from kentender_strategy.seeds.kentender_mvp_v1_strategy import (
 	APPROVER,
 	AUTHOR,
 	PLAN_TITLE,
+	PROFILE_EFFECTIVE_FROM,
+	PROFILE_FUTURE,
+	PROFILE_IMMEDIATE,
+	seed_str_des_v2_draft,
 	seed_str_des_v2_fixture,
+	seed_str_des_v2_returned_fixture,
 	upsert_kentender_mvp_v1_strategy,
 )
 from kentender_strategy.services.strategy_writes import create_strategy_successor_version
@@ -46,9 +51,22 @@ AUDITOR = "naomi.chebet@moh.example.test"
 NOBODY = "samuel.otieno@moh.example.test"
 ACTORS = (AUTHOR, APPROVER, AUDITOR, NOBODY)
 
-# A plan a browser run creates through the New strategic plan form is
+# A plan a browser run creates through the Create strategic plan form is
 # recognised — and removed on the next reset — by this title prefix.
 BROWSER_PLAN_PREFIX = "Playwright —"
+BROWSER_NEW_PLAN_TITLE = "Playwright — Ministry of Health Strategic Plan 2028–2033 (Demo)"
+
+
+def _immediate_effective_from() -> str:
+	"""STR18-FX-IMMEDIATE starts on 25 Nov 2026 (§14.4). A browser run on a
+	site whose date is still earlier than that must use a start the server
+	can activate today, because approval is permitted only when the version
+	can become effective immediately (§5.1) and a browser cannot pin the
+	review instant the way a Python test can. The deviation is returned in
+	the fixture dict (`effective_from`) so the spec asserts the real value."""
+	spec_date = PROFILE_EFFECTIVE_FROM[PROFILE_IMMEDIATE]
+	today = str(frappe.utils.today())
+	return spec_date if today >= spec_date else today
 
 
 def _guard() -> None:
@@ -141,10 +159,7 @@ def reset_default(*, commit: bool = True) -> dict[str, Any]:
 	}
 
 
-def reset_submitted_fixture(*, commit: bool = True) -> dict[str, Any]:
-	"""§14.4 — Version 2 Submitted for approval by Esther (target 80 → 85)."""
-	base = reset_default(commit=False)
-	fixture = seed_str_des_v2_fixture()
+def _with_v2(base: dict[str, Any], fixture: dict[str, Any], *, commit: bool) -> dict[str, Any]:
 	v2 = fixture["plan_version"]
 	if commit:
 		frappe.db.commit()
@@ -152,7 +167,44 @@ def reset_submitted_fixture(*, commit: bool = True) -> dict[str, Any]:
 		**base,
 		"v2": v2,
 		"v2_reference": frappe.db.get_value("Strategic Plan Version", v2, "plan_version_id"),
+		"profile": fixture.get("profile"),
+		"effective_from": str(frappe.db.get_value("Strategic Plan Version", v2, "effective_from")),
+		"return_reason": fixture.get("return_reason"),
 	}
+
+
+def reset_submitted_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""STR18-FX-IMMEDIATE — Version 2 Submitted for approval by Esther
+	(target 80% → 85%, applicability start moved), approvable today."""
+	base = reset_default(commit=False)
+	fixture = seed_str_des_v2_fixture(profile=PROFILE_IMMEDIATE, effective_from=_immediate_effective_from())
+	return _with_v2(base, fixture, commit=commit)
+
+
+def reset_future_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""STR18-FX-FUTURE — the same submission starting 1 Jul 2027: approval
+	is refused and Return stays available."""
+	base = reset_default(commit=False)
+	fixture = seed_str_des_v2_fixture(profile=PROFILE_FUTURE)
+	return _with_v2(base, fixture, commit=commit)
+
+
+def reset_returned_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""STR18-FX-RETURN — the immediate submission returned by Alfred with the
+	§11.9 reason; Esther's correction starting point."""
+	base = reset_default(commit=False)
+	fixture = seed_str_des_v2_returned_fixture(effective_from=_immediate_effective_from())
+	return _with_v2(base, fixture, commit=commit)
+
+
+def reset_date_target_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""STR18-FX-DATE-TARGET — a Draft Version 2 whose target is anchored to
+	30 Jun 2028 instead of a financial year."""
+	base = reset_default(commit=False)
+	fixture = seed_str_des_v2_draft(
+		profile=PROFILE_IMMEDIATE, effective_from=_immediate_effective_from(), target_by_date=True
+	)
+	return _with_v2(base, fixture, commit=commit)
 
 
 def reset_draft_fixture(*, commit: bool = True) -> dict[str, Any]:

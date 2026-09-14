@@ -94,17 +94,35 @@ def create_strategy_snapshot(plan_version_id: str, objective_id: str, correlatio
 	)
 
 
-# --- §10.1 command contracts ----------------------------------------------------
+# --- §8/§8.2 command contracts ---------------------------------------------------
+#
+# v1.8 (plan D6): every write command is retriable. The client captures one
+# `idempotency_key` per attempt and reuses it on retry and after a lost
+# response; the journal returns the original committed result on replay, so
+# no attempt ever creates a second plan, version, submission or decision.
 
 
 @frappe.whitelist()
-def save_strategy_plan_draft(payload=None, expected_version: str | None = None):
-	return writes.save_strategy_plan_draft(_obj(payload) or {}, expected_version=expected_version or None)
+def save_strategy_plan_draft(payload=None, expected_version: str | None = None, idempotency_key: str | None = None):
+	data = _obj(payload) or {}
+	return run_idempotent(
+		idempotency_key or None,
+		"Strategic Plan",
+		str(data.get("plan_id") or "new"),
+		"save_strategy_plan_draft",
+		lambda: writes.save_strategy_plan_draft(data, expected_version=expected_version or None),
+	)
 
 
 @frappe.whitelist()
-def create_strategy_successor_version(plan_id: str):
-	return writes.create_strategy_successor_version(plan_id)
+def create_strategy_successor_version(plan_id: str, idempotency_key: str | None = None):
+	return run_idempotent(
+		idempotency_key or None,
+		"Strategic Plan",
+		plan_id,
+		"create_strategy_successor_version",
+		lambda: writes.create_strategy_successor_version(plan_id),
+	)
 
 
 @frappe.whitelist()
@@ -115,26 +133,42 @@ def save_strategy_structure_draft(
 	targets=None,
 	deletes=None,
 	expected_version: str | None = None,
+	idempotency_key: str | None = None,
 ):
-	return writes.save_strategy_structure_draft(
+	return run_idempotent(
+		idempotency_key or None,
+		"Strategic Plan Version",
 		plan_version_id,
-		nodes=_obj(nodes) or [],
-		indicators=_obj(indicators) or [],
-		targets=_obj(targets) or [],
-		deletes=_obj(deletes) or [],
-		expected_version=expected_version or None,
+		"save_strategy_structure_draft",
+		lambda: writes.save_strategy_structure_draft(
+			plan_version_id,
+			nodes=_obj(nodes) or [],
+			indicators=_obj(indicators) or [],
+			targets=_obj(targets) or [],
+			deletes=_obj(deletes) or [],
+			expected_version=expected_version or None,
+		),
 	)
 
 
 @frappe.whitelist()
 def submit_strategy_version(
-	plan_version_id: str, expected_version: str | None = None, correlation_id: str | None = None
+	plan_version_id: str,
+	expected_version: str | None = None,
+	correlation_id: str | None = None,
+	idempotency_key: str | None = None,
 ):
-	return transitions.transition_plan_version(
+	return run_idempotent(
+		idempotency_key or None,
+		"Strategic Plan Version",
 		plan_version_id,
-		"Submit for approval",
-		expected_version=expected_version or None,
-		correlation_id=correlation_id or None,
+		"submit_strategy_version",
+		lambda: transitions.transition_plan_version(
+			plan_version_id,
+			"Submit for approval",
+			expected_version=expected_version or None,
+			correlation_id=correlation_id or idempotency_key or None,
+		),
 	)
 
 
@@ -144,29 +178,45 @@ def return_strategy_version(
 	reason: str,
 	expected_version: str | None = None,
 	correlation_id: str | None = None,
+	idempotency_key: str | None = None,
 ):
-	"""§10.1 return_strategy_version — Strategy Approver only, Submitted for
+	"""§8 return_strategy_version — Strategy Approver only, Submitted for
 	approval only. Requires a 10-500 character correction reason."""
-	return transitions.transition_plan_version(
+	return run_idempotent(
+		idempotency_key or None,
+		"Strategic Plan Version",
 		plan_version_id,
-		"Return",
-		reason=reason,
-		expected_version=expected_version or None,
-		correlation_id=correlation_id or None,
+		"return_strategy_version",
+		lambda: transitions.transition_plan_version(
+			plan_version_id,
+			"Return",
+			reason=reason,
+			expected_version=expected_version or None,
+			correlation_id=correlation_id or idempotency_key or None,
+		),
 	)
 
 
 @frappe.whitelist()
 def approve_strategy_version(
-	plan_version_id: str, expected_version: str | None = None, correlation_id: str | None = None
+	plan_version_id: str,
+	expected_version: str | None = None,
+	correlation_id: str | None = None,
+	idempotency_key: str | None = None,
 ):
-	"""§10.1 approve_strategy_version — Strategy Approver only, Submitted for
-	approval only. Revalidates readiness/overlap and activates the version,
-	atomically superseding the plan's previous Active version in the same
-	transaction — there is no separate Activate action any more."""
-	return transitions.transition_plan_version(
+	"""§8 approve_strategy_version — Strategy Approver only, Submitted for
+	approval only. Revalidates readiness, immediate applicability and
+	overlap and activates the version, atomically superseding the plan's
+	previous Active version in the same transaction."""
+	return run_idempotent(
+		idempotency_key or None,
+		"Strategic Plan Version",
 		plan_version_id,
-		"Approve",
-		expected_version=expected_version or None,
-		correlation_id=correlation_id or None,
+		"approve_strategy_version",
+		lambda: transitions.transition_plan_version(
+			plan_version_id,
+			"Approve",
+			expected_version=expected_version or None,
+			correlation_id=correlation_id or idempotency_key or None,
+		),
 	)

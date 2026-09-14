@@ -5,47 +5,74 @@
  * Vue-in-Desk-page modules). Namespaced under .kt-industry, never :root, so
  * this stylesheet can never leak into Desk chrome or any other screen.
  *
- * Tokens re-tuned per docs/mvp-1-r1/00_common/KenTender Industry Design
- * Refinement.md, carried over from the regenerated PLN-CHG-001 v1.2 artboard
- * bundle (docs/mvp-1-r1/04_planning/design/_ds/kentender-industry-.../styles.css,
- * the current source of truth for the system's look): ground vs surface is
- * inverted — cards/dialogs/inputs are white sheets pinned to a steel-tinted
- * paper ground, running lighter-upward with elevation instead of darker-
- * downward — plus the knock-on fixes the doc calls out (solid, heavier
- * hairlines; solid disabled tokens instead of opacity; solid status-chip
- * tints instead of alpha, re-checked for is-pending on white).
+ * Tokens re-tuned (STR-CHG-001 v1.8, 14 Sep 2026, owner decision) from the
+ * regenerated Strategy artboard bundle
+ * (docs/mvp-1-r1/02_strategy/strategy_design/_ds/kentender-industry-.../styles.css
+ * + readme.md — the current source of truth for the system's look): royal
+ * indigo accent with a rust/amber second accent, a cooler paper ground and
+ * regenerated OKLCH ramps; corner registration marks and status/figure dots
+ * removed system-wide (state is carried by label text and fill alone); a
+ * banded table header on an accent rule; a 1px accent-700 focus ring; a
+ * type-size floor; and the disclosure, timeline, KPI card, notice, checkbox
+ * and tag components the v1.8 artboards compose with. Earlier re-tunes
+ * (PLN-CHG-001 v1.2 bundle: white sheets on a tinted ground, solid hairlines,
+ * solid disabled tokens, solid status tints) are retained underneath.
  *
  * Fonts: Barlow / Barlow Condensed, self-hosted (kt_cl_fonts.css, Phase 6 of
  * CFG-CHG-002) — no CDN @import, unlike the raw Claude Design artboard export.
  */
 
 .kt-industry {
-	--kt-color-bg: #f4f5f7;
+	--kt-color-bg: #f0f2f7;
 	--kt-color-surface: #ffffff;
 	--kt-color-surface-2: #eef0f3;
 	--kt-color-text: #16181a;
-	--kt-color-accent: #416180;
-	--kt-color-accent-2: #6b4f8c;
+	--kt-color-accent: #2b46b0; /* royal indigo — the one solid-fill action colour */
+	--kt-color-accent-2: #d9691a; /* rust/amber — links and secondary emphasis */
 	/* Solid hairline (neutral-300), not a transparency mix — a mix against
 	   the old dark text washes out on the new white surfaces. */
-	--kt-color-divider: #d6d9dd;
+	--kt-color-divider: #d4d8e3;
+
+	/* Categorical data-viz palette — chart series only, never UI chrome or
+	   state (each palette encodes exactly one thing). */
+	--kt-chart-1: #0891b2;
+	--kt-chart-2: #ea580c;
+	--kt-chart-3: #65a30d;
+	--kt-chart-4: #c026d3;
+	--kt-chart-5: #5a5ce2;
+	--kt-chart-6: #b77c00;
 
 	/* Neutral ramp — generated in OKLCH with a whisper of the accent's hue
 	   angle (~0.008 chroma) so greys read as cool paper, not dead concrete. */
-	--kt-color-neutral-100: #f6f7f9;
-	--kt-color-neutral-200: #e9ebee;
-	--kt-color-neutral-300: #d6d9dd;
-	--kt-color-neutral-400: #b8bcc2;
-	--kt-color-neutral-500: #989da4;
-	--kt-color-neutral-600: #7a7f86;
-	--kt-color-neutral-700: #5c6167;
-	--kt-color-neutral-800: #41454b;
-	--kt-color-neutral-900: #2a2d32;
+	--kt-color-neutral-100: #f5f6f9;
+	--kt-color-neutral-200: #e7e9f0;
+	--kt-color-neutral-300: #d4d8e3;
+	--kt-color-neutral-400: #b3b9cc;
+	--kt-color-neutral-500: #8f97ad;
+	--kt-color-neutral-600: #70788d;
+	--kt-color-neutral-700: #525a6c;
+	--kt-color-neutral-800: #343a49;
+	--kt-color-neutral-900: #1c2030;
 
-	--kt-color-accent-100: #eef6ff;
-	--kt-color-accent-200: #d6ebff;
-	--kt-color-accent-800: #2c455d;
-	--kt-color-accent-900: #1d2d3d;
+	--kt-color-accent-100: #e5e9fb;
+	--kt-color-accent-200: #c4cdf5;
+	--kt-color-accent-300: #98a6ee;
+	--kt-color-accent-400: #6d80e6;
+	--kt-color-accent-500: #4c63cb;
+	--kt-color-accent-600: #2b46b0;
+	--kt-color-accent-700: #233784;
+	--kt-color-accent-800: #1b2c68;
+	--kt-color-accent-900: #131f4a;
+
+	--kt-color-accent-2-100: #faede4;
+	--kt-color-accent-2-200: #f4d5bf;
+	--kt-color-accent-2-300: #ecb48d;
+	--kt-color-accent-2-400: #e4965f;
+	--kt-color-accent-2-500: #df803c;
+	--kt-color-accent-2-600: #d9691a;
+	--kt-color-accent-2-700: #ad5314;
+	--kt-color-accent-2-800: #8a4310;
+	--kt-color-accent-2-900: #66320c;
 
 	/* Status vocabulary (see .kt-status below) — solid precomputed tints,
 	   not alpha, so a chip renders identically on a white card and the grey
@@ -76,6 +103,7 @@
 	--kt-radius-lg: 7px;
 
 	--kt-shadow-sm: 0 1px 2px color-mix(in srgb, #2a2d32 12%, transparent);
+	--kt-shadow-md: 0 3px 10px color-mix(in srgb, #2a2d32 14%, transparent);
 	--kt-shadow-lg: 0 12px 32px color-mix(in srgb, #2a2d32 20%, transparent);
 
 	background: var(--kt-color-bg);
@@ -108,34 +136,23 @@
 	outline: none;
 }
 .kt-industry :focus-visible {
-	outline: 2px solid var(--kt-color-accent);
+	outline: 1px solid var(--kt-color-accent-700);
 	outline-offset: 2px;
 }
+.kt-industry ::selection { background: color-mix(in srgb, var(--kt-color-accent) 30%, transparent); }
+/* Links are the second accent (rust); indigo stays reserved for actions. */
+.kt-industry a:not(.kt-btn):not(.kt-tab):not(.kt-add-child) { color: var(--kt-color-accent-2-700); text-underline-offset: 3px; }
+.kt-industry a:not(.kt-btn):not(.kt-tab):not(.kt-add-child):hover { color: var(--kt-color-accent-2-800); }
 
-/* — blueprint frame: square, transparent, hairline-bordered, registration-mark
-     corners. Matches the artboards' wireframe aesthetic. — */
+/* — blueprint frame: square, hairline-bordered — a plain hairline and
+     nothing more. Corner registration marks were removed system-wide by
+     the v1.8 design system; the rule below silences the markup other apps
+     still emit (FOLLOW_UPS FU-09) until it is cleaned up. — */
 .kt-industry .kt-blueprint {
 	position: relative;
 	border: 1px solid var(--kt-color-divider);
 }
-.kt-industry .kt-corner {
-	position: absolute;
-	width: 11px;
-	height: 11px;
-	color: color-mix(in srgb, var(--kt-color-text) 55%, transparent);
-}
-.kt-industry .kt-corner::before,
-.kt-industry .kt-corner::after {
-	content: "";
-	position: absolute;
-	background: currentColor;
-}
-.kt-industry .kt-corner::before { left: 5px; top: 0; width: 1px; height: 100%; }
-.kt-industry .kt-corner::after { top: 5px; left: 0; width: 100%; height: 1px; }
-.kt-industry .kt-corner.tl { top: -6px; left: -6px; }
-.kt-industry .kt-corner.tr { top: -6px; right: -6px; }
-.kt-industry .kt-corner.bl { bottom: -6px; left: -6px; }
-.kt-industry .kt-corner.br { bottom: -6px; right: -6px; }
+.kt-industry .kt-corner { display: none !important; }
 
 /* — buttons — */
 .kt-industry .kt-btn {
@@ -168,23 +185,44 @@
 }
 .kt-industry .kt-btn-primary { background: var(--kt-color-accent); color: #fff; border-color: var(--kt-color-accent); }
 .kt-industry .kt-btn-primary:hover:not(:disabled) { background: var(--kt-color-accent-800); }
+.kt-industry .kt-btn-primary:active:not(:disabled) { background: var(--kt-color-accent-900); }
+.kt-industry .kt-btn-secondary { border-color: var(--kt-color-neutral-400); }
 /* Destructive action is derived from the rose status hue — destruction IS
    state semantics, so it stays inside the "no colour beyond steel except to
    encode state" rule rather than inventing its own red. */
 .kt-industry .kt-btn-primary.kt-danger { background: var(--kt-status-critical); border-color: var(--kt-status-critical); }
-.kt-industry .kt-btn-secondary:hover:not(:disabled) { background: color-mix(in srgb, var(--kt-color-text) 7%, transparent); }
+.kt-industry .kt-btn-secondary:hover:not(:disabled) { background: var(--kt-color-neutral-100); }
+.kt-industry .kt-btn-secondary:active:not(:disabled) { background: var(--kt-color-neutral-200); }
 .kt-industry .kt-btn-secondary.kt-danger { color: var(--kt-status-critical); border-color: var(--kt-status-critical); }
 .kt-industry .kt-btn-secondary.kt-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--kt-status-critical) 8%, transparent); }
 .kt-industry .kt-btn-ghost { color: var(--kt-color-accent); border-color: transparent; padding-inline: var(--kt-space-1); }
-.kt-industry .kt-btn-ghost:hover:not(:disabled) { background: color-mix(in srgb, var(--kt-color-accent) 10%, transparent); }
+.kt-industry .kt-btn-ghost:hover:not(:disabled) { background: var(--kt-color-accent-100); }
+.kt-industry .kt-btn-ghost:active:not(:disabled) { background: var(--kt-color-accent-200); }
+/* Small square hairline control (the artboards' .move-btn — Move up / Move
+   down beside a selected tree item). Disabled reads solid, never faded. */
+.kt-industry .kt-move-btn {
+	font-family: var(--kt-font-heading);
+	font-weight: var(--kt-font-heading-weight);
+	font-size: 12px;
+	padding: 4px 9px;
+	border: 1px solid var(--kt-color-divider);
+	background: transparent;
+	color: var(--kt-color-text);
+	cursor: pointer;
+}
+.kt-industry .kt-move-btn:hover:not(:disabled) { background: var(--kt-color-neutral-100); }
+.kt-industry .kt-move-btn:disabled { color: var(--kt-color-neutral-400); cursor: default; }
 
 /* — forms — */
 .kt-industry .kt-field > label {
 	display: block;
 	font-size: 12px;
 	margin-bottom: 5px;
-	color: color-mix(in srgb, var(--kt-color-text) 70%, transparent);
+	color: var(--kt-color-neutral-800);
 }
+/* Guidance line under a field (the artboards' 12px neutral-700 hint). */
+.kt-industry .kt-field-hint { font-size: 12px; color: var(--kt-color-neutral-700); margin-top: 4px; }
+.kt-industry .kt-field-error { font-size: 12px; color: var(--kt-status-critical); margin: 4px 0 0; }
 .kt-industry .kt-input {
 	width: 100%;
 	height: 40px;
@@ -217,13 +255,21 @@
 	align-items: center;
 	font-size: 14px;
 	border-bottom: 1px solid var(--kt-color-divider);
-	color: color-mix(in srgb, var(--kt-color-text) 55%, transparent);
+	color: var(--kt-color-neutral-700);
 }
+/* Square checkbox (certification-style confirmations). */
+.kt-industry .kt-checkbox { display: inline-flex; align-items: flex-start; gap: 8px; cursor: pointer; font-size: 14px; }
+.kt-industry .kt-checkbox input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+.kt-industry .kt-checkbox .box { width: 16px; height: 16px; flex: none; margin-top: 2px; border: 1.5px solid var(--kt-color-divider); background: var(--kt-color-surface); position: relative; }
+.kt-industry .kt-checkbox:hover .box { border-color: var(--kt-color-accent); }
+.kt-industry .kt-checkbox input:checked + .box { background: var(--kt-color-accent); border-color: var(--kt-color-accent); }
+.kt-industry .kt-checkbox input:checked + .box::after { content: ""; position: absolute; left: 4px; top: 1px; width: 5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.kt-industry .kt-checkbox input:focus-visible + .box { outline: 1px solid var(--kt-color-accent-700); outline-offset: 2px; }
 
 /* — cards — */
 /* Cards are filled white sheets pinned to the drawing board, not transparent
-   outlines — the hairline border + corner marks do the "blueprint" work, the
-   fill reads as paper. This was the one rule that made every earlier bg/
+   outlines — the hairline border does the "blueprint" work, the fill reads
+   as paper. This was the one rule that made every earlier bg/
    surface tune invisible: with background:transparent no surface colour was
    ever painted here at all. */
 .kt-industry .kt-card {
@@ -244,8 +290,17 @@
 	padding-bottom: 10px;
 	border-bottom: 2px solid var(--kt-color-accent);
 	align-self: flex-start;
-	margin: 0 0 12px;
+	margin: 0 0 16px;
 }
+/* Caption label beside a figure or under a value. Dimmed 11px text failed
+   contrast (~2.5:1); a solid neutral-700 step at 13px/600 does not. */
+.kt-industry .kt-label { font-size: 13px; font-weight: 600; color: var(--kt-color-neutral-700); }
+/* Decorative tags — labels only, never state (state is .kt-status). */
+.kt-industry .kt-tag { display: inline-flex; align-items: center; font-size: 12px; letter-spacing: 0.02em; padding: 3px 10px; border-radius: 0; }
+.kt-industry .kt-tag-accent { background: var(--kt-color-accent-100); color: var(--kt-color-accent-800); }
+.kt-industry .kt-tag-accent-2 { background: var(--kt-color-accent-2-100); color: var(--kt-color-accent-2-800); }
+.kt-industry .kt-tag-neutral { background: var(--kt-color-neutral-200); color: var(--kt-color-neutral-800); }
+.kt-industry .kt-tag-outline { border: 1px solid var(--kt-color-accent); color: var(--kt-color-accent); }
 
 /* — key/value rows — */
 .kt-industry .kt-row {
@@ -257,26 +312,37 @@
 	font-size: 14px;
 	align-items: center;
 }
-.kt-industry .kt-row dt { color: color-mix(in srgb, var(--kt-color-text) 62%, transparent); margin: 0; }
+.kt-industry .kt-row dt { color: var(--kt-color-neutral-700); margin: 0; }
 .kt-industry .kt-row dd { margin: 0; }
 
-/* — tables — */
-.kt-industry .kt-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+/* — tables — the header is a banded row on an accent rule, promoted to
+     condensed uppercase at full strength; rows hover in accent-100. Numeric
+     cells right-align in tabular figures; true zeros recede. Markup must
+     carry <thead>/<tbody> or the header rules silently no-op. — */
+.kt-industry .kt-table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--kt-color-surface); }
 .kt-industry .kt-table th {
 	text-align: left;
-	font-size: 11px;
-	letter-spacing: 0.08em;
+	font-family: var(--kt-font-heading);
+	font-weight: var(--kt-font-heading-weight);
+	font-size: 13px;
+	letter-spacing: 0.1em;
 	text-transform: uppercase;
-	color: color-mix(in srgb, var(--kt-color-text) 60%, transparent);
-	padding: 12px 16px;
-	border-bottom: 1px solid var(--kt-color-divider);
+	color: var(--kt-color-text);
+	padding: 10px var(--kt-space-4);
+	background: var(--kt-color-neutral-100);
+	border-bottom: 2px solid var(--kt-color-accent);
 }
+.kt-industry .kt-table thead th { position: sticky; top: 0; z-index: 1; }
 .kt-industry .kt-table td {
-	padding: 16px;
+	padding: 10px var(--kt-space-4);
 	border-bottom: 1px solid color-mix(in srgb, var(--kt-color-text) 8%, transparent);
 }
-.kt-industry .kt-table tbody tr:hover { background: color-mix(in srgb, var(--kt-color-text) 4%, transparent); }
-.kt-industry .kt-muted { color: color-mix(in srgb, var(--kt-color-text) 78%, transparent); }
+.kt-industry .kt-table td:first-child { min-width: 100px; }
+.kt-industry .kt-table tbody tr:hover { background: var(--kt-color-accent-100); }
+.kt-industry .kt-table .is-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.kt-industry .kt-table td.is-num { font-weight: 600; }
+.kt-industry .kt-table .is-num.is-zero, .kt-industry .kt-figure.is-zero { color: var(--kt-color-neutral-500); font-weight: 400; }
+.kt-industry .kt-muted { color: var(--kt-color-neutral-700); }
 .kt-industry .kt-tabular { font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
 
 /* — eyebrow (small uppercase label above a value/heading) — */
@@ -286,7 +352,7 @@
 	font-weight: 700;
 	text-transform: uppercase;
 	letter-spacing: 0.06em;
-	color: color-mix(in srgb, var(--kt-color-text) 60%, transparent);
+	color: var(--kt-color-neutral-700);
 	margin-bottom: 8px;
 }
 
@@ -324,7 +390,7 @@
 	color: var(--kt-color-text);
 	cursor: pointer;
 }
-.kt-industry .kt-add-child:hover { background: color-mix(in srgb, var(--kt-color-text) 7%, transparent); }
+.kt-industry .kt-add-child:hover { background: var(--kt-color-neutral-100); }
 
 /* — sticky footer (dialog / create-mode action bar) — */
 .kt-industry .kt-sticky-footer {
@@ -350,10 +416,10 @@
 	cursor: pointer;
 }
 .kt-industry .kt-tree-node.selected {
-	background: color-mix(in srgb, var(--kt-color-accent) 10%, transparent);
+	background: var(--kt-color-accent-100);
 	border-color: var(--kt-color-accent);
 }
-.kt-industry .kt-tree-node:hover { background: color-mix(in srgb, var(--kt-color-text) 5%, transparent); }
+.kt-industry .kt-tree-node:hover { background: var(--kt-color-neutral-100); }
 .kt-industry .kt-tree-row {
 	display: flex;
 	align-items: flex-start;
@@ -372,7 +438,7 @@
 	padding-left: 11px;
 	border-left: 1px solid var(--kt-color-divider);
 }
-.kt-industry .kt-tree-type { font-size: 11px; color: color-mix(in srgb, var(--kt-color-text) 62%, transparent); white-space: nowrap; }
+.kt-industry .kt-tree-type { font-size: 11px; color: var(--kt-color-neutral-700); white-space: nowrap; }
 .kt-industry .kt-tree-toggle {
 	flex: none;
 	display: inline-flex;
@@ -391,30 +457,33 @@
 }
 .kt-industry .kt-tree-toggle.collapsed { transform: rotate(0deg); }
 .kt-industry .kt-tree-toggle:not(.collapsed) { transform: rotate(90deg); }
-.kt-industry .kt-tree-hidden-count { font-size: 11px; color: color-mix(in srgb, var(--kt-color-text) 62%, transparent); }
+.kt-industry .kt-tree-hidden-count { font-size: 11px; color: var(--kt-color-neutral-700); }
 
-/* — tabs — */
+/* — tabs — a flat row on a hairline; the selected tab is accent-800 at
+     600 weight on a 2px accent underline (the v1.8 .kt-tabs/.kt-tab). — */
 .kt-industry .kt-tabs {
 	display: flex;
-	gap: 24px;
+	gap: var(--kt-space-6);
 	border-bottom: 1px solid var(--kt-color-divider);
+	flex-wrap: wrap;
 }
 .kt-industry .kt-tab {
 	position: relative;
-	font-family: var(--kt-font-heading);
-	font-weight: var(--kt-font-heading-weight);
-	font-size: 17px;
-	letter-spacing: 0.01em;
-	padding: 0 0 12px;
-	color: color-mix(in srgb, var(--kt-color-text) 62%, transparent);
+	font-family: var(--kt-font-body);
+	font-weight: 400;
+	font-size: 14px;
+	padding: 0 0 var(--kt-space-3);
+	color: var(--kt-color-neutral-700);
 	display: inline-flex;
 	align-items: baseline;
 	gap: 8px;
 	cursor: pointer;
+	white-space: nowrap;
 	background: none;
 	border: 0;
 }
-.kt-industry .kt-tab[aria-selected="true"] { color: var(--kt-color-text); }
+.kt-industry .kt-tab:hover:not([aria-selected="true"]) { color: var(--kt-color-text); }
+.kt-industry .kt-tab[aria-selected="true"] { color: var(--kt-color-accent-800); font-weight: 600; }
 .kt-industry .kt-tab[aria-selected="true"]::after {
 	content: "";
 	position: absolute;
@@ -427,9 +496,10 @@
 .kt-industry .kt-tab .kt-count {
 	font-family: var(--kt-font-body);
 	font-size: 12px;
+	font-weight: 400;
 	padding: 2px 7px;
-	background: color-mix(in srgb, var(--kt-color-text) 8%, transparent);
-	color: color-mix(in srgb, var(--kt-color-text) 70%, transparent);
+	background: var(--kt-color-neutral-100);
+	color: var(--kt-color-neutral-700);
 }
 .kt-industry .kt-tab[aria-selected="true"] .kt-count {
 	background: var(--kt-color-accent-100);
@@ -440,6 +510,8 @@
 .kt-industry .kt-figure { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 44px; line-height: 1; }
 .kt-industry .kt-figure.is-live { color: var(--kt-status-live); }
 .kt-industry .kt-figure.is-attention { color: var(--kt-status-attention); }
+.kt-industry .kt-figure.is-critical { color: var(--kt-status-critical); }
+.kt-industry .kt-figure::after { content: none !important; }
 
 /* — dialog — */
 .kt-industry .kt-dialog-backdrop {
@@ -480,14 +552,10 @@
 	border-radius: 6px;
 	white-space: nowrap;
 }
-.kt-industry .kt-status::before {
-	content: "";
-	width: 7px;
-	height: 7px;
-	border-radius: 50%;
-	background: currentColor;
-	flex: none;
-}
+/* Dots removed system-wide (v1.8): state is carried by label text and
+   fill alone. The pseudo-element stays declared so older markup that
+   relied on the gap renders identically. */
+.kt-industry .kt-status::before { display: none; }
 /* Solid precomputed tints, not alpha — an alpha tint over #e9e9ea (the old,
    darker-than-ground surface) read as a soft wash; the same alpha over white
    goes chalky, and is-pending's neutral tint in particular nearly vanished.
@@ -495,14 +563,13 @@
 .kt-industry .kt-status.is-live { background: var(--kt-status-live-bg); color: var(--kt-status-live); }
 .kt-industry .kt-status.is-draft { background: var(--kt-status-draft-bg); color: var(--kt-status-draft); }
 .kt-industry .kt-status.is-pending { background: var(--kt-status-pending-bg); color: var(--kt-status-pending); }
-.kt-industry .kt-status.is-pending::before { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
 .kt-industry .kt-status.is-attention { background: var(--kt-status-attention-bg); color: var(--kt-status-attention); }
 .kt-industry .kt-status.is-critical { background: var(--kt-status-critical-bg); color: var(--kt-status-critical); }
 
 /* — empty / loading / error register states — */
 .kt-industry .kt-skel {
 	height: 14px;
-	background: color-mix(in srgb, var(--kt-color-text) 10%, transparent);
+	background: var(--kt-color-neutral-200);
 	animation: kt-skel-pulse 1.4s ease-in-out infinite;
 }
 @keyframes kt-skel-pulse {
@@ -520,7 +587,7 @@
 	padding: 60px 48px 80px;
 }
 .kt-industry .kt-empty h2 { font-size: 28px; }
-.kt-industry .kt-empty p { margin: 0; font-size: 15px; color: color-mix(in srgb, var(--kt-color-text) 70%, transparent); }
+.kt-industry .kt-empty p { margin: 0; font-size: 15px; color: var(--kt-color-neutral-700); }
 
 /* — Vue-in-Desk page runtime (kentender_core.desk_page) — */
 /* First paint of a page whose bundle is still loading: the page ground and a
@@ -534,7 +601,7 @@
 }
 .kt-industry .kt-rail-placeholder {
 	height: 64px;
-	background: #f2f4f6;
+	background: var(--kt-color-neutral-100);
 	border-bottom: 1px solid var(--kt-color-divider);
 }
 /* In-place revalidation of a screen that already has content: a 2px bar at
@@ -559,4 +626,100 @@
 @keyframes kt-refreshing {
 	from { background-position: -50% 0; }
 	to { background-position: 150% 0; }
+}
+
+/* ── v1.8 components (Strategy artboard bundle, 14 Sep 2026) ── */
+
+/* Page-level advisory banner, four variants. */
+.kt-industry .kt-notice { display: flex; gap: var(--kt-space-3); align-items: flex-start; padding: var(--kt-space-4); border-left: 3px solid var(--kt-color-accent); background: var(--kt-color-accent-100); }
+.kt-industry .kt-notice-icon { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; color: var(--kt-color-accent-700); }
+.kt-industry .kt-notice-body { font-size: 14px; color: var(--kt-color-neutral-800); }
+.kt-industry .kt-notice-body strong { color: var(--kt-color-text); }
+.kt-industry .kt-notice.is-warning { border-left-color: var(--kt-status-attention); background: var(--kt-status-attention-bg); }
+.kt-industry .kt-notice.is-warning .kt-notice-icon { color: var(--kt-status-attention); }
+.kt-industry .kt-notice.is-critical { border-left-color: var(--kt-status-critical); background: var(--kt-status-critical-bg); }
+.kt-industry .kt-notice.is-critical .kt-notice-icon { color: var(--kt-status-critical); }
+.kt-industry .kt-notice.is-live { border-left-color: var(--kt-status-live); background: var(--kt-status-live-bg); }
+.kt-industry .kt-notice.is-live .kt-notice-icon { color: var(--kt-status-live); }
+
+/* A record's decision/approval chain — not a chart. */
+.kt-industry .kt-timeline { background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); padding: var(--kt-space-4) var(--kt-space-4) 4px; }
+.kt-industry .kt-timeline-row { display: grid; grid-template-columns: 20px 1fr; column-gap: var(--kt-space-4); }
+.kt-industry .kt-timeline-dot-col { display: flex; flex-direction: column; align-items: center; align-self: stretch; }
+.kt-industry .kt-timeline-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--kt-color-neutral-400); flex-shrink: 0; margin-top: 5px; }
+.kt-industry .kt-timeline-dot.is-live { background: var(--kt-status-live); }
+.kt-industry .kt-timeline-dot.is-draft { background: var(--kt-status-draft); }
+.kt-industry .kt-timeline-dot.is-attention { background: var(--kt-status-attention); }
+.kt-industry .kt-timeline-dot.is-critical { background: var(--kt-status-critical); }
+.kt-industry .kt-timeline-dot.is-pending { background: transparent; box-shadow: inset 0 0 0 1.5px var(--kt-color-neutral-500); }
+.kt-industry .kt-timeline-line { width: 2px; flex: 1; margin: 4px 0; background: var(--kt-color-accent-400); min-height: 16px; }
+.kt-industry .kt-timeline-line.is-upcoming { background: var(--kt-color-neutral-300); }
+.kt-industry .kt-timeline-item { padding-bottom: var(--kt-space-6); }
+.kt-industry .kt-timeline-item-title { font-size: 13px; font-weight: 600; }
+.kt-industry .kt-timeline-item-title.is-upcoming { color: var(--kt-color-neutral-700); }
+.kt-industry .kt-timeline-item-meta { font-size: 12px; color: var(--kt-color-neutral-700); margin-top: 2px; }
+
+/* Summary metric card; the top accent appears only past a threshold. */
+.kt-industry .kt-kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--kt-space-3); }
+.kt-industry .kt-kpi-card { position: relative; background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); border-top: 3px solid transparent; padding: var(--kt-space-4); display: flex; flex-direction: column; gap: var(--kt-space-2); }
+.kt-industry .kt-kpi-card.is-attention { border-top-color: var(--kt-status-attention); }
+.kt-industry .kt-kpi-card.is-critical { border-top-color: var(--kt-status-critical); }
+.kt-industry .kt-kpi-card.is-live { border-top-color: var(--kt-status-live); }
+.kt-industry .kt-kpi-icon { width: 18px; height: 18px; color: var(--kt-color-accent-700); }
+.kt-industry .kt-kpi-value { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 26px; line-height: 1.1; display: flex; align-items: baseline; gap: 8px; }
+.kt-industry .kt-kpi-sub { font-size: 12px; color: var(--kt-color-neutral-700); }
+
+/* Expand/collapse panel. */
+.kt-industry .kt-disclosure { background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); }
+.kt-industry .kt-disclosure-head { display: flex; align-items: center; justify-content: space-between; padding: var(--kt-space-4); cursor: pointer; }
+.kt-industry .kt-disclosure-head:hover { background: var(--kt-color-neutral-100); }
+.kt-industry .kt-disclosure-title-row { display: flex; align-items: center; gap: var(--kt-space-3); }
+.kt-industry .kt-disclosure-title { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 14px; letter-spacing: 0.01em; text-transform: uppercase; }
+.kt-industry .kt-disclosure-chevron { color: var(--kt-color-accent-700); flex-shrink: 0; transition: transform 0.15s ease; }
+.kt-industry .kt-disclosure-chevron.is-open { transform: rotate(180deg); }
+.kt-industry .kt-disclosure-body { border-top: 1px solid var(--kt-color-divider); padding: var(--kt-space-4); }
+
+/* Page sections for content with no ruled structure of its own. */
+.kt-industry .kt-section { margin-bottom: var(--kt-space-8); }
+.kt-industry .kt-panel { background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); padding: var(--kt-space-4); margin-top: var(--kt-space-3); }
+.kt-industry .kt-meta-row { display: flex; gap: var(--kt-space-6); flex-wrap: wrap; align-items: flex-end; }
+.kt-industry .kt-meta-row > div { display: flex; flex-direction: column; gap: 4px; }
+.kt-industry .kt-meta-value { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 18px; }
+
+/* Media hardening — keep when trimming (see the design-system readme). */
+@media (forced-colors: active) {
+	.kt-industry .kt-status, .kt-industry .kt-tag { border: 1px solid currentColor; }
+	.kt-industry .kt-timeline-dot { border: 1px solid currentColor; }
+	.kt-industry .kt-timeline-dot.is-pending { box-shadow: none; border: 1.5px solid currentColor; }
+	.kt-industry .kt-notice { border: 1px solid CanvasText; border-left-width: 3px; }
+	.kt-industry .kt-checkbox .box { border-color: CanvasText; }
+	.kt-industry .kt-checkbox input:checked + .box { background: CanvasText; border-color: CanvasText; }
+	.kt-industry .kt-checkbox input:checked + .box::after { border-color: Canvas; }
+}
+@media print {
+	.kt-industry { background: #fff; color: #000; }
+	.kt-industry .kt-btn, .kt-industry .kt-dialog-backdrop, .kt-industry .kt-tabs, .kt-industry .kt-sticky-footer { display: none; }
+	.kt-industry .kt-card, .kt-industry .kt-dialog { box-shadow: none; background: #fff; border-color: #000; }
+	.kt-industry .kt-status { background: none; color: #000; border: 1px solid #000; }
+	.kt-industry a { color: #000; }
+	.kt-industry .kt-table thead th { position: static; border-bottom-color: #000; }
+	.kt-industry .kt-notice { background: #fff; border-color: #000; }
+	.kt-industry .kt-notice-icon { display: none; }
+}
+@media (max-width: 480px) {
+	.kt-industry .kt-input { font-size: 16px; }
+}
+
+/* ── Responsive card grids (KT-STD-001 §3, STR-CHG-001 v1.8 §11.4/§11.11):
+     two-column compositions stack on narrow screens; the editor's
+     tree/selected-item split stacks with the tree first. ── */
+.kt-industry .kt-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--kt-space-6); align-items: start; }
+.kt-industry .kt-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--kt-space-6); }
+.kt-industry .kt-editor-grid { display: grid; grid-template-columns: 42% 58%; gap: var(--kt-space-6); align-items: start; }
+.kt-industry .kt-objective-grid { display: grid; grid-template-columns: 1fr 200px; gap: var(--kt-space-6); align-items: start; }
+@media (max-width: 900px) {
+	.kt-industry .kt-grid-2, .kt-industry .kt-grid-3, .kt-industry .kt-editor-grid, .kt-industry .kt-objective-grid { grid-template-columns: 1fr; }
+	.kt-industry .kt-editor-grid > .kt-card { position: static !important; }
+	.kt-industry .kt-shell { padding-left: 16px; padding-right: 16px; }
+	.kt-industry .kt-sticky-footer { flex-wrap: wrap; padding-left: 16px; padding-right: 16px; }
 }

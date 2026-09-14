@@ -30,7 +30,10 @@ from kentender_strategy.services.strategy_authorization import (
 	require_plan_version_capability,
 )
 from kentender_strategy.services.strategy_domain_guards import assert_no_primary_overlap
-from kentender_strategy.services.strategy_readiness import assert_version_ready_for_submit
+from kentender_strategy.services.strategy_readiness import (
+	assert_version_ready_for_approval,
+	assert_version_ready_for_submit,
+)
 from kentender_strategy.services.strategy_reference import resolve_version_name
 
 # (status, action) -> (next_status, capability). Matches the 4-row §6.1
@@ -84,7 +87,11 @@ def _version_payload(doc) -> dict:
 		"name": doc.name,
 		"plan_version_id": doc.plan_version_id,
 		"plan_id": doc.plan_id,
+		"plan_reference": frappe.db.get_value("Strategic Plan", doc.plan_id, "plan_id"),
+		"version_number": doc.version_number,
 		"status": doc.status,
+		"effective_from": str(doc.effective_from) if doc.effective_from else None,
+		"effective_to": str(doc.effective_to) if doc.effective_to else None,
 		"expected_version": str(doc.modified),
 		"allowed_actions": available_actions(doc),
 	}
@@ -100,9 +107,15 @@ def _activate(doc) -> None:
 	"""STR-BR-015: revalidates and atomically activates: supersedes the
 	plan's own previous Active version (successor case) and rejects
 	cross-plan Primary overlap (STR-BR-004), inside the request's own DB
-	transaction. Fires directly off "Approve" (§6.2: "Approval ... activates
-	the version inside one transaction") — there is no separate Activate
-	action any more."""
+	transaction. Fires directly off "Approve" (§5.1: "Approval ... activates
+	within one transaction") — there is no separate Activate action.
+
+	Predecessor closure (v1.8 plan D8 / STR18-XD-002): the superseded
+	version's applicability interval is closed to the day before the
+	successor starts when the successor starts after the predecessor did;
+	otherwise the predecessor keeps its stored dates. Date semantics are
+	whole site dates — a successor effective on day D is current from D and
+	the predecessor's last applicable day is D-1."""
 	_assert_no_primary_overlap(doc)
 
 	current_active = frappe.get_all(
@@ -113,6 +126,12 @@ def _activate(doc) -> None:
 	for name in current_active:
 		other = frappe.get_doc("Strategic Plan Version", name)
 		other.status = "Superseded"
+		if (
+			doc.effective_from
+			and other.effective_from
+			and frappe.utils.getdate(doc.effective_from) > frappe.utils.getdate(other.effective_from)
+		):
+			other.effective_to = frappe.utils.add_days(frappe.utils.getdate(doc.effective_from), -1)
 		other.save(ignore_permissions=True)
 		record_event(
 			entity_type="Strategic Plan Version",
@@ -167,9 +186,10 @@ def transition_plan_version(
 
 	prior_status = doc.status
 	if action == "Approve":
-		# STR-BR-015: readiness/overlap revalidated and the version activated
-		# atomically inside _activate — no separate Awaiting Approval/Approved
-		# stopover.
+		# STR-BR-015: readiness, immediate applicability (§5.1) and overlap
+		# are revalidated and the version activated atomically — no separate
+		# Awaiting Approval/Approved stopover, no scheduled activation.
+		assert_version_ready_for_approval(doc)
 		_activate(doc)
 	else:
 		doc.status = next_status

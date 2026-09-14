@@ -11,13 +11,15 @@
 <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
 <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
 </helmet>
-<dc-import name="Shell" breadcrumb="Home > Strategy Alignment > Approval tasks > STR-MOH-2023-001-V2" hint-size="100%,700px">
+<dc-import name="Shell" breadcrumb="Home > Strategy Alignment > Approval tasks > STR-MOH-2023-001-V2" hint-size="100%,920px">
 <div data-screen-label="STR-DES-09" style="max-width:1180px;margin:0 auto;padding:var(--space-8) var(--space-6) 120px">
   <div style="margin-bottom:var(--space-6)">
     <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--color-accent);margin-bottom:6px">STR-MOH-2023-001 &middot; VERSION 2</div>
-    <div style="display:flex;align-items:center;gap:var(--space-3)">
-      <h1 style="font-size:28px;margin:0">Approve strategic plan version</h1>
-      <span class="kt-status is-pending">Submitted for approval</span>
+    <h1 style="font-size:28px;margin:0 0 4px">Review plan changes</h1>
+    <div style="font-size:16px;font-weight:600;margin-bottom:6px">Ministry of Health Strategic Plan (Demo)</div>
+    <div style="display:flex;align-items:center;gap:var(--space-3);font-size:13px;color:var(--color-neutral-700)">
+      <span>Submitted by Esther Muthoni, 24 Nov 2026, 16:20 EAT</span>
+      <span class="kt-status is-pending">Awaiting approval</span>
     </div>
   </div>
 
@@ -28,22 +30,39 @@
     <a href="./STR-DES-09.dc.html" style="text-decoration:none;font-family:var(--font-heading);font-weight:600;font-size:14px;padding:0 0 10px;color:var(--color-text);border-bottom:2px solid var(--color-accent)">History</a>
   </div>
 
-  <div class="card blueprint" style="padding:var(--space-4)">
-    <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-    <div class="kt-card-title">Version history</div>
-    <table class="table">
-      <thead><tr><th>Date and time</th><th>Event</th><th>Actor</th></tr></thead>
-      <tbody>
-        <tr><td>24 Nov 2026, 16:20 EAT</td><td>Submitted for approval</td><td>Esther Muthoni</td></tr>
-        <tr><td>24 Nov 2026, 15:55 EAT</td><td>Draft saved</td><td>Esther Muthoni</td></tr>
-        <tr><td>24 Nov 2026, 13:10 EAT</td><td>Successor Version 2 created</td><td>Esther Muthoni</td></tr>
-      </tbody>
-    </table>
+  <div class="card blueprint" style="padding:var(--space-4);margin-bottom:var(--space-8)">
+    <div class="kt-card-title">Submission and history</div>
+    <div class="kt-timeline" style="border:none;padding:0">
+      <div class="kt-timeline-row">
+        <div class="kt-timeline-dot-col"><div class="kt-timeline-dot is-pending"></div><div class="kt-timeline-line"></div></div>
+        <div class="kt-timeline-item">
+          <div class="kt-timeline-item-title">Submitted for approval</div>
+          <div class="kt-timeline-item-meta">24 Nov 2026, 16:20 EAT &middot; Esther Muthoni</div>
+        </div>
+      </div>
+      <div class="kt-timeline-row">
+        <div class="kt-timeline-dot-col"><div class="kt-timeline-dot is-draft"></div><div class="kt-timeline-line"></div></div>
+        <div class="kt-timeline-item">
+          <div class="kt-timeline-item-title">Draft saved</div>
+          <div class="kt-timeline-item-meta">24 Nov 2026, 15:55 EAT &middot; Esther Muthoni</div>
+        </div>
+      </div>
+      <div class="kt-timeline-row">
+        <div class="kt-timeline-dot-col"><div class="kt-timeline-dot is-draft"></div></div>
+        <div class="kt-timeline-item" style="padding-bottom:0">
+          <div class="kt-timeline-item-title">Draft update created from Version 1</div>
+          <div class="kt-timeline-item-meta">24 Nov 2026, 13:10 EAT &middot; Esther Muthoni</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
-<div style="position:sticky;bottom:0;background:var(--color-surface);border-top:1px solid var(--color-divider);padding:var(--space-4) var(--space-6);display:flex;justify-content:flex-end;gap:var(--space-3)">
-  <button type="button" class="btn" style="border-color:var(--status-critical);color:var(--status-critical);background:transparent">Return</button>
-  <button type="button" class="btn btn-primary">Approve</button>
+<div style="position:sticky;bottom:0;background:var(--color-surface);border-top:1px solid var(--color-divider);padding:var(--space-4) var(--space-6);display:flex;align-items:center;justify-content:flex-end;gap:var(--space-4)">
+  <div style="font-size:12px;color:var(--color-neutral-700);max-width:480px;text-align:right">Approval replaces the current strategy version for new planning selections. Existing approved records keep their saved strategy details.</div>
+  <div style="display:flex;gap:var(--space-3);flex:none">
+    <button type="button" class="btn" style="border-color:var(--status-critical);color:var(--status-critical);background:transparent">Return for correction</button>
+    <button type="button" class="btn btn-primary">Approve changes and use plan</button>
+  </div>
 </div>
 </dc-import>
 </x-dc>

@@ -26,3 +26,19 @@ def ensure_fiscal_year(start_year: int) -> str:
 			}
 		).insert(ignore_permissions=True)
 	return name
+
+
+def pin_review_date(testcase, date: str = "2099-12-31") -> None:
+	"""v1.8 §5.1 — approval is permitted only when the version can become
+	effective immediately, judged against the site date. Fixture plans live
+	far in the future so they never overlap the canonical §14.3 plan, so a
+	suite that approves them pins the review instant the way §14.4 pins its
+	own clocks. Restored automatically at the end of the test."""
+	from unittest.mock import patch
+
+	patcher = patch(
+		"kentender_strategy.services.strategy_readiness.today",
+		return_value=frappe.utils.getdate(date),
+	)
+	patcher.start()
+	testcase.addCleanup(patcher.stop)
