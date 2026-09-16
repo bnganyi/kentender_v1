@@ -243,6 +243,69 @@ class TestScopeGating(DepartmentalNeedsPermissionCase):
 		)
 
 
+class TestCartesianProductIsolation(DepartmentalNeedsPermissionCase):
+	"""AUTH-ADR-001 v1.7 §16.3 step 8 — one user's Departmental Author and Head
+	of User Department responsibilities in different Organisation Units must
+	not cross. No real seed actor currently holds two *different*
+	responsibilities in two *different* units at once (Grace holds Author in
+	both Digital Health and HR Management and Development; Peter holds Head of
+	User Department in both) — this test grants a disposable dual-role user,
+	exactly as `TestActingHeadOfDepartment._ensure_acting_test_user` does for
+	its own otherwise-unreachable shape, rather than distorting a real actor's
+	assignment set."""
+
+	CARTESIAN_TEST_USER = "nds.test.cartesian@example.test"
+
+	def _ensure_cartesian_test_user(self) -> str:
+		if not frappe.db.exists("User", self.CARTESIAN_TEST_USER):
+			doc = frappe.get_doc(
+				{
+					"doctype": "User",
+					"email": self.CARTESIAN_TEST_USER,
+					"first_name": "Cartesian",
+					"last_name": "Test User",
+					"send_welcome_email": 0,
+					"user_type": "System User",
+					"enabled": 1,
+				}
+			)
+			doc.insert(ignore_permissions=True)
+			doc.add_roles("Desk User")
+		grant(
+			user=self.CARTESIAN_TEST_USER,
+			business_role=ROLE_DEPARTMENTAL_AUTHOR,
+			organisation_unit=self.ou,
+			fixture_namespace=NS_TEST_GRANT,
+			actor="Administrator",
+		)
+		grant(
+			user=self.CARTESIAN_TEST_USER,
+			business_role=ROLE_HEAD_OF_USER_DEPARTMENT,
+			organisation_unit=self.ou_hrmd,
+			fixture_namespace=NS_TEST_GRANT,
+			actor="Administrator",
+		)
+		return self.CARTESIAN_TEST_USER
+
+	def test_author_and_head_of_department_responsibilities_do_not_cross_organisation_units(self):
+		user = self._ensure_cartesian_test_user()
+		# Author in Digital Health: may create there...
+		self.assertTrue(permissions.require_create(user, self.ou))
+		# ...but the Author grant does not extend to HR Management and
+		# Development, where this user's only grant is Head of User Department.
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			permissions.require_create(user, self.ou_hrmd)
+		self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
+		# Head of User Department in HR Management and Development: may decide
+		# a submitted Need there...
+		permissions.require_review_command(self.hrmd_need(), user)
+		# ...but the Head of User Department grant does not extend to Digital
+		# Health, where this user's only grant is Departmental Author.
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			permissions.require_review_command(self.accepted_need(), user)
+		self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
+
+
 class TestActingHeadOfDepartment(DepartmentalNeedsPermissionCase):
 	"""NDS-AC-042 — an Acting appointment is one time-bound URA row, not a
 	separate delegate role."""

@@ -393,6 +393,33 @@ class TestInitialNeedLifecycle(DepartmentalNeedsCommandCase):
 		self.assertEqual(copy.based_on_revision, original)
 		self.assertEqual(copy.title, self.version(original).title)
 
+	def test_get_need_history_names_each_decision_in_order(self):
+		# NDS-CHG-001 v1.13 §11.1/§11.5 — the History disclosure needs the full
+		# decision sequence, plain-language and oldest-first.
+		submitted = self.submit(self.create())
+		returned = self.decide(submitted, "return", reason=REASON)
+		read = workspace.get_need(need=returned["need"], user=AUTHOR)
+		history = read["history"]
+		self.assertEqual(len(history), 2)
+		self.assertIn("Submitted", history[0]["title"])
+		self.assertIn("Revision 1", history[0]["title"])
+		self.assertEqual(history[1]["title"], "Returned for correction")
+		self.assertTrue(history[1]["meta"])
+
+	def test_get_need_names_when_it_was_submitted(self):
+		# NDS-CHG-001 v1.13 §11.6 "Submitted at".
+		submitted = self.submit(self.create())
+		read = workspace.get_need(need=submitted["need"], user=AUTHOR)
+		self.assertIsNotNone(read["submitted"])
+		self.assertTrue(read["submitted"]["occurred_at"])
+
+	def test_get_need_names_the_accepting_capacity(self):
+		# NDS-CHG-001 v1.13 §11.8 "Capacity" — resolved from the exact
+		# assignment the accept decision snapshotted (§15), not guessed.
+		accepted = self.accepted()
+		read = workspace.get_need(need=accepted["need"], user=AUTHOR)
+		self.assertEqual(read["accepted"]["capacity"], "Head of User Department")
+
 	def test_a_resubmitted_correction_keeps_the_returned_version_intact(self):
 		# Revision integrity. The return path is asserted above; this is the other
 		# half — that editing and resubmitting the correction writes to the *copy*
@@ -1178,3 +1205,51 @@ class TestSuccessorReachesTheReviewQueue(DepartmentalNeedsCommandCase):
 		reference = frappe.db.get_value("Departmental Need", accepted["need"], "need_reference")
 		row = next(row for row in result["needs"] if row["reference"] == reference)
 		self.assertNotIn("review", {action["code"] for action in row["actions"]})
+
+	def test_review_task_carries_the_previously_accepted_revision_for_a_successor(self):
+		# NDS-CHG-001 v1.13 §11.10 — the "What changed" comparison needs both
+		# the proposed and the previously accepted content on the one read.
+		accepted, _ = self.submitted_successor()
+		task = frappe.db.get_value(
+			"Departmental Need Review Task",
+			{"departmental_need": accepted["need"], "status": TASK_OPEN},
+			"name",
+		)
+		frappe.set_user(REVIEWER)
+		try:
+			read = workspace.get_review_task(task=task, user=REVIEWER)
+		finally:
+			frappe.set_user("Administrator")
+		self.assertEqual(str(read["accepted_revision"]["required_by_date"]), "2027-12-31")
+		self.assertEqual(str(read["revision"]["required_by_date"]), "2027-09-15")
+
+	def test_review_task_scope_is_named_not_raw_ids(self):
+		# The artboards show Department/Financial year by name; a raw doc name
+		# leaked through here until this row.
+		accepted, _ = self.submitted_successor()
+		task = frappe.db.get_value(
+			"Departmental Need Review Task",
+			{"departmental_need": accepted["need"], "status": TASK_OPEN},
+			"name",
+		)
+		frappe.set_user(REVIEWER)
+		try:
+			read = workspace.get_review_task(task=task, user=REVIEWER)
+		finally:
+			frappe.set_user("Administrator")
+		self.assertNotEqual(read["scope"]["organisation_unit"], self.ou)
+		self.assertNotIn("-", read["scope"]["financial_year"])
+
+	def test_review_task_carries_no_accepted_revision_for_an_initial_review(self):
+		submitted = self.submit(self.create())
+		task = frappe.db.get_value(
+			"Departmental Need Review Task",
+			{"departmental_need": submitted["need"], "status": TASK_OPEN},
+			"name",
+		)
+		frappe.set_user(REVIEWER)
+		try:
+			read = workspace.get_review_task(task=task, user=REVIEWER)
+		finally:
+			frappe.set_user("Administrator")
+		self.assertEqual(read["accepted_revision"], {})

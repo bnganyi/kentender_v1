@@ -1,10 +1,10 @@
 <!-- The one role-appropriate table §1.1 leaves in place of the retired summary
      cards and split sections. Shared by NDS-DES-01, 02 and 02b — the caller
-     supplies the columns each role sees. -->
+     supplies the columns each role sees. NDS-CHG-001 v1.13 §11.2/§11.3 render
+     this directly inside the workspace's .kt-panel-lg, with no separate
+     bordered card of its own. -->
 <template>
-	<div class="kt-card kt-blueprint" style="padding: 0; overflow: hidden">
-		<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-		<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+	<div>
 		<table class="kt-table" data-testid="nds-needs-table" style="width: 100%">
 			<thead>
 				<tr>
@@ -24,7 +24,7 @@
 						<template v-if="column.key === 'need'">
 							<span style="font-weight: 500">{{ row.title || "Untitled need" }}</span>
 							<br />
-							<span style="color: var(--color-neutral-600); font-size: 13px">{{
+							<span style="color: var(--kt-color-neutral-600); font-size: 13px">{{
 								row.reference
 							}}</span>
 						</template>

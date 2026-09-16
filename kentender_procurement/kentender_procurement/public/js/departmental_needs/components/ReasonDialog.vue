@@ -16,11 +16,15 @@
 		>
 			<div :id="titleId" class="kt-dialog-title">{{ title }}</div>
 			<div class="kt-dialog-body">
-				<p style="margin: 0 0 16px; font-size: 14.5px; color: var(--color-neutral-700)">
+				<!-- NDS-DES-11 — the requirement name/reference/revision, so the
+				     target is unambiguous before the reason field. -->
+				<p v-if="subject" style="margin: 8px 0 0; font-size: 14.5px; font-weight: 500">{{ subject }}</p>
+				<div v-if="subject" class="kt-label" style="margin-bottom: 16px">{{ subjectMeta }}</div>
+				<p v-if="lede" style="margin: 0 0 16px; font-size: 14.5px; color: var(--color-neutral-700)">
 					{{ lede }}
 				</p>
 				<div class="kt-field">
-					<label :for="fieldId">Reason</label>
+					<label :for="fieldId">{{ fieldLabel }}</label>
 					<textarea
 						:id="fieldId"
 						ref="reasonEl"
@@ -58,7 +62,10 @@ import { onMounted, onBeforeUnmount, ref } from "vue";
 
 defineProps({
 	title: { type: String, required: true },
-	lede: { type: String, required: true },
+	subject: { type: String, default: "" },
+	subjectMeta: { type: String, default: "" },
+	lede: { type: String, default: "" },
+	fieldLabel: { type: String, default: "Reason" },
 	confirmLabel: { type: String, required: true },
 	modelValue: { type: String, default: "" },
 	error: { type: String, default: "" },

@@ -630,11 +630,13 @@
 
 /* ── v1.8 components (Strategy artboard bundle, 14 Sep 2026) ── */
 
-/* Page-level advisory banner, four variants. */
+/* Page-level advisory banner, five variants. */
 .kt-industry .kt-notice { display: flex; gap: var(--kt-space-3); align-items: flex-start; padding: var(--kt-space-4); border-left: 3px solid var(--kt-color-accent); background: var(--kt-color-accent-100); }
 .kt-industry .kt-notice-icon { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; color: var(--kt-color-accent-700); }
 .kt-industry .kt-notice-body { font-size: 14px; color: var(--kt-color-neutral-800); }
 .kt-industry .kt-notice-body strong { color: var(--kt-color-text); }
+.kt-industry .kt-notice.is-info { border-left-color: var(--kt-color-accent-700); background: var(--kt-color-accent-100); }
+.kt-industry .kt-notice.is-info .kt-notice-icon { color: var(--kt-color-accent-700); }
 .kt-industry .kt-notice.is-warning { border-left-color: var(--kt-status-attention); background: var(--kt-status-attention-bg); }
 .kt-industry .kt-notice.is-warning .kt-notice-icon { color: var(--kt-status-attention); }
 .kt-industry .kt-notice.is-critical { border-left-color: var(--kt-status-critical); background: var(--kt-status-critical-bg); }
@@ -686,6 +688,19 @@
 .kt-industry .kt-meta-row > div { display: flex; flex-direction: column; gap: 4px; }
 .kt-industry .kt-meta-value { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 18px; }
 
+/* ── v1.13 components (Departmental Needs artboard bundle, 15 Sep 2026) ── */
+
+/* A full-screen page frame — the same fill/border as .kt-card, larger
+   padding for a top-level workspace/editor/detail composition rather than a
+   nested content block. */
+.kt-industry .kt-panel-lg { background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); padding: var(--kt-space-8); }
+
+/* A vertical stack of labelled read-only facts (the six-fact requirement
+   review block). */
+.kt-industry .kt-factstack { display: flex; flex-direction: column; gap: var(--kt-space-4); }
+.kt-industry .kt-factstack .kt-label { margin-bottom: 3px; }
+.kt-industry .kt-factstack .kt-factstack-value { font-size: 14px; }
+
 /* Media hardening — keep when trimming (see the design-system readme). */
 @media (forced-colors: active) {
 	.kt-industry .kt-status, .kt-industry .kt-tag { border: 1px solid currentColor; }
@@ -699,7 +714,7 @@
 @media print {
 	.kt-industry { background: #fff; color: #000; }
 	.kt-industry .kt-btn, .kt-industry .kt-dialog-backdrop, .kt-industry .kt-tabs, .kt-industry .kt-sticky-footer { display: none; }
-	.kt-industry .kt-card, .kt-industry .kt-dialog { box-shadow: none; background: #fff; border-color: #000; }
+	.kt-industry .kt-card, .kt-industry .kt-dialog, .kt-industry .kt-panel-lg { box-shadow: none; background: #fff; border-color: #000; }
 	.kt-industry .kt-status { background: none; color: #000; border: 1px solid #000; }
 	.kt-industry a { color: #000; }
 	.kt-industry .kt-table thead th { position: static; border-bottom-color: #000; }
@@ -722,4 +737,46 @@
 	.kt-industry .kt-editor-grid > .kt-card { position: static !important; }
 	.kt-industry .kt-shell { padding-left: 16px; padding-right: 16px; }
 	.kt-industry .kt-sticky-footer { flex-wrap: wrap; padding-left: 16px; padding-right: 16px; }
+}
+
+/* ── BUD-CHG-001 v1.9 (15 Sep 2026): record disclosure rows and the
+     part-to-whole utilisation bar, ported from the Budget artboard bundle
+     (docs/mvp-1-r1/03_budget/design/_ds/kentender-industry-.../styles.css).
+     .kt-record is a <details> whose <summary> carries the row (index, ref,
+     title, meta, amount) and a footer with links + toggle; .kt-bar draws
+     committed (deep) and reserved (mid) against the free track. ── */
+.kt-industry .kt-record { background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); display: block; }
+.kt-industry .kt-record summary { list-style: none; cursor: pointer; }
+.kt-industry .kt-record summary::-webkit-details-marker { display: none; }
+.kt-industry .kt-record-main { display: flex; gap: var(--kt-space-4); padding: var(--kt-space-4); align-items: flex-start; }
+.kt-industry .kt-record-index { width: 32px; height: 32px; flex: none; display: flex; align-items: center; justify-content: center; background: var(--kt-color-neutral-100); border: 1px solid var(--kt-color-divider); font-family: var(--kt-font-heading); font-weight: 600; font-size: 13px; color: var(--kt-color-neutral-700); }
+.kt-industry .kt-record-body { flex: 1; min-width: 0; }
+.kt-industry .kt-record-ref { font-size: 12px; color: var(--kt-color-neutral-700); }
+.kt-industry .kt-record-title { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 17px; margin-top: 2px; }
+.kt-industry .kt-record-meta { display: flex; gap: var(--kt-space-3); align-items: center; flex-wrap: wrap; margin-top: 8px; font-size: 13px; color: var(--kt-color-neutral-700); }
+.kt-industry .kt-record-value { text-align: right; flex: none; }
+.kt-industry .kt-record-amount { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 20px; }
+.kt-industry .kt-record-sub { font-size: 12px; color: var(--kt-color-neutral-700); margin-top: 2px; }
+.kt-industry .kt-record-footer { display: flex; align-items: center; justify-content: space-between; padding: var(--kt-space-3) var(--kt-space-4); border-top: 1px solid var(--kt-color-divider); font-size: 13px; }
+.kt-industry .kt-record-footer-label { color: var(--kt-color-neutral-700); margin-right: 6px; }
+.kt-industry .kt-record-footer > span:first-child { white-space: nowrap; }
+.kt-industry .kt-record-toggle { display: inline-flex; align-items: center; gap: 6px; color: var(--kt-color-accent-700); font-weight: 600; flex-shrink: 0; }
+.kt-industry .kt-record .kt-disclosure-chevron { transition: transform 0.15s ease; }
+.kt-industry .kt-record[open] .kt-disclosure-chevron { transform: rotate(180deg); }
+.kt-industry .kt-record:not([open]) .when-open { display: none; }
+.kt-industry .kt-record[open] .when-closed { display: none; }
+.kt-industry .kt-record-detail { border-top: 1px solid var(--kt-color-divider); padding: var(--kt-space-4); }
+.kt-industry .kt-record-list { display: flex; flex-direction: column; gap: var(--kt-space-3); }
+.kt-industry .kt-bar { display: flex; height: 6px; background: var(--kt-color-neutral-200); overflow: hidden; }
+.kt-industry .kt-bar > i { display: block; height: 100%; }
+.kt-industry .kt-bar-committed { background: var(--kt-color-accent-800); }
+.kt-industry .kt-bar-reserved { background: var(--kt-color-accent-400); }
+@media (forced-colors: active) {
+	.kt-industry .kt-record, .kt-industry .kt-record-index { border-color: CanvasText; }
+	.kt-industry .kt-bar { background: var(--kt-color-neutral-400); border: 1px solid var(--kt-color-neutral-500); }
+}
+@media print {
+	.kt-industry .kt-record { border-color: #000; }
+	.kt-industry .kt-record-index { background: #fff; border-color: #000; }
+	.kt-industry .kt-record-detail { display: block !important; }
 }

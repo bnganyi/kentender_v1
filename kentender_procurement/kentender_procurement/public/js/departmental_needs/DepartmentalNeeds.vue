@@ -32,10 +32,10 @@
 				:error="error"
 				:outcome="workspace.outcome"
 				:context="workspace.context || {}"
+				:contexts="workspace.contexts || []"
 				:submission="submissionState"
 				:needs="workspace.needs || []"
 				:actions="workspace.actions || []"
-				:count-label="workspace.count_label || ''"
 				:financial-years="financialYears"
 				:selected-financial-year="financialYear"
 				v-model:search="search"
@@ -45,17 +45,22 @@
 				@reload="load"
 				@action="onRowAction"
 				@select-financial-year="onSelectFinancialYear"
-				@change-context="onChangeContext"
+				@select-context="onSelectContext"
 			/>
 
 			<NeedEditorScreen
 				v-else-if="screen === 'editor'"
 				:mode="editorMode"
+				:need="detail.need || {}"
 				:revision="editorRevision"
 				:context="editorContext"
+				:department-choices="editorDepartmentChoices"
+				:selected-department="selectedDepartment"
 				:units="units"
 				@unit-created="(unit) => units.push(unit)"
+				@select-department="onSelectDepartment"
 				:return-reason="needReference ? detail.latest_return : null"
+				:history="needReference ? detail.history || [] : []"
 				:error-summary="errorSummary"
 				:field-errors="fieldErrors"
 				:pending="pending"
@@ -76,9 +81,12 @@
 				:author-label="detail.author_label || ''"
 				:accepted-by-label="acceptedBy.actor_label || ''"
 				:accepted-at="acceptedBy.occurred_at || ''"
+				:accepted-capacity="acceptedBy.capacity || ''"
+				:submitted-at="(detail.submitted || {}).occurred_at || ''"
 				:access-profile="detail.access_profile || ''"
 				:actions="detail.actions || []"
 				:latest-return="detail.latest_return || null"
+				:history="detail.history || []"
 				:withdrawal-open="withdrawalOpen"
 				@create-update="onCreateSuccessor"
 				@request-withdrawal="openWithdrawalDialog"
@@ -92,6 +100,7 @@
 				v-else-if="screen === 'task'"
 				:need="task.need || {}"
 				:revision="task.revision || {}"
+				:accepted-revision="task.accepted_revision || {}"
 				:scope="task.scope || {}"
 				:requester-label="task.requester_label || ''"
 				:opened-at="task.opened_at || ''"
@@ -107,8 +116,10 @@
 
 			<WithdrawalReviewScreen
 				v-else-if="screen === 'withdrawal'"
+				:need="task.need || {}"
 				:request="task.withdrawal_request || {}"
 				:revision="task.revision || {}"
+				:scope="task.scope || {}"
 				:dependency="dependency"
 				:requester-label="requesterLabel"
 				:requested-at="task.opened_at || ''"
@@ -128,7 +139,10 @@
 		<ReasonDialog
 			v-if="reasonDialog"
 			:title="reasonDialog.title"
-			:lede="reasonDialog.lede"
+			:subject="reasonDialog.subject || ''"
+			:subject-meta="reasonDialog.subjectMeta || ''"
+			:lede="reasonDialog.lede || ''"
+			:field-label="reasonDialog.fieldLabel || 'Reason'"
 			:confirm-label="reasonDialog.confirmLabel"
 			:destructive="reasonDialog.destructive"
 			v-model="reason"
@@ -149,17 +163,6 @@
 			@confirm="confirmDialog.onConfirm()"
 			@cancel="closeDialog"
 		/>
-
-		<!-- NDS-DES-15 §11.16/§12.1 — shown only when more than one authorised
-		     Organisation Unit is eligible to create in the one open Fiscal Year. -->
-		<CreateTargetDialog
-			v-if="createTargetDialog"
-			:organisation-units="createTargetChoices.organisation_units || []"
-			:financial-year-label="createTargetChoices.financial_year_label || ''"
-			:pending="pending"
-			@continue="onCreateTargetContinue"
-			@cancel="createTargetDialog = false"
-		/>
 	</div>
 </template>
 
@@ -171,7 +174,6 @@ import * as api from "./data/needsApi.js";
 import { quantityWithUnit } from "./data/format.js";
 import ConfirmDialog from "./components/ConfirmDialog.vue";
 import ContextPicker from "./components/ContextPicker.vue";
-import CreateTargetDialog from "./components/CreateTargetDialog.vue";
 import NeedDetailScreen from "./components/NeedDetailScreen.vue";
 import NeedEditorScreen from "./components/NeedEditorScreen.vue";
 import ReasonDialog from "./components/ReasonDialog.vue";
@@ -210,12 +212,14 @@ const dialog = ref("");
 const reason = ref("");
 const reasonError = ref("");
 const financialYears = ref([]);
-const createTargetDialog = ref(false);
-const createTargetChoices = ref({});
-// The exact department + the one open Fiscal Year resolved for the Need
+// The eligible departments + the one open Fiscal Year resolved for the Need
 // currently being created — from list_need_create_targets, never from the
-// workspace's FY filter (see editorContext).
-const createContext = ref(null);
+// workspace's FY filter (see editorContext). NDS-CHG-001 v1.13 §11.16 — the
+// create form itself hosts the department choice; there is no longer a
+// separate preliminary dialog for the multi-department case.
+const createTargets = ref(null);
+// The user's in-form pick, NDS-DES-15-MULTIPLE only; empty until chosen.
+const selectedDepartment = ref("");
 
 // CTX-CHG-001 — the working context is a SERVER-SIDE user preference. These
 // refs carry only the current screen's resolved/explicit values; a bare load
@@ -227,37 +231,29 @@ const createContext = ref(null);
 // next login.
 const contextKey = ref("");
 const financialYear = ref("");
-// Rule 5.4 — "Change context" is always available: when set, the picker shows
-// even though the server could resolve a remembered context.
-const changingContext = ref(false);
 
+// NDS-CHG-001 v1.13 §11.2 — the Financial year control is an optional filter
+// ("All financial years" is a valid default), not a mandatory pre-selection:
+// `get_workspace` already lists across every year when none is selected
+// (AUTH-ADR-001 v1.7 §16.3 step 9 — never trapped by a remembered year). The
+// full-screen picker is reserved for the one case the server cannot resolve
+// on its own: no remembered Organisation Unit and more than one eligible.
 const selectionRequired = computed(
 	() =>
 		!loading.value &&
 		!error.value &&
 		screen.value === "workspace" &&
-		(changingContext.value ||
-			workspace.value.outcome === "CONTEXT_SELECTION_REQUIRED" ||
-			// The context is department *and* FY (§12.1). With several selectable
-			// years, rows must not be listed against an unresolved one.
-			(financialYears.value.length > 1 && !financialYear.value))
+		workspace.value.outcome === "CONTEXT_SELECTION_REQUIRED"
 );
 
 function onSelectContext(value) {
 	contextKey.value = value;
-	changingContext.value = false;
 	load({ quiet: true });
 }
 
 function onSelectFinancialYear(value) {
 	financialYear.value = value;
 	load({ quiet: true });
-}
-
-function onChangeContext() {
-	// Rule 5.4 — reopen the picker; the pick itself re-persists server-side.
-	contextKey.value = "";
-	changingContext.value = true;
 }
 
 // --- routing ---------------------------------------------------------------
@@ -323,8 +319,20 @@ const editorContext = computed(() => {
 	// only years already represented by existing Needs — empty on a first
 	// Need, and unrelated to which year is open for creation). Falls back to
 	// the workspace context only for a direct URL load of /new (no
-	// createContext yet resolved).
-	if (!needReference.value) return createContext.value || workspace.value.context || {};
+	// createTargets yet resolved).
+	if (!needReference.value) {
+		const targets = createTargets.value;
+		if (!targets) return workspace.value.context || {};
+		const chosen = (targets.organisation_units || []).find(
+			(row) => row.organisation_unit === selectedDepartment.value
+		);
+		return {
+			organisation_unit: selectedDepartment.value,
+			organisation_unit_label: chosen ? chosen.organisation_unit_label : "",
+			financial_year: targets.financial_year,
+			financial_year_label: targets.financial_year_label,
+		};
+	}
 	// The artboards show scope by name, never by ID.
 	const need = detail.value.need || {};
 	const labels = detail.value.scope_labels || {};
@@ -333,6 +341,22 @@ const editorContext = computed(() => {
 		financial_year_label: labels.financial_year || need.financial_year,
 	};
 });
+
+// NDS-DES-15-MULTIPLE — offered only while creating and more than one
+// department is eligible; a single eligible department resolves silently
+// (SINGLE) and this stays empty, so the editor renders it read-only instead.
+const editorDepartmentChoices = computed(() => {
+	if (needReference.value || !createTargets.value) return [];
+	const units = createTargets.value.organisation_units || [];
+	return units.length > 1 ? units : [];
+});
+
+function onSelectDepartment(value) {
+	selectedDepartment.value = value;
+	// Reuses the same server-side preference persistence the workspace filter
+	// uses, so the list reflects the chosen department on return.
+	contextKey.value = value;
+}
 
 const withdrawalOpen = computed(
 	() => (detail.value.open_task || {}).task_type === "Withdrawal"
@@ -389,7 +413,10 @@ function applyLoaded(loaded) {
 	}
 	if (loaded.detail) {
 		detail.value = loaded.detail;
-		usage.value = { usage: detail.value.planning_usage };
+		// §4.7/§11.8 — the full detail (usage + Plan/Plan Item references), not
+		// just the bare value: the workspace table's own status pill still
+		// reads `row.planning_usage` (a plain string) unaffected by this.
+		usage.value = detail.value.planning_usage || {};
 		disposition.value = detail.value.planning_disposition || null;
 		acceptedBy.value = detail.value.accepted || {};
 		return;
@@ -515,7 +542,10 @@ async function run(action, fn) {
 	try {
 		return await fn(api.newIdempotencyKey(action));
 	} catch (e) {
-		if (dialog.value) reasonError.value = e.message;
+		// Only a ReasonDialog renders `reasonError` inline; a ConfirmDialog has
+		// no error slot of its own (a failure there was previously silent —
+		// found while wiring the new withdraw-draft confirmation).
+		if (reasonDialog.value) reasonError.value = e.message;
 		else errorSummary.value = e.message;
 		return null;
 	} finally {
@@ -573,16 +603,21 @@ async function onSubmit(form) {
 }
 
 function contextArgs() {
-	const context = createContext.value || workspace.value.context || {};
+	if (createTargets.value) {
+		return { organisation_unit: selectedDepartment.value, financial_year: createTargets.value.financial_year };
+	}
+	const context = workspace.value.context || {};
 	return {
 		organisation_unit: context.organisation_unit,
 		financial_year: context.financial_year,
 	};
 }
 
-// NDS-DES-15 / §12.1 — resolved at click time from the exact authorised
-// create targets, never from a Fiscal Year permission, the list's current FY
-// filter or a browser-stored context.
+// NDS-CHG-001 v1.13 §11.16/§12.1 — resolved at click time from the exact
+// authorised create targets, never from a Fiscal Year permission, the list's
+// current FY filter or a browser-stored context. A single eligible
+// department resolves silently; several go straight to the form, which hosts
+// the choice itself (NDS-DES-15-MULTIPLE) — there is no separate dialog.
 async function onCreateClick() {
 	const targets = await api.listNeedCreateTargets();
 	if (!targets.open || !(targets.organisation_units || []).length) {
@@ -591,38 +626,17 @@ async function onCreateClick() {
 		await load({ quiet: true });
 		return;
 	}
-	if (targets.organisation_units.length === 1) {
-		await enterCreateEditor(targets, targets.organisation_units[0].organisation_unit);
-		return;
-	}
-	createTargetChoices.value = targets;
-	createTargetDialog.value = true;
-}
-
-async function enterCreateEditor(targets, organisationUnit) {
-	const selected = (targets.organisation_units || []).find(
-		(row) => row.organisation_unit === organisationUnit
-	);
-	createContext.value = {
-		organisation_unit: organisationUnit,
-		organisation_unit_label: selected?.organisation_unit_label || organisationUnit,
-		financial_year: targets.financial_year,
-		financial_year_label: targets.financial_year_label,
-	};
-	// Reuses the same server-side preference persistence the department picker
-	// uses, so the workspace list reflects the chosen department on return —
-	// a convenience, not what the editor itself reads (see editorContext).
-	if (contextKey.value !== organisationUnit) {
-		contextKey.value = organisationUnit;
-		changingContext.value = false;
+	createTargets.value = targets;
+	const units = targets.organisation_units;
+	selectedDepartment.value = units.length === 1 ? units[0].organisation_unit : "";
+	if (selectedDepartment.value && contextKey.value !== selectedDepartment.value) {
+		// Reuses the same server-side preference persistence the workspace
+		// filter uses, so the list reflects the chosen department on return —
+		// a convenience, not what the editor itself reads (see editorContext).
+		contextKey.value = selectedDepartment.value;
 		await load({ quiet: true });
 	}
 	go("new");
-}
-
-function onCreateTargetContinue(organisationUnit) {
-	createTargetDialog.value = false;
-	enterCreateEditor(createTargetChoices.value, organisationUnit);
 }
 
 async function onCreateSuccessor() {
@@ -636,6 +650,11 @@ async function onCreateSuccessor() {
 	if (result) go(needReference.value, "edit");
 }
 
+// NDS-CHG-001 v1.13 §11.5/§11.16 — the editor's destructive footer button
+// means something different per mode: a successor's is "Cancel update"
+// (unwinds the proposal only), a Draft/Returned's is "Withdraw need" (a real
+// lifecycle command via NDS-DES-13 WITHDRAW-DRAFT), and a brand new unsaved
+// form's is a plain, mutation-free "Cancel".
 function onEditorCancel() {
 	if (editorMode.value === "successor") {
 		dialog.value = "cancel-successor";
@@ -646,7 +665,7 @@ function onEditorCancel() {
 		go();
 		return;
 	}
-	go(needReference.value);
+	dialog.value = "withdraw-draft";
 }
 
 function onRowAction(row, action) {
@@ -681,31 +700,48 @@ function openWithdrawalDialog() {
 }
 
 const REASON_DIALOGS = {
-	// NDS-DES-13a
+	// NDS-DES-13 RETURN-INITIAL / RETURN-UPDATE — same title/field label
+	// either way; only the confirm command differs.
 	return: {
-		title: "Return for correction",
-		lede: "Explain what the requester must correct before resubmission.",
-		confirmLabel: "Return need",
+		title: "What needs to change?",
+		fieldLabel: "Correction required",
+		confirmLabel: "Return for correction",
 		onConfirm: () => decide(api.returnNeedRevision, "return"),
 	},
-	// NDS-DES-13b
-	decline: {
-		title: "Do not take forward",
-		lede: "Explain why this requirement will not be taken forward.",
-		confirmLabel: "Do not take forward",
-		destructive: true,
-		onConfirm: () => decide(api.declineNeedRevision, "decline"),
+	// NDS-DES-13 DECLINE-INITIAL / DECLINE-UPDATE — title, field label and
+	// confirm label all split by whether this is the initial submission or a
+	// proposed update (§8.5).
+	get decline() {
+		const isSuccessor = task.value.task_type === "Successor acceptance";
+		return {
+			title: isSuccessor ? "Decline proposed changes" : "Do not take forward",
+			fieldLabel: isSuccessor
+				? "Why are you declining these changes?"
+				: "Why are you declining this requirement?",
+			confirmLabel: isSuccessor ? "Decline proposed changes" : "Do not take forward",
+			destructive: true,
+			onConfirm: () => decide(api.declineNeedRevision, "decline"),
+		};
 	},
-	// NDS-DES-11
-	"request-withdrawal": {
-		title: "Request withdrawal",
-		lede: "Explain why this accepted need should no longer be used for procurement planning.",
-		confirmLabel: "Submit request",
-		onConfirm: () => requestWithdrawal(),
+	// NDS-DES-11 — exact copy; subject/subjectMeta name the accepted Need
+	// unambiguously before the reason field.
+	get "request-withdrawal"() {
+		const need = detail.value.need || {};
+		const revision = detail.value.current_revision || {};
+		return {
+			title: "Request withdrawal",
+			subject: revision.title || "",
+			subjectMeta: `${need.need_reference || ""} · Accepted revision ${revision.revision_number || ""}`,
+			lede: "Explain why this accepted requirement should no longer be available for procurement planning.",
+			fieldLabel: "Reason for withdrawal",
+			confirmLabel: "Request withdrawal",
+			onConfirm: () => requestWithdrawal(),
+		};
 	},
+	// NDS-DES-13 DECLINE-WITHDRAWAL — exact copy.
 	"decline-withdrawal": {
 		title: "Decline withdrawal",
-		lede: "Explain why this withdrawal request is declined.",
+		fieldLabel: "Reason",
 		confirmLabel: "Decline withdrawal",
 		destructive: true,
 		onConfirm: () => decideWithdrawal("decline"),
@@ -728,22 +764,33 @@ const confirmDialog = computed(() => {
 		};
 	}
 	if (dialog.value === "approve-withdrawal") {
+		// NDS-DES-13 APPROVE-WITHDRAWAL — exact copy.
 		return {
-			title: "Approve withdrawal",
-			message:
-				"The accepted need will be withdrawn and Procurement Planning will be notified. This cannot be undone.",
+			title: "Approve withdrawal?",
+			message: "This withdraws the accepted requirement. Earlier decisions remain in history.",
 			confirmLabel: "Approve withdrawal",
 			onConfirm: () => decideWithdrawal("approve"),
 		};
 	}
 	if (dialog.value === "cancel-successor") {
+		// NDS-DES-13 CANCEL-UPDATE — exact copy.
 		return {
-			title: "Cancel update",
-			message:
-				"The open update will be withdrawn. The earlier accepted revision stays current.",
+			title: "Cancel these proposed changes?",
+			message: "The previously accepted requirement will remain in effect.",
 			confirmLabel: "Cancel update",
 			destructive: true,
 			onConfirm: () => cancelSuccessor(),
+		};
+	}
+	if (dialog.value === "withdraw-draft") {
+		// NDS-DES-13 WITHDRAW-DRAFT — exact copy.
+		return {
+			title: "Withdraw this need?",
+			message:
+				"This withdraws the unaccepted requirement. Earlier submissions and decisions remain in history.",
+			confirmLabel: "Withdraw need",
+			destructive: true,
+			onConfirm: () => withdrawDraft(),
 		};
 	}
 	return null;
@@ -809,6 +856,21 @@ async function cancelSuccessor() {
 	if (!result) return;
 	closeDialog();
 	go(needReference.value);
+}
+
+// NDS-DES-13 WITHDRAW-DRAFT — §5.1: a Draft or Returned Need's own Author may
+// withdraw it before acceptance.
+async function withdrawDraft() {
+	const result = await run("withdraw", (key) =>
+		api.withdrawUnacceptedNeed({
+			need: (detail.value.need || {}).name,
+			expected_version: recordVersion(),
+			idempotency_key: key,
+		})
+	);
+	if (!result) return;
+	closeDialog();
+	go();
 }
 
 function clearFilters() {

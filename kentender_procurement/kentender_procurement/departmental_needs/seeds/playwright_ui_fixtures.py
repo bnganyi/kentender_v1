@@ -91,6 +91,18 @@ def _key() -> str:
 	return f"nds-pw-{uuid4().hex}"
 
 
+def now_marker() -> str:
+	"""A `creation`-comparable timestamp for `purge_untagged_needs_since()`.
+
+	`creation` is stored as a naive site-local (EAT) datetime string. A
+	caller capturing "now" with something UTC-labelled (e.g. JavaScript's
+	`Date.toISOString()`) is ~3 hours behind real EAT wall-clock once the
+	'Z' is stripped by the DB comparison — the purge would then also catch
+	everything created in that 3-hour gap, not just what ran after it.
+	`frappe.utils.now()` is already in the right format and timezone."""
+	return frappe.utils.now()
+
+
 def _guard() -> None:
 	"""Never build demo actors or fixtures on a production site."""
 	if frappe.flags.in_test or frappe.conf.get("developer_mode") or frappe.conf.get("allow_tests"):
@@ -174,6 +186,50 @@ def ensure_actors() -> dict[str, str]:
 	_actor(PLANNER, "Playwright Planner", ROLE_PROCUREMENT_PLANNER, scoped=False)
 	_clear_context_preferences()
 	return {"author": AUTHOR, "reviewer": REVIEWER, "planner": PLANNER}
+
+
+def purge_untagged_needs_since(since: str, *, commit: bool = True) -> dict[str, Any]:
+	"""Remove `Departmental Need` rows (and everything under them) a UI-driven
+	test minted directly through a real create/submit/propose-change click,
+	never through a fixture builder — so never stamped with a namespace
+	`reset_all()` can find.
+
+	`departmental-needs-fidelity.spec.ts` reaches several states this way
+	(NDS-DES-04/08/09). Each pass mints a brand-new, unstamped `Departmental
+	Need` under the real `NDS-MOH-2027-####` series; left alone these
+	accumulate forever. Scoped to `since` (an ISO timestamp, normally the
+	spec's own start time) so the §14 canonical seed Needs — created long
+	before any test runs, and already excluded by the namespace filter — are
+	never at risk even if that filter were ever absent.
+	"""
+	_guard()
+	needs = frappe.db.get_all(
+		"Departmental Need",
+		filters={"fixture_namespace": ["is", "not set"], "creation": [">=", since]},
+		pluck="name",
+	)
+	removed: dict[str, int] = {}
+	if needs:
+		for doctype in _NAMESPACED:
+			if doctype == "Departmental Need":
+				names = needs
+			else:
+				names = frappe.db.get_all(doctype, filters={"departmental_need": ("in", needs)}, pluck="name")
+			if names:
+				frappe.db.delete(doctype, {"name": ("in", names)})
+			removed[doctype] = len(names)
+		# Not in `_NAMESPACED` — Planning-owned, but it links back to us and a
+		# leaked Need would otherwise leave it pointing at a deleted row.
+		projections = frappe.db.get_all(
+			"Need Planning Disposition Projection", filters={"departmental_need": ("in", needs)}, pluck="name"
+		)
+		if projections:
+			frappe.db.delete("Need Planning Disposition Projection", {"name": ("in", projections)})
+		removed["Need Planning Disposition Projection"] = len(projections)
+		frappe.db.delete("Notification Log", {"document_type": "Departmental Need", "document_name": ("in", needs)})
+	if commit:
+		frappe.db.commit()
+	return {"since": since, "removed": removed}
 
 
 def reset_all(*, commit: bool = False) -> dict[str, Any]:

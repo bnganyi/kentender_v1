@@ -47,9 +47,13 @@ test.describe("NDS-UI-05 review task", () => {
 		await expectScreen(page, "task");
 		// §12.5 — the complete submitted revision, not a summary. Scoped to the
 		// shell: frappe keeps the previous page container (My Work, still
-		// holding the row title) in the DOM.
+		// holding the row title) in the DOM. NDS-CHG-001 v1.13 §11.1's six-fact
+		// arrangement repeats the title as its own labelled "Requirement title"
+		// row beneath the heading that already shows it (the artboards do this
+		// on every detail/review screen), so the name legitimately appears
+		// twice — `.first()` asserts the heading occurrence.
 		await expect(
-			page.locator('[data-testid="nds-shell"]').getByText("County health records digitisation"),
+			page.locator('[data-testid="nds-shell"]').getByText("County health records digitisation").first(),
 		).toBeVisible();
 		await expect(page.locator('[data-testid="nds-decision-return"]')).toBeVisible();
 		await expect(page.locator('[data-testid="nds-decision-decline"]')).toBeVisible();
@@ -141,8 +145,10 @@ test.describe("NDS-UI-05 review task", () => {
 		await loginAsNdsFixtureAuthor(page);
 		await gotoNeeds(page, `/${NEED}`);
 		await expectScreen(page, "detail");
+		// NDS-CHG-001 v1.13 §11.5 — the exact artboard heading, replacing the
+		// old ad hoc "Returned for correction" card title.
 		const card = page.locator('[data-testid="nds-detail-editable"]');
-		await expect(card).toContainText("Returned for correction");
+		await expect(card).toContainText("What needs to change");
 		await expect(card).toContainText("Quantity needs a basis");
 		const correct = page.locator('[data-testid="nds-detail-edit"]');
 		await expect(correct).toHaveText("Correct");

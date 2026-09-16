@@ -49,12 +49,13 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		const row = page.locator(`[data-testid="nds-need-row"][data-reference="${NEED}"]`);
 		await expect(row).toBeVisible();
 		await expect(row).toHaveAttribute("data-status", "Draft");
-		// Complete visibility of authorship: the workspace also serves the
-		// reviewer through the main rail entry, where rows are not their own.
+		// NDS-CHG-001 v1.13 §11.2 — the author's own list carries no
+		// Requester/Requested-by column at all (every row is already theirs);
+		// that column exists only in the HoD's shared register (§11.3), covered
+		// by the review-task spec's dual-role fixture.
 		await expect(
 			page.locator('[data-testid="nds-needs-table"] th', { hasText: "Requested by" }),
-		).toBeVisible();
-		await expect(row).toContainText("Playwright Author");
+		).toHaveCount(0);
 		// §12.1 — a Draft belongs to its author, so the row offers Continue.
 		await expect(row.locator('[data-testid="nds-row-action"]')).toHaveAttribute(
 			"data-action",
@@ -114,9 +115,12 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		await expectScreen(page, "editor");
 		await expect(page.locator('[data-testid="nds-title"]')).not.toHaveValue("");
 
-		await page.locator('[data-testid="nds-editor-cancel"]').click();
-		await expectScreen(page, "detail");
-		await page.locator(".kt-rail-crumb-link", { hasText: "Departmental Needs" }).click();
+		// NDS-CHG-001 v1.13 §11.5/§11.16 — a Draft/Returned Need's destructive
+		// footer button is now "Withdraw need" (a real command, confirmed via
+		// dialog), not a plain navigate-away Cancel; go back to the workspace
+		// directly rather than exercising that confirmation here.
+		await gotoNeeds(page, "");
+		await selectContext(page);
 		await expectScreen(page, "workspace");
 		await page.locator('[data-testid="nds-create-need"]').click();
 		await expectScreen(page, "editor");

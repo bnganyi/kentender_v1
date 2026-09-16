@@ -714,7 +714,7 @@ role opening the Page gets the Forbidden state and no record data) or retire it.
 Found on 2026-09-11 while verifying the returned-Need correction route; left as is
 because the choice between the two is the module owner's.
 
-## FU-23 — the workspace has no Financial Year filter (2026-09-11)
+## FU-23 — the workspace has no Financial Year filter (2026-09-11) — CLOSED 2026-09-15
 
 NDS-CHG-001 v1.10 §11.2 specifies a filter row of Search / Status / Financial
 Year (showing "All financial years") / Clear filters, and §12.1 names
@@ -724,6 +724,11 @@ Found on 2026-09-11 while auditing v1.9 against the build for v1.10; left open
 because a second-FY fixture does not exist on the canonical site yet, so the
 filter would ship untested.
 
+**Closed**: delivered in the v1.13 usability pass (NDS-CHG-001 tracker
+NDS13-301) — the workspace's §11.1 filter row now includes a Financial Year
+`<select>`, client-side against the already-loaded list. Live-verified as
+Grace and again in the Phase 4 golden-path walkthrough (NDS13-404).
+
 ## FU-24 — technical read is now centralised in KT-STD-001 (2026-09-11)
 
 Technical read is now stated once in KT-STD-001 v1.5 §3A.6 (11 Sep 2026). At
@@ -731,6 +736,203 @@ this module's next version: replace its own technical-read prose, roles-table
 row wording, Forbidden carve-out and any masking clause's silence about
 technical readers with a citation of §3A.6; update AUTH-ADR-001 citations to
 v1.8.
+
+## FU-25 — Two more AUTH-ADR-001 §16.3 steps have no checked-in regression (2026-09-15)
+
+**What.** Auditing the NDS-CHG-001 v1.13 §16.3 AUTH-ADR-001 v1.7 correction
+slice against the v1.10 cycle's own gate (`NDS-G02`) for the NDS13-CHG-001..005
+usability pass found: step 8 (Cartesian-product isolation) was genuinely
+missing a checked-in test and has now been added
+(`test_departmental_needs_permissions.py::TestCartesianProductIsolation`).
+Steps 10 (a parent-OU Head of User Department assignment covers its named
+descendants but never a sibling outside that subtree) and 13 (reaching
+`kentender_needs_submission_closes_at` has the same effect as a manual close,
+including a command issued after close but before page reload) remain exactly
+where the v1.10 tracker left them — implemented in `context.py`/the shared
+resolver's `descendants_of`, live-verified once, never asserted by an
+automated test. Step 9 (multi-Fiscal-Year browsing) is the same gap FU-19
+already names as NDS-AC-050.
+
+**Why it matters.** Same blind-spot class this module has hit twice before
+(NDS-509/510, NDS-713's two Playwright-only defects): correct-by-inspection
+code with no regression to catch a future change that breaks it silently.
+
+**Why not fixed here.** Step 10 needs an Organisation Unit tree with a real
+parent/two-descendants/sibling shape and step 13 needs a controlled
+close-instant fixture; neither is required by NDS12-AC-*/NDS13-AC-* (this
+cycle's own acceptance criteria) and building either is pre-existing
+regression debt, not part of the §11/§12.10 screen rewrite this cycle exists
+to deliver.
+
+**Fix.** A future session scoped for it: a permission test using the site's
+real OU tree (or a disposable one) to prove `descendants_of` includes the two
+named descendants and excludes a sibling; a lifecycle test that sets
+`kentender_needs_submission_closes_at` to a near-future instant, advances the
+clock past it, and asserts create/submit are refused before the hourly
+`close_due_needs_submissions` job has run.
+
+---
+
+## FU-26 — Four pre-existing test failures found running the full NDS suite during the v1.13 screen rewrite (2026-09-15)
+
+**What.** Running all 11 Departmental Needs Python test files individually
+while verifying Phase 3A/3B of the v1.13 screen rewrite surfaced four
+failures, none in a file this cycle touched and none caused by it:
+
+1. `test_departmental_needs_architecture.py::test_planning_never_touches_a_needs_table`
+   — `procurement_planning/services/plan_read.py` calls
+   `frappe.get_value('Departmental Need Decision', ...)` directly, a real D1
+   architecture-boundary violation in Planning's own code (reads a Needs
+   table instead of the published contract).
+2. `test_departmental_needs_my_work.py::test_an_author_notification_still_opens_the_record`
+   — a Returned-need author notification link already pointed at
+   `/app/departmental-needs/{ref}/edit` instead of the plain detail route
+   before this session began.
+3/4. `test_departmental_needs_static_scan.py::test_partially_included_is_gone_from_the_projection`
+   and `::test_the_module_defines_exactly_the_section_4_doctypes` — both
+   fail because `Need Planning Disposition Projection` (§4.8's disposition
+   projection doctype, and its `Not proceeding` value) isn't in this test's
+   `PERMITTED_DOCTYPES`/expected-values allowlists. That doctype predates
+   this session (built for the PLN-CHG-001 v1.18 disposition work, see
+   FU-07 below) — the static scan was simply never updated to match.
+
+**Why not fixed here.** (1) is Planning-owned code; (2) is a notifications
+routing decision unrelated to the screen rewrite; (3)/(4) are stale
+allowlists for a doctype this cycle didn't introduce. Fixing any of them
+would be scope creep into work this usability cycle doesn't own.
+
+**Fix.** A future session scoped for it: Planning reads accepted Needs
+through `get_current_accepted_need`, never the Decision table directly;
+confirm the correct notification target for a Returned need with the
+Project Owner; update the static scan's allowlists to include `Need
+Planning Disposition Projection` and its `Not proceeding` value.
+
+**Update 2026-09-15, Phase 3C.** A fifth pre-existing failure, same class:
+`test_departmental_needs_domain_model.py::test_accepted_seed_need_points_at_its_accepted_version`
+expects `NDS-MOH-2027-0001.current_accepted_revision == "...-V001"` but the
+live site has it at `...-V002` — the canonical Need already has a real
+accepted successor on it, from work that landed on this site before this
+session began (this session only read the Need and added/removed disposition/
+usage projection test rows, cleaned up after, never touched its lifecycle).
+The site's canonical data has drifted from what the seed/tests assert; a
+`make seed-canonical` reseed would fix it but was not run mid-cycle to avoid
+disrupting in-progress verification — flagged for the Phase 4 release-gate
+pass instead.
+
+---
+
+## FU-27 — Four NDS-DES-07A Planning-status variants need a new async boundary or a revision lookback (2026-09-15)
+
+**What.** NDS-CHG-001 v1.13 §11.8A specifies 9 Planning-status variants for
+the accepted-Need detail screen. 5 are shipped (NONE, PROCEEDING, EXCLUDED,
+STILL-ACTIVE, RESTORED — all pure combinations of the existing disposition +
+usage projection reads, verified live). 4 are not:
+
+1. **REFRESHING** / **UNAVAILABLE** / **UNAVAILABLE-NO-SNAPSHOT** — these are
+   about the Planning-status *read itself* failing or being slow, independent
+   of the rest of the page (which loads fine). Today, usage/disposition are
+   bundled into the one atomic `get_need()` call the whole detail screen
+   waits on — there is no separate loading/error boundary for just this
+   section to be in. Building these needs a real architecture change: a
+   second async fetch (with its own pending/retry state) for planning status,
+   not a template port.
+2. **OLDER** — shows an *earlier* accepted revision's Planning facts when a
+   newer revision has been accepted but Planning hasn't caught up yet. The
+   current reads (`planning_usage_detail`/`planning_disposition_detail`)
+   only ever look at the Need's *current* `current_accepted_revision`; there
+   is no lookback across a Need's prior accepted revisions' own projections.
+
+**Why not fixed here.** Both are genuine new capabilities, not visual
+fidelity work — the kind of change this usability cycle's own scope
+(§20: "introduces no new business field, approval stage, role, module or
+prototype stack") is meant to stay clear of. Building them properly means
+touching the read contracts' shape, not just the Vue templates.
+
+**Fix.** A future session: split the Planning-status read into its own
+whitelisted call with independent loading/retry state (closes
+REFRESHING/UNAVAILABLE/UNAVAILABLE-NO-SNAPSHOT); extend
+`planning_usage_detail`/`planning_disposition_detail` (or add a sibling read)
+to walk back through a Need's accepted-revision history when the current
+revision has no projection yet (closes OLDER).
+
+**Update 2026-09-15, Phase 3E.** The withdrawal review screen (NDS-DES-12)
+has the identical gap: `check_accepted_need_withdrawal_dependency` returns
+`included`/`active_plan`/`active_plan_item` only — there is no way for it to
+say "the check itself failed" (NDS-DES-12-UNAVAILABLE) as opposed to "checked,
+not included" (CLEAR). Same fix category: the read needs a distinguishable
+failure/unavailable result (or the command needs to let a failure propagate
+as a typed, catchable state) before that variant can be built.
+
+---
+
+## FU-28 — Two visual baselines carry a live "requested/submitted at" timestamp and drift on every re-run (2026-09-15)
+
+**What.** `nds-des-06-review-task` and `nds-des-12a-withdrawal-blocked` each
+show a "Submitted at"/"Requested at" fact sourced from `now_datetime()` at
+fixture-build time — not a fixed date. Re-running the visual suite at a
+different wall-clock moment than the baseline was shot produces a small
+(≈0.01 ratio) pixel diff purely from that one line's changed text, with no
+other change on the page. Hit twice this session (both baselines needed a
+second re-shoot for exactly this reason, confirmed via the diff size and
+unchanged image dimensions).
+
+**Why not fixed here.** `ReadonlyRow.vue`'s existing `data-volatile` masking
+convention (`departmental-needs-visual.spec.ts` already masks other volatile
+instants) is the right fix, but neither screen's live timestamp fact is
+currently rendered through `ReadonlyRow` after the v1.13 rewrite — both use a
+plain `<span>`. Wiring the mask through touches the visual-regression
+harness itself, out of scope for this screen-redesign cycle.
+
+**Fix.** A future session: give the live "Submitted at"/"Requested at"
+elements a `data-volatile="true"` attribute (matching `ReadonlyRow`'s own
+convention) and confirm the visual spec's existing volatile-masking logic
+picks them up.
+
+---
+
+## FU-29 — CLOSED 2026-09-15 — UI-driven Playwright fixtures leaked ~1,000 untagged Needs into the site
+
+**What.** A Phase 4 release-gate DB audit found only 4 genuinely canonical
+`Departmental Need` rows (`NDS-MOH-2027-0001..0004`, tagged
+`fixture_namespace=KENTENDER_MVP_1_R1_NDS`) against 925 untagged rows
+matching the real `NDS-MOH-2027-####` reference pattern plus 75 more matching
+`NDS-TEST-*` — all `fixture_namespace IS NULL`, invisible to
+`clearFixtures()`/`reset_all()`. Visible live impact before the fix: the
+workspace register showed "829 needs" instead of ~4, and a Head of
+Department's decision queue showed the same fixture title duplicated 9 times.
+
+**Root cause.** The `need_reference` counter is site-wide (AUTH-ADR-001 v1.7
+§1.1 — one implicit Procuring Entity, one open Fiscal Year), and
+`departmental-needs-fidelity.spec.ts`'s DES-04/08/09 tests reach their target
+states through genuine UI create/submit/propose-change clicks rather than a
+namespaced fixture builder — each one mints a brand-new `Departmental Need`
+nothing ever stamps for cleanup. This session's many live-actor browser
+verification passes across Phase 3 did the same thing by hand.
+
+**Fixed.** Added `purge_untagged_needs_since(since, commit=True)` to
+`playwright_ui_fixtures.py` (mirrors the existing `purge_fixture_needs`/
+`reset_all` pattern: direct `frappe.db.delete`, bypassing
+`Departmental Need.on_trash()`'s retention guard the same way those helpers
+already do; cascades across all 7 `_NAMESPACED` doctypes plus
+`Need Planning Disposition Projection`, which links back to a Need but isn't
+in that tuple, and `Notification Log`). Wired into the fidelity spec's own
+`test.afterAll` via new `siteNow()`/`purgeUntaggedNeedsSince()` helpers in
+`helpers.ts`, so every future run self-cleans whatever it created.
+
+A second bug surfaced while wiring this in: the first version captured the
+cutoff with JavaScript's `Date.toISOString()` (UTC-labelled), but `creation`
+is stored as a naive **site-local (EAT)** timestamp — the UTC cutoff read
+about 3 hours earlier than intended and over-deleted (harmlessly, since
+canonical rows stay protected by the namespace filter regardless of the
+timestamp). Fixed by adding `now_marker()` (wraps `frappe.utils.now()`) to
+`playwright_ui_fixtures.py` and having the spec read the site's own clock
+instead of a JS one.
+
+Historical leaked data (the full ~1,000 rows) was cleaned up as part of
+closing this out; a DB check immediately after confirmed the site holds
+exactly the 4 canonical Needs. See NDS-CHG-001 tracker NDS13-406.
+
+---
 
 ## FU-07 — PLN-CHG-001 v1.18 disposition event (opened 2026-09-12)
 

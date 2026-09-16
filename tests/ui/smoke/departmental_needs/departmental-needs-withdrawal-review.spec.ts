@@ -49,13 +49,14 @@ test.describe("NDS-UI-07 withdrawal review", () => {
 		await loginAsNdsFixtureReviewer(page);
 		await openWithdrawal(page);
 
-		// NDS-AC-019 — the dependency is shown, and Approve is simply absent
-		// rather than present-and-disabled: §12.6 gives the blocked variant only
-		// Close, so there is no control to mis-click.
+		// NDS-AC-019 / NDS-CHG-001 v1.13 §11.13 — the dependency is shown, and
+		// Approve is simply absent rather than present-and-disabled: the blocked
+		// variant's own footer is Decline withdrawal / Close (no primary
+		// decision action), so there is no control to mis-click.
 		await expect(page.locator('[data-testid="nds-view-plan-item"]')).toBeVisible();
 		await expect(page.locator('[data-testid="nds-withdrawal-close"]')).toBeVisible();
 		await expect(page.locator('[data-testid="nds-withdrawal-approve"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="nds-withdrawal-decline"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="nds-withdrawal-decline"]')).toBeVisible();
 
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});

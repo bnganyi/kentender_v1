@@ -1,9 +1,8 @@
-<!-- The PE / department / FY (and optionally intake) band that heads every
-     screen in NDS-DES-01, 02, 03, 05, 10. -->
+<!-- The department / FY (and other read-only context) band that heads
+     several screens (NDS-DES-04/05/06/08/09). NDS-CHG-001 v1.13 §11.1 — a
+     compact shaded group, not a bordered blueprint card. -->
 <template>
-	<div class="kt-card kt-blueprint" style="margin-bottom: 16px; padding: 20px 24px">
-		<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-		<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+	<div class="kt-panel" style="margin-bottom: var(--kt-space-4)">
 		<div class="kt-context-grid" :style="{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }">
 			<ReadonlyRow
 				v-for="item in items"

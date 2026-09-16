@@ -82,6 +82,28 @@ export function clearFixtures(): void {
 	bench(`execute ${FIXTURES}.reset_all --kwargs "{'commit': True}"`);
 }
 
+/**
+ * The site's own clock, in the naive local (EAT) format `creation` columns
+ * are stored in — not a JS `Date`, which is UTC-labelled and would read as
+ * ~3 hours behind real EAT wall-clock once compared against `creation`.
+ */
+export function siteNow(): string {
+	return bench(`execute ${FIXTURES}.now_marker`).trim().replace(/^"|"$/g, "");
+}
+
+/**
+ * Remove `Departmental Need` rows (and everything under them) minted through
+ * a real UI-driven create/submit/propose-change click rather than a fixture
+ * builder — so never stamped with a namespace `clearFixtures()` can find.
+ * The design-fidelity spec's DES-04/08/09 tests reach several states this
+ * way; without this they leak real-looking `NDS-MOH-2027-####` rows forever.
+ * Pass a `siteNow()` timestamp captured before any test ran, so the §14
+ * canonical seed, created long before, is never at risk.
+ */
+export function purgeUntaggedNeedsSince(since: string): void {
+	bench(`execute ${FIXTURES}.purge_untagged_needs_since --kwargs "{'since': '${since}', 'commit': True}"`);
+}
+
 /** The §10 canonical route. `/app` is rewritten to `/desk` by Frappe itself. */
 export async function gotoNeeds(page: Page, route = ""): Promise<void> {
 	await page.setViewportSize({ width: 1440, height: 1024 });
@@ -177,7 +199,16 @@ export function collectConsoleErrors(page: Page): string[] {
 		// parser-initiated Image request, no matching element in any frame).
 		// It surfaced only intermittently, poisoning unrelated specs.
 		if (url && /\/undefined$/.test(url)) return;
-		if (message.type() === "error") errors.push(url ? `${message.text()} (${url})` : message.text());
+		// Known phantom, not ours: the realtime socket.io connection is not
+		// part of any Departmental Needs page-ready contract, and a dev
+		// environment without its server running (or a slow handshake) 404s
+		// the polling transport on every Desk load — matching the same filter
+		// already established in Strategy/Requisitions/Planning/Tender
+		// Preparation's own helpers.
+		const text = message.text();
+		if (text.includes("socket.io") || text.includes("ERR_CONNECTION_REFUSED")) return;
+		if (text.includes("Failed to load resource") && url && /\/socket\.io\//.test(url)) return;
+		if (message.type() === "error") errors.push(url ? `${text} (${url})` : text);
 	});
 	page.on("pageerror", (error) => errors.push(String(error)));
 	return errors;
