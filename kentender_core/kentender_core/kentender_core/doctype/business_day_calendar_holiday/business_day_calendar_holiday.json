@@ -1,0 +1,20 @@
+{
+ "actions": [],
+ "creation": "2026-09-16 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "istable": 1,
+ "editable_grid": 1,
+ "module": "Kentender Core",
+ "owner": "Administrator",
+ "name": "Business Day Calendar Holiday",
+ "field_order": ["holiday_date", "holiday_name", "source_reference"],
+ "fields": [
+  {"fieldname": "holiday_date", "fieldtype": "Date", "label": "Holiday Date", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "holiday_name", "fieldtype": "Data", "label": "Holiday Name", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "source_reference", "fieldtype": "Data", "label": "Source Reference", "in_list_view": 1}
+ ],
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

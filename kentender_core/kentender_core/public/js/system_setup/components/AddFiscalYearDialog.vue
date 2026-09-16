@@ -60,10 +60,33 @@ watch(startYear, async (value) => {
 					>
 				</div>
 				<!-- CFG-DES-04 — "FY 2028/29 · 1 Jul 2028 – 30 Jun 2029" -->
-				<div v-if="preview" class="kt-summary" data-testid="kt-fy-preview">
-					{{ preview.label }} · {{ preview.period_label }}
-					<template v-if="preview.exists"> — {{ __("already exists") }}</template>
+				<!-- The generated identity and period as separately labelled
+				     facts (§11.3: dates are never user-entered) — never a
+				     concatenated line the reader has to parse. -->
+				<div v-if="preview" class="kt-meta-row" style="margin-top:10px" data-testid="kt-fy-preview">
+					<div>
+						<span class="kt-label">{{ __("Financial year") }}</span>
+						<span class="kt-meta-value">{{ preview.label }}</span>
+					</div>
+					<div>
+						<span class="kt-label">{{ __("Period") }}</span>
+						<span class="kt-meta-value">{{ preview.period_label }}</span>
+					</div>
 				</div>
+				<!-- CFG-UX-AC-05 — the exact duplicate/Company defects, never a
+				     silent create; Add stays disabled for either. -->
+				<div
+					v-if="preview && preview.exists"
+					class="kt-notice is-critical"
+					role="alert"
+					data-testid="kt-fy-duplicate"
+				><strong>{{ __("Duplicate.") }}</strong> {{ __("This financial year already exists.") }}</div>
+				<div
+					v-else-if="preview && preview.company_missing"
+					class="kt-notice is-critical"
+					role="alert"
+					data-testid="kt-fy-company-missing"
+				><strong>{{ __("Company not linked.") }}</strong> {{ __("The accounting company must be configured before you can add a financial year.") }}</div>
 				<p v-if="error" class="kt-inline-error" role="alert">{{ error }}</p>
 			</div>
 			<div class="kt-dialog-actions">
@@ -73,7 +96,7 @@ watch(startYear, async (value) => {
 				<button
 					type="button"
 					class="kt-btn kt-btn-primary"
-					:disabled="busy || !preview || preview.exists"
+					:disabled="busy || !preview || preview.exists || preview.company_missing"
 					data-testid="kt-fy-add-confirm"
 					@click="emit('confirm', Number(startYear))"
 				>{{ __("Add financial year") }}</button>

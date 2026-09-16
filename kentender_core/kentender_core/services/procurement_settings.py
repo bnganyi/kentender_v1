@@ -29,12 +29,13 @@ from frappe.utils import flt, getdate, now_datetime
 from kentender_core.services.audit_event_service import log_audit_event
 from kentender_core.services.configuration_errors import fail_cfg
 from kentender_core.services.reference_data_idempotency import run_idempotent
-from kentender_core.services.site_configuration import require_configuration_administrator
+from kentender_core.services.site_configuration import PE_TYPES, require_configuration_administrator
 
 FUNDING_SOURCE = "Funding Source"
 METHOD_PROFILE = "Procurement Method Profile"
 SCHEDULE_PROFILE = "Procedure Schedule Profile"
 SETTINGS = "Procurement Settings"
+CALENDAR = "Business Day Calendar"
 
 VERIFICATION_PENDING = "Production verification pending"
 VERIFICATION_FIXTURE = "Fixture-verified — not production law"
@@ -380,6 +381,7 @@ def register_schedule_profile_version(
 	procedure: str = "",
 	effective_until: str = "",
 	counting_rule: str = "Calendar days",
+	calendar: str = "",
 	estimated_delivery_period_default_days: int | None = None,
 	verification_status: str = VERIFICATION_PENDING,
 	applicability_basis: str = "Planned invitation date",
@@ -396,6 +398,30 @@ def register_schedule_profile_version(
 	if counting_rule not in COUNTING_RULES:
 		fail_cfg("CFG_PROFILE_INVALID", "Select a counting rule.")
 	verification = _require_verification(verification_status)
+	if counting_rule == "Working days":
+		# §10.9 / CFG-UX-AC-20 — a working-day interval needs a *verified*
+		# calendar version that actually covers this profile's period. An
+		# existing-but-unverified calendar, or one whose period does not reach
+		# the profile's, cannot pass on the strength of its name alone.
+		if not calendar or not frappe.db.exists(CALENDAR, calendar):
+			fail_cfg("CFG_CALENDAR_REQUIRED")
+		row = frappe.db.get_value(
+			CALENDAR,
+			calendar,
+			["status", "verification_status", "effective_from", "effective_until"],
+			as_dict=True,
+		)
+		if row.status != "Active" or row.verification_status != VERIFICATION_VERIFIED:
+			fail_cfg("CFG_CALENDAR_REQUIRED", "Select a verified working-day calendar for this interval.")
+		if getdate(row.effective_from) > getdate(effective_from) or (
+			row.effective_until and effective_until and getdate(row.effective_until) < getdate(effective_until)
+		):
+			fail_cfg(
+				"CFG_CALENDAR_REQUIRED",
+				"The selected working-day calendar does not cover this schedule's period.",
+			)
+	else:
+		calendar = ""
 
 	def _do() -> dict[str, Any]:
 		if not milestones:
@@ -453,6 +479,7 @@ def register_schedule_profile_version(
 				"effective_until": getdate(effective_until) if effective_until else None,
 				"applicability_basis": applicability_basis,
 				"counting_rule": counting_rule,
+				"calendar": calendar,
 				"estimated_delivery_period_default_days": estimated_delivery_period_default_days,
 				"verification_status": verification,
 				"source_instrument": source_instrument,
@@ -494,6 +521,12 @@ def _schedule_profile_projection(doc) -> dict[str, Any]:
 	# Complete = every applicable period milestone has a default and a
 	# counting rule; the anchor and the delivery row carry none by design.
 	gaps = [r["milestone"] for r in rows if r["applies"] and r["period_key"] and r["default_days"] is None]
+	calendar_row = None
+	if doc.counting_rule == "Working days":
+		if doc.calendar and frappe.db.exists(CALENDAR, doc.calendar):
+			calendar_row = _business_day_calendar_projection(frappe.get_cached_doc(CALENDAR, doc.calendar))
+		else:
+			gaps = [*gaps, "working_day_calendar"]
 	return {
 		"profile": doc.name,
 		"reference_set": "Schedule profile",
@@ -507,6 +540,7 @@ def _schedule_profile_projection(doc) -> dict[str, Any]:
 		"effective_until": str(doc.effective_until or ""),
 		"applicability_basis": doc.applicability_basis or "",
 		"counting_rule": doc.counting_rule or "Calendar days",
+		"calendar": calendar_row,
 		"estimated_delivery_period_default_days": (
 			int(doc.estimated_delivery_period_default_days) if doc.estimated_delivery_period_default_days else None
 		),
@@ -550,19 +584,134 @@ def resolve_schedule_profile(*, procurement_method: str, procurement_category: s
 
 
 # --------------------------------------------------------------------------
+# Business-day calendars (CFG-CHG-002 v0.11 §4.8; C04 working-days)
+# --------------------------------------------------------------------------
+
+
+def register_business_day_calendar_version(
+	*,
+	calendar_name: str,
+	effective_from: str,
+	weekend_days: list[str],
+	holidays: list[dict[str, Any]] | None = None,
+	effective_until: str = "",
+	verification_status: str = VERIFICATION_PENDING,
+	source_instrument: str = "",
+	provision: str = "",
+	source_document: str = "",
+	fixture_namespace: str = "",
+	idempotency_key: str = "",
+) -> dict[str, Any]:
+	"""§7 `SaveBusinessDayCalendarVersion` — immutable calendar version; a
+	newer overlapping version supersedes the earlier one (same pattern as
+	schedule profiles)."""
+	require_configuration_administrator()
+	name = " ".join((calendar_name or "").split())
+	if not name:
+		fail_cfg("CFG_CALENDAR_REQUIRED", "Enter the calendar name.")
+	days = [d for d in (weekend_days or []) if d]
+	verification = _require_verification(verification_status)
+
+	def _do() -> dict[str, Any]:
+		reference = _code(name) or "CALENDAR"
+		version = _next_version(CALENDAR, {"calendar_name": name})
+		rows = []
+		seen: set[str] = set()
+		for h in holidays or []:
+			date = h.get("holiday_date")
+			if not date or date in seen:
+				fail_cfg("CFG_CALENDAR_REQUIRED", "Each holiday needs a distinct date.")
+			seen.add(date)
+			rows.append(
+				{
+					"holiday_date": date,
+					"holiday_name": (h.get("holiday_name") or "").strip(),
+					"source_reference": (h.get("source_reference") or "").strip(),
+				}
+			)
+		doc = frappe.get_doc(
+			{
+				"doctype": CALENDAR,
+				"calendar_reference": f"{reference}-V{version}",
+				"calendar_name": name,
+				"version_number": version,
+				"status": "Active",
+				"effective_from": getdate(effective_from),
+				"effective_until": getdate(effective_until) if effective_until else None,
+				"weekend_days": ",".join(days),
+				"verification_status": verification,
+				"source_instrument": source_instrument,
+				"provision": provision,
+				"source_document": source_document,
+				"holidays": rows,
+				"fixture_namespace": fixture_namespace,
+			}
+		)
+		doc.insert(ignore_permissions=True)
+		superseded = _supersede_overlapping(CALENDAR, {"calendar_name": name}, doc.effective_from, doc.effective_until, doc.name)
+		log_audit_event(event_type="site_configuration", document_type=CALENDAR, document_name=doc.name, action="register_business_day_calendar_version", metadata={"version": version, "superseded": superseded, "verification_status": verification})
+		return {"calendar": doc.name, "version_number": version, "superseded": superseded, "created": True}
+
+	return run_idempotent(idempotency_key, CALENDAR, _code(name) or "CALENDAR", "register_business_day_calendar_version", _do)
+
+
+def _business_day_calendar_projection(doc) -> dict[str, Any]:
+	return {
+		"calendar": doc.name,
+		"calendar_name": doc.calendar_name,
+		"version_number": int(doc.version_number),
+		"status": doc.status,
+		"effective_from": str(doc.effective_from or ""),
+		"effective_until": str(doc.effective_until or ""),
+		"weekend_days": [d for d in (doc.weekend_days or "").split(",") if d],
+		"verification_status": doc.verification_status or VERIFICATION_PENDING,
+		"source_instrument": doc.source_instrument or "",
+		"provision": doc.provision or "",
+		"source_document": doc.source_document or "",
+		"holidays": [
+			{"holiday_date": str(r.holiday_date), "holiday_name": r.holiday_name, "source_reference": r.source_reference or ""}
+			for r in sorted(doc.holidays or [], key=lambda r: str(r.holiday_date))
+		],
+		"expected_version": str(doc.modified),
+	}
+
+
+def list_business_day_calendars() -> list[dict[str, Any]]:
+	names = frappe.get_all(CALENDAR, pluck="name", order_by="calendar_name asc, version_number desc")
+	return [_business_day_calendar_projection(frappe.get_cached_doc(CALENDAR, n)) for n in names]
+
+
+def get_business_day_calendar(name: str) -> dict[str, Any]:
+	if not frappe.db.exists(CALENDAR, name):
+		fail_cfg("CFG_CALENDAR_REQUIRED", "That calendar version does not exist.")
+	return _business_day_calendar_projection(frappe.get_cached_doc(CALENDAR, name))
+
+
+# --------------------------------------------------------------------------
 # Reminder threshold (§5.5.1B; C04-eligibility-reminder)
 # --------------------------------------------------------------------------
 
 
 def get_reminder_threshold_days() -> int:
 	value = frappe.db.get_single_value(SETTINGS, "approaching_milestone_threshold_days")
-	return int(value) if value else DEFAULT_REMINDER_THRESHOLD_DAYS
+	# 0 is a real setting (§10.10: reminders begin on the milestone date), so
+	# only an absent value falls back to the default — never a falsy one.
+	return DEFAULT_REMINDER_THRESHOLD_DAYS if value in (None, "") else int(value)
 
 
 def set_reminder_threshold_days(*, days: int, idempotency_key: str = "") -> dict[str, Any]:
 	require_configuration_administrator()
 
 	def _do() -> dict[str, Any]:
+		# §10.10 — a whole number of calendar days, 0–365. 0 is legitimate
+		# (reminders begin on the milestone date); anything else is refused
+		# here, not only in the browser.
+		try:
+			value = int(days)
+		except (TypeError, ValueError):
+			fail_cfg("CFG_PROFILE_INVALID", "Enter a whole number from 0 to 365.")
+		if not 0 <= value <= 365:
+			fail_cfg("CFG_PROFILE_INVALID", "Enter a whole number from 0 to 365.")
 		before = get_reminder_threshold_days()
 		doc = frappe.get_doc(SETTINGS)
 		doc.approaching_milestone_threshold_days = int(days)
@@ -580,37 +729,30 @@ def set_reminder_threshold_days(*, days: int, idempotency_key: str = "") -> dict
 
 def get_procurement_settings() -> dict[str, Any]:
 	"""One read for the fifth System setup tab: funding sources, every rule
-	Version (method profiles, regulator references), every schedule profile
-	and the reminder threshold. Administrator / System Manager only."""
+	Version (method profiles, regulator references), every schedule profile,
+	every calendar and the reminder threshold. Administrator / System
+	Manager only."""
 	from kentender_core.services import regulatory_reference as register
 
 	user = frappe.session.user
 	if user != "Administrator" and "System Manager" not in frappe.get_roles(user):
 		return {"outcome": "FORBIDDEN"}
-	references = []
-	for row in frappe.get_all(register.DOCTYPE, fields=["name", "fiscal_year", "effective_from", "gazette_reference", "status", "verification_status", "modified"], order_by="fiscal_year desc, effective_from desc"):
-		references.append(
-			{
-				"reference": row["name"],
-				"reference_set": "Reservation rules",
-				"fiscal_year": row["fiscal_year"],
-				"effective_from": str(row["effective_from"] or ""),
-				"gazette_reference": row["gazette_reference"] or "",
-				"status": row["status"],
-				"verification_status": row["verification_status"] or VERIFICATION_PENDING,
-			}
-		)
 	return {
 		"outcome": "OK",
 		"funding_sources": list_funding_sources(),
 		"method_profiles": list_method_profiles(),
-		"regulatory_references": references,
+		"reference_sets": register.list_reference_sets(),
+		"reference_kinds": list(register.REFERENCE_KINDS),
 		"schedule_profiles": list_schedule_profiles(),
+		"calendars": list_business_day_calendars(),
 		"reminder_threshold_days": get_reminder_threshold_days(),
 		"verification_statuses": list(VERIFICATION_STATUSES),
 		"milestones": [{"milestone": m, "label": MILESTONE_LABELS[m]} for m in MILESTONES],
 		"procurement_methods": frappe.get_all("Procurement Method", filters={"status": "Active"}, pluck="name", order_by="name asc"),
 		"procurement_categories": list(PROCUREMENT_CATEGORIES),
+		# §10.6's "Entity types" applicability control offers the same closed
+		# set the Procuring entity screen uses — never a free-text entity name.
+		"entity_types": list(PE_TYPES),
 	}
 
 
@@ -621,7 +763,7 @@ def get_procurement_settings() -> dict[str, Any]:
 
 def purge_fixture_profiles(fixture_namespace: str) -> int:
 	count = 0
-	for doctype in (METHOD_PROFILE, SCHEDULE_PROFILE):
+	for doctype in (METHOD_PROFILE, SCHEDULE_PROFILE, CALENDAR):
 		for name in frappe.get_all(doctype, filters={"fixture_namespace": fixture_namespace}, pluck="name"):
 			doc = frappe.get_doc(doctype, name)
 			doc.flags.kt_fixture_purge = True

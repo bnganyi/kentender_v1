@@ -8,215 +8,41 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "name": "Regulatory Reference",
- "autoname": "format:REG-{fiscal_year}-{##}",
+ "autoname": "hash",
+ "naming_rule": "Random",
+ "title_field": "reference_key",
  "fields": [
-  {
-   "fieldname": "fiscal_year",
-   "fieldtype": "Link",
-   "label": "Fiscal Year",
-   "options": "Fiscal Year",
-   "reqd": 1,
-   "read_only": 1,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "effective_from",
-   "fieldtype": "Date",
-   "label": "Effective From",
-   "reqd": 1,
-   "read_only": 1,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "gazette_reference",
-   "fieldtype": "Data",
-   "label": "Gazette Reference",
-   "read_only": 1,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "label": "Status",
-   "options": "Active\nSuperseded",
-   "default": "Active",
-   "reqd": 1,
-   "read_only": 1,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "column_break_rr",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "reservation_target_percent",
-   "fieldtype": "Percent",
-   "label": "Reservation Target (%)",
-   "read_only": 1,
-   "description": "Regulation 149 / section 53(6): share of planned value reserved for youth, women and persons with disabilities."
-  },
-  {
-   "fieldname": "county_resident_target_percent",
-   "fieldtype": "Percent",
-   "label": "County Resident-Tenderer Minimum (%)",
-   "read_only": 1,
-   "description": "Regulation 40(5): applies only where the site entity is a county entity."
-  },
-  {
-   "fieldname": "exclusive_preference_works_amount",
-   "fieldtype": "Currency",
-   "label": "Exclusive Preference Threshold — Works",
-   "read_only": 1,
-   "description": "Regulation 163: works, construction materials and other materials made in Kenya."
-  },
-  {
-   "fieldname": "exclusive_preference_goods_services_amount",
-   "fieldtype": "Currency",
-   "label": "Exclusive Preference Threshold — Goods and Services",
-   "read_only": 1
-  },
-  {
-   "fieldname": "market_price_index_published",
-   "fieldtype": "Check",
-   "label": "Market Price Index Published",
-   "default": "0",
-   "read_only": 1
-  },
-  {
-   "fieldname": "section_verification",
-   "fieldtype": "Section Break",
-   "label": "Source and Verification"
-  },
-  {
-   "fieldname": "verification_status",
-   "fieldtype": "Select",
-   "label": "Verification Status",
-   "options": "Production verification pending\nFixture-verified — not production law\nVerified",
-   "default": "Production verification pending",
-   "reqd": 1,
-   "read_only": 1,
-   "in_list_view": 1
-  },
-  {
-   "fieldname": "applicability_basis",
-   "fieldtype": "Data",
-   "label": "Applicability Basis",
-   "read_only": 1,
-   "description": "The legally applicable date each rule kind resolves by; blank means the Fiscal Year alone."
-  },
-  {
-   "fieldname": "source_instrument",
-   "fieldtype": "Data",
-   "label": "Source Instrument",
-   "read_only": 1
-  },
-  {
-   "fieldname": "provision",
-   "fieldtype": "Data",
-   "label": "Provision",
-   "read_only": 1
-  },
-  {
-   "fieldname": "source_document",
-   "fieldtype": "Attach",
-   "label": "Source Document",
-   "read_only": 1
-  },
-  {
-   "fieldname": "section_break_bands",
-   "fieldtype": "Section Break",
-   "label": "Threshold Matrix (Second Schedule)"
-  },
-  {
-   "fieldname": "threshold_bands",
-   "fieldtype": "Table",
-   "label": "Threshold Bands",
-   "options": "Regulatory Threshold Band",
-   "read_only": 1
-  },
-  {
-   "fieldname": "section_break_res",
-   "fieldtype": "Section Break",
-   "label": "Preference and Reservation Categories (section 157(4))"
-  },
-  {
-   "fieldname": "reservation_categories",
-   "fieldtype": "Table",
-   "label": "Reservation Categories",
-   "options": "Regulatory Reservation Category",
-   "read_only": 1
-  },
-  {
-   "fieldname": "section_break_mpi",
-   "fieldtype": "Section Break",
-   "label": "Market Price Index (section 54(3))"
-  },
-  {
-   "fieldname": "market_prices",
-   "fieldtype": "Table",
-   "label": "Market Prices",
-   "options": "Regulatory Market Price",
-   "read_only": 1
-  },
-  {
-   "fieldname": "section_break_buf",
-   "fieldtype": "Section Break",
-   "label": "Schedule Buffer Defaults"
-  },
-  {
-   "fieldname": "schedule_buffers",
-   "fieldtype": "Table",
-   "label": "Schedule Buffers",
-   "options": "Regulatory Schedule Buffer",
-   "read_only": 1
-  },
-  {
-   "fieldname": "fixture_namespace",
-   "fieldtype": "Data",
-   "label": "Fixture Namespace",
-   "hidden": 1,
-   "read_only": 1
-  }
+  {"fieldname": "reference_set", "fieldtype": "Link", "label": "Reference Set", "options": "Regulatory Reference Set", "reqd": 1, "read_only": 1, "in_list_view": 1},
+  {"fieldname": "reference_key", "fieldtype": "Data", "label": "Reference Key", "reqd": 1, "read_only": 1, "in_list_view": 1, "description": "Denormalized from the Reference Set for query convenience."},
+  {"fieldname": "reference_kind", "fieldtype": "Select", "label": "Reference Kind", "options": "Method eligibility\nReservation rules\nExclusive preference\nPreference margins\nMarket price index\nApproval applicability\nPublication obligations", "reqd": 1, "read_only": 1, "in_list_view": 1},
+  {"fieldname": "version_number", "fieldtype": "Int", "label": "Version", "reqd": 1, "read_only": 1, "in_list_view": 1},
+  {"fieldname": "status", "fieldtype": "Select", "label": "Status", "options": "Active\nSuperseded", "default": "Active", "reqd": 1, "read_only": 1},
+  {"fieldname": "column_break_a", "fieldtype": "Column Break"},
+  {"fieldname": "effective_from", "fieldtype": "Date", "label": "Effective From", "reqd": 1, "read_only": 1},
+  {"fieldname": "effective_until", "fieldtype": "Date", "label": "Effective Until", "read_only": 1},
+  {"fieldname": "applicability_basis", "fieldtype": "Select", "label": "Applicability Basis", "options": "FiscalYearStart\nPlanSubmissionDate\nPlanApprovalDate\nProceedingAuthorizationDate\nInvitationDate\nContractSigningDate", "read_only": 1},
+  {"fieldname": "applicability_entity_types", "fieldtype": "Small Text", "label": "Applicability — Entity Types", "read_only": 1, "description": "Comma-separated entity types; blank means all."},
+  {"fieldname": "applicability_county", "fieldtype": "Select", "label": "Applicability — County", "options": "All\nCounty\nNonCounty", "default": "All", "read_only": 1},
+  {"fieldname": "applicability_categories", "fieldtype": "Small Text", "label": "Applicability — Categories", "read_only": 1, "description": "Comma-separated Goods/Works/Services; blank means all."},
+  {"fieldname": "applicability_currency", "fieldtype": "Data", "label": "Applicability — Currency", "default": "KES", "read_only": 1},
+  {"fieldname": "section_source", "fieldtype": "Section Break", "label": "Sources and Interpretation"},
+  {"fieldname": "verification_status", "fieldtype": "Select", "label": "Verification Status", "options": "Production verification pending\nFixture-verified — not production law\nVerified", "default": "Production verification pending", "reqd": 1, "read_only": 1, "in_list_view": 1},
+  {"fieldname": "source_instrument", "fieldtype": "Data", "label": "Source Instrument", "read_only": 1},
+  {"fieldname": "provision", "fieldtype": "Data", "label": "Provisions", "read_only": 1},
+  {"fieldname": "source_document", "fieldtype": "Attach", "label": "Source Document", "read_only": 1},
+  {"fieldname": "interpretation", "fieldtype": "Text", "label": "Interpretation", "read_only": 1},
+  {"fieldname": "section_supersession", "fieldtype": "Section Break", "label": "Correction"},
+  {"fieldname": "supersedes_version_ids", "fieldtype": "Small Text", "label": "Earlier Versions Replaced", "read_only": 1, "description": "Comma-separated Regulatory Reference names, same reference set, strictly older."},
+  {"fieldname": "change_reason", "fieldtype": "Small Text", "label": "Reason for Change", "read_only": 1},
+  {"fieldname": "section_payload", "fieldtype": "Section Break", "label": "Typed Payload"},
+  {"fieldname": "payload_schema_version", "fieldtype": "Data", "label": "Payload Schema Version", "default": "1", "read_only": 1},
+  {"fieldname": "payload_json", "fieldtype": "Long Text", "label": "Payload (kind-typed, validated)", "read_only": 1},
+  {"fieldname": "fixture_namespace", "fieldtype": "Data", "label": "Fixture Namespace", "hidden": 1, "read_only": 1}
  ],
- "field_order": [
-  "fiscal_year",
-  "effective_from",
-  "gazette_reference",
-  "status",
-  "column_break_rr",
-  "reservation_target_percent",
-  "county_resident_target_percent",
-  "exclusive_preference_works_amount",
-  "exclusive_preference_goods_services_amount",
-  "market_price_index_published",
-  "section_verification",
-  "verification_status",
-  "applicability_basis",
-  "source_instrument",
-  "provision",
-  "source_document",
-  "section_break_bands",
-  "threshold_bands",
-  "section_break_res",
-  "reservation_categories",
-  "section_break_mpi",
-  "market_prices",
-  "section_break_buf",
-  "schedule_buffers",
-  "fixture_namespace"
- ],
+ "field_order": ["reference_set", "reference_key", "reference_kind", "version_number", "status", "column_break_a", "effective_from", "effective_until", "applicability_basis", "applicability_entity_types", "applicability_county", "applicability_categories", "applicability_currency", "section_source", "verification_status", "source_instrument", "provision", "source_document", "interpretation", "section_supersession", "supersedes_version_ids", "change_reason", "section_payload", "payload_schema_version", "payload_json", "fixture_namespace"],
  "permissions": [
-  {
-   "create": 1,
-   "delete": 0,
-   "read": 1,
-   "role": "System Manager",
-   "write": 1
-  },
-  {
-   "read": 1,
-   "role": "Desk User"
-  }
+  {"create": 1, "delete": 0, "read": 1, "role": "System Manager", "write": 1},
+  {"read": 1, "role": "Desk User"}
  ],
  "track_changes": 1
 }

@@ -1,0 +1,38 @@
+{
+ "actions": [],
+ "creation": "2026-09-16 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "module": "Kentender Core",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "name": "Business Day Calendar",
+ "autoname": "field:calendar_reference",
+ "naming_rule": "By fieldname",
+ "title_field": "calendar_name",
+ "fields": [
+  {"fieldname": "calendar_reference", "fieldtype": "Data", "label": "Calendar Reference", "reqd": 1, "unique": 1, "read_only": 1},
+  {"fieldname": "calendar_name", "fieldtype": "Data", "label": "Calendar Name", "reqd": 1, "read_only": 1, "in_list_view": 1},
+  {"fieldname": "version_number", "fieldtype": "Int", "label": "Version", "reqd": 1, "read_only": 1, "in_list_view": 1},
+  {"fieldname": "status", "fieldtype": "Select", "label": "Status", "options": "Active\nSuperseded", "default": "Active", "reqd": 1, "read_only": 1},
+  {"fieldname": "column_break_a", "fieldtype": "Column Break"},
+  {"fieldname": "effective_from", "fieldtype": "Date", "label": "Effective From", "reqd": 1, "read_only": 1},
+  {"fieldname": "effective_until", "fieldtype": "Date", "label": "Effective Until", "read_only": 1},
+  {"fieldname": "weekend_days", "fieldtype": "Small Text", "label": "Weekend Days", "reqd": 1, "read_only": 1, "description": "Comma-separated weekday names, e.g. Saturday,Sunday."},
+  {"fieldname": "section_source", "fieldtype": "Section Break", "label": "Source and Verification"},
+  {"fieldname": "verification_status", "fieldtype": "Select", "label": "Verification Status", "options": "Production verification pending\nFixture-verified — not production law\nVerified", "default": "Production verification pending", "reqd": 1, "read_only": 1, "in_list_view": 1},
+  {"fieldname": "source_instrument", "fieldtype": "Data", "label": "Source Instrument", "read_only": 1},
+  {"fieldname": "provision", "fieldtype": "Data", "label": "Provision", "read_only": 1},
+  {"fieldname": "source_document", "fieldtype": "Attach", "label": "Source Document", "read_only": 1},
+  {"fieldname": "section_holidays", "fieldtype": "Section Break", "label": "Holidays"},
+  {"fieldname": "holidays", "fieldtype": "Table", "label": "Holidays", "options": "Business Day Calendar Holiday", "read_only": 1},
+  {"fieldname": "fixture_namespace", "fieldtype": "Data", "label": "Fixture Namespace", "hidden": 1, "read_only": 1}
+ ],
+ "field_order": ["calendar_reference", "calendar_name", "version_number", "status", "column_break_a", "effective_from", "effective_until", "weekend_days", "section_source", "verification_status", "source_instrument", "provision", "source_document", "section_holidays", "holidays", "fixture_namespace"],
+ "permissions": [
+  {"create": 1, "delete": 0, "read": 1, "role": "System Manager", "write": 1},
+  {"read": 1, "role": "Desk User"}
+ ],
+ "track_changes": 1
+}

@@ -26,7 +26,7 @@ def after_migrate():
 
 
 def _ensure_fiscal_year_flag_fields():
-	"""CFG-CHG-002 v0.6 §4.2 — the namespaced intake flags on ERPNext Fiscal Year.
+	"""CFG-CHG-002 v0.11 §4.3 — the namespaced intake flags on ERPNext Fiscal Year.
 
 	KenTender uses the ERPNext DocType unchanged and adds only Custom Fields
 	under the `kentender_` prefix — never a fork, override or shadow year
@@ -35,72 +35,115 @@ def _ensure_fiscal_year_flag_fields():
 
 	The flag pattern rule: a future module flag is a
 	`kentender_{module}_{purpose}` check plus an optional `_closes_at`
-	datetime, added HERE, not in the consuming module (§4.2)."""
+	datetime, added HERE, not in the consuming module (§4.2/§4.3).
+
+	v0.11 replaces the single shared `kentender_flag_changed_by`/`_at` pair
+	with namespaced `kentender_{module_key}_intake_changed_by`/`_changed_at`/
+	`_revision` per module key, so a reader can tell which module last
+	touched a given year's flags (CFG10-CHG-007). The retired shared fields
+	are dropped outright, not kept as a fallback — no migration was needed
+	for this cutover (owner, 16 Sep 2026: dev site data may be torn down)."""
 	from frappe.custom.doctype.custom_field.custom_field import create_custom_fields
 
-	create_custom_fields(
-		{
-			"Fiscal Year": [
-				{
-					"fieldname": "kentender_needs_submission_open",
-					"fieldtype": "Check",
-					"label": "KenTender: Needs Submission Open",
-					"default": "0",
-					"read_only": 1,
-					"no_copy": 1,
-					"insert_after": "disabled",
-					"description": "At most one Fiscal Year may have this enabled at any instant. Maintained only through System setup.",
-				},
-				{
-					"fieldname": "kentender_needs_submission_closes_at",
-					"fieldtype": "Datetime",
-					"label": "KenTender: Needs Submission Closes At",
-					"read_only": 1,
-					"no_copy": 1,
-					"insert_after": "kentender_needs_submission_open",
-					"description": "Optional. Reaching this instant closes intake automatically.",
-				},
-				{
-					"fieldname": "kentender_dpp_submission_open",
-					"fieldtype": "Check",
-					"label": "KenTender: Departmental Plan Submission Open",
-					"default": "0",
-					"read_only": 1,
-					"no_copy": 1,
-					"insert_after": "kentender_needs_submission_closes_at",
-					"description": "CFG-CHG-002 v0.9 §4.2. At most one Fiscal Year may have this enabled at any instant; independent of needs intake. Maintained only through the site-configuration commands.",
-				},
-				{
-					"fieldname": "kentender_dpp_submission_closes_at",
-					"fieldtype": "Datetime",
-					"label": "KenTender: Departmental Plan Submission Closes At",
-					"read_only": 1,
-					"no_copy": 1,
-					"insert_after": "kentender_dpp_submission_open",
-					"description": "Optional. Reaching this instant closes departmental-plan intake automatically.",
-				},
-				{
-					"fieldname": "kentender_flag_changed_by",
-					"fieldtype": "Link",
-					"options": "User",
-					"label": "KenTender: Flag Changed By",
-					"read_only": 1,
-					"no_copy": 1,
-					"insert_after": "kentender_dpp_submission_closes_at",
-				},
-				{
-					"fieldname": "kentender_flag_changed_at",
-					"fieldtype": "Datetime",
-					"label": "KenTender: Flag Changed At",
-					"read_only": 1,
-					"no_copy": 1,
-					"insert_after": "kentender_flag_changed_by",
-				},
-			]
-		},
-		ignore_validate=True,
-		update=True,
-	)
+	from kentender_core.services.site_configuration import MODULE_AUDIT_FIELDS, MODULE_FLAG_FIELDS
+
+	# Exact §4.3 field names come from `site_configuration.py`'s own
+	# `MODULE_FLAG_FIELDS`/`MODULE_AUDIT_FIELDS` — the single source of truth
+	# — rather than re-derived here, so the two can never drift apart (the
+	# spec's own table is *not* uniform: needs/dpp carry a `_submission_`
+	# infix, disposal_plan does not).
+	MODULE_LABELS = {
+		"needs": "Needs Submission",
+		"dpp": "Departmental Plan Submission",
+		"disposal_plan": "Disposal Plan Submission",
+	}
+	insert_after_by_key = {"needs": "disabled"}
+	ordered_keys = list(MODULE_FLAG_FIELDS)
+	for previous, current in zip(ordered_keys, ordered_keys[1:]):
+		insert_after_by_key[current] = MODULE_AUDIT_FIELDS[previous][2]  # previous module's `_revision` field
+
+	fields: list[dict] = []
+	for key, (flag_open, flag_closes_at) in MODULE_FLAG_FIELDS.items():
+		label = MODULE_LABELS[key]
+		changed_by_field, changed_at_field, revision_field = MODULE_AUDIT_FIELDS[key]
+		fields.append(
+			{
+				"fieldname": flag_open,
+				"fieldtype": "Check",
+				"label": f"KenTender: {label} Open",
+				"default": "0",
+				"read_only": 1,
+				"no_copy": 1,
+				"insert_after": insert_after_by_key[key],
+				"description": "At most one Fiscal Year may have this enabled at any instant. Maintained only through System setup.",
+			}
+		)
+		fields.append(
+			{
+				"fieldname": flag_closes_at,
+				"fieldtype": "Datetime",
+				"label": f"KenTender: {label} Closes At",
+				"read_only": 1,
+				"no_copy": 1,
+				"insert_after": flag_open,
+				"description": "Optional. Reaching this instant closes intake automatically.",
+			}
+		)
+		fields.append(
+			{
+				"fieldname": changed_by_field,
+				"fieldtype": "Link",
+				"options": "User",
+				"label": f"KenTender: {label} Changed By",
+				"read_only": 1,
+				"no_copy": 1,
+				"insert_after": flag_closes_at,
+			}
+		)
+		fields.append(
+			{
+				"fieldname": changed_at_field,
+				"fieldtype": "Datetime",
+				"label": f"KenTender: {label} Changed At",
+				"read_only": 1,
+				"no_copy": 1,
+				"insert_after": changed_by_field,
+			}
+		)
+		fields.append(
+			{
+				"fieldname": revision_field,
+				"fieldtype": "Int",
+				"label": f"KenTender: {label} Revision",
+				"default": "0",
+				"read_only": 1,
+				"no_copy": 1,
+				"insert_after": changed_at_field,
+			}
+		)
+	create_custom_fields({"Fiscal Year": fields}, ignore_validate=True, update=True)
+
+	# Retired v0.10/v0.11-draft fields — no external reader depends on any of
+	# these (grepped repo-wide 16 Sep 2026), dropped outright rather than
+	# migrated. The `_submission_open/_closes_at` pair only ever existed
+	# transiently on this dev site from a since-corrected `kentender_disposal_plan_submission_*`
+	# naming bug in this function itself.
+	for retired in (
+		"kentender_flag_changed_by",
+		"kentender_flag_changed_at",
+		"kentender_disposal_plan_submission_open",
+		"kentender_disposal_plan_submission_closes_at",
+	):
+		existing = frappe.db.get_value("Custom Field", {"dt": "Fiscal Year", "fieldname": retired})
+		if existing:
+			frappe.delete_doc("Custom Field", existing, ignore_permissions=True, force=True)
+		# Deleting the Custom Field record only removes the field
+		# definition — Frappe's schema sync is additive-only and never drops
+		# a column on its own, so the retired column would otherwise linger
+		# in the database forever even though nothing can read or write it
+		# through the framework any more.
+		if frappe.db.has_column("Fiscal Year", retired):
+			frappe.db.sql_ddl(f"ALTER TABLE `tabFiscal Year` DROP COLUMN `{retired}`")
 
 
 def _ensure_business_role_projections():

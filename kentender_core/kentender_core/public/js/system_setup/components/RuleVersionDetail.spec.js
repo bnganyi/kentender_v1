@@ -36,10 +36,30 @@ describe("RuleVersionDetail", () => {
 		await flushPromises();
 		expect(wrapper.find('[data-testid="kt-procset-rule-title"]').text()).toBe("Method eligibility — Open Tender — Version 1");
 		const labels = wrapper.findAll('[data-testid="kt-procset-rule-card"] .kt-label').map((l) => l.text());
-		expect(labels).toEqual(["Reference set", "Version", "Applicability basis", "Effective from", "Effective until", "Source instrument", "Provision", "Source document", "Verification status"]);
+		// §10.6's saved detail: the summary facts, then the four supporting
+		// groups (rule details, applicability, sources, usage).
+		expect(labels).toEqual([
+			"Rule kind",
+			"Version",
+			"Which date determines the rule to use?",
+			"Applies from",
+			"Applies until",
+			"Source check",
+			"Details",
+			"Method",
+			"Currency",
+			"Which date determines the rule to use?",
+			"Entity applicability",
+			"County applicability",
+			"Source instrument",
+			"Edition",
+			"Provisions",
+			"Source document",
+			"Interpretation",
+		]);
 		expect(wrapper.text()).toContain("1 Jul 2027");
 		expect(wrapper.text()).toContain("Not attached");
-		expect(wrapper.find('[data-testid="kt-procset-rule-verification"]').text()).toBe("Pending");
+		expect(wrapper.find('[data-testid="kt-procset-rule-verification"]').text()).toBe("Source check needed");
 		expect(wrapper.find('[data-testid="kt-procset-rule-incomplete"]').text()).toBe("Required conditions not yet completed");
 		expect(wrapper.find('[data-testid="kt-procset-rule-values"]').text()).toContain("No fixed maximum for goods.");
 		expect(wrapper.findAll("input").length).toBe(0);

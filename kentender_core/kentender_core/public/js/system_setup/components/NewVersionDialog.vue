@@ -6,6 +6,7 @@
 // validates and supersedes any overlapping Active Version.
 import { computed, nextTick, onMounted, reactive, ref } from "vue";
 import { procurementSettingsApi } from "../data/procurementSettingsApi.js";
+import { sourceCheckLabel } from "../data/format.js";
 
 const props = defineProps({
 	mode: { type: String, required: true }, // "method" | "schedule"
@@ -126,20 +127,22 @@ function submit() {
 				</div>
 				<div class="kt-facts-row">
 					<div class="kt-field">
-						<label for="kt-nv-from">{{ __("Effective from") }}</label>
+						<label for="kt-nv-from">{{ __("Applies from") }}</label>
 						<input id="kt-nv-from" ref="field" v-model="form.effective_from" class="kt-input" type="date" data-testid="kt-nv-effective-from">
 					</div>
 					<div class="kt-field">
-						<label for="kt-nv-until">{{ __("Effective until") }}</label>
+						<label for="kt-nv-until">{{ __("Applies until") }}</label>
 						<input id="kt-nv-until" v-model="form.effective_until" class="kt-input" type="date" data-testid="kt-nv-effective-until">
 					</div>
 				</div>
 				<div class="kt-field">
-					<label for="kt-nv-verification">{{ __("Verification status") }}</label>
+					<!-- §8.1 — the same plain source-check vocabulary the rest of
+					     the module reads, not the stored model value. -->
+					<label for="kt-nv-verification">{{ __("Source check") }}</label>
 					<select id="kt-nv-verification" v-model="form.verification_status" class="kt-input" data-testid="kt-nv-verification">
-						<option v-for="status in verificationStatuses" :key="status" :value="status">{{ status }}</option>
+						<option v-for="status in verificationStatuses" :key="status" :value="status">{{ __(sourceCheckLabel(status)) }}</option>
 					</select>
-					<p class="kt-hint">{{ __("Record Verified only with the primary source, provision and document below.") }}</p>
+					<p class="kt-hint">{{ __("Record Sources verified only with the primary source, provision and document below.") }}</p>
 				</div>
 				<div class="kt-field">
 					<label for="kt-nv-instrument">{{ __("Source instrument") }}</label>

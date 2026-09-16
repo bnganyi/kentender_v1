@@ -13,6 +13,11 @@ import UnitDetail from "../components/UnitDetail.vue";
 import { orgStructureApi } from "../data/orgStructureApi.js";
 import { siteConfigApi } from "../data/siteConfigApi.js";
 
+const props = defineProps({
+	// §6/§11.1 — the Administrator-only repair authority, from the server's
+	// own capability projection rather than a role guess in the browser.
+	canRepair: { type: Boolean, default: false },
+});
 const emit = defineEmits(["repaired", "view-affected"]);
 
 const loading = ref(true);
@@ -213,7 +218,14 @@ onUnmounted(() => {
 			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
 			<h2>{{ __("Organisation structure needs repair") }}</h2>
 			<p>{{ __("The root organisation unit is missing. Run the governed repair before assigning responsibilities.") }}</p>
+			<!-- §6/§11.1 — the repair is Administrator-only; a System Manager
+			     holds ordinary configuration maintenance and sees the
+			     escalation instead of an action that would be refused. -->
+			<p v-if="!canRepair" class="kt-muted" data-testid="kt-org-repair-escalation">
+				{{ __("Only the Administrator can run this repair. Ask an Administrator to run it.") }}
+			</p>
 			<button
+				v-if="canRepair"
 				type="button"
 				class="kt-btn kt-btn-secondary"
 				:disabled="busy"

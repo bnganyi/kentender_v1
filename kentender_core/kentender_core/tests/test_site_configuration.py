@@ -37,11 +37,16 @@ class ConfigurationTestCase(IntegrationTestCase):
 		super().setUpClass()
 		cls.addClassCleanup(purge)
 		# These tests move the single-open intake flags onto far-future years;
-		# restore whichever years were open beforehand so the canonical §8 seed
-		# world (and every sibling suite that depends on it) is left intact.
+		# restore whichever years were open beforehand — including their exact
+		# closing instant, or a bare reopen silently wipes it to "no closing
+		# date" — so the canonical §8 seed world (and every sibling suite that
+		# depends on it) is left intact.
 		cls._open_before = {
-			flag: frappe.get_all("Fiscal Year", filters={flag: 1}, pluck="name")
-			for flag in (configuration.FLAG_OPEN, configuration.DPP_FLAG_OPEN)
+			flag: frappe.get_all("Fiscal Year", filters={flag: 1}, fields=["name", closes_field], as_list=False)
+			for flag, closes_field in (
+				(configuration.FLAG_OPEN, configuration.FLAG_CLOSES_AT),
+				(configuration.DPP_FLAG_OPEN, configuration.DPP_FLAG_CLOSES_AT),
+			)
 			if frappe.db.has_column("Fiscal Year", flag)
 		}
 		cls.addClassCleanup(cls._restore_open_flags)
@@ -50,16 +55,46 @@ class ConfigurationTestCase(IntegrationTestCase):
 
 	@classmethod
 	def _restore_open_flags(cls):
+		"""Put the canonical intake world back exactly as the seed documents it.
+
+		This deliberately does **not** trust a value captured in `setUpClass`:
+		classes in this module run in sequence, so a later class can capture a
+		value an earlier one has already damaged and then faithfully restore
+		the damage. `site_setup`'s own constants are the single source of
+		truth, so the canonical year is reasserted from those and any other
+		year this suite opened is closed.
+		"""
 		frappe.set_user("Administrator")
-		for flag, years in cls._open_before.items():
-			opener = (
-				configuration.open_needs_submission
-				if flag == configuration.FLAG_OPEN
-				else configuration.open_dpp_submission
-			)
-			for year in years:
-				if frappe.db.exists("Fiscal Year", year) and not frappe.db.get_value("Fiscal Year", year, flag):
-					opener(fiscal_year=year, reason="test cleanup: restore the previously open year")
+		from kentender_core.seeds import site_setup
+
+		canonical = {
+			"needs": (site_setup.INTAKE, configuration.FLAG_OPEN, configuration.open_needs_submission),
+			"dpp": (site_setup.DPP_INTAKE, configuration.DPP_FLAG_OPEN, configuration.open_dpp_submission),
+		}
+		for module_key, (intake, flag, opener) in canonical.items():
+			year = configuration._fy_name(intake["start_year"])
+			if not frappe.db.exists("Fiscal Year", year):
+				continue
+			closes_at = intake["closes_at"]
+			try:
+				if frappe.db.get_value("Fiscal Year", year, flag):
+					configuration.update_intake_close_instant(
+						module_key=module_key,
+						fiscal_year=year,
+						closes_at=closes_at,
+						reason="test cleanup: reassert the seed's documented closing instant",
+					)
+				else:
+					# Reopening also closes whichever far-future test year this
+					# suite left holding the module's single open slot.
+					opener(
+						fiscal_year=year,
+						closes_at=closes_at,
+						reason="test cleanup: restore the canonical open year",
+					)
+			except Exception:
+				# Cleanup must never mask the test result that preceded it.
+				pass
 		frappe.db.commit()
 
 	def code(self, caught) -> str:
@@ -85,6 +120,13 @@ class TestSitePE(ConfigurationTestCase):
 		self.assertTrue(out["configured"])
 		self.assertEqual(out["procuring_entity"]["pe_code"], fx.SITE_PE_CODE)
 		self.assertEqual(out["root_unit"]["id"], self.root)
+
+	def test_approval_applicability_is_verification_required_with_no_matching_rule(self):
+		"""CFG-CHG-002 v0.11 §4.2 — no "Approval applicability" reference
+		exists yet in the canonical world, so this stays an honest
+		"Verification required", never a silent pass."""
+		out = configuration.get_site_configuration()
+		self.assertEqual(out["procuring_entity"]["approval_applicability"]["result"], "Verification required")
 
 	def test_configuring_twice_is_structurally_refused(self):
 		"""CFG-AC-003 — the Single holds one identity; the command refuses."""
@@ -201,6 +243,60 @@ class TestSitePE(ConfigurationTestCase):
 			frappe.set_user("Administrator")
 		self.assertEqual(self.code(caught), "CFG_AUTHORITY_REQUIRED")
 
+	def test_only_the_administrator_may_repair_the_organisation_root(self):
+		"""§6/§11.1 — a System Manager holds ordinary configuration maintenance
+		but not this exceptional repair, and the screen is told so through the
+		same capability projection."""
+		manager = fx.user("cfg.manager")
+		manager_doc = frappe.get_doc("User", manager)
+		if "System Manager" not in {row.role for row in manager_doc.get("roles") or []}:
+			manager_doc.append("roles", {"role": "System Manager"})
+			manager_doc.save(ignore_permissions=True)
+		frappe.db.commit()
+
+		frappe.set_user(manager)
+		try:
+			# Ordinary maintenance is still available to them.
+			configuration.list_fiscal_years()
+			self.assertFalse(configuration.is_site_administrator())
+			self.assertFalse(configuration.get_site_configuration()["capabilities"]["repair_root"])
+			with self.assertRaises(ConfigurationError) as caught:
+				configuration.repair_organisation_root()
+		finally:
+			frappe.set_user("Administrator")
+		self.assertEqual(self.code(caught), "CFG_AUTHORITY_REQUIRED")
+		self.assertIn("Only the Administrator", str(caught.exception))
+		self.assertTrue(configuration.get_site_configuration()["capabilities"]["repair_root"])
+
+	def test_approval_applicability_resolves_verified_and_conflict_against_a_real_rule(self):
+		"""§4.2/§5 — a matching, Verified 'Approval applicability' reference
+		flips the result; a mismatched route reads as a configuration
+		conflict, never a silent pass."""
+		from kentender_core.services import regulatory_reference as register
+
+		created = register.create_regulatory_reference(
+			reference_key="KT-TEST-APPROVAL-APPLICABILITY",
+			reference_kind="Approval applicability",
+			fixture_namespace="KT_TEST_CFG",
+		)
+		self.addCleanup(lambda: (register.purge_fixture_references("KT_TEST_CFG"), frappe.db.commit()))
+		version = register.save_regulatory_reference_version(
+			reference_set=created["reference_set"],
+			payload={"entity_types": ["State Corporation"], "approval_route": "Board of Directors"},
+			effective_from="2020-01-01",
+			applicability_entity_types=["State Corporation"],
+			fixture_namespace="KT_TEST_CFG",
+		)
+		register.record_reference_verification(
+			target_doctype=register.DOCTYPE, target_name=version["reference"], outcome="Verified",
+			instrument_edition="e", effective_dates_and_amendments="e", applicability_date_basis_explanation="e",
+			interpretation_evidence="e", fixture_namespace="KT_TEST_CFG",
+		)
+		result = configuration._approval_applicability("State Corporation", False, "Board of Directors")
+		self.assertEqual(result["result"], "Verified")
+		conflict = configuration._approval_applicability("State Corporation", False, "Council")
+		self.assertEqual(conflict["result"], "Configuration conflict")
+
 	def test_configuration_authority_is_not_business_authority(self):
 		"""CFG-AC-019 — the administrator who maintains setup still cannot
 		exercise a module responsibility without an assignment."""
@@ -246,6 +342,22 @@ class TestFiscalYears(ConfigurationTestCase):
 		self.assertLess(names.index(configuration._fy_name(Y2)), names.index(configuration._fy_name(Y1)))
 		by_name = {row["fiscal_year"]: row for row in listing["fiscal_years"]}
 		self.assertEqual(by_name[configuration._fy_name(Y1)]["phase"], "Upcoming")
+
+	def test_adding_a_year_without_an_accounting_company_is_refused(self):
+		"""CFG-UX-AC-05 — the Company defect, not a silently unlinked year."""
+		year = 2098
+		with patch.object(configuration, "_site_company", return_value=""):
+			with self.assertRaises(ConfigurationError) as caught:
+				configuration.add_fiscal_year(start_year=year)
+		self.assertEqual(self.code(caught), "CFG_FY_COMPANY_MISSING")
+		self.assertFalse(frappe.db.exists("Fiscal Year", configuration._fy_name(year)))
+
+	def test_preview_reports_the_company_defect_before_submit(self):
+		with patch.object(configuration, "_site_company", return_value=""):
+			preview = configuration.preview_fiscal_year(Y1)
+		self.assertTrue(preview["company_missing"])
+		preview = configuration.preview_fiscal_year(Y1)
+		self.assertFalse(preview["company_missing"])
 
 
 class TestNeedsSubmissionFlag(ConfigurationTestCase):
@@ -304,7 +416,7 @@ class TestNeedsSubmissionFlag(ConfigurationTestCase):
 			with self.assertRaises(ConfigurationError) as caught:
 				configuration.set_fiscal_year_disabled(fiscal_year=one, disabled=True)
 			self.assertEqual(self.code(caught), "CFG_FY_IN_USE")
-			self.assertIn("Needs submission is open", str(caught.exception))
+			self.assertIn("Departmental needs submission is open", str(caught.exception))
 		finally:
 			configuration.close_needs_submission(fiscal_year=one, reason="Test reset.")
 
@@ -380,6 +492,81 @@ class TestDppIntakeFlag(ConfigurationTestCase):
 		self.assertFalse(row["dpp_submission_open"])
 		self.assertEqual(row["dpp_submission_closes_label"], "")
 
+
+class TestIntakeHistory(ConfigurationTestCase):
+	"""§10.3 C02 — the Change history disclosure reads the same Audit Event
+	rows every intake command already appends."""
+
+	def test_open_close_and_deadline_change_each_appear_as_a_labelled_entry(self):
+		one = self.fy(Y1)
+		configuration.open_needs_submission(
+			fiscal_year=one, closes_at="2099-11-25 23:59:00", reason="Annual needs call issued."
+		)
+		configuration.update_intake_close_instant(
+			module_key="needs", fiscal_year=one, closes_at="2099-11-30 23:59:00", reason="Extended."
+		)
+		configuration.close_needs_submission(fiscal_year=one, reason="Call ended.")
+
+		history = configuration.list_fiscal_year_intake_history(one)
+		self.assertEqual(history["fiscal_year"], one)
+		by_change = {entry["change"]: entry for entry in history["entries"]}
+		self.assertEqual(set(by_change), {"Open", "Deadline changed", "Closed"})
+
+		opened = by_change["Open"]
+		self.assertEqual(opened["activity"], "Departmental needs")
+		self.assertEqual(opened["previous_value"], "—")
+		self.assertIn("2099", opened["new_value"])
+		self.assertEqual(opened["reason"], "Annual needs call issued.")
+		self.assertEqual(opened["changed_by"], "Administrator")
+
+		deadline = by_change["Deadline changed"]
+		self.assertIn("2099", deadline["previous_value"])
+		self.assertIn("2099", deadline["new_value"])
+		self.assertNotEqual(deadline["previous_value"], deadline["new_value"])
+
+		closed = by_change["Closed"]
+		self.assertEqual(closed["new_value"], "Closed")
+		self.assertEqual(closed["reason"], "Call ended.")
+
+		# Newest first (§11.3 ordering already used elsewhere on this surface).
+		timestamps = [e["changed_at"] for e in history["entries"]]
+		self.assertEqual(timestamps[0], closed["changed_at"])
+
+	def test_the_disclosure_caps_entries_but_reports_the_true_total(self):
+		"""A long-lived site accumulates far more than a page's worth of intake
+		events on its canonical year (confirmed live: 5,000+); the disclosure
+		must never render an unbounded table."""
+		one = self.fy(Y1)
+		from kentender_core.services.audit_event_service import log_audit_event
+
+		page_size = configuration._INTAKE_HISTORY_PAGE_SIZE
+		before = configuration.list_fiscal_year_intake_history(one)["count"]
+		for _ in range(page_size + 1):
+			log_audit_event(
+				event_type="site_configuration",
+				document_type="Fiscal Year",
+				document_name=one,
+				action="close_needs_submission",
+				metadata={"reason": "bulk"},
+			)
+		history = configuration.list_fiscal_year_intake_history(one)
+		self.assertEqual(history["count"], before + page_size + 1)
+		self.assertEqual(len(history["entries"]), page_size)
+
+	def test_an_unrelated_audit_event_is_not_mistaken_for_intake_history(self):
+		one = self.fy(Y1)
+		from kentender_core.services.audit_event_service import log_audit_event
+
+		log_audit_event(
+			event_type="site_configuration",
+			document_type="Fiscal Year",
+			document_name=one,
+			action="set_fiscal_year_disabled",
+			metadata={"disabled": True},
+		)
+		history = configuration.list_fiscal_year_intake_history(one)
+		self.assertEqual(history["entries"], [])
+
 	def test_scheduled_close_reaches_the_dpp_flag(self):
 		y2 = self.fy(Y2)
 		configuration.open_dpp_submission(fiscal_year=y2, closes_at=str(now_datetime().replace(year=2099)))
@@ -432,4 +619,4 @@ class TestCountyApplicability(ConfigurationTestCase):
 		self.assertEqual(self.code(caught), "CFG_COUNTY_APPLICABILITY_MISMATCH")
 		single = frappe.get_doc(configuration.SITE_PE_DOCTYPE)
 		self.assertEqual((single.pe_type, single.entity_is_county, str(single.modified)), before)
-		self.assertIn("County applicability does not match", str(caught.exception))
+		self.assertIn("The county answer does not match the entity details", str(caught.exception))

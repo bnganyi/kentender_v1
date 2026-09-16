@@ -503,43 +503,72 @@ def _seed_contact_offices() -> dict[str, int]:
 
 
 def _seed_regulatory_reference(fiscal_year: str = "", fixture_namespace: str = FIXTURE_TAG, *, verification_status: str = "Production verification pending", reservation_target_percent=None, county_target_percent=None) -> str:
+	"""CFG-CHG-002 v0.11 Phase 2b — seeds the "Reservation rules" kind's
+	Regulatory Reference Set/Version for `fiscal_year`. `threshold_matrix`
+	is no longer seeded here at all: it is now derived at read time from
+	`Procurement Method Profile` (D10), which `_seed_method_profiles` already
+	seeds with the same Second Schedule figures — closes the former
+	duplicate-write (FU-08). Signature and find-or-create/override behaviour
+	are unchanged so every existing caller (Requisitions/Planning Playwright
+	fixtures, Planning's own test world) keeps working without modification."""
 	from kentender_core.services import regulatory_reference as register
 
 	fiscal_year = fiscal_year or configuration._fy_name(DPP_INTAKE["start_year"])
-	bands = []
-	for method, goods, works, services, basis, reference in THRESHOLD_BANDS:
-		for category, amount in (("Goods", goods), ("Works", works), ("Services", services)):
-			bands.append(
-				{
-					"procurement_category": category,
-					"procurement_method": method,
-					"max_amount": amount,
-					"basis": basis,
-					"statutory_reference": reference,
-				}
-			)
-	outcome = register.register_regulatory_reference(
-		fiscal_year=fiscal_year,
-		effective_from=REGULATORY_REFERENCE["effective_from"],
-		gazette_reference=REGULATORY_REFERENCE["gazette_reference"],
-		threshold_bands=bands,
-		reservation_categories=[
-			{"category": name, "advantage_rank": rank, "is_regional": regional, "statutory_reference": ref}
-			for name, rank, regional, ref in RESERVATION_CATEGORIES
-		],
-		reservation_target_percent=REGULATORY_REFERENCE["reservation_target_percent"] if reservation_target_percent is None else reservation_target_percent,
-		county_resident_target_percent=REGULATORY_REFERENCE["county_resident_target_percent"] if county_target_percent is None else county_target_percent,
-		exclusive_preference_works_amount=REGULATORY_REFERENCE["exclusive_preference_works_amount"],
-		exclusive_preference_goods_services_amount=REGULATORY_REFERENCE["exclusive_preference_goods_services_amount"],
-		market_prices=[],
-		schedule_buffers=[],
+	fy_row = frappe.db.get_value("Fiscal Year", fiscal_year, ["year_start_date", "year_end_date"], as_dict=True)
+	if not fy_row:
+		frappe.throw(f"Unknown fiscal year: {fiscal_year}.")
+
+	reference_key = "RESERVATION-RULES"
+	reference_set = frappe.db.get_value(register.SET_DOCTYPE, {"reference_key": reference_key}, "name")
+	if not reference_set:
+		reference_set = register.create_regulatory_reference(
+			reference_key=reference_key,
+			reference_kind="Reservation rules",
+			display_name="Reservation rules",
+			fixture_namespace=fixture_namespace,
+		)["reference_set"]
+
+	target = REGULATORY_REFERENCE["reservation_target_percent"] if reservation_target_percent is None else reservation_target_percent
+	county_target = REGULATORY_REFERENCE["county_resident_target_percent"] if county_target_percent is None else county_target_percent
+
+	# Find-or-create, like every sibling profile seed (`_profile_exists`).
+	# Without this the seed saved a brand-new version on every run — each one
+	# superseding the last — so the canonical set climbed a version per
+	# `site_setup.run()`, per gate and per test run (found live at v21).
+	existing = frappe.db.get_value(
+		register.DOCTYPE,
+		{
+			"reference_set": reference_set,
+			"status": "Active",
+			"effective_from": fy_row["year_start_date"],
+		},
+		"name",
+	)
+	if existing:
+		return existing
+
+	outcome = register.save_regulatory_reference_version(
+		reference_set=reference_set,
+		payload={
+			"obligation_code": "ANNUAL-RESERVATION-TARGET",
+			"target_percent": target,
+			"county_target_percent": county_target,
+			"denominator_basis": "AnnualProcurementBudget",
+			"overlap_policy": "Independent",
+			"categories": [
+				{"category": name, "advantage_rank": rank, "is_regional": regional, "statutory_reference": ref}
+				for name, rank, regional, ref in RESERVATION_CATEGORIES
+			],
+		},
+		effective_from=fy_row["year_start_date"],
+		effective_until=fy_row["year_end_date"],
+		applicability_basis="FiscalYearStart",
 		verification_status=verification_status,
-		applicability_basis="Fiscal Year",
 		source_instrument=PROFILE_SOURCE["source_instrument"],
 		provision=PROFILE_SOURCE["provision"],
 		fixture_namespace=fixture_namespace,
 	)
-	return f"{outcome['reference']}{'' if outcome['created'] else ' (existing)'}"
+	return outcome["reference"]
 
 
 def _profile_exists(doctype: str, filters: dict) -> str:

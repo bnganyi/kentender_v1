@@ -58,6 +58,32 @@ async function filterRegisterTo(page: Page, text: string): Promise<void> {
 	await page.waitForSelector(`table.kt-table tbody tr:has-text("${text}")`, { timeout: 15_000 });
 }
 
+/**
+ * The reservation rule's current version id, read from the server rather than
+ * hardcoded: version ids are hashes under the v0.11 envelope, and the seed's
+ * version number moves as fixtures run.
+ */
+async function currentReservationVersion(page: Page): Promise<string> {
+	const response = await page.request.get(
+		"/api/method/kentender_core.api.procurement_settings_api.get_procurement_settings"
+	);
+	const body = await response.json();
+	const set = (body.message?.reference_sets || []).find(
+		(row: any) => row.reference_kind === "Reservation rules"
+	);
+	expect(set?.version?.name, "a current Reservation rules version").toBeTruthy();
+	return set.version.name;
+}
+
+/** The first registered working-day calendar, or "" when none exists yet. */
+async function firstCalendar(page: Page): Promise<string> {
+	const response = await page.request.get(
+		"/api/method/kentender_core.api.procurement_settings_api.get_procurement_settings"
+	);
+	const body = await response.json();
+	return (body.message?.calendars || [])[0]?.calendar || "";
+}
+
 async function artboardLandmarks(page: Page, file: string, scope: string): Promise<string[]> {
 	await openArtboard(page, `${DESIGN_DIR}/${file}`, scope);
 	return landmarks(page, scope);
@@ -229,13 +255,16 @@ test.describe("System setup — design fidelity", () => {
 		await art.close();
 	});
 
-	// PLN-CHG-001 v1.18 §10.11 — the C01–C04 frames supersede CFG-DES-01/03
-	// as the fidelity source for the Procuring entity, Fiscal years and
-	// Procurement settings tabs (plan D13); CFG-DES-04/05 stay for the
-	// add-year and needs-intake dialogs.
-	test("C01-configured — Procuring entity tab with route and county flag", async ({ page, browser }) => {
+	// CFG-CHG-002 v0.11 §10.2 — C01-Procuring-Entity.dc.html's own anchored
+	// sections (#configured/#conflict) are the fidelity source, replacing
+	// the retired Planning-owned C01-C04-Setup.dc.html frame (plan D-port,
+	// Phase 3A). "Setup record" and "Plan approval authority" are new
+	// sections in v0.11; the county flag is now an explicit Yes/No radio,
+	// never a checkbox.
+	test("C01-configured — Procuring entity tab with route, county radio, setup record and approval readiness", async ({ page, browser }) => {
 		const art = await browser.newPage();
-		const scope = await openFrame(art, PLN_DESIGN, "C01-configured");
+		const scope = "#configured";
+		await openArtboard(art, `${DESIGN_DIR}/C01-Procuring-Entity.dc.html`, scope);
 		const wanted = await landmarks(art, scope);
 
 		await loginAsAdministrator(page);
@@ -247,26 +276,28 @@ test.describe("System setup — design fidelity", () => {
 			"Board of Directors",
 			"Council",
 		]);
+		expect(await page.locator('[data-testid="kt-setup-pe-county-yes"]').isVisible()).toBe(true);
+		expect(await page.locator('[data-testid="kt-setup-pe-county-no"]').isVisible()).toBe(true);
 		expect(errors, "console errors").toEqual([]);
 		await art.close();
 	});
 
-	test("C01-conflict — county applicability mismatch shown inline, nothing saved", async ({ page, browser }) => {
+	test("C01-conflict — county applicability mismatch shown as a critical notice, nothing saved", async ({ page, browser }) => {
 		const art = await browser.newPage();
-		const scope = await openFrame(art, PLN_DESIGN, "C01-conflict");
+		const scope = "#conflict";
+		await openArtboard(art, `${DESIGN_DIR}/C01-Procuring-Entity.dc.html`, scope);
 		const wanted = await landmarks(art, scope);
 
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "procuring-entity", '[data-testid="kt-setup-pe-record"]');
 		const typeBefore = await page.locator('[data-testid="kt-setup-pe-type"]').inputValue();
 		await page.selectOption('[data-testid="kt-setup-pe-type"]', "County Government");
-		if (await page.locator('[data-testid="kt-setup-pe-county"]').isChecked()) {
-			await page.uncheck('[data-testid="kt-setup-pe-county"]');
-		}
+		// The current record is a non-county entity (No is checked); leave it
+		// as-is so the type/county combination genuinely conflicts.
 		await page.click('[data-testid="kt-setup-pe-submit"]');
 		await page.waitForSelector('[data-testid="kt-setup-pe-county-conflict"]');
-		expect(await page.locator('[data-testid="kt-setup-pe-county-conflict"]').textContent()).toContain(
-			"County applicability does not match the entity details. Review the configuration."
+		expect(await page.locator('[data-testid="kt-setup-pe-county-conflict"]').textContent()).toBe(
+			"Conflict. The county answer does not match the entity details."
 		);
 		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C01-conflict");
 		// Refused before save: a reload shows the unchanged record.
@@ -277,149 +308,354 @@ test.describe("System setup — design fidelity", () => {
 		// the server's ConfigurationError traceback for the 417 response in
 		// developer mode. Nothing else may be logged.
 		expect(
-			errors.filter((e) => !e.includes("County applicability does not match") && !/status of 417/.test(e)),
+			errors.filter((e) => !e.includes("The county answer does not match") && !/status of 417/.test(e)),
 			"console errors"
 		).toEqual([]);
 		await art.close();
 	});
 
-	test("C02 — Fiscal years tab with the departmental-plan intake dialog", async ({ page, browser }) => {
+	// CFG-CHG-002 v0.11 §10.3 — C02-Financial-Years.dc.html's own anchored
+	// sections replace the retired Planning-owned C02/C02-close frames and
+	// the CFG-DES-04/05 standalone dialog boards (Phase 3B, FU-11). The
+	// overview now carries all three intake activities and links to a
+	// per-year Submission periods detail; every open/close/deadline action
+	// lives on that detail.
+	//
+	// One deliberate, documented delta: the artboard's table cells pluralise
+	// two activity names ("Departmental plans", "Disposal plans") while its
+	// own dialog titles use the singular §8 vocabulary ("Open departmental
+	// plan submissions"). The live screen uses the §8 singular throughout so
+	// the table, the dialogs, the blockers and the server-composed change
+	// history read as one vocabulary; those two `th` landmarks are dropped
+	// from the comparison rather than silently passed (FOLLOW_UPS FU-12).
+	const C02_PLURAL_ACTIVITY_HEADERS = ["Departmental plans", "Disposal plans"];
+
+	test("C02-overview — Financial years list with all three intake activities", async ({ page, browser }) => {
 		const art = await browser.newPage();
-		const scope = await openFrame(art, PLN_DESIGN, "C02");
-		const wanted = await landmarks(art, scope);
-		const artDialogWidth = await boxWidth(art, `${scope} .dialog`);
+		const scope = "#overview";
+		await openArtboard(art, `${DESIGN_DIR}/C02-Financial-Years.dc.html`, scope);
+		const wanted = (await landmarks(art, scope)).filter((text) => !C02_PLURAL_ACTIVITY_HEADERS.includes(text));
 
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "fiscal-years", '[data-testid="kt-fy-table"]');
-		// §8.4 world: 2027/28 is open for departmental-plan intake, 2026/27 is
-		// closed — managing the closed year opens the "Open" dialog, the
-		// artboard's state. Nothing is submitted.
-		await page.click('[data-testid="kt-fy-open-plan-2026-2027"]');
-		await page.waitForSelector('[data-testid="kt-fy-intake"][data-purpose="plan"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C02");
-		expectClose(await boxWidth(page, DIALOG_SCOPE), artDialogWidth, 2, "dialog width");
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C02-overview");
+		// The third activity is the v0.11 addition; the row action is the link
+		// to that year's own submission periods, never an inline open/close.
+		await expect(page.locator('[data-testid="kt-fy-disposal_plan-2027-2028"]')).toBeVisible();
+		await expect(page.locator('[data-testid="kt-fy-detail-2027-2028"]')).toHaveText("Submission periods");
 		expect(errors, "console errors").toEqual([]);
 		await art.close();
 	});
 
-	test("C02-close — Close departmental-plan intake dialog", async ({ page, browser }) => {
+	test("C02-detail — Submission periods for one year, with the change-history disclosure", async ({ page, browser }) => {
 		const art = await browser.newPage();
-		const scope = await openFrame(art, PLN_DESIGN, "C02-close");
-		const wanted = await landmarks(art, `${scope} .dialog`);
-		const artDialogWidth = await boxWidth(art, `${scope} .dialog`);
+		const scope = "#detail";
+		await openArtboard(art, `${DESIGN_DIR}/C02-Financial-Years.dc.html`, scope);
+		const wanted = (await landmarks(art, scope)).filter((text) => !C02_PLURAL_ACTIVITY_HEADERS.includes(text));
 
 		await loginAsAdministrator(page);
-		const errors = await openSetupTab(page, "fiscal-years", '[data-testid="kt-fy-table"]');
-		await page.click('[data-testid="kt-fy-close-plan-2027-2028"]');
-		await page.waitForSelector('[data-testid="kt-fy-intake"][data-purpose="plan"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, DIALOG_SCOPE), "C02-close");
-		expectClose(await boxWidth(page, DIALOG_SCOPE), artDialogWidth, 2, "dialog width");
+		const errors = await openSetupTab(page, "fiscal-years/year/2027-2028", '[data-testid="kt-setup-fy-detail-card"]');
+		// The artboard draws the history table expanded; the live disclosure
+		// starts collapsed, so open it before comparing landmarks.
+		await page.click('[data-testid="kt-fy-history-toggle"]');
+		await page.waitForSelector('[data-testid="kt-fy-history-body"] table');
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C02-detail");
 		expect(errors, "console errors").toEqual([]);
 		await art.close();
 	});
 
-	test("C03 — Procurement settings: funding sources and procurement rules", async ({ page, browser }) => {
+	test("C02-add-year — Add financial year dialog with the server preview", async ({ page, browser }) => {
 		const art = await browser.newPage();
-		const scope = await openFrame(art, PLN_DESIGN, "C03");
+		// `document.querySelector` takes the first match: the dialog itself,
+		// not the duplicate/Company defect notices beside it in the grid.
+		const scope = "#add-year .dialog";
+		await openArtboard(art, `${DESIGN_DIR}/C02-Financial-Years.dc.html`, scope);
 		const wanted = await landmarks(art, scope);
-
-		await loginAsAdministrator(page);
-		const errors = await openSetupTab(page, "procurement-settings", '[data-testid="kt-procset-rules"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C03");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	test("C03-source-editor — Edit funding source", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const scope = await openFrame(art, PLN_DESIGN, "C03-source-editor");
-		const wanted = await landmarks(art, scope);
-
-		await loginAsAdministrator(page);
-		const errors = await openSetupTab(page, "procurement-settings", '[data-testid="kt-procset-sources"]');
-		await page.click('[data-testid="kt-procset-source-edit-Government of Kenya"]');
-		await page.waitForSelector('[data-testid="kt-procset-source-editor"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C03-source-editor");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	test("C03-detail — a referenced rule Version, read-only", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const scope = await openFrame(art, PLN_DESIGN, "C03-detail");
-		const wanted = await landmarks(art, scope);
-
-		await loginAsAdministrator(page);
-		const errors = await openSetupTab(page, "procurement-settings/rule/MPR-OPEN-TENDER-V1", '[data-testid="kt-procset-rule-card"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C03-detail");
-		expect(await page.locator('[data-testid="kt-procset-rule-card"] input').count()).toBe(0);
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	test("C04 — Schedule profile", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const scope = await openFrame(art, PLN_DESIGN, "C04");
-		const wanted = await landmarks(art, scope);
-
-		await loginAsAdministrator(page);
-		const errors = await openSetupTab(page, "procurement-settings/profile/SPR-OPEN-TENDER-GOODS-V1", '[data-testid="kt-procset-profile-table"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C04");
-		expect(await page.locator('[data-testid="kt-procset-profile-table"] tbody tr').count()).toBe(7);
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	test("C04-eligibility-reminder — reminder threshold card", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const scope = await openFrame(art, PLN_DESIGN, "C04-eligibility-reminder");
-		const wanted = await landmarks(art, scope);
-
-		await loginAsAdministrator(page);
-		const errors = await openSetupTab(page, "procurement-settings", '[data-testid="kt-procset-reminder"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C04-eligibility-reminder");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	test("CFG-DES-04 — Add financial year dialog", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "CFG-DES-04 Add financial year dialog.dc.html", ".dialog-backdrop .dialog");
-		const artWidth = await boxWidth(art, ".dialog-backdrop .dialog");
 
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "fiscal-years", '[data-testid="kt-fy-table"]');
 		await page.click('[data-testid="kt-fy-add-open"]');
 		await page.waitForSelector('[data-testid="kt-fy-add"]');
 		// Reach the artboard's state: a start year entered, server preview shown.
-		await page.fill('[data-testid="kt-fy-start-year"]', "2028");
+		await page.fill('[data-testid="kt-fy-start-year"]', "2035");
 		await page.waitForSelector('[data-testid="kt-fy-preview"]', { timeout: 10_000 });
+		expectLandmarkSubsequence(wanted, await landmarks(page, DIALOG_SCOPE), "C02-add-year");
 
-		expectLandmarkSubsequence(wanted, await landmarks(page, DIALOG_SCOPE), "CFG-DES-04");
-		expectClose(await boxWidth(page, DIALOG_SCOPE), artWidth, 2, "dialog width");
+		// The exact duplicate defect, and Add disabled with it (CFG-UX-AC-05).
+		// The Company defect shares that treatment and is proven server-side in
+		// kentender_core.tests.test_site_configuration.
+		await page.fill('[data-testid="kt-fy-start-year"]', "2027");
+		await page.waitForSelector('[data-testid="kt-fy-duplicate"]');
+		await expect(page.locator('[data-testid="kt-fy-duplicate"]')).toHaveText(
+			"Duplicate. This financial year already exists."
+		);
+		await expect(page.locator('[data-testid="kt-fy-add-confirm"]')).toBeDisabled();
 		expect(errors, "console errors").toEqual([]);
 		await art.close();
 	});
 
-	test("CFG-DES-05 — Open needs submission dialog (with replacement notice)", async ({ page, browser }) => {
+	test("C02-open-form — Open submissions form with the cross-year replacement notice", async ({ page, browser }) => {
 		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(
-			art,
-			"CFG-DES-05 Open needs submission dialog.dc.html",
-			".dialog-backdrop .dialog"
-		);
-		const artWidth = await boxWidth(art, ".dialog-backdrop .dialog");
+		// First card in the forms grid: Open · Departmental needs.
+		const scope = "#forms .card";
+		await openArtboard(art, `${DESIGN_DIR}/C02-Financial-Years.dc.html`, scope);
+		const wanted = await landmarks(art, scope);
 
 		await loginAsAdministrator(page);
-		const errors = await openSetupTab(page, "fiscal-years", '[data-testid="kt-fy-table"]');
-		// §8.4 world: 2027/28 is open, so opening 2026/27 shows the replacement
-		// notice — the artboard's exact state. Nothing is submitted.
-		await page.click('[data-testid="kt-fy-open-2026-2027"]');
+		const errors = await openSetupTab(page, "fiscal-years/year/2026-2027", '[data-testid="kt-setup-fy-detail-card"]');
+		// §8.4 world: 2027/28 holds needs intake, so opening it for 2026/27
+		// shows the replacement notice. Nothing is submitted.
+		await page.click('[data-testid="kt-fy-open-needs"]');
 		await page.waitForSelector('[data-testid="kt-fy-intake-replaces"]');
-
-		expectLandmarkSubsequence(wanted, await landmarks(page, DIALOG_SCOPE), "CFG-DES-05");
-		expectClose(await boxWidth(page, DIALOG_SCOPE), artWidth, 2, "dialog width");
+		expectLandmarkSubsequence(wanted, await landmarks(page, DIALOG_SCOPE), "C02-open-form");
 		expect(errors, "console errors").toEqual([]);
 		await art.close();
 	});
+
+	test("C02-deadline-form — Change closing time form", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		// Seventh card in the forms grid: the deadline edit.
+		const scope = "#forms .card:nth-child(7)";
+		await openArtboard(art, `${DESIGN_DIR}/C02-Financial-Years.dc.html`, scope);
+		const wanted = await landmarks(art, scope);
+
+		await loginAsAdministrator(page);
+		const errors = await openSetupTab(page, "fiscal-years/year/2027-2028", '[data-testid="kt-setup-fy-detail-card"]');
+		await page.click('[data-testid="kt-fy-deadline-needs"]');
+		await page.waitForSelector('[data-testid="kt-fy-intake"][data-mode="deadline"]');
+		expectLandmarkSubsequence(wanted, await landmarks(page, DIALOG_SCOPE), "C02-deadline-form");
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	test("C02-disable — the blocked disable dialog names its exact blockers", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		// First dialog in the disable grid: "This financial year cannot be disabled".
+		const scope = "#disable .dialog";
+		await openArtboard(art, `${DESIGN_DIR}/C02-Financial-Years.dc.html`, scope);
+		const wanted = await landmarks(art, scope);
+
+		await loginAsAdministrator(page);
+		const errors = await openSetupTab(page, "fiscal-years/year/2027-2028", '[data-testid="kt-setup-fy-detail-card"]');
+		await page.click('[data-testid="kt-fy-disable-open"]');
+		await page.waitForSelector('[data-testid="kt-fy-disable"]');
+		expectLandmarkSubsequence(wanted, await landmarks(page, DIALOG_SCOPE), "C02-disable");
+		await expect(page.locator('[data-testid="kt-fy-disable-blocker"]').first()).toHaveText(
+			"Departmental needs submission is open for this financial year."
+		);
+		await expect(page.locator('[data-testid="kt-fy-disable-confirm"]')).toBeDisabled();
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	// CFG-CHG-002 v0.11 §10.5 — C03A-Funding-Sources.dc.html (Phase 3C). The
+	// board carries no anchor ids, so `document.querySelector` takes the
+	// first `.blueprint` (the list) and the first `.dialog` (the editor).
+	test("C03A-list — Funding sources list with the availability column", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		const scope = ".blueprint";
+		await openArtboard(art, `${DESIGN_DIR}/C03A-Funding-Sources.dc.html`, scope);
+		const wanted = await landmarks(art, scope);
+
+		await loginAsAdministrator(page);
+		const errors = await openSetupTab(page, "procurement-settings", '[data-testid="kt-procset-sources"]');
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C03A-list");
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	test("C03A-editor — the availability choice states what it governs, and a duplicate name is refused before submit", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		const scope = ".dialog";
+		await openArtboard(art, `${DESIGN_DIR}/C03A-Funding-Sources.dc.html`, scope);
+		const wanted = await landmarks(art, scope);
+
+		await loginAsAdministrator(page);
+		const errors = await openSetupTab(page, "procurement-settings/new-source", '[data-testid="kt-procset-source-editor"]');
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C03A-editor");
+
+		await page.fill('[data-testid="kt-fs-name"]', "Government of Kenya");
+		await page.waitForSelector('[data-testid="kt-fs-duplicate"]');
+		await expect(page.locator('[data-testid="kt-fs-duplicate"]')).toHaveText(
+			"Duplicate. A funding source with this name already exists."
+		);
+		await expect(page.locator('[data-testid="kt-fs-save"]')).toBeDisabled();
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	// CFG-CHG-002 v0.11 §10.6–§10.9 — the rule editor, the source check and
+	// the working-day calendar (Phases 3D–3F). Each renders its own anchored
+	// section of the owning artboard.
+	test("C03B-add — Add procurement rule offers exactly the seven kinds", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		const scope = "#add";
+		await openArtboard(art, `${DESIGN_DIR}/C03BC-Procurement-Rules.dc.html`, scope);
+		// The board samples three entity types in its own order; the live control
+		// offers the complete closed set in the same canonical order the
+		// Procuring entity screen uses. The sample is fixture data, not an
+		// ordering contract, so the three labels are excluded — the control's
+		// presence is still asserted through the "Entity types" group label.
+		const ENTITY_TYPE_SAMPLES = ["National Government Ministry", "County Government", "State Corporation"];
+		const wanted = (await landmarks(art, scope)).filter((text) => !ENTITY_TYPE_SAMPLES.includes(text));
+
+		await loginAsAdministrator(page);
+		const errors = await openSetupTab(page, "procurement-settings/new-rule", '[data-testid="kt-procset-rule-editor"]');
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C03B-add");
+		expect(await page.locator('[data-testid="kt-rule-kind"] option').allTextContents()).toEqual([
+			"Method eligibility",
+			"Reservation rules",
+			"Exclusive preference",
+			"Preference margins",
+			"Market price index",
+			"Approval applicability",
+			"Publication obligations",
+		]);
+		// Method eligibility is owned by its method profile (plan D10), so the
+		// editor says so rather than offering a divergent second form.
+		await page.selectOption('[data-testid="kt-rule-kind"]', "Method eligibility");
+		await expect(page.locator('[data-testid="kt-rule-delegated"]')).toBeVisible();
+		await expect(page.locator('[data-testid="kt-rule-save"]')).toBeDisabled();
+		// Each other kind brings its own validated field group.
+		await page.selectOption('[data-testid="kt-rule-kind"]', "Publication obligations");
+		await expect(page.locator('[data-testid="kt-po-id"]')).toBeVisible();
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	test("C03D-pending — Check sources fixes its target and refuses a verified result without evidence", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		const scope = "#pending";
+		await openArtboard(art, `${DESIGN_DIR}/C03D-Source-Checks.dc.html`, scope);
+		const wanted = await landmarks(art, scope);
+
+		await loginAsAdministrator(page);
+		const reference = await currentReservationVersion(page);
+		const errors = await openSetupTab(
+			page,
+			`procurement-settings/check-sources/${reference}`,
+			'[data-testid="kt-source-check-rule"]'
+		);
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C03D-pending");
+
+		await page.selectOption('[data-testid="kt-sc-result"]', "Verified");
+		await expect(page.locator('[data-testid="kt-sc-evidence-required"]')).toHaveText(
+			"Complete the source, applicability and interpretation evidence before recording a verified source check."
+		);
+		await expect(page.locator('[data-testid="kt-sc-record"]')).toBeDisabled();
+		// Nothing is recorded: both histories are read-only here.
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	test("C04-calendar — the working-day calendar editor, with row controls only while unsaved", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		// The board's second `.blueprint` in this section is the calendar
+		// editor; `#calendar` scopes to the whole missing/add/detail group.
+		const scope = "#calendar .blueprint";
+		await openArtboard(art, `${DESIGN_DIR}/C04-Schedules-Calendars.dc.html`, scope);
+		// This one board documents both states at once: the unsaved editor
+		// (Cancel / Save calendar version, Add row) and the saved detail
+		// (Create new version / Check sources / View usage and history). A
+		// live screen is only ever in one of them, so each set of actions is
+		// asserted in the state it belongs to rather than both at once.
+		const SAVED_ONLY = ["Create new version", "Check sources", "View usage and history"];
+		const wanted = (await landmarks(art, scope)).filter((text) => !SAVED_ONLY.includes(text));
+
+		await loginAsAdministrator(page);
+		const errors = await openSetupTab(page, "procurement-settings/new-calendar", '[data-testid="kt-procset-calendar"]');
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C04-calendar");
+		await expect(page.locator('[data-testid="kt-cal-weekend-Saturday"]')).toBeChecked();
+		await expect(page.locator('[data-testid="kt-cal-weekend-Sunday"]')).toBeChecked();
+		await expect(page.locator('[data-testid="kt-cal-add-holiday"]')).toBeVisible();
+
+		// The saved state: read-only, no row controls, and the successor action.
+		const calendar = await firstCalendar(page);
+		if (calendar) {
+			await page.goto(`/app/system-setup#procurement-settings/calendar/${calendar}`, { waitUntil: "domcontentloaded" });
+			await page.waitForSelector('[data-testid="kt-cal-name-ro"]', { timeout: 20_000 });
+			await expect(page.locator('[data-testid="kt-cal-new-version"]')).toBeVisible();
+			await expect(page.locator('[data-testid="kt-cal-add-holiday"]')).toHaveCount(0);
+		}
+		// Nothing is saved: a calendar version is immutable once written.
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	// CFG-CHG-002 v0.11 §10.10 — Reminders.dc.html (Phase 3G). The board's
+	// first `.blueprint` is the unchanged specimen; the card states what is
+	// being set, its unit and both consequences.
+	test("Reminders — the threshold states what it sets, its unit and that it is not a deadline", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		const scope = ".blueprint";
+		await openArtboard(art, `${DESIGN_DIR}/Reminders.dc.html`, scope);
+		const wanted = await landmarks(art, scope);
+
+		await loginAsAdministrator(page);
+		const errors = await openSetupTab(page, "procurement-settings", '[data-testid="kt-procset-reminder"]');
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "Reminders");
+		const card = page.locator('[data-testid="kt-procset-reminder"]');
+		await expect(card).toContainText("Unit: Calendar days");
+		await expect(card).toContainText("This changes reminder timing, not procurement deadlines.");
+		await expect(card).toContainText("Use 0 to begin reminders on the milestone date; overdue reminders still apply.");
+
+		// 0–365 is the rule, stated before the round trip (the server refuses
+		// the same range — kentender_core.tests.test_procurement_settings).
+		await page.fill('[data-testid="kt-reminder-days"]', "366");
+		await expect(page.locator('[data-testid="kt-reminder-range-error"]')).toHaveText(
+			"Enter a whole number from 0 to 365."
+		);
+		await expect(page.locator('[data-testid="kt-reminder-save"]')).toBeDisabled();
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	// Retargeted from the retired Planning board to CFG's own C03BC "#detail"
+	// (Phase 3D). The saved detail states its groups and its actions; nothing
+	// on it is editable, because a correction is a new version (§11.6).
+	test("C03B-detail — a saved rule Version, read-only", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		const scope = "#detail";
+		await openArtboard(art, `${DESIGN_DIR}/C03BC-Procurement-Rules.dc.html`, scope);
+		// Kind-specific values are the fixture's own (the board samples a
+		// method-eligibility rule); this asserts the composition, not the data.
+		const FIXTURE_VALUES = ["Method", "Procedure", "Category", "Currency"];
+		const wanted = (await landmarks(art, scope)).filter((text) => !FIXTURE_VALUES.includes(text));
+
+		await loginAsAdministrator(page);
+		// The board samples a method-eligibility rule, but Check sources applies
+		// to the verification targets the model actually has (a reference
+		// version or a calendar — a method profile carries its own status, plan
+		// D10). The composition under test is the same either way.
+		const reference = await currentReservationVersion(page);
+		const errors = await openSetupTab(page, `procurement-settings/rule/${reference}`, '[data-testid="kt-procset-rule-card"]');
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C03B-detail");
+		// Read-only: a correction is a new version, never an edit in place.
+		expect(await page.locator('[data-testid="kt-procset-rule-card"] input').count()).toBe(0);
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	// Retargeted from the retired Planning board to CFG's own C04 "#detail".
+	test("C04-schedule — Schedule profile detail with its seven milestones", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		const scope = "#detail";
+		await openArtboard(art, `${DESIGN_DIR}/C04-Schedules-Calendars.dc.html`, scope);
+		// A schedule profile is not one of the model's verification targets (a
+		// reference version or a calendar is — `_VERIFICATION_TARGETS`); it
+		// carries its own status through its register command. The source-check
+		// actions are asserted on the calendar, where they apply.
+		const VERIFICATION_TARGET_ACTIONS = ["Check sources", "View usage and history"];
+		const wanted = (await landmarks(art, scope)).filter((text) => !VERIFICATION_TARGET_ACTIONS.includes(text));
+
+		await loginAsAdministrator(page);
+		const errors = await openSetupTab(page, "procurement-settings/profile/SPR-OPEN-TENDER-GOODS-V1", '[data-testid="kt-procset-profile-table"]');
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C04-schedule");
+		// Seven milestones, and the six intervals between them.
+		expect(await page.locator('[data-testid^="kt-procset-milestone-"]').count()).toBe(7);
+		expect(await page.locator('[data-testid^="kt-procset-interval-"]').count()).toBe(6);
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
 });

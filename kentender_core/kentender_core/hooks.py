@@ -256,6 +256,8 @@ scheduler_events = {
 		"kentender_core.services.site_configuration.close_due_needs_submissions",
 		# CFG-CHG-002 v0.9 §4.2 — the same closure for departmental-plan intake.
 		"kentender_core.services.site_configuration.close_due_dpp_submissions",
+		# CFG-CHG-002 v0.11 §4.3 — the same closure for disposal-plan intake.
+		"kentender_core.services.site_configuration.close_due_disposal_plan_submissions",
 	],
 	"daily": [
 		# AUTH-ADR-001 v1.6 §5.7 — remove Frappe Role projections left behind

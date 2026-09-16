@@ -224,8 +224,14 @@ class ProcurementSettingsTestCase(IntegrationTestCase):
 		out = settings.set_reminder_threshold_days(days=10)
 		self.assertEqual(out["approaching_milestone_threshold_days"], 10)
 		self.assertEqual(settings.get_reminder_threshold_days(), 10)
-		with self.assertRaises(frappe.ValidationError):
-			settings.set_reminder_threshold_days(days=0)
+		# CFG-CHG-002 v0.11 §10.10 — 0 is legitimate (reminders begin on the
+		# milestone date); the bound is 0–365, superseding the old 1–60.
+		settings.set_reminder_threshold_days(days=0)
+		self.assertEqual(settings.get_reminder_threshold_days(), 0)
+		for refused in (-1, 366):
+			with self.assertRaises(frappe.ValidationError) as caught:
+				settings.set_reminder_threshold_days(days=refused)
+			self.assertIn("0 to 365", str(caught.exception))
 		settings.set_reminder_threshold_days(days=settings.DEFAULT_REMINDER_THRESHOLD_DAYS)
 		self.assertEqual(settings.get_reminder_threshold_days(), 7)
 
@@ -244,5 +250,7 @@ class ProcurementSettingsTestCase(IntegrationTestCase):
 		self.assertIn("funding_sources", read)
 		self.assertIn("method_profiles", read)
 		self.assertIn("schedule_profiles", read)
-		self.assertIn("regulatory_references", read)
+		self.assertIn("calendars", read)
+		self.assertIn("reference_sets", read)
+		self.assertIn("reference_kinds", read)
 		self.assertEqual(read["verification_statuses"], list(settings.VERIFICATION_STATUSES))

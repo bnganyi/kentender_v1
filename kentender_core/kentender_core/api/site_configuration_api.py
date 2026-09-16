@@ -85,6 +85,12 @@ def preview_fiscal_year(start_year: int | str) -> dict[str, Any]:
 
 
 @frappe.whitelist()
+def list_fiscal_year_intake_history(fiscal_year: str) -> dict[str, Any]:
+	"""§10.3 C02 — the Change history disclosure for one financial year."""
+	return configuration.list_fiscal_year_intake_history(fiscal_year)
+
+
+@frappe.whitelist()
 def add_fiscal_year(start_year: int | str, idempotency_key: str | None = None) -> dict[str, Any]:
 	"""§7 `AddFiscalYear` — generated dates; the site Company attached."""
 	return configuration.add_fiscal_year(
@@ -155,6 +161,68 @@ def close_dpp_submission(
 	"""CFG v0.9 §4.2 — close departmental-plan intake, audited."""
 	return configuration.close_dpp_submission(
 		fiscal_year=fiscal_year,
+		reason=reason or "",
+		expected_version=expected_version or "",
+		idempotency_key=idempotency_key or "",
+	)
+
+
+@frappe.whitelist()
+def get_disposal_plan_submission_state(fiscal_year: str | None = None) -> dict[str, Any]:
+	"""CFG-CHG-002 v0.11 §4.3 — the disposal-plan intake flag, read-only."""
+	return configuration.get_disposal_plan_submission_state(fiscal_year or "")
+
+
+@frappe.whitelist()
+def open_disposal_plan_submission(
+	fiscal_year: str,
+	closes_at: str | None = None,
+	reason: str | None = None,
+	expected_version: str | None = None,
+	idempotency_key: str | None = None,
+) -> dict[str, Any]:
+	"""CFG-CHG-002 v0.11 §4.3 — open disposal-plan intake for one year,
+	atomically closing any other; independent of needs and dpp."""
+	return configuration.open_disposal_plan_submission(
+		fiscal_year=fiscal_year,
+		closes_at=closes_at or "",
+		reason=reason or "",
+		expected_version=expected_version or "",
+		idempotency_key=idempotency_key or "",
+	)
+
+
+@frappe.whitelist()
+def close_disposal_plan_submission(
+	fiscal_year: str,
+	reason: str | None = None,
+	expected_version: str | None = None,
+	idempotency_key: str | None = None,
+) -> dict[str, Any]:
+	"""CFG-CHG-002 v0.11 §4.3 — close disposal-plan intake, audited."""
+	return configuration.close_disposal_plan_submission(
+		fiscal_year=fiscal_year,
+		reason=reason or "",
+		expected_version=expected_version or "",
+		idempotency_key=idempotency_key or "",
+	)
+
+
+@frappe.whitelist()
+def update_intake_close_instant(
+	module_key: str,
+	fiscal_year: str,
+	closes_at: str | None = None,
+	reason: str | None = None,
+	expected_version: str | None = None,
+	idempotency_key: str | None = None,
+) -> dict[str, Any]:
+	"""§7 `UpdateIntakeCloseInstant` — changes only the named module's close
+	instant on its currently-open year; never opens or swaps a year."""
+	return configuration.update_intake_close_instant(
+		module_key=module_key,
+		fiscal_year=fiscal_year,
+		closes_at=closes_at or "",
 		reason=reason or "",
 		expected_version=expected_version or "",
 		idempotency_key=idempotency_key or "",

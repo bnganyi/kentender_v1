@@ -39,16 +39,18 @@ test.describe("System setup — Procurement settings", () => {
 			await page.waitForSelector(`[data-testid="kt-procset-source-${TEST_SOURCE}"]`);
 		}
 		// Disable, then re-enable: the list re-renders from the server each time.
+		// CFG-CHG-002 v0.11 §10.5 — availability is an explicit Yes/No choice
+		// ("Available for new selection"), not an "Enabled" checkbox.
 		await page.click(`[data-testid="kt-procset-source-edit-${TEST_SOURCE}"]`);
-		await page.waitForSelector('[data-testid="kt-fs-enabled"]');
-		const wasEnabled = await page.isChecked('[data-testid="kt-fs-enabled"]');
-		await page.setChecked('[data-testid="kt-fs-enabled"]', !wasEnabled);
+		await page.waitForSelector('[data-testid="kt-fs-enabled-yes"]');
+		const wasEnabled = await page.isChecked('[data-testid="kt-fs-enabled-yes"]');
+		await page.click(wasEnabled ? '[data-testid="kt-fs-enabled-no"]' : '[data-testid="kt-fs-enabled-yes"]');
 		await page.click('[data-testid="kt-fs-save"]');
 		await page.waitForSelector(`[data-testid="kt-procset-source-${TEST_SOURCE}"]`);
 		await expect(row).toContainText(wasEnabled ? "No" : "Yes");
 		await page.click(`[data-testid="kt-procset-source-edit-${TEST_SOURCE}"]`);
-		await page.waitForSelector('[data-testid="kt-fs-enabled"]');
-		await page.setChecked('[data-testid="kt-fs-enabled"]', wasEnabled);
+		await page.waitForSelector('[data-testid="kt-fs-enabled-yes"]');
+		await page.click(wasEnabled ? '[data-testid="kt-fs-enabled-yes"]' : '[data-testid="kt-fs-enabled-no"]');
 		await page.click('[data-testid="kt-fs-save"]');
 		await page.waitForSelector(`[data-testid="kt-procset-source-${TEST_SOURCE}"]`);
 		await expect(row).toContainText(wasEnabled ? "Yes" : "No");
@@ -71,7 +73,7 @@ test.describe("System setup — Procurement settings", () => {
 		await page.waitForSelector('[data-testid="kt-procset-rule-card"]');
 		expect(page.url()).toContain("#procurement-settings/rule/MPR-OPEN-TENDER-V1");
 		await expect(page.locator('[data-testid="kt-procset-rule-title"]')).toContainText("Method eligibility — Open Tender — Version 1");
-		await expect(page.locator('[data-testid="kt-procset-rule-verification"]')).toHaveText("Pending");
+		await expect(page.locator('[data-testid="kt-procset-rule-verification"]')).toHaveText("Source check needed");
 		expect(await page.locator('[data-testid="kt-procset-rule-card"] input').count()).toBe(0);
 
 		await page.click('[data-testid="kt-procset-rule-new-version"]');
@@ -92,7 +94,9 @@ test.describe("System setup — Procurement settings", () => {
 		await page.click('[data-testid="kt-procset-profile-view-SPR-OPEN-TENDER-GOODS-V1"]');
 		await page.waitForSelector('[data-testid="kt-procset-profile-table"]');
 		await expect(page.locator('[data-testid="kt-procset-profile-title"]')).toHaveText("Open Tender — goods");
-		expect(await page.locator('[data-testid="kt-procset-profile-table"] tbody tr').count()).toBe(7);
+		// §10.9 — the milestones and the intervals between them are two tables.
+		expect(await page.locator('[data-testid^="kt-procset-milestone-"]').count()).toBe(7);
+		expect(await page.locator('[data-testid^="kt-procset-interval-"]').count()).toBe(6);
 		await expect(page.locator('[data-testid="kt-procset-profile-notice"]')).toContainText("cannot support Plan submission");
 		await expect(page.locator('[data-testid="kt-procset-profile-delivery-default"]')).toHaveText("Not set");
 		expect(errors, "console errors").toEqual([]);

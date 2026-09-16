@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+</helmet>
+<div style="position:sticky;top:0;z-index:10;background:var(--color-surface);border-bottom:1px solid var(--color-divider);padding:14px 24px;display:flex;flex-wrap:wrap;gap:16px;align-items:baseline">
+<strong style="font-family:var(--font-heading);font-size:14px;letter-spacing:.04em">SYSTEM SETUP — STATIC DESIGN CONTRACT</strong>
+<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px">
+<a href="C01-Procuring-Entity.dc.html">C01</a>
+<a href="C02-Financial-Years.dc.html">C02</a>
+<a href="C03A-Funding-Sources.dc.html">C03-A</a>
+<a href="C03BC-Procurement-Rules.dc.html" style="color:var(--color-accent-700);font-weight:600">C03-B/C</a>
+<a href="C03D-Source-Checks.dc.html">C03-D</a>
+<a href="C04-Schedules-Calendars.dc.html">C04</a>
+<a href="Reminders.dc.html">Reminders</a>
+</div>
+</div>
+<div style="position:sticky;top:49px;z-index:9;background:var(--color-surface-2);border-bottom:1px solid var(--color-divider);padding:8px 24px;display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--color-neutral-700)">
+<a href="#list">List / empty / set-only</a><a href="#detail">Saved detail</a><a href="#rename">Rename</a><a href="#add">Add rule form</a><a href="#kinds">Kind editors (7)</a><a href="#version">New version / impact</a><a href="#states">Gap / overlap / stale</a>
+</div>
+<main style="max-width:980px;margin:0 auto;padding:32px 24px 96px">
+<div style="margin-bottom:32px">
+<span class="tag tag-outline">C03-B/C · CUX-03</span>
+<h1 style="margin-top:10px">Procurement rules &amp; versions</h1>
+<p class="text-muted" style="max-width:65ch">§10.6–10.7 — Administrator; Ministry of Health; 24 Nov 2026, 09:15 EAT.</p>
+</div>
+
+<div id="list" style="margin:0 0 40px">
+<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C03-B</span><span class="tag tag-outline">CONFIG-RULES</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Rule list, empty, set-only, partial save</h4></div>
+<div class="blueprint" style="background:var(--color-surface);padding:28px;max-width:920px;margin-bottom:16px">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+<div><h3 style="margin-bottom:4px">Procurement rules</h3><p class="card-body" style="margin-bottom:0">Maintain procurement rules and their supporting sources.</p></div>
+<button type="button" class="btn btn-primary">Add rule</button>
+</div>
+<div style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0">
+<div class="field" style="flex:1;min-width:200px"><label>Search</label><input class="input" placeholder="" /></div>
+<div class="field" style="min-width:160px"><label>Rule kind</label><select class="input"><option>All</option><option>Method eligibility</option><option>Reservation rules</option><option>Exclusive preference</option><option>Preference margins</option><option>Market price index</option><option>Approval applicability</option><option>Publication obligations</option></select></div>
+<div class="field" style="min-width:160px"><label>Source check</label><select class="input"><option>All</option><option>Source check needed</option><option>Sources verified</option><option>Source check rejected</option></select></div>
+</div>
+<table class="table">
+<thead><tr><th>Rule</th><th>Applies from</th><th>Applies until</th><th>Version</th><th>Source check</th><th>Details</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td>Method eligibility</td><td>1 Jul 2027</td><td>30 Jun 2028</td><td>1</td><td><span class="kt-status is-attention">Source check needed</span></td><td><span class="kt-status is-pending">Details missing</span></td><td><a href="#detail">View</a></td></tr>
+<tr><td>Reservation rules</td><td>1 Jul 2027</td><td>30 Jun 2028</td><td>1</td><td><span class="kt-status is-attention">Source check needed</span></td><td><span class="kt-status is-pending">Details missing</span></td><td><a href="#">View</a></td></tr>
+</tbody></table>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+<div class="card" style="align-items:center;text-align:center"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-400)" stroke-width="1.5"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><p style="font-weight:600;margin-bottom:4px">No procurement rules yet</p><p class="card-body">Add rules for the procurement procedures supported by this release.</p><button type="button" class="btn btn-primary btn-block">Add rule</button></div>
+<div class="card"><div class="kt-status is-pending" style="margin-bottom:6px">No version saved</div><div class="kt-meta-row"><div><span class="kt-label">Rule</span><span class="kt-meta-value">Method eligibility</span></div></div><button type="button" class="btn btn-secondary" style="margin-top:8px">Add first version</button></div>
+<div class="kt-notice is-warning" style="flex-direction:column;align-items:flex-start"><div style="display:flex;gap:12px;align-items:flex-start"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body"><strong>Rule created; version not saved.</strong> Your entries are retained so you can finish saving this version.</div></div><button type="button" class="btn btn-primary" style="margin-left:30px">Save rule version</button></div>
+<div class="card"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-700)" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg><span class="tag tag-neutral">Not published</span></div><p class="card-body">No price index has been published for this period.</p></div>
+</div>
+</div>
+
+<div id="detail" style="margin:0 0 40px">
+<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C03-B</span><span class="tag tag-outline">CONFIG-RULES</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Saved detail — Method eligibility</h4></div>
+<div class="blueprint" style="background:var(--color-surface);padding:28px;max-width:920px">
+<h3 style="margin-bottom:4px">Method eligibility</h3>
+<div class="kt-meta-row" style="margin-bottom:12px">
+<div><span class="kt-label">Rule kind</span><span class="kt-meta-value">Method eligibility</span></div>
+<div><span class="kt-label">Version</span><span class="kt-meta-value">1</span></div>
+<div><span class="kt-label">Applies from</span><span class="kt-meta-value">1 Jul 2027</span></div>
+<div><span class="kt-label">Applies until</span><span class="kt-meta-value">30 Jun 2028</span></div>
+<div><span class="kt-label">Source check</span><span class="kt-meta-value"><span class="kt-status is-attention">Source check needed</span></span></div>
+<div><span class="kt-label">Details</span><span class="kt-meta-value"><span class="kt-status is-pending">Details missing</span></span></div>
+</div>
+<div class="kt-notice is-warning" style="margin-bottom:16px"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">Complete the rule details and source checks before using this version.</div></div>
+
+<div style="display:grid;gap:16px;grid-template-columns:1fr 1fr">
+<div class="kt-section"><h6 class="kt-card-title">Rule details</h6><div class="kt-panel"><div class="kt-meta-row">
+<div><span class="kt-label">Method</span><span class="kt-meta-value">Open Tender</span></div>
+<div><span class="kt-label">Procedure</span><span class="kt-meta-value">Planning example</span></div>
+<div><span class="kt-label">Category</span><span class="kt-meta-value">Goods</span></div>
+<div><span class="kt-label">Currency</span><span class="kt-meta-value">KES</span></div>
+</div></div></div>
+<div class="kt-section"><h6 class="kt-card-title">When this rule applies</h6><div class="kt-panel"><div class="kt-meta-row">
+<div><span class="kt-label">Which date determines the rule to use?</span><span class="kt-meta-value">Not yet established</span></div>
+<div><span class="kt-label">Entity applicability</span><span class="kt-meta-value">Not yet established</span></div>
+<div><span class="kt-label">County applicability</span><span class="kt-meta-value">Not yet established</span></div>
+</div></div></div>
+<div class="kt-section" style="grid-column:1/-1"><h6 class="kt-card-title">Sources and interpretation</h6><div class="kt-panel"><div class="kt-meta-row">
+<div><span class="kt-label">Source instrument</span><span class="kt-meta-value">Public Procurement and Asset Disposal Regulations — source verification pending</span></div>
+<div><span class="kt-label">Edition</span><span class="kt-meta-value">Not yet established</span></div>
+<div><span class="kt-label">Provisions</span><span class="kt-meta-value">Not yet established</span></div>
+<div><span class="kt-label">Source document</span><span class="kt-meta-value">Not attached</span></div>
+<div><span class="kt-label">Interpretation</span><span class="kt-meta-value">Applicability review is outstanding.</span></div>
+</div></div></div>
+<div class="kt-section" style="grid-column:1/-1"><h6 class="kt-card-title">Usage and history</h6><div class="kt-panel"><span class="kt-meta-value">Not supplied in this isolated example.</span></div></div>
+</div>
+
+<div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+<button type="button" class="btn btn-secondary">Create new version</button>
+<button type="button" class="btn btn-secondary">Check sources</button>
+<button type="button" class="btn btn-ghost">View usage and history</button>
+</div>
+<div class="kt-meta-row" style="margin-top:16px"><div><span class="kt-label">Rule identifier</span><span class="kt-meta-value">METHOD-ELIGIBILITY</span></div></div>
+</div>
+</div>
+
+<div id="rename" style="margin:0 0 40px">
+<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C03-B</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Edit rule name</h4></div>
+<div class="dialog" style="position:static;max-width:360px">
+<div class="dialog-title">Edit rule name</div>
+<div class="dialog-body"><div class="field"><label>Rule name</label><input class="input" value="Method eligibility" /></div></div>
+<div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Save changes</button></div>
+</div>
+</div>
+
+<div id="add" style="margin:0 0 40px">
+<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C03-B</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Add procurement rule — shell</h4></div>
+<div class="blueprint" style="background:var(--color-surface);padding:28px;max-width:820px">
+<h3>Add procurement rule</h3>
+<div style="display:grid;gap:16px;grid-template-columns:1fr 1fr;margin:16px 0">
+<div class="field"><label>Rule name</label><input class="input" value="Method eligibility" /></div>
+<div class="field"><label>Rule identifier</label><input class="input" value="METHOD-ELIGIBILITY" /></div>
+<div class="field" style="grid-column:1/-1"><label>Rule kind</label>
+<select class="input"><option>Method eligibility</option><option>Reservation rules</option><option>Exclusive preference</option><option>Preference margins</option><option>Market price index</option><option>Approval applicability</option><option>Publication obligations</option></select>
+<p class="text-muted" style="font-size:12px;margin-top:4px">Exactly seven options. Method condition is not a Rule kind — its groups appear only inside Method eligibility (see §10.7 below).</p>
+</div>
+</div>
+<h6 class="kt-card-title">When this rule applies</h6>
+<div style="display:grid;gap:14px;grid-template-columns:1fr 1fr;margin-bottom:14px">
+<div class="field"><label>Applies from</label><input class="input" type="date" placeholder="" /></div>
+<div class="field"><label>Applies until</label><input class="input" type="date" placeholder="" /></div>
+<div class="field" style="grid-column:1/-1"><label>Which date determines the rule to use?</label>
+<select class="input"><option value="">— Select —</option><option>Financial year start</option><option>Plan submission date</option><option>Plan approval date</option><option>Proceeding authorisation date</option><option>Invitation date</option><option>Contract signing date</option></select></div>
+<div class="field"><label id="ar-entity-types">Entity types</label>
+<div style="display:flex;flex-direction:column;gap:4px" role="group" aria-labelledby="ar-entity-types">
+<label class="kt-checkbox"><input type="checkbox" /><span class="box"></span>National Government Ministry</label>
+<label class="kt-checkbox"><input type="checkbox" /><span class="box"></span>County Government</label>
+<label class="kt-checkbox"><input type="checkbox" /><span class="box"></span>State Corporation</label>
+</div></div>
+<div class="field"><label>County applicability</label><select class="input"><option value="">— Select —</option><option>All</option><option>County</option><option>Non-county</option></select></div>
+<div class="field"><label id="ar-categories">Categories</label>
+<div style="display:flex;gap:14px" role="group" aria-labelledby="ar-categories">
+<label class="kt-checkbox"><input type="checkbox" /><span class="box"></span>Goods</label>
+<label class="kt-checkbox"><input type="checkbox" /><span class="box"></span>Works</label>
+<label class="kt-checkbox"><input type="checkbox" /><span class="box"></span>Services</label>
+</div></div>
+<div class="field"><label>Currency</label><select class="input"><option value="">— Select —</option><option>KES</option></select></div>
+</div>
+<h6 class="kt-card-title">Sources and interpretation</h6>
+<div style="display:grid;gap:14px;grid-template-columns:1fr 1fr">
+<div class="field"><label>Instrument</label><input class="input" placeholder="" /></div>
+<div class="field"><label>Edition</label><input class="input" placeholder="" /></div>
+<div class="field" style="grid-column:1/-1"><label>Provisions</label><input class="input" placeholder="" /></div>
+<div class="field"><label>Source URL</label><input class="input" placeholder="" /></div>
+<div class="field"><label>Source document</label><input class="input" value="Not attached" disabled="disabled" /></div>
+<div class="field" style="grid-column:1/-1"><label>Effective dates and amendments</label><input class="input" placeholder="" /></div>
+<div class="field" style="grid-column:1/-1"><label>Interpretation</label><textarea class="input" rows="2" placeholder=""></textarea></div>
+</div>
+<div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-secondary" type="button">Cancel</button><button class="btn btn-primary" type="button">Save rule version</button></div>
+</div>
+</div>
+
+<div id="kinds" style="margin:0 0 40px">
+<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px"><span class="tag tag-accent">C03-C</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Seven kind-specific editors + embedded Method-condition groups</h4></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px">
+
+<div class="card"><div class="card-kicker">1 · Method eligibility</div>
+<h6 class="kt-card-title">Which purchases qualify?</h6>
+<div style="display:grid;gap:10px;grid-template-columns:1fr 1fr;margin-bottom:12px">
+<div class="field"><label>Method</label><select class="input"><option selected="selected">Open Tender</option><option>Restricted Tender</option><option>Request for Quotations</option><option>Direct Procurement</option></select></div>
+<div class="field"><label>Procedure</label><select class="input"><option selected="selected">Planning example</option></select></div>
+<div class="field"><label>Category</label><select class="input"><option selected="selected">Goods</option><option>Works</option><option>Services</option></select></div>
+<div class="field"><label>Currency</label><select class="input"><option selected="selected">KES</option></select></div>
+</div>
+<h6 class="kt-card-title">Value range</h6>
+<div style="display:grid;gap:10px;grid-template-columns:1fr 1fr;margin-bottom:12px">
+<div class="field" style="grid-column:1/-1"><label>Value measured against</label><select class="input"><option>Per request</option><option>Per item per financial year</option><option selected="selected">Approved budget allocation</option></select></div>
+<div class="field"><label>Minimum status</label><select class="input"><option>Value specified</option><option>No limit stated in the verified source</option><option selected="selected">Not yet established</option></select></div>
+<div class="field"><label>Minimum amount</label><input class="input" type="number" disabled="disabled" placeholder="" /></div>
+<div class="field"><label>Maximum status</label><select class="input"><option>Value specified</option><option>No limit stated in the verified source</option><option selected="selected">Not yet established</option></select></div>
+<div class="field"><label>Maximum amount</label><input class="input" type="number" disabled="disabled" placeholder="" /></div>
+</div>
+<h6 class="kt-card-title">Conditions and evidence — embedded Method-condition groups</h6>
+<div class="kt-panel">
+<div class="field" style="margin-bottom:8px;max-width:200px"><label id="mc-req">Conditions required</label><select class="input" aria-labelledby="mc-req"><option>All</option><option>Any</option></select></div>
+<table class="table"><thead><tr><th>Condition</th><th>Fact to check</th><th>Comparison</th><th>Expected value</th><th>Required evidence</th></tr></thead><tbody><tr><td colspan="5" class="text-muted">Required conditions not yet completed.</td></tr></tbody></table>
+<button type="button" class="btn btn-ghost" style="margin-top:8px">Add row</button>
+<p style="color:var(--status-critical);font-size:12px;margin-top:6px">Unsupported row variant: This condition is not available in this release.</p>
+</div></div>
+
+<div class="card"><div class="card-kicker">2 · Reservation rules</div>
+<h6 class="kt-card-title">Annual target</h6>
+<div style="display:grid;gap:10px;grid-template-columns:1fr 1fr;margin-bottom:12px">
+<div class="field"><label>Obligation code</label><input class="input" value="ANNUAL-TARGET-EXAMPLE" /></div>
+<div class="field"><label>Target</label><input class="input" type="number" value="30" /></div>
+</div>
+<h6 class="kt-card-title">What the target is measured against</h6>
+<div class="field" style="margin-bottom:12px"><label>Measured against</label><select class="input"><option selected="selected">Annual procurement budget</option><option>Annual procurement value</option></select></div>
+<h6 class="kt-card-title">Who qualifies</h6>
+<div style="display:grid;gap:10px;grid-template-columns:1fr 1fr;margin-bottom:12px">
+<div class="field"><label>Eligible planned designation</label><input class="input" value="Youth" /></div>
+<div class="field"><label>County applicability</label><select class="input"><option selected="selected">All</option><option>County</option><option>Non-county</option></select></div>
+</div>
+<h6 class="kt-card-title">How targets overlap</h6>
+<div class="field"><label>How targets overlap</label><select class="input"><option value="">— Select —</option><option>Targets apply independently</option><option>Targets are mutually exclusive</option><option>Specified overlap</option></select></div>
+<p class="text-muted" style="font-size:12px;margin-top:8px">Illustrative values; source checks are still needed. Overlap shown unselected — "Not yet established" is a display state, not a governed overlap option.</p></div>
+
+<div class="card"><div class="card-kicker">3 · Exclusive preference</div>
+<h6 class="kt-card-title">Which purchases are restricted?</h6>
+<div class="kt-meta-row" style="margin-bottom:8px"><div><span class="kt-label">Restriction code</span><span class="kt-meta-value">—</span></div><div><span class="kt-label">Category / Method / Currency</span><span class="kt-meta-value">—</span></div><div><span class="kt-label">Amount</span><span class="kt-meta-value">blank</span></div></div>
+<h6 class="kt-card-title">Eligible suppliers</h6>
+<div class="kt-meta-row" style="margin-bottom:8px"><div><span class="kt-label">Eligible party classification</span><span class="kt-meta-value">—</span></div></div>
+<h6 class="kt-card-title">Conditions</h6>
+<p style="color:var(--status-critical);font-size:12px">Required conditions not yet completed.</p></div>
+
+<div class="card"><div class="card-kicker">4 · Preference margins</div>
+<h6 class="kt-card-title">Margin</h6>
+<div class="kt-meta-row" style="margin-bottom:8px"><div><span class="kt-label">Scheme / Procedure</span><span class="kt-meta-value">—</span></div><div><span class="kt-label">Margin</span><span class="kt-meta-value">blank</span></div></div>
+<h6 class="kt-card-title">Qualifying conditions</h6>
+<div class="kt-meta-row" style="margin-bottom:8px"><div><span class="kt-label">Origin / Shareholding from–to</span><span class="kt-meta-value">—</span></div></div>
+<h6 class="kt-card-title">Evaluation basis</h6>
+<p class="text-muted" style="font-size:12px">Used during evaluation; this does not decide supplier entitlement in Planning.</p></div>
+
+<div class="card"><div class="card-kicker">5 · Market price index</div>
+<h6 class="kt-card-title">Published prices</h6>
+<p class="card-body">CONFIG has no price rows.</p>
+<span class="tag tag-neutral">Not published</span>
+<h6 class="kt-card-title" style="margin-top:10px">Publication and coverage</h6>
+<div class="kt-meta-row"><div><span class="kt-label">Item / Category / Unit / Currency</span><span class="kt-meta-value">—</span></div></div></div>
+
+<div class="card"><div class="card-kicker">6 · Approval applicability</div>
+<h6 class="kt-card-title">Entity facts</h6>
+<div class="kt-meta-row" style="margin-bottom:8px"><div><span class="kt-label">Entity type</span><span class="kt-meta-value">National Government Ministry</span></div><div><span class="kt-label">County applicability</span><span class="kt-meta-value">Non-county</span></div><div><span class="kt-label">Required entity evidence</span><span class="kt-meta-value">Not yet established</span></div></div>
+<h6 class="kt-card-title">Plan approval authority</h6>
+<div style="display:grid;gap:10px;grid-template-columns:1fr 1fr;margin-bottom:8px">
+<div class="field"><label>Plan approval authority</label><select class="input"><option selected="selected">Cabinet Secretary</option><option>County Executive Committee Member</option><option>Board of Directors</option><option>Council</option></select></div>
+<div class="field"><label>Required business capacity</label><input class="input" value="Configured statutory capacity" disabled="disabled" /></div>
+</div>
+<h6 class="kt-card-title">Supporting instrument</h6>
+<div class="kt-meta-row"><div><span class="kt-label">Source reference</span><span class="kt-meta-value">—</span></div></div></div>
+
+<div class="card"><div class="card-kicker">7 · Publication obligations</div>
+<h6 class="kt-card-title">What must be published or reported?</h6>
+<div class="kt-meta-row" style="margin-bottom:8px"><div><span class="kt-label">Obligation</span><span class="kt-meta-value">LAW-OB-009</span></div></div>
+<h6 class="kt-card-title">Who is responsible?</h6>
+<div class="kt-meta-row" style="margin-bottom:8px"><div><span class="kt-label">Accountable actor / Recipient / Channel</span><span class="kt-meta-value">—</span></div></div>
+<h6 class="kt-card-title">When and where?</h6>
+<div class="kt-meta-row" style="margin-bottom:8px"><div><span class="kt-label">Trigger / Due rule / Days / Reporting period</span><span class="kt-meta-value">—</span></div></div>
+<p class="text-muted" style="font-size:12px">Operating-model verification required.</p></div>
+
+</div>
+</div>
+
+<div id="version" style="margin:0 0 40px">
+<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C03-B</span><span class="tag tag-outline">CONFIG-RULES</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">New version &amp; replacement impact</h4></div>
+<div class="blueprint" style="background:var(--color-surface);padding:28px;max-width:820px">
+<h3 style="margin-bottom:4px">Method eligibility — new version</h3>
+<span class="tag tag-neutral">Unsaved changes</span>
+<div class="kt-meta-row" style="margin:12px 0"><div><span class="kt-label">Earlier version</span><span class="kt-meta-value">1</span></div><div><span class="kt-label">Applies from</span><span class="kt-meta-value">1 Jul 2027</span></div><div><span class="kt-label">Applies until</span><span class="kt-meta-value">30 Jun 2028</span></div></div>
+<div class="field"><label>Reason for change</label><textarea class="input" rows="2" placeholder=""></textarea></div>
+<p class="text-muted" style="font-size:12px;margin:8px 0">Earlier versions this replaces: Method eligibility Version 1.</p>
+<div class="kt-section"><h6 class="kt-card-title">Effect of this replacement</h6><div class="kt-panel"><div class="kt-meta-row">
+<div><span class="kt-label">Coverage replaced</span><span class="kt-meta-value">Version 1, for matching applicability within the displayed period</span></div>
+<div><span class="kt-label">Current readiness</span><span class="kt-meta-value">Version 1 already needs source checks</span></div>
+<div><span class="kt-label">Historical decisions</span><span class="kt-meta-value">Keep the exact evidence used at the time</span></div>
+<div><span class="kt-label">Usage</span><span class="kt-meta-value">Not supplied in this isolated example</span></div>
+</div></div></div>
+<div class="kt-notice is-warning" style="margin-top:12px"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">The replacement will not be usable for affected new decisions until its required details and source checks are complete.</div></div>
+<div class="kt-notice is-critical" style="margin-top:8px"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body">Live-data impact variant: Saving this replacement will block {affected action} until its sources are verified.</div></div>
+<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px"><button class="btn btn-secondary" type="button">Cancel</button><button class="btn btn-primary" type="button">Save new version</button></div>
+</div>
+</div>
+
+<div id="states" style="margin:0 0 24px">
+<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px"><span class="tag tag-accent">C03-B</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Date gap, overlap &amp; stale input</h4></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+<div class="kt-notice is-critical" style="flex-direction:column;align-items:flex-start"><div style="display:flex;gap:12px;align-items:flex-start"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg><div class="kt-notice-body"><strong>No coverage.</strong> No rule covers the required date.</div></div><a href="#" style="margin-left:30px;font-size:13px">Review versions</a></div>
+<div class="kt-notice is-critical" style="flex-direction:column;align-items:flex-start"><div style="display:flex;gap:12px;align-items:flex-start"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body"><strong>Overlap.</strong> Rule versions overlap for the required date.</div></div><a href="#" style="margin-left:30px;font-size:13px">Review versions</a></div>
+<div class="kt-notice is-warning" style="flex-direction:column;align-items:flex-start"><div style="display:flex;gap:12px;align-items:flex-start"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg><div class="kt-notice-body"><strong>Stale.</strong> This information has changed since you opened it.</div></div><a href="#" style="margin-left:30px;font-size:13px">Review latest details</a></div>
+</div>
+</div>
+
+</main>
+
+</x-dc>
+</body>
+</html>

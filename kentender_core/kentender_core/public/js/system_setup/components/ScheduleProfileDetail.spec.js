@@ -44,13 +44,31 @@ describe("ScheduleProfileDetail", () => {
 		const wrapper = mount(ScheduleProfileDetail, { props: { name: "SPR-OPEN-TENDER-GOODS-V1" }, global: globalMocks() });
 		await flushPromises();
 		expect(wrapper.find('[data-testid="kt-procset-profile-title"]').text()).toBe("Open Tender — goods");
-		expect(wrapper.findAll(".kt-procset-meta .kt-label").map((l) => l.text())).toEqual(["Method", "Procedure", "Version", "Effective"]);
-		expect(wrapper.findAll("thead th").map((h) => h.text())).toEqual(["Milestone", "Sequence", "Applies", "Counting rule", "Minimum", "Maximum", "Default", "Basis"]);
-		expect(wrapper.findAll("tbody tr").length).toBe(7);
-		const award = wrapper.find('[data-testid="kt-procset-milestone-award_approval"]');
+		expect(wrapper.findAll(".kt-procset-meta .kt-label").map((l) => l.text())).toEqual(["Name", "Which date determines the rule to use?", "Method", "Procedure", "Version", "Applies"]);
+		// §10.9 keeps the milestones and the intervals between them as two
+		// separate tables.
+		expect(wrapper.findAll("thead th").map((h) => h.text())).toEqual([
+			"Milestone",
+			"Order",
+			"Applies",
+			"Role in this schedule",
+			"From",
+			"To",
+			"Days counted",
+			"Minimum status",
+			"Maximum status",
+			"Default days",
+			"Default basis",
+		]);
+		// Seven milestones, and the six intervals between them.
+		expect(wrapper.findAll('[data-testid^="kt-procset-milestone-"]').length).toBe(7);
+		expect(wrapper.findAll('[data-testid^="kt-procset-interval-"]').length).toBe(6);
+		// Days and their basis describe the interval that closes at a
+		// milestone, so they are read from the interval row.
+		const award = wrapper.find('[data-testid="kt-procset-interval-award_approval"]');
 		expect(award.text()).toContain("Planning assumption");
-		expect(award.findAll("td")[6].text()).toBe("5");
-		const bid = wrapper.find('[data-testid="kt-procset-milestone-bid_opening"]');
+		expect(award.findAll("td")[5].text()).toBe("5");
+		const bid = wrapper.find('[data-testid="kt-procset-interval-bid_opening"]');
 		expect(bid.text()).toContain("Verification required");
 		expect(bid.findAll("td")[4].text()).toBe("—");
 		expect(wrapper.find('[data-testid="kt-procset-profile-delivery-default"]').text()).toBe("Not set");
@@ -63,7 +81,7 @@ describe("ScheduleProfileDetail", () => {
 		const wrapper = mount(ScheduleProfileDetail, { props: { name: "SPR-OPEN-TENDER-GOODS-V1", verificationStatuses: ["Verified"] }, global: globalMocks() });
 		await flushPromises();
 		expect(wrapper.find('[data-testid="kt-procset-profile-notice"]').exists()).toBe(false);
-		expect(wrapper.find('[data-testid="kt-procset-milestone-bid_opening"]').text()).toContain("Statutory");
+		expect(wrapper.find('[data-testid="kt-procset-milestone-bid_opening"]').text()).toContain("Calculated milestone");
 		await wrapper.find('[data-testid="kt-procset-profile-new-version"]').trigger("click");
 		expect(wrapper.find('[data-testid="kt-nv-milestones"]').findAll(".kt-procset-row").length).toBe(7);
 		expect(wrapper.find('[data-testid="kt-nv-profile-name"]').element.value).toBe("Open Tender — goods");

@@ -266,6 +266,15 @@
 .kt-industry .kt-checkbox input:checked + .box::after { content: ""; position: absolute; left: 4px; top: 1px; width: 5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .kt-industry .kt-checkbox input:focus-visible + .box { outline: 1px solid var(--kt-color-accent-700); outline-offset: 2px; }
 
+/* Round radio button (an explicit, mutually-exclusive choice — e.g. County
+   entity Yes/No — CFG-CHG-002 v0.11 C01, never a checkbox stand-in). */
+.kt-industry .kt-radio { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; }
+.kt-industry .kt-radio input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+.kt-industry .kt-radio .dot { width: 16px; height: 16px; flex: none; border-radius: 50%; border: 1.5px solid var(--kt-color-divider); }
+.kt-industry .kt-radio:hover .dot { border-color: var(--kt-color-accent); }
+.kt-industry .kt-radio input:checked + .dot { border-color: var(--kt-color-accent); background: var(--kt-color-accent); box-shadow: inset 0 0 0 4px var(--kt-color-surface); }
+.kt-industry .kt-radio input:focus-visible + .dot { outline: 2px solid var(--kt-color-accent); outline-offset: 2px; }
+
 /* — cards — */
 /* Cards are filled white sheets pinned to the drawing board, not transparent
    outlines — the hairline border does the "blueprint" work, the fill reads
@@ -710,6 +719,8 @@
 	.kt-industry .kt-checkbox .box { border-color: CanvasText; }
 	.kt-industry .kt-checkbox input:checked + .box { background: CanvasText; border-color: CanvasText; }
 	.kt-industry .kt-checkbox input:checked + .box::after { border-color: Canvas; }
+	.kt-industry .kt-radio .dot { border-color: CanvasText; }
+	.kt-industry .kt-radio input:checked + .dot { background: CanvasText; border-color: CanvasText; }
 }
 @media print {
 	.kt-industry { background: #fff; color: #000; }

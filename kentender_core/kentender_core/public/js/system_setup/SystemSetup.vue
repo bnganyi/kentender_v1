@@ -215,8 +215,14 @@ onUnmounted(() => {
 					:site="site"
 					:on-updated="refreshSite"
 					@configured="refreshSite"
+					@navigate="(sub) => selectTab('procurement-settings', { sub })"
 				/>
-				<FiscalYearsTab v-else-if="activeTab === 'fiscal-years'" @changed="refreshSite" />
+				<FiscalYearsTab
+					v-else-if="activeTab === 'fiscal-years'"
+					:subpath="subpath"
+					@changed="refreshSite"
+					@navigate="navigateWithin"
+				/>
 				<ProcurementSettingsTab
 					v-else-if="activeTab === 'procurement-settings'"
 					:subpath="subpath"
@@ -224,6 +230,7 @@ onUnmounted(() => {
 				/>
 				<OrganisationStructureTab
 					v-else-if="activeTab === 'organisation-structure'"
+					:can-repair="!!(site && site.capabilities && site.capabilities.repair_root)"
 					@repaired="refreshSite"
 					@view-affected="viewAffected"
 				/>

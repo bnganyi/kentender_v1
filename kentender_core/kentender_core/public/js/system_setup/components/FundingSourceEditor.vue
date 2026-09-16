@@ -8,6 +8,11 @@ import { procurementSettingsApi } from "../data/procurementSettingsApi.js";
 const props = defineProps({
 	source: { type: Object, default: null },
 	creating: { type: Boolean, default: false },
+	// Every existing source, so a duplicate name is refused before submit
+	// (§10.5's exact defect) — `add_funding_source` is deliberately tolerant
+	// of a repeat so the canonical seed stays idempotent, and would otherwise
+	// report a silent success here.
+	existing: { type: Array, default: () => [] },
 });
 const emit = defineEmits(["saved", "cancel"]);
 
@@ -21,7 +26,14 @@ const { pending: busy, run } = kentender_core.desk_page.createCommandRunner(
 );
 
 const title = computed(() => (props.creating ? __("Add funding source") : __("Edit funding source")));
-const canSave = computed(() => !busy.value && label.value.trim().length >= 2);
+const duplicate = computed(() => {
+	const wanted = label.value.trim().toLowerCase();
+	if (!wanted) return false;
+	return props.existing.some(
+		(row) => row.name !== props.source?.name && (row.label || "").trim().toLowerCase() === wanted
+	);
+});
+const canSave = computed(() => !busy.value && !duplicate.value && label.value.trim().length >= 2);
 
 onMounted(async () => {
 	await nextTick();
@@ -31,7 +43,13 @@ onMounted(async () => {
 function save() {
 	return run(async () => {
 		if (props.creating) {
-			await procurementSettingsApi.addFundingSource(label.value.trim());
+			const created = await procurementSettingsApi.addFundingSource(label.value.trim());
+			// `add_funding_source` takes a name only; an entry created as "not
+			// available" is the same catalogue entry disabled immediately after,
+			// through the one command that owns availability.
+			if (!enabled.value) {
+				await procurementSettingsApi.updateFundingSource(created.name, { enabled: false }, "");
+			}
 		} else {
 			await procurementSettingsApi.updateFundingSource(
 				props.source.name,
@@ -59,15 +77,32 @@ function save() {
 				<input id="kt-fs-name" ref="field" v-model="label" class="kt-input" data-testid="kt-fs-name">
 				<p v-if="source && source.referenced" class="kt-hint">{{ __("This source is referenced by a Budget line and cannot be renamed.") }}</p>
 			</div>
-			<label class="kt-setup-check">
-				<input v-model="enabled" type="checkbox" :disabled="creating" data-testid="kt-fs-enabled">
-				{{ __("Enabled") }}
-			</label>
-			<p v-if="error" class="kt-inline-error" role="alert" data-testid="kt-fs-error">{{ error }}</p>
+			<!-- §10.5 — an explicit Yes/No choice stating what it governs,
+			     never a bare "Enabled" checkbox. -->
+			<div class="kt-field">
+				<label id="kt-fs-avail-label">{{ __("Available for new selection") }}</label>
+				<div style="display:flex;gap:16px" role="radiogroup" aria-labelledby="kt-fs-avail-label">
+					<label class="kt-radio" data-testid="kt-fs-enabled-yes">
+						<input type="radio" name="kt-fs-avail" :checked="enabled" @change="enabled = true">
+						<span class="dot" />{{ __("Yes") }}
+					</label>
+					<label class="kt-radio" data-testid="kt-fs-enabled-no">
+						<input type="radio" name="kt-fs-avail" :checked="!enabled" @change="enabled = false">
+						<span class="dot" />{{ __("No") }}
+					</label>
+				</div>
+				<p class="kt-hint">{{ __("Turning this off prevents new selection; existing records keep their funding history.") }}</p>
+			</div>
+			<div v-if="duplicate" class="kt-notice is-critical" role="alert" data-testid="kt-fs-duplicate">
+				<strong>{{ __("Duplicate.") }}</strong> {{ __("A funding source with this name already exists.") }}
+			</div>
+			<p v-else-if="error" class="kt-inline-error" role="alert" data-testid="kt-fs-error">{{ error }}</p>
 		</div>
 		<div class="kt-procset-footer kt-procset-narrow">
 			<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="kt-fs-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
-			<button type="button" class="kt-btn kt-btn-primary" :disabled="!canSave" data-testid="kt-fs-save" @click="save">{{ __("Save changes") }}</button>
+			<button type="button" class="kt-btn kt-btn-primary" :disabled="!canSave" data-testid="kt-fs-save" @click="save">
+				{{ creating ? __("Add funding source") : __("Save changes") }}
+			</button>
 		</div>
 	</div>
 </template>

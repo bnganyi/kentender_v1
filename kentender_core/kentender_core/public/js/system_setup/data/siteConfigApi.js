@@ -59,6 +59,38 @@ export const siteConfigApi = {
 			expected_version: expectedVersion || null,
 			idempotency_key: newIdempotencyKey("plan-intake"),
 		}),
+	openDisposalPlanSubmission: (fiscalYear, closesAt, reason, expectedVersion) =>
+		frappeCall(PREFIX + "open_disposal_plan_submission", {
+			fiscal_year: fiscalYear,
+			closes_at: closesAt || null,
+			reason: reason || null,
+			expected_version: expectedVersion || null,
+			idempotency_key: newIdempotencyKey("disposal-intake"),
+		}),
+	closeDisposalPlanSubmission: (fiscalYear, reason, expectedVersion) =>
+		frappeCall(PREFIX + "close_disposal_plan_submission", {
+			fiscal_year: fiscalYear,
+			reason: reason || null,
+			expected_version: expectedVersion || null,
+			idempotency_key: newIdempotencyKey("disposal-intake"),
+		}),
+	updateIntakeCloseInstant: (moduleKey, fiscalYear, closesAt, reason, expectedVersion) =>
+		frappeCall(PREFIX + "update_intake_close_instant", {
+			module_key: moduleKey,
+			fiscal_year: fiscalYear,
+			closes_at: closesAt || null,
+			reason: reason || null,
+			expected_version: expectedVersion || null,
+			idempotency_key: newIdempotencyKey("deadline"),
+		}),
+	setFiscalYearDisabled: (fiscalYear, disabled, expectedVersion) =>
+		frappeCall(PREFIX + "set_fiscal_year_disabled", {
+			fiscal_year: fiscalYear,
+			disabled: disabled ? 1 : 0,
+			expected_version: expectedVersion || null,
+		}),
+	listFiscalYearIntakeHistory: (fiscalYear) =>
+		frappeCall(PREFIX + "list_fiscal_year_intake_history", { fiscal_year: fiscalYear }),
 	repairRoot: () =>
 		frappeCall(PREFIX + "repair_organisation_root", {
 			idempotency_key: newIdempotencyKey("root"),

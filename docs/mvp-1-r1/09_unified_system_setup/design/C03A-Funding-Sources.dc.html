@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+</helmet>
+<div style="position:sticky;top:0;z-index:10;background:var(--color-surface);border-bottom:1px solid var(--color-divider);padding:14px 24px;display:flex;flex-wrap:wrap;gap:16px;align-items:baseline">
+<strong style="font-family:var(--font-heading);font-size:14px;letter-spacing:.04em">SYSTEM SETUP — STATIC DESIGN CONTRACT</strong>
+<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px">
+<a href="C01-Procuring-Entity.dc.html">C01</a>
+<a href="C02-Financial-Years.dc.html">C02</a>
+<a href="C03A-Funding-Sources.dc.html" style="color:var(--color-accent-700);font-weight:600">C03-A</a>
+<a href="C03BC-Procurement-Rules.dc.html">C03-B/C</a>
+<a href="C03D-Source-Checks.dc.html">C03-D</a>
+<a href="C04-Schedules-Calendars.dc.html">C04</a>
+<a href="Reminders.dc.html">Reminders</a>
+</div>
+</div>
+<main style="max-width:900px;margin:0 auto;padding:32px 24px 96px">
+<div style="margin-bottom:32px">
+<span class="tag tag-outline">C03-A</span>
+<h1 style="margin-top:10px">Funding sources</h1>
+<p class="text-muted" style="max-width:60ch">§10.5 — Administrator; Ministry of Health; 24 Nov 2026, 09:15 EAT.</p>
+</div>
+
+<div style="margin:0 0 40px">
+<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C03-A</span><span class="tag tag-outline">CONFIG</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">List, edit &amp; disabled</h4></div>
+<div class="blueprint" style="background:var(--color-surface);padding:28px;max-width:820px">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+<div><h3 style="margin-bottom:4px">Funding sources</h3><p class="card-body" style="margin-bottom:0">Maintain the sources used in procurement budgets.</p></div>
+<button type="button" class="btn btn-primary">Add funding source</button>
+</div>
+<table class="table">
+<thead><tr><th>Name</th><th>Available for new selection</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td>Government of Kenya</td><td><span class="kt-status is-live">Yes</span></td><td><a href="#">Edit</a></td></tr>
+<tr><td>Development partner</td><td><span class="kt-status is-critical">No</span></td><td><a href="#">Edit</a></td></tr>
+<tr><td>Appropriation in Aid</td><td><span class="kt-status is-live">Yes</span></td><td><a href="#">Edit</a></td></tr>
+</tbody></table>
+<p class="text-muted" style="font-size:12px;margin-top:8px">Disabled specimen shown above: Development partner, Available for new selection = No.</p>
+</div>
+</div>
+
+<div style="margin:0 0 40px">
+<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C03-A</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Add / edit editor &amp; duplicate</h4></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+<div class="dialog" style="position:static;max-width:340px">
+<div class="dialog-title">Add funding source</div>
+<div class="dialog-body">
+<div class="field"><label>Funding source name</label><input class="input" value="Development partner" /></div>
+<div class="field" style="margin-top:10px"><label id="fs-avail">Available for new selection</label>
+<div style="display:flex;gap:16px" role="radiogroup" aria-labelledby="fs-avail"><label class="radio"><input type="radio" name="avail" checked="checked" /><span class="dot"></span>Yes</label><label class="radio"><input type="radio" name="avail" /><span class="dot"></span>No</label></div></div>
+<p class="text-muted" style="font-size:12px;margin-top:6px">Turning this off prevents new selection; existing records keep their funding history.</p>
+</div>
+<div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Add funding source</button></div>
+</div>
+<div class="kt-notice is-critical"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body"><strong>Duplicate.</strong> A funding source with this name already exists.</div></div>
+</div>
+</div>
+
+<div style="margin:0 0 24px">
+<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C03-A</span><span class="tag tag-outline">CONFIG-EMPTY</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Empty</h4></div>
+<div class="blueprint" style="background:var(--color-surface);padding:40px;max-width:820px;text-align:center">
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-400)" stroke-width="1.5" style="margin:0 auto 12px"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+<p style="font-weight:600;margin-bottom:4px">No funding sources yet</p>
+<p class="card-body">Add the sources used by this site's procurement budgets.</p>
+<button type="button" class="btn btn-primary">Add funding source</button>
+</div>
+</div>
+
+</main>
+
+</x-dc>
+</body>
+</html>

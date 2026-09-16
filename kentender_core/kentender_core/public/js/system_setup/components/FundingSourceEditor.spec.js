@@ -1,4 +1,5 @@
-// C03-source-editor — name and Enabled; server owns the rules.
+// CFG-CHG-002 v0.11 §10.5 (C03-A) — funding source name and an explicit
+// "Available for new selection" Yes/No choice; server owns the rules.
 import { flushPromises, mount } from "@vue/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { globalMocks } from "./spec_helpers.js";
@@ -19,8 +20,9 @@ describe("FundingSourceEditor", () => {
 		});
 		expect(wrapper.find(".kt-section-title").text()).toBe("Edit funding source");
 		expect(wrapper.find('[data-testid="kt-fs-name"]').element.value).toBe("Development partner");
-		expect(wrapper.find('[data-testid="kt-fs-enabled"]').element.checked).toBe(true);
-		await wrapper.find('[data-testid="kt-fs-enabled"]').setValue(false);
+		expect(wrapper.find('[data-testid="kt-fs-enabled-yes"] input').element.checked).toBe(true);
+		expect(wrapper.text()).toContain("Turning this off prevents new selection; existing records keep their funding history.");
+		await wrapper.find('[data-testid="kt-fs-enabled-no"] input').trigger("change");
 		await wrapper.find('[data-testid="kt-fs-save"]').trigger("click");
 		await flushPromises();
 		expect(api.updateFundingSource).toHaveBeenCalledWith("Development partner", { label: "Development partner", enabled: false }, "v2");
@@ -31,6 +33,7 @@ describe("FundingSourceEditor", () => {
 		api.addFundingSource.mockResolvedValue({ name: "Donor", created: true });
 		const creating = mount(FundingSourceEditor, { props: { creating: true }, global: globalMocks() });
 		expect(creating.find(".kt-section-title").text()).toBe("Add funding source");
+		expect(creating.find('[data-testid="kt-fs-save"]').text()).toBe("Add funding source");
 		expect(creating.find('[data-testid="kt-fs-save"]').attributes("disabled")).toBeDefined();
 		await creating.find('[data-testid="kt-fs-name"]').setValue("Donor");
 		await creating.find('[data-testid="kt-fs-save"]').trigger("click");
@@ -55,5 +58,42 @@ describe("FundingSourceEditor", () => {
 		await flushPromises();
 		expect(wrapper.find('[data-testid="kt-fs-error"]').text()).toContain("cannot be renamed");
 		expect(wrapper.emitted("saved")).toBeFalsy();
+	});
+
+	it("a name that already exists is the exact duplicate defect, with Add refused before submit", async () => {
+		const wrapper = mount(FundingSourceEditor, {
+			props: {
+				creating: true,
+				existing: [{ name: "Government of Kenya", label: "Government of Kenya", enabled: true }],
+			},
+			global: globalMocks(),
+		});
+		await wrapper.find('[data-testid="kt-fs-name"]').setValue("  government of kenya  ");
+		expect(wrapper.find('[data-testid="kt-fs-duplicate"]').text()).toBe(
+			"Duplicate. A funding source with this name already exists."
+		);
+		expect(wrapper.find('[data-testid="kt-fs-save"]').attributes("disabled")).toBeDefined();
+
+		// The source being edited is not its own duplicate.
+		const editing = mount(FundingSourceEditor, {
+			props: {
+				source: { name: "Government of Kenya", label: "Government of Kenya", enabled: true, referenced: false, expected_version: "v1" },
+				existing: [{ name: "Government of Kenya", label: "Government of Kenya", enabled: true }],
+			},
+			global: globalMocks(),
+		});
+		expect(editing.find('[data-testid="kt-fs-duplicate"]').exists()).toBe(false);
+	});
+
+	it("creating an unavailable source disables it through the command that owns availability", async () => {
+		api.addFundingSource.mockResolvedValue({ name: "Donor", created: true });
+		api.updateFundingSource.mockResolvedValue({ name: "Donor", enabled: false });
+		const wrapper = mount(FundingSourceEditor, { props: { creating: true }, global: globalMocks() });
+		await wrapper.find('[data-testid="kt-fs-name"]').setValue("Donor");
+		await wrapper.find('[data-testid="kt-fs-enabled-no"] input').trigger("change");
+		await wrapper.find('[data-testid="kt-fs-save"]').trigger("click");
+		await flushPromises();
+		expect(api.addFundingSource).toHaveBeenCalledWith("Donor");
+		expect(api.updateFundingSource).toHaveBeenCalledWith("Donor", { enabled: false }, "");
 	});
 });

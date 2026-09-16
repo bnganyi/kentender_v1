@@ -32,6 +32,10 @@ import * as path from "path";
 const LANDMARK_SELECTOR = [
 	".kt-card-title",
 	".kt-dialog-title",
+	// A screen that renders an artboard's `.dialog` as a full sub-view titles
+	// it with `.kt-section-title`; no artboard uses that class, so listing it
+	// only lets a live title match the artboard's own title landmark.
+	".kt-section-title",
 	".dialog-title",
 	"label",
 	"legend",

@@ -28,9 +28,25 @@ function payload(overrides = {}) {
 		method_profiles: [
 			{ profile: "MPR-OPEN-TENDER-V1", procurement_method: "Open Tender", version_number: 1, status: "Active", effective_from: "2027-07-01", effective_until: "2028-06-30", verification_status: "Production verification pending", conditions: [] },
 		],
-		regulatory_references: [
-			{ reference: "REG-2027-2028-01", fiscal_year: "2027-2028", effective_from: "2027-07-01", gazette_reference: "GAZ", status: "Active", verification_status: "Production verification pending" },
+		reference_sets: [
+			{
+				reference_set: "rs-reservation",
+				reference_key: "RESERVATION-RULES",
+				reference_kind: "Reservation rules",
+				display_name: "Reservation rules",
+				has_version: true,
+				version: { name: "rv-1", version_number: 3, status: "Active", effective_from: "2027-07-01", effective_until: "2028-06-30", verification_status: "Production verification pending" },
+			},
+			{
+				reference_set: "rs-margins",
+				reference_key: "PREFERENCE-MARGINS",
+				reference_kind: "Preference margins",
+				display_name: "Preference margins",
+				has_version: false,
+				version: null,
+			},
 		],
+		reference_kinds: ["Method eligibility", "Reservation rules", "Preference margins"],
 		schedule_profiles: [
 			{ profile: "SPR-OPEN-TENDER-GOODS-V1", profile_name: "Open Tender — goods", procurement_method: "Open Tender", procurement_category: "Goods", version_number: 1, status: "Active", effective_from: "2027-07-01", effective_until: "2028-06-30", verification_status: "Production verification pending", complete: true, gaps: [], milestones: [] },
 		],
@@ -62,7 +78,7 @@ describe("ProcurementSettingsTab", () => {
 		expect(wrapper.text()).toContain("Add funding source");
 	});
 
-	it("funding sources show Enabled as Yes/No and an Edit button per row", async () => {
+	it("funding sources show availability as Yes/No and an Edit link per row", async () => {
 		const wrapper = await mountTab();
 		const gok = wrapper.find('[data-testid="kt-procset-source-Government of Kenya"]');
 		expect(gok.text()).toContain("Yes");
@@ -78,9 +94,13 @@ describe("ProcurementSettingsTab", () => {
 		expect(rules.text()).toContain("Reservation rules");
 		expect(rules.text()).toContain("1 Jul 2027");
 		expect(rules.text()).toContain("30 Jun 2028");
+		// §7.3 — a set with no version yet is its own recoverable row, never an
+		// empty version row.
+		expect(rules.find('[data-testid="kt-procset-rule-noversion-rs-margins"]').text()).toBe("No version saved");
+		// §8.1 — the plain result vocabulary, the same on every screen.
 		expect(rules.findAll(".kt-status.is-attention").map((s) => s.text())).toEqual([
-			"Production verification pending",
-			"Production verification pending",
+			"Source check needed",
+			"Source check needed",
 		]);
 		expect(rules.text()).not.toContain("Verified ");
 	});

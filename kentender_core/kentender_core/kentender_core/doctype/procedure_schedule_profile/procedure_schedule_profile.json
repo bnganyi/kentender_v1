@@ -24,6 +24,7 @@
   {"fieldname": "effective_until", "fieldtype": "Date", "label": "Effective Until", "read_only": 1},
   {"fieldname": "applicability_basis", "fieldtype": "Data", "label": "Applicability Basis", "read_only": 1},
   {"fieldname": "counting_rule", "fieldtype": "Select", "label": "Default Counting Rule", "options": "Calendar days\nWorking days", "default": "Calendar days", "reqd": 1, "read_only": 1},
+  {"fieldname": "calendar", "fieldtype": "Link", "label": "Working-Day Calendar", "options": "Business Day Calendar", "read_only": 1, "description": "Required when Default Counting Rule is Working days (CFG-CHG-002 v0.11 §4.8)."},
   {"fieldname": "estimated_delivery_period_default_days", "fieldtype": "Int", "label": "Estimated Delivery Period Default (days)", "read_only": 1, "description": "Blank means Not set; a Planner must enter the period."},
   {"fieldname": "section_source", "fieldtype": "Section Break", "label": "Source and Verification"},
   {"fieldname": "verification_status", "fieldtype": "Select", "label": "Verification Status", "options": "Production verification pending\nFixture-verified — not production law\nVerified", "default": "Production verification pending", "reqd": 1, "read_only": 1, "in_list_view": 1},
@@ -34,7 +35,7 @@
   {"fieldname": "milestones", "fieldtype": "Table", "label": "Milestones", "options": "Schedule Profile Milestone", "read_only": 1},
   {"fieldname": "fixture_namespace", "fieldtype": "Data", "label": "Fixture Namespace", "hidden": 1, "read_only": 1}
  ],
- "field_order": ["profile_reference", "profile_name", "procurement_method", "procedure", "procurement_category", "version_number", "status", "column_break_a", "effective_from", "effective_until", "applicability_basis", "counting_rule", "estimated_delivery_period_default_days", "section_source", "verification_status", "source_instrument", "provision", "source_document", "section_milestones", "milestones", "fixture_namespace"],
+ "field_order": ["profile_reference", "profile_name", "procurement_method", "procedure", "procurement_category", "version_number", "status", "column_break_a", "effective_from", "effective_until", "applicability_basis", "counting_rule", "calendar", "estimated_delivery_period_default_days", "section_source", "verification_status", "source_instrument", "provision", "source_document", "section_milestones", "milestones", "fixture_namespace"],
  "permissions": [
   {"create": 1, "delete": 0, "read": 1, "role": "System Manager", "write": 1},
   {"read": 1, "role": "Desk User"}

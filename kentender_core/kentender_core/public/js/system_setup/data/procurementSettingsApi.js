@@ -37,6 +37,50 @@ export const procurementSettingsApi = {
 		}),
 	getRegulatoryReferenceVersion: (name) =>
 		frappeCall(PREFIX + "get_regulatory_reference_version", { name }),
+	listRegulatoryReferenceVersions: (referenceSet) =>
+		frappeCall(PREFIX + "list_regulatory_reference_versions", { reference_set: referenceSet }),
+	// §7.3 is two commands on purpose: the set can exist with no version, and
+	// the editor recovers from a failure between them.
+	createRegulatoryReference: ({ reference_key, reference_kind, display_name }) =>
+		frappeCall(PREFIX + "create_regulatory_reference", {
+			reference_key,
+			reference_kind,
+			display_name: display_name || null,
+			idempotency_key: newIdempotencyKey("ref"),
+		}),
+	saveRegulatoryReferenceVersion: (payload) =>
+		frappeCall(PREFIX + "save_regulatory_reference_version", {
+			...payload,
+			payload: JSON.stringify(payload.payload || {}),
+			applicability_entity_types: JSON.stringify(payload.applicability_entity_types || []),
+			applicability_categories: JSON.stringify(payload.applicability_categories || []),
+			supersedes_version_ids: JSON.stringify(payload.supersedes_version_ids || []),
+			idempotency_key: newIdempotencyKey("refv"),
+		}),
+	renameRegulatoryReference: (referenceSet, displayName, expectedVersion) =>
+		frappeCall(PREFIX + "rename_regulatory_reference", {
+			reference_set: referenceSet,
+			display_name: displayName,
+			expected_version: expectedVersion || null,
+		}),
+	recordReferenceVerification: (payload) =>
+		frappeCall(PREFIX + "record_reference_verification", {
+			...payload,
+			idempotency_key: newIdempotencyKey("verify"),
+		}),
+	listVerificationHistory: (targetDoctype, targetName) =>
+		frappeCall(PREFIX + "list_verification_history", {
+			target_doctype: targetDoctype,
+			target_name: targetName,
+		}),
+	getBusinessDayCalendar: (name) => frappeCall(PREFIX + "get_business_day_calendar", { name }),
+	registerBusinessDayCalendarVersion: (payload) =>
+		frappeCall(PREFIX + "register_business_day_calendar_version", {
+			...payload,
+			weekend_days: JSON.stringify(payload.weekend_days || []),
+			holidays: JSON.stringify(payload.holidays || []),
+			idempotency_key: newIdempotencyKey("cal"),
+		}),
 	setReminderThresholdDays: (days) =>
 		frappeCall(PREFIX + "set_reminder_threshold_days", { days, idempotency_key: newIdempotencyKey("rem") }),
 };

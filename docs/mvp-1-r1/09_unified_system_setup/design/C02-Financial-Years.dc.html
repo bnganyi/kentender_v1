@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+</helmet>
+<div style="position:sticky;top:0;z-index:10;background:var(--color-surface);border-bottom:1px solid var(--color-divider);padding:14px 24px;display:flex;flex-wrap:wrap;gap:16px;align-items:baseline">
+<strong style="font-family:var(--font-heading);font-size:14px;letter-spacing:.04em">SYSTEM SETUP — STATIC DESIGN CONTRACT</strong>
+<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px">
+<a href="C01-Procuring-Entity.dc.html">C01</a>
+<a href="C02-Financial-Years.dc.html" style="color:var(--color-accent-700);font-weight:600">C02</a>
+<a href="C03A-Funding-Sources.dc.html">C03-A</a>
+<a href="C03BC-Procurement-Rules.dc.html">C03-B/C</a>
+<a href="C03D-Source-Checks.dc.html">C03-D</a>
+<a href="C04-Schedules-Calendars.dc.html">C04</a>
+<a href="Reminders.dc.html">Reminders</a>
+</div>
+</div>
+<div style="position:sticky;top:49px;z-index:9;background:var(--color-surface-2);border-bottom:1px solid var(--color-divider);padding:8px 24px;display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--color-neutral-700)">
+<a href="#overview">Overview</a><a href="#empty">Empty</a><a href="#add-year">Add year</a><a href="#detail">Year detail</a><a href="#disable">Disable / re-enable</a><a href="#forms">Open/close forms</a><a href="#form-states">Form states</a>
+</div>
+<main style="max-width:960px;margin:0 auto;padding:32px 24px 96px">
+<div style="margin-bottom:32px">
+<span class="tag tag-outline">C02 / CUX-01–02</span>
+<h1 style="margin-top:10px">Financial years &amp; submission periods</h1>
+<p class="text-muted" style="max-width:65ch">§10.3–10.4 — Administrator; Ministry of Health; 24 Nov 2026, 09:15 EAT.</p>
+</div>
+
+<div id="overview" style="margin:0 0 40px">
+<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C02</span><span class="tag tag-outline">CONFIG</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Year overview</h4></div>
+<div class="blueprint" style="background:var(--color-surface);padding:28px;max-width:900px">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+<div><h3 style="margin-bottom:4px">Financial years</h3><p class="card-body" style="margin-bottom:0">Set when departments can submit needs and plans.</p></div>
+<button type="button" class="btn btn-primary">Add financial year</button>
+</div>
+<label class="kt-checkbox" style="margin:14px 0"><input type="checkbox" /><span class="box"></span>Include disabled years</label>
+<table class="table">
+<thead><tr><th>Financial year</th><th>Period</th><th>Phase</th><th>Departmental needs</th><th>Departmental plans</th><th>Disposal plans</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td>FY 2027/28</td><td>1 Jul 2027–30 Jun 2028</td><td><span class="tag tag-neutral">Upcoming</span></td>
+<td><span class="kt-status is-live">Open</span><br/><span class="text-muted" style="font-size:12px">Closes at: 25 Nov 2026, 23:59 EAT</span></td>
+<td><span class="kt-status is-live">Open</span><br/><span class="text-muted" style="font-size:12px">Closes at: 30 Nov 2026, 23:59 EAT</span></td>
+<td><span class="kt-status is-critical">Closed</span></td>
+<td><a href="#detail">Submission periods</a></td></tr>
+<tr><td>FY 2026/27</td><td>1 Jul 2026–30 Jun 2027</td><td><span class="tag tag-neutral">Current</span></td>
+<td><span class="kt-status is-critical">Closed</span></td><td><span class="kt-status is-critical">Closed</span></td><td><span class="kt-status is-critical">Closed</span></td>
+<td><a href="#detail">Submission periods</a></td></tr>
+</tbody></table>
+<p class="text-muted" style="font-size:13px;margin-top:12px">Each activity can be open for one financial year at a time.</p>
+<p class="text-muted" style="font-size:13px">2 financial years</p>
+<div class="kt-disclosure">
+<div class="kt-disclosure-head" onclick="var b=this.nextElementSibling,c=this.querySelector('.kt-disclosure-chevron');var open=b.style.display!=='none';b.style.display=open?'none':'block';c.classList.toggle('is-open',!open)">
+<div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Shared accounting settings</span></div>
+<svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg>
+</div>
+<div class="kt-disclosure-body"><p class="card-body">Financial years and units of measure are shared with accounting.</p><a href="#">Manage units of measure</a></div>
+</div>
+</div>
+</div>
+
+<div id="empty" style="margin:0 0 40px">
+<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C02</span><span class="tag tag-outline">CONFIG-EMPTY</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Empty years</h4></div>
+<div class="blueprint" style="background:var(--color-surface);padding:40px;max-width:900px;text-align:center">
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-400)" stroke-width="1.5" style="margin:0 auto 12px"><rect x="3" y="4" width="18" height="18" rx="0"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+<p style="font-weight:600;margin-bottom:4px">No financial years yet.</p>
+<p class="card-body">Add the first financial year for this site.</p>
+<button type="button" class="btn btn-primary">Add financial year</button>
+</div>
+</div>
+
+<div id="add-year" style="margin:0 0 40px">
+<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C02</span><span class="tag tag-outline">CONFIG</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Add financial year — preview, duplicate, missing Company</h4></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+<div class="dialog" style="position:static;max-width:360px">
+<div class="dialog-title">Add financial year</div>
+<div class="dialog-body">
+<div class="field"><label>Start year</label><input class="input" type="number" value="2028" /></div>
+<div class="kt-meta-row" style="margin-top:10px"><div><span class="kt-label">Financial year</span><span class="kt-meta-value">FY 2028/29</span></div><div><span class="kt-label">Period</span><span class="kt-meta-value">1 Jul 2028–30 Jun 2029</span></div></div>
+</div>
+<div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Add financial year</button></div>
+</div>
+<div class="kt-notice is-critical" style="flex-direction:column;align-items:flex-start"><div style="display:flex;gap:12px;align-items:flex-start"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body"><strong>Duplicate.</strong> This financial year already exists.</div></div><a href="#" style="margin-left:30px;font-size:13px">View financial year</a></div>
+<div class="kt-notice is-critical" style="flex-direction:column;align-items:flex-start"><div style="display:flex;gap:12px;align-items:flex-start"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body"><strong>Company not linked.</strong> The accounting company must be configured before you can add a financial year.</div></div><p class="text-muted" style="font-size:12px;margin-left:30px">No accounting company is linked to this site.</p></div>
+</div>
+</div>
+
+<div id="detail" style="margin:0 0 40px">
+<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C02 / CUX-01</span><span class="tag tag-outline">CONFIG</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Year detail — submission periods</h4></div>
+<div class="blueprint" style="background:var(--color-surface);padding:28px;max-width:900px">
+<h3>Submission periods</h3>
+<div class="kt-panel" style="margin-bottom:16px"><div class="kt-meta-row">
+<div><span class="kt-label">Financial year</span><span class="kt-meta-value">FY 2027/28</span></div>
+<div><span class="kt-label">Period</span><span class="kt-meta-value">1 Jul 2027–30 Jun 2028</span></div>
+<div><span class="kt-label">Financial year enabled</span><span class="kt-meta-value">Yes</span></div>
+</div></div>
+<table class="table">
+<thead><tr><th>Activity</th><th>Status</th><th>Closes at</th><th>Actions</th></tr></thead>
+<tbody>
+<tr><td>Departmental needs</td><td><span class="kt-status is-live">Open</span></td><td>25 Nov 2026, 23:59 EAT</td><td><button class="btn btn-ghost" type="button">Change closing time</button> <button class="btn btn-secondary" type="button">Close submissions</button></td></tr>
+<tr><td>Departmental plans</td><td><span class="kt-status is-live">Open</span></td><td>30 Nov 2026, 23:59 EAT</td><td><button class="btn btn-ghost" type="button">Change closing time</button> <button class="btn btn-secondary" type="button">Close submissions</button></td></tr>
+<tr><td>Disposal plans</td><td><span class="kt-status is-critical">Closed</span></td><td>Not set</td><td><button class="btn btn-secondary" type="button">Open submissions</button></td></tr>
+</tbody></table>
+<p class="text-muted" style="font-size:12px;margin-top:8px">Open-ended open row reads "No closing date". Scheduled-expiry variant shows "Closed" with a separate "Closed at: 25 Nov 2026, 23:59 EAT" for Departmental needs.</p>
+<div class="kt-disclosure" style="margin-top:16px">
+<div class="kt-disclosure-head" onclick="var b=this.nextElementSibling,c=this.querySelector('.kt-disclosure-chevron');var open=b.style.display!=='none';b.style.display=open?'none':'block';c.classList.toggle('is-open',!open)">
+<div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Change history</span><span class="tag tag-neutral">2 entries</span></div>
+<svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg>
+</div>
+<div class="kt-disclosure-body">
+<table class="table"><thead><tr><th>Activity</th><th>Financial year</th><th>Change</th><th>Previous value</th><th>New value</th><th>Reason</th><th>Changed by</th><th>Changed at</th></tr></thead>
+<tbody><tr><td>Departmental needs</td><td>FY 2027/28</td><td>Open</td><td>—</td><td>25 Nov 2026, 23:59 EAT</td><td>Annual needs call issued under circular MOH/PROC/2026/07.</td><td>Administrator</td><td>1 Nov 2026, 08:02 EAT</td></tr></tbody></table>
+</div></div>
+</div>
+</div>
+
+<div id="disable" style="margin:0 0 40px">
+<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C02</span><span class="tag tag-outline">CONFIG</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Disable / re-enable</h4></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+<div class="dialog" style="position:static;max-width:360px"><div class="dialog-title">This financial year cannot be disabled</div><div class="dialog-body">Departmental needs submissions are still open.</div><div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary" disabled="disabled">Disable financial year</button></div></div>
+<div class="dialog" style="position:static;max-width:360px"><div class="dialog-title">Disable FY 2027/28?</div><div class="dialog-body">This year will be unavailable for new use.</div><div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Disable financial year</button></div></div>
+<div class="card"><div class="card-kicker">Disabled-year detail</div><div class="kt-meta-row"><div><span class="kt-label">Financial year enabled</span><span class="kt-meta-value">No</span></div></div><button type="button" class="btn btn-secondary" style="margin-top:8px">Enable financial year</button></div>
+</div>
+</div>
+
+<div id="forms" style="margin:0 0 40px">
+<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px"><span class="tag tag-accent">C02 / CUX-02</span><span class="tag tag-outline">CONFIG · CONFIG-SWAP</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Open, close &amp; change-deadline forms — all seven</h4></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px">
+
+<div class="card"><div class="card-kicker">Open · Departmental needs</div><div class="card-title" style="font-size:16px">Open departmental needs submissions</div>
+<div class="kt-meta-row" style="margin:8px 0"><div><span class="kt-label">Year</span><span class="kt-meta-value">FY 2027/28</span></div></div>
+<div class="field"><label>Close automatically on (EAT)</label><input class="input" type="datetime-local" value="2026-11-25T23:59" /></div>
+<p class="text-muted" style="font-size:12px">Leave the closing date blank to keep submissions open until you close them.</p>
+<div class="field"><label>Reason</label><textarea class="input" rows="2">Annual needs call issued under circular MOH/PROC/2026/07.</textarea></div>
+<div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-secondary" type="button">Cancel</button><button class="btn btn-primary" type="button">Open submissions</button></div></div>
+
+<div class="card"><div class="card-kicker">Close · Departmental needs</div><div class="card-title" style="font-size:16px">Close departmental needs submissions</div>
+<div class="kt-meta-row" style="margin:8px 0"><div><span class="kt-label">Year</span><span class="kt-meta-value">FY 2027/28</span></div></div>
+<p class="text-muted" style="font-size:12px">No deadline input.</p>
+<div class="field"><label>Reason</label><textarea class="input" rows="2">Needs call closed on the date announced in circular MOH/PROC/2026/07.</textarea></div>
+<p class="text-muted" style="font-size:12px">Existing needs remain available under the Departmental Needs rules.</p>
+<div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-secondary" type="button">Cancel</button><button class="btn btn-primary" type="button">Close submissions</button></div></div>
+
+<div class="card"><div class="card-kicker">Open · Departmental plans</div><div class="card-title" style="font-size:16px">Open departmental plan submissions</div>
+<div class="kt-meta-row" style="margin:8px 0"><div><span class="kt-label">Year</span><span class="kt-meta-value">FY 2027/28</span></div></div>
+<div class="field"><label>Close automatically on (EAT)</label><input class="input" type="datetime-local" value="2026-11-30T23:59" /></div>
+<div class="field"><label>Reason</label><textarea class="input" rows="2">Annual departmental procurement planning call.</textarea></div>
+<div class="kt-notice is-warning" style="margin:8px 0"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">CONFIG-SWAP: This will close departmental plan submissions for FY 2026/27. Departmental needs and disposal plan submissions will stay as they are.</div></div>
+<div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-secondary" type="button">Cancel</button><button class="btn btn-primary" type="button">Open submissions</button></div></div>
+
+<div class="card"><div class="card-kicker">Close · Departmental plans</div><div class="card-title" style="font-size:16px">Close departmental plan submissions</div>
+<div class="kt-meta-row" style="margin:8px 0"><div><span class="kt-label">Year</span><span class="kt-meta-value">FY 2027/28</span></div></div>
+<p class="text-muted" style="font-size:12px">No deadline input.</p>
+<div class="field"><label>Reason</label><textarea class="input" rows="2">The announced departmental submission period has ended.</textarea></div>
+<p class="text-muted" style="font-size:12px">Existing submissions and permitted updates remain available.</p>
+<div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-secondary" type="button">Cancel</button><button class="btn btn-primary" type="button">Close submissions</button></div></div>
+
+<div class="card"><div class="card-kicker">Open · Disposal plans</div><div class="card-title" style="font-size:16px">Open disposal plan submissions</div>
+<div class="kt-meta-row" style="margin:8px 0"><div><span class="kt-label">Year</span><span class="kt-meta-value">FY 2027/28</span></div></div>
+<div class="field"><label>Close automatically on (EAT)</label><input class="input" type="datetime-local" placeholder="" /></div>
+<div class="field"><label>Reason</label><textarea class="input" rows="2">Disposal intake opened for the declared fixture scenario.</textarea></div>
+<div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-secondary" type="button">Cancel</button><button class="btn btn-primary" type="button">Open submissions</button></div></div>
+
+<div class="card"><div class="card-kicker">Close · Disposal plans</div><div class="card-title" style="font-size:16px">Close disposal plan submissions</div>
+<div class="kt-meta-row" style="margin:8px 0"><div><span class="kt-label">Year</span><span class="kt-meta-value">FY 2027/28</span></div></div>
+<p class="text-muted" style="font-size:12px">No deadline input.</p>
+<div class="field"><label>Reason</label><textarea class="input" rows="2">The announced disposal intake period has ended.</textarea></div>
+<p class="text-muted" style="font-size:12px">Existing records remain available under the Disposal rules.</p>
+<div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-secondary" type="button">Cancel</button><button class="btn btn-primary" type="button">Close submissions</button></div></div>
+
+<div class="card"><div class="card-kicker">Deadline edit</div><div class="card-title" style="font-size:16px">Change closing time</div>
+<div class="kt-meta-row" style="margin:8px 0"><div><span class="kt-label">Year</span><span class="kt-meta-value">FY 2027/28</span></div><div><span class="kt-label">Activity</span><span class="kt-meta-value">Departmental plans</span></div></div>
+<div class="field"><label>Close automatically on (EAT)</label><input class="input" type="datetime-local" value="2026-11-30T23:59" /></div>
+<div class="field"><label>Reason</label><textarea class="input" rows="2">The announced submission deadline has been extended.</textarea></div>
+<div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-secondary" type="button">Cancel</button><button class="btn btn-primary" type="button">Save closing time</button></div></div>
+
+</div>
+</div>
+
+<div id="form-states" style="margin:0 0 24px">
+<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px"><span class="tag tag-accent">C02 / CUX-02</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Deadline error, expiry &amp; stale states</h4></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+<div class="kt-notice is-critical"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body"><strong>Deadline error.</strong> Enter a closing time later than the current time.</div></div>
+<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><div class="kt-notice-body"><strong>Expired.</strong> Departmental needs submissions closed at 25 Nov 2026, 23:59 EAT.</div></div>
+<div class="kt-notice is-warning" style="flex-direction:column;align-items:flex-start"><div style="display:flex;gap:12px;align-items:flex-start"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg><div class="kt-notice-body"><strong>Stale.</strong> These submission settings have changed since you opened them.</div></div><a href="#" style="margin-left:30px;font-size:13px">Review latest settings</a></div>
+</div>
+</div>
+
+</main>
+
+</x-dc>
+</body>
+</html>
