@@ -4,14 +4,7 @@ import {
 	openArtboard,
 	landmarks,
 	expectLandmarkSubsequence,
-	widthRatio,
-	boxWidth,
-	rowHeightByText,
-	gridLabelColumn,
-	textFits,
 	collectPageErrors,
-	expectClose,
-	openFrame,
 } from "../../helpers/designFidelity";
 
 /**
@@ -22,22 +15,28 @@ import {
  *
  *   - the artboard's ordered structural landmarks must appear in order in the
  *     live page (composition), and
- *   - geometry measured off the artboard (column split, row heights, dialog
- *     widths, grid label columns, truncation state of named fixture text)
- *     must match the live measurement within tolerance.
+ *   - geometry measured off the artboard must match the live measurement
+ *     within tolerance, where a board fixes one.
+ *
+ * Scope: the boards this module owns — C01, C02, C03A, C03BC, C03D, C04 and
+ * Reminders. The AUTH-owned boards were removed from this folder by their
+ * owner and their tests with them (plan D2, FOLLOW_UPS FU-11): CFG cannot
+ * assert fidelity against artboards it does not own. The AUTH tabs still
+ * render inside this page; their behaviour is covered by the responsibility
+ * and access specs, not here.
  *
  * Prerequisite state: the KT-STD §8 seed world
  * (`bench execute kentender_core.seeds.site_setup.run` — idempotent; the
  * `ui-system-setup-fidelity-gate` make target runs it first).
  *
- * Known, deliberate fixture deltas NOT asserted here: record ids and codes
- * (tracker C4, resolved: codes are server-generated OU-{suffix}-{sequence};
- * the artboards' mnemonic chips are historical fixture data), names, dates.
- * Data is the seed's business; this gate owns structure and geometry.
+ * Known, deliberate deltas NOT asserted here, each explained at its own test:
+ * record ids, names and dates (the seed's business, not this gate's); a
+ * board's sampled subset or ordering of a closed vocabulary; and the action
+ * sets a board documents for several states at once, which are asserted in
+ * the state each actually belongs to.
  */
 
 const DESIGN_DIR = "docs/mvp-1-r1/09_unified_system_setup/design";
-const PLN_DESIGN = "docs/mvp-1-r1/04_planning/design/C01-C04-Setup.dc.html";
 const LIVE_SCOPE = ".kt-setup-shell";
 const DIALOG_SCOPE = ".kt-dialog";
 
@@ -51,11 +50,6 @@ async function openSetupTab(page: Page, tab: string, readySelector: string): Pro
 	// fallback face's different metrics make truncation checks flaky.
 	await page.evaluate(() => (document as any).fonts?.ready?.catch(() => undefined));
 	return errors;
-}
-
-async function filterRegisterTo(page: Page, text: string): Promise<void> {
-	await page.fill('[data-testid="kt-ura-search"]', text);
-	await page.waitForSelector(`table.kt-table tbody tr:has-text("${text}")`, { timeout: 15_000 });
 }
 
 /**
@@ -84,184 +78,7 @@ async function firstCalendar(page: Page): Promise<string> {
 	return (body.message?.calendars || [])[0]?.calendar || "";
 }
 
-async function artboardLandmarks(page: Page, file: string, scope: string): Promise<string[]> {
-	await openArtboard(page, `${DESIGN_DIR}/${file}`, scope);
-	return landmarks(page, scope);
-}
-
 test.describe("System setup — design fidelity", () => {
-	// The six AUTH-DES boards below are AUTH-owned (plan D2) and no longer
-	// exist in CFG's design folder — a prior change removed them, and this
-	// spec is where that first shows up. They are skipped rather than left
-	// failing: CFG cannot supply another module's artboards, and a wall of red
-	// hides the real state. Each asserts nothing today; re-enable them (or
-	// move them to AUTH's own gate) when AUTH supplies the boards — FOLLOW_UPS
-	// FU-11.
-	test.skip("AUTH-DES-01 — Organisation structure tab", async ({ page, browser }) => {
-		const artboardScope = '[data-screen-label="AUTH-DES-01"]';
-		const art = await browser.newPage();
-		await openArtboard(art, `${DESIGN_DIR}/AUTH-DES-01 Organisation structure.dc.html`, artboardScope);
-		const wanted = await landmarks(art, artboardScope);
-		const artTreeRatio = await widthRatio(art, `${artboardScope} .card`);
-		const artRowHeight = await rowHeightByText(art, artboardScope, "Ministry of Health");
-		const artPanelCol = await gridLabelColumn(art, `${artboardScope} div[style*="grid-template-columns:130px"]`);
-		const artDirectorateFits = await textFits(art, artboardScope, "Directorate of Digital Health and Policy");
-		// C4 (tracker, RESOLVED 2026-09-03: codes ARE server-generated
-		// OU-{suffix}-{sequence}): the owner-supplied artboards keep their
-		// historical mnemonic chips, so live chips are permanently wider.
-		// Measure both so the truncation check excuses exactly that data
-		// delta and nothing else.
-		const artChipWidth = await art.evaluate((scope) => {
-			const chip = document.querySelector(`${scope} span[style*="ui-monospace"]`);
-			return chip ? chip.getBoundingClientRect().width : 0;
-		}, artboardScope);
-
-		await loginAsAdministrator(page);
-		const errors = await openSetupTab(page, "organisation-structure", '[data-testid="kt-ou-detail"]');
-		// Mirror the artboard's selection (the directorate) so the same actions render.
-		await page.click('.kt-org-tree-host .tree-link:has-text("Directorate of Digital Health")');
-		await page.waitForTimeout(500);
-
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "AUTH-DES-01");
-		expectClose(await widthRatio(page, ".kt-org-tree-card"), artTreeRatio, 0.02, "tree column ratio");
-		expectClose(
-			await rowHeightByText(page, ".kt-org-tree-host", "Ministry of Health"),
-			artRowHeight,
-			2,
-			"tree row height"
-		);
-		expectClose(await gridLabelColumn(page, ".kt-panel-row"), artPanelCol, 1, "panel label column");
-		if (artDirectorateFits) {
-			// The artboard shows the full directorate name. Live must too, up to
-			// the C4 chip-width delta (generated codes are wider than the
-			// artboards' historical mnemonic chips — C4 resolved: generated
-			// codes are canonical, so this allowance is permanent by design).
-			const live = await page.evaluate(() => {
-				const label = Array.from(document.querySelectorAll<HTMLElement>(".kt-org-tree-host .tree-label")).find(
-					(a) => (a.textContent || "").trim() === "Directorate of Digital Health and Policy"
-				);
-				const chip = label?.closest(".tree-link")?.querySelector(".kt-tree-code");
-				return {
-					deficit: label ? label.scrollWidth - label.clientWidth : NaN,
-					chipWidth: chip ? chip.getBoundingClientRect().width : 0,
-				};
-			});
-			const allowance = Math.max(0, live.chipWidth - artChipWidth) + 1;
-			expect(
-				live.deficit,
-				`directorate name truncated ${live.deficit}px beyond the C4 chip allowance (${allowance.toFixed(1)}px)`
-			).toBeLessThanOrEqual(allowance);
-		}
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	test.skip("AUTH-DES-02 — Add organisation unit dialog", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "AUTH-DES-02 Add organisation unit dialog.dc.html", ".dialog-backdrop .dialog");
-		const artWidth = await boxWidth(art, ".dialog-backdrop .dialog");
-
-		await loginAsAdministrator(page);
-		const errors = await openSetupTab(page, "organisation-structure", '[data-testid="kt-ou-detail"]');
-		await page.click('[data-testid="kt-ou-add"]');
-		await page.waitForSelector('[data-testid="kt-ou-prompt"]');
-
-		expectLandmarkSubsequence(wanted, await landmarks(page, DIALOG_SCOPE), "AUTH-DES-02");
-		expectClose(await boxWidth(page, DIALOG_SCOPE), artWidth, 2, "dialog width");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	test.skip("AUTH-DES-03 — Users and responsibilities register", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(
-			art,
-			"AUTH-DES-03 Users and responsibilities register.dc.html",
-			'[data-screen-label="AUTH-DES-03"]'
-		);
-
-		await loginAsAdministrator(page);
-		const errors = await openSetupTab(page, "users-and-responsibilities", '[data-testid="kt-ura-table"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "AUTH-DES-03");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	test.skip("AUTH-DES-04 — Assign responsibility dialog (OU scope with summary)", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(
-			art,
-			"AUTH-DES-04 Assign responsibility - Organisation Unit scope.dc.html",
-			".dialog-backdrop .dialog"
-		);
-		const artWidth = await boxWidth(art, ".dialog-backdrop .dialog");
-
-		await loginAsAdministrator(page);
-		const errors = await openSetupTab(page, "users-and-responsibilities", '[data-testid="kt-ura-table"]');
-		await page.click('[data-testid="kt-ura-assign-open"]');
-		await page.waitForSelector('[data-testid="kt-ura-assign"]');
-		// Reach the artboard's state: user picked, OU-scoped role, unit chosen,
-		// server summary rendered. Nothing is submitted.
-		await page.fill('[data-testid="kt-ura-user"]', "grace");
-		await page.click('.kt-matches button:has-text("Grace Wanjiku")');
-		await page.click('[data-testid="kt-ura-role"]');
-		await page.click('[data-testid="kt-ura-role-option-Departmental Author"]');
-		await page.click('[data-testid="kt-ura-ou-toggle"]');
-		await page.click('.kt-matches button:has-text("Digital Health")');
-		await page.waitForSelector('[data-testid="kt-ura-summary"]', { timeout: 10_000 });
-
-		expectLandmarkSubsequence(wanted, await landmarks(page, DIALOG_SCOPE), "AUTH-DES-04");
-		expectClose(await boxWidth(page, DIALOG_SCOPE), artWidth, 2, "dialog width");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	test.skip("AUTH-DES-06 — Responsibility detail", async ({ page, browser }) => {
-		const artboardScope = '[data-screen-label="AUTH-DES-06"]';
-		const art = await browser.newPage();
-		await openArtboard(art, `${DESIGN_DIR}/AUTH-DES-06 Responsibility detail.dc.html`, artboardScope);
-		const wanted = await landmarks(art, artboardScope);
-		const artLabelCol = await gridLabelColumn(art, `${artboardScope} div[style*="grid-template-columns:200px"]`);
-
-		await loginAsAdministrator(page);
-		const errors = await openSetupTab(page, "users-and-responsibilities", '[data-testid="kt-ura-table"]');
-		// Any Active assignment renders the artboard's full composition. The
-		// register lists newest rows first and this site's register churns
-		// (seed reconciliations, test worlds), so filter to Grace rather than
-		// assuming her rows sit on the first page.
-		await filterRegisterTo(page, "Grace Wanjiku");
-		await page.click('table.kt-table tbody tr:has-text("Grace Wanjiku") a');
-		await page.waitForSelector('[data-testid="kt-ura-history"]', { timeout: 15_000 });
-
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "AUTH-DES-06");
-		expectClose(await gridLabelColumn(page, ".kt-detail-row"), artLabelCol, 1, "detail label column");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	test.skip("AUTH-DES-07 — Revoke responsibility dialog", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(
-			art,
-			"AUTH-DES-07 Revoke responsibility dialog.dc.html",
-			".dialog-backdrop .dialog"
-		);
-		const artWidth = await boxWidth(art, ".dialog-backdrop .dialog");
-
-		await loginAsAdministrator(page);
-		const errors = await openSetupTab(page, "users-and-responsibilities", '[data-testid="kt-ura-table"]');
-		await filterRegisterTo(page, "Grace Wanjiku");
-		await page.click('table.kt-table tbody tr:has-text("Grace Wanjiku") a');
-		await page.waitForSelector('[data-testid="kt-ura-open-revoke"]', { timeout: 15_000 });
-		await page.click('[data-testid="kt-ura-open-revoke"]');
-		await page.waitForSelector('[data-testid="kt-ura-revoke"]');
-
-		expectLandmarkSubsequence(wanted, await landmarks(page, DIALOG_SCOPE), "AUTH-DES-07");
-		expectClose(await boxWidth(page, DIALOG_SCOPE), artWidth, 2, "dialog width");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
 	// CFG-CHG-002 v0.11 §10.2 — C01-Procuring-Entity.dc.html's own anchored
 	// sections (#configured/#conflict) are the fidelity source, replacing
 	// the retired Planning-owned C01-C04-Setup.dc.html frame (plan D-port,
