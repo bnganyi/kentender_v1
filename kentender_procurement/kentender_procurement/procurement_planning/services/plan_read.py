@@ -504,6 +504,16 @@ def _waiting_on(version, report, *, can_sign: bool) -> str:
 	return f"Ready for the Head of Procurement Function to sign and submit · {names}"
 
 
+def _preview(text: str, *, limit: int = 90) -> str:
+	"""A faithful short preview: never a truncation mid-word, and never a
+	summary that changes the meaning (§9.3.7)."""
+	text = cstr(text).strip()
+	if len(text) <= limit:
+		return text
+	cut = text[:limit].rsplit(" ", 1)[0]
+	return f"{cut}…"
+
+
 def _acceptance_history(fiscal_year: str) -> list[str]:
 	"""Who accepted each departmental plan, and when — the provenance of the
 	sources this plan is built from."""
@@ -869,6 +879,11 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 				"department": _ou_label(allocation.organisation_unit),
 				"source_origin": allocation.source_origin,
 				"departmental_plan_line": f"{dpp_reference} · Submission {dpp_version_number}",
+				# §10.8 "View classification details" opens the accepted
+				# classification evidence for this exact source.
+				"dpp_submission": cstr(
+					frappe.db.get_value("Departmental Plan Submission", {"dpp_version": dpp_version}, "name")
+				) if dpp_version else "",
 				"need_reference_line": f"{allocation.need} · Revision {needs_intake.need_revision_number(allocation.need_revision)}" if allocation.need else "",
 				"quantity_display": _quantity_display(allocation.quantity, allocation.unit),
 				"quantity_number": f"{flt(allocation.quantity):g}",
@@ -946,6 +961,26 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 			"item_state_badge": {"Draft": "Proposed"}.get(item.item_state, item.item_state),
 		},
 		"plan_reference": plan.plan_reference,
+		# §10.8 — one compact read-only summary under the editable fields.
+		# Quantity, unit and the required date are derived from the included
+		# requirements; Plan horizon is a fixed literal and is not displayed.
+		"summary_line": " · ".join(
+			part for part in (
+				cstr(item.procurement_category),
+				total_quantity_display if allocations else "",
+				f"Required by {_date(item.baseline_delivery_completion_date)}" if item.baseline_delivery_completion_date else "",
+			) if part and part != "—"
+		),
+		# §10.8 — a blocking configuration problem is one plain issue and its
+		# recovery owner, never a resolver status field (PLN22-AC-005).
+		"method_issue": (
+			f"{cstr(item.procurement_method)} cannot be confirmed until the applicable method rule is verified in System setup."
+			if cstr(item.procurement_method) and not method_profile.get("found") else ""
+		),
+		# §9.3.7 — a long reason leads with a faithful short preview and an
+		# adjacent disclosure; the full governed text stays available.
+		"aggregation_reason_preview": _preview(cstr(item.aggregation_reason)),
+		"estimate_basis_preview": _preview(cstr(item.estimate_basis)),
 		"sources": sources,
 		"sources_caption": f"{len(sources)} sources · {sum(flt(a.quantity) for a in allocations):g} {_unit_label(allocations[0].unit).lower()} · {_money(value)}" if combined else "",
 		"planned_value_display": _money(value),

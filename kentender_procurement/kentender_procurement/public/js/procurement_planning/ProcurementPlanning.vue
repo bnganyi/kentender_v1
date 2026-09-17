@@ -255,8 +255,18 @@
 						:pending="pending"
 						:error-summary="errorSummary"
 						@save="onSavePlanItem"
-						@dissolve="onDissolvePlanItem"
+						@remove="dissolveDialog = true"
 						@back="onBackToPlan"
+						@view-classification="onViewItemClassification"
+						@open-setup="frappe.set_route('system-setup')"
+					/>
+					<DissolveItemDialog
+						v-if="dissolveDialog"
+						:sources="planItem.sources || []"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onDissolvePlanItem"
+						@cancel="dissolveDialog = false"
 					/>
 				</template>
 
@@ -321,6 +331,7 @@ import AnnualPlanScreen from "./components/AnnualPlanScreen.vue";
 import FormPlanItemsDialog from "./components/FormPlanItemsDialog.vue";
 import ReasonDialog from "./components/ReasonDialog.vue";
 import CancelUpdateDialog from "./components/CancelUpdateDialog.vue";
+import DissolveItemDialog from "./components/DissolveItemDialog.vue";
 import ActivePlanScreen from "./components/ActivePlanScreen.vue";
 import ShiftScheduleDialog from "./components/ShiftScheduleDialog.vue";
 import PublicationResultScreen from "./components/PublicationResultScreen.vue";
@@ -370,6 +381,7 @@ const formDialog = ref(false);
 // was ticked.
 const selectedSources = ref([]);
 const cancelUpdateDialog = ref(false);
+const dissolveDialog = ref(false);
 const cancelUpdateReason = ref("");
 const splittingDialog = ref(false);
 const lateActivationDialog = ref(false);
@@ -559,6 +571,7 @@ function applyLoaded(scr, loaded) {
 			break;
 		case "plan-item":
 			planItem.value = loaded;
+			dissolveDialog.value = false;
 			break;
 		case "finance":
 			financeTask.value = loaded;
@@ -764,6 +777,14 @@ async function onSaveDirect(payload) {
 		})
 	);
 	if (result) go(dppReference.value);
+}
+
+function onViewItemClassification() {
+	// §10.8 — the classification evidence for this purchase's own sources,
+	// read-only: nothing on the purchase editor makes it editable.
+	const source = (planItem.value.sources || [])[0];
+	if (!source || !source.dpp_submission) return;
+	frappe.set_route(WORKSPACE_PAGE, "dpp-classification", source.dpp_submission);
 }
 
 async function onPreparePlanUpdate() {

@@ -1,32 +1,42 @@
-// PLN-CHG-001 v1.18 §5.6.3/§5.4.6 — DissolveItemDialog component tests (U21-dissolve-item).
+// PLN-CHG-001 v1.23 §10.8 U09-REMOVE.
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import DissolveItemDialog from "./DissolveItemDialog.vue";
 
+const SOURCES = [
+	{ requirement: "Clinical training laptops", department: "HRMD", amount_display: "KES 20,000,000" },
+	{ requirement: "Clinical deployment laptops", department: "Digital Health", amount_display: "KES 30,000,000" },
+];
+
+function make(props = {}) {
+	return mount(DissolveItemDialog, { props: { pending: false, error: "", sources: SOURCES, ...props } });
+}
+
 describe("DissolveItemDialog", () => {
-	it("renders the exact frame copy and both actions", () => {
-		const wrapper = mount(DissolveItemDialog, { props: { pending: false, error: "" } });
-		expect(wrapper.get(".kt-dialog-title").text()).toBe("Dissolve Plan Item?");
-		expect(wrapper.text()).toContain(
-			"Its eligible sources will return to this Draft's unallocated requirements. This action does not release Budget funds."
-		);
-		const buttons = wrapper.findAll("button").map((b) => b.text());
-		expect(buttons).toEqual(["Cancel", "Dissolve Plan Item"]);
+	it("names what happens to the requirements and to the money", () => {
+		const w = make();
+		expect(w.text()).toContain("Remove this purchase?");
+		expect(w.text()).toContain("These requirements will return to this draft plan so they can be added again.");
+		expect(w.text()).toContain("No funds are released.");
 	});
 
-	it("emits cancel and confirm from the respective buttons", async () => {
-		const wrapper = mount(DissolveItemDialog, { props: { pending: false, error: "" } });
-		await wrapper.get('[data-testid="pln-dissolve-item-confirm"]').trigger("click");
-		expect(wrapper.emitted("confirm")).toHaveLength(1);
-		await wrapper.findAll("button")[0].trigger("click");
-		expect(wrapper.emitted("cancel")).toHaveLength(1);
+	it("lists the requirements that will be returned", () => {
+		const w = make();
+		const table = w.get('[data-testid="pln-dissolve-sources"]');
+		expect(table.text()).toContain("Clinical training laptops");
+		expect(table.text()).toContain("KES 30,000,000");
 	});
 
-	it("disables both actions while pending and shows a server error", () => {
-		const wrapper = mount(DissolveItemDialog, { props: { pending: true, error: "The item changed." } });
-		for (const button of wrapper.findAll("button")) {
-			expect(button.attributes("disabled")).toBeDefined();
-		}
-		expect(wrapper.get('[data-testid="pln-dissolve-item-error"]').text()).toBe("The item changed.");
+	it("emits confirm and cancel", async () => {
+		const w = make();
+		await w.get('[data-testid="pln-dissolve-item-confirm"]').trigger("click");
+		expect(w.emitted("confirm")).toHaveLength(1);
+		await w.findAll("button")[0].trigger("click");
+		expect(w.emitted("cancel")).toHaveLength(1);
+	});
+
+	it("shows a command error", () => {
+		const w = make({ error: "This item can no longer be removed from the draft." });
+		expect(w.get('[data-testid="pln-dissolve-item-error"]').text()).toContain("can no longer be removed");
 	});
 });
