@@ -84,6 +84,21 @@ export function returnDepartmentalPlan(args) {
 	return frappeCall(`${BASE}.return_departmental_plan`, args);
 }
 
+// PLN-CHG-001 v1.23 §7.1/§7.2 — accepted-classification evidence and the
+// Planning-owned correction of it. There is deliberately no procurement
+// category in the correction payload: the server derives it from the governed
+// catalogue and rejects a client-supplied one (§4.4).
+export function getAcceptedDppClassification(dppSubmission, dppEntryId = "") {
+	return frappeCall(`${BASE}.get_accepted_dpp_classification`, {
+		dpp_submission: dppSubmission,
+		dpp_entry_id: dppEntryId,
+	});
+}
+
+export function correctAcceptedRequirementClassification(args) {
+	return frappeCall(`${BASE}.correct_accepted_requirement_classification`, args);
+}
+
 // --- annual plan + plan items -------------------------------------------
 
 export function getAnnualPlan(planReference) {

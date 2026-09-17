@@ -1,203 +1,281 @@
-<!-- PLN-UI-06 DPP validation task (§12.6), rendering PLN-DES-06 v1.12
-     class-for-class: immutable submission context (six facts, three columns),
-     snapshot rows with the inline requirement-type select and a View
-     disclosure of the submitted narrative, the certification card with its
-     signed line, and the two decision controls. -->
+<!-- PLN-CHG-001 v1.23 §10.5 — Procurement review of a departmental plan (U06),
+     ported from U06.dc.html.
+
+     The complete certified content comes first, then one decision. The only
+     classification input anywhere is Requirement type; Category is read-only
+     text beside it, derived by the server from the same governed catalogue
+     entry — a client cannot send one (§4.4).
+
+     Missing classification or stale source evidence removes Accept but never
+     Return: a corrective action must stay available precisely when the
+     evidence needed for a positive decision is the thing that is wrong
+     (§6.3). -->
 <template>
 	<div>
-		<p class="kt-page-kicker">{{ detail.header?.eyebrow }}</p>
-		<h1 class="kt-page-title">{{ detail.header?.title }}</h1>
-		<p class="pln-quiet-ref">{{ detail.header?.reference_line }}</p>
-		<span class="kt-status" :class="badgeClass" data-testid="dppv-badge">
-			{{ detail.header?.badge }}
-		</span>
-
-		<!-- submission context card -->
-		<div class="kt-card kt-blueprint pln-card-pad" data-testid="dppv-context">
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<div class="pln-field-grid pln-field-grid-3">
-				<div class="pln-ro-field">
-					<label>Department</label>
-					<div class="pln-val">{{ detail.context?.department }}</div>
-				</div>
-				<div class="pln-ro-field">
-					<label>Financial Year</label>
-					<div class="pln-val">{{ detail.context?.financial_year }}</div>
-				</div>
-				<div class="pln-ro-field">
-					<label>Submitted by</label>
-					<div class="pln-val">{{ detail.context?.submitted_by }}</div>
-				</div>
-				<div class="pln-ro-field">
-					<label>Submitted</label>
-					<div class="pln-val">{{ detail.context?.submitted_at }}</div>
-				</div>
-				<div class="pln-ro-field">
-					<label>Requirements</label>
-					<div class="pln-val">{{ detail.context?.requirements }}</div>
-				</div>
-				<div class="pln-ro-field">
-					<label>Total indicative value</label>
-					<div class="pln-val">{{ detail.context?.total_display }}</div>
-				</div>
+		<div class="pln-masthead">
+			<div>
+				<h1 class="kt-page-title" data-testid="pln-review-title">{{ title }}</h1>
+				<p class="kt-page-lede">Check the certified requirements before adding them to the annual plan.</p>
 			</div>
 		</div>
 
-		<!-- §6.1 — the certifier sees the task read-only -->
-		<div
-			v-if="detail.maker_checker_blocked && detail.status === 'Open'"
-			class="pln-notice"
-			data-testid="dppv-maker-checker"
-		>
-			<p class="pln-notice-title">You certified this submission</p>
-			<p>Another Procurement Planner must validate it.</p>
+		<div class="kt-meta-row pln-context-row" data-testid="pln-review-context">
+			<div>
+				<span class="kt-label">Reference</span>
+				<span class="kt-meta-value">{{ referenceOnly }}</span>
+			</div>
+			<div>
+				<span class="kt-label">Submission</span>
+				<span class="kt-meta-value">{{ submissionNumber }}</span>
+			</div>
+			<div>
+				<span class="kt-label">Financial year</span>
+				<span class="kt-meta-value">{{ context.financial_year }}</span>
+			</div>
+			<div>
+				<span class="kt-label">Status</span>
+				<span class="kt-meta-value">
+					<span class="kt-status" :class="`is-${task.header?.badge_kind || 'pending'}`">{{ statusLabel }}</span>
+				</span>
+			</div>
 		</div>
 
-		<div v-if="errorSummary" class="pln-notice is-critical" role="alert" data-testid="dppv-error">
-			<p class="pln-notice-title">This decision could not be completed</p>
-			<p>{{ errorSummary }}</p>
+		<!-- Certification: secondary evidence, with the full immutable statement
+		     available rather than summarised away. -->
+		<div class="kt-meta-row pln-certified-by" data-testid="pln-review-certified">
+			<div>
+				<span class="kt-label">Certified by</span>
+				<span class="kt-meta-value">{{ context.submitted_by }}</span>
+			</div>
+			<div>
+				<span class="kt-label">Certified at</span>
+				<span class="kt-meta-value">{{ context.submitted_at }}</span>
+			</div>
+		</div>
+		<details class="kt-disclosure" data-testid="pln-review-certification">
+			<summary class="kt-disclosure-head">
+				<span class="kt-disclosure-title">View certification</span>
+			</summary>
+			<div class="kt-disclosure-body">{{ certification.text }}</div>
+		</details>
+
+		<!-- U06-SEGREGATION — the actor who certified this submission cannot
+		     review it. Content stays readable; both decisions are absent. -->
+		<div v-if="task.maker_checker_blocked" class="kt-notice is-critical" data-testid="pln-review-segregation">
+			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+				<circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16h.01"></path>
+			</svg>
+			<div class="kt-notice-body">You cannot review a departmental plan you certified.</div>
 		</div>
 
-		<!-- submitted requirements table -->
-		<div class="kt-card kt-blueprint pln-card-pad" data-testid="dppv-entries">
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<table class="pln-table">
+		<!-- U06-STALE-SOURCE — Accept goes, Return stays. -->
+		<template v-if="staleSources.length">
+			<div class="kt-notice is-warning" data-testid="pln-review-stale">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+					<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
+				</svg>
+				<div class="kt-notice-body">
+					A source requirement changed after this submission was certified. Return it to the department for correction.
+				</div>
+			</div>
+			<table class="kt-table" data-testid="pln-review-stale-table">
 				<thead>
-					<tr>
-						<th>Requirement</th>
-						<th>Source</th>
-						<th class="pln-num">Quantity</th>
-						<th>Required by</th>
-						<th>Procurement Budget Line</th>
-						<th class="pln-num">Amount</th>
-						<th>Requirement type</th>
-						<th></th>
-					</tr>
+					<tr><th>Requirement</th><th>Revision certified</th><th>Current revision</th></tr>
 				</thead>
 				<tbody>
-					<template v-for="row in detail.entries" :key="row.entry_id">
-						<tr :data-testid="`dppv-entry-${row.entry_id}`">
-							<td>{{ row.title }}</td>
-							<td>{{ row.source_label }}</td>
-							<td class="pln-num">{{ row.quantity_display }}</td>
-							<td>{{ row.required_by_display }}</td>
-							<td>{{ row.budget_line_display }}</td>
-							<td class="pln-num">{{ row.amount_display }}</td>
-							<td>
-								<!-- a not-proceeding entry takes no classification (§5.1) -->
-								<span v-if="row.not_proceeding" class="kt-status is-draft">Not proceeding</span>
-								<select
-									v-else-if="decidable"
-									class="kt-input pln-seg-select"
-									:data-testid="`dppv-type-${row.entry_id}`"
-									:value="classifications[row.entry_id] || ''"
-									@change="$emit('classify', row.entry_id, $event.target.value)"
-								>
-									<option value="" disabled>Select…</option>
-									<option v-for="type in detail.requirement_types" :key="type" :value="type">
-										{{ type }}
-									</option>
-								</select>
-								<span v-else>{{ classifications[row.entry_id] || "—" }}</span>
-							</td>
-							<td style="text-align: right">
-								<button
-									type="button"
-									class="kt-btn kt-btn-ghost"
-									:data-testid="`dppv-view-${row.entry_id}`"
-									:aria-expanded="expanded[row.entry_id] ? 'true' : 'false'"
-									@click="toggle(row.entry_id)"
-								>
-									View
-								</button>
-							</td>
-						</tr>
-						<!-- the submitted narrative, read-only (§12.6 "all submitted entry details") -->
-						<tr v-if="expanded[row.entry_id]" :data-testid="`dppv-detail-${row.entry_id}`">
-							<td colspan="8">
-								<div class="pln-field-grid pln-entry-detail">
-									<div class="pln-ro-field" style="grid-column: 1 / -1">
-										<label>Description</label>
-										<div class="pln-val">{{ row.description }}</div>
-									</div>
-									<div class="pln-ro-field" style="grid-column: 1 / -1">
-										<label>Expected operational result</label>
-										<div class="pln-val">{{ row.expected_operational_result }}</div>
-									</div>
-									<div v-if="row.not_proceeding" class="pln-ro-field" style="grid-column: 1 / -1">
-										<label>Not proceeding</label>
-										<div class="pln-val">{{ row.not_proceeding_reason }}</div>
-									</div>
-								</div>
-							</td>
-						</tr>
-					</template>
+					<tr v-for="row in staleSources" :key="row.entry_id">
+						<td>{{ row.title }}</td>
+						<td>{{ row.certified_revision_display }}</td>
+						<td>{{ row.current_revision_display }}</td>
+					</tr>
 				</tbody>
 			</table>
+		</template>
+
+		<div class="kt-kpi-row" data-testid="pln-review-summary">
+			<div class="kt-kpi-card">
+				<div class="kt-kpi-value">{{ summary.included_requirements }}</div>
+				<div class="kt-kpi-sub">Included requirements</div>
+			</div>
+			<div class="kt-kpi-card">
+				<div class="kt-kpi-value">{{ summary.included_cost_display }}</div>
+				<div class="kt-kpi-sub">Included cost</div>
+			</div>
+			<div class="kt-kpi-card">
+				<div class="kt-kpi-value">{{ summary.excluded_requirements }}</div>
+				<div class="kt-kpi-sub">Excluded requirements</div>
+			</div>
 		</div>
 
-		<!-- certification card with the signed line -->
-		<div class="pln-cert-box" data-testid="dppv-certification">
-			<div class="kt-card-title">{{ detail.certification?.heading }}</div>
-			<p>{{ detail.certification?.text }}</p>
-			<p class="pln-signed">{{ detail.certification?.signed_line }}</p>
-		</div>
+		<!-- One card per requirement, not a nine-column grid: the first line is
+		     the source facts, the second is the only decision the Planner makes
+		     about it. -->
+		<div
+			v-for="row in entries"
+			:key="row.entry_id"
+			class="kt-card kt-blueprint pln-review-row"
+			data-testid="pln-review-row"
+		>
+			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+			<div class="kt-meta-row">
+				<div class="pln-review-name">
+					<span class="kt-label">Requirement</span>
+					<span class="kt-meta-value">{{ row.title }}</span>
+				</div>
+				<div>
+					<span class="kt-label">Quantity</span>
+					<span class="kt-meta-value">{{ row.quantity_number }}</span>
+				</div>
+				<div>
+					<span class="kt-label">Unit</span>
+					<span class="kt-meta-value">{{ row.unit_label }}</span>
+				</div>
+				<div>
+					<span class="kt-label">Required by</span>
+					<span class="kt-meta-value">{{ row.required_by_display }}</span>
+				</div>
+				<div>
+					<span class="kt-label">Estimated cost</span>
+					<span class="kt-meta-value">{{ row.amount_display }}</span>
+				</div>
+				<div>
+					<a href="#" data-testid="pln-review-view" @click.prevent="$emit('view-requirement', row)">View requirement</a>
+				</div>
+			</div>
 
-		<!-- decision footer -->
-		<div v-if="decidable" class="pln-footer-bar">
-			<button
-				type="button"
-				class="kt-btn kt-btn-secondary"
-				data-testid="dppv-return"
-				:disabled="pending"
-				@click="$emit('open-return-dialog')"
-			>
-				Return to department
-			</button>
-			<button
-				type="button"
-				class="kt-btn kt-btn-primary"
-				data-testid="dppv-accept"
-				:disabled="pending || !fullyClassified"
-				@click="$emit('accept')"
-			>
-				Accept departmental plan
-			</button>
+			<div v-if="row.not_proceeding" class="pln-review-excluded" data-testid="pln-review-excluded">
+				<div class="kt-meta-row">
+					<div>
+						<span class="kt-label">Status</span>
+						<span class="kt-meta-value"><span class="kt-status is-muted">Not included this year</span></span>
+					</div>
+					<div>
+						<span class="kt-label">Requirement type</span>
+						<span class="kt-meta-value">Not applicable</span>
+					</div>
+				</div>
+				<p class="kt-muted">{{ row.not_proceeding_reason }}</p>
+			</div>
+
+			<!-- The second line: budget line, and the one Planner input. -->
+			<div v-else class="kt-meta-row pln-review-classify">
+				<div>
+					<span class="kt-label">Budget line</span>
+					<span class="kt-meta-value">{{ row.budget_line_display }}</span>
+				</div>
+				<div class="kt-field">
+					<label :for="`type-${row.entry_id}`" class="kt-label">Requirement type</label>
+					<select
+						:id="`type-${row.entry_id}`"
+						class="kt-input"
+						data-testid="pln-review-type"
+						:disabled="!canDecide"
+						:value="classifications[row.entry_id] || ''"
+						@change="$emit('set-classification', { entry_id: row.entry_id, requirement_type: $event.target.value })"
+					>
+						<option value="">Select a requirement type</option>
+						<option v-for="option in requirementTypes" :key="option.requirement_type" :value="option.requirement_type">
+							{{ option.requirement_type }}
+						</option>
+					</select>
+				</div>
+				<div>
+					<span class="kt-label">Category</span>
+					<!-- Read-only, derived, never sent: §4.4. -->
+					<span class="kt-meta-value" data-testid="pln-review-category">{{ categoryFor(row.entry_id) }}</span>
+				</div>
+			</div>
+
+			<p v-if="!row.not_proceeding && missingClassification(row)" class="pln-error-summary" data-testid="pln-review-row-error">
+				Select the requirement type before accepting this departmental plan.
+			</p>
 		</div>
+		<p v-if="!entries.length" class="kt-muted">No requirements in this submission.</p>
+
+		<p v-if="entries.some((r) => !r.not_proceeding)" class="kt-muted" data-testid="pln-review-helper">
+			Choose the requirement type. Category is set automatically.
+		</p>
+
+		<!-- Decision. What acceptance does, and what it does not. -->
+		<template v-if="!task.maker_checker_blocked">
+			<p class="kt-muted" data-testid="pln-review-consequence">
+				Accepting makes the included requirements available for annual plan preparation.
+				It does not approve the Annual Procurement Plan.
+			</p>
+			<div class="pln-footer" data-testid="pln-review-footer">
+				<button
+					type="button"
+					class="kt-btn kt-btn-secondary"
+					data-testid="pln-review-return"
+					:disabled="pending || !canDecide"
+					@click="$emit('return-to-department')"
+				>
+					Return to department
+				</button>
+				<div class="pln-footer-right">
+					<!-- Absent, not disabled, when the evidence cannot support it. -->
+					<button
+						v-if="canAccept"
+						type="button"
+						class="kt-btn kt-btn-primary"
+						data-testid="pln-review-accept"
+						:disabled="pending"
+						@click="$emit('accept')"
+					>
+						Accept departmental plan
+					</button>
+				</div>
+			</div>
+		</template>
 	</div>
 </template>
 
 <script setup>
-import { computed, reactive } from "vue";
+import { computed } from "vue";
 
 const props = defineProps({
-	detail: { type: Object, default: () => ({}) },
+	task: { type: Object, default: () => ({}) },
 	classifications: { type: Object, default: () => ({}) },
 	pending: Boolean,
-	errorSummary: String,
 });
 
-defineEmits(["classify", "accept", "open-return-dialog"]);
+defineEmits(["set-classification", "accept", "return-to-department", "view-requirement"]);
 
-const expanded = reactive({});
+const context = computed(() => props.task.context || {});
+const certification = computed(() => props.task.certification || {});
+const summary = computed(() => props.task.summary || {});
+const entries = computed(() => props.task.entries || []);
+const requirementTypes = computed(() => props.task.requirement_types || []);
+const staleSources = computed(() => props.task.stale_sources || []);
+const canDecide = computed(() => Boolean(props.task.can_decide));
 
-function toggle(entryId) {
-	expanded[entryId] = !expanded[entryId];
+const title = computed(() => `Review ${context.value.department || "the"}'s departmental plan`);
+const referenceOnly = computed(() => (props.task.header?.reference_line || "").split(" · ")[0]);
+const submissionNumber = computed(() => {
+	const match = /Submission (\d+)/.exec(props.task.header?.reference_line || "");
+	return match ? match[1] : "";
+});
+const statusLabel = computed(() =>
+	props.task.status === "Open" ? "Awaiting Procurement review" : props.task.header?.badge || "",
+);
+
+function categoryFor(entryId) {
+	const selected = props.classifications[entryId];
+	if (!selected) return "—";
+	const match = requirementTypes.value.find((option) => option.requirement_type === selected);
+	return match ? match.procurement_category : "—";
 }
 
-const decidable = computed(
-	() => props.detail.status === "Open" && !props.detail.maker_checker_blocked
-);
+function missingClassification(row) {
+	return canDecide.value && !props.classifications[row.entry_id];
+}
 
-const fullyClassified = computed(() =>
-	(props.detail.entries || [])
-		.filter((row) => !row.not_proceeding)
-		.every((row) => props.classifications[row.entry_id])
-);
-
-const badgeClass = computed(() =>
-	props.detail.header?.badge_kind === "pending" ? "is-pending" : "is-live"
-);
+// U06-CLASSIFICATION-MISSING and U06-STALE-SOURCE both remove Accept and keep
+// Return. The server decides too; this only avoids offering a decision that
+// would certainly fail.
+const canAccept = computed(() => {
+	if (!canDecide.value || staleSources.value.length) return false;
+	return entries.value.every((row) => row.not_proceeding || props.classifications[row.entry_id]);
+});
 </script>

@@ -38,6 +38,24 @@ from kentender_procurement.procurement_planning.services import envelope, scope_
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import ROLE_PROCUREMENT_PLANNER
 
+def _full_name(user: str) -> str:
+	return cstr(frappe.db.get_value("User", user, "full_name") or user)
+
+
+#: §4.1 — instants are UTC in storage and shown in Africa/Nairobi.
+NAIROBI = "Africa/Nairobi"
+
+
+def _eat(value) -> str:
+	"""A UTC instant rendered as EAT, the same way every other Planning read
+	does it."""
+	if not value:
+		return ""
+	from frappe.utils import convert_utc_to_timezone, format_datetime, get_datetime
+
+	return f"{format_datetime(convert_utc_to_timezone(get_datetime(value), NAIROBI), 'd MMM yyyy, HH:mm')} EAT"
+
+
 REASON_MIN = 20
 REASON_MAX = 500
 
@@ -146,7 +164,9 @@ def _accepted_classification(dpp_submission: str, dpp_entry_id: str) -> dict[str
 		"requirement_type": requirement_type,
 		"procurement_category": category_for(requirement_type),
 		"actor": decision.actor,
+		"actor_name": _full_name(decision.actor),
 		"at": decision.decided_at,
+		"at_display": _eat(decision.decided_at),
 	}
 
 
@@ -164,7 +184,9 @@ def correction_history(dpp_submission: str, dpp_entry_id: str) -> list[dict[str,
 			"procurement_category": row.new_procurement_category,
 			"reason": row.reason,
 			"actor": row.corrected_by,
+			"actor_name": _full_name(row.corrected_by),
 			"at": row.corrected_at,
+			"at_display": _eat(row.corrected_at),
 		}
 		for row in frappe.get_all(
 			"DPP Classification Correction",
@@ -336,9 +358,15 @@ def get_accepted_dpp_classification(
 	# A technical reader passes the read gate but is never offered the command.
 	authz.require_site_read((ROLE_PROCUREMENT_PLANNER,), actor)
 	rows = _classification_rows(dpp_submission, only_entry=cstr(dpp_entry_id).strip())
+	version = frappe.db.get_value("Departmental Plan Submission", dpp_submission, "dpp_version")
+	root = frappe.db.get_value("Departmental Plan Version", version, "departmental_plan")
 	return {
 		"ok": True,
 		"dpp_submission": dpp_submission,
+		"dpp_reference": cstr(frappe.db.get_value("Departmental Plan", root, "dpp_reference")),
+		"submission_number": int(
+			frappe.db.get_value("Departmental Plan Submission", dpp_submission, "submission_number") or 0
+		),
 		"rows": rows,
 		"requirement_types": active_requirement_types(),
 		"can_correct": authz.has_site_role(ROLE_PROCUREMENT_PLANNER, actor),

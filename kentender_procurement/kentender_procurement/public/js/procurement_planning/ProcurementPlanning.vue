@@ -111,13 +111,13 @@
 
 				<template v-else-if="screen === 'dpp-review'">
 					<DppValidationScreen
-						:detail="validation"
+						:task="validation"
 						:classifications="classifications"
 						:pending="pending"
-						:error-summary="errorSummary"
-						@classify="onClassify"
+						@set-classification="onClassify"
 						@accept="onAccept"
-						@open-return-dialog="returnDialog = true"
+						@return-to-department="returnDialog = true"
+						@view-requirement="onViewRequirement"
 					/>
 					<ReturnIssuesDialog
 						v-if="returnDialog"
@@ -126,6 +126,25 @@
 						:error="errorSummary"
 						@confirm="onReturnConfirm"
 						@cancel="returnDialog = false"
+					/>
+				</template>
+
+				<!-- PLN-CHG-001 v1.23 §10.5 — the accepted-classification record
+				     and its correction panel (U06-ACCEPTED-CLASSIFICATION /
+				     U06-CORRECT-CLASSIFICATION). -->
+				<template v-else-if="screen === 'dpp-classification'">
+					<ClassificationEvidenceScreen
+						:evidence="classificationEvidence"
+						:panel="classificationPanel"
+						:new-type="classificationNewType"
+						:reason="classificationReason"
+						:error="errorSummary"
+						:pending="pending"
+						@correct="onOpenClassificationCorrection"
+						@cancel="onCancelClassificationCorrection"
+						@save="onSaveClassificationCorrection"
+						@update:new-type="classificationNewType = $event"
+						@update:reason="classificationReason = $event"
 					/>
 				</template>
 
@@ -283,6 +302,7 @@ import WorkspaceScreen from "./components/WorkspaceScreen.vue";
 import DppPlanScreen from "./components/DppPlanScreen.vue";
 import DppEntryEditorScreen from "./components/DppEntryEditorScreen.vue";
 import DppValidationScreen from "./components/DppValidationScreen.vue";
+import ClassificationEvidenceScreen from "./components/ClassificationEvidenceScreen.vue";
 import ReturnIssuesDialog from "./components/ReturnIssuesDialog.vue";
 import NotProceedDialog from "./components/NotProceedDialog.vue";
 import AnnualPlanScreen from "./components/AnnualPlanScreen.vue";
@@ -323,6 +343,10 @@ const editor = ref({});
 const certified = ref(false);
 const validation = ref({});
 const classifications = ref({});
+const classificationEvidence = ref({});
+const classificationPanel = ref(null);
+const classificationNewType = ref("");
+const classificationReason = ref("");
 const returnDialog = ref(false);
 const notProceedDialog = ref(false);
 const annualPlan = ref({});
@@ -366,6 +390,9 @@ const screen = computed(() => {
 	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "dpp-review" && segments.value[1]) {
 		return "dpp-review";
 	}
+	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "dpp-classification" && segments.value[1]) {
+		return "dpp-classification";
+	}
 	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "finance" && segments.value[1]) {
 		return "finance";
 	}
@@ -382,6 +409,10 @@ const screen = computed(() => {
 
 const validationTaskId = computed(() =>
 	segments.value[0] === "dpp-review" ? segments.value[1] || "" : ""
+);
+
+const classificationSubmissionId = computed(() =>
+	segments.value[0] === "dpp-classification" ? segments.value[1] || "" : ""
 );
 
 const financeTaskId = computed(() =>
@@ -408,6 +439,8 @@ const screenKey = computed(() => {
 			return `dpp-entry:${dppReference.value}:${entryId.value || "new"}`;
 		case "dpp-review":
 			return `dpp-review:${validationTaskId.value}`;
+		case "dpp-classification":
+			return `dpp-classification:${classificationSubmissionId.value}`;
 		case "plan":
 			return `plan:${planReference.value}`;
 		case "plan-item":
@@ -451,6 +484,8 @@ function fetchFor(scr) {
 			return api.getDppEntryEditor(dppReference.value, entryId.value || undefined);
 		case "dpp-review":
 			return api.getDppValidationTask(validationTaskId.value);
+		case "dpp-classification":
+			return api.getAcceptedDppClassification(classificationSubmissionId.value);
 		case "plan":
 			return api.getAnnualPlan(planReference.value);
 		case "plan-item":
@@ -481,6 +516,14 @@ function applyLoaded(scr, loaded) {
 		case "dpp-entry":
 			editor.value = loaded;
 			notProceedDialog.value = false;
+			break;
+		case "dpp-classification":
+			classificationEvidence.value = loaded;
+			// A reload closes the panel: it was opened against evidence that
+			// may have moved.
+			classificationPanel.value = null;
+			classificationNewType.value = "";
+			classificationReason.value = "";
 			break;
 		case "dpp-review":
 			validation.value = loaded;
@@ -703,8 +746,48 @@ async function onSaveDirect(payload) {
 	if (result) go(dppReference.value);
 }
 
-function onClassify(entryId, value) {
+function onClassify({ entry_id: entryId, requirement_type: value }) {
 	classifications.value = { ...classifications.value, [entryId]: value };
+}
+
+function onViewRequirement(row) {
+	frappe.set_route(DPP_PAGE, validation.value.dpp_reference || "", "entry", row.entry_id);
+}
+
+// --- §10.5 accepted-classification correction -----------------------------
+
+function onOpenClassificationCorrection(row) {
+	classificationPanel.value = row;
+	classificationNewType.value = "";
+	classificationReason.value = "";
+	errorSummary.value = "";
+}
+
+function onCancelClassificationCorrection() {
+	classificationPanel.value = null;
+	classificationNewType.value = "";
+	classificationReason.value = "";
+	errorSummary.value = "";
+}
+
+async function onSaveClassificationCorrection() {
+	const row = classificationPanel.value;
+	if (!row) return;
+	const result = await run("correct-classification", (key) =>
+		api.correctAcceptedRequirementClassification({
+			dpp_submission: classificationEvidence.value.dpp_submission,
+			dpp_entry_id: row.dpp_entry_id,
+			// The exact evidence head the Planner was looking at: a concurrent
+			// correction must fail rather than silently stack on a newer one.
+			expected_evidence_id: row.classification.evidence_id,
+			new_requirement_type: classificationNewType.value,
+			reason: classificationReason.value,
+			idempotency_key: key,
+		})
+	);
+	if (!result) return;
+	onCancelClassificationCorrection();
+	await load({ quiet: true });
 }
 
 async function onAccept() {

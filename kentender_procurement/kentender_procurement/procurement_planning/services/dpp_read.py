@@ -18,7 +18,7 @@ import frappe
 from frappe.utils import cstr, flt, fmt_money, format_datetime, formatdate
 
 from kentender_core.services import site_configuration
-from kentender_procurement.procurement_planning.services import budget_gateway, needs_intake, references
+from kentender_procurement.procurement_planning.services import budget_gateway, dpp_classification, needs_intake, references
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.dpp_lifecycle import ATTESTATION, _has_any_submission, entry_is_complete
 from kentender_procurement.procurement_planning.services.planning_roles import ROLE_AUDITOR, ROLE_PROCUREMENT_PLANNER
@@ -416,9 +416,16 @@ def get_dpp_validation_task(*, task: str, user: str | None = None) -> dict[str, 
 			"title": row.get("title"),
 			"source_label": f"Accepted Need · {row.get('need')}" if row.get("need") else "Direct requirement",
 			"quantity_display": _quantity_display(row.get("quantity"), cstr(row.get("unit"))),
+			"quantity_number": _quantity_number(row.get("quantity")),
+			"unit_label": cstr(row.get("unit")),
 			"required_by_display": _date(row.get("required_by_date")),
 			"budget_line_display": line_labels.get(cstr(row.get("budget_line")), {}).get("reference") or cstr(row.get("budget_line")) or "—",
-			"amount_display": _money(row.get("indicative_amount")) if not cstr(row.get("not_proceeding_reason")).strip() else "—",
+			# §10.5 — an excluded row shows Not applicable for cost and type;
+			# it needs neither, and an em dash would not say why.
+			"amount_display": (
+				"Not applicable" if cstr(row.get("not_proceeding_reason")).strip()
+				else _money(row.get("indicative_amount"))
+			),
 			"description": row.get("description"),
 			"expected_operational_result": row.get("expected_operational_result"),
 			"not_proceeding": bool(cstr(row.get("not_proceeding_reason")).strip()),
@@ -426,7 +433,9 @@ def get_dpp_validation_task(*, task: str, user: str | None = None) -> dict[str, 
 		}
 		for row in snapshots
 	]
-	requirement_types = frappe.get_all("Requirement Type", filters={"status": "Active"}, order_by="title asc", pluck="name")
+	# §4.4 — the Planner picks a type; the category comes with it so the screen
+	# can show the derived value beside the selector without a round trip.
+	requirement_types = dpp_classification.active_requirement_types()
 	decision_ref = cstr(task_doc.decision)
 	decided = None
 	if decision_ref:
@@ -454,6 +463,12 @@ def get_dpp_validation_task(*, task: str, user: str | None = None) -> dict[str, 
 			"submitted_at": _eat(submission.submitted_at),
 			"requirements": len(rows),
 			"total_display": _money(total),
+			# §10.5 summary strip: included count, included cost, excluded count.
+			"included_requirements": len([r for r in rows if not r["not_proceeding"]]),
+			"included_cost_display": _money(
+				sum(flt(r.get("indicative_amount")) for r in snapshots if not cstr(r.get("not_proceeding_reason")).strip())
+			),
+			"excluded_requirements": len([r for r in rows if r["not_proceeding"]]),
 		},
 		"entries": rows,
 		"requirement_types": requirement_types,

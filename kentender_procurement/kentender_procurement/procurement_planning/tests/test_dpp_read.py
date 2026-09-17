@@ -417,7 +417,15 @@ class TestValidationTaskRead(DppReadCase):
 		self.assertEqual(result["context"]["total_display"], "KES 1,000,000")
 		self.assertEqual(result["header"]["badge"], "Awaiting validation")
 		self.assertIn("Certified by", result["certification"]["signed_line"])
-		self.assertIn("Goods", result["requirement_types"])
+		# PLN-CHG-001 v1.23 §4.4 — the catalogue carries the category the server
+		# derives, so U06 can show it beside the selector without guessing.
+		self.assertIn(
+			{"requirement_type": "Goods", "procurement_category": "Goods"}, result["requirement_types"]
+		)
+		self.assertIn(
+			{"requirement_type": "Non-consulting services", "procurement_category": "Services"},
+			result["requirement_types"],
+		)
 		self.assertFalse(result["maker_checker_blocked"])
 		self.assertEqual(result["task_token"], task.task_token)
 

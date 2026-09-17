@@ -1,170 +1,197 @@
-// PLN-CHG-001 v1.12 §15 — DppValidationScreen + ReturnIssuesDialog tests
-// (D14): PLN-DES-06 exact fields, decision gating, dialog copy and completeness.
+// PLN-CHG-001 v1.23 §10.5 — DppValidationScreen component tests (U06).
+//
+// Two rules carry most of the weight here. Requirement type is the only
+// classification input, and Category is derived text the client never sends.
+// And when the evidence for a positive decision is the thing that is wrong,
+// Accept goes away but Return must not — otherwise the plan is stuck.
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import DppValidationScreen from "./DppValidationScreen.vue";
-import ReturnIssuesDialog from "./ReturnIssuesDialog.vue";
 
-const DETAIL = {
-	outcome: "OK",
-	task: "T1",
-	task_token: "tok",
-	status: "Open",
-	maker_checker_blocked: false,
-	header: {
-		eyebrow: "DEPARTMENTAL PLAN REVIEW",
-		title: "Validate Digital Health departmental plan",
-		reference_line: "DPP-MOH-DHI-2027-001 · Submission 1",
-		badge: "Awaiting validation",
-		badge_kind: "pending",
-	},
-	context: {
-		department: "Digital Health",
-		financial_year: "FY 2027/28",
-		submitted_by: "Dr Peter Kimani",
-		submitted_at: "25 Nov 2026, 10:00 EAT",
-		requirements: 2,
-		total_display: "KES 100,000,000",
-	},
-	entries: [
-		{
-			entry_id: "E1",
-			title: "National digital health infrastructure upgrade",
-			source_label: "Accepted Need · NDS-MOH-2027-0001",
-			quantity_display: "1 programme",
-			required_by_display: "31 Aug 2027",
-			budget_line_display: "MOH-BL-DHI-2027",
-			amount_display: "KES 80,000,000",
-			description: "Procure and implement national digital health infrastructure across priority health facilities.",
-			expected_operational_result: "Priority health facilities can use secure and interoperable digital health services.",
-			not_proceeding: false,
-		},
-		{
-			entry_id: "E2",
-			title: "Digital health platform security assessment",
-			source_label: "Direct requirement",
-			quantity_display: "1 service",
-			required_by_display: "31 Oct 2027",
-			budget_line_display: "MOH-BL-DHI-2027",
-			amount_display: "KES 20,000,000",
-		},
-	],
-	requirement_types: ["Consulting services", "Goods", "Non-consulting services"],
-	certification: {
-		heading: "Departmental certification",
-		text: "I certify that this Departmental Procurement Plan contains the current procurement requirements of Digital Health for FY 2027/28…",
-		signed_line: "Certified by Dr Peter Kimani · 25 Nov 2026, 10:00 EAT",
-	},
-	decided: null,
+const TYPES = [
+	{ requirement_type: "Consulting services", procurement_category: "Services" },
+	{ requirement_type: "Goods", procurement_category: "Goods" },
+	{ requirement_type: "Non-consulting services", procurement_category: "Services" },
+	{ requirement_type: "Works", procurement_category: "Works" },
+];
+
+const INFRASTRUCTURE = {
+	entry_id: "DPPE-MOH-DHI-2027-001",
+	title: "National digital health infrastructure upgrade",
+	quantity_number: "1",
+	unit_label: "Programme",
+	required_by_display: "31 Aug 2027",
+	amount_display: "KES 80,000,000",
+	budget_line_display: "MOH-BL-DHI-2027",
+	not_proceeding: false,
+	not_proceeding_reason: "",
 };
 
-function make(detail = DETAIL, classifications = {}) {
+const LAPTOPS = {
+	entry_id: "DPPE-MOH-DHI-2027-002",
+	title: "Clinical deployment laptops for digital health rollout",
+	quantity_number: "150",
+	unit_label: "Each",
+	required_by_display: "31 Dec 2027",
+	amount_display: "KES 30,000,000",
+	budget_line_display: "MOH-BL-HWD-2027",
+	not_proceeding: false,
+	not_proceeding_reason: "",
+};
+
+function task(overrides = {}) {
+	return {
+		outcome: "OK",
+		task: "DPPT-MOH-DHI-2027-001-V1",
+		status: "Open",
+		can_decide: true,
+		maker_checker_blocked: false,
+		header: {
+			reference_line: "DPP-MOH-DHI-2027-001 · Submission 1",
+			badge: "Awaiting validation",
+			badge_kind: "pending",
+		},
+		context: {
+			department: "Digital Health",
+			financial_year: "FY 2027/28",
+			submitted_by: "Julia Njeri",
+			submitted_at: "25 Nov 2026, 10:30 EAT",
+		},
+		summary: {
+			included_requirements: 2,
+			included_cost_display: "KES 110,000,000",
+			excluded_requirements: 0,
+		},
+		entries: [INFRASTRUCTURE, LAPTOPS],
+		requirement_types: TYPES,
+		stale_sources: [],
+		certification: { text: "I certify that this plan records Digital Health's requirements for FY 2027/28." },
+		...overrides,
+	};
+}
+
+function make(props = {}) {
 	return mount(DppValidationScreen, {
-		props: { detail, classifications, pending: false, errorSummary: "" },
+		props: { task: task(), classifications: {}, pending: false, ...props },
 	});
 }
 
-describe("DppValidationScreen — PLN-DES-06", () => {
-	it("renders the exact submission context card", () => {
+describe("DppValidationScreen — U06 BASE", () => {
+	it("leads with the certified content and the included/excluded summary", () => {
 		const w = make();
-		const context = w.find('[data-testid="dppv-context"]');
-		expect(context.text()).toContain("Dr Peter Kimani");
-		expect(context.text()).toContain("25 Nov 2026, 10:00 EAT");
-		expect(context.text()).toContain("KES 100,000,000");
-		expect(w.find(".kt-page-kicker").text()).toBe("DEPARTMENTAL PLAN REVIEW");
-		// PLN-DES-06: six facts, no Procuring Entity
-		expect(context.findAll("label").map((l) => l.text())).toEqual([
-			"Department", "Financial Year", "Submitted by", "Submitted", "Requirements", "Total indicative value",
-		]);
-		expect(w.text()).not.toContain("Procuring Entity");
-		expect(w.findAll("thead th").map((th) => th.text())).toEqual([
-			"Requirement", "Source", "Quantity", "Required by", "Procurement Budget Line", "Amount", "Requirement type", "",
-		]);
+		expect(w.find('[data-testid="pln-review-title"]').text()).toBe("Review Digital Health's departmental plan");
+		expect(w.find('[data-testid="pln-review-context"]').text()).toContain("DPP-MOH-DHI-2027-001");
+		expect(w.find('[data-testid="pln-review-context"]').text()).toContain("Awaiting Procurement review");
+		expect(w.find('[data-testid="pln-review-certified"]').text()).toContain("Julia Njeri");
+		const summary = w.find('[data-testid="pln-review-summary"]').text();
+		expect(summary).toContain("Included requirements");
+		expect(summary).toContain("KES 110,000,000");
+		expect(summary).toContain("Excluded requirements");
 	});
 
-	it("View discloses the submitted narrative read-only without editing anything", async () => {
+	it("says plainly what accepting does and does not do", () => {
 		const w = make();
-		expect(w.find('[data-testid="dppv-detail-E1"]').exists()).toBe(false);
-		await w.find('[data-testid="dppv-view-E1"]').trigger("click");
-		const detail = w.find('[data-testid="dppv-detail-E1"]');
-		expect(detail.text()).toContain("Procure and implement national digital health infrastructure");
-		expect(detail.findAll("input, textarea, select")).toHaveLength(0);
-	});
-
-	it("a not-proceeding entry needs no classification and shows its status", () => {
-		const detail = {
-			...DETAIL,
-			entries: [DETAIL.entries[0], { ...DETAIL.entries[1], not_proceeding: true, not_proceeding_reason: "Deferred.", amount_display: "—" }],
-		};
-		const w = make(detail, { E1: "Non-consulting services" });
-		expect(w.find('[data-testid="dppv-type-E2"]').exists()).toBe(false);
-		expect(w.find('[data-testid="dppv-entry-E2"]').text()).toContain("Not proceeding");
-		expect(w.find('[data-testid="dppv-accept"]').attributes("disabled")).toBeUndefined();
-	});
-
-	it("gates acceptance on a classification for every entry", async () => {
-		const partial = make(DETAIL, { E1: "Non-consulting services" });
-		expect(partial.find('[data-testid="dppv-accept"]').attributes("disabled")).toBeDefined();
-		const full = make(DETAIL, { E1: "Non-consulting services", E2: "Consulting services" });
-		expect(full.find('[data-testid="dppv-accept"]').attributes("disabled")).toBeUndefined();
-		await full.find('[data-testid="dppv-accept"]').trigger("click");
-		expect(full.emitted("accept")).toHaveLength(1);
-	});
-
-	it("shows the certification with the signed line and no editable requirement facts", () => {
-		const w = make();
-		expect(w.find('[data-testid="dppv-certification"]').text()).toContain(
-			"Certified by Dr Peter Kimani · 25 Nov 2026, 10:00 EAT"
+		expect(w.find('[data-testid="pln-review-consequence"]').text()).toContain(
+			"It does not approve the Annual Procurement Plan.",
 		);
-		// only the classification selects are editable (§11.7)
-		const editables = w.findAll("input, textarea");
-		expect(editables).toHaveLength(0);
-		expect(w.findAll("select")).toHaveLength(2);
-	});
-
-	it("removes the decision footer for the maker-checker-blocked certifier", () => {
-		const w = make({ ...DETAIL, maker_checker_blocked: true });
-		expect(w.find('[data-testid="dppv-maker-checker"]').text()).toContain(
-			"You certified this submission"
-		);
-		expect(w.find('[data-testid="dppv-accept"]').exists()).toBe(false);
-		expect(w.find('[data-testid="dppv-return"]').exists()).toBe(false);
-		expect(w.findAll("select")).toHaveLength(0);
 	});
 });
 
-describe("ReturnIssuesDialog — §12.6", () => {
-	function makeDialog() {
-		return mount(ReturnIssuesDialog, {
-			props: { entries: DETAIL.entries, pending: false, error: "" },
-		});
-	}
+describe("DppValidationScreen — classification input", () => {
+	it("offers only Requirement type, and derives Category from the selection", async () => {
+		const w = make({ classifications: { [INFRASTRUCTURE.entry_id]: "Non-consulting services" } });
+		const selects = w.findAll('[data-testid="pln-review-type"]');
+		expect(selects).toHaveLength(2);
+		// Category is text, never a control: a client cannot submit one (§4.4).
+		const categories = w.findAll('[data-testid="pln-review-category"]');
+		expect(categories[0].text()).toBe("Services");
+		expect(categories[0].element.tagName).not.toBe("SELECT");
+		expect(w.find('[data-testid="pln-review-helper"]').text()).toBe(
+			"Choose the requirement type. Category is set automatically.",
+		);
+	});
 
-	it("requires entry + problem + correction before confirming", async () => {
-		const w = makeDialog();
-		const confirm = w.find('[data-testid="dppv-return-confirm"]');
-		expect(confirm.attributes("disabled")).toBeDefined();
-		await w.find('[data-testid="dppv-issue-problem-0"]').setValue("Amount unsupported");
-		expect(confirm.attributes("disabled")).toBeDefined();
-		await w
-			.find('[data-testid="dppv-issue-correction-0"]')
-			.setValue("Align the amount with the budget line.");
-		expect(confirm.attributes("disabled")).toBeUndefined();
-		await confirm.trigger("click");
-		const [issues] = w.emitted("confirm")[0];
-		expect(issues[0]).toEqual({
-			entry_id: "E1",
-			problem: "Amount unsupported",
-			correction: "Align the amount with the budget line.",
+	it("emits the entry and the selected type only", async () => {
+		const w = make();
+		await w.findAll('[data-testid="pln-review-type"]')[1].setValue("Goods");
+		expect(w.emitted("set-classification")[0][0]).toEqual({
+			entry_id: LAPTOPS.entry_id,
+			requirement_type: "Goods",
 		});
 	});
 
-	it("carries no reason category, attachment, assignee or due date (§11.17)", () => {
-		const w = makeDialog();
-		expect(w.text()).not.toContain("Category");
-		expect(w.text()).not.toContain("Attachment");
-		expect(w.text()).not.toContain("Assignee");
-		expect(w.text()).not.toContain("Due date");
-		expect(w.find('input[type="file"]').exists()).toBe(false);
+	it("derives Works from Works and Services from either services type", async () => {
+		const w = make({
+			classifications: { [INFRASTRUCTURE.entry_id]: "Works", [LAPTOPS.entry_id]: "Consulting services" },
+		});
+		const categories = w.findAll('[data-testid="pln-review-category"]');
+		expect(categories[0].text()).toBe("Works");
+		expect(categories[1].text()).toBe("Services");
+	});
+});
+
+describe("DppValidationScreen — U06-EXCLUDED", () => {
+	it("shows an excluded row's reason and offers it no classification control", () => {
+		const excluded = {
+			...INFRASTRUCTURE,
+			amount_display: "Not applicable",
+			not_proceeding: true,
+			not_proceeding_reason: "The department will pursue this requirement in a later annual planning cycle.",
+		};
+		const w = make({
+			task: task({ entries: [excluded, LAPTOPS], summary: { included_requirements: 1, included_cost_display: "KES 30,000,000", excluded_requirements: 1 } }),
+			classifications: { [LAPTOPS.entry_id]: "Goods" },
+		});
+		const row = w.find('[data-testid="pln-review-excluded"]');
+		expect(row.text()).toContain("Not included this year");
+		expect(row.text()).toContain("Not applicable");
+		expect(row.text()).toContain("The department will pursue this requirement in a later annual planning cycle.");
+		// One control, for the one included row.
+		expect(w.findAll('[data-testid="pln-review-type"]')).toHaveLength(1);
+		// An excluded row needs no classification, so Accept is available.
+		expect(w.find('[data-testid="pln-review-accept"]').exists()).toBe(true);
+	});
+});
+
+describe("DppValidationScreen — corrective actions stay available", () => {
+	it("U06-CLASSIFICATION-MISSING: removes Accept, keeps Return, names the missing input", () => {
+		const w = make({ classifications: { [LAPTOPS.entry_id]: "Goods" } });
+		expect(w.find('[data-testid="pln-review-accept"]').exists()).toBe(false);
+		expect(w.find('[data-testid="pln-review-return"]').attributes("disabled")).toBeUndefined();
+		expect(w.find('[data-testid="pln-review-row-error"]').text()).toBe(
+			"Select the requirement type before accepting this departmental plan.",
+		);
+	});
+
+	it("U06-STALE-SOURCE: removes Accept, keeps Return, and shows the exact change", () => {
+		const w = make({
+			task: task({
+				stale_sources: [
+					{
+						entry_id: INFRASTRUCTURE.entry_id,
+						title: INFRASTRUCTURE.title,
+						certified_revision_display: "Rev. 1 · certified 24 Nov 2026",
+						current_revision_display: "Rev. 2 · updated 2 Dec 2026",
+					},
+				],
+			}),
+			classifications: { [INFRASTRUCTURE.entry_id]: "Works", [LAPTOPS.entry_id]: "Goods" },
+		});
+		expect(w.find('[data-testid="pln-review-stale"]').text()).toContain(
+			"A source requirement changed after this submission was certified.",
+		);
+		expect(w.find('[data-testid="pln-review-stale-table"]').text()).toContain("Rev. 2 · updated 2 Dec 2026");
+		expect(w.find('[data-testid="pln-review-accept"]').exists()).toBe(false);
+		expect(w.find('[data-testid="pln-review-return"]').exists()).toBe(true);
+	});
+
+	it("U06-SEGREGATION: removes both decisions but keeps the content readable", () => {
+		const w = make({ task: task({ maker_checker_blocked: true, can_decide: false }) });
+		expect(w.find('[data-testid="pln-review-segregation"]').text()).toBe(
+			"You cannot review a departmental plan you certified.",
+		);
+		expect(w.find('[data-testid="pln-review-accept"]').exists()).toBe(false);
+		expect(w.find('[data-testid="pln-review-return"]').exists()).toBe(false);
+		expect(w.findAll('[data-testid="pln-review-row"]')).toHaveLength(2);
 	});
 });
