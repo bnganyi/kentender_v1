@@ -55,6 +55,20 @@ from kentender_core.services import site_configuration
 PLAYWRIGHT_NS = "KENTENDER_PLAYWRIGHT"
 NS = "KENTENDER_MVP_1_R1_PLN"
 
+# PLN-CHG-001 v1.23 §13 — nothing seeded may claim `Verified`. The canonical
+# world registers its method and schedule profiles as
+# `Fixture-verified — not production law`, which is what the submission gate
+# admits and what every screen showing a rule must display. Leaving them at
+# `Production verification pending` (the site default, and the right default
+# for a real site) makes the canonical Plan permanently unsubmittable.
+VERIFICATION_FIXTURE = "Fixture-verified — not production law"
+# §10.2's own schedule arithmetic: tendering 21, evaluation 30 (maximum),
+# award buffer 5, notification 2, standstill 14 (minimum).
+PROFILE_LIMITS = {"bid_opening": (7, None), "evaluation_completion": (None, 30), "contract_signing": (14, None)}
+# §10.2's illustrative mandatory planning allocation: 30% of the KES 160m
+# annual procurement budget = KES 48m required.
+RESERVATION_TARGET_PERCENT = 30
+
 FY = "2027-2028"
 DHI_NAME = "Digital Health"  # spec: OU-MOH-DHI
 HRMD_NAME = "Human Resources Management and Development"  # spec: OU-MOH-HRMD
@@ -153,6 +167,12 @@ COMBINED_ITEM_VALUES = {
 		"and one delivery schedule."
 	),
 	"aggregation_indicator": "Aggregated into this package",
+	# §13 / D9 — the canonical world must reach Active because the
+	# Requisitions and Tender Preparation seed stages consume it. Its
+	# qualifying designation is what satisfies the mandatory planning
+	# allocation; §10.2's BASE None/None shortfall is a UI fixture, not this
+	# world. This is a fixture designation, not verified category eligibility.
+	"reservation_category": "Youth",
 	# §14.5 — "using the same governed periods as PPI-MOH-2027-021," a
 	# fortnight-later invitation date; every *_period_days field is
 	# inherited from ITEM_VALUES above unchanged.
@@ -170,11 +190,29 @@ CLOCK = {
 	"statutory_approved": "2026-12-09 08:00:00",  # 9 Dec 2026, 11:00 EAT
 	"publication_attempted": "2026-12-10 11:55:00",  # 10 Dec 2026, 14:55 EAT
 	"publication_acknowledged": "2026-12-10 12:00:00",  # 10 Dec 2026, 15:00 EAT
+	"treasury_submitted": "2026-12-10 11:00:00",  # 10 Dec 2026, 14:00 EAT (§10.12)
 }
 
 _DOCTYPES = (
 	# dependents first, roots last
 	"Plan Drawdown Reference",
+	# PLN-CHG-001 v1.18 §5.5.2 publication chain. These were absent from the
+	# purge, so a reset left the previous run's Approved Plan Snapshot behind
+	# and the next approval reused it — including its older content shape,
+	# which then failed the public-payload build with a bare KeyError.
+	"Publication Acknowledgement",
+	"Publication Attempt",
+	"Publication Intent",
+	"Plan Publication Hold",
+	"Plan Publication",
+	"Treasury Submission Evidence",
+	"Late Activation Explanation",
+	"Approved Plan Snapshot",
+	"Plan Preparation Signature",
+	"Plan Financial Basis",
+	"Plan Finance Basis Reuse",
+	"Milestone Actual Event",
+	"Proceeding Coverage",
 	"Annual Plan Publication",
 	"Plan Governance Decision",
 	"Plan Governance Task",
@@ -238,6 +276,58 @@ def _unit_for(user: str, role: str, unit_name: str) -> str:
 		if unit and frappe.db.get_value("Organisation Unit", unit, "unit_name") == unit_name:
 			return unit
 	return ""
+
+
+def ensure_profiles() -> dict[str, Any]:
+	"""Register the fixture-verified method and schedule profiles for the
+	canonical Fiscal Year, through the same seeder a real site uses.
+
+	Idempotent: `_seed_*_profiles` skip a profile that already exists for the
+	same effective window, so a rerun registers nothing new.
+	"""
+	from kentender_core.seeds import site_setup
+	from kentender_core.services import procurement_settings as settings
+
+	year = int(FY.split("-")[0])
+	# §10.2 anchors the canonical schedules at 1 May and 15 May 2027 while
+	# FY 2027/28 begins on 1 July 2027, so a profile window starting at the
+	# financial year would not cover the plan's own applicable dates and no
+	# rule would resolve. This is the recorded applicability-date/fixture
+	# conflict (§17.2, CFG-XD-001) — the fixture's dates are what the
+	# specification fixes, so the seed widens its own configuration window to
+	# cover them rather than relaxing the resolver or back-dating the plan.
+	# A profile's effective window is configuration; the rule it carries is
+	# not weakened, and nothing is marked Verified.
+	window = {"effective_from": f"{year}-01-01", "effective_until": f"{year + 1}-06-30"}
+	methods = site_setup._seed_method_profiles(
+		effective=window, verification_status=VERIFICATION_FIXTURE, fixture_namespace=NS,
+	)
+	schedules = site_setup._seed_schedule_profiles(
+		effective=window, verification_status=VERIFICATION_FIXTURE, fixture_namespace=NS,
+		limits=PROFILE_LIMITS, estimated_delivery_default_days=30,
+	)
+	# The seeders skip a profile that already covers this window, so a site
+	# that was set up before this seed existed keeps whatever status it was
+	# given — on this canonical world, `Production verification pending`,
+	# which blocks Sign and submit forever. Stamp those rows to the fixture
+	# status. This is the seed correcting its own fixture rules; it never
+	# writes `Verified`, and a profile outside this window is untouched.
+	site_setup._seed_regulatory_reference(
+		fiscal_year=FY,
+		fixture_namespace=NS,
+		verification_status=VERIFICATION_FIXTURE,
+		reservation_target_percent=RESERVATION_TARGET_PERCENT,
+	)
+	stamped = 0
+	for doctype in (settings.METHOD_PROFILE, settings.SCHEDULE_PROFILE, "Regulatory Reference"):
+		for name in frappe.get_all(
+			doctype,
+			filters={"status": "Active", "verification_status": ("!=", VERIFICATION_FIXTURE)},
+			pluck="name",
+		):
+			frappe.db.set_value(doctype, name, "verification_status", VERIFICATION_FIXTURE, update_modified=False)
+			stamped += 1
+	return {"method_profiles": methods, "schedule_profiles": schedules, "stamped_fixture_verified": stamped}
 
 
 def verify_prerequisites() -> dict[str, str]:
@@ -557,17 +647,43 @@ def _submit_plan(plan_reference: str) -> Any:
 
 
 def _govern_and_publish(plan_reference: str) -> dict[str, Any]:
-	"""§14.6 — Mercy submits, Amina adopts, Daniel approves in the entity's
-	configured route, and PublishAnnualPlan runs automatically inside the
-	approval (§11.15), activating the Version on acknowledgement."""
-	from kentender_procurement.procurement_planning.services import plan_governance
+	"""§14.6 / §5.5.2 — Charles signs and submits, Amina adopts, Daniel
+	approves in the entity's configured route.
+
+	Approval commits the exact content and a durable publication intent; it
+	does **not** transmit. The rest is the real asynchronous sequence: Amina
+	records the external Treasury submission, the worker sends the frozen
+	package, and the acknowledgement activates the Version. There is no RQ
+	worker on this bench, so the worker step runs inline here — which is
+	exactly what it does under test.
+	"""
+	from kentender_procurement.procurement_planning.services import plan_governance, publication_pipeline, treasury
 
 	ao_task = _submit_plan(plan_reference)
 	with _as(ACCOUNTING_OFFICER):
 		adopted = plan_governance.adopt_and_submit_plan(task=ao_task.name, task_token=ao_task.task_token, idempotency_key=_key("adopt-plan"))
 	statutory_task = frappe.get_doc("Plan Governance Task", adopted["statutory_task"])
 	with _as(STATUTORY):
-		return plan_governance.approve_annual_plan(task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=_key("approve-plan"))
+		approved = plan_governance.approve_annual_plan(
+			task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=_key("approve-plan"),
+		)
+
+	plan_version = approved["plan_version"]
+	# §5.5.2.2 — the AO records that the exact approved document was sent.
+	# This is external dispatch evidence, not another approval.
+	with _as(ACCOUNTING_OFFICER):
+		treasury.record_treasury_submission(
+			plan_version=plan_version,
+			submitted_at=CLOCK["treasury_submitted"],
+			channel="Official correspondence",
+			destination="National Treasury",
+			dispatch_reference="MOH/APP/2027/001",
+			exact_document_confirmed=True,
+			idempotency_key=_key("treasury-submission"),
+		)
+	frappe.set_user("Administrator")
+	published = publication_pipeline.publish_annual_plan(plan_version=plan_version, idempotency_key=_key("publish-plan"))
+	return {**approved, "publication_result": published.get("result"), "publication": published.get("publication")}
 
 
 def _stamp_design_clock(plan_reference: str) -> None:
@@ -597,12 +713,29 @@ def _stamp_design_clock(plan_reference: str) -> None:
 		task = frappe.db.get_value("Plan Governance Task", {"plan_version": version, "stage": stage}, "decision")
 		if task:
 			frappe.db.set_value("Plan Governance Decision", task, "decided_at", when, update_modified=False)
-	publication = frappe.db.get_value("Annual Plan Publication", {"plan_version": version}, "name")
+	# PLN-CHG-001 v1.18 §5.5.2 — the publication chain, not the retired v1.12
+	# `Annual Plan Publication` row.
+	publication = frappe.db.get_value("Plan Publication", {"plan_version": version}, "name")
 	if publication:
 		frappe.db.set_value(
-			"Annual Plan Publication", publication,
-			{"attempted_at": CLOCK["publication_attempted"], "acknowledged_at": CLOCK["publication_acknowledged"]}, update_modified=False,
+			"Plan Publication", publication, "acknowledged_at", CLOCK["publication_acknowledged"], update_modified=False,
 		)
+		for attempt in frappe.get_all("Publication Attempt", filters={"publication": publication}, pluck="name"):
+			frappe.db.set_value(
+				"Publication Attempt", attempt,
+				{"attempted_at": CLOCK["publication_attempted"], "completed_at": CLOCK["publication_acknowledged"]},
+				update_modified=False,
+			)
+		for ack in frappe.get_all("Publication Acknowledgement", filters={"publication": publication}, pluck="name"):
+			frappe.db.set_value(
+				"Publication Acknowledgement", ack,
+				{"acknowledged_at": CLOCK["publication_acknowledged"], "received_at": CLOCK["publication_acknowledged"]},
+				update_modified=False,
+			)
+		for evidence in frappe.get_all("Treasury Submission Evidence", filters={"plan_version": version}, pluck="name"):
+			frappe.db.set_value(
+				"Treasury Submission Evidence", evidence, "recorded_at", CLOCK["treasury_submitted"], update_modified=False,
+			)
 
 
 def upsert_planning_base(*, commit: bool = False) -> dict[str, Any]:
@@ -612,6 +745,9 @@ def upsert_planning_base(*, commit: bool = False) -> dict[str, Any]:
 	or publication attempt)."""
 	_guard()
 	_actors()
+	# §13: the canonical world's own fixture-verified rules, before anything
+	# that has to resolve one.
+	ensure_profiles()
 	prereqs = verify_prerequisites()
 	_destination()
 
@@ -743,8 +879,57 @@ def _wipe_fiscal_year(fiscal_year: str) -> dict[str, int]:
 		delete(decision_doctype, frappe.get_all(decision_doctype, filters={"task": ("in", task_rows or ("",))}, pluck="name"))
 		delete(task_doctype, task_rows)
 	delete("Annual Plan Publication", frappe.get_all("Annual Plan Publication", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name"))
+	# PLN-CHG-001 v1.18 §5.5.2 publication chain, dependents first. This was
+	# missing, so a reset left the previous run's Approved Plan Snapshot in
+	# place and the next approval reused it — content shape and all.
+	publications = frappe.get_all("Plan Publication", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
+	delete("Publication Acknowledgement", frappe.get_all("Publication Acknowledgement", filters={"publication": ("in", publications or ("",))}, pluck="name"))
+	delete("Publication Attempt", frappe.get_all("Publication Attempt", filters={"publication": ("in", publications or ("",))}, pluck="name"))
+	delete("Publication Intent", frappe.get_all("Publication Intent", filters={"publication": ("in", publications or ("",))}, pluck="name"))
+	delete("Plan Publication Hold", frappe.get_all("Plan Publication Hold", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name"))
+	delete("Plan Publication", publications)
+	delete("Treasury Submission Evidence", frappe.get_all("Treasury Submission Evidence", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name"))
+	delete("Late Activation Explanation", frappe.get_all("Late Activation Explanation", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name"))
+	delete("Approved Plan Snapshot", frappe.get_all("Approved Plan Snapshot", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name"))
+	delete("Plan Preparation Signature", frappe.get_all("Plan Preparation Signature", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name"))
+	delete("Plan Finance Basis Reuse", frappe.get_all("Plan Finance Basis Reuse", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name"))
+	delete("Plan Financial Basis", frappe.get_all("Plan Financial Basis", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name"))
+	delete("Milestone Actual Event", frappe.get_all("Milestone Actual Event", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name"))
+	delete("Proceeding Coverage", frappe.get_all("Proceeding Coverage", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name"))
 	delete("Annual Plan Version", plan_versions)
 	delete("Annual Plan", plans)
+
+	# Orphans. A previous run that failed part-way could delete the Annual
+	# Plan while leaving its publication chain behind; the filters above key
+	# off the plan, so those rows become unreachable and the next approval
+	# happily reuses a stale snapshot. Sweep anything whose Plan Version no
+	# longer exists. (This is how the v1.12 OCDS-shaped snapshots survived
+	# every reset until now.)
+	live_versions = set(frappe.get_all("Annual Plan Version", pluck="name"))
+	for doctype in (
+		"Publication Acknowledgement",
+		"Publication Attempt",
+		"Publication Intent",
+	):
+		live_publications = set(frappe.get_all("Plan Publication", pluck="name"))
+		delete(doctype, [
+			row.name for row in frappe.get_all(doctype, fields=["name", "publication"], limit_page_length=0)
+			if cstr(row.publication) not in live_publications
+		])
+	for doctype in (
+		"Plan Publication",
+		"Plan Publication Hold",
+		"Treasury Submission Evidence",
+		"Late Activation Explanation",
+		"Approved Plan Snapshot",
+		"Plan Preparation Signature",
+		"Plan Finance Basis Reuse",
+		"Plan Financial Basis",
+	):
+		delete(doctype, [
+			row.name for row in frappe.get_all(doctype, fields=["name", "plan_version"], limit_page_length=0)
+			if cstr(row.plan_version) not in live_versions
+		])
 	return deleted
 
 
@@ -991,16 +1176,23 @@ def validate_planning_seed() -> list[dict[str, Any]]:
 	check("active.two_items", bool(view and view["summary"]["plan_items"] == 2))
 	if view and view["items"]:
 		item = view["items"][0]
-		check("item.baseline_1_may_2027", any(r["milestone"] == "invitation" and r["baseline"] == "2027-05-01" for r in item["schedule"]))
-		check("item.forecast_seeded", all(r["forecast"] == r["baseline"] and not r["actual"] for r in item["schedule"]))
+		# PLN-CHG-001 v1.23 — the approved baseline is the only schedule the
+		# MVP keeps, and it lives on the item detail, not on the Active row
+		# (which carries planned scope and remaining allowance).
+		detail = plan_read.get_plan_item(plan_item_id=item["plan_item_id"], user=PLANNER)
+		check("item.baseline_1_may_2027", any(
+			r["milestone"] == "invitation" and r["date"] == "2027-05-01" for r in detail["baseline"]["rows"]
+		))
 		eligibility = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item["plan_item_id"], user=PLANNER)
 		check("eligibility.eligible", eligibility["eligible"])
 		check("eligibility.remaining_80m", eligibility["remaining_value"] == 80000000)
 		check("eligibility.qty_1", eligibility["remaining_quantity"] == 1)
 	if view and len(view["items"]) > 1:
 		combined = view["items"][1]
-		check("combined.baseline_15_may_2027", any(r["milestone"] == "invitation" and r["baseline"] == "2027-05-15" for r in combined["schedule"]))
-		check("combined.forecast_seeded", all(r["forecast"] == r["baseline"] and not r["actual"] for r in combined["schedule"]))
+		combined_detail = plan_read.get_plan_item(plan_item_id=combined["plan_item_id"], user=PLANNER)
+		check("combined.baseline_15_may_2027", any(
+			r["milestone"] == "invitation" and r["date"] == "2027-05-15" for r in combined_detail["baseline"]["rows"]
+		))
 		combined_eligibility = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=combined["plan_item_id"], user=PLANNER)
 		# REQ-CHG-001 v1.6 D7 chains its own seed straight after this one in
 		# `make seed-kentender-mvp-v1` and authorises a Requisition against this
@@ -1026,8 +1218,12 @@ def validate_planning_seed() -> list[dict[str, Any]]:
 		decision = frappe.db.get_value("Plan Governance Task", {"plan_version": version, "stage": stage}, "decision")
 		who = frappe.db.get_value("Plan Governance Decision", decision, "actor") if decision else ""
 		check(f"governance.{stage.split()[0].lower()}_by_named_actor", who == actor, str(who))
-	publication = frappe.db.get_value("Annual Plan Publication", {"plan_version": version, "result": "Acknowledged"}, "name")
+	publication = frappe.db.get_value("Plan Publication", {"plan_version": version, "publication_state": "Acknowledged"}, "name")
 	check("publication.acknowledged", bool(publication))
+	check(
+		"publication.treasury_evidence_current",
+		bool(frappe.db.get_value("Treasury Submission Evidence", {"plan_version": version, "evidence_state": "Current"}, "name")),
+	)
 	accepted_revision = needs_intake.current_accepted_revision_of(NEED, FY)
 	check("need_usage.fully_included", bool(accepted_revision) and needs_usage.is_actively_included(accepted_revision), str(accepted_revision))
 	return checks

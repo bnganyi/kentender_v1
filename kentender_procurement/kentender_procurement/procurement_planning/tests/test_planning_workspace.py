@@ -207,11 +207,14 @@ class TestWorkspace(WorkspaceCase):
 		view (a submitted-not-yet-validated plan has nothing to view)."""
 		self.submitted()
 		result = self.load(fx.PLANNER)
-		self.assertEqual(result["departmental_plans_shape"], "submission")
-		row = result["departmental_plans"][0]
-		self.assertEqual(row["version"], 1)
-		self.assertIsNone(row["accepted_submission"])
-		self.assertIsNone(row["open_submission"])
+		# PLN-CHG-001 v1.23 §10.3 — the summary table is Department, Status,
+		# Requirements, Estimated cost, Action. Submission numbers are
+		# deliberately absent from it; they remain on the record itself.
+		table = result["departmental_table"]
+		self.assertEqual(table["columns"], ["Department", "Status", "Requirements", "Estimated cost", "Action"])
+		self.assertEqual(table["count_label"], "1 departmental plan")
+		self.assertNotIn("version", table["rows"][0])
+		self.assertEqual(result["departmental_plans"][0]["version"], 1)
 
 	def test_departmental_plans_switch_to_the_accepted_shape_once_one_plan_is_accepted(self):
 		"""U01-A/B/C — once any departmental plan this FY has been accepted,
@@ -229,10 +232,10 @@ class TestWorkspace(WorkspaceCase):
 			classifications={entry_id: "Consulting services"},
 		)
 		result = self.load(fx.PLANNER)
-		self.assertEqual(result["departmental_plans_shape"], "accepted")
-		row = result["departmental_plans"][0]
-		self.assertEqual(row["accepted_submission"], 1)
-		self.assertIsNone(row["open_submission"])
+		row = result["departmental_table"]["rows"][0]
+		self.assertEqual(row["status"], "Accepted")
+		self.assertEqual(row["action"], "View departmental plan")
+		self.assertEqual(result["departmental_plans"][0]["accepted_submission"], 1)
 
 	def test_workspace_read_creates_nothing(self):
 		counts = {
@@ -311,7 +314,6 @@ class TestWorkspace(WorkspaceCase):
 		result = self.load(fx.PLANNER)
 		self.assertFalse(result["window_open"])
 		self.assertIsNone(result["not_included"])
-		self.assertEqual(result["departmental_plans_shape"], "accepted")
 		row = result["departmental_plans"][0]
 		self.assertEqual(row["version"], 2)
 		self.assertEqual(row["status"], "Accepted · update in progress")
@@ -344,17 +346,18 @@ class TestWorkspace(WorkspaceCase):
 
 		result = self.load(fx.PLANNER)
 		self.assertEqual(result["annual_plan"]["plan_reference"], accepted["annual_plan"])
-		self.assertEqual(result["annual_plan"]["summary"], "Annual Plan · Active Version 1")
-		self.assertEqual(len(result["annual_plan"]["blocks"]), 1)
-		block = result["annual_plan"]["blocks"][0]
-		self.assertEqual(block["kind"], "active")
-		self.assertEqual(block["version_status"], "Active")
-		self.assertEqual(block["action"], "Prepare plan update")
-		self.assertEqual(block["action_kind"], "primary")
-		# a non-Planner reader gets the same facts but only a plain View link
-		auditor_block = self.load(fx.AUDITOR)["annual_plan"]["blocks"][0]
-		self.assertEqual(auditor_block["action"], "View Active Plan")
-		self.assertEqual(auditor_block["action_kind"], "secondary")
+		# §10.3 U01-CURRENT — one Current plan row; Prepare plan update sits at
+		# the section's upper right, not inside the row.
+		rows = result["annual_plan"]["rows"]
+		self.assertEqual(len(rows), 1)
+		self.assertEqual(rows[0]["kind"], "current")
+		self.assertEqual(dict(rows[0]["facts"])["Status"], "Current plan")
+		self.assertEqual(rows[0]["action"], "View current plan")
+		self.assertTrue(result["annual_plan"]["can_prepare_update"])
+		# a reader gets the same row and no update control
+		auditor = self.load(fx.AUDITOR)["annual_plan"]
+		self.assertEqual(auditor["rows"][0]["action"], "View current plan")
+		self.assertFalse(auditor["can_prepare_update"])
 		self.assertEqual(result["waiting"], [])
 		row = result["actionable"][0]
 		self.assertEqual(row["headline"], "1 accepted departmental entry not yet in the Active plan")
@@ -373,7 +376,10 @@ class TestAnnualPlanCard(WorkspaceCase):
 
 	def test_no_plan_yet_is_an_empty_block_list(self):
 		result = self.load(fx.PLANNER)
-		self.assertEqual(result["annual_plan"], {"plan_reference": "", "title": "", "summary": "", "blocks": []})
+		# §10.3 U01-NO-PLAN — an empty state with no create action.
+		self.assertEqual(result["annual_plan"]["rows"], [])
+		self.assertEqual(result["annual_plan"]["empty_title"], "No annual plan yet")
+		self.assertFalse(result["annual_plan"]["can_prepare_update"])
 
 	def test_an_initial_draft_offers_continue_plan_to_the_planner_only(self):
 		from kentender_procurement.procurement_planning.services import dpp_validation
@@ -387,24 +393,26 @@ class TestAnnualPlanCard(WorkspaceCase):
 			classifications={entry_id: "Consulting services"},
 		)
 		result = self.load(fx.PLANNER)
-		self.assertEqual(len(result["annual_plan"]["blocks"]), 1)
-		block = result["annual_plan"]["blocks"][0]
-		self.assertEqual(block["kind"], "current")
-		self.assertEqual(block["version_status"], "Draft")
-		self.assertEqual(block["version_number"], 1)
-		self.assertEqual(block["funding_state"], "Not requested")
-		self.assertEqual(block["action"], "Continue Plan")
-		self.assertEqual(block["action_kind"], "primary")
-		self.assertEqual(block["route"], ["annual-procurement-plan", frappe.db.get_value("Annual Plan", {"fiscal_year": fx.FY_OPEN}, "plan_reference")])
-		# a non-Planner reader (e.g. the Auditor) sees the same facts but only a view link
-		auditor_block = self.load(fx.AUDITOR)["annual_plan"]["blocks"][0]
-		self.assertEqual(auditor_block["action"], "View")
-		self.assertEqual(auditor_block["action_kind"], "secondary")
+		# §10.3 U01 BASE — the draft row names what it is and says plainly that
+		# it cannot yet authorise procurement.
+		rows = result["annual_plan"]["rows"]
+		self.assertEqual(len(rows), 1)
+		self.assertEqual(rows[0]["kind"], "draft")
+		facts = dict(rows[0]["facts"])
+		self.assertEqual(facts["Current plan"], "No current plan yet")
+		self.assertEqual(facts["Work"], "Draft plan")
+		self.assertEqual(facts["Version"], "1")
+		self.assertEqual(rows[0]["note"], "This plan is being prepared. It cannot yet be used to authorise procurement.")
+		self.assertEqual(rows[0]["action"], "Continue plan")
+		self.assertEqual(rows[0]["route"], ["annual-procurement-plan", frappe.db.get_value("Annual Plan", {"fiscal_year": fx.FY_OPEN}, "plan_reference")])
+		# a reader sees the same facts, never a Continue
+		self.assertEqual(self.load(fx.AUDITOR)["annual_plan"]["rows"][0]["action"], "View plan")
 
-	def test_active_plus_a_draft_successor_is_two_blocks(self):
-		"""U01-B — the Active block offers View (never a discretionary
-		command over Active content) and the candidate block offers the
-		Planner's own Continue update."""
+	def test_active_plus_a_draft_successor_is_two_rows(self):
+		"""§10.3 U01-CURRENT-UPDATE — Current plan and Plan update are two
+		independent labelled rows, the note between them says the current plan
+		stays in force, and Prepare plan update is removed rather than
+		disabled while an update already exists."""
 		from kentender_procurement.procurement_planning.services import dpp_validation
 
 		submitted = self.submitted()
@@ -426,22 +434,25 @@ class TestAnnualPlanCard(WorkspaceCase):
 		frappe.db.set_value("Annual Plan", accepted["annual_plan"], "open_successor_version", successor.name)
 
 		result = self.load(fx.PLANNER)
-		blocks = result["annual_plan"]["blocks"]
-		self.assertEqual(len(blocks), 2)
-		active_block, candidate_block = blocks
-		self.assertEqual(active_block["kind"], "active")
-		self.assertEqual(active_block["version_status"], "Active")
-		self.assertEqual(active_block["action"], "View Active Plan")
-		self.assertEqual(active_block["action_kind"], "secondary")
-		self.assertEqual(candidate_block["kind"], "candidate")
-		self.assertEqual(candidate_block["version_status"], "Draft")
-		self.assertEqual(candidate_block["version_number"], 2)
-		self.assertEqual(candidate_block["action"], "Continue update")
-		self.assertEqual(candidate_block["action_kind"], "primary")
+		rows = result["annual_plan"]["rows"]
+		self.assertEqual(len(rows), 2)
+		current_row, update_row = rows
+		self.assertEqual(current_row["kind"], "current")
+		self.assertEqual(dict(current_row["facts"])["Status"], "Current plan")
+		self.assertEqual(current_row["action"], "View current plan")
+		self.assertEqual(update_row["kind"], "candidate")
+		self.assertEqual(dict(update_row["facts"])["Work"], "Plan update — Draft")
+		self.assertEqual(dict(update_row["facts"])["Version"], "2")
+		self.assertEqual(update_row["action"], "Continue update")
+		self.assertEqual(
+			result["annual_plan"]["update_note"],
+			"The current plan remains in force while this update is reviewed.",
+		)
+		self.assertFalse(result["annual_plan"]["can_prepare_update"])
 
-	def test_a_candidate_awaiting_a_decision_offers_no_card_button(self):
-		"""U01-F — the decision lives on that actor's own governance task in
-		Your actions, never a second button on the Annual Plan card."""
+	def test_a_candidate_awaiting_a_decision_offers_no_row_command(self):
+		"""§9.1 — waiting work is status on its document, not a duplicate
+		disabled task. The decision lives on that actor's own governance task."""
 		from kentender_procurement.procurement_planning.services import dpp_validation
 
 		submitted = self.submitted()
@@ -454,7 +465,8 @@ class TestAnnualPlanCard(WorkspaceCase):
 		)
 		frappe.db.set_value("Annual Plan Version", accepted["annual_plan_version"], "version_status", "Awaiting Accounting Officer")
 		result = self.load(fx.PLANNER)
-		block = result["annual_plan"]["blocks"][0]
-		self.assertEqual(block["version_status"], "Awaiting Accounting Officer")
-		self.assertEqual(block["action"], "")
-		self.assertEqual(block["action_kind"], "")
+		row = result["annual_plan"]["rows"][0]
+		self.assertEqual(dict(row["facts"])["Work"], "Awaiting Accounting Officer")
+		# The Planner may read it; there is no Continue on a locked Version.
+		self.assertEqual(row["action"], "View plan")
+		self.assertFalse(result["annual_plan"]["can_prepare_update"])

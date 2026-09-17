@@ -760,3 +760,82 @@
 .kt-pln .pln-method-card + .pln-method-card {
 	margin-top: 16px;
 }
+
+/* ==========================================================================
+   PLN-CHG-001 v1.23 §10.3 — U01 workspace composition
+   ========================================================================== */
+
+/* A section heading with its own right-aligned action (Prepare plan update). */
+.kt-pln .pln-section-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: var(--kt-space-4);
+	margin: var(--kt-space-6) 0 var(--kt-space-3);
+}
+.kt-pln .pln-section-head .kt-card-title {
+	margin: 0;
+}
+
+/* One plan row: labelled facts on the left, one action at the right. */
+.kt-pln .pln-plan-row,
+.kt-pln .pln-own-plan,
+.kt-pln .pln-action-card {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	gap: var(--kt-space-4);
+	flex-wrap: wrap;
+	margin-bottom: var(--kt-space-4);
+}
+.kt-pln .pln-plan-row .kt-meta-row,
+.kt-pln .pln-own-plan .kt-meta-row,
+.kt-pln .pln-action-card .kt-meta-row {
+	flex: 1 1 320px;
+	min-width: 0;
+}
+.kt-pln .pln-plan-row .kt-btn,
+.kt-pln .pln-own-plan .kt-btn,
+.kt-pln .pln-action-card .kt-btn {
+	flex-shrink: 0;
+}
+
+/* The note under a plan row sits tight against it — it explains that row, so
+   it must not read as a separate block. */
+.kt-pln .pln-plan-note {
+	margin: calc(var(--kt-space-3) * -1) 0 var(--kt-space-5);
+}
+
+.kt-pln .pln-plan-empty {
+	margin-bottom: var(--kt-space-5);
+}
+.kt-pln .pln-plan-empty .kt-meta-value {
+	margin: 0 0 4px;
+}
+
+/* The current issue: one sentence and its recovery action on one line, so the
+   action reads as belonging to the issue rather than to the page. */
+.kt-pln .pln-notice-split {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--kt-space-4);
+	flex-wrap: wrap;
+}
+.kt-pln .pln-notice-split .kt-btn {
+	flex-shrink: 0;
+}
+
+.kt-pln .pln-dept-table {
+	margin-top: var(--kt-space-3);
+}
+
+.kt-pln .pln-loading-text {
+	margin: 0 0 var(--kt-space-3);
+	padding: var(--kt-space-4) var(--kt-space-4) 0;
+	color: var(--kt-color-neutral-700);
+	font-size: 14px;
+}

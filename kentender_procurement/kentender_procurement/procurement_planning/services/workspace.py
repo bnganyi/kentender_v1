@@ -324,6 +324,167 @@ def _action(
 	}
 
 
+
+# --------------------------------------------------------------------------
+# PLN-CHG-001 v1.23 §10.3 — the U01 composition
+#
+# The workspace leads with the governing or draft plan, then one current issue,
+# then departmental plans. The reservation arithmetic that used to sit here in
+# four numbers is now one plain sentence and one recovery action; the full
+# calculation stays in the Plan check detail (PLN22-CHG-003).
+# --------------------------------------------------------------------------
+
+#: Header copy per actor. The Planner owns the annual plan; a departmental
+#: actor's page is about their own department's requirements.
+HEADER_PLANNER = {
+	"title": "Annual procurement planning",
+	"description": "Prepare departmental requirements, organise the annual plan and follow its approval.",
+}
+HEADER_DEPARTMENTAL = {
+	"title": "Procurement planning",
+	"description": "Prepare your department's procurement requirements and follow their review.",
+}
+
+
+def _plan_rows(plan, active_version, open_version, *, is_planner: bool) -> list[dict[str, Any]]:
+	"""The Annual plan section: one labelled row per independently existing
+	thing. §9.1 requires Active and candidate to stay separate rows, each
+	saying what it represents, and a Current plan link to resolve the actual
+	Active pointer rather than the highest version number."""
+	if not plan:
+		return []
+	route = ["annual-procurement-plan", plan.plan_reference]
+	rows: list[dict[str, Any]] = []
+	distinct_candidate = bool(active_version and open_version and open_version.name != active_version.name)
+
+	if active_version:
+		value = _allocated_value(active_version.name)
+		rows.append(
+			{
+				"kind": "current",
+				"facts": [
+					("Current plan", plan.title),
+					("Version", str(active_version.version_number)),
+					("Approved value", _money(value)),
+					("Status", "Current plan"),
+					("Plan reference", plan.plan_reference),
+				],
+				"note": "",
+				"action": "View current plan",
+				"action_kind": "secondary",
+				"route": route,
+			}
+		)
+
+	if open_version and (not active_version or distinct_candidate):
+		value = _allocated_value(open_version.name)
+		items = frappe.db.count("Annual Plan Item", {"plan_version": open_version.name, "item_state": ("!=", "Dissolved")})
+		if active_version:
+			facts = [
+				("Work", "Plan update — Draft" if open_version.version_status == "Draft" else open_version.version_status),
+				("Version", str(open_version.version_number)),
+				("Proposed value", _money(value)),
+			]
+			change = cstr(open_version.get("change_reason"))
+			if change:
+				facts.append(("Change", change))
+			action = "Continue update" if (is_planner and open_version.version_status == "Draft") else "View plan update"
+			note = ""
+		else:
+			facts = [
+				("Current plan", "No current plan yet"),
+				("Work", "Draft plan" if open_version.version_status == "Draft" else open_version.version_status),
+				("Version", str(open_version.version_number)),
+				("Purchases", str(items)),
+				("Estimated cost", _money(value)),
+				("Plan reference", plan.plan_reference),
+			]
+			action = "Continue plan" if (is_planner and open_version.version_status == "Draft") else "View plan"
+			note = "This plan is being prepared. It cannot yet be used to authorise procurement."
+		rows.append(
+			{
+				"kind": "candidate" if active_version else "draft",
+				"facts": facts,
+				"note": note,
+				"action": action,
+				"action_kind": "primary" if action.startswith("Continue") else "secondary",
+				"route": route,
+			}
+		)
+	return rows
+
+
+def _current_issue(plan, open_version, *, is_planner: bool) -> dict[str, Any] | None:
+	"""One plain sentence and one recovery action, placed immediately below the
+	plan row. Never four accounting values (PLN22-AC-006)."""
+	if not (plan and open_version and open_version.version_status == "Draft" and is_planner):
+		return None
+	from kentender_procurement.procurement_planning.services import readiness
+
+	try:
+		allocations = readiness.reservation_allocations(open_version.name, plan.fiscal_year)
+	except Exception:
+		return None
+	if not allocations.get("mandatory") or allocations.get("met"):
+		return None
+	shortfall = cstr(allocations.get("shortfall"))
+	if not shortfall:
+		return None
+	return {
+		"text": f"Allocate {_money(flt(shortfall))} more to eligible reserved procurement before sending the plan to Finance.",
+		"action": "Review reserved procurement",
+		"route": ["annual-procurement-plan", plan.plan_reference],
+	}
+
+
+def _departmental_table(dpp_rows: list[dict[str, Any]]) -> dict[str, Any]:
+	"""Department / Status / Requirements / Estimated cost / Action. Submission
+	numbers are deliberately absent from this summary (§10.3)."""
+	return {
+		"heading": "Departmental plans",
+		"columns": ["Department", "Status", "Requirements", "Estimated cost", "Action"],
+		"rows": [
+			{
+				"department": row["department"],
+				"status": row["status"],
+				"status_kind": row["status_kind"],
+				"requirements": row["requirements"],
+				"value": row["value"],
+				"action": "View departmental plan" if row["route"] else "",
+				"route": row["route"],
+			}
+			for row in dpp_rows
+		],
+		"count_label": f"{len(dpp_rows)} departmental plan{'s' if len(dpp_rows) != 1 else ''}",
+		"empty_text": "No departmental plans to display.",
+	}
+
+
+def _own_departmental_section(dpp_rows, departmental_units, *, window_open: bool) -> dict[str, Any] | None:
+	"""U01-DEPARTMENT-AUTHOR / U01-HOD — "Your departmental plan"."""
+	if not departmental_units:
+		return None
+	unit = departmental_units[0]
+	row = next((r for r in dpp_rows if r["organisation_unit"] == unit["id"]), None)
+	if row is None:
+		if not window_open:
+			return None
+		return {
+			"heading": "Your departmental plan",
+			"empty": True,
+			"empty_text": "No departmental plan yet",
+			"action": "Start departmental plan",
+			"organisation_unit": unit["id"],
+		}
+	return {
+		"heading": "Your departmental plan",
+		"empty": False,
+		"facts": [("Department", row["department"]), ("Status", row["status"])],
+		"action": "Continue departmental plan" if row["state"] == "Draft" else "View departmental plan",
+		"route": row["route"],
+	}
+
+
 def get_planning_workspace(*, financial_year: str | None = None, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	if not authz.holds_any_planning_responsibility(actor):
@@ -472,30 +633,43 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 					)
 				)
 
-	plan_summary = ""
-	if open_version:
-		plan_summary = f"Annual Plan · {open_version.version_status} Version {open_version.version_number}"
-	count_label = f"{len(dpp_rows)} departmental plan{'s' if len(dpp_rows) != 1 else ''}"
-	# U01-A/B/C (an accepted departmental plan exists somewhere this FY) split
-	# the count into Accepted/Open Submission with a View action; U01-D (none
-	# accepted yet — nothing to view) shows a single Submission count instead.
-	plans_shape = "accepted" if any(row["state"] == "Accepted" or row["accepted_submission"] is not None for row in dpp_rows) else "submission"
+	rows = _plan_rows(plan, active_version_doc, open_version, is_planner=is_planner)
+	# §10.3 U01-CURRENT: the Planner may start an update only while no candidate
+	# exists; U01-CURRENT-UPDATE removes the control rather than disabling it.
+	can_prepare_update = bool(
+		is_planner and plan and active_version_doc
+		and not (open_version and open_version.name != active_version_doc.name)
+	)
 	return {
 		"outcome": "OK",
 		"context": context,
 		"window_open": window_open,
+		# §9.1 — a departmental actor's page is about their own requirements.
+		"header": HEADER_DEPARTMENTAL if (departmental_units and not is_planner) else HEADER_PLANNER,
 		"annual_plan": {
+			"heading": "Annual plan",
 			"plan_reference": plan.plan_reference if plan else "",
 			"title": plan.title if plan else "",
-			"summary": plan_summary,
-			"blocks": _annual_plan_card(plan, active_version_doc, open_version, is_planner=is_planner),
+			"rows": rows,
+			"can_prepare_update": can_prepare_update,
+			"prepare_update_action": "Prepare plan update",
+			# §10.3 U01-CURRENT-UPDATE
+			"update_note": (
+				"The current plan remains in force while this update is reviewed."
+				if len(rows) > 1 else ""
+			),
+			# §10.3 U01-NO-PLAN — an empty state, never a create action.
+			"empty_title": "No annual plan yet",
+			"empty_text": "The draft annual plan will appear after Procurement accepts a departmental plan.",
+			# A departmental actor reads the annual plan; they never act on it.
+			"read_only": not is_planner,
 		},
+		"current_issue": _current_issue(plan, open_version, is_planner=is_planner),
+		"your_departmental_plan": _own_departmental_section(dpp_rows, departmental_units, window_open=window_open),
+		# §9.1 — "Omit an empty Your actions section."
 		"actionable": actionable,
 		"waiting": waiting,
+		"departmental_table": _departmental_table(dpp_rows),
 		"departmental_plans": dpp_rows,
-		"departmental_plans_shape": plans_shape,
-		"departmental_plans_heading": "Departmental plans feeding this Annual Plan",
-		"departmental_plans_lede": "These are the accepted and pending plans behind the entry above.",
-		"count_label": count_label,
 		"not_included": _not_included(fy, window_open),
 	}

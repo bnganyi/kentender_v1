@@ -327,7 +327,6 @@ def _wipe_planning_side() -> None:
 	plans = frappe.get_all("Annual Plan", filters={"fiscal_year": FY}, pluck="name")
 	plan_versions = frappe.get_all("Annual Plan Version", filters={"annual_plan": ("in", plans or ("",))}, pluck="name")
 	items = frappe.get_all("Annual Plan Item", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
-	frappe.db.delete("Plan Item Forecast Revision", {"plan_item": ("in", items or ("",))})
 	frappe.db.delete("Plan Drawdown Reference", {"plan_item": ("in", items or ("",))})
 	frappe.db.delete("Plan Source Allocation", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan Item", {"plan_version": ("in", plan_versions or ("",))})
