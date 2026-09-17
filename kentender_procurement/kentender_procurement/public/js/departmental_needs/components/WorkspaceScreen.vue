@@ -121,8 +121,18 @@
 					</div>
 				</div>
 
-				<!-- §11.2 filters — first row: search, status, financial year. -->
-				<div style="display: flex; gap: var(--kt-space-3); margin: var(--kt-space-4) 0 var(--kt-space-2)">
+				<!-- §11.2 filters — one row: search, status, financial year,
+				     department, Clear filters (DES-01's own single-row layout;
+				     splitting this across two rows made the department select's
+				     long label read as if the row had wrapped). -->
+				<div
+					style="
+						display: flex;
+						gap: var(--kt-space-3);
+						margin: var(--kt-space-4) 0;
+						align-items: center;
+					"
+				>
 					<input
 						class="kt-input"
 						style="flex: 1"
@@ -133,7 +143,7 @@
 					/>
 					<select
 						class="kt-input"
-						style="width: 200px"
+						style="width: 160px"
 						data-testid="nds-status-filter"
 						:value="status"
 						@change="$emit('update:status', $event.target.value)"
@@ -143,7 +153,7 @@
 					</select>
 					<select
 						class="kt-input"
-						style="width: 200px"
+						style="width: 180px"
 						data-testid="nds-fy-filter"
 						:value="selectedFinancialYear || context.financial_year || ''"
 						@change="$emit('select-financial-year', $event.target.value)"
@@ -153,12 +163,9 @@
 							{{ year.label }}
 						</option>
 					</select>
-				</div>
-				<!-- Second row: department selector, Clear filters. -->
-				<div style="display: flex; justify-content: space-between; margin-bottom: var(--kt-space-4)">
 					<select
 						class="kt-input"
-						style="width: 260px"
+						style="width: 200px"
 						data-testid="nds-department-filter"
 						:value="context.organisation_unit || ''"
 						@change="$emit('select-context', $event.target.value)"
@@ -171,7 +178,13 @@
 							{{ row.organisation_unit_label }}
 						</option>
 					</select>
-					<button class="kt-btn kt-btn-secondary" @click="$emit('clear-filters')">Clear filters</button>
+					<button
+						class="kt-btn kt-btn-secondary"
+						style="flex: none"
+						@click="$emit('clear-filters')"
+					>
+						Clear filters
+					</button>
 				</div>
 
 				<!-- NDS-DES-02 first content section — a decision queue only when
