@@ -28,7 +28,7 @@ import { APPROVER, AUDITOR, AUTHOR, PASSWORD, expectScreen, gotoStrategy, resetF
  *     tab row itself is asserted separately.
  */
 
-const DESIGN = "docs/mvp-1-r1/02_strategy/strategy_design";
+const DESIGN = "docs/mvp-1-r1/02_strategy/design";
 const TAB_TEXTS = new Set(["Plans 1", "My work 0", "Overview", "Structure", "History", "Changes", "Collapse", "Expand"]);
 
 function wanted(list: string[], extraStrip: string[] = []): string[] {

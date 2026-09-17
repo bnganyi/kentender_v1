@@ -322,173 +322,190 @@ function nodePath(node) {
 			<div style="margin-top: 10px"><button type="button" class="kt-btn kt-btn-secondary" @click="loadWorkspace">{{ __("Try again") }}</button></div>
 		</div>
 		<template v-else-if="workspace">
-			<header style="display: flex; justify-content: space-between; align-items: flex-start; gap: 13.6px">
-				<div>
-					<div class="kt-eyebrow" style="text-transform: uppercase; font-size: 11px; letter-spacing: 0.1em; color: var(--kt-color-accent); margin-bottom: 6px" data-testid="str-plan-eyebrow">
-						{{ workspace.plan.reference }}<template v-if="version"> &middot; {{ __("VERSION") }} {{ version.version_number }}</template>
-					</div>
-					<h1 style="font-size: 30px; margin: 0 0 4px" data-testid="str-plan-title-heading">{{ headerTitle }}</h1>
-					<div style="display: flex; align-items: center; gap: 10.2px; flex-wrap: wrap">
-						<span v-if="tab === 'structure' && editable" style="font-size: 15px; font-weight: 600">{{ workspace.plan.title }}</span>
-						<span v-if="version" class="kt-status" :class="version.status_tone" data-testid="str-plan-status">{{ version.status_label }}</span>
-						<a v-if="isPrevious && workspace.routes.current" href="#" data-testid="str-view-current" @click.prevent="navigate(workspace.routes.current)">{{ __("View current plan") }}</a>
-					</div>
-				</div>
-				<div style="display: flex; gap: 6.8px; align-items: flex-start">
-					<template v-if="tab === 'structure' && editable">
-						<button type="button" class="kt-btn kt-btn-secondary" :disabled="acting" data-testid="str-save-changes" @click="editorRef?.save()">{{ __("Save changes") }}</button>
-						<button type="button" class="kt-btn kt-btn-primary" :disabled="acting" data-testid="str-submit" @click="editorRef?.submit()">{{ __("Submit for approval") }}</button>
-					</template>
-					<div v-else-if="workspace.capabilities.update_plan" style="text-align: right; max-width: 360px">
-						<button type="button" class="kt-btn kt-btn-secondary" :disabled="acting" data-testid="str-update-plan" @click="confirmDialog = 'update-plan'">{{ __("Update plan") }}</button>
-						<div class="kt-field-hint" style="margin-top: 6px">{{ __("Start a draft from the current plan. The current plan remains in use until the changes are approved.") }}</div>
-					</div>
-				</div>
-			</header>
-
-			<p v-if="actionError" class="kt-field-error" data-testid="str-action-error" style="font-size: 14px; margin: 0" role="alert">{{ actionError }}</p>
-
-			<!-- §11.3 — pending update, separate from the current facts. -->
-			<div v-if="pendingUpdate && tab !== 'structure'" class="kt-notice" data-testid="str-pending-update" :data-kind="pendingUpdate.kind">
-				<div class="kt-notice-body">
-					<strong>{{ pendingUpdate.kind === 'draft' ? __("Update in progress.") : __("Update awaiting Strategy Approver review.") }}</strong>
-					{{ __("The current plan remains in use until the changes are approved.") }}
-					<a v-if="pendingUpdate.action_label" href="#" data-testid="str-pending-update-continue" @click.prevent="navigate(pendingUpdate.structure_route)">{{ pendingUpdate.action_label }}</a>
-					<a v-else href="#" data-testid="str-pending-update-open" @click.prevent="navigate(pendingUpdate.route)">{{ __("View the update") }}</a>
-				</div>
-			</div>
-			<div v-if="version && version.status === 'Draft' && version.return_reason" class="kt-notice is-warning" data-testid="str-return-reason">
-				<div class="kt-notice-body"><strong>{{ __("Changes requested.") }}</strong> {{ version.return_reason }}</div>
-			</div>
-			<div v-if="version && version.status === 'Submitted for approval' && tab !== 'structure'" class="kt-notice" data-testid="str-awaiting-review">
-				<div class="kt-notice-body">
-					<strong>{{ __("Awaiting Strategy Approver review.") }}</strong> {{ __("No further edits until an authorised Return.") }}
-					<a v-if="workspace.routes.approval" href="#" data-testid="str-open-approval" @click.prevent="navigate(workspace.routes.approval)">{{ __("Open approval task") }}</a>
-				</div>
-			</div>
-			<div v-if="tab === 'structure' && editable && isUpdate" class="kt-notice" data-testid="str-editor-notice">
-				<div class="kt-notice-body">{{ __("The current plan remains in use until these changes are approved.") }}</div>
-			</div>
-
-			<div class="kt-tabs" role="tablist">
-				<button type="button" role="tab" class="kt-tab" data-testid="str-tab-overview" :aria-selected="tab === 'overview'" @click="switchTab('overview')">{{ __("Overview") }}</button>
-				<button v-if="!workspace.no_version" type="button" role="tab" class="kt-tab" data-testid="str-tab-structure" :aria-selected="tab === 'structure'" @click="switchTab('structure')">{{ __("Structure") }}</button>
-				<button v-if="!workspace.no_version" type="button" role="tab" class="kt-tab" data-testid="str-tab-history" :aria-selected="tab === 'history'" @click="switchTab('history')">{{ __("History") }}</button>
-			</div>
-
-			<template v-if="tab === 'overview'">
-				<div v-if="workspace.no_version" class="kt-card kt-empty"><h2>{{ __("This plan has no version yet.") }}</h2></div>
-				<template v-else>
-					<!-- §11.3A Draft Overview — plan details and version dates -->
-					<div v-if="isDraft && (canEditIdentity || canEditDates)" class="kt-card kt-blueprint" data-testid="str-draft-details">
-						<div class="kt-card-title">{{ __("Plan details") }}</div>
-						<div v-if="canEditIdentity" style="display: grid; gap: 13.6px; max-width: 640px">
-							<div class="kt-field">
-								<label for="str-detail-title">{{ __("Plan title") }}</label>
-								<input id="str-detail-title" v-model="detailForm.title" class="kt-input" data-testid="str-identity-title" />
-								<p v-if="detailErrors.title" class="kt-field-error">{{ detailErrors.title }}</p>
+			<!-- The page title, its tabs and (for Overview/History) everything below
+			     sit inside one bordered panel, with a thin rule between sections
+			     instead of a gap between separate boxes — matching the current
+			     design. The Structure tab is the one exception: the panel ends
+			     right after the tabs, and the tree/selected-item boxes below it
+			     stay as their own separate boxes. -->
+			<div class="kt-card kt-blueprint" style="padding: 0">
+				<div style="padding: 20.4px 20.4px 0">
+					<header style="display: flex; justify-content: space-between; align-items: flex-start; gap: 13.6px; margin-bottom: 20.4px">
+						<div>
+							<div class="kt-eyebrow" style="text-transform: uppercase; font-size: 11px; letter-spacing: 0.1em; color: var(--kt-color-accent); margin-bottom: 6px" data-testid="str-plan-eyebrow">
+								{{ workspace.plan.reference }}<template v-if="version"> &middot; {{ __("VERSION") }} {{ version.version_number }}</template>
 							</div>
-							<div class="kt-field">
-								<label>{{ __("Plan type") }}</label>
-								<div class="kt-ro" data-testid="str-detail-plan-type">{{ workspace.plan.plan_type_label }}</div>
-							</div>
-							<div v-if="workspace.plan.parent_primary_plan_id" class="kt-field">
-								<label>{{ __("Main plan") }}</label>
-								<div class="kt-ro">{{ workspace.plan.parent_primary_plan_title }}</div>
-							</div>
-							<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 13.6px">
-								<div class="kt-field">
-									<label for="str-detail-start">{{ __("Start date") }}</label>
-									<input id="str-detail-start" v-model="detailForm.period_start" class="kt-input" type="date" data-testid="str-identity-start" />
-									<p v-if="detailErrors.period_start" class="kt-field-error">{{ detailErrors.period_start }}</p>
-								</div>
-								<div class="kt-field">
-									<label for="str-detail-end">{{ __("End date") }}</label>
-									<input id="str-detail-end" v-model="detailForm.period_end" class="kt-input" type="date" data-testid="str-identity-end" />
-									<p v-if="detailErrors.period_end" class="kt-field-error">{{ detailErrors.period_end }}</p>
-								</div>
+							<h1 style="font-size: 30px; margin: 0 0 4px" data-testid="str-plan-title-heading">{{ headerTitle }}</h1>
+							<div style="display: flex; align-items: center; gap: 10.2px; flex-wrap: wrap">
+								<span v-if="tab === 'structure' && editable" style="font-size: 15px; font-weight: 600">{{ workspace.plan.title }}</span>
+								<span v-if="version" class="kt-status" :class="version.status_tone" data-testid="str-plan-status">{{ version.status_label }}</span>
+								<a v-if="isPrevious && workspace.routes.current" href="#" data-testid="str-view-current" @click.prevent="navigate(workspace.routes.current)">{{ __("View current plan") }}</a>
 							</div>
 						</div>
-						<div v-else style="display: grid; gap: 13.6px; max-width: 640px">
-							<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20.4px">
-								<div><div class="kt-label">{{ __("Plan type") }}</div><div style="font-size: 14px; margin-top: 3px">{{ workspace.plan.plan_type_label }}</div></div>
+						<div style="display: flex; gap: 6.8px; align-items: flex-start">
+							<template v-if="tab === 'structure' && editable">
+								<button type="button" class="kt-btn kt-btn-secondary" :disabled="acting" data-testid="str-save-changes" @click="editorRef?.save()">{{ __("Save changes") }}</button>
+								<button type="button" class="kt-btn kt-btn-primary" :disabled="acting" data-testid="str-submit" @click="editorRef?.submit()">{{ __("Submit for approval") }}</button>
+							</template>
+							<div v-else-if="workspace.capabilities.update_plan" style="text-align: right; max-width: 360px">
+								<button type="button" class="kt-btn kt-btn-secondary" :disabled="acting" data-testid="str-update-plan" @click="confirmDialog = 'update-plan'">{{ __("Update plan") }}</button>
+								<div class="kt-field-hint" style="margin-top: 6px">{{ __("Start a draft from the current plan. The current plan remains in use until the changes are approved.") }}</div>
+							</div>
+						</div>
+					</header>
+				</div>
+
+				<p v-if="actionError" class="kt-field-error" data-testid="str-action-error" style="font-size: 14px; margin: 0 20.4px 20.4px" role="alert">{{ actionError }}</p>
+
+				<!-- §11.3 — pending update, separate from the current facts. -->
+				<div v-if="pendingUpdate && tab !== 'structure'" class="kt-notice" style="margin: 0 20.4px 20.4px" data-testid="str-pending-update" :data-kind="pendingUpdate.kind">
+					<div class="kt-notice-body">
+						<strong>{{ pendingUpdate.kind === 'draft' ? __("Update in progress.") : __("Update awaiting Strategy Approver review.") }}</strong>
+						{{ __("The current plan remains in use until the changes are approved.") }}
+						<a v-if="pendingUpdate.action_label" href="#" data-testid="str-pending-update-continue" @click.prevent="navigate(pendingUpdate.structure_route)">{{ pendingUpdate.action_label }}</a>
+						<a v-else href="#" data-testid="str-pending-update-open" @click.prevent="navigate(pendingUpdate.route)">{{ __("View the update") }}</a>
+					</div>
+				</div>
+				<div v-if="version && version.status === 'Draft' && version.return_reason" class="kt-notice is-warning" style="margin: 0 20.4px 20.4px" data-testid="str-return-reason">
+					<div class="kt-notice-body"><strong>{{ __("Changes requested.") }}</strong> {{ version.return_reason }}</div>
+				</div>
+				<div v-if="version && version.status === 'Submitted for approval' && tab !== 'structure'" class="kt-notice" style="margin: 0 20.4px 20.4px" data-testid="str-awaiting-review">
+					<div class="kt-notice-body">
+						<strong>{{ __("Awaiting Strategy Approver review.") }}</strong> {{ __("No further edits until an authorised Return.") }}
+						<a v-if="workspace.routes.approval" href="#" data-testid="str-open-approval" @click.prevent="navigate(workspace.routes.approval)">{{ __("Open approval task") }}</a>
+					</div>
+				</div>
+				<div v-if="tab === 'structure' && editable && isUpdate" class="kt-notice" style="margin: 0 20.4px 20.4px" data-testid="str-editor-notice">
+					<div class="kt-notice-body">{{ __("The current plan remains in use until these changes are approved.") }}</div>
+				</div>
+
+				<div class="kt-tabs" role="tablist" style="padding: 0 20.4px">
+					<button type="button" role="tab" class="kt-tab" data-testid="str-tab-overview" :aria-selected="tab === 'overview'" @click="switchTab('overview')">{{ __("Overview") }}</button>
+					<button v-if="!workspace.no_version" type="button" role="tab" class="kt-tab" data-testid="str-tab-structure" :aria-selected="tab === 'structure'" @click="switchTab('structure')">{{ __("Structure") }}</button>
+					<button v-if="!workspace.no_version" type="button" role="tab" class="kt-tab" data-testid="str-tab-history" :aria-selected="tab === 'history'" @click="switchTab('history')">{{ __("History") }}</button>
+				</div>
+
+				<template v-if="tab === 'overview'">
+					<div v-if="workspace.no_version" style="padding: 20.4px"><h2 style="margin: 0">{{ __("This plan has no version yet.") }}</h2></div>
+					<template v-else>
+						<!-- §11.3A Draft Overview — plan details and version dates -->
+						<div v-if="isDraft && (canEditIdentity || canEditDates)" style="padding: 20.4px" data-testid="str-draft-details">
+							<div class="kt-card-title">{{ __("Plan details") }}</div>
+							<div v-if="canEditIdentity" style="display: grid; gap: 13.6px; max-width: 640px">
+								<div class="kt-field">
+									<label for="str-detail-title">{{ __("Plan title") }}</label>
+									<input id="str-detail-title" v-model="detailForm.title" class="kt-input" data-testid="str-identity-title" />
+									<p v-if="detailErrors.title" class="kt-field-error">{{ detailErrors.title }}</p>
+								</div>
+								<div class="kt-field">
+									<label>{{ __("Plan type") }}</label>
+									<div class="kt-ro" data-testid="str-detail-plan-type">{{ workspace.plan.plan_type_label }}</div>
+								</div>
+								<div v-if="workspace.plan.parent_primary_plan_id" class="kt-field">
+									<label>{{ __("Main plan") }}</label>
+									<div class="kt-ro">{{ workspace.plan.parent_primary_plan_title }}</div>
+								</div>
+								<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 13.6px">
+									<div class="kt-field">
+										<label for="str-detail-start">{{ __("Start date") }}</label>
+										<input id="str-detail-start" v-model="detailForm.period_start" class="kt-input" type="date" data-testid="str-identity-start" />
+										<p v-if="detailErrors.period_start" class="kt-field-error">{{ detailErrors.period_start }}</p>
+									</div>
+									<div class="kt-field">
+										<label for="str-detail-end">{{ __("End date") }}</label>
+										<input id="str-detail-end" v-model="detailForm.period_end" class="kt-input" type="date" data-testid="str-identity-end" />
+										<p v-if="detailErrors.period_end" class="kt-field-error">{{ detailErrors.period_end }}</p>
+									</div>
+								</div>
+							</div>
+							<div v-else style="display: grid; gap: 13.6px; max-width: 640px">
+								<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20.4px">
+									<div><div class="kt-label">{{ __("Plan type") }}</div><div style="font-size: 14px; margin-top: 3px">{{ workspace.plan.plan_type_label }}</div></div>
+									<div><div class="kt-label">{{ __("Plan period") }}</div><div style="font-size: 14px; margin-top: 3px">{{ workspace.plan.period_label }}</div></div>
+									<div><div class="kt-label">{{ __("Based on") }}</div><div style="font-size: 14px; margin-top: 3px">{{ __("Version {0}", [version.version_number - 1]) }}</div></div>
+								</div>
+								<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 13.6px">
+									<div class="kt-field">
+										<label for="str-use-from">{{ __("Use from") }}</label>
+										<input id="str-use-from" v-model="detailForm.effective_from" class="kt-input" type="date" data-testid="str-use-from" />
+										<p v-if="detailErrors.effective_from" class="kt-field-error">{{ detailErrors.effective_from }}</p>
+									</div>
+									<div class="kt-field">
+										<label for="str-use-until">{{ __("Use until") }}</label>
+										<input id="str-use-until" v-model="detailForm.effective_to" class="kt-input" type="date" data-testid="str-use-until" />
+										<p v-if="detailErrors.effective_to" class="kt-field-error">{{ detailErrors.effective_to }}</p>
+									</div>
+								</div>
+								<div class="kt-field-hint">{{ __("These dates must fall within the plan period. Approval makes this version current immediately; a future start date prevents approval until that date.") }}</div>
+							</div>
+							<div style="display: flex; justify-content: flex-end; gap: 10.2px; margin-top: 13.6px">
+								<button type="button" class="kt-btn kt-btn-secondary" :disabled="acting || !detailsDirty" data-testid="str-save-plan-details" @click="savePlanDetails">{{ __("Save plan details") }}</button>
+								<button type="button" class="kt-btn kt-btn-primary" :disabled="acting" data-testid="str-edit-structure" @click="editStructure">{{ __("Edit structure") }}</button>
+							</div>
+						</div>
+
+						<div v-else style="padding: 20.4px" data-testid="str-identity-card">
+							<div class="kt-card-title">{{ __("Plan details") }}</div>
+							<div class="kt-grid-3">
+								<div><div class="kt-label">{{ __("Plan type") }}</div><div style="font-size: 14px; margin-top: 3px" data-testid="str-plan-type">{{ workspace.plan.plan_type_label }}</div></div>
 								<div><div class="kt-label">{{ __("Plan period") }}</div><div style="font-size: 14px; margin-top: 3px">{{ workspace.plan.period_label }}</div></div>
-								<div><div class="kt-label">{{ __("Based on") }}</div><div style="font-size: 14px; margin-top: 3px">{{ __("Version {0}", [version.version_number - 1]) }}</div></div>
+								<div><div class="kt-label">{{ appliesLabel }}</div><div style="font-size: 14px; margin-top: 3px" data-testid="str-version-applies">{{ version.effective_period_label || "—" }}</div></div>
 							</div>
-							<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 13.6px">
-								<div class="kt-field">
-									<label for="str-use-from">{{ __("Use from") }}</label>
-									<input id="str-use-from" v-model="detailForm.effective_from" class="kt-input" type="date" data-testid="str-use-from" />
-									<p v-if="detailErrors.effective_from" class="kt-field-error">{{ detailErrors.effective_from }}</p>
+						</div>
+
+						<!-- §11.3 readiness — actual actionable items, not a green checklist -->
+						<div v-if="isDraft && readinessFailures.length" class="kt-notice is-warning" style="margin: 0 20.4px 20.4px" data-testid="str-readiness-failures">
+							<div class="kt-notice-body">
+								<strong>{{ __("Before this plan can be submitted:") }}</strong>
+								<span v-for="f in readinessFailures" :key="f.rule" style="display: block">{{ f.message }}</span>
+								<a href="#" data-testid="str-readiness-edit" @click.prevent="switchTab('structure')">{{ __("Edit structure") }}</a>
+							</div>
+						</div>
+
+						<div style="padding: 20.4px; border-top: 1px solid var(--kt-color-divider)" data-testid="str-objectives-card">
+							<div class="kt-card-title">{{ __("Objectives and targets") }}</div>
+							<ObjectivesAndTargets :objectives="workspace.objectives" :empty-message="__('No objectives yet. Add a pillar, a programme and an objective in Structure.')" />
+						</div>
+
+						<div class="kt-grid-2" style="padding: 20.4px; border-top: 1px solid var(--kt-color-divider)">
+							<div>
+								<div class="kt-card-title">{{ __("Structure summary") }}</div>
+								<StructureSummary :counts="workspace.structure_summary" />
+							</div>
+							<div data-testid="str-authority-card">
+								<div class="kt-card-title">{{ __("Approval details") }}</div>
+								<VersionTimeline
+									v-if="workspace.approval_details"
+									:events="[{ event: 'Approve', event_label: workspace.approval_details.label, at_label: workspace.approval_details.at_label, actor_name: workspace.approval_details.actor_name, tone: 'is-live' }]"
+								/>
+								<p v-else class="kt-muted" style="margin: 0" data-testid="str-no-approval">{{ __("Not yet approved.") }}</p>
+								<div v-if="workspace.versions.length > 1" style="margin-top: 13.6px">
+									<div class="kt-label" style="margin-bottom: 6px">{{ __("Versions") }}</div>
+									<table class="kt-table" data-testid="str-versions-table">
+										<thead><tr><th>{{ __("Version") }}</th><th>{{ __("Status") }}</th><th>{{ __("Applies") }}</th></tr></thead>
+										<tbody>
+											<tr v-for="v in workspace.versions" :key="v.id" data-testid="str-version-row">
+												<td><a href="#" @click.prevent="navigate(v.route)">{{ __("Version") }} {{ v.version_number }}</a></td>
+												<td><span class="kt-status" :class="v.status_tone">{{ v.status_label }}</span></td>
+												<td>{{ v.effective_period_label || "—" }}</td>
+											</tr>
+										</tbody>
+									</table>
 								</div>
-								<div class="kt-field">
-									<label for="str-use-until">{{ __("Use until") }}</label>
-									<input id="str-use-until" v-model="detailForm.effective_to" class="kt-input" type="date" data-testid="str-use-until" />
-									<p v-if="detailErrors.effective_to" class="kt-field-error">{{ detailErrors.effective_to }}</p>
-								</div>
-							</div>
-							<div class="kt-field-hint">{{ __("These dates must fall within the plan period. Approval makes this version current immediately; a future start date prevents approval until that date.") }}</div>
-						</div>
-						<div style="display: flex; justify-content: flex-end; gap: 10.2px; margin-top: 13.6px">
-							<button type="button" class="kt-btn kt-btn-secondary" :disabled="acting || !detailsDirty" data-testid="str-save-plan-details" @click="savePlanDetails">{{ __("Save plan details") }}</button>
-							<button type="button" class="kt-btn kt-btn-primary" :disabled="acting" data-testid="str-edit-structure" @click="editStructure">{{ __("Edit structure") }}</button>
-						</div>
-					</div>
-
-					<div v-else class="kt-card kt-blueprint" data-testid="str-identity-card">
-						<div class="kt-card-title">{{ __("Plan details") }}</div>
-						<div class="kt-grid-3">
-							<div><div class="kt-label">{{ __("Plan type") }}</div><div style="font-size: 14px; margin-top: 3px" data-testid="str-plan-type">{{ workspace.plan.plan_type_label }}</div></div>
-							<div><div class="kt-label">{{ __("Plan period") }}</div><div style="font-size: 14px; margin-top: 3px">{{ workspace.plan.period_label }}</div></div>
-							<div><div class="kt-label">{{ appliesLabel }}</div><div style="font-size: 14px; margin-top: 3px" data-testid="str-version-applies">{{ version.effective_period_label || "—" }}</div></div>
-						</div>
-					</div>
-
-					<!-- §11.3 readiness — actual actionable items, not a green checklist -->
-					<div v-if="isDraft && readinessFailures.length" class="kt-notice is-warning" data-testid="str-readiness-failures">
-						<div class="kt-notice-body">
-							<strong>{{ __("Before this plan can be submitted:") }}</strong>
-							<span v-for="f in readinessFailures" :key="f.rule" style="display: block">{{ f.message }}</span>
-							<a href="#" data-testid="str-readiness-edit" @click.prevent="switchTab('structure')">{{ __("Edit structure") }}</a>
-						</div>
-					</div>
-
-					<div class="kt-card kt-blueprint" data-testid="str-objectives-card">
-						<div class="kt-card-title">{{ __("Objectives and targets") }}</div>
-						<ObjectivesAndTargets :objectives="workspace.objectives" :empty-message="__('No objectives yet. Add a pillar, a programme and an objective in Structure.')" />
-					</div>
-
-					<div class="kt-grid-2">
-						<div class="kt-card kt-blueprint">
-							<div class="kt-card-title">{{ __("Structure summary") }}</div>
-							<StructureSummary :counts="workspace.structure_summary" />
-						</div>
-						<div class="kt-card kt-blueprint" data-testid="str-authority-card">
-							<div class="kt-card-title">{{ __("Approval details") }}</div>
-							<VersionTimeline
-								v-if="workspace.approval_details"
-								:events="[{ event: 'Approve', event_label: workspace.approval_details.label, at_label: workspace.approval_details.at_label, actor_name: workspace.approval_details.actor_name, tone: 'is-live' }]"
-							/>
-							<p v-else class="kt-muted" style="margin: 0" data-testid="str-no-approval">{{ __("Not yet approved.") }}</p>
-							<div v-if="workspace.versions.length > 1" style="margin-top: 13.6px">
-								<div class="kt-label" style="margin-bottom: 6px">{{ __("Versions") }}</div>
-								<table class="kt-table" data-testid="str-versions-table">
-									<thead><tr><th>{{ __("Version") }}</th><th>{{ __("Status") }}</th><th>{{ __("Applies") }}</th></tr></thead>
-									<tbody>
-										<tr v-for="v in workspace.versions" :key="v.id" data-testid="str-version-row">
-											<td><a href="#" @click.prevent="navigate(v.route)">{{ __("Version") }} {{ v.version_number }}</a></td>
-											<td><span class="kt-status" :class="v.status_tone">{{ v.status_label }}</span></td>
-											<td>{{ v.effective_period_label || "—" }}</td>
-										</tr>
-									</tbody>
-								</table>
 							</div>
 						</div>
+					</template>
+				</template>
+
+				<template v-else-if="tab === 'history'">
+					<div style="padding: 20.4px" data-testid="str-history">
+						<div class="kt-card-title">{{ __("History") }} &middot; {{ __("Version") }} {{ version.version_number }}</div>
+						<VersionTimeline :events="history" />
 					</div>
 				</template>
-			</template>
+			</div>
 
-			<template v-else-if="tab === 'structure'">
+			<template v-if="tab === 'structure'">
 				<StructureEditor
 					v-if="editable"
 					ref="editorRef"
@@ -520,13 +537,6 @@ function nodePath(node) {
 						</template>
 						<p v-else class="kt-muted" style="margin: 0">{{ __("Select an item to read its complete facts.") }}</p>
 					</div>
-				</div>
-			</template>
-
-			<template v-else-if="tab === 'history'">
-				<div class="kt-card kt-blueprint" data-testid="str-history">
-					<div class="kt-card-title">{{ __("History") }} &middot; {{ __("Version") }} {{ version.version_number }}</div>
-					<VersionTimeline :events="history" />
 				</div>
 			</template>
 		</template>

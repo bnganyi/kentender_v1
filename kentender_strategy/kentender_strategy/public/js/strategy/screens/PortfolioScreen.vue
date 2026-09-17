@@ -213,45 +213,42 @@ async function submitDraft() {
 			</div>
 
 			<template v-else>
-				<header style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px">
-					<div>
-						<div class="kt-eyebrow" style="text-transform: uppercase; font-size: 11px; letter-spacing: 0.1em; color: var(--kt-color-accent); margin-bottom: 6px">
-							{{ __("Strategy Alignment") }}
+				<!-- The title, the tabs and the table below now sit inside one
+				     bordered panel instead of floating as separate boxes, matching
+				     the current design. -->
+				<div class="kt-card kt-blueprint" style="padding: 0">
+					<header style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 20.4px 20.4px 0">
+						<div>
+							<div class="kt-eyebrow" style="text-transform: uppercase; font-size: 11px; letter-spacing: 0.1em; color: var(--kt-color-accent); margin-bottom: 6px">
+								{{ __("Strategy Alignment") }}
+							</div>
+							<h1 style="font-size: 30px; margin: 0">{{ __("Strategic plans") }}</h1>
+							<p style="color: var(--kt-color-neutral-800); font-size: 14px; margin: 6.8px 0 20.4px; max-width: 640px">
+								{{ __("Create and maintain the strategy used for budget and procurement planning.") }}
+							</p>
 						</div>
-						<h1 style="font-size: 30px; margin: 0">{{ __("Strategic plans") }}</h1>
-						<p style="color: var(--kt-color-neutral-800); font-size: 14px; margin: 6.8px 0 0; max-width: 640px">
-							{{ __("Create and maintain the strategy used for budget and procurement planning.") }}
-						</p>
+						<button v-if="canCreatePlan" type="button" class="kt-btn kt-btn-primary" style="margin-top: 2px" data-testid="str-new-plan" @click="openCreateForm">
+							{{ __("Create strategic plan") }}
+						</button>
+					</header>
+
+					<div class="kt-tabs" role="tablist" style="padding: 0 20.4px">
+						<button type="button" role="tab" class="kt-tab" data-testid="str-tab-plans" :aria-selected="activeTab === 'plans'" @click="go()">
+							{{ __("Plans") }} <span class="kt-count">{{ plans.length }}</span>
+						</button>
+						<button type="button" role="tab" class="kt-tab" data-testid="str-tab-my-work" :aria-selected="activeTab === 'my-work'" @click="go('my-work')">
+							{{ __("Actions") }} <span class="kt-count">{{ myWork.length }}</span>
+						</button>
 					</div>
-					<button v-if="canCreatePlan" type="button" class="kt-btn kt-btn-primary" data-testid="str-new-plan" @click="openCreateForm">
-						{{ __("Create strategic plan") }}
-					</button>
-				</header>
 
-				<div class="kt-tabs" role="tablist">
-					<button type="button" role="tab" class="kt-tab" data-testid="str-tab-plans" :aria-selected="activeTab === 'plans'" @click="go()">
-						{{ __("Plans") }} <span class="kt-count">{{ plans.length }}</span>
-					</button>
-					<button type="button" role="tab" class="kt-tab" data-testid="str-tab-my-work" :aria-selected="activeTab === 'my-work'" @click="go('my-work')">
-						{{ __("Actions") }} <span class="kt-count">{{ myWork.length }}</span>
-					</button>
-				</div>
+					<p v-if="error" class="kt-muted" data-testid="str-refresh-error" style="margin: 13.6px 20.4px 0">{{ __("The list could not be refreshed. Showing the last loaded plans.") }}</p>
 
-				<p v-if="error" class="kt-muted" data-testid="str-refresh-error">{{ __("The list could not be refreshed. Showing the last loaded plans.") }}</p>
-
-				<template v-if="activeTab === 'plans'">
-					<div v-if="plans.length === 0 && !filtersActive" class="kt-card kt-blueprint" style="padding: 0" data-testid="str-empty">
-						<div style="padding: 13.6px 13.6px 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px">
-							<h2 style="font-size: 19px; margin: 0">{{ __("Strategic plans") }}</h2>
-							<button v-if="canCreatePlan" type="button" class="kt-btn kt-btn-primary" @click="openCreateForm">{{ __("Create strategic plan") }}</button>
-						</div>
-						<div style="padding: 20.4px 13.6px; text-align: center; font-size: 13px; color: var(--kt-color-neutral-700)">
+					<template v-if="activeTab === 'plans'">
+						<div v-if="plans.length === 0 && !filtersActive" style="padding: 20.4px 20.4px 27.2px; text-align: center; font-size: 13px; color: var(--kt-color-neutral-700)" data-testid="str-empty">
 							{{ canCreatePlan ? __("No strategic plans exist yet.") : __("No strategic plans to display.") }}
 						</div>
-					</div>
-					<template v-else>
-						<div class="kt-card kt-blueprint" style="padding: 0; gap: 0">
-							<div style="display: flex; gap: 10.2px; padding: 13.6px">
+						<template v-else>
+							<div style="display: flex; gap: 10.2px; padding: 13.6px 20.4px">
 								<input v-model="filters.q" class="kt-input" style="flex: 1" data-testid="str-search" :placeholder="__('Search plan or reference')" :aria-label="__('Search plan or reference')" />
 								<select v-model="filters.role" class="kt-input" style="width: 200px" data-testid="str-role-filter" :aria-label="__('Plan type')">
 									<option value="">{{ __("All plan types") }}</option>
@@ -290,44 +287,44 @@ async function submitDraft() {
 										</tr>
 									</tbody>
 								</table>
-								<div style="padding: 10.2px 13.6px; font-size: 12px; color: var(--kt-color-neutral-700)" data-testid="str-count-label">
-									{{ plans.length === 1 ? __("Showing 1 of 1 plan") : __("Showing {0} of {1} plans", [plans.length, plans.length]) }}
+								<div style="padding: 10.2px 20.4px" data-testid="str-count-label">
+									<span style="font-size: 12px; color: var(--kt-color-neutral-700)">{{ plans.length === 1 ? __("Showing 1 of 1 plan") : __("Showing {0} of {1} plans", [plans.length, plans.length]) }}</span>
 								</div>
 							</template>
-						</div>
+						</template>
 					</template>
-				</template>
 
-				<template v-else>
-					<div class="kt-card kt-blueprint" style="padding: 0; gap: 0">
-						<div v-if="myWork.length === 0" style="padding: 20.4px 13.6px; text-align: center; font-size: 13px; color: var(--kt-color-neutral-700)" data-testid="str-my-work-empty">
+					<template v-else>
+						<div v-if="myWork.length === 0" style="padding: 20.4px 20.4px 27.2px; text-align: center; font-size: 13px; color: var(--kt-color-neutral-700)" data-testid="str-my-work-empty">
 							{{ __("Nothing needs your action right now.") }}
 						</div>
-						<table v-else class="kt-table" data-testid="str-my-work-table">
-							<thead>
-								<tr>
-									<th>{{ __("Plan") }}</th>
-									<th>{{ __("Review") }}</th>
-									<th>{{ __("Submitted by") }}</th>
-									<th>{{ __("Submitted") }}</th>
-									<th>{{ __("Status") }}</th>
-									<th>{{ __("Action") }}</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr v-for="w in myWork" :key="w.version_id" data-testid="str-my-work-row" :data-version-reference="w.version_reference">
-									<td>{{ w.plan_title }} <span class="kt-muted">&middot; {{ w.plan_reference }} &middot; {{ __("Version") }} {{ w.version_number }}</span></td>
-									<td>{{ w.review_type }}</td>
-									<td>{{ w.submitted_by || "—" }}</td>
-									<td>{{ w.submitted_at_label || "—" }}</td>
-									<td><span class="kt-status" :class="w.status_tone">{{ w.status_label }}</span></td>
-									<td><a href="#" class="kt-btn kt-btn-ghost" style="padding: 4px 10px; height: auto" data-testid="str-my-work-action" @click.prevent="openRoute(w.action_route)">{{ w.action_label }}</a></td>
-								</tr>
-							</tbody>
-						</table>
-						<div v-if="myWork.length" style="padding: 10.2px 13.6px; font-size: 12px; color: var(--kt-color-neutral-700)">{{ __("Showing {0} item(s)", [myWork.length]) }}</div>
-					</div>
-				</template>
+						<template v-else>
+							<table class="kt-table" data-testid="str-my-work-table">
+								<thead>
+									<tr>
+										<th>{{ __("Plan") }}</th>
+										<th>{{ __("Review") }}</th>
+										<th>{{ __("Submitted by") }}</th>
+										<th>{{ __("Submitted") }}</th>
+										<th>{{ __("Status") }}</th>
+										<th>{{ __("Action") }}</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr v-for="w in myWork" :key="w.version_id" data-testid="str-my-work-row" :data-version-reference="w.version_reference">
+										<td>{{ w.plan_title }} <span class="kt-muted">&middot; {{ w.plan_reference }} &middot; {{ __("Version") }} {{ w.version_number }}</span></td>
+										<td>{{ w.review_type }}</td>
+										<td>{{ w.submitted_by || "—" }}</td>
+										<td>{{ w.submitted_at_label || "—" }}</td>
+										<td><span class="kt-status" :class="w.status_tone">{{ w.status_label }}</span></td>
+										<td><a href="#" class="kt-btn kt-btn-ghost" style="padding: 4px 10px; height: auto" data-testid="str-my-work-action" @click.prevent="openRoute(w.action_route)">{{ w.action_label }}</a></td>
+									</tr>
+								</tbody>
+							</table>
+							<div style="padding: 10.2px 20.4px; font-size: 12px; color: var(--kt-color-neutral-700)">{{ __("Showing {0} item(s)", [myWork.length]) }}</div>
+						</template>
+					</template>
+				</div>
 			</template>
 		</template>
 

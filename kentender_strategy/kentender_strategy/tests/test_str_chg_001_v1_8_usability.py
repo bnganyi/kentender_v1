@@ -421,6 +421,31 @@ class TestIdempotentReplay(UsabilityTestBase):
 		self.assertEqual(len(approvals), 1)
 
 
+class TestPlaywrightPurgeRestoresPredecessorDates(UsabilityTestBase):
+	"""A browser run that approves a successor shortens the predecessor's
+	`effective_to` (plan D8/STR18-XD-002); the Playwright reset must undo
+	that too, not only the status flip, or the very next comparison test
+	sees a phantom third "Version effective until" change. Found live
+	2026-09-17: `purge()` reset status but left the shortened date, so
+	`diff_strategy_versions` reported 3 changes instead of the fixture's 2.
+
+	Patches `_canonical_plan` to point at a throwaway plan rather than
+	matching by the real canonical title, so this never touches whatever
+	the live "Ministry of Health Strategic Plan (Demo)" row is doing."""
+
+	def test_purge_restores_the_seeded_effective_to_after_a_shortened_predecessor(self):
+		from unittest.mock import patch
+
+		from kentender_strategy.seeds import playwright_ui_fixtures as pw
+
+		plan_id, v1 = self._plan_and_version(effective_to="2045-06-30")
+		frappe.db.set_value("Strategic Plan Version", v1, {"status": "Superseded", "effective_to": "2040-11-24"})
+		with patch.object(pw, "_canonical_plan", return_value=plan_id):
+			pw.purge(commit=False)
+		self.assertEqual(frappe.db.get_value("Strategic Plan Version", v1, "status"), "Active")
+		self.assertEqual(str(frappe.db.get_value("Strategic Plan Version", v1, "effective_to")), "2028-06-30")
+
+
 class TestFixtureProfiles(UsabilityTestBase):
 	"""STR18-208 / STR18-AC-021, 022 — the §14.4 profiles on the canonical
 	plan, isolated and torn down; the default Version 1 stays unchanged."""

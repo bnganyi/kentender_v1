@@ -194,3 +194,31 @@ resolved with the date, the change that closed it, and the evidence (test name
 or command output), mirroring how the NDS and Planning registers record
 resolution. Keep the original "why it matters" text so a future reader
 understands what was being traded off, even after the fix lands.
+
+---
+
+## FU-12 — Design folder renamed and refreshed; screens re-ported to match (2026-09-17)
+
+**Status:** Closed 2026-09-17.
+**What:** The design export moved from `strategy_design/` to `design/`
+(matching every sibling module's naming) and 11 of the 12 artboards were
+revised: the page title, its tabs, and (for the register, the plan overview,
+and all four approval-task tabs) every section below now sit inside one
+bordered panel with a thin rule between sections, replacing the previous
+look of several separate boxes with gaps between them. The structure editor
+keeps its two side-by-side boxes below a panel that holds only the title,
+notice and tabs. No wording, field, button, or table column changed —
+purely the outer layout. `PortfolioScreen.vue`, `PlanWorkspaceScreen.vue`
+and `ApprovalTaskScreen.vue` were restructured to match; `strategy-fidelity.spec.ts`'s
+artboard path was updated to `design/`.
+**Also found and fixed:** the Playwright reset script only restored a
+superseded Version 1's status back to Active, not the "used until" date the
+v1.8 predecessor-closure feature shortens on approval. A stray date from
+this session's own earlier testing was corrupting the live dev site's
+canonical plan and made the approver's Changes tab show three differences
+instead of two. Fixed in `playwright_ui_fixtures.py::purge()`, covered by a
+new regression test, and the live site's date was restored by hand.
+**Evidence:** Python suite 104 tests OK; `make ui-strategy-gate` 8 passed;
+`make ui-strategy-fidelity-gate` 4 passed; live screenshots in
+`evidence/v1_8b/`; site left with only the canonical plan.
+**Path:** none outstanding.

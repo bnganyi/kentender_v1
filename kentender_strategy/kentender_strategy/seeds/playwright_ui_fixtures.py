@@ -129,10 +129,21 @@ def purge(*, commit: bool = True) -> dict[str, Any]:
 		for version in versions:
 			_delete_version_tree(version)
 			removed["versions"] += 1
-		first = frappe.db.get_value("Strategic Plan Version", {"plan_id": plan, "version_number": 1}, "name")
-		if first and frappe.db.get_value("Strategic Plan Version", first, "status") != "Active":
-			# Superseded by a fixture approval: the §14.3 seed is Version 1 Active.
-			frappe.db.set_value("Strategic Plan Version", first, "status", "Active", update_modified=False)
+		first = frappe.db.get_value(
+			"Strategic Plan Version", {"plan_id": plan, "version_number": 1}, ["name", "status", "effective_to"], as_dict=True
+		)
+		if first and (first.status != "Active" or str(first.effective_to) != "2028-06-30"):
+			# A browser run that approved a successor does two things to
+			# Version 1: marks it Superseded, and (v1.8 predecessor closure)
+			# shortens its "used until" date to the day before the successor
+			# started. Undo both — the §14.3 seed's Version 1 is Active and
+			# runs the full 2023-07-01 to 2028-06-30 plan period.
+			frappe.db.set_value(
+				"Strategic Plan Version",
+				first.name,
+				{"status": "Active", "effective_to": "2028-06-30"},
+				update_modified=False,
+			)
 	for name in frappe.get_all("Strategic Plan", filters={"title": ["like", f"{BROWSER_PLAN_PREFIX}%"]}, pluck="name"):
 		_delete_plan(name)
 		removed["plans"] += 1
