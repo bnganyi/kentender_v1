@@ -451,9 +451,23 @@ def clear_canonical_modules() -> dict[str, Any]:
 			out["requisitions"][doctype] = out["requisitions"].get(doctype, 0) + count
 		else:
 			out["requisitions"][doctype] = count
-	from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import clear_planning_fixture_rows
+	# Not clear_planning_fixture_rows(include_canonical=True, ...) alone:
+	# "Planning Command Journal" isn't one of its _DOCTYPES, so a stale
+	# "pln-seed:open-dhi-dpp"-keyed row survives, and the next seed run's
+	# open_departmental_plan() replays it — returning a cached result that
+	# names a Departmental Plan Version this same clear just deleted, so
+	# the seed's very next step ("did the accepted Need project into the
+	# Draft DPP") finds nothing and throws. reset_planning_seed() is the
+	# complete teardown: it also reverses the Need's usage projection
+	# through the real published channel and purges that journal.
+	from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import (
+		clear_planning_fixture_rows,
+		reset_planning_seed,
+	)
 
-	out["planning"] = clear_planning_fixture_rows(include_canonical=True, include_playwright=playwright_ok)
+	out["planning"] = reset_planning_seed(commit=False)
+	for doctype, count in clear_planning_fixture_rows(include_canonical=False, include_playwright=playwright_ok).items():
+		out["planning"][doctype] = out["planning"].get(doctype, 0) + count
 	from kentender_procurement.departmental_needs.seeds.playwright_ui_fixtures import purge_fixture_needs
 
 	out["needs"] = purge_fixture_needs(namespace=NEEDS_NS, commit=False)
@@ -695,13 +709,21 @@ def run(
 	through: str = STAGES[-1],
 	reset: bool = True,
 	rebuild: bool = False,
+	wipe: bool = False,
 	validate: bool = True,
 	force: bool = False,
 	commit: bool = True,
 ) -> dict[str, Any]:
 	"""Clear everything non-canonical (``reset``), optionally the canonical
-	module rows too (``rebuild``), reseed up to ``through`` and validate.
-	One transaction: any failure rolls the whole run back."""
+	module rows too (``rebuild``), optionally the site stage itself
+	(``wipe`` — the Procuring Entity, Organisation Units, Fiscal Years and
+	the §8.3 actors ``rebuild`` alone never touches, since every other
+	stage's canonical rows reference them), reseed up to ``through`` and
+	validate. One transaction: any failure rolls the whole run back.
+
+	``wipe`` implies ``rebuild``: the site stage is the foundation every
+	module stage's canonical rows sit on, so it is only ever safe to drop
+	after they are already gone, never on its own."""
 	frappe.only_for(("System Manager", "Administrator"))
 	_assert_allowed(force)
 	_stage_index(through)
@@ -719,8 +741,10 @@ def run(
 	if force:
 		frappe.flags.in_test = True
 	try:
-		if rebuild:
+		if rebuild or wipe:
 			result["rebuild"] = clear_canonical_modules()
+		if wipe:
+			result["wiped"] = site_setup.reset_site_setup(commit=False)
 		if reset:
 			result["removed"] = clear_non_canonical()
 		result["seeded"] = seed(through=through)

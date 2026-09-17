@@ -136,8 +136,8 @@
 					<div v-else class="pln-val" data-testid="dpp-f-budget-line">{{ budgetLineLabel }}</div>
 				</div>
 				<div class="pln-ro-field">
-					<label>Currency</label>
-					<div class="pln-val">{{ currency }}</div>
+					<label>Line name</label>
+					<div class="pln-val" data-testid="dpp-f-budget-line-title">{{ selectedLineTitle }}</div>
 				</div>
 				<div class="pln-field">
 					<label for="dpp-amount">Indicative amount</label>
@@ -153,31 +153,17 @@
 					/>
 					<div v-else class="pln-val" data-testid="dpp-f-amount">{{ form.indicative_amount }}</div>
 				</div>
-			</div>
-
-			<!-- PLN-AC-092 — a Need-origin entry the department will not proceed
-			     with is accounted for with a reason instead of funding (§5.1). -->
-			<div v-if="isNeed && canEdit" class="pln-not-proceeding" data-testid="dpp-not-proceeding">
-				<label class="pln-checkbox-row">
-					<input
-						type="checkbox"
-						v-model="form.not_proceeding"
-						data-testid="dpp-f-not-proceeding"
-					/>
-					This requirement will not proceed in this financial year
-				</label>
-				<div v-if="form.not_proceeding" class="pln-field">
-					<label for="dpp-not-proceeding-reason">Reason</label>
-					<textarea
-						id="dpp-not-proceeding-reason"
-						class="kt-input"
-						rows="3"
-						v-model="form.not_proceeding_reason"
-						data-testid="dpp-f-not-proceeding-reason"
-					></textarea>
+				<div class="pln-ro-field">
+					<label>Currency</label>
+					<div class="pln-val">{{ currency }}</div>
 				</div>
 			</div>
-			<div v-else-if="isNeed && form.not_proceeding" class="pln-not-proceeding" data-testid="dpp-not-proceeding">
+
+			<!-- PLN-AC-092 — a Need-origin entry already not proceeding is
+			     accounted for with its reason instead of funding (§5.1); reached
+			     directly only, since the Plan screen's own row now offers
+			     Restore rather than a route back into this editor. -->
+			<div v-if="isNeed && form.not_proceeding" class="pln-not-proceeding" data-testid="dpp-not-proceeding">
 				<div class="pln-ro-field">
 					<label>This requirement will not proceed in this financial year</label>
 					<div class="pln-val" data-testid="dpp-f-not-proceeding-reason">{{ form.not_proceeding_reason }}</div>
@@ -190,7 +176,19 @@
 			<p>{{ errorSummary }}</p>
 		</div>
 
-		<div class="pln-footer-bar" style="justify-content: flex-end">
+		<!-- U03's own footer: Do not proceed is a separate, secondary action
+		     from Save funding details, opening its own dialog (§5.1.4) -->
+		<div class="pln-footer-bar" :style="showNotProceed ? '' : 'justify-content: flex-end'">
+			<button
+				v-if="showNotProceed"
+				type="button"
+				class="kt-btn kt-btn-ghost"
+				data-testid="dpp-editor-not-proceed"
+				:disabled="pending"
+				@click="$emit('open-not-proceed-dialog')"
+			>
+				Do not proceed this financial year
+			</button>
 			<div class="pln-footer-actions">
 				<button type="button" class="kt-btn kt-btn-secondary" @click="$emit('cancel')">{{ canEdit ? "Cancel" : "Back" }}</button>
 				<button
@@ -217,7 +215,7 @@ const props = defineProps({
 	errorSummary: String,
 });
 
-const emit = defineEmits(["save-funding", "save-direct", "cancel"]);
+const emit = defineEmits(["save-funding", "save-direct", "open-not-proceed-dialog", "cancel"]);
 
 const entry = computed(() => props.editor.entry || {});
 const context = computed(() => props.editor.context || {});
@@ -239,6 +237,7 @@ const unitLabel = computed(
 const budgetLineLabel = computed(
 	() => budgetLines.value.find((l) => l.id === form.budget_line)?.label || form.budget_line || ""
 );
+const selectedLineTitle = computed(() => budgetLines.value.find((l) => l.id === form.budget_line)?.title || "");
 
 const form = reactive({
 	title: "",
@@ -252,6 +251,8 @@ const form = reactive({
 	not_proceeding: false,
 	not_proceeding_reason: "",
 });
+
+const showNotProceed = computed(() => isNeed.value && canEdit.value && !form.not_proceeding);
 
 watch(
 	() => props.editor,
@@ -283,13 +284,6 @@ watch(
 
 function save() {
 	if (isNeed.value) {
-		if (form.not_proceeding) {
-			emit("save-funding", {
-				entry_id: entry.value.entry_id,
-				not_proceeding_reason: form.not_proceeding_reason,
-			});
-			return;
-		}
 		emit("save-funding", {
 			entry_id: entry.value.entry_id,
 			budget_line: form.budget_line,

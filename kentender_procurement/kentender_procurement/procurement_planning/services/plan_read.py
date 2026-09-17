@@ -448,6 +448,36 @@ def _open_task_for(actor: str, version) -> dict[str, Any] | None:
 	return None
 
 
+def _version_allocation_totals(plan_version: str) -> tuple[set[str], float, float]:
+	rows = frappe.get_all(
+		"Plan Source Allocation", filters={"plan_version": plan_version, "allocation_state": ("in", ("Draft", "Active"))},
+		fields=["dpp_entry", "quantity", "indicative_amount"],
+	)
+	return {r.dpp_entry for r in rows}, sum(flt(r.quantity) for r in rows), sum(flt(r.indicative_amount) for r in rows)
+
+
+def _version_changes(version) -> dict[str, Any]:
+	"""U07-changes/U07-changes-update — the Version's own `change_reason`
+	(§4.5) against its predecessor's source set, quantities and value. Not a
+	literal per-field diff (neither Version stores a "description" field to
+	compare): the Planner's own narrative is the record of *why*; this is
+	the record of *what actually moved* underneath it, computed fresh from
+	the live allocations rather than any frozen snapshot (a still-Draft
+	successor has not frozen `source_cohort` yet)."""
+	if not version.based_on_version:
+		return {"is_initial": True}
+	before_set, before_qty, before_value = _version_allocation_totals(version.based_on_version)
+	after_set, after_qty, after_value = _version_allocation_totals(version.name)
+	return {
+		"is_initial": False,
+		"based_on_version_number": frappe.db.get_value("Annual Plan Version", version.based_on_version, "version_number"),
+		"change_reason": cstr(version.change_reason),
+		"source_set_changed": before_set != after_set,
+		"quantities_changed": before_qty != after_qty,
+		"value_changed": before_value != after_value,
+	}
+
+
 def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	plan = _plan_root(plan_reference)
@@ -471,6 +501,7 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 		"plan_reference": plan.plan_reference,
 		"version_reference": version.name,
 		"version_status": version.version_status,
+		"version_number": version.version_number,
 		"funding_state": version.funding_state,
 		"record_version": int(version.record_version or 0),
 		"fiscal_year": plan.fiscal_year,
@@ -493,7 +524,15 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 			"value_display": _money(item_value),
 			"reserved_share_display": (f"{share['qualifying']} planned reservation · required {share['required']}" if (target and share["basis"]["available"]) else f"{share['qualifying']} planned reservation"),
 			"reservation": share,
+			# U07-overview's own strip: the same accepted-entry count under its
+			# own label, plus how many departments they come from.
+			"departmental_sources": len(all_accepted),
+			"departments": len({row["organisation_unit"] for row in all_accepted}),
+			"funding_evidence_state": version.funding_state,
 		},
+		"project_name": cstr(version.project_name),
+		"change_reason": cstr(version.change_reason),
+		"changes": _version_changes(version),
 		"unallocated_sources": unallocated,
 		"unallocated_caption": f"{len(unallocated)} entr{'y' if len(unallocated) == 1 else 'ies'} available" if unallocated else "",
 		"plan_items": items,
@@ -506,6 +545,10 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 			or (version.version_status == "Active" and can_act and version.funding_state in ("Stale", "Returned"))  # §5.3.4 reassessment
 		),
 		"funding_evidence": _funding_evidence(version),
+		# U07-funding's own Budget table — the per-line Approved/Planned/
+		# Reserved/Committed/Available breakdown already computed for the
+		# affordability gate, exposed here for direct display.
+		"affordability": readiness_report["affordability"] if readiness_report else None,
 		# v1.18 §6.2 — **Sign and submit Annual Plan** belongs to the Head of Procurement Function
 		"can_submit": can_sign and no_blockers and not unallocated and bool(readiness_report and readiness_report["funding_current"]),
 		"can_sign_and_submit": can_sign and no_blockers and not unallocated and bool(readiness_report and readiness_report["funding_current"]),
@@ -663,6 +706,8 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 				"departmental_plan_line": f"{dpp_reference} · Submission {dpp_version_number}",
 				"need_reference_line": f"{allocation.need} · Revision {needs_intake.need_revision_number(allocation.need_revision)}" if allocation.need else "",
 				"quantity_display": _quantity_display(allocation.quantity, allocation.unit),
+				"quantity_number": f"{flt(allocation.quantity):g}",
+				"unit_label": _unit_label(allocation.unit),
 				"required_by_display": _date(allocation.required_by_date),
 				"budget_line": allocation.budget_line,
 				"budget_line_display": line.get("label") or cstr(allocation.budget_line),
@@ -719,6 +764,7 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 		)
 	combined = len(sources) > 1
 	mutable = item.item_state == "Draft" and version.version_status == "Draft" and can_act and version.funding_state != "Awaiting confirmation"
+	total_quantity_display = _quantity_display(sum(flt(a.quantity) for a in allocations), allocations[0].unit) if allocations else "—"
 	return {
 		"outcome": "OK",
 		"plan_item_id": item.plan_item_id,
@@ -738,6 +784,7 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 		"sources": sources,
 		"sources_caption": f"{len(sources)} sources · {sum(flt(a.quantity) for a in allocations):g} {_unit_label(allocations[0].unit).lower()} · {_money(value)}" if combined else "",
 		"planned_value_display": _money(value),
+		"total_quantity_display": total_quantity_display,
 		"identity": {
 			"title": item.title,
 			"description": item.description,
@@ -785,6 +832,9 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 			"lotting_indicator": cstr(item.lotting_indicator),
 			"lot_count": int(item.lot_count or 0),
 			"helper": "The planned designation from the governed catalogue. Choose None where no designation applies; candidate entitlement is assessed downstream.",
+			# no restriction-computation mechanism exists yet this cycle — a
+			# static line, matching the spec's own "read-only example text".
+			"mandatory_restrictions_line": "No additional restriction applies",
 		},
 		"baseline": {
 			"target_invitation_date": cstr(item.baseline_invitation_date),
@@ -846,7 +896,12 @@ def _funding_evidence(version) -> dict[str, Any]:
 		if not decision:
 			return None
 		basis = financial_basis.basis_of_decision(frappe._dict(task=decision.task))
-		return {"decision": decision.decision_reference, "decided_at": cstr(decision.decided_at), "decided_at_display": _eat(decision.decided_at), "basis_digest": cstr(basis.basis_digest) if basis else "", "planned_total": financial_basis.summary(basis).get("planned_total", "") if basis else ""}
+		actor = frappe.db.get_value("Plan Finance Decision", decision.name, "actor")
+		return {
+			"decision": decision.decision_reference, "decided_at": cstr(decision.decided_at), "decided_at_display": _eat(decision.decided_at),
+			"actor": actor, "actor_name": cstr(frappe.db.get_value("User", actor, "full_name") or actor) if actor else "",
+			"basis_digest": cstr(basis.basis_digest) if basis else "", "planned_total": financial_basis.summary(basis).get("planned_total", "") if basis else "",
+		}
 
 	at_approval = None
 	if version.submitted_at:
@@ -862,6 +917,80 @@ def _funding_evidence(version) -> dict[str, Any]:
 		"reuse": {"earlier_decision": frappe.db.get_value("Plan Finance Decision", reuse[0].earlier_decision, "decision_reference"), "validated_at": _eat(reuse[0].validated_at)} if reuse else None,
 		"open_review": frappe.db.get_value("Plan Finance Task", {"plan_version": version.name, "status": "Open"}, "task_reference") or "",
 	}
+
+
+_DECISION_OUTCOME_LABELS = {"Confirm plan funding": "Confirmed", "Return to planner": "Returned"}
+
+
+def _finance_history(version) -> list[dict[str, Any]]:
+	"""U10-history — every review attempt in order; a later Review's own
+	outcome never overwrites an earlier one's."""
+	from kentender_procurement.procurement_planning.services import financial_basis
+
+	chain = authz.evidence_chain(version.name) or [version.name]
+	tasks = frappe.get_all(
+		"Plan Finance Task", filters={"plan_version": ("in", chain)},
+		fields=["name", "task_reference", "status", "decision", "financial_basis"],
+		order_by="creation asc",
+	)
+	rows = []
+	for idx, task in enumerate(tasks, start=1):
+		basis = frappe.get_doc(financial_basis.DOCTYPE, task.financial_basis) if task.financial_basis else None
+		budget_version = _budget_version_display(basis)
+		basis_line = budget_version or ("Current revised Budget basis" if idx > 1 else "")
+		if task.decision:
+			decision = frappe.get_doc("Plan Finance Decision", task.decision)
+			rows.append(
+				{
+					"review": f"Review {idx}",
+					"basis": basis_line,
+					"outcome": _DECISION_OUTCOME_LABELS.get(decision.decision, decision.decision),
+					"actor": cstr(frappe.db.get_value("User", decision.actor, "full_name") or decision.actor),
+					"time_display": _date(decision.decided_at),
+				}
+			)
+		else:
+			rows.append({"review": f"Review {idx}", "basis": basis_line, "outcome": "Awaiting confirmation", "actor": "—", "time_display": "—"})
+	return rows
+
+
+def _budget_version_display(basis) -> str:
+	from kentender_procurement.procurement_planning.services import financial_basis
+
+	if not basis:
+		return ""
+	rows = financial_basis.lines_of(basis)
+	if not rows:
+		return ""
+	line_version = rows[0].get("line_version")
+	budget_version = frappe.db.get_value("Procurement Budget Line Version", line_version, "budget_version") if line_version else None
+	if not budget_version:
+		return ""
+	reference, version_number = frappe.db.get_value("Procurement Budget Version", budget_version, ["generated_reference", "version_number"]) or (None, None)
+	return f"{reference}, Version {version_number}" if reference else ""
+
+
+def _affordability_rows(statement: dict[str, Any]) -> list[dict[str, Any]]:
+	"""The per-Budget-Line Approved/Planned/Reserved/Committed/Available
+	breakdown — shared by `GetFinanceTask` (PLN-DES-10) and the Review
+	screen's own Funding section (U11-checks)."""
+	return [
+		{
+			"budget_line": line["budget_line"],
+			"budget_line_label": f"{line.get('reference') or line['budget_line']} — {line.get('title')}" if line.get("title") else (line.get("reference") or line["budget_line"]),
+			"funding_source": cstr(line.get("funding_source")) or "—",
+			"approved_display": _money(line.get("approved")),
+			"planned_display": _money(line.get("planned")),
+			"within_approved": bool(line.get("within_approved")),
+			"within_approved_display": "Yes" if line.get("within_approved") else "No",
+			"reserved_display": _money(line.get("reserved")),
+			"committed_display": _money(line.get("committed")),
+			"available_display": _money(line.get("available")),
+			"within_available": bool(line.get("within_available")),
+			"excess_display": _money(line.get("excess_over_approved")) if not line.get("within_approved") else "",
+		}
+		for line in statement.get("lines", [])
+	]
 
 
 def get_finance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
@@ -888,26 +1017,10 @@ def get_finance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 	items = frappe.db.count("Annual Plan Item", {"plan_version": version.name, "item_state": ("!=", "Dissolved")})
 	share = readiness.reservation_allocations(version.name, plan.fiscal_year)
 	target = share["target_percent"]
-	rows = [
-		{
-			"budget_line": line["budget_line"],
-			"budget_line_label": f"{line.get('reference') or line['budget_line']} — {line.get('title')}" if line.get("title") else (line.get("reference") or line["budget_line"]),
-			"funding_source": cstr(line.get("funding_source")) or "—",
-			"approved_display": _money(line.get("approved")),
-			"planned_display": _money(line.get("planned")),
-			"within_approved": bool(line.get("within_approved")),
-			"within_approved_display": "Yes" if line.get("within_approved") else "No",
-			"reserved_display": _money(line.get("reserved")),
-			"committed_display": _money(line.get("committed")),
-			"available_display": _money(line.get("available")),
-			"within_available": bool(line.get("within_available")),
-			"excess_display": _money(line.get("excess_over_approved")) if not line.get("within_approved") else "",
-		}
-		for line in statement.get("lines", [])
-	]
 	within_approved = bool(statement.get("within_approved"))
 	within_available = bool(statement.get("within_available"))
 	can_decide = authz.has_site_role(ROLE_FINANCE_CONFIRMATION_OFFICER, actor) and not decided and not authz.is_segregated(actor, authz.ACTION_FINANCE_DECIDE, plan_version=version.name)
+	rows = _affordability_rows(statement)
 	return {
 		"outcome": "OK",
 		"task": task_doc.name,
@@ -946,16 +1059,136 @@ def get_finance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 		"basis_current": (financial_basis.current_digest(plan, version) == cstr(basis.basis_digest)) if (basis and not decided) else None,
 		"is_reassessment": version.version_status == "Active",
 		"version_status": version.version_status,
+		"version_number": version.version_number,
+		"history": _finance_history(version),
+		"funding_evidence": _funding_evidence(version),
 	}
 
 
 # --------------------------------------------------------------------------
-# GetPlanGovernanceTask (PLN-DES-11/12)
+# GetPlanGovernanceTask (PLN-DES-11/12) / GetSourceEvidence (PLN-DES-12)
 # --------------------------------------------------------------------------
 
 
+def _governance_sources(version, plan) -> list[dict[str, Any]]:
+	"""U11 Sources — every current allocation across the Version's Plan
+	Items, each carrying its own `source_key` for a U12 drill-in link."""
+	items = {
+		i.name: i
+		for i in frappe.get_all("Annual Plan Item", filters={"plan_version": version.name, "item_state": ("!=", "Dissolved")}, fields=["name", "plan_item_id", "title"])
+	}
+	labels = _line_labels(plan.fiscal_year)
+	allocations = frappe.get_all(
+		"Plan Source Allocation",
+		filters={"plan_version": version.name, "allocation_state": ("in", ("Draft", "Active"))},
+		fields=["plan_item", "source_key", "source_origin", "organisation_unit", "quantity", "unit", "budget_line", "indicative_amount"],
+		order_by="creation asc",
+	)
+	rows = []
+	for a in allocations:
+		item = items.get(a.plan_item)
+		if not item:
+			continue
+		line = labels.get(cstr(a.budget_line), {})
+		rows.append(
+			{
+				"plan_item_id": item.plan_item_id,
+				"plan_item_title": item.title,
+				"department": _ou_label(a.organisation_unit),
+				"source_key": a.source_key,
+				"source_origin": a.source_origin,
+				"quantity_display": _quantity_display(a.quantity, a.unit),
+				"unit_label": _unit_label(a.unit),
+				"budget_line_display": line.get("label") or cstr(a.budget_line),
+				"amount_display": _money(a.indicative_amount),
+			}
+		)
+	return rows
+
+
+def _governance_method_and_schedule(version, user: str | None) -> list[dict[str, Any]]:
+	"""U11-checks — one Method-and-eligibility / Schedule card per Plan
+	Item, read from the same resolver `GetPlanItem` (PLN-DES-09) uses so
+	the two screens never disagree on the applicable profile or dates."""
+	item_ids = frappe.get_all("Annual Plan Item", filters={"plan_version": version.name, "item_state": ("!=", "Dissolved")}, pluck="plan_item_id", order_by="creation asc")
+	cards = []
+	for plan_item_id in item_ids:
+		detail = get_plan_item(plan_item_id=plan_item_id, user=user)
+		mp = detail["classification"]["method_profile"]
+		declarations = [c for c in mp["conditions"] if c.get("kind") != "Known fact"]
+		cards.append(
+			{
+				"plan_item_id": plan_item_id,
+				"title": detail["identity"]["title"],
+				"method": {
+					"method": detail["classification"]["procurement_method"],
+					"profile": mp["profile"],
+					"version_number": mp["version_number"],
+					"conditions_complete": mp["evidence_complete"],
+					"evidence_line": declarations[0]["required_evidence"] if declarations else "Method eligibility record",
+					"specific_authorisation": "Required" if any(c.get("authorisation_actor") for c in declarations) else "Not required",
+				},
+				"schedule": {
+					"target_invitation_display": _date(detail["baseline"]["target_invitation_date"]),
+					"rows": detail["baseline"]["rows"],
+					"periods_display": {f: f"{v} calendar days" for f, v in detail["baseline"]["periods"].items()},
+					"estimated_delivery_period_days": detail["baseline"]["estimated_delivery_period_days"],
+					"estimated_completion_display": detail["baseline"]["estimated_completion_display"],
+					"delivery_boundary_ok": detail["baseline"]["delivery_boundary_ok"],
+				},
+			}
+		)
+	return cards
+
+
+_GOVERNANCE_STAGE_OUTCOME = {"Adopt and submit": "Adopted and submitted", "Approve": "Approved", "Return for correction": "Returned"}
+
+
+def _governance_history(version) -> list[dict[str, Any]]:
+	"""U11-decisions — every completed review in order (Finance,
+	Preparation, Accounting Officer adoption, Statutory approval), plus
+	the current open stage as **Awaiting decision**; a later stage's row
+	never overwrites an earlier one's (mirrors `_finance_history`)."""
+	rows = []
+	finance_task = frappe.db.get_value("Plan Finance Task", {"plan_version": version.name, "decision": ("is", "set")}, "decision", order_by="creation asc")
+	if finance_task:
+		decision = frappe.get_doc("Plan Finance Decision", finance_task)
+		rows.append(
+			{
+				"stage": "Finance", "actor": cstr(frappe.db.get_value("User", decision.actor, "full_name") or decision.actor),
+				"capacity": "Finance Confirmation Officer", "outcome": _DECISION_OUTCOME_LABELS.get(decision.decision, decision.decision),
+				"date_display": _eat(decision.decided_at),
+			}
+		)
+	if version.preparation_signature:
+		sig = frappe.db.get_value("Plan Preparation Signature", version.preparation_signature, ["actor", "capacity", "signed_at"], as_dict=True)
+		if sig:
+			rows.append(
+				{
+					"stage": "Preparation", "actor": cstr(frappe.db.get_value("User", sig.actor, "full_name") or sig.actor),
+					"capacity": sig.capacity, "outcome": "Signed and submitted", "date_display": _eat(sig.signed_at),
+				}
+			)
+	for stage in ("Accounting Officer adoption", "Statutory approval"):
+		task = frappe.db.get_value("Plan Governance Task", {"plan_version": version.name, "stage": stage}, ["name", "decision", "capacity"], as_dict=True)
+		if not task:
+			continue
+		if task.decision:
+			decision = frappe.get_doc("Plan Governance Decision", task.decision)
+			rows.append(
+				{
+					"stage": stage, "actor": cstr(frappe.db.get_value("User", decision.actor, "full_name") or decision.actor),
+					"capacity": decision.capacity, "outcome": _GOVERNANCE_STAGE_OUTCOME.get(decision.decision, decision.decision),
+					"date_display": _eat(decision.decided_at),
+				}
+			)
+		else:
+			rows.append({"stage": stage, "actor": "—", "capacity": task.capacity, "outcome": "Awaiting decision", "date_display": "—"})
+	return rows
+
+
 def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
-	from kentender_procurement.procurement_planning.services import plan_governance
+	from kentender_procurement.procurement_planning.services import plan_finance, plan_governance
 
 	actor = authz.actor(user)
 	if not task or not frappe.db.exists("Plan Governance Task", task):
@@ -990,6 +1223,11 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 	) + ("No contract splitting advisory." if not snapshot.get("splitting_advisory_count") else f"{snapshot['splitting_advisory_count']} contract splitting advisory confirmed by the Planner.")
 	action = authz.ACTION_AO_DECIDE if task_doc.stage == "Accounting Officer adoption" else authz.ACTION_STATUTORY_DECIDE
 	can_decide = task_doc.status == "Open" and authz.has_site_role(role, actor) and not authz.is_segregated(actor, action, plan_version=version.name)
+	funding_current = plan_finance.funding_is_current(version)
+	funding_evidence = _funding_evidence(version)
+	confirmation = funding_evidence.get("current_confirmation") or {}
+	reference = readiness.reference_for(plan.fiscal_year)
+	share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
 	return {
 		"outcome": "OK",
 		"task": task_doc.name,
@@ -998,6 +1236,8 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 		"status": task_doc.status,
 		"stage": task_doc.stage,
 		"can_decide": can_decide,
+		"plan_reference": plan.plan_reference,
+		"version_number": version.version_number,
 		"header": {
 			"eyebrow": f"{task_doc.stage.upper()} · {plan.plan_reference} · VERSION {version.version_number}",
 			"title": plan.title,
@@ -1006,7 +1246,12 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 		"authority_card": authority_card,
 		"decision_statement": (
 			f"I adopt the complete consolidated Annual Procurement Plan Version {version.version_number} shown above and submit it for the statutory approval applicable to this Procuring Entity."
-			if task_doc.stage == "Accounting Officer adoption" else ""
+			if task_doc.stage == "Accounting Officer adoption"
+			else (
+				f"I record the {authority_card['capacity_detail']}'s resolution approving the complete consolidated Annual Procurement Plan Version {version.version_number}."
+				if authority_card and authority_card["is_board"]
+				else f"I approve the complete consolidated Annual Procurement Plan Version {version.version_number} as adopted by the Accounting Officer."
+			)
 		),
 		"items": rows,
 		"caption": f"{len(rows)} Plan Item{'s' if len(rows) != 1 else ''} · {_money(total_value)}",
@@ -1020,6 +1265,152 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 			if task_doc.stage == "Accounting Officer adoption"
 			else {"title": "Return adopted Plan Version for correction?", "lede": f"The Accounting-Officer-adopted Version {version.version_number} remains unchanged. State the correction required."}
 		),
+		# v1.18 §6.3/D-register — a positive decision additionally needs a
+		# current funding basis (U11-stale); Return stays available regardless.
+		"funding_current": funding_current,
+		"can_decide_positive": can_decide and funding_current,
+		"sources": _governance_sources(version, plan),
+		"funding": {
+			"rows": _affordability_rows(plan_finance.affordability_statement(plan, version)),
+			"statement_as_at": confirmation.get("decided_at_display", ""),
+			"confirmed_by": confirmation.get("actor_name", ""),
+			"at_approval": funding_evidence.get("at_approval"),
+			"current": funding_evidence.get("current"),
+		},
+		"method_and_schedule": _governance_method_and_schedule(version, user),
+		"reservation": {
+			"target_percent": share["target_percent"],
+			"required_allocation_display": _money(share["required"]) if share["required"] not in ("", None) else "Not mandatory",
+			"planned_qualifying_display": _money(share["qualifying"]),
+			"shortfall_display": _money(share["shortfall"]) if share["shortfall"] not in ("", None) else "",
+			"share_of_annual_display": f"{share['percent_of_annual']:.2f}%" if share["basis"]["available"] else "",
+			"budget_basis_reference": share["basis"]["budget_reference"],
+			"budget_version_display": f"Version {share['basis']['version_reference']}" if share["basis"]["version_reference"] else "",
+			"county_requirement_display": (f"{share['county']['target_percent']}%" if share["county"]["applicable"] else "Not applicable"),
+			"met": share["met"],
+		},
+		"changes": _version_changes(version),
+		"history": _governance_history(version),
+		"can_download_review_pack": True,
+	}
+
+
+def get_source_evidence(*, task: str, source_key: str, user: str | None = None) -> dict[str, Any]:
+	"""U12 — the exact origin chain for one reviewed allocation, reached
+	only from its own Review task (never a bare public lookup): the Need's
+	own department acceptance (where Need-origin), the DPP's certification
+	and the Planner's acceptance for planning, plus whether a newer
+	accepted Need revision now exists (§10.5's own three variants)."""
+	actor = authz.actor(user)
+	task_doc = frappe.db.get_value("Plan Governance Task", task, ["name", "plan_version", "stage"], as_dict=True)
+	if not task_doc:
+		authz.not_found()
+	role = ROLE_ACCOUNTING_OFFICER if task_doc.stage == "Accounting Officer adoption" else ROLE_PLAN_STATUTORY_APPROVER
+	authz.require_site_read((role, ROLE_PROCUREMENT_PLANNER, ROLE_AUDITOR), actor)
+	version = frappe.get_doc("Annual Plan Version", task_doc.plan_version)
+	plan = frappe.get_doc("Annual Plan", version.annual_plan)
+	allocation = frappe.db.get_value(
+		"Plan Source Allocation",
+		{"plan_version": version.name, "source_key": source_key, "allocation_state": ("in", ("Draft", "Active"))},
+		["name", "plan_item", "dpp_entry", "source_origin", "need", "need_revision", "organisation_unit", "quantity", "unit", "required_by_date", "budget_line", "indicative_amount"],
+		as_dict=True,
+	)
+	if not allocation:
+		authz.not_found()
+	plan_item = frappe.db.get_value("Annual Plan Item", allocation.plan_item, ["plan_item_id", "title"], as_dict=True)
+	entry = frappe.get_doc("Departmental Plan Entry", allocation.dpp_entry)
+	dpp_version = frappe.get_doc("Departmental Plan Version", entry.dpp_version)
+	dpp_root = frappe.db.get_value("Departmental Plan", dpp_version.departmental_plan, "dpp_reference")
+	labels = _line_labels(plan.fiscal_year)
+	line = labels.get(cstr(allocation.budget_line), {})
+
+	certified = None
+	if dpp_version.submission:
+		sub = frappe.db.get_value("Departmental Plan Submission", dpp_version.submission, ["submitted_by_user", "submitted_at"], as_dict=True)
+		if sub:
+			certified = {"actor": sub.submitted_by_user, "actor_name": cstr(frappe.db.get_value("User", sub.submitted_by_user, "full_name") or sub.submitted_by_user), "display": _eat(sub.submitted_at)}
+	accepted_for_planning = None
+	validation_decision = frappe.db.get_value(
+		"Departmental Plan Validation Decision", {"submission": dpp_version.submission, "decision": "Accept departmental plan"},
+		["actor", "decided_at"], as_dict=True,
+	) if dpp_version.submission else None
+	if validation_decision:
+		accepted_for_planning = {
+			"actor": validation_decision.actor, "actor_name": cstr(frappe.db.get_value("User", validation_decision.actor, "full_name") or validation_decision.actor),
+			"display": _eat(validation_decision.decided_at),
+		}
+
+	need_accepted, has_newer_revision, newer_revision_number = None, False, None
+	if allocation.source_origin == needs_intake.NEED_ORIGIN and allocation.need:
+		need_decision = frappe.db.get_value(
+			"Departmental Need Decision", {"departmental_need": allocation.need, "need_revision": allocation.need_revision, "action": "Accept for planning"},
+			["actor", "occurred_at"], as_dict=True, order_by="occurred_at asc",
+		)
+		if need_decision:
+			need_accepted = {
+				"actor": need_decision.actor, "actor_name": cstr(frappe.db.get_value("User", need_decision.actor, "full_name") or need_decision.actor),
+				"display": _eat(need_decision.occurred_at),
+			}
+		current_revision = needs_intake.current_accepted_revision_of(allocation.need, plan.fiscal_year)
+		if current_revision and current_revision != cstr(allocation.need_revision):
+			has_newer_revision = True
+			newer_revision_number = needs_intake.need_revision_number(current_revision)
+
+	return {
+		"outcome": "OK",
+		"task": task_doc.name,
+		"source_key": source_key,
+		"plan_reference": plan.plan_reference,
+		"version_number": version.version_number,
+		"plan_item_id": plan_item.plan_item_id,
+		"title": entry.title,
+		"quantity_display": _quantity_display(allocation.quantity, allocation.unit),
+		"required_by_display": _date(allocation.required_by_date),
+		"amount_display": _money(allocation.indicative_amount),
+		"description": cstr(entry.description),
+		"expected_operational_result": cstr(entry.expected_operational_result),
+		"source_origin": allocation.source_origin,
+		"department": _ou_label(allocation.organisation_unit),
+		"need_reference": cstr(allocation.need),
+		"need_revision_number": needs_intake.need_revision_number(allocation.need_revision) if allocation.need_revision else None,
+		"departmental_plan_reference": dpp_root,
+		"submission_number": dpp_version.version_number,
+		"dpp_entry_id": entry.entry_id,
+		"budget_line_display": line.get("label") or cstr(allocation.budget_line),
+		"planning_amount_display": _money(allocation.indicative_amount),
+		"need_accepted": need_accepted,
+		"certified": certified,
+		"accepted_for_planning": accepted_for_planning,
+		"has_newer_revision": has_newer_revision,
+		"newer_revision_number": newer_revision_number,
+		"back_route": ["procurement-planning", "review", task_doc.name],
+	}
+
+
+def build_review_pack(*, task: str, user: str | None = None) -> dict[str, Any]:
+	"""PLN18-AC-025 / PLN18-UX-14 — the protected review pack: the complete
+	governed content already on the Review screen, plus every source's own
+	evidence index, as one downloadable document (§10.4's own **Download
+	review pack**). Scoped to the same read model, not the post-approval
+	`plan_json` public contract (that snapshot does not exist yet at this
+	pre-approval stage)."""
+	review = get_plan_governance_task(task=task, user=user)
+	evidence_index = [get_source_evidence(task=task, source_key=row["source_key"], user=user) for row in review["sources"]]
+	return {
+		"schema": "KenTenderPlanReviewPack.v1",
+		"generated_at": _eat(frappe.utils.now_datetime()),
+		"task_reference": review["task_reference"],
+		"stage": review["stage"],
+		"status": review["status"],
+		"header": review["header"],
+		"items": review["items"],
+		"sources": review["sources"],
+		"funding": review["funding"],
+		"method_and_schedule": review["method_and_schedule"],
+		"reservation": review["reservation"],
+		"changes": review["changes"],
+		"history": review["history"],
+		"evidence_index": evidence_index,
 	}
 
 

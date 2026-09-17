@@ -11,6 +11,12 @@ function make() {
 }
 
 describe("FinanceReturnDialog — §12.9", () => {
+	it("matches U10-reassess-return's own title and confirm button text", () => {
+		const w = make();
+		expect(w.find(".kt-dialog-title").text()).toBe("Return for correction?");
+		expect(w.find('[data-testid="fnt-return-confirm"]').text()).toBe("Return");
+	});
+
 	it("requires a reason of at least 10 characters before confirming", async () => {
 		const w = make();
 		const confirm = w.find('[data-testid="fnt-return-confirm"]');

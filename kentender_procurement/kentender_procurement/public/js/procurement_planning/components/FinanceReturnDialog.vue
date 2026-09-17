@@ -1,13 +1,11 @@
-<!-- §12.9 — Return to planner requires one actionable correction reason and
-     creates no reservation. No artboard names this dialog; it follows the
-     same title/intro/required-multiline/Cancel+Return shape PLN-DES-15 uses
-     for the two governance return dialogs (§11.17), adapted to Finance's
-     own copy. No reason category, attachment, assignee, due date or
-     optional note (§11.17's own absences apply here too). -->
+<!-- U10-reassess-return — Return to planner requires one actionable
+     correction reason and creates no reservation. No reason category,
+     attachment, assignee, due date or optional note (§11.17's own absences
+     apply here too). -->
 <template>
 	<div class="kt-dialog-backdrop" data-testid="fnt-return-dialog">
 		<div class="kt-dialog" role="dialog" aria-modal="true" aria-labelledby="fnt-return-title">
-			<div id="fnt-return-title" class="kt-dialog-title">Return to planner?</div>
+			<div id="fnt-return-title" class="kt-dialog-title">Return for correction?</div>
 			<p class="pln-dialog-lede">
 				No reservation is created. State the correction required.
 			</p>
@@ -30,7 +28,7 @@
 					:disabled="pending || reason.trim().length < 10"
 					@click="$emit('confirm', reason.trim())"
 				>
-					Return for correction
+					Return
 				</button>
 			</div>
 		</div>

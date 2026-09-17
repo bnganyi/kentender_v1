@@ -107,6 +107,31 @@ describe("the Annual Plan card (U01-A..G)", () => {
 		expect(w.find('[data-testid="pln-plan-action-active"]').classes()).toContain("kt-btn-secondary");
 		expect(w.find('[data-testid="pln-plan-action-candidate"]').text()).toBe("Continue update");
 		expect(w.find('[data-testid="pln-plan-action-candidate"]').classes()).toContain("kt-btn-primary");
+		// U01-B — "Approved value" once cleared statutory approval, "Planned
+		// value" for the Draft candidate beside it
+		const labels = w.find('[data-testid="pln-annual-plan-card"]').findAll(".kt-label").map((l) => l.text());
+		expect(labels).toContain("Approved value");
+		expect(labels).toContain("Planned value");
+	});
+
+	it.each([
+		["Draft", "Planned value"],
+		["Awaiting Accounting Officer", "Planned value"],
+		["Awaiting statutory approval", "Planned value"],
+		["Publication failed", "Planned value"],
+		["Active", "Approved value"],
+		["Published — activation held", "Approved value"],
+	])("U01-A/B/C/F/G — version_status %s uses the %s label", (versionStatus, expectedLabel) => {
+		const w = make({
+			workspace: workspace({
+				annual_plan: {
+					plan_reference: "PLN-MOH-2027-001", summary: "",
+					blocks: [{ kind: "current", route: ["annual-procurement-plan", "PLN-MOH-2027-001"], version_number: 1, version_status: versionStatus, funding_state: "Confirmed", plan_items: 2, value_display: "KES 130,000,000", action: "", action_kind: "" }],
+				},
+			}),
+		});
+		const labels = w.findAll('[data-testid="pln-annual-plan-card"] .kt-label').map((l) => l.text());
+		expect(labels).toContain(expectedLabel);
 	});
 
 	it("U01-F: a candidate awaiting a decision renders no button on the card itself", () => {
@@ -141,6 +166,44 @@ describe("actionable rows and departmental plans", () => {
 		expect(cards[1].text()).toContain("Complete Plan readiness");
 	});
 
+	// U01-D/E/F — the "Your actions" card shows labelled facts, not one prose
+	// line, when the server supplies them.
+	it("renders the server's labelled facts instead of the prose supporting line when present", () => {
+		const w = make({
+			workspace: workspace({
+				actionable: [
+					{
+						headline: "Validate departmental plan",
+						supporting: "Digital Health · Submission 1 · 2 requirements · KES 110,000,000 · submitted 25 Nov 2026 by Julia Njeri",
+						facts: [
+							{ label: "Submitted by", value: "Julia Njeri" },
+							{ label: "Submitted", value: "25 Nov 2026, 10:30 EAT" },
+							{ label: "Requirements", value: "2" },
+							{ label: "Value", value: "KES 110,000,000" },
+						],
+						action: "Review",
+						route: ["procurement-planning", "dpp-review", "T1"],
+					},
+				],
+			}),
+		});
+		const card = w.find('[data-testid="pln-actionable"]');
+		const labels = card.findAll(".kt-label").map((l) => l.text());
+		expect(labels).toEqual(["Submitted by", "Submitted", "Requirements", "Value"]);
+		expect(card.text()).not.toContain("submitted 25 Nov 2026 by Julia Njeri");
+	});
+
+	it("falls back to the prose supporting line when the server sends no facts", () => {
+		const w = make({
+			workspace: workspace({
+				actionable: [{ headline: "Complete Plan readiness", supporting: "Version 1 · Shortfall KES 48,000,000", action: "Review readiness", route: ["annual-procurement-plan", "PLN-MOH-2027-001"] }],
+			}),
+		});
+		const card = w.find('[data-testid="pln-actionable"]');
+		expect(card.findAll(".kt-label")).toHaveLength(0);
+		expect(card.text()).toContain("Version 1 · Shortfall KES 48,000,000");
+	});
+
 	it("emits open-departmental-plan for an Open-departmental-plan route, navigate otherwise", async () => {
 		const w = make({
 			workspace: workspace({
@@ -166,6 +229,39 @@ describe("actionable rows and departmental plans", () => {
 		});
 		expect(w.find('[data-testid="pln-departmental-plans"]').text()).toContain("Digital Health");
 		expect(w.find('[data-testid="pln-count-label"]').text()).toBe("1 departmental plan");
+	});
+
+	// U01-A/B/C — once any departmental plan has been accepted this FY, the
+	// table splits into Accepted/Open Submission with a View action.
+	it("uses the Accepted/Open Submission columns with a View action once a plan has been accepted", () => {
+		const w = make({
+			workspace: workspace({
+				departmental_plans_shape: "accepted",
+				departmental_plans: [
+					{ dpp_reference: "DPP-1", department: "Digital Health", accepted_submission: 1, open_submission: null, requirements: 2, value: "KES 110,000,000", status: "Accepted", route: ["departmental-procurement-plan", "DPP-1"] },
+				],
+			}),
+		});
+		const headers = w.findAll('[data-testid="pln-departmental-plans"] th').map((h) => h.text());
+		expect(headers).toEqual(["Department", "Accepted Submission", "Open Submission", "Requirements", "Value", "Status", ""]);
+		const cells = w.findAll('[data-testid="pln-departmental-plans"] tbody td').map((c) => c.text());
+		expect(cells).toEqual(["Digital Health", "1", "None", "2", "KES 110,000,000", "Accepted", "View"]);
+	});
+
+	// U01-D — before any acceptance this FY, a single Submission count and no
+	// action: there is nothing accepted yet to view.
+	it("uses a single Submission column with no action before anything is accepted", () => {
+		const w = make({
+			workspace: workspace({
+				departmental_plans_shape: "submission",
+				departmental_plans: [
+					{ dpp_reference: "DPP-1", department: "Digital Health", version: 1, requirements: 2, value: "KES 110,000,000", status: "Awaiting validation", route: ["departmental-procurement-plan", "DPP-1"] },
+				],
+			}),
+		});
+		const headers = w.findAll('[data-testid="pln-departmental-plans"] th').map((h) => h.text());
+		expect(headers).toEqual(["Department", "Submission", "Requirements", "Value", "Status"]);
+		expect(w.find('[data-testid="pln-departmental-plans"] button').exists()).toBe(false);
 	});
 });
 

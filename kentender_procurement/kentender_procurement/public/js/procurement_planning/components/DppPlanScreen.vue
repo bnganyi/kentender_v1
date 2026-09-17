@@ -117,7 +117,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					<template v-for="row in plan.entries" :key="row.entry_id">
+					<template v-for="row in proceedingEntries" :key="row.entry_id">
 						<tr :data-testid="`dpp-entry-${row.entry_id}`">
 							<td>{{ row.title }}</td>
 							<td>{{ row.source_label }}</td>
@@ -154,6 +154,54 @@
 				</tbody>
 			</table>
 			<p class="pln-table-caption" data-testid="dpp-totals">{{ plan.totals_caption }}</p>
+		</div>
+
+		<!-- U03-notproceeding — a distinct section, excluded from financial
+		     totals above; full Need facts and quantity preserved, each with
+		     its own reason and Restore action. -->
+		<div v-if="notProceedingEntries.length" class="kt-card kt-blueprint pln-card-pad" data-testid="dpp-not-proceeding-entries" style="margin-top: 24px">
+			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+			<div class="kt-card-title">Not proceeding this financial year</div>
+			<table class="pln-table">
+				<thead>
+					<tr>
+						<th>Requirement</th>
+						<th class="pln-num">Quantity</th>
+						<th>Required by</th>
+						<th>Budget Line</th>
+						<th>Funding</th>
+					</tr>
+				</thead>
+				<tbody>
+					<template v-for="row in notProceedingEntries" :key="row.entry_id">
+						<tr :data-testid="`dpp-not-proceeding-${row.entry_id}`">
+							<td>{{ row.title }}</td>
+							<td class="pln-num">{{ row.quantity_display }}</td>
+							<td>{{ row.required_by_display }}</td>
+							<td>{{ row.budget_line_display }}</td>
+							<td>Not required</td>
+						</tr>
+						<tr>
+							<td colspan="5">
+								<div class="pln-plan-block-row">
+									<p class="pln-card-subhead" style="margin: 0">Reason: {{ row.not_proceeding_reason }}</p>
+									<button
+										v-if="row.action"
+										type="button"
+										class="kt-btn kt-btn-secondary"
+										:data-testid="`dpp-restore-${row.entry_id}`"
+										:disabled="pending"
+										@click="$emit('restore-entry', row.entry_id)"
+									>
+										{{ row.action }}
+									</button>
+								</div>
+							</td>
+						</tr>
+					</template>
+				</tbody>
+			</table>
 		</div>
 
 		<!-- PLN-DES-05 certification card -->
@@ -214,6 +262,7 @@ defineEmits([
 	"view-accepted-needs",
 	"add-direct",
 	"open-entry",
+	"restore-entry",
 	"back",
 	"save-draft",
 	"submit",
@@ -221,6 +270,10 @@ defineEmits([
 	"open-task",
 	"update:certified",
 ]);
+
+// U03-notproceeding — a distinct section, excluded from the totals above.
+const proceedingEntries = computed(() => (props.plan.entries || []).filter((row) => row.disposition !== "Not proceeding"));
+const notProceedingEntries = computed(() => (props.plan.entries || []).filter((row) => row.disposition === "Not proceeding"));
 
 const KIND_CLASS = {
 	live: "is-live",

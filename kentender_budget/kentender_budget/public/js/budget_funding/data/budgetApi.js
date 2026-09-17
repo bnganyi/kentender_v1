@@ -3,11 +3,10 @@ import { frappeCall } from "../../budget_shared/data/frappeCall.js";
 const APP = "kentender_budget.api.budget_api";
 const REF_DATA = "kentender_core.api.reference_data_api";
 
-// BUD-CHG-001 v1.3 Phase 4/7 — one site is one Procuring Entity: Budget's
-// own workspace is keyed by Fiscal Year alone, never a combined PE+FY
-// "working context" (kentender_core.api.reference_data_api.get_working_context/
-// select_working_context are still real, live endpoints — other, still
-// PE-scoped modules use them — Budget's own contracts just no longer do).
+// BUD-CHG-001 v1.9 — Budget's own workspace is keyed by Fiscal Year alone
+// (one site is one Procuring Entity). Every write carries the version's
+// optimistic-lock stamp (`expected_modified`) and a client-minted
+// `idempotency_key` (§9.3); the server returns typed results, never a modal.
 export function getBudgetWorkspace(fiscalYear) {
 	return frappeCall(`${APP}.get_budget_workspace`, { fiscal_year: fiscalYear });
 }
@@ -40,8 +39,10 @@ export function saveBudgetLinesDraft(payload) {
 	return frappeCall(`${APP}.save_budget_lines_draft`, { payload });
 }
 
-export function submitBudgetVersion(budgetVersion) {
-	return frappeCall(`${APP}.submit_budget_version`, { payload: { budget_version: budgetVersion } });
+export function submitBudgetVersion(budgetVersion, expectedModified, idempotencyKey) {
+	return frappeCall(`${APP}.submit_budget_version`, {
+		payload: { budget_version: budgetVersion, expected_modified: expectedModified, idempotency_key: idempotencyKey },
+	});
 }
 
 export function listOrganisationUnits() {
@@ -80,18 +81,28 @@ export function getBudgetApprovalTaskChanges(budgetVersion) {
 	return frappeCall(`${APP}.get_budget_approval_task_changes`, { budget_version: budgetVersion });
 }
 
-export function returnBudgetVersion(budgetVersion, returnReason, expectedModified) {
+export function returnBudgetVersion(budgetVersion, returnReason, expectedModified, idempotencyKey) {
 	return frappeCall(`${APP}.return_budget_version`, {
-		payload: { budget_version: budgetVersion, return_reason: returnReason, expected_modified: expectedModified },
+		payload: { budget_version: budgetVersion, return_reason: returnReason, expected_modified: expectedModified, idempotency_key: idempotencyKey },
 	});
 }
 
-export function approveBudgetVersion(budgetVersion, expectedModified) {
+export function approveBudgetVersion(budgetVersion, expectedModified, idempotencyKey) {
 	return frappeCall(`${APP}.approve_budget_version`, {
-		payload: { budget_version: budgetVersion, expected_modified: expectedModified },
+		payload: { budget_version: budgetVersion, expected_modified: expectedModified, idempotency_key: idempotencyKey },
 	});
 }
 
 export function getBudgetLinePosition(budgetLine) {
 	return frappeCall(`${APP}.get_budget_line_position`, { budget_line: budgetLine });
+}
+
+export function getBudgetClosureStatus(budget) {
+	return frappeCall(`${APP}.get_budget_closure_status`, { budget });
+}
+
+export function closeBudget(budget, expectedModified, idempotencyKey) {
+	return frappeCall(`${APP}.close_budget`, {
+		payload: { budget, expected_modified: expectedModified, idempotency_key: idempotencyKey },
+	});
 }

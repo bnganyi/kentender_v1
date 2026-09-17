@@ -70,11 +70,23 @@ FUNDING_EVENT_TYPES = frozenset(
 # EVENT_SUBMITTED / EVENT_RESERVED are remapped to the exact wording BUD-DES-07
 # and BUD-DES-07A show ("Submitted for review" / "Reservation confirmed") —
 # the stored event_type stays the precise audit value, only display changes.
+# BUD-CHG-001 v1.9 §11.7/§11.19 — business wording for funding events and
+# lifecycle events; the stored event_type stays the precise audit value.
 _DISPLAY_LABEL = {
+	EVENT_VERSION_CREATED: _("Budget version created"),
 	EVENT_DRAFT_APPROVAL_SAVED: _("Draft saved"),
 	EVENT_DRAFT_LINES_SAVED: _("Draft saved"),
 	EVENT_SUBMITTED: _("Submitted for review"),
-	EVENT_RESERVED: _("Reservation confirmed"),
+	EVENT_RETURNED: _("Returned for correction"),
+	EVENT_APPROVED: _("Approved and activated"),
+	EVENT_SUPERSEDED: _("Superseded by a later version"),
+	EVENT_CLOSED: _("Budget closed"),
+	EVENT_RESERVED: _("Requisition funding reserved"),
+	EVENT_REVALIDATED: _("Reservation revalidated"),
+	EVENT_RELEASED: _("Funds released"),
+	EVENT_PARTIAL: _("Converted into a commitment"),
+	EVENT_COMMITMENT: _("Converted into a commitment"),
+	EVENT_COMMITMENT_ADJUSTED: _("Commitment adjusted"),
 }
 
 _POSITION_KEYS = ("approved", "reserved", "committed", "available")
@@ -112,6 +124,9 @@ def record_event(
 	after: dict[str, float] | None = None,
 	event_at=None,
 	fixture_namespace: str = "",
+	idempotency_key: str = "",
+	payload_digest: str = "",
+	command_result: str = "",
 ) -> str:
 	"""Insert one immutable Budget Audit Event (the FundingLedgerEvent object).
 
@@ -140,6 +155,9 @@ def record_event(
 		"revalidation_failure_code": revalidation_failure_code or "",
 		"reason": reason or "",
 		"fixture_namespace": fixture_namespace or "",
+		"idempotency_key": idempotency_key or None,
+		"payload_digest": payload_digest or "",
+		"command_result": command_result or "",
 	}
 	for key in _POSITION_KEYS:
 		values[f"before_{key}"] = flt((before or {}).get(key)) if before else None
@@ -180,6 +198,7 @@ def _row_dto(r) -> dict[str, Any]:
 		"amount": flt(r.get("amount")) if r.get("amount") is not None else None,
 		"currency": r.get("currency") or "",
 		"actor": _user_label(r.get("actor")),
+		"initiating_actor": _user_label(r.get("actor")),
 		"actor_kind": r.get("actor_kind") or "user",
 		"calling_module": r.get("calling_module") or "",
 		"correlation_id": r.get("correlation_id") or "",

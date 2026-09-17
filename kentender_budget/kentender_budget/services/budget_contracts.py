@@ -31,11 +31,13 @@ from kentender_budget.services.budget_authorization import (
 	has_budget_version_capability,
 	holds_any_budget_responsibility,
 	holds_budget_approver_assignment,
+	is_technical,
 	require_budget_create_capability,
 	require_budget_read_scope,
 	require_budget_version_capability,
 	require_budget_version_read_scope,
 )
+from kentender_budget.services.budget_idempotency import run_idempotent
 from kentender_budget.services.budget_reference import (
 	allocate_budget_line_version_reference,
 	allocate_budget_reference,
@@ -74,11 +76,12 @@ def list_available_fiscal_years() -> list[str]:
 
 
 def _org_unit_label(org_unit: str | None) -> str:
-	"""Empty owner_org_unit means Entity-wide (Budget Line Version's own field
-	description) — that reads as a real label everywhere it's displayed, not
-	a blank cell."""
+	"""Empty owner_org_unit means every source department may draw on the
+	line (BUD-CHG-001 v1.9 §4.9 label "All departments"; the stored value is
+	unchanged) — that reads as a real label everywhere it's displayed, not a
+	blank cell."""
 	if not org_unit:
-		return _("Entity-wide")
+		return _("All departments")
 	return frappe.db.get_value("Organisation Unit", org_unit, "unit_name") or org_unit
 
 
@@ -251,30 +254,104 @@ def _plan_item_url(plan_item: str | None) -> str:
 	return f"/app/procurement-plan-item/{plan_item_id}" if plan_item_id else ""
 
 
+def _reservation_ledger_sums(reservation: str) -> dict[str, float]:
+	"""Conservation (§4.6): original = remaining + converted + released, read
+	from the reservation's own ledger rows."""
+	rows = frappe.get_all(
+		"Budget Audit Event",
+		filters={"reservation": reservation, "event_type": ["in", ["Contract commitment recorded", "Reservation partially converted", "Reservation released"]]},
+		fields=["event_type", "amount"],
+	)
+	converted = sum(flt(r.amount) for r in rows if r.event_type in ("Contract commitment recorded", "Reservation partially converted"))
+	released = sum(flt(r.amount) for r in rows if r.event_type == "Reservation released")
+	return {"converted": converted, "released": released}
+
+
+_REVIEW_REASONS = {
+	"BUDGET_LINE_FLOOR_BREACH": (
+		"The budget line's registered allocation no longer covers this reservation after the last allocation update.",
+		"The owning Requisition must be revalidated by its Procurement owner before it can progress.",
+	),
+}
+
+
+def _requires_review_facts(reservation: str) -> dict[str, str] | None:
+	"""§11.19 — the typed reason behind a Needs Attention hold, read from the
+	latest `Reservation revalidated` ledger event (tracker D5)."""
+	row = frappe.db.get_value(
+		"Budget Audit Event",
+		{"reservation": reservation, "event_type": "Reservation revalidated", "revalidation_failure_code": ["!=", ""]},
+		["revalidation_failure_code", "downstream_reference", "event_at"],
+		order_by="event_at desc",
+		as_dict=True,
+	)
+	code = (row.revalidation_failure_code if row else "") or "BUDGET_LINE_FLOOR_BREACH"
+	reason, owner_hint = _REVIEW_REASONS.get(code, ("This reservation requires review by its owner.", "The owning Requisition or Contract process must resolve it."))
+	return {"code": code, "reason": reason, "owner_hint": owner_hint, "since_display": _display_datetime(row.event_at) if row else ""}
+
+
+def _requisition_facts(caller_reference: str, calling_module: str) -> dict[str, str]:
+	"""The owning Requisition, by its stable reference, with a route only when
+	the record resolves and the caller may read it (§12.4: never a guessed
+	route). Tracker D6: derived from `caller_reference`, no schema coupling."""
+	ref = (caller_reference or "").strip()
+	if not ref or not frappe.db.exists("DocType", "Procurement Requisition"):
+		return {"requisition_reference": ref, "requisition_url": ""}
+	name = frappe.db.get_value("Procurement Requisition", {"requisition_reference": ref}, "name")
+	if not name:
+		return {"requisition_reference": ref, "requisition_url": ""}
+	try:
+		readable = frappe.has_permission("Procurement Requisition", doc=name, user=frappe.session.user)
+	except Exception:
+		readable = False
+	return {"requisition_reference": ref, "requisition_url": f"/app/procurement-requisitions/{ref}/authorised" if readable else ""}
+
+
+def _source_department(plan_source_allocation: str | None) -> str:
+	"""The exact source department of the drawn Planning allocation (§4.5) via
+	Planning's own record, labelled through the Organisation Unit name."""
+	if not plan_source_allocation or not frappe.db.exists("DocType", "Plan Source Allocation"):
+		return ""
+	unit = frappe.db.get_value("Plan Source Allocation", plan_source_allocation, "organisation_unit")
+	if not unit:
+		return ""
+	return frappe.db.get_value("Organisation Unit", unit, "unit_name") or unit
+
+
 def _line_active_reservations(budget_line: str) -> list[dict[str, Any]]:
 	rows = frappe.get_all(
 		"Funding Reservation",
 		filters={"budget_line": budget_line, "status": ["in", _ACTIVE_RESERVATION_STATUSES]},
-		fields=["name", "generated_reference", "plan_item", "original_amount", "remaining_amount", "status"],
+		fields=["name", "generated_reference", "plan_item", "plan_source_allocation", "original_amount", "remaining_amount", "status", "caller_reference", "calling_module", "currency"],
 		order_by="creation asc",
 	)
 	out = []
 	for r in rows:
+		sums = _reservation_ledger_sums(r.name)
+		requires_review = r.status == "Needs Attention"
+		source = _source_department(r.plan_source_allocation)
+		req = _requisition_facts(r.caller_reference, r.calling_module)
+		lead = req["requisition_reference"] or _plan_item_label(r.plan_item) or r.generated_reference
 		out.append(
 			{
 				"id": r.name,
 				"code": r.generated_reference,
+				"title": f"{lead} · {source} source" if source else lead,
+				"source_department": source,
+				**req,
 				"plan_item_label": _plan_item_label(r.plan_item),
-				# §12.4 "View Plan Item uses a server-returned authorised Planning
-				# URL. The Budget client does not build a route from a guessed
-				# naming rule." — this is PLN-CHG-001 v1.2's own §10 route for the
-				# Plan Item editor, keyed by the stable business plan_item_id (the
-				# Demand-era `procurement-plan-item-editor` page was demolished
-				# with its module).
 				"plan_item_url": _plan_item_url(r.plan_item),
 				"original_amount": flt(r.original_amount),
 				"remaining_amount": flt(r.remaining_amount),
+				"originally_reserved": flt(r.original_amount),
+				"still_reserved": flt(r.remaining_amount),
+				"converted": sums["converted"],
+				"released": sums["released"],
 				"status": r.status,
+				"status_label": _("Requires review — funds remain reserved") if requires_review else (_("Partially converted") if r.status == "Partially Converted" else _("Active")),
+				"requires_review": requires_review,
+				"review": _requires_review_facts(r.name) if requires_review else None,
+				"currency": r.currency or "KES",
 			}
 		)
 	return out
@@ -297,9 +374,19 @@ def get_budget_line_position(budget_line: str, *, as_at_version: str | None = No
 	version_name = as_at_version or owning_version.name
 	line_version = _line_version_for(version_name, line.name) if version_name else None
 	position = _line_position(line.name, line_version)
+	reservations = _line_active_reservations(line.name)
+	converted_total = sum(r["converted"] for r in reservations)
+	currency = line_version.currency if line_version else "KES"
+	explanation = ""
+	if position["committed"] > 0 and converted_total > 0:
+		explanation = _("{0} of the reservation is now committed to a contract. The remaining reservation is {1}. No payment is recorded here.").format(
+			format_kes_full(converted_total, currency=currency), format_kes_full(position["reserved"], currency=currency)
+		)
 	return {
 		"id": line.name,
 		"code": line.generated_reference,
+		"as_at_display": _display_datetime(frappe.utils.now_datetime()),
+		"explanation": explanation,
 		"title": line_version.title if line_version else "",
 		"owner_org_unit": _org_unit_label(line_version.owner_org_unit) if line_version else "",
 		"funding_source": _funding_source_label(line_version.funding_source) if line_version else "",
@@ -315,7 +402,7 @@ def get_budget_line_position(budget_line: str, *, as_at_version: str | None = No
 			"version_number": owning_version.version_number,
 			"status": owning_version.status,
 		},
-		"reservations": _line_active_reservations(line.name),
+		"reservations": reservations,
 	}
 
 
@@ -428,7 +515,41 @@ def _version_summary(version) -> dict[str, Any]:
 		"approval_date": str(version.approval_date) if version.approval_date else "",
 		"approval_date_display": _display_date(version.approval_date),
 		"authorised_total": flt(version.authorised_total),
+		"budget": version.budget,
+		"revision_type": version.revision_type or "",
+		"based_on": version.based_on_budget_version or None,
+		# The optimistic-lock stamp every command sends back as expected_modified.
+		"modified": str(version.modified) if version.modified else "",
 	}
+
+
+def _closed_version(budget_name: str) -> Any | None:
+	names = frappe.get_all(
+		"Procurement Budget Version", filters={"budget": budget_name, "status": "Closed"}, order_by="version_number desc", limit=1, pluck="name"
+	)
+	return frappe.get_doc("Procurement Budget Version", names[0]) if names else None
+
+
+def _current_or_closed_version(budget_name: str) -> Any | None:
+	"""The version a read-only Budget workspace shows: the Active one, or the
+	Closed one after year-end closure (BUD-CHG-001 v1.9 §11.1B/§11.18)."""
+	return _active_version(budget_name) or _closed_version(budget_name)
+
+
+def _closure_summary(version) -> dict[str, Any]:
+	if not version or version.status != "Closed":
+		return {"state": "open"}
+	return {
+		"state": "closed",
+		"closed_by": _user_label(version.closed_by),
+		"closed_at": str(version.closed_at) if version.closed_at else "",
+		"closed_at_display": _display_datetime(version.closed_at),
+	}
+
+
+def _fy_end_display(fiscal_year: str) -> str:
+	end = frappe.db.get_value("Fiscal Year", fiscal_year, "year_end_date")
+	return _display_date(end) if end else ""
 
 
 
@@ -475,16 +596,13 @@ def forbidden_task_verdict(user: str | None = None) -> dict[str, Any] | None:
 
 
 def get_budget_workspace(fiscal_year: str | None = None) -> dict[str, Any]:
-	"""BUD-UI-01 — the scoped Budget and operational position for one
-	explicit Fiscal Year, or the selectable catalogue when none was given.
+	"""BUD-UI-01 — the selected Fiscal Year's existing Draft/submission,
+	current Budget and operational position, with the §11.1B state matrix and
+	the server-decided `available_actions` (BUD-CHG-001 v1.9 §12.1).
 
-	One site is one Procuring Entity: there is no PE+FY combined "working
-	context" any more (BUD-CHG-001 v1.2 Phase 8's `resolve_working_context`
-	dependency is gone). The caller supplies a Fiscal Year directly; when it
-	does not, this never guesses "today's" year — it returns
-	selection_required with the full catalogue (`list_available_fiscal_years`)
-	for the client to offer, mirroring the "never a first-record or
-	Administrator fallback" principle already applied to PE scoping."""
+	One site is one Procuring Entity: the caller supplies a Fiscal Year
+	directly; when it does not, this never guesses "today's" year — it
+	returns selection_required with the full catalogue."""
 	if not holds_any_budget_responsibility(frappe.session.user):
 		return {"outcome": "FORBIDDEN", "forbidden": FORBIDDEN}
 	fy = (fiscal_year or "").strip()
@@ -498,6 +616,8 @@ def get_budget_workspace(fiscal_year: str | None = None) -> dict[str, Any]:
 		"fiscal_year": {"id": fy, "label": fy},
 		"has_budget": False,
 		"can_register": False,
+		"state": "no_record",
+		"available_actions": [],
 	}
 
 	budget_name = frappe.db.get_value("Procurement Budget", {"fiscal_year": fy}, "name")
@@ -505,30 +625,39 @@ def get_budget_workspace(fiscal_year: str | None = None) -> dict[str, Any]:
 		try:
 			require_budget_create_capability(frappe.session.user)
 			result["can_register"] = True
+			result["available_actions"].append("record_allocation")
 		except ResponsibilityError:
-			# Denials from require_budget_create_capability surface as the
-			# closed §10 vocabulary, not frappe.PermissionError (see
-			# budget_authorization.py) — a reader with no Budget Officer
-			# assignment simply doesn't get the register action, not an error.
+			# A reader with no Budget Officer assignment simply doesn't get the
+			# register action, not an error (closed §10 vocabulary).
 			pass
 		return result
 
 	budget = frappe.get_doc("Procurement Budget", budget_name)
 	require_budget_read_scope("Procurement Budget", budget.name)
-	version = _active_version(budget_name)
+	active = _active_version(budget_name)
+	closed = None if active else _closed_version(budget_name)
 	result["has_budget"] = True
 	result["budget"] = _budget_summary(budget)
 	pending = _pending_version_summary(budget_name, frappe.session.user)
 	if pending:
 		result["pending_version"] = pending
-	if not version:
-		# A Budget row exists (an Officer saved a Draft) but nothing has been
-		# Activated yet — no artboard covers this directly (BUD-DES-16 "No
-		# baseline" only covers "no Budget row at all"); the client reuses
-		# that empty-state shell with the server-decided `pending_version`
-		# action (AGENTS.md §6.2 — never derived from status client-side).
+		result["available_actions"].append(pending["action"])
+
+	if not active and not closed:
+		# A Budget row exists but nothing has been activated yet (§11.1B):
+		# never a current position, never a zero, never a second Register.
+		if pending:
+			if pending["status"] == "Submitted for approval":
+				result["state"] = "initial_submitted"
+			elif pending["is_returned"]:
+				result["state"] = "returned_draft"
+			else:
+				result["state"] = "initial_draft"
+		else:
+			result["state"] = "initial_pending_hidden"
 		return result
 
+	version = active or closed
 	totals = _version_totals(version.name)
 	result["version"] = _version_summary(version)
 	result["positions"] = {
@@ -537,39 +666,63 @@ def get_budget_workspace(fiscal_year: str | None = None) -> dict[str, Any]:
 		"committed": totals["committed"],
 		"available": totals["available"],
 	}
-	result["can_create_revision"] = has_budget_version_capability(frappe.session.user, CAP_EDIT, version)
+	result["positions_as_at_display"] = _display_datetime(frappe.utils.now_datetime())
 	result["lines_preview"] = [_line_preview_row(row) for row in totals["lines"][:5]]
+	result["closure"] = _closure_summary(version)
+	if closed:
+		result["state"] = "closed"
+		result["can_create_revision"] = False
+		result["available_actions"].append("view_budget")
+		return result
+
+	result["can_create_revision"] = not pending and has_budget_version_capability(frappe.session.user, CAP_EDIT, version)
+	result["available_actions"].append("view_budget")
+	if result["can_create_revision"]:
+		result["available_actions"].append("update_allocation")
+	if pending:
+		result["state"] = "current_with_submitted" if pending["status"] == "Submitted for approval" else "current_with_draft"
+	else:
+		result["state"] = "current"
 	return result
 
 
 def _pending_version_summary(budget_name: str, user: str) -> dict[str, Any] | None:
 	"""The one open (Draft or Submitted for approval) version on this Budget
-	— an unactivated baseline or a successor revision — with the action the
-	caller may take on it, decided here (AGENTS.md §6.2), never from status
-	client-side:
+	— an unactivated baseline or a successor — with the action the caller may
+	take on it, decided here (AGENTS.md §6.2), never from status client-side:
 
-	- `open_draft`      the Budget Officer continues an editable Draft;
-	- `open_task`       the Budget Approver decides a Submitted version
-	                    (BUD-DES-08..13) — without this the approver had no
-	                    in-app route to a successor's task at all, only a
-	                    hand-typed URL;
-	- `view_submission` the submitting Officer sees the read-only submitted
-	                    version while it awaits a decision.
+	- `continue_draft` / `continue_update` / `correct_and_resubmit`
+	                    the Budget Officer continues an editable Draft;
+	- `review`          the Budget Approver decides a Submitted version;
+	- `view_submission` the submitting Officer (or an authorised reader) sees
+	                    the read-only submitted version;
+	- `view_draft`      an authorised reader inspects a Draft read-only;
+	- `view_version_readonly`
+	                    AUTH §8 technical readers (Administrator / System
+	                    Manager) with no Budget business assignment — the
+	                    §12.1 correction: a fourth outcome, never nothing.
 
-	A reader holding none of those capabilities gets no disclosure that an
+	A reader who cannot read the version at all gets no disclosure that an
 	open version exists (§12.1's no-disclosure principle)."""
 	pending = _draft_version(budget_name)
 	if not pending:
 		return None
+	is_successor = bool(pending.based_on_budget_version)
+	is_returned = pending.status == "Draft" and bool((pending.return_reason or "").strip())
 	action = None
 	if pending.status == "Draft":
 		if has_budget_version_capability(user, CAP_EDIT, pending):
-			action = "open_draft"
+			action = "correct_and_resubmit" if is_returned else ("continue_update" if is_successor else "continue_draft")
 	elif pending.status == "Submitted for approval":
 		if has_budget_version_capability(user, CAP_APPROVE, pending):
-			action = "open_task"
+			action = "review"
 		elif has_budget_version_capability(user, CAP_EDIT, pending):
 			action = "view_submission"
+	if not action:
+		if is_technical(user):
+			action = "view_version_readonly"
+		elif frappe.has_permission("Procurement Budget Version", doc=pending.name, user=user):
+			action = "view_submission" if pending.status == "Submitted for approval" else "view_draft"
 	if not action:
 		return None
 	return {
@@ -577,8 +730,18 @@ def _pending_version_summary(budget_name: str, user: str) -> dict[str, Any] | No
 		"code": pending.generated_reference,
 		"version_number": pending.version_number,
 		"status": pending.status,
-		"is_successor": bool(pending.based_on_budget_version),
+		"is_successor": is_successor,
+		"is_returned": is_returned,
+		"revision_type": pending.revision_type or "",
 		"action": action,
+		"submitted_by": _user_label(pending.submitted_by),
+		"submitted_at_display": _display_datetime(pending.submitted_at),
+		"last_saved_display": _display_datetime(pending.modified),
+		"return": (
+			{"reason": pending.return_reason, "by": _user_label(pending.decided_by), "at_display": _display_datetime(pending.decided_at)}
+			if is_returned
+			else None
+		),
 	}
 
 
@@ -634,7 +797,9 @@ def get_budget_version_draft(budget_version: str) -> dict[str, Any]:
 
 
 def get_budget_detail(budget: str) -> dict[str, Any]:
-	"""BUD-UI-03 Overview tab — Active/read-only funding position + context."""
+	"""BUD-UI-03 Overview tab — Active (or Closed) read-only funding position
+	+ context, with the server-decided `available_actions` and the closure
+	summary (BUD-CHG-001 v1.9 §11.4/§11.18)."""
 	verdict = forbidden_verdict()
 	if verdict:
 		return verdict
@@ -643,11 +808,22 @@ def get_budget_detail(budget: str) -> dict[str, Any]:
 	except frappe.DoesNotExistError:
 		frappe.clear_last_message()
 		return dict(NOT_FOUND)
-	version = _active_version(doc.name)
+	version = _current_or_closed_version(doc.name)
 	if not version:
 		return dict(NOT_FOUND)
 	require_budget_version_read_scope(version)
 	totals = _version_totals(version.name)
+	pending = _pending_version_summary(doc.name, frappe.session.user)
+	is_active = version.status == "Active"
+	can_update = is_active and not pending and has_budget_version_capability(frappe.session.user, CAP_EDIT, version)
+	can_close = is_active and has_budget_version_capability(frappe.session.user, CAP_APPROVE, version)
+	actions = []
+	if can_update:
+		actions.append("update_allocation")
+	if pending:
+		actions.append(pending["action"])
+	if can_close:
+		actions.append("close_budget")
 	return {
 		"budget": _budget_summary(doc),
 		"version": _version_summary(version),
@@ -657,17 +833,21 @@ def get_budget_detail(budget: str) -> dict[str, Any]:
 			"committed": totals["committed"],
 			"available": totals["available"],
 		},
+		"positions_as_at_display": _display_datetime(frappe.utils.now_datetime()),
 		"approval_document": version.approval_document,
+		"document": {"name": (version.approval_document or "").split("/").pop() if version.approval_document else "", "url": version.approval_document or ""},
 		"activation": {
 			"submitted_by": _user_label(version.submitted_by),
 			"submitted_at": _display_datetime(version.submitted_at),
 			"decided_by": _user_label(version.decided_by),
 			"decided_at": _display_datetime(version.decided_at),
 		},
-		"can_create_revision": has_budget_version_capability(frappe.session.user, CAP_EDIT, version),
+		"closure": {**_closure_summary(version), "fy_end_date_display": _fy_end_display(doc.fiscal_year)},
+		"can_create_revision": can_update,
+		"available_actions": actions,
 		# §6: at most one open successor per Budget — when one exists the
-		# header offers it (open/decide) instead of "Create revision".
-		"pending_version": _pending_version_summary(doc.name, frappe.session.user),
+		# header offers it (open/decide) instead of Update registered allocation.
+		"pending_version": pending,
 	}
 
 
@@ -692,17 +872,22 @@ def _validate_draft_payload(payload: dict) -> dict[str, str]:
 	except Exception:
 		total_val = 0
 	if not total or total_val <= 0:
-		errors["authorised_total"] = _("Authorised total must be greater than zero")
+		errors["authorised_total"] = _("Approved allocation must be greater than zero")
 	return errors
 
 
 def save_budget_version_draft(payload: dict | str | None = None) -> dict[str, Any]:
 	"""§9.2 `save_budget_version_draft` — create or update Draft approval
-	details with optimistic concurrency. Creates the Budget on first save."""
+	details with optimistic concurrency. Creates the Budget on first save.
+	Typed results, never a modal: BUDGET_ALREADY_EXISTS carries the existing
+	authorised route; BUDGET_STALE_WRITE carries the current stamp (§9.3/§13)."""
 	if isinstance(payload, str):
 		payload = frappe.parse_json(payload)
 	payload = payload or {}
+	return run_idempotent(payload=payload, fn=lambda: _save_budget_version_draft(payload), budget_for=lambda r: (r.get("budget") or {}).get("id") if isinstance(r.get("budget"), dict) else (r.get("version") or {}).get("budget"))
 
+
+def _save_budget_version_draft(payload: dict[str, Any]) -> dict[str, Any]:
 	budget_key = (payload.get("budget") or "").strip()
 	version_key = (payload.get("budget_version") or "").strip()
 
@@ -715,15 +900,25 @@ def save_budget_version_draft(payload: dict | str | None = None) -> dict[str, An
 		if not frappe.db.exists("Fiscal Year", fy):
 			frappe.throw(_("Fiscal Year {0} not found").format(fy), frappe.DoesNotExistError, title="BUDGET_CONFIG_MISSING")
 		require_budget_create_capability(frappe.session.user)
-		if frappe.db.exists("Procurement Budget", {"fiscal_year": fy}):
-			frappe.throw(
-				_("A Budget already exists for this Fiscal Year"),
-				frappe.DuplicateEntryError,
-				title="BUDGET_ALREADY_EXISTS",
-			)
+		existing_name = frappe.db.get_value("Procurement Budget", {"fiscal_year": fy}, "name")
+		if existing_name:
+			existing = frappe.get_doc("Procurement Budget", existing_name)
+			pending = _pending_version_summary(existing.name, frappe.session.user)
+			return {
+				"ok": False,
+				"code": "BUDGET_ALREADY_EXISTS",
+				"errors": {"fiscal_year": _("An allocation record already exists for this financial year. Open it to continue.")},
+				"budget": _budget_summary(existing),
+				"pending_version": pending,
+				"route": _pending_route(existing, pending),
+			}
 		errors = _validate_draft_payload(payload)
 		if errors:
 			return {"ok": False, "errors": errors}
+		if not (payload.get("approval_document") or "").strip():
+			# §9.3 — the four approval details, including one uploaded/linked
+			# document, precede Save and add budget lines.
+			return {"ok": False, "errors": {"approval_document": _("Attach the approval document before saving.")}}
 
 		budget = frappe.get_doc(
 			{
@@ -735,7 +930,7 @@ def save_budget_version_draft(payload: dict | str | None = None) -> dict[str, An
 		)
 		budget.insert(ignore_permissions=True)
 		version = _create_draft_version(budget, payload, based_on=None)
-		return {"ok": True, "budget": _budget_summary(budget), "version": _version_summary(version)}
+		return {"ok": True, "saved_scope": "approval_details", "created": True, "budget": _budget_summary(budget), "version": _version_summary(version)}
 
 	if version_key:
 		version = _resolve_budget_version(version_key)
@@ -747,11 +942,16 @@ def save_budget_version_draft(payload: dict | str | None = None) -> dict[str, An
 
 	require_budget_version_capability(frappe.session.user, CAP_EDIT, version)
 	if version.status != "Draft":
-		frappe.throw(_("Only a Draft version can be edited"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
+		return {"ok": False, "code": "BUDGET_INVALID_STATE", "errors": {"status": _("This budget has changed. Refresh to see the available actions.")}, "version": _version_summary(version)}
 
 	expected_version = payload.get("expected_modified")
 	if expected_version and str(version.modified) != str(expected_version):
-		frappe.throw(_("This Budget Version was changed by someone else"), frappe.ValidationError, title="BUDGET_STALE_WRITE")
+		return {
+			"ok": False,
+			"code": "BUDGET_STALE_WRITE",
+			"errors": {"expected_modified": _("This budget has changed since you opened it. Refresh to see the current details.")},
+			"version": _version_summary(version),
+		}
 
 	errors = _validate_draft_payload(payload)
 	if errors:
@@ -776,7 +976,18 @@ def save_budget_version_draft(payload: dict | str | None = None) -> dict[str, An
 		correlation_id=frappe.generate_hash(length=12),
 		calling_module="Budget & Funding",
 	)
-	return {"ok": True, "version": _version_summary(version)}
+	version.reload()
+	return {"ok": True, "saved_scope": "approval_details", "version": _version_summary(version)}
+
+
+def _pending_route(budget, pending: dict[str, Any] | None) -> list[str]:
+	"""The authorised route for an existing record (§13 BUDGET_ALREADY_EXISTS):
+	the pending version's own editor/review route, else the Budget workspace."""
+	if pending and pending["action"] == "review":
+		return ["budget-funding", "review", pending["id"]]
+	if pending:
+		return ["budget-funding", budget.generated_reference, "version", str(pending["version_number"]), "edit"]
+	return ["budget-funding", budget.generated_reference]
 
 
 def _create_draft_version(budget, payload: dict, *, based_on) -> Any:
@@ -859,7 +1070,17 @@ def create_budget_successor_version(budget: str, payload: dict | str | None = No
 
 	existing_draft = _draft_version(doc.name)
 	if existing_draft:
-		return {"ok": True, "version": _version_summary(existing_draft), "existing": True}
+		# §12.3 — a second open successor is rejected and the existing route returned.
+		pending = _pending_version_summary(doc.name, frappe.session.user)
+		return {
+			"ok": False,
+			"code": "BUDGET_INVALID_STATE",
+			"errors": {"successor": _("An update is already in progress for this budget. Open it to continue.")},
+			"existing": True,
+			"version": _version_summary(existing_draft),
+			"pending_version": pending,
+			"route": _pending_route(doc, pending),
+		}
 
 	# approval_reference/date/authorised_total are DB-mandatory on Budget Version
 	# from the first insert (approval_document is not — it is only required

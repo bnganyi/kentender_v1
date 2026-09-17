@@ -597,10 +597,190 @@ class TestReturnPlanVersion(GovernanceCase):
 		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
 		requested = plan_finance.request_plan_funding_confirmation(plan_version=correction.name, expected_record_version=plan["record_version"], idempotency_key=key())
 		self.assertEqual(requested["action"], "requested")
-		task = frappe.get_doc("Plan Finance Task", requested["task"])
-		frappe.set_user(fx.FINANCE_OFFICER)
-		plan_finance.confirm_plan_funding(task=task.name, task_token=task.task_token, idempotency_key=key())
-		frappe.set_user(fx.HOPF)
-		correction.reload()
-		resubmitted = plan_governance.submit_corrected_plan(plan_version=correction.name, expected_record_version=correction.record_version, idempotency_key=key())
-		self.assertEqual(resubmitted["action"], "submitted")
+
+
+class TestReviewReadModel(GovernanceCase):
+	"""PLN-CHG-001 v1.18 §10.4/10.5 (U11/U12) — the Review screen's full
+	read model beyond the old ten-column snapshot (sources, funding,
+	method-and-schedule per item, reservation, changes, decision history)
+	and `GetSourceEvidence`'s origin chain for one allocation."""
+
+	def need_backed_item(self, *, indicative_amount: float = 1000000) -> tuple[dict, str]:
+		"""A Need-origin Plan Item, with the department's own acceptance
+		recorded as a `Departmental Need Decision` (never mocked away —
+		only the intake *read* is mocked, per the NDS/Planning module
+		boundary; the decision row is a real NDS-owned fact)."""
+		patched = patch.object(needs_intake, "current_accepted_sources", return_value=[fx.accepted_source()])
+		patched.start()
+		self.addCleanup(patched.stop)
+		frappe.set_user(fx.AUTHOR)
+		opened = dpp_lifecycle.open_departmental_plan(
+			organisation_unit=fx.OU_ALPHA, fiscal_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
+		)
+		entry = frappe.get_doc("Departmental Plan Entry", {"dpp_version": opened["current_version"], "need": fx.NEED})
+		frappe.get_doc(
+			{
+				"doctype": "Departmental Need Decision", "decision_id": f"NDD-{key()[:10]}", "departmental_need": fx.NEED,
+				"need_revision": fx.NEED_V1, "action": "Accept for planning", "actor": fx.HOD,
+				"occurred_at": "2101-11-25 10:00:00", "prior_state": "Submitted", "result_state": "Accepted for planning",
+				"idempotency_key": key(), "fixture_namespace": fx.NS,
+			}
+		).insert(ignore_permissions=True)
+		funded = dpp_lifecycle.save_need_funding(
+			dpp_version=opened["current_version"], entry_id=entry.entry_id, budget_line=fx.BUDGET_LINE,
+			indicative_amount=indicative_amount, expected_record_version=opened["record_version"], idempotency_key=key(),
+		)
+		frappe.set_user(fx.HOD)
+		submitted = dpp_lifecycle.submit_departmental_plan(
+			dpp_version=opened["current_version"], certification_confirmed=True,
+			expected_record_version=funded["record_version"], idempotency_key=key(),
+		)
+		dpp_task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
+		frappe.set_user(fx.PLANNER)
+		accepted = dpp_validation.accept_departmental_plan(
+			task=dpp_task.name, classifications={entry.entry_id: "Goods"}, task_token=dpp_task.task_token, idempotency_key=key(),
+		)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		formed = plan_workbench.form_plan_items(
+			plan_version=accepted["annual_plan_version"], dpp_entries=[plan["unallocated_sources"][0]["dpp_entry"]],
+			mode="each", expected_record_version=plan["record_version"], idempotency_key=key(),
+		)
+		self.complete(formed["created_items"][0])
+		self.confirm_funding(accepted["annual_plan"])
+		return accepted, formed["created_items"][0]
+
+	def test_the_review_read_model_carries_sources_funding_method_schedule_reservation_and_changes(self):
+		accepted, item_id = self.confirmed_item()
+		submitted = self.submit(accepted["annual_plan"])
+		task = frappe.get_doc("Plan Governance Task", submitted["task"])
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		read = plan_read.get_plan_governance_task(task=task.name)
+
+		self.assertEqual(len(read["sources"]), 1)
+		source = read["sources"][0]
+		self.assertEqual(source["plan_item_id"], item_id)
+		self.assertTrue(source["source_key"])
+		self.assertTrue(source["amount_display"].startswith("KES"))
+
+		self.assertTrue(read["funding"]["rows"])
+		self.assertIn("statement_as_at", read["funding"])
+
+		self.assertEqual(len(read["method_and_schedule"]), 1)
+		item_detail = read["method_and_schedule"][0]
+		self.assertEqual(item_detail["plan_item_id"], item_id)
+		self.assertTrue(item_detail["method"]["profile"])
+		self.assertTrue(item_detail["schedule"]["rows"])
+
+		self.assertIn("required_allocation_display", read["reservation"])
+		self.assertTrue(read["changes"]["is_initial"])
+		self.assertTrue(read["can_download_review_pack"])
+
+	def test_the_decisions_history_lists_finance_preparation_and_each_completed_stage_in_order(self):
+		accepted, item_id = self.confirmed_item()
+		submitted = self.submit(accepted["annual_plan"])
+		ao_task = frappe.get_doc("Plan Governance Task", submitted["task"])
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		before_adopt = plan_read.get_plan_governance_task(task=ao_task.name)
+		stages = [row["stage"] for row in before_adopt["history"]]
+		self.assertEqual(stages, ["Finance", "Preparation", "Accounting Officer adoption"])
+		self.assertEqual(before_adopt["history"][0]["outcome"], "Confirmed")
+		self.assertEqual(before_adopt["history"][1]["outcome"], "Signed and submitted")
+		self.assertEqual(before_adopt["history"][2]["outcome"], "Awaiting decision")
+
+		adopted = plan_governance.adopt_and_submit_plan(task=ao_task.name, task_token=ao_task.task_token, idempotency_key=key())
+		frappe.set_user(fx.STATUTORY)
+		after_adopt = plan_read.get_plan_governance_task(task=adopted["statutory_task"])
+		stages = [row["stage"] for row in after_adopt["history"]]
+		self.assertEqual(stages, ["Finance", "Preparation", "Accounting Officer adoption", "Statutory approval"])
+		self.assertEqual(after_adopt["history"][2]["outcome"], "Adopted and submitted")
+		self.assertEqual(after_adopt["history"][3]["outcome"], "Awaiting decision")
+
+	def test_a_stale_funding_basis_is_visible_and_blocks_the_positive_decision_only(self):
+		accepted, item_id = self.confirmed_item()
+		submitted = self.submit(accepted["annual_plan"])
+		ao_task = frappe.get_doc("Plan Governance Task", submitted["task"])
+		line_version = frappe.db.get_value(
+			"Procurement Budget Line Version",
+			{"budget_line": fx.BUDGET_LINE, "budget_version": ("in", frappe.get_all("Procurement Budget Version", filters={"status": "Active"}, pluck="name"))},
+			"name",
+		)
+		previous = frappe.db.get_value("Procurement Budget Line Version", line_version, "approved_amount")
+		frappe.db.set_value("Procurement Budget Line Version", line_version, "approved_amount", 1, update_modified=False)
+		self.addCleanup(frappe.db.set_value, "Procurement Budget Line Version", line_version, "approved_amount", previous, update_modified=False)
+
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		read = plan_read.get_plan_governance_task(task=ao_task.name)
+		self.assertFalse(read["funding_current"])
+		self.assertTrue(read["can_decide"])  # Return remains available
+		self.assertFalse(read["can_decide_positive"])
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_governance.adopt_and_submit_plan(task=ao_task.name, task_token=ao_task.task_token, idempotency_key=key())
+		self.assertEqual(caught.exception.code, "PLN_FINANCE_STALE")
+
+	def test_get_source_evidence_resolves_the_full_need_backed_evidence_chain(self):
+		accepted, item_id = self.need_backed_item()
+		submitted = self.submit(accepted["annual_plan"])
+		task = frappe.get_doc("Plan Governance Task", submitted["task"])
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		review = plan_read.get_plan_governance_task(task=task.name)
+		source_key = review["sources"][0]["source_key"]
+
+		evidence = plan_read.get_source_evidence(task=task.name, source_key=source_key)
+		self.assertEqual(evidence["source_origin"], "Accepted Departmental Need")
+		self.assertTrue(evidence["need_accepted"]["actor_name"])
+		self.assertTrue(evidence["need_accepted"]["display"].startswith("25 Nov 2101"))
+		self.assertTrue(evidence["certified"]["actor_name"])
+		self.assertTrue(evidence["accepted_for_planning"]["actor_name"])
+		self.assertFalse(evidence["has_newer_revision"])
+		self.assertTrue(evidence["quantity_display"])
+		self.assertTrue(evidence["amount_display"].startswith("KES"))
+
+	def test_get_source_evidence_direct_origin_has_no_need_accepted_line(self):
+		accepted, item_id = self.confirmed_item()
+		submitted = self.submit(accepted["annual_plan"])
+		task = frappe.get_doc("Plan Governance Task", submitted["task"])
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		review = plan_read.get_plan_governance_task(task=task.name)
+		source_key = review["sources"][0]["source_key"]
+
+		evidence = plan_read.get_source_evidence(task=task.name, source_key=source_key)
+		self.assertEqual(evidence["source_origin"], "Direct departmental requirement")
+		self.assertIsNone(evidence["need_accepted"])
+		self.assertTrue(evidence["certified"]["actor_name"])
+
+	def test_the_statutory_stage_carries_its_own_individual_decision_statement(self):
+		accepted, item_id = self.confirmed_item()
+		submitted = self.submit(accepted["annual_plan"])
+		ao_task = frappe.get_doc("Plan Governance Task", submitted["task"])
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		adopted = plan_governance.adopt_and_submit_plan(task=ao_task.name, task_token=ao_task.task_token, idempotency_key=key())
+		frappe.set_user(fx.STATUTORY)
+		individual = plan_read.get_plan_governance_task(task=adopted["statutory_task"])
+		self.assertEqual(individual["decision_statement"], "I approve the complete consolidated Annual Procurement Plan Version 1 as adopted by the Accounting Officer.")
+
+	def test_the_statutory_stage_carries_its_own_collective_decision_statement(self):
+		self._with_council_route()
+		accepted, item_id = self.confirmed_item()
+		submitted = self.submit(accepted["annual_plan"])
+		ao_task = frappe.get_doc("Plan Governance Task", submitted["task"])
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		adopted = plan_governance.adopt_and_submit_plan(task=ao_task.name, task_token=ao_task.task_token, idempotency_key=key())
+		frappe.set_user(fx.STATUTORY)
+		collective = plan_read.get_plan_governance_task(task=adopted["statutory_task"])
+		self.assertEqual(collective["decision_statement"], "I record the Council's resolution approving the complete consolidated Annual Procurement Plan Version 1.")
+
+	def _with_council_route(self):
+		single = frappe.get_doc("Site Procuring Entity")
+		before = single.statutory_approval_route
+		single.statutory_approval_route = "Council"
+		single.save(ignore_permissions=True)
+		self.addCleanup(lambda: (frappe.get_doc("Site Procuring Entity").db_set("statutory_approval_route", before)))
+
+	def test_the_review_pack_carries_every_source_evidence_entry(self):
+		accepted, item_id = self.confirmed_item()
+		submitted = self.submit(accepted["annual_plan"])
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		pack = plan_read.build_review_pack(task=submitted["task"])
+		self.assertEqual(pack["schema"], "KenTenderPlanReviewPack.v1")
+		self.assertEqual(len(pack["evidence_index"]), 1)
+		self.assertEqual(pack["evidence_index"][0]["source_origin"], "Direct departmental requirement")

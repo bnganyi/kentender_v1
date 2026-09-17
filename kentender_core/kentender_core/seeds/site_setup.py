@@ -252,7 +252,12 @@ def contact_office_display(office_name: str) -> str:
 # Planning assumptions) and the Second Schedule limits above, none of which
 # has been verified against primary law here (v1.18 §15.2 prerequisite;
 # plan D16 keeps the fixture-verified set in the Planning seed).
-PROFILE_EFFECTIVE = {"effective_from": "2027-07-01", "effective_until": "2028-06-30"}
+# `effective_from` starts on Planning's own earliest baseline invitation
+# date (`procurement_planning.seeds.kentender_mvp_v1.ITEM_VALUES`), not on
+# the FY's own start (2027-07-01): Planning invites before the FY it plans
+# for opens, and a profile scoped to exactly the FY window left that
+# invitation with no rule in force at all (SEED-OPS-001 v1.2 change log).
+PROFILE_EFFECTIVE = {"effective_from": "2027-05-01", "effective_until": "2028-06-30"}
 PROFILE_SOURCE = {
 	"source_instrument": "Public Procurement and Asset Disposal Regulations — source verification pending",
 	"provision": "Verification required",
@@ -764,6 +769,130 @@ def _seed_users() -> list[str]:
 			update_password(email, TEST_PASSWORD)
 		out.append(email)
 	return out
+
+
+def reset_site_setup(*, commit: bool = False) -> dict[str, int]:
+	"""Tear down everything `run()` creates or converges, for a caller that has
+	already torn down every module stage on top of it (site is the foundation
+	every other stage's Fiscal Years, Organisation Units and actors reference,
+	so this must run last, never on its own — `canonical.run(wipe=True)` is
+	the sanctioned entry point).
+
+	Three things `run()` touches are deliberately left alone, matching
+	SEED-OPS-001 §3.2: the ERPNext Company (`_seed_company` never creates one
+	if any exists, and never will here either), the Requirement Type /
+	Procurement Method catalogues, and UOM enablement — none of the three
+	carries a fixture_namespace, because they are Configuration & Governance's
+	shared reference data, not this seed's own rows, whatever this seed does
+	to activate them.
+
+	Resets the Site Procuring Entity Single doctype directly rather than
+	through a command: CFG-BR-001 has no "unconfigure" command to call — a
+	real Procuring Entity is never meant to un-onboard itself — so a caller
+	that genuinely wants a blank site accepts the same direct-delete
+	authority this whole teardown path already exercises everywhere else.
+	"""
+	from kentender_core.services import organisation_structure as structure
+	from kentender_core.services import regulatory_reference as register
+	from kentender_core.services import site_configuration as configuration
+
+	deleted: dict[str, int] = {}
+	# Procurement Method Profile, Procedure Schedule Profile, Regulatory
+	# Reference and its Set are audit-immutable by design (their own
+	# on_trash refuses deletion) with exactly one sanctioned override: the
+	# same kt_fixture_purge flag the document's own fixture-purge callers
+	# already set — canonical.py's clear_non_canonical() uses it on
+	# Regulatory Reference for exactly this reason.
+	_PURGE_FLAGGED = {"Procurement Method Profile", "Procedure Schedule Profile", "Regulatory Reference", "Regulatory Reference Set"}
+
+	def delete(doctype: str, names: list[str]) -> None:
+		for name in names:
+			if not frappe.db.exists(doctype, name):
+				continue
+			if doctype in _PURGE_FLAGGED:
+				doc = frappe.get_doc(doctype, name)
+				doc.flags.kt_fixture_purge = True
+				doc.delete(ignore_permissions=True, force=True)
+			else:
+				frappe.delete_doc(doctype, name, force=True, ignore_permissions=True, delete_permanently=True)
+		if names:
+			deleted[doctype] = deleted.get(doctype, 0) + len(names)
+
+	# Assignments and users first: everything below is what they were granted
+	# on or authored through, and Frappe's own ownership/modified-by columns
+	# would otherwise point at a user this function is about to delete.
+	assignment_names = frappe.get_all(
+		"User Responsibility Assignment",
+		filters={"fixture_namespace": FIXTURE_TAG},
+		pluck="name",
+	)
+	delete("User Responsibility Assignment", assignment_names)
+
+	actor_emails = [f"{local}@moh.example.test" for local, _ in ACTORS]
+	for email in actor_emails:
+		if not frappe.db.exists("User", email):
+			continue
+		for doctype, field in (
+			("User Responsibility Assignment", "user"),
+			("User Scope Assignment", "user"),
+			("User Permission", "user"),
+			("Notification Log", "for_user"),
+			("Contact", "user"),
+		):
+			if not frappe.db.exists("DocType", doctype) or not frappe.db.has_column(doctype, field):
+				continue
+			delete(doctype, frappe.get_all(doctype, filters={field: email}, pluck="name"))
+		frappe.delete_doc("User", email, force=True, ignore_permissions=True)
+		deleted["User"] = deleted.get("User", 0) + 1
+
+	# Profiles and the regulatory reference: namespace-stamped, so selection
+	# is exact regardless of how many times `run()` has converged over them.
+	from kentender_core.services import procurement_settings as settings
+
+	for doctype in (settings.METHOD_PROFILE, settings.SCHEDULE_PROFILE):
+		delete(doctype, frappe.get_all(doctype, filters={"fixture_namespace": FIXTURE_TAG}, pluck="name"))
+	ref_versions = frappe.get_all(register.DOCTYPE, filters={"fixture_namespace": FIXTURE_TAG}, pluck="name")
+	delete(register.DOCTYPE, ref_versions)
+	delete(register.SET_DOCTYPE, frappe.get_all(register.SET_DOCTYPE, filters={"fixture_namespace": FIXTURE_TAG}, pluck="name"))
+
+	# Delivery Location / Contact Office: identified by the exact names this
+	# seed names them, not by namespace (an existing row is updated in place
+	# on a rerun without ever being stamped if it predates this seed).
+	delete("Delivery Location", [name for name, _address in DELIVERY_LOCATIONS if frappe.db.exists("Delivery Location", name)])
+	delete("Contact Office", [name for name, *_rest in CONTACT_OFFICES if frappe.db.exists("Contact Office", name)])
+
+	# Fiscal Years, then Organisation Units, then the site identity itself —
+	# the two things every stage above ultimately hangs off, so last.
+	fy_names = [configuration._fy_name(year) for year in FISCAL_START_YEARS]
+	delete("Fiscal Year", [name for name in fy_names if frappe.db.exists("Fiscal Year", name)])
+
+	unit_names = [name for name, _parent in UNITS]
+	root = structure._root()
+	if root:
+		unit_names.append(root)
+	pending = [u for u in unit_names if frappe.db.exists("Organisation Unit", u)]
+	for _ in range(8):
+		if not pending:
+			break
+		remaining = []
+		for unit in pending:
+			if frappe.db.count("Organisation Unit", {"parent_organisation_unit": unit}):
+				remaining.append(unit)
+				continue
+			frappe.delete_doc("Organisation Unit", unit, force=True, ignore_permissions=True)
+			deleted["Organisation Unit"] = deleted.get("Organisation Unit", 0) + 1
+		pending = remaining
+
+	if configuration.is_configured():
+		for field in ("pe_name", "pe_code", "pe_type", "ppra_registration", "statutory_approval_route"):
+			frappe.db.set_single_value(configuration.SITE_PE_DOCTYPE, field, "")
+		frappe.db.set_single_value(configuration.SITE_PE_DOCTYPE, "entity_is_county", 0)
+		frappe.db.set_single_value(configuration.SITE_PE_DOCTYPE, "timezone", "Africa/Nairobi")
+		deleted["Site Procuring Entity"] = 1
+
+	if commit:
+		frappe.db.commit()
+	return deleted
 
 
 def _seed_assignments() -> list[str]:

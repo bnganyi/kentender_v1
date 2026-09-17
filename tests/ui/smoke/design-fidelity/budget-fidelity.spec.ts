@@ -1,644 +1,351 @@
 import { test, expect, Page } from "@playwright/test";
-import { login } from "../../helpers/auth";
+import { openArtboard, expectLandmarkSubsequence } from "../../helpers/designFidelity";
 import {
-	openArtboard,
-	landmarks,
-	expectLandmarkSubsequence,
-	collectPageErrors,
-} from "../../helpers/designFidelity";
+	ADMIN,
+	APPROVER,
+	AUDITOR,
+	CANONICAL_FY,
+	NOBODY,
+	OFFICER,
+	ClosureFixture,
+	ConversionFixture,
+	EmptyYearFixture,
+	PendingFixture,
+	SuccessorFixture,
+	collectConsoleErrors,
+	expectScreen,
+	gotoBudget,
+	login,
+	resetFixture,
+	selectYear,
+} from "../budget/helpers";
 
 /**
- * Budget & Funding design-fidelity gate (AGENTS.md §6.6 enforcement, BUD-802).
+ * Budget & Funding design-fidelity gate — BUD-CHG-001 v1.9 (AGENTS.md §6.6
+ * enforcement, tracker BUD19-403).
  *
- * Clones the System Setup gate's own approach (tests/ui/smoke/design-fidelity/
- * system-setup-fidelity.spec.ts): render each `.dc.html` artboard, derive its
- * ordered structural landmarks (card titles, field labels, table headers,
- * buttons — see designFidelity.ts's own doc comment for the exact selector),
- * and assert the live route's own landmarks contain that sequence in order.
+ * Renders each reconciled `.dc.html` board in the same browser, puts it into
+ * one named switcher state (the boards are multi-state: `<sc-if value="{{x}}">`
+ * blocks and `{{placeholder}}` text, resolved here from a per-test map with the
+ * dc-runtime blocked), derives the board's ordered structural landmarks
+ * (card titles, dialog titles, labels, table headers, buttons, tabs) and
+ * asserts the live route's own landmarks contain that sequence in order.
  *
- * Covers all 22 non-retired Budget & Funding artboards (of the 30 total in
- * docs/mvp-1-r1/03_budget/design/ — the 8 excluded are the 4 "Activation
- * Task - *" + 4 "Initial Baseline Activation - *" files, which model the
- * explicitly-retired BUD-DES-12/13A second-decision-stage screens per
- * BUD-CHG-001 v1.3 §11.12/§11.13A — confirmed by content, they contain
- * literal "Awaiting Activation"/"Budget Reviewer" text). Between them the 22
- * artboards exercise all 5 live routes plus the 4 BUD-DES-16 workspace state
- * variants:
- *
- *   - Workspace                    /app/budget-funding
- *   - New/pre-creation             /app/budget-funding/new
- *   - Draft/successor editor       /app/budget-funding/{code}/version/{n}/edit[/lines]
- *   - Approval task                /app/budget-funding/review/{version}[/lines|/changes|/history]
- *   - Active budget detail         /app/budget-funding/{code}[/lines|/activity|/history]
- *   - Budget line detail           /app/budget-funding/line/{code}
- *
- * BUD-DES-05 (Active Budget Lines) and BUD-DES-07A (Active Budget History)
- * are deliberately NOT covered here: §11.5/§11.7A's own text says "no
- * .dc.html artboard exists for this screen" and instructs reusing the
- * BUD-DES-04 header/tabs plus another screen's table chrome verbatim — there
- * is no oracle artboard to render against, so no fidelity check is possible
- * or required for those two tab states.
- *
- * Known, deliberate artboard-vs-live deltas NOT asserted here (each stripped
- * from the artboard-derived `wanted` list before comparing, mirroring the
- * reference gate's own precedent for a documented, permanent fixture/
- * artboard delta — its C4 mnemonic-vs-generated-code allowance):
- *
- *   - "Procuring Entity": 8 of the 22 artboards ("Active Budget Overview
- *     [.dc.html/- Budget Officer]", "Budget Line Detail[.dc.html/- With
- *     Reservation]", "Initial Baseline Review - Overview", "Reviewer Task -
- *     Overview", "Register Approved Budget Draft", "Successor Revision Draft
- *     - Overview") still render this row as a genuine `.kt-label`/`<label>`
- *     landmark, even though BUD-CHG-001 v1.3 §11's own preamble explicitly
- *     prohibits it ("do not show a Procuring Entity row or selector") and
- *     the live screens correctly have none (BUD-702/BUD-705, browser-
- *     verified). Re-adding it to the live screens would be a regression
- *     against the governing spec text, not a fix.
- *   - "Recommend for activation": all 8 of the approval-task-shaped
- *     artboards ("Reviewer Task - *" and "Initial Baseline Review - *")
- *     carry this exact button text in their fixed footer, alongside
- *     "Return" — both artboard families predate BUD-DES-12/13A's retirement
- *     (the old two-stage Reviewer-then-Activation-Authority workflow) and
- *     were never updated to the single-decision "Approve" wording §11.8's
- *     own written spec text describes and BUD-705 already browser-verified
- *     live. "Return" itself is NOT stripped — it is a real, correctly-
- *     rendered live button on both fixtures.
- *   - "Replace": "Register Approved Budget Draft.dc.html" (BUD-DES-02) shows
- *     the Approval document field already holding a file (button reads
- *     "Replace"). A genuinely fresh "new" registration form — the only state
- *     this route can be in — has no file attached yet and reads "Upload"
- *     instead; this is a data-state difference in which moment the artboard
- *     depicts, not a missing control.
- *   - "Reviewed by" / "Activated by": "Active Budget Overview[.dc.html/-
- *     Budget Officer].dc.html"'s Activation card still splits the decision
- *     into two separate actors (the old two-stage workflow again), where
- *     §11.4's own written spec text and the live card both use one combined
- *     "Approved and activated by" row — same stale-artboard class as
- *     "Recommend for activation" above, same fix (not asserted).
- *
- * Separately, Budget's own screens style every small field-label row with
- * `.kt-eyebrow` (kentender_core's shared kt_industry_tokens.css), not the
- * artboards' `.kt-label` (a System-Setup-specific class, kt_admin_
- * configuration.css — confirmed by grep; Budget's screens never load that
- * stylesheet). Both render identically; only the class name differs. Rather
- * than fork designFidelity.ts's shared LANDMARK_SELECTOR (other gates use
- * it too) or invent a second live class purely to satisfy this gate,
- * `liveLandmarks()` below is this file's own local extraction — identical to
- * the shared `landmarks()` helper's own selector plus `.kt-eyebrow` — used
- * only for the live-page side of every comparison; the artboard side keeps
- * using the shared, unmodified `landmarks()`.
- *
- * Two genuine, small, artboard-specified defects found and fixed live while
- * building this gate (BudgetApprovalTaskScreen.vue): the Budget Lines tab's
- * amount column header was hardcoded "Proposed amount" even for the initial-
- * baseline (no-predecessor) case, where §11.13 specifies "Submitted amount";
- * and the History tab had no "Version history" card title at all, though
- * §11.11/§11.13 both specify one.
- *
- * Prerequisite state: `bench console` fed budget_fidelity_seed.py (idempotent
- * — the `ui-budget-fidelity-gate` make target runs it first, piped through
- * `exec(open(...).read())` rather than raw stdin — see that file's own
- * top-of-file comment for why: IPython's line-by-line stdin cell-splitting
- * silently mishandles multi-statement scripts with blank lines inside
- * indented blocks, which cost most of this gate's build time to track down).
+ * Fixture data (ids, dates, amounts, names) is exempt; structure is not.
+ * Landmarks whose text is fixture data (a dialog title carrying the year) are
+ * dropped explicitly per test, never silently.
  */
 
 const DESIGN_DIR = "docs/mvp-1-r1/03_budget/design";
-const ARTBOARD_SCOPE = "x-dc";
-// .kt-industry, not .kt-shell: the Approval task / editor screens' fixed
-// footer (Return/Approve, Save draft/Submit for review) is a SIBLING of
-// .kt-shell, not a descendant — scoping to .kt-shell alone silently drops
-// every footer-button landmark.
-const LIVE_SCOPE = ".kt-industry";
+const ART = "x-dc";
+const LIVE = ".kt-industry";
 
-const PASSWORD = "Test@123";
-const BUDGET_OFFICER = "josphat.mwangi@moh.example.test";
-const BUDGET_APPROVER = "beatrice.kamau@moh.example.test";
-const AUDITOR = "naomi.chebet@moh.example.test";
-const NO_ASSIGNMENT_ACTOR = "samuel.otieno@moh.example.test";
+const LIVE_SELECTOR = [".kt-card-title", ".kt-dialog-title", "label", "legend", ".kt-label", "th", "button", ".kt-tab"].join(", ");
+const ART_SELECTOR = [".kt-card-title", ".kt-dialog-title", ".dialog-title", "label", "legend", ".kt-label", "th", "button"].join(", ");
 
-const EMPTY_FY = "2063-2064";
+type Vals = Record<string, string | boolean>;
 
-test.use({ viewport: { width: 1440, height: 1024 } });
-
-async function loginAsBudgetOfficer(page: Page) {
-	await login(page, BUDGET_OFFICER, PASSWORD);
+/** Resolve the board's switcher state, drop the switcher bar, then read landmarks. */
+async function boardLandmarks(art: Page, file: string, vals: Vals, drops: string[] = []): Promise<string[]> {
+	await openArtboard(art, `${DESIGN_DIR}/${file}`, ART);
+	const texts = await art.evaluate(
+		({ scope, selector, vals }) => {
+			const root = document.querySelector(scope)!;
+			// The state switcher bar is design tooling, not the screen.
+			root.querySelectorAll("button").forEach((b) => {
+				if ((b.getAttribute("onclick") || "").startsWith("{{set")) b.remove();
+			});
+			// <sc-if value="{{name}}"> keeps its children only when vals[name] is true.
+			const ifs = Array.from(root.querySelectorAll("sc-if")).reverse();
+			for (const el of ifs) {
+				const key = (el.getAttribute("value") || "").replace(/[{}]/g, "");
+				const keep = Object.prototype.hasOwnProperty.call(vals, key) ? !!vals[key] : (el.getAttribute("hint-placeholder-val") || "").includes("true");
+				if (!keep) el.remove();
+			}
+			const out: string[] = [];
+			for (const el of Array.from(root.querySelectorAll<HTMLElement>(selector))) {
+				if (!el.getClientRects().length) continue;
+				let text = (el.textContent || "").replace(/\s+/g, " ").trim();
+				text = text.replace(/\{\{(\w+)\}\}/g, (_m, k) => (typeof vals[k] === "string" ? String(vals[k]) : ""));
+				text = text.replace(/\s+/g, " ").trim();
+				if (text && !text.includes("{{")) out.push(text);
+			}
+			return out;
+		},
+		{ scope: ART, selector: ART_SELECTOR, vals }
+	);
+	return texts.filter((t) => !drops.includes(t));
 }
-async function loginAsBudgetApprover(page: Page) {
-	await login(page, BUDGET_APPROVER, PASSWORD);
-}
-async function loginAsAuditor(page: Page) {
-	await login(page, AUDITOR, PASSWORD);
-}
 
-/** See this file's own top-of-file comment on the .kt-eyebrow/.kt-label delta. */
-const LIVE_LANDMARK_SELECTOR = [
-	".kt-card-title",
-	".kt-dialog-title",
-	".dialog-title",
-	"label",
-	"legend",
-	".kt-label",
-	".kt-eyebrow",
-	"th",
-	"button",
-].join(", ");
-
-async function liveLandmarks(page: Page, scope: string): Promise<string[]> {
+async function liveLandmarks(page: Page): Promise<string[]> {
 	return page.evaluate(
 		({ scope, selector }) => {
 			const root = document.querySelector(scope);
 			if (!root) return [];
-			const texts: string[] = [];
+			const out: string[] = [];
 			for (const el of Array.from(root.querySelectorAll<HTMLElement>(selector))) {
 				if (!el.getClientRects().length) continue;
 				const text = (el.textContent || "").replace(/\s+/g, " ").trim();
-				if (text) texts.push(text);
+				if (text) out.push(text);
 			}
-			return texts;
+			return out;
 		},
-		{ scope, selector: LIVE_LANDMARK_SELECTOR },
+		{ scope: LIVE, selector: LIVE_SELECTOR }
 	);
 }
 
-/** See this file's own top-of-file comment on each stripped delta. */
-function stripKnownArtboardDeltas(wanted: string[], extra: string[] = []): string[] {
-	const drop = new Set(["Procuring Entity", ...extra]);
-	return wanted.filter((t) => !drop.has(t));
+async function withBoard(browser: any, file: string, vals: Vals, drops: string[] = []): Promise<string[]> {
+	const art = await browser.newPage();
+	try {
+		return await boardLandmarks(art, file, vals, drops);
+	} finally {
+		await art.close();
+	}
 }
 
-async function artboardLandmarks(page: Page, file: string, extraDrops: string[] = []): Promise<string[]> {
-	await openArtboard(page, `${DESIGN_DIR}/${file}`, ARTBOARD_SCOPE);
-	return stripKnownArtboardDeltas(await landmarks(page, ARTBOARD_SCOPE), extraDrops);
+async function openWorkspace(page: Page, user: string, fy: string) {
+	await login(page, user);
+	await gotoBudget(page);
+	await selectYear(page, fy);
+	await gotoBudget(page);
+	await expectScreen(page, "workspace");
 }
 
-test.describe("Budget & Funding — design fidelity", () => {
-	// ---------------------------------------------------------------
-	// Workspace (/app/budget-funding) — BUD-DES-01 + BUD-DES-16 states
-	// ---------------------------------------------------------------
+test.describe.configure({ mode: "serial" });
 
-	test("BUD-DES-01 — Budget & Funding workspace (Active state)", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "Budget and Funding Workspace.dc.html");
+test.describe("Budget & Funding — design fidelity (v1.9 boards)", () => {
+	const WS = "Budget & Funding Workspace.dc.html";
+	const DETAIL = "Budget Detail Workspace.dc.html";
+	const LINE = "Budget Line Detail.dc.html";
+	const TASK = "Approval Task.dc.html";
+	const REG = "Register Approved Budget.dc.html";
+	const EDITOR = "Draft Budget Lines Editor.dc.html";
+	const SUCC = "Successor Revision Draft.dc.html";
 
-		const errors = collectPageErrors(page);
-		await loginAsAuditor(page);
-		await page.goto("/app/budget-funding", { waitUntil: "domcontentloaded" });
-		await page.waitForSelector('[data-testid="budget-fy-filter"]', { timeout: 30_000 });
-		await page.selectOption('[data-testid="budget-fy-filter"]', "2027-2028");
-		await page.waitForSelector('[data-testid="budget-summary-card"]', { timeout: 20_000 });
-
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-01");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
+	test("BUD-DES-01 workspace, Active", async ({ page, browser }) => {
+		resetFixture("reset_default");
+		const wanted = await withBoard(browser, WS, { isActive: true, isPendingCard: false });
+		const errors = collectConsoleErrors(page);
+		await openWorkspace(page, AUDITOR, CANONICAL_FY);
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-01");
+		expect(errors).toEqual([]);
 	});
 
-	test("BUD-DES-16 — Workspace state: Loading", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		// The Loading artboard's whole card content is skeleton placeholder
-		// bars (plain unstyled <div>s) — no .kt-card-title/label/th/button
-		// element exists to land on the shared landmark selector, so `wanted`
-		// is genuinely empty here (confirmed: expectLandmarkSubsequence's own
-		// "at least one landmark matched" assertion is not meaningful against
-		// an empty artboard set). Assert structure directly instead: the
-		// artboard's own composition — one full-width card followed by 4
-		// position-card skeletons — is what the live skeleton must match.
-		await openArtboard(art, `${DESIGN_DIR}/Workspace State - Loading.dc.html`, ARTBOARD_SCOPE);
-		const artSkelCount = await art.locator(`${ARTBOARD_SCOPE} .kt-skel`).count();
+	test("BUD-DES-01B initial draft / submitted / returned", async ({ page, browser }) => {
+		const draft = resetFixture<PendingFixture>("reset_initial_draft");
+		let wanted = await withBoard(browser, WS, { isActive: false, isPendingCard: true, isReturned: false, pendingAction: "Continue draft", pendingWhoLabel: "Created by", pendingWhenLabel: "Last saved" });
+		await openWorkspace(page, OFFICER, draft.pending.fiscal_year);
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-01B initial draft");
 
-		await loginAsBudgetOfficer(page);
-		// Hang the workspace call indefinitely so the loading skeleton renders
-		// and stays put for the assertion (route interception — no other way
-		// to hold this real, fast, in-process call open long enough to observe).
-		await page.route("**/api/method/**get_budget_workspace*", () => {
-			/* never fulfilled */
-		});
-		await page.goto("/app/budget-funding", { waitUntil: "domcontentloaded" });
-		await page.waitForSelector('[data-testid="budget-fy-filter"]', { timeout: 30_000 });
-		await page.selectOption('[data-testid="budget-fy-filter"]', "2027-2028");
-		await page.waitForSelector(".kt-skel", { timeout: 10_000 });
+		const submitted = resetFixture<PendingFixture>("reset_initial_submitted");
+		wanted = await withBoard(browser, WS, { isActive: false, isPendingCard: true, isReturned: false, pendingAction: "Review", pendingWhoLabel: "Submitted by", pendingWhenLabel: "Submitted" });
+		await openWorkspace(page, APPROVER, submitted.pending.fiscal_year);
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-01B initial submitted");
 
-		expect(await page.locator(".kt-skel").count(), "skeleton bar count").toBeGreaterThanOrEqual(artSkelCount);
+		const returned = resetFixture<PendingFixture>("reset_returned_draft");
+		wanted = await withBoard(browser, WS, { isActive: false, isPendingCard: true, isReturned: true, pendingAction: "Correct and resubmit", pendingWhoLabel: "Submitted by", pendingWhenLabel: "Returned" });
+		await openWorkspace(page, OFFICER, returned.pending.fiscal_year);
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-01B returned");
+	});
+
+	test("BUD-DES-01A/01B current with an update (draft, submitted, technical reader)", async ({ page, browser }) => {
+		resetFixture<SuccessorFixture>("reset_successor_draft");
+		let wanted = await withBoard(browser, WS, { isActive: true, isPendingCard: true, isReturned: false, pendingAction: "Continue update", pendingWhoLabel: "Created by", pendingWhenLabel: "Last saved" });
+		await openWorkspace(page, OFFICER, CANONICAL_FY);
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-01B current + draft");
+
+		resetFixture<SuccessorFixture>("reset_successor_submitted");
+		wanted = await withBoard(browser, WS, { isActive: true, isPendingCard: true, isReturned: false, pendingAction: "View version (read-only)", pendingWhoLabel: "Submitted by", pendingWhenLabel: "Submitted" });
+		await openWorkspace(page, ADMIN, CANONICAL_FY);
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-01A technical reader");
+	});
+
+	test("BUD-DES-16 workspace states: no baseline, forbidden, server error, loading", async ({ page, browser }) => {
+		const fx = resetFixture<EmptyYearFixture>("reset_no_budget_year");
+		let wanted = await withBoard(browser, WS, { isActive: false, isNoBaseline: true });
+		await openWorkspace(page, OFFICER, fx.empty_fiscal_year);
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-16 no baseline");
+
+		await login(page, NOBODY);
+		await gotoBudget(page);
+		await expect(page.getByTestId("bud-forbidden")).toBeVisible({ timeout: 30_000 });
+		await expect(page.getByTestId("budget-fy-filter")).toHaveCount(0);
+		await expect(page.locator(".modal.show")).toHaveCount(0);
+
+		wanted = await withBoard(browser, WS, { isActive: false, isServerError: true });
+		await login(page, OFFICER);
+		await page.route("**/api/method/kentender_budget.api.budget_api.get_budget_workspace", (route) => route.fulfill({ status: 500, body: "boom" }));
+		await gotoBudget(page);
+		await selectYear(page, CANONICAL_FY);
+		await gotoBudget(page);
+		await expect(page.getByTestId("bud-ws-server-error")).toBeVisible({ timeout: 30_000 });
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-16 server error");
 		await page.unrouteAll({ behavior: "ignoreErrors" });
-		await art.close();
-	});
 
-	test("BUD-DES-16 — Workspace state: No baseline", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "Workspace State - No Baseline.dc.html");
-
-		const errors = collectPageErrors(page);
-		await loginAsBudgetOfficer(page);
-		await page.goto("/app/budget-funding", { waitUntil: "domcontentloaded" });
-		await page.waitForSelector('[data-testid="budget-fy-filter"]', { timeout: 30_000 });
-		await page.selectOption('[data-testid="budget-fy-filter"]', EMPTY_FY);
-		await page.waitForSelector('[data-testid="budget-no-baseline"]', { timeout: 20_000 });
-
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-16 No baseline");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	test("BUD-DES-16 — Workspace state: Forbidden", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		// Same empty-landmark-set situation as the Loading state above: the
-		// artboard's icon/heading/body are all plain unstyled <div>s (no
-		// .kt-card-title/label/th/button), so there is nothing for the shared
-		// landmark selector to match. Verify the artboard's own body copy
-		// directly instead — it is real, comparable text, just not inside a
-		// landmark element.
-		await openArtboard(art, `${DESIGN_DIR}/Workspace State - Forbidden.dc.html`, ARTBOARD_SCOPE);
-		const artBody = (await art.locator(`${ARTBOARD_SCOPE} .card`).innerText()).trim();
-		expect(artBody).toContain("Ask your KenTender administrator to review your Budget assignment.");
-		// The artboard still carries v1.3's copy ("…review your Budget
-		// assignment."); BUD-CHG-001 v1.6 §11.16 / BUD-AC-040 and KT-STD-001
-		// §3A.4 replaced it with the responsibility list and the System setup
-		// pointer, which is what the live page shows (FOLLOW_UPS FU-06 family:
-		// artboard text lags the governing spec section).
-
-		// KT-STD-001 §3A.2 — the verdict is data, not an HTTP 403 (a 403 would
-		// also raise Frappe's own "Not permitted" modal). Samuel Otieno is the
-		// register's no-Budget-responsibility actor (§8.3: expired assignment),
-		// so the real page-load path is exercised, not a mocked response.
-		const errors = collectPageErrors(page);
-		await login(page, NO_ASSIGNMENT_ACTOR, PASSWORD);
-		await page.goto("/app/budget-funding", { waitUntil: "domcontentloaded" });
-		await page.waitForSelector('[data-testid="bud-forbidden"]', { timeout: 30_000 });
-		await expect(page.getByText("You do not have access to Budget & Funding")).toBeVisible();
-		await expect(
-			page.getByText("Budget Officer, Budget Approver, Finance Confirmation Officer or Auditor")
-		).toBeVisible();
-		await expect(page.getByText("Ask your KenTender administrator to assign one in System setup.")).toBeVisible();
-		// §3A.1 — no content, empty state or permission modal behind the panel.
-		expect(await page.locator('[data-testid="budget-summary-card"]').count()).toBe(0);
-		expect(await page.locator(".modal.show").count()).toBe(0);
-		expect(errors, "console errors").toEqual([]);
-
-		await art.close();
-	});
-
-	test("BUD-DES-16 — Workspace state: Server error", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "Workspace State - Server Error.dc.html");
-
-		await loginAsBudgetOfficer(page);
-		await page.route("**/api/method/**get_budget_workspace*", async (route) => {
-			await route.fulfill({ status: 500, contentType: "application/json", body: "{}" });
-		});
-		await page.goto("/app/budget-funding", { waitUntil: "domcontentloaded" });
-		await page.waitForSelector('[data-testid="budget-fy-filter"]', { timeout: 30_000 });
-		await page.selectOption('[data-testid="budget-fy-filter"]', "2027-2028");
-		await page.waitForSelector('text=Budget & Funding could not be loaded.', { timeout: 20_000 });
-
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-16 Server error");
+		await page.route("**/api/method/kentender_budget.api.budget_api.get_budget_workspace", () => undefined);
+		await gotoBudget(page);
+		await expect(page.getByTestId("bud-ws-skeleton")).toBeVisible({ timeout: 30_000 });
+		expect(await page.locator(".kt-skel").count()).toBeGreaterThanOrEqual(6);
 		await page.unrouteAll({ behavior: "ignoreErrors" });
-		await art.close();
 	});
 
-	// ---------------------------------------------------------------
-	// New / pre-creation (/app/budget-funding/new) — BUD-DES-02
-	// ---------------------------------------------------------------
-
-	test("BUD-DES-02 — Register approved budget draft", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "Register Approved Budget Draft.dc.html", ["Replace"]);
-
-		const errors = collectPageErrors(page);
-		await loginAsBudgetOfficer(page);
-		await page.goto("/app/budget-funding/new", { waitUntil: "domcontentloaded" });
-		await page.waitForSelector("#bud-new-fy", { timeout: 30_000 });
-		await page.selectOption("#bud-new-fy", EMPTY_FY);
-		await page.waitForSelector('[data-testid="bud-editor-save-btn"]', { timeout: 20_000 });
-
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-02");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
+	test("BUD-DES-02 record approved allocation", async ({ page, browser }) => {
+		const fx = resetFixture<EmptyYearFixture>("reset_no_budget_year");
+		const wanted = await withBoard(browser, REG, {});
+		await login(page, OFFICER);
+		await gotoBudget(page);
+		await selectYear(page, fx.empty_fiscal_year);
+		await gotoBudget(page, "/new");
+		await expectScreen(page, "register");
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-02");
 	});
 
-	// ---------------------------------------------------------------
-	// Draft editor, existing (/app/budget-funding/{code}/version/{n}/edit/lines)
-	// — BUD-DES-03
-	// ---------------------------------------------------------------
-
-	test("BUD-DES-03 — Draft Budget Lines editor", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "Draft Budget Lines Editor.dc.html");
-
-		const errors = collectPageErrors(page);
-		await loginAsBudgetOfficer(page);
-		await page.goto("/app/budget-funding/BUD-FIDELITY-DRAFT/version/1/edit/lines", {
-			waitUntil: "domcontentloaded",
-		});
-		await page.waitForSelector('[data-testid="bud-editor-lines-table"]', { timeout: 30_000 });
-
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-03");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
+	test("BUD-DES-03 draft budget lines editor", async ({ page, browser }) => {
+		const fx = resetFixture<PendingFixture>("reset_initial_draft");
+		const wanted = await withBoard(browser, EDITOR, { hwdAmount: "KES 60,000,000", entered: "KES 160,000,000", noticeClass: "kt-notice is-live", noticeText: "Budget lines match the approved allocation." });
+		await login(page, OFFICER);
+		await gotoBudget(page, `/${fx.pending.budget_code}/version/1/edit/lines`);
+		await expectScreen(page, "editor");
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-03");
 	});
 
-	// Regression (2026-09-11, "owner scope lost on save"): after Save draft the
-	// editor used to reload the Budget Lines twice — the second reload was
-	// fire-and-forget and landed after the screen was interactive again, so an
-	// Owner scope picked right after "Draft saved" was silently reverted to the
-	// server's rows and the next save sent the reverted value. The slower the
-	// round trip, the wider the window; this test widens it deliberately.
-	test("BUD-DES-03 — Owner scope picked right after a save is kept and persisted", async ({ page }) => {
-		const errors = collectPageErrors(page);
-		await loginAsBudgetOfficer(page);
-		await page.goto("/app/budget-funding/BUD-FIDELITY-DRAFT/version/1/edit/lines", {
-			waitUntil: "domcontentloaded",
-		});
-		await page.waitForSelector('[data-testid="bud-editor-lines-table"]', { timeout: 30_000 });
+	test("BUD-DES-14/15 successor draft, approval details and lines, and Changes requested", async ({ page, browser }) => {
+		const fx = resetFixture<SuccessorFixture>("reset_successor_draft");
+		let wanted = await withBoard(browser, SUCC, { isOverview: true, isLines: false, isReturned: false, statusLabel: "Draft" });
+		await login(page, OFFICER);
+		await gotoBudget(page, `/${fx.budget_code}/version/${fx.v2_number}/edit`);
+		await expectScreen(page, "editor");
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-14");
+		wanted = await withBoard(browser, SUCC, { isOverview: false, isLines: true, isReturned: false, statusLabel: "Draft" });
+		await gotoBudget(page, `/${fx.budget_code}/version/${fx.v2_number}/edit/lines`);
+		await expectScreen(page, "editor");
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-15");
 
-		const ownerSelect = page.locator('[data-testid="bud-editor-lines-table"] tbody tr').first().locator("select").first();
-		const saveBtn = page.locator('[data-testid="bud-editor-save-btn"]').first();
-		const original = await ownerSelect.inputValue();
-		const candidates = (await ownerSelect.locator("option").evaluateAll((opts) => opts.map((o) => (o as HTMLOptionElement).value))).filter(
-			(v) => v && v !== original,
-		);
-		expect(candidates.length, "needs two alternative Organisation Units").toBeGreaterThanOrEqual(2);
-		const [first, second] = candidates;
-
-		// Every lines reload now takes 1.5 s longer than the save itself.
-		await page.route("**/api/method/kentender_budget.api.budget_api.get_budget_version_lines_editor", async (route) => {
-			const response = await route.fetch();
-			await new Promise((resolve) => setTimeout(resolve, 1500));
-			await route.fulfill({ response });
-		});
-
-		await ownerSelect.selectOption(first);
-		await saveBtn.click();
-		await expect(saveBtn).toBeDisabled();
-		await expect(saveBtn).toBeEnabled({ timeout: 30_000 });
-		await expect(ownerSelect).toHaveValue(first);
-
-		// The user's very next edit, made as soon as the screen is interactive.
-		await ownerSelect.selectOption(second);
-		await page.waitForTimeout(3000); // any stale reload would land in here
-		await expect(ownerSelect, "late reload must not revert the user's selection").toHaveValue(second);
-
-		await saveBtn.click();
-		await expect(saveBtn).toBeDisabled();
-		await expect(saveBtn).toBeEnabled({ timeout: 30_000 });
-		await page.reload({ waitUntil: "domcontentloaded" });
-		await page.waitForSelector('[data-testid="bud-editor-lines-table"]', { timeout: 30_000 });
-		await expect(ownerSelect).toHaveValue(second);
-
-		// Leave the shared fixture as the seed wrote it.
-		await ownerSelect.selectOption(original);
-		await saveBtn.click();
-		await expect(saveBtn).toBeEnabled({ timeout: 30_000 });
-		expect(errors, "console errors").toEqual([]);
+		const returned = resetFixture<SuccessorFixture>("reset_successor_returned");
+		wanted = await withBoard(browser, SUCC, { isOverview: true, isLines: false, isReturned: true, statusLabel: "Changes requested" });
+		await gotoBudget(page, `/${returned.budget_code}/version/${returned.v2_number}/edit`);
+		await expectScreen(page, "editor");
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-14 Changes requested");
 	});
 
-	// ---------------------------------------------------------------
-	// Active budget detail (/app/budget-funding/{code}[/tab]) — BUD-DES-04/04A/07
-	// ---------------------------------------------------------------
+	test("BUD-DES-04/04A/05/07/07A budget workspace tabs", async ({ page, browser }) => {
+		resetFixture("reset_default");
+		const base = { isOverview: true, isLines: false, isActivity: false, isHistory: false, isOfficer: false, isApproverActive: false, isCloseSurface: false, isApprover: false, isClosed: false, statusLabel: "Current", reserved: "KES 0", committed: "KES 0", available: "KES 160,000,000", asAt: "" };
+		let wanted = await withBoard(browser, DETAIL, base);
+		await login(page, AUDITOR);
+		await gotoBudget(page, "/MOH-BUD-2027-001");
+		await expectScreen(page, "detail");
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-04");
 
-	test("BUD-DES-04 — Active Budget overview (Auditor)", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "Active Budget Overview.dc.html", ["Reviewed by", "Activated by"]);
+		wanted = await withBoard(browser, DETAIL, { ...base, isOfficer: true });
+		await login(page, OFFICER);
+		await gotoBudget(page, "/MOH-BUD-2027-001");
+		await expectScreen(page, "detail");
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-04A");
 
-		const errors = collectPageErrors(page);
-		await loginAsAuditor(page);
-		await page.goto("/app/budget-funding/MOH-BUD-2027-001", { waitUntil: "domcontentloaded" });
-		await page.waitForSelector('[data-testid="budget-detail-header"]', { timeout: 30_000 });
+		wanted = await withBoard(browser, DETAIL, { ...base, isOverview: false, isLines: true });
+		await gotoBudget(page, "/MOH-BUD-2027-001/lines");
+		await expectScreen(page, "detail");
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-05");
 
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-04");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
+		wanted = await withBoard(browser, DETAIL, { ...base, isOverview: false, isActivity: true });
+		await gotoBudget(page, "/MOH-BUD-2027-001/activity");
+		await expectScreen(page, "detail");
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-07");
+
+		wanted = await withBoard(browser, DETAIL, { ...base, isOverview: false, isHistory: true });
+		await gotoBudget(page, "/MOH-BUD-2027-001/history");
+		await expectScreen(page, "detail");
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-07A");
 	});
 
-	test("BUD-DES-04A — Active Budget overview (Budget Officer, Create revision)", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "Active Budget Overview - Budget Officer.dc.html", [
-			"Reviewed by",
-			"Activated by",
-		]);
+	test("BUD-DES-17 closure: before year end, blocked, ready, confirm, closed", async ({ page, browser }) => {
+		resetFixture("reset_default");
+		let wanted = await withBoard(browser, DETAIL, { isOverview: true, isOfficer: false, isApproverActive: true, isApprover: true, isCloseSurface: false, isClosed: false, statusLabel: "Current" });
+		await login(page, APPROVER);
+		await gotoBudget(page, "/MOH-BUD-2027-001");
+		await expectScreen(page, "detail");
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-17 approver header");
 
-		const errors = collectPageErrors(page);
-		await loginAsBudgetOfficer(page);
-		await page.goto("/app/budget-funding/MOH-BUD-2027-001", { waitUntil: "domcontentloaded" });
-		await page.waitForSelector('[data-testid="budget-detail-create-revision-btn"]', { timeout: 30_000 });
+		const blocked = resetFixture<ClosureFixture>("reset_close_blocked");
+		wanted = await withBoard(browser, DETAIL, { isOverview: false, showTabs: false, isCloseSurface: true, isCloseBlocked: true, isCloseReady: false, isCloseConfirm: false, isClosed: false, isOfficer: false, isApproverActive: false, isApprover: false });
+		await gotoBudget(page, `/${blocked.closure.budget_code}/close`);
+		await expectScreen(page, "closure");
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-17 blocked");
 
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-04A");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
+		const ready = resetFixture<ClosureFixture>("reset_close_ready");
+		wanted = await withBoard(browser, DETAIL, { isOverview: false, showTabs: false, isCloseSurface: true, isCloseBlocked: false, isCloseReady: true, isCloseConfirm: false, isClosed: false, isOfficer: false, isApproverActive: false, isApprover: false });
+		await gotoBudget(page, `/${ready.closure.budget_code}/close`);
+		await expectScreen(page, "closure");
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-17 ready");
+
+		wanted = await withBoard(browser, DETAIL, { isOverview: false, showTabs: false, isCloseSurface: true, isCloseBlocked: false, isCloseReady: true, isCloseConfirm: true, isClosed: false, isOfficer: false, isApproverActive: false, isApprover: false }, ["Close budget for FY 2027/28?"]);
+		await page.getByTestId("bud-close-btn").click();
+		await expect(page.getByTestId("bud-close-confirm")).toBeVisible();
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-17 confirm");
+		await page.getByTestId("bud-close-confirm-btn").click();
+		await expect(page.getByTestId("bud-close-closed")).toBeVisible({ timeout: 30_000 });
+
+		wanted = await withBoard(browser, DETAIL, { isOverview: true, isClosed: true, isCloseSurface: false, isOfficer: false, isApproverActive: false, isApprover: false, statusLabel: "Closed" });
+		await gotoBudget(page, `/${ready.closure.budget_code}`);
+		await expectScreen(page, "detail");
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-17 closed");
 	});
 
-	test("BUD-DES-07 — Funding Activity", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "Funding Activity.dc.html");
+	test("BUD-DES-06/06A/06B budget line detail", async ({ page, browser }) => {
+		const fx = resetFixture<SuccessorFixture>("reset_successor_draft");
+		let wanted = await withBoard(browser, LINE, { hasReservation: false, hasPartial: false, isPartial: false, isReview: false, noReservation: true, eyebrow: "", lineTitle: "", ownerScope: "", observedAt: "", approved: "", reserved: "", available: "", committed: "", availableKpiClass: "kt-kpi-card", reservedBarStyle: "", committedBarStyle: "", committedStyle: "" });
+		await login(page, AUDITOR);
+		await gotoBudget(page, `/line/${fx.hwd_code}`);
+		await expectScreen(page, "line");
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-06");
 
-		const errors = collectPageErrors(page);
-		await loginAsAuditor(page);
-		await page.goto("/app/budget-funding/BUD-FIDELITY-REVIEW/activity", { waitUntil: "domcontentloaded" });
-		await page.waitForSelector('[data-testid="budget-detail-activity-table"]', { timeout: 30_000 });
+		wanted = await withBoard(browser, LINE, { hasReservation: true, hasPartial: false, isPartial: false, isReview: false, noReservation: false });
+		await gotoBudget(page, `/line/${fx.dhi_code}`);
+		await expectScreen(page, "line");
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-06A");
 
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-07");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
+		const conv = resetFixture<ConversionFixture>("reset_requires_review");
+		wanted = await withBoard(browser, LINE, { hasReservation: false, hasPartial: true, isPartial: false, isReview: true, noReservation: false, partialStatus: "Requires review — funds remain reserved", partialStatusClass: "kt-status is-attention" });
+		await gotoBudget(page, `/line/${conv.conversion.dhi_code}`);
+		await expectScreen(page, "line");
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-06B");
 	});
 
-	// ---------------------------------------------------------------
-	// Budget Line detail (/app/budget-funding/line/{code}) — BUD-DES-06/06A
-	// ---------------------------------------------------------------
-
-	test("BUD-DES-06 — Budget Line detail (no reservation)", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "Budget Line Detail.dc.html");
-
-		const errors = collectPageErrors(page);
-		await loginAsBudgetOfficer(page);
-		// The fixture budget's own reservation-free line. The canonical
-		// MOH-BL-HWD-2027 is no longer a valid "no reservation" target: the
-		// Requisitions canonical seed stage (SEED-OPS-001, 2026-09-09) reserves
-		// against it, and this gate must not depend on what downstream seeds do
-		// to the canonical world.
-		await page.goto("/app/budget-funding/line/BUD-FIDELITY-REVIEW-HWD", { waitUntil: "domcontentloaded" });
-		await page.waitForSelector('[data-testid="bud-line-reservations-empty"]', { timeout: 30_000 });
-
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-06");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
+	test("BUD-DES-13 review registered allocation, four tabs", async ({ page, browser }) => {
+		const fx = resetFixture<PendingFixture>("reset_initial_submitted");
+		await login(page, APPROVER);
+		const v1 = { isV1: true, isV2: false, isBlocked: false, isReturn: false, approveLabel: "Approve registered allocation", afterHeader: "Available after update", createdLabel: "Budget Version 1 created" };
+		for (const [tab, route] of [["isOverview", ""], ["isLines", "/lines"], ["isChanges", "/changes"], ["isHistory", "/history"]] as const) {
+			const wanted = await withBoard(browser, TASK, { ...v1, isOverview: false, isLines: false, isChanges: false, isHistory: false, [tab]: true });
+			await gotoBudget(page, `/review/${fx.pending.version_code}${route}`);
+			await expectScreen(page, "review");
+			expectLandmarkSubsequence(wanted, await liveLandmarks(page), `BUD-DES-13 ${tab}`);
+		}
 	});
 
-	test("BUD-DES-06A — Budget Line detail (with an active reservation)", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "Budget Line Detail - With Reservation.dc.html");
+	test("BUD-DES-08/09/10/11 review allocation changes, blocked variant and Return dialog", async ({ page, browser }) => {
+		const fx = resetFixture<SuccessorFixture>("reset_successor_submitted");
+		await login(page, APPROVER);
+		const v2 = { isV1: false, isV2: true, isBlocked: false, isReturn: false, approveLabel: "Approve allocation update", afterHeader: "Available after update", createdLabel: "Draft update created from Version 1" };
+		for (const [tab, route] of [["isOverview", ""], ["isLines", "/lines"], ["isChanges", "/changes"], ["isHistory", "/history"]] as const) {
+			const wanted = await withBoard(browser, TASK, { ...v2, isOverview: false, isLines: false, isChanges: false, isHistory: false, [tab]: true });
+			await gotoBudget(page, `/review/${fx.v2_code}${route}`);
+			await expectScreen(page, "review");
+			expectLandmarkSubsequence(wanted, await liveLandmarks(page), `BUD-DES-08..11 ${tab}`);
+		}
+		let wanted = await withBoard(browser, TASK, { ...v2, isOverview: true, isReturn: true });
+		await gotoBudget(page, `/review/${fx.v2_code}`);
+		await expectScreen(page, "review");
+		await page.getByTestId("bud-task-return-btn").click();
+		await expect(page.getByTestId("bud-task-return-dialog")).toBeVisible();
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-08 Return dialog");
 
-		const errors = collectPageErrors(page);
-		await loginAsAuditor(page);
-		await page.goto("/app/budget-funding/line/BUD-FIDELITY-REVIEW-DHI", { waitUntil: "domcontentloaded" });
-		await page.waitForSelector('[data-testid="bud-line-reservations-table"]', { timeout: 30_000 });
-
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-06A");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	// ---------------------------------------------------------------
-	// Approval task (/app/budget-funding/review/{version}[/tab])
-	// — BUD-DES-13 (Initial Baseline Review, Version 1, no predecessor)
-	// ---------------------------------------------------------------
-
-	test("BUD-DES-13 Overview — Initial baseline review", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "Initial Baseline Review - Overview.dc.html", ["Recommend for activation"]);
-
-		const errors = collectPageErrors(page);
-		await loginAsBudgetApprover(page);
-		await page.goto("/app/budget-funding/review/BUD-FIDELITY-BASELINE-V1", { waitUntil: "domcontentloaded" });
-		await page.waitForSelector('[data-testid="bud-task-readiness"]', { timeout: 30_000 });
-
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-13 Overview");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	test("BUD-DES-13 Budget Lines — Initial baseline review", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "Initial Baseline Review - Budget Lines.dc.html", ["Recommend for activation"]);
-
-		const errors = collectPageErrors(page);
-		await loginAsBudgetApprover(page);
-		await page.goto("/app/budget-funding/review/BUD-FIDELITY-BASELINE-V1/lines", {
-			waitUntil: "domcontentloaded",
-		});
-		await page.waitForSelector('[data-testid="bud-task-lines-table"]', { timeout: 30_000 });
-
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-13 Budget Lines");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	test("BUD-DES-13 Changes — Initial baseline review", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "Initial Baseline Review - Changes.dc.html", ["Recommend for activation"]);
-
-		const errors = collectPageErrors(page);
-		await loginAsBudgetApprover(page);
-		await page.goto("/app/budget-funding/review/BUD-FIDELITY-BASELINE-V1/changes", {
-			waitUntil: "domcontentloaded",
-		});
-		await page.waitForSelector('[data-testid="bud-task-changes-baseline"]', { timeout: 30_000 });
-
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-13 Changes");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	test("BUD-DES-13 History — Initial baseline review", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "Initial Baseline Review - History.dc.html", ["Recommend for activation"]);
-
-		const errors = collectPageErrors(page);
-		await loginAsBudgetApprover(page);
-		await page.goto("/app/budget-funding/review/BUD-FIDELITY-BASELINE-V1/history", {
-			waitUntil: "domcontentloaded",
-		});
-		await page.waitForSelector('[data-testid="bud-task-history-table"]', { timeout: 30_000 });
-
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-13 History");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	// ---------------------------------------------------------------
-	// Approval task — BUD-DES-08/09/10/11 (Reviewer Task, Version 2 successor
-	// with a predecessor: "Based on" / "Revision type" / Changes vs Active)
-	// ---------------------------------------------------------------
-
-	test("BUD-DES-08 Overview — Reviewer task", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "Reviewer Task - Overview.dc.html", ["Recommend for activation"]);
-
-		const errors = collectPageErrors(page);
-		await loginAsBudgetApprover(page);
-		await page.goto("/app/budget-funding/review/BUD-FIDELITY-REVIEW-V2", { waitUntil: "domcontentloaded" });
-		await page.waitForSelector('[data-testid="bud-task-readiness"]', { timeout: 30_000 });
-
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-08");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	test("BUD-DES-09 Budget Lines — Reviewer task", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "Reviewer Task - Budget Lines.dc.html", ["Recommend for activation"]);
-
-		const errors = collectPageErrors(page);
-		await loginAsBudgetApprover(page);
-		await page.goto("/app/budget-funding/review/BUD-FIDELITY-REVIEW-V2/lines", { waitUntil: "domcontentloaded" });
-		await page.waitForSelector('[data-testid="bud-task-lines-table"]', { timeout: 30_000 });
-
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-09");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	test("BUD-DES-10 Changes — Reviewer task", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "Reviewer Task - Changes.dc.html", ["Recommend for activation"]);
-
-		const errors = collectPageErrors(page);
-		await loginAsBudgetApprover(page);
-		await page.goto("/app/budget-funding/review/BUD-FIDELITY-REVIEW-V2/changes", { waitUntil: "domcontentloaded" });
-		await page.waitForSelector('[data-testid="bud-task-changes-table"]', { timeout: 30_000 });
-
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-10");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	test("BUD-DES-11 History — Reviewer task", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "Reviewer Task - History.dc.html", ["Recommend for activation"]);
-
-		const errors = collectPageErrors(page);
-		await loginAsBudgetApprover(page);
-		await page.goto("/app/budget-funding/review/BUD-FIDELITY-REVIEW-V2/history", { waitUntil: "domcontentloaded" });
-		await page.waitForSelector('[data-testid="bud-task-history-table"]', { timeout: 30_000 });
-
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-11");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	// ---------------------------------------------------------------
-	// Successor revision draft, unsubmitted
-	// (/app/budget-funding/{code}/version/{n}/edit[/lines]) — BUD-DES-14/15
-	// ---------------------------------------------------------------
-
-	test("BUD-DES-14 — Successor revision draft, Overview", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "Successor Revision Draft - Overview.dc.html");
-
-		const errors = collectPageErrors(page);
-		await loginAsBudgetOfficer(page);
-		await page.goto("/app/budget-funding/BUD-FIDELITY-SUCCESSOR/version/2/edit", {
-			waitUntil: "domcontentloaded",
-		});
-		await page.waitForSelector('[data-testid="bud-editor-submit-btn"]', { timeout: 30_000 });
-
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-14");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
-	});
-
-	test("BUD-DES-15 — Successor revision draft, Budget Lines", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		const wanted = await artboardLandmarks(art, "Successor Revision Draft - Budget Lines.dc.html");
-
-		const errors = collectPageErrors(page);
-		await loginAsBudgetOfficer(page);
-		await page.goto("/app/budget-funding/BUD-FIDELITY-SUCCESSOR/version/2/edit/lines", {
-			waitUntil: "domcontentloaded",
-		});
-		await page.waitForSelector('[data-testid="bud-editor-lines-table"]', { timeout: 30_000 });
-
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page, LIVE_SCOPE), "BUD-DES-15");
-		expect(errors, "console errors").toEqual([]);
-		await art.close();
+		const breach = resetFixture<SuccessorFixture>("reset_live_breach");
+		wanted = await withBoard(browser, TASK, { ...v2, isOverview: true, isBlocked: true, afterHeader: "Available after update / Shortfall" });
+		await gotoBudget(page, `/review/${breach.v2_code}`);
+		await expectScreen(page, "review");
+		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "BUD-DES-08 blocked");
+		await expect(page.getByTestId("bud-task-approve-btn")).toBeDisabled();
 	});
 });

@@ -34,6 +34,10 @@ const WITHIN = {
 	advisory: null,
 	quiet_line: "Confirmation records that this plan fits the approved budget. It reserves no funds; reservation happens at requisition.",
 	failing_lines: [],
+	is_reassessment: false,
+	version_number: 1,
+	history: [{ review: "Review 1", basis: "MOH-BUD-2027-001, Version 1", outcome: "Awaiting confirmation", actor: "—", time_display: "—" }],
+	funding_evidence: { state: "Awaiting confirmation", at_approval: null },
 };
 
 function make(task = WITHIN) {
@@ -47,16 +51,29 @@ describe("FinanceTaskScreen — PLN-DES-10", () => {
 		expect(w.find(".pln-quiet-ref").text()).toBe("FNT-MOH-2027-001 · PLN-MOH-2027-001 · Version 1");
 		expect(w.find('[data-testid="fnt-badge"]').text()).toBe("Awaiting Finance");
 		expect(w.find('[data-testid="fnt-summary"]').findAll("label").map((l) => l.text())).toEqual([
-			"Plan Items", "Plan value", "Procurement Budget Lines used", "Reserved share",
+			"Plan Items", "Planned value", "Budget Lines", "Reserved share",
 		]);
 		const card = w.find('[data-testid="fnt-affordability"]');
 		expect(card.find(".kt-card-title").text()).toBe("Affordability");
-		expect(w.find('[data-testid="fnt-as-at"]').text()).toBe("Position as at 4 Dec 2026, 09:58 EAT");
+		expect(w.find('[data-testid="fnt-as-at"]').text()).toBe("4 Dec 2026, 09:58 EAT");
 		expect(card.findAll("thead th").map((th) => th.text())).toEqual([
-			"Procurement Budget Line", "Funding source", "Approved", "Planned in this Plan", "Within approved", "Reserved", "Committed", "Currently available",
+			"Budget Line", "Funding source", "Approved", "Planned in this Plan", "Within approved", "Reserved", "Committed", "Currently available",
 		]);
 		expect(card.findAll("tbody tr")).toHaveLength(2);
 		expect(w.find('[data-testid="fnt-line-0"]').text()).toContain("Yes");
+		expect(w.find('[data-testid="fnt-history"]').exists()).toBe(true);
+	});
+
+	it("shows the reassessment header and read-only-content notice for an Active Version", () => {
+		const w = make({ ...WITHIN, is_reassessment: true, version_number: 3 });
+		expect(w.find(".kt-page-title").text()).toBe("Reassess funding for Active Plan Version 3");
+		expect(w.find('[data-testid="fnt-reassessment-notice"]').text()).toContain("Plan content is read-only");
+	});
+
+	it("keeps the plan's own title when not reassessing", () => {
+		const w = make();
+		expect(w.find(".kt-page-title").text()).toBe("Ministry of Health Annual Procurement Plan 2027/28");
+		expect(w.find('[data-testid="fnt-reassessment-notice"]').exists()).toBe(false);
 	});
 
 	it("shows the green within-approved notice, the quiet no-reservation line and both decision controls", async () => {

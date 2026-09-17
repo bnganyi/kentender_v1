@@ -264,6 +264,20 @@
 	border-bottom: 1px solid var(--color-neutral-200);
 }
 
+/* U21-empty: the loading heading is announced to assistive tech only —
+   sighted users see the live .kt-skel shimmer, not this placeholder text. */
+.kt-pln .pln-sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
 /* PLN-DES-02/05 header row + reference line */
 .kt-pln .pln-header-row {
 	display: flex;
@@ -309,6 +323,12 @@
 	font-family: var(--font-heading);
 	font-weight: 600;
 	font-size: 16px;
+}
+/* U07-unallocated/U07-items (before formation) — a zero count/value reads
+   muted, not as an alarming absence. */
+.kt-pln .pln-val.is-zero {
+	color: var(--color-neutral-500);
+	font-weight: 400;
 }
 
 /* PLN-DES-02 amber readiness notice (+ a critical variant for refusals) */
@@ -633,6 +653,10 @@
 	gap: 8px;
 	font-size: 14px;
 }
+/* U08-incompatible — the combined choice greys out rather than disappearing */
+.kt-pln .pln-radio-option.is-disabled {
+	color: var(--color-neutral-500);
+}
 .kt-pln .pln-summary-box {
 	border: 1px solid var(--color-neutral-200);
 	padding: 12px 14px;
@@ -679,4 +703,60 @@
 	margin: 0;
 	font-size: 13.5px;
 	color: var(--kt-color-critical, #b3261e);
+}
+
+/* U11 Review — the header's own secondary action (Download review pack)
+ * sits beside the title/meta instead of below it, so the title block gets
+ * its own row wrapper; .pln-rmeta is U11's own reference/Version/status
+ * line (ported from the artboard's .rmeta). */
+.kt-pln .pln-rhead {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 16px;
+	margin-bottom: 24px;
+}
+.kt-pln .pln-rmeta {
+	display: flex;
+	gap: 24px;
+	font-size: 13px;
+	color: var(--color-neutral-800);
+	align-items: center;
+	margin-top: 6px;
+}
+
+/* U11's own in-page section nav (ported verbatim from the artboard's
+ * .seclinks): anchor links to each read-only section on one long page, not
+ * a tab-switch — every section stays reachable by scroll, reload or Find. */
+.kt-pln .pln-seclinks {
+	display: flex;
+	gap: 24px;
+	flex-wrap: wrap;
+	border-bottom: 1px solid var(--color-divider);
+	margin-bottom: 24px;
+	padding-bottom: 0;
+	font-size: 13px;
+}
+.kt-pln .pln-seclinks a {
+	padding-bottom: 9px;
+	display: inline-block;
+	color: var(--color-neutral-800);
+	text-decoration: none;
+	cursor: pointer;
+}
+.kt-pln .pln-seclinks a.active {
+	border-bottom: 2px solid var(--color-accent);
+	color: var(--color-accent-700);
+	font-weight: 600;
+}
+
+.kt-pln .pln-review-section {
+	margin-bottom: 24px;
+	scroll-margin-top: 16px;
+}
+.kt-pln .pln-review-section + .pln-review-section {
+	margin-top: 0;
+}
+.kt-pln .pln-method-card + .pln-method-card {
+	margin-top: 16px;
 }

@@ -92,6 +92,35 @@ def _plan_line(plan, version, value: float, requested_at) -> str:
 	return f"{plan.title} · Version {version.version_number} · {_count(items, 'item')} · {_money(value)} · requested {_date(requested_at)}"
 
 
+def _validation_facts(task) -> list[tuple[str, Any]]:
+	"""U01-D's own labelled facts for a Validate departmental plan task."""
+	submission = frappe.db.get_value(
+		"Departmental Plan Submission", task.submission, ["submitted_by_user", "submitted_at", "entry_snapshots"], as_dict=True,
+	) or {}
+	snapshots = json.loads(submission.get("entry_snapshots") or "[]")
+	value = sum(flt(r.get("indicative_amount")) for r in snapshots if not cstr(r.get("not_proceeding_reason")).strip())
+	by = cstr(frappe.db.get_value("User", submission.get("submitted_by_user"), "full_name") or submission.get("submitted_by_user"))
+	return [
+		("Submitted by", by),
+		("Submitted", _date(submission.get("submitted_at"))),
+		("Requirements", str(len(snapshots))),
+		("Value", _money(value)),
+	]
+
+
+def _governance_facts(version, value: float) -> list[tuple[str, Any]]:
+	"""U01-F's own labelled facts for an Accounting Officer/statutory decision task."""
+	items = frappe.db.count("Annual Plan Item", {"plan_version": version.name, "item_state": ("!=", "Dissolved")})
+	by = cstr(frappe.db.get_value("User", version.get("submitted_by_user"), "full_name") or version.get("submitted_by_user"))
+	return [
+		("Version", str(version.version_number)),
+		("Plan Items", str(items)),
+		("Value", _money(value)),
+		("Submitted by", by),
+		("Submitted", _date(version.get("submitted_at"))),
+	]
+
+
 def _allocated_value(version_name: str) -> float:
 	return sum(
 		flt(r.indicative_amount)
@@ -193,6 +222,11 @@ def _dpp_rows(fiscal_year: str, permitted_units: set[str] | None, window_open: b
 			status, kind = "Accepted · update in progress", "attention"
 		elif root.current_state in ("Draft", "Withdrawn") and not window_open and not root.current_accepted_version:
 			status, kind = "Not submitted — window closed", "critical"
+		accepted_number = (
+			frappe.db.get_value("Departmental Plan Version", root.current_accepted_version, "version_number")
+			if root.current_accepted_version else None
+		)
+		open_number = version_number if root.current_accepted_version and version_name != root.current_accepted_version else None
 		rows.append(
 			{
 				"dpp_reference": root.dpp_reference,
@@ -205,6 +239,8 @@ def _dpp_rows(fiscal_year: str, permitted_units: set[str] | None, window_open: b
 				"value": _money(sum(flt(e.indicative_amount) for e in entries if not cstr(e.not_proceeding_reason).strip())),
 				"status": status,
 				"status_kind": kind,
+				"accepted_submission": accepted_number,
+				"open_submission": open_number,
 				"route": ["departmental-procurement-plan", root.dpp_reference] if can_open_dpp else None,
 			}
 		)
@@ -275,8 +311,17 @@ def _not_included(fiscal_year: str, window_open: bool) -> dict[str, str] | None:
 	}
 
 
-def _action(headline: str, supporting: str, button: str, route: list[str], kind: str = "live") -> dict[str, Any]:
-	return {"headline": headline, "supporting": supporting, "action": button, "route": route, "kind": kind}
+def _action(
+	headline: str, supporting: str, button: str, route: list[str], kind: str = "live",
+	*, facts: list[tuple[str, Any]] | None = None,
+) -> dict[str, Any]:
+	# U01-D/E/F's own "Your actions" cards show labelled facts, not one prose
+	# line; only the three variants a frame actually specifies get `facts` —
+	# every other actionable kind keeps its existing free-text `supporting`.
+	return {
+		"headline": headline, "supporting": supporting, "action": button, "route": route, "kind": kind,
+		"facts": [{"label": label, "value": value} for label, value in (facts or [])],
+	}
 
 
 def get_planning_workspace(*, financial_year: str | None = None, user: str | None = None) -> dict[str, Any]:
@@ -321,7 +366,12 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 		# FU-15 — every supporting line carries version, size and value
 		detail = f"{row['department']} · Submission {row['version']} · {_count(row['requirements'], 'requirement')} · {row['value']}"
 		if row["state"] == "Draft" and row["status_kind"] != "critical":
-			actionable.append(_action("Continue departmental plan", detail, "Continue", row["route"], "attention"))
+			actionable.append(
+				_action(
+					"Continue departmental plan", detail, "Continue", row["route"], "attention",
+					facts=[("Submission", str(row["version"])), ("Requirements", str(row["requirements"])), ("Specified value", row["value"])],
+				)
+			)
 		elif row["state"] == "Returned":
 			returned = _returned_on(row["version_name"])
 			actionable.append(_action("Correct and resubmit departmental plan", f"{detail} · returned {returned}" if returned else detail, "Correct", row["route"], "critical"))
@@ -336,7 +386,7 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 	if plan and (plan.open_successor_version or plan.active_version):
 		open_version = frappe.db.get_value(
 			"Annual Plan Version", plan.open_successor_version or plan.active_version,
-			["name", "version_number", "version_status", "funding_state"], as_dict=True,
+			["name", "version_number", "version_status", "funding_state", "submitted_by_user", "submitted_at"], as_dict=True,
 		)
 	active_version_doc = None
 	if plan and plan.active_version:
@@ -356,7 +406,12 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 			if authz.is_segregated(actor, authz.ACTION_DPP_VALIDATE, submission=task.submission):
 				waiting.append({"item": "Departmental plan awaiting validation by another Planner", "scope": _ou_label(task.organisation_unit)})
 				continue
-			actionable.append(_action("Validate departmental plan", _validation_line(task), "Review", [PAGE, "dpp-review", task.name], "attention"))
+			actionable.append(
+				_action(
+					"Validate departmental plan", _validation_line(task), "Review submission", [PAGE, "dpp-review", task.name], "attention",
+					facts=_validation_facts(task),
+				)
+			)
 		count, value, departments = _accepted_unallocated(fy)
 		if count and plan and open_version and open_version.version_status == "Draft":
 			plural = "entry" if count == 1 else "entries"
@@ -409,8 +464,12 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 				if authz.is_segregated(actor, action, plan_version=open_version.name):
 					continue
 				headline = "Adopt the Annual Procurement Plan" if stage == "Accounting Officer adoption" else "Approve the Annual Procurement Plan"
+				value = _allocated_value(open_version.name)
 				actionable.append(
-					_action(headline, _plan_line(plan, open_version, _allocated_value(open_version.name), task.creation), "Open decision", [PAGE, "review", task.name])
+					_action(
+						headline, _plan_line(plan, open_version, value, task.creation), "Open decision", [PAGE, "review", task.name],
+						facts=_governance_facts(open_version, value),
+					)
 				)
 
 	health = None
@@ -421,6 +480,10 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 	if open_version:
 		plan_summary = f"Annual Plan · {open_version.version_status} Version {open_version.version_number}"
 	count_label = f"{len(dpp_rows)} departmental plan{'s' if len(dpp_rows) != 1 else ''}"
+	# U01-A/B/C (an accepted departmental plan exists somewhere this FY) split
+	# the count into Accepted/Open Submission with a View action; U01-D (none
+	# accepted yet — nothing to view) shows a single Submission count instead.
+	plans_shape = "accepted" if any(row["state"] == "Accepted" or row["accepted_submission"] is not None for row in dpp_rows) else "submission"
 	return {
 		"outcome": "OK",
 		"context": context,
@@ -435,6 +498,7 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 		"waiting": waiting,
 		"schedule_health": health,
 		"departmental_plans": dpp_rows,
+		"departmental_plans_shape": plans_shape,
 		"departmental_plans_heading": "Departmental plans feeding this Annual Plan",
 		"departmental_plans_lede": "These are the accepted and pending plans behind the entry above.",
 		"count_label": count_label,

@@ -110,6 +110,10 @@ export function confirmSplittingAdvisory(args) {
 	return frappeCall(`${BASE}.confirm_splitting_advisory`, args);
 }
 
+export function savePlanVersionDetails(args) {
+	return frappeCall(`${BASE}.save_plan_version_details`, args);
+}
+
 // --- plan-level finance (§5.2, one task per Version) --------------------
 
 export function requestPlanFundingConfirmation(args) {
@@ -152,6 +156,16 @@ export function approveAnnualPlan(args) {
 
 export function returnPlanVersion(args) {
 	return frappeCall(`${BASE}.return_plan_version`, args);
+}
+
+export function getSourceEvidence(task, sourceKey) {
+	return frappeCall(`${BASE}.get_source_evidence`, { task, source_key: sourceKey });
+}
+
+// A plain authenticated file download (§10.4 **Download review pack**),
+// not the JSON API layer — the caller binds this straight to an <a href>.
+export function reviewPackDownloadUrl(task) {
+	return `/api/method/${BASE}.download_review_pack?task=${encodeURIComponent(task)}`;
 }
 
 // --- publication, successors, schedule ----------------------------------

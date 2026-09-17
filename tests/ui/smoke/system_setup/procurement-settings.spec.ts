@@ -78,7 +78,7 @@ test.describe("System setup — Procurement settings", () => {
 
 		await page.click('[data-testid="kt-procset-rule-new-version"]');
 		await page.waitForSelector('[data-testid="kt-procset-new-version"]');
-		await expect(page.locator('[data-testid="kt-nv-effective-from"]')).toHaveValue("2027-07-01");
+		await expect(page.locator('[data-testid="kt-nv-effective-from"]')).toHaveValue("2027-05-01");
 		await page.keyboard.press("Escape");
 		await expect(page.locator('[data-testid="kt-procset-new-version"]')).toHaveCount(0);
 

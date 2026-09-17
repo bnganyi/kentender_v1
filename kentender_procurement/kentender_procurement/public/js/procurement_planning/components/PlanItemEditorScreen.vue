@@ -1,23 +1,28 @@
-<!-- PLN-UI-09 Plan Item editor (§12.8), rendering PLN-DES-09 (single source)
-     and PLN-DES-09A (combined) from one read model: read-only source card or
-     table, Identity, Classification and method (Objective + admissible
-     method selects), Preference and structure (with the conditional
-     multi-year justification and lot count), and the Baseline schedule card
-     whose computed dates recalculate live from the target invitation date
-     and the five governed periods behind a closed-by-default disclosure.
-     No Finance action, no forecast or actual field, no source edit. -->
+<!-- PLN-CHG-001 v1.18 §9.3/§12.8 U09 Plan Item editor, ported class-for-class
+     from U09 (default + CONFIG-missing method notice), U09-eligibility-lots,
+     U09-schedule-expanded, U09-conditional-method, U09-feasibility-fail and
+     U09-locked (one route, `/app/procurement-plan-item/{plan_item_id}`, for
+     every state — §9's own table lists "scope lock" as one of this same
+     screen's states, not a separate one). Five sections in the frame's own
+     order: Requirement and sources, Package details, Method and eligibility,
+     Reservation and structure, Baseline schedule.
+
+     §17.4 removed concepts this row does not rebuild: Plan horizon,
+     Aggregation and Lotting are read-only facts here (spec line ~1265 calls
+     Plan horizon "read-only" explicitly; nothing in the frame or spec offers
+     a control for any of the three) — only "Lot count" stays editable, and
+     only once already "Packaged into lots". The v1.12 reservation-reason /
+     highest-advantage override UI, the multi-year justification textarea and
+     the county-resident checkbox are gone: "No highest-advantage ranking or
+     override reason" (spec line 1265) and no v1.18 frame shows any of them. -->
 <template>
 	<div class="pln-editor pln-editor-wide">
 		<p class="kt-page-kicker">{{ item.header?.eyebrow }}</p>
 		<h1 class="kt-page-title">{{ item.header?.title }}</h1>
 		<p class="pln-quiet-ref">{{ item.header?.reference_line }}</p>
-		<span class="kt-status is-draft" data-testid="ppi-badge">{{ item.header?.item_state_badge }}</span>
+		<span class="kt-status" :class="badgeClass" data-testid="ppi-badge">{{ item.header?.item_state_badge }}</span>
 
-		<div
-			v-if="item.source_correction_required"
-			class="pln-notice is-critical"
-			data-testid="ppi-source-correction"
-		>
+		<div v-if="item.source_correction_required" class="pln-notice is-critical" data-testid="ppi-source-correction">
 			<p class="pln-notice-title">Source correction required</p>
 			<p>
 				A departmental source changed. Dissolve this Plan Item and re-form it
@@ -25,91 +30,71 @@
 			</p>
 		</div>
 
+		<!-- §9.7 domain notices: scope lock, correction hold -->
+		<div
+			v-for="notice in item.notices || []"
+			:key="notice.kind"
+			class="pln-notice is-attention"
+			:data-testid="`ppi-notice-${notice.kind}`"
+		>
+			<p class="pln-notice-title">{{ notice.heading }}</p>
+			<p>{{ notice.text }}</p>
+			<div v-if="notice.kind === 'scope_locked'" class="pln-facts-row" style="margin-top: 8px">
+				<div class="pln-fact"><span class="kt-label">Requisition</span><span class="pln-fact-val">{{ scopeLock.first_requisition }}</span></div>
+				<div class="pln-fact"><span class="kt-label">Date</span><span class="pln-fact-val">{{ scopeLockSinceDisplay }}</span></div>
+			</div>
+		</div>
+
 		<div v-if="errorSummary" class="pln-notice is-critical" role="alert" data-testid="ppi-error">
 			<p class="pln-notice-title">This command could not be completed</p>
 			<p>{{ errorSummary }}</p>
 		</div>
 
-		<!-- single source -->
-		<div v-if="!item.combined" class="kt-card kt-blueprint pln-card-pad" data-testid="ppi-source">
+		<!-- Requirement and sources -->
+		<div class="kt-card kt-blueprint pln-card-pad" data-testid="ppi-sources">
 			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
 			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<div class="kt-card-title">Departmental source</div>
-			<div v-if="source" class="pln-field-grid">
-				<div class="pln-ro-field"><label>Department</label><div class="pln-val">{{ source.department }}</div></div>
-				<div class="pln-ro-field"><label>Source origin</label><div class="pln-val">{{ source.source_origin }}</div></div>
-				<div class="pln-ro-field"><label>Departmental plan</label><div class="pln-val">{{ source.departmental_plan_line }}</div></div>
-				<div v-if="source.need_reference_line" class="pln-ro-field">
-					<label>Accepted Need</label><div class="pln-val">{{ source.need_reference_line }}</div>
-				</div>
-				<div class="pln-ro-field"><label>Quantity</label><div class="pln-val">{{ source.quantity_display }}</div></div>
-				<div class="pln-ro-field"><label>Required by</label><div class="pln-val">{{ source.required_by_display }}</div></div>
-				<div class="pln-ro-field"><label>Procurement Budget Line</label><div class="pln-val">{{ source.budget_line_display }}</div></div>
-				<div class="pln-ro-field"><label>Planned value</label><div class="pln-val">{{ item.planned_value_display }}</div></div>
-			</div>
-			<p class="pln-helper-text" data-testid="ppi-price-index">{{ priceIndexLine }}</p>
-		</div>
-
-		<!-- combined sources -->
-		<div v-else class="kt-card kt-blueprint pln-card-pad" data-testid="ppi-sources">
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<div class="kt-card-title">Departmental sources</div>
+			<div class="kt-card-title">Requirement and sources</div>
 			<table class="pln-table">
 				<thead>
 					<tr>
-						<th>Requirement</th><th>Department</th><th>Source origin</th>
-						<th class="pln-num">Quantity</th><th>Required by</th>
-						<th>Procurement Budget Line</th><th class="pln-num">Amount</th>
+						<th>Source</th><th>Department</th>
+						<th class="pln-num">Quantity</th><th>Unit</th>
+						<th>Required by</th><th>Procurement Budget Line</th>
+						<th class="pln-num">{{ scopeLock.locked ? "Original allowance" : "Amount" }}</th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr v-for="(row, idx) in item.sources" :key="idx">
-						<td>{{ row.requirement }}</td>
+						<td>{{ row.need_reference_line || row.requirement }}</td>
 						<td>{{ row.department }}</td>
-						<td>{{ row.source_origin }}</td>
-						<td class="pln-num">{{ row.quantity_display }}</td>
+						<td class="pln-num">{{ row.quantity_number }}</td>
+						<td>{{ row.unit_label }}</td>
 						<td>{{ row.required_by_display }}</td>
-						<td>{{ row.budget_line_display?.split(" — ")[0] || row.budget_line }}</td>
+						<td>{{ row.budget_line_display }}</td>
 						<td class="pln-num">{{ row.amount_display }}</td>
 					</tr>
 				</tbody>
 			</table>
-			<p class="pln-table-caption">{{ item.sources_caption }}</p>
+			<p v-if="item.sources_caption" class="pln-table-caption">{{ item.sources_caption }}</p>
 			<p class="pln-helper-text" data-testid="ppi-price-index">{{ priceIndexLine }}</p>
 		</div>
 
-		<!-- Identity -->
-		<div class="kt-card kt-blueprint pln-card-pad" data-testid="ppi-identity">
+		<!-- Package details -->
+		<div class="kt-card kt-blueprint pln-card-pad" data-testid="ppi-package">
 			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
 			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<div class="kt-card-title">Identity</div>
+			<div class="kt-card-title">Package details</div>
 			<div class="pln-field-grid">
 				<div class="pln-field" style="grid-column: 1 / -1">
-					<label for="ppi-title">Plan Item title</label>
+					<label for="ppi-title">Package title</label>
 					<input id="ppi-title" type="text" class="kt-input" data-testid="ppi-title" v-model="form.title" :disabled="!item.mutable" />
 				</div>
 				<div class="pln-field" style="grid-column: 1 / -1">
-					<label for="ppi-description">Procurement description</label>
+					<label for="ppi-description">Package description</label>
 					<textarea id="ppi-description" class="kt-input" rows="3" data-testid="ppi-description" v-model="form.description" :disabled="!item.mutable"></textarea>
 				</div>
-				<div class="pln-ro-field">
-					<label>Requirement type</label><div class="pln-val">{{ identity.requirement_type }}</div>
-				</div>
-				<div v-if="item.combined" class="pln-field" style="grid-column: 1 / -1">
-					<label for="ppi-aggregation">Aggregation reason</label>
-					<textarea id="ppi-aggregation" class="kt-input" rows="2" data-testid="ppi-aggregation" v-model="form.aggregation_reason" :disabled="!item.mutable" :aria-invalid="invalid('aggregation_reason')"></textarea>
-				</div>
-			</div>
-		</div>
-
-		<!-- Classification and method -->
-		<div class="kt-card kt-blueprint pln-card-pad" data-testid="ppi-classification">
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<div class="kt-card-title">Classification and method</div>
-			<div class="pln-field-grid">
-				<div class="pln-field">
+				<div class="pln-field" style="grid-column: 1 / -1">
 					<label for="ppi-objective">Strategic Objective</label>
 					<select id="ppi-objective" class="kt-input" data-testid="ppi-objective" v-model="form.strategic_objective" :disabled="!item.mutable" :aria-invalid="invalid('strategic_objective')">
 						<option value="">Select…</option>
@@ -117,73 +102,112 @@
 							{{ row.reference ? `${row.reference} — ${row.title}` : row.title }}
 						</option>
 					</select>
+					<p class="pln-helper-text">{{ objectivePath }}</p>
 				</div>
-				<div class="pln-ro-field">
-					<label>Objective path</label><div class="pln-val">{{ objectivePath }}</div>
+				<div v-if="item.combined" class="pln-field" style="grid-column: 1 / -1">
+					<label for="ppi-aggregation">Aggregation reason</label>
+					<textarea id="ppi-aggregation" class="kt-input" rows="2" data-testid="ppi-aggregation" v-model="form.aggregation_reason" :disabled="!item.mutable" :aria-invalid="invalid('aggregation_reason')"></textarea>
+				</div>
+				<div class="pln-field" style="grid-column: 1 / -1">
+					<label for="ppi-estimate-basis">Estimate basis</label>
+					<textarea id="ppi-estimate-basis" class="kt-input" rows="2" data-testid="ppi-estimate-basis" v-model="form.estimate_basis" :disabled="!item.mutable" :aria-invalid="invalid('estimate_basis')"></textarea>
+					<p class="pln-helper-text">The market survey used and which incidental costs are included.</p>
 				</div>
 				<div class="pln-field">
-					<label for="ppi-method">Procurement method</label>
+					<label for="ppi-estimate-basis-reference">Estimate basis reference</label>
+					<input id="ppi-estimate-basis-reference" type="text" class="kt-input" data-testid="ppi-estimate-basis-reference" v-model="form.estimate_basis_reference" :disabled="!item.mutable" :aria-invalid="invalid('estimate_basis_reference')" />
+				</div>
+			</div>
+			<div class="pln-facts-row" style="margin-top: 12px">
+				<div class="pln-fact"><span class="kt-label">Quantity</span><span class="pln-fact-val">{{ item.total_quantity_display }}</span></div>
+				<div class="pln-fact"><span class="kt-label">Value</span><span class="pln-fact-val">{{ item.planned_value_display }}</span></div>
+			</div>
+		</div>
+
+		<!-- Method and eligibility -->
+		<div v-if="!classification.reference_available" class="kt-card kt-blueprint pln-card-pad" data-testid="ppi-method-config-missing" style="border-color: var(--status-attention, #b45309)">
+			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+			<div class="kt-card-title">Method and eligibility</div>
+			<p class="pln-notice-title"><span class="kt-status is-attention">Procurement rules are not configured</span></p>
+			<p>Required configuration is missing or incomplete. Draft work can continue where permitted; the affected submission is unavailable.</p>
+		</div>
+		<div v-else class="kt-card kt-blueprint pln-card-pad" data-testid="ppi-method-card">
+			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+			<div class="kt-card-title">Method and eligibility</div>
+			<div class="pln-facts-row" style="margin-bottom: 12px">
+				<div class="pln-field">
+					<label for="ppi-method">Method</label>
 					<select id="ppi-method" class="kt-input" data-testid="ppi-method" v-model="form.procurement_method" :disabled="!item.mutable" :aria-invalid="invalid('procurement_method')">
 						<option v-for="method in methodOptions" :key="method" :value="method">{{ method }}</option>
 					</select>
 				</div>
-				<div class="pln-ro-field">
-					<label>Value band</label><div class="pln-val" data-testid="ppi-value-band">{{ classification.value_band }}</div>
+				<div class="pln-fact"><span class="kt-label">Procedure profile</span><span class="pln-fact-val">{{ procedureProfileLine }}</span></div>
+				<div v-if="methodProfile.conditions?.length" class="pln-fact">
+					<span class="kt-label">Conditions</span>
+					<span class="kt-status" :class="methodProfile.evidence_complete ? 'is-live' : 'is-attention'">{{ methodProfile.evidence_complete ? "Complete" : "Evidence required" }}</span>
+				</div>
+			</div>
+			<template v-if="methodProfile.conditions?.length">
+				<h4 class="pln-section-label">Eligibility conditions</h4>
+				<table class="pln-table" data-testid="ppi-conditions">
+					<thead><tr><th>Condition</th><th>Value</th></tr></thead>
+					<tbody>
+						<tr v-for="row in methodProfile.conditions" :key="row.condition_id">
+							<td>{{ row.description }}</td>
+							<td>
+								<span v-if="row.kind === 'Known fact'" class="kt-status" :class="row.result === 'Met' ? 'is-live' : 'is-critical'">{{ row.result }}</span>
+								<span v-else class="kt-status" :class="row.result === 'Declared' ? 'is-live' : 'is-attention'">{{ row.result }}</span>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</template>
+			<div v-for="row in declarationConditions" :key="row.condition_id" class="pln-field-grid" style="margin-top: 12px">
+				<div class="pln-field" style="grid-column: 1 / -1">
+					<label :for="`ppi-evidence-${row.condition_id}`">{{ (row.description || "").replace(/\.$/, "") }}</label>
+					<input
+						:id="`ppi-evidence-${row.condition_id}`" type="text" class="kt-input"
+						:data-testid="`ppi-evidence-${row.condition_id}`"
+						v-model="evidenceForm[row.condition_id].evidence_reference"
+						:disabled="!item.mutable"
+					/>
+				</div>
+				<div v-if="row.authorisation_actor" class="pln-fact">
+					<span class="kt-label">Required specific authorisation</span><span class="pln-fact-val">{{ row.authorisation_actor }}</span>
+				</div>
+				<div v-if="row.authorisation_actor" class="pln-field">
+					<label :for="`ppi-authorisation-${row.condition_id}`">Authorisation reference</label>
+					<input
+						:id="`ppi-authorisation-${row.condition_id}`" type="text" class="kt-input"
+						:data-testid="`ppi-authorisation-${row.condition_id}`"
+						v-model="evidenceForm[row.condition_id].authorisation_reference"
+						:disabled="!item.mutable"
+					/>
 				</div>
 			</div>
 		</div>
 
-		<!-- Preference and structure -->
+		<!-- Reservation and structure -->
 		<div class="kt-card kt-blueprint pln-card-pad" data-testid="ppi-preference">
 			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
 			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<div class="kt-card-title">Preference and structure</div>
-			<div class="pln-field-grid">
-				<div class="pln-field" style="grid-column: 1 / -1">
-					<label for="ppi-reservation">Preference and reservation</label>
+			<div class="kt-card-title">{{ preference.lotting_indicator === "Packaged into lots" ? "Structure — Packaged into lots" : "Reservation and structure" }}</div>
+			<div class="pln-facts-row" style="margin-bottom: 12px">
+				<div class="pln-field" style="max-width: 220px">
+					<label for="ppi-reservation">Planned reservation</label>
 					<select id="ppi-reservation" class="kt-input" data-testid="ppi-reservation" v-model="form.reservation_category" :disabled="!item.mutable" :aria-invalid="invalid('reservation_category')">
 						<option v-for="category in reservationOptions" :key="category" :value="category">{{ category }}</option>
 					</select>
-					<p class="pln-helper-text">{{ preference.helper }}</p>
 				</div>
-				<div v-if="reasonRequired" class="pln-field" style="grid-column: 1 / -1">
-					<label for="ppi-reservation-reason">Reservation reason</label>
-					<textarea id="ppi-reservation-reason" class="kt-input" rows="2" data-testid="ppi-reservation-reason" v-model="form.reservation_category_reason" :disabled="!item.mutable" :aria-invalid="invalid('reservation_category_reason')"></textarea>
-					<p class="pln-helper-text">Why this scheme rather than {{ preference.highest_advantage }}, the highest-advantage scheme published for this year.</p>
-				</div>
-				<div v-if="preference.county_control_available" class="pln-field" style="grid-column: 1 / -1">
-					<label class="pln-checkbox-row">
-						<input type="checkbox" data-testid="ppi-county" v-model="form.county_resident_reservation" :disabled="!item.mutable" />
-						Reserved for county-resident tenderers
-					</label>
-				</div>
-				<div class="pln-field">
-					<label for="ppi-horizon">Plan horizon</label>
-					<select id="ppi-horizon" class="kt-input" data-testid="ppi-horizon" v-model="form.plan_horizon" :disabled="!item.mutable">
-						<option value="Single year">Single year</option>
-						<option value="Multi-year">Multi-year</option>
-					</select>
-				</div>
-				<div class="pln-field">
-					<label for="ppi-aggregation-indicator">Aggregation</label>
-					<select id="ppi-aggregation-indicator" class="kt-input" data-testid="ppi-aggregation-indicator" v-model="form.aggregation_indicator" :disabled="!item.mutable">
-						<option value="Not aggregated">Not aggregated</option>
-						<option value="Aggregated into this package">Aggregated into this package</option>
-						<option value="Common-user item arrangement">Common-user item arrangement</option>
-					</select>
-				</div>
-				<div class="pln-field">
-					<label for="ppi-lotting">Lotting</label>
-					<select id="ppi-lotting" class="kt-input" data-testid="ppi-lotting" v-model="form.lotting_indicator" :disabled="!item.mutable">
-						<option value="Single lot">Single lot</option>
-						<option value="Packaged into lots">Packaged into lots</option>
-					</select>
-				</div>
-				<div v-if="form.plan_horizon === 'Multi-year'" class="pln-field" style="grid-column: 1 / -1">
-					<label for="ppi-multi-year">Multi-year justification</label>
-					<textarea id="ppi-multi-year" class="kt-input" rows="2" data-testid="ppi-multi-year" v-model="form.multi_year_justification" :disabled="!item.mutable" :aria-invalid="invalid('multi_year_justification')"></textarea>
-				</div>
-				<div v-if="form.lotting_indicator === 'Packaged into lots'" class="pln-field">
+				<div class="pln-fact"><span class="kt-label">Mandatory restrictions</span><span class="pln-fact-val">{{ preference.mandatory_restrictions_line }}</span></div>
+				<div class="pln-fact"><span class="kt-label">Plan horizon</span><span class="pln-fact-val">{{ preference.plan_horizon }}</span></div>
+			</div>
+			<div class="pln-facts-row">
+				<div class="pln-fact"><span class="kt-label">Aggregation</span><span class="pln-fact-val">{{ preference.aggregation_indicator }}</span></div>
+				<div class="pln-fact"><span class="kt-label">Lotting</span><span class="pln-fact-val">{{ preference.lotting_indicator }}</span></div>
+				<div v-if="preference.lotting_indicator === 'Packaged into lots'" class="pln-field" style="max-width: 120px">
 					<label for="ppi-lot-count">Lot count</label>
 					<input id="ppi-lot-count" type="number" min="2" step="1" class="kt-input" data-testid="ppi-lot-count" v-model="form.lot_count" :disabled="!item.mutable" :aria-invalid="invalid('lot_count')" />
 				</div>
@@ -206,7 +230,7 @@
 			</div>
 
 			<table class="pln-table pln-baseline-table" style="margin-top: 16px" data-testid="ppi-baseline-table">
-				<thead><tr><th>Milestone</th><th>Baseline date</th></tr></thead>
+				<thead><tr><th>Milestone</th><th>Baseline</th></tr></thead>
 				<tbody>
 					<tr v-for="row in computedRows" :key="row.milestone" :data-testid="`ppi-baseline-${row.milestone}`">
 						<td>{{ row.label }}</td>
@@ -214,10 +238,12 @@
 					</tr>
 				</tbody>
 			</table>
-			<p class="pln-helper-text">
-				Delivery completion is the department's own required-by date. The computed contract
-				signing date must leave a reasonable delivery period before it.
-			</p>
+			<div class="pln-facts-row" style="margin: 12px 0">
+				<div class="pln-fact"><span class="kt-label">Estimated delivery / implementation period</span><span class="pln-fact-val">{{ deliveryPeriodDisplay }}</span></div>
+				<div class="pln-fact"><span class="kt-label">Estimated completion</span><span class="pln-fact-val">{{ baseline.estimated_completion_display || display(computedDates.delivery_completion) }}</span></div>
+				<div class="pln-fact"><span class="kt-label">Required by</span><span class="pln-fact-val">{{ requiredByDisplay }}</span></div>
+				<div class="pln-fact"><span class="kt-label">Outcome</span><span class="kt-status" :class="deliveryBoundaryOk ? 'is-live' : 'is-critical'">{{ deliveryBoundaryOk ? "Within the required-by date" : "Estimated completion exceeds the required-by date" }}</span></div>
+			</div>
 			<p v-if="!deliveryBoundaryOk" class="pln-dialog-error" data-testid="ppi-boundary-warning">
 				The computed contract signing date leaves too little time before the required-by date. Bring the target invitation date forward or shorten a period.
 			</p>
@@ -225,7 +251,7 @@
 			<div class="pln-disclosure">
 				<button
 					type="button"
-					class="pln-disclosure-trigger"
+					class="pln-disclosure-trigger btn btn-ghost"
 					data-testid="ppi-adjust-periods"
 					:aria-expanded="periodsOpen ? 'true' : 'false'"
 					@click="periodsOpen = !periodsOpen"
@@ -274,6 +300,7 @@
 
 <script setup>
 import { computed, reactive, ref, watch } from "vue";
+import { formatDate } from "../data/format.js";
 
 const props = defineProps({
 	item: { type: Object, default: () => ({}) },
@@ -284,11 +311,11 @@ const props = defineProps({
 const emit = defineEmits(["save", "dissolve", "back"]);
 
 const PERIODS = [
-	{ key: "tendering_period_days", label: "Tendering period", floor: "tendering_period_days" },
-	{ key: "evaluation_period_days", label: "Evaluation period", ceiling: "evaluation_period_days" },
+	{ key: "tendering_period_days", label: "Tendering", floor: "tendering_period_days" },
+	{ key: "evaluation_period_days", label: "Evaluation", ceiling: "evaluation_period_days" },
 	{ key: "award_approval_buffer_days", label: "Award approval buffer", assumption: true },
 	{ key: "notification_buffer_days", label: "Notification buffer", assumption: true },
-	{ key: "standstill_period_days", label: "Standstill period", floor: "standstill_period_days" },
+	{ key: "standstill_period_days", label: "Standstill", floor: "standstill_period_days" },
 ];
 
 const MILESTONES = [
@@ -303,14 +330,33 @@ const MILESTONES = [
 
 const MIN_IMPLEMENTATION_ALLOWANCE_DAYS = 7;
 
-const source = computed(() => (props.item.sources || [])[0] || null);
 const identity = computed(() => props.item.identity || {});
 const classification = computed(() => props.item.classification || {});
+const methodProfile = computed(() => classification.value.method_profile || {});
 const preference = computed(() => props.item.preference || {});
 const baseline = computed(() => props.item.baseline || {});
+const scopeLock = computed(() => props.item.scope_lock || {});
 const periodsOpen = ref(false);
 
+const badgeClass = computed(() => (props.item.is_active ? "is-live" : "is-draft"));
+const scopeLockSinceDisplay = computed(() => formatDate(scopeLock.value.since));
+
 const priceIndexLine = computed(() => (props.item.market_price_index || {}).helper || "");
+const requiredByDisplay = computed(() => (props.item.sources || [])[0]?.required_by_display || "—");
+const deliveryPeriodDisplay = computed(() => {
+	const days = baseline.value.estimated_delivery_period_days;
+	return days == null ? "—" : `${days} Calendar days`;
+});
+
+const procedureProfileLine = computed(() => {
+	const profile = methodProfile.value;
+	return profile.found ? `${profile.profile}, Version ${profile.version_number}` : "";
+});
+
+// §12.8 — "Do not invent universal checkboxes for every method." Evidence
+// inputs render only for the Declaration-kind conditions this method's own
+// profile actually names, never a generic control offered for every method.
+const declarationConditions = computed(() => (methodProfile.value.conditions || []).filter((c) => c.kind !== "Known fact"));
 
 const objectivePath = computed(() => {
 	const selected = (classification.value.strategic_objectives || []).find((row) => row.id === form.strategic_objective);
@@ -330,23 +376,15 @@ const reservationOptions = computed(() => {
 	return categories.includes("None") ? categories : ["None", ...categories];
 });
 
-const reasonRequired = computed(
-	() => form.reservation_category && form.reservation_category !== "None" && preference.value.highest_advantage && form.reservation_category !== preference.value.highest_advantage
-);
-
 const form = reactive({
 	title: "",
 	description: "",
 	strategic_objective: "",
 	aggregation_reason: "",
+	estimate_basis: "",
+	estimate_basis_reference: "",
 	procurement_method: "",
 	reservation_category: "None",
-	reservation_category_reason: "",
-	county_resident_reservation: false,
-	plan_horizon: "Single year",
-	multi_year_justification: "",
-	aggregation_indicator: "Not aggregated",
-	lotting_indicator: "Single lot",
 	lot_count: null,
 	baseline_invitation_date: "",
 	tendering_period_days: null,
@@ -355,6 +393,8 @@ const form = reactive({
 	notification_buffer_days: null,
 	standstill_period_days: null,
 });
+
+const evidenceForm = reactive({});
 
 function hydrate() {
 	const item = props.item || {};
@@ -369,19 +409,25 @@ function hydrate() {
 		description: ident.description || "",
 		strategic_objective: cls.strategic_objective || "",
 		aggregation_reason: ident.aggregation_reason || "",
+		estimate_basis: cls.estimate_basis || "",
+		estimate_basis_reference: cls.estimate_basis_reference || "",
 		procurement_method: cls.procurement_method || cls.proposed_method || "",
 		reservation_category: pref.reservation_category || "None",
-		reservation_category_reason: pref.reservation_category_reason || "",
-		county_resident_reservation: !!pref.county_resident_reservation,
-		plan_horizon: pref.plan_horizon || "Single year",
-		multi_year_justification: pref.multi_year_justification || "",
-		aggregation_indicator: pref.aggregation_indicator || (item.combined ? "Aggregated into this package" : "Not aggregated"),
-		lotting_indicator: pref.lotting_indicator || "Single lot",
 		lot_count: pref.lot_count || null,
 		baseline_invitation_date: base.target_invitation_date || "",
 	});
 	for (const period of PERIODS) {
 		form[period.key] = periods[period.key] || defaults[period.key] || 0;
+	}
+	for (const key of Object.keys(evidenceForm)) delete evidenceForm[key];
+	const existing = new Map((cls.method_condition_evidence || []).map((row) => [row.condition_id, row]));
+	for (const condition of (cls.method_profile || {}).conditions || []) {
+		if (condition.kind === "Known fact") continue;
+		const given = existing.get(condition.condition_id) || {};
+		evidenceForm[condition.condition_id] = {
+			evidence_reference: given.evidence_reference || "",
+			authorisation_reference: given.authorisation_reference || "",
+		};
 	}
 	periodsOpen.value = false;
 }
@@ -484,19 +530,19 @@ function save() {
 		title: form.title,
 		description: form.description,
 		strategic_objective: form.strategic_objective,
+		estimate_basis: form.estimate_basis,
+		estimate_basis_reference: form.estimate_basis_reference,
 		procurement_method: form.procurement_method,
 		reservation_category: form.reservation_category,
-		plan_horizon: form.plan_horizon,
-		aggregation_indicator: form.aggregation_indicator,
-		lotting_indicator: form.lotting_indicator,
 		baseline_invitation_date: form.baseline_invitation_date,
 	};
 	for (const period of PERIODS) values[period.key] = Number(form[period.key]);
 	if (props.item.combined) values.aggregation_reason = form.aggregation_reason;
-	if (reasonRequired.value) values.reservation_category_reason = form.reservation_category_reason;
-	if (preference.value.county_control_available) values.county_resident_reservation = form.county_resident_reservation ? 1 : 0;
-	if (form.plan_horizon === "Multi-year") values.multi_year_justification = form.multi_year_justification;
-	if (form.lotting_indicator === "Packaged into lots") values.lot_count = Number(form.lot_count) || 0;
+	if (preference.value.lotting_indicator === "Packaged into lots") values.lot_count = Number(form.lot_count) || 0;
+	const evidenceRows = Object.entries(evidenceForm)
+		.filter(([, row]) => row.evidence_reference || row.authorisation_reference)
+		.map(([condition_id, row]) => ({ condition_id, ...row }));
+	if (evidenceRows.length) values.method_condition_evidence = evidenceRows;
 	emit("save", values);
 }
 </script>

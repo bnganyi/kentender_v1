@@ -1,76 +1,75 @@
 <script setup>
-import { ref, computed, onActivated, onMounted } from "vue";
+import { ref, computed, onActivated, onMounted, watch } from "vue";
 import { useRouteState } from "../../budget_shared/composables/useRouteState.js";
 import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
 import { useFiscalYearFilter } from "../../budget_shared/composables/useFiscalYearFilter.js";
-import { formatKes } from "../../budget_shared/data/formatKes.js";
-import { getBudgetWorkspace } from "../data/budgetApi.js";
+import { formatKes, mintKey } from "../../budget_shared/data/formatKes.js";
+import KtErrorBanner from "./KtErrorBanner.vue";
+import { getBudgetWorkspace, createBudgetSuccessorVersion } from "../data/budgetApi.js";
 
-const { go } = useRouteState("budget-funding");
+// BUD-UI-01 — BUD-DES-01 / 01A / 01B / 16 (BUD-CHG-001 v1.9 §11.1, §11.1A,
+// §11.1B, §11.16, §12.1). The server decides the state and the permitted
+// actions; this screen only composes them.
+const { go, epoch } = useRouteState("budget-funding");
 
 const railTrail = computed(() => [
 	{ label: __("Home"), route: ["Workspaces", "Procurement Home"] },
 	{ label: __("Budget & Funding") },
 ]);
 const railEl = ref(null);
-// BUD-CHG-001 v1.3 Phase 4/7 — one site is one Procuring Entity: no global
-// PE switcher on this rail any more.
 usePageRail(railEl, railTrail, { showPeSwitcher: false });
 
 const fyFilter = useFiscalYearFilter();
+const guard = kentender_core.desk_page.createSequenceGuard();
 
 const loading = ref(true);
+const refreshing = ref(false);
 const forbidden = ref(null);
 const serverError = ref(false);
 const workspace = ref(null);
-let refreshSeq = 0;
+const actingError = ref(null);
 
 async function refresh(opts) {
-	const quiet = !!(opts && opts.quiet === true);
-	const seq = ++refreshSeq;
-	if (!quiet) loading.value = true;
+	const quiet = !!(opts && opts.quiet === true) && !!workspace.value;
+	const token = guard.next();
+	if (quiet) refreshing.value = true;
+	else loading.value = true;
 	forbidden.value = null;
 	serverError.value = false;
 	try {
 		const result = await getBudgetWorkspace(fyFilter.selected.value);
-		if (seq !== refreshSeq) return;
+		if (!guard.isCurrent(token)) return;
 		if (result && result.outcome === "FORBIDDEN") {
 			workspace.value = null;
 			forbidden.value = result.forbidden;
 		} else if (result && result.selection_required) {
-			// No year was sent — the "Select a fiscal year" state renders.
 			workspace.value = null;
 		} else {
 			workspace.value = result;
 		}
 	} catch (e) {
-		if (seq === refreshSeq) serverError.value = true;
+		if (guard.isCurrent(token)) serverError.value = true;
 	} finally {
-		if (seq === refreshSeq) loading.value = false;
+		if (guard.isCurrent(token)) {
+			loading.value = false;
+			refreshing.value = false;
+		}
 	}
 }
 
 onMounted(async () => {
-	// The remembered Fiscal Year must be known *before* the first workspace
-	// call: running the two concurrently sent an empty year, and a direct
-	// load with a remembered year rendered "No approved procurement budget
-	// is registered for —." with no action instead of that year's budget
-	// (confirmed live, 2026-09-06). KT-STD-001 v1.2 §3A.1 still holds — the
-	// Forbidden verdict comes back from this same call whether or not a
-	// year is selected, so it renders before the year selector either way.
+	// The remembered Fiscal Year must be known before the first workspace
+	// call (§12.1: the filter is remembered only with a visible reset).
 	await fyFilter.load();
 	await refresh();
 });
-
-// KeepAlive brings this instance back with its rows still on screen; the
-// year may have been changed on the editor screen (shared filter), so
-// re-read it and revalidate in place. The first activation is the mount.
 let activations = 0;
 onActivated(async () => {
 	if (activations++ === 0) return;
 	await fyFilter.load();
 	refresh({ quiet: true });
 });
+watch(epoch, () => refresh({ quiet: true }));
 
 async function onSelectFy(fy) {
 	fyFilter.select(fy);
@@ -81,295 +80,300 @@ async function onSelectFy(fy) {
 	await refresh();
 }
 
-function openBudget() {
-	go(workspace.value.budget.code);
-}
-function openLine(line) {
-	go("line", line.code);
-}
-function openPending() {
-	const pending = workspace.value.pending_version;
-	if (pending.action === "open_task") go("review", pending.id);
-	// Budget Version references are deterministic (§15.3: "{budget_reference}-V{n}")
-	// — build the editor route from the Budget's own code, not the pending
-	// version's id, which belongs in the review route above instead.
-	else go(workspace.value.budget.code, "version", pending.version_number, "edit");
-}
+const state = computed(() => workspace.value?.state || "");
+const pending = computed(() => workspace.value?.pending_version || null);
+const actions = computed(() => workspace.value?.available_actions || []);
+const currency = computed(() => workspace.value?.budget?.currency || "KES");
+const hasCurrent = computed(() => !!workspace.value?.version);
+const isClosed = computed(() => state.value === "closed");
+const canRecord = computed(() => actions.value.includes("record_allocation"));
 
-// Copy and button label follow the server-decided action (AGENTS.md §6.2):
-// a Submitted version is awaiting the Approver's decision, not "in progress".
+const ACTION_LABELS = {
+	record_allocation: __("Record approved allocation"),
+	continue_draft: __("Continue draft"),
+	view_draft: __("View draft"),
+	view_submission: __("View submission"),
+	review: __("Review"),
+	continue_update: __("Continue update"),
+	correct_and_resubmit: __("Correct and resubmit"),
+	view_version_readonly: __("View version (read-only)"),
+	view_budget: __("View budget"),
+	update_allocation: __("Update registered allocation"),
+};
+
+// §11.1B — the main message per state; the server's action is the button.
 const pendingCopy = computed(() => {
-	const pending = workspace.value?.pending_version;
-	const fy = workspace.value?.fiscal_year?.label || "—";
-	if (!pending) return null;
-	const successor = pending.is_successor;
-	if (pending.status === "Submitted for approval") {
+	const p = pending.value;
+	const fy = workspace.value?.fiscal_year?.label || "";
+	if (!p) return null;
+	if (p.is_returned) {
 		return {
-			heading: successor
-				? __("Revision Version {0} is awaiting approval for {1}.", [pending.version_number, fy])
-				: __("A budget version is awaiting approval for {0}.", [fy]),
-			body:
-				pending.action === "open_task"
-					? __("Review the submitted version, then approve or return it.")
-					: __("The submitted version is read-only until the Budget Approver decides it."),
-			label: pending.action === "open_task" ? __("Open approval task") : __("View submission"),
+			heading: __("Changes requested"),
+			status: __("Draft"),
+			statusClass: "is-attention",
+			body: p.is_successor
+				? __("Correct the returned update and submit it again. The current allocation stays in use; the earlier submission and its document are retained.")
+				: __("Correct the returned allocation and submit it again. The earlier submission and its document are retained."),
+			whoLabel: __("Submitted by"),
+			whenLabel: __("Returned"),
+			when: p.return?.at_display || "",
+		};
+	}
+	if (p.status === "Submitted for approval") {
+		return {
+			heading: p.is_successor ? __("Allocation update awaiting Budget Approver review") : __("Awaiting Budget Approver review"),
+			status: __("Submitted for approval"),
+			statusClass: "is-pending",
+			body: p.is_successor
+				? __("The current allocation stays in use. Version {0} is read-only until the Budget Approver decides it.", [p.version_number])
+				: __("No allocation is current in KenTender yet. The submitted allocation is read-only until the Budget Approver decides it."),
+			whoLabel: __("Submitted by"),
+			whenLabel: __("Submitted"),
+			when: p.submitted_at_display || "",
 		};
 	}
 	return {
-		heading: successor
-			? __("A Draft revision (Version {0}) is in progress for {1}.", [pending.version_number, fy])
-			: __("A Draft budget is in progress for {0}.", [fy]),
-		body: successor
-			? __("Continue the draft revision before it can be submitted for approval.")
-			: __("Continue the draft before it can go Active."),
-		label: __("Open draft"),
+		heading: p.is_successor ? __("Update in progress") : __("Allocation draft"),
+		status: __("Draft"),
+		statusClass: "is-draft",
+		body: p.is_successor
+			? __("The current allocation stays in use until this update is approved.")
+			: __("Continue recording the approved allocation for FY {0}. No allocation is current in KenTender yet.", [fy]),
+		whoLabel: __("Created by"),
+		whenLabel: __("Last saved"),
+		when: p.last_saved_display || "",
 	};
 });
-function registerBudget() {
-	go("new");
+const pendingAction = computed(() => (pending.value ? pending.value.action : null));
+const pendingActionLabel = computed(() => (pendingAction.value ? ACTION_LABELS[pendingAction.value] : ""));
+const pendingIsPrimary = computed(() => ["continue_draft", "correct_and_resubmit", "review"].includes(pendingAction.value));
+
+const updating = ref(false);
+async function runAction(action) {
+	const ws = workspace.value;
+	const p = ws?.pending_version;
+	actingError.value = null;
+	if (action === "record_allocation") return go("new");
+	if (action === "view_budget") return go(ws.budget.code);
+	if (action === "review" && p) return go("review", p.id);
+	if (action === "update_allocation") return updateAllocation();
+	if (p) return go(ws.budget.code, "version", String(p.version_number), "edit");
+}
+
+// §12.3 — one server-side copy of the Active Version; a second open
+// successor is refused and the existing route is returned instead.
+async function updateAllocation() {
+	if (updating.value) return;
+	updating.value = true;
+	try {
+		const result = await createBudgetSuccessorVersion(workspace.value.budget.code, { revision_type: "Transfer", idempotency_key: mintKey("successor") });
+		if (result.ok) {
+			go(workspace.value.budget.code, "version", String(result.version.version_number), "edit");
+			return;
+		}
+		if (result.route) {
+			go(...result.route.slice(1));
+			return;
+		}
+		actingError.value = Object.values(result.errors || {}).join(" ") || __("Could not start the update.");
+	} catch (e) {
+		actingError.value = e.message || String(e);
+	} finally {
+		updating.value = false;
+	}
+}
+
+function openLine(line) {
+	go("line", line.code);
 }
 </script>
 
 <template>
-	<div class="kt-industry">
+	<div class="kt-industry" data-testid="bud-ws" :data-loading="loading ? 'true' : 'false'" :data-refreshing="refreshing ? 'true' : 'false'">
 		<div ref="railEl" class="kt-rail-mount"></div>
 
-		<div class="kt-shell">
+		<!-- BUD-DES-16 Forbidden: only the inline panel — no header, filter or protected content painted. -->
+		<div v-if="!loading && forbidden" class="kt-shell">
+			<div class="kt-card kt-blueprint kt-empty" data-testid="bud-forbidden">
+				<h2>{{ __(forbidden.heading) }}</h2>
+				<p class="kt-muted">{{ __(forbidden.text) }}</p>
+			</div>
+		</div>
+
+		<div v-else class="kt-shell">
 			<header style="margin-bottom: 4px">
 				<span class="kt-eyebrow">{{ __("BUDGET & FUNDING") }}</span>
 				<h1 style="margin: 0 0 8px 0; font-size: 32px">{{ __("Budget & Funding") }}</h1>
-				<p class="kt-page-lede">
-					{{ __("View the registered procurement budget and the funding position used by Procurement Planning.") }}
-				</p>
+				<p class="kt-page-lede">{{ __("View the registered procurement budget and the funding position used by Procurement Planning.") }}</p>
 			</header>
 
-			<!-- Filter row (BUD-DES-01) — a local view filter, never a gate: it
-			     grants nothing and is remembered only with this visible reset. -->
+			<!-- Filter row (BUD-DES-01) — a local view filter, never a gate. -->
 			<div style="display: flex; align-items: center; gap: 10px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--kt-color-divider)">
-				<label class="kt-field-label" style="margin: 0" for="bud-ws-fy">{{ __("Fiscal Year") }}</label>
-				<select
-					id="bud-ws-fy"
-					class="kt-input"
-					style="width: auto; min-width: 160px"
-					:disabled="fyFilter.loading.value"
-					:value="fyFilter.selected.value"
-					data-testid="budget-fy-filter"
-					@change="onSelectFy($event.target.value)"
-				>
-					<option value="" disabled>{{ __("Select a fiscal year") }}</option>
+				<label class="kt-label" style="margin: 0" for="bud-ws-fy">{{ __("Financial year") }}</label>
+				<select id="bud-ws-fy" class="kt-input" style="width: auto; min-width: 160px" :disabled="fyFilter.loading.value" :value="fyFilter.selected.value" data-testid="budget-fy-filter" @change="onSelectFy($event.target.value)">
+					<option value="" disabled>{{ __("Select a financial year") }}</option>
 					<option v-for="fy in fyFilter.fiscalYears.value" :key="fy" :value="fy">{{ fy }}</option>
 				</select>
 			</div>
 
-			<!-- Loading (BUD-DES-16) -->
+			<KtErrorBanner :message="actingError" style="margin-bottom: 16px" @dismiss="actingError = null" />
+
+			<!-- Loading (BUD-DES-16): one skeleton current-budget card, four position cards, two rows. -->
 			<template v-if="loading">
-				<div class="kt-card kt-blueprint">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<div class="kt-skel" style="width: 280px; height: 20px; margin-bottom: 16px"></div>
-					<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px">
-						<div v-for="i in 4" :key="i">
-							<div class="kt-skel" style="width: 70%; height: 11px; margin-bottom: 8px"></div>
-							<div class="kt-skel" style="width: 85%; height: 16px"></div>
-						</div>
-					</div>
+				<div class="kt-card kt-blueprint" data-testid="bud-ws-skeleton">
+					<div class="kt-skel" style="width: 300px; height: 16px; margin-bottom: 14px"></div>
+					<div class="kt-skel" style="width: 200px; height: 12px"></div>
 				</div>
-				<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px">
-					<div v-for="i in 4" :key="i" class="kt-card kt-blueprint">
-						<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-						<div class="kt-skel" style="width: 60%; height: 11px; margin-bottom: 10px"></div>
-						<div class="kt-skel" style="width: 80%; height: 26px"></div>
-					</div>
+				<div class="kt-kpi-row" style="margin-bottom: 16px">
+					<div v-for="i in 4" :key="i" class="kt-kpi-card"><div class="kt-skel" style="width: 70%; height: 14px"></div></div>
 				</div>
 				<div class="kt-card kt-blueprint">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<div class="kt-skel" style="width: 140px; height: 16px; margin-bottom: 16px"></div>
-					<div v-for="i in 2" :key="i" style="display: flex; gap: 24px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--kt-color-divider)">
-						<div class="kt-skel" style="width: 220px; height: 14px"></div>
-						<div class="kt-skel" style="width: 140px; height: 14px"></div>
-						<div class="kt-skel" style="width: 90px; height: 14px; margin-left: auto"></div>
-						<div class="kt-skel" style="width: 90px; height: 14px"></div>
-						<div class="kt-skel" style="width: 90px; height: 14px"></div>
-						<div class="kt-skel" style="width: 90px; height: 14px"></div>
-					</div>
+					<div class="kt-skel" style="height: 14px; margin-bottom: 16px"></div>
+					<div class="kt-skel" style="height: 14px"></div>
 				</div>
 			</template>
 
-			<!-- Forbidden (BUD-DES-16) -->
-			<div v-else-if="forbidden" class="kt-card kt-blueprint kt-empty" data-testid="bud-forbidden">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--kt-color-accent-800)">
-					<rect x="5" y="11" width="14" height="10" rx="1" /><path d="M8 11V7a4 4 0 0 1 8 0v4" />
-				</svg>
-				<h2>{{ __(forbidden.heading) }}</h2>
-				<p class="kt-muted">{{ __(forbidden.text) }}</p>
-			</div>
-
 			<!-- Server error (BUD-DES-16) -->
-			<div v-else-if="serverError" class="kt-card kt-blueprint kt-empty">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: oklch(0.45 0.13 28)">
-					<path d="M12 9v4" /><path d="M12 17h.01" /><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
-				</svg>
+			<div v-else-if="serverError" class="kt-card kt-blueprint kt-empty" data-testid="bud-ws-server-error">
 				<h2>{{ __("Budget & Funding could not be loaded.") }}</h2>
 				<p class="kt-muted">{{ __("Try again. If the problem continues, contact KenTender support.") }}</p>
-				<button type="button" class="kt-btn kt-btn-primary" @click="refresh">{{ __("Try again") }}</button>
+				<button type="button" class="kt-btn kt-btn-primary" @click="refresh()">{{ __("Try again") }}</button>
 			</div>
 
-			<!-- No fiscal year selected yet — never auto-picked (§12.1). -->
+			<!-- No financial year selected yet — never auto-picked (§12.1). -->
 			<div v-else-if="!fyFilter.selected.value" class="kt-card kt-blueprint kt-empty" data-testid="budget-select-fy">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<h2>{{ __("Select a fiscal year to view its procurement budget.") }}</h2>
+				<h2>{{ __("Select a financial year to view its procurement budget.") }}</h2>
 			</div>
 
-			<!-- No baseline (BUD-DES-16) -->
-			<div v-else-if="!workspace || !workspace.has_budget" class="kt-card kt-blueprint kt-empty" data-testid="budget-no-baseline">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--kt-color-accent-800)">
-					<rect x="3" y="4" width="18" height="16" rx="1" /><path d="M3 9h18" /><path d="M8 2v4" /><path d="M16 2v4" />
-				</svg>
-				<h2>{{ __("No approved procurement budget is registered for {0}.", [workspace.fiscal_year?.label || "—"]) }}</h2>
-				<p class="kt-muted">{{ __("Register the externally approved budget before Procurement Planning requests funding confirmation.") }}</p>
-				<button v-if="workspace.can_register" type="button" class="kt-btn kt-btn-primary" @click="registerBudget" data-testid="budget-register-btn">
-					{{ __("Register approved budget") }}
+			<!-- No record (BUD-DES-16 No baseline) -->
+			<div v-else-if="!workspace || state === 'no_record'" class="kt-card kt-blueprint kt-empty" data-testid="budget-no-baseline">
+				<h2>{{ __("No procurement allocation has been recorded for FY {0}.", [workspace?.fiscal_year?.label || fyFilter.selected.value]) }}</h2>
+				<p class="kt-muted">{{ __("Record the externally approved allocation for this financial year.") }}</p>
+				<button v-if="canRecord" type="button" class="kt-btn kt-btn-primary" data-testid="budget-register-btn" @click="runAction('record_allocation')">
+					{{ ACTION_LABELS.record_allocation }}
 				</button>
 			</div>
 
-			<!-- Budget exists but nothing Active yet — no artboard covers this
-			     directly; reuses the empty-state shell with a status-appropriate
-			     action instead of "Register" (registering again would violate
-			     the one-Budget-per-fiscal-year rule). A reader with no edit/
-			     approve capability never sees this branch: the server omits
-			     pending_version entirely for them, so they fall through to the
-			     "No baseline" branch above instead. -->
-			<div v-else-if="!workspace.version" class="kt-card kt-blueprint kt-empty" data-testid="budget-pending-draft">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--kt-color-accent-800)">
-					<rect x="3" y="4" width="18" height="16" rx="1" /><path d="M3 9h18" /><path d="M8 2v4" /><path d="M16 2v4" />
-				</svg>
-				<h2>{{ pendingCopy ? pendingCopy.heading : __("A budget version is in progress for {0}.", [workspace.fiscal_year?.label || "—"]) }}</h2>
-				<p class="kt-muted">{{ pendingCopy ? pendingCopy.body : __("It becomes visible here once it is Active.") }}</p>
-				<button
-					v-if="workspace.pending_version"
-					type="button"
-					class="kt-btn kt-btn-primary"
-					@click="openPending"
-					data-testid="budget-pending-action-btn"
-				>
-					{{ pendingCopy.label }}
-				</button>
-			</div>
-
-			<!-- Active (BUD-DES-01) -->
 			<template v-else>
-				<!-- An open successor revision (§6: at most one) — the actor's
-				     own route to it, server-decided; a reader sees nothing. -->
-				<div v-if="workspace.pending_version" class="kt-card kt-blueprint" data-testid="budget-pending-successor">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px">
-						<div>
-							<div style="font-family: var(--kt-font-heading); font-weight: 600; font-size: 16px">{{ pendingCopy.heading }}</div>
-							<div class="kt-muted" style="font-size: 14px; margin-top: 4px">{{ pendingCopy.body }}</div>
-						</div>
-						<button type="button" class="kt-btn kt-btn-primary" style="flex: none" @click="openPending" data-testid="budget-pending-action-btn">
-							{{ pendingCopy.label }}
-						</button>
-					</div>
-				</div>
-				<div class="kt-card kt-blueprint" data-testid="budget-summary-card">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px">
+				<!-- BUD-DES-01A/01B pending card: initial draft/submission, returned, or an update on a current allocation. -->
+				<div v-if="pending && pendingCopy" class="kt-card kt-blueprint" data-testid="budget-pending-card" :data-state="state" :data-action="pendingAction">
+					<div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 14px">
 						<div style="display: flex; align-items: center; gap: 12px">
-							<h3 style="margin: 0">{{ workspace.budget.title }}</h3>
-							<span class="kt-status is-live">{{ workspace.version.status }}</span>
+							<h2 style="margin: 0; font-size: 19px">{{ pendingCopy.heading }}</h2>
+							<span class="kt-status" :class="pendingCopy.statusClass">{{ pendingCopy.status }}</span>
 						</div>
-						<button type="button" class="kt-btn kt-btn-secondary" @click="openBudget" data-testid="budget-view-btn">
-							{{ __("View budget") }}
+						<button type="button" class="kt-btn" :class="pendingIsPrimary ? 'kt-btn-primary' : 'kt-btn-secondary'" data-testid="budget-pending-action-btn" @click="runAction(pendingAction)">
+							{{ pendingActionLabel }}
 						</button>
 					</div>
-					<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px">
-						<div>
-							<div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Budget reference") }}</div>
-							<div style="font-size: 14px; font-weight: 500">{{ workspace.budget.code }}</div>
+					<p style="font-size: 14px; margin: 0 0 12px" class="kt-muted">{{ pendingCopy.body }}</p>
+					<div v-if="pending.is_returned && pending.return" class="kt-notice is-warning" style="margin-bottom: 12px" data-testid="budget-pending-return">
+						<div class="kt-notice-body">
+							<strong>{{ __("Changes requested by {0}, {1}.", [pending.return.by, pending.return.at_display]) }}</strong>
+							{{ pending.return.reason }}
 						</div>
-						<div>
-							<div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Active version") }}</div>
-							<div style="font-size: 14px; font-weight: 500">{{ __("Version {0}", [workspace.version.version_number]) }}</div>
-						</div>
-						<div>
-							<div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Approval reference") }}</div>
-							<div style="font-size: 14px; font-weight: 500">{{ workspace.version.approval_reference }}</div>
-						</div>
-						<div>
-							<div class="kt-eyebrow" style="margin-bottom: 4px">{{ __("Approval date") }}</div>
-							<div style="font-size: 14px; font-weight: 500">{{ workspace.version.approval_date_display }}</div>
-						</div>
+					</div>
+					<div class="kt-ws-facts" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 24px">
+						<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Version") }}</div><div style="font-size: 14px">{{ __("Version {0}", [pending.version_number]) }}</div></div>
+						<div><div class="kt-label" style="margin-bottom: 3px">{{ pendingCopy.whoLabel }}</div><div style="font-size: 14px">{{ pending.submitted_by || "—" }}</div></div>
+						<div><div class="kt-label" style="margin-bottom: 3px">{{ pendingCopy.whenLabel }}</div><div style="font-size: 14px">{{ pendingCopy.when || "—" }}</div></div>
+						<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Financial Year") }}</div><div style="font-size: 14px">{{ workspace.fiscal_year.label }}</div></div>
 					</div>
 				</div>
 
-				<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px" data-testid="budget-position-cards">
-					<div class="kt-card kt-blueprint">
-						<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-						<div class="kt-eyebrow">{{ __("Approved") }}</div>
-						<div class="kt-figure" style="font-size: 26px">{{ formatKes(workspace.positions.approved, workspace.budget.currency) }}</div>
-					</div>
-					<div class="kt-card kt-blueprint">
-						<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-						<div class="kt-eyebrow">{{ __("Reserved") }}</div>
-						<div class="kt-figure is-attention" style="font-size: 26px">{{ formatKes(workspace.positions.reserved, workspace.budget.currency) }}</div>
-					</div>
-					<div class="kt-card kt-blueprint">
-						<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-						<div class="kt-eyebrow">{{ __("Committed") }}</div>
-						<div class="kt-figure" style="font-size: 26px; color: #1d4ed8">{{ formatKes(workspace.positions.committed, workspace.budget.currency) }}</div>
-					</div>
-					<div class="kt-card kt-blueprint">
-						<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-						<div class="kt-eyebrow">{{ __("Available") }}</div>
-						<div class="kt-figure is-live" style="font-size: 26px">{{ formatKes(workspace.positions.available, workspace.budget.currency) }}</div>
-					</div>
+				<!-- Pending initial work the caller may not read: nothing current, nothing invented. -->
+				<div v-if="!hasCurrent && !pending" class="kt-card kt-blueprint kt-empty" data-testid="budget-pending-hidden">
+					<h2>{{ __("No allocation is current in KenTender yet for FY {0}.", [workspace.fiscal_year.label]) }}</h2>
+					<p class="kt-muted">{{ __("An allocation record exists for this financial year and is being prepared.") }}</p>
 				</div>
 
-				<div class="kt-card kt-blueprint">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<div class="kt-card-title">{{ __("Budget Lines") }}</div>
-					<table class="kt-table" data-testid="budget-lines-preview">
-						<thead>
-							<tr>
-								<th>{{ __("Budget Line") }}</th>
-								<th>{{ __("Owner scope") }}</th>
-								<th style="text-align: right">{{ __("Approved") }}</th>
-								<th style="text-align: right">{{ __("Reserved") }}</th>
-								<th style="text-align: right">{{ __("Committed") }}</th>
-								<th style="text-align: right">{{ __("Available") }}</th>
-								<th></th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr v-for="line in workspace.lines_preview" :key="line.id">
-								<td>
-									<div>{{ line.title }}</div>
-									<div class="kt-muted" style="font-size: 12px; margin-top: 2px">{{ line.code }}</div>
-								</td>
-								<td>{{ line.owner_org_unit }}</td>
-								<td style="text-align: right">{{ formatKes(line.approved, workspace.budget.currency) }}</td>
-								<td style="text-align: right">{{ formatKes(line.reserved, workspace.budget.currency) }}</td>
-								<td style="text-align: right">{{ formatKes(line.committed, workspace.budget.currency) }}</td>
-								<td style="text-align: right">{{ formatKes(line.available, workspace.budget.currency) }}</td>
-								<td style="text-align: right">
-									<a href="#" style="font-size: 13px; font-weight: 500; text-decoration: none" @click.prevent="openLine(line)">{{ __("View") }}</a>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
+				<!-- Current budget card (BUD-DES-01) or the Closed variant (§11.1B). -->
+				<template v-if="hasCurrent">
+					<div class="kt-card kt-blueprint" data-testid="budget-summary-card">
+						<div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 14px">
+							<div style="display: flex; align-items: center; gap: 12px">
+								<h2 style="margin: 0; font-size: 19px">{{ workspace.budget.title }}</h2>
+								<span class="kt-status" :class="isClosed ? 'is-critical' : 'is-live'">{{ isClosed ? __("Closed") : __("Current") }}</span>
+							</div>
+							<button type="button" class="kt-btn kt-btn-secondary" data-testid="budget-view-btn" @click="runAction('view_budget')">{{ ACTION_LABELS.view_budget }}</button>
+						</div>
+						<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px 24px" class="kt-ws-facts">
+							<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Budget reference") }}</div><div style="font-size: 14px">{{ workspace.budget.code }}</div></div>
+							<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Current version") }}</div><div style="font-size: 14px">{{ __("Version {0}", [workspace.version.version_number]) }}</div></div>
+							<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Currency") }}</div><div style="font-size: 14px">{{ currency }}</div></div>
+							<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Approval reference") }}</div><div style="font-size: 14px">{{ workspace.version.approval_reference }}</div></div>
+							<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Approval date") }}</div><div style="font-size: 14px">{{ workspace.version.approval_date_display }}</div></div>
+						</div>
+						<div v-if="isClosed" class="kt-notice is-info" style="margin-top: 14px" data-testid="budget-closed-note">
+							<div class="kt-notice-body">
+								<strong>{{ __("Closed by {0}, {1}.", [workspace.closure.closed_by, workspace.closure.closed_at_display]) }}</strong>
+								{{ __("No new reservations, conversions or commitment increases. Existing commitments and history remain.") }}
+							</div>
+						</div>
+						<div v-else-if="actions.includes('update_allocation')" style="margin-top: 14px">
+							<button type="button" class="kt-btn kt-btn-secondary" data-testid="budget-update-btn" :disabled="updating" @click="runAction('update_allocation')">{{ ACTION_LABELS.update_allocation }}</button>
+						</div>
+					</div>
+
+					<div class="kt-kpi-row" style="margin-bottom: 8px" data-testid="budget-position-cards">
+						<div class="kt-kpi-card">
+							<div class="kt-kpi-value">{{ formatKes(workspace.positions.approved, currency) }}</div>
+							<div class="kt-kpi-sub">{{ __("Registered allocation") }}</div>
+						</div>
+						<div class="kt-kpi-card">
+							<div class="kt-kpi-value" :class="{ 'is-zero': !workspace.positions.reserved }">{{ formatKes(workspace.positions.reserved, currency) }}</div>
+							<div class="kt-kpi-sub">{{ __("Reserved for requisitions") }}</div>
+						</div>
+						<div class="kt-kpi-card">
+							<div class="kt-kpi-value" :class="{ 'is-zero': !workspace.positions.committed }">{{ formatKes(workspace.positions.committed, currency) }}</div>
+							<div class="kt-kpi-sub">{{ __("Committed to contracts") }}</div>
+						</div>
+						<div class="kt-kpi-card" :class="workspace.positions.available > 0 ? 'is-live' : 'is-critical'">
+							<div class="kt-kpi-value">{{ formatKes(workspace.positions.available, currency) }}</div>
+							<div class="kt-kpi-sub">{{ __("Available to reserve") }}</div>
+						</div>
+					</div>
+					<p class="kt-muted" style="font-size: 12px; margin: 0 0 20px" data-testid="budget-position-as-at">{{ __("Funding position as at {0}", [workspace.positions_as_at_display]) }}</p>
+
+					<div class="kt-card kt-blueprint" style="padding: 0">
+						<h3 class="kt-card-title" style="margin: 0; padding: 20px 20px 4px">{{ __("Budget Lines") }}</h3>
+						<div style="overflow-x: auto">
+							<table class="kt-table" data-testid="budget-lines-preview">
+								<thead>
+									<tr>
+										<th>{{ __("Budget Line") }}</th>
+										<th>{{ __("Available to") }}</th>
+										<th class="is-num">{{ __("Registered allocation") }}</th>
+										<th class="is-num">{{ __("Reserved for requisitions") }}</th>
+										<th class="is-num">{{ __("Committed to contracts") }}</th>
+										<th class="is-num">{{ __("Available to reserve") }}</th>
+										<th></th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr v-for="line in workspace.lines_preview" :key="line.id">
+										<td><div>{{ line.title }}</div><div class="kt-muted" style="font-size: 11px; margin-top: 2px">{{ line.code }}</div></td>
+										<td>{{ line.owner_org_unit }}</td>
+										<td class="is-num">{{ formatKes(line.approved, currency) }}</td>
+										<td class="is-num" :class="{ 'is-zero': !line.reserved }">{{ formatKes(line.reserved, currency) }}</td>
+										<td class="is-num" :class="{ 'is-zero': !line.committed }">{{ formatKes(line.committed, currency) }}</td>
+										<td class="is-num">{{ formatKes(line.available, currency) }}</td>
+										<td><a href="#" @click.prevent="openLine(line)">{{ __("View") }}</a></td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</template>
 			</template>
 		</div>
 	</div>
 </template>
 
 <style scoped>
-.kt-field-label {
-	font-size: 12px;
-	color: color-mix(in srgb, var(--kt-color-text) 70%, transparent);
+@media (max-width: 900px) {
+	.kt-ws-facts {
+		grid-template-columns: 1fr 1fr !important;
+	}
 }
 </style>

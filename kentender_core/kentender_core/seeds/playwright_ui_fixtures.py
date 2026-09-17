@@ -113,9 +113,9 @@ def reset_config_rules(*, commit: bool = True) -> dict[str, Any]:
 
 	Method eligibility is deliberately not built here: the canonical seed
 	already carries a real, complete "Open Tender" Method eligibility
-	version with actual Second Schedule data (`site_setup._seed_method_profiles`)
-	for the same 2027-07-01..2028-06-30 window — a second version would
-	supersede it rather than add an isolated pending specimen. Build a
+	version with actual Second Schedule data (`site_setup._seed_method_profiles`,
+	`site_setup.PROFILE_EFFECTIVE`) — a second version for an overlapping
+	window would supersede it rather than add an isolated pending specimen. Build a
 	dedicated fixture-only method profile (a procurement method the
 	canonical seed does not already cover, or a namespaced overlap-safe
 	window) once Phase 3D's screen actually needs one."""

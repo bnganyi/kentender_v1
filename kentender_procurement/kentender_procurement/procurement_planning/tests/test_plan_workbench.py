@@ -435,6 +435,32 @@ class TestProfilesEvidenceAndFeasibility(PlanWorkbenchCase):
 		self.assertNotIn("Low Value Procurement", item["classification"]["admissible_methods"])
 		self.assertEqual(item["scope_lock"], {"locked": False, "since": "", "first_requisition": "", "held": False, "open_requests": 0})
 
+	def test_the_item_editor_read_model_carries_a_total_quantity_and_a_restrictions_line(self):
+		"""PLN18-305 (U09 Plan Item editor): `get_plan_item()` needs one
+		aggregate quantity display (the single-source case already has its own
+		via `sources[0]`, but a combined item's own "Quantity" fact in Package
+		details has no per-source string to reuse) and the Reservation and
+		structure card's own "Mandatory restrictions" fact — a static line for
+		now since no restriction-computation mechanism exists yet in this
+		cycle (matching the spec's own "read-only example text")."""
+		_, item_id = self.one_item()
+		single = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertEqual(single["total_quantity_display"], single["sources"][0]["quantity_display"])
+		self.assertEqual(single["preference"]["mandatory_restrictions_line"], "No additional restriction applies")
+
+	def test_a_combined_item_sums_quantity_across_its_sources(self):
+		accepted, entry_a, entry_b = self.accept_two(
+			{"title": "Clinical training laptops", "quantity": 100, "budget_line": fx.BUDGET_LINE},
+			{"title": "Clinical deployment laptops", "quantity": 150, "budget_line": fx.BUDGET_LINE_2},
+		)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		formed = plan_workbench.form_plan_items(
+			plan_version=accepted["annual_plan_version"], dpp_entries=[entry_a, entry_b],
+			mode="combined", expected_record_version=plan["record_version"], idempotency_key=key(),
+		)
+		combined = plan_read.get_plan_item(plan_item_id=formed["created_items"][0])
+		self.assertEqual(combined["total_quantity_display"], "250 each")
+
 	def test_a_method_without_a_schedule_profile_permits_draft_work_but_blocks_submission(self):
 		_, item_id = self.one_item()
 		item = plan_read.get_plan_item(plan_item_id=item_id)

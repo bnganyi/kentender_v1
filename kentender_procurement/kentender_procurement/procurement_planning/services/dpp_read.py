@@ -98,6 +98,16 @@ def _returned_issues(version) -> dict[str, list[dict[str, str]]]:
 	return issues
 
 
+def _entry_action(*, not_proceeding: bool, need_origin: bool, mutable: bool) -> str:
+	"""U02-A/U03-notproceeding — a not-proceeding entry's only Draft action is
+	Restore, never Complete/View; a direct entry's own row is never restorable."""
+	if not mutable:
+		return ""
+	if not_proceeding:
+		return "Restore to planned requirements" if need_origin else ""
+	return "Edit" if not need_origin else "Complete"
+
+
 BADGES = {
 	"Draft": ("Draft", "attention"),
 	"Submitted": ("Awaiting validation", "attention"),
@@ -162,9 +172,9 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 					"not_proceeding_reason": cstr(row.not_proceeding_reason),
 					"disposition": "Not proceeding" if not_proceeding else "Proceeding",
 					"can_set_disposition": need_origin and version.version_status == "Draft" and access in ("author", "hod"),
-					"action": (
-						"" if version.version_status != "Draft" or access in ("planner", "oversight")
-						else ("Edit" if not need_origin else "Complete")
+					"action": _entry_action(
+						not_proceeding=not_proceeding, need_origin=need_origin,
+						mutable=version.version_status == "Draft" and access in ("author", "hod"),
 					),
 					"issues": issues_by_entry.get(row.entry_id, []),
 				}
@@ -173,7 +183,7 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 	ready = bool(entries) and incomplete == 0
 	if mutable and ready:
 		for row in entries:
-			if row["action"]:
+			if row["action"] and row["disposition"] != "Not proceeding":
 				row["action"] = "View"
 	count_label = f"{len(entries)} requirement{'s' if len(entries) != 1 else ''}"
 	if incomplete:

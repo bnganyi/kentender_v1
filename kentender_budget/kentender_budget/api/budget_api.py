@@ -165,6 +165,15 @@ def approve_budget_version(payload: dict | str | None = None):
 
 
 @frappe.whitelist()
+def get_budget_closure_status(budget: str | None = None):
+	"""BUD-CHG-001 v1.9 §9.4/§11.18 — year-end closure read: before year end,
+	blocked, unavailable, ready or closed. Reads only."""
+	from kentender_budget.services import budget_readiness_contracts as readiness
+
+	return readiness.get_budget_closure_status(budget or "")
+
+
+@frappe.whitelist()
 def close_budget(payload: dict | str | None = None):
 	from kentender_budget.services import budget_readiness_contracts as readiness
 

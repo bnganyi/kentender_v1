@@ -144,6 +144,93 @@ class TestWorkspace(WorkspaceCase):
 				result = self.load(user)
 				self.assertTrue(result["departmental_plans"][0].get("route"))
 
+	def test_the_validate_actionable_card_carries_u01d_labelled_facts(self):
+		"""U01-D — the Planner's "Your actions" card shows labelled facts, not
+		one prose line (the free-text `supporting` line is kept too, for
+		whatever does not yet have a frame-specified fact set)."""
+		self.submitted()
+		planner_row = next(r for r in self.load(fx.PLANNER)["actionable"] if r["headline"] == "Validate departmental plan")
+		self.assertEqual([f["label"] for f in planner_row["facts"]], ["Submitted by", "Submitted", "Requirements", "Value"])
+
+	def test_the_continue_actionable_card_carries_u01e_labelled_facts(self):
+		"""U01-E — the Departmental Author's own "Your actions" card."""
+		frappe.set_user(fx.AUTHOR)
+		dpp_lifecycle.open_departmental_plan(
+			organisation_unit=fx.OU_ALPHA, fiscal_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
+		)
+		author_row = next(r for r in self.load(fx.AUTHOR)["actionable"] if r["headline"] == "Continue departmental plan")
+		self.assertEqual([f["label"] for f in author_row["facts"]], ["Submission", "Requirements", "Specified value"])
+
+	def test_the_governance_decision_actionable_card_carries_u01f_labelled_facts(self):
+		submitted = self.submitted()
+		task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
+		entry = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": submitted["current_version"]}, ["name", "entry_id"], as_dict=True)
+		frappe.set_user(fx.PLANNER)
+		from kentender_procurement.procurement_planning.services import dpp_validation, plan_finance, plan_governance, plan_read, plan_workbench
+
+		accepted = dpp_validation.accept_departmental_plan(
+			task=task.name, task_token=task.task_token, idempotency_key=key(),
+			classifications={entry.entry_id: "Consulting services"},
+		)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		formed = plan_workbench.form_plan_items(
+			plan_version=plan["version_reference"], dpp_entries=[entry.name], mode="each",
+			expected_record_version=plan["record_version"], idempotency_key=key(),
+		)
+		item = plan_read.get_plan_item(plan_item_id=formed["created_items"][0])
+		plan_workbench.save_plan_item(
+			plan_item=formed["created_items"][0], values=fx.item_values(), expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		requested = plan_finance.request_plan_funding_confirmation(
+			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=key(),
+		)
+		finance_task = frappe.get_doc("Plan Finance Task", requested["task"])
+		frappe.set_user(fx.FINANCE_OFFICER)
+		plan_finance.confirm_plan_funding(task=finance_task.name, task_token=finance_task.task_token, idempotency_key=key())
+		frappe.set_user(fx.HOPF)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		plan_governance.submit_consolidated_plan(
+			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=key(),
+		)
+
+		ao_row = next(r for r in self.load(fx.ACCOUNTING_OFFICER)["actionable"] if r["action"] == "Open decision")
+		self.assertEqual([f["label"] for f in ao_row["facts"]], ["Version", "Plan Items", "Value", "Submitted by", "Submitted"])
+		self.assertEqual(dict((f["label"], f["value"]) for f in ao_row["facts"])["Version"], "1")
+
+	def test_departmental_plans_use_the_single_submission_shape_before_anything_is_accepted(self):
+		"""U01-D — nothing accepted yet this FY: one Submission count, no
+		Accepted/Open split (there is nothing accepted to split), no route to
+		view (a submitted-not-yet-validated plan has nothing to view)."""
+		self.submitted()
+		result = self.load(fx.PLANNER)
+		self.assertEqual(result["departmental_plans_shape"], "submission")
+		row = result["departmental_plans"][0]
+		self.assertEqual(row["version"], 1)
+		self.assertIsNone(row["accepted_submission"])
+		self.assertIsNone(row["open_submission"])
+
+	def test_departmental_plans_switch_to_the_accepted_shape_once_one_plan_is_accepted(self):
+		"""U01-A/B/C — once any departmental plan this FY has been accepted,
+		every row carries an explicit Accepted Submission number (None where
+		that department itself has none) instead of the single Submission
+		count."""
+		from kentender_procurement.procurement_planning.services import dpp_validation
+
+		submitted = self.submitted()
+		task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
+		entry_id = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": submitted["current_version"]}, "entry_id")
+		frappe.set_user(fx.PLANNER)
+		dpp_validation.accept_departmental_plan(
+			task=task.name, task_token=task.task_token, idempotency_key=key(),
+			classifications={entry_id: "Consulting services"},
+		)
+		result = self.load(fx.PLANNER)
+		self.assertEqual(result["departmental_plans_shape"], "accepted")
+		row = result["departmental_plans"][0]
+		self.assertEqual(row["accepted_submission"], 1)
+		self.assertIsNone(row["open_submission"])
+
 	def test_workspace_read_creates_nothing(self):
 		counts = {
 			d: frappe.db.count(d)
@@ -221,10 +308,13 @@ class TestWorkspace(WorkspaceCase):
 		result = self.load(fx.PLANNER)
 		self.assertFalse(result["window_open"])
 		self.assertIsNone(result["not_included"])
+		self.assertEqual(result["departmental_plans_shape"], "accepted")
 		row = result["departmental_plans"][0]
 		self.assertEqual(row["version"], 2)
 		self.assertEqual(row["status"], "Accepted · update in progress")
 		self.assertEqual(row["status_kind"], "attention")
+		self.assertEqual(row["accepted_submission"], 1)
+		self.assertEqual(row["open_submission"], 2)
 		# the department is still offered its draft to continue
 		author = self.load(fx.AUTHOR)
 		self.assertEqual(author["actionable"][0]["headline"], "Continue departmental plan")

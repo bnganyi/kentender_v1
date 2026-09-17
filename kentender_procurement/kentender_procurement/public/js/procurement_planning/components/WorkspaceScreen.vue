@@ -131,7 +131,7 @@
 								<div class="pln-fact"><span class="kt-label">Status</span><span class="kt-status" :class="statusClass(block.version_status)">{{ block.version_status }}</span></div>
 								<div class="pln-fact"><span class="kt-label">Funding evidence</span><span class="kt-status" :class="fundingClass(block.funding_state)">{{ block.funding_state }}</span></div>
 								<div class="pln-fact"><span class="kt-label">Plan Items</span><span class="pln-fact-val">{{ block.plan_items }}</span></div>
-								<div class="pln-fact"><span class="kt-label">{{ block.version_status === 'Draft' ? 'Planned' : 'Approved' }} value</span><span class="pln-fact-val">{{ block.value_display }}</span></div>
+								<div class="pln-fact"><span class="kt-label">{{ valueLabel(block.version_status) }} value</span><span class="pln-fact-val">{{ block.value_display }}</span></div>
 							</div>
 							<button
 								v-if="block.action"
@@ -166,8 +166,14 @@
 					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
 					<div class="kt-page-kicker">YOUR ACTIONS</div>
 					<div class="kt-card-title" style="margin: 4px 0 12px">{{ row.headline }}</div>
+					<div v-if="row.facts && row.facts.length" class="pln-facts-row" style="margin-bottom: 12px">
+						<div v-for="fact in row.facts" :key="fact.label" class="pln-fact">
+							<span class="kt-label">{{ fact.label }}</span>
+							<span class="pln-fact-val">{{ fact.value }}</span>
+						</div>
+					</div>
 					<div class="pln-ready-row">
-						<div v-if="row.supporting" class="pln-ready-sub">{{ row.supporting }}</div>
+						<div v-if="!row.facts?.length && row.supporting" class="pln-ready-sub">{{ row.supporting }}</div>
 						<button
 							type="button"
 							class="kt-btn kt-btn-primary"
@@ -192,27 +198,43 @@
 					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
 					<div class="kt-card-title">{{ workspace.departmental_plans_heading }}</div>
 					<p class="pln-card-subhead">{{ workspace.departmental_plans_lede }}</p>
+					<!-- U01-A/B/C once a departmental plan has been accepted this FY:
+					     Accepted/Open Submission split, with a View action. U01-D
+					     before any acceptance: a single Submission count, no action —
+					     there is nothing accepted yet to view. -->
 					<table v-if="(workspace.departmental_plans || []).length" class="pln-table">
 						<thead>
-							<tr>
+							<tr v-if="workspace.departmental_plans_shape === 'accepted'">
 								<th>Department</th>
-								<th class="pln-num">Submission</th>
+								<th class="pln-num">Accepted Submission</th>
+								<th class="pln-num">Open Submission</th>
 								<th class="pln-num">Requirements</th>
 								<th class="pln-num">Value</th>
 								<th>Status</th>
 								<th></th>
 							</tr>
+							<tr v-else>
+								<th>Department</th>
+								<th class="pln-num">Submission</th>
+								<th class="pln-num">Requirements</th>
+								<th class="pln-num">Value</th>
+								<th>Status</th>
+							</tr>
 						</thead>
 						<tbody>
 							<tr v-for="row in workspace.departmental_plans" :key="row.dpp_reference">
 								<td>{{ row.department }}</td>
-								<td class="pln-num">{{ row.version }}</td>
+								<template v-if="workspace.departmental_plans_shape === 'accepted'">
+									<td class="pln-num">{{ row.accepted_submission ?? "None" }}</td>
+									<td class="pln-num">{{ row.open_submission ?? "None" }}</td>
+								</template>
+								<td v-else class="pln-num">{{ row.version }}</td>
 								<td class="pln-num">{{ row.requirements }}</td>
 								<td class="pln-num">{{ row.value }}</td>
 								<td>
 									<span class="kt-status" :class="statusClass(row.status)">{{ row.status }}</span>
 								</td>
-								<td style="text-align: right">
+								<td v-if="workspace.departmental_plans_shape === 'accepted'" style="text-align: right">
 									<button v-if="row.route" type="button" class="kt-btn kt-btn-ghost" @click="$emit('navigate', row.route)">
 										View
 									</button>
@@ -272,6 +294,15 @@ function fundingClass(state) {
 	if (state === "Confirmed") return "is-live";
 	if (state === "Stale" || state === "Returned") return "is-critical";
 	return "is-draft";
+}
+
+// U01-A/B/C/F/G — "Approved value" once the Version has cleared statutory
+// approval (Active, or published with activation held); "Planned value"
+// through every governance stage before that (Draft, Awaiting Accounting
+// Officer, Awaiting statutory approval, Publication failed).
+const APPROVED_VALUE_STATUSES = new Set(["Active", "Published — activation held"]);
+function valueLabel(status) {
+	return APPROVED_VALUE_STATUSES.has(status) ? "Approved" : "Planned";
 }
 
 function onWorkAction(row) {

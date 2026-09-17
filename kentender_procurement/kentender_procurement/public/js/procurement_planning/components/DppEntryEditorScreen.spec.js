@@ -14,6 +14,7 @@ const BUDGET_LINES = [
 	{
 		id: "MOH-BL-DHI-2027",
 		label: "MOH-BL-DHI-2027 — Digital health infrastructure programme",
+		title: "Digital health infrastructure programme",
 		approved_display: "KES 100,000,000",
 		currency: "KES",
 	},
@@ -87,7 +88,13 @@ describe("DppEntryEditorScreen — PLN-DES-03 (Need funding)", () => {
 		expect(funding.find(".kt-card-title").text()).toBe("Planning funding");
 		expect(funding.find('label[for="dpp-budget-line"]').text()).toBe("Procurement Budget Line");
 		expect(funding.text()).toContain("KES");
+		// U03's own field order: Budget Line, Line name, Indicative amount, Currency
+		expect(funding.findAll("label").map((l) => l.text())).toEqual([
+			"Procurement Budget Line", "Line name", "Indicative amount", "Currency",
+		]);
+		expect(funding.find('[data-testid="dpp-f-budget-line-title"]').text()).toBe("");
 		await w.find('[data-testid="dpp-f-budget-line"]').setValue("MOH-BL-DHI-2027");
+		expect(funding.find('[data-testid="dpp-f-budget-line-title"]').text()).toBe("Digital health infrastructure programme");
 		await w.find('[data-testid="dpp-f-amount"]').setValue("80000000");
 		await w.find('[data-testid="dpp-editor-save"]').trigger("click");
 		const [payload] = w.emitted("save-funding")[0];
@@ -99,29 +106,43 @@ describe("DppEntryEditorScreen — PLN-DES-03 (Need funding)", () => {
 		expect(w.find('[data-testid="dpp-editor-save"]').text()).toBe("Save funding details");
 	});
 
-	it("marks a Need as not proceeding with a reason in place of funding (PLN-AC-092)", async () => {
+	// U03's own footer: Do not proceed is a separate action opening its own
+	// dialog (SetNeedPlanningDisposition, §5.1.4) — not bundled into the
+	// funding save, and never offered once the entry is already not proceeding
+	// (the Plan screen's own row offers Restore instead of a route back here).
+	it("offers Do not proceed this financial year as a distinct ghost action", async () => {
 		const w = mount(DppEntryEditorScreen, {
 			props: { editor: NEED_EDITOR, pending: false, errorSummary: "" },
 		});
-		expect(w.find('[data-testid="dpp-f-not-proceeding-reason"]').exists()).toBe(false);
-		await w.find('[data-testid="dpp-f-not-proceeding"]').setValue(true);
-		expect(w.find('[data-testid="dpp-f-budget-line"]').attributes("disabled")).toBeDefined();
-		await w
-			.find('[data-testid="dpp-f-not-proceeding-reason"]')
-			.setValue("The department will defer this requirement to the following financial year.");
-		await w.find('[data-testid="dpp-editor-save"]').trigger("click");
-		const [payload] = w.emitted("save-funding")[0];
-		expect(payload).toEqual({
-			entry_id: "E1",
-			not_proceeding_reason: "The department will defer this requirement to the following financial year.",
-		});
+		const button = w.get('[data-testid="dpp-editor-not-proceed"]');
+		expect(button.text()).toBe("Do not proceed this financial year");
+		await button.trigger("click");
+		expect(w.emitted("open-not-proceed-dialog")).toHaveLength(1);
+		expect(w.emitted("save-funding")).toBeUndefined();
 	});
 
-	it("offers the not-proceeding control only on a Need-origin entry", () => {
-		const w = mount(DppEntryEditorScreen, {
+	it("offers the not-proceeding action only on an editable Need-origin entry", () => {
+		const direct = mount(DppEntryEditorScreen, {
 			props: { editor: DIRECT_EDITOR, pending: false, errorSummary: "" },
 		});
-		expect(w.find('[data-testid="dpp-not-proceeding"]').exists()).toBe(false);
+		expect(direct.find('[data-testid="dpp-editor-not-proceed"]').exists()).toBe(false);
+
+		const readOnly = mount(DppEntryEditorScreen, {
+			props: { editor: { ...NEED_EDITOR, can_edit: false }, pending: false, errorSummary: "" },
+		});
+		expect(readOnly.find('[data-testid="dpp-editor-not-proceed"]').exists()).toBe(false);
+	});
+
+	it("shows an already-not-proceeding entry read-only, with no route back to the funding form", () => {
+		const w = mount(DppEntryEditorScreen, {
+			props: {
+				editor: { ...NEED_EDITOR, entry: { ...NEED_EDITOR.entry, not_proceeding_reason: "The department will defer this requirement." } },
+				pending: false,
+				errorSummary: "",
+			},
+		});
+		expect(w.find('[data-testid="dpp-f-not-proceeding-reason"]').text()).toBe("The department will defer this requirement.");
+		expect(w.find('[data-testid="dpp-editor-not-proceed"]').exists()).toBe(false);
 	});
 });
 

@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KenTender Planning — U06 Classification Artboards v0.1</title>
+  <style>
+    :root {
+      --ink: #1d2732;
+      --muted: #586574;
+      --line: #d6dde5;
+      --panel: #f4f7fa;
+      --blue: #203d66;
+      --blue-soft: #edf3fb;
+      --green: #176b4a;
+      --green-soft: #e9f6f0;
+      --amber: #8a5700;
+      --amber-soft: #fff5df;
+      --white: #fff;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: #eef1f4; font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    main { max-width: 1240px; margin: 28px auto; padding: 36px 44px 56px; background: var(--white); }
+    h1 { margin: 4px 0 8px; font-size: 32px; line-height: 1.2; }
+    h2 { margin: 44px 0 8px; font-size: 25px; line-height: 1.25; }
+    h3 { margin: 4px 0 8px; font-size: 27px; line-height: 1.25; }
+    h4 { margin: 26px 0 10px; font-size: 18px; }
+    p { margin: 8px 0; }
+    .eyebrow { color: var(--muted); font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .intro { max-width: 900px; color: #3d4a58; }
+    .design-note { margin: 22px 0; padding: 14px 17px; border-left: 4px solid #657a91; background: var(--panel); }
+    .design-note strong { display: block; margin-bottom: 3px; }
+    .artboard { margin-top: 18px; border: 1px solid #bcc7d2; background: var(--white); box-shadow: 0 7px 20px rgba(27, 43, 60, .09); }
+    .topbar { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; padding: 28px 32px 24px; border-bottom: 1px solid var(--line); }
+    .reference { margin-top: 4px; color: var(--muted); font-size: 14px; }
+    .status { display: inline-flex; align-items: center; gap: 7px; padding: 6px 11px; color: var(--green); background: var(--green-soft); border-radius: 4px; font-size: 14px; font-weight: 700; white-space: nowrap; }
+    .status::before { content: "✓"; }
+    .body { padding: 26px 32px 30px; }
+    .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 8px 0 26px; }
+    .fact { min-height: 82px; padding: 13px 15px; background: var(--panel); border: 1px solid #e3e8ed; }
+    .label { display: block; margin-bottom: 4px; color: var(--muted); font-size: 13px; font-weight: 650; }
+    .value { display: block; font-weight: 650; }
+    .subvalue { display: block; margin-top: 3px; color: var(--muted); font-size: 13px; }
+    .tablewrap { overflow-x: auto; border: 1px solid var(--line); }
+    table { width: 100%; border-collapse: collapse; min-width: 920px; }
+    th, td { padding: 14px 15px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+    th { color: #344252; background: var(--panel); font-size: 13px; letter-spacing: .02em; }
+    tr:last-child td { border-bottom: 0; }
+    .requirement { min-width: 255px; font-weight: 650; }
+    .secondary { display: block; margin-top: 3px; color: var(--muted); font-size: 13px; font-weight: 400; }
+    .link-action { color: var(--blue); font-weight: 700; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; }
+    .explain { margin: 20px 0 0; padding: 14px 16px; border-left: 4px solid var(--blue); background: var(--blue-soft); }
+    .details { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+    .footer-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
+    .button { display: inline-block; padding: 10px 16px; border: 1px solid #8d9aaa; border-radius: 3px; background: var(--white); color: var(--ink); font-weight: 700; }
+    .button.primary { color: var(--white); background: var(--blue); border-color: var(--blue); }
+    .overlay-stage { padding: 34px; background: #e8edf2; }
+    .underlay { height: 118px; margin-bottom: -82px; padding: 18px 22px; border: 1px solid #c8d0d9; background: rgba(255,255,255,.78); color: #576574; }
+    .dialog { position: relative; max-width: 760px; margin: 0 auto; background: var(--white); border: 1px solid #aebac6; box-shadow: 0 16px 44px rgba(20, 33, 46, .2); }
+    .dialog-head { padding: 24px 28px 18px; border-bottom: 1px solid var(--line); }
+    .dialog-body { padding: 22px 28px 26px; }
+    .context { padding: 13px 15px; background: var(--panel); border: 1px solid #e0e6eb; }
+    .context strong { display: block; }
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 22px; }
+    .field-group { margin-top: 18px; }
+    .field-name { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 700; }
+    .field-control { min-height: 46px; padding: 10px 12px; border: 1px solid #8998a8; background: var(--white); }
+    .field-control.readonly { border-color: #d6dde5; background: var(--panel); }
+    .field-control.selectlike { display: flex; justify-content: space-between; align-items: center; }
+    .field-control.selectlike::after { content: "⌄"; color: var(--muted); font-size: 18px; }
+    .field-control.textarea { min-height: 88px; }
+    .required::after { content: " *"; color: #9b1c31; }
+    .impact { margin-top: 20px; padding: 14px 16px; color: #5e3e00; background: var(--amber-soft); border-left: 4px solid #bb7a11; }
+    .dialog .footer-actions { margin: 0; padding: 18px 28px; background: #fafbfc; }
+    .post-save { margin-top: 18px; padding: 16px 18px; border: 1px dashed #8090a0; background: var(--white); }
+    .post-save strong { color: var(--green); }
+    .acceptance { margin-top: 28px; padding: 16px 18px; border: 1px solid var(--line); background: var(--panel); }
+    .acceptance ul { margin: 8px 0 0; padding-left: 21px; }
+    .acceptance li { margin: 6px 0; }
+    footer { margin-top: 42px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+    @media (max-width: 800px) {
+      main { margin: 0; padding: 24px 16px 38px; }
+      .topbar { padding: 22px 20px; flex-direction: column; }
+      .body { padding: 22px 20px; }
+      .summary, .field-grid { grid-template-columns: 1fr; }
+      .overlay-stage { padding: 16px; }
+      .dialog-head, .dialog-body { padding-inline: 20px; }
+      .dialog .footer-actions { padding-inline: 20px; }
+    }
+    @media print {
+      body { background: white; }
+      main { max-width: none; margin: 0; padding: 0; }
+      .artboard { box-shadow: none; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">KenTender · Procurement Planning · Static design source</div>
+    <h1>Accepted classification and correction</h1>
+    <p><strong>U06 classification artboards v0.1 · 17 September 2026</strong></p>
+    <p class="intro">These two artboards complete the design source required by PLN-CHG-001 v1.23 §10.5. They show the accepted classification history and the focused correction panel as separate states. They do not change the certified departmental requirement.</p>
+    <div class="design-note"><strong>Fixture boundary</strong>Departmental plan DPP-MOH-DHI-2027-001 · Submission 3. Julia Njeri certifies on 28 Nov 2026 at 10:00 EAT. Mercy Kilonzo accepts and classifies on 29 Nov 2026 at 15:00 EAT. This fixture is isolated from Submission 1.</div>
+  </header>
+
+  <section aria-labelledby="accepted-title">
+    <h2 id="accepted-title">Artboard 1 — U06-ACCEPTED-CLASSIFICATION</h2>
+    <p class="intro">The Planner can understand what was accepted, who classified it and which classification can be corrected without reopening departmental content.</p>
+    <div class="artboard">
+      <div class="topbar">
+        <div>
+          <div class="eyebrow">Digital Health · FY 2027/28</div>
+          <h3>View accepted requirement classifications</h3>
+          <div class="reference">DPP-MOH-DHI-2027-001 · Submission 3</div>
+        </div>
+        <span class="status">Accepted</span>
+      </div>
+      <div class="body">
+        <div class="summary" aria-label="Acceptance evidence">
+          <div class="fact"><span class="label">Certified by</span><span class="value">Julia Njeri</span><span class="subvalue">28 Nov 2026, 10:00 EAT</span></div>
+          <div class="fact"><span class="label">Accepted by</span><span class="value">Mercy Kilonzo</span><span class="subvalue">29 Nov 2026, 15:00 EAT</span></div>
+          <div class="fact"><span class="label">Included requirements</span><span class="value">2</span><span class="subvalue">Both available for planning</span></div>
+          <div class="fact"><span class="label">Departmental content</span><span class="value">Certified and unchanged</span><span class="subvalue">Classification is Procurement-owned</span></div>
+        </div>
+
+        <h4>Accepted classifications</h4>
+        <div class="tablewrap">
+          <table>
+            <thead>
+              <tr><th>Requirement</th><th>Requirement type</th><th>Category</th><th>Classified by</th><th>Classified at</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="requirement">National digital health infrastructure upgrade<span class="secondary">NDS-MOH-2027-0001 · Revision 1</span></td>
+                <td>Works</td><td>Works</td><td>Mercy Kilonzo</td><td>29 Nov 2026<br>15:00 EAT</td><td><span class="link-action">Correct classification</span></td>
+              </tr>
+              <tr>
+                <td class="requirement">Clinical deployment laptops for digital health rollout<span class="secondary">NDS-MOH-2027-0004 · Revision 1</span></td>
+                <td>Goods</td><td>Goods</td><td>Mercy Kilonzo</td><td>29 Nov 2026<br>15:00 EAT</td><td><span class="link-action">View history</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="explain"><strong>The certified departmental requirement will not change.</strong> A correction records a new procurement classification and keeps the earlier decision in history.</p>
+        <div class="details"><strong>Planning impact already present:</strong> the infrastructure requirement formed draft purchase PPI-MOH-2027-044 on 29 Nov 2026 at 15:10 EAT. No submitted or current plan uses it.</div>
+        <div class="footer-actions"><span class="button">Back to departmental plans</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="correct-title">
+    <h2 id="correct-title">Artboard 2 — U06-CORRECT-CLASSIFICATION</h2>
+    <p class="intro">The correction stays focused on one requirement. Current values are read-only; the Planner selects the governed requirement type, and the system derives Category.</p>
+    <div class="artboard overlay-stage">
+      <div class="underlay" aria-hidden="true"><strong>Accepted requirement classifications</strong><br>National digital health infrastructure upgrade · Works / Works</div>
+      <div class="dialog" role="dialog" aria-labelledby="dialog-title" aria-modal="true">
+        <div class="dialog-head">
+          <div class="eyebrow">Requirement classification</div>
+          <h3 id="dialog-title">Correct requirement classification</h3>
+          <p>This records a new Procurement classification. It does not change the department’s certified requirement.</p>
+        </div>
+        <div class="dialog-body">
+          <div class="context">
+            <span class="label">Requirement</span>
+            <strong>National digital health infrastructure upgrade</strong>
+            <span class="subvalue">NDS-MOH-2027-0001 · Revision 1 · DPP-MOH-DHI-2027-001 · Submission 3</span>
+          </div>
+
+          <div class="field-grid">
+            <div>
+              <span class="field-name">Current requirement type</span>
+              <div class="field-control readonly">Works</div>
+            </div>
+            <div>
+              <span class="field-name">Current category</span>
+              <div class="field-control readonly">Works</div>
+            </div>
+          </div>
+
+          <div class="field-grid">
+            <div>
+              <span class="field-name required">New requirement type</span>
+              <div class="field-control selectlike">Non-consulting services</div>
+            </div>
+            <div>
+              <span class="field-name">New category</span>
+              <div class="field-control readonly">Services</div>
+              <span class="subvalue">Set automatically from the selected requirement type.</span>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <span class="field-name required">Reason for correction</span>
+            <div class="field-control textarea">The requirement is for a managed technical service and contains no construction work.</div>
+          </div>
+
+          <div class="impact"><strong>What happens next</strong><br>This requirement is already in a draft purchase. The purchase will need to be rebuilt before the plan can continue. The accepted departmental submission will not change.</div>
+        </div>
+        <div class="footer-actions"><span class="button">Cancel</span><span class="button primary">Save classification correction</span></div>
+      </div>
+      <div class="post-save"><strong>After a successful save:</strong> show “Classification corrected” and the old/new values, Mercy Kilonzo, 30 Nov 2026 at 09:20 EAT, the reason, and <span class="link-action">Review affected purchase</span>. A stale save shows the plain-language stale-record error and changes nothing.</div>
+    </div>
+  </section>
+
+  <section class="acceptance" aria-labelledby="checks-title">
+    <strong id="checks-title">Design acceptance checks</strong>
+    <ul>
+      <li>The history screen and correction panel are separate artboards; the purchase-editor response is not a substitute.</li>
+      <li>Only Requirement type is selected. Category is visibly derived and cannot be edited independently.</li>
+      <li>The accepted departmental submission, original classification, correction actor/time and reason remain distinct.</li>
+      <li>The affected draft purchase and required recovery are explained before saving, in plain language.</li>
+      <li>Each artboard has one primary task and no internal lifecycle, event or resolver terminology.</li>
+    </ul>
+  </section>
+
+  <footer>Grounding: KenTender PLN-CHG-001 v1.23 §§5.1.6, 10.5, 10.18, 14.7 and 14.9; KT-STD-001 v1.6 composition and usability rules. Static design source only; no implementation or user-test result is claimed.</footer>
+</main>
+</body>
+</html>

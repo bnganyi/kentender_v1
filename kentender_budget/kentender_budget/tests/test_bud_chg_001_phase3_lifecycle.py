@@ -207,33 +207,33 @@ class TestBudgetVersionDraftCreation(_BudgetLifecycleTestBase):
 		self._track("Procurement Budget Version", first["version"]["id"])
 		self._track("Procurement Budget", first["budget"]["id"])
 
-		with self.assertRaises(frappe.DuplicateEntryError):
-			contracts.save_budget_version_draft(dict(payload))
+		second = contracts.save_budget_version_draft(dict(payload))
+		self.assertFalse(second["ok"])
+		self.assertEqual(second["code"], "BUDGET_ALREADY_EXISTS")
+		self.assertEqual(second["route"][:2], ["budget-funding", first["budget"]["code"]])
 
-	def test_registering_a_budget_does_not_require_an_approval_document(self):
-		"""Approval document is not required to register/save-draft a Budget
-		Version — only before it can be submitted for review (see
-		test_submit_blocked_without_approval_document below). Regression test:
-		Procurement Budget Version.approval_document was DB `reqd: 1`, so even
-		though `_validate_draft_payload` never checked it, the very first
-		`.insert()` still raised Frappe's own generic MandatoryError before the
-		user ever reached the file upload step."""
+	def test_registering_a_budget_requires_an_approval_document(self):
+		"""BUD-CHG-001 v1.9 §9.3 — the four approval details, including one
+		uploaded/linked document, precede Save and add budget lines. An
+		incomplete form stays unsaved with its actual error (no Budget row)."""
 		self._as(self.officer)
+		fy = self._fresh_fy()
 		result = contracts.save_budget_version_draft(
 			{
-				"fiscal_year": self._fresh_fy(),
+				"fiscal_year": fy,
 				"approval_reference": f"NODOC-{self.suffix}",
 				"approval_date": add_days(nowdate(), -5),
 				"authorised_total": 1000,
 			}
 		)
-		self.assertTrue(result["ok"], result.get("errors"))
-		self._track("Procurement Budget Version", result["version"]["id"])
-		self._track("Procurement Budget", result["budget"]["id"])
+		self.assertFalse(result["ok"])
+		self.assertIn("approval_document", result["errors"])
+		self.assertFalse(frappe.db.exists("Procurement Budget", {"fiscal_year": fy}))
 
 	def test_submit_blocked_without_approval_document(self):
-		"""Optional at draft save, still mandatory before submission
-		(BUD-BR-018-family evidence guard in `_evaluate_readiness`)."""
+		"""Mandatory before submission (BUD-BR-004 evidence guard in
+		`_evaluate_readiness`) — a Draft whose document link was lost cannot be
+		submitted, and the blocker names the field."""
 		self._as(self.officer)
 		result = contracts.save_budget_version_draft(
 			{
@@ -241,10 +241,12 @@ class TestBudgetVersionDraftCreation(_BudgetLifecycleTestBase):
 				"approval_reference": f"NODOC-SUBMIT-{self.suffix}",
 				"approval_date": add_days(nowdate(), -5),
 				"authorised_total": 10_000_000,
+				"approval_document": "/files/test-approval.pdf",
 			}
 		)
 		self.assertTrue(result["ok"], result.get("errors"))
 		version = result["version"]["id"]
+		frappe.db.set_value("Procurement Budget Version", version, "approval_document", "")
 		self._track("Procurement Budget Version", version)
 		self._track("Procurement Budget", result["budget"]["id"])
 
@@ -326,7 +328,7 @@ class TestBudgetLinesDraft(_BudgetLifecycleTestBase):
 
 		rows = {r["title"]: r for r in lines_svc.get_budget_version_lines_editor(version)["rows"]}
 		self.assertEqual(rows["Entity-wide line"]["owner_org_unit"], "")
-		self.assertEqual(rows["Entity-wide line"]["owner_org_unit_label"], "Entity-wide")
+		self.assertEqual(rows["Entity-wide line"]["owner_org_unit_label"], "All departments")
 		self.assertEqual(rows["Unit line"]["owner_org_unit"], self.ou_dhp)
 
 	def test_only_editable_line_fields_are_title_owner_funding_amount(self):
@@ -437,8 +439,10 @@ class TestActiveAndSupersededImmutability(_BudgetLifecycleTestBase):
 		budget, version = self._create_active_baseline()
 		self._as(self.officer)
 		line_name = frappe.get_all("Procurement Budget Line Version", filters={"budget_version": version}, pluck="budget_line")[0]
-		with self.assertRaises(frappe.ValidationError):
-			lines_svc.save_budget_lines_draft({"budget_version": version, "lines": [{"budget_line": line_name, "approved_amount": 999}]})
+		result = lines_svc.save_budget_lines_draft({"budget_version": version, "lines": [{"budget_line": line_name, "approved_amount": 999}]})
+		self.assertFalse(result["ok"])
+		self.assertEqual(result["code"], "BUDGET_INVALID_STATE")
+		self.assertNotEqual(frappe.db.get_value("Procurement Budget Line Version", {"budget_version": version, "budget_line": line_name}, "approved_amount"), 999)
 
 
 class TestSuccessorVersionRules(_BudgetLifecycleTestBase):

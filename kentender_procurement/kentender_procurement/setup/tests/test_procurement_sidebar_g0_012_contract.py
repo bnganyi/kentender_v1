@@ -12,18 +12,22 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 # Civic Ledger IA: Planned capability overviews + Available modules.
-# The legacy "Configuration" section is Disabled for deployment; the rows below
-# named "Configuration and Governance" are the replacement group shipped by
-# CFG-CHG-002 (Reference Data) and STD-CHG-001 (Standard Tender Documents).
 #
 # NDS-CHG-001 v1.1 §10 gave Departmental Needs three menu entries; two remain.
 # "Review tasks" was a §10 specification defect (removed 2026-08-30, to be
 # corrected in the next complete NDS successor): review decisions reach the
 # HoD through My Work and notifications, and the workspace's role-aware rows,
-# never through a work-queue sidebar entry. "System setup" is configuration,
-# so it sits as a child of "Configuration and Governance" — a URL link, since
-# it is a sub-route of the same Page. Its display_depends_on is presentation
-# only.
+# never through a work-queue sidebar entry.
+#
+# "Configuration and Governance" (the collapsible group housing System setup,
+# Reference Data and Standard Tender Documents) was retired 2026-09-17: it
+# duplicated the "Platform Configuration & Governance" Workspace hub and only
+# ever surfaced System setup for most users (its two siblings'
+# display_depends_on gated them to narrower roles). "System setup" is kept as
+# a flat top-level link — a URL link, since it is a sub-route of the same
+# Page — its display_depends_on stays presentation only. Reference Data and
+# Standard Tender Documents remain reachable from the Platform Configuration
+# & Governance Workspace and their own direct routes.
 #
 # "Home" and "Supplier Management" are Planned (2026-09-05): the former's
 # `kt-procurement-home` page is broken, the latter's workspace is not ready
@@ -47,10 +51,7 @@ _EXPECTED_ITEM_LABELS: tuple[str, ...] = (
 	"Awards",
 	"Contract Management",
 	"Supplier Management",
-	"Configuration and Governance",
 	"System setup",
-	"Reference Data",
-	"Standard Tender Documents",
 )
 
 
@@ -104,6 +105,7 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 		self.assertIn("Tender Management", section_labels)
 		self.assertNotIn("Configuration", section_labels)
 		self.assertNotIn("STD Administration", section_labels)
+		self.assertNotIn("Configuration and Governance", section_labels)
 
 		self.assertEqual(
 			children_of("Tender Management"),
@@ -115,17 +117,12 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 				"Awards",
 			],
 		)
-		# Every configuration entry lives here, including the Departmental Needs
-		# intake window. Frappe nests one level only (Sidebar.find_nested_items),
-		# so a configuration group cannot be a Section Break inside this one.
-		self.assertEqual(
-			children_of("Configuration and Governance"),
-			[
-				"System setup",
-				"Reference Data",
-				"Standard Tender Documents",
-			],
-		)
+
+		# "Configuration and Governance" was retired 2026-09-17: System setup
+		# is now a flat top-level link, not a section child.
+		system_setup_row = next(row for row in items if row.get("label") == "System setup")
+		self.assertEqual(system_setup_row.get("type"), "Link")
+		self.assertEqual(int(system_setup_row.get("child") or 0), 0)
 
 	def test_procurement_sidebar_planned_items_route_to_coming_soon(self):
 		path = os.path.join(
@@ -183,6 +180,9 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 			"STD Versions",
 			"Forms & Schemas",
 			"Import Review",
+			"Configuration and Governance",
+			"Reference Data",
+			"Standard Tender Documents",
 		):
 			self.assertNotIn(dropped, labels, msg=f"{dropped!r} should not appear in current IA")
 

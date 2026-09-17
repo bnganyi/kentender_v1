@@ -92,6 +92,50 @@ class TestGetDepartmentalPlan(DppReadCase):
 		self.assertFalse(result["can_submit"])
 		self.assertFalse(result["certification"]["show"])
 
+	def test_a_not_proceeding_need_offers_restore_never_complete_or_view(self):
+		"""U02/U03-notproceeding — a not-proceeding entry's own Draft action is
+		always Restore, whether or not the rest of the plan is otherwise ready
+		(the mutable-and-ready "View" override used to clobber it)."""
+		self._sources.stop() if hasattr(self, "_sources") else None
+		patched = patch.object(needs_intake, "current_accepted_sources", return_value=[fx.accepted_source()])
+		patched.start()
+		self.addCleanup(patched.stop)
+		revision = patch.object(needs_intake, "current_accepted_revision_of", return_value=fx.NEED_V1)
+		revision.start()
+		self.addCleanup(revision.stop)
+		opened = self.opened()
+		entry_id = frappe.db.get_value(
+			"Departmental Plan Entry", {"dpp_version": opened["current_version"], "need": fx.NEED}, "entry_id",
+		)
+		frappe.set_user(fx.AUTHOR)
+		marked = dpp_lifecycle.set_need_planning_disposition(
+			dpp_version=opened["current_version"], entry_id=entry_id, disposition="Do not proceed",
+			reason="The department will defer this requirement to the following financial year.",
+			expected_record_version=opened["record_version"], idempotency_key=key(),
+		)
+		result = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
+		row = next(r for r in result["entries"] if r["entry_id"] == entry_id)
+		self.assertEqual(row["action"], "Restore to planned requirements")
+
+		# still Restore, not View, once a direct requirement makes the rest ready
+		frappe.set_user(fx.AUTHOR)
+		dpp_lifecycle.save_direct_requirement(
+			dpp_version=opened["current_version"], values=fx.direct_values(),
+			expected_record_version=marked["record_version"], idempotency_key=key(),
+		)
+		ready_read = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
+		self.assertTrue(ready_read["mutable"])
+		still_row = next(r for r in ready_read["entries"] if r["entry_id"] == entry_id)
+		self.assertEqual(still_row["action"], "Restore to planned requirements")
+		other_row = next(r for r in ready_read["entries"] if r["entry_id"] != entry_id)
+		self.assertEqual(other_row["action"], "View")
+
+		# a Planner reading the same Draft gets no action at all
+		frappe.set_user(fx.PLANNER)
+		planner_read = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
+		planner_row = next(r for r in planner_read["entries"] if r["entry_id"] == entry_id)
+		self.assertEqual(planner_row["action"], "")
+
 	def test_ready_plan_reads_as_des05_for_the_hod_only(self):
 		opened = self.opened()
 		frappe.set_user(fx.AUTHOR)

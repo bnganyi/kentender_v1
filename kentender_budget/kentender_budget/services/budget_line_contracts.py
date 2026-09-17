@@ -28,7 +28,33 @@ from kentender_budget.services.budget_contracts import (
 	_version_totals,
 	format_kes_full,
 )
+from kentender_budget.services.budget_idempotency import run_idempotent
 from kentender_budget.services.budget_reference import allocate_budget_line_reference, allocate_budget_line_version_reference
+
+
+def _protected_amount(budget_line: str) -> float:
+	pos = _line_position(budget_line, None)
+	return pos["reserved"] + pos["committed"]
+
+
+def _editor_totals(version, rows: list[dict[str, Any]]) -> dict[str, Any]:
+	"""§11.3/§11.15 — Approved allocation vs Total entered with the exact
+	positive still-to-assign / over-allocation figure, plus Total moved out /
+	Total moved in for a successor."""
+	from kentender_budget.services.budget_readiness_contracts import _reconcile
+
+	line_total = sum(flt(r.get("approved_amount")) for r in rows)
+	totals = _reconcile(version.authorised_total, line_total)
+	if version.based_on_budget_version:
+		moved_out = moved_in = 0.0
+		for r in rows:
+			delta = flt(r.get("approved_amount")) - flt(r.get("current_amount") or 0.0)
+			if delta > 0:
+				moved_in += delta
+			elif delta < 0:
+				moved_out += -delta
+		totals.update({"total_moved_out": moved_out, "total_moved_in": moved_in, "transfer_balanced": abs(moved_out - moved_in) < 0.01})
+	return totals
 
 
 def _lines_previously_in_active(budget_version) -> dict[str, Any]:
@@ -53,10 +79,19 @@ def save_budget_lines_draft(payload: dict | str | None = None) -> dict[str, Any]
 		payload = frappe.parse_json(payload)
 	payload = payload or {}
 
+	return run_idempotent(payload=payload, fn=lambda: _save_budget_lines_draft(payload), budget_for=lambda r: (r.get("version") or {}).get("budget"))
+
+
+def _save_budget_lines_draft(payload: dict[str, Any]) -> dict[str, Any]:
+	from kentender_budget.services.budget_contracts import _version_summary
+
 	version = _resolve_budget_version(payload.get("budget_version") or "")
 	require_budget_version_capability(frappe.session.user, CAP_EDIT, version)
 	if version.status != "Draft":
-		frappe.throw(_("Only a Draft version can be edited"), frappe.ValidationError, title="BUDGET_INVALID_STATE")
+		return {"ok": False, "code": "BUDGET_INVALID_STATE", "errors": {"status": _("This budget has changed. Refresh to see the available actions.")}, "version": _version_summary(version)}
+	expected = payload.get("expected_modified")
+	if expected and str(version.modified) != str(expected):
+		return {"ok": False, "code": "BUDGET_STALE_WRITE", "errors": {"expected_modified": _("This budget has changed since you opened it. Refresh to see the current details.")}, "version": _version_summary(version)}
 
 	budget = frappe.get_doc("Procurement Budget", version.budget)
 	locked = _lines_previously_in_active(version)
@@ -74,10 +109,29 @@ def save_budget_lines_draft(payload: dict | str | None = None) -> dict[str, Any]
 	for i, row in enumerate(rows):
 		budget_line_key = (row.get("budget_line") or "").strip()
 		remove = bool(row.get("remove"))
+		omit = bool(row.get("omit"))
+
+		if omit:
+			# BUD-BR-020 / §12.2 — omission from the proposed Version only,
+			# permitted while the line has no remaining reservation or active
+			# commitment (rechecked again at approval). The line identity and
+			# its history are untouched; only this Draft's Line Version goes.
+			if budget_line_key not in locked:
+				errors[f"lines.{i}"] = _("Only a previously approved line can be omitted from an update")
+				continue
+			protected = _protected_amount(budget_line_key)
+			if protected > 0:
+				errors[f"lines.{i}"] = _("{0} has {1} reserved or committed and cannot be omitted from this update").format(
+					locked[budget_line_key].title, format_kes_full(protected, currency=budget.currency or "KES")
+				)
+				continue
+			if budget_line_key in existing_versions:
+				frappe.delete_doc("Procurement Budget Line Version", existing_versions[budget_line_key].name, ignore_permissions=True)
+			continue
 
 		if remove:
 			if budget_line_key in locked:
-				errors[f"lines.{i}"] = _("A previously Active line cannot be removed")
+				errors[f"lines.{i}"] = _("A previously approved line cannot be removed; omit it from this update instead")
 				continue
 			if budget_line_key and budget_line_key in existing_versions:
 				frappe.delete_doc("Procurement Budget Line Version", existing_versions[budget_line_key].name, ignore_permissions=True)
@@ -161,15 +215,9 @@ def save_budget_lines_draft(payload: dict | str | None = None) -> dict[str, Any]
 		calling_module="Budget & Funding",
 	)
 
-	totals = _version_totals(version.name)
-	return {
-		"ok": True,
-		"totals": {
-			"authorised_total": flt(version.authorised_total),
-			"line_total": totals["approved"],
-			"difference": flt(version.authorised_total) - totals["approved"],
-		},
-	}
+	version.reload()
+	editor = get_budget_version_lines_editor(version.name)
+	return {"ok": True, "saved_scope": "budget_lines", "totals": editor["totals"], "rows": editor["rows"], "version": _version_summary(version)}
 
 
 def get_budget_version_lines_editor(budget_version: str) -> dict[str, Any]:
@@ -206,10 +254,8 @@ def get_budget_version_lines_editor(budget_version: str) -> dict[str, Any]:
 		if rows
 		else {}
 	)
-	line_total = 0.0
 	out = []
 	for r in rows:
-		line_total += flt(r.approved_amount)
 		is_locked = r.budget_line in locked
 		row_dto: dict[str, Any] = {
 			"budget_line": r.budget_line,
@@ -237,17 +283,31 @@ def get_budget_version_lines_editor(budget_version: str) -> dict[str, Any]:
 					)
 				)
 			row_dto["active_amount"] = active_amount
+			row_dto["current_amount"] = active_amount
 			row_dto["change"] = flt(r.approved_amount) - active_amount
+			protected = _protected_amount(r.budget_line) if is_locked else 0.0
+			row_dto["protected_amount"] = protected
+			# §11.15 Omit from this update — only when nothing is reserved or committed.
+			row_dto["can_omit"] = may_edit and is_locked and protected <= 0
 		out.append(row_dto)
+
+	omitted = []
+	if version.based_on_budget_version:
+		present = {r.budget_line for r in rows}
+		for line_name, prior in locked.items():
+			if line_name not in present:
+				omitted.append({"budget_line": line_name, "title": prior.title, "current_amount": flt(frappe.db.get_value("Procurement Budget Line Version", {"budget_version": version.based_on_budget_version, "budget_line": line_name}, "approved_amount"))})
+	totals = _editor_totals(version, out)
+	if omitted and "total_moved_out" in totals:
+		totals["total_moved_out"] += sum(o["current_amount"] for o in omitted)
+		totals["transfer_balanced"] = abs(totals["total_moved_out"] - totals["total_moved_in"]) < 0.01
 
 	return {
 		"rows": out,
+		"omitted": omitted,
 		"is_successor": bool(version.based_on_budget_version),
-		"totals": {
-			"authorised_total": flt(version.authorised_total),
-			"line_total": line_total,
-			"difference": flt(version.authorised_total) - line_total,
-		},
+		"can_edit": may_edit and version.status == "Draft",
+		"totals": totals,
 	}
 
 

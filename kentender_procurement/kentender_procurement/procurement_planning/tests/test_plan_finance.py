@@ -188,6 +188,31 @@ class TestConfirmPlanFunding(PlanFinanceCase):
 		frappe.set_user(fx.HOPF)
 		self.assertTrue(plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])["can_sign_and_submit"])  # v1.18 §6.2
 
+	def test_the_history_lists_every_review_and_a_later_one_never_overwrites_an_earlier_one(self):
+		"""U10-history (PLN18-306) — Review 1's own Return stays Review 1;
+		Review 2 is its own row, in order, and does not overwrite it."""
+		accepted, item_id = self.ready_item()
+		first = self.request(accepted["annual_plan"])
+		frappe.set_user(fx.FINANCE_OFFICER)
+		plan_finance.return_from_finance(
+			task=first["task"], reason="Reconcile the planned total against the approved line.", task_token=frappe.get_doc("Plan Finance Task", first["task"]).task_token, idempotency_key=key(),
+		)
+		second = self.request(accepted["annual_plan"])
+		self.assertNotEqual(first["task"], second["task"])
+		confirmed = self.confirm(second["task"])
+
+		read = plan_read.get_finance_task(task=second["task"])
+		self.assertEqual(len(read["history"]), 2)
+		review_1, review_2 = read["history"]
+		self.assertEqual(review_1["review"], "Review 1")
+		self.assertEqual(review_1["outcome"], "Returned")
+		self.assertEqual(review_2["review"], "Review 2")
+		self.assertEqual(review_2["outcome"], "Confirmed")
+		self.assertEqual(review_2["actor"], frappe.db.get_value("User", fx.FINANCE_OFFICER, "full_name"))
+		self.assertNotEqual(review_1["time_display"], "—")
+		self.assertEqual(confirmed["action"], "confirmed")
+		self.assertEqual(read["funding_evidence"]["state"], "Confirmed")
+
 	def test_the_hybrid_planner_who_requested_cannot_also_confirm(self):
 		accepted, item_id = self.ready_item()
 		requested = self.request(accepted["annual_plan"], user=fx.HYBRID_FINANCE)

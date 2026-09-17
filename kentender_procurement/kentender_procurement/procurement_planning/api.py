@@ -200,6 +200,27 @@ def get_plan_governance_task(task: str) -> dict[str, Any]:
 
 
 @frappe.whitelist()
+def get_source_evidence(task: str, source_key: str) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_read
+
+	return plan_read.get_source_evidence(task=task, source_key=source_key)
+
+
+@frappe.whitelist()
+def download_review_pack(task: str) -> None:
+	"""U11 **Download review pack** — a plain authenticated file download
+	(not the JSON API layer), so it must not be called through `run()`."""
+	import json as _json
+
+	from kentender_procurement.procurement_planning.services import plan_read
+
+	pack = plan_read.build_review_pack(task=task)
+	frappe.local.response.filename = f"{pack['task_reference']}-review-pack.json"
+	frappe.local.response.filecontent = _json.dumps(pack, indent=2, default=str)
+	frappe.local.response.type = "download"
+
+
+@frappe.whitelist()
 def get_publication_task(publication: str) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import plan_read
 
@@ -235,6 +256,8 @@ def save_plan_item(plan_item: str, item_values, expected_record_version, idempot
 
 @frappe.whitelist()
 def save_plan_version_details(plan_version: str, detail_values, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_workbench
+
 	return plan_workbench.save_plan_version_details(
 		plan_version=plan_version, values=_parse_json(detail_values, {}), expected_record_version=expected_record_version, idempotency_key=idempotency_key,
 	)

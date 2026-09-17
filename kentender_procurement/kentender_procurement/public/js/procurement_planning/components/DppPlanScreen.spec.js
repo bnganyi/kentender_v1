@@ -172,15 +172,33 @@ describe("DppPlanScreen — PLN-DES-05", () => {
 		expect(make(DRAFT_PLAN).find('[data-testid="dpp-add-direct"]').exists()).toBe(true);
 	});
 
-	it("renders a not-proceeding row with its muted status and no amount", () => {
-		const plan = {
-			...DRAFT_PLAN,
-			entries: [{ ...DRAFT_PLAN.entries[0], status: "Not proceeding", status_kind: "muted", amount_display: "—", budget_line_display: "—" }],
+	// U03-notproceeding — a distinct section, excluded from the main table and
+	// its financial totals, each with its own reason and Restore action.
+	it("moves a not-proceeding entry into its own section with Restore, out of the main table", async () => {
+		const notProceeding = {
+			...DRAFT_PLAN.entries[0],
+			status: "Not proceeding", status_kind: "muted", amount_display: "—", budget_line_display: "—",
+			disposition: "Not proceeding", not_proceeding_reason: "The department will defer this requirement.",
+			action: "Restore to planned requirements",
 		};
+		const plan = { ...DRAFT_PLAN, entries: [notProceeding, DRAFT_PLAN.entries[1]] };
 		const w = make(plan);
-		const row = w.find('[data-testid="dpp-entries"] tbody tr');
-		expect(row.find(".kt-status").text()).toBe("Not proceeding");
-		expect(row.find(".kt-status").classes()).toContain("is-draft");
+		expect(w.find('[data-testid="dpp-entries"] tbody tr').text()).not.toContain("National digital health");
+		expect(w.findAll('[data-testid="dpp-entries"] tbody tr')).toHaveLength(1);
+
+		const section = w.find('[data-testid="dpp-not-proceeding-entries"]');
+		expect(section.find(".kt-card-title").text()).toBe("Not proceeding this financial year");
+		expect(section.text()).toContain("National digital health infrastructure upgrade");
+		expect(section.text()).toContain("Reason: The department will defer this requirement.");
+		const restore = section.get('[data-testid="dpp-restore-E1"]');
+		expect(restore.text()).toBe("Restore to planned requirements");
+		await restore.trigger("click");
+		expect(w.emitted("restore-entry")[0]).toEqual(["E1"]);
+	});
+
+	it("renders no not-proceeding section when nothing is excluded", () => {
+		const w = make(DRAFT_PLAN);
+		expect(w.find('[data-testid="dpp-not-proceeding-entries"]').exists()).toBe(false);
 	});
 
 	it("ready rows read View and the totals drop the 'specified' suffix", () => {

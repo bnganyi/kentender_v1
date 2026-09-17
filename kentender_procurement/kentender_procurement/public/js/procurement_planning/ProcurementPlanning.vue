@@ -81,6 +81,7 @@
 						@view-accepted-needs="onViewAcceptedNeeds"
 						@add-direct="go(dppReference, 'add-direct')"
 						@open-entry="onOpenEntry"
+						@restore-entry="onRestoreDisposition"
 						@back="frappe.set_route(WORKSPACE_PAGE)"
 						@save-draft="load({ quiet: true })"
 						@submit="onSubmit"
@@ -96,7 +97,15 @@
 						:error-summary="errorSummary"
 						@save-funding="onSaveFunding"
 						@save-direct="onSaveDirect"
+						@open-not-proceed-dialog="notProceedDialog = true"
 						@cancel="go(dppReference)"
+					/>
+					<NotProceedDialog
+						v-if="notProceedDialog"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onNotProceedConfirm"
+						@cancel="notProceedDialog = false"
 					/>
 				</template>
 
@@ -173,6 +182,7 @@
 						@submit-consolidated="onSubmitPlanRequested"
 						@confirm-splitting="splittingDialog = true"
 						@open-task="(route) => frappe.set_route(...route)"
+						@save-details="onSaveVersionDetails"
 					/>
 					<FormPlanItemsDialog
 						v-if="formDialog"
@@ -237,14 +247,16 @@
 				</template>
 
 				<template v-else-if="screen === 'governance'">
-					<GovernanceTaskScreen
+					<ReviewScreen
 						:task="governanceTask"
 						:pending="pending"
 						:error-summary="errorSummary"
 						@confirm="onGovernanceConfirm"
 						@open-return-dialog="governanceReturnDialog = true"
+						@navigate="onNavigate"
+						@open-source="onOpenSource"
 					/>
-					<GovernanceReturnDialog
+					<ReturnPlanDialog
 						v-if="governanceReturnDialog"
 						:dialog="governanceTask.return_dialog"
 						:pending="pending"
@@ -252,6 +264,10 @@
 						@confirm="onGovernanceReturn"
 						@cancel="governanceReturnDialog = false"
 					/>
+				</template>
+
+				<template v-else-if="screen === 'governance-source'">
+					<SourceEvidenceScreen :evidence="sourceEvidence" @navigate="onNavigate" />
 				</template>
 			</template>
 		</div>
@@ -268,6 +284,7 @@ import DppPlanScreen from "./components/DppPlanScreen.vue";
 import DppEntryEditorScreen from "./components/DppEntryEditorScreen.vue";
 import DppValidationScreen from "./components/DppValidationScreen.vue";
 import ReturnIssuesDialog from "./components/ReturnIssuesDialog.vue";
+import NotProceedDialog from "./components/NotProceedDialog.vue";
 import AnnualPlanScreen from "./components/AnnualPlanScreen.vue";
 import FormPlanItemsDialog from "./components/FormPlanItemsDialog.vue";
 import ReasonDialog from "./components/ReasonDialog.vue";
@@ -307,6 +324,7 @@ const certified = ref(false);
 const validation = ref({});
 const classifications = ref({});
 const returnDialog = ref(false);
+const notProceedDialog = ref(false);
 const annualPlan = ref({});
 const planItem = ref({});
 const formDialog = ref(false);
@@ -462,6 +480,7 @@ function applyLoaded(scr, loaded) {
 			break;
 		case "dpp-entry":
 			editor.value = loaded;
+			notProceedDialog.value = false;
 			break;
 		case "dpp-review":
 			validation.value = loaded;
@@ -626,31 +645,49 @@ async function onCreateUpdate() {
 }
 
 async function onSaveFunding(payload) {
-	// PLN-CHG-001 v1.18 §5.1.4 — the not-proceeding outcome is its own command
-	// (SetNeedPlanningDisposition); funding is saved separately. The U04 re-port
-	// (Phase 3B) gives Restore its own control.
-	const result = payload.not_proceeding_reason
-		? await run("set-need-disposition", (key) =>
-				api.setNeedPlanningDisposition({
-					dpp_version: editor.value.dpp_version,
-					entry_id: payload.entry_id,
-					disposition: "Do not proceed",
-					reason: payload.not_proceeding_reason,
-					expected_record_version: editor.value.record_version,
-					idempotency_key: key,
-				})
-			)
-		: await run("save-need-funding", (key) =>
-				api.saveNeedFunding({
-					dpp_version: editor.value.dpp_version,
-					entry_id: payload.entry_id,
-					budget_line: payload.budget_line || undefined,
-					indicative_amount: payload.indicative_amount || undefined,
-					expected_record_version: editor.value.record_version,
-					idempotency_key: key,
-				})
-			);
+	const result = await run("save-need-funding", (key) =>
+		api.saveNeedFunding({
+			dpp_version: editor.value.dpp_version,
+			entry_id: payload.entry_id,
+			budget_line: payload.budget_line || undefined,
+			indicative_amount: payload.indicative_amount || undefined,
+			expected_record_version: editor.value.record_version,
+			idempotency_key: key,
+		})
+	);
 	if (result) go(dppReference.value);
+}
+
+// PLN-CHG-001 v1.18 §5.1.4 — U03's own overlaid dialog, reached from the
+// editor's "Do not proceed this financial year" ghost button.
+async function onNotProceedConfirm(reason) {
+	const result = await run("set-need-disposition", (key) =>
+		api.setNeedPlanningDisposition({
+			dpp_version: editor.value.dpp_version,
+			entry_id: editor.value.entry?.entry_id,
+			disposition: "Do not proceed",
+			reason,
+			expected_record_version: editor.value.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (result) go(dppReference.value);
+}
+
+// U03-notproceeding — Restore lives on the Plan screen's own not-proceeding
+// row, not the editor: no dialog, direct command (the frame draws no overlay).
+async function onRestoreDisposition(entryId) {
+	await run("restore-need-disposition", async (key) => {
+		const r = await api.setNeedPlanningDisposition({
+			dpp_version: dpp.value.version?.name,
+			entry_id: entryId,
+			disposition: "Restore",
+			expected_record_version: dpp.value.record_version,
+			idempotency_key: key,
+		});
+		await load({ quiet: true });
+		return r;
+	});
 }
 
 async function onSaveDirect(payload) {
@@ -757,6 +794,21 @@ async function onRequestPlanFunding() {
 	await run("request-plan-funding", async (key) => {
 		const r = await api.requestPlanFundingConfirmation({
 			plan_version: annualPlan.value.version_reference,
+			expected_record_version: annualPlan.value.record_version,
+			idempotency_key: key,
+		});
+		await load({ quiet: true });
+		return r;
+	});
+}
+
+// U07-overview — the Preparation card's own Save draft (SavePlanVersionDetails,
+// project_name only; a successor's change_reason is set at BeginPlanUpdate).
+async function onSaveVersionDetails(values) {
+	await run("save-plan-version-details", async (key) => {
+		const r = await api.savePlanVersionDetails({
+			plan_version: annualPlan.value.version_reference,
+			detail_values: JSON.stringify(values),
 			expected_record_version: annualPlan.value.record_version,
 			idempotency_key: key,
 		});

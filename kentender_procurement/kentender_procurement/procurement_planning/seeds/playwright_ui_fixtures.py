@@ -320,22 +320,16 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 	OUTSIDER_OU = _unit(OUTSIDER_OU_NAME)
 	# §5.5.3.1: an unverified regulatory reference is treated as absent, not
 	# a passing zero — the default `verification_status` ("Production
-	# verification pending") left this world's reservation/threshold data
-	# unusable by `readiness.reservation_allocations()`; mirror the Python
-	# test world's own fixture-verified call (`tests/fixtures.ensure_world`).
-	# `register_regulatory_reference` is idempotent on (fiscal_year, gazette
-	# reference): adding this Fiscal Year already auto-seeded one Regulatory
-	# Reference row at the site-wide default (Production verification
-	# pending, 30%), so the call below returns that same row unchanged
-	# rather than creating a fixture-verified one — force this world's own
-	# row directly, a fixture-only override matching every other direct
-	# `frappe.db.set_value` test-state assignment in this module.
+	# verification pending") left this world's reservation data unusable by
+	# `readiness.reservation_allocations()`; mirror the Python test world's
+	# own fixture-verified call (`tests/fixtures.ensure_world`).
+	#
+	# CFG-CHG-002 v0.11 Phase 2b: `Regulatory Reference` versions are now
+	# effective-dated per reference set (no `fiscal_year` column), each new
+	# call to `_seed_regulatory_reference` for an overlapping date range
+	# genuinely supersedes the prior version, so a real override no longer
+	# needs the direct-write workaround this used to require.
 	site_setup._seed_regulatory_reference(fiscal_year=FY, fixture_namespace=NS_PW, verification_status=VERIFICATION_FIXTURE, reservation_target_percent=0)
-	frappe.db.set_value(
-		"Regulatory Reference", {"fiscal_year": FY},
-		{"verification_status": VERIFICATION_FIXTURE, "reservation_target_percent": 0, "county_resident_target_percent": 0},
-		update_modified=False,
-	)
 	ensure_profiles()
 	if not frappe.db.exists("Currency", "KES"):
 		frappe.get_doc({"doctype": "Currency", "currency_name": "KES", "enabled": 1}).insert(ignore_permissions=True)
@@ -696,6 +690,52 @@ def _complete_item(plan_item_id: str, **overrides) -> None:
 		)
 
 
+def reset_item_config_missing_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""U09 — no method/schedule profile in force for this item's category and
+	method (the base fixture-year world's own profiles removed after it is
+	built; the NEXT reset's own `ensure_world()` re-seeds them, so this does
+	not leak into later tests)."""
+	state = reset_plan_item_fixture(need=need, commit=False)
+	purge_profiles()
+	if commit:
+		frappe.db.commit()
+	return state
+
+
+def reset_item_lots_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""U09-eligibility-lots: a complete item Packaged into lots."""
+	state = reset_plan_item_fixture(need=need, commit=False)
+	_complete_item(state["plan_item_id"], lotting_indicator="Packaged into lots", lot_count=2)
+	if commit:
+		frappe.db.commit()
+	return state
+
+
+def reset_item_direct_procurement_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""U09-conditional-method: Direct Procurement with its Declaration
+	condition already evidenced (Conditions: Declared)."""
+	state = reset_plan_item_fixture(need=need, commit=False)
+	_complete_item(
+		state["plan_item_id"], procurement_method="Direct Procurement",
+		method_condition_evidence=[{"condition_id": "CIRCUMSTANCES", "evidence_reference": "Method eligibility record", "authorisation_reference": "AO/2098/DP/1"}],
+	)
+	if commit:
+		frappe.db.commit()
+	return state
+
+
+def reset_item_feasibility_fail_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""U09-feasibility-fail: a target invitation date so late the computed
+	contract signing date leaves no delivery period before the required-by
+	date from the Need (2099-03-31 — see `NEED_CONTENT` in the Playwright
+	spec's own `helpers.ts`)."""
+	state = reset_plan_item_fixture(need=need, commit=False)
+	_complete_item(state["plan_item_id"], baseline_invitation_date="2099-03-01")
+	if commit:
+		frappe.db.commit()
+	return state
+
+
 def _request_funding(plan_reference: str) -> str:
 	from kentender_procurement.procurement_planning.services import plan_finance, plan_read
 
@@ -705,6 +745,18 @@ def _request_funding(plan_reference: str) -> str:
 			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=_key(),
 		)
 	return requested["task"]
+
+
+def reset_ready_for_funding_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""U07-funding-ready: the one complete Plan Item, no Plan Finance Task
+	yet — every pre-Finance readiness check passes and Request plan funding
+	confirmation is genuinely clickable (unlike `reset_finance_fixture`,
+	whose task is already open by the time it returns)."""
+	state = reset_plan_item_fixture(need=need, commit=False)
+	_complete_item(state["plan_item_id"])
+	if commit:
+		frappe.db.commit()
+	return state
 
 
 def reset_finance_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
@@ -790,6 +842,44 @@ def reset_active_fixture(*, need: str = "", commit: bool = True) -> dict[str, An
 	if commit:
 		frappe.db.commit()
 	return {**state, "publication_result": published["result"], "publication": approved["publication"]}
+
+
+def reset_update_candidate_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""U01-B: the Active Plan plus its open Draft successor (`BeginPlanUpdate`),
+	still untouched — the workspace's Active-plus-candidate two-block card
+	with the Planner's own "Continue update" action on the candidate block."""
+	from kentender_procurement.procurement_planning.services import plan_publication
+
+	state = reset_active_fixture(need=need, commit=False)
+	with _as(PLANNER):
+		successor = plan_publication.begin_plan_update(plan_reference=state["plan_reference"], idempotency_key=_key())
+	if commit:
+		frappe.db.commit()
+	return {**state, "successor_version": successor["successor_version"]}
+
+
+def reset_finance_reassessment_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""U10-reassess-return: the Budget Line's own approved amount changed
+	after activation, making the Active Version's funding confirmation
+	stale (§5.3.4) — the Finance Confirmation Officer reassesses exact,
+	unchanged Plan content against the new financial evidence. `funding_state`
+	is set directly (a fixture-only override, same pattern as every other
+	direct state assignment in this module) since nothing re-derives it
+	lazily until the next command touches the Version."""
+	from kentender_procurement.procurement_planning.services import plan_finance
+
+	state = reset_active_fixture(need=need, commit=False)
+	line_version = frappe.db.get_value(
+		"Procurement Budget Line Version",
+		{"budget_line": BUDGET_LINE, "budget_version": ("in", frappe.get_all("Procurement Budget Version", filters={"status": "Active"}, pluck="name"))},
+		"name",
+	)
+	frappe.db.set_value("Procurement Budget Line Version", line_version, "approved_amount", 90_000_000, update_modified=False)
+	frappe.db.set_value("Annual Plan Version", state["plan_version"], "funding_state", "Stale", update_modified=False)
+	task = _request_funding(state["plan_reference"])
+	if commit:
+		frappe.db.commit()
+	return {**state, "task": task}
 
 
 def reset_publication_failed_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:

@@ -154,6 +154,46 @@ class TestEndpointsSurviveTheFrameworksTransportFields(RequestShapedCase):
 		)
 		self.assertEqual(returned["action"], "returned")
 
+	def test_save_plan_version_details_over_the_request_path(self):
+		"""PLN18-304 — found live: `api.save_plan_version_details` called
+		`plan_workbench.save_plan_version_details` without importing
+		`plan_workbench` at all, a 500 (`NameError`) for every real caller
+		since the day it was added; no test drove it through the API layer,
+		only `plan_workbench.save_plan_version_details` directly."""
+		frappe.set_user(fx.AUTHOR)
+		opened = self.call(
+			"open_departmental_plan", organisation_unit=fx.OU_ALPHA, fiscal_year=fx.FY_OPEN,
+			idempotency_key=key(),
+		)
+		added = self.call(
+			"save_direct_requirement", dpp_version=opened["current_version"],
+			entry_values=json.dumps(fx.direct_values()),
+			expected_record_version=str(opened["record_version"]),
+			idempotency_key=key(),
+		)
+		frappe.set_user(fx.HOD)
+		submitted = self.call(
+			"submit_departmental_plan", dpp_version=opened["current_version"],
+			certification_confirmed="1",
+			expected_record_version=str(added["record_version"]),
+			idempotency_key=key(),
+		)
+		task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
+		frappe.set_user(fx.PLANNER)
+		accepted = self.call(
+			"accept_departmental_plan", task=task.name,
+			classifications=json.dumps({added["entry_id"]: "Consulting services"}),
+			task_token=task.task_token, idempotency_key=key(),
+		)
+		plan = self.call("get_annual_plan", plan_reference=accepted["annual_plan"])
+		result = self.call(
+			"save_plan_version_details", plan_version=plan["version_reference"],
+			detail_values=json.dumps({"project_name": "Digital health infrastructure programme"}),
+			expected_record_version=str(plan["record_version"]), idempotency_key=key(),
+		)
+		self.assertEqual(result["action"], "details_saved")
+		self.assertEqual(self.call("get_annual_plan", plan_reference=accepted["annual_plan"])["project_name"], "Digital health infrastructure programme")
+
 	def test_resolve_planning_context_is_reachable(self):
 		frappe.set_user(fx.PLANNER)
 		result = self.call("resolve_planning_context")

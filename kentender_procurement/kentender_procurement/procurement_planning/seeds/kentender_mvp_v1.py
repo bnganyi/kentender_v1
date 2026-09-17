@@ -47,6 +47,7 @@ import frappe
 from frappe.utils import cstr, now_datetime
 from frappe.utils.password import update_password
 
+from kentender_core.seeds import clock
 from kentender_core.seeds.constants import TEST_PASSWORD
 from kentender_core.services import responsibility_administration as administration
 from kentender_core.services import site_configuration
@@ -182,6 +183,9 @@ _DOCTYPES = (
 	"Plan Finance Task",
 	"Plan Source Allocation",
 	"Annual Plan Item",
+	"Plan Item Correction Disposition",
+	"Plan Item Correction Request",
+	"Plan Item",
 	"Annual Plan Version",
 	"Annual Plan",
 	"Departmental Plan Validation Decision",
@@ -286,7 +290,7 @@ def verify_prerequisites() -> dict[str, str]:
 
 
 def _destination() -> None:
-	from kentender_procurement.procurement_planning.services.plan_publication import DESTINATION_ADAPTER
+	from kentender_procurement.procurement_planning.services.publication_pipeline import DESTINATION_ADAPTER
 
 	if frappe.db.exists("Annual Plan Publication Destination", {"destination_id": DESTINATION_ID}):
 		return
@@ -352,7 +356,8 @@ def _build_accepted_dpp(
 ) -> dict[str, Any]:
 	"""§14.4 — the Digital Health departmental plan through the real commands:
 	Grace funds the projected Need entry (plus any further accepted Needs
-	already projected for the same unit — `extra_need_fundings`), Peter
+	already projected for the same unit — `extra_need_fundings`), Julia
+	(acting Head of User Department for Digital Health in November)
 	submits, Mercy classifies and accepts, which auto-creates the Draft
 	Annual Plan (§5.2)."""
 	from kentender_procurement.procurement_planning.services import dpp_lifecycle, dpp_validation, plan_read
@@ -393,7 +398,15 @@ def _build_accepted_dpp(
 			)
 			record_version = need_funded["record_version"]
 			classifications[need_entry_id] = spec["classification"]
-	with _as(HOD):
+	# Submitted 25 Nov 2026, 10:00 EAT (CLOCK["dpp_submitted"]'s wall-clock
+	# instant) — inside Julia's Digital Health acting window (1 Oct-30 Nov)
+	# and before Peter's own Digital Health assignment starts (1 Dec), the
+	# same reasoning the Departmental Needs seed already applies to this
+	# unit's November decisions. The command's own authority check reads
+	# the real clock (AUTH-ADR-001 §4.6), so it must actually run at that
+	# instant (plan D19) — Julia alone is never enough while this runs at
+	# today's real date, which falls in neither window.
+	with _as(ACTING_HOD), clock.at("2026-11-25 10:00:00"):
 		submitted = dpp_lifecycle.submit_departmental_plan(
 			dpp_version=opened["current_version"], certification_confirmed=True,
 			expected_record_version=record_version, idempotency_key=_key("submit-dpp"),
@@ -710,6 +723,20 @@ def _wipe_fiscal_year(fiscal_year: str) -> dict[str, int]:
 	delete("Plan Drawdown Reference", frappe.get_all("Plan Drawdown Reference", filters={"plan_item": ("in", items or ("",))}, pluck="name"))
 	delete("Plan Source Allocation", frappe.get_all("Plan Source Allocation", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name"))
 	delete("Annual Plan Item", items)
+	# "Plan Item" (PPI-…) is Annual Plan Item's own parent (its `plan_item`
+	# link), created with no fixture_namespace stamp of its own until
+	# recently — the same "rows created through the commands carry no
+	# namespace" gap this function exists to close for everything else on
+	# this Fiscal Year. Its children key off it directly, not the plan
+	# version, since a Plan Item outlives a single version.
+	plan_items = frappe.get_all("Plan Item", filters={"annual_plan": ("in", plans or ("",))}, pluck="name")
+	delete("Plan Item Correction Disposition", frappe.get_all(
+		"Plan Item Correction Disposition",
+		filters={"correction_request": ("in", frappe.get_all("Plan Item Correction Request", filters={"plan_item": ("in", plan_items or ("",))}, pluck="name") or ("",))},
+		pluck="name",
+	))
+	delete("Plan Item Correction Request", frappe.get_all("Plan Item Correction Request", filters={"plan_item": ("in", plan_items or ("",))}, pluck="name"))
+	delete("Plan Item", plan_items)
 	for task_doctype, decision_doctype in (("Plan Finance Task", "Plan Finance Decision"), ("Plan Governance Task", "Plan Governance Decision")):
 		task_rows = frappe.get_all(task_doctype, filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
 		delete(decision_doctype, frappe.get_all(decision_doctype, filters={"task": ("in", task_rows or ("",))}, pluck="name"))

@@ -25,7 +25,7 @@
 					</select>
 				</div>
 				<div class="pln-field">
-					<label :for="`dppv-issue-problem-${index}`">Problem</label>
+					<label :for="`dppv-issue-problem-${index}`">Issue</label>
 					<input
 						:id="`dppv-issue-problem-${index}`"
 						type="text"
