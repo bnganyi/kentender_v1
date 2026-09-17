@@ -70,6 +70,11 @@ NEEDS = (
 		"unit": "Programme",
 		"required_by_date": "2027-08-31",
 		"state": STATE_ACCEPTED,
+		# Its accept decision is dated 24 Nov 2026 (DECISION_TIMES below), inside
+		# Julia's Digital Health acting window (1 Oct-30 Nov) and before
+		# Peter's own Digital Health assignment starts (1 Dec) — same
+		# reasoning NDS-MOH-2027-0004 already applies below.
+		"reviewer": ACTING_REVIEWER,
 	},
 	{
 		"reference": "NDS-MOH-2027-0002",
@@ -230,6 +235,7 @@ def _build_need(spec: dict, author_units: dict[str, str]) -> str:
 	_namespace(need, created["current_revision"])
 
 	if spec["state"] == STATE_DRAFT:
+		_stamp_children(need)
 		return need
 
 	with _as(AUTHOR), clock.at(when.get("submit", "2026-11-24 12:00:00")):
@@ -239,6 +245,7 @@ def _build_need(spec: dict, author_units: dict[str, str]) -> str:
 			idempotency_key=f"nds-seed:{reference}:submit",
 		)
 	if spec["state"] == STATE_SUBMITTED:
+		_stamp_children(need)
 		return need
 
 	decision = "accept" if spec["state"] == STATE_ACCEPTED else "return"
@@ -261,6 +268,7 @@ def _build_need(spec: dict, author_units: dict[str, str]) -> str:
 	if result.get("successor_revision"):
 		# §14.3 — Revision 2 is the server-created editable copy of the returned V1.
 		_namespace(need, result["successor_revision"])
+	_stamp_children(need)
 	return need
 
 
@@ -270,6 +278,20 @@ def _namespace(need: str, version: str = "") -> None:
 		frappe.db.set_value(
 			"Departmental Need Revision", version, "fixture_namespace", NS, update_modified=False
 		)
+
+
+def _stamp_children(need: str) -> None:
+	"""Namespace-stamp every Decision/Event/Review Task row the lifecycle
+	commands above created for `need`, not just the Need and its Revisions —
+	`purge_fixture_needs` filters every _NAMESPACED doctype by this field, so
+	an unstamped Decision row survives a rebuild's purge as an orphan and
+	then breaks the next create's idempotency replay (it finds the orphan
+	but the Need it points at is already gone)."""
+	from kentender_procurement.departmental_needs.seeds.playwright_ui_fixtures import (
+		_stamp_children as _stamp_children_impl,
+	)
+
+	_stamp_children_impl(need, namespace=NS)
 
 
 def upsert_departmental_needs(*, commit: bool = False) -> dict[str, list[str]]:

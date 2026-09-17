@@ -437,12 +437,23 @@ def clear_canonical_modules() -> dict[str, Any]:
 	from kentender_procurement.tender_preparation.seeds.clear import clear_tender_fixture_rows
 
 	out["tender_preparation"] = clear_tender_fixture_rows(include_canonical=True, include_playwright=playwright_ok)
+	# Not clear_requisition_fixture_rows(include_canonical=True, ...): that
+	# path is a direct delete which refuses outright on an Authorised
+	# Requisition with an Active Budget reservation (the "wipe after
+	# authorise" hazard). reset_requisitions_seed() revokes it first through
+	# the real command, then does the same delete — the safe rebuild path.
 	from kentender_procurement.procurement_requisitions.seeds.clear import clear_requisition_fixture_rows
+	from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import reset_requisitions_seed
 
-	out["requisitions"] = clear_requisition_fixture_rows(include_canonical=True, include_playwright=playwright_ok)
+	out["requisitions"] = reset_requisitions_seed(commit=False)
+	for doctype, count in clear_requisition_fixture_rows(include_canonical=False, include_playwright=playwright_ok).get("deleted", {}).items():
+		if isinstance(count, int):
+			out["requisitions"][doctype] = out["requisitions"].get(doctype, 0) + count
+		else:
+			out["requisitions"][doctype] = count
 	from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import clear_planning_fixture_rows
 
-	out["planning"] = clear_planning_fixture_rows(include_canonical=True, include_playwright=True)
+	out["planning"] = clear_planning_fixture_rows(include_canonical=True, include_playwright=playwright_ok)
 	from kentender_procurement.departmental_needs.seeds.playwright_ui_fixtures import purge_fixture_needs
 
 	out["needs"] = purge_fixture_needs(namespace=NEEDS_NS, commit=False)
