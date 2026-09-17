@@ -70,6 +70,16 @@ def _quantity_display(quantity, unit: str) -> str:
 	return f"{value:g} {_unit_label(unit).lower()}".strip()
 
 
+def _quantity_number(quantity) -> str:
+	"""§10.1 — Quantity and Unit are separate columns, so the number is
+	rendered on its own without the unit appended."""
+	return f"{flt(quantity):g}"
+
+
+def _revision_number(need_revision: str) -> int:
+	return needs_intake.need_revision_number(need_revision)
+
+
 def _window_display(fiscal_year: str) -> dict[str, str]:
 	state = site_configuration.get_dpp_submission_state(fiscal_year)
 	if state.get("open"):
@@ -151,22 +161,36 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 				total_specified += flt(row.indicative_amount)
 			need_origin = row.source_origin == needs_intake.NEED_ORIGIN
 			line = line_labels.get(cstr(row.budget_line), {})
+			# §10.4's own wording: what the row *is* to the department, not an
+			# internal readiness label.
 			if not_proceeding:
-				status, kind = "Not proceeding", "muted"
+				status, kind = "Not included this year", "muted"
 			elif funded:
-				status, kind = "Ready", "live"
+				status, kind = "Included", "live"
 			else:
-				status, kind = "Funding incomplete", "attention"
+				status, kind = "Funding details needed", "attention"
 			entries.append(
 				{
 					"entry_id": row.entry_id,
 					"source_origin": row.source_origin,
 					"title": row.title,
 					"source_label": f"Accepted Need · {row.need}" if need_origin else "Direct requirement",
+					# §10.4 — the requirement cell is the title on its own line
+					# with its source reference and revision beneath, in muted
+					# text. Direct requirements have no Need revision to show.
+					"reference_line": (
+						f"{row.need} · Revision {_revision_number(row.need_revision)}"
+						if need_origin and row.need else "Direct requirement"
+					),
+					"quantity_number": _quantity_number(row.quantity),
+					"unit_label": cstr(row.unit),
 					"quantity_display": _quantity_display(row.quantity, row.unit),
 					"required_by_display": _date(row.required_by_date),
 					"budget_line_display": (line.get("reference") or cstr(row.budget_line)) if row.budget_line else ("—" if not_proceeding else "Not selected"),
-					"amount_display": _money(row.indicative_amount) if funded else "—",
+					"amount_display": (
+						_money(row.indicative_amount) if funded
+						else ("Not applicable" if not_proceeding else "Not entered")
+					),
 					"status": status,
 					"status_kind": kind,
 					"not_proceeding_reason": cstr(row.not_proceeding_reason),
@@ -270,6 +294,7 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 		},
 		"context": {
 			"department": labels["department"],
+			"department_name": labels["department_name"],
 			"financial_year": labels["financial_year"],
 			"window": window,
 		},
@@ -278,6 +303,10 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 		"open_task": open_task,
 		"entries": entries,
 		"totals_caption": totals_caption if entries else "",
+		# §10.4 — the summary strip's own value. For the Author this is "cost
+		# entered so far"; for the HoD it is the included cost. Same number,
+		# different claim, so the label is decided by the screen.
+		"included_cost_display": _money(total_specified),
 		"certification": {
 			"heading": "Departmental certification",
 			"text": attestation,

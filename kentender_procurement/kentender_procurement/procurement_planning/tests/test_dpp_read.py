@@ -81,11 +81,15 @@ class TestGetDepartmentalPlan(DppReadCase):
 		need_row = by_origin["Accepted Departmental Need"]
 		self.assertEqual(need_row["source_label"], "Accepted Need · NEED-PLNT-0001")
 		self.assertEqual(need_row["budget_line_display"], "Not selected")
-		self.assertEqual(need_row["amount_display"], "—")
-		self.assertEqual(need_row["status"], "Funding incomplete")
+		# PLN-CHG-001 v1.23 §10.4 — the row says what it is to the department:
+		# "Not entered" reads as an outstanding input, "—" reads as nothing.
+		self.assertEqual(need_row["amount_display"], "Not entered")
+		self.assertEqual(need_row["status"], "Funding details needed")
+		self.assertEqual(need_row["reference_line"], "NEED-PLNT-0001 · Revision 1")
 		self.assertEqual(need_row["action"], "Complete")
 		direct_row = by_origin["Direct departmental requirement"]
-		self.assertEqual(direct_row["status"], "Ready")
+		self.assertEqual(direct_row["status"], "Included")
+		self.assertEqual(direct_row["reference_line"], "Direct requirement")
 		self.assertEqual(direct_row["action"], "Edit")
 		self.assertEqual(result["totals_caption"], "2 requirements · KES 1,000,000 specified")
 		self.assertIn("Open until", result["context"]["window"]["display"])

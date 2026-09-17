@@ -839,3 +839,78 @@
 	color: var(--kt-color-neutral-700);
 	font-size: 14px;
 }
+
+/* ==========================================================================
+   PLN-CHG-001 v1.23 §10.4 — U02–U05 departmental plan
+   ========================================================================== */
+
+/* The record-context row is separated from the content by a rule, so the
+   labelled values read as context rather than as the first section. */
+.kt-pln .pln-context-row {
+	border-bottom: 1px solid var(--kt-color-neutral-200);
+	padding-bottom: var(--kt-space-4);
+	margin-bottom: var(--kt-space-4);
+}
+
+/* A requirement's reference sits beneath its name in smaller muted text; the
+   name leads (§10.1). */
+.kt-pln .pln-row-ref {
+	font-size: 12px;
+	margin-top: 2px;
+}
+
+/* Row detail — an exclusion reason or a returned comment — belongs to the row
+   above it, so it is indented and unruled at the top. */
+.kt-pln .pln-row-detail > td {
+	border-top: 0;
+	padding-top: 0;
+	padding-bottom: var(--kt-space-3);
+}
+.kt-pln .pln-row-detail .kt-label {
+	display: block;
+	margin-bottom: 2px;
+}
+
+.kt-pln .pln-dpp-table {
+	margin-top: var(--kt-space-3);
+}
+.kt-pln .pln-dpp-add {
+	margin-top: var(--kt-space-3);
+}
+.kt-pln .pln-certification {
+	margin-top: var(--kt-space-5);
+}
+.kt-pln .pln-certification .kt-checkbox {
+	margin-top: var(--kt-space-3);
+}
+
+/* The action area is separated by a top border after all decision content
+   (§10.1), with secondary actions left of the right-aligned primary. */
+.kt-pln .pln-footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+	gap: var(--kt-space-4);
+	border-top: 1px solid var(--kt-color-neutral-200);
+	margin-top: var(--kt-space-6);
+	padding-top: var(--kt-space-4);
+}
+.kt-pln .pln-footer-right {
+	display: flex;
+	align-items: center;
+	gap: var(--kt-space-3);
+	flex-wrap: wrap;
+	justify-content: flex-end;
+}
+.kt-pln .pln-footer-right p {
+	margin: 0;
+	font-size: 12px;
+}
+.kt-pln .pln-dpp-task {
+	margin-top: var(--kt-space-4);
+}
+.kt-pln .pln-error-summary {
+	margin-top: var(--kt-space-4);
+	color: var(--kt-status-critical);
+	font-size: 14px;
+}
