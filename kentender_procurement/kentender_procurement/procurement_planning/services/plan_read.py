@@ -1173,6 +1173,15 @@ def _affordability_rows(statement: dict[str, Any]) -> list[dict[str, Any]]:
 		{
 			"budget_line": line["budget_line"],
 			"budget_line_label": f"{line.get('reference') or line['budget_line']} — {line.get('title')}" if line.get("title") else (line.get("reference") or line["budget_line"]),
+			# §10.9 — the first view is Budget line, Line name, Approved,
+			# Planned, Difference and Result. Reference and name are separate
+			# columns, and the difference is stated rather than left to be
+			# worked out from two figures.
+			"budget_line_reference": cstr(line.get("reference") or line["budget_line"]),
+			"line_name": cstr(line.get("title")),
+			"difference_display": _money(flt(line.get("approved")) - flt(line.get("planned"))),
+			"result": "Within budget" if line.get("within_approved") else "Exceeds approved amount",
+			"result_kind": "live" if line.get("within_approved") else "critical",
 			"funding_source": cstr(line.get("funding_source")) or "—",
 			"approved_display": _money(line.get("approved")),
 			"planned_display": _money(line.get("planned")),

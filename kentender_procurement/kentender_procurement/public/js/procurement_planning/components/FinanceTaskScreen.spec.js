@@ -1,124 +1,167 @@
-// PLN-CHG-001 v1.12 §15 — FinanceTaskScreen component tests (D14).
-// PLN-DES-10 exact fields (one task per Version), the over-approved variant
-// that omits Confirm (§12.9), and §11.12's absences.
+// PLN-CHG-001 v1.23 §10.9 — FinanceTaskScreen component tests (U10).
+//
+// The distinction this screen exists to protect: an approved-amount excess
+// blocks confirmation, low current availability does not. Both must be
+// visible, and they must not look alike.
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import FinanceTaskScreen from "./FinanceTaskScreen.vue";
 
-const LINE = {
-	budget_line: "BL-1",
-	budget_line_label: "MOH-BL-DHI-2027 — Digital health infrastructure programme",
-	funding_source: "Government of Kenya",
-	approved_display: "KES 100,000,000", planned_display: "KES 80,000,000",
-	within_approved: true, within_approved_display: "Yes",
-	reserved_display: "KES 0", committed_display: "KES 0", available_display: "KES 100,000,000",
-	within_available: true, excess_display: "",
-};
-
-const WITHIN = {
-	task: "FNT-1", task_reference: "FNT-MOH-2027-001", task_token: "tok",
-	status: "Open", decided: false, can_decide: true, can_confirm: true,
-	header: {
-		eyebrow: "PLAN FUNDING CONFIRMATION", title: "Ministry of Health Annual Procurement Plan 2027/28",
-		reference_line: "FNT-MOH-2027-001 · PLN-MOH-2027-001 · Version 1", badge: "Awaiting Finance",
-	},
-	summary: { plan_items: 1, value_display: "KES 80,000,000", lines_used: 1, reserved_share_display: "0% of plan value · target 30%" },
-	as_at_display: "4 Dec 2026, 09:58 EAT",
-	lines: [
-		LINE,
-		{ ...LINE, budget_line: "BL-2", budget_line_label: "MOH-BL-HWD-2027 — Digital health workforce development", approved_display: "KES 60,000,000", planned_display: "KES 0", available_display: "KES 60,000,000" },
-	],
-	within_approved: true,
-	within_available: true,
-	notice: { kind: "live", text: "The consolidated plan is within the approved budget on every Procurement Budget Line." },
-	advisory: null,
-	quiet_line: "Confirmation records that this plan fits the approved budget. It reserves no funds; reservation happens at requisition.",
-	failing_lines: [],
-	is_reassessment: false,
-	version_number: 1,
-	history: [{ review: "Review 1", basis: "MOH-BUD-2027-001, Version 1", outcome: "Awaiting confirmation", actor: "—", time_display: "—" }],
-	funding_evidence: { state: "Awaiting confirmation", at_approval: null },
-};
-
-function make(task = WITHIN) {
-	return mount(FinanceTaskScreen, { props: { task, pending: false, errorSummary: "" } });
+function line(overrides = {}) {
+	return {
+		budget_line: "bl-dhi",
+		budget_line_reference: "MOH-BL-DHI-2027",
+		line_name: "Digital health infrastructure programme",
+		funding_source: "Government of Kenya",
+		approved_display: "KES 100,000,000",
+		planned_display: "KES 80,000,000",
+		difference_display: "KES 20,000,000",
+		result: "Within budget",
+		result_kind: "live",
+		within_approved: true,
+		within_available: true,
+		reserved_display: "KES 0",
+		committed_display: "KES 0",
+		available_display: "KES 100,000,000",
+		excess_display: "",
+		...overrides,
+	};
 }
 
-describe("FinanceTaskScreen — PLN-DES-10", () => {
-	it("renders the header, the four-field plan summary and the eight-column affordability table", () => {
+function task(overrides = {}) {
+	return {
+		outcome: "OK",
+		task: "FNT-MOH-2027-001",
+		status: "Open",
+		can_decide: true,
+		can_confirm: true,
+		segregated: false,
+		is_reassessment: false,
+		stale: false,
+		header: {
+			title: "Ministry of Health Annual Procurement Plan 2027/28",
+			reference_line: "FNT-MOH-2027-001 · PLN-MOH-2027-001 · Version 1",
+		},
+		budget_reference: "MOH-BUD-2027-001",
+		as_at_display: "3 Dec 2026, 09:00 EAT",
+		lines: [line(), line({ budget_line: "bl-hwd", budget_line_reference: "MOH-BL-HWD-2027", line_name: "Digital health workforce development", approved_display: "KES 60,000,000", planned_display: "KES 50,000,000", difference_display: "KES 10,000,000", available_display: "KES 60,000,000" })],
+		history: [],
+		...overrides,
+	};
+}
+
+function make(props = {}) {
+	return mount(FinanceTaskScreen, { props: { task: task(), pending: false, errorSummary: "", ...props } });
+}
+
+describe("FinanceTaskScreen — U10 BASE", () => {
+	it("asks the one question it exists to answer", () => {
 		const w = make();
-		expect(w.find(".kt-page-kicker").text()).toBe("PLAN FUNDING CONFIRMATION");
-		expect(w.find(".pln-quiet-ref").text()).toBe("FNT-MOH-2027-001 · PLN-MOH-2027-001 · Version 1");
-		expect(w.find('[data-testid="fnt-badge"]').text()).toBe("Awaiting Finance");
-		expect(w.find('[data-testid="fnt-summary"]').findAll("label").map((l) => l.text())).toEqual([
-			"Plan Items", "Planned value", "Budget Lines", "Reserved share",
+		expect(w.find('[data-testid="fnt-title"]').text()).toBe("Check funding for the annual plan");
+		expect(w.text()).toContain("Confirm whether each planned amount is within its approved budget line.");
+		expect(w.find('[data-testid="fnt-badge"]').text()).toBe("Your decision required");
+	});
+
+	it("puts approved, planned, difference and result in the first view", () => {
+		const w = make();
+		const headers = w.findAll('[data-testid="fnt-comparison"] th').map((th) => th.text());
+		expect(headers).toEqual([
+			"Budget line", "Line name", "Approved amount", "Planned amount", "Difference", "Result", "Action",
 		]);
-		const card = w.find('[data-testid="fnt-affordability"]');
-		expect(card.find(".kt-card-title").text()).toBe("Affordability");
-		expect(w.find('[data-testid="fnt-as-at"]').text()).toBe("4 Dec 2026, 09:58 EAT");
-		expect(card.findAll("thead th").map((th) => th.text())).toEqual([
-			"Budget Line", "Funding source", "Approved", "Planned in this Plan", "Within approved", "Reserved", "Committed", "Currently available",
-		]);
-		expect(card.findAll("tbody tr")).toHaveLength(2);
-		expect(w.find('[data-testid="fnt-line-0"]').text()).toContain("Yes");
-		expect(w.find('[data-testid="fnt-history"]').exists()).toBe(true);
+		expect(w.find('[data-testid="fnt-line-0"]').text()).toContain("KES 20,000,000");
+		expect(w.find('[data-testid="fnt-line-0"]').text()).toContain("Within budget");
 	});
 
-	it("shows the reassessment header and read-only-content notice for an Active Version", () => {
-		const w = make({ ...WITHIN, is_reassessment: true, version_number: 3 });
-		expect(w.find(".kt-page-title").text()).toBe("Reassess funding for Active Plan Version 3");
-		expect(w.find('[data-testid="fnt-reassessment-notice"]').text()).toContain("Plan content is read-only");
-	});
-
-	it("keeps the plan's own title when not reassessing", () => {
+	it("keeps current balances collapsed and advisory", () => {
 		const w = make();
-		expect(w.find(".kt-page-title").text()).toBe("Ministry of Health Annual Procurement Plan 2027/28");
-		expect(w.find('[data-testid="fnt-reassessment-notice"]').exists()).toBe(false);
+		const balances = w.find('[data-testid="fnt-balances"]');
+		expect(balances.attributes("open")).toBeUndefined();
+		expect(balances.text()).toContain("advisory and do not affect the affordability decision");
 	});
 
-	it("shows the green within-approved notice, the quiet no-reservation line and both decision controls", async () => {
+	it("says what confirming does and does not do", () => {
 		const w = make();
-		const notice = w.find('[data-testid="fnt-within-approved"]');
-		expect(notice.classes()).toContain("is-live");
-		expect(notice.text()).toBe("The consolidated plan is within the approved budget on every Procurement Budget Line.");
-		expect(w.find('[data-testid="fnt-quiet-line"]').text()).toContain("It reserves no funds; reservation happens at requisition.");
+		expect(w.find('[data-testid="fnt-consequence"]').text()).toBe(
+			"Confirming records affordability. It does not reserve funds or approve the plan.",
+		);
+	});
+
+	it("offers both decisions when the plan is within budget", () => {
+		const w = make();
 		expect(w.find('[data-testid="fnt-confirm"]').text()).toBe("Confirm plan funding");
-		await w.find('[data-testid="fnt-confirm"]').trigger("click");
-		expect(w.emitted("confirm")).toHaveLength(1);
-		await w.find('[data-testid="fnt-return"]').trigger("click");
-		expect(w.emitted("open-return-dialog")).toHaveLength(1);
+		expect(w.find('[data-testid="fnt-return"]').attributes("disabled")).toBeUndefined();
 	});
+});
 
-	it("omits Confirm, names the excess and keeps Return when a line exceeds its approved amount", () => {
+describe("FinanceTaskScreen — availability versus affordability", () => {
+	it("U10-LOW-AVAILABILITY: says the confirmation is still permitted", () => {
 		const w = make({
-			...WITHIN, can_confirm: false, within_approved: false,
-			lines: [{ ...LINE, within_approved: false, within_approved_display: "No", planned_display: "KES 120,000,000", excess_display: "KES 20,000,000" }],
-			notice: { kind: "critical", text: "The planned total exceeds the approved amount on one or more Procurement Budget Lines. Return the plan to the Planner." },
+			task: task({ lines: [line({ within_available: false, available_display: "KES 10,000,000" })] }),
 		});
-		expect(w.find('[data-testid="fnt-over-approved"]').classes()).toContain("is-critical");
-		expect(w.find('[data-testid="fnt-line-0"]').text()).toContain("exceeds by KES 20,000,000");
-		expect(w.find('[data-testid="fnt-confirm"]').exists()).toBe(false);
-		expect(w.find('[data-testid="fnt-return"]').exists()).toBe(true);
-	});
-
-	it("shows the below-available advisory as quiet text that blocks nothing (§12.9)", () => {
-		const w = make({ ...WITHIN, within_available: false, advisory: { kind: "advisory", text: "The planned total exceeds the currently available amount on at least one line. Planning and drawdown run on different horizons; this blocks nothing." } });
-		expect(w.find('[data-testid="fnt-advisory"]').text()).toContain("this blocks nothing");
+		expect(w.find('[data-testid="fnt-low-availability-0"]').text()).toContain(
+			"The plan is still within the approved budget, so funding confirmation is permitted.",
+		);
+		// Both decisions remain available.
 		expect(w.find('[data-testid="fnt-confirm"]').exists()).toBe(true);
+		expect(w.find('[data-testid="fnt-return"]').attributes("disabled")).toBeUndefined();
 	});
 
-	it("removes the decision footer once decided or for a non-deciding reader", () => {
-		expect(make({ ...WITHIN, status: "Completed", decided: true, can_decide: false, can_confirm: false, header: { ...WITHIN.header, badge: "Completed" } }).find(".pln-footer-bar").exists()).toBe(false);
-		const reader = make({ ...WITHIN, can_decide: false, can_confirm: false });
-		expect(reader.find('[data-testid="fnt-confirm"]').exists()).toBe(false);
-		expect(reader.find('[data-testid="fnt-return"]').exists()).toBe(false);
+	it("U10-OVER-APPROVED: removes Confirm, keeps Return, and names the exact excess", () => {
+		const w = make({
+			task: task({
+				can_confirm: false,
+				lines: [
+					line({
+						approved_display: "KES 70,000,000",
+						planned_display: "KES 80,000,000",
+						difference_display: "KES -10,000,000",
+						result: "Exceeds approved amount",
+						result_kind: "critical",
+						within_approved: false,
+						excess_display: "KES 10,000,000",
+					}),
+				],
+			}),
+		});
+		expect(w.find('[data-testid="fnt-excess-0"]').text()).toContain(
+			"exceeds its approved budget by KES 10,000,000",
+		);
+		expect(w.find('[data-testid="fnt-confirm"]').exists()).toBe(false);
+		expect(w.find('[data-testid="fnt-return"]').attributes("disabled")).toBeUndefined();
+	});
+});
+
+describe("FinanceTaskScreen — other states", () => {
+	it("U10-REASSESS: retitles and says it is evidence, not re-approval", () => {
+		const w = make({ task: task({ is_reassessment: true }) });
+		expect(w.find('[data-testid="fnt-title"]').text()).toBe("Check funding again for the current plan");
+		expect(w.find('[data-testid="fnt-reassessment-notice"]').text()).toContain(
+			"does not change or re-approve the plan",
+		);
 	});
 
-	it("carries no per-item list, editable amount, note, reservation or available-after column (§11.12)", () => {
-		const w = make();
-		expect(w.findAll("input, textarea, select")).toHaveLength(0);
-		expect(w.text()).not.toContain("Available after confirmation");
-		expect(w.text()).not.toContain("Note");
-		expect(w.find('[data-testid="fnt-plan-item"]').exists()).toBe(false);
+	it("U10-CHANGED: says the amounts moved and offers the replacement when there is one", () => {
+		const w = make({ task: task({ stale: true, replacement_route: ["procurement-planning", "finance", "FNT-2"] }) });
+		expect(w.find('[data-testid="fnt-changed"]').text()).toContain("The amounts for this review have changed.");
+		expect(w.find('[data-testid="fnt-open-replacement"]').text()).toBe("Open updated funding review");
+	});
+
+	it("U10-CHANGED: names the responsible role when there is no replacement to open", () => {
+		const w = make({ task: task({ stale: true }) });
+		expect(w.find('[data-testid="fnt-open-replacement"]').exists()).toBe(false);
+		expect(w.find('[data-testid="fnt-changed"]').text()).toContain("Responsible role: Procurement Planner");
+	});
+
+	it("blocks a segregated actor from both decisions", () => {
+		const w = make({ task: task({ segregated: true, can_decide: false, can_confirm: false }) });
+		expect(w.find('[data-testid="fnt-segregated"]').text()).toContain("independent decision-maker is required");
+		expect(w.find('[data-testid="fnt-confirm"]').exists()).toBe(false);
+		expect(w.find('[data-testid="fnt-return"]').attributes("disabled")).toBeDefined();
+	});
+
+	it("shows no decision area once the review is decided", () => {
+		const w = make({ task: task({ status: "Completed", can_decide: false, can_confirm: false }) });
+		expect(w.find('[data-testid="fnt-footer"]').exists()).toBe(false);
+		expect(w.find('[data-testid="fnt-comparison"]').exists()).toBe(true);
 	});
 });
