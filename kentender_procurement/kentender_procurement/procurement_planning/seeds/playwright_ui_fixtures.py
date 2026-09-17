@@ -379,6 +379,10 @@ def _wipe() -> None:
 	dpp_versions = frappe.get_all("Departmental Plan Version", filters={"departmental_plan": ("in", dpp_roots or ("",))}, pluck="name")
 	submissions = frappe.get_all("Departmental Plan Submission", filters={"dpp_version": ("in", dpp_versions or ("",))}, pluck="name")
 	tasks = frappe.get_all("Departmental Plan Validation Task", filters={"fiscal_year": FY}, pluck="name")
+	# PLN-CHG-001 v1.23 §4.4 — classification corrections are keyed by
+	# submission and entry id; leaving them behind would let one test's
+	# correction reshape the next test's effective classification.
+	frappe.db.delete("DPP Classification Correction", {"dpp_submission": ("in", submissions or ("",))})
 	frappe.db.delete("Departmental Plan Validation Decision", {"task": ("in", tasks or ("",))})
 	frappe.db.delete("Departmental Plan Validation Task", {"name": ("in", tasks or ("",))})
 	frappe.db.delete("Departmental Plan Submission", {"name": ("in", submissions or ("",))})
@@ -389,12 +393,11 @@ def _wipe() -> None:
 	plans = frappe.get_all("Annual Plan", filters={"fiscal_year": FY}, pluck="name")
 	plan_versions = frappe.get_all("Annual Plan Version", filters={"annual_plan": ("in", plans or ("",))}, pluck="name")
 	items = frappe.get_all("Annual Plan Item", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
-	frappe.db.delete("Plan Item Forecast Revision", {"plan_item": ("in", items or ("",))})
 	frappe.db.delete("Plan Drawdown Reference", {"plan_item": ("in", items or ("",))})
 	frappe.db.delete("Plan Source Allocation", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan Item", {"plan_version": ("in", plan_versions or ("",))})
 	roots = frappe.get_all("Plan Item", filters={"annual_plan": ("in", plans or ("",))}, pluck="name")
-	for doctype in ("Milestone Actual Event", "Proceeding Coverage", "Milestone Notice"):
+	for doctype in ("Milestone Actual Event", "Proceeding Coverage"):
 		frappe.db.delete(doctype, {"plan_item": ("in", roots or ("",))})
 	frappe.db.delete("Plan Item Correction Disposition", {"correction_request": ("in", frappe.get_all("Plan Item Correction Request", filters={"plan_item_id": ("in", roots or ("",))}, pluck="name") or ("",))})
 	frappe.db.delete("Plan Item Correction Request", {"plan_item_id": ("in", roots or ("",))})
@@ -900,19 +903,3 @@ def reset_publication_failed_fixture(*, need: str = "", commit: bool = True) -> 
 	if commit:
 		frappe.db.commit()
 	return {**state, "publication_result": published["result"], "publication": approved["publication"]}
-
-
-def run_milestone_check(*, today: str = "2098-08-25", commit: bool = True) -> dict[str, Any]:
-	"""§8.3 `CheckApproachingMilestones` run for a pinned day (the fixture
-	item's invitation is 1 Sep 2098; 25 Aug is exactly 7 days out — the
-	governed default threshold, §5.5.1B — so it is inside the window)."""
-	from kentender_procurement.procurement_planning.services import schedule
-
-	_guard()
-	frappe.set_user("Administrator")
-	first = schedule.check_approaching_milestones(today=today)
-	second = schedule.check_approaching_milestones(today=today)
-	notifications = frappe.db.count("Notification Log", {"for_user": PLANNER, "email_header": ("like", "pln:milestone:%")})
-	if commit:
-		frappe.db.commit()
-	return {"raised": [list(r) for r in first["raised"]], "raised_again": [list(r) for r in second["raised"]], "notifications": notifications}

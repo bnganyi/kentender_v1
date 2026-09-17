@@ -220,13 +220,16 @@ class TestActivationAndRetryPublication(PublicationCase):
 		self.assertEqual(read["header"]["badge"], "Active")
 		self.assertFalse(read["mutable"])
 		self.assertEqual(read["active_view"]["summary"]["plan_items"], 1)
-		self.assertEqual(read["active_view"]["summary"]["schedule_health_display"], "0 of 1 item behind baseline")
+		# PLN-CHG-001 v1.23 — no schedule-health projection survives the
+		# forecast deferral (PLN23-AC-001).
+		self.assertNotIn("schedule_health_display", read["active_view"]["summary"])
 		row = read["active_view"]["items"][0]
 		self.assertEqual(row["plan_item_id"], item_id)
-		self.assertEqual(len(row["schedule"]), 7)
-		self.assertTrue(all(r["forecast"] == r["baseline"] and r["actual"] == "" for r in row["schedule"]))
-		self.assertTrue(row["schedule"][0]["can_shift"])
-		self.assertTrue(row["schedule"][-1]["can_shift"])  # v1.18 §5.5.1: a final-milestone single-row change is allowed with a reason
+		# PLN-CHG-001 v1.23 — the Active row carries planned scope and remaining
+		# allowance, not a per-milestone forecast grid: the forecast facility is
+		# deferred in full (PLN23-AC-001).
+		self.assertNotIn("schedule", row)
+		self.assertEqual(row["requisition_availability_display"], "1 each · KES 1,000,000")
 		self.assertIn("Acknowledged", read["active_view"]["governance_card"]["publication_line"])
 
 		publication.reload()
@@ -269,7 +272,6 @@ class TestActivationAndRetryPublication(PublicationCase):
 		self.assertEqual(frappe.db.get_value("Annual Plan Version", version_name, "version_status"), "Publication failed")
 		publication = frappe.get_doc("Plan Publication", approved["publication"])
 		self.assertEqual(publication.publication_state, "Failed")
-		self.assertFalse(frappe.db.get_value("Annual Plan Item", {"plan_version": version_name}, "forecast_invitation_date"))
 
 		frappe.set_user(fx.PLANNER)
 		with self.assertRaises(frappe.DoesNotExistError):
@@ -463,7 +465,7 @@ class TestTreasuryAndWithdrawal(PublicationCase):
 		self.assertEqual(caught.exception.code, "PLN_REVIEW_STALE")
 
 
-class TestForecastCascade(PublicationCase):
+class TestHeldCorrectionAndReassessment(PublicationCase):
 	def active(self) -> tuple[dict, str]:
 		accepted, item_id = self.confirmed_item()
 		self.activate(accepted["annual_plan"])
@@ -526,132 +528,89 @@ class TestForecastCascade(PublicationCase):
 		self.assertNotEqual(after["current_confirmation"]["decision"], after["at_approval"]["decision"])
 		self.assertEqual(frappe.db.count("Plan Finance Decision", {"decision": "Confirm plan funding", "task": ("in", frappe.get_all("Plan Finance Task", filters={"plan_version": version_name}, pluck="name"))}), 2)
 
-	def test_preview_proposes_every_later_milestone_and_confirm_writes_one_cascade(self):
-		accepted, item_id = self.active()
-		frappe.set_user(fx.PLANNER)
-		preview = schedule.preview_forecast_cascade(plan_item=item_id, milestone="bid_opening", new_forecast_date="2101-10-06")
-		self.assertEqual(preview["delta_days"], 14)
-		self.assertEqual([r["milestone"] for r in preview["rows"]], list(schedule.MILESTONES[1:]))
-		self.assertTrue(all(r["included"] for r in preview["rows"]))
-		self.assertEqual(preview["rows"][0]["proposed_forecast"], "2101-10-06")
-		# no write from a preview (invariant 1)
-		self.assertEqual(frappe.db.count("Plan Item Forecast Revision"), 0)
+class TestOwnerSuppliedActuals(PublicationCase):
+	"""PLN-CHG-001 v1.23 §5.5.1A — actual milestone dates come only from the
+	module that owns the real event, are stored per procurement proceeding, and
+	never collapse onto the Plan Item. The forecast facility this used to sit
+	beside is deferred in full (PLN23-CHG-001)."""
 
-		result = schedule.confirm_forecast_cascade(
-			plan_item=item_id, milestone="bid_opening", new_forecast_date="2101-10-06", included_milestones=None,
-			reason="Tender Preparation confirmed the issue date will slip two weeks pending template release.",
-			expected_record_version=preview["record_version"], idempotency_key=key(),
+	def active(self) -> tuple[dict, str]:
+		accepted, item_id = self.confirmed_item()
+		self.activate(accepted["annual_plan"])
+		return accepted, item_id
+
+	def test_an_actual_is_recorded_per_proceeding_and_is_never_typed_by_a_user(self):
+		accepted, item_id = self.active()
+		schedule.record_tender_milestone_actual(
+			plan_item_id=item_id, milestone="invitation", actual_date="2101-09-03",
+			source_event_id="TPR-TEST-1", producer="tender_preparation",
 		)
-		self.assertEqual(result["action"], "forecast_shifted")
-		self.assertTrue(result["cascade_id"])
-		self.assertEqual(len(result["revisions"]), 6)
-		item = frappe.get_doc("Annual Plan Item", plan_read.resolve_item_doc_name(item_id))
-		self.assertEqual(str(item.forecast_bid_opening_date), "2101-10-06")
-		self.assertEqual(str(item.baseline_bid_opening_date), "2101-09-22")  # baseline untouched (PLN-AC-118)
-		self.assertEqual(str(item.forecast_delivery_completion_date), "2102-05-14")
-		read = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
-		self.assertEqual(read["active_view"]["summary"]["schedule_health_display"], "1 of 1 item behind baseline")
-		self.assertTrue(read["active_view"]["items"][0]["behind_baseline"])
-		revisions = frappe.get_all("Plan Item Forecast Revision", filters={"plan_item": item.name}, fields=["cascade_id", "milestone"])
-		self.assertEqual({r.cascade_id for r in revisions}, {result["cascade_id"]})
-
-	def test_excluding_every_downstream_row_writes_a_standalone_revision(self):
-		accepted, item_id = self.active()
-		frappe.set_user(fx.PLANNER)
-		preview = schedule.preview_forecast_cascade(plan_item=item_id, milestone="award_approval", new_forecast_date="2101-10-28")
-		result = schedule.confirm_forecast_cascade(
-			plan_item=item_id, milestone="award_approval", new_forecast_date="2101-10-28", included_milestones=["award_approval"],
-			reason="Award approval alone moves one day; the notification date still follows it.",
-			expected_record_version=preview["record_version"], idempotency_key=key(),
+		events = frappe.get_all(
+			"Milestone Actual Event",
+			filters={"plan_item_id": item_id, "milestone": "invitation"},
+			fields=["actual_date", "event_id"],
 		)
-		self.assertEqual(result["cascade_id"], "")  # PLN-AC-127
-		self.assertEqual(len(result["revisions"]), 1)
-		item = frappe.get_doc("Annual Plan Item", plan_read.resolve_item_doc_name(item_id))
-		self.assertEqual(str(item.forecast_award_approval_date), "2101-10-28")
-		self.assertEqual(str(item.forecast_award_notification_date), "2101-10-29")
+		self.assertEqual(len(events), 1)
+		self.assertEqual(str(events[0].actual_date), "2101-09-03")
 
-	def test_governed_gaps_and_reasons_are_enforced_on_confirmation(self):
-		accepted, item_id = self.active()
-		frappe.set_user(fx.PLANNER)
-		preview = schedule.preview_forecast_cascade(plan_item=item_id, milestone="contract_signing", new_forecast_date="2101-11-05")
-		with self.assertRaises(ProcurementPlanningError) as caught:
-			schedule.confirm_forecast_cascade(
-				plan_item=item_id, milestone="contract_signing", new_forecast_date="2101-11-05", included_milestones=["contract_signing"],
-				reason="Signing pulled forward inside the standstill period, which is not allowed.",
-				expected_record_version=preview["record_version"], idempotency_key=key(),
-			)
-		self.assertEqual(caught.exception.code, "PLN_PROFILE_PERIOD_INVALID")  # PLN18 §8: labelled parameters
-		self.assertEqual(caught.exception.detail["period"], "standstill_period_days")
-		with self.assertRaises(ProcurementPlanningError) as caught:
-			schedule.confirm_forecast_cascade(
-				plan_item=item_id, milestone="bid_opening", new_forecast_date="2101-10-06", included_milestones=None,
-				reason="short", expected_record_version=preview["record_version"], idempotency_key=key(),
-			)
-		self.assertEqual(caught.exception.code, "PLN_FORECAST_REASON_REQUIRED")
+		# A replayed event id changes nothing (PLN18-AC-099).
+		again = schedule.record_tender_milestone_actual(
+			plan_item_id=item_id, milestone="invitation", actual_date="2101-09-03",
+			source_event_id="TPR-TEST-1", producer="tender_preparation",
+		)
+		self.assertTrue(again.get("idempotent"))
+		self.assertEqual(frappe.db.count("Milestone Actual Event", {"plan_item_id": item_id, "milestone": "invitation"}), 1)
 
-	def test_a_milestone_with_an_actual_is_never_proposed_and_actuals_are_never_typed(self):
-		accepted, item_id = self.active()
-		# the only writer of an actual is the inbound projection contract (§18)
-		schedule.record_tender_milestone_actual(plan_item_id=item_id, milestone="invitation", actual_date="2101-09-03", source_event_id="TPR-TEST-1", producer="tender_preparation")
-		# PLN-CHG-001 v1.18 §4.8 / plan D10: same value again is a no-op; a
-		# different value never overwrites unless it supersedes the earlier event
-		again = schedule.record_tender_milestone_actual(plan_item_id=item_id, milestone="invitation", actual_date="2101-09-03", source_event_id="TPR-TEST-1", producer="tender_preparation")
-		self.assertTrue(again["idempotent"])
+		# A different date under a new event id is a conflicting fact for the
+		# same proceeding, not a silent overwrite.
 		with self.assertRaises(ProcurementPlanningError) as guarded:
-			schedule.record_tender_milestone_actual(plan_item_id=item_id, milestone="invitation", actual_date="2101-09-04", source_event_id="TPR-TEST-2", producer="tender_preparation")
-		self.assertEqual(guarded.exception.code, "PLN_ACTUAL_NOT_WRITABLE")
-		with self.assertRaises(ProcurementPlanningError) as guarded:
-			schedule.record_tender_milestone_actual(plan_item_id=item_id, milestone="invitation", actual_date="2101-09-04", source_event_id="", producer="tender_preparation")
-		self.assertEqual(guarded.exception.code, "PLN_ACTUAL_NOT_WRITABLE")
-		frappe.set_user(fx.PLANNER)
-		item = plan_read.get_plan_item(plan_item_id=item_id)
-		self.assertEqual(item["schedule"][0]["actual"], "2101-09-03")
-		self.assertEqual(item["schedule"][0]["variance_baseline_days"], 2)
-		self.assertFalse(item["schedule"][0]["can_shift"])
-		with self.assertRaises(ProcurementPlanningError) as caught:
-			schedule.preview_forecast_cascade(plan_item=item_id, milestone="invitation", new_forecast_date="2101-09-10")
-		self.assertEqual(caught.exception.code, "PLN_CASCADE_INCLUDES_ACTUAL_MILESTONE")
-		preview = schedule.preview_forecast_cascade(plan_item=item_id, milestone="bid_opening", new_forecast_date="2101-09-29")
-		self.assertNotIn("invitation", [r["milestone"] for r in preview["rows"]])
-		# PLN-AC-119 — no save path accepts a typed actual, even for Administrator
-		frappe.set_user("Administrator")
-		with self.assertRaises(ProcurementPlanningError) as caught:
-			plan_workbench.save_plan_item(
-				plan_item=item_id, values={"actual_bid_opening_date": "2101-09-25"}, expected_record_version=item["record_version"], idempotency_key=key(),
+			schedule.record_tender_milestone_actual(
+				plan_item_id=item_id, milestone="invitation", actual_date="2101-09-04",
+				source_event_id="TPR-TEST-2", producer="tender_preparation",
 			)
-		self.assertEqual(caught.exception.code, "PLN_ACTUAL_NOT_WRITABLE")
+		self.assertEqual(guarded.exception.code, "PLN_ACTUAL_NOT_WRITABLE")
 
-	def test_the_daily_nudge_raises_once_per_milestone_per_day(self):
-		accepted, item_id = self.active()
-		frappe.db.delete("Notification Log", {"for_user": fx.PLANNER})
-		item_name = plan_read.resolve_item_doc_name(item_id)
-		root = frappe.db.get_value("Annual Plan Item", item_name, "plan_item")
-		frappe.db.delete("Milestone Notice", {"plan_item": root})
-		first = schedule.check_approaching_milestones(today="2101-08-25")
-		self.assertIn((item_id, "invitation"), first["raised"])
-		count = frappe.db.count("Notification Log", {"for_user": fx.PLANNER, "email_header": ("like", f"pln:milestone:{item_id}:invitation:%")})
-		self.assertEqual(count, 1)
-		notice = frappe.get_doc("Milestone Notice", {"plan_item": root, "milestone": "invitation", "proceeding_id": "", "recipient": fx.PLANNER})
-		self.assertEqual(notice.notice_status, "Approaching")
-		self.assertEqual(len(json.loads(notice.history)), 1)
-		schedule.check_approaching_milestones(today="2101-08-25")
-		self.assertEqual(frappe.db.count("Notification Log", {"for_user": fx.PLANNER, "email_header": ("like", f"pln:milestone:{item_id}:invitation:%")}), 1)
-		self.assertEqual(frappe.db.count("Milestone Notice", {"plan_item": root, "milestone": "invitation", "proceeding_id": "", "recipient": fx.PLANNER}), 1)
-		notice.reload()
-		self.assertEqual(len(json.loads(notice.history)), 1)  # same status again — no duplicate history entry
-		self.assertEqual(frappe.db.count("Plan Governance Task", {"plan_version": accepted["annual_plan_version"], "status": "Open"}), 0)
-		# PLN-CHG-001 v1.18 §5.5.1B: Overdue detection (added Phase 2g) now
-		# also flags every OTHER Active item on this shared site whose own
-		# forecast lies before this artificial "today" — assert this test's
-		# own item specifically, not the whole-site list.
-		self.assertNotIn((item_id, "invitation"), schedule.check_approaching_milestones(today="2101-06-01")["raised"])
-		schedule.check_approaching_milestones(today="2101-09-04")  # past the forecast date: Overdue
-		notice.reload()
-		self.assertEqual(notice.notice_status, "Overdue")
-		self.assertEqual(len(json.loads(notice.history)), 2)
-		schedule.record_tender_milestone_actual(plan_item_id=item_id, milestone="invitation", actual_date="2101-09-03", source_event_id="TPR-NUDGE-1", producer="tender_preparation")
-		notice.reload()
-		self.assertEqual(notice.notice_status, "Cleared")
+		# An unauthenticated event with no producer event id is refused.
+		with self.assertRaises(ProcurementPlanningError) as guarded:
+			schedule.record_tender_milestone_actual(
+				plan_item_id=item_id, milestone="invitation", actual_date="2101-09-04",
+				source_event_id="", producer="tender_preparation",
+			)
+		self.assertEqual(guarded.exception.code, "PLN_ACTUAL_NOT_WRITABLE")
+
+	def test_no_planner_save_path_accepts_an_actual_or_a_forecast_date(self):
+		"""PLN18-AC-120 and PLN23-AC-001 together: the Planner can type neither."""
+		accepted, item_id = self.confirmed_item()
+		frappe.set_user(fx.PLANNER)
+		for field, expected in (
+			("actual_invitation_date", "PLN_ACTUAL_NOT_WRITABLE"),
+			("forecast_invitation_date", "PLN_SCHEDULE_INVALID"),
+		):
+			with self.assertRaises(ProcurementPlanningError) as caught:
+				plan_workbench.save_plan_item(
+					plan_item=item_id, values={field: "2101-09-03"},
+					expected_record_version=0, idempotency_key=key(),
+				)
+			self.assertEqual(caught.exception.code, expected)
+
+	def test_the_forecast_facility_has_no_runtime_entry_point(self):
+		"""PLN23-AC-001 — no route, endpoint, scheduler job or notice producer."""
+		from kentender_procurement.procurement_planning import api
+		from kentender_procurement.procurement_planning.services import notifications
+
+		for withdrawn in ("preview_forecast_cascade", "confirm_forecast_cascade"):
+			self.assertFalse(hasattr(api, withdrawn), f"{withdrawn} is exposed again")
+		for withdrawn in ("check_approaching_milestones", "seed_forecast_from_baseline", "schedule_health"):
+			self.assertFalse(hasattr(schedule, withdrawn), f"schedule.{withdrawn} is back")
+		for withdrawn in ("upsert_milestone_notice", "clear_milestone_notice", "notify_approaching_milestone"):
+			self.assertFalse(hasattr(notifications, withdrawn), f"notifications.{withdrawn} is back")
+		self.assertFalse(frappe.db.exists("DocType", "Plan Item Forecast Revision"))
+		self.assertFalse(frappe.db.exists("DocType", "Milestone Notice"))
+
+		from kentender_procurement import hooks
+
+		scheduled = [job for jobs in getattr(hooks, "scheduler_events", {}).values() for job in jobs]
+		self.assertEqual([j for j in scheduled if "schedule" in j or "milestone" in j], [])
 
 
 class TestBeginAndCancelPlanUpdate(PublicationCase):
@@ -667,12 +626,11 @@ class TestBeginAndCancelPlanUpdate(PublicationCase):
 		successor = begun["successor_version"]
 		self.assertEqual(frappe.db.get_value("Annual Plan Version", successor, "based_on_version"), active_version)
 		self.assertEqual(frappe.db.get_value("Annual Plan Version", successor, "funding_state"), "Not requested")
-		copies = frappe.get_all("Annual Plan Item", filters={"plan_item_id": item_id}, fields=["name", "plan_version", "item_state", "forecast_invitation_date", "baseline_invitation_date"])
+		copies = frappe.get_all("Annual Plan Item", filters={"plan_item_id": item_id}, fields=["name", "plan_version", "item_state", "baseline_invitation_date"])
 		self.assertEqual(len(copies), 2)
 		by_version = {c.plan_version: c for c in copies}
 		self.assertEqual(by_version[active_version].item_state, "Active")
 		self.assertEqual(by_version[successor].item_state, "Draft")
-		self.assertFalse(by_version[successor].forecast_invitation_date)
 		self.assertEqual(str(by_version[successor].baseline_invitation_date), "2101-09-01")
 
 		read = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])

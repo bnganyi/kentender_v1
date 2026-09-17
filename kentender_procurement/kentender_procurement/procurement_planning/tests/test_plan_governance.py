@@ -328,12 +328,15 @@ class TestAdoptApproveChain(GovernanceCase):
 		self.assertTrue(publication.external_reference)
 		ack = frappe.get_doc("Publication Acknowledgement", {"publication": publication.name})
 		self.assertTrue(ack.matched)
-		# PLN-AC-123: forecasts seeded from baseline on activation
+		# PLN-CHG-001 v1.23 §5.6.7 / PLN23-AC-001 — activation initialises no
+		# forecast record: AC-124 is future-only and the approved baseline is
+		# the only schedule the MVP keeps. The item is Active and its baseline
+		# survives activation untouched.
 		item = plan_read.get_plan_item(plan_item_id=item_id)
 		self.assertTrue(item["is_active"])
-		for row in item["schedule"]:
-			self.assertEqual(row["forecast"], row["baseline"])
-			self.assertEqual(row["actual"], "")
+		self.assertNotIn("schedule", item)
+		self.assertNotIn("revisions", item)
+		self.assertEqual(item["baseline"]["target_invitation_date"], "2101-09-01")
 
 	def test_a_board_route_requires_a_resolution_reference(self):
 		single = frappe.get_doc("Site Procuring Entity")
@@ -503,7 +506,8 @@ class TestReturnPlanVersion(GovernanceCase):
 		corrected_item = frappe.get_doc("Annual Plan Item", {"plan_version": correction.name, "plan_item_id": item_id})
 		self.assertEqual(corrected_item.item_state, "Draft")
 		self.assertEqual(str(corrected_item.baseline_invitation_date), "2101-09-01")
-		self.assertFalse(corrected_item.forecast_invitation_date)
+		# v1.23: no forecast column exists to carry forward.
+		self.assertNotIn("forecast_invitation_date", corrected_item.as_dict())
 		self.assertEqual(frappe.db.get_value("Annual Plan", accepted["annual_plan"], "open_successor_version"), correction.name)
 		frappe.set_user(fx.PLANNER)
 		read = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])

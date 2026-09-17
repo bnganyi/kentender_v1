@@ -34,7 +34,6 @@
   "reservation_category",
   "reservation_category_reason",
   "county_resident_reservation",
-  "exclusive_preference",
   "threshold_band_at_readiness",
   "section_break_baseline",
   "baseline_invitation_date",
@@ -53,22 +52,6 @@
   "baseline_award_notification_date",
   "baseline_contract_signing_date",
   "baseline_delivery_completion_date",
-  "section_break_forecast",
-  "forecast_invitation_date",
-  "forecast_bid_opening_date",
-  "forecast_evaluation_completion_date",
-  "forecast_award_approval_date",
-  "forecast_award_notification_date",
-  "forecast_contract_signing_date",
-  "forecast_delivery_completion_date",
-  "section_break_actual",
-  "actual_invitation_date",
-  "actual_bid_opening_date",
-  "actual_evaluation_completion_date",
-  "actual_award_approval_date",
-  "actual_award_notification_date",
-  "actual_contract_signing_date",
-  "actual_delivery_completion_date",
   "item_status",
   "item_state",
   "record_version",
@@ -101,7 +84,7 @@
    "options": "Plan Item",
    "read_only": 1,
    "search_index": 1,
-   "description": "Stable identity root (§4.6); this row is the exact per-Version content."
+   "description": "Stable identity root (\u00a74.6); this row is the exact per-Version content."
   },
   {
    "fieldname": "title",
@@ -110,14 +93,14 @@
    "reqd": 1,
    "length": 160,
    "in_list_view": 1,
-   "description": "Procurement package title; 5–160 characters."
+   "description": "Procurement package title; 5\u2013160 characters."
   },
   {
    "fieldname": "description",
    "fieldtype": "Small Text",
    "label": "Description",
    "reqd": 1,
-   "description": "Procurement-facing description; 10–1,000 characters."
+   "description": "Procurement-facing description; 10\u20131,000 characters."
   },
   {
    "fieldname": "strategic_objective",
@@ -133,7 +116,7 @@
    "label": "Strategy Plan",
    "options": "Strategic Plan",
    "read_only": 1,
-   "description": "Objective lineage stored on selection (§7.2)."
+   "description": "Objective lineage stored on selection (\u00a77.2)."
   },
   {
    "fieldname": "strategy_plan_version",
@@ -206,7 +189,7 @@
    "fieldname": "aggregation_reason",
    "fieldtype": "Small Text",
    "label": "Aggregation Reason",
-   "description": "Required only when more than one DPP entry forms the item; 20–500 characters."
+   "description": "Required only when more than one DPP entry forms the item; 20\u2013500 characters."
   },
   {
    "fieldname": "procurement_category",
@@ -214,7 +197,7 @@
    "label": "Procurement Category",
    "options": "Goods\nWorks\nServices",
    "read_only": 1,
-   "description": "Goods, works or services — derived from the accepted DPP classification; the Second Schedule threshold matrix is keyed on it (§4.9)."
+   "description": "Goods, works or services \u2014 derived from the accepted DPP classification; the Second Schedule threshold matrix is keyed on it (\u00a74.9)."
   },
   {
    "fieldname": "section_break_reg41",
@@ -228,7 +211,7 @@
    "options": "Single year",
    "default": "Single year",
    "read_only": 1,
-   "description": "Fixed literal (§4.6); no selector."
+   "description": "Fixed literal (\u00a74.6); no selector."
   },
   {
    "fieldname": "aggregation_indicator",
@@ -259,7 +242,7 @@
    "fieldname": "reservation_category",
    "fieldtype": "Data",
    "label": "Preference and Reservation Category",
-   "description": "Governed value from the effective-dated regulator reference for the plan's Fiscal Year; required before plan funding confirmation, None is an explicit choice (§4.9)."
+   "description": "Governed value from the effective-dated regulator reference for the plan's Fiscal Year; required before plan funding confirmation, None is an explicit choice (\u00a74.9)."
   },
   {
    "fieldname": "reservation_category_reason",
@@ -273,14 +256,6 @@
    "label": "County Resident-Tenderer Reservation",
    "default": "0",
    "description": "Available only where the site entity is a county entity (regulation 40(5))."
-  },
-  {
-   "fieldname": "exclusive_preference",
-   "fieldtype": "Check",
-   "label": "Exclusive Preference (derived)",
-   "default": "0",
-   "read_only": 1,
-   "description": "Regulation 163 — derived from funding source and planned value, never entered."
   },
   {
    "fieldname": "threshold_band_at_readiness",
@@ -298,7 +273,7 @@
    "fieldname": "baseline_invitation_date",
    "fieldtype": "Date",
    "label": "Target Invitation Date",
-   "description": "The one Planner-set anchor; locked once the Plan Version leaves Draft (§4.9)."
+   "description": "The one Planner-set anchor; locked once the Plan Version leaves Draft (\u00a74.9)."
   },
   {
    "fieldname": "tendering_period_days",
@@ -339,7 +314,7 @@
    "fieldname": "period_inputs",
    "fieldtype": "JSON",
    "label": "Period Inputs",
-   "description": "profile period key → integer days, as entered."
+   "description": "profile period key \u2192 integer days, as entered."
   },
   {
    "fieldname": "baseline_milestones",
@@ -356,146 +331,38 @@
   {
    "fieldname": "baseline_bid_opening_date",
    "fieldtype": "Date",
-   "label": "Baseline — Bid Opening",
+   "label": "Baseline \u2014 Bid Opening",
    "read_only": 1
   },
   {
    "fieldname": "baseline_evaluation_completion_date",
    "fieldtype": "Date",
-   "label": "Baseline — Evaluation Completion",
+   "label": "Baseline \u2014 Evaluation Completion",
    "read_only": 1
   },
   {
    "fieldname": "baseline_award_approval_date",
    "fieldtype": "Date",
-   "label": "Baseline — Tender Award Approval",
+   "label": "Baseline \u2014 Tender Award Approval",
    "read_only": 1
   },
   {
    "fieldname": "baseline_award_notification_date",
    "fieldtype": "Date",
-   "label": "Baseline — Notification of Award",
+   "label": "Baseline \u2014 Notification of Award",
    "read_only": 1
   },
   {
    "fieldname": "baseline_contract_signing_date",
    "fieldtype": "Date",
-   "label": "Baseline — Contract Signing",
+   "label": "Baseline \u2014 Contract Signing",
    "read_only": 1
   },
   {
    "fieldname": "baseline_delivery_completion_date",
    "fieldtype": "Date",
-   "label": "Baseline — Delivery or Implementation Completion",
+   "label": "Baseline \u2014 Delivery or Implementation Completion",
    "read_only": 1
-  },
-  {
-   "fieldname": "section_break_forecast",
-   "fieldtype": "Section Break",
-   "label": "Forecast Schedule (Active Versions only)"
-  },
-  {
-   "fieldname": "forecast_invitation_date",
-   "fieldtype": "Date",
-   "label": "Forecast — Invitation or Advertisement",
-   "read_only": 1,
-   "description": "Null until activation; seeded from baseline on activation; changed only through the cascade preview/confirm commands."
-  },
-  {
-   "fieldname": "forecast_bid_opening_date",
-   "fieldtype": "Date",
-   "label": "Forecast — Bid Opening",
-   "read_only": 1,
-   "description": "Null until activation; seeded from baseline on activation; changed only through the cascade preview/confirm commands."
-  },
-  {
-   "fieldname": "forecast_evaluation_completion_date",
-   "fieldtype": "Date",
-   "label": "Forecast — Evaluation Completion",
-   "read_only": 1,
-   "description": "Null until activation; seeded from baseline on activation; changed only through the cascade preview/confirm commands."
-  },
-  {
-   "fieldname": "forecast_award_approval_date",
-   "fieldtype": "Date",
-   "label": "Forecast — Tender Award Approval",
-   "read_only": 1,
-   "description": "Null until activation; seeded from baseline on activation; changed only through the cascade preview/confirm commands."
-  },
-  {
-   "fieldname": "forecast_award_notification_date",
-   "fieldtype": "Date",
-   "label": "Forecast — Notification of Award",
-   "read_only": 1,
-   "description": "Null until activation; seeded from baseline on activation; changed only through the cascade preview/confirm commands."
-  },
-  {
-   "fieldname": "forecast_contract_signing_date",
-   "fieldtype": "Date",
-   "label": "Forecast — Contract Signing",
-   "read_only": 1,
-   "description": "Null until activation; seeded from baseline on activation; changed only through the cascade preview/confirm commands."
-  },
-  {
-   "fieldname": "forecast_delivery_completion_date",
-   "fieldtype": "Date",
-   "label": "Forecast — Delivery or Implementation Completion",
-   "read_only": 1,
-   "description": "Null until activation; seeded from baseline on activation; changed only through the cascade preview/confirm commands."
-  },
-  {
-   "fieldname": "section_break_actual",
-   "fieldtype": "Section Break",
-   "label": "Actual Schedule (projection-only)"
-  },
-  {
-   "fieldname": "actual_invitation_date",
-   "fieldtype": "Date",
-   "label": "Actual — Invitation or Advertisement",
-   "read_only": 1,
-   "description": "Written only by the owning module's projection contract (§18); never typed."
-  },
-  {
-   "fieldname": "actual_bid_opening_date",
-   "fieldtype": "Date",
-   "label": "Actual — Bid Opening",
-   "read_only": 1,
-   "description": "Written only by the owning module's projection contract (§18); never typed."
-  },
-  {
-   "fieldname": "actual_evaluation_completion_date",
-   "fieldtype": "Date",
-   "label": "Actual — Evaluation Completion",
-   "read_only": 1,
-   "description": "Written only by the owning module's projection contract (§18); never typed."
-  },
-  {
-   "fieldname": "actual_award_approval_date",
-   "fieldtype": "Date",
-   "label": "Actual — Tender Award Approval",
-   "read_only": 1,
-   "description": "Written only by the owning module's projection contract (§18); never typed."
-  },
-  {
-   "fieldname": "actual_award_notification_date",
-   "fieldtype": "Date",
-   "label": "Actual — Notification of Award",
-   "read_only": 1,
-   "description": "Written only by the owning module's projection contract (§18); never typed."
-  },
-  {
-   "fieldname": "actual_contract_signing_date",
-   "fieldtype": "Date",
-   "label": "Actual — Contract Signing",
-   "read_only": 1,
-   "description": "Written only by the owning module's projection contract (§18); never typed."
-  },
-  {
-   "fieldname": "actual_delivery_completion_date",
-   "fieldtype": "Date",
-   "label": "Actual — Delivery or Implementation Completion",
-   "read_only": 1,
-   "description": "Written only by the owning module's projection contract (§18); never typed."
   },
   {
    "fieldname": "item_status",
@@ -504,7 +371,7 @@
    "options": "Not started\nIn progress\nCompleted\nCancelled",
    "default": "Not started",
    "read_only": 1,
-   "description": "Third Schedule column 17 — derived from actuals where present."
+   "description": "Third Schedule column 17 \u2014 derived from actuals where present."
   },
   {
    "fieldname": "item_state",
@@ -538,7 +405,7 @@
  ],
  "grid_page_length": 50,
  "links": [],
- "modified": "2026-08-30 12:00:00.000000",
+ "modified": "2026-09-18 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement Planning",
  "name": "Annual Plan Item",

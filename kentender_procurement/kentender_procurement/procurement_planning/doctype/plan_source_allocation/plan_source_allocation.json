@@ -13,6 +13,9 @@
   "dpp_entry",
   "source_origin",
   "source_key",
+  "classification_evidence",
+  "classification_requirement_type",
+  "classification_procurement_category",
   "need",
   "need_revision",
   "organisation_unit",
@@ -84,7 +87,27 @@
    "label": "Source Key",
    "read_only": 1,
    "search_index": 1,
-   "description": "need:{need} or direct:{direct_source_id} — the stable source identity (§4.6)."
+   "description": "need:{need} or direct:{direct_source_id} \u2014 the stable source identity (\u00a74.6)."
+  },
+  {
+   "fieldname": "classification_evidence",
+   "fieldtype": "Data",
+   "label": "Classification Evidence ID",
+   "read_only": 1,
+   "search_index": 1,
+   "description": "PLN-CHG-001 v1.23 \u00a74.6 \u2014 the exact effective classification evidence this allocation was formed from. A later correction never rewrites this snapshot."
+  },
+  {
+   "fieldname": "classification_requirement_type",
+   "fieldtype": "Data",
+   "label": "Classification Requirement Type",
+   "read_only": 1
+  },
+  {
+   "fieldname": "classification_procurement_category",
+   "fieldtype": "Data",
+   "label": "Classification Procurement Category",
+   "read_only": 1
   },
   {
    "fieldname": "need",
@@ -172,7 +195,7 @@
  ],
  "grid_page_length": 50,
  "links": [],
- "modified": "2026-08-30 12:00:00.000000",
+ "modified": "2026-09-18 09:00:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement Planning",
  "name": "Plan Source Allocation",

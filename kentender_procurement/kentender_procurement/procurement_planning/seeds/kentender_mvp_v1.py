@@ -175,7 +175,6 @@ CLOCK = {
 _DOCTYPES = (
 	# dependents first, roots last
 	"Plan Drawdown Reference",
-	"Plan Item Forecast Revision",
 	"Annual Plan Publication",
 	"Plan Governance Decision",
 	"Plan Governance Task",
@@ -188,6 +187,7 @@ _DOCTYPES = (
 	"Plan Item",
 	"Annual Plan Version",
 	"Annual Plan",
+	"DPP Classification Correction",
 	"Departmental Plan Validation Decision",
 	"Departmental Plan Validation Task",
 	"Departmental Plan Submission",
@@ -710,16 +710,17 @@ def _wipe_fiscal_year(fiscal_year: str) -> dict[str, int]:
 	roots = frappe.get_all("Departmental Plan", filters={"fiscal_year": fiscal_year}, pluck="name")
 	versions = frappe.get_all("Departmental Plan Version", filters={"departmental_plan": ("in", roots or ("",))}, pluck="name")
 	tasks = frappe.get_all("Departmental Plan Validation Task", filters={"fiscal_year": fiscal_year}, pluck="name")
+	submissions = frappe.get_all("Departmental Plan Submission", filters={"dpp_version": ("in", versions or ("",))}, pluck="name")
+	delete("DPP Classification Correction", frappe.get_all("DPP Classification Correction", filters={"dpp_submission": ("in", submissions or ("",))}, pluck="name"))
 	delete("Departmental Plan Validation Decision", frappe.get_all("Departmental Plan Validation Decision", filters={"task": ("in", tasks or ("",))}, pluck="name"))
 	delete("Departmental Plan Validation Task", tasks)
-	delete("Departmental Plan Submission", frappe.get_all("Departmental Plan Submission", filters={"dpp_version": ("in", versions or ("",))}, pluck="name"))
+	delete("Departmental Plan Submission", submissions)
 	delete("Departmental Plan Entry", frappe.get_all("Departmental Plan Entry", filters={"dpp_version": ("in", versions or ("",))}, pluck="name"))
 	delete("Departmental Plan Version", versions)
 	delete("Departmental Plan", roots)
 	plans = frappe.get_all("Annual Plan", filters={"fiscal_year": fiscal_year}, pluck="name")
 	plan_versions = frappe.get_all("Annual Plan Version", filters={"annual_plan": ("in", plans or ("",))}, pluck="name")
 	items = frappe.get_all("Annual Plan Item", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
-	delete("Plan Item Forecast Revision", frappe.get_all("Plan Item Forecast Revision", filters={"plan_item": ("in", items or ("",))}, pluck="name"))
 	delete("Plan Drawdown Reference", frappe.get_all("Plan Drawdown Reference", filters={"plan_item": ("in", items or ("",))}, pluck="name"))
 	delete("Plan Source Allocation", frappe.get_all("Plan Source Allocation", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name"))
 	delete("Annual Plan Item", items)
@@ -987,7 +988,7 @@ def validate_planning_seed() -> list[dict[str, Any]]:
 	check("active.two_items", bool(view and view["summary"]["plan_items"] == 2), str(view and view["summary"]))
 	check("active.value_130m", bool(view and "130,000,000" in view["summary"]["value_display"]))
 	check("active.activated_display_15_00_eat", bool(view and view["summary"]["activated_display"] == "10 Dec 2026, 15:00 EAT"), str(view and view["summary"]["activated_display"]))
-	check("active.schedule_health_0_of_2", bool(view and view["summary"]["schedule_health_display"] == "0 of 2 items behind baseline"))
+	check("active.two_items", bool(view and view["summary"]["plan_items"] == 2))
 	if view and view["items"]:
 		item = view["items"][0]
 		check("item.baseline_1_may_2027", any(r["milestone"] == "invitation" and r["baseline"] == "2027-05-01" for r in item["schedule"]))

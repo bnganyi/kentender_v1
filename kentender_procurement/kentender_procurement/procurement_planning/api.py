@@ -140,6 +140,33 @@ def accept_departmental_plan(task: str, classifications, task_token: str, idempo
 	return dpp_validation.accept_departmental_plan(task=task, classifications=_parse_json(classifications, {}), task_token=task_token, idempotency_key=idempotency_key)
 
 
+@frappe.whitelist()
+def get_accepted_dpp_classification(dpp_submission: str, dpp_entry_id: str = "") -> dict[str, Any]:
+	"""PLN-CHG-001 v1.23 §7.1 `GetAcceptedDPPClassification`."""
+	from kentender_procurement.procurement_planning.services import dpp_classification
+
+	return dpp_classification.get_accepted_dpp_classification(dpp_submission=dpp_submission, dpp_entry_id=dpp_entry_id)
+
+
+@frappe.whitelist()
+def correct_accepted_requirement_classification(
+	dpp_submission: str, dpp_entry_id: str, expected_evidence_id: str, new_requirement_type: str, reason: str,
+	idempotency_key: str,
+) -> dict[str, Any]:
+	"""PLN-CHG-001 v1.23 §7.2 `CorrectAcceptedRequirementClassification`.
+
+	Explicit parameters only: a `**kwargs` signature here would forward Frappe's
+	own `cmd` and `csrf_token` form fields into the keyword-only service.
+	Procurement category is deliberately absent — the server derives it.
+	"""
+	from kentender_procurement.procurement_planning.services import dpp_classification
+
+	return dpp_classification.correct_accepted_requirement_classification(
+		dpp_submission=dpp_submission, dpp_entry_id=dpp_entry_id, expected_evidence_id=expected_evidence_id,
+		new_requirement_type=new_requirement_type, reason=reason, idempotency_key=idempotency_key,
+	)
+
+
 # --- §8.1 reads ------------------------------------------------------------
 
 
@@ -470,25 +497,14 @@ def cancel_plan_update(plan_reference: str, expected_record_version, idempotency
 	return plan_publication.cancel_plan_update(plan_reference=plan_reference, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
 
 
-# --- forecast cascade (Active Version only) -------------------------------------
-
-
-@frappe.whitelist()
-def preview_forecast_cascade(plan_item: str, milestone: str, new_forecast_date: str) -> dict[str, Any]:
-	from kentender_procurement.procurement_planning.services import schedule
-
-	return schedule.preview_forecast_cascade(plan_item=plan_item, milestone=milestone, new_forecast_date=new_forecast_date)
-
-
-@frappe.whitelist()
-def confirm_forecast_cascade(plan_item: str, milestone: str, new_forecast_date: str, reason: str, expected_record_version, idempotency_key: str, included_milestones=None) -> dict[str, Any]:
-	from kentender_procurement.procurement_planning.services import schedule
-
-	return schedule.confirm_forecast_cascade(
-		plan_item=plan_item, milestone=milestone, new_forecast_date=new_forecast_date,
-		included_milestones=_parse_json(included_milestones, None), reason=reason,
-		expected_record_version=expected_record_version, idempotency_key=idempotency_key,
-	)
+# --- forecast cascade -------------------------------------------------------
+#
+# PLN-CHG-001 v1.23 §7.5 / §15.3 (PLN23-CHG-001): the MVP registers no
+# `PreviewForecastCascade` or `ConfirmForecastCascade` service. The tested
+# implementation stays in `services/schedule.py` so its regressions keep
+# passing, but it has no whitelisted endpoint, no route and no control. Do not
+# re-expose it until the forecast facility is separately approved with its
+# owner integrations.
 
 
 # --- §7.4 Requisition eligibility — published for a sibling module ----------------

@@ -57,7 +57,16 @@ DPP_INTAKE = {"start_year": 2027, "closes_at": "2026-11-30 20:59:59"}
 # CFG-CHG-002 v0.9 §3 — the requirement-type and procurement-method
 # catalogues Configuration & Governance owns (PLN-CHG-001 v1.12 §14.1: four
 # types incl. Works; the eleven Third Schedule methods, Open Tender first).
-REQUIREMENT_TYPES = ("Non-consulting services", "Consulting services", "Goods", "Works")
+# PLN-CHG-001 v1.23 §4.4 — the governed requirement-type catalogue carries its
+# own procurement category. The Planner selects only the type; the server
+# derives the category from this catalogue entry and rejects a client-supplied
+# one. Never re-express this mapping as a module constant in a consumer.
+REQUIREMENT_TYPES = (
+	("Non-consulting services", "Services"),
+	("Consulting services", "Services"),
+	("Goods", "Goods"),
+	("Works", "Works"),
+)
 PROCUREMENT_METHODS = (
 	"Open Tender",
 	"Direct Procurement",
@@ -438,14 +447,27 @@ def _seed_dpp_intake() -> str:
 
 def _seed_catalogues() -> dict[str, int]:
 	created = 0
-	for doctype, titles in (("Requirement Type", REQUIREMENT_TYPES), ("Procurement Method", PROCUREMENT_METHODS)):
-		for title in titles:
-			if frappe.db.exists(doctype, title):
-				if frappe.db.get_value(doctype, title, "status") != "Active":
-					frappe.db.set_value(doctype, title, "status", "Active", update_modified=False)
-				continue
-			frappe.get_doc({"doctype": doctype, "title": title, "status": "Active"}).insert(ignore_permissions=True)
-			created += 1
+	for title, category in REQUIREMENT_TYPES:
+		if frappe.db.exists("Requirement Type", title):
+			updates = {}
+			if frappe.db.get_value("Requirement Type", title, "status") != "Active":
+				updates["status"] = "Active"
+			if frappe.db.get_value("Requirement Type", title, "procurement_category") != category:
+				updates["procurement_category"] = category
+			if updates:
+				frappe.db.set_value("Requirement Type", title, updates, update_modified=False)
+			continue
+		frappe.get_doc(
+			{"doctype": "Requirement Type", "title": title, "procurement_category": category, "status": "Active"}
+		).insert(ignore_permissions=True)
+		created += 1
+	for title in PROCUREMENT_METHODS:
+		if frappe.db.exists("Procurement Method", title):
+			if frappe.db.get_value("Procurement Method", title, "status") != "Active":
+				frappe.db.set_value("Procurement Method", title, "status", "Active", update_modified=False)
+			continue
+		frappe.get_doc({"doctype": "Procurement Method", "title": title, "status": "Active"}).insert(ignore_permissions=True)
+		created += 1
 	return {"created": created, "requirement_types": len(REQUIREMENT_TYPES), "procurement_methods": len(PROCUREMENT_METHODS)}
 
 

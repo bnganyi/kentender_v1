@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""PLN-CHG-001 v1.18 — schema contract tests (plan Phase 2a, tracker PLN18-201..204).
+"""PLN-CHG-001 v1.23 — schema contract tests (tracker PLN22-134).
 
 Guards: (1) every §4 doctype exists with exactly its allow-listed fields (an
 undocumented field is a defect, not an option); (2) the composite uniqueness
@@ -11,9 +11,12 @@ token survives in the module's server sources (tracker rule 3) — and the scan
 itself is proven live by a planted violation; (5) `errors.py` equals spec §8;
 (6) the retired doctypes are gone; (7) controllers stay thin.
 
+Guard (8) is new in v1.23: `PLN23-AC-001` requires that the deferred forecast
+and reminder facility has no runtime entry point at all — no schema, no
+whitelisted endpoint, no scheduler registration and no notification producer.
+
 `DEFERRED_MENTIONS` names the rule-3 tokens still present in a file until the
-Phase 2 sub-phase that removes them lands (row id given); the Phase 2 exit row
-PLN18-213 requires it empty.
+row that removes them lands (row id given); the Phase 1 exit requires it empty.
 """
 
 from __future__ import annotations
@@ -29,7 +32,7 @@ from kentender_procurement.procurement_planning import errors
 MODULE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SPEC = os.path.join(
 	os.path.dirname(frappe.get_app_path("kentender_procurement")), "..", "docs", "mvp-1-r1", "04_planning",
-	"KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_18.md",
+	"KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_23.md",
 )
 
 MILESTONES = ("invitation", "bid_opening", "evaluation_completion", "award_approval", "award_notification", "contract_signing", "delivery_completion")
@@ -41,7 +44,8 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 	"Departmental Plan Entry": {"entry_id", "dpp_version", "source_origin", "direct_source_id", "need", "need_revision", "title", "description", "expected_operational_result", "quantity", "unit", "required_by_date", "budget_line", "indicative_amount", "not_proceeding_reason", "fixture_namespace"},
 	"Departmental Plan Submission": {"submission_reference", "dpp_version", "submission_number", "entry_snapshots", "content_hash", "attestation_text", "submitted_by_user", "authority_snapshot", "submitted_at", "fixture_namespace"},
 	"Departmental Plan Validation Task": {"task_reference", "submission", "dpp_version", "organisation_unit", "fiscal_year", "status", "decision", "task_token", "record_version", "fixture_namespace"},
-	"Departmental Plan Validation Decision": {"decision_reference", "task", "submission", "decision", "classifications", "issues", "actor", "authority_snapshot", "decided_at", "command_idempotency_key", "fixture_namespace"},
+	"Departmental Plan Validation Decision": {"decision_reference", "task", "submission", "decision", "classifications", "derived_categories", "issues", "actor", "authority_snapshot", "decided_at", "command_idempotency_key", "fixture_namespace"},
+	"DPP Classification Correction": {"correction_id", "dpp_submission", "dpp_entry_id", "supersedes_evidence_id", "previous_requirement_type", "previous_procurement_category", "new_requirement_type", "new_procurement_category", "reason", "corrected_by", "authority_snapshot", "corrected_at", "command_idempotency_key", "fixture_namespace"},
 	# --- annual roots, versions, items (§4.5–4.6) -----------------------------
 	"Annual Plan": {"plan_reference", "title", "fiscal_year", "active_version", "open_successor_version", "record_version", "fixture_namespace"},
 	"Annual Plan Version": {
@@ -56,15 +60,14 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 		"objective_path", "requirement_type", "procurement_method", "method_profile_version", "schedule_profile_version",
 		"method_condition_evidence", "mandatory_restriction_results", "estimate_basis", "estimate_basis_reference", "aggregation_reason",
 		"procurement_category", "plan_horizon", "aggregation_indicator", "lotting_indicator", "lot_count", "reservation_category",
-		"reservation_category_reason", "county_resident_reservation", "exclusive_preference", "threshold_band_at_readiness",
+		"reservation_category_reason", "county_resident_reservation", "threshold_band_at_readiness",
 		"baseline_invitation_date", "tendering_period_days", "evaluation_period_days", "award_approval_buffer_days",
 		"notification_buffer_days", "standstill_period_days", "estimated_delivery_period_days", "period_inputs", "baseline_milestones",
 		"estimated_completion_date",
-		*(f"baseline_{m}_date" for m in MILESTONES if m != "invitation"), *(f"forecast_{m}_date" for m in MILESTONES), *(f"actual_{m}_date" for m in MILESTONES),
+		*(f"baseline_{m}_date" for m in MILESTONES if m != "invitation"),
 		"item_status", "item_state", "record_version", "fixture_namespace",
 	},
-	"Plan Source Allocation": {"allocation_id", "plan_item", "plan_item_id", "plan_version", "dpp_entry", "source_origin", "source_key", "need", "need_revision", "organisation_unit", "quantity", "unit", "required_by_date", "budget_line", "indicative_amount", "allocation_state", "fixture_namespace"},
-	"Plan Item Forecast Revision": {"plan_item", "plan_item_id", "milestone", "previous_forecast_date", "new_forecast_date", "reason", "cascade_id", "revised_by", "revised_at", "fixture_namespace"},
+	"Plan Source Allocation": {"allocation_id", "plan_item", "plan_item_id", "plan_version", "dpp_entry", "source_origin", "source_key", "classification_evidence", "classification_requirement_type", "classification_procurement_category", "need", "need_revision", "organisation_unit", "quantity", "unit", "required_by_date", "budget_line", "indicative_amount", "allocation_state", "fixture_namespace"},
 	# --- financial and governance evidence (§4.7) -----------------------------
 	"Plan Financial Basis": {"plan_version", "fiscal_year", "currency", "precision", "lines", "planned_total", "approved_total", "basis_digest", "budget_basis_digest", "captured_at", "fixture_namespace"},
 	"Plan Finance Task": {"task_reference", "plan_version", "financial_basis", "plan_value", "line_totals_hash", "affordability_statement", "status", "decision", "task_token", "record_version", "fixture_namespace"},
@@ -80,7 +83,6 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 	"Plan Item Correction Disposition": {"correction_request", "action", "actor", "authority_snapshot", "disposed_at", "reason", "correcting_plan_version", "replacement_lineage", "producer_event_id", "command_idempotency_key", "fixture_namespace"},
 	"Milestone Actual Event": {"producer", "event_id", "schema_version", "proceeding_type", "proceeding_id", "requisition_reference", "plan_version", "plan_item", "plan_item_id", "allocation", "milestone", "actual_date", "recorded_at", "producer_sequence", "supersedes_event_id", "source_evidence_reference", "fixture_namespace"},
 	"Proceeding Coverage": {"proceeding_type", "proceeding_id", "requisition_reference", "requisition_version", "plan_version", "plan_item", "plan_item_id", "allocation", "covered_quantity", "covered_value", "authorisation_state", "publication_state", "reversal_state", "last_event", "fixture_namespace"},
-	"Milestone Notice": {"recipient", "plan_item", "plan_item_id", "proceeding_id", "milestone", "due_date", "notice_status", "notification_key", "last_evaluated_at", "history", "fixture_namespace"},
 	# --- publication and external evidence (§4.9) -----------------------------
 	"Approved Plan Snapshot": {"plan_version", "annual_plan", "content", "evidence_index", "content_digest", "approval_decision", "strategy_approval_snapshot", "approved_at", "fixture_namespace"},
 	"Plan Publication": {"publication_id", "snapshot", "plan_version", "destination", "schema_version", "manifest", "package_hash", "publication_state", "public_location", "external_reference", "acknowledged_at", "record_version", "fixture_namespace"},
@@ -99,17 +101,24 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 # v1.18 §4.6/§4.7 columns whose replacement lands in a later Phase 2 sub-phase;
 # dropped by `pln_chg_001_v118_drop_retired_fields` at the Phase 2 exit (D15).
 RETIRED_COLUMNS_PENDING_DROP = {
-	"Annual Plan Item": {"exclusive_preference", "threshold_band_at_readiness", "reservation_category_reason", "tendering_period_days", "evaluation_period_days", "award_approval_buffer_days", "notification_buffer_days", "standstill_period_days"},
+	"Annual Plan Item": {"threshold_band_at_readiness", "reservation_category_reason", "tendering_period_days", "evaluation_period_days", "award_approval_buffer_days", "notification_buffer_days", "standstill_period_days"},
 	"Annual Plan Version": {"funding_line_totals_hash", "splitting_confirmation", "late_activation_reason"},
 	"Plan Finance Task": {"plan_value", "line_totals_hash", "affordability_statement"},
 }
 
-CORE_CATALOGUES = {"Requirement Type": {"title", "status", "fixture_namespace"}, "Procurement Method": {"title", "status", "fixture_namespace"}}
+CORE_CATALOGUES = {
+	# PLN-CHG-001 v1.23 §4.4 — the governed category lives on the catalogue
+	# entry, not in a consumer's module constant.
+	"Requirement Type": {"title", "procurement_category", "status", "fixture_namespace"},
+	"Procurement Method": {"title", "status", "fixture_namespace"},
+}
 
 LEGACY_DOCTYPES = (
 	"Procurement Plan", "Procurement Plan Version", "Procurement Plan Item", "Procurement Plan Item Version", "Plan Need Allocation",
 	"Plan Decision", "Plan Validation Result", "Planning Handoff Snapshot", "Publication Event",
 	"Departmental Plan Submission Window", "Plan Reservation Reference",
+	# PLN-CHG-001 v1.23 (PLN23-CHG-001) — the deferred forecast facility
+	"Plan Item Forecast Revision", "Milestone Notice",
 )
 
 # Tracker rule 3 (v1.18 §16 / §17.4) + the v1.12 §1.1 list. Each token is
@@ -128,6 +137,11 @@ PROHIBITED_TOKENS = (
 	"highest_advantage", "multi_year_justification", "Multi-year", "\"ocds", "ocid", "Awaiting Finance\"",
 	"record_requisition_drawdown", "RecordRequisitionDrawdown", "_stamp_design_clock", "showPeSwitcher: true",
 	"kt_cl_surface_registry", "is_board_capacity",
+	# v1.23 rule 3 — the forecast/reminder facility has no MVP entry point
+	"preview_forecast_cascade", "confirm_forecast_cascade", "check_approaching_milestones",
+	"seed_forecast_from_baseline", "upsert_milestone_notice", "clear_milestone_notice",
+	"notify_approaching_milestone", "schedule_health", "Plan Item Forecast Revision", "Milestone Notice",
+	"Update expected dates", "CATEGORY_BY_TYPE", "procurement_category_for",
 )
 
 # Tests proving a retired concept is ABSENT from the live site, and the one
@@ -141,12 +155,34 @@ ALLOWED_MENTIONS = {
 	("errors.py", "Multi-year"),  # the §8 message of PLN_MULTI_YEAR_UNSUPPORTED names what is rejected
 	("services/plan_json.py", "ocid"),  # the docstring names the retired OCDS concept this module never produces
 	("tests/test_plan_publication.py", "ocid"),  # proves ocid is absent from both the internal snapshot and the public payload
+	# v1.23: the tests that prove the forecast facility has no entry point must
+	# be able to name what they are proving absent.
+	("tests/test_plan_publication.py", "preview_forecast_cascade"),
+	("tests/test_plan_publication.py", "confirm_forecast_cascade"),
+	("tests/test_planning_api_requests.py", "preview_forecast_cascade"),
+	("tests/test_planning_api_requests.py", "confirm_forecast_cascade"),
+	("tests/test_plan_publication.py", "check_approaching_milestones"),
+	("tests/test_plan_publication.py", "seed_forecast_from_baseline"),
+	("tests/test_plan_publication.py", "schedule_health"),
+	("tests/test_plan_publication.py", "upsert_milestone_notice"),
+	("tests/test_plan_publication.py", "clear_milestone_notice"),
+	("tests/test_plan_publication.py", "notify_approaching_milestone"),
+	("tests/test_plan_publication.py", "Plan Item Forecast Revision"),
+	("tests/test_plan_publication.py", "Milestone Notice"),
+	("tests/test_planning_workspace.py", "schedule_health"),
+	("services/readiness.py", "CATEGORY_BY_TYPE"),  # the note recording where derivation moved to
+	("services/readiness.py", "procurement_category_for"),
 }
 
 # Rule-3 tokens still present until the named Phase 2 row lands (PLN18-213 requires this empty).
 DEFERRED_MENTIONS: dict[tuple[str, str], str] = {
 	("seeds/kentender_mvp_v1.py", "_stamp_design_clock"): "PLN18-401",
 }
+
+# PLN-CHG-001 v1.23 §8 removed both of these from the user-facing error table
+# with the forecast facility. They stay registered in `errors.py` only so the
+# dormant code that raises them keeps importing; nothing routed can reach them.
+DORMANT_CODES = {"PLN_FORECAST_REASON_REQUIRED", "PLN_CASCADE_INCLUDES_ACTUAL_MILESTONE"}
 
 SCAN_DIRS = ("doctype", "services", "tests", "page", "seeds")
 SCAN_SUFFIXES = (".py", ".json")
@@ -195,7 +231,7 @@ def spec_error_table() -> dict[str, str]:
 	return dict(re.findall(r"^\| (PLN_[A-Z_]+) \| (.+?) \|$", section, re.M))
 
 
-class TestPlanningV118Schema(IntegrationTestCase):
+class TestPlanningV123Schema(IntegrationTestCase):
 	def test_every_v118_doctype_has_exactly_its_allow_listed_fields(self):
 		for doctype, expected in {**EXPECTED_FIELDS, **CORE_CATALOGUES}.items():
 			self.assertTrue(frappe.db.exists("DocType", doctype), f"{doctype} is missing")
@@ -244,7 +280,7 @@ class TestPlanningV118Schema(IntegrationTestCase):
 	def test_the_scan_catches_a_planted_violation(self):
 		planted = os.path.join(MODULE_DIR, "seeds", "_planted_violation_test.py")
 		with open(planted, "w", encoding="utf-8") as handle:
-			handle.write("# planted by test_planning_v118_schema\nVALUE = 'record_requisition_drawdown'\n")
+			handle.write("# planted by test_planning_v123_schema\nVALUE = 'record_requisition_drawdown'\n")
 		try:
 			hits = scan_for_tokens()
 		finally:
@@ -254,9 +290,14 @@ class TestPlanningV118Schema(IntegrationTestCase):
 
 	def test_error_contract_equals_spec_section_8(self):
 		table = spec_error_table()
-		self.assertEqual(len(table), 51)
-		self.assertEqual(set(table), set(errors.ERROR_CODES))
-		self.assertEqual(table, errors.MESSAGES)
+		self.assertEqual(len(table), 52)
+		# v1.23 §8 dropped PLN_FORECAST_REASON_REQUIRED and
+		# PLN_CASCADE_INCLUDES_ACTUAL_MILESTONE from the user-facing table with
+		# the forecast facility, so errors.py is a strict superset of the spec
+		# table by exactly those two dormant codes and by nothing else.
+		self.assertEqual(set(errors.ERROR_CODES) - set(table), DORMANT_CODES)
+		self.assertEqual(set(table) - set(errors.ERROR_CODES), set())
+		self.assertEqual(table, {k: v for k, v in errors.MESSAGES.items() if k not in DORMANT_CODES})
 		for removed in ("PLN_RESERVATION_RELEASE_FAILED", "PLN_TENDERING_PERIOD_BELOW_MINIMUM", "PLN_EVALUATION_PERIOD_ABOVE_MAXIMUM", "PLN_STANDSTILL_BELOW_MINIMUM"):
 			self.assertNotIn(removed, errors.ERROR_CODES)
 			with self.assertRaises(ValueError):

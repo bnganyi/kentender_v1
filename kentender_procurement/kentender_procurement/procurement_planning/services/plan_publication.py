@@ -24,7 +24,7 @@ import frappe
 from frappe.utils import cstr, now_datetime
 
 from kentender_procurement.procurement_planning.errors import fail
-from kentender_procurement.procurement_planning.services import envelope, schedule
+from kentender_procurement.procurement_planning.services import envelope
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.plan_governance import _copy_version_content, _next_plan_version_number
 from kentender_procurement.procurement_planning.services.planning_roles import ROLE_PROCUREMENT_PLANNER
@@ -74,10 +74,9 @@ def _activate_version(version, plan) -> None:
 			frappe.db.set_value("Plan Source Allocation", {"plan_item": ("in", removed_item_names)}, "allocation_state", "Removed in successor", update_modified=False)
 		frappe.db.set_value("Annual Plan Version", predecessor, "version_status", "Superseded", update_modified=False)
 
-	activating = frappe.get_all("Annual Plan Item", filters={"plan_version": version.name, "item_state": "Draft"}, pluck="name")
+	# PLN-CHG-001 v1.23 §5.6.7 — the approved schedule is immutable and no
+	# forecast record is initialised at activation (AC-124 is future-only).
 	frappe.db.set_value("Annual Plan Item", {"plan_version": version.name, "item_state": "Draft"}, "item_state", "Active", update_modified=False)
-	for name in activating:
-		schedule.seed_forecast_from_baseline(name)
 	frappe.db.set_value("Plan Source Allocation", {"plan_version": version.name, "allocation_state": "Draft"}, "allocation_state", "Active", update_modified=False)
 	envelope.bump(version, version_status="Active", activated_at=now_datetime())
 	frappe.db.set_value("Annual Plan", plan.name, {"active_version": version.name, "open_successor_version": ""}, update_modified=False)

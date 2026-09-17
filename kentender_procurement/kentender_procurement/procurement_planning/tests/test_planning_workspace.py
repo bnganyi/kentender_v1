@@ -100,7 +100,10 @@ class TestWorkspace(WorkspaceCase):
 		self.assertEqual(departments, [fx.OU_ALPHA_NAME])
 		headlines = [row["headline"] for row in result["actionable"]]
 		self.assertIn("Continue departmental plan", headlines)
-		self.assertIsNone(result["schedule_health"])  # PLN-AC-129: absent, not zero
+		# PLN-CHG-001 v1.23 §7.1 — GetPlanningWorkspace no longer carries a
+		# schedule-health projection; the forecast facility it measured is
+		# deferred in full (PLN23-CHG-001, AC-130 future-only).
+		self.assertNotIn("schedule_health", result)
 
 	def test_every_open_validation_task_is_offered_to_the_planner(self):
 		self.submitted()

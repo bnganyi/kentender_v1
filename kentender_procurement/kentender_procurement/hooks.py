@@ -429,11 +429,12 @@ doc_events = {
 
 # PLN-CHG-001 v1.12 §8.3 — the daily approaching-milestone nudge. Creates no
 # task, no state and no blocking condition; deduplicated per item/milestone/day.
-scheduler_events = {
-	"daily": [
-		"kentender_procurement.procurement_planning.services.schedule.check_approaching_milestones",
-	],
-}
+# PLN-CHG-001 v1.23 §7.5 (PLN23-CHG-001): the MVP registers no forecast or
+# milestone-notification scheduler job. `check_approaching_milestones` remains
+# in `procurement_planning/services/schedule.py` with its tests, but it is not
+# scheduled, routed or invoked from configuration. Re-register it only when the
+# forecast/reminder facility is separately approved under §15.3.
+scheduler_events: dict[str, list[str]] = {}
 
 # scheduler_events = {
 # 	"all": [

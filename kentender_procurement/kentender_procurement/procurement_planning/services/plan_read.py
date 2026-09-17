@@ -89,13 +89,33 @@ def _open_version(plan):
 	return frappe.get_doc("Annual Plan Version", name)
 
 
-def _classifications(dpp_version: str) -> dict[str, str]:
+def _classification_evidence(dpp_version: str) -> dict[str, dict[str, Any]]:
+	"""PLN-CHG-001 v1.23 §4.4 — the **effective** classification per accepted
+	entry: the latest valid correction where one exists, otherwise the original
+	acceptance. New Planning work always reads through here, which is what makes
+	a correction take effect without rewriting any accepted decision."""
+	from kentender_procurement.procurement_planning.services import dpp_classification
+
+	submission = frappe.db.get_value("Departmental Plan Submission", {"dpp_version": dpp_version}, "name")
+	if not submission:
+		return {}
 	decision = frappe.db.get_value(
 		"Departmental Plan Validation Decision",
-		{"submission": frappe.db.get_value("Departmental Plan Submission", {"dpp_version": dpp_version}, "name"), "decision": "Accept departmental plan"},
+		{"submission": submission, "decision": "Accept departmental plan"},
 		"classifications",
 	)
-	return json.loads(decision) if decision else {}
+	accepted = json.loads(decision) if decision else {}
+	out: dict[str, dict[str, Any]] = {}
+	for entry_id in accepted:
+		effective = dpp_classification.effective_classification(submission, entry_id)
+		if effective:
+			out[entry_id] = effective
+	return out
+
+
+def _classifications(dpp_version: str) -> dict[str, str]:
+	"""Effective requirement type per accepted entry."""
+	return {k: cstr(v["requirement_type"]) for k, v in _classification_evidence(dpp_version).items()}
 
 
 def _line_labels(fiscal_year: str) -> dict[str, dict[str, Any]]:
@@ -581,7 +601,7 @@ def _active_view(version, plan) -> dict[str, Any]:
 	items = frappe.get_all(
 		"Annual Plan Item",
 		filters={"plan_version": version.name, "item_state": "Active"},
-		fields=["name", "plan_item_id", "title", "requirement_type", "procurement_method", "strategic_objective", "baseline_delivery_completion_date", "record_version", *schedule.BASELINE_FIELDS, *schedule.FORECAST_FIELDS, *schedule.ACTUAL_FIELDS],
+		fields=["name", "plan_item_id", "title", "requirement_type", "procurement_method", "strategic_objective", "baseline_delivery_completion_date", "record_version", *schedule.BASELINE_FIELDS],
 		order_by="creation asc",
 	)
 	rows = []
@@ -608,14 +628,11 @@ def _active_view(version, plan) -> dict[str, Any]:
 				"completion_display": _date(item.baseline_delivery_completion_date),
 				"value_display": _money(value),
 				"requisition_availability_display": f"{total_qty - drawn[0]:g} {unit_label.lower()} · {_money(value - drawn[1])}".strip(),
-				"behind_baseline": schedule.behind_baseline(item),
-				"schedule": schedule.schedule_rows(item),
 				"record_version": int(item.record_version or 0),
 				"route": ["procurement-plan-item", item.plan_item_id],
 			}
 		)
 	item_value = sum(flt(a.indicative_amount) for a in frappe.get_all("Plan Source Allocation", filters={"plan_version": version.name, "allocation_state": "Active"}, fields=["indicative_amount"]))
-	health = schedule.schedule_health(version.name)
 	publication = frappe.db.get_value(
 		"Plan Publication", {"plan_version": version.name, "publication_state": "Acknowledged"}, ["name", "acknowledged_at", "external_reference"], as_dict=True,
 	)
@@ -624,7 +641,6 @@ def _active_view(version, plan) -> dict[str, Any]:
 			"plan_items": len(rows),
 			"value_display": _money(item_value),
 			"departments": len(departments),
-			"schedule_health_display": f"{health['behind']} of {health['total']} item{'s' if health['total'] != 1 else ''} behind baseline",
 			"activated_display": _eat(version.activated_at),
 		},
 		"items": rows,
@@ -865,11 +881,6 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 			"delivery_boundary_ok": schedule.delivery_boundary_ok(baseline_map, delivery_days),
 			"locked": version.version_status != "Draft",
 		},
-		"schedule": schedule.schedule_rows(item) if version.version_status == "Active" else [],
-		"revisions": [
-			{"milestone": r.milestone, "label": schedule.MILESTONE_LABELS.get(r.milestone, r.milestone), "previous": cstr(r.previous_forecast_date), "new": cstr(r.new_forecast_date), "reason": r.reason, "cascade_id": cstr(r.cascade_id), "revised_by": r.revised_by, "revised_at": _eat(r.revised_at)}
-			for r in frappe.get_all("Plan Item Forecast Revision", filters={"plan_item": item.name}, fields=["milestone", "previous_forecast_date", "new_forecast_date", "reason", "cascade_id", "revised_by", "revised_at"], order_by="revised_at asc, creation asc")
-		],
 		"market_price_index": {"published": bool(price_rows), "rows": price_rows, "helper": "Market price index: not published for this category." if not price_rows else ""},
 		"blockers": blockers,
 	}

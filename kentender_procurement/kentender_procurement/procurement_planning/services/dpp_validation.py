@@ -23,7 +23,7 @@ import frappe
 from frappe.utils import cstr, now_datetime
 
 from kentender_procurement.procurement_planning.errors import fail
-from kentender_procurement.procurement_planning.services import envelope, references
+from kentender_procurement.procurement_planning.services import dpp_classification, envelope, references
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.dpp_lifecycle import _next_version_number, copy_entries
 from kentender_procurement.procurement_planning.services.planning_roles import ROLE_PROCUREMENT_PLANNER
@@ -38,7 +38,10 @@ def _open_task(task_name: str):
 	return task
 
 
-def _decide(task, *, decision: str, actor: str, assignment, classifications=None, issues=None, idempotency_key: str = "") -> Any:
+def _decide(
+	task, *, decision: str, actor: str, assignment, classifications=None, derived_categories=None, issues=None,
+	idempotency_key: str = "",
+) -> Any:
 	version_number = frappe.db.get_value("Departmental Plan Version", task.dpp_version, "version_number")
 	dpp_reference = frappe.db.get_value(
 		"Departmental Plan",
@@ -53,6 +56,7 @@ def _decide(task, *, decision: str, actor: str, assignment, classifications=None
 			"submission": task.submission,
 			"decision": decision,
 			"classifications": json.dumps(classifications) if classifications else None,
+			"derived_categories": json.dumps(derived_categories) if derived_categories else None,
 			"issues": json.dumps(issues) if issues else None,
 			"actor": actor,
 			"authority_snapshot": authz.authority_snapshot(assignment),
@@ -137,10 +141,22 @@ def return_departmental_plan(
 
 def accept_departmental_plan(
 	*, task: str, classifications: dict[str, str] | str, task_token: str, idempotency_key: str, user: str | None = None,
+	**unexpected: Any,
 ) -> dict[str, Any]:
+	"""PLN-CHG-001 v1.23 §4.4 — the Planner supplies one governed requirement
+	type per proceeding entry and nothing else. The server derives the category
+	from the same catalogue entry and freezes both on the immutable decision, so
+	downstream history stays reproducible (`PLN21-AC-001`)."""
+	dpp_classification.reject_client_category(unexpected)
 	actor = authz.actor(user)
 	if isinstance(classifications, str):
 		classifications = json.loads(classifications)
+	if isinstance(classifications, dict):
+		# A caller may not smuggle a category in as `{"DPPE-…": {"requirement_type": …,
+		# "procurement_category": …}}` either.
+		for value in classifications.values():
+			if isinstance(value, dict):
+				dpp_classification.reject_client_category(value)
 	payload = {"task": task, "classifications": json.dumps(classifications, sort_keys=True)}
 	replay = envelope.replay_or_none(idempotency_key, payload)
 	if replay:
@@ -160,7 +176,13 @@ def accept_departmental_plan(
 	proceeding = [row for row in snapshots if not cstr(row.get("not_proceeding_reason")).strip()]
 	unclassified = [row["entry_id"] for row in proceeding if cstr(classifications.get(row["entry_id"])) not in active_types]
 	if unclassified:
-		fail("PLN_CLASSIFICATION_INCOMPLETE", f"Classify every submitted requirement before accepting the plan: {', '.join(unclassified)}.")
+		fail("PLN_CLASSIFICATION_INCOMPLETE", f"Choose a requirement type for each included requirement: {', '.join(unclassified)}.")
+	# Derived here so an unmapped catalogue entry fails the whole acceptance
+	# rather than silently defaulting a category onto frozen evidence.
+	derived_categories = {
+		row["entry_id"]: dpp_classification.category_for(cstr(classifications[row["entry_id"]]))
+		for row in proceeding
+	}
 	from kentender_procurement.procurement_planning.services import needs_intake
 
 	for row in snapshots:
@@ -172,6 +194,7 @@ def accept_departmental_plan(
 	decision = _decide(
 		task_doc, decision="Accept departmental plan", actor=actor, assignment=assignment,
 		classifications={k: v for k, v in classifications.items() if k in {r["entry_id"] for r in proceeding}},
+		derived_categories=derived_categories,
 		idempotency_key=idempotency_key,
 	)
 	prior_accepted = cstr(root.current_accepted_version)

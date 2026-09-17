@@ -8,7 +8,7 @@ card of headline-plus-button rows containing only work the actor may perform
 now (the read-offer-vs-command parity rule); it is absent, not empty, when
 nothing is actionable. The departmental-plans table beneath is supporting
 detail for that card. Where an Active Plan Version exists in scope the
-workspace shows one schedule-health count. Reads create nothing (invariant
+workspace creates nothing (invariant
 1). The Forbidden verdict is resolved before anything else (PLN-AC-111).
 """
 
@@ -22,7 +22,7 @@ import json
 from frappe.utils import cstr, flt, fmt_money, formatdate
 
 from kentender_core.services import site_configuration
-from kentender_procurement.procurement_planning.services import needs_intake, schedule
+from kentender_procurement.procurement_planning.services import needs_intake
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_context import resolve_planning_context
 from kentender_procurement.procurement_planning.services.planning_roles import (
@@ -472,10 +472,6 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 					)
 				)
 
-	health = None
-	if plan and plan.active_version:
-		health = schedule.schedule_health(plan.active_version)
-
 	plan_summary = ""
 	if open_version:
 		plan_summary = f"Annual Plan · {open_version.version_status} Version {open_version.version_number}"
@@ -496,7 +492,6 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 		},
 		"actionable": actionable,
 		"waiting": waiting,
-		"schedule_health": health,
 		"departmental_plans": dpp_rows,
 		"departmental_plans_shape": plans_shape,
 		"departmental_plans_heading": "Departmental plans feeding this Annual Plan",

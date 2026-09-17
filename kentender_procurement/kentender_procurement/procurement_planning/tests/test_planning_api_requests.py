@@ -308,18 +308,12 @@ class TestEndpointsSurviveTheFrameworksTransportFields(RequestShapedCase):
 		frappe.set_user("Administrator")
 		published = self.call("publish_annual_plan", plan_version=plan["version_reference"], idempotency_key=key())
 		self.assertEqual(published["result"], "Acknowledged")
-		frappe.set_user(fx.PLANNER)
-		preview = self.call("preview_forecast_cascade", plan_item=item_id, milestone="bid_opening", new_forecast_date="2101-09-25")
-		self.assertEqual(len(preview["rows"]), 6)
-		# a three-day shift of two rows keeps award approval (27 Oct) after evaluation (25 Oct)
-		confirmed = self.call(
-			"confirm_forecast_cascade", plan_item=item_id, milestone="bid_opening", new_forecast_date="2101-09-25",
-			included_milestones=json.dumps(["bid_opening", "evaluation_completion"]),
-			reason="Tender Preparation confirmed the issue date will slip three days pending template release.",
-			expected_record_version=str(preview["record_version"]), idempotency_key=key(),
-		)
-		self.assertEqual(len(confirmed["revisions"]), 2)
-		self.assertTrue(confirmed["cascade_id"])
+		# PLN-CHG-001 v1.23 §7.5 (PLN23-AC-001) — the forecast cascade has no
+		# whitelisted endpoint at all, so the request surface cannot reach it.
+		from kentender_procurement.procurement_planning import api as planning_api
+
+		for withdrawn in ("preview_forecast_cascade", "confirm_forecast_cascade"):
+			self.assertFalse(hasattr(planning_api, withdrawn), f"{withdrawn} is exposed again")
 		publication = frappe.db.get_value("Plan Publication", {"plan_version": accepted["annual_plan_version"]}, "name")
 		self.assertEqual(self.call("get_publication_task", publication=publication)["publication_state"], "Acknowledged")
 

@@ -29,7 +29,6 @@ from kentender_core.services.regulatory_reference import get_regulatory_referenc
 from kentender_procurement.procurement_planning.errors import fail
 from kentender_procurement.procurement_planning.services import schedule
 
-CATEGORY_BY_TYPE = {"Goods": "Goods", "Works": "Works"}
 NONE_RESERVATION = "None"
 # PLN-CHG-001 v1.18 §4.6 — a fixed literal; unsupported horizons are rejected (PLN_MULTI_YEAR_UNSUPPORTED)
 PLAN_HORIZONS = ("Single year",)
@@ -38,9 +37,11 @@ LOTTING_INDICATORS = ("Single lot", "Packaged into lots")
 OPEN_TENDER = "Open Tender"
 
 
-def procurement_category_for(requirement_type: str) -> str:
-	"""§4.9 — goods, works or services from the accepted classification."""
-	return CATEGORY_BY_TYPE.get(cstr(requirement_type), "Services")
+# PLN-CHG-001 v1.23 §4.4 — category derivation moved to
+# `dpp_classification.category_for`, which reads the governed Requirement Type
+# catalogue. The local `CATEGORY_BY_TYPE` mapping that used to live here was a
+# hard-coded substitute for that catalogue and silently defaulted anything it
+# did not recognise to Services.
 
 
 def reference_for(fiscal_year: str) -> dict[str, Any]:

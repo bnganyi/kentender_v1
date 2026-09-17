@@ -29,6 +29,7 @@ from frappe.utils import cstr, flt, getdate
 
 from kentender_procurement.procurement_planning.errors import fail
 from kentender_procurement.procurement_planning.services import (
+	dpp_classification,
 	envelope,
 	plan_read,
 	profiles,
@@ -116,7 +117,8 @@ def _create_item(*, version, plan, entries: list, combined: bool, fixture_namesp
 	plan_item_id = references.plan_item_id(plan.fiscal_year)
 	title = " + ".join(e.title for e in entries)[:160] if combined else entries[0].title
 	requirement_type = entries[0].get("classification")
-	category = readiness.procurement_category_for(requirement_type)
+	# §4.4 — derived from the governed catalogue entry, never a local mapping.
+	category = dpp_classification.category_for(requirement_type)
 	method = readiness.OPEN_TENDER if frappe.db.exists("Procurement Method", readiness.OPEN_TENDER) else None
 	delivery = min((getdate(e.required_by_date) for e in entries if e.required_by_date), default=None)
 	resolved = profiles.resolve(procurement_method=method or "", procurement_category=category, applicability_date=profiles.applicability_date(None, plan.fiscal_year))
@@ -167,6 +169,12 @@ def _create_item(*, version, plan, entries: list, combined: bool, fixture_namesp
 				"dpp_entry": entry.name,
 				"source_origin": entry.source_origin,
 				"source_key": f"need:{entry.need}" if entry.need else f"direct:{cstr(entry.direct_source_id) or entry.entry_id}",
+				# §4.6 — the exact effective classification evidence this
+				# allocation was formed from. A later correction appends new
+				# evidence; it never rewrites this snapshot.
+				"classification_evidence": cstr((entry.get("classification_evidence") or {}).get("evidence_id")),
+				"classification_requirement_type": cstr((entry.get("classification_evidence") or {}).get("requirement_type")),
+				"classification_procurement_category": cstr((entry.get("classification_evidence") or {}).get("procurement_category")),
 				"need": entry.need or None,
 				"need_revision": entry.need_revision or None,
 				"organisation_unit": entry.organisation_unit,
@@ -222,7 +230,9 @@ def form_plan_items(
 	entries = []
 	for name in dpp_entries:
 		entry = _entry_doc(name, plan.fiscal_year, version.name)
-		entry["classification"] = plan_read._classifications(entry.dpp_version).get(entry.entry_id, "")
+		evidence = plan_read._classification_evidence(entry.dpp_version).get(entry.entry_id) or {}
+		entry["classification"] = cstr(evidence.get("requirement_type"))
+		entry["classification_evidence"] = evidence
 		entries.append(entry)
 	# §5.4.2 — a correction Draft admits only the returned Version's stable source cohort
 	cohort = set(json.loads(version.source_cohort or "[]")) if cstr(version.correction_of_plan_version) else set()
@@ -310,10 +320,15 @@ def save_plan_item(*, plan_item: str, values: dict[str, Any] | str, expected_rec
 	if unknown:
 		if unknown & (set(schedule.BASELINE_FIELDS) - {"baseline_invitation_date"}):
 			fail("PLN_SCHEDULE_INVALID", "Baseline milestone dates are derived, never entered.", {"fields": sorted(unknown)})
-		if unknown & set(schedule.ACTUAL_FIELDS):
+		# PLN-CHG-001 v1.23 §5.5.1A — an actual date only ever arrives from the
+		# module that owns the real event. A Planner save naming one is refused
+		# by name so the message says why, not just "unexpected field".
+		if any(f.startswith("actual_") for f in unknown):
 			fail("PLN_ACTUAL_NOT_WRITABLE")
-		if unknown & set(schedule.FORECAST_FIELDS):
-			fail("PLN_SCHEDULE_INVALID", "Forecast dates change only through the cascade commands.", {"fields": sorted(unknown)})
+		# §15.3 — the forecast facility is deferred in full; there is no command
+		# that would accept these either (PLN23-CHG-001).
+		if any(f.startswith("forecast_") for f in unknown):
+			fail("PLN_SCHEDULE_INVALID", "The approved schedule cannot be changed. Expected dates are not maintained in this release.", {"fields": sorted(unknown)})
 		fail("PLN_ENTRY_INCOMPLETE", f"Plan Item input is limited to the defined allow-list; unexpected: {sorted(unknown)}.")
 	payload = {"plan_item": plan_item, **{k: cstr(values.get(k)) for k in PLAN_ITEM_FIELDS}}
 	replay = envelope.replay_or_none(idempotency_key, payload)
