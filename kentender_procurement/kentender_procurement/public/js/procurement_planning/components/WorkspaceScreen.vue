@@ -175,7 +175,7 @@
 					class="kt-btn kt-btn-primary"
 					data-testid="pln-prepare-update"
 					:disabled="pending"
-					@click="$emit('navigate', planRoute)"
+					@click="$emit('prepare-update')"
 				>
 					{{ annualPlan.prepare_update_action }}
 				</button>
@@ -309,6 +309,7 @@ const emit = defineEmits([
 	"reset-financial-year",
 	"open-departmental-plan",
 	"navigate",
+	"prepare-update",
 ]);
 
 const context = computed(() => props.workspace.context || {});

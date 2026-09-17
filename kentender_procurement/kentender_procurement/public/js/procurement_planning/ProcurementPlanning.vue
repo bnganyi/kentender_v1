@@ -30,6 +30,7 @@
 				@reset-financial-year="onResetFy"
 				@open-departmental-plan="onOpenDepartmentalPlan"
 				@navigate="onNavigate"
+				@prepare-update="onPreparePlanUpdate"
 			/>
 
 			<template v-else>
@@ -192,20 +193,31 @@
 					</div>
 					<AnnualPlanScreen
 						:plan="annualPlan"
+						:selected="selectedSources"
 						:pending="pending"
 						:error-summary="errorSummary"
 						@open-form-dialog="formDialog = true"
 						@navigate="onNavigate"
-						@back="frappe.set_route(WORKSPACE_PAGE)"
+						@toggle-source="onToggleSource"
+						@view-requirement="onViewPlanRequirement"
 						@request-funding="onRequestPlanFunding"
 						@submit-consolidated="onSubmitPlanRequested"
-						@confirm-splitting="splittingDialog = true"
+						@cancel-update="cancelUpdateDialog = true"
 						@open-task="(route) => frappe.set_route(...route)"
 						@save-details="onSaveVersionDetails"
 					/>
+					<CancelUpdateDialog
+						v-if="cancelUpdateDialog"
+						:pending="pending"
+						:error="errorSummary"
+						:reason="cancelUpdateReason"
+						@update:reason="cancelUpdateReason = $event"
+						@confirm="onCancelPlanUpdate"
+						@cancel="cancelUpdateDialog = false; cancelUpdateReason = ''"
+					/>
 					<FormPlanItemsDialog
 						v-if="formDialog"
-						:entries="annualPlan.unallocated_sources || []"
+						:entries="selectedSourceRows"
 						:pending="pending"
 						:error="errorSummary"
 						@confirm="onFormConfirm"
@@ -308,6 +320,7 @@ import NotProceedDialog from "./components/NotProceedDialog.vue";
 import AnnualPlanScreen from "./components/AnnualPlanScreen.vue";
 import FormPlanItemsDialog from "./components/FormPlanItemsDialog.vue";
 import ReasonDialog from "./components/ReasonDialog.vue";
+import CancelUpdateDialog from "./components/CancelUpdateDialog.vue";
 import ActivePlanScreen from "./components/ActivePlanScreen.vue";
 import ShiftScheduleDialog from "./components/ShiftScheduleDialog.vue";
 import PublicationResultScreen from "./components/PublicationResultScreen.vue";
@@ -352,6 +365,12 @@ const notProceedDialog = ref(false);
 const annualPlan = ref({});
 const planItem = ref({});
 const formDialog = ref(false);
+// §10.7 — the Planner selects sources on U07 and then chooses how they become
+// purchases in U08; the selection lives here so the dialog sees exactly what
+// was ticked.
+const selectedSources = ref([]);
+const cancelUpdateDialog = ref(false);
+const cancelUpdateReason = ref("");
 const splittingDialog = ref(false);
 const lateActivationDialog = ref(false);
 const financeTask = ref({});
@@ -532,6 +551,7 @@ function applyLoaded(scr, loaded) {
 			break;
 		case "plan":
 			annualPlan.value = loaded;
+			selectedSources.value = [];
 			formDialog.value = false;
 			splittingDialog.value = false;
 			lateActivationDialog.value = false;
@@ -744,6 +764,47 @@ async function onSaveDirect(payload) {
 		})
 	);
 	if (result) go(dppReference.value);
+}
+
+async function onPreparePlanUpdate() {
+	// §5.2.3 / §11.9 — the guarded successor start, not a navigation. The
+	// Active predecessor stays in force; this only opens one Draft candidate.
+	const planReference = (workspace.value.annual_plan || {}).plan_reference;
+	const result = await run("begin-plan-update", (key) =>
+		api.beginPlanUpdate({ plan_reference: planReference, idempotency_key: key })
+	);
+	if (!result) return;
+	frappe.set_route(PLAN_PAGE, planReference);
+}
+
+async function onCancelPlanUpdate() {
+	const result = await run("cancel-plan-update", (key) =>
+		api.cancelPlanUpdate({
+			plan_reference: annualPlan.value.plan_reference,
+			reason: cancelUpdateReason.value,
+			expected_record_version: annualPlan.value.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (!result) return;
+	cancelUpdateDialog.value = false;
+	cancelUpdateReason.value = "";
+	frappe.set_route(WORKSPACE_PAGE);
+}
+
+function onToggleSource(entryId) {
+	const current = selectedSources.value;
+	selectedSources.value = current.includes(entryId)
+		? current.filter((id) => id !== entryId)
+		: [...current, entryId];
+}
+
+const selectedSourceRows = computed(() =>
+	(annualPlan.value.unallocated_sources || []).filter((row) => selectedSources.value.includes(row.entry_id))
+);
+
+function onViewPlanRequirement(row) {
+	frappe.set_route(DPP_PAGE, row.dpp_reference || "", "entry", row.entry_id);
 }
 
 function onClassify({ entry_id: entryId, requirement_type: value }) {

@@ -1,32 +1,42 @@
-// PLN-CHG-001 v1.18 §8.2 — CancelUpdateDialog component tests (U21-cancel-update).
+// PLN-CHG-001 v1.23 §10.17 U21-CANCEL-UPDATE.
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import CancelUpdateDialog from "./CancelUpdateDialog.vue";
 
+function make(props = {}) {
+	return mount(CancelUpdateDialog, { props: { pending: false, error: "", reason: "", ...props } });
+}
+
 describe("CancelUpdateDialog", () => {
-	it("renders the exact frame copy and both actions", () => {
-		const wrapper = mount(CancelUpdateDialog, { props: { pending: false, error: "" } });
-		expect(wrapper.get(".kt-dialog-title").text()).toBe("Cancel Plan update?");
-		expect(wrapper.text()).toContain(
-			"The open update will be cancelled. The Active Plan and existing procurement proceedings will remain unchanged."
-		);
-		const buttons = wrapper.findAll("button").map((b) => b.text());
-		expect(buttons).toEqual(["Keep update", "Cancel update"]);
+	it("reassures that nothing already in force changes", () => {
+		const w = make();
+		expect(w.text()).toContain("Cancel this plan update?");
+		expect(w.text()).toContain("The current plan and existing procurement will remain unchanged.");
+		expect(w.text()).toContain("Keep update");
 	});
 
-	it("emits cancel from Keep update and confirm from Cancel update", async () => {
-		const wrapper = mount(CancelUpdateDialog, { props: { pending: false, error: "" } });
-		await wrapper.get('[data-testid="pln-cancel-update-confirm"]').trigger("click");
-		expect(wrapper.emitted("confirm")).toHaveLength(1);
-		await wrapper.findAll("button")[0].trigger("click");
-		expect(wrapper.emitted("cancel")).toHaveLength(1);
+	it("holds the confirm until a real reason is given", async () => {
+		const w = make();
+		expect(w.get('[data-testid="pln-cancel-update-confirm"]').attributes("disabled")).toBeDefined();
+
+		const short = make({ reason: "changed mind" });
+		expect(short.get('[data-testid="pln-cancel-update-confirm"]').attributes("disabled")).toBeDefined();
+
+		const ok = make({ reason: "The department withdrew the additional laptops from this cycle." });
+		expect(ok.get('[data-testid="pln-cancel-update-confirm"]').attributes("disabled")).toBeUndefined();
 	});
 
-	it("disables both actions while pending and shows a server error", () => {
-		const wrapper = mount(CancelUpdateDialog, { props: { pending: true, error: "Something changed." } });
-		for (const button of wrapper.findAll("button")) {
-			expect(button.attributes("disabled")).toBeDefined();
-		}
-		expect(wrapper.get('[data-testid="pln-cancel-update-error"]').text()).toBe("Something changed.");
+	it("emits confirm and cancel", async () => {
+		const w = make({ reason: "The department withdrew the additional laptops from this cycle." });
+		await w.get('[data-testid="pln-cancel-update-confirm"]').trigger("click");
+		expect(w.emitted("confirm")).toHaveLength(1);
+		await w.findAll("button")[0].trigger("click");
+		expect(w.emitted("cancel")).toHaveLength(1);
+	});
+
+	it("shows a command error without losing the typed reason", () => {
+		const w = make({ reason: "The department withdrew the additional laptops from this cycle.", error: "boom" });
+		expect(w.get('[data-testid="pln-cancel-update-error"]').text()).toBe("boom");
+		expect(w.get('[data-testid="pln-cancel-update-reason"]').element.value).toContain("withdrew");
 	});
 });

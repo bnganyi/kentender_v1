@@ -226,6 +226,11 @@ describe("WorkspaceScreen — U01-CURRENT and U01-CURRENT-UPDATE", () => {
 		expect(w.find('[data-testid="pln-prepare-update"]').text()).toBe("Prepare plan update");
 		expect(w.find('[data-testid="pln-plan-row-current"]').text()).toContain("Current plan");
 		expect(w.find('[data-testid="pln-current-issue"]').exists()).toBe(false);
+		// §11.9 — Prepare invokes the guarded successor start; it is a command,
+		// not a link to the plan.
+		w.find('[data-testid="pln-prepare-update"]').trigger("click");
+		expect(w.emitted("prepare-update")).toBeTruthy();
+		expect(w.emitted("navigate")).toBeFalsy();
 	});
 
 	it("shows two independent rows, the in-force note between them, and removes the update control", () => {

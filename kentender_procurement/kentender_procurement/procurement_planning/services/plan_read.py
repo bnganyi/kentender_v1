@@ -159,7 +159,13 @@ def _accepted_entry_rows(fiscal_year: str) -> list[dict[str, Any]]:
 					"classification": cstr(classifications.get(entry.entry_id)),
 					"quantity": flt(entry.quantity),
 					"quantity_display": _quantity_display(entry.quantity, entry.unit),
+					# §10.1 — Quantity and Unit are separate columns.
+					"quantity_number": f"{flt(entry.quantity):g}",
+					"unit_label": cstr(entry.unit),
 					"unit": entry.unit,
+					"source_label": (
+						f"Accepted Need · {entry.need}" if entry.need else "Direct requirement"
+					),
 					"required_by_date": cstr(entry.required_by_date),
 					"required_by_display": _date(entry.required_by_date),
 					"budget_line": entry.budget_line,
@@ -428,14 +434,142 @@ def _item_rows(plan_version: str) -> list[dict[str, Any]]:
 				"procurement_method": cstr(item.procurement_method),
 				"reservation_category": cstr(item.reservation_category) or "—",
 				"completion_display": _date(item.baseline_delivery_completion_date),
+				# §10.1 — Quantity and Unit are separate columns.
+				"quantity_number": f"{sum(flt(a.quantity) for a in allocations):g}",
+				"unit_label": cstr(allocations[0].unit) if allocations else "",
 				"sources": len(allocations),
 				"departments": " / ".join(sorted({_ou_label(a_ou) for a_ou in {frappe.db.get_value("Plan Source Allocation", a.name, "organisation_unit") for a in allocations}})),
 				"value_display": _money(value),
 				"source_correction_required": any(source_correction_required(a.dpp_entry) for a in allocations),
+				# §10.6 — the row names the next thing to do to this purchase,
+				# never a generic "Review required" badge (§9.4).
+				"current_work": _current_work(item, allocations),
 				"route": ["procurement-plan-item", item.plan_item_id],
 			}
 		)
 	return rows
+
+
+#: §9.4 — a readiness finding is concrete missing work, in the words the
+#: Planner would use: "Choose a procurement method", never "Complete readiness".
+CURRENT_WORK = {
+	"PLN_OBJECTIVE_INELIGIBLE": "Choose a strategic objective",
+	"PLN_RESERVATION_REQUIRED": "Choose who this procurement is reserved for",
+	"PLN_RESERVATION_SHORTFALL": "Review the required reserved allocation",
+	"PLN_PLAN_CONTENTS_INCOMPLETE": "Complete the purchase details",
+	"PLN_ENTRY_INCOMPLETE": "Complete the purchase details",
+	"PLN_SCHEDULE_INVALID": "Review the dates",
+	"PLN_DELIVERY_BOUNDARY_INSUFFICIENT": "Review the dates against the departmental deadline",
+	"PLN_DELIVERY_PERIOD_REQUIRED": "Enter the expected delivery period",
+	"PLN_METHOD_NOT_ADMISSIBLE": "Choose a procurement method that meets the conditions",
+	"PLN_METHOD_EVIDENCE_REQUIRED": "Provide the evidence the method requires",
+	"PLN_REFERENCE_UNAVAILABLE": "Choose a procurement method",
+	"PLN_SOURCE_CORRECTION_REQUIRED": "Rebuild this purchase after a source correction",
+}
+
+
+def _current_work(item, allocations) -> str:
+	"""The first thing this purchase still needs, named."""
+	if any(source_correction_required(a.dpp_entry) for a in allocations):
+		return CURRENT_WORK["PLN_SOURCE_CORRECTION_REQUIRED"]
+	if not cstr(item.procurement_method):
+		return CURRENT_WORK["PLN_REFERENCE_UNAVAILABLE"]
+	if not cstr(item.reservation_category):
+		return CURRENT_WORK["PLN_RESERVATION_REQUIRED"]
+	if not cstr(item.strategic_objective):
+		return CURRENT_WORK["PLN_OBJECTIVE_INELIGIBLE"]
+	if not item.baseline_invitation_date:
+		return CURRENT_WORK["PLN_SCHEDULE_INVALID"]
+	if not cstr(item.estimate_basis).strip():
+		return CURRENT_WORK["PLN_PLAN_CONTENTS_INCOMPLETE"]
+	return "Ready"
+
+
+def _waiting_on(version, report, *, can_sign: bool) -> str:
+	"""Who the plan is waiting on now, by name where AUTH resolves one."""
+	if version.version_status != "Draft" or not report or report["blockers"]:
+		return ""
+	if not report.get("funding_current"):
+		return ""
+	if can_sign:
+		# This actor holds the action; the button says the rest.
+		return ""
+	holders = authz.users_with_site_role(ROLE_HEAD_OF_PROCUREMENT_FUNCTION)
+	if not holders:
+		return (
+			"Ready for the Head of Procurement Function to sign and submit. "
+			"No one currently holds that responsibility — ask your KenTender administrator."
+		)
+	names = " / ".join(sorted(cstr(frappe.db.get_value("User", u, "full_name") or u) for u in holders))
+	return f"Ready for the Head of Procurement Function to sign and submit · {names}"
+
+
+def _acceptance_history(fiscal_year: str) -> list[str]:
+	"""Who accepted each departmental plan, and when — the provenance of the
+	sources this plan is built from."""
+	lines = []
+	for task in frappe.get_all(
+		"Departmental Plan Validation Task",
+		filters={"fiscal_year": fiscal_year, "status": "Completed"},
+		fields=["organisation_unit", "decision"],
+		order_by="creation asc",
+		limit_page_length=0,
+	):
+		decision = frappe.db.get_value(
+			"Departmental Plan Validation Decision", task.decision, ["actor", "decided_at", "decision"], as_dict=True
+		)
+		if not decision or decision.decision != "Accept departmental plan":
+			continue
+		actor = cstr(frappe.db.get_value("User", decision.actor, "full_name") or decision.actor)
+		lines.append(f"{_ou_label(task.organisation_unit)} acceptance: {actor}, {_eat(decision.decided_at)}")
+	return lines
+
+
+def _plan_checks(version, plan, report) -> list[dict[str, Any]]:
+	"""Funding, Reserved procurement and Schedule, each as one current result
+	with a link to the exact correction when it fails."""
+	blockers = report["blockers"]
+	codes = {b["code"] for b in blockers}
+	plan_route = ["annual-procurement-plan", plan.plan_reference]
+
+	funding_state = cstr(version.funding_state)
+	funding = {
+		"Not requested": "Not yet checked",
+		"Awaiting confirmation": "Finance is reviewing the funding",
+		"Confirmed": "Within each approved budget line",
+		"Returned": "Returned by Finance",
+		"Stale": "Funding needs to be checked again",
+	}.get(funding_state, funding_state)
+
+	reservation = next((b for b in blockers if b["code"] in ("PLN_RESERVATION_SHORTFALL", "PLN_REFERENCE_UNAVAILABLE") and b.get("field") == "reservation_category"), None)
+	shortfall = next((b for b in blockers if b["code"] == "PLN_RESERVATION_SHORTFALL"), None)
+	if shortfall:
+		reservation_result = f"{_money(flt(shortfall.get('shortfall') or 0))} more qualifying allocation required"
+		reservation_kind = "critical"
+	elif reservation:
+		reservation_result = "The reserved-procurement rule or budget basis is missing"
+		reservation_kind = "critical"
+	else:
+		reservation_result = "Required allocation met"
+		reservation_kind = "live"
+
+	schedule_failing = [b["plan_item_id"] for b in blockers if b["code"] in ("PLN_SCHEDULE_INVALID", "PLN_DELIVERY_BOUNDARY_INSUFFICIENT", "PLN_DELIVERY_PERIOD_REQUIRED") and b.get("plan_item_id")]
+	if schedule_failing:
+		schedule_result = f"{len(schedule_failing)} purchase{'s do' if len(schedule_failing) != 1 else ' does'} not meet its departmental deadline"
+		schedule_kind = "critical"
+	else:
+		schedule_result = "All purchases meet their departmental deadlines"
+		schedule_kind = "live"
+
+	return [
+		{"label": "Funding", "result": funding, "kind": "live" if funding_state == "Confirmed" else "neutral", "route": None},
+		{
+			"label": "Reserved procurement", "result": reservation_result, "kind": reservation_kind,
+			"action": "Review reserved procurement" if reservation_kind == "critical" else "",
+			"route": plan_route if reservation_kind == "critical" else None,
+		},
+		{"label": "Schedule", "result": schedule_result, "kind": schedule_kind, "route": None},
+	]
 
 
 def _signature_summary(version) -> dict[str, Any] | None:
@@ -555,8 +689,17 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 		"changes": _version_changes(version),
 		"unallocated_sources": unallocated,
 		"unallocated_caption": f"{len(unallocated)} entr{'y' if len(unallocated) == 1 else 'ies'} available" if unallocated else "",
+		# §10.6 — the departmental acceptances behind this plan, as history.
+		"history_lines": _acceptance_history(plan.fiscal_year),
+		"current_version_number": int(
+			frappe.db.get_value("Annual Plan Version", plan.active_version, "version_number") or 0
+		) if plan.active_version else None,
 		"plan_items": items,
 		"readiness": readiness_report["checks"] if readiness_report else [],
+		# §10.6 — three named results, only the ones that decide the next
+		# action. The line comparisons and the reservation arithmetic stay in
+		# their own detail, not on the preparation page (PLN22-CHG-005).
+		"plan_checks": _plan_checks(version, plan, readiness_report) if readiness_report else [],
 		"blockers": readiness_report["blockers"] if readiness_report else [],
 		"splitting_advisories": readiness_report["advisories"] if readiness_report else [],
 		"splitting_confirmation": cstr(version.splitting_confirmation),
@@ -572,6 +715,12 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 		# v1.18 §6.2 — **Sign and submit Annual Plan** belongs to the Head of Procurement Function
 		"can_submit": can_sign and no_blockers and not unallocated and bool(readiness_report and readiness_report["funding_current"]),
 		"can_sign_and_submit": can_sign and no_blockers and not unallocated and bool(readiness_report and readiness_report["funding_current"]),
+		# §10.6 U07-UPDATE — only the Planner, only on an open successor.
+		"can_cancel_update": bool(can_act and version.based_on_version and version.version_status == "Draft"),
+		# §10.6 U07-FINANCE-COMPLETE / §6.5 — name the actual responsible
+		# person rather than offering the Planner a handover control they do
+		# not hold. Where no person resolves, name the role (§6.5).
+		"waiting_on": _waiting_on(version, readiness_report, can_sign=can_sign),
 		"preparation_signature": _signature_summary(version),
 		"late_activation_required": bool(frappe.db.get_value("Fiscal Year", plan.fiscal_year, "year_start_date") and frappe.utils.getdate(frappe.utils.nowdate()) >= frappe.utils.getdate(frappe.db.get_value("Fiscal Year", plan.fiscal_year, "year_start_date"))),
 		"latest_publication": _latest_publication(version.name),

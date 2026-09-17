@@ -1,317 +1,220 @@
-// PLN-CHG-001 v1.18 (PLN18-304/307) — AnnualPlanScreen component tests. U07's
-// five tabs, including Governance and publication's own U11-HOPF
-// preparation-signature card, and the U08 formation trigger; exact fields,
-// absent fields, action visibility straight off the server's read model.
+// PLN-CHG-001 v1.23 §10.6 — AnnualPlanScreen component tests (U07).
+//
+// The preparation page's job is to say what still needs doing. Purchases lead
+// and each names its own next work; Plan checks is three results, not eight;
+// and the arithmetic behind a failing check stays where the correction is.
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import AnnualPlanScreen from "./AnnualPlanScreen.vue";
 
-const READINESS = [
-	{ check: "Every Plan Item has a Strategic Objective", result: "Not started", kind: "neutral" },
-	{ check: "Plan funding confirmed", result: "Not started", kind: "neutral" },
-	{ check: "Planned reservation allocation", result: "0.00 planned · target not published", kind: "advisory" },
-	{ check: "Contract splitting review", result: "No advisory", kind: "neutral" },
-];
-
-const PLAN = {
-	outcome: "OK",
-	plan_reference: "PLN-MOH-2027-001",
-	version_reference: "PLN-MOH-2027-001-V1",
-	record_version: 0,
-	mutable: true,
-	can_act: true,
-	funding_state: "Not requested",
-	is_correction: false,
-	version_number: 1,
-	project_name: "",
-	header: {
-		eyebrow: "ANNUAL PROCUREMENT PLAN",
-		title: "Ministry of Health Annual Procurement Plan 2027/28",
-		reference_line: "PLN-MOH-2027-001 · Version 1",
-		badge: "Draft",
-	},
-	summary: {
-		accepted_entries: 1, allocated: 0, plan_items: 0, value_display: "KES 0",
-		reserved_share_display: "0.00 planned reservation",
-		departmental_sources: 1, departments: 1, funding_evidence_state: "Not requested",
-		reservation: { target_percent: 30, required: "KES 48,000,000", qualifying: "KES 0", shortfall: "KES 48,000,000", met: false, basis: { available: false } },
-	},
-	unallocated_sources: [
-		{
-			dpp_entry: "DPER-1", title: "National digital health infrastructure upgrade",
-			department: "Digital Health", source_origin: "Accepted Departmental Need",
-			classification: "Non-consulting services", quantity_display: "1 programme", indicative_amount: 80000000,
-			budget_line: "BL-1", budget_line_display: "MOH-BL-DHI-2027", amount_display: "KES 80,000,000",
-		},
-	],
-	unallocated_caption: "1 entry available",
-	plan_items: [],
-	readiness: READINESS,
-	blockers: [],
-	splitting_advisories: [],
-	splitting_confirmation: "",
-	can_request_funding: false,
-	can_submit: false,
-	late_activation_required: false,
-	affordability: null,
-	changes: { is_initial: true },
+const INFRASTRUCTURE = {
+	plan_item_id: "PPI-MOH-2027-021",
+	title: "National digital health infrastructure upgrade",
+	quantity_number: "1",
+	unit_label: "Programme",
+	value_display: "KES 80,000,000",
+	completion_display: "31 Aug 2027",
+	current_work: "Choose a procurement method",
+	sources: 1,
+	route: ["procurement-plan-item", "PPI-MOH-2027-021"],
 };
 
-function make(plan = PLAN) {
-	return mount(AnnualPlanScreen, { props: { plan, pending: false, errorSummary: "" } });
+const LAPTOPS = {
+	plan_item_id: "PPI-MOH-2027-033",
+	title: "Clinical training and deployment laptops for digital health rollout",
+	quantity_number: "250",
+	unit_label: "Each",
+	value_display: "KES 50,000,000",
+	completion_display: "31 Dec 2027",
+	current_work: "Review the required reserved allocation",
+	sources: 2,
+	route: ["procurement-plan-item", "PPI-MOH-2027-033"],
+};
+
+const CHECKS = [
+	{ label: "Funding", result: "Not yet checked", kind: "neutral", route: null },
+	{
+		label: "Reserved procurement",
+		result: "KES 48,000,000 more qualifying allocation required",
+		kind: "critical",
+		action: "Review reserved procurement",
+		route: ["annual-procurement-plan", "PLN-MOH-2027-001"],
+	},
+	{ label: "Schedule", result: "All purchases meet their departmental deadlines", kind: "live", route: null },
+];
+
+function plan(overrides = {}) {
+	return {
+		outcome: "OK",
+		plan_reference: "PLN-MOH-2027-001",
+		version_number: 1,
+		version_status: "Draft",
+		record_version: 3,
+		mutable: true,
+		is_successor: false,
+		project_name: "",
+		change_reason: "",
+		header: { title: "Ministry of Health Annual Procurement Plan 2027/28", badge: "Draft" },
+		plan_items: [INFRASTRUCTURE, LAPTOPS],
+		unallocated_sources: [],
+		plan_checks: CHECKS,
+		changes: { is_initial: true },
+		history_lines: ["Digital Health acceptance: Mercy Kilonzo, 27 Nov 2026, 14:00 EAT"],
+		can_request_funding: false,
+		can_sign_and_submit: false,
+		can_cancel_update: false,
+		open_task: null,
+		waiting_on: "",
+		...overrides,
+	};
 }
 
-describe("AnnualPlanScreen — open task from the record (FU-14)", () => {
-	it("renders the holder's open task in the header and emits its route", async () => {
-		const w = make({ ...PLAN, open_task: { label: "Open Finance task", route: ["procurement-planning", "finance", "FNT-1"] } });
-		const button = w.find('[data-testid="pln-open-task"]');
-		expect(button.text()).toBe("Open Finance task");
-		await button.trigger("click");
-		expect(w.emitted("open-task")[0][0]).toEqual(["procurement-planning", "finance", "FNT-1"]);
-		expect(make(PLAN).find('[data-testid="pln-open-task"]').exists()).toBe(false);
+function make(props = {}) {
+	return mount(AnnualPlanScreen, {
+		props: { plan: plan(), selected: [], pending: false, errorSummary: "", ...props },
 	});
-});
+}
 
-describe("AnnualPlanScreen — tabs", () => {
-	it("renders all five tabs with Overview active first", () => {
+describe("AnnualPlanScreen — U07 BASE", () => {
+	it("leads with purchases, each naming its own next work", () => {
 		const w = make();
-		const tabs = w.findAll('[role="tab"]');
-		expect(tabs.map((t) => t.text())).toEqual(["Overview", "Plan Items", "Funding and readiness", "Governance and publication", "Changes"]);
-		expect(w.find('[data-testid="pln-tab-overview"]').attributes("aria-selected")).toBe("true");
+		expect(w.find('[data-testid="ppl-title"]').text()).toBe("Prepare the annual procurement plan");
+		const rows = w.findAll('[data-testid="ppl-purchase-row"]');
+		expect(rows).toHaveLength(2);
+		expect(rows[0].text()).toContain("Choose a procurement method");
+		expect(rows[1].text()).toContain("Review the required reserved allocation");
+		// Not a generic readiness badge (§9.4).
+		expect(w.text()).not.toContain("Complete readiness");
+		expect(w.text()).not.toContain("Review required");
 	});
 
-	it("switches tabs on click, only one panel visible at a time", async () => {
+	it("shows exactly three plan checks, with the failing one linking to its correction", () => {
 		const w = make();
-		expect(w.find('[data-testid="pln-plan-summary-strip"]').exists()).toBe(true);
-		await w.find('[data-testid="pln-tab-items"]').trigger("click");
-		expect(w.find('[data-testid="pln-tab-items"]').attributes("aria-selected")).toBe("true");
-		expect(w.find('[data-testid="pln-plan-summary-strip"]').exists()).toBe(false);
-		expect(w.find('[data-testid="pln-unallocated-sources"]').exists()).toBe(true);
+		const checks = w.find('[data-testid="ppl-plan-checks"]');
+		expect(checks.text()).toContain("Funding");
+		expect(checks.text()).toContain("Reserved procurement");
+		expect(checks.text()).toContain("Schedule");
+		expect(checks.text()).toContain("KES 48,000,000 more qualifying allocation required");
+		expect(w.find('[data-testid="ppl-check-action"]').text()).toBe("Review reserved procurement");
+		// PLN22-AC-006: the required/qualifying/shortfall arithmetic is not
+		// repeated here.
+		expect(w.text()).not.toContain("Planned qualifying allocation");
+		expect(w.text()).not.toContain("Budget basis");
 	});
-});
 
-describe("AnnualPlanScreen — Overview tab", () => {
-	it("renders the header and the five-field summary strip", () => {
+	it("omits the project-name field when blank, offering to add one instead", () => {
 		const w = make();
-		expect(w.find(".kt-page-kicker").text()).toBe("ANNUAL PROCUREMENT PLAN");
-		expect(w.find('[data-testid="pln-plan-badge"]').text()).toBe("Draft");
-		const strip = w.find('[data-testid="pln-plan-summary-strip"]');
-		expect(strip.findAll("label").map((l) => l.text())).toEqual([
-			"Plan Items", "Departmental sources", "Departments", "Planned value", "Funding evidence",
-		]);
-		expect(strip.text()).toContain("Not requested");
+		expect(w.find('[data-testid="ppl-project-name"]').exists()).toBe(false);
+		expect(w.find('[data-testid="ppl-add-project-name"]').exists()).toBe(true);
 	});
 
-	it("shows Before submission with the first blocker's own message, switching to the Funding tab", async () => {
-		const w = make({ ...PLAN, blockers: [{ code: "PLN_RESERVATION_SHORTFALL", message: "Required reservation allocation not met. Required KES 48,000,000, planned KES 0, shortfall KES 48,000,000." }] });
-		const card = w.find('[data-testid="pln-before-submission"]');
-		expect(card.text()).toContain("Required reservation allocation not met");
-		await card.find("button").trigger("click");
-		expect(w.find('[data-testid="pln-tab-funding"]').attributes("aria-selected")).toBe("true");
+	it("shows the project-name field when the plan has one", () => {
+		const w = make({ plan: plan({ project_name: "National digital health rollout" }) });
+		expect(w.find('[data-testid="ppl-project-name"]').exists()).toBe(true);
 	});
 
-	it("has no Before submission card once there are no blockers", () => {
-		expect(make({ ...PLAN, blockers: [] }).find('[data-testid="pln-before-submission"]').exists()).toBe(false);
-	});
-
-	it("edits and saves the project name only when it actually changed", async () => {
+	it("keeps changes and history closed by default", () => {
 		const w = make();
-		const save = w.find('[data-testid="pln-save-details"]');
-		expect(save.attributes("disabled")).toBeDefined();
-		await w.find('[data-testid="pln-project-name"]').setValue("Digital health infrastructure programme");
-		expect(save.attributes("disabled")).toBeUndefined();
-		await save.trigger("click");
-		expect(w.emitted("save-details")[0][0]).toEqual({ project_name: "Digital health infrastructure programme" });
+		const history = w.find('[data-testid="ppl-history"]');
+		expect(history.attributes("open")).toBeUndefined();
+		expect(history.text()).toContain("This is the first version of the annual plan.");
 	});
 
-	it("disables the project name field once the plan is no longer mutable", () => {
-		const w = make({ ...PLAN, mutable: false });
-		expect(w.find('[data-testid="pln-project-name"]').attributes("disabled")).toBeDefined();
-		expect(w.find('[data-testid="pln-save-details"]').exists()).toBe(false);
-	});
-});
-
-describe("AnnualPlanScreen — Plan Items tab", () => {
-	function openItems(plan) {
-		const w = make(plan);
-		w.find('[data-testid="pln-tab-items"]').trigger("click");
-		return w;
-	}
-
-	it("shows the empty Plan Items state with the unallocated table and Form Plan Items", async () => {
-		const w = openItems();
-		await w.vm.$nextTick();
-		expect(w.find('[data-testid="pln-plan-items"]').exists()).toBe(false);
-		const card = w.find('[data-testid="pln-unallocated-sources"]');
-		expect(card.findAll("thead th").map((th) => th.text())).toEqual([
-			"", "Requirement", "Department", "Source origin", "Classification", "Quantity", "Procurement Budget Line", "Amount",
-		]);
-		await w.find('[data-testid="pln-form-items"]').trigger("click");
-		expect(w.emitted("open-form-dialog")).toHaveLength(1);
-	});
-
-	it("renders formed Plan Items and flags a source-correction-required row", async () => {
-		const w = openItems({
-			...PLAN,
-			plan_items: [
-				{
-					plan_item_id: "PPI-1", title: "A package", departments: "Digital Health", requirement_type: "Goods",
-					procurement_method: "Open Tender", reservation_category: "None", completion_display: "31 Aug 2027",
-					value_display: "KES 1,000,000", item_state: "Draft", source_correction_required: true,
-					route: ["procurement-plan-item", "PPI-1"],
-				},
-			],
-			unallocated_sources: [], unallocated_caption: "",
-		});
-		await w.vm.$nextTick();
-		const row = w.find('[data-testid="pln-item-PPI-1"]');
-		expect(row.text()).toContain("Source correction required");
-		await row.trigger("click");
-		expect(w.emitted("navigate")[0][0]).toEqual(["procurement-plan-item", "PPI-1"]);
-		expect(w.find('[data-testid="pln-unallocated-sources"]').text()).toContain("No unallocated requirements");
-		expect(w.find('[data-testid="pln-form-items"]').exists()).toBe(false);
-	});
-
-	it("shows no accepted departmental entries when there is nothing at all", async () => {
-		const w = openItems({ ...PLAN, unallocated_sources: [], unallocated_caption: "", plan_items: [] });
-		await w.vm.$nextTick();
-		expect(w.find('[data-testid="pln-unallocated-sources"]').text()).toContain("No accepted departmental entries");
-	});
-});
-
-describe("AnnualPlanScreen — Funding and readiness tab", () => {
-	function openFunding(plan) {
-		const w = make(plan);
-		w.find('[data-testid="pln-tab-funding"]').trigger("click");
-		return w;
-	}
-
-	it("renders the Budget table when affordability is available", async () => {
-		const w = openFunding({
-			...PLAN,
-			affordability: {
-				within_approved: true,
-				lines: [{ budget_line: "BL-1", reference: "MOH-BL-DHI-2027", title: "Digital health infrastructure programme", funding_source: "Government of Kenya", approved: 100000000, planned: 80000000, reserved: 0, committed: 0, available: 100000000 }],
-			},
-		});
-		await w.vm.$nextTick();
-		const card = w.find('[data-testid="pln-budget-table"]');
-		expect(card.findAll("thead th").map((th) => th.text())).toEqual([
-			"Budget Line", "Funding source", "Approved", "Planned", "Reserved", "Committed", "Available",
-		]);
-		expect(card.text()).toContain("Within approved amounts");
-	});
-
-	it("has no Budget table when affordability has not been computed", async () => {
-		const w = openFunding({ ...PLAN, affordability: null });
-		await w.vm.$nextTick();
-		expect(w.find('[data-testid="pln-budget-table"]').exists()).toBe(false);
-	});
-
-	it("renders the Reservation card and the plan readiness rows", async () => {
-		const w = openFunding();
-		await w.vm.$nextTick();
-		const reservation = w.find('[data-testid="pln-reservation"]');
-		expect(reservation.text()).toContain("Required allocation not met");
-		expect(reservation.findAll(".kt-label").map((l) => l.text())).toEqual([
-			"Target", "Required allocation", "Planned qualifying allocation", "Shortfall",
-		]); // no Budget basis fact: basis.available is false in the fixture
-		const readiness = w.find('[data-testid="pln-readiness"]');
-		expect(readiness.findAll("tbody tr")).toHaveLength(READINESS.length);
-	});
-
-	it("offers the splitting confirmation only while an advisory is unconfirmed (O1)", async () => {
-		const w = openFunding({
-			...PLAN,
-			readiness: READINESS.map((r) => (r.check === "Contract splitting review" ? { ...r, result: "1 advisory", kind: "advisory" } : r)),
-			splitting_advisories: [{ message: "Two items on MOH-BL-DHI-2027 together exceed the open-tender threshold." }],
-		});
-		await w.vm.$nextTick();
-		await w.find('[data-testid="pln-confirm-splitting"]').trigger("click");
-		expect(w.emitted("confirm-splitting")).toHaveLength(1);
-		expect(w.find('[data-testid="pln-splitting-advisories"]').text()).toContain("together exceed");
-	});
-
-	it("keeps Request plan funding confirmation disabled until the server says ready", async () => {
-		const w = openFunding();
-		await w.vm.$nextTick();
-		expect(w.find('[data-testid="pln-request-funding"]').attributes("disabled")).toBeDefined();
-	});
-
-	it("emits the version-level funding request once enabled", async () => {
-		const w = openFunding({ ...PLAN, can_request_funding: true });
-		await w.vm.$nextTick();
-		await w.find('[data-testid="pln-request-funding"]').trigger("click");
-		expect(w.emitted("request-funding")).toHaveLength(1);
-	});
-});
-
-describe("AnnualPlanScreen — Governance and publication tab", () => {
-	// U11-HOPF (§9's "Existing Plan record for preparation") — Charles's own
-	// preparation-signature card lives here, on the Draft record's own route;
-	// no Adopt/Approve/Board controls (those belong to ReviewScreen's own
-	// task route once a governance task exists).
-	it("shows the preparation-signature card, no Adopt or Approve controls", async () => {
+	it("omits Send to Finance while a blocking check fails, and never shows Submit or Approve", () => {
 		const w = make();
-		await w.find('[data-testid="pln-tab-governance"]').trigger("click");
-		const card = w.find('[data-testid="pln-preparation-decisions"]');
-		expect(card.text()).toContain("No Preparation decision recorded yet.");
-		expect(card.text()).toContain("I confirm that the complete Annual Procurement Plan Version 1 is ready for Accounting Officer adoption.");
-		expect(w.text()).not.toContain("Adopt");
+		expect(w.find('[data-testid="ppl-request-funding"]').exists()).toBe(false);
+		expect(w.find('[data-testid="ppl-save"]').exists()).toBe(true);
 		expect(w.text()).not.toContain("Approve");
+		// No Approval and publication section while the Draft is being prepared.
+		expect(w.text()).not.toContain("Approval and publication");
+	});
+
+	it("offers Send to Finance once the checks allow it", () => {
+		const w = make({ plan: plan({ can_request_funding: true }) });
+		expect(w.find('[data-testid="ppl-request-funding"]').text()).toBe("Send to Finance for funding review");
 	});
 });
 
-describe("AnnualPlanScreen — Changes tab", () => {
-	it("shows No earlier Version for the initial Version", async () => {
-		const w = make({ ...PLAN, changes: { is_initial: true } });
-		await w.find('[data-testid="pln-tab-changes"]').trigger("click");
-		const card = w.find('[data-testid="pln-changes"]');
-		expect(card.text()).toContain("No earlier Version");
-		expect(card.text()).toContain("This is the first Version of the Annual Plan.");
+describe("AnnualPlanScreen — U07-UNALLOCATED and selection", () => {
+	const SOURCE = {
+		entry_id: "DPPE-MOH-DHI-2027-001",
+		title: "National digital health infrastructure upgrade",
+		source_label: "Accepted Need · NDS-MOH-2027-0001",
+		department: "Digital Health",
+		quantity_number: "1",
+		unit_label: "Programme",
+		amount_display: "KES 80,000,000",
+	};
+
+	it("shows the empty purchases state and the sources waiting to be added", () => {
+		const w = make({ plan: plan({ plan_items: [], unallocated_sources: [SOURCE] }) });
+		expect(w.find('[data-testid="ppl-purchases-empty"]').text()).toBe("No purchases have been added yet.");
+		expect(w.findAll('[data-testid="ppl-unallocated-row"]')).toHaveLength(1);
 	});
 
-	it("shows the change reason and the Unchanged facts for a narrative-only update", async () => {
-		const w = make({
-			...PLAN,
-			changes: { is_initial: false, based_on_version_number: 1, change_reason: "Clarify the infrastructure scope for the priority facilities identified.", source_set_changed: false, quantities_changed: false, value_changed: false },
-		});
-		await w.find('[data-testid="pln-tab-changes"]').trigger("click");
-		const card = w.find('[data-testid="pln-changes"]');
-		expect(card.text()).toContain("Clarify the infrastructure scope");
-		expect(card.findAll(".kt-label").map((l) => l.text())).toEqual(["Source set", "Quantities", "Value"]);
-		expect(card.text().match(/Unchanged/g)).toHaveLength(3);
-	});
-});
+	it("holds Add selected requirements until at least one is ticked", async () => {
+		const w = make({ plan: plan({ plan_items: [], unallocated_sources: [SOURCE] }) });
+		expect(w.find('[data-testid="ppl-add-selected"]').attributes("disabled")).toBeDefined();
+		expect(w.find('[data-testid="ppl-select-hint"]').text()).toBe("Select at least one requirement.");
 
-describe("AnnualPlanScreen — footer", () => {
-	it("hides the submit footer once the plan is no longer mutable or awaiting confirmation", () => {
-		expect(make({ ...PLAN, mutable: false, funding_state: "Confirmed" }).find('[data-testid="pln-submit-consolidated"]').exists()).toBe(false);
+		const selected = make({ plan: plan({ plan_items: [], unallocated_sources: [SOURCE] }), selected: [SOURCE.entry_id] });
+		expect(selected.find('[data-testid="ppl-add-selected"]').attributes("disabled")).toBeUndefined();
+		expect(selected.find('[data-testid="ppl-select-hint"]').exists()).toBe(false);
 	});
 
-	it("emits the submission once enabled, always labelled Sign and submit Annual Plan", async () => {
-		const w = make({ ...PLAN, can_submit: true });
-		const button = w.find('[data-testid="pln-submit-consolidated"]');
-		expect(button.text()).toBe("Sign and submit Annual Plan");
-		await button.trigger("click");
-		expect(w.emitted("submit-consolidated")).toHaveLength(1);
+	it("emits the toggled source", async () => {
+		const w = make({ plan: plan({ plan_items: [], unallocated_sources: [SOURCE] }) });
+		await w.find('[data-testid="ppl-select-source"]').trigger("change");
+		expect(w.emitted("toggle-source")[0]).toEqual([SOURCE.entry_id]);
 	});
 
-	it("keeps the same label for a correction's resubmission (v1.18 §6.2 — one existing action)", () => {
-		const w = make({ ...PLAN, can_submit: true, is_correction: true });
-		expect(w.find('[data-testid="pln-submit-consolidated"]').text()).toBe("Sign and submit Annual Plan");
-	});
-
-	it("states the funding state plainly while awaiting, returned or stale", () => {
-		expect(make({ ...PLAN, funding_state: "Awaiting confirmation", mutable: false }).find('[data-testid="pln-funding-notice"]').text()).toContain("Awaiting Finance confirmation");
-		expect(make({ ...PLAN, funding_state: "Returned" }).find('[data-testid="pln-funding-notice"]').text()).toContain("returned by Finance");
-		expect(make({ ...PLAN, funding_state: "Stale" }).find('[data-testid="pln-funding-notice"]').text()).toContain("no longer current");
-		expect(make().find('[data-testid="pln-funding-notice"]').exists()).toBe(false);
-	});
-
-	it("shows no charts or blank-item creation control anywhere (§11.8)", () => {
+	it("says plainly when every requirement is already in a purchase", () => {
 		const w = make();
-		expect(w.find("canvas").exists()).toBe(false);
-		expect(w.text()).not.toContain("New Plan Item");
+		expect(w.find('[data-testid="ppl-all-allocated"]').text()).toBe(
+			"All 3 departmental requirements are included in the 2 purchases above.",
+		);
+		expect(w.find('[data-testid="ppl-add-selected"]').exists()).toBe(false);
+	});
+});
+
+describe("AnnualPlanScreen — U07-UPDATE", () => {
+	it("names itself an update, shows the current version and asks why", () => {
+		const w = make({
+			plan: plan({
+				is_successor: true,
+				version_number: 2,
+				current_version_number: 1,
+				can_cancel_update: true,
+			}),
+		});
+		expect(w.find('[data-testid="ppl-title"]').text()).toBe("Prepare plan update");
+		expect(w.find('[data-testid="ppl-context"]').text()).toContain("Draft update");
+		expect(w.find('[data-testid="ppl-context"]').text()).toContain("Version 1");
+		expect(w.find('[data-testid="ppl-change-reason"]').exists()).toBe(true);
+		expect(w.find('[data-testid="ppl-cancel-update"]').text()).toBe("Cancel plan update");
+	});
+});
+
+describe("AnnualPlanScreen — U07-FINANCE-COMPLETE", () => {
+	it("names the responsible person rather than offering the Planner a handover control", () => {
+		const w = make({
+			plan: plan({
+				can_request_funding: false,
+				plan_checks: [
+					{ label: "Funding", result: "Within each approved budget line", kind: "live", route: null },
+					{ label: "Reserved procurement", result: "Required allocation met", kind: "live", route: null },
+					{ label: "Schedule", result: "All purchases meet their departmental deadlines", kind: "live", route: null },
+				],
+				waiting_on: "Ready for the Head of Procurement Function to sign and submit · Charles Mutiso",
+			}),
+		});
+		expect(w.find('[data-testid="ppl-waiting-on"]').text()).toContain("Charles Mutiso");
+		// The Planner gets no approval or handover action of their own.
+		expect(w.find('[data-testid="ppl-sign-submit"]').exists()).toBe(false);
+	});
+
+	it("offers Sign and submit only to the actor who holds it", () => {
+		const w = make({ plan: plan({ can_sign_and_submit: true }) });
+		expect(w.find('[data-testid="ppl-sign-submit"]').text()).toBe("Sign and submit Annual Plan");
 	});
 });

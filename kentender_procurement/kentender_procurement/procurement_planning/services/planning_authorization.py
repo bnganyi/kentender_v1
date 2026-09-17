@@ -29,7 +29,7 @@ import json
 from typing import Any
 
 import frappe
-from frappe.utils import cstr
+from frappe.utils import cstr, nowdate
 
 from kentender_core.services.authorization import (
 	PURPOSE_COMMAND,
@@ -223,6 +223,33 @@ def require_site_role(role: str, user: str | None = None, *, masked: bool = True
 	if not decision.allowed:
 		_deny(decision, masked=masked)
 	return decision.assignment
+
+
+def users_with_site_role(role: str) -> list[str]:
+	"""Who currently holds this Site-wide responsibility.
+
+	§6.5: "Use only actual authorised person names returned by AUTH/task
+	ownership. Where no person can be resolved, show the responsible role and a
+	configuration issue; never invent an assignee." This returns the real
+	holders so a screen can name them, and an empty list so it can say plainly
+	that nobody holds it.
+	"""
+	today = nowdate()
+	return [
+		row.user
+		for row in frappe.get_all(
+			"User Responsibility Assignment",
+			filters={
+				"business_role": role,
+				"status": "Enabled",
+				"organisation_unit": ("in", ("", None)),
+			},
+			fields=["user", "effective_from", "effective_to"],
+			limit_page_length=0,
+		)
+		if (not row.effective_from or cstr(row.effective_from) <= today)
+		and (not row.effective_to or cstr(row.effective_to) >= today)
+	]
 
 
 def has_site_role(role: str, user: str | None = None) -> bool:
