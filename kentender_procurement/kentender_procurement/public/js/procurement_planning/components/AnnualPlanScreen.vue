@@ -37,6 +37,10 @@
 					<span class="kt-status" :class="badgeClass">{{ statusLabel }}</span>
 				</span>
 			</div>
+			<div>
+				<span class="kt-label">Financial year</span>
+				<span class="kt-meta-value">{{ plan.financial_year_label }}</span>
+			</div>
 			<div v-if="plan.is_successor && currentVersion">
 				<span class="kt-label">Current plan</span>
 				<span class="kt-meta-value">Version {{ currentVersion }}</span>

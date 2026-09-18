@@ -740,6 +740,9 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 		"funding_state": version.funding_state,
 		"record_version": int(version.record_version or 0),
 		"fiscal_year": plan.fiscal_year,
+		# §10.6 — the year is part of identifying which plan this is, not a
+		# footnote: two years' plans differ in nothing else on this row.
+		"financial_year_label": references.fy_label(plan.fiscal_year),
 		"header": {
 			"eyebrow": "ANNUAL PROCUREMENT PLAN",
 			"title": plan.title,
@@ -1293,6 +1296,7 @@ def get_finance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 		if decision_statement:
 			statement = json.loads(decision_statement)
 	basis = frappe.get_doc(financial_basis.DOCTYPE, task_doc.financial_basis) if task_doc.financial_basis else None
+	basis_summary = financial_basis.summary(basis)
 	totals = readiness.line_totals(version.name)
 	used = [line for line in statement.get("lines", []) if flt(line.get("planned")) > 0]
 	items = frappe.db.count("Annual Plan Item", {"plan_version": version.name, "item_state": ("!=", "Dissolved")})
@@ -1324,6 +1328,17 @@ def get_finance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 			"reserved_share_display": (f"{share['qualifying']} planned reservation · required {share['required']}" if (target and share["basis"]["available"]) else f"{share['qualifying']} planned reservation"),
 		},
 		"as_at_display": _eat(statement.get("as_at")),
+		# §10.9 — the provenance of the numbers being decided on: which budget,
+		# which version of it, and when the confirmation was asked for. The
+		# screen rendered `budget_reference` already; nothing ever supplied it,
+		# so it read "—" on every task.
+		"budget_reference": cstr(statement.get("budget_reference")) or cstr(
+			frappe.db.get_value("Procurement Budget", {"fiscal_year": plan.fiscal_year}, "generated_reference")
+		),
+		"budget_version_display": (
+			f"Version {basis_summary['budget_version']}" if basis_summary.get("budget_version") else ""
+		),
+		"requested_display": _eat(task_doc.creation),
 		"lines": rows,
 		"within_approved": within_approved,
 		"within_available": within_available,
@@ -1336,7 +1351,7 @@ def get_finance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 		"quiet_line": "Confirmation records that this plan fits the approved budget. It reserves no funds; reservation happens at requisition.",
 		"failing_lines": statement.get("failing_lines", []),
 		# v1.18 §4.7 — the immutable basis this review decides on
-		"financial_basis": financial_basis.summary(basis),
+		"financial_basis": basis_summary,
 		"basis_current": (financial_basis.current_digest(plan, version) == cstr(basis.basis_digest)) if (basis and not decided) else None,
 		"is_reassessment": version.version_status == "Active",
 		"version_status": version.version_status,

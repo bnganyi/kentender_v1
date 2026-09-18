@@ -46,6 +46,16 @@
 				<span class="kt-label">Budget</span>
 				<span class="kt-meta-value">{{ task.budget_reference || "—" }}</span>
 			</div>
+			<!-- Which version of that budget, and when the confirmation was
+			     asked for: the numbers below mean nothing without them. -->
+			<div v-if="task.budget_version_display">
+				<span class="kt-label">Budget version</span>
+				<span class="kt-meta-value">{{ task.budget_version_display }}</span>
+			</div>
+			<div>
+				<span class="kt-label">Requested at</span>
+				<span class="kt-meta-value">{{ task.requested_display }}</span>
+			</div>
 			<div>
 				<span class="kt-label">Amounts as at</span>
 				<span class="kt-meta-value" data-testid="fnt-as-at">{{ task.as_at_display }}</span>
@@ -164,6 +174,7 @@
 					<thead>
 						<tr>
 							<th>Budget line</th><th>Funding source</th>
+							<th class="is-num">Planned allocation</th>
 							<th class="is-num">Reserved</th><th class="is-num">Committed</th><th class="is-num">Currently available</th>
 						</tr>
 					</thead>
@@ -171,6 +182,7 @@
 						<tr v-for="row in lines" :key="`balance-${row.budget_line}`">
 							<td>{{ row.budget_line_reference }}</td>
 							<td>{{ row.funding_source }}</td>
+							<td class="is-num">{{ row.planned_display }}</td>
 							<td class="is-num">{{ row.reserved_display }}</td>
 							<td class="is-num">{{ row.committed_display }}</td>
 							<td class="is-num">{{ row.available_display }}</td>

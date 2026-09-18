@@ -298,11 +298,15 @@
 			<div class="kt-disclosure-body">
 				<p class="kt-muted">{{ task.changes?.is_initial ? "First annual plan" : "" }}</p>
 				<table class="kt-table">
-					<thead><tr><th>Stage</th><th>Actor</th><th>Capacity</th><th>Outcome</th><th>Date</th></tr></thead>
+					<!-- §10.10 — which decision, what came of it, in what
+					     capacity, by whom and when. The outcome sits next to the
+					     decision it belongs to, and the time is part of the
+					     record, not a date. -->
+					<thead><tr><th>Decision</th><th>Outcome</th><th>Capacity</th><th>Person</th><th>Date/time</th></tr></thead>
 					<tbody>
 						<tr v-for="(row, index) in history" :key="index">
-							<td>{{ row.stage }}</td><td>{{ row.actor }}</td><td>{{ row.capacity }}</td>
-							<td>{{ row.outcome }}</td><td>{{ row.date_display }}</td>
+							<td>{{ row.stage }}</td><td>{{ row.outcome }}</td><td>{{ row.capacity }}</td>
+							<td>{{ row.actor }}</td><td>{{ row.date_display }}</td>
 						</tr>
 					</tbody>
 				</table>
