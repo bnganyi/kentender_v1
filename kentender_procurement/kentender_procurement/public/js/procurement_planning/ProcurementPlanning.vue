@@ -992,7 +992,7 @@ function onNavigate(routeSegments) {
 	frappe.set_route(...routeSegments);
 }
 
-async function onFormConfirm(dppEntries, mode) {
+async function onFormConfirm({ dppEntries, mode, combinationReason, combinedTitle }) {
 	// RUN-CHG-001 — only the in-place branch (multiple items formed, staying
 	// on this Plan) needs its reload inside the guarded function; the
 	// single-item branch navigates away to a different screen instead.
@@ -1001,6 +1001,10 @@ async function onFormConfirm(dppEntries, mode) {
 			plan_version: annualPlan.value.version_reference,
 			dpp_entries: JSON.stringify(dppEntries),
 			mode,
+			// §10.7 — asked at the moment of combining, so the combined
+			// purchase is complete the moment it exists.
+			combination_reason: combinationReason || "",
+			combined_title: combinedTitle || "",
 			expected_record_version: annualPlan.value.record_version,
 			idempotency_key: key,
 		});

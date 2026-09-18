@@ -964,3 +964,30 @@
 .kt-pln .pln-missing-setting .kt-notice-body > p:last-child {
 	margin-bottom: 0;
 }
+
+/* §10.7 — the add-requirements panel is wider than a confirmation dialog: it
+   carries a source table and a preview, not one question. */
+.kt-pln .pln-form-dialog {
+	width: min(900px, calc(100vw - 48px));
+	max-width: none;
+}
+.kt-pln .pln-form-choice {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--kt-space-5);
+	margin: var(--kt-space-4) 0;
+}
+.kt-pln .pln-form-option {
+	display: flex;
+	align-items: center;
+	gap: var(--kt-space-2);
+	cursor: pointer;
+}
+/* A disabled option stays readable: it is explained above, not hidden. */
+.kt-pln .pln-form-option.is-disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+.kt-pln .pln-form-preview {
+	margin-top: var(--kt-space-4);
+}

@@ -30,7 +30,7 @@ import frappe
 from frappe.utils import cstr, flt, fmt_money, formatdate
 
 from kentender_procurement.procurement_planning.errors import MESSAGES
-from kentender_procurement.procurement_planning.services import missing_setting, needs_intake, readiness, references, schedule
+from kentender_procurement.procurement_planning.services import missing_setting, needs_intake, readiness, references, schedule, scope_lock
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import (
 	ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
@@ -705,6 +705,25 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 	all_accepted = _accepted_entry_rows(plan.fiscal_year)
 	allocated_ids = _allocated_dpp_entries(version.name)
 	unallocated = [row for row in all_accepted if row["dpp_entry"] not in allocated_ids]
+	# §10.7 U08-DUPLICATE/INCOMPLETE — a source a scope-locked purchase already
+	# holds cannot be formed again under a new identity (§5.4.6), so it is
+	# named as unavailable here rather than refused after the Planner commits.
+	from kentender_procurement.procurement_planning.services import plan_workbench
+
+	for row in unallocated:
+		# §10.7 U08-INCOMPATIBLE — the combinable identity from the one rule the
+		# formation command enforces (invariant 8), so U08 can offer the combine
+		# choice exactly where the command would accept it.
+		row["combination_key"] = plan_workbench.combination_key(
+			frappe._dict({
+				"budget_line": row["budget_line"], "classification": row["classification"],
+				"unit": row["unit"], "source_origin": row["source_origin"],
+			})
+		)
+		row["unavailable_reason"] = (
+			"is already held by a purchase whose scope was fixed by an authorised requisition."
+			if scope_lock.locked_items_for_sources(plan.fiscal_year, [row["dpp_entry"]]) else ""
+		)
 	items = _item_rows(version.name)
 	item_value = sum(flt(a.indicative_amount) for a in frappe.get_all("Plan Source Allocation", filters={"plan_version": version.name, "allocation_state": ("in", ("Draft", "Active"))}, fields=["indicative_amount"]))
 	readiness_report = plan_readiness(version, plan) if version.version_status == "Draft" else None

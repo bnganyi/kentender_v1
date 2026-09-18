@@ -38,6 +38,13 @@ from kentender_procurement.procurement_planning.services import (
 from kentender_procurement.procurement_planning.tests import fixtures as fx
 
 
+#: §10.7 — combining is only permitted with the reason for it.
+COMBINATION_REASON = (
+	"Both departments require the same specification for the same programme; combining secures "
+	"better unit pricing and one delivery schedule."
+)
+
+
 def key() -> str:
 	return uuid4().hex
 
@@ -336,7 +343,8 @@ class TestDrawdownAndReversal(RequisitionCase):
 		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
 		formed = plan_workbench.form_plan_items(
 			plan_version=accepted["annual_plan_version"], dpp_entries=[entry_a, entry_b],
-			mode="combined", expected_record_version=plan["record_version"], idempotency_key=key(),
+			mode="combined", combination_reason=COMBINATION_REASON,
+			expected_record_version=plan["record_version"], idempotency_key=key(),
 		)
 		item_id = formed["created_items"][0]
 		self.complete_and_confirm(
@@ -506,7 +514,8 @@ class TestProjectionFieldCompleteness(RequisitionCase):
 		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
 		formed = plan_workbench.form_plan_items(
 			plan_version=accepted["annual_plan_version"], dpp_entries=[entry_a, entry_b],
-			mode="combined", expected_record_version=plan["record_version"], idempotency_key=key(),
+			mode="combined", combination_reason=COMBINATION_REASON,
+			expected_record_version=plan["record_version"], idempotency_key=key(),
 		)
 		item_id = formed["created_items"][0]
 		self.complete_and_confirm(item_id, aggregation_reason="Same-unit combine for the dedup test.", aggregation_indicator="Aggregated into this package")

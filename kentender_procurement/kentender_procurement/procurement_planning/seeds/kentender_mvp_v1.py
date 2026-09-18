@@ -583,7 +583,12 @@ def _form_each_and_combined_items(plan_reference: str, prereqs: dict[str, str]) 
 		plan = plan_read.get_annual_plan(plan_reference=plan_reference)
 		formed_combined = plan_workbench.form_plan_items(
 			plan_version=plan["version_reference"], dpp_entries=laptop_sources,
-			mode="combined", expected_record_version=plan["record_version"], idempotency_key=_key("form-combined"),
+			mode="combined",
+			# §10.7 — the combination is named and justified where it is made,
+			# exactly as U08 asks the Planner for it.
+			combination_reason=COMBINED_ITEM_VALUES["aggregation_reason"],
+			combined_title=COMBINED_ITEM_VALUES["title"],
+			expected_record_version=plan["record_version"], idempotency_key=_key("form-combined"),
 		)
 		combined_item_id = formed_combined["created_items"][0]
 		combined_item = plan_read.get_plan_item(plan_item_id=combined_item_id)

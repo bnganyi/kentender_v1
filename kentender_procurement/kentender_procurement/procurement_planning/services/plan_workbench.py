@@ -97,17 +97,44 @@ def _entry_budget(entry) -> str:
 	return cstr(frappe.db.get_value("Procurement Budget Line", entry.budget_line, "budget"))
 
 
+#: Invariant 8 — the dimensions that must match for sources to become one
+#: purchase, and what each one is called where a Planner has to read it. The
+#: Fiscal Year is implicit; the Procurement Budget (not the individual line)
+#: carries the currency.
+COMBINATION_DIMENSIONS: tuple[tuple[str, str], ...] = (
+	("budget", "They draw on different budgets."),
+	("classification", "They are different requirement types."),
+	("unit", "They are measured in different units."),
+	("origin", "They come from different kinds of requirement."),
+)
+
+
+def combination_key(entry) -> dict[str, str]:
+	"""One source's combinable identity, from the same rule the command
+	enforces — so a screen can offer the choice only where the command would
+	accept it, and name the actual difference where it would not."""
+	return {
+		"budget": _entry_budget(entry),
+		"classification": cstr(entry.get("classification")),
+		"unit": cstr(entry.get("unit")),
+		"origin": cstr(entry.get("source_origin")),
+	}
+
+
+def combination_conflicts(entries: list) -> list[str]:
+	"""Which of the dimensions actually differ across these sources."""
+	keys = [combination_key(e) for e in entries]
+	return [
+		reason for dimension, reason in COMBINATION_DIMENSIONS
+		if len({k[dimension] for k in keys}) > 1
+	]
+
+
 def _compatible(entries: list) -> bool:
-	"""Invariant 8 — same Fiscal Year (implicit), Procurement Budget (hence
-	currency), requirement type, unit and treatment (source origin)."""
-	budgets = {_entry_budget(e) for e in entries}
-	classifications = {cstr(e.get("classification")) for e in entries}
-	units = {e.unit for e in entries}
-	origins = {e.source_origin for e in entries}
-	return len(budgets) == 1 and len(classifications) == 1 and len(units) == 1 and len(origins) == 1
+	return not combination_conflicts(entries)
 
 
-def _create_item(*, version, plan, entries: list, combined: bool, fixture_namespace: str = ""):
+def _create_item(*, version, plan, entries: list, combined: bool, fixture_namespace: str = "", combination_reason: str = "", title_override: str = ""):
 	"""A formed item carries the §4.6 defaults: category from the accepted
 	classification, Open Tender proposed (section 91(1)), Single year / Not
 	aggregated (Aggregated for a combined item) / Single lot, the resolved
@@ -115,7 +142,9 @@ def _create_item(*, version, plan, entries: list, combined: bool, fixture_namesp
 	otherwise — the profile, not a constant, supplies them) and its stable
 	`Plan Item` root."""
 	plan_item_id = references.plan_item_id(plan.fiscal_year)
-	title = " + ".join(e.title for e in entries)[:160] if combined else entries[0].title
+	# §10.7 — a combined purchase is named by the Planner who combined it; the
+	# joined source titles are only the offered default.
+	title = cstr(title_override).strip()[:160] or (" + ".join(e.title for e in entries)[:160] if combined else entries[0].title)
 	requirement_type = entries[0].get("classification")
 	# §4.4 — derived from the governed catalogue entry, never a local mapping.
 	category = dpp_classification.category_for(requirement_type)
@@ -144,7 +173,10 @@ def _create_item(*, version, plan, entries: list, combined: bool, fixture_namesp
 			"procurement_method": method,
 			"method_profile_version": resolved["method"].get("profile") if resolved["method"].get("found") else None,
 			"schedule_profile_version": resolved["schedule"].get("profile") if resolved["schedule"].get("found") else None,
-			"aggregation_reason": "",
+			# §10.7 U08-COMBINE — the reason is asked at the moment of combining,
+			# where the Planner actually holds it, not left as a blocker to be
+			# discovered later in the editor.
+			"aggregation_reason": cstr(combination_reason).strip() if combined else "",
 			"plan_horizon": "Single year",
 			"aggregation_indicator": "Aggregated into this package" if combined else "Not aggregated",
 			"lotting_indicator": "Single lot",
@@ -202,13 +234,19 @@ def _mark_funding_changed(version) -> None:
 
 
 def form_plan_items(
-	*, plan_version: str, dpp_entries: list[str] | str, mode: str = "each", expected_record_version, idempotency_key: str, user: str | None = None,
+	*, plan_version: str, dpp_entries: list[str] | str, mode: str = "each", combination_reason: str = "",
+	combined_title: str = "", expected_record_version, idempotency_key: str, user: str | None = None,
 ) -> dict[str, Any]:
 	actor = authz.actor(user)
 	if isinstance(dpp_entries, str):
 		dpp_entries = json.loads(dpp_entries)
 	dpp_entries = [cstr(e) for e in dpp_entries if cstr(e)]
-	payload = {"plan_version": plan_version, "dpp_entries": sorted(dpp_entries), "mode": mode}
+	combination_reason = cstr(combination_reason).strip()
+	combined_title = cstr(combined_title).strip()
+	payload = {
+		"plan_version": plan_version, "dpp_entries": sorted(dpp_entries), "mode": mode,
+		"combination_reason": combination_reason, "combined_title": combined_title,
+	}
 	replay = envelope.replay_or_none(idempotency_key, payload)
 	if replay:
 		return replay
@@ -252,7 +290,14 @@ def form_plan_items(
 	elif mode == "combined":
 		if not _compatible(entries):
 			fail("PLN_SOURCE_INCOMPATIBLE")
-		item = _create_item(version=version, plan=plan, entries=entries, combined=True, fixture_namespace=cstr(plan.fixture_namespace))
+		# The same 20–500 the readiness gate requires of a combined package
+		# (§4.6), enforced where the Planner is actually asked for it.
+		if not (20 <= len(combination_reason) <= 500):
+			fail("PLN_ENTRY_INCOMPLETE", "State why these requirements are being combined into one purchase (20–500 characters).")
+		item = _create_item(
+			version=version, plan=plan, entries=entries, combined=True, fixture_namespace=cstr(plan.fixture_namespace),
+			combination_reason=combination_reason, title_override=combined_title,
+		)
 		created = [item.plan_item_id]
 	else:
 		fail("PLN_ENTRY_INCOMPLETE", "Choose whether to create one Plan Item for each entry or one combined Plan Item.")

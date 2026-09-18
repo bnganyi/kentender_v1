@@ -1,115 +1,189 @@
-// PLN-CHG-001 v1.18 (PLN18-304) — FormPlanItemsDialog component tests.
-// U08: pre-checked sources, the one-each/one-combined choice only once
-// several are selected, U08-incompatible's differing-Budget-Line block, and
-// §11.9's absences.
+// PLN-CHG-001 v1.23 §10.7 — FormPlanItemsDialog component tests (U08).
+//
+// Selected sources, the grouping choice, and what it will produce — in that
+// order. The reason for combining is asked here; there is no partial quantity
+// control, no implicit combining, and no way to add a source the plan can no
+// longer draw on.
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import FormPlanItemsDialog from "./FormPlanItemsDialog.vue";
 
-const ONE = [
-	{
-		dpp_entry: "DPER-1", title: "National digital health infrastructure upgrade",
-		department: "Digital Health", budget_line: "BL-DHI", budget_line_display: "MOH-BL-DHI-2027",
-		quantity: 1, quantity_display: "1 programme", amount_display: "KES 80,000,000",
-	},
-];
+const REASON = "Both departments require the same laptop specification for the same national digital-health rollout; combining secures better unit pricing and one delivery schedule.";
 
-const TWO_COMPATIBLE = [
-	...ONE,
-	{
-		dpp_entry: "DPER-2", title: "Clinical deployment laptops for digital health rollout",
-		department: "Digital Health", budget_line: "BL-DHI", budget_line_display: "MOH-BL-DHI-2027",
-		quantity: 150, quantity_display: "150 each", amount_display: "KES 30,000,000",
-	},
-];
-
-const TWO_INCOMPATIBLE = [
-	...ONE,
-	{
-		dpp_entry: "DPER-3", title: "Clinical training laptops for digital health rollout",
-		department: "Human Resources Management and Development", budget_line: "BL-HWD", budget_line_display: "MOH-BL-HWD-2027",
-		quantity: 100, quantity_display: "100 each", amount_display: "KES 20,000,000",
-	},
-];
-
-function make(entries) {
-	return mount(FormPlanItemsDialog, { props: { entries, pending: false, error: "" } });
+function source(overrides = {}) {
+	return {
+		dpp_entry: "DPE-0001",
+		entry_id: "DPP-MOH-HRMD-2027-002",
+		title: "Clinical training laptops for digital health rollout",
+		department: "Human Resources Management and Development",
+		quantity: 100,
+		quantity_number: "100",
+		unit_label: "Each",
+		amount_display: "KES 20,000,000",
+		indicative_amount: 20000000,
+		budget_line: "MOH-BL-HWD-2027",
+		// The combinable identity the server derives from invariant 8.
+		combination_key: { budget: "BUD-MOH-2027", classification: "Goods", unit: "Each", origin: "Accepted Need" },
+		unavailable_reason: "",
+		...overrides,
+	};
 }
 
-describe("FormPlanItemsDialog — U08", () => {
-	it("pre-checks the one source and creates one item without a formation choice", async () => {
-		const w = make(ONE);
-		expect(w.get(".kt-dialog-title").text()).toBe("Form Plan Item");
-		expect(w.find('[data-testid="pln-form-select-DPER-1"]').element.checked).toBe(true);
-		expect(w.find('[data-testid="pln-form-mode-each"]').exists()).toBe(false);
-		expect(w.findAll("thead th").map((th) => th.text())).toEqual([
-			"", "Requirement", "Department", "Quantity", "Budget Line", "Amount",
-		]);
-		expect(w.find('[data-testid="pln-form-confirm"]').text()).toBe("Create Plan Item");
+const PAIR = [
+	source(),
+	source({
+		dpp_entry: "DPE-0002",
+		entry_id: "DPP-MOH-DH-2027-003",
+		title: "Clinical deployment laptops for digital health rollout",
+		department: "Digital Health",
+		quantity: 150,
+		quantity_number: "150",
+		amount_display: "KES 30,000,000",
+		indicative_amount: 30000000,
+	}),
+];
+
+const make = (entries = PAIR, props = {}) =>
+	mount(FormPlanItemsDialog, { props: { entries, pending: false, error: "", ...props } });
+
+describe("FormPlanItemsDialog — U08 BASE", () => {
+	it("asks the question and shows exactly what was selected", () => {
+		const w = make();
+		expect(w.find('[data-testid="pln-form-title"]').text()).toBe("How should these requirements be added?");
+		const rows = w.findAll('[data-testid="pln-form-source-row"]');
+		expect(rows).toHaveLength(2);
+		expect(rows[0].text()).toContain("Clinical training laptops for digital health rollout");
+		expect(rows[0].text()).toContain("Human Resources Management and Development");
+		expect(rows[0].text()).toContain("100");
+		expect(rows[0].text()).toContain("Each");
+		expect(rows[0].text()).toContain("KES 20,000,000");
+		expect(rows[1].text()).toContain("Digital Health");
+		expect(rows[1].text()).toContain("KES 30,000,000");
+	});
+
+	it("offers the selection as fact, not as checkboxes to re-pick", () => {
+		const w = make();
+		expect(w.findAll('input[type="checkbox"]')).toHaveLength(0);
+	});
+
+	it("offers only the two groupings, and no partial quantity control", () => {
+		const w = make();
+		expect(w.find('[data-testid="pln-form-mode-each"]').exists()).toBe(true);
+		expect(w.find('[data-testid="pln-form-mode-combined"]').exists()).toBe(true);
+		expect(w.findAll('input[type="number"]')).toHaveLength(0);
+	});
+});
+
+describe("FormPlanItemsDialog — U08-SEPARATE", () => {
+	it("previews one purchase per source, with no combination reason", () => {
+		const w = make();
+		expect(w.find('[data-testid="pln-form-purchases"]').text()).toBe("2");
+		expect(w.find('[data-testid="pln-form-reason"]').exists()).toBe(false);
+		const rows = w.findAll('[data-testid="pln-form-preview-rows"] tr');
+		expect(rows).toHaveLength(2);
+		expect(rows[0].text()).toContain("100 Each");
+		expect(rows[1].text()).toContain("KES 30,000,000");
+	});
+
+	it("adds them without further input", async () => {
+		const w = make();
+		expect(w.find('[data-testid="pln-form-confirm"]').text()).toBe("Add to plan");
 		await w.find('[data-testid="pln-form-confirm"]').trigger("click");
-		expect(w.emitted("confirm")[0]).toEqual([["DPER-1"], "each"]);
+		expect(w.emitted("confirm")[0][0]).toEqual({
+			dppEntries: ["DPE-0001", "DPE-0002"],
+			mode: "each",
+			combinationReason: "",
+			combinedTitle: "",
+		});
 	});
+});
 
-	it("requires the formation choice once several compatible sources are selected", async () => {
-		const w = make(TWO_COMPATIBLE);
-		expect(w.get(".kt-dialog-title").text()).toBe("Form Plan Items");
-		expect(w.find('[data-testid="pln-form-mode-each"]').element.checked).toBe(true);
-		expect(w.find('[data-testid="pln-form-mode-combined"]').attributes("disabled")).toBeUndefined();
-		expect(w.find('[data-testid="pln-form-confirm"]').text()).toContain("Create 2 Plan Items");
-		await w.find('[data-testid="pln-form-mode-combined"]').setValue(true);
-		expect(w.find('[data-testid="pln-form-confirm"]').text()).toBe("Create Plan Item");
-		await w.find('[data-testid="pln-form-confirm"]').trigger("click");
-		expect(w.emitted("confirm")[0]).toEqual([["DPER-1", "DPER-2"], "combined"]);
-	});
+describe("FormPlanItemsDialog — U08-COMBINE", () => {
+	async function combining() {
+		const w = make();
+		await w.find('[data-testid="pln-form-mode-combined"]').setValue();
+		return w;
+	}
 
-	// U08-incompatible
-	it("blocks the combined choice when selected sources' Budget Lines differ", async () => {
-		const w = make(TWO_INCOMPATIBLE);
-		expect(w.find('[data-testid="pln-form-incompatible"]').text()).toContain(
-			"These requirements cannot be combined because their Procurement Budget Lines differ."
-		);
-		const combined = w.find('[data-testid="pln-form-mode-combined"]');
-		expect(combined.attributes("disabled")).toBeDefined();
-		await combined.setValue(true); // even if forced, the effective mode stays "each"
-		await w.find('[data-testid="pln-form-confirm"]').trigger("click");
-		expect(w.emitted("confirm")[0]).toEqual([["DPER-1", "DPER-3"], "each"]);
-	});
-
-	it("has no incompatibility notice or disabled radio when Budget Lines match", () => {
-		const w = make(TWO_COMPATIBLE);
-		expect(w.find('[data-testid="pln-form-incompatible"]').exists()).toBe(false);
-	});
-
-	it("unchecking every source disables confirmation", async () => {
-		const w = make(ONE);
-		await w.find('[data-testid="pln-form-select-DPER-1"]').setValue(false);
+	it("requires the reason before the purchase can be added", async () => {
+		const w = await combining();
 		expect(w.find('[data-testid="pln-form-confirm"]').attributes("disabled")).toBeDefined();
+
+		await w.find('[data-testid="pln-form-reason"]').setValue("Too short");
+		expect(w.find('[data-testid="pln-form-confirm"]').attributes("disabled")).toBeDefined();
+
+		await w.find('[data-testid="pln-form-reason"]').setValue(REASON);
+		expect(w.find('[data-testid="pln-form-confirm"]').attributes("disabled")).toBeUndefined();
 	});
 
-	it("carries no source search, partial quantity, amount override, lot split, Strategy, method or note (§11.9)", () => {
-		const w = make(TWO_COMPATIBLE);
-		expect(w.find('input[type="search"]').exists()).toBe(false);
-		expect(w.text()).not.toContain("Strategic Objective");
-		expect(w.text()).not.toContain("Procurement method");
-		expect(w.text()).not.toContain("Note");
+	it("previews one purchase with the combined quantity, cost and title", async () => {
+		const w = await combining();
+		await w.find('[data-testid="pln-form-reason"]').setValue(REASON);
+		await w.find('[data-testid="pln-form-title-input"]').setValue(
+			"Clinical training and deployment laptops for digital health rollout",
+		);
+		const preview = w.find('[data-testid="pln-form-preview"]');
+		expect(w.find('[data-testid="pln-form-purchases"]').text()).toBe("1");
+		expect(preview.text()).toContain("250 Each");
+		expect(preview.text()).toContain("KES 50,000,000");
+		expect(w.find('[data-testid="pln-form-preview-title"]').text()).toBe(
+			"Clinical training and deployment laptops for digital health rollout",
+		);
+
+		await w.find('[data-testid="pln-form-confirm"]').trigger("click");
+		expect(w.emitted("confirm")[0][0]).toEqual({
+			dppEntries: ["DPE-0001", "DPE-0002"],
+			mode: "combined",
+			combinationReason: REASON,
+			combinedTitle: "Clinical training and deployment laptops for digital health rollout",
+		});
 	});
 
-	it("shows the Preview facts: selected requirements, items to create, quantity and value", () => {
-		const w = make(ONE);
-		const facts = w.findAll(".pln-fact");
-		expect(facts.map((f) => f.get(".kt-label").text())).toEqual([
-			"Selected requirements", "Plan Items to create", "Quantity", "Value",
+	it("never adds two different units into one number", async () => {
+		// Two units never combine under invariant 8, so this is the display
+		// rule alone: even asked directly, the numbers stay apart.
+		const w = make([PAIR[0], source({ dpp_entry: "DPE-0003", quantity: 2, quantity_number: "2", unit_label: "Programme", indicative_amount: 5000000, amount_display: "KES 5,000,000" })]);
+		await w.find('[data-testid="pln-form-mode-combined"]').setValue();
+		expect(w.find('[data-testid="pln-form-preview"]').text()).toContain("100 Each + 2 Programme");
+		expect(w.find('[data-testid="pln-form-preview"]').text()).not.toContain("102");
+	});
+});
+
+describe("FormPlanItemsDialog — U08-INCOMPATIBLE", () => {
+	it("says why, disables only the combine option, and still adds separately", async () => {
+		const w = make([
+			PAIR[0],
+			source({
+				dpp_entry: "DPE-0004",
+				budget_line: "MOH-BL-DHP-2027",
+				combination_key: { budget: "BUD-MOH-DEV-2027", classification: "Goods", unit: "Each", origin: "Accepted Need" },
+			}),
 		]);
-		expect(facts.map((f) => f.get(".pln-fact-val").text())).toEqual([
-			"1", "1", "1 programme", "KES 80,000,000",
-		]);
+		// The governed sentence, plus the difference that actually blocks it.
+		expect(w.find('[data-testid="pln-form-incompatible"]').text()).toBe(
+			"These requirements cannot be combined. Add them as separate purchases. They draw on different budgets.",
+		);
+		expect(w.find('[data-testid="pln-form-mode-combined"]').attributes("disabled")).toBeDefined();
+		expect(w.find('[data-testid="pln-form-mode-each"]').attributes("disabled")).toBeUndefined();
+		expect(w.find('[data-testid="pln-form-confirm"]').attributes("disabled")).toBeUndefined();
 	});
+});
 
-	it("sums Quantity across several selected sources regardless of formation choice", async () => {
-		const w = make(TWO_COMPATIBLE);
-		const quantityFact = () => w.findAll(".pln-fact")[2].get(".pln-fact-val").text();
-		expect(quantityFact()).toBe("151");
-		await w.find('[data-testid="pln-form-mode-combined"]').setValue(true);
-		expect(quantityFact()).toBe("151");
+describe("FormPlanItemsDialog — U08-DUPLICATE/INCOMPLETE", () => {
+	it("names the source and its problem, and offers no way to add it", () => {
+		const w = make([
+			PAIR[0],
+			source({
+				dpp_entry: "DPE-0005",
+				title: "National digital health infrastructure upgrade",
+				unavailable_reason: "is already held by a purchase whose scope was fixed by an authorised requisition.",
+			}),
+		]);
+		expect(w.find('[data-testid="pln-form-blocked"]').text()).toContain(
+			"National digital health infrastructure upgrade is already held by a purchase",
+		);
+		expect(w.find('[data-testid="pln-form-confirm"]').exists()).toBe(false);
+		// The choice is not offered either: there is nothing to choose between.
+		expect(w.find('[data-testid="pln-form-mode-each"]').exists()).toBe(false);
 	});
 });

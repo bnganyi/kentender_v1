@@ -1,103 +1,146 @@
-<!-- §12.7 — the Form Plan Items dialog, rendering PLN-DES-08 class-for-class:
-     the source table (pre-checked, no search), the one-each/one-combined
-     formation choice, and the result preview. No partial quantity, amount
-     override, lot split, Strategy, method or Finance control. -->
+<!-- PLN-CHG-001 v1.23 §10.7 — Add selected requirements (U08), ported from
+     U08.dc.html.
+
+     Three things in this order: what was selected, how it should be added, and
+     what that will produce. The selection itself was already made on the plan
+     behind this panel, so it is shown here as fact, not re-offered as
+     checkboxes — re-picking here would let the panel disagree with the rows
+     highlighted behind it.
+
+     Combining is the consequential choice, so the reason for it is asked here,
+     where the Planner is holding it, rather than left to be discovered later as
+     a readiness blocker in the purchase editor. There is no partial quantity
+     control and no implicit combining. -->
 <template>
 	<div class="kt-dialog-backdrop" data-testid="pln-form-dialog">
-		<div class="kt-dialog" role="dialog" aria-modal="true" aria-labelledby="pln-form-title">
-			<div id="pln-form-title" class="kt-dialog-title">{{ selectedRows.length > 1 ? "Form Plan Items" : "Form Plan Item" }}</div>
-			<p class="pln-dialog-lede">
-				Select accepted departmental entries and choose how they should form
-				procurement packages.
-			</p>
+		<div class="kt-dialog pln-form-dialog" role="dialog" aria-modal="true" aria-labelledby="pln-form-title">
+			<div id="pln-form-title" class="kt-dialog-title" data-testid="pln-form-title">How should these requirements be added?</div>
 
-			<table class="pln-table">
-				<thead>
-					<tr>
-						<th></th><th>Requirement</th><th>Department</th>
-						<th class="pln-num">Quantity</th><th>Budget Line</th>
-						<th class="pln-num">Amount</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr v-for="row in entries" :key="row.dpp_entry">
-						<td>
-							<input
-								type="checkbox"
-								:data-testid="`pln-form-select-${row.dpp_entry}`"
-								:checked="selected.has(row.dpp_entry)"
-								@change="toggle(row.dpp_entry)"
-							/>
-						</td>
-						<td>{{ row.title }}</td>
-						<td>{{ row.department }}</td>
-						<td class="pln-num">{{ row.quantity_display }}</td>
-						<td>{{ row.budget_line_display || row.budget_line }}</td>
-						<td class="pln-num">{{ row.amount_display }}</td>
-					</tr>
-				</tbody>
-			</table>
-
-			<!-- U08-incompatible — differing Procurement Budget Lines cannot combine -->
-			<div v-if="selectedRows.length > 1 && !budgetLinesCompatible" class="pln-dialog-section" data-testid="pln-form-incompatible">
-				<p>These requirements cannot be combined because their Procurement Budget Lines differ.</p>
+			<!-- U08-DUPLICATE/INCOMPLETE — a named source and its concrete
+			     problem, above the choice. There is nothing to add, so nothing
+			     offers to add it. -->
+			<div v-if="blocked" class="kt-notice is-critical" data-testid="pln-form-blocked">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+					<path d="M18 6L6 18M6 6l12 12"></path>
+				</svg>
+				<div class="kt-notice-body">{{ blocked }}</div>
 			</div>
 
-			<div v-if="selectedRows.length > 1" class="pln-dialog-section">
-				<p class="pln-section-label">Formation</p>
-				<div class="pln-radio-group">
-					<label class="pln-radio-option">
-						<input type="radio" value="each" v-model="mode" data-testid="pln-form-mode-each" />
-						Create one Plan Item for each selected requirement
+			<template v-else>
+				<table class="kt-table" data-testid="pln-form-sources">
+					<thead>
+						<tr>
+							<th>Requirement</th><th>Department</th>
+							<th class="is-num">Quantity</th><th>Unit</th><th class="is-num">Estimated cost</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="row in entries" :key="row.dpp_entry" data-testid="pln-form-source-row">
+							<td>
+								{{ row.title }}
+								<div class="kt-muted pln-row-ref">{{ row.entry_id }}</div>
+							</td>
+							<td>{{ row.department }}</td>
+							<td class="is-num">{{ row.quantity_number }}</td>
+							<td>{{ row.unit_label }}</td>
+							<td class="is-num">{{ row.amount_display }}</td>
+						</tr>
+					</tbody>
+				</table>
+
+				<!-- U08-INCOMPATIBLE — said before the choice, so the disabled
+				     option reads as explained rather than broken. -->
+				<div v-if="!combinable" class="kt-notice is-warning" data-testid="pln-form-incompatible">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+						<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
+					</svg>
+					<div class="kt-notice-body">{{ incompatibleText }}</div>
+				</div>
+
+				<div v-if="entries.length > 1" class="pln-form-choice" role="radiogroup" aria-label="How should these requirements be added?">
+					<label class="pln-form-option">
+						<input type="radio" value="each" v-model="mode" data-testid="pln-form-mode-each">
+						Keep separate
 					</label>
-					<label class="pln-radio-option" :class="{ 'is-disabled': !budgetLinesCompatible }">
+					<label class="pln-form-option" :class="{ 'is-disabled': !combinable }">
 						<input
-							type="radio" value="combined" v-model="mode"
-							:disabled="!budgetLinesCompatible"
+							type="radio"
+							value="combined"
+							v-model="mode"
+							:disabled="!combinable"
 							data-testid="pln-form-mode-combined"
-						/>
-						Create one combined Plan Item from all selected requirements
+						>
+						Combine into one purchase
 					</label>
 				</div>
-			</div>
 
-			<div class="pln-dialog-section">
-				<p class="kt-card-title">Preview</p>
-				<div class="pln-facts-row">
-					<div class="pln-fact">
-						<span class="kt-label">Selected requirements</span>
-						<span class="pln-fact-val">{{ selectedRows.length }}</span>
+				<template v-if="effectiveMode === 'combined'">
+					<div class="kt-field">
+						<label for="pln-form-reason" class="kt-label">Reason for combining</label>
+						<textarea
+							id="pln-form-reason"
+							class="kt-input"
+							rows="3"
+							data-testid="pln-form-reason"
+							v-model="reason"
+						></textarea>
+						<div class="kt-field-hint">20–500 characters.</div>
 					</div>
-					<div class="pln-fact">
-						<span class="kt-label">Plan Items to create</span>
-						<span class="pln-fact-val">{{ itemsToCreate }}</span>
+					<div class="kt-field">
+						<label for="pln-form-title-input" class="kt-label">Purchase title</label>
+						<input id="pln-form-title-input" class="kt-input" data-testid="pln-form-title-input" v-model="combinedTitle">
 					</div>
-					<div class="pln-fact">
-						<span class="kt-label">Quantity</span>
-						<span class="pln-fact-val">{{ quantityDisplay }}</span>
+				</template>
+
+				<!-- What the choice will actually produce. -->
+				<div class="kt-card pln-form-preview" data-testid="pln-form-preview">
+					<div class="kt-meta-row">
+						<div>
+							<span class="kt-label">Purchases</span>
+							<span class="kt-meta-value" data-testid="pln-form-purchases">{{ purchases }}</span>
+						</div>
+						<template v-if="effectiveMode === 'combined'">
+							<div>
+								<span class="kt-label">Total quantity</span>
+								<span class="kt-meta-value">{{ totalQuantityDisplay }}</span>
+							</div>
+							<div>
+								<span class="kt-label">Estimated cost</span>
+								<span class="kt-meta-value">{{ totalCostDisplay }}</span>
+							</div>
+							<div>
+								<span class="kt-label">Purchase title</span>
+								<span class="kt-meta-value" data-testid="pln-form-preview-title">{{ combinedTitle }}</span>
+							</div>
+						</template>
 					</div>
-					<div class="pln-fact">
-						<span class="kt-label">Value</span>
-						<span class="pln-fact-val">{{ totalDisplay }}</span>
-					</div>
+					<!-- Keeping them separate produces one purchase per source,
+					     each with its own scope; the rows say so. -->
+					<table v-if="effectiveMode === 'each'" class="kt-table" data-testid="pln-form-preview-rows">
+						<tbody>
+							<tr v-for="row in entries" :key="row.dpp_entry">
+								<td>{{ row.title }}</td>
+								<td class="is-num">{{ row.quantity_number }} {{ row.unit_label }}</td>
+								<td class="is-num">{{ row.amount_display }}</td>
+							</tr>
+						</tbody>
+					</table>
 				</div>
-			</div>
+			</template>
 
-			<p v-if="error" class="pln-dialog-error" role="alert" data-testid="pln-form-error">
-				{{ error }}
-			</p>
+			<p v-if="error" class="pln-dialog-error" role="alert" data-testid="pln-form-error">{{ error }}</p>
 
 			<div class="kt-dialog-actions">
-				<button class="kt-btn kt-btn-secondary" :disabled="pending" @click="$emit('cancel')">
-					Cancel
-				</button>
+				<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" @click="$emit('cancel')">Cancel</button>
 				<button
+					v-if="!blocked"
+					type="button"
 					class="kt-btn kt-btn-primary"
 					data-testid="pln-form-confirm"
-					:disabled="pending || !selectedRows.length"
+					:disabled="pending || !canAdd"
 					@click="confirm"
 				>
-					Create {{ itemsToCreate > 1 ? `${itemsToCreate} ` : "" }}Plan Item{{ itemsToCreate > 1 ? "s" : "" }}
+					Add to plan
 				</button>
 			</div>
 		</div>
@@ -105,7 +148,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from "vue";
+import { computed, ref } from "vue";
 
 const props = defineProps({
 	entries: { type: Array, default: () => [] },
@@ -115,60 +158,74 @@ const props = defineProps({
 
 const emit = defineEmits(["confirm", "cancel"]);
 
-// every source starts pre-checked (§11.9 fixture): the Planner is forming
-// items from what they already opened the dialog to act on.
-const selected = reactive(new Set(props.entries.map((row) => row.dpp_entry)));
 const mode = ref("each");
+const reason = ref("");
 
-function toggle(dppEntry) {
-	if (selected.has(dppEntry)) selected.delete(dppEntry);
-	else selected.add(dppEntry);
-}
+// U08-INCOMPATIBLE — the server supplies each source's combinable identity
+// from the one rule the formation command enforces, so the choice is offered
+// exactly where the command would accept it, and the reason named here is the
+// difference that actually blocks it.
+const DIMENSIONS = [
+	["budget", "They draw on different budgets."],
+	["classification", "They are different requirement types."],
+	["unit", "They are measured in different units."],
+	["origin", "They come from different kinds of requirement."],
+];
 
-const selectedRows = computed(() =>
-	props.entries.filter((row) => selected.has(row.dpp_entry))
+const conflicts = computed(() =>
+	DIMENSIONS.filter(
+		([dimension]) => new Set(props.entries.map((row) => (row.combination_key || {})[dimension])).size > 1,
+	).map(([, reason]) => reason),
 );
 
-// U08-incompatible — differing Procurement Budget Lines cannot combine into
-// one Plan Item (checked client-side so the choice never even offers what
-// the server would refuse).
-const budgetLinesCompatible = computed(
-	() => new Set(selectedRows.value.map((row) => row.budget_line)).size <= 1
+const combinable = computed(() => props.entries.length > 1 && !conflicts.value.length);
+const incompatibleText = computed(() =>
+	conflicts.value.length
+		? `These requirements cannot be combined. Add them as separate purchases. ${conflicts.value.join(" ")}`
+		: "",
 );
 
-// §12.7 — one selected source creates one item without asking a second
-// choice; the formation radio only matters once several are selected, and
-// only "each" is offered once the selection is not combinable.
-const effectiveMode = computed(() => (selectedRows.value.length > 1 && budgetLinesCompatible.value ? mode.value : "each"));
+// One source makes one purchase; there is no second choice to make.
+const effectiveMode = computed(() => (combinable.value ? mode.value : "each"));
 
-const itemsToCreate = computed(() =>
-	effectiveMode.value === "each" ? selectedRows.value.length : Math.min(selectedRows.value.length, 1)
-);
+const purchases = computed(() => (effectiveMode.value === "combined" ? 1 : props.entries.length));
 
-const totalDisplay = computed(() => {
-	const total = selectedRows.value.reduce(
-		(sum, row) => sum + Number(row.amount_display.replace(/[^\d.]/g, "") || 0),
-		0
-	);
+// U08-DUPLICATE/INCOMPLETE — a source the plan can no longer draw on.
+const blocked = computed(() => {
+	const stale = props.entries.find((row) => row.unavailable_reason);
+	return stale ? `${stale.title} ${stale.unavailable_reason}` : "";
+});
+
+// Quantities combine only where the unit is the same. Two units are two facts,
+// and adding them would produce a number that means nothing.
+const totalQuantityDisplay = computed(() => {
+	const units = new Set(props.entries.map((row) => row.unit_label));
+	const total = props.entries.reduce((sum, row) => sum + Number(row.quantity || 0), 0);
+	if (units.size === 1) return `${total} ${[...units][0]}`;
+	return props.entries.map((row) => `${row.quantity_number} ${row.unit_label}`).join(" + ");
+});
+
+const totalCostDisplay = computed(() => {
+	const total = props.entries.reduce((sum, row) => sum + Number(row.indicative_amount || 0), 0);
 	return `KES ${total.toLocaleString("en-KE")}`;
 });
 
-const totalQuantity = computed(() =>
-	selectedRows.value.reduce((sum, row) => sum + Number(row.quantity || 0), 0)
-);
+const defaultTitle = computed(() => props.entries.map((row) => row.title).join(" + ").slice(0, 160));
+const combinedTitle = ref(defaultTitle.value);
 
-// one selected source shows its own quantity/unit text; several sum to a
-// plain number since units may differ across combined sources.
-const quantityDisplay = computed(() => {
-	if (selectedRows.value.length === 1) return selectedRows.value[0].quantity_display;
-	return String(totalQuantity.value);
+const canAdd = computed(() => {
+	if (!props.entries.length) return false;
+	if (effectiveMode.value !== "combined") return true;
+	const length = reason.value.trim().length;
+	return length >= 20 && length <= 500 && Boolean(combinedTitle.value.trim());
 });
 
 function confirm() {
-	emit(
-		"confirm",
-		selectedRows.value.map((row) => row.dpp_entry),
-		effectiveMode.value
-	);
+	emit("confirm", {
+		dppEntries: props.entries.map((row) => row.dpp_entry),
+		mode: effectiveMode.value,
+		combinationReason: effectiveMode.value === "combined" ? reason.value.trim() : "",
+		combinedTitle: effectiveMode.value === "combined" ? combinedTitle.value.trim() : "",
+	});
 }
 </script>

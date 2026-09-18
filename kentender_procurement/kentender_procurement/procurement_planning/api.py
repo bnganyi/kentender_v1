@@ -258,11 +258,15 @@ def get_publication_task(publication: str) -> dict[str, Any]:
 
 
 @frappe.whitelist()
-def form_plan_items(plan_version: str, dpp_entries, mode: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+def form_plan_items(
+	plan_version: str, dpp_entries, mode: str, expected_record_version, idempotency_key: str,
+	combination_reason: str = "", combined_title: str = "",
+) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import plan_workbench
 
 	return plan_workbench.form_plan_items(
 		plan_version=plan_version, dpp_entries=_parse_json(dpp_entries, []), mode=mode,
+		combination_reason=combination_reason, combined_title=combined_title,
 		expected_record_version=expected_record_version, idempotency_key=idempotency_key,
 	)
 

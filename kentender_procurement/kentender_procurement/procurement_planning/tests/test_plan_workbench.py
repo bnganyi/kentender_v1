@@ -24,6 +24,14 @@ from kentender_procurement.procurement_planning.services import (
 from kentender_procurement.procurement_planning.tests import fixtures as fx
 
 
+#: §10.7 — a combined purchase must say why it was combined, at the moment it
+#: is combined. 20–500 characters, the same range the readiness gate requires.
+COMBINATION_REASON = (
+	"Both departments require the same specification for the same programme; combining secures "
+	"better unit pricing and one delivery schedule."
+)
+
+
 def key() -> str:
 	return uuid4().hex
 
@@ -245,13 +253,73 @@ class TestFormPlanItemsCombine(PlanWorkbenchCase):
 		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
 		result = plan_workbench.form_plan_items(
 			plan_version=accepted["annual_plan_version"], dpp_entries=[entry_a, entry_b],
-			mode="combined", expected_record_version=plan["record_version"], idempotency_key=key(),
+			mode="combined", combination_reason=COMBINATION_REASON,
+			expected_record_version=plan["record_version"], idempotency_key=key(),
 		)
 		self.assertTrue(result["single"])
 		item = plan_read.get_plan_item(plan_item_id=result["created_items"][0])
 		self.assertTrue(item["combined"])
 		self.assertEqual(len(item["sources"]), 2)
 		self.assertIn("2 sources", item["sources_caption"])
+
+	def test_a_combined_purchase_carries_the_reason_it_was_combined(self):
+		"""§10.7 U08-COMBINE — the reason is captured where the Planner is
+		asked for it, so the purchase is complete the moment it exists rather
+		than arriving with a readiness blocker already on it."""
+		accepted, entry_a, entry_b = self.accept_two(
+			{"title": "Clinical training laptops"}, {"title": "Clinical deployment laptops"},
+		)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		result = plan_workbench.form_plan_items(
+			plan_version=accepted["annual_plan_version"], dpp_entries=[entry_a, entry_b],
+			mode="combined", combination_reason=COMBINATION_REASON,
+			combined_title="Clinical training and deployment laptops for digital health rollout",
+			expected_record_version=plan["record_version"], idempotency_key=key(),
+		)
+		item = plan_read.get_plan_item(plan_item_id=result["created_items"][0])
+		self.assertEqual(item["identity"]["aggregation_reason"], COMBINATION_REASON)
+		self.assertEqual(item["identity"]["title"], "Clinical training and deployment laptops for digital health rollout")
+
+	def test_combining_without_a_reason_is_refused(self):
+		accepted, entry_a, entry_b = self.accept_two(
+			{"title": "Requirement A"}, {"title": "Requirement B"},
+		)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		for offered in ("", "Too short"):
+			with self.subTest(reason=offered):
+				with self.assertRaises(ProcurementPlanningError) as caught:
+					plan_workbench.form_plan_items(
+						plan_version=accepted["annual_plan_version"], dpp_entries=[entry_a, entry_b],
+						mode="combined", combination_reason=offered,
+						expected_record_version=plan["record_version"], idempotency_key=key(),
+					)
+				self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+		self.assertEqual(frappe.db.count("Annual Plan Item", {"fixture_namespace": fx.NS}), 0)
+
+	def test_keeping_them_separate_never_invents_a_combination_reason(self):
+		accepted, entry_a, entry_b = self.accept_two(
+			{"title": "Requirement A"}, {"title": "Requirement B"},
+		)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		result = plan_workbench.form_plan_items(
+			plan_version=accepted["annual_plan_version"], dpp_entries=[entry_a, entry_b],
+			mode="each", combination_reason=COMBINATION_REASON,
+			expected_record_version=plan["record_version"], idempotency_key=key(),
+		)
+		for plan_item_id in result["created_items"]:
+			with self.subTest(plan_item_id=plan_item_id):
+				item = plan_read.get_plan_item(plan_item_id=plan_item_id)
+				self.assertEqual(item["identity"]["aggregation_reason"], "")
+
+	def test_the_combination_rule_names_what_actually_differs(self):
+		"""The rule a screen reads is the rule the command enforces: same
+		budget, requirement type, unit and kind of requirement (invariant 8)."""
+		same = frappe._dict({"budget_line": fx.BUDGET_LINE, "classification": "Goods", "unit": "Each", "source_origin": "Direct requirement"})
+		other_unit = frappe._dict({**same, "unit": "Programme"})
+		other_type = frappe._dict({**same, "classification": "Works"})
+		self.assertEqual(plan_workbench.combination_conflicts([same, frappe._dict(same)]), [])
+		self.assertEqual(plan_workbench.combination_conflicts([same, other_unit]), ["They are measured in different units."])
+		self.assertEqual(plan_workbench.combination_conflicts([same, other_type]), ["They are different requirement types."])
 
 	def test_combined_mode_rejects_incompatible_classifications(self):
 		accepted, entry_a, entry_b = self.accept_two(
@@ -262,7 +330,8 @@ class TestFormPlanItemsCombine(PlanWorkbenchCase):
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			plan_workbench.form_plan_items(
 				plan_version=accepted["annual_plan_version"], dpp_entries=[entry_a, entry_b],
-				mode="combined", expected_record_version=plan["record_version"], idempotency_key=key(),
+				mode="combined", combination_reason=COMBINATION_REASON,
+				expected_record_version=plan["record_version"], idempotency_key=key(),
 			)
 		self.assertEqual(caught.exception.code, "PLN_SOURCE_INCOMPATIBLE")
 		self.assertEqual(frappe.db.count("Annual Plan Item", {"fixture_namespace": fx.NS}), 0)
@@ -456,7 +525,8 @@ class TestProfilesEvidenceAndFeasibility(PlanWorkbenchCase):
 		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
 		formed = plan_workbench.form_plan_items(
 			plan_version=accepted["annual_plan_version"], dpp_entries=[entry_a, entry_b],
-			mode="combined", expected_record_version=plan["record_version"], idempotency_key=key(),
+			mode="combined", combination_reason=COMBINATION_REASON,
+			expected_record_version=plan["record_version"], idempotency_key=key(),
 		)
 		combined = plan_read.get_plan_item(plan_item_id=formed["created_items"][0])
 		self.assertEqual(combined["total_quantity_display"], "250 each")
