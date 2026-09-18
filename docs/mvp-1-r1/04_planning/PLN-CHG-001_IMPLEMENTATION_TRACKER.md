@@ -76,22 +76,20 @@
 | PLN22-G13e | §13.3 isolated presentation profiles | Partial | 2026-09-18, commits `6438be07`, `bb1ba9ec`, and this one. All thirteen §13.3 profiles audited against the fixture chain; six had no browser-reachable fixture at all. Four built as isolated profiles that put back whatever they moved: `reset_collective_fixture` (the statutory route is one site-wide value — saved and restored, verified reading Cabinet Secretary again afterwards), `reset_publication_unknown_fixture`, `reset_late_activation_fixture` and `reset_finance_excess_fixture`. The last exposed a leak of its own: cutting the approved amount left the next profile starting from the shortfall, so `_reset` now restores the budget baseline for every profile — isolation is the point of §13.3 and the suite was drifting as it ran. **Owed:** published-held, extra requirement, readability/history. |
 | PLN22-G13f | Panels gated that had never rendered against a real server | Partial | 2026-09-18. U11-COLLECTIVE, U13-UNKNOWN, U21-LATE-ACTIVATION, U09-INVALID-SCHEDULE, U09-REMOVE, U10-OVER-APPROVED, U10-RETURN, U10-REASSESS now assert in a browser; U10-HISTORY is asserted behaviourally because its artboard carries no landmarks. Found: **a seventh unreachable screen** — `LateExplanationDialog` and `LateExplanationHistory` were built and component-tested and imported by nothing, so the Accounting Officer could not perform §6.3's listed **Explain late start of the annual plan**; the whole route is now built (`bb1ba9ec`). And **a real copy defect** — §10.9 U10-RETURN heads its dialog **What needs to change?** with a **Return to planner** primary and a read-only whole-plan context; the build said "Return for correction?" / "Correction required" / "Return". Corrected at both test layers. **Owed:** U09-LOCKED, U09-SOURCE-CORRECTION and the two U09 classification variants (all need downstream or correction fixtures); U10-LOW-AVAILABILITY and U10-CHANGED. |
 | PLN22-G14 | Phase 3: canonical seed green; §13.3 isolated profiles; every blank artboard value supplied; REQ + TPR stages re-run; persona browser pass | Partial | 2026-09-18, commit `3f5db2c7`. **The canonical seed works again** — it had been failing since the v1.18 rebuild. Five real faults fixed: profiles registered `Production verification pending` (the submission gate rejects it); the profile window started at the financial year while §10.2 anchors the schedules in May 2027, so no rule resolved; no reservation rule and no qualifying designation, so the mandatory allocation could not be assessed; the reset never purged the v1.18 publication chain and its filters keyed off an already-deleted plan, leaving two OCDS-shaped snapshots from the retired era to be reused; and the seed still drove the retired synchronous publication. `make seed-canonical THROUGH=planning` green, validates clean, `test_planning_seed` 7/7. **REQ/TPR stages closed 2026-09-18, commit `e6b8d671`** — `make seed-canonical THROUGH=tender_preparation` green after repairing a real cross-module break: this cycle dropped the fourteen item-level forecast/actual columns and Tender Preparation still read `Annual Plan Item.actual_invitation_date` off the table, so the seed died on `Unknown column`. §611 forbids collapsing two proceedings' dates into one item actual, so Planning now publishes `schedule.current_proceeding_actual` and TPR asks through it scoped to the Tender — which its write path already passed. A sweep of all twelve dropped column names leaves only comments, result keys and negative assertions. **Owed:** the §13.3 isolated profiles (G13e), the blank artboard values, the persona pass. Canonical world re-validated clean on 18 Sep after the browser and fidelity runs (`{"ok": true, "through": "planning", "failures": []}`). Note the discipline this exposed: a Playwright run leaves its fixture world behind — `globalTeardown` restores the intake flags only — so `make seed-canonical SITE=<site> THROUGH=planning` is what returns the site to canonical, and the validation must be re-run after any browser work, not assumed. |
-| PLN22-G15 | Phase 4 release evidence: full Planning regression; cross-module checkpoint; production build with changed hashes for `kentender_procurement` + `kentender_core`; 109 artboards compared at 1440 × 1024 and narrow; removed-construct scan; acceptance map closed truthfully; follow-ups and memory updated | Planned | — |
-
+| PLN22-G15 | Phase 4 release evidence: full Planning regression; cross-module checkpoint; production build with changed hashes for `kentender_procurement` + `kentender_core`; 109 artboards compared at 1440 × 1024 and narrow; removed-construct scan; acceptance map closed truthfully; follow-ups and memory updated | Partial | 2026-09-18. Started, not close. **Done:** the Planning regression (311 tests), the component suite (269) and every Planning browser spec with the fidelity gate (54 + 30). **Partial:** the cross-module checkpoint (TPR only), the production build (`kentender_procurement` hashes recorded, `kentender_core` not built), the removed-construct scan (swept, not recorded as evidence) and the follow-ups. **Not started:** the 111-artboard comparison at 1440 × 1024 and narrow — the narrow dimension is untested entirely — and the §§14.1–14.8 acceptance map. See PLN22-401..409. |
 ---
 
 ## Work register — Phase 0: Baseline and disposition
 
 | ID | Item | Status | Evidence / gap |
 |---|---|---|---|
-| PLN22-001 | Write this plan and tracker; retire the v1.18 plan/tracker into `retired/`; create `evidence/v1_22/` | Planned | — |
-| PLN22-002 | Checkpoint-commit the uncommitted v1.18 Phase-3 UI work (PLN18-303..306 components, specs, Playwright specs) with a message naming it as superseded-on-landing (D3) | Planned | — |
-| PLN22-003 | Record the baseline: `bench run-tests` counts for the 16 Planning test modules, one module per run; `npx vitest run --project procurement-planning`; Playwright not run (fixtures target the retired artboards); `bench migrate` clean | Planned | — |
-| PLN22-004 | Generate `evidence/v1_22/FRAMES.md` from the 15 design files: 109 MVP artboard ids, no duplicates, as the fidelity/evidence filename list | Planned | — |
-| PLN22-005 | Raise owner Q1 (C1, missing U06 artboards) and Q2 (C2, forecast/reminder acceptance rows); record answers in the decision log | Planned | — |
-| PLN22-006 | Point `PLN-CHG-001_FOLLOW_UPS.md` at this cycle; add a v1.22 seam row to Budget, NDS, REQ and TPR follow-ups naming the classification-correction hold contract (§15.2 row "Scope-locked classification correction") | Planned | — |
-| PLN22-007 | Diff the pack's `_ds/.../styles.css` against `kentender_core/.../kt_industry_tokens.css`; list any genuinely missing component class; confirm `ui-industry-design-gate` still passes (D12) | Planned | — |
-
+| PLN22-001 | Write this plan and tracker; retire the v1.18 plan/tracker into `retired/`; create `evidence/v1_22/` | Done | G00. Written; v1.18 retired into `retired/`. The folder is `evidence/v1_23/`, not `v1_22` — this row was written before the version landed. |
+| PLN22-002 | Checkpoint-commit the uncommitted v1.18 Phase-3 UI work (PLN18-303..306 components, specs, Playwright specs) with a message naming it as superseded-on-landing (D3) | Done | G00, checkpoint commit `06249aa6`. |
+| PLN22-003 | Record the baseline: `bench run-tests` counts for the 16 Planning test modules, one module per run; `npx vitest run --project procurement-planning`; Playwright not run (fixtures target the retired artboards); `bench migrate` clean | Done | G00/G03. 16 modules recorded one per run; vitest baseline taken; Playwright deliberately not run against the retired artboards; `bench migrate` clean. |
+| PLN22-004 | Generate `evidence/v1_22/FRAMES.md` from the 15 design files: 109 MVP artboard ids, no duplicates, as the fidelity/evidence filename list | Done | G00. `evidence/v1_23/FRAMES.md` lists 112 panels across 15 files, no duplicates. |
+| PLN22-005 | Raise owner Q1 (C1, missing U06 artboards) and Q2 (C2, forecast/reminder acceptance rows); record answers in the decision log | Done | Decision log, 2026-09-18. Both closed by v1.23 itself rather than needing the owner: C1 supplied the two U06 artboards, C2 deferred the forecast rows outright. |
+| PLN22-006 | Point `PLN-CHG-001_FOLLOW_UPS.md` at this cycle; add a v1.22 seam row to Budget, NDS, REQ and TPR follow-ups naming the classification-correction hold contract (§15.2 row "Scope-locked classification correction") | Partial | `PLN-CHG-001_FOLLOW_UPS.md` carries this cycle (FU-V123-01..08). **Owed:** the seam rows in Budget, NDS, REQ and TPR's own follow-up files. |
+| PLN22-007 | Diff the pack's `_ds/.../styles.css` against `kentender_core/.../kt_industry_tokens.css`; list any genuinely missing component class; confirm `ui-industry-design-gate` still passes (D12) | Planned | Not run. `ui-industry-design-gate` has not been executed this cycle. |
 ---
 
 ## Work register — Phase 1: Domain delta
@@ -100,43 +98,39 @@
 
 | ID | Item | Status | Evidence / gap |
 |---|---|---|---|
-| PLN22-101 | `dpp_validation.accept_departmental_plan` accepts only `requirement_type_id` per proceeding entry; derives `procurement_category` from the effective governed catalogue entry; **rejects a client-supplied or mismatched category**; freezes both on the immutable decision | Planned | — |
-| PLN22-102 | New doctype `DPP Classification Correction` with the seven §4.4 fields; immutable controller (no in-place edit, no delete); `supersedes_classification_evidence_id` chain | Planned | — |
-| PLN22-103 | `services/dpp_classification.py`: `correct_accepted_requirement_classification` — one transaction rechecking accepted submission, current correction head, authority, catalogue mapping and every affected allocation; stale/concurrent attempts fail whole; new type must differ | Planned | — |
-| PLN22-104 | Effective-classification projection used for new Planning work only; never rewrites an accepted decision, allocation, submitted Plan or Active Plan | Planned | — |
-| PLN22-105 | `Plan Source Allocation` gains `classification_evidence`, `classification_requirement_type`, `classification_procurement_category`; patch existing rows from their acceptance evidence; a later correction never rewrites the stored snapshot | Planned | — |
-| PLN22-106 | Affected-item recovery — the four outcomes: unallocated source becomes available corrected; mutable Draft item marked `Source correction required` (dissolve-and-re-form only); submitted/approved/Active Version unchanged and routed to correction or successor; scope-locked item records the correction, **holds new authorisation** and names the downstream owner route | Planned | — |
-| PLN22-107 | Read `get_accepted_dpp_classification` — original acceptance, ordered correction history, current effective type/category, affected allocations, exact permitted correction/recovery action | Planned | — |
-| PLN22-108 | Three new error codes `PLN_CLASSIFICATION_UNCHANGED`, `PLN_CLASSIFICATION_CORRECTION_STALE`, `PLN_CLASSIFICATION_CORRECTION_BLOCKED` with the exact §8 user text; reuse the existing `PLN_SOURCE_CORRECTION_REQUIRED` | Planned | — |
-| PLN22-109 | `api.py`: expose `correct_accepted_requirement_classification` and `get_accepted_dpp_classification` with explicit signatures (no `**kwargs` transport-field trap) | Planned | — |
-| PLN22-110 | `tests/test_dpp_classification_correction.py` — derivation; client category rejected; unchanged rejected; stale head rejected; excluded entry rejected; unauthorised rejected; each of the four recovery outcomes; concurrency; audit and export content | Planned | — |
-
+| PLN22-101 | `dpp_validation.accept_departmental_plan` accepts only `requirement_type_id` per proceeding entry; derives `procurement_category` from the effective governed catalogue entry; **rejects a client-supplied or mismatched category**; freezes both on the immutable decision | Done | G01, commit `f1b2feb6`. `test_dpp_classification_correction` 18/18. |
+| PLN22-102 | New doctype `DPP Classification Correction` with the seven §4.4 fields; immutable controller (no in-place edit, no delete); `supersedes_classification_evidence_id` chain | Done | G01, commit `f1b2feb6`. `test_dpp_classification_correction` 18/18. |
+| PLN22-103 | `services/dpp_classification.py`: `correct_accepted_requirement_classification` — one transaction rechecking accepted submission, current correction head, authority, catalogue mapping and every affected allocation; stale/concurrent attempts fail whole; new type must differ | Done | G01, commit `f1b2feb6`. `test_dpp_classification_correction` 18/18. |
+| PLN22-104 | Effective-classification projection used for new Planning work only; never rewrites an accepted decision, allocation, submitted Plan or Active Plan | Done | G01, commit `f1b2feb6`. `test_dpp_classification_correction` 18/18. |
+| PLN22-105 | `Plan Source Allocation` gains `classification_evidence`, `classification_requirement_type`, `classification_procurement_category`; patch existing rows from their acceptance evidence; a later correction never rewrites the stored snapshot | Done | G01, commit `f1b2feb6`. `test_dpp_classification_correction` 18/18. |
+| PLN22-106 | Affected-item recovery — the four outcomes: unallocated source becomes available corrected; mutable Draft item marked `Source correction required` (dissolve-and-re-form only); submitted/approved/Active Version unchanged and routed to correction or successor; scope-locked item records the correction, **holds new authorisation** and names the downstream owner route | Done | G01, commit `f1b2feb6`. `test_dpp_classification_correction` 18/18. |
+| PLN22-107 | Read `get_accepted_dpp_classification` — original acceptance, ordered correction history, current effective type/category, affected allocations, exact permitted correction/recovery action | Done | G01, commit `f1b2feb6`. `test_dpp_classification_correction` 18/18. |
+| PLN22-108 | Three new error codes `PLN_CLASSIFICATION_UNCHANGED`, `PLN_CLASSIFICATION_CORRECTION_STALE`, `PLN_CLASSIFICATION_CORRECTION_BLOCKED` with the exact §8 user text; reuse the existing `PLN_SOURCE_CORRECTION_REQUIRED` | Done | G01, commit `f1b2feb6`. `test_dpp_classification_correction` 18/18. |
+| PLN22-109 | `api.py`: expose `correct_accepted_requirement_classification` and `get_accepted_dpp_classification` with explicit signatures (no `**kwargs` transport-field trap) | Done | G01, commit `f1b2feb6`. `test_dpp_classification_correction` 18/18. |
+| PLN22-110 | `tests/test_dpp_classification_correction.py` — derivation; client category rejected; unchanged rejected; stale head rejected; excluded entry rejected; unauthorised rejected; each of the four recovery outcomes; concurrency; audit and export content | Done | G01, commit `f1b2feb6`. `test_dpp_classification_correction` 18/18. |
 ### 1B — Forecast, cascade and reminder withdrawal (§7.5, §10.14, §11.9, §15.3; PLN22-AC-010, PLN23-AC-001)
 
 | ID | Item | Status | Evidence / gap |
 |---|---|---|---|
-| PLN22-121 | Remove `preview_forecast_cascade` and `confirm_forecast_cascade` from `api.py`; keep the services, records and their tests green | Planned | — |
-| PLN22-122 | Delete `ShiftScheduleDialog.vue` + spec; confirm no screen, route or label offers `Update expected dates` | Planned | — |
-| PLN22-123 | Unregister every forecast/reminder runtime entry point: scheduler jobs in `hooks.py`, notification producers, setup controls. §7.5 now forbids the service entirely | Planned | — |
-| PLN22-124 | Delete error codes `PLN_FORECAST_REASON_REQUIRED` and `PLN_CASCADE_INCLUDES_ACTUAL_MILESTONE` (removed from §8 by v1.23) | Planned | — |
-
+| PLN22-121 | Remove `preview_forecast_cascade` and `confirm_forecast_cascade` from `api.py`; keep the services, records and their tests green | Done | G02, commit `f1b2feb6`. The facility is removed outright, not merely unreachable. |
+| PLN22-122 | Delete `ShiftScheduleDialog.vue` + spec; confirm no screen, route or label offers `Update expected dates` | Done | G02, commit `f1b2feb6`. The facility is removed outright, not merely unreachable. |
+| PLN22-123 | Unregister every forecast/reminder runtime entry point: scheduler jobs in `hooks.py`, notification producers, setup controls. §7.5 now forbids the service entirely | Done | G02, commit `f1b2feb6`. The facility is removed outright, not merely unreachable. |
+| PLN22-124 | Delete error codes `PLN_FORECAST_REASON_REQUIRED` and `PLN_CASCADE_INCLUDES_ACTUAL_MILESTONE` (removed from §8 by v1.23) | Done | G02, commit `f1b2feb6`. The facility is removed outright, not merely unreachable. |
 ### 1C — Residue removal and schema guard (D6)
 
 | ID | Item | Status | Evidence / gap |
 |---|---|---|---|
-| PLN22-131 | Drop `exclusive_preference` from `Annual Plan Item` and from `plan_governance.py`'s copy list; patch | Planned | — |
-| PLN22-132 | Drop the fourteen unused item-level `forecast_*` / `actual_*` date columns; confirm `Milestone Actual Event` is the only actual store and per-proceeding coverage reads from it | Planned | — |
-| PLN22-133 | Confirm `plan_horizon` is a fixed literal with no editable selector and multi-year payloads are rejected server-side | Planned | — |
-| PLN22-134 | Rename `test_planning_v118_schema` → `test_planning_v122_schema`; add the new prohibited strings from rule 3; **prove every guard with a planted violation** | Planned | — |
-
+| PLN22-131 | Drop `exclusive_preference` from `Annual Plan Item` and from `plan_governance.py`'s copy list; patch | Done | G02, commit `f1b2feb6`, with patch `pln_chg_001_v123_drop_forecast_facility`. |
+| PLN22-132 | Drop the fourteen unused item-level `forecast_*` / `actual_*` date columns; confirm `Milestone Actual Event` is the only actual store and per-proceeding coverage reads from it | Done | G02 + G14. Dropped, and `Milestone Actual Event` proven the only store — re-running the downstream stages found Tender Preparation still reading `actual_invitation_date`; repaired in `e6b8d671`, and a sweep of all twelve names is clean. |
+| PLN22-133 | Confirm `plan_horizon` is a fixed literal with no editable selector and multi-year payloads are rejected server-side | Done | G02. `test_planning_v123_schema` 12/12. |
+| PLN22-134 | Rename `test_planning_v118_schema` → `test_planning_v122_schema`; add the new prohibited strings from rule 3; **prove every guard with a planted violation** | Done | G02. Landed as `test_planning_v123_schema` (v1.23, not v1.22); every guard proven by a planted violation. |
 ### 1D — Phase 1 exit
 
 | ID | Item | Status | Evidence / gap |
 |---|---|---|---|
-| PLN22-141 | `make planning-domain-gate` green | Planned | — |
-| PLN22-142 | Three consecutive clean `bench migrate` | Planned | — |
-| PLN22-143 | Cross-module checkpoint: Budget, NDS, Requisitions, Tender Preparation suites, one module per run, never alongside Playwright | Planned | — |
-
+| PLN22-141 | `make planning-domain-gate` green | Done | G03. 16 modules, 262 tests at Phase 1 exit; 311 on the Phase 4 re-run (G13c). |
+| PLN22-142 | Three consecutive clean `bench migrate` | Done | G03. Three consecutive clean runs. |
+| PLN22-143 | Cross-module checkpoint: Budget, NDS, Requisitions, Tender Preparation suites, one module per run, never alongside Playwright | Partial | G03 at Phase 1 exit. Re-run owed at Phase 4 (PLN22-404); TPR is already re-run and green (`e6b8d671`). |
 ---
 
 ## Work register — Phase 2: UI slices
@@ -145,49 +139,46 @@ Each slice row set is: `a` read projection, `b` screen port, `c` vitest, `d` fid
 
 | ID | Slice | Families and artboards | Status | Evidence / gap |
 |---|---|---|---|---|
-| PLN22-201 | 2A | U01 (6) + U21 (16). One plain shortfall sentence and one recovery action on the workspace; Current plan resolves the Active pointer; empty `Your actions` omitted | Planned | — |
-| PLN22-202 | 2B | U02–U05 (13). Inline funding beside the requirement; same-page HoD certification; explicit exclude/include with reason and cleared operative funding | Planned | — |
-| PLN22-203 | 2C | U06 (8) incl. `U06-ACCEPTED-CLASSIFICATION` and `U06-CORRECT-CLASSIFICATION`. Requirement type is the only classification input; Category is derived read-only beside it | Planned | — |
-| PLN22-204 | 2D | U07 (7) + U08 (4). Purchases lead, one concise Plan checks section, History secondary; no Approval/publication section on a Draft; `Send to Finance` absent while a check blocks | Planned | — |
-| PLN22-205 | 2E | U09 (7). Six sections with `Supporting details` collapsed; omit `None`, `Not applicable`, `Single lot`, `Lot count 1` and plan-level reservation arithmetic | Planned | — |
-| PLN22-206 | 2F | U10 (7). First view is Budget line, Approved, Planned, Difference, Result; availability and basis provenance are supporting detail | Planned | — |
-| PLN22-207 | 2G | U11 (9) + U12 (4). Decision summary, visible issues, concise purchase rows, actor statement. **No purchase starts expanded.** Only header, prior accountability, statement and buttons vary by actor | Planned | — |
-| PLN22-208 | 2H | U13 (14). Four distinct status rows; unknown is never rendered as failure; retry/reconcile only for a separately authorised technical operator | Planned | — |
-| PLN22-209 | 2I | U14 (5) + U16 (7). Planned scope, authorised coverage, procurement stage; no completion placeholder. Corrections lead with the required change and the hold consequence | Planned | — |
-| PLN22-210 | 2J | C01–C04 (4). Planning-side missing-setting panel only: Setting, Affected action, Responsible role, and an `Open System setup` link for an authorised maintainer | Planned | — |
-| PLN22-211 | — | Delete the v1.12 remnants superseded by 2G/2H/2I: `ActivePlanScreen`, `PublicationResultScreen`, `GovernanceTaskScreen`, `ReviewScreen`, `SourceEvidenceScreen` and their specs, in their own slices | Planned | — |
-| PLN22-212 | — | Retire the superseded Playwright specs (`planning-governance`, `planning-publication`, `planning-evidence-pack`, `planning-release-evidence`) as their replacements land | Planned | — |
-
+| PLN22-201 | 2A | U01 (6) + U21 (16). One plain shortfall sentence and one recovery action on the workspace; Current plan resolves the Active pointer; empty `Your actions` omitted | Partial | G04, commit `3f5db2c7`. U01 re-ported and verified live. **Owed:** the U21 states. Audited 2026-09-18 — most carry no landmarks at all, being prose and skeletons the instrument never compares; U21-LATE-ACTIVATION was the one substantial variant and is now gated (G13f). |
+| PLN22-202 | 2B | U02–U05 (13). Inline funding beside the requirement; same-page HoD certification; explicit exclude/include with reason and cleared operative funding | Done | G05, commits `dd589569`, `fc1c9202`. |
+| PLN22-203 | 2C | U06 (8) incl. `U06-ACCEPTED-CLASSIFICATION` and `U06-CORRECT-CLASSIFICATION`. Requirement type is the only classification input; Category is derived read-only beside it | Done | G06, commit `2f81b1e7`. |
+| PLN22-204 | 2D | U07 (7) + U08 (4). Purchases lead, one concise Plan checks section, History secondary; no Approval/publication section on a Draft; `Send to Finance` absent while a check blocks | Done | G07, commits `3d08b6b2`, `e47941c7`. |
+| PLN22-205 | 2E | U09 (7). Six sections with `Supporting details` collapsed; omit `None`, `Not applicable`, `Single lot`, `Lot count 1` and plan-level reservation arithmetic | Partial | G08, commit `e6e444c1`. **Owed:** U09-LOCKED, U09-SOURCE-CORRECTION and the two classification variants need downstream or correction fixtures. INVALID-SCHEDULE and REMOVE gated 2026-09-18 (G13f). |
+| PLN22-206 | 2F | U10 (7). First view is Budget line, Approved, Planned, Difference, Result; availability and basis provenance are supporting detail | Partial | G09, commit `930395af`. OVER-APPROVED, RETURN and REASSESS gated 2026-09-18; HISTORY asserted behaviourally (no landmarks). **Owed:** LOW-AVAILABILITY and CHANGED. |
+| PLN22-207 | 2G | U11 (9) + U12 (4). Decision summary, visible issues, concise purchase rows, actor statement. **No purchase starts expanded.** Only header, prior accountability, statement and buttons vary by actor | Done | G10, commits `00daf535`, `88e26522`. U11-COLLECTIVE gated 2026-09-18 (G13f). |
+| PLN22-208 | 2H | U13 (14). Four distinct status rows; unknown is never rendered as failure; retry/reconcile only for a separately authorised technical operator | Done | G11, commits `0e4c4a85`, `46bff957`. U13-UNKNOWN gated 2026-09-18 (G13f). |
+| PLN22-209 | 2I | U14 (5) + U16 (7). Planned scope, authorised coverage, procurement stage; no completion placeholder. Corrections lead with the required change and the hold consequence | Done | G12, commit `bf0545d5`. |
+| PLN22-210 | 2J | C01–C04 (4). Planning-side missing-setting panel only: Setting, Affected action, Responsible role, and an `Open System setup` link for an authorised maintainer | Done | G13, commit `25686aab`. |
+| PLN22-211 | — | Delete the v1.12 remnants superseded by 2G/2H/2I: `ActivePlanScreen`, `PublicationResultScreen`, `GovernanceTaskScreen`, `ReviewScreen`, `SourceEvidenceScreen` and their specs, in their own slices | Done | `ActivePlanScreen`, `ShiftScheduleDialog` and `GovernanceTaskScreen` deleted with their specs. The row's premise changed: `PublicationResultScreen`, `ReviewScreen` and `SourceEvidenceScreen` were rebuilt for v1.23 rather than deleted — and rebuilding them is what revealed they had never been wired at all. |
+| PLN22-212 | — | Retire the superseded Playwright specs (`planning-governance`, `planning-publication`, `planning-evidence-pack`, `planning-release-evidence`) as their replacements land | Reversed | ~~Retire the four specs~~ — they were repaired instead, and are green (G13b). Retiring them would have destroyed the only coverage that finds an unwired screen; `planning-publication` is what proves the withdrawal dialogs work, and `planning-evidence-pack` passes 7/7. |
 ---
 
 ## Work register — Phase 3: Seed and browser world
 
 | ID | Item | Status | Evidence / gap |
 |---|---|---|---|
-| PLN22-301 | Rebuild the §10.2 fixture under the frozen clock: 2 items, 3 sources, 2 departments, KES 130,000,000; BASE stays a **blocked** mandatory-allocation case (None/None, KES 48,000,000 shortfall) | Planned | — |
-| PLN22-302 | READY as an explicitly labelled UI scenario only: laptop designation Youth, qualifying KES 50,000,000, 31.25% of the KES 160,000,000 annual budget | Planned | — |
-| PLN22-303 | Supply the artboard values left blank (C4), one sub-row each: U04-EDIT saved direct reference; U05-ALL-EXCLUDED second exclusion reason; U06-STALE-SOURCE changed revision and value; U07-WAITING-FINANCE request instant; U07-UPDATE reason; U08-INCOMPATIBLE differing budget lines; U08-DUPLICATE cohort facts; U09-LOCKED requisition evidence; U09-CLASSIFICATION-LOCKED downstream record and route; U10 request/as-at instants; U11-COLLECTIVE recorder identity; U11-LATE-ADOPTION date and reason; U12 certification text; U13 attempt and activation instants; U14 proceeding ids; U16 accepted DPP update reference; U21-CANCEL-UPDATE reason | Planned | — |
-| PLN22-304 | Isolated §13.3 presentation profiles, including the classification-correction history on DPP-MOH-DHI-2027-001 Submission 3 (Julia certifies 28 Nov 10:00, Mercy accepts Works/Works 29 Nov 15:00, item PPI-MOH-2027-044 forms 15:10, Mercy corrects to Non-consulting services/Services 30 Nov 09:20) — never mutations of the shared BASE records | Planned | — |
-| PLN22-305 | Seed reset and rerun deterministic and idempotent; `make seed-canonical-validate` green twice | Planned | — |
-| PLN22-306 | Re-run the Requisitions and Tender Preparation canonical stages on the new Plan | Planned | — |
-| PLN22-307 | Persona browser pass as each §10.2 actor: Grace, Julia, Peter, Mercy, Charles, Josphat, Amina, Daniel, Naomi, plus a technical reader and a refused outsider | Planned | — |
-
+| PLN22-301 | Rebuild the §10.2 fixture under the frozen clock: 2 items, 3 sources, 2 departments, KES 130,000,000; BASE stays a **blocked** mandatory-allocation case (None/None, KES 48,000,000 shortfall) | Partial | G14. The canonical seed works again and validates clean; five real faults fixed. **Owed:** the §10.2 two-item/three-source shape — the Playwright world is still one item. |
+| PLN22-302 | READY as an explicitly labelled UI scenario only: laptop designation Youth, qualifying KES 50,000,000, 31.25% of the KES 160,000,000 annual budget | Planned | Not started. |
+| PLN22-303 | Supply the artboard values left blank (C4), one sub-row each: U04-EDIT saved direct reference; U05-ALL-EXCLUDED second exclusion reason; U06-STALE-SOURCE changed revision and value; U07-WAITING-FINANCE request instant; U07-UPDATE reason; U08-INCOMPATIBLE differing budget lines; U08-DUPLICATE cohort facts; U09-LOCKED requisition evidence; U09-CLASSIFICATION-LOCKED downstream record and route; U10 request/as-at instants; U11-COLLECTIVE recorder identity; U11-LATE-ADOPTION date and reason; U12 certification text; U13 attempt and activation instants; U14 proceeding ids; U16 accepted DPP update reference; U21-CANCEL-UPDATE reason | Planned | Not started. Seventeen owner-supplied values; several (U04-EDIT's saved reference, U09-LOCKED's requisition, U13's instants) can only come from the executable fixture or the owner, not be invented. |
+| PLN22-304 | Isolated §13.3 presentation profiles, including the classification-correction history on DPP-MOH-DHI-2027-001 Submission 3 (Julia certifies 28 Nov 10:00, Mercy accepts Works/Works 29 Nov 15:00, item PPI-MOH-2027-044 forms 15:10, Mercy corrects to Non-consulting services/Services 30 Nov 09:20) — never mutations of the shared BASE records | Partial | G13e, commits `6438be07`, `bb1ba9ec`, `9cbb2029`. Four of the six missing profiles built, each restoring what it moved. **Owed:** published-held, extra requirement, readability/history. |
+| PLN22-305 | Seed reset and rerun deterministic and idempotent; `make seed-canonical-validate` green twice | Done | Run repeatedly on 2026-09-18 through both `planning` and `tender_preparation`; `{"ok": true, "failures": []}` each time. |
+| PLN22-306 | Re-run the Requisitions and Tender Preparation canonical stages on the new Plan | Done | G14, commit `e6b8d671`. `CANONICAL_SEED_OK through=tender_preparation`, after repairing the cross-module column break it exposed. |
+| PLN22-307 | Persona browser pass as each §10.2 actor: Grace, Julia, Peter, Mercy, Charles, Josphat, Amina, Daniel, Naomi, plus a technical reader and a refused outsider | Partial | `planning-release-evidence.spec.ts` covers Mercy, Grace, Josphat, Daniel, Naomi and Samuel's expired assignment, all green. **Owed:** Julia, Peter, Charles, Amina and a technical reader as their own pass. |
 ---
 
 ## Work register — Phase 4: Release evidence
 
 | ID | Item | Status | Evidence / gap |
 |---|---|---|---|
-| PLN22-401 | Full Planning Python regression, one module per run | Planned | — |
-| PLN22-402 | `npx vitest run --project procurement-planning` green | Planned | — |
-| PLN22-403 | Every Planning Playwright spec + fidelity gate, single worker | Planned | — |
-| PLN22-404 | Cross-module checkpoint: core, Budget, NDS, Requisitions, Tender Preparation | Planned | — |
-| PLN22-405 | Production asset build via `./scripts/bench-with-node.sh build --app kentender_procurement` and `--app kentender_core`; record changed bundle hashes | Planned | — |
-| PLN22-406 | All 111 MVP artboards compared at 1440 × 1024 and at a narrow width; screenshots in `evidence/v1_22/` | Planned | — |
-| PLN22-407 | Removed-construct scan proving every rule-3 string absent from product code | Planned | — |
-| PLN22-408 | Acceptance map below closed truthfully; §14.5 participant verification recorded separately as still owed | Planned | — |
-| PLN22-409 | Follow-ups updated; memory updated | Planned | — |
-
+| PLN22-401 | Full Planning Python regression, one module per run | Done | G13c. 19 modules, 311 tests, no failures. Note: `--app kentender_procurement` as a whole cannot discover, because `tender_management`'s tests import a `derived_models` package that does not exist — pre-existing and unrelated. |
+| PLN22-402 | `npx vitest run --project procurement-planning` green | Done | 269 tests across 30 files. |
+| PLN22-403 | Every Planning Playwright spec + fidelity gate, single worker | Done | G13a/G13b. 54 browser tests and the 30-test fidelity gate, single worker. |
+| PLN22-404 | Cross-module checkpoint: core, Budget, NDS, Requisitions, Tender Preparation | Partial | Tender Preparation re-run green (`e6b8d671`). **Owed:** core, Budget, NDS, Requisitions. |
+| PLN22-405 | Production asset build via `./scripts/bench-with-node.sh build --app kentender_procurement` and `--app kentender_core`; record changed bundle hashes | Partial | `kentender_procurement` rebuilt repeatedly with changed hashes (`5QHXECE7` → `XILEPZKM` → `BI4SUECE` → `E2BXR2BA`). **Owed:** the `kentender_core` build and the recorded pair. |
+| PLN22-406 | All 111 MVP artboards compared at 1440 × 1024 and at a narrow width; screenshots in `evidence/v1_22/` | Planned | Not started. The narrow-width dimension is untested entirely. |
+| PLN22-407 | Removed-construct scan proving every rule-3 string absent from product code | Partial | Rule-3 strings swept 2026-09-18: every hit is the guard test itself, an error message enforcing the prohibition, or a comment. **Owed:** the scan recorded as evidence rather than run ad hoc. |
+| PLN22-408 | Acceptance map below closed truthfully; §14.5 participant verification recorded separately as still owed | Planned | Not started. |
+| PLN22-409 | Follow-ups updated; memory updated | Partial | Follow-ups carry FU-V123-01..08; memory updated for the queue trap. **Owed:** the closing pass. |
 ---
 
 ## Acceptance map
