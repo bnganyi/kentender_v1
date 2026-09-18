@@ -124,6 +124,26 @@
 							<span v-else>—</span>
 						</td>
 					</tr>
+					<!-- U03-FUNDING — the funding panel opens beneath the
+					     requirement it is about, with the rest of the plan still
+					     visible above and below it. -->
+					<tr v-if="fundingEntryId === row.entry_id" class="pln-row-detail" data-testid="pln-dpp-funding-row">
+						<td colspan="7">
+							<EntryFundingPanel
+								:editor="fundingEditor"
+								:budget-line="fundingBudgetLine"
+								:amount="fundingAmount"
+								:pending="pending"
+								:error="errorSummary"
+								@save="$emit('save-funding')"
+								@cancel="$emit('close-funding')"
+								@exclude="$emit('exclude-entry', row)"
+								@correct-source="$emit('correct-source', row)"
+								@update:budget-line="$emit('update:fundingBudgetLine', $event)"
+								@update:amount="$emit('update:fundingAmount', $event)"
+							/>
+						</td>
+					</tr>
 					<!-- U03-EXCLUDED-ROW — the reason is always visible, never
 					     behind a disclosure: it is the whole content of the row. -->
 					<tr v-if="row.not_proceeding_reason" class="pln-row-detail" data-testid="pln-dpp-exclusion-reason">
@@ -241,12 +261,19 @@
 <script setup>
 import { computed } from "vue";
 import MissingSettingPanel from "./MissingSettingPanel.vue";
+import EntryFundingPanel from "./EntryFundingPanel.vue";
 
 const props = defineProps({
 	plan: { type: Object, default: () => ({}) },
 	pending: Boolean,
 	certified: Boolean,
 	errorSummary: String,
+	// §10.4 U03-FUNDING — the one requirement whose funding panel is open,
+	// and the caller's own draft of it.
+	fundingEntryId: { type: String, default: "" },
+	fundingEditor: { type: Object, default: () => ({}) },
+	fundingBudgetLine: { type: String, default: "" },
+	fundingAmount: { type: [String, Number], default: "" },
 });
 
 const emit = defineEmits([
@@ -254,6 +281,13 @@ const emit = defineEmits([
 	"add-direct",
 	"open-entry",
 	"restore-entry",
+	"open-funding",
+	"save-funding",
+	"close-funding",
+	"exclude-entry",
+	"correct-source",
+	"update:fundingBudgetLine",
+	"update:fundingAmount",
 	"back",
 	"save-draft",
 	"submit",
@@ -318,6 +352,12 @@ const closedNotice = computed(() => {
 function onRowAction(row) {
 	if (row.action === "Include in this year's departmental plan") {
 		emit("restore-entry", row);
+		return;
+	}
+	// An accepted requirement's funding belongs here, beneath its own row; a
+	// direct requirement is the department's own record and opens as one.
+	if (row.opens_funding_panel) {
+		emit("open-funding", row);
 		return;
 	}
 	emit("open-entry", row);

@@ -86,20 +86,21 @@ class TestGetDepartmentalPlan(DppReadCase):
 		self.assertEqual(need_row["amount_display"], "Not entered")
 		self.assertEqual(need_row["status"], "Funding details needed")
 		self.assertEqual(need_row["reference_line"], "NEED-PLNT-0001 · Revision 1")
-		self.assertEqual(need_row["action"], "Complete")
+		self.assertEqual(need_row["action"], "Enter funding details")
 		direct_row = by_origin["Direct departmental requirement"]
 		self.assertEqual(direct_row["status"], "Included")
 		self.assertEqual(direct_row["reference_line"], "Direct requirement")
-		self.assertEqual(direct_row["action"], "Edit")
+		# §10.4 — a direct requirement is the department's own record, so its
+		# action opens it for review rather than naming a funding gap.
+		self.assertEqual(direct_row["action"], "Review details")
 		self.assertEqual(result["totals_caption"], "2 requirements · KES 1,000,000 specified")
 		self.assertIn("Open until", result["context"]["window"]["display"])
 		self.assertFalse(result["can_submit"])
 		self.assertFalse(result["certification"]["show"])
 
-	def test_a_not_proceeding_need_offers_restore_never_complete_or_view(self):
-		"""U02/U03-notproceeding — a not-proceeding entry's own Draft action is
-		always Restore, whether or not the rest of the plan is otherwise ready
-		(the mutable-and-ready "View" override used to clobber it)."""
+	def test_a_not_proceeding_need_offers_only_the_way_back_in(self):
+		"""§10.4 U03-EXCLUDED-ROW — an excluded entry's own Draft action is
+		always the way back in, whatever state the rest of the plan is in."""
 		self._sources.stop() if hasattr(self, "_sources") else None
 		patched = patch.object(needs_intake, "current_accepted_sources", return_value=[fx.accepted_source()])
 		patched.start()
@@ -119,7 +120,7 @@ class TestGetDepartmentalPlan(DppReadCase):
 		)
 		result = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
 		row = next(r for r in result["entries"] if r["entry_id"] == entry_id)
-		self.assertEqual(row["action"], "Restore to planned requirements")
+		self.assertEqual(row["action"], "Include in this year's departmental plan")
 
 		# still Restore, not View, once a direct requirement makes the rest ready
 		frappe.set_user(fx.AUTHOR)
@@ -130,9 +131,9 @@ class TestGetDepartmentalPlan(DppReadCase):
 		ready_read = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
 		self.assertTrue(ready_read["mutable"])
 		still_row = next(r for r in ready_read["entries"] if r["entry_id"] == entry_id)
-		self.assertEqual(still_row["action"], "Restore to planned requirements")
+		self.assertEqual(still_row["action"], "Include in this year's departmental plan")
 		other_row = next(r for r in ready_read["entries"] if r["entry_id"] != entry_id)
-		self.assertEqual(other_row["action"], "View")
+		self.assertEqual(other_row["action"], "Review details")
 
 		# a Planner reading the same Draft gets no action at all
 		frappe.set_user(fx.PLANNER)

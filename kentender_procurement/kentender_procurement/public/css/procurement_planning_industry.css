@@ -1002,3 +1002,35 @@
 	margin-bottom: var(--kt-space-3);
 	font-size: 13px;
 }
+
+/* §10.4 U03-FUNDING — the funding panel is part of the row it belongs to, so
+   it is inset under it rather than floating as its own card. */
+.kt-pln .pln-funding-panel {
+	padding: var(--kt-space-4) 0 var(--kt-space-2);
+}
+.kt-pln .pln-funding-panel .kt-field {
+	max-width: 480px;
+}
+.kt-pln .pln-funding-correction {
+	margin-top: var(--kt-space-3);
+	font-size: 13px;
+}
+.kt-pln .pln-funding-correction a {
+	margin-right: var(--kt-space-2);
+}
+
+/* §10.4 U04 — a form for one requirement: a reading column, with Quantity and
+   Unit side by side as the artboard pairs them. */
+.kt-pln .pln-entry-editor {
+	max-width: 760px;
+}
+.kt-pln .pln-entry-pair {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--kt-space-4);
+}
+@media (max-width: 640px) {
+	.kt-pln .pln-entry-pair {
+		grid-template-columns: 1fr;
+	}
+}

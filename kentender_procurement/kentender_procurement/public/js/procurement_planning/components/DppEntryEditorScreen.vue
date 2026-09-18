@@ -1,205 +1,116 @@
-<!-- PLN-UI-03 (accepted-Need funding, PLN-DES-03) and PLN-UI-04 (direct
-     requirement, PLN-DES-04) in one screen: the mode is the entry's source
-     origin. Need facts render read-only in the artboard's exact order;
-     Planning owns only Procurement Budget Line and indicative amount on a
-     Need-origin entry (§12.3), or — PLN-AC-092 — a not-proceeding reason in
-     their place. A direct entry carries exactly the eight defined values
-     (§12.4); units come only from enabled ERPNext UOM records. -->
+<!-- PLN-CHG-001 v1.23 §10.4 — Add or edit a departmental requirement
+     (U04-DIRECT / U04-EDIT), ported from U02-U05.dc.html.
+
+     This page exists for requirements the department states itself, which did
+     not come through Departmental Needs. Everything on it is the department's
+     own: there is no Need field, no bypass reason, no Strategy, no procurement
+     method and no attachment — those are other people's decisions, made later.
+
+     Funding for an *accepted* requirement is not here. It opens beneath its
+     own row on the departmental plan (U03-FUNDING), where the rest of the
+     plan stays visible. -->
 <template>
-	<div class="pln-editor">
-		<template v-if="isNeed">
-			<h1 class="kt-page-title">Complete funding details</h1>
-			<p class="kt-page-lede">
-				Add the Planning-owned funding details for this accepted departmental
-				requirement.
-			</p>
-			<span class="kt-status is-attention">Accepted Need</span>
-
-			<div class="kt-card kt-blueprint pln-card-pad" data-testid="dpp-need-facts">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-card-title">Accepted requirement</div>
-				<div class="pln-field-grid">
-					<div class="pln-ro-field">
-						<label>Title</label>
-						<div class="pln-val">{{ entry.title }}</div>
-					</div>
-					<div class="pln-ro-field" style="grid-column: 1 / -1">
-						<label>Description</label>
-						<div class="pln-val">{{ entry.description }}</div>
-					</div>
-					<div class="pln-ro-field" style="grid-column: 1 / -1">
-						<label>Expected operational result</label>
-						<div class="pln-val">{{ entry.expected_operational_result }}</div>
-					</div>
-					<div class="pln-ro-field">
-						<label>Quantity</label>
-						<div class="pln-val">{{ entry.quantity_display }}</div>
-					</div>
-					<div class="pln-ro-field">
-						<label>Unit</label>
-						<div class="pln-val">{{ entry.unit_label }}</div>
-					</div>
-					<div class="pln-ro-field">
-						<label>Required by</label>
-						<div class="pln-val">{{ entry.required_by_display }}</div>
-					</div>
-					<div class="pln-ro-field">
-						<label>Accepted Need</label>
-						<div class="pln-val">{{ entry.need_reference_line }}</div>
-					</div>
-				</div>
+	<div class="pln-entry-editor">
+		<div class="pln-masthead">
+			<div>
+				<h1 class="kt-page-title" data-testid="dpp-editor-title">{{ isNew ? "Add a requirement" : entry.title }}</h1>
+				<p v-if="isNew" class="kt-page-lede">
+					Add a departmental requirement that was not created through Departmental Needs.
+				</p>
+				<p v-else class="kt-muted pln-row-ref" data-testid="dpp-editor-reference">{{ entry.entry_id }}</p>
 			</div>
-		</template>
-
-		<template v-else>
-			<h1 class="kt-page-title">{{ isNew ? "Add direct requirement" : "Edit direct requirement" }}</h1>
-			<p class="kt-page-lede">
-				Add a requirement the department already knows it needs to procure.
-			</p>
-			<span class="kt-status is-pending">{{ isNew ? "New" : "Direct requirement" }}</span>
-
-			<div class="kt-card kt-blueprint pln-card-pad" data-testid="dpp-editor-context">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="pln-field-grid">
-					<div class="pln-ro-field">
-						<label>Department</label>
-						<div class="pln-val">{{ context.department }}</div>
-					</div>
-					<div class="pln-ro-field">
-						<label>Financial Year</label>
-						<div class="pln-val">{{ context.financial_year }}</div>
-					</div>
-				</div>
-			</div>
-
-			<div class="kt-card kt-blueprint pln-card-pad">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-card-title">Requirement</div>
-				<div class="pln-field-grid">
-					<div class="pln-field" style="grid-column: 1 / -1">
-						<label for="dpp-title">Title</label>
-						<input v-if="canEdit" id="dpp-title" type="text" class="kt-input" v-model="form.title" data-testid="dpp-f-title" />
-						<div v-else class="pln-val" data-testid="dpp-f-title">{{ form.title }}</div>
-					</div>
-					<div class="pln-field" style="grid-column: 1 / -1">
-						<label for="dpp-description">Description</label>
-						<textarea v-if="canEdit" id="dpp-description" class="kt-input" rows="3" v-model="form.description" data-testid="dpp-f-description"></textarea>
-						<div v-else class="pln-val" data-testid="dpp-f-description">{{ form.description }}</div>
-					</div>
-					<div class="pln-field" style="grid-column: 1 / -1">
-						<label for="dpp-result">Expected operational result</label>
-						<textarea v-if="canEdit" id="dpp-result" class="kt-input" rows="3" v-model="form.expected_operational_result" data-testid="dpp-f-result"></textarea>
-						<div v-else class="pln-val" data-testid="dpp-f-result">{{ form.expected_operational_result }}</div>
-					</div>
-					<div class="pln-field">
-						<label for="dpp-quantity">Quantity</label>
-						<input v-if="canEdit" id="dpp-quantity" type="number" min="1" step="1" class="kt-input" v-model="form.quantity" data-testid="dpp-f-quantity" />
-						<div v-else class="pln-val" data-testid="dpp-f-quantity">{{ form.quantity }}</div>
-					</div>
-					<div class="pln-field">
-						<label for="dpp-unit">Unit</label>
-						<select v-if="canEdit" id="dpp-unit" class="kt-input" v-model="form.unit" data-testid="dpp-f-unit">
-							<option v-for="unit in units" :key="unit.id" :value="unit.id">{{ unit.label }}</option>
-						</select>
-						<div v-else class="pln-val" data-testid="dpp-f-unit">{{ unitLabel }}</div>
-					</div>
-					<div class="pln-field">
-						<label for="dpp-required-by">Required by</label>
-						<input v-if="canEdit" id="dpp-required-by" type="date" class="kt-input" v-model="form.required_by_date" data-testid="dpp-f-required-by" />
-						<div v-else class="pln-val" data-testid="dpp-f-required-by">{{ form.required_by_date }}</div>
-					</div>
-				</div>
-			</div>
-		</template>
-
-		<!-- funding card — shared by both modes -->
-		<div class="kt-card kt-blueprint pln-card-pad" data-testid="dpp-funding">
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<div class="kt-card-title">{{ isNeed ? "Planning funding" : "Funding" }}</div>
-			<div class="pln-field-grid">
-				<div class="pln-field">
-					<label for="dpp-budget-line">Procurement Budget Line</label>
-					<select
-						v-if="canEdit"
-						id="dpp-budget-line"
-						class="kt-input"
-						v-model="form.budget_line"
-						data-testid="dpp-f-budget-line"
-						:disabled="form.not_proceeding"
-					>
-						<option v-for="line in budgetLines" :key="line.id" :value="line.id">{{ line.label }}</option>
-					</select>
-					<div v-else class="pln-val" data-testid="dpp-f-budget-line">{{ budgetLineLabel }}</div>
-				</div>
-				<div class="pln-ro-field">
-					<label>Line name</label>
-					<div class="pln-val" data-testid="dpp-f-budget-line-title">{{ selectedLineTitle }}</div>
-				</div>
-				<div class="pln-field">
-					<label for="dpp-amount">Indicative amount</label>
-					<input
-						v-if="canEdit"
-						id="dpp-amount"
-						type="number"
-						min="1"
-						class="kt-input"
-						v-model="form.indicative_amount"
-						data-testid="dpp-f-amount"
-						:disabled="form.not_proceeding"
-					/>
-					<div v-else class="pln-val" data-testid="dpp-f-amount">{{ form.indicative_amount }}</div>
-				</div>
-				<div class="pln-ro-field">
-					<label>Currency</label>
-					<div class="pln-val">{{ currency }}</div>
-				</div>
-			</div>
-
-			<!-- PLN-AC-092 — a Need-origin entry already not proceeding is
-			     accounted for with its reason instead of funding (§5.1); reached
-			     directly only, since the Plan screen's own row now offers
-			     Restore rather than a route back into this editor. -->
-			<div v-if="isNeed && form.not_proceeding" class="pln-not-proceeding" data-testid="dpp-not-proceeding">
-				<div class="pln-ro-field">
-					<label>This requirement will not proceed in this financial year</label>
-					<div class="pln-val" data-testid="dpp-f-not-proceeding-reason">{{ form.not_proceeding_reason }}</div>
-				</div>
+			<div v-if="!isNew" class="pln-header-actions">
+				<span class="kt-status" :class="editor.mutable ? 'is-attention' : 'is-muted'">{{ editor.mutable ? "Draft" : "Submitted" }}</span>
 			</div>
 		</div>
 
-		<div v-if="errorSummary" class="pln-notice is-critical" role="alert" data-testid="dpp-editor-error">
-			<p class="pln-notice-title">This could not be saved</p>
-			<p>{{ errorSummary }}</p>
+		<div class="kt-meta-row pln-context-row" data-testid="dpp-editor-context">
+			<div>
+				<span class="kt-label">Department</span>
+				<span class="kt-meta-value">{{ context.department }}</span>
+			</div>
+			<div>
+				<span class="kt-label">Financial year</span>
+				<span class="kt-meta-value">{{ context.financial_year }}</span>
+			</div>
 		</div>
 
-		<!-- U03's own footer: Do not proceed is a separate, secondary action
-		     from Save funding details, opening its own dialog (§5.1.4) -->
-		<div class="pln-footer-bar" :style="showNotProceed ? '' : 'justify-content: flex-end'">
+		<div class="kt-field">
+			<label for="dpp-title" class="kt-label">Requirement title</label>
+			<input id="dpp-title" class="kt-input" data-testid="dpp-f-title" :disabled="!canEdit" v-model="form.title">
+		</div>
+		<div class="kt-field">
+			<label for="dpp-description" class="kt-label">Description</label>
+			<textarea id="dpp-description" class="kt-input" rows="3" data-testid="dpp-f-description" :disabled="!canEdit" v-model="form.description"></textarea>
+		</div>
+		<div class="kt-field">
+			<label for="dpp-result" class="kt-label">Expected result</label>
+			<textarea id="dpp-result" class="kt-input" rows="2" data-testid="dpp-f-result" :disabled="!canEdit" v-model="form.expected_operational_result"></textarea>
+		</div>
+
+		<!-- Quantity and Unit side by side, and never merged into one field. -->
+		<div class="pln-entry-pair">
+			<div class="kt-field">
+				<label for="dpp-quantity" class="kt-label">Quantity</label>
+				<input id="dpp-quantity" class="kt-input" type="number" min="1" step="1" data-testid="dpp-f-quantity" :disabled="!canEdit" v-model="form.quantity">
+			</div>
+			<div class="kt-field">
+				<label for="dpp-unit" class="kt-label">Unit</label>
+				<select id="dpp-unit" class="kt-input" data-testid="dpp-f-unit" :disabled="!canEdit" v-model="form.unit">
+					<option value="">Select a unit</option>
+					<option v-for="unit in editor.units || []" :key="unit.id" :value="unit.id">{{ unit.label }}</option>
+				</select>
+			</div>
+		</div>
+
+		<div class="kt-field">
+			<label for="dpp-required-by" class="kt-label">Required by</label>
+			<input id="dpp-required-by" class="kt-input" type="date" data-testid="dpp-f-required-by" :disabled="!canEdit" v-model="form.required_by_date">
+		</div>
+
+		<div class="kt-field">
+			<label for="dpp-budget-line" class="kt-label">Budget line</label>
+			<select id="dpp-budget-line" class="kt-input" data-testid="dpp-f-budget-line" :disabled="!canEdit" v-model="form.budget_line">
+				<option value="">Select a budget line</option>
+				<option v-for="line in editor.budget_lines || []" :key="line.id" :value="line.id">{{ line.title || line.label }}</option>
+			</select>
+			<div v-if="selectedLineReference" class="kt-muted" data-testid="dpp-f-budget-line-code">{{ selectedLineReference }}</div>
+		</div>
+
+		<div class="kt-field">
+			<label for="dpp-amount" class="kt-label">Estimated cost (KES)</label>
+			<input id="dpp-amount" class="kt-input" type="number" min="1" data-testid="dpp-f-amount" :disabled="!canEdit" v-model="form.indicative_amount">
+		</div>
+
+		<p v-if="errorSummary" class="pln-error-summary" data-testid="dpp-editor-error">{{ errorSummary }}</p>
+
+		<div class="pln-footer" data-testid="dpp-editor-footer">
+			<!-- U04-EDIT — removing a requirement the department added is the
+			     department's own to do; it has no place on a new one. -->
 			<button
-				v-if="showNotProceed"
+				v-if="!isNew && canEdit"
 				type="button"
 				class="kt-btn kt-btn-ghost"
-				data-testid="dpp-editor-not-proceed"
+				data-testid="dpp-editor-remove"
 				:disabled="pending"
-				@click="$emit('open-not-proceed-dialog')"
+				@click="$emit('remove')"
 			>
-				Do not proceed this financial year
+				Remove requirement
 			</button>
-			<div class="pln-footer-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" @click="$emit('cancel')">{{ canEdit ? "Cancel" : "Back" }}</button>
+			<span v-else></span>
+			<div class="pln-footer-right">
+				<button type="button" class="kt-btn kt-btn-secondary" data-testid="dpp-editor-cancel" :disabled="pending" @click="$emit('cancel')">
+					{{ isNew ? "Cancel" : "Back to departmental plan" }}
+				</button>
 				<button
 					v-if="canEdit"
 					type="button"
 					class="kt-btn kt-btn-primary"
 					data-testid="dpp-editor-save"
-					:disabled="pending"
-					@click="save"
+					:disabled="pending || !complete"
+					@click="$emit('save-direct', { ...form })"
 				>
-					{{ isNeed ? "Save funding details" : isNew ? "Add requirement" : "Save changes" }}
+					{{ isNew ? "Add requirement" : "Save requirement" }}
 				</button>
 			</div>
 		</div>
@@ -215,94 +126,56 @@ const props = defineProps({
 	errorSummary: String,
 });
 
-const emit = defineEmits(["save-funding", "save-direct", "open-not-proceed-dialog", "cancel"]);
+defineEmits(["save-direct", "remove", "cancel"]);
 
 const entry = computed(() => props.editor.entry || {});
 const context = computed(() => props.editor.context || {});
-const units = computed(() => props.editor.units || []);
-const budgetLines = computed(() => props.editor.budget_lines || []);
-const currency = computed(() => props.editor.currency || "KES");
-const isNew = computed(() => !props.editor.entry);
-const isNeed = computed(
-	() => entry.value.source_origin === "Accepted Departmental Need"
-);
-// KT-STD-001 v1.5 §3A.6 / AUTH-ADR-001 §8 — a technical reader or Auditor
-// opens this editor read-only (`get_dpp_entry_editor` sets `can_edit: false`
-// for them); every command control below is absent for that actor, never
-// merely disabled.
-const canEdit = computed(() => props.editor.can_edit !== false);
-const unitLabel = computed(
-	() => units.value.find((u) => u.id === form.unit)?.label || form.unit || ""
-);
-const budgetLineLabel = computed(
-	() => budgetLines.value.find((l) => l.id === form.budget_line)?.label || form.budget_line || ""
-);
-const selectedLineTitle = computed(() => budgetLines.value.find((l) => l.id === form.budget_line)?.title || "");
+const isNew = computed(() => !entry.value.entry_id);
+const canEdit = computed(() => Boolean(props.editor.can_edit && props.editor.mutable));
 
 const form = reactive({
 	title: "",
 	description: "",
 	expected_operational_result: "",
-	quantity: 1,
+	quantity: "",
 	unit: "",
 	required_by_date: "",
 	budget_line: "",
-	indicative_amount: null,
-	not_proceeding: false,
-	not_proceeding_reason: "",
+	indicative_amount: "",
 });
 
-const showNotProceed = computed(() => isNeed.value && canEdit.value && !form.not_proceeding);
-
+// AGENTS.md §6.4 — the controls are bound to the department's own draft. A
+// quiet in-place refresh that carries nothing new must not discard what they
+// have typed since, so re-hydration is keyed to the record actually moving.
 watch(
 	() => props.editor,
-	(editor, previous) => {
-		const row = editor?.entry || {};
-		// An in-place refresh that returns the same entry at the same record
-		// version carries nothing new — re-hydrating would discard what the
-		// user has typed since.
-		if (
-			previous &&
-			(previous.entry?.entry_id ?? null) === (row.entry_id ?? null) &&
-			(previous.record_version ?? null) === (editor?.record_version ?? null)
-		) {
-			return;
-		}
+	(next, previous) => {
+		if (previous && (previous.record_version ?? null) === (next?.record_version ?? null)) return;
+		const row = next?.entry || {};
 		form.title = row.title || "";
 		form.description = row.description || "";
 		form.expected_operational_result = row.expected_operational_result || "";
-		form.quantity = row.quantity || 1;
-		form.unit = row.unit || (editor?.units?.[0]?.id ?? "");
+		form.quantity = row.quantity ?? "";
+		form.unit = row.unit || "";
 		form.required_by_date = row.required_by_date || "";
 		form.budget_line = row.budget_line || "";
-		form.indicative_amount = row.indicative_amount || null;
-		form.not_proceeding_reason = row.not_proceeding_reason || "";
-		form.not_proceeding = !!row.not_proceeding_reason;
+		form.indicative_amount = row.indicative_amount ?? "";
 	},
-	{ immediate: true, deep: false }
+	{ immediate: true },
 );
 
-function save() {
-	if (isNeed.value) {
-		emit("save-funding", {
-			entry_id: entry.value.entry_id,
-			budget_line: form.budget_line,
-			indicative_amount: form.indicative_amount,
-		});
-		return;
-	}
-	emit("save-direct", {
-		entry_id: isNew.value ? null : entry.value.entry_id,
-		values: {
-			title: form.title,
-			description: form.description,
-			expected_operational_result: form.expected_operational_result,
-			quantity: form.quantity,
-			unit: form.unit,
-			required_by_date: form.required_by_date,
-			budget_line: form.budget_line,
-			indicative_amount: form.indicative_amount,
-		},
-	});
-}
+const selectedLineReference = computed(() => {
+	const line = (props.editor.budget_lines || []).find((row) => row.id === form.budget_line);
+	return line ? line.reference || line.id : "";
+});
+
+// Every field is required for the requirement to be a requirement; the control
+// says so by staying unavailable rather than failing on the server.
+const complete = computed(() =>
+	Boolean(
+		form.title.trim() && form.description.trim() && form.expected_operational_result.trim()
+		&& Number(form.quantity) > 0 && form.unit && form.required_by_date
+		&& form.budget_line && Number(form.indicative_amount) > 0,
+	),
+);
 </script>

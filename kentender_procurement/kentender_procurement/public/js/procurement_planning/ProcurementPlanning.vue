@@ -81,13 +81,33 @@
 						@update:certified="certified = $event"
 						@view-accepted-needs="onViewAcceptedNeeds"
 						@add-direct="go(dppReference, 'add-direct')"
+						:funding-entry-id="fundingEntryId"
+						:funding-editor="editor"
+						:funding-budget-line="fundingBudgetLine"
+						:funding-amount="fundingAmount"
 						@open-entry="onOpenEntry"
 						@restore-entry="onRestoreDisposition"
+						@open-funding="onOpenFunding"
+						@save-funding="onSaveEntryFunding"
+						@close-funding="onCloseFunding"
+						@exclude-entry="onExcludeEntry"
+						@correct-source="onViewAcceptedNeeds"
+						@update:funding-budget-line="fundingBudgetLine = $event"
+						@update:funding-amount="fundingAmount = $event"
 						@back="frappe.set_route(WORKSPACE_PAGE)"
 						@save-draft="load({ quiet: true })"
 						@submit="onSubmit"
 						@create-update="onCreateUpdate"
 						@open-task="(route) => frappe.set_route(...route)"
+					/>
+					<!-- U03-EXCLUDE — the governed exclusion reason, over the
+					     plan, for the requirement whose panel is open. -->
+					<NotProceedDialog
+						v-if="notProceedDialog"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onNotProceedConfirm"
+						@cancel="notProceedDialog = false"
 					/>
 				</template>
 
@@ -96,17 +116,9 @@
 						:editor="editor"
 						:pending="pending"
 						:error-summary="errorSummary"
-						@save-funding="onSaveFunding"
 						@save-direct="onSaveDirect"
-						@open-not-proceed-dialog="notProceedDialog = true"
+						@remove="onRemoveDirect"
 						@cancel="go(dppReference)"
-					/>
-					<NotProceedDialog
-						v-if="notProceedDialog"
-						:pending="pending"
-						:error="errorSummary"
-						@confirm="onNotProceedConfirm"
-						@cancel="notProceedDialog = false"
 					/>
 				</template>
 
@@ -413,6 +425,12 @@ const supportRef = ref("");
 const workspace = ref({});
 const dpp = ref({});
 const editor = ref({});
+// §10.4 U03-FUNDING — which requirement's funding panel is open beneath its
+// own row, and the department's own unsaved draft of it. The inputs are bound
+// to this, never to the server echo (AGENTS.md §6.4).
+const fundingEntryId = ref("");
+const fundingBudgetLine = ref("");
+const fundingAmount = ref("");
 const certified = ref(false);
 const validation = ref({});
 const classifications = ref({});
@@ -625,6 +643,11 @@ function applyLoaded(scr, loaded) {
 		case "dpp":
 			dpp.value = loaded;
 			certified.value = false;
+			// A reload closes the funding panel: it was opened against an
+			// entry whose state may have moved.
+			fundingEntryId.value = "";
+			fundingBudgetLine.value = "";
+			fundingAmount.value = "";
 			break;
 		case "dpp-entry":
 			editor.value = loaded;
@@ -786,6 +809,51 @@ function onOpenEntry(row) {
 	go(dppReference.value, "entry", row.entry_id);
 }
 
+// §10.4 U03-FUNDING — the panel opens in place. The editor read supplies the
+// eligible budget lines and the requirement's own facts; nothing navigates.
+async function onOpenFunding(row) {
+	if (fundingEntryId.value === row.entry_id) {
+		onCloseFunding();
+		return;
+	}
+	errorSummary.value = "";
+	const loaded = await api.getDppEntryEditor(dppReference.value, row.entry_id);
+	editor.value = loaded;
+	fundingEntryId.value = row.entry_id;
+	fundingBudgetLine.value = loaded.entry?.budget_line || "";
+	fundingAmount.value = loaded.entry?.indicative_amount ?? "";
+}
+
+function onCloseFunding() {
+	fundingEntryId.value = "";
+	fundingBudgetLine.value = "";
+	fundingAmount.value = "";
+	errorSummary.value = "";
+}
+
+async function onSaveEntryFunding() {
+	const result = await run("save-need-funding", async (key) => {
+		const r = await api.saveNeedFunding({
+			dpp_version: editor.value.dpp_version,
+			entry_id: fundingEntryId.value,
+			budget_line: fundingBudgetLine.value || undefined,
+			indicative_amount: fundingAmount.value || undefined,
+			expected_record_version: editor.value.record_version,
+			idempotency_key: key,
+		});
+		await load({ quiet: true });
+		return r;
+	});
+	if (result) onCloseFunding();
+}
+
+// U03-EXCLUDE — the exclusion is a governed reason, so it keeps its own
+// dialog rather than being a third control in the funding panel.
+function onExcludeEntry(row) {
+	fundingEntryId.value = row.entry_id;
+	notProceedDialog.value = true;
+}
+
 function onViewAcceptedNeeds() {
 	frappe.set_route("departmental-needs");
 }
@@ -818,34 +886,29 @@ async function onCreateUpdate() {
 	});
 }
 
-async function onSaveFunding(payload) {
-	const result = await run("save-need-funding", (key) =>
-		api.saveNeedFunding({
-			dpp_version: editor.value.dpp_version,
-			entry_id: payload.entry_id,
-			budget_line: payload.budget_line || undefined,
-			indicative_amount: payload.indicative_amount || undefined,
-			expected_record_version: editor.value.record_version,
-			idempotency_key: key,
-		})
-	);
-	if (result) go(dppReference.value);
-}
-
 // PLN-CHG-001 v1.18 §5.1.4 — U03's own overlaid dialog, reached from the
 // editor's "Do not proceed this financial year" ghost button.
 async function onNotProceedConfirm(reason) {
-	const result = await run("set-need-disposition", (key) =>
-		api.setNeedPlanningDisposition({
-			dpp_version: editor.value.dpp_version,
-			entry_id: editor.value.entry?.entry_id,
+	// Reached from the funding panel on the plan (the ordinary path) or from
+	// the direct-entry editor page; either way it is the same command against
+	// the same entry.
+	const onPlan = screen.value === "dpp";
+	const result = await run("set-need-disposition", async (key) => {
+		const r = await api.setNeedPlanningDisposition({
+			dpp_version: onPlan ? dpp.value.version?.name : editor.value.dpp_version,
+			entry_id: onPlan ? fundingEntryId.value : editor.value.entry?.entry_id,
 			disposition: "Do not proceed",
 			reason,
-			expected_record_version: editor.value.record_version,
+			expected_record_version: onPlan ? dpp.value.record_version : editor.value.record_version,
 			idempotency_key: key,
-		})
-	);
-	if (result) go(dppReference.value);
+		});
+		if (onPlan) await load({ quiet: true });
+		return r;
+	});
+	if (!result) return;
+	notProceedDialog.value = false;
+	if (onPlan) onCloseFunding();
+	else go(dppReference.value);
 }
 
 // U03-notproceeding — Restore lives on the Plan screen's own not-proceeding
@@ -864,12 +927,26 @@ async function onRestoreDisposition(entryId) {
 	});
 }
 
-async function onSaveDirect(payload) {
+async function onSaveDirect(values) {
 	const result = await run("save-direct", (key) =>
 		api.saveDirectRequirement({
 			dpp_version: editor.value.dpp_version,
-			entry_values: JSON.stringify(payload.values),
-			entry_id: payload.entry_id || undefined,
+			entry_values: JSON.stringify(values),
+			entry_id: entryId.value || undefined,
+			expected_record_version: editor.value.record_version,
+			idempotency_key: key,
+		})
+	);
+	if (result) go(dppReference.value);
+}
+
+// U04-EDIT — a requirement the department added is the department's own to
+// withdraw; it leaves the draft entirely rather than being marked excluded.
+async function onRemoveDirect() {
+	const result = await run("remove-direct", (key) =>
+		api.removeDirectRequirement({
+			dpp_version: editor.value.dpp_version,
+			entry_id: entryId.value,
 			expected_record_version: editor.value.record_version,
 			idempotency_key: key,
 		})
