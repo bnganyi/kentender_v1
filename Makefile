@@ -1002,6 +1002,23 @@ THROUGH ?= tender_preparation
 WIPE ?= False
 FORCE ?= False
 RESEED ?= None
+# Make variables are case-sensitive: `force=True`/`wipe=True`/`through=budget`
+# on the command line silently set a DIFFERENT variable from FORCE/WIPE/
+# THROUGH above and are otherwise ignored - a very natural mistake since
+# it matches the Python kwarg names exactly. Accept the lowercase spelling
+# as an alias, command-line value wins either way.
+ifdef through
+THROUGH := $(through)
+endif
+ifdef wipe
+WIPE := $(wipe)
+endif
+ifdef force
+FORCE := $(force)
+endif
+ifdef reseed
+RESEED := $(reseed)
+endif
 seed-canonical:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
 		kentender_core.seeds.canonical.run \
