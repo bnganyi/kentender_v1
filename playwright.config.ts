@@ -23,6 +23,13 @@ export default defineConfig({
      * `UI_BASE_URL=https://kentender.midas.com` only where that host resolves (VPN / DNS).
      */
     baseURL: process.env.UI_BASE_URL || 'http://127.0.0.1:8000',
+    /**
+     * A click on a control that never becomes actionable — a disabled button
+     * a spec forgot to satisfy the precondition for — otherwise waits out the
+     * whole test timeout with no output, which reads as a hung suite rather
+     * than a failing test. Bound it well under the per-test budget.
+     */
+    actionTimeout: 15_000,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

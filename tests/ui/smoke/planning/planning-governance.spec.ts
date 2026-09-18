@@ -44,7 +44,9 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		// decision; nothing is expanded, and no advisory has its own line.
 		await expect(page.locator('[data-testid="rev-summary"]')).toBeVisible();
 		await expect(page.locator('[data-testid="rev-plan-checks"]')).toBeVisible();
-		await expect(page.locator('[data-testid="rev-statement"]')).toContainText("I adopt the complete consolidated Annual Procurement Plan Version 1");
+		// §10.10 — the statement says what the control does, in the second
+		// person, rather than putting words in the decider's mouth.
+		await expect(page.locator('[data-testid="rev-statement"]')).toContainText("you adopt the complete plan shown here");
 		await expect(page.locator('[data-testid="rev-accountability"]')).toHaveCount(0);
 		await page.locator('[data-testid="rev-confirm"]').click();
 		await expectReady(page, "workspace");
@@ -100,7 +102,8 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
 		await expect(page.locator('[data-testid="ppl-context"]')).toContainText("Version 2");
-		await expect(page.locator('[data-testid="ppl-context"]')).toContainText("Draft");
+		// A returned version comes back as a correction draft, which says so.
+		await expect(page.locator('[data-testid="ppl-context"]')).toContainText("Draft update");
 		await expect(page.locator('[data-testid="ppl-purchases"] tbody tr')).toHaveCount(1);
 		await expect(page.locator('[data-testid="ppl-sign-submit"]')).toHaveText("Submit corrected Plan");
 	});

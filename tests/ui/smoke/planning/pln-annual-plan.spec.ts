@@ -37,9 +37,15 @@ test.describe("PLN18-304 Annual Plan record", () => {
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
 
+		// The control is unavailable until a requirement is ticked (§10.6).
+		// The checkbox is styled: its input sits behind the label a user
+		// actually clicks, so the test clicks what the user clicks.
+		await page.locator('[data-testid="ppl-select-source"]').first().click({ force: true });
+		await expect(page.locator('[data-testid="ppl-add-selected"]')).toBeEnabled();
 		await page.locator('[data-testid="ppl-add-selected"]').click();
 		await expect(page.locator('[data-testid="pln-form-dialog"]')).toBeVisible();
 		await expect(page.locator('[data-testid="pln-form-title"]')).toHaveText("How should these requirements be added?");
+		await expect(page.locator('[data-testid="pln-form-confirm"]')).toHaveText("Add to plan");
 		await page.locator('[data-testid="pln-form-confirm"]').click();
 		await expectReady(page, "plan-item");
 

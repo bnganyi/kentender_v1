@@ -48,7 +48,8 @@ test.describe("PLN18-302 Procurement Planning workspace", () => {
 		const own = page.locator('[data-testid="pln-own-plan"]');
 		await expect(own.locator('[data-testid="pln-own-plan-empty"]')).toHaveText("No departmental plan yet");
 		await expect(page.locator('[data-testid="pln-start-departmental-plan"]')).toHaveText("Start departmental plan");
-		await expect(page.locator('[data-testid="pln-count-label"]')).toHaveText("0 departmental plans");
+		// §10.3 — an empty table says so in words rather than counting to zero.
+		await expect(page.locator('[data-testid="pln-departmental-empty"]')).toBeVisible();
 
 		await page.locator('[data-testid="pln-start-departmental-plan"]').click();
 		// The command runs and the page re-renders in place — no full reload.
@@ -65,7 +66,7 @@ test.describe("PLN18-302 Procurement Planning workspace", () => {
 		await gotoPlanning(page);
 		await expectReady(page, "workspace");
 
-		const button = page.locator('[data-testid="pln-plan-action-current"]');
+		const button = page.locator('[data-testid^="pln-plan-action-"]').first();
 		await expect(button).toHaveText(/Continue plan|Continue Plan/);
 		await button.click();
 		await expect(page).toHaveURL(new RegExp(`/annual-procurement-plan/${state.plan_reference}$`));
@@ -90,7 +91,7 @@ test.describe("PLN18-302 Procurement Planning workspace", () => {
 		await expect(page.locator('[data-testid="pln-context-strip"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="pln-departmental-table"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="pln-action"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="pln-plan-row-current"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid^="pln-plan-row-"]')).toHaveCount(0);
 	});
 
 	test("an author from another department sees only their own row, never the other unit's", async ({ page }) => {
@@ -111,18 +112,18 @@ test.describe("PLN18-302 Procurement Planning workspace", () => {
 
 		await gotoPlanning(page);
 		await expectReady(page, "workspace");
-		await expect(page.locator('[data-testid="pln-plan-row-current"]')).toBeVisible();
+		await expect(page.locator('[data-testid^="pln-plan-row-"]').first()).toBeVisible();
 
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await expectReady(page, "workspace");
-		await expect(page.locator('[data-testid="pln-plan-row-current"]')).toBeVisible();
+		await expect(page.locator('[data-testid^="pln-plan-row-"]').first()).toBeVisible();
 
-		await page.locator('[data-testid="pln-plan-action-current"]').click();
+		await page.locator('[data-testid^="pln-plan-action-"]').first().click();
 		await expect(page).toHaveURL(new RegExp(`/annual-procurement-plan/${state.plan_reference}$`));
 
 		await page.goBack();
 		await expectReady(page, "workspace");
-		await expect(page.locator('[data-testid="pln-plan-row-current"]')).toBeVisible();
+		await expect(page.locator('[data-testid^="pln-plan-row-"]').first()).toBeVisible();
 
 		await page.goForward();
 		await expect(page).toHaveURL(new RegExp(`/annual-procurement-plan/${state.plan_reference}$`));

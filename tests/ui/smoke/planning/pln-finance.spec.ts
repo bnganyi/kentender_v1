@@ -38,7 +38,9 @@ test.describe("PLN18-306 Finance task", () => {
 		await login(page, FINANCE, PASSWORD);
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
-		await page.locator('[data-testid="pln-action-button"]').click();
+		// The open task is offered on the plan record itself (§10.6), not
+		// through the workspace's "Your actions" card.
+		await page.locator('[data-testid="ppl-open-task"]').click();
 		await expectReady(page, "finance");
 		await expect(page).toHaveURL(new RegExp(`/procurement-planning/finance/${state.task}$`));
 		await expect(page.locator('[data-testid="fnt-badge"]')).toHaveText("Awaiting Finance");

@@ -40,7 +40,7 @@ test.describe("PLN18-305 Plan Item editor", () => {
 		await page.goto(`/app/procurement-plan-item/${state.plan_item_id}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan-item");
 
-		await page.locator('[data-testid="ppi-read-basis"]').fill("Market survey of the current supplier panel including delivery and installation costs.");
+		await page.locator('[data-testid="ppi-estimate-basis"]').fill("Market survey of the current supplier panel including delivery and installation costs.");
 		await page.locator('[data-testid="ppi-basis-reference"]').fill("MS-2098-001");
 		await page.locator('[data-testid="ppi-deadline"]').fill("2098-11-01");
 		await page.locator('[data-testid="ppi-reservation"]').selectOption("Youth");

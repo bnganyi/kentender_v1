@@ -73,6 +73,21 @@
 				<input id="pub-treasury-dispatch" class="kt-input" data-testid="pub-treasury-dispatch" v-model="form.dispatch_reference">
 			</div>
 
+			<!-- §10.12 — the evidence itself. It is optional because the
+			     dispatch is recorded whether or not a copy is to hand, and
+			     recording it is what the plan's publication waits on. -->
+			<div class="kt-field">
+				<label for="pub-treasury-file" class="kt-label">Submission evidence file</label>
+				<input
+					id="pub-treasury-file"
+					class="kt-input"
+					type="text"
+					data-testid="pub-treasury-file"
+					placeholder="A link or file reference for the dispatch evidence"
+					v-model="form.supporting_attachment"
+				>
+			</div>
+
 			<div v-if="isCorrection" class="kt-field">
 				<label for="pub-treasury-reason" class="kt-label">Reason for correction</label>
 				<textarea id="pub-treasury-reason" class="kt-input" rows="3" data-testid="pub-treasury-reason" v-model="form.reason"></textarea>
@@ -125,6 +140,7 @@ const form = reactive({
 	destination: prior.value.destination || "National Treasury",
 	dispatch_reference: prior.value.dispatch_reference || "",
 	reason: "",
+	supporting_attachment: "",
 	exact_document_confirmed: false,
 });
 

@@ -46,7 +46,10 @@ test.describe("v1.12 evidence pack", () => {
 		await login(page, PLANNER, PASSWORD);
 		await gotoPlanning(page);
 		await expectReady(page, "workspace");
-		await expect(page.locator('[data-testid="pln-actionable"]')).toBeVisible();
+		// The row's own testid names what the row is — "draft" before any
+		// version is in force, "current" after — so the evidence shot asserts
+		// that the annual plan section rendered, not which state it is in.
+		await expect(page.locator('[data-testid^="pln-plan-row-"]').first()).toBeVisible();
 		await shot(page, "PLN-DES-01-workspace");
 		await login(page, NOBODY, PASSWORD);
 		await gotoPlanning(page);
@@ -71,7 +74,7 @@ test.describe("v1.12 evidence pack", () => {
 		await login(page, HOD, PASSWORD);
 		await gotoDpp(page, ready.dpp_reference);
 		await expectReady(page, "dpp");
-		await expect(page.locator('[data-testid="dpp-certification"]')).toBeVisible();
+		await expect(page.locator('[data-testid="pln-dpp-certification"]')).toBeVisible();
 		await shot(page, "PLN-DES-05-hod-submission");
 	});
 
@@ -89,7 +92,11 @@ test.describe("v1.12 evidence pack", () => {
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
 		await shot(page, "PLN-DES-07-draft-annual-plan");
-		await page.locator('[data-testid="pln-form-items"]').click();
+		// The checkbox is styled: its input sits behind the label a user
+		// actually clicks, so the test clicks what the user clicks.
+		await page.locator('[data-testid="ppl-select-source"]').first().click({ force: true });
+		await expect(page.locator('[data-testid="ppl-add-selected"]')).toBeEnabled();
+		await page.locator('[data-testid="ppl-add-selected"]').click();
 		await expect(page.locator('[data-testid="pln-form-dialog"]')).toBeVisible();
 		await shot(page, "PLN-DES-08-form-plan-items-dialog");
 	});
@@ -117,16 +124,16 @@ test.describe("v1.12 evidence pack", () => {
 		await gotoPlanning(page, `/review/${ao.task}`);
 		await expectReady(page, "governance");
 		await shot(page, "PLN-DES-11-accounting-officer-adoption");
-		await page.locator('[data-testid="pgt-return"]').click();
-		await expect(page.locator('[data-testid="pgt-return-dialog"]')).toBeVisible();
+		await page.locator('[data-testid="rev-secondary"]').click();
+		await expect(page.locator('[data-testid="rvw-return-dialog"]')).toBeVisible();
 		await shot(page, "PLN-DES-15-return-dialog-ao");
 		const statutory = resetFixture<State>("reset_statutory_fixture");
 		await login(page, STATUTORY, PASSWORD);
 		await gotoPlanning(page, `/review/${statutory.task}`);
 		await expectReady(page, "governance");
 		await shot(page, "PLN-DES-12-statutory-approval");
-		await page.locator('[data-testid="pgt-return"]').click();
-		await expect(page.locator('[data-testid="pgt-return-dialog"]')).toBeVisible();
+		await page.locator('[data-testid="rev-secondary"]').click();
+		await expect(page.locator('[data-testid="rvw-return-dialog"]')).toBeVisible();
 		await shot(page, "PLN-DES-15-return-dialog-statutory");
 	});
 
@@ -135,12 +142,11 @@ test.describe("v1.12 evidence pack", () => {
 		await login(page, PLANNER, PASSWORD);
 		await page.goto(`/app/annual-procurement-plan/${active.plan_reference}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
-		await page.locator(`[data-testid="pln-active-schedule-${active.plan_item_id}"]`).click();
-		await expect(page.locator('[data-testid="pln-schedule-card"]')).toBeVisible();
 		await shot(page, "PLN-DES-14-active-annual-plan");
-		await page.locator('[data-testid="pln-shift-bid_opening"]').click();
-		await expect(page.locator('[data-testid="pln-shift-row-delivery_completion"]')).toBeVisible();
-		await shot(page, "PLN-DES-14A-shift-schedule-dialog");
+		await page.goto(`/app/annual-procurement-plan/${active.plan_reference}/progress`, { waitUntil: "domcontentloaded" });
+		await expectReady(page, "progress");
+		await expect(page.locator('[data-testid="prg-purchase"]').first()).toBeVisible();
+		await shot(page, "PLN-U14-procurement-progress");
 		await gotoPlanning(page, `/publication/${active.publication}`);
 		await expectReady(page, "publication");
 		await shot(page, "PLN-DES-13-publication-result");

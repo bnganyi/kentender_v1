@@ -34,35 +34,48 @@ test.describe("PLN18-303 Departmental Plan screens", () => {
 	test("author completes Need funding, then marks it not proceeding and restores it", async ({ page }) => {
 		const state = resetFixture<{ dpp_reference: string; need_entry_id: string }>("reset_dpp_fixture");
 		const errors = collectConsoleErrors(page);
+		const REASON = "The department will pursue this requirement in a later annual planning cycle.";
 		await login(page, AUTHOR, PASSWORD);
-		await gotoDpp(page, state.dpp_reference, `/entry/${state.need_entry_id}`);
-		await expectReady(page, "dpp-entry");
-
-		await page.locator('[data-testid="dpp-f-budget-line"]').selectOption({ index: 0 });
-		await page.locator('[data-testid="dpp-f-amount"]').fill("80000000");
-		await page.locator('[data-testid="dpp-editor-save"]').click();
+		await gotoDpp(page, state.dpp_reference);
 		await expectReady(page, "dpp");
-		await expect(page.locator(`[data-testid="dpp-entry-${state.need_entry_id}"]`)).toContainText("Ready");
 
-		// U03's own dialog — SetNeedPlanningDisposition, not bundled into save
-		await page.locator(`[data-testid="dpp-entry-action-${state.need_entry_id}"]`).click();
-		await expectReady(page, "dpp-entry");
+		// §10.4 U03-FUNDING — funding opens beneath the requirement's own row;
+		// the rest of the plan stays visible throughout.
+		const row = page.locator('[data-testid="pln-dpp-row"]').first();
+		await expect(row).toContainText("Funding details needed");
+		await row.locator('[data-testid="pln-dpp-row-action"]').click();
+		await expect(page.locator('[data-testid="dpp-funding-panel"]')).toBeVisible();
+		await expect(page.locator('[data-testid="pln-dpp-table"]')).toBeVisible();
+
+		await page.locator('[data-testid="dpp-funding-line"]').selectOption({ index: 1 });
+		await page.locator('[data-testid="dpp-funding-amount"]').fill("80000000");
+		await page.locator('[data-testid="dpp-funding-save"]').click();
+		// The row refreshes in place; the panel closes because it was opened
+		// against an entry whose state has now moved.
+		await expect(page.locator('[data-testid="dpp-funding-panel"]')).toHaveCount(0, { timeout: 30_000 });
+		await expect(page.locator('[data-testid="pln-dpp-row"]').first()).toContainText("Included");
+
+		// U03-EXCLUDE — a governed reason, in its own dialog, never bundled
+		// into the save.
+		await page.locator('[data-testid="pln-dpp-row"]').first().locator('[data-testid="pln-dpp-row-action"]').click();
 		await page.locator('[data-testid="dpp-funding-exclude"]').click();
 		await expect(page.locator('[data-testid="pln-not-proceed-dialog"]')).toBeVisible();
-		await page.locator('[data-testid="pln-not-proceed-reason"]').fill("The department will pursue this requirement in a later annual planning cycle.");
+		await page.locator('[data-testid="pln-not-proceed-reason"]').fill(REASON);
 		await page.locator('[data-testid="pln-not-proceed-confirm"]').click();
-		await expectReady(page, "dpp");
 
-		// U03-notproceeding — a distinct section, excluded from the main table
-		await expect(page.locator('[data-testid="pln-dpp-table"] tbody tr')).toHaveCount(0);
-		const section = page.locator('[data-testid="pln-dpp-exclusion-reason"]');
-		await expect(section).toContainText("Not proceeding this financial year");
-		await expect(section).toContainText("Reason: The department will pursue this requirement in a later annual planning cycle.");
+		// U03-EXCLUDED-ROW — the reason is always visible beneath the row, and
+		// the only action offered is the way back in.
+		const excluded = page.locator('[data-testid="pln-dpp-exclusion-reason"]');
+		await expect(excluded).toContainText(REASON, { timeout: 30_000 });
+		await expect(page.locator('[data-testid="pln-dpp-row"]').first()).toContainText("Not included this year");
+		await expect(page.locator('[data-testid="pln-dpp-row-action"]').first())
+			.toHaveText("Include in this year's departmental plan");
 
-		await page.locator(`[data-testid="dpp-restore-${state.need_entry_id}"]`).click();
-		await expectReady(page, "dpp");
-		await expect(page.locator('[data-testid="pln-dpp-exclusion-reason"]')).toHaveCount(0);
-		await expect(page.locator(`[data-testid="dpp-entry-${state.need_entry_id}"]`)).toContainText("Funding incomplete");
+		await page.locator('[data-testid="pln-dpp-row-action"]').first().click();
+		await expect(page.locator('[data-testid="pln-dpp-exclusion-reason"]')).toHaveCount(0, { timeout: 30_000 });
+		// Restoring brings it back without its funding: §10.4 U03-REINCLUDE
+		// prefills no old operative amount.
+		await expect(page.locator('[data-testid="pln-dpp-row"]').first()).toContainText("Funding details needed");
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 

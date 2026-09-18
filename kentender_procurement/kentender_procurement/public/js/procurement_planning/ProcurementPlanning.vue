@@ -993,6 +993,7 @@ async function onRecordTreasury(values) {
 				channel: values.channel,
 				destination: values.destination,
 				dispatch_reference: values.dispatch_reference,
+				supporting_attachment: values.supporting_attachment || "",
 				idempotency_key: key,
 			})
 			: await api.recordTreasurySubmission({
@@ -1002,6 +1003,7 @@ async function onRecordTreasury(values) {
 				destination: values.destination,
 				dispatch_reference: values.dispatch_reference,
 				exact_document_confirmed: values.exact_document_confirmed ? 1 : 0,
+				supporting_attachment: values.supporting_attachment || "",
 				idempotency_key: key,
 			});
 		await load({ quiet: true });

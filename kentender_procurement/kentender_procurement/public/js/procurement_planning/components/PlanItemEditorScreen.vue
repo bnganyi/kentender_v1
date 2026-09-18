@@ -121,7 +121,13 @@
 				<span class="kt-label">Estimate basis</span>
 				<span class="kt-meta-value">
 					<template v-if="item.mutable">
-						<textarea class="kt-input" rows="2" :value="draft.estimate_basis" @input="onField('estimate_basis', $event.target.value)"></textarea>
+						<textarea
+							class="kt-input"
+							rows="2"
+							data-testid="ppi-estimate-basis"
+							:value="draft.estimate_basis"
+							@input="onField('estimate_basis', $event.target.value)"
+						></textarea>
 					</template>
 					<template v-else>
 						{{ item.estimate_basis_preview }}

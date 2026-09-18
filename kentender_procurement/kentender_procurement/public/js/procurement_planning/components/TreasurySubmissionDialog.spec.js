@@ -64,6 +64,22 @@ describe("TreasurySubmissionDialog — U13-TREASURY-FORM", () => {
 		expect(payload.exact_document_confirmed).toBe(true);
 	});
 
+	it("carries the evidence file, without requiring it", async () => {
+		const w = make();
+		await fill(w);
+		await w.find('[data-testid="pub-treasury-file"]').setValue("Treasury-dispatch-evidence-example.pdf");
+		await w.find('[data-testid="pub-treasury-confirm"]').setValue(true);
+		await w.find('[data-testid="pub-treasury-submit"]').trigger("click");
+		expect(w.emitted("confirm")[0][0].supporting_attachment).toBe("Treasury-dispatch-evidence-example.pdf");
+
+		// The dispatch is recorded whether or not a copy is to hand: the
+		// publication waits on the record, not on the file.
+		const without = make();
+		await fill(without);
+		await without.find('[data-testid="pub-treasury-confirm"]').setValue(true);
+		expect(without.find('[data-testid="pub-treasury-submit"]').attributes("disabled")).toBeUndefined();
+	});
+
 	it("asks for the fields before the confirmation means anything", () => {
 		expect(make().find('[data-testid="pub-treasury-hint"]').text()).toBe(
 			"Enter the date sent, channel, destination and dispatch reference.",
