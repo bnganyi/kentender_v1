@@ -32,6 +32,7 @@ from kentender_strategy.services.strategy_audit import list_events
 from kentender_strategy.services.strategy_authorization import (
 	CAP_APPROVE,
 	CAP_AUTHOR,
+	has_ever_been_submitted,
 	has_plan_create_capability,
 	has_plan_version_capability,
 	holds_approver_responsibility,
@@ -691,7 +692,13 @@ def get_plan_workspace(plan_id: str, version_number: str | int | None = None) ->
 			"plan": _plan_dto(plan),
 			"versions": [],
 			"no_version": True,
-			"capabilities": {"update_plan": False, "edit_identity": False, "edit_version_dates": False, "submit": False},
+			"capabilities": {
+				"update_plan": False,
+				"edit_identity": False,
+				"edit_version_dates": False,
+				"submit": False,
+				"discard_draft": False,
+			},
 			"routes": {"overview": plan_route(plan.plan_id)},
 		}
 
@@ -729,6 +736,10 @@ def get_plan_workspace(plan_id: str, version_number: str | int | None = None) ->
 	)
 	# §11.3A — a successor Draft exposes Use from / Use until.
 	version_dates_editable = is_editable_draft and int(selected.version_number) > 1
+	# A Draft that has never been submitted may be discarded outright; once
+	# submitted (even if later Returned to Draft), it is corrected forward
+	# only — mirrors the structure-delete lock in save_strategy_structure_draft.
+	can_discard_draft = is_editable_draft and not has_ever_been_submitted(selected.name)
 
 	selected_doc = frappe.get_doc("Strategic Plan Version", selected.name)
 	version_dtos = []
@@ -768,6 +779,7 @@ def get_plan_workspace(plan_id: str, version_number: str | int | None = None) ->
 			"edit_identity": identity_editable,
 			"edit_version_dates": version_dates_editable,
 			"submit": is_editable_draft,
+			"discard_draft": can_discard_draft,
 		},
 		"routes": {
 			"overview": plan_route(plan.plan_id) if (not active or selected.name == active.name) and version_number in (None, "") else version_route(plan.plan_id, selected.version_number),

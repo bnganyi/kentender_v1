@@ -79,6 +79,13 @@ export const createSuccessorVersion = (planId, idempotencyKey) =>
 		idempotency_key: idempotencyKey || null,
 	});
 
+export const discardPlanDraft = (planVersionId, expectedVersion, idempotencyKey) =>
+	call("kentender_strategy.api.strategy_consumer_api.discard_strategy_plan_draft", {
+		plan_version_id: planVersionId,
+		expected_version: expectedVersion || null,
+		idempotency_key: idempotencyKey || null,
+	});
+
 // --- STR-UI-04 Approval task -------------------------------------------------
 
 export const getVersionReviewOverview = (planVersionId) =>

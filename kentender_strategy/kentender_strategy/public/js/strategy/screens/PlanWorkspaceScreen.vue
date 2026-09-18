@@ -20,7 +20,7 @@ import ObjectivesAndTargets from "../components/ObjectivesAndTargets.vue";
 import StructureSummary from "../components/StructureSummary.vue";
 import VersionTimeline from "../components/VersionTimeline.vue";
 import { typeLabel } from "../../strategy_shared/nodeIcons.js";
-import { getPlanWorkspace, savePlanDraft, getVersionHistory, getStrategyTree, createSuccessorVersion } from "../data/strategyApi.js";
+import { getPlanWorkspace, savePlanDraft, getVersionHistory, getStrategyTree, createSuccessorVersion, discardPlanDraft } from "../data/strategyApi.js";
 
 const { route, epoch } = useRouteState("strategy");
 const planId = computed(() => (route.value[1] === "plan" ? route.value[2] || null : null));
@@ -51,6 +51,7 @@ const confirmDialog = ref(null);
 
 const version = computed(() => workspace.value?.current_version || null);
 const editable = computed(() => !!workspace.value?.is_editable_draft);
+const canDiscardDraft = computed(() => !!workspace.value?.capabilities?.discard_draft);
 const isDraft = computed(() => version.value?.status === "Draft");
 const isCurrent = computed(() => version.value?.status === "Active");
 const isPrevious = computed(() => version.value?.status === "Superseded");
@@ -261,6 +262,25 @@ async function doUpdatePlan() {
 	}
 }
 
+// --- Discard draft (discard_strategy_plan_draft) -----------------------------------
+async function doDiscardDraft() {
+	confirmDialog.value = null;
+	acting.value = true;
+	actionError.value = null;
+	try {
+		const result = await runAttempt(`discard-draft:${version.value.id}`, (key) =>
+			discardPlanDraft(version.value.id, version.value.expected_version, key)
+		);
+		frappe.show_alert({ message: __("Draft discarded"), indicator: "green" });
+		if (result.plan_discarded) frappe.set_route("strategy");
+		else frappe.set_route("strategy", "plan", workspace.value.plan.reference);
+	} catch (e) {
+		actionError.value = e.unknownOutcome ? __("We could not confirm the result. Checking the existing request…") : e.message || String(e);
+	} finally {
+		acting.value = false;
+	}
+}
+
 function onSubmitted() {
 	historyLoaded.value = false;
 	frappe.set_route("strategy", "plan", workspace.value.plan.reference, "version", String(version.value.version_number));
@@ -343,6 +363,7 @@ function nodePath(node) {
 							</div>
 						</div>
 						<div style="display: flex; gap: 6.8px; align-items: flex-start">
+							<button v-if="canDiscardDraft" type="button" class="kt-btn kt-btn-secondary kt-danger" :disabled="acting" data-testid="str-discard-draft" @click="confirmDialog = 'discard-draft'">{{ __("Discard draft") }}</button>
 							<template v-if="tab === 'structure' && editable">
 								<button type="button" class="kt-btn kt-btn-secondary" :disabled="acting" data-testid="str-save-changes" @click="editorRef?.save()">{{ __("Save changes") }}</button>
 								<button type="button" class="kt-btn kt-btn-primary" :disabled="acting" data-testid="str-submit" @click="editorRef?.submit()">{{ __("Submit for approval") }}</button>
@@ -547,6 +568,16 @@ function nodePath(node) {
 			:message="__('Start a draft from the current plan. The current plan remains in use until the changes are approved.')"
 			:confirm-label="__('Update plan')"
 			@confirm="doUpdatePlan"
+			@cancel="confirmDialog = null"
+		/>
+		<ConfirmDialog
+			:open="confirmDialog === 'discard-draft'"
+			:title="__('Discard this draft?')"
+			:message="version && version.version_number > 1 ? __('This removes the draft update. The current plan stays in use.') : __('This permanently removes the plan and everything entered for it. This cannot be undone.')"
+			:confirm-label="__('Discard draft')"
+			danger
+			testid="str-confirm-discard"
+			@confirm="doDiscardDraft"
 			@cancel="confirmDialog = null"
 		/>
 	</div>

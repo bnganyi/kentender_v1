@@ -152,6 +152,24 @@ def save_strategy_structure_draft(
 
 
 @frappe.whitelist()
+def discard_strategy_plan_draft(
+	plan_version_id: str,
+	expected_version: str | None = None,
+	idempotency_key: str | None = None,
+):
+	"""discard_strategy_plan_draft — Strategy Author only, Draft and never
+	submitted only. Permanently removes the version (and, for a plan's only
+	version, the plan itself)."""
+	return run_idempotent(
+		idempotency_key or None,
+		"Strategic Plan Version",
+		plan_version_id,
+		"discard_strategy_plan_draft",
+		lambda: writes.discard_strategy_plan_draft(plan_version_id, expected_version=expected_version or None),
+	)
+
+
+@frappe.whitelist()
 def submit_strategy_version(
 	plan_version_id: str,
 	expected_version: str | None = None,
