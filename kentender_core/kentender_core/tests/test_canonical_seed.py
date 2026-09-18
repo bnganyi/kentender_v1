@@ -29,7 +29,7 @@ class TestCanonicalSelection(IntegrationTestCase):
 	def test_stage_ladder_is_ordered_and_closed(self):
 		self.assertEqual(
 			canonical.STAGES,
-			("site", "strategy", "budget", "needs", "planning", "requisitions", "tender_preparation"),
+			("site", "strategy", "budget", "needs", "planning", "requisitions"),
 		)
 		with self.assertRaises(frappe.ValidationError):
 			canonical._stage_index("tender")
@@ -135,21 +135,20 @@ class TestCanonicalSeedRun(IntegrationTestCase):
 
 
 class TestCanonicalSeedFullChain(IntegrationTestCase):
-	"""The full site → strategy → budget → needs → planning → requisitions →
-	tender_preparation chain, on the real test site, `reset=False` so this
+	"""The full site → strategy → budget → needs → planning → requisitions
+	chain, on the real test site, `reset=False` so this
 	stays scoped to the seed's own rows (as `TestCanonicalSeedRun` already
 	does for budget)."""
 
-	def test_seed_through_tender_preparation_is_idempotent(self):
+	def test_seed_through_requisitions_is_idempotent(self):
 		frappe.set_user("Administrator")
-		first = canonical.run(through="tender_preparation", reset=False, validate=True, force=True, commit=False)
+		first = canonical.run(through="requisitions", reset=False, validate=True, force=True, commit=False)
 		self.assertTrue(first["ok"])
-		counts = {dt: frappe.db.count(dt) for dt in ("Departmental Need", "Annual Plan", "Procurement Requisition", "Prepared Tender")}
+		counts = {dt: frappe.db.count(dt) for dt in ("Departmental Need", "Annual Plan", "Procurement Requisition")}
 
-		second = canonical.run(through="tender_preparation", reset=False, validate=True, force=True, commit=False)
+		second = canonical.run(through="requisitions", reset=False, validate=True, force=True, commit=False)
 		self.assertTrue(second["ok"])
 		self.assertTrue(second["seeded"]["requisitions"]["idempotent"])
-		self.assertTrue(second["seeded"]["tender_preparation"]["idempotent"])
 		for dt, count in counts.items():
 			self.assertEqual(frappe.db.count(dt), count, dt)
 

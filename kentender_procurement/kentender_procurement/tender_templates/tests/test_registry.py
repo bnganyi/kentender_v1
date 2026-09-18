@@ -15,7 +15,7 @@ import tempfile
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from kentender_procurement.tender_preparation.services.errors import TenderPreparationError
+from kentender_procurement.tenders.services.errors import TendersError
 from kentender_procurement.tender_templates import loader, registry
 
 
@@ -60,9 +60,9 @@ class TestInstall(RegistryCase):
 		result = registry.install(bundle_root=root)
 		self.assertFalse(result["ok"])
 		self.assertEqual(result["availability"], registry.UNAVAILABLE)
-		with self.assertRaises(TenderPreparationError) as ctx:
+		with self.assertRaises(TendersError) as ctx:
 			registry.resolve(bundle_root=root)
-		self.assertEqual(ctx.exception.code, "TPR_TEMPLATE_UNAVAILABLE")
+		self.assertEqual(ctx.exception.code, "TND_TEMPLATE_UNAVAILABLE")
 
 	def test_a_bundle_altered_after_installation_is_refused_at_resolve(self):
 		"""SMOKE-14 — the row still says Available; the live re-verification
@@ -71,9 +71,9 @@ class TestInstall(RegistryCase):
 		root = _copy_bundle()
 		with open(os.path.join(root, "templates", "print.css"), "a", encoding="utf-8") as fh:
 			fh.write("/* tampered */")
-		with self.assertRaises(TenderPreparationError) as ctx:
+		with self.assertRaises(TendersError) as ctx:
 			registry.resolve(bundle_root=root)
-		self.assertEqual(ctx.exception.code, "TPR_TEMPLATE_UNAVAILABLE")
+		self.assertEqual(ctx.exception.code, "TND_TEMPLATE_UNAVAILABLE")
 
 	def test_nobody_edits_the_row_outside_the_installer(self):
 		registry.install()

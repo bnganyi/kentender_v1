@@ -111,17 +111,6 @@
    "collapsible": 0,
    "indent": 0,
    "keep_closed": 0,
-   "label": "Tender Preparation",
-   "link_to": "tender-preparation",
-   "link_type": "Page",
-   "show_arrow": 0,
-   "type": "Link"
-  },
-  {
-   "child": 1,
-   "collapsible": 0,
-   "indent": 0,
-   "keep_closed": 0,
    "label": "Tenders",
    "link_to": "publications",
    "link_type": "Page",
@@ -203,7 +192,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-09-18 01:27:43.409162",
+ "modified": "2026-09-19 00:30:07.009230",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

@@ -19,8 +19,8 @@ STR-CHG-001 §14 plan, ``budget`` the BUD-CHG-001 §15.3 Active baseline,
 ``needs`` the NDS-CHG-001 §14.3 default Needs, ``planning`` the
 PLN-CHG-001 §14 integrated baseline, ``requisitions`` the REQ-CHG-001 v1.6
 §16 Authorised Requisition on the one eligible combined Plan Item, and
-``tender_preparation`` the TPR-CHG-001 v0.6 §16 Tender approved for
-publication on that Requisition's handoff. Each stage calls the owning
+``tenders`` the TPR-CHG-001 v0.8 §13.3 primary Tender lifecycle on that
+Requisition's handoff (added by the Tenders module). Each stage calls the owning
 module's own canonical-shaped seed function directly — never the legacy
 multi-PE `kentender_core.seeds.kentender_mvp_v1.orchestrator` — so seeding
 through any stage never creates `PE-CGKIS` or any second Procuring Entity.
@@ -46,7 +46,7 @@ import frappe
 
 from kentender_core.seeds import site_setup
 
-STAGES: tuple[str, ...] = ("site", "strategy", "budget", "needs", "planning", "requisitions", "tender_preparation")
+STAGES: tuple[str, ...] = ("site", "strategy", "budget", "needs", "planning", "requisitions")
 
 # Namespaces whose rows are canonical and survive `reset`.
 STRATEGY_NS = "str-chg-001-mvp1"
@@ -54,9 +54,9 @@ BUDGET_ACTOR_NS = "KENTENDER_MVP_V1"  # Budget's own actor assignments (pre-2026
 NEEDS_NS = "KENTENDER_MVP_1_R1_NDS"
 PLANNING_NS = "KENTENDER_MVP_1_R1_PLN"
 REQUISITIONS_NS = "KENTENDER_MVP_1_R1_REQ"  # not stamped on Requisitions' own rows (D5 predates the column) — see clear_non_canonical
-TENDER_PREPARATION_NS = "KENTENDER_MVP_1_R1_TPR"
+TENDERS_NS = "KENTENDER_MVP_1_R1_TND"
 CANONICAL_NAMESPACES = frozenset(
-	{site_setup.FIXTURE_TAG, BUDGET_ACTOR_NS, STRATEGY_NS, NEEDS_NS, PLANNING_NS, REQUISITIONS_NS, TENDER_PREPARATION_NS}
+	{site_setup.FIXTURE_TAG, BUDGET_ACTOR_NS, STRATEGY_NS, NEEDS_NS, PLANNING_NS, REQUISITIONS_NS, TENDERS_NS}
 )
 
 # KT-STD-001 §8.3 — the whole shared register, whatever stage is seeded.
@@ -99,7 +99,7 @@ _LEGACY_DEMO_DOCTYPES = ("Procurement Handoff Card", "Procurement Journey")
 
 
 def _playwright_cleanup_allowed() -> bool:
-	"""Requisitions' and Tender Preparation's own playwright fixture
+	"""Requisitions' and Tenders' own playwright fixture
 	modules refuse to touch their rows unless developer_mode/allow_tests is
 	set (or a test is already running) — a guard this orchestrator's own
 	`force` cannot bypass, since it belongs to a sibling module. Unlike
@@ -208,7 +208,6 @@ def collect_non_canonical() -> dict[str, list[str]]:
 		("Departmental Need", NEEDS_NS),
 		("Annual Plan", PLANNING_NS),
 		("Departmental Plan", PLANNING_NS),
-		("Prepared Tender", TENDER_PREPARATION_NS),
 		("Regulatory Reference", site_setup.FIXTURE_TAG),
 	):
 		if frappe.db.exists("DocType", doctype):
@@ -336,7 +335,7 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 			if isinstance(count, int) and count:
 				deleted[doctype] = deleted.get(doctype, 0) + count
 
-	# Downstream first: Tender Preparation consumes Requisitions' handoff,
+	# Downstream first: Tenders consumes Requisitions' handoff,
 	# Requisitions consumes Planning's Plan Item, Planning and Needs
 	# reference Budget lines and units. Neither module stamps every
 	# doctype with a fixture_namespace column, so their own clear functions
@@ -344,14 +343,6 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 	# `include_canonical=False` here only ever removes Playwright-owned
 	# residue, matching how Planning/Needs rows survive `reset`.
 	playwright_ok = _playwright_cleanup_allowed()
-	if plan.get("Prepared Tender"):
-		from kentender_procurement.tender_preparation.seeds.clear import clear_tender_fixture_rows
-
-		_fold(clear_tender_fixture_rows(include_canonical=False, include_playwright=playwright_ok))
-		for name in plan.get("Prepared Tender", []):
-			if frappe.db.exists("Prepared Tender", name):
-				frappe.delete_doc("Prepared Tender", name, force=1, ignore_permissions=True)
-				deleted["Prepared Tender"] = deleted.get("Prepared Tender", 0) + 1
 
 	from kentender_procurement.procurement_requisitions.seeds.clear import clear_requisition_fixture_rows
 
@@ -459,13 +450,9 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 
 def clear_canonical_modules() -> dict[str, Any]:
 	"""`rebuild`: drop the canonical module rows too (downstream first —
-	Tender Preparation before Requisitions before Planning/Needs, since each
+	Tenders before Requisitions before Planning/Needs, since each
 	consumes the one before it), leaving the §8 site world."""
 	out: dict[str, Any] = {}
-	playwright_ok = _playwright_cleanup_allowed()
-	from kentender_procurement.tender_preparation.seeds.clear import clear_tender_fixture_rows
-
-	out["tender_preparation"] = clear_tender_fixture_rows(include_canonical=True, include_playwright=playwright_ok)
 	# Not clear_requisition_fixture_rows(include_canonical=True, ...): that
 	# path is a direct delete which refuses outright on an Authorised
 	# Requisition with an Active Budget reservation (the "wipe after
@@ -563,10 +550,6 @@ def seed(*, through: str = STAGES[-1]) -> dict[str, Any]:
 				pluck="name",
 			):
 				frappe.db.set_value("Funding Reservation", reservation, "fixture_namespace", REQUISITIONS_NS, update_modified=False)
-	if last >= STAGES.index("tender_preparation"):
-		from kentender_procurement.tender_preparation.seeds.kentender_mvp_v1 import upsert_tender_preparation
-
-		report["tender_preparation"] = upsert_tender_preparation(commit=False)
 	return report
 
 
@@ -682,8 +665,8 @@ def validate(*, through: str = STAGES[-1]) -> dict[str, Any]:
 		check(bool(plan_row and plan_row.active_version), f"canonical FY 2027-2028 Annual Plan Active, found {plan_row}")
 		if through == "planning":
 			# Only when Planning is the last stage seeded. Once Requisitions'
-			# combined item is later consumed through a real Tender Preparation
-			# build, TPR's own seed legitimately writes a real
+			# combined item is later consumed through a real Tenders
+			# build, the Tenders seed legitimately writes a real
 			# `actual_invitation_date` onto this same Plan Item (FU-16,
 			# `record_tender_milestone_actual`) — `validate_planning_seed()`
 			# was written for Planning seeded alone and would misread that
@@ -697,12 +680,6 @@ def validate(*, through: str = STAGES[-1]) -> dict[str, Any]:
 		from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import validate_requisitions_seed
 
 		for row in validate_requisitions_seed():
-			check(row["ok"], f"{row['check']}: {row['detail']}")
-
-	if last >= STAGES.index("tender_preparation"):
-		from kentender_procurement.tender_preparation.seeds.kentender_mvp_v1 import validate_tender_preparation_seed
-
-		for row in validate_tender_preparation_seed():
 			check(row["ok"], f"{row['check']}: {row['detail']}")
 
 	report = {"ok": not failures, "through": through, "failures": failures}
@@ -771,7 +748,7 @@ def run(
 	result: dict[str, Any] = {"ok": True, "through": through if reseed else None, "reseed": reseed}
 	# `force` is meant to mean "bypass every fixture-build guard this run
 	# touches," not just this orchestrator's own (§1.1) — the needs/
-	# planning/requisitions/tender_preparation module seeds each carry an
+	# planning/requisitions/tenders module seeds each carry an
 	# independent developer_mode/allow_tests guard of their own that this
 	# function's `force` parameter cannot otherwise reach. All of them
 	# already accept `frappe.flags.in_test` as an equally valid bypass, so

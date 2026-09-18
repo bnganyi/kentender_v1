@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""TPR-CHG-001 v0.6 §6.3 / STD-TPL-IMP-001 §12 — the read-only
+"""TPR-CHG-001 v0.8 §3 / STD-TPL-IMP-001 §12 — the read-only
 `Supported Tender Template` registry.
 
 `install()` is the one writer (idempotent; wired into `after_migrate`): it
@@ -81,16 +81,16 @@ def after_migrate() -> None:
 
 def resolve(template_key: str = loader.TEMPLATE_KEY, template_version: str = loader.TEMPLATE_VERSION, *, bundle_root: str = loader.DEFAULT_BUNDLE_ROOT) -> dict[str, Any]:
 	"""The exact installed release a new Tender binds to — or
-	`TPR_TEMPLATE_UNAVAILABLE`, creating nothing (§11.3)."""
-	from kentender_procurement.tender_preparation.services.errors import fail
+	`TND_TEMPLATE_UNAVAILABLE`, creating nothing (TPR-CHG-001 v0.8 §8)."""
+	from kentender_procurement.tenders.services.errors import fail
 
 	name = registry_name(template_key, template_version)
 	row = frappe.db.get_value(REGISTRY_DOCTYPE, name, ["name", "availability", "bundle_digest", "official_source_digest", "display_name"], as_dict=True)
 	if not row or row.availability != AVAILABLE:
-		fail("TPR_TEMPLATE_UNAVAILABLE", detail={"template": name, "availability": row.availability if row else "not installed"})
+		fail("TND_TEMPLATE_UNAVAILABLE", detail={"template": name, "availability": row.availability if row else "not installed"})
 	verification = loader.verify(bundle_root)
 	if not verification.ok or verification.bundle_digest != row.bundle_digest or verification.source_digest != row.official_source_digest:
-		fail("TPR_TEMPLATE_UNAVAILABLE", "The installed template bundle no longer matches its registered digests.", detail={"template": name, "problems": verification.summary()})
+		fail("TND_TEMPLATE_UNAVAILABLE", "The installed template bundle no longer matches its registered digests.", detail={"template": name, "problems": verification.summary()})
 	return {
 		"registry": row.name, "template_key": template_key, "template_version": template_version, "display_name": row.display_name,
 		"official_source_digest": row.official_source_digest, "bundle_digest": row.bundle_digest,

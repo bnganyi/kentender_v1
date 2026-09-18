@@ -6,7 +6,7 @@ renderer for `IT-EQUIPMENT-OPEN-V1`.
 
 Masters are loaded only from the installed code bundle; Jinja runs with
 `StrictUndefined`, autoescape and no custom filters (STD-TPL-001 v0.5 §4.1);
-the render context is built by Tender Preparation's canonical serializer,
+the render context is built by the Tenders module's canonical serializer,
 never from a user-editable database field; the Invitation renders separately
 from the issued Tender (STD-STD-001 §7); HTML is the authoritative output
 and the PDF a convenience rendering of the same content (plan D4).

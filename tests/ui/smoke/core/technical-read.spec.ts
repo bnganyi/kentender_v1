@@ -17,12 +17,10 @@ import { collectConsoleErrors } from "../planning/helpers";
  * invented, per the task's read-only lookup requirement. Route assertions
  * were cross-checked against the actual resolvers each module registered
  * (`kentender_procurement.{departmental_needs,procurement_planning,
- * procurement_requisitions,tender_preparation}.services.technical_read`) —
- * in particular, Procurement Requisition and Prepared Tender resolve the
- * doc name to its own business reference before building the route
- * (`_requisition_route`/`_tender_route`), so the URL segment is
- * `requisition_reference`/`tender_reference`, not the PRQ-#####/TPR-#####
- * doc name. Still flagged for reconciliation in the task report, since this
+ * procurement_requisitions}.services.technical_read`) —
+ * in particular, Procurement Requisition resolves the doc name to its own
+ * business reference before building the route (`_requisition_route`), so
+ * the URL segment is `requisition_reference`, not the PRQ-##### doc name. Still flagged for reconciliation in the task report, since this
  * spec was written without running it.
  */
 
@@ -32,7 +30,6 @@ const WORKSPACES = [
 	"/app/departmental-needs",
 	"/app/procurement-planning",
 	"/app/procurement-requisitions",
-	"/app/tender-preparation",
 	"/app/system-setup",
 ];
 
@@ -126,16 +123,6 @@ test.describe.serial("Technical record search + technical-user access sweep", ()
 		await reqRow.locator('[data-testid="kt-ts-open"]').click();
 		await expect(page).toHaveURL(/\/procurement-requisitions\/REQ-MOH-2027-002-001$/, { timeout: 20_000 });
 
-		// Prepared Tender — business reference TND-MOH-2027-002, doc name
-		// TPR-22181. Route: tender-preparation/<tender_reference> (same
-		// resolve-to-business-reference pattern as Procurement Requisition
-		// above, in kentender_procurement.tender_preparation.services.technical_read).
-		await gotoTechnicalSearch(page);
-		await runSearch(page, "TND-MOH-2027-002");
-		const tprRow = page.locator('[data-testid="kt-ts-row"]', { hasText: "TND-MOH-2027-002" });
-		await expect(tprRow).toBeVisible({ timeout: 20_000 });
-		await tprRow.locator('[data-testid="kt-ts-open"]').click();
-		await expect(page).toHaveURL(/\/tender-preparation\/TND-MOH-2027-002$/, { timeout: 20_000 });
 
 		expect(errors, `console errors: ${errors.join(" | ")}`).toEqual([]);
 	});

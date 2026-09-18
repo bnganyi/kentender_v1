@@ -340,7 +340,6 @@ def purge_kentender_playwright_data(*, commit: bool = True) -> dict[str, Any]:
 				include_canonical=False, include_playwright=True
 			),
 			"users": purge_test_local_users(),
-			"tender_preparation": _clear_tender_preparation_playwright_rows(),
 			"requisitions": _clear_requisitions_playwright_rows(),
 		}
 		if commit:
@@ -407,22 +406,6 @@ def _clear_requisitions_playwright_rows_canonical() -> dict[str, Any]:
 	return clear_requisition_fixture_rows(include_canonical=True, include_playwright=False)
 
 
-def _clear_tender_preparation_canonical() -> dict[str, Any]:
-	"""TPR-CHG-001 v0.6 §16 — release the canonical handoff's consumption
-	(through Requisitions' seam) and drop the Tender rows before Requisitions'
-	own clear can revoke its authorisation."""
-	from kentender_procurement.tender_preparation.seeds.clear import clear_tender_fixture_rows
-
-	frappe.set_user("Administrator")
-	return clear_tender_fixture_rows(include_canonical=True, include_playwright=False)
-
-
-def _clear_tender_preparation_playwright_rows() -> dict[str, Any]:
-	from kentender_procurement.tender_preparation.seeds.clear import clear_tender_fixture_rows
-
-	return clear_tender_fixture_rows(include_canonical=False, include_playwright=True)
-
-
 def clear_kentender_mvp_v1(
 	*,
 	include_strategy: bool = True,
@@ -430,13 +413,10 @@ def clear_kentender_mvp_v1(
 	include_demands: bool = True,
 	include_planning: bool = False,
 	include_requisitions: bool = False,
-	include_tender_preparation: bool = False,
 ) -> dict[str, Any]:
 	out: dict[str, Any] = {"ok": True}
 	out["scope_assignments"] = clear_kentender_mvp_v1_scope_assignments()
-	# Reverse dependency: Tender Preparation → Requisitions → Planning → Demands → Budget → Strategy.
-	if include_tender_preparation:
-		out["tender_preparation"] = _clear_tender_preparation_canonical()
+	# Reverse dependency: Requisitions → Planning → Demands → Budget → Strategy.
 	if include_requisitions:
 		out["requisitions"] = _clear_requisitions_playwright_rows_canonical()
 	if include_planning:

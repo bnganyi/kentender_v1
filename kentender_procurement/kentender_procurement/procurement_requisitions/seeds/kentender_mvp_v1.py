@@ -366,16 +366,16 @@ def stamp_handoff_consumption_clock(requisition: str, *, when: str | None = None
 
 
 def seed_consumed_handoff(*, commit: bool = False) -> dict[str, Any]:
-	"""Retired (TPR-CHG-001 v0.6 plan D19). §16.4 fixture 6 — the authorised
-	handoff consumed by a Tender — is now produced by a real `PrepareTender`
-	in `kentender_procurement.tender_preparation.seeds.kentender_mvp_v1
-	.upsert_tender_preparation`, which chains after this module in the core
-	orchestrator; a synthetic consumption by a Tender that does not exist
-	would contradict the live Tender Preparation module."""
+	"""Retired. §16.4 fixture 6 — the authorised handoff consumed by a
+	Tender — is produced by a real `StartTender` in
+	`kentender_procurement.tenders.seeds.kentender_mvp_v1.upsert_tenders`
+	(TPR-CHG-001 v0.8 §13), which chains after this module in the canonical
+	seed; a synthetic consumption by a Tender that does not exist would
+	contradict the live Tenders module."""
 	frappe.throw(
 		"seed_consumed_handoff() is retired: the consumed handoff is seeded by "
-		"kentender_procurement.tender_preparation.seeds.kentender_mvp_v1.upsert_tender_preparation "
-		"(a real Tender), chained after upsert_requisitions_base in the core orchestrator.",
+		"kentender_procurement.tenders.seeds.kentender_mvp_v1.upsert_tenders "
+		"(a real Tender), chained after upsert_requisitions_base in the canonical seed.",
 		frappe.ValidationError,
 	)
 	return {}  # unreachable
