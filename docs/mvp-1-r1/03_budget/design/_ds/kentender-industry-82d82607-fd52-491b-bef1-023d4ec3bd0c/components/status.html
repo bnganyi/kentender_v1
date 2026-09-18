@@ -1,0 +1,35 @@
+<!-- @dsCard group="Components" name="Status chips" subtitle="State-encoding chips, figures and section titles" viewport="640x460" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Industry — Status semantics</title>
+<link rel="stylesheet" href="../styles.css" />
+<style>
+.demo { max-width: 620px; margin: 0 auto; padding: var(--space-6) var(--space-4) var(--space-8); }
+.demo-head { font-family: var(--font-body); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.55; margin: var(--space-6) 0 var(--space-3); }
+.demo-head:first-child { margin-top: 0; }
+.row { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.figs { display: flex; gap: var(--space-6); flex-wrap: wrap; }
+.fig-n { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 34px; line-height: 1; }
+.fig-l { font-size: 12px; opacity: 0.6; margin-top: 6px; }
+.titlebox { display: flex; flex-direction: column; }
+.note { font-size: 12px; opacity: 0.6; max-width: 60ch; }
+</style>
+</head>
+<body>
+<main class="demo">
+<div class="demo-head">Status chips</div>
+<div class="row"><span class="kt-status is-live">Active</span><span class="kt-status is-draft">Draft</span><span class="kt-status is-pending">Not assessed</span><span class="kt-status is-attention">Configuration required</span><span class="kt-status is-critical">Suspended</span></div>
+<div class="demo-head">Summary figures</div>
+<div class="figs">
+<div><div class="fig-n kt-figure is-live">142</div><div class="fig-l">Active listings</div></div>
+<div><div class="fig-n kt-figure is-attention">7</div><div class="fig-l">Need configuration</div></div>
+</div>
+<div class="demo-head">Section title</div>
+<div class="titlebox"><h3 class="kt-card-title">Evaluation summary</h3></div>
+<p class="note">These five hues encode record state only. Decorative labels stay on <code>.tag</code>.</p>
+</main>
+</body>
+</html>

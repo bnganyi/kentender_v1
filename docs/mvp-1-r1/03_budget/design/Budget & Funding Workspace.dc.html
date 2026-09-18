@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+  <style>
+    @keyframes ktPulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
+    body { margin: 0; }
+    a { color: var(--color-accent-700); }
+    a:hover { color: var(--color-accent-900); }
+  </style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:80px;">
+
+  <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
+    <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">BUD-CHG-001 v1.9 · BUD-UI-01 state:</span>
+    <button type="button" class="{{btnActive}}" onclick="{{setActive}}" style="font-size:12px;padding:6px 12px;">01 Active</button>
+    <button type="button" class="{{btnLoading}}" onclick="{{setLoading}}" style="font-size:12px;padding:6px 12px;">16 Loading</button>
+    <button type="button" class="{{btnNoBaseline}}" onclick="{{setNoBaseline}}" style="font-size:12px;padding:6px 12px;">16 No baseline</button>
+    <button type="button" class="{{btnForbidden}}" onclick="{{setForbidden}}" style="font-size:12px;padding:6px 12px;">16 Forbidden</button>
+    <button type="button" class="{{btnServerError}}" onclick="{{setServerError}}" style="font-size:12px;padding:6px 12px;">16 Server error</button>
+    <button type="button" class="{{btnInitialDraft}}" onclick="{{setInitialDraft}}" style="font-size:12px;padding:6px 12px;">01B Initial draft</button>
+    <button type="button" class="{{btnInitialSubmitted}}" onclick="{{setInitialSubmitted}}" style="font-size:12px;padding:6px 12px;">01B Initial submitted</button>
+    <button type="button" class="{{btnReturned}}" onclick="{{setReturned}}" style="font-size:12px;padding:6px 12px;">01B Returned</button>
+    <button type="button" class="{{btnCurrentDraft}}" onclick="{{setCurrentDraft}}" style="font-size:12px;padding:6px 12px;">01B Current + draft update</button>
+    <button type="button" class="{{btnCurrentSubmitted}}" onclick="{{setCurrentSubmitted}}" style="font-size:12px;padding:6px 12px;">01A/01B Current + update awaiting review</button>
+    <button type="button" class="{{btnClosed}}" onclick="{{setClosed}}" style="font-size:12px;padding:6px 12px;">01B Closed</button>
+  </div>
+
+  <div data-screen-label="BUD-DES-01 Workspace" style="max-width:1240px;margin:0 auto;padding:36px 40px 0;">
+    <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px;">BUDGET &amp; FUNDING</div>
+    <h1 style="font-family:var(--font-heading);font-weight:600;font-size:32px;margin:0 0 8px;letter-spacing:.01em;">Budget &amp; Funding</h1>
+    <p style="font-size:14px;color:var(--color-neutral-700);margin:0 0 24px;max-width:70ch;">View the registered procurement budget and the funding position used by Procurement Planning.</p>
+    <div style="margin-bottom:28px;">
+      <select class="input" style="width:auto;min-width:170px;">
+        <option>FY 2027/28</option>
+      </select>
+    </div>
+  </div>
+
+  <sc-if value="{{isPendingCard}}" hint-placeholder-val="{{false}}">
+  <div style="max-width:1240px;margin:0 auto;padding:0 40px;">
+    <div class="card blueprint elev-sm" style="padding:18px 24px;margin-bottom:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <h2 style="font-family:var(--font-heading);font-weight:600;font-size:19px;margin:0;letter-spacing:.01em;">{{pendingHeading}}</h2>
+          <span class="{{pendingStatusClass}}">{{pendingStatus}}</span>
+        </div>
+        <button type="button" class="{{pendingBtnClass}}">{{pendingAction}}</button>
+      </div>
+      <p style="font-size:14px;color:var(--color-neutral-700);margin:0 0 12px;">{{pendingBody}}</p>
+      <sc-if value="{{isReturned}}" hint-placeholder-val="{{false}}">
+        <div class="kt-notice is-warning" style="margin-bottom:12px;">
+          <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+          <div class="kt-notice-body"><strong>Changes requested by Beatrice Kamau, 2 Oct 2026, 10:40 EAT.</strong> Attach the signed approval instrument; the uploaded file is a draft memo, not the approved allocation.</div>
+        </div>
+      </sc-if>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px 24px;">
+        <div><div class="kt-label" style="margin-bottom:3px;">Version</div><div style="font-size:14px;">{{pendingVersion}}</div></div>
+        <div><div class="kt-label" style="margin-bottom:3px;">{{pendingWhoLabel}}</div><div style="font-size:14px;">Josphat Mwangi, Budget Officer</div></div>
+        <div><div class="kt-label" style="margin-bottom:3px;">{{pendingWhenLabel}}</div><div style="font-size:14px;">{{pendingWhen}}</div></div>
+        <div><div class="kt-label" style="margin-bottom:3px;">Financial Year</div><div style="font-size:14px;">FY 2027/28</div></div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{isActive}}" hint-placeholder-val="{{true}}">
+  <div style="max-width:1240px;margin:0 auto;padding:0 40px;">
+    <div class="card blueprint elev-sm" style="padding:18px 24px;margin-bottom:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <h2 style="font-family:var(--font-heading);font-weight:600;font-size:19px;margin:0;letter-spacing:.01em;">Ministry of Health procurement budget 2027/28</h2>
+          <span class="{{currentStatusClass}}">{{currentStatus}}</span>
+        </div>
+        <button type="button" class="btn btn-secondary">View budget</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px 24px;">
+        <div><div class="kt-label" style="margin-bottom:3px;">Budget reference</div><div style="font-size:14px;">MOH-BUD-2027-001</div></div>
+        <div><div class="kt-label" style="margin-bottom:3px;">Current version</div><div style="font-size:14px;">Version 1</div></div>
+        <div><div class="kt-label" style="margin-bottom:3px;">Currency</div><div style="font-size:14px;">KES</div></div>
+        <div><div class="kt-label" style="margin-bottom:3px;">Approval reference</div><div style="font-size:14px;">MOH-FIN-BUD-2027-01 (Demo)</div></div>
+        <div><div class="kt-label" style="margin-bottom:3px;">Approval date</div><div style="font-size:14px;">30 Sep 2026</div></div>
+      </div>
+    </div>
+
+    <div class="kt-kpi-row" style="margin-bottom:8px;">
+      <div class="kt-kpi-card">
+        <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="1"/><circle cx="12" cy="12" r="2"/></svg>
+        <div class="kt-kpi-value">KES 160,000,000</div>
+        <div class="kt-kpi-sub">Registered allocation</div>
+      </div>
+      <div class="kt-kpi-card">
+        <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="1"/><circle cx="12" cy="12" r="2"/></svg>
+        <div class="kt-kpi-value">{{reserved}}</div>
+        <div class="kt-kpi-sub">Reserved for requisitions</div>
+      </div>
+      <div class="kt-kpi-card">
+        <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="1"/><circle cx="12" cy="12" r="2"/></svg>
+        <div class="kt-kpi-value" style="color:var(--color-neutral-500);">KES 0</div>
+        <div class="kt-kpi-sub">Committed to contracts</div>
+      </div>
+      <div class="kt-kpi-card is-live">
+        <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="1"/><circle cx="12" cy="12" r="2"/></svg>
+        <div class="kt-kpi-value">{{available}}</div>
+        <div class="kt-kpi-sub">Available to reserve</div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--color-neutral-600);margin:0 0 24px;">Funding position as at {{asAt}}</p>
+
+    <div class="card blueprint elev-sm" style="padding:0;margin-bottom:40px;">
+      <h3 class="kt-card-title" style="margin:0;padding:20px 20px 4px;">Budget Lines</h3>
+      <table class="table" style="table-layout:fixed;width:100%;">
+        <thead><tr><th style="width:25%;">Budget Line</th><th style="width:10%;">Available to</th><th style="width:14.5%;text-align:right;">Registered allocation</th><th style="width:14.5%;text-align:right;">Reserved for requisitions</th><th style="width:14.5%;text-align:right;">Committed to contracts</th><th style="width:14.5%;text-align:right;">Available to reserve</th><th style="width:7%;"></th></tr></thead>
+        <tbody>
+          <tr><td><div>Digital health infrastructure programme</div><div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px;">MOH-BL-DHI-2027</div></td><td>Digital Health</td><td class="is-num">KES 100,000,000</td><td class="is-num">{{dhiReserved}}</td><td class="is-num is-zero">KES 0</td><td class="is-num">{{dhiAvailable}}</td><td><a href="#">View</a></td></tr>
+          <tr><td><div>Digital health workforce development</div><div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px;">MOH-BL-HWD-2027</div></td><td>All departments</td><td class="is-num">KES 60,000,000</td><td class="is-num is-zero">KES 0</td><td class="is-num is-zero">KES 0</td><td class="is-num">KES 60,000,000</td><td><a href="#">View</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{isLoading}}" hint-placeholder-val="{{false}}">
+  <div style="max-width:1240px;margin:0 auto;padding:0 40px;">
+    <div class="card blueprint elev-sm" style="padding:24px;margin-bottom:24px;">
+      <div style="width:300px;height:16px;background:var(--color-neutral-200);margin-bottom:14px;animation:ktPulse 1.6s ease-in-out infinite;"></div>
+      <div style="width:200px;height:12px;background:var(--color-neutral-200);animation:ktPulse 1.6s ease-in-out infinite;"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+      <div class="card blueprint elev-sm" style="padding:18px;height:70px;"><div style="width:70%;height:14px;background:var(--color-neutral-200);animation:ktPulse 1.6s ease-in-out infinite;"></div></div>
+      <div class="card blueprint elev-sm" style="padding:18px;height:70px;"><div style="width:70%;height:14px;background:var(--color-neutral-200);animation:ktPulse 1.6s ease-in-out infinite;"></div></div>
+      <div class="card blueprint elev-sm" style="padding:18px;height:70px;"><div style="width:70%;height:14px;background:var(--color-neutral-200);animation:ktPulse 1.6s ease-in-out infinite;"></div></div>
+      <div class="card blueprint elev-sm" style="padding:18px;height:70px;"><div style="width:70%;height:14px;background:var(--color-neutral-200);animation:ktPulse 1.6s ease-in-out infinite;"></div></div>
+    </div>
+    <div class="card blueprint elev-sm" style="padding:20px;">
+      <div style="height:14px;background:var(--color-neutral-200);margin-bottom:16px;animation:ktPulse 1.6s ease-in-out infinite;"></div>
+      <div style="height:14px;background:var(--color-neutral-200);animation:ktPulse 1.6s ease-in-out infinite;"></div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{isNoBaseline}}" hint-placeholder-val="{{false}}">
+  <div style="max-width:640px;margin:40px auto 0;padding:0 40px;text-align:center;">
+    <div class="card blueprint elev-sm" style="padding:48px 40px;">
+      <h2 style="font-family:var(--font-heading);font-weight:600;font-size:22px;margin:0 0 10px;">No procurement allocation has been recorded for FY 2027/28.</h2>
+      <p style="font-size:14px;color:var(--color-neutral-700);margin:0 0 24px;">Record the externally approved allocation for this financial year.</p>
+      <button type="button" class="btn btn-primary">Record approved allocation</button>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{isForbidden}}" hint-placeholder-val="{{false}}">
+  <div style="max-width:640px;margin:40px auto 0;padding:0 40px;text-align:center;">
+    <div class="card blueprint elev-sm" style="padding:48px 40px;">
+      <h2 style="font-family:var(--font-heading);font-weight:600;font-size:22px;margin:0 0 10px;">You do not have access to Budget &amp; Funding.</h2>
+      <p style="font-size:14px;color:var(--color-neutral-700);margin:0;">This area needs one of these responsibilities: Budget Officer, Budget Approver, Finance Confirmation Officer or Auditor. Ask your KenTender administrator to assign one in System setup.</p>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{isServerError}}" hint-placeholder-val="{{false}}">
+  <div style="max-width:640px;margin:40px auto 0;padding:0 40px;text-align:center;">
+    <div class="card blueprint elev-sm" style="padding:48px 40px;">
+      <h2 style="font-family:var(--font-heading);font-weight:600;font-size:22px;margin:0 0 10px;">Budget &amp; Funding could not be loaded.</h2>
+      <p style="font-size:14px;color:var(--color-neutral-700);margin:0 0 24px;">Try again. If the problem continues, contact KenTender support.</p>
+      <button type="button" class="btn btn-primary">Try again</button>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { view: 'active' };
+  renderVals() {
+    const v = this.state.view;
+    const cls = (name) => v === name ? 'btn btn-primary' : 'btn btn-secondary';
+    const pendingViews = ['initialDraft', 'initialSubmitted', 'returned', 'currentDraft', 'currentSubmitted'];
+    const hasCurrent = v === 'active' || v === 'currentDraft' || v === 'currentSubmitted' || v === 'closed';
+    const march = v === 'currentDraft' || v === 'currentSubmitted';
+    const copy = {
+      initialDraft: { heading: 'Allocation draft', status: 'Draft', statusClass: 'kt-status is-draft', body: 'Continue recording the approved allocation. No allocation is current in KenTender yet.', action: 'Continue draft', btn: 'btn btn-primary', version: 'Version 1', who: 'Created by', whenLabel: 'Last saved', when: '1 Oct 2026, 15:55 EAT' },
+      initialSubmitted: { heading: 'Awaiting Budget Approver review', status: 'Submitted for approval', statusClass: 'kt-status is-pending', body: 'No allocation is current in KenTender yet. The submitted allocation is read-only until the Budget Approver decides it.', action: 'Review', btn: 'btn btn-primary', version: 'Version 1', who: 'Submitted by', whenLabel: 'Submitted', when: '1 Oct 2026, 16:20 EAT' },
+      returned: { heading: 'Changes requested', status: 'Draft', statusClass: 'kt-status is-attention', body: 'Correct the returned allocation and resubmit it. The earlier submission and its document are retained.', action: 'Correct and resubmit', btn: 'btn btn-primary', version: 'Version 1', who: 'Submitted by', whenLabel: 'Returned', when: '2 Oct 2026, 10:40 EAT' },
+      currentDraft: { heading: 'Update in progress', status: 'Draft', statusClass: 'kt-status is-draft', body: 'The current allocation stays in use until this update is approved.', action: 'Continue update', btn: 'btn btn-secondary', version: 'Version 2', who: 'Created by', whenLabel: 'Last saved', when: '15 Mar 2027, 15:55 EAT' },
+      currentSubmitted: { heading: 'Allocation update awaiting Budget Approver review', status: 'Submitted for approval', statusClass: 'kt-status is-pending', body: 'The current allocation stays in use. Version 2 is read-only until the Budget Approver decides it.', action: 'View version (read-only)', btn: 'btn btn-secondary', version: 'Version 2', who: 'Submitted by', whenLabel: 'Submitted', when: '15 Mar 2027, 16:20 EAT' },
+    }[v] || {};
+    return {
+      setActive: () => this.setState({ view: 'active' }), setLoading: () => this.setState({ view: 'loading' }),
+      setNoBaseline: () => this.setState({ view: 'nobaseline' }), setForbidden: () => this.setState({ view: 'forbidden' }),
+      setServerError: () => this.setState({ view: 'servererror' }),
+      setInitialDraft: () => this.setState({ view: 'initialDraft' }), setInitialSubmitted: () => this.setState({ view: 'initialSubmitted' }),
+      setReturned: () => this.setState({ view: 'returned' }), setCurrentDraft: () => this.setState({ view: 'currentDraft' }),
+      setCurrentSubmitted: () => this.setState({ view: 'currentSubmitted' }), setClosed: () => this.setState({ view: 'closed' }),
+      isActive: hasCurrent, isLoading: v === 'loading', isNoBaseline: v === 'nobaseline', isForbidden: v === 'forbidden', isServerError: v === 'servererror',
+      isPendingCard: pendingViews.includes(v), isReturned: v === 'returned',
+      btnActive: cls('active'), btnLoading: cls('loading'), btnNoBaseline: cls('nobaseline'), btnForbidden: cls('forbidden'), btnServerError: cls('servererror'),
+      btnInitialDraft: cls('initialDraft'), btnInitialSubmitted: cls('initialSubmitted'), btnReturned: cls('returned'), btnCurrentDraft: cls('currentDraft'), btnCurrentSubmitted: cls('currentSubmitted'), btnClosed: cls('closed'),
+      pendingHeading: copy.heading, pendingStatus: copy.status, pendingStatusClass: copy.statusClass, pendingBody: copy.body, pendingAction: copy.action, pendingBtnClass: copy.btn,
+      pendingVersion: copy.version, pendingWhoLabel: copy.who, pendingWhenLabel: copy.whenLabel, pendingWhen: copy.when,
+      currentStatus: v === 'closed' ? 'Closed' : 'Current', currentStatusClass: v === 'closed' ? 'kt-status is-critical' : 'kt-status is-live',
+      reserved: march ? 'KES 80,000,000' : 'KES 0', available: march ? 'KES 80,000,000' : 'KES 160,000,000',
+      dhiReserved: march ? 'KES 80,000,000' : 'KES 0', dhiAvailable: march ? 'KES 20,000,000' : 'KES 100,000,000',
+      asAt: march ? '16 Mar 2027, 10:15 EAT' : (v === 'closed' ? '1 Jul 2028, 09:12 EAT (closed)' : '10 Dec 2026, 15:05 EAT'),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

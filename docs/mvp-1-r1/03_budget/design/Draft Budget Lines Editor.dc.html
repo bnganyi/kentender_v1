@@ -8,121 +8,112 @@
 <body>
 <x-dc>
 <helmet>
-  <link rel="stylesheet" href="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/styles.css">
-  <script src="_ds/industry-f4215206-dde7-4912-856f-50b1076a52f6/_ds_bundle.js"></script>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
   <style>
     body { margin: 0; }
     a { color: var(--color-accent-700); }
     a:hover { color: var(--color-accent-900); }
-    .kt-tab { font-family: var(--font-heading); font-weight: 600; font-size: 15px; padding: 10px 2px; color: color-mix(in srgb, var(--color-text) 55%, transparent); border-bottom: 2px solid transparent; cursor: pointer; }
-    .kt-tab.active { color: var(--color-text); border-bottom-color: var(--color-accent); }
-    .kt-input-prefix { min-height: 36px; padding: 6px 10px; font-size: 14px; display: flex; align-items: center; gap: 6px; background: var(--color-surface); border: 1px solid var(--color-divider); border-radius: var(--radius-md); }
-    .kt-input-prefix span.prefix { color: color-mix(in srgb, var(--color-text) 55%, transparent); }
-    .kt-input-prefix input { border: none; background: transparent; padding: 0; min-height: auto; width: 100%; }
-    .btn-danger-outline { border: 1px solid color-mix(in srgb, #b91c1c 55%, transparent); color: #b91c1c; background: transparent; font-size: 13px; padding: 5px 10px; }
-    .btn-danger-outline:hover { background: color-mix(in srgb, #b91c1c 8%, transparent); }
-    select.input { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235d5d60' stroke-width='1.5'><path d='M6 9l6 6 6-6'/></svg>"); background-repeat: no-repeat; background-position: right 10px center; background-size: 14px; padding-right: 30px; }
   </style>
 </helmet>
-<div style="width:1440px;min-height:1024px;background:var(--color-bg);font-family:var(--font-body);color:var(--color-text);box-sizing:border-box">
-  <div style="max-width:1200px;margin:0 auto;padding:32px 0;display:flex;flex-direction:column">
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:60px;">
+  <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
+    <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">BUD-CHG-001 v1.9 · Totals:</span>
+    <button type="button" class="{{btnMatch}}" onclick="{{setMatch}}" style="font-size:12px;padding:6px 12px;">03 Match</button>
+    <button type="button" class="{{btnUnder}}" onclick="{{setUnder}}" style="font-size:12px;padding:6px 12px;">03 Amount still to assign</button>
+    <button type="button" class="{{btnOver}}" onclick="{{setOver}}" style="font-size:12px;padding:6px 12px;">03 Amount over allocation</button>
+  </div>
 
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px">
+  <div data-screen-label="BUD-DES-03 Draft Budget Lines editor" style="max-width:1440px;margin:0 auto;padding:8px 40px 0;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;margin-bottom:20px;">
       <div>
-        <div style="font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--color-accent-700);margin-bottom:8px">MOH-BUD-2027-001 &middot; VERSION 1</div>
-        <div style="display:flex;align-items:center;gap:12px">
-          <h1 style="margin:0">Register approved budget</h1>
-          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:3px 10px 3px 8px;border-radius:6px;background:var(--color-accent-100);color:var(--color-accent-800)"><span style="width:6px;height:6px;border-radius:50%;background:var(--color-accent-600);display:inline-block"></span>Draft</span>
+        <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:6px;">MOH-BUD-2027-001 · VERSION 1</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <h1 style="font-family:var(--font-heading);font-weight:600;font-size:30px;margin:0;letter-spacing:.01em;">Record approved allocation</h1>
+          <span class="kt-status is-draft">Draft</span>
         </div>
       </div>
-      <div style="display:flex;gap:12px;flex:none;margin-top:4px">
-        <button type="button" class="btn btn-secondary" style="border-color:color-mix(in srgb, var(--color-text) 30%, transparent)">Save draft</button>
+      <div style="display:flex;gap:10px;">
+        <button type="button" class="btn btn-secondary">Save changes</button>
         <button type="button" class="btn btn-primary">Submit for review</button>
       </div>
     </div>
 
-    <div style="display:flex;gap:28px;border-bottom:1px solid var(--color-divider);margin-bottom:24px">
-      <div class="kt-tab">Overview</div>
-      <div class="kt-tab active">Budget Lines</div>
+    <div class="kt-tabs" role="tablist" style="margin-bottom:24px;">
+      <label class="kt-tab"><input type="radio" name="dtab" />Approval details</label>
+      <label class="kt-tab"><input type="radio" name="dtab" checked="checked" />Budget lines</label>
     </div>
 
-    <div class="card blueprint" style="margin-bottom:16px;padding:16px 24px">
-      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
-        <div>
-          <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 55%, transparent);margin-bottom:4px">Authorised total</div>
-          <div style="font-family:var(--font-heading);font-weight:600;font-size:20px">KES 160,000,000</div>
-        </div>
-        <div>
-          <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 55%, transparent);margin-bottom:4px">Budget Line total</div>
-          <div style="font-family:var(--font-heading);font-weight:600;font-size:20px">KES 160,000,000</div>
-        </div>
-        <div>
-          <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:color-mix(in srgb, var(--color-text) 55%, transparent);margin-bottom:4px">Difference</div>
-          <div style="font-family:var(--font-heading);font-weight:600;font-size:20px">KES 0</div>
-        </div>
+    <div class="kt-kpi-row" style="margin-bottom:14px;">
+      <div class="kt-kpi-card">
+        <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="1"/><circle cx="12" cy="12" r="2"/></svg>
+        <div class="kt-kpi-value">KES 160,000,000</div>
+        <div class="kt-kpi-sub">Approved allocation</div>
+      </div>
+      <div class="kt-kpi-card">
+        <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="1"/><circle cx="12" cy="12" r="2"/></svg>
+        <div class="kt-kpi-value">{{entered}}</div>
+        <div class="kt-kpi-sub">Total entered</div>
       </div>
     </div>
 
-    <div class="card blueprint" style="padding:20px 24px">
-      <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-      <table class="table" style="margin-bottom:16px">
-        <thead>
-          <tr>
-            <th>Budget Line</th>
-            <th>Line title</th>
-            <th>Owner scope</th>
-            <th>Funding source</th>
-            <th style="text-align:right">Approved amount</th>
-            <th></th>
-          </tr>
-        </thead>
+    <div class="{{noticeClass}}" style="margin-bottom:24px;">
+      <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg>
+      <div class="kt-notice-body">{{noticeText}}</div>
+    </div>
+
+    <p class="kt-label" style="margin:0 0 10px;">Which department may use this budget line?</p>
+
+    <div class="card blueprint elev-sm" style="padding:0;margin-bottom:16px;overflow-x:auto;overflow-y:hidden;">
+      <table class="table" style="min-width:900px;">
+        <thead><tr><th>Budget line</th><th>Available to</th><th>Funding source</th><th class="is-num">Amount</th><th></th></tr></thead>
         <tbody>
-          <tr>
-            <td style="color:color-mix(in srgb, var(--color-text) 55%, transparent);white-space:nowrap">MOH-BL-DHI-2027</td>
-            <td><input class="input" value="Digital health infrastructure programme"></td>
-            <td>
-              <select class="input">
-                <option>Digital Health</option>
-              </select>
+          <tr style="vertical-align:top;">
+            <td style="vertical-align:top;">
+              <input class="input" style="min-width:260px;margin-bottom:4px;box-sizing:border-box;" value="Digital health infrastructure programme" />
+              <div style="font-size:11px;color:var(--color-neutral-600);">MOH-BL-DHI-2027</div>
             </td>
-            <td>
-              <select class="input">
-                <option>Government of Kenya</option>
-              </select>
-            </td>
-            <td style="text-align:right">
-              <div class="kt-input-prefix"><span class="prefix">KES</span><input value="100,000,000" style="text-align:right"></div>
-            </td>
-            <td style="white-space:nowrap"><button type="button" class="btn btn-danger-outline">Remove</button></td>
+            <td style="vertical-align:top;"><select class="input" style="min-width:165px;box-sizing:border-box;text-overflow:ellipsis;overflow:hidden;"><option>Digital Health</option></select></td>
+            <td style="vertical-align:top;"><select class="input" style="min-width:165px;box-sizing:border-box;text-overflow:ellipsis;overflow:hidden;"><option>Government of Kenya</option></select></td>
+            <td style="vertical-align:top;"><input class="input" style="text-align:right;width:100%;min-width:150px;box-sizing:border-box;" value="KES 100,000,000" /></td>
+            <td style="vertical-align:top;"><button type="button" class="btn" style="border-color:var(--status-critical);color:var(--status-critical);background:transparent;font-size:13px;padding:5px 10px;white-space:nowrap;">Remove</button></td>
           </tr>
-          <tr>
-            <td style="color:color-mix(in srgb, var(--color-text) 55%, transparent);white-space:nowrap">MOH-BL-HWD-2027</td>
-            <td><input class="input" value="Digital health workforce development"></td>
-            <td>
-              <select class="input">
-                <option>HR Management and Development</option>
-              </select>
+          <tr style="vertical-align:top;">
+            <td style="vertical-align:top;">
+              <input class="input" style="min-width:260px;margin-bottom:4px;box-sizing:border-box;" value="Digital health workforce development" />
+              <div style="font-size:11px;color:var(--color-neutral-600);">MOH-BL-HWD-2027</div>
             </td>
-            <td>
-              <select class="input">
-                <option>Government of Kenya</option>
-              </select>
-            </td>
-            <td style="text-align:right">
-              <div class="kt-input-prefix"><span class="prefix">KES</span><input value="60,000,000" style="text-align:right"></div>
-            </td>
-            <td style="white-space:nowrap"><button type="button" class="btn btn-danger-outline">Remove</button></td>
+            <td style="vertical-align:top;"><select class="input" style="min-width:165px;box-sizing:border-box;text-overflow:ellipsis;overflow:hidden;"><option>All departments</option></select></td>
+            <td style="vertical-align:top;"><select class="input" style="min-width:165px;box-sizing:border-box;text-overflow:ellipsis;overflow:hidden;"><option>Government of Kenya</option></select></td>
+            <td style="vertical-align:top;"><input class="input" style="text-align:right;width:100%;min-width:150px;box-sizing:border-box;" value="{{hwdAmount}}" /></td>
+            <td><button type="button" class="btn" style="border-color:var(--status-critical);color:var(--status-critical);background:transparent;font-size:13px;padding:5px 10px;white-space:nowrap;">Remove</button></td>
           </tr>
         </tbody>
       </table>
-      <button type="button" class="btn btn-secondary" style="border-color:color-mix(in srgb, var(--color-text) 30%, transparent);align-self:flex-start">Add Budget Line</button>
     </div>
 
+    <button type="button" class="btn btn-secondary">Add Budget Line</button>
   </div>
 </div>
 
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1024}}"></script>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { totals: 'match' };
+  renderVals() {
+    const t = this.state.totals;
+    const cls = (n) => t === n ? 'btn btn-primary' : 'btn btn-secondary';
+    return {
+      setMatch: () => this.setState({ totals: 'match' }), setUnder: () => this.setState({ totals: 'under' }), setOver: () => this.setState({ totals: 'over' }),
+      btnMatch: cls('match'), btnUnder: cls('under'), btnOver: cls('over'),
+      entered: t === 'match' ? 'KES 160,000,000' : (t === 'under' ? 'KES 150,000,000' : 'KES 165,000,000'),
+      hwdAmount: t === 'match' ? 'KES 60,000,000' : (t === 'under' ? 'KES 50,000,000' : 'KES 65,000,000'),
+      noticeClass: t === 'match' ? 'kt-notice is-live' : (t === 'under' ? 'kt-notice is-warning' : 'kt-notice is-critical'),
+      noticeText: t === 'match' ? 'Budget lines match the approved allocation.' : (t === 'under' ? 'Amount still to assign: KES 10,000,000' : 'Amount over allocation: KES 5,000,000'),
+    };
+  }
+}
+</script>
 </body>
 </html>
