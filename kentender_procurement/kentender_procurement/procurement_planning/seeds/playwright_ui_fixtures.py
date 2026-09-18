@@ -946,6 +946,23 @@ def reset_active_fixture(*, need: str = "", commit: bool = True) -> dict[str, An
 UPDATE_CHANGE_REASON = "The department's description of the package was corrected after activation."
 
 
+def reset_late_activation_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""§13.3 / §10.14 U21-LATE-ACTIVATION — the initial plan that only became
+	active after its financial year had already begun.
+
+	The fixture year starts 1 Jul 2098 and the seeded activation happens under
+	the frozen clock, so the gap is made by moving `activated_at` a month past
+	the year start — a fixture-only override, the same pattern as
+	`funding_state` in the reassessment profile. Nothing else is touched: the
+	explanation exists precisely because the activation instant is a fact that
+	may never be rewritten (§4.9)."""
+	state = reset_active_fixture(need=need, commit=False)
+	frappe.db.set_value("Annual Plan Version", state["plan_version"], "activated_at", "2098-08-01 09:00:00", update_modified=False)
+	if commit:
+		frappe.db.commit()
+	return state
+
+
 def reset_update_candidate_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
 	"""§10.3 U01-CURRENT-UPDATE: the plan in force plus an open Draft
 	successor that has actually changed something.

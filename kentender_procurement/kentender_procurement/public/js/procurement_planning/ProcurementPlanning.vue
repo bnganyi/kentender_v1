@@ -225,8 +225,18 @@
 						@correct-treasury="treasuryDialog = true"
 						@request-withdrawal="withdrawalDialog = 'request'"
 						@decide-withdrawal="withdrawalDialog = 'decision'"
+						@explain-late="lateExplanationDialog = true"
 						@navigate="onNavigate"
 						@back="publication.plan_reference ? frappe.set_route(PLAN_PAGE, publication.plan_reference) : frappe.set_route(WORKSPACE_PAGE)"
+					/>
+					<LateExplanationDialog
+						v-if="lateExplanationDialog"
+						:financial-year-started="publication.late_activation?.financial_year_started_display || ''"
+						:activated-at="publication.late_activation?.activated_display || ''"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onRecordLateExplanation"
+						@cancel="lateExplanationDialog = false"
 					/>
 					<TreasurySubmissionDialog
 						v-if="treasuryDialog"
@@ -416,6 +426,7 @@ import ProgressScreen from "./components/ProgressScreen.vue";
 import CorrectionRequestsScreen from "./components/CorrectionRequestsScreen.vue";
 import RecordCorrectionDialog from "./components/RecordCorrectionDialog.vue";
 import PublicationResultScreen from "./components/PublicationResultScreen.vue";
+import LateExplanationDialog from "./components/LateExplanationDialog.vue";
 import TreasurySubmissionDialog from "./components/TreasurySubmissionDialog.vue";
 import WithdrawalDialog from "./components/WithdrawalDialog.vue";
 import PlanItemEditorScreen from "./components/PlanItemEditorScreen.vue";
@@ -474,6 +485,7 @@ const dissolveDialog = ref(false);
 // explanation, are inputs to the decision itself rather than separate dialogs.
 const collectiveResolution = ref("");
 const treasuryDialog = ref(false);
+const lateExplanationDialog = ref(false);
 // §10.12 — "" (closed), "request" (the AO's) or "decision" (the statutory
 // authority's). The two are different dialogs for different people.
 const withdrawalDialog = ref("");
@@ -728,6 +740,7 @@ function applyLoaded(scr, loaded) {
 		case "publication":
 			publication.value = loaded;
 			treasuryDialog.value = false;
+			lateExplanationDialog.value = false;
 			withdrawalDialog.value = "";
 			break;
 	}
@@ -1015,6 +1028,24 @@ async function onRecordTreasury(values) {
 		return r;
 	});
 	if (result) treasuryDialog.value = false;
+}
+
+// §10.14 — append, never rewrite: the newest recorded explanation is named as
+// the one this supersedes, so the earlier reason stays readable beside it.
+async function onRecordLateExplanation(reason) {
+	const recorded = publication.value.late_activation?.explanations || [];
+	const latest = recorded.length ? recorded[recorded.length - 1].id : "";
+	const result = await run("record-late-explanation", async (key) => {
+		const r = await api.recordLateActivationExplanation({
+			plan_version: publication.value.version?.reference,
+			reason,
+			supersedes: latest,
+			idempotency_key: key,
+		});
+		await load({ quiet: true });
+		return r;
+	});
+	if (result) lateExplanationDialog.value = false;
 }
 
 // §5.5.2.4 — the AO asks and the statutory authority decides; the mode the

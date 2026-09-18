@@ -1863,6 +1863,46 @@ def build_review_pack(*, task: str, user: str | None = None) -> dict[str, Any]:
 # --------------------------------------------------------------------------
 
 
+def _late_activation(version, actor: str) -> dict[str, Any]:
+	"""§10.14 U21-LATE-ACTIVATION — the read-only facts the explanation is
+	about, the explanations already recorded, and whether this reader is the
+	Accounting Officer who may add one.
+
+	`applicable` is a fact about the plan, not about the reader: an auditor
+	sees the same late activation and the same history, and simply cannot add
+	to it. The dialog shows no editable date because nothing here may change
+	when the year started or when the plan became active."""
+	plan = frappe.get_doc("Annual Plan", version.annual_plan)
+	year_start = frappe.db.get_value("Fiscal Year", plan.fiscal_year, "year_start_date")
+	activated_at = version.activated_at if version.get("activated_at") else None
+	applicable = bool(
+		year_start and activated_at and frappe.utils.getdate(activated_at) >= frappe.utils.getdate(year_start)
+	)
+	rows = frappe.get_all(
+		"Late Activation Explanation",
+		filters={"plan_version": version.name},
+		fields=["name", "reason", "actor", "recorded_at", "supersedes"],
+		order_by="recorded_at asc",
+	)
+	superseded = {cstr(r.supersedes) for r in rows if cstr(r.supersedes)}
+	return {
+		"applicable": applicable,
+		"financial_year_started_display": _date(year_start),
+		"activated_display": _eat(activated_at),
+		"explanations": [
+			{
+				"id": r.name,
+				"reason": cstr(r.reason),
+				"actor_name": cstr(frappe.db.get_value("User", r.actor, "full_name") or r.actor),
+				"recorded_display": _eat(r.recorded_at),
+				"superseded": r.name in superseded,
+			}
+			for r in rows
+		],
+		"can_explain": applicable and authz.has_site_role(ROLE_ACCOUNTING_OFFICER, actor),
+	}
+
+
 def get_publication_task(*, publication: str, user: str | None = None) -> dict[str, Any]:
 	"""§10.13 — the retry/reconcile screen for one `Plan Publication`: its
 	Treasury-evidence gate, the attempt history and the current publication
@@ -1937,6 +1977,12 @@ def get_publication_task(*, publication: str, user: str | None = None) -> dict[s
 			and version.version_status in ("Approved — publication pending", "Publication failed")
 		),
 		"quiet_notice": "Publication is a system worker action after statutory approval. Retry and reconciliation are technical actions, never a business decision.",
+		# §10.14 U21-LATE-ACTIVATION / §6.3 — the Accounting Officer's own
+		# listed action when the plan only became active after the financial
+		# year had begun. Append-only: every explanation is kept and a later
+		# one supersedes rather than rewrites (§4.9), and none of this ever
+		# alters the activation instant it explains.
+		"late_activation": _late_activation(version, actor),
 		"can_retry": is_technical(actor) and doc.publication_state == "Failed",
 		"can_reconcile": is_technical(actor) and doc.publication_state == "Indeterminate",
 		# §10.12 U13-CORRECT-EVIDENCE — a correction supersedes the recorded

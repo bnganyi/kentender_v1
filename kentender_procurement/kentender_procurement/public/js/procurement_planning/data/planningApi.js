@@ -211,6 +211,13 @@ export function correctTreasurySubmissionEvidence(args) {
 	return frappeCall(`${BASE}.correct_treasury_submission_evidence`, args);
 }
 
+// §10.14 / §6.3 — why an initial plan only became active after its financial
+// year began. Append-only: a later explanation names the one it supersedes
+// and neither replaces it nor moves the activation instant.
+export function recordLateActivationExplanation(args) {
+	return frappeCall(`${BASE}.record_late_activation_explanation`, args);
+}
+
 // §5.5.2.4 — the recovery route for an approved plan whose content is
 // defective and confirmed not published. Two actors, two commands.
 export function requestPlanWithdrawal(args) {

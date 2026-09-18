@@ -1,4 +1,4 @@
-// PLN-CHG-001 v1.18 §7.2 — LateExplanationDialog component tests (U21-late-explanation).
+// PLN-CHG-001 v1.23 §10.14 — LateExplanationDialog component tests (U21-LATE-ACTIVATION).
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import LateExplanationDialog from "./LateExplanationDialog.vue";
@@ -6,7 +6,6 @@ import LateExplanationDialog from "./LateExplanationDialog.vue";
 function make(props = {}) {
 	return mount(LateExplanationDialog, {
 		props: {
-			initialVersion: 1,
 			financialYearStarted: "1 Jul 2027",
 			activatedAt: "2 Jul 2027, 09:00 EAT",
 			pending: false,
@@ -17,12 +16,14 @@ function make(props = {}) {
 }
 
 describe("LateExplanationDialog", () => {
-	it("renders the three facts and starts with an empty explanation", () => {
+	it("§10.14: heads the dialog with the outcome and states only the two read-only facts", () => {
 		const wrapper = make();
-		expect(wrapper.get(".kt-dialog-title").text()).toBe("Record late activation explanation");
+		expect(wrapper.get(".kt-dialog-title").text()).toBe("Explain late start of the annual plan");
 		const facts = wrapper.findAll(".pln-fact-val").map((f) => f.text());
-		expect(facts).toEqual(["1", "1 Jul 2027", "2 Jul 2027, 09:00 EAT"]);
+		expect(facts).toEqual(["1 Jul 2027", "2 Jul 2027, 09:00 EAT"]);
 		expect(wrapper.get('[data-testid="pln-late-explanation-reason"]').element.value).toBe("");
+		// No editable date: this says why the gap exists, it never moves it.
+		expect(wrapper.findAll('input[type="date"]')).toHaveLength(0);
 	});
 
 	it("disables Record explanation until text is entered, then emits it trimmed", async () => {

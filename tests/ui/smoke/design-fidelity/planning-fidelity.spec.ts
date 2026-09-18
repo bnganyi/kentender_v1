@@ -56,6 +56,7 @@ const U12 = `${DESIGN}/U12.dc.html`;
 const U13 = `${DESIGN}/U13.dc.html`;
 const U14 = `${DESIGN}/U14.dc.html`;
 const U16 = `${DESIGN}/U16.dc.html`;
+const U21 = `${DESIGN}/U21.dc.html`;
 
 /**
  * Landmarks the v1.23 specification replaced but the v1.23 artboard pack still
@@ -104,6 +105,7 @@ const U09_REMOVE_ACTION: LandmarkExemption[] = [
 // `variantScope` picks the one wanted by its `.tag`.
 const WITHDRAWAL_PANEL = "U13-WITHDRAWAL-REQUEST \u00b7 U13-WITHDRAWN \u00b7 U13-CORRECT-EVIDENCE";
 const TRANSMISSION_PANEL = "U13-SENDING \u00b7 U13-FAILED \u00b7 U13-UNKNOWN";
+const LATE_PANEL = "U21-UNCERTAIN-DECISION \u00b7 U21-HISTORICAL \u00b7 U21-LATE-ACTIVATION";
 
 // Sequential, but not serial: the gate runs on one worker because the fixtures
 // are one shared world, and each panel is an independent assertion about an
@@ -488,6 +490,23 @@ test.describe("Procurement Planning — design fidelity (U13 publication)", () =
 		await page.locator('[data-testid="pub-record-treasury"]').click();
 		await expect(page.locator('[data-testid="pub-treasury-dialog"]')).toBeVisible();
 		expectLandmarkSubsequence(art, await landmarks(page, '[data-testid="pub-treasury-dialog"]'), "U13-TREASURY-FORM");
+		expect(errors, "console errors").toEqual([]);
+	});
+
+	test("U21-LATE-ACTIVATION — why the plan started late, said once and kept", async ({ page, browser }) => {
+		const state = resetFixture<{ publication: string }>("reset_late_activation_fixture");
+		const art = await wanted(browser, U21, LATE_PANEL, "U21-LATE-ACTIVATION");
+		const errors = collectConsoleErrors(page);
+		await login(page, ACCOUNTING_OFFICER, PASSWORD);
+		await gotoPlanning(page, `/publication/${state.publication}`);
+		await expectReady(page, "publication");
+		await expect(page.locator('[data-testid="pub-late-activation"]')).toBeVisible();
+		await page.locator('[data-testid="pub-explain-late"]').click();
+		const dialog = page.locator('[data-testid="pln-late-explanation-dialog"]');
+		await expect(dialog).toBeVisible();
+		expectLandmarkSubsequence(art, await landmarks(page, '[data-testid="pln-late-explanation-dialog"]'), "U21-LATE-ACTIVATION");
+		// §10.14 — it says why, and offers no way to change when.
+		await expect(dialog.locator('input[type="date"]')).toHaveCount(0);
 		expect(errors, "console errors").toEqual([]);
 	});
 

@@ -126,6 +126,44 @@ describe("PublicationResultScreen — failure is not uncertainty", () => {
 		expect(ao.find('[data-testid="pub-responsible"]').text()).toContain("Authorised technical operator");
 	});
 
+	it("§10.14: the Accounting Officer is offered the late-start explanation, and it appends", () => {
+		const late = {
+			applicable: true,
+			financial_year_started_display: "1 Jul 2027",
+			activated_display: "2 Jul 2027, 09:00 EAT",
+			explanations: [],
+			can_explain: true,
+		};
+		const w = make({ task: task({ late_activation: late }) });
+		const section = w.find('[data-testid="pub-late-activation"]');
+		expect(section.exists()).toBe(true);
+		expect(section.text()).toContain("Financial year started");
+		expect(section.text()).toContain("Plan became active");
+		expect(w.find('[data-testid="pub-late-activation-none"]').exists()).toBe(true);
+		expect(w.find('[data-testid="pub-explain-late"]').text()).toBe("Explain late start of the annual plan");
+
+		// A recorded explanation is kept and shown; the action then adds to it.
+		const w2 = make({
+			task: task({
+				late_activation: {
+					...late,
+					explanations: [{ id: "LAE-1", reason: "Acknowledgement arrived after the year began.", actor_name: "Amina Hassan", recorded_display: "3 Jul 2027, 08:00 EAT", superseded: false }],
+				},
+			}),
+		});
+		expect(w2.find('[data-testid="pln-late-explanation-history"]').exists()).toBe(true);
+		expect(w2.find('[data-testid="pub-explain-late"]').text()).toBe("Add to the explanation");
+
+		// A reader who is not the Accounting Officer sees the fact, not the action.
+		const reader = make({ task: task({ late_activation: { ...late, can_explain: false } }) });
+		expect(reader.find('[data-testid="pub-late-activation"]').exists()).toBe(true);
+		expect(reader.find('[data-testid="pub-explain-late"]').exists()).toBe(false);
+
+		// Not late at all: the whole section is absent, not an empty heading.
+		const ordinary = make({ task: task() });
+		expect(ordinary.find('[data-testid="pub-late-activation"]').exists()).toBe(false);
+	});
+
 	it("U13-UNKNOWN: says it is unconfirmed, and reconciles rather than retrying blind", () => {
 		const w = make({
 			task: task({

@@ -195,6 +195,41 @@
 			Responsible role: {{ responsibleRole }}
 		</p>
 
+		<!-- §10.14 / §6.3 — the Accounting Officer's own listed action when the
+		     plan only became active after the financial year began. The facts
+		     are stated read-only; the explanation never moves the activation
+		     instant it explains, and earlier ones are kept, not replaced. -->
+		<section v-if="lateActivation.applicable" class="pln-section" data-testid="pub-late-activation">
+			<h3 class="kt-card-title">Late start of the annual plan</h3>
+			<div class="kt-meta-row">
+				<div>
+					<span class="kt-label">Financial year started</span>
+					<span class="kt-meta-value">{{ lateActivation.financial_year_started_display }}</span>
+				</div>
+				<div>
+					<span class="kt-label">Plan became active</span>
+					<span class="kt-meta-value">{{ lateActivation.activated_display }}</span>
+				</div>
+			</div>
+			<LateExplanationHistory
+				v-if="lateActivation.explanations.length"
+				:financial-year-started="lateActivation.financial_year_started_display"
+				:activated-at="lateActivation.activated_display"
+				:entries="lateActivation.explanations"
+			/>
+			<p v-else class="kt-muted" data-testid="pub-late-activation-none">No explanation has been recorded yet.</p>
+			<button
+				v-if="lateActivation.can_explain"
+				type="button"
+				class="kt-btn kt-btn-secondary"
+				data-testid="pub-explain-late"
+				:disabled="pending"
+				@click="$emit('explain-late')"
+			>
+				{{ lateActivation.explanations.length ? "Add to the explanation" : "Explain late start of the annual plan" }}
+			</button>
+		</section>
+
 		<details v-if="attempts.length" class="kt-disclosure" data-testid="pub-attempts">
 			<summary class="kt-disclosure-head"><span class="kt-disclosure-title">Publication attempts</span></summary>
 			<div class="kt-disclosure-body">
@@ -217,6 +252,8 @@
 <script setup>
 import { computed } from "vue";
 
+import LateExplanationHistory from "./LateExplanationHistory.vue";
+
 const props = defineProps({
 	task: { type: Object, default: () => ({}) },
 	pending: Boolean,
@@ -225,7 +262,7 @@ const props = defineProps({
 
 defineEmits([
 	"record-treasury", "correct-treasury", "retry", "reconcile",
-	"request-withdrawal", "decide-withdrawal", "navigate", "back",
+	"request-withdrawal", "decide-withdrawal", "explain-late", "navigate", "back",
 ]);
 
 const statusRows = computed(() => props.task.status_rows || []);
@@ -244,6 +281,15 @@ const stateLabel = computed(() => {
 // correcting the Treasury submission) must not silence it: an Accounting
 // Officer looking at a failed publication would otherwise be shown no retry
 // and no word of whose it is.
+const lateActivation = computed(() => ({
+	applicable: false,
+	financial_year_started_display: "",
+	activated_display: "",
+	explanations: [],
+	can_explain: false,
+	...(props.task.late_activation || {}),
+}));
+
 const responsibleRole = computed(() => {
 	const unrecovered =
 		props.task.publication_state === "Failed" || props.task.publication_state === "Indeterminate";
