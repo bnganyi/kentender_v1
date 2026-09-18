@@ -16,10 +16,10 @@
   <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
     <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">TPR-DES-09:</span>
-    <button type="button" class="{{btnHopf}}" onclick="{{setHopf}}" style="font-size:12px;padding:6px 12px;">HOPF</button>
-    <button type="button" class="{{btnAo}}" onclick="{{setAo}}" style="font-size:12px;padding:6px 12px;">Accounting Officer</button>
-    <button type="button" class="{{btnPo}}" onclick="{{setPo}}" style="font-size:12px;padding:6px 12px;">Procurement Officer</button>
-    <button type="button" class="{{btnReader}}" onclick="{{setReader}}" style="font-size:12px;padding:6px 12px;">Reader</button>
+    <button type="button" class="{{btnHopf}}" onclick="{{setHopf}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">HOPF</button>
+    <button type="button" class="{{btnAo}}" onclick="{{setAo}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Accounting Officer</button>
+    <button type="button" class="{{btnPo}}" onclick="{{setPo}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Procurement Officer</button>
+    <button type="button" class="{{btnReader}}" onclick="{{setReader}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Reader</button>
     <button type="button" class="{{btnEnded}}" onclick="{{setEnded}}" style="font-size:12px;padding:6px 12px;margin-left:auto;">Submission ended</button>
   </div>
 
@@ -146,7 +146,7 @@ class Component extends DCLogic {
   state = { role: 'hopf', ended: false, open: [false,false,false,false,false,false,false] };
   renderVals() {
     const r = this.state.role;
-    const cls = (name) => r === name ? 'btn btn-primary' : 'btn btn-secondary';
+    const cls = (name) => r === name ? 'btn btn-primary' : 'btn';
     const open = this.state.open;
     const toggles = {};
     open.forEach((v, i) => {
@@ -162,7 +162,7 @@ class Component extends DCLogic {
       setReader: () => this.setState({ role: 'reader' }),
       setEnded: () => this.setState((s) => ({ ended: !s.ended })),
       btnHopf: cls('hopf'), btnAo: cls('ao'), btnPo: cls('po'), btnReader: cls('reader'),
-      btnEnded: this.state.ended ? 'btn btn-primary' : 'btn btn-secondary',
+      btnEnded: this.state.ended ? 'btn btn-primary' : 'btn',
       isOpen: !this.state.ended,
       isEnded: this.state.ended,
       hasAddenda: true,

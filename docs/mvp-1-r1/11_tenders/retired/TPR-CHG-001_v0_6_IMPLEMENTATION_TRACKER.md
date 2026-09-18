@@ -1,3 +1,5 @@
+> **Retired 18 September 2026** — superseded in full by TPR-CHG-001 v0.8 (`docs/mvp-1-r1/11_tenders/`). The `tender_preparation` module this file tracks was removed without data migration. Historical reference only.
+
 # TPR-CHG-001 v0.6 — Tender Preparation build — tracker
 
 **Authority:** `KenTender_TPR-CHG-001_Minimal_IT_Tender_Preparation_v0_6.md` (approved 7 September 2026).

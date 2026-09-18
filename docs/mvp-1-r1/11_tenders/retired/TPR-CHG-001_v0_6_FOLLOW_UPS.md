@@ -1,3 +1,5 @@
+> **Retired 18 September 2026** — superseded in full by TPR-CHG-001 v0.8 (`docs/mvp-1-r1/11_tenders/`). The `tender_preparation` module this file tracks was removed without data migration. Historical reference only.
+
 # Tender Preparation — outstanding follow-ups
 
 Items deliberately left open during the **TPR-CHG-001 v0.6** build (started 8 September 2026). Each is either a correction owed to another approved document, a gap in a sibling module's contract, or a capability with no provider in this bench. Nothing here blocks the module's acceptance contract unless a row says so.

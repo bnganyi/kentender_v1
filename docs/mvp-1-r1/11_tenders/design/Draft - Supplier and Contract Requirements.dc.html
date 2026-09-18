@@ -22,8 +22,8 @@
   <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
     <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">TPR-DES-04 / 13:</span>
-    <button type="button" class="{{btnBase}}" onclick="{{setBase}}" style="font-size:12px;padding:6px 12px;">Draft, complete</button>
-    <button type="button" class="{{btnReturned}}" onclick="{{setReturned}}" style="font-size:12px;padding:6px 12px;">Returned for correction</button>
+    <button type="button" class="{{btnBase}}" onclick="{{setBase}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Draft, complete</button>
+    <button type="button" class="{{btnReturned}}" onclick="{{setReturned}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Returned for correction</button>
   </div>
 
   <div data-screen-label="TPR-DES-04 Draft supplier and contract requirements" style="max-width:1100px;margin:0 auto;padding:32px 40px 0;">
@@ -46,27 +46,27 @@
       </div>
 
       <div style="padding:24px 24px 20px;border-bottom:1px solid var(--color-divider);">
-        <div style="display:grid;grid-template-columns:32px 1fr 32px 1fr 32px;grid-template-rows:auto auto;row-gap:10px;align-items:center;">
-          <div style="grid-row:1;width:32px;height:32px;border-radius:50%;background:var(--status-live);color:#fff;display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg></div>
-          <div style="grid-row:1;height:2px;background:var(--status-live);margin:0 6px;"></div>
-          <div style="grid-row:1;width:32px;height:32px;border-radius:50%;background:var(--color-accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-weight:600;box-shadow:0 0 0 3px var(--color-accent-100);">2</div>
-          <div style="grid-row:1;height:2px;background:var(--color-neutral-300);margin:0 6px;"></div>
-          <div style="grid-row:1;width:32px;height:32px;border-radius:50%;background:var(--color-surface-2);color:var(--color-neutral-600);display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-weight:600;">3</div>
-
-          <div style="grid-row:2;grid-column:1 / 3;">
-            <div style="font-size:14px;font-weight:600;margin-bottom:6px;">Tender details</div>
-            <span class="kt-status is-live">Complete</span>
-          </div>
-          <div style="grid-row:2;grid-column:3 / 5;">
-            <div style="font-size:14px;font-weight:700;margin-bottom:6px;color:var(--color-accent-700);">Supplier and contract requirements</div>
-            <span class="kt-status is-attention">Needs attention</span>
-          </div>
-          <div style="grid-row:2;grid-column:4 / 6;text-align:right;">
-            <div style="font-size:14px;font-weight:600;margin-bottom:6px;">Review and submit</div>
-            <span class="kt-status is-pending">Not started</span>
-          </div>
+        <div style="display:flex;align-items:center;">
+          <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-weight:600;flex:none;background:var(--status-live);color:#fff;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <div style="flex:1;height:2px;margin:0 8px;background:var(--status-live);"></div>
+          <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-weight:600;flex:none;background:var(--color-accent);color:#fff;box-shadow:0 0 0 3px var(--color-accent-100);">2</div>
+          <div style="flex:1;height:2px;margin:0 8px;background:var(--color-neutral-300);"></div>
+          <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-weight:600;flex:none;background:var(--color-surface-2);color:var(--color-neutral-600);">3</div>
         </div>
-      </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:12px;">
+        <div style="text-align:left;min-width:0;">
+          <div style="font-size:14px;font-weight:600;margin-bottom:6px;text-wrap:pretty;">Tender details</div>
+          <span class="kt-status is-live">Complete</span>
+        </div>
+        <div style="text-align:center;min-width:0;">
+          <div style="font-size:14px;font-weight:700;margin-bottom:6px;color:var(--color-accent-700);text-wrap:pretty;">Supplier and contract requirements</div>
+          <span class="kt-status is-attention">Needs attention</span>
+        </div>
+        <div style="text-align:right;min-width:0;">
+          <div style="font-size:14px;font-weight:600;margin-bottom:6px;text-wrap:pretty;">Review and submit</div>
+          <span class="kt-status is-pending">Not started</span>
+        </div>
+        </div>      </div>
 
       <div style="padding:16px 24px;border-bottom:1px solid var(--color-divider);">
         <p style="font-size:14px;color:var(--color-neutral-700);margin:0;">The authorised requirements are already included. Choose only the additional evidence suppliers must provide and complete the contract terms below.</p>
@@ -195,7 +195,7 @@ class Component extends DCLogic {
   state = { view: 'base', addOpen: false, evalOpen: false, reqOpen: false, hasEvidence: false };
   renderVals() {
     const v = this.state.view;
-    const cls = (val) => val === v ? 'btn btn-primary' : 'btn btn-secondary';
+    const cls = (val) => val === v ? 'btn btn-primary' : 'btn';
     return {
       setBase: () => this.setState({ view: 'base' }),
       setReturned: () => this.setState({ view: 'returned' }),

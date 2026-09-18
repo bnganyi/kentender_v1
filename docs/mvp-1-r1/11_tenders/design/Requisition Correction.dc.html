@@ -16,9 +16,9 @@
   <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
     <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">TPR-DES-13:</span>
-    <button type="button" class="{{btnReturned}}" onclick="{{setReturned}}" style="font-size:12px;padding:6px 12px;">Returned</button>
-    <button type="button" class="{{btnRequested}}" onclick="{{setRequested}}" style="font-size:12px;padding:6px 12px;">Correction requested</button>
-    <button type="button" class="{{btnSuccessor}}" onclick="{{setSuccessor}}" style="font-size:12px;padding:6px 12px;">Corrected successor ready</button>
+    <button type="button" class="{{btnReturned}}" onclick="{{setReturned}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Returned</button>
+    <button type="button" class="{{btnRequested}}" onclick="{{setRequested}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Correction requested</button>
+    <button type="button" class="{{btnSuccessor}}" onclick="{{setSuccessor}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Corrected successor ready</button>
   </div>
 
   <div data-screen-label="TPR-DES-13 Requisition correction" style="max-width:900px;margin:0 auto;padding:32px 40px 0;">
@@ -126,7 +126,7 @@ class Component extends DCLogic {
   state = { variant: 'returned', requestDialogOpen: false };
   renderVals() {
     const v = this.state.variant;
-    const cls = (name) => v === name ? 'btn btn-primary' : 'btn btn-secondary';
+    const cls = (name) => v === name ? 'btn btn-primary' : 'btn';
     return {
       setReturned: () => this.setState({ variant: 'returned' }),
       setRequested: () => this.setState({ variant: 'requested' }),

@@ -21,9 +21,9 @@
   <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
     <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">TPR-DES-03 meeting:</span>
-    <button type="button" class="{{btnNo}}" onclick="{{setNo}}" style="font-size:12px;padding:6px 12px;">No meeting</button>
-    <button type="button" class="{{btnPhysical}}" onclick="{{setPhysical}}" style="font-size:12px;padding:6px 12px;">Physical</button>
-    <button type="button" class="{{btnOnline}}" onclick="{{setOnline}}" style="font-size:12px;padding:6px 12px;">Online</button>
+    <button type="button" class="{{btnNo}}" onclick="{{setNo}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">No meeting</button>
+    <button type="button" class="{{btnPhysical}}" onclick="{{setPhysical}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Physical</button>
+    <button type="button" class="{{btnOnline}}" onclick="{{setOnline}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Online</button>
   </div>
 
   <div data-screen-label="TPR-DES-03 Draft Tender details" style="max-width:1100px;margin:0 auto;padding:32px 40px 0;">
@@ -38,20 +38,28 @@
         <p style="font-size:14px;color:var(--color-neutral-700);margin:0;">Set the dates and security suppliers must follow.</p>
       </div>
 
-      <div style="padding:18px 24px;border-bottom:1px solid var(--color-divider);display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
-        <div class="card blueprint" style="padding:12px 14px;background:var(--color-accent-100);border-color:var(--color-accent-500);">
-          <div class="kt-label" style="margin-bottom:2px;">Tender details</div>
+      <div style="padding:24px 24px 20px;border-bottom:1px solid var(--color-divider);">
+        <div style="display:flex;align-items:center;">
+          <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-weight:600;flex:none;background:var(--color-accent);color:#fff;box-shadow:0 0 0 3px var(--color-accent-100);">1</div>
+          <div style="flex:1;height:2px;margin:0 8px;background:var(--color-neutral-300);"></div>
+          <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-weight:600;flex:none;background:var(--color-surface-2);color:var(--color-neutral-600);">2</div>
+          <div style="flex:1;height:2px;margin:0 8px;background:var(--color-neutral-300);"></div>
+          <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-weight:600;flex:none;background:var(--color-surface-2);color:var(--color-neutral-600);">3</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:12px;">
+        <div style="text-align:left;min-width:0;">
+          <div style="font-size:14px;font-weight:700;margin-bottom:6px;color:var(--color-accent-700);text-wrap:pretty;">Tender details</div>
           <span class="kt-status is-attention">Needs attention</span>
         </div>
-        <div class="card blueprint" style="padding:12px 14px;">
-          <div class="kt-label" style="margin-bottom:2px;">Supplier and contract requirements</div>
+        <div style="text-align:center;min-width:0;">
+          <div style="font-size:14px;font-weight:600;margin-bottom:6px;text-wrap:pretty;">Supplier and contract requirements</div>
           <span class="kt-status is-pending">Not started</span>
         </div>
-        <div class="card blueprint" style="padding:12px 14px;">
-          <div class="kt-label" style="margin-bottom:2px;">Review and submit</div>
+        <div style="text-align:right;min-width:0;">
+          <div style="font-size:14px;font-weight:600;margin-bottom:6px;text-wrap:pretty;">Review and submit</div>
           <span class="kt-status is-pending">Not started</span>
         </div>
-      </div>
+        </div>      </div>
 
       <div style="padding:16px 24px;border-bottom:1px solid var(--color-divider);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;">
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px 24px;flex:1;">
@@ -166,14 +174,14 @@ class Component extends DCLogic {
   renderVals() {
     const m = this.state.meeting;
     const mode = this.state.mode;
-    const cls = (v) => v === m ? 'btn btn-primary' : 'btn btn-secondary';
+    const cls = (v) => v === m ? 'btn btn-primary' : 'btn';
     return {
       setNo: () => this.setState({ meeting: 'no' }),
       setPhysical: () => this.setState({ meeting: 'yes', mode: 'physical' }),
       setOnline: () => this.setState({ meeting: 'yes', mode: 'online' }),
       setPhysicalIfNone: () => this.setState((st) => ({ meeting: 'yes', mode: st.mode })),
-      btnNo: cls('no'), btnPhysical: m === 'yes' && mode === 'physical' ? 'btn btn-primary' : 'btn btn-secondary',
-      btnOnline: m === 'yes' && mode === 'online' ? 'btn btn-primary' : 'btn btn-secondary',
+      btnNo: cls('no'), btnPhysical: m === 'yes' && mode === 'physical' ? 'btn btn-primary' : 'btn',
+      btnOnline: m === 'yes' && mode === 'online' ? 'btn btn-primary' : 'btn',
       hasMeeting: m === 'yes',
       noChecked: m === 'no' ? true : undefined,
       yesChecked: m === 'yes' ? true : undefined,

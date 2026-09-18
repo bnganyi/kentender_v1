@@ -16,9 +16,9 @@
   <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
     <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">TPR-DES-08:</span>
-    <button type="button" class="{{btnA}}" onclick="{{setBase}}" style="font-size:12px;padding:6px 12px;">Confirmation required</button>
-    <button type="button" class="{{btnB}}" onclick="{{setInvalid}}" style="font-size:12px;padding:6px 12px;">Invalid evidence</button>
-    <button type="button" class="{{btnC}}" onclick="{{setConflict}}" style="font-size:12px;padding:6px 12px;">Conflicting confirmation</button>
+    <button type="button" class="{{btnA}}" onclick="{{setBase}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Confirmation required</button>
+    <button type="button" class="{{btnB}}" onclick="{{setInvalid}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Invalid evidence</button>
+    <button type="button" class="{{btnC}}" onclick="{{setConflict}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Conflicting confirmation</button>
   </div>
 
   <div data-screen-label="TPR-DES-08 Publication confirmation" style="max-width:1100px;margin:0 auto;padding:32px 40px 0;">
@@ -121,7 +121,7 @@ class Component extends DCLogic {
   state = { variant: 'base', confirmDialogOpen: false, ruleOpen: false };
   renderVals() {
     const v = this.state.variant;
-    const cls = (name) => v === name ? 'btn btn-primary' : 'btn btn-secondary';
+    const cls = (name) => v === name ? 'btn btn-primary' : 'btn';
     return {
       setBase: () => this.setState({ variant: 'base' }),
       setInvalid: () => this.setState({ variant: 'invalid' }),

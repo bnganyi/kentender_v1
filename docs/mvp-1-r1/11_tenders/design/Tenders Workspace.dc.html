@@ -47,10 +47,21 @@
       </div>
 
       <sc-if value="{{showCounts}}" hint-placeholder-val="{{true}}">
-        <div style="padding:16px 24px;border-bottom:1px solid var(--color-divider);display:flex;gap:12px;flex-wrap:wrap;">
-          <sc-for list="{{counts}}" as="c" hint-placeholder-count="1">
-            <div class="tag tag-accent" style="cursor:default;">{{c.label}} {{c.value}}</div>
-          </sc-for>
+        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);">
+          <div class="kt-kpi-row">
+            <sc-for list="{{counts}}" as="c" hint-placeholder-count="3">
+              <div class="{{c.cls}}">
+                <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <sc-for list="{{c.icon}}" as="d" hint-placeholder-count="2">
+                    <path d="{{d}}"></path>
+                  </sc-for>
+                </svg>
+                <div class="kt-kpi-value">{{c.value}}</div>
+                <div style="font-family:var(--font-heading);font-size:14px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text);">{{c.label}}</div>
+                <div class="kt-kpi-sub">{{c.sub}}</div>
+              </div>
+            </sc-for>
+          </div>
         </div>
       </sc-if>
 
@@ -113,13 +124,24 @@ class Component extends DCLogic {
       technical: { purchase: 'Supply and delivery of business laptops', plan: 'PPI-MOH-2027-033', tender: 'TND-MOH-2027-033', requisition: 'REQ-MOH-2027-033-001', status: 'Published — open', statusClass: 'kt-status is-live', requiredBy: '30 Sep 2027', action: 'View', actionClass: 'btn btn-secondary', hasSubline: false },
       empty: {},
     };
+    const ICON = {
+      start: ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20', 'm10 8 6 4-6 4V8'],
+      draft: ['M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z', 'M14 2v5h5'],
+      returned: ['M9 14 4 9l5-5', 'M4 9h10.5A5.5 5.5 0 0 1 20 14.5v0A5.5 5.5 0 0 1 14.5 20H11'],
+      waiting: ['M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20', 'M12 6v6l4 2'],
+      evidence: ['M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z', 'M14 2v5h5', 'm9 15 2 2 4-4'],
+    };
+    const kpi = (label, value, sub, icon, state) => ({
+      label, value, sub, icon: ICON[icon],
+      cls: value > 0 && state ? 'kt-kpi-card is-' + state : 'kt-kpi-card',
+    });
     const countsFor = {
-      ready: [{ label: 'Ready to start', value: 1 }, { label: 'Drafts', value: 0 }, { label: 'Returned to me', value: 0 }],
-      draft: [{ label: 'Ready to start', value: 0 }, { label: 'Drafts', value: 1 }, { label: 'Returned to me', value: 0 }],
-      returned: [{ label: 'Ready to start', value: 0 }, { label: 'Drafts', value: 0 }, { label: 'Returned to me', value: 1 }],
-      hopf: [{ label: 'Awaiting procurement approval', value: 1 }],
-      ao: [{ label: 'Awaiting publication authorisation', value: 1 }],
-      publishing: [{ label: 'Publication evidence required', value: 1 }],
+      ready: [kpi('Ready to start', 1, 'Approved requisitions awaiting a tender', 'start', 'live'), kpi('Drafts', 0, 'Started, not yet submitted', 'draft'), kpi('Returned to me', 0, 'Sent back for correction', 'returned', 'attention')],
+      draft: [kpi('Ready to start', 0, 'Approved requisitions awaiting a tender', 'start', 'live'), kpi('Drafts', 1, 'Started, not yet submitted', 'draft'), kpi('Returned to me', 0, 'Sent back for correction', 'returned', 'attention')],
+      returned: [kpi('Ready to start', 0, 'Approved requisitions awaiting a tender', 'start', 'live'), kpi('Drafts', 0, 'Started, not yet submitted', 'draft'), kpi('Returned to me', 1, 'Sent back for correction', 'returned', 'attention')],
+      hopf: [kpi('Awaiting my approval', 1, 'Tenders submitted for procurement approval', 'waiting', 'attention')],
+      ao: [kpi('Awaiting my authorisation', 1, 'Approved tenders awaiting a publication decision', 'waiting', 'attention')],
+      publishing: [kpi('Evidence outstanding', 1, 'Published channels awaiting confirmation', 'evidence', 'attention')],
       published: [], reader: [], technical: [], empty: [],
     };
     return {

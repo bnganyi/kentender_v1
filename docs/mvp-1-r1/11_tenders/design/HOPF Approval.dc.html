@@ -21,8 +21,8 @@
   <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
     <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">TPR-DES-06:</span>
-    <button type="button" class="{{btnNormal}}" onclick="{{setNormal}}" style="font-size:12px;padding:6px 12px;">Normal</button>
-    <button type="button" class="{{btnSegregation}}" onclick="{{setSegregation}}" style="font-size:12px;padding:6px 12px;">Segregation blocked</button>
+    <button type="button" class="{{btnNormal}}" onclick="{{setNormal}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Normal</button>
+    <button type="button" class="{{btnSegregation}}" onclick="{{setSegregation}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Segregation blocked</button>
   </div>
 
   <div data-screen-label="TPR-DES-06 HOPF approval" style="max-width:1100px;margin:0 auto;padding:32px 40px 0;">
@@ -221,7 +221,7 @@ class Component extends DCLogic {
       setNormal: () => this.setState({ variant: 'normal' }),
       setSegregation: () => this.setState({ variant: 'segregation' }),
       btnNormal: segregation ? 'btn btn-secondary' : 'btn btn-primary',
-      btnSegregation: segregation ? 'btn btn-primary' : 'btn btn-secondary',
+      btnSegregation: segregation ? 'btn btn-primary' : 'btn',
       isSegregation: segregation,
       isNormal: !segregation,
       openReturn: () => this.setState({ returnOpen: true }),
