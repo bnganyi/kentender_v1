@@ -50,7 +50,7 @@ Interactive states are themed, never browser defaults: give every interactive el
 | `.duotone` | The image wrapper — every content photograph goes through it | foundations/image.html |
 | `.kt-disclosure` (+ `-head`, `-title-row`, `-title`, `-chevron`, `-body`) | Expand/collapse panel, no corner marks | components/disclosure.html |
 | `.kt-timeline` (+ `-row`, `-dot-col`, `-dot`, `-line`, `-item`, `-item-title`, `-item-meta`) | A record's decision/approval chain — not a chart | components/timeline.html |
-| `.kt-kpi-row` / `.kt-kpi-card` (+ `-icon`, `-value`, `-dot`, `-sub`) | Summary metric card; top accent + dot appear only past a threshold | components/kpi.html |
+| `.kt-kpi-row` / `.kt-kpi-card` (+ `-icon`, `-value`, `-sub`) | Summary metric card; a top accent bar appears only past a threshold | components/kpi.html |
 | `.kt-notice` (`is-info`/`is-warning`/`is-critical`/`is-live`) | Page-level advisory banner | components/notice.html |
 | `.kt-checkbox` | Square checkbox (certification-style confirmations) | components/forms.html |
 | `.kt-tabs` / `.kt-tab` | CSS-only tab row | components/forms.html |
@@ -76,6 +76,7 @@ States are built in: hovers and pressed states come from the accent ramp, keyboa
 - Do not reintroduce corner registration marks — the `.blueprint` frame is a plain hairline border. This reverses the earlier rule entirely, not just narrows it to `.card` and figures.
 - `disabled` and `checked` must carry an explicit value (`disabled="disabled"`, `checked="checked"`) in any templating context that strips valueless boolean HTML attributes — plain static HTML pages are unaffected.
 - Status/figure/KPI dots are removed entirely — state is carried by label text, fill color, and (for KPI cards) the top accent bar alone. Do not reintroduce a dot anywhere.
+- Labels are atomic: `.btn`, `.tag`, `.kt-status`, `.seg-opt` and `.kt-nav-item` never wrap internally (`white-space: nowrap`). If a label is too wide for its container, wrap the row (`flex-wrap: wrap` on the tag/button group), widen the column, or shorten the label — do not let the label fracture.
 - Do not use `--chart-*` colors for UI chrome (buttons, chips, nav) or `.kt-status` hues for chart series — each palette encodes exactly one thing.
 - Do not use thick icon strokes; the set is Lucide at 1.5.
 - Do not add decorative color beyond the steel accent. The accent's own deep step (`--color-accent-900`) may carry a full field where the deck's section dividers use it — steel as ground, type reversed to paper. (The landing's numbers sit on a drawn spec-sheet plate on the paper ground instead — its own grammar, not a field.)

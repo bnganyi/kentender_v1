@@ -412,7 +412,9 @@ function restoreLine(o) {
 
 		<template v-else-if="draft">
 			<div class="kt-shell" style="padding-bottom: 32px">
-				<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px" data-testid="bud-editor-header">
+				<div class="kt-card kt-blueprint" style="padding: 0">
+				<div style="padding: 24px 24px 0">
+				<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px" data-testid="bud-editor-header">
 					<div>
 						<div class="kt-eyebrow" style="margin-bottom: 6px">{{ draft.budget.code }} · {{ __("VERSION {0}", [draft.version.version_number]) }}</div>
 						<div style="display: flex; align-items: center; gap: 12px">
@@ -446,18 +448,23 @@ function restoreLine(o) {
 					</div>
 				</div>
 
-				<div class="kt-tabs" role="tablist">
+				<div class="kt-tabs" role="tablist" style="margin-bottom: 0">
 					<div class="kt-tab" role="tab" :aria-selected="tab === 'details'" tabindex="0" data-testid="bud-editor-tab-overview" @click="switchTab('details')" @keydown.enter="switchTab('details')">{{ __("Approval details") }}</div>
 					<div class="kt-tab" role="tab" :aria-selected="tab === 'lines'" tabindex="0" data-testid="bud-editor-tab-lines" @click="switchTab('lines')" @keydown.enter="switchTab('lines')">{{ __("Budget lines") }}</div>
+				</div>
 				</div>
 
 				<!-- Approval details (BUD-DES-14 / BUD-DES-02 fields) -->
 				<template v-if="tab === 'details'">
-					<div v-if="isSuccessor" class="kt-notice is-info" style="margin-bottom: 16px" data-testid="bud-editor-successor-note">
+					<div v-if="isSuccessor" class="kt-notice is-info" style="margin: 0; border-top: 1px solid var(--kt-color-divider)" data-testid="bud-editor-successor-note">
 						<div class="kt-notice-body">{{ __("The current allocation stays in use until this update is approved.") }}</div>
 					</div>
-					<div class="kt-card kt-blueprint">
-						<h3 class="kt-card-title">{{ isSuccessor ? __("Version context") : __("Budget context") }}</h3>
+					<div style="padding: 22px 24px; border-top: 1px solid var(--kt-color-divider)">
+						<h3 class="kt-card-title" style="margin: 0 0 16px; display: flex; align-items: center; gap: 6px">
+							<template v-if="isSuccessor"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="6" x2="6" y1="3" y2="15" /><circle cx="18" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="M18 9a9 9 0 0 1-9 9" /></svg></template>
+							<template v-else><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" x2="21" y1="22" y2="22" /><line x1="6" x2="6" y1="18" y2="11" /><line x1="10" x2="10" y1="18" y2="11" /><line x1="14" x2="14" y1="18" y2="11" /><line x1="18" x2="18" y1="18" y2="11" /><polygon points="12 2 20 7 4 7" /></svg></template>
+							{{ isSuccessor ? __("Version context") : __("Budget context") }}
+						</h3>
 						<div class="kt-grid-2" style="gap: 16px">
 							<div class="kt-field"><label>{{ __("Financial Year") }}</label><input class="kt-input" type="text" :value="draft.budget.fiscal_year.label" disabled /></div>
 							<div class="kt-field"><label>{{ __("Currency") }}</label><input class="kt-input" type="text" :value="draft.budget.currency" disabled /></div>
@@ -475,8 +482,11 @@ function restoreLine(o) {
 							</template>
 						</div>
 					</div>
-					<div class="kt-card kt-blueprint">
-						<h3 class="kt-card-title">{{ __("External approval") }}</h3>
+					<div style="padding: 22px 24px; border-top: 1px solid var(--kt-color-divider)">
+						<h3 class="kt-card-title" style="margin: 0 0 16px; display: flex; align-items: center; gap: 6px">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" /><path d="m9 12 2 2 4-4" /></svg>
+							{{ __("External approval") }}
+						</h3>
 						<div class="kt-grid-2" style="gap: 16px">
 							<div class="kt-field">
 								<label for="bud-editor-approval-ref">{{ __("Approval reference") }}</label>
@@ -505,31 +515,33 @@ function restoreLine(o) {
 
 				<!-- Budget lines (BUD-DES-03 / BUD-DES-15) -->
 				<template v-else>
-					<div v-if="!linesEditor" class="kt-card kt-blueprint"><div class="kt-skel" style="width: 240px; height: 16px"></div></div>
+					<div v-if="!linesEditor" style="padding: 20px 24px; border-top: 1px solid var(--kt-color-divider)"><div class="kt-skel" style="width: 240px; height: 16px"></div></div>
 					<template v-else>
+						<div style="padding: 20px 24px; border-top: 1px solid var(--kt-color-divider)">
 						<div class="kt-kpi-row" style="margin-bottom: 14px" data-testid="bud-editor-totals">
-							<div class="kt-kpi-card"><div class="kt-kpi-value">{{ formatKes(previewTotals.approved, currency) }}</div><div class="kt-kpi-sub">{{ __("Approved allocation") }}</div></div>
-							<div class="kt-kpi-card"><div class="kt-kpi-value">{{ formatKes(previewTotals.entered, currency) }}</div><div class="kt-kpi-sub">{{ __("Total entered") }}</div></div>
+							<div class="kt-kpi-card"><svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" x2="21" y1="22" y2="22" /><line x1="6" x2="6" y1="18" y2="11" /><line x1="10" x2="10" y1="18" y2="11" /><line x1="14" x2="14" y1="18" y2="11" /><line x1="18" x2="18" y1="18" y2="11" /><polygon points="12 2 20 7 4 7" /></svg><div class="kt-kpi-value">{{ formatKes(previewTotals.approved, currency) }}</div><div class="kt-kpi-sub">{{ __("Approved allocation") }}</div></div>
+							<div class="kt-kpi-card"><svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 7V4H6l6 8-6 8h12v-3" /></svg><div class="kt-kpi-value">{{ formatKes(previewTotals.entered, currency) }}</div><div class="kt-kpi-sub">{{ __("Total entered") }}</div></div>
 						</div>
-						<div class="kt-notice" :class="previewTotals.match ? 'is-live' : previewTotals.still ? 'is-warning' : 'is-critical'" style="margin-bottom: 16px" data-testid="bud-editor-reconcile">
+						<div class="kt-notice" :class="previewTotals.match ? 'is-live' : previewTotals.still ? 'is-warning' : 'is-critical'" style="margin: 0" data-testid="bud-editor-reconcile">
 							<div class="kt-notice-body">
 								<template v-if="previewTotals.match">{{ __("Budget lines match the approved allocation.") }}</template>
 								<template v-else-if="previewTotals.still">{{ __("Amount still to assign: {0}", [formatKes(previewTotals.still, currency)]) }}</template>
 								<template v-else>{{ __("Amount over allocation: {0}", [formatKes(previewTotals.over, currency)]) }}</template>
 							</div>
 						</div>
-						<div v-if="isSuccessor && form.revision_type === 'Transfer'" style="display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap" data-testid="bud-editor-transfer-totals">
+						</div>
+						<div v-if="isSuccessor && form.revision_type === 'Transfer'" style="padding: 16px 24px; border-top: 1px solid var(--kt-color-divider); display: flex; gap: 12px; flex-wrap: wrap" data-testid="bud-editor-transfer-totals">
 							<span class="kt-tag kt-tag-neutral">{{ __("Total moved out: {0}", [formatKes(previewTotals.movedOut, currency)]) }}</span>
 							<span class="kt-tag kt-tag-accent-2">{{ __("Total moved in: {0}", [formatKes(previewTotals.movedIn, currency)]) }}</span>
 						</div>
-						<p v-if="canEdit && !isSuccessor" class="kt-label" style="margin: 0 0 10px">{{ __("Which department may use this budget line?") }}</p>
-						<div v-if="isSuccessor" class="kt-muted" style="font-size: 13px; margin: 0 0 10px">{{ __("Existing lines keep their name, department and funding source. Add a new budget line for a changed purpose, department or funding source.") }}</div>
+						<p v-if="canEdit && !isSuccessor" class="kt-label" style="margin: 0; padding: 16px 24px 10px; border-top: 1px solid var(--kt-color-divider)">{{ __("Which department may use this budget line?") }}</p>
+						<div v-if="isSuccessor" class="kt-muted" style="font-size: 13px; padding: 16px 24px 10px; border-top: 1px solid var(--kt-color-divider)">{{ __("Existing lines keep their name, department and funding source. Add a new budget line for a changed purpose, department or funding source.") }}</div>
 
-						<div class="kt-card kt-blueprint" style="padding: 0; overflow-x: auto">
+						<div style="overflow-x: auto">
 							<table class="kt-table" data-testid="bud-editor-lines-table">
 								<thead>
 									<tr>
-										<th>{{ __("Budget line") }}</th>
+										<th>{{ isSuccessor ? __("Budget line") : __("Budget Line") }}</th>
 										<th>{{ __("Available to") }}</th>
 										<th>{{ __("Funding source") }}</th>
 										<th v-if="isSuccessor" class="is-num">{{ __("Current allocation") }}</th>
@@ -572,7 +584,7 @@ function restoreLine(o) {
 								</tbody>
 							</table>
 						</div>
-						<div v-if="omitted.length" class="kt-card kt-blueprint" style="margin-top: 12px" data-testid="bud-editor-omitted">
+						<div v-if="omitted.length" style="padding: 16px 24px; border-top: 1px solid var(--kt-color-divider)" data-testid="bud-editor-omitted">
 							<h3 class="kt-card-title">{{ __("Omitted from this update") }}</h3>
 							<div v-for="o in omitted" :key="o.budget_line" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 14px; padding: 6px 0">
 								<span>{{ o.title }} · {{ formatKes(o.current_amount, currency) }}</span>
@@ -580,9 +592,12 @@ function restoreLine(o) {
 							</div>
 							<p class="kt-muted" style="font-size: 12px; margin: 8px 0 0">{{ __("The line and its history remain; it is left out of the proposed version only.") }}</p>
 						</div>
-						<button v-if="canEdit" type="button" class="kt-btn kt-btn-secondary" style="margin-top: 12px" data-testid="bud-editor-add-line-btn" @click="addLine">{{ __("Add Budget Line") }}</button>
+						<div v-if="canEdit" style="padding: 16px 24px; border-top: 1px solid var(--kt-color-divider)">
+							<button type="button" class="kt-btn kt-btn-secondary" data-testid="bud-editor-add-line-btn" @click="addLine">{{ __("Add Budget Line") }}</button>
+						</div>
 					</template>
 				</template>
+				</div>
 			</div>
 
 			<div v-if="navGuard" class="kt-dialog-backdrop" tabindex="-1" @keydown.esc="navGuard = null">

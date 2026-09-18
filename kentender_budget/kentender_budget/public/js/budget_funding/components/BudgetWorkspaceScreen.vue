@@ -289,79 +289,90 @@ function openLine(line) {
 
 				<!-- Current budget card (BUD-DES-01) or the Closed variant (§11.1B). -->
 				<template v-if="hasCurrent">
-					<div class="kt-card kt-blueprint" data-testid="budget-summary-card">
-						<div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 14px">
-							<div style="display: flex; align-items: center; gap: 12px">
-								<h2 style="margin: 0; font-size: 19px">{{ workspace.budget.title }}</h2>
-								<span class="kt-status" :class="isClosed ? 'is-critical' : 'is-live'">{{ isClosed ? __("Closed") : __("Current") }}</span>
+					<div class="kt-card kt-blueprint" style="padding: 0" data-testid="budget-summary-card">
+						<div style="padding: 20px 24px; border-bottom: 1px solid var(--kt-color-divider)">
+							<div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 14px">
+								<div style="display: flex; align-items: center; gap: 12px">
+									<h2 style="margin: 0; font-size: 19px">{{ workspace.budget.title }}</h2>
+									<span class="kt-status" :class="isClosed ? 'is-critical' : 'is-live'">{{ isClosed ? __("Closed") : __("Current") }}</span>
+								</div>
+								<button type="button" class="kt-btn kt-btn-secondary" data-testid="budget-view-btn" @click="runAction('view_budget')">{{ ACTION_LABELS.view_budget }}</button>
 							</div>
-							<button type="button" class="kt-btn kt-btn-secondary" data-testid="budget-view-btn" @click="runAction('view_budget')">{{ ACTION_LABELS.view_budget }}</button>
-						</div>
-						<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px 24px" class="kt-ws-facts">
-							<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Budget reference") }}</div><div style="font-size: 14px">{{ workspace.budget.code }}</div></div>
-							<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Current version") }}</div><div style="font-size: 14px">{{ __("Version {0}", [workspace.version.version_number]) }}</div></div>
-							<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Currency") }}</div><div style="font-size: 14px">{{ currency }}</div></div>
-							<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Approval reference") }}</div><div style="font-size: 14px">{{ workspace.version.approval_reference }}</div></div>
-							<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Approval date") }}</div><div style="font-size: 14px">{{ workspace.version.approval_date_display }}</div></div>
-						</div>
-						<div v-if="isClosed" class="kt-notice is-info" style="margin-top: 14px" data-testid="budget-closed-note">
-							<div class="kt-notice-body">
-								<strong>{{ __("Closed by {0}, {1}.", [workspace.closure.closed_by, workspace.closure.closed_at_display]) }}</strong>
-								{{ __("No new reservations, conversions or commitment increases. Existing commitments and history remain.") }}
+							<div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px 24px" class="kt-ws-facts">
+								<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Budget reference") }}</div><div style="font-size: 14px">{{ workspace.budget.code }}</div></div>
+								<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Current version") }}</div><div style="font-size: 14px">{{ __("Version {0}", [workspace.version.version_number]) }}</div></div>
+								<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Currency") }}</div><div style="font-size: 14px">{{ currency }}</div></div>
+								<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Approval reference") }}</div><div style="font-size: 14px">{{ workspace.version.approval_reference }}</div></div>
+								<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Approval date") }}</div><div style="font-size: 14px">{{ workspace.version.approval_date_display }}</div></div>
+							</div>
+							<div v-if="isClosed" class="kt-notice is-info" style="margin-top: 14px" data-testid="budget-closed-note">
+								<div class="kt-notice-body">
+									<strong>{{ __("Closed by {0}, {1}.", [workspace.closure.closed_by, workspace.closure.closed_at_display]) }}</strong>
+									{{ __("No new reservations, conversions or commitment increases. Existing commitments and history remain.") }}
+								</div>
+							</div>
+							<div v-else-if="actions.includes('update_allocation')" style="margin-top: 14px">
+								<button type="button" class="kt-btn kt-btn-secondary" data-testid="budget-update-btn" :disabled="updating" @click="runAction('update_allocation')">{{ ACTION_LABELS.update_allocation }}</button>
 							</div>
 						</div>
-						<div v-else-if="actions.includes('update_allocation')" style="margin-top: 14px">
-							<button type="button" class="kt-btn kt-btn-secondary" data-testid="budget-update-btn" :disabled="updating" @click="runAction('update_allocation')">{{ ACTION_LABELS.update_allocation }}</button>
-						</div>
-					</div>
 
-					<div class="kt-kpi-row" style="margin-bottom: 8px" data-testid="budget-position-cards">
-						<div class="kt-kpi-card">
-							<div class="kt-kpi-value">{{ formatKes(workspace.positions.approved, currency) }}</div>
-							<div class="kt-kpi-sub">{{ __("Registered allocation") }}</div>
+						<div style="padding: 20px 24px; border-bottom: 1px solid var(--kt-color-divider)">
+							<div class="kt-kpi-row" style="margin-bottom: 8px" data-testid="budget-position-cards">
+								<div class="kt-kpi-card">
+									<svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" x2="21" y1="22" y2="22" /><line x1="6" x2="6" y1="18" y2="11" /><line x1="10" x2="10" y1="18" y2="11" /><line x1="14" x2="14" y1="18" y2="11" /><line x1="18" x2="18" y1="18" y2="11" /><polygon points="12 2 20 7 4 7" /></svg>
+									<div class="kt-kpi-value">{{ formatKes(workspace.positions.approved, currency) }}</div>
+									<div class="kt-kpi-sub">{{ __("Registered allocation") }}</div>
+								</div>
+								<div class="kt-kpi-card">
+									<svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>
+									<div class="kt-kpi-value" :class="{ 'is-zero': !workspace.positions.reserved }">{{ formatKes(workspace.positions.reserved, currency) }}</div>
+									<div class="kt-kpi-sub">{{ __("Reserved for requisitions") }}</div>
+								</div>
+								<div class="kt-kpi-card">
+									<svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /><path d="m9 15 2 2 4-4" /></svg>
+									<div class="kt-kpi-value" :class="{ 'is-zero': !workspace.positions.committed }">{{ formatKes(workspace.positions.committed, currency) }}</div>
+									<div class="kt-kpi-sub">{{ __("Committed to contracts") }}</div>
+								</div>
+								<div class="kt-kpi-card" :class="workspace.positions.available > 0 ? 'is-live' : 'is-critical'">
+									<svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 9.9-1" /></svg>
+									<div class="kt-kpi-value">{{ formatKes(workspace.positions.available, currency) }}</div>
+									<div class="kt-kpi-sub">{{ __("Available to reserve") }}</div>
+								</div>
+							</div>
+							<p class="kt-muted" style="font-size: 12px; margin: 0" data-testid="budget-position-as-at">{{ __("Funding position as at {0}", [workspace.positions_as_at_display]) }}</p>
 						</div>
-						<div class="kt-kpi-card">
-							<div class="kt-kpi-value" :class="{ 'is-zero': !workspace.positions.reserved }">{{ formatKes(workspace.positions.reserved, currency) }}</div>
-							<div class="kt-kpi-sub">{{ __("Reserved for requisitions") }}</div>
-						</div>
-						<div class="kt-kpi-card">
-							<div class="kt-kpi-value" :class="{ 'is-zero': !workspace.positions.committed }">{{ formatKes(workspace.positions.committed, currency) }}</div>
-							<div class="kt-kpi-sub">{{ __("Committed to contracts") }}</div>
-						</div>
-						<div class="kt-kpi-card" :class="workspace.positions.available > 0 ? 'is-live' : 'is-critical'">
-							<div class="kt-kpi-value">{{ formatKes(workspace.positions.available, currency) }}</div>
-							<div class="kt-kpi-sub">{{ __("Available to reserve") }}</div>
-						</div>
-					</div>
-					<p class="kt-muted" style="font-size: 12px; margin: 0 0 20px" data-testid="budget-position-as-at">{{ __("Funding position as at {0}", [workspace.positions_as_at_display]) }}</p>
 
-					<div class="kt-card kt-blueprint" style="padding: 0">
-						<h3 class="kt-card-title" style="margin: 0; padding: 20px 20px 4px">{{ __("Budget Lines") }}</h3>
-						<div style="overflow-x: auto">
-							<table class="kt-table" data-testid="budget-lines-preview">
-								<thead>
-									<tr>
-										<th>{{ __("Budget Line") }}</th>
-										<th>{{ __("Available to") }}</th>
-										<th class="is-num">{{ __("Registered allocation") }}</th>
-										<th class="is-num">{{ __("Reserved for requisitions") }}</th>
-										<th class="is-num">{{ __("Committed to contracts") }}</th>
-										<th class="is-num">{{ __("Available to reserve") }}</th>
-										<th></th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr v-for="line in workspace.lines_preview" :key="line.id">
-										<td><div>{{ line.title }}</div><div class="kt-muted" style="font-size: 11px; margin-top: 2px">{{ line.code }}</div></td>
-										<td>{{ line.owner_org_unit }}</td>
-										<td class="is-num">{{ formatKes(line.approved, currency) }}</td>
-										<td class="is-num" :class="{ 'is-zero': !line.reserved }">{{ formatKes(line.reserved, currency) }}</td>
-										<td class="is-num" :class="{ 'is-zero': !line.committed }">{{ formatKes(line.committed, currency) }}</td>
-										<td class="is-num">{{ formatKes(line.available, currency) }}</td>
-										<td><a href="#" @click.prevent="openLine(line)">{{ __("View") }}</a></td>
-									</tr>
-								</tbody>
-							</table>
+						<div>
+							<h3 class="kt-card-title" style="margin: 0; padding: 20px 20px 4px; display: flex; align-items: center; gap: 6px">
+								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="8" x2="21" y1="6" y2="6" /><line x1="8" x2="21" y1="12" y2="12" /><line x1="8" x2="21" y1="18" y2="18" /><line x1="3" x2="3.01" y1="6" y2="6" /><line x1="3" x2="3.01" y1="12" y2="12" /><line x1="3" x2="3.01" y1="18" y2="18" /></svg>
+								{{ __("Budget Lines") }}
+							</h3>
+							<div style="overflow-x: auto">
+								<table class="kt-table" data-testid="budget-lines-preview">
+									<thead>
+										<tr>
+											<th>{{ __("Budget Line") }}</th>
+											<th>{{ __("Available to") }}</th>
+											<th class="is-num">{{ __("Registered allocation") }}</th>
+											<th class="is-num">{{ __("Reserved for requisitions") }}</th>
+											<th class="is-num">{{ __("Committed to contracts") }}</th>
+											<th class="is-num">{{ __("Available to reserve") }}</th>
+											<th></th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr v-for="line in workspace.lines_preview" :key="line.id">
+											<td><div>{{ line.title }}</div><div class="kt-muted" style="font-size: 11px; margin-top: 2px">{{ line.code }}</div></td>
+											<td>{{ line.owner_org_unit }}</td>
+											<td class="is-num">{{ formatKes(line.approved, currency) }}</td>
+											<td class="is-num" :class="{ 'is-zero': !line.reserved }">{{ formatKes(line.reserved, currency) }}</td>
+											<td class="is-num" :class="{ 'is-zero': !line.committed }">{{ formatKes(line.committed, currency) }}</td>
+											<td class="is-num">{{ formatKes(line.available, currency) }}</td>
+											<td><a href="#" @click.prevent="openLine(line)">{{ __("View") }}</a></td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
 						</div>
 					</div>
 				</template>

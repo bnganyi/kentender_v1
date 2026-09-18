@@ -1,0 +1,51 @@
+{
+  "name": "Industry",
+  "palette": {
+    "hue": 231,
+    "band": "light",
+    "scheme": "dual",
+    "sat": 0.4,
+    "bg": "#f0f2f7",
+    "surface": "#ffffff",
+    "surface2": "#eef0f3",
+    "text": "#16181a",
+    "accent": "#2b46b0",
+    "accent2": "#d9691a",
+    "divider": "#d4d8e3",
+    "chart": ["#0891b2", "#ea580c", "#65a30d", "#c026d3", "#5a5ce2", "#b77c00"],
+    "status": {
+      "live": { "fg": "#047857", "bg": "#e7f8f2" },
+      "draft": { "fg": "#003d9b", "bg": "#e6eefa" },
+      "pending": { "fg": "#434654", "bg": "#f1f1f3" },
+      "attention": { "fg": "#92610a", "bg": "#fdf0da" },
+      "critical": { "fg": "#b0143a", "bg": "#fce8ec" }
+    },
+    "danger": { "base": "#b0143a", "hover": "#8f102f", "active": "#700c25" }
+  },
+  "fonts": {
+    "heading": {
+      "family": "Barlow Condensed",
+      "class": "grotesque",
+      "weights": [
+        400,
+        600
+      ]
+    },
+    "body": {
+      "family": "Barlow",
+      "class": "grotesque",
+      "weights": [
+        400,
+        500,
+        700
+      ]
+    }
+  },
+  "density": 0.85,
+  "radius": 4,
+  "layoutStyle": "grid",
+  "frame": "blueprint",
+  "imageTreatment": "duotone",
+  "photo": "industry",
+  "iconSet": "lucide-thin"
+}

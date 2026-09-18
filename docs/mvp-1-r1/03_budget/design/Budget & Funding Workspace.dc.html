@@ -21,7 +21,7 @@
 
   <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
-    <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">BUD-CHG-001 v1.9 · BUD-UI-01 state:</span>
+    <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">BUD-UI-01 state:</span>
     <button type="button" class="{{btnActive}}" onclick="{{setActive}}" style="font-size:12px;padding:6px 12px;">01 Active</button>
     <button type="button" class="{{btnLoading}}" onclick="{{setLoading}}" style="font-size:12px;padding:6px 12px;">16 Loading</button>
     <button type="button" class="{{btnNoBaseline}}" onclick="{{setNoBaseline}}" style="font-size:12px;padding:6px 12px;">16 No baseline</button>
@@ -35,102 +35,105 @@
     <button type="button" class="{{btnClosed}}" onclick="{{setClosed}}" style="font-size:12px;padding:6px 12px;">01B Closed</button>
   </div>
 
+  <sc-if value="{{showWorkspace}}" hint-placeholder-val="{{true}}">
   <div data-screen-label="BUD-DES-01 Workspace" style="max-width:1240px;margin:0 auto;padding:36px 40px 0;">
-    <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px;">BUDGET &amp; FUNDING</div>
-    <h1 style="font-family:var(--font-heading);font-weight:600;font-size:32px;margin:0 0 8px;letter-spacing:.01em;">Budget &amp; Funding</h1>
-    <p style="font-size:14px;color:var(--color-neutral-700);margin:0 0 24px;max-width:70ch;">View the registered procurement budget and the funding position used by Procurement Planning.</p>
-    <div style="margin-bottom:28px;">
-      <select class="input" style="width:auto;min-width:170px;">
-        <option>FY 2027/28</option>
-      </select>
-    </div>
-  </div>
+    <div class="card blueprint elev-sm" style="padding:0;">
 
-  <sc-if value="{{isPendingCard}}" hint-placeholder-val="{{false}}">
-  <div style="max-width:1240px;margin:0 auto;padding:0 40px;">
-    <div class="card blueprint elev-sm" style="padding:18px 24px;margin-bottom:24px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px;">
-        <div style="display:flex;align-items:center;gap:12px;">
-          <h2 style="font-family:var(--font-heading);font-weight:600;font-size:19px;margin:0;letter-spacing:.01em;">{{pendingHeading}}</h2>
-          <span class="{{pendingStatusClass}}">{{pendingStatus}}</span>
-        </div>
-        <button type="button" class="{{pendingBtnClass}}">{{pendingAction}}</button>
+      <div style="padding:28px 24px 20px;border-bottom:1px solid var(--color-divider);">
+        <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:8px;">BUDGET &amp; FUNDING</div>
+        <h1 style="font-family:var(--font-heading);font-weight:600;font-size:32px;margin:0 0 8px;letter-spacing:.01em;">Budget &amp; Funding</h1>
+        <p style="font-size:14px;color:var(--color-neutral-700);margin:0 0 16px;max-width:70ch;">View the registered procurement budget and the funding position used by Procurement Planning.</p>
+        <select class="input" style="width:auto;min-width:170px;">
+          <option>FY 2027/28</option>
+        </select>
       </div>
-      <p style="font-size:14px;color:var(--color-neutral-700);margin:0 0 12px;">{{pendingBody}}</p>
-      <sc-if value="{{isReturned}}" hint-placeholder-val="{{false}}">
-        <div class="kt-notice is-warning" style="margin-bottom:12px;">
-          <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
-          <div class="kt-notice-body"><strong>Changes requested by Beatrice Kamau, 2 Oct 2026, 10:40 EAT.</strong> Attach the signed approval instrument; the uploaded file is a draft memo, not the approved allocation.</div>
+
+      <sc-if value="{{isPendingCard}}" hint-placeholder-val="{{false}}">
+      <div style="padding:18px 24px;border-bottom:1px solid var(--color-divider);">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <h2 style="font-family:var(--font-heading);font-weight:600;font-size:19px;margin:0;letter-spacing:.01em;">{{pendingHeading}}</h2>
+            <span class="{{pendingStatusClass}}">{{pendingStatus}}</span>
+          </div>
+          <button type="button" class="{{pendingBtnClass}}">{{pendingAction}}</button>
         </div>
+        <p style="font-size:14px;color:var(--color-neutral-700);margin:0 0 12px;">{{pendingBody}}</p>
+        <sc-if value="{{isReturned}}" hint-placeholder-val="{{false}}">
+          <div class="kt-notice is-warning" style="margin-bottom:12px;">
+            <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+            <div class="kt-notice-body"><strong>Changes requested by Beatrice Kamau, 2 Oct 2026, 10:40 EAT.</strong> Attach the signed approval instrument; the uploaded file is a draft memo, not the approved allocation.</div>
+          </div>
+        </sc-if>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px 24px;">
+          <div><div class="kt-label" style="margin-bottom:3px;">Version</div><div style="font-size:14px;">{{pendingVersion}}</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">{{pendingWhoLabel}}</div><div style="font-size:14px;">Josphat Mwangi, Budget Officer</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">{{pendingWhenLabel}}</div><div style="font-size:14px;">{{pendingWhen}}</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Financial Year</div><div style="font-size:14px;">FY 2027/28</div></div>
+        </div>
+      </div>
       </sc-if>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px 24px;">
-        <div><div class="kt-label" style="margin-bottom:3px;">Version</div><div style="font-size:14px;">{{pendingVersion}}</div></div>
-        <div><div class="kt-label" style="margin-bottom:3px;">{{pendingWhoLabel}}</div><div style="font-size:14px;">Josphat Mwangi, Budget Officer</div></div>
-        <div><div class="kt-label" style="margin-bottom:3px;">{{pendingWhenLabel}}</div><div style="font-size:14px;">{{pendingWhen}}</div></div>
-        <div><div class="kt-label" style="margin-bottom:3px;">Financial Year</div><div style="font-size:14px;">FY 2027/28</div></div>
-      </div>
-    </div>
-  </div>
-  </sc-if>
 
-  <sc-if value="{{isActive}}" hint-placeholder-val="{{true}}">
-  <div style="max-width:1240px;margin:0 auto;padding:0 40px;">
-    <div class="card blueprint elev-sm" style="padding:18px 24px;margin-bottom:24px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px;">
-        <div style="display:flex;align-items:center;gap:12px;">
-          <h2 style="font-family:var(--font-heading);font-weight:600;font-size:19px;margin:0;letter-spacing:.01em;">Ministry of Health procurement budget 2027/28</h2>
-          <span class="{{currentStatusClass}}">{{currentStatus}}</span>
+      <sc-if value="{{isActive}}" hint-placeholder-val="{{true}}">
+      <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <h2 style="font-family:var(--font-heading);font-weight:600;font-size:19px;margin:0;letter-spacing:.01em;">Ministry of Health procurement budget 2027/28</h2>
+            <span class="{{currentStatusClass}}">{{currentStatus}}</span>
+          </div>
+          <button type="button" class="btn btn-secondary">View budget</button>
         </div>
-        <button type="button" class="btn btn-secondary">View budget</button>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px 24px;">
+          <div><div class="kt-label" style="margin-bottom:3px;">Budget reference</div><div style="font-size:14px;">MOH-BUD-2027-001</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Current version</div><div style="font-size:14px;">Version 1</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Currency</div><div style="font-size:14px;">KES</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Approval reference</div><div style="font-size:14px;">MOH-FIN-BUD-2027-01 (Demo)</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Approval date</div><div style="font-size:14px;">30 Sep 2026</div></div>
+        </div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px 24px;">
-        <div><div class="kt-label" style="margin-bottom:3px;">Budget reference</div><div style="font-size:14px;">MOH-BUD-2027-001</div></div>
-        <div><div class="kt-label" style="margin-bottom:3px;">Current version</div><div style="font-size:14px;">Version 1</div></div>
-        <div><div class="kt-label" style="margin-bottom:3px;">Currency</div><div style="font-size:14px;">KES</div></div>
-        <div><div class="kt-label" style="margin-bottom:3px;">Approval reference</div><div style="font-size:14px;">MOH-FIN-BUD-2027-01 (Demo)</div></div>
-        <div><div class="kt-label" style="margin-bottom:3px;">Approval date</div><div style="font-size:14px;">30 Sep 2026</div></div>
-      </div>
-    </div>
 
-    <div class="kt-kpi-row" style="margin-bottom:8px;">
-      <div class="kt-kpi-card">
-        <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="1"/><circle cx="12" cy="12" r="2"/></svg>
-        <div class="kt-kpi-value">KES 160,000,000</div>
-        <div class="kt-kpi-sub">Registered allocation</div>
+      <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);">
+        <div class="kt-kpi-row" style="margin-bottom:8px;">
+          <div class="kt-kpi-card">
+            <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>
+            <div class="kt-kpi-value">KES 160,000,000</div>
+            <div class="kt-kpi-sub">Registered allocation</div>
+          </div>
+          <div class="kt-kpi-card">
+            <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            <div class="kt-kpi-value">{{reserved}}</div>
+            <div class="kt-kpi-sub">Reserved for requisitions</div>
+          </div>
+          <div class="kt-kpi-card">
+            <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/></svg>
+            <div class="kt-kpi-value" style="color:var(--color-neutral-500);">KES 0</div>
+            <div class="kt-kpi-sub">Committed to contracts</div>
+          </div>
+          <div class="kt-kpi-card is-live">
+            <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+            <div class="kt-kpi-value">{{available}}</div>
+            <div class="kt-kpi-sub">Available to reserve</div>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--color-neutral-600);margin:0;">Funding position as at {{asAt}}</p>
       </div>
-      <div class="kt-kpi-card">
-        <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="1"/><circle cx="12" cy="12" r="2"/></svg>
-        <div class="kt-kpi-value">{{reserved}}</div>
-        <div class="kt-kpi-sub">Reserved for requisitions</div>
-      </div>
-      <div class="kt-kpi-card">
-        <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="1"/><circle cx="12" cy="12" r="2"/></svg>
-        <div class="kt-kpi-value" style="color:var(--color-neutral-500);">KES 0</div>
-        <div class="kt-kpi-sub">Committed to contracts</div>
-      </div>
-      <div class="kt-kpi-card is-live">
-        <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="1"/><circle cx="12" cy="12" r="2"/></svg>
-        <div class="kt-kpi-value">{{available}}</div>
-        <div class="kt-kpi-sub">Available to reserve</div>
-      </div>
-    </div>
-    <p style="font-size:12px;color:var(--color-neutral-600);margin:0 0 24px;">Funding position as at {{asAt}}</p>
 
-    <div class="card blueprint elev-sm" style="padding:0;margin-bottom:40px;">
-      <h3 class="kt-card-title" style="margin:0;padding:20px 20px 4px;">Budget Lines</h3>
-      <table class="table" style="table-layout:fixed;width:100%;">
-        <thead><tr><th style="width:25%;">Budget Line</th><th style="width:10%;">Available to</th><th style="width:14.5%;text-align:right;">Registered allocation</th><th style="width:14.5%;text-align:right;">Reserved for requisitions</th><th style="width:14.5%;text-align:right;">Committed to contracts</th><th style="width:14.5%;text-align:right;">Available to reserve</th><th style="width:7%;"></th></tr></thead>
-        <tbody>
-          <tr><td><div>Digital health infrastructure programme</div><div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px;">MOH-BL-DHI-2027</div></td><td>Digital Health</td><td class="is-num">KES 100,000,000</td><td class="is-num">{{dhiReserved}}</td><td class="is-num is-zero">KES 0</td><td class="is-num">{{dhiAvailable}}</td><td><a href="#">View</a></td></tr>
-          <tr><td><div>Digital health workforce development</div><div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px;">MOH-BL-HWD-2027</div></td><td>All departments</td><td class="is-num">KES 60,000,000</td><td class="is-num is-zero">KES 0</td><td class="is-num is-zero">KES 0</td><td class="is-num">KES 60,000,000</td><td><a href="#">View</a></td></tr>
-        </tbody>
-      </table>
+      <div>
+        <h3 class="kt-card-title" style="margin:0;padding:20px 20px 4px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>Budget Lines</h3>
+        <table class="table" style="table-layout:fixed;width:100%;">
+          <thead><tr><th style="width:25%;">Budget Line</th><th style="width:10%;">Available to</th><th style="width:14.5%;text-align:right;">Registered allocation</th><th style="width:14.5%;text-align:right;">Reserved for requisitions</th><th style="width:14.5%;text-align:right;">Committed to contracts</th><th style="width:14.5%;text-align:right;">Available to reserve</th><th style="width:7%;"></th></tr></thead>
+          <tbody>
+            <tr><td><div>Digital health infrastructure programme</div><div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px;">MOH-BL-DHI-2027</div></td><td>Digital Health</td><td class="is-num">KES 100,000,000</td><td class="is-num">{{dhiReserved}}</td><td class="is-num is-zero">KES 0</td><td class="is-num">{{dhiAvailable}}</td><td><a href="#">View</a></td></tr>
+            <tr><td><div>Digital health workforce development</div><div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px;">MOH-BL-HWD-2027</div></td><td>All departments</td><td class="is-num">KES 60,000,000</td><td class="is-num is-zero">KES 0</td><td class="is-num is-zero">KES 0</td><td class="is-num">KES 60,000,000</td><td><a href="#">View</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+      </sc-if>
     </div>
   </div>
   </sc-if>
 
   <sc-if value="{{isLoading}}" hint-placeholder-val="{{false}}">
-  <div style="max-width:1240px;margin:0 auto;padding:0 40px;">
+  <div style="max-width:1240px;margin:0 auto;padding:36px 40px 0;">
     <div class="card blueprint elev-sm" style="padding:24px;margin-bottom:24px;">
       <div style="width:300px;height:16px;background:var(--color-neutral-200);margin-bottom:14px;animation:ktPulse 1.6s ease-in-out infinite;"></div>
       <div style="width:200px;height:12px;background:var(--color-neutral-200);animation:ktPulse 1.6s ease-in-out infinite;"></div>
@@ -203,6 +206,7 @@ class Component extends DCLogic {
       setInitialDraft: () => this.setState({ view: 'initialDraft' }), setInitialSubmitted: () => this.setState({ view: 'initialSubmitted' }),
       setReturned: () => this.setState({ view: 'returned' }), setCurrentDraft: () => this.setState({ view: 'currentDraft' }),
       setCurrentSubmitted: () => this.setState({ view: 'currentSubmitted' }), setClosed: () => this.setState({ view: 'closed' }),
+      showWorkspace: v !== 'loading' && v !== 'nobaseline' && v !== 'forbidden' && v !== 'servererror',
       isActive: hasCurrent, isLoading: v === 'loading', isNoBaseline: v === 'nobaseline', isForbidden: v === 'forbidden', isServerError: v === 'servererror',
       isPendingCard: pendingViews.includes(v), isReturned: v === 'returned',
       btnActive: cls('active'), btnLoading: cls('loading'), btnNoBaseline: cls('nobaseline'), btnForbidden: cls('forbidden'), btnServerError: cls('servererror'),

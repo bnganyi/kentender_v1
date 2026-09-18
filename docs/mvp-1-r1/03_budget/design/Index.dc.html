@@ -18,7 +18,7 @@
 </helmet>
 <div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:60px;">
   <div style="max-width:1100px;margin:0 auto;padding:56px 40px 0;">
-    <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px;">BUD-CHG-001 · v1.9 · Consolidated approved requirements, 13 Sep 2026 · boards reconciled 15 Sep 2026 (spec controls where a delivered board disagreed)</div>
+    <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px;">BUD-CHG-001 · v1.9 · Consolidated approved requirements, 13 Sep 2026 · visual refresh reconciled 18 Sep 2026</div>
     <h1 style="font-family:var(--font-heading);font-weight:600;font-size:38px;margin:0 0 12px;letter-spacing:.01em;">Budget &amp; Funding — static design artboards</h1>
     <p style="font-size:15px;color:var(--color-neutral-700);margin:0 0 40px;max-width:70ch;">Every artboard in §11 of the requirements, grouped by screen family. Each page bundles the states/tabs/actors that artboard family covers, with a small switcher above the artboard content so you can step through them.</p>
   </div>
@@ -29,7 +29,7 @@
       <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div class="kt-card-title" style="margin-bottom:8px;">Budget &amp; Funding workspace</div>
-        <p class="card-body" style="margin:0 0 10px;">The landing page — current budget, funding position and line preview — plus loading, no-baseline, forbidden, server-error, initial draft/submitted, returned, current-with-update, technical-reader and closed states (§11.1, §11.1A, §11.1B, §11.16).</p>
+        <p class="card-body" style="margin:0 0 10px;">The landing page — current budget, funding position and line preview — plus loading, no-baseline, forbidden, server-error, initial draft/submitted, returned, current-with-update, technical-reader and closed states.</p>
         <span class="tag tag-neutral">BUD-DES-01 · 01A · 01B · 16</span>
       </div>
     </a>
@@ -38,7 +38,7 @@
       <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div class="kt-card-title" style="margin-bottom:8px;">Register approved budget</div>
-        <p class="card-body" style="margin:0 0 10px;">Record approved allocation: year and currency context and the four external-approval fields before any line exists (§11.2).</p>
+        <p class="card-body" style="margin:0 0 10px;">The first Draft screen: financial year and currency context, and the external-approval evidence fields, before any line exists.</p>
         <span class="tag tag-neutral">BUD-DES-02</span>
       </div>
     </a>
@@ -47,7 +47,7 @@
       <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div class="kt-card-title" style="margin-bottom:8px;">Draft Budget Lines editor</div>
-        <p class="card-body" style="margin:0 0 10px;">Editing the initial Draft's line set: Approved allocation / Total entered, match or exact still-to-assign / over-allocation messages, editable rows (§11.3).</p>
+        <p class="card-body" style="margin:0 0 10px;">Editing the initial Draft's line set: line total strip against the authorised total, and the editable line rows.</p>
         <span class="tag tag-neutral">BUD-DES-03</span>
       </div>
     </a>
@@ -56,7 +56,7 @@
       <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div class="kt-card-title" style="margin-bottom:8px;">Active Budget workspace</div>
-        <p class="card-body" style="margin:0 0 10px;">The read-only budget workspace: Overview, Budget Lines, Funding Activity and History, the Officer header variant, and the Approver closure states — before year end, blocked, ready, confirm, Closed (§11.4–§11.7A, §11.18).</p>
+        <p class="card-body" style="margin:0 0 10px;">The read-only budget workspace: Overview, Budget Lines, Funding Activity and History, the Officer header variant, and the Approver closure states — before year end, blocked, ready, confirm, Closed.</p>
         <span class="tag tag-neutral">BUD-DES-04 · 04A · 05 · 07 · 07A · 17</span>
       </div>
     </a>
@@ -65,7 +65,7 @@
       <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div class="kt-card-title" style="margin-bottom:8px;">Budget Line detail</div>
-        <p class="card-body" style="margin:0 0 10px;">One line's position and lineage — no reservations, two requisition reservations, a partial conversion and a reservation requiring review (§11.6, §11.6A, §11.19).</p>
+        <p class="card-body" style="margin:0 0 10px;">One line's position and lineage — no reservations, two requisition reservations, a partial conversion and a reservation requiring review.</p>
         <span class="tag tag-neutral">BUD-DES-06 · 06A · 06B</span>
       </div>
     </a>
@@ -74,7 +74,7 @@
       <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div class="kt-card-title" style="margin-bottom:8px;">Approval task</div>
-        <p class="card-body" style="margin:0 0 10px;">The Budget Approver's decision screen: changes-first review for the Version 2 transfer, the complete registered allocation for Version 1, the live-breach blocked variant and the Return dialog (§11.8–§11.13).</p>
+        <p class="card-body" style="margin:0 0 10px;">The Budget Approver's decision screen: changes-first review for the Version 2 transfer, the complete registered allocation for Version 1, the live-breach blocked variant and the Return dialog.</p>
         <span class="tag tag-neutral">BUD-DES-08 · 09 · 10 · 11 · 13</span>
       </div>
     </a>
@@ -83,7 +83,7 @@
       <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
         <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
         <div class="kt-card-title" style="margin-bottom:8px;">Successor revision draft</div>
-        <p class="card-body" style="margin:0 0 10px;">Josphat's Version 2 Transfer draft: Type of change, external approval, editable proposed amounts with omission, and the Changes-requested state (§11.14–§11.15).</p>
+        <p class="card-body" style="margin:0 0 10px;">Josphat's Version 2 Transfer draft: Type of change, external approval, editable proposed amounts with omission, and the Changes-requested state.</p>
         <span class="tag tag-neutral">BUD-DES-14 · 15</span>
       </div>
     </a>

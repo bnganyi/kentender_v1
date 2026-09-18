@@ -147,7 +147,9 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 			<div v-else-if="serverError" class="kt-card kt-blueprint kt-empty" data-testid="budget-detail-server-error"><h2>{{ __("This budget could not be loaded.") }}</h2><button type="button" class="kt-btn kt-btn-primary" @click="loadDetail()">{{ __("Try again") }}</button></div>
 
 			<template v-else-if="detail">
-				<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 16px" data-testid="budget-detail-header">
+				<div class="kt-card kt-blueprint" style="padding: 0">
+				<div style="padding: 28px 24px 0">
+				<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px" data-testid="budget-detail-header">
 					<div>
 						<div class="kt-eyebrow" style="margin-bottom: 6px">{{ detail.budget.code }} · {{ __("VERSION {0}", [detail.version.version_number]) }}</div>
 						<div style="display: flex; align-items: center; gap: 12px">
@@ -163,17 +165,18 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 				</div>
 				<KtErrorBanner :message="actingError" style="margin-bottom: 12px" @dismiss="actingError = null" />
 
-				<div class="kt-tabs" role="tablist">
+				<div class="kt-tabs" role="tablist" style="margin-bottom: 0">
 					<div class="kt-tab" role="tab" tabindex="0" :aria-selected="tab === 'overview'" data-testid="budget-detail-tab-overview" @click="switchTab('overview')" @keydown.enter="switchTab('overview')">{{ __("Overview") }}</div>
 					<div class="kt-tab" role="tab" tabindex="0" :aria-selected="tab === 'lines'" data-testid="budget-detail-tab-lines" @click="switchTab('lines')" @keydown.enter="switchTab('lines')">{{ __("Budget Lines") }}</div>
 					<div class="kt-tab" role="tab" tabindex="0" :aria-selected="tab === 'activity'" data-testid="budget-detail-tab-activity" @click="switchTab('activity')" @keydown.enter="switchTab('activity')">{{ __("Funding Activity") }}</div>
 					<div class="kt-tab" role="tab" tabindex="0" :aria-selected="tab === 'history'" data-testid="budget-detail-tab-history" @click="switchTab('history')" @keydown.enter="switchTab('history')">{{ __("History") }}</div>
 				</div>
+				</div>
 
 				<!-- Overview (BUD-DES-04/04A + closure notes §11.18) -->
 				<template v-if="tab === 'overview'">
-					<div v-if="isClosed" class="kt-card kt-blueprint" data-testid="budget-detail-closure">
-						<h3 class="kt-card-title">{{ __("Closure") }}</h3>
+					<div v-if="isClosed" style="padding: 22px 24px; border-top: 1px solid var(--kt-color-divider)" data-testid="budget-detail-closure">
+						<h3 class="kt-card-title" style="margin: 0 0 14px">{{ __("Closure") }}</h3>
 						<div class="kt-grid-3" style="gap: 16px">
 							<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Closed by") }}</div><div style="font-size: 14px">{{ detail.closure.closed_by }}</div></div>
 							<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Closed") }}</div><div style="font-size: 14px">{{ detail.closure.closed_at_display }}</div></div>
@@ -182,26 +185,28 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 						<p class="kt-muted" style="font-size: 13px; margin: 12px 0 0">{{ __("No new reservations, conversions or commitment increases. Existing commitments and history remain.") }}</p>
 					</div>
 
+					<div style="padding: 20px 24px; border-top: 1px solid var(--kt-color-divider)">
 					<div class="kt-kpi-row" style="margin-bottom: 8px" data-testid="budget-detail-position-cards">
-						<div class="kt-kpi-card"><div class="kt-kpi-value">{{ formatKes(detail.positions.approved, currency) }}</div><div class="kt-kpi-sub">{{ __("Registered allocation") }}</div></div>
-						<div class="kt-kpi-card"><div class="kt-kpi-value" :class="{ 'is-zero': !detail.positions.reserved }">{{ formatKes(detail.positions.reserved, currency) }}</div><div class="kt-kpi-sub">{{ __("Reserved for requisitions") }}</div></div>
-						<div class="kt-kpi-card"><div class="kt-kpi-value" :class="{ 'is-zero': !detail.positions.committed }">{{ formatKes(detail.positions.committed, currency) }}</div><div class="kt-kpi-sub">{{ __("Committed to contracts") }}</div></div>
-						<div class="kt-kpi-card" :class="detail.positions.available > 0 ? 'is-live' : 'is-critical'"><div class="kt-kpi-value">{{ formatKes(detail.positions.available, currency) }}</div><div class="kt-kpi-sub">{{ __("Available to reserve") }}</div></div>
+						<div class="kt-kpi-card"><svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" x2="21" y1="22" y2="22" /><line x1="6" x2="6" y1="18" y2="11" /><line x1="10" x2="10" y1="18" y2="11" /><line x1="14" x2="14" y1="18" y2="11" /><line x1="18" x2="18" y1="18" y2="11" /><polygon points="12 2 20 7 4 7" /></svg><div class="kt-kpi-value">{{ formatKes(detail.positions.approved, currency) }}</div><div class="kt-kpi-sub">{{ __("Registered allocation") }}</div></div>
+						<div class="kt-kpi-card"><svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg><div class="kt-kpi-value" :class="{ 'is-zero': !detail.positions.reserved }">{{ formatKes(detail.positions.reserved, currency) }}</div><div class="kt-kpi-sub">{{ __("Reserved for requisitions") }}</div></div>
+						<div class="kt-kpi-card"><svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /><path d="m9 15 2 2 4-4" /></svg><div class="kt-kpi-value" :class="{ 'is-zero': !detail.positions.committed }">{{ formatKes(detail.positions.committed, currency) }}</div><div class="kt-kpi-sub">{{ __("Committed to contracts") }}</div></div>
+						<div class="kt-kpi-card" :class="detail.positions.available > 0 ? 'is-live' : 'is-critical'"><svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 9.9-1" /></svg><div class="kt-kpi-value">{{ formatKes(detail.positions.available, currency) }}</div><div class="kt-kpi-sub">{{ __("Available to reserve") }}</div></div>
 					</div>
 					<div class="kt-bar" style="margin-bottom: 8px"><i class="kt-bar-committed" :style="{ width: barCommitted + '%' }"></i><i class="kt-bar-reserved" :style="{ width: barReserved + '%' }"></i></div>
-					<p class="kt-muted" style="font-size: 12px; margin: 0 0 20px" data-testid="budget-detail-as-at">{{ __("Funding position as at {0}", [detail.positions_as_at_display]) }}</p>
+					<p class="kt-muted" style="font-size: 12px; margin: 0" data-testid="budget-detail-as-at">{{ __("Funding position as at {0}", [detail.positions_as_at_display]) }}</p>
+					</div>
 
-					<div class="kt-grid-2" style="margin-bottom: 16px">
-						<div class="kt-card kt-blueprint" style="margin: 0">
-							<h3 class="kt-card-title">{{ __("Budget context") }}</h3>
+					<div class="kt-grid-2" style="border-top: 1px solid var(--kt-color-divider)">
+						<div style="padding: 22px; border-right: 1px solid var(--kt-color-divider)">
+							<h3 class="kt-card-title" style="margin: 0 0 14px; display: flex; align-items: center; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" x2="21" y1="22" y2="22" /><line x1="6" x2="6" y1="18" y2="11" /><line x1="10" x2="10" y1="18" y2="11" /><line x1="14" x2="14" y1="18" y2="11" /><line x1="18" x2="18" y1="18" y2="11" /><polygon points="12 2 20 7 4 7" /></svg>{{ __("Budget context") }}</h3>
 							<div style="display: grid; gap: 12px">
 								<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Financial Year") }}</div><div style="font-size: 14px">{{ detail.budget.fiscal_year.label }}</div></div>
 								<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Currency") }}</div><div style="font-size: 14px">{{ currency }}</div></div>
 								<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Current version") }}</div><div style="font-size: 14px">{{ __("Version {0}", [detail.version.version_number]) }}</div></div>
 							</div>
 						</div>
-						<div class="kt-card kt-blueprint" style="margin: 0">
-							<h3 class="kt-card-title">{{ __("External approval") }}</h3>
+						<div style="padding: 22px">
+							<h3 class="kt-card-title" style="margin: 0 0 14px; display: flex; align-items: center; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" /><path d="m9 12 2 2 4-4" /></svg>{{ __("External approval") }}</h3>
 							<div style="display: grid; gap: 12px">
 								<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Approval reference") }}</div><div style="font-size: 14px">{{ detail.version.approval_reference }}</div></div>
 								<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Approval date") }}</div><div style="font-size: 14px">{{ detail.version.approval_date_display }}</div></div>
@@ -215,23 +220,23 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 						</div>
 					</div>
 
-					<div class="kt-card kt-blueprint">
-						<h3 class="kt-card-title">{{ __("Activation") }}</h3>
+					<div style="padding: 22px 24px; border-top: 1px solid var(--kt-color-divider)">
+						<h3 class="kt-card-title" style="margin: 0 0 14px; display: flex; align-items: center; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" /></svg>{{ __("Activation") }}</h3>
 						<div class="kt-grid-3" style="gap: 16px">
 							<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Submitted by") }}</div><div style="font-size: 14px">{{ detail.activation.submitted_by || "—" }}</div></div>
 							<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Approved and activated by") }}</div><div style="font-size: 14px">{{ detail.activation.decided_by || "—" }}</div></div>
 							<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Activated") }}</div><div style="font-size: 14px">{{ detail.activation.decided_at || "—" }}</div></div>
 						</div>
-					</div>
-					<div v-if="actions.includes('close_budget') && detail.closure.fy_end_date_display" class="kt-notice is-info" style="margin-top: 16px" data-testid="budget-detail-close-note">
-						<div class="kt-notice-body">{{ __("This budget can be closed only after {0}.", [detail.closure.fy_end_date_display]) }} <a href="#" @click.prevent="go(budgetIdParam, 'close')">{{ __("Check closure") }}</a></div>
+						<div v-if="actions.includes('close_budget') && detail.closure.fy_end_date_display" class="kt-notice is-info" style="margin-top: 16px" data-testid="budget-detail-close-note">
+							<div class="kt-notice-body">{{ __("This budget can be closed only after {0}.", [detail.closure.fy_end_date_display]) }} <a href="#" @click.prevent="go(budgetIdParam, 'close')">{{ __("Check closure") }}</a></div>
+						</div>
 					</div>
 				</template>
 
 				<!-- Budget Lines (BUD-DES-05) -->
 				<template v-else-if="tab === 'lines'">
-					<div v-if="!linesActive" class="kt-card kt-blueprint"><div class="kt-skel" style="width: 240px; height: 16px"></div></div>
-					<div v-else class="kt-card kt-blueprint" style="padding: 0; overflow-x: auto">
+					<div v-if="!linesActive" style="padding: 20px 24px; border-top: 1px solid var(--kt-color-divider)"><div class="kt-skel" style="width: 240px; height: 16px"></div></div>
+					<div v-else style="border-top: 1px solid var(--kt-color-divider); overflow-x: auto">
 						<table class="kt-table" data-testid="budget-detail-lines-table">
 							<thead>
 								<tr>
@@ -270,7 +275,7 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 
 				<!-- Funding Activity (BUD-DES-07) -->
 				<template v-else-if="tab === 'activity'">
-					<div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap">
+					<div style="padding: 20px 24px; border-top: 1px solid var(--kt-color-divider); display: flex; gap: 12px; flex-wrap: wrap">
 						<select v-model="activityFilterLine" class="kt-input" style="width: 220px" data-testid="budget-detail-activity-filter-line">
 							<option value="">{{ __("All Budget Lines") }}</option>
 							<option v-for="l in activity?.budget_lines || []" :key="l.id" :value="l.id">{{ l.title }}</option>
@@ -280,14 +285,14 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 							<option v-for="opt in activity?.event_type_options || []" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
 						</select>
 					</div>
-					<div v-if="!activity" class="kt-card kt-blueprint"><div class="kt-skel" style="width: 240px; height: 16px"></div></div>
-					<div v-else-if="!activity.rows.length" class="kt-notice is-info" data-testid="budget-detail-activity-empty">
+					<div v-if="!activity" style="padding: 0 24px 20px"><div class="kt-skel" style="width: 240px; height: 16px"></div></div>
+					<div v-else-if="!activity.rows.length" class="kt-notice is-info" style="margin: 0 24px 20px" data-testid="budget-detail-activity-empty">
 						<div class="kt-notice-body">
 							<template v-if="activityFilterLine || activityFilterEvent">{{ __("No funding events match these filters.") }} <a href="#" data-testid="budget-detail-activity-clear-filters" @click.prevent="clearActivityFilters">{{ __("Clear filters") }}</a></template>
 							<template v-else>{{ __("No funding activity has been recorded for this budget.") }}</template>
 						</div>
 					</div>
-					<div v-else class="kt-card kt-blueprint" style="padding: 0; overflow-x: auto">
+					<div v-else style="border-top: 1px solid var(--kt-color-divider); overflow-x: auto">
 						<table class="kt-table" data-testid="budget-detail-activity-table">
 							<thead><tr><th>{{ __("Date and time") }}</th><th>{{ __("Event") }}</th><th>{{ __("Budget Line") }}</th><th>{{ __("Requisition / reservation") }}</th><th class="is-num">{{ __("Amount") }}</th><th>{{ __("Initiating actor") }}</th></tr></thead>
 							<tbody>
@@ -307,8 +312,8 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 
 				<!-- History (BUD-DES-07A) -->
 				<template v-else-if="tab === 'history'">
-					<div v-if="!history" class="kt-card kt-blueprint"><div class="kt-skel" style="width: 240px; height: 16px"></div></div>
-					<div v-else class="kt-card kt-blueprint" data-testid="budget-detail-history-table">
+					<div v-if="!history" style="padding: 20px 24px; border-top: 1px solid var(--kt-color-divider)"><div class="kt-skel" style="width: 240px; height: 16px"></div></div>
+					<div v-else style="padding: 22px 24px; border-top: 1px solid var(--kt-color-divider)" data-testid="budget-detail-history-table">
 						<h3 class="kt-card-title">{{ __("Version history") }}</h3>
 						<div class="kt-timeline">
 							<div v-for="(row, i) in history.rows" :key="row.id" class="kt-timeline-row">
@@ -318,6 +323,7 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 						</div>
 					</div>
 				</template>
+				</div>
 			</template>
 		</div>
 	</div>

@@ -205,12 +205,6 @@ function cancel() {
 
 		<template v-else>
 			<div class="kt-shell" style="max-width: 760px; padding-bottom: 96px">
-				<header style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px">
-					<h1 style="margin: 0">{{ __("Record approved allocation") }}</h1>
-					<span class="kt-status is-draft">{{ __("Draft") }}</span>
-				</header>
-				<p class="kt-page-lede" style="margin: 0 0 24px">{{ __("Enter the allocation approved outside KenTender and attach its approval document.") }}</p>
-
 				<KtErrorBanner :message="actingError" style="margin-bottom: 16px" @dismiss="actingError = null" />
 
 				<div v-if="savedButLost" class="kt-notice is-warning" style="margin-bottom: 16px" data-testid="bud-reg-saved-lost">
@@ -220,51 +214,67 @@ function cancel() {
 					</div>
 				</div>
 
-				<div class="kt-card kt-blueprint">
-					<h3 class="kt-card-title">{{ __("Budget context") }}</h3>
-					<div class="kt-grid-2" style="gap: 16px">
-						<div class="kt-field">
-							<label for="bud-reg-year">{{ __("Financial Year") }}</label>
-							<select id="bud-reg-year" class="kt-input" :value="fyFilter.selected.value" data-testid="bud-reg-fy" @change="onSelectFy($event.target.value)">
-								<option v-for="fy in fyFilter.fiscalYears.value" :key="fy" :value="fy">{{ fy }}</option>
-							</select>
-							<p class="kt-field-hint">{{ __("The year becomes fixed once the allocation is saved.") }}</p>
+				<div class="kt-card kt-blueprint" style="padding: 0">
+					<div style="padding: 24px 24px 20px; border-bottom: 1px solid var(--kt-color-divider)">
+						<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px">
+							<h1 style="margin: 0">{{ __("Record approved allocation") }}</h1>
+							<span class="kt-status is-draft">{{ __("Draft") }}</span>
 						</div>
-						<div class="kt-field">
-							<label>{{ __("Currency") }}</label>
-							<input class="kt-input" type="text" value="KES" disabled data-testid="bud-reg-currency" />
+						<p class="kt-page-lede" style="margin: 0">{{ __("Enter the allocation approved outside KenTender and attach its approval document.") }}</p>
+					</div>
+
+					<div style="padding: 24px; border-bottom: 1px solid var(--kt-color-divider)">
+						<h3 class="kt-card-title" style="margin: 0 0 16px; display: flex; align-items: center; gap: 6px">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" x2="21" y1="22" y2="22" /><line x1="6" x2="6" y1="18" y2="11" /><line x1="10" x2="10" y1="18" y2="11" /><line x1="14" x2="14" y1="18" y2="11" /><line x1="18" x2="18" y1="18" y2="11" /><polygon points="12 2 20 7 4 7" /></svg>
+							{{ __("Budget context") }}
+						</h3>
+						<div class="kt-grid-2" style="gap: 16px">
+							<div class="kt-field">
+								<label for="bud-reg-year">{{ __("Financial Year") }}</label>
+								<select id="bud-reg-year" class="kt-input" :value="fyFilter.selected.value" data-testid="bud-reg-fy" @change="onSelectFy($event.target.value)">
+									<option v-for="fy in fyFilter.fiscalYears.value" :key="fy" :value="fy">{{ fy }}</option>
+								</select>
+								<p class="kt-field-hint">{{ __("The year becomes fixed once the allocation is saved.") }}</p>
+							</div>
+							<div class="kt-field">
+								<label>{{ __("Currency") }}</label>
+								<input class="kt-input" type="text" value="KES" disabled data-testid="bud-reg-currency" />
+							</div>
 						</div>
 					</div>
-				</div>
 
-				<div class="kt-card kt-blueprint">
-					<h3 class="kt-card-title">{{ __("External approval") }}</h3>
-					<div class="kt-grid-2" style="gap: 16px">
-						<div class="kt-field">
-							<label for="bud-reg-ref">{{ __("Approval reference") }}</label>
-							<input id="bud-reg-ref" v-model="form.approval_reference" class="kt-input" type="text" data-testid="bud-reg-approval-ref" />
-							<p v-if="fieldErrors.approval_reference" class="kt-field-error">{{ fieldErrors.approval_reference }}</p>
-						</div>
-						<div class="kt-field">
-							<label for="bud-reg-date">{{ __("Approval date") }}</label>
-							<input id="bud-reg-date" v-model="form.approval_date" class="kt-input" type="date" data-testid="bud-reg-approval-date" />
-							<p v-if="fieldErrors.approval_date" class="kt-field-error">{{ fieldErrors.approval_date }}</p>
-						</div>
-						<div class="kt-field">
-							<label for="bud-reg-total">{{ __("Approved allocation") }}</label>
-							<div class="kt-input-prefix"><span class="prefix">KES</span><input id="bud-reg-total" v-model="form.authorised_total" type="number" min="0" data-testid="bud-reg-approved-allocation" /></div>
-							<p v-if="fieldErrors.authorised_total" class="kt-field-error">{{ fieldErrors.authorised_total }}</p>
-						</div>
-						<div class="kt-field">
-							<label>{{ __("Approval document") }}</label>
-							<div class="kt-file-row" style="justify-content: space-between">
-								<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis" data-testid="bud-reg-document-name">{{ form.approval_document_name || __("No file attached") }}</span>
-								<button type="button" class="kt-btn kt-btn-ghost" style="flex: none; font-size: 13px" data-testid="bud-reg-upload-btn" @click="openFileUploader">
-									{{ form.approval_document ? __("Replace") : __("Attach") }}
-								</button>
+					<div style="padding: 24px">
+						<h3 class="kt-card-title" style="margin: 0 0 16px; display: flex; align-items: center; gap: 6px">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" /><path d="m9 12 2 2 4-4" /></svg>
+							{{ __("External approval") }}
+						</h3>
+						<div class="kt-grid-2" style="gap: 16px">
+							<div class="kt-field">
+								<label for="bud-reg-ref">{{ __("Approval reference") }}</label>
+								<input id="bud-reg-ref" v-model="form.approval_reference" class="kt-input" type="text" data-testid="bud-reg-approval-ref" />
+								<p v-if="fieldErrors.approval_reference" class="kt-field-error">{{ fieldErrors.approval_reference }}</p>
 							</div>
-							<p v-if="fieldErrors.approval_document" class="kt-field-error">{{ fieldErrors.approval_document }}</p>
-							<p v-else class="kt-field-hint">{{ __("Exactly one approval document. It is required before the allocation is saved.") }}</p>
+							<div class="kt-field">
+								<label for="bud-reg-date">{{ __("Approval date") }}</label>
+								<input id="bud-reg-date" v-model="form.approval_date" class="kt-input" type="date" data-testid="bud-reg-approval-date" />
+								<p v-if="fieldErrors.approval_date" class="kt-field-error">{{ fieldErrors.approval_date }}</p>
+							</div>
+							<div class="kt-field">
+								<label for="bud-reg-total">{{ __("Approved allocation") }}</label>
+								<div class="kt-input-prefix"><span class="prefix">KES</span><input id="bud-reg-total" v-model="form.authorised_total" type="number" min="0" data-testid="bud-reg-approved-allocation" /></div>
+								<p v-if="fieldErrors.authorised_total" class="kt-field-error">{{ fieldErrors.authorised_total }}</p>
+							</div>
+							<div class="kt-field">
+								<label>{{ __("Approval document") }}</label>
+								<div class="kt-file-row" style="justify-content: space-between">
+									<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis" data-testid="bud-reg-document-name">{{ form.approval_document_name || __("No file attached") }}</span>
+									<button type="button" class="kt-btn kt-btn-ghost" style="flex: none; font-size: 13px" data-testid="bud-reg-upload-btn" @click="openFileUploader">
+										{{ form.approval_document ? __("Replace") : __("Attach") }}
+									</button>
+								</div>
+								<p v-if="fieldErrors.approval_document" class="kt-field-error">{{ fieldErrors.approval_document }}</p>
+								<p v-else class="kt-field-hint">{{ __("Exactly one approval document. It is required before the allocation is saved.") }}</p>
+							</div>
 						</div>
 					</div>
 				</div>

@@ -27,146 +27,157 @@
   </div>
 
   <div data-screen-label="BUD-DES-06 Budget Line detail" style="max-width:1000px;margin:0 auto;padding:32px 40px 0;">
-    <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:6px;">{{eyebrow}}</div>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
-      <h1 style="font-family:var(--font-heading);font-weight:600;font-size:30px;margin:0;letter-spacing:.01em;">{{lineTitle}}</h1>
-      <span class="kt-status is-live">Active</span>
-    </div>
 
-    <div style="display:flex;gap:32px;padding:14px 0;border-top:1px solid var(--color-divider);border-bottom:1px solid var(--color-divider);margin-bottom:24px;">
-      <div><span class="kt-label">Budget </span><span style="font-size:14px;margin-left:6px;">MOH-BUD-2027-001 · Version 1</span></div>
-      <div><span class="kt-label">Financial Year </span><span style="font-size:14px;margin-left:6px;">FY 2027/28</span></div>
-    </div>
+    <div class="card blueprint elev-sm" style="padding:0;">
 
-    <div class="kt-kpi-row" style="margin-bottom:10px;">
-      <div class="kt-kpi-card">
-        <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="1"/><circle cx="12" cy="12" r="2"/></svg>
-        <div class="kt-kpi-value">{{approved}}</div>
-        <div class="kt-kpi-sub">Registered allocation</div>
+      <div style="padding:28px 28px 20px;border-bottom:1px solid var(--color-divider);">
+        <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:6px;">{{eyebrow}}</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <h1 style="font-family:var(--font-heading);font-weight:600;font-size:30px;margin:0;letter-spacing:.01em;">{{lineTitle}}</h1>
+          <span class="kt-status is-live">Active</span>
+        </div>
       </div>
-      <div class="kt-kpi-card">
-        <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="1"/><circle cx="12" cy="12" r="2"/></svg>
-        <div class="kt-kpi-value">{{reserved}}</div>
-        <div class="kt-kpi-sub">Reserved for requisitions</div>
-      </div>
-      <div class="kt-kpi-card">
-        <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="1"/><circle cx="12" cy="12" r="2"/></svg>
-        <div class="kt-kpi-value" style="{{committedStyle}}">{{committed}}</div>
-        <div class="kt-kpi-sub">Committed to contracts</div>
-      </div>
-      <div class="{{availableKpiClass}}">
-        <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="1"/><circle cx="12" cy="12" r="2"/></svg>
-        <div class="kt-kpi-value">{{available}}</div>
-        <div class="kt-kpi-sub">Available to reserve</div>
-      </div>
-    </div>
-    <div class="kt-bar" style="margin-bottom:8px;"><i class="kt-bar-committed" style="{{committedBarStyle}}"></i><i class="kt-bar-reserved" style="{{reservedBarStyle}}"></i></div>
-    <p style="font-size:12px;color:var(--color-neutral-600);margin:0 0 24px;">Funding position as at {{observedAt}}</p>
 
-    <sc-if value="{{isPartial}}" hint-placeholder-val="{{false}}">
-      <div class="kt-notice is-info" style="margin-bottom:24px;">
-        <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
-        <div class="kt-notice-body"><strong>KES 60,000,000 of the reservation is now committed to a contract.</strong> The remaining reservation is KES 20,000,000. No payment is recorded here.</div>
+      <div style="padding:22px 28px;border-bottom:1px solid var(--color-divider);display:flex;gap:32px;">
+        <div><span class="kt-label">Budget </span><span style="font-size:14px;margin-left:6px;">MOH-BUD-2027-001 · Version 1</span></div>
+        <div><span class="kt-label">Financial Year </span><span style="font-size:14px;margin-left:6px;">FY 2027/28</span></div>
       </div>
-    </sc-if>
-    <div class="card blueprint elev-sm" style="padding:22px;margin-bottom:24px;">
-      <h3 class="kt-card-title" style="margin:0 0 14px;">Line identity</h3>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
-        <div><div class="kt-label" style="margin-bottom:3px;">Available to</div><div style="font-size:14px;">{{ownerScope}}</div></div>
-        <div><div class="kt-label" style="margin-bottom:3px;">Funding source</div><div style="font-size:14px;">Government of Kenya</div></div>
-        <div><div class="kt-label" style="margin-bottom:3px;">Current version</div><div style="font-size:14px;">Version 1</div></div>
-      </div>
-    </div>
 
-    <h3 class="kt-card-title" style="margin:0 0 14px;">Active reservations</h3>
-
-    <sc-if value="{{hasReservation}}" hint-placeholder-val="{{false}}">
-      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:40px;">
-        <details class="kt-record">
-          <summary>
-            <div class="kt-record-main">
-              <div class="kt-record-index">01</div>
-              <div class="kt-record-body">
-                <div class="kt-record-ref">RSV-MOH-2027-033-001</div>
-                <div class="kt-record-title">REQ-MOH-2027-033-001 · HRMD source</div>
-                <div class="kt-record-meta"><span class="kt-status is-live">Active</span><span>Plan Item PPI-MOH-2027-033</span></div>
-              </div>
-              <div class="kt-record-value">
-                <div class="kt-record-amount">KES 20,000,000</div>
-                <div class="kt-record-sub">Still reserved · originally KES 20,000,000</div>
-              </div>
-            </div>
-            <div class="kt-record-footer"><span><a href="#" onclick="event.stopPropagation()">View Requisition</a></span><span class="kt-record-toggle"><span class="when-closed">Show detail</span><span class="when-open">Hide detail</span><svg class="kt-disclosure-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg></span></div>
-          </summary>
-          <div class="kt-record-detail"><p class="card-body" style="margin:0;">Sourced from the HR Management and Development requisition line. <a href="#">View Plan Item</a></p></div>
-        </details>
-        <details class="kt-record">
-          <summary>
-            <div class="kt-record-main">
-              <div class="kt-record-index">02</div>
-              <div class="kt-record-body">
-                <div class="kt-record-ref">RSV-MOH-2027-033-002</div>
-                <div class="kt-record-title">REQ-MOH-2027-033-001 · Digital Health source</div>
-                <div class="kt-record-meta"><span class="kt-status is-live">Active</span><span>Plan Item PPI-MOH-2027-033</span></div>
-              </div>
-              <div class="kt-record-value">
-                <div class="kt-record-amount">KES 30,000,000</div>
-                <div class="kt-record-sub">Still reserved · originally KES 30,000,000</div>
-              </div>
-            </div>
-            <div class="kt-record-footer"><span><a href="#" onclick="event.stopPropagation()">View Requisition</a></span><span class="kt-record-toggle"><span class="when-closed">Show detail</span><span class="when-open">Hide detail</span><svg class="kt-disclosure-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg></span></div>
-          </summary>
-          <div class="kt-record-detail"><p class="card-body" style="margin:0;">Sourced from the Digital Health requisition line. <a href="#">View Plan Item</a></p></div>
-        </details>
-      </div>
-    </sc-if>
-
-    <sc-if value="{{hasPartial}}" hint-placeholder-val="{{false}}">
-      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:40px;">
-        <details class="kt-record" open="open">
-          <summary>
-            <div class="kt-record-main">
-              <div class="kt-record-index">01</div>
-              <div class="kt-record-body">
-                <div class="kt-record-ref">RSV-MOH-2027-021-001</div>
-                <div class="kt-record-title">REQ-MOH-2027-021-001 · Digital Health source</div>
-                <div class="kt-record-meta"><span class="{{partialStatusClass}}">{{partialStatus}}</span><span>Plan Item PPI-MOH-2027-021</span></div>
-              </div>
-              <div class="kt-record-value">
-                <div class="kt-record-amount">KES 20,000,000</div>
-                <div class="kt-record-sub">Still reserved · originally KES 80,000,000</div>
-              </div>
-            </div>
-            <div class="kt-record-footer"><span><a href="#" onclick="event.stopPropagation()">View Requisition</a></span><span class="kt-record-toggle"><span class="when-closed">Show detail</span><span class="when-open">Hide detail</span><svg class="kt-disclosure-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg></span></div>
-          </summary>
-          <div class="kt-record-detail" style="padding:0;">
-            <sc-if value="{{isReview}}" hint-placeholder-val="{{false}}">
-              <div class="kt-notice is-warning" style="margin:14px;">
-                <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
-                <div class="kt-notice-body"><strong>Requires review — funds remain reserved.</strong> The budget line's registered allocation no longer covers this reservation after the last allocation update. The owning Requisition must be revalidated by its Procurement owner before it can progress; nothing is released from this screen.</div>
-              </div>
-            </sc-if>
-            <table class="table">
-              <thead><tr><th>Value</th><th class="is-num">Amount</th></tr></thead>
-              <tbody>
-                <tr><td>Originally reserved</td><td class="is-num">KES 80,000,000</td></tr>
-                <tr><td>Converted into commitments</td><td class="is-num">KES 60,000,000</td></tr>
-                <tr><td>Released from this reservation</td><td class="is-num is-zero">KES 0</td></tr>
-                <tr><td>Still reserved</td><td class="is-num">KES 20,000,000</td></tr>
-              </tbody>
-            </table>
-            <p class="card-body" style="margin:0;padding:14px;">Sourced from the Digital Health requisition line. <a href="#">View Plan Item</a> · Contract KT-CON-2027-004 (view unavailable until the Contract module publishes its records).</p>
+      <div style="padding:22px 28px;border-bottom:1px solid var(--color-divider);">
+        <div class="kt-kpi-row" style="margin-bottom:10px;">
+          <div class="kt-kpi-card">
+            <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>
+            <div class="kt-kpi-value">{{approved}}</div>
+            <div class="kt-kpi-sub">Registered allocation</div>
           </div>
-        </details>
+          <div class="kt-kpi-card">
+            <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            <div class="kt-kpi-value" style="{{reservedValStyle}}">{{reserved}}</div>
+            <div class="kt-kpi-sub">Reserved for requisitions</div>
+          </div>
+          <div class="kt-kpi-card">
+            <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/></svg>
+            <div class="kt-kpi-value" style="{{committedStyle}}">{{committed}}</div>
+            <div class="kt-kpi-sub">Committed to contracts</div>
+          </div>
+          <div class="{{availableKpiClass}}">
+            <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+            <div class="kt-kpi-value">{{available}}</div>
+            <div class="kt-kpi-sub">Available to reserve</div>
+          </div>
+        </div>
+        <div class="kt-bar" style="margin-bottom:8px;"><i class="kt-bar-committed" style="{{committedBarStyle}}"></i><i class="kt-bar-reserved" style="{{reservedBarStyle}}"></i></div>
+        <p style="font-size:12px;color:var(--color-neutral-600);margin:0;">Funding position as at {{observedAt}}</p>
       </div>
-    </sc-if>
 
-    <sc-if value="{{noReservation}}" hint-placeholder-val="{{true}}">
-      <div class="kt-notice is-info" style="margin-bottom:40px;">
-        <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
-        <div class="kt-notice-body"><strong>No active reservations.</strong> This Budget Line has no confirmed funding reservations.</div>
+      <sc-if value="{{isPartial}}" hint-placeholder-val="{{false}}">
+        <div class="kt-notice is-info" style="margin:22px 28px 0;">
+          <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
+          <div class="kt-notice-body"><strong>KES 60,000,000 of the reservation is now committed to a contract.</strong> The remaining reservation is KES 20,000,000. No payment is recorded here.</div>
+        </div>
+      </sc-if>
+
+      <div style="padding:22px 28px;border-bottom:1px solid var(--color-divider);">
+        <h3 class="kt-card-title" style="margin:0 0 14px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42Z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>Line identity</h3>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+          <div><div class="kt-label" style="margin-bottom:3px;">Available to</div><div style="font-size:14px;">{{ownerScope}}</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Funding source</div><div style="font-size:14px;">Government of Kenya</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Current version</div><div style="font-size:14px;">Version 1</div></div>
+        </div>
       </div>
-    </sc-if>
+
+      <div style="padding:22px 28px;">
+        <h3 class="kt-card-title" style="margin:0 0 14px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Active reservations</h3>
+
+        <sc-if value="{{hasReservation}}" hint-placeholder-val="{{false}}">
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <details class="kt-record">
+              <summary>
+                <div class="kt-record-main">
+                  <div class="kt-record-index">01</div>
+                  <div class="kt-record-body">
+                    <div class="kt-record-ref">RSV-MOH-2027-033-001</div>
+                    <div class="kt-record-title">REQ-MOH-2027-033-001 · HRMD source</div>
+                    <div class="kt-record-meta"><span class="kt-status is-live">Active</span><span>Plan Item PPI-MOH-2027-033</span></div>
+                  </div>
+                  <div class="kt-record-value">
+                    <div class="kt-record-amount">KES 20,000,000</div>
+                    <div class="kt-record-sub">Still reserved · originally KES 20,000,000</div>
+                  </div>
+                </div>
+                <div class="kt-record-footer"><span><a href="#" onclick="event.stopPropagation()">View Requisition</a></span><span class="kt-record-toggle"><span class="when-closed">Show detail</span><span class="when-open">Hide detail</span><svg class="kt-disclosure-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg></span></div>
+              </summary>
+              <div class="kt-record-detail"><p class="card-body" style="margin:0;">Sourced from the HR Management and Development requisition line. <a href="#">View Plan Item</a></p></div>
+            </details>
+            <details class="kt-record">
+              <summary>
+                <div class="kt-record-main">
+                  <div class="kt-record-index">02</div>
+                  <div class="kt-record-body">
+                    <div class="kt-record-ref">RSV-MOH-2027-033-002</div>
+                    <div class="kt-record-title">REQ-MOH-2027-033-001 · Digital Health source</div>
+                    <div class="kt-record-meta"><span class="kt-status is-live">Active</span><span>Plan Item PPI-MOH-2027-033</span></div>
+                  </div>
+                  <div class="kt-record-value">
+                    <div class="kt-record-amount">KES 30,000,000</div>
+                    <div class="kt-record-sub">Still reserved · originally KES 30,000,000</div>
+                  </div>
+                </div>
+                <div class="kt-record-footer"><span><a href="#" onclick="event.stopPropagation()">View Requisition</a></span><span class="kt-record-toggle"><span class="when-closed">Show detail</span><span class="when-open">Hide detail</span><svg class="kt-disclosure-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg></span></div>
+              </summary>
+              <div class="kt-record-detail"><p class="card-body" style="margin:0;">Sourced from the Digital Health requisition line. <a href="#">View Plan Item</a></p></div>
+            </details>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{hasPartial}}" hint-placeholder-val="{{false}}">
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <details class="kt-record" open="open">
+              <summary>
+                <div class="kt-record-main">
+                  <div class="kt-record-index">01</div>
+                  <div class="kt-record-body">
+                    <div class="kt-record-ref">RSV-MOH-2027-021-001</div>
+                    <div class="kt-record-title">REQ-MOH-2027-021-001 · Digital Health source</div>
+                    <div class="kt-record-meta"><span class="{{partialStatusClass}}">{{partialStatus}}</span><span>Plan Item PPI-MOH-2027-021</span></div>
+                  </div>
+                  <div class="kt-record-value">
+                    <div class="kt-record-amount">KES 20,000,000</div>
+                    <div class="kt-record-sub">Still reserved · originally KES 80,000,000</div>
+                  </div>
+                </div>
+                <div class="kt-record-footer"><span><a href="#" onclick="event.stopPropagation()">View Requisition</a></span><span class="kt-record-toggle"><span class="when-closed">Show detail</span><span class="when-open">Hide detail</span><svg class="kt-disclosure-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg></span></div>
+              </summary>
+              <div class="kt-record-detail" style="padding:0;">
+                <sc-if value="{{isReview}}" hint-placeholder-val="{{false}}">
+                  <div class="kt-notice is-warning" style="margin:14px;">
+                    <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+                    <div class="kt-notice-body"><strong>Requires review — funds remain reserved.</strong> The budget line's registered allocation no longer covers this reservation after the last allocation update. The owning Requisition must be revalidated by its Procurement owner before it can progress; nothing is released from this screen.</div>
+                  </div>
+                </sc-if>
+                <table class="table">
+                  <thead><tr><th>Value</th><th class="is-num">Amount</th></tr></thead>
+                  <tbody>
+                    <tr><td>Originally reserved</td><td class="is-num">KES 80,000,000</td></tr>
+                    <tr><td>Converted into commitments</td><td class="is-num">KES 60,000,000</td></tr>
+                    <tr><td>Released from this reservation</td><td class="is-num is-zero">KES 0</td></tr>
+                    <tr><td>Still reserved</td><td class="is-num">KES 20,000,000</td></tr>
+                  </tbody>
+                </table>
+                <p class="card-body" style="margin:0;padding:14px;">Sourced from the Digital Health requisition line. <a href="#">View Plan Item</a> · Contract KT-CON-2027-004 (view unavailable until the Contract module publishes its records).</p>
+              </div>
+            </details>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{noReservation}}" hint-placeholder-val="{{true}}">
+          <div class="kt-notice is-info">
+            <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
+            <div class="kt-notice-body"><strong>No active reservations.</strong> This Budget Line has no confirmed funding reservations.</div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -199,6 +210,7 @@ class Component extends DCLogic {
       observedAt: on ? '16 Mar 2027, 10:15 EAT' : (partial ? '20 Apr 2027, 11:30 EAT' : '4 Dec 2026, 09:58 EAT'),
       approved: fmt(approved), reserved: fmt(reserved), available: fmt(available),
       committed: fmt(committed), committedStyle: committed ? '' : 'color:var(--color-neutral-500);',
+      reservedValStyle: reserved === 0 ? 'color:var(--color-neutral-500);' : '',
       availableKpiClass: 'kt-kpi-card ' + stateClass,
       reservedBarStyle: 'width:' + reservedPct + '%', committedBarStyle: 'width:' + committedPct + '%',
       partialStatus: v === 'review' ? 'Requires review — funds remain reserved' : 'Partially converted',

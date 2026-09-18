@@ -19,55 +19,60 @@
 <div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:60px;">
   <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
-    <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">BUD-CHG-001 v1.9 · Totals:</span>
+    <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">Totals:</span>
     <button type="button" class="{{btnMatch}}" onclick="{{setMatch}}" style="font-size:12px;padding:6px 12px;">03 Match</button>
     <button type="button" class="{{btnUnder}}" onclick="{{setUnder}}" style="font-size:12px;padding:6px 12px;">03 Amount still to assign</button>
     <button type="button" class="{{btnOver}}" onclick="{{setOver}}" style="font-size:12px;padding:6px 12px;">03 Amount over allocation</button>
   </div>
 
   <div data-screen-label="BUD-DES-03 Draft Budget Lines editor" style="max-width:1440px;margin:0 auto;padding:8px 40px 0;">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;margin-bottom:20px;">
-      <div>
-        <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:6px;">MOH-BUD-2027-001 · VERSION 1</div>
-        <div style="display:flex;align-items:center;gap:12px;">
-          <h1 style="font-family:var(--font-heading);font-weight:600;font-size:30px;margin:0;letter-spacing:.01em;">Record approved allocation</h1>
-          <span class="kt-status is-draft">Draft</span>
+    <div class="card blueprint elev-sm" style="padding:0;">
+
+      <div style="padding:24px 24px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;margin-bottom:20px;">
+          <div>
+            <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:6px;">MOH-BUD-2027-001 · VERSION 1</div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <h1 style="font-family:var(--font-heading);font-weight:600;font-size:30px;margin:0;letter-spacing:.01em;">Record approved allocation</h1>
+              <span class="kt-status is-draft">Draft</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button type="button" class="btn btn-secondary">Save changes</button>
+            <button type="button" class="btn btn-primary">Submit for review</button>
+          </div>
+        </div>
+
+        <div class="kt-tabs" role="tablist" style="margin-bottom:0;">
+          <label class="kt-tab"><input type="radio" name="dtab" />Approval details</label>
+          <label class="kt-tab"><input type="radio" name="dtab" checked="checked" />Budget lines</label>
         </div>
       </div>
-      <div style="display:flex;gap:10px;">
-        <button type="button" class="btn btn-secondary">Save changes</button>
-        <button type="button" class="btn btn-primary">Submit for review</button>
+
+      <div style="padding:20px 24px;border-top:1px solid var(--color-divider);">
+        <div class="kt-kpi-row" style="margin-bottom:14px;">
+          <div class="kt-kpi-card">
+            <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>
+            <div class="kt-kpi-value">KES 160,000,000</div>
+            <div class="kt-kpi-sub">Approved allocation</div>
+          </div>
+          <div class="kt-kpi-card">
+            <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 7V4H6l6 8-6 8h12v-3"/></svg>
+            <div class="kt-kpi-value">{{entered}}</div>
+            <div class="kt-kpi-sub">Total entered</div>
+          </div>
+        </div>
+        <div class="{{noticeClass}}" style="margin:0;">
+          <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg>
+          <div class="kt-notice-body">{{noticeText}}</div>
+        </div>
       </div>
-    </div>
 
-    <div class="kt-tabs" role="tablist" style="margin-bottom:24px;">
-      <label class="kt-tab"><input type="radio" name="dtab" />Approval details</label>
-      <label class="kt-tab"><input type="radio" name="dtab" checked="checked" />Budget lines</label>
-    </div>
+      <p class="kt-label" style="margin:0;padding:0 24px 10px;border-top:1px solid var(--color-divider);padding-top:16px;">Which department may use this budget line?</p>
 
-    <div class="kt-kpi-row" style="margin-bottom:14px;">
-      <div class="kt-kpi-card">
-        <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="1"/><circle cx="12" cy="12" r="2"/></svg>
-        <div class="kt-kpi-value">KES 160,000,000</div>
-        <div class="kt-kpi-sub">Approved allocation</div>
-      </div>
-      <div class="kt-kpi-card">
-        <svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="1"/><circle cx="12" cy="12" r="2"/></svg>
-        <div class="kt-kpi-value">{{entered}}</div>
-        <div class="kt-kpi-sub">Total entered</div>
-      </div>
-    </div>
-
-    <div class="{{noticeClass}}" style="margin-bottom:24px;">
-      <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg>
-      <div class="kt-notice-body">{{noticeText}}</div>
-    </div>
-
-    <p class="kt-label" style="margin:0 0 10px;">Which department may use this budget line?</p>
-
-    <div class="card blueprint elev-sm" style="padding:0;margin-bottom:16px;overflow-x:auto;overflow-y:hidden;">
+      <div style="overflow-x:auto;overflow-y:hidden;">
       <table class="table" style="min-width:900px;">
-        <thead><tr><th>Budget line</th><th>Available to</th><th>Funding source</th><th class="is-num">Amount</th><th></th></tr></thead>
+        <thead><tr><th>Budget Line</th><th>Available to</th><th>Funding source</th><th class="is-num">Amount</th><th></th></tr></thead>
         <tbody>
           <tr style="vertical-align:top;">
             <td style="vertical-align:top;">
@@ -91,9 +96,12 @@
           </tr>
         </tbody>
       </table>
-    </div>
+      </div>
 
-    <button type="button" class="btn btn-secondary">Add Budget Line</button>
+      <div style="padding:16px 24px;">
+        <button type="button" class="btn btn-secondary">Add Budget Line</button>
+      </div>
+    </div>
   </div>
 </div>
 
