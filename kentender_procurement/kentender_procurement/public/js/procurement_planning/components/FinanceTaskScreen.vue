@@ -195,7 +195,9 @@
 
 		<!-- U10-HISTORY — funding checked at approval versus the latest check,
 		     never merged into one claim. -->
-		<FinanceHistory v-if="history.length" :rows="history" />
+		<!-- The component's own prop is `history`; passing `rows` bound
+		     nothing, so the table drew its headings over an empty body. -->
+		<FinanceHistory v-if="history.length" :history="history" :funding-evidence="task.funding_evidence || {}" />
 
 		<p class="kt-muted" data-testid="fnt-consequence">
 			Confirming records affordability. It does not reserve funds or approve the plan.

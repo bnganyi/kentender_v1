@@ -167,3 +167,23 @@ describe("FinanceTaskScreen — other states", () => {
 		expect(w.find('[data-testid="fnt-comparison"]').exists()).toBe(true);
 	});
 });
+
+describe("FinanceTaskScreen — the funding evidence history", () => {
+	it("passes the reviews through to the history, not an empty table", () => {
+		const w = make({
+			task: task({
+				history: [
+					{ review: "Review 1", basis: "MOH-BUD-2027-001, Version 1", outcome: "Confirmed", actor: "Josphat Mwangi", time_display: "4 Dec 2026" },
+				],
+				funding_evidence: { state: "Confirmed" },
+			}),
+		});
+		// The component's own prop is `history`; binding anything else drew
+		// the headings over an empty body.
+		const rows = w.findAll('[data-testid="fnt-history"] tbody tr');
+		expect(rows).toHaveLength(1);
+		expect(rows[0].text()).toContain("Review 1");
+		expect(rows[0].text()).toContain("Josphat Mwangi");
+	});
+});
+

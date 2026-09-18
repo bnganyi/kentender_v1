@@ -79,6 +79,7 @@ test.describe("PLN18-306 Finance task", () => {
 		// A decided review offers no decision, and says who decided it.
 		await expect(page.locator('[data-testid="fnt-confirm"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="fnt-return"]')).toHaveCount(0);
+		// U10-history — the decided review is on record, with its outcome.
 		await expect(page.locator('[data-testid="fnt-history"]')).toContainText("Confirmed");
 	});
 

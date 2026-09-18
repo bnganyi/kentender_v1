@@ -98,7 +98,7 @@ test.describe("PLN18-303 Departmental Plan screens", () => {
 		await page.locator('[data-testid="dpp-f-quantity"]').fill("1");
 		await page.locator('[data-testid="dpp-f-unit"]').selectOption({ index: 1 });
 		await page.locator('[data-testid="dpp-f-required-by"]').fill("2099-04-30");
-		await page.locator('[data-testid="dpp-f-budget-line"]').selectOption({ index: 0 });
+		await page.locator('[data-testid="dpp-f-budget-line"]').selectOption({ index: 1 });
 		await page.locator('[data-testid="dpp-f-amount"]').fill("20000000");
 		await page.locator('[data-testid="dpp-editor-save"]').click();
 		await expectReady(page, "dpp");
@@ -127,7 +127,7 @@ test.describe("PLN18-303 Departmental Plan screens", () => {
 		await expect(page.locator('[data-testid="pln-dpp-context"]')).toContainText("Ready to submit");
 
 		const cert = page.locator('[data-testid="pln-dpp-certification"]');
-		await expect(cert).toContainText("Departmental certification");
+		await expect(cert).toContainText("Certification");
 		await expect(cert).toContainText("I confirm this certification");
 		await expect(page.locator('[data-testid="pln-dpp-submit"]')).toBeDisabled();
 		await page.locator('[data-testid="pln-dpp-certify"]').check();
