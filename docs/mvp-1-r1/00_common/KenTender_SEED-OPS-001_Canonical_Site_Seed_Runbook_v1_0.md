@@ -3,8 +3,8 @@
 | Control | Value |
 |---|---|
 | Document ID | SEED-OPS-001 |
-| Version | 1.1 |
-| Date | 9 September 2026 |
+| Version | 1.2 |
+| Date | 17 September 2026 |
 | Status | Maintained — update whenever a module stage is added to the seed or the canonical world changes |
 | Purpose | The one command that resets a KenTender site to the canonical seed world and how to keep it truthful as modules land |
 | Standards | KT-STD-001 v1.3 §8 (shared fixture register, §8.6 seed execution rules, §10 prohibited shortcuts); SEED-001 v1.0 (harmonized end-to-end fixture) |
@@ -35,7 +35,7 @@ Underneath, the targets call the `bench execute` entry points directly, which is
 ```bash
 cd /home/midasuser/frappe-bench
 bench --site kentender.midas.com execute kentender_core.seeds.canonical.run \
-  --kwargs '{"through": "budget", "reset": true, "validate": true}'
+  --kwargs '{"through": "budget", "reset": True, "validate": True}'
 bench --site kentender.midas.com execute kentender_core.seeds.canonical.dry_run
 bench --site kentender.midas.com execute kentender_core.seeds.canonical.validate \
   --kwargs '{"through": "budget"}'
@@ -46,7 +46,7 @@ Success prints one line, `CANONICAL_SEED_OK through=<stage> removed={…}`, foll
 ### 1.1 Prerequisites
 
 - The site's apps are migrated (`bench --site <site> migrate` clean).
-- `developer_mode` is on in `site_config.json`, or `allow_canonical_seed` is set there, or `"force": true` is passed. The seed refuses otherwise: it deletes rows and, in developer mode, sets the fixture password on the register's actors.
+- `developer_mode` is on in `site_config.json`, or `allow_canonical_seed` is set there, or `"force": True` is passed. The seed refuses otherwise: it deletes rows and, in developer mode, sets the fixture password on the register's actors.
 - The site is configured as `PE-MOH` or not configured at all. A site configured as a different Procuring Entity fails the seed rather than being repaired (KT-STD-001 §8.6).
 - Run it as `Administrator` (the `bench execute` default).
 
@@ -106,11 +106,12 @@ Selection is by explicit identity, namespace or fixture e-mail domain — never 
 | Switch | Default | Effect |
 |---|---|---|
 | `through` / `THROUGH` | `tender_preparation` | Last stage to seed (`site`, `strategy`, `budget`, `needs`, `planning`, `requisitions`, `tender_preparation`). |
-| `reset` | `true` | Run the §3.1 clear before seeding. `false` seeds only. |
-| `rebuild` | `false` | Also drop the canonical module rows before seeding — Tender Preparation, then Requisitions, then Planning, then Needs, then Budget, then Strategy (downstream first, since each consumes the one before it) — and rebuild from scratch. Use it when a canonical record is wrong, not merely missing. Stages beyond `through` are cleared but not reseeded. |
-| `validate` | `true` | Run §5 after seeding; a failure rolls the run back. |
-| `force` | `false` | Bypass every fixture-build guard this run touches — this orchestrator's own (§1.1) and, for the duration of the run only, each module seed's independent `developer_mode`/`allow_tests` guard (`needs`/`planning`/`requisitions`/`tender_preparation`), by setting `frappe.flags.in_test` rather than requiring `developer_mode` on the site. |
-| `commit` | `true` | Commit at the end (tests pass `false`). |
+| `reset` | `True` | Run the §3.1 clear before seeding. `False` seeds only. |
+| `rebuild` | `False` | Also drop the canonical module rows before seeding — Tender Preparation, then Requisitions, then Planning, then Needs, then Budget, then Strategy (downstream first, since each consumes the one before it) — and rebuild from scratch. Use it when a canonical record is wrong, not merely missing. Stages beyond `through` are cleared but not reseeded. |
+| `wipe` | `False` | Drop the `site` stage too — the Procuring Entity, Organisation Units, Fiscal Years, Regulatory Reference, method/schedule rule profiles and the §8.3 actors themselves — then rebuild everything from nothing. Implies `rebuild` (the site stage is what every module stage's rows reference, so it is only ever safe to drop after they are already gone). This is the one option that deletes real user accounts (the register's own); it never touches a non-fixture account. Use it for a genuinely fresh canonical world, not a targeted correction — `rebuild` alone is enough when only a module's own rows drifted. |
+| `validate` | `True` | Run §5 after seeding; a failure rolls the run back. |
+| `force` | `False` | Bypass every fixture-build guard this run touches — this orchestrator's own (§1.1) and, for the duration of the run only, each module seed's independent `developer_mode`/`allow_tests` guard (`needs`/`planning`/`requisitions`/`tender_preparation`), by setting `frappe.flags.in_test` rather than requiring `developer_mode` on the site. |
+| `commit` | `True` | Commit at the end (tests pass `False`). |
 
 ---
 
@@ -151,12 +152,14 @@ Everything the module seed writes must go through the same commands the UI uses,
 | Symptom | Cause and fix |
 |---|---|
 | `make: No rule to make target 'seed-canonical'` | Run from `apps/kentender_v1/`, not the bench root. |
-| `Canonical seed refused: enable developer_mode…` | The site is not in developer mode; set `developer_mode` or `allow_canonical_seed` in `site_config.json`, or pass `"force": true` on the `bench execute` form. |
+| `Canonical seed refused: enable developer_mode…` | The site is not in developer mode; set `developer_mode` or `allow_canonical_seed` in `site_config.json`, or pass `"force": True` on the `bench execute` form. |
+| `NameError: name 'true' is not defined` (or `'false'`) | `bench execute --kwargs` evaluates the string as a Python literal, not JSON — it needs `True`/`False`, capitalised, never lowercase `true`/`false`. Every example in this document uses the correct casing; a value copied from elsewhere (or typed from habit) is the usual cause. |
 | `This site is configured as PE-XXX, not PE-MOH` | The seed never overwrites a different site identity (§8.6). Reconfigure the site deliberately, or use a different site. |
 | Validation fails on "no non-canonical Fiscal Years" or "no fixture-domain users outside the register" | Something referenced the row so the clear skipped it (a year referenced by a Need, a user holding a canonical assignment). The dry run shows the plan; resolve the reference, then rerun. |
 | `BUDGET_CONFIG_MISSING` from the Budget stage | The `site` stage did not complete (fiscal year or funding source absent). The whole run rolled back; read the earlier error. |
 | Strategy stage `STRATEGY_CONFIG_MISSING` | Same — FY 2027-2028 is created by the `site` stage. |
 | Every Desk page load logs two console 404s afterwards | Unrelated to the seed: the dev server's socket.io long-poll and Frappe's sidebar divider image (see the Budget tracker, 2026-09-06). |
+| `Required procurement rules or their calculation basis are missing or unverified` at the `submission` stage, with `wipe` or `rebuild` through `planning`/`requisitions`/`tender_preparation` | Known, open gap (v1.2 change log): the `submission` readiness check requires a verified schedule profile; `site_setup` seeds every profile `Production verification pending` by design, and Planning's own seed has no step that creates a verified one despite a comment saying it should. Not fixable from this document's side — `through=needs` (or earlier) still works fully. |
 
 ---
 
@@ -174,3 +177,4 @@ Everything the module seed writes must go through the same commands the UI uses,
 |---|---|---|
 | 1.0 | 6 September 2026 | First issue, alongside `kentender_core.seeds.canonical` with stages `site`, `strategy`, `budget`; `site_setup` extended with the Budget actors and the funding source. |
 | 1.1 | 9 September 2026 | Promoted `needs`, `planning`, `requisitions`, `tender_preparation` per §6 — the chain now reaches the same latest stage `make seed-kentender-mvp-v1` does, with no legacy multi-PE orchestrator anywhere in the path. Closed two defects the promotion surfaced: (1) Requisitions' `authorise_requisition()` opened Budget reservations with no `fixture_namespace`, so `reset` deleted its own canonical evidence every time — the orchestrator (not the sibling module, which must not write Budget's doctype directly) now stamps `KENTENDER_MVP_1_R1_REQ` on them, healing pre-existing unstamped rows too; (2) the Fiscal Year removal list was computed once, before the rest of the same clear pass ran, so a year that only became unreferenced as a result of that same pass (its Annual Plan or stray Budget going with it) was missed — now recomputed fresh at the point of deletion. `validate()` calls each later module's own validator only when it is exactly the last stage seeded, since a downstream stage's real consumption of an earlier one's canonical row (Requisitions on Planning's Plan Item, Tender Preparation on Requisitions' handoff and Planning's `actual_invitation_date`, FU-16) is expected progress, not drift. `THROUGH`'s default is now the last stage (`tender_preparation`), matching `canonical.STAGES[-1]`. |
+| 1.2 | 17 September 2026 | Added `wipe` (§4): the `site` stage had no teardown at all until now — `rebuild` alone never touched the Procuring Entity, Organisation Units, Fiscal Years, Regulatory Reference, method/schedule rule profiles or the §8.3 actors, since every module stage's own canonical rows reference them and dropping them first was never safe. `site_setup.reset_site_setup()` tears these down last, after `rebuild`'s module-stage teardown, then `seed()` rebuilds the whole chain from nothing. Two things learned building it: Procurement Method Profile, Procedure Schedule Profile and Regulatory Reference (+ its Set) are audit-immutable by design — their own `on_trash` refuses deletion outright except through the `kt_fixture_purge` flag their own fixture-purge callers already use, the same one `clear_non_canonical()` sets on Regulatory Reference; and the ERPNext Company, the Requirement Type / Procurement Method catalogues, UOM enablement and Procurement Settings are deliberately left alone even under `wipe`, since none of them carries a `fixture_namespace` — they are Configuration & Governance's shared reference data, not this seed's own rows, whatever `site_setup.run()` does to activate them. Verified through `needs` end to end (teardown, fresh site/strategy/budget/needs, `validate()` clean).<br><br>Also fixed `site_setup.PROFILE_EFFECTIVE`: the canonical Open Tender method rule was in force only from 1 July 2027 (the Fiscal Year's own start), but Planning's own seed needs it in force from 1 May 2027 (Planning invites before the FY it plans for opens) — every value on both sides is explicitly `Production verification pending`, so this was two fixture assumptions disagreeing with each other, not a settled regulatory date to preserve. Moved to 1 May 2027; the one live UI test that reads this real seeded date (`tests/ui/smoke/system_setup/procurement-settings.spec.ts`) is updated to match — everywhere else the date appeared was either the same literal chosen independently for an unrelated fixture or a genuinely unrelated coincidence (the ordinary 1 July fiscal-year start), confirmed file by file before changing anything.<br><br>This closed the `pre_finance` readiness gate `through=tender_preparation` was failing on. A second, later gate at the `submission` stage remains open: it requires the schedule profile to be verified (`Fixture-verified` or better), but `site_setup` deliberately seeds every profile as merely `Production verification pending` — a Planning seed comment says "plan D16 keeps the fixture-verified set in the Planning seed," but no such code exists in Planning's seed today. That is unfinished work belonging to Planning's own separate, active v1.18 rebuild, not a canonical-seed defect — `wipe`/`rebuild` through `planning`, `requisitions` or `tender_preparation` will not succeed until it lands. `through=needs` (or `through=budget`/`through=strategy`) is unaffected and fully green. |

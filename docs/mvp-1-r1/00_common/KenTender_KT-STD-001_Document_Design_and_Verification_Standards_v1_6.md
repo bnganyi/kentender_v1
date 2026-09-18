@@ -3,13 +3,14 @@
 | Control | Value |
 |---|---|
 | Document ID | KT-STD-001 |
-| Version | 1.3 |
+| Version | 1.6 |
 | Status | **Approved** |
-| Approved on | 7 September 2026 |
-| Date | 4 September 2026 |
-| Supersedes | v1.2, approved 3 September 2026 |
+| Approved on | 15 September 2026 |
+| Approval record | Project Owner instruction on 15 September 2026 to persist the agreed explicit screen-composition standard for reuse and revise Departmental Needs. |
+| Date | 15 September 2026 |
+| Supersedes | v1.5, approved 14 September 2026; retained as historical evidence. |
 | Applies to | Every KenTender change unit, architecture decision record and module requirements document |
-| Change type | Adds Brian Wafula (Procurement Officer, Tender Preparation) to §8.3, needed because SEED-001 had incorrectly given Charles Mutiso both the preparer and approver role for the same Tender Version — a direct violation of TPR-CHG-001's own segregation rule. Corrects "Head of Procurement" to "Head of Procurement Function" per the statutory term. Earlier: extracted rules previously duplicated across AUTH-ADR-001, CFG-CHG-002 and NDS-CHG-001. |
+| Change type | Adds §2.6–2.8: explicit screen composition, deterministic state variants and a design-contract review gate; preserves v1.5 technical read and all other shared requirements. |
 
 **Controlling decision:** Rules that apply to every KenTender document are written once here. A change unit states its domain and cites this standard. Where a change unit repeats a rule from this standard verbatim, this standard prevails and the repetition is deleted at the next revision.
 
@@ -48,6 +49,7 @@ Each change unit's design section states only what is specific to it: its artboa
 - Do not render requirement identifiers, fixture notes or implementation guidance in the artboard.
 - Generated identifiers may be displayed on saved records but never as editable fields.
 - Never represent a failure, a forbidden result or a missing configuration as an empty successful table or register.
+- **Every distinct fact gets its own labelled field, table column or table row.** Do not join an item name, a count, a location, a date, a value, or any other set of unrelated facts onto one line with `·`, a comma, or any other delimiter standing in for a heading a reader would otherwise be given. This does not forbid a genuine identifier lineage (`TND-MOH-2027-033 · REQ-MOH-2027-033-001 · Version 1`) or a status-count badge (`0 Blocking · 1 Warning`) — both name a single kind of thing read left to right. It forbids specifying an entire structured package as a bare count or a summary sentence and leaving the reader, or an implementer, to invent what's actually in it. **Correction.** This rule was first written three times, separately, in REQ-CHG-001, TPR-CHG-001 and TPUB-CHG-001, after the same defect — bare counts ("2 items", "11 rows") and dot-crammed summary lines standing in for real content — shipped to a rendered production screen and was found there before it was found here. Each document's own design section still names its own instance of the defect, as history; the rule itself now lives here, once, for every document that cites this standard to inherit.
 
 ### 2.3 Product-wide prohibitions
 
@@ -76,6 +78,49 @@ Inside every full-page artboard:
 Frappe supplies the Desk header, breadcrumb, session controls, route lifecycle, dialogs, toasts, the tree control and accessibility primitives. KenTender supplies the established `--kt-*` tokens and shared Vue components. Claude Design supplies only the page content defined in the change unit's design section.
 
 Design export runtime files are design evidence under `docs/`. They are never imported into production.
+
+---
+
+### 2.6 Explicit screen-composition standard
+
+A static design contract must tell the designer how to compose the screen, not merely enumerate its contents. Concision is achieved through clear structure and reuse of named, complete compositions—not by packing labels, permissions, fixture facts and alternatives into dense paragraphs. The following format is mandatory for every new or revised module design contract.
+
+1. **Screen identity and purpose.** State the stable artboard ID, screen name and the user's immediate task in one sentence.
+2. **Fixture context — outside the artboard.** State actor, relevant assignment/scope, date/time, exact record/revision and named scenario. Separate fixture metadata from visible screen content. Resolve the pictured permission and state; do not ask the designer to calculate them.
+3. **Page header.** State title and exact description; locate the primary action relative to the title. State the visible badge/reference and where each goes. Explicitly say when no header action appears.
+4. **Composition, top to bottom.** Describe every region in visual order with a placement instruction: below the header, above the table, beneath the changed-fields comparison, at the foot of the form. Name the region and say what it contains. For a horizontal row, give its left-to-right order. Use shared layout tokens; invent no second shell or new pixel system.
+5. **Controls and content.** Specify field labels, control types, exact values, helper text and arrangement. Give complete table columns in order and all fixture rows. State where secondary text appears and how it is visually subordinate. A list of field names alone is insufficient.
+6. **Actions and visible state.** For every action in the pictured state, specify label, location, prominence and enabled/disabled/absent treatment. Place the explanation beside a disabled or blocked action. Do not use “only if permitted”, “may appear”, “where relevant” or an unresolved choice as instructions for that artboard.
+7. **Supporting detail.** Name each disclosure or secondary section, locate it, state whether it starts open or closed, and supply its exact contents. Critical warnings, differences and decision consequences stay visible. Complete reviewer facts must not depend on opening an arbitrary sequence of disclosures.
+8. **Separate state variants.** Give each required empty, filtered-empty, closed, error, blocked, pending or alternate-actor composition a stable variant ID and exact base plus changes. State the resulting content and action set. An explicit variant may reuse a fully defined base; it must not refer vaguely to “the usual screen”.
+9. **Visual acceptance.** Finish with the concrete visual result to check: ordering, hierarchy, visible facts/actions and absence of ambiguities. Behavioral tests belong in the functional/acceptance sections.
+
+Use short, named subsections and instructional sentences or bullets. Tables are appropriate for field specifications, actual displayed rows and exact state comparisons; they do not replace instructions for placement. Example: “Place Create need at the right of the page header, aligned with the title; show it enabled in this fixture. Place the description beneath the title.” Do not write only “Primary Create need”.
+
+Do not use prose such as “secondary REF-001” as literal cell content. State “Render the title on the first line; place REF-001 beneath it in smaller muted text”, then supply the exact title and reference separately. Keep independent facts separately labelled under §2.2. This format authorises no new business fields, controls, cards or workflow steps.
+
+### 2.7 Static specification and functional interaction mapping
+
+The static contract states what the pictured screen contains and how it is arranged. The functional section supplies a matching action map: artboard/action, destination or visible result, applicable existing command/read contract, and outcome/error behavior. These are two coordinated parts of the same module document. Do not put server permissions, API calls, transaction order, concurrency or lifecycle algorithms into the design prompt.
+
+Every visible interactive control must have an unambiguous functional mapping, including navigation, filters, disclosures, retry, Cancel, Save and decisions. The map must distinguish navigation from mutation and identify the exact record/revision being opened. A designer must never invent an action's destination, and an implementer must never infer its behavior from a button's appearance. Existing shared behavior may be cited; domain-specific effects must be explicit.
+
+A closed-input design prompt remains §2 of this standard plus the module's single static design section. Interaction maps, implementation contracts and acceptance tests are excluded from that prompt. A design-only consumer does not need the entire requirements document to find the exact visible content.
+
+### 2.8 Design-contract review gate
+
+Before sending a contract to the design system, confirm:
+
+- Every screen has an explicit top-to-bottom composition and action placement.
+- Each named fixture resolves its actor, record/revision and pictured state.
+- Every independent fact has a label; every table has complete stated columns and rows.
+- Every action has one definite visible treatment in that variant and a functional mapping outside the design input.
+- Critical consequences and required review facts are visible without compulsory navigation or disclosures.
+- Alternate states are separate, named variants; no optional-layout decision is delegated to the designer.
+- Fixture evidence does not reuse one exact event for conflicting outcomes on the same source revision.
+- The contract uses the current approved domain and usability decisions; an older layout example does not restore retired fields, roles or workflows.
+
+Failure requires correcting the contract before design generation. A complete field inventory, dense requirements table or approved document status is not proof of a usable or sufficiently specified composition. Actual artboard comparison and representative-user validation remain separate evidence.
 
 ---
 
@@ -140,13 +185,23 @@ The template, with each document supplying its surface name and responsibility l
 > This area needs one of these responsibilities: {responsibility list}.
 > Ask your KenTender administrator to assign one in System setup.
 
-For a surface reached by technical access rather than a business responsibility, the second line reads: **This area needs Administrator or System Manager access.**
+For a surface reached by technical access rather than a business responsibility, the second line reads: **This area needs Administrator or System Manager access.** A technical reader (Administrator or System Manager) never sees a Forbidden panel on any KenTender surface; see §3A.6.
 
 The panel shall not name a line manager, a supervisor or a department head. Responsibilities are granted by an Administrator or System Manager in System setup, and no other route exists.
 
 ### 3A.5 Identity chrome
 
 Where a page displays the signed-in user's role, it displays **every** active responsibility with its scope, or none at all. A single role label is wrong for any user holding more than one assignment, which the authorisation model expressly permits.
+
+### 3A.6 Technical read
+
+1. Administrator and System Manager are never Forbidden on a KenTender surface and never masked as Not found. The page-state verdict for them is always permitted.
+2. Every register shows them every record site-wide, across every Organisation Unit and Fiscal Year, through the module's existing filters. Every detail, task and editor route resolves for them regardless of the record's status, read-only, with every command control absent. Action queues and My Work are empty for them: they read everything and decide nothing.
+3. The sitewide **Technical record search** (`/app/technical-search`, owned by kentender_core, specified in AUTH-ADR-001 §8 and AUTH-DES-09) resolves any KenTender reference or title to the record's own route. A module does not build a bespoke filter or search for technical readers.
+4. Module documents cite this section and do not restate it. Where a module clause masks, forbids or scopes a technical reader, this section prevails until that document's next version removes the clause.
+5. Seeds, fixtures and test profiles never grant Administrator or System Manager a business role.
+
+Every module registers its record types with the Technical record search and its read entry points with the technical-read conformance gate (AUTH-ADR-001 §9); a module that does not register fails release evidence.
 
 ---
 
@@ -355,8 +410,10 @@ These apply to every document and every layer, not only to artboards. Section 2.
 
 ## 12. Approval effect
 
-This approval makes KT-STD-001 v1.3 the single source for KenTender design-input mechanics, page behaviour, implementation standards, verification protocol, release evidence, document structure, shared fixtures, universal prohibitions and error-contract conventions.
+KT-STD-001 v1.6 is approved under the Project Owner's 15 September 2026 instruction to persist the agreed design-contract correction for reuse. It supersedes v1.5 and earlier versions as the current shared standard. It adds §§2.6–2.8 and authorises the corresponding Departmental Needs design-contract revision; it does not change any module's business fields, governance, permissions or lifecycle.
 
-Where a citing document conflicts with this standard, the citing document prevails only where it states the departure explicitly and gives a reason. A silent divergence is a defect, not a decision. This standard governs form and delivery; it never overrides a domain decision in an architecture decision record or a module requirements document.
+The complete v1.5 technical-read requirement in §3A.6 remains unchanged. Shared design-input mechanics, page behavior, implementation and verification standards, release evidence, document structure, fixture register and error conventions remain controlling. Use v1.6 for new and revised work. Existing citations of earlier editions inherit current shared provisions subject to the stated domain-precedence rules; they do not permit conflicting technical-read or ambiguous design instructions.
 
-v1.3 adds Brian Wafula to §8.3 and corrects "Head of Procurement" to "Head of Procurement Function." v1.2 adds section 3A. v1.1 added sections 10 and 11 to v1.0, and completes the shared fixture register in §8.3 and §8.4A with the actors and instants required by STR-CHG-001, BUD-CHG-001, PLN-CHG-001 and DSP-CHG-001. Nothing else changes. Existing citations of KT-STD-001 v1.0 through v1.2 remain valid.
+A module's domain decisions remain its own authority. Any deliberate shared-standard departure must be explicitly named with its reason. This approval does not claim that existing modules have already been rewritten, artboards rendered, user testing completed or software deployed.
+
+Version history: v1.5, approved 14 September 2026, introduced §3A.6 technical read. v1.4 introduced §2.2's separate-labelled-fact rule. v1.3 added Brian Wafula and corrected Head of Procurement Function. v1.2 introduced §3A. v1.1 added universal prohibitions, error conventions and shared actors/instants. Those provisions are retained.

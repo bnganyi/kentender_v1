@@ -4,7 +4,9 @@
 |---|---|
 | Document ID | KT-STD-001 |
 | Version | 1.5 |
-| Status | **Proposed for product-owner approval** |
+| Status | **Approved** |
+| Approved on | 14 September 2026 |
+| Approval record | Project Owner instruction in this review to mark KT-STD-001 v1.5 approved and use it going forward. |
 | Date | 11 September 2026 |
 | Supersedes | v1.4, approved 11 September 2026 |
 | Applies to | Every KenTender change unit, architecture decision record and module requirements document |
@@ -365,7 +367,7 @@ These apply to every document and every layer, not only to artboards. Section 2.
 
 ## 12. Approval effect
 
-KT-STD-001 v1.5 is proposed for product-owner approval. On approval it supersedes v1.4 and all earlier versions in full and becomes the single source for KenTender design-input mechanics, page behaviour, implementation standards, verification protocol, release evidence, document structure, shared fixtures, universal prohibitions and error-contract conventions. v1.4 was approved on 11 September 2026; this correction supersedes that approval because v1.4 stated the technical-read right in AUTH-ADR-001 §8 alone, with no single cross-cutting statement of its page-state consequences, and six module documents had already drifted into three different grants and masking rules with no technical exception. It further authorises new §3A.6 Technical read: Administrator and System Manager are never Forbidden or masked as Not found; every register, detail, task and editor route resolves for them read-only with commands absent; the sitewide Technical record search at `/app/technical-search` (AUTH-ADR-001 §8, AUTH-DES-09) is the one sanctioned direct-search mechanism; module documents cite this section rather than restate it; and seeds never grant Administrator or System Manager a business role.
+KT-STD-001 v1.5 was approved by the Project Owner on 14 September 2026. It supersedes v1.4 and all earlier versions in full and becomes the single source for KenTender design-input mechanics, page behaviour, implementation standards, verification protocol, release evidence, document structure, shared fixtures, universal prohibitions and error-contract conventions. v1.4 was approved on 11 September 2026; this correction supersedes that approval because v1.4 stated the technical-read right in AUTH-ADR-001 §8 alone, with no single cross-cutting statement of its page-state consequences, and six module documents had already drifted into three different grants and masking rules with no technical exception. It further authorises new §3A.6 Technical read: Administrator and System Manager are never Forbidden or masked as Not found; every register, detail, task and editor route resolves for them read-only with commands absent; the sitewide Technical record search at `/app/technical-search` (AUTH-ADR-001 §8, AUTH-DES-09) is the one sanctioned direct-search mechanism; module documents cite this section rather than restate it; and seeds never grant Administrator or System Manager a business role.
 
 Where a citing document conflicts with this standard, the citing document prevails only where it states the departure explicitly and gives a reason. A silent divergence is a defect, not a decision. This standard governs form and delivery; it never overrides a domain decision in an architecture decision record or a module requirements document.
 
