@@ -844,6 +844,19 @@ def _record_treasury(plan_version: str) -> dict[str, Any]:
 		)
 
 
+def reset_approved_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""§10.13 U13-TREASURY-FORM: approved, with the publication and intent
+	committed, and nothing sent to Treasury yet. This is the only state in
+	which the Accounting Officer is offered the first-submission form — once
+	a submission exists, the same route offers the correction form instead
+	(U13-CORRECT-EVIDENCE), which is a different artboard."""
+	state = reset_statutory_fixture(need=need, commit=False)
+	approved = _approve(state)
+	if commit:
+		frappe.db.commit()
+	return {**state, "publication": approved["publication"]}
+
+
 def reset_active_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
 	"""PLN-DES-14's opening state: the approved, acknowledged, Active Plan
 	with its one item's forecasts seeded from baseline. The worker runs

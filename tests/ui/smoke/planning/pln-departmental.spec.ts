@@ -112,7 +112,11 @@ test.describe("PLN18-303 Departmental Plan screens", () => {
 		// plan is not yet ready — this row stays openable, not read-only
 		await row.getByRole("link", { name: "Review details" }).click();
 		await expectReady(page, "dpp-entry");
-		await expect(page.locator(".kt-page-title")).toHaveText("Edit direct requirement");
+		// §10.4 U04-EDIT — the editor is headed by the requirement itself, with
+		// its saved reference beneath; only the new-requirement form is headed
+		// with an instruction.
+		await expect(page.locator('[data-testid="dpp-editor-title"]')).toHaveText("Digital health platform security assessment");
+		await expect(page.locator('[data-testid="dpp-editor-reference"]')).not.toBeEmpty();
 		await page.locator('[data-testid="dpp-f-title"]').fill("Digital health platform security assessment (revised)");
 		await page.locator('[data-testid="dpp-editor-save"]').click();
 		await expectReady(page, "dpp");
@@ -137,7 +141,7 @@ test.describe("PLN18-303 Departmental Plan screens", () => {
 		await page.locator('[data-testid="pln-dpp-submit"]').click();
 		// the HoD holds no validation task themselves (that is the Planner's own
 		// task, FU-14) — submitting reloads this same record in place
-		await expect(page.locator('[data-testid="pln-dpp-context"]')).toHaveText("Awaiting validation");
+		await expect(page.locator('[data-testid="pln-dpp-context"]')).toContainText("Awaiting validation");
 		await expect(page.locator('[data-testid="pln-dpp-certification"]')).toHaveCount(0);
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});

@@ -91,9 +91,32 @@ export async function landmarks(page: Page, scope: string): Promise<string[]> {
  * (live landmarks). On failure, name the first artboard landmark the live
  * page is missing or has out of order.
  */
-export function expectLandmarkSubsequence(wanted: string[], got: string[], label: string): void {
+/**
+ * A landmark an artboard still draws but the specification has since replaced.
+ * The gate excuses it and says why, rather than either failing on a gap that is
+ * not a defect or dropping the panel from the gate altogether. An exemption
+ * naming a landmark the artboard no longer draws fails as stale, so refreshing
+ * the artboard is what removes it.
+ */
+export type LandmarkExemption = { landmark: string; because: string };
+
+export function expectLandmarkSubsequence(
+	wanted: string[],
+	got: string[],
+	label: string,
+	exempt: LandmarkExemption[] = []
+): void {
+	for (const { landmark } of exempt) {
+		if (!wanted.includes(landmark)) {
+			throw new Error(
+				`${label}: the exemption for ${JSON.stringify(landmark)} is stale — the artboard no longer draws it. Delete the exemption.`
+			);
+		}
+	}
+	const excused = new Set(exempt.map((entry) => entry.landmark));
 	let cursor = 0;
 	for (const landmark of wanted) {
+		if (excused.has(landmark)) continue;
 		const found = got.indexOf(landmark, cursor);
 		if (found === -1) {
 			const seenBefore = got.includes(landmark);

@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { login } from "../../helpers/auth";
-import { expectLandmarkSubsequence, landmarks, openPanel, variantScope } from "../../helpers/designFidelity";
+import { LandmarkExemption, expectLandmarkSubsequence, landmarks, openPanel, variantScope } from "../../helpers/designFidelity";
 import {
 	ACCOUNTING_OFFICER,
 	AUTHOR,
@@ -56,6 +56,37 @@ const U12 = `${DESIGN}/U12.dc.html`;
 const U13 = `${DESIGN}/U13.dc.html`;
 const U14 = `${DESIGN}/U14.dc.html`;
 const U16 = `${DESIGN}/U16.dc.html`;
+
+/**
+ * Landmarks the v1.23 specification replaced but the v1.23 artboard pack still
+ * draws. The code follows the specification, so the gate excuses these and says
+ * which section retired them; refreshing the artboard is what removes the
+ * exemption, because an exemption for a landmark the artboard no longer draws
+ * fails as stale. Tracked as FU-V123-01 and FU-V123-05.
+ */
+const U11_DECISION_TABLE: LandmarkExemption[] = ["Decision", "Outcome", "Capacity", "Person", "Date/time"].map(
+	(landmark) => ({
+		landmark,
+		because:
+			"§10.10 replaced this decision-history table above the decision with the Accountability section (Funding, Preparation) plus a collapsed Changes and history disclosure.",
+	})
+);
+
+const U14_EXECUTION_COLUMNS: LandmarkExemption[] = [
+	{
+		landmark: "Procurements started",
+		because: "§10.13 names this column Procurement stage.",
+	},
+	{
+		landmark: "Completion",
+		because:
+			"§10.13: do not create a Completion column unless an owning module supplies authoritative completion evidence. None does.",
+	},
+];
+
+// U13 draws three withdrawal/correction variants side by side under one label;
+// `variantScope` picks the one wanted by its `.tag`.
+const WITHDRAWAL_PANEL = "U13-WITHDRAWAL-REQUEST \u00b7 U13-WITHDRAWN \u00b7 U13-CORRECT-EVIDENCE";
 
 // Sequential, but not serial: the gate runs on one worker because the fixtures
 // are one shared world, and each panel is an independent assertion about an
@@ -239,6 +270,11 @@ test.describe("Procurement Planning — design fidelity (U07 annual plan, U08 fo
 		await page.setViewportSize({ width: 1440, height: 1024 });
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`);
 		await expectReady(page, "plan");
+		// §10.6 omits Project name when blank, so the live Draft offers the
+		// control instead. The artboard depicts the Planner who took it up —
+		// take it up here too, then compare the same state.
+		await page.locator('[data-testid="ppl-add-project-name"]').click();
+		await expect(page.locator('[data-testid="ppl-project-name"]')).toBeVisible();
 		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U07");
 		expect(errors, "console errors").toEqual([]);
 	});
@@ -312,7 +348,7 @@ test.describe("Procurement Planning — design fidelity (U11 governance, U12 evi
 		await login(page, ACCOUNTING_OFFICER, PASSWORD);
 		await gotoPlanning(page, `/review/${state.task}`);
 		await expectReady(page, "governance");
-		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U11-AO");
+		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U11-AO", U11_DECISION_TABLE);
 		expect(errors, "console errors").toEqual([]);
 	});
 
@@ -323,7 +359,7 @@ test.describe("Procurement Planning — design fidelity (U11 governance, U12 evi
 		await login(page, STATUTORY, PASSWORD);
 		await gotoPlanning(page, `/review/${state.task}`);
 		await expectReady(page, "governance");
-		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U11-STATUTORY");
+		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U11-STATUTORY", U11_DECISION_TABLE);
 		expect(errors, "console errors").toEqual([]);
 	});
 
@@ -342,26 +378,39 @@ test.describe("Procurement Planning — design fidelity (U11 governance, U12 evi
 });
 
 /**
- * U13. The published/active panels are covered by the active fixture; the
- * Treasury form, its correction and both withdrawal dialogs need the
- * approved-but-unpublished or publication-failed states, which
- * `reset_publication_failed_fixture` builds.
+ * U13. The published/active panels are covered by the active fixture. The
+ * Treasury form and its correction are two different artboards because they
+ * are two different states of the same route: before a submission exists the
+ * Accounting Officer is asked to confirm the document, and after one exists
+ * they are asked why they are changing it. Each is compared against its own
+ * panel, from the fixture that actually produces it.
  */
 test.describe("Procurement Planning — design fidelity (U13 publication)", () => {
 	test.afterAll(() => restoreSite());
 
 	test("U13-TREASURY-FORM — every field, and the confirmation that gates it", async ({ page, browser }) => {
-		const state = resetFixture<{ publication: string }>("reset_publication_failed_fixture");
+		const state = resetFixture<{ publication: string }>("reset_approved_fixture");
 		const art = await wanted(browser, U13, "U13-TREASURY-FORM");
 		const errors = collectConsoleErrors(page);
 		await login(page, ACCOUNTING_OFFICER, PASSWORD);
 		await gotoPlanning(page, `/publication/${state.publication}`);
 		await expectReady(page, "publication");
-		const record = page.locator('[data-testid="pub-record-treasury"]');
-		const correct = page.locator('[data-testid="pub-correct-treasury"]');
-		await (await record.count() ? record : correct).click();
+		await page.locator('[data-testid="pub-record-treasury"]').click();
 		await expect(page.locator('[data-testid="pub-treasury-dialog"]')).toBeVisible();
 		expectLandmarkSubsequence(art, await landmarks(page, '[data-testid="pub-treasury-dialog"]'), "U13-TREASURY-FORM");
+		expect(errors, "console errors").toEqual([]);
+	});
+
+	test("U13-CORRECT-EVIDENCE — the same route once a submission already exists", async ({ page, browser }) => {
+		const state = resetFixture<{ publication: string }>("reset_publication_failed_fixture");
+		const art = await wanted(browser, U13, WITHDRAWAL_PANEL, "U13-CORRECT-EVIDENCE");
+		const errors = collectConsoleErrors(page);
+		await login(page, ACCOUNTING_OFFICER, PASSWORD);
+		await gotoPlanning(page, `/publication/${state.publication}`);
+		await expectReady(page, "publication");
+		await page.locator('[data-testid="pub-correct-treasury"]').click();
+		await expect(page.locator('[data-testid="pub-treasury-dialog"]')).toBeVisible();
+		expectLandmarkSubsequence(art, await landmarks(page, '[data-testid="pub-treasury-dialog"]'), "U13-CORRECT-EVIDENCE");
 		expect(errors, "console errors").toEqual([]);
 	});
 });
@@ -377,7 +426,7 @@ test.describe("Procurement Planning — design fidelity (U14 progress, U16 corre
 		await page.setViewportSize({ width: 1440, height: 1024 });
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}/progress`);
 		await expectReady(page, "progress");
-		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U14");
+		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U14", U14_EXECUTION_COLUMNS);
 		// PLN22-AC-009 — the absence is the acceptance criterion.
 		await expect(page.locator(LIVE)).not.toContainText("Completion");
 		await expect(page.locator(LIVE)).not.toContainText("Forecast");
