@@ -16,6 +16,9 @@
   .factstack{display:flex;flex-direction:column;gap:var(--space-4)}
   .factstack .kt-label{margin-bottom:3px}
   .factstack .val{font-size:14px}
+  .factstack-text{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4) var(--space-6)}
+  .factstack-meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--space-4);border-top:1px solid var(--color-neutral-200);padding-top:var(--space-3)}
+  .kt-panel .kt-meta-row{justify-content:space-between}
   .board-root > div{margin-bottom:0 !important}
 </style>
 </helmet>
@@ -64,14 +67,12 @@
           <div><span class="kt-label">Closes at</span><span class="kt-meta-value" style="font-size:14px">25 Nov 2026, 23:59 EAT</span></div>
         </div>
       </div>
-      <div style="display:flex;gap:var(--space-3);margin:var(--space-4) 0 var(--space-2)">
+      <div style="display:flex;gap:var(--space-3);margin:var(--space-4) 0;align-items:center">
         <input class="input" placeholder="Search title or reference" style="flex:1" disabled="disabled">
         <select class="input" style="width:160px" disabled="disabled"><option>All statuses</option></select>
         <select class="input" style="width:180px" disabled="disabled"><option>All financial years</option></select>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:var(--space-4)">
-        <select class="input" style="width:220px" disabled="disabled"><option>Digital Health</option></select>
-        <span class="btn btn-ghost">Clear filters</span>
+        <select class="input" style="width:200px" disabled="disabled"><option>Digital Health</option></select>
+        <span class="btn btn-ghost" style="flex:none">Clear filters</span>
       </div>
       <table class="table">
         <thead><tr><th>Requirement</th><th>Quantity</th><th>Required by</th><th>Status</th><th></th></tr></thead>
@@ -274,11 +275,15 @@
       </div>
       <h6 class="kt-card-title">Requirement details</h6>
       <div class="factstack" style="margin-top:var(--space-4);margin-bottom:var(--space-4)">
-        <div><div class="kt-label">Requirement title</div><div class="val">Digital health workforce certification programme</div></div>
-        <div><div class="kt-label">Description</div><div class="val">Professional certification programme for staff supporting national digital health services.</div></div>
-        <div><div class="kt-label">Expected result</div><div class="val">Build internal capacity to operate and support national digital health platforms.</div></div>
-        <div style="display:flex;gap:var(--space-6)"><div><div class="kt-label">Quantity</div><div class="val">1</div></div><div><div class="kt-label">Unit</div><div class="val">Programme</div></div></div>
-        <div><div class="kt-label">Required by</div><div class="val">31 Dec 2027</div></div>
+        <div class="factstack-text">
+          <div><div class="kt-label">Description</div><div class="val">Professional certification programme for staff supporting national digital health services.</div></div>
+          <div><div class="kt-label">Expected result</div><div class="val">Build internal capacity to operate and support national digital health platforms.</div></div>
+        </div>
+        <div class="factstack-meta">
+          <div><div class="kt-label">Quantity</div><div class="val">1</div></div>
+          <div><div class="kt-label">Unit</div><div class="val">Programme</div></div>
+          <div><div class="kt-label">Required by</div><div class="val">31 Dec 2027</div></div>
+        </div>
       </div>
       <div class="kt-disclosure">
         <div class="kt-disclosure-head">
@@ -315,11 +320,15 @@
       </div>
       <h6 class="kt-card-title">Requirement details</h6>
       <div class="factstack" style="margin-top:var(--space-4);margin-bottom:var(--space-6)">
-        <div><div class="kt-label">Requirement title</div><div class="val">Digital health workforce certification programme</div></div>
-        <div><div class="kt-label">Description</div><div class="val">Professional certification programme for staff supporting national digital health services.</div></div>
-        <div><div class="kt-label">Expected result</div><div class="val">Build internal capacity to operate and support national digital health platforms.</div></div>
-        <div style="display:flex;gap:var(--space-6)"><div><div class="kt-label">Quantity</div><div class="val">1</div></div><div><div class="kt-label">Unit</div><div class="val">Programme</div></div></div>
-        <div><div class="kt-label">Required by</div><div class="val">31 Dec 2027</div></div>
+        <div class="factstack-text">
+          <div><div class="kt-label">Description</div><div class="val">Professional certification programme for staff supporting national digital health services.</div></div>
+          <div><div class="kt-label">Expected result</div><div class="val">Build internal capacity to operate and support national digital health platforms.</div></div>
+        </div>
+        <div class="factstack-meta">
+          <div><div class="kt-label">Quantity</div><div class="val">1</div></div>
+          <div><div class="kt-label">Unit</div><div class="val">Programme</div></div>
+          <div><div class="kt-label">Required by</div><div class="val">31 Dec 2027</div></div>
+        </div>
       </div>
       <h6 class="kt-card-title">Your decision</h6>
       <p class="text-muted" style="font-size:12px;margin:var(--space-3) 0 var(--space-4)">Accepting makes this requirement available for departmental procurement planning. It does not approve spending or start procurement.</p>
@@ -353,24 +362,27 @@
         <div class="kt-meta-row">
           <div><span class="kt-label">Department</span><span class="kt-meta-value" style="font-size:14px">Digital Health</span></div>
           <div><span class="kt-label">Financial year</span><span class="kt-meta-value" style="font-size:14px">FY 2027/28</span></div>
-          <div><span class="kt-label">Accepted by</span><span class="kt-meta-value" style="font-size:14px">Julia Njeri</span></div>
-          <div><span class="kt-label">Capacity</span><span class="kt-meta-value" style="font-size:14px">Acting Head of User Department</span></div>
+          <div><span class="kt-label">Accepted by</span><span class="kt-meta-value" style="font-size:14px">Julia Njeri <span class="text-muted" style="font-size:12px;font-weight:400">· Acting Head of User Department</span></span></div>
           <div><span class="kt-label">Accepted at</span><span class="kt-meta-value" style="font-size:14px">24 Nov 2026, 14:00 EAT</span></div>
         </div>
       </div>
       <h6 class="kt-card-title">Planning status</h6>
-      <div style="display:flex;flex-direction:column;gap:var(--space-3);margin-top:var(--space-4)">
+      <div style="display:flex;gap:var(--space-8);margin-top:var(--space-4)">
         <div style="font-size:13px"><span class="kt-label" style="display:block">Departmental plan</span><span class="kt-status is-live">Included</span></div>
         <div style="font-size:13px"><span class="kt-label" style="display:block">Current annual plan</span><span class="kt-status is-live">Included</span></div>
       </div>
       <div class="card-meta" style="margin:var(--space-3) 0 var(--space-6)">These statuses do not confirm that the requirement has been purchased or delivered.</div>
       <h6 class="kt-card-title">Requirement details</h6>
       <div class="factstack" style="margin-top:var(--space-4);margin-bottom:var(--space-4)">
-        <div><div class="kt-label">Requirement title</div><div class="val">National digital health infrastructure upgrade</div></div>
-        <div><div class="kt-label">Description</div><div class="val">Procure and implement national digital health infrastructure across priority health facilities.</div></div>
-        <div><div class="kt-label">Expected result</div><div class="val">Priority health facilities can use secure and interoperable digital health services.</div></div>
-        <div style="display:flex;gap:var(--space-6)"><div><div class="kt-label">Quantity</div><div class="val">1</div></div><div><div class="kt-label">Unit</div><div class="val">Programme</div></div></div>
-        <div><div class="kt-label">Required by</div><div class="val">31 Aug 2027</div></div>
+        <div class="factstack-text">
+          <div><div class="kt-label">Description</div><div class="val">Procure and implement national digital health infrastructure across priority health facilities.</div></div>
+          <div><div class="kt-label">Expected result</div><div class="val">Priority health facilities can use secure and interoperable digital health services.</div></div>
+        </div>
+        <div class="factstack-meta">
+          <div><div class="kt-label">Quantity</div><div class="val">1</div></div>
+          <div><div class="kt-label">Unit</div><div class="val">Programme</div></div>
+          <div><div class="kt-label">Required by</div><div class="val">31 Aug 2027</div></div>
+        </div>
       </div>
       <div class="kt-disclosure">
         <div class="kt-disclosure-head">
@@ -587,11 +599,15 @@
       </table>
       <h6 class="kt-card-title">Requirement details</h6>
       <div class="factstack" style="margin-top:var(--space-4);margin-bottom:var(--space-4)">
-        <div><div class="kt-label">Requirement title</div><div class="val">National digital health infrastructure upgrade</div></div>
-        <div><div class="kt-label">Description</div><div class="val">Procure and implement national digital health infrastructure across priority health facilities.</div></div>
-        <div><div class="kt-label">Expected result</div><div class="val">Priority health facilities can use secure and interoperable digital health services.</div></div>
-        <div style="display:flex;gap:var(--space-6)"><div><div class="kt-label">Quantity</div><div class="val">1</div></div><div><div class="kt-label">Unit</div><div class="val">Programme</div></div></div>
-        <div><div class="kt-label">Required by</div><div class="val">15 Sep 2027</div></div>
+        <div class="factstack-text">
+          <div><div class="kt-label">Description</div><div class="val">Procure and implement national digital health infrastructure across priority health facilities.</div></div>
+          <div><div class="kt-label">Expected result</div><div class="val">Priority health facilities can use secure and interoperable digital health services.</div></div>
+        </div>
+        <div class="factstack-meta">
+          <div><div class="kt-label">Quantity</div><div class="val">1</div></div>
+          <div><div class="kt-label">Unit</div><div class="val">Programme</div></div>
+          <div><div class="kt-label">Required by</div><div class="val">15 Sep 2027</div></div>
+        </div>
       </div>
       <h6 class="kt-card-title">Your decision</h6>
       <p class="text-muted" style="font-size:12px;margin:var(--space-3) 0 4px">Accepting updates the requirement available to Planning. Existing departmental and annual plans do not change automatically.</p>
@@ -679,11 +695,15 @@
       </div>
       <h6 class="kt-card-title">Requirement details</h6>
       <div class="factstack" style="margin-top:var(--space-4);margin-bottom:var(--space-4)">
-        <div><div class="kt-label">Requirement title</div><div class="val">National digital health infrastructure upgrade</div></div>
-        <div><div class="kt-label">Description</div><div class="val">Procure and implement national digital health infrastructure across priority health facilities.</div></div>
-        <div><div class="kt-label">Expected result</div><div class="val">Priority health facilities can use secure and interoperable digital health services.</div></div>
-        <div style="display:flex;gap:var(--space-6)"><div><div class="kt-label">Quantity</div><div class="val">1</div></div><div><div class="kt-label">Unit</div><div class="val">Programme</div></div></div>
-        <div><div class="kt-label">Required by</div><div class="val">31 Aug 2027</div></div>
+        <div class="factstack-text">
+          <div><div class="kt-label">Description</div><div class="val">Procure and implement national digital health infrastructure across priority health facilities.</div></div>
+          <div><div class="kt-label">Expected result</div><div class="val">Priority health facilities can use secure and interoperable digital health services.</div></div>
+        </div>
+        <div class="factstack-meta">
+          <div><div class="kt-label">Quantity</div><div class="val">1</div></div>
+          <div><div class="kt-label">Unit</div><div class="val">Programme</div></div>
+          <div><div class="kt-label">Required by</div><div class="val">31 Aug 2027</div></div>
+        </div>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:var(--space-2);padding-top:var(--space-4);border-top:1px solid var(--color-divider)">
         <span class="btn btn-secondary">Decline withdrawal</span>
