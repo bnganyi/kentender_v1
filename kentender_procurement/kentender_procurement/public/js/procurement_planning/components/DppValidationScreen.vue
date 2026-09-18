@@ -47,6 +47,12 @@
 				<span class="kt-label">Certified by</span>
 				<span class="kt-meta-value">{{ context.submitted_by }}</span>
 			</div>
+			<!-- The capacity is what makes the certification mean something;
+			     it is omitted rather than guessed (§10.5). -->
+			<div v-if="context.submitted_capacity">
+				<span class="kt-label">Capacity</span>
+				<span class="kt-meta-value">{{ context.submitted_capacity }}</span>
+			</div>
 			<div>
 				<span class="kt-label">Certified at</span>
 				<span class="kt-meta-value">{{ context.submitted_at }}</span>

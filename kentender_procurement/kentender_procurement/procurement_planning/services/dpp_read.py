@@ -408,6 +408,15 @@ def get_dpp_entry_editor(*, dpp_reference: str, entry_id: str | None = None, use
 	return payload
 
 
+def _snapshot_role(snapshot: str) -> str:
+	"""The business role recorded in a frozen assignment snapshot. A snapshot
+	that cannot be read yields nothing rather than a guess."""
+	try:
+		return cstr(json.loads(snapshot or "{}").get("business_role"))
+	except (ValueError, TypeError):
+		return ""
+
+
 def get_dpp_validation_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 	"""§8.1 GetDPPValidationTask / PLN-UI-06 — the exact immutable submission,
 	all entry details and the current decision controls (PLN-DES-06)."""
@@ -476,6 +485,12 @@ def get_dpp_validation_task(*, task: str, user: str | None = None) -> dict[str, 
 			"department": labels["department_name"],
 			"financial_year": labels["financial_year"],
 			"submitted_by": submitted_by,
+			# §10.5 — the capacity the person certified in. A certification by
+			# someone with no authority to give it is a different fact from one
+			# given by the Head of Department, and the Planner deciding on it
+			# needs to see which. Taken from the assignment snapshot the
+			# submission froze, so a later change cannot rewrite it (§13).
+			"submitted_capacity": _snapshot_role(submission.get("authority_snapshot")),
 			"submitted_at": _eat(submission.submitted_at),
 			"requirements": len(rows),
 			"total_display": _money(total),

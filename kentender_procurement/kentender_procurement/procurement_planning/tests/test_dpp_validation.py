@@ -17,6 +17,7 @@ from kentender_procurement.procurement_planning.errors import ProcurementPlannin
 from kentender_procurement.procurement_planning.services import (
 	budget_gateway,
 	dpp_lifecycle,
+	dpp_read,
 	dpp_validation,
 	needs_intake,
 )
@@ -338,3 +339,27 @@ class TestReturn(ValidationCase):
 		self.assertEqual(resubmission.dpp_version, correction.name)
 		self.assertEqual(resubmission.submission_number, correction.version_number)
 		self.assertEqual(resubmission.submission_number, 2)
+
+
+class TestCertifyingCapacity(ValidationCase):
+	"""§10.5 — a certification by someone with no authority to give it is a
+	different fact from one given by the Head of Department, and the Planner
+	deciding on it needs to see which."""
+
+	def test_the_capacity_the_submission_froze_is_carried_to_the_reviewer(self):
+		task = self.submitted_task()
+		frappe.set_user(fx.PLANNER)
+		read = dpp_read.get_dpp_validation_task(task=task.name)
+		self.assertEqual(read["context"]["submitted_capacity"], "Head of User Department")
+
+	def test_a_submission_with_no_snapshot_yields_nothing_rather_than_a_guess(self):
+		"""The column carries a JSON constraint, so unparseable text cannot
+		reach it; an absent snapshot is the case that can actually happen."""
+		task = self.submitted_task()
+		frappe.db.set_value(
+			"Departmental Plan Submission", task.submission, "authority_snapshot", None, update_modified=False
+		)
+		frappe.set_user(fx.PLANNER)
+		read = dpp_read.get_dpp_validation_task(task=task.name)
+		self.assertEqual(read["context"]["submitted_capacity"], "")
+
