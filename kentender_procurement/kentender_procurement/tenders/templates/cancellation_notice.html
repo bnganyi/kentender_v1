@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Notice of Cancellation - {{ tender.reference }}</title>
+</head>
+<body class="cancellation-notice">
+
+<header class="notice-header">
+  <p class="pe-name">{{ procuring_entity.name }}</p>
+  <p class="pe-address">{{ procuring_entity.address }}</p>
+</header>
+
+<h1>NOTICE OF CANCELLATION OF PROCUREMENT PROCEEDINGS</h1>
+
+<p class="tender-identity">
+  <strong>Tender Reference:</strong> {{ tender.reference }}<br>
+  <strong>Tender Title:</strong> {{ tender.title }}<br>
+  <strong>Published on:</strong> {{ tender.published_at }}<br>
+  <strong>Submission deadline:</strong> {{ tender.submission_deadline }}
+</p>
+
+<p>
+  In accordance with section 63 of the Public Procurement and Asset Disposal Act, 2015, {{ procuring_entity.name }} gives notice that the procurement proceedings identified above were cancelled on <strong>{{ cancellation.decided_at }}</strong> by the Accounting Officer.
+</p>
+
+<h2>1. Ground</h2>
+<p>{{ cancellation.ground }}</p>
+
+<h2>2. Circumstances</h2>
+<p>{{ cancellation.reason }}</p>
+
+<h2>3. Effect</h2>
+<p>No Tender will be received, opened or evaluated under this reference. Tenders already submitted electronically through {{ platform.name }} will not be opened. Any replacement procurement will be advertised under a new reference through the required channels.</p>
+
+<div class="signature-block">
+  <p>Issued on behalf of {{ procuring_entity.name }} by:</p>
+  <p>
+    <strong>Name:</strong> {{ cancellation.decided_by }}<br>
+    <strong>Designation:</strong> Accounting Officer<br>
+    <strong>Authentication reference:</strong> {{ cancellation.reference }}
+  </p>
+</div>
+
+</body>
+</html>

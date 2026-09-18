@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Addendum {{ addendum.reference }} - {{ tender.reference }}</title>
+</head>
+<body class="addendum-notice">
+
+<header class="notice-header">
+  <p class="pe-name">{{ procuring_entity.name }}</p>
+  <p class="pe-address">{{ procuring_entity.address }}</p>
+</header>
+
+<h1>ADDENDUM {{ addendum.number }} TO TENDER DOCUMENT</h1>
+
+<p class="tender-identity">
+  <strong>Tender Reference:</strong> {{ tender.reference }}<br>
+  <strong>Tender Title:</strong> {{ tender.title }}<br>
+  <strong>Addendum Reference:</strong> {{ addendum.reference }}<br>
+  <strong>Issued on:</strong> {{ addendum.issued_at }}
+</p>
+
+<p>
+  {{ procuring_entity.name }} issues this Addendum to the Tender Document identified above. It forms part of the Tender Document. All other terms of the Tender Document remain unchanged.
+</p>
+
+<h2>1. Change</h2>
+<table class="change-table">
+  <thead><tr><th>Item</th><th>Detail</th></tr></thead>
+  <tbody>
+    <tr><th>Class of change</th><td>{{ addendum.change_class }}</td></tr>
+    <tr><th>Affected area</th><td>{{ addendum.affected_area }}</td></tr>
+    <tr><th>Affected reference</th><td>{{ addendum.affected_reference }}</td></tr>
+    <tr><th>Published wording</th><td>{{ addendum.previous_value }}</td></tr>
+    <tr><th>Revised wording</th><td>{{ addendum.revised_value }}</td></tr>
+    <tr><th>Reason</th><td>{{ addendum.reason }}</td></tr>
+  </tbody>
+</table>
+
+<h2>2. Submission deadline</h2>
+{% if addendum.deadline_extension_required %}
+<p>The submission deadline is extended. Tenders must be submitted electronically through {{ platform.name }} not later than <strong>{{ addendum.revised_submission_deadline }}</strong>. Electronic opening follows immediately thereafter.</p>
+{% else %}
+<p>The submission deadline is unchanged: <strong>{{ tender.submission_deadline }}</strong>.</p>
+{% endif %}
+
+<h2>3. Acknowledgement</h2>
+<p>Tenderers shall acknowledge receipt of this Addendum in the Form of Tender. Requests for clarification must be submitted to {{ procuring_entity.contact_office }}.</p>
+
+<div class="signature-block">
+  <p>Issued on behalf of {{ procuring_entity.name }} by:</p>
+  <p>
+    <strong>Name:</strong> {{ addendum.issued_by }}<br>
+    <strong>Designation:</strong> Head of Procurement Function<br>
+    <strong>Authentication reference:</strong> {{ addendum.reference }}
+  </p>
+</div>
+
+</body>
+</html>

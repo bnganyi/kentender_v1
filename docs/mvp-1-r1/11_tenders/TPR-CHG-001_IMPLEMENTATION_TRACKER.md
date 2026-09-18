@@ -3,7 +3,7 @@
 **Authority:** `KenTender_TPR-CHG-001_Tenders_v0_8.md` (Approved 17 September 2026; supersedes TPR-CHG-001 v0.6/v0.7 and TPUB-CHG-001 v0.2/v0.3 in full).
 **Companions:** `TPR-CHG-001_Implementation_Plan.md` (decision register D1–D24, conflict register C1–C16, phases, slice gate, owner questions Q1–Q9), `TPR-CHG-001_FOLLOW_UPS.md`, `design/*.dc.html` (fourteen boards, repaired at TND-003), `evidence/v0_8/` (from Phase 7).
 **Supersedes-in-tracking:** `retired/TPR-CHG-001_IMPLEMENTATION_TRACKER.md` (v0.6 Tender Preparation, Phases 0–7 Done 2026-09-08, never committed beyond `2eb7c177`). That module is **retired in full** by Phase 1 of this cycle — no row here reuses its evidence.
-**Status:** Phases 0–2 Done 19 September 2026. Phase 3 (template binding + documents) next.
+**Status:** Phases 0–3 Done 19 September 2026. Phase 4 (preparation + approval services) next.
 **Started:** 18 September 2026.
 
 ## Tracker rules
@@ -33,7 +33,7 @@
 | TND-G00 | Phase 0 docs, board repair, personas, cancellation catalogue verified | Done | 2026-09-19. TND-001..006 Done; boards verified after the owner's re-export. |
 | TND-G01 | Retirement complete: zero references outside `retired/`; migrate clean ×3; bundle gate green; canonical reseed through `requisitions` green | Done | 2026-09-19. TND-101..110; one REQ-owned pre-existing test error recorded as FU-20. |
 | TND-G02 | Contracts + schema: doctypes migrate; Page + sidebar; schema test planted-violation-proven; gateway pins green | Done | 2026-09-19. TND-201..209; `make tenders-schema-gate` green. |
-| TND-G03 | Template binding + documents: exact renders; notice templates; documents by digest | Planned | |
+| TND-G03 | Template binding + documents: exact renders; notice templates; documents by digest | Done | 2026-09-19. TND-301..305; `test_serializer` 11/11, `test_documents` 8/8. |
 | TND-G04 | Preparation + approval services: §7.1 reads 1–4,6 and §7.2 commands proven; `tenders-services-gate` | Planned | |
 | TND-G05 | Publication services: §7.3 + every §15.3 case; `tenders-publication-integrity-gate` | Planned | |
 | TND-G06 | Open-period services: §7.4 all rows; scheduler close; handoff | Planned | |
@@ -86,11 +86,11 @@
 
 | ID | Item | Status | Evidence |
 |---|---|---|---|
-| TND-301 | `template_binding.py` (resolve 1.1 via `tender_templates.registry.resolve`, bind `template_release_id`/`official_source_digest`/`bundle_digest`; `TND_TEMPLATE_UNAVAILABLE`) + tests (tamper → unavailable) | Planned | |
-| TND-302 | `snapshot.py` + `serializer.py` (D4: grouped goods line with lineage, technical/warranty/acceptance/services/materials schedules, supplier response schema §4.5.1, evaluation contract §4.5.2, contract projection §4.5.3, render context without internal-only keys, package digest) + `test_serializer.py` (AC-018..022, AC-044-style absence of Strategic objective/plan horizon/authorised value) | Planned | |
-| TND-303 | `render_service.py`: Invitation + complete Tender through the bundle renderer, exact-compare to the 1.1 fixtures; deterministic digests (AC-024) | Planned | |
-| TND-304 | `tenders/templates/{addendum_notice,cancellation_notice}.html` + `test_notice_templates.py` (StrictUndefined, exact HTML, digest) | Planned | |
-| TND-305 | `documents.py` + `Tender Document` (kind, audience internal/public/audit, digest, `File`); `GetTenderDocument` by digest with audience masking; preview never mutates (AC-023) | Planned | |
+| TND-301 | `template_binding.py` (resolve 1.1 via `tender_templates.registry.resolve`, bind `template_release_id`/`official_source_digest`/`bundle_digest`; `TND_TEMPLATE_UNAVAILABLE`) + tests (tamper → unavailable) | Done | 2026-09-19. `template_binding.py` (`bind()` via `tender_templates.registry.resolve` → release id `IT-EQUIPMENT-OPEN-V1-1.1`, both digests, supported reservation categories; `verify(version)` names drift); `test_documents.TestTemplateBinding` 2/2. |
+| TND-302 | `snapshot.py` + `serializer.py` (D4: grouped goods line with lineage, technical/warranty/acceptance/services/materials schedules, supplier response schema §4.5.1, evaluation contract §4.5.2, contract projection §4.5.3, render context without internal-only keys, package digest) + `test_serializer.py` (AC-018..022, AC-044-style absence of Strategic objective/plan horizon/authorised value) | Done | 2026-09-19. `snapshot.py` (build/load/digest, `WARRANTY-SUPPORT` identity, internal context incl. authorised value + reservation ids), `controls.py` (D23 catalogue: two tasks, free positive integers for contracts/years, money 2-dp, hidden-conditional rejection, `defaults`, `normalise`, `task_status`), `evidence.py` (§4.4 rows, visible-identity check, `proves_label`), `serializer.py` (grouped goods line with quantities/allocations/reservations lineage, 11 technical rows, warranty, acceptance, price schedule with supplier-only cells, §4.5.1 response schema incl. goods/warranty/acceptance/evidence rows, §4.5.2 evaluation contract, §4.5.3 contract projection, render context = installed fixture shape, generated digests, package digest); `tests/sample.py` = §10.1 fixture pack as a synthetic v1.3 payload; `test_serializer` 11/11. |
+| TND-303 | `render_service.py`: Invitation + complete Tender through the bundle renderer, exact-compare to the 1.1 fixtures; deterministic digests (AC-024) | Done | 2026-09-19. `render_service.py` (bundle renderer, context digest, convenience PDF, `approval_block`); `test_documents.TestRenders` 3/3: clean render, every TECH/ACC id once in Section V, grouped line ids, no internal leak, no authorised value, reservation clause; digests identical across reloads; PDF starts `%PDF`. |
+| TND-304 | `tenders/templates/{addendum_notice,cancellation_notice}.html` + `test_notice_templates.py` (StrictUndefined, exact HTML, digest) | Done | 2026-09-19. `tenders/templates/{addendum_notice,cancellation_notice}.html` + `services/notices.py` (StrictUndefined, autoescape, digest); `test_documents.TestNotices` 2/2 incl. strict failure on a missing key and zero unresolved content. |
+| TND-305 | `documents.py` + `Tender Document` (kind, audience internal/public/audit, digest, `File`); `GetTenderDocument` by digest with audience masking; preview never mutates (AC-023) | Done | 2026-09-19. `documents.py`: `Tender Document` written once per (kind, digest) with private HTML + PDF Files, immutable; `get_tender_document(digest, audience)` masks outsiders, refuses `Public` before `published_at`, `Audit` to non-site readers; `test_documents.TestDocumentStore` 1/1 (idempotent store, plain save refused, audience paths). |
 
 ## Work register — Phase 4: preparation + approval services
 
