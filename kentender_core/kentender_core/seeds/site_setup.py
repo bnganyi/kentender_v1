@@ -373,6 +373,15 @@ def _seed_site() -> str:
 				"entity_is_county": SITE["entity_is_county"],
 			}
 		)
+		# The PE and its root are meant to exist together (configure_procuring_
+		# entity creates both in one transaction) but nothing enforces that
+		# invariant once they can drift apart independently - e.g. a
+		# `wipe`/`rebuild` cycle interrupted between the two, or the root
+		# deleted by some other path. Self-heal here rather than letting
+		# _seed_units() fail deep inside with "root organisation unit is
+		# missing" for a state this seed itself is meant to fix.
+		if not structure._root():
+			configuration.repair_organisation_root()
 		return "updated"
 	configuration.configure_procuring_entity(**SITE)
 	return "configured"
