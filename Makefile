@@ -133,7 +133,7 @@ help:
 	@echo "  make ui-bidder-final-submission-gate — Final Submission Website Playwright smoke (modal structure)"
 	@echo "  make e1-nssf-seed-gate SITE=$(SITE) — E1 NSSF seed mapper + preview (subset)"
 	@echo "  make e1-nssf-poc-gate SITE=$(SITE) — full E1 PoC: seed + bid APIs + Playwright bidder workspace"
-	@echo "  make seed-canonical SITE=$(SITE) [THROUGH=tender_preparation] — clear every non-canonical row, then reseed KT-STD-001 §8 configuration + SEED-001 modules progressively (site → strategy → budget → needs → planning → requisitions → tender_preparation) and validate"
+	@echo "  make seed-canonical SITE=$(SITE) [THROUGH=tender_preparation] [WIPE=True] [FORCE=True] — clear every non-canonical row, then reseed KT-STD-001 §8 configuration + SEED-001 modules progressively (site → strategy → budget → needs → planning → requisitions → tender_preparation) and validate; WIPE=True also drops and rebuilds the site stage itself (needs FORCE=True outside developer_mode)"
 	@echo "  make seed-canonical-dry-run SITE=$(SITE) — report what seed-canonical would remove, delete nothing"
 	@echo "  make seed-canonical-validate SITE=$(SITE) [THROUGH=tender_preparation] — validate the canonical world only"
 	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — fixture-scoped reset + full KENTENDER_MVP_V1 seed + Playwright purge + validate"
@@ -987,11 +987,18 @@ e1-nssf-poc-gate:
 
 # Canonical world (KT-STD-001 §8 + SEED-001), progressive by module stage.
 # THROUGH: site | strategy | budget | needs | planning | requisitions | tender_preparation (later stages are added as they land).
+# WIPE=True also drops the site stage itself (Procuring Entity, Organisation
+# Units, Fiscal Years, actors) before rebuilding from nothing — see
+# docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_*.md §4. FORCE=True bypasses
+# every module seed's own developer_mode/allow_tests guard, required for WIPE
+# outside developer_mode. Both must stay Python-literal True/False, not JSON.
 THROUGH ?= tender_preparation
+WIPE ?= False
+FORCE ?= False
 seed-canonical:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
 		kentender_core.seeds.canonical.run \
-		--kwargs '{"through": "$(THROUGH)", "reset": True, "validate": True}'
+		--kwargs '{"through": "$(THROUGH)", "reset": True, "wipe": $(WIPE), "force": $(FORCE), "validate": True}'
 
 seed-canonical-dry-run:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
