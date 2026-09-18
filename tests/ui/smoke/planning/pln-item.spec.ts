@@ -78,13 +78,15 @@ test.describe("PLN18-305 Plan Item editor", () => {
 		await page.locator('[data-testid="ppi-method"]').selectOption("Direct Procurement");
 		await page.locator('[data-testid="ppi-save"]').click();
 		await expect(page.locator('[data-testid="ppi-save"]')).toBeEnabled({ timeout: 10_000 });
-		await expect(page.locator('[data-testid="ppi-rule-evidence"]')).toContainText("Evidence required");
+		// §10.8 — the condition asks for what it needs, beside its own result;
+		// the rule version and source check stay in Supporting details.
+		await expect(page.locator('[data-testid="ppi-condition-result-CIRCUMSTANCES"]')).toContainText("Evidence required");
 
 		await page.locator('[data-testid="ppi-evidence-CIRCUMSTANCES"]').fill("Sole supplier holds the exclusive distribution rights for this equipment.");
 		await page.locator('[data-testid="ppi-authorisation-CIRCUMSTANCES"]').fill("AO/2098/DP/1");
 		await page.locator('[data-testid="ppi-save"]').click();
 		await expect(page.locator('[data-testid="ppi-save"]')).toBeEnabled({ timeout: 10_000 });
-		await expect(page.locator('[data-testid="ppi-rule-evidence"]')).toContainText("Declared");
+		await expect(page.locator('[data-testid="ppi-condition-result-CIRCUMSTANCES"]')).toContainText("Declared");
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
@@ -94,7 +96,12 @@ test.describe("PLN18-305 Plan Item editor", () => {
 		await page.goto(`/app/procurement-plan-item/${state.plan_item_id}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan-item");
 
+		// Removing a purchase returns its requirements to the plan, so it is
+		// confirmed rather than done on one click (§10.8).
 		await page.locator('[data-testid="ppi-remove"]').click();
+		await expect(page.locator('[data-testid="pln-dissolve-item-dialog"]')).toBeVisible();
+		await expect(page.locator('[data-testid="pln-dissolve-sources"]')).toBeVisible();
+		await page.locator('[data-testid="pln-dissolve-item-confirm"]').click();
 		await expectReady(page, "plan");
 		await expect(page).toHaveURL(new RegExp(`annual-procurement-plan/${state.plan_reference}`));
 	});
@@ -106,7 +113,8 @@ test.describe("PLN18-305 Plan Item editor", () => {
 		await expectReady(page, "plan-item");
 		await expect(page.locator('[data-testid="ppi-save"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="ppi-remove"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="ppi-title"]')).toBeDisabled();
+		// `ppi-title` is the page heading; the editable title is its own field.
+		await expect(page.locator('[data-testid="ppi-title-input"]')).toBeDisabled();
 	});
 
 	test("a departmental Author has no route to the Plan Item editor", async ({ page }) => {

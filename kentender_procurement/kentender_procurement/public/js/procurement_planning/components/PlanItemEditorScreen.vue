@@ -68,11 +68,11 @@
 		<h3 class="kt-card-title">Purchase details</h3>
 		<div class="kt-field">
 			<label for="ppi-title-input" class="kt-label">Title</label>
-			<input id="ppi-title-input" class="kt-input" :value="draft.title" :disabled="!item.mutable" @input="onField('title', $event.target.value)">
+			<input id="ppi-title-input" class="kt-input" data-testid="ppi-title-input" :value="draft.title" :disabled="!item.mutable" @input="onField('title', $event.target.value)">
 		</div>
 		<div class="kt-field">
 			<label for="ppi-description" class="kt-label">Description</label>
-			<textarea id="ppi-description" class="kt-input" rows="3" :value="draft.description" :disabled="!item.mutable" @input="onField('description', $event.target.value)"></textarea>
+			<textarea id="ppi-description" class="kt-input" rows="3" data-testid="ppi-description" :value="draft.description" :disabled="!item.mutable" @input="onField('description', $event.target.value)"></textarea>
 		</div>
 		<div class="pln-summary-line">
 			<!-- Derived from the included requirements; not editable here, and
