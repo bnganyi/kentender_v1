@@ -85,6 +85,16 @@ const U14_EXECUTION_COLUMNS: LandmarkExemption[] = [
 	},
 ];
 
+/**
+ * §10.9's main comparison is "Budget line; Line name; Approved amount; Planned
+ * amount; Difference; Result; Action". The U10-OVER-APPROVED artboard draws
+ * §10.10's shorter funding-evidence headings instead — a different table.
+ */
+const U10_SHORT_HEADINGS: LandmarkExemption[] = [
+	{ landmark: "Approved", because: "§10.9's main comparison names the column Approved amount." },
+	{ landmark: "Planned", because: "§10.9's main comparison names the column Planned amount." },
+];
+
 /** §10.8 renamed these; the U09 artboards still carry the older wording. */
 const U09_SCHEDULE_LABELS: LandmarkExemption[] = [
 	{ landmark: "Estimated period", because: "§10.8 Dates names it Expected delivery period." },
@@ -406,6 +416,68 @@ test.describe("Procurement Planning — design fidelity (U10 funding review)", (
 		await gotoPlanning(page, `/finance/${state.task}`);
 		await expectReady(page, "finance");
 		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U10");
+		expect(errors, "console errors").toEqual([]);
+	});
+
+	test("U10-OVER-APPROVED — the plan asks for more than the line approves", async ({ page, browser }) => {
+		const state = resetFixture<{ task: string }>("reset_finance_excess_fixture");
+		const art = await wanted(browser, U10, "U10-OVER-APPROVED");
+		const errors = collectConsoleErrors(page);
+		await login(page, FINANCE, PASSWORD);
+		await gotoPlanning(page, `/finance/${state.task}`);
+		await expectReady(page, "finance");
+		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U10-OVER-APPROVED", U10_SHORT_HEADINGS);
+		// §10.9's own headings, which this artboard borrowed from another table.
+		for (const heading of ["Approved amount", "Planned amount", "Difference", "Result"]) {
+			await expect(page.locator(LIVE)).toContainText(heading);
+		}
+		// §10.9 U10-OVER-APPROVED — the exact shortfall, named.
+		await expect(page.locator(LIVE)).toContainText("exceeds its approved budget by");
+		// §10.9 — an approved excess blocks confirmation and leaves the return.
+		await expect(page.locator('[data-testid="fnt-confirm"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="fnt-return"]')).toBeVisible();
+		expect(errors, "console errors").toEqual([]);
+	});
+
+	test("U10-RETURN — the correction Finance is asking for", async ({ page, browser }) => {
+		const state = resetFixture<{ task: string }>("reset_finance_excess_fixture");
+		const art = await wanted(browser, U10, "U10-RETURN");
+		const errors = collectConsoleErrors(page);
+		await login(page, FINANCE, PASSWORD);
+		await gotoPlanning(page, `/finance/${state.task}`);
+		await expectReady(page, "finance");
+		await page.locator('[data-testid="fnt-return"]').click();
+		await expect(page.locator('[data-testid="fnt-return-dialog"]')).toBeVisible();
+		expectLandmarkSubsequence(art, await landmarks(page, '[data-testid="fnt-return-dialog"]'), "U10-RETURN");
+		expect(errors, "console errors").toEqual([]);
+	});
+
+	test("U10-REASSESS — checking the same plan again on a new basis", async ({ page, browser }) => {
+		const state = resetFixture<{ task: string }>("reset_finance_reassessment_fixture");
+		const art = await wanted(browser, U10, "U10-REASSESS");
+		const errors = collectConsoleErrors(page);
+		await login(page, FINANCE, PASSWORD);
+		await gotoPlanning(page, `/finance/${state.task}`);
+		await expectReady(page, "finance");
+		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U10-REASSESS");
+		expect(errors, "console errors").toEqual([]);
+	});
+
+	// U10-HISTORY carries no landmarks at all — it is values and prose, which
+	// this instrument never compares — so it cannot be gated by landmark order.
+	// Its structure is asserted here instead, and FU-V123-08 records that the
+	// live block names and columns do not match §10.9's own.
+	test("U10-HISTORY — both reviews kept, neither overwriting the other", async ({ page }) => {
+		const state = resetFixture<{ task: string }>("reset_finance_reassessment_fixture");
+		const errors = collectConsoleErrors(page);
+		await login(page, FINANCE, PASSWORD);
+		await gotoPlanning(page, `/finance/${state.task}`);
+		await expectReady(page, "finance");
+		const history = page.locator('[data-testid="fnt-history"]');
+		await expect(history).toBeVisible();
+		await expect(history.locator("tbody tr")).toHaveCount(2);
+		await expect(page.locator('[data-testid="fnt-history-review-1"]')).toContainText("Confirmed");
+		await expect(page.locator('[data-testid="fnt-history-review-2"]')).toContainText("Awaiting confirmation");
 		expect(errors, "console errors").toEqual([]);
 	});
 });

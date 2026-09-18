@@ -13,8 +13,10 @@ function make() {
 describe("FinanceReturnDialog — §12.9", () => {
 	it("matches U10-reassess-return's own title and confirm button text", () => {
 		const w = make();
-		expect(w.find(".kt-dialog-title").text()).toBe("Return for correction?");
-		expect(w.find('[data-testid="fnt-return-confirm"]').text()).toBe("Return");
+		// §10.9 U10-RETURN — the heading is the question being answered.
+		expect(w.find(".kt-dialog-title").text()).toBe("What needs to change?");
+		expect(w.find('[data-testid="fnt-return-context"]').text()).toBe("Whole annual plan");
+		expect(w.find('[data-testid="fnt-return-confirm"]').text()).toBe("Return to planner");
 	});
 
 	it("requires a reason of at least 10 characters before confirming", async () => {

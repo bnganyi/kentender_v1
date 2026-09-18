@@ -92,7 +92,7 @@ test.describe("PLN18-306 Finance task", () => {
 
 		await page.locator('[data-testid="fnt-return"]').click();
 		await expect(page.locator('[data-testid="fnt-return-dialog"]')).toBeVisible();
-		await expect(page.locator('[data-testid="fnt-return-dialog"] .kt-dialog-title')).toHaveText("Return for correction?");
+		await expect(page.locator('[data-testid="fnt-return-dialog"] .kt-dialog-title')).toHaveText("What needs to change?");
 		await page.locator('[data-testid="fnt-return-reason"]').fill("Reduce the planned amount or obtain an approved Budget revision for the Digital Health line.");
 		await page.locator('[data-testid="fnt-return-confirm"]').click();
 		await page.waitForURL(/procurement-planning$/);

@@ -465,9 +465,32 @@ def _pin_fixture_year() -> None:
 		working_context.select_module_fy("planning", FY, user=email, offered=[FY])
 
 
+#: The fixture budget line's own approved amount (see `ensure_world`). Profiles
+#: that move it to make a shortfall or a revised basis must not leave the next
+#: profile starting from their scenario — §13.3 wants isolated presentation
+#: profiles, not a world that drifts as the suite runs.
+CANONICAL_APPROVED_AMOUNT = 100_000_000
+
+
+def _restore_budget_baseline() -> None:
+	for line_version in frappe.get_all(
+		"Procurement Budget Line Version",
+		filters={
+			"budget_line": ("in", [x for x in (BUDGET_LINE, BUDGET_LINE_2) if x]),
+			"budget_version": ("in", frappe.get_all("Procurement Budget Version", filters={"status": "Active"}, pluck="name")),
+		},
+		pluck="name",
+	):
+		frappe.db.set_value(
+			"Procurement Budget Line Version", line_version,
+			"approved_amount", CANONICAL_APPROVED_AMOUNT, update_modified=False,
+		)
+
+
 def _reset(commit: bool) -> dict[str, Any]:
 	world = ensure_world(commit=False)
 	_wipe()
+	_restore_budget_baseline()
 	_clear_context_preferences()
 	_pin_fixture_year()
 	if commit:
@@ -827,6 +850,33 @@ def reset_finance_fixture(*, need: str = "", commit: bool = True) -> dict[str, A
 	state = reset_plan_item_fixture(need=need, commit=False)
 	_complete_item(state["plan_item_id"])
 	task = _request_funding(state["plan_reference"])
+	if commit:
+		frappe.db.commit()
+	return {**state, "task": task}
+
+
+def reset_finance_excess_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""§13.3 Finance excess / §10.9 U10-OVER-APPROVED — the plan asks for more
+	than the budget line approves.
+
+	The item plans KES 80,000,000; the line's approved amount is cut to
+	70,000,000 so the excess is exactly 10,000,000, which §13.3 names. The
+	confirmation is then blocked and only the return remains — the same
+	amounts the affordability gate itself computes, never a flag set to
+	pretend a shortfall."""
+	state = reset_plan_item_fixture(need=need, commit=False)
+	_complete_item(state["plan_item_id"])
+	# The request itself checks affordability and would refuse, which is the
+	# rule working: this profile is the Officer meeting an excess that appeared
+	# on the authoritative basis after the request, not a plan that was allowed
+	# to ask for the impossible.
+	line_version = frappe.db.get_value(
+		"Procurement Budget Line Version",
+		{"budget_line": BUDGET_LINE, "budget_version": ("in", frappe.get_all("Procurement Budget Version", filters={"status": "Active"}, pluck="name"))},
+		"name",
+	)
+	task = _request_funding(state["plan_reference"])
+	frappe.db.set_value("Procurement Budget Line Version", line_version, "approved_amount", 70_000_000, update_modified=False)
 	if commit:
 		frappe.db.commit()
 	return {**state, "task": task}
