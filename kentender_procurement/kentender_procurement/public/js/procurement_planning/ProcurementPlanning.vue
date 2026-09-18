@@ -149,26 +149,56 @@
 					/>
 				</template>
 
-				<template v-else-if="screen === 'plan' && annualPlan.active_view">
-					<ActivePlanScreen
-						:plan="annualPlan"
+				<!-- PLN-CHG-001 v1.23 §10.13 — procurement progress against the
+				     plan in force (U14). This replaces the v1.12 "active plan"
+				     screen, whose forecast column and cascade dialog the
+				     deferred forecast facility removed (PLN23-CHG-001). -->
+				<template v-else-if="screen === 'progress'">
+					<ProgressScreen
+						:progress="progress"
 						:pending="pending"
 						:error-summary="errorSummary"
-						@begin-update="onBeginUpdate"
 						@navigate="onNavigate"
-						@back="frappe.set_route(WORKSPACE_PAGE)"
-						@shift="onOpenShift"
+						@view-corrections="onViewCorrections"
+						@back="frappe.set_route(PLAN_PAGE, planReference)"
 					/>
-					<ShiftScheduleDialog
-						v-if="shift"
-						:milestone-label="shift.label"
-						:new-date="shift.newDate"
-						:rows="shift.rows"
+				</template>
+
+				<!-- §10.15 — the correction requests against one purchase (U16). -->
+				<template v-else-if="screen === 'corrections'">
+					<CorrectionRequestsScreen
+						:task="corrections"
+						:open-issue="openIssue"
+						:pending="pending"
+						:error-summary="errorSummary"
+						@open-issue="onOpenIssue"
+						@prepare-correction="onPrepareCorrection"
+						@record-completed="completeRequest = $event"
+						@close-without-change="noChangeRequest = $event"
+						@navigate="onNavigate"
+						@back="frappe.set_route(PLAN_ITEM_PAGE, planItemId)"
+					/>
+					<RecordCorrectionDialog
+						v-if="completeRequest"
+						:request="completeRequest"
+						:correcting-plan="corrections.correcting_plan || {}"
 						:pending="pending"
 						:error="errorSummary"
-						@date-change="onShiftDateChange"
-						@confirm="onConfirmShift"
-						@cancel="shift = null"
+						@confirm="onRecordCorrectionCompleted"
+						@cancel="completeRequest = null"
+					/>
+					<ReasonDialog
+						v-if="noChangeRequest"
+						testid="cor-no-change-dialog"
+						title="Close without a plan change"
+						:intro="`${noChangeRequest.change_required} — requested from ${noChangeRequest.detail.requisition_reference || noChangeRequest.requested_from}.`"
+						label="Reason"
+						confirm-label="Close request"
+						:min-length="20"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onCloseWithoutChange"
+						@cancel="noChangeRequest = null"
 					/>
 				</template>
 
@@ -347,8 +377,9 @@ import DissolveItemDialog from "./components/DissolveItemDialog.vue";
 import ReviewScreen from "./components/ReviewScreen.vue";
 import ReturnPlanDialog from "./components/ReturnPlanDialog.vue";
 import SourceEvidenceScreen from "./components/SourceEvidenceScreen.vue";
-import ActivePlanScreen from "./components/ActivePlanScreen.vue";
-import ShiftScheduleDialog from "./components/ShiftScheduleDialog.vue";
+import ProgressScreen from "./components/ProgressScreen.vue";
+import CorrectionRequestsScreen from "./components/CorrectionRequestsScreen.vue";
+import RecordCorrectionDialog from "./components/RecordCorrectionDialog.vue";
 import PublicationResultScreen from "./components/PublicationResultScreen.vue";
 import PlanItemEditorScreen from "./components/PlanItemEditorScreen.vue";
 import FinanceTaskScreen from "./components/FinanceTaskScreen.vue";
@@ -410,7 +441,12 @@ const financeReturnDialog = ref(false);
 const governanceTask = ref({});
 const governanceReturnDialog = ref(false);
 const publication = ref({});
-const shift = ref(null);
+const progress = ref({});
+const corrections = ref({});
+// Which issue's mechanics the Planner has deliberately opened (§10.15).
+const openIssue = ref("");
+const completeRequest = ref(null);
+const noChangeRequest = ref(null);
 
 // §10/§12.1 — the Financial Year is a visible filter only; the server
 // resolves the remembered preference on a bare load.
@@ -453,8 +489,12 @@ const screen = computed(() => {
 	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "publication" && segments.value[1]) {
 		return "publication";
 	}
-	if (pageSlug.value === PLAN_PAGE && planReference.value) return "plan";
-	if (pageSlug.value === PLAN_ITEM_PAGE && planItemId.value) return "plan-item";
+	if (pageSlug.value === PLAN_PAGE && planReference.value) {
+		return segments.value[1] === "progress" ? "progress" : "plan";
+	}
+	if (pageSlug.value === PLAN_ITEM_PAGE && planItemId.value) {
+		return segments.value[1] === "corrections" ? "corrections" : "plan-item";
+	}
 	return "workspace";
 });
 
@@ -494,8 +534,12 @@ const screenKey = computed(() => {
 			return `dpp-classification:${classificationSubmissionId.value}`;
 		case "plan":
 			return `plan:${planReference.value}`;
+		case "progress":
+			return `progress:${planReference.value}`;
 		case "plan-item":
 			return `plan-item:${planItemId.value}`;
+		case "corrections":
+			return `corrections:${planItemId.value}`;
 		case "finance":
 			return `finance:${financeTaskId.value}`;
 		case "governance":
@@ -539,8 +583,12 @@ function fetchFor(scr) {
 			return api.getAcceptedDppClassification(classificationSubmissionId.value);
 		case "plan":
 			return api.getAnnualPlan(planReference.value);
+		case "progress":
+			return api.getProcurementProgress(planReference.value);
 		case "plan-item":
 			return api.getPlanItem(planItemId.value);
+		case "corrections":
+			return api.getPlanCorrectionRequests(planItemId.value);
 		case "finance":
 			return api.getFinanceTask(financeTaskId.value);
 		case "governance":
@@ -587,11 +635,21 @@ function applyLoaded(scr, loaded) {
 			formDialog.value = false;
 			splittingDialog.value = false;
 			lateActivationDialog.value = false;
-			shift.value = null;
+			break;
+		case "progress":
+			progress.value = loaded;
 			break;
 		case "plan-item":
 			planItem.value = loaded;
 			dissolveDialog.value = false;
+			break;
+		case "corrections":
+			corrections.value = loaded;
+			// A reload closes both dialogs and the open detail: they were
+			// opened against a request whose state may have moved.
+			openIssue.value = "";
+			completeRequest.value = null;
+			noChangeRequest.value = null;
 			break;
 		case "finance":
 			financeTask.value = loaded;
@@ -1084,52 +1142,67 @@ async function onSubmitConsolidatedPlan(lateActivationReason) {
 	}
 }
 
-// §12.12 — the cascade dialog: the server computes every proposal (PLN-AC-124)
-function onOpenShift({ item, milestone }) {
-	const row = (item.schedule || []).find((r) => r.milestone === milestone) || {};
-	shift.value = { item, milestone, label: row.label || milestone, newDate: row.forecast || "", rows: [] };
-	if (row.forecast) onShiftDateChange(row.forecast);
+// PLN-CHG-001 v1.23 §10.13 / §10.15 — progress and correction requests.
+
+function onViewCorrections(planItemId) {
+	frappe.set_route(PLAN_ITEM_PAGE, planItemId, "corrections");
 }
 
-async function onShiftDateChange(value) {
-	if (!shift.value) return;
-	shift.value = { ...shift.value, newDate: value };
-	if (!value) return;
-	errorSummary.value = "";
-	try {
-		const preview = await api.previewForecastCascade({
-			plan_item: shift.value.item.plan_item_id,
-			milestone: shift.value.milestone,
-			new_forecast_date: value,
-		});
-		if (shift.value && shift.value.newDate === value) {
-			shift.value = { ...shift.value, rows: preview.rows || [], recordVersion: preview.record_version };
-		}
-	} catch (e) {
-		errorSummary.value = e.message;
-	}
+// The mechanics of one issue open only when the Planner asks for them; the
+// required change is what the table leads with (PLN22-AC-011).
+function onOpenIssue(request) {
+	openIssue.value = openIssue.value === request ? "" : request;
 }
 
-async function onConfirmShift({ included_milestones, reason }) {
-	if (!shift.value) return;
-	const current = shift.value;
-	// RUN-CHG-001 — reload inside the guarded function (same-screen command).
-	const result = await run("confirm-forecast-cascade", async (key) => {
-		const r = await api.confirmForecastCascade({
-			plan_item: current.item.plan_item_id,
-			milestone: current.milestone,
-			new_forecast_date: current.newDate,
-			included_milestones: JSON.stringify(included_milestones),
-			reason,
-			expected_record_version: current.recordVersion ?? current.item.record_version,
+// §7.2 StartPlanItemCorrection — Open becomes In progress. The hold stays in
+// force: starting is not resolving, and this command never edits the item.
+async function onPrepareCorrection(row) {
+	const result = await run("start-correction", async (key) => {
+		const r = await api.startPlanItemCorrection({
+			correction_request: row.request,
+			expected_record_version: row.record_version,
 			idempotency_key: key,
 		});
 		await load({ quiet: true });
 		return r;
 	});
-	if (result) {
-		shift.value = null;
-	}
+	if (result) openIssue.value = row.request;
+}
+
+// §7.2 ResolvePlanItemCorrectionRequest — recorded against the exact Active
+// version; the server refuses anything that is not Active.
+async function onRecordCorrectionCompleted() {
+	const row = completeRequest.value;
+	if (!row) return;
+	const result = await run("resolve-correction", async (key) => {
+		const r = await api.resolvePlanItemCorrectionRequest({
+			correction_request: row.request,
+			correcting_plan_version: corrections.value.correcting_plan?.correcting_plan_version,
+			expected_record_version: row.record_version,
+			idempotency_key: key,
+		});
+		await load({ quiet: true });
+		return r;
+	});
+	if (result) completeRequest.value = null;
+}
+
+// §7.2 ClosePlanItemCorrectionWithoutChange — a reasoned no-change outcome.
+// It resolves this request only, and revives nothing downstream.
+async function onCloseWithoutChange(reason) {
+	const row = noChangeRequest.value;
+	if (!row) return;
+	const result = await run("close-correction", async (key) => {
+		const r = await api.closePlanItemCorrectionWithoutChange({
+			correction_request: row.request,
+			reason,
+			expected_record_version: row.record_version,
+			idempotency_key: key,
+		});
+		await load({ quiet: true });
+		return r;
+	});
+	if (result) noChangeRequest.value = null;
 }
 
 async function onRetryPublication() {

@@ -399,16 +399,15 @@ ui-demands-workspace-gate:
 # PLN-CHG-001 v1.18 — Phase 2 exit (PLN18-213): the whole Planning-owned
 # Python domain suite (every services/schema test, discovered dynamically —
 # new test files are picked up without editing this target), including the
-# rule-3 removed-concept scan (test_planning_v118_schema). Each test class's
+# rule-3 removed-concept scan (test_planning_v123_schema). Each test class's
 # own addClassCleanup(fx.restore_site) restores intake flags and wipes test
 # rows; the cross-module checkpoint (core, budget, NDS, strategy, REQ, TPR)
 # has no single shared gate across apps and is run as the sibling modules'
 # own suites (see the tracker's PLN18-213 evidence for the exact list).
-# test_planning_seed is excluded: it still drives the pre-v1.18 synchronous
-# publication shape and is Phase 4's own planning-seed-gate to close, not a
-# Phase 2 regression (tracker PLN18-209/210/213).
+# test_planning_seed is included again: PLN-CHG-001 v1.23 repaired the seed
+# onto the asynchronous publication pipeline, so it is an ordinary regression.
 planning-domain-gate:
-	cd $(BENCH_ROOT) && for m in $$(cd apps/kentender_v1/kentender_procurement/kentender_procurement/procurement_planning/tests && ls test_*.py | sed 's/\.py$$//' | grep -v '^test_planning_seed$$'); do \
+	cd $(BENCH_ROOT) && for m in $$(cd apps/kentender_v1/kentender_procurement/kentender_procurement/procurement_planning/tests && ls test_*.py | sed 's/\.py$$//'); do \
 		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.procurement_planning.tests.$$m || exit 1; done
 
 # PLN18-302 — U01 Workspace + U21 Common States (PLN-CHG-001 v1.18 Phase 3A).

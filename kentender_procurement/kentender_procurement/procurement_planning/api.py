@@ -497,6 +497,23 @@ def cancel_plan_update(plan_reference: str, expected_record_version, idempotency
 	return plan_publication.cancel_plan_update(plan_reference=plan_reference, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
 
 
+# --- §10.13 / §10.15 progress and correction requests -----------------------
+
+
+@frappe.whitelist()
+def get_procurement_progress(plan_reference: str = "") -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import progress_read
+
+	return progress_read.get_procurement_progress(plan_reference=plan_reference)
+
+
+@frappe.whitelist()
+def get_plan_correction_requests(plan_item_id: str) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import progress_read
+
+	return progress_read.get_plan_correction_requests(plan_item_id=plan_item_id)
+
+
 # --- forecast cascade -------------------------------------------------------
 #
 # PLN-CHG-001 v1.23 §7.5 / §15.3 (PLN23-CHG-001): the MVP registers no

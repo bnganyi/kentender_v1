@@ -142,7 +142,10 @@ def _accepted_entry_rows(fiscal_year: str) -> list[dict[str, Any]]:
 		entries = frappe.get_all(
 			"Departmental Plan Entry",
 			filters={"dpp_version": version},
-			fields=["name", "entry_id", "title", "source_origin", "quantity", "unit", "required_by_date", "budget_line", "indicative_amount", "not_proceeding_reason"],
+			# `need` is selected because `source_label` below distinguishes an
+			# accepted Need from a direct requirement; omitting it silently
+			# labelled every source "Direct requirement".
+			fields=["name", "entry_id", "title", "source_origin", "need", "quantity", "unit", "required_by_date", "budget_line", "indicative_amount", "not_proceeding_reason"],
 		)
 		ou_label = _ou_label(root.organisation_unit)
 		for entry in entries:

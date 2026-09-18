@@ -212,10 +212,31 @@ export function cancelPlanUpdate(args) {
 	return frappeCall(`${BASE}.cancel_plan_update`, args);
 }
 
-export function previewForecastCascade(args) {
-	return frappeCall(`${BASE}.preview_forecast_cascade`, args);
+// --- progress and correction requests (§10.13, §10.15) -------------------
+
+export function getProcurementProgress(planReference) {
+	return frappeCall(`${BASE}.get_procurement_progress`, { plan_reference: planReference || "" });
 }
 
-export function confirmForecastCascade(args) {
-	return frappeCall(`${BASE}.confirm_forecast_cascade`, args);
+export function getPlanCorrectionRequests(planItemId) {
+	return frappeCall(`${BASE}.get_plan_correction_requests`, { plan_item_id: planItemId });
 }
+
+// §5.4.5 — the three permitted dispositions of one request. None of them
+// revives the stopped downstream work; the requesting module starts fresh.
+export function startPlanItemCorrection(args) {
+	return frappeCall(`${BASE}.start_plan_item_correction`, args);
+}
+
+export function resolvePlanItemCorrectionRequest(args) {
+	return frappeCall(`${BASE}.resolve_plan_item_correction_request`, args);
+}
+
+export function closePlanItemCorrectionWithoutChange(args) {
+	return frappeCall(`${BASE}.close_plan_item_correction_without_change`, args);
+}
+
+// PLN-CHG-001 v1.23 §7.5 / §15.3 (PLN23-CHG-001): the MVP registers no
+// forecast cascade service, so this adapter carries no entry point to one.
+// U15 is deferred and U14 shows approved dates and owner-supplied actuals
+// only — there is no "Update expected dates" action to call.

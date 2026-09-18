@@ -373,6 +373,11 @@ def _plan_rows(plan, active_version, open_version, *, is_planner: bool) -> list[
 				"action": "View current plan",
 				"action_kind": "secondary",
 				"route": route,
+				# §11.5 — what has actually been procured against the plan in
+				# force is its own surface (U14), reached from the plan it is
+				# about rather than from a separate menu entry.
+				"secondary_action": "View procurement progress",
+				"secondary_route": [*route, "progress"],
 			}
 		)
 

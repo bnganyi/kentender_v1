@@ -187,6 +187,46 @@
 			</div>
 		</div>
 
+		<!-- §10.6 — once the version is Active, its approval and publication
+		     are facts about it, not a preparation step, so they appear here
+		     rather than as a stage in a wizard. They stay absent while a Draft
+		     is still being prepared. -->
+		<template v-if="activeView">
+			<h3 class="kt-card-title">Approval and publication</h3>
+			<div class="kt-meta-row" data-testid="ppl-governance">
+				<div>
+					<span class="kt-label">Adopted by the Accounting Officer</span>
+					<span class="kt-meta-value">{{ activeView.governance_card.ao_adoption_line || "—" }}</span>
+				</div>
+				<div>
+					<span class="kt-label">Approved</span>
+					<span class="kt-meta-value">{{ activeView.governance_card.statutory_approval_line || "—" }}</span>
+				</div>
+				<div>
+					<span class="kt-label">Published</span>
+					<span class="kt-meta-value">
+						{{ activeView.governance_card.publication_line || "Not published" }}
+						<a
+							v-if="activeView.governance_card.publication_route"
+							href="#"
+							class="pln-check-action"
+							data-testid="ppl-view-publication"
+							@click.prevent="$emit('navigate', activeView.governance_card.publication_route)"
+						>View publication evidence</a>
+					</span>
+				</div>
+				<div>
+					<span class="kt-label">In force since</span>
+					<span class="kt-meta-value">{{ activeView.summary.activated_display }}</span>
+				</div>
+			</div>
+			<!-- §10.13 — what has actually been procured against it lives in
+			     its own surface; this page is about the plan itself. -->
+			<a href="#" data-testid="ppl-view-progress" @click.prevent="$emit('navigate', ['annual-procurement-plan', plan.plan_reference, 'progress'])">
+				View procurement progress
+			</a>
+		</template>
+
 		<!-- Changes and history: secondary, closed by default. -->
 		<details class="kt-disclosure" data-testid="ppl-history">
 			<summary class="kt-disclosure-head">
@@ -298,6 +338,7 @@ watch(
 );
 
 const items = computed(() => props.plan.plan_items || []);
+const activeView = computed(() => props.plan.active_view);
 const unallocated = computed(() => props.plan.unallocated_sources || []);
 const planChecks = computed(() => props.plan.plan_checks || []);
 const history = computed(() => props.plan.history_lines || []);

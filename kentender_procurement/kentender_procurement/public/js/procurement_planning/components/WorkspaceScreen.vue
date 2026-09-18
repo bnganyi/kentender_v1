@@ -190,15 +190,23 @@
 								<span class="kt-meta-value">{{ fact[1] }}</span>
 							</div>
 						</div>
-						<button
-							type="button"
-							class="kt-btn"
-							:class="row.action_kind === 'primary' ? 'kt-btn-primary' : 'kt-btn-secondary'"
-							:data-testid="`pln-plan-action-${row.kind}`"
-							@click="$emit('navigate', row.route)"
-						>
-							{{ row.action }}
-						</button>
+						<div class="pln-footer-right">
+							<a
+								v-if="row.secondary_action"
+								href="#"
+								:data-testid="`pln-plan-secondary-${row.kind}`"
+								@click.prevent="$emit('navigate', row.secondary_route)"
+							>{{ row.secondary_action }}</a>
+							<button
+								type="button"
+								class="kt-btn"
+								:class="row.action_kind === 'primary' ? 'kt-btn-primary' : 'kt-btn-secondary'"
+								:data-testid="`pln-plan-action-${row.kind}`"
+								@click="$emit('navigate', row.route)"
+							>
+								{{ row.action }}
+							</button>
+						</div>
 					</div>
 					<p v-if="row.note" class="kt-muted pln-plan-note" data-testid="pln-plan-note">{{ row.note }}</p>
 					<!-- §10.3 U01-CURRENT-UPDATE: the note sits between the two rows. -->

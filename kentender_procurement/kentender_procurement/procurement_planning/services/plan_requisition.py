@@ -241,7 +241,6 @@ def get_requisition_eligible_plan_item(*, plan_item_id: str, user: str | None = 
 		"currency": "KES",
 		"award_packages": 1,
 		"planned_dates": {f"{m}_date": cstr(item.get(f"baseline_{m}_date")) for m in schedule.MILESTONES},
-		"forecast_dates": {f"{m}_date": cstr(item.get(f"forecast_{m}_date")) for m in schedule.MILESTONES},
 		"funding_confirmation_references": [confirmation] if confirmation else [],
 		"funding_state": version.funding_state,
 		"total_quantity": total_qty,

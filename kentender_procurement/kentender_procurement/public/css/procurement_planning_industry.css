@@ -914,3 +914,41 @@
 	color: var(--kt-status-critical);
 	font-size: 14px;
 }
+
+/* ==========================================================================
+   PLN-CHG-001 v1.23 §10.13 / §10.15 — U14 progress, U16 correction requests
+   ========================================================================== */
+
+/* Purchases sit side by side so planned, covered and started read as one
+   comparison per purchase rather than a long scroll (U14.dc.html). */
+.kt-pln .pln-progress-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+	gap: var(--kt-space-5);
+	margin-bottom: var(--kt-space-5);
+}
+.kt-pln .pln-progress-card .kt-card-title {
+	margin: 0;
+}
+.kt-pln .pln-progress-card .kt-meta-row {
+	margin-top: var(--kt-space-3);
+}
+/* The hold belongs to the purchase above the purchase's own facts, so it is
+   flush with the top of the card rather than floating between cards. */
+.kt-pln .pln-progress-card .kt-notice {
+	margin-bottom: var(--kt-space-4);
+}
+.kt-pln .pln-progress-actions {
+	margin-top: var(--kt-space-4);
+}
+/* Each proceeding's dates are headed by the proceeding they belong to; two
+   proceedings never read as one table. */
+.kt-pln .pln-progress-dates-head {
+	margin: var(--kt-space-4) 0 var(--kt-space-2);
+}
+
+@media (max-width: 900px) {
+	.kt-pln .pln-progress-grid {
+		grid-template-columns: 1fr;
+	}
+}

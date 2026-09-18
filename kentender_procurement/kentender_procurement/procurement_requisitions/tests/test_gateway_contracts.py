@@ -24,7 +24,10 @@ REQUIRED_PROJECTION_FIELDS = (
 	"objective_path", "strategic_objective_path", "title", "reservation_category", "lotting_indicator", "lot_count",
 	# PLN-CHG-001 v1.18 §4.6: `plan_horizon` is a fixed literal; the multi-year justification key is gone (REQ-CHG-001 v1.8 owed, FU-24)
 	"plan_horizon", "contributing_org_unit_ids", "currency", "award_packages",
-	"planned_dates", "forecast_dates", "funding_confirmation_references", "funding_state", "total_quantity",
+	# PLN-CHG-001 v1.23 §7.5/§15.3 (PLN23-CHG-001): Planning keeps no forecast
+	# records, so `forecast_dates` is gone from the projection rather than
+	# shipped as seven permanently empty strings.
+	"planned_dates", "funding_confirmation_references", "funding_state", "total_quantity",
 	"total_value", "remaining_quantity", "remaining_value", "sources", "evaluated_at",
 )
 

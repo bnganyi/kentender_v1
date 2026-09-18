@@ -118,16 +118,11 @@ def baseline_lateness_days(actual_date, baseline_date, *, applicable: bool = Tru
 	return date_diff(getdate(actual_date), getdate(baseline_date))
 
 
-def forecast_error_days(actual_date, forecast_date, *, applicable: bool = True):
-	"""Actual milestone date − identified forecast date; positive is later
-	than that forecast. The caller must pass the exact forecast revision in
-	force when the proceeding's actual was recorded (§5.5.1A: "never
-	substitute ... a forecast revised after the event"), never the latest one."""
-	if not applicable:
-		return NOT_APPLICABLE
-	if not actual_date or not forecast_date:
-		return NOT_AVAILABLE
-	return date_diff(getdate(actual_date), getdate(forecast_date))
+# PLN-CHG-001 v1.23 §10.13 / §15.3 (PLN23-CHG-001): there is no forecast tier
+# in the MVP, so there is no forecast-error measure. A future facility that
+# reintroduces forecasts must compare against the exact revision in force when
+# the proceeding's actual was recorded (§5.5.1A: "never substitute ... a
+# forecast revised after the event"), never the latest one.
 
 
 def elapsed_days(start_date, end_date, *, applicable: bool = True):
@@ -176,11 +171,11 @@ def proceeding_events(plan_item_id: str, proceeding_id: str) -> dict[str, dict[s
 
 
 def proceeding_variance(plan_item_id: str, proceeding_id: str) -> list[dict[str, Any]]:
-	"""§5.5.1A's per-proceeding table: baseline, the forecast in force,
-	actual and the four labelled measures for every milestone the item's
-	resolved schedule profile makes applicable — the shape a future review
-	pack / detail screen (Phase 3) renders under its own explicit labels,
-	never an unexplained "Variance" heading."""
+	"""§5.5.1A's per-proceeding table: the approved baseline, the owner-
+	supplied actual and the three labelled measures for every milestone the
+	item's resolved schedule profile makes applicable — the shape U14
+	renders under its own explicit labels, never an unexplained "Variance"
+	heading. Forecast comparison is absent from the MVP (§10.13)."""
 	from kentender_procurement.procurement_planning.services import profiles, schedule
 
 	item = frappe.get_doc("Annual Plan Item", {"plan_item_id": plan_item_id})
@@ -194,16 +189,14 @@ def proceeding_variance(plan_item_id: str, proceeding_id: str) -> list[dict[str,
 	for m in schedule.MILESTONES:
 		is_applicable = m in applicable
 		baseline = item.get(f"baseline_{m}_date")
-		forecast = item.get(f"forecast_{m}_date")
 		event = events.get(m)
 		actual = event.actual_date if event else None
 		rows.append(
 			{
 				"milestone": m, "applicable": is_applicable,
-				"baseline": cstr(baseline), "forecast": cstr(forecast), "actual": cstr(actual),
+				"baseline": cstr(baseline), "actual": cstr(actual),
 				"event": event.name if event else "", "event_id": event.event_id if event else "",
 				"baseline_lateness_days": baseline_lateness_days(actual, baseline, applicable=is_applicable),
-				"forecast_error_days": forecast_error_days(actual, forecast, applicable=is_applicable),
 				"elapsed_since_previous_days": elapsed_days(previous_actual, actual, applicable=is_applicable and previous_actual is not None),
 				"duration_variance_since_previous_days": duration_variance_days(
 					item.get(f"baseline_{previous_applicable_milestone}_date") if previous_applicable_milestone else None, baseline,
