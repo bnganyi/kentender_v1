@@ -310,6 +310,24 @@ Operational rules:
 
 Escalate test scope immediately only when the change itself is broad or dangerous—for example a migration, global permission rule, shared shell/router, app contract, framework patch, or release candidate. State why the broader run is justified.
 
+### 8.1 Misleading failures on this bench
+
+Two environment faults present as application defects. Rule out both before diagnosing code.
+
+**A masked `bench execute` error.** `bench execute <dotted.path>` calls `frappe.get_attr(path)(...)` and, on any exception, retries with `eval(path)` — which fails as `NameError: name '<app>' is not defined`. That NameError is never the real error, and the app it names is never the problem: the function threw and the cause was discarded. Get the real one:
+
+```bash
+cd $BENCH_ROOT/sites && ../env/bin/python -c "import frappe; \
+  frappe.init(site='<site>'); frappe.connect(); \
+  from <module> import <fn>; <fn>()"
+```
+
+**An undrained background-job queue.** This bench runs no RQ worker by default, and `delete_doc` enqueues `delete_dynamic_links`, so every fixture reset adds jobs nothing consumes. Past `MAX_QUEUED_JOBS` (500, plus 50 per site) Frappe refuses all new enqueues with `QueueOverloaded`, and every reset or `restore_site` that deletes a document fails — reported as the NameError above. In Playwright that failure lands in `afterAll`, which does not abort the run, so later blocks execute against a world nobody restored and produce cascading failures that read as product defects.
+
+- Check with `make ui-queue-check` (`FIX=1` drains). The UI suites run the same guard in `tests/ui/globalSetup.ts` and refuse to start when it cannot be cleared.
+- Never read `rq:queue:default`. The key is bench-namespaced (`rq:queue:<bench>:default`) and the un-namespaced one does not exist, so it always reports `0` — a check that reads it is worse than no check. Enumerate with `redis-cli -p <redis_queue port> keys "rq:queue:*"`.
+- Draining once is not enough, because jobs accumulate during a run. Keep a worker up: `nohup bench worker --queue default &`. It does not survive a bench restart.
+
 ## 9. Completion standard
 
 Before claiming completion:

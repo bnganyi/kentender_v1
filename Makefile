@@ -31,6 +31,7 @@ help:
 	@echo "  make x-02-no-plain-bench-build-gate — X-02 tender-management prompts must not document bare bench asset build (doc 9 §3.1)"
 	@echo "  make x-03-doc9-acceptance-sequence-gate — X-03 doc 9 §23.4 KenTender acceptance runbook markers (doc + audit)"
 	@echo "  make vue-desk-bundle-translation-binding-gate SITE=$(SITE) — every Vue-in-Desk bundle using __() in templates binds globalProperties.__ (AGENTS.md §6.1)"
+	@echo "  make ui-queue-check [FIX=1] — background-job queue depth; a full queue breaks every fixture reset and teardown and reports it as a misleading NameError (AGENTS.md §8.1)"
 	@echo "  make ui-smoke — Phase La: npm run test:ui:smoke (needs Node, running site, apps/kentender_v1/.env.ui)"
 	@echo "  make ui-workspace-pattern-gate — workspace contract tests (selection, scroll, anti-flicker)"
 	@echo "  make ui-strategy-gate — STR-CHG-001 v1.8 §16.2 browser journeys (author, approver, access states) on the §14 profiles"

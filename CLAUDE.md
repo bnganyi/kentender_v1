@@ -88,6 +88,8 @@ npx playwright test path/to/spec.ts -g "test name"
 
 Use `npm run test:ui:smoke` for the UI smoke checkpoint and `npm run test:ui` only when a full UI run is justified.
 
+If a UI run fails oddly — teardowns failing, later specs failing against state an earlier spec left behind, or a `NameError` naming an app — check `make ui-queue-check` before reading any application code. See `AGENTS.md` §8.1.
+
 ### Assets
 
 Never use plain `bench build` or an app-level Yarn build. Use the Node wrapper, which lives at the **bench root**, not in this repository:
