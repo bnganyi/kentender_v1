@@ -201,25 +201,20 @@ function openLine(line) {
 		</div>
 
 		<div v-else class="kt-shell">
-			<header style="margin-bottom: 4px">
-				<span class="kt-eyebrow">{{ __("BUDGET & FUNDING") }}</span>
-				<h1 style="margin: 0 0 8px 0; font-size: 32px">{{ __("Budget & Funding") }}</h1>
-				<p class="kt-page-lede">{{ __("View the registered procurement budget and the funding position used by Procurement Planning.") }}</p>
-			</header>
-
-			<!-- Filter row (BUD-DES-01) — a local view filter, never a gate. -->
-			<div style="display: flex; align-items: center; gap: 10px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--kt-color-divider)">
-				<label class="kt-label" style="margin: 0" for="bud-ws-fy">{{ __("Financial year") }}</label>
-				<select id="bud-ws-fy" class="kt-input" style="width: auto; min-width: 160px" :disabled="fyFilter.loading.value" :value="fyFilter.selected.value" data-testid="budget-fy-filter" @change="onSelectFy($event.target.value)">
-					<option value="" disabled>{{ __("Select a financial year") }}</option>
-					<option v-for="fy in fyFilter.fiscalYears.value" :key="fy" :value="fy">{{ fy }}</option>
-				</select>
-			</div>
-
-			<KtErrorBanner :message="actingError" style="margin-bottom: 16px" @dismiss="actingError = null" />
-
-			<!-- Loading (BUD-DES-16): one skeleton current-budget card, four position cards, two rows. -->
+			<!-- Loading (BUD-DES-16): plain header, one skeleton current-budget card, four position cards, two rows. -->
 			<template v-if="loading">
+				<header style="margin-bottom: 4px">
+					<span class="kt-eyebrow">{{ __("BUDGET & FUNDING") }}</span>
+					<h1 style="margin: 0 0 8px 0; font-size: 32px">{{ __("Budget & Funding") }}</h1>
+					<p class="kt-page-lede">{{ __("View the registered procurement budget and the funding position used by Procurement Planning.") }}</p>
+				</header>
+				<div style="display: flex; align-items: center; gap: 10px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--kt-color-divider)">
+					<label class="kt-label" style="margin: 0" for="bud-ws-fy">{{ __("Financial year") }}</label>
+					<select id="bud-ws-fy" class="kt-input" style="width: auto; min-width: 160px" :disabled="fyFilter.loading.value" :value="fyFilter.selected.value" data-testid="budget-fy-filter" @change="onSelectFy($event.target.value)">
+						<option value="" disabled>{{ __("Select a financial year") }}</option>
+						<option v-for="fy in fyFilter.fiscalYears.value" :key="fy" :value="fy">{{ fy }}</option>
+					</select>
+				</div>
 				<div class="kt-card kt-blueprint" data-testid="bud-ws-skeleton">
 					<div class="kt-skel" style="width: 300px; height: 16px; margin-bottom: 14px"></div>
 					<div class="kt-skel" style="width: 200px; height: 12px"></div>
@@ -233,64 +228,119 @@ function openLine(line) {
 				</div>
 			</template>
 
-			<!-- Server error (BUD-DES-16) -->
-			<div v-else-if="serverError" class="kt-card kt-blueprint kt-empty" data-testid="bud-ws-server-error">
-				<h2>{{ __("Budget & Funding could not be loaded.") }}</h2>
-				<p class="kt-muted">{{ __("Try again. If the problem continues, contact KenTender support.") }}</p>
-				<button type="button" class="kt-btn kt-btn-primary" @click="refresh()">{{ __("Try again") }}</button>
-			</div>
+			<!-- Server error (BUD-DES-16) — plain header, simple centered card. -->
+			<template v-else-if="serverError">
+				<header style="margin-bottom: 4px">
+					<span class="kt-eyebrow">{{ __("BUDGET & FUNDING") }}</span>
+					<h1 style="margin: 0 0 8px 0; font-size: 32px">{{ __("Budget & Funding") }}</h1>
+					<p class="kt-page-lede">{{ __("View the registered procurement budget and the funding position used by Procurement Planning.") }}</p>
+				</header>
+				<div style="display: flex; align-items: center; gap: 10px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--kt-color-divider)">
+					<label class="kt-label" style="margin: 0" for="bud-ws-fy">{{ __("Financial year") }}</label>
+					<select id="bud-ws-fy" class="kt-input" style="width: auto; min-width: 160px" :disabled="fyFilter.loading.value" :value="fyFilter.selected.value" data-testid="budget-fy-filter" @change="onSelectFy($event.target.value)">
+						<option value="" disabled>{{ __("Select a financial year") }}</option>
+						<option v-for="fy in fyFilter.fiscalYears.value" :key="fy" :value="fy">{{ fy }}</option>
+					</select>
+				</div>
+				<div class="kt-card kt-blueprint kt-empty" data-testid="bud-ws-server-error">
+					<h2>{{ __("Budget & Funding could not be loaded.") }}</h2>
+					<p class="kt-muted">{{ __("Try again. If the problem continues, contact KenTender support.") }}</p>
+					<button type="button" class="kt-btn kt-btn-primary" @click="refresh()">{{ __("Try again") }}</button>
+				</div>
+			</template>
 
-			<!-- No financial year selected yet — never auto-picked (§12.1). -->
-			<div v-else-if="!fyFilter.selected.value" class="kt-card kt-blueprint kt-empty" data-testid="budget-select-fy">
-				<h2>{{ __("Select a financial year to view its procurement budget.") }}</h2>
-			</div>
+			<!-- No financial year selected yet — never auto-picked (§12.1). Plain header, the picker is the content. -->
+			<template v-else-if="!fyFilter.selected.value">
+				<header style="margin-bottom: 4px">
+					<span class="kt-eyebrow">{{ __("BUDGET & FUNDING") }}</span>
+					<h1 style="margin: 0 0 8px 0; font-size: 32px">{{ __("Budget & Funding") }}</h1>
+					<p class="kt-page-lede">{{ __("View the registered procurement budget and the funding position used by Procurement Planning.") }}</p>
+				</header>
+				<div style="display: flex; align-items: center; gap: 10px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--kt-color-divider)">
+					<label class="kt-label" style="margin: 0" for="bud-ws-fy">{{ __("Financial year") }}</label>
+					<select id="bud-ws-fy" class="kt-input" style="width: auto; min-width: 160px" :disabled="fyFilter.loading.value" :value="fyFilter.selected.value" data-testid="budget-fy-filter" @change="onSelectFy($event.target.value)">
+						<option value="" disabled>{{ __("Select a financial year") }}</option>
+						<option v-for="fy in fyFilter.fiscalYears.value" :key="fy" :value="fy">{{ fy }}</option>
+					</select>
+				</div>
+				<div class="kt-card kt-blueprint kt-empty" data-testid="budget-select-fy">
+					<h2>{{ __("Select a financial year to view its procurement budget.") }}</h2>
+				</div>
+			</template>
 
-			<!-- No record (BUD-DES-16 No baseline) -->
-			<div v-else-if="!workspace || state === 'no_record'" class="kt-card kt-blueprint kt-empty" data-testid="budget-no-baseline">
-				<h2>{{ __("No procurement allocation has been recorded for FY {0}.", [workspace?.fiscal_year?.label || fyFilter.selected.value]) }}</h2>
-				<p class="kt-muted">{{ __("Record the externally approved allocation for this financial year.") }}</p>
-				<button v-if="canRecord" type="button" class="kt-btn kt-btn-primary" data-testid="budget-register-btn" @click="runAction('record_allocation')">
-					{{ ACTION_LABELS.record_allocation }}
-				</button>
-			</div>
+			<!-- No record (BUD-DES-16 No baseline) — plain header, the notice is the content. -->
+			<template v-else-if="!workspace || state === 'no_record'">
+				<header style="margin-bottom: 4px">
+					<span class="kt-eyebrow">{{ __("BUDGET & FUNDING") }}</span>
+					<h1 style="margin: 0 0 8px 0; font-size: 32px">{{ __("Budget & Funding") }}</h1>
+					<p class="kt-page-lede">{{ __("View the registered procurement budget and the funding position used by Procurement Planning.") }}</p>
+				</header>
+				<div style="display: flex; align-items: center; gap: 10px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--kt-color-divider)">
+					<label class="kt-label" style="margin: 0" for="bud-ws-fy">{{ __("Financial year") }}</label>
+					<select id="bud-ws-fy" class="kt-input" style="width: auto; min-width: 160px" :disabled="fyFilter.loading.value" :value="fyFilter.selected.value" data-testid="budget-fy-filter" @change="onSelectFy($event.target.value)">
+						<option value="" disabled>{{ __("Select a financial year") }}</option>
+						<option v-for="fy in fyFilter.fiscalYears.value" :key="fy" :value="fy">{{ fy }}</option>
+					</select>
+				</div>
+				<div class="kt-card kt-blueprint kt-empty" data-testid="budget-no-baseline">
+					<h2>{{ __("No procurement allocation has been recorded for FY {0}.", [workspace?.fiscal_year?.label || fyFilter.selected.value]) }}</h2>
+					<p class="kt-muted">{{ __("Record the externally approved allocation for this financial year.") }}</p>
+					<button v-if="canRecord" type="button" class="kt-btn kt-btn-primary" data-testid="budget-register-btn" @click="runAction('record_allocation')">
+						{{ ACTION_LABELS.record_allocation }}
+					</button>
+				</div>
+			</template>
 
+			<!-- Active/pending (BUD-DES-01/01A/01B): header + filter are the FIRST section of the one card, matching the board. -->
 			<template v-else>
-				<!-- BUD-DES-01A/01B pending card: initial draft/submission, returned, or an update on a current allocation. -->
-				<div v-if="pending && pendingCopy" class="kt-card kt-blueprint" data-testid="budget-pending-card" :data-state="state" :data-action="pendingAction">
-					<div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 14px">
-						<div style="display: flex; align-items: center; gap: 12px">
-							<h2 style="margin: 0; font-size: 19px">{{ pendingCopy.heading }}</h2>
-							<span class="kt-status" :class="pendingCopy.statusClass">{{ pendingCopy.status }}</span>
-						</div>
-						<button type="button" class="kt-btn" :class="pendingIsPrimary ? 'kt-btn-primary' : 'kt-btn-secondary'" data-testid="budget-pending-action-btn" @click="runAction(pendingAction)">
-							{{ pendingActionLabel }}
-						</button>
+				<div class="kt-card kt-blueprint" style="padding: 0">
+					<div style="padding: 28px 24px 20px; border-bottom: 1px solid var(--kt-color-divider)">
+						<span class="kt-eyebrow">{{ __("BUDGET & FUNDING") }}</span>
+						<h1 style="margin: 0 0 8px 0; font-size: 32px">{{ __("Budget & Funding") }}</h1>
+						<p class="kt-page-lede" style="margin: 0 0 16px">{{ __("View the registered procurement budget and the funding position used by Procurement Planning.") }}</p>
+						<select id="bud-ws-fy" class="kt-input" style="width: auto; min-width: 160px" :disabled="fyFilter.loading.value" :value="fyFilter.selected.value" data-testid="budget-fy-filter" @change="onSelectFy($event.target.value)">
+							<option value="" disabled>{{ __("Select a financial year") }}</option>
+							<option v-for="fy in fyFilter.fiscalYears.value" :key="fy" :value="fy">{{ fy }}</option>
+						</select>
+						<KtErrorBanner :message="actingError" style="margin-top: 16px; margin-bottom: 0" @dismiss="actingError = null" />
 					</div>
-					<p style="font-size: 14px; margin: 0 0 12px" class="kt-muted">{{ pendingCopy.body }}</p>
-					<div v-if="pending.is_returned && pending.return" class="kt-notice is-warning" style="margin-bottom: 12px" data-testid="budget-pending-return">
-						<div class="kt-notice-body">
-							<strong>{{ __("Changes requested by {0}, {1}.", [pending.return.by, pending.return.at_display]) }}</strong>
-							{{ pending.return.reason }}
-						</div>
-					</div>
-					<div class="kt-ws-facts" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 24px">
-						<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Version") }}</div><div style="font-size: 14px">{{ __("Version {0}", [pending.version_number]) }}</div></div>
-						<div><div class="kt-label" style="margin-bottom: 3px">{{ pendingCopy.whoLabel }}</div><div style="font-size: 14px">{{ pending.submitted_by || "—" }}</div></div>
-						<div><div class="kt-label" style="margin-bottom: 3px">{{ pendingCopy.whenLabel }}</div><div style="font-size: 14px">{{ pendingCopy.when || "—" }}</div></div>
-						<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Financial Year") }}</div><div style="font-size: 14px">{{ workspace.fiscal_year.label }}</div></div>
-					</div>
-				</div>
 
-				<!-- Pending initial work the caller may not read: nothing current, nothing invented. -->
-				<div v-if="!hasCurrent && !pending" class="kt-card kt-blueprint kt-empty" data-testid="budget-pending-hidden">
-					<h2>{{ __("No allocation is current in KenTender yet for FY {0}.", [workspace.fiscal_year.label]) }}</h2>
-					<p class="kt-muted">{{ __("An allocation record exists for this financial year and is being prepared.") }}</p>
-				</div>
+					<!-- BUD-DES-01A/01B pending section: initial draft/submission, returned, or an update on a current allocation. -->
+					<div v-if="pending && pendingCopy" style="padding: 18px 24px; border-bottom: 1px solid var(--kt-color-divider)" data-testid="budget-pending-card" :data-state="state" :data-action="pendingAction">
+						<div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 14px">
+							<div style="display: flex; align-items: center; gap: 12px">
+								<h2 style="margin: 0; font-size: 19px">{{ pendingCopy.heading }}</h2>
+								<span class="kt-status" :class="pendingCopy.statusClass">{{ pendingCopy.status }}</span>
+							</div>
+							<button type="button" class="kt-btn" :class="pendingIsPrimary ? 'kt-btn-primary' : 'kt-btn-secondary'" data-testid="budget-pending-action-btn" @click="runAction(pendingAction)">
+								{{ pendingActionLabel }}
+							</button>
+						</div>
+						<p style="font-size: 14px; margin: 0 0 12px" class="kt-muted">{{ pendingCopy.body }}</p>
+						<div v-if="pending.is_returned && pending.return" class="kt-notice is-warning" style="margin-bottom: 12px" data-testid="budget-pending-return">
+							<div class="kt-notice-body">
+								<strong>{{ __("Changes requested by {0}, {1}.", [pending.return.by, pending.return.at_display]) }}</strong>
+								{{ pending.return.reason }}
+							</div>
+						</div>
+						<div class="kt-ws-facts" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 24px">
+							<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Version") }}</div><div style="font-size: 14px">{{ __("Version {0}", [pending.version_number]) }}</div></div>
+							<div><div class="kt-label" style="margin-bottom: 3px">{{ pendingCopy.whoLabel }}</div><div style="font-size: 14px">{{ pending.submitted_by || "—" }}</div></div>
+							<div><div class="kt-label" style="margin-bottom: 3px">{{ pendingCopy.whenLabel }}</div><div style="font-size: 14px">{{ pendingCopy.when || "—" }}</div></div>
+							<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Financial Year") }}</div><div style="font-size: 14px">{{ workspace.fiscal_year.label }}</div></div>
+						</div>
+					</div>
 
-				<!-- Current budget card (BUD-DES-01) or the Closed variant (§11.1B). -->
-				<template v-if="hasCurrent">
-					<div class="kt-card kt-blueprint" style="padding: 0" data-testid="budget-summary-card">
-						<div style="padding: 20px 24px; border-bottom: 1px solid var(--kt-color-divider)">
+					<!-- Pending initial work the caller may not read: nothing current, nothing invented. -->
+					<div v-if="!hasCurrent && !pending" class="kt-empty" style="padding: 22px 24px" data-testid="budget-pending-hidden">
+						<h2>{{ __("No allocation is current in KenTender yet for FY {0}.", [workspace.fiscal_year.label]) }}</h2>
+						<p class="kt-muted">{{ __("An allocation record exists for this financial year and is being prepared.") }}</p>
+					</div>
+
+					<!-- Current budget section (BUD-DES-01) or the Closed variant (§11.1B). -->
+					<template v-if="hasCurrent">
+						<div data-testid="budget-summary-card">
+							<div style="padding: 20px 24px; border-bottom: 1px solid var(--kt-color-divider)">
 							<div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 14px">
 								<div style="display: flex; align-items: center; gap: 12px">
 									<h2 style="margin: 0; font-size: 19px">{{ workspace.budget.title }}</h2>
@@ -376,6 +426,7 @@ function openLine(line) {
 						</div>
 					</div>
 				</template>
+				</div>
 			</template>
 		</div>
 	</div>
