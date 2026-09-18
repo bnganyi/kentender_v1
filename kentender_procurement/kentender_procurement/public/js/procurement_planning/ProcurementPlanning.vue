@@ -938,7 +938,12 @@ async function onNotProceedConfirm(reason) {
 
 // U03-notproceeding — Restore lives on the Plan screen's own not-proceeding
 // row, not the editor: no dialog, direct command (the frame draws no overlay).
-async function onRestoreDisposition(entryId) {
+// U03-EXCLUDED-ROW — the screen emits the row it was clicked on; this takes
+// the entry id out of it. Passing the row straight through sent an object
+// where the command expects an id, so restoring silently did nothing.
+async function onRestoreDisposition(row) {
+	const entryId = typeof row === "string" ? row : row?.entry_id;
+	if (!entryId) return;
 	await run("restore-need-disposition", async (key) => {
 		const r = await api.setNeedPlanningDisposition({
 			dpp_version: dpp.value.version?.name,

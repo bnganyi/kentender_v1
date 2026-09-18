@@ -156,7 +156,9 @@ describe("FinanceTaskScreen — other states", () => {
 		const w = make({ task: task({ segregated: true, can_decide: false, can_confirm: false }) });
 		expect(w.find('[data-testid="fnt-segregated"]').text()).toContain("independent decision-maker is required");
 		expect(w.find('[data-testid="fnt-confirm"]').exists()).toBe(false);
-		expect(w.find('[data-testid="fnt-return"]').attributes("disabled")).toBeDefined();
+		// §6.1 — absent, not disabled: a greyed control tells the reader
+		// nothing about why the decision is not theirs. The notice does.
+		expect(w.find('[data-testid="fnt-return"]').exists()).toBe(false);
 	});
 
 	it("shows no decision area once the review is decided", () => {

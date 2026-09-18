@@ -202,15 +202,20 @@
 		</p>
 
 		<div v-if="task.status === 'Open'" class="pln-footer" data-testid="fnt-footer">
+			<!-- Absent, not disabled, for a reader who holds no decision here:
+			     the Planner who asked for this confirmation is segregated from
+			     making it, and a greyed control tells them nothing (§6.1). -->
 			<button
+				v-if="task.can_decide"
 				type="button"
 				class="kt-btn kt-btn-secondary"
 				data-testid="fnt-return"
-				:disabled="pending || !task.can_decide"
+				:disabled="pending"
 				@click="$emit('open-return-dialog')"
 			>
 				Return to planner
 			</button>
+			<span v-else></span>
 			<div class="pln-footer-right">
 				<!-- Absent when the plan exceeds an approved amount: the
 				     decision is not available, and Return is how it gets

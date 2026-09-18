@@ -67,6 +67,7 @@
 			<input
 				id="ppl-project"
 				class="kt-input"
+				data-testid="ppl-project-input"
 				:value="projectNameDraft"
 				:disabled="!plan.mutable"
 				@input="projectNameDraft = $event.target.value"
@@ -121,7 +122,7 @@
 			<table class="kt-table" data-testid="ppl-unallocated">
 				<thead>
 					<tr>
-						<th>Select</th>
+						<th v-if="plan.mutable">Select</th>
 						<th>Requirement</th>
 						<th>Department</th>
 						<th class="is-num">Quantity</th>
@@ -132,7 +133,7 @@
 				</thead>
 				<tbody>
 					<tr v-for="row in unallocated" :key="row.entry_id" data-testid="ppl-unallocated-row">
-						<td>
+						<td v-if="plan.mutable">
 							<label class="kt-checkbox">
 								<input
 									type="checkbox"
@@ -157,7 +158,9 @@
 					</tr>
 				</tbody>
 			</table>
-			<div class="pln-add-selected">
+			<!-- A reader who cannot form purchases is not offered the control
+			     at all: this cycle shows no control a reader cannot use. -->
+			<div v-if="plan.mutable" class="pln-add-selected">
 				<p v-if="!selected.length" class="kt-muted" data-testid="ppl-select-hint">Select at least one requirement.</p>
 				<button
 					type="button"

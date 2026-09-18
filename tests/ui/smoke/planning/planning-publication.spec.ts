@@ -26,7 +26,10 @@ import {
 
 type ActiveState = { plan_reference: string; plan_item_id: string; publication: string };
 
-test.describe.configure({ mode: "serial", timeout: 180_000 });
+// Sequential, but not serial: these run on one worker because the fixtures
+// are one shared world, and each test rebuilds its own. Aborting the rest of
+// the file because one test failed hides every other result behind it.
+test.describe.configure({ timeout: 180_000 });
 
 async function gotoPlan(page: import("@playwright/test").Page, reference: string): Promise<void> {
 	await page.setViewportSize({ width: 1440, height: 1024 });

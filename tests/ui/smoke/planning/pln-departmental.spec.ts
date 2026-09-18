@@ -26,7 +26,10 @@ import {
  * (deleted with this row).
  */
 
-test.describe.configure({ mode: "serial", timeout: 180_000 });
+// Sequential, but not serial: these run on one worker because the fixtures
+// are one shared world, and each test rebuilds its own. Aborting the rest of
+// the file because one test failed hides every other result behind it.
+test.describe.configure({ timeout: 180_000 });
 
 test.describe("PLN18-303 Departmental Plan screens", () => {
 	test.afterAll(() => restoreSite());
@@ -85,12 +88,15 @@ test.describe("PLN18-303 Departmental Plan screens", () => {
 		await login(page, AUTHOR, PASSWORD);
 		await gotoDpp(page, state.dpp_reference, "/add-direct");
 		await expectReady(page, "dpp-entry");
-		await expect(page.locator(".kt-page-title")).toHaveText("Add direct requirement");
+		// §10.4 U04-DIRECT — the page is named for what the department is
+		// doing, not for the internal origin of the record.
+		await expect(page.locator('[data-testid="dpp-editor-title"]')).toHaveText("Add a requirement");
 
 		await page.locator('[data-testid="dpp-f-title"]').fill("Digital health platform security assessment");
 		await page.locator('[data-testid="dpp-f-description"]').fill("Assess the security of the platform and report.");
 		await page.locator('[data-testid="dpp-f-result"]').fill("A prioritised remediation plan exists.");
 		await page.locator('[data-testid="dpp-f-quantity"]').fill("1");
+		await page.locator('[data-testid="dpp-f-unit"]').selectOption({ index: 1 });
 		await page.locator('[data-testid="dpp-f-required-by"]').fill("2099-04-30");
 		await page.locator('[data-testid="dpp-f-budget-line"]').selectOption({ index: 0 });
 		await page.locator('[data-testid="dpp-f-amount"]').fill("20000000");
@@ -117,7 +123,8 @@ test.describe("PLN18-303 Departmental Plan screens", () => {
 		await login(page, HOD, PASSWORD);
 		await gotoDpp(page, state.dpp_reference);
 		await expectReady(page, "dpp");
-		await expect(page.locator('[data-testid="pln-dpp-context"]')).toHaveText("Ready to submit");
+		// The context row carries the department and year alongside the status.
+		await expect(page.locator('[data-testid="pln-dpp-context"]')).toContainText("Ready to submit");
 
 		const cert = page.locator('[data-testid="pln-dpp-certification"]');
 		await expect(cert).toContainText("Departmental certification");
@@ -145,9 +152,11 @@ test.describe("PLN18-303 Departmental Plan screens", () => {
 		await expectReady(page, "dpp-entry");
 		await expect(page.locator('[data-testid="dpp-funding-exclude"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="dpp-editor-save"]')).toHaveCount(0);
-		// read-only for an Auditor: the same testid renders a plain value, never
-		// the editable <select>
-		await expect(page.locator('select[data-testid="dpp-f-budget-line"]')).toHaveCount(0);
+		// Read-only for an Auditor: the field keeps its shape and its value —
+		// a requirement's facts are what they came to read — but nothing on it
+		// can be changed (§10.4 U04).
+		await expect(page.locator('[data-testid="dpp-f-budget-line"]')).toBeDisabled();
+		await expect(page.locator('[data-testid="dpp-f-title"]')).toBeDisabled();
 	});
 
 	test("an author from another department is masked, never sees the record", async ({ page }) => {
@@ -166,10 +175,13 @@ test.describe("PLN18-303 Departmental Plan screens", () => {
 		await login(page, PLANNER, PASSWORD);
 		await page.goto(`/app/procurement-planning/dpp-review/${state.task}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "dpp-review");
-		await expect(page.locator('[data-testid="pln-review-accept"]')).toBeDisabled();
-		// index 0 is the disabled "Select…" placeholder
-		await page.locator(`[data-testid="dppv-type-${state.need_entry_id}"]`).selectOption({ index: 1 });
-		await page.locator(`[data-testid="dppv-type-${state.direct_entry_id}"]`).selectOption({ index: 1 });
+		// §10.5 — the acceptance is absent until the evidence supports it,
+		// never a disabled control with no explanation.
+		await expect(page.locator('[data-testid="pln-review-accept"]')).toHaveCount(0);
+		// index 0 is the "Select…" placeholder; each requirement is classified
+		// on its own.
+		await page.locator(`[data-testid="pln-review-type"][data-entry="${state.need_entry_id}"]`).selectOption({ index: 1 });
+		await page.locator(`[data-testid="pln-review-type"][data-entry="${state.direct_entry_id}"]`).selectOption({ index: 1 });
 		await expect(page.locator('[data-testid="pln-review-accept"]')).toBeEnabled();
 		await page.locator('[data-testid="pln-review-accept"]').click();
 		await expectReady(page, "workspace");

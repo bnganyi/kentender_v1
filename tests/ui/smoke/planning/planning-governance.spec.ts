@@ -22,7 +22,10 @@ import {
 
 type GovernanceState = { task: string; plan_reference: string };
 
-test.describe.configure({ mode: "serial", timeout: 180_000 });
+// Sequential, but not serial: these run on one worker because the fixtures
+// are one shared world, and each test rebuilds its own. Aborting the rest of
+// the file because one test failed hides every other result behind it.
+test.describe.configure({ timeout: 180_000 });
 
 test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 	test.afterAll(() => restoreSite());

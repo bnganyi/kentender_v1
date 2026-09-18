@@ -27,7 +27,10 @@ import {
 
 type FinanceState = { task: string; plan_reference: string };
 
-test.describe.configure({ mode: "serial", timeout: 180_000 });
+// Sequential, but not serial: these run on one worker because the fixtures
+// are one shared world, and each test rebuilds its own. Aborting the rest of
+// the file because one test failed hides every other result behind it.
+test.describe.configure({ timeout: 180_000 });
 
 test.describe("PLN18-306 Finance task", () => {
 	test.afterAll(() => restoreSite());
@@ -43,7 +46,9 @@ test.describe("PLN18-306 Finance task", () => {
 		await page.locator('[data-testid="ppl-open-task"]').click();
 		await expectReady(page, "finance");
 		await expect(page).toHaveURL(new RegExp(`/procurement-planning/finance/${state.task}$`));
-		await expect(page.locator('[data-testid="fnt-badge"]')).toHaveText("Awaiting Finance");
+		// §10.9 — the badge names what this reader has to do, not which queue
+		// the record is sitting in.
+		await expect(page.locator('[data-testid="fnt-badge"]')).toHaveText("Your decision required");
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 

@@ -218,3 +218,23 @@ describe("AnnualPlanScreen — U07-FINANCE-COMPLETE", () => {
 		expect(w.find('[data-testid="ppl-sign-submit"]').text()).toBe("Sign and submit Annual Plan");
 	});
 });
+
+describe("AnnualPlanScreen — a reader who cannot change the plan", () => {
+	it("is offered no way to form purchases, not a disabled one", () => {
+		const w = make({
+			plan: plan({
+				mutable: false,
+				can_act: false,
+				unallocated_sources: [
+					{ entry_id: "DPP-MOH-DH-2027-004", dpp_entry: "DPE-0004", title: "A requirement not yet in a purchase", department: "Digital Health", quantity_number: "1", unit_label: "Programme", amount_display: "KES 10,000,000", source_label: "Accepted Need · NDS-MOH-2027-0009" },
+				],
+			}),
+		});
+		// §10.6 — the requirements are still readable; only the controls go.
+		expect(w.find('[data-testid="ppl-unallocated"]').exists()).toBe(true);
+		expect(w.find('[data-testid="ppl-select-source"]').exists()).toBe(false);
+		expect(w.find('[data-testid="ppl-add-selected"]').exists()).toBe(false);
+		expect(w.find('[data-testid="ppl-save"]').exists()).toBe(false);
+	});
+});
+

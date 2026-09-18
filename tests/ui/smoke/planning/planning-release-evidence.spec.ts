@@ -31,7 +31,10 @@ const SAMUEL = "samuel.otieno@moh.example.test";
 
 let PLAN = "";
 
-test.describe.configure({ mode: "serial", timeout: 180_000 });
+// Sequential, but not serial: these run on one worker because the fixtures
+// are one shared world, and each test rebuilds its own. Aborting the rest of
+// the file because one test failed hides every other result behind it.
+test.describe.configure({ timeout: 180_000 });
 
 test.beforeAll(() => {
 	// FU-10/FU-11 — until the Strategy §14.3 seed and the Budget lines' unit

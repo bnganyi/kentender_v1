@@ -25,7 +25,10 @@ import {
  * row): that file's testids predate the five-tab restructuring.
  */
 
-test.describe.configure({ mode: "serial", timeout: 180_000 });
+// Sequential, but not serial: these run on one worker because the fixtures
+// are one shared world, and each test rebuilds its own. Aborting the rest of
+// the file because one test failed hides every other result behind it.
+test.describe.configure({ timeout: 180_000 });
 
 test.describe("PLN18-304 Annual Plan record", () => {
 	test.afterAll(() => restoreSite());
@@ -63,17 +66,18 @@ test.describe("PLN18-304 Annual Plan record", () => {
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
 
-		const save = page.locator('[data-testid="ppl-save"]');
-		await expect(save).toBeDisabled();
-		await page.locator('[data-testid="ppl-project-name"]').fill("Digital health infrastructure programme");
-		await expect(save).toBeEnabled();
-		await save.click();
-		await expectReady(page, "plan");
-		await expect(save).toBeDisabled();
+		// §10.6 — a plan covering several projects leaves this blank, so the
+		// field is offered rather than always present.
+		await page.locator('[data-testid="ppl-add-project-name"]').click();
+		await page.locator('[data-testid="ppl-project-input"]').fill("Digital health infrastructure programme");
+		await page.locator('[data-testid="ppl-save"]').click();
 
+		// It is the persistence that matters: a reload reads it back from the
+		// server, not from what the page still had in hand.
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
-		await expect(page.locator('[data-testid="ppl-project-name"]')).toHaveValue("Digital health infrastructure programme");
+		await expect(page.locator('[data-testid="ppl-project-input"]'))
+			.toHaveValue("Digital health infrastructure programme", { timeout: 30_000 });
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
@@ -88,7 +92,9 @@ test.describe("PLN18-304 Annual Plan record", () => {
 		await expect(request).toBeEnabled();
 		await request.click();
 		await expectReady(page, "plan");
-		await expect(page.locator('[data-testid="ppl-plan-checks"]')).toContainText("Awaiting Finance confirmation");
+		// §10.6 — the check says what is happening, not which queue the record
+		// is waiting in.
+		await expect(page.locator('[data-testid="ppl-plan-checks"]')).toContainText("Finance is reviewing the funding");
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 

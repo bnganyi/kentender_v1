@@ -30,7 +30,10 @@ import {
 const OUT = path.resolve(__dirname, "../../../../docs/mvp-1-r1/04_planning/evidence/v1_12");
 type State = { dpp_reference: string; need_entry_id: string; task: string; plan_reference: string; plan_item_id: string; publication: string };
 
-test.describe.configure({ mode: "serial", timeout: 180_000 });
+// Sequential, but not serial: these run on one worker because the fixtures
+// are one shared world, and each test rebuilds its own. Aborting the rest of
+// the file because one test failed hides every other result behind it.
+test.describe.configure({ timeout: 180_000 });
 
 async function shot(page: import("@playwright/test").Page, name: string): Promise<void> {
 	fs.mkdirSync(OUT, { recursive: true });

@@ -28,7 +28,10 @@ import {
 
 type PlanItemState = { plan_item_id: string; plan_reference: string };
 
-test.describe.configure({ mode: "serial", timeout: 180_000 });
+// Sequential, but not serial: these run on one worker because the fixtures
+// are one shared world, and each test rebuilds its own. Aborting the rest of
+// the file because one test failed hides every other result behind it.
+test.describe.configure({ timeout: 180_000 });
 
 test.describe("PLN18-305 Plan Item editor", () => {
 	test.afterAll(() => restoreSite());
@@ -42,7 +45,9 @@ test.describe("PLN18-305 Plan Item editor", () => {
 
 		await page.locator('[data-testid="ppi-estimate-basis"]').fill("Market survey of the current supplier panel including delivery and installation costs.");
 		await page.locator('[data-testid="ppi-basis-reference"]').fill("MS-2098-001");
-		await page.locator('[data-testid="ppi-deadline"]').fill("2098-11-01");
+		// The Planner sets the target invitation date; the departmental
+		// deadline beside it is derived from the sources and is read-only.
+		await page.locator('[data-testid="ppi-invitation"]').fill("2098-11-01");
 		await page.locator('[data-testid="ppi-reservation"]').selectOption("Youth");
 		await page.locator('[data-testid="ppi-save"]').click();
 		await expect(page.locator('[data-testid="ppi-save"]')).toBeEnabled({ timeout: 10_000 });

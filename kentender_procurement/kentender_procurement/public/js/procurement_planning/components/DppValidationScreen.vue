@@ -178,10 +178,14 @@
 				</div>
 				<div class="kt-field">
 					<label :for="`type-${row.entry_id}`" class="kt-label">Requirement type</label>
+					<!-- Addressable per requirement: a submission with several
+					     needs one classification each, and a test (or a
+					     screen-reader) has to be able to tell them apart. -->
 					<select
 						:id="`type-${row.entry_id}`"
 						class="kt-input"
 						data-testid="pln-review-type"
+						:data-entry="row.entry_id"
 						:disabled="!canDecide"
 						:value="classifications[row.entry_id] || ''"
 						@change="$emit('set-classification', { entry_id: row.entry_id, requirement_type: $event.target.value })"
