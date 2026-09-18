@@ -292,7 +292,6 @@
 						@remove="dissolveDialog = true"
 						@back="onBackToPlan"
 						@view-classification="onViewItemClassification"
-						@open-setup="frappe.set_route('system-setup')"
 					/>
 					<DissolveItemDialog
 						v-if="dissolveDialog"
@@ -384,7 +383,6 @@ import PublicationResultScreen from "./components/PublicationResultScreen.vue";
 import PlanItemEditorScreen from "./components/PlanItemEditorScreen.vue";
 import FinanceTaskScreen from "./components/FinanceTaskScreen.vue";
 import FinanceReturnDialog from "./components/FinanceReturnDialog.vue";
-import GovernanceTaskScreen from "./components/GovernanceTaskScreen.vue";
 import GovernanceReturnDialog from "./components/GovernanceReturnDialog.vue";
 
 const WORKSPACE_PAGE = "procurement-planning";

@@ -181,6 +181,9 @@
 
 		<p v-if="errorSummary" class="pln-error-summary" data-testid="pln-dpp-error">{{ errorSummary }}</p>
 
+		<!-- §10.16 C02-DPP-CLOSED — immediately above the action it blocks. -->
+		<MissingSettingPanel v-if="plan.missing_setting" :panel="plan.missing_setting" />
+
 		<!-- Action area, after all decision content. -->
 		<div class="pln-footer" data-testid="pln-dpp-footer">
 			<button type="button" class="kt-btn kt-btn-secondary" data-testid="pln-dpp-back" @click="$emit('back')">
@@ -237,6 +240,7 @@
 
 <script setup>
 import { computed } from "vue";
+import MissingSettingPanel from "./MissingSettingPanel.vue";
 
 const props = defineProps({
 	plan: { type: Object, default: () => ({}) },

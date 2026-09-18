@@ -206,6 +206,11 @@
 
 			<p v-if="errorSummary" class="pln-error-summary" data-testid="rev-error">{{ errorSummary }}</p>
 
+			<!-- §10.16 C01-ROUTE-MISSING — adoption creates the statutory
+			     approval task, so an unassigned approver blocks it. Stated with
+			     the decision, immediately above it. -->
+			<MissingSettingPanel v-if="task.missing_setting" :panel="task.missing_setting" />
+
 			<div class="pln-footer" data-testid="rev-footer">
 				<button
 					v-if="actor.secondary"
@@ -296,6 +301,7 @@
 
 <script setup>
 import { computed, ref } from "vue";
+import MissingSettingPanel from "./MissingSettingPanel.vue";
 
 const props = defineProps({
 	task: { type: Object, default: () => ({}) },

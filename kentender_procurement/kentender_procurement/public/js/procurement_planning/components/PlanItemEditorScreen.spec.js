@@ -43,7 +43,7 @@ function item(overrides = {}) {
 			item_state_badge: "Draft",
 		},
 		summary_line: "Goods · 250 each · Required by 31 Dec 2027",
-		method_issue: "",
+		missing_settings: [],
 		planned_value_display: "KES 50,000,000",
 		aggregation_reason_preview: "Both departments require the same laptop specification for the same…",
 		estimate_basis_preview: "Market survey estimate includes delivery, installation…",
@@ -204,15 +204,33 @@ describe("PlanItemEditorScreen — dates", () => {
 });
 
 describe("PlanItemEditorScreen — material issues stay visible", () => {
-	it("replaces resolver mechanics with one plain method issue and its owner", () => {
+	it("C03 — names the missing setting, the action it blocks and its owner", () => {
 		const w = make({
 			item: item({
-				method_issue: "Open Tender cannot be confirmed until the applicable method rule is verified in System setup.",
+				missing_settings: [
+					{
+						setting: "Applicable procurement method rule",
+						affected_action: "Send plan for governance review",
+						affected_purchase: "Test procurement package · PPI-MOH-2027-033",
+						responsible_role: "Administrator or System Manager",
+						note: "",
+						can_open_setup: false,
+						action: "",
+						href: "",
+						ask_text: "Ask your KenTender administrator to complete this setting.",
+					},
+				],
 			}),
 		});
-		const issue = w.find('[data-testid="ppi-method-issue"]');
-		expect(issue.text()).toContain("cannot be confirmed until the applicable method rule is verified in System setup");
-		expect(w.find('[data-testid="ppi-open-setup"]').text()).toBe("Go to System setup");
+		const panel = w.find('[data-testid="pln-missing-setting"]');
+		expect(panel.text()).toContain("Applicable procurement method rule");
+		expect(panel.text()).toContain("Send plan for governance review");
+		expect(panel.text()).toContain("Administrator or System Manager");
+		// No disabled setup control in Planning — a Planner is told who to ask.
+		expect(w.find('[data-testid="pln-open-setup"]').exists()).toBe(false);
+		expect(w.find('[data-testid="pln-ask-administrator"]').text()).toBe(
+			"Ask your KenTender administrator to complete this setting.",
+		);
 	});
 
 	it("U09-LOCKED: shows the scope restriction and removes the remove control", () => {

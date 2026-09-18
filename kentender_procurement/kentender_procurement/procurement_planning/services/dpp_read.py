@@ -18,7 +18,7 @@ import frappe
 from frappe.utils import cstr, flt, fmt_money, format_datetime, formatdate
 
 from kentender_core.services import site_configuration
-from kentender_procurement.procurement_planning.services import budget_gateway, dpp_classification, needs_intake, references
+from kentender_procurement.procurement_planning.services import budget_gateway, dpp_classification, missing_setting, needs_intake, references
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.dpp_lifecycle import ATTESTATION, _has_any_submission, entry_is_complete
 from kentender_procurement.procurement_planning.services.planning_roles import ROLE_AUDITOR, ROLE_PROCUREMENT_PLANNER
@@ -299,6 +299,10 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 			"window": window,
 		},
 		"readiness": readiness,
+		# §10.16 C02-DPP-CLOSED — the closed submission window named as the
+		# setting it is, above the submit action it blocks. Draft saving and
+		# returned-correction work are untouched and stay where they are.
+		"missing_setting": missing_setting.dpp_submissions(fiscal_year=root.fiscal_year, user=actor),
 		"submit_hint": submit_hint,
 		"open_task": open_task,
 		"entries": entries,

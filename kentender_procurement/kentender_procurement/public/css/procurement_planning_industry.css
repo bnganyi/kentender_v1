@@ -952,3 +952,15 @@
 		grid-template-columns: 1fr;
 	}
 }
+
+/* §10.16 — the missing-setting panel is a notice whose body is a labelled
+   fact row plus one action, so the labels stack rather than sitting inline. */
+.kt-pln .pln-missing-setting .kt-meta-row {
+	margin-bottom: var(--kt-space-3);
+}
+.kt-pln .pln-missing-setting .kt-btn {
+	align-self: flex-start;
+}
+.kt-pln .pln-missing-setting .kt-notice-body > p:last-child {
+	margin-bottom: 0;
+}

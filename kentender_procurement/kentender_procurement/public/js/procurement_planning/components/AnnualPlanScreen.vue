@@ -240,6 +240,11 @@
 
 		<p v-if="errorSummary" class="pln-error-summary" data-testid="ppl-error">{{ errorSummary }}</p>
 
+		<!-- §10.16 C03-METHOD-MISSING / C04-SCHEDULE-MISSING — each missing
+		     rule with the purchase it is missing for, immediately above the
+		     actions it blocks. -->
+		<MissingSettingPanel v-for="(panel, index) in missingSettings" :key="index" :panel="panel" />
+
 		<div class="pln-footer" data-testid="ppl-footer">
 			<button
 				v-if="plan.can_cancel_update"
@@ -301,6 +306,7 @@
 
 <script setup>
 import { computed, ref, watch } from "vue";
+import MissingSettingPanel from "./MissingSettingPanel.vue";
 
 const props = defineProps({
 	plan: { type: Object, default: () => ({}) },
@@ -339,6 +345,7 @@ watch(
 
 const items = computed(() => props.plan.plan_items || []);
 const activeView = computed(() => props.plan.active_view);
+const missingSettings = computed(() => props.plan.missing_settings || []);
 const unallocated = computed(() => props.plan.unallocated_sources || []);
 const planChecks = computed(() => props.plan.plan_checks || []);
 const history = computed(() => props.plan.history_lines || []);

@@ -181,16 +181,10 @@
 				<input id="ppi-lots" class="kt-input" type="number" min="2" data-testid="ppi-lot-count" :value="draft.lot_count" :disabled="!item.mutable" @input="onField('lot_count', $event.target.value)">
 			</div>
 		</div>
-		<!-- One plain issue and its recovery owner, never resolver mechanics. -->
-		<div v-if="item.method_issue" class="kt-notice is-attention" data-testid="ppi-method-issue">
-			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-				<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
-			</svg>
-			<div class="kt-notice-body pln-notice-split">
-				<span>{{ item.method_issue }}</span>
-				<a href="#" data-testid="ppi-open-setup" @click.prevent="$emit('open-setup')">Go to System setup</a>
-			</div>
-		</div>
+		<!-- §10.16 C03/C04 — the named setting, the action it blocks and its
+		     owner, never resolver mechanics; the setup control only for an
+		     actor who actually holds setup access. -->
+		<MissingSettingPanel v-for="(panel, index) in missingSettings" :key="index" :panel="panel" />
 		<button
 			v-if="!showReservation && item.mutable"
 			type="button"
@@ -321,6 +315,7 @@
 
 <script setup>
 import { computed, reactive, ref, watch } from "vue";
+import MissingSettingPanel from "./MissingSettingPanel.vue";
 
 const props = defineProps({
 	item: { type: Object, default: () => ({}) },
@@ -328,7 +323,7 @@ const props = defineProps({
 	errorSummary: String,
 });
 
-const emit = defineEmits(["save", "remove", "back", "view-classification", "open-setup"]);
+const emit = defineEmits(["save", "remove", "back", "view-classification"]);
 
 const EDITABLE = [
 	"title",
@@ -387,6 +382,7 @@ const baseline = computed(() => props.item.baseline || {});
 const methodProfile = computed(() => classification.value.method_profile || {});
 const sources = computed(() => props.item.sources || []);
 const notices = computed(() => props.item.notices || []);
+const missingSettings = computed(() => props.item.missing_settings || []);
 const versionNumber = computed(() => {
 	const match = /Version (\d+)/.exec(props.item.header?.reference_line || "");
 	return match ? match[1] : "";

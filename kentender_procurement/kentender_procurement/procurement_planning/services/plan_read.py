@@ -30,7 +30,7 @@ import frappe
 from frappe.utils import cstr, flt, fmt_money, formatdate
 
 from kentender_procurement.procurement_planning.errors import MESSAGES
-from kentender_procurement.procurement_planning.services import needs_intake, readiness, references, schedule
+from kentender_procurement.procurement_planning.services import missing_setting, needs_intake, readiness, references, schedule
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import (
 	ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
@@ -749,6 +749,13 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 		"project_name": cstr(version.project_name),
 		"change_reason": cstr(version.change_reason),
 		"changes": _version_changes(version),
+		# §10.16 C03-METHOD-MISSING / C04-SCHEDULE-MISSING — each missing rule
+		# named with the purchase it is missing for, placed above the actions
+		# it blocks. A Draft only: an Active version's rules already resolved.
+		"missing_settings": (
+			missing_setting.procurement_rules(version_name=version.name, fiscal_year=plan.fiscal_year, user=actor)
+			if version.version_status == "Draft" else []
+		),
 		"unallocated_sources": unallocated,
 		"unallocated_caption": f"{len(unallocated)} entr{'y' if len(unallocated) == 1 else 'ies'} available" if unallocated else "",
 		# §10.6 — the departmental acceptances behind this plan, as history.
@@ -1023,12 +1030,11 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 				f"Required by {_date(item.baseline_delivery_completion_date)}" if item.baseline_delivery_completion_date else "",
 			) if part and part != "—"
 		),
-		# §10.8 — a blocking configuration problem is one plain issue and its
-		# recovery owner, never a resolver status field (PLN22-AC-005).
-		"method_issue": (
-			f"{cstr(item.procurement_method)} cannot be confirmed until the applicable method rule is verified in System setup."
-			if cstr(item.procurement_method) and not method_profile.get("found") else ""
-		),
+		# §10.8 / §10.16 — a blocking configuration problem is the named
+		# setting, the action it blocks and its owner, never a resolver status
+		# field (PLN22-AC-005). The setup control appears only for an actor who
+		# actually holds setup access.
+		"missing_settings": missing_setting.item_procurement_rules(item=item, fiscal_year=plan.fiscal_year, user=actor),
 		# §9.3.7 — a long reason leads with a faithful short preview and an
 		# adjacent disclosure; the full governed text stays available.
 		"aggregation_reason_preview": _preview(cstr(item.aggregation_reason)),
@@ -1593,6 +1599,13 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 		# current funding basis (U11-stale); Return stays available regardless.
 		"funding_current": funding_current,
 		"can_decide_positive": can_decide and funding_current,
+		# §10.16 C01-ROUTE-MISSING — the AO's adoption creates the statutory
+		# approval task, so an unassigned approver blocks it. Placed with the
+		# decision it blocks, not as a page-level banner.
+		"missing_setting": (
+			missing_setting.approval_authority(user=actor)
+			if task_doc.stage == "Accounting Officer adoption" else None
+		),
 		"sources": _governance_sources(version, plan),
 		"funding": {
 			"rows": _affordability_rows(plan_finance.affordability_statement(plan, version)),
