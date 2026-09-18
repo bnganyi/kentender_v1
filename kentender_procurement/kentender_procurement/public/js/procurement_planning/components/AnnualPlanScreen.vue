@@ -301,7 +301,26 @@
 		</div>
 
 		<!-- U07-FINANCE-COMPLETE — who is waited on, named. -->
-		<p v-if="plan.waiting_on" class="kt-muted" data-testid="ppl-waiting-on">{{ plan.waiting_on }}</p>
+		<!-- §10.6 U07-FINANCE-COMPLETE — the notice and the responsible person
+		     are two labelled facts, never one delimiter-joined line (§12.1). -->
+		<div v-if="waitingOn.notice" class="kt-meta-row" data-testid="ppl-waiting-on">
+			<div>
+				<span class="kt-label">Approval</span>
+				<span class="kt-meta-value">{{ waitingOn.notice }}</span>
+			</div>
+			<div v-if="waitingOn.people.length">
+				<span class="kt-label">{{ waitingOn.people.length === 1 ? "Responsible person" : "Responsible people" }}</span>
+				<span class="kt-meta-value" data-testid="ppl-waiting-on-person">
+					<span v-for="(name, index) in waitingOn.people" :key="name" class="pln-responsible-name">
+						{{ index ? ", " : "" }}{{ name }}
+					</span>
+				</span>
+			</div>
+			<div v-else-if="waitingOn.unassigned">
+				<span class="kt-label">Responsible person</span>
+				<span class="kt-meta-value" data-testid="ppl-waiting-on-unassigned">{{ waitingOn.unassigned }}</span>
+			</div>
+		</div>
 
 		<div v-if="plan.open_task" class="pln-dpp-task">
 			<button type="button" class="kt-btn kt-btn-primary" data-testid="ppl-open-task" @click="$emit('open-task', plan.open_task.route)">
@@ -360,6 +379,13 @@ const currentVersion = computed(() => props.plan.current_version_number);
 
 const title = computed(() => (props.plan.is_successor ? "Prepare plan update" : "Prepare the annual procurement plan"));
 const statusLabel = computed(() => (props.plan.is_successor ? "Draft update" : props.plan.header?.badge));
+
+const waitingOn = computed(() => ({
+	notice: "",
+	people: [],
+	unassigned: "",
+	...(props.plan.waiting_on || {}),
+}));
 
 const changesText = computed(() =>
 	props.plan.changes?.is_initial ? "This is the first version of the annual plan." : "",

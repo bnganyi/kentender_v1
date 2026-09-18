@@ -488,23 +488,29 @@ def _current_work(item, allocations) -> str:
 	return "Ready"
 
 
-def _waiting_on(version, report, *, can_sign: bool) -> str:
-	"""Who the plan is waiting on now, by name where AUTH resolves one."""
+WAITING_ON_NOTICE = "Ready for the Head of Procurement Function to sign and submit"
+WAITING_ON_UNASSIGNED = "No one currently holds that responsibility — ask your KenTender administrator."
+
+
+def _waiting_on(version, report, *, can_sign: bool) -> dict[str, Any]:
+	"""§10.6 U07-FINANCE-COMPLETE — who the plan is waiting on now, as the
+	notice and the responsible person kept apart. §12.1 requires separately
+	labelled facts, so this never returns one delimiter-joined sentence, and
+	several holders are a list of people rather than a slash-run inside it."""
+	blank = {"notice": "", "people": [], "unassigned": ""}
 	if version.version_status != "Draft" or not report or report["blockers"]:
-		return ""
+		return blank
 	if not report.get("funding_current"):
-		return ""
+		return blank
 	if can_sign:
 		# This actor holds the action; the button says the rest.
-		return ""
+		return blank
 	holders = authz.users_with_site_role(ROLE_HEAD_OF_PROCUREMENT_FUNCTION)
 	if not holders:
-		return (
-			"Ready for the Head of Procurement Function to sign and submit. "
-			"No one currently holds that responsibility — ask your KenTender administrator."
-		)
-	names = " / ".join(sorted(cstr(frappe.db.get_value("User", u, "full_name") or u) for u in holders))
-	return f"Ready for the Head of Procurement Function to sign and submit · {names}"
+		# §6.5 — name the role and the configuration issue, never an assignee.
+		return {"notice": WAITING_ON_NOTICE, "people": [], "unassigned": WAITING_ON_UNASSIGNED}
+	names = sorted(cstr(frappe.db.get_value("User", u, "full_name") or u) for u in holders)
+	return {"notice": WAITING_ON_NOTICE, "people": names, "unassigned": ""}
 
 
 def _preview(text: str, *, limit: int = 90) -> str:

@@ -64,7 +64,7 @@ function plan(overrides = {}) {
 		can_sign_and_submit: false,
 		can_cancel_update: false,
 		open_task: null,
-		waiting_on: "",
+		waiting_on: { notice: "", people: [], unassigned: "" },
 		...overrides,
 	};
 }
@@ -205,12 +205,49 @@ describe("AnnualPlanScreen — U07-FINANCE-COMPLETE", () => {
 					{ label: "Reserved procurement", result: "Required allocation met", kind: "live", route: null },
 					{ label: "Schedule", result: "All purchases meet their departmental deadlines", kind: "live", route: null },
 				],
-				waiting_on: "Ready for the Head of Procurement Function to sign and submit · Charles Mutiso",
+				waiting_on: {
+					notice: "Ready for the Head of Procurement Function to sign and submit",
+					people: ["Charles Mutiso"],
+					unassigned: "",
+				},
 			}),
 		});
-		expect(w.find('[data-testid="ppl-waiting-on"]').text()).toContain("Charles Mutiso");
+		// §10.6 — the notice and the person are separately labelled facts.
+		const waiting = w.find('[data-testid="ppl-waiting-on"]');
+		expect(waiting.text()).toContain("Ready for the Head of Procurement Function to sign and submit");
+		expect(waiting.text()).toContain("Responsible person");
+		expect(w.find('[data-testid="ppl-waiting-on-person"]').text()).toBe("Charles Mutiso");
 		// The Planner gets no approval or handover action of their own.
 		expect(w.find('[data-testid="ppl-sign-submit"]').exists()).toBe(false);
+	});
+
+	it("U07-FINANCE-COMPLETE: several holders are a list of people, not a slash-run", () => {
+		const w = make({
+			plan: plan({
+				waiting_on: {
+					notice: "Ready for the Head of Procurement Function to sign and submit",
+					people: ["Ada Kimani", "Charles Mutiso"],
+					unassigned: "",
+				},
+			}),
+		});
+		expect(w.find('[data-testid="ppl-waiting-on"]').text()).toContain("Responsible people");
+		expect(w.find('[data-testid="ppl-waiting-on-person"]').text()).toBe("Ada Kimani, Charles Mutiso");
+		expect(w.find('[data-testid="ppl-waiting-on"]').text()).not.toContain(" / ");
+	});
+
+	it("U07-FINANCE-COMPLETE: no holder names the configuration issue, never an assignee (§6.5)", () => {
+		const w = make({
+			plan: plan({
+				waiting_on: {
+					notice: "Ready for the Head of Procurement Function to sign and submit",
+					people: [],
+					unassigned: "No one currently holds that responsibility — ask your KenTender administrator.",
+				},
+			}),
+		});
+		expect(w.find('[data-testid="ppl-waiting-on-person"]').exists()).toBe(false);
+		expect(w.find('[data-testid="ppl-waiting-on-unassigned"]').text()).toContain("ask your KenTender administrator");
 	});
 
 	it("offers Sign and submit only to the actor who holds it", () => {

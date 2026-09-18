@@ -84,15 +84,20 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		await page.locator('[data-testid="rev-confirm"]').click();
 		await expectReady(page, "workspace");
 
-		// approval published and activated the Plan (§5.2)
+		// §5.5.2 — approval commits the snapshot, the publication and the
+		// intent. It does not send anything and does not activate: the plan is
+		// not in force until the publication is acknowledged, which is the
+		// publication spec's own subject.
 		await login(page, PLANNER, PASSWORD);
 		await gotoPlanning(page);
 		await expectReady(page, "workspace");
-		// §10.3 — the plan in force is its own row, and it offers the progress
-		// of what has been procured against it.
-		const current = page.locator('[data-testid="pln-plan-row-current"]');
-		await expect(current).toContainText("Current plan");
-		await expect(page.locator('[data-testid="pln-plan-secondary-current"]')).toHaveText("View procurement progress");
+		await expect(page.locator('[data-testid="pln-plan-row-current"]')).toHaveCount(0);
+		const approved = page.locator('[data-testid="pln-plan-row-draft"]');
+		await expect(approved).toContainText("Approved — publication pending");
+		// §10.3 — and the workspace says plainly what that does not yet permit.
+		await expect(page.locator('[data-testid="pln-plan-note"]')).toContainText(
+			"It cannot yet be used to authorise procurement."
+		);
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
@@ -121,11 +126,13 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		// separate correction badge; what says so is the submission action.
 		await expect(contextValue(page, "ppl-context", "Status")).toHaveText("Draft");
 		await expect(page.locator('[data-testid="ppl-purchases"] tbody tr')).toHaveCount(1);
-		// §5.3 — a return resets the funding evidence, so the corrected Draft
-		// goes back to Finance before anyone can sign it. The submission
-		// control is absent rather than disabled (§10.6).
+		// §6.2 — signing and submitting belongs to the Head of Procurement
+		// Function, never the Planner, so §10.6 names who is waited on instead
+		// of offering a control this reader does not hold.
 		await expect(page.locator('[data-testid="ppl-sign-submit"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="ppl-request-funding"]')).toHaveText("Send to Finance for funding review");
+		await expect(page.locator('[data-testid="ppl-waiting-on"]')).toContainText(
+			"Ready for the Head of Procurement Function to sign and submit"
+		);
 	});
 
 	test("the statutory return dialog carries its own copy", async ({ page }) => {
