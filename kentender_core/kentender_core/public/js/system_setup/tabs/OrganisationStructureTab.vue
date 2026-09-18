@@ -126,10 +126,77 @@ function selectedRootLabel() {
 	return rootId.value;
 }
 
+// A stale response must never clobber a newer one — e.g. the framework's own
+// on_click side effect during reload_node() below fires a select() for the
+// reloaded parent, which can resolve after the deliberate select() this file
+// issues for the actually-relevant unit.
+let selectSeq = 0;
+
 async function select(unitId) {
+	const seq = ++selectSeq;
 	try {
-		selected.value = await orgStructureApi.getUnit(unitId);
+		const unit = await orgStructureApi.getUnit(unitId);
+		if (!active || seq !== selectSeq) return;
+		selected.value = unit;
 	} catch (error) {
+		if (!active || seq !== selectSeq) return;
+		loadError.value = error.message;
+	}
+}
+
+function treeNodeFor(unitId) {
+	if (!treeWidget) return null;
+	// The root node's key in frappe.ui.Tree is its display label, not its id.
+	if (unitId === rootId.value) return treeWidget.root_node;
+	return treeWidget.nodes[unitId] || null;
+}
+
+function updateNodeDisplay(node, unit) {
+	node.data = { ...(node.data || {}), value: node.data?.value ?? unit.id, label: unit.name, unit_code: unit.code, status: unit.status };
+	if (node.is_root) {
+		rootMeta.value = { ...(rootMeta.value || {}), name: unit.name, unit_code: unit.code, status: unit.status };
+	}
+	const label = node.$tree_link && node.$tree_link.find(".tree-label");
+	if (label && label.length) label.html(` ${treeWidget.get_node_label(node)}`);
+	node.$tree_link && node.$tree_link.find(".kt-tree-meta").remove();
+	treeWidget.on_render && treeWidget.on_render(node);
+}
+
+// Only the part of the tree that actually changed is refreshed. Rebuilding
+// the whole widget (the old behaviour) collapses every expanded branch back
+// to the root and, on a long tree, shrinks the page enough that the
+// browser's unchanged scroll position lands past the remaining content.
+async function afterStructureChange({ parentId = null, focusUnit, updateNodeOnly = false } = {}) {
+	if (!treeWidget) {
+		await load();
+		return;
+	}
+	if (!updateNodeOnly) {
+		const parentNode = treeNodeFor(parentId);
+		if (!parentNode) {
+			await load();
+			return;
+		}
+		// A childless node renders as a leaf; force it back to "has children"
+		// before the reload, or frappe.ui.Tree's own expand logic — gated on
+		// this flag — leaves the freshly loaded child hidden.
+		parentNode.expandable = true;
+		await treeWidget.reload_node(parentNode);
+		if (state.value === "empty_root") state.value = "ready";
+	}
+	const seq = ++selectSeq;
+	try {
+		const unit = await orgStructureApi.getUnit(focusUnit);
+		if (!active || seq !== selectSeq) return;
+		selected.value = unit;
+		const node = treeNodeFor(focusUnit);
+		if (node) {
+			if (updateNodeOnly) updateNodeDisplay(node, unit);
+			treeWidget.select_link(node);
+			treeWidget.set_selected_node(node);
+		}
+	} catch (error) {
+		if (!active || seq !== selectSeq) return;
 		loadError.value = error.message;
 	}
 }
@@ -159,13 +226,30 @@ async function run(action, { reload = true } = {}) {
 	}
 }
 
-const addUnit = () => run(() => orgStructureApi.addUnit(selected.value?.id || rootId.value, dialog.value));
+const addUnit = () =>
+	run(async () => {
+		const parentId = selected.value?.id || rootId.value;
+		const result = await orgStructureApi.addUnit(parentId, dialog.value);
+		await afterStructureChange({ parentId, focusUnit: result.unit });
+	}, { reload: false });
 const renameUnit = () =>
-	run(() => orgStructureApi.renameUnit(selected.value.id, dialog.value, selected.value.expected_version));
+	run(async () => {
+		const unitId = selected.value.id;
+		await orgStructureApi.renameUnit(unitId, dialog.value, selected.value.expected_version);
+		await afterStructureChange({ focusUnit: unitId, updateNodeOnly: true });
+	}, { reload: false });
 const deactivateUnit = () =>
-	run(() => orgStructureApi.setActive(selected.value.id, false, selected.value.expected_version));
+	run(async () => {
+		const unitId = selected.value.id;
+		await orgStructureApi.setActive(unitId, false, selected.value.expected_version);
+		await afterStructureChange({ focusUnit: unitId, updateNodeOnly: true });
+	}, { reload: false });
 const reactivateUnit = () =>
-	run(() => orgStructureApi.setActive(selected.value.id, true, selected.value.expected_version));
+	run(async () => {
+		const unitId = selected.value.id;
+		await orgStructureApi.setActive(unitId, true, selected.value.expected_version);
+		await afterStructureChange({ focusUnit: unitId, updateNodeOnly: true });
+	}, { reload: false });
 
 async function repair() {
 	busy.value = true;

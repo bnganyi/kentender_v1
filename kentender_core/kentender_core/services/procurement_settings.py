@@ -153,6 +153,25 @@ def update_funding_source(*, name: str, label: str = "", enabled: bool | None = 
 	return {"name": doc.name, "enabled": doc.record_status == "Available", "expected_version": str(doc.modified)}
 
 
+def delete_funding_source(*, name: str) -> dict[str, Any]:
+	"""Remove a catalogue entry that has never been used.
+
+	A source referenced by any Budget line version keeps its stable ID and
+	historical reads forever (§10.5, §17.2) — "Disable" (record_status =
+	Retired, via `update_funding_source`) is the only removal a referenced
+	entry ever gets. One that has never been used carries no history to
+	protect, so it can be deleted outright rather than left as permanent
+	clutter (e.g. a mistaken or test entry)."""
+	require_configuration_administrator()
+	if not frappe.db.exists(FUNDING_SOURCE, name):
+		fail_cfg("CFG_PROFILE_INVALID", "That funding source does not exist.")
+	if _funding_source_referenced(name):
+		fail_cfg("CFG_CATALOGUE_IN_USE")
+	frappe.delete_doc(FUNDING_SOURCE, name, ignore_permissions=True)
+	log_audit_event(event_type="site_configuration", document_type=FUNDING_SOURCE, document_name=name, action="delete_funding_source", metadata={"label": name})
+	return {"name": name, "deleted": True}
+
+
 # --------------------------------------------------------------------------
 # Shared version mechanics
 # --------------------------------------------------------------------------

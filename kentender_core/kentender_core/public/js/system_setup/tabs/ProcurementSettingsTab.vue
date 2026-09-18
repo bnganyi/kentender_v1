@@ -8,6 +8,7 @@
 // `rule/<name>`, `profile/<name>`, `new-source`) lives in the page hash so
 // refresh and back/forward restore the same view.
 import { computed, onMounted, ref, watch } from "vue";
+import ConfirmDialog from "../components/ConfirmDialog.vue";
 import FundingSourceEditor from "../components/FundingSourceEditor.vue";
 import RuleVersionDetail from "../components/RuleVersionDetail.vue";
 import RuleEditor from "../components/RuleEditor.vue";
@@ -158,6 +159,32 @@ watch(
 async function afterChange() {
 	await load({ quiet: true });
 }
+
+// A source nothing has ever used carries no history to protect, so it can be
+// removed outright instead of sitting in the list forever as clutter (e.g. a
+// mistaken or test entry). A referenced source is never offered the action —
+// "Disable" (the existing availability toggle in its own editor) is its only
+// removal — and the server refuses a referenced deletion regardless.
+const deletingSource = ref(null); // the row, while its confirm dialog is open
+const deleteError = ref("");
+const deleteBusy = ref(false);
+function askRemoveSource(row) {
+	deletingSource.value = row;
+	deleteError.value = "";
+}
+async function confirmRemoveSource() {
+	deleteBusy.value = true;
+	deleteError.value = "";
+	try {
+		await procurementSettingsApi.deleteFundingSource(deletingSource.value.name);
+		deletingSource.value = null;
+		await afterChange();
+	} catch (error) {
+		deleteError.value = error.message;
+	} finally {
+		deleteBusy.value = false;
+	}
+}
 </script>
 
 <template>
@@ -276,7 +303,16 @@ async function afterChange() {
 						<tr v-for="row in fundingSources" :key="row.name" :data-testid="'kt-procset-source-' + row.name">
 							<td class="kt-row-name">{{ row.label }}</td>
 							<td><span :class="row.enabled ? 'kt-status is-live' : 'kt-status is-critical'">{{ row.enabled ? __("Yes") : __("No") }}</span></td>
-							<td class="kt-row-actions"><a href="#" :data-testid="'kt-procset-source-edit-' + row.name" @click.prevent="go('source/' + row.name)">{{ __("Edit") }}</a></td>
+							<td class="kt-row-actions">
+								<a href="#" :data-testid="'kt-procset-source-edit-' + row.name" @click.prevent="go('source/' + row.name)">{{ __("Edit") }}</a>
+								<a
+									v-if="!row.referenced"
+									href="#"
+									style="margin-left:10px;color:var(--kt-status-critical)"
+									:data-testid="'kt-procset-source-remove-' + row.name"
+									@click.prevent="askRemoveSource(row)"
+								>{{ __("Remove") }}</a>
+							</td>
 						</tr>
 					</tbody>
 				</table>
@@ -416,5 +452,18 @@ async function afterChange() {
 				<ReminderSettingCard :days="data.reminder_threshold_days" @saved="afterChange" />
 			</div>
 		</template>
+
+		<ConfirmDialog
+			v-if="deletingSource"
+			:title="__('Remove this funding source?')"
+			:body="__('{0} has never been used and will be removed permanently. This cannot be undone.', [deletingSource.label])"
+			:confirm-label="__('Remove')"
+			destructive
+			:error="deleteError"
+			:busy="deleteBusy"
+			testid="kt-procset-source-remove-confirm"
+			@confirm="confirmRemoveSource"
+			@cancel="deletingSource = null"
+		/>
 	</section>
 </template>

@@ -1,13 +1,17 @@
 <script setup>
 // §12.1.2 — Deactivate is confirmed with its impact, not performed silently.
 // Reactivate reuses the same dialog with its own copy.
-defineProps({
+const props = defineProps({
 	title: { type: String, required: true },
 	body: { type: String, required: true },
 	confirmLabel: { type: String, required: true },
 	destructive: { type: Boolean, default: false },
 	error: { type: String, default: "" },
 	busy: { type: Boolean, default: false },
+	// Kept default-compatible with the original Organisation units caller;
+	// a second caller (e.g. Procurement settings) passes its own so the two
+	// screens' dialogs are independently selectable in a test.
+	testid: { type: String, default: "kt-ou-confirm" },
 });
 const emit = defineEmits(["confirm", "cancel"]);
 </script>
@@ -19,7 +23,7 @@ const emit = defineEmits(["confirm", "cancel"]);
 			role="dialog"
 			aria-modal="true"
 			:aria-label="title"
-			data-testid="kt-ou-confirm"
+			:data-testid="testid"
 			@keydown.esc="emit('cancel')"
 		>
 			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />

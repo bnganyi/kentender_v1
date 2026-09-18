@@ -21,6 +21,10 @@ export const procurementSettingsApi = {
 			enabled: enabled === undefined || enabled === null ? null : enabled ? 1 : 0,
 			expected_version: expectedVersion || null,
 		}),
+	// Only offered in the UI for a source nothing references yet (row.referenced
+	// === false); the server refuses a referenced one with CFG_CATALOGUE_IN_USE
+	// regardless, so this is never authority, only a shortcut for the common case.
+	deleteFundingSource: (name) => frappeCall(PREFIX + "delete_funding_source", { name }),
 	getMethodProfile: (name) => frappeCall(PREFIX + "get_method_profile", { name }),
 	registerMethodProfileVersion: (payload) =>
 		frappeCall(PREFIX + "register_method_profile_version", {

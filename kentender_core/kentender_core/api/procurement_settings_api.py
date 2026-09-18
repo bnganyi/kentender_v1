@@ -60,6 +60,11 @@ def update_funding_source(name: str, label: str | None = None, enabled=None, exp
 
 
 @frappe.whitelist()
+def delete_funding_source(name: str) -> dict[str, Any]:
+	return settings.delete_funding_source(name=name)
+
+
+@frappe.whitelist()
 def get_method_profile(name: str) -> dict[str, Any]:
 	return settings.get_method_profile(name)
 

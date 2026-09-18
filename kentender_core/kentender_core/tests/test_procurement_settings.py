@@ -218,6 +218,41 @@ class ProcurementSettingsTestCase(IntegrationTestCase):
 		self.assertTrue(renamed["enabled"])
 		self.assertTrue(frappe.db.exists("Audit Event", {"document_type": settings.FUNDING_SOURCE, "action": "update_funding_source"}))
 
+	def test_an_unused_funding_source_can_be_removed_but_a_referenced_one_cannot(self):
+		created = settings.add_funding_source(label="KT Test Removable")
+		self.assertTrue(created["created"])
+		self.assertFalse(settings.delete_funding_source(name=created["name"])["deleted"] is False)
+		self.assertFalse(frappe.db.exists(settings.FUNDING_SOURCE, created["name"]))
+		self.assertTrue(
+			frappe.db.exists("Audit Event", {"document_type": settings.FUNDING_SOURCE, "action": "delete_funding_source"})
+		)
+
+		referenced = settings.add_funding_source(label="KT Test Referenced")["name"]
+		self.addCleanup(lambda: frappe.delete_doc(settings.FUNDING_SOURCE, referenced, force=True, ignore_permissions=True))
+		line = frappe.get_doc(
+			{
+				"doctype": "Procurement Budget Line Version",
+				"funding_source": referenced,
+			}
+		)
+		# A throwaway row naming the source is enough to prove the guard reads
+		# real usage, not a flag on the source itself — no other Budget Line
+		# fields are required for `frappe.db.exists` to see the row.
+		line.flags.ignore_mandatory = True
+		line.insert(ignore_permissions=True)
+		self.addCleanup(lambda: frappe.delete_doc("Procurement Budget Line Version", line.name, force=True, ignore_permissions=True))
+
+		row = next(r for r in settings.list_funding_sources() if r["name"] == referenced)
+		self.assertTrue(row["referenced"])
+		with self.assertRaises(ConfigurationError) as caught:
+			settings.delete_funding_source(name=referenced)
+		self.assertEqual(self.code(caught), "CFG_CATALOGUE_IN_USE")
+		self.assertTrue(frappe.db.exists(settings.FUNDING_SOURCE, referenced))
+
+		with self.assertRaises(ConfigurationError) as caught:
+			settings.delete_funding_source(name="KT Test Does Not Exist")
+		self.assertEqual(self.code(caught), "CFG_PROFILE_INVALID")
+
 	def test_reminder_threshold_defaults_to_seven_and_is_bounded(self):
 		before = settings.get_reminder_threshold_days()
 		self.assertGreaterEqual(before, 1)

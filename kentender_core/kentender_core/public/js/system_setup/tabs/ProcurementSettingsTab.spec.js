@@ -13,6 +13,7 @@ const api = vi.hoisted(() => ({
 	setReminderThresholdDays: vi.fn(),
 	addFundingSource: vi.fn(),
 	updateFundingSource: vi.fn(),
+	deleteFundingSource: vi.fn(),
 }));
 vi.mock("../data/procurementSettingsApi.js", () => ({ procurementSettingsApi: api }));
 
@@ -85,6 +86,25 @@ describe("ProcurementSettingsTab", () => {
 		expect(wrapper.find('[data-testid="kt-procset-source-Development partner"]').text()).toContain("No");
 		await gok.find('[data-testid="kt-procset-source-edit-Government of Kenya"]').trigger("click");
 		expect(wrapper.emitted("navigate")[0]).toEqual(["source/Government of Kenya"]);
+	});
+
+	it("only an unreferenced funding source offers Remove, and confirming it calls the delete API", async () => {
+		const wrapper = await mountTab();
+		expect(wrapper.find('[data-testid="kt-procset-source-remove-Government of Kenya"]').exists()).toBe(false);
+		const removeLink = wrapper.find('[data-testid="kt-procset-source-remove-Development partner"]');
+		expect(removeLink.exists()).toBe(true);
+
+		api.deleteFundingSource.mockResolvedValue({ name: "Development partner", deleted: true });
+		api.get.mockResolvedValueOnce(payload({ funding_sources: [payload().funding_sources[0]] }));
+		await removeLink.trigger("click");
+		await flushPromises();
+		const dialog = wrapper.find('[data-testid="kt-procset-source-remove-confirm"]');
+		expect(dialog.exists()).toBe(true);
+		await dialog.find('[data-testid="kt-ou-confirm-accept"]').trigger("click");
+		await flushPromises();
+
+		expect(api.deleteFundingSource).toHaveBeenCalledWith("Development partner");
+		expect(wrapper.find('[data-testid="kt-procset-source-remove-confirm"]').exists()).toBe(false);
 	});
 
 	it("procurement rules list every method profile and reference Version with its source verification", async () => {
