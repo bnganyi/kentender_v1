@@ -238,13 +238,19 @@ const stateLabel = computed(() => {
 	return props.task.header?.badge || "";
 });
 
-// §10.12 — a reader who holds neither action is told whose it is.
+// §10.13 U13-FAILED — "for AO/reader show Responsible role Authorised
+// technical operator and no button". The statement belongs to the recovery
+// the reader cannot perform, so holding some other action here (recording or
+// correcting the Treasury submission) must not silence it: an Accounting
+// Officer looking at a failed publication would otherwise be shown no retry
+// and no word of whose it is.
 const responsibleRole = computed(() => {
-	if (props.task.can_retry || props.task.can_reconcile || props.task.can_record_treasury) return "";
-	if (props.task.publication_state === "Failed" || props.task.publication_state === "Indeterminate") {
+	const unrecovered =
+		props.task.publication_state === "Failed" || props.task.publication_state === "Indeterminate";
+	if (unrecovered && !props.task.can_retry && !props.task.can_reconcile) {
 		return "Authorised technical operator";
 	}
-	if (!treasury.value) return "Accounting Officer";
+	if (!treasury.value && !props.task.can_record_treasury) return "Accounting Officer";
 	return "";
 });
 </script>

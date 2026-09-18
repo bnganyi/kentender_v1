@@ -195,3 +195,13 @@ export async function tickCheckbox(input: Locator): Promise<void> {
 	await input.locator("xpath=ancestor::label[1]").click();
 	await expect(input).toBeChecked();
 }
+
+/** The value shown under one label in a `kt-meta-row` context strip. Label and
+ *  value are adjacent elements, so the row's own text reads "Version2" and
+ *  `toContainText("Version 2")` can never match — ask for the value itself. */
+export function contextValue(page: Page, testId: string, label: string): Locator {
+	return page
+		.locator(`[data-testid="${testId}"] > div`)
+		.filter({ has: page.getByText(label, { exact: true }) })
+		.locator(".kt-meta-value");
+}

@@ -116,6 +116,14 @@ describe("PublicationResultScreen — failure is not uncertainty", () => {
 		});
 		expect(reader.find('[data-testid="pub-retry"]').exists()).toBe(false);
 		expect(reader.find('[data-testid="pub-responsible"]').text()).toContain("Authorised technical operator");
+
+		// And the Accounting Officer is still told whose the recovery is, even
+		// though they hold a Treasury action of their own on the same screen.
+		const ao = make({
+			task: task({ publication_state: "Failed", can_record_treasury: true, can_retry: false, treasury_evidence: null }),
+		});
+		expect(ao.find('[data-testid="pub-retry"]').exists()).toBe(false);
+		expect(ao.find('[data-testid="pub-responsible"]').text()).toContain("Authorised technical operator");
 	});
 
 	it("U13-UNKNOWN: says it is unconfirmed, and reconciles rather than retrying blind", () => {

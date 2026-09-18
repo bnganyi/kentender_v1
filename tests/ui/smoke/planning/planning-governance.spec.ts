@@ -7,6 +7,7 @@ import {
 	PLANNER,
 	STATUTORY,
 	collectConsoleErrors,
+	contextValue,
 	expectReady,
 	gotoPlanning,
 	resetFixture,
@@ -50,7 +51,11 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		// §10.10 — the statement says what the control does, in the second
 		// person, rather than putting words in the decider's mouth.
 		await expect(page.locator('[data-testid="rev-statement"]')).toContainText("you adopt the complete plan shown here");
-		await expect(page.locator('[data-testid="rev-accountability"]')).toHaveCount(0);
+		// §10.10's second section: who checked the funding and who signed the
+		// preparation, as two compact rows — not a decision-history table.
+		const accountability = page.locator('[data-testid="rev-accountability"]');
+		await expect(accountability).toContainText("Funding");
+		await expect(accountability).toContainText("Preparation");
 		await page.locator('[data-testid="rev-confirm"]').click();
 		await expectReady(page, "workspace");
 
@@ -59,14 +64,21 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		await gotoPlanning(page);
 		await expectReady(page, "workspace");
 		const action = page.locator('[data-testid="pln-action"]');
-		await expect(action.locator(".pln-ready-headline")).toHaveText("Approve the Annual Procurement Plan");
-		await action.locator("button").click();
+		// §10.3 — the card leads with the outcome the actor is being asked for.
+		await expect(action.locator(".kt-meta-value").first()).toHaveText("Approve the Annual Procurement Plan");
+		await action.locator('[data-testid="pln-action-button"]').click();
 		await expectReady(page, "governance");
-		await expect(page.locator('[data-testid="rev-context"]')).toContainText("Awaiting statutory approval");
+		// §10.10 — the stage names the authority that is actually being waited
+		// on, not the internal name of the step.
+		await expect(page.locator('[data-testid="rev-context"]')).toContainText("Awaiting Responsible Cabinet Secretary");
 		const authority = page.locator('[data-testid="rev-accountability"]');
-		await expect(authority).toContainText("Cabinet Secretary");
-		await expect(authority).toContainText("Playwright Accounting Officer");
-		await expect(page.locator('[data-testid="rev-statement"]')).toHaveCount(0);
+		await expect(authority).toContainText("Playwright Finance Officer");
+		await expect(authority).toContainText("Head of Procurement Function");
+		// §10.10 U11-STATUTORY — the statement says what the control does, and
+		// is explicit that approval is not yet publication.
+		await expect(page.locator('[data-testid="rev-statement"]')).toContainText(
+			"Publication and activation checks must still be completed."
+		);
 		await expect(page.locator('[data-testid="rev-resolution"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="rev-confirm"]')).toHaveText("Approve Annual Procurement Plan");
 		await page.locator('[data-testid="rev-confirm"]').click();
@@ -104,11 +116,16 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		await login(page, PLANNER, PASSWORD);
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
-		await expect(page.locator('[data-testid="ppl-context"]')).toContainText("Version 2");
-		// A returned version comes back as a correction draft, which says so.
-		await expect(page.locator('[data-testid="ppl-context"]')).toContainText("Draft update");
+		await expect(contextValue(page, "ppl-context", "Version")).toHaveText("2");
+		// A returned version comes back as an ordinary Draft — §10.6 has no
+		// separate correction badge; what says so is the submission action.
+		await expect(contextValue(page, "ppl-context", "Status")).toHaveText("Draft");
 		await expect(page.locator('[data-testid="ppl-purchases"] tbody tr')).toHaveCount(1);
-		await expect(page.locator('[data-testid="ppl-sign-submit"]')).toHaveText("Submit corrected Plan");
+		// §5.3 — a return resets the funding evidence, so the corrected Draft
+		// goes back to Finance before anyone can sign it. The submission
+		// control is absent rather than disabled (§10.6).
+		await expect(page.locator('[data-testid="ppl-sign-submit"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="ppl-request-funding"]')).toHaveText("Send to Finance for funding review");
 	});
 
 	test("the statutory return dialog carries its own copy", async ({ page }) => {

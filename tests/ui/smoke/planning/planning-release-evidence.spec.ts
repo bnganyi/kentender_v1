@@ -99,10 +99,13 @@ test.describe("§14 persona pass on the seeded world", () => {
 		await selectSeedYear(page);
 		const row = page.locator('[data-testid="pln-departmental-table"] tbody tr', { hasText: "Digital Health" });
 		await expect(row.locator(".kt-status")).toHaveText("Accepted");
-		await row.locator("button").click();
+		// The row's action is a link, as every Industry table's action is.
+		await row.locator('[data-testid="pln-departmental-open"]').click();
 		await expectReady(page, "dpp");
 		await expect(page.locator('[data-testid="pln-dpp-context"]')).toContainText("Accepted");
-		await expect(page.locator('[data-testid="pln-dpp-table"] tbody tr').first()).toContainText("Accepted Need · NDS-MOH-2027-0001");
+		// §10.3 — the requirement cell carries the source reference and its
+		// revision beneath the title, exactly as the section's own table shows.
+		await expect(page.locator('[data-testid="pln-dpp-table"] tbody tr').first()).toContainText("NDS-MOH-2027-0001 · Revision 1");
 		await expect(page.locator('[data-testid="pln-dpp-table"] tbody tr').first()).toContainText("KES 80,000,000");
 		await expect(page.locator('[data-testid="pln-dpp-add"]')).toHaveCount(0);
 	});
