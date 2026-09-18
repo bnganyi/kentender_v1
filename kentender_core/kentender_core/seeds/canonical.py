@@ -78,8 +78,20 @@ REGISTER_LOCAL_PARTS: tuple[str, ...] = (
 )
 REGISTER_USERS = frozenset(f"{local}@moh.example.test" for local in REGISTER_LOCAL_PARTS)
 # Only accounts on a fixture e-mail domain are ever deleted; a real person's
-# account (any other domain) is never a seed's to remove.
-FIXTURE_EMAIL_DOMAINS: tuple[str, ...] = ("@moh.example.test", "@example.test", "@test.local", "@moh.test", "@moe.test")
+# account (any other domain) is never a seed's to remove. Includes the
+# RFC 2606 reserved placeholder domains (example.com/.org/.net) since stray
+# manually-created test accounts land there, not just the project's own
+# `.test`/`.local` fixture domains.
+FIXTURE_EMAIL_DOMAINS: tuple[str, ...] = (
+	"@moh.example.test",
+	"@example.test",
+	"@test.local",
+	"@moh.test",
+	"@moe.test",
+	"@example.com",
+	"@example.org",
+	"@example.net",
+)
 
 CANONICAL_BUDGET_CODES = ("MOH-BUD-2027-001",)
 
