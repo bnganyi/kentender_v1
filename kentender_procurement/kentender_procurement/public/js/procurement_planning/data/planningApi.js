@@ -193,6 +193,13 @@ export function retryPublication(args) {
 	return frappeCall(`${BASE}.retry_publication`, args);
 }
 
+// §5.5.2.3 — reads the authoritative destination result for an attempt whose
+// outcome is unknown. It never sets success manually, and an unknown result
+// that stays unknown stays held.
+export function reconcilePublication(args) {
+	return frappeCall(`${BASE}.reconcile_publication`, args);
+}
+
 export function beginPlanUpdate(args) {
 	return frappeCall(`${BASE}.begin_plan_update`, args);
 }

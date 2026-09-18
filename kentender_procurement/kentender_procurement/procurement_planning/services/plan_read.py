@@ -514,6 +514,55 @@ def _preview(text: str, *, limit: int = 90) -> str:
 	return f"{cut}…"
 
 
+#: §10.12 — the exact state wording for each of the four rows.
+_WEBSITE_STATE = {
+	"Pending": "Publication is in progress",
+	"Dispatched": "Publication is in progress",
+	"Acknowledged": "Published",
+	"Failed": "The plan was not published",
+	"Indeterminate": "We could not confirm whether publication succeeded.",
+	"Held": "Publication is on hold",
+}
+
+
+def _publication_status_rows(doc, version, *, treasury_current: bool) -> list[dict[str, str]]:
+	state = cstr(doc.publication_state)
+	website = _WEBSITE_STATE.get(state, "Not started")
+	if version.version_status == "Active":
+		procurement = "Current plan"
+		procurement_kind = "live"
+	elif version.version_status == "Published — activation held":
+		procurement = "Published, but not available for new procurement"
+		procurement_kind = "critical"
+	elif version.version_status == "Withdrawn for correction":
+		procurement = "Not active"
+		procurement_kind = "muted"
+	else:
+		procurement = "This plan is not yet active"
+		procurement_kind = "pending"
+	return [
+		{
+			"label": "Plan approval",
+			"state": "Historical approval retained" if version.version_status == "Withdrawn for correction" else "Approved",
+			"kind": "live",
+		},
+		{
+			"label": "Treasury submission",
+			"state": "Recorded" if treasury_current else "Details not yet recorded",
+			"kind": "live" if treasury_current else "attention",
+		},
+		{
+			"label": "Website publication",
+			"state": website,
+			# An unknown result is its own state, never a failure.
+			"kind": {
+				"Acknowledged": "live", "Failed": "critical", "Indeterminate": "attention", "Held": "attention",
+			}.get(state, "pending"),
+		},
+		{"label": "Use for procurement", "state": procurement, "kind": procurement_kind},
+	]
+
+
 def _acceptance_history(fiscal_year: str) -> list[str]:
 	"""Who accepted each departmental plan, and when — the provenance of the
 	sources this plan is built from."""
@@ -1737,11 +1786,33 @@ def get_publication_task(*, publication: str, user: str | None = None) -> dict[s
 			{"attempt_number": a.attempt_number, "result": a.result, "attempted_display": _eat(a.attempted_at), "completed_display": _eat(a.completed_at), "external_reference": cstr(a.external_reference), "failure_reason": cstr(a.failure_reason)}
 			for a in attempts
 		],
+		# §10.12 U13-EVIDENCE-RECORDED — every recorded field, separately
+		# labelled, with the recording actor distinct from the dispatch time.
 		"treasury_evidence": (
-			{"recorded": True, "submitted_display": _eat(treasury.submitted_at), "channel": treasury.channel, "dispatch_reference": treasury.dispatch_reference}
-			if treasury else {"recorded": False}
+			{
+				"recorded": True,
+				"submitted_display": _eat(treasury.submitted_at),
+				"channel": treasury.channel,
+				"dispatch_reference": treasury.dispatch_reference,
+				"recorded_display": _eat(treasury.recorded_at),
+				"recorded_by_name": cstr(
+					frappe.db.get_value("User", frappe.db.get_value("Treasury Submission Evidence", treasury.name, "actor"), "full_name")
+					or ""
+				),
+			}
+			if treasury else None
 		),
 		"hold": {"active": bool(hold), "kind": hold.hold_kind if hold else "", "reason": cstr(hold.reason) if hold else "", "raised_display": _eat(hold.raised_at) if hold else ""},
+		# §10.12 — four distinct rows, in this order. Approval, external
+		# submission, publication and activation are four different facts and
+		# none of them proves another. "Unknown" is never rendered as failure.
+		"status_rows": _publication_status_rows(doc, version, treasury_current=bool(treasury)),
+		# §10.12 — the AO records external dispatch; a technical operator
+		# retries or reconciles. Technical read alone grants neither.
+		"can_record_treasury": (
+			authz.has_site_role(ROLE_ACCOUNTING_OFFICER, actor)
+			and version.version_status in ("Approved — publication pending", "Publication failed")
+		),
 		"quiet_notice": "Publication is a system worker action after statutory approval. Retry and reconciliation are technical actions, never a business decision.",
 		"can_retry": is_technical(actor) and doc.publication_state == "Failed",
 		"can_reconcile": is_technical(actor) and doc.publication_state == "Indeterminate",

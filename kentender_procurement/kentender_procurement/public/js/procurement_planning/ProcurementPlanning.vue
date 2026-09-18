@@ -178,6 +178,10 @@
 						:pending="pending"
 						:error-summary="errorSummary"
 						@retry="onRetryPublication"
+						@reconcile="onReconcilePublication"
+						@record-treasury="treasuryDialog = true"
+						@correct-treasury="treasuryDialog = true"
+						@navigate="onNavigate"
 						@back="publication.plan_reference ? frappe.set_route(PLAN_PAGE, publication.plan_reference) : frappe.set_route(WORKSPACE_PAGE)"
 					/>
 				</template>
@@ -396,6 +400,7 @@ const dissolveDialog = ref(false);
 // §10.10 — a collective body's resolution reference, and the AO's late-start
 // explanation, are inputs to the decision itself rather than separate dialogs.
 const collectiveResolution = ref("");
+const treasuryDialog = ref(false);
 const lateReason = ref("");
 const cancelUpdateReason = ref("");
 const splittingDialog = ref(false);
@@ -600,6 +605,7 @@ function applyLoaded(scr, loaded) {
 			break;
 		case "publication":
 			publication.value = loaded;
+			treasuryDialog.value = false;
 			break;
 	}
 }
@@ -794,6 +800,15 @@ async function onSaveDirect(payload) {
 		})
 	);
 	if (result) go(dppReference.value);
+}
+
+async function onReconcilePublication() {
+	// §5.5.2.3 — reconciliation reads the authoritative destination result.
+	// It never sets success, and an unknown outcome stays unknown.
+	const result = await run("reconcile-publication", (key) =>
+		api.reconcilePublication({ publication: publication.value.publication, idempotency_key: key })
+	);
+	if (result) await load({ quiet: true });
 }
 
 function onViewItemClassification() {
