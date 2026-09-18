@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import getdate
+from frappe.utils import cstr, getdate
 
 from kentender_procurement.procurement_planning.services import schedule
 from kentender_procurement.tender_preparation.services.errors import fail
@@ -20,11 +20,19 @@ from kentender_procurement.tender_preparation.services.errors import fail
 MILESTONE_INVITATION = "invitation"
 
 
-def current_actual_invitation_date(plan_item_id: str):
-	name = frappe.db.get_value("Annual Plan Item", {"plan_item_id": plan_item_id, "item_state": "Active"}, "name")
-	if not name:
-		return None
-	return frappe.db.get_value("Annual Plan Item", name, "actual_invitation_date")
+def current_actual_invitation_date(plan_item_id: str, tender: str = ""):
+	"""What this Tender has already told Planning, asked through Planning's
+	own published read.
+
+	PLN-CHG-001 v1.23 §5.5.1A removed the `Annual Plan Item.actual_*_date`
+	mirror this used to read directly: §611 forbids collapsing two
+	proceedings' dates into one unqualified item actual, since two Tenders
+	against one Plan Item legitimately hold two invitation dates and both
+	must remain visible. The answer is therefore scoped to this Tender, and
+	comes from the owner's service rather than its table (AGENTS.md §2)."""
+	return schedule.current_proceeding_actual(
+		plan_item_id=plan_item_id, milestone=MILESTONE_INVITATION, proceeding_id=cstr(tender).strip(),
+	)
 
 
 PRODUCER = "tender_preparation"
@@ -37,12 +45,12 @@ def publish_invitation_actual(*, plan_item_id: str, actual_date, correlation_id:
 	producer sequence. Planning now enforces idempotency and never-overwrite
 	itself (plan D10); this module's pre-check stays as the earlier, explicit
 	refusal."""
-	existing = current_actual_invitation_date(plan_item_id)
+	existing = current_actual_invitation_date(plan_item_id, tender)
 	if existing and getdate(existing) != getdate(actual_date):
 		fail(
 			"TPR_MILESTONE_ACTUAL_REJECTED",
-			"Planning already carries a different actual invitation date for this Plan Item; it is never overwritten.",
-			{"plan_item_id": plan_item_id, "existing": str(existing), "offered": str(getdate(actual_date))},
+			"Planning already carries a different actual invitation date for this Tender; it is never overwritten.",
+			{"plan_item_id": plan_item_id, "tender": tender, "existing": str(existing), "offered": str(getdate(actual_date))},
 		)
 	try:
 		return schedule.record_tender_milestone_actual(

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import frappe
 
+from kentender_procurement.procurement_planning.services import schedule
 from kentender_procurement.tender_preparation.services import events, planning_gateway, publication
 from kentender_procurement.tender_preparation.services.errors import TenderPreparationError
 from kentender_procurement.tender_preparation.tests import fixtures as fx
@@ -28,10 +29,14 @@ class TestAcknowledgeAndPublish(TenderCase):
 		self.assertTrue(root.publication_consumed_at)
 		handoff = frappe.get_doc("Tender Publication Handoff", app["publication_handoff"])
 		self.assertEqual((handoff.status, handoff.consumption_correlation_id, str(handoff.published_on)), ("Consumed", correlation, "2102-02-01"))
-		self.assertEqual(str(planning_gateway.current_actual_invitation_date(root.plan_item_id)), "2102-02-01")
+		self.assertEqual(str(planning_gateway.current_actual_invitation_date(root.plan_item_id, root.name)), "2102-02-01")
 		self.assertEqual(frappe.db.count("Tender Preparation Event", {"tender": root.name, "event_type": events.EVENT_MILESTONE_ACTUAL}), 1)
-		item = frappe.db.get_value("Annual Plan Item", {"plan_item_id": root.plan_item_id, "item_state": "Active"}, ["actual_bid_opening_date", "actual_evaluation_completion_date"], as_dict=True)
-		self.assertFalse(item.actual_bid_opening_date or item.actual_evaluation_completion_date)
+		# No milestone beyond invitation is written. PLN v1.23 §5.5.1A keeps
+		# actuals per proceeding only, so ask for this Tender's own.
+		for milestone in ("bid_opening", "evaluation_completion"):
+			self.assertIsNone(
+				schedule.current_proceeding_actual(plan_item_id=root.plan_item_id, milestone=milestone, proceeding_id=root.name)
+			)
 
 	def test_a_repeat_with_the_same_correlation_id_publishes_nothing(self):
 		app = fx.approved()
@@ -60,12 +65,20 @@ class TestAcknowledgeAndPublish(TenderCase):
 	def test_a_different_existing_actual_date_is_never_overwritten(self):
 		app = fx.approved()
 		root = frappe.get_doc("Prepared Tender", app["tender"])
-		name = frappe.db.get_value("Annual Plan Item", {"plan_item_id": root.plan_item_id, "item_state": "Active"}, "name")
-		frappe.db.set_value("Annual Plan Item", name, "actual_invitation_date", "2102-01-20", update_modified=False)
+		# The prior fact is an event this Tender already recorded, not a column:
+		# PLN v1.23 §611 keeps one actual per proceeding and no item-level
+		# mirror, so the refusal is scoped to this Tender rather than the item.
+		schedule.record_tender_milestone_actual(
+			plan_item_id=root.plan_item_id, milestone="invitation", actual_date="2102-01-20",
+			source_event_id=fx.key(), producer=planning_gateway.PRODUCER,
+			proceeding_id=root.name, proceeding_type=planning_gateway.PROCEEDING_TYPE, producer_sequence=1,
+		)
 		frappe.set_user("Administrator")
 		with self.assertRaises(TenderPreparationError) as ctx:
 			publication.acknowledge_publication_consumed(tender=app["tender"], correlation_id=fx.key(), published_on="2102-02-01")
 		self.assertEqual(ctx.exception.code, "TPR_MILESTONE_ACTUAL_REJECTED")
-		self.assertEqual(str(frappe.db.get_value("Annual Plan Item", name, "actual_invitation_date")), "2102-01-20")
+		self.assertEqual(
+			str(planning_gateway.current_actual_invitation_date(root.plan_item_id, root.name)), "2102-01-20"
+		)
 		# the refused acknowledgment left the handoff Ready (atomic)
 		self.assertEqual(frappe.db.get_value("Tender Publication Handoff", app["publication_handoff"], "status"), "Ready")

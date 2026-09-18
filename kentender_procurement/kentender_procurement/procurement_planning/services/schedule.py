@@ -115,6 +115,25 @@ def require_delivery_boundary(baseline: dict[str, Any], estimated_delivery_perio
 # --------------------------------------------------------------------------
 
 
+def current_proceeding_actual(*, plan_item_id: str, milestone: str, proceeding_id: str = ""):
+	"""§5.5.1A — the current actual date this one proceeding carries for this
+	milestone, or None.
+
+	The published read for an owning module that needs to know what it has
+	already told Planning: Tender Preparation asks before offering its own
+	early refusal. It is deliberately proceeding-scoped, because an
+	item-scoped answer does not exist — two Tenders against one Plan Item
+	hold two invitation actuals and both remain visible (§611). Consumers
+	must never read an item column for this; there is none.
+	"""
+	from kentender_procurement.procurement_planning.services import actuals
+
+	if milestone not in MILESTONES:
+		fail("PLN_SCHEDULE_INVALID", "Unknown milestone.")
+	event = actuals.proceeding_events(plan_item_id, cstr(proceeding_id).strip()).get(milestone)
+	return event.actual_date if event else None
+
+
 def record_tender_milestone_actual(
 	*,
 	plan_item_id: str,
@@ -139,14 +158,16 @@ def record_tender_milestone_actual(
 	different proceedings on the same item keep two independent actuals for
 	the same milestone (§5.5.1A's own example — 100 and 150 laptops, two
 	Tenders, two invitation dates, "both must remain visible") rather than
-	one ever silently overwriting the other. `Annual Plan Item.actual_*_date`
-	stays a best-effort last-recorded mirror for the single-proceeding
-	common case and every existing item-level reader (§8.3 reminders,
-	`schedule_rows`, the Requisition eligibility projection) — aggregating
-	it correctly across multiple proceedings is explicitly outside the MVP
-	(§5.5.1A); the per-proceeding `Milestone Actual Event`/`Proceeding
-	Coverage` store below is the fact of record. `coverage` rows (owner-
-	supplied) upsert this proceeding's own coverage projection."""
+	one ever silently overwriting the other.
+
+	The per-proceeding `Milestone Actual Event`/`Proceeding Coverage` store
+	is the only fact of record. v1.23 §5.5.1A removed the item-level
+	`Annual Plan Item.actual_*_date` mirror outright — §611 forbids
+	collapsing different proceedings' dates into one unqualified item
+	actual, because choosing either loses material information. Consumers
+	ask `current_proceeding_actual` for their own proceeding.
+	`coverage` rows (owner-supplied) upsert this proceeding's own coverage
+	projection."""
 	if milestone not in MILESTONES:
 		fail("PLN_SCHEDULE_INVALID", "Unknown milestone.")
 	source_event_id = cstr(source_event_id).strip()

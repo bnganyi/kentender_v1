@@ -102,7 +102,9 @@ class TestPlanningMilestoneContract(IntegrationTestCase):
 
 	def test_invitation_is_a_milestone_and_no_bid_opening_is_written_here(self):
 		self.assertIn("invitation", schedule.MILESTONES)
-		self.assertIn("actual_invitation_date", schedule.ACTUAL_FIELDS)
+		# PLN v1.23 §5.5.1A dropped the item-level mirror this used to name;
+		# the published read is proceeding-scoped and is what this app calls.
+		self.assertTrue(callable(schedule.current_proceeding_actual))
 
 
 class TestCoreMastersAndRegistry(IntegrationTestCase):

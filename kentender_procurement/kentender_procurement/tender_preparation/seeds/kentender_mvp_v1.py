@@ -357,7 +357,8 @@ def validate_tender_preparation_seed() -> list[dict[str, Any]]:
 	if handoffs:
 		check("publication_handoff.published_on_15_may", cstr(handoffs[0].published_on) == PUBLISHED_ON, cstr(handoffs[0].published_on))
 	check("milestone.event", bool(events.find(events.EVENT_MILESTONE_ACTUAL, _key(f"{tender.name}:ack"))), "")
-	actual = planning_gateway.current_actual_invitation_date(tender.plan_item_id)
+	# Scoped to this Tender: Planning holds one actual per proceeding (§611).
+	actual = planning_gateway.current_actual_invitation_date(tender.plan_item_id, tender.name)
 	check("planning.actual_invitation_15_may", bool(actual) and getdate(actual) == getdate(PUBLISHED_ON), cstr(actual))
 	approved_view = read.get_approved_tender(tender=tender.name, user=AUDITOR)
 	check("read.approved_by_charles", approved_view.get("outcome") == "OK" and (approved_view.get("approved_by") or {}).get("name") == "Charles Mutiso", str(approved_view.get("approved_by")))
