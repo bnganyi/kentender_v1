@@ -1,304 +1,390 @@
-<!-- PLN-CHG-001 v1.18 §10.4 (U11) — the complete governance review: one
-     long read-only page (Plan Items, Sources, Funding, Method and
-     schedule, Reservations, Changes, Decisions) reached at its own task
-     route (/procurement-planning/review/{task_id}) for Accounting Officer
-     adoption and statutory approval. The Head of Procurement Function's own
-     preparation signature (U11-HOPF) is a different screen entirely — see
-     AnnualPlanScreen's Governance tab, reached on the Draft Plan's own
-     record route per §9 ("Existing Plan record for preparation"); there is
-     no governance task yet at that stage to route to.
+<!-- PLN-CHG-001 v1.23 §10.10 — the complete annual-plan review (U11), ported
+     from U11.dc.html.
 
-     §10.4's own seclinks are anchor jumps down one page, not a tab switch
-     (ported verbatim from the artboard's .seclinks) — every section stays
-     reachable by scroll, reload or browser Find, and "View full details"
-     on a Plan Item leaves to its own existing PlanItemEditorScreen route
-     rather than duplicating that screen's content here. -->
+     Every governance actor reads the same document. Only the header, the prior
+     accountability shown, the decision statement and the actual buttons
+     change: HOPF signs, the AO adopts, the statutory authority approves, a
+     collective body records its own decision, and a reader decides nothing.
+
+     The order matters. Decision summary, visible material issues, concise
+     purchase rows, then the actor's statement and their decision — before any
+     collapsed evidence. The actor must not scroll through audit evidence to
+     reach the decision, and no purchase opens by itself. But nothing material
+     is hidden either: an issue that would change the verdict is always in the
+     summary, never behind a disclosure. -->
 <template>
 	<div>
-		<div class="pln-rhead">
+		<div class="pln-masthead pln-masthead-split">
 			<div>
-				<p class="kt-page-kicker">{{ task.header?.eyebrow }}</p>
-				<h1 class="kt-page-title">{{ task.header?.title }}</h1>
-				<div class="pln-rmeta">
-					<span><span class="kt-label">Reference</span> {{ task.plan_reference }}</span>
-					<span><span class="kt-label">Version</span> {{ task.version_number }}</span>
-					<span class="kt-status" :class="badgeClass">{{ task.header?.badge }}</span>
+				<h1 class="kt-page-title" data-testid="rev-title">{{ actor.title }}</h1>
+				<p class="kt-page-lede">{{ actor.description }}</p>
+			</div>
+			<button
+				v-if="task.can_download_review_pack"
+				type="button"
+				class="kt-btn kt-btn-secondary"
+				data-testid="rev-download"
+				@click="$emit('download-pack')"
+			>
+				Download review pack
+			</button>
+		</div>
+
+		<div class="kt-meta-row pln-context-row" data-testid="rev-context">
+			<div>
+				<span class="kt-label">Plan</span>
+				<span class="kt-meta-value">{{ task.header?.title }}</span>
+			</div>
+			<div>
+				<span class="kt-label">Plan reference</span>
+				<span class="kt-meta-value">{{ task.plan_reference }}</span>
+			</div>
+			<div>
+				<span class="kt-label">Version</span>
+				<span class="kt-meta-value">{{ task.version_number }}</span>
+			</div>
+			<div>
+				<span class="kt-label">Current stage</span>
+				<span class="kt-meta-value"><span class="kt-status is-attention">{{ stageLabel }}</span></span>
+			</div>
+		</div>
+
+		<!-- U11-READER historical variant. -->
+		<p v-if="task.historical" class="kt-muted" data-testid="rev-historical">Historical plan — read only</p>
+
+		<!-- First section — Decision summary. -->
+		<h3 class="kt-card-title">Decision summary</h3>
+		<div class="kt-kpi-row" data-testid="rev-summary">
+			<div class="kt-kpi-card">
+				<div class="kt-kpi-value">{{ summary.value_display }}</div>
+				<div class="kt-kpi-sub">Estimated cost</div>
+			</div>
+			<div class="kt-kpi-card">
+				<div class="kt-kpi-value">{{ summary.purchases }}</div>
+				<div class="kt-kpi-sub">Purchases</div>
+			</div>
+			<div class="kt-kpi-card">
+				<div class="kt-kpi-value">{{ summary.departments }}</div>
+				<div class="kt-kpi-sub">Departments</div>
+			</div>
+		</div>
+		<div class="kt-meta-row" data-testid="rev-checks">
+			<div>
+				<span class="kt-label">Funding</span>
+				<span class="kt-meta-value">{{ summary.funding }}</span>
+			</div>
+			<div>
+				<span class="kt-label">Reserved procurement</span>
+				<span class="kt-meta-value">{{ summary.reservation }}</span>
+			</div>
+			<div>
+				<span class="kt-label">Schedule</span>
+				<span class="kt-meta-value">{{ summary.schedule }}</span>
+			</div>
+		</div>
+
+		<!-- Either no blocking issues, or the exact issues. Never neither. -->
+		<div v-if="!issues.length" class="kt-notice is-info" data-testid="rev-no-issues">
+			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+				<circle cx="12" cy="12" r="9"></circle><path d="m8 12 3 3 5-6"></path>
+			</svg>
+			<div class="kt-notice-body">No blocking issues</div>
+		</div>
+		<div v-for="issue in issues" :key="issue" class="kt-notice is-critical" data-testid="rev-issue">
+			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+				<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
+			</svg>
+			<div class="kt-notice-body">{{ issue }}</div>
+		</div>
+
+		<table class="kt-table" data-testid="rev-purchases">
+			<thead>
+				<tr>
+					<th>Purchase</th><th>Purpose</th><th class="is-num">Quantity</th>
+					<th>Unit</th><th>Required by</th><th class="is-num">Estimated cost</th><th>Action</th>
+				</tr>
+			</thead>
+			<tbody>
+				<template v-for="row in items" :key="row.plan_item_id">
+					<tr data-testid="rev-purchase-row">
+						<td>{{ row.title }}</td>
+						<td>{{ row.purpose }}</td>
+						<td class="is-num">{{ row.quantity_number }}</td>
+						<td>{{ row.unit_label }}</td>
+						<td>{{ row.delivery_completion_display }}</td>
+						<td class="is-num">{{ row.value_display }}</td>
+						<td>
+							<a href="#" data-testid="rev-review-purchase" @click.prevent="toggle(row.plan_item_id)">Review purchase</a>
+						</td>
+					</tr>
+					<!-- One level of detail, opened deliberately. -->
+					<tr v-if="open.includes(row.plan_item_id)" class="pln-row-detail" data-testid="rev-purchase-detail">
+						<td colspan="7">
+							<div class="kt-meta-row">
+								<div>
+									<span class="kt-label">Estimated cost</span>
+									<span class="kt-meta-value">{{ row.value_display }}</span>
+								</div>
+								<div>
+									<span class="kt-label">Procurement approach</span>
+									<span class="kt-meta-value">{{ row.procurement_method }}</span>
+								</div>
+								<div>
+									<span class="kt-label">Departments</span>
+									<span class="kt-meta-value">{{ row.department }}</span>
+								</div>
+							</div>
+							<a href="#" data-testid="rev-view-evidence" @click.prevent="$emit('view-evidence', row)">View departmental evidence</a>
+						</td>
+					</tr>
+				</template>
+			</tbody>
+		</table>
+		<p class="kt-muted" data-testid="rev-caption">{{ task.caption }}</p>
+
+		<!-- Second section — Accountability. Two compact labelled rows. -->
+		<h3 class="kt-card-title">Accountability</h3>
+		<div class="kt-meta-row" data-testid="rev-accountability">
+			<div>
+				<span class="kt-label">Funding</span>
+				<span class="kt-meta-value">{{ fundingLine }}</span>
+			</div>
+			<!-- Absent before the signature exists (U11-HOPF). -->
+			<div v-if="signature">
+				<span class="kt-label">Preparation</span>
+				<span class="kt-meta-value" data-testid="rev-preparation">
+					Signed by {{ signature.actor_name }}, {{ signature.capacity }} · {{ signature.signed_at_display }}
+				</span>
+			</div>
+		</div>
+		<p class="kt-muted">Funding confirmation does not set money aside.</p>
+
+		<!-- The decision comes before the collapsed evidence, not after it. -->
+		<template v-if="task.status === 'Open' && task.can_decide">
+			<!-- U11-COLLECTIVE — the body decides; the recorder records. -->
+			<div v-if="authority.is_board" class="kt-meta-row" data-testid="rev-collective">
+				<div>
+					<span class="kt-label">Decision belongs to</span>
+					<span class="kt-meta-value">{{ authority.capacity_detail }}</span>
+				</div>
+				<div>
+					<span class="kt-label">Recorded by</span>
+					<span class="kt-meta-value">{{ task.recorder_name || "—" }}</span>
+				</div>
+				<div class="kt-field">
+					<label for="rev-resolution" class="kt-label">Resolution reference</label>
+					<input
+						id="rev-resolution"
+						class="kt-input"
+						data-testid="rev-resolution"
+						:value="resolution"
+						@input="$emit('update:resolution', $event.target.value)"
+					>
 				</div>
 			</div>
-			<a
-				v-if="task.can_download_review_pack"
-				:href="reviewPackUrl" class="kt-btn kt-btn-secondary" data-testid="rvw-download-pack"
-			>Download review pack</a>
-		</div>
 
-		<nav class="pln-seclinks" data-testid="rvw-seclinks">
-			<a v-for="link in SECTIONS" :key="link.id" :class="{ active: activeSection === link.id }" @click="scrollTo(link.id)">{{ link.label }}</a>
-		</nav>
-
-		<div v-if="errorSummary" class="pln-notice is-critical" role="alert" data-testid="rvw-error">
-			<p class="pln-notice-title">This decision could not be completed</p>
-			<p>{{ errorSummary }}</p>
-		</div>
-
-		<div v-if="task.late_activation_reason" class="pln-notice" data-testid="rvw-late-activation">
-			<p class="pln-notice-title">Submitted after the start of the Financial Year</p>
-			<p>{{ task.late_activation_reason }}</p>
-		</div>
-
-		<!-- U11-stale — the submitted content never changes; only the current
-		     funding evidence has drifted from what was decided on. -->
-		<div v-if="!task.funding_current" class="kt-card kt-blueprint pln-card-pad" data-testid="rvw-stale-notice" style="border-color: var(--kt-status-attention)">
-			<p class="pln-notice-title" style="color: var(--kt-status-attention)">Review basis has changed</p>
-			<p>The current Budget basis no longer matches the funding confirmation. The submitted content remains unchanged.</p>
-		</div>
-
-		<section id="rvw-items" class="pln-review-section">
-			<div class="kt-card kt-blueprint pln-card-pad" data-testid="rvw-items">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-card-title">Plan Items</div>
-				<table class="pln-table">
-					<thead><tr><th>Plan Item</th><th>Category</th><th class="pln-num">Quantity</th><th>Unit</th><th class="pln-num">Value</th><th>Required by</th><th></th></tr></thead>
-					<tbody>
-						<tr v-for="row in task.items" :key="row.plan_item_id">
-							<td>{{ row.title }}</td>
-							<td>{{ row.procurement_category }}</td>
-							<td class="pln-num">{{ row.quantity_number }}</td>
-							<td>{{ row.unit_label }}</td>
-							<td class="pln-num">{{ row.value_display }}</td>
-							<td>{{ row.delivery_completion_display }}</td>
-							<td><a @click="$emit('navigate', row.route)">View full details</a></td>
-						</tr>
-					</tbody>
-				</table>
-				<p class="pln-table-caption" data-testid="rvw-caption">{{ task.caption }}</p>
-				<p class="pln-table-caption pln-table-caption-tight" data-testid="rvw-advisory-line">{{ task.advisory_line }}</p>
+			<!-- U11-LATE-ADOPTION — the AO must say why, before deciding. -->
+			<div v-if="task.late_activation_required" class="kt-field" data-testid="rev-late">
+				<div class="kt-meta-row">
+					<div>
+						<span class="kt-label">Financial year started</span>
+						<span class="kt-meta-value">{{ task.financial_year_started_display }}</span>
+					</div>
+				</div>
+				<label for="rev-late-reason" class="kt-label">Why is this initial plan being submitted after the financial year started?</label>
+				<textarea
+					id="rev-late-reason"
+					class="kt-input"
+					rows="2"
+					data-testid="rev-late-reason"
+					:value="lateReason"
+					@input="$emit('update:lateReason', $event.target.value)"
+				></textarea>
 			</div>
-		</section>
 
-		<section id="rvw-sources" class="pln-review-section">
-			<div class="kt-card kt-blueprint pln-card-pad" data-testid="rvw-sources">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-card-title">Sources</div>
-				<table class="pln-table">
-					<thead><tr><th>Source</th><th>Department</th><th class="pln-num">Quantity</th><th>Unit</th><th class="pln-num">Amount</th><th></th></tr></thead>
-					<tbody>
-						<tr v-for="row in task.sources" :key="row.source_key">
-							<td>{{ row.plan_item_title }}</td>
-							<td>{{ row.department }}</td>
-							<td class="pln-num">{{ row.quantity_display }}</td>
-							<td>{{ row.unit_label }}</td>
-							<td class="pln-num">{{ row.amount_display }}</td>
-							<td><a @click="$emit('open-source', row.source_key)" data-testid="rvw-source-link">View source evidence</a></td>
-						</tr>
-					</tbody>
-				</table>
+			<p class="pln-decision-statement" data-testid="rev-statement">{{ actor.statement }}</p>
+
+			<p v-if="errorSummary" class="pln-error-summary" data-testid="rev-error">{{ errorSummary }}</p>
+
+			<div class="pln-footer" data-testid="rev-footer">
+				<button
+					v-if="actor.secondary"
+					type="button"
+					class="kt-btn kt-btn-secondary"
+					data-testid="rev-secondary"
+					:disabled="pending"
+					@click="actor.secondary_is_return ? $emit('open-return-dialog') : $emit('back')"
+				>
+					{{ actor.secondary }}
+				</button>
+				<span v-else></span>
+				<div class="pln-footer-right">
+					<!-- Absent, not disabled, when a material issue blocks it:
+					     the server gates it too (§10.10). -->
+					<button
+						v-if="task.can_decide_positive && !issues.length"
+						type="button"
+						class="kt-btn kt-btn-primary"
+						data-testid="rev-confirm"
+						:disabled="pending"
+						@click="$emit('confirm')"
+					>
+						{{ actor.confirm }}
+					</button>
+				</div>
 			</div>
-		</section>
+		</template>
 
-		<section id="rvw-funding" class="pln-review-section">
-			<div class="kt-card kt-blueprint pln-card-pad" data-testid="rvw-funding">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-card-title">Funding</div>
-				<table class="pln-table" style="margin-bottom: 12px">
+		<!-- Supporting evidence, all closed. Complete, reachable, secondary. -->
+		<details class="kt-disclosure" data-testid="rev-funding-evidence">
+			<summary class="kt-disclosure-head"><span class="kt-disclosure-title">Funding evidence</span></summary>
+			<div class="kt-disclosure-body">
+				<table class="kt-table">
 					<thead>
-						<tr>
-							<th>Budget Line</th><th>Funding source</th><th class="pln-num">Approved</th>
-							<th class="pln-num">Planned</th><th class="pln-num">Reserved</th><th class="pln-num">Committed</th><th class="pln-num">Available</th>
-						</tr>
+						<tr><th>Budget line</th><th class="is-num">Approved</th><th class="is-num">Planned</th><th class="is-num">Difference</th><th>Result</th></tr>
 					</thead>
 					<tbody>
-						<tr v-for="row in task.funding?.rows" :key="row.budget_line">
-							<td>{{ row.budget_line_label }}</td>
-							<td>{{ row.funding_source }}</td>
-							<td class="pln-num">{{ row.approved_display }}</td>
-							<td class="pln-num">{{ row.planned_display }}</td>
-							<td class="pln-num">{{ row.reserved_display }}</td>
-							<td class="pln-num">{{ row.committed_display }}</td>
-							<td class="pln-num">{{ row.available_display }}</td>
+						<tr v-for="row in funding.rows || []" :key="row.budget_line">
+							<td>{{ row.budget_line_reference }}</td>
+							<td class="is-num">{{ row.approved_display }}</td>
+							<td class="is-num">{{ row.planned_display }}</td>
+							<td class="is-num">{{ row.difference_display }}</td>
+							<td><span class="kt-status" :class="`is-${row.result_kind}`">{{ row.result }}</span></td>
 						</tr>
 					</tbody>
 				</table>
-				<div class="pln-facts-row">
-					<div class="pln-fact"><span class="kt-label">Statement as at</span><span class="pln-fact-val">{{ task.funding?.statement_as_at }}</span></div>
-					<div class="pln-fact"><span class="kt-label">Confirmed by</span><span class="pln-fact-val">{{ task.funding?.confirmed_by }}</span></div>
+			</div>
+		</details>
+
+		<details class="kt-disclosure" data-testid="rev-plan-checks">
+			<summary class="kt-disclosure-head"><span class="kt-disclosure-title">Review Plan checks</span></summary>
+			<div class="kt-disclosure-body">
+				<div class="kt-meta-row">
+					<div>
+						<span class="kt-label">Required allocation</span>
+						<span class="kt-meta-value">{{ reservation.required_allocation_display }}</span>
+					</div>
+					<div>
+						<span class="kt-label">Planned qualifying allocation</span>
+						<span class="kt-meta-value">{{ reservation.planned_qualifying_display }}</span>
+					</div>
+					<div>
+						<span class="kt-label">Budget basis</span>
+						<span class="kt-meta-value">{{ reservation.budget_basis_reference }} · {{ reservation.budget_version_display }}</span>
+					</div>
 				</div>
 			</div>
-		</section>
+		</details>
 
-		<section id="rvw-method" class="pln-review-section">
-			<div
-				v-for="card in task.method_and_schedule" :key="card.plan_item_id"
-				class="kt-card kt-blueprint pln-card-pad pln-method-card" data-testid="rvw-method"
-			>
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-card-title">Method and eligibility — {{ card.title }}</div>
-				<div class="pln-facts-row" style="margin-bottom: 12px">
-					<div class="pln-fact"><span class="kt-label">Method</span><span class="pln-fact-val">{{ card.method.method }}</span></div>
-					<div class="pln-fact"><span class="kt-label">Procedure profile</span><span class="pln-fact-val">{{ card.method.profile }}</span></div>
-					<div class="pln-fact"><span class="kt-label">Profile Version</span><span class="pln-fact-val">{{ card.method.version_number }}</span></div>
-					<div class="pln-fact"><span class="kt-label">Conditions</span><span class="kt-status" :class="card.method.conditions_complete ? 'is-live' : 'is-pending'">{{ card.method.conditions_complete ? "Complete" : "Incomplete" }}</span></div>
-				</div>
-				<div class="pln-facts-row" style="margin-bottom: 20px">
-					<div class="pln-fact"><span class="kt-label">Evidence</span><span class="pln-fact-val">{{ card.method.evidence_line }}</span></div>
-					<div class="pln-fact"><span class="kt-label">Required specific authorisation</span><span class="pln-fact-val">{{ card.method.specific_authorisation }}</span></div>
-				</div>
-				<div class="kt-card-title">Schedule</div>
-				<table class="pln-table" style="margin-bottom: 12px">
-					<thead><tr><th>Milestone</th><th>Baseline</th></tr></thead>
+		<details class="kt-disclosure" data-testid="rev-history">
+			<summary class="kt-disclosure-head"><span class="kt-disclosure-title">Changes and history</span></summary>
+			<div class="kt-disclosure-body">
+				<p class="kt-muted">{{ task.changes?.is_initial ? "First annual plan" : "" }}</p>
+				<table class="kt-table">
+					<thead><tr><th>Stage</th><th>Actor</th><th>Capacity</th><th>Outcome</th><th>Date</th></tr></thead>
 					<tbody>
-						<tr v-for="row in card.schedule.rows" :key="row.milestone">
-							<td>{{ row.label }}</td>
-							<td>{{ row.date_display }}<span v-if="row.source_boundary" style="font-size: 11px; color: var(--color-neutral-700)"> (source boundary)</span></td>
+						<tr v-for="(row, index) in history" :key="index">
+							<td>{{ row.stage }}</td><td>{{ row.actor }}</td><td>{{ row.capacity }}</td>
+							<td>{{ row.outcome }}</td><td>{{ row.date_display }}</td>
 						</tr>
 					</tbody>
 				</table>
-				<div class="pln-facts-row" style="margin-bottom: 12px">
-					<div v-for="(label, field) in PERIOD_LABELS" :key="field" class="pln-fact">
-						<span class="kt-label">{{ label }}</span><span class="pln-fact-val">{{ card.schedule.periods_display?.[field] }}</span>
-					</div>
-				</div>
-				<div class="pln-facts-row">
-					<div class="pln-fact"><span class="kt-label">Estimated delivery period</span><span class="pln-fact-val">{{ card.schedule.estimated_delivery_period_days }} calendar days</span></div>
-					<div class="pln-fact"><span class="kt-label">Estimated completion</span><span class="pln-fact-val">{{ card.schedule.estimated_completion_display }}</span></div>
-				</div>
 			</div>
-		</section>
-
-		<section id="rvw-reservations" class="pln-review-section">
-			<div class="kt-card kt-blueprint pln-card-pad" data-testid="rvw-reservation">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-card-title">Reservation</div>
-				<div class="pln-facts-row" style="margin-bottom: 12px">
-					<div class="pln-fact"><span class="kt-label">Target</span><span class="pln-fact-val">{{ task.reservation?.target_percent ? `${task.reservation.target_percent}%` : "Not mandatory" }}</span></div>
-					<div class="pln-fact"><span class="kt-label">Required allocation</span><span class="pln-fact-val">{{ task.reservation?.required_allocation_display }}</span></div>
-					<div class="pln-fact"><span class="kt-label">Planned qualifying allocation</span><span class="pln-fact-val">{{ task.reservation?.planned_qualifying_display }}</span></div>
-					<div class="pln-fact"><span class="kt-label">Shortfall</span><span class="pln-fact-val">{{ task.reservation?.shortfall_display || "KES 0" }}</span></div>
-					<div class="pln-fact"><span class="kt-label">Share of annual budget</span><span class="pln-fact-val">{{ task.reservation?.share_of_annual_display }}</span></div>
-				</div>
-				<div class="pln-facts-row" style="margin-bottom: 12px">
-					<div class="pln-fact"><span class="kt-label">Budget basis</span><span class="pln-fact-val">{{ task.reservation?.budget_basis_reference }}</span></div>
-					<div class="pln-fact"><span class="kt-label">Budget Version</span><span class="pln-fact-val">{{ task.reservation?.budget_version_display }}</span></div>
-					<div class="pln-fact"><span class="kt-label">County requirement</span><span class="pln-fact-val">{{ task.reservation?.county_requirement_display }}</span></div>
-				</div>
-				<span class="kt-status" :class="task.reservation?.met ? 'is-live' : 'is-pending'">{{ task.reservation?.met ? "Required allocation met" : "Required allocation not met" }}</span>
-			</div>
-		</section>
-
-		<section id="rvw-changes" class="pln-review-section">
-			<div class="kt-card kt-blueprint pln-card-pad" data-testid="rvw-changes">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-card-title">Changes</div>
-				<template v-if="task.changes?.is_initial ?? true">
-					<p style="font-weight: 600; margin: 0 0 4px">No earlier Version</p>
-					<p style="margin: 0">This is the first Version of the Annual Plan.</p>
-				</template>
-				<template v-else>
-					<table class="pln-table" style="margin-bottom: 12px">
-						<thead><tr><th>Field</th><th>Change reason</th></tr></thead>
-						<tbody><tr><td>Procurement description</td><td>{{ task.changes.change_reason || "—" }}</td></tr></tbody>
-					</table>
-					<div class="pln-facts-row">
-						<div class="pln-fact"><span class="kt-label">Source set</span><span class="pln-fact-val">{{ task.changes.source_set_changed ? "Changed" : "Unchanged" }}</span></div>
-						<div class="pln-fact"><span class="kt-label">Quantities</span><span class="pln-fact-val">{{ task.changes.quantities_changed ? "Changed" : "Unchanged" }}</span></div>
-						<div class="pln-fact"><span class="kt-label">Value</span><span class="pln-fact-val">{{ task.changes.value_changed ? "Changed" : "Unchanged" }}</span></div>
-					</div>
-				</template>
-			</div>
-		</section>
-
-		<section id="rvw-decisions" class="pln-review-section">
-			<GovernanceHistory :history="task.history || []" />
-
-			<div v-if="task.authority_card" class="kt-card kt-blueprint pln-card-pad" data-testid="rvw-authority" style="margin-top: 16px">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="pln-field-grid">
-					<div class="pln-ro-field">
-						<label>{{ task.authority_card.is_board ? "Governing body" : "Capacity" }}</label>
-						<div class="pln-val">{{ task.authority_card.is_board ? task.authority_card.capacity_detail || task.authority_card.capacity : task.authority_card.capacity }}</div>
-					</div>
-					<div v-if="task.authority_card.is_board" class="pln-ro-field">
-						<label>Required capacity</label>
-						<div class="pln-val">Authorised Council decision recorder</div>
-					</div>
-					<div v-else class="pln-ro-field">
-						<label>Accounting Officer adoption</label>
-						<div class="pln-val">{{ task.authority_card.ao_adoption_line }}</div>
-					</div>
-				</div>
-			</div>
-
-			<div v-if="task.decision_statement" class="pln-cert-box" data-testid="rvw-statement" style="margin-top: 16px">
-				<p>{{ task.decision_statement }}</p>
-			</div>
-
-			<div v-if="task.authority_card?.is_board && task.can_decide" class="pln-field" style="max-width: 320px; margin-top: 12px" data-testid="rvw-resolution-field">
-				<label for="rvw-resolution">Resolution reference</label>
-				<input id="rvw-resolution" type="text" class="kt-input" data-testid="rvw-resolution" v-model="resolutionReference" />
-			</div>
-
-			<div v-if="task.can_decide" class="pln-footer-bar">
-				<button
-					type="button" class="kt-btn kt-btn-secondary" data-testid="rvw-return"
-					:disabled="pending" @click="$emit('open-return-dialog')"
-				>Return for correction</button>
-				<button
-					type="button" class="kt-btn kt-btn-primary" data-testid="rvw-confirm"
-					:disabled="pending || !task.can_decide_positive || (task.authority_card?.is_board && !resolutionReference.trim())"
-					@click="$emit('confirm', resolutionReference.trim())"
-				>{{ task.confirm_label }}</button>
-			</div>
-		</section>
+		</details>
 	</div>
 </template>
 
 <script setup>
 import { computed, ref } from "vue";
-import GovernanceHistory from "./GovernanceHistory.vue";
-import { reviewPackDownloadUrl } from "../data/planningApi.js";
 
 const props = defineProps({
 	task: { type: Object, default: () => ({}) },
+	resolution: { type: String, default: "" },
+	lateReason: { type: String, default: "" },
 	pending: Boolean,
 	errorSummary: String,
 });
 
-defineEmits(["confirm", "open-return-dialog", "navigate", "open-source"]);
+defineEmits([
+	"confirm",
+	"open-return-dialog",
+	"back",
+	"download-pack",
+	"view-evidence",
+	"update:resolution",
+	"update:lateReason",
+]);
 
-const resolutionReference = ref("");
-const activeSection = ref("rvw-items");
+const open = ref([]);
 
-const SECTIONS = [
-	{ id: "rvw-items", label: "Plan Items" },
-	{ id: "rvw-sources", label: "Sources" },
-	{ id: "rvw-funding", label: "Funding" },
-	{ id: "rvw-method", label: "Method and schedule" },
-	{ id: "rvw-reservations", label: "Reservations" },
-	{ id: "rvw-changes", label: "Changes" },
-	{ id: "rvw-decisions", label: "Decisions" },
-];
+const summary = computed(() => props.task.decision_summary || {});
+const issues = computed(() => summary.value.issues || []);
+const items = computed(() => props.task.items || []);
+const funding = computed(() => props.task.funding || {});
+const reservation = computed(() => props.task.reservation || {});
+const history = computed(() => props.task.history || []);
+const authority = computed(() => props.task.authority_card || {});
+const signature = computed(() => props.task.preparation_signature);
 
-const PERIOD_LABELS = {
-	tendering_period_days: "Tendering",
-	evaluation_period_days: "Evaluation",
-	award_approval_buffer_days: "Award approval buffer",
-	notification_buffer_days: "Notification buffer",
-	standstill_period_days: "Standstill",
+const stageLabel = computed(() => {
+	if (props.task.stage === "Accounting Officer adoption") return "Awaiting Accounting Officer";
+	if (props.task.stage === "Statutory approval") return `Awaiting ${authority.value.capacity_detail || "statutory authority"}`;
+	return props.task.stage || "";
+});
+
+const fundingLine = computed(() => {
+	const at = funding.value.at_approval || {};
+	if (!at.actor_name) return "Not yet checked";
+	return `Within each approved budget line · Checked by ${at.actor_name} · ${at.decided_at_display}`;
+});
+
+// Only these four things differ between actors. The document does not.
+const ACTORS = {
+	"Head of Procurement Function": {
+		title: "Review and submit the annual procurement plan",
+		description: "Review the complete plan before sending it to the Accounting Officer.",
+		statement: "I confirm that this complete annual procurement plan is ready for Accounting Officer adoption.",
+		confirm: "Sign and submit Annual Plan",
+		secondary: "Back to annual plan",
+		secondary_is_return: false,
+	},
+	"Accounting Officer adoption": {
+		title: "Review the annual procurement plan",
+		description: "Review the proposed purchases. If you adopt the plan, it will go to the configured approving authority.",
+		statement: "By selecting Adopt and submit, you adopt the complete plan shown here and send it for approval.",
+		confirm: "Adopt and submit",
+		secondary: "Return for correction",
+		secondary_is_return: true,
+	},
+	"Statutory approval": {
+		title: "Approve the annual procurement plan",
+		description: "Review the plan adopted by the Accounting Officer.",
+		statement: "By selecting Approve Annual Procurement Plan, you approve the complete plan shown here. Publication and activation checks must still be completed.",
+		confirm: "Approve Annual Procurement Plan",
+		secondary: "Return for correction",
+		secondary_is_return: true,
+	},
 };
 
-const badgeClass = computed(() => (props.task.header?.badge === "Active" ? "is-live" : "is-pending"));
+const COLLECTIVE = {
+	title: "Record the decision",
+	description: "Record the decision the body actually took on this plan.",
+	statement: "Record approval only if the body approved this plan.",
+	confirm: "Record approval",
+	secondary: "Record return for correction",
+	secondary_is_return: true,
+};
 
-const reviewPackUrl = computed(() => (props.task.task ? reviewPackDownloadUrl(props.task.task) : ""));
+const actor = computed(() => {
+	if (props.task.stage === "Statutory approval" && authority.value.is_board) {
+		return { ...COLLECTIVE, title: `Record the ${authority.value.capacity_detail}'s decision` };
+	}
+	return ACTORS[props.task.stage] || ACTORS["Accounting Officer adoption"];
+});
 
-function scrollTo(id) {
-	activeSection.value = id;
-	const el = document.getElementById(id);
-	if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+function toggle(planItemId) {
+	open.value = open.value.includes(planItemId)
+		? open.value.filter((id) => id !== planItemId)
+		: [...open.value, planItemId];
 }
 </script>

@@ -290,12 +290,17 @@
 				<template v-else-if="screen === 'governance'">
 					<ReviewScreen
 						:task="governanceTask"
+						:resolution="collectiveResolution"
+						:late-reason="lateReason"
 						:pending="pending"
 						:error-summary="errorSummary"
 						@confirm="onGovernanceConfirm"
 						@open-return-dialog="governanceReturnDialog = true"
-						@navigate="onNavigate"
-						@open-source="onOpenSource"
+						@back="frappe.set_route(PLAN_PAGE, governanceTask.plan_reference || '')"
+						@download-pack="onDownloadReviewPack"
+						@view-evidence="onOpenSource"
+						@update:resolution="collectiveResolution = $event"
+						@update:late-reason="lateReason = $event"
 					/>
 					<ReturnPlanDialog
 						v-if="governanceReturnDialog"
@@ -332,6 +337,12 @@ import FormPlanItemsDialog from "./components/FormPlanItemsDialog.vue";
 import ReasonDialog from "./components/ReasonDialog.vue";
 import CancelUpdateDialog from "./components/CancelUpdateDialog.vue";
 import DissolveItemDialog from "./components/DissolveItemDialog.vue";
+// U11/U12. These three were used in the template but never imported, so the
+// governance review has never actually rendered — the v1.18 cycle stopped
+// before this slice.
+import ReviewScreen from "./components/ReviewScreen.vue";
+import ReturnPlanDialog from "./components/ReturnPlanDialog.vue";
+import SourceEvidenceScreen from "./components/SourceEvidenceScreen.vue";
 import ActivePlanScreen from "./components/ActivePlanScreen.vue";
 import ShiftScheduleDialog from "./components/ShiftScheduleDialog.vue";
 import PublicationResultScreen from "./components/PublicationResultScreen.vue";
@@ -382,6 +393,10 @@ const formDialog = ref(false);
 const selectedSources = ref([]);
 const cancelUpdateDialog = ref(false);
 const dissolveDialog = ref(false);
+// §10.10 — a collective body's resolution reference, and the AO's late-start
+// explanation, are inputs to the decision itself rather than separate dialogs.
+const collectiveResolution = ref("");
+const lateReason = ref("");
 const cancelUpdateReason = ref("");
 const splittingDialog = ref(false);
 const lateActivationDialog = ref(false);
@@ -579,6 +594,8 @@ function applyLoaded(scr, loaded) {
 			break;
 		case "governance":
 			governanceTask.value = loaded;
+			collectiveResolution.value = "";
+			lateReason.value = "";
 			governanceReturnDialog.value = false;
 			break;
 		case "publication":
@@ -1123,23 +1140,37 @@ async function onBeginUpdate() {
 	if (result) await load({ quiet: true });
 }
 
-async function onGovernanceConfirm(resolutionReference) {
+async function onGovernanceConfirm() {
 	const command = governanceTask.value.stage === "Accounting Officer adoption" ? "adopt" : "approve";
 	const result = await run(command, (key) =>
 		command === "adopt"
 			? api.adoptAndSubmitPlan({
 					task: governanceTask.value.task,
 					task_token: governanceTask.value.task_token,
+					// §10.10 U11-LATE-ADOPTION — the AO's own explanation, given
+					// on the review rather than in a separate dialog.
+					late_activation_reason: lateReason.value || undefined,
 					idempotency_key: key,
 				})
 			: api.approveAnnualPlan({
 					task: governanceTask.value.task,
 					task_token: governanceTask.value.task_token,
-					resolution_reference: resolutionReference,
+					// Required only for a collective body; the server checks it.
+					resolution_reference: collectiveResolution.value || undefined,
 					idempotency_key: key,
 				})
 	);
 	if (result) frappe.set_route(WORKSPACE_PAGE);
+}
+
+function onDownloadReviewPack() {
+	// §11.1 — the exact authorised reviewed snapshot, and never a
+	// prerequisite to deciding.
+	window.open(
+		`/api/method/kentender_procurement.procurement_planning.api.download_review_pack`
+		+ `?task=${encodeURIComponent(governanceTask.value.task || "")}`,
+		"_blank",
+	);
 }
 
 async function onGovernanceReturn(reason) {

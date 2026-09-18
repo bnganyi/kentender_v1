@@ -1348,6 +1348,40 @@ def _governance_method_and_schedule(version, user: str | None) -> list[dict[str,
 _GOVERNANCE_STAGE_OUTCOME = {"Adopt and submit": "Adopted and submitted", "Approve": "Approved", "Return for correction": "Returned"}
 
 
+def _governance_schedule_result(version, plan) -> str:
+	report = plan_readiness(version, plan, stage="submission")
+	failing = [
+		b for b in report["blockers"]
+		if b["code"] in ("PLN_SCHEDULE_INVALID", "PLN_DELIVERY_BOUNDARY_INSUFFICIENT", "PLN_DELIVERY_PERIOD_REQUIRED")
+	]
+	if not failing:
+		return "All purchases meet departmental deadlines"
+	return f"{len(failing)} purchase{'s do' if len(failing) != 1 else ' does'} not meet its departmental deadline"
+
+
+def _governance_issues(version, plan, *, funding_current: bool, share) -> list[str]:
+	"""Every material issue, in the actor's words, before their decision.
+
+	§10.10: the decision never precedes a hidden material issue. An empty list
+	means the screen says "No blocking issues" — which it may only do when
+	there genuinely are none.
+	"""
+	issues: list[str] = []
+	if not funding_current:
+		issues.append(
+			"The budget has changed since Finance checked this plan. "
+			"Procurement must obtain a new funding check before this plan can be adopted."
+		)
+	if share["mandatory"] and not share["met"]:
+		issues.append(f"Reserved procurement is below the required amount by {_money(share['shortfall'])}.")
+	report = plan_readiness(version, plan, stage="submission")
+	for blocker in report["blockers"]:
+		message = cstr(blocker.get("message"))
+		if message and message not in issues:
+			issues.append(message)
+	return issues
+
+
 def _governance_history(version) -> list[dict[str, Any]]:
 	"""U11-decisions — every completed review in order (Finance,
 	Preparation, Accounting Officer adoption, Statutory approval), plus
@@ -1405,6 +1439,24 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 	snapshot = json.loads(version.submitted_snapshot) if version.submitted_snapshot else {}
 	rows = snapshot.get("rows", snapshot if isinstance(snapshot, list) else [])
 	total_value = sum(flt(row.get("value")) for row in rows)
+	for row in rows:
+		# The purpose comes from the sources, not from a separate field: it is
+		# what the department said the requirement is for.
+		row.setdefault(
+			"purpose",
+			cstr(
+				frappe.db.get_value(
+					"Departmental Plan Entry",
+					frappe.db.get_value(
+						"Plan Source Allocation",
+						{"plan_item_id": row.get("plan_item_id"), "allocation_state": ("!=", "Released")},
+						"dpp_entry",
+					),
+					"expected_operational_result",
+				)
+				or ""
+			),
+		)
 	authority_card = None
 	if task_doc.stage == "Statutory approval":
 		ao_decision = frappe.db.get_value("Plan Governance Task", {"plan_version": version.name, "stage": "Accounting Officer adoption"}, "decision")
@@ -1439,6 +1491,22 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 		"task_token": task_doc.task_token,
 		"status": task_doc.status,
 		"stage": task_doc.stage,
+		# §10.10 — the decision summary every governance actor sees first.
+		# Three figures, three results, then either "No blocking issues" or
+		# the exact issues. The actor must not have to assemble this.
+		"decision_summary": {
+			"value_display": _money(total_value),
+			"purchases": len(rows),
+			"departments": len({r["department"] for r in rows if r.get("department")}),
+			"funding": "Within approved budget" if funding_current else "Funding needs to be checked again",
+			"funding_kind": "live" if funding_current else "critical",
+			"reservation": "Required allocation met" if share["met"] or not share["mandatory"] else (
+				f"{_money(share['shortfall'])} more qualifying allocation required"
+			),
+			"reservation_kind": "live" if (share["met"] or not share["mandatory"]) else "critical",
+			"schedule": _governance_schedule_result(version, plan),
+			"issues": _governance_issues(version, plan, funding_current=funding_current, share=share),
+		},
 		"can_decide": can_decide,
 		"plan_reference": plan.plan_reference,
 		"version_number": version.version_number,
