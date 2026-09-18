@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { login } from "../../helpers/auth";
-import { LandmarkExemption, expectLandmarkSubsequence, landmarks, openPanel, variantScope } from "../../helpers/designFidelity";
+import { LandmarkExemption, expectLandmarkSubsequence, landmarks, onceEach, openPanel, variantScope } from "../../helpers/designFidelity";
 import {
 	ACCOUNTING_OFFICER,
 	AUTHOR,
@@ -241,7 +241,13 @@ test.describe("Procurement Planning — design fidelity (U06 validation)", () =>
 		// The artboard's base state has the requirement type chosen, which is
 		// what makes the acceptance available: the control is absent until the
 		// evidence supports it, not disabled (§10.5).
-		await page.locator('[data-testid="pln-review-type"]').first().selectOption({ index: 1 });
+		// Acceptance needs every requirement classified, and this submission
+		// carries two (a Need-origin row and a direct one) — classifying only
+		// the first leaves it correctly blocked.
+		const types = page.locator('[data-testid="pln-review-type"]');
+		for (let i = 0; i < (await types.count()); i += 1) {
+			await types.nth(i).selectOption({ index: 1 });
+		}
 		await expect(page.locator('[data-testid="pln-review-accept"]')).toBeVisible();
 		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U06");
 		expect(errors, "console errors").toEqual([]);
@@ -292,16 +298,26 @@ test.describe("Procurement Planning — design fidelity (U07 annual plan, U08 fo
 	});
 
 	test("U08-COMBINE — the selected requirements, the choice and what it produces", async ({ page, browser }) => {
-		const state = resetFixture<{ plan_reference: string }>("reset_workbench_fixture");
+		// The choice between keeping requirements separate and combining them
+		// only exists with more than one selected, which is what the artboard
+		// draws — so this variant needs a world with two unallocated sources.
+		const state = resetFixture<{ plan_reference: string }>("reset_combinable_sources_fixture");
 		const art = await wanted(browser, U08, "U08-COMBINE (base)");
 		const errors = collectConsoleErrors(page);
 		await login(page, PLANNER, PASSWORD);
 		await page.setViewportSize({ width: 1440, height: 1024 });
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`);
 		await expectReady(page, "plan");
-		await tickCheckbox(page.locator('[data-testid="ppl-select-source"]').first());
+		const sources = page.locator('[data-testid="ppl-select-source"]');
+		await expect(sources).toHaveCount(2);
+		await tickCheckbox(sources.nth(0));
+		await tickCheckbox(sources.nth(1));
 		await page.locator('[data-testid="ppl-add-selected"]').click();
 		await expect(page.locator('[data-testid="pln-form-dialog"]')).toBeVisible();
+		// The dialog opens on Keep separate; this panel is the combined choice,
+		// and the reason it asks for only exists once that choice is made.
+		await page.locator('[data-testid="pln-form-mode-combined"]').check();
+		await expect(page.locator('[data-testid="pln-form-reason"]')).toBeVisible();
 		expectLandmarkSubsequence(art, await landmarks(page, '[data-testid="pln-form-dialog"]'), "U08-COMBINE");
 		expect(errors, "console errors").toEqual([]);
 	});
@@ -348,7 +364,7 @@ test.describe("Procurement Planning — design fidelity (U11 governance, U12 evi
 		await login(page, ACCOUNTING_OFFICER, PASSWORD);
 		await gotoPlanning(page, `/review/${state.task}`);
 		await expectReady(page, "governance");
-		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U11-AO", U11_DECISION_TABLE);
+		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U11-AO");
 		expect(errors, "console errors").toEqual([]);
 	});
 
@@ -370,6 +386,10 @@ test.describe("Procurement Planning — design fidelity (U11 governance, U12 evi
 		await login(page, ACCOUNTING_OFFICER, PASSWORD);
 		await gotoPlanning(page, `/review/${state.task}`);
 		await expectReady(page, "governance");
+		// §10.10 — no purchase starts expanded, and the source evidence links
+		// live in the one level of detail Review purchase opens.
+		await page.locator('[data-testid="rev-review-purchase"]').first().click();
+		await expect(page.locator('[data-testid="rev-purchase-detail"]').first()).toBeVisible();
 		await page.locator('[data-testid="rev-view-evidence"]').first().click();
 		await expectReady(page, "governance-source");
 		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U12");
@@ -426,7 +446,11 @@ test.describe("Procurement Planning — design fidelity (U14 progress, U16 corre
 		await page.setViewportSize({ width: 1440, height: 1024 });
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}/progress`);
 		await expectReady(page, "progress");
-		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U14", U14_EXECUTION_COLUMNS);
+		// The artboard draws one card per purchase in §10.2's fixture, which has
+		// two; this world has one. How many purchases a world holds is fixture
+		// content, and this gate never compares fixture content — so the card's
+		// own structure is compared once.
+		expectLandmarkSubsequence(onceEach(art), await landmarks(page, LIVE), "U14", U14_EXECUTION_COLUMNS);
 		// PLN22-AC-009 — the absence is the acceptance criterion.
 		await expect(page.locator(LIVE)).not.toContainText("Completion");
 		await expect(page.locator(LIVE)).not.toContainText("Forecast");

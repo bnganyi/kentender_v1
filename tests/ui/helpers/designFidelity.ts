@@ -92,6 +92,19 @@ export async function landmarks(page: Page, scope: string): Promise<string[]> {
  * page is missing or has out of order.
  */
 /**
+ * An artboard draws one card, row or block per entry in its own fixture; how
+ * many entries a live world holds is fixture content, which this gate never
+ * compares. `onceEach` keeps the first occurrence of each landmark so the
+ * repeated structure is still compared in full, exactly once. Use it only
+ * where the repetition is a fixture's row count, never to excuse a landmark
+ * the live page genuinely lacks.
+ */
+export function onceEach(wanted: string[]): string[] {
+	const seen = new Set<string>();
+	return wanted.filter((landmark) => (seen.has(landmark) ? false : (seen.add(landmark), true)));
+}
+
+/**
  * A landmark an artboard still draws but the specification has since replaced.
  * The gate excuses it and says why, rather than either failing on a gap that is
  * not a defect or dropping the panel from the gate altogether. An exemption

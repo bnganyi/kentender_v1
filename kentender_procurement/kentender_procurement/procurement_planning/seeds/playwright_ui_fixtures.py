@@ -672,6 +672,40 @@ def reset_combined_item_fixture(*, needs: list[str] | str = "", commit: bool = T
 	return {**world, "dpp_reference": opened["dpp_reference"], "plan_reference": accepted["annual_plan"], "plan_version": accepted["annual_plan_version"], "plan_item_id": items[0]}
 
 
+def reset_combinable_sources_fixture(*, needs: list[str] | str = "", commit: bool = True) -> dict[str, Any]:
+	"""§10.7 U08-COMBINE: the same two accepted Needs as the combined fixture,
+	left unallocated. The formation dialog only offers the choice between
+	keeping requirements separate and combining them when more than one is
+	selected, so a one-source world can never reach the variant."""
+	from kentender_procurement.procurement_planning.services import dpp_lifecycle
+
+	if isinstance(needs, str):
+		needs = json.loads(needs) if needs else []
+	if len(needs) != 2:
+		frappe.throw("The combinable fixture needs exactly two accepted Needs from NDS's fixture module (`needs=`).")
+	world = _reset(commit=False)
+	opened = _open_dpp()
+	record_version = opened["record_version"]
+	entries = []
+	for need, amount in ((needs[0], 48000000), (needs[1], 72000000)):
+		entry = _need_entry(opened["current_version"], need)
+		with _as(AUTHOR):
+			saved = dpp_lifecycle.save_need_funding(
+				dpp_version=opened["current_version"], entry_id=entry.entry_id, budget_line=BUDGET_LINE, indicative_amount=amount,
+				expected_record_version=record_version, idempotency_key=_key(),
+			)
+		record_version = saved["record_version"]
+		entries.append(entry)
+	task = _submit(opened["current_version"], record_version)
+	accepted = _accept({"task": task}, {e.entry_id: "Goods" for e in entries})
+	if commit:
+		frappe.db.commit()
+	return {
+		**world, "dpp_reference": opened["dpp_reference"],
+		"plan_reference": accepted["annual_plan"], "plan_version": accepted["annual_plan_version"],
+	}
+
+
 # --- Slice C journeys (Finance confirmation, governance decisions) ------------
 
 ITEM_VALUES = {

@@ -132,7 +132,7 @@ export function resetFixture<T = Record<string, unknown>>(fn: string, kwargs: Re
 	if (NEED_BACKED.has(fn)) {
 		ensureWorld();
 		args.need = acceptedNeeds([NEED_CONTENT])[0];
-	} else if (fn === "reset_combined_item_fixture") {
+	} else if (fn === "reset_combined_item_fixture" || fn === "reset_combinable_sources_fixture") {
 		ensureWorld();
 		args.needs = acceptedNeeds(COMBINED_NEEDS);
 	}
