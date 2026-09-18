@@ -162,7 +162,7 @@ test.describe("PLN18-305 Plan Item editor", () => {
 			await route.fulfill({ response });
 		});
 
-		const titleField = page.locator('[data-testid="ppi-title"]');
+		const titleField = page.locator('[data-testid="ppi-title-input"]');
 		const save = page.locator('[data-testid="ppi-save"]');
 		const pageTitle = page.locator(".kt-page-title");
 
