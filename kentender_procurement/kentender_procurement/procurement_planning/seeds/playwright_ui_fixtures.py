@@ -33,6 +33,7 @@ from typing import Any
 from uuid import uuid4
 
 import frappe
+from frappe.utils import cstr
 from frappe.utils.password import update_password
 
 from kentender_core.seeds.constants import TEST_PASSWORD
@@ -46,6 +47,9 @@ FY = "2098-2099"
 FY_LABEL = "FY 2098/99"
 INTAKE_CLOSES_AT = "2099-05-31 20:59:59"  # 31 May 2099, 23:59 EAT — pinned
 PREVIOUS_FLAGS_KEY = "kt_pln_playwright_previous_flags"
+#: §13.3 Collective authority — the statutory route is one site-wide value,
+#: so a Council profile must put back whatever the site had before.
+PREVIOUS_ROUTE_KEY = "kt_pln_playwright_previous_statutory_route"
 
 OU_NAME = "Playwright — Procurement Planning"
 OUTSIDER_OU_NAME = "Playwright — Planning Outsider"
@@ -241,8 +245,15 @@ def restore_site(*, commit: bool = True) -> dict[str, Any]:
 	_wipe()
 	purge_profiles()
 	_clear_context_preferences()
+	previous_route = frappe.defaults.get_global_default(PREVIOUS_ROUTE_KEY)
+	if previous_route:
+		# §13.3's collective profile moved one site-wide value; put it back
+		# before anything else reads it.
+		frappe.db.set_single_value("Site Procuring Entity", "statutory_approval_route", previous_route)
+		frappe.defaults.clear_default(PREVIOUS_ROUTE_KEY)
+		frappe.clear_cache()
 	raw = frappe.defaults.get_global_default(PREVIOUS_FLAGS_KEY)
-	restored = {"dpp": [], "needs": []}
+	restored = {"dpp": [], "needs": [], "statutory_route": previous_route or ""}
 	if raw:
 		previous = json.loads(raw)
 		for year in previous.get("dpp", []):
@@ -853,6 +864,30 @@ def reset_statutory_fixture(*, need: str = "", commit: bool = True) -> dict[str,
 	return {**state, "ao_task": state["task"], "task": adopted["statutory_task"]}
 
 
+def reset_collective_fixture(*, need: str = "", route: str = "Council", commit: bool = True) -> dict[str, Any]:
+	"""§13.3 Collective authority — the same adopted Plan awaiting a body that
+	decides collectively rather than one Cabinet Secretary.
+
+	An isolated presentation profile, not a mutation of the shared world: the
+	route is a single site-wide value, so the previous one is saved and
+	`restore_site` puts it back. The Playwright statutory actor records the
+	body's resolution; §13.3 forbids dressing the Ministry's own Cabinet
+	Secretary up as a Council, and this world has no such actor to dress."""
+	from kentender_procurement.procurement_planning.services import plan_governance
+
+	if route not in plan_governance.COLLECTIVE_ROUTES:
+		frappe.throw(f"{route!r} is not a collective route; expected one of {sorted(plan_governance.COLLECTIVE_ROUTES)}.")
+	previous = cstr(frappe.db.get_single_value("Site Procuring Entity", "statutory_approval_route"))
+	if previous and not frappe.defaults.get_global_default(PREVIOUS_ROUTE_KEY):
+		frappe.defaults.set_global_default(PREVIOUS_ROUTE_KEY, previous)
+	frappe.db.set_single_value("Site Procuring Entity", "statutory_approval_route", route)
+	frappe.clear_cache()
+	state = reset_statutory_fixture(need=need, commit=False)
+	if commit:
+		frappe.db.commit()
+	return {**state, "statutory_route": route, "previous_route": previous}
+
+
 # --- Slice D journeys (Active plan, cascade, publication) ---------------------
 
 
@@ -968,6 +1003,26 @@ def reset_finance_reassessment_fixture(*, need: str = "", commit: bool = True) -
 	if commit:
 		frappe.db.commit()
 	return {**state, "task": task}
+
+
+def reset_publication_unknown_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""§13.3 Publication recovery — the transmission whose outcome never came
+	back. §10.12 keeps this distinct from failure: an unknown result is not a
+	failure, offers reconciliation rather than a blind retry, and must never
+	be presented as either success or defeat."""
+	from kentender_procurement.procurement_planning.services import publication_pipeline
+
+	state = reset_statutory_fixture(need=need, commit=False)
+	approved = _approve(state)
+	_record_treasury(state["plan_version"])
+	destination = frappe.get_doc("Plan Publication", approved["publication"]).destination
+	frappe.db.set_value("Annual Plan Publication Destination", destination, "sandbox_outcome", "Indeterminate")
+	with _as("Administrator"):
+		publication_pipeline.publish_annual_plan(plan_version=state["plan_version"], idempotency_key=_key())
+	frappe.db.set_value("Annual Plan Publication Destination", destination, "sandbox_outcome", "Acknowledge")
+	if commit:
+		frappe.db.commit()
+	return {**state, "publication": approved["publication"]}
 
 
 def reset_publication_failed_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:

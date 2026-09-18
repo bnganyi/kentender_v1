@@ -67,6 +67,7 @@ const NEED_BACKED = new Set([
 	"reset_dpp_fixture", "reset_review_fixture", "reset_accepted_fixture", "reset_workbench_fixture",
 	"reset_plan_item_fixture", "reset_finance_fixture", "reset_governance_fixture", "reset_statutory_fixture",
 	"reset_approved_fixture", "reset_active_fixture", "reset_publication_failed_fixture", "reset_update_candidate_fixture",
+	"reset_collective_fixture", "reset_publication_unknown_fixture",
 	"reset_ready_for_funding_fixture", "reset_item_config_missing_fixture", "reset_item_lots_fixture",
 	"reset_item_direct_procurement_fixture", "reset_item_feasibility_fail_fixture",
 	"reset_finance_reassessment_fixture",

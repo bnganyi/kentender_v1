@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { login } from "../../helpers/auth";
+import { login, loginAsAdministrator } from "../../helpers/auth";
 import { LandmarkExemption, expectLandmarkSubsequence, landmarks, onceEach, openPanel, variantScope } from "../../helpers/designFidelity";
 import {
 	ACCOUNTING_OFFICER,
@@ -87,6 +87,7 @@ const U14_EXECUTION_COLUMNS: LandmarkExemption[] = [
 // U13 draws three withdrawal/correction variants side by side under one label;
 // `variantScope` picks the one wanted by its `.tag`.
 const WITHDRAWAL_PANEL = "U13-WITHDRAWAL-REQUEST \u00b7 U13-WITHDRAWN \u00b7 U13-CORRECT-EVIDENCE";
+const TRANSMISSION_PANEL = "U13-SENDING \u00b7 U13-FAILED \u00b7 U13-UNKNOWN";
 
 // Sequential, but not serial: the gate runs on one worker because the fixtures
 // are one shared world, and each panel is an independent assertion about an
@@ -379,6 +380,22 @@ test.describe("Procurement Planning — design fidelity (U11 governance, U12 evi
 		expect(errors, "console errors").toEqual([]);
 	});
 
+	test("U11-COLLECTIVE — the body decides, the recorder records", async ({ page, browser }) => {
+		// §13.3's isolated collective profile: one site-wide route, put back by
+		// restore_site. The decision belongs to the Council; the actor only
+		// records it, and must supply the resolution it was taken under.
+		const state = resetFixture<{ task: string }>("reset_collective_fixture");
+		const art = await wanted(browser, U11, "U11-COLLECTIVE");
+		const errors = collectConsoleErrors(page);
+		await login(page, STATUTORY, PASSWORD);
+		await gotoPlanning(page, `/review/${state.task}`);
+		await expectReady(page, "governance");
+		await expect(page.locator('[data-testid="rev-collective"]')).toBeVisible();
+		await expect(page.locator('[data-testid="rev-resolution"]')).toBeVisible();
+		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U11-COLLECTIVE");
+		expect(errors, "console errors").toEqual([]);
+	});
+
 	test("U12 — the exact departmental requirement behind one reviewed source", async ({ page, browser }) => {
 		const state = resetFixture<{ task: string }>("reset_governance_fixture");
 		const art = await wanted(browser, U12, "U12 — Pinned source (base)");
@@ -418,6 +435,31 @@ test.describe("Procurement Planning — design fidelity (U13 publication)", () =
 		await page.locator('[data-testid="pub-record-treasury"]').click();
 		await expect(page.locator('[data-testid="pub-treasury-dialog"]')).toBeVisible();
 		expectLandmarkSubsequence(art, await landmarks(page, '[data-testid="pub-treasury-dialog"]'), "U13-TREASURY-FORM");
+		expect(errors, "console errors").toEqual([]);
+	});
+
+	test("U13-UNKNOWN — an unconfirmed result is neither success nor failure", async ({ page, browser }) => {
+		const state = resetFixture<{ publication: string }>("reset_publication_unknown_fixture");
+		const art = await wanted(browser, U13, TRANSMISSION_PANEL, "U13-UNKNOWN");
+		const errors = collectConsoleErrors(page);
+		// §10.12 — reconciling an unknown result is the technical operator's,
+		// and a technical read alone never creates retry authority, so the
+		// panel this artboard draws is theirs.
+		await loginAsAdministrator(page);
+		await gotoPlanning(page, `/publication/${state.publication}`);
+		await expectReady(page, "publication");
+		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U13-UNKNOWN");
+		// Reconciliation, never a blind retry, and never shown as failure.
+		await expect(page.locator('[data-testid="pub-retry"]')).toHaveCount(0);
+		await expect(page.locator(LIVE)).not.toContainText("The plan was not published");
+
+		// The Accounting Officer reads the same unknown result and is offered
+		// no recovery of any kind.
+		await login(page, ACCOUNTING_OFFICER, PASSWORD);
+		await gotoPlanning(page, `/publication/${state.publication}`);
+		await expectReady(page, "publication");
+		await expect(page.locator('[data-testid="pub-retry"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="pub-reconcile"]')).toHaveCount(0);
 		expect(errors, "console errors").toEqual([]);
 	});
 
