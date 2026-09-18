@@ -35,49 +35,47 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		await expectReady(page, "governance");
 
 		// PLN-DES-11 exact composition from the immutable snapshot
-		await expect(page.locator(".kt-page-kicker")).toContainText("ACCOUNTING OFFICER ADOPTION");
-		await expect(page.locator('[data-testid="pgt-badge"]')).toHaveText("Awaiting Accounting Officer");
-		await expect(page.locator('[data-testid="pgt-items"] thead th')).toHaveText([
-			"Plan Item", "Department", "Source origin", "Quantity", "Strategic Objective", "Method", "Reservation", "Value", "Completion", "Funding",
-		]);
-		const row = page.locator('[data-testid="pgt-items"] tbody tr');
+		await expect(page.locator('[data-testid="rev-context"]')).toContainText("Awaiting Accounting Officer");
+		const row = page.locator('[data-testid="rev-purchase-row"]');
 		await expect(row).toHaveCount(1);
 		await expect(row).toContainText("Digital health infrastructure package");
-		await expect(row).toContainText("Open Tender");
-		await expect(row.locator(".kt-status")).toHaveText("Within budget");
-		await expect(page.locator('[data-testid="pgt-caption"]')).toHaveText("1 Plan Item · KES 80,000,000");
-		await expect(page.locator('[data-testid="pgt-advisory-line"]')).toContainText("No contract splitting advisory.");
-		await expect(page.locator('[data-testid="pgt-statement"]')).toContainText("I adopt the complete consolidated Annual Procurement Plan Version 1");
-		await expect(page.locator('[data-testid="pgt-authority"]')).toHaveCount(0);
-		await page.locator('[data-testid="pgt-confirm"]').click();
+		await expect(page.locator('[data-testid="rev-caption"]')).toContainText("KES 80,000,000");
+		// §10.10 — the decision summary and the checks come before the
+		// decision; nothing is expanded, and no advisory has its own line.
+		await expect(page.locator('[data-testid="rev-summary"]')).toBeVisible();
+		await expect(page.locator('[data-testid="rev-plan-checks"]')).toBeVisible();
+		await expect(page.locator('[data-testid="rev-statement"]')).toContainText("I adopt the complete consolidated Annual Procurement Plan Version 1");
+		await expect(page.locator('[data-testid="rev-accountability"]')).toHaveCount(0);
+		await page.locator('[data-testid="rev-confirm"]').click();
 		await expectReady(page, "workspace");
 
 		// PLN-DES-12 — the statutory approver's own task
 		await login(page, STATUTORY, PASSWORD);
 		await gotoPlanning(page);
 		await expectReady(page, "workspace");
-		const action = page.locator('[data-testid="pln-action-row"]');
+		const action = page.locator('[data-testid="pln-action"]');
 		await expect(action.locator(".pln-ready-headline")).toHaveText("Approve the Annual Procurement Plan");
 		await action.locator("button").click();
 		await expectReady(page, "governance");
-		await expect(page.locator(".kt-page-kicker")).toContainText("STATUTORY APPROVAL");
-		await expect(page.locator('[data-testid="pgt-badge"]')).toHaveText("Awaiting statutory approval");
-		const authority = page.locator('[data-testid="pgt-authority"]');
-		await expect(authority.locator("label")).toHaveText(["Capacity", "Accounting Officer adoption"]);
+		await expect(page.locator('[data-testid="rev-context"]')).toContainText("Awaiting statutory approval");
+		const authority = page.locator('[data-testid="rev-accountability"]');
 		await expect(authority).toContainText("Cabinet Secretary");
 		await expect(authority).toContainText("Playwright Accounting Officer");
-		await expect(page.locator('[data-testid="pgt-statement"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="pgt-resolution"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="pgt-confirm"]')).toHaveText("Approve Annual Procurement Plan");
-		await page.locator('[data-testid="pgt-confirm"]').click();
+		await expect(page.locator('[data-testid="rev-statement"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="rev-resolution"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="rev-confirm"]')).toHaveText("Approve Annual Procurement Plan");
+		await page.locator('[data-testid="rev-confirm"]').click();
 		await expectReady(page, "workspace");
 
 		// approval published and activated the Plan (§5.2)
 		await login(page, PLANNER, PASSWORD);
 		await gotoPlanning(page);
 		await expectReady(page, "workspace");
-		await expect(page.locator('[data-testid="pln-plan-summary"]')).toHaveText("· Annual Plan · Active Version 1");
-		await expect(page.locator('[data-testid="pln-schedule-health"]')).toHaveText("· 0 of 1 item behind baseline");
+		// §10.3 — the plan in force is its own row, and it offers the progress
+		// of what has been procured against it.
+		const current = page.locator('[data-testid="pln-plan-row-current"]');
+		await expect(current).toContainText("Current plan");
+		await expect(page.locator('[data-testid="pln-plan-secondary-current"]')).toHaveText("View procurement progress");
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
@@ -86,14 +84,14 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		await login(page, ACCOUNTING_OFFICER, PASSWORD);
 		await gotoPlanning(page, `/review/${state.task}`);
 		await expectReady(page, "governance");
-		await page.locator('[data-testid="pgt-return"]').click();
-		const dialog = page.locator('[data-testid="pgt-return-dialog"]');
+		await page.locator('[data-testid="rev-secondary"]').click();
+		const dialog = page.locator('[data-testid="rvw-return-dialog"]');
 		await expect(dialog).toBeVisible();
 		await expect(dialog.locator(".kt-dialog-title")).toHaveText("Return Plan Version for correction?");
 		await expect(dialog).toContainText("The submitted Version 1 remains unchanged. State the correction required.");
-		const confirm = page.locator('[data-testid="pgt-return-confirm"]');
+		const confirm = page.locator('[data-testid="rvw-return-confirm"]');
 		await expect(confirm).toBeDisabled();
-		await page.locator('[data-testid="pgt-return-reason"]').fill("Confirm the planned contract-signing date against the delivery completion date.");
+		await page.locator('[data-testid="rvw-return-reason"]').fill("Confirm the planned contract-signing date against the delivery completion date.");
 		await expect(confirm).toBeEnabled();
 		await confirm.click();
 		await expectReady(page, "workspace");
@@ -101,10 +99,10 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		await login(page, PLANNER, PASSWORD);
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
-		await expect(page.locator(".pln-quiet-ref")).toContainText("Version 2");
-		await expect(page.locator('[data-testid="pln-plan-badge"]')).toHaveText("Draft");
-		await expect(page.locator('[data-testid="pln-plan-items"] tbody tr')).toHaveCount(1);
-		await expect(page.locator('[data-testid="pln-submit-consolidated"]')).toHaveText("Submit corrected Plan");
+		await expect(page.locator('[data-testid="ppl-context"]')).toContainText("Version 2");
+		await expect(page.locator('[data-testid="ppl-context"]')).toContainText("Draft");
+		await expect(page.locator('[data-testid="ppl-purchases"] tbody tr')).toHaveCount(1);
+		await expect(page.locator('[data-testid="ppl-sign-submit"]')).toHaveText("Submit corrected Plan");
 	});
 
 	test("the statutory return dialog carries its own copy", async ({ page }) => {
@@ -112,8 +110,8 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		await login(page, STATUTORY, PASSWORD);
 		await gotoPlanning(page, `/review/${state.task}`);
 		await expectReady(page, "governance");
-		await page.locator('[data-testid="pgt-return"]').click();
-		const dialog = page.locator('[data-testid="pgt-return-dialog"]');
+		await page.locator('[data-testid="rev-secondary"]').click();
+		const dialog = page.locator('[data-testid="rvw-return-dialog"]');
 		await expect(dialog.locator(".kt-dialog-title")).toHaveText("Return adopted Plan Version for correction?");
 		await expect(dialog).toContainText("The Accounting-Officer-adopted Version 1 remains unchanged. State the correction required.");
 		await expect(dialog.locator("label")).toHaveText(["Correction required"]);
@@ -125,8 +123,8 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		await login(page, PLANNER, PASSWORD);
 		await gotoPlanning(page, `/review/${state.task}`);
 		await expectReady(page, "governance");
-		await expect(page.locator('[data-testid="pgt-items"]')).toBeVisible();
-		await expect(page.locator('[data-testid="pgt-confirm"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="pgt-return"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="rev-purchases"]')).toBeVisible();
+		await expect(page.locator('[data-testid="rev-confirm"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="rev-secondary"]')).toHaveCount(0);
 	});
 });

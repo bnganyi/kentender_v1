@@ -193,7 +193,9 @@
 					</select>
 				</div>
 				<div>
-					<span class="kt-label">Category</span>
+					<!-- The label says where the value comes from: the Planner
+					     cannot set it, and a bare "Category" invites the attempt. -->
+					<span class="kt-label">Category (derived)</span>
 					<!-- Read-only, derived, never sent: §4.4. -->
 					<span class="kt-meta-value" data-testid="pln-review-category">{{ categoryFor(row.entry_id) }}</span>
 				</div>

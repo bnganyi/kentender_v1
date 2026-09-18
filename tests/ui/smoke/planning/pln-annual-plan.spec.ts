@@ -37,18 +37,16 @@ test.describe("PLN18-304 Annual Plan record", () => {
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
 
-		await page.locator('[data-testid="pln-tab-items"]').click();
-		await page.locator('[data-testid="pln-form-items"]').click();
+		await page.locator('[data-testid="ppl-add-selected"]').click();
 		await expect(page.locator('[data-testid="pln-form-dialog"]')).toBeVisible();
-		await expect(page.locator('[data-testid="pln-form-dialog"] .kt-dialog-title')).toHaveText("Form Plan Item");
+		await expect(page.locator('[data-testid="pln-form-title"]')).toHaveText("How should these requirements be added?");
 		await page.locator('[data-testid="pln-form-confirm"]').click();
 		await expectReady(page, "plan-item");
 
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
-		await page.locator('[data-testid="pln-tab-items"]').click();
-		await expect(page.locator('[data-testid="pln-plan-items"] tbody tr')).toHaveCount(1);
-		await expect(page.locator('[data-testid="pln-unallocated-sources"]')).toContainText("No unallocated requirements");
+		await expect(page.locator('[data-testid="ppl-purchases"] tbody tr')).toHaveCount(1);
+		await expect(page.locator('[data-testid="ppl-all-allocated"]')).toBeVisible();
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
@@ -59,9 +57,9 @@ test.describe("PLN18-304 Annual Plan record", () => {
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
 
-		const save = page.locator('[data-testid="pln-save-details"]');
+		const save = page.locator('[data-testid="ppl-save"]');
 		await expect(save).toBeDisabled();
-		await page.locator('[data-testid="pln-project-name"]').fill("Digital health infrastructure programme");
+		await page.locator('[data-testid="ppl-project-name"]').fill("Digital health infrastructure programme");
 		await expect(save).toBeEnabled();
 		await save.click();
 		await expectReady(page, "plan");
@@ -69,7 +67,7 @@ test.describe("PLN18-304 Annual Plan record", () => {
 
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
-		await expect(page.locator('[data-testid="pln-project-name"]')).toHaveValue("Digital health infrastructure programme");
+		await expect(page.locator('[data-testid="ppl-project-name"]')).toHaveValue("Digital health infrastructure programme");
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
@@ -79,13 +77,12 @@ test.describe("PLN18-304 Annual Plan record", () => {
 		await login(page, PLANNER, PASSWORD);
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
-		await page.locator('[data-testid="pln-tab-funding"]').click();
 
-		const request = page.locator('[data-testid="pln-request-funding"]');
+		const request = page.locator('[data-testid="ppl-request-funding"]');
 		await expect(request).toBeEnabled();
 		await request.click();
 		await expectReady(page, "plan");
-		await expect(page.locator('[data-testid="pln-funding-notice"]')).toContainText("Awaiting Finance confirmation");
+		await expect(page.locator('[data-testid="ppl-plan-checks"]')).toContainText("Awaiting Finance confirmation");
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
@@ -94,13 +91,11 @@ test.describe("PLN18-304 Annual Plan record", () => {
 		await login(page, AUDITOR, PASSWORD);
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
-		await expect(page.locator('[data-testid="pln-save-details"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="ppl-save"]')).toHaveCount(0);
 
-		await page.locator('[data-testid="pln-tab-items"]').click();
-		await expect(page.locator('[data-testid="pln-form-items"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="ppl-add-selected"]')).toHaveCount(0);
 
-		await page.locator('[data-testid="pln-tab-funding"]').click();
-		await expect(page.locator('[data-testid="pln-request-funding"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="ppl-request-funding"]')).toHaveCount(0);
 	});
 
 	test("a departmental Author has no route to the Annual Plan record", async ({ page }) => {

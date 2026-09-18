@@ -56,7 +56,11 @@ const U13 = `${DESIGN}/U13.dc.html`;
 const U14 = `${DESIGN}/U14.dc.html`;
 const U16 = `${DESIGN}/U16.dc.html`;
 
-test.describe.configure({ mode: "serial", timeout: 180_000 });
+// Sequential, but not serial: the gate runs on one worker because the fixtures
+// are one shared world, and each panel is an independent assertion about an
+// independent screen. Aborting the remaining twenty because the tenth found a
+// missing label turns a full report into one finding per half-hour run.
+test.describe.configure({ timeout: 180_000 });
 
 /** Render one artboard panel and hand back its ordered landmarks. */
 async function wanted(browser: any, file: string, panel: string, variant?: string): Promise<string[]> {
@@ -202,16 +206,21 @@ test.describe("Procurement Planning — design fidelity (U06 validation)", () =>
 		await login(page, PLANNER, PASSWORD);
 		await gotoPlanning(page, `/dpp-review/${state.task}`);
 		await expectReady(page, "dpp-review");
+		// The artboard's base state has the requirement type chosen, which is
+		// what makes the acceptance available: the control is absent until the
+		// evidence supports it, not disabled (§10.5).
+		await page.locator('[data-testid="pln-review-type"]').first().selectOption({ index: 1 });
+		await expect(page.locator('[data-testid="pln-review-accept"]')).toBeVisible();
 		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U06");
 		expect(errors, "console errors").toEqual([]);
 	});
 
 	test("U06-ACCEPTED-CLASSIFICATION — the accepted record, read after the fact", async ({ page, browser }) => {
-		const state = resetFixture<{ submission: string }>("reset_accepted_fixture");
+		const state = resetFixture<{ dpp_submission: string }>("reset_accepted_fixture");
 		const art = await wanted(browser, U06, "U06-ACCEPTED-CLASSIFICATION");
 		const errors = collectConsoleErrors(page);
 		await login(page, PLANNER, PASSWORD);
-		await gotoPlanning(page, `/dpp-classification/${state.submission}`);
+		await gotoPlanning(page, `/dpp-classification/${state.dpp_submission}`);
 		await expectReady(page, "dpp-classification");
 		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U06-ACCEPTED-CLASSIFICATION");
 		expect(errors, "console errors").toEqual([]);
@@ -226,8 +235,8 @@ test.describe("Procurement Planning — design fidelity (U07 annual plan, U08 fo
 		const art = await wanted(browser, U07, "U07 — BASE");
 		const errors = collectConsoleErrors(page);
 		await login(page, PLANNER, PASSWORD);
-		await gotoPlanning(page);
-		await page.goto(`${page.url().split("/desk")[0]}/app/annual-procurement-plan/${state.plan_reference}`);
+		await page.setViewportSize({ width: 1440, height: 1024 });
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`);
 		await expectReady(page, "plan");
 		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U07");
 		expect(errors, "console errors").toEqual([]);
@@ -238,7 +247,8 @@ test.describe("Procurement Planning — design fidelity (U07 annual plan, U08 fo
 		const art = await wanted(browser, U07, "U07-UNALLOCATED");
 		const errors = collectConsoleErrors(page);
 		await login(page, PLANNER, PASSWORD);
-		await page.goto(`${page.url().split("/desk")[0]}/app/annual-procurement-plan/${state.plan_reference}`);
+		await page.setViewportSize({ width: 1440, height: 1024 });
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`);
 		await expectReady(page, "plan");
 		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U07-UNALLOCATED");
 		expect(errors, "console errors").toEqual([]);
@@ -249,7 +259,8 @@ test.describe("Procurement Planning — design fidelity (U07 annual plan, U08 fo
 		const art = await wanted(browser, U08, "U08-COMBINE (base)");
 		const errors = collectConsoleErrors(page);
 		await login(page, PLANNER, PASSWORD);
-		await page.goto(`${page.url().split("/desk")[0]}/app/annual-procurement-plan/${state.plan_reference}`);
+		await page.setViewportSize({ width: 1440, height: 1024 });
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`);
 		await expectReady(page, "plan");
 		await page.locator('[data-testid="ppl-select-source"]').first().check();
 		await page.locator('[data-testid="ppl-add-selected"]').click();
@@ -267,7 +278,8 @@ test.describe("Procurement Planning — design fidelity (U09 purchase editor)", 
 		const art = await wanted(browser, U09, "U09 — BASE");
 		const errors = collectConsoleErrors(page);
 		await login(page, PLANNER, PASSWORD);
-		await page.goto(`${page.url().split("/desk")[0]}/app/procurement-plan-item/${state.plan_item_id}`);
+		await page.setViewportSize({ width: 1440, height: 1024 });
+		await page.goto(`/app/procurement-plan-item/${state.plan_item_id}`);
 		await expectReady(page, "plan-item");
 		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U09");
 		expect(errors, "console errors").toEqual([]);
@@ -361,7 +373,8 @@ test.describe("Procurement Planning — design fidelity (U14 progress, U16 corre
 		const art = await wanted(browser, U14, "U14 — BASE (initial)");
 		const errors = collectConsoleErrors(page);
 		await login(page, PLANNER, PASSWORD);
-		await page.goto(`${page.url().split("/desk")[0]}/app/annual-procurement-plan/${state.plan_reference}/progress`);
+		await page.setViewportSize({ width: 1440, height: 1024 });
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}/progress`);
 		await expectReady(page, "progress");
 		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U14");
 		// PLN22-AC-009 — the absence is the acceptance criterion.

@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { login, loginAsAdministrator } from "../../helpers/auth";
 import {
+	ACCOUNTING_OFFICER,
 	PASSWORD,
 	PLANNER,
 	collectConsoleErrors,
@@ -12,10 +13,15 @@ import {
 } from "./helpers";
 
 /**
- * PLN-CHG-001 v1.12 Phase 6 (Slice D) — PLN-UI-13/14: the Active Plan with
- * its three-tier schedule, the cascade reforecast dialog (PLN-DES-14A), the
- * publication result (PLN-DES-13) with the technical retry, Prepare plan
- * update, and the daily CheckApproachingMilestones job proven live.
+ * PLN-CHG-001 v1.23 §10.12–§10.13 — what happens to an approved plan: the
+ * publication result and its recovery paths, the plan update that succeeds it,
+ * and the procurement progress recorded against the plan in force.
+ *
+ * Two whole tests from the v1.12 version of this file are gone rather than
+ * retargeted, because what they proved no longer exists: the forecast cascade
+ * dialog and the daily approaching-milestone job were both removed with the
+ * forecast facility (PLN23-CHG-001). Keeping a retargeted shell of them would
+ * assert that a deleted feature still behaves.
  */
 
 type ActiveState = { plan_reference: string; plan_item_id: string; publication: string };
@@ -28,115 +34,104 @@ async function gotoPlan(page: import("@playwright/test").Page, reference: string
 	await expectReady(page, "plan");
 }
 
-test.describe("PLN-UI-13/14 Active Plan, cascade and publication", () => {
+test.describe("Publication, recovery and the plan in force", () => {
 	test.afterAll(() => restoreSite());
 
-	test("the Active Plan shows PLN-DES-14 and a cascade shift moves every later forecast with one reason", async ({ page }) => {
+	test("an active plan states its approval and publication, and offers the progress against it", async ({ page }) => {
 		const state = resetFixture<ActiveState>("reset_active_fixture");
 		const errors = collectConsoleErrors(page);
 		await login(page, PLANNER, PASSWORD);
 		await gotoPlan(page, state.plan_reference);
 
-		await expect(page.locator('[data-testid="pln-plan-badge"]')).toHaveText("Active");
-		await expect(page.locator('[data-testid="pln-active-summary-strip"] label')).toHaveText(["Plan Items", "Approved value", "Departments", "Schedule health", "Activated"]);
-		await expect(page.locator('[data-testid="pln-active-health"]')).toHaveText("0 of 1 item behind baseline");
-		const row = page.locator(`[data-testid="pln-active-row-${state.plan_item_id}"]`);
-		await expect(row).toContainText("Digital health infrastructure package");
-		await expect(row).toContainText("1 each · KES 80,000,000");
-		await expect(page.locator('[data-testid="pln-active-governance"]')).toContainText("Acknowledged ·");
+		// §10.6 — once a version is in force, its approval and publication are
+		// facts about it rather than steps still to take.
+		const governance = page.locator('[data-testid="ppl-governance"]');
+		await expect(governance).toContainText("Acknowledged");
+		await expect(governance).toContainText("Adopted by the Accounting Officer");
 
-		// the schedule card: baseline = forecast, em-dash actuals, Shift on six rows
-		await page.locator(`[data-testid="pln-active-schedule-${state.plan_item_id}"]`).click();
-		const card = page.locator('[data-testid="pln-schedule-card"]');
-		await expect(card).toBeVisible();
-		await expect(card.locator("tbody tr")).toHaveCount(7);
-		const bid = page.locator('[data-testid="pln-schedule-bid_opening"]');
-		await expect(bid.locator(".pln-baseline-val")).toHaveText("22 Sep 2098");
-		await expect(bid.locator(".pln-forecast-val")).toHaveText("22 Sep 2098");
-		await expect(bid.locator(".pln-actual-val")).toHaveText("—");
-		await expect(page.locator('[data-testid^="pln-shift-"]')).toHaveCount(6);
-		await expect(page.locator('[data-testid="pln-shift-delivery_completion"]')).toHaveCount(0);
-
-		// PLN-DES-14A — the server proposes every later row; one reason; confirm
-		await page.locator('[data-testid="pln-shift-bid_opening"]').click();
-		const dialog = page.locator('[data-testid="pln-shift-dialog"]');
-		await expect(dialog).toBeVisible();
-		await expect(dialog.locator(".kt-dialog-title")).toHaveText("Shift schedule from here — Bid opening");
-		await page.locator('[data-testid="pln-shift-date"]').fill("2098-10-06");
-		await expect(page.locator('[data-testid="pln-shift-row-bid_opening"]')).toContainText("6 Oct 2098");
-		await expect(page.locator('[data-testid="pln-shift-row-evaluation_completion"]')).toContainText("5 Nov 2098");
-		await expect(dialog.locator("tbody tr")).toHaveCount(6);
-		await expect(page.locator('[data-testid="pln-shift-confirm"]')).toBeDisabled();
-		await page.locator('[data-testid="pln-shift-reason"]').fill("Tender Preparation confirmed the issue date will slip two weeks pending template release.");
-		await page.locator('[data-testid="pln-shift-confirm"]').click();
-		await expect(dialog).toHaveCount(0, { timeout: 30_000 });
-
-		// the interactive re-render (the card stays open): forecasts moved, baseline untouched, health counts one behind
-		await expect(bid.locator(".pln-forecast-val")).toHaveText("6 Oct 2098");
-		await expect(bid.locator(".pln-baseline-val")).toHaveText("22 Sep 2098");
-		await expect(page.locator('[data-testid="pln-schedule-contract_signing"] .pln-forecast-val')).toHaveText("26 Nov 2098");
-		await expect(page.locator('[data-testid="pln-active-health"]')).toHaveText("1 of 1 item behind baseline");
+		await page.locator('[data-testid="ppl-view-progress"]').click();
+		await expectReady(page, "progress");
+		// §10.13 — planned, covered and started; quantity and value together.
+		const purchase = page.locator('[data-testid="prg-purchase"]').first();
+		await expect(purchase).toContainText("Digital health infrastructure package");
+		await expect(purchase).toContainText("KES 80,000,000");
+		await expect(purchase).toContainText("Not started");
+		// PLN22-AC-009 / PLN23-CHG-001 — the absence is the acceptance criterion.
+		await expect(page.locator(".kt-pln .kt-shell")).not.toContainText("Completion");
+		await expect(page.locator(".kt-pln .kt-shell")).not.toContainText("Forecast");
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
-	test("Prepare plan update opens the sole Draft successor and the predecessor stays Active", async ({ page }) => {
+	test("preparing an update opens one draft successor, and the plan in force stays in force", async ({ page }) => {
 		const state = resetFixture<ActiveState>("reset_active_fixture");
 		await login(page, PLANNER, PASSWORD);
-		await gotoPlan(page, state.plan_reference);
-		await page.locator('[data-testid="pln-begin-update"]').click();
-		await expect(page.locator('[data-testid="pln-plan-badge"]')).toHaveText("Draft", { timeout: 30_000 });
-		await expect(page.locator(".pln-quiet-ref")).toContainText("Version 2");
-		await expect(page.locator('[data-testid="pln-plan-items"] tbody tr')).toHaveCount(1);
-		await expect(page.locator('[data-testid="pln-begin-update"]')).toHaveCount(0);
-		// the workspace still reports the Active version's schedule health
 		await gotoPlanning(page);
 		await expectReady(page, "workspace");
-		await expect(page.locator('[data-testid="pln-schedule-health"]')).toHaveText("· 0 of 1 item behind baseline");
+
+		// §5.2.3 — the guarded successor start, from the workspace.
+		await page.locator('[data-testid="pln-prepare-update"]').click();
+		await expectReady(page, "plan");
+		await expect(page.locator('[data-testid="ppl-context"]')).toContainText("Version 2");
+		await expect(page.locator('[data-testid="ppl-context"]')).toContainText("Draft");
+		await expect(page.locator('[data-testid="ppl-purchase-row"]')).toHaveCount(1);
+
+		await gotoPlanning(page);
+		await expectReady(page, "workspace");
+		// The plan in force and its candidate are two rows, and the start
+		// control is gone rather than disabled while one exists (§10.3).
+		await expect(page.locator('[data-testid="pln-plan-row-current"]')).toBeVisible();
+		await expect(page.locator('[data-testid="pln-plan-row-candidate"]')).toBeVisible();
+		await expect(page.locator('[data-testid="pln-prepare-update"]')).toHaveCount(0);
 	});
 
-	test("the publication result reads the acknowledged attempt; a failed attempt is recovered by a technical retry", async ({ page }) => {
+	test("an acknowledged publication offers no recovery; a failed one offers it to the technical operator alone", async ({ page }) => {
 		const acknowledged = resetFixture<ActiveState>("reset_active_fixture");
-		await login(page, PLANNER, PASSWORD);
+		await login(page, ACCOUNTING_OFFICER, PASSWORD);
 		await gotoPlanning(page, `/publication/${acknowledged.publication}`);
 		await expectReady(page, "publication");
-		await expect(page.locator(".kt-page-title")).toHaveText("Publication result");
-		await expect(page.locator('[data-testid="pub-badge"]')).toHaveText("Acknowledged");
-		await expect(page.locator('[data-testid="pub-approved-plan"]')).toContainText("FY 2098/99");
-		await expect(page.locator('[data-testid="pub-approved-plan"]')).toContainText("Cabinet Secretary");
-		await expect(page.locator('[data-testid="pub-result"]')).toHaveText("Acknowledged");
+
+		// §10.12 — four facts, four rows, none proving another.
+		const rows = page.locator('[data-testid="pub-status-row"]');
+		await expect(rows).toHaveCount(4);
+		await expect(rows.nth(2)).toContainText("Published");
 		await expect(page.locator('[data-testid="pub-retry"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="pub-quiet-notice"]')).toContainText("without a business-role control");
+		await expect(page.locator('[data-testid="pub-reconcile"]')).toHaveCount(0);
 
 		const failed = resetFixture<ActiveState>("reset_publication_failed_fixture");
 		await gotoPlan(page, failed.plan_reference);
-		await expect(page.locator('[data-testid="pln-publication-failed"] h3')).toHaveText("Publication was not acknowledged");
 		await page.locator('[data-testid="pln-open-publication"]').click();
 		await expectReady(page, "publication");
-		await expect(page.locator('[data-testid="pub-badge"]')).toHaveText("Publication failed");
-		// the Planner never sees the retry (§11.15)
+		await expect(page.locator('[data-testid="pub-context"]')).toContainText("Publication failed");
+		// The business actor never sees the technical recovery (§10.12).
 		await expect(page.locator('[data-testid="pub-retry"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="pub-responsible"]')).toContainText("Authorised technical operator");
 
 		await loginAsAdministrator(page);
 		await gotoPlanning(page, `/publication/${failed.publication}`);
 		await expectReady(page, "publication");
 		await page.locator('[data-testid="pub-retry"]').click();
-		await expect(page.locator('[data-testid="pub-badge"]')).toHaveText("Acknowledged", { timeout: 30_000 });
-		await expect(page.locator('[data-testid="pub-result"]')).toHaveText("Acknowledged");
-		await expect(page.locator('[data-testid="pub-failed"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="pub-status-row"]').nth(2)).toContainText("Published", { timeout: 30_000 });
 	});
 
-	test("the daily CheckApproachingMilestones job raises once per milestone per day (§8.3)", async ({ page }) => {
-		resetFixture<ActiveState>("reset_active_fixture");
-		const result = resetFixture<{ raised: string[][]; raised_again: string[][]; notifications: number }>("run_milestone_check", { today: "2098-08-25" });
-		expect(result.raised.some(([, milestone]) => milestone === "invitation")).toBe(true);
-		// the second run of the same day considers the same milestone but raises
-		// no second notification (PLN-AC-130): exactly one log row for the Planner
-		expect(result.raised_again).toEqual(result.raised);
-		expect(result.notifications).toBe(1);
-		// and the job mutates nothing on the Active plan
-		await login(page, PLANNER, PASSWORD);
-		await gotoPlanning(page);
-		await expectReady(page, "workspace");
-		await expect(page.locator('[data-testid="pln-schedule-health"]')).toHaveText("· 0 of 1 item behind baseline");
+	test("the Accounting Officer asks for a withdrawal; the approving authority decides it", async ({ page }) => {
+		const failed = resetFixture<ActiveState>("reset_publication_failed_fixture");
+		await login(page, ACCOUNTING_OFFICER, PASSWORD);
+		await gotoPlanning(page, `/publication/${failed.publication}`);
+		await expectReady(page, "publication");
+
+		await page.locator('[data-testid="pub-request-withdrawal"]').click();
+		const dialog = page.locator('[data-testid="pub-withdrawal-dialog"]');
+		await expect(dialog).toBeVisible();
+		await expect(page.locator('[data-testid="pub-withdrawal-confirmation"]')).toHaveText("Confirmed not published");
+		// A reason someone can act on, or no request.
+		await expect(page.locator('[data-testid="pub-withdrawal-confirm"]')).toBeDisabled();
+		await page.locator('[data-testid="pub-withdrawal-reason"]').fill(
+			"A material defect was found in the approved content before it reached the destination."
+		);
+		await page.locator('[data-testid="pub-withdrawal-confirm"]').click();
+
+		// The AO has asked; there is nothing more for them to do but wait.
+		await expect(page.locator('[data-testid="pub-withdrawal-state"]')).toBeVisible({ timeout: 30_000 });
+		await expect(page.locator('[data-testid="pub-request-withdrawal"]')).toHaveCount(0);
 	});
 });

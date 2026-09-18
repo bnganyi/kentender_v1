@@ -40,21 +40,21 @@ test.describe("PLN18-305 Plan Item editor", () => {
 		await page.goto(`/app/procurement-plan-item/${state.plan_item_id}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan-item");
 
-		await page.locator('[data-testid="ppi-estimate-basis"]').fill("Market survey of the current supplier panel including delivery and installation costs.");
-		await page.locator('[data-testid="ppi-estimate-basis-reference"]').fill("MS-2098-001");
-		await page.locator('[data-testid="ppi-target-date"]').fill("2098-11-01");
+		await page.locator('[data-testid="ppi-read-basis"]').fill("Market survey of the current supplier panel including delivery and installation costs.");
+		await page.locator('[data-testid="ppi-basis-reference"]').fill("MS-2098-001");
+		await page.locator('[data-testid="ppi-deadline"]').fill("2098-11-01");
 		await page.locator('[data-testid="ppi-reservation"]').selectOption("Youth");
 		await page.locator('[data-testid="ppi-save"]').click();
 		await expect(page.locator('[data-testid="ppi-save"]')).toBeEnabled({ timeout: 10_000 });
 		await expect(page.locator('[data-testid="ppi-error"]')).toHaveCount(0);
 
-		const dates = page.locator('[data-testid="ppi-baseline-table"] tbody tr').first().locator("td").nth(1);
+		const dates = page.locator('[data-testid="ppi-milestones"] tbody tr').first().locator("td").nth(1);
 		await expect(dates).toHaveText("1 Nov 2098");
-		await expect(page.locator('[data-testid="ppi-boundary-warning"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="ppi-boundary"]')).toHaveCount(0);
 
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan-item");
-		await expect(page.locator('[data-testid="ppi-estimate-basis-reference"]')).toHaveValue("MS-2098-001");
+		await expect(page.locator('[data-testid="ppi-basis-reference"]')).toHaveValue("MS-2098-001");
 		await expect(page.locator('[data-testid="ppi-reservation"]')).toHaveValue("Youth");
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
@@ -69,13 +69,13 @@ test.describe("PLN18-305 Plan Item editor", () => {
 		await page.locator('[data-testid="ppi-method"]').selectOption("Direct Procurement");
 		await page.locator('[data-testid="ppi-save"]').click();
 		await expect(page.locator('[data-testid="ppi-save"]')).toBeEnabled({ timeout: 10_000 });
-		await expect(page.locator('[data-testid="ppi-conditions"]')).toContainText("Evidence required");
+		await expect(page.locator('[data-testid="ppi-rule-evidence"]')).toContainText("Evidence required");
 
 		await page.locator('[data-testid="ppi-evidence-CIRCUMSTANCES"]').fill("Sole supplier holds the exclusive distribution rights for this equipment.");
 		await page.locator('[data-testid="ppi-authorisation-CIRCUMSTANCES"]').fill("AO/2098/DP/1");
 		await page.locator('[data-testid="ppi-save"]').click();
 		await expect(page.locator('[data-testid="ppi-save"]')).toBeEnabled({ timeout: 10_000 });
-		await expect(page.locator('[data-testid="ppi-conditions"]')).toContainText("Declared");
+		await expect(page.locator('[data-testid="ppi-rule-evidence"]')).toContainText("Declared");
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
@@ -85,7 +85,7 @@ test.describe("PLN18-305 Plan Item editor", () => {
 		await page.goto(`/app/procurement-plan-item/${state.plan_item_id}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan-item");
 
-		await page.locator('[data-testid="ppi-dissolve"]').click();
+		await page.locator('[data-testid="ppi-remove"]').click();
 		await expectReady(page, "plan");
 		await expect(page).toHaveURL(new RegExp(`annual-procurement-plan/${state.plan_reference}`));
 	});
@@ -96,7 +96,7 @@ test.describe("PLN18-305 Plan Item editor", () => {
 		await page.goto(`/app/procurement-plan-item/${state.plan_item_id}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan-item");
 		await expect(page.locator('[data-testid="ppi-save"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="ppi-dissolve"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="ppi-remove"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="ppi-title"]')).toBeDisabled();
 	});
 

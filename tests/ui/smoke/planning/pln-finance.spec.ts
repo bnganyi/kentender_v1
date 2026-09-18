@@ -38,7 +38,7 @@ test.describe("PLN18-306 Finance task", () => {
 		await login(page, FINANCE, PASSWORD);
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
-		await page.locator('[data-testid="pln-open-task"]').click();
+		await page.locator('[data-testid="pln-action-button"]').click();
 		await expectReady(page, "finance");
 		await expect(page).toHaveURL(new RegExp(`/procurement-planning/finance/${state.task}$`));
 		await expect(page.locator('[data-testid="fnt-badge"]')).toHaveText("Awaiting Finance");
@@ -50,7 +50,7 @@ test.describe("PLN18-306 Finance task", () => {
 		await login(page, PLANNER, PASSWORD);
 		await page.goto(`/app/procurement-planning/finance/${state.task}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "finance");
-		await expect(page.locator('[data-testid="fnt-affordability"]')).toBeVisible();
+		await expect(page.locator('[data-testid="fnt-comparison"]')).toBeVisible();
 		await expect(page.locator('[data-testid="fnt-confirm"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="fnt-return"]')).toHaveCount(0);
 	});

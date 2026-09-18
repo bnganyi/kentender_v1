@@ -18,15 +18,15 @@ import {
 } from "./helpers";
 
 /**
- * PLN-CHG-001 v1.18 (PLN18-302) — the Procurement Planning workspace's own
- * behaviour: real §8 commands and their interactive re-render, navigation
- * (direct load, reload, back/forward), and error recovery. Structural/copy
- * fidelity against U01/U21 lives in `design-fidelity/planning-fidelity.spec.ts`
- * — this file does not re-assert landmark order or exact prose.
+ * PLN-CHG-001 v1.23 — the Procurement Planning workspace's own behaviour: real
+ * commands and their interactive re-render, navigation (direct load, reload,
+ * back/forward), and error recovery. Structural and copy fidelity against the
+ * artboards lives in `design-fidelity/planning-fidelity.spec.ts`; this file
+ * does not re-assert landmark order or exact prose.
  *
- * Replaces the v1.12 `planning-workspace.spec.ts` (deleted with this row):
- * that file's testids (`pln-action-row`, `.pln-ready-headline`, `pln-pe-select`,
- * `pln-plan-summary`) no longer exist on the re-ported screen.
+ * Retargeted for v1.23: a departmental actor's own plan is its own section
+ * rather than an entry in "Your actions", the plan card is a row per version,
+ * and there is no Procuring Entity selector — the site is the entity.
  */
 
 test.describe.configure({ mode: "serial", timeout: 180_000 });
@@ -41,21 +41,20 @@ test.describe("PLN18-302 Procurement Planning workspace", () => {
 		await gotoPlanning(page);
 		await expectReady(page, "workspace");
 		await expectFixtureYear(page);
-		await expect(page.locator('[data-testid="pln-pe-select"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="pln-fy-select"]')).toBeVisible();
 
-		const card = page.locator('[data-testid="pln-actionable"]');
-		await expect(card).toHaveCount(1);
-		await expect(card.locator(".kt-card-title")).toHaveText(/^No departmental plan yet for/);
-		await expect(page.locator('[data-testid="pln-work-action-0"]')).toHaveText("Start departmental plan");
+		// §10.3 U01-DEPARTMENT-AUTHOR — a departmental actor's page leads with
+		// their own plan, so the empty state is that section, not a work item.
+		const own = page.locator('[data-testid="pln-own-plan"]');
+		await expect(own.locator('[data-testid="pln-own-plan-empty"]')).toHaveText("No departmental plan yet");
+		await expect(page.locator('[data-testid="pln-start-departmental-plan"]')).toHaveText("Start departmental plan");
 		await expect(page.locator('[data-testid="pln-count-label"]')).toHaveText("0 departmental plans");
 
-		await page.locator('[data-testid="pln-work-action-0"]').click();
-		await expect(card.locator(".kt-card-title")).toHaveText("Continue departmental plan", { timeout: 30_000 });
-		await expect(page.locator('[data-testid="pln-work-action-0"]')).toHaveText("Continue");
-		const planRow = page.locator('[data-testid="pln-departmental-plans"] tbody tr');
-		await expect(planRow).toHaveCount(1);
-		await expect(planRow).toContainText(OU_NAME);
-		await expect(page.locator('[data-testid="pln-count-label"]')).toHaveText("1 departmental plan");
+		await page.locator('[data-testid="pln-start-departmental-plan"]').click();
+		// The command runs and the page re-renders in place — no full reload.
+		await expect(own.locator('[data-testid="pln-own-plan-action"]')).toHaveText("Continue departmental plan", { timeout: 30_000 });
+		await expect(own).toContainText(OU_NAME);
+		await expect(page.locator('[data-testid="pln-own-plan-empty"]')).toHaveCount(0);
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
@@ -67,7 +66,7 @@ test.describe("PLN18-302 Procurement Planning workspace", () => {
 		await expectReady(page, "workspace");
 
 		const button = page.locator('[data-testid="pln-plan-action-current"]');
-		await expect(button).toHaveText("Continue Plan");
+		await expect(button).toHaveText(/Continue plan|Continue Plan/);
 		await button.click();
 		await expect(page).toHaveURL(new RegExp(`/annual-procurement-plan/${state.plan_reference}$`));
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
@@ -78,8 +77,8 @@ test.describe("PLN18-302 Procurement Planning workspace", () => {
 		await login(page, AUDITOR, PASSWORD);
 		await gotoPlanning(page);
 		await expectReady(page, "workspace");
-		await expect(page.locator('[data-testid="pln-actionable"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="pln-departmental-plans"] tbody tr')).toHaveCount(2);
+		await expect(page.locator('[data-testid="pln-action"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="pln-departmental-table"] tbody tr')).toHaveCount(2);
 		await expect(page.locator('[data-testid="pln-forbidden"]')).toHaveCount(0);
 	});
 
@@ -89,9 +88,9 @@ test.describe("PLN18-302 Procurement Planning workspace", () => {
 		await expectReady(page, "workspace");
 		await expect(page.locator('[data-testid="pln-forbidden"]')).toBeVisible();
 		await expect(page.locator('[data-testid="pln-context-strip"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="pln-departmental-plans"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="pln-actionable"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="pln-annual-plan-card"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="pln-departmental-table"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="pln-action"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="pln-plan-row-current"]')).toHaveCount(0);
 	});
 
 	test("an author from another department sees only their own row, never the other unit's", async ({ page }) => {
@@ -100,7 +99,7 @@ test.describe("PLN18-302 Procurement Planning workspace", () => {
 		await login(page, OUTSIDER, PASSWORD);
 		await gotoPlanning(page);
 		await expectReady(page, "workspace");
-		const rows = page.locator('[data-testid="pln-departmental-plans"] tbody tr');
+		const rows = page.locator('[data-testid="pln-departmental-table"] tbody tr');
 		await expect(rows).toHaveCount(1);
 		await expect(rows.first()).not.toContainText(OU_NAME);
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
@@ -112,18 +111,18 @@ test.describe("PLN18-302 Procurement Planning workspace", () => {
 
 		await gotoPlanning(page);
 		await expectReady(page, "workspace");
-		await expect(page.locator('[data-testid="pln-annual-plan-card"]')).toBeVisible();
+		await expect(page.locator('[data-testid="pln-plan-row-current"]')).toBeVisible();
 
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await expectReady(page, "workspace");
-		await expect(page.locator('[data-testid="pln-annual-plan-card"]')).toBeVisible();
+		await expect(page.locator('[data-testid="pln-plan-row-current"]')).toBeVisible();
 
 		await page.locator('[data-testid="pln-plan-action-current"]').click();
 		await expect(page).toHaveURL(new RegExp(`/annual-procurement-plan/${state.plan_reference}$`));
 
 		await page.goBack();
 		await expectReady(page, "workspace");
-		await expect(page.locator('[data-testid="pln-annual-plan-card"]')).toBeVisible();
+		await expect(page.locator('[data-testid="pln-plan-row-current"]')).toBeVisible();
 
 		await page.goForward();
 		await expect(page).toHaveURL(new RegExp(`/annual-procurement-plan/${state.plan_reference}$`));

@@ -548,7 +548,12 @@ def reset_review_fixture(*, need: str = "", commit: bool = True) -> dict[str, An
 	task = frappe.db.get_value("Departmental Plan Validation Task", {"task_reference": submitted["task"]}, "name")
 	if commit:
 		frappe.db.commit()
-	return {**state, "task": task, "submission": submitted["task"]}
+	# The validation task and the submission it is about are two different
+	# records; a spec reading the accepted classification needs the submission.
+	return {
+		**state, "task": task, "submission": submitted["task"],
+		"dpp_submission": frappe.db.get_value("Departmental Plan Validation Task", {"task_reference": task}, "submission"),
+	}
 
 
 def reset_accepted_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
