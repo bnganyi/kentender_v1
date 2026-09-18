@@ -134,7 +134,19 @@
 									<span class="kt-meta-value">{{ row.department }}</span>
 								</div>
 							</div>
-							<a href="#" data-testid="rev-view-evidence" @click.prevent="$emit('view-evidence', row)">View departmental evidence</a>
+							<!-- §10.11 — the evidence link belongs to a source, not
+							     to the purchase: a combined purchase was reviewed on
+							     several, and each one has its own departmental
+							     certification and acceptance behind it. -->
+							<div class="pln-evidence-links">
+								<a
+									v-for="source in row.sources || []"
+									:key="source.source_key"
+									href="#"
+									data-testid="rev-view-evidence"
+									@click.prevent="$emit('view-evidence', source)"
+								>{{ (row.sources || []).length > 1 ? source.title : "View departmental evidence" }}</a>
+							</div>
 						</td>
 					</tr>
 				</template>

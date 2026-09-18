@@ -739,6 +739,52 @@ class TestReviewReadModel(GovernanceCase):
 		self.assertTrue(evidence["quantity_display"])
 		self.assertTrue(evidence["amount_display"].startswith("KES"))
 
+	def test_each_reviewed_purchase_carries_its_own_sources_and_their_evidence_routes(self):
+		"""§10.11 — U12 is reached from the exact allocation it is evidence
+		for, so every reviewed purchase names its own sources and the route to
+		each one's evidence."""
+		accepted, item_id = self.need_backed_item()
+		submitted = self.submit(accepted["annual_plan"])
+		task = frappe.get_doc("Plan Governance Task", submitted["task"])
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		review = plan_read.get_plan_governance_task(task=task.name)
+
+		row = next(r for r in review["items"] if r["plan_item_id"] == item_id)
+		self.assertTrue(row["sources"])
+		source = row["sources"][0]
+		self.assertTrue(source["source_key"])
+		self.assertTrue(source["title"])
+		self.assertEqual(source["route"], ["procurement-planning", "review", task.name, "source", source["source_key"]])
+
+	def test_source_evidence_states_quantity_and_unit_apart_and_names_the_certifying_capacity(self):
+		accepted, item_id = self.need_backed_item()
+		submitted = self.submit(accepted["annual_plan"])
+		task = frappe.get_doc("Plan Governance Task", submitted["task"])
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		review = plan_read.get_plan_governance_task(task=task.name)
+		evidence = plan_read.get_source_evidence(task=task.name, source_key=review["sources"][0]["source_key"])
+
+		# §10.1 — the two facts never merge into one string.
+		self.assertTrue(evidence["quantity_number"])
+		self.assertTrue(evidence["unit_label"])
+		# The capacity comes from the assignment the submission froze.
+		self.assertEqual(evidence["certified"]["capacity"], "Head of User Department")
+		self.assertEqual(evidence["certification_status"], "Certified")
+		self.assertEqual(evidence["procurement_disposition"], "Proceeding")
+		# A source that is in a Plan proceeded; it is never presented as
+		# something still to be decided.
+		self.assertTrue(evidence["budget_line_reference"])
+
+	def test_source_evidence_on_the_version_in_force_is_not_marked_historical(self):
+		accepted, item_id = self.need_backed_item()
+		submitted = self.submit(accepted["annual_plan"])
+		task = frappe.get_doc("Plan Governance Task", submitted["task"])
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		review = plan_read.get_plan_governance_task(task=task.name)
+		evidence = plan_read.get_source_evidence(task=task.name, source_key=review["sources"][0]["source_key"])
+		# Nothing is Active yet, so nothing is superseded either.
+		self.assertFalse(evidence["historical"])
+
 	def test_get_source_evidence_direct_origin_has_no_need_accepted_line(self):
 		accepted, item_id = self.confirmed_item()
 		submitted = self.submit(accepted["annual_plan"])

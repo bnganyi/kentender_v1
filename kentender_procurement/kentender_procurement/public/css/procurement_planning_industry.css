@@ -991,3 +991,14 @@
 .kt-pln .pln-form-preview {
 	margin-top: var(--kt-space-4);
 }
+
+/* §10.11 — one requirement read end to end: a reading column, not a full-width
+   table page. */
+.kt-pln .pln-evidence {
+	max-width: 820px;
+}
+.kt-pln .pln-evidence-back {
+	display: inline-block;
+	margin-bottom: var(--kt-space-3);
+	font-size: 13px;
+}

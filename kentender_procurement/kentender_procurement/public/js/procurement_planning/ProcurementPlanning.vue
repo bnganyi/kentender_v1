@@ -331,7 +331,7 @@
 						@open-return-dialog="governanceReturnDialog = true"
 						@back="frappe.set_route(PLAN_PAGE, governanceTask.plan_reference || '')"
 						@download-pack="onDownloadReviewPack"
-						@view-evidence="onOpenSource"
+						@view-evidence="onNavigate($event.route)"
 						@update:resolution="collectiveResolution = $event"
 						@update:late-reason="lateReason = $event"
 					/>
@@ -346,7 +346,12 @@
 				</template>
 
 				<template v-else-if="screen === 'governance-source'">
-					<SourceEvidenceScreen :evidence="sourceEvidence" @navigate="onNavigate" />
+					<SourceEvidenceScreen
+						:evidence="sourceEvidence"
+						@navigate="onNavigate"
+						@view-newer="onViewNewerRequirement"
+						@reload="load"
+					/>
 				</template>
 			</template>
 		</div>
@@ -437,6 +442,8 @@ const lateActivationDialog = ref(false);
 const financeTask = ref({});
 const financeReturnDialog = ref(false);
 const governanceTask = ref({});
+// §10.11 U12 — one reviewed allocation's own departmental evidence.
+const sourceEvidence = ref({});
 const governanceReturnDialog = ref(false);
 const publication = ref({});
 const progress = ref({});
@@ -482,7 +489,8 @@ const screen = computed(() => {
 		return "finance";
 	}
 	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "review" && segments.value[1]) {
-		return "governance";
+		// §10.11 — the evidence of one source, within its own review.
+		return segments.value[2] === "source" && segments.value[3] ? "governance-source" : "governance";
 	}
 	if (pageSlug.value === WORKSPACE_PAGE && segments.value[0] === "publication" && segments.value[1]) {
 		return "publication";
@@ -510,6 +518,10 @@ const financeTaskId = computed(() =>
 
 const governanceTaskId = computed(() =>
 	segments.value[0] === "review" ? segments.value[1] || "" : ""
+);
+
+const sourceKey = computed(() =>
+	segments.value[2] === "source" ? segments.value.slice(3).join("/") : ""
 );
 
 const publicationId = computed(() =>
@@ -542,6 +554,8 @@ const screenKey = computed(() => {
 			return `finance:${financeTaskId.value}`;
 		case "governance":
 			return `governance:${governanceTaskId.value}`;
+		case "governance-source":
+			return `governance-source:${governanceTaskId.value}:${sourceKey.value}`;
 		case "publication":
 			return `publication:${publicationId.value}`;
 		default:
@@ -591,6 +605,8 @@ function fetchFor(scr) {
 			return api.getFinanceTask(financeTaskId.value);
 		case "governance":
 			return api.getPlanGovernanceTask(governanceTaskId.value);
+		case "governance-source":
+			return api.getSourceEvidence(governanceTaskId.value, sourceKey.value);
 		case "publication":
 			return api.getPublicationTask(publicationId.value);
 		default:
@@ -658,6 +674,9 @@ function applyLoaded(scr, loaded) {
 			collectiveResolution.value = "";
 			lateReason.value = "";
 			governanceReturnDialog.value = false;
+			break;
+		case "governance-source":
+			sourceEvidence.value = loaded;
 			break;
 		case "publication":
 			publication.value = loaded;
@@ -1145,6 +1164,14 @@ async function onSubmitConsolidatedPlan(lateActivationReason) {
 }
 
 // PLN-CHG-001 v1.23 §10.13 / §10.15 — progress and correction requests.
+
+// §10.11 U12-NEWER-SOURCE — the newer requirement is the department's record,
+// not this plan's; it opens where that department keeps it, and the reviewed
+// evidence behind it is left exactly as it was.
+function onViewNewerRequirement() {
+	const reference = sourceEvidence.value.departmental_plan_reference;
+	if (reference) frappe.set_route(DPP_PAGE, reference);
+}
 
 function onViewCorrections(planItemId) {
 	frappe.set_route(PLAN_ITEM_PAGE, planItemId, "corrections");

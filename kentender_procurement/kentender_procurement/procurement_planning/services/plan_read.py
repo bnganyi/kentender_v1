@@ -1502,6 +1502,30 @@ def _governance_history(version) -> list[dict[str, Any]]:
 	return rows
 
 
+def _reviewed_sources(version_name: str, plan_item_id: str, task: str) -> list[dict[str, Any]]:
+	"""The exact allocations this purchase was reviewed on, each with the key
+	its own evidence is read by."""
+	rows = []
+	for allocation in frappe.get_all(
+		"Plan Source Allocation",
+		filters={"plan_version": version_name, "plan_item_id": plan_item_id, "allocation_state": ("!=", "Released")},
+		fields=["source_key", "dpp_entry", "organisation_unit", "quantity", "unit", "indicative_amount"],
+		order_by="creation asc",
+		limit_page_length=0,
+	):
+		rows.append(
+			{
+				"source_key": cstr(allocation.source_key),
+				"title": cstr(frappe.db.get_value("Departmental Plan Entry", allocation.dpp_entry, "title")),
+				"department": _ou_label(allocation.organisation_unit),
+				"quantity_display": _quantity_display(allocation.quantity, allocation.unit),
+				"amount_display": _money(allocation.indicative_amount),
+				"route": [PAGE, "review", task, "source", cstr(allocation.source_key)],
+			}
+		)
+	return rows
+
+
 def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import plan_finance, plan_governance
 
@@ -1534,6 +1558,11 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 				or ""
 			),
 		)
+		# §10.11 — each purchase's own reviewed sources, so "View departmental
+		# evidence" can open the exact one (U12 is reached from its own
+		# allocation, never from a bare lookup). A combined purchase has
+		# several, and each keeps its own link.
+		row["sources"] = _reviewed_sources(version.name, cstr(row.get("plan_item_id")), task_doc.name)
 	authority_card = None
 	if task_doc.stage == "Statutory approval":
 		ao_decision = frappe.db.get_value("Plan Governance Task", {"plan_version": version.name, "stage": "Accounting Officer adoption"}, "decision")
@@ -1651,6 +1680,15 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 	}
 
 
+def _snapshot_role(snapshot: str) -> str:
+	"""The business role recorded in a frozen assignment snapshot. A snapshot
+	that cannot be read yields nothing rather than a guess."""
+	try:
+		return cstr(json.loads(snapshot or "{}").get("business_role"))
+	except (ValueError, TypeError):
+		return ""
+
+
 def get_source_evidence(*, task: str, source_key: str, user: str | None = None) -> dict[str, Any]:
 	"""U12 — the exact origin chain for one reviewed allocation, reached
 	only from its own Review task (never a bare public lookup): the Need's
@@ -1682,9 +1720,21 @@ def get_source_evidence(*, task: str, source_key: str, user: str | None = None) 
 
 	certified = None
 	if dpp_version.submission:
-		sub = frappe.db.get_value("Departmental Plan Submission", dpp_version.submission, ["submitted_by_user", "submitted_at"], as_dict=True)
+		sub = frappe.db.get_value(
+			"Departmental Plan Submission", dpp_version.submission,
+			["submitted_by_user", "submitted_at", "authority_snapshot", "attestation_text"], as_dict=True,
+		)
 		if sub:
-			certified = {"actor": sub.submitted_by_user, "actor_name": cstr(frappe.db.get_value("User", sub.submitted_by_user, "full_name") or sub.submitted_by_user), "display": _eat(sub.submitted_at)}
+			certified = {
+				"actor": sub.submitted_by_user,
+				"actor_name": cstr(frappe.db.get_value("User", sub.submitted_by_user, "full_name") or sub.submitted_by_user),
+				"display": _eat(sub.submitted_at),
+				# §10.11 — the capacity the person certified in, taken from the
+				# assignment snapshot the submission froze, so a later change
+				# to their responsibilities never rewrites this evidence (§13).
+				"capacity": _snapshot_role(sub.authority_snapshot),
+				"attestation_text": cstr(sub.attestation_text),
+			}
 	accepted_for_planning = None
 	validation_decision = frappe.db.get_value(
 		"Departmental Plan Validation Decision", {"submission": dpp_version.submission, "decision": "Accept departmental plan"},
@@ -1721,6 +1771,10 @@ def get_source_evidence(*, task: str, source_key: str, user: str | None = None) 
 		"plan_item_id": plan_item.plan_item_id,
 		"title": entry.title,
 		"quantity_display": _quantity_display(allocation.quantity, allocation.unit),
+		# §10.11 — Quantity and Unit are separate labelled facts, as they are
+		# everywhere else a requirement's scope is stated (§10.1).
+		"quantity_number": f"{flt(allocation.quantity):g}",
+		"unit_label": _unit_label(allocation.unit),
 		"required_by_display": _date(allocation.required_by_date),
 		"amount_display": _money(allocation.indicative_amount),
 		"description": cstr(entry.description),
@@ -1733,12 +1787,25 @@ def get_source_evidence(*, task: str, source_key: str, user: str | None = None) 
 		"submission_number": dpp_version.version_number,
 		"dpp_entry_id": entry.entry_id,
 		"budget_line_display": line.get("label") or cstr(allocation.budget_line),
+		# Named and referenced separately: the name says what the money is
+		# for, the reference is what a Budget officer will look it up by.
+		"budget_line_name": line.get("title") or "",
+		"budget_line_reference": line.get("reference") or cstr(allocation.budget_line),
 		"planning_amount_display": _money(allocation.indicative_amount),
+		# §10.11 — the department's own disposition of this requirement. An
+		# excluded requirement never reaches a Plan allocation, so a source
+		# that is here proceeded.
+		"procurement_disposition": "Proceeding",
+		"certification_status": "Certified" if certified else "Not certified",
 		"need_accepted": need_accepted,
 		"certified": certified,
 		"accepted_for_planning": accepted_for_planning,
 		"has_newer_revision": has_newer_revision,
 		"newer_revision_number": newer_revision_number,
+		# U12-HISTORICAL-PLAN — evidence read from a version that is no longer
+		# in force is the exact historical snapshot, and says so.
+		"historical": bool(plan.active_version) and version.name != cstr(plan.active_version),
+		"current_plan_route": ["annual-procurement-plan", plan.plan_reference],
 		"back_route": ["procurement-planning", "review", task_doc.name],
 	}
 
