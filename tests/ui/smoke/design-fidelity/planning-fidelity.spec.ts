@@ -84,6 +84,22 @@ const U14_EXECUTION_COLUMNS: LandmarkExemption[] = [
 	},
 ];
 
+/** §10.8 renamed these; the U09 artboards still carry the older wording. */
+const U09_SCHEDULE_LABELS: LandmarkExemption[] = [
+	{ landmark: "Estimated period", because: "§10.8 Dates names it Expected delivery period." },
+	{ landmark: "Estimated completion", because: "§10.8 Dates names it Expected completion." },
+	{ landmark: "Departmental required-by date", because: "§10.8 Dates names it Departmental deadline." },
+	{ landmark: "Review schedule", because: "§10.8 U09-INVALID-SCHEDULE names the action Review dates." },
+];
+
+const U09_REMOVE_ACTION: LandmarkExemption[] = [
+	{
+		landmark: "Remove item and return requirements",
+		because:
+			"§10.8 U09-REMOVE heads the dialog Remove this purchase? and names its primary action Remove purchase.",
+	},
+];
+
 // U13 draws three withdrawal/correction variants side by side under one label;
 // `variantScope` picks the one wanted by its `.tag`.
 const WITHDRAWAL_PANEL = "U13-WITHDRAWAL-REQUEST \u00b7 U13-WITHDRAWN \u00b7 U13-CORRECT-EVIDENCE";
@@ -342,6 +358,43 @@ test.describe("Procurement Planning — design fidelity (U09 purchase editor)", 
 
 test.describe("Procurement Planning — design fidelity (U10 funding review)", () => {
 	test.afterAll(() => restoreSite());
+
+	test("U09-INVALID-SCHEDULE — the dates that miss the department's deadline", async ({ page, browser }) => {
+		const state = resetFixture<{ plan_item_id: string }>("reset_item_feasibility_fail_fixture");
+		const art = await wanted(browser, U09, "U09-INVALID-SCHEDULE");
+		const errors = collectConsoleErrors(page);
+		await login(page, PLANNER, PASSWORD);
+		await page.setViewportSize({ width: 1440, height: 1024 });
+		await page.goto(`/app/procurement-plan-item/${state.plan_item_id}`);
+		await expectReady(page, "plan-item");
+		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U09-INVALID-SCHEDULE", U09_SCHEDULE_LABELS);
+		// The artboard lags §10.8 here, so assert the section's own words too —
+		// otherwise the exemptions would leave almost nothing being checked.
+		for (const label of ["Expected delivery period", "Expected completion", "Departmental deadline"]) {
+			await expect(page.locator(LIVE)).toContainText(label);
+		}
+		await expect(page.locator('[data-testid="ppi-review-dates"]')).toHaveText("Review dates");
+		expect(errors, "console errors").toEqual([]);
+	});
+
+	test("U09-REMOVE — what removing a purchase says it will do to its requirements", async ({ page, browser }) => {
+		const state = resetFixture<{ plan_item_id: string }>("reset_plan_item_fixture");
+		const art = await wanted(browser, U09, "U09-REMOVE");
+		const errors = collectConsoleErrors(page);
+		await login(page, PLANNER, PASSWORD);
+		await page.setViewportSize({ width: 1440, height: 1024 });
+		await page.goto(`/app/procurement-plan-item/${state.plan_item_id}`);
+		await expectReady(page, "plan-item");
+		await page.locator('[data-testid="ppi-remove"]').click();
+		const dialog = page.locator('[data-testid="pln-dissolve-item-dialog"]');
+		await expect(dialog).toBeVisible();
+		expectLandmarkSubsequence(art, await landmarks(page, '[data-testid="pln-dissolve-item-dialog"]'), "U09-REMOVE", U09_REMOVE_ACTION);
+		// §10.8's own copy, which the artboard has not caught up with.
+		await expect(dialog).toContainText("Remove this purchase?");
+		await expect(dialog).toContainText("These requirements will return to this draft plan so they can be added again. No funds are released.");
+		await expect(page.locator('[data-testid="pln-dissolve-item-confirm"]')).toHaveText("Remove purchase");
+		expect(errors, "console errors").toEqual([]);
+	});
 
 	test("U10 — approved, planned, difference and the result", async ({ page, browser }) => {
 		const state = resetFixture<{ task: string }>("reset_finance_fixture");
