@@ -560,6 +560,7 @@ kt_my_work_providers = [
 	"kentender_procurement.departmental_needs.services.my_work_provider.my_work_rows",
 	"kentender_procurement.procurement_planning.services.my_work_provider.my_work_rows",
 	"kentender_procurement.procurement_requisitions.services.my_work_provider.my_work_rows",
+	"kentender_procurement.tenders.services.my_work_provider.my_work_rows",
 ]
 
 # AUTH-ADR-001 v1.8 §8/§9 / KT-STD-001 v1.5 §3A.6 — the shared Technical
@@ -570,6 +571,7 @@ kt_technical_reference_resolvers = [
 	"kentender_procurement.departmental_needs.services.technical_read.reference_resolvers",
 	"kentender_procurement.procurement_planning.services.technical_read.reference_resolvers",
 	"kentender_procurement.procurement_requisitions.services.technical_read.reference_resolvers",
+	"kentender_procurement.tenders.services.technical_read.reference_resolvers",
 	"kentender_procurement.std_configuration.services.technical_read.reference_resolvers",
 ]
 
@@ -577,6 +579,7 @@ kt_technical_read_probes = [
 	"kentender_procurement.departmental_needs.services.technical_read.read_probes",
 	"kentender_procurement.procurement_planning.services.technical_read.read_probes",
 	"kentender_procurement.procurement_requisitions.services.technical_read.read_probes",
+	"kentender_procurement.tenders.services.technical_read.read_probes",
 	"kentender_procurement.std_configuration.services.technical_read.read_probes",
 ]
 
