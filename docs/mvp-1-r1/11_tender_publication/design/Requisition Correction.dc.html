@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+  <style>body{margin:0;} a{color:var(--color-accent-700);} a:hover{color:var(--color-accent-900);}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:100px;position:relative;">
+  <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
+    <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">TPR-DES-13:</span>
+    <button type="button" class="{{btnReturned}}" onclick="{{setReturned}}" style="font-size:12px;padding:6px 12px;">Returned</button>
+    <button type="button" class="{{btnRequested}}" onclick="{{setRequested}}" style="font-size:12px;padding:6px 12px;">Correction requested</button>
+    <button type="button" class="{{btnSuccessor}}" onclick="{{setSuccessor}}" style="font-size:12px;padding:6px 12px;">Corrected successor ready</button>
+  </div>
+
+  <div data-screen-label="TPR-DES-13 Requisition correction" style="max-width:900px;margin:0 auto;padding:32px 40px 0;">
+    <div class="card blueprint elev-sm" style="padding:0;">
+
+      <sc-if value="{{isReturned}}" hint-placeholder-val="{{true}}">
+        <div style="padding:28px 24px 20px;border-bottom:1px solid var(--color-divider);">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <h1 style="font-family:var(--font-heading);font-weight:600;font-size:28px;margin:0;letter-spacing:.01em;">Supplier and contract requirements</h1>
+            <span class="kt-status is-attention">Needs attention</span>
+          </div>
+          <p style="font-size:13px;color:var(--color-neutral-600);margin:0;">TND-MOH-2027-033 &middot; Draft Version 2 &middot; 25 Mar 2027, 14:05 EAT</p>
+        </div>
+        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);">
+          <div class="kt-notice is-attention">
+            <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            <div class="kt-notice-body"><strong>Returned for correction.</strong> Returned by Charles Mutiso, 24 Mar 2027, 16:20 EAT: "Increase past supply experience evidence detail — confirm the criterion is proportionate to purchase value."</div>
+          </div>
+        </div>
+        <div style="padding:16px 24px;border-bottom:1px solid var(--color-divider);display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+          <div class="card blueprint" style="padding:12px 14px;"><div class="kt-label" style="margin-bottom:2px;">Tender details</div><span class="kt-status is-live">Complete</span></div>
+          <div class="card blueprint" style="padding:12px 14px;background:var(--color-accent-100);border-color:var(--color-accent-500);"><div class="kt-label" style="margin-bottom:2px;">Supplier and contract requirements</div><span class="kt-status is-attention">Needs attention</span></div>
+          <div class="card blueprint" style="padding:12px 14px;"><div class="kt-label" style="margin-bottom:2px;">Review and submit</div><span class="kt-status is-pending">Not started</span></div>
+        </div>
+        <div style="padding:20px 24px;display:flex;gap:12px;">
+          <button type="button" class="btn btn-secondary">Save</button>
+          <button type="button" class="btn btn-primary">Review</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isRequested}}" hint-placeholder-val="{{false}}">
+        <div style="padding:28px 24px 20px;border-bottom:1px solid var(--color-divider);">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <h1 style="font-family:var(--font-heading);font-weight:600;font-size:28px;margin:0;letter-spacing:.01em;">Supply and delivery of hospital backup batteries</h1>
+            <span class="kt-status is-critical">Requisition correction requested</span>
+          </div>
+          <p style="font-size:13px;color:var(--color-neutral-600);margin:0;">TND-MOH-2027-041</p>
+        </div>
+        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);">
+          <div class="kt-notice is-critical">
+            <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            <div class="kt-notice-body"><strong>This Tender cannot continue.</strong></div>
+          </div>
+        </div>
+        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div><div class="kt-label" style="margin-bottom:3px;">Requested by</div><div style="font-size:14px;">Brian Wafula</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Requested at</div><div style="font-size:14px;">2 Apr 2027, 10:00 EAT</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Reason</div><div style="font-size:14px;">The authorised battery-runtime requirement must be corrected before this Tender can continue.</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Requisition</div><div style="font-size:14px;">REQ-MOH-2027-041-001</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Current owner</div><div style="font-size:14px;">Head of User Department</div></div>
+        </div>
+        <div style="padding:20px 24px;display:flex;gap:12px;">
+          <button type="button" class="btn btn-secondary">View requisition status</button>
+          <button type="button" class="btn btn-secondary">View history</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isSuccessor}}" hint-placeholder-val="{{false}}">
+        <div style="padding:28px 24px 20px;border-bottom:1px solid var(--color-divider);">
+          <h1 style="font-family:var(--font-heading);font-weight:600;font-size:28px;margin:0 0 6px;letter-spacing:.01em;">Supply and delivery of hospital backup batteries</h1>
+          <p style="font-size:13px;color:var(--color-neutral-600);margin:0;">REQ-MOH-2027-041-001</p>
+        </div>
+        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);">
+          <div class="kt-notice is-live">
+            <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg>
+            <div class="kt-notice-body"><strong>A corrected requisition is ready.</strong></div>
+          </div>
+        </div>
+        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div><div class="kt-label" style="margin-bottom:3px;">Requisition Version 1</div><div style="font-size:14px;">Stopped &middot; corrected battery-runtime requirement pending</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Requisition Version 2</div><div style="font-size:14px;">Authorised &middot; corrected battery-runtime requirement</div></div>
+        </div>
+        <div style="padding:20px 24px;">
+          <p style="font-size:13px;color:var(--color-neutral-700);margin:0 0 16px;">Starting continues into a new Draft Version 3. Version 2 remains stopped and unchanged in history.</p>
+          <button type="button" class="btn btn-primary">Start corrected Tender Version</button>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+
+  <sc-if value="{{requestDialogOpen}}" hint-placeholder-val="{{false}}">
+    <div style="position:fixed;inset:0;z-index:50;">
+      <div class="dialog-backdrop" style="position:fixed;">
+        <div class="dialog" role="dialog" aria-modal="true">
+          <div class="dialog-title">Request a requisition correction?</div>
+          <div class="dialog-body">
+            <div class="field"><label>Reason</label><textarea class="input" rows="3">The authorised battery-runtime requirement must be corrected before this Tender can continue.</textarea></div>
+            <p style="font-size:13px;color:var(--color-neutral-700);margin:12px 0 0;">This Tender Version will stop and remain in history. Work can continue only from a newly authorised corrected Requisition.</p>
+          </div>
+          <div class="dialog-actions">
+            <button type="button" class="btn btn-secondary" onclick="{{closeDialog}}">Cancel</button>
+            <button type="button" class="btn btn-danger" onclick="{{closeDialog}}">Request requisition correction</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { variant: 'returned', requestDialogOpen: false };
+  renderVals() {
+    const v = this.state.variant;
+    const cls = (name) => v === name ? 'btn btn-primary' : 'btn btn-secondary';
+    return {
+      setReturned: () => this.setState({ variant: 'returned' }),
+      setRequested: () => this.setState({ variant: 'requested' }),
+      setSuccessor: () => this.setState({ variant: 'successor' }),
+      btnReturned: cls('returned'), btnRequested: cls('requested'), btnSuccessor: cls('successor'),
+      isReturned: v === 'returned', isRequested: v === 'requested', isSuccessor: v === 'successor',
+      requestDialogOpen: this.state.requestDialogOpen,
+      closeDialog: () => this.setState({ requestDialogOpen: false }),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

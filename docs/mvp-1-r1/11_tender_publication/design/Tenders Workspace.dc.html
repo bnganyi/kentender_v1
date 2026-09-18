@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; }
+    a { color: var(--color-accent-700); }
+    a:hover { color: var(--color-accent-900); }
+  </style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:80px;">
+
+  <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:6px;">&larr; Index</a>
+    <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">TPR-DES-01:</span>
+    <select class="input" style="width:auto;font-size:12px;padding:5px 10px;" onchange="{{setActor}}">
+      <option value="ready" selected="{{selReady}}">Ready to start (Brian)</option>
+      <option value="draft" selected="{{selDraft}}">Draft — needs attention (Brian)</option>
+      <option value="returned" selected="{{selReturned}}">Returned to me (Brian)</option>
+      <option value="hopf" selected="{{selHopf}}">Awaiting my approval (Charles, HOPF)</option>
+      <option value="ao" selected="{{selAo}}">Awaiting my publication decision (Amina, AO)</option>
+      <option value="publishing" selected="{{selPublishing}}">Publication evidence required (Charles, HOPF)</option>
+      <option value="published" selected="{{selPublished}}">Published — open (any permitted actor)</option>
+      <option value="reader" selected="{{selReader}}">Departmental reader / Auditor</option>
+      <option value="technical" selected="{{selTechnical}}">Administrator / System Manager</option>
+      <option value="empty" selected="{{selEmpty}}">Empty result</option>
+    </select>
+  </div>
+
+  <div data-screen-label="TPR-DES-01 Tenders workspace" style="max-width:1240px;margin:0 auto;padding:36px 40px 0;">
+    <div class="card blueprint elev-sm" style="padding:0;">
+
+      <div style="padding:28px 24px 20px;border-bottom:1px solid var(--color-divider);">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.5"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+          <h1 style="font-family:var(--font-heading);font-weight:600;font-size:32px;margin:0;letter-spacing:.01em;">Tenders</h1>
+        </div>
+        <p style="font-size:14px;color:var(--color-neutral-700);margin:0;max-width:70ch;">Prepare approved requisitions, complete approvals and follow publication.</p>
+      </div>
+
+      <sc-if value="{{showCounts}}" hint-placeholder-val="{{true}}">
+        <div style="padding:16px 24px;border-bottom:1px solid var(--color-divider);display:flex;gap:12px;flex-wrap:wrap;">
+          <sc-for list="{{counts}}" as="c" hint-placeholder-count="1">
+            <div class="tag tag-accent" style="cursor:default;">{{c.label}} {{c.value}}</div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <div style="padding:16px 24px;border-bottom:1px solid var(--color-divider);display:flex;gap:12px;flex-wrap:wrap;align-items:end;">
+        <div class="field" style="min-width:220px;margin:0;"><label style="font-size:11px;">Search</label><input class="input" placeholder="Tender, requisition or purchase" /></div>
+        <div class="field" style="margin:0;"><label style="font-size:11px;">Status</label><select class="input" style="width:auto;">
+          <option>All statuses</option>
+        </select></div>
+        <div class="field" style="margin:0;"><label style="font-size:11px;">Financial year</label><select class="input" style="width:auto;">
+          <option>All financial years</option>
+        </select></div>
+        <button type="button" class="btn btn-secondary">Clear filters</button>
+      </div>
+
+      <sc-if value="{{isEmpty}}" hint-placeholder-val="{{false}}">
+        <div style="padding:64px 24px;text-align:center;">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-500)" stroke-width="1.5" style="margin-bottom:12px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <p style="font-size:14px;color:var(--color-neutral-700);margin:0 0 16px;">No Tenders match these filters.</p>
+          <button type="button" class="btn btn-secondary">Clear filters</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isNotEmpty}}" hint-placeholder-val="{{true}}">
+        <div style="overflow-x:auto;">
+          <table class="table" style="width:100%;">
+            <thead><tr><th style="width:32%;">Purchase</th><th style="width:22%;">Tender</th><th style="width:22%;">Status</th><th style="width:14%;">Required by</th><th style="width:10%;"></th></tr></thead>
+            <tbody>
+              <tr>
+                <td><div style="display:flex;align-items:center;gap:8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="1.5"><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.29 7 12 12l8.71-5"/><path d="M12 22V12"/></svg><div>{{row.purchase}}<div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px;">{{row.plan}}</div></div></div></td>
+                <td>{{row.tender}}<div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px;">{{row.requisition}}</div></td>
+                <td><span class="{{row.statusClass}}">{{row.status}}</span><sc-if value="{{row.hasSubline}}" hint-placeholder-val="{{false}}"><div style="font-size:11px;color:var(--color-neutral-600);margin-top:4px;">{{row.subline}}</div></sc-if></td>
+                <td>{{row.requiredBy}}</td>
+                <td style="text-align:right;"><button type="button" class="{{row.actionClass}}">{{row.action}}</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { actor: 'ready' };
+  renderVals() {
+    const a = this.state.actor;
+    const sel = (v) => a === v ? true : undefined;
+    const rows = {
+      ready: { purchase: 'Supply and delivery of business laptops', plan: 'PPI-MOH-2027-033', tender: 'Not started', requisition: 'REQ-MOH-2027-033-001', status: 'Ready to start', statusClass: 'kt-status is-pending', requiredBy: '30 Sep 2027', action: 'Start Tender', actionClass: 'btn btn-primary', hasSubline: false },
+      draft: { purchase: 'Supply and delivery of business laptops', plan: 'PPI-MOH-2027-033', tender: 'TND-MOH-2027-033', requisition: 'REQ-MOH-2027-033-001', status: 'Draft', statusClass: 'kt-status is-draft', requiredBy: '30 Sep 2027', action: 'Continue', actionClass: 'btn btn-primary', hasSubline: true, subline: 'Tender details need attention' },
+      returned: { purchase: 'Supply and delivery of business laptops', plan: 'PPI-MOH-2027-033', tender: 'TND-MOH-2027-033', requisition: 'REQ-MOH-2027-033-001', status: 'Returned to you', statusClass: 'kt-status is-attention', requiredBy: '30 Sep 2027', action: 'Correct', actionClass: 'btn btn-primary', hasSubline: true, subline: 'Supplier requirements need attention' },
+      hopf: { purchase: 'Supply and delivery of business laptops', plan: 'PPI-MOH-2027-033', tender: 'TND-MOH-2027-033', requisition: 'REQ-MOH-2027-033-001', status: 'Awaiting your approval', statusClass: 'kt-status is-attention', requiredBy: '30 Sep 2027', action: 'Review', actionClass: 'btn btn-primary', hasSubline: false },
+      ao: { purchase: 'Supply and delivery of business laptops', plan: 'PPI-MOH-2027-033', tender: 'TND-MOH-2027-033', requisition: 'REQ-MOH-2027-033-001', status: 'Awaiting your publication decision', statusClass: 'kt-status is-attention', requiredBy: '30 Sep 2027', action: 'Review publication', actionClass: 'btn btn-primary', hasSubline: false },
+      publishing: { purchase: 'Supply and delivery of business laptops', plan: 'PPI-MOH-2027-033', tender: 'TND-MOH-2027-033', requisition: 'REQ-MOH-2027-033-001', status: 'Publication evidence required', statusClass: 'kt-status is-attention', requiredBy: '30 Sep 2027', action: 'Complete evidence', actionClass: 'btn btn-primary', hasSubline: true, subline: 'Notice board and newspaper evidence' },
+      published: { purchase: 'Supply and delivery of business laptops', plan: 'PPI-MOH-2027-033', tender: 'TND-MOH-2027-033', requisition: 'REQ-MOH-2027-033-001', status: 'Published — open until 12 Jun 2027, 11:00 EAT', statusClass: 'kt-status is-live', requiredBy: '30 Sep 2027', action: 'View', actionClass: 'btn btn-secondary', hasSubline: false },
+      reader: { purchase: 'Supply and delivery of business laptops', plan: 'PPI-MOH-2027-033', tender: 'TND-MOH-2027-033', requisition: 'REQ-MOH-2027-033-001', status: 'Published — open', statusClass: 'kt-status is-live', requiredBy: '30 Sep 2027', action: 'View', actionClass: 'btn btn-secondary', hasSubline: false },
+      technical: { purchase: 'Supply and delivery of business laptops', plan: 'PPI-MOH-2027-033', tender: 'TND-MOH-2027-033', requisition: 'REQ-MOH-2027-033-001', status: 'Published — open', statusClass: 'kt-status is-live', requiredBy: '30 Sep 2027', action: 'View', actionClass: 'btn btn-secondary', hasSubline: false },
+      empty: {},
+    };
+    const countsFor = {
+      ready: [{ label: 'Ready to start', value: 1 }, { label: 'Drafts', value: 0 }, { label: 'Returned to me', value: 0 }],
+      draft: [{ label: 'Ready to start', value: 0 }, { label: 'Drafts', value: 1 }, { label: 'Returned to me', value: 0 }],
+      returned: [{ label: 'Ready to start', value: 0 }, { label: 'Drafts', value: 0 }, { label: 'Returned to me', value: 1 }],
+      hopf: [{ label: 'Awaiting procurement approval', value: 1 }],
+      ao: [{ label: 'Awaiting publication authorisation', value: 1 }],
+      publishing: [{ label: 'Publication evidence required', value: 1 }],
+      published: [], reader: [], technical: [], empty: [],
+    };
+    return {
+      setActor: (e) => this.setState({ actor: e.target.value }),
+      selReady: sel('ready'), selDraft: sel('draft'), selReturned: sel('returned'), selHopf: sel('hopf'),
+      selAo: sel('ao'), selPublishing: sel('publishing'), selPublished: sel('published'), selReader: sel('reader'),
+      selTechnical: sel('technical'), selEmpty: sel('empty'),
+      isEmpty: a === 'empty',
+      isNotEmpty: a !== 'empty',
+      showCounts: a !== 'reader' && a !== 'technical' && a !== 'empty',
+      counts: countsFor[a] || [],
+      row: rows[a] || {},
+    };
+  }
+}
+
+</script>
+</body>
+</html>

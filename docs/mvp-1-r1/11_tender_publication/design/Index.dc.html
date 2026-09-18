@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; }
+    a { color: var(--color-accent-700); }
+    a:hover { color: var(--color-accent-900); }
+  </style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:60px;">
+  <div style="max-width:1180px;margin:0 auto;padding:56px 40px 0;">
+    <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:10px;">TPR-CHG-001 · v0.8 · Proposed for Project Owner review</div>
+    <h1 style="font-family:var(--font-heading);font-weight:600;font-size:38px;margin:0 0 12px;letter-spacing:.01em;">Tenders — static design artboards</h1>
+    <p style="font-size:15px;color:var(--color-neutral-700);margin:0 0 40px;max-width:74ch;">Every artboard family in §10, grouped by screen. Each page bundles the states/tabs/actors that family covers, with a small switcher above the artboard content so you can step through them.</p>
+  </div>
+
+  <div style="max-width:1180px;margin:0 auto;padding:0 40px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+
+    <a href="Tenders Workspace.dc.html" style="text-decoration:none;color:inherit;">
+      <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
+        <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--color-accent-100);color:var(--color-accent-700);margin-bottom:12px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg></div><div class="kt-card-title" style="margin-bottom:8px;">Tenders workspace</div>
+        <p class="card-body" style="margin:0 0 10px;">One role-aware queue for starts, drafts, decisions and open Tenders — every actor's next-action view plus the empty state.</p>
+        <span class="tag tag-neutral">TPR-DES-01</span>
+      </div>
+    </a>
+
+    <a href="Start Tender Dialog.dc.html" style="text-decoration:none;color:inherit;">
+      <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
+        <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--color-accent-100);color:var(--color-accent-700);margin-bottom:12px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg></div><div class="kt-card-title" style="margin-bottom:8px;">Start Tender dialog</div>
+        <p class="card-body" style="margin:0 0 10px;">Confirming the authorised Requisition before creating the Draft, plus the unsupported-product result.</p>
+        <span class="tag tag-neutral">TPR-DES-02</span>
+      </div>
+    </a>
+
+    <a href="Draft - Tender Details.dc.html" style="text-decoration:none;color:inherit;">
+      <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
+        <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--color-accent-100);color:var(--color-accent-700);margin-bottom:12px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></div><div class="kt-card-title" style="margin-bottom:8px;">Draft: Tender details</div>
+        <p class="card-body" style="margin:0 0 10px;">Dates, security and the optional pre-tender meeting, with its physical and online variants and the requisition drawer.</p>
+        <span class="tag tag-neutral">TPR-DES-03</span>
+      </div>
+    </a>
+
+    <a href="Draft - Supplier and Contract Requirements.dc.html" style="text-decoration:none;color:inherit;">
+      <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
+        <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--color-accent-100);color:var(--color-accent-700);margin-bottom:12px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/></svg></div><div class="kt-card-title" style="margin-bottom:8px;">Draft: Supplier &amp; contract requirements</div>
+        <p class="card-body" style="margin:0 0 10px;">Evidence and contract terms, the add-evidence dialog, and the Returned-for-correction reuse of this same screen.</p>
+        <span class="tag tag-neutral">TPR-DES-04 · 13</span>
+      </div>
+    </a>
+
+    <a href="Review and Submit.dc.html" style="text-decoration:none;color:inherit;">
+      <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
+        <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--color-accent-100);color:var(--color-accent-700);margin-bottom:12px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg></div><div class="kt-card-title" style="margin-bottom:8px;">Review and submit</div>
+        <p class="card-body" style="margin:0 0 10px;">The readiness result, review sections and submission confirmation, plus the Needs-attention blocked state.</p>
+        <span class="tag tag-neutral">TPR-DES-05</span>
+      </div>
+    </a>
+
+    <a href="HOPF Approval.dc.html" style="text-decoration:none;color:inherit;">
+      <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
+        <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--color-accent-100);color:var(--color-accent-700);margin-bottom:12px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg></div><div class="kt-card-title" style="margin-bottom:8px;">HOPF approval</div>
+        <p class="card-body" style="margin:0 0 10px;">Return or approve the immutable package, with the return dialog, approval dialog and segregation-blocked state.</p>
+        <span class="tag tag-neutral">TPR-DES-06</span>
+      </div>
+    </a>
+
+    <a href="AO Publication Authorisation.dc.html" style="text-decoration:none;color:inherit;">
+      <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
+        <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--color-accent-100);color:var(--color-accent-700);margin-bottom:12px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg></div><div class="kt-card-title" style="margin-bottom:8px;">AO publication authorisation</div>
+        <p class="card-body" style="margin:0 0 10px;">The Accounting Officer's one business decision over the approved package and its generated channels.</p>
+        <span class="tag tag-neutral">TPR-DES-07</span>
+      </div>
+    </a>
+
+    <a href="Publication Progress and Evidence.dc.html" style="text-decoration:none;color:inherit;">
+      <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
+        <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--color-accent-100);color:var(--color-accent-700);margin-bottom:12px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div><div class="kt-card-title" style="margin-bottom:8px;">Publication progress &amp; evidence</div>
+        <p class="card-body" style="margin:0 0 10px;">Channel-by-channel confirmation, the evidence dialog, and the Result-unknown / Confirmed-failed variants.</p>
+        <span class="tag tag-neutral">TPR-DES-08</span>
+      </div>
+    </a>
+
+    <a href="Published Tender.dc.html" style="text-decoration:none;color:inherit;">
+      <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
+        <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--color-accent-100);color:var(--color-accent-700);margin-bottom:12px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></div><div class="kt-card-title" style="margin-bottom:8px;">Published Tender</div>
+        <p class="card-body" style="margin:0 0 10px;">The effective open record — documents, channels, addenda and inquiries — with the No-addendum and Submission-ended variants.</p>
+        <span class="tag tag-neutral">TPR-DES-09</span>
+      </div>
+    </a>
+
+    <a href="Prepare and Issue Addendum.dc.html" style="text-decoration:none;color:inherit;">
+      <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
+        <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--color-accent-100);color:var(--color-accent-700);margin-bottom:12px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6"/><path d="M12 12v6"/><path d="M9 15h6"/></svg></div><div class="kt-card-title" style="margin-bottom:8px;">Prepare &amp; issue addendum</div>
+        <p class="card-body" style="margin:0 0 10px;">Drafting a non-material change, the HOPF issue view, and the Material-change-blocked result.</p>
+        <span class="tag tag-neutral">TPR-DES-10</span>
+      </div>
+    </a>
+
+    <a href="Respond to Addendum Inquiry.dc.html" style="text-decoration:none;color:inherit;">
+      <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
+        <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--color-accent-100);color:var(--color-accent-700);margin-bottom:12px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="kt-card-title" style="margin-bottom:8px;">Respond to addendum inquiry</div>
+        <p class="card-body" style="margin:0 0 10px;">Answering an authenticated candidate question, classifying whether the response affects a requirement.</p>
+        <span class="tag tag-neutral">TPR-DES-11</span>
+      </div>
+    </a>
+
+    <a href="Cancel Tender.dc.html" style="text-decoration:none;color:inherit;">
+      <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
+        <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--color-accent-100);color:var(--color-accent-700);margin-bottom:12px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></div><div class="kt-card-title" style="margin-bottom:8px;">Cancel Tender</div>
+        <p class="card-body" style="margin:0 0 10px;">The Accounting Officer's final decision, the optional HOPF recommendation, and the Cancelled-detail record.</p>
+        <span class="tag tag-neutral">TPR-DES-12</span>
+      </div>
+    </a>
+
+    <a href="Requisition Correction.dc.html" style="text-decoration:none;color:inherit;">
+      <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
+        <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--color-accent-100);color:var(--color-accent-700);margin-bottom:12px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></div><div class="kt-card-title" style="margin-bottom:8px;">Requisition correction</div>
+        <p class="card-body" style="margin:0 0 10px;">Stopping a Version for owner correction, the terminal Correction-requested state, and the authorised-successor resume.</p>
+        <span class="tag tag-neutral">TPR-DES-13</span>
+      </div>
+    </a>
+
+    <a href="Common States.dc.html" style="text-decoration:none;color:inherit;">
+      <div class="card blueprint elev-sm" style="padding:24px;height:100%;">
+        <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--color-accent-100);color:var(--color-accent-700);margin-bottom:12px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m4.93 19.07 4.24-4.24"/></svg></div><div class="kt-card-title" style="margin-bottom:8px;">Common states</div>
+        <p class="card-body" style="margin:0 0 10px;">Forbidden, Not found, unavailable, already-started, configuration-missing, stale-write and load-failure recovery screens.</p>
+        <span class="tag tag-neutral">TPR-DES-14</span>
+      </div>
+    </a>
+
+  </div>
+
+  <div style="max-width:1180px;margin:40px auto 0;padding:0 40px;">
+    <p style="font-size:12px;color:var(--color-neutral-600);">Fixture: TND-MOH-2027-033 · Supply and delivery of business laptops · Ministry of Health · FY 2027/28. §10.1 shared fixture pack governs every screen unless a variant states otherwise.</p>
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; }
+    a { color: var(--color-accent-700); }
+    a:hover { color: var(--color-accent-900); }
+  </style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:100px;position:relative;">
+
+  <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
+    <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">TPR-DES-03 meeting:</span>
+    <button type="button" class="{{btnNo}}" onclick="{{setNo}}" style="font-size:12px;padding:6px 12px;">No meeting</button>
+    <button type="button" class="{{btnPhysical}}" onclick="{{setPhysical}}" style="font-size:12px;padding:6px 12px;">Physical</button>
+    <button type="button" class="{{btnOnline}}" onclick="{{setOnline}}" style="font-size:12px;padding:6px 12px;">Online</button>
+  </div>
+
+  <div data-screen-label="TPR-DES-03 Draft Tender details" style="max-width:1100px;margin:0 auto;padding:32px 40px 0;">
+    <div class="card blueprint elev-sm" style="padding:0;">
+
+      <div style="padding:28px 24px 20px;border-bottom:1px solid var(--color-divider);">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+          <h1 style="font-family:var(--font-heading);font-weight:600;font-size:28px;margin:0;letter-spacing:.01em;">Supply and delivery of business laptops</h1>
+          <span class="kt-status is-draft">Draft</span>
+        </div>
+        <p style="font-size:13px;color:var(--color-neutral-600);margin:0 0 10px;">TND-MOH-2027-033 · REQ-MOH-2027-033-001</p>
+        <p style="font-size:14px;color:var(--color-neutral-700);margin:0;">Set the dates and security suppliers must follow.</p>
+      </div>
+
+      <div style="padding:18px 24px;border-bottom:1px solid var(--color-divider);display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+        <div class="card blueprint" style="padding:12px 14px;background:var(--color-accent-100);border-color:var(--color-accent-500);">
+          <div class="kt-label" style="margin-bottom:2px;">Tender details</div>
+          <span class="kt-status is-attention">Needs attention</span>
+        </div>
+        <div class="card blueprint" style="padding:12px 14px;">
+          <div class="kt-label" style="margin-bottom:2px;">Supplier and contract requirements</div>
+          <span class="kt-status is-pending">Not started</span>
+        </div>
+        <div class="card blueprint" style="padding:12px 14px;">
+          <div class="kt-label" style="margin-bottom:2px;">Review and submit</div>
+          <span class="kt-status is-pending">Not started</span>
+        </div>
+      </div>
+
+      <div style="padding:16px 24px;border-bottom:1px solid var(--color-divider);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px 24px;flex:1;">
+          <div><div class="kt-label" style="margin-bottom:3px;">Purchase</div><div style="font-size:14px;">Clinical training and deployment laptops</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Method</div><div style="font-size:14px;">Open Tender</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Quantity</div><div style="font-size:14px;">250 Each</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Latest delivery</div><div style="font-size:14px;">30 Sep 2027</div></div>
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="{{openDrawer}}" style="display:inline-flex;align-items:center;gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+          View authorised requisition
+        </button>
+      </div>
+
+      <div style="padding:22px 24px;border-bottom:1px solid var(--color-divider);">
+        <h3 class="kt-card-title" style="margin:0 0 16px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>Tender dates</h3>
+        <div class="field" style="margin-bottom:14px;"><label>Tender title</label><input class="input" value="Supply and delivery of business laptops" /></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px;">
+          <div class="field" style="margin:0;"><label>Issue date</label><div class="date-field"><span>15 May 2027</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div></div>
+          <div class="field" style="margin:0;"><label>Clarification deadline</label><div class="date-field"><span>27 May 2027, 17:00 EAT</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="field" style="margin:0;"><label>Submission deadline</label><div class="date-field"><span>5 Jun 2027, 11:00 EAT</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div></div>
+          <div class="field" style="margin:0;"><label>Tender validity (days)</label><input class="input" value="120" />
+            <div class="kt-label" style="margin-top:4px;font-weight:400;">How long suppliers' offers must remain valid.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:22px 24px;border-bottom:1px solid var(--color-divider);">
+        <h3 class="kt-card-title" style="margin:0 0 16px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Tender security</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+          <div><div class="kt-label" style="margin-bottom:3px;">Treatment</div><div style="font-size:14px;color:var(--color-neutral-700);">Fixed by template</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Currency</div><div style="font-size:14px;color:var(--color-neutral-700);">KES</div></div>
+          <div class="field" style="margin:0;"><label>Amount</label><input class="input" value="500,000.00" /></div>
+        </div>
+      </div>
+
+      <div style="padding:22px 24px;">
+        <h3 class="kt-card-title" style="margin:0 0 16px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Pre-tender meeting</h3>
+        <div class="seg" role="radiogroup" style="margin-bottom:16px;width:fit-content;">
+          <label class="seg-opt"><input type="radio" name="meeting" checked="{{noChecked}}" onchange="{{setNo}}" />No</label>
+          <label class="seg-opt"><input type="radio" name="meeting" checked="{{yesChecked}}" onchange="{{setPhysicalIfNone}}" />Yes</label>
+        </div>
+        <sc-if value="{{hasMeeting}}" hint-placeholder-val="{{false}}">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+            <div class="field" style="margin:0;"><label>Meeting date/time</label><div class="date-field"><span>22 May 2027, 10:00 EAT</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div></div>
+            <div class="field" style="margin:0;"><label>Meeting mode</label>
+              <div class="seg" role="radiogroup">
+                <label class="seg-opt"><input type="radio" name="mode" checked="{{physicalChecked}}" onchange="{{setPhysical}}" />Physical</label>
+                <label class="seg-opt"><input type="radio" name="mode" checked="{{onlineChecked}}" onchange="{{setOnline}}" />Online</label>
+              </div>
+            </div>
+          </div>
+          <sc-if value="{{isPhysical}}" hint-placeholder-val="{{true}}">
+            <div class="field" style="margin:0;"><label>Meeting venue</label><input class="input" value="Ministry of Health Headquarters, Afya House, Nairobi" /></div>
+          </sc-if>
+          <sc-if value="{{isOnline}}" hint-placeholder-val="{{false}}">
+            <div class="field" style="margin:0;"><label>Online joining information</label><input class="input" value="Microsoft Teams — https://meet.example.test/tnd-moh-2027-033" /></div>
+          </sc-if>
+        </sc-if>
+      </div>
+
+    </div>
+  </div>
+
+  <div style="position:sticky;bottom:0;background:var(--color-surface);border-top:1px solid var(--color-divider);padding:16px 40px;display:flex;justify-content:space-between;gap:12px;">
+    <a href="Tenders Workspace.dc.html" style="align-self:center;font-size:13px;">Back to Tenders</a>
+    <div style="display:flex;gap:12px;">
+      <button type="button" class="btn btn-secondary">Save draft</button>
+      <button type="button" class="btn btn-primary">Continue</button>
+    </div>
+  </div>
+
+  <sc-if value="{{drawerOpen}}" hint-placeholder-val="{{false}}">
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:40;" onclick="{{closeDrawer}}"></div>
+    <div style="position:fixed;top:0;right:0;bottom:0;width:440px;background:var(--color-surface);box-shadow:var(--shadow-lg);z-index:41;overflow-y:auto;padding:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 class="kt-card-title" style="margin:0;">Authorised requisition</h3>
+        <button type="button" class="btn-icon" onclick="{{closeDrawer}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      </div>
+      <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-neutral-700);margin:16px 0 8px;">Approved purchase and policy context</h4>
+      <p style="font-size:12px;color:var(--color-neutral-600);margin:0 0 12px;">For internal review only — not included in supplier documents.</p>
+      <div style="display:grid;gap:10px;font-size:13px;margin-bottom:20px;">
+        <div><span class="kt-label">Plan Item</span> PPI-MOH-2027-033</div>
+        <div><span class="kt-label">Requisition</span> REQ-MOH-2027-033-001 · Version 1</div>
+        <div><span class="kt-label">Authorised value</span> KES 50,000,000.00</div>
+        <div><span class="kt-label">Reservation</span> Youth</div>
+        <div><span class="kt-label">Lotting</span> Single lot</div>
+        <div><span class="kt-label">Strategic objective</span> Strengthen interoperable national digital health services</div>
+        <div><span class="kt-label">Plan horizon</span> Single year</div>
+        <div><span class="kt-label">Template</span> IT Equipment — Open Tender · Version 1.1</div>
+        <div><span class="kt-label">Opening date/time</span> 5 Jun 2027, 11:00 EAT (generated, equal to submission deadline)</div>
+      </div>
+      <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-neutral-700);margin:16px 0 8px;">Authorised requirements</h4>
+      <table class="table" style="font-size:12px;">
+        <thead><tr><th>Item</th><th style="text-align:right;">Quantity</th></tr></thead>
+        <tbody>
+          <tr><td>Business laptops</td><td class="is-num">250 Each</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:12px;color:var(--color-neutral-600);margin-top:8px;">11 technical requirements · 6 warranty/support facts · 5 acceptance checks carried in full.</p>
+    </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { meeting: 'no', mode: 'physical', drawerOpen: false };
+  renderVals() {
+    const m = this.state.meeting;
+    const mode = this.state.mode;
+    const cls = (v) => v === m ? 'btn btn-primary' : 'btn btn-secondary';
+    return {
+      setNo: () => this.setState({ meeting: 'no' }),
+      setPhysical: () => this.setState({ meeting: 'yes', mode: 'physical' }),
+      setOnline: () => this.setState({ meeting: 'yes', mode: 'online' }),
+      setPhysicalIfNone: () => this.setState((st) => ({ meeting: 'yes', mode: st.mode })),
+      btnNo: cls('no'), btnPhysical: m === 'yes' && mode === 'physical' ? 'btn btn-primary' : 'btn btn-secondary',
+      btnOnline: m === 'yes' && mode === 'online' ? 'btn btn-primary' : 'btn btn-secondary',
+      hasMeeting: m === 'yes',
+      noChecked: m === 'no' ? true : undefined,
+      yesChecked: m === 'yes' ? true : undefined,
+      physicalChecked: mode === 'physical' ? true : undefined,
+      onlineChecked: mode === 'online' ? true : undefined,
+      isPhysical: mode === 'physical', isOnline: mode === 'online',
+      openDrawer: () => this.setState({ drawerOpen: true }),
+      closeDrawer: () => this.setState({ drawerOpen: false }),
+      drawerOpen: this.state.drawerOpen,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

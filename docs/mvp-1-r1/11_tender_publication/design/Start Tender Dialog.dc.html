@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; }
+    a { color: var(--color-accent-700); }
+    a:hover { color: var(--color-accent-900); }
+    .dialog-demo { position: relative; min-height: 640px; }
+    .dialog-demo .dialog-backdrop { position: absolute; }
+  </style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:60px;">
+
+  <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
+    <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">TPR-DES-02:</span>
+    <button type="button" class="{{btnSupported}}" onclick="{{setSupported}}" style="font-size:12px;padding:6px 12px;">Supported requisition</button>
+    <button type="button" class="{{btnUnsupported}}" onclick="{{setUnsupported}}" style="font-size:12px;padding:6px 12px;">Unsupported product</button>
+  </div>
+
+  <div class="dialog-demo" style="max-width:1100px;margin:0 auto;">
+    <div style="padding:36px 40px 0;filter:blur(1px);opacity:.55;">
+      <div class="card blueprint elev-sm" style="padding:24px;">
+        <div class="kt-card-title" style="margin-bottom:10px;">Tenders</div>
+        <div style="height:12px;width:60%;background:var(--color-neutral-200);margin-bottom:8px;"></div>
+        <div style="height:12px;width:40%;background:var(--color-neutral-200);"></div>
+      </div>
+    </div>
+
+    <div class="dialog-backdrop" style="position:absolute;inset:0;">
+      <div class="dialog" role="dialog" aria-modal="true" style="width:520px;">
+        <div class="dialog-title" style="display:flex;align-items:center;gap:8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m9 15 2 2 4-4"/></svg>
+          Start this Tender?
+        </div>
+        <div class="dialog-body">
+          <p style="margin:0 0 16px;">A Draft Tender will be created from the authorised requisition below.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin-bottom:16px;">
+            <div><div class="kt-label" style="margin-bottom:3px;">Purchase</div><div style="font-size:14px;">{{purchase}}</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Requisition</div><div style="font-size:14px;">{{requisition}}</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Quantity</div><div style="font-size:14px;">{{quantity}}</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Approved value</div><div style="font-size:14px;">{{value}}</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Method</div><div style="font-size:14px;">Open Tender</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Latest delivery</div><div style="font-size:14px;">{{delivery}}</div></div>
+          </div>
+
+          <sc-if value="{{isSupported}}" hint-placeholder-val="{{true}}">
+            <div class="kt-notice is-live" style="margin-bottom:14px;">
+              <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg>
+              <div class="kt-notice-body"><strong>Supported</strong> — IT equipment using the standard Open Tender format.</div>
+            </div>
+            <div class="kt-disclosure" style="margin-bottom:10px;">
+              <div class="kt-disclosure-head" onclick="{{toggleWhy}}">
+                <div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Why this requisition is supported</span></div>
+                <svg class="{{whyChevron}}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <sc-if value="{{whyOpen}}" hint-placeholder-val="{{false}}">
+                <div class="kt-disclosure-body">
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:13px;">
+                    <div>Category: Goods</div><div>Product: Straightforward off-the-shelf IT equipment</div>
+                    <div>Method: Open Tender</div><div>Reservation: Youth</div>
+                    <div>Lotting: Single lot</div><div>Currency: KES</div>
+                    <div>Award package: One</div><div>Plan horizon: Single year</div>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+            <div class="kt-disclosure">
+              <div class="kt-disclosure-head" onclick="{{toggleTemplate}}">
+                <div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Template and source details</span></div>
+                <svg class="{{templateChevron}}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <sc-if value="{{templateOpen}}" hint-placeholder-val="{{false}}">
+                <div class="kt-disclosure-body">
+                  <div style="font-size:13px;">Template: IT Equipment — Open Tender · Version 1.1<br />Official source: REQ-MOH-2027-033-001 · Version 1</div>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{isUnsupported}}" hint-placeholder-val="{{false}}">
+            <div class="kt-notice is-critical">
+              <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              <div class="kt-notice-body">This requisition is not supported by the current IT-equipment Tender format.</div>
+            </div>
+          </sc-if>
+        </div>
+        <div class="dialog-actions">
+          <button type="button" class="btn btn-secondary">Cancel</button>
+          <button type="button" class="btn btn-primary" disabled="{{startDisabled}}">Start Tender</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { supported: true, whyOpen: false, templateOpen: false };
+  renderVals() {
+    const s = this.state.supported;
+    const cls = (v) => v === s ? 'btn btn-primary' : 'btn btn-secondary';
+    return {
+      setSupported: () => this.setState({ supported: true }),
+      setUnsupported: () => this.setState({ supported: false }),
+      btnSupported: cls(true), btnUnsupported: cls(false),
+      isSupported: s, isUnsupported: !s, startDisabled: !s ? true : undefined,
+      purchase: s ? 'Clinical training and deployment laptops for digital health rollout' : 'Implementation of a national health-data exchange platform',
+      requisition: s ? 'REQ-MOH-2027-033-001' : 'REQ-MOH-2027-038-001',
+      quantity: s ? '250 Each' : '1 Project',
+      value: s ? 'KES 50,000,000.00' : 'KES 120,000,000.00',
+      delivery: s ? '30 Sep 2027' : '31 Dec 2027',
+      toggleWhy: () => this.setState((st) => ({ whyOpen: !st.whyOpen })),
+      toggleTemplate: () => this.setState((st) => ({ templateOpen: !st.templateOpen })),
+      whyOpen: this.state.whyOpen, templateOpen: this.state.templateOpen,
+      whyChevron: this.state.whyOpen ? 'kt-disclosure-chevron is-open' : 'kt-disclosure-chevron',
+      templateChevron: this.state.templateOpen ? 'kt-disclosure-chevron is-open' : 'kt-disclosure-chevron',
+    };
+  }
+}
+
+</script>
+</body>
+</html>
