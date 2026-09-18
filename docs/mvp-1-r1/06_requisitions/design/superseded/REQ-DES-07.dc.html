@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<style>a{color:var(--color-accent-700)} a:hover{color:var(--color-accent-900)}</style>
+</helmet>
+<div style="background:var(--color-bg);min-height:100vh;padding:48px 64px;display:flex;flex-direction:column;align-items:center;gap:52px;font-family:var(--font-body);color:var(--color-text)">
+<div style="width:100%;max-width:1200px"><a href="Index.dc.html">← Index</a></div>
+
+<div style="width:100%;max-width:1200px;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-accent">REQ-DES-07</span><span style="font-family:var(--font-heading);font-weight:600;font-size:18px">Head of User Department review — base</span></div>
+<div style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">Fixture: Dr Peter Kimani, lead HoD · immutable Version 1 · 8 Mar 2027, 09:00 EAT</div>
+
+<div>
+<div style="display:flex;align-items:center;gap:10px"><h1 style="font-size:26px;margin:0">Review departmental requisition</h1><span class="kt-status is-attention">Awaiting your approval</span></div>
+<div class="kt-label" style="margin-top:6px">REQ-MOH-2027-033-001</div>
+<p class="text-muted" style="margin-top:6px">Confirm that the request accurately states the departments' need and minimum requirements.</p>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:24px">
+<div class="kt-panel" style="margin-top:0">
+<div class="kt-meta-row">
+<div><span class="kt-label">Result</span><span class="kt-meta-value">Ready for departmental submission</span></div>
+<div><span class="kt-label">Prepared by</span><span class="kt-meta-value">Grace Wanjiku</span></div>
+<div><span class="kt-label">Contributing departments</span><span class="kt-meta-value">Digital Health; Human Resources Management and Development</span></div>
+<div><span class="kt-label">Submitting department</span><span class="kt-meta-value">Digital Health</span></div>
+</div>
+</div>
+
+<dc-import name="ReviewComposition" hint-size="100%,2400px"></dc-import>
+
+<div class="card elev-sm" style="border-left:3px solid var(--color-accent)">I confirm that this requisition states the departments' operational need and minimum requirements and may be submitted to Procurement.</div>
+
+<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--color-divider);padding-top:16px">
+<button type="button" class="btn btn-ghost">Request Planning correction</button>
+<div style="display:flex;gap:10px;align-items:center">
+<div style="position:relative"><button type="button" class="btn btn-ghost">Other actions ▾</button>
+<div class="card elev-md" style="position:absolute;bottom:38px;right:0;width:200px;padding:6px"><button type="button" class="btn btn-ghost btn-block" style="justify-content:flex-start;color:var(--status-critical)">Withdraw requisition</button></div></div>
+<button type="button" class="btn btn-secondary">Return for correction</button>
+<button type="button" class="btn btn-primary">Submit to Procurement</button>
+</div>
+</div>
+</div>
+</div>
+
+<hr class="hr" style="width:100%;max-width:900px;margin:0" />
+
+<div style="width:100%;max-width:900px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-outline">Return dialog</span></div>
+<div style="position:relative;height:480px;background:var(--color-neutral-800);overflow:hidden">
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+<div class="dialog" style="width:480px">
+<div class="dialog-title">Return this requisition for correction?</div>
+<div class="field"><label>Correction required (20–1,000 characters)</label><textarea class="input">Replace the processor wording with a measurable, supplier-neutral minimum.</textarea><span class="text-muted" style="font-size:12px">State what must change and identify the affected section.</span></div>
+<div class="field"><label>Affected section (optional)</label><select class="input"><option>Technical requirements</option><option>Request details</option><option>Equipment</option><option>Warranty and support</option><option>Services</option><option>Acceptance</option><option>Supporting materials</option><option>Whole requisition</option></select></div>
+<div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Return for correction</button></div>
+</div>
+</div>
+</div>
+</div>
+
+<hr class="hr" style="width:100%;max-width:1200px;margin:0" />
+
+<div style="width:100%;max-width:1200px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-outline">REQ-DES-07-SUBMITTED</span><span style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">After submission, before authorisation — Dr Peter Kimani viewing the same complete Version read-only</span></div>
+<div style="display:flex;align-items:center;gap:10px"><h3 style="margin:0">Review departmental requisition</h3><span class="kt-status is-draft">Submitted to Procurement</span></div>
+<span class="text-muted">No edit, return, submit or Procurement-decision action appears.</span>
+<div style="display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--color-divider);padding-top:14px">
+<button type="button" class="btn btn-ghost">Request Planning correction</button>
+<button type="button" class="btn btn-ghost" style="color:var(--status-critical)">Withdraw requisition</button>
+</div>
+</div>
+
+</div>
+
+</x-dc>
+</body>
+</html>

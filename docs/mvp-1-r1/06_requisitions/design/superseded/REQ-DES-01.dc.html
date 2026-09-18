@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<style>a{color:var(--color-accent-700)} a:hover{color:var(--color-accent-900)}</style>
+</helmet>
+<div style="background:var(--color-bg);min-height:100vh;padding:48px 64px;display:flex;flex-direction:column;align-items:center;gap:52px;font-family:var(--font-body);color:var(--color-text)">
+<div style="width:100%;max-width:1200px"><a href="Index.dc.html">← Index</a></div>
+
+<div style="width:100%;max-width:1200px;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-accent">REQ-DES-01</span><span style="font-family:var(--font-heading);font-weight:600;font-size:18px">Requisitions workspace — base</span></div>
+<div style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">Fixture: Grace Wanjiku, Departmental Author for both fixture departments · 1 Mar 2027, 09:00 EAT · READY scenario, no existing root</div>
+
+<div><h1 style="font-size:28px;margin:0">Procurement Requisitions</h1><p class="text-muted" style="margin-top:6px">Prepare and follow requests for purchases already approved in the annual plan.</p></div>
+
+<div style="display:flex;flex-direction:column;gap:24px">
+<div class="kt-kpi-row">
+<div class="kt-kpi-card"><svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16v16H4z"/><path d="M4 9h16"/></svg><div class="kt-kpi-value">0</div><div class="kt-kpi-sub">Drafts</div></div>
+<div class="kt-kpi-card"><svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 14l-4-4 4-4M5 10h11a4 4 0 010 8h-1"/></svg><div class="kt-kpi-value">0</div><div class="kt-kpi-sub">Returned to me</div></div>
+<div class="kt-kpi-card"><svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg><div class="kt-kpi-value">0</div><div class="kt-kpi-sub">My approvals</div></div>
+</div>
+
+<div style="display:flex;gap:12px;align-items:center">
+<input class="input" style="max-width:300px" placeholder="Search by requisition or purchase" />
+<select class="input" style="max-width:180px"><option>All statuses</option></select>
+<select class="input" style="max-width:200px"><option>All my departments</option></select>
+<button type="button" class="btn btn-ghost">Clear filters</button>
+</div>
+
+<div class="kt-section" style="margin:0">
+<h6 class="kt-card-title">Ready to start</h6>
+<table class="table"><thead><tr><th>Approved purchase</th><th>Departments</th><th>Still available</th><th>Needed by</th><th>Action</th></tr></thead>
+<tbody>
+<tr>
+<td>Clinical training and deployment laptops for digital health rollout<div class="kt-label" style="margin-top:2px">PPI-MOH-2027-033</div></td>
+<td>Digital Health; HR Management and Development</td>
+<td>250 Each<div class="kt-label" style="margin-top:2px">KES 50,000,000.00</div></td>
+<td>31 Dec 2027</td>
+<td><button type="button" class="btn btn-primary">Start requisition</button></td>
+</tr>
+</tbody></table>
+</div>
+
+<div class="kt-section" style="margin:0">
+<h6 class="kt-card-title">My requisitions</h6>
+<div class="card" style="align-items:center;text-align:center;padding:32px 24px;gap:6px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg><div class="card-title" style="font-size:15px;margin-top:6px">You have no requisitions yet.</div><p class="card-body" style="margin:0">Start one from an approved purchase above, or wait for one to be assigned to you.</p></div>
+</div>
+</div>
+</div>
+
+<hr class="hr" style="width:100%;max-width:1200px;margin:0" />
+
+<div style="width:100%;max-width:1200px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-outline">REQ-DES-01-DRAFT</span><span style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">Ready row is absent; an in-progress Draft appears in My requisitions</span></div>
+<div class="kt-section" style="margin:0">
+<h6 class="kt-card-title">My requisitions</h6>
+<table class="table"><thead><tr><th>Requisition</th><th>Approved purchase</th><th>Status</th><th>Updated</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td>REQ-MOH-2027-033-001</td><td>Clinical training and deployment laptops for digital health rollout</td><td><span class="kt-status is-draft">Draft — Request details need attention</span></td><td>1 Mar 2027, 09:45 EAT</td><td><button type="button" class="btn btn-secondary">Continue</button></td></tr>
+</tbody></table>
+</div>
+</div>
+
+<hr class="hr" style="width:100%;max-width:1200px;margin:0" />
+
+<div style="width:100%;max-width:1200px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-outline">REQ-DES-01-ACTION</span><span style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">An assigned record awaits Grace's approval responsibility</span></div>
+<div class="kt-section" style="margin:0">
+<h6 class="kt-card-title">My requisitions</h6>
+<table class="table"><thead><tr><th>Requisition</th><th>Approved purchase</th><th>Status</th><th>Updated</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td>REQ-MOH-2027-033-001</td><td>Clinical training and deployment laptops for digital health rollout</td><td><span class="kt-status is-attention">Awaiting your approval</span></td><td>8 Mar 2027, 09:00 EAT</td><td><button type="button" class="btn btn-primary">Review</button></td></tr>
+</tbody></table>
+</div>
+</div>
+
+<hr class="hr" style="width:100%;max-width:1200px;margin:0" />
+
+<div style="width:100%;max-width:1200px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-outline">REQ-DES-01-NONE</span><span style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">No approved purchases currently ready for a requisition</span></div>
+<div class="kt-section" style="margin:0"><h6 class="kt-card-title">Ready to start</h6>
+<div class="card" style="align-items:center;text-align:center;padding:32px 24px;gap:6px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.5"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg><div class="card-title" style="font-size:15px;margin-top:6px">No approved purchases are ready for a requisition.</div><p class="card-body" style="margin:0">New requisitions appear here once Planning approves a purchase.</p></div>
+</div>
+<div class="kt-section" style="margin:0"><h6 class="kt-card-title">My requisitions</h6><div class="card" style="align-items:center;text-align:center;padding:32px 24px;gap:6px"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg><div class="card-title" style="font-size:15px;margin-top:6px">You have no requisitions yet.</div><p class="card-body" style="margin:0">Start one from an approved purchase above, or wait for one to be assigned to you.</p></div></div>
+</div>
+
+<hr class="hr" style="width:100%;max-width:1200px;margin:0" />
+
+<div style="width:100%;max-width:1200px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-outline">REQ-DES-01-TECHNICAL</span><span style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">Administrator / System Manager, technical read, site-wide</span></div>
+<div style="display:flex;gap:12px;align-items:center">
+<input class="input" style="max-width:240px" placeholder="Search" />
+<select class="input" style="max-width:160px"><option>All statuses</option></select>
+<select class="input" style="max-width:180px"><option>All departments</option></select>
+<select class="input" style="max-width:140px"><option>FY 2027/28</option></select>
+</div>
+<table class="table"><thead><tr><th>Requisition</th><th>Approved purchase</th><th>Department</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>REQ-MOH-2027-033-001</td><td>Clinical training and deployment laptops for digital health rollout</td><td>Digital Health; HR Management and Development</td><td><span class="kt-status is-draft">Draft</span></td></tr>
+</tbody></table>
+<span class="text-muted">Work-summary counts and business actions are absent for this responsibility.</span>
+</div>
+
+</div>
+
+</x-dc>
+</body>
+</html>

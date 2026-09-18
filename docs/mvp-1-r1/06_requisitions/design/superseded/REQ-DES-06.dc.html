@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<style>a{color:var(--color-accent-700)} a:hover{color:var(--color-accent-900)}</style>
+</helmet>
+<div style="background:var(--color-bg);min-height:100vh;padding:48px 64px;display:flex;flex-direction:column;align-items:center;gap:52px;font-family:var(--font-body);color:var(--color-text)">
+<div style="width:100%;max-width:1200px"><a href="Index.dc.html">← Index</a></div>
+
+<div style="width:100%;max-width:1200px;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-accent">REQ-DES-06</span><span style="font-family:var(--font-heading);font-weight:600;font-size:18px">Draft: Review and submit — base</span></div>
+<div style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">Fixture: Grace · complete Draft Version 1 · no blocking issue · one delivery-date warning</div>
+
+<div style="display:flex;gap:0;border:1px solid var(--color-divider)">
+<div style="flex:1;padding:12px 16px;border-right:1px solid var(--color-divider)"><div class="kt-label">Request details</div><span class="kt-status is-live" style="margin-top:4px">Complete</span></div>
+<div style="flex:1;padding:12px 16px;border-right:1px solid var(--color-divider)"><div class="kt-label">Requirements</div><span class="kt-status is-live" style="margin-top:4px">Complete</span></div>
+<div style="flex:1;padding:12px 16px;background:var(--color-accent-100)"><div class="kt-label">Review and submit</div></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:24px">
+<div class="kt-notice is-live"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg><div class="kt-notice-body"><strong>Ready to send for department approval</strong></div></div>
+<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">The requested delivery date is 6 days after the plan's estimated completion date.</div></div>
+<div class="kt-panel" style="margin-top:0"><div class="kt-meta-row">
+<div><span class="kt-label">Estimated completion</span><span class="kt-meta-value">24 Sep 2027</span></div>
+<div><span class="kt-label">Latest delivery date</span><span class="kt-meta-value">30 Sep 2027</span></div>
+<div><span class="kt-label">Plan completion boundary</span><span class="kt-meta-value">31 Dec 2027</span></div>
+</div></div>
+
+<dc-import name="ReviewComposition" hint-size="100%,2400px"></dc-import>
+
+<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--color-divider);padding-top:16px">
+<button type="button" class="btn btn-ghost">Back to requirements</button>
+<div style="display:flex;gap:10px"><button type="button" class="btn btn-secondary">Save draft</button><button type="button" class="btn btn-primary">Send for department approval</button></div>
+</div>
+</div>
+</div>
+
+<hr class="hr" style="width:100%;max-width:1200px;margin:0" />
+
+<div style="width:100%;max-width:1200px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-outline">REQ-DES-06-DIRECT-HOD</span><span style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">Dr Peter Kimani preparing the Draft directly, current lead-HoD assignment</span></div>
+<div class="kt-notice is-live"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg><div class="kt-notice-body"><strong>Ready to submit to Procurement</strong></div></div>
+<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--color-divider);padding-top:14px">
+<div style="display:flex;gap:10px;align-items:center">
+<button type="button" class="btn btn-ghost">Back to requirements</button>
+<div style="position:relative"><button type="button" class="btn btn-ghost">Other actions ▾</button>
+<div class="card elev-md" style="position:absolute;top:38px;left:0;width:220px;padding:6px;gap:4px">
+<button type="button" class="btn btn-ghost btn-block" style="justify-content:flex-start">Request Planning correction</button>
+<button type="button" class="btn btn-ghost btn-block" style="justify-content:flex-start;color:var(--status-critical)">Withdraw requisition</button>
+</div></div>
+</div>
+<div style="display:flex;gap:10px"><button type="button" class="btn btn-secondary">Save draft</button><button type="button" class="btn btn-primary">Submit to Procurement</button></div>
+</div>
+<span class="text-muted" style="font-size:13px">No self-approval action is shown. Request Planning correction opens the REQ-DES-08 dialog; Withdraw opens the confirmation below.</span>
+</div>
+
+<hr class="hr" style="width:100%;max-width:900px;margin:0" />
+
+<div style="width:100%;max-width:900px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-outline">Withdraw requisition dialog</span></div>
+<div style="position:relative;height:420px;background:var(--color-neutral-800);overflow:hidden">
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+<div class="dialog" style="width:480px">
+<div class="dialog-title">Withdraw this requisition?</div>
+<div class="field"><label>Reason (required, 20–1,000 characters)</label><textarea class="input" placeholder="State why this requisition is being withdrawn"></textarea></div>
+<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">The requisition will close without using approved-plan amounts or reserving funding.</div></div>
+<div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-danger">Withdraw requisition</button></div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+
+</x-dc>
+</body>
+</html>

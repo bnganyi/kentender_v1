@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<style>a{color:var(--color-accent-700)} a:hover{color:var(--color-accent-900)}</style>
+</helmet>
+<div style="background:var(--color-bg);min-height:100vh;padding:48px 64px;display:flex;flex-direction:column;align-items:center;gap:52px;font-family:var(--font-body);color:var(--color-text)">
+<div style="width:100%;max-width:1200px"><a href="Index.dc.html">← Index</a></div>
+
+<div style="width:100%;max-width:1200px;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-accent">REQ-DES-10</span><span style="font-family:var(--font-heading);font-weight:600;font-size:18px">Authorised requisition — Procurement Officer</span></div>
+<div style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">Fixture: Authorised Version 1 · actor Procurement Officer · handoff not consumed</div>
+
+<div style="display:flex;justify-content:space-between;align-items:flex-start">
+<div><div style="display:flex;align-items:center;gap:10px"><h1 style="font-size:26px;margin:0">Clinical training and deployment laptops for digital health rollout</h1><span class="kt-status is-live">Authorised</span></div>
+<div class="kt-label" style="margin-top:6px">REQ-MOH-2027-033-001</div>
+<p class="text-muted" style="margin-top:6px">This requisition is authorised and ready for Tender Preparation.</p></div>
+<button type="button" class="btn btn-primary">Continue to Tender Preparation</button>
+</div>
+<div style="display:flex;flex-direction:column;gap:24px">
+<div class="kt-panel" style="margin-top:0"><div class="kt-meta-row">
+<div><span class="kt-label">Authorised by</span><span class="kt-meta-value">Charles Mutiso</span></div>
+<div><span class="kt-label">Authorised at</span><span class="kt-meta-value">15 Mar 2027, 10:00 EAT</span></div>
+<div><span class="kt-label">Requisition value</span><span class="kt-meta-value">KES 50,000,000.00</span></div>
+<div><span class="kt-label">Tender Preparation</span><span class="kt-meta-value">Not started</span></div>
+</div></div>
+
+<dc-import name="ReviewComposition" show-funding-reservations="{{ true }}" hint-size="100%,2600px"></dc-import>
+
+<div class="kt-disclosure">
+<div class="kt-disclosure-head" onclick="var b=this.nextElementSibling,c=this.querySelector('.kt-disclosure-chevron');var open=b.style.display!=='none';b.style.display=open?'none':'block';c.classList.toggle('is-open',!open)">
+<div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Record details</span></div>
+<svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg>
+</div>
+<div class="kt-disclosure-body" style="display:none"><div class="kt-meta-row">
+<div><span class="kt-label">Planning drawdown display reference</span><span class="kt-meta-value">PDR-MOH-2027-033-001</span></div>
+<div><span class="kt-label">Source references</span><span class="kt-meta-value">SRC-MOH-033-001; SRC-MOH-033-002</span></div>
+<div><span class="kt-label">Handoff display reference</span><span class="kt-meta-value">REQ-MOH-2027-033-001</span></div>
+</div></div>
+</div>
+</div>
+</div>
+
+<hr class="hr" style="width:100%;max-width:1200px;margin:0" />
+
+<div style="width:100%;max-width:1200px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-outline">REQ-DES-10-HOPF</span><span style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">HOPF before consumption — no header primary; footer secondary Revoke authorisation</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center">
+<span class="kt-status is-live">Authorised</span>
+<button type="button" class="btn btn-secondary">Revoke authorisation</button>
+</div>
+</div>
+
+<hr class="hr" style="width:100%;max-width:900px;margin:0" />
+
+<div style="width:100%;max-width:900px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-outline">Revocation dialog</span></div>
+<div style="position:relative;height:420px;background:var(--color-neutral-800);overflow:hidden"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+<div class="dialog" style="width:480px">
+<div class="dialog-title">Revoke this authorisation?</div>
+<div class="field"><label>Reason (required, 20–1,000 characters)</label><textarea class="input"></textarea></div>
+<div class="dialog-body">The approved-plan amounts and both funding reservations will be reversed. The authorised requisition will remain in history.</div>
+<div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Revoke authorisation</button></div>
+</div>
+</div></div>
+</div>
+
+<hr class="hr" style="width:100%;max-width:1200px;margin:0" />
+
+<div style="width:100%;max-width:1200px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-outline">REQ-DES-10-CONSUMED</span><span style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">Tender Preparation has consumed the handoff</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center">
+<div class="kt-notice is-live" style="margin:0"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg><div class="kt-notice-body"><strong>Tender Preparation started</strong> · TND-MOH-2027-033</div></div>
+<button type="button" class="btn btn-primary">Open Tender</button>
+</div>
+</div>
+
+<hr class="hr" style="width:100%;max-width:1200px;margin:0" />
+
+<div style="width:100%;max-width:1200px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-outline">REQ-DES-10-AUDITOR</span><span style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">Auditor / technical reader — navigation/export controls only, all business actions absent</span></div>
+<div style="display:flex;justify-content:space-between;align-items:center">
+<span class="kt-status is-live">Authorised</span>
+<button type="button" class="btn btn-ghost">Export</button>
+</div>
+</div>
+
+</div>
+
+</x-dc>
+</body>
+</html>

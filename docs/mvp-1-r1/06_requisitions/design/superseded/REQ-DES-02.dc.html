@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<style>a{color:var(--color-accent-700)} a:hover{color:var(--color-accent-900)}</style>
+</helmet>
+<div style="background:var(--color-bg);min-height:100vh;padding:40px;display:flex;flex-direction:column;align-items:center;gap:48px;font-family:var(--font-body);color:var(--color-text)">
+<div style="width:1440px"><a href="Index.dc.html">← Index</a></div>
+
+<div style="width:900px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-accent">REQ-DES-02</span><span style="font-family:var(--font-heading);font-weight:600;font-size:18px">Start requisition dialog — base</span></div>
+<div style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">Fixture: same as REQ-DES-01 · no Requisition exists</div>
+<div style="position:relative;height:560px;background:var(--color-neutral-800);border-radius:0;overflow:hidden">
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+<div class="dialog" style="width:520px">
+<div class="dialog-title">Start this requisition?</div>
+<div class="dialog-body">A Draft will be created from the approved purchase below.</div>
+<div class="kt-panel">
+<div class="kt-meta-row">
+<div><span class="kt-label">Approved purchase</span><span class="kt-meta-value">Clinical training and deployment laptops for digital health rollout</span></div>
+</div>
+<div class="kt-meta-row" style="margin-top:10px">
+<div><span class="kt-label">Departments</span><span class="kt-meta-value">Digital Health; Human Resources Management and Development</span></div>
+</div>
+<div class="kt-meta-row" style="margin-top:10px">
+<div><span class="kt-label">Still available</span><span class="kt-meta-value">250 Each</span></div>
+<div><span class="kt-label">&nbsp;</span><span class="kt-meta-value">KES 50,000,000.00</span></div>
+</div>
+<div class="kt-meta-row" style="margin-top:10px">
+<div><span class="kt-label">Plan completion boundary</span><span class="kt-meta-value">31 Dec 2027</span></div>
+<div><span class="kt-label">Requirement product</span><span class="kt-meta-value">IT Equipment</span></div>
+</div>
+</div>
+<div class="kt-notice is-info"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg><div class="kt-notice-body">This release supports straightforward off-the-shelf IT equipment. It does not support software development, integration or migration.</div></div>
+<div class="text-muted">Digital Health will submit this combined departmental request.</div>
+<div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Start requisition</button></div>
+</div>
+</div>
+</div>
+</div>
+
+<div style="width:900px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-outline">REQ-DES-02-UNSUPPORTED</span></div>
+<div style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">Fixture: isolated reset — Requirement product is Software integration</div>
+<div style="position:relative;height:560px;background:var(--color-neutral-800);overflow:hidden">
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+<div class="dialog" style="width:520px">
+<div class="dialog-title">Start this requisition?</div>
+<div class="dialog-body">A Draft will be created from the approved purchase below.</div>
+<div class="kt-panel">
+<div class="kt-meta-row"><div><span class="kt-label">Approved purchase</span><span class="kt-meta-value">Clinical training and deployment laptops for digital health rollout</span></div></div>
+<div class="kt-meta-row" style="margin-top:10px">
+<div><span class="kt-label">Departments</span><span class="kt-meta-value">Digital Health; Human Resources Management and Development</span></div>
+</div>
+<div class="kt-meta-row" style="margin-top:10px">
+<div><span class="kt-label">Still available</span><span class="kt-meta-value">250 Each</span></div>
+<div><span class="kt-label">&nbsp;</span><span class="kt-meta-value">KES 50,000,000.00</span></div>
+</div>
+<div class="kt-meta-row" style="margin-top:10px">
+<div><span class="kt-label">Plan completion boundary</span><span class="kt-meta-value">31 Dec 2027</span></div>
+<div><span class="kt-label">Requirement product</span><span class="kt-meta-value">Software integration</span></div>
+</div>
+</div>
+<div class="kt-notice is-critical"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body">This approved purchase requires software integration, which this release does not support.</div></div>
+<div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-secondary" disabled="disabled">Start requisition</button></div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+
+</x-dc>
+</body>
+</html>

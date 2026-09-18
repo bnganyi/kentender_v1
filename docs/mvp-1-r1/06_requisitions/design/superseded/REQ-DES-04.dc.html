@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<style>a{color:var(--color-accent-700)} a:hover{color:var(--color-accent-900)}</style>
+</helmet>
+<div style="background:var(--color-bg);min-height:100vh;padding:48px 64px;display:flex;flex-direction:column;align-items:center;gap:52px;font-family:var(--font-body);color:var(--color-text)">
+<div style="width:100%;max-width:1200px"><a href="Index.dc.html">← Index</a></div>
+
+<div style="width:100%;max-width:960px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-accent">REQ-DES-04</span><span style="font-family:var(--font-heading);font-weight:600;font-size:18px">Add laptop request — base</span></div>
+<div style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">Fixture: Grace · both approved-requirement rows selected · no item saved</div>
+<div style="position:relative;height:760px;background:var(--color-neutral-800);overflow:hidden">
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+<div class="dialog" style="width:640px;max-height:700px;overflow:auto">
+<div class="dialog-title">Add laptop request</div>
+<p class="text-muted" style="margin:0">Enter the shared laptop details once, then confirm the quantity and intended use for each department.</p>
+
+<div class="kt-label">Shared details</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div class="field"><label>Equipment category</label><select class="input"><option>Laptop</option></select></div>
+<div class="field"><label>Item name</label><input class="input" value="Business laptops" /></div>
+<div class="field"><label>Delivery location</label><input class="input" value="Ministry of Health Headquarters, Afya House, Nairobi" /></div>
+<div class="field"><label>Latest delivery date</label><div class="date-field"><span>30 Sep 2027</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div></div>
+</div>
+
+<div class="kt-label" style="margin-top:8px">Department quantities and use</div>
+<table class="table"><thead><tr><th>Use</th><th>Department and approved requirement</th><th class="is-num">Quantity</th><th>Unit</th><th>Intended use</th></tr></thead>
+<tbody>
+<tr>
+<td><label class="kt-checkbox"><input type="checkbox" checked="checked" /><span class="box"></span></label></td>
+<td>Human Resources Management and Development<div class="kt-label" style="margin-top:2px">SRC-MOH-033-001</div></td>
+<td class="is-num"><input class="input" value="100" style="max-width:80px" /></td>
+<td>Each</td>
+<td><input class="input" value="Clinical training for Human Resources Management and Development staff" /></td>
+</tr>
+<tr>
+<td><label class="kt-checkbox"><input type="checkbox" checked="checked" /><span class="box"></span></label></td>
+<td>Digital Health<div class="kt-label" style="margin-top:2px">SRC-MOH-033-002</div></td>
+<td class="is-num"><input class="input" value="150" style="max-width:80px" /></td>
+<td>Each</td>
+<td><input class="input" value="Field digital-health deployment for Digital Health staff" /></td>
+</tr>
+</tbody></table>
+
+<p class="text-muted" style="font-size:13px;margin:0">The standard laptop requirements will be ready for review in the next task.</p>
+
+<div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Add 2 equipment rows</button></div>
+</div>
+</div>
+</div>
+</div>
+
+<hr class="hr" style="width:100%;max-width:960px;margin:0" />
+
+<div style="width:100%;max-width:960px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-outline">REQ-DES-04-ONE-SOURCE</span><span style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">Only one approved requirement has a positive requested amount</span></div>
+<div style="position:relative;height:560px;background:var(--color-neutral-800);overflow:hidden">
+<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+<div class="dialog" style="width:640px">
+<div class="dialog-title">Add laptop request</div>
+<p class="text-muted" style="margin:0">Enter the shared laptop details once, then confirm the quantity and intended use for each department.</p>
+<div class="kt-label">Shared details</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div class="field"><label>Equipment category</label><select class="input"><option>Laptop</option></select></div>
+<div class="field"><label>Item name</label><input class="input" value="Business laptops" /></div>
+<div class="field"><label>Delivery location</label><input class="input" value="Ministry of Health Headquarters, Afya House, Nairobi" /></div>
+<div class="field"><label>Latest delivery date</label><div class="date-field"><span>30 Sep 2027</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div></div>
+</div>
+<div class="kt-label" style="margin-top:8px">Department quantities and use</div>
+<table class="table"><thead><tr><th>Use</th><th>Department and approved requirement</th><th class="is-num">Quantity</th><th>Unit</th><th>Intended use</th></tr></thead>
+<tbody>
+<tr>
+<td><label class="kt-checkbox"><input type="checkbox" checked="checked" /><span class="box"></span></label></td>
+<td>Digital Health<div class="kt-label" style="margin-top:2px">SRC-MOH-033-002</div></td>
+<td class="is-num"><input class="input" value="150" style="max-width:80px" /></td>
+<td>Each</td>
+<td><input class="input" value="Field digital-health deployment for Digital Health staff" /></td>
+</tr>
+</tbody></table>
+<div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Add equipment row</button></div>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+
+</x-dc>
+</body>
+</html>

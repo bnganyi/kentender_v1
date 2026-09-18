@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<style>a{color:var(--color-accent-700)} a:hover{color:var(--color-accent-900)}</style>
+</helmet>
+<div style="background:var(--color-bg);min-height:100vh;padding:48px 64px;display:flex;flex-direction:column;align-items:center;gap:52px;font-family:var(--font-body);color:var(--color-text)">
+<div style="width:100%;max-width:1200px"><a href="Index.dc.html">← Index</a></div>
+
+<div style="width:100%;max-width:1200px;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-accent">REQ-DES-08</span><span style="font-family:var(--font-heading);font-weight:600;font-size:18px">Procurement authorisation — Ready to authorise</span></div>
+<div style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">Fixture: Charles Mutiso, HOPF · immutable submitted Version 1 · 15 Mar 2027, 10:00 EAT · current checks pass</div>
+
+<div>
+<div style="display:flex;align-items:center;gap:10px"><h1 style="font-size:26px;margin:0">Authorise requisition</h1><span class="kt-status is-draft">Submitted to Procurement</span></div>
+<p class="text-muted" style="margin-top:6px">Review the request, current funding and procurement checks before authorising it.</p>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:24px">
+<div class="kt-notice is-live"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg><div class="kt-notice-body"><strong>Ready to authorise</strong><br/>Authorising will reserve KES 50,000,000.00 and allow Tender Preparation to begin.</div></div>
+
+<div class="kt-section" style="margin:0"><h6 class="kt-card-title">Current funding</h6>
+<div class="kt-panel" style="margin-top:0"><div class="kt-meta-row">
+<div><span class="kt-label">Budget Line</span><span class="kt-meta-value">MOH-BL-HWD-2027</span></div>
+<div><span class="kt-label">Approved</span><span class="kt-meta-value">KES 60,000,000.00</span></div>
+<div><span class="kt-label">Available now</span><span class="kt-meta-value">KES 60,000,000.00</span></div>
+</div>
+<div class="kt-meta-row" style="margin-top:10px">
+<div><span class="kt-label">This requisition</span><span class="kt-meta-value">KES 50,000,000.00</span></div>
+<div><span class="kt-label">Available after authorisation</span><span class="kt-meta-value">KES 10,000,000.00</span></div>
+</div></div>
+<div class="kt-bar" style="margin-top:10px"><i class="kt-bar-committed" style="width:83%"></i><i class="kt-bar-reserved" style="width:0%"></i></div>
+<table class="table" style="margin-top:10px"><thead><tr><th>Source</th><th class="is-num">Requested value</th></tr></thead><tbody>
+<tr><td>Human Resources Management and Development</td><td class="is-num">KES 20,000,000.00</td></tr>
+<tr><td>Digital Health</td><td class="is-num">KES 30,000,000.00</td></tr>
+</tbody></table>
+</div>
+
+<div class="kt-section" style="margin:0"><h6 class="kt-card-title">Planning availability</h6>
+<div class="kt-panel" style="margin-top:0"><div class="kt-meta-row">
+<div><span class="kt-label">Status</span><span class="kt-meta-value"><span class="kt-status is-live">Eligible</span></span></div>
+<div><span class="kt-label">Quantity available</span><span class="kt-meta-value">250 Each</span></div>
+<div><span class="kt-label">Value available</span><span class="kt-meta-value">KES 50,000,000.00</span></div>
+</div></div></div>
+
+<div class="kt-section" style="margin:0"><h6 class="kt-card-title">Departmental certification</h6>
+<div class="kt-panel" style="margin-top:0"><div class="kt-meta-row">
+<div><span class="kt-label">Submitted by</span><span class="kt-meta-value">Dr Peter Kimani</span></div>
+<div><span class="kt-label">Lead department</span><span class="kt-meta-value">Digital Health</span> <a href="#" style="margin-left:8px;font-size:13px">Change submitting department</a></div>
+<div><span class="kt-label">Submitted at</span><span class="kt-meta-value">8 Mar 2027, 09:00 EAT</span></div>
+</div></div></div>
+
+<dc-import name="ReviewComposition" hint-size="100%,2400px"></dc-import>
+
+<details style="margin:0;border:1px solid var(--color-divider);background:var(--color-surface);padding:16px">
+<summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px">
+<h6 class="kt-card-title" style="margin:0">Procurement checks</h6>
+<span class="kt-label" style="color:var(--color-accent-700);white-space:nowrap">Show details</span>
+</summary>
+<div class="text-muted" style="margin:6px 0 12px">8 checks passed</div>
+<table class="table"><thead><tr><th>Check</th><th>Result</th></tr></thead><tbody>
+<tr><td>Procurement category</td><td>Goods</td></tr>
+<tr><td>Requirement type</td><td>Straightforward off-the-shelf IT equipment</td></tr>
+<tr><td>Reservation category</td><td>Youth</td></tr>
+<tr><td>Lotting indicator</td><td>Single lot</td></tr>
+<tr><td>Currency</td><td>KES</td></tr>
+<tr><td>Award package</td><td>One</td></tr>
+<tr><td>Planned method</td><td>Open Tender</td></tr>
+<tr><td>Plan horizon</td><td>Single year</td></tr>
+</tbody></table>
+</details>
+
+<div class="card elev-sm" style="border-left:3px solid var(--color-accent)">I authorise this requisition. The approved-plan amounts will be used, funding will be reserved and Tender Preparation may begin.</div>
+
+<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--color-divider);padding-top:16px">
+<button type="button" class="btn btn-ghost">Request Planning correction</button>
+<div style="display:flex;gap:10px"><button type="button" class="btn btn-secondary">Return to department</button><button type="button" class="btn btn-primary">Authorise requisition</button></div>
+</div>
+</div>
+</div>
+
+<hr class="hr" style="width:100%;max-width:900px;margin:0" />
+
+<div style="width:100%;max-width:900px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-outline">Return-to-department dialog</span></div>
+<div style="position:relative;height:460px;background:var(--color-neutral-800);overflow:hidden"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+<div class="dialog" style="width:480px">
+<div class="dialog-title">Return this requisition to the department?</div>
+<div class="field"><label>Correction required (20–1,000 characters)</label><textarea class="input" placeholder="State what must change and identify the affected section"></textarea></div>
+<div class="field"><label>Affected section (optional)</label><select class="input"><option>Request details</option><option>Equipment</option><option>Technical requirements</option><option>Warranty and support</option><option>Services</option><option>Acceptance</option><option>Supporting materials</option><option>Whole requisition</option></select></div>
+<div class="kt-notice is-info"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg><div class="kt-notice-body">The submitted Version will remain in history and a copied Draft will open for correction.</div></div>
+<div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Return to department</button></div>
+</div>
+</div></div>
+</div>
+
+<hr class="hr" style="width:100%;max-width:900px;margin:0" />
+
+<div style="width:100%;max-width:900px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-outline">Change-submitting-department dialog</span></div>
+<div style="position:relative;height:460px;background:var(--color-neutral-800);overflow:hidden"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+<div class="dialog" style="width:480px">
+<div class="dialog-title">Change submitting department and return?</div>
+<div class="field"><label>Submitting department</label><select class="input"><option>Human Resources Management and Development</option><option>Digital Health</option></select></div>
+<div class="field"><label>Reason (required, 20–500 characters)</label><textarea class="input" placeholder="Why the submitting department is changing"></textarea></div>
+<div class="kt-notice is-info"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg><div class="kt-notice-body">The current submission will remain in history. A copied Draft must be certified by the new submitting department before authorisation.</div></div>
+<div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Confirm change and return</button></div>
+</div>
+</div></div>
+</div>
+
+<hr class="hr" style="width:100%;max-width:900px;margin:0" />
+
+<div style="width:100%;max-width:900px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-outline">REQ-DES-08-CORRECTION · Request a Planning correction dialog</span></div>
+<div class="kt-label">Isolated reset — Budget Line shown as MOH-BL-DHI-2027 (Digital Health only), conflicting with the HRMD source row; current checks do not pass in this reset</div>
+<div style="position:relative;height:460px;background:var(--color-neutral-800);overflow:hidden"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">
+<div class="dialog" style="width:480px">
+<div class="dialog-title">Request a Planning correction?</div>
+<div class="field"><label>What is wrong in the approved plan? (required, 20–1,000 characters)</label><textarea class="input">The approved source allocation refers to the wrong Budget Line. Please review the departmental funding specification through the governed Planning correction process.</textarea></div>
+<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">This requisition will be preserved and stopped. It will not reopen automatically after Planning responds.</div></div>
+<div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Send correction request</button></div>
+</div>
+</div></div>
+</div>
+
+<hr class="hr" style="width:100%;max-width:1200px;margin:0" />
+
+<div style="width:100%;max-width:1200px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-outline">REQ-DES-08-BLOCKING-FUNDING</span><span style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">Only KES 40,000,000.00 available</span></div>
+<div class="kt-notice is-critical"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body"><strong>Cannot authorise — insufficient funding</strong></div></div>
+<div class="kt-panel" style="margin-top:0"><div class="kt-meta-row">
+<div><span class="kt-label">Requested</span><span class="kt-meta-value">KES 50,000,000.00</span></div>
+<div><span class="kt-label">Available</span><span class="kt-meta-value">KES 40,000,000.00</span></div>
+<div><span class="kt-label">Shortfall</span><span class="kt-meta-value">KES 10,000,000.00</span></div>
+</div></div>
+<div style="display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--color-divider);padding-top:14px"><button type="button" class="btn btn-secondary">Return to department</button><button type="button" class="btn btn-secondary">Refresh checks</button></div>
+</div>
+
+<hr class="hr" style="width:100%;max-width:1200px;margin:0" />
+
+<div style="width:100%;max-width:1200px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-outline">REQ-DES-08-HOLD</span><span style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">A Planning correction is open</span></div>
+<div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body"><strong>Authorisation is on hold while Planning reviews a correction request.</strong><br/>UI-CORR-001 · Open</div></div>
+<div style="display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--color-divider);padding-top:14px"><button type="button" class="btn btn-ghost">View Planning request</button><button type="button" class="btn btn-secondary">Refresh checks</button><button type="button" class="btn btn-secondary">Return to department</button></div>
+</div>
+
+<hr class="hr" style="width:100%;max-width:1200px;margin:0" />
+
+<div style="width:100%;max-width:1200px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span class="tag tag-outline">REQ-DES-08-TECHNICAL</span><span style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--color-neutral-700);border-left:2px dashed var(--color-neutral-400);padding-left:8px;font-weight:400">Technical reader — same complete content and result evidence; every business action and decision statement absent</span></div>
+<div class="kt-notice is-live"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg><div class="kt-notice-body">Ready to authorise</div></div>
+<span class="text-muted">Read/navigation/export only. No Authorise, Return, Request Planning correction or decision statement is rendered.</span>
+</div>
+
+</div>
+
+</x-dc>
+</body>
+</html>

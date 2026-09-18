@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<style>a{color:var(--color-accent-700)} a:hover{color:var(--color-accent-900)}</style>
+</helmet>
+<div style="background:var(--color-bg);min-height:100vh;padding:40px;display:flex;flex-direction:column;align-items:center;gap:32px;font-family:var(--font-body);color:var(--color-text)">
+<div style="width:1200px"><a href="Index.dc.html">← Index</a></div>
+<div style="width:1200px"><span class="tag tag-accent">REQ-DES-12</span> <span style="font-family:var(--font-heading);font-weight:600;font-size:18px">Common and access states</span></div>
+
+<div style="width:1200px;display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+<div style="display:flex;flex-direction:column;gap:8px"><div class="kt-label">Loading</div>
+<div class="card elev-sm" style="gap:8px"><div style="height:14px;width:60%;background:var(--color-neutral-200)"></div><div style="height:14px;width:90%;background:var(--color-neutral-200)"></div><div style="height:14px;width:40%;background:var(--color-neutral-200)"></div></div></div>
+
+<div style="display:flex;flex-direction:column;gap:8px"><div class="kt-label">Workspace forbidden</div>
+<div class="card elev-sm"><span>You do not have access to Procurement Requisitions.</span><span class="text-muted">This area needs Departmental Author, Head of User Department, Head of Procurement Function, Procurement Planner, Procurement Officer, Auditor, Administrator or System Manager access. Ask your KenTender administrator to assign the appropriate responsibility in System setup.</span></div></div>
+
+<div style="display:flex;flex-direction:column;gap:8px"><div class="kt-label">Record not found / masked</div>
+<div class="card elev-sm"><span>Requisition not found</span><button type="button" class="btn btn-secondary" style="align-self:flex-start">Back to Requisitions</button></div></div>
+
+<div style="display:flex;flex-direction:column;gap:8px"><div class="kt-label">Load failure</div>
+<div class="card elev-sm"><span>Procurement Requisitions could not be loaded.</span><button type="button" class="btn btn-secondary" style="align-self:flex-start">Try again</button></div></div>
+
+<div style="display:flex;flex-direction:column;gap:8px"><div class="kt-label">Stale Draft</div>
+<div class="card elev-sm"><div class="kt-notice is-warning" style="margin:0"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">This requisition changed after you opened it. Review the latest version before saving.</div></div><button type="button" class="btn btn-secondary" style="align-self:flex-start">Review latest version</button></div></div>
+
+<div style="display:flex;flex-direction:column;gap:8px"><div class="kt-label">Unsupported product</div>
+<div class="card elev-sm"><span class="card-title">Clinical training and deployment laptops for digital health rollout</span><span class="kt-label">Requirement product: Software integration</span><div class="kt-notice is-critical" style="margin:0"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body">This approved purchase requires software integration, which this release does not support.</div></div><button type="button" class="btn btn-secondary" style="align-self:flex-start">Back to Requisitions</button></div></div>
+
+<div style="display:flex;flex-direction:column;gap:8px"><div class="kt-label">Existing open requisition</div>
+<div class="card elev-sm"><span>REQ-MOH-2027-033-001 · Draft · Request details need attention</span><button type="button" class="btn btn-primary" style="align-self:flex-start">Open existing requisition</button></div></div>
+
+<div style="display:flex;flex-direction:column;gap:8px"><div class="kt-label">Existing procurement scope</div>
+<div class="card elev-sm"><span>This approved purchase already has an authorised requisition. Additional requirements must use a separate approved purchase.</span><button type="button" class="btn btn-secondary" style="align-self:flex-start">View approved purchase</button></div></div>
+
+<div style="display:flex;flex-direction:column;gap:8px"><div class="kt-label">Remaining original amount</div>
+<div class="card elev-sm"><span>This request uses only the remaining amount from the original approved purchase.</span>
+<table class="table" style="margin-top:6px"><thead><tr><th></th><th class="is-num">Quantity</th><th class="is-num">Value</th></tr></thead><tbody>
+<tr><td>Original</td><td class="is-num">250 Each</td><td class="is-num">KES 50,000,000.00</td></tr>
+<tr><td>Previously used</td><td class="is-num">100 Each</td><td class="is-num">KES 20,000,000.00</td></tr>
+<tr><td>Still available</td><td class="is-num">150 Each</td><td class="is-num">KES 30,000,000.00</td></tr>
+</tbody></table>
+<span class="text-muted">Normal Start/Authorise remains available only when every other current guard passes.</span></div></div>
+
+<div style="display:flex;flex-direction:column;gap:8px"><div class="kt-label">Multi-year unsupported</div>
+<div class="card elev-sm"><div class="kt-notice is-critical" style="margin:0"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body">This release supports purchases completed within one financial year.</div></div><span class="kt-label">Failed check: Plan horizon</span><button type="button" class="btn btn-secondary" style="align-self:flex-start">Back to Requisitions</button></div></div>
+
+<div style="display:flex;flex-direction:column;gap:8px"><div class="kt-label">New submitting department</div>
+<div class="card elev-sm"><span>This requisition was returned for certification by the new submitting department.</span>
+<div class="kt-meta-row" style="margin-top:6px"><div><span class="kt-label">Earlier certified department</span><span class="kt-meta-value">Digital Health</span></div><div><span class="kt-label">New submitting department</span><span class="kt-meta-value">Human Resources Management and Development</span></div></div>
+<button type="button" class="btn btn-primary" style="align-self:flex-start">Open copied Draft</button></div></div>
+
+<div style="display:flex;flex-direction:column;gap:8px"><div class="kt-label">Withdrawn</div>
+<div class="card elev-sm"><span class="kt-status is-critical">Withdrawn</span>
+<div class="kt-meta-row" style="margin-top:6px"><div><span class="kt-label">Withdrawn by</span><span class="kt-meta-value">Dr Peter Kimani</span></div><div><span class="kt-label">Time</span><span class="kt-meta-value">9 Mar 2027, 14:00 EAT</span></div></div>
+<span class="text-muted">No approved-plan amount or funding was used.</span>
+<button type="button" class="btn btn-secondary" style="align-self:flex-start">Back to Requisitions</button></div></div>
+
+<div style="display:flex;flex-direction:column;gap:8px"><div class="kt-label">Revocation/consumption race</div>
+<div class="card elev-sm"><div class="kt-notice is-warning" style="margin:0"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">Tender Preparation has already started. This authorisation can no longer be revoked.</div></div><span class="kt-label">Tender reference: TND-MOH-2027-033</span><button type="button" class="btn btn-primary" style="align-self:flex-start">Open Tender</button></div></div>
+
+<div style="display:flex;flex-direction:column;gap:8px"><div class="kt-label">Save validation</div>
+<div class="card elev-sm"><div class="kt-notice is-warning" style="margin:0"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg><div class="kt-notice-body">Requested equipment quantity for Digital Health is 140 Each but the approved requirement requests 150 Each.</div></div><span class="text-muted">All still-authorised input is retained; the error binds locally beside the affected row.</span><button type="button" class="btn btn-secondary" style="align-self:flex-start">Save again after correction</button></div></div>
+
+<div style="display:flex;flex-direction:column;gap:8px"><div class="kt-label">Uncertain decision result</div>
+<div class="card elev-sm" style="gap:10px">
+<span class="text-muted">Base: Checking whether your action completed…</span>
+<span class="kt-status is-live">Committed: Requisition submitted to Procurement</span>
+<span class="text-muted">Retry-safe: The result could not be confirmed. Check the current requisition before trying again.</span>
+</div></div>
+
+<div style="display:flex;flex-direction:column;gap:8px"><div class="kt-label">Technical read</div>
+<div class="card elev-sm"><span class="text-muted">Complete record in its actual state. Read/navigation/export only.</span></div></div>
+
+</div>
+</div>
+
+</x-dc>
+</body>
+</html>
