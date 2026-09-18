@@ -27,7 +27,7 @@ export const AUTHOR = "esther.muthoni@moh.example.test";
 export const APPROVER = "alfred.ochieng@moh.example.test";
 export const AUDITOR = "naomi.chebet@moh.example.test";
 export const NOBODY = "samuel.otieno@moh.example.test";
-export const PLAN_TITLE = "Ministry of Health Strategic Plan (Demo)";
+export const PLAN_TITLE = "Ministry of Health Strategic Plan";
 // STR18-FX-NEW-PLAN (§14.4) — the browser-created plan carries the purge
 // prefix so every reset removes it.
 export const NEW_PLAN_TITLE = "Playwright — Ministry of Health Strategic Plan 2028–2033 (Demo)";

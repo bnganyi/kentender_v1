@@ -266,13 +266,20 @@ def restore_site(*, commit: bool = True) -> dict[str, Any]:
 				restored["needs"].append(year)
 		frappe.defaults.clear_default(PREVIOUS_FLAGS_KEY)
 	# Whatever was remembered, the site must end on the §8 seed's state: if no
-	# year holds a flag now, re-seed the flags exactly as site_setup does.
+	# year holds a flag now, re-seed the flags exactly as site_setup does —
+	# but only when the site is actually configured. A full `canonical.run
+	# (wipe=True, reseed=False)` deletes every Fiscal Year, and this same
+	# clear path runs unconditionally as part of that wipe; re-seeding an
+	# intake flag on a Fiscal Year that no longer exists throws instead of
+	# restoring anything. Nothing to restore on an unconfigured site.
 	from kentender_core.seeds import site_setup
 
-	if not _open_years(site_configuration.DPP_FLAG_OPEN):
+	dpp_target = site_configuration._fy_name(site_setup.DPP_INTAKE["start_year"])
+	needs_target = site_configuration._fy_name(site_setup.INTAKE["start_year"])
+	if not _open_years(site_configuration.DPP_FLAG_OPEN) and frappe.db.exists("Fiscal Year", dpp_target):
 		site_setup._seed_dpp_intake()
 		restored["dpp"].append("re-seeded")
-	if not _open_years(site_configuration.FLAG_OPEN):
+	if not _open_years(site_configuration.FLAG_OPEN) and frappe.db.exists("Fiscal Year", needs_target):
 		site_setup._seed_intake()
 		restored["needs"].append("re-seeded")
 	if commit:

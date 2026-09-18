@@ -867,21 +867,30 @@ def reset_site_setup(*, commit: bool = False) -> dict[str, int]:
 		frappe.delete_doc("User", email, force=True, ignore_permissions=True)
 		deleted["User"] = deleted.get("User", 0) + 1
 
-	# Profiles and the regulatory reference: namespace-stamped, so selection
-	# is exact regardless of how many times `run()` has converged over them.
+	# Profiles and the regulatory reference: every row, not just this seed's
+	# own FIXTURE_TAG namespace. These four doctypes are audit-immutable
+	# (on_trash refuses deletion outside the kt_fixture_purge flag `delete()`
+	# already sets above), so nothing but a deliberate purge like this one
+	# ever removes them — nothing outside a full wipe should call this
+	# function (it has exactly one caller, `canonical.run(wipe=True)`), and
+	# other test suites' own namespaces (e.g. Planning's, Regulatory
+	# Reference's own test suite) were found accumulating hundreds of rows
+	# here with no other path that ever cleans them up.
 	from kentender_core.services import procurement_settings as settings
 
 	for doctype in (settings.METHOD_PROFILE, settings.SCHEDULE_PROFILE):
-		delete(doctype, frappe.get_all(doctype, filters={"fixture_namespace": FIXTURE_TAG}, pluck="name"))
-	ref_versions = frappe.get_all(register.DOCTYPE, filters={"fixture_namespace": FIXTURE_TAG}, pluck="name")
-	delete(register.DOCTYPE, ref_versions)
-	delete(register.SET_DOCTYPE, frappe.get_all(register.SET_DOCTYPE, filters={"fixture_namespace": FIXTURE_TAG}, pluck="name"))
+		delete(doctype, frappe.get_all(doctype, pluck="name"))
+	delete(register.DOCTYPE, frappe.get_all(register.DOCTYPE, pluck="name"))
+	delete(register.SET_DOCTYPE, frappe.get_all(register.SET_DOCTYPE, pluck="name"))
 
-	# Delivery Location / Contact Office: identified by the exact names this
-	# seed names them, not by namespace (an existing row is updated in place
-	# on a rerun without ever being stamped if it predates this seed).
-	delete("Delivery Location", [name for name, _address in DELIVERY_LOCATIONS if frappe.db.exists("Delivery Location", name)])
-	delete("Contact Office", [name for name, *_rest in CONTACT_OFFICES if frappe.db.exists("Contact Office", name)])
+	# Delivery Location / Contact Office: every row, not just this seed's own
+	# named ones — neither carries a fixture_namespace column (an existing
+	# row is updated in place on a rerun without ever being stamped if it
+	# predates this seed), and other modules' own test suites were found
+	# leaving obviously-disposable rows behind here (e.g. "Test Delivery
+	# Location — Requisitions") with no other path that ever removes them.
+	delete("Delivery Location", frappe.get_all("Delivery Location", pluck="name"))
+	delete("Contact Office", frappe.get_all("Contact Office", pluck="name"))
 
 	# Fiscal Years, then Organisation Units, then the site identity itself —
 	# the two things every stage above ultimately hangs off, so last.

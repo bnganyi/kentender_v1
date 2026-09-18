@@ -105,6 +105,22 @@ def allocate_reference(type_token: str) -> str:
 	frappe.throw(_("Could not allocate a unique {0} reference").format(type_token))
 
 
+def reset_reference_series() -> dict[str, int]:
+	"""Wipe-only: drop the never-reuse Series counter for every reference
+	type this module allocates, so a freshly wiped canonical world's first
+	Strategic Plan (etc.) starts again at ``####0001`` instead of wherever
+	the site's history left off. Safe only because a full wipe has already
+	deleted every row `allocate_reference` checks for a collision — outside
+	a wipe this would defeat the whole point of never reusing a number."""
+	removed: dict[str, int] = {}
+	for token in REF_TYPE_META:
+		rows = frappe.db.sql("SELECT `name` FROM `tabSeries` WHERE `name` LIKE %s", (f"%-{token}-",))
+		if rows:
+			frappe.db.sql("DELETE FROM `tabSeries` WHERE `name` LIKE %s", (f"%-{token}-",))
+			removed[token] = len(rows)
+	return removed
+
+
 def assert_reference_immutable(doc, field: str) -> None:
 	"""Block reference edits after first save.
 

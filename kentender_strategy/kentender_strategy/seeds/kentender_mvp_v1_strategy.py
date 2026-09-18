@@ -44,7 +44,7 @@ from kentender_strategy.services.strategy_writes import (
 FY_2027_2028 = "2027-2028"
 FIXTURE_NS = "str-chg-001-mvp1"
 
-PLAN_TITLE = "Ministry of Health Strategic Plan (Demo)"
+PLAN_TITLE = "Ministry of Health Strategic Plan"
 
 # STR-CHG-001 v1.7 §14.1 / KT-STD-001 §8.3 — granted by site_setup.py, used
 # here, never created or granted by this seed.

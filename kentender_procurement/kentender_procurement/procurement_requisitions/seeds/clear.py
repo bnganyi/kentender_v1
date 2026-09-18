@@ -91,3 +91,25 @@ def clear_requisition_fixture_rows(
 		frappe.db.delete("Requisition Command Journal", {"name": ("in", journal)})
 	deleted["Requisition Command Journal"] = len(journal)
 	return {"ok": True, "deleted": deleted}
+
+
+def wipe_all_requisitions() -> dict[str, int]:
+	"""Unconditional: every row this module owns, regardless of which Plan
+	Item it references or whether it is Authorised with an Active Budget
+	reservation. `clear_requisition_fixture_rows` deliberately refuses that
+	case (it would orphan Planning/Budget state that is still live) — but a
+	full site `wipe` clears Planning and Budget in the same pass, so there
+	is nothing left to orphan. This is also the only path that reaches a
+	Requisition whose Plan Item was itself already deleted by an earlier,
+	incomplete clear (title lookup finds nothing for it, so the selective
+	clear above can never see it — the orphan otherwise survives every wipe
+	forever)."""
+	deleted: dict[str, int] = {}
+	for doctype in _DOCTYPES:
+		deleted[doctype] = frappe.db.count(doctype)
+		frappe.db.delete(doctype)
+	reservations = frappe.get_all("Funding Reservation", filters={"calling_module": "Procurement Requisitions"}, pluck="name")
+	if reservations:
+		frappe.db.delete("Funding Reservation", {"name": ("in", reservations)})
+	deleted["Funding Reservation"] = len(reservations)
+	return deleted

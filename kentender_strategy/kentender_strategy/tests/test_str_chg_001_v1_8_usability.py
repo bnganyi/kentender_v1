@@ -431,7 +431,7 @@ class TestPlaywrightPurgeRestoresPredecessorDates(UsabilityTestBase):
 
 	Patches `_canonical_plan` to point at a throwaway plan rather than
 	matching by the real canonical title, so this never touches whatever
-	the live "Ministry of Health Strategic Plan (Demo)" row is doing."""
+	the live "Ministry of Health Strategic Plan" row is doing."""
 
 	def test_purge_restores_the_seeded_effective_to_after_a_shortened_predecessor(self):
 		from unittest.mock import patch

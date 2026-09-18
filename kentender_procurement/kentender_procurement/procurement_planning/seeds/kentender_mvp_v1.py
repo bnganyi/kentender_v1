@@ -808,6 +808,27 @@ def upsert_planning_base(*, commit: bool = False) -> dict[str, Any]:
 	}
 
 
+def wipe_all_planning() -> dict[str, int]:
+	"""Unconditional: every row in every Planning doctype, regardless of
+	fiscal year or fixture stamp — except `Annual Plan Publication
+	Destination`, which is shared site configuration, not test data.
+	`reset_planning_seed`/`clear_planning_fixture_rows` both select by a
+	live fiscal year or a currently-known parent; an isolation-year fixture
+	whose own parent (e.g. an Annual Plan) was already deleted by some
+	other, unrelated test run is invisible to either and survives every
+	wipe forever (found: a `PPI-MOH-2099-001` Plan Item under a long-gone
+	`PLN-MOH-2099-001`, from some other test's isolation year). Only safe
+	unconditionally under a full site `wipe`, which has nothing left on
+	Requisitions/Budget/Needs for an orphaned Planning row to reference."""
+	deleted: dict[str, int] = {}
+	for doctype in _DOCTYPES:
+		if doctype == "Annual Plan Publication Destination":
+			continue
+		deleted[doctype] = frappe.db.count(doctype)
+		frappe.db.delete(doctype)
+	return deleted
+
+
 # --- isolated profiles (§14.10 — mutually exclusive with the baseline) -------
 
 

@@ -238,6 +238,20 @@ def collect_non_canonical() -> dict[str, list[str]]:
 			if _fixture_email(u) and u not in REGISTER_USERS
 		],
 	)
+	# Direct sweep, independent of any User row: a Contact whose User was
+	# already deleted by some other, incomplete test teardown has no User
+	# left to find it through, and is otherwise invisible to this clear
+	# forever. Found on this site accumulating in the thousands from
+	# unrelated CFG/AUTH test suites that create a Contact with no matching
+	# User at all.
+	add(
+		"Contact",
+		[
+			c.name
+			for c in frappe.get_all("Contact", fields=["name", "email_id"])
+			if c.email_id and _fixture_email(c.email_id) and c.email_id not in REGISTER_USERS
+		],
+	)
 
 	keep_units = _canonical_units()
 	add("Organisation Unit", [u for u in frappe.get_all("Organisation Unit", pluck="name") if u not in keep_units])
@@ -415,6 +429,9 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 	for user in plan.get("User", []):
 		if frappe.db.exists("User", user):
 			_delete_user(user, deleted)
+	# Orphaned Contacts direct from the plan (no User left to delete them
+	# through) — see collect_non_canonical()'s own note on this.
+	_delete_docs("Contact", plan.get("Contact", []), deleted)
 
 	# Units children-first: a pass deletes the leaves, the next their parents.
 	pending = [u for u in plan.get("Organisation Unit", []) if frappe.db.exists("Organisation Unit", u)]
@@ -722,6 +739,7 @@ def run(
 	reset: bool = True,
 	rebuild: bool = False,
 	wipe: bool = False,
+	reseed: bool = True,
 	validate: bool = True,
 	force: bool = False,
 	commit: bool = True,
@@ -735,12 +753,18 @@ def run(
 
 	``wipe`` implies ``rebuild``: the site stage is the foundation every
 	module stage's canonical rows sit on, so it is only ever safe to drop
-	after they are already gone, never on its own."""
+	after they are already gone, never on its own.
+
+	``reseed=False`` clears/wipes exactly as above and then stops — no
+	stage is rebuilt and ``through``/``validate`` are ignored, since there
+	is nothing left on the site to validate against. This is the "empty
+	database, no data at all" mode: everything KenTender's own seed owns
+	is gone and nothing replaces it."""
 	frappe.only_for(("System Manager", "Administrator"))
 	_assert_allowed(force)
 	_stage_index(through)
 	frappe.set_user("Administrator")
-	result: dict[str, Any] = {"ok": True, "through": through}
+	result: dict[str, Any] = {"ok": True, "through": through if reseed else None, "reseed": reseed}
 	# `force` is meant to mean "bypass every fixture-build guard this run
 	# touches," not just this orchestrator's own (§1.1) — the needs/
 	# planning/requisitions/tender_preparation module seeds each carry an
@@ -756,16 +780,32 @@ def run(
 		if rebuild or wipe:
 			result["rebuild"] = clear_canonical_modules()
 		if wipe:
+			from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import wipe_all_planning
+			from kentender_procurement.procurement_requisitions.seeds.clear import wipe_all_requisitions
+			from kentender_strategy.services.strategy_reference import reset_reference_series
+
+			# clear_canonical_modules()'s requisitions/planning steps both
+			# select by a live parent (title or fiscal year) rather than a
+			# fixture_namespace column every row carries, so a row whose
+			# parent was already deleted by some other, unrelated test run
+			# is invisible to either and survives every rebuild forever.
+			# Only safe to go unconditional here: `wipe` clears every other
+			# module in the same pass, so nothing is left for an orphan to
+			# reference.
+			result["planning_wiped"] = wipe_all_planning()
+			result["requisitions_wiped"] = wipe_all_requisitions()
+			result["reference_series_reset"] = reset_reference_series()
 			result["wiped"] = site_setup.reset_site_setup(commit=False)
 		if reset:
 			result["removed"] = clear_non_canonical()
-		result["seeded"] = seed(through=through)
-		if validate:
-			result["validate"] = globals()["validate"](through=through)
+		if reseed:
+			result["seeded"] = seed(through=through)
+			if validate:
+				result["validate"] = globals()["validate"](through=through)
 		if commit:
 			frappe.db.commit()
 		print(
-			"CANONICAL_SEED_OK through=%s removed=%s" % (through, result.get("removed") or {}),
+			"CANONICAL_SEED_OK through=%s removed=%s" % (result["through"], result.get("removed") or {}),
 		)
 		return result
 	except Exception:

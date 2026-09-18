@@ -139,6 +139,7 @@ help:
 	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — fixture-scoped reset + full KENTENDER_MVP_V1 seed + Playwright purge + validate"
 	@echo "  make seed-kentender-mvp-v1-validate SITE=$(SITE) — validate full KENTENDER_MVP_V1 stack"
 	@echo "  make purge-kentender-playwright-data SITE=$(SITE) — remove owned Playwright/Gate fixtures without deleting canonical or business records"
+	@echo "  make purge-erpnext-test-fixtures SITE=$(SITE) — remove ERPNext's own _Test Fiscal Year residue (not KenTender seed data)"
 	@echo "  make seed-moh-mvp-v1 SITE=$(SITE) — deprecated alias → seed-kentender-mvp-v1"
 	@echo "  make seed-stable-platform SITE=$(SITE) — load MOH stable platform seed (Works + IT STD)"
 	@echo "  make seed-stable-platform-reset SITE=$(SITE) — clear + reload stable platform seed"
@@ -991,14 +992,17 @@ e1-nssf-poc-gate:
 # Units, Fiscal Years, actors) before rebuilding from nothing — see
 # docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_*.md §4. FORCE=True bypasses
 # every module seed's own developer_mode/allow_tests guard, required for WIPE
-# outside developer_mode. Both must stay Python-literal True/False, not JSON.
+# outside developer_mode. RESEED=False stops after clearing/wiping — nothing
+# is rebuilt, THROUGH/validate are skipped: an empty database, no data at
+# all. All three must stay Python-literal True/False, not JSON.
 THROUGH ?= tender_preparation
 WIPE ?= False
 FORCE ?= False
+RESEED ?= True
 seed-canonical:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
 		kentender_core.seeds.canonical.run \
-		--kwargs '{"through": "$(THROUGH)", "reset": True, "wipe": $(WIPE), "force": $(FORCE), "validate": True}'
+		--kwargs '{"through": "$(THROUGH)", "reset": True, "wipe": $(WIPE), "reseed": $(RESEED), "force": $(FORCE), "validate": True}'
 
 seed-canonical-dry-run:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
@@ -1020,6 +1024,13 @@ seed-kentender-mvp-v1-validate:
 purge-kentender-playwright-data:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
 		kentender_core.seeds.kentender_mvp_v1.clear.purge_kentender_playwright_data
+
+# Not KenTender seed data — ERPNext's own `_Test Fiscal Year %` residue from
+# running ERPNext's Python test suite on this site. canonical.py's wipe
+# deliberately never touches these (SEED-OPS-001 §3.2); this is separate.
+purge-erpnext-test-fixtures:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
+		kentender_core.tests.erpnext_test_fixture_cleanup.purge
 
 # Deprecated aliases (one cycle).
 seed-moh-mvp-v1: seed-kentender-mvp-v1
