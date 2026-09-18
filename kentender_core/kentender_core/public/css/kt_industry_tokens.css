@@ -492,6 +492,7 @@
 	border: 0;
 }
 .kt-industry .kt-tab:hover:not([aria-selected="true"]) { color: var(--kt-color-text); }
+.kt-industry .kt-tab:disabled { color: var(--kt-color-neutral-400); cursor: not-allowed; }
 .kt-industry .kt-tab[aria-selected="true"] { color: var(--kt-color-accent-800); font-weight: 600; }
 .kt-industry .kt-tab[aria-selected="true"]::after {
 	content: "";

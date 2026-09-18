@@ -273,11 +273,14 @@ test.describe("System setup — design fidelity", () => {
 	});
 
 	// CFG-CHG-002 v0.11 §10.5 — C03A-Funding-Sources.dc.html (Phase 3C). The
-	// board carries no anchor ids, so `document.querySelector` takes the
-	// first `.blueprint` (the list) and the first `.dialog` (the editor).
+	// board carries no anchor ids. Every C01-Reminders board now shares one
+	// page-level `.blueprint` (breadcrumb, title, tabs, sub-nav) with the
+	// content sections as its next siblings, so the list — the section right
+	// after that shared header — is the second direct child; the first
+	// `.dialog` still finds the editor unambiguously.
 	test("C03A-list — Funding sources list with the availability column", async ({ page, browser }) => {
 		const art = await browser.newPage();
-		const scope = ".blueprint";
+		const scope = ".blueprint > div:nth-child(2)";
 		await openArtboard(art, `${DESIGN_DIR}/C03A-Funding-Sources.dc.html`, scope);
 		const wanted = await landmarks(art, scope);
 
@@ -374,9 +377,12 @@ test.describe("System setup — design fidelity", () => {
 
 	test("C04-calendar — the working-day calendar editor, with row controls only while unsaved", async ({ page, browser }) => {
 		const art = await browser.newPage();
-		// The board's second `.blueprint` in this section is the calendar
-		// editor; `#calendar` scopes to the whole missing/add/detail group.
-		const scope = "#calendar .blueprint";
+		// `#calendar` scopes to the whole missing/add/detail group; its own
+		// blueprint header now wraps both the "missing" notice and the
+		// calendar editor as plain sibling blocks (no distinguishing class
+		// since the C03/C04 header refresh), so the editor — always the last
+		// of the three direct children — is selected positionally.
+		const scope = "#calendar > div:last-child";
 		await openArtboard(art, `${DESIGN_DIR}/C04-Schedules-Calendars.dc.html`, scope);
 		// This one board documents both states at once: the unsaved editor
 		// (Cancel / Save calendar version, Add row) and the saved detail
@@ -407,11 +413,12 @@ test.describe("System setup — design fidelity", () => {
 	});
 
 	// CFG-CHG-002 v0.11 §10.10 — Reminders.dc.html (Phase 3G). The board's
-	// first `.blueprint` is the unchanged specimen; the card states what is
-	// being set, its unit and both consequences.
+	// own blueprint header now wraps all four documented states (the C03/C04
+	// header refresh), so the first nested `.blueprint` — the unchanged
+	// specimen — is what scopes this one state.
 	test("Reminders — the threshold states what it sets, its unit and that it is not a deadline", async ({ page, browser }) => {
 		const art = await browser.newPage();
-		const scope = ".blueprint";
+		const scope = ".blueprint .blueprint";
 		await openArtboard(art, `${DESIGN_DIR}/Reminders.dc.html`, scope);
 		const wanted = await landmarks(art, scope);
 

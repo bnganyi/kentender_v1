@@ -63,7 +63,16 @@ const OVERLAP_POLICIES = [
 const APPROVAL_ROUTES = ["Cabinet Secretary", "County Executive Committee Member", "Board of Directors", "Council"];
 
 const current = computed(() => props.currentVersion || {});
-const kind = ref(current.value.reference_kind || props.kinds[0] || "Reservation rules");
+// "Method eligibility" is maintained as a Procedure Method Profile (D10);
+// this form only shows a redirect notice for it (`delegated` below), never a
+// savable form. Defaulting a new rule to it silently traps an administrator
+// who starts typing without touching the dropdown — confirmed live
+// 2026-09-18 — so the default here skips it in favour of the first kind
+// this form can actually save.
+const kind = ref(current.value.reference_kind || defaultKind());
+function defaultKind() {
+	return props.kinds.find((option) => option !== "Method eligibility") || props.kinds[0] || "Reservation rules";
+}
 const form = ref({
 	display_name: "",
 	reference_key: "",
@@ -85,7 +94,7 @@ const priceRows = ref([]);
 
 function seed() {
 	const version = current.value;
-	kind.value = version.reference_kind || props.kinds[0] || "Reservation rules";
+	kind.value = version.reference_kind || defaultKind();
 	form.value = {
 		display_name: version.reference_key ? version.reference_kind || "" : "",
 		reference_key: "",

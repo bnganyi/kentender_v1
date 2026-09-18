@@ -231,7 +231,7 @@ function openUomList() {
 				class="kt-btn kt-btn-primary"
 				data-testid="kt-fy-add-open"
 				@click="openDialog('add')"
-			>{{ __("Add financial year") }}</button>
+			><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add financial year") }}</button>
 		</div>
 
 		<div v-if="loading" class="kt-card kt-blueprint" data-testid="kt-fy-loading">
@@ -253,7 +253,7 @@ function openUomList() {
 			<h2>{{ __("No financial years yet") }}</h2>
 			<p>{{ __("Add the first financial year for this site.") }}</p>
 			<button type="button" class="kt-btn kt-btn-primary" @click="openDialog('add')">
-				{{ __("Add financial year") }}
+				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add financial year") }}
 			</button>
 		</div>
 

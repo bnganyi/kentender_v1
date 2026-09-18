@@ -99,7 +99,7 @@ watch(startYear, async (value) => {
 					:disabled="busy || !preview || preview.exists || preview.company_missing"
 					data-testid="kt-fy-add-confirm"
 					@click="emit('confirm', Number(startYear))"
-				>{{ __("Add financial year") }}</button>
+				><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add financial year") }}</button>
 			</div>
 		</div>
 	</div>

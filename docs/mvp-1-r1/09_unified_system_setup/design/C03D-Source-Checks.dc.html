@@ -11,31 +11,24 @@
 <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
 <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
 </helmet>
-<div style="position:sticky;top:0;z-index:10;background:var(--color-surface);border-bottom:1px solid var(--color-divider);padding:14px 24px;display:flex;flex-wrap:wrap;gap:16px;align-items:baseline">
-<strong style="font-family:var(--font-heading);font-size:14px;letter-spacing:.04em">SYSTEM SETUP — STATIC DESIGN CONTRACT</strong>
-<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px">
-<a href="C01-Procuring-Entity.dc.html">C01</a>
-<a href="C02-Financial-Years.dc.html">C02</a>
-<a href="C03A-Funding-Sources.dc.html">C03-A</a>
-<a href="C03BC-Procurement-Rules.dc.html">C03-B/C</a>
-<a href="C03D-Source-Checks.dc.html" style="color:var(--color-accent-700);font-weight:600">C03-D</a>
-<a href="C04-Schedules-Calendars.dc.html">C04</a>
-<a href="Reminders.dc.html">Reminders</a>
-</div>
-</div>
-<div style="position:sticky;top:49px;z-index:9;background:var(--color-surface-2);border-bottom:1px solid var(--color-divider);padding:8px 24px;display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--color-neutral-700)">
-<a href="#pending">Pending</a><a href="#verified">Verified-incomplete</a><a href="#rejected">Rejected</a><a href="#history">History tables</a><a href="#evidence">Historical vs current</a>
-</div>
 <main style="max-width:900px;margin:0 auto;padding:32px 24px 96px">
-<div style="margin-bottom:32px">
-<span class="tag tag-outline">C03-D · CUX-04</span>
-<h1 style="margin-top:10px">Check sources &amp; history</h1>
-<p class="text-muted" style="max-width:60ch">§10.8 — Administrator; Ministry of Health; 24 Nov 2026, 09:15 EAT.</p>
+<div class="blueprint" style="background:var(--color-surface)">
+<div style="padding:32px 32px 0">
+<div class="kt-breadcrumb" style="margin-bottom:14px">Home &gt; Configuration and Governance &gt; <strong>System setup</strong></div>
+<div style="font-family:var(--font-heading);font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700)">Configuration and governance</div>
+<h1 style="margin:6px 0 10px">System setup</h1>
+<p class="text-muted" style="max-width:62ch;margin:0">Manage this site's details, financial years, responsibilities and procurement settings.</p>
+<div class="kt-tabs" style="margin-top:26px">
+<a class="kt-tab" href="C01-Procuring-Entity.dc.html" style="color:var(--color-neutral-700);text-decoration:none">Procuring entity</a>
+<a class="kt-tab" href="C02-Financial-Years.dc.html" style="color:var(--color-neutral-700);text-decoration:none">Financial years</a>
+<span class="kt-tab" style="color:var(--color-neutral-700);text-decoration:none">Organisation structure</span>
+<span class="kt-tab" style="color:var(--color-neutral-700);text-decoration:none">Users and responsibilities</span>
+<a class="kt-tab" href="C03A-Funding-Sources.dc.html" style="color:var(--color-accent-800);font-weight:600;text-decoration:none;border-bottom:2px solid var(--color-accent);margin-bottom:-1px">Procurement settings</a>
 </div>
-
-<div id="pending" style="margin:0 0 40px">
-<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C03-D</span><span class="tag tag-outline">CONFIG-RULES</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Pending source check</h4></div>
-<div class="blueprint" style="background:var(--color-surface);padding:28px;max-width:760px">
+<div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:16px;font-size:13px"><a href="C03A-Funding-Sources.dc.html" style="color:var(--color-accent-2-700);text-decoration:underline;text-underline-offset:2px">Funding sources</a><a href="C03BC-Procurement-Rules.dc.html" style="color:var(--color-accent-800);font-weight:600;text-decoration:none">Procurement rules</a><a href="C04-Schedules-Calendars.dc.html" style="color:var(--color-accent-2-700);text-decoration:underline;text-underline-offset:2px">Procurement schedules</a><a href="Reminders.dc.html" style="color:var(--color-accent-2-700);text-decoration:underline;text-underline-offset:2px">Reminders</a></div>
+</div>
+<div id="pending">
+<div style="padding:28px">
 <h3>Check sources</h3>
 <div class="kt-meta-row" style="margin-bottom:14px"><div><span class="kt-label">Record kind</span><span class="kt-meta-value">Procurement rule</span></div><div><span class="kt-label">Rule</span><span class="kt-meta-value">Method eligibility</span></div><div><span class="kt-label">Version</span><span class="kt-meta-value">1</span></div></div>
 <div class="field"><label>Result</label><select class="input"><option>Source check needed</option><option>Sources verified</option><option>Source check rejected</option></select></div>
@@ -63,26 +56,23 @@
 </div>
 </div>
 
-<div id="verified" style="margin:0 0 40px">
-<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C03-D</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Verified-selected, incomplete evidence</h4></div>
-<div class="card" style="max-width:760px">
+<div id="verified" style="border-top:1px solid var(--color-divider)">
+<div style="padding:28px;display:flex;flex-direction:column;gap:4px">
 <div class="field"><label>Result</label><select class="input"><option>Source check needed</option><option selected="selected">Sources verified</option><option>Source check rejected</option></select></div>
 <div class="kt-notice is-critical" style="margin-top:10px"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body">Complete the source, applicability and interpretation evidence before recording a verified source check.</div></div>
 </div>
 </div>
 
-<div id="rejected" style="margin:0 0 40px">
-<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C03-D</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Rejected</h4></div>
-<div class="card" style="max-width:760px">
+<div id="rejected" style="border-top:1px solid var(--color-divider)">
+<div style="padding:28px;display:flex;flex-direction:column;gap:4px">
 <div class="kt-meta-row" style="margin-bottom:8px"><div><span class="kt-label">Result</span><span class="kt-meta-value"><span class="kt-status is-critical">Source check rejected</span></span></div></div>
 <div class="field"><label>Reason</label><textarea class="input" rows="2">The cited source does not establish the stated applicability.</textarea></div>
 <div class="kt-notice is-critical" style="margin-top:10px"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body">Affected new decisions are blocked; historical evidence is retained.</div></div>
 </div>
 </div>
 
-<div id="history" style="margin:0 0 40px">
-<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px"><span class="tag tag-accent">C03-D</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">History tables</h4></div>
-<div style="display:flex;flex-direction:column;gap:20px">
+<div id="history" style="border-top:1px solid var(--color-divider)">
+<div style="display:flex;flex-direction:column;gap:24px;padding:28px">
 <div><h6 class="kt-card-title">Version history</h6>
 <table class="table"><thead><tr><th>Version</th><th>Applies from</th><th>Applies until</th><th>Recorded at</th><th>Recorded by</th><th>Earlier versions replaced</th><th>Source check</th><th>Action</th></tr></thead>
 <tbody><tr><td>1</td><td>1 Jul 2027</td><td>30 Jun 2028</td><td>12 Sep 2026</td><td>Administrator</td><td>—</td><td><span class="kt-status is-attention">Source check needed</span></td><td><a href="#">View</a></td></tr></tbody></table></div>
@@ -95,9 +85,8 @@
 </div>
 </div>
 
-<div id="evidence" style="margin:0 0 24px">
-<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C03-D</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Historical vs current evidence</h4></div>
-<div class="card" style="max-width:760px">
+<div id="evidence" style="border-top:1px solid var(--color-divider)">
+<div style="padding:28px;display:flex;flex-direction:column;gap:4px">
 <div class="kt-meta-row">
 <div><span class="kt-label">Source check at the decision</span><span class="kt-meta-value">Sources verified (recorded 3 Aug 2026)</span></div>
 <div><span class="kt-label">Current source check</span><span class="kt-meta-value"><span class="kt-status is-critical">Source check rejected</span></span></div>
@@ -106,6 +95,7 @@
 </div>
 </div>
 
+</div>
 </main>
 
 </x-dc>

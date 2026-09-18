@@ -1,12 +1,12 @@
 <script setup>
-// CFG-CHG-002 v0.6 §9–§11 — the one System setup page: shared header, four
-// horizontal tabs, hash-anchor tab state. Frappe supplies the Desk header and
-// breadcrumb (KT-STD-001 §2.5); this component renders only the content
-// column below it, ported from CFG-DES-01…07 and AUTH-DES-01…08.
-//
-// The hash selects the tab; refresh, direct load and browser back/forward
-// preserve it (CFG-AC-024). Tab changes update the hash without a full route
-// change (§9). No remembered browser context is required or authoritative.
+// CFG-CHG-002 v0.11 §9–§11 — the one System setup page. The top rail
+// (breadcrumb, notifications, user identity) is the shared
+// kentender_core.industry.mountPageRail every Industry module mounts; the
+// artboard's own breadcrumb line documents that rail and is not rendered
+// again here. Below it, the module's content area ported from the boards:
+// one white blueprint card carrying the eyebrow, title, lede, the five tabs
+// and the active tab's sections. The hash selects the tab; refresh, direct
+// load and browser back/forward preserve it (CFG-AC-024).
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import ProcuringEntityTab from "./tabs/ProcuringEntityTab.vue";
 import FiscalYearsTab from "./tabs/FiscalYearsTab.vue";
@@ -14,16 +14,27 @@ import OrganisationStructureTab from "./tabs/OrganisationStructureTab.vue";
 import UserResponsibilitiesTab from "./tabs/UserResponsibilitiesTab.vue";
 import ProcurementSettingsTab from "./tabs/ProcurementSettingsTab.vue";
 import { siteConfigApi } from "./data/siteConfigApi.js";
+import { usePageRail } from "./composables/usePageRail.js";
+
+const railEl = ref(null);
+usePageRail(
+	railEl,
+	computed(() => [
+		{ label: __("Home"), route: ["Workspaces", "Procurement Home"] },
+		{ label: __("Configuration and Governance"), route: ["Workspaces", "Platform Configuration & Governance"] },
+		{ label: __("System setup") },
+	])
+);
 
 const TABS = [
 	{ key: "procuring-entity", label: __("Procuring entity") },
-	{ key: "fiscal-years", label: __("Fiscal years") },
+	{ key: "fiscal-years", label: __("Financial years") },
+	{ key: "organisation-structure", label: __("Organisation structure") },
+	{ key: "users-and-responsibilities", label: __("Users and responsibilities") },
 	// PLN-CHG-001 v1.18 §10.11 — the fifth tab houses the agreed
 	// catalogue/profile maintenance (C03/C04); a presentation addition, not a
 	// governance module.
 	{ key: "procurement-settings", label: __("Procurement settings") },
-	{ key: "organisation-structure", label: __("Organisation structure") },
-	{ key: "users-and-responsibilities", label: __("Users and responsibilities") },
 ];
 
 const loading = ref(true);
@@ -136,10 +147,6 @@ function viewAffected(unitId) {
 	selectTab("users-and-responsibilities");
 }
 
-function backToConfiguration() {
-	frappe.set_route("Workspaces", "Platform Configuration & Governance");
-}
-
 onMounted(() => {
 	window.addEventListener("hashchange", onHashChange);
 	load();
@@ -154,22 +161,31 @@ onUnmounted(() => {
 
 <template>
 	<div class="kt-industry kt-setup-root" data-testid="kt-setup-root">
+		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-setup-shell">
-			<a
-				href="#"
-				class="kt-back-link"
-				data-testid="back-to-workbench"
-				@click.prevent="backToConfiguration"
-			>← {{ __("Configuration and Governance") }}</a>
-
-			<header class="kt-setup-header">
-				<span class="kt-eyebrow">{{ __("Configuration and Governance") }}</span>
+		<div class="kt-setup-page kt-blueprint">
+			<header class="kt-setup-head">
+				<span class="kt-eyebrow">{{ __("Configuration and governance") }}</span>
 				<h1 class="kt-setup-title">{{ __("System setup") }}</h1>
 				<p class="kt-setup-lede">
-					{{ __("Configure this KenTender site, its financial years, organisational structure and user responsibilities.") }}
+					{{ __("Manage this site's details, financial years, responsibilities and procurement settings.") }}
 				</p>
+				<nav v-if="!forbidden && !loadError && !loading" class="kt-tabs" role="tablist" data-testid="kt-setup-tabs">
+					<button
+						v-for="tab in TABS"
+						:key="tab.key"
+						type="button"
+						role="tab"
+						class="kt-tab"
+						:aria-selected="activeTab === tab.key"
+						:disabled="tabDisabled(tab.key)"
+						:data-testid="'kt-setup-tab-' + tab.key"
+						@click="selectTab(tab.key)"
+					>{{ tab.label }}</button>
+				</nav>
 			</header>
 
+			<div class="kt-setup-panel">
 			<!-- CFG-DES-07 forbidden/error/loading — never an empty success -->
 			<div v-if="forbidden" class="kt-card kt-blueprint kt-empty" data-testid="kt-setup-forbidden">
 				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
@@ -195,21 +211,6 @@ onUnmounted(() => {
 			</div>
 
 			<template v-else>
-				<nav class="kt-setup-tabs" role="tablist" data-testid="kt-setup-tabs">
-					<button
-						v-for="tab in TABS"
-						:key="tab.key"
-						type="button"
-						role="tab"
-						class="kt-setup-tab"
-						:class="{ 'is-active': activeTab === tab.key, 'is-disabled': tabDisabled(tab.key) }"
-						:aria-selected="activeTab === tab.key"
-						:disabled="tabDisabled(tab.key)"
-						:data-testid="'kt-setup-tab-' + tab.key"
-						@click="selectTab(tab.key)"
-					>{{ tab.label }}</button>
-				</nav>
-
 				<ProcuringEntityTab
 					v-if="activeTab === 'procuring-entity'"
 					:site="site"
@@ -239,6 +240,8 @@ onUnmounted(() => {
 					:initial-unit="uraUnitFilter"
 				/>
 			</template>
+			</div>
+		</div>
 		</div>
 	</div>
 </template>

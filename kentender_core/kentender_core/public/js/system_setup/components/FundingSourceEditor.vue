@@ -101,7 +101,7 @@ function save() {
 		<div class="kt-procset-footer kt-procset-narrow">
 			<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="kt-fs-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
 			<button type="button" class="kt-btn kt-btn-primary" :disabled="!canSave" data-testid="kt-fs-save" @click="save">
-				{{ creating ? __("Add funding source") : __("Save changes") }}
+				<svg v-if="creating" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" /></svg>{{ creating ? __("Add funding source") : __("Save changes") }}
 			</button>
 		</div>
 	</div>

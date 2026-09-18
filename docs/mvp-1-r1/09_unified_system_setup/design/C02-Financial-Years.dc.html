@@ -11,34 +11,26 @@
 <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
 <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
 </helmet>
-<div style="position:sticky;top:0;z-index:10;background:var(--color-surface);border-bottom:1px solid var(--color-divider);padding:14px 24px;display:flex;flex-wrap:wrap;gap:16px;align-items:baseline">
-<strong style="font-family:var(--font-heading);font-size:14px;letter-spacing:.04em">SYSTEM SETUP — STATIC DESIGN CONTRACT</strong>
-<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:13px">
-<a href="C01-Procuring-Entity.dc.html">C01</a>
-<a href="C02-Financial-Years.dc.html" style="color:var(--color-accent-700);font-weight:600">C02</a>
-<a href="C03A-Funding-Sources.dc.html">C03-A</a>
-<a href="C03BC-Procurement-Rules.dc.html">C03-B/C</a>
-<a href="C03D-Source-Checks.dc.html">C03-D</a>
-<a href="C04-Schedules-Calendars.dc.html">C04</a>
-<a href="Reminders.dc.html">Reminders</a>
-</div>
-</div>
-<div style="position:sticky;top:49px;z-index:9;background:var(--color-surface-2);border-bottom:1px solid var(--color-divider);padding:8px 24px;display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--color-neutral-700)">
-<a href="#overview">Overview</a><a href="#empty">Empty</a><a href="#add-year">Add year</a><a href="#detail">Year detail</a><a href="#disable">Disable / re-enable</a><a href="#forms">Open/close forms</a><a href="#form-states">Form states</a>
-</div>
 <main style="max-width:960px;margin:0 auto;padding:32px 24px 96px">
-<div style="margin-bottom:32px">
-<span class="tag tag-outline">C02 / CUX-01–02</span>
-<h1 style="margin-top:10px">Financial years &amp; submission periods</h1>
-<p class="text-muted" style="max-width:65ch">§10.3–10.4 — Administrator; Ministry of Health; 24 Nov 2026, 09:15 EAT.</p>
+<div class="blueprint" style="background:var(--color-surface)">
+<div style="padding:32px 32px 0">
+<div class="kt-breadcrumb" style="margin-bottom:14px">Home &gt; Configuration and Governance &gt; <strong>System setup</strong></div>
+<div style="font-family:var(--font-heading);font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700)">Configuration and governance</div>
+<h1 style="margin:6px 0 10px">System setup</h1>
+<p class="text-muted" style="max-width:62ch;margin:0">Manage this site's details, financial years, responsibilities and procurement settings.</p>
+<div class="kt-tabs" style="margin-top:26px">
+<a class="kt-tab" href="C01-Procuring-Entity.dc.html" style="color:var(--color-neutral-700);text-decoration:none">Procuring entity</a>
+<a class="kt-tab" href="C02-Financial-Years.dc.html" style="color:var(--color-accent-800);font-weight:600;text-decoration:none;border-bottom:2px solid var(--color-accent);margin-bottom:-1px">Financial years</a>
+<span class="kt-tab" style="color:var(--color-neutral-700);text-decoration:none">Organisation structure</span>
+<span class="kt-tab" style="color:var(--color-neutral-700);text-decoration:none">Users and responsibilities</span>
+<a class="kt-tab" href="C03A-Funding-Sources.dc.html" style="color:var(--color-neutral-700);text-decoration:none">Procurement settings</a>
 </div>
-
-<div id="overview" style="margin:0 0 40px">
-<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C02</span><span class="tag tag-outline">CONFIG</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Year overview</h4></div>
-<div class="blueprint" style="background:var(--color-surface);padding:28px;max-width:900px">
+</div>
+<div id="overview">
+<div style="padding:28px">
 <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
 <div><h3 style="margin-bottom:4px">Financial years</h3><p class="card-body" style="margin-bottom:0">Set when departments can submit needs and plans.</p></div>
-<button type="button" class="btn btn-primary">Add financial year</button>
+<button type="button" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:6px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="flex:none;align-self:center"><path d="M12 5v14M5 12h14"/></svg>Add financial year</button>
 </div>
 <label class="kt-checkbox" style="margin:14px 0"><input type="checkbox" /><span class="box"></span>Include disabled years</label>
 <table class="table">
@@ -65,35 +57,32 @@
 </div>
 </div>
 
-<div id="empty" style="margin:0 0 40px">
-<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C02</span><span class="tag tag-outline">CONFIG-EMPTY</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Empty years</h4></div>
-<div class="blueprint" style="background:var(--color-surface);padding:40px;max-width:900px;text-align:center">
+<div id="empty" style="border-top:1px solid var(--color-divider)">
+<div style="padding:40px;text-align:center">
 <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-400)" stroke-width="1.5" style="margin:0 auto 12px"><rect x="3" y="4" width="18" height="18" rx="0"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
 <p style="font-weight:600;margin-bottom:4px">No financial years yet.</p>
 <p class="card-body">Add the first financial year for this site.</p>
-<button type="button" class="btn btn-primary">Add financial year</button>
+<button type="button" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:6px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="flex:none;align-self:center"><path d="M12 5v14M5 12h14"/></svg>Add financial year</button>
 </div>
 </div>
 
-<div id="add-year" style="margin:0 0 40px">
-<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C02</span><span class="tag tag-outline">CONFIG</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Add financial year — preview, duplicate, missing Company</h4></div>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+<div id="add-year" style="border-top:1px solid var(--color-divider)">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;align-items:start;padding:28px">
 <div class="dialog" style="position:static;max-width:360px">
 <div class="dialog-title">Add financial year</div>
 <div class="dialog-body">
 <div class="field"><label>Start year</label><input class="input" type="number" value="2028" /></div>
 <div class="kt-meta-row" style="margin-top:10px"><div><span class="kt-label">Financial year</span><span class="kt-meta-value">FY 2028/29</span></div><div><span class="kt-label">Period</span><span class="kt-meta-value">1 Jul 2028–30 Jun 2029</span></div></div>
 </div>
-<div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Add financial year</button></div>
+<div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:6px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="flex:none;align-self:center"><path d="M12 5v14M5 12h14"/></svg>Add financial year</button></div>
 </div>
 <div class="kt-notice is-critical" style="flex-direction:column;align-items:flex-start"><div style="display:flex;gap:12px;align-items:flex-start"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body"><strong>Duplicate.</strong> This financial year already exists.</div></div><a href="#" style="margin-left:30px;font-size:13px">View financial year</a></div>
 <div class="kt-notice is-critical" style="flex-direction:column;align-items:flex-start"><div style="display:flex;gap:12px;align-items:flex-start"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body"><strong>Company not linked.</strong> The accounting company must be configured before you can add a financial year.</div></div><p class="text-muted" style="font-size:12px;margin-left:30px">No accounting company is linked to this site.</p></div>
 </div>
 </div>
 
-<div id="detail" style="margin:0 0 40px">
-<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C02 / CUX-01</span><span class="tag tag-outline">CONFIG</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Year detail — submission periods</h4></div>
-<div class="blueprint" style="background:var(--color-surface);padding:28px;max-width:900px">
+<div id="detail" style="border-top:1px solid var(--color-divider)">
+<div style="padding:28px">
 <h3>Submission periods</h3>
 <div class="kt-panel" style="margin-bottom:16px"><div class="kt-meta-row">
 <div><span class="kt-label">Financial year</span><span class="kt-meta-value">FY 2027/28</span></div>
@@ -120,18 +109,16 @@
 </div>
 </div>
 
-<div id="disable" style="margin:0 0 40px">
-<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span class="tag tag-accent">C02</span><span class="tag tag-outline">CONFIG</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Disable / re-enable</h4></div>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+<div id="disable" style="border-top:1px solid var(--color-divider)">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;align-items:start;padding:28px">
 <div class="dialog" style="position:static;max-width:360px"><div class="dialog-title">This financial year cannot be disabled</div><div class="dialog-body">Departmental needs submissions are still open.</div><div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary" disabled="disabled">Disable financial year</button></div></div>
 <div class="dialog" style="position:static;max-width:360px"><div class="dialog-title">Disable FY 2027/28?</div><div class="dialog-body">This year will be unavailable for new use.</div><div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Disable financial year</button></div></div>
 <div class="card"><div class="card-kicker">Disabled-year detail</div><div class="kt-meta-row"><div><span class="kt-label">Financial year enabled</span><span class="kt-meta-value">No</span></div></div><button type="button" class="btn btn-secondary" style="margin-top:8px">Enable financial year</button></div>
 </div>
 </div>
 
-<div id="forms" style="margin:0 0 40px">
-<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px"><span class="tag tag-accent">C02 / CUX-02</span><span class="tag tag-outline">CONFIG · CONFIG-SWAP</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Open, close &amp; change-deadline forms — all seven</h4></div>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px">
+<div id="forms" style="border-top:1px solid var(--color-divider)">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;align-items:start;padding:28px">
 
 <div class="card"><div class="card-kicker">Open · Departmental needs</div><div class="card-title" style="font-size:16px">Open departmental needs submissions</div>
 <div class="kt-meta-row" style="margin:8px 0"><div><span class="kt-label">Year</span><span class="kt-meta-value">FY 2027/28</span></div></div>
@@ -183,15 +170,15 @@
 </div>
 </div>
 
-<div id="form-states" style="margin:0 0 24px">
-<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:14px"><span class="tag tag-accent">C02 / CUX-02</span><h4 style="margin:0;text-transform:uppercase;letter-spacing:.05em;color:var(--color-neutral-700)">Deadline error, expiry &amp; stale states</h4></div>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">
+<div id="form-states" style="border-top:1px solid var(--color-divider)">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;align-items:start;padding:28px">
 <div class="kt-notice is-critical"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body"><strong>Deadline error.</strong> Enter a closing time later than the current time.</div></div>
 <div class="kt-notice is-warning"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><div class="kt-notice-body"><strong>Expired.</strong> Departmental needs submissions closed at 25 Nov 2026, 23:59 EAT.</div></div>
 <div class="kt-notice is-warning" style="flex-direction:column;align-items:flex-start"><div style="display:flex;gap:12px;align-items:flex-start"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg><div class="kt-notice-body"><strong>Stale.</strong> These submission settings have changed since you opened them.</div></div><a href="#" style="margin-left:30px;font-size:13px">Review latest settings</a></div>
 </div>
 </div>
 
+</div>
 </main>
 
 </x-dc>

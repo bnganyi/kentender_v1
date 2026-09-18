@@ -590,7 +590,8 @@ textarea.input { min-height: 90px; resize: vertical; }
 .kt-section { margin-bottom: var(--space-8); }
 .kt-section + .kt-section { margin-top: var(--space-8); }
 .kt-panel { background: var(--color-surface); border: 1px solid var(--color-divider); padding: var(--space-4); margin-top: var(--space-3); }
-.kt-meta-row { display: flex; gap: var(--space-6); flex-wrap: wrap; align-items: flex-end; }
+.kt-meta-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-4) var(--space-6); align-items: end; }
+.kt-meta-row.is-tight { display: flex; flex-wrap: wrap; }
 .kt-meta-row > div { display: flex; flex-direction: column; gap: 4px; }
 .kt-meta-value { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 18px; }
 

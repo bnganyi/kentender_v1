@@ -4,7 +4,7 @@
 
 kentender_core.desk_page.register("system-setup", {
 	title: __("System setup"),
-	bundles: ["system_setup.bundle.js"],
+	bundles: ["kt_industry_page_rail.bundle.js", "system_setup.bundle.js"],
 	mount: (el) => frappe.kt_mount_system_setup(el),
 	sidebarWorkspaceKey: "procurement",
 });

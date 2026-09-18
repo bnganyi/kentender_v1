@@ -153,6 +153,7 @@ const approvalStatusText = computed(() => {
 function goToProcurementRules() {
 	emit("navigate", "procurement-rules");
 }
+
 </script>
 
 <template>

@@ -275,8 +275,7 @@ async function confirmRemoveSource() {
 			<nav class="kt-setup-subnav" data-testid="kt-procset-subnav">
 				<a href="#" class="is-active" @click.prevent="scrollTo('kt-procset-sources')">{{ __("Funding sources") }}</a>
 				<a href="#" @click.prevent="scrollTo('kt-procset-rules')">{{ __("Procurement rules") }}</a>
-				<a href="#" @click.prevent="scrollTo('kt-procset-profiles')">{{ __("Schedule profiles") }}</a>
-				<a href="#" @click.prevent="scrollTo('kt-procset-calendars')">{{ __("Working-day calendars") }}</a>
+				<a href="#" @click.prevent="scrollTo('kt-procset-profiles')">{{ __("Procurement schedules") }}</a>
 				<a href="#" @click.prevent="scrollTo('kt-procset-reminders')">{{ __("Reminders") }}</a>
 			</nav>
 
@@ -292,7 +291,7 @@ async function confirmRemoveSource() {
 						<p class="kt-muted">{{ __("Maintain the sources used in procurement budgets.") }}</p>
 					</div>
 					<button type="button" class="kt-btn kt-btn-primary" data-testid="kt-procset-source-add" @click="go('new-source')">
-						{{ __("Add funding source") }}
+						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add funding source") }}
 					</button>
 				</div>
 				<table v-if="fundingSources.length" class="kt-table">
@@ -319,7 +318,7 @@ async function confirmRemoveSource() {
 				<div v-else class="kt-empty" data-testid="kt-procset-sources-empty">
 					<h2>{{ __("No funding sources yet") }}</h2>
 					<p>{{ __("Add the sources used by this site's procurement budgets.") }}</p>
-					<button type="button" class="kt-btn kt-btn-primary" @click="go('new-source')">{{ __("Add funding source") }}</button>
+					<button type="button" class="kt-btn kt-btn-primary" @click="go('new-source')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add funding source") }}</button>
 				</div>
 			</div>
 
@@ -332,7 +331,7 @@ async function confirmRemoveSource() {
 						<p class="kt-muted">{{ __("Maintain procurement rules and their supporting sources.") }}</p>
 					</div>
 					<button type="button" class="kt-btn kt-btn-primary" data-testid="kt-procset-rule-add" @click="go('new-rule')">
-						{{ __("Add rule") }}
+						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add rule") }}
 					</button>
 				</div>
 				<div v-if="rules.length" class="kt-procset-filters" style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0">
@@ -383,14 +382,15 @@ async function confirmRemoveSource() {
 				<div v-else class="kt-empty" data-testid="kt-procset-rules-empty">
 					<h2>{{ __("No procurement rules yet") }}</h2>
 					<p>{{ __("Add rules for the procurement procedures supported by this release.") }}</p>
-					<button type="button" class="kt-btn kt-btn-primary" @click="go('new-rule')">{{ __("Add rule") }}</button>
+					<button type="button" class="kt-btn kt-btn-primary" @click="go('new-rule')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add rule") }}</button>
 				</div>
 			</div>
 
 			<!-- C04 schedule profiles (list; detail is its own frame) -->
 			<div id="kt-procset-profiles" class="kt-card kt-blueprint kt-table-card" data-testid="kt-procset-profiles">
 				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-				<h3 class="kt-card-title">{{ __("Schedule profiles") }}</h3>
+				<h3 class="kt-card-title">{{ __("Procurement schedules") }}</h3>
+				<p class="kt-muted">{{ __("Set the time intervals used to prepare procurement schedules.") }}</p>
 				<table class="kt-table">
 					<thead>
 						<tr><th>{{ __("Profile") }}</th><th>{{ __("Method") }}</th><th>{{ __("Category") }}</th><th>{{ __("Version") }}</th><th>{{ __("Effective") }}</th><th>{{ __("Source verification") }}</th><th class="kt-visually-hidden-th"><span class="kt-visually-hidden">{{ __("Actions") }}</span></th></tr>
@@ -422,7 +422,7 @@ async function confirmRemoveSource() {
 						<p class="kt-muted">{{ __("Set the weekends and holidays that working-day intervals count against.") }}</p>
 					</div>
 					<button type="button" class="kt-btn kt-btn-primary" data-testid="kt-procset-calendar-add" @click="go('new-calendar')">
-						{{ __("Add calendar") }}
+						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add calendar") }}
 					</button>
 				</div>
 				<table v-if="calendars.length" class="kt-table">
@@ -443,7 +443,7 @@ async function confirmRemoveSource() {
 				<div v-else class="kt-empty" data-testid="kt-procset-calendars-empty">
 					<h2>{{ __("No working-day calendars yet") }}</h2>
 					<p>{{ __("Add a calendar before a schedule can count working days.") }}</p>
-					<button type="button" class="kt-btn kt-btn-primary" @click="go('new-calendar')">{{ __("Add calendar") }}</button>
+					<button type="button" class="kt-btn kt-btn-primary" @click="go('new-calendar')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add calendar") }}</button>
 				</div>
 			</div>
 
