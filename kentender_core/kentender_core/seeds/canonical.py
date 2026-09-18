@@ -800,6 +800,16 @@ def run(
 			result["requisitions_wiped"] = wipe_all_requisitions()
 			result["reference_series_reset"] = reset_reference_series()
 			result["wiped"] = site_setup.reset_site_setup(commit=False)
+			# Not KenTender seed data, but wipe's own job is "empty database"
+			# and this recurs constantly: `bench run-tests` on kentender_core
+			# (or any app) fires Frappe's before_tests global test-record
+			# preload the first time an old-style test class runs, which
+			# creates ~39 ERPNext `_Test Fiscal Year %` rows as a side
+			# effect of routine test runs during ordinary module work - not
+			# a rare event, so a separate command to remember doesn't hold up.
+			from kentender_core.tests.erpnext_test_fixture_cleanup import purge as purge_erpnext_test_fixtures
+
+			result["erpnext_test_fixtures_purged"] = purge_erpnext_test_fixtures(commit=False)
 		if reset:
 			result["removed"] = clear_non_canonical()
 		if reseed:
