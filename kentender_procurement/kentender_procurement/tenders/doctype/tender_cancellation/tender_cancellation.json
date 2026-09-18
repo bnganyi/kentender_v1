@@ -1,0 +1,211 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-19 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tender",
+  "publication",
+  "ground",
+  "ground_label",
+  "reason",
+  "recommendation",
+  "decided_by",
+  "decided_at",
+  "col_a",
+  "ppra_report_due_by",
+  "candidate_notice_due_by",
+  "cancellation_digest",
+  "notice_document_digest",
+  "section_obl",
+  "obligations",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "tender",
+   "fieldtype": "Link",
+   "options": "Tender",
+   "label": "Tender",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "publication",
+   "fieldtype": "Link",
+   "options": "Tender Publication",
+   "label": "Publication",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ground",
+   "fieldtype": "Data",
+   "label": "Ground",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "ground_label",
+   "fieldtype": "Data",
+   "label": "Ground label",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recommendation",
+   "fieldtype": "Link",
+   "options": "Tender Decision",
+   "label": "Recommendation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Decided by",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "decided_at",
+   "fieldtype": "Datetime",
+   "label": "Decided at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ppra_report_due_by",
+   "fieldtype": "Date",
+   "label": "PPRA report due by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "candidate_notice_due_by",
+   "fieldtype": "Date",
+   "label": "Candidate notices due by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancellation_digest",
+   "fieldtype": "Data",
+   "label": "Cancellation digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notice_document_digest",
+   "fieldtype": "Data",
+   "label": "Notice document digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_obl",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "obligations",
+   "fieldtype": "Table",
+   "options": "Tender Cancellation Obligation",
+   "label": "Compliance obligations"
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-19 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Tenders",
+ "name": "Tender Cancellation",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "format:TDC-{#####}",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Head of Procurement Function",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounting Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
+  }
+ ]
+}

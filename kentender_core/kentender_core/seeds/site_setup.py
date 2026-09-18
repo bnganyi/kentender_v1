@@ -295,6 +295,29 @@ SCHEDULE_MILESTONES = (
 )
 REMINDER_THRESHOLD_DAYS = 7
 
+# TPR-CHG-001 v0.8 §10.1 "Publication configuration" / plan D6 — the
+# publication rule for a national Open Tender, expressed through CFG-CHG-002
+# v0.11's own "Publication obligations" rule kind: one reference set per
+# required channel (a set carries one channel per version, and overlapping
+# versions of one set supersede each other), all citing the same rule id in
+# `source_reference`, plus the two cancellation obligations. Every MVP channel
+# is Evidence based (§5.5.1): nothing here names an integration contract.
+PUBLICATION_RULE = "PUB-RULE-MOH-OT-2027-01"
+PUBLICATION_TRIGGER_INVITATION = "TenderInvitation"
+PUBLICATION_TRIGGER_CANCELLATION = "TenderCancellation"
+PUBLICATION_CHANNELS = (
+	# (channel code, display label, public URL expected)
+	("STATE_PORTAL", "State Portal", True),
+	("MINISTRY_WEBSITE", "Ministry website", True),
+	("NOTICE_BOARD", "Notice board", False),
+	("NATIONAL_NEWSPAPERS", "Two national newspapers", False),
+)
+CANCELLATION_OBLIGATIONS = (
+	# (code, label, recipient, due rule, days)
+	("PPRA_REPORT", "PPRA cancellation report", "Public Procurement Regulatory Authority", "CalendarDaysAfter", 14),
+	("CANDIDATE_NOTICE", "Candidate cancellation notice", "Registered candidates", "CalendarDaysAfter", 14),
+)
+
 # PLN-CHG-001 v1.18 §13.1 / plan D19 — the two stop-gap assignment rows the
 # 5 Sep 2026 seed created and this seed retires (revoked with a reason, never
 # deleted): Julia's widened acting window and Peter's undated Digital Health
@@ -342,6 +365,7 @@ def run(*, commit: bool = True) -> dict:
 		"regulatory_reference": _seed_regulatory_reference(),
 		"method_profiles": _seed_method_profiles(),
 		"schedule_profiles": _seed_schedule_profiles(),
+		"publication_obligations": _seed_publication_obligations(),
 		"procurement_settings": _seed_procurement_settings(),
 		"uoms": _seed_uoms(),
 		"users": _seed_users(),
@@ -605,6 +629,54 @@ def _seed_regulatory_reference(fiscal_year: str = "", fixture_namespace: str = F
 		fixture_namespace=fixture_namespace,
 	)
 	return outcome["reference"]
+
+
+def _seed_publication_obligations(*, effective: dict | None = None, fixture_namespace: str = FIXTURE_TAG, verification_status: str = "Production verification pending") -> dict[str, int]:
+	"""TPR-CHG-001 v0.8 §10.1 / plan D6 — six "Publication obligations"
+	reference sets (four invitation channels, two cancellation obligations),
+	find-or-create like every sibling seed. `effective` defaults to the
+	profile window (Planning invites before the FY it plans for opens)."""
+	from kentender_core.services import regulatory_reference as register
+
+	effective = effective or PROFILE_EFFECTIVE
+	created = 0
+	rows = [
+		(
+			f"{PUBLICATION_RULE}/{code}", f"{label} — {PUBLICATION_RULE}",
+			{
+				"obligation_id": "LAW-OB-PUB-INVITATION", "accountable_actor_role": "Head of Procurement Function",
+				"recipient": "Public", "channel": code, "trigger_event": PUBLICATION_TRIGGER_INVITATION,
+				"due_rule": "Immediate", "source_reference": PUBLICATION_RULE,
+			},
+		)
+		for code, label, _public_url in PUBLICATION_CHANNELS
+	] + [
+		(
+			f"{PUBLICATION_RULE}/{code}", f"{label} — {PUBLICATION_RULE}",
+			{
+				"obligation_id": f"LAW-OB-CANCEL-{code}", "accountable_actor_role": "Accounting Officer",
+				"recipient": recipient, "channel": code, "trigger_event": PUBLICATION_TRIGGER_CANCELLATION,
+				"due_rule": due_rule, "days": days, "source_reference": PUBLICATION_RULE,
+			},
+		)
+		for code, label, recipient, due_rule, days in CANCELLATION_OBLIGATIONS
+	]
+	for reference_key, display_name, payload in rows:
+		reference_set = frappe.db.get_value(register.SET_DOCTYPE, {"reference_key": reference_key}, "name")
+		if not reference_set:
+			reference_set = register.create_regulatory_reference(
+				reference_key=reference_key, reference_kind="Publication obligations", display_name=display_name, fixture_namespace=fixture_namespace,
+			)["reference_set"]
+		if frappe.db.get_value(register.DOCTYPE, {"reference_set": reference_set, "status": "Active", "effective_from": effective["effective_from"]}, "name"):
+			continue
+		register.save_regulatory_reference_version(
+			reference_set=reference_set, payload=payload, effective_from=effective["effective_from"], effective_until=effective.get("effective_until", ""),
+			applicability_basis="InvitationDate", applicability_categories=["Goods"],
+			verification_status=verification_status, source_instrument=PROFILE_SOURCE["source_instrument"], provision=PROFILE_SOURCE["provision"],
+			fixture_namespace=fixture_namespace,
+		)
+		created += 1
+	return {"created": created, "total": len(rows)}
 
 
 def _profile_exists(doctype: str, filters: dict) -> str:

@@ -168,6 +168,18 @@
    "create": 0,
    "delete": 0,
    "write": 0
+  },
+  {
+   "role": "Accounting Officer",
+   "read": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "report": 1,
+   "share": 0,
+   "create": 0,
+   "delete": 0,
+   "write": 0
   }
  ],
  "row_format": "Dynamic",
@@ -176,5 +188,5 @@
  "states": [],
  "track_changes": 1,
  "autoname": "format:{template_key}-{template_version}",
- "description": "TPR-CHG-001 v0.6 §6.3 — read-only registry row created only by tender_templates.registry.install(); no role holds write permission."
+ "description": "TPR-CHG-001 v0.6 \u00a76.3 \u2014 read-only registry row created only by tender_templates.registry.install(); no role holds write permission."
 }

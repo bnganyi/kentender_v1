@@ -1,0 +1,264 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-19 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tender",
+  "publication",
+  "subject_type",
+  "subject_id",
+  "subject_digest",
+  "channel",
+  "channel_label",
+  "confirmation_mode",
+  "status",
+  "section_evidence",
+  "available_at",
+  "evidence_reference",
+  "public_url",
+  "url_not_applicable_reason",
+  "evidence_file",
+  "evidence_digest",
+  "evidence_check_result",
+  "evidence_notes",
+  "col_b",
+  "attestation_text",
+  "attested_by",
+  "attested_at",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "tender",
+   "fieldtype": "Link",
+   "options": "Tender",
+   "label": "Tender",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "publication",
+   "fieldtype": "Link",
+   "options": "Tender Publication",
+   "label": "Publication",
+   "read_only": 1
+  },
+  {
+   "fieldname": "subject_type",
+   "fieldtype": "Select",
+   "options": "Publication\nAddendum\nCancellation notice",
+   "label": "Subject type",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "subject_id",
+   "fieldtype": "Data",
+   "label": "Subject",
+   "read_only": 1
+  },
+  {
+   "fieldname": "subject_digest",
+   "fieldtype": "Data",
+   "label": "Subject digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "channel",
+   "fieldtype": "Data",
+   "label": "Channel",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "channel_label",
+   "fieldtype": "Data",
+   "label": "Channel label",
+   "read_only": 1
+  },
+  {
+   "fieldname": "confirmation_mode",
+   "fieldtype": "Select",
+   "options": "Evidence based",
+   "label": "Confirmation mode",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "options": "Awaiting confirmation\nConfirmed",
+   "label": "Status",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_evidence",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "available_at",
+   "fieldtype": "Datetime",
+   "label": "Available at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_reference",
+   "fieldtype": "Data",
+   "label": "Evidence reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "public_url",
+   "fieldtype": "Data",
+   "label": "Public URL",
+   "read_only": 1
+  },
+  {
+   "fieldname": "url_not_applicable_reason",
+   "fieldtype": "Small Text",
+   "label": "URL not applicable reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_file",
+   "fieldtype": "Link",
+   "options": "File",
+   "label": "Evidence file",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_digest",
+   "fieldtype": "Data",
+   "label": "Evidence digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_check_result",
+   "fieldtype": "Data",
+   "label": "Evidence check result",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_notes",
+   "fieldtype": "Small Text",
+   "label": "Evidence notes",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_b",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "attestation_text",
+   "fieldtype": "Small Text",
+   "label": "Attestation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attested_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Attested by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attested_at",
+   "fieldtype": "Datetime",
+   "label": "Attested at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-19 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Tenders",
+ "name": "Tender Channel Confirmation",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "hash",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Head of Procurement Function",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounting Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
+  }
+ ]
+}

@@ -1,0 +1,318 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-19 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tender_reference",
+  "requirement_title",
+  "requisition_handoff",
+  "requisition",
+  "requisition_reference",
+  "requisition_version",
+  "plan_item_id",
+  "plan_item_version_id",
+  "fiscal_year",
+  "lead_org_unit",
+  "contributing_org_unit_ids",
+  "col_a",
+  "product_key",
+  "template_release_id",
+  "official_source_digest",
+  "bundle_digest",
+  "current_version",
+  "approved_version",
+  "overall_status",
+  "section_pub",
+  "publication",
+  "published_at",
+  "submission_deadline",
+  "clarification_deadline",
+  "cancellation",
+  "submission_handoff",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "tender_reference",
+   "fieldtype": "Data",
+   "label": "Tender reference",
+   "read_only": 1,
+   "in_list_view": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "requirement_title",
+   "fieldtype": "Data",
+   "label": "Requirement title",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "requisition_handoff",
+   "fieldtype": "Data",
+   "label": "Requisition handoff",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requisition",
+   "fieldtype": "Data",
+   "label": "Requisition",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requisition_reference",
+   "fieldtype": "Data",
+   "label": "Requisition reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requisition_version",
+   "fieldtype": "Data",
+   "label": "Requisition version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "plan_item_id",
+   "fieldtype": "Data",
+   "label": "Plan Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "plan_item_version_id",
+   "fieldtype": "Data",
+   "label": "Plan Item version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fiscal_year",
+   "fieldtype": "Link",
+   "options": "Fiscal Year",
+   "label": "Fiscal year",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lead_org_unit",
+   "fieldtype": "Link",
+   "options": "Organisation Unit",
+   "label": "Lead organisation unit",
+   "read_only": 1
+  },
+  {
+   "fieldname": "contributing_org_unit_ids",
+   "fieldtype": "Small Text",
+   "label": "Contributing organisation units",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "product_key",
+   "fieldtype": "Data",
+   "label": "Product key",
+   "read_only": 1
+  },
+  {
+   "fieldname": "template_release_id",
+   "fieldtype": "Data",
+   "label": "Template release",
+   "read_only": 1
+  },
+  {
+   "fieldname": "official_source_digest",
+   "fieldtype": "Data",
+   "label": "Official source digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bundle_digest",
+   "fieldtype": "Data",
+   "label": "Bundle digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_version",
+   "fieldtype": "Link",
+   "options": "Tender Version",
+   "label": "Current version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_version",
+   "fieldtype": "Link",
+   "options": "Tender Version",
+   "label": "Approved version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "overall_status",
+   "fieldtype": "Select",
+   "options": "Draft\nAwaiting procurement approval\nApproved\nPublication authorised\nPublished \u2014 open\nSubmission period ended\nCancelled\nRequisition correction requested",
+   "label": "Overall status",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_pub",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "publication",
+   "fieldtype": "Link",
+   "options": "Tender Publication",
+   "label": "Publication",
+   "read_only": 1
+  },
+  {
+   "fieldname": "published_at",
+   "fieldtype": "Datetime",
+   "label": "Published at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submission_deadline",
+   "fieldtype": "Datetime",
+   "label": "Submission deadline",
+   "read_only": 1
+  },
+  {
+   "fieldname": "clarification_deadline",
+   "fieldtype": "Datetime",
+   "label": "Clarification deadline",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancellation",
+   "fieldtype": "Link",
+   "options": "Tender Cancellation",
+   "label": "Cancellation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submission_handoff",
+   "fieldtype": "Link",
+   "options": "Tender Submission Handoff",
+   "label": "Submission handoff",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-19 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Tenders",
+ "name": "Tender",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "format:TDR-{#####}",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Head of Procurement Function",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounting Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Departmental Author",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Head of User Department",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "title_field": "tender_reference",
+ "search_fields": "tender_reference,requisition_reference,requirement_title"
+}

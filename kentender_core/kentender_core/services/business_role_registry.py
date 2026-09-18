@@ -142,7 +142,9 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 		"Accounting Officer",
 		SCOPE_SITE,
 		"PLN-CHG-001 v1.12 §6",
-		sod_tags=("plan_adoption",),
+		# TPR-CHG-001 v0.8 §6 (2026-09-19): the same office authorises Tender
+		# publication (never confirms it) and cancels a Tender.
+		sod_tags=("plan_adoption", "publication_authorisation", "tender_cancellation"),
 	),
 	# §4.12: "Exactly one route applies." The applicable capacity — Cabinet
 	# Secretary, County Executive Committee Member, Board of Directors or
@@ -181,17 +183,21 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 		# submits the consolidated Annual Procurement Plan (preparation
 		# accountability, not an added approval stage) — a third sod tag, no
 		# Planner equivalence.
-		sod_tags=("requisition_authorisation", "tender_approval", "plan_preparation_signature"),
+		# TPR-CHG-001 v0.8 §6 (2026-09-19): the same office confirms channel
+		# publication with evidence and attestation, and issues addenda —
+		# two more sod tags on the same entry, no new registry row.
+		sod_tags=("requisition_authorisation", "tender_approval", "plan_preparation_signature", "channel_confirmation", "addendum_issue"),
 	),
-	# --- Tender Preparation (TPR-CHG-001 v0.6 §5) -------------------------
-	# Site-wide; prepares and submits Tender Versions and can never approve
-	# one it prepared (§10.3 — enforced from the Version's own preparation
-	# audit event, not from this registry). The identically-named legacy
-	# Frappe Role already exists on seeded sites; `ensure_roles()` reuses it.
+	# --- Tenders (TPR-CHG-001 v0.8 §6) ------------------------------------
+	# Site-wide; starts, prepares and submits Tender Versions, drafts addenda
+	# and answers inquiries; can never approve or authorise a Version it
+	# prepared or submitted (§6 — enforced from the Version's own audit
+	# columns, not from this registry). The identically-named legacy Frappe
+	# Role already exists on seeded sites; `ensure_roles()` reuses it.
 	_entry(
 		"Procurement Officer",
 		SCOPE_SITE,
-		"TPR-CHG-001 v0.6 §5",
+		"TPR-CHG-001 v0.8 §6",
 		sod_tags=("tender_preparation",),
 	),
 	_entry("Strategy Author", SCOPE_SITE, "STR-CHG-001 v1.7 §6", sod_tags=("strategy_authoring",)),

@@ -1,0 +1,324 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-19 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tender",
+  "publication",
+  "addendum_number",
+  "addendum_reference",
+  "status",
+  "col_a",
+  "change_class",
+  "affected_area",
+  "affected_reference",
+  "affected_reference_key",
+  "section_change",
+  "previous_value",
+  "revised_value",
+  "reason",
+  "materiality_statement",
+  "deadline_extension_required",
+  "revised_submission_deadline",
+  "baseline_digest",
+  "addendum_digest",
+  "section_audit",
+  "drafted_by",
+  "drafted_at",
+  "submitted_by",
+  "submitted_at",
+  "returned_by",
+  "returned_at",
+  "return_reason",
+  "col_b",
+  "issued_by",
+  "issued_at",
+  "effective_at",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "tender",
+   "fieldtype": "Link",
+   "options": "Tender",
+   "label": "Tender",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "publication",
+   "fieldtype": "Link",
+   "options": "Tender Publication",
+   "label": "Publication",
+   "read_only": 1
+  },
+  {
+   "fieldname": "addendum_number",
+   "fieldtype": "Int",
+   "label": "Addendum number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "addendum_reference",
+   "fieldtype": "Data",
+   "label": "Addendum reference",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "options": "Draft\nReturned\nAwaiting issue\nAwaiting publication confirmation\nIssued",
+   "label": "Status",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "change_class",
+   "fieldtype": "Select",
+   "options": "Administrative clarification\nNon-material correction\nSubmission deadline extension",
+   "label": "Change class",
+   "read_only": 1
+  },
+  {
+   "fieldname": "affected_area",
+   "fieldtype": "Select",
+   "options": "Invitation detail\nTechnical requirement\nGoods/delivery schedule\nSubmission or opening detail\nEvaluation or contract term\nOther stated location",
+   "label": "Affected area",
+   "read_only": 1
+  },
+  {
+   "fieldname": "affected_reference",
+   "fieldtype": "Data",
+   "label": "Affected reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "affected_reference_key",
+   "fieldtype": "Data",
+   "label": "Affected reference key",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_change",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "previous_value",
+   "fieldtype": "Small Text",
+   "label": "Previous value",
+   "read_only": 1
+  },
+  {
+   "fieldname": "revised_value",
+   "fieldtype": "Small Text",
+   "label": "Revised value",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "materiality_statement",
+   "fieldtype": "Small Text",
+   "label": "Why this is not material",
+   "read_only": 1
+  },
+  {
+   "fieldname": "deadline_extension_required",
+   "fieldtype": "Check",
+   "label": "Deadline extension required",
+   "read_only": 1
+  },
+  {
+   "fieldname": "revised_submission_deadline",
+   "fieldtype": "Datetime",
+   "label": "Revised submission deadline",
+   "read_only": 1
+  },
+  {
+   "fieldname": "baseline_digest",
+   "fieldtype": "Data",
+   "label": "Baseline digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "addendum_digest",
+   "fieldtype": "Data",
+   "label": "Addendum digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_audit",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "drafted_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Drafted by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "drafted_at",
+   "fieldtype": "Datetime",
+   "label": "Drafted at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Submitted by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "returned_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Returned by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "returned_at",
+   "fieldtype": "Datetime",
+   "label": "Returned at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "return_reason",
+   "fieldtype": "Small Text",
+   "label": "Return reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_b",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "issued_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Issued by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "issued_at",
+   "fieldtype": "Datetime",
+   "label": "Issued at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "effective_at",
+   "fieldtype": "Datetime",
+   "label": "Effective at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-19 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Tenders",
+ "name": "Tender Addendum",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "format:TDA-{#####}",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Head of Procurement Function",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounting Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
+  }
+ ]
+}

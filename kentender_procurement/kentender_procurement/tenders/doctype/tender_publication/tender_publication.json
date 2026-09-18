@@ -1,0 +1,239 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-19 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tender",
+  "tender_version",
+  "package_digest",
+  "authorised_by",
+  "authorised_at",
+  "col_a",
+  "rule_snapshot_id",
+  "rule_snapshot_json",
+  "threshold_snapshot_json",
+  "required_channels_json",
+  "minimum_preparation_days",
+  "section_status",
+  "publication_status",
+  "published_at",
+  "publication_digest",
+  "withdrawn_by",
+  "withdrawn_at",
+  "withdrawal_reason",
+  "withdrawal_evidence",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "tender",
+   "fieldtype": "Link",
+   "options": "Tender",
+   "label": "Tender",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "tender_version",
+   "fieldtype": "Link",
+   "options": "Tender Version",
+   "label": "Tender version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "package_digest",
+   "fieldtype": "Data",
+   "label": "Package digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "authorised_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Authorised by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "authorised_at",
+   "fieldtype": "Datetime",
+   "label": "Authorised at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "rule_snapshot_id",
+   "fieldtype": "Data",
+   "label": "Rule snapshot",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rule_snapshot_json",
+   "fieldtype": "Long Text",
+   "label": "Rule snapshot detail",
+   "read_only": 1
+  },
+  {
+   "fieldname": "threshold_snapshot_json",
+   "fieldtype": "Small Text",
+   "label": "Threshold snapshot",
+   "read_only": 1
+  },
+  {
+   "fieldname": "required_channels_json",
+   "fieldtype": "Small Text",
+   "label": "Required channels",
+   "read_only": 1
+  },
+  {
+   "fieldname": "minimum_preparation_days",
+   "fieldtype": "Int",
+   "label": "Minimum preparation days",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_status",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "publication_status",
+   "fieldtype": "Select",
+   "options": "Evidence required\nPublished\nWithdrawn before confirmation\nCancelled",
+   "label": "Publication status",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "published_at",
+   "fieldtype": "Datetime",
+   "label": "Published at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "publication_digest",
+   "fieldtype": "Data",
+   "label": "Publication digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "withdrawn_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Withdrawn by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "withdrawn_at",
+   "fieldtype": "Datetime",
+   "label": "Withdrawn at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "withdrawal_reason",
+   "fieldtype": "Small Text",
+   "label": "Withdrawal reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "withdrawal_evidence",
+   "fieldtype": "Small Text",
+   "label": "Withdrawal evidence",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-19 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Tenders",
+ "name": "Tender Publication",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "format:TDP-{#####}",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Head of Procurement Function",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounting Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
+  }
+ ]
+}

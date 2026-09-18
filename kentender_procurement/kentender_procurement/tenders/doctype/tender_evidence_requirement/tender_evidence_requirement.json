@@ -1,0 +1,74 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-19 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "evidence_requirement_id",
+  "label",
+  "evidence_type",
+  "linked_requirement_type",
+  "linked_requirement_id",
+  "mandatory",
+  "row_order"
+ ],
+ "fields": [
+  {
+   "fieldname": "evidence_requirement_id",
+   "fieldtype": "Data",
+   "label": "Evidence requirement",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "label": "Evidence",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "evidence_type",
+   "fieldtype": "Select",
+   "options": "Declaration\nCertificate\nDatasheet or brochure\nSchedule or form\nOther document",
+   "label": "Type",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "linked_requirement_type",
+   "fieldtype": "Select",
+   "options": "Item\nTechnical requirement\nService\nWarranty/support",
+   "label": "Requirement type"
+  },
+  {
+   "fieldname": "linked_requirement_id",
+   "fieldtype": "Data",
+   "label": "Proves"
+  },
+  {
+   "fieldname": "mandatory",
+   "fieldtype": "Check",
+   "label": "Required"
+  },
+  {
+   "fieldname": "row_order",
+   "fieldtype": "Int",
+   "label": "Row order"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-19 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Tenders",
+ "name": "Tender Evidence Requirement",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "permissions": []
+}

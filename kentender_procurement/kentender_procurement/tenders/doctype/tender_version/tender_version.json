@@ -1,0 +1,408 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-19 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tender",
+  "version_number",
+  "status",
+  "predecessor_version",
+  "requisition_handoff",
+  "requisition_version",
+  "col_a",
+  "template_release_id",
+  "official_source_digest",
+  "bundle_digest",
+  "requisition_snapshot_digest",
+  "section_content",
+  "requisition_snapshot_json",
+  "officer_payload_json",
+  "evidence_requirements",
+  "review_findings",
+  "review_result_digest",
+  "section_digests",
+  "invitation_digest",
+  "issued_tender_digest",
+  "response_schema_digest",
+  "evaluation_contract_digest",
+  "contract_projection_digest",
+  "package_digest",
+  "section_audit",
+  "prepared_by",
+  "prepared_at",
+  "submitted_by",
+  "submitted_at",
+  "approved_by",
+  "approved_at",
+  "col_b",
+  "returned_by",
+  "returned_at",
+  "return_reason",
+  "return_affected_task",
+  "reopen_reason",
+  "stopped_by",
+  "stopped_at",
+  "stop_reason",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "tender",
+   "fieldtype": "Link",
+   "options": "Tender",
+   "label": "Tender",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "version_number",
+   "fieldtype": "Int",
+   "label": "Version number",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "options": "Draft\nSubmitted\nReturned\nApproved\nStopped for requisition correction",
+   "label": "Status",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "predecessor_version",
+   "fieldtype": "Link",
+   "options": "Tender Version",
+   "label": "Predecessor version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requisition_handoff",
+   "fieldtype": "Data",
+   "label": "Requisition handoff",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requisition_version",
+   "fieldtype": "Data",
+   "label": "Requisition version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_a",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "template_release_id",
+   "fieldtype": "Data",
+   "label": "Template release",
+   "read_only": 1
+  },
+  {
+   "fieldname": "official_source_digest",
+   "fieldtype": "Data",
+   "label": "Official source digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bundle_digest",
+   "fieldtype": "Data",
+   "label": "Bundle digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requisition_snapshot_digest",
+   "fieldtype": "Data",
+   "label": "Requisition snapshot digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_content",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "requisition_snapshot_json",
+   "fieldtype": "Long Text",
+   "label": "Inherited requirement snapshot",
+   "read_only": 1
+  },
+  {
+   "fieldname": "officer_payload_json",
+   "fieldtype": "Long Text",
+   "label": "Officer values",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evidence_requirements",
+   "fieldtype": "Table",
+   "options": "Tender Evidence Requirement",
+   "label": "Evidence requirements"
+  },
+  {
+   "fieldname": "review_findings",
+   "fieldtype": "Table",
+   "options": "Tender Review Finding",
+   "label": "Review findings"
+  },
+  {
+   "fieldname": "review_result_digest",
+   "fieldtype": "Data",
+   "label": "Review result digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_digests",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "invitation_digest",
+   "fieldtype": "Data",
+   "label": "Invitation digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "issued_tender_digest",
+   "fieldtype": "Data",
+   "label": "Issued Tender digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "response_schema_digest",
+   "fieldtype": "Data",
+   "label": "Response schema digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evaluation_contract_digest",
+   "fieldtype": "Data",
+   "label": "Evaluation contract digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "contract_projection_digest",
+   "fieldtype": "Data",
+   "label": "Contract projection digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "package_digest",
+   "fieldtype": "Data",
+   "label": "Package digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_audit",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "prepared_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Prepared by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prepared_at",
+   "fieldtype": "Datetime",
+   "label": "Prepared at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Submitted by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_at",
+   "fieldtype": "Datetime",
+   "label": "Submitted at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Approved by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_at",
+   "fieldtype": "Datetime",
+   "label": "Approved at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_b",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "returned_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Returned by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "returned_at",
+   "fieldtype": "Datetime",
+   "label": "Returned at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "return_reason",
+   "fieldtype": "Small Text",
+   "label": "Return reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "return_affected_task",
+   "fieldtype": "Data",
+   "label": "Return affected task",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reopen_reason",
+   "fieldtype": "Small Text",
+   "label": "Reopen reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "stopped_by",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Stopped by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "stopped_at",
+   "fieldtype": "Datetime",
+   "label": "Stopped at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "stop_reason",
+   "fieldtype": "Small Text",
+   "label": "Stop reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-19 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Tenders",
+ "name": "Tender Version",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "format:TDV-{#####}",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Head of Procurement Function",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounting Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Departmental Author",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Head of User Department",
+   "share": 0,
+   "write": 0
+  }
+ ]
+}

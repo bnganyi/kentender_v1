@@ -310,11 +310,9 @@ test.describe("Civic Ledger — native Workspace Sidebar restyle", () => {
 		expect(["400", "500"].includes(weightsQuiet.tm || "")).toBe(true);
 		expect(["400", "500"].includes(weightsQuiet.std || "")).toBe(true);
 
-		// TPR-CHG-001 v0.8: the Tender Management child is the Tenders Desk Page
-		// (Phase 1 of the rebuild still points the link at the legacy `publications`
-		// Page until the `tenders` Page lands in Phase 2), so its own route is what
-		// activates it.
-		await page.goto("/desk/publications", { waitUntil: "domcontentloaded" });
+		// TPR-CHG-001 v0.8 §9: the Tender Management child is the Tenders Desk
+		// Page, so its own route is what activates it.
+		await page.goto("/desk/tenders", { waitUntil: "domcontentloaded" });
 		await expect(page.locator(NATIVE_RAIL)).toBeVisible({ timeout: 30_000 });
 		await expect(
 			page.locator(
