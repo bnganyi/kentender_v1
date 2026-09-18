@@ -403,7 +403,7 @@ function initial() {
 		strategic_objective: classification.strategic_objective || "",
 		// §7.2 — the rows the save command expects: one per declarable
 		// condition, carrying what the Planner supplied for it.
-		method_condition_evidence: (classification.conditions || [])
+		method_condition_evidence: ((classification.method_profile || {}).conditions || [])
 			.filter((c) => c.kind !== "Known fact")
 			.map((c) => ({
 				condition_id: c.condition_id,
@@ -441,7 +441,7 @@ const missingSettings = computed(() => props.item.missing_settings || []);
 // A condition the rule states as a fact about the purchase (a value band) is
 // evaluated, not declared; only the rest are asked of the Planner.
 const declarableConditions = computed(() =>
-	(classification.value.conditions || []).filter((c) => c.kind !== "Known fact"),
+	((classification.value.method_profile || {}).conditions || []).filter((c) => c.kind !== "Known fact"),
 );
 
 const conditionEvidence = computed(() =>

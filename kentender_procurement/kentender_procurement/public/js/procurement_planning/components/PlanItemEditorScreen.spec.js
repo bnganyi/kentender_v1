@@ -284,7 +284,7 @@ describe("PlanItemEditorScreen — a method that asks something of the Planner",
 	];
 
 	it("§10.8 — asks only for what the rule requires the Planner to supply", () => {
-		const w = make({ item: item({ classification: { ...item().classification, conditions: CONDITIONS } }) });
+		const w = make({ item: item({ classification: { ...item().classification, method_profile: { found: true, conditions: CONDITIONS } } }) });
 		// A condition that is a fact about the purchase is evaluated, not asked.
 		expect(w.find('[data-testid="ppi-condition-VALUE_BAND"]').exists()).toBe(false);
 		const asked = w.find('[data-testid="ppi-condition-CIRCUMSTANCES"]');
@@ -296,13 +296,13 @@ describe("PlanItemEditorScreen — a method that asks something of the Planner",
 
 	it("asks for no authorisation where the rule names nobody to give it", () => {
 		const conditions = [{ ...CONDITIONS[1], authorisation_actor: "" }];
-		const w = make({ item: item({ classification: { ...item().classification, conditions } }) });
+		const w = make({ item: item({ classification: { ...item().classification, method_profile: { found: true, conditions } } }) });
 		expect(w.find('[data-testid="ppi-evidence-CIRCUMSTANCES"]').exists()).toBe(true);
 		expect(w.find('[data-testid="ppi-authorisation-CIRCUMSTANCES"]').exists()).toBe(false);
 	});
 
 	it("carries what was supplied into the save", async () => {
-		const w = make({ item: item({ classification: { ...item().classification, conditions: CONDITIONS } }) });
+		const w = make({ item: item({ classification: { ...item().classification, method_profile: { found: true, conditions: CONDITIONS } } }) });
 		await w.find('[data-testid="ppi-evidence-CIRCUMSTANCES"]').setValue("Sole supplier holds exclusive distribution rights.");
 		await w.find('[data-testid="ppi-authorisation-CIRCUMSTANCES"]').setValue("AO/2027/DP/1");
 		await w.find('[data-testid="ppi-save"]').trigger("click");
@@ -315,7 +315,7 @@ describe("PlanItemEditorScreen — a method that asks something of the Planner",
 	});
 
 	it("offers no input at all to a reader who cannot change the purchase", () => {
-		const w = make({ item: item({ mutable: false, classification: { ...item().classification, conditions: CONDITIONS } }) });
+		const w = make({ item: item({ mutable: false, classification: { ...item().classification, method_profile: { found: true, conditions: CONDITIONS } } }) });
 		expect(w.find('[data-testid="ppi-evidence-CIRCUMSTANCES"]').attributes("disabled")).toBeDefined();
 	});
 });
