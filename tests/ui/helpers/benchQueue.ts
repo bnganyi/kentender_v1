@@ -86,13 +86,31 @@ export function queueDepth(): { total: number; byKey: Record<string, number> } {
 	return { total, byKey };
 }
 
-/** A long-running `bench worker` consuming the queue keeps depth at ~0. */
+/**
+ * RQ's worker TTL is 420s and it refreshes the heartbeat well inside that;
+ * anything older is a worker that died without deregistering.
+ */
+export const WORKER_HEARTBEAT_STALE_SECONDS = 600;
+
+/**
+ * Ask RQ who is consuming the queue, not the process table.
+ *
+ * `bench worker` execs `python -m frappe.utils.bench_helper frappe worker`, so
+ * the live process is named `frappe worker` and a `pgrep -f "bench worker"`
+ * matches only whatever shell wrapper happens to quote that text — it reports
+ * a worker when there is a stale wrapper and none when a worker was started
+ * plainly. RQ registers each worker in Redis with a state and a heartbeat,
+ * which is both authoritative and true of a worker started any way at all.
+ */
 export function workerRunning(): boolean {
 	try {
-		const out = execSync("pgrep -af 'bench worker' || true", { stdio: "pipe", encoding: "utf-8", timeout: 15_000 });
-		// pgrep -f matches this very check's own command line, so require a
-		// line that is the worker itself rather than a shell quoting it.
-		return out.split("\n").some((line) => /bench\s+worker(\s|$)/.test(line) && !line.includes("pgrep"));
+		const ids = redis("smembers rq:workers").split("\n").map((id) => id.trim()).filter(Boolean);
+		for (const id of ids) {
+			const heartbeat = Date.parse(redis(`hget "${id}" last_heartbeat`));
+			if (!Number.isFinite(heartbeat)) continue;
+			if ((Date.now() - heartbeat) / 1000 < WORKER_HEARTBEAT_STALE_SECONDS) return true;
+		}
+		return false;
 	} catch {
 		return false;
 	}
