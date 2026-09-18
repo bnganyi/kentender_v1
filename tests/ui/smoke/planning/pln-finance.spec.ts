@@ -109,7 +109,11 @@ test.describe("PLN18-306 Finance task", () => {
 		// §10.9 U10-REASSESS — the title says what the reader is being asked
 		// to do, not which record state it derives from.
 		await expect(page.locator('[data-testid="fnt-title"]')).toHaveText("Check funding again for the current plan");
-		await expect(page.locator('[data-testid="fnt-history"] tbody tr')).toHaveCount(1);
+		// U10-history — the reassessment does not overwrite the confirmation that
+		// made this Version Active; both reviews stand, in order.
+		await expect(page.locator('[data-testid="fnt-history"] tbody tr')).toHaveCount(2);
+		await expect(page.locator('[data-testid="fnt-history-review-1"]')).toContainText("Confirmed");
+		await expect(page.locator('[data-testid="fnt-history-review-2"]')).toContainText("Awaiting confirmation");
 		await page.locator('[data-testid="fnt-confirm"]').click();
 		await page.waitForURL(/procurement-planning$/);
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);

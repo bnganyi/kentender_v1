@@ -13,6 +13,7 @@ import {
 	gotoDpp,
 	resetFixture,
 	restoreSite,
+	tickCheckbox,
 } from "./helpers";
 
 /**
@@ -103,11 +104,13 @@ test.describe("PLN18-303 Departmental Plan screens", () => {
 		await page.locator('[data-testid="dpp-editor-save"]').click();
 		await expectReady(page, "dpp");
 		const row = page.locator('[data-testid="pln-dpp-table"] tbody tr', { hasText: "Digital health platform security assessment" });
-		await expect(row).toContainText("Ready");
+		// §10.3 — a requirement with a budget line and an amount is Included;
+		// its action names what the department does next, which is read it back.
+		await expect(row).toContainText("Included");
 
 		// the plan's other (Need-origin) entry is still unfunded, so the whole
-		// plan is not yet ready — this row's own action stays Edit, not View
-		await row.getByRole("button", { name: "Edit" }).click();
+		// plan is not yet ready — this row stays openable, not read-only
+		await row.getByRole("link", { name: "Review details" }).click();
 		await expectReady(page, "dpp-entry");
 		await expect(page.locator(".kt-page-title")).toHaveText("Edit direct requirement");
 		await page.locator('[data-testid="dpp-f-title"]').fill("Digital health platform security assessment (revised)");
@@ -130,7 +133,7 @@ test.describe("PLN18-303 Departmental Plan screens", () => {
 		await expect(cert).toContainText("Certification");
 		await expect(cert).toContainText("I confirm this certification");
 		await expect(page.locator('[data-testid="pln-dpp-submit"]')).toBeDisabled();
-		await page.locator('[data-testid="pln-dpp-certify"]').check();
+		await tickCheckbox(page.locator('[data-testid="pln-dpp-certify"]'));
 		await page.locator('[data-testid="pln-dpp-submit"]').click();
 		// the HoD holds no validation task themselves (that is the Planner's own
 		// task, FU-14) — submitting reloads this same record in place

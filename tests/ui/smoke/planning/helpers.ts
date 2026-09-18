@@ -1,7 +1,7 @@
 import { execSync } from "node:child_process";
 import path from "node:path";
 
-import { expect, Page } from "@playwright/test";
+import { expect, Locator, Page } from "@playwright/test";
 
 /**
  * Shared plumbing for the PLN-CHG-001 v1.12 browser specs (decision D13).
@@ -186,4 +186,12 @@ export function collectConsoleErrors(page: Page): string[] {
 	});
 	page.on("pageerror", (error) => errors.push(String(error)));
 	return errors;
+}
+
+/** The Industry checkbox hides the real input (`pointer-events: none`) and draws
+ *  its own box, so `.check()` finds the input unclickable. Click the label, which
+ *  is what a person does, and assert the input actually toggled. */
+export async function tickCheckbox(input: Locator): Promise<void> {
+	await input.locator("xpath=ancestor::label[1]").click();
+	await expect(input).toBeChecked();
 }

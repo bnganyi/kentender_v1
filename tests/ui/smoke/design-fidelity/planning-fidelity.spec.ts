@@ -16,6 +16,7 @@ import {
 	gotoPlanning,
 	resetFixture,
 	restoreSite,
+	tickCheckbox,
 } from "../planning/helpers";
 
 /**
@@ -262,7 +263,7 @@ test.describe("Procurement Planning — design fidelity (U07 annual plan, U08 fo
 		await page.setViewportSize({ width: 1440, height: 1024 });
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`);
 		await expectReady(page, "plan");
-		await page.locator('[data-testid="ppl-select-source"]').first().check();
+		await tickCheckbox(page.locator('[data-testid="ppl-select-source"]').first());
 		await page.locator('[data-testid="ppl-add-selected"]').click();
 		await expect(page.locator('[data-testid="pln-form-dialog"]')).toBeVisible();
 		expectLandmarkSubsequence(art, await landmarks(page, '[data-testid="pln-form-dialog"]'), "U08-COMBINE");
