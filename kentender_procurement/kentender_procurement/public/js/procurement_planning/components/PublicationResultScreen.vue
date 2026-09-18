@@ -78,6 +78,21 @@
 			</div>
 		</div>
 
+		<!-- U13-WITHDRAWAL-REQUEST — a request that is open is its own state,
+		     and the person who asked is named in it. -->
+		<div v-if="task.withdrawal_request" class="kt-notice is-attention" data-testid="pub-withdrawal-state">
+			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+				<circle cx="12" cy="12" r="9"></circle><path d="M12 8h.01M11 12h1v5h1"></path>
+			</svg>
+			<div class="kt-notice-body">
+				<strong>Withdrawal requested — awaiting {{ task.withdrawal_request.capacity || "the approving authority" }}</strong>
+				<p>{{ task.withdrawal_request.reason }}</p>
+				<p class="kt-muted">
+					Requested by {{ task.withdrawal_request.requested_by_name }} · {{ task.withdrawal_request.requested_display }}
+				</p>
+			</div>
+		</div>
+
 		<!-- A hold is a recorded control over transmission, not a withdrawal
 		     of the approval (§5.5.2.3). -->
 		<div v-if="task.hold?.active" class="kt-notice is-warning" data-testid="pub-hold">
@@ -146,6 +161,31 @@
 				>
 					Check publication result
 				</button>
+				<!-- §10.12 U13-WITHDRAWAL — the recovery route for an approved
+				     plan whose content is defective and confirmed not published.
+				     The AO asks; the statutory authority decides. Only one ever
+				     appears to one person, and once a request is open the AO's is
+				     gone. -->
+				<button
+					v-if="task.can_request_withdrawal"
+					type="button"
+					class="kt-btn kt-btn-secondary"
+					data-testid="pub-request-withdrawal"
+					:disabled="pending"
+					@click="$emit('request-withdrawal')"
+				>
+					Request withdrawal for correction
+				</button>
+				<button
+					v-if="task.can_decide_withdrawal"
+					type="button"
+					class="kt-btn kt-btn-primary"
+					data-testid="pub-decide-withdrawal"
+					:disabled="pending"
+					@click="$emit('decide-withdrawal')"
+				>
+					Withdraw for correction
+				</button>
 			</div>
 		</div>
 
@@ -183,7 +223,10 @@ const props = defineProps({
 	errorSummary: String,
 });
 
-defineEmits(["record-treasury", "correct-treasury", "retry", "reconcile", "navigate", "back"]);
+defineEmits([
+	"record-treasury", "correct-treasury", "retry", "reconcile",
+	"request-withdrawal", "decide-withdrawal", "navigate", "back",
+]);
 
 const statusRows = computed(() => props.task.status_rows || []);
 const attempts = computed(() => props.task.attempts || []);

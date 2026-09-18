@@ -1034,3 +1034,16 @@
 		grid-template-columns: 1fr;
 	}
 }
+
+/* §10.12 — the Treasury form carries four fields and a confirmation, so it is
+   wider than a one-question dialog. */
+.kt-pln .pln-treasury-dialog {
+	width: min(640px, calc(100vw - 48px));
+	max-width: none;
+}
+.kt-pln .pln-treasury-confirm {
+	display: flex;
+	align-items: center;
+	gap: var(--kt-space-2);
+	margin-top: var(--kt-space-3);
+}

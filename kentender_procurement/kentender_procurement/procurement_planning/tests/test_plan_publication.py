@@ -465,6 +465,69 @@ class TestTreasuryAndWithdrawal(PublicationCase):
 		self.assertEqual(caught.exception.code, "PLN_REVIEW_STALE")
 
 
+class TestWithdrawalReadModel(PublicationCase):
+	"""§10.12 U13-WITHDRAWAL-* — whose action it is, at each point."""
+
+	def failed_publication(self):
+		"""An approved plan whose transmission failed — the one state the
+		withdrawal route exists for."""
+		accepted, item_id = self.confirmed_item()
+		approved = self.approve(accepted["annual_plan"])
+		version_name = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
+		self.record_treasury(version_name)
+		destination = frappe.get_doc("Plan Publication", approved["publication"]).destination
+		frappe.db.set_value("Annual Plan Publication Destination", destination, "sandbox_outcome", "Fail")
+		frappe.set_user("Administrator")
+		publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=key())
+		return accepted, version_name, approved["publication"]
+
+	def test_only_the_accounting_officer_is_offered_the_request(self):
+		accepted, version_name, publication = self.failed_publication()
+
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		ao_read = plan_read.get_publication_task(publication=publication)
+		self.assertTrue(ao_read["can_request_withdrawal"])
+		self.assertFalse(ao_read["can_decide_withdrawal"])
+		# The fact the whole route depends on, stated rather than assumed.
+		self.assertEqual(ao_read["publication_confirmation"], "Confirmed not published")
+
+		frappe.set_user(fx.STATUTORY)
+		statutory_read = plan_read.get_publication_task(publication=publication)
+		self.assertFalse(statutory_read["can_request_withdrawal"])
+		# Nothing has been requested yet, so there is nothing to decide.
+		self.assertFalse(statutory_read["can_decide_withdrawal"])
+
+	def test_an_open_request_moves_the_action_to_the_statutory_authority(self):
+		accepted, version_name, publication = self.failed_publication()
+		reason = "A material defect was found in the approved package."
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		treasury.request_plan_withdrawal(plan_version=version_name, reason=reason, idempotency_key=key())
+
+		ao_read = plan_read.get_publication_task(publication=publication)
+		# The AO has asked; there is nothing more for them to do but wait.
+		self.assertFalse(ao_read["can_request_withdrawal"])
+		self.assertEqual(ao_read["withdrawal_request"]["reason"], reason)
+		self.assertTrue(ao_read["withdrawal_request"]["requested_by_name"])
+		self.assertTrue(ao_read["withdrawal_request"]["requested_display"].endswith("EAT"))
+
+		frappe.set_user(fx.STATUTORY)
+		statutory_read = plan_read.get_publication_task(publication=publication)
+		self.assertTrue(statutory_read["can_decide_withdrawal"])
+		self.assertTrue(statutory_read["withdrawal_task"])
+		self.assertTrue(statutory_read["withdrawal_task_token"])
+
+	def test_recorded_treasury_evidence_is_offered_for_correction_not_overwrite(self):
+		accepted, version_name, publication = self.failed_publication()
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		read = plan_read.get_publication_task(publication=publication)
+		self.assertTrue(read["treasury_evidence_id"])
+		prior = read["treasury_prior"]
+		self.assertEqual(prior["dispatch_reference"], "MOH/APP/2101/001")
+		self.assertEqual(prior["channel"], "Email")
+		self.assertEqual(prior["destination"], "treasury@example.test")
+		self.assertTrue(prior["submitted_display"].endswith("EAT"))
+
+
 class TestHeldCorrectionAndReassessment(PublicationCase):
 	def active(self) -> tuple[dict, str]:
 		accepted, item_id = self.confirmed_item()

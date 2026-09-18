@@ -200,6 +200,27 @@ export function reconcilePublication(args) {
 	return frappeCall(`${BASE}.reconcile_publication`, args);
 }
 
+// §5.5.2 / §10.12 — the Accounting Officer's record of what was sent outside
+// the system, and the correction of it. A correction supersedes the recorded
+// evidence with a reason; it never overwrites it.
+export function recordTreasurySubmission(args) {
+	return frappeCall(`${BASE}.record_treasury_submission`, args);
+}
+
+export function correctTreasurySubmissionEvidence(args) {
+	return frappeCall(`${BASE}.correct_treasury_submission_evidence`, args);
+}
+
+// §5.5.2.4 — the recovery route for an approved plan whose content is
+// defective and confirmed not published. Two actors, two commands.
+export function requestPlanWithdrawal(args) {
+	return frappeCall(`${BASE}.request_plan_withdrawal`, args);
+}
+
+export function withdrawApprovedPlanForCorrection(args) {
+	return frappeCall(`${BASE}.withdraw_approved_plan_for_correction`, args);
+}
+
 export function beginPlanUpdate(args) {
 	return frappeCall(`${BASE}.begin_plan_update`, args);
 }

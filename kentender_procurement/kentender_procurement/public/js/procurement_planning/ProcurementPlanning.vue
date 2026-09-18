@@ -223,8 +223,27 @@
 						@reconcile="onReconcilePublication"
 						@record-treasury="treasuryDialog = true"
 						@correct-treasury="treasuryDialog = true"
+						@request-withdrawal="withdrawalDialog = 'request'"
+						@decide-withdrawal="withdrawalDialog = 'decision'"
 						@navigate="onNavigate"
 						@back="publication.plan_reference ? frappe.set_route(PLAN_PAGE, publication.plan_reference) : frappe.set_route(WORKSPACE_PAGE)"
+					/>
+					<TreasurySubmissionDialog
+						v-if="treasuryDialog"
+						:task="publication"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onRecordTreasury"
+						@cancel="treasuryDialog = false"
+					/>
+					<WithdrawalDialog
+						v-if="withdrawalDialog"
+						:task="publication"
+						:mode="withdrawalDialog"
+						:pending="pending"
+						:error="errorSummary"
+						@confirm="onWithdrawal"
+						@cancel="withdrawalDialog = ''"
 					/>
 				</template>
 
@@ -397,6 +416,8 @@ import ProgressScreen from "./components/ProgressScreen.vue";
 import CorrectionRequestsScreen from "./components/CorrectionRequestsScreen.vue";
 import RecordCorrectionDialog from "./components/RecordCorrectionDialog.vue";
 import PublicationResultScreen from "./components/PublicationResultScreen.vue";
+import TreasurySubmissionDialog from "./components/TreasurySubmissionDialog.vue";
+import WithdrawalDialog from "./components/WithdrawalDialog.vue";
 import PlanItemEditorScreen from "./components/PlanItemEditorScreen.vue";
 import FinanceTaskScreen from "./components/FinanceTaskScreen.vue";
 import FinanceReturnDialog from "./components/FinanceReturnDialog.vue";
@@ -453,6 +474,9 @@ const dissolveDialog = ref(false);
 // explanation, are inputs to the decision itself rather than separate dialogs.
 const collectiveResolution = ref("");
 const treasuryDialog = ref(false);
+// §10.12 — "" (closed), "request" (the AO's) or "decision" (the statutory
+// authority's). The two are different dialogs for different people.
+const withdrawalDialog = ref("");
 const lateReason = ref("");
 const cancelUpdateReason = ref("");
 const splittingDialog = ref(false);
@@ -704,6 +728,7 @@ function applyLoaded(scr, loaded) {
 		case "publication":
 			publication.value = loaded;
 			treasuryDialog.value = false;
+			withdrawalDialog.value = "";
 			break;
 	}
 }
@@ -952,6 +977,59 @@ async function onRemoveDirect() {
 		})
 	);
 	if (result) go(dppReference.value);
+}
+
+// §5.5.2 / §10.12 — the Accounting Officer records what was sent outside the
+// system. A correction supersedes the recorded evidence with a reason; it
+// never overwrites it, so the two are separate commands.
+async function onRecordTreasury(values) {
+	const correcting = Boolean(publication.value.treasury_prior);
+	const result = await run("record-treasury", async (key) => {
+		const r = correcting
+			? await api.correctTreasurySubmissionEvidence({
+				prior_evidence: publication.value.treasury_evidence_id,
+				reason: values.reason,
+				submitted_at: values.submitted_at,
+				channel: values.channel,
+				destination: values.destination,
+				dispatch_reference: values.dispatch_reference,
+				idempotency_key: key,
+			})
+			: await api.recordTreasurySubmission({
+				plan_version: publication.value.version?.reference,
+				submitted_at: values.submitted_at,
+				channel: values.channel,
+				destination: values.destination,
+				dispatch_reference: values.dispatch_reference,
+				exact_document_confirmed: values.exact_document_confirmed ? 1 : 0,
+				idempotency_key: key,
+			});
+		await load({ quiet: true });
+		return r;
+	});
+	if (result) treasuryDialog.value = false;
+}
+
+// §5.5.2.4 — the AO asks and the statutory authority decides; the mode the
+// dialog was opened in is which of the two this is.
+async function onWithdrawal(reason) {
+	const deciding = withdrawalDialog.value === "decision";
+	const result = await run("plan-withdrawal", async (key) => {
+		const r = deciding
+			? await api.withdrawApprovedPlanForCorrection({
+				task: publication.value.withdrawal_task,
+				task_token: publication.value.withdrawal_task_token,
+				idempotency_key: key,
+			})
+			: await api.requestPlanWithdrawal({
+				plan_version: publication.value.version?.reference,
+				reason,
+				idempotency_key: key,
+			});
+		await load({ quiet: true });
+		return r;
+	});
+	if (result) withdrawalDialog.value = "";
 }
 
 async function onReconcilePublication() {

@@ -1918,4 +1918,73 @@ def get_publication_task(*, publication: str, user: str | None = None) -> dict[s
 		"quiet_notice": "Publication is a system worker action after statutory approval. Retry and reconciliation are technical actions, never a business decision.",
 		"can_retry": is_technical(actor) and doc.publication_state == "Failed",
 		"can_reconcile": is_technical(actor) and doc.publication_state == "Indeterminate",
+		# §10.12 U13-CORRECT-EVIDENCE — a correction supersedes the recorded
+		# evidence with a reason; it never overwrites it.
+		"treasury_evidence_id": treasury.name if treasury else "",
+		"treasury_prior": (
+			{
+				"submitted_at": cstr(treasury.submitted_at),
+				"submitted_display": _eat(treasury.submitted_at),
+				"channel": cstr(treasury.channel),
+				"destination": cstr(frappe.db.get_value("Treasury Submission Evidence", treasury.name, "destination")),
+				"dispatch_reference": cstr(treasury.dispatch_reference),
+			}
+			if treasury else None
+		),
+		**_withdrawal_state(version, actor),
 	}
+
+
+def _withdrawal_state(version, actor: str) -> dict[str, Any]:
+	"""§10.12 U13-WITHDRAWAL-* — the recovery route for an approved plan whose
+	content is defective and confirmed not published.
+
+	Two different people, two different actions, and neither can do the
+	other's: the Accounting Officer asks, and the configured statutory
+	authority decides. Once a request is open, the AO's own action is gone —
+	there is nothing more for them to do but wait."""
+	from kentender_procurement.procurement_planning.services import treasury as treasury_service
+
+	request_task = frappe.db.get_value(
+		"Plan Governance Task",
+		{"plan_version": version.name, "task_reference": f"SAT-WD-{version.name}", "status": "Open"},
+		["name", "task_token", "capacity"], as_dict=True,
+	)
+	hold = frappe.db.get_value(
+		"Plan Publication Hold",
+		{"plan_version": version.name, "hold_state": "Active", "hold_kind": "Withdrawal request"},
+		["reason", "raised_at", "raised_by"], as_dict=True,
+	)
+	eligible = (
+		version.version_status in ("Approved — publication pending", "Publication failed")
+		and treasury_service._confirmed_unpublished(version)
+	)
+	return {
+		"withdrawal_request": (
+			{
+				"reason": cstr(hold.reason),
+				"requested_by_name": _person_name(hold.raised_by),
+				"requested_display": _eat(hold.raised_at),
+				"capacity": cstr(request_task.capacity) if request_task else "",
+			}
+			if request_task and hold else None
+		),
+		"withdrawal_task": request_task.name if request_task else "",
+		"withdrawal_task_token": request_task.task_token if request_task else "",
+		# The plan's content is confirmed not published — the fact the whole
+		# recovery route depends on, stated rather than assumed.
+		"publication_confirmation": "Confirmed not published" if eligible else "",
+		"can_request_withdrawal": bool(
+			eligible and not request_task and authz.has_site_role(ROLE_ACCOUNTING_OFFICER, actor)
+		),
+		"can_decide_withdrawal": bool(
+			request_task and authz.has_site_role(ROLE_PLAN_STATUTORY_APPROVER, actor)
+		),
+	}
+
+
+def _person_name(user) -> str:
+	user = cstr(user).strip()
+	if not user:
+		return ""
+	return cstr(frappe.db.get_value("User", user, "full_name")) or user
