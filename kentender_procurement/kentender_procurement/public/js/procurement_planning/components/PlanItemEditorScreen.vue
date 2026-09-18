@@ -162,6 +162,45 @@
 					<option v-for="method in classification.admissible_methods || []" :key="method" :value="method">{{ method }}</option>
 				</select>
 			</div>
+			<!-- §10.8 — a condition-specific input appears only when the chosen
+			     method actually requires the Planner to supply it. A method
+			     whose conditions are facts about the purchase asks nothing. -->
+			<div
+				v-for="condition in declarableConditions"
+				:key="condition.condition_id"
+				class="kt-field pln-condition"
+				:data-testid="`ppi-condition-${condition.condition_id}`"
+			>
+				<label :for="`ppi-evidence-${condition.condition_id}`" class="kt-label">
+					{{ condition.required_evidence || condition.description }}
+				</label>
+				<input
+					:id="`ppi-evidence-${condition.condition_id}`"
+					class="kt-input"
+					:data-testid="`ppi-evidence-${condition.condition_id}`"
+					:value="conditionEvidence[condition.condition_id]?.evidence_reference || ''"
+					:disabled="!item.mutable"
+					@input="onEvidence(condition.condition_id, 'evidence_reference', $event.target.value)"
+				>
+				<!-- Only where the rule names someone who has to authorise it. -->
+				<template v-if="condition.authorisation_actor">
+					<label :for="`ppi-authorisation-${condition.condition_id}`" class="kt-label">
+						{{ condition.authorisation_actor }} authorisation
+					</label>
+					<input
+						:id="`ppi-authorisation-${condition.condition_id}`"
+						class="kt-input"
+						:data-testid="`ppi-authorisation-${condition.condition_id}`"
+						:value="conditionEvidence[condition.condition_id]?.authorisation_reference || ''"
+						:disabled="!item.mutable"
+						@input="onEvidence(condition.condition_id, 'authorisation_reference', $event.target.value)"
+					>
+				</template>
+				<div class="kt-field-hint" :data-testid="`ppi-condition-result-${condition.condition_id}`">
+					{{ condition.result }}<template v-if="condition.statutory_reference"> · {{ condition.statutory_reference }}</template>
+				</div>
+			</div>
+
 			<!-- Shown only when the Planner must choose one or one is set;
 			     "None" is never displayed to prove the field exists. -->
 			<div v-if="showReservation" class="kt-field">
@@ -362,6 +401,15 @@ function initial() {
 		baseline_invitation_date: baseline.target_invitation_date || "",
 		estimated_delivery_period_days: baseline.estimated_delivery_period_days ?? "",
 		strategic_objective: classification.strategic_objective || "",
+		// §7.2 — the rows the save command expects: one per declarable
+		// condition, carrying what the Planner supplied for it.
+		method_condition_evidence: (classification.conditions || [])
+			.filter((c) => c.kind !== "Known fact")
+			.map((c) => ({
+				condition_id: c.condition_id,
+				evidence_reference: c.evidence_reference || "",
+				authorisation_reference: c.authorisation_reference || "",
+			})),
 	};
 }
 
@@ -389,6 +437,25 @@ const methodProfile = computed(() => classification.value.method_profile || {});
 const sources = computed(() => props.item.sources || []);
 const notices = computed(() => props.item.notices || []);
 const missingSettings = computed(() => props.item.missing_settings || []);
+
+// A condition the rule states as a fact about the purchase (a value band) is
+// evaluated, not declared; only the rest are asked of the Planner.
+const declarableConditions = computed(() =>
+	(classification.value.conditions || []).filter((c) => c.kind !== "Known fact"),
+);
+
+const conditionEvidence = computed(() =>
+	Object.fromEntries((draft.method_condition_evidence || []).map((row) => [row.condition_id, row])),
+);
+
+function onEvidence(conditionId, field, value) {
+	if (!props.item.mutable) return;
+	const rows = draft.method_condition_evidence || [];
+	const existing = rows.find((row) => row.condition_id === conditionId);
+	if (existing) existing[field] = value;
+	else rows.push({ condition_id: conditionId, evidence_reference: "", authorisation_reference: "", [field]: value });
+	draft.method_condition_evidence = [...rows];
+}
 const versionNumber = computed(() => {
 	const match = /Version (\d+)/.exec(props.item.header?.reference_line || "");
 	return match ? match[1] : "";

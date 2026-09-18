@@ -265,3 +265,58 @@ describe("PlanItemEditorScreen — material issues stay visible", () => {
 		expect(supporting.text()).not.toContain("A departmental requirement changed");
 	});
 });
+
+describe("PlanItemEditorScreen — a method that asks something of the Planner", () => {
+	const CONDITIONS = [
+		{ condition_id: "VALUE_BAND", kind: "Known fact", description: "Within the low-value band", mandatory: true, result: "Met" },
+		{
+			condition_id: "CIRCUMSTANCES",
+			kind: "Declaration",
+			description: "The circumstances permitting direct procurement",
+			required_evidence: "Evidence of the circumstances relied on",
+			authorisation_actor: "Accounting Officer",
+			statutory_reference: "s.103(2)(a)",
+			mandatory: true,
+			result: "Evidence required",
+			evidence_reference: "",
+			authorisation_reference: "",
+		},
+	];
+
+	it("§10.8 — asks only for what the rule requires the Planner to supply", () => {
+		const w = make({ item: item({ classification: { ...item().classification, conditions: CONDITIONS } }) });
+		// A condition that is a fact about the purchase is evaluated, not asked.
+		expect(w.find('[data-testid="ppi-condition-VALUE_BAND"]').exists()).toBe(false);
+		const asked = w.find('[data-testid="ppi-condition-CIRCUMSTANCES"]');
+		expect(asked.text()).toContain("Evidence of the circumstances relied on");
+		expect(asked.text()).toContain("Evidence required");
+		expect(asked.text()).toContain("s.103(2)(a)");
+		expect(w.find('[data-testid="ppi-authorisation-CIRCUMSTANCES"]').exists()).toBe(true);
+	});
+
+	it("asks for no authorisation where the rule names nobody to give it", () => {
+		const conditions = [{ ...CONDITIONS[1], authorisation_actor: "" }];
+		const w = make({ item: item({ classification: { ...item().classification, conditions } }) });
+		expect(w.find('[data-testid="ppi-evidence-CIRCUMSTANCES"]').exists()).toBe(true);
+		expect(w.find('[data-testid="ppi-authorisation-CIRCUMSTANCES"]').exists()).toBe(false);
+	});
+
+	it("carries what was supplied into the save", async () => {
+		const w = make({ item: item({ classification: { ...item().classification, conditions: CONDITIONS } }) });
+		await w.find('[data-testid="ppi-evidence-CIRCUMSTANCES"]').setValue("Sole supplier holds exclusive distribution rights.");
+		await w.find('[data-testid="ppi-authorisation-CIRCUMSTANCES"]').setValue("AO/2027/DP/1");
+		await w.find('[data-testid="ppi-save"]').trigger("click");
+		const saved = w.emitted("save")[0][0].method_condition_evidence;
+		expect(saved).toContainEqual({
+			condition_id: "CIRCUMSTANCES",
+			evidence_reference: "Sole supplier holds exclusive distribution rights.",
+			authorisation_reference: "AO/2027/DP/1",
+		});
+	});
+
+	it("offers no input at all to a reader who cannot change the purchase", () => {
+		const w = make({ item: item({ mutable: false, classification: { ...item().classification, conditions: CONDITIONS } }) });
+		expect(w.find('[data-testid="ppi-evidence-CIRCUMSTANCES"]').attributes("disabled")).toBeDefined();
+	});
+});
+

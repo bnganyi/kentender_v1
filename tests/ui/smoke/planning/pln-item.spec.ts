@@ -55,7 +55,11 @@ test.describe("PLN18-305 Plan Item editor", () => {
 
 		const dates = page.locator('[data-testid="ppi-milestones"] tbody tr').first().locator("td").nth(1);
 		await expect(dates).toHaveText("1 Nov 2098");
-		await expect(page.locator('[data-testid="ppi-boundary"]')).toHaveCount(0);
+		// §10.8 — the boundary line always states the relationship between the
+		// computed completion and the department's deadline; it reads as an
+		// error only when the deadline cannot be met.
+		await expect(page.locator('[data-testid="ppi-boundary"]'))
+			.toHaveText("Expected to meet the departmental deadline");
 
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan-item");

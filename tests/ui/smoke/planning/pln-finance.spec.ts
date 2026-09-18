@@ -76,9 +76,10 @@ test.describe("PLN18-306 Finance task", () => {
 
 		await page.goto(`/app/procurement-planning/finance/${state.task}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "finance");
+		// A decided review offers no decision, and says who decided it.
 		await expect(page.locator('[data-testid="fnt-confirm"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="fnt-return"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="fnt-history"] tbody tr')).toHaveCount(1);
+		await expect(page.locator('[data-testid="fnt-history"]')).toContainText("Confirmed");
 	});
 
 	test("Finance returns a plan to the planner with a reason", async ({ page }) => {
@@ -104,8 +105,10 @@ test.describe("PLN18-306 Finance task", () => {
 		await page.goto(`/app/procurement-planning/finance/${state.task}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "finance");
 
-		await expect(page.locator("h1")).toHaveText("Reassess funding for Active Plan Version 1");
-		await expect(page.locator('[data-testid="fnt-history"] tbody tr')).toHaveCount(2);
+		// §10.9 U10-REASSESS — the title says what the reader is being asked
+		// to do, not which record state it derives from.
+		await expect(page.locator('[data-testid="fnt-title"]')).toHaveText("Check funding again for the current plan");
+		await expect(page.locator('[data-testid="fnt-history"] tbody tr')).toHaveCount(1);
 		await page.locator('[data-testid="fnt-confirm"]').click();
 		await page.waitForURL(/procurement-planning$/);
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
