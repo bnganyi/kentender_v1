@@ -84,6 +84,10 @@ def ensure_world() -> None:
 	from kentender_procurement.tender_templates import registry
 
 	registry.install()
+	# The publication rule the §10.1 fixture cites (site rows; find-or-create).
+	from kentender_core.seeds import site_setup
+
+	site_setup._seed_publication_obligations()
 
 
 def wipe_tender_rows() -> None:
@@ -154,6 +158,19 @@ def _complete_draft(prepared: dict, *, items: tuple[tuple[str, int, str], ...]) 
 		values={"applies_to_scope": "All items", "check_type": "Quantity", "pass_condition": "Delivered quantities equal the authorised schedule", "evidence_type": "Inspection record"},
 		expected_record_version=package_version.record_version, idempotency_key=key(),
 	)
+
+
+def evidence_file(file_name: str = "NB-MOH-2027-033.png") -> str:
+	"""A real one-pixel image as a private File (Frappe runs images through
+	Pillow on insert), for channel-confirmation evidence."""
+	from io import BytesIO
+
+	from PIL import Image
+
+	buffer = BytesIO()
+	Image.new("RGB", (1, 1), (255, 255, 255)).save(buffer, format="JPEG" if file_name.lower().endswith((".jpg", ".jpeg")) else "PNG")
+	doc = frappe.get_doc({"doctype": "File", "file_name": file_name, "is_private": 1, "content": buffer.getvalue()}).insert(ignore_permissions=True)
+	return doc.name
 
 
 def authorised_handoff(*, items: tuple[tuple[str, int, str], ...] = (("Business laptops", 1, "Clinical training"),)) -> dict:

@@ -63,4 +63,5 @@ def read_probes() -> list[dict]:
 		{"label": "tenders.get_tender", "call": api.get_tender, "kwargs": _tender_kwargs},
 		{"label": "tenders.get_tender_review", "call": api.get_tender_review, "kwargs": _tender_kwargs},
 		{"label": "tenders.get_tender_history", "call": api.get_tender_history, "kwargs": _tender_kwargs},
+		{"label": "tenders.get_tender_publication", "call": api.get_tender_publication, "kwargs": _tender_kwargs},
 	]

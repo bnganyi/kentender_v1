@@ -18,7 +18,7 @@ from typing import Any
 
 import frappe
 
-from kentender_procurement.tenders.services import correction, documents, draft_commands as cmd, history, lifecycle, read
+from kentender_procurement.tenders.services import correction, documents, draft_commands as cmd, history, lifecycle, publication, read
 
 
 def _parse_json(value, default):
@@ -64,6 +64,11 @@ def get_tender_review(tender: str) -> dict[str, Any]:
 @frappe.whitelist()
 def get_tender_history(tender: str) -> dict[str, Any]:
 	return _masked_read(history.get_tender_history, dict(tender=tender))
+
+
+@frappe.whitelist()
+def get_tender_publication(tender: str) -> dict[str, Any]:
+	return _masked_read(publication.get_tender_publication, dict(tender=tender))
 
 
 @frappe.whitelist()
@@ -149,3 +154,26 @@ def request_requisition_correction(tender: str, reason: str, expected_record_ver
 @frappe.whitelist()
 def start_corrected_tender_version(tender: str, handoff: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
 	return correction.start_corrected_tender_version(tender=tender, handoff=handoff, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+# --------------------------------------------------------------------------
+# §7.3 Publication commands
+# --------------------------------------------------------------------------
+
+
+@frappe.whitelist()
+def authorise_tender_publication(tender: str, expected_record_version, idempotency_key: str, task: str = "", task_token: str = "") -> dict[str, Any]:
+	return publication.authorise_tender_publication(tender=tender, expected_record_version=expected_record_version, idempotency_key=idempotency_key, task=task, task_token=task_token)
+
+
+@frappe.whitelist()
+def confirm_publication_channel(tender: str, channel: str, available_at: str, evidence_reference: str, evidence_file: str, package_digest: str, expected_record_version, idempotency_key: str, public_url: str = "", url_not_applicable_reason: str = "", evidence_notes: str = "", attestation_confirmed=False) -> dict[str, Any]:
+	return publication.confirm_publication_channel(
+		tender=tender, channel=channel, available_at=available_at, evidence_reference=evidence_reference, evidence_file=evidence_file, package_digest=package_digest, expected_record_version=expected_record_version,
+		idempotency_key=idempotency_key, public_url=public_url, url_not_applicable_reason=url_not_applicable_reason, evidence_notes=evidence_notes, attestation_confirmed=str(attestation_confirmed).lower() in ("1", "true"),
+	)
+
+
+@frappe.whitelist()
+def withdraw_publication_authorisation(tender: str, reason: str, evidence: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return publication.withdraw_publication_authorisation(tender=tender, reason=reason, evidence=evidence, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
