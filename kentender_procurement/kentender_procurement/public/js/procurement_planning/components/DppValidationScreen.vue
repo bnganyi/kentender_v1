@@ -145,8 +145,14 @@
 					<span class="kt-label">Estimated cost</span>
 					<span class="kt-meta-value">{{ row.amount_display }}</span>
 				</div>
+				<!-- Every other fact in this card is labelled; the action was
+				     the one cell that was not, which left the reader to infer
+				     what the link was for from the link alone. -->
 				<div>
-					<a href="#" data-testid="pln-review-view" @click.prevent="$emit('view-requirement', row)">View requirement</a>
+					<span class="kt-label">Action</span>
+					<span class="kt-meta-value">
+						<a href="#" data-testid="pln-review-view" @click.prevent="$emit('view-requirement', row)">View requirement</a>
+					</span>
 				</div>
 			</div>
 
