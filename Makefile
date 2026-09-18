@@ -992,13 +992,16 @@ e1-nssf-poc-gate:
 # Units, Fiscal Years, actors) before rebuilding from nothing — see
 # docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_*.md §4. FORCE=True bypasses
 # every module seed's own developer_mode/allow_tests guard, required for WIPE
-# outside developer_mode. RESEED=False stops after clearing/wiping — nothing
-# is rebuilt, THROUGH/validate are skipped: an empty database, no data at
-# all. All three must stay Python-literal True/False, not JSON.
+# outside developer_mode. RESEED defaults to None (Python-literal, not a
+# string) so canonical.run() picks its own default: reseed immediately for
+# a plain reset/rebuild, but WIPE=True alone now means what "wipe" says —
+# clear and stop, empty database. Pass RESEED=True to also force the old
+# "wipe then immediately rebuild everything" behaviour. All three must stay
+# Python-literal True/False/None, not JSON true/false/null.
 THROUGH ?= tender_preparation
 WIPE ?= False
 FORCE ?= False
-RESEED ?= True
+RESEED ?= None
 seed-canonical:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
 		kentender_core.seeds.canonical.run \

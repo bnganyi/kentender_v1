@@ -739,7 +739,7 @@ def run(
 	reset: bool = True,
 	rebuild: bool = False,
 	wipe: bool = False,
-	reseed: bool = True,
+	reseed: bool | None = None,
 	validate: bool = True,
 	force: bool = False,
 	commit: bool = True,
@@ -755,11 +755,15 @@ def run(
 	module stage's canonical rows sit on, so it is only ever safe to drop
 	after they are already gone, never on its own.
 
-	``reseed=False`` clears/wipes exactly as above and then stops — no
-	stage is rebuilt and ``through``/``validate`` are ignored, since there
-	is nothing left on the site to validate against. This is the "empty
-	database, no data at all" mode: everything KenTender's own seed owns
-	is gone and nothing replaces it."""
+	``reseed`` defaults to the opposite of ``wipe``: plain ``reset``/
+	``rebuild`` still reseed immediately, matching every call site before
+	this parameter existed, but ``wipe`` alone now means what the word
+	says — clear everything and stop, no stage rebuilt, ``through``/
+	``validate`` ignored, nothing left on the site to validate against.
+	Pass ``reseed=True`` explicitly with ``wipe=True`` for the old
+	"wipe then immediately rebuild the whole chain" behaviour."""
+	if reseed is None:
+		reseed = not wipe
 	frappe.only_for(("System Manager", "Administrator"))
 	_assert_allowed(force)
 	_stage_index(through)
