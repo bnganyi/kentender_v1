@@ -10,6 +10,13 @@ export default defineConfig({
     timeout: 5_000,
   },
   fullyParallel: false,
+  /**
+   * Refuses to start on a background queue Frappe will reject enqueues from.
+   * Every fixture reset deletes documents, each deletion enqueues a job, and
+   * nothing consumes them without a worker — so the suite breaks mid-run in
+   * ways that read as product defects. See tests/ui/helpers/benchQueue.ts.
+   */
+  globalSetup: './tests/ui/globalSetup.ts',
   /** PLN-CHG-001 v1.12 D13 — puts the Planning fixtures' intake flags back. */
   globalTeardown: './tests/ui/globalTeardown.ts',
   /** Fewer parallel browsers reduces flaky `/login` when many tests log in as the same user. */

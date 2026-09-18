@@ -174,6 +174,14 @@ restart:
 doctor:
 	cd $(BENCH_ROOT) && bench doctor
 
+# The background-job queue this bench never drains on its own. Every fixture
+# reset enqueues jobs; past Frappe's ceiling every reset and teardown fails,
+# and `bench execute` reports that as a misleading NameError. The UI suites
+# check this automatically (tests/ui/globalSetup.ts); this is the same check
+# by hand, and `FIX=1` drains it.
+ui-queue-check:
+	node tests/ui/helpers/queueCheck.cjs $(if $(FIX),--fix,)
+
 list:
 	cd $(BENCH_ROOT) && bench --site $(SITE) list-apps
 
