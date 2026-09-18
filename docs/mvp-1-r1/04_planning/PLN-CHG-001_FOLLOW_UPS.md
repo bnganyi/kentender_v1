@@ -44,3 +44,13 @@ Items deliberately outside the v1.18 implementation cycle opened 12 September 20
 - **FU-22–FU-25:** the named sibling version exists and its `FOLLOW_UPS`/tracker row cites the Phase 1 evidence rows (PLN18-101..110).
 - **FU-26:** a county world drives `county_resident_reservation` in a browser spec and PLN18-AC-097 moves from `Partial` to `Done`.
 - **FU-30:** one shared precision contract test passes in each of the three sibling suites.
+
+## PLN-CHG-001 v1.23 — raised during the build (18 Sep 2026)
+
+| # | What | Why it was not closed here | Where it bites |
+|---|---|---|---|
+| FU-V123-01 | §10.13's U14-ACTUALS artboard block still draws a **Forecast date** column, and U14's BASE/PARTIAL cards still draw a **Completion** row reading "No completion evidence" / "Tracking is not yet available". | The prose of the same section forbids both — PLN23-CHG-001 removed the forecast facility outright, and PLN22-AC-009 forbids a completion placeholder. The build follows the prose and the acceptance criterion. | The artboard file, not the product. It should be regenerated so the two agree. |
+| FU-V123-02 | §10.7 U08-INCOMPATIBLE's copy says "These requirements use different budget lines and cannot be combined." | The rule the command enforces is the same **budget**, not the same budget line: two lines of one budget combine legitimately, and there is a test for it. The build uses §8's own governed sentence plus the difference that actually blocks it. | The variant's copy. §8's error table is already right. |
+| FU-V123-03 | §10.11 U12's fixture states Revision 2 and 11:00/14:05 EAT; the canonical seed's own values are Revision 1 and 10:00/14:00. | Fixture values, not product behaviour — the fidelity gate deliberately never compares values. | Only the artboard's own fixture caption. |
+| FU-V123-04 | `active_view` in `plan_read` is now rendered only as the approval/publication section of an Active plan; the item rows inside it are no longer read by any screen. | Trimming it means rewriting the seed validation and eight test assertions for no user-visible gain. | Dead weight in one projection. |
+

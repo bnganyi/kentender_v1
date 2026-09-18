@@ -451,8 +451,9 @@ ui-planning-release-evidence-gate:
 		tests/ui/smoke/design-fidelity/planning-fidelity.spec.ts
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
 
-# PLN-CHG-001 v1.12 decision D14 — every artboard's landmarks in order on the
-# live screen (AGENTS.md §6.6), on the D13 world.
+# PLN-CHG-001 v1.23 — every artboard panel's landmarks, in order, on the live
+# screen (AGENTS.md §6.6), on the Playwright world. Rewritten for v1.23: the
+# design files are one labelled panel per variant, indexed by `openPanel`.
 ui-planning-fidelity-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/design-fidelity/planning-fidelity.spec.ts

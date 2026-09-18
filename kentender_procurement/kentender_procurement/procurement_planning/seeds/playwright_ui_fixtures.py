@@ -604,6 +604,14 @@ def reset_workbench_fixture(*, need: str = "", commit: bool = True) -> dict[str,
 	return {**state, "plan_reference": accepted["annual_plan"], "plan_version": accepted["annual_plan_version"]}
 
 
+#: §10.7 U08-COMBINE — combining is only permitted with the reason for it,
+#: asked at the moment of combining.
+COMBINATION_REASON = (
+	"Both departments require the same laptop specification for the same national digital-health "
+	"rollout; combining secures better unit pricing and one delivery schedule."
+)
+
+
 def _form(plan_version: str, entries: list[str], mode: str) -> list[str]:
 	from kentender_procurement.procurement_planning.services import plan_read, plan_workbench
 
@@ -611,6 +619,7 @@ def _form(plan_version: str, entries: list[str], mode: str) -> list[str]:
 		plan = plan_read.get_annual_plan(plan_reference=frappe.db.get_value("Annual Plan Version", plan_version, "annual_plan") and frappe.db.get_value("Annual Plan", frappe.db.get_value("Annual Plan Version", plan_version, "annual_plan"), "plan_reference"))
 		formed = plan_workbench.form_plan_items(
 			plan_version=plan_version, dpp_entries=entries, mode=mode,
+			combination_reason=COMBINATION_REASON if mode == "combined" else "",
 			expected_record_version=plan["record_version"], idempotency_key=_key(),
 		)
 	return formed["created_items"]
@@ -847,18 +856,42 @@ def reset_active_fixture(*, need: str = "", commit: bool = True) -> dict[str, An
 	return {**state, "publication_result": published["result"], "publication": approved["publication"]}
 
 
+UPDATE_CHANGE_REASON = "The department's description of the package was corrected after activation."
+
+
 def reset_update_candidate_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
-	"""U01-B: the Active Plan plus its open Draft successor (`BeginPlanUpdate`),
-	still untouched — the workspace's Active-plus-candidate two-block card
-	with the Planner's own "Continue update" action on the candidate block."""
-	from kentender_procurement.procurement_planning.services import plan_publication
+	"""§10.3 U01-CURRENT-UPDATE: the plan in force plus an open Draft
+	successor that has actually changed something.
+
+	A bare `BeginPlanUpdate` copy is not what the artboard draws, and it is
+	not what a Planner would ever be looking at: the row names the purchase
+	the update affects and why, and neither exists until the successor
+	differs from its predecessor. So this fixture makes one real change —
+	the description of the copied purchase — and records the reason for it."""
+	from kentender_procurement.procurement_planning.services import plan_publication, plan_read, plan_workbench
 
 	state = reset_active_fixture(need=need, commit=False)
 	with _as(PLANNER):
 		successor = plan_publication.begin_plan_update(plan_reference=state["plan_reference"], idempotency_key=_key())
+		item_id = frappe.db.get_value(
+			"Annual Plan Item",
+			{"plan_version": successor["successor_version"], "item_state": ("!=", "Dissolved")},
+			"plan_item_id",
+		)
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		plan_workbench.save_plan_item(
+			plan_item=item_id,
+			values={"description": "The corrected description of the national digital health infrastructure package."},
+			expected_record_version=item["record_version"], idempotency_key=_key(),
+		)
+		plan = plan_read.get_annual_plan(plan_reference=state["plan_reference"])
+		plan_workbench.save_plan_version_details(
+			plan_version=successor["successor_version"], values={"change_reason": UPDATE_CHANGE_REASON},
+			expected_record_version=plan["record_version"], idempotency_key=_key(),
+		)
 	if commit:
 		frappe.db.commit()
-	return {**state, "successor_version": successor["successor_version"]}
+	return {**state, "successor_version": successor["successor_version"], "successor_item_id": item_id}
 
 
 def reset_finance_reassessment_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:

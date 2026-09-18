@@ -257,6 +257,71 @@ export async function frameScope(page: Page, frameId: string): Promise<string> {
 	return selector;
 }
 
+/**
+ * A v1.23 artboard panel's scope selector.
+ *
+ * The v1.23 design files drop the v1.18 `.frame` + `.caption` pairing: each
+ * panel is a positioned wrapper whose first child is an absolutely-positioned
+ * label carrying the panel id (e.g. "U14 — BASE (initial)"), followed by the
+ * panel's own content. The label is the oracle's index; the content is what is
+ * measured, so this returns the content, never the label.
+ */
+export async function panelScope(page: Page, label: string): Promise<string> {
+	const selector = await page.evaluate((wanted) => {
+		const labels = Array.from(document.querySelectorAll<HTMLElement>("div[style*=\"position:absolute\"]")).filter(
+			(el) => (el.textContent || "").replace(/\s+/g, " ").trim() === wanted
+		);
+		if (labels.length !== 1) return "";
+		const content = labels[0].nextElementSibling as HTMLElement | null;
+		if (!content) return "";
+		const domId = "kt-panel-" + wanted.replace(/[^A-Za-z0-9_-]/g, "-");
+		content.id = domId;
+		return "#" + domId;
+	}, label);
+	if (!selector) {
+		throw new Error(`panel ${JSON.stringify(label)} not found exactly once in the artboard file`);
+	}
+	return selector;
+}
+
+/** Open a v1.23 artboard file and return the scope selector of one panel. */
+export async function openPanel(page: Page, relPath: string, label: string): Promise<string> {
+	// v1.23 panels are plain positioned divs, so there is no `.frame` to wait
+	// for — and a panel's own label is too short to satisfy the height check.
+	// The document body is what must have painted.
+	await openArtboard(page, relPath, "body");
+	return panelScope(page, label);
+}
+
+/**
+ * One variant inside a panel that draws several side by side, keyed by the
+ * `.tag` the artboard labels each block with. Comparing a three-variant panel
+ * as one scope would demand that a single live screen carry all three at once,
+ * which is exactly what the artboard is saying it does not.
+ */
+export async function variantScope(page: Page, panel: string, tag: string): Promise<string> {
+	const selector = await page.evaluate(
+		({ panel, tag }) => {
+			const root = document.querySelector(panel);
+			if (!root) return "";
+			const tags = Array.from(root.querySelectorAll<HTMLElement>(".tag")).filter(
+				(el) => (el.textContent || "").replace(/\s+/g, " ").trim() === tag
+			);
+			if (tags.length !== 1) return "";
+			const block = tags[0].parentElement as HTMLElement | null;
+			if (!block) return "";
+			const domId = "kt-variant-" + tag.replace(/[^A-Za-z0-9_-]/g, "-");
+			block.id = domId;
+			return "#" + domId;
+		},
+		{ panel, tag }
+	);
+	if (!selector) {
+		throw new Error(`variant ${JSON.stringify(tag)} not found exactly once in panel ${panel}`);
+	}
+	return selector;
+}
+
 /** Open a v1.18 artboard file and return the scope selector of one frame. */
 export async function openFrame(page: Page, relPath: string, frameId: string): Promise<string> {
 	await openArtboard(page, relPath, ".frame");

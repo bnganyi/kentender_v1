@@ -280,7 +280,9 @@ describe("WorkspaceScreen — U01-DEPARTMENT-AUTHOR and U01-HOD", () => {
 				your_departmental_plan: {
 					heading: "Your departmental plan",
 					empty: false,
-					facts: [["Department", "Digital Health"], ["Status", "Draft"]],
+					// §10.3 — which department, which year, what state, in that
+					// order; the year is part of identifying the plan.
+					facts: [["Department", "Digital Health"], ["Financial year", "FY 2027/28"], ["Status", "Draft"]],
 					action: "Continue departmental plan",
 					route: ["departmental-procurement-plan", "DPP-MOH-DHI-2027-001"],
 				},

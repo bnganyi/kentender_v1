@@ -143,14 +143,13 @@
 						</button>
 					</template>
 					<template v-else>
+						<!-- The facts arrive in the order §10.3 states them —
+						     which department, which year, what state — so the
+						     year is not appended after the status here. -->
 						<div class="kt-meta-row">
 							<div v-for="fact in ownPlan.facts" :key="fact[0]">
 								<span class="kt-label">{{ fact[0] }}</span>
 								<span class="kt-meta-value">{{ fact[1] }}</span>
-							</div>
-							<div>
-								<span class="kt-label">Financial year</span>
-								<span class="kt-meta-value">{{ context.financial_year_label || context.financial_year }}</span>
 							</div>
 						</div>
 						<button

@@ -346,6 +346,50 @@ HEADER_DEPARTMENTAL = {
 }
 
 
+def _affected_purchases(active_version, open_version) -> str:
+	"""Which of the plan's purchases this update actually changes — added,
+	removed, or moved in scope or value.
+
+	Computed from the live rows rather than a stored summary, because a Draft
+	successor is still being edited and any frozen description of it would be
+	stale the moment it was written. Nothing changed yet is an honest empty
+	result, not a guess."""
+	if not (active_version and open_version):
+		return ""
+
+	#: What "the purchase changed" means here: what it is, how much of it, and
+	#: what it costs. A schedule or method change is a change to how it will be
+	#: procured, not to the purchase itself, and belongs to the update's own
+	#: reason rather than to this list.
+	fields = ("title", "description")
+
+	def snapshot(version_name: str) -> dict[str, tuple]:
+		rows: dict[str, tuple] = {}
+		for item in frappe.get_all(
+			"Annual Plan Item",
+			filters={"plan_version": version_name, "item_state": ("!=", "Dissolved")},
+			fields=["name", "plan_item_id", *fields],
+			limit_page_length=0,
+		):
+			totals = frappe.get_all(
+				"Plan Source Allocation",
+				filters={"plan_item": item.name, "allocation_state": ("!=", "Released")},
+				fields=["quantity", "indicative_amount"],
+				limit_page_length=0,
+			)
+			rows[cstr(item.plan_item_id)] = (
+				tuple(cstr(item.get(field)) for field in fields),
+				sum(flt(t.quantity) for t in totals),
+				sum(flt(t.indicative_amount) for t in totals),
+			)
+		return rows
+
+	before, after = snapshot(active_version.name), snapshot(open_version.name)
+	changed = [row[0][0] for plan_item_id, row in after.items() if before.get(plan_item_id) != row]
+	changed += [row[0][0] for plan_item_id, row in before.items() if plan_item_id not in after]
+	return " · ".join(sorted(set(changed)))
+
+
 def _plan_rows(plan, active_version, open_version, *, is_planner: bool) -> list[dict[str, Any]]:
 	"""The Annual plan section: one labelled row per independently existing
 	thing. §9.1 requires Active and candidate to stay separate rows, each
@@ -390,6 +434,12 @@ def _plan_rows(plan, active_version, open_version, *, is_planner: bool) -> list[
 				("Version", str(open_version.version_number)),
 				("Proposed value", _money(value)),
 			]
+			# §10.3 U01-CURRENT-UPDATE — an update is about something. Naming
+			# the purchase it affects is what tells the reader whether it
+			# concerns them; "Version 2" alone does not.
+			affected = _affected_purchases(active_version, open_version)
+			if affected:
+				facts.append(("Affected purchase", affected))
 			change = cstr(open_version.get("change_reason"))
 			if change:
 				facts.append(("Change", change))
@@ -465,7 +515,7 @@ def _departmental_table(dpp_rows: list[dict[str, Any]]) -> dict[str, Any]:
 	}
 
 
-def _own_departmental_section(dpp_rows, departmental_units, *, window_open: bool) -> dict[str, Any] | None:
+def _own_departmental_section(dpp_rows, departmental_units, *, window_open: bool, financial_year_label: str) -> dict[str, Any] | None:
 	"""U01-DEPARTMENT-AUTHOR / U01-HOD — "Your departmental plan"."""
 	if not departmental_units:
 		return None
@@ -484,7 +534,14 @@ def _own_departmental_section(dpp_rows, departmental_units, *, window_open: bool
 	return {
 		"heading": "Your departmental plan",
 		"empty": False,
-		"facts": [("Department", row["department"]), ("Status", row["status"])],
+		# §10.3 U01-DEPARTMENT-AUTHOR — which department, which year, what
+		# state, in that order: the year is part of identifying the plan, not
+		# a footnote after its status.
+		"facts": [
+			("Department", row["department"]),
+			("Financial year", financial_year_label),
+			("Status", row["status"]),
+		],
 		"action": "Continue departmental plan" if row["state"] == "Draft" else "View departmental plan",
 		"route": row["route"],
 	}
@@ -532,12 +589,28 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 		# FU-15 — every supporting line carries version, size and value
 		detail = f"{row['department']} · Submission {row['version']} · {_count(row['requirements'], 'requirement')} · {row['value']}"
 		if row["state"] == "Draft" and row["status_kind"] != "critical":
-			actionable.append(
-				_action(
-					"Continue departmental plan", detail, "Continue", row["route"], "attention",
-					facts=[("Submission", str(row["version"])), ("Requirements", str(row["requirements"])), ("Specified value", row["value"])],
+			# §10.3 U01-HOD — the Head of Department's own work on a draft is
+			# not the Author's. They are not continuing to write it; they are
+			# deciding whether to certify and submit it, so the card names
+			# that outcome rather than the draft's size.
+			if authz.dpp_read_profile(unit["id"], actor) == "hod":
+				actionable.append(
+					_action(
+						"Review departmental plan",
+						detail, "Review departmental plan", row["route"], "attention",
+						facts=[
+							("Departmental plan", f"{row['department']} {context.get('financial_year_label') or fy}"),
+							("Outcome required", "Review and submit"),
+						],
+					)
 				)
-			)
+			else:
+				actionable.append(
+					_action(
+						"Continue departmental plan", detail, "Continue", row["route"], "attention",
+						facts=[("Submission", str(row["version"])), ("Requirements", str(row["requirements"])), ("Specified value", row["value"])],
+					)
+				)
 		elif row["state"] == "Returned":
 			returned = _returned_on(row["version_name"])
 			actionable.append(_action("Correct and resubmit departmental plan", f"{detail} · returned {returned}" if returned else detail, "Correct", row["route"], "critical"))
@@ -552,7 +625,11 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 	if plan and (plan.open_successor_version or plan.active_version):
 		open_version = frappe.db.get_value(
 			"Annual Plan Version", plan.open_successor_version or plan.active_version,
-			["name", "version_number", "version_status", "funding_state", "submitted_by_user", "submitted_at"], as_dict=True,
+			# §10.3 — `change_reason` is what the update row says it is *for*;
+			# selecting it here is the difference between the row explaining
+			# itself and the row being a version number.
+			["name", "version_number", "version_status", "funding_state", "submitted_by_user", "submitted_at", "change_reason"],
+			as_dict=True,
 		)
 	active_version_doc = None
 	if plan and plan.active_version:
@@ -670,7 +747,10 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 			"read_only": not is_planner,
 		},
 		"current_issue": _current_issue(plan, open_version, is_planner=is_planner),
-		"your_departmental_plan": _own_departmental_section(dpp_rows, departmental_units, window_open=window_open),
+		"your_departmental_plan": _own_departmental_section(
+			dpp_rows, departmental_units, window_open=window_open,
+			financial_year_label=cstr(context.get("financial_year_label")) or cstr(fy),
+		),
 		# §9.1 — "Omit an empty Your actions section."
 		"actionable": actionable,
 		"waiting": waiting,

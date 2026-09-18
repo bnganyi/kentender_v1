@@ -20,9 +20,11 @@ from kentender_procurement.procurement_planning.services import (
 	budget_gateway,
 	dpp_lifecycle,
 	needs_intake,
+	plan_publication,
 	workspace,
 )
 from kentender_procurement.procurement_planning.tests import fixtures as fx
+from kentender_procurement.procurement_planning.tests.test_plan_requisition import RequisitionCase
 
 
 def key() -> str:
@@ -470,3 +472,33 @@ class TestAnnualPlanCard(WorkspaceCase):
 		# The Planner may read it; there is no Continue on a locked Version.
 		self.assertEqual(row["action"], "View plan")
 		self.assertFalse(result["annual_plan"]["can_prepare_update"])
+
+
+class TestUpdateRowNamesItsPurchase(RequisitionCase):
+	"""§10.3 U01-CURRENT-UPDATE — an update is about something, and the row
+	says what."""
+
+	def test_a_successor_with_no_change_yet_names_no_purchase(self):
+		accepted, item_id = self.active_item()
+		frappe.set_user(fx.PLANNER)
+		plan_publication.begin_plan_update(plan_reference=accepted["annual_plan"], idempotency_key=key())
+		read = workspace.get_planning_workspace(financial_year=fx.FY_OPEN, user=fx.PLANNER)
+		candidate = next(r for r in read["annual_plan"]["rows"] if r["kind"] == "candidate")
+		facts = dict(candidate["facts"])
+		# A copied successor has changed nothing yet; saying "Affected
+		# purchase: <everything>" would be a guess dressed as a fact.
+		self.assertNotIn("Affected purchase", facts)
+
+	def test_a_changed_purchase_is_named_on_the_update_row(self):
+		accepted, item_id = self.active_item()
+		frappe.set_user(fx.PLANNER)
+		plan_publication.begin_plan_update(plan_reference=accepted["annual_plan"], idempotency_key=key())
+		successor = frappe.db.get_value("Annual Plan", {"plan_reference": accepted["annual_plan"]}, "open_successor_version")
+		item = frappe.db.get_value(
+			"Annual Plan Item", {"plan_version": successor, "plan_item_id": item_id}, "name"
+		)
+		frappe.db.set_value("Annual Plan Item", item, "title", "A renamed purchase", update_modified=False)
+
+		read = workspace.get_planning_workspace(financial_year=fx.FY_OPEN, user=fx.PLANNER)
+		candidate = next(r for r in read["annual_plan"]["rows"] if r["kind"] == "candidate")
+		self.assertEqual(dict(candidate["facts"])["Affected purchase"], "A renamed purchase")
