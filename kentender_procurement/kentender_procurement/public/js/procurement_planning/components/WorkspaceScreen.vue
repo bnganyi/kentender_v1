@@ -51,252 +51,254 @@
 		</div>
 
 		<template v-else>
-			<!-- Page header: title and description upper left; no header action
-			     in this composition. -->
-			<div class="pln-masthead">
-				<div>
-					<h1 class="kt-page-title" data-testid="pln-title">{{ header.title }}</h1>
-					<p class="kt-page-lede">{{ header.description }}</p>
-				</div>
-			</div>
-
-			<!-- Financial year sits below the header at the left, bound to the
-			     caller's own selection so it never snaps back to the server echo
-			     while a new year is still loading. §10.3/U01 draws this as a
-			     single neutral tag (`.kt-tag.kt-tag-neutral`), fusing the label
-			     and value the way every other on-page fact does — not the plain
-			     unboxed control the retired v1.12 artboard drew. -->
-			<div class="pln-filter-strip" data-testid="pln-context-strip">
-				<span class="kt-tag kt-tag-neutral pln-fy-chip">
-					<label for="pln-fy-select">Financial year</label>
-					<select
-						id="pln-fy-select"
-						class="pln-fy-select"
-						data-testid="pln-fy-select"
-						:value="selectedFinancialYear || context.financial_year || ''"
-						@change="$emit('select-financial-year', $event.target.value)"
-					>
-						<option v-for="year in context.financial_years || []" :key="year.id" :value="year.id">
-							{{ year.label }}
-						</option>
-					</select>
-				</span>
-				<button
-					v-if="context.resolved_financial_year_source === 'saved_default'"
-					type="button"
-					class="kt-btn kt-btn-ghost pln-filter-reset"
-					data-testid="pln-fy-reset"
-					@click="$emit('reset-financial-year')"
-				>
-					Reset
-				</button>
-			</div>
-
-			<!-- U01-HOD: the departmental actor's own required outcome comes
-			     before everything else. Omitted entirely when there is none. -->
-			<template v-if="actionable.length">
-				<h3 class="kt-card-title" data-testid="pln-your-actions-heading">
-					{{ actionable.length === 1 ? "Your action" : "Your actions" }}
-				</h3>
-				<div
-					v-for="(row, index) in actionable"
-					:key="`action-${index}`"
-					class="kt-card kt-blueprint pln-action-card"
-					data-testid="pln-action"
-				>
-					<div class="kt-meta-row">
-						<div>
-							<span class="kt-label">Outcome required</span>
-							<span class="kt-meta-value">{{ row.headline }}</span>
-						</div>
-						<div
-							v-for="fact in row.facts || []"
-							:key="fact.label"
-						>
-							<span class="kt-label">{{ fact.label }}</span>
-							<span class="kt-meta-value">{{ fact.value }}</span>
-						</div>
+			<div class="pln-sheet">
+				<!-- Page header: title and description upper left; no header action
+				     in this composition. -->
+				<div class="pln-masthead">
+					<div>
+						<h1 class="kt-page-title" data-testid="pln-title">{{ header.title }}</h1>
+						<p class="kt-page-lede">{{ header.description }}</p>
 					</div>
-					<p v-if="row.supporting" class="kt-muted">{{ row.supporting }}</p>
+				</div>
+
+				<!-- Financial year sits below the header at the left, bound to the
+				     caller's own selection so it never snaps back to the server echo
+				     while a new year is still loading. §10.3/U01 draws this as a
+				     single neutral tag (`.kt-tag.kt-tag-neutral`), fusing the label
+				     and value the way every other on-page fact does — not the plain
+				     unboxed control the retired v1.12 artboard drew. -->
+				<div class="pln-filter-strip" data-testid="pln-context-strip">
+					<span class="kt-tag kt-tag-neutral pln-fy-chip">
+						<label for="pln-fy-select">Financial year</label>
+						<select
+							id="pln-fy-select"
+							class="pln-fy-select"
+							data-testid="pln-fy-select"
+							:value="selectedFinancialYear || context.financial_year || ''"
+							@change="$emit('select-financial-year', $event.target.value)"
+						>
+							<option v-for="year in context.financial_years || []" :key="year.id" :value="year.id">
+								{{ year.label }}
+							</option>
+						</select>
+					</span>
 					<button
+						v-if="context.resolved_financial_year_source === 'saved_default'"
 						type="button"
-						class="kt-btn kt-btn-primary"
-						data-testid="pln-action-button"
-						@click="onAction(row)"
+						class="kt-btn kt-btn-ghost pln-filter-reset"
+						data-testid="pln-fy-reset"
+						@click="$emit('reset-financial-year')"
 					>
-						{{ row.action }}
+						Reset
 					</button>
 				</div>
-			</template>
 
-			<!-- U01-DEPARTMENT-AUTHOR / U01-HOD: "Your departmental plan". -->
-			<template v-if="ownPlan">
-				<h3 class="kt-card-title">{{ ownPlan.heading }}</h3>
-				<div class="kt-card kt-blueprint pln-own-plan" data-testid="pln-own-plan">
-					<template v-if="ownPlan.empty">
-						<p class="kt-muted" data-testid="pln-own-plan-empty">{{ ownPlan.empty_text }}</p>
+				<!-- U01-HOD: the departmental actor's own required outcome comes
+				     before everything else. Omitted entirely when there is none. -->
+				<template v-if="actionable.length">
+					<h3 class="kt-card-title" data-testid="pln-your-actions-heading">
+						{{ actionable.length === 1 ? "Your action" : "Your actions" }}
+					</h3>
+					<div
+						v-for="(row, index) in actionable"
+						:key="`action-${index}`"
+						class="kt-card kt-blueprint pln-action-card"
+						data-testid="pln-action"
+					>
+						<div class="kt-meta-row">
+							<div>
+								<span class="kt-label">Outcome required</span>
+								<span class="kt-meta-value">{{ row.headline }}</span>
+							</div>
+							<div
+								v-for="fact in row.facts || []"
+								:key="fact.label"
+							>
+								<span class="kt-label">{{ fact.label }}</span>
+								<span class="kt-meta-value">{{ fact.value }}</span>
+							</div>
+						</div>
+						<p v-if="row.supporting" class="kt-muted">{{ row.supporting }}</p>
 						<button
 							type="button"
 							class="kt-btn kt-btn-primary"
-							data-testid="pln-start-departmental-plan"
-							:disabled="pending"
-							@click="$emit('open-departmental-plan', ownPlan.organisation_unit)"
+							data-testid="pln-action-button"
+							@click="onAction(row)"
 						>
-							{{ ownPlan.action }}
+							{{ row.action }}
 						</button>
-					</template>
-					<template v-else>
-						<!-- The facts arrive in the order §10.3 states them —
-						     which department, which year, what state — so the
-						     year is not appended after the status here. -->
-						<div class="kt-meta-row">
-							<div v-for="fact in ownPlan.facts" :key="fact[0]">
-								<span class="kt-label">{{ fact[0] }}</span>
-								<span class="kt-meta-value">{{ fact[1] }}</span>
-							</div>
-						</div>
-						<button
-							v-if="ownPlan.route"
-							type="button"
-							class="kt-btn kt-btn-primary"
-							data-testid="pln-own-plan-action"
-							@click="$emit('navigate', ownPlan.route)"
-						>
-							{{ ownPlan.action }}
-						</button>
-					</template>
-				</div>
-			</template>
+					</div>
+				</template>
 
-			<!-- First section — Annual plan. -->
-			<div class="pln-section-head">
-				<h3 class="kt-card-title">{{ annualPlan.heading }}</h3>
-				<button
-					v-if="annualPlan.can_prepare_update"
-					type="button"
-					class="kt-btn kt-btn-primary"
-					data-testid="pln-prepare-update"
-					:disabled="pending"
-					@click="$emit('prepare-update')"
-				>
-					{{ annualPlan.prepare_update_action }}
-				</button>
-			</div>
-
-			<template v-if="planRows.length">
-				<template v-for="(row, index) in planRows" :key="`plan-${row.kind}`">
-					<div class="kt-card kt-blueprint pln-plan-row" :data-testid="`pln-plan-row-${row.kind}`">
-						<div class="kt-meta-row">
-							<div v-for="fact in row.facts" :key="fact[0]">
-								<span class="kt-label">{{ fact[0] }}</span>
-								<span class="kt-meta-value">{{ fact[1] }}</span>
-							</div>
-						</div>
-						<div class="pln-footer-right">
-							<a
-								v-if="row.secondary_action"
-								href="#"
-								:data-testid="`pln-plan-secondary-${row.kind}`"
-								@click.prevent="$emit('navigate', row.secondary_route)"
-							>{{ row.secondary_action }}</a>
+				<!-- U01-DEPARTMENT-AUTHOR / U01-HOD: "Your departmental plan". -->
+				<template v-if="ownPlan">
+					<h3 class="kt-card-title">{{ ownPlan.heading }}</h3>
+					<div class="kt-card kt-blueprint pln-own-plan" data-testid="pln-own-plan">
+						<template v-if="ownPlan.empty">
+							<p class="kt-muted" data-testid="pln-own-plan-empty">{{ ownPlan.empty_text }}</p>
 							<button
 								type="button"
-								class="kt-btn"
-								:class="row.action_kind === 'primary' ? 'kt-btn-primary' : 'kt-btn-secondary'"
-								:data-testid="`pln-plan-action-${row.kind}`"
-								@click="$emit('navigate', row.route)"
+								class="kt-btn kt-btn-primary"
+								data-testid="pln-start-departmental-plan"
+								:disabled="pending"
+								@click="$emit('open-departmental-plan', ownPlan.organisation_unit)"
 							>
-								{{ row.action }}
+								{{ ownPlan.action }}
 							</button>
-						</div>
+						</template>
+						<template v-else>
+							<!-- The facts arrive in the order §10.3 states them —
+							     which department, which year, what state — so the
+							     year is not appended after the status here. -->
+							<div class="kt-meta-row">
+								<div v-for="fact in ownPlan.facts" :key="fact[0]">
+									<span class="kt-label">{{ fact[0] }}</span>
+									<span class="kt-meta-value">{{ fact[1] }}</span>
+								</div>
+							</div>
+							<button
+								v-if="ownPlan.route"
+								type="button"
+								class="kt-btn kt-btn-primary"
+								data-testid="pln-own-plan-action"
+								@click="$emit('navigate', ownPlan.route)"
+							>
+								{{ ownPlan.action }}
+							</button>
+						</template>
 					</div>
-					<p v-if="row.note" class="kt-muted pln-plan-note" data-testid="pln-plan-note">{{ row.note }}</p>
-					<!-- §10.3 U01-CURRENT-UPDATE: the note sits between the two rows. -->
-					<p
-						v-if="index === 0 && planRows.length > 1 && annualPlan.update_note"
-						class="kt-muted pln-plan-note"
-						data-testid="pln-update-note"
-					>
-						{{ annualPlan.update_note }}
-					</p>
 				</template>
-			</template>
-			<!-- U01-NO-PLAN — an empty state, never a Create action. -->
-			<div v-else class="kt-card kt-blueprint pln-plan-empty" data-testid="pln-annual-plan-empty">
-				<p class="kt-meta-value">{{ annualPlan.empty_title }}</p>
-				<p class="kt-muted">{{ annualPlan.empty_text }}</p>
-			</div>
 
-			<!-- Immediately below the plan row — the one current issue. -->
-			<div v-if="currentIssue" class="kt-notice is-warning" data-testid="pln-current-issue">
-				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-					<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
-				</svg>
-				<div class="kt-notice-body pln-notice-split">
-					<span>{{ currentIssue.text }}</span>
+				<!-- First section — Annual plan. -->
+				<div class="pln-section-head">
+					<h3 class="kt-card-title">{{ annualPlan.heading }}</h3>
 					<button
+						v-if="annualPlan.can_prepare_update"
 						type="button"
-						class="kt-btn kt-btn-secondary"
-						data-testid="pln-current-issue-action"
-						@click="$emit('navigate', currentIssue.route)"
+						class="kt-btn kt-btn-primary"
+						data-testid="pln-prepare-update"
+						:disabled="pending"
+						@click="$emit('prepare-update')"
 					>
-						{{ currentIssue.action }}
+						{{ annualPlan.prepare_update_action }}
 					</button>
 				</div>
-			</div>
 
-			<!-- A late accepted requirement that no departmental plan could
-			     include: an explanation, never a bypass. -->
-			<div v-if="workspace.not_included" class="kt-notice is-warning" data-testid="pln-not-included">
-				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-					<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
-				</svg>
-				<div class="kt-notice-body">
-					<strong>{{ workspace.not_included.title }}</strong>
-					<p>{{ workspace.not_included.text }}</p>
+				<template v-if="planRows.length">
+					<template v-for="(row, index) in planRows" :key="`plan-${row.kind}`">
+						<div class="kt-card kt-blueprint pln-plan-row" :data-testid="`pln-plan-row-${row.kind}`">
+							<div class="kt-meta-row">
+								<div v-for="fact in row.facts" :key="fact[0]">
+									<span class="kt-label">{{ fact[0] }}</span>
+									<span class="kt-meta-value">{{ fact[1] }}</span>
+								</div>
+							</div>
+							<div class="pln-footer-right">
+								<a
+									v-if="row.secondary_action"
+									href="#"
+									:data-testid="`pln-plan-secondary-${row.kind}`"
+									@click.prevent="$emit('navigate', row.secondary_route)"
+								>{{ row.secondary_action }}</a>
+								<button
+									type="button"
+									class="kt-btn"
+									:class="row.action_kind === 'primary' ? 'kt-btn-primary' : 'kt-btn-secondary'"
+									:data-testid="`pln-plan-action-${row.kind}`"
+									@click="$emit('navigate', row.route)"
+								>
+									{{ row.action }}
+								</button>
+							</div>
+						</div>
+						<p v-if="row.note" class="kt-muted pln-plan-note" data-testid="pln-plan-note">{{ row.note }}</p>
+						<!-- §10.3 U01-CURRENT-UPDATE: the note sits between the two rows. -->
+						<p
+							v-if="index === 0 && planRows.length > 1 && annualPlan.update_note"
+							class="kt-muted pln-plan-note"
+							data-testid="pln-update-note"
+						>
+							{{ annualPlan.update_note }}
+						</p>
+					</template>
+				</template>
+				<!-- U01-NO-PLAN — an empty state, never a Create action. -->
+				<div v-else class="kt-card kt-blueprint pln-plan-empty" data-testid="pln-annual-plan-empty">
+					<p class="kt-meta-value">{{ annualPlan.empty_title }}</p>
+					<p class="kt-muted">{{ annualPlan.empty_text }}</p>
 				</div>
+
+				<!-- Immediately below the plan row — the one current issue. -->
+				<div v-if="currentIssue" class="kt-notice is-warning" data-testid="pln-current-issue">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+						<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
+					</svg>
+					<div class="kt-notice-body pln-notice-split">
+						<span>{{ currentIssue.text }}</span>
+						<button
+							type="button"
+							class="kt-btn kt-btn-secondary"
+							data-testid="pln-current-issue-action"
+							@click="$emit('navigate', currentIssue.route)"
+						>
+							{{ currentIssue.action }}
+						</button>
+					</div>
+				</div>
+
+				<!-- A late accepted requirement that no departmental plan could
+				     include: an explanation, never a bypass. -->
+				<div v-if="workspace.not_included" class="kt-notice is-warning" data-testid="pln-not-included">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+						<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
+					</svg>
+					<div class="kt-notice-body">
+						<strong>{{ workspace.not_included.title }}</strong>
+						<p>{{ workspace.not_included.text }}</p>
+					</div>
+				</div>
+
+				<!-- Second section — Departmental plans. -->
+				<h3 class="kt-card-title">{{ table.heading }}</h3>
+				<table v-if="table.rows.length" class="kt-table pln-dept-table" data-testid="pln-departmental-table">
+					<thead>
+						<tr>
+							<th v-for="column in table.columns" :key="column" :class="{ 'is-num': isNumeric(column) }">
+								{{ column }}
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="row in table.rows" :key="row.department" data-testid="pln-departmental-row">
+							<td>{{ row.department }}</td>
+							<td><span class="kt-status" :class="statusClass(row.status)">{{ row.status }}</span></td>
+							<td class="is-num">{{ row.requirements }}</td>
+							<td class="is-num">{{ row.value }}</td>
+							<td>
+								<a
+									v-if="row.route"
+									href="#"
+									data-testid="pln-departmental-open"
+									@click.prevent="$emit('navigate', row.route)"
+								>{{ row.action }}</a>
+								<span v-else>—</span>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<p v-else class="kt-muted" data-testid="pln-departmental-empty">{{ table.empty_text }}</p>
+				<p v-if="table.rows.length" class="kt-muted" data-testid="pln-count-label">{{ table.count_label }}</p>
+
+				<!-- Waiting work: neutral read-only text, never a queue with controls. -->
+				<p
+					v-for="(row, index) in workspace.waiting || []"
+					:key="`waiting-${index}`"
+					class="pln-strip-quiet pln-waiting"
+					data-testid="pln-waiting"
+				>
+					{{ row.item }} · {{ row.scope }}
+				</p>
 			</div>
-
-			<!-- Second section — Departmental plans. -->
-			<h3 class="kt-card-title">{{ table.heading }}</h3>
-			<table v-if="table.rows.length" class="kt-table pln-dept-table" data-testid="pln-departmental-table">
-				<thead>
-					<tr>
-						<th v-for="column in table.columns" :key="column" :class="{ 'is-num': isNumeric(column) }">
-							{{ column }}
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr v-for="row in table.rows" :key="row.department" data-testid="pln-departmental-row">
-						<td>{{ row.department }}</td>
-						<td><span class="kt-status" :class="statusClass(row.status)">{{ row.status }}</span></td>
-						<td class="is-num">{{ row.requirements }}</td>
-						<td class="is-num">{{ row.value }}</td>
-						<td>
-							<a
-								v-if="row.route"
-								href="#"
-								data-testid="pln-departmental-open"
-								@click.prevent="$emit('navigate', row.route)"
-							>{{ row.action }}</a>
-							<span v-else>—</span>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-			<p v-else class="kt-muted" data-testid="pln-departmental-empty">{{ table.empty_text }}</p>
-			<p v-if="table.rows.length" class="kt-muted" data-testid="pln-count-label">{{ table.count_label }}</p>
-
-			<!-- Waiting work: neutral read-only text, never a queue with controls. -->
-			<p
-				v-for="(row, index) in workspace.waiting || []"
-				:key="`waiting-${index}`"
-				class="pln-strip-quiet pln-waiting"
-				data-testid="pln-waiting"
-			>
-				{{ row.item }} · {{ row.scope }}
-			</p>
 		</template>
 	</div>
 </template>

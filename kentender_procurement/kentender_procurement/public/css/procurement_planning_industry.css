@@ -37,6 +37,23 @@
 	margin-bottom: 24px;
 }
 
+/* The whole screen's own outer sheet: title, filter and every section sit
+ * inside one bordered, shadowed surface — not a bare header on the grey
+ * page background with separate cards floating loose beneath it. Every
+ * PLN-DES panel draws this same plain sheet (no `.kt-blueprint` corner
+ * marks — Planning's own artboards never draw those on the page shell,
+ * only on loading/error/empty state cards). `kt_industry_tokens.css` has
+ * no shared "page sheet" class for this — plain `.kt-card` is a flex
+ * column with its own `gap`, which would double up against every child's
+ * existing margin, so this is a standalone block box, not composed from
+ * `.kt-card`. */
+.kt-pln .pln-sheet {
+	background: var(--kt-color-surface);
+	border: 1px solid var(--color-divider);
+	box-shadow: var(--kt-shadow-md);
+	padding: 32px 40px;
+}
+
 /* §10.3/U01 Financial Year filter: one neutral tag fusing the label and the
  * value, same as every other on-page fact — never a bordered, corner-marked
  * card (§11.2; that rule is about `.kt-blueprint`/`.kt-corner`, not this
