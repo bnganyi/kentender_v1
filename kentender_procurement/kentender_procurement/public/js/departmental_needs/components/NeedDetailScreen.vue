@@ -78,16 +78,44 @@
 			<div class="kt-meta-row">
 				<div v-for="fact in contextItems" :key="fact.label">
 					<span class="kt-label">{{ fact.label }}</span>
-					<span class="kt-meta-value" style="font-size: 14px">{{ fact.value }}</span>
+					<span class="kt-meta-value" style="font-size: 14px"
+						>{{ fact.value }}<span v-if="fact.sub" class="text-muted" style="font-size: 12px; font-weight: 400">
+							· {{ fact.sub }}</span
+						></span
+					>
 				</div>
 			</div>
 		</div>
 
-		<!-- §11.8 Planning status — two rows, Departmental plan (disposition) and
-		     Current annual plan (usage); never merged into one status. -->
+		<!-- §11.8 Planning status — Departmental plan (disposition) and Current
+		     annual plan (usage) side by side (18 Sep 2026 design-board
+		     refresh: was a vertical stack); still two independent facts,
+		     never merged into one status. §11.8A REFRESHING/UNAVAILABLE/
+		     UNAVAILABLE-NO-SNAPSHOT (NDS-CHG-001 v1.14 Phase 2) — a separate,
+		     independently-retriable check from the rest of this screen. -->
 		<template v-if="showPlanning">
 			<h6 class="kt-card-title">Planning status</h6>
-			<div style="display: flex; flex-direction: column; gap: var(--kt-space-3); margin-top: var(--kt-space-4)">
+			<div v-if="planningRefreshing" class="text-muted" style="font-size: 12.5px; margin-top: var(--kt-space-2)">
+				Updating Planning information…
+			</div>
+			<div v-if="planningUnavailable" class="kt-notice is-critical" style="margin-top: var(--kt-space-2)">
+				<div class="kt-notice-body" style="font-size: 12px">
+					Planning information is temporarily unavailable.<br />
+					Withdrawal cannot be approved until the required check succeeds.
+					<div>
+						<button
+							type="button"
+							class="kt-action-link"
+							data-testid="nds-retry-planning"
+							style="font-size: 12px; margin-top: 6px"
+							@click="$emit('retry-planning')"
+						>
+							Try again
+						</button>
+					</div>
+				</div>
+			</div>
+			<div style="display: flex; gap: var(--kt-space-8); margin-top: var(--kt-space-4)">
 				<div style="font-size: 13px">
 					<span class="kt-label" style="display: block">Departmental plan</span>
 					<span class="kt-status" :class="departmentalPlanStatus.cls">{{ departmentalPlanStatus.label }}</span>
@@ -97,6 +125,13 @@
 					<span class="kt-status" :class="annualPlanStatus.cls">{{ annualPlanStatus.label }}</span>
 				</div>
 			</div>
+			<div
+				v-if="(planningRefreshing || planningUnavailableWithSnapshot) && planningCheckedAt"
+				class="text-muted"
+				style="font-size: 12px; margin-top: var(--kt-space-2)"
+			>
+				Last confirmed: {{ formatInstant(planningCheckedAt) }}
+			</div>
 			<!-- NDS-DES-07A STILL-ACTIVE — a not-proceeding departmental
 			     disposition with the requirement still Fully included blocks
 			     withdrawal until Planning clears it. -->
@@ -104,6 +139,39 @@
 				<div class="kt-notice-body" style="font-size: 12px">
 					The annual plan has not yet been updated. Withdrawal cannot be approved while
 					this requirement remains included.
+				</div>
+			</div>
+			<!-- NDS-DES-07A OLDER — the current accepted revision has never itself
+			     been projected, but Planning is still using an earlier accepted
+			     revision's inclusion. -->
+			<div v-if="olderUsageFact" class="kt-notice is-info" style="margin-top: var(--kt-space-2)">
+				<div class="kt-notice-body" style="font-size: 12px">
+					The current annual plan still uses the previously accepted details.
+					<div style="display: flex; gap: var(--kt-space-6); margin-top: var(--kt-space-3)">
+						<div><strong style="color: var(--kt-color-text)">Included requirement revision</strong> {{ olderUsageFact.revision_number }}</div>
+						<div v-if="olderUsageFact.required_by_date"><strong style="color: var(--kt-color-text)">Earlier required-by date</strong> {{ formatDate(olderUsageFact.required_by_date) }}</div>
+					</div>
+					<div style="display: flex; gap: var(--kt-space-4); margin-top: 6px">
+						<button
+							type="button"
+							class="kt-action-link"
+							data-testid="nds-view-earlier-requirement"
+							style="font-size: 12px"
+							@click="olderRequirementOpen = !olderRequirementOpen"
+						>
+							{{ olderRequirementOpen ? "Hide earlier requirement" : "View earlier requirement" }}
+						</button>
+						<button
+							v-if="olderUsageFact.active_plan_item"
+							type="button"
+							class="kt-action-link"
+							style="font-size: 12px"
+							@click="$emit('view-plan-item')"
+						>
+							View annual plan item
+						</button>
+					</div>
+					<RequirementCard v-if="olderRequirementOpen" :revision="olderUsageFact.content" :show-heading="false" />
 				</div>
 			</div>
 			<div class="text-muted" style="font-size: 12px; margin: var(--kt-space-3) 0 var(--kt-space-6)">
@@ -192,7 +260,7 @@
 <script setup>
 import { computed, ref } from "vue";
 import RequirementCard from "./RequirementCard.vue";
-import { formatInstant } from "../data/format.js";
+import { formatDate, formatInstant } from "../data/format.js";
 
 const props = defineProps({
 	need: { type: Object, default: () => ({}) },
@@ -202,6 +270,12 @@ const props = defineProps({
 	usage: { type: Object, default: () => ({}) },
 	// get_departmental_need().planning_disposition — Planning information only.
 	disposition: { type: Object, default: null },
+	// §11.8A — the dedicated Planning-status re-check's own state (NDS-CHG-001
+	// v1.14 Phase 2), separate from this screen's own load.
+	olderUsage: { type: Object, default: null },
+	planningChecking: Boolean,
+	planningUnavailable: Boolean,
+	planningCheckedAt: { type: String, default: "" },
 	authorLabel: { type: String, default: "" },
 	accessProfile: { type: String, default: "" },
 	actions: { type: Array, default: () => [] },
@@ -214,7 +288,17 @@ const props = defineProps({
 	pinnedRevision: { type: Object, default: null },
 	history: { type: Array, default: () => [] },
 });
-defineEmits(["create-update", "request-withdrawal", "view-plan-item", "open-successor", "edit", "review"]);
+defineEmits([
+	"create-update",
+	"request-withdrawal",
+	"view-plan-item",
+	"open-successor",
+	"edit",
+	"review",
+	"retry-planning",
+]);
+
+const olderRequirementOpen = ref(false);
 
 const planningHistoryOpen = ref(false);
 
@@ -273,20 +357,41 @@ const ownerActions = computed(() => {
 
 const showPlanning = computed(() => isAccepted.value);
 
+// §11.8A — whether there is any recorded Planning fact at all to fall back
+// on while a check is in flight or has failed. Absent this, a failure is
+// UNAVAILABLE-NO-SNAPSHOT rather than UNAVAILABLE.
+const hasPlanningSnapshot = computed(
+	() => Boolean(props.disposition?.recorded) || Boolean(props.usage?.recorded) || Boolean(props.olderUsage)
+);
+const planningRefreshing = computed(() => props.planningChecking && hasPlanningSnapshot.value);
+const planningUnavailableWithSnapshot = computed(() => props.planningUnavailable && hasPlanningSnapshot.value);
+const planningUnavailableNoSnapshot = computed(() => props.planningUnavailable && !hasPlanningSnapshot.value);
+const olderUsageFact = computed(() => (!props.usage?.recorded ? props.olderUsage : null));
+
 // §11.8/§11.8A — Departmental plan reads the accepted DPP disposition;
 // Current annual plan reads Active usage. The two are independent facts,
-// never merged into one status.
+// never merged into one status. REFRESHING/UNAVAILABLE keep the
+// last-confirmed labels with their own suffix rather than showing a new
+// (unconfirmed) result; UNAVAILABLE-NO-SNAPSHOT shows neither.
+const statusSuffix = computed(() =>
+	planningRefreshing.value || planningUnavailableWithSnapshot.value ? " — last confirmed" : ""
+);
 const departmentalPlanStatus = computed(() => {
-	if (!props.disposition?.recorded) return { cls: "is-pending", label: "No accepted decision recorded" };
+	if (planningUnavailableNoSnapshot.value) return { cls: "is-critical", label: "Unavailable" };
+	if (!props.disposition?.recorded)
+		return { cls: "is-pending", label: `No accepted departmental decision recorded${statusSuffix.value}` };
 	return props.disposition.disposition === "Not proceeding"
-		? { cls: "is-attention", label: "Not included this year" }
-		: { cls: "is-live", label: "Included" };
+		? { cls: "is-attention", label: `Not included this year${statusSuffix.value}` }
+		: { cls: "is-live", label: `Included${statusSuffix.value}` };
 });
 const annualPlanStatus = computed(() => {
-	if (props.usage?.usage !== "Fully included") return { cls: "is-pending", label: "Not included" };
+	if (planningUnavailableNoSnapshot.value) return { cls: "is-critical", label: "Unavailable" };
+	if (props.usage?.usage !== "Fully included") return { cls: "is-pending", label: `Not included${statusSuffix.value}` };
 	// STILL-ACTIVE — a not-proceeding departmental disposition, but the
 	// requirement remains represented in the current annual plan.
-	return stillActive.value ? { cls: "is-live", label: "Still included" } : { cls: "is-live", label: "Included" };
+	return stillActive.value
+		? { cls: "is-live", label: `Still included${statusSuffix.value}` }
+		: { cls: "is-live", label: `Included${statusSuffix.value}` };
 });
 const stillActive = computed(
 	() => props.disposition?.recorded && props.disposition.disposition === "Not proceeding" && props.usage?.usage === "Fully included"
@@ -321,14 +426,15 @@ function label(field) {
 
 const contextItems = computed(() => {
 	if (isAccepted.value) {
+		// §11.8 "Accepted by"/"Capacity" — merged into one fact (18 Sep 2026
+		// design-board refresh); `sub` is omitted, not shown blank, when the
+		// accepting assignment predates §15 snapshotting or has since been
+		// removed.
 		const facts = [
 			{ label: "Department", value: label("organisation_unit") },
 			{ label: "Financial year", value: label("financial_year") },
-			{ label: "Accepted by", value: props.acceptedByLabel || props.authorLabel },
+			{ label: "Accepted by", value: props.acceptedByLabel || props.authorLabel, sub: props.acceptedCapacity || "" },
 		];
-		// §11.8 "Capacity" — omitted, not shown blank, when the accepting
-		// assignment predates §15 snapshotting or has since been removed.
-		if (props.acceptedCapacity) facts.push({ label: "Capacity", value: props.acceptedCapacity });
 		facts.push({ label: "Accepted at", value: formatInstant(props.acceptedAt) });
 		return facts;
 	}

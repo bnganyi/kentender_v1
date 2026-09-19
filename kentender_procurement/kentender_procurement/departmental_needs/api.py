@@ -26,7 +26,11 @@ from kentender_procurement.departmental_needs.services.context import (
 	resolve_creation_context,
 	selectable_financial_years,
 )
-from kentender_procurement.departmental_needs.services.usage import project_planning_usage, project_planning_disposition
+from kentender_procurement.departmental_needs.services.usage import (
+	planning_status_for_need as _planning_status_for_need,
+	project_planning_usage,
+	project_planning_disposition,
+)
 from kentender_procurement.departmental_needs.services.workspace import (
 	get_current_accepted_need as _get_current_accepted_need,
 	get_need,
@@ -45,6 +49,10 @@ get_departmental_review_task = frappe.whitelist()(get_review_task)
 get_needs_submission_state = frappe.whitelist()(_get_needs_submission_state)
 get_current_accepted_need = frappe.whitelist()(_get_current_accepted_need)
 check_accepted_need_withdrawal_dependency = frappe.whitelist()(lifecycle.check_withdrawal_dependency)
+# §11.8A — the detail screen's own dedicated Planning-status re-check,
+# separate from get_departmental_need's atomic payload (NDS-CHG-001 v1.14
+# Phase 2: REFRESHING/UNAVAILABLE/UNAVAILABLE-NO-SNAPSHOT/OLDER).
+get_need_planning_status = frappe.whitelist()(_planning_status_for_need)
 
 
 # --- §8.2 commands ---------------------------------------------------------

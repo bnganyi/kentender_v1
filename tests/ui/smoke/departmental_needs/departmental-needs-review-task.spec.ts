@@ -47,11 +47,11 @@ test.describe("NDS-UI-05 review task", () => {
 		await expectScreen(page, "task");
 		// §12.5 — the complete submitted revision, not a summary. Scoped to the
 		// shell: frappe keeps the previous page container (My Work, still
-		// holding the row title) in the DOM. NDS-CHG-001 v1.13 §11.1's six-fact
-		// arrangement repeats the title as its own labelled "Requirement title"
-		// row beneath the heading that already shows it (the artboards do this
-		// on every detail/review screen), so the name legitimately appears
-		// twice — `.first()` asserts the heading occurrence.
+		// holding the row title) in the DOM. `.first()` asserts the heading
+		// occurrence in case of any residual duplicate text elsewhere on the
+		// page (the 18 Sep 2026 design refresh dropped RequirementCard's own
+		// redundant "Requirement title" fact row, so this is normally a
+		// single match now).
 		await expect(
 			page.locator('[data-testid="nds-shell"]').getByText("County health records digitisation").first(),
 		).toBeVisible();

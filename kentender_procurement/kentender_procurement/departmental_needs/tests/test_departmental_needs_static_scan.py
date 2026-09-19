@@ -35,6 +35,9 @@ from kentender_procurement.departmental_needs.services import lifecycle
 MODULE = pathlib.Path(lifecycle.__file__).parents[1]
 
 # §4 — the complete object set. Anything else under doctype/ is a leftover.
+# `Need Planning Disposition Projection` predates NDS-CHG-001 v1.14 (built for
+# PLN-CHG-001 v1.18's disposition work, FOLLOW_UPS FU-07) — this allowlist was
+# simply never updated to match (FU-26).
 PERMITTED_DOCTYPES = frozenset(
 	{
 		"Departmental Need",
@@ -44,6 +47,7 @@ PERMITTED_DOCTYPES = frozenset(
 		"Departmental Need Event",
 		"Need Withdrawal Request",
 		"Need Planning Usage Projection",
+		"Need Planning Disposition Projection",
 	}
 )
 
@@ -259,9 +263,14 @@ class DepartmentalNeedsSchemaScanTest(IntegrationTestCase):
 				self.assertFalse(frappe.db.exists("DocType", doctype))
 
 	def test_partially_included_is_gone_from_the_projection(self):
+		# PLN-CHG-001 v1.12 §4.4 added `Not proceeding` after this test was
+		# first written (FU-26) — `Partially included` stays gone; `Not
+		# proceeding` is not that value returning under a new name (it lives
+		# on the projection's own `usage` field per §4.7, not a
+		# resurrection of the removed partial-allocation concept).
 		options = frappe.get_meta("Need Planning Usage Projection").get_field("usage").options
 		values = [line.strip() for line in (options or "").split("\n") if line.strip()]
-		self.assertEqual(values, ["Not included", "Fully included"])
+		self.assertEqual(values, ["Not included", "Fully included", "Not proceeding"])
 		self.assertNotIn(REMOVED_USAGE_VALUE, options or "")
 
 	def test_retired_roles_exist_nowhere(self):

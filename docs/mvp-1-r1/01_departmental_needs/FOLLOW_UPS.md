@@ -634,6 +634,26 @@ combining `close_window()` with `update_need`; and, if this module's screens
 are touched again, a `departmental-needs-fidelity.spec.ts` following the
 System Setup/Budget pattern.
 
+**CLOSED 2026-09-19 (NDS-CHG-001 v1.14).** All three items closed:
+1. NDS-AC-048 — `CreateTargetDialog.vue` no longer exists (retired by
+   NDS13-CHG-003's inline DES-15 selector, closed in v1.13). The Python half
+   closed: `TestCreateTargets` in `test_departmental_needs_contracts.py`
+   proves `list_need_create_targets`'s multi-OU shape using Grace's own real
+   2-OU grant. The Playwright half — a spec reaching the inline `/new`
+   multi-select flow — was **not** written; see the new FU-32.
+2. NDS-AC-050 — `TestMultiFiscalYearBrowsing` in
+   `test_departmental_needs_lifecycle.py`: a disposable second Fiscal Year,
+   proves `selectable_financial_years()` offers both years and the workspace
+   neither leaks one year's rows into a filtered read of the other nor hides
+   either from an unfiltered one. Found a real bug while building this: the
+   server-side remembered-FY default (`frappe.defaults`, CTX-CHG-001)
+   persists for real between test runs on this bench (see FU-30) and was
+   bleeding into unrelated later tests — fixed with an explicit reset.
+3. NDS-AC-054 half — `test_save_draft_still_succeeds_once_intake_has_closed`
+   proves `update_need` still succeeds on a Draft/Returned Need while intake
+   is closed, confirming `require_open_intake` was never called there.
+The design-fidelity gate itself was added in v1.13 (NDS13-401), separately.
+
 ---
 
 ## FU-20 — Procurement Planning's own test suite cannot currently execute against this site (2026-09-04)
@@ -771,6 +791,24 @@ named descendants and excludes a sibling; a lifecycle test that sets
 clock past it, and asserts create/submit are refused before the hourly
 `close_due_needs_submissions` job has run.
 
+**CLOSED 2026-09-19 (NDS-CHG-001 v1.14).** Both steps covered:
+1. Step 10 — this site's real Organisation Unit tree is flat (confirmed by
+   direct query: no `Organisation Unit` has a `parent_org_unit`), so a
+   real-tree test would need to build disposable tree data, which is
+   `kentender_core`'s tree-doctype territory, not this module's. Instead,
+   `TestParentOrganisationUnitCoversDescendantsNotSiblings` in
+   `test_departmental_needs_permissions.py` mocks
+   `kentender_core.services.authorization.descendants_of` to prove NDS's own
+   `require_review_command` actually consults the shared resolver's
+   descendant set (covers two named units, excludes a third) rather than
+   only ever comparing for an exact OU match.
+2. Step 13 — `TestAutoCloseInstant` in `test_departmental_needs_lifecycle.py`
+   opens a window with `closes_at` 1.5 seconds in the future, sleeps past it
+   with real wall-clock time (no mocked clock), and confirms both create and
+   submit are refused with `NDS_INTAKE_NOT_OPEN` — proving
+   `needs_submission_state`'s direct instant-comparison (already correct
+   code, per its own docstring) with a real regression, not just a read.
+
 ---
 
 ## FU-26 — Four pre-existing test failures found running the full NDS suite during the v1.13 screen rewrite (2026-09-15)
@@ -819,6 +857,22 @@ The site's canonical data has drifted from what the seed/tests assert; a
 disrupting in-progress verification — flagged for the Phase 4 release-gate
 pass instead.
 
+**Update 2026-09-19 (NDS-CHG-001 v1.14).** Of the five items: (3)/(4) closed
+— `PERMITTED_DOCTYPES` gained `Need Planning Disposition Projection`, and a
+second, previously-unnoticed static-scan gap in the same test file was found
+and fixed alongside it: `test_partially_included_is_gone_from_the_projection`
+still asserted the `usage` field's options were exactly `["Not included",
+"Fully included"]`, stale since PLN-CHG-001 v1.12 §4.4 added `Not
+proceeding` to that same field (confirmed against the live DocType JSON
+before changing the assertion). The domain-model flake — item 5 above — is
+**confirmed resolved**: `NDS-MOH-2027-0001.current_accepted_revision` reads
+`...-V001` again (a live query 19 Sep 2026, and a clean `test_
+departmental_needs_domain_model.py` run, 24/24), a side effect of `db1e7c6a`'s
+canonical-seed fixes, not a change made this cycle. Items (1) Planning's
+`plan_read.py` boundary violation and (2) the notification-link routing
+question remain exactly as written — still reproduced this session, still
+not this module's to fix.
+
 ---
 
 ## FU-27 — Four NDS-DES-07A Planning-status variants need a new async boundary or a revision lookback (2026-09-15)
@@ -863,6 +917,35 @@ not included" (CLEAR). Same fix category: the read needs a distinguishable
 failure/unavailable result (or the command needs to let a failure propagate
 as a typed, catchable state) before that variant can be built.
 
+**Update 2026-09-19 (NDS-CHG-001 v1.14) — backend and UI built, formal test
+coverage split out as FU-31.** All 5 variants now have real logic and a real
+UI:
+- `services/usage.py::planning_status_for_need` — a new whitelisted read
+  (`get_need_planning_status`), separate from `get_departmental_need`'s
+  atomic payload, fetched by the client as an independent, retriable
+  revalidation. `planning_usage_detail()` gained a `recorded` boolean
+  (mirroring `planning_disposition_detail`'s existing one) so "never
+  checked" is distinguishable from "checked, not included" — this is what
+  makes UNAVAILABLE-NO-SNAPSHOT representable at all.
+- `services/usage.py::older_revision_usage()` — walks a Need's
+  `REVISION_SUPERSEDED` revisions newest-first for the first one Planning
+  reported `Fully included`, returning that revision's own 6 content fields
+  too, so "View earlier requirement" can render inline (a disclosure toggle
+  reusing `RequirementCard`, not a new route/screen).
+- The same failure-signal pattern (try/catch → `{unavailable: true}` →
+  distinguishable UI state + Try again) was applied to
+  `check_accepted_need_withdrawal_dependency` for DES-12-UNAVAILABLE.
+- `NeedDetailScreen.vue`/`WithdrawalReviewScreen.vue` render all 5 states
+  with the exact §11.8A/§11.13 copy; `DepartmentalNeeds.vue` orchestrates the
+  revalidation calls.
+- **Genuinely not done**: no fixture builder in `playwright_ui_fixtures.py`
+  for any of these 5 states (none of the named `NDS-SC-DISPOSITION-*`
+  profiles exist in seeds, confirmed again by grep), and no Playwright spec
+  exercises any of them — REFRESHING needs a route-delay, the three
+  UNAVAILABLE variants need a route-abort/500. Only live-verified manually
+  for the 5 unaffected (already-shipped) variants plus a general smoke check
+  that nothing broke. See the new **FU-31**.
+
 ---
 
 ## FU-28 — Two visual baselines carry a live "requested/submitted at" timestamp and drift on every re-run (2026-09-15)
@@ -887,6 +970,13 @@ harness itself, out of scope for this screen-redesign cycle.
 elements a `data-volatile="true"` attribute (matching `ReadonlyRow`'s own
 convention) and confirm the visual spec's existing volatile-masking logic
 picks them up.
+
+**CLOSED 2026-09-19 (NDS-CHG-001 v1.14).** `data-volatile="true"` added
+directly to `ReviewTaskScreen.vue`'s "Submitted at" value and
+`WithdrawalReviewScreen.vue`'s "Requested at" value. Confirmed by re-shooting
+both baselines: the regenerated images show the value masked (a solid
+magenta box) exactly where the volatile-masking convention is expected to
+apply it. Full visual spec re-run afterward: 6/6 green.
 
 ---
 
@@ -937,3 +1027,147 @@ exactly the 4 canonical Needs. See NDS-CHG-001 tracker NDS13-406.
 ## FU-07 — PLN-CHG-001 v1.18 disposition event (opened 2026-09-12)
 
 Planning emits `NeedPlanningDispositionChanged.v1` (event_id, schema_version, producer_sequence, need_id, need_revision_id, dpp_submission_id, disposition, reason when excluded, actor, decision_at) after a departmental submission is **accepted** with a Need marked not proceeding. Departmental Needs consumes it into a `Need Planning Disposition Projection` and shows it as Planning information on the Need; it is separate from `NeedPlanningUsageChanged.v1`, whose `Fully included` / `Not included` / `Not proceeding` semantics are unchanged (a DPP exclusion never clears an existing Active dependency). Code lands under Planning tracker row PLN18-108; NDS-CHG-001 v1.11 (§4.7, §7.2) is owed. See `docs/mvp-1-r1/04_planning/PLN-CHG-001_FOLLOW_UPS.md` FU-24.
+
+---
+
+## FU-30 — `bench run-tests` does not roll back on this bench (found 2026-09-19)
+
+**What.** Discovered mid-NDS-CHG-001 v1.14: `bench --site kentender.midas.com
+run-tests --app kentender_procurement --module <file>` does **not** wrap the
+run in a transaction that gets rolled back afterward, contrary to the
+default/expected behaviour of Frappe's `IntegrationTestCase`. Every write a
+test makes — a created `Departmental Need`, a `frappe.defaults.set_user_default`
+call, a disposable `User`/`Fiscal Year` doc — persists for real on the site,
+across the whole run and across separate invocations. Confirmed directly: a
+single full run of `test_departmental_needs_lifecycle.py` (73 tests) alone
+left ~200 real `Departmental Need` rows; running the full 11-file suite
+across one session left 643.
+
+**Why it matters.** Every existing test file in this module already assumes
+this (namespaced grants get `revoke()`d in `addCleanup`, and the module's own
+Playwright fixture layer has an elaborate `purge_fixture_needs`/`reset_all`/
+`purge_untagged_needs_since` apparatus) — but nothing said so in one place for
+the *Python* suite specifically, and the assumption is easy to miss when
+writing a new test that reads or asserts on real counts (`frappe.db.count`,
+`get_needs_workspace`'s row count, a `selectable_financial_years()` list)
+against what should be a clean canonical baseline.
+
+**Fix applied this session, not a general fix.** After every Python test run
+that could have created `Departmental Need` rows, called
+`kentender_procurement.departmental_needs.seeds.playwright_ui_fixtures.purge_untagged_needs_since`
+with an early cutoff (`'2020-01-01 00:00:00'`) via `bench execute`, confirmed
+back to exactly the 4 canonical rows each time. Also found and fixed a
+related persistence surprise: `frappe.defaults.set_user_default` (the
+CTX-CHG-001 remembered-Financial-Year mechanism) also does not roll back,
+and a stale value from an earlier failed test attempt broke an unrelated
+later test in the same file until reset directly.
+
+**Not fixed.** The runner's own transaction behaviour is out of this
+module's control (and possibly intentional — `IntegrationTestCase` may be
+deliberately commit-based on this bench, as distinct from a lighter-weight
+unit-test base class). A future session should: (a) treat every Python
+`bench run-tests` invocation on this bench as commit-for-real, exactly like a
+Playwright run, and purge afterward; (b) consider whether a `tearDown`/
+`addClassCleanup` hook belongs on `DepartmentalNeedsCommandCase` and its
+siblings to make this automatic rather than relying on a human to remember.
+
+---
+
+## FU-31 — DES-07A's 4 new Planning-status variants and DES-12-UNAVAILABLE have real logic but no Playwright regression (2026-09-19)
+
+**What.** NDS-CHG-001 v1.14 built the genuine missing capability FU-27 named
+— a dedicated, independently-retriable Planning-status read
+(`get_need_planning_status`), a revision-lookback helper
+(`older_revision_usage`), and the equivalent failure-signal treatment for the
+withdrawal-dependency check — and wired all 5 resulting UI states
+(REFRESHING, UNAVAILABLE, UNAVAILABLE-NO-SNAPSHOT, OLDER,
+DES-12-UNAVAILABLE) into `NeedDetailScreen.vue`/`WithdrawalReviewScreen.vue`
+with the exact §11.8A/§11.13 copy. What it did **not** build:
+
+1. Fixture builders in `playwright_ui_fixtures.py` for any of the 5 states —
+   none of the named `NDS-SC-DISPOSITION-*` §14.6A profiles exist in seeds
+   (reconfirmed by grep, same finding as NDS13-201).
+2. A Playwright spec exercising any of them. REFRESHING needs a
+   `page.route()` delay on `get_need_planning_status`; UNAVAILABLE and
+   UNAVAILABLE-NO-SNAPSHOT need a `page.route()` abort/500 on the same
+   endpoint (with/without a prior successful projection, respectively);
+   DES-12-UNAVAILABLE needs the same treatment on
+   `check_accepted_need_withdrawal_dependency`; OLDER needs a real
+   successor-accept-then-project-on-the-superseded-revision fixture (the
+   exact sequence `test_older_revision_usage_walks_back_when_current_
+   revision_is_unprojected` in `test_departmental_needs_lifecycle.py`
+   already proves works at the service layer — a Playwright fixture would
+   reuse the same command sequence).
+
+**Why not fixed here.** This was already the single largest, most
+architecturally novel item in the v1.14 cycle (its own tracker risk R1);
+building 5 new fixture profiles plus 5 new route-mocked Playwright tests
+was judged to be starting a second cycle's worth of work rather than
+finishing this one, and the session was explicitly told not to loop
+indefinitely. The backend is real, unit-tested where it can be
+(`older_revision_usage`, 2 tests, green) and live-verified manually for the
+unaffected 5 variants plus a general regression sweep (no console errors, no
+existing-spec breakage) — but NDS13-AC-006/AC-008 stay `Partial`, not `Done`,
+until this lands.
+
+**Fix.** A future session: build the 5 fixtures, write the 5 (or more,
+per-variant) Playwright tests using route interception for the failure
+cases, then flip NDS13-AC-006/AC-008 to `Done` in the tracker.
+
+---
+
+## FU-32 — AC-048's inline multi-department flow has a Python contract test but no Playwright spec (2026-09-19)
+
+**What.** `TestCreateTargets` in `test_departmental_needs_contracts.py`
+(added this session) proves `list_need_create_targets`'s multi-OU return
+shape using Grace's real two-OU grant. No Playwright spec drives the actual
+`/new` inline DES-15 selector through a two-OU actor — the Playwright
+`AUTHOR` fixture persona is single-OU only (same structural gap FU-19
+originally named for the now-retired `CreateTargetDialog`), so the existing
+Playwright suite cannot structurally reach the MULTIPLE-department branch of
+`NeedEditorScreen.vue` at all. NDS13-302's own evidence records a one-time
+manual browser verification of this exact flow as Grace (both departments
+offered, Save draft/Submit for review disabled until one is chosen), but
+that was never captured as a checked-in spec.
+
+**Fix.** A future session: add a two-OU Playwright fixture actor (or grant a
+second OU to the existing `AUTHOR` fixture persona) and a spec asserting the
+inline multi-select disable/enable behaviour and successful create.
+
+---
+
+## FU-33 — `test_departmental_needs_navigation.py` is stale against the live sidebar/role configuration (found 2026-09-19)
+
+**What.** Running the full Python suite for NDS-CHG-001 v1.14 surfaced 6
+failures/errors in `test_departmental_needs_navigation.py`, none touched by
+this cycle and none present in any file this cycle edited:
+
+1. `test_module_sits_after_budget_and_before_planning` — looks for a sidebar
+   entry labelled exactly "Procurement Plans"; the committed
+   `workspace_sidebar/procurement.json` (confirmed via `git diff`, clean —
+   not a local uncommitted change) has renamed it to "Procurement Planning"
+   at some point before this session.
+2. `test_page_is_registered_once_with_its_own_controller` — expects
+   `hooks.py`'s `nds_page_js` dict to have exactly one entry
+   (`departmental-needs`); it has had a second, unrelated entry
+   (`departmental-procurement-plan`) committed since at least 5 Sep 2026
+   (confirmed via `git log` on that file — also not caused by this session).
+3. Four `test_every_section_6_business_role_may_open_the_page` subtests
+   (`Departmental Author`, `Head of User Department`, `Procurement Planner`,
+   `Auditor`) — the sidebar row's own role-visibility set reads empty,
+   presumably the same sidebar-file drift as (1).
+
+**Why it matters.** Same class as `procurement-sidebar-g0012-preexisting-drift`
+(memory) — a sidebar/label rename in Procurement Planning's own scope left
+this module's navigation test uninformed. Not a Departmental Needs defect.
+
+**Why not fixed here.** Fixing it means deciding the *correct* current label
+and role set for Procurement Planning's own sidebar entry, which is that
+module's call, not this cycle's (§11/§12.10 design-fidelity and Planning-
+status scope named at the top of this tracker's own plan).
+
+**Fix.** A future session, scoped to Procurement Planning or navigation
+hygiene generally: update `test_departmental_needs_navigation.py`'s
+expectations to match the current sidebar file, or fix the sidebar/role
+configuration if the rename was itself unintentional — whichever the module
+owner confirms is correct.

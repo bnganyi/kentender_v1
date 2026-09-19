@@ -306,6 +306,66 @@ class TestCartesianProductIsolation(DepartmentalNeedsPermissionCase):
 		self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
 
 
+class TestParentOrganisationUnitCoversDescendantsNotSiblings(DepartmentalNeedsPermissionCase):
+	"""AUTH-ADR-001 v1.7 §16.3 step 10 — a Head of User Department assignment
+	on a parent Organisation Unit covers its named descendants but never a
+	sibling outside that subtree (FOLLOW_UPS FU-25).
+
+	`kentender_core.services.authorization.descendants_of` is the shared
+	resolver's own tree traversal — testing the traversal *algorithm* against
+	a real multi-level Organisation Unit tree is kentender_core's own
+	responsibility, not this module's, and this site's real OU tree is flat
+	(no parent/child Organisation Units exist to test against without
+	building disposable tree data outside this module's ownership). What
+	NDS-CHG-001 owns, and what was genuinely untested, is whether its *own*
+	scope check (`require_review_command`) actually consults that traversal
+	rather than only ever comparing the assignment's OU for an exact match —
+	proven here by controlling what the traversal reports.
+	"""
+
+	PARENT_TEST_USER = "nds.test.parent-hod@example.test"
+
+	def _ensure_parent_hod(self) -> str:
+		if not frappe.db.exists("User", self.PARENT_TEST_USER):
+			doc = frappe.get_doc(
+				{
+					"doctype": "User",
+					"email": self.PARENT_TEST_USER,
+					"first_name": "Parent",
+					"last_name": "HoD Test User",
+					"send_welcome_email": 0,
+					"user_type": "System User",
+					"enabled": 1,
+				}
+			)
+			doc.insert(ignore_permissions=True)
+			doc.add_roles("Desk User")
+		grant(
+			user=self.PARENT_TEST_USER,
+			business_role=ROLE_HEAD_OF_USER_DEPARTMENT,
+			organisation_unit=self.ou,
+			fixture_namespace=NS_TEST_GRANT,
+			actor="Administrator",
+		)
+		return self.PARENT_TEST_USER
+
+	def test_a_parent_ou_assignment_covers_named_descendants_but_not_a_sibling(self):
+		from unittest.mock import patch
+
+		user = self._ensure_parent_hod()
+		with patch(
+			"kentender_core.services.authorization.descendants_of",
+			return_value={self.ou, "OU-NDS-TEST-CHILD-1", "OU-NDS-TEST-CHILD-2"},
+		):
+			for covered in ("OU-NDS-TEST-CHILD-1", "OU-NDS-TEST-CHILD-2"):
+				permissions.require_review_command(frappe._dict({"organisation_unit": covered}), user)
+			with self.assertRaises(DepartmentalNeedError) as caught:
+				permissions.require_review_command(
+					frappe._dict({"organisation_unit": self.ou_hrmd}), user
+				)
+			self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
+
+
 class TestActingHeadOfDepartment(DepartmentalNeedsPermissionCase):
 	"""NDS-AC-042 — an Acting appointment is one time-bound URA row, not a
 	separate delegate role."""

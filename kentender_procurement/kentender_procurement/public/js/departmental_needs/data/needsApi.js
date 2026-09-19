@@ -37,6 +37,11 @@ export const checkWithdrawalDependency = (need, acceptedRevision) =>
 		accepted_revision: acceptedRevision,
 	});
 
+// §11.8A — the detail screen's own dedicated Planning-status re-check,
+// separate from getDepartmentalNeed's atomic payload.
+export const getNeedPlanningStatus = (need) =>
+	frappeCall(`${API}.get_need_planning_status`, { need });
+
 // --- §8.2 commands ---------------------------------------------------------
 //
 // Every command takes an idempotency key. §12.3 requires one key to be reused

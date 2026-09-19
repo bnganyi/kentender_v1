@@ -78,6 +78,10 @@
 				:pinned-revision="pinnedRevision"
 				:usage="usage"
 				:disposition="disposition"
+				:older-usage="olderUsage"
+				:planning-checking="planningChecking"
+				:planning-unavailable="planningUnavailable"
+				:planning-checked-at="planningCheckedAt"
 				:author-label="detail.author_label || ''"
 				:accepted-by-label="acceptedBy.actor_label || ''"
 				:accepted-at="acceptedBy.occurred_at || ''"
@@ -94,6 +98,7 @@
 				@edit="go(needReference, 'edit')"
 				@review="(action) => onRowAction({ reference: needReference }, action)"
 				@view-plan-item="onViewPlanItem"
+				@retry-planning="refreshPlanningStatus"
 			/>
 
 			<ReviewTaskScreen
@@ -121,6 +126,7 @@
 				:revision="task.revision || {}"
 				:scope="task.scope || {}"
 				:dependency="dependency"
+				:dependency-checking="dependencyChecking"
 				:requester-label="requesterLabel"
 				:requested-at="task.opened_at || ''"
 				:permitted="task.permitted_decisions || []"
@@ -131,6 +137,7 @@
 				@decline="dialog = 'decline-withdrawal'"
 				@close="go()"
 				@view-plan-item="onViewPlanItem"
+				@retry-dependency="retryWithdrawalDependency"
 			/>
 
 		</div>
@@ -205,7 +212,12 @@ const task = ref({});
 const submissionState = ref({ open: false, financial_year: "", label: "", closes_at: "" });
 const usage = ref({});
 const disposition = ref(null);
+const olderUsage = ref(null);
+const planningChecking = ref(false);
+const planningUnavailable = ref(false);
+const planningCheckedAt = ref("");
 const dependency = ref({});
+const dependencyChecking = ref(false);
 const units = ref([]);
 const acceptedBy = ref({});
 const dialog = ref("");
@@ -384,11 +396,19 @@ async function fetchFor(scr) {
 		const loadedTask = await api.getDepartmentalReviewTask(taskId.value);
 		let loadedDependency = null;
 		if (scr === "withdrawal") {
+			// NDS-DES-12-UNAVAILABLE — the check itself can fail independently of
+			// the task load; caught here rather than left to abort the whole
+			// screen navigation, so the withdrawal review still renders with an
+			// explicit "could not be checked" state and a Try again action.
 			const request = loadedTask.withdrawal_request || {};
-			loadedDependency = await api.checkWithdrawalDependency(
-				(loadedTask.need || {}).name,
-				request.accepted_revision
-			);
+			try {
+				loadedDependency = await api.checkWithdrawalDependency(
+					(loadedTask.need || {}).name,
+					request.accepted_revision
+				);
+			} catch (e) {
+				loadedDependency = { unavailable: true };
+			}
 		}
 		return { task: loadedTask, dependency: loadedDependency };
 	}
@@ -418,6 +438,9 @@ function applyLoaded(loaded) {
 		// reads `row.planning_usage` (a plain string) unaffected by this.
 		usage.value = detail.value.planning_usage || {};
 		disposition.value = detail.value.planning_disposition || null;
+		olderUsage.value = null;
+		planningUnavailable.value = false;
+		planningCheckedAt.value = "";
 		acceptedBy.value = detail.value.accepted || {};
 		return;
 	}
@@ -454,6 +477,12 @@ async function load(opts) {
 		if (seq !== loadSeq) return;
 		cache.set(key, loaded);
 		applyLoaded(loaded);
+		if (loaded.detail && (loaded.detail.need || {}).current_state === "Accepted for planning") {
+			// Fire-and-forget: the atomic payload just applied already has a
+			// usable "last confirmed" value, so this revalidation never blocks
+			// first paint (AGENTS.md §6.4).
+			refreshPlanningStatus();
+		}
 		if (loaded.workspace && !quiet) {
 			// The Needs-submission flag is a site-wide read, independent of the
 			// selected department, so a quiet filter refresh keeps the one
@@ -685,6 +714,51 @@ function onRowAction(row, action) {
 function onViewPlanItem() {
 	const item = usage.value.active_plan_item || dependency.value.active_plan_item;
 	if (item) frappe.set_route("procurement-plan-item", item);
+}
+
+// NDS-DES-12-UNAVAILABLE — Try again re-runs the exact same check; a second
+// failure simply leaves `dependency.unavailable` set, no different from the
+// first.
+async function retryWithdrawalDependency() {
+	const request = task.value.withdrawal_request || {};
+	const needName = (task.value.need || {}).name;
+	if (!needName) return;
+	dependencyChecking.value = true;
+	try {
+		dependency.value = await api.checkWithdrawalDependency(needName, request.accepted_revision);
+	} catch (e) {
+		dependency.value = { unavailable: true };
+	} finally {
+		dependencyChecking.value = false;
+	}
+}
+
+// §11.8A — a dedicated, independently-retriable re-check of the Planning
+// status section, separate from the detail screen's own atomic load: fired
+// once after the detail screen first renders (revalidate in place, AGENTS.md
+// §6.4), and again from the UNAVAILABLE state's own Try again. The atomic
+// `get_departmental_need()` payload already loaded into `usage`/`disposition`
+// is kept as the pre-existing "last confirmed" value if this call is slow or
+// fails, so the common case (this call succeeds quickly) is visually
+// unchanged from before Phase 2.
+async function refreshPlanningStatus() {
+	const needName = needReference.value;
+	if (!needName) return;
+	planningChecking.value = true;
+	try {
+		const result = await api.getNeedPlanningStatus(needName);
+		if (needReference.value !== needName) return; // superseded by navigation
+		usage.value = result.planning_usage || {};
+		disposition.value = result.planning_disposition || null;
+		olderUsage.value = result.older_usage || null;
+		planningCheckedAt.value = result.checked_at || "";
+		planningUnavailable.value = false;
+	} catch (e) {
+		if (needReference.value !== needName) return;
+		planningUnavailable.value = true;
+	} finally {
+		if (needReference.value === needName) planningChecking.value = false;
+	}
 }
 
 // --- dialogs ---------------------------------------------------------------

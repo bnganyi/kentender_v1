@@ -711,6 +711,14 @@
 .kt-industry .kt-factstack .kt-label { margin-bottom: 3px; }
 .kt-industry .kt-factstack .kt-factstack-value { font-size: 14px; }
 
+/* Requirement-details sub-groupings within a .kt-factstack (18 Sep 2026
+   design-board refresh, NDS-CHG-001 v1.14 Phase 1): free-text facts
+   (description/expected result) in a 2-column grid, short meta facts
+   (quantity/unit/required by) in a 3-column grid — the title itself is
+   never repeated here, since the screen heading already shows it. */
+.kt-industry .kt-factstack-text { display: grid; grid-template-columns: 1fr 1fr; gap: var(--kt-space-4) var(--kt-space-6); }
+.kt-industry .kt-factstack-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--kt-space-4); border-top: 1px solid var(--kt-color-neutral-200); padding-top: var(--kt-space-3); }
+
 /* Media hardening — keep when trimming (see the design-system readme). */
 @media (forced-colors: active) {
 	.kt-industry .kt-status, .kt-industry .kt-tag { border: 1px solid currentColor; }

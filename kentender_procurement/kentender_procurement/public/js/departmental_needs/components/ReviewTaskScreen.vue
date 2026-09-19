@@ -22,7 +22,7 @@
 				<div><span class="kt-label">Requester</span><span class="kt-meta-value" style="font-size: 14px">{{ requesterLabel }}</span></div>
 				<div><span class="kt-label">Department</span><span class="kt-meta-value" style="font-size: 14px">{{ scope.organisation_unit || "" }}</span></div>
 				<div><span class="kt-label">Financial year</span><span class="kt-meta-value" style="font-size: 14px">{{ scope.financial_year || "" }}</span></div>
-				<div><span class="kt-label">Submitted at</span><span class="kt-meta-value" style="font-size: 14px">{{ formatInstant(openedAt) }}</span></div>
+				<div><span class="kt-label">Submitted at</span><span class="kt-meta-value" style="font-size: 14px" data-volatile="true">{{ formatInstant(openedAt) }}</span></div>
 			</div>
 		</div>
 

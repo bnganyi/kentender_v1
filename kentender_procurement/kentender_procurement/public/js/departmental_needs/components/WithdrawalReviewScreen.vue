@@ -1,6 +1,7 @@
 <!-- NDS-UI-07 withdrawal review (§12.6) — NDS-DES-12 base (blocked/
-     "still-Active") + the CLEAR variant. The dependency is always the fresh
-     server result, never a cached button state. -->
+     "still-Active"), the CLEAR variant and NDS-DES-12-UNAVAILABLE (the check
+     itself failing, `dependency.unavailable`). The dependency is always the
+     fresh server result, never a cached button state. -->
 <template>
 	<div class="kt-panel-lg" style="max-width: 700px">
 		<h3 style="margin: 0">Review withdrawal request</h3>
@@ -19,17 +20,36 @@
 		<h6 class="kt-card-title" style="margin-top: var(--kt-space-6)">Withdrawal request</h6>
 		<div style="display: flex; gap: var(--kt-space-6); font-size: 13px; margin: var(--kt-space-3) 0 var(--kt-space-3)">
 			<div><span class="kt-label" style="display: block">Requested by</span>{{ requesterLabel }}</div>
-			<div><span class="kt-label" style="display: block">Requested at</span>{{ formatInstant(requestedAt) }}</div>
+			<div><span class="kt-label" style="display: block">Requested at</span><span data-volatile="true">{{ formatInstant(requestedAt) }}</span></div>
 		</div>
 		<div style="font-size: 13px">
 			<span class="kt-label" style="display: block">Reason for withdrawal</span>{{ request.reason }}
 		</div>
 
-		<!-- §11.13 second section — Planning status; blocked (STILL-ACTIVE) or
-		     CLEAR (no Active inclusion). UNAVAILABLE (the check itself failing)
-		     is not distinguishable from CLEAR by the current read contract —
-		     see FOLLOW_UPS FU-27. -->
-		<div v-if="dependency.included" class="kt-notice is-warning" style="margin: var(--kt-space-4) 0">
+		<!-- §11.13 second section — Planning status; blocked (STILL-ACTIVE),
+		     CLEAR (no Active inclusion) or NDS-DES-12-UNAVAILABLE (the check
+		     itself failed — a distinguishable provider-failure profile,
+		     separate from CLEAR; closes FOLLOW_UPS FU-27's withdrawal-screen
+		     gap). -->
+		<div v-if="dependency.unavailable" class="kt-notice is-critical" style="margin: var(--kt-space-4) 0">
+			<div class="kt-notice-body">
+				Planning information could not be checked. Withdrawal cannot be approved until
+				the check succeeds.
+				<div>
+					<button
+						type="button"
+						class="kt-action-link"
+						data-testid="nds-retry-dependency"
+						style="font-size: 12px; margin-top: 6px"
+						:disabled="dependencyChecking"
+						@click="$emit('retry-dependency')"
+					>
+						{{ dependencyChecking ? "Checking…" : "Try again" }}
+					</button>
+				</div>
+			</div>
+		</div>
+		<div v-else-if="dependency.included" class="kt-notice is-warning" style="margin: var(--kt-space-4) 0">
 			<div class="kt-notice-body">
 				<strong>Withdrawal cannot be approved yet.</strong> This requirement is still
 				included in the current annual plan. Procurement must review the necessary plan
@@ -77,10 +97,10 @@
 			>
 				Decline withdrawal
 			</button>
-			<!-- §11.13 — blocked (still-Active) never offers Approve; Close
-			     replaces it as the only other footer action. -->
+			<!-- §11.13 — blocked (still-Active) or UNAVAILABLE never offer
+			     Approve; Close replaces it as the only other footer action. -->
 			<button
-				v-if="dependency.included"
+				v-if="dependency.included || dependency.unavailable"
 				class="kt-btn kt-btn-secondary"
 				data-testid="nds-withdrawal-close"
 				:disabled="pending"
@@ -121,8 +141,9 @@ const props = defineProps({
 	makerCheckerBlocked: Boolean,
 	errorSummary: { type: String, default: "" },
 	pending: Boolean,
+	dependencyChecking: Boolean,
 });
-defineEmits(["approve", "decline", "close", "view-plan-item"]);
+defineEmits(["approve", "decline", "close", "view-plan-item", "retry-dependency"]);
 
 const canDecline = computed(() => !props.makerCheckerBlocked && props.permitted.includes("decline"));
 const canApprove = computed(() => !props.makerCheckerBlocked && props.permitted.includes("approve"));

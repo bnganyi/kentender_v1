@@ -21,6 +21,8 @@ import frappe
 from frappe.utils import cstr, now_datetime
 
 from kentender_procurement.departmental_needs.constants import (
+	REVISION_CONTENT_FIELDS,
+	REVISION_SUPERSEDED,
 	ROLE_PROCUREMENT_PLANNER,
 	USAGE_FULL,
 	USAGE_NOT_INCLUDED,
@@ -32,6 +34,7 @@ from kentender_procurement.departmental_needs.services.permissions import (
 	actor,
 	in_scope,
 	is_administrative,
+	require_view,
 )
 
 
@@ -70,11 +73,78 @@ def planning_usage_detail(need: str, accepted_revision: str = "") -> dict[str, A
 	return {
 		"need": cstr(need),
 		"accepted_revision": version,
+		# §11.8A NONE / NDS11-AC-071 — a Need Planning has never reported on is
+		# distinct from one confirmed `Not included`; `usage` still defaults to
+		# `Not included` for callers that only need the display value (the
+		# workspace table's status pill), but `recorded` tells the detail
+		# screen which case it actually is.
+		"recorded": bool(row),
 		"usage": cstr(row.get("usage") or USAGE_NOT_INCLUDED),
 		"active_plan": cstr(row.get("active_plan") or ""),
 		"active_plan_item": cstr(row.get("active_plan_item") or ""),
 		"not_proceeding_reason": cstr(row.get("not_proceeding_reason") or ""),
 		"source_event_id": cstr(row.get("source_event_id") or ""),
+	}
+
+
+def older_revision_usage(need: str, current_accepted_revision: str) -> dict[str, Any] | None:
+	"""§11.8A OLDER — when the Need's current accepted revision has never
+	itself been projected by Planning, the current annual plan may still be
+	using an *earlier* accepted (now superseded) revision's inclusion. Walks
+	revisions previously accepted for this Need, most recent first, and
+	returns the first one Planning actually reported as `Fully included`.
+
+	This never changes the current revision's own `Not included` status
+	(§11.8A is explicit the two-row section keeps reporting the current
+	revision plainly) — it is a separate supplementary fact for the "current
+	annual plan still uses the previously accepted details" disclosure.
+	"""
+	if not current_accepted_revision or _projection(current_accepted_revision):
+		return None
+	prior_revisions = frappe.get_all(
+		"Departmental Need Revision",
+		filters={"departmental_need": need, "revision_status": REVISION_SUPERSEDED},
+		fields=["name", "revision_number", *REVISION_CONTENT_FIELDS],
+		order_by="revision_number desc",
+	)
+	for row in prior_revisions:
+		projection = _projection(row.name)
+		if projection and cstr(projection.get("usage")) == USAGE_FULL:
+			return {
+				"revision": row.name,
+				"revision_number": row.revision_number,
+				"required_by_date": str(row.required_by_date or ""),
+				"active_plan": cstr(projection.get("active_plan") or ""),
+				"active_plan_item": cstr(projection.get("active_plan_item") or ""),
+				# §11.8A "View earlier requirement" — the older revision's own
+				# six content facts, not the current revision's.
+				"content": {field: row.get(field) for field in REVISION_CONTENT_FIELDS},
+			}
+	return None
+
+
+def planning_status_for_need(need: str, user: str | None = None) -> dict[str, Any]:
+	"""§11.8A's dedicated Planning-status re-check — separate from
+	`get_departmental_need()`'s atomic payload so the client can revalidate
+	this section independently (REFRESHING while in flight, UNAVAILABLE if
+	this call itself fails — a real exception here, e.g. a transient DB
+	error, is left to propagate to the caller rather than swallowed).
+
+	Same §9 view authorisation as `get_departmental_need()` — this reads the
+	same protected record, just a narrower slice of it.
+	"""
+	principal = actor(user)
+	if not frappe.db.exists("Departmental Need", need):
+		fail("NDS_SCOPE_DENIED", "Departmental Need not found.")
+	doc = frappe.get_doc("Departmental Need", need)
+	require_view(doc, principal)
+	current_accepted_revision = cstr(doc.current_accepted_revision or "")
+	return {
+		"need": cstr(need),
+		"planning_usage": planning_usage_detail(need, current_accepted_revision),
+		"planning_disposition": planning_disposition_detail(need),
+		"older_usage": older_revision_usage(need, current_accepted_revision),
+		"checked_at": cstr(now_datetime()),
 	}
 
 

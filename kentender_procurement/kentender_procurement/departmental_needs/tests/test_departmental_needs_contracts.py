@@ -16,6 +16,7 @@ from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, now_datetime
 
 from kentender_procurement.departmental_needs import api
+from kentender_procurement.departmental_needs.services.context import list_need_create_targets
 from kentender_procurement.departmental_needs.constants import (
 	STATE_ACCEPTED,
 	USAGE_FULL,
@@ -34,7 +35,10 @@ from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
 from kentender_procurement.departmental_needs.seeds import profiles
 from kentender_procurement.departmental_needs.services import lifecycle, workspace
 from kentender_procurement.departmental_needs.services.usage import (
+	older_revision_usage,
+	planning_status_for_need,
 	planning_usage,
+	planning_usage_detail,
 	project_planning_usage,
 )
 
@@ -53,6 +57,10 @@ READ_CONTRACTS = (
 	"get_needs_submission_state",
 	"get_current_accepted_need",
 	"check_accepted_need_withdrawal_dependency",
+	# NDS-CHG-001 v1.14 §11.8A — the detail screen's own dedicated
+	# Planning-status re-check, separate from get_departmental_need's atomic
+	# payload.
+	"get_need_planning_status",
 )
 
 # §8.2 — every command contract, by its exact name. `save_needs_intake_window`
@@ -143,6 +151,33 @@ class TestContractSurface(ContractCase):
 		for name in ("return_need_revision", "accept_need_revision", "decline_need_revision"):
 			source = inspect.getsource(getattr(api, name))
 			self.assertIn("lifecycle.review_need", source)
+
+
+class TestCreateTargets(ContractCase):
+	"""§8.1 `list_need_create_targets` / NDS-AC-048 (FOLLOW_UPS FU-19) — the
+	actual zero/one/several-OU return shape, not just that the name is
+	whitelisted. Grace (`AUTHOR`) already holds two real Departmental Author
+	assignments (Digital Health, HR Management and Development) per §14.2 —
+	no disposable fixture needed for the "several" case. `CreateTargetDialog.vue`
+	was retired by NDS13-CHG-003 in favour of the inline DES-15 selector, but
+	this contract is what that selector's multi-department choice still
+	reads."""
+
+	def test_several_eligible_departments_are_all_offered(self):
+		result = list_need_create_targets(user=AUTHOR)
+		units = {row["organisation_unit"] for row in result["organisation_units"]}
+		self.assertEqual(units, {self.ou, self.ou_hrmd})
+		self.assertTrue(result["open"])
+		self.assertTrue(result["financial_year"])
+
+	def test_a_user_with_no_authoring_grant_is_offered_nothing(self):
+		# `financial_year` reflects the flag's own global state regardless of
+		# this user's authority — `open` is what actually combines the two
+		# (§16.4 step 4: no Fiscal Year permission ever substitutes for the
+		# OU-eligibility check).
+		result = list_need_create_targets(user=REVIEWER)
+		self.assertEqual(result["organisation_units"], [])
+		self.assertFalse(result["open"])
 
 
 class TestErrorContract(ContractCase):
@@ -406,6 +441,96 @@ class TestPlanningUsageProjection(ContractCase):
 			"Departmental Need", need.name, ["current_state", "record_version"]
 		)
 		self.assertEqual(before, after)
+
+	def test_recorded_is_false_until_planning_projects_then_true(self):
+		# NDS-CHG-001 v1.14 §11.8A NONE/UNAVAILABLE-NO-SNAPSHOT — a Need
+		# Planning has never reported on is distinct from a confirmed `Not
+		# included`; `recorded` is what tells the two apart (NDS11-AC-071).
+		# A freshly accepted Need of this test's own, never the shared
+		# canonical fixture other tests in this class also project onto
+		# (this runner gives no per-test rollback).
+		frappe.set_user(AUTHOR)
+		created = lifecycle.create_need(
+			organisation_unit=self.ou,
+			financial_year=FY,
+			idempotency_key=self.key(),
+			title="NDS14 recorded-flag fixture",
+			description="Isolated fixture for the planning_usage_detail recorded flag.",
+			expected_operational_result="Proves recorded is false before any projection.",
+			indicative_quantity=1,
+			unit="Each",
+			required_by_date="2027-12-31",
+		)
+		submitted = lifecycle.submit_need(
+			need=created["need"], expected_version=created["record_version"], idempotency_key=self.key()
+		)
+		frappe.set_user(REVIEWER)
+		accepted = lifecycle.review_need(
+			need=submitted["need"],
+			decision="accept",
+			task=submitted["task"],
+			expected_version=submitted["record_version"],
+			decision_token=frappe.db.get_value(
+				"Departmental Need Review Task", submitted["task"], "decision_token"
+			),
+			idempotency_key=self.key(),
+		)
+		before = planning_usage_detail(accepted["need"], accepted["current_accepted_revision"])
+		self.assertFalse(before["recorded"])
+		self.assertEqual(before["usage"], USAGE_NOT_INCLUDED)
+		frappe.set_user(PLANNER)
+		project_planning_usage(
+			departmental_need=accepted["need"],
+			accepted_revision=accepted["current_accepted_revision"],
+			usage=USAGE_FULL,
+			source_event_id=self.key(),
+			active_plan="PLN-NDS14-TEST",
+			active_plan_item="PPI-NDS14-TEST",
+		)
+		after = planning_usage_detail(accepted["need"], accepted["current_accepted_revision"])
+		self.assertTrue(after["recorded"])
+		self.assertEqual(after["usage"], USAGE_FULL)
+
+
+class TestPlanningStatusForNeed(ContractCase):
+	"""§11.8A `get_need_planning_status` — the detail screen's own dedicated,
+	independently-retriable Planning-status re-check (NDS-CHG-001 v1.14
+	Phase 2)."""
+
+	def test_matches_get_departmental_need_s_own_planning_fields(self):
+		need = self.accepted_need()
+		frappe.set_user(PLANNER)
+		project_planning_usage(
+			departmental_need=need.name,
+			accepted_revision=need.current_accepted_revision,
+			usage=USAGE_FULL,
+			source_event_id=self.key(),
+			active_plan="PLN-MOH-2027-001",
+			active_plan_item="PPI-MOH-2027-021",
+		)
+		frappe.set_user(AUTHOR)
+		bundled = workspace.get_need(need=need.name, user=AUTHOR)
+		dedicated = planning_status_for_need(need.name, user=AUTHOR)
+		self.assertEqual(dedicated["planning_usage"], bundled["planning_usage"])
+		self.assertEqual(dedicated["planning_disposition"], bundled["planning_disposition"])
+		self.assertIsNone(dedicated["older_usage"])
+		self.assertTrue(dedicated["checked_at"])
+
+	def test_a_reader_with_no_view_authority_is_denied(self):
+		need = self.accepted_need()
+		frappe.set_user("Guest")
+		try:
+			with self.assertRaises(DepartmentalNeedError) as caught:
+				planning_status_for_need(need.name, user="Guest")
+			self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_an_unknown_need_is_denied_not_missing(self):
+		# §9 — disclose no protected record data, including its existence.
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			planning_status_for_need("NDS-DOES-NOT-EXIST", user=AUTHOR)
+		self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
 
 
 class ReviewQueueActionTest(ContractCase):
