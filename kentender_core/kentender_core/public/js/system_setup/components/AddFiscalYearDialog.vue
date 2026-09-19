@@ -34,7 +34,7 @@ watch(startYear, async (value) => {
 </script>
 
 <template>
-	<div class="kt-dialog-backdrop" @click.self="emit('cancel')">
+	<div class="kt-dialog-backdrop">
 		<div
 			class="kt-dialog kt-blueprint kt-narrow"
 			role="dialog"

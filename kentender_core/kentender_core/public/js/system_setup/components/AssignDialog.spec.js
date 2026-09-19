@@ -63,6 +63,16 @@ describe("AssignDialog", () => {
 		expect(wrapper.find('[data-testid="kt-ura-ou"]').exists()).toBe(false);
 	});
 
+	it("never dismisses on a click outside the dialog — only Cancel or Escape do", async () => {
+		const wrapper = mountDialog();
+		await flushPromises();
+		await wrapper.find(".kt-dialog-backdrop").trigger("click");
+		expect(wrapper.emitted("cancel")).toBeUndefined();
+
+		await wrapper.find('[data-testid="kt-ura-assign"]').trigger("keydown.esc");
+		expect(wrapper.emitted("cancel")).toHaveLength(1);
+	});
+
 	it("renders the role beside its scope tag and units as their full path", async () => {
 		const wrapper = mountDialog();
 		await pickRole(wrapper, "Departmental Author");

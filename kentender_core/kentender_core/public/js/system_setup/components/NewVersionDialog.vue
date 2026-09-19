@@ -115,7 +115,7 @@ function submit() {
 </script>
 
 <template>
-	<div class="kt-dialog-backdrop" @click.self="emit('cancel')">
+	<div class="kt-dialog-backdrop">
 		<div class="kt-dialog kt-blueprint kt-procset-dialog" role="dialog" aria-modal="true" :aria-label="title" data-testid="kt-procset-new-version" @keydown.esc="emit('cancel')">
 			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
 			<h2 class="kt-dialog-title">{{ title }}</h2>

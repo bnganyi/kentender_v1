@@ -284,7 +284,7 @@ const applicabilityBasis = computed(
 			</div>
 
 			<!-- C03-B "rename" — the display name only. -->
-			<div v-if="renaming" class="kt-dialog-backdrop" @click.self="renaming = false">
+			<div v-if="renaming" class="kt-dialog-backdrop">
 				<div class="kt-dialog kt-blueprint kt-narrow" role="dialog" aria-modal="true" :aria-label="__('Edit rule name')" data-testid="kt-procset-rule-rename-dialog" @keydown.esc="renaming = false">
 					<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
 					<h2 class="kt-dialog-title">{{ __("Edit rule name") }}</h2>
