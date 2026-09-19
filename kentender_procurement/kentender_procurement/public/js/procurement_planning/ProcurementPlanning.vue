@@ -1201,6 +1201,17 @@ async function onReturnConfirm(issues) {
 
 function onNavigate(routeSegments) {
 	if (!routeSegments || !routeSegments.length) return;
+	// §10.3 "Your actions" reuses the generic action-route shape for a
+	// department with no plan yet, but starting one is a command, not a
+	// screen — `screen` (above) has no case for an "open" segment, so
+	// set_route-ing there used to just re-render the same workspace. Route
+	// it through the same open-departmental-plan command the "Your
+	// departmental plan" section already uses, which creates the DPP and
+	// reloads in place.
+	if (routeSegments[0] === WORKSPACE_PAGE && routeSegments[1] === "open" && routeSegments[2]) {
+		onOpenDepartmentalPlan(routeSegments[2]);
+		return;
+	}
 	frappe.set_route(...routeSegments);
 }
 
