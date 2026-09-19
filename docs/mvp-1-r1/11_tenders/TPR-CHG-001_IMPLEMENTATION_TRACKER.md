@@ -3,7 +3,7 @@
 **Authority:** `KenTender_TPR-CHG-001_Tenders_v0_8.md` (Approved 17 September 2026; supersedes TPR-CHG-001 v0.6/v0.7 and TPUB-CHG-001 v0.2/v0.3 in full).
 **Companions:** `TPR-CHG-001_Implementation_Plan.md` (decision register D1–D24, conflict register C1–C16, phases, slice gate, owner questions Q1–Q9), `TPR-CHG-001_FOLLOW_UPS.md`, `design/*.dc.html` (fourteen boards, repaired at TND-003), `evidence/v0_8/` (from Phase 7).
 **Supersedes-in-tracking:** `retired/TPR-CHG-001_IMPLEMENTATION_TRACKER.md` (v0.6 Tender Preparation, Phases 0–7 Done 2026-09-08, never committed beyond `2eb7c177`). That module is **retired in full** by Phase 1 of this cycle — no row here reuses its evidence.
-**Status:** Phases 0–5 Done 19 September 2026. Phase 6 (open-period services) next.
+**Status:** Phases 0–6 Done 19 September 2026. Phase 7 (UI slices 7a–7l) next.
 **Started:** 18 September 2026.
 
 ## Tracker rules
@@ -36,7 +36,7 @@
 | TND-G03 | Template binding + documents: exact renders; notice templates; documents by digest | Done | 2026-09-19. TND-301..305; `test_serializer` 11/11, `test_documents` 8/8. |
 | TND-G04 | Preparation + approval services: §7.1 reads 1–4,6 and §7.2 commands proven; `tenders-services-gate` | Done | 2026-09-19. TND-401..409; gate green (67 tests). |
 | TND-G05 | Publication services: §7.3 + every §15.3 case; `tenders-publication-integrity-gate` | Done | 2026-09-19. TND-501..506; `test_publication` 11/11 (integrity cases live in the same module, run by `tenders-services-gate`). |
-| TND-G06 | Open-period services: §7.4 all rows; scheduler close; handoff | Planned | |
+| TND-G06 | Open-period services: §7.4 all rows; scheduler close; handoff | Done | 2026-09-19. TND-601..607; `make tenders-services-gate` 10 modules / 84 tests green (`test_open_period` 6/6). |
 | TND-G07 | UI: every slice 7a–7l passes the plan §8 slice gate; `ui-tenders-fidelity-gate` | Planned | |
 | TND-G08 | Seeds: canonical `tenders` stage idempotent + validator twice; twelve Playwright profiles | Planned | |
 | TND-G09 | Release evidence: persona pass, evidence pack, build hash, industry/translation gates, runbooks, AC map closed truthfully | Planned | |
@@ -121,13 +121,13 @@
 
 | ID | Item | Status | Evidence |
 |---|---|---|---|
-| TND-601 | `addenda.py`: `CreateAddendumDraft` (Published — open only; `TND_CANCELLED` / unavailable after close), `UpdateAddendumDraft` (affected reference resolves against current effective content incl. prior addenda; previous value exact or `TND_ADDENDUM_STALE`), materiality guard (`TND_ADDENDUM_MATERIAL` for quantity/value/scope/method/reservation/lotting/package/requirement/evaluation), deadline-extension computation from the rule (`TND_ADDENDUM_DEADLINE_REQUIRED`), `SubmitAddendumForIssue`, `ReturnAddendumForCorrection` (AC-057..060) | Planned | |
-| TND-602 | `IssueAddendum` (HoPF, immutable, addendum notice document, channel confirmations over the original channel set) + `ConfirmAddendumPublicationChannel` through the generic engine; Issued only after all channels; effective deadline updated on the Tender (AC-061/062) | Planned | |
-| TND-603 | `candidate_gateway.py` (D8) + `inquiries.py`: `ReceiveAddendumInquiry` (producer identity, dedup, late → `TND_INQUIRY_LATE` with receipt preserved), `RespondToAddendumInquiry` (bounded response, effect classification, anonymised broadcast event + digest when affects requirements) + forgery/privacy tests (AC-063..065) | Planned | |
-| TND-604 | `cancellation.py`: `RecommendTenderCancellation` (HoPF, append-only, no status change), `CancelTender` (AO, ground from D7 catalogue, reason 20–2,000, immediate terminal state, cancellation notice document, obligations from CFG `TenderCancellation` rows + one per original channel), `RecordCancellationComplianceEvidence`; Due/Recorded/Overdue derivation; finality tests (AC-066..068) | Planned | |
-| TND-605 | `submission_close.py` (D9): `CloseTenderSubmissionPeriod`, `close_due_submission_periods` scheduler job, `Tender Submission Handoff` + `TenderSubmissionPeriodEnded` event, consumer-contract test | Planned | |
-| TND-606 | Audit rows §12.2 9–12; `GetTenderHistory` covers addenda/inquiries/cancellation/downstream events; My Work rows for HoPF issue task and inquiry response | Planned | |
-| TND-607 | `tenders-services-gate` extended with Phase 6 modules; whole-module run recorded | Planned | |
+| TND-601 | `addenda.py`: `CreateAddendumDraft` (Published — open only; `TND_CANCELLED` / unavailable after close), `UpdateAddendumDraft` (affected reference resolves against current effective content incl. prior addenda; previous value exact or `TND_ADDENDUM_STALE`), materiality guard (`TND_ADDENDUM_MATERIAL` for quantity/value/scope/method/reservation/lotting/package/requirement/evaluation), deadline-extension computation from the rule (`TND_ADDENDUM_DEADLINE_REQUIRED`), `SubmitAddendumForIssue`, `ReturnAddendumForCorrection` (AC-057..060) | Done | 2026-09-19. `addenda.py`: affected-reference catalogue (effective values with issued addenda applied; material rows flagged), `deadline_rule` (late-amendment window `LATE_AMENDMENT_DAYS = 7`), create/update/submit/return with inline field errors; `test_open_period.TestAddenda`. |
+| TND-602 | `IssueAddendum` (HoPF, immutable, addendum notice document, channel confirmations over the original channel set) + `ConfirmAddendumPublicationChannel` through the generic engine; Issued only after all channels; effective deadline updated on the Tender (AC-061/062) | Done | 2026-09-19. `issue_addendum` (HoPF, digest, addendum notice document, one confirmation row per original channel) + `confirm_addendum_publication_channel` via `channel_confirmation`; last confirmation sets Issued, `effective_at`, revised `submission_deadline`; workspace label follows the effective deadline. |
+| TND-603 | `candidate_gateway.py` (D8) + `inquiries.py`: `ReceiveAddendumInquiry` (producer identity, dedup, late → `TND_INQUIRY_LATE` with receipt preserved), `RespondToAddendumInquiry` (bounded response, effect classification, anonymised broadcast event + digest when affects requirements) + forgery/privacy tests (AC-063..065) | Done | 2026-09-19. `inquiries.py` (D8 fake: `Tender Inquiry Producer` Frappe role on `tndt.producer`; dedup on producer + inbound event; inquiry deadline = later of clarification deadline and addendum `effective_at` + `INQUIRY_WINDOW_DAYS = 7`, capped at the effective deadline; Late preserved, `TND_INQUIRY_LATE` on respond; broadcast event carries no candidate identity). `open_period_read.get_addendum_inquiry` masks identity except for auditor/technical. |
+| TND-604 | `cancellation.py`: `RecommendTenderCancellation` (HoPF, append-only, no status change), `CancelTender` (AO, ground from D7 catalogue, reason 20–2,000, immediate terminal state, cancellation notice document, obligations from CFG `TenderCancellation` rows + one per original channel), `RecordCancellationComplianceEvidence`; Due/Recorded/Overdue derivation; finality tests (AC-066..068) | Done | 2026-09-19. `cancellation.py` (D7 grounds catalogue, recommend = decision only, `cancel_tender` AO-only terminal, notice document, obligations = one per original channel + CFG `TenderCancellation` rows ordered channels→PPRA→candidate, `record_cancellation_compliance_evidence`, `refresh_obligation_statuses`); every command after cancel fails `TND_CANCELLED` except cancellation-notice confirmations. |
+| TND-605 | `submission_close.py` (D9): `CloseTenderSubmissionPeriod`, `close_due_submission_periods` scheduler job, `Tender Submission Handoff` + `TenderSubmissionPeriodEnded` event, consumer-contract test | Done | 2026-09-19. `submission_close.py` (Administrator/technical/scheduler only; `force` for seeds; immutable handoff payload with package, publication, confirmations digests, addendum trail, documents), `hooks.scheduler_events.hourly`, `get_submission_handoff`; `test_open_period.TestCancellationAndClose`. |
+| TND-606 | Audit rows §12.2 9–12; `GetTenderHistory` covers addenda/inquiries/cancellation/downstream events; My Work rows for HoPF issue task and inquiry response | Done | 2026-09-19. `history.py` lists addendum/inquiry/cancellation/close events; `my_work_provider` surfaces `HOPF addendum issue` and `Inquiry response` tasks; `technical_read` probes for addendum and cancellation. |
+| TND-607 | `tenders-services-gate` extended with Phase 6 modules; whole-module run recorded | Done | 2026-09-19. Gate globs every `tenders/tests/test_*.py`; run 2026-09-19: 8+10+7+13+6+11+6+11+6+6 = 84 tests OK. `test_read` asserts 37 whitelisted endpoints. |
 
 ## Work register — Phase 7: UI slices
 
@@ -277,18 +277,18 @@
 | TPR08-AC-054 | Invitation actual written once to Planning; replay idempotent | TND-503, 505 | Planned | |
 | TPR08-AC-055 | Withdrawal only unpublished/no channel; auditable | TND-504 | Planned | |
 | TPR08-AC-056 | Published record shows time, deadline, documents, evidence, addenda, inquiries | TND-709 | Planned | |
-| TPR08-AC-057 | Addendum draft unavailable before publication / after close / after cancel | TND-601 | Planned | |
-| TPR08-AC-058 | Addendum records before/after, reference, reason, materiality | TND-601, 710 | Planned | |
-| TPR08-AC-059 | Material change cannot be issued | TND-601, 710 | Planned | |
-| TPR08-AC-060 | Late addendum requires lawful revised deadline | TND-601, 710 | Planned | |
-| TPR08-AC-061 | Issue freezes addendum; confirmations per original channel | TND-602 | Planned | |
-| TPR08-AC-062 | Issued only after all channels confirmed | TND-602, 708 | Planned | |
-| TPR08-AC-063 | Inquiry only from authenticated candidate-service event | TND-603 | Planned | |
-| TPR08-AC-064 | Requirement-affecting response broadcast anonymously with digest | TND-603, 710 | Planned | |
-| TPR08-AC-065 | Non-affecting response to asker, auditable | TND-603, 710 | Planned | |
-| TPR08-AC-066 | Only AO cancels; ground + reason; final on commit | TND-604, 711 | Planned | |
-| TPR08-AC-067 | Cancellation never restores/reopens/replaces | TND-604 | Planned | |
-| TPR08-AC-068 | Obligations tracked with truthful states | TND-604, 711 | Planned | |
+| TPR08-AC-057 | Addendum draft unavailable before publication / after close / after cancel | TND-601 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
+| TPR08-AC-058 | Addendum records before/after, reference, reason, materiality | TND-601, 710 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
+| TPR08-AC-059 | Material change cannot be issued | TND-601, 710 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
+| TPR08-AC-060 | Late addendum requires lawful revised deadline | TND-601, 710 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
+| TPR08-AC-061 | Issue freezes addendum; confirmations per original channel | TND-602 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
+| TPR08-AC-062 | Issued only after all channels confirmed | TND-602, 708 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
+| TPR08-AC-063 | Inquiry only from authenticated candidate-service event | TND-603 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
+| TPR08-AC-064 | Requirement-affecting response broadcast anonymously with digest | TND-603, 710 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
+| TPR08-AC-065 | Non-affecting response to asker, auditable | TND-603, 710 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
+| TPR08-AC-066 | Only AO cancels; ground + reason; final on commit | TND-604, 711 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
+| TPR08-AC-067 | Cancellation never restores/reopens/replaces | TND-604 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
+| TPR08-AC-068 | Obligations tracked with truthful states | TND-604, 711 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
 | TPR08-AC-069 | Every board implementable from §10.1 + KT-STD §2 | TND-003, 714 | Planned | |
 | TPR08-AC-070 | Every visible action = one §11 behaviour; absent when not permitted | every slice, TND-714 | Planned | |
 | TPR08-AC-071 | No keys/hashes/enums/payloads in the default UI | TND-714, 903 | Planned | |

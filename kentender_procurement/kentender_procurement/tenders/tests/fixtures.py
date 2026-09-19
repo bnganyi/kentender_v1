@@ -31,8 +31,9 @@ BOTH = "tndt.both@example.test"  # Procurement Officer + HoPF + AO — the segre
 AUDITOR = req_fx.AUDITOR
 OUTSIDER = req_fx.OUTSIDER  # Departmental Author in OU_BETA — never a contributing unit
 NOBODY = "tndt.nobody@example.test"
+PRODUCER = "tndt.producer@example.test"  # the bidder-facing service identity (plan D8)
 DEPARTMENTAL = req_fx.AUTHOR  # Departmental Author in OU_ALPHA — the neutral reader
-TENDER_ACTORS = (OFFICER, BOTH, NOBODY)
+TENDER_ACTORS = (OFFICER, BOTH, NOBODY, PRODUCER)
 
 LOCATION = "Test Delivery Location — Tenders"
 CONTACT_OFFICE = "Test Contact Office — Tenders"
@@ -69,8 +70,13 @@ def ensure_world() -> None:
 	from kentender_core.services.business_role_registry import ensure_roles
 
 	ensure_roles()
-	for email, name in ((OFFICER, "TNDT Procurement Officer"), (BOTH, "TNDT Officer and Approver"), (NOBODY, "TNDT Nobody")):
+	for email, name in ((OFFICER, "TNDT Procurement Officer"), (BOTH, "TNDT Officer and Approver"), (NOBODY, "TNDT Nobody"), (PRODUCER, "TNDT Bidder Service")):
 		_user(email, name)
+	from kentender_procurement.tenders.services import inquiries
+	from kentender_procurement.tenders.services.tender_roles import INQUIRY_PRODUCER_ROLE
+
+	inquiries.ensure_producer_role()
+	frappe.get_doc("User", PRODUCER).add_roles(INQUIRY_PRODUCER_ROLE)
 	_grant(OFFICER, "Procurement Officer")
 	_grant(BOTH, "Procurement Officer")
 	_grant(BOTH, "Head of Procurement Function")

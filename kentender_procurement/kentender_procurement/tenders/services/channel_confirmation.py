@@ -147,7 +147,7 @@ def confirm_channel(
 		authz.not_found()
 	row = envelope.locked(DOCTYPE, name)
 	root = envelope.locked("Tender", row.tender)
-	if root.overall_status == "Cancelled":
+	if root.overall_status == "Cancelled" and subject_type != SUBJECT_CANCELLATION:
 		fail("TND_CANCELLED")
 	envelope.check_record_version(root, expected_record_version)
 	clean = _validate_inputs(row, available_at=available_at, evidence_reference=evidence_reference, public_url=public_url, url_not_applicable_reason=url_not_applicable_reason, evidence_file=evidence_file, evidence_notes=evidence_notes, attestation_confirmed=attestation_confirmed, package_digest=package_digest)

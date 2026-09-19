@@ -18,7 +18,7 @@ from typing import Any
 
 import frappe
 
-from kentender_procurement.tenders.services import correction, documents, draft_commands as cmd, history, lifecycle, publication, read
+from kentender_procurement.tenders.services import addenda, cancellation, correction, documents, draft_commands as cmd, history, inquiries, lifecycle, open_period_read, publication, read, submission_close
 
 
 def _parse_json(value, default):
@@ -177,3 +177,89 @@ def confirm_publication_channel(tender: str, channel: str, available_at: str, ev
 @frappe.whitelist()
 def withdraw_publication_authorisation(tender: str, reason: str, evidence: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
 	return publication.withdraw_publication_authorisation(tender=tender, reason=reason, evidence=evidence, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+# --------------------------------------------------------------------------
+# §7.4 Open-period and cancellation
+# --------------------------------------------------------------------------
+
+
+@frappe.whitelist()
+def get_tender_addendum(tender: str, addendum: str = "") -> dict[str, Any]:
+	return _masked_read(open_period_read.get_tender_addendum, dict(tender=tender, addendum=addendum))
+
+
+@frappe.whitelist()
+def get_addendum_inquiry(tender: str, inquiry: str) -> dict[str, Any]:
+	return _masked_read(open_period_read.get_addendum_inquiry, dict(tender=tender, inquiry=inquiry))
+
+
+@frappe.whitelist()
+def get_tender_cancellation(tender: str) -> dict[str, Any]:
+	return _masked_read(open_period_read.get_tender_cancellation, dict(tender=tender))
+
+
+@frappe.whitelist()
+def get_tender_submission_handoff(tender: str) -> dict[str, Any]:
+	return _masked_read(submission_close.get_submission_handoff, dict(tender=tender))
+
+
+@frappe.whitelist()
+def create_addendum_draft(tender: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return addenda.create_addendum_draft(tender=tender, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def update_addendum_draft(tender: str, addendum: str, addendum_values, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return addenda.update_addendum_draft(tender=tender, addendum=addendum, values=_parse_json(addendum_values, {}), expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def submit_addendum_for_issue(tender: str, addendum: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return addenda.submit_addendum_for_issue(tender=tender, addendum=addendum, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def return_addendum_for_correction(tender: str, addendum: str, reason: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return addenda.return_addendum_for_correction(tender=tender, addendum=addendum, reason=reason, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def issue_addendum(tender: str, addendum: str, expected_record_version, idempotency_key: str, task: str = "", task_token: str = "") -> dict[str, Any]:
+	return addenda.issue_addendum(tender=tender, addendum=addendum, expected_record_version=expected_record_version, idempotency_key=idempotency_key, task=task, task_token=task_token)
+
+
+@frappe.whitelist()
+def confirm_addendum_publication_channel(tender: str, addendum: str, channel: str, available_at: str, evidence_reference: str, evidence_file: str, addendum_digest: str, expected_record_version, idempotency_key: str, public_url: str = "", url_not_applicable_reason: str = "", evidence_notes: str = "", attestation_confirmed=False) -> dict[str, Any]:
+	return addenda.confirm_addendum_publication_channel(
+		tender=tender, addendum=addendum, channel=channel, available_at=available_at, evidence_reference=evidence_reference, evidence_file=evidence_file, addendum_digest=addendum_digest, expected_record_version=expected_record_version,
+		idempotency_key=idempotency_key, public_url=public_url, url_not_applicable_reason=url_not_applicable_reason, evidence_notes=evidence_notes, attestation_confirmed=str(attestation_confirmed).lower() in ("1", "true"),
+	)
+
+
+@frappe.whitelist()
+def receive_addendum_inquiry(tender: str, addendum: str, candidate_identity: str, question: str, received_at: str, inbound_event_id: str) -> dict[str, Any]:
+	return inquiries.receive_addendum_inquiry(tender=tender, addendum=addendum, candidate_identity=candidate_identity, question=question, received_at=received_at, inbound_event_id=inbound_event_id)
+
+
+@frappe.whitelist()
+def respond_to_addendum_inquiry(tender: str, inquiry: str, response: str, affects_requirements, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return inquiries.respond_to_addendum_inquiry(tender=tender, inquiry=inquiry, response=response, affects_requirements=affects_requirements, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def recommend_tender_cancellation(tender: str, ground: str, reason: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return cancellation.recommend_tender_cancellation(tender=tender, ground=ground, reason=reason, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def cancel_tender(tender: str, ground: str, reason: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return cancellation.cancel_tender(tender=tender, ground=ground, reason=reason, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def record_cancellation_compliance_evidence(tender: str, obligation_id: str, evidence_reference: str, expected_record_version, idempotency_key: str, evidence_file: str = "", available_at: str = "", public_url: str = "", url_not_applicable_reason: str = "", attestation_confirmed=False) -> dict[str, Any]:
+	return cancellation.record_cancellation_compliance_evidence(
+		tender=tender, obligation_id=obligation_id, evidence_reference=evidence_reference, evidence_file=evidence_file, expected_record_version=expected_record_version, idempotency_key=idempotency_key,
+		available_at=available_at or None, public_url=public_url, url_not_applicable_reason=url_not_applicable_reason, attestation_confirmed=str(attestation_confirmed).lower() in ("1", "true"),
+	)

@@ -435,7 +435,11 @@ doc_events = {
 # in `procurement_planning/services/schedule.py` with its tests, but it is not
 # scheduled, routed or invoked from configuration. Re-register it only when the
 # forecast/reminder facility is separately approved under §15.3.
-scheduler_events: dict[str, list[str]] = {}
+scheduler_events: dict[str, list[str]] = {
+	# TPR-CHG-001 v0.8 §5.1 / plan D9 — the submission period closes by the
+	# system, one Tender per transaction, idempotent.
+	"hourly": ["kentender_procurement.tenders.services.submission_close.close_due_submission_periods"],
+}
 
 # scheduler_events = {
 # 	"all": [

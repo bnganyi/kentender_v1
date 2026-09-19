@@ -185,7 +185,7 @@ class TestApiSurface(TenderReadCase):
 		offenders = [n.name for n in tree.body if isinstance(n, ast.FunctionDef) and n.args.kwarg is not None]
 		self.assertEqual(offenders, [])
 		whitelisted = [n.name for n in tree.body if isinstance(n, ast.FunctionDef) and any(getattr(d, "attr", None) == "whitelist" or getattr(getattr(d, "func", None), "attr", None) == "whitelist" for d in n.decorator_list)]
-		self.assertEqual(len(whitelisted), 22)
+		self.assertEqual(len(whitelisted), 37)
 
 	def test_the_journey_over_the_request_path(self):
 		authorised = fx.authorised_handoff(items=(("Business laptops", 1, "Clinical training"),))

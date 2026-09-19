@@ -155,6 +155,9 @@ def cancellation_obligations(*, applicability_date) -> list[dict[str, Any]]:
 				"obligation_id": cstr(payload.get("obligation_id")), "reference": version["reference"], "reference_key": version["reference_key"], "version_number": version["version_number"],
 			}
 		)
+	# §10.13 order: the notice channels first, then the PPRA report, then the candidate notice.
+	order = list(CHANNEL_LABELS)
+	out.sort(key=lambda o: (order.index(o["code"]) if o["code"] in order else len(order), o["reference_key"]))
 	return out
 
 
