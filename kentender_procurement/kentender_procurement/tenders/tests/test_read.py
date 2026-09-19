@@ -160,6 +160,15 @@ class TestRecordReview(TenderReadCase):
 		self.assertEqual(officer_hist["events"][0]["payload"], {})
 
 	def test_a_returned_draft_reads_as_returned_to_you_at_the_affected_task(self):
+		# TPR-CHG-001 v0.8 Phase 7 (UI-informed correction, 19 Sep 2026): the
+		# workspace row's own "Correct" action now routes straight to the
+		# task the reviewer flagged (`AFFECTED_TASK_KEYS`), not always to
+		# "review" — a Playwright click-through of the real screen showed
+		# routing every return through the review summary first, no matter
+		# which task was flagged, is one extra hop the label "Correct"
+		# already promises to skip. `get_tender`'s own `returned.affected_task`
+		# (asserted below) is unchanged and still drives the editor's own
+		# returned-notice banner regardless of which task the row opens on.
 		_, started = self._started()
 		self._complete(started)
 		root = frappe.get_doc("Tender", started["tender"])
@@ -168,7 +177,7 @@ class TestRecordReview(TenderReadCase):
 		lifecycle.return_tender_for_correction(tender=root.name, reason="Confirm whether manufacturer authorisation is necessary and update the supplier evidence requirement.", affected_task="Supplier and contract requirements", expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF, task=submitted["task"])
 		ws = read.get_tenders_workspace(user=fx.OFFICER)
 		row = next(r for r in ws["rows"] if r.get("tender") == root.name)
-		self.assertEqual((row["status_key"], row["action_label"], row["route"]), ("returned", "Correct", ["tenders", root.tender_reference, "review"]))
+		self.assertEqual((row["status_key"], row["action_label"], row["route"]), ("returned", "Correct", ["tenders", root.tender_reference, "requirements"]))
 		self.assertTrue(row["status_label"].startswith("Returned to you"))
 		self.assertEqual(next(c["value"] for c in ws["counts"] if c["key"] == "returned"), 1)
 		record = read.get_tender(tender=root.name, user=fx.OFFICER)
