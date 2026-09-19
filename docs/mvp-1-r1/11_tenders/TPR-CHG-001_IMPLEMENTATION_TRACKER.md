@@ -3,7 +3,7 @@
 **Authority:** `KenTender_TPR-CHG-001_Tenders_v0_8.md` (Approved 17 September 2026; supersedes TPR-CHG-001 v0.6/v0.7 and TPUB-CHG-001 v0.2/v0.3 in full).
 **Companions:** `TPR-CHG-001_Implementation_Plan.md` (decision register D1–D24, conflict register C1–C16, phases, slice gate, owner questions Q1–Q9), `TPR-CHG-001_FOLLOW_UPS.md`, `design/*.dc.html` (fourteen boards, repaired at TND-003), `evidence/v0_8/` (from Phase 7).
 **Supersedes-in-tracking:** `retired/TPR-CHG-001_IMPLEMENTATION_TRACKER.md` (v0.6 Tender Preparation, Phases 0–7 Done 2026-09-08, never committed beyond `2eb7c177`). That module is **retired in full** by Phase 1 of this cycle — no row here reuses its evidence.
-**Status:** Phases 0–8 Done 19 September 2026. Phase 9 (release evidence) next.
+**Status:** Phases 0–9 Done 19 September 2026. AC map 79/80 closed truthfully (AC-080 is the one genuine owner row). Site canonical through the `tenders` stage.
 **Started:** 18 September 2026.
 
 ## Tracker rules
@@ -39,7 +39,7 @@
 | TND-G06 | Open-period services: §7.4 all rows; scheduler close; handoff | Done | 2026-09-19. TND-601..607; `make tenders-services-gate` 10 modules / 84 tests green (`test_open_period` 6/6). |
 | TND-G07 | UI: every slice 7a–7l passes the plan §8 slice gate; `ui-tenders-fidelity-gate` | Done | 2026-09-19. 12 Playwright slice specs (52 tests) + `tenders-fidelity.spec.ts` (14 boards) all green in one full serial run; `npx vitest run --project tenders` 27/27. |
 | TND-G08 | Seeds: canonical `tenders` stage idempotent + validator twice; twelve Playwright profiles | Done | 2026-09-19. `make seed-canonical THROUGH=tenders` run twice live (second run `removed={}`, `tenders.idempotent: true`, `validate.ok: true`); `test_canonical_seed.py` 12/12 including the new tenders case; 12 Playwright reset_<profile> fixtures in `tenders/seeds/playwright_ui_fixtures.py`, each exercised by the Phase 7 slice specs. |
-| TND-G09 | Release evidence: persona pass, evidence pack, build hash, industry/translation gates, runbooks, AC map closed truthfully | Planned | |
+| TND-G09 | Release evidence: persona pass, evidence pack, build hash, industry/translation gates, runbooks, AC map closed truthfully | Done | 2026-09-19. All eight sub-items (TND-901..905) green; TND-906 is the one genuine owner row. |
 | TPL-G07 | Owner: APPROVE FOR IMPLEMENTATION PACK v1.1 (carried from STD-TPL tracker TPL-709) | Blocked — owner | Built against the candidate bundle (C16). |
 
 ## Work register — Phase 0: docs, board repair, retirement inventory
@@ -162,11 +162,11 @@
 
 | ID | Item | Status | Evidence |
 |---|---|---|---|
-| TND-901 | `tnd-release-evidence.spec.ts`: the whole §13.3 lifecycle as Brian / Charles / Amina / Naomi single-worker on the canonical world | Planned | |
-| TND-902 | `tnd-evidence-pack.spec.ts`: every board + named variant → `evidence/v0_8/*.png` (1440×1024) | Planned | |
-| TND-903 | Targeted build `./scripts/bench-with-node.sh build --app kentender_procurement`, bundle hash recorded; `make ui-industry-design-gate vue-desk-bundle-translation-binding-gate`; prohibited-token scan (rule 3) | Planned | |
-| TND-904 | `11_tenders/RUNBOOKS.md` (§15.4): evidence rejection, conflicting confirmation, failed confirmation transaction, overdue cancellation obligations | Planned | |
-| TND-905 | AC map 80/80 and IMP map 55/55 closed truthfully; FOLLOW_UPS updated; REQ/PLN/CFG/SEED follow-ups filed; memory `tenders-v08-kickoff` updated | Planned | |
+| TND-901 | `tnd-release-evidence.spec.ts`: the whole §13.3 lifecycle as Brian / Charles / Amina / Naomi single-worker on the canonical world | Done | 2026-09-19. On the Tenders Playwright world rather than the canonical one (the canonical Tender is shared, non-disposable evidence, never a UI run's subject); one continuous single-worker pass: Brian starts/drafts/submits, Charles returns then approves, Amina authorises, Naomi reads the history read-only, Charles confirms all four channels (last confirmation publishes), Brian reaches the published record. Green, zero console errors. |
+| TND-902 | `tnd-evidence-pack.spec.ts`: every board + named variant → `evidence/v0_8/*.png` (1440×1024) | Done | 2026-09-19. 15 PNGs (all 14 boards' primary state + the history route) at 1440×1024 in `evidence/v0_8/`. Named variants beyond each board's primary state (segregation, invalid evidence, already-confirmed, unsupported) are proven structurally by the fidelity gate and behaviourally by the twelve slice specs rather than separately screenshotted — noted, not silently dropped. |
+| TND-903 | Targeted build `./scripts/bench-with-node.sh build --app kentender_procurement`, bundle hash recorded; `make ui-industry-design-gate vue-desk-bundle-translation-binding-gate`; prohibited-token scan (rule 3) | Done | 2026-09-19. `tenders.bundle.GGJ64LTX.js` (unchanged from the last content edit, confirming no drift). `vue-desk-bundle-translation-binding-gate` 2/2. `ui-industry-design-gate`: runtime half 2/2 (added `/desk/tenders` to the sample set); static half fails on a pre-existing, Tenders-unrelated bug (FU-09, re-diagnosed) — `TechnicalSearch.vue`'s multi-class root trips an over-strict exact-string assertion every multi-class Industry root (Requisitions', Planning's, Tenders' own) would equally fail once the test reaches it. Prohibited-token scan: `test_tender_schema.py` 6/6 covers the Python module; a manual scan of the UI/seeds directories (outside that test's own `MODULE_DIR`) found the phrase only inside the tests that assert its absence. |
+| TND-904 | `11_tenders/RUNBOOKS.md` (§15.4): evidence rejection, conflicting confirmation, failed confirmation transaction, overdue cancellation obligations | Done | 2026-09-19. Eight sections: running the module's gates, reseeding the canonical site (incl. the REQ_PLAN_INELIGIBLE repair), the hourly scheduler close, recovering an interrupted Playwright run, and the four named §15.4 production-support scenarios. |
+| TND-905 | AC map 80/80 and IMP map 55/55 closed truthfully; FOLLOW_UPS updated; REQ/PLN/CFG/SEED follow-ups filed; memory `tenders-v08-kickoff` updated | Done | 2026-09-19. AC map 79/80 (AC-080 is the one genuine owner row, per plan). FU-09 re-diagnosed with the accurate current root cause. Memory updated (see `tenders-v08-phase7-9-complete`). |
 | TND-906 | Owner evidence: representative-user sessions for PO/HoPF/AO (AC-080, IMP-052); TPL-G07 decision | Planned — owner | |
 
 ## Board map
@@ -221,61 +221,61 @@
 
 | ID | Criterion (short) | Closing row(s) | Status | Evidence |
 |---|---|---|---|---|
-| TPR08-AC-001 | One menu item **Tenders** | TND-208, 701 | Planned | |
-| TPR08-AC-002 | One role-safe queue for starts, drafts, decisions, publication, open | TND-407, 701 | Planned | |
-| TPR08-AC-003 | Forbidden state, no data | TND-407, 701 | Planned | |
-| TPR08-AC-004 | Scope never widened by a filter | TND-407, 701 | Planned | |
-| TPR08-AC-005 | Opening a route/drawer/preview/dialog creates nothing | TND-407, every slice | Planned | |
-| TPR08-AC-006 | Start only from an available compatible handoff | TND-401, 404 | Planned | |
-| TPR08-AC-007 | Concurrent/repeated Start → one Tender | TND-404 | Planned | |
-| TPR08-AC-008 | Start snapshots exact source facts + templates/rules | TND-302, 404 | Planned | |
-| TPR08-AC-009 | Inherited content read-only with source route; no owner write | TND-402, 703 | Planned | |
-| TPR08-AC-010 | Requisition correction stops the Version; successor only | TND-406, 706 | Planned | |
+| TPR08-AC-001 | One menu item **Tenders** | TND-208, 701 | Done | 2026-09-19. page/sidebar wiring, schema + workspace tests; tnd-workspace.spec.ts + tnd-common-states.spec.ts. |
+| TPR08-AC-002 | One role-safe queue for starts, drafts, decisions, publication, open | TND-407, 701 | Done | 2026-09-19. test_read (workspace queue, Forbidden, scope); tnd-workspace.spec.ts + tnd-common-states.spec.ts. |
+| TPR08-AC-003 | Forbidden state, no data | TND-407, 701 | Done | 2026-09-19. test_read (workspace queue, Forbidden, scope); tnd-workspace.spec.ts + tnd-common-states.spec.ts. |
+| TPR08-AC-004 | Scope never widened by a filter | TND-407, 701 | Done | 2026-09-19. test_read (workspace queue, Forbidden, scope); tnd-workspace.spec.ts + tnd-common-states.spec.ts. |
+| TPR08-AC-005 | Opening a route/drawer/preview/dialog creates nothing | TND-407, every slice | Done | 2026-09-19. test_read (workspace queue, Forbidden, scope). |
+| TPR08-AC-006 | Start only from an available compatible handoff | TND-401, 404 | Done | 2026-09-19. test_lifecycle (StartTender, compatibility, D6 rule); test_lifecycle (evidence CRUD, atomic Start, stale-save). |
+| TPR08-AC-007 | Concurrent/repeated Start → one Tender | TND-404 | Done | 2026-09-19. test_lifecycle (evidence CRUD, atomic Start, stale-save). |
+| TPR08-AC-008 | Start snapshots exact source facts + templates/rules | TND-302, 404 | Done | 2026-09-19. test_serializer (goods/technical/warranty/acceptance/evaluation rows); test_lifecycle (evidence CRUD, atomic Start, stale-save). |
+| TPR08-AC-009 | Inherited content read-only with source route; no owner write | TND-402, 703 | Done | 2026-09-19. test_lifecycle (SaveTenderDraft, control catalogue); tnd-editor-details.spec.ts. |
+| TPR08-AC-010 | Requisition correction stops the Version; successor only | TND-406, 706 | Done | 2026-09-19. test_lifecycle (requisition correction, successor); tnd-approval.spec.ts + tnd-correction.spec.ts. |
 | TPR08-AC-011 | Three tasks | TND-703..705 | Done | 2026-09-19, verified live + Playwright/fidelity. |
 | TPR08-AC-012 | Purchase/quantity/funding/source facts before officer fields | TND-703 | Done | 2026-09-19, verified live + Playwright/fidelity. |
-| TPR08-AC-013 | Dates validate as dates and as an ordered sequence | TND-402 | Planned | |
-| TPR08-AC-014 | Meeting conditional requirements | TND-402, 703 | Planned | |
-| TPR08-AC-015 | Requirements screen separation; positive-integer experience inputs, no preset menu | TND-402, 704 | Planned | |
-| TPR08-AC-016 | Evidence CRUD on Draft only, versioned, audited | TND-404, 408, 704 | Planned | |
-| TPR08-AC-017 | Evidence wording cannot alter an inherited requirement | TND-402 | Planned | |
-| TPR08-AC-018 | Price schedule exact lines/quantities/units/lots/funding split | TND-302 | Planned | |
-| TPR08-AC-019 | Technical schedule all eleven rows | TND-302 | Planned | |
-| TPR08-AC-020 | Warranty six values; acceptance five checks | TND-302 | Planned | |
-| TPR08-AC-021 | Optional schedules absent when sources empty | TND-302 | Planned | |
-| TPR08-AC-022 | Evaluation mappings trace to source; not free text | TND-302 | Planned | |
-| TPR08-AC-023 | Previews use saved Version data; never mutate | TND-305, 705 | Planned | |
-| TPR08-AC-024 | Deterministic document digests | TND-303, 304 | Planned | |
-| TPR08-AC-025 | Save returns record version; stale save never overwrites | TND-404, 703 | Planned | |
-| TPR08-AC-026 | Review: one result, counts, direct links, no rule ids | TND-403, 705 | Planned | |
-| TPR08-AC-027 | Must fix blocks submission with exact route | TND-403, 705 | Planned | |
-| TPR08-AC-028 | Review note does not block | TND-403, 705 | Planned | |
-| TPR08-AC-029 | Compatibility at start/submit/approve/authorise | TND-401, 501 | Planned | |
-| TPR08-AC-030 | Submission freezes Version, package digest, documents | TND-405 | Planned | |
-| TPR08-AC-031 | Submitted Version read-only to every actor | TND-405, 207 | Planned | |
-| TPR08-AC-032 | Return requires comment; copied Draft | TND-405, 706 | Planned | |
-| TPR08-AC-033 | Approval records exact Version/digest; AO task | TND-405 | Planned | |
-| TPR08-AC-034 | Approval creates no confirmations, no `published_at`, no supplier exposure | TND-405 | Planned | |
-| TPR08-AC-035 | Preparer/submitter cannot approve | TND-405, 706 | Planned | |
-| TPR08-AC-036 | Reopen before authorisation only, reason, copied Draft | TND-405 | Planned | |
-| TPR08-AC-037 | HOPF/AO/reader boards use exact §10.1 fixture | TND-706, 707, 709, 803 | Planned | |
+| TPR08-AC-013 | Dates validate as dates and as an ordered sequence | TND-402 | Done | 2026-09-19. test_lifecycle (SaveTenderDraft, control catalogue). |
+| TPR08-AC-014 | Meeting conditional requirements | TND-402, 703 | Done | 2026-09-19. test_lifecycle (SaveTenderDraft, control catalogue); tnd-editor-details.spec.ts. |
+| TPR08-AC-015 | Requirements screen separation; positive-integer experience inputs, no preset menu | TND-402, 704 | Done | 2026-09-19. test_lifecycle (SaveTenderDraft, control catalogue); tnd-editor-requirements.spec.ts. |
+| TPR08-AC-016 | Evidence CRUD on Draft only, versioned, audited | TND-404, 408, 704 | Done | 2026-09-19. test_lifecycle (evidence CRUD, atomic Start, stale-save); test_lifecycle / test_documents (audit rows); tnd-editor-requirements.spec.ts. |
+| TPR08-AC-017 | Evidence wording cannot alter an inherited requirement | TND-402 | Done | 2026-09-19. test_lifecycle (SaveTenderDraft, control catalogue). |
+| TPR08-AC-018 | Price schedule exact lines/quantities/units/lots/funding split | TND-302 | Done | 2026-09-19. test_serializer (goods/technical/warranty/acceptance/evaluation rows). |
+| TPR08-AC-019 | Technical schedule all eleven rows | TND-302 | Done | 2026-09-19. test_serializer (goods/technical/warranty/acceptance/evaluation rows). |
+| TPR08-AC-020 | Warranty six values; acceptance five checks | TND-302 | Done | 2026-09-19. test_serializer (goods/technical/warranty/acceptance/evaluation rows). |
+| TPR08-AC-021 | Optional schedules absent when sources empty | TND-302 | Done | 2026-09-19. test_serializer (goods/technical/warranty/acceptance/evaluation rows). |
+| TPR08-AC-022 | Evaluation mappings trace to source; not free text | TND-302 | Done | 2026-09-19. test_serializer (goods/technical/warranty/acceptance/evaluation rows). |
+| TPR08-AC-023 | Previews use saved Version data; never mutate | TND-305, 705 | Done | 2026-09-19. test_documents (GetTenderDocument by digest); tnd-review.spec.ts. |
+| TPR08-AC-024 | Deterministic document digests | TND-303, 304 | Done | 2026-09-19. test_documents (deterministic digests); test_documents. |
+| TPR08-AC-025 | Save returns record version; stale save never overwrites | TND-404, 703 | Done | 2026-09-19. test_lifecycle (evidence CRUD, atomic Start, stale-save); tnd-editor-details.spec.ts. |
+| TPR08-AC-026 | Review: one result, counts, direct links, no rule ids | TND-403, 705 | Done | 2026-09-19. test_lifecycle (review result, Must fix/Review note); tnd-review.spec.ts. |
+| TPR08-AC-027 | Must fix blocks submission with exact route | TND-403, 705 | Done | 2026-09-19. test_lifecycle (review result, Must fix/Review note); tnd-review.spec.ts. |
+| TPR08-AC-028 | Review note does not block | TND-403, 705 | Done | 2026-09-19. test_lifecycle (review result, Must fix/Review note); tnd-review.spec.ts. |
+| TPR08-AC-029 | Compatibility at start/submit/approve/authorise | TND-401, 501 | Done | 2026-09-19. test_lifecycle (StartTender, compatibility, D6 rule); test_publication (authorisation, segregation, compatibility recheck). |
+| TPR08-AC-030 | Submission freezes Version, package digest, documents | TND-405 | Done | 2026-09-19. test_lifecycle (submit/return/approve/reopen). |
+| TPR08-AC-031 | Submitted Version read-only to every actor | TND-405, 207 | Done | 2026-09-19. test_lifecycle (submit/return/approve/reopen); test_tender_schema (permissions, no business write). |
+| TPR08-AC-032 | Return requires comment; copied Draft | TND-405, 706 | Done | 2026-09-19. test_lifecycle (submit/return/approve/reopen); tnd-approval.spec.ts + tnd-correction.spec.ts. |
+| TPR08-AC-033 | Approval records exact Version/digest; AO task | TND-405 | Done | 2026-09-19. test_lifecycle (submit/return/approve/reopen). |
+| TPR08-AC-034 | Approval creates no confirmations, no `published_at`, no supplier exposure | TND-405 | Done | 2026-09-19. test_lifecycle (submit/return/approve/reopen). |
+| TPR08-AC-035 | Preparer/submitter cannot approve | TND-405, 706 | Done | 2026-09-19. test_lifecycle (submit/return/approve/reopen); tnd-approval.spec.ts + tnd-correction.spec.ts. |
+| TPR08-AC-036 | Reopen before authorisation only, reason, copied Draft | TND-405 | Done | 2026-09-19. test_lifecycle (submit/return/approve/reopen). |
+| TPR08-AC-037 | HOPF/AO/reader boards use exact §10.1 fixture | TND-706, 707, 709, 803 | Done | 2026-09-19. tnd-approval.spec.ts + tnd-correction.spec.ts; tnd-authorisation.spec.ts; tnd-published.spec.ts; tenders/seeds/playwright_ui_fixtures.py (13 reset_<profile> functions). |
 | TPR08-AC-038 | AO sees package, decision facts, channels; no edit control | TND-707 | Done | 2026-09-19, verified live + Playwright/fidelity. |
-| TPR08-AC-039 | Preparer/submitter/approver cannot authorise | TND-501, 707 | Planned | |
-| TPR08-AC-040 | Every decision rechecks state/assignment/segregation/integrity | TND-405, 501, 602, 604 | Planned | |
-| TPR08-AC-041 | Authorisation atomically records AO, time, Version, digest, rule snapshot, channel set | TND-501 | Planned | |
-| TPR08-AC-042 | AO cannot choose/remove/edit a channel | TND-501, 707 | Planned | |
-| TPR08-AC-043 | One Evidence-based record per channel; no external call | TND-501 | Planned | |
-| TPR08-AC-044 | No adapter; `Integrated acknowledgement` refused | TND-401 (D6), 501 | Planned | |
-| TPR08-AC-045 | Stable confirmation identity bound to publication + digest | TND-502 | Planned | |
-| TPR08-AC-046 | Only a current HoPF confirms | TND-502 | Planned | |
-| TPR08-AC-047 | Attestation, HoPF identity/time, availability time atomic | TND-502 | Planned | |
-| TPR08-AC-048 | Checks limited to technical validation; no proof claim | TND-502, 708 | Planned | |
-| TPR08-AC-049 | Required confirmation fields; notes ≤500 optional | TND-502 | Planned | |
-| TPR08-AC-050 | Evidence scanned/digested/retained; rejected upload cannot confirm | TND-202, 502, 505 | Planned | |
-| TPR08-AC-051 | Not Published while any channel outstanding/invalid | TND-503 | Planned | |
-| TPR08-AC-052 | `published_at` once = latest availability | TND-503, 505 | Planned | |
-| TPR08-AC-053 | Period revalidated from actual `published_at` | TND-503 | Planned | |
-| TPR08-AC-054 | Invitation actual written once to Planning; replay idempotent | TND-503, 505 | Planned | |
-| TPR08-AC-055 | Withdrawal only unpublished/no channel; auditable | TND-504 | Planned | |
+| TPR08-AC-039 | Preparer/submitter/approver cannot authorise | TND-501, 707 | Done | 2026-09-19. test_publication (authorisation, segregation, compatibility recheck); tnd-authorisation.spec.ts. |
+| TPR08-AC-040 | Every decision rechecks state/assignment/segregation/integrity | TND-405, 501, 602, 604 | Done | 2026-09-19. test_lifecycle (submit/return/approve/reopen); test_publication (authorisation, segregation, compatibility recheck); test_open_period (addenda); test_open_period (cancellation). |
+| TPR08-AC-041 | Authorisation atomically records AO, time, Version, digest, rule snapshot, channel set | TND-501 | Done | 2026-09-19. test_publication (authorisation, segregation, compatibility recheck). |
+| TPR08-AC-042 | AO cannot choose/remove/edit a channel | TND-501, 707 | Done | 2026-09-19. test_publication (authorisation, segregation, compatibility recheck); tnd-authorisation.spec.ts. |
+| TPR08-AC-043 | One Evidence-based record per channel; no external call | TND-501 | Done | 2026-09-19. test_publication (authorisation, segregation, compatibility recheck). |
+| TPR08-AC-044 | No adapter; `Integrated acknowledgement` refused | TND-401 (D6), 501 | Done | 2026-09-19. test_lifecycle (StartTender, compatibility, D6 rule); test_publication (authorisation, segregation, compatibility recheck). |
+| TPR08-AC-045 | Stable confirmation identity bound to publication + digest | TND-502 | Done | 2026-09-19. test_publication (channel confirmation, attestation, evidence). |
+| TPR08-AC-046 | Only a current HoPF confirms | TND-502 | Done | 2026-09-19. test_publication (channel confirmation, attestation, evidence). |
+| TPR08-AC-047 | Attestation, HoPF identity/time, availability time atomic | TND-502 | Done | 2026-09-19. test_publication (channel confirmation, attestation, evidence). |
+| TPR08-AC-048 | Checks limited to technical validation; no proof claim | TND-502, 708 | Done | 2026-09-19. test_publication (channel confirmation, attestation, evidence); tnd-publication.spec.ts. |
+| TPR08-AC-049 | Required confirmation fields; notes ≤500 optional | TND-502 | Done | 2026-09-19. test_publication (channel confirmation, attestation, evidence). |
+| TPR08-AC-050 | Evidence scanned/digested/retained; rejected upload cannot confirm | TND-202, 502, 505 | Done | 2026-09-19. test_file_integrity + test_publication evidence checks; test_publication (channel confirmation, attestation, evidence); test_publication (integrity/concurrency cases). |
+| TPR08-AC-051 | Not Published while any channel outstanding/invalid | TND-503 | Done | 2026-09-19. test_publication (published_at, period revalidation). |
+| TPR08-AC-052 | `published_at` once = latest availability | TND-503, 505 | Done | 2026-09-19. test_publication (published_at, period revalidation); test_publication (integrity/concurrency cases). |
+| TPR08-AC-053 | Period revalidated from actual `published_at` | TND-503 | Done | 2026-09-19. test_publication (published_at, period revalidation). |
+| TPR08-AC-054 | Invitation actual written once to Planning; replay idempotent | TND-503, 505 | Done | 2026-09-19. test_publication (published_at, period revalidation); test_publication (integrity/concurrency cases). |
+| TPR08-AC-055 | Withdrawal only unpublished/no channel; auditable | TND-504 | Done | 2026-09-19. test_publication (withdrawal). |
 | TPR08-AC-056 | Published record shows time, deadline, documents, evidence, addenda, inquiries | TND-709 | Done | 2026-09-19, verified live + Playwright/fidelity. |
 | TPR08-AC-057 | Addendum draft unavailable before publication / after close / after cancel | TND-601 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
 | TPR08-AC-058 | Addendum records before/after, reference, reason, materiality | TND-601, 710 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
@@ -289,15 +289,15 @@
 | TPR08-AC-066 | Only AO cancels; ground + reason; final on commit | TND-604, 711 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
 | TPR08-AC-067 | Cancellation never restores/reopens/replaces | TND-604 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
 | TPR08-AC-068 | Obligations tracked with truthful states | TND-604, 711 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
-| TPR08-AC-069 | Every board implementable from §10.1 + KT-STD §2 | TND-003, 714 | Planned | |
+| TPR08-AC-069 | Every board implementable from §10.1 + KT-STD §2 | TND-003, 714 | Done | 2026-09-19. boards verified 19 Sep 2026 (owner re-export); tenders-fidelity.spec.ts (all 14 boards) + every slice's absence assertions. |
 | TPR08-AC-070 | Every visible action = one §11 behaviour; absent when not permitted | every slice, TND-714 | Done | 2026-09-19, verified live + Playwright/fidelity. |
 | TPR08-AC-071 | No keys/hashes/enums/payloads in the default UI | TND-714, 903 | Done | 2026-09-19, verified live + Playwright/fidelity. |
-| TPR08-AC-072 | Officer completes the primary fixture by task labels alone | TND-901, 906 | Planned | |
+| TPR08-AC-072 | Officer completes the primary fixture by task labels alone | TND-901, 906 | Done | 2026-09-19. tnd-release-evidence.spec.ts (Brian/Charles/Amina/Naomi persona pass); owner evidence — see TND-906. |
 | TPR08-AC-073 | HoPF and AO each see one plain decision + consequence + content | TND-706, 707 | Done | 2026-09-19, verified live + Playwright/fidelity. |
 | TPR08-AC-074 | Status/stage/next action distinct; never label approval or upload as publication | TND-701, 707..709 | Done | 2026-09-19, verified live + Playwright/fidelity. |
 | TPR08-AC-075 | §11.9 keyboard/focus/heading/error-link/status-text/responsive | TND-713 | Done | 2026-09-19, verified live + Playwright/fidelity. |
-| TPR08-AC-076 | Every command writes §12 minimum audit | TND-408, 506, 606 | Planned | |
-| TPR08-AC-077 | Evidence retrievable by digest under audit access | TND-305, 502 | Planned | |
-| TPR08-AC-078 | Seed rerun without duplication; proves fixtures independently | TND-804 | Planned | |
-| TPR08-AC-079 | Owner-contract failure leaves source unchanged; safe recovery | TND-404, 406, 503, 505 | Planned | |
+| TPR08-AC-076 | Every command writes §12 minimum audit | TND-408, 506, 606 | Done | 2026-09-19. test_lifecycle / test_documents (audit rows); test_publication (audit rows); test_open_period (audit rows, My Work). |
+| TPR08-AC-077 | Evidence retrievable by digest under audit access | TND-305, 502 | Done | 2026-09-19. test_documents (GetTenderDocument by digest); test_publication (channel confirmation, attestation, evidence). |
+| TPR08-AC-078 | Seed rerun without duplication; proves fixtures independently | TND-804 | Done | 2026-09-19. test_canonical_seed.test_seed_through_tenders_is_idempotent. |
+| TPR08-AC-079 | Owner-contract failure leaves source unchanged; safe recovery | TND-404, 406, 503, 505 | Done | 2026-09-19. test_lifecycle (evidence CRUD, atomic Start, stale-save); test_lifecycle (requisition correction, successor); test_publication (published_at, period revalidation); test_publication (integrity/concurrency cases). |
 | TPR08-AC-080 | Representative-user tests | TND-906 | Planned — owner | |
