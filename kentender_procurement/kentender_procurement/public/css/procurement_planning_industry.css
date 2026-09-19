@@ -985,20 +985,53 @@
 	width: min(900px, calc(100vw - 48px));
 	max-width: none;
 }
-.kt-pln .pln-form-choice {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--kt-space-5);
+/* U08's own segmented toggle. `kt_industry_tokens.css` does not ship a
+ * shared `.kt-seg`, so this follows the same locally-scoped precedent
+ * Tenders already set (`.kt-tnd .tnd-seg[-opt]` in tenders_industry.css) —
+ * a bordered track with the selected option filled solid, not two bare
+ * radio labels floating side by side. */
+.kt-pln .pln-seg {
+	display: inline-flex;
+	overflow: hidden;
+	background: var(--kt-color-surface);
+	border: 1px solid var(--color-divider);
+	border-radius: var(--radius-md);
+	width: fit-content;
 	margin: var(--kt-space-4) 0;
 }
-.kt-pln .pln-form-option {
-	display: flex;
+.kt-pln .pln-seg-opt {
+	display: inline-flex;
 	align-items: center;
-	gap: var(--kt-space-2);
+	gap: 6px;
+	white-space: nowrap;
+	padding: 7px 12px;
+	font-size: 13px;
 	cursor: pointer;
+	margin: 0;
+}
+.kt-pln .pln-seg-opt input {
+	position: absolute;
+	opacity: 0;
+	width: 0;
+	height: 0;
+	pointer-events: none;
+}
+.kt-pln .pln-seg-opt + .pln-seg-opt {
+	border-left: 1px solid var(--color-divider);
+}
+.kt-pln .pln-seg-opt:has(input:checked) {
+	background: var(--color-accent);
+	color: #fff;
+}
+.kt-pln .pln-seg-opt:not(:has(input:checked)):hover {
+	background: var(--color-neutral-100);
+}
+.kt-pln .pln-seg-opt:has(input:focus-visible) {
+	outline: 2px solid var(--color-accent);
+	outline-offset: -2px;
 }
 /* A disabled option stays readable: it is explained above, not hidden. */
-.kt-pln .pln-form-option.is-disabled {
+.kt-pln .pln-seg-opt.is-disabled {
 	opacity: 0.55;
 	cursor: not-allowed;
 }
