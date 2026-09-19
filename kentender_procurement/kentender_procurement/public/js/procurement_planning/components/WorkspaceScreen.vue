@@ -62,13 +62,16 @@
 
 			<!-- Financial year sits below the header at the left, bound to the
 			     caller's own selection so it never snaps back to the server echo
-			     while a new year is still loading. -->
+			     while a new year is still loading. §10.3/U01 draws this as a
+			     single neutral tag (`.kt-tag.kt-tag-neutral`), fusing the label
+			     and value the way every other on-page fact does — not the plain
+			     unboxed control the retired v1.12 artboard drew. -->
 			<div class="pln-filter-strip" data-testid="pln-context-strip">
-				<div class="pln-filter-field">
+				<span class="kt-tag kt-tag-neutral pln-fy-chip">
 					<label for="pln-fy-select">Financial year</label>
 					<select
 						id="pln-fy-select"
-						class="kt-input"
+						class="pln-fy-select"
 						data-testid="pln-fy-select"
 						:value="selectedFinancialYear || context.financial_year || ''"
 						@change="$emit('select-financial-year', $event.target.value)"
@@ -77,7 +80,7 @@
 							{{ year.label }}
 						</option>
 					</select>
-				</div>
+				</span>
 				<button
 					v-if="context.resolved_financial_year_source === 'saved_default'"
 					type="button"

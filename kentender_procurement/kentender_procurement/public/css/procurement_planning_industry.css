@@ -37,9 +37,14 @@
 	margin-bottom: 24px;
 }
 
-/* PLN-DES-01 v1.12 inline Financial Year filter: a plain control at text
- * weight directly beneath the description — never a bordered, corner-marked
- * card (§11.2). */
+/* §10.3/U01 Financial Year filter: one neutral tag fusing the label and the
+ * value, same as every other on-page fact — never a bordered, corner-marked
+ * card (§11.2; that rule is about `.kt-blueprint`/`.kt-corner`, not this
+ * lighter `.kt-tag` pill). The retired v1.12 artboard (PLN-DES-01) drew this
+ * as a plain unboxed label+select; the current pack redrew it as a chip and
+ * this rule was never updated to follow — a `<select>` still has to sit
+ * inside it functioning as a real control, so it is un-styled to inherit the
+ * tag's own background/padding rather than drawing its own box. */
 .kt-pln .pln-filter-strip {
 	display: flex;
 	flex-direction: row;
@@ -47,18 +52,27 @@
 	gap: 12px;
 	margin-top: 20px;
 }
-.kt-pln .pln-filter-field {
-	display: flex;
-	align-items: center;
-	gap: 8px;
+.kt-pln .pln-fy-chip {
+	gap: 6px;
 }
-.kt-pln .pln-filter-field label {
-	font-size: 14px;
-	color: var(--color-neutral-800);
+.kt-pln .pln-fy-chip label {
 	margin: 0;
 }
-.kt-pln .pln-filter-field select {
+.kt-pln .pln-fy-select {
+	appearance: none;
+	border: none;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	letter-spacing: inherit;
+	padding: 0;
+	margin: 0;
 	width: auto;
+	cursor: pointer;
+}
+.kt-pln .pln-fy-select:focus-visible {
+	outline: 2px solid var(--color-accent);
+	outline-offset: 2px;
 }
 .kt-pln .pln-filter-reset {
 	padding: 2px 8px;
