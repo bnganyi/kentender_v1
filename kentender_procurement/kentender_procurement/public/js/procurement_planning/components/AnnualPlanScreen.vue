@@ -12,320 +12,322 @@
      are sections of one plan's life, not stages of a wizard. -->
 <template>
 	<div>
-		<div class="pln-masthead">
-			<div>
-				<h1 class="kt-page-title" data-testid="ppl-title">{{ title }}</h1>
+		<div class="pln-sheet">
+			<div class="pln-masthead">
+				<div>
+					<h1 class="kt-page-title" data-testid="ppl-title">{{ title }}</h1>
+				</div>
 			</div>
-		</div>
 
-		<div class="kt-meta-row pln-context-row" data-testid="ppl-context">
-			<div>
-				<span class="kt-label">Plan</span>
-				<span class="kt-meta-value">{{ plan.header?.title }}</span>
+			<div class="kt-meta-row pln-context-row" data-testid="ppl-context">
+				<div>
+					<span class="kt-label">Plan</span>
+					<span class="kt-meta-value">{{ plan.header?.title }}</span>
+				</div>
+				<div>
+					<span class="kt-label">Reference</span>
+					<span class="kt-meta-value">{{ plan.plan_reference }}</span>
+				</div>
+				<div>
+					<span class="kt-label">Version</span>
+					<span class="kt-meta-value">{{ plan.version_number }}</span>
+				</div>
+				<div>
+					<span class="kt-label">Status</span>
+					<span class="kt-meta-value">
+						<span class="kt-status" :class="badgeClass">{{ statusLabel }}</span>
+					</span>
+				</div>
+				<div>
+					<span class="kt-label">Financial year</span>
+					<span class="kt-meta-value">{{ plan.financial_year_label }}</span>
+				</div>
+				<div v-if="plan.is_successor && currentVersion">
+					<span class="kt-label">Current plan</span>
+					<span class="kt-meta-value">Version {{ currentVersion }}</span>
+				</div>
 			</div>
-			<div>
-				<span class="kt-label">Reference</span>
-				<span class="kt-meta-value">{{ plan.plan_reference }}</span>
-			</div>
-			<div>
-				<span class="kt-label">Version</span>
-				<span class="kt-meta-value">{{ plan.version_number }}</span>
-			</div>
-			<div>
-				<span class="kt-label">Status</span>
-				<span class="kt-meta-value">
-					<span class="kt-status" :class="badgeClass">{{ statusLabel }}</span>
-				</span>
-			</div>
-			<div>
-				<span class="kt-label">Financial year</span>
-				<span class="kt-meta-value">{{ plan.financial_year_label }}</span>
-			</div>
-			<div v-if="plan.is_successor && currentVersion">
-				<span class="kt-label">Current plan</span>
-				<span class="kt-meta-value">Version {{ currentVersion }}</span>
-			</div>
-		</div>
 
-		<!-- U07-UPDATE — a successor must say why it exists. -->
-		<div v-if="plan.is_successor" class="kt-field pln-plan-field" data-testid="ppl-change-reason">
-			<label for="ppl-change-reason" class="kt-label">Reason for updating the plan</label>
-			<textarea
-				id="ppl-change-reason"
-				class="kt-input"
-				rows="2"
-				:value="changeReasonDraft"
-				:disabled="!plan.mutable"
-				@input="changeReasonDraft = $event.target.value"
-			></textarea>
-		</div>
+			<!-- U07-UPDATE — a successor must say why it exists. -->
+			<div v-if="plan.is_successor" class="kt-field pln-plan-field" data-testid="ppl-change-reason">
+				<label for="ppl-change-reason" class="kt-label">Reason for updating the plan</label>
+				<textarea
+					id="ppl-change-reason"
+					class="kt-input"
+					rows="2"
+					:value="changeReasonDraft"
+					:disabled="!plan.mutable"
+					@input="changeReasonDraft = $event.target.value"
+				></textarea>
+			</div>
 
-		<!-- §10.6 — Project name is omitted when blank. A whole-plan field with
-		     nothing in it is not worth a control on every visit. -->
-		<div v-if="plan.project_name || showProjectName" class="kt-field pln-plan-field" data-testid="ppl-project-name">
-			<label for="ppl-project" class="kt-label">Project name (if applicable)</label>
-			<input
-				id="ppl-project"
-				class="kt-input"
-				data-testid="ppl-project-input"
-				:value="projectNameDraft"
-				:disabled="!plan.mutable"
-				@input="projectNameDraft = $event.target.value"
+			<!-- §10.6 — Project name is omitted when blank. A whole-plan field with
+			     nothing in it is not worth a control on every visit. -->
+			<div v-if="plan.project_name || showProjectName" class="kt-field pln-plan-field" data-testid="ppl-project-name">
+				<label for="ppl-project" class="kt-label">Project name (if applicable)</label>
+				<input
+					id="ppl-project"
+					class="kt-input"
+					data-testid="ppl-project-input"
+					:value="projectNameDraft"
+					:disabled="!plan.mutable"
+					@input="projectNameDraft = $event.target.value"
+				>
+				<div class="kt-field-hint">Leave blank when the plan covers several projects.</div>
+			</div>
+			<button
+				v-else-if="plan.mutable"
+				type="button"
+				class="kt-btn kt-btn-ghost pln-plan-field"
+				data-testid="ppl-add-project-name"
+				@click="showProjectName = true"
 			>
-			<div class="kt-field-hint">Leave blank when the plan covers several projects.</div>
-		</div>
-		<button
-			v-else-if="plan.mutable"
-			type="button"
-			class="kt-btn kt-btn-ghost pln-plan-field"
-			data-testid="ppl-add-project-name"
-			@click="showProjectName = true"
-		>
-			Add a project name
-		</button>
+				Add a project name
+			</button>
 
-		<h3 class="kt-card-title">Purchases</h3>
-		<table v-if="items.length" class="kt-table" data-testid="ppl-purchases">
-			<thead>
-				<tr>
-					<th>Purchase</th>
-					<th class="is-num">Quantity</th>
-					<th>Unit</th>
-					<th class="is-num">Estimated cost</th>
-					<th>Required by</th>
-					<th>Current work</th>
-					<th>Action</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr v-for="row in items" :key="row.plan_item_id" data-testid="ppl-purchase-row">
-					<td>
-						{{ row.title }}
-						<div class="kt-muted pln-row-ref">{{ row.plan_item_id }}</div>
-					</td>
-					<td class="is-num">{{ row.quantity_number }}</td>
-					<td>{{ row.unit_label }}</td>
-					<td class="is-num">{{ row.value_display }}</td>
-					<td>{{ row.completion_display }}</td>
-					<td>{{ row.current_work }}</td>
-					<td>
-						<a href="#" data-testid="ppl-edit-purchase" @click.prevent="$emit('navigate', row.route)">Edit purchase</a>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-		<p v-else class="kt-muted" data-testid="ppl-purchases-empty">No purchases have been added yet.</p>
-
-		<!-- U07-UNALLOCATED — the sources still waiting to become purchases. -->
-		<h3 class="kt-card-title">Requirements ready to add</h3>
-		<template v-if="unallocated.length">
-			<table class="kt-table" data-testid="ppl-unallocated">
+			<h3 class="kt-card-title">Purchases</h3>
+			<table v-if="items.length" class="kt-table" data-testid="ppl-purchases">
 				<thead>
 					<tr>
-						<th v-if="plan.mutable">Select</th>
-						<th>Requirement</th>
-						<th>Department</th>
+						<th>Purchase</th>
 						<th class="is-num">Quantity</th>
 						<th>Unit</th>
 						<th class="is-num">Estimated cost</th>
+						<th>Required by</th>
+						<th>Current work</th>
 						<th>Action</th>
 					</tr>
 				</thead>
 				<tbody>
-					<tr v-for="row in unallocated" :key="row.entry_id" data-testid="ppl-unallocated-row">
-						<td v-if="plan.mutable">
-							<label class="kt-checkbox">
-								<input
-									type="checkbox"
-									data-testid="ppl-select-source"
-									:checked="selected.includes(row.entry_id)"
-									@change="$emit('toggle-source', row.entry_id)"
-								>
-								<span class="box"></span>
-							</label>
-						</td>
+					<tr v-for="row in items" :key="row.plan_item_id" data-testid="ppl-purchase-row">
 						<td>
 							{{ row.title }}
-							<div class="kt-muted pln-row-ref">{{ row.source_label }}</div>
+							<div class="kt-muted pln-row-ref">{{ row.plan_item_id }}</div>
 						</td>
-						<td>{{ row.department }}</td>
 						<td class="is-num">{{ row.quantity_number }}</td>
 						<td>{{ row.unit_label }}</td>
-						<td class="is-num">{{ row.amount_display }}</td>
+						<td class="is-num">{{ row.value_display }}</td>
+						<td>{{ row.completion_display }}</td>
+						<td>{{ row.current_work }}</td>
 						<td>
-							<a href="#" data-testid="ppl-view-requirement" @click.prevent="$emit('view-requirement', row)">View requirement</a>
+							<a href="#" data-testid="ppl-edit-purchase" @click.prevent="$emit('navigate', row.route)">Edit purchase</a>
 						</td>
 					</tr>
 				</tbody>
 			</table>
-			<!-- A reader who cannot form purchases is not offered the control
-			     at all: this cycle shows no control a reader cannot use. -->
-			<div v-if="plan.mutable" class="pln-add-selected">
-				<p v-if="!selected.length" class="kt-muted" data-testid="ppl-select-hint">Select at least one requirement.</p>
-				<button
-					type="button"
-					class="kt-btn kt-btn-primary"
-					data-testid="ppl-add-selected"
-					:disabled="pending || !selected.length"
-					@click="$emit('open-form-dialog')"
-				>
-					Add selected requirements
-				</button>
-			</div>
-		</template>
-		<p v-else class="kt-muted" data-testid="ppl-all-allocated">{{ allAllocatedText }}</p>
+			<p v-else class="kt-muted" data-testid="ppl-purchases-empty">No purchases have been added yet.</p>
 
-		<!-- Plan checks: three results, each naming its own correction. -->
-		<h3 class="kt-card-title">Plan checks</h3>
-		<div class="kt-meta-row pln-plan-checks" data-testid="ppl-plan-checks">
-			<div v-for="check in planChecks" :key="check.label">
-				<span class="kt-label">{{ check.label }}</span>
-				<span class="kt-meta-value">
-					<span v-if="check.kind === 'critical'" class="kt-status is-critical">{{ check.result }}</span>
-					<span v-else>{{ check.result }}</span>
-					<a
-						v-if="check.action"
-						href="#"
-						class="pln-check-action"
-						data-testid="ppl-check-action"
-						@click.prevent="$emit('navigate', check.route)"
-					>{{ check.action }}</a>
-				</span>
-			</div>
-		</div>
+			<!-- U07-UNALLOCATED — the sources still waiting to become purchases. -->
+			<h3 class="kt-card-title">Requirements ready to add</h3>
+			<template v-if="unallocated.length">
+				<table class="kt-table" data-testid="ppl-unallocated">
+					<thead>
+						<tr>
+							<th v-if="plan.mutable">Select</th>
+							<th>Requirement</th>
+							<th>Department</th>
+							<th class="is-num">Quantity</th>
+							<th>Unit</th>
+							<th class="is-num">Estimated cost</th>
+							<th>Action</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="row in unallocated" :key="row.entry_id" data-testid="ppl-unallocated-row">
+							<td v-if="plan.mutable">
+								<label class="kt-checkbox">
+									<input
+										type="checkbox"
+										data-testid="ppl-select-source"
+										:checked="selected.includes(row.entry_id)"
+										@change="$emit('toggle-source', row.entry_id)"
+									>
+									<span class="box"></span>
+								</label>
+							</td>
+							<td>
+								{{ row.title }}
+								<div class="kt-muted pln-row-ref">{{ row.source_label }}</div>
+							</td>
+							<td>{{ row.department }}</td>
+							<td class="is-num">{{ row.quantity_number }}</td>
+							<td>{{ row.unit_label }}</td>
+							<td class="is-num">{{ row.amount_display }}</td>
+							<td>
+								<a href="#" data-testid="ppl-view-requirement" @click.prevent="$emit('view-requirement', row)">View requirement</a>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<!-- A reader who cannot form purchases is not offered the control
+				     at all: this cycle shows no control a reader cannot use. -->
+				<div v-if="plan.mutable" class="pln-add-selected">
+					<p v-if="!selected.length" class="kt-muted" data-testid="ppl-select-hint">Select at least one requirement.</p>
+					<button
+						type="button"
+						class="kt-btn kt-btn-primary"
+						data-testid="ppl-add-selected"
+						:disabled="pending || !selected.length"
+						@click="$emit('open-form-dialog')"
+					>
+						Add selected requirements
+					</button>
+				</div>
+			</template>
+			<p v-else class="kt-muted" data-testid="ppl-all-allocated">{{ allAllocatedText }}</p>
 
-		<!-- §10.6 — once the version is Active, its approval and publication
-		     are facts about it, not a preparation step, so they appear here
-		     rather than as a stage in a wizard. They stay absent while a Draft
-		     is still being prepared. -->
-		<template v-if="activeView">
-			<h3 class="kt-card-title">Approval and publication</h3>
-			<div class="kt-meta-row" data-testid="ppl-governance">
-				<div>
-					<span class="kt-label">Adopted by the Accounting Officer</span>
-					<span class="kt-meta-value">{{ activeView.governance_card.ao_adoption_line || "—" }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Approved</span>
-					<span class="kt-meta-value">{{ activeView.governance_card.statutory_approval_line || "—" }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Published</span>
+			<!-- Plan checks: three results, each naming its own correction. -->
+			<h3 class="kt-card-title">Plan checks</h3>
+			<div class="kt-meta-row pln-plan-checks" data-testid="ppl-plan-checks">
+				<div v-for="check in planChecks" :key="check.label">
+					<span class="kt-label">{{ check.label }}</span>
 					<span class="kt-meta-value">
-						{{ activeView.governance_card.publication_line || "Not published" }}
+						<span v-if="check.kind === 'critical'" class="kt-status is-critical">{{ check.result }}</span>
+						<span v-else>{{ check.result }}</span>
 						<a
-							v-if="activeView.governance_card.publication_route"
+							v-if="check.action"
 							href="#"
 							class="pln-check-action"
-							data-testid="ppl-view-publication"
-							@click.prevent="$emit('navigate', activeView.governance_card.publication_route)"
-						>View publication evidence</a>
+							data-testid="ppl-check-action"
+							@click.prevent="$emit('navigate', check.route)"
+						>{{ check.action }}</a>
 					</span>
 				</div>
-				<div>
-					<span class="kt-label">In force since</span>
-					<span class="kt-meta-value">{{ activeView.summary.activated_display }}</span>
+			</div>
+
+			<!-- §10.6 — once the version is Active, its approval and publication
+			     are facts about it, not a preparation step, so they appear here
+			     rather than as a stage in a wizard. They stay absent while a Draft
+			     is still being prepared. -->
+			<template v-if="activeView">
+				<h3 class="kt-card-title">Approval and publication</h3>
+				<div class="kt-meta-row" data-testid="ppl-governance">
+					<div>
+						<span class="kt-label">Adopted by the Accounting Officer</span>
+						<span class="kt-meta-value">{{ activeView.governance_card.ao_adoption_line || "—" }}</span>
+					</div>
+					<div>
+						<span class="kt-label">Approved</span>
+						<span class="kt-meta-value">{{ activeView.governance_card.statutory_approval_line || "—" }}</span>
+					</div>
+					<div>
+						<span class="kt-label">Published</span>
+						<span class="kt-meta-value">
+							{{ activeView.governance_card.publication_line || "Not published" }}
+							<a
+								v-if="activeView.governance_card.publication_route"
+								href="#"
+								class="pln-check-action"
+								data-testid="ppl-view-publication"
+								@click.prevent="$emit('navigate', activeView.governance_card.publication_route)"
+							>View publication evidence</a>
+						</span>
+					</div>
+					<div>
+						<span class="kt-label">In force since</span>
+						<span class="kt-meta-value">{{ activeView.summary.activated_display }}</span>
+					</div>
 				</div>
-			</div>
-			<!-- §10.13 — what has actually been procured against it lives in
-			     its own surface; this page is about the plan itself. -->
-			<a href="#" data-testid="ppl-view-progress" @click.prevent="$emit('navigate', ['annual-procurement-plan', plan.plan_reference, 'progress'])">
-				View procurement progress
-			</a>
-		</template>
+				<!-- §10.13 — what has actually been procured against it lives in
+				     its own surface; this page is about the plan itself. -->
+				<a href="#" data-testid="ppl-view-progress" @click.prevent="$emit('navigate', ['annual-procurement-plan', plan.plan_reference, 'progress'])">
+					View procurement progress
+				</a>
+			</template>
 
-		<!-- Changes and history: secondary, closed by default. -->
-		<details class="kt-disclosure" data-testid="ppl-history">
-			<summary class="kt-disclosure-head">
-				<span class="kt-disclosure-title">Changes and history</span>
-			</summary>
-			<div class="kt-disclosure-body">
-				<p class="kt-muted">{{ changesText }}</p>
-				<p v-for="(row, index) in history" :key="index" class="kt-muted">{{ row }}</p>
-			</div>
-		</details>
+			<!-- Changes and history: secondary, closed by default. -->
+			<details class="kt-disclosure" data-testid="ppl-history">
+				<summary class="kt-disclosure-head">
+					<span class="kt-disclosure-title">Changes and history</span>
+				</summary>
+				<div class="kt-disclosure-body">
+					<p class="kt-muted">{{ changesText }}</p>
+					<p v-for="(row, index) in history" :key="index" class="kt-muted">{{ row }}</p>
+				</div>
+			</details>
 
-		<p v-if="errorSummary" class="pln-error-summary" data-testid="ppl-error">{{ errorSummary }}</p>
+			<p v-if="errorSummary" class="pln-error-summary" data-testid="ppl-error">{{ errorSummary }}</p>
 
-		<!-- §10.16 C03-METHOD-MISSING / C04-SCHEDULE-MISSING — each missing
-		     rule with the purchase it is missing for, immediately above the
-		     actions it blocks. -->
-		<MissingSettingPanel v-for="(panel, index) in missingSettings" :key="index" :panel="panel" />
+			<!-- §10.16 C03-METHOD-MISSING / C04-SCHEDULE-MISSING — each missing
+			     rule with the purchase it is missing for, immediately above the
+			     actions it blocks. -->
+			<MissingSettingPanel v-for="(panel, index) in missingSettings" :key="index" :panel="panel" />
 
-		<div class="pln-footer" data-testid="ppl-footer">
-			<button
-				v-if="plan.can_cancel_update"
-				type="button"
-				class="kt-btn kt-btn-secondary"
-				data-testid="ppl-cancel-update"
-				:disabled="pending"
-				@click="$emit('cancel-update')"
-			>
-				Cancel plan update
-			</button>
-			<span v-else></span>
-			<div class="pln-footer-right">
+			<div class="pln-footer" data-testid="ppl-footer">
 				<button
-					v-if="plan.mutable"
+					v-if="plan.can_cancel_update"
 					type="button"
 					class="kt-btn kt-btn-secondary"
-					data-testid="ppl-save"
+					data-testid="ppl-cancel-update"
 					:disabled="pending"
-					@click="onSave"
+					@click="$emit('cancel-update')"
 				>
-					Save draft
+					Cancel plan update
 				</button>
-				<!-- Absent, not disabled, while a blocking check fails (§10.6). -->
-				<button
-					v-if="plan.can_request_funding"
-					type="button"
-					class="kt-btn kt-btn-primary"
-					data-testid="ppl-request-funding"
-					:disabled="pending"
-					@click="$emit('request-funding')"
-				>
-					Send to Finance for funding review
-				</button>
-				<!-- The HOPF's own action, never the Planner's (§6.2). -->
-				<button
-					v-if="plan.can_sign_and_submit"
-					type="button"
-					class="kt-btn kt-btn-primary"
-					data-testid="ppl-sign-submit"
-					:disabled="pending"
-					@click="$emit('submit-consolidated')"
-				>
-					Sign and submit Annual Plan
-				</button>
+				<span v-else></span>
+				<div class="pln-footer-right">
+					<button
+						v-if="plan.mutable"
+						type="button"
+						class="kt-btn kt-btn-secondary"
+						data-testid="ppl-save"
+						:disabled="pending"
+						@click="onSave"
+					>
+						Save draft
+					</button>
+					<!-- Absent, not disabled, while a blocking check fails (§10.6). -->
+					<button
+						v-if="plan.can_request_funding"
+						type="button"
+						class="kt-btn kt-btn-primary"
+						data-testid="ppl-request-funding"
+						:disabled="pending"
+						@click="$emit('request-funding')"
+					>
+						Send to Finance for funding review
+					</button>
+					<!-- The HOPF's own action, never the Planner's (§6.2). -->
+					<button
+						v-if="plan.can_sign_and_submit"
+						type="button"
+						class="kt-btn kt-btn-primary"
+						data-testid="ppl-sign-submit"
+						:disabled="pending"
+						@click="$emit('submit-consolidated')"
+					>
+						Sign and submit Annual Plan
+					</button>
+				</div>
 			</div>
-		</div>
 
-		<!-- U07-FINANCE-COMPLETE — who is waited on, named. -->
-		<!-- §10.6 U07-FINANCE-COMPLETE — the notice and the responsible person
-		     are two labelled facts, never one delimiter-joined line (§12.1). -->
-		<div v-if="waitingOn.notice" class="kt-meta-row" data-testid="ppl-waiting-on">
-			<div>
-				<span class="kt-label">Approval</span>
-				<span class="kt-meta-value">{{ waitingOn.notice }}</span>
-			</div>
-			<div v-if="waitingOn.people.length">
-				<span class="kt-label">{{ waitingOn.people.length === 1 ? "Responsible person" : "Responsible people" }}</span>
-				<span class="kt-meta-value" data-testid="ppl-waiting-on-person">
-					<span v-for="(name, index) in waitingOn.people" :key="name" class="pln-responsible-name">
-						{{ index ? ", " : "" }}{{ name }}
+			<!-- U07-FINANCE-COMPLETE — who is waited on, named. -->
+			<!-- §10.6 U07-FINANCE-COMPLETE — the notice and the responsible person
+			     are two labelled facts, never one delimiter-joined line (§12.1). -->
+			<div v-if="waitingOn.notice" class="kt-meta-row" data-testid="ppl-waiting-on">
+				<div>
+					<span class="kt-label">Approval</span>
+					<span class="kt-meta-value">{{ waitingOn.notice }}</span>
+				</div>
+				<div v-if="waitingOn.people.length">
+					<span class="kt-label">{{ waitingOn.people.length === 1 ? "Responsible person" : "Responsible people" }}</span>
+					<span class="kt-meta-value" data-testid="ppl-waiting-on-person">
+						<span v-for="(name, index) in waitingOn.people" :key="name" class="pln-responsible-name">
+							{{ index ? ", " : "" }}{{ name }}
+						</span>
 					</span>
-				</span>
+				</div>
+				<div v-else-if="waitingOn.unassigned">
+					<span class="kt-label">Responsible person</span>
+					<span class="kt-meta-value" data-testid="ppl-waiting-on-unassigned">{{ waitingOn.unassigned }}</span>
+				</div>
 			</div>
-			<div v-else-if="waitingOn.unassigned">
-				<span class="kt-label">Responsible person</span>
-				<span class="kt-meta-value" data-testid="ppl-waiting-on-unassigned">{{ waitingOn.unassigned }}</span>
-			</div>
-		</div>
 
-		<div v-if="plan.open_task" class="pln-dpp-task">
-			<button type="button" class="kt-btn kt-btn-primary" data-testid="ppl-open-task" @click="$emit('open-task', plan.open_task.route)">
-				{{ plan.open_task.label }}
-			</button>
+			<div v-if="plan.open_task" class="pln-dpp-task">
+				<button type="button" class="kt-btn kt-btn-primary" data-testid="ppl-open-task" @click="$emit('open-task', plan.open_task.route)">
+					{{ plan.open_task.label }}
+				</button>
+			</div>
 		</div>
 	</div>
 </template>

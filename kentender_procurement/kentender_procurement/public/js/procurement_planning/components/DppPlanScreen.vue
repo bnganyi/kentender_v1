@@ -12,248 +12,250 @@
      a disclosure (§10.4 U03-EXCLUDED-ROW). -->
 <template>
 	<div>
-		<div class="pln-masthead">
-			<div>
-				<h1 class="kt-page-title" data-testid="pln-dpp-title">{{ heading.title }}</h1>
-				<p class="kt-page-lede">{{ heading.description }}</p>
+		<div class="pln-sheet">
+			<div class="pln-masthead">
+				<div>
+					<h1 class="kt-page-title" data-testid="pln-dpp-title">{{ heading.title }}</h1>
+					<p class="kt-page-lede">{{ heading.description }}</p>
+				</div>
 			</div>
-		</div>
 
-		<!-- Record context: separately labelled values, names before codes. -->
-		<div class="kt-meta-row pln-context-row" data-testid="pln-dpp-context">
-			<div>
-				<span class="kt-label">Department</span>
-				<span class="kt-meta-value">{{ context.department }}</span>
+			<!-- Record context: separately labelled values, names before codes. -->
+			<div class="kt-meta-row pln-context-row" data-testid="pln-dpp-context">
+				<div>
+					<span class="kt-label">Department</span>
+					<span class="kt-meta-value">{{ context.department }}</span>
+				</div>
+				<div>
+					<span class="kt-label">Financial year</span>
+					<span class="kt-meta-value">{{ context.financial_year }}</span>
+				</div>
+				<div>
+					<span class="kt-label">Status</span>
+					<span class="kt-meta-value">
+						<span class="kt-status" :class="`is-${plan.header?.badge_kind || 'draft'}`">{{ plan.header?.badge }}</span>
+					</span>
+				</div>
+				<div v-if="plan.accepted_submission_number">
+					<span class="kt-label">Accepted submission</span>
+					<span class="kt-meta-value">{{ plan.accepted_submission_number }}</span>
+				</div>
+				<div v-if="plan.is_correction && plan.candidate_submission_number">
+					<span class="kt-label">Correction submission</span>
+					<span class="kt-meta-value">{{ plan.candidate_submission_number }}</span>
+				</div>
 			</div>
-			<div>
-				<span class="kt-label">Financial year</span>
-				<span class="kt-meta-value">{{ context.financial_year }}</span>
-			</div>
-			<div>
-				<span class="kt-label">Status</span>
-				<span class="kt-meta-value">
-					<span class="kt-status" :class="`is-${plan.header?.badge_kind || 'draft'}`">{{ plan.header?.badge }}</span>
-				</span>
-			</div>
-			<div v-if="plan.accepted_submission_number">
-				<span class="kt-label">Accepted submission</span>
-				<span class="kt-meta-value">{{ plan.accepted_submission_number }}</span>
-			</div>
-			<div v-if="plan.is_correction && plan.candidate_submission_number">
-				<span class="kt-label">Correction submission</span>
-				<span class="kt-meta-value">{{ plan.candidate_submission_number }}</span>
-			</div>
-		</div>
 
-		<!-- U05-CORRECTION — the correction notice leads, before the table it
-		     affects. -->
-		<div v-if="plan.is_correction" class="kt-notice is-warning" data-testid="pln-dpp-correction-notice">
-			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-				<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
-			</svg>
-			<div class="kt-notice-body">Your plan needs a correction</div>
-		</div>
-
-		<div v-if="plan.update_notice" class="kt-notice is-warning" data-testid="pln-dpp-update-notice">
-			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-				<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
-			</svg>
-			<div class="kt-notice-body">
-				<strong>{{ plan.update_notice.title }}</strong>
-				<p>{{ plan.update_notice.text }}</p>
+			<!-- U05-CORRECTION — the correction notice leads, before the table it
+			     affects. -->
+			<div v-if="plan.is_correction" class="kt-notice is-warning" data-testid="pln-dpp-correction-notice">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+					<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
+				</svg>
+				<div class="kt-notice-body">Your plan needs a correction</div>
 			</div>
-		</div>
 
-		<!-- U02-CLOSED — the draft stays editable; only submission is closed. -->
-		<div v-if="closedNotice" class="kt-notice is-warning" data-testid="pln-dpp-closed">
-			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-				<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
-			</svg>
-			<div class="kt-notice-body">{{ closedNotice }}</div>
-		</div>
+			<div v-if="plan.update_notice" class="kt-notice is-warning" data-testid="pln-dpp-update-notice">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+					<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
+				</svg>
+				<div class="kt-notice-body">
+					<strong>{{ plan.update_notice.title }}</strong>
+					<p>{{ plan.update_notice.text }}</p>
+				</div>
+			</div>
 
-		<!-- Summary strip. The Author's cost label says "entered so far" because
-		     that is what it is: no complete departmental total exists yet. -->
-		<div class="kt-kpi-row" data-testid="pln-dpp-summary">
-			<div class="kt-kpi-card">
-				<div class="kt-kpi-value">{{ summary.requirements }}</div>
-				<div class="kt-kpi-sub">Requirements</div>
+			<!-- U02-CLOSED — the draft stays editable; only submission is closed. -->
+			<div v-if="closedNotice" class="kt-notice is-warning" data-testid="pln-dpp-closed">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+					<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
+				</svg>
+				<div class="kt-notice-body">{{ closedNotice }}</div>
 			</div>
-			<div class="kt-kpi-card">
-				<div class="kt-kpi-value">{{ summary.cost }}</div>
-				<div class="kt-kpi-sub">{{ summary.cost_label }}</div>
-			</div>
-			<div class="kt-kpi-card" :class="{ 'is-attention': summary.attention }">
-				<div class="kt-kpi-value">{{ summary.third }}</div>
-				<div class="kt-kpi-sub">{{ summary.third_label }}</div>
-			</div>
-		</div>
 
-		<h3 class="kt-card-title">Requirements</h3>
-		<table class="kt-table pln-dpp-table" data-testid="pln-dpp-table">
-			<thead>
-				<tr>
-					<th>Requirement</th>
-					<th class="is-num">Quantity</th>
-					<th>Unit</th>
-					<th>Required by</th>
-					<th class="is-num">Estimated cost</th>
-					<th>Status</th>
-					<th>Action</th>
-				</tr>
-			</thead>
-			<tbody>
-				<template v-for="row in entries" :key="row.entry_id">
-					<tr data-testid="pln-dpp-row">
-						<td>
-							{{ row.title }}
-							<div class="kt-muted pln-row-ref">{{ row.reference_line }}</div>
-						</td>
-						<td class="is-num">{{ row.quantity_number }}</td>
-						<td>{{ row.unit_label }}</td>
-						<td>{{ row.required_by_display }}</td>
-						<td class="is-num">{{ row.amount_display }}</td>
-						<td><span class="kt-status" :class="`is-${row.status_kind}`">{{ row.status }}</span></td>
-						<td>
-							<a
-								v-if="row.action"
-								href="#"
-								data-testid="pln-dpp-row-action"
-								@click.prevent="onRowAction(row)"
-							>{{ row.action }}</a>
-							<span v-else>—</span>
-						</td>
+			<!-- Summary strip. The Author's cost label says "entered so far" because
+			     that is what it is: no complete departmental total exists yet. -->
+			<div class="kt-kpi-row" data-testid="pln-dpp-summary">
+				<div class="kt-kpi-card">
+					<div class="kt-kpi-value">{{ summary.requirements }}</div>
+					<div class="kt-kpi-sub">Requirements</div>
+				</div>
+				<div class="kt-kpi-card">
+					<div class="kt-kpi-value">{{ summary.cost }}</div>
+					<div class="kt-kpi-sub">{{ summary.cost_label }}</div>
+				</div>
+				<div class="kt-kpi-card" :class="{ 'is-attention': summary.attention }">
+					<div class="kt-kpi-value">{{ summary.third }}</div>
+					<div class="kt-kpi-sub">{{ summary.third_label }}</div>
+				</div>
+			</div>
+
+			<h3 class="kt-card-title">Requirements</h3>
+			<table class="kt-table pln-dpp-table" data-testid="pln-dpp-table">
+				<thead>
+					<tr>
+						<th>Requirement</th>
+						<th class="is-num">Quantity</th>
+						<th>Unit</th>
+						<th>Required by</th>
+						<th class="is-num">Estimated cost</th>
+						<th>Status</th>
+						<th>Action</th>
 					</tr>
-					<!-- U03-FUNDING — the funding panel opens beneath the
-					     requirement it is about, with the rest of the plan still
-					     visible above and below it. -->
-					<tr v-if="fundingEntryId === row.entry_id" class="pln-row-detail" data-testid="pln-dpp-funding-row">
-						<td colspan="7">
-							<EntryFundingPanel
-								:editor="fundingEditor"
-								:budget-line="fundingBudgetLine"
-								:amount="fundingAmount"
-								:pending="pending"
-								:error="errorSummary"
-								@save="$emit('save-funding')"
-								@cancel="$emit('close-funding')"
-								@exclude="$emit('exclude-entry', row)"
-								@correct-source="$emit('correct-source', row)"
-								@update:budget-line="$emit('update:fundingBudgetLine', $event)"
-								@update:amount="$emit('update:fundingAmount', $event)"
-							/>
-						</td>
+				</thead>
+				<tbody>
+					<template v-for="row in entries" :key="row.entry_id">
+						<tr data-testid="pln-dpp-row">
+							<td>
+								{{ row.title }}
+								<div class="kt-muted pln-row-ref">{{ row.reference_line }}</div>
+							</td>
+							<td class="is-num">{{ row.quantity_number }}</td>
+							<td>{{ row.unit_label }}</td>
+							<td>{{ row.required_by_display }}</td>
+							<td class="is-num">{{ row.amount_display }}</td>
+							<td><span class="kt-status" :class="`is-${row.status_kind}`">{{ row.status }}</span></td>
+							<td>
+								<a
+									v-if="row.action"
+									href="#"
+									data-testid="pln-dpp-row-action"
+									@click.prevent="onRowAction(row)"
+								>{{ row.action }}</a>
+								<span v-else>—</span>
+							</td>
+						</tr>
+						<!-- U03-FUNDING — the funding panel opens beneath the
+						     requirement it is about, with the rest of the plan still
+						     visible above and below it. -->
+						<tr v-if="fundingEntryId === row.entry_id" class="pln-row-detail" data-testid="pln-dpp-funding-row">
+							<td colspan="7">
+								<EntryFundingPanel
+									:editor="fundingEditor"
+									:budget-line="fundingBudgetLine"
+									:amount="fundingAmount"
+									:pending="pending"
+									:error="errorSummary"
+									@save="$emit('save-funding')"
+									@cancel="$emit('close-funding')"
+									@exclude="$emit('exclude-entry', row)"
+									@correct-source="$emit('correct-source', row)"
+									@update:budget-line="$emit('update:fundingBudgetLine', $event)"
+									@update:amount="$emit('update:fundingAmount', $event)"
+								/>
+							</td>
+						</tr>
+						<!-- U03-EXCLUDED-ROW — the reason is always visible, never
+						     behind a disclosure: it is the whole content of the row. -->
+						<tr v-if="row.not_proceeding_reason" class="pln-row-detail" data-testid="pln-dpp-exclusion-reason">
+							<td colspan="7">
+								<span class="kt-label">Reason for excluding this requirement</span>
+								<span>{{ row.not_proceeding_reason }}</span>
+							</td>
+						</tr>
+						<!-- U05-CORRECTION — Procurement's comment sits beside the row
+						     it is about, in full. -->
+						<tr v-for="(issue, index) in row.issues || []" :key="`${row.entry_id}-issue-${index}`" class="pln-row-detail" data-testid="pln-dpp-issue">
+							<td colspan="7">
+								<span class="kt-label">What needs to change?</span>
+								<span>{{ issue.correction || issue.problem }}</span>
+							</td>
+						</tr>
+					</template>
+					<tr v-if="!entries.length">
+						<td colspan="7" class="kt-muted" data-testid="pln-dpp-empty">No requirements yet.</td>
 					</tr>
-					<!-- U03-EXCLUDED-ROW — the reason is always visible, never
-					     behind a disclosure: it is the whole content of the row. -->
-					<tr v-if="row.not_proceeding_reason" class="pln-row-detail" data-testid="pln-dpp-exclusion-reason">
-						<td colspan="7">
-							<span class="kt-label">Reason for excluding this requirement</span>
-							<span>{{ row.not_proceeding_reason }}</span>
-						</td>
-					</tr>
-					<!-- U05-CORRECTION — Procurement's comment sits beside the row
-					     it is about, in full. -->
-					<tr v-for="(issue, index) in row.issues || []" :key="`${row.entry_id}-issue-${index}`" class="pln-row-detail" data-testid="pln-dpp-issue">
-						<td colspan="7">
-							<span class="kt-label">What needs to change?</span>
-							<span>{{ issue.correction || issue.problem }}</span>
-						</td>
-					</tr>
-				</template>
-				<tr v-if="!entries.length">
-					<td colspan="7" class="kt-muted" data-testid="pln-dpp-empty">No requirements yet.</td>
-				</tr>
-			</tbody>
-		</table>
+				</tbody>
+			</table>
 
-		<div v-if="plan.mutable" class="pln-dpp-add">
-			<button type="button" class="kt-btn kt-btn-ghost" data-testid="pln-dpp-add" @click="$emit('add-direct')">
-				Add a requirement
-			</button>
-		</div>
+			<div v-if="plan.mutable" class="pln-dpp-add">
+				<button type="button" class="kt-btn kt-btn-ghost" data-testid="pln-dpp-add" @click="$emit('add-direct')">
+					Add a requirement
+				</button>
+			</div>
 
-		<!-- U05-CORRECTION's "For your next departmental update": named, and
-		     deliberately without an add action — the correction comes first. -->
-		<template v-if="plan.is_correction">
-			<h3 class="kt-card-title">For your next departmental update</h3>
-			<p class="kt-muted" data-testid="pln-dpp-next-update">
-				Finish this correction first. New requirements belong in the next update.
-			</p>
-		</template>
-
-		<!-- Certification: the HoD's, on the complete plan, on this page. -->
-		<div v-if="certification.show" class="kt-card kt-blueprint pln-certification" data-testid="pln-dpp-certification">
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<div class="kt-card-title">Certification</div>
-			<p class="kt-muted">{{ certification.text }}</p>
-			<label class="kt-checkbox">
-				<input
-					type="checkbox"
-					data-testid="pln-dpp-certify"
-					:checked="certified"
-					@change="$emit('update:certified', $event.target.checked)"
-				>
-				<span class="box"></span>{{ certification.checkbox_label }}
-			</label>
-		</div>
-
-		<p v-if="errorSummary" class="pln-error-summary" data-testid="pln-dpp-error">{{ errorSummary }}</p>
-
-		<!-- §10.16 C02-DPP-CLOSED — immediately above the action it blocks. -->
-		<MissingSettingPanel v-if="plan.missing_setting" :panel="plan.missing_setting" />
-
-		<!-- Action area, after all decision content. -->
-		<div class="pln-footer" data-testid="pln-dpp-footer">
-			<button type="button" class="kt-btn kt-btn-secondary" data-testid="pln-dpp-back" @click="$emit('back')">
-				Back
-			</button>
-			<div class="pln-footer-right">
-				<!-- The Author is told who submits, rather than shown a control
-				     they cannot use (§10.4). -->
-				<p v-if="plan.submit_hint" class="kt-muted" data-testid="pln-dpp-submit-hint">{{ plan.submit_hint }}</p>
-				<p v-else-if="certification.show && !certified" class="kt-muted" data-testid="pln-dpp-certify-hint">
-					Confirm the certification to submit this plan.
+			<!-- U05-CORRECTION's "For your next departmental update": named, and
+			     deliberately without an add action — the correction comes first. -->
+			<template v-if="plan.is_correction">
+				<h3 class="kt-card-title">For your next departmental update</h3>
+				<p class="kt-muted" data-testid="pln-dpp-next-update">
+					Finish this correction first. New requirements belong in the next update.
 				</p>
-				<button
-					v-if="plan.mutable"
-					type="button"
-					class="kt-btn kt-btn-secondary"
-					data-testid="pln-dpp-save"
-					:disabled="pending"
-					@click="$emit('save-draft')"
-				>
-					Save draft
+			</template>
+
+			<!-- Certification: the HoD's, on the complete plan, on this page. -->
+			<div v-if="certification.show" class="kt-card kt-blueprint pln-certification" data-testid="pln-dpp-certification">
+				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
+				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
+				<div class="kt-card-title">Certification</div>
+				<p class="kt-muted">{{ certification.text }}</p>
+				<label class="kt-checkbox">
+					<input
+						type="checkbox"
+						data-testid="pln-dpp-certify"
+						:checked="certified"
+						@change="$emit('update:certified', $event.target.checked)"
+					>
+					<span class="box"></span>{{ certification.checkbox_label }}
+				</label>
+			</div>
+
+			<p v-if="errorSummary" class="pln-error-summary" data-testid="pln-dpp-error">{{ errorSummary }}</p>
+
+			<!-- §10.16 C02-DPP-CLOSED — immediately above the action it blocks. -->
+			<MissingSettingPanel v-if="plan.missing_setting" :panel="plan.missing_setting" />
+
+			<!-- Action area, after all decision content. -->
+			<div class="pln-footer" data-testid="pln-dpp-footer">
+				<button type="button" class="kt-btn kt-btn-secondary" data-testid="pln-dpp-back" @click="$emit('back')">
+					Back
 				</button>
-				<button
-					v-if="plan.can_submit"
-					type="button"
-					class="kt-btn kt-btn-primary"
-					data-testid="pln-dpp-submit"
-					:disabled="pending || !certified"
-					@click="$emit('submit')"
-				>
-					{{ plan.is_correction ? "Resubmit departmental plan" : "Submit departmental plan" }}
-				</button>
-				<button
-					v-if="plan.can_create_update"
-					type="button"
-					class="kt-btn kt-btn-primary"
-					data-testid="pln-dpp-create-update"
-					:disabled="pending"
-					@click="$emit('create-update')"
-				>
-					Create update
+				<div class="pln-footer-right">
+					<!-- The Author is told who submits, rather than shown a control
+					     they cannot use (§10.4). -->
+					<p v-if="plan.submit_hint" class="kt-muted" data-testid="pln-dpp-submit-hint">{{ plan.submit_hint }}</p>
+					<p v-else-if="certification.show && !certified" class="kt-muted" data-testid="pln-dpp-certify-hint">
+						Confirm the certification to submit this plan.
+					</p>
+					<button
+						v-if="plan.mutable"
+						type="button"
+						class="kt-btn kt-btn-secondary"
+						data-testid="pln-dpp-save"
+						:disabled="pending"
+						@click="$emit('save-draft')"
+					>
+						Save draft
+					</button>
+					<button
+						v-if="plan.can_submit"
+						type="button"
+						class="kt-btn kt-btn-primary"
+						data-testid="pln-dpp-submit"
+						:disabled="pending || !certified"
+						@click="$emit('submit')"
+					>
+						{{ plan.is_correction ? "Resubmit departmental plan" : "Submit departmental plan" }}
+					</button>
+					<button
+						v-if="plan.can_create_update"
+						type="button"
+						class="kt-btn kt-btn-primary"
+						data-testid="pln-dpp-create-update"
+						:disabled="pending"
+						@click="$emit('create-update')"
+					>
+						Create update
+					</button>
+				</div>
+			</div>
+
+			<!-- The Planner holding the open task is never stranded on the record. -->
+			<div v-if="plan.open_task" class="pln-dpp-task" data-testid="pln-dpp-open-task">
+				<button type="button" class="kt-btn kt-btn-primary" @click="$emit('open-task', plan.open_task.route)">
+					{{ plan.open_task.label }}
 				</button>
 			</div>
-		</div>
-
-		<!-- The Planner holding the open task is never stranded on the record. -->
-		<div v-if="plan.open_task" class="pln-dpp-task" data-testid="pln-dpp-open-task">
-			<button type="button" class="kt-btn kt-btn-primary" @click="$emit('open-task', plan.open_task.route)">
-				{{ plan.open_task.label }}
-			</button>
 		</div>
 	</div>
 </template>

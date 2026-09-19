@@ -345,7 +345,11 @@ test.describe("Procurement Planning — design fidelity (U07 annual plan, U08 fo
 		await expect(page.locator('[data-testid="pln-form-dialog"]')).toBeVisible();
 		// The dialog opens on Keep separate; this panel is the combined choice,
 		// and the reason it asks for only exists once that choice is made.
-		await page.locator('[data-testid="pln-form-mode-combined"]').check();
+		// U08's own `.seg`/`.seg-opt` toggle hides its native radio input
+		// (pointer-events aside, the visual state is drawn entirely on the
+		// label) — same as the checkbox trap `tickCheckbox` already exists
+		// for, so it is reused here rather than `.check()`ing the hidden input.
+		await tickCheckbox(page.locator('[data-testid="pln-form-mode-combined"]'));
 		await expect(page.locator('[data-testid="pln-form-reason"]')).toBeVisible();
 		expectLandmarkSubsequence(art, await landmarks(page, '[data-testid="pln-form-dialog"]'), "U08-COMBINE");
 		expect(errors, "console errors").toEqual([]);

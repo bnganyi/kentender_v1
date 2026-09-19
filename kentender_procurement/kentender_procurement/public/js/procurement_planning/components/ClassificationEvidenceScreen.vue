@@ -13,164 +13,166 @@
         on the row rather than left for the Planner to work out. -->
 <template>
 	<div>
-		<div class="pln-masthead">
-			<div>
-				<h1 class="kt-page-title" data-testid="pln-class-title">View accepted requirement classifications</h1>
-			</div>
-		</div>
-
-		<div class="kt-meta-row pln-context-row" data-testid="pln-class-context">
-			<div>
-				<span class="kt-label">Reference</span>
-				<span class="kt-meta-value">{{ evidence.dpp_reference }}</span>
-			</div>
-			<div>
-				<span class="kt-label">Submission</span>
-				<span class="kt-meta-value">{{ evidence.submission_number }}</span>
-			</div>
-			<div>
-				<span class="kt-label">Status</span>
-				<span class="kt-meta-value"><span class="kt-status is-live">Accepted</span></span>
-			</div>
-		</div>
-
-		<table class="kt-table" data-testid="pln-class-table">
-			<thead>
-				<tr>
-					<th>Requirement</th>
-					<th>Requirement type</th>
-					<th>Category</th>
-					<th>Classified by</th>
-					<th>Classified at</th>
-					<th>Action</th>
-				</tr>
-			</thead>
-			<tbody>
-				<template v-for="row in rows" :key="row.dpp_entry_id">
-					<tr data-testid="pln-class-row">
-						<td>{{ row.title }}</td>
-						<td>{{ row.excluded ? "Not applicable" : row.classification.requirement_type }}</td>
-						<td>{{ row.excluded ? "Not applicable" : row.classification.procurement_category }}</td>
-						<td>{{ row.excluded ? "—" : row.classification.actor_name }}</td>
-						<td>{{ row.excluded ? "—" : row.classification.at_display }}</td>
-						<td>
-							<a
-								v-if="row.can_correct && evidence.can_correct"
-								href="#"
-								data-testid="pln-class-correct"
-								@click.prevent="$emit('correct', row)"
-							>Correct classification</a>
-							<span v-else>—</span>
-						</td>
-					</tr>
-					<!-- A corrected row shows what it was and why, in place: the
-					     history is the point of the record. -->
-					<tr v-if="!row.excluded && row.classification.corrected" class="pln-row-detail" data-testid="pln-class-history">
-						<td colspan="6">
-							<span class="kt-label">Corrected from</span>
-							<span>
-								{{ lastCorrection(row).previous_requirement_type }} /
-								{{ lastCorrection(row).previous_procurement_category }}
-								· {{ lastCorrection(row).reason }}
-							</span>
-						</td>
-					</tr>
-				</template>
-			</tbody>
-		</table>
-
-		<p class="kt-muted" data-testid="pln-class-note">
-			The certified departmental requirement will not change. A correction records a new procurement
-			classification and keeps the earlier decision in history.
-		</p>
-
-		<!-- Whatever already consumed a corrected source, named with its own
-		     recovery route rather than left implicit. -->
-		<div
-			v-for="notice in affectedNotices"
-			:key="notice.key"
-			class="kt-notice"
-			:class="notice.kind"
-			data-testid="pln-class-affected"
-		>
-			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-				<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
-			</svg>
-			<div class="kt-notice-body">{{ notice.text }}</div>
-		</div>
-
-		<!-- U06-CORRECT-CLASSIFICATION — a focused panel over this screen. -->
-		<div v-if="panel" class="kt-dialog-backdrop" data-testid="pln-class-panel">
-			<div class="kt-dialog pln-class-dialog">
-				<div class="kt-dialog-title">Correct requirement classification</div>
-				<div class="pln-dialog-body">
-					<p class="pln-class-subject">
-						<strong>{{ panel.title }}</strong><br>
-						<span class="kt-muted">{{ evidence.dpp_reference }} · Submission {{ evidence.submission_number }}</span>
-					</p>
-
-					<div class="kt-meta-row">
-						<div>
-							<span class="kt-label">Current requirement type</span>
-							<span class="kt-meta-value">{{ panel.classification.requirement_type }}</span>
-						</div>
-						<div>
-							<span class="kt-label">Current category</span>
-							<span class="kt-meta-value">{{ panel.classification.procurement_category }}</span>
-						</div>
-					</div>
-
-					<div class="kt-field">
-						<label for="pln-class-new-type" class="kt-label">New requirement type</label>
-						<select
-							id="pln-class-new-type"
-							class="kt-input"
-							data-testid="pln-class-new-type"
-							:value="newType"
-							@change="$emit('update:newType', $event.target.value)"
-						>
-							<option value="">Select a requirement type</option>
-							<option
-								v-for="option in selectableTypes"
-								:key="option.requirement_type"
-								:value="option.requirement_type"
-							>{{ option.requirement_type }}</option>
-						</select>
-					</div>
-
-					<div class="pln-class-derived">
-						<span class="kt-label">New category (derived)</span>
-						<span class="kt-meta-value" data-testid="pln-class-new-category">{{ derivedCategory }}</span>
-					</div>
-
-					<div class="kt-field">
-						<label for="pln-class-reason" class="kt-label">Reason for correction</label>
-						<textarea
-							id="pln-class-reason"
-							class="kt-input"
-							rows="3"
-							data-testid="pln-class-reason"
-							:value="reason"
-							@input="$emit('update:reason', $event.target.value)"
-						></textarea>
-					</div>
-
-					<p class="kt-muted" data-testid="pln-class-impact">{{ impactText }}</p>
-					<p v-if="error" class="pln-error-summary" data-testid="pln-class-error">{{ error }}</p>
+		<div class="pln-sheet">
+			<div class="pln-masthead">
+				<div>
+					<h1 class="kt-page-title" data-testid="pln-class-title">View accepted requirement classifications</h1>
 				</div>
-				<div class="kt-dialog-actions">
-					<button type="button" class="kt-btn kt-btn-secondary" data-testid="pln-class-cancel" @click="$emit('cancel')">
-						Cancel
-					</button>
-					<button
-						type="button"
-						class="kt-btn kt-btn-primary"
-						data-testid="pln-class-save"
-						:disabled="pending || !canSave"
-						@click="$emit('save')"
-					>
-						Save classification correction
-					</button>
+			</div>
+
+			<div class="kt-meta-row pln-context-row" data-testid="pln-class-context">
+				<div>
+					<span class="kt-label">Reference</span>
+					<span class="kt-meta-value">{{ evidence.dpp_reference }}</span>
+				</div>
+				<div>
+					<span class="kt-label">Submission</span>
+					<span class="kt-meta-value">{{ evidence.submission_number }}</span>
+				</div>
+				<div>
+					<span class="kt-label">Status</span>
+					<span class="kt-meta-value"><span class="kt-status is-live">Accepted</span></span>
+				</div>
+			</div>
+
+			<table class="kt-table" data-testid="pln-class-table">
+				<thead>
+					<tr>
+						<th>Requirement</th>
+						<th>Requirement type</th>
+						<th>Category</th>
+						<th>Classified by</th>
+						<th>Classified at</th>
+						<th>Action</th>
+					</tr>
+				</thead>
+				<tbody>
+					<template v-for="row in rows" :key="row.dpp_entry_id">
+						<tr data-testid="pln-class-row">
+							<td>{{ row.title }}</td>
+							<td>{{ row.excluded ? "Not applicable" : row.classification.requirement_type }}</td>
+							<td>{{ row.excluded ? "Not applicable" : row.classification.procurement_category }}</td>
+							<td>{{ row.excluded ? "—" : row.classification.actor_name }}</td>
+							<td>{{ row.excluded ? "—" : row.classification.at_display }}</td>
+							<td>
+								<a
+									v-if="row.can_correct && evidence.can_correct"
+									href="#"
+									data-testid="pln-class-correct"
+									@click.prevent="$emit('correct', row)"
+								>Correct classification</a>
+								<span v-else>—</span>
+							</td>
+						</tr>
+						<!-- A corrected row shows what it was and why, in place: the
+						     history is the point of the record. -->
+						<tr v-if="!row.excluded && row.classification.corrected" class="pln-row-detail" data-testid="pln-class-history">
+							<td colspan="6">
+								<span class="kt-label">Corrected from</span>
+								<span>
+									{{ lastCorrection(row).previous_requirement_type }} /
+									{{ lastCorrection(row).previous_procurement_category }}
+									· {{ lastCorrection(row).reason }}
+								</span>
+							</td>
+						</tr>
+					</template>
+				</tbody>
+			</table>
+
+			<p class="kt-muted" data-testid="pln-class-note">
+				The certified departmental requirement will not change. A correction records a new procurement
+				classification and keeps the earlier decision in history.
+			</p>
+
+			<!-- Whatever already consumed a corrected source, named with its own
+			     recovery route rather than left implicit. -->
+			<div
+				v-for="notice in affectedNotices"
+				:key="notice.key"
+				class="kt-notice"
+				:class="notice.kind"
+				data-testid="pln-class-affected"
+			>
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+					<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
+				</svg>
+				<div class="kt-notice-body">{{ notice.text }}</div>
+			</div>
+
+			<!-- U06-CORRECT-CLASSIFICATION — a focused panel over this screen. -->
+			<div v-if="panel" class="kt-dialog-backdrop" data-testid="pln-class-panel">
+				<div class="kt-dialog pln-class-dialog">
+					<div class="kt-dialog-title">Correct requirement classification</div>
+					<div class="pln-dialog-body">
+						<p class="pln-class-subject">
+							<strong>{{ panel.title }}</strong><br>
+							<span class="kt-muted">{{ evidence.dpp_reference }} · Submission {{ evidence.submission_number }}</span>
+						</p>
+
+						<div class="kt-meta-row">
+							<div>
+								<span class="kt-label">Current requirement type</span>
+								<span class="kt-meta-value">{{ panel.classification.requirement_type }}</span>
+							</div>
+							<div>
+								<span class="kt-label">Current category</span>
+								<span class="kt-meta-value">{{ panel.classification.procurement_category }}</span>
+							</div>
+						</div>
+
+						<div class="kt-field">
+							<label for="pln-class-new-type" class="kt-label">New requirement type</label>
+							<select
+								id="pln-class-new-type"
+								class="kt-input"
+								data-testid="pln-class-new-type"
+								:value="newType"
+								@change="$emit('update:newType', $event.target.value)"
+							>
+								<option value="">Select a requirement type</option>
+								<option
+									v-for="option in selectableTypes"
+									:key="option.requirement_type"
+									:value="option.requirement_type"
+								>{{ option.requirement_type }}</option>
+							</select>
+						</div>
+
+						<div class="pln-class-derived">
+							<span class="kt-label">New category (derived)</span>
+							<span class="kt-meta-value" data-testid="pln-class-new-category">{{ derivedCategory }}</span>
+						</div>
+
+						<div class="kt-field">
+							<label for="pln-class-reason" class="kt-label">Reason for correction</label>
+							<textarea
+								id="pln-class-reason"
+								class="kt-input"
+								rows="3"
+								data-testid="pln-class-reason"
+								:value="reason"
+								@input="$emit('update:reason', $event.target.value)"
+							></textarea>
+						</div>
+
+						<p class="kt-muted" data-testid="pln-class-impact">{{ impactText }}</p>
+						<p v-if="error" class="pln-error-summary" data-testid="pln-class-error">{{ error }}</p>
+					</div>
+					<div class="kt-dialog-actions">
+						<button type="button" class="kt-btn kt-btn-secondary" data-testid="pln-class-cancel" @click="$emit('cancel')">
+							Cancel
+						</button>
+						<button
+							type="button"
+							class="kt-btn kt-btn-primary"
+							data-testid="pln-class-save"
+							:disabled="pending || !canSave"
+							@click="$emit('save')"
+						>
+							Save classification correction
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>

@@ -11,107 +11,109 @@
      plan stays visible. -->
 <template>
 	<div class="pln-entry-editor">
-		<div class="pln-masthead">
-			<div>
-				<h1 class="kt-page-title" data-testid="dpp-editor-title">{{ isNew ? "Add a requirement" : entry.title }}</h1>
-				<p v-if="isNew" class="kt-page-lede">
-					Add a departmental requirement that was not created through Departmental Needs.
-				</p>
-				<p v-else class="kt-muted pln-row-ref" data-testid="dpp-editor-reference">{{ entry.entry_id }}</p>
+		<div class="pln-sheet">
+			<div class="pln-masthead">
+				<div>
+					<h1 class="kt-page-title" data-testid="dpp-editor-title">{{ isNew ? "Add a requirement" : entry.title }}</h1>
+					<p v-if="isNew" class="kt-page-lede">
+						Add a departmental requirement that was not created through Departmental Needs.
+					</p>
+					<p v-else class="kt-muted pln-row-ref" data-testid="dpp-editor-reference">{{ entry.entry_id }}</p>
+				</div>
+				<div v-if="!isNew" class="pln-header-actions">
+					<span class="kt-status" :class="editor.mutable ? 'is-attention' : 'is-muted'">{{ editor.mutable ? "Draft" : "Submitted" }}</span>
+				</div>
 			</div>
-			<div v-if="!isNew" class="pln-header-actions">
-				<span class="kt-status" :class="editor.mutable ? 'is-attention' : 'is-muted'">{{ editor.mutable ? "Draft" : "Submitted" }}</span>
-			</div>
-		</div>
 
-		<div class="kt-meta-row pln-context-row" data-testid="dpp-editor-context">
-			<div>
-				<span class="kt-label">Department</span>
-				<span class="kt-meta-value">{{ context.department }}</span>
+			<div class="kt-meta-row pln-context-row" data-testid="dpp-editor-context">
+				<div>
+					<span class="kt-label">Department</span>
+					<span class="kt-meta-value">{{ context.department }}</span>
+				</div>
+				<div>
+					<span class="kt-label">Financial year</span>
+					<span class="kt-meta-value">{{ context.financial_year }}</span>
+				</div>
 			</div>
-			<div>
-				<span class="kt-label">Financial year</span>
-				<span class="kt-meta-value">{{ context.financial_year }}</span>
-			</div>
-		</div>
 
-		<div class="kt-field">
-			<label for="dpp-title" class="kt-label">Requirement title</label>
-			<input id="dpp-title" class="kt-input" data-testid="dpp-f-title" :disabled="!canEdit" v-model="form.title">
-		</div>
-		<div class="kt-field">
-			<label for="dpp-description" class="kt-label">Description</label>
-			<textarea id="dpp-description" class="kt-input" rows="3" data-testid="dpp-f-description" :disabled="!canEdit" v-model="form.description"></textarea>
-		</div>
-		<div class="kt-field">
-			<label for="dpp-result" class="kt-label">Expected result</label>
-			<textarea id="dpp-result" class="kt-input" rows="2" data-testid="dpp-f-result" :disabled="!canEdit" v-model="form.expected_operational_result"></textarea>
-		</div>
-
-		<!-- Quantity and Unit side by side, and never merged into one field. -->
-		<div class="pln-entry-pair">
 			<div class="kt-field">
-				<label for="dpp-quantity" class="kt-label">Quantity</label>
-				<input id="dpp-quantity" class="kt-input" type="number" min="1" step="1" data-testid="dpp-f-quantity" :disabled="!canEdit" v-model="form.quantity">
+				<label for="dpp-title" class="kt-label">Requirement title</label>
+				<input id="dpp-title" class="kt-input" data-testid="dpp-f-title" :disabled="!canEdit" v-model="form.title">
 			</div>
 			<div class="kt-field">
-				<label for="dpp-unit" class="kt-label">Unit</label>
-				<select id="dpp-unit" class="kt-input" data-testid="dpp-f-unit" :disabled="!canEdit" v-model="form.unit">
-					<option value="">Select a unit</option>
-					<option v-for="unit in editor.units || []" :key="unit.id" :value="unit.id">{{ unit.label }}</option>
+				<label for="dpp-description" class="kt-label">Description</label>
+				<textarea id="dpp-description" class="kt-input" rows="3" data-testid="dpp-f-description" :disabled="!canEdit" v-model="form.description"></textarea>
+			</div>
+			<div class="kt-field">
+				<label for="dpp-result" class="kt-label">Expected result</label>
+				<textarea id="dpp-result" class="kt-input" rows="2" data-testid="dpp-f-result" :disabled="!canEdit" v-model="form.expected_operational_result"></textarea>
+			</div>
+
+			<!-- Quantity and Unit side by side, and never merged into one field. -->
+			<div class="pln-entry-pair">
+				<div class="kt-field">
+					<label for="dpp-quantity" class="kt-label">Quantity</label>
+					<input id="dpp-quantity" class="kt-input" type="number" min="1" step="1" data-testid="dpp-f-quantity" :disabled="!canEdit" v-model="form.quantity">
+				</div>
+				<div class="kt-field">
+					<label for="dpp-unit" class="kt-label">Unit</label>
+					<select id="dpp-unit" class="kt-input" data-testid="dpp-f-unit" :disabled="!canEdit" v-model="form.unit">
+						<option value="">Select a unit</option>
+						<option v-for="unit in editor.units || []" :key="unit.id" :value="unit.id">{{ unit.label }}</option>
+					</select>
+				</div>
+			</div>
+
+			<div class="kt-field">
+				<label for="dpp-required-by" class="kt-label">Required by</label>
+				<input id="dpp-required-by" class="kt-input" type="date" data-testid="dpp-f-required-by" :disabled="!canEdit" v-model="form.required_by_date">
+			</div>
+
+			<div class="kt-field">
+				<label for="dpp-budget-line" class="kt-label">Budget line</label>
+				<select id="dpp-budget-line" class="kt-input" data-testid="dpp-f-budget-line" :disabled="!canEdit" v-model="form.budget_line">
+					<option value="">Select a budget line</option>
+					<option v-for="line in editor.budget_lines || []" :key="line.id" :value="line.id">{{ line.title || line.label }}</option>
 				</select>
+				<div v-if="selectedLineReference" class="kt-muted" data-testid="dpp-f-budget-line-code">{{ selectedLineReference }}</div>
 			</div>
-		</div>
 
-		<div class="kt-field">
-			<label for="dpp-required-by" class="kt-label">Required by</label>
-			<input id="dpp-required-by" class="kt-input" type="date" data-testid="dpp-f-required-by" :disabled="!canEdit" v-model="form.required_by_date">
-		</div>
+			<div class="kt-field">
+				<label for="dpp-amount" class="kt-label">Estimated cost (KES)</label>
+				<input id="dpp-amount" class="kt-input" type="number" min="1" data-testid="dpp-f-amount" :disabled="!canEdit" v-model="form.indicative_amount">
+			</div>
 
-		<div class="kt-field">
-			<label for="dpp-budget-line" class="kt-label">Budget line</label>
-			<select id="dpp-budget-line" class="kt-input" data-testid="dpp-f-budget-line" :disabled="!canEdit" v-model="form.budget_line">
-				<option value="">Select a budget line</option>
-				<option v-for="line in editor.budget_lines || []" :key="line.id" :value="line.id">{{ line.title || line.label }}</option>
-			</select>
-			<div v-if="selectedLineReference" class="kt-muted" data-testid="dpp-f-budget-line-code">{{ selectedLineReference }}</div>
-		</div>
+			<p v-if="errorSummary" class="pln-error-summary" data-testid="dpp-editor-error">{{ errorSummary }}</p>
 
-		<div class="kt-field">
-			<label for="dpp-amount" class="kt-label">Estimated cost (KES)</label>
-			<input id="dpp-amount" class="kt-input" type="number" min="1" data-testid="dpp-f-amount" :disabled="!canEdit" v-model="form.indicative_amount">
-		</div>
-
-		<p v-if="errorSummary" class="pln-error-summary" data-testid="dpp-editor-error">{{ errorSummary }}</p>
-
-		<div class="pln-footer" data-testid="dpp-editor-footer">
-			<!-- U04-EDIT — removing a requirement the department added is the
-			     department's own to do; it has no place on a new one. -->
-			<button
-				v-if="!isNew && canEdit"
-				type="button"
-				class="kt-btn kt-btn-ghost"
-				data-testid="dpp-editor-remove"
-				:disabled="pending"
-				@click="$emit('remove')"
-			>
-				Remove requirement
-			</button>
-			<span v-else></span>
-			<div class="pln-footer-right">
-				<button type="button" class="kt-btn kt-btn-secondary" data-testid="dpp-editor-cancel" :disabled="pending" @click="$emit('cancel')">
-					{{ isNew ? "Cancel" : "Back to departmental plan" }}
-				</button>
+			<div class="pln-footer" data-testid="dpp-editor-footer">
+				<!-- U04-EDIT — removing a requirement the department added is the
+				     department's own to do; it has no place on a new one. -->
 				<button
-					v-if="canEdit"
+					v-if="!isNew && canEdit"
 					type="button"
-					class="kt-btn kt-btn-primary"
-					data-testid="dpp-editor-save"
-					:disabled="pending || !complete"
-					@click="$emit('save-direct', { ...form })"
+					class="kt-btn kt-btn-ghost"
+					data-testid="dpp-editor-remove"
+					:disabled="pending"
+					@click="$emit('remove')"
 				>
-					{{ isNew ? "Add requirement" : "Save requirement" }}
+					Remove requirement
 				</button>
+				<span v-else></span>
+				<div class="pln-footer-right">
+					<button type="button" class="kt-btn kt-btn-secondary" data-testid="dpp-editor-cancel" :disabled="pending" @click="$emit('cancel')">
+						{{ isNew ? "Cancel" : "Back to departmental plan" }}
+					</button>
+					<button
+						v-if="canEdit"
+						type="button"
+						class="kt-btn kt-btn-primary"
+						data-testid="dpp-editor-save"
+						:disabled="pending || !complete"
+						@click="$emit('save-direct', { ...form })"
+					>
+						{{ isNew ? "Add requirement" : "Save requirement" }}
+					</button>
+				</div>
 			</div>
 		</div>
 	</div>
