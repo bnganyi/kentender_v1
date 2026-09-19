@@ -29,7 +29,7 @@ class TestCanonicalSelection(IntegrationTestCase):
 	def test_stage_ladder_is_ordered_and_closed(self):
 		self.assertEqual(
 			canonical.STAGES,
-			("site", "strategy", "budget", "needs", "planning", "requisitions"),
+			("site", "strategy", "budget", "needs", "planning", "requisitions", "tenders"),
 		)
 		with self.assertRaises(frappe.ValidationError):
 			canonical._stage_index("tender")
@@ -135,10 +135,10 @@ class TestCanonicalSeedRun(IntegrationTestCase):
 
 
 class TestCanonicalSeedFullChain(IntegrationTestCase):
-	"""The full site → strategy → budget → needs → planning → requisitions
-	chain, on the real test site, `reset=False` so this
-	stays scoped to the seed's own rows (as `TestCanonicalSeedRun` already
-	does for budget)."""
+	"""The full site → strategy → budget → needs → planning → requisitions →
+	tenders chain, on the real test site, `reset=False` so this stays scoped
+	to the seed's own rows (as `TestCanonicalSeedRun` already does for
+	budget)."""
 
 	def test_seed_through_requisitions_is_idempotent(self):
 		frappe.set_user("Administrator")
@@ -149,6 +149,20 @@ class TestCanonicalSeedFullChain(IntegrationTestCase):
 		second = canonical.run(through="requisitions", reset=False, validate=True, force=True, commit=False)
 		self.assertTrue(second["ok"])
 		self.assertTrue(second["seeded"]["requisitions"]["idempotent"])
+		for dt, count in counts.items():
+			self.assertEqual(frappe.db.count(dt), count, dt)
+
+	def test_seed_through_tenders_is_idempotent(self):
+		"""TPR-CHG-001 v0.8 TND-804 (AC-078) — a second `through="tenders"`
+		run creates no duplicate Tender and reports idempotent."""
+		frappe.set_user("Administrator")
+		first = canonical.run(through="tenders", reset=False, validate=True, force=True, commit=False)
+		self.assertTrue(first["ok"])
+		counts = {dt: frappe.db.count(dt) for dt in ("Procurement Requisition", "Tender", "Tender Addendum", "Tender Addendum Inquiry", "Tender Submission Handoff")}
+
+		second = canonical.run(through="tenders", reset=False, validate=True, force=True, commit=False)
+		self.assertTrue(second["ok"])
+		self.assertTrue(second["seeded"]["tenders"]["idempotent"])
 		for dt, count in counts.items():
 			self.assertEqual(frappe.db.count(dt), count, dt)
 

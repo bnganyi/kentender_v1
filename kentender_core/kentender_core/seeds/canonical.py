@@ -46,7 +46,7 @@ import frappe
 
 from kentender_core.seeds import site_setup
 
-STAGES: tuple[str, ...] = ("site", "strategy", "budget", "needs", "planning", "requisitions")
+STAGES: tuple[str, ...] = ("site", "strategy", "budget", "needs", "planning", "requisitions", "tenders")
 
 # Namespaces whose rows are canonical and survive `reset`.
 STRATEGY_NS = "str-chg-001-mvp1"
@@ -75,6 +75,11 @@ REGISTER_LOCAL_PARTS: tuple[str, ...] = (
 	"daniel.rotich",
 	"charles.mutiso",
 	"brian.wafula",
+	# TPR-CHG-001 v0.8 §13.1 (plan D8) — the bidder-facing service identity
+	# that delivers addendum inquiries; a canonical service account, never a
+	# person, but on the same fixture e-mail domain as every other seeded
+	# actor and so registered the same way.
+	"tender.inquiry.producer",
 )
 REGISTER_USERS = frozenset(f"{local}@moh.example.test" for local in REGISTER_LOCAL_PARTS)
 # Only accounts on a fixture e-mail domain are ever deleted; a real person's
@@ -460,7 +465,9 @@ def clear_canonical_modules() -> dict[str, Any]:
 	# the real command, then does the same delete — the safe rebuild path.
 	from kentender_procurement.procurement_requisitions.seeds.clear import clear_requisition_fixture_rows
 	from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import reset_requisitions_seed
+	from kentender_procurement.tenders.seeds.kentender_mvp_v1 import reset_tenders_seed
 
+	out["tenders"] = reset_tenders_seed(commit=False)
 	out["requisitions"] = reset_requisitions_seed(commit=False)
 	for doctype, count in clear_requisition_fixture_rows(include_canonical=False, include_playwright=playwright_ok).get("deleted", {}).items():
 		if isinstance(count, int):
@@ -550,6 +557,10 @@ def seed(*, through: str = STAGES[-1]) -> dict[str, Any]:
 				pluck="name",
 			):
 				frappe.db.set_value("Funding Reservation", reservation, "fixture_namespace", REQUISITIONS_NS, update_modified=False)
+	if last >= STAGES.index("tenders"):
+		from kentender_procurement.tenders.seeds.kentender_mvp_v1 import upsert_tenders_base
+
+		report["tenders"] = upsert_tenders_base(commit=False)
 	return report
 
 
@@ -680,6 +691,12 @@ def validate(*, through: str = STAGES[-1]) -> dict[str, Any]:
 		from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import validate_requisitions_seed
 
 		for row in validate_requisitions_seed():
+			check(row["ok"], f"{row['check']}: {row['detail']}")
+
+	if last >= STAGES.index("tenders"):
+		from kentender_procurement.tenders.seeds.kentender_mvp_v1 import validate_tenders_seed
+
+		for row in validate_tenders_seed():
 			check(row["ok"], f"{row['check']}: {row['detail']}")
 
 	report = {"ok": not failures, "through": through, "failures": failures}

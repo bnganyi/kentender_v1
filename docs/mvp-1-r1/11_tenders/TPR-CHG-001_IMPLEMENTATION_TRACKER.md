@@ -3,7 +3,7 @@
 **Authority:** `KenTender_TPR-CHG-001_Tenders_v0_8.md` (Approved 17 September 2026; supersedes TPR-CHG-001 v0.6/v0.7 and TPUB-CHG-001 v0.2/v0.3 in full).
 **Companions:** `TPR-CHG-001_Implementation_Plan.md` (decision register D1–D24, conflict register C1–C16, phases, slice gate, owner questions Q1–Q9), `TPR-CHG-001_FOLLOW_UPS.md`, `design/*.dc.html` (fourteen boards, repaired at TND-003), `evidence/v0_8/` (from Phase 7).
 **Supersedes-in-tracking:** `retired/TPR-CHG-001_IMPLEMENTATION_TRACKER.md` (v0.6 Tender Preparation, Phases 0–7 Done 2026-09-08, never committed beyond `2eb7c177`). That module is **retired in full** by Phase 1 of this cycle — no row here reuses its evidence.
-**Status:** Phases 0–7 Done 19 September 2026. Phase 8 (seeds) next.
+**Status:** Phases 0–8 Done 19 September 2026. Phase 9 (release evidence) next.
 **Started:** 18 September 2026.
 
 ## Tracker rules
@@ -38,7 +38,7 @@
 | TND-G05 | Publication services: §7.3 + every §15.3 case; `tenders-publication-integrity-gate` | Done | 2026-09-19. TND-501..506; `test_publication` 11/11 (integrity cases live in the same module, run by `tenders-services-gate`). |
 | TND-G06 | Open-period services: §7.4 all rows; scheduler close; handoff | Done | 2026-09-19. TND-601..607; `make tenders-services-gate` 10 modules / 84 tests green (`test_open_period` 6/6). |
 | TND-G07 | UI: every slice 7a–7l passes the plan §8 slice gate; `ui-tenders-fidelity-gate` | Done | 2026-09-19. 12 Playwright slice specs (52 tests) + `tenders-fidelity.spec.ts` (14 boards) all green in one full serial run; `npx vitest run --project tenders` 27/27. |
-| TND-G08 | Seeds: canonical `tenders` stage idempotent + validator twice; twelve Playwright profiles | Planned | |
+| TND-G08 | Seeds: canonical `tenders` stage idempotent + validator twice; twelve Playwright profiles | Done | 2026-09-19. `make seed-canonical THROUGH=tenders` run twice live (second run `removed={}`, `tenders.idempotent: true`, `validate.ok: true`); `test_canonical_seed.py` 12/12 including the new tenders case; 12 Playwright reset_<profile> fixtures in `tenders/seeds/playwright_ui_fixtures.py`, each exercised by the Phase 7 slice specs. |
 | TND-G09 | Release evidence: persona pass, evidence pack, build hash, industry/translation gates, runbooks, AC map closed truthfully | Planned | |
 | TPL-G07 | Owner: APPROVE FOR IMPLEMENTATION PACK v1.1 (carried from STD-TPL tracker TPL-709) | Blocked — owner | Built against the candidate bundle (C16). |
 
@@ -152,11 +152,11 @@
 
 | ID | Item | Status | Evidence |
 |---|---|---|---|
-| TND-801 | `seeds/kentender_mvp_v1.py` (`verify_prerequisites`, `upsert_tenders` through the §13.3 rows with injected clock, `reset_tenders_seed`, `validate_tenders_seed`) | Planned | |
-| TND-802 | Core `canonical.py` `tenders` stage (clear/seed/validate), `make seed-canonical THROUGH=tenders`, Makefile help, SEED-OPS-001 row; `test_canonical_seed.py` idempotency test through `tenders` | Planned | |
-| TND-803 | `seeds/playwright_ui_fixtures.py`: world FY 2100-2101, `ensure_world`, `restore_site`, twelve `reset_<profile>` functions (§13.4) built through real commands; `seeds/clear.py`; `globalTeardown.ts` | Planned | |
-| TND-804 | `tests/test_tenders_seed.py`; validator green twice on the site; second run creates no duplicate (AC-078) | Planned | |
-| TND-805 | Site left canonical after the phase (`seed-canonical-validate THROUGH=tenders` green; Playwright world wiped) | Planned | |
+| TND-801 | `seeds/kentender_mvp_v1.py` (`verify_prerequisites`, `upsert_tenders` through the §13.3 rows with injected clock, `reset_tenders_seed`, `validate_tenders_seed`) | Done | 2026-09-19. Full §13.3 timeline (start → V1 submit → HoPF return → V2 resubmit → approve → authorise → four channels confirmed → one addendum issued + fully confirmed → one inquiry answered → scheduler close) as the four canonical actors (Brian Wafula, Charles Mutiso, Amina Hassan, Naomi Chebet) plus the bidder-facing producer service identity, on Requisitions' own canonical handoff — never a second Requisition. |
+| TND-802 | Core `canonical.py` `tenders` stage (clear/seed/validate), `make seed-canonical THROUGH=tenders`, Makefile help, SEED-OPS-001 row; `test_canonical_seed.py` idempotency test through `tenders` | Done | 2026-09-19. `STAGES` extended, `clear_canonical_modules()` resets Tenders before Requisitions, `seed()`/`validate()` gained tenders blocks, `REGISTER_LOCAL_PARTS` gained the producer identity; Makefile help + `THROUGH` comment updated; SEED-OPS-001 runbook v1.7 row; `test_seed_through_tenders_is_idempotent` added and green. |
+| TND-803 | `seeds/playwright_ui_fixtures.py`: world FY 2100-2101, `ensure_world`, `restore_site`, twelve `reset_<profile>` functions (§13.4) built through real commands; `seeds/clear.py`; `globalTeardown.ts` | Done (Phase 7) | 2026-09-19. Deviation, judged: extends Requisitions' own Playwright world (FY 2099-2100) rather than a separate FY 2100-2101 world, reusing its one authorised handoff rather than building a second world from scratch — the same reuse decision REQ's own module made for Planning. Thirteen `reset_<profile>` functions (one more than named, covering both the addendum-confirming and awaiting-issue states separately); `restore_site`/`ensure_world` present; no separate `seeds/clear.py` (the module's own `_wipe_tenders()` + `reset_all()` cover it); `globalTeardown.ts` restores both Requisitions' and Tenders' worlds. |
+| TND-804 | `tests/test_tenders_seed.py`; validator green twice on the site; second run creates no duplicate (AC-078) | Done | 2026-09-19. Folded into `kentender_core.tests.test_canonical_seed.TestCanonicalSeedFullChain.test_seed_through_tenders_is_idempotent` (consistent with how the Requisitions stage's own equivalent lives in the same shared file, not a per-module test file) — asserts row counts unchanged and `idempotent: true` on the second run. |
+| TND-805 | Site left canonical after the phase (`seed-canonical-validate THROUGH=tenders` green; Playwright world wiped) | Done | 2026-09-19. Site reseeded canonical through tenders as the phase's last live action; Tenders Playwright world wiped via `restore_site()` before the canonical run. |
 
 ## Work register — Phase 9: release evidence
 
