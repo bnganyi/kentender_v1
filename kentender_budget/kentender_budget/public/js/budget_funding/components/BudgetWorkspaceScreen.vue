@@ -77,7 +77,13 @@ async function onSelectFy(fy) {
 		workspace.value = null;
 		return;
 	}
-	await refresh();
+	// 2026-09-19 — this fired the full-page skeleton on every Fiscal Year
+	// change, even switching between two years that had already both loaded
+	// once. `refresh` itself only treats `quiet` as true when there is
+	// existing content to refresh in place (`!!workspace.value`), so passing
+	// it unconditionally is safe: the very first pick, with nothing on
+	// screen yet, still shows the skeleton.
+	await refresh({ quiet: true });
 }
 
 const state = computed(() => workspace.value?.state || "");
@@ -166,7 +172,13 @@ async function updateAllocation() {
 	if (updating.value) return;
 	updating.value = true;
 	try {
-		const result = await createBudgetSuccessorVersion(workspace.value.budget.code, { revision_type: "Transfer", idempotency_key: mintKey("successor") });
+		// 2026-09-19 — Update registered allocation does not yet know what kind of
+		// change this is; the officer decides on the Approval details tab.
+		// "Correction" is the one revision type with no hidden constraint
+		// (BUD-BR-018's fixed-total/balanced-transfer rule applies only when
+		// the officer explicitly picks Transfer) — the safe, unsurprising
+		// starting point for what is usually just "fix this and resubmit".
+		const result = await createBudgetSuccessorVersion(workspace.value.budget.code, { revision_type: "Correction", idempotency_key: mintKey("successor") });
 		if (result.ok) {
 			go(workspace.value.budget.code, "version", String(result.version.version_number), "edit");
 			return;

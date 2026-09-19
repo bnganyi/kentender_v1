@@ -7,6 +7,38 @@ import { ADMIN, APPROVER, OFFICER, PendingFixture, SuccessorFixture, RETURN_REAS
  */
 test.describe.configure({ mode: "serial" });
 
+test("returning to Overview from another tab never lands on a literal \"undefined\" route", async ({ page }) => {
+	/**
+	 * Regression (2026-09-19): switching tabs omits the default tab's own
+	 * route segment with `t === "overview" ? undefined : t`, a natural,
+	 * repeated idiom across these screens. `go()` forwarded that literal
+	 * `undefined` straight to `frappe.set_route`, which stringifies it into
+	 * the URL itself ("/review/{id}/undefined") instead of dropping it — no
+	 * screen resolves that route, so the tab bar and header kept rendering
+	 * (they do not depend on it) while the content panel underneath went
+	 * blank, silently, with no error. Fixed in the shared `useRoute` adapter
+	 * (`kt_desk_page.js`) so it protects every screen built on it, not only
+	 * this one.
+	 */
+	const fx = resetFixture<PendingFixture>("reset_initial_submitted");
+	const errors = collectConsoleErrors(page);
+	await login(page, APPROVER);
+	await gotoBudget(page, `/review/${fx.pending.version_code}/lines`);
+	await expectScreen(page, "review");
+	await page.getByTestId("bud-task-tab-overview").click();
+	await expect(page).not.toHaveURL(/undefined/);
+	await expect(page.getByTestId("bud-task-approve-btn")).toBeVisible();
+	await page.getByTestId("bud-task-approve-btn").click();
+	await expect(page.getByTestId("bud-task-status")).toHaveText("Approved and activated", { timeout: 30_000 });
+
+	// The same idiom on the same (now decided) task, after approval.
+	await page.getByTestId("bud-task-tab-history").click();
+	await page.getByTestId("bud-task-tab-overview").click();
+	await expect(page).not.toHaveURL(/undefined/);
+	await expect(page.getByTestId("bud-task-evidence")).toBeVisible();
+	expect(errors).toEqual([]);
+});
+
 test("review registered allocation: complete set, evidence, one approval activates", async ({ page }) => {
 	const fx = resetFixture<PendingFixture>("reset_initial_submitted");
 	const errors = collectConsoleErrors(page);
@@ -27,6 +59,29 @@ test("review registered allocation: complete set, evidence, one approval activat
 	await expect(page.getByTestId("bud-task-status")).toHaveText("Approved and activated", { timeout: 30_000 });
 	await expect(page.getByTestId("bud-task-footer")).toHaveCount(0);
 	await expect(page.locator(".modal.show")).toHaveCount(0);
+	expect(errors).toEqual([]);
+});
+
+test("the Approver reaching the read-only editor route is offered a way to decide it", async ({ page }) => {
+	/**
+	 * Regression (2026-09-19): a Budget Approver who lands on BUD-UI-02's
+	 * read-only editor route for a Submitted version — rather than the
+	 * BUD-UI-04 review route the workspace/My Work links normally send them
+	 * to — saw a bare "Read-only" label and no way to decide it. The route
+	 * itself must never be a dead end for the one person who can act.
+	 */
+	const fx = resetFixture<PendingFixture>("reset_initial_submitted");
+	const errors = collectConsoleErrors(page);
+	await login(page, APPROVER);
+	await gotoBudget(page, `/${fx.pending.budget_code}/version/${fx.pending.version_number}/edit`);
+	await expectScreen(page, "editor");
+	await expect(page.getByTestId("bud-editor-readonly")).toBeVisible();
+	const reviewBtn = page.getByTestId("bud-editor-review-btn");
+	await expect(reviewBtn).toHaveText("Review this allocation");
+	await reviewBtn.click();
+	await expectScreen(page, "review");
+	await expect(page).toHaveURL(new RegExp(`/review/${fx.pending.version}$`));
+	await expect(page.getByTestId("bud-task-approve-btn")).toBeVisible();
 	expect(errors).toEqual([]);
 });
 

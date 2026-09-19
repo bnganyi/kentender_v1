@@ -81,6 +81,25 @@ test("a returned update opens with the reason and resubmits the same draft", asy
 	await expect(page.getByTestId("bud-editor-status")).toHaveText("Submitted for approval", { timeout: 30_000 });
 });
 
+test("the Officer can see a version's own history from the editor, not only from Detail", async ({ page }) => {
+	/**
+	 * 2026-09-19 (owner report) — the Approver's review task has always had a
+	 * History tab; the Officer working the same version in the editor had no
+	 * equivalent, and for a version that has never been Active there is no
+	 * Detail route to fall back to at all (get_budget_detail resolves an
+	 * Active Version).
+	 */
+	const fx = resetFixture<SuccessorFixture>("reset_successor_returned");
+	await login(page, OFFICER);
+	await gotoBudget(page, `/${fx.budget_code}/version/${fx.v2_number}/edit`);
+	await expectScreen(page, "editor");
+	await page.getByTestId("bud-editor-tab-history").click();
+	await expect(page).toHaveURL(new RegExp(`/version/${fx.v2_number}/edit/history$`));
+	const table = page.getByTestId("bud-editor-history-table");
+	await expect(table).toContainText("Budget version created");
+	await expect(table).toContainText("Returned for correction");
+});
+
 test("successor lines: omission only where nothing is reserved; transfer totals; unsaved guard", async ({ page }) => {
 	const fx = resetFixture<SuccessorFixture>("reset_omission");
 	await login(page, OFFICER);

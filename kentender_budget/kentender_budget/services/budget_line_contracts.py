@@ -142,6 +142,22 @@ def _save_budget_lines_draft(payload: dict[str, Any]) -> dict[str, Any]:
 		funding_source = (row.get("funding_source") or "").strip()
 		approved_amount = flt(row.get("approved_amount"))
 
+		# BUD-BR-019 — identity fields are immutable once previously Active;
+		# only approved_amount may change. This substitution must run before
+		# the required-field checks below: a locked row is "silently held" to
+		# its prior identity regardless of what the client sent, so a blank
+		# or stale client value for title/owner/funding on a locked row is
+		# never a validation failure (2026-09-19 regression — the client's
+		# own omit-then-restore round trip does not remember a row's owner
+		# unit or funding source, so a real resubmission sent both blank;
+		# the checks below used to run against that blank payload before this
+		# substitution ever reached it).
+		if budget_line_key and budget_line_key in locked:
+			prior = locked[budget_line_key]
+			title = prior.title
+			owner_org_unit = prior.owner_org_unit or ""
+			funding_source = prior.funding_source
+
 		if not title:
 			errors[f"lines.{i}.title"] = _("Line title is required")
 		if not funding_source:
@@ -152,15 +168,6 @@ def _save_budget_lines_draft(payload: dict[str, Any]) -> dict[str, Any]:
 		# or permission check (§17.1/§18) — only existence is validated here.
 		if owner_org_unit and not frappe.db.exists("Organisation Unit", owner_org_unit):
 			errors[f"lines.{i}.owner_org_unit"] = _("Organisation unit not found")
-
-		if budget_line_key and budget_line_key in locked:
-			prior = locked[budget_line_key]
-			# BUD-BR-019 — identity fields are immutable once previously Active;
-			# only approved_amount may change. Silently hold the prior identity
-			# rather than accept a client-supplied change.
-			title = prior.title
-			owner_org_unit = prior.owner_org_unit
-			funding_source = prior.funding_source
 
 		seen.add(budget_line_key)
 		if errors:

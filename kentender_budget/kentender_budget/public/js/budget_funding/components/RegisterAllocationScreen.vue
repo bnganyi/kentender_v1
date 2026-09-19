@@ -273,7 +273,7 @@ function cancel() {
 									</button>
 								</div>
 								<p v-if="fieldErrors.approval_document" class="kt-field-error">{{ fieldErrors.approval_document }}</p>
-								<p v-else class="kt-field-hint">{{ __("Exactly one approval document. It is required before the allocation is saved.") }}</p>
+								<p v-else class="kt-field-hint">{{ __("Optional. Exactly one document, if attached.") }}</p>
 							</div>
 						</div>
 					</div>

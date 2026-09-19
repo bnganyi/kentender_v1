@@ -12,6 +12,7 @@ import {
 	submitBudgetVersion,
 	listOrganisationUnits,
 	listFundingSources,
+	getBudgetVersionHistory,
 } from "../data/budgetApi.js";
 
 // BUD-UI-02 — BUD-DES-03 (initial Draft lines) and BUD-DES-14/15 (successor
@@ -24,10 +25,16 @@ const { route, go, epoch } = useRouteState("budget-funding");
 const budgetIdParam = computed(() => route.value[1]);
 const versionNumberParam = computed(() => route.value[3]);
 const versionKey = computed(() => (budgetIdParam.value && versionNumberParam.value ? `${budgetIdParam.value}-V${versionNumberParam.value}` : null));
-const tab = computed(() => (route.value[5] === "lines" ? "lines" : "details"));
+const tab = computed(() => (route.value[5] === "lines" || route.value[5] === "history" ? route.value[5] : "details"));
 
 const draft = ref(null);
 const linesEditor = ref(null);
+// 2026-09-19 — the Officer working their own Draft/Submitted/Returned
+// version had no way to see its lifecycle so far — unlike the Approver's
+// review task screen, which already has this same tab. Genuinely nowhere
+// else to look: a version that has never been Active has no Detail route at
+// all (get_budget_detail resolves an Active Version, not a Draft).
+const history = ref(null);
 const orgUnits = ref([]);
 const fundingSources = ref([]);
 const loading = ref(true);
@@ -43,6 +50,25 @@ const unknownOutcome = ref(false);
 
 const isSuccessor = computed(() => !!draft.value?.based_on);
 const canEdit = computed(() => !!draft.value?.can_edit);
+// 2026-09-19 regression — a Budget Approver reaching this read-only route
+// for a version awaiting their own decision must be routed to the review
+// task (BUD-UI-04), never left with a bare "Read-only" label and nowhere
+// to go.
+const canReview = computed(() => !!draft.value?.can_review);
+function openReview() {
+	go("review", draft.value.version.id);
+}
+// 2026-09-19 regression — this sentence and the fixed instructional
+// sentence that follows it are one run-on paragraph (per the approved
+// artboard, Successor Revision Draft.dc.html), separated only by the
+// reason's own trailing punctuation. A real reason typed without one (e.g.
+// "try again to fear") ran straight into "Correct the draft and submit it
+// again..." with no break at all. The reason is never rewritten — only
+// terminated, exactly as if the author had typed the period themselves.
+const returnedReasonPunctuated = computed(() => {
+	const reason = (draft.value?.returned?.reason || "").trim();
+	return /[.!?]$/.test(reason) ? reason : `${reason}.`;
+});
 const currency = computed(() => draft.value?.budget?.currency || "KES");
 const title = computed(() => (isSuccessor.value ? __("Update registered allocation") : __("Record approved allocation")));
 const statusLabel = computed(() => {
@@ -65,7 +91,7 @@ const railEl = ref(null);
 usePageRail(railEl, railTrail, { showPeSwitcher: false });
 
 // --- Approval details scope ---
-const form = reactive({ approval_reference: "", approval_date: "", authorised_total: "", approval_document: "", approval_document_name: "", revision_type: "Transfer" });
+const form = reactive({ approval_reference: "", approval_date: "", authorised_total: "", approval_document: "", approval_document_name: "", revision_type: "Correction" });
 let formSignature = "";
 function signature() {
 	return JSON.stringify([form.approval_reference, form.approval_date, String(form.authorised_total), form.approval_document, form.revision_type]);
@@ -74,13 +100,30 @@ function hydrateForm() {
 	if (!draft.value) return;
 	form.approval_reference = draft.value.version.approval_reference || "";
 	form.approval_date = draft.value.version.approval_date || "";
-	form.authorised_total = draft.value.version.authorised_total || "";
+	form.revision_type = draft.value.revision_type || "Correction";
+	// A Transfer moves money between lines only — the approved allocation
+	// itself is immutable (matches the server's own transfer.total_changed
+	// rule). Always hydrate from the fixed baseline, never from whatever the
+	// version happens to have saved: 2026-09-19 regression — the field was
+	// freely editable for a Transfer, so a Draft could carry a changed total
+	// that only ever failed at Submit, with the header card, the field and
+	// the eventual blocker each naming a different figure. Hydrating from
+	// the baseline also self-heals a Draft a prior save already got wrong.
+	form.authorised_total = isSuccessor.value && form.revision_type === "Transfer" ? draft.value.based_on.authorised_total : draft.value.version.authorised_total || "";
 	form.approval_document = draft.value.approval_document || "";
 	form.approval_document_name = (draft.value.approval_document || "").split("/").pop();
-	form.revision_type = draft.value.revision_type || "Transfer";
 	formSignature = signature();
 }
 const detailsDirty = computed(() => !!draft.value && signature() !== formSignature);
+const allocationLocked = computed(() => isSuccessor.value && form.revision_type === "Transfer");
+// Switching Type of change to Transfer mid-edit must lock the total back to
+// the baseline immediately, not only on the next full reload.
+watch(
+	() => form.revision_type,
+	(type) => {
+		if (draft.value && isSuccessor.value && type === "Transfer") form.authorised_total = draft.value.based_on.authorised_total;
+	}
+);
 
 // --- Budget lines scope ---
 const linesDirty = ref(false);
@@ -118,8 +161,9 @@ async function loadDraft(opts) {
 		if (changed && !userEditing) hydrateForm();
 		if (!orgUnits.value.length) orgUnits.value = (await listOrganisationUnits()).rows || [];
 		if (!fundingSources.value.length) fundingSources.value = (await listFundingSources()).rows || [];
-		// A direct load landing on the lines tab must still fetch it.
+		// A direct load landing on the lines or history tab must still fetch it.
 		if (tab.value === "lines" && !(opts && opts.lines === false)) await loadLines();
+		if (tab.value === "history" && !history.value) await loadHistory();
 	} catch (e) {
 		if (!guard.isCurrent(token)) return;
 		if (e.httpStatus === 403) forbidden.value = { heading: __("You do not have access to this budget version"), text: "" };
@@ -145,17 +189,24 @@ async function loadLines() {
 	linesDirty.value = false;
 }
 
+async function loadHistory() {
+	if (!versionKey.value) return;
+	history.value = await getBudgetVersionHistory(versionKey.value);
+}
+
 onMounted(loadDraft);
 watch(versionKey, (v, prev) => {
 	if (v && v !== prev) {
 		draft.value = null;
 		linesEditor.value = null;
 		linesDirty.value = false;
+		history.value = null;
 		loadDraft();
 	}
 });
 watch(tab, (t) => {
 	if (t === "lines" && !linesEditor.value) loadLines();
+	if (t === "history" && !history.value) loadHistory();
 });
 let activations = 0;
 onActivated(() => {
@@ -170,10 +221,10 @@ function switchTab(t) {
 	if (t === tab.value) return;
 	const dirtyScope = tab.value === "details" && detailsDirty.value ? "details" : tab.value === "lines" && linesDirty.value ? "lines" : null;
 	if (dirtyScope) {
-		navGuard.value = { scope: dirtyScope, proceed: () => go(budgetIdParam.value, "version", versionNumberParam.value, "edit", t === "lines" ? "lines" : undefined) };
+		navGuard.value = { scope: dirtyScope, proceed: () => go(budgetIdParam.value, "version", versionNumberParam.value, "edit", t === "details" ? undefined : t) };
 		return;
 	}
-	go(budgetIdParam.value, "version", versionNumberParam.value, "edit", t === "lines" ? "lines" : undefined);
+	go(budgetIdParam.value, "version", versionNumberParam.value, "edit", t === "details" ? undefined : t);
 }
 async function navSave() {
 	const g = navGuard.value;
@@ -390,13 +441,20 @@ function removeLine(row) {
 	linesDirty.value = true;
 }
 function omitLine(row) {
-	omitted.value.push({ budget_line: row.budget_line, title: row.title, current_amount: row.current_amount });
+	// The full row, not a subset — 2026-09-19 regression: reconstructing a
+	// stripped {budget_line, title, current_amount} on restore dropped the
+	// row's owner unit and funding source, which then submitted as blank
+	// and could not be saved. The server holds these fields immutable for a
+	// previously-Active line regardless of what is sent, but they still need
+	// to be correct here so the read-only display (and any full-row payload)
+	// shows the line's real identity, not "All departments" / empty.
+	omitted.value.push({ ...row });
 	linesEditor.value.rows = linesEditor.value.rows.filter((r) => r !== row);
 	linesDirty.value = true;
 }
 function restoreLine(o) {
 	omitted.value = omitted.value.filter((x) => x !== o);
-	linesEditor.value.rows.push({ budget_line: o.budget_line, budget_line_code: "", title: o.title, owner_org_unit: "", funding_source: "", approved_amount: o.current_amount, identity_locked: true, can_remove: false, can_omit: true, current_amount: o.current_amount, change: 0, protected_amount: 0 });
+	linesEditor.value.rows.push({ ...o, can_remove: false, can_omit: true, change: 0 });
 	linesDirty.value = true;
 }
 </script>
@@ -423,9 +481,17 @@ function restoreLine(o) {
 						</div>
 					</div>
 					<div v-if="canEdit" style="display: flex; align-items: center; gap: 10px; flex: none">
-						<span class="kt-muted" style="font-size: 12px" data-testid="bud-editor-scope">{{ __("Save scope: {0}", [scopeLabel]) }}</span>
+						<!-- 2026-09-19 — "Save scope is Approval details"/"Save scope is
+						     Budget lines" (v1.9 §11.14/§11.15) is build direction for
+						     which fields a save persists, not UI copy; no artboard shows
+						     it. A prior pass rendered it verbatim as a visible label —
+						     removed; the active tab already tells the user this. -->
 						<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="bud-editor-save-btn" @click="saveChanges">{{ __("Save changes") }}</button>
 						<button type="button" class="kt-btn kt-btn-primary" :disabled="busy" data-testid="bud-editor-submit-btn" @click="submitForReview">{{ __("Submit for review") }}</button>
+					</div>
+					<div v-else-if="canReview" style="display: flex; align-items: center; gap: 10px; flex: none">
+						<span class="kt-muted" style="font-size: 12px" data-testid="bud-editor-readonly">{{ __("Read-only") }}</span>
+						<button type="button" class="kt-btn kt-btn-primary" data-testid="bud-editor-review-btn" @click="openReview">{{ __("Review this allocation") }}</button>
 					</div>
 					<span v-else class="kt-muted" style="font-size: 13px" data-testid="bud-editor-readonly">{{ __("Read-only") }}</span>
 				</div>
@@ -443,7 +509,7 @@ function restoreLine(o) {
 
 				<div v-if="draft.returned" class="kt-notice is-warning" style="margin-bottom: 16px" data-testid="bud-editor-returned">
 					<div class="kt-notice-body">
-						<strong>{{ __("Changes requested by {0}, {1}.", [draft.returned.by, draft.returned.at]) }}</strong> {{ draft.returned.reason }}
+						<strong>{{ __("Changes requested by {0}, {1}.", [draft.returned.by, draft.returned.at]) }}</strong> {{ returnedReasonPunctuated }}
 						{{ __("Correct the draft and submit it again; the earlier submission and its document are retained.") }}
 					</div>
 				</div>
@@ -451,6 +517,7 @@ function restoreLine(o) {
 				<div class="kt-tabs" role="tablist" style="margin-bottom: 0">
 					<div class="kt-tab" role="tab" :aria-selected="tab === 'details'" tabindex="0" data-testid="bud-editor-tab-overview" @click="switchTab('details')" @keydown.enter="switchTab('details')">{{ __("Approval details") }}</div>
 					<div class="kt-tab" role="tab" :aria-selected="tab === 'lines'" tabindex="0" data-testid="bud-editor-tab-lines" @click="switchTab('lines')" @keydown.enter="switchTab('lines')">{{ __("Budget lines") }}</div>
+					<div class="kt-tab" role="tab" :aria-selected="tab === 'history'" tabindex="0" data-testid="bud-editor-tab-history" @click="switchTab('history')" @keydown.enter="switchTab('history')">{{ __("History") }}</div>
 				</div>
 				</div>
 
@@ -498,7 +565,8 @@ function restoreLine(o) {
 							</div>
 							<div class="kt-field">
 								<label for="bud-editor-approved-allocation">{{ __("Approved allocation") }}</label>
-								<div class="kt-input-prefix"><span class="prefix">{{ currency }}</span><input id="bud-editor-approved-allocation" v-model="form.authorised_total" type="number" min="0" :disabled="!canEdit" data-testid="bud-editor-approved-allocation" /></div>
+								<div class="kt-input-prefix"><span class="prefix">{{ currency }}</span><input id="bud-editor-approved-allocation" v-model="form.authorised_total" type="number" min="0" :disabled="!canEdit || allocationLocked" data-testid="bud-editor-approved-allocation" /></div>
+								<p v-if="allocationLocked" class="kt-field-hint" data-testid="bud-editor-allocation-locked-hint">{{ __("A transfer moves money between budget lines; the approved allocation itself does not change.") }}</p>
 							</div>
 							<div class="kt-field">
 								<label>{{ __("Approval document") }}</label>
@@ -514,7 +582,7 @@ function restoreLine(o) {
 				</template>
 
 				<!-- Budget lines (BUD-DES-03 / BUD-DES-15) -->
-				<template v-else>
+				<template v-else-if="tab === 'lines'">
 					<div v-if="!linesEditor" style="padding: 20px 24px; border-top: 1px solid var(--kt-color-divider)"><div class="kt-skel" style="width: 240px; height: 16px"></div></div>
 					<template v-else>
 						<div style="padding: 20px 24px; border-top: 1px solid var(--kt-color-divider)">
@@ -596,6 +664,22 @@ function restoreLine(o) {
 							<button type="button" class="kt-btn kt-btn-secondary" data-testid="bud-editor-add-line-btn" @click="addLine">{{ __("Add Budget Line") }}</button>
 						</div>
 					</template>
+				</template>
+
+				<!-- History — mirrors BudgetApprovalTaskScreen.vue's own History
+				     tab; the Officer working this Draft has no other route to see
+				     it (2026-09-19). -->
+				<template v-else-if="tab === 'history'">
+					<div v-if="!history" style="padding: 20px 24px; border-top: 1px solid var(--kt-color-divider)"><div class="kt-skel" style="width: 240px; height: 16px"></div></div>
+					<div v-else style="padding: 22px 24px; border-top: 1px solid var(--kt-color-divider)" data-testid="bud-editor-history-table">
+						<h3 class="kt-card-title">{{ __("Version history") }}</h3>
+						<div class="kt-timeline">
+							<div v-for="(row, i) in history.rows" :key="row.id" class="kt-timeline-row">
+								<div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-live"></i><i v-if="i < history.rows.length - 1" class="kt-timeline-line"></i></div>
+								<div class="kt-timeline-item"><div class="kt-timeline-item-title">{{ row.event_type_label }}</div><div class="kt-timeline-item-meta">{{ row.event_at_display }} · {{ row.actor }}</div></div>
+							</div>
+						</div>
+					</div>
 				</template>
 				</div>
 			</div>

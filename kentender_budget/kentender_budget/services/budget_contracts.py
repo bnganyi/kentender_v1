@@ -781,6 +781,14 @@ def get_budget_version_draft(budget_version: str) -> dict[str, Any]:
 		"revision_type": version.revision_type or "",
 		"approval_document": version.approval_document or "",
 		"can_edit": version.status == "Draft" and has_budget_version_capability(frappe.session.user, CAP_EDIT, version),
+		# 2026-09-19 regression — a Budget Approver who reaches this read-only
+		# route for a Submitted version (rather than the review task route)
+		# was told nothing beyond "Read-only": no business assignment holder
+		# should ever land on a dead end. The client uses this to offer the
+		# BUD-UI-04 review route instead of stranding the one person who can
+		# actually decide the version.
+		"can_review": version.status == "Submitted for approval"
+		and has_budget_version_capability(frappe.session.user, CAP_APPROVE, version),
 		# §6 — a Return carries a required reason; the Officer correcting the
 		# Draft needs to see it on the editor, not only in the History tab.
 		# `submit_budget_version` clears it again on resubmission.
@@ -915,10 +923,10 @@ def _save_budget_version_draft(payload: dict[str, Any]) -> dict[str, Any]:
 		errors = _validate_draft_payload(payload)
 		if errors:
 			return {"ok": False, "errors": errors}
-		if not (payload.get("approval_document") or "").strip():
-			# §9.3 — the four approval details, including one uploaded/linked
-			# document, precede Save and add budget lines.
-			return {"ok": False, "errors": {"approval_document": _("Attach the approval document before saving.")}}
+		# 2026-09-19 — the approval document is no longer required to save or
+		# submit (owner instruction). FOLLOW_UPS FU-23 tracks reconciling
+		# BUD-CHG-001 v1.9 §9.3/§5/BUD-BR-004's own text, which still
+		# describes it as mandatory, at the document's next revision.
 
 		budget = frappe.get_doc(
 			{

@@ -277,7 +277,20 @@ frappe.provide("kentender_core.desk_page");
 		}
 
 		function go() {
-			frappe.set_route.apply(frappe, [pageSlug].concat(Array.prototype.slice.call(arguments)));
+			// 2026-09-19 regression — a screen omitting its default tab segment
+			// with `cond ? "tab" : undefined` (a natural, repeated idiom across
+			// these pages) forwarded that literal `undefined` straight to
+			// frappe.set_route, which stringifies it into the URL itself
+			// ("/review/{id}/undefined") rather than dropping it — landing on a
+			// route no screen resolves, with the previous screen's content stuck
+			// on the page. No route segment is ever legitimately undefined or
+			// null, so every caller's `go(...)` is filtered here once, for every
+			// Vue-in-Desk page built on this adapter, rather than trusting each
+			// call site to build a clean argument list itself.
+			var args = Array.prototype.slice.call(arguments).filter(function (a) {
+				return a !== undefined && a !== null;
+			});
+			frappe.set_route.apply(frappe, [pageSlug].concat(args));
 		}
 
 		return { route: route, go: go, epoch: epoch, isShown: shown };

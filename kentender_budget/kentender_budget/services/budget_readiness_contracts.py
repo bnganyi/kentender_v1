@@ -88,8 +88,9 @@ def _evaluate_readiness(version) -> list[dict[str, Any]]:
 		issues.append(_issue("evidence.approval_date", _("Approval date is required"), ev, {"field": "approval_date"}))
 	elif getdate(version.approval_date) > getdate():
 		issues.append(_issue("evidence.approval_date", _("Approval date cannot be in the future"), ev, {"field": "approval_date"}))
-	if not (version.approval_document or "").strip():
-		issues.append(_issue("evidence.approval_document", _("Approval document is required"), ev, {"field": "approval_document"}))
+	# 2026-09-19 — approval_document is no longer part of the evidence gate
+	# (owner instruction; see budget_contracts.py's own note on this same
+	# change and FOLLOW_UPS FU-23).
 	if not version.authorised_total or flt(version.authorised_total) <= 0:
 		issues.append(_issue("evidence.authorised_total", _("Approved allocation must be greater than zero"), ev, {"field": "authorised_total"}))
 

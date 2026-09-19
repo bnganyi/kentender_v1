@@ -123,7 +123,8 @@ async function updateAllocation() {
 	updating.value = true;
 	actingError.value = null;
 	try {
-		const result = await createBudgetSuccessorVersion(budgetIdParam.value, { revision_type: "Transfer", idempotency_key: mintKey("successor") });
+		// See BudgetWorkspaceScreen.vue's own note on this same call.
+		const result = await createBudgetSuccessorVersion(budgetIdParam.value, { revision_type: "Correction", idempotency_key: mintKey("successor") });
 		if (result.ok) return go(budgetIdParam.value, "version", String(result.version.version_number), "edit");
 		if (result.route) return go(...result.route.slice(1));
 		actingError.value = Object.values(result.errors || {}).join(" ");
