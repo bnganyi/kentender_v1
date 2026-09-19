@@ -94,6 +94,15 @@ def _seed_moh_plan() -> dict[str, Any]:
 		existing_version = frappe.db.get_value(
 			"Strategic Plan Version", {"plan_id": existing_plan, "version_number": 1}, "name"
 		)
+		# Heal a plan/version some other path left unstamped (found live: a
+		# plan matching this exact title but fixture_namespace NULL, so
+		# validate()'s namespace-scoped count found 0 despite the row
+		# existing — the same "pre-existing unstamped row" gap Requisitions'
+		# authorise_requisition() already had to heal for the same reason).
+		if frappe.db.get_value("Strategic Plan", existing_plan, "fixture_namespace") != FIXTURE_NS:
+			frappe.db.set_value("Strategic Plan", existing_plan, "fixture_namespace", FIXTURE_NS, update_modified=False)
+		if existing_version and frappe.db.get_value("Strategic Plan Version", existing_version, "fixture_namespace") != FIXTURE_NS:
+			frappe.db.set_value("Strategic Plan Version", existing_version, "fixture_namespace", FIXTURE_NS, update_modified=False)
 		return {"ok": True, "plan": existing_plan, "plan_version": existing_version, "already_seeded": True}
 
 	draft = _run_as(
