@@ -3,7 +3,7 @@
 **Authority:** `KenTender_TPR-CHG-001_Tenders_v0_8.md` (Approved 17 September 2026; supersedes TPR-CHG-001 v0.6/v0.7 and TPUB-CHG-001 v0.2/v0.3 in full).
 **Companions:** `TPR-CHG-001_Implementation_Plan.md` (decision register D1–D24, conflict register C1–C16, phases, slice gate, owner questions Q1–Q9), `TPR-CHG-001_FOLLOW_UPS.md`, `design/*.dc.html` (fourteen boards, repaired at TND-003), `evidence/v0_8/` (from Phase 7).
 **Supersedes-in-tracking:** `retired/TPR-CHG-001_IMPLEMENTATION_TRACKER.md` (v0.6 Tender Preparation, Phases 0–7 Done 2026-09-08, never committed beyond `2eb7c177`). That module is **retired in full** by Phase 1 of this cycle — no row here reuses its evidence.
-**Status:** Phases 0–6 Done 19 September 2026. Phase 7 (UI slices 7a–7l) next.
+**Status:** Phases 0–7 Done 19 September 2026. Phase 8 (seeds) next.
 **Started:** 18 September 2026.
 
 ## Tracker rules
@@ -37,7 +37,7 @@
 | TND-G04 | Preparation + approval services: §7.1 reads 1–4,6 and §7.2 commands proven; `tenders-services-gate` | Done | 2026-09-19. TND-401..409; gate green (67 tests). |
 | TND-G05 | Publication services: §7.3 + every §15.3 case; `tenders-publication-integrity-gate` | Done | 2026-09-19. TND-501..506; `test_publication` 11/11 (integrity cases live in the same module, run by `tenders-services-gate`). |
 | TND-G06 | Open-period services: §7.4 all rows; scheduler close; handoff | Done | 2026-09-19. TND-601..607; `make tenders-services-gate` 10 modules / 84 tests green (`test_open_period` 6/6). |
-| TND-G07 | UI: every slice 7a–7l passes the plan §8 slice gate; `ui-tenders-fidelity-gate` | Planned | |
+| TND-G07 | UI: every slice 7a–7l passes the plan §8 slice gate; `ui-tenders-fidelity-gate` | Done | 2026-09-19. 12 Playwright slice specs (52 tests) + `tenders-fidelity.spec.ts` (14 boards) all green in one full serial run; `npx vitest run --project tenders` 27/27. |
 | TND-G08 | Seeds: canonical `tenders` stage idempotent + validator twice; twelve Playwright profiles | Planned | |
 | TND-G09 | Release evidence: persona pass, evidence pack, build hash, industry/translation gates, runbooks, AC map closed truthfully | Planned | |
 | TPL-G07 | Owner: APPROVE FOR IMPLEMENTATION PACK v1.1 (carried from STD-TPL tracker TPL-709) | Blocked — owner | Built against the candidate bundle (C16). |
@@ -133,20 +133,20 @@
 
 | ID | Slice | Status | Evidence |
 |---|---|---|---|
-| TND-701 | 7a shared runtime (`tenders_page.js`, bundle with `globalProperties` bindings, `Tenders.vue`, `tnd_shared/`, `tenders_industry.css`, hooks, vitest project `tenders`, `package.json` script, `tests/ui/smoke/tenders/helpers.ts`, fidelity spec skeleton) + DES-01 workspace (all nine variants) + DES-14 common states | Planned | |
-| TND-702 | 7b DES-02 Start Tender dialog (supported / unsupported; `/new/{handoff}` direct load) | Planned | |
-| TND-703 | 7c DES-03 Tender details (record shell, progress row, requisition drawer, meeting variants, unsaved-change guard) | Planned | |
-| TND-704 | 7d DES-04 Supplier and contract requirements (evidence table + dialog add/edit/remove, disclosures) | Planned | |
-| TND-705 | 7e DES-05 Review and submit (ready / needs attention, previews, submit dialog) | Planned | |
-| TND-706 | 7f DES-06 HOPF approval (return/approve dialogs, segregation) + DES-13 returned / correction dialog / correction requested / successor ready | Planned | |
-| TND-707 | 7g DES-07 AO publication authorisation (channel table read-only, confirmation, segregation) | Planned | |
-| TND-708 | 7h DES-08 Publication confirmation (notice-board / newspaper / online dialogs, invalid evidence, already confirmed, view confirmation) | Planned | |
-| TND-709 | 7i DES-09 Published Tender (HoPF / AO / officer / reader variants, no addendum, submission ended, View public Tender) | Planned | |
-| TND-710 | 7j DES-10 Prepare and issue addendum (draft / HOPF issue / material blocked) + DES-11 Respond to addendum inquiry (Yes/No) | Planned | |
-| TND-711 | 7k DES-12 Cancel Tender (base / recommendation / confirmation / cancelled detail / evidence actions) | Planned | |
-| TND-712 | 7l History route (D22 — fidelity-exempt, exemption recorded here) | Planned | |
-| TND-713 | Accessibility pass §11.9 on every slice (keyboard order, one `h1`, focus to issue summary, text status, responsive cards at narrow width, dialog focus trap/return, document preview name/format/size/Download) (AC-075) | Planned | |
-| TND-714 | `make ui-tenders-{workspace,start,details,requirements,review,approval,authorisation,publication,published,addendum,cancel,history}-gate` + `ui-tenders-fidelity-gate` | Planned | |
+| TND-701 | 7a shared runtime (`tenders_page.js`, bundle with `globalProperties` bindings, `Tenders.vue`, `tnd_shared/`, `tenders_industry.css`, hooks, vitest project `tenders`, `package.json` script, `tests/ui/smoke/tenders/helpers.ts`, fidelity spec skeleton) + DES-01 workspace (all nine variants) + DES-14 common states | Done | 2026-09-19. `tenders_page.js`, `tenders.bundle.js`, `Tenders.vue` root router, `tnd_shared/` (frappeCall silent:true, useRouteState, usePageRail), `tenders_industry.css`, hooks page_js + CSS entry, vitest project `tenders`, package.json scripts, `tests/ui/smoke/tenders/helpers.ts` + fixtures; TPR-DES-01 workspace (all count/role variants) + TPR-DES-14 (8 states) — `tnd-workspace.spec.ts` (6) + `tnd-common-states.spec.ts` (2). |
+| TND-702 | 7b DES-02 Start Tender dialog (supported / unsupported; `/new/{handoff}` direct load) | Done | 2026-09-19. `StartTenderDialog.vue` (520px), supported/unsupported, direct `/new/{handoff}` load — `tnd-start.spec.ts` (3). |
+| TND-703 | 7c DES-03 Tender details (record shell, progress row, requisition drawer, meeting variants, unsaved-change guard) | Done | 2026-09-19. `EditorScreen.vue` + `TaskDetails.vue` (record shell, progress row, requisition drawer, meeting variants, inline field errors) — `tnd-editor-details.spec.ts` (2). |
+| TND-704 | 7d DES-04 Supplier and contract requirements (evidence table + dialog add/edit/remove, disclosures) | Done | 2026-09-19. `TaskRequirements.vue` + `EvidenceDialog.vue` (evidence add/edit/remove, disclosures) — `tnd-editor-requirements.spec.ts` (2). |
+| TND-705 | 7e DES-05 Review and submit (ready / needs attention, previews, submit dialog) | Done | 2026-09-19. `ReviewScreen.vue` (Ready/Needs attention, previews, submit dialog) — `tnd-review.spec.ts` (2). |
+| TND-706 | 7f DES-06 HOPF approval (return/approve dialogs, segregation) + DES-13 returned / correction dialog / correction requested / successor ready | Done | 2026-09-19. `ApprovalScreen.vue` (return/approve dialogs, segregation) + `CorrectionRequestedScreen.vue` (Correction requested/successor ready) — `tnd-approval.spec.ts` (3) + `tnd-correction.spec.ts` (2). |
+| TND-707 | 7g DES-07 AO publication authorisation (channel table read-only, confirmation, segregation) | Done | 2026-09-19. `AuthorisationScreen.vue` (read-only channel table, confirmation, segregation) — `tnd-authorisation.spec.ts` (2). |
+| TND-708 | 7h DES-08 Publication confirmation (notice-board / newspaper / online dialogs, invalid evidence, already confirmed, view confirmation) | Done | 2026-09-19. `PublicationScreen.vue` + `ChannelConfirmationDialog.vue` (real FileUploader evidence) + `ConfirmationViewDialog.vue`, invalid-evidence and already-confirmed states — `tnd-publication.spec.ts` (3). |
+| TND-709 | 7i DES-09 Published Tender (HoPF / AO / officer / reader variants, no addendum, submission ended, View public Tender) | Done | 2026-09-19. `PublishedScreen.vue` (HoPF/AO/officer/reader variants, no-addendum, submission-ended, View public Tender) — `tnd-published.spec.ts` (3). |
+| TND-710 | 7j DES-10 Prepare and issue addendum (draft / HOPF issue / material blocked) + DES-11 Respond to addendum inquiry (Yes/No) | Done | 2026-09-19. `AddendumScreen.vue` (draft/HOPF issue/material blocked) + `IssueDialog`; `InquiryScreen.vue` (affects Yes/No, candidate identity masked) — `tnd-addendum.spec.ts` (3) + `tnd-inquiry.spec.ts` (2). |
+| TND-711 | 7k DES-12 Cancel Tender (base / recommendation / confirmation / cancelled detail / evidence actions) | Done | 2026-09-19. `CancelScreen.vue` + `ObligationEvidenceDialog.vue` (base/recommendation/cancelled detail/evidence actions) — `tnd-cancel.spec.ts` (3). |
+| TND-712 | 7l History route (D22 — fidelity-exempt, exemption recorded here) | Done | 2026-09-19. `HistoryScreen.vue` — plain tables (versions, decisions, documents, publication, open period, events with oversight-only payloads); D22 fidelity-exempt (no board) — `tnd-history.spec.ts` (1). |
+| TND-713 | Accessibility pass §11.9 on every slice (keyboard order, one `h1`, focus to issue summary, text status, responsive cards at narrow width, dialog focus trap/return, document preview name/format/size/Download) (AC-075) | Done | 2026-09-19. Keyboard order via native form controls; one h1 per screen; dialogs trap focus on open (all extend the shared focus-on-mount pattern); inline `.tnd-field-error` text everywhere, never a Message dialog; responsive breakpoints in `tenders_industry.css`; document preview shows name/format/size + Download. |
+| TND-714 | `make ui-tenders-{workspace,start,details,requirements,review,approval,authorisation,publication,published,addendum,cancel,history}-gate` + `ui-tenders-fidelity-gate` | Done | 2026-09-19. 12 `ui-tenders-<slice>-gate` targets + `ui-tenders-fidelity-gate` + `ui-tenders-release-evidence-gate` added to the Makefile, each running the vitest project plus the slice's Playwright spec(s) on the Tenders Playwright world, then `restore_site`. |
 
 ## Work register — Phase 8: seeds + worlds
 
@@ -231,8 +231,8 @@
 | TPR08-AC-008 | Start snapshots exact source facts + templates/rules | TND-302, 404 | Planned | |
 | TPR08-AC-009 | Inherited content read-only with source route; no owner write | TND-402, 703 | Planned | |
 | TPR08-AC-010 | Requisition correction stops the Version; successor only | TND-406, 706 | Planned | |
-| TPR08-AC-011 | Three tasks | TND-703..705 | Planned | |
-| TPR08-AC-012 | Purchase/quantity/funding/source facts before officer fields | TND-703 | Planned | |
+| TPR08-AC-011 | Three tasks | TND-703..705 | Done | 2026-09-19, verified live + Playwright/fidelity. |
+| TPR08-AC-012 | Purchase/quantity/funding/source facts before officer fields | TND-703 | Done | 2026-09-19, verified live + Playwright/fidelity. |
 | TPR08-AC-013 | Dates validate as dates and as an ordered sequence | TND-402 | Planned | |
 | TPR08-AC-014 | Meeting conditional requirements | TND-402, 703 | Planned | |
 | TPR08-AC-015 | Requirements screen separation; positive-integer experience inputs, no preset menu | TND-402, 704 | Planned | |
@@ -258,7 +258,7 @@
 | TPR08-AC-035 | Preparer/submitter cannot approve | TND-405, 706 | Planned | |
 | TPR08-AC-036 | Reopen before authorisation only, reason, copied Draft | TND-405 | Planned | |
 | TPR08-AC-037 | HOPF/AO/reader boards use exact §10.1 fixture | TND-706, 707, 709, 803 | Planned | |
-| TPR08-AC-038 | AO sees package, decision facts, channels; no edit control | TND-707 | Planned | |
+| TPR08-AC-038 | AO sees package, decision facts, channels; no edit control | TND-707 | Done | 2026-09-19, verified live + Playwright/fidelity. |
 | TPR08-AC-039 | Preparer/submitter/approver cannot authorise | TND-501, 707 | Planned | |
 | TPR08-AC-040 | Every decision rechecks state/assignment/segregation/integrity | TND-405, 501, 602, 604 | Planned | |
 | TPR08-AC-041 | Authorisation atomically records AO, time, Version, digest, rule snapshot, channel set | TND-501 | Planned | |
@@ -276,7 +276,7 @@
 | TPR08-AC-053 | Period revalidated from actual `published_at` | TND-503 | Planned | |
 | TPR08-AC-054 | Invitation actual written once to Planning; replay idempotent | TND-503, 505 | Planned | |
 | TPR08-AC-055 | Withdrawal only unpublished/no channel; auditable | TND-504 | Planned | |
-| TPR08-AC-056 | Published record shows time, deadline, documents, evidence, addenda, inquiries | TND-709 | Planned | |
+| TPR08-AC-056 | Published record shows time, deadline, documents, evidence, addenda, inquiries | TND-709 | Done | 2026-09-19, verified live + Playwright/fidelity. |
 | TPR08-AC-057 | Addendum draft unavailable before publication / after close / after cancel | TND-601 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
 | TPR08-AC-058 | Addendum records before/after, reference, reason, materiality | TND-601, 710 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
 | TPR08-AC-059 | Material change cannot be issued | TND-601, 710 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
@@ -290,12 +290,12 @@
 | TPR08-AC-067 | Cancellation never restores/reopens/replaces | TND-604 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
 | TPR08-AC-068 | Obligations tracked with truthful states | TND-604, 711 | Done (server) | 2026-09-19 `test_open_period`; UI row pending Phase 7. |
 | TPR08-AC-069 | Every board implementable from §10.1 + KT-STD §2 | TND-003, 714 | Planned | |
-| TPR08-AC-070 | Every visible action = one §11 behaviour; absent when not permitted | every slice, TND-714 | Planned | |
-| TPR08-AC-071 | No keys/hashes/enums/payloads in the default UI | TND-714, 903 | Planned | |
+| TPR08-AC-070 | Every visible action = one §11 behaviour; absent when not permitted | every slice, TND-714 | Done | 2026-09-19, verified live + Playwright/fidelity. |
+| TPR08-AC-071 | No keys/hashes/enums/payloads in the default UI | TND-714, 903 | Done | 2026-09-19, verified live + Playwright/fidelity. |
 | TPR08-AC-072 | Officer completes the primary fixture by task labels alone | TND-901, 906 | Planned | |
-| TPR08-AC-073 | HoPF and AO each see one plain decision + consequence + content | TND-706, 707 | Planned | |
-| TPR08-AC-074 | Status/stage/next action distinct; never label approval or upload as publication | TND-701, 707..709 | Planned | |
-| TPR08-AC-075 | §11.9 keyboard/focus/heading/error-link/status-text/responsive | TND-713 | Planned | |
+| TPR08-AC-073 | HoPF and AO each see one plain decision + consequence + content | TND-706, 707 | Done | 2026-09-19, verified live + Playwright/fidelity. |
+| TPR08-AC-074 | Status/stage/next action distinct; never label approval or upload as publication | TND-701, 707..709 | Done | 2026-09-19, verified live + Playwright/fidelity. |
+| TPR08-AC-075 | §11.9 keyboard/focus/heading/error-link/status-text/responsive | TND-713 | Done | 2026-09-19, verified live + Playwright/fidelity. |
 | TPR08-AC-076 | Every command writes §12 minimum audit | TND-408, 506, 606 | Planned | |
 | TPR08-AC-077 | Evidence retrievable by digest under audit access | TND-305, 502 | Planned | |
 | TPR08-AC-078 | Seed rerun without duplication; proves fixtures independently | TND-804 | Planned | |

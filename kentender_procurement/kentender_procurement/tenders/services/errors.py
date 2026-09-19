@@ -85,6 +85,17 @@ class TendersError(frappe.ValidationError):
 		self.code = code
 		self.detail = detail or {}
 		super().__init__(message)
+		# The Vue surfaces pick the inline state (stale write, invalid evidence,
+		# already confirmed, ...) from the code, not from message text; the
+		# request response carries it alongside Frappe's own error fields.
+		response = getattr(getattr(frappe, "local", None), "response", None)
+		if response is not None:
+			try:
+				response["kt_error_code"] = code
+				response["kt_error_message"] = message
+				response["kt_error_detail"] = self.detail
+			except Exception:
+				pass
 
 
 def fail(code: str, message: str = "", detail: dict | None = None) -> None:

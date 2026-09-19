@@ -46,6 +46,16 @@ export default defineConfig({
 				},
 			},
 			{
+				// TPR-CHG-001 v0.8 §11 — SFC component tests for the Tenders
+				// screens and dialogs, alongside (never instead of) the browser layer.
+				plugins: [vue()],
+				test: {
+					name: "tenders",
+					environment: "jsdom",
+					include: ["kentender_procurement/kentender_procurement/public/js/tenders/**/*.spec.js"],
+				},
+			},
+			{
 				// AUTH-ADR-001 v1.6 §18.2 items 22–24 — SFC component tests for the
 				// System setup tabs and dialogs: field variants per registry scope,
 				// server-decided action visibility, and state rendering, alongside

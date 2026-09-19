@@ -52,6 +52,10 @@ UNIT = "Each"
 DELIVERY_LOCATION = "Playwright — Requisitions Delivery Location"
 
 OU_NAME = "Playwright — Procurement Requisitions"
+PROFILE_WINDOW = {"effective_from": f"{FY_START}-07-01", "effective_until": f"{FY_START + 1}-06-30"}
+PROFILE_LIMITS = {"bid_opening": (7, None), "evaluation_completion": (None, 30), "contract_signing": (14, None)}
+VERIFICATION_FIXTURE = "Fixture-verified — not production law"
+DELIVERY_DEFAULT_DAYS = 30
 
 # Requisitions-facing actors (the ones a spec actually logs in as).
 AUTHOR = "pw.req.author@example.test"
@@ -86,6 +90,11 @@ DIRECT_ITEM_VALUES = {
 	"lotting_indicator": "Single lot",
 	"reservation_category": "None",
 	"procurement_method": "Open Tender",
+	# PLN-CHG-001 v1.23 readiness: the estimate basis is required before a
+	# funding request (plan_read.plan_readiness) — added 19 Sep 2026 when the
+	# Tenders Playwright world, which builds on this one, first ran.
+	"estimate_basis": "Market survey of three suppliers in July 2099 including delivery and installation.",
+	"estimate_basis_reference": "MS-PWREQ-2099-001",
 	"baseline_invitation_date": f"{FY_START}-09-01",
 	"tendering_period_days": 21,
 	"evaluation_period_days": 30,
@@ -233,6 +242,12 @@ def restore_site(*, commit: bool = True) -> dict[str, Any]:
 	Safe to call when nothing was moved."""
 	_guard()
 	frappe.set_user("Administrator")
+	# The fixture-verified profiles this world seeds for its own year leave
+	# with it (they are test data; the Python suite's own world seeds and
+	# purges its twin the same way).
+	from kentender_core.services import procurement_settings
+
+	procurement_settings.purge_fixture_profiles(NS_PW)
 	raw = frappe.defaults.get_global_default(PREVIOUS_FLAGS_KEY)
 	restored: list[str] = []
 	if raw:
@@ -267,7 +282,21 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 		else:
 			frappe.get_doc({"doctype": "UOM", "uom_name": UNIT, "enabled": 1}).insert(ignore_permissions=True)
 	OU = _unit(OU_NAME)
-	site_setup._seed_regulatory_reference(fiscal_year=FY, fixture_namespace=NS_PW)
+	# A reservation rule still at "Production verification pending" blocks
+	# Sign and submit (plan_read.plan_readiness → PLN_REFERENCE_UNAVAILABLE);
+	# the seeder is find-or-create, so an earlier pending version for this
+	# year is removed first and the fixture-verified one seeded, target 0,
+	# exactly as Planning's own worlds do.
+	fy_start = frappe.db.get_value("Fiscal Year", FY, "year_start_date")
+	frappe.db.delete("Regulatory Reference", {"reference_key": "RESERVATION-RULES", "effective_from": fy_start, "verification_status": ("!=", VERIFICATION_FIXTURE)})
+	site_setup._seed_regulatory_reference(fiscal_year=FY, fixture_namespace=NS_PW, verification_status=VERIFICATION_FIXTURE, reservation_target_percent=0)
+	# PLN-CHG-001 v1.23 (D10): method admissibility and the schedule now
+	# resolve from Procurement Method / Schedule Profiles in force on the
+	# package's applicable date — the site's own profiles cover 2027-2028
+	# only, so this world seeds fixture-verified ones for its own year the
+	# way Planning's Playwright world does (added 19 Sep 2026).
+	site_setup._seed_method_profiles(effective=PROFILE_WINDOW, verification_status=VERIFICATION_FIXTURE, fixture_namespace=NS_PW)
+	site_setup._seed_schedule_profiles(effective=PROFILE_WINDOW, verification_status=VERIFICATION_FIXTURE, fixture_namespace=NS_PW, limits=PROFILE_LIMITS, estimated_delivery_default_days=DELIVERY_DEFAULT_DAYS)
 	if not frappe.db.exists("Currency", "KES"):
 		frappe.get_doc({"doctype": "Currency", "currency_name": "KES", "enabled": 1}).insert(ignore_permissions=True)
 	_delivery_location()
@@ -330,11 +359,31 @@ def _wipe_planning_side() -> None:
 	frappe.db.delete("Plan Drawdown Reference", {"plan_item": ("in", items or ("",))})
 	frappe.db.delete("Plan Source Allocation", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan Item", {"plan_version": ("in", plan_versions or ("",))})
+	# Activation (Treasury evidence + publish, added 19 Sep 2026) writes the
+	# published Plan Item roots and their publication trail — the same rows
+	# Planning's own `wipe_planning_rows()` removes, in the same order.
+	roots = frappe.get_all("Plan Item", filters={"annual_plan": ("in", plans or ("",))}, pluck="name")
+	for doctype in ("Milestone Actual Event", "Proceeding Coverage"):
+		if frappe.db.exists("DocType", doctype):
+			frappe.db.delete(doctype, {"plan_item": ("in", roots or ("",))})
+	frappe.db.delete("Plan Item Correction Disposition", {"correction_request": ("in", frappe.get_all("Plan Item Correction Request", filters={"plan_item_id": ("in", roots or ("",))}, pluck="name") or ("",))})
+	frappe.db.delete("Plan Item Correction Request", {"plan_item_id": ("in", roots or ("",))})
+	frappe.db.delete("Plan Item", {"name": ("in", roots or ("",))})
 	for task_doctype, decision_doctype in (("Plan Finance Task", "Plan Finance Decision"), ("Plan Governance Task", "Plan Governance Decision")):
 		task_rows = frappe.get_all(task_doctype, filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
 		frappe.db.delete(decision_doctype, {"task": ("in", task_rows or ("",))})
 		frappe.db.delete(task_doctype, {"name": ("in", task_rows or ("",))})
 	frappe.db.delete("Annual Plan Publication", {"plan_version": ("in", plan_versions or ("",))})
+	for doctype in ("Plan Preparation Signature", "Plan Financial Basis", "Plan Finance Basis Reuse", "Treasury Submission Evidence", "Plan Publication Hold", "Late Activation Explanation"):
+		if frappe.db.exists("DocType", doctype):
+			frappe.db.delete(doctype, {"plan_version": ("in", plan_versions or ("",))})
+	snapshots = frappe.get_all("Approved Plan Snapshot", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
+	publications = frappe.get_all("Plan Publication", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
+	for doctype in ("Publication Intent", "Publication Attempt", "Publication Acknowledgement"):
+		if frappe.db.exists("DocType", doctype):
+			frappe.db.delete(doctype, {"publication": ("in", publications or ("",))})
+	frappe.db.delete("Plan Publication", {"name": ("in", publications or ("",))})
+	frappe.db.delete("Approved Plan Snapshot", {"name": ("in", snapshots or ("",))})
 	frappe.db.delete("Annual Plan Version", {"name": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan", {"name": ("in", plans or ("",))})
 	frappe.db.delete("Planning Command Journal", {"actor": ("in", ACTORS)})
@@ -436,7 +485,22 @@ def _build_eligible_plan_item(*, indicative_amount: float = 40_000_000) -> tuple
 		adopted = plan_governance.adopt_and_submit_plan(task=ao_task.name, task_token=ao_task.task_token, idempotency_key=_key())
 	statutory_task = frappe.get_doc("Plan Governance Task", adopted["statutory_task"])
 	with _as(PLN_STATUTORY):
-		plan_governance.approve_annual_plan(task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=_key())
+		approved = plan_governance.approve_annual_plan(task=statutory_task.name, task_token=statutory_task.task_token, idempotency_key=_key())
+	# §5.5.2 (Planning D8): approval only commits; Treasury evidence gates the
+	# activation worker, which runs inline here (no RQ worker on this bench).
+	# Without it every Plan Source Allocation stays Draft and the eligibility
+	# read refuses the author (added 19 Sep 2026 — the Python world's own
+	# `activate()` twin).
+	from kentender_procurement.procurement_planning.services import publication_pipeline, treasury
+
+	version_name = frappe.db.get_value("Plan Publication", approved["publication"], "plan_version")
+	with _as(PLN_AO):
+		treasury.record_treasury_submission(
+			plan_version=version_name, submitted_at=f"{FY_START}-11-01 09:00:00", channel="Email", destination="treasury@example.test",
+			dispatch_reference=f"MOH/APP/{FY_START}/001", exact_document_confirmed=True, idempotency_key=_key(),
+		)
+	frappe.set_user("Administrator")
+	publication_pipeline.publish_annual_plan(plan_version=version_name, idempotency_key=_key())
 	return accepted["annual_plan"], item_id
 
 

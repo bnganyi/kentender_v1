@@ -71,6 +71,7 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/departmental_needs_industry.css?v={_desk_asset_v('public/css/departmental_needs_industry.css')}",
 	f"/assets/kentender_procurement/css/procurement_planning_industry.css?v={_desk_asset_v('public/css/procurement_planning_industry.css')}",
 	f"/assets/kentender_procurement/css/procurement_requisitions_industry.css?v={_desk_asset_v('public/css/procurement_requisitions_industry.css')}",
+	f"/assets/kentender_procurement/css/tenders_industry.css?v={_desk_asset_v('public/css/tenders_industry.css')}",
 ]
 app_include_js = [
 	f"/assets/kentender_procurement/js/procurement_sidebar_header.js?v={_desk_asset_v('public/js/procurement_sidebar_header.js')}",
