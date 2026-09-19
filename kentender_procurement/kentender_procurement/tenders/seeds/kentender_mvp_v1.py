@@ -347,6 +347,26 @@ def reset_tenders_seed(*, commit: bool = False) -> dict[str, int]:
 	return {"ok": True, "namespace": NS, "deleted": deleted}
 
 
+def wipe_all_tenders() -> dict[str, int]:
+	"""Unconditional: every row this module owns, regardless of which
+	Requisition it references. `reset_tenders_seed` selects by looking up
+	the current combined Plan Item's title, then its Requisition, then the
+	Tender tied to that Requisition — the same live-parent lookup pattern
+	Requisitions/Planning had, and the same failure mode: a Tender whose
+	Requisition (or that Requisition's own Plan Item) was already deleted
+	by some other, unrelated cycle has no parent left to be found through,
+	and survives every wipe forever. Only safe unconditionally under a
+	full site `wipe`, which clears Requisitions/Planning in the same pass."""
+	deleted: dict[str, int] = {}
+	for doctype in TENDER_DOCTYPES:
+		deleted[doctype] = frappe.db.count(doctype)
+		frappe.db.delete(doctype)
+	journal = frappe.db.count("Tender Command Journal")
+	frappe.db.delete("Tender Command Journal")
+	deleted["Tender Command Journal"] = journal
+	return deleted
+
+
 def validate_tenders_seed() -> list[dict[str, Any]]:
 	"""One row per §13.3 event this fixture must have produced, plus the
 	digest/idempotency facts the plan's own gate names. Never mutates."""

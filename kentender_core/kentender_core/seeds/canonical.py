@@ -458,6 +458,7 @@ def clear_canonical_modules() -> dict[str, Any]:
 	Tenders before Requisitions before Planning/Needs, since each
 	consumes the one before it), leaving the §8 site world."""
 	out: dict[str, Any] = {}
+	playwright_ok = _playwright_cleanup_allowed()
 	# Not clear_requisition_fixture_rows(include_canonical=True, ...): that
 	# path is a direct delete which refuses outright on an Authorised
 	# Requisition with an Active Budget reservation (the "wipe after
@@ -780,16 +781,18 @@ def run(
 		if wipe:
 			from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import wipe_all_planning
 			from kentender_procurement.procurement_requisitions.seeds.clear import wipe_all_requisitions
+			from kentender_procurement.tenders.seeds.kentender_mvp_v1 import wipe_all_tenders
 			from kentender_strategy.services.strategy_reference import reset_reference_series
 
-			# clear_canonical_modules()'s requisitions/planning steps both
-			# select by a live parent (title or fiscal year) rather than a
-			# fixture_namespace column every row carries, so a row whose
-			# parent was already deleted by some other, unrelated test run
-			# is invisible to either and survives every rebuild forever.
-			# Only safe to go unconditional here: `wipe` clears every other
-			# module in the same pass, so nothing is left for an orphan to
-			# reference.
+			# clear_canonical_modules()'s tenders/requisitions/planning steps
+			# all select by a live parent (a title, a Requisition, a fiscal
+			# year) rather than a fixture_namespace column every row
+			# carries, so a row whose parent was already deleted by some
+			# other, unrelated test run is invisible to any of them and
+			# survives every rebuild forever. Only safe to go unconditional
+			# here: `wipe` clears every other module in the same pass, so
+			# nothing is left for an orphan to reference.
+			result["tenders_wiped"] = wipe_all_tenders()
 			result["planning_wiped"] = wipe_all_planning()
 			result["requisitions_wiped"] = wipe_all_requisitions()
 			result["reference_series_reset"] = reset_reference_series()
