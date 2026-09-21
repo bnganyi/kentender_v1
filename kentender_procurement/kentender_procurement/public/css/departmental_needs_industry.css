@@ -296,3 +296,34 @@
 	color: var(--color-neutral-600);
 	font-size: 13px;
 }
+
+/* 21 Sep 2026 design-board refresh — a heading icon before a .kt-card-title's
+ * text (mirrors Tenders' own .tnd-section-title modifier rather than a
+ * per-instance inline style). The icon itself carries the accent tint; the
+ * label text inherits .kt-card-title's own colour. */
+.kt-industry .nds-section-title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.kt-industry .nds-section-title svg {
+	flex: none;
+	color: var(--color-accent);
+}
+
+/* A leading search icon inside a text input (NDS-DES-01/02 search fields). */
+.kt-industry .nds-search-field {
+	position: relative;
+	flex: 1;
+	display: flex;
+	align-items: center;
+}
+.kt-industry .nds-search-field svg {
+	position: absolute;
+	left: 10px;
+	color: var(--color-neutral-700);
+	pointer-events: none;
+}
+.kt-industry .nds-search-field .kt-input {
+	padding-left: 32px;
+}

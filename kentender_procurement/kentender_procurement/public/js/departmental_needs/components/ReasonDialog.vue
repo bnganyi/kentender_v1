@@ -50,7 +50,40 @@
 					:disabled="pending"
 					@click="$emit('confirm')"
 				>
-					{{ confirmLabel }}
+					<svg
+						v-if="confirmLabel === 'Return for correction'"
+						width="15"
+						height="15"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					><path d="M3 7v6h6" /><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" /></svg>
+					<svg
+						v-else-if="confirmLabel === 'Request withdrawal'"
+						width="15"
+						height="15"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					><rect width="20" height="5" x="2" y="3" rx="1" /><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" /><path d="M10 12h4" /></svg>
+					<svg
+						v-else-if="['Do not take forward', 'Decline proposed changes', 'Decline withdrawal'].includes(confirmLabel)"
+						width="15"
+						height="15"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					><path d="M18 6 6 18M6 6l12 12" /></svg
+					>{{ confirmLabel }}
 				</button>
 			</div>
 		</div>

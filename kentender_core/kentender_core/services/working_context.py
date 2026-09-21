@@ -318,6 +318,20 @@ def select_module_fy(
 	)
 
 
+def clear_module_fy(module: str, user: str | None = None) -> None:
+	"""Erase `module`'s remembered Financial Year outright.
+
+	The mirror of `select_module_fy`, for when the caller's own preference
+	genuinely *is* "nothing selected" (an explicit "All financial years"
+	reset) rather than a value that simply was not supplied this call.
+	`get_module_fy`/`_resolve_module_dimension` cannot tell those two apart
+	from an empty `requested` alone — both look identical on the wire — so a
+	caller that means the former must say so through this separate call.
+	"""
+	user = user or frappe.session.user
+	frappe.defaults.clear_user_default(_module_key(module, "financial_year"), user=user)
+
+
 # --- Organisation Unit (per module; Departmental Needs) ---------------------
 
 
@@ -348,3 +362,11 @@ def select_module_ou(
 	module: str, ou_id: str, user: str | None = None, *, offered: list[Any] | None = None
 ) -> dict[str, Any]:
 	return get_module_ou(module, user, requested=cstr(ou_id).strip(), offered=offered)
+
+
+def clear_module_ou(module: str, user: str | None = None) -> None:
+	"""Erase `module`'s remembered Organisation Unit outright — the OU mirror
+	of `clear_module_fy`; see its docstring for why this is a separate call
+	rather than an empty `requested` value."""
+	user = user or frappe.session.user
+	frappe.defaults.clear_user_default(_module_key(module, "org_unit"), user=user)

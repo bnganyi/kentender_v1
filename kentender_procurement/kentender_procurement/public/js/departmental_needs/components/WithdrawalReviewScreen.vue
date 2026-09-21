@@ -3,8 +3,12 @@
      itself failing, `dependency.unavailable`). The dependency is always the
      fresh server result, never a cached button state. -->
 <template>
-	<div class="kt-panel-lg" style="max-width: 700px">
-		<h3 style="margin: 0">Review withdrawal request</h3>
+	<div class="kt-panel-lg" style="max-width: 880px">
+		<h3 style="margin: 0; display: flex; align-items: center; gap: 10px">
+			<span class="kt-icon-tile"
+				><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1" /><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" /><path d="M10 12h4" /></svg
+			></span>Review withdrawal request
+		</h3>
 		<div style="font-size: 16px; font-weight: 600; margin: var(--kt-space-3) 0 2px">{{ revision.title }}</div>
 		<div class="kt-label" style="margin-bottom: var(--kt-space-3)">
 			Need {{ need.need_reference }} · Withdrawal request {{ request.name }} · Accepted revision {{ revision.revision_number }}
@@ -17,7 +21,10 @@
 			<div class="kt-notice-body">{{ errorSummary }}</div>
 		</div>
 
-		<h6 class="kt-card-title" style="margin-top: var(--kt-space-6)">Withdrawal request</h6>
+		<h6 class="kt-card-title nds-section-title" style="margin-top: var(--kt-space-6)">
+			<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1" /><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" /><path d="M10 12h4" /></svg
+			><span>Withdrawal request</span>
+		</h6>
 		<div style="display: flex; gap: var(--kt-space-6); font-size: 13px; margin: var(--kt-space-3) 0 var(--kt-space-3)">
 			<div><span class="kt-label" style="display: block">Requested by</span>{{ requesterLabel }}</div>
 			<div><span class="kt-label" style="display: block">Requested at</span><span data-volatile="true">{{ formatInstant(requestedAt) }}</span></div>
@@ -95,7 +102,8 @@
 				data-testid="nds-withdrawal-decline"
 				@click="$emit('decline')"
 			>
-				Decline withdrawal
+				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg
+				>Decline withdrawal
 			</button>
 			<!-- §11.13 — blocked (still-Active) or UNAVAILABLE never offer
 			     Approve; Close replaces it as the only other footer action. -->
@@ -115,7 +123,8 @@
 				data-testid="nds-withdrawal-approve"
 				@click="$emit('approve')"
 			>
-				Approve withdrawal
+				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg
+				>Approve withdrawal
 			</button>
 		</div>
 	</div>

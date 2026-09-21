@@ -111,7 +111,15 @@
 	font-family: var(--kt-font-body);
 	font-size: 15px;
 	line-height: 1.55;
-	min-height: 100%;
+	/* `100%` only resolves against a sized ancestor; every ancestor Frappe
+	   gives a mounted Vue-in-Desk page (.layout-main-section and up) is
+	   auto-height, so this was a no-op the moment a screen's own content was
+	   shorter than the viewport — the page's own body colour (kt_cl_shell's
+	   #f7f9fb) showed through below it as a visibly different grey (found
+	   live 21 Sep 2026 on Departmental Needs, but structural to every
+	   Industry page). `vh` needs no ancestor sizing, matching the
+	   .kt-desk-page-placeholder rule below, which already had this right. */
+	min-height: 100vh;
 }
 
 .kt-industry,
@@ -603,7 +611,10 @@
 /* First paint of a page whose bundle is still loading: the page ground and a
    rail-height band, so the frame before Vue mounts is not a white hole. */
 .kt-desk-page-mount {
-	min-height: 100%;
+	/* Same fix as `.kt-industry` above, on the mount point itself — the
+	   ancestor Frappe actually appends into `.layout-main-section` — so the
+	   guarantee holds regardless of what a given page mounts inside it. */
+	min-height: 100vh;
 }
 .kt-industry.kt-desk-page-placeholder {
 	min-height: 100vh;
@@ -718,6 +729,12 @@
    never repeated here, since the screen heading already shows it. */
 .kt-industry .kt-factstack-text { display: grid; grid-template-columns: 1fr 1fr; gap: var(--kt-space-4) var(--kt-space-6); }
 .kt-industry .kt-factstack-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--kt-space-4); border-top: 1px solid var(--kt-color-neutral-200); padding-top: var(--kt-space-3); }
+
+/* A small colour-tinted square housing a heading icon (21 Sep 2026 design-board
+   refresh) — generic and reusable, not Departmental-Needs-specific, so it
+   lives here rather than in that module's own CSS file. */
+.kt-industry .kt-icon-tile { display: inline-flex; width: 32px; height: 32px; flex: none; align-items: center; justify-content: center; background: var(--kt-color-accent-100); color: var(--kt-color-accent-900); }
+.kt-industry .kt-icon-tile svg { flex: none; }
 
 /* Media hardening — keep when trimming (see the design-system readme). */
 @media (forced-colors: active) {

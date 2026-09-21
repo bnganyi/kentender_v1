@@ -1171,3 +1171,186 @@ hygiene generally: update `test_departmental_needs_navigation.py`'s
 expectations to match the current sidebar file, or fix the sidebar/role
 configuration if the rename was itself unintentional — whichever the module
 owner confirms is correct.
+
+---
+
+## FU-34 — CLOSED 2026-09-21 — the workspace's full-screen "Select a department" step contradicted §12.1 outright
+
+**What.** `ContextPicker.vue` blocked entry to the workspace with a
+standalone "Select a department" screen whenever an actor held more than one
+eligible Organisation Unit and nothing was yet remembered — every first
+login for a multi-department actor (e.g. Grace, Digital Health + HRMD).
+NDS-CHG-001 v1.13 §12.1 says the opposite in as many words: "Do not
+require... a pre-entry selection screen... Load all of the actor's
+authorised own Needs across assigned departments... Several remain available
+through ordinary changeable filters; they do not block page entry." The
+picker had apparently been built on a mistaken belief that the workspace
+*needed* a single resolved Organisation Unit before it could query anything
+— true of the code as it stood, not true of the requirement.
+
+**Why it matters.** This is exactly the class of defect this tracker exists
+to catch: a screen built and shipped (NDS13-301 evidence even live-verified
+it, reading it as correct) that directly contradicts its own governing
+requirements text. `CreateTargetDialog.vue` (the equivalent defect for the
+*create* flow) was already caught and retired in the v1.13 cycle
+(NDS13-CHG-003) — this was the same defect's twin on the *workspace-entry*
+flow, missed at the time.
+
+**Fixed.**
+- `services/workspace.py::get_workspace` — several contexts with nothing
+  selected is no longer `CONTEXT_SELECTION_REQUIRED` (retired outright; only
+  zero contexts is a real access denial, `NO_AUTHORISED_CONTEXT`). It now
+  queries every authorised Organisation Unit combined
+  (`organisation_unit IN (...)`), exactly mirroring how the Financial Year
+  filter already behaved when nothing was selected. `Create need`'s own
+  offer no longer depends on which department happens to be in view either
+  (§12.1: create targets derive from authoring assignments, never "the
+  list's current FY filter or a browser-stored context" — the same rule
+  extends to the OU filter).
+- `ContextPicker.vue` deleted outright (confirmed zero other call sites
+  first) — `DepartmentalNeeds.vue`'s `selectionRequired` gate and the
+  `context-selection` shell state retired with it.
+- `WorkspaceScreen.vue`'s Department filter gained an explicit "All
+  departments" option (matching "All statuses"/"All financial years" already
+  there) — the visible reset §12.1 requires back to the combined view.
+- `clearFilters()` was also silently not resetting Department or Financial
+  year at all (only search/status) despite being labelled "Clear filters" —
+  fixed alongside, since it's the same reset mechanism.
+- Both the Department and Financial year context *facts* rendered blank
+  (not broken, but easy to mistake for broken) whenever nothing resolves to
+  a single value — now show "All departments"/"All financial years",
+  matching the filter option's own label instead of an empty field.
+
+**Verified.** `test_departmental_needs_permissions.py`: 40/40 green,
+including two existing tests corrected to expect the new `READY` /combined
+outcome instead of the old blocking one, and one new test
+(`test_no_remembered_department_loads_every_authorised_one_combined`)
+proving against real seeded data that the combined view is the literal union
+of what each department shows individually. Full Playwright suite
+(workspace/detail/review-task/withdrawal-review/accepted-source, the visual
+spec, and the fidelity spec): 35/37 + 10/10 fidelity green, the 2 remaining
+"failures" were pure fixture-reference-number drift on unrelated baselines
+(re-shot, visually re-confirmed). `tests/ui/smoke/departmental_needs/helpers.ts`'s
+`selectContext()` needed no changes — it was already written as a permanent
+no-op once the picker screen it targeted stopped existing.
+
+## FU-35 — CLOSED 2026-09-21 — "All departments"/"All financial years" reverted the instant they were picked
+
+**What.** FU-34 made "All departments" a real, clickable filter option for
+the first time — and the moment a real multi-department actor (Grace) used
+it, it silently snapped straight back to whichever department was already
+remembered. Same mechanism, same latent exposure, on Financial year's own
+"All financial years" option. Reported live 2026-09-21 with a screenshot of
+Grace's workspace.
+
+**Root cause.** `get_workspace(organisation_unit="")` and
+`get_module_fy`/`get_module_ou`'s own `requested` argument cannot tell "the
+caller explicitly asked for everything" apart from "the caller didn't
+mention this filter at all" — both arrive as the same empty string, and the
+existing resolver treated any empty value as "fall back to whatever is
+remembered." `_selected_context`'s `len(contexts) == 1` shortcut meant a
+single-department actor (Peter) could never have shown this — it only ever
+surfaces for a multi-department actor explicitly backing away from a
+specific pick, which is exactly the case FU-34 had just made reachable.
+
+**Fixed.** Two new, narrowly-scoped, additive core functions —
+`kentender_core.services.working_context.clear_module_fy`/`clear_module_ou`
+— erase the remembered preference outright rather than trying to smuggle a
+third state through the existing `requested` string. `get_workspace` gained
+two boolean flags, `clear_organisation_unit`/`clear_financial_year`,
+defaulting to `False` (every existing caller unaffected); the filter's own
+"All..." options and "Clear filters" now send the relevant flag(s) alongside
+the blank value, and `get_workspace` clears the remembered preference
+*before* resolving, so the untouched fallback logic naturally lands on
+"combined" — no change needed to `_selected_context`'s own resolution order
+at all. `DepartmentalNeeds.vue`'s `applyLoaded()` also only ever moved
+`contextKey`/`financialYear` forward to a truthy value, never back — fixed
+to mirror the server's resolution unconditionally, including back to "".
+
+**Verified.** New test
+`test_an_explicit_all_departments_choice_overrides_the_remembered_one`
+(red against the old code, green after the fix) proves the clear is durable
+across a second, completely bare `get_workspace()` call, not just honoured
+for the one request that asked for it — `test_departmental_needs_permissions.py`
+41/41 green. Live-verified as Grace herself (the exact actor and scenario
+reported): picked Digital Health, picked "All departments" back — stayed on
+"All departments" and kept showing all 4 needs across both her departments,
+including after a full page reload. The equivalent Financial year fix
+shares the identical code path but has no live multi-year fixture to
+exercise it against; not independently proven by its own test.
+
+## FU-36 — CLOSED 2026-09-21 — every Industry page had two different page backgrounds stacked on top of each other
+
+**What.** Reported live 2026-09-21 alongside FU-35, with a screenshot
+showing a visibly darker grey band below the Departmental Needs workspace
+panel whenever its content was shorter than the viewport. Confirmed
+structural, not cosmetic to this one screen: every Vue-in-Desk Industry page
+(Budget, Tenders, Planning, Strategy, Requisitions, System setup, Reference
+Data, Technical search, Departmental Needs itself) shares the exact same
+`.kt-industry`/`.kt-desk-page-mount` wrapper and was equally exposed; small
+datasets in Departmental Needs just made it visible first.
+
+**Root cause.** `kt_industry_tokens.css`'s `.kt-industry` rule used
+`min-height: 100%`. A percentage `min-height` only resolves against a sized
+ancestor, and every ancestor Frappe gives a mounted Vue-in-Desk page
+(`.layout-main-section` and up, short of `.main-section` four levels up)
+is auto-height — so the rule was a silent no-op the instant a screen's own
+content was shorter than the viewport, and `kentender_core`'s own
+`kt_cl_shell.js`-driven `body.kt-cl-shell` background (`#f7f9fb`, a
+different shade from `.kt-industry`'s own `--kt-color-bg` `#f0f2f7`) showed
+through below it. The pre-mount loading placeholder rule three lines below
+already used `100vh` and never had this problem — only the real mounted
+element was left on the weaker unit.
+
+**Fixed.** `kt_industry_tokens.css`: both `.kt-industry` and
+`.kt-desk-page-mount` changed from `min-height: 100%` to `min-height: 100vh`
+— `vh` needs no sized ancestor, matching the already-correct placeholder
+rule. One shared line, zero per-module changes, fixes every consuming page
+at once.
+
+**Verified.** Live screenshots before/after on Departmental Needs (seam
+gone, uniform background to the bottom of the viewport) and on Budget's
+"you do not have access" denied screen (a second, independent short-content
+case) — both clean. Not independently re-shot against every other consuming
+module; the fix is one shared, low-risk CSS rule (a minimum, never a cap, so
+it cannot truncate a page with more content than the viewport) rather than
+a per-module change, so the risk of an undiscovered regression elsewhere is
+low but not exhaustively checked.
+
+## FU-37 — CLOSED 2026-09-21 — a filter change could permanently strand the table on a stale result (pre-existing, found while verifying FU-35)
+
+**What.** Found by an isolated `--retries=0` rerun of
+`departmental-needs-workspace.spec.ts`'s "filters refresh the table in
+place" test, which failed consistently (not flakily) outside the suite's
+default one-retry safety net. Proved pre-existing, not caused by FU-35: it
+still reproduced 2/3 times with FU-35's own `clearFilters()` edit reverted
+to a bare `search`/`status` reset, on unmodified `refreshFilters`/`watch`
+code. It had been shipping as an intermittent "flaky" pass-on-retry in every
+normal run, never as a hard failure, so nobody had reason to look at it.
+
+**Root cause.** `load()` drops a quiet reload outright
+(`if (quiet && inFlightKey === key) return;`) whenever another one for the
+same screen is still in flight — with nothing to replace it. Two filter
+changes shortly after one another (e.g. picking a status, then clicking
+Clear filters straight after) can each trigger a `load()`: the second one
+lands while the first is still in flight and gets dropped silently, and
+because `refreshFilters` also unconditionally `clearTimeout`s the debounced
+search timer on every call, the *debounced* retry that would otherwise have
+followed the search-box change gets cancelled in the same breath. Net
+result: zero further requests, ever — the table sits on the first change's
+now-irrelevant result until some unrelated action happens to trigger a
+fresh load.
+
+**Fixed.** `DepartmentalNeeds.vue`'s `load()` — a quiet reload dropped this
+way is no longer just discarded: it is coalesced into `pendingQuietOpts`
+(OR-merging any one-shot clear intent so it is never lost across multiple
+dropped attempts) and re-issued once as a trailing follow-up the moment the
+in-flight request's own `finally` block runs. Standard trailing-edge
+coalescing — at most one extra request, always reflecting whatever the
+filters actually are by the time it fires.
+
+**Verified.** The isolated repro test: 5/5 clean passes with
+`--retries=0` (previously failing outright without the suite's default
+retry). Full Departmental Needs Playwright suite (functional + visual +
+fidelity) re-run afterward with `--retries=0` throughout, to confirm this
+fix carries no regression of its own now that the retry safety net is off.

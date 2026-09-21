@@ -3,8 +3,33 @@
      choice are the same editor over the same six values; only the masthead,
      notice, context and footer differ. -->
 <template>
-	<div class="kt-panel-lg" style="max-width: 700px">
-		<h3 style="margin: 0">{{ heading }}</h3>
+	<div class="kt-panel-lg" style="max-width: 880px">
+		<h3 style="margin: 0; display: flex; align-items: center; gap: 10px">
+			<span class="kt-icon-tile">
+				<svg
+					v-if="mode === 'create'"
+					width="18"
+					height="18"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /><path d="M14 2v4a2 2 0 0 0 2 2h4" /><path d="M12 12v6M9 15h6" /></svg>
+				<svg
+					v-else
+					width="18"
+					height="18"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /><path d="M14 2v4a2 2 0 0 0 2 2h4" /><path d="m11 17 4-4-1.5-1.5L9.5 15.5V17z" /></svg>
+			</span>{{ heading }}
+		</h3>
 		<div v-if="reference" style="display: flex; gap: var(--kt-space-3); align-items: center; margin: 6px 0 0">
 			<span class="kt-label">{{ reference }}</span>
 			<span class="kt-status" :class="statusClass">{{ statusLabel }}</span>
@@ -79,10 +104,11 @@
 			</div>
 		</div>
 
-		<!-- §11.1 six-field arrangement: title/description/expected result full
-		     width, quantity+unit side by side, required by on its own row. -->
-		<div style="display: flex; flex-direction: column; gap: var(--kt-space-4); margin-top: var(--kt-space-4)">
-			<div class="field">
+		<!-- §11.1 six-field arrangement (21 Sep 2026 design-board refresh):
+		     title spans both columns, description/expected result side by
+		     side, quantity/unit/required-by in one row spanning both columns. -->
+		<div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--kt-space-4) var(--kt-space-6); margin-top: var(--kt-space-4)">
+			<div class="field" style="grid-column: 1 / -1">
 				<label class="kt-label" for="nds-title">Requirement title</label>
 				<input
 					id="nds-title"
@@ -121,8 +147,8 @@
 					What will the department be able to do when this need is met?
 				</div>
 			</div>
-			<div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--kt-space-4)">
-				<div class="field" style="margin: 0">
+			<div style="display: flex; gap: var(--kt-space-4); grid-column: 1 / -1">
+				<div class="field" style="margin: 0; flex: 1">
 					<label class="kt-label" for="nds-quantity">Quantity</label>
 					<input
 						id="nds-quantity"
@@ -142,7 +168,7 @@
 						{{ inputErrors.indicative_quantity }}
 					</div>
 				</div>
-				<div class="field" style="margin: 0">
+				<div class="field" style="margin: 0; flex: 1">
 					<label class="kt-label" for="nds-unit">Unit</label>
 					<div style="display: flex; gap: 8px; align-items: center">
 						<select id="nds-unit" data-testid="nds-unit" class="kt-input" v-model="form.unit" style="flex: 1">
@@ -165,21 +191,21 @@
 						Select the unit that describes the quantity.
 					</div>
 				</div>
-			</div>
-			<div class="field" style="max-width: 340px">
-				<label class="kt-label" for="nds-required-by">Required by</label>
-				<input
-					id="nds-required-by"
-					ref="requiredByEl"
-					data-testid="nds-required-by"
-					class="kt-input"
-					type="date"
-					v-model="form.required_by_date"
-					@input="inputErrors.required_by_date = ''"
-				/>
-				<div class="text-muted" style="font-size: 12.5px; margin-top: 4px">When does the department need it?</div>
-				<div v-if="inputErrors.required_by_date" class="kt-field-error" data-testid="nds-required-by-error">
-					{{ inputErrors.required_by_date }}
+				<div class="field" style="margin: 0; flex: 1">
+					<label class="kt-label" for="nds-required-by">Required by</label>
+					<input
+						id="nds-required-by"
+						ref="requiredByEl"
+						data-testid="nds-required-by"
+						class="kt-input"
+						type="date"
+						v-model="form.required_by_date"
+						@input="inputErrors.required_by_date = ''"
+					/>
+					<div class="text-muted" style="font-size: 12.5px; margin-top: 4px">When does the department need it?</div>
+					<div v-if="inputErrors.required_by_date" class="kt-field-error" data-testid="nds-required-by-error">
+						{{ inputErrors.required_by_date }}
+					</div>
 				</div>
 			</div>
 		</div>
@@ -227,7 +253,29 @@
 				:disabled="pending"
 				@click="$emit('cancel')"
 			>
-				{{ cancelLabel }}
+				<svg
+					v-if="cancelLabel === 'Cancel update'"
+					width="15"
+					height="15"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				><path d="M18 6 6 18M6 6l12 12" /></svg>
+				<svg
+					v-else-if="cancelLabel === 'Withdraw need'"
+					width="15"
+					height="15"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				><path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg
+				>{{ cancelLabel }}
 			</button>
 			<div style="display: flex; gap: var(--kt-space-2)">
 				<button
@@ -236,7 +284,8 @@
 					:disabled="pending || departmentRequired"
 					@click="guardedEmit('save')"
 				>
-					{{ saveLabel }}
+					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" /><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" /><path d="M7 3v4a1 1 0 0 0 1 1h7" /></svg
+					>{{ saveLabel }}
 				</button>
 				<button
 					class="kt-btn kt-btn-primary"
@@ -244,7 +293,8 @@
 					:disabled="pending || departmentRequired"
 					@click="guardedEmit('submit')"
 				>
-					{{ submitLabel }}
+					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" /><path d="m21.854 2.147-10.94 10.939" /></svg
+					>{{ submitLabel }}
 				</button>
 			</div>
 		</div>

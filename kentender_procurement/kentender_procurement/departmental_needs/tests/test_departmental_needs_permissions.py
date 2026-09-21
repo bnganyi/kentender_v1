@@ -478,23 +478,65 @@ class TestServerSideContextPreferences(DepartmentalNeedsPermissionCase):
 		frappe.set_user(AUTHOR)
 		workspace.get_workspace(organisation_unit=self.ou)
 		# The reviewer shares the browser in the field; here they share nothing
-		# but the server — their own resolution must still prompt (Peter has
-		# two departments, so no single one auto-selects).
+		# but the server — their own resolution must still come back combined
+		# across both their departments (§12.1: several contexts and nothing
+		# remembered is a normal "browse everything" state, never a prompt).
 		frappe.set_user(REVIEWER)
 		fresh = workspace.get_workspace()
-		self.assertEqual(fresh["outcome"], "CONTEXT_SELECTION_REQUIRED")
+		self.assertEqual(fresh["outcome"], "READY")
+		self.assertEqual(fresh["context"]["organisation_unit"], "")
+		self.assertEqual({row["organisation_unit"] for row in fresh["contexts"]}, {self.ou, self.ou_hrmd})
 
 	def test_a_remembered_unit_outside_the_offer_heals_to_unselected(self):
 		"""A remembered OU the caller no longer holds resolves to "unselected"
-		(re-prompt where more than one context exists), never to access and
-		never to a hard error — the offer itself is the authority on what may
-		be picked. Grace has two real contexts, so a single-context shortcut
-		cannot mask this: healing must actually run `get_module_ou`."""
+		— the combined view across every currently-offered context (§12.1),
+		never to access and never to a hard error; the offer itself is the
+		authority on what may be picked. Grace has two real contexts, so a
+		single-context shortcut cannot mask this: healing must actually run
+		`get_module_ou`."""
 		frappe.defaults.set_user_default("kt_needs_org_unit", "OU-DOES-NOT-EXIST", user=AUTHOR)
 		frappe.set_user(AUTHOR)
 		offer = workspace.get_workspace()
-		self.assertEqual(offer["outcome"], "CONTEXT_SELECTION_REQUIRED")
+		self.assertEqual(offer["outcome"], "READY")
+		self.assertEqual(offer["context"]["organisation_unit"], "")
 		self.assertEqual({row["organisation_unit"] for row in offer["contexts"]}, {self.ou, self.ou_hrmd})
+
+	def test_no_remembered_department_loads_every_authorised_one_combined(self):
+		"""§12.1 — "Load all of the actor's authorised own Needs across
+		assigned departments... Several remain available through ordinary
+		changeable filters; they do not block page entry." Checked before
+		either per-department call below runs, since an explicit
+		`organisation_unit` persists as the remembered default and would
+		otherwise mask the combined case this test exists to prove."""
+		frappe.set_user(AUTHOR)
+		combined = workspace.get_workspace()
+		self.assertEqual(combined["outcome"], "READY")
+		self.assertEqual(combined["context"]["organisation_unit"], "")
+		combined_refs = {row["reference"] for row in combined["needs"]}
+		only_ou_refs = {row["reference"] for row in workspace.get_workspace(organisation_unit=self.ou)["needs"]}
+		only_hrmd_refs = {
+			row["reference"] for row in workspace.get_workspace(organisation_unit=self.ou_hrmd)["needs"]
+		}
+		self.assertTrue(only_ou_refs, "expected at least one seeded Need in Digital Health")
+		self.assertTrue(only_hrmd_refs, "expected at least one seeded Need in HR Management and Development")
+		self.assertEqual(combined_refs, only_ou_refs | only_hrmd_refs)
+
+	def test_an_explicit_all_departments_choice_overrides_the_remembered_one(self):
+		"""The workspace's "All departments" filter option sends an explicit,
+		empty `organisation_unit` — found live 21 Sep 2026 to snap straight
+		back to the previously remembered department instead of honouring the
+		choice, because an empty explicit request and "nothing requested yet"
+		resolved identically. `clear_organisation_unit=True` is how the filter
+		tells the server this pick is deliberate, not absent, and the clear
+		must be durable — a later bare reload must not resurrect the old pick
+		either."""
+		frappe.set_user(AUTHOR)
+		workspace.get_workspace(organisation_unit=self.ou)
+		cleared = workspace.get_workspace(organisation_unit="", clear_organisation_unit=True)
+		self.assertEqual(cleared["outcome"], "READY")
+		self.assertEqual(cleared["context"]["organisation_unit"], "")
+		still_combined = workspace.get_workspace()
+		self.assertEqual(still_combined["context"]["organisation_unit"], "")
 
 	def test_a_direct_record_link_ignores_the_working_preference(self):
 		"""Rule 6 — a record opens under its own stored scope after permission

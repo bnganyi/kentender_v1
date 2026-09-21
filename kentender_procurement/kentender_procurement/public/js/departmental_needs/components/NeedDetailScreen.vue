@@ -4,10 +4,14 @@
      STILL-ACTIVE/RESTORED). The screen shows the exact revision it was asked
      for and never rewrites the requested one. -->
 <template>
-	<div class="kt-panel-lg" style="max-width: 700px">
+	<div class="kt-panel-lg" style="max-width: 880px">
 		<div style="display: flex; justify-content: space-between; align-items: flex-start">
 			<div>
-				<h4 style="margin: 0">{{ shownRevision.title }}</h4>
+				<h4 style="margin: 0; display: flex; align-items: center; gap: 10px">
+					<span class="kt-icon-tile"
+						><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /><path d="M14 2v4a2 2 0 0 0 2 2h4" /><path d="M8 13h8M8 17h5" /></svg
+					></span>{{ shownRevision.title }}
+				</h4>
 				<div class="kt-label" style="margin: 4px 0 8px">{{ need.need_reference }}</div>
 				<div style="display: flex; gap: var(--kt-space-3); align-items: center">
 					<span class="kt-status" :class="statusClass">{{ statusLabel }}</span>
@@ -23,7 +27,29 @@
 					:data-action="action.code"
 					@click="$emit(action.code)"
 				>
-					{{ action.label }}
+					<svg
+						v-if="action.code === 'create-update'"
+						width="15"
+						height="15"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /><path d="M14 2v4a2 2 0 0 0 2 2h4" /><path d="m11 17 4-4-1.5-1.5L9.5 15.5V17z" /></svg>
+					<svg
+						v-else-if="action.code === 'request-withdrawal'"
+						width="15"
+						height="15"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					><rect width="20" height="5" x="2" y="3" rx="1" /><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" /><path d="M10 12h4" /></svg
+					>{{ action.label }}
 				</button>
 			</div>
 		</div>
@@ -94,7 +120,10 @@
 		     UNAVAILABLE-NO-SNAPSHOT (NDS-CHG-001 v1.14 Phase 2) — a separate,
 		     independently-retriable check from the rest of this screen. -->
 		<template v-if="showPlanning">
-			<h6 class="kt-card-title">Planning status</h6>
+			<h6 class="kt-card-title nds-section-title">
+				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg
+				><span>Planning status</span>
+			</h6>
 			<div v-if="planningRefreshing" class="text-muted" style="font-size: 12.5px; margin-top: var(--kt-space-2)">
 				Updating Planning information…
 			</div>

@@ -34,8 +34,13 @@ import {
 const ARTBOARD_FILE = "docs/mvp-1-r1/01_departmental_needs/design/Departmental Needs - Design Board.dc.html";
 const LIVE_SCOPE = '[data-testid="nds-shell"]';
 
+// 21 Sep 2026 design-board refresh wraps each artboard's panel in a
+// realistic 1440×1024 browser-frame mockup (`.artboard > .ab-main >
+// .ab-body > div`) to show it in situ — canvas presentation only, never
+// ported into the live app, but the artboard-side scope selector has to
+// follow the panel to its new depth.
 function panelScope(id: string): string {
-	return `#${id} > .kt-panel-lg`;
+	return `#${id} .ab-body .kt-panel-lg`;
 }
 
 /**

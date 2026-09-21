@@ -139,16 +139,15 @@ export async function expectScreen(page: Page, screen: string): Promise<void> {
  * (mirrored by `DepartmentalNeeds.vue`'s own `selectionRequired`) never shows
  * a picker for a one-option scope, and the site carries exactly one Open
  * Fiscal Year at a time (CFG-BR-010), so `financialYears.length` is never
- * greater than one either. There is therefore no stable identifier for a
- * caller to supply today — the old hardcoded Organisation Unit argument is
- * gone.
+ * greater than one either.
  *
- * This helper stays deliberately defensive rather than being deleted: it
- * remains a no-op whenever the shell is not on `"context-selection"` (every
- * call today), and picks the first selectable option in each control when it
- * is — so a future fixture actor granted more than one Organisation Unit, or
- * a second concurrently-open Fiscal Year, does not silently strand every
- * calling spec at an unhandled picker.
+ * 21 Sep 2026 — the `"context-selection"` screen itself is retired
+ * (`ContextPicker.vue` deleted): NDS-CHG-001 v1.13 §12.1 forbids any
+ * pre-entry selection screen, several departments included — the workspace
+ * now always loads directly, with Department as an ordinary filter. This
+ * helper is kept as a permanent no-op (the guard below never fires any more)
+ * rather than deleted, so the many call sites across this suite do not each
+ * need editing for a screen that no longer exists.
  */
 export async function selectContext(page: Page): Promise<void> {
 	const shell = page.locator('[data-testid="nds-shell"]');

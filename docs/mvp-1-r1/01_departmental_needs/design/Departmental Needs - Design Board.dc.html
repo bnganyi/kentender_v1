@@ -20,9 +20,21 @@
   .factstack-meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--space-4);border-top:1px solid var(--color-neutral-200);padding-top:var(--space-3)}
   .kt-panel .kt-meta-row{justify-content:space-between}
   .board-root > div{margin-bottom:0 !important}
+  .artboard{width:1440px;height:1024px;display:flex;background:var(--color-bg);border:1px solid var(--color-neutral-300);overflow:hidden}
+  .ab-main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .ab-body{flex:1;min-height:0;overflow:auto;padding:var(--space-6)}
+  .ab-body > div{margin:0 auto}
+  .ab-tile{display:inline-flex;width:32px;height:32px;flex:none;align-items:center;justify-content:center;background:var(--color-accent-100);color:var(--color-accent-900)}
+  .kt-card-title{display:flex;align-items:center;gap:8px}
+  .kt-card-title svg{flex:none;color:var(--color-accent)}
+  .btn svg{flex:none}
+  .ab-search{position:relative;flex:1;display:flex;align-items:center}
+  .ab-search svg{position:absolute;left:10px;color:var(--color-neutral-700);pointer-events:none}
+  .ab-search .input{padding-left:32px}
+  .ab-body > .kt-panel-lg{width:100% !important}
 </style>
 </helmet>
-<div class="board-root" style="min-width:2400px;padding:56px;display:flex;flex-direction:column;gap:var(--space-8)">
+<div class="board-root" style="min-width:1560px;padding:56px;display:flex;flex-direction:column;gap:var(--space-8)">
 
   <div style="max-width:760px;margin:0 0 48px">
     <div class="text-muted" style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:0 0 8px">NDS-CHG-001 v1.13 · §11</div>
@@ -51,13 +63,16 @@
   <!-- ============ DES-01 ============ -->
   <div id="des01" style="margin-bottom:56px">
     <div class="text-muted" style="font-size:13px;font-weight:700;margin-bottom:12px">NDS-DES-01 · Author workspace <span style="font-weight:400;opacity:.7">— Grace Wanjiku, Digital Health &amp; HRMD, 24 Nov 2026 15:00 EAT</span></div>
-    <div class="kt-panel-lg" style="width:760px">
+        <div class="artboard">
+      <div class="ab-main">
+        <div class="ab-body"><div style="max-width:1100px">
+<div class="kt-panel-lg">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
-          <h3 style="margin:0">My needs</h3>
+          <h3 style="margin:0;display:flex;align-items:center;gap:10px"><span class="ab-tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>My needs</h3>
           <p class="text-muted" style="font-size:13px;margin:6px 0 0">Describe your department's requirements and follow their review.</p>
         </div>
-        <span class="btn btn-primary">Create need</span>
+        <span class="btn btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Create need</span>
       </div>
       <div class="kt-panel" style="margin-top:var(--space-4)">
         <div class="kt-meta-row">
@@ -68,7 +83,7 @@
         </div>
       </div>
       <div style="display:flex;gap:var(--space-3);margin:var(--space-4) 0;align-items:center">
-        <input class="input" placeholder="Search title or reference" style="flex:1" disabled="disabled">
+        <span class="ab-search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input class="input" placeholder="Search title or reference" disabled="disabled"></span>
         <select class="input" style="width:160px" disabled="disabled"><option>All statuses</option></select>
         <select class="input" style="width:180px" disabled="disabled"><option>All financial years</option></select>
         <select class="input" style="width:200px" disabled="disabled"><option>Digital Health</option></select>
@@ -93,13 +108,19 @@
       </table>
       <div class="text-muted" style="font-size:13px;margin-top:var(--space-3)">2 needs</div>
     </div>
+        </div></div>
+      </div>
+    </div>
   </div>
 
   <!-- ============ DES-02 ============ -->
   <div id="des02" style="margin-bottom:56px">
     <div class="text-muted" style="font-size:13px;font-weight:700;margin-bottom:12px">NDS-DES-02 · HoD work in the shared workspace <span style="font-weight:400;opacity:.7">— Dr Peter Kimani, HRMD, 24 Nov 2026 15:00 EAT</span></div>
-    <div class="kt-panel-lg" style="width:820px">
-      <h3 style="margin:0">Departmental Needs</h3>
+        <div class="artboard">
+      <div class="ab-main">
+        <div class="ab-body"><div style="max-width:1100px">
+<div class="kt-panel-lg">
+      <h3 style="margin:0;display:flex;align-items:center;gap:10px"><span class="ab-tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18M3 12h18M3 19h18"/></svg></span>Departmental Needs</h3>
       <p class="text-muted" style="font-size:13px;margin:6px 0 0">Review submitted requirements and view the department's needs.</p>
       <div class="kt-panel" style="margin:var(--space-4) 0">
         <div class="kt-meta-row">
@@ -107,7 +128,7 @@
           <div><span class="kt-label">Financial year</span><span class="kt-meta-value" style="font-size:14px">FY 2027/28</span></div>
         </div>
       </div>
-      <h6 class="kt-card-title">Needs requiring your decision</h6>
+      <h6 class="kt-card-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg><span>Needs requiring your decision</span></h6>
       <table class="table" style="margin-bottom:var(--space-2)">
         <thead><tr><th>Requirement</th><th>Submitted by</th><th>Quantity</th><th>Required by</th><th>Review</th><th></th></tr></thead>
         <tbody>
@@ -119,9 +140,9 @@
       </table>
       <div class="text-muted" style="font-size:13px;margin-bottom:var(--space-8)">1 need awaiting review</div>
 
-      <h6 class="kt-card-title">All departmental needs</h6>
+      <h6 class="kt-card-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18M3 12h18M3 19h18"/></svg><span>All departmental needs</span></h6>
       <div style="display:flex;gap:var(--space-3);margin:var(--space-4) 0">
-        <input class="input" placeholder="Search title or reference" style="flex:1" disabled="disabled">
+        <span class="ab-search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input class="input" placeholder="Search title or reference" disabled="disabled"></span>
         <select class="input" style="width:160px" disabled="disabled"><option>All statuses</option></select>
       </div>
       <table class="table">
@@ -143,13 +164,19 @@
       </table>
       <div class="text-muted" style="font-size:13px;margin-top:var(--space-3)">2 department needs</div>
     </div>
+        </div></div>
+      </div>
+    </div>
   </div>
 
   <!-- ============ DES-03 ============ -->
   <div id="des03" style="margin-bottom:56px">
     <div class="text-muted" style="font-size:13px;font-weight:700;margin-bottom:12px">NDS-DES-03 · Create a departmental need <span style="font-weight:400;opacity:.7">— Grace Wanjiku, 24 Nov 2026 10:05 EAT, new unsaved form</span></div>
-    <div class="kt-panel-lg" style="width:640px">
-      <h3 style="margin:0">Create a departmental need</h3>
+        <div class="artboard">
+      <div class="ab-main">
+        <div class="ab-body"><div style="max-width:880px">
+<div class="kt-panel-lg">
+      <h3 style="margin:0;display:flex;align-items:center;gap:10px"><span class="ab-tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 12v6M9 15h6"/></svg></span>Create a departmental need</h3>
       <p class="text-muted" style="font-size:13px;margin:6px 0 var(--space-4)">Describe one requirement for your department. Your Head of Department will review it for procurement planning.</p>
       <div style="display:flex;gap:var(--space-4);margin-bottom:var(--space-4)">
         <div class="field" style="flex:1"><label>Department</label>
@@ -157,8 +184,8 @@
         <div class="field" style="flex:1"><label>Financial year</label>
           <input class="input" value="FY 2027/28" disabled="disabled"></div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:var(--space-4)">
-        <div class="field"><label>Requirement title</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4) var(--space-6)">
+        <div class="field" style="grid-column:1/-1"><label>Requirement title</label>
           <input class="input" value="National digital health infrastructure upgrade" disabled="disabled">
           <div class="card-meta" style="margin-top:3px">Give the requirement a short, recognisable name.</div></div>
         <div class="field"><label>Description</label>
@@ -167,21 +194,24 @@
         <div class="field"><label>Expected result</label>
           <textarea class="input" rows="2" disabled="disabled">Priority health facilities can use secure and interoperable digital health services.</textarea>
           <div class="card-meta" style="margin-top:3px">What will the department be able to do when this need is met?</div></div>
-        <div style="display:flex;gap:var(--space-4)">
+        <div style="display:flex;gap:var(--space-4);grid-column:1/-1">
           <div class="field" style="flex:1"><label>Quantity</label><input class="input" value="1" disabled="disabled">
             <div class="card-meta" style="margin-top:3px">Enter the total quantity needed.</div></div>
           <div class="field" style="flex:1"><label>Unit</label><input class="input" value="Programme" disabled="disabled">
             <div class="card-meta" style="margin-top:3px">Select the unit that describes the quantity.</div></div>
+          <div class="field" style="flex:1"><label>Required by</label><input class="input" value="31 Aug 2027" disabled="disabled">
+            <div class="card-meta" style="margin-top:3px">When does the department need it?</div></div>
         </div>
-        <div class="field"><label>Required by</label><input class="input" value="31 Aug 2027" disabled="disabled">
-          <div class="card-meta" style="margin-top:3px">When does the department need it?</div></div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:var(--space-6);padding-top:var(--space-4);border-top:1px solid var(--color-divider)">
         <span class="btn btn-secondary">Cancel</span>
         <div style="display:flex;gap:var(--space-2)">
-          <span class="btn btn-secondary">Save draft</span>
-          <span class="btn btn-primary">Submit for review</span>
+          <span class="btn btn-secondary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>Save draft</span>
+          <span class="btn btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>Submit for review</span>
         </div>
+      </div>
+    </div>
+        </div></div>
       </div>
     </div>
   </div>
@@ -189,8 +219,11 @@
   <!-- ============ DES-04 ============ -->
   <div id="des04" style="margin-bottom:56px">
     <div class="text-muted" style="font-size:13px;font-weight:700;margin-bottom:12px">NDS-DES-04 · Returned correction <span style="font-weight:400;opacity:.7">— Grace, HRMD, NDS-MOH-2027-0003 Revision 2, 24 Nov 2026 14:15 EAT</span></div>
-    <div class="kt-panel-lg" style="width:640px">
-      <h4 style="margin:0">Clinical training laptops for digital health rollout</h4>
+        <div class="artboard">
+      <div class="ab-main">
+        <div class="ab-body"><div style="max-width:880px">
+<div class="kt-panel-lg">
+      <h4 style="margin:0;display:flex;align-items:center;gap:10px"><span class="ab-tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m11 17 4-4-1.5-1.5L9.5 15.5V17z"/></svg></span>Clinical training laptops for digital health rollout</h4>
       <div class="kt-label" style="margin:4px 0 8px">NDS-MOH-2027-0003</div>
       <div style="display:flex;gap:var(--space-3);align-items:center;margin-bottom:var(--space-4)">
         <span class="kt-status is-attention">Changes requested</span>
@@ -213,15 +246,15 @@
           <div><span class="kt-label">Financial year</span><span class="kt-meta-value" style="font-size:14px">FY 2027/28</span></div>
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:var(--space-4)">
-        <div class="field"><label>Requirement title</label><input class="input" value="Clinical training laptops for digital health rollout" disabled="disabled"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4) var(--space-6)">
+        <div class="field" style="grid-column:1/-1"><label>Requirement title</label><input class="input" value="Clinical training laptops for digital health rollout" disabled="disabled"></div>
         <div class="field"><label>Description</label><textarea class="input" rows="2" disabled="disabled">Laptop computers for clinical training during the national digital health rollout.</textarea></div>
         <div class="field"><label>Expected result</label><textarea class="input" rows="2" disabled="disabled">Provide the equipment required for staff training on the deployed digital health services.</textarea></div>
-        <div style="display:flex;gap:var(--space-4)">
+        <div style="display:flex;gap:var(--space-4);grid-column:1/-1">
           <div class="field" style="flex:1"><label>Quantity</label><input class="input" value="200" disabled="disabled"></div>
           <div class="field" style="flex:1"><label>Unit</label><input class="input" value="Each" disabled="disabled"></div>
+          <div class="field" style="flex:1"><label>Required by</label><input class="input" value="31 Dec 2027" disabled="disabled"></div>
         </div>
-        <div class="field"><label>Required by</label><input class="input" value="31 Dec 2027" disabled="disabled"></div>
       </div>
       <div class="kt-disclosure" style="margin-top:var(--space-4)">
         <div class="kt-disclosure-head">
@@ -242,11 +275,14 @@
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:var(--space-6);padding-top:var(--space-4);border-top:1px solid var(--color-divider)">
-        <span class="btn btn-danger">Withdraw need</span>
+        <span class="btn btn-danger"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Withdraw need</span>
         <div style="display:flex;gap:var(--space-2)">
-          <span class="btn btn-secondary">Save changes</span>
-          <span class="btn btn-primary">Resubmit for review</span>
+          <span class="btn btn-secondary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>Save changes</span>
+          <span class="btn btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>Resubmit for review</span>
         </div>
+      </div>
+    </div>
+        </div></div>
       </div>
     </div>
   </div>
@@ -254,8 +290,11 @@
   <!-- ============ DES-05 ============ -->
   <div id="des05" style="margin-bottom:56px">
     <div class="text-muted" style="font-size:13px;font-weight:700;margin-bottom:12px">NDS-DES-05 · Submitted detail <span style="font-weight:400;opacity:.7">— Grace, HRMD, Rev 1, submitted 24 Nov 2026 12:20 EAT</span></div>
-    <div class="kt-panel-lg" style="width:600px">
-      <h4 style="margin:0">Digital health workforce certification programme</h4>
+        <div class="artboard">
+      <div class="ab-main">
+        <div class="ab-body"><div style="max-width:880px">
+<div class="kt-panel-lg">
+      <h4 style="margin:0;display:flex;align-items:center;gap:10px"><span class="ab-tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8M8 17h5"/></svg></span>Digital health workforce certification programme</h4>
       <div class="kt-label" style="margin:4px 0 8px">NDS-MOH-2027-0002</div>
       <div style="display:flex;gap:var(--space-3);align-items:center;margin-bottom:var(--space-4)">
         <span class="text-muted" style="font-size:12px">Revision 1</span>
@@ -273,7 +312,7 @@
           <div><span class="kt-label">Submitted at</span><span class="kt-meta-value" style="font-size:14px">24 Nov 2026, 12:20 EAT</span></div>
         </div>
       </div>
-      <h6 class="kt-card-title">Requirement details</h6>
+      <h6 class="kt-card-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8M8 17h5"/></svg><span>Requirement details</span></h6>
       <div class="factstack" style="margin-top:var(--space-4);margin-bottom:var(--space-4)">
         <div class="factstack-text">
           <div><div class="kt-label">Description</div><div class="val">Professional certification programme for staff supporting national digital health services.</div></div>
@@ -300,13 +339,19 @@
         </div>
       </div>
     </div>
+        </div></div>
+      </div>
+    </div>
   </div>
 
   <!-- ============ DES-06 ============ -->
   <div id="des06" style="margin-bottom:56px">
     <div class="text-muted" style="font-size:13px;font-weight:700;margin-bottom:12px">NDS-DES-06 · Initial HoD review <span style="font-weight:400;opacity:.7">— Peter, HRMD, 24 Nov 2026 12:35 EAT</span></div>
-    <div class="kt-panel-lg" style="width:600px">
-      <h3 style="margin:0">Review departmental need</h3>
+        <div class="artboard">
+      <div class="ab-main">
+        <div class="ab-body"><div style="max-width:880px">
+<div class="kt-panel-lg">
+      <h3 style="margin:0;display:flex;align-items:center;gap:10px"><span class="ab-tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg></span>Review departmental need</h3>
       <div style="font-size:16px;font-weight:600;margin:var(--space-3) 0 2px">Digital health workforce certification programme</div>
       <div class="kt-label" style="margin-bottom:6px">NDS-MOH-2027-0002</div>
       <div class="text-muted" style="font-size:12px;margin-bottom:var(--space-4)">Revision 1</div>
@@ -318,7 +363,7 @@
           <div><span class="kt-label">Submitted at</span><span class="kt-meta-value" style="font-size:14px">24 Nov 2026, 12:20 EAT</span></div>
         </div>
       </div>
-      <h6 class="kt-card-title">Requirement details</h6>
+      <h6 class="kt-card-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8M8 17h5"/></svg><span>Requirement details</span></h6>
       <div class="factstack" style="margin-top:var(--space-4);margin-bottom:var(--space-6)">
         <div class="factstack-text">
           <div><div class="kt-label">Description</div><div class="val">Professional certification programme for staff supporting national digital health services.</div></div>
@@ -330,12 +375,15 @@
           <div><div class="kt-label">Required by</div><div class="val">31 Dec 2027</div></div>
         </div>
       </div>
-      <h6 class="kt-card-title">Your decision</h6>
+      <h6 class="kt-card-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 12.5-8 8a2.119 2.119 0 1 1-3-3l8-8"/><path d="m16 16 6-6"/><path d="m8 8 6-6"/><path d="m9 7 8 8"/><path d="m21 11-8-8"/></svg><span>Your decision</span></h6>
       <p class="text-muted" style="font-size:12px;margin:var(--space-3) 0 var(--space-4)">Accepting makes this requirement available for departmental procurement planning. It does not approve spending or start procurement.</p>
       <div style="display:flex;justify-content:flex-end;gap:var(--space-2);padding-top:var(--space-4);border-top:1px solid var(--color-divider)">
-        <span class="btn btn-secondary">Return for correction</span>
-        <span class="btn btn-secondary">Do not take forward</span>
-        <span class="btn btn-primary">Accept for planning</span>
+        <span class="btn btn-secondary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>Return for correction</span>
+        <span class="btn btn-secondary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>Do not take forward</span>
+        <span class="btn btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Accept for planning</span>
+      </div>
+    </div>
+        </div></div>
       </div>
     </div>
   </div>
@@ -343,10 +391,13 @@
   <!-- ============ DES-07 ============ -->
   <div id="des07" style="margin-bottom:20px">
     <div class="text-muted" style="font-size:13px;font-weight:700;margin-bottom:12px">NDS-DES-07 · Accepted requirement and Planning status <span style="font-weight:400;opacity:.7">— Grace, Digital Health, Rev 1, 5 Jan 2027 10:15 EAT</span></div>
-    <div class="kt-panel-lg" style="width:640px">
+        <div class="artboard">
+      <div class="ab-main">
+        <div class="ab-body"><div style="max-width:880px">
+<div class="kt-panel-lg">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
-          <h4 style="margin:0">National digital health infrastructure upgrade</h4>
+          <h4 style="margin:0;display:flex;align-items:center;gap:10px"><span class="ab-tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8M8 17h5"/></svg></span>National digital health infrastructure upgrade</h4>
           <div class="kt-label" style="margin:4px 0 8px">NDS-MOH-2027-0001</div>
           <div style="display:flex;gap:var(--space-3);align-items:center">
             <span class="kt-status is-live">Accepted for planning</span>
@@ -354,8 +405,8 @@
           </div>
         </div>
         <div style="display:flex;gap:var(--space-2)">
-          <span class="btn btn-secondary">Create update</span>
-          <span class="btn btn-secondary">Request withdrawal</span>
+          <span class="btn btn-secondary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m11 17 4-4-1.5-1.5L9.5 15.5V17z"/></svg>Create update</span>
+          <span class="btn btn-secondary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>Request withdrawal</span>
         </div>
       </div>
       <div class="kt-panel" style="margin:var(--space-4) 0">
@@ -366,13 +417,13 @@
           <div><span class="kt-label">Accepted at</span><span class="kt-meta-value" style="font-size:14px">24 Nov 2026, 14:00 EAT</span></div>
         </div>
       </div>
-      <h6 class="kt-card-title">Planning status</h6>
+      <h6 class="kt-card-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Planning status</span></h6>
       <div style="display:flex;gap:var(--space-8);margin-top:var(--space-4)">
         <div style="font-size:13px"><span class="kt-label" style="display:block">Departmental plan</span><span class="kt-status is-live">Included</span></div>
         <div style="font-size:13px"><span class="kt-label" style="display:block">Current annual plan</span><span class="kt-status is-live">Included</span></div>
       </div>
       <div class="card-meta" style="margin:var(--space-3) 0 var(--space-6)">These statuses do not confirm that the requirement has been purchased or delivered.</div>
-      <h6 class="kt-card-title">Requirement details</h6>
+      <h6 class="kt-card-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8M8 17h5"/></svg><span>Requirement details</span></h6>
       <div class="factstack" style="margin-top:var(--space-4);margin-bottom:var(--space-4)">
         <div class="factstack-text">
           <div><div class="kt-label">Description</div><div class="val">Procure and implement national digital health infrastructure across priority health facilities.</div></div>
@@ -411,6 +462,9 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+        </div></div>
       </div>
     </div>
   </div>
@@ -515,8 +569,11 @@
   <!-- ============ DES-08 ============ -->
   <div id="des08" style="margin-bottom:20px">
     <div class="text-muted" style="font-size:13px;font-weight:700;margin-bottom:12px">NDS-DES-08 · Propose changes to an accepted Need <span style="font-weight:400;opacity:.7">— Grace, Digital Health, accepted Rev 1 / Draft update Rev 2, 15 Dec 2026 09:10 EAT</span></div>
-    <div class="kt-panel-lg" style="width:640px">
-      <h3 style="margin:0">Update accepted need</h3>
+        <div class="artboard">
+      <div class="ab-main">
+        <div class="ab-body"><div style="max-width:880px">
+<div class="kt-panel-lg">
+      <h3 style="margin:0;display:flex;align-items:center;gap:10px"><span class="ab-tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m11 17 4-4-1.5-1.5L9.5 15.5V17z"/></svg></span>Update accepted need</h3>
       <div style="font-size:16px;font-weight:600;margin:var(--space-3) 0 2px">National digital health infrastructure upgrade</div>
       <div class="kt-label" style="margin-bottom:6px">NDS-MOH-2027-0001</div>
       <div style="display:flex;gap:var(--space-3);align-items:center;margin-bottom:var(--space-4)">
@@ -545,11 +602,14 @@
         <div class="field"><label>Required by</label><input class="input" value="15 Sep 2027" disabled="disabled"></div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:var(--space-6);padding-top:var(--space-4);border-top:1px solid var(--color-divider)">
-        <span class="btn btn-danger">Cancel update</span>
+        <span class="btn btn-danger"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>Cancel update</span>
         <div style="display:flex;gap:var(--space-2)">
-          <span class="btn btn-secondary">Save draft</span>
-          <span class="btn btn-primary">Submit update for review</span>
+          <span class="btn btn-secondary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>Save draft</span>
+          <span class="btn btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>Submit update for review</span>
         </div>
+      </div>
+    </div>
+        </div></div>
       </div>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:var(--space-4);margin-top:var(--space-4)">
@@ -576,8 +636,11 @@
   <!-- ============ DES-09 ============ -->
   <div id="des09" style="margin-bottom:56px">
     <div class="text-muted" style="font-size:13px;font-weight:700;margin-bottom:12px">NDS-DES-09 · HoD review of proposed changes <span style="font-weight:400;opacity:.7">— Peter, submitted by Grace 15 Dec 2026 09:45 EAT, review at 10:05</span></div>
-    <div class="kt-panel-lg" style="width:640px">
-      <h3 style="margin:0">Review proposed changes</h3>
+        <div class="artboard">
+      <div class="ab-main">
+        <div class="ab-body"><div style="max-width:880px">
+<div class="kt-panel-lg">
+      <h3 style="margin:0;display:flex;align-items:center;gap:10px"><span class="ab-tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></svg></span>Review proposed changes</h3>
       <div style="font-size:16px;font-weight:600;margin:var(--space-3) 0 2px">National digital health infrastructure upgrade</div>
       <div class="kt-label" style="margin-bottom:6px">NDS-MOH-2027-0001</div>
       <div style="display:flex;gap:var(--space-3);margin-bottom:var(--space-4)">
@@ -592,12 +655,12 @@
           <div><span class="kt-label">Submitted at</span><span class="kt-meta-value" style="font-size:14px">15 Dec 2026, 09:45 EAT</span></div>
         </div>
       </div>
-      <h6 class="kt-card-title">What changed</h6>
+      <h6 class="kt-card-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></svg><span>What changed</span></h6>
       <table class="table" style="margin:var(--space-4) 0 var(--space-6)">
         <thead><tr><th>Field</th><th>Previously accepted</th><th>Proposed</th></tr></thead>
         <tbody><tr><td>Required by</td><td>31 Aug 2027</td><td><strong>15 Sep 2027</strong></td></tr></tbody>
       </table>
-      <h6 class="kt-card-title">Requirement details</h6>
+      <h6 class="kt-card-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8M8 17h5"/></svg><span>Requirement details</span></h6>
       <div class="factstack" style="margin-top:var(--space-4);margin-bottom:var(--space-4)">
         <div class="factstack-text">
           <div><div class="kt-label">Description</div><div class="val">Procure and implement national digital health infrastructure across priority health facilities.</div></div>
@@ -609,13 +672,16 @@
           <div><div class="kt-label">Required by</div><div class="val">15 Sep 2027</div></div>
         </div>
       </div>
-      <h6 class="kt-card-title">Your decision</h6>
+      <h6 class="kt-card-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 12.5-8 8a2.119 2.119 0 1 1-3-3l8-8"/><path d="m16 16 6-6"/><path d="m8 8 6-6"/><path d="m9 7 8 8"/><path d="m21 11-8-8"/></svg><span>Your decision</span></h6>
       <p class="text-muted" style="font-size:12px;margin:var(--space-3) 0 4px">Accepting updates the requirement available to Planning. Existing departmental and annual plans do not change automatically.</p>
       <p class="text-muted" style="font-size:12px;margin:0 0 var(--space-4)">Declining the changes keeps the previously accepted requirement.</p>
       <div style="display:flex;justify-content:flex-end;gap:var(--space-2);padding-top:var(--space-4);border-top:1px solid var(--color-divider)">
-        <span class="btn btn-secondary">Return for correction</span>
-        <span class="btn btn-secondary">Decline proposed changes</span>
-        <span class="btn btn-primary">Accept proposed changes</span>
+        <span class="btn btn-secondary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>Return for correction</span>
+        <span class="btn btn-secondary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>Decline proposed changes</span>
+        <span class="btn btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Accept proposed changes</span>
+      </div>
+    </div>
+        </div></div>
       </div>
     </div>
   </div>
@@ -632,7 +698,7 @@
   <!-- ============ DES-11 ============ -->
   <div id="des11" style="margin-bottom:20px">
     <div class="text-muted" style="font-size:13px;font-weight:700;margin-bottom:12px">NDS-DES-11 · Request withdrawal <span style="font-weight:400;opacity:.7">— Grace, Rev 1, 5 Jan 2027 10:20 EAT — dialog over dimmed DES-07A-STILL-ACTIVE parent</span></div>
-    <div style="position:relative;width:900px;height:380px;background:var(--color-surface-2)">
+    <div style="position:relative;width:1440px;height:1024px;background:var(--color-surface-2);border:1px solid var(--color-neutral-300)">
       <div class="dialog-backdrop" style="position:absolute">
         <div class="dialog" style="width:520px">
           <div class="dialog-title">Request withdrawal</div>
@@ -643,7 +709,7 @@
             <textarea class="input" rows="3" disabled="disabled">The programme will not proceed in FY 2027/28 because implementation responsibility has moved outside the department.</textarea></div>
           <div class="dialog-actions">
             <span class="btn btn-secondary">Cancel</span>
-            <span class="btn btn-primary">Request withdrawal</span>
+            <span class="btn btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>Request withdrawal</span>
           </div>
         </div>
       </div>
@@ -665,12 +731,15 @@
   <!-- ============ DES-12 ============ -->
   <div id="des12" style="margin-bottom:20px">
     <div class="text-muted" style="font-size:13px;font-weight:700;margin-bottom:12px">NDS-DES-12 · Withdrawal review <span style="font-weight:400;opacity:.7">— Peter, DHI, NDS-WDR-MOH-2027-0001, 5 Jan 2027 10:30 EAT, still-Active primary profile</span></div>
-    <div class="kt-panel-lg" style="width:640px">
-      <h3 style="margin:0">Review withdrawal request</h3>
+        <div class="artboard">
+      <div class="ab-main">
+        <div class="ab-body"><div style="max-width:880px">
+<div class="kt-panel-lg">
+      <h3 style="margin:0;display:flex;align-items:center;gap:10px"><span class="ab-tile"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg></span>Review withdrawal request</h3>
       <div style="font-size:16px;font-weight:600;margin:var(--space-3) 0 2px">National digital health infrastructure upgrade</div>
       <div class="kt-label" style="margin-bottom:var(--space-3)">Need NDS-MOH-2027-0001 · Withdrawal request NDS-WDR-MOH-2027-0001 · Accepted revision 1</div>
       <span class="kt-status is-attention">Waiting for a Planning change</span>
-      <h6 class="kt-card-title" style="margin-top:var(--space-6)">Withdrawal request</h6>
+      <h6 class="kt-card-title" style="margin-top:var(--space-6)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg><span>Withdrawal request</span></h6>
       <div style="display:flex;gap:var(--space-6);font-size:13px;margin:var(--space-3) 0 var(--space-3)">
         <div><span class="kt-label" style="display:block">Requested by</span>Grace Wanjiku</div>
         <div><span class="kt-label" style="display:block">Requested at</span>5 Jan 2027, 10:20 EAT</div>
@@ -693,7 +762,7 @@
           <div><span class="kt-label">Financial year</span><span class="kt-meta-value" style="font-size:14px">FY 2027/28</span></div>
         </div>
       </div>
-      <h6 class="kt-card-title">Requirement details</h6>
+      <h6 class="kt-card-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h8M8 17h5"/></svg><span>Requirement details</span></h6>
       <div class="factstack" style="margin-top:var(--space-4);margin-bottom:var(--space-4)">
         <div class="factstack-text">
           <div><div class="kt-label">Description</div><div class="val">Procure and implement national digital health infrastructure across priority health facilities.</div></div>
@@ -706,8 +775,11 @@
         </div>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:var(--space-2);padding-top:var(--space-4);border-top:1px solid var(--color-divider)">
-        <span class="btn btn-secondary">Decline withdrawal</span>
+        <span class="btn btn-secondary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>Decline withdrawal</span>
         <span class="btn btn-secondary">Close</span>
+      </div>
+    </div>
+        </div></div>
       </div>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:var(--space-4);margin-top:var(--space-4)">
@@ -715,14 +787,14 @@
         <div class="card-kicker">CLEAR — no Active inclusion, any revision</div>
         <span class="kt-status is-pending">Awaiting review</span>
         <p class="card-body" style="font-size:12px;margin:var(--space-2) 0">This requirement is not included in the current annual plan.</p>
-        <div style="display:flex;gap:var(--space-2)"><span class="btn btn-secondary">Decline withdrawal</span><span class="btn btn-primary">Approve withdrawal</span></div>
+        <div style="display:flex;gap:var(--space-2)"><span class="btn btn-secondary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>Decline withdrawal</span><span class="btn btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Approve withdrawal</span></div>
       </div>
       <div class="card" style="width:300px">
         <div class="card-kicker">UNAVAILABLE — provider failure</div>
         <span class="kt-status is-pending">Awaiting review</span>
         <p class="card-body" style="font-size:12px;margin:var(--space-2) 0">Planning information could not be checked. Withdrawal cannot be approved until the check succeeds.</p>
         <a href="#" style="font-size:12px">Try again</a>
-        <div style="display:flex;gap:var(--space-2);margin-top:var(--space-2)"><span class="btn btn-secondary">Decline withdrawal</span><span class="btn btn-secondary">Close</span></div>
+        <div style="display:flex;gap:var(--space-2);margin-top:var(--space-2)"><span class="btn btn-secondary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>Decline withdrawal</span><span class="btn btn-secondary">Close</span></div>
       </div>
     </div>
   </div>
@@ -736,49 +808,49 @@
         <div class="card-kicker">RETURN-INITIAL · parent: 0003 Rev 1 review, Peter</div>
         <div class="dialog-title" style="font-size:16px">What needs to change?</div>
         <div class="field"><label>Correction required</label><textarea class="input" rows="2" disabled="disabled">Check how many staff need laptops and update the quantity.</textarea></div>
-        <div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary">Return for correction</span></div>
+        <div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>Return for correction</span></div>
       </div>
       <div class="card" style="width:300px">
         <div class="card-kicker">RETURN-UPDATE · parent: DES-09, 0001 Rev 2</div>
         <div class="dialog-title" style="font-size:16px">What needs to change?</div>
         <div class="field"><label>Correction required</label><textarea class="input" rows="2" disabled="disabled">Check the required-by date against the programme schedule.</textarea></div>
-        <div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary">Return for correction</span></div>
+        <div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>Return for correction</span></div>
       </div>
       <div class="card" style="width:300px">
         <div class="card-kicker">DECLINE-INITIAL · parent: DES-06, 0002 Rev 1</div>
         <div class="dialog-title" style="font-size:16px">Do not take forward</div>
         <div class="field"><label>Why are you declining this requirement?</label><textarea class="input" rows="2" disabled="disabled">The requirement is already covered by an existing enterprise service for FY 2027/28.</textarea></div>
-        <div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary">Do not take forward</span></div>
+        <div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>Do not take forward</span></div>
       </div>
       <div class="card" style="width:300px">
         <div class="card-kicker">DECLINE-UPDATE · parent: DES-09, 0001 Rev 2</div>
         <div class="dialog-title" style="font-size:16px">Decline proposed changes</div>
         <div class="field"><label>Why are you declining these changes?</label><textarea class="input" rows="2" disabled="disabled">The previously accepted delivery date is still required for the programme.</textarea></div>
-        <div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary">Decline proposed changes</span></div>
+        <div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>Decline proposed changes</span></div>
       </div>
       <div class="card" style="width:300px">
         <div class="card-kicker">DECLINE-WITHDRAWAL · parent: DES-12, 0001 Rev 1</div>
         <div class="dialog-title" style="font-size:16px">Decline withdrawal</div>
         <div class="field"><label>Reason</label><textarea class="input" rows="2" disabled="disabled">The requirement remains valid and must remain available for departmental procurement planning.</textarea></div>
-        <div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary">Decline withdrawal</span></div>
+        <div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>Decline withdrawal</span></div>
       </div>
       <div class="card" style="width:300px">
         <div class="card-kicker">WITHDRAW-DRAFT · parent: DES-04, 0003 correction Rev 2</div>
         <div class="dialog-title" style="font-size:16px">Withdraw this need?</div>
         <p class="card-body">This withdraws the unaccepted requirement. Earlier submissions and decisions remain in history.</p>
-        <div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary">Withdraw need</span></div>
+        <div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Withdraw need</span></div>
       </div>
       <div class="card" style="width:300px">
         <div class="card-kicker">CANCEL-UPDATE · parent: DES-08, 0001 proposed Rev 2</div>
         <div class="dialog-title" style="font-size:16px">Cancel these proposed changes?</div>
         <p class="card-body">The previously accepted requirement will remain in effect.</p>
-        <div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary">Cancel update</span></div>
+        <div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>Cancel update</span></div>
       </div>
       <div class="card" style="width:300px">
         <div class="card-kicker">APPROVE-WITHDRAWAL · parent: DES-12-CLEAR, 0001 Rev 1</div>
         <div class="dialog-title" style="font-size:16px">Approve withdrawal?</div>
         <p class="card-body">This withdraws the accepted requirement. Earlier decisions remain in history.</p>
-        <div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary">Approve withdrawal</span></div>
+        <div class="dialog-actions"><span class="btn btn-secondary">Cancel</span><span class="btn btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Approve withdrawal</span></div>
       </div>
     </div>
   </div>
@@ -932,7 +1004,7 @@
         <div class="card-meta">Financial year FY 2027/28 (read-only). Six fields keep their supplied values.</div>
         <div style="display:flex;justify-content:space-between;margin-top:var(--space-2)">
           <span class="btn btn-secondary">Cancel</span>
-          <div style="display:flex;gap:6px"><button class="btn btn-secondary" disabled="disabled">Save draft</button><button class="btn btn-primary" disabled="disabled">Submit for review</button></div>
+          <div style="display:flex;gap:6px"><button class="btn btn-secondary" disabled="disabled"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>Save draft</button><button class="btn btn-primary" disabled="disabled"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>Submit for review</button></div>
         </div>
       </div>
 
@@ -949,8 +1021,8 @@
         <div class="card-meta">Department Digital Health (read-only) · FY 2027/28 (read-only)</div>
         <p class="card-body" style="font-size:12px">Description: Laptop computers for deployment at priority facilities during the national digital health rollout. Expected result: Provide endpoint equipment required to use the deployed digital health services. Quantity 150 Each · Required by 31 Dec 2027.</p>
         <div style="display:flex;justify-content:space-between;margin-top:var(--space-2)">
-          <span class="btn btn-danger">Withdraw need</span>
-          <div style="display:flex;gap:6px"><span class="btn btn-secondary">Save changes</span><span class="btn btn-primary">Submit for review</span></div>
+          <span class="btn btn-danger"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Withdraw need</span>
+          <div style="display:flex;gap:6px"><span class="btn btn-secondary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></svg>Save changes</span><span class="btn btn-primary"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/></svg>Submit for review</span></div>
         </div>
       </div>
 

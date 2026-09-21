@@ -155,6 +155,23 @@ def _persist_context_preference(principal: str, organisation_unit: str) -> None:
 		frappe.clear_last_message()
 
 
+def _clear_context_preference(principal: str) -> None:
+	"""The mirror of `_persist_context_preference` — an explicit "All
+	departments" pick (the filter's own §12.1 reset) is itself a preference,
+	so it must overwrite whatever specific department was remembered before.
+	Without this, the very next load that sends no explicit department at all
+	would silently resolve back to the old one through the ordinary
+	remembered-preference path below, and the reset would look broken (found
+	live 21 Sep 2026 — the "All departments" option visibly snapped back to
+	the previous department)."""
+	from kentender_core.services.working_context import clear_module_ou
+
+	try:
+		clear_module_ou("needs", principal)
+	except Exception:
+		frappe.clear_last_message()
+
+
 def _selected_context(principal: str, organisation_unit: str) -> tuple[dict[str, str] | None, list[dict[str, str]]]:
 	# Viewing, not authoring: this resolver also serves NDS-UI-02, whose only
 	# audience is the Head of User Department — a role that never authors.
@@ -199,24 +216,39 @@ def get_workspace(
 	financial_year: str = "",
 	search: str = "",
 	status: str = "",
+	# The filter's own "All departments"/"All financial years" option and the
+	# "Clear filters" button send an explicit empty value — indistinguishable
+	# on its own from a request that simply never mentioned this filter, which
+	# resolves from the remembered preference below. These two flags are how
+	# the caller says "this blank means I chose it," so the choice sticks
+	# instead of silently resolving back to whatever was remembered (found
+	# live 21 Sep 2026 — the "All departments" option visibly snapped back).
+	clear_organisation_unit: bool = False,
+	clear_financial_year: bool = False,
 	user: str | None = None,
 ) -> dict[str, Any]:
 	principal = actor(user)
+	if clear_organisation_unit:
+		_clear_context_preference(principal)
+	# §12.1 — "Do not require... a pre-entry selection screen... One department
+	# may display directly. Several remain available through ordinary
+	# changeable filters; they do not block page entry." `selected` is `None`
+	# whenever several contexts exist and none is remembered/explicit — that
+	# is a normal "browse everything" state below, never a blocking outcome.
+	# Zero contexts is the only real access denial.
 	selected, contexts = _selected_context(principal, cstr(organisation_unit).strip())
-	if not selected:
-		result = {
+	if not contexts:
+		return {
 			"ok": False,
-			"outcome": "NO_AUTHORISED_CONTEXT" if not contexts else "CONTEXT_SELECTION_REQUIRED",
-			"contexts": contexts,
+			"outcome": "NO_AUTHORISED_CONTEXT",
+			"contexts": [],
 			"financial_years": selectable_financial_years(principal),
 			"needs": [],
 			"actions": [],
-		}
-		if not contexts:
 			# Not rendered — see `scope_diagnostic`'s own docstring for why this
 			# stays internal rather than becoming a new visible page state.
-			result["scope_diagnostic"] = scope_diagnostic(principal)
-		return result
+			"scope_diagnostic": scope_diagnostic(principal),
+		}
 	_fy_rows = selectable_financial_years(principal)
 	# CTX-CHG-001 — the module's own FY memory, resolved by the core service:
 	# an explicit year is validated against this module's offer and persisted
@@ -224,6 +256,14 @@ def get_workspace(
 	# "unselected"; a single offered year auto-selects. Never authoritative —
 	# every command still re-checks its own scope and the intake window.
 	from kentender_core.services.working_context import get_module_fy
+
+	if clear_financial_year:
+		from kentender_core.services.working_context import clear_module_fy
+
+		try:
+			clear_module_fy("needs", principal)
+		except Exception:
+			frappe.clear_last_message()
 
 	requested_fy = cstr(financial_year).strip()
 	try:
@@ -233,7 +273,16 @@ def get_workspace(
 		frappe.clear_last_message()
 		fy_state = get_module_fy("needs", principal, offered=_fy_rows)
 	fy = fy_state["selected"]["id"] if fy_state["selected"] else ""
-	filters: dict[str, Any] = {"organisation_unit": selected["organisation_unit"]}
+	# A single resolved context filters to it; several with none chosen loads
+	# every authorised one combined (§12.1) — exactly how the Fiscal Year
+	# filter already behaves above when nothing is selected.
+	filters: dict[str, Any] = {
+		"organisation_unit": (
+			selected["organisation_unit"]
+			if selected
+			else ("in", [row["organisation_unit"] for row in contexts])
+		)
+	}
 	if fy:
 		filters["financial_year"] = fy
 	if cstr(status).strip():
@@ -292,26 +341,22 @@ def get_workspace(
 		"contexts": contexts,
 		"financial_years": _fy_rows,
 		"context": {
-			**selected,
+			"organisation_unit": selected["organisation_unit"] if selected else "",
+			"organisation_unit_label": selected["organisation_unit_label"] if selected else "",
 			"financial_year": fy,
 			"financial_year_label": next(
 				(row["label"] for row in _fy_rows if row["id"] == fy), fy
 			),
 		},
 		"needs": needs,
-		# §12.1 / §17 — the server decides the action. A reviewer, Planner or
-		# Auditor reaches this contract too (it backs NDS-UI-02 as well), and
-		# none of them authors, so Create need is offered only where the user
-		# could actually create in this context. The client's separate
-		# intake-window check narrows it further; it cannot stand alone,
-		# because intake is Open for part of every year.
+		# §12.1 — "Derive create targets by combining active Departmental
+		# Author OU assignments with the one... Fiscal Year... Do not use...
+		# the list's current FY filter or a browser-stored context": Create
+		# need is offered whenever the actor can author *anywhere*, entirely
+		# independent of which department the register is currently viewing
+		# or filtered to.
 		"actions": (
-			[{"code": "create", "label": "Create need"}]
-			if any(
-				row["organisation_unit"] == selected["organisation_unit"]
-				for row in creation_contexts(principal)
-			)
-			else []
+			[{"code": "create", "label": "Create need"}] if creation_contexts(principal) else []
 		),
 	}
 

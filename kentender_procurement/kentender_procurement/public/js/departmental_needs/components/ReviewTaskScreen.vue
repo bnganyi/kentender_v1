@@ -2,8 +2,33 @@
      review of proposed changes. Renders the exact immutable submitted
      revision identified by the task, then the decision area. -->
 <template>
-	<div class="kt-panel-lg" style="max-width: 700px">
-		<h3 style="margin: 0">{{ heading }}</h3>
+	<div class="kt-panel-lg" style="max-width: 880px">
+		<h3 style="margin: 0; display: flex; align-items: center; gap: 10px">
+			<span class="kt-icon-tile">
+				<svg
+					v-if="isSuccessor"
+					width="18"
+					height="18"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				><circle cx="18" cy="18" r="3" /><circle cx="6" cy="6" r="3" /><path d="M13 6h3a2 2 0 0 1 2 2v7" /><path d="M11 18H8a2 2 0 0 1-2-2V9" /></svg>
+				<svg
+					v-else
+					width="18"
+					height="18"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				><rect width="8" height="4" x="8" y="2" rx="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="m9 14 2 2 4-4" /></svg>
+			</span>{{ heading }}
+		</h3>
 		<div style="font-size: 16px; font-weight: 600; margin: var(--kt-space-3) 0 2px">{{ revision.title }}</div>
 		<div class="kt-label" style="margin-bottom: 6px">{{ need.need_reference }}</div>
 		<div style="display: flex; gap: var(--kt-space-3); margin-bottom: var(--kt-space-4)">
@@ -28,7 +53,10 @@
 
 		<!-- NDS-DES-09 — the changed field(s) lead, before the full proposal. -->
 		<template v-if="isSuccessor && changedFields.length">
-			<h6 class="kt-card-title">What changed</h6>
+			<h6 class="kt-card-title nds-section-title">
+				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3" /><circle cx="6" cy="6" r="3" /><path d="M13 6h3a2 2 0 0 1 2 2v7" /><path d="M11 18H8a2 2 0 0 1-2-2V9" /></svg
+				><span>What changed</span>
+			</h6>
 			<table class="kt-table" style="margin: var(--kt-space-4) 0 var(--kt-space-6)">
 				<thead><tr><th>Field</th><th>Previously accepted</th><th>Proposed</th></tr></thead>
 				<tbody>
@@ -43,7 +71,10 @@
 
 		<RequirementCard :revision="revision" />
 
-		<h6 class="kt-card-title">Your decision</h6>
+		<h6 class="kt-card-title nds-section-title">
+			<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 12.5-8 8a2.119 2.119 0 1 1-3-3l8-8" /><path d="m16 16 6-6" /><path d="m8 8 6-6" /><path d="m9 7 8 8" /><path d="m21 11-8-8" /></svg
+			><span>Your decision</span>
+		</h6>
 		<p v-if="isSuccessor" class="text-muted" style="font-size: 12px; margin: var(--kt-space-3) 0 4px">
 			Accepting updates the requirement available to Planning. Existing departmental and
 			annual plans do not change automatically.
@@ -65,13 +96,16 @@
 			style="display: flex; justify-content: flex-end; gap: var(--kt-space-2); padding-top: var(--kt-space-4); border-top: 1px solid var(--kt-color-divider)"
 		>
 			<button class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="nds-decision-return" @click="$emit('return')">
-				Return for correction
+				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6" /><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" /></svg
+				>Return for correction
 			</button>
 			<button class="kt-btn kt-btn-secondary kt-danger" :disabled="pending" data-testid="nds-decision-decline" @click="$emit('decline')">
-				{{ declineLabel }}
+				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg
+				>{{ declineLabel }}
 			</button>
 			<button class="kt-btn kt-btn-primary" :disabled="pending" data-testid="nds-decision-accept" @click="$emit('accept')">
-				{{ acceptLabel }}
+				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg
+				>{{ acceptLabel }}
 			</button>
 		</div>
 	</div>

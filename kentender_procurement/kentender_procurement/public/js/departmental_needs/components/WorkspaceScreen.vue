@@ -55,10 +55,14 @@
 		</div>
 
 		<template v-else>
-			<div class="kt-panel-lg">
+			<div class="kt-panel-lg" style="max-width: 1100px">
 				<div style="display: flex; justify-content: space-between; align-items: flex-start">
 					<div>
-						<h3 style="margin: 0">Departmental Needs</h3>
+						<h3 style="margin: 0; display: flex; align-items: center; gap: 10px">
+							<span class="kt-icon-tile"
+								><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18M3 12h18M3 19h18" /></svg
+							></span>Departmental Needs
+						</h3>
 						<p class="text-muted" style="font-size: 13px; margin: 6px 0 0">{{ lede }}</p>
 					</div>
 					<button
@@ -67,7 +71,7 @@
 						data-testid="nds-create-need"
 						@click="$emit('create')"
 					>
-						Create need
+						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14" /></svg>Create need
 					</button>
 				</div>
 
@@ -78,14 +82,18 @@
 					<div class="kt-meta-row">
 						<div>
 							<span class="kt-label">Department</span>
+							<!-- §12.1 — several departments combined (nothing resolved
+							     to one) is a normal state, not an error; name it the
+							     same way the filter option below already does rather
+							     than leaving the fact blank. -->
 							<span class="kt-meta-value" style="font-size: 14px" data-testid="nds-department-fact">{{
-								context.organisation_unit_label || context.organisation_unit || ""
+								context.organisation_unit_label || context.organisation_unit || "All departments"
 							}}</span>
 						</div>
 						<div>
 							<span class="kt-label">Financial year</span>
 							<span class="kt-meta-value" style="font-size: 14px">{{
-								context.financial_year_label || context.financial_year || ""
+								context.financial_year_label || context.financial_year || "All financial years"
 							}}</span>
 						</div>
 						<div v-if="canCreate">
@@ -133,14 +141,15 @@
 						align-items: center;
 					"
 				>
-					<input
-						class="kt-input"
-						style="flex: 1"
-						placeholder="Search title or reference"
-						data-testid="nds-search"
-						:value="search"
-						@input="$emit('update:search', $event.target.value)"
-					/>
+					<span class="nds-search-field"
+						><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg
+						><input
+							class="kt-input"
+							placeholder="Search title or reference"
+							data-testid="nds-search"
+							:value="search"
+							@input="$emit('update:search', $event.target.value)"
+					/></span>
 					<select
 						class="kt-input"
 						style="width: 160px"
@@ -170,6 +179,11 @@
 						:value="context.organisation_unit || ''"
 						@change="$emit('select-context', $event.target.value)"
 					>
+						<!-- §12.1 — several departments "remain available through
+						     ordinary changeable filters; they do not block page
+						     entry," and clearing this filter is the visible reset
+						     back to every authorised department combined. -->
+						<option value="">All departments</option>
 						<option
 							v-for="row in contexts"
 							:key="row.organisation_unit"
@@ -190,7 +204,10 @@
 				<!-- NDS-DES-02 first content section — a decision queue only when
 				     one exists; never a separate menu entry or role switch. -->
 				<template v-if="decisionQueue.length">
-					<h6 class="kt-card-title">Needs requiring your decision</h6>
+					<h6 class="kt-card-title nds-section-title">
+						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="m9 14 2 2 4-4" /></svg
+						><span>Needs requiring your decision</span>
+					</h6>
 					<NeedsTable
 						:needs="decisionQueue"
 						:columns="decisionColumns"
@@ -200,7 +217,10 @@
 					<div class="text-muted" style="font-size: 13px; margin-bottom: var(--kt-space-8)">
 						{{ decisionQueue.length === 1 ? "1 need awaiting review" : `${decisionQueue.length} needs awaiting review` }}
 					</div>
-					<h6 class="kt-card-title">All departmental needs</h6>
+					<h6 class="kt-card-title nds-section-title">
+						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18M3 12h18M3 19h18" /></svg
+						><span>All departmental needs</span>
+					</h6>
 				</template>
 
 				<!-- NDS-DES-14 EMPTY-AUTHOR / EMPTY-READER / FILTERED-EMPTY -->

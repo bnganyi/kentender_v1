@@ -11,23 +11,13 @@
 		<div
 			class="kt-shell"
 			data-testid="nds-shell"
-			:data-screen="selectionRequired ? 'context-selection' : screen"
+			:data-screen="screen"
 			:data-loading="loading ? 'true' : 'false'"
 			:data-refreshing="refreshing ? 'true' : 'false'"
 			:data-reference="needReference || ''"
 		>
-			<ContextPicker
-				v-if="selectionRequired"
-				:contexts="workspace.contexts || []"
-				:financial-years="financialYears"
-				:context-key="contextKey"
-				:financial-year="financialYear"
-				@select-context="onSelectContext"
-				@select-financial-year="onSelectFinancialYear"
-			/>
-
 			<WorkspaceScreen
-				v-else-if="screen === 'workspace'"
+				v-if="screen === 'workspace'"
 				:loading="loading"
 				:error="error"
 				:outcome="workspace.outcome"
@@ -180,7 +170,6 @@ import { usePageRail } from "../nds_shared/composables/usePageRail.js";
 import * as api from "./data/needsApi.js";
 import { quantityWithUnit } from "./data/format.js";
 import ConfirmDialog from "./components/ConfirmDialog.vue";
-import ContextPicker from "./components/ContextPicker.vue";
 import NeedDetailScreen from "./components/NeedDetailScreen.vue";
 import NeedEditorScreen from "./components/NeedEditorScreen.vue";
 import ReasonDialog from "./components/ReasonDialog.vue";
@@ -244,28 +233,29 @@ const selectedDepartment = ref("");
 const contextKey = ref("");
 const financialYear = ref("");
 
-// NDS-CHG-001 v1.13 §11.2 — the Financial year control is an optional filter
-// ("All financial years" is a valid default), not a mandatory pre-selection:
-// `get_workspace` already lists across every year when none is selected
-// (AUTH-ADR-001 v1.7 §16.3 step 9 — never trapped by a remembered year). The
-// full-screen picker is reserved for the one case the server cannot resolve
-// on its own: no remembered Organisation Unit and more than one eligible.
-const selectionRequired = computed(
-	() =>
-		!loading.value &&
-		!error.value &&
-		screen.value === "workspace" &&
-		workspace.value.outcome === "CONTEXT_SELECTION_REQUIRED"
-);
-
+// NDS-CHG-001 v1.13 §12.1 — "Do not require... a pre-entry selection
+// screen... Several [departments] remain available through ordinary
+// changeable filters; they do not block page entry." Both Department and
+// Financial year are optional local filters with the same shape: `""` means
+// "every authorised value combined," never "nothing chosen yet, please
+// choose." `get_workspace` returns that combined view directly — there is no
+// separate blocking outcome to react to here any more (there was, briefly:
+// `CONTEXT_SELECTION_REQUIRED` plus a full-screen ContextPicker, which
+// contradicted this exact spec line — retired 21 Sep 2026).
+// An empty `value` is the "All departments"/"All financial years" option —
+// a deliberate reset, not an unset field — so it must tell the server this
+// blank is explicit (`clearOrganisationUnit`/`clearFinancialYear`) or the
+// resolver cannot tell it apart from "nothing sent yet" and quietly falls
+// back to the remembered department/year instead (found live 21 Sep 2026:
+// the option visibly snapped back to the old department).
 function onSelectContext(value) {
 	contextKey.value = value;
-	load({ quiet: true });
+	load({ quiet: true, clearOrganisationUnit: !value });
 }
 
 function onSelectFinancialYear(value) {
 	financialYear.value = value;
-	load({ quiet: true });
+	load({ quiet: true, clearFinancialYear: !value });
 }
 
 // --- routing ---------------------------------------------------------------
@@ -384,6 +374,17 @@ const requesterLabel = computed(
 // away mid-flight) can never overwrite the newer response's state.
 let loadSeq = 0;
 let inFlightKey = "";
+// A quiet reload requested while another is already in flight for the same
+// screen used to be dropped outright with nothing to replace it: the
+// in-flight request already carries a stale filter snapshot by definition, so
+// letting its own response be the last word could strand the table on it
+// forever (found live 21 Sep 2026 — two filter changes shortly after one
+// another, e.g. a status pick followed at once by Clear filters, could leave
+// the register showing the first change's now-irrelevant result with no
+// further request ever firing). This coalesces every dropped attempt into
+// one trailing follow-up once the in-flight request finishes, carrying
+// forward any one-shot clear intent so it is never lost.
+let pendingQuietOpts = null;
 
 const screenKey = computed(() => {
 	if (screen.value === "task" || screen.value === "withdrawal") return `task:${taskId.value}`;
@@ -391,7 +392,7 @@ const screenKey = computed(() => {
 	return "workspace";
 });
 
-async function fetchFor(scr) {
+async function fetchFor(scr, opts) {
 	if (scr === "task" || scr === "withdrawal") {
 		const loadedTask = await api.getDepartmentalReviewTask(taskId.value);
 		let loadedDependency = null;
@@ -421,6 +422,8 @@ async function fetchFor(scr) {
 			financial_year: financialYear.value,
 			search: search.value,
 			status: status.value,
+			clear_organisation_unit: !!(opts && opts.clearOrganisationUnit),
+			clear_financial_year: !!(opts && opts.clearFinancialYear),
 		}),
 	};
 }
@@ -446,13 +449,15 @@ function applyLoaded(loaded) {
 	}
 	workspace.value = loaded.workspace;
 	financialYears.value = workspace.value.financial_years || [];
-	// One eligible context loads directly (§12.1).
-	const resolved = workspace.value.context;
-	if (resolved && resolved.organisation_unit) {
-		// Mirror the server's resolution; the server is the memory.
-		contextKey.value = resolved.organisation_unit;
-		if (resolved.financial_year) financialYear.value = resolved.financial_year;
-	}
+	// The server is the memory: mirror its resolution exactly, including back
+	// to "" (every authorised department/year combined) — this used to only
+	// ever move to a truthy value and never back, so a resolution that
+	// legitimately lands on "combined" (e.g. an authorisation change
+	// invalidating what was selected) left the filters showing the old pick
+	// after the rows underneath had already gone combined.
+	const resolved = workspace.value.context || {};
+	contextKey.value = resolved.organisation_unit || "";
+	financialYear.value = resolved.financial_year || "";
 }
 
 // The skeleton shows only for a screen with nothing to show yet. A screen
@@ -465,7 +470,18 @@ async function load(opts) {
 	const cached = cache.get(key);
 	if (opts && opts.entering && cached) applyLoaded(cached);
 	const quiet = !!(opts && opts.quiet === true) || !!cached;
-	if (quiet && inFlightKey === key) return;
+	if (quiet && inFlightKey === key) {
+		pendingQuietOpts = {
+			quiet: true,
+			clearOrganisationUnit:
+				!!(pendingQuietOpts && pendingQuietOpts.clearOrganisationUnit) ||
+				!!(opts && opts.clearOrganisationUnit),
+			clearFinancialYear:
+				!!(pendingQuietOpts && pendingQuietOpts.clearFinancialYear) ||
+				!!(opts && opts.clearFinancialYear),
+		};
+		return;
+	}
 	const seq = ++loadSeq;
 	inFlightKey = key;
 	if (quiet) refreshing.value = true;
@@ -473,7 +489,7 @@ async function load(opts) {
 	error.value = "";
 	errorSummary.value = "";
 	try {
-		const loaded = await fetchFor(scr);
+		const loaded = await fetchFor(scr, opts);
 		if (seq !== loadSeq) return;
 		cache.set(key, loaded);
 		applyLoaded(loaded);
@@ -498,6 +514,11 @@ async function load(opts) {
 			loading.value = false;
 			refreshing.value = false;
 			inFlightKey = "";
+			if (pendingQuietOpts) {
+				const next = pendingQuietOpts;
+				pendingQuietOpts = null;
+				load(next);
+			}
 		}
 	}
 }
@@ -950,5 +971,8 @@ async function withdrawDraft() {
 function clearFilters() {
 	search.value = "";
 	status.value = "";
+	contextKey.value = "";
+	financialYear.value = "";
+	load({ quiet: true, clearOrganisationUnit: true, clearFinancialYear: true });
 }
 </script>
