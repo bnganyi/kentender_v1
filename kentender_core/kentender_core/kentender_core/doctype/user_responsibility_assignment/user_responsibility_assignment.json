@@ -32,8 +32,7 @@
    "label": "User",
    "options": "User",
    "reqd": 1,
-   "search_index": 1,
-   "set_only_once": 1
+   "search_index": 1
   },
   {
    "description": "A responsibility registered in kentender_core.services.business_role_registry.",
@@ -43,8 +42,7 @@
    "in_standard_filter": 1,
    "label": "Business Responsibility",
    "reqd": 1,
-   "search_index": 1,
-   "set_only_once": 1
+   "search_index": 1
   },
   {
    "fieldname": "organisation_unit",
@@ -52,8 +50,7 @@
    "in_list_view": 1,
    "label": "Organisation Unit",
    "options": "Organisation Unit",
-   "search_index": 1,
-   "set_only_once": 1
+   "search_index": 1
   },
   {
    "fieldname": "column_break_ura_scope",

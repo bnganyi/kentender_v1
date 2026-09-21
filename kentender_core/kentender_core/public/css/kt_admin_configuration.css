@@ -627,6 +627,11 @@
 .kt-industry .kt-history-card .kt-table {
 	margin-top: 6px;
 }
+.kt-industry .kt-history-detail {
+	font-size: 12px;
+	color: var(--kt-color-neutral-700);
+	margin-top: 2px;
+}
 /* CFG-DES-01/AUTH-DES-06 — the page-bottom action bar. Sticky inside the
    scrolling Desk page so it reads as the artboards' pinned bar. */
 .kt-industry .kt-action-bar {

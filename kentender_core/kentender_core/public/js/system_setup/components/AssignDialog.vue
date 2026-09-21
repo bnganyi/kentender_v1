@@ -22,21 +22,43 @@ const props = defineProps({
 	organisationUnits: { type: Array, required: true },
 	busy: { type: Boolean, default: false },
 	error: { type: String, default: "" },
+	// The scheduled assignment being changed (the detail projection), or
+	// null to assign a new one. Owner decision 21 Sep 2026: an assignment
+	// that has not started yet may be changed in any field, through this
+	// same dialog; the server refuses once it is in force.
+	editing: { type: Object, default: null },
 });
 const emit = defineEmits(["submit", "cancel"]);
 
-const form = ref({
-	user: "",
-	business_role: "",
-	organisation_unit: "",
-	appointment_type: "Permanent",
-	effective_from: "",
-	effective_to: "",
-	authority_reference: "",
-});
+const isEdit = computed(() => !!props.editing);
+// The inputs are date-only; a stored instant arrives as "2026-12-01 00:00:00".
+function dateOnly(value) {
+	return value ? String(value).slice(0, 10) : "";
+}
+const form = ref(
+	props.editing
+		? {
+				user: props.editing.user,
+				business_role: props.editing.business_role,
+				organisation_unit: props.editing.organisation_unit || "",
+				appointment_type: props.editing.appointment_type || "Permanent",
+				effective_from: dateOnly(props.editing.effective_from),
+				effective_to: dateOnly(props.editing.effective_to),
+				authority_reference: props.editing.authority_reference || "",
+			}
+		: {
+				user: "",
+				business_role: "",
+				organisation_unit: "",
+				appointment_type: "Permanent",
+				effective_from: "",
+				effective_to: "",
+				authority_reference: "",
+			}
+);
 const userQuery = ref("");
 const userMatches = ref([]);
-const userLabel = ref("");
+const userLabel = ref(props.editing ? props.editing.user_full_name || props.editing.user : "");
 const roleOpen = ref(false);
 const ouOpen = ref(false);
 const preview = ref(null);
@@ -55,6 +77,7 @@ const selectedUnit = computed(() =>
 onMounted(async () => {
 	await nextTick();
 	firstField.value?.focus();
+	if (isEdit.value) refreshPreview();
 	userMatches.value = await responsibilityApi.searchUsers("");
 });
 
@@ -106,7 +129,11 @@ async function refreshPreview() {
 	const token = ++previewToken;
 	previewing.value = true;
 	try {
-		const result = await responsibilityApi.preview({ ...form.value });
+		const result = await responsibilityApi.preview({
+			...form.value,
+			// The record being changed is left out of the overlap checks.
+			...(props.editing ? { assignment: props.editing.assignment } : {}),
+		});
 		if (token === previewToken) preview.value = result;
 	} catch (e) {
 		if (token === previewToken) preview.value = { ok: false, problems: [], conflict: null, summary: "" };
@@ -147,14 +174,21 @@ const blockedReason = computed(() => {
 			class="kt-dialog kt-blueprint kt-assign"
 			role="dialog"
 			aria-modal="true"
-			:aria-label="__('Assign responsibility')"
+			:aria-label="isEdit ? __('Edit scheduled assignment') : __('Assign responsibility')"
 			data-testid="kt-ura-assign"
 			@keydown.esc="onEscape"
 		>
 			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-			<h2 class="kt-dialog-title">{{ __("Assign responsibility") }}</h2>
+			<h2 class="kt-dialog-title">{{ isEdit ? __("Edit scheduled assignment") : __("Assign responsibility") }}</h2>
 
 			<div class="kt-assign-body">
+				<div v-if="isEdit" class="kt-notice is-info" data-testid="kt-ura-edit-notice">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9" /><path d="M12 8h.01M11 12h1v5h1" /></svg>
+					<div class="kt-notice-body">
+						{{ __("This assignment has not started yet, so any of its details can still be changed. Clear Effective from to bring it into force now.") }}
+					</div>
+				</div>
+
 				<!-- 1 User — AUTH-DES-04's stacked name and login -->
 				<div class="kt-field">
 					<label for="kt-assign-user">{{ __("User") }}</label>
@@ -373,7 +407,7 @@ const blockedReason = computed(() => {
 					:disabled="!canSubmit"
 					data-testid="kt-ura-assign-confirm"
 					@click="emit('submit', { ...form })"
-				>{{ __("Assign responsibility") }}</button>
+				>{{ isEdit ? __("Save changes") : __("Assign responsibility") }}</button>
 			</div>
 		</div>
 	</div>

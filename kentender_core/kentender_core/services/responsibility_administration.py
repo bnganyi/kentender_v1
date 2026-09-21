@@ -26,6 +26,7 @@ from frappe.utils import format_datetime, get_datetime, now_datetime
 
 from kentender_core.utils.display import display_date, display_datetime
 
+from kentender_core.services.audit_event_service import log_audit_event
 from kentender_core.services.authorization import (
 	APPOINTMENT_ACTING,
 	APPOINTMENT_PERMANENT,
@@ -203,6 +204,146 @@ def revoke(
 	return {"assignment": doc.name, "revoked": True}
 
 
+# Owner decision 21 Sep 2026: an assignment that is not yet in force may be
+# changed in any attribute. Nothing has been decided under it, so there is no
+# historical authority to protect; once it is Active (or Expired, or Revoked)
+# §14.4 stands — revoke and replace. Every field the assign dialog offers.
+EDITABLE_FIELDS: tuple[tuple[str, str], ...] = (
+	("user", "User"),
+	("business_role", "Responsibility"),
+	("organisation_unit", "Organisation Unit"),
+	("appointment_type", "Appointment"),
+	("authority_reference", "Authority reference"),
+	("effective_from", "Effective from"),
+	("effective_to", "Effective to"),
+)
+UPDATE_ACTION = "update_scheduled"
+UPDATE_EVENT_TYPE = "responsibility_administration"
+
+
+def update_scheduled(
+	assignment: str,
+	*,
+	user: str,
+	business_role: str,
+	organisation_unit: str = "",
+	appointment_type: str = APPOINTMENT_PERMANENT,
+	authority_reference: str = "",
+	effective_from: str | None = None,
+	effective_to: str | None = None,
+	expected_version: str = "",
+	actor: str | None = None,
+) -> dict[str, Any]:
+	"""Change an assignment that has not started yet.
+
+	Re-validated exactly as a new grant would be — registry scope, dates,
+	overlap and exclusive office — but with the record itself excluded from
+	the overlap checks, so moving its own dates never conflicts with itself.
+	The change is recorded as an append-only history event with the before
+	and after of every field that moved, and the Role projection is
+	re-synchronised for the previous and (if changed) the new holder.
+	Returns ``changed: False`` and writes nothing when no value differs.
+	"""
+	doc = frappe.get_doc(ASSIGNMENT_DOCTYPE, assignment, for_update=True)
+	principal = require_assignment_administrator(doc.business_role, actor)
+	if business_role != doc.business_role:
+		require_assignment_administrator(business_role, actor)
+	if expected_version and str(doc.modified) != str(expected_version):
+		fail("AUTH_STATE_CHANGED", "This assignment changed. Reload and try again.")
+	if derived_status(doc.as_dict()) != DERIVED_SCHEDULED:
+		fail(
+			"AUTH_STATE_CHANGED",
+			"This assignment has already started, so it can no longer be changed. "
+			"Revoke it and assign a replacement instead.",
+		)
+
+	entry = require_registered(business_role)
+	_require_enabled_user(user)
+	if not entry.requires_organisation_unit:
+		organisation_unit = ""
+	effective_from = effective_from or None
+	effective_to = effective_to or None
+	authority_reference = (authority_reference or "").strip()
+
+	preview = preview_assignment(
+		user=user,
+		business_role=business_role,
+		organisation_unit=organisation_unit,
+		appointment_type=appointment_type,
+		effective_from=effective_from,
+		effective_to=effective_to,
+		authority_reference=authority_reference,
+		assignment=doc.name,
+	)
+	if preview["problems"]:
+		fail("AUTH_CONFIGURATION_INVALID", preview["problems"][0]["message"])
+	conflict = preview["conflict"]
+	if conflict:
+		fail(
+			"AUTH_EXCLUSIVE_OFFICE_CONFLICT"
+			if conflict["kind"] == "exclusive_office"
+			else "AUTH_CONFIGURATION_INVALID",
+			conflict["message"],
+		)
+
+	after = {
+		"user": user,
+		"business_role": business_role,
+		"organisation_unit": organisation_unit or None,
+		"appointment_type": appointment_type,
+		"authority_reference": authority_reference,
+		"effective_from": effective_from,
+		"effective_to": effective_to,
+	}
+	changes = [
+		{
+			"field": field,
+			"label": label,
+			"before": _change_display(field, doc.get(field)),
+			"after": _change_display(field, after[field]),
+		}
+		for field, label in EDITABLE_FIELDS
+		if _change_key(field, doc.get(field)) != _change_key(field, after[field])
+	]
+	if not changes:
+		return {"assignment": doc.name, "changed": False, "changes": []}
+
+	previous_user = doc.user
+	doc.update(after)
+	doc.save(ignore_permissions=True)
+	log_audit_event(
+		event_type=UPDATE_EVENT_TYPE,
+		document_type=ASSIGNMENT_DOCTYPE,
+		document_name=doc.name,
+		action=UPDATE_ACTION,
+		performed_by=principal,
+		metadata={"changes": changes},
+	)
+	_sync_projection(previous_user)
+	if user != previous_user:
+		_sync_projection(user)
+	return {"assignment": doc.name, "changed": True, "changes": changes}
+
+
+def _change_key(field: str, value) -> str:
+	if field in ("effective_from", "effective_to"):
+		return str(get_datetime(value)) if value else ""
+	return (value or "").strip() if isinstance(value, str) else (value or "")
+
+
+def _change_display(field: str, value) -> str:
+	"""The history line's words for one value — the register's own vocabulary."""
+	if field == "user":
+		return (frappe.db.get_value("User", value, "full_name") or value) if value else "—"
+	if field == "organisation_unit":
+		return _unit_label(value) or "Site-wide"
+	if field == "effective_from":
+		return display_datetime(value) if value else "now"
+	if field == "effective_to":
+		return display_datetime(value) if value else "No scheduled end"
+	return value or "—"
+
+
 def list_for_user(target_user: str, *, at=None) -> dict[str, Any]:
 	"""Current, scheduled, expired and revoked assignments for one user.
 
@@ -248,13 +389,15 @@ def _matching_enabled(
 	organisation_unit: str,
 	effective_from: str | None,
 	effective_to: str | None,
+	exclude: str = "",
 ) -> dict[str, Any] | None:
 	"""The Enabled assignment for this exact tuple whose period overlaps, if any.
 
 	Locked for the duration of the transaction so a concurrent grant of the
 	same tuple waits rather than racing past the overlap check. There is no
 	partial-unique index that could express "one Enabled row per tuple per
-	period", which is why this is a lock rather than a constraint.
+	period", which is why this is a lock rather than a constraint. `exclude`
+	is the record being changed, which must not overlap itself.
 	"""
 	rows = frappe.db.sql(
 		"""
@@ -275,6 +418,8 @@ def _matching_enabled(
 		as_dict=True,
 	)
 	for row in rows:
+		if row["name"] == exclude:
+			continue
 		if _periods_overlap(
 			row.get("effective_from"), row.get("effective_to"), effective_from, effective_to
 		):
@@ -289,6 +434,7 @@ def _exclusive_office_conflict(
 	organisation_unit: str,
 	effective_from: str | None,
 	effective_to: str | None,
+	exclude: str = "",
 ) -> dict[str, Any] | None:
 	"""§4.7 — the other holder whose Enabled assignment overlaps this office.
 
@@ -314,6 +460,8 @@ def _exclusive_office_conflict(
 		as_dict=True,
 	)
 	for row in rows:
+		if row["name"] == exclude:
+			continue
 		if _periods_overlap(
 			row.get("effective_from"), row.get("effective_to"), effective_from, effective_to
 		):
@@ -584,13 +732,16 @@ def preview_assignment(
 	effective_from: str | None = None,
 	effective_to: str | None = None,
 	authority_reference: str = "",
+	assignment: str = "",
 ) -> dict[str, Any]:
 	"""§9.2 `PreviewResponsibilityAssignment` — validate and describe; create nothing.
 
 	The dialog's primary button stays disabled until this returns `ok`, so
 	every rule the server will apply is visible before anything is written —
 	including the exact conflicting assignment, which §14.3 forbids the UI
-	from resolving with an invented precedence rule of its own.
+	from resolving with an invented precedence rule of its own. `assignment`
+	names a scheduled record being changed, which is left out of the overlap
+	and exclusive-office checks.
 	"""
 	require_assignment_administrator_any()
 
@@ -644,8 +795,12 @@ def preview_assignment(
 			organisation_unit=organisation_unit,
 			effective_from=effective_from,
 			effective_to=effective_to,
+			exclude=assignment,
 		)
-		if row and not _is_same_appointment(row, appointment_type, authority_reference):
+		# A new grant identical to an existing row is an idempotent regrant
+		# (§4.7); a change to a scheduled record can never merge into another
+		# row, so for it every overlap is a conflict.
+		if row and (assignment or not _is_same_appointment(row, appointment_type, authority_reference)):
 			conflict = {
 				"assignment": row["name"],
 				"kind": "overlap",
@@ -662,6 +817,7 @@ def preview_assignment(
 				organisation_unit=organisation_unit,
 				effective_from=effective_from,
 				effective_to=effective_to,
+				exclude=assignment,
 			)
 			if holder is not None:
 				# §14.3 — the preview returns the exact conflicting assignment
@@ -770,21 +926,7 @@ def get_assignment_detail(assignment: str, *, at=None) -> dict[str, Any]:
 	diagnostics = diagnose_user(doc.user, at=at)
 	projection_present = set(entry.frappe_roles) <= set(frappe.get_roles(doc.user))
 
-	history = [
-		{
-			"when": display_datetime(doc.assigned_at),
-			"actor": doc.assigned_by or "",
-			"event": "Responsibility assigned",
-		}
-	]
-	if doc.revoked_at:
-		history.append(
-			{
-				"when": display_datetime(doc.revoked_at),
-				"actor": doc.revoked_by or "",
-				"event": "Responsibility revoked",
-			}
-		)
+	history = _history(doc)
 
 	effective_start = (
 		f"From {display_datetime(doc.effective_from)}" if doc.effective_from else "From now"
@@ -808,10 +950,13 @@ def get_assignment_detail(assignment: str, *, at=None) -> dict[str, Any]:
 			"expected_version": str(doc.modified),
 			"organisation_unit_path": _unit_path(unit),
 			"included_units": [_unit_label(u) for u in included],
-			# §14.4 — Expired and Revoked assignments are read-only, and there
-			# is no Edit action at all: a wrong assignment is revoked and
-			# replaced so historical authority is never rewritten.
+			# §14.4 — Expired and Revoked assignments are read-only. An
+			# assignment already in force is never edited: a wrong one is
+			# revoked and replaced so historical authority is never rewritten.
+			# One that has not started yet may still be changed (owner
+			# decision 21 Sep 2026) — `update_scheduled`.
 			"can_revoke": row_status in (DERIVED_ACTIVE, DERIVED_SCHEDULED),
+			"can_edit": row_status == DERIVED_SCHEDULED,
 			"diagnostics": {
 				"required_projection": list(entry.frappe_roles),
 				"projection_present": projection_present,
@@ -824,6 +969,62 @@ def get_assignment_detail(assignment: str, *, at=None) -> dict[str, Any]:
 		}
 	)
 	return view
+
+
+def _history(doc) -> list[dict[str, Any]]:
+	"""§15 — the append-only administrative history, oldest first: the grant,
+	every change made before the start, and the revocation."""
+	entries: list[tuple[Any, dict[str, Any]]] = [
+		(
+			get_datetime(doc.assigned_at) if doc.assigned_at else None,
+			{
+				"when": display_datetime(doc.assigned_at),
+				"actor": doc.assigned_by or "",
+				"event": "Responsibility assigned",
+				"detail": "",
+			},
+		)
+	]
+	for event in frappe.get_all(
+		"Audit Event",
+		filters={
+			"document_type": ASSIGNMENT_DOCTYPE,
+			"document_name": doc.name,
+			"action": UPDATE_ACTION,
+		},
+		fields=["timestamp", "performed_by", "metadata"],
+		order_by="timestamp asc",
+		limit_page_length=0,
+	):
+		meta = frappe.parse_json(event.get("metadata")) or {}
+		entries.append(
+			(
+				get_datetime(event["timestamp"]),
+				{
+					"when": display_datetime(event["timestamp"]),
+					"actor": event.get("performed_by") or "",
+					"event": "Scheduled assignment changed",
+					"detail": "; ".join(
+						f"{change['label']}: {change['before']} → {change['after']}"
+						for change in meta.get("changes", [])
+					),
+				},
+			)
+		)
+	if doc.revoked_at:
+		entries.append(
+			(
+				get_datetime(doc.revoked_at),
+				{
+					"when": display_datetime(doc.revoked_at),
+					"actor": doc.revoked_by or "",
+					"event": "Responsibility revoked",
+					"detail": "",
+				},
+			)
+		)
+	entries.sort(key=lambda item: item[0] or get_datetime("1900-01-01"))
+	return [entry for _, entry in entries]
 
 
 def _unit_path(unit: str) -> str:

@@ -23,7 +23,23 @@ from frappe.utils import get_datetime
 from kentender_core.services.business_role_registry import require_registered
 from kentender_core.services.authorization import (
 	APPOINTMENT_ACTING,
+	DERIVED_SCHEDULED,
 	STATUS_ENABLED,
+	derived_status,
+)
+
+# The identity and period of an assignment. Changeable only while the
+# assignment has not started (owner decision 21 Sep 2026); once it is in
+# force, §14.4 stands — a wrong assignment is revoked and replaced, never
+# rewritten, so historical authority is preserved.
+IDENTITY_FIELDS = (
+	"user",
+	"business_role",
+	"organisation_unit",
+	"appointment_type",
+	"authority_reference",
+	"effective_from",
+	"effective_to",
 )
 
 
@@ -33,6 +49,30 @@ class UserResponsibilityAssignment(Document):
 		self._validate_scope(entry)
 		self._validate_period()
 		self._validate_appointment()
+		self._validate_immutable_once_in_force()
+
+	def _validate_immutable_once_in_force(self):
+		"""§14.4/§15 — the record itself refuses a rewrite of an assignment
+		that has ever been in force, whatever path tries it (the Desk form
+		included); the administration service is not the only guard."""
+		if self.is_new():
+			return
+		stored = frappe.db.get_value(
+			self.doctype,
+			self.name,
+			["status", *IDENTITY_FIELDS],
+			as_dict=True,
+		)
+		if not stored or derived_status(stored.status, stored.effective_from, stored.effective_to) == DERIVED_SCHEDULED:
+			return
+		for field in IDENTITY_FIELDS:
+			if _same(field, stored.get(field), self.get(field)):
+				continue
+			frappe.throw(
+				"This assignment has already started, so it can no longer be changed. "
+				"Revoke it and assign a replacement instead.",
+				title="Assignment already in force",
+			)
 
 	def _validate_scope(self, entry):
 		"""§4.5 — an Organisation Unit is required for OU-scoped roles and
@@ -87,3 +127,9 @@ class UserResponsibilityAssignment(Document):
 		if self.effective_to and get_datetime(self.effective_to) < at:
 			return False
 		return True
+
+
+def _same(field: str, stored, current) -> bool:
+	if field in ("effective_from", "effective_to"):
+		return (get_datetime(stored) if stored else None) == (get_datetime(current) if current else None)
+	return (stored or "") == (current or "")

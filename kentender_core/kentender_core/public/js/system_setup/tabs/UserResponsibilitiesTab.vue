@@ -138,6 +138,21 @@ async function submitAssignment(payload) {
 	}
 }
 
+async function submitEdit(payload) {
+	busy.value = true;
+	dialog.error = "";
+	try {
+		await responsibilityApi.updateScheduled(detail.value.assignment, payload, detail.value.expected_version);
+		closeDialog();
+		await openDetail(detail.value.assignment);
+		loadRows({ quiet: true });
+	} catch (error) {
+		dialog.error = error.message;
+	} finally {
+		busy.value = false;
+	}
+}
+
 async function submitRevocation(reason) {
 	busy.value = true;
 	dialog.error = "";
@@ -174,6 +189,7 @@ async function submitRevocation(reason) {
 				v-else-if="detail"
 				:assignment="detail"
 				@revoke="openDialog('revoke')"
+				@edit="openDialog('edit')"
 				@back="backToRegister"
 			/>
 		</template>
@@ -331,6 +347,16 @@ async function submitRevocation(reason) {
 			:busy="busy"
 			:error="dialog.error"
 			@submit="submitAssignment"
+			@cancel="closeDialog"
+		/>
+		<AssignDialog
+			v-if="dialog.kind === 'edit' && detail"
+			:editing="detail"
+			:responsibilities="options.responsibilities"
+			:organisation-units="options.organisation_units"
+			:busy="busy"
+			:error="dialog.error"
+			@submit="submitEdit"
 			@cancel="closeDialog"
 		/>
 		<RevokeDialog

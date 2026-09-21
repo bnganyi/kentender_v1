@@ -4,16 +4,17 @@
 // Audit card, the collapsed Access-diagnostics row, the Administrative
 // history table, and the destructive command alone in the bottom action bar.
 //
-// There is deliberately no Edit action: an incorrect assignment is revoked
-// and replaced so historical authority is never rewritten. Revoke itself
-// appears only because the server said so (`can_revoke`). No Procuring
-// Entity row exists (§13.7).
+// An assignment already in force is never edited: an incorrect one is
+// revoked and replaced so historical authority is never rewritten. One that
+// has not started yet may still be changed (owner decision 21 Sep 2026) —
+// the Edit action, like Revoke, appears only because the server said so
+// (`can_edit` / `can_revoke`). No Procuring Entity row exists (§13.7).
 import { ref } from "vue";
 
 defineProps({
 	assignment: { type: Object, required: true },
 });
-const emit = defineEmits(["revoke", "back"]);
+const emit = defineEmits(["revoke", "edit", "back"]);
 
 const diagnosticsOpen = ref(false);
 
@@ -177,15 +178,26 @@ const STATUS_KIND = {
 						<tr v-for="event in assignment.history" :key="event.event + event.when">
 							<td>{{ event.when }}</td>
 							<td>{{ event.actor }}</td>
-							<td>{{ event.event }}</td>
+							<td>
+								{{ event.event }}
+								<div v-if="event.detail" class="kt-history-detail">{{ event.detail }}</div>
+							</td>
 						</tr>
 					</tbody>
 				</table>
 			</div>
 		</div>
 
-		<div v-if="assignment.can_revoke" class="kt-action-bar">
+		<div v-if="assignment.can_revoke || assignment.can_edit" class="kt-action-bar">
 			<button
+				v-if="assignment.can_edit"
+				type="button"
+				class="kt-btn kt-btn-secondary"
+				data-testid="kt-ura-open-edit"
+				@click="emit('edit')"
+			>{{ __("Edit scheduled assignment") }}</button>
+			<button
+				v-if="assignment.can_revoke"
 				type="button"
 				class="kt-btn kt-btn-primary kt-danger"
 				data-testid="kt-ura-open-revoke"

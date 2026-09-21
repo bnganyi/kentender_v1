@@ -110,6 +110,18 @@ def purge(*, commit: bool = True) -> dict[str, int]:
 				pluck="name",
 			)
 		)
+		if assignments:
+			# A scheduled assignment's change history lives in Audit Event.
+			audit.update(
+				frappe.get_all(
+					"Audit Event",
+					filters={
+						"document_type": "User Responsibility Assignment",
+						"document_name": ("in", sorted(assignments)),
+					},
+					pluck="name",
+				)
+			)
 		for name in audit:
 			frappe.delete_doc("Audit Event", name, force=1, ignore_permissions=True)
 		audit_rows = len(audit)

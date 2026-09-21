@@ -147,4 +147,43 @@ describe("AssignDialog", () => {
 		expect(conflict.text()).toContain("Dr Peter Kimani");
 		expect(wrapper.find(".kt-blocked").text()).toContain("Resolve the conflicting assignment to continue");
 	});
+
+	it("changes a scheduled assignment through the same dialog: prefilled, titled as a change, previewed against the record itself", async () => {
+		const wrapper = mount(AssignDialog, {
+			props: {
+				responsibilities: RESPONSIBILITIES,
+				organisationUnits: UNITS,
+				editing: {
+					assignment: "URA-00009",
+					user: "peter.kimani@moh.example.test",
+					user_full_name: "Dr Peter Kimani",
+					business_role: "Departmental Author",
+					organisation_unit: "OU-MOH-00001",
+					appointment_type: "Permanent",
+					authority_reference: "",
+					effective_from: "2026-12-01 00:00:00",
+					effective_to: "",
+					expected_version: "2026-09-21 10:00:00",
+				},
+			},
+			global: globalMocks(),
+		});
+		await flushPromises();
+		expect(wrapper.find(".kt-dialog-title").text()).toBe("Edit scheduled assignment");
+		expect(wrapper.find('[data-testid="kt-ura-edit-notice"]').text()).toContain("has not started yet");
+		expect(wrapper.find('[data-testid="kt-ura-user-picked"]').text()).toContain("Dr Peter Kimani");
+		expect(wrapper.find('[data-testid="kt-ura-role"]').text()).toContain("Departmental Author");
+		expect(wrapper.find('[data-testid="kt-ura-from"]').element.value).toBe("2026-12-01");
+		expect(wrapper.find('[data-testid="kt-ura-assign-confirm"]').text()).toBe("Save changes");
+		expect(responsibilityApi.preview).toHaveBeenCalledWith(
+			expect.objectContaining({ assignment: "URA-00009", user: "peter.kimani@moh.example.test", effective_from: "2026-12-01" })
+		);
+
+		await wrapper.find('[data-testid="kt-ura-from"]').setValue("");
+		await flushPromises();
+		expect(wrapper.emitted("submit")).toBeUndefined();
+		const last = responsibilityApi.preview.mock.calls.at(-1)[0];
+		expect(last.effective_from).toBe("");
+		expect(last.assignment).toBe("URA-00009");
+	});
 });

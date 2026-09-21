@@ -29,6 +29,20 @@ def _grant(user, role, unit="", **kwargs):
 	)
 
 
+def _exclusive_hod():
+	"""§4.7's mechanism, exercised by patching Head of User Department to
+	exclusive for the duration of a test: no registered role declares the
+	flag yet (tracker D4), but the server behaviour must be proven so a module
+	document can flip it without new code."""
+	import dataclasses
+	from unittest.mock import patch as mock_patch
+
+	from kentender_core.services import business_role_registry as registry
+
+	entry = dataclasses.replace(registry.REGISTRY["Head of User Department"], exclusive_office=True)
+	return mock_patch.dict(registry.REGISTRY, {"Head of User Department": entry})
+
+
 class AdministrationTestCase(IntegrationTestCase):
 	@classmethod
 	def setUpClass(cls):
@@ -122,15 +136,7 @@ class TestExclusiveOffice(AdministrationTestCase):
 	document can flip it without new code."""
 
 	def exclusive_hod(self):
-		import dataclasses
-		from unittest.mock import patch as mock_patch
-
-		from kentender_core.services import business_role_registry as registry
-
-		entry = dataclasses.replace(
-			registry.REGISTRY["Head of User Department"], exclusive_office=True
-		)
-		return mock_patch.dict(registry.REGISTRY, {"Head of User Department": entry})
+		return _exclusive_hod()
 
 	def test_a_second_active_holder_for_the_same_office_is_refused(self):
 		"""§4.7/AUTH-AC-017 — with the exact conflicting record named."""
@@ -372,3 +378,195 @@ class TestRegisterPreviewAndDetail(AdministrationTestCase):
 		detail = administration.get_assignment_detail(granted)
 		self.assertFalse(detail["can_revoke"])
 		self.assertEqual(detail["status"], "Revoked")
+
+
+ASSIGNMENT_FIELDS = [
+	"user",
+	"business_role",
+	"organisation_unit",
+	"appointment_type",
+	"authority_reference",
+	"effective_from",
+	"effective_to",
+	"modified",
+]
+
+
+class TestUpdateScheduled(AdministrationTestCase):
+	"""Owner decision 21 Sep 2026 — an assignment that is not yet in force may
+	be changed in any attribute; once it has started, §14.4's revoke-and-
+	replace still governs. The change is re-validated as a grant would be
+	(without conflicting with itself), recorded append-only, and the Role
+	projection follows the holder."""
+
+	def scheduled(self, local, role="Departmental Author", unit=None, **kwargs):
+		user = fx.user(local, local.replace(".", " ").title())
+		granted = _grant(
+			user, role, unit or self.child, effective_from="2097-01-01 00:00:00", **kwargs
+		)["assignment"]
+		return user, granted
+
+	def _update(self, assignment, **overrides):
+		row = frappe.db.get_value(
+			"User Responsibility Assignment", assignment, ASSIGNMENT_FIELDS, as_dict=True
+		)
+		payload = {
+			"user": row.user,
+			"business_role": row.business_role,
+			"organisation_unit": row.organisation_unit or "",
+			"appointment_type": row.appointment_type,
+			"authority_reference": row.authority_reference or "",
+			"effective_from": str(row.effective_from) if row.effective_from else None,
+			"effective_to": str(row.effective_to) if row.effective_to else None,
+			"expected_version": str(row.modified),
+		}
+		payload.update(overrides)
+		return administration.update_scheduled(assignment, **payload)
+
+	def test_clearing_the_start_brings_a_scheduled_assignment_into_force_now(self):
+		user, granted = self.scheduled("adm.edit.now")
+		self.assertEqual(administration.get_assignment_detail(granted)["status"], "Scheduled")
+		self.assertTrue(administration.get_assignment_detail(granted)["can_edit"])
+
+		result = self._update(granted, effective_from=None)
+		self.assertTrue(result["changed"])
+		self.assertEqual([c["field"] for c in result["changes"]], ["effective_from"])
+
+		detail = administration.get_assignment_detail(granted)
+		self.assertEqual(detail["status"], "Active")
+		self.assertFalse(detail["can_edit"])
+		self.assertTrue(detail["can_revoke"])
+		self.assertEqual(
+			[row["event"] for row in detail["history"]],
+			["Responsibility assigned", "Scheduled assignment changed"],
+		)
+		self.assertIn("Effective from: 1 Jan 2097", detail["history"][1]["detail"])
+		self.assertIn("→ now", detail["history"][1]["detail"])
+
+	def test_every_attribute_can_change_before_the_start(self):
+		user, granted = self.scheduled("adm.edit.all")
+		other = fx.user("adm.edit.other", "Edit Other Test")
+		result = self._update(
+			granted,
+			user=other,
+			business_role="Head of User Department",
+			organisation_unit=self.unit,
+			appointment_type="Acting",
+			authority_reference="MOH/HR/ACT/2097/007",
+			effective_from="2097-03-01 00:00:00",
+			effective_to="2097-06-30 23:59:59",
+		)
+		self.assertEqual(
+			{c["field"] for c in result["changes"]},
+			{f for f in ASSIGNMENT_FIELDS if f != "modified"},
+		)
+		row = frappe.db.get_value(
+			"User Responsibility Assignment", granted, ASSIGNMENT_FIELDS, as_dict=True
+		)
+		self.assertEqual(row.user, other)
+		self.assertEqual(row.business_role, "Head of User Department")
+		self.assertEqual(row.organisation_unit, self.unit)
+		self.assertEqual(row.appointment_type, "Acting")
+		self.assertEqual(row.authority_reference, "MOH/HR/ACT/2097/007")
+		self.assertEqual(str(row.effective_from), "2097-03-01 00:00:00")
+		self.assertEqual(str(row.effective_to), "2097-06-30 23:59:59")
+		# The Role projection follows the holder (§5.7).
+		self.assertNotIn("Departmental Author", frappe.get_roles(user))
+		self.assertIn("Head of User Department", frappe.get_roles(other))
+		# The detail's stamp moved, so a stale second edit is refused.
+		detail = administration.get_assignment_detail(granted)
+		self.assertEqual(detail["user"], other)
+		self.assertEqual(detail["status"], "Scheduled")
+
+	def test_an_assignment_in_force_cannot_be_changed(self):
+		user = fx.user("adm.edit.active")
+		granted = _grant(user, "Departmental Author", self.child)["assignment"]
+		self.assertFalse(administration.get_assignment_detail(granted)["can_edit"])
+		with self.assertRaises(ResponsibilityError) as caught:
+			self._update(granted, effective_to="2097-01-01 00:00:00")
+		self.assertEqual(self.code(caught), "AUTH_STATE_CHANGED")
+		self.assertIn("already started", str(caught.exception))
+
+	def test_a_revoked_assignment_cannot_be_changed(self):
+		user, granted = self.scheduled("adm.edit.revoked")
+		administration.revoke(granted, reason="Scheduled edit test: revoked first.")
+		with self.assertRaises(ResponsibilityError) as caught:
+			self._update(granted, effective_from=None)
+		self.assertEqual(self.code(caught), "AUTH_STATE_CHANGED")
+
+	def test_a_stale_version_is_refused(self):
+		user, granted = self.scheduled("adm.edit.stale")
+		with self.assertRaises(ResponsibilityError) as caught:
+			self._update(granted, effective_from=None, expected_version="2000-01-01 00:00:00")
+		self.assertEqual(self.code(caught), "AUTH_STATE_CHANGED")
+		self.assertEqual(administration.get_assignment_detail(granted)["status"], "Scheduled")
+
+	def test_an_unchanged_edit_writes_nothing(self):
+		user, granted = self.scheduled("adm.edit.same")
+		result = self._update(granted)
+		self.assertFalse(result["changed"])
+		self.assertEqual(len(administration.get_assignment_detail(granted)["history"]), 1)
+
+	def test_the_change_is_rechecked_for_overlap_but_never_against_itself(self):
+		user, granted = self.scheduled("adm.edit.overlap")
+		# Moving its own dates is not an overlap with itself.
+		self.assertTrue(self._update(granted, effective_from="2097-02-01 00:00:00")["changed"])
+		# The same person already holds this responsibility for the parent
+		# unit with no end, so moving the scheduled one there overlaps.
+		_grant(user, "Departmental Author", self.unit)
+		with self.assertRaises(ResponsibilityError) as caught:
+			self._update(granted, organisation_unit=self.unit)
+		self.assertEqual(self.code(caught), "AUTH_CONFIGURATION_INVALID")
+
+	def test_the_change_is_rechecked_for_an_exclusive_office(self):
+		holder = fx.user("adm.edit.holder", "Edit Holder Test")
+		scope_b = fx.unit("KT Test Admin Edit B", namespace=NS)
+		with _exclusive_hod():
+			_grant(holder, "Head of User Department", scope_b)
+			user, granted = self.scheduled("adm.edit.office", role="Head of User Department")
+			with self.assertRaises(ResponsibilityError) as caught:
+				self._update(granted, organisation_unit=scope_b)
+		self.assertEqual(self.code(caught), "AUTH_EXCLUSIVE_OFFICE_CONFLICT")
+		self.assertIn("Edit Holder Test", str(caught.exception))
+
+	def test_an_ordinary_actor_may_not_change_a_scheduled_assignment(self):
+		user, granted = self.scheduled("adm.edit.noauth")
+		nobody = fx.user("adm.edit.nobody")
+		with self.assertRaises(ResponsibilityError) as caught:
+			self._update(granted, actor=nobody, effective_from=None)
+		self.assertEqual(self.code(caught), "AUTH_RESPONSIBILITY_REQUIRED")
+
+	def test_the_preview_leaves_the_record_being_changed_out_of_the_conflict_checks(self):
+		user, granted = self.scheduled("adm.edit.preview")
+		# Re-describing the scheduled Permanent grant as an overlapping Acting
+		# one is a conflict for a NEW grant, but not for a change to the
+		# record itself.
+		acting = {
+			"user": user,
+			"business_role": "Departmental Author",
+			"organisation_unit": self.child,
+			"appointment_type": "Acting",
+			"authority_reference": "MOH/HR/ACT/2097/011",
+			"effective_from": "2097-01-15 00:00:00",
+			"effective_to": "2097-03-01 00:00:00",
+		}
+		as_new_grant = administration.preview_assignment(**acting)
+		self.assertIsNotNone(as_new_grant["conflict"])
+		self.assertEqual(as_new_grant["conflict"]["assignment"], granted)
+		as_a_change = administration.preview_assignment(**acting, assignment=granted)
+		self.assertTrue(as_a_change["ok"])
+
+	def test_the_record_itself_refuses_a_rewrite_once_in_force(self):
+		"""§14.4/§15 — the DocType guard, independent of the service: a Desk
+		form edit of an Active assignment's holder is refused."""
+		user = fx.user("adm.edit.form")
+		other = fx.user("adm.edit.form.other")
+		granted = _grant(user, "Departmental Author", self.child)["assignment"]
+		doc = frappe.get_doc("User Responsibility Assignment", granted)
+		doc.user = other
+		with self.assertRaises(frappe.ValidationError) as caught:
+			doc.save(ignore_permissions=True)
+		self.assertIn("already started", str(caught.exception))
+		self.assertEqual(
+			frappe.db.get_value("User Responsibility Assignment", granted, "user"), user
+		)
