@@ -109,7 +109,7 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		await page.locator('[data-testid="rev-secondary"]').click();
 		const dialog = page.locator('[data-testid="rvw-return-dialog"]');
 		await expect(dialog).toBeVisible();
-		await expect(dialog.locator(".kt-dialog-title")).toHaveText("Return Plan Version for correction?");
+		await expect(dialog.locator(".kt-dialog-title")).toHaveText("What needs to change?");
 		await expect(dialog).toContainText("The submitted Version 1 remains unchanged. State the correction required.");
 		const confirm = page.locator('[data-testid="rvw-return-confirm"]');
 		await expect(confirm).toBeDisabled();
@@ -142,9 +142,9 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		await expectReady(page, "governance");
 		await page.locator('[data-testid="rev-secondary"]').click();
 		const dialog = page.locator('[data-testid="rvw-return-dialog"]');
-		await expect(dialog.locator(".kt-dialog-title")).toHaveText("Return adopted Plan Version for correction?");
+		await expect(dialog.locator(".kt-dialog-title")).toHaveText("What needs to change?");
 		await expect(dialog).toContainText("The Accounting-Officer-adopted Version 1 remains unchanged. State the correction required.");
-		await expect(dialog.locator("label")).toHaveText(["Correction required"]);
+		await expect(dialog.locator("label")).toHaveText(["Comment"]);
 		await expect(dialog.locator("textarea")).toHaveCount(1);
 	});
 

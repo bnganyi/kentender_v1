@@ -1,78 +1,53 @@
-<!-- PLN-CHG-001 v1.23 §10.3 — the Planning workspace (U01), ported
-     class-for-class from U01.dc.html.
+<!-- PLN-CHG-001 v1.24 §10.3 (KT-STD-001 v1.7 §2.6) — the Planning workspace
+     (U01), ported class-for-class from Artboards-U01.dc.html.
 
-     The order is fixed: header, financial year, Annual plan, the one current
-     issue, then departmental plans. The reservation shortfall that used to be
-     four accounting values here is now one sentence and one recovery action;
-     the arithmetic stays in the Plan check detail (PLN22-CHG-003).
+     One bare `.kt-page` sheet, never a `.kt-card.kt-blueprint` box per row
+     (PLN24-CHG-007). The order is fixed: header with the Financial year
+     field inline, a decision-required region when one exists, the actor's
+     own departmental plan, the Planner's own Annual plan work (task row plus
+     the one current issue), then departmental plans as a quieter register.
+     A departmental actor reads a simplified read-only "Annual plan position"
+     instead of the Planner's own interactive Annual plan work region — they
+     never see Continue/Prepare-update controls that are not theirs to use.
 
-     An empty "Your actions" section is omitted entirely rather than rendered
-     with a placeholder (§9.1), and waiting work is status on its own document,
-     never a duplicate disabled task row. -->
+     An empty "Your actions" style region is omitted entirely rather than
+     rendered with a placeholder (§9.1), and waiting work is status on its
+     own document, never a duplicate disabled task row. -->
 <template>
 	<div>
-		<!-- loading skeleton: the actual structure, no stale rows or actions -->
-		<div v-if="loading" class="kt-card kt-blueprint" style="padding: 0; overflow: hidden" data-testid="pln-loading">
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<p class="pln-loading-text">Loading procurement planning…</p>
-			<div v-for="row in 3" :key="row" class="pln-skel-row">
-				<div class="kt-skel" style="width: 72%"></div>
-				<div class="kt-skel" style="width: 52%"></div>
-				<div class="kt-skel" style="width: 52%"></div>
-				<div class="kt-skel" style="width: 44%"></div>
+		<CommonStates v-if="loading" kind="loading-workspace" testid="pln-loading" />
+		<CommonStates v-else-if="error" kind="load-failure" testid="pln-error" :support-ref="supportRef" @action="$emit('reload')" />
+		<!-- §9/§3A.1 — the verdict resolves before any header, filter, content
+		     or empty state is painted (PLN18-AC-112). -->
+		<div v-else-if="workspace.outcome === 'FORBIDDEN'" class="kt-page" data-testid="pln-forbidden">
+			<div class="kt-empty">
+				<h3 style="font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 23px; margin: 0">
+					{{ forbidden.heading }}
+				</h3>
+				<p>{{ forbidden.text }}</p>
+			</div>
+		</div>
+		<div v-else-if="workspace.outcome === 'NO_CONTEXT'" class="kt-page" data-testid="pln-no-context">
+			<div class="kt-empty">
+				<h3 style="font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 23px; margin: 0">
+					Procurement Planning is not available
+				</h3>
+				<p>No configured Financial Year is available for Planning.</p>
 			</div>
 		</div>
 
-		<!-- U21-LOAD-FAILURE -->
-		<div v-else-if="error" class="kt-card kt-blueprint pln-state-card" data-testid="pln-error">
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<h3>Procurement Planning could not be loaded</h3>
-			<p>Try again. If the problem continues, contact support.</p>
-			<button class="kt-btn kt-btn-secondary" @click="$emit('reload')">Try again</button>
-			<p class="pln-support-ref">Support reference: {{ supportRef }}</p>
-		</div>
-
-		<!-- U21-DENIED: the verdict resolves before any header, filter, content
-		     or empty state is painted (PLN18-AC-112). -->
-		<div v-else-if="workspace.outcome === 'FORBIDDEN'" class="kt-card kt-blueprint pln-state-card" data-testid="pln-forbidden">
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<h3>{{ forbidden.heading }}</h3>
-			<p>{{ forbidden.text }}</p>
-		</div>
-
-		<div v-else-if="workspace.outcome === 'NO_CONTEXT'" class="kt-card kt-blueprint pln-state-card" data-testid="pln-no-context">
-			<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-			<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<h3>Procurement Planning is not available</h3>
-			<p>No configured Financial Year is available for Planning.</p>
-		</div>
-
-		<template v-else>
-			<div class="pln-sheet">
-				<!-- Page header: title and description upper left; no header action
-				     in this composition. -->
-				<div class="pln-masthead">
-					<div>
-						<h1 class="kt-page-title" data-testid="pln-title">{{ header.title }}</h1>
-						<p class="kt-page-lede">{{ header.description }}</p>
-					</div>
-				</div>
-
-				<!-- Financial year sits below the header at the left, bound to the
-				     caller's own selection so it never snaps back to the server echo
-				     while a new year is still loading. §10.3/U01 draws this as a
-				     single neutral tag (`.kt-tag.kt-tag-neutral`), fusing the label
-				     and value the way every other on-page fact does — not the plain
-				     unboxed control the retired v1.12 artboard drew. -->
-				<div class="pln-filter-strip" data-testid="pln-context-strip">
-					<span class="kt-tag kt-tag-neutral pln-fy-chip">
+		<div v-else class="kt-page">
+			<div class="kt-page-head">
+				<div>
+					<h1 class="kt-page-title" data-testid="pln-title">{{ header.title }}</h1>
+					<p class="kt-page-desc">{{ header.description }}</p>
+					<!-- Bound to the caller's own selection, never the server echo, so
+					     it never snaps back while a new year is still loading. -->
+					<div class="kt-field" style="margin-top: var(--kt-space-4); width: 190px" data-testid="pln-context-strip">
 						<label for="pln-fy-select">Financial year</label>
 						<select
 							id="pln-fy-select"
-							class="pln-fy-select"
+							class="kt-input"
 							data-testid="pln-fy-select"
 							:value="selectedFinancialYear || context.financial_year || ''"
 							@change="$emit('select-financial-year', $event.target.value)"
@@ -81,163 +56,175 @@
 								{{ year.label }}
 							</option>
 						</select>
-					</span>
-					<button
-						v-if="context.resolved_financial_year_source === 'saved_default'"
-						type="button"
-						class="kt-btn kt-btn-ghost pln-filter-reset"
-						data-testid="pln-fy-reset"
-						@click="$emit('reset-financial-year')"
-					>
-						Reset
+						<button
+							v-if="context.resolved_financial_year_source === 'saved_default'"
+							type="button"
+							class="kt-btn kt-btn-ghost"
+							data-testid="pln-fy-reset"
+							style="margin-top: 6px"
+							@click="$emit('reset-financial-year')"
+						>
+							Reset
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- U01-HOD: the departmental actor's own required decision comes
+			     before everything else. Omitted entirely when there is none. -->
+			<div v-if="actionable.length" class="kt-region" data-testid="pln-actionable-region">
+				<h2 data-testid="pln-your-actions-heading">{{ actionableHeading }}</h2>
+				<div v-for="(row, index) in actionable" :key="`action-${index}`" class="kt-task-row" data-testid="pln-action">
+					<div style="flex: 1">
+						<div class="pln-task-title">{{ actionTitle(row) }}</div>
+						<p class="pln-task-desc">{{ actionDescription(row) }}</p>
+					</div>
+					<button type="button" class="kt-btn kt-btn-primary" data-testid="pln-action-button" @click="onAction(row)">
+						{{ row.action }}
 					</button>
 				</div>
+			</div>
 
-				<!-- U01-HOD: the departmental actor's own required outcome comes
-				     before everything else. Omitted entirely when there is none. -->
-				<template v-if="actionable.length">
-					<h3 class="kt-card-title" data-testid="pln-your-actions-heading">
-						{{ actionable.length === 1 ? "Your action" : "Your actions" }}
-					</h3>
-					<div
-						v-for="(row, index) in actionable"
-						:key="`action-${index}`"
-						class="kt-card kt-blueprint pln-action-card"
-						data-testid="pln-action"
-					>
-						<div class="kt-meta-row">
-							<div>
-								<span class="kt-label">Outcome required</span>
-								<span class="kt-meta-value">{{ row.headline }}</span>
-							</div>
-							<div
-								v-for="fact in row.facts || []"
-								:key="fact.label"
-							>
-								<span class="kt-label">{{ fact.label }}</span>
-								<span class="kt-meta-value">{{ fact.value }}</span>
-							</div>
-						</div>
-						<p v-if="row.supporting" class="kt-muted">{{ row.supporting }}</p>
+			<!-- U01-DEPARTMENT-AUTHOR / U01-HOD: "Your departmental plan". -->
+			<div v-if="ownPlan" class="kt-region" data-testid="pln-own-plan-region">
+				<h2>{{ ownPlan.heading }}</h2>
+				<div data-testid="pln-own-plan">
+					<div v-if="ownPlan.empty" class="kt-empty">
+						<div class="pln-task-title" data-testid="pln-own-plan-empty">{{ ownPlan.empty_text }}</div>
 						<button
 							type="button"
 							class="kt-btn kt-btn-primary"
-							data-testid="pln-action-button"
-							@click="onAction(row)"
+							data-testid="pln-start-departmental-plan"
+							style="margin-top: var(--kt-space-4)"
+							:disabled="pending"
+							@click="$emit('open-departmental-plan', ownPlan.organisation_unit)"
 						>
-							{{ row.action }}
+							{{ ownPlan.action }}
 						</button>
 					</div>
-				</template>
+					<div v-else class="kt-task-row">
+						<div style="flex: 1">
+							<div class="pln-task-title">{{ ownPlanTitle }}</div>
+							<p class="pln-task-desc">{{ ownPlanNarrative }}</p>
+						</div>
+						<button
+							v-if="ownPlan.route"
+							type="button"
+							class="kt-btn kt-btn-primary"
+							data-testid="pln-own-plan-action"
+							@click="$emit('navigate', ownPlan.route)"
+						>
+							{{ ownPlan.action }}
+						</button>
+					</div>
+				</div>
+			</div>
 
-				<!-- U01-DEPARTMENT-AUTHOR / U01-HOD: "Your departmental plan". -->
-				<template v-if="ownPlan">
-					<h3 class="kt-card-title">{{ ownPlan.heading }}</h3>
-					<div class="kt-card kt-blueprint pln-own-plan" data-testid="pln-own-plan">
-						<template v-if="ownPlan.empty">
-							<p class="kt-muted" data-testid="pln-own-plan-empty">{{ ownPlan.empty_text }}</p>
-							<button
-								type="button"
-								class="kt-btn kt-btn-primary"
-								data-testid="pln-start-departmental-plan"
-								:disabled="pending"
-								@click="$emit('open-departmental-plan', ownPlan.organisation_unit)"
-							>
-								{{ ownPlan.action }}
-							</button>
-						</template>
-						<template v-else>
-							<!-- The facts arrive in the order §10.3 states them —
-							     which department, which year, what state — so the
-							     year is not appended after the status here. -->
-							<div class="kt-meta-row">
-								<div v-for="fact in ownPlan.facts" :key="fact[0]">
-									<span class="kt-label">{{ fact[0] }}</span>
-									<span class="kt-meta-value">{{ fact[1] }}</span>
+			<!-- A departmental actor reads the Annual Plan; they never act on it
+			     (§10.3). Their own read-only "Annual plan position" replaces the
+			     Planner's interactive Annual plan work region below. -->
+			<div v-if="ownPlan" class="kt-region is-secondary" data-testid="pln-annual-plan-position">
+				<h2>Annual plan position</h2>
+				<div class="kt-group">
+					<p style="margin: 0 0 var(--kt-space-3); font-size: 14px; color: var(--kt-color-neutral-800)">
+						{{ annualPositionNote }}
+					</p>
+					<div class="kt-meta-row">
+						<div><span class="kt-label">Plan</span><span style="font-size: 14px">{{ annualPlan.title }}</span></div>
+						<div><span class="kt-label">Reference</span><span style="font-size: 14px">{{ annualPlanReference }}</span></div>
+						<div><span class="kt-label">State</span><span class="kt-status" :class="planStateClass">{{ planStateLabel }}</span></div>
+					</div>
+				</div>
+			</div>
+
+			<!-- First section — Annual plan work. Dominant, Planner-only. Only the
+			     dominant row (the candidate/update when one exists, else the
+			     current or draft plan) renders as the interactive task row;
+			     U01-CURRENT-UPDATE demotes the current plan itself to a compact
+			     read-only baseline below, in its own secondary region — it is
+			     never a second interactive task row competing with the update. -->
+			<div v-if="!ownPlan" class="kt-region" data-testid="pln-annual-plan-region">
+				<h2>Annual plan work</h2>
+				<template v-if="dominantRow">
+					<div class="kt-task-row" :data-testid="`pln-plan-row-${dominantRow.kind}`">
+						<div style="flex: 1">
+							<div class="pln-task-title">{{ planRowTitle(dominantRow) }}</div>
+							<div style="font-size: 12.5px; color: var(--kt-color-neutral-700); margin-top: 3px">
+								{{ planRowSubtitle(dominantRow) }}
+							</div>
+							<template v-if="dominantRow.kind === 'draft'">
+								<div style="display: flex; gap: var(--kt-space-5); margin-top: var(--kt-space-3); font-size: 14px">
+									<span>{{ factValue(dominantRow.facts, 'Purchases') }} purchases</span>
+									<span>{{ factValue(dominantRow.facts, 'Estimated cost') }} estimated cost</span>
+								</div>
+							</template>
+							<template v-else-if="dominantRow.kind === 'current'">
+								<div style="display: flex; gap: var(--kt-space-5); align-items: center; margin-top: var(--kt-space-3); font-size: 14px">
+									<span>{{ factValue(dominantRow.facts, 'Approved value') }} approved value</span>
+									<span class="kt-status is-live">In force</span>
+								</div>
+							</template>
+							<div v-else-if="dominantRow.kind === 'candidate'" class="kt-meta-row" style="margin-top: var(--kt-space-4); max-width: 900px">
+								<div><span class="kt-label">Proposed value</span><span class="kt-meta-value">{{ factValue(dominantRow.facts, 'Proposed value') }}</span></div>
+								<div v-if="factValue(dominantRow.facts, 'Affected purchase')">
+									<span class="kt-label">Affected purchase</span><span style="font-size: 14px">{{ factValue(dominantRow.facts, 'Affected purchase') }}</span>
+								</div>
+								<div v-if="factValue(dominantRow.facts, 'Change')">
+									<span class="kt-label">Change</span><span style="font-size: 14px">{{ factValue(dominantRow.facts, 'Change') }}</span>
 								</div>
 							</div>
+							<p v-if="dominantRow.note" style="margin: var(--kt-space-3) 0 0; font-size: 14px; color: var(--kt-color-neutral-800)">{{ dominantRow.note }}</p>
+							<p v-if="dominantRow.kind === 'candidate'" style="margin: var(--kt-space-4) 0 0; font-size: 14px; color: var(--kt-color-neutral-800)">
+								{{ annualPlan.update_note || 'The current plan remains in force while this update is reviewed.' }}
+							</p>
+						</div>
+						<div style="display: flex; gap: var(--kt-space-3); align-items: center">
+							<a
+								v-if="dominantRow.secondary_action"
+								href="#"
+								:data-testid="`pln-plan-secondary-${dominantRow.kind}`"
+								@click.prevent="$emit('navigate', dominantRow.secondary_route)"
+							>{{ dominantRow.secondary_action }}</a>
 							<button
-								v-if="ownPlan.route"
+								v-if="dominantRow.kind === 'current' && annualPlan.can_prepare_update"
 								type="button"
-								class="kt-btn kt-btn-primary"
-								data-testid="pln-own-plan-action"
-								@click="$emit('navigate', ownPlan.route)"
+								class="kt-btn kt-btn-secondary"
+								data-testid="pln-prepare-update"
+								:disabled="pending"
+								@click="$emit('prepare-update')"
 							>
-								{{ ownPlan.action }}
+								{{ annualPlan.prepare_update_action }}
 							</button>
-						</template>
+							<button
+								v-if="dominantRow.action"
+								type="button"
+								class="kt-btn"
+								:class="dominantRow.action_kind === 'primary' ? 'kt-btn-primary' : 'kt-btn-secondary'"
+								:data-testid="`pln-plan-action-${dominantRow.kind}`"
+								@click="$emit('navigate', dominantRow.route)"
+							>
+								{{ dominantRow.action }}
+							</button>
+						</div>
 					</div>
 				</template>
-
-				<!-- First section — Annual plan. -->
-				<div class="pln-section-head">
-					<h3 class="kt-card-title">{{ annualPlan.heading }}</h3>
-					<button
-						v-if="annualPlan.can_prepare_update"
-						type="button"
-						class="kt-btn kt-btn-primary"
-						data-testid="pln-prepare-update"
-						:disabled="pending"
-						@click="$emit('prepare-update')"
-					>
-						{{ annualPlan.prepare_update_action }}
-					</button>
-				</div>
-
-				<template v-if="planRows.length">
-					<template v-for="(row, index) in planRows" :key="`plan-${row.kind}`">
-						<div class="kt-card kt-blueprint pln-plan-row" :data-testid="`pln-plan-row-${row.kind}`">
-							<div class="kt-meta-row">
-								<div v-for="fact in row.facts" :key="fact[0]">
-									<span class="kt-label">{{ fact[0] }}</span>
-									<span class="kt-meta-value">{{ fact[1] }}</span>
-								</div>
-							</div>
-							<div class="pln-footer-right">
-								<a
-									v-if="row.secondary_action"
-									href="#"
-									:data-testid="`pln-plan-secondary-${row.kind}`"
-									@click.prevent="$emit('navigate', row.secondary_route)"
-								>{{ row.secondary_action }}</a>
-								<button
-									type="button"
-									class="kt-btn"
-									:class="row.action_kind === 'primary' ? 'kt-btn-primary' : 'kt-btn-secondary'"
-									:data-testid="`pln-plan-action-${row.kind}`"
-									@click="$emit('navigate', row.route)"
-								>
-									{{ row.action }}
-								</button>
-							</div>
-						</div>
-						<p v-if="row.note" class="kt-muted pln-plan-note" data-testid="pln-plan-note">{{ row.note }}</p>
-						<!-- §10.3 U01-CURRENT-UPDATE: the note sits between the two rows. -->
-						<p
-							v-if="index === 0 && planRows.length > 1 && annualPlan.update_note"
-							class="kt-muted pln-plan-note"
-							data-testid="pln-update-note"
-						>
-							{{ annualPlan.update_note }}
-						</p>
-					</template>
-				</template>
 				<!-- U01-NO-PLAN — an empty state, never a Create action. -->
-				<div v-else class="kt-card kt-blueprint pln-plan-empty" data-testid="pln-annual-plan-empty">
-					<p class="kt-meta-value">{{ annualPlan.empty_title }}</p>
-					<p class="kt-muted">{{ annualPlan.empty_text }}</p>
+				<div v-else class="kt-empty" data-testid="pln-annual-plan-empty">
+					<div class="pln-task-title">{{ annualPlan.empty_title }}</div>
+					<p>{{ annualPlan.empty_text }}</p>
 				</div>
 
 				<!-- Immediately below the plan row — the one current issue. -->
-				<div v-if="currentIssue" class="kt-notice is-warning" data-testid="pln-current-issue">
+				<div v-if="currentIssue" class="kt-notice is-warning" style="margin-top: var(--kt-space-5)" data-testid="pln-current-issue">
 					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 						<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
 					</svg>
-					<div class="kt-notice-body pln-notice-split">
-						<span>{{ currentIssue.text }}</span>
+					<div style="flex: 1">
+						<div class="kt-notice-body">{{ currentIssue.text }}</div>
 						<button
 							type="button"
 							class="kt-btn kt-btn-secondary"
+							style="margin-top: var(--kt-space-3)"
 							data-testid="pln-current-issue-action"
 							@click="$emit('navigate', currentIssue.route)"
 						>
@@ -248,7 +235,7 @@
 
 				<!-- A late accepted requirement that no departmental plan could
 				     include: an explanation, never a bypass. -->
-				<div v-if="workspace.not_included" class="kt-notice is-warning" data-testid="pln-not-included">
+				<div v-if="workspace.not_included" class="kt-notice is-warning" style="margin-top: var(--kt-space-5)" data-testid="pln-not-included">
 					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 						<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
 					</svg>
@@ -257,10 +244,28 @@
 						<p>{{ workspace.not_included.text }}</p>
 					</div>
 				</div>
+			</div>
 
-				<!-- Second section — Departmental plans. -->
-				<h3 class="kt-card-title">{{ table.heading }}</h3>
-				<table v-if="table.rows.length" class="kt-table pln-dept-table" data-testid="pln-departmental-table">
+			<!-- U01-CURRENT-UPDATE — the current plan stays visible as a compact
+			     read-only baseline while the update is being reviewed; it keeps
+			     its established testid so it is still findable as "the current
+			     plan row" even though it is no longer the interactive one. -->
+			<div v-if="currentRow && candidateRow" class="kt-region is-secondary" data-testid="pln-plan-row-current">
+				<h2>Current annual procurement plan</h2>
+				<div class="kt-group">
+					<div class="kt-meta-row">
+						<div><span class="kt-label">Plan</span><span style="font-size: 14px">{{ annualPlan.title }}</span></div>
+						<div><span class="kt-label">Reference</span><span style="font-size: 14px">{{ planRowSubtitle(currentRow) }}</span></div>
+						<div><span class="kt-label">Approved value</span><span class="kt-meta-value">{{ factValue(currentRow.facts, 'Approved value') }}</span></div>
+						<div><span class="kt-label">State</span><span class="kt-status is-live">In force</span></div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Second section — Departmental plans, a quieter register. -->
+			<div class="kt-region is-secondary">
+				<h2>{{ table.heading }}</h2>
+				<table v-if="table.rows.length" class="kt-table" data-testid="pln-departmental-table">
 					<thead>
 						<tr>
 							<th v-for="column in table.columns" :key="column" :class="{ 'is-num': isNumeric(column) }">
@@ -278,6 +283,7 @@
 								<a
 									v-if="row.route"
 									href="#"
+									class="kt-btn kt-btn-ghost"
 									data-testid="pln-departmental-open"
 									@click.prevent="$emit('navigate', row.route)"
 								>{{ row.action }}</a>
@@ -286,25 +292,27 @@
 						</tr>
 					</tbody>
 				</table>
-				<p v-else class="kt-muted" data-testid="pln-departmental-empty">{{ table.empty_text }}</p>
-				<p v-if="table.rows.length" class="kt-muted" data-testid="pln-count-label">{{ table.count_label }}</p>
-
-				<!-- Waiting work: neutral read-only text, never a queue with controls. -->
-				<p
-					v-for="(row, index) in workspace.waiting || []"
-					:key="`waiting-${index}`"
-					class="pln-strip-quiet pln-waiting"
-					data-testid="pln-waiting"
-				>
-					{{ row.item }} · {{ row.scope }}
+				<p v-else data-testid="pln-departmental-empty">{{ table.empty_text }}</p>
+				<p v-if="table.rows.length" style="margin: var(--kt-space-3) 0 0; font-size: 13px; color: var(--kt-color-neutral-700)" data-testid="pln-count-label">
+					{{ table.count_label }}
 				</p>
 			</div>
-		</template>
+
+			<!-- Waiting work: neutral read-only text, never a queue with controls. -->
+			<p
+				v-for="(row, index) in workspace.waiting || []"
+				:key="`waiting-${index}`"
+				data-testid="pln-waiting"
+			>
+				{{ row.item }} · {{ row.scope }}
+			</p>
+		</div>
 	</div>
 </template>
 
 <script setup>
 import { computed } from "vue";
+import CommonStates from "./CommonStates.vue";
 
 const props = defineProps({
 	loading: Boolean,
@@ -330,9 +338,11 @@ const actionable = computed(() => props.workspace.actionable || []);
 const header = computed(() => props.workspace.header || { title: "", description: "" });
 const annualPlan = computed(() => props.workspace.annual_plan || {});
 const planRows = computed(() => annualPlan.value.rows || []);
-const planRoute = computed(() =>
-	annualPlan.value.plan_reference ? ["annual-procurement-plan", annualPlan.value.plan_reference] : null,
-);
+const currentRow = computed(() => planRows.value.find((row) => row.kind === "current") || null);
+const candidateRow = computed(() => planRows.value.find((row) => row.kind === "candidate") || null);
+// U01-CURRENT-UPDATE demotes the current plan to a compact read-only summary
+// once a candidate exists; only one row is ever the interactive task row.
+const dominantRow = computed(() => candidateRow.value || currentRow.value || planRows.value.find((row) => row.kind === "draft") || null);
 const currentIssue = computed(() => props.workspace.current_issue || null);
 const ownPlan = computed(() => props.workspace.your_departmental_plan || null);
 const table = computed(() => props.workspace.departmental_table || { columns: [], rows: [] });
@@ -343,6 +353,69 @@ function isNumeric(column) {
 
 function onAction(row) {
 	emit("navigate", row.route);
+}
+
+/** The value beside a labelled fact the server returned as [label, value] pairs. */
+function factValue(facts, label) {
+	const match = (facts || []).find((fact) => fact[0] === label);
+	return match ? match[1] : "";
+}
+
+// §10.3 — the big task-row title names what the row *is*; the server's own
+// "kind" discriminator already carries that meaning, so it is translated
+// here rather than duplicated as a fourth server-side string.
+const PLAN_ROW_TITLE = {
+	draft: "Draft annual procurement plan",
+	current: "Current annual procurement plan",
+	candidate: "Continue plan update",
+};
+
+function planRowTitle(row) {
+	return PLAN_ROW_TITLE[row.kind] || row.kind;
+}
+
+function planRowSubtitle(row) {
+	const version = factValue(row.facts, "Version");
+	if (row.kind === "candidate") return `Version ${version}`;
+	return [annualPlan.value.plan_reference, version && `Version ${version}`].filter(Boolean).join(" · ");
+}
+
+const planStateClass = computed(() => (planRows.value[0]?.kind === "current" ? "is-live" : "is-draft"));
+const planStateLabel = computed(() => (planRows.value[0]?.kind === "current" ? "In force" : "Draft"));
+const annualPlanReference = computed(() => {
+	const version = factValue(planRows.value[0]?.facts, "Version");
+	return [annualPlan.value.plan_reference, version && `Version ${version}`].filter(Boolean).join(" · ");
+});
+const annualPositionNote = computed(() =>
+	planStateClass.value === "is-live"
+		? "This is the plan currently in force."
+		: "The annual procurement plan is being prepared by Procurement. It cannot yet be used to authorise procurement.",
+);
+
+const ownPlanTitle = computed(() => factValue(ownPlan.value?.facts, "Department") && `${factValue(ownPlan.value.facts, "Department")} departmental plan · ${factValue(ownPlan.value.facts, "Financial year")}`);
+const ownPlanNarrative = computed(() => {
+	const status = factValue(ownPlan.value?.facts, "Status");
+	if (status === "Draft") return "Draft — complete the requirements and funding details";
+	return status;
+});
+
+// U01-HOD — the Head of Department's own decision heading names the count;
+// U01-DEPARTMENT-AUTHOR's "Continue departmental plan" work never reaches
+// this region at all (§10.3 routes it through "Your departmental plan").
+const actionableHeading = computed(() => {
+	const n = actionable.value.length;
+	return `${n} departmental plan${n === 1 ? "" : "s"} require${n === 1 ? "s" : ""} your decision`;
+});
+
+function actionTitle(row) {
+	return factValue(row.facts, "Departmental plan") || row.headline;
+}
+
+function actionDescription(row) {
+	if (row.action === "Review departmental plan") {
+		return "Review the complete departmental plan and submit it to Procurement";
+	}
+	return row.supporting;
 }
 
 // The wording is always the server's own literal; only the colour is decided

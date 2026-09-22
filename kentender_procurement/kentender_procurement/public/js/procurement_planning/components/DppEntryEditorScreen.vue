@@ -11,11 +11,11 @@
      plan stays visible. -->
 <template>
 	<div class="pln-entry-editor">
-		<div class="pln-sheet">
-			<div class="pln-masthead">
+		<div class="kt-page">
+			<div class="kt-page-head">
 				<div>
 					<h1 class="kt-page-title" data-testid="dpp-editor-title">{{ isNew ? "Add a requirement" : entry.title }}</h1>
-					<p v-if="isNew" class="kt-page-lede">
+					<p v-if="isNew" class="kt-page-desc">
 						Add a departmental requirement that was not created through Departmental Needs.
 					</p>
 					<p v-else class="kt-muted pln-row-ref" data-testid="dpp-editor-reference">{{ entry.entry_id }}</p>

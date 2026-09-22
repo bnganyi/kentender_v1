@@ -13,8 +13,8 @@
         on the row rather than left for the Planner to work out. -->
 <template>
 	<div>
-		<div class="pln-sheet">
-			<div class="pln-masthead">
+		<div class="kt-page">
+			<div class="kt-page-head">
 				<div>
 					<h1 class="kt-page-title" data-testid="pln-class-title">View accepted requirement classifications</h1>
 				</div>
@@ -35,11 +35,13 @@
 				</div>
 			</div>
 
-			<table class="kt-table" data-testid="pln-class-table">
+			<div class="kt-region">
+				<h2>Accepted classifications</h2>
+				<table class="kt-table" data-testid="pln-class-table">
 				<thead>
 					<tr>
 						<th>Requirement</th>
-						<th>Requirement type</th>
+						<th>Accepted requirement type</th>
 						<th>Category</th>
 						<th>Classified by</th>
 						<th>Classified at</th>
@@ -84,6 +86,7 @@
 				The certified departmental requirement will not change. A correction records a new procurement
 				classification and keeps the earlier decision in history.
 			</p>
+			</div>
 
 			<!-- Whatever already consumed a corrected source, named with its own
 			     recovery route rather than left implicit. -->

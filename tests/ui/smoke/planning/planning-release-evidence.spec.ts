@@ -70,7 +70,7 @@ test.describe("§14 persona pass on the seeded world", () => {
 		await gotoPlanning(page);
 		await expectReady(page, "workspace");
 		await selectSeedYear(page);
-		await expect(page.locator('[data-testid="pln-plan-row-current"]')).toContainText("Current plan");
+		await expect(page.locator('[data-testid="pln-plan-row-current"]')).toContainText("Current annual procurement plan");
 		await expect(page.locator('[data-testid="pln-plan-row-current"]')).toContainText("KES 130,000,000");
 		await expect(page.locator('[data-testid="pln-departmental-table"] tbody tr').first()).toContainText("Digital Health");
 
@@ -118,7 +118,7 @@ test.describe("§14 persona pass on the seeded world", () => {
 			await selectSeedYear(page);
 			await expect(page.locator('[data-testid="pln-action"]')).toHaveCount(0);
 			await expect(page.locator('[data-testid="pln-forbidden"]')).toHaveCount(0);
-			await expect(page.locator('[data-testid="pln-plan-row-current"]')).toContainText("Current plan");
+			await expect(page.locator('[data-testid="pln-plan-row-current"]')).toContainText("Current annual procurement plan");
 		}
 	});
 

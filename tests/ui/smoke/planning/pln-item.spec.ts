@@ -122,7 +122,7 @@ test.describe("PLN18-305 Plan Item editor", () => {
 		await login(page, AUTHOR, PASSWORD);
 		await page.goto(`/app/procurement-plan-item/${state.plan_item_id}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan-item");
-		await expect(page.locator('[data-testid="pln-error"] h3')).toHaveText("This record isn't available to you");
+		await expect(page.locator('[data-testid="pln-error"] h3')).toHaveText("This record is not available to you.");
 	});
 
 	test("an unrelated Author (Outsider) is masked the same way", async ({ page }) => {
@@ -130,7 +130,7 @@ test.describe("PLN18-305 Plan Item editor", () => {
 		await login(page, OUTSIDER, PASSWORD);
 		await page.goto(`/app/procurement-plan-item/${state.plan_item_id}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan-item");
-		await expect(page.locator('[data-testid="pln-error"] h3')).toHaveText("This record isn't available to you");
+		await expect(page.locator('[data-testid="pln-error"] h3')).toHaveText("This record is not available to you.");
 	});
 
 	/**

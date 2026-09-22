@@ -270,10 +270,20 @@ class TestReturn(ValidationCase):
 		frappe.set_user(fx.PLANNER)
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			dpp_validation.return_departmental_plan(
-				task=task.name, issues=[{"entry_id": self.entry_id, "problem": "", "correction": ""}],
+				task=task.name, issues=[{"entry_id": self.entry_id, "correction_required": ""}],
 				task_token=task.task_token, idempotency_key=key(),
 			)
 		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
+
+	def test_return_accepts_a_whole_plan_issue_with_no_entry(self):
+		task = self.submitted_task()
+		frappe.set_user(fx.PLANNER)
+		result = dpp_validation.return_departmental_plan(
+			task=task.name,
+			issues=[{"entry_id": "", "correction_required": "The submitted totals do not reconcile."}],
+			task_token=task.task_token, idempotency_key=key(),
+		)
+		self.assertEqual(result["action"], "returned")
 
 	def test_return_preserves_snapshot_and_creates_the_correction_draft(self):
 		task = self.submitted_task()
@@ -282,8 +292,7 @@ class TestReturn(ValidationCase):
 			task=task.name,
 			issues=[{
 				"entry_id": self.entry_id,
-				"problem": "Amount looks wrong",
-				"correction": "Confirm the indicative amount against the budget line.",
+				"correction_required": "Confirm the indicative amount against the budget line.",
 			}],
 			task_token=task.task_token,
 			idempotency_key=key(),
@@ -314,8 +323,7 @@ class TestReturn(ValidationCase):
 			task=task.name,
 			issues=[{
 				"entry_id": self.entry_id,
-				"problem": "Description too thin",
-				"correction": "Expand the requirement description.",
+				"correction_required": "Expand the requirement description.",
 			}],
 			task_token=task.task_token, idempotency_key=key(),
 		)

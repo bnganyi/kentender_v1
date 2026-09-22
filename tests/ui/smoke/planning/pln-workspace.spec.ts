@@ -148,7 +148,7 @@ test.describe("PLN18-302 Procurement Planning workspace", () => {
 
 		await gotoPlanning(page);
 		const error = page.locator('[data-testid="pln-error"]');
-		await expect(error.locator("h3")).toHaveText("Procurement Planning could not be loaded");
+		await expect(error.locator("h3")).toHaveText("Procurement Planning could not be loaded.");
 		await expect(error).toContainText("Support reference:");
 
 		await error.locator("button").click();

@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { login, loginAsAdministrator } from "../../helpers/auth";
-import { LandmarkExemption, expectLandmarkSubsequence, landmarks, onceEach, openPanel, variantScope } from "../../helpers/designFidelity";
+import { LandmarkExemption, expectLandmarkSubsequence, landmarks, onceEach, openSection } from "../../helpers/designFidelity";
 import {
 	ACCOUNTING_OFFICER,
 	AUTHOR,
@@ -20,115 +20,107 @@ import {
 } from "../planning/helpers";
 
 /**
- * Procurement Planning design-fidelity gate — PLN-CHG-001 v1.23.
+ * Procurement Planning design-fidelity gate — PLN-CHG-001 v1.24 (Stage 2,
+ * KT-STD-001 v1.7).
  *
- * Rewritten from scratch for v1.23: the v1.18 artboard files this spec used to
- * compare against are retired, and the v1.23 files have a different shape —
- * one labelled panel per variant rather than `.frame`/`.caption` pairs, with
- * several variants often drawn side by side in one panel. `openPanel` and
- * `variantScope` in the shared helper index them.
+ * Re-pointed for v1.24: the v1.23 per-screen artboard files (and their
+ * positioned-label panel/tag convention) are retired, replaced by 10 bundled
+ * `Artboards-*.dc.html` files. Several screen families now share one file
+ * (U07+U08, U12+U13, U14+U16, and C01–C04+U21), and every variant is its own
+ * `<section id="EXACT-SPEC-ID">` — `openSection` in the shared helper opens
+ * one directly, with no panel/tag indexing step.
  *
  * The instrument is unchanged and deliberately narrow: the artboard's ordered
- * landmark texts (card titles, field labels, table headers, buttons) must
- * appear in that order in the live page. Extra live landmarks are allowed.
- * Values are never compared — the fixture year and the artboard's fixture are
- * different worlds on purpose.
+ * landmark texts (card/region titles, field labels, table headers, buttons)
+ * must appear in that order in the live page. Extra live landmarks are
+ * allowed. Values are never compared — the fixture year and the artboard's
+ * fixture are different worlds on purpose.
  *
  * What is asserted here is what the Playwright fixture chain can actually put
  * the live screen into. Variants needing a state no fixture builds are named
  * in their family's own comment with where they are covered instead, rather
  * than silently omitted — a fidelity gate that quietly skips half its frames
- * is worse than one that says which half.
+ * is worse than one that says which half. A handful of named variants are
+ * themselves "awaiting fixture" placeholders in the v1.24 pack (dashed-border
+ * boxes, not finished mockups) — those are marked `test.fixme` here with the
+ * screen-family slice that owns resolving them, per the Planning UI-fidelity
+ * implementation plan.
  */
 
 const DESIGN = "docs/mvp-1-r1/04_planning/design";
 const LIVE = ".kt-pln .kt-shell";
 
-const U01 = `${DESIGN}/U01.dc.html`;
-const U0205 = `${DESIGN}/U02-U05.dc.html`;
-const U06 = `${DESIGN}/U06.dc.html`;
-const U07 = `${DESIGN}/U07.dc.html`;
-const U08 = `${DESIGN}/U08.dc.html`;
-const U09 = `${DESIGN}/U09.dc.html`;
-const U10 = `${DESIGN}/U10.dc.html`;
-const U11 = `${DESIGN}/U11.dc.html`;
-const U12 = `${DESIGN}/U12.dc.html`;
-const U13 = `${DESIGN}/U13.dc.html`;
-const U14 = `${DESIGN}/U14.dc.html`;
-const U16 = `${DESIGN}/U16.dc.html`;
-const U21 = `${DESIGN}/U21.dc.html`;
+const U01 = `${DESIGN}/Artboards-U01.dc.html`;
+const U0205 = `${DESIGN}/Artboards-U02-U05.dc.html`;
+const U06 = `${DESIGN}/Artboards-U06.dc.html`;
+const U07 = `${DESIGN}/Artboards-U07-U08.dc.html`;
+const U08 = U07; // same bundled file
+const U09 = `${DESIGN}/Artboards-U09.dc.html`;
+const U10 = `${DESIGN}/Artboards-U10.dc.html`;
+const U11 = `${DESIGN}/Artboards-U11.dc.html`;
+const U12 = `${DESIGN}/Artboards-U12-U13.dc.html`;
+const U13 = U12; // same bundled file
+const U14 = `${DESIGN}/Artboards-U14-U16.dc.html`;
+const U16 = U14; // same bundled file
+const U21 = `${DESIGN}/Artboards-C01-U21.dc.html`;
 
 /**
- * Landmarks the v1.23 specification replaced but the v1.23 artboard pack still
- * draws. The code follows the specification, so the gate excuses these and says
- * which section retired them; refreshing the artboard is what removes the
- * exemption, because an exemption for a landmark the artboard no longer draws
- * fails as stale. Tracked as FU-V123-01 and FU-V123-05.
+ * §10.2's fixture pairs "no annual plan yet" with two departmental
+ * submissions already Accepted and awaiting Procurement review, so
+ * U01-NO-PLAN's Departmental plans table has rows. `reset_workspace_fixture`
+ * builds the no-plan state alone, with no departmental submissions at all —
+ * a real coverage gap, not a markup defect: the same table headers render
+ * correctly (with rows) in every other U01 test against this exact
+ * component. Exempted here rather than left to fail on a fixture the
+ * Playwright chain does not build; a fixture that adds two Accepted DPPs
+ * without an Annual Plan removes this exemption.
  */
-const U11_DECISION_TABLE: LandmarkExemption[] = ["Decision", "Outcome", "Capacity", "Person", "Date/time"].map(
+const U01_NO_PLAN_TABLE: LandmarkExemption[] = ["Department", "Status", "Requirements", "Estimated cost", "Action"].map(
 	(landmark) => ({
 		landmark,
-		because:
-			"§10.10 replaced this decision-history table above the decision with the Accountability section (Funding, Preparation) plus a collapsed Changes and history disclosure.",
-	})
+		because: "reset_workspace_fixture builds no departmental submissions; §10.2's own fixture pairs no-plan-yet with two Accepted ones.",
+	}),
 );
 
-const U14_EXECUTION_COLUMNS: LandmarkExemption[] = [
-	{
-		landmark: "Procurements started",
-		because: "§10.13 names this column Procurement stage.",
-	},
-	{
-		landmark: "Completion",
-		because:
-			"§10.13: do not create a Completion column unless an owning module supplies authoritative completion evidence. None does.",
-	},
-];
-
 /**
- * §10.9's main comparison is "Budget line; Line name; Approved amount; Planned
- * amount; Difference; Result; Action". The U10-OVER-APPROVED artboard draws
- * §10.10's shorter funding-evidence headings instead — a different table.
+ * U06-ACCEPTED-CLASSIFICATION adds a secondary region naming the draft
+ * purchase a classification formed, when it formed and whether any submitted
+ * or Active plan already uses it. `GetAcceptedDPPClassification` (§7.1) has no
+ * such field — it returns `affected.recovery` for the unrelated correction-
+ * impact notices, not a formed-purchase reference or timestamp for the
+ * unmodified row — so this cannot be rendered without inventing a value. A
+ * genuine gap, not a markup defect; flagged for the module owner rather than
+ * silently built from guessed data. Removing the exemption is what closing it
+ * looks like, once the read service supplies the field.
  */
-const U10_SHORT_HEADINGS: LandmarkExemption[] = [
-	{ landmark: "Approved", because: "§10.9's main comparison names the column Approved amount." },
-	{ landmark: "Planned", because: "§10.9's main comparison names the column Planned amount." },
-];
-
-/** §10.8 renamed these; the U09 artboards still carry the older wording. */
-const U09_SCHEDULE_LABELS: LandmarkExemption[] = [
-	{ landmark: "Estimated period", because: "§10.8 Dates names it Expected delivery period." },
-	{ landmark: "Estimated completion", because: "§10.8 Dates names it Expected completion." },
-	{ landmark: "Departmental required-by date", because: "§10.8 Dates names it Departmental deadline." },
-	{ landmark: "Review schedule", because: "§10.8 U09-INVALID-SCHEDULE names the action Review dates." },
-];
-
-const U09_REMOVE_ACTION: LandmarkExemption[] = [
-	{
-		landmark: "Remove item and return requirements",
-		because:
-			"§10.8 U09-REMOVE heads the dialog Remove this purchase? and names its primary action Remove purchase.",
-	},
-];
-
-// U13 draws three withdrawal/correction variants side by side under one label;
-// `variantScope` picks the one wanted by its `.tag`.
-const WITHDRAWAL_PANEL = "U13-WITHDRAWAL-REQUEST \u00b7 U13-WITHDRAWN \u00b7 U13-CORRECT-EVIDENCE";
-const TRANSMISSION_PANEL = "U13-SENDING \u00b7 U13-FAILED \u00b7 U13-UNKNOWN";
-const LATE_PANEL = "U21-UNCERTAIN-DECISION \u00b7 U21-HISTORICAL \u00b7 U21-LATE-ACTIVATION";
+const U06_DRAFT_PURCHASE_REGION: LandmarkExemption[] = [
+	"Draft purchase formed from this classification",
+	"Purchase",
+	"Formed at",
+	"Plan use",
+].map((landmark) => ({
+	landmark,
+	because: "GetAcceptedDPPClassification supplies no formed-purchase reference, timestamp or plan-use fact for this row; not invented here.",
+}));
 
 // Sequential, but not serial: the gate runs on one worker because the fixtures
-// are one shared world, and each panel is an independent assertion about an
+// are one shared world, and each section is an independent assertion about an
 // independent screen. Aborting the remaining twenty because the tenth found a
 // missing label turns a full report into one finding per half-hour run.
 test.describe.configure({ timeout: 180_000 });
 
-/** Render one artboard panel and hand back its ordered landmarks. */
-async function wanted(browser: any, file: string, panel: string, variant?: string): Promise<string[]> {
+/**
+ * Render one artboard section and hand back its ordered landmarks. A section
+ * drawing a focused dialog over a dimmed page (U08 and its siblings) scopes
+ * both together, so `subScope` narrows to the dialog alone — matching a live
+ * test that (rightly) only asserts the dialog's own fidelity, since the page
+ * behind it is a different screen's own test.
+ */
+async function wanted(browser: any, file: string, id: string, subScope = ""): Promise<string[]> {
 	const art = await browser.newPage();
 	try {
-		const scope = await openPanel(art, file, panel);
-		return await landmarks(art, variant ? await variantScope(art, scope, variant) : scope);
+		const scope = await openSection(art, file, id);
+		return await landmarks(art, subScope ? `${scope} ${subScope}` : scope);
 	} finally {
 		await art.close();
 	}
@@ -144,7 +136,7 @@ test.describe("Procurement Planning — design fidelity (U01 workspace)", () => 
 		await login(page, PLANNER, PASSWORD);
 		await gotoPlanning(page);
 		await expectReady(page, "workspace");
-		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U01-NO-PLAN");
+		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U01-NO-PLAN", U01_NO_PLAN_TABLE);
 		expect(errors, "console errors").toEqual([]);
 	});
 
@@ -168,10 +160,13 @@ test.describe("Procurement Planning — design fidelity (U01 workspace)", () => 
 		await expectReady(page, "workspace");
 		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U01-CURRENT-UPDATE");
 		// §9.1 — the plan in force and the candidate are separate rows, each
-		// saying what it is; they are never merged into one.
+		// saying what it is; they are never merged into one. §10.3 v1.24 demotes
+		// the plan in force to a compact read-only baseline once a candidate
+		// exists — it keeps its own region but loses the interactive
+		// "View procurement progress" link the dominant row alone carries.
 		await expect(page.locator('[data-testid="pln-plan-row-current"]')).toBeVisible();
+		await expect(page.locator('[data-testid="pln-plan-row-current"]')).toContainText("In force");
 		await expect(page.locator('[data-testid="pln-plan-row-candidate"]')).toBeVisible();
-		await expect(page.locator('[data-testid="pln-plan-secondary-current"]')).toBeVisible();
 		expect(errors, "console errors").toEqual([]);
 	});
 
@@ -262,7 +257,7 @@ test.describe("Procurement Planning — design fidelity (U06 validation)", () =>
 
 	test("U06 — the submission as the Planner reads it, with its classification input", async ({ page, browser }) => {
 		const state = resetFixture<{ task: string }>("reset_review_fixture");
-		const art = await wanted(browser, U06, "U06 — BASE");
+		const art = await wanted(browser, U06, "U06");
 		const errors = collectConsoleErrors(page);
 		await login(page, PLANNER, PASSWORD);
 		await gotoPlanning(page, `/dpp-review/${state.task}`);
@@ -289,7 +284,7 @@ test.describe("Procurement Planning — design fidelity (U06 validation)", () =>
 		await login(page, PLANNER, PASSWORD);
 		await gotoPlanning(page, `/dpp-classification/${state.dpp_submission}`);
 		await expectReady(page, "dpp-classification");
-		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U06-ACCEPTED-CLASSIFICATION");
+		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U06-ACCEPTED-CLASSIFICATION", U06_DRAFT_PURCHASE_REGION);
 		expect(errors, "console errors").toEqual([]);
 	});
 });
@@ -299,7 +294,7 @@ test.describe("Procurement Planning — design fidelity (U07 annual plan, U08 fo
 
 	test("U07 — purchases first, then the plan's own checks", async ({ page, browser }) => {
 		const state = resetFixture<{ plan_reference: string }>("reset_plan_item_fixture");
-		const art = await wanted(browser, U07, "U07 — BASE");
+		const art = await wanted(browser, U07, "U07");
 		const errors = collectConsoleErrors(page);
 		await login(page, PLANNER, PASSWORD);
 		await page.setViewportSize({ width: 1440, height: 1024 });
@@ -331,7 +326,7 @@ test.describe("Procurement Planning — design fidelity (U07 annual plan, U08 fo
 		// only exists with more than one selected, which is what the artboard
 		// draws — so this variant needs a world with two unallocated sources.
 		const state = resetFixture<{ plan_reference: string }>("reset_combinable_sources_fixture");
-		const art = await wanted(browser, U08, "U08-COMBINE (base)");
+		const art = await wanted(browser, U08, "U08", ".dialog");
 		const errors = collectConsoleErrors(page);
 		await login(page, PLANNER, PASSWORD);
 		await page.setViewportSize({ width: 1440, height: 1024 });
@@ -361,7 +356,7 @@ test.describe("Procurement Planning — design fidelity (U09 purchase editor)", 
 
 	test("U09 — the five decision sections and nothing else", async ({ page, browser }) => {
 		const state = resetFixture<{ plan_item_id: string }>("reset_plan_item_fixture");
-		const art = await wanted(browser, U09, "U09 — BASE");
+		const art = await wanted(browser, U09, "U09");
 		const errors = collectConsoleErrors(page);
 		await login(page, PLANNER, PASSWORD);
 		await page.setViewportSize({ width: 1440, height: 1024 });
@@ -383,9 +378,9 @@ test.describe("Procurement Planning — design fidelity (U10 funding review)", (
 		await page.setViewportSize({ width: 1440, height: 1024 });
 		await page.goto(`/app/procurement-plan-item/${state.plan_item_id}`);
 		await expectReady(page, "plan-item");
-		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U09-INVALID-SCHEDULE", U09_SCHEDULE_LABELS);
-		// The artboard lags §10.8 here, so assert the section's own words too —
-		// otherwise the exemptions would leave almost nothing being checked.
+		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U09-INVALID-SCHEDULE");
+		// §10.8's own words, asserted directly as well as through the landmark
+		// sequence above.
 		for (const label of ["Expected delivery period", "Expected completion", "Departmental deadline"]) {
 			await expect(page.locator(LIVE)).toContainText(label);
 		}
@@ -395,7 +390,7 @@ test.describe("Procurement Planning — design fidelity (U10 funding review)", (
 
 	test("U09-REMOVE — what removing a purchase says it will do to its requirements", async ({ page, browser }) => {
 		const state = resetFixture<{ plan_item_id: string }>("reset_plan_item_fixture");
-		const art = await wanted(browser, U09, "U09-REMOVE");
+		const art = await wanted(browser, U09, "U09-REMOVE", ".dialog");
 		const errors = collectConsoleErrors(page);
 		await login(page, PLANNER, PASSWORD);
 		await page.setViewportSize({ width: 1440, height: 1024 });
@@ -404,7 +399,7 @@ test.describe("Procurement Planning — design fidelity (U10 funding review)", (
 		await page.locator('[data-testid="ppi-remove"]').click();
 		const dialog = page.locator('[data-testid="pln-dissolve-item-dialog"]');
 		await expect(dialog).toBeVisible();
-		expectLandmarkSubsequence(art, await landmarks(page, '[data-testid="pln-dissolve-item-dialog"]'), "U09-REMOVE", U09_REMOVE_ACTION);
+		expectLandmarkSubsequence(art, await landmarks(page, '[data-testid="pln-dissolve-item-dialog"]'), "U09-REMOVE");
 		// §10.8's own copy, which the artboard has not caught up with.
 		await expect(dialog).toContainText("Remove this purchase?");
 		await expect(dialog).toContainText("These requirements will return to this draft plan so they can be added again. No funds are released.");
@@ -414,7 +409,7 @@ test.describe("Procurement Planning — design fidelity (U10 funding review)", (
 
 	test("U10 — approved, planned, difference and the result", async ({ page, browser }) => {
 		const state = resetFixture<{ task: string }>("reset_finance_fixture");
-		const art = await wanted(browser, U10, "U10 — BASE (within approved)");
+		const art = await wanted(browser, U10, "U10");
 		const errors = collectConsoleErrors(page);
 		await login(page, FINANCE, PASSWORD);
 		await gotoPlanning(page, `/finance/${state.task}`);
@@ -430,7 +425,7 @@ test.describe("Procurement Planning — design fidelity (U10 funding review)", (
 		await login(page, FINANCE, PASSWORD);
 		await gotoPlanning(page, `/finance/${state.task}`);
 		await expectReady(page, "finance");
-		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U10-OVER-APPROVED", U10_SHORT_HEADINGS);
+		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U10-OVER-APPROVED");
 		// §10.9's own headings, which this artboard borrowed from another table.
 		for (const heading of ["Approved amount", "Planned amount", "Difference", "Result"]) {
 			await expect(page.locator(LIVE)).toContainText(heading);
@@ -445,7 +440,7 @@ test.describe("Procurement Planning — design fidelity (U10 funding review)", (
 
 	test("U10-RETURN — the correction Finance is asking for", async ({ page, browser }) => {
 		const state = resetFixture<{ task: string }>("reset_finance_excess_fixture");
-		const art = await wanted(browser, U10, "U10-RETURN");
+		const art = await wanted(browser, U10, "U10-RETURN", ".dialog");
 		const errors = collectConsoleErrors(page);
 		await login(page, FINANCE, PASSWORD);
 		await gotoPlanning(page, `/finance/${state.task}`);
@@ -457,6 +452,12 @@ test.describe("Procurement Planning — design fidelity (U10 funding review)", (
 	});
 
 	test("U10-REASSESS — checking the same plan again on a new basis", async ({ page, browser }) => {
+		// `U10-REASSESS` is an "awaiting fixture" placeholder in the v1.24 pack
+		// (Artboards-U10.dc.html — a dashed-border box, not a finished mockup),
+		// so there is no real design to compare against yet. Resolving this is
+		// slice 1f's job in the Planning UI-fidelity implementation plan, not
+		// this harness re-point.
+		test.fixme(true, "U10-REASSESS has no finished v1.24 design yet — see plan slice 1f");
 		const state = resetFixture<{ task: string }>("reset_finance_reassessment_fixture");
 		const art = await wanted(browser, U10, "U10-REASSESS");
 		const errors = collectConsoleErrors(page);
@@ -496,6 +497,12 @@ test.describe("Procurement Planning — design fidelity (U11 governance, U12 evi
 		await login(page, ACCOUNTING_OFFICER, PASSWORD);
 		await gotoPlanning(page, `/review/${state.task}`);
 		await expectReady(page, "governance");
+		// The artboard's own caption: "One purchase is shown open to picture the
+		// single drill-down level; no purchase opens automatically" — so open one
+		// deliberately, matching what the artboard depicts, rather than asserting
+		// against a state the live page never reaches on its own.
+		await page.locator('[data-testid="rev-review-purchase"]').first().click();
+		await expect(page.locator('[data-testid="rev-purchase-detail"]').first()).toBeVisible();
 		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U11-AO");
 		expect(errors, "console errors").toEqual([]);
 	});
@@ -507,7 +514,7 @@ test.describe("Procurement Planning — design fidelity (U11 governance, U12 evi
 		await login(page, STATUTORY, PASSWORD);
 		await gotoPlanning(page, `/review/${state.task}`);
 		await expectReady(page, "governance");
-		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U11-STATUTORY", U11_DECISION_TABLE);
+		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U11-STATUTORY");
 		expect(errors, "console errors").toEqual([]);
 	});
 
@@ -515,6 +522,12 @@ test.describe("Procurement Planning — design fidelity (U11 governance, U12 evi
 		// §13.3's isolated collective profile: one site-wide route, put back by
 		// restore_site. The decision belongs to the Council; the actor only
 		// records it, and must supply the resolution it was taken under.
+		//
+		// `U11-COLLECTIVE` is itself an "awaiting fixture" placeholder in the
+		// v1.24 pack (Artboards-U11.dc.html) — no finished mockup exists yet.
+		// Resolving this is slice 1g's job in the Planning UI-fidelity
+		// implementation plan, not this harness re-point.
+		test.fixme(true, "U11-COLLECTIVE has no finished v1.24 design yet — see plan slice 1g");
 		const state = resetFixture<{ task: string }>("reset_collective_fixture");
 		const art = await wanted(browser, U11, "U11-COLLECTIVE");
 		const errors = collectConsoleErrors(page);
@@ -529,7 +542,7 @@ test.describe("Procurement Planning — design fidelity (U11 governance, U12 evi
 
 	test("U12 — the exact departmental requirement behind one reviewed source", async ({ page, browser }) => {
 		const state = resetFixture<{ task: string }>("reset_governance_fixture");
-		const art = await wanted(browser, U12, "U12 — Pinned source (base)");
+		const art = await wanted(browser, U12, "U12");
 		const errors = collectConsoleErrors(page);
 		await login(page, ACCOUNTING_OFFICER, PASSWORD);
 		await gotoPlanning(page, `/review/${state.task}`);
@@ -571,7 +584,7 @@ test.describe("Procurement Planning — design fidelity (U13 publication)", () =
 
 	test("U21-LATE-ACTIVATION — why the plan started late, said once and kept", async ({ page, browser }) => {
 		const state = resetFixture<{ publication: string }>("reset_late_activation_fixture");
-		const art = await wanted(browser, U21, LATE_PANEL, "U21-LATE-ACTIVATION");
+		const art = await wanted(browser, U21, "U21-LATE-ACTIVATION", ".dialog");
 		const errors = collectConsoleErrors(page);
 		await login(page, ACCOUNTING_OFFICER, PASSWORD);
 		await gotoPlanning(page, `/publication/${state.publication}`);
@@ -588,7 +601,7 @@ test.describe("Procurement Planning — design fidelity (U13 publication)", () =
 
 	test("U13-UNKNOWN — an unconfirmed result is neither success nor failure", async ({ page, browser }) => {
 		const state = resetFixture<{ publication: string }>("reset_publication_unknown_fixture");
-		const art = await wanted(browser, U13, TRANSMISSION_PANEL, "U13-UNKNOWN");
+		const art = await wanted(browser, U13, "U13-UNKNOWN");
 		const errors = collectConsoleErrors(page);
 		// §10.12 — reconciling an unknown result is the technical operator's,
 		// and a technical read alone never creates retry authority, so the
@@ -613,7 +626,7 @@ test.describe("Procurement Planning — design fidelity (U13 publication)", () =
 
 	test("U13-CORRECT-EVIDENCE — the same route once a submission already exists", async ({ page, browser }) => {
 		const state = resetFixture<{ publication: string }>("reset_publication_failed_fixture");
-		const art = await wanted(browser, U13, WITHDRAWAL_PANEL, "U13-CORRECT-EVIDENCE");
+		const art = await wanted(browser, U13, "U13-CORRECT-EVIDENCE");
 		const errors = collectConsoleErrors(page);
 		await login(page, ACCOUNTING_OFFICER, PASSWORD);
 		await gotoPlanning(page, `/publication/${state.publication}`);
@@ -630,7 +643,7 @@ test.describe("Procurement Planning — design fidelity (U14 progress, U16 corre
 
 	test("U14 — planned, covered and what has started", async ({ page, browser }) => {
 		const state = resetFixture<{ plan_reference: string }>("reset_active_fixture");
-		const art = await wanted(browser, U14, "U14 — BASE (initial)");
+		const art = await wanted(browser, U14, "U14");
 		const errors = collectConsoleErrors(page);
 		await login(page, PLANNER, PASSWORD);
 		await page.setViewportSize({ width: 1440, height: 1024 });
@@ -640,7 +653,7 @@ test.describe("Procurement Planning — design fidelity (U14 progress, U16 corre
 		// two; this world has one. How many purchases a world holds is fixture
 		// content, and this gate never compares fixture content — so the card's
 		// own structure is compared once.
-		expectLandmarkSubsequence(onceEach(art), await landmarks(page, LIVE), "U14", U14_EXECUTION_COLUMNS);
+		expectLandmarkSubsequence(onceEach(art), await landmarks(page, LIVE), "U14");
 		// PLN22-AC-009 — the absence is the acceptance criterion.
 		await expect(page.locator(LIVE)).not.toContainText("Completion");
 		await expect(page.locator(LIVE)).not.toContainText("Forecast");

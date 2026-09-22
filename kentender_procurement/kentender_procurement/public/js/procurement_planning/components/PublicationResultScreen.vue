@@ -13,16 +13,16 @@
      access alone grants neither. -->
 <template>
 	<div>
-		<div class="pln-sheet">
-			<div class="pln-masthead pln-masthead-split">
+		<div class="kt-page">
+			<div class="kt-page-head">
 				<div>
 					<h1 class="kt-page-title" data-testid="pub-title">Complete publication of the annual plan</h1>
-					<p class="kt-page-lede">
+					<p class="kt-page-desc">
 						Record when the approved plan was sent to the National Treasury and attach the submission evidence.
 					</p>
 				</div>
-				<div class="pln-header-actions">
-					<button type="button" class="kt-btn kt-btn-secondary" data-testid="pub-view-plan" @click="$emit('navigate', ['annual-procurement-plan', task.plan_reference])">
+				<div class="kt-page-actions">
+					<button type="button" class="kt-btn kt-btn-ghost" data-testid="pub-view-plan" @click="$emit('navigate', ['annual-procurement-plan', task.plan_reference])">
 						View approved plan
 					</button>
 				</div>
@@ -46,17 +46,19 @@
 			</div>
 
 			<!-- The four facts, each with its own label and state. -->
-			<div class="kt-timeline" data-testid="pub-status">
-				<div v-for="(row, index) in statusRows" :key="row.label" class="kt-timeline-row" data-testid="pub-status-row">
-					<div class="kt-timeline-dot-col">
-						<i class="kt-timeline-dot" :class="`is-${row.kind}`"></i>
-						<i v-if="index < statusRows.length - 1" class="kt-timeline-line"></i>
-					</div>
-					<div class="kt-timeline-item">
-						<div class="kt-timeline-item-title">{{ row.label }}</div>
-						<div class="kt-timeline-item-meta">{{ row.state }}</div>
-					</div>
-				</div>
+			<div class="kt-region">
+				<h2>Publication status</h2>
+				<table class="kt-table" data-testid="pub-status">
+					<thead>
+						<tr><th>Step</th><th>State</th></tr>
+					</thead>
+					<tbody>
+						<tr v-for="row in statusRows" :key="row.label" data-testid="pub-status-row">
+							<td>{{ row.label }}</td>
+							<td><span class="kt-status" :class="`is-${row.kind}`">{{ row.state }}</span></td>
+						</tr>
+					</tbody>
+				</table>
 			</div>
 
 			<!-- Recorded Treasury evidence, in full, once it exists. -->
@@ -81,7 +83,7 @@
 
 			<!-- U13-WITHDRAWAL-REQUEST — a request that is open is its own state,
 			     and the person who asked is named in it. -->
-			<div v-if="task.withdrawal_request" class="kt-notice is-attention" data-testid="pub-withdrawal-state">
+			<div v-if="task.withdrawal_request" class="kt-notice is-warning" data-testid="pub-withdrawal-state">
 				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 					<circle cx="12" cy="12" r="9"></circle><path d="M12 8h.01M11 12h1v5h1"></path>
 				</svg>
@@ -107,7 +109,7 @@
 			</div>
 
 			<!-- U13-UNKNOWN — said as uncertainty, with reconciliation first. -->
-			<div v-if="task.publication_state === 'Indeterminate'" class="kt-notice is-attention" data-testid="pub-unknown">
+			<div v-if="task.publication_state === 'Indeterminate'" class="kt-notice is-warning" data-testid="pub-unknown">
 				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 					<circle cx="12" cy="12" r="9"></circle><path d="M12 8h.01M11 12h1v5h1"></path>
 				</svg>
@@ -200,8 +202,8 @@
 			     plan only became active after the financial year began. The facts
 			     are stated read-only; the explanation never moves the activation
 			     instant it explains, and earlier ones are kept, not replaced. -->
-			<section v-if="lateActivation.applicable" class="pln-section" data-testid="pub-late-activation">
-				<h3 class="kt-card-title">Late start of the annual plan</h3>
+			<section v-if="lateActivation.applicable" class="kt-region" data-testid="pub-late-activation">
+				<h2>Late start of the annual plan</h2>
 				<div class="kt-meta-row">
 					<div>
 						<span class="kt-label">Financial year started</span>

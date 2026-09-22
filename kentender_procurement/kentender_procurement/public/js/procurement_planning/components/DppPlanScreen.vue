@@ -12,11 +12,11 @@
      a disclosure (§10.4 U03-EXCLUDED-ROW). -->
 <template>
 	<div>
-		<div class="pln-sheet">
-			<div class="pln-masthead">
+		<div class="kt-page">
+			<div class="kt-page-head">
 				<div>
 					<h1 class="kt-page-title" data-testid="pln-dpp-title">{{ heading.title }}</h1>
-					<p class="kt-page-lede">{{ heading.description }}</p>
+					<p class="kt-page-desc">{{ heading.description }}</p>
 				</div>
 			</div>
 
@@ -55,6 +55,23 @@
 				<div class="kt-notice-body">Your plan needs a correction</div>
 			</div>
 
+			<!-- §4.4 — a returned issue against the whole submission rather
+			     than one requirement. -->
+			<div
+				v-for="(issue, index) in plan.plan_issues || []"
+				:key="`plan-issue-${index}`"
+				class="kt-notice is-warning"
+				data-testid="pln-dpp-plan-issue"
+			>
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+					<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
+				</svg>
+				<div class="kt-notice-body">
+					<strong>What needs to change?</strong>
+					<p>{{ issueText(issue) }}</p>
+				</div>
+			</div>
+
 			<div v-if="plan.update_notice" class="kt-notice is-warning" data-testid="pln-dpp-update-notice">
 				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 					<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
@@ -75,23 +92,20 @@
 
 			<!-- Summary strip. The Author's cost label says "entered so far" because
 			     that is what it is: no complete departmental total exists yet. -->
-			<div class="kt-kpi-row" data-testid="pln-dpp-summary">
-				<div class="kt-kpi-card">
-					<div class="kt-kpi-value">{{ summary.requirements }}</div>
-					<div class="kt-kpi-sub">Requirements</div>
-				</div>
-				<div class="kt-kpi-card">
-					<div class="kt-kpi-value">{{ summary.cost }}</div>
-					<div class="kt-kpi-sub">{{ summary.cost_label }}</div>
-				</div>
-				<div class="kt-kpi-card" :class="{ 'is-attention': summary.attention }">
-					<div class="kt-kpi-value">{{ summary.third }}</div>
-					<div class="kt-kpi-sub">{{ summary.third_label }}</div>
+			<div class="kt-group" data-testid="pln-dpp-summary">
+				<div class="kt-meta-row">
+					<div><span class="kt-label">Requirements</span><span class="kt-meta-value">{{ summary.requirements }}</span></div>
+					<div><span class="kt-label">{{ summary.cost_label }}</span><span class="kt-meta-value">{{ summary.cost }}</span></div>
+					<div>
+						<span class="kt-label">{{ summary.third_label }}</span>
+						<span class="kt-meta-value" :style="summary.attention ? 'color:var(--kt-status-attention)' : ''">{{ summary.third }}</span>
+					</div>
 				</div>
 			</div>
 
-			<h3 class="kt-card-title">Requirements</h3>
-			<table class="kt-table pln-dpp-table" data-testid="pln-dpp-table">
+			<div class="kt-region">
+				<h2>Requirements</h2>
+				<table class="kt-table pln-dpp-table" data-testid="pln-dpp-table">
 				<thead>
 					<tr>
 						<th>Requirement</th>
@@ -119,6 +133,7 @@
 								<a
 									v-if="row.action"
 									href="#"
+									class="kt-btn kt-btn-ghost"
 									data-testid="pln-dpp-row-action"
 									@click.prevent="onRowAction(row)"
 								>{{ row.action }}</a>
@@ -158,7 +173,7 @@
 						<tr v-for="(issue, index) in row.issues || []" :key="`${row.entry_id}-issue-${index}`" class="pln-row-detail" data-testid="pln-dpp-issue">
 							<td colspan="7">
 								<span class="kt-label">What needs to change?</span>
-								<span>{{ issue.correction || issue.problem }}</span>
+								<span>{{ issueText(issue) }}</span>
 							</td>
 						</tr>
 					</template>
@@ -166,28 +181,28 @@
 						<td colspan="7" class="kt-muted" data-testid="pln-dpp-empty">No requirements yet.</td>
 					</tr>
 				</tbody>
-			</table>
+				</table>
 
-			<div v-if="plan.mutable" class="pln-dpp-add">
-				<button type="button" class="kt-btn kt-btn-ghost" data-testid="pln-dpp-add" @click="$emit('add-direct')">
-					Add a requirement
-				</button>
+				<div v-if="plan.mutable" class="pln-dpp-add">
+					<button type="button" class="kt-btn kt-btn-secondary" data-testid="pln-dpp-add" @click="$emit('add-direct')">
+						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+						Add a requirement
+					</button>
+				</div>
 			</div>
 
 			<!-- U05-CORRECTION's "For your next departmental update": named, and
 			     deliberately without an add action — the correction comes first. -->
-			<template v-if="plan.is_correction">
-				<h3 class="kt-card-title">For your next departmental update</h3>
-				<p class="kt-muted" data-testid="pln-dpp-next-update">
+			<div v-if="plan.is_correction" class="kt-region is-secondary">
+				<h2>For your next departmental update</h2>
+				<p data-testid="pln-dpp-next-update">
 					Finish this correction first. New requirements belong in the next update.
 				</p>
-			</template>
+			</div>
 
 			<!-- Certification: the HoD's, on the complete plan, on this page. -->
-			<div v-if="certification.show" class="kt-card kt-blueprint pln-certification" data-testid="pln-dpp-certification">
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-card-title">Certification</div>
+			<div v-if="certification.show" class="kt-decision" data-testid="pln-dpp-certification">
+				<h2 style="font-family: var(--kt-font-heading); font-size: 21px; margin: 0 0 var(--kt-space-3)">Certification</h2>
 				<p class="kt-muted">{{ certification.text }}</p>
 				<label class="kt-checkbox">
 					<input
@@ -363,5 +378,13 @@ function onRowAction(row) {
 		return;
 	}
 	emit("open-entry", row);
+}
+
+// §4.4 — a new issue carries one comment; a historical decision still carries
+// the retired two-field shape, and both facts of it are shown rather than one
+// discarded.
+function issueText(issue) {
+	if (issue.correction_required) return issue.correction_required;
+	return [issue.problem, issue.correction].filter(Boolean).join(" — ");
 }
 </script>

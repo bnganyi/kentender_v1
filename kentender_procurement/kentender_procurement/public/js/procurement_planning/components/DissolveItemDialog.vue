@@ -7,7 +7,7 @@
      where its requirements go and whether any money moves. Both are stated. -->
 <template>
 	<div class="kt-dialog-backdrop" data-testid="pln-dissolve-item-dialog">
-		<div class="kt-dialog" role="dialog" aria-modal="true" aria-labelledby="pln-dissolve-item-title">
+		<div class="kt-dialog" style="width: 520px" role="dialog" aria-modal="true" aria-labelledby="pln-dissolve-item-title">
 			<div id="pln-dissolve-item-title" class="kt-dialog-title">Remove this purchase?</div>
 			<table v-if="sources.length" class="kt-table" data-testid="pln-dissolve-sources">
 				<thead><tr><th>Requirement</th><th>Department</th><th class="is-num">Allocation</th></tr></thead>
@@ -30,7 +30,7 @@
 					Cancel
 				</button>
 				<button
-					class="kt-btn kt-btn-primary" data-testid="pln-dissolve-item-confirm"
+					class="kt-btn kt-btn-primary kt-danger" data-testid="pln-dissolve-item-confirm"
 					:disabled="pending" @click="$emit('confirm')"
 				>
 					Remove purchase

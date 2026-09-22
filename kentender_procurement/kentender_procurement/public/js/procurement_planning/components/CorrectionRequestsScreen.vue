@@ -13,8 +13,8 @@
      is no manual unlock and no "resume requisitions" action anywhere. -->
 <template>
 	<div>
-		<div class="pln-sheet">
-			<div class="pln-masthead">
+		<div class="kt-page">
+			<div class="kt-page-head">
 				<div>
 					<h1 class="kt-page-title" data-testid="cor-title">Planning change required</h1>
 				</div>
@@ -49,14 +49,16 @@
 
 			<!-- The permanent restriction. U16-PERMANENT-SCOPE — it stays visible
 			     after every request resolves, and never gains a "restored" badge. -->
-			<div v-if="task.scope_lock?.locked" class="kt-notice is-attention" data-testid="cor-scope-lock">
+			<div v-if="task.scope_lock?.locked" class="kt-notice is-warning" data-testid="cor-scope-lock">
 				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 					<rect x="5" y="11" width="14" height="9" rx="1"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path>
 				</svg>
 				<div class="kt-notice-body">{{ task.scope_lock.text }}</div>
 			</div>
 
-			<table v-if="requests.length" class="kt-table" data-testid="cor-issues">
+			<div v-if="requests.length" class="kt-region">
+				<h2>Issues</h2>
+				<table class="kt-table" data-testid="cor-issues">
 				<thead>
 					<tr><th>What needs to change</th><th>Status</th><th>Requested from</th><th>Action</th></tr>
 				</thead>
@@ -67,7 +69,7 @@
 							<td><span class="kt-status" :class="`is-${row.status_kind}`">{{ row.status }}</span></td>
 							<td>{{ row.requested_from }}</td>
 							<td>
-								<a href="#" data-testid="cor-issue-action" @click.prevent="$emit('open-issue', row.request)">{{ row.action }}</a>
+								<a href="#" class="kt-btn kt-btn-ghost" data-testid="cor-issue-action" @click.prevent="$emit('open-issue', row.request)">{{ row.action }}</a>
 							</td>
 						</tr>
 						<!-- U16-OPEN-DETAIL — the mechanics, under the issue they
@@ -193,15 +195,16 @@
 					</template>
 				</tbody>
 			</table>
+			</div>
 			<p v-else class="kt-muted" data-testid="cor-no-issues">No planning change has been requested for this purchase.</p>
 
 			<!-- U16-ADDITIONAL-REQUIREMENT — the lawful route for a requirement
 			     that arrived after this purchase's scope was fixed. Naming it here
 			     creates nothing; the action only opens the pending work. -->
-			<template v-if="additional">
-				<h3 class="kt-card-title">{{ additional.heading }}</h3>
-				<div v-for="source in additional.sources" :key="source.dpp_entry" class="kt-card" data-testid="cor-additional">
-					<h6 class="kt-card-title">{{ source.title }}</h6>
+			<div v-if="additional" class="kt-region is-secondary">
+				<h2>{{ additional.heading }}</h2>
+				<div v-for="source in additional.sources" :key="source.dpp_entry" class="kt-group" data-testid="cor-additional" style="margin-bottom: var(--kt-space-4)">
+					<div class="kt-muted" style="font-weight: 600; margin-bottom: 4px">{{ source.title }}</div>
 					<div class="kt-meta-row">
 						<div>
 							<span class="kt-label">Department</span>
@@ -236,8 +239,8 @@
 						</div>
 					</div>
 				</div>
-				<a href="#" data-testid="cor-add-separate" @click.prevent="$emit('navigate', additional.route)">{{ additional.action }}</a>
-			</template>
+				<a href="#" class="kt-btn kt-btn-secondary" data-testid="cor-add-separate" @click.prevent="$emit('navigate', additional.route)">{{ additional.action }}</a>
+			</div>
 
 			<p v-if="errorSummary" class="pln-error-summary" data-testid="cor-error">{{ errorSummary }}</p>
 		</div>

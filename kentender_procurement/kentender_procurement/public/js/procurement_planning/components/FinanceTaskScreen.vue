@@ -11,11 +11,11 @@
      affordability — it reserves nothing and approves nothing. -->
 <template>
 	<div>
-		<div class="pln-sheet">
-			<div class="pln-masthead">
+		<div class="kt-page">
+			<div class="kt-page-head">
 				<div>
 					<h1 class="kt-page-title" data-testid="fnt-title">{{ title }}</h1>
-					<p class="kt-page-lede">{{ description }}</p>
+					<p class="kt-page-desc">{{ description }}</p>
 				</div>
 			</div>
 
@@ -103,66 +103,69 @@
 			<p v-if="errorSummary" class="pln-error-summary" data-testid="fnt-error">{{ errorSummary }}</p>
 
 			<!-- The comparison. Approved versus planned, per line. -->
-			<table class="kt-table" data-testid="fnt-comparison">
-				<thead>
-					<tr>
-						<th>Budget line</th><th>Line name</th>
-						<th class="is-num">Approved amount</th><th class="is-num">Planned amount</th>
-						<th class="is-num">Difference</th><th>Result</th><th>Action</th>
-					</tr>
-				</thead>
-				<tbody>
-					<template v-for="(row, index) in lines" :key="row.budget_line">
-						<tr :data-testid="`fnt-line-${index}`">
-							<td>{{ row.budget_line_reference }}</td>
-							<td>{{ row.line_name }}</td>
-							<td class="is-num">{{ row.approved_display }}</td>
-							<td class="is-num">{{ row.planned_display }}</td>
-							<td class="is-num">{{ row.difference_display }}</td>
-							<td><span class="kt-status" :class="`is-${row.result_kind}`">{{ row.result }}</span></td>
-							<td>
-								<a href="#" data-testid="fnt-line-details" @click.prevent="openLine = openLine === index ? null : index">View details</a>
-							</td>
+			<div class="kt-region">
+				<h2>Approved against planned</h2>
+				<table class="kt-table" data-testid="fnt-comparison">
+					<thead>
+						<tr>
+							<th>Budget line</th><th>Line name</th>
+							<th class="is-num">Approved amount</th><th class="is-num">Planned amount</th>
+							<th class="is-num">Difference</th><th>Result</th><th>Action</th>
 						</tr>
-						<!-- U10-LOW-AVAILABILITY — advisory, said beside the line it
-						     is about, and explicitly not a reason to withhold
-						     confirmation. -->
-						<tr v-if="!row.within_available && row.within_approved" class="pln-row-detail" :data-testid="`fnt-low-availability-${index}`">
-							<td colspan="7" class="kt-muted">
-								Current availability is lower than the planned amount. The plan is still within the approved
-								budget, so funding confirmation is permitted.
-							</td>
-						</tr>
-						<tr v-if="!row.within_approved" class="pln-row-detail" :data-testid="`fnt-excess-${index}`">
-							<td colspan="7" class="pln-error-summary">
-								{{ row.line_name || row.budget_line_reference }} exceeds its approved budget by {{ row.excess_display }}.
-							</td>
-						</tr>
-						<tr v-if="openLine === index" class="pln-row-detail" :data-testid="`fnt-line-detail-${index}`">
-							<td colspan="7">
-								<div class="kt-meta-row">
-									<div>
-										<span class="kt-label">Funding source</span>
-										<span class="kt-meta-value">{{ row.funding_source }}</span>
+					</thead>
+					<tbody>
+						<template v-for="(row, index) in lines" :key="row.budget_line">
+							<tr :data-testid="`fnt-line-${index}`">
+								<td>{{ row.budget_line_reference }}</td>
+								<td>{{ row.line_name }}</td>
+								<td class="is-num">{{ row.approved_display }}</td>
+								<td class="is-num">{{ row.planned_display }}</td>
+								<td class="is-num">{{ row.difference_display }}</td>
+								<td><span class="kt-status" :class="`is-${row.result_kind}`">{{ row.result }}</span></td>
+								<td>
+									<a href="#" class="kt-btn kt-btn-ghost" data-testid="fnt-line-details" @click.prevent="openLine = openLine === index ? null : index">View details</a>
+								</td>
+							</tr>
+							<!-- U10-LOW-AVAILABILITY — advisory, said beside the line it
+							     is about, and explicitly not a reason to withhold
+							     confirmation. -->
+							<tr v-if="!row.within_available && row.within_approved" class="pln-row-detail" :data-testid="`fnt-low-availability-${index}`">
+								<td colspan="7" class="kt-muted">
+									Current availability is lower than the planned amount. The plan is still within the approved
+									budget, so funding confirmation is permitted.
+								</td>
+							</tr>
+							<tr v-if="!row.within_approved" class="pln-row-detail" :data-testid="`fnt-excess-${index}`">
+								<td colspan="7" class="pln-error-summary">
+									{{ row.line_name || row.budget_line_reference }} exceeds its approved budget by {{ row.excess_display }}.
+								</td>
+							</tr>
+							<tr v-if="openLine === index" class="pln-row-detail" :data-testid="`fnt-line-detail-${index}`">
+								<td colspan="7">
+									<div class="kt-meta-row">
+										<div>
+											<span class="kt-label">Funding source</span>
+											<span class="kt-meta-value">{{ row.funding_source }}</span>
+										</div>
+										<div>
+											<span class="kt-label">Reserved</span>
+											<span class="kt-meta-value">{{ row.reserved_display }}</span>
+										</div>
+										<div>
+											<span class="kt-label">Committed</span>
+											<span class="kt-meta-value">{{ row.committed_display }}</span>
+										</div>
+										<div>
+											<span class="kt-label">Currently available</span>
+											<span class="kt-meta-value">{{ row.available_display }}</span>
+										</div>
 									</div>
-									<div>
-										<span class="kt-label">Reserved</span>
-										<span class="kt-meta-value">{{ row.reserved_display }}</span>
-									</div>
-									<div>
-										<span class="kt-label">Committed</span>
-										<span class="kt-meta-value">{{ row.committed_display }}</span>
-									</div>
-									<div>
-										<span class="kt-label">Currently available</span>
-										<span class="kt-meta-value">{{ row.available_display }}</span>
-									</div>
-								</div>
-							</td>
-						</tr>
-					</template>
-				</tbody>
-			</table>
+								</td>
+							</tr>
+						</template>
+					</tbody>
+				</table>
+			</div>
 
 			<!-- Current balances: advisory, collapsed, visually separated from the
 			     approved-versus-planned decision. -->

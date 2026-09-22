@@ -17,7 +17,7 @@ function make(props = {}) {
 describe("FinanceHistory — U10-history", () => {
 	it("renders the two evidence-state facts and every review row in order", () => {
 		const w = make();
-		expect(w.find(".kt-card-title").text()).toBe("Funding evidence history");
+		expect(w.find("h2").text()).toBe("Funding evidence history");
 		const facts = w.findAll(".pln-fact");
 		expect(facts.map((f) => f.get(".kt-label").text())).toEqual(["Funding evidence at approval", "Current funding confirmation"]);
 		expect(facts[0].text()).toContain("Confirmed");

@@ -3,10 +3,8 @@
      order. A later Review's own outcome never overwrites an earlier one's
      row; this is a read-only projection, no action lives here. -->
 <template>
-	<div class="kt-card kt-blueprint pln-card-pad" data-testid="fnt-history">
-		<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-		<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-		<div class="kt-card-title">Funding evidence history</div>
+	<div class="kt-region is-secondary" data-testid="fnt-history">
+		<h2>Funding evidence history</h2>
 		<div class="pln-facts-row" style="margin-bottom: 16px">
 			<div class="pln-fact">
 				<span class="kt-label">Funding evidence at approval</span>

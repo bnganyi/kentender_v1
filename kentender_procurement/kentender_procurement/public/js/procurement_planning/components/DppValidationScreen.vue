@@ -12,11 +12,11 @@
      (§6.3). -->
 <template>
 	<div>
-		<div class="pln-sheet">
-			<div class="pln-masthead">
+		<div class="kt-page">
+			<div class="kt-page-head">
 				<div>
 					<h1 class="kt-page-title" data-testid="pln-review-title">{{ title }}</h1>
-					<p class="kt-page-lede">Check the certified requirements before adding them to the annual plan.</p>
+					<p class="kt-page-desc">Check the certified requirements before adding them to the annual plan.</p>
 				</div>
 			</div>
 
@@ -99,118 +99,89 @@
 				</table>
 			</template>
 
-			<div class="kt-kpi-row" data-testid="pln-review-summary">
-				<div class="kt-kpi-card">
-					<div class="kt-kpi-value">{{ summary.included_requirements }}</div>
-					<div class="kt-kpi-sub">Included requirements</div>
-				</div>
-				<div class="kt-kpi-card">
-					<div class="kt-kpi-value">{{ summary.included_cost_display }}</div>
-					<div class="kt-kpi-sub">Included cost</div>
-				</div>
-				<div class="kt-kpi-card">
-					<div class="kt-kpi-value">{{ summary.excluded_requirements }}</div>
-					<div class="kt-kpi-sub">Excluded requirements</div>
-				</div>
-			</div>
-
-			<!-- One card per requirement, not a nine-column grid: the first line is
-			     the source facts, the second is the only decision the Planner makes
-			     about it. -->
-			<div
-				v-for="row in entries"
-				:key="row.entry_id"
-				class="kt-card kt-blueprint pln-review-row"
-				data-testid="pln-review-row"
-			>
-				<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-				<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-				<div class="kt-meta-row">
-					<div class="pln-review-name">
-						<span class="kt-label">Requirement</span>
-						<span class="kt-meta-value">{{ row.title }}</span>
-					</div>
-					<div>
-						<span class="kt-label">Quantity</span>
-						<span class="kt-meta-value">{{ row.quantity_number }}</span>
-					</div>
-					<div>
-						<span class="kt-label">Unit</span>
-						<span class="kt-meta-value">{{ row.unit_label }}</span>
-					</div>
-					<div>
-						<span class="kt-label">Required by</span>
-						<span class="kt-meta-value">{{ row.required_by_display }}</span>
-					</div>
-					<div>
-						<span class="kt-label">Estimated cost</span>
-						<span class="kt-meta-value">{{ row.amount_display }}</span>
-					</div>
-					<!-- Every other fact in this card is labelled; the action was
-					     the one cell that was not, which left the reader to infer
-					     what the link was for from the link alone. -->
-					<div>
-						<span class="kt-label">Action</span>
-						<span class="kt-meta-value">
-							<a href="#" data-testid="pln-review-view" @click.prevent="$emit('view-requirement', row)">View requirement</a>
-						</span>
-					</div>
+			<div class="kt-region">
+				<h2>Certified requirements</h2>
+				<div class="kt-meta-row" style="max-width: 760px; margin-bottom: var(--kt-space-5)" data-testid="pln-review-summary">
+					<div><span class="kt-label">Included requirements</span><span class="kt-meta-value">{{ summary.included_requirements }}</span></div>
+					<div><span class="kt-label">Included cost</span><span class="kt-meta-value">{{ summary.included_cost_display }}</span></div>
+					<div><span class="kt-label">Excluded requirements</span><span class="kt-meta-value">{{ summary.excluded_requirements }}</span></div>
 				</div>
 
-				<div v-if="row.not_proceeding" class="pln-review-excluded" data-testid="pln-review-excluded">
-					<div class="kt-meta-row">
-						<div>
-							<span class="kt-label">Status</span>
-							<span class="kt-meta-value"><span class="kt-status is-muted">Not included this year</span></span>
+				<!-- One line of source facts, one line of decision — not a
+				     nine-column grid of individually labelled facts. -->
+				<div
+					v-for="row in entries"
+					:key="row.entry_id"
+					class="pln-review-row"
+					data-testid="pln-review-row"
+				>
+					<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: var(--kt-space-6)">
+						<div style="flex: 1">
+							<div style="font-family: var(--kt-font-heading); font-size: 19px">{{ row.title }}</div>
+							<div style="display: flex; gap: var(--kt-space-5); margin-top: 6px; font-size: 13.5px; color: var(--kt-color-neutral-800)">
+								<span>{{ row.quantity_number }} {{ row.unit_label }}</span>
+								<span>Required by {{ row.required_by_display }}</span>
+								<span style="font-variant-numeric: tabular-nums">{{ row.amount_display }}</span>
+							</div>
 						</div>
-						<div>
-							<span class="kt-label">Requirement type</span>
-							<span class="kt-meta-value">Not applicable</span>
+						<a href="#" class="kt-btn kt-btn-ghost" data-testid="pln-review-view" @click.prevent="$emit('view-requirement', row)">View requirement</a>
+					</div>
+
+					<div v-if="row.not_proceeding" class="pln-review-excluded" data-testid="pln-review-excluded">
+						<div class="kt-meta-row">
+							<div>
+								<span class="kt-label">Status</span>
+								<span class="kt-meta-value"><span class="kt-status is-muted">Not included this year</span></span>
+							</div>
+							<div>
+								<span class="kt-label">Requirement type</span>
+								<span class="kt-meta-value">Not applicable</span>
+							</div>
 						</div>
+						<p class="kt-muted">{{ row.not_proceeding_reason }}</p>
 					</div>
-					<p class="kt-muted">{{ row.not_proceeding_reason }}</p>
-				</div>
 
-				<!-- The second line: budget line, and the one Planner input. -->
-				<div v-else class="kt-meta-row pln-review-classify">
-					<div>
-						<span class="kt-label">Budget line</span>
-						<span class="kt-meta-value">{{ row.budget_line_display }}</span>
-					</div>
-					<div class="kt-field">
-						<label :for="`type-${row.entry_id}`" class="kt-label">Requirement type</label>
-						<!-- Addressable per requirement: a submission with several
-						     needs one classification each, and a test (or a
-						     screen-reader) has to be able to tell them apart. -->
-						<select
-							:id="`type-${row.entry_id}`"
-							class="kt-input"
-							data-testid="pln-review-type"
-							:data-entry="row.entry_id"
-							:disabled="!canDecide"
-							:value="classifications[row.entry_id] || ''"
-							@change="$emit('set-classification', { entry_id: row.entry_id, requirement_type: $event.target.value })"
-						>
-							<option value="">Select a requirement type</option>
-							<option v-for="option in requirementTypes" :key="option.requirement_type" :value="option.requirement_type">
-								{{ option.requirement_type }}
-							</option>
-						</select>
-					</div>
-					<div>
-						<!-- The label says where the value comes from: the Planner
-						     cannot set it, and a bare "Category" invites the attempt. -->
-						<span class="kt-label">Category (derived)</span>
-						<!-- Read-only, derived, never sent: §4.4. -->
-						<span class="kt-meta-value" data-testid="pln-review-category">{{ categoryFor(row.entry_id) }}</span>
-					</div>
-				</div>
+					<!-- The second line: the one Planner input, and what it derives. -->
+					<template v-else>
+						<div style="display: grid; grid-template-columns: 260px 240px 1fr; gap: var(--kt-space-5); align-items: end; margin-top: var(--kt-space-4)">
+							<div class="kt-field">
+								<label :for="`type-${row.entry_id}`">Requirement type</label>
+								<!-- Addressable per requirement: a submission with several
+								     needs one classification each, and a test (or a
+								     screen-reader) has to be able to tell them apart. -->
+								<select
+									:id="`type-${row.entry_id}`"
+									class="kt-input"
+									data-testid="pln-review-type"
+									:data-entry="row.entry_id"
+									:disabled="!canDecide"
+									:value="classifications[row.entry_id] || ''"
+									@change="$emit('set-classification', { entry_id: row.entry_id, requirement_type: $event.target.value })"
+								>
+									<option value="">Select a requirement type</option>
+									<option v-for="option in requirementTypes" :key="option.requirement_type" :value="option.requirement_type">
+										{{ option.requirement_type }}
+									</option>
+								</select>
+							</div>
+							<div>
+								<span class="kt-label">Category</span>
+								<!-- Read-only, derived, never sent: §4.4. -->
+								<div style="font-size: 15px; font-weight: 600; margin-top: 4px" data-testid="pln-review-category">{{ categoryFor(row.entry_id) }}</div>
+							</div>
+						</div>
+						<div class="kt-group" style="margin-top: var(--kt-space-4)">
+							<span class="kt-label">Budget line</span>
+							<div style="font-size: 14px; margin-top: 2px">{{ row.budget_line_display }}</div>
+						</div>
+					</template>
 
-				<p v-if="!row.not_proceeding && missingClassification(row)" class="pln-error-summary" data-testid="pln-review-row-error">
-					Select the requirement type before accepting this departmental plan.
-				</p>
+					<p v-if="!row.not_proceeding && missingClassification(row)" class="pln-error-summary" data-testid="pln-review-row-error">
+						Select the requirement type before accepting this departmental plan.
+					</p>
+				</div>
+				<p v-if="!entries.length" class="kt-muted">No requirements in this submission.</p>
 			</div>
-			<p v-if="!entries.length" class="kt-muted">No requirements in this submission.</p>
 
 			<p v-if="entries.some((r) => !r.not_proceeding)" class="kt-muted" data-testid="pln-review-helper">
 				Choose the requirement type. Category is set automatically.

@@ -17,8 +17,8 @@
      A material issue is never moved into Supporting details. -->
 <template>
 	<div>
-		<div class="pln-sheet">
-			<div class="pln-masthead">
+		<div class="kt-page">
+			<div class="kt-page-head">
 				<div>
 					<h1 class="kt-page-title" data-testid="ppi-title">{{ item.header?.title }}</h1>
 				</div>
@@ -66,98 +66,105 @@
 			</div>
 
 			<!-- 1. Purchase details -->
-			<h3 class="kt-card-title">Purchase details</h3>
-			<div class="kt-field">
-				<label for="ppi-title-input" class="kt-label">Title</label>
-				<input id="ppi-title-input" class="kt-input" data-testid="ppi-title-input" :value="draft.title" :disabled="!item.mutable" @input="onField('title', $event.target.value)">
-			</div>
-			<div class="kt-field">
-				<label for="ppi-description" class="kt-label">Description</label>
-				<textarea id="ppi-description" class="kt-input" rows="3" data-testid="ppi-description" :value="draft.description" :disabled="!item.mutable" @input="onField('description', $event.target.value)"></textarea>
-			</div>
-			<div class="pln-summary-line">
-				<!-- Derived from the included requirements; not editable here, and
-				     Plan horizon is a fixed literal so it is not shown at all. -->
-				<span class="kt-muted" data-testid="ppi-summary-line">{{ item.summary_line }}</span>
-				<a href="#" data-testid="ppi-view-classification" @click.prevent="$emit('view-classification')">View classification details</a>
+			<div class="kt-region">
+				<h2>Purchase details</h2>
+				<div class="kt-field">
+					<label for="ppi-title-input" class="kt-label">Title</label>
+					<input id="ppi-title-input" class="kt-input" data-testid="ppi-title-input" :value="draft.title" :disabled="!item.mutable" @input="onField('title', $event.target.value)">
+				</div>
+				<div class="kt-field">
+					<label for="ppi-description" class="kt-label">Description</label>
+					<textarea id="ppi-description" class="kt-input" rows="3" data-testid="ppi-description" :value="draft.description" :disabled="!item.mutable" @input="onField('description', $event.target.value)"></textarea>
+				</div>
+				<div class="pln-summary-line">
+					<!-- Derived from the included requirements; not editable here, and
+					     Plan horizon is a fixed literal so it is not shown at all. -->
+					<span class="kt-muted" data-testid="ppi-summary-line">{{ item.summary_line }}</span>
+					<a href="#" class="kt-btn kt-btn-ghost" data-testid="ppi-view-classification" @click.prevent="$emit('view-classification')">View classification details</a>
+				</div>
 			</div>
 
 			<!-- 2. Included requirements -->
-			<h3 class="kt-card-title">Included requirements</h3>
-			<table class="kt-table" data-testid="ppi-sources">
-				<thead>
-					<tr>
-						<th>Requirement</th><th>Department</th><th class="is-num">Quantity</th>
-						<th>Unit</th><th>Required by</th><th class="is-num">Allocation</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr v-for="row in sources" :key="row.requirement + row.department" data-testid="ppi-source-row">
-						<td>{{ row.requirement }}</td>
-						<td>{{ row.department }}</td>
-						<td class="is-num">{{ row.quantity_number }}</td>
-						<td>{{ row.unit_label }}</td>
-						<td>{{ row.required_by_display }}</td>
-						<td class="is-num">{{ row.amount_display }}</td>
-					</tr>
-				</tbody>
-			</table>
-			<div v-if="item.combined" class="pln-summary-line" data-testid="ppi-combined">
-				<span>
-					<span class="kt-tag kt-tag-neutral">Combined purchase</span>
-					<span class="kt-muted">{{ item.aggregation_reason_preview }}</span>
-				</span>
-				<a href="#" data-testid="ppi-read-reason" @click.prevent="fullReason = !fullReason">Read full reason</a>
+			<div class="kt-region">
+				<h2>Included requirements</h2>
+				<table class="kt-table" data-testid="ppi-sources">
+					<thead>
+						<tr>
+							<th>Requirement</th><th>Department</th><th class="is-num">Quantity</th>
+							<th>Unit</th><th>Required by</th><th class="is-num">Allocation</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr v-for="row in sources" :key="row.requirement + row.department" data-testid="ppi-source-row">
+							<td>{{ row.requirement }}</td>
+							<td>{{ row.department }}</td>
+							<td class="is-num">{{ row.quantity_number }}</td>
+							<td>{{ row.unit_label }}</td>
+							<td>{{ row.required_by_display }}</td>
+							<td class="is-num">{{ row.amount_display }}</td>
+						</tr>
+					</tbody>
+				</table>
+				<div v-if="item.combined" class="pln-summary-line" data-testid="ppi-combined">
+					<span>
+						<span class="kt-tag kt-tag-neutral">Combined purchase</span>
+						<span class="kt-muted">{{ item.aggregation_reason_preview }}</span>
+					</span>
+					<a href="#" data-testid="ppi-read-reason" @click.prevent="fullReason = !fullReason">Read full reason</a>
+				</div>
+				<p v-if="fullReason" class="kt-muted" data-testid="ppi-full-reason">{{ item.identity?.aggregation_reason }}</p>
 			</div>
-			<p v-if="fullReason" class="kt-muted" data-testid="ppi-full-reason">{{ item.identity?.aggregation_reason }}</p>
 
 			<!-- 3. Estimated cost -->
-			<h3 class="kt-card-title">Estimated cost</h3>
-			<div class="kt-meta-row">
-				<div>
-					<span class="kt-label">Planned amount</span>
-					<span class="kt-meta-value" data-testid="ppi-planned-value">{{ item.planned_value_display }}</span>
-				</div>
-				<div class="pln-basis">
-					<span class="kt-label">Estimate basis</span>
-					<span class="kt-meta-value">
-						<template v-if="item.mutable">
-							<textarea
+			<div class="kt-region">
+				<h2>Estimated cost</h2>
+				<div class="kt-meta-row">
+					<div>
+						<span class="kt-label">Planned amount (KES)</span>
+						<span class="kt-meta-value" data-testid="ppi-planned-value">{{ item.planned_value_display }}</span>
+					</div>
+					<div class="pln-basis">
+						<span class="kt-label">Estimate basis</span>
+						<span class="kt-meta-value">
+							<template v-if="item.mutable">
+								<textarea
+									class="kt-input"
+									rows="2"
+									data-testid="ppi-estimate-basis"
+									:value="draft.estimate_basis"
+									@input="onField('estimate_basis', $event.target.value)"
+								></textarea>
+							</template>
+							<template v-else>
+								{{ item.estimate_basis_preview }}
+								<a href="#" data-testid="ppi-read-basis" @click.prevent="fullBasis = !fullBasis">Read full basis</a>
+							</template>
+						</span>
+					</div>
+					<!-- §10.8 — shown only when an actual accessible record exists. -->
+					<div v-if="draft.estimate_basis_reference || item.mutable">
+						<span class="kt-label">Supporting document</span>
+						<span class="kt-meta-value">
+							<input
+								v-if="item.mutable"
 								class="kt-input"
-								rows="2"
-								data-testid="ppi-estimate-basis"
-								:value="draft.estimate_basis"
-								@input="onField('estimate_basis', $event.target.value)"
-							></textarea>
-						</template>
-						<template v-else>
-							{{ item.estimate_basis_preview }}
-							<a href="#" data-testid="ppi-read-basis" @click.prevent="fullBasis = !fullBasis">Read full basis</a>
-						</template>
-					</span>
+								data-testid="ppi-basis-reference"
+								:value="draft.estimate_basis_reference"
+								@input="onField('estimate_basis_reference', $event.target.value)"
+							>
+							<template v-else>{{ draft.estimate_basis_reference }}</template>
+						</span>
+					</div>
 				</div>
-				<!-- §10.8 — shown only when an actual accessible record exists. -->
-				<div v-if="draft.estimate_basis_reference || item.mutable">
-					<span class="kt-label">Supporting document</span>
-					<span class="kt-meta-value">
-						<input
-							v-if="item.mutable"
-							class="kt-input"
-							data-testid="ppi-basis-reference"
-							:value="draft.estimate_basis_reference"
-							@input="onField('estimate_basis_reference', $event.target.value)"
-						>
-						<template v-else>{{ draft.estimate_basis_reference }}</template>
-					</span>
-				</div>
+				<p v-if="fullBasis" class="kt-muted" data-testid="ppi-full-basis">{{ classification.estimate_basis }}</p>
 			</div>
-			<p v-if="fullBasis" class="kt-muted" data-testid="ppi-full-basis">{{ classification.estimate_basis }}</p>
 
 			<!-- 4. Procurement approach -->
-			<h3 class="kt-card-title">Procurement approach</h3>
-			<div class="kt-meta-row">
+			<div class="kt-region">
+				<h2>Procurement approach</h2>
+				<div class="kt-meta-row">
 				<div class="kt-field">
-					<label for="ppi-method" class="kt-label">Method</label>
+					<label for="ppi-method" class="kt-label">Procurement method</label>
 					<select id="ppi-method" class="kt-input" data-testid="ppi-method" :value="draft.procurement_method" :disabled="!item.mutable" @change="onField('procurement_method', $event.target.value)">
 						<option value="">Select a procurement method</option>
 						<option v-for="method in classification.admissible_methods || []" :key="method" :value="method">{{ method }}</option>
@@ -227,50 +234,72 @@
 					<input id="ppi-lots" class="kt-input" type="number" min="2" data-testid="ppi-lot-count" :value="draft.lot_count" :disabled="!item.mutable" @input="onField('lot_count', $event.target.value)">
 				</div>
 			</div>
-			<!-- §10.16 C03/C04 — the named setting, the action it blocks and its
-			     owner, never resolver mechanics; the setup control only for an
-			     actor who actually holds setup access. -->
-			<MissingSettingPanel v-for="(panel, index) in missingSettings" :key="index" :panel="panel" />
-			<button
-				v-if="!showReservation && item.mutable"
-				type="button"
-				class="kt-btn kt-btn-ghost"
-				data-testid="ppi-add-reservation"
-				@click="forceReservation = true"
-			>
-				Add a planned designation
-			</button>
+				<!-- §10.16 C03/C04 — the named setting, the action it blocks and its
+				     owner, never resolver mechanics; the setup control only for an
+				     actor who actually holds setup access. -->
+				<MissingSettingPanel v-for="(panel, index) in missingSettings" :key="index" :panel="panel" />
+				<button
+					v-if="!showReservation && item.mutable"
+					type="button"
+					class="kt-btn kt-btn-ghost"
+					data-testid="ppi-add-reservation"
+					@click="forceReservation = true"
+				>
+					Add a planned designation
+				</button>
+			</div>
 
 			<!-- 5. Dates -->
-			<h3 class="kt-card-title">Dates</h3>
-			<div class="kt-meta-row">
-				<div class="kt-field">
-					<label for="ppi-invitation" class="kt-label">Target invitation date</label>
-					<input id="ppi-invitation" class="kt-input" type="date" data-testid="ppi-invitation" :value="draft.baseline_invitation_date" :disabled="!item.mutable" @input="onField('baseline_invitation_date', $event.target.value)">
+			<div class="kt-region">
+				<!-- U09-INVALID-SCHEDULE — the blocking problem and its recovery
+				     action sit beside the dates they are about. -->
+				<div v-if="saveBlocked" class="kt-notice is-critical" style="margin-bottom: var(--kt-space-4)">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+						<circle cx="12" cy="12" r="10"></circle><path d="M12 8v5"></path><path d="M12 16h.01"></path>
+					</svg>
+					<div style="flex: 1">
+						<div class="kt-notice-body">{{ boundaryText }}</div>
+						<button
+							type="button"
+							class="kt-btn kt-btn-secondary"
+							style="margin-top: var(--kt-space-3)"
+							data-testid="ppi-review-dates"
+							@click="scrollToDates"
+						>
+							Review dates
+						</button>
+					</div>
 				</div>
-				<div class="kt-field">
-					<label for="ppi-delivery" class="kt-label">Expected delivery period</label>
-					<input id="ppi-delivery" class="kt-input" type="number" min="0" data-testid="ppi-delivery-days" :value="draft.estimated_delivery_period_days" :disabled="!item.mutable" @input="onField('estimated_delivery_period_days', $event.target.value)">
-					<div class="kt-field-hint">Calendar days</div>
+				<h2>Dates</h2>
+				<div class="kt-meta-row">
+					<div class="kt-field">
+						<label for="ppi-invitation" class="kt-label">Target invitation date</label>
+						<input id="ppi-invitation" class="kt-input" type="date" data-testid="ppi-invitation" :value="draft.baseline_invitation_date" :disabled="!item.mutable" @input="onField('baseline_invitation_date', $event.target.value)">
+					</div>
+					<div class="kt-field">
+						<label for="ppi-delivery" class="kt-label">Expected delivery period</label>
+						<input id="ppi-delivery" class="kt-input" type="number" min="0" data-testid="ppi-delivery-days" :value="draft.estimated_delivery_period_days" :disabled="!item.mutable" @input="onField('estimated_delivery_period_days', $event.target.value)">
+						<div class="kt-field-hint">Calendar days</div>
+					</div>
+					<div>
+						<span class="kt-label">Expected completion</span>
+						<span class="kt-meta-value" data-testid="ppi-completion">{{ baseline.estimated_completion_display || "—" }}</span>
+					</div>
+					<div>
+						<span class="kt-label">Departmental deadline</span>
+						<span class="kt-meta-value" data-testid="ppi-deadline">{{ deadlineDisplay }}</span>
+					</div>
 				</div>
-				<div>
-					<span class="kt-label">Expected completion</span>
-					<span class="kt-meta-value" data-testid="ppi-completion">{{ baseline.estimated_completion_display || "—" }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Departmental deadline</span>
-					<span class="kt-meta-value" data-testid="ppi-deadline">{{ deadlineDisplay }}</span>
-				</div>
+				<p
+					v-if="baseline.estimated_completion_display"
+					class="kt-muted"
+					:class="{ 'pln-error-summary': !baseline.delivery_boundary_ok }"
+					data-testid="ppi-boundary"
+				>
+					{{ boundaryText }}
+				</p>
+				<a href="#" class="kt-btn kt-btn-ghost" data-testid="ppi-view-dates" @click.prevent="supporting = true">View calculated dates</a>
 			</div>
-			<p
-				v-if="baseline.estimated_completion_display"
-				class="kt-muted"
-				:class="{ 'pln-error-summary': !baseline.delivery_boundary_ok }"
-				data-testid="ppi-boundary"
-			>
-				{{ boundaryText }}
-			</p>
-			<a href="#" class="pln-view-dates" data-testid="ppi-view-dates" @click.prevent="supporting = true">View calculated dates</a>
 
 			<!-- 6. Supporting details — one level, closed by default. -->
 			<details class="kt-disclosure" :open="supporting" data-testid="ppi-supporting">
@@ -323,7 +352,7 @@
 				<button
 					v-if="item.mutable && !item.scope_lock?.locked"
 					type="button"
-					class="kt-btn kt-btn-secondary"
+					class="kt-btn kt-btn-secondary kt-danger"
 					data-testid="ppi-remove"
 					:disabled="pending"
 					@click="$emit('remove')"
@@ -347,15 +376,6 @@
 					</button>
 				</div>
 			</div>
-			<button
-				v-if="saveBlocked"
-				type="button"
-				class="kt-btn kt-btn-secondary pln-review-dates"
-				data-testid="ppi-review-dates"
-				@click="scrollToDates"
-			>
-				Review dates
-			</button>
 		</div>
 	</div>
 </template>

@@ -133,7 +133,7 @@ test.describe("PLN18-306 Finance task", () => {
 		await login(page, AUTHOR, PASSWORD);
 		await page.goto(`/app/procurement-planning/finance/${state.task}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "finance");
-		await expect(page.locator('[data-testid="pln-error"] h3')).toHaveText("This record isn't available to you");
+		await expect(page.locator('[data-testid="pln-error"] h3')).toHaveText("This record is not available to you.");
 	});
 
 	test("an unrelated Author (Outsider) is masked the same way", async ({ page }) => {
@@ -141,6 +141,6 @@ test.describe("PLN18-306 Finance task", () => {
 		await login(page, OUTSIDER, PASSWORD);
 		await page.goto(`/app/procurement-planning/finance/${state.task}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "finance");
-		await expect(page.locator('[data-testid="pln-error"] h3')).toHaveText("This record isn't available to you");
+		await expect(page.locator('[data-testid="pln-error"] h3')).toHaveText("This record is not available to you.");
 	});
 });

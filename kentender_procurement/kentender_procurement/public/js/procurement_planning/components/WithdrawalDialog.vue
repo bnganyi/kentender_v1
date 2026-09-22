@@ -12,7 +12,7 @@
      repeats the review and approval it already passed. -->
 <template>
 	<div class="kt-dialog-backdrop" data-testid="pub-withdrawal-dialog">
-		<div class="kt-dialog" role="dialog" aria-modal="true" aria-labelledby="pub-withdrawal-title">
+		<div class="kt-dialog" style="width: 520px" role="dialog" aria-modal="true" aria-labelledby="pub-withdrawal-title">
 			<div id="pub-withdrawal-title" class="kt-dialog-title" data-testid="pub-withdrawal-title">
 				{{ isDecision ? "Withdraw this plan for correction?" : "Request withdrawal for correction" }}
 			</div>

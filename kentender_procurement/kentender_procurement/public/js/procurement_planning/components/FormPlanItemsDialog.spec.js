@@ -79,9 +79,10 @@ describe("FormPlanItemsDialog — U08-SEPARATE", () => {
 		const w = make();
 		expect(w.find('[data-testid="pln-form-purchases"]').text()).toBe("2");
 		expect(w.find('[data-testid="pln-form-reason"]').exists()).toBe(false);
-		const rows = w.findAll('[data-testid="pln-form-preview-rows"] tr');
+		const rows = w.findAll('[data-testid="pln-form-preview-rows"] tbody tr');
 		expect(rows).toHaveLength(2);
-		expect(rows[0].text()).toContain("100 Each");
+		expect(rows[0].text()).toContain("100");
+		expect(rows[0].text()).toContain("Each");
 		expect(rows[1].text()).toContain("KES 30,000,000");
 	});
 

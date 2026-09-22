@@ -89,23 +89,35 @@ def _window_display(fiscal_year: str) -> dict[str, str]:
 	return {"state": "Closed", "display": "Closed"}
 
 
-def _returned_issues(version) -> dict[str, list[dict[str, str]]]:
-	"""§12.2 — a returned submission's structured issues, keyed by entry."""
+def _returned_issues(version) -> tuple[dict[str, list[dict[str, str]]], list[dict[str, str]]]:
+	"""§4.4/§12.2 — a returned submission's issues, keyed by entry, plus any
+	whole-submission issue (`entry_id` null) separately. A decision is
+	immutable, so an older row still carries the retired `{problem,
+	correction}` shape rather than the single `correction_required` comment —
+	both facts are distinct information and neither is discarded or rewritten
+	to fit the current shape."""
 	if not version.returned_from_submission:
-		return {}
+		return {}, []
 	decision = frappe.db.get_value(
 		"Departmental Plan Validation Decision",
 		{"submission": version.returned_from_submission, "decision": "Return to department"},
 		"issues",
 	)
 	if not decision:
-		return {}
-	issues: dict[str, list[dict[str, str]]] = {}
+		return {}, []
+	by_entry: dict[str, list[dict[str, str]]] = {}
+	whole_plan: list[dict[str, str]] = []
 	for row in json.loads(decision):
-		issues.setdefault(cstr(row.get("entry_id")), []).append(
-			{"problem": cstr(row.get("problem")), "correction": cstr(row.get("correction"))}
-		)
-	return issues
+		entry_id = cstr(row.get("entry_id")).strip()
+		if "correction_required" in row:
+			item = {"correction_required": cstr(row.get("correction_required"))}
+		else:
+			item = {"problem": cstr(row.get("problem")), "correction": cstr(row.get("correction"))}
+		if entry_id:
+			by_entry.setdefault(entry_id, []).append(item)
+		else:
+			whole_plan.append(item)
+	return by_entry, whole_plan
 
 
 def _entry_action(*, not_proceeding: bool, need_origin: bool, mutable: bool, funded: bool, can_open: bool) -> str:
@@ -147,7 +159,7 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 	entries = []
 	incomplete = 0
 	total_specified = 0.0
-	issues_by_entry = _returned_issues(version) if version else {}
+	issues_by_entry, plan_issues = _returned_issues(version) if version else ({}, [])
 	if version:
 		rows = frappe.get_all(
 			"Departmental Plan Entry",
@@ -333,7 +345,9 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 		"can_submit": mutable and ready and access == "hod",
 		"can_create_update": can_create_update,
 		"update_notice": update_notice,
-		"has_returned_issues": bool(issues_by_entry),
+		"has_returned_issues": bool(issues_by_entry) or bool(plan_issues),
+		# §4.4 — an issue against the whole submission rather than one entry.
+		"plan_issues": plan_issues,
 	}
 
 

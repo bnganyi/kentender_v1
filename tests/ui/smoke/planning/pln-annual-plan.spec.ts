@@ -116,7 +116,7 @@ test.describe("PLN18-304 Annual Plan record", () => {
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
 		await expect(page.locator('[data-testid="pln-error"]')).toBeVisible();
-		await expect(page.locator('[data-testid="pln-error"] h3')).toHaveText("This record isn't available to you");
+		await expect(page.locator('[data-testid="pln-error"] h3')).toHaveText("This record is not available to you.");
 	});
 
 	test("an unrelated Author (Outsider) is masked the same way", async ({ page }) => {
@@ -124,6 +124,6 @@ test.describe("PLN18-304 Annual Plan record", () => {
 		await login(page, OUTSIDER, PASSWORD);
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
-		await expect(page.locator('[data-testid="pln-error"] h3')).toHaveText("This record isn't available to you");
+		await expect(page.locator('[data-testid="pln-error"] h3')).toHaveText("This record is not available to you.");
 	});
 });

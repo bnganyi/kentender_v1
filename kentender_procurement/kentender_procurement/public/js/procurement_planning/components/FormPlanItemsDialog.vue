@@ -96,7 +96,7 @@
 				</template>
 
 				<!-- What the choice will actually produce. -->
-				<div class="kt-card pln-form-preview" data-testid="pln-form-preview">
+				<div class="pln-form-preview" data-testid="pln-form-preview">
 					<div class="kt-meta-row">
 						<div>
 							<span class="kt-label">Purchases</span>
@@ -120,10 +120,19 @@
 					<!-- Keeping them separate produces one purchase per source,
 					     each with its own scope; the rows say so. -->
 					<table v-if="effectiveMode === 'each'" class="kt-table" data-testid="pln-form-preview-rows">
+						<thead>
+							<tr>
+								<th>Purchase</th>
+								<th class="is-num">Quantity</th>
+								<th>Unit</th>
+								<th class="is-num">Estimated cost</th>
+							</tr>
+						</thead>
 						<tbody>
 							<tr v-for="row in entries" :key="row.dpp_entry">
 								<td>{{ row.title }}</td>
-								<td class="is-num">{{ row.quantity_number }} {{ row.unit_label }}</td>
+								<td class="is-num">{{ row.quantity_number }}</td>
+								<td>{{ row.unit_label }}</td>
 								<td class="is-num">{{ row.amount_display }}</td>
 							</tr>
 						</tbody>

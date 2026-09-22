@@ -14,21 +14,22 @@
      summary, never behind a disclosure. -->
 <template>
 	<div>
-		<div class="pln-sheet">
-			<div class="pln-masthead pln-masthead-split">
+		<div class="kt-page">
+			<div class="kt-page-head">
 				<div>
 					<h1 class="kt-page-title" data-testid="rev-title">{{ actor.title }}</h1>
-					<p class="kt-page-lede">{{ actor.description }}</p>
+					<p class="kt-page-desc">{{ actor.description }}</p>
 				</div>
-				<button
-					v-if="task.can_download_review_pack"
-					type="button"
-					class="kt-btn kt-btn-secondary"
-					data-testid="rev-download"
-					@click="$emit('download-pack')"
-				>
-					Download review pack
-				</button>
+				<div v-if="task.can_download_review_pack" class="kt-page-actions">
+					<button
+						type="button"
+						class="kt-btn kt-btn-secondary"
+						data-testid="rev-download"
+						@click="$emit('download-pack')"
+					>
+						Download review pack
+					</button>
+				</div>
 			</div>
 
 			<div class="kt-meta-row pln-context-row" data-testid="rev-context">
@@ -54,123 +55,174 @@
 			<p v-if="task.historical" class="kt-muted" data-testid="rev-historical">Historical plan — read only</p>
 
 			<!-- First section — Decision summary. -->
-			<h3 class="kt-card-title">Decision summary</h3>
-			<div class="kt-kpi-row" data-testid="rev-summary">
-				<div class="kt-kpi-card">
-					<div class="kt-kpi-value">{{ summary.value_display }}</div>
-					<div class="kt-kpi-sub">Estimated cost</div>
+			<div class="kt-region">
+				<h2>Decision summary</h2>
+				<div class="kt-meta-row" data-testid="rev-summary" style="margin-bottom: var(--kt-space-4)">
+					<div>
+						<span class="kt-label">Estimated cost</span>
+						<span class="kt-meta-value">{{ summary.value_display }}</span>
+					</div>
+					<div>
+						<span class="kt-label">Purchases</span>
+						<span class="kt-meta-value">{{ summary.purchases }}</span>
+					</div>
+					<div>
+						<span class="kt-label">Departments</span>
+						<span class="kt-meta-value">{{ summary.departments }}</span>
+					</div>
 				</div>
-				<div class="kt-kpi-card">
-					<div class="kt-kpi-value">{{ summary.purchases }}</div>
-					<div class="kt-kpi-sub">Purchases</div>
+				<div class="kt-meta-row" data-testid="rev-checks" style="margin-bottom: var(--kt-space-4)">
+					<div>
+						<span class="kt-label">Funding</span>
+						<span class="kt-meta-value" style="font-size: 14px">{{ summary.funding }}</span>
+					</div>
+					<div>
+						<span class="kt-label">Reserved procurement</span>
+						<span class="kt-meta-value" style="font-size: 14px">{{ summary.reservation }}</span>
+					</div>
+					<div>
+						<span class="kt-label">Schedule</span>
+						<span class="kt-meta-value" style="font-size: 14px">{{ summary.schedule }}</span>
+					</div>
 				</div>
-				<div class="kt-kpi-card">
-					<div class="kt-kpi-value">{{ summary.departments }}</div>
-					<div class="kt-kpi-sub">Departments</div>
-				</div>
-			</div>
-			<div class="kt-meta-row" data-testid="rev-checks">
-				<div>
-					<span class="kt-label">Funding</span>
-					<span class="kt-meta-value">{{ summary.funding }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Reserved procurement</span>
-					<span class="kt-meta-value">{{ summary.reservation }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Schedule</span>
-					<span class="kt-meta-value">{{ summary.schedule }}</span>
-				</div>
-			</div>
 
-			<!-- Either no blocking issues, or the exact issues. Never neither. -->
-			<div v-if="!issues.length" class="kt-notice is-info" data-testid="rev-no-issues">
-				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-					<circle cx="12" cy="12" r="9"></circle><path d="m8 12 3 3 5-6"></path>
-				</svg>
-				<div class="kt-notice-body">No blocking issues</div>
-			</div>
-			<div v-for="issue in issues" :key="issue" class="kt-notice is-critical" data-testid="rev-issue">
-				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-					<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
-				</svg>
-				<div class="kt-notice-body">{{ issue }}</div>
-			</div>
+				<!-- Either no blocking issues, or the exact issues. Never neither. -->
+				<div v-if="!issues.length" class="kt-notice is-info" data-testid="rev-no-issues">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+						<circle cx="12" cy="12" r="9"></circle><path d="m8 12 3 3 5-6"></path>
+					</svg>
+					<div class="kt-notice-body">No blocking issues</div>
+				</div>
+				<div v-for="issue in issues" :key="issue" class="kt-notice is-critical" data-testid="rev-issue">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+						<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
+					</svg>
+					<div class="kt-notice-body">{{ issue }}</div>
+				</div>
 
-			<table class="kt-table" data-testid="rev-purchases">
-				<thead>
-					<tr>
-						<th>Purchase</th><th>Purpose</th><th class="is-num">Quantity</th>
-						<th>Unit</th><th>Required by</th><th class="is-num">Estimated cost</th><th>Action</th>
-					</tr>
-				</thead>
-				<tbody>
-					<template v-for="row in items" :key="row.plan_item_id">
-						<tr data-testid="rev-purchase-row">
-							<td>{{ row.title }}</td>
-							<td>{{ row.purpose }}</td>
-							<td class="is-num">{{ row.quantity_number }}</td>
-							<td>{{ row.unit_label }}</td>
-							<td>{{ row.delivery_completion_display }}</td>
-							<td class="is-num">{{ row.value_display }}</td>
-							<td>
-								<a href="#" data-testid="rev-review-purchase" @click.prevent="toggle(row.plan_item_id)">Review purchase</a>
-							</td>
+				<table class="kt-table" data-testid="rev-purchases">
+					<thead>
+						<tr>
+							<th>Purchase</th><th>Purpose</th><th class="is-num">Quantity</th>
+							<th>Unit</th><th>Required by</th><th class="is-num">Estimated cost</th><th>Action</th>
 						</tr>
-						<!-- One level of detail, opened deliberately. -->
-						<tr v-if="open.includes(row.plan_item_id)" class="pln-row-detail" data-testid="rev-purchase-detail">
-							<td colspan="7">
-								<div class="kt-meta-row">
-									<div>
-										<span class="kt-label">Estimated cost</span>
-										<span class="kt-meta-value">{{ row.value_display }}</span>
+					</thead>
+					<tbody>
+						<template v-for="row in items" :key="row.plan_item_id">
+							<tr data-testid="rev-purchase-row">
+								<td>{{ row.title }}</td>
+								<td>{{ row.purpose }}</td>
+								<td class="is-num">{{ row.quantity_number }}</td>
+								<td>{{ row.unit_label }}</td>
+								<td>{{ row.delivery_completion_display }}</td>
+								<td class="is-num">{{ row.value_display }}</td>
+								<td>
+									<a href="#" class="kt-btn kt-btn-ghost" data-testid="rev-review-purchase" @click.prevent="toggle(row.plan_item_id)">Review purchase</a>
+								</td>
+							</tr>
+							<!-- One level of detail, opened deliberately. -->
+							<tr v-if="open.includes(row.plan_item_id)" class="pln-row-detail" data-testid="rev-purchase-detail">
+								<td colspan="7">
+									<p v-if="row.purpose" class="kt-muted">{{ row.purpose }}</p>
+									<div class="kt-meta-row">
+										<div>
+											<span class="kt-label">Department</span>
+											<span class="kt-meta-value">{{ row.department }}</span>
+										</div>
+										<div>
+											<span class="kt-label">Quantity</span>
+											<span class="kt-meta-value">{{ row.quantity_display || row.quantity_number }}</span>
+										</div>
+										<div>
+											<span class="kt-label">Required by</span>
+											<span class="kt-meta-value">{{ row.delivery_completion_display }}</span>
+										</div>
+										<div>
+											<span class="kt-label">Estimated cost</span>
+											<span class="kt-meta-value">{{ row.value_display }}</span>
+										</div>
+										<div>
+											<span class="kt-label">Procurement approach</span>
+											<span class="kt-meta-value">{{ row.procurement_method }}</span>
+										</div>
+										<div>
+											<span class="kt-label">Expected completion</span>
+											<span class="kt-meta-value">{{ row.delivery_completion_display }}</span>
+										</div>
+										<div>
+											<span class="kt-label">Departmental deadline</span>
+											<span class="kt-meta-value">{{ row.delivery_completion_display }}</span>
+										</div>
 									</div>
-									<div>
-										<span class="kt-label">Procurement approach</span>
-										<span class="kt-meta-value">{{ row.procurement_method }}</span>
+									<!-- §10.11 — the evidence link belongs to a source, not
+									     to the purchase: a combined purchase was reviewed on
+									     several, and each one has its own departmental
+									     certification and acceptance behind it. -->
+									<div class="pln-evidence-links">
+										<a
+											v-for="source in row.sources || []"
+											:key="source.source_key"
+											href="#"
+											class="kt-btn kt-btn-ghost"
+											data-testid="rev-view-evidence"
+											@click.prevent="$emit('view-evidence', source)"
+										>{{ (row.sources || []).length > 1 ? source.title : "View departmental evidence" }}</a>
 									</div>
-									<div>
-										<span class="kt-label">Departments</span>
-										<span class="kt-meta-value">{{ row.department }}</span>
-									</div>
-								</div>
-								<!-- §10.11 — the evidence link belongs to a source, not
-								     to the purchase: a combined purchase was reviewed on
-								     several, and each one has its own departmental
-								     certification and acceptance behind it. -->
-								<div class="pln-evidence-links">
-									<a
-										v-for="source in row.sources || []"
-										:key="source.source_key"
-										href="#"
-										data-testid="rev-view-evidence"
-										@click.prevent="$emit('view-evidence', source)"
-									>{{ (row.sources || []).length > 1 ? source.title : "View departmental evidence" }}</a>
-								</div>
-							</td>
-						</tr>
-					</template>
-				</tbody>
-			</table>
-			<p class="kt-muted" data-testid="rev-caption">{{ task.caption }}</p>
+								</td>
+							</tr>
+						</template>
+					</tbody>
+				</table>
+				<p class="kt-muted" data-testid="rev-caption">{{ task.caption }}</p>
+			</div>
 
-			<!-- Second section — Accountability. Two compact labelled rows. -->
-			<h3 class="kt-card-title">Accountability</h3>
-			<div class="kt-meta-row" data-testid="rev-accountability">
-				<div>
-					<span class="kt-label">Funding</span>
-					<span class="kt-meta-value">{{ fundingLine }}</span>
+			<!-- Second section — Accountability. -->
+			<div class="kt-region is-secondary" data-testid="rev-accountability">
+				<h2>Accountability</h2>
+				<div class="kt-group">
+					<div class="kt-meta-row">
+						<div>
+							<span class="kt-label">Funding</span>
+							<span class="kt-meta-value" style="font-size: 14px">{{ fundingAt.actor_name ? "Within each approved budget line" : "Not yet checked" }}</span>
+						</div>
+						<template v-if="fundingAt.actor_name">
+							<div><span class="kt-label">Checked by</span><span class="kt-meta-value" style="font-size: 14px">{{ fundingAt.actor_name }}</span></div>
+							<div><span class="kt-label">Checked at</span><span class="kt-meta-value" style="font-size: 14px">{{ fundingAt.decided_at_display }}</span></div>
+						</template>
+					</div>
 				</div>
 				<!-- Absent before the signature exists (U11-HOPF). -->
-				<div v-if="signature">
-					<span class="kt-label">Preparation</span>
-					<span class="kt-meta-value" data-testid="rev-preparation">
-						Signed by {{ signature.actor_name }}, {{ signature.capacity }} · {{ signature.signed_at_display }}
-					</span>
+				<div v-if="signature" class="kt-group" data-testid="rev-preparation">
+					<div class="kt-meta-row">
+						<div><span class="kt-label">Preparation</span><span class="kt-meta-value" style="font-size: 14px">Signed</span></div>
+						<div><span class="kt-label">Signed by</span><span class="kt-meta-value" style="font-size: 14px">{{ signature.actor_name }}</span></div>
+						<div><span class="kt-label">Capacity</span><span class="kt-meta-value" style="font-size: 14px">{{ signature.capacity }}</span></div>
+						<div><span class="kt-label">Signed at</span><span class="kt-meta-value" style="font-size: 14px">{{ signature.signed_at_display }}</span></div>
+					</div>
 				</div>
+				<p class="kt-muted" style="margin-top: var(--kt-space-4)">Funding confirmation does not set money aside.</p>
 			</div>
-			<p class="kt-muted">Funding confirmation does not set money aside.</p>
+
+			<!-- Funding evidence — visible, secondary, matching the artboard's own
+			     always-open treatment: the other evidence sections stay closed.
+			     Between Accountability and the decision, matching the artboard. -->
+			<div class="kt-region is-secondary" data-testid="rev-funding-evidence">
+				<h2>Funding evidence</h2>
+				<table class="kt-table">
+					<thead>
+						<tr><th>Budget line</th><th class="is-num">Approved</th><th class="is-num">Planned</th><th class="is-num">Difference</th><th>Result</th></tr>
+					</thead>
+					<tbody>
+						<tr v-for="row in funding.rows || []" :key="row.budget_line">
+							<td>{{ row.budget_line_reference }}</td>
+							<td class="is-num">{{ row.approved_display }}</td>
+							<td class="is-num">{{ row.planned_display }}</td>
+							<td class="is-num">{{ row.difference_display }}</td>
+							<td><span class="kt-status" :class="`is-${row.result_kind}`">{{ row.result }}</span></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
 
 			<!-- The decision comes before the collapsed evidence, not after it. -->
 			<template v-if="task.status === 'Open' && task.can_decide">
@@ -252,27 +304,6 @@
 					</div>
 				</div>
 			</template>
-
-			<!-- Supporting evidence, all closed. Complete, reachable, secondary. -->
-			<details class="kt-disclosure" data-testid="rev-funding-evidence">
-				<summary class="kt-disclosure-head"><span class="kt-disclosure-title">Funding evidence</span></summary>
-				<div class="kt-disclosure-body">
-					<table class="kt-table">
-						<thead>
-							<tr><th>Budget line</th><th class="is-num">Approved</th><th class="is-num">Planned</th><th class="is-num">Difference</th><th>Result</th></tr>
-						</thead>
-						<tbody>
-							<tr v-for="row in funding.rows || []" :key="row.budget_line">
-								<td>{{ row.budget_line_reference }}</td>
-								<td class="is-num">{{ row.approved_display }}</td>
-								<td class="is-num">{{ row.planned_display }}</td>
-								<td class="is-num">{{ row.difference_display }}</td>
-								<td><span class="kt-status" :class="`is-${row.result_kind}`">{{ row.result }}</span></td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-			</details>
 
 			<details class="kt-disclosure" data-testid="rev-plan-checks">
 				<summary class="kt-disclosure-head"><span class="kt-disclosure-title">Review Plan checks</span></summary>
@@ -356,11 +387,7 @@ const stageLabel = computed(() => {
 	return props.task.stage || "";
 });
 
-const fundingLine = computed(() => {
-	const at = funding.value.at_approval || {};
-	if (!at.actor_name) return "Not yet checked";
-	return `Within each approved budget line · Checked by ${at.actor_name} · ${at.decided_at_display}`;
-});
+const fundingAt = computed(() => funding.value.at_approval || {});
 
 // Only these four things differ between actors. The document does not.
 const ACTORS = {

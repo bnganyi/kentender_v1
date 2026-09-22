@@ -182,8 +182,7 @@ class TestGetDepartmentalPlan(DppReadCase):
 			task=task.name,
 			issues=[{
 				"entry_id": added["entry_id"],
-				"problem": "Amount unsupported",
-				"correction": "Align the amount with the budget line.",
+				"correction_required": "Align the amount with the budget line.",
 			}],
 			task_token=task.task_token, idempotency_key=key(),
 		)
@@ -191,9 +190,85 @@ class TestGetDepartmentalPlan(DppReadCase):
 		result = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
 		self.assertTrue(result["has_returned_issues"])
 		row = next(r for r in result["entries"] if r["entry_id"] == added["entry_id"])
-		self.assertEqual(row["issues"][0]["problem"], "Amount unsupported")
 		self.assertEqual(
-			row["issues"][0]["correction"], "Align the amount with the budget line."
+			row["issues"][0]["correction_required"], "Align the amount with the budget line."
+		)
+
+	def test_returned_plan_surfaces_a_whole_plan_issue_separately(self):
+		opened = self.opened()
+		frappe.set_user(fx.AUTHOR)
+		added = dpp_lifecycle.save_direct_requirement(
+			dpp_version=opened["current_version"], values=fx.direct_values(),
+			expected_record_version=opened["record_version"], idempotency_key=key(),
+		)
+		frappe.set_user(fx.HOD)
+		submitted = dpp_lifecycle.submit_departmental_plan(
+			dpp_version=opened["current_version"], certification_confirmed=True,
+			expected_record_version=added["record_version"], idempotency_key=key(),
+		)
+		task = frappe.get_doc(
+			"Departmental Plan Validation Task", {"task_reference": submitted["task"]}
+		)
+		frappe.set_user(fx.PLANNER)
+		dpp_validation.return_departmental_plan(
+			task=task.name,
+			issues=[{"entry_id": "", "correction_required": "The submitted totals do not reconcile."}],
+			task_token=task.task_token, idempotency_key=key(),
+		)
+		frappe.set_user(fx.AUTHOR)
+		result = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
+		self.assertTrue(result["has_returned_issues"])
+		self.assertEqual(result["plan_issues"], [{"correction_required": "The submitted totals do not reconcile."}])
+		row = next(r for r in result["entries"] if r["entry_id"] == added["entry_id"])
+		self.assertEqual(row["issues"], [])
+
+	def test_a_historical_two_field_decision_still_reads_back_both_facts(self):
+		"""§4.4 is a coordinated payload amendment, not a rename: a decision
+		already recorded under the retired `{problem, correction}` shape is
+		never rewritten, and both facts of it keep showing distinctly."""
+		opened = self.opened()
+		frappe.set_user(fx.AUTHOR)
+		added = dpp_lifecycle.save_direct_requirement(
+			dpp_version=opened["current_version"], values=fx.direct_values(),
+			expected_record_version=opened["record_version"], idempotency_key=key(),
+		)
+		frappe.set_user(fx.HOD)
+		submitted = dpp_lifecycle.submit_departmental_plan(
+			dpp_version=opened["current_version"], certification_confirmed=True,
+			expected_record_version=added["record_version"], idempotency_key=key(),
+		)
+		task = frappe.get_doc(
+			"Departmental Plan Validation Task", {"task_reference": submitted["task"]}
+		)
+		frappe.set_user(fx.PLANNER)
+		import json as _json
+
+		frappe.get_doc(
+			{
+				"doctype": "Departmental Plan Validation Decision",
+				"decision_reference": "DEC-HIST-TEST-01",
+				"task": task.name,
+				"submission": task.submission,
+				"decision": "Return to department",
+				"issues": _json.dumps([
+					{"entry_id": added["entry_id"], "problem": "Amount unsupported", "correction": "Align the amount with the budget line."}
+				]),
+				"actor": fx.PLANNER,
+				"authority_snapshot": "{}",
+				"decided_at": frappe.utils.now_datetime(),
+				"command_idempotency_key": key(),
+			}
+		).insert(ignore_permissions=True)
+		frappe.db.set_value("Departmental Plan Validation Task", task.name, "status", "Completed", update_modified=False)
+		frappe.db.set_value(
+			"Departmental Plan Version", opened["current_version"], "returned_from_submission", task.submission, update_modified=False,
+		)
+		frappe.set_user(fx.AUTHOR)
+		result = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
+		row = next(r for r in result["entries"] if r["entry_id"] == added["entry_id"])
+		self.assertEqual(
+			row["issues"][0],
+			{"problem": "Amount unsupported", "correction": "Align the amount with the budget line."},
 		)
 
 	def test_out_of_scope_actor_gets_not_found(self):

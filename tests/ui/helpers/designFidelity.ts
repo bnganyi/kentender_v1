@@ -30,7 +30,12 @@ import * as path from "path";
  */
 
 const LANDMARK_SELECTOR = [
+	// Kept for v1.23-era screens still mid-port; the v1.24 pack titles a
+	// `.kt-region` with a bare, unclassed `<h2>` instead (KT-STD-001 v1.7
+	// §2.6.7 — no uppercase/accented section headings). Drop this once no
+	// Planning screen renders `.kt-card-title` any more.
 	".kt-card-title",
+	".kt-region > h2",
 	".kt-dialog-title",
 	// A screen that renders an artboard's `.dialog` as a full sub-view titles
 	// it with `.kt-section-title`; no artboard uses that class, so listing it
@@ -362,4 +367,31 @@ export async function variantScope(page: Page, panel: string, tag: string): Prom
 export async function openFrame(page: Page, relPath: string, frameId: string): Promise<string> {
 	await openArtboard(page, relPath, ".frame");
 	return frameScope(page, frameId);
+}
+
+/**
+ * A v1.24 (KT-STD-001 §2.6) artboard's scope selector.
+ *
+ * The Stage 2 bundled `Artboards-*.dc.html` files drop the v1.23 positioned-
+ * label panel convention entirely: every variant is its own
+ * `<section id="EXACT-SPEC-ID">` (e.g. `id="U01-CURRENT-UPDATE"`), one variant
+ * per section, so the id itself is the scope — no label text or side-by-side
+ * tag lookup is needed. Fails loudly when the id is missing or duplicated,
+ * same as the older `frameScope`/`panelScope`.
+ */
+export async function sectionScope(page: Page, id: string): Promise<string> {
+	const count = await page.evaluate(
+		(wanted) => document.querySelectorAll(`section#${wanted}`).length,
+		id
+	);
+	if (count !== 1) {
+		throw new Error(`section ${JSON.stringify(id)} not found exactly once in the artboard file (found ${count})`);
+	}
+	return `#${id}`;
+}
+
+/** Open a v1.24 bundled artboard file and return the scope selector of one section. */
+export async function openSection(page: Page, relPath: string, id: string): Promise<string> {
+	await openArtboard(page, relPath, "body");
+	return sectionScope(page, id);
 }

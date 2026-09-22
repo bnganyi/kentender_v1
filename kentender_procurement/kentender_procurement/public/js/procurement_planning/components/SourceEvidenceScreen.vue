@@ -11,7 +11,7 @@
      because the plan was not reviewed on the newer one. -->
 <template>
 	<div class="pln-evidence">
-		<div class="pln-sheet">
+		<div class="kt-page">
 			<a href="#" class="pln-evidence-back" data-testid="src-back-top" @click.prevent="$emit('navigate', evidence.back_route)">
 				← Return to plan review
 			</a>
@@ -48,8 +48,12 @@
 					</div>
 				</div>
 
-				<h1 class="kt-page-title" data-testid="src-title">Departmental requirement</h1>
-				<p class="kt-page-lede">{{ evidence.title }}</p>
+				<div class="kt-page-head">
+					<div>
+						<h1 class="kt-page-title" data-testid="src-title">Departmental requirement</h1>
+						<p class="kt-page-desc">{{ evidence.title }}</p>
+					</div>
+				</div>
 
 				<div class="kt-meta-row pln-context-row" data-testid="src-context">
 					<div>
@@ -78,101 +82,107 @@
 					</div>
 				</div>
 
-				<h3 class="kt-card-title">Requirement details</h3>
-				<div class="kt-meta-row" data-testid="src-requirement">
-					<div>
-						<span class="kt-label">Requirement title</span>
-						<span class="kt-meta-value">{{ evidence.title }}</span>
-					</div>
-					<div>
-						<span class="kt-label">Description</span>
-						<span class="kt-meta-value">{{ evidence.description }}</span>
-					</div>
-					<div>
-						<span class="kt-label">Expected result</span>
-						<span class="kt-meta-value">{{ evidence.expected_operational_result }}</span>
-					</div>
-					<div>
-						<span class="kt-label">Quantity</span>
-						<span class="kt-meta-value">{{ evidence.quantity_number }}</span>
-					</div>
-					<div>
-						<span class="kt-label">Unit</span>
-						<span class="kt-meta-value">{{ evidence.unit_label }}</span>
-					</div>
-					<div>
-						<span class="kt-label">Required by</span>
-						<span class="kt-meta-value">{{ evidence.required_by_display }}</span>
+				<div class="kt-region">
+					<h2>Requirement details</h2>
+					<div class="kt-meta-row" data-testid="src-requirement">
+						<div>
+							<span class="kt-label">Requirement title</span>
+							<span class="kt-meta-value">{{ evidence.title }}</span>
+						</div>
+						<div>
+							<span class="kt-label">Description</span>
+							<span class="kt-meta-value">{{ evidence.description }}</span>
+						</div>
+						<div>
+							<span class="kt-label">Expected result</span>
+							<span class="kt-meta-value">{{ evidence.expected_operational_result }}</span>
+						</div>
+						<div>
+							<span class="kt-label">Quantity</span>
+							<span class="kt-meta-value">{{ evidence.quantity_number }}</span>
+						</div>
+						<div>
+							<span class="kt-label">Unit</span>
+							<span class="kt-meta-value">{{ evidence.unit_label }}</span>
+						</div>
+						<div>
+							<span class="kt-label">Required by</span>
+							<span class="kt-meta-value">{{ evidence.required_by_display }}</span>
+						</div>
 					</div>
 				</div>
 
-				<h3 class="kt-card-title">Departmental funding</h3>
-				<div class="kt-meta-row" data-testid="src-funding">
-					<div>
-						<span class="kt-label">Department</span>
-						<span class="kt-meta-value">{{ evidence.department }}</span>
-					</div>
-					<div v-if="evidence.budget_line_name">
-						<span class="kt-label">Budget line name</span>
-						<span class="kt-meta-value">{{ evidence.budget_line_name }}</span>
-					</div>
-					<div>
-						<span class="kt-label">Budget line</span>
-						<span class="kt-meta-value">{{ evidence.budget_line_reference }}</span>
-					</div>
-					<div>
-						<span class="kt-label">Amount</span>
-						<span class="kt-meta-value">{{ evidence.planning_amount_display }}</span>
+				<div class="kt-region is-secondary">
+					<h2>Departmental funding</h2>
+					<div class="kt-meta-row" data-testid="src-funding">
+						<div>
+							<span class="kt-label">Department</span>
+							<span class="kt-meta-value">{{ evidence.department }}</span>
+						</div>
+						<div v-if="evidence.budget_line_name">
+							<span class="kt-label">Budget line name</span>
+							<span class="kt-meta-value">{{ evidence.budget_line_name }}</span>
+						</div>
+						<div>
+							<span class="kt-label">Budget line</span>
+							<span class="kt-meta-value">{{ evidence.budget_line_reference }}</span>
+						</div>
+						<div>
+							<span class="kt-label">Amount</span>
+							<span class="kt-meta-value">{{ evidence.planning_amount_display }}</span>
+						</div>
 					</div>
 				</div>
 
-				<h3 class="kt-card-title">Certification and Procurement review</h3>
-				<div class="kt-meta-row" data-testid="src-certification">
-					<div>
-						<span class="kt-label">Certification status</span>
-						<span class="kt-meta-value">
-							<span class="kt-status" :class="evidence.certified ? 'is-live' : 'is-attention'">{{ evidence.certification_status }}</span>
-						</span>
+				<div class="kt-region is-secondary">
+					<h2>Certification and Procurement review</h2>
+					<div class="kt-meta-row" data-testid="src-certification">
+						<div>
+							<span class="kt-label">Certification status</span>
+							<span class="kt-meta-value">
+								<span class="kt-status" :class="evidence.certified ? 'is-live' : 'is-attention'">{{ evidence.certification_status }}</span>
+							</span>
+						</div>
+						<template v-if="evidence.certified">
+							<div>
+								<span class="kt-label">Certified by</span>
+								<span class="kt-meta-value">{{ evidence.certified.actor_name }}</span>
+							</div>
+							<!-- The capacity is what makes the certification mean
+							     something; it is omitted rather than guessed. -->
+							<div v-if="evidence.certified.capacity">
+								<span class="kt-label">Capacity</span>
+								<span class="kt-meta-value">{{ evidence.certified.capacity }}</span>
+							</div>
+							<div>
+								<span class="kt-label">Certified at</span>
+								<span class="kt-meta-value">{{ evidence.certified.display }}</span>
+							</div>
+						</template>
+						<div>
+							<span class="kt-label">Procurement disposition</span>
+							<span class="kt-meta-value">{{ evidence.procurement_disposition }}</span>
+						</div>
+						<template v-if="evidence.accepted_for_planning">
+							<div>
+								<span class="kt-label">Accepted by</span>
+								<span class="kt-meta-value">{{ evidence.accepted_for_planning.actor_name }}</span>
+							</div>
+							<div>
+								<span class="kt-label">Accepted at</span>
+								<span class="kt-meta-value">{{ evidence.accepted_for_planning.display }}</span>
+							</div>
+						</template>
 					</div>
-					<template v-if="evidence.certified">
+					<!-- The department's own words, where the owner supplied them. -->
+					<p v-if="evidence.certified?.attestation_text" class="kt-muted" data-testid="src-attestation">
+						{{ evidence.certified.attestation_text }}
+					</p>
+					<div v-if="evidence.need_accepted" class="kt-meta-row" data-testid="src-need-accepted">
 						<div>
-							<span class="kt-label">Certified by</span>
-							<span class="kt-meta-value">{{ evidence.certified.actor_name }}</span>
+							<span class="kt-label">Need accepted by</span>
+							<span class="kt-meta-value">{{ evidence.need_accepted.actor_name }} · {{ evidence.need_accepted.display }}</span>
 						</div>
-						<!-- The capacity is what makes the certification mean
-						     something; it is omitted rather than guessed. -->
-						<div v-if="evidence.certified.capacity">
-							<span class="kt-label">Capacity</span>
-							<span class="kt-meta-value">{{ evidence.certified.capacity }}</span>
-						</div>
-						<div>
-							<span class="kt-label">Certified at</span>
-							<span class="kt-meta-value">{{ evidence.certified.display }}</span>
-						</div>
-					</template>
-					<div>
-						<span class="kt-label">Procurement disposition</span>
-						<span class="kt-meta-value">{{ evidence.procurement_disposition }}</span>
-					</div>
-					<template v-if="evidence.accepted_for_planning">
-						<div>
-							<span class="kt-label">Accepted by</span>
-							<span class="kt-meta-value">{{ evidence.accepted_for_planning.actor_name }}</span>
-						</div>
-						<div>
-							<span class="kt-label">Accepted at</span>
-							<span class="kt-meta-value">{{ evidence.accepted_for_planning.display }}</span>
-						</div>
-					</template>
-				</div>
-				<!-- The department's own words, where the owner supplied them. -->
-				<p v-if="evidence.certified?.attestation_text" class="kt-muted" data-testid="src-attestation">
-					{{ evidence.certified.attestation_text }}
-				</p>
-				<div v-if="evidence.need_accepted" class="kt-meta-row" data-testid="src-need-accepted">
-					<div>
-						<span class="kt-label">Need accepted by</span>
-						<span class="kt-meta-value">{{ evidence.need_accepted.actor_name }} · {{ evidence.need_accepted.display }}</span>
 					</div>
 				</div>
 
@@ -211,7 +221,7 @@
 				<div class="pln-footer" data-testid="src-footer">
 					<span></span>
 					<div class="pln-footer-right">
-						<button type="button" class="kt-btn kt-btn-secondary" data-testid="src-back-bottom" @click="$emit('navigate', evidence.back_route)">
+						<button type="button" class="kt-btn kt-btn-primary" data-testid="src-back-bottom" @click="$emit('navigate', evidence.back_route)">
 							Return to plan review
 						</button>
 					</div>

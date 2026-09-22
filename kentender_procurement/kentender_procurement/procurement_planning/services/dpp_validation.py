@@ -85,18 +85,22 @@ def return_departmental_plan(
 	assignment = authz.require_site_role(ROLE_PROCUREMENT_PLANNER, actor)
 	envelope.assert_task_token(task_doc, task_token)
 	authz.require_not_segregated(actor, authz.ACTION_DPP_VALIDATE, submission=task_doc.submission)
+	# PLN-CHG-001 v1.24 §4.4 — one required nonblank comment per issue, labelled
+	# "What needs to change?"; `entry_id` is null for a whole-submission issue.
+	# No second problem/issue field: this is a coordinated payload amendment,
+	# not a rename, so a historical decision's own `{problem, correction}` rows
+	# stay exactly as recorded (dpp_read._returned_issues reads both shapes).
 	cleaned = [
 		{
-			"entry_id": cstr(row.get("entry_id")).strip(),
-			"problem": cstr(row.get("problem")).strip(),
-			"correction": cstr(row.get("correction")).strip(),
+			"entry_id": cstr(row.get("entry_id")).strip() or None,
+			"correction_required": cstr(row.get("correction_required")).strip(),
 		}
 		for row in (issues or [])
 	]
-	if not cleaned or any(not (row["entry_id"] and row["problem"] and row["correction"]) for row in cleaned):
+	if not cleaned or any(not row["correction_required"] or len(row["correction_required"]) > 1000 for row in cleaned):
 		fail(
 			"PLN_ENTRY_INCOMPLETE",
-			"State at least one structured issue: the affected entry, the concise problem and the exact correction required.",
+			"State at least one issue: what needs to change, for a requirement or for the whole plan (1-1,000 characters).",
 		)
 
 	version = frappe.get_doc("Departmental Plan Version", task_doc.dpp_version)

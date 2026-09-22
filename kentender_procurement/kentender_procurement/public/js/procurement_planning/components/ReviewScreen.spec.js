@@ -116,18 +116,23 @@ describe("ReviewScreen — U11-AO shared composition", () => {
 		expect(w.find('[data-testid="rev-purchase-detail"]').text()).toContain("Open Tender");
 	});
 
-	it("keeps every evidence section closed", () => {
+	it("keeps the secondary evidence sections closed, Funding evidence visible", () => {
 		const w = make();
-		for (const id of ["rev-funding-evidence", "rev-plan-checks", "rev-history"]) {
+		for (const id of ["rev-plan-checks", "rev-history"]) {
 			expect(w.find(`[data-testid="${id}"]`).attributes("open")).toBeUndefined();
 		}
+		expect(w.find('[data-testid="rev-funding-evidence"] table').exists()).toBe(true);
 	});
 
 	it("shows funding and preparation accountability as two compact rows", () => {
 		const w = make();
 		const accountability = w.find('[data-testid="rev-accountability"]');
-		expect(accountability.text()).toContain("Checked by Josphat Mwangi");
-		expect(w.find('[data-testid="rev-preparation"]').text()).toContain("Charles Mutiso, Head of Procurement Function");
+		expect(accountability.text()).toContain("Checked by");
+		expect(accountability.text()).toContain("Josphat Mwangi");
+		const preparation = w.find('[data-testid="rev-preparation"]');
+		expect(preparation.text()).toContain("Charles Mutiso");
+		expect(preparation.text()).toContain("Head of Procurement Function");
+		expect(preparation.text()).toContain("7 Dec 2026, 10:00 EAT");
 	});
 
 	it("does not require the review pack to decide", () => {

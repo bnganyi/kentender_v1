@@ -5,13 +5,11 @@
      apply here too). -->
 <template>
 	<div class="kt-dialog-backdrop" data-testid="fnt-return-dialog">
-		<div class="kt-dialog" role="dialog" aria-modal="true" aria-labelledby="fnt-return-title">
+		<div class="kt-dialog" style="width: 520px" role="dialog" aria-modal="true" aria-labelledby="fnt-return-title">
 			<div id="fnt-return-title" class="kt-dialog-title">What needs to change?</div>
-			<div class="kt-meta-row">
-				<div>
-					<span class="kt-label">Applies to</span>
-					<span class="kt-meta-value" data-testid="fnt-return-context">Whole annual plan</span>
-				</div>
+			<div class="kt-group">
+				<span class="kt-label">Context</span>
+				<div style="font-size: 14px; margin-top: 2px" data-testid="fnt-return-context">Whole annual plan</div>
 			</div>
 			<p class="pln-dialog-lede">
 				No reservation is created. State the correction required.

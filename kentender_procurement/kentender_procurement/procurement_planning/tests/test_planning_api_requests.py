@@ -145,8 +145,7 @@ class TestEndpointsSurviveTheFrameworksTransportFields(RequestShapedCase):
 			issues=json.dumps([
 				{
 					"entry_id": added["entry_id"],
-					"problem": "Amount unsupported",
-					"correction": "Align the amount with the budget line.",
+					"correction_required": "Align the amount with the budget line.",
 				}
 			]),
 			task_token=task.task_token,

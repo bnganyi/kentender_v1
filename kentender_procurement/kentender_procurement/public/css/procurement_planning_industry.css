@@ -1052,8 +1052,11 @@
 	opacity: 0.55;
 	cursor: not-allowed;
 }
+/* U08 — what the choice will produce: a plain shaded block, not a card. */
 .kt-pln .pln-form-preview {
 	margin-top: var(--kt-space-4);
+	background: var(--kt-color-surface-2);
+	padding: var(--kt-space-4);
 }
 
 /* §10.11 — one requirement read end to end: a reading column, not a full-width

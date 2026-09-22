@@ -172,7 +172,7 @@ test.describe("PLN18-303 Departmental Plan screens", () => {
 		await gotoDpp(page, state.dpp_reference);
 		await expectReady(page, "dpp");
 		await expect(page.locator('[data-testid="pln-error"]')).toBeVisible();
-		await expect(page.locator('[data-testid="pln-error"] h3')).toHaveText("This record isn't available to you");
+		await expect(page.locator('[data-testid="pln-error"] h3')).toHaveText("This record is not available to you.");
 		await expect(page.locator(".kt-page-title")).toHaveCount(0);
 	});
 
@@ -203,8 +203,7 @@ test.describe("PLN18-303 Departmental Plan screens", () => {
 		await expectReady(page, "dpp-review");
 		await page.locator('[data-testid="pln-review-return"]').click();
 		await expect(page.locator('[data-testid="dppv-return-dialog"]')).toBeVisible();
-		await page.locator('[data-testid="dppv-issue-problem-0"]').fill("The indicative amount needs correction.");
-		await page.locator('[data-testid="dppv-issue-correction-0"]').fill("Confirm and update the amount.");
+		await page.locator('[data-testid="dppv-issue-comment-0"]').fill("Confirm and update the amount.");
 		await page.locator('[data-testid="dppv-return-confirm"]').click();
 		await expectReady(page, "workspace");
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);

@@ -1,19 +1,21 @@
-<!-- U11-return — the review's own Return dialog, differing only in its
-     title/intro text (served by the read model per stage, §10.4's exact
-     copy). Required multiline "Correction required"; no reason category,
-     attachment, assignee, due date or optional note (§11.17). -->
+<!-- PLN-CHG-001 v1.24 §10.10 U11-RETURN, ported from Artboards-U11.dc.html.
+     Required multiline comment; no reason category, attachment, assignee,
+     due date or optional note (§11.17). Every governance return is a
+     whole-plan correction — ReturnPlanVersion takes no per-purchase target —
+     so the artboard's illustrative Context selector names nothing the
+     command consumes and is not built as a live control. -->
 <template>
 	<div class="kt-dialog-backdrop" data-testid="rvw-return-dialog">
-		<div class="kt-dialog" role="dialog" aria-modal="true" aria-labelledby="rvw-return-title">
-			<div id="rvw-return-title" class="kt-dialog-title">{{ dialog.title }}</div>
-			<p class="pln-dialog-lede">{{ dialog.lede }}</p>
+		<div class="kt-dialog" style="width: 520px" role="dialog" aria-modal="true" aria-labelledby="rvw-return-title">
+			<div id="rvw-return-title" class="kt-dialog-title">What needs to change?</div>
 			<div class="pln-field">
-				<label for="rvw-return-reason">Correction required</label>
+				<label for="rvw-return-reason">Comment</label>
 				<textarea
-					id="rvw-return-reason" class="kt-input" rows="3"
+					id="rvw-return-reason" class="kt-input" rows="4"
 					data-testid="rvw-return-reason" v-model="reason"
 				></textarea>
 			</div>
+			<p class="pln-dialog-lede">{{ dialog.lede }}</p>
 			<p v-if="error" class="pln-dialog-error" role="alert" data-testid="rvw-return-error">
 				{{ error }}
 			</p>

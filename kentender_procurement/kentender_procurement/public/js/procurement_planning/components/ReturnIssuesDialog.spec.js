@@ -1,7 +1,7 @@
-// PLN-CHG-001 v1.18 §12.6 — ReturnIssuesDialog component tests (U06 overlay,
-// "Return departmental plan for correction?"). At least one structured issue
-// with its affected entry, the exact fields U06 draws, and Add another issue
-// as a legitimate addition beyond the single-issue frame example.
+// PLN-CHG-001 v1.24 §4.4/§10.5 — ReturnIssuesDialog component tests
+// (U06-RETURN). One or more issues, each one required comment against a
+// requirement or the whole plan, and Add another issue as a legitimate
+// addition beyond the single-issue frame example.
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import ReturnIssuesDialog from "./ReturnIssuesDialog.vue";
@@ -16,33 +16,43 @@ function make(props = {}) {
 }
 
 describe("ReturnIssuesDialog", () => {
-	it("renders the frame's exact title, lede and field labels", () => {
+	it("renders the frame's exact title and field labels, with the plan as an option", () => {
 		const w = make();
-		expect(w.get(".kt-dialog-title").text()).toBe("Return to department?");
-		expect(w.text()).toContain("The submitted plan remains unchanged. State each issue and the exact correction required.");
-		expect(w.findAll("label").map((l) => l.text())).toEqual(["Affected requirement", "Issue", "Correction required"]);
+		expect(w.get(".kt-dialog-title").text()).toBe("What needs to change?");
+		expect(w.findAll("label").map((l) => l.text())).toEqual(["Context", "Comment"]);
+		const options = w.find('[data-testid="dppv-issue-context-0"]').findAll("option").map((o) => o.text());
+		expect(options).toEqual(["Whole departmental plan", ...ENTRIES.map((e) => e.title)]);
 	});
 
-	it("disables Return to department until every issue row is complete, then emits the issues", async () => {
+	it("disables Return to department until every issue has a comment, then emits entry_id and correction_required only", async () => {
 		const w = make();
 		const confirm = w.get('[data-testid="dppv-return-confirm"]');
 		expect(confirm.attributes("disabled")).toBeDefined();
 
-		await w.get('[data-testid="dppv-issue-entry-0"]').setValue("E2");
-		await w.get('[data-testid="dppv-issue-problem-0"]').setValue("The indicative amount needs correction.");
-		await w.get('[data-testid="dppv-issue-correction-0"]').setValue("Confirm and update the deployment laptop amount.");
+		await w.get('[data-testid="dppv-issue-context-0"]').setValue("E2");
+		await w.get('[data-testid="dppv-issue-comment-0"]').setValue("Confirm and update the deployment laptop amount.");
 		expect(confirm.attributes("disabled")).toBeUndefined();
 		await confirm.trigger("click");
 		expect(w.emitted("confirm")[0][0]).toEqual([
-			{ entry_id: "E2", problem: "The indicative amount needs correction.", correction: "Confirm and update the deployment laptop amount." },
+			{ entry_id: "E2", correction_required: "Confirm and update the deployment laptop amount." },
+		]);
+	});
+
+	it("keeps entry_id null for a whole-plan issue", async () => {
+		const w = make();
+		await w.get('[data-testid="dppv-issue-context-0"]').setValue("");
+		await w.get('[data-testid="dppv-issue-comment-0"]').setValue("The submitted totals do not reconcile.");
+		await w.get('[data-testid="dppv-return-confirm"]').trigger("click");
+		expect(w.emitted("confirm")[0][0]).toEqual([
+			{ entry_id: null, correction_required: "The submitted totals do not reconcile." },
 		]);
 	});
 
 	it("adds another issue row on demand", async () => {
 		const w = make();
-		expect(w.findAll('[data-testid^="dppv-issue-entry-"]')).toHaveLength(1);
+		expect(w.findAll('[data-testid^="dppv-issue-context-"]')).toHaveLength(1);
 		await w.get('[data-testid="dppv-issue-add"]').trigger("click");
-		expect(w.findAll('[data-testid^="dppv-issue-entry-"]')).toHaveLength(2);
+		expect(w.findAll('[data-testid^="dppv-issue-context-"]')).toHaveLength(2);
 	});
 
 	it("disables Cancel and Return to department while pending, and shows a server error", () => {

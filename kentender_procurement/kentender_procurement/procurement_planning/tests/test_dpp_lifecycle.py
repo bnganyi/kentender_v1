@@ -450,7 +450,7 @@ class TestCorrectionCohort(PlanningCommandCase):
 		from kentender_procurement.procurement_planning.services import dpp_validation
 
 		returned = dpp_validation.return_departmental_plan(
-			task=task.name, issues=[{"entry_id": added["entry_id"], "problem": "Amount too low", "correction": "Re-estimate the amount"}],
+			task=task.name, issues=[{"entry_id": added["entry_id"], "correction_required": "Re-estimate the amount"}],
 			task_token=task.task_token, idempotency_key=key(),
 		)
 		root = frappe.get_doc("Departmental Plan", opened["departmental_plan"])

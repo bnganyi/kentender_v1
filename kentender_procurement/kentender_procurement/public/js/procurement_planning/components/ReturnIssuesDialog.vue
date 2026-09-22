@@ -1,52 +1,42 @@
-<!-- §12.6 — the structured-issue return dialog: at least one issue with the
-     affected entry, the concise problem and the exact correction required.
-     No reason category, attachment, assignee or optional note (§11.17). -->
+<!-- PLN-CHG-001 v1.24 §4.4/§10.5 U06-RETURN, ported class-for-class from
+     Artboards-U06.dc.html. One or more issues, each a single required
+     comment ("What needs to change?") against one requirement or the whole
+     departmental plan — no second problem/issue field, and no forced
+     per-issue requirement (§4.4 supersedes the retired two-field, entry-only
+     contract). -->
 <template>
 	<div class="kt-dialog-backdrop" data-testid="dppv-return-dialog">
-		<div class="kt-dialog" role="dialog" aria-modal="true" aria-labelledby="dppv-return-title">
-			<div id="dppv-return-title" class="kt-dialog-title">Return to department?</div>
-			<p class="pln-dialog-lede">
-				The submitted plan remains unchanged. State each issue and the exact
-				correction required.
-			</p>
+		<div class="kt-dialog" style="width: 520px" role="dialog" aria-modal="true" aria-labelledby="dppv-return-title">
+			<div id="dppv-return-title" class="kt-dialog-title">What needs to change?</div>
 
 			<div v-for="(issue, index) in issues" :key="index" class="pln-issue-row">
 				<div class="pln-field">
-					<label :for="`dppv-issue-entry-${index}`">Affected requirement</label>
+					<label :for="`dppv-issue-context-${index}`">Context</label>
 					<select
-						:id="`dppv-issue-entry-${index}`"
+						:id="`dppv-issue-context-${index}`"
 						class="kt-input"
-						:data-testid="`dppv-issue-entry-${index}`"
+						:data-testid="`dppv-issue-context-${index}`"
 						v-model="issue.entry_id"
 					>
+						<option value="">Whole departmental plan</option>
 						<option v-for="entry in entries" :key="entry.entry_id" :value="entry.entry_id">
 							{{ entry.title }}
 						</option>
 					</select>
 				</div>
 				<div class="pln-field">
-					<label :for="`dppv-issue-problem-${index}`">Issue</label>
-					<input
-						:id="`dppv-issue-problem-${index}`"
-						type="text"
-						class="kt-input"
-						:data-testid="`dppv-issue-problem-${index}`"
-						v-model="issue.problem"
-					/>
-				</div>
-				<div class="pln-field">
-					<label :for="`dppv-issue-correction-${index}`">Correction required</label>
+					<label :for="`dppv-issue-comment-${index}`">Comment</label>
 					<textarea
-						:id="`dppv-issue-correction-${index}`"
+						:id="`dppv-issue-comment-${index}`"
 						class="kt-input"
-						rows="2"
-						:data-testid="`dppv-issue-correction-${index}`"
-						v-model="issue.correction"
+						rows="4"
+						:data-testid="`dppv-issue-comment-${index}`"
+						v-model="issue.correction_required"
 					></textarea>
 				</div>
 			</div>
 
-			<button class="kt-btn kt-btn-ghost" data-testid="dppv-issue-add" @click="addIssue">
+			<button type="button" class="kt-btn kt-btn-ghost" data-testid="dppv-issue-add" @click="addIssue">
 				Add another issue
 			</button>
 
@@ -55,14 +45,15 @@
 			</p>
 
 			<div class="kt-dialog-actions">
-				<button class="kt-btn kt-btn-secondary" :disabled="pending" @click="$emit('cancel')">
+				<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" @click="$emit('cancel')">
 					Cancel
 				</button>
 				<button
+					type="button"
 					class="kt-btn kt-btn-primary"
 					data-testid="dppv-return-confirm"
 					:disabled="pending || !complete"
-					@click="$emit('confirm', issues)"
+					@click="onConfirm"
 				>
 					Return to department
 				</button>
@@ -80,21 +71,20 @@ const props = defineProps({
 	error: String,
 });
 
-defineEmits(["confirm", "cancel"]);
+const emit = defineEmits(["confirm", "cancel"]);
 
-const issues = reactive([
-	{ entry_id: props.entries[0]?.entry_id || "", problem: "", correction: "" },
-]);
+const issues = reactive([{ entry_id: props.entries[0]?.entry_id || "", correction_required: "" }]);
 
 function addIssue() {
-	issues.push({ entry_id: props.entries[0]?.entry_id || "", problem: "", correction: "" });
+	issues.push({ entry_id: props.entries[0]?.entry_id || "", correction_required: "" });
 }
 
-const complete = computed(
-	() =>
-		issues.length > 0 &&
-		issues.every(
-			(issue) => issue.entry_id && issue.problem.trim() && issue.correction.trim()
-		)
-);
+const complete = computed(() => issues.length > 0 && issues.every((issue) => issue.correction_required.trim()));
+
+function onConfirm() {
+	emit(
+		"confirm",
+		issues.map((issue) => ({ entry_id: issue.entry_id || null, correction_required: issue.correction_required.trim() })),
+	);
+}
 </script>

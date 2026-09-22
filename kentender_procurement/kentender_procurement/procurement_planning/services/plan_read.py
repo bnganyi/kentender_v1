@@ -1925,7 +1925,8 @@ def get_publication_task(*, publication: str, user: str | None = None) -> dict[s
 	)
 	treasury = frappe.db.get_value(
 		"Treasury Submission Evidence", {"plan_version": version.name, "evidence_state": "Current"},
-		["name", "submitted_at", "channel", "dispatch_reference", "recorded_at"], as_dict=True,
+		["name", "submitted_at", "channel", "dispatch_reference", "recorded_at", "destination", "supporting_attachment", "actor"],
+		as_dict=True,
 	)
 	hold = frappe.db.get_value("Plan Publication Hold", {"plan_version": version.name, "hold_state": "Active"}, ["name", "hold_kind", "reason", "raised_at"], as_dict=True)
 	badge, badge_kind = {
@@ -1958,10 +1959,8 @@ def get_publication_task(*, publication: str, user: str | None = None) -> dict[s
 				"channel": treasury.channel,
 				"dispatch_reference": treasury.dispatch_reference,
 				"recorded_display": _eat(treasury.recorded_at),
-				"recorded_by_name": cstr(
-					frappe.db.get_value("User", frappe.db.get_value("Treasury Submission Evidence", treasury.name, "actor"), "full_name")
-					or ""
-				),
+				"recorded_by_name": cstr(frappe.db.get_value("User", treasury.actor, "full_name") or ""),
+				"supporting_attachment": cstr(treasury.supporting_attachment),
 			}
 			if treasury else None
 		),
@@ -1993,8 +1992,10 @@ def get_publication_task(*, publication: str, user: str | None = None) -> dict[s
 				"submitted_at": cstr(treasury.submitted_at),
 				"submitted_display": _eat(treasury.submitted_at),
 				"channel": cstr(treasury.channel),
-				"destination": cstr(frappe.db.get_value("Treasury Submission Evidence", treasury.name, "destination")),
+				"destination": cstr(treasury.destination),
 				"dispatch_reference": cstr(treasury.dispatch_reference),
+				"supporting_attachment": cstr(treasury.supporting_attachment),
+				"recorded_by_name": cstr(frappe.db.get_value("User", treasury.actor, "full_name") or ""),
 			}
 			if treasury else None
 		),

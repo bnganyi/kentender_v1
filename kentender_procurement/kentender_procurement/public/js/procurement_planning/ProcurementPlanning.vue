@@ -34,43 +34,29 @@
 			/>
 
 			<template v-else>
-				<div v-if="loading" class="kt-card kt-blueprint" style="padding: 24px">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<div v-for="row in 3" :key="row" class="pln-skel-row">
-						<div class="kt-skel" style="width: 72%"></div>
-						<div class="kt-skel" style="width: 52%"></div>
-						<div class="kt-skel" style="width: 52%"></div>
-						<div class="kt-skel" style="width: 44%"></div>
-					</div>
-				</div>
-				<!-- §9/§11.18 — a masked "not found" (a record that exists but the
-				     actor may not read) is a calm, expected state, never the
-				     technical-failure panel below: no "Try again", no support
-				     reference (reported live 2026-09-11 as a departmental actor's
-				     direct link reading as a crash). Shares data-testid="pln-error"
-				     with the load-error panel so either state satisfies the one
-				     "this record page has an error" locator every spec already uses. -->
-				<div v-else-if="notAvailable" class="kt-card kt-blueprint pln-state-card" data-testid="pln-error">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<h3>This record isn't available to you</h3>
-					<p>It may not exist, or you may not have access to it.</p>
-					<button
-						type="button" class="kt-btn kt-btn-secondary"
-						data-testid="pln-not-found-back"
-						@click="frappe.set_route(WORKSPACE_PAGE)"
-					>Go to Procurement Planning</button>
-				</div>
-				<!-- PLN-DES-16 load error — one component for every record page -->
-				<div v-else-if="error" class="kt-card kt-blueprint pln-state-card" data-testid="pln-error">
-					<i class="kt-corner tl"></i><i class="kt-corner tr"></i>
-					<i class="kt-corner bl"></i><i class="kt-corner br"></i>
-					<h3>Procurement Planning could not be loaded</h3>
-					<p>Try again. If the problem continues, quote the support reference shown below.</p>
-					<button type="button" class="kt-btn kt-btn-secondary" @click="load">Try again</button>
-					<p class="pln-support-ref">Support reference: {{ supportRef }}</p>
-				</div>
+				<CommonStates v-if="loading" kind="loading-review" testid="pln-loading" />
+				<!-- §9/§11.18, U21-MASKED — a masked "not found" (a record that
+				     exists but the actor may not read) is a calm, expected state,
+				     never the technical-failure panel below: no "Try again", no
+				     support reference (reported live 2026-09-11 as a departmental
+				     actor's direct link reading as a crash). Shares
+				     testid="pln-error" with the load-error panel so either
+				     state satisfies the one "this record page has an error"
+				     locator every spec already uses. -->
+				<CommonStates
+					v-else-if="notAvailable"
+					kind="masked"
+					testid="pln-error"
+					@action="frappe.set_route(WORKSPACE_PAGE)"
+				/>
+				<!-- U21-LOAD-FAILURE — one component for every record page -->
+				<CommonStates
+					v-else-if="error"
+					kind="load-failure"
+					testid="pln-error"
+					:support-ref="supportRef"
+					@action="load"
+				/>
 
 				<template v-else-if="screen === 'dpp'">
 					<DppPlanScreen
@@ -106,8 +92,10 @@
 						v-if="notProceedDialog"
 						:pending="pending"
 						:error="errorSummary"
+						:title="notProceedEntry?.title"
+						:reference="notProceedEntry?.reference_line"
 						@confirm="onNotProceedConfirm"
-						@cancel="notProceedDialog = false"
+						@cancel="notProceedDialog = false; notProceedEntry = null"
 					/>
 				</template>
 
@@ -405,6 +393,7 @@ import { useRouteState } from "../pln_shared/composables/useRouteState.js";
 import { usePageRail } from "../pln_shared/composables/usePageRail.js";
 import * as api from "./data/planningApi.js";
 import WorkspaceScreen from "./components/WorkspaceScreen.vue";
+import CommonStates from "./components/CommonStates.vue";
 import DppPlanScreen from "./components/DppPlanScreen.vue";
 import DppEntryEditorScreen from "./components/DppEntryEditorScreen.vue";
 import DppValidationScreen from "./components/DppValidationScreen.vue";
@@ -432,7 +421,6 @@ import WithdrawalDialog from "./components/WithdrawalDialog.vue";
 import PlanItemEditorScreen from "./components/PlanItemEditorScreen.vue";
 import FinanceTaskScreen from "./components/FinanceTaskScreen.vue";
 import FinanceReturnDialog from "./components/FinanceReturnDialog.vue";
-import GovernanceReturnDialog from "./components/GovernanceReturnDialog.vue";
 
 const WORKSPACE_PAGE = "procurement-planning";
 const DPP_PAGE = "departmental-procurement-plan";
@@ -472,6 +460,7 @@ const classificationNewType = ref("");
 const classificationReason = ref("");
 const returnDialog = ref(false);
 const notProceedDialog = ref(false);
+const notProceedEntry = ref(null);
 const annualPlan = ref({});
 const planItem = ref({});
 const formDialog = ref(false);
@@ -889,6 +878,7 @@ async function onSaveEntryFunding() {
 // dialog rather than being a third control in the funding panel.
 function onExcludeEntry(row) {
 	fundingEntryId.value = row.entry_id;
+	notProceedEntry.value = row;
 	notProceedDialog.value = true;
 }
 
@@ -945,6 +935,7 @@ async function onNotProceedConfirm(reason) {
 	});
 	if (!result) return;
 	notProceedDialog.value = false;
+	notProceedEntry.value = null;
 	if (onPlan) onCloseFunding();
 	else go(dppReference.value);
 }

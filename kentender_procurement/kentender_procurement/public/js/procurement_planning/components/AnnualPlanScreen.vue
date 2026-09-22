@@ -12,8 +12,8 @@
      are sections of one plan's life, not stages of a wizard. -->
 <template>
 	<div>
-		<div class="pln-sheet">
-			<div class="pln-masthead">
+		<div class="kt-page">
+			<div class="kt-page-head">
 				<div>
 					<h1 class="kt-page-title" data-testid="ppl-title">{{ title }}</h1>
 				</div>
@@ -85,113 +85,119 @@
 				Add a project name
 			</button>
 
-			<h3 class="kt-card-title">Purchases</h3>
-			<table v-if="items.length" class="kt-table" data-testid="ppl-purchases">
-				<thead>
-					<tr>
-						<th>Purchase</th>
-						<th class="is-num">Quantity</th>
-						<th>Unit</th>
-						<th class="is-num">Estimated cost</th>
-						<th>Required by</th>
-						<th>Current work</th>
-						<th>Action</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr v-for="row in items" :key="row.plan_item_id" data-testid="ppl-purchase-row">
-						<td>
-							{{ row.title }}
-							<div class="kt-muted pln-row-ref">{{ row.plan_item_id }}</div>
-						</td>
-						<td class="is-num">{{ row.quantity_number }}</td>
-						<td>{{ row.unit_label }}</td>
-						<td class="is-num">{{ row.value_display }}</td>
-						<td>{{ row.completion_display }}</td>
-						<td>{{ row.current_work }}</td>
-						<td>
-							<a href="#" data-testid="ppl-edit-purchase" @click.prevent="$emit('navigate', row.route)">Edit purchase</a>
-						</td>
-					</tr>
-				</tbody>
-			</table>
-			<p v-else class="kt-muted" data-testid="ppl-purchases-empty">No purchases have been added yet.</p>
-
-			<!-- U07-UNALLOCATED — the sources still waiting to become purchases. -->
-			<h3 class="kt-card-title">Requirements ready to add</h3>
-			<template v-if="unallocated.length">
-				<table class="kt-table" data-testid="ppl-unallocated">
+			<div class="kt-region">
+				<h2>Purchases</h2>
+				<table v-if="items.length" class="kt-table" data-testid="ppl-purchases">
 					<thead>
 						<tr>
-							<th v-if="plan.mutable">Select</th>
-							<th>Requirement</th>
-							<th>Department</th>
+							<th>Purchase</th>
 							<th class="is-num">Quantity</th>
 							<th>Unit</th>
 							<th class="is-num">Estimated cost</th>
+							<th>Required by</th>
+							<th>Current work</th>
 							<th>Action</th>
 						</tr>
 					</thead>
 					<tbody>
-						<tr v-for="row in unallocated" :key="row.entry_id" data-testid="ppl-unallocated-row">
-							<td v-if="plan.mutable">
-								<label class="kt-checkbox">
-									<input
-										type="checkbox"
-										data-testid="ppl-select-source"
-										:checked="selected.includes(row.entry_id)"
-										@change="$emit('toggle-source', row.entry_id)"
-									>
-									<span class="box"></span>
-								</label>
-							</td>
+						<tr v-for="row in items" :key="row.plan_item_id" data-testid="ppl-purchase-row">
 							<td>
 								{{ row.title }}
-								<div class="kt-muted pln-row-ref">{{ row.source_label }}</div>
+								<div class="kt-muted pln-row-ref">{{ row.plan_item_id }}</div>
 							</td>
-							<td>{{ row.department }}</td>
 							<td class="is-num">{{ row.quantity_number }}</td>
 							<td>{{ row.unit_label }}</td>
-							<td class="is-num">{{ row.amount_display }}</td>
+							<td class="is-num">{{ row.value_display }}</td>
+							<td>{{ row.completion_display }}</td>
+							<td>{{ row.current_work }}</td>
 							<td>
-								<a href="#" data-testid="ppl-view-requirement" @click.prevent="$emit('view-requirement', row)">View requirement</a>
+								<a href="#" class="kt-btn kt-btn-ghost" data-testid="ppl-edit-purchase" @click.prevent="$emit('navigate', row.route)">Edit purchase</a>
 							</td>
 						</tr>
 					</tbody>
 				</table>
-				<!-- A reader who cannot form purchases is not offered the control
-				     at all: this cycle shows no control a reader cannot use. -->
-				<div v-if="plan.mutable" class="pln-add-selected">
-					<p v-if="!selected.length" class="kt-muted" data-testid="ppl-select-hint">Select at least one requirement.</p>
-					<button
-						type="button"
-						class="kt-btn kt-btn-primary"
-						data-testid="ppl-add-selected"
-						:disabled="pending || !selected.length"
-						@click="$emit('open-form-dialog')"
-					>
-						Add selected requirements
-					</button>
-				</div>
-			</template>
-			<p v-else class="kt-muted" data-testid="ppl-all-allocated">{{ allAllocatedText }}</p>
+				<div v-else class="kt-empty" data-testid="ppl-purchases-empty">No purchases have been added yet.</div>
+			</div>
+
+			<!-- U07-UNALLOCATED — the sources still waiting to become purchases. -->
+			<div class="kt-region" :class="{ 'is-secondary': !unallocated.length }">
+				<h2>Requirements ready to add</h2>
+				<template v-if="unallocated.length">
+					<table class="kt-table" data-testid="ppl-unallocated">
+						<thead>
+							<tr>
+								<th v-if="plan.mutable">Select</th>
+								<th>Requirement</th>
+								<th>Department</th>
+								<th class="is-num">Quantity</th>
+								<th>Unit</th>
+								<th class="is-num">Estimated cost</th>
+								<th>Action</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr v-for="row in unallocated" :key="row.entry_id" data-testid="ppl-unallocated-row">
+								<td v-if="plan.mutable">
+									<label class="kt-checkbox">
+										<input
+											type="checkbox"
+											data-testid="ppl-select-source"
+											:checked="selected.includes(row.entry_id)"
+											@change="$emit('toggle-source', row.entry_id)"
+										>
+										<span class="box"></span>
+									</label>
+								</td>
+								<td>
+									{{ row.title }}
+									<div class="kt-muted pln-row-ref">{{ row.source_label }}</div>
+								</td>
+								<td>{{ row.department }}</td>
+								<td class="is-num">{{ row.quantity_number }}</td>
+								<td>{{ row.unit_label }}</td>
+								<td class="is-num">{{ row.amount_display }}</td>
+								<td>
+									<a href="#" class="kt-btn kt-btn-ghost" data-testid="ppl-view-requirement" @click.prevent="$emit('view-requirement', row)">View requirement</a>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<!-- A reader who cannot form purchases is not offered the control
+					     at all: this cycle shows no control a reader cannot use. -->
+					<div v-if="plan.mutable" class="pln-add-selected">
+						<p v-if="!selected.length" class="kt-muted" data-testid="ppl-select-hint">Select at least one requirement.</p>
+						<button
+							type="button"
+							class="kt-btn kt-btn-primary"
+							data-testid="ppl-add-selected"
+							:disabled="pending || !selected.length"
+							@click="$emit('open-form-dialog')"
+						>
+							Add selected requirements
+						</button>
+					</div>
+				</template>
+				<p v-else class="kt-muted" data-testid="ppl-all-allocated">{{ allAllocatedText }}</p>
+			</div>
 
 			<!-- Plan checks: three results, each naming its own correction. -->
-			<h3 class="kt-card-title">Plan checks</h3>
-			<div class="kt-meta-row pln-plan-checks" data-testid="ppl-plan-checks">
-				<div v-for="check in planChecks" :key="check.label">
-					<span class="kt-label">{{ check.label }}</span>
-					<span class="kt-meta-value">
-						<span v-if="check.kind === 'critical'" class="kt-status is-critical">{{ check.result }}</span>
-						<span v-else>{{ check.result }}</span>
-						<a
-							v-if="check.action"
-							href="#"
-							class="pln-check-action"
-							data-testid="ppl-check-action"
-							@click.prevent="$emit('navigate', check.route)"
-						>{{ check.action }}</a>
-					</span>
+			<div class="kt-region">
+				<h2>Plan checks</h2>
+				<div class="kt-meta-row pln-plan-checks" data-testid="ppl-plan-checks">
+					<div v-for="check in planChecks" :key="check.label">
+						<span class="kt-label">{{ check.label }}</span>
+						<span class="kt-meta-value">
+							<span v-if="check.kind === 'critical'" class="kt-status is-critical">{{ check.result }}</span>
+							<span v-else>{{ check.result }}</span>
+							<a
+								v-if="check.action"
+								href="#"
+								class="pln-check-action"
+								data-testid="ppl-check-action"
+								@click.prevent="$emit('navigate', check.route)"
+							>{{ check.action }}</a>
+						</span>
+					</div>
 				</div>
 			</div>
 
@@ -199,8 +205,8 @@
 			     are facts about it, not a preparation step, so they appear here
 			     rather than as a stage in a wizard. They stay absent while a Draft
 			     is still being prepared. -->
-			<template v-if="activeView">
-				<h3 class="kt-card-title">Approval and publication</h3>
+			<div v-if="activeView" class="kt-region is-secondary">
+				<h2>Approval and publication</h2>
 				<div class="kt-meta-row" data-testid="ppl-governance">
 					<div>
 						<span class="kt-label">Adopted by the Accounting Officer</span>
@@ -233,7 +239,7 @@
 				<a href="#" data-testid="ppl-view-progress" @click.prevent="$emit('navigate', ['annual-procurement-plan', plan.plan_reference, 'progress'])">
 					View procurement progress
 				</a>
-			</template>
+			</div>
 
 			<!-- Changes and history: secondary, closed by default. -->
 			<details class="kt-disclosure" data-testid="ppl-history">

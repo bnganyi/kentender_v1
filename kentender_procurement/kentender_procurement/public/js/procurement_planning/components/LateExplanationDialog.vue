@@ -6,7 +6,7 @@
      API call, the idempotency key and the already-formatted fact values. -->
 <template>
 	<div class="kt-dialog-backdrop" data-testid="pln-late-explanation-dialog">
-		<div class="kt-dialog" role="dialog" aria-modal="true" aria-labelledby="pln-late-explanation-title">
+		<div class="kt-dialog" style="width: 520px" role="dialog" aria-modal="true" aria-labelledby="pln-late-explanation-title">
 			<div id="pln-late-explanation-title" class="kt-dialog-title">Explain late start of the annual plan</div>
 			<div class="pln-facts-row">
 				<div class="pln-fact">

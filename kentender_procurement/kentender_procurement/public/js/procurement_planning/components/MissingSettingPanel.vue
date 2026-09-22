@@ -11,7 +11,7 @@
      exact section; everyone else gets the sentence naming who to ask. Planning
      shows no disabled setup control. -->
 <template>
-	<div class="kt-notice is-attention pln-missing-setting" data-testid="pln-missing-setting">
+	<div class="kt-notice is-warning pln-missing-setting" data-testid="pln-missing-setting">
 		<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 			<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
 		</svg>
