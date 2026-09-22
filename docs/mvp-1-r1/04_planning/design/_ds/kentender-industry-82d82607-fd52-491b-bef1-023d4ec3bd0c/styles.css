@@ -78,6 +78,7 @@
   --space-2: 6.8px;
   --space-3: 10.2px;
   --space-4: 13.6px;
+  --space-5: 17px;
   --space-6: 20.4px;
   --space-8: 27.2px;
 
@@ -301,6 +302,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 /* — dialog — */
 .dialog-backdrop {
   position: fixed; inset: 0; display: grid; place-items: center;
+  z-index: 10; /* above sticky .table thead th (z-index 1) so a dimmed parent doesn't leak header bands */
   padding: var(--space-4);
   background: color-mix(in srgb, var(--color-neutral-900) 50%, transparent);
 }
@@ -454,6 +456,7 @@ textarea.input { min-height: 90px; resize: vertical; }
   .kt-status { background: none; color: #000; border: 1px solid #000; }
   a { color: #000; }
   .table thead th { position: static; border-bottom-color: #000; }
+  .kt-page { box-shadow: none; border-color: #000; margin: 0; }
 }
 
 /* iOS Safari auto-zooms fields under 16px — a meaningful share of bidders
@@ -617,7 +620,8 @@ textarea.input { min-height: 90px; resize: vertical; }
 .kt-section { margin-bottom: var(--space-8); }
 .kt-section + .kt-section { margin-top: var(--space-8); }
 .kt-panel { background: var(--color-surface); border: 1px solid var(--color-divider); padding: var(--space-4); margin-top: var(--space-3); }
-.kt-meta-row { display: flex; gap: var(--space-6); flex-wrap: wrap; align-items: flex-end; }
+.kt-meta-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-4) var(--space-6); align-items: end; }
+.kt-meta-row.is-tight { display: flex; flex-wrap: wrap; }
 .kt-meta-row > div { display: flex; flex-direction: column; gap: 4px; }
 .kt-meta-value { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 18px; }
 
@@ -667,4 +671,28 @@ textarea.input { min-height: 90px; resize: vertical; }
 .kt-topbar-user-text { text-align: right; }
 .kt-topbar-user-text .name { font-size: 13px; font-weight: 600; }
 .kt-topbar-user-text .role { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-neutral-700); }
+
+/* ── Page shell: the one sheet a page is drawn on ── */
+.kt-page { max-width: 1200px; margin: var(--space-6) auto; padding: var(--space-6); background: var(--color-surface); border: 1px solid var(--color-divider); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--space-5); }
+.kt-page-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-6); }
+.kt-page-title { font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 32px; line-height: 1.1; margin: 0; }
+.kt-page-desc { margin: var(--space-2) 0 0; font-size: 14px; color: var(--color-neutral-800); }
+.kt-page-scope { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-3); font-size: 13px; color: var(--color-neutral-700); }
+.kt-page-actions { display: flex; gap: var(--space-3); flex: none; }
+/* A region inside the sheet: title + open content, no box */
+.kt-region > h2 { font-family: var(--font-heading); font-size: 21px; margin: 0 0 var(--space-3); }
+.kt-region.is-secondary > h2 { font-size: 17px; color: var(--color-neutral-800); }
+/* Quiet supporting group: a hairline rule, not a card */
+.kt-group { border-left: 2px solid var(--color-divider); padding: 2px 0 2px var(--space-4); }
+/* Level-1 task row and decision area: accent rule, no box */
+.kt-task-row { border-left: 3px solid var(--color-accent); padding: 4px 0 4px var(--space-5); display: flex; align-items: center; gap: var(--space-6); }
+.kt-decision { border-top: 2px solid var(--color-accent); padding: var(--space-5) 0 0; }
+/* Filter bar: controls local to the records they filter */
+.kt-filter-bar { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--space-3); align-items: end; margin-bottom: var(--space-4); }
+.kt-filter-bar > .is-wide { grid-column: span 2; }
+/* Inside a page sheet a disclosure is a rule band, not a nested card */
+.kt-page .kt-disclosure { border-left: 0; border-right: 0; border-bottom: 0; }
+/* Empty / filtered-empty inside the sheet */
+.kt-empty { padding: var(--space-8) var(--space-6); text-align: center; border-top: 1px solid var(--color-divider); color: var(--color-neutral-800); }
+.kt-empty svg { width: 30px; height: 30px; color: var(--color-neutral-600); margin-bottom: var(--space-3); }
 .kt-topbar-avatar { width: 30px; height: 30px; flex: none; border-radius: 50%; background: var(--color-accent-900); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }

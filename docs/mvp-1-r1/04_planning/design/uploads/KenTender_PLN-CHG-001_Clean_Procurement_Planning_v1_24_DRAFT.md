@@ -2,18 +2,18 @@
 
 | Control | Value |
 |---|---|
-| Version | **1.23** |
-| Date | 17 September 2026 |
-| Status | **Proposed consistency correction — awaiting Project Owner approval** |
-| Supersedes | On approval, v1.22 and all earlier Planning implementation specifications in full |
-| Decision authority | Approved v1.20 baseline, the classification-correction requirements first drafted in v1.21, the v1.22 simplicity decisions and the Project Owner confirmation of the forecast/design corrections on 17 September 2026 |
+| Version | **1.24** |
+| Date | 21 September 2026 |
+| Status | **Proposed for approval — Stage 2 presentation rewrite** |
+| Intended supersession | v1.23 and all earlier Planning implementation specifications on approval |
+| Decision authority | Retained v1.23 functional/consolidation source; approved v1.20 baseline, classification-correction requirements, v1.22 simplicity decisions, the 17 September forecast/design corrections, approved KT-STD-001 v1.7 and the Project Owner's 21 September instruction to move Stage 2 to Planning |
 | UX basis | Planning Usability Blueprint v0.2, approved 13 September 2026; supersedes conflicting v1.18/PLN-UX-001 presentation. Prior proof of concept is historical evidence of a limited walkthrough only |
-| Change scope | Full retained business specification plus classification correction, end-to-end simplification, complete forecast deferral and the missing classification-artboard gate; 116-row re-implementation table |
+| Change scope | Full retained business specification plus classification correction, complete forecast deferral and the missing classification-artboard gate; Stage 2 task-led presentation rewrite; retained 116-row re-implementation baseline plus 7 Stage 2 presentation changes |
 | Evidence boundary | Requirements consolidation only. No production schema, repository, legal source verification or release certification is asserted. |
 | Implementation status | Not implemented by this document. External owner amendments and verification gates remain in §15 and §17. |
 | Reading rule | §§1–16 and §18 are the current requirements. §17 records provenance, dependencies and replacement mappings; earlier wording quoted there is historical, not an alternative implementation option. |
 
-This is the proposed complete successor to v1.22. It retains the approved business, authority, legal, audit, classification-correction and simplicity rules. It closes two consistency gaps: the MVP has no forecast editor, cascade API or scheduled reminder job, and the accepted-classification/correction feature cannot proceed without both required U06 artboards. PLN-REF-001 and PLN-UX-001 remain provenance records; implementers need not combine their operative wording with earlier Planning versions or the usability blueprint.
+This is the proposed Stage 2 successor to v1.23. It retains the complete business, authority, legal, audit, classification-correction, forecast-deferral and simplicity contract and rewrites presentation under approved KT-STD-001 v1.7. PLN-REF-001 and PLN-UX-001 remain provenance records; implementers need not combine their operative wording with earlier Planning versions or the usability blueprint. This revision adds no field, state, role, permission, command, event, integration or governance step.
 
 ## 1. Governing decision and disposition register
 
@@ -31,7 +31,7 @@ The preparation-signature decision in §6 is a deliberate refinement of who perf
 
 ### 1.2 Source basis and approval interpretation
 
-The product owner approved the refinement register and subsequently approved the Planning Usability Blueprint v0.2, including supporting-detail readability and every actor journey. This successor incorporates those decisions and the requested KT-STD-001 v1.6 explicit-composition correction. The earlier proof of concept did not establish ordinary-user usability; no complete artboard rendering, representative-user validation or implementation is claimed. Detailed schema representations and cross-module payloads below make the approved rules implementable; coordinated owner amendments must adopt their matching sides before integration release.
+The product owner approved the refinement register and subsequently approved the Planning Usability Blueprint v0.2, including supporting-detail readability and every actor journey. This successor incorporates those decisions and the approved KT-STD-001 v1.7 task-led presentation standard. The earlier proof of concept did not establish ordinary-user usability; no complete artboard rendering, representative-user validation or implementation is claimed. Detailed schema representations and cross-module payloads below make the approved rules implementable; coordinated owner amendments must adopt their matching sides before integration release.
 
 Statutory propositions retain their supplied provenance, reconciled by approved LAW-REG-001 v1.1. This consolidation performs no new legal research and does not promote unresolved interpretations or illustrative constants to verified production law. Required legal source/layout verification remains an explicit dependency.
 
@@ -39,7 +39,7 @@ Statutory propositions retain their supplied provenance, reconciled by approved 
 |---|---|---|
 | Procurement Planning | PLN-CHG-001 v1.18 | Complete predecessor; original domain, governance, fixture and 72 refinements carried forward |
 | Approved usability design | Planning Usability Blueprint v0.2 | UX-01–20, readable supporting detail, all actor journeys; approved 13 September 2026 |
-| Document standards | KT-STD-001 v1.6, approved | Current shared design, explicit composition, technical-read, implementation and release standard; this module supplies its exact screen content |
+| Document standards | KT-STD-001 v1.7, approved | Current shared task-led design, technical-read, implementation and release standard; this module supplies its exact screen content and information priority |
 | Responsibilities | AUTH-ADR-001 v1.7 | Current scoped responsibility, acting authority and separation of duties |
 | Budget & Funding | BUD-CHG-001 v1.9, consolidated approved requirements | Exact Money, whole-plan affordability, annual denominator and Budget ownership; no Planning reservation |
 | Departmental Needs | NDS-CHG-001 v1.13, consolidated approved requirements | Source revisions, Quantity, distinct accepted disposition/Active usage and unchanged acceptance wire keys |
@@ -68,7 +68,7 @@ Statutory propositions retain their supplied provenance, reconciled by approved 
 | §§16–17 implementation/prohibitions | §§15–16; no copied obsolete reservation, optional-route or generic-period instructions |
 | §§18–20 precedence/conformance/approval effect | §§17–18; actual source statuses and explicit external prerequisites |
 
-The full decision-by-decision table is §17.4: 72 refinement rows, 20 usability rows, 6 explicit-composition rows, 3 classification-correction rows, 13 simplicity rows and 2 consistency-correction rows. Verification columns describe required work, not completed tests.
+The full decision-by-decision table is §17.4: 116 retained rows plus 7 Stage 2 presentation rows. Verification columns describe required work, not completed tests.
 
 ## 2. Purpose, outcomes and scope exclusions
 
@@ -117,7 +117,7 @@ The field tables are normative. Each field inherits the common rules here as wel
 | ID | Opaque server-generated identifier or exact owner-supplied identifier; never parsed to infer authority or another record. A business reference, stable ID, exact Version ID and concurrency token are distinct. |
 | Link mapping | A logical `x_id` maps one-to-one to the Frappe Link/Data field `x`; an object’s own ID maps to `name`. No compatibility alias is introduced. |
 | Money | Exact decimal currency-unit value, never binary float or minor units under a shilling value. APIs use decimal strings. Currency precision comes from the Budget currency contract; KES uses two decimals in the fixture. Reject excess precision rather than rounding. Storage must retain at least 18 integral digits and the currency’s supported fractional digits. Missing/unsupported precision blocks the affected monetary write. |
-| Quantity | Exact positive decimal string with governed UOM precision. Need quantities are copied exactly, never rounded or partially allocated. Direct quantities obey the same UOM rule. Use approved BUD v1.9/NDS v1.13 and CFG v0.11 precision/provider contracts; matching REQ adoption and integration evidence remain required. |
+| Quantity | Exact positive decimal string with governed UOM precision. Need quantities are copied exactly, never rounded or partially allocated. Direct quantities obey the same UOM rule. Use approved BUD v1.9/NDS v1.14 and CFG v0.11 precision/provider contracts; matching REQ adoption and integration evidence remain required. |
 | Dates/instants | Business dates are ISO dates interpreted in site timezone; instants are UTC in services/audit and shown in Africa/Nairobi for the fixture. |
 | Version token | Non-negative monotonic integer `record_version` on mutable aggregates/tasks; commands require the expected token. Display sequence numbers are never tokens. |
 | Text | Trimmed nonblank text where required. Item title 5–160 characters, package description 10–1,000. Disposition and aggregation reasons 20–500. Other reasons identify an actionable issue and are capped at 1,000; no invented optional note. |
@@ -335,7 +335,7 @@ A copied correction of a submission validly made while the window was open may b
 
 Define a Planning-owned command `SetNeedPlanningDisposition` for the two Draft actions, with entry identity, expected version and idempotency key. The not-proceeding branch additionally requires the reason. Submitted or accepted dispositions can change only through a new DPP submission.
 
-NDS v1.13's `NeedPlanningUsageChanged.v1` means Active Plan inclusion only. It must retain that meaning. The agreed `NeedPlanningDispositionChanged.v1` event records the separately accepted DPP disposition and its source revision, submission, reason, actor, decision time and ordering identity. Departmental Needs displays it as Planning information without changing Need lifecycle or the existing `Fully included`/`Not included` usage projection. This is a coordinated NDS contract addition, not an undisclosed extension of the existing event.
+NDS v1.14's `NeedPlanningUsageChanged.v1` means Active Plan inclusion only. It must retain that meaning. The agreed `NeedPlanningDispositionChanged.v1` event records the separately accepted DPP disposition and its source revision, submission, reason, actor, decision time and ordering identity. Departmental Needs displays it as Planning information without changing Need lifecycle or the existing `Fully included`/`Not included` usage projection. This is a coordinated NDS contract addition, not an undisclosed extension of the existing event.
 
 Draft exclusions do not publish an accepted disposition. An accepted exclusion does not remove an existing Active Plan dependency; that dependency changes only when the relevant Plan successor activates.
 
@@ -630,7 +630,7 @@ Use explicit labels, not an unexplained Variance heading. A stage may start and 
 
 #### 5.5.1B Future reminders — RI-040
 
-This facility is not implemented in the v1.23 MVP. The rules below are retained for a separately approved future implementation after authoritative milestone ownership and actual/expected-date integrations exist. The MVP creates no schedule-driven Planning reminders, reminder records, scheduled checks or notification producers.
+This facility is not implemented in the v1.24 MVP. The rules below are retained for a separately approved future implementation after authoritative milestone ownership and actual/expected-date integrations exist. The MVP creates no schedule-driven Planning reminders, reminder records, scheduled checks or notification producers.
 
 | Concern | Approved rule |
 |---|---|
@@ -755,7 +755,7 @@ All rows are subject to current AUTH assignment, OU scope, task and segregation.
 | Accounting Officer | Adoption, Treasury evidence, late explanation and withdrawal requests | Existing governed actions | Does not impersonate the statutory authority |
 | Configured statutory authority | Exact Plan adoption/withdrawal request | Approve, return or confirmed-unpublished withdrawal as allowed | Board/Council record collective resolution and authorised recording actor |
 | Auditor/authorised reader | Plan and evidence navigation | Read-only history, permitted review pack | No business decision |
-| Administrator/System Manager | Technical read under KT-STD-001 v1.6 §3A.6 | Read all Planning records site-wide through registered routes; no business command. Separately granted setup/publication-recovery authority uses the owning contract. | Technical read supplies no Planning decision or publication retry authority |
+| Administrator/System Manager | Technical read under KT-STD-001 v1.7 §3A.6 | Read all Planning records site-wide through registered routes; no business command. Separately granted setup/publication-recovery authority uses the owning contract. | Technical read supplies no Planning decision or publication retry authority |
 
 If a user holds multiple responsibilities, render permitted actions together and enforce incompatible action history across the correction chain. Do not select one role label and hide the others' legitimate work. Do not add an assignee picker to route around an unavailable or conflicted actor.
 
@@ -803,7 +803,7 @@ Apply the same distinction to DPP validation and Finance return. Otherwise stale
 | Confirm or return Finance | Adopt/return as AO; approve/return as statutory authority |
 | Adopt or return as AO | Approve/return as statutory authority |
 
-A governance return preserves the incompatible-action history through every linked correction. Creating a new Draft or changing an actor's role label does not reset it. A new independently governed successor after activation starts its own candidate chain while preserving predecessor audit history. Technical read follows KT-STD-001 v1.6 §3A.6 and is never a business-decision exception.
+A governance return preserves the incompatible-action history through every linked correction. Creating a new Draft or changing an actor's role label does not reset it. A new independently governed successor after activation starts its own candidate chain while preserving predecessor audit history. Technical read follows KT-STD-001 v1.7 §3A.6 and is never a business-decision exception.
 
 ### 6.5 Complete actor journeys and reusable review
 
@@ -925,7 +925,7 @@ The Draft stores the selected Objective identity and its resolved Strategy versi
 
 The snapshot call belongs to final Plan approval, not item formation, Finance confirmation, AO adoption or publication retry. It must not append duplicate Strategy snapshot evidence on retry. An Active Plan retains its approved lineage when Strategy later changes. A new or corrected selection must use the current eligible Strategy version; a copied successor must explicitly validate the eligibility rule applicable to every item before new approval.
 
-NDS v1.13 retains `accepted_version_id` and `version_number` in `DepartmentalNeedAccepted.v2`. Planning maps those wire keys to its internal Need-revision fields and shows **Revision** to the user. Do not rename wire keys or generated `-V{nnn}` references merely because the display counter changed.
+NDS v1.14 retains `accepted_version_id` and `version_number` in `DepartmentalNeedAccepted.v2`. Planning maps those wire keys to its internal Need-revision fields and shows **Revision** to the user. Do not rename wire keys or generated `-V{nnn}` references merely because the display counter changed.
 
 REQ owns one open Requisition per stable `plan_item_id`, not per department. Planning must use that same rule and the producer's documented drawdown command name. REQ calls `AuthoriseRequisitionDrawdown`; the predecessor lists `RecordRequisitionDrawdown`. The canonical command is AuthoriseRequisitionDrawdown in §7.2; no compatibility alias is retained.
 
@@ -939,7 +939,7 @@ User labels in §§8–10 do not rename command IDs, event enums, status values,
 
 For new departmental returns, use the single-comment contract in §4.4. For whole-Plan returns, the existing actionable `reason` is the same **What needs to change?** input. Optional affected-item context is an explicit nullable exact item-version reference in the same reviewed Plan; it does not create item-level approval or partially return the Plan. Validate it server-side; freeze it with the decision. If old wire/storage has no such field, add it through an inspected versioned migration; never encode a selectable item as an unvalidated free-text identifier. Finance returns remain whole-plan decisions with one actionable reason. A comment may name an affected line from the reviewed statement without introducing an additional required selector or new Finance approval scope.
 
-The accepted NDS disposition contract matches approved NDS v1.13: schema_version is integer 1; producer_sequence is allocated transactionally per stable Need’s disposition stream; disposition is exactly `Proceeding` or `Not proceeding this financial year`. Reason is null for Proceeding or 20–500 characters for exclusion. Actor is the Procurement acceptance actor; decision_at is its UTC instant. Emit one event per Need-origin entry after complete DPP acceptance, including restored/unchanged proceeding entries with their current accepted Submission provenance; no direct-entry event. Retries reuse exact event IDs. Disposition and usage have independent ordering/replay; unknown versions, gaps and unknown source revisions reconcile without synthetic records. User-facing Include/Exclude labels do not change these enums or make Draft work an accepted disposition.
+The accepted NDS disposition contract matches approved NDS v1.14: schema_version is integer 1; producer_sequence is allocated transactionally per stable Need’s disposition stream; disposition is exactly `Proceeding` or `Not proceeding this financial year`. Reason is null for Proceeding or 20–500 characters for exclusion. Actor is the Procurement acceptance actor; decision_at is its UTC instant. Emit one event per Need-origin entry after complete DPP acceptance, including restored/unchanged proceeding entries with their current accepted Submission provenance; no direct-entry event. Retries reuse exact event IDs. Disposition and usage have independent ordering/replay; unknown versions, gaps and unknown source revisions reconcile without synthetic records. User-facing Include/Exclude labels do not change these enums or make Draft work an accepted disposition.
 
 CFG v0.11 owns the native UOM selectable/precision adapter and date-sensitive rule resolver. Never assume a UOM `enabled` database column. BUD v1.9 owns exact currency metadata, decision-time affordability and the complete annual denominator. Source, Budget and responsibility reads use owner services with matching scope. Documentation approval does not establish repository compatibility.
 
@@ -1122,25 +1122,27 @@ The Project Owner approved Planning Usability Blueprint v0.2, including all acto
 
 ## 10. Complete screen and static design contract
 
-This section replaces PLN v1.19 §10 in full. Supply KT-STD-001 v1.6 §2 and this section only to the design tool. It specifies visible composition and exact fixture states. Section 11.9 maps controls to behavior and remains outside design prompts.
+This is the complete Stage 2 Planning presentation input. Supply **KT-STD-001 v1.7 §2 plus this section only** to the design tool. Section 11.9 remains the excluded functional action map. This rewrite changes presentation architecture only; it creates no field, state, responsibility, authority rule, command, service, event or approval stage.
 
-### 10.1 Shared composition rules
+### 10.1 Shared experience contract
 
-Use the established KenTender content area inside Frappe Desk. The shell, tokens, dimensions and closed-input rules come from KT-STD-001 v1.6. Fixture actor, scope, time and scenario stay outside the artboard.
+Use the approved KenTender content area and Frappe shell. Apply KT-STD-001 v1.7's archetypes, structured density and visual hierarchy. Fixture actor, scope, time and scenario stay outside the artboard.
 
-Every full-page Planning artboard follows this order unless its own composition explicitly replaces a region:
+**Required archetypes.** U01 is a Work workspace. U02–U05, U07 and U09 are Forms/editors with subordinate summaries. U06, U10 and U11 are Reviews/decisions. U08 and focused confirmations are Dialogs/panels. U12 and U13 are Record details with state-specific actions. U14 is a monitoring Register/detail. U16 is a correction Work workspace/detail. C01–C04 are Setup owner surfaces. U21 supplies shared states. U15 remains deferred with no MVP artboard.
 
-1. Page header: title and description at upper left; stated primary action at upper right, aligned with the title.
-2. Record context: separate labelled values for Financial year, Plan/Submission reference, Version and current status. Names lead; codes and version evidence are subordinate.
-3. Visible issue or task summary: only current material work, placed before the content it affects.
-4. Main content: named sections in the stated top-to-bottom order. A section’s first view contains the facts needed to understand the result; supporting evidence follows in one-level disclosures.
-5. Action area: separated by a top border after all decision content. Secondary actions appear to the left of the right-aligned primary action. A blocked action is absent or explicitly disabled as stated, with its explanation immediately above.
+**Information priority.** Level 1 is the actor's required work, current plan/result, material blocker and lawful next action. Level 2 is the purchase, source, funding, schedule or governance evidence needed for the current task. Level 3 is exact lineage, rule provenance, calculations, immutable history and technical evidence. Complete evidence remains available, but only Level 1 and the task-relevant part of Level 2 lead the first view.
 
-Render every independent fact under its own label. In a table, place a purchase or requirement name on the first line of its cell and its reference beneath in smaller muted text. “Secondary”, “fixture”, internal enum names and requirement instructions never appear as business copy. Long names wrap. Money remains right-aligned with currency. Quantity and Unit have separate columns unless a stated compact detail group uses adjacent labelled values.
+**Orientation.** Business names lead. References and Version evidence sit beneath or in a quiet orientation line. Group related context where meaning remains unambiguous; do not place Financial year, reference, Version and status into a large empty context box. Never repeat the same Plan facts in header, summary and table without a distinct task purpose.
 
-Supporting sections use headings and restrained surface contrast. Material budget excess, reservation shortfall, stale evidence, deadline conflict, scope restriction, active procurement or unavailable required evidence stays visible. History and technical provenance may start collapsed; purchase, source, funding, schedule and decision facts required to make the current decision do not.
+**Component choice.** Use task rows for assigned actions, result blocks for current decision outcomes and tables only for genuine repeated comparison or registers. A small purchase or action set does not become a wide grid by default. Put filters with the records they filter. Use one disclosure depth for Level 3 evidence. A count or status summary orients; it never substitutes for complete review content.
 
-Every action below has a definite visible treatment for its named fixture. Variant IDs replace only the stated base regions and retain the rest of the base composition. No phrase such as “when permitted”, “may appear” or “where relevant” delegates a layout decision to the designer.
+**Material issues.** Budget excess, reservation shortfall, stale or unavailable mandatory evidence, deadline conflict, scope restriction and active procurement remain visible beside the affected task or purchase. Passing calculations and provenance move to supporting evidence when they do not change the current decision.
+
+**Actions.** Each task region has one visually dominant action. Filters, History, export and evidence navigation do not compete with it. Consequences sit beside decisions. A blocked action includes its reason and recovery or is absent. Corrective, destructive and navigation actions remain visually distinct.
+
+**Visual restraint.** Use typography, reading order, spacing and alignment before borders. Do not use nested cards, repeated full-width accent rules, equal-sized KPI tiles, uppercase section headings or apparent selected rows without an actual selection state. Preserve professional density and readable monetary alignment.
+
+**Definite fixtures.** Every action below has one visible treatment in its named variant. A variant replaces only the stated base regions and retains the rest. No “when permitted”, “where relevant” or unresolved optional layout is delegated to the designer. Technical read follows KT-STD-001 v1.7 §3A.6.
 
 ### 10.2 Closed fixture pack
 
@@ -1226,17 +1228,21 @@ When rendered, actor and time are separate labelled fields. Plan-level stage evi
 
 ### 10.3 U01 — Planning workspace
 
-**Purpose:** See the current annual plan, Planning work and departmental submissions without interpreting internal record hierarchy.
+**Archetype and purpose:** Work workspace. See the governing/draft annual plan, act on current Planning work and then browse departmental plans.
 
 **Fixture — outside the artboard:** Mercy Kilonzo; Procurement Planner; 3 Dec 2026, 09:00 EAT; BASE Draft Plan Version 1; no Active Plan; no assigned decision task.
 
-**Header.** Title **Annual procurement planning** at upper left. Beneath it, **Prepare departmental requirements, organise the annual plan and follow its approval.** No header action in this base. Place Financial year selector **FY 2027/28** below the header at the left.
+**Primary question and action.** What is the current Planning position, and what must Mercy do next? **Continue plan** is primary in the BASE fixture.
 
-**First section — Annual plan.** Heading **Annual plan**. Display one full-width plan row/card with these separately labelled values: Current plan **No current plan yet**; Work **Draft plan**; Version **1**; Purchases **2**; Estimated cost **KES 130,000,000**; Plan reference **PLN-MOH-2027-001**. Under the facts show **This plan is being prepared. It cannot yet be used to authorise procurement.** Place enabled **Continue plan** at the row’s right.
+**Information priority.** Level 1: Draft Plan, reservation shortfall and Continue/Review action. Level 2: accepted departmental plans. Level 3: submission/version history on record routes.
 
-**Immediately below the plan row — current issue.** Visible warning **Allocate KES 48,000,000 more to eligible reserved procurement before sending the plan to Finance.** Place enabled **Review reserved procurement** below it. Required and qualifying calculations remain in the linked Plan check detail; do not repeat four accounting values on the workspace.
+**Header and orientation.** Title **Annual procurement planning**; description **Prepare departmental requirements, organise the annual plan and follow its approval.** Beneath it, compact Financial year selector **FY 2027/28**. No header action in BASE.
 
-**Second section — Departmental plans.** Place below the issue. Table columns: Department; Status; Requirements; Estimated cost; Action.
+**Annual plan work.** Dominant first region. Show title **Draft annual procurement plan** with muted **PLN-MOH-2027-001 · Version 1**. Beside/beneath it show compact facts **2 purchases · KES 130,000,000 estimated cost** and narrative **This plan is being prepared. It cannot yet be used to authorise procurement.** Put primary enabled **Continue plan** at right.
+
+Directly beneath, one visible issue block: **Reserved procurement is below the required allocation by KES 48,000,000. Resolve this before sending the plan to Finance.** Put enabled **Review reserved procurement** beside/below it. Do not repeat the full target/qualifying calculation on the workspace.
+
+**Departmental plans.** Quieter secondary register below. No global filters in this fixed two-row fixture. Table:
 
 | Department | Status | Requirements | Estimated cost | Action |
 |---|---|---|---|---|
@@ -1245,23 +1251,25 @@ When rendered, actor and time are separate labelled fields. Plan-level stage evi
 
 Both action links are enabled. Submission numbers are absent from this summary. Below the table show **2 departmental plans**.
 
-**U01-CURRENT.** READY-derived Current Plan Version 1 at 10 Dec 2026, 15:05 EAT. Same header/FY. Annual plan section contains Current plan **Ministry of Health Annual Procurement Plan 2027/28**; Version **1**; Approved value **KES 130,000,000**; Status **Current plan**; reference separately. Enabled **View current plan**. Put enabled **Prepare plan update** at the upper right of this section. No reservation-shortfall warning and no Your actions section.
+**U01-CURRENT.** READY-derived Current Plan Version 1 at 10 Dec 2026, 15:05 EAT. Replace the dominant region with **Current annual procurement plan**, muted reference/Version, **KES 130,000,000 approved value**, and narrative **This is the plan currently in force.** Primary row action **View current plan**. Put secondary enabled **Prepare plan update** at region right. No issue or empty action region.
 
-**U01-CURRENT-UPDATE.** Same current row, plus a second row beneath it: Work **Plan update — Draft**; Version **2**; Proposed value **KES 130,000,000**; Affected purchase **Clinical training and deployment laptops for digital health rollout**; Change **Description updated**; action **Continue update**. Between the rows and departmental table show **The current plan remains in force while this update is reviewed.** Remove Prepare plan update while an update exists.
+**U01-CURRENT-UPDATE.** Keep the current Plan as a compact read-only baseline. Above it, make **Continue plan update** the Level 1 task: muted **Version 2**, Proposed value **KES 130,000,000**, affected purchase **Clinical training and deployment laptops for digital health rollout**, change **Description updated**, primary **Continue update**. Visible text **The current plan remains in force while this update is reviewed.** Remove Prepare plan update.
 
-**U01-NO-PLAN.** Mercy; 26 Nov 2026, 09:00 EAT; no accepted DPP. Annual plan empty state: **No annual plan yet** and **The draft annual plan will appear after Procurement accepts a departmental plan.** No Continue or Create Annual Plan action. Departmental table shows named available submissions only if supplied by that fixture; an empty fixture shows **No departmental plans to display.**
+**U01-NO-PLAN.** Mercy; 26 Nov 2026, 09:00 EAT; no accepted DPP. Dominant empty result **No annual plan yet** with **The draft annual plan will appear after Procurement accepts a departmental plan.** No Continue or Create action. Departmental register shows supplied submissions or **No departmental plans to display.**
 
-**U01-DEPARTMENT-AUTHOR.** Grace; Digital Health Author; 24 Nov 2026, 15:00 EAT; DPP Draft. Header title **Procurement planning** and description **Prepare your department’s procurement requirements and follow their review.** First section **Your departmental plan** with Department **Digital Health**, Financial year **FY 2027/28**, Status **Draft**, action **Continue departmental plan**. If no DPP exists and DPP intake is open, replace this with **No departmental plan yet** and enabled **Start departmental plan**. Annual Plan information follows as a read-only section; no Planner action.
+**U01-DEPARTMENT-AUTHOR.** Grace; DHI Author; DPP Draft. Header **Procurement planning** / **Prepare your department’s procurement requirements and follow their review.** Dominant task row **Digital Health departmental plan · FY 2027/28**, status narrative **Draft — complete the requirements and funding details**, primary **Continue departmental plan**. With no DPP and open intake: **No departmental plan yet** plus primary **Start departmental plan**. Annual Plan position follows as a quieter read-only result; no Planner action.
 
-**U01-HOD.** Julia; acting HoD DHI; 25 Nov 2026, 10:15 EAT; DPP Draft ready for certification. Header as U01-DEPARTMENT-AUTHOR. Insert first section **Your action** with Departmental plan **Digital Health FY 2027/28**; Outcome required **Review and submit**; action **Review departmental plan**. Then show the same departmental-plan row. No Start action.
+**U01-HOD.** Julia; acting HoD DHI; Draft ready for certification. Dominant heading **1 departmental plan requires your decision**. Task row **Digital Health · FY 2027/28**, narrative **Review the complete departmental plan and submit it to Procurement**, primary **Review departmental plan**. The plan register follows quietly. No Start action.
 
 **U01-ASSIGNED-DECISION.** A task link does not render this workspace first; it opens the exact U06, U10 or U11 task. This variant has no separate artboard.
 
-**Visual check.** The governing or draft plan leads, followed by current issue and departmental plans. Every card says what it represents; references do not compete with names. No empty task panel appears.
+**Comprehension acceptance.** The governing/draft Plan and next lawful action are identifiable before departmental-plan rows. The current issue is attached to the Plan it blocks. References do not compete with names, and no empty task panel appears.
 
 ### 10.4 U02–U05 — Departmental plan preparation and certification
 
-**Purpose:** Complete, exclude or add departmental requirements and let the HoD certify the whole plan on the same page.
+**Archetype and purpose:** Form/editor with a review variant. Complete, exclude or add departmental requirements and let the HoD certify the whole plan on the same page.
+
+**Shared information priority.** For the Author, Level 1 is incomplete requirement work and Save; Level 2 is the requirement/funding register; Level 3 is accepted-source history. For the HoD, Level 1 is certification consequence and Submit; Level 2 is complete included/excluded content; Level 3 is earlier submission history. Do not give summary counts, filters and certification equal weight.
 
 **Fixture — outside the artboard:** Grace as Author and Julia as acting HoD for Digital Health; FY 2027/28; BASE requirements; use the exact actor/time stated per variant below.
 
@@ -1302,13 +1310,17 @@ The title/reference pairs form one displayed Requirement cell. Each action is en
 
 ### 10.5 U06 — Procurement review of a departmental plan
 
-**Purpose:** Validate the certified submission, classify included requirements and accept or return the whole submission; the accepted-evidence variant permits a separately recorded correction of a Procurement-owned classification.
+**Archetype and purpose:** Review/decision. Validate one certified submission, classify included requirements and accept or return it; the accepted-evidence variant permits a separately recorded Procurement-owned classification correction.
 
 **Fixture — outside the artboard:** Mercy; DHI Submission 1; certified by Julia Njeri on 25 Nov 2026, 10:30 EAT; review 27 Nov 2026, 13:45 EAT; BASE.
 
-**Header.** Title **Review Digital Health’s departmental plan**; description **Check the certified requirements before adding them to the annual plan.** Reference **DPP-MOH-DHI-2027-001** beneath; separately labelled Submission **1**, Financial year **FY 2027/28**, Status **Awaiting Procurement review**. No header action.
+**Primary question and action.** Are the certified requirements complete and correctly classified for annual-plan preparation? **Accept departmental plan** is primary; Return is corrective.
 
-**Below context — certification.** Show **Certified by Julia Njeri on 25 Nov 2026, 10:30 EAT** as secondary evidence, with **View certification** for the capacity and full immutable statement.
+**Information priority.** Level 1: decision required, any missing classification/stale source and decision actions. Level 2: complete certified requirements with the single Planner classification input. Level 3: immutable certification and classification history.
+
+**Header.** Title **Review Digital Health’s departmental plan**; description **Check the certified requirements before adding them to the annual plan.** Muted **DPP-MOH-DHI-2027-001 · Submission 1 · FY 2027/28**; badge **Awaiting Procurement review**. Immediately show **Decision required — classify every included requirement, then accept the complete submission or return it for correction.** No header action.
+
+**Certification orientation.** Quiet line **Certified by Julia Njeri on 25 Nov 2026, 10:30 EAT** with **View certification** for capacity and the full immutable statement.
 
 **Below certification — requirements.** Summary Included requirements **2**; Included cost **KES 110,000,000**; Excluded requirements **0**. Use one row/card per requirement rather than a nine-column grid. The first line contains Requirement, Quantity/Unit, Required by and Estimated cost. The second line contains Budget line and the only Planner input: Requirement type. Category appears immediately beside it as read-only derived text. Infrastructure type is **Non-consulting services** → Category **Services**; deployment laptops type **Goods** → Category **Goods**. Helper: **Choose the requirement type. Category is set automatically.** Each row has **View requirement**. No type/category control appears on an excluded row.
 
@@ -1330,15 +1342,19 @@ The title/reference pairs form one displayed Requirement cell. Each action is en
 
 **U06-SEGREGATION.** Isolated actor who certified the same submission. Replace decision section with **You cannot review a departmental plan you certified.** Both decision actions absent; read-only content remains.
 
-**Visual check.** Complete certified content precedes one departmental validation decision. Requirement type is the only selected classification input and Category is visibly derived. Missing classification/source evidence removes acceptance without removing the corrective return. An accepted-classification correction is a separately labelled historical action; it never resembles editing the certified submission.
+**Comprehension acceptance.** Mercy can identify the whole-submission decision, incomplete classification and corrective route before provenance. Requirement type is the only selected input and Category is visibly derived. Missing evidence removes acceptance without removing Return. Classification correction never resembles editing the certified submission.
 
 ### 10.6 U07 — Annual plan preparation
 
-**Purpose:** Organise accepted departmental requirements into purchases and prepare the exact Draft or update.
+**Archetype and purpose:** Form/editor workspace. Organise accepted departmental requirements into purchases and prepare the exact Draft or update.
 
 **Fixture — outside the artboard:** Mercy; BASE Draft Plan PLN-MOH-2027-001 Version 1; 3 Dec 2026, 09:15 EAT; both plan items already formed unless a variant says otherwise.
 
-**Header.** Title **Prepare the annual procurement plan**. Beneath: Plan **Ministry of Health Annual Procurement Plan 2027/28**; reference **PLN-MOH-2027-001** on its own muted line; Version **1**; Status **Draft**; Financial year **FY 2027/28**. No header action.
+**Primary question and action.** What purchase work blocks the Draft from moving to Finance? **Edit purchase** or the exact Plan-check recovery leads; Save draft remains the page action.
+
+**Information priority.** Level 1: current purchase work and blocking Plan checks. Level 2: purchase/source values and requirements ready to add. Level 3: exact departmental acceptance and version history.
+
+**Header.** Title **Prepare the annual procurement plan**. Beneath, Plan name then muted **PLN-MOH-2027-001 · Version 1 · FY 2027/28** and badge **Draft**. No header action.
 
 **Page order.** Show Purchases first, followed by one concise Plan checks section. History is a secondary disclosure. Do not create an Approval and publication section while the Planner is still preparing the Draft.
 
@@ -1351,7 +1367,7 @@ The title/reference pairs form one displayed Requirement cell. Each action is en
 
 Both Edit purchase links are enabled. Beneath, section **Requirements ready to add** contains **All three departmental requirements are included in the two purchases above.** No Add selected requirements action in this formed state.
 
-**Plan checks.** Show only current results that determine the next action: Funding **Not yet checked**; Reserved procurement **KES 48,000,000 more qualifying allocation required**; Schedule **Both purchases meet their departmental deadlines**. Each failing result links to the exact correction. Detailed line comparisons and reservation calculations are supporting detail. **Send to Finance for funding review** is absent while a blocking Plan check fails.
+**Plan checks.** Place immediately after Purchases, before any secondary source register. Show only results that determine the next action: Funding **Not yet checked**; Reserved procurement **KES 48,000,000 more qualifying allocation required**; Schedule **Both purchases meet their departmental deadlines**. Render the reservation shortfall as the dominant issue with its exact correction link; passing Schedule is quieter. Detailed calculations are supporting evidence. **Send to Finance for funding review** is absent while a blocking check fails.
 
 **Changes and history.** Collapsed by default. Expanded text **This is the first version of the annual plan.** Below, exact departmental acceptance history for DHI and HRMD from §10.2 in separate rows.
 
@@ -1369,11 +1385,11 @@ Both Edit purchase links are enabled. Beneath, section **Requirements ready to a
 
 **U07-UPDATE.** UPDATE Plan Version 2, current Version 1 remains in force. Header title **Prepare plan update**, Status **Draft update**, separate Current plan **Version 1**. Required field **Reason for updating the plan** uses the exact reason supplied by UPDATE fixture; no reason is provided in §10.2, so generation waits for that value. Purchases show proposed content. Changes and history starts open and lists Purchase, Field, Current value, Proposed value. Cancellation action **Cancel plan update** at far left; Save draft at right. Section **For a later plan update** contains pending unrelated sources and **Finish this correction first. These requirements cannot be added to the plan currently under correction.** Exact rows require their owner fixture.
 
-**Visual check.** Purchases lead and each names its next work. Funding/governance remain sections of one plan. No stepper, empty formation button or generic “Review required” label.
+**Comprehension acceptance.** Purchases and the exact blocking work lead. Mercy can tell why Finance submission is unavailable and where to correct it without interpreting readiness enums. Funding/governance remain one Plan; no stepper or generic Review required label.
 
 ### 10.7 U08 — Add selected requirements
 
-**Purpose:** Choose how multiple compatible departmental requirements become purchases before committing their full scope.
+**Archetype and purpose:** Focused panel. Choose how multiple compatible departmental requirements become purchases before committing their full scope.
 
 **Fixture — outside the artboard:** Mercy; U07-TWO-SELECTED; laptop training and deployment sources; BASE amounts; 3 Dec 2026, 09:25 EAT.
 
@@ -1391,15 +1407,19 @@ Both Edit purchase links are enabled. Beneath, section **Requirements ready to a
 
 **U08-DUPLICATE/INCOMPLETE.** If an exact source is already fully allocated or its cohort changed, show the named source and concrete problem above the choice; Add to plan absent. The artboard requires actual source/version facts from the respective test profile.
 
-**Visual check.** Users see selected sources, grouping choice and resulting items in that order. No partial quantity control or implicit combining.
+**Comprehension acceptance.** Selected sources, grouping choice and the resulting purchase are readable in that order. No partial-quantity control or implicit combining is introduced.
 
 ### 10.8 U09 — Purchase editor
 
-**Purpose:** Complete the few decisions needed to prepare one Draft purchase. Preserve complete evidence without making the Planner work through the internal Planning model.
+**Archetype and purpose:** Form/editor. Complete the few decisions needed to prepare one Draft purchase while retaining complete supporting evidence.
 
 **Fixture — outside the artboard:** Mercy; laptop item PPI-MOH-2027-033 in BASE/READY as stated per variant; Draft Plan Version 1; 3 Dec 2026, 09:40 EAT.
 
-**Header.** Title **Clinical training and deployment laptops for digital health rollout**. Under it, reference **PPI-MOH-2027-033**; Plan version **1**; Status **Draft**. Upper-right header action absent. Immediately below context show current visible issue: BASE **Reserved procurement is below the required amount**; READY replaces this with no issue.
+**Primary question and action.** What must be completed or corrected for this purchase? **Save draft** is primary; the current blocking issue names the exact recovery.
+
+**Information priority.** Level 1: current blocker and affected section. Level 2: editable purchase, cost, method and dates plus complete included requirements. Level 3: Strategy/classification/rule provenance and milestone calculations.
+
+**Header.** Title **Clinical training and deployment laptops for digital health rollout**. Beneath, muted **PPI-MOH-2027-033 · Plan Version 1** and badge **Draft**. No header action. Immediately show BASE issue **Reserved procurement is below the required amount**; READY has no issue.
 
 **Sections top to bottom:** Purchase details; Included requirements; Estimated cost; Procurement approach; Dates; Supporting details. Keep the first five open. Supporting details starts collapsed and contains Strategy provenance, classification provenance, applicable rule evidence and detailed milestone calculations. A material issue is never moved into Supporting details.
 
@@ -1431,15 +1451,19 @@ Both Edit purchase links are enabled. Beneath, section **Requirements ready to a
 
 **U09-CLASSIFICATION-LOCKED.** Independent item with exact authorised Requisition or published Tender supplied by its owner fixture. Show **This purchase is already in procurement and cannot be reclassified through Planning.** Separately label the corrected classification, exact current Plan classification and Requisition/Tender evidence. Explain **The correction is recorded, but it has not changed the existing procurement. Follow the correction or cancellation process shown for that procurement.** Actions **View classification history** and the exact authorised downstream **View procurement** link only. Remove/re-form, add-source and Save-as-correction controls are absent; new authorisation is held. Do not generate this variant until the downstream owner supplies the exact record and permitted correction route.
 
-**Visual check.** A Planner can identify the purchase, sources, cost, method and deadline without opening Supporting details. The page names the current blocker before Save/removal actions and never hides a scope or deadline conflict. No configuration or audit label competes visually with an editable decision.
+**Comprehension acceptance.** Mercy identifies the blocker, editable decision and affected section before supporting provenance. Purchase, sources, cost, method and deadline remain readable without opening Supporting details. No scope/deadline conflict is hidden and no audit label competes with editable work.
 
 ### 10.9 U10 — Funding review and reassessment
 
-**Purpose:** Compare the complete Plan against approved Budget lines and record only the Finance affordability result.
+**Archetype and purpose:** Review/decision. Compare the complete Plan against approved Budget lines and record only the Finance affordability result.
 
 **Fixture — outside the artboard:** Josphat Mwangi; Finance Confirmation Officer; READY Plan Version 1; requested review before 4 Dec 2026, 10:00 EAT; exact request/as-at times must come from the owner fixture.
 
-**Header.** Title **Check funding for the annual plan**; description **Confirm whether each planned amount is within its approved budget line.** Plan title beneath; reference **PLN-MOH-2027-001**; Version **1**; Review status **Your decision required**. No header action.
+**Primary question and action.** Is each planned amount within its approved Budget line? **Confirm plan funding** is primary when the comparison passes; Return is corrective.
+
+**Information priority.** Level 1: affordability result, any excess and decision actions. Level 2: approved/planned/difference comparison. Level 3: current balances and immutable review history.
+
+**Header.** Title **Check funding for the annual plan**; description **Confirm whether each planned amount is within its approved budget line.** Plan title beneath; muted **PLN-MOH-2027-001 · Version 1**; badge **Your decision required**. Immediately show **Decision required — confirm affordability or return the Plan to the Planner.** No header action.
 
 **Statement context.** Immediately below, show Budget **MOH-BUD-2027-001** and **Amounts as at** from the exact task fixture. Budget version and request timestamp remain in **Review details** and immutable history; they do not compete with the affordability decision.
 
@@ -1466,15 +1490,17 @@ Both Edit purchase links are enabled. Beneath, section **Requirements ready to a
 
 **U10-HISTORY.** Reader layout below the current comparison. Separate blocks **Funding checked at approval** and **Latest funding check**, each with Review; Budget version; Plan version; Outcome; Person; Date/time. No link implies review of another snapshot.
 
-**Visual check.** Finance sees approved, planned, difference and result without opening any detail. Current availability is secondary; reservation and general Planning compliance are absent from the Finance verdict.
+**Comprehension acceptance.** Josphat sees the whole-Plan affordability result and any excess before balances/provenance. Approved, planned, difference and result remain directly comparable. Current availability is secondary; reservation and general compliance do not contaminate the Finance verdict.
 
 ### 10.10 U11 — Complete annual-plan review and decisions
 
-**Purpose:** Give every governance actor the same decision-ready summary, visible material issues and access to the complete Plan evidence, with only their actual decision and consequence changed.
+**Archetype and purpose:** Review/decision. Give every governance actor the same decision-ready Plan, visible material issues and complete evidence, changing only the actor's lawful decision and consequence.
 
 **Fixture — outside the artboard:** READY Plan Version 1. Primary AO fixture: Amina Hassan, 8 Dec 2026, 10:00 EAT immediately before adoption; variants below provide their own actor/time and stage.
 
-**Shared review composition.** Header title/description changes by actor below. Under it, separately labelled Plan title; Plan reference **PLN-MOH-2027-001**; Version **1**; Financial year **FY 2027/28**; Current stage. Put **Download review pack** as a secondary header action at upper right for every authorised actor; it is enabled and labelled with the exact current stage. No decision depends on using it.
+**Shared information priority.** Level 1: actual decision, consequence and material blocker. Level 2: decision summary, complete purchase coverage and accountability required for that actor. Level 3: source, rule, calculation and decision history. Download is secondary and never competes with the decision.
+
+**Shared review composition.** Header title/description changes by actor below. Beneath, Plan title and quiet orientation **PLN-MOH-2027-001 · Version 1 · FY 2027/28 · {Current stage}**. Put **Download review pack** as a secondary header action. Immediately state the actor's decision question/consequence from the applicable variant before the Decision summary; do not defer it until after multiple evidence sections.
 
 **First section — Decision summary.** Show Estimated cost **KES 130,000,000**; Purchases **2**; Departments **2**; Funding **Within approved budget**; Reserved procurement **Required allocation met**; Schedule **All purchases meet departmental deadlines**. Immediately below show **No blocking issues** or the exact blocking issues. Then table Purchase; Purpose; Quantity; Unit; Required by; Estimated cost. Each purchase has **Review purchase**; no purchase starts expanded.
 
@@ -1495,7 +1521,7 @@ Within each open purchase, show Estimated cost; Procurement approach; Expected c
 
 **Fifth section — Changes and history.** Starts collapsed. Changes states **First annual plan** for the initial Plan. When opened, show the immutable decision-history table and exact actors/times. Do not display a future decision as a synthetic history row; the current decision is already stated beside its action.
 
-**Decision area placement.** Put the actor statement after the Decision summary and purchase table, before collapsed supporting evidence. The actor must not scroll through audit evidence to reach the decision. All material issues must already be visible and positive action remains server-gated by the complete evidence.
+**Decision area placement.** Show the actor statement near the top as orientation, but keep the buttons after the Decision summary and purchase table so the actor reviews material content before acting. Audit evidence follows after the action area. All blockers remain visible and positive action remains server-gated by complete evidence.
 
 **U11-HOPF.** Charles; 7 Dec 2026, 10:00 EAT before signature. Header **Review and submit the annual procurement plan**; description **Review the complete plan before sending it to the Accounting Officer.** Stage **Funding checked**. Omit Preparation completed row; decision statement **I confirm that this complete annual procurement plan is ready for Accounting Officer adoption.** Footer **Back to annual plan** / primary **Sign and submit Annual Plan**, enabled. No Return action.
 
@@ -1518,6 +1544,8 @@ Within each open purchase, show Estimated cost; Procurement approach; Expected c
 **Visual check.** Every decision actor receives the same concise decision summary and can reach the same complete evidence. Only header, prior accountability, decision statement and actual buttons vary. A decision never precedes a hidden material issue, but ordinary evidence does not need to be simultaneously expanded.
 
 ### 10.11 U12 — Exact departmental evidence
+
+**Archetype and primary question:** Detail/evidence. **What exact departmental requirement and decision does this Plan use?** Level 1 is the pinned requirement identity, status and six source facts; Level 2 is funding, certification and Procurement disposition; Level 3 is record lineage. This is a reading surface, not a table-shaped workflow.
 
 **Purpose:** Inspect the exact accepted source and departmental decision used by the reviewed Plan, then return to the same review context.
 
@@ -1544,6 +1572,8 @@ Footer contains enabled **Return to plan review**, restoring the originating pur
 **Visual check.** The full six source facts appear before funding and decisions. The user can distinguish pinned source evidence from a newer source or current plan without losing review context.
 
 ### 10.12 U13 — Publication evidence and recovery
+
+**Archetype and primary question:** Detail/evidence with a focused next action. **What has happened to this approved Plan, and what—if anything—must I do now?** Level 1 is the four-step status and the one lawful next action; Level 2 is the evidence for the current step; Level 3 is transmission and recovery history. Do not present all recovery mechanics as parallel controls.
 
 **Purpose:** Record external submission evidence, observe publication/activation separately and use only state-appropriate recovery.
 
@@ -1583,6 +1613,8 @@ Footer contains enabled **Return to plan review**, restoring the originating pur
 
 ### 10.13 U14 — Procurement progress
 
+**Archetype and primary question:** Monitoring register with drill-down. **Which planned purchases have authorised procurement coverage, and where is attention needed?** Level 1 is coverage, stage and holds; Level 2 is proceeding evidence and uncovered scope; Level 3 is Planning lineage and owner-supplied actuals. Summary rows must scan as statuses, not as a dense evidence ledger.
+
 **Purpose:** Show how much of each current Plan purchase is covered by authorised requisitions and what operational evidence is available.
 
 **Fixture — outside the artboard:** Mercy; Current Plan Version 1; EXECUTION initial and later isolated profiles; exact clock and proceeding identities supplied per profile.
@@ -1614,6 +1646,8 @@ The approved schedule remains readable in U09/U11. When a downstream module supp
 
 ### 10.15 U16 — Plan correction requests
 
+**Archetype and primary question:** Correction workspace with focused detail. **What must change, what is held, and what is the lawful next step?** Level 1 is the issue and consequence; Level 2 is affected scope and permitted resolution; Level 3 is request identity, versions and history. Internal orchestration never leads the first view.
+
 **Purpose:** Tell the Planner what downstream issue affects the purchase, what work is held and what lawful correction is available. Preserve separate requests and holds without exposing internal orchestration.
 
 **Fixture — outside the artboard:** Mercy; current laptop item; UI-COR-01 Open and UI-COR-02 In progress; isolated EXECUTION profile.
@@ -1644,7 +1678,7 @@ The approved schedule remains readable in U09/U11. When a downstream module supp
 
 **Fixture — outside the artboard:** Administrator or System Manager; use the matching approved CFG v0.11 §10 fixture and route; Planning supplies only the business-side error/link variants below.
 
-C01–C04 are owner surfaces, not Planning artboards. Generate or revise them from KT-STD-001 v1.6 §2 plus CFG v0.11 §10. Do not combine this Planning design section with CFG’s design section or copy a partial setup form into Planning.
+C01–C04 are owner surfaces, not Planning artboards. Generate or revise them from KT-STD-001 v1.7 §§2 and 10 plus CFG v0.11 §10. Their archetype is setup/maintenance: lead with the setting that blocks work, its consequence and the authorised repair task; keep configuration provenance and history secondary. Do not combine this Planning design section with CFG’s design section or copy a partial setup form into Planning.
 
 **Planning-side missing-setting panel.** On the affected Draft/review, place the concrete issue immediately above the affected action. Show separate labels Setting; Affected action; Responsible role. If the actor also holds authorised setup access, place enabled **Open System setup** below and route to the exact CFG section. Otherwise show **Ask your KenTender administrator to complete this setting.** No disabled setup controls appear in Planning.
 
@@ -1665,7 +1699,7 @@ Technical readers follow KT-STD §3A.6 for Planning data. Setup maintenance foll
 
 **Fixture — outside the artboard:** Each variant is independent and names its base surface/actor below.
 
-**Page-state placement.** Loading, denied, masked and load-failure replace protected page content. Empty and filtered-empty retain their authorised header/filters. Command errors appear below record context and above the affected form/content. A focused confirmation uses the standard 520 px dialog over its exact parent.
+**Page-state placement.** These are state variants of the parent archetype, not generic blank cards. Preserve the parent page's orientation and hierarchy wherever disclosure is authorised. Loading, denied, masked and load-failure replace protected page content. Empty and filtered-empty retain their authorised header/filters. Command errors appear below record context and above the affected form/content. A focused confirmation uses the standard 520 px dialog over its exact parent.
 
 **U21-LOADING-WORKSPACE.** Parent/fixture: U01; verdict/data pending. Visible text **Loading procurement planning…** Composition/actions: Actual-structure skeleton only; no stale rows/actions.
 
@@ -1723,9 +1757,9 @@ Each row is required design evidence. A variant marked as waiting for an exact f
 | C01–C04 | Generate from CFG v0.11 §10; Planning-side missing route/intake/method/schedule panels only. |
 | U21 | Loading; denied; masked; failure; no tasks; filtered empty; changed; save failure; uncertain; historical; late activation; cancel update with reason; remove; technical workspace/detail. |
 
-Before design generation confirm the nine KT-STD-001 v1.6 §2.8 gates. Additionally: reconcile each fixture against current NDS v1.13, CFG v0.11, BUD v1.9 and STR v1.8 owner facts; keep the canonical 27 November DPP acceptances distinct from NDS’s 4/5 January exclusion profiles; never depict the May 2027 schedules as legally ready while CFG-XD-001 remains unresolved.
+Before design generation confirm the KT-STD-001 v1.7 §§2 and 10 gates, including named archetype, primary question, Level 1–3 hierarchy, first-view content, definite action hierarchy and representative-user comprehension. Additionally: reconcile each fixture against current NDS v1.14, CFG v0.11, BUD v1.9 and STR v1.8 owner facts; keep the canonical 27 November DPP acceptances distinct from NDS’s 4/5 January exclusion profiles; never depict the May 2027 schedules as legally ready while CFG-XD-001 remains unresolved.
 
-Each artboard ends its review with: correct top-to-bottom ordering; exact visible facts; definite action states; material issues outside collapsed detail; every interactive control mapped in §11.9; no invented identity/time/source/legal value. Compare at 1440 × 1024 and narrow layouts, then run the representative-user tasks in §14.5. A complete contract is not usability evidence.
+Each artboard ends its review with: named archetype and primary question; correct top-to-bottom ordering; a visibly dominant Level 1; exact visible facts; definite action states; material issues outside collapsed detail; every interactive control mapped in §11.9; no invented identity/time/source/legal value. Compare the first viewport at 1440 × 1024 and the complete page at desktop and narrow layouts, then run the representative-user tasks in §14.5. A complete contract is not usability evidence.
 
 ## 11. Functional interaction requirements — excluded from design prompts
 
@@ -1795,7 +1829,7 @@ Supporting details use §9.3’s structure, not a single paragraph containing ac
 
 Preserve still-authorised unsaved input across validation/save failure. Report unsaved versus saved state accurately; do not introduce unsupported autosave or navigation-triggered writes. On ambiguous command response, query/replay the original command identity under existing idempotency rules before offering another decision. Never manufacture success or create duplicate approval tasks. If authority is revoked, clear protected presentation as required and do not retain inaccessible content in the browser merely to preserve edits.
 
-Use route-level and record-level authority before rendering. Administrator/System Manager technical read follows KT-STD-001 v1.6 §3A.6, including shared search and conformance registration; Auditor/business reads retain their owner scopes. Read access is not business-decision authority. Deep-link, export and optional evidence access enforce the same protected snapshot. Do not remove server checks to make a sketch easier to use.
+Use route-level and record-level authority before rendering. Administrator/System Manager technical read follows KT-STD-001 v1.7 §3A.6, including shared search and conformance registration; Auditor/business reads retain their owner scopes. Read access is not business-decision authority. Deep-link, export and optional evidence access enforce the same protected snapshot. Do not remove server checks to make a sketch easier to use.
 
 ### 11.9 Complete design-to-interaction map — excluded from design prompts
 
@@ -1842,7 +1876,7 @@ This table is the behavioral counterpart to §10. It changes no command, state o
 | Cancel/Back/Close | Return to exact parent/context without committing the pending action. | No write; preserve safe authorised work where specified. |
 | Try again/Refresh | Repeat owner read or reload current state. | No inferred success/absence; changed commands require new explicit decision. |
 | Uncertain result recovery | Resolve/replay original idempotency identity before another action. | §7.1; conflicting actions disabled; no duplicate task/decision. |
-| Technical record search/read | Resolve exact registered Planning route and render read-only in every state. | KT-STD v1.6 §3A.6; all business commands absent. |
+| Technical record search/read | Resolve exact registered Planning route and render read-only in every state. | KT-STD v1.7 §3A.6; all business commands absent. |
 
 Any control introduced by implementation but absent here is omitted until its purpose, destination/result, authority, error behavior and audit effect are approved. The UI wording maps to stable command/event identities in §§4–7; no display label renames the wire contract.
 
@@ -1925,13 +1959,13 @@ The §10.2 integrated fixture is retained. The following are isolated presentati
 | Access/retry | Acting assignment expires or record changes after load; owner responses enforce scope and idempotency; failed save preserves only still-authorised input |
 | Classification correction | Isolated history on DPP-MOH-DHI-2027-001 Submission 3: Julia certifies 28 Nov 10:00, Mercy accepts Works/Works on 29 Nov 15:00, Draft item PPI-MOH-2027-044 forms 15:10, then Mercy corrects to Non-consulting services/Services on 30 Nov 09:20 with §10.5 reason; Submission 1 and accepted Submission 3 remain unchanged; item marked Source correction required; stale repeat rejected |
 
-These supplement rather than silently change SEED v1.3. Every production field value must come from the actual owner. The approved NDS v1.13 source/revision chronology and CFG v0.11 date/precision rules apply; remaining date applicability and primary-law verification gaps are not fixed by moving the fixture’s FY or declaring READY.
+These supplement rather than silently change SEED v1.3. Every production field value must come from the actual owner. The approved NDS v1.14 source/revision chronology and CFG v0.11 date/precision rules apply; remaining date applicability and primary-law verification gaps are not fixed by moving the fixture’s FY or declaring READY.
 
 ## 14. Acceptance contract
 
 Each result below is a normative acceptance requirement, not a test already run. IDs are unique in this successor. The full decision-specific regressions in §17.4 also supplement the baseline and UX criteria. Cross-module requirements pass only with the corresponding provider/consumer implementation and evidence.
 
-Forecast-editing and reminder requirements **PLN18-AC-119, PLN18-AC-124–131, PLN18-UX-20–22, PLN19-UX-035 and PLN18-RI-030/039/040** are retained as future-facility requirements only. They are explicitly excluded from the v1.23 MVP release gate and must not create forecast schemas, routes, APIs, controls, scheduler registrations, notification producers, reminder work or placeholder tracking. All other listed criteria remain MVP requirements unless their row expressly states a future dependency.
+Forecast-editing and reminder requirements **PLN18-AC-119, PLN18-AC-124–131, PLN18-UX-20–22, PLN19-UX-035 and PLN18-RI-030/039/040** are retained as future-facility requirements only. They are explicitly excluded from the v1.24 MVP release gate and must not create forecast schemas, routes, APIs, controls, scheduler registrations, notification producers, reminder work or placeholder tracking. All other listed criteria remain MVP requirements unless their row expressly states a future dependency.
 
 ### 14.1 Corrected baseline acceptance set
 
@@ -2055,19 +2089,19 @@ Forecast-editing and reminder requirements **PLN18-AC-119, PLN18-AC-124–131, P
 | PLN18-AC-116 | Applicable baseline dates derive from the invitation anchor and profile periods; final completion boundary derives from source required-by dates. No independent baseline date editor exists. |
 | PLN18-AC-117 | Submitting a Plan Version blocked by `PLN_DELIVERY_BOUNDARY_INSUFFICIENT` is rejected, naming the affected Plan Item. |
 | PLN18-AC-118 | A locked baseline field cannot be changed by any command once the owning Version has left Draft; only a Plan successor can produce a new baseline. |
-| PLN18-AC-119 | **Future facility — excluded from v1.23 MVP.** Forecast changes require reason, exact current schedule token and append-only revisions for changed rows only; preserve baseline, actuals and comparison references. |
+| PLN18-AC-119 | **Future facility — excluded from v1.24 MVP.** Forecast changes require reason, exact current schedule token and append-only revisions for changed rows only; preserve baseline, actuals and comparison references. |
 | PLN18-AC-120 | No human role/API path supplies actuals directly; only authenticated owning-module events with exact proceeding/source lineage are accepted. |
 | PLN18-AC-121 | Before publication the fixture has no actual event evidence; show Not available rather than zero. Invitation events later populate their own proceeding; unsupported six milestone integrations are labelled explicitly. |
 | PLN18-AC-122 | Single year is fixed/read-only, aggregation and lotting are governed editable Draft fields, and lot count appears only for Packaged into lots; no multi-year justification control remains. |
 | PLN18-AC-123 | Pre-Finance readiness checks applicable package/structure/source/schedule fields but does not require an existing Finance confirmation; formal submission adds current financial and mandatory rule/evidence gates. |
-| PLN18-AC-124 | **Future facility — excluded from v1.23 MVP.** Forecasts initialize from baseline exactly once on activation; absent before activation; supersession preserves last forecasts and revision history rather than nulling them. |
-| PLN18-AC-125 | **Future facility — excluded from v1.23 MVP.** Changing a forecast proposes all eligible later milestones by the same delta; excluded rows and explicit individual overrides remain visible and the resulting full schedule is validated. |
-| PLN18-AC-126 | **Future facility — excluded from v1.23 MVP.** A milestone with a recorded actual date is never returned as an includable or excludable row in a cascade proposal, and a direct attempt to include one is rejected. |
-| PLN18-AC-127 | **Future facility — excluded from v1.23 MVP.** Confirming a cascade writes one forecast revision per included row, all sharing one cascade identity, atomically. |
-| PLN18-AC-128 | **Future facility — excluded from v1.23 MVP.** A final-milestone or other single-row forecast change is valid with a reason and null cascade ID; a multirow accepted set shares one cascade ID. |
-| PLN18-AC-129 | **Future facility — excluded from v1.23 MVP.** Forecast confirmation validates every affected adjacency, including included/excluded boundaries and individual overrides, under the applicable profile; late completion forecasts remain recordable and flagged. |
-| PLN18-AC-130 | **Future facility — excluded from v1.23 MVP.** Workspace/Active schedule-health counts derive from exact applicable item/proceeding forecast evidence; no Active plan means absent count, and unlike quantities or proceeding dates are not collapsed. |
-| PLN18-AC-131 | **Future facility — excluded from v1.23 MVP.** Daily checks inspect every applicable outstanding milestone and update one unresolved notice per recipient/item/proceeding/milestone, without per-day duplicates, blocking work or inferring completion. |
+| PLN18-AC-124 | **Future facility — excluded from v1.24 MVP.** Forecasts initialize from baseline exactly once on activation; absent before activation; supersession preserves last forecasts and revision history rather than nulling them. |
+| PLN18-AC-125 | **Future facility — excluded from v1.24 MVP.** Changing a forecast proposes all eligible later milestones by the same delta; excluded rows and explicit individual overrides remain visible and the resulting full schedule is validated. |
+| PLN18-AC-126 | **Future facility — excluded from v1.24 MVP.** A milestone with a recorded actual date is never returned as an includable or excludable row in a cascade proposal, and a direct attempt to include one is rejected. |
+| PLN18-AC-127 | **Future facility — excluded from v1.24 MVP.** Confirming a cascade writes one forecast revision per included row, all sharing one cascade identity, atomically. |
+| PLN18-AC-128 | **Future facility — excluded from v1.24 MVP.** A final-milestone or other single-row forecast change is valid with a reason and null cascade ID; a multirow accepted set shares one cascade ID. |
+| PLN18-AC-129 | **Future facility — excluded from v1.24 MVP.** Forecast confirmation validates every affected adjacency, including included/excluded boundaries and individual overrides, under the applicable profile; late completion forecasts remain recordable and flagged. |
+| PLN18-AC-130 | **Future facility — excluded from v1.24 MVP.** Workspace/Active schedule-health counts derive from exact applicable item/proceeding forecast evidence; no Active plan means absent count, and unlike quantities or proceeding dates are not collapsed. |
+| PLN18-AC-131 | **Future facility — excluded from v1.24 MVP.** Daily checks inspect every applicable outstanding milestone and update one unresolved notice per recipient/item/proceeding/milestone, without per-day duplicates, blocking work or inferring completion. |
 | PLN18-AC-132 | Internal defaults come from complete effective-dated method/procedure profiles; missing profiles block submission instead of silently falling back to 5/2-day buffers or Open Tender rules. |
 | PLN18-AC-133 | The baseline schedule card shows the computed result before the period inputs, and the period-adjustment disclosure loads closed by default. |
 | PLN18-AC-134 | The computed baseline table updates immediately on a target-date or period change, before any save command is issued. |
@@ -2097,9 +2131,9 @@ These are required future verification checks, not executed test results. Each U
 | PLN18-UX-17 | Confirmed failure, unknown outcome and published-held are distinct; no unsafe withdrawal/blind retry; hold/dispatch concurrency preserves the external truth |
 | PLN18-UX-18 | Web/PDF/JSON publication derives from one immutable snapshot; no disposal or OCDS-compliance claim; activation does not occur on generic success |
 | PLN18-UX-19 | Exact proceeding coverage and separate actuals displayed; partial drawdown retains remaining allowance; publication never implies full fulfilment |
-| PLN18-UX-20 | **Future facility — excluded from v1.23 MVP.** Forecast error and forecast-history comparisons have correct signs/bases; missing versus inapplicable distinct; historical comparisons reproducible |
-| PLN18-UX-21 | **Future facility — excluded from v1.23 MVP.** Cascade supports individual overrides and final-row revision; every affected adjacency checked; commit atomic; late forecasts allowed; already-actual rows immutable |
-| PLN18-UX-22 | **Future facility — excluded from v1.23 MVP.** Reminders deduplicate, reforecast without flooding, resolve only from actual evidence and navigate to the exact work; later milestones not starved by earlier missing actuals |
+| PLN18-UX-20 | **Future facility — excluded from v1.24 MVP.** Forecast error and forecast-history comparisons have correct signs/bases; missing versus inapplicable distinct; historical comparisons reproducible |
+| PLN18-UX-21 | **Future facility — excluded from v1.24 MVP.** Cascade supports individual overrides and final-row revision; every affected adjacency checked; commit atomic; late forecasts allowed; already-actual rows immutable |
+| PLN18-UX-22 | **Future facility — excluded from v1.24 MVP.** Reminders deduplicate, reforecast without flooding, resolve only from actual evidence and navigate to the exact work; later milestones not starved by earlier missing actuals |
 | PLN18-UX-23 | Multiple correction requests retain the shared hold; only permitted terminal outcomes release it; no Draft resolution, scope unlock or stopped-Requisition resurrection |
 | PLN18-UX-24 | Reservation denominator/qualifying amount/shortfall reflect the complete Budget basis; overlap/category rules verified; missing mandatory configuration blocks |
 | PLN18-UX-25 | No Planning highest-advantage ranking or reason-only override; planned designation and candidate entitlement remain distinct |
@@ -2120,7 +2154,7 @@ These are required future verification checks, not executed test results. Each U
 5. Publication intent commits separately from external transmission. Treasury evidence gates exact-Version dispatch; crash/unknown/duplicate callbacks, hold races, confirmed-unpublished withdrawal and published-held corrections preserve external fact and activate at most once.
 6. Original Need → accepted DPP → Active APP → authorized REQ → published Tender; later Need cannot be absorbed into that stable item, including copied-Version, increased-revision, partial-drawdown and activation-race variants. Its separate new item succeeds through normal governance and becomes eligible for its own proceeding. The old Tender covers/fulfils none of the new source.
 7. Two unresolved correction requests hold only the affected item. One disposition cannot clear the other; Draft correction cannot resolve; no-change closure requires reason and restarts no stopped REQ. Permanent procurement-scope lock remains after hold release.
-8. Two sequential Tender proceedings retain different owner-supplied actuals and exact coverage; corrected events never overwrite another proceeding. Missing values are not zero. Forecast comparison and reminder behavior is a future-facility journey excluded from the v1.23 MVP.
+8. Two sequential Tender proceedings retain different owner-supplied actuals and exact coverage; corrected events never overwrite another proceeding. Missing values are not zero. Forecast comparison and reminder behavior is a future-facility journey excluded from the v1.24 MVP.
 9. Full authorized review/export exposes all fields and immutable evidence, source back-navigation restores context, failures have actionable copy, and none of these controls requires opening every accordion. Complete every §10 artboard/state at the prescribed viewport before release.
 
 ### 14.4 Additional v1.19 usability acceptance
@@ -2163,7 +2197,7 @@ These 40 checks supplement the 134 retained business criteria and 32 retained UX
 | PLN19-UX-032 | Board/Council variants identify the body and authorised recorder and require the applicable resolution for collective decisions; no personal approval inference, role impersonation or member-voting workflow. |
 | PLN19-UX-033 | AO Treasury evidence matches the exact approved document and records dispatch only; correction appends history. Late initial adoption/activation explanations occur in their correct contexts without backdating or ordinary-update duplication. |
 | PLN19-UX-034 | Publication failure, unknown outcome and published-held remain distinct; only safe retry/reconciliation/eligible withdrawal actions appear for authorised actors. No blind retry, manual success or forced activation exists. |
-| PLN19-UX-035 | **Future facility — excluded from the v1.23 MVP.** When separately approved, forecast changes preview all eligible affected rows, individual overrides and approved-date comparison; actual rows remain protected and commit is atomic. |
+| PLN19-UX-035 | **Future facility — excluded from the v1.24 MVP.** When separately approved, forecast changes preview all eligible affected rows, individual overrides and approved-date comparison; actual rows remain protected and commit is atomic. |
 | PLN19-UX-036 | Multiple correction requests retain the hold until each permitted terminal outcome; resolution requires correcting Active content, no-change requires reason, permanent scope remains and stopped REQ never auto-restarts. |
 | PLN19-UX-037 | Auditor/reader follows exact historical departmental and Finance evidence and exports only authorised content; current warnings never overwrite the past and decision controls are absent. |
 | PLN19-UX-038 | CFG-owned setup exposes complete route/intake/catalogue/profile/verification tasks under existing authority, with no extra approval chain or legal-verification checkbox bypass; denied/masked/loading states are distinct. Reminder setup is future-only and absent from the MVP. |
@@ -2204,7 +2238,7 @@ Any mistaken understanding of approval, certification, included scope or procure
 
 | ID | Required result |
 |---|---|
-| PLN20-AC-001 | Every MVP composition in U01–U14, U16 and U21 states purpose, external fixture, header, top-to-bottom regions, exact values/actions and visual acceptance under KT-STD v1.6 §§2.6–2.8. U15 is explicitly deferred. |
+| PLN20-AC-001 | Every MVP composition in U01–U14, U16 and U21 states purpose, external fixture, header, top-to-bottom regions, exact values/actions and visual acceptance under KT-STD v1.7 §§2 and 10. U15 is explicitly deferred. |
 | PLN20-AC-002 | C01–C04 are generated from CFG v0.11’s complete owner design section; Planning shows only its exact missing-setting consequence and authorised link, without a competing partial setup contract. |
 | PLN20-AC-003 | Each actor variant has one definite action set; HOPF, AO, individual/collective authority, Finance, departmental actors, readers and technical readers cannot inherit another actor’s controls. |
 | PLN20-AC-004 | Primary and alternate fixtures are isolated and internally consistent; canonical 27 Nov DPP acceptance is not conflated with NDS’s 4/5 Jan exclusions or conditional Plan activation. |
@@ -2214,7 +2248,7 @@ Any mistaken understanding of approval, certification, included scope or procure
 | PLN20-AC-008 | A variant missing an owner-generated identity, timestamp, reason, rule or changed value is not sent to design; no designer-generated fixture or false successful state fills the gap. |
 | PLN20-AC-009 | Departmental Draft/correction/certification and Planner validation layouts retain full included/excluded content, exact coverage, certification and contextual return without adding a handover/approval stage. |
 | PLN20-AC-010 | Annual Plan, Finance, governance and publication layouts keep current/Draft/update, approved/planned/available, signature/adoption/approval, and approval/publication/activation as separate facts. |
-| PLN20-AC-011 | Technical reader layouts conform to KT-STD v1.6 §3A.6 and shared search/conformance registration, with business commands absent; separately granted setup or publication recovery remains owner-controlled. |
+| PLN20-AC-011 | Technical reader layouts conform to KT-STD v1.7 §3A.6 and shared search/conformance registration, with business commands absent; separately granted setup or publication recovery remains owner-controlled. |
 | PLN20-AC-012 | All required MVP desktop/narrow artboards pass explicit composition comparison, keyboard/focus/error checks and representative-user tasks; specification approval does not count as participant evidence. |
 
 ### 14.7 Classification provenance and correction acceptance
@@ -2253,11 +2287,26 @@ Any mistaken understanding of approval, certification, included scope or procure
 | PLN23-AC-001 | The MVP has no forecast record schema, forecast/cascade route or API, U15 action, scheduled milestone check, reminder configuration control or Planning notification producer. Existing tested code, if retained temporarily, is unreachable and unregistered; a greenfield implementation does not create it. |
 | PLN23-AC-002 | `U06-ACCEPTED-CLASSIFICATION` and `U06-CORRECT-CLASSIFICATION` exist as separate reviewed static artboards using the exact §10.5 fixture before **Correct classification** is implemented. U09 is not accepted as a substitute for either design source. |
 
+### 14.10 v1.24 Stage 2 presentation acceptance
+
+| ID | Required result |
+|---|---|
+| PLN24-AC-001 | No field, state, command, authority, validation, integration, audit or evidence requirement changes solely because of this presentation rewrite. |
+| PLN24-AC-002 | Every MVP composition names its archetype and primary user question and implements the Level 1–3 information hierarchy in §10.1. |
+| PLN24-AC-003 | U01 leads with the current Plan or immediate task; counts and issues support that task and do not become an equal-weight dashboard grid. |
+| PLN24-AC-004 | U02–U09 distinguish preparation, review and focused-choice surfaces; the current issue and one primary action are evident before supporting evidence. |
+| PLN24-AC-005 | U10 and U11 put the actual decision, consequence, material blockers and concise decision basis before provenance and history. |
+| PLN24-AC-006 | U12 and U13 present one coherent evidence story: pinned source truth for U12 and approval-to-activation state with one lawful next action for U13. |
+| PLN24-AC-007 | U14 and U16 scan as monitoring and exception workspaces: coverage/stage/holds or required change/consequence appear before internal records. |
+| PLN24-AC-008 | C01–C04 and U21 inherit the parent archetype and preserve orientation; setup ownership or an exceptional state never becomes an unstructured generic panel. |
+| PLN24-AC-009 | Colour, borders, cards, badges, uppercase text and repeated metadata are restrained; emphasis communicates task, issue, state or consequence rather than decoration. |
+| PLN24-AC-010 | At 1440 × 1024 and the prescribed narrow layout, a representative actor can identify within the first view what this is, what matters now and what they can do; §14.5 testing verifies comprehension without coaching. |
+
 ## 15. Implementation, dependencies and verification
 
 ### 15.1 Implementation constraints
 
-Apply KT-STD-001 v1.6 §§4–6: explicit Frappe domain records/services; existing Vue 3 Desk mounting and scoped components; native ERPNext configuration/catalogues; server authorization and exact version/idempotency enforcement; focused tests followed by affected-module/cross-app and release gates. Do not port the proof-of-concept stack or global CSS resets into Desk. Register surfaces centrally, use stable accessible selectors and return to the owning workspace.
+Apply KT-STD-001 v1.7 §§4–6: explicit Frappe domain records/services; existing Vue 3 Desk mounting and scoped components; native ERPNext configuration/catalogues; server authorization and exact version/idempotency enforcement; focused tests followed by affected-module/cross-app and release gates. Do not port the proof-of-concept stack or global CSS resets into Desk. Register surfaces centrally, use stable accessible selectors and return to the owning workspace.
 
 Inspect the actual implementation during re-implementation; the uploaded documents’ build assertions are not verified facts. Record concrete repository/test targets against the stable RI IDs after inspection. Do not invent those paths now. Cutover must remove superseded schema, roles, fields, commands and routes after dependency/reference checks and required evidence; preserve immutable records and never delete ERPNext/HRMS records as a Planning cleanup.
 
@@ -2272,7 +2321,7 @@ Inspect the actual implementation during re-implementation; the uploaded documen
 | 5 | Implement signature, adoption, statutory route and return guards | Each positive/negative transition and same-user conflict tested on original and correction Versions |
 | 6 | Implement successor activation and Requisition contracts | No balance reset, no duplicate source capacity, exact reversal, one-open-Requisition and correction-request tests |
 | 7 | Implement the agreed schedule, publication and reporting boundaries after their prerequisites | Method profiles, deterministic calculations, exact publication package/acknowledgement, Treasury evidence, recovery paths and report data ownership contracts |
-| 8 | Implement the simplified task compositions and all MVP actor variants; reconcile seeds and acceptance criteria | Every screen state maps to the same lifecycle; both U06 classification artboards present; one integrated fixture; unique criterion IDs; no contradictory required outcomes; no forecast/reminder runtime entry point |
+| 8 | Implement the task-led Stage 2 compositions and all MVP actor variants; reconcile seeds and acceptance criteria | Every screen state maps to the same lifecycle; archetype and Level 1–3 hierarchy are visible; both U06 classification artboards present; one integrated fixture; unique criterion IDs; no contradictory required outcomes; no forecast/reminder runtime entry point |
 | 9 | Run the prescribed release gate | KT-STD §4–6 evidence, affected cross-module tests, schema scan and reviewed screens |
 
 Do not repair a fixture by weakening a domain invariant. Do not mark a code change verified solely because an old test passed: the old acceptance contract itself contains mutually exclusive outcomes. Preserve the intended assertion, replace the superseded assertion, and keep an explicit old-to-new test mapping in the final register.
@@ -2313,7 +2362,7 @@ The integrated Plan's original amounts do not excuse a reservation shortfall und
 
 ### 15.4 Release evidence
 
-Require focused red-green evidence for every changed acceptance criterion, clean module and affected cross-module contract suites, production asset build, the prescribed browser smoke/own-request checks, all approved artboards compared at 1440 × 1024, and a schema/repository scan proving superseded constructs removed. Re-run broad testing only for a concrete affected shared contract or the release gate. Prototype walkthrough or document approval is not release evidence. Record the §14.5 participant results separately from automated and browser verification.
+Require focused red-green evidence for every changed acceptance criterion, clean module and affected cross-module contract suites, production asset build, the prescribed browser smoke/own-request checks, all approved artboards compared by first viewport and complete page at 1440 × 1024 and the prescribed narrow layout, and a schema/repository scan proving superseded constructs removed. Re-run broad testing only for a concrete affected shared contract or the release gate. Prototype walkthrough or document approval is not release evidence. Record the §14.5 participant results separately from automated and browser verification.
 
 ## 16. Prohibited shortcuts
 
@@ -2338,7 +2387,7 @@ Require focused red-green evidence for every changed acceptance criterion, clean
 
 ### 17.1 Precedence and incorporation ledger
 
-On approval, this successor replaces v1.22 and all earlier operative Planning content. The approved Blueprint v0.2 controls the incorporated usability direction; its approval is not evidence of implementation. The original v1.17 file, approved refinement register and original UI specification remain historical source artifacts. AUTH owns authority, CFG owns catalogues/rules/setup, BUD owns financial facts and transactions, NDS owns Need revisions, STR owns objective/snapshot evidence, REQ owns requisition authorisation and invocation of Budget reservation commands; Budget owns the reservation records and financial balances, and TPR/TPUB own tender preparation/publication facts. This document cannot silently amend their implementations.
+On approval, this successor replaces v1.23 and all earlier operative Planning content. The approved Blueprint v0.2 controls the incorporated usability direction; its approval is not evidence of implementation. The original v1.17 file, approved refinement register and original UI specification remain historical source artifacts. AUTH owns authority, CFG owns catalogues/rules/setup, BUD owns financial facts and transactions, NDS owns Need revisions, STR owns objective/snapshot evidence, REQ owns requisition authorisation and invocation of Budget reservation commands; Budget owns the reservation records and financial balances, and TPR/TPUB own tender preparation/publication facts. This document cannot silently amend their implementations.
 
 | Incorporated source | Current location and treatment |
 |---|---|
@@ -2359,7 +2408,7 @@ On approval, this successor replaces v1.22 and all earlier operative Planning co
 
 ### 17.2 Owner alignment and unresolved integration work
 
-For this proposed successor, current inspected documentation references are NDS v1.13, STR v1.8, BUD v1.9, CFG v0.11 and KT-STD v1.6. Their consolidated status does not claim cross-app code is implemented. Where historical rows below name predecessor versions, retain them as provenance and apply the current contract in §§1–16 after approval.
+For this proposed successor, current inspected documentation references are NDS v1.14, STR v1.8, BUD v1.9, CFG v0.11 and KT-STD v1.7. Their consolidated status does not claim cross-app code is implemented. Where historical rows below name predecessor versions, retain them as provenance and apply the current contract in §§1–16 after approval.
 
 This is the current status of the owner-document work first identified in v1.18. The historical 72-row register remains below, with old section citations identified as provenance. Approval of an owner document does not prove that its APIs, schemas, legal checks or seed commands are implemented.
 
@@ -2522,7 +2571,7 @@ Every old acceptance-row occurrence maps below. “Retained/re-expressed” pres
 
 ### 17.4 Full changes for re-implementation
 
-The 116 rows below comprise 72 refinements, 20 usability changes, 6 v1.20 composition changes, 3 v1.21 classification changes, 13 v1.22 simplicity changes and 2 v1.23 consistency corrections. None is marked implemented or tested. “Baseline/owner references” preserves the original reviewed-section references from PLN-REF-001; those numbers are provenance, not current navigation. “Current target” gives the current local sections and screen families. Stable acceptance IDs remain regression requirements; future forecast criteria are expressly outside the v1.23 MVP gate under §14. External owner changes remain subject to §15.
+The 123 rows below comprise 72 refinements, 20 usability changes, 6 v1.20 composition changes, 3 v1.21 classification changes, 13 v1.22 simplicity changes, 2 v1.23 consistency corrections and 7 v1.24 Stage 2 presentation changes. None is marked implemented or tested. “Baseline/owner references” preserves the original reviewed-section references from PLN-REF-001; those numbers are provenance, not current navigation. “Current target” gives the current local sections and screen families. Stable acceptance IDs remain regression requirements; future forecast criteria are expressly outside the v1.24 MVP gate under §14. External owner changes remain subject to §15.
 
 | Change ID | Decision origin | Existing requirement or defect | Approved replacement | Current target / screens | Baseline/owner references | Acceptance ID and required verification |
 |---|---|---|---|---|---|---|
@@ -2555,7 +2604,7 @@ The 116 rows below comprise 72 refinements, 20 usability changes, 6 v1.20 compos
 | PLN-RI-027 | Agreed refinement | PLN RecordRequisitionDrawdown differs from REQ AuthoriseRequisitionDrawdown | Adopt one exact versioned contract, atomic with Budget reservation and reversal | §§4.3, 4.5–4.8, 5.4, 7–8; U14 | PLN §8.2; REQ §9.1–9.1A | **PLN18-RI-027** — Consumer/provider signature and all-or-nothing transaction tests pass |
 | PLN-RI-028 | Agreed refinement | Inbound correction commands lack a complete request lifecycle | Define request identity, state, ownership, source routing and resolution against an Active correction | §§4.3, 4.5–4.8, 5.4, 7–8; U16 | PLN §8.2; REQ §7.4A | **PLN18-RI-028** — Request cannot resolve on a Draft; stopped Requisition is never edited or resurrected |
 | PLN-RI-029 | Agreed refinement | Plan Item authorisation hold while upstream correction requests remain unresolved — previously unspecified, now resolved by product-owner agreement | Apply one effective hold on new Requisition authorisations for the affected stable item from successful request recording until every request is resolved against an Active correction or closed without change with a reason; recalculate eligibility; preserve existing proceedings and stopped-Version evidence | §§4.3, 4.5–4.8, 5.4, 7–8; U14/U16 | This register §7.5; PLN §7.4 and correction-request services; REQ §7.4A and authorisation gate | **PLN18-RI-029** — Item-only hold; existing authorisations/Tenders untouched; multiple requests cannot clear each other; no release on Draft correction; no automatic restart; concurrent recording/authorisation cannot bypass hold |
-| PLN-RI-030 | Reconciliation | Forecasts must be null on Superseded Versions | **Future facility only:** if forecasting is separately approved, preserve its last forecasts and append-only revision history after supersession. The MVP creates no forecast records | §§5.5, 14, 15.3; future U15 | PLN §4.9; AC-123 | **PLN18-RI-030 — future-only**; excluded from the v1.23 MVP gate |
+| PLN-RI-030 | Reconciliation | Forecasts must be null on Superseded Versions | **Future facility only:** if forecasting is separately approved, preserve its last forecasts and append-only revision history after supersession. The MVP creates no forecast records | §§5.5, 14, 15.3; future U15 | PLN §4.9; AC-123 | **PLN18-RI-030 — future-only**; excluded from the v1.24 MVP gate |
 | PLN-RI-031 | Reconciliation | All actual writers declared absent despite invitation event path | Document invitation publisher and distinguish pre-event fixtures from unsupported milestones | §§4.8, 5.5, 7; U14 | PLN §§4.9, 8.2, 18; TPR §9.5; TPUB §§8–9 | **PLN18-RI-031** — Publication event writes invitation actual once; pre-publication fixture remains null |
 | PLN-RI-032 | Agreed refinement | Multiple sequential Requisitions/Tenders can overwrite one item-level actual | Record actuals per proceeding with exact Plan/source/quantity lineage; repeated event ID is idempotent, different Tender is separate, correction supersedes a linked event. Display proceedings separately; defer aggregate item actuals | §§4.8, 5.5, 7; U14 | §10.1A; PLN actual contract; REQ/TPR/TPUB | **PLN18-RI-032** — Two sequential Tenders retain different dates; duplicate replay changes nothing; correction cannot overwrite another proceeding or compare against a later forecast |
 | PLN-RI-033 | Agreed refinement | Strategy snapshot timing and reviewed path are under-specified | Retain reviewed lineage; create deterministic STR snapshot at final approval; mismatch fails atomically | §§4.6, 7.4; U09/U11 | PLN §§4.9, 7.2, 8; STR §§7–8, 12.6 | **PLN18-RI-033** — Approval snapshot equals reviewed selection; retry creates no duplicate snapshot |
@@ -2564,8 +2613,8 @@ The 116 rows below comprise 72 refinements, 20 usability changes, 6 v1.20 compos
 | PLN-RI-036 | Agreed refinement | Universal seven-/fourteen-day floors ignore method/procedure applicability | Implement governed method/procedure schedule profiles and complete System setup maintenance surface: sequence, counting, verified limits, internal defaults, legal references, effective dates and immutable Versions; missing profile blocks submission | §§4.6, 4.8, 5.5, 7–8; U09/U11/C04 | §10.1; §11.4; PLN §4.9; CFG services/UI/seeds | **PLN18-RI-036** — Different methods resolve appropriate profiles; missing/ambiguous rules fail the affected gate; no Open Tender fallback; submitted profile history survives configuration change |
 | PLN-RI-037 | Agreed refinement | Sensible implementation allowance is an undefined blocker | Require Planner's non-negative integer Estimated delivery or implementation period in calendar days; zero explicit, never fallback. Signing plus period must meet the source-derived boundary at submission | §§4.6, 4.8, 5.5, 7–8; U09/U11 | §10.1; PLN invariant 12a; AC-116; method profiles | **PLN18-RI-037** — Exact-date boundary passes and one-day excess blocks; missing period rejects; zero requires explicit entry; deadline is never silently extended |
 | PLN-RI-038 | Agreed refinement | Date lateness and elapsed-duration variance are conflated | In MVP, baseline lateness = actual minus baseline and duration variance = planned elapsed minus actual elapsed. Per proceeding, retain fixed source/rule Versions; missing is Not available and inapplicable is Not applicable. Forecast error is future-only | §§4.6, 4.8, 5.5, 7–8; U14 | §10.1A; LAW §1; PLN §4.9; views/exports | **PLN18-RI-038** — Early/on-time/late signs agree across UI/export; late finish with shorter duration reports both correctly; no missing-to-zero or MVP forecast comparison |
-| PLN-RI-039 | Agreed refinement | Cascade validates only included rows; final milestone has no edit path | **Future facility only:** validate every affected adjacency in a resulting forecast schedule and allow a last-milestone single-row revision | §§14, 15.3; future U15 | PLN invariant 12c; §§8.2, 11.16–11.16A, 12.12 | **PLN18-RI-039 — future-only**; excluded from the v1.23 MVP gate |
-| PLN-RI-040 | Agreed refinement | Daily deduplication conflicts with one unresolved notice; first missing actual hides later dates | **Future facility only:** define milestone checks, deduplicated notices, reforecast handling and actual-event resolution after owner integrations exist | §§14, 15.3; future U15/configuration | §10.1B; PLN §8.3 and AC-130; CFG/shared notifications | **PLN18-RI-040 — future-only**; excluded from the v1.23 MVP gate |
+| PLN-RI-039 | Agreed refinement | Cascade validates only included rows; final milestone has no edit path | **Future facility only:** validate every affected adjacency in a resulting forecast schedule and allow a last-milestone single-row revision | §§14, 15.3; future U15 | PLN invariant 12c; §§8.2, 11.16–11.16A, 12.12 | **PLN18-RI-039 — future-only**; excluded from the v1.24 MVP gate |
+| PLN-RI-040 | Agreed refinement | Daily deduplication conflicts with one unresolved notice; first missing actual hides later dates | **Future facility only:** define milestone checks, deduplicated notices, reforecast handling and actual-event resolution after owner integrations exist | §§14, 15.3; future U15/configuration | §10.1B; PLN §8.3 and AC-130; CFG/shared notifications | **PLN18-RI-040 — future-only**; excluded from the v1.24 MVP gate |
 | PLN-RI-041 | Agreed refinement | Approved but unpublished or externally uncertain invalid Plan has no correction route | Hold/reconcile; confirmed-unpublished AO request and statutory Withdraw for correction create copied Draft with full governance. Unknown outcome forbids withdrawal/replacement. Published with failed activation becomes Published — activation held and permits governed correction successor | §§4.9, 5.5.2, 7–8; U13/U07 | §5; §10.2.3; PLN §§5.2, 7.1, 8.2, 12.11; publication adapter | **PLN18-RI-041** — Hold/dispatch race cannot misclassify unpublished; no edits to approval; no uncertain cancellation; held Version has no new authorisation capacity; correction can activate without first activating defective content |
 | PLN-RI-042 | Agreed refinement | Publication runs inside ApproveAnnualPlan as if external transmission were locally atomic | Commit approval and durable intent; apply Treasury/hold gates, transmit and reconcile separately; record exact acknowledgement then activate once only if activation checks pass | §§4.9, 5.5.2, 7–8; U13 | §10.2; PLN §8.2; PlanPublication | **PLN18-RI-042** — Crash after external success, duplicate callback and concurrent retry preserve exact evidence; invalid acknowledged candidate is held without false activation or duplicate publication |
 | PLN-RI-043 | Agreed refinement | Treasury submission is external but its publication prerequisite has no evidence | AO Record Treasury submission: exact approved Version/document hash, time, channel, destination, dispatch reference, attachment and confirmation. Gate website transmission on valid evidence; append corrections; require own evidence per successor; automate later | §§4.9, 5.5.2, 7–8; U13 | §10.2.2; PLN §§2.1, 4.13, 7.5A; LAW §5 | **PLN18-RI-043** — Approval intent waits for evidence; predecessor evidence cannot satisfy successor; invalidation holds/reconciles; no Treasury approval or receipt gate; website/State Portal facts not inferred |
@@ -2642,12 +2691,19 @@ The 116 rows below comprise 72 refinements, 20 usability changes, 6 v1.20 compos
 | PLN22-CHG-013 | Reimplementation completeness | Existing composition and UX criteria could force the dense UI and deferred forecast facility back into implementation. | Amend conflicting acceptance wording, add 13 simplicity criteria, update inventory/interactions/prohibitions and require representative-user proof that complete evidence remains reachable without first-view overload. | §§10.18, 11, 14–17; All | v1.21 §§10–18 | **PLN22-AC-012–013** — Implementation passes simplicity/directness testing without weakening legal or server-side controls. |
 | PLN23-CHG-001 | Project Owner consistency correction, 17 Sept 2026 | Forecasting was described as deferred, but four forecast/reminder acceptance criteria remained in the MVP gate and service/configuration entries still appeared current. | Make the deferral complete: no MVP forecast schema, route, API/service, U15 control, scheduler registration, reminder configuration or notification producer. Mark every affected legacy criterion future-only. Existing tested code may remain unreachable; greenfield work does not implement it. | §§4.8, 5.5, 7.5, 9–11, 14–16; future U15 | v1.22 §§4–17 and consistency review | **PLN23-AC-001** — Repository, route, service, scheduler, UI, configuration and acceptance inventories expose no forecast/reminder runtime entry point. |
 | PLN23-CHG-002 | Project Owner consistency correction, 17 Sept 2026 | The accepted-classification history and correction panel were required in §10.5, but neither had a static design source; U09 only showed the downstream response. | Require two separate exact-fixture artboards, `U06-ACCEPTED-CLASSIFICATION` and `U06-CORRECT-CLASSIFICATION`, and block implementation of **Correct classification** until both are reviewed and inventoried. | §§10.5, 10.18, 14.9, 15.2; U06 | v1.22 §10.5 and design review | **PLN23-AC-002** — Both reviewed artboards exist; U09 is not accepted as a substitute. |
+| PLN24-CHG-001 | Project Owner Stage 2 instruction, 21 Sep 2026 | Planning remained compositionally complete but still read as a dense specification translated into screens. | Adopt KT-STD v1.7 archetypes, primary questions and Level 1–3 information hierarchy across the complete Planning surface inventory without changing function. | §§9–10, 14.10; All | KT-STD-001 v1.7 §§2, 10; retained v1.23 function | **PLN24-AC-001–002** — Function remains exact and every composition has a task-led hierarchy. |
+| PLN24-CHG-002 | Stage 2 workspace review | U01 could still become an equal-weight dashboard of counts, checks and lists. | Make the current Plan or immediate task dominant; attach issues and counts to that work and keep departmental plans secondary. | §10.3; U01 | v1.23 §10.3 | **PLN24-AC-003** — First view communicates current work and next action. |
+| PLN24-CHG-003 | Stage 2 preparation/review review | Departmental and annual-plan preparation surfaces did not consistently distinguish editing, review and focused choices. | Assign form/editor, review/decision and dialog archetypes to U02–U09; put issue and action before evidence and retain all governed content. | §§10.4–10.8; U02–U09 | v1.23 §§10.4–10.8 | **PLN24-AC-004** — Users understand the immediate task before supporting evidence. |
+| PLN24-CHG-004 | Stage 2 decision-screen review | Finance and governance evidence could still compete visually with the actual decision. | Put verdict, consequence, blockers and concise decision basis first; move provenance/history to reachable supporting levels. | §§10.9–10.10; U10–U11 | v1.23 §§10.9–10.10 | **PLN24-AC-005** — Decision purpose and consequence dominate without hiding material facts. |
+| PLN24-CHG-005 | Stage 2 evidence/progress review | Detail, publication and monitoring screens lacked a single explicit question and could regress to record dumps. | Give U12–U14 detail/evidence or monitoring archetypes; preserve pinned truth, four-step publication state and coverage/stage scanning. | §§10.11–10.13; U12–U14 | v1.23 §§10.11–10.13 | **PLN24-AC-006–007** — Evidence and progress read as coherent stories, not undifferentiated tables. |
+| PLN24-CHG-006 | Stage 2 exception/setup review | Corrections, setup issues and shared states could become generic panels detached from their parent task. | Give U16 a correction-workspace hierarchy and require C01–C04/U21 to inherit the parent archetype, orientation and action hierarchy. | §§10.15–10.17; U16/C01–C04/U21 | v1.23 §§10.15–10.17 | **PLN24-AC-007–008** — Exceptions preserve context and expose one lawful next step. |
+| PLN24-CHG-007 | Stage 2 visual and verification review | Correct content could still be rendered with excessive cards, borders, badges, uppercase labels and equal emphasis. | Require visual restraint plus first-viewport and narrow-layout comprehension checks in the design and release gates. | §§10.1, 10.18, 14.5, 14.10, 15.4 | KT-STD-001 v1.7 §10 | **PLN24-AC-009–010** — Emphasis conveys importance and representative users identify context, priority and action without coaching. |
 
 ## 18. Approval effect
 
-**PLN-CHG-001 v1.23 is proposed for Project Owner approval.** Until approval, PLN-CHG-001 v1.22 remains the approved Planning implementation specification.
+**PLN-CHG-001 v1.24 is proposed for Project Owner approval as the Stage 2 Planning successor.** The retained v1.23 text is its functional source; this document does not infer a separate approval status for that source.
 
-Approval of v1.23 will supersede v1.22 and all earlier Planning implementation wording in full. It retains the approved business, authority, governance, integration, audit, classification-correction and simplicity requirements. It makes the forecast/reminder deferral internally complete and makes both U06 classification artboards a prerequisite for implementation. Its full 116-row change table is §17.4. Existing stable acceptance IDs remain traceable; PLN23-AC-001–002 govern the two corrected release boundaries.
+Approval of v1.24 will supersede v1.23 and all earlier Planning implementation wording in full. It retains every business, authority, governance, integration, audit, classification-correction, simplicity and consistency requirement while replacing the presentation contract with the Stage 2 task-led hierarchy. Its full 123-row change table is §17.4. Existing stable acceptance IDs remain traceable; PLN24-AC-001–010 govern the Stage 2 presentation boundary.
 
 Approval is a requirements/design decision, not current-law verification, repository compatibility, completed actor testing, passed accessibility checks, migration proof or production deployment authorisation. Exact domain and owner prerequisites in §15/§17.2 remain. Outstanding sibling contracts are not approved by this document. Required future facilities remain explicitly deferred in §15.3.
 
