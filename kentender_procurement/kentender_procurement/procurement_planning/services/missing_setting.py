@@ -102,7 +102,7 @@ def dpp_submissions(*, fiscal_year: str, user: str | None = None) -> dict[str, A
 		setting="Departmental plan submissions",
 		affected_action="Submit initial departmental plan",
 		section=SECTION_FISCAL_YEARS,
-		note="Saving a draft and correcting a returned submission are unaffected.",
+		note="Initial submission is blocked until this is configured. Saving a draft or correcting a returned submission still works.",
 		user=user,
 	)
 

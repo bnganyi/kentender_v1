@@ -57,15 +57,15 @@ describe("MissingSettingPanel — without setup access", () => {
 });
 
 describe("MissingSettingPanel — C02-DPP-CLOSED", () => {
-	it("says what remains permitted", () => {
+	it("says what is blocked before what remains permitted", () => {
 		const w = make({
 			setting: "Departmental plan submissions",
 			affected_action: "Submit initial departmental plan",
-			note: "Saving a draft and correcting a returned submission are unaffected.",
+			note: "Initial submission is blocked until this is configured. Saving a draft or correcting a returned submission still works.",
 			href: "/app/system-setup#fiscal-years",
 		});
 		expect(w.find('[data-testid="pln-missing-setting-note"]').text()).toBe(
-			"Saving a draft and correcting a returned submission are unaffected.",
+			"Initial submission is blocked until this is configured. Saving a draft or correcting a returned submission still works.",
 		);
 		expect(w.find('[data-testid="pln-open-setup"]').attributes("href")).toBe("/app/system-setup#fiscal-years");
 	});
