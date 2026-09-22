@@ -714,27 +714,83 @@
 /* A full-screen page frame — the same fill/border as .kt-card, larger
    padding for a top-level workspace/editor/detail composition rather than a
    nested content block. */
-.kt-industry .kt-panel-lg { background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); padding: var(--kt-space-8); }
+/* The artboard centres every capped-width panel within its own frame
+   (`.ab-body > div{margin:0 auto}` — canvas-only, never ported), but each
+   live screen only ever ported the max-width value onto .kt-panel-lg
+   itself, never the centring — so on any viewport wider than the panel's
+   own cap, it sat flush against the left edge with a bare grey gap on the
+   right instead (found live 21 Sep 2026). `margin: 0 auto` only has a
+   visible effect once a max-width actually constrains the panel below its
+   container's width, so this is a no-op for anything already full-width. */
+.kt-industry .kt-panel-lg { background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); padding: var(--kt-space-8); margin: 0 auto; }
 
 /* A vertical stack of labelled read-only facts (the six-fact requirement
    review block). */
 .kt-industry .kt-factstack { display: flex; flex-direction: column; gap: var(--kt-space-4); }
 .kt-industry .kt-factstack .kt-label { margin-bottom: 3px; }
-.kt-industry .kt-factstack .kt-factstack-value { font-size: 14px; }
+.kt-industry .kt-factstack .kt-factstack-value { font-size: 15px; line-height: 1.55; margin: 0; }
 
-/* Requirement-details sub-groupings within a .kt-factstack (18 Sep 2026
-   design-board refresh, NDS-CHG-001 v1.14 Phase 1): free-text facts
-   (description/expected result) in a 2-column grid, short meta facts
-   (quantity/unit/required by) in a 3-column grid — the title itself is
-   never repeated here, since the screen heading already shows it. */
-.kt-industry .kt-factstack-text { display: grid; grid-template-columns: 1fr 1fr; gap: var(--kt-space-4) var(--kt-space-6); }
-.kt-industry .kt-factstack-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--kt-space-4); border-top: 1px solid var(--kt-color-neutral-200); padding-top: var(--kt-space-3); }
+/* Requirement-details layout within a .kt-factstack (single-sheet migration,
+   21 Sep 2026, NDS-CHG-001 v1.14 §11.1): "present Description and Expected
+   result as the main readable narrative" — stacked full-width paragraphs,
+   not the 18 Sep two/three-column grids this replaces — then Quantity, Unit
+   and Required by collapse into the one compact summary line §11.1 asks
+   for, not three separately labelled facts. The screen's own heading (e.g.
+   "What the department needs", "Accepted requirement") sits above this
+   block; the title is never repeated here. NDS-DES-05/07/09/12 all use this
+   same quiet hairline-rule summary; DES-06 alone renders it as a bolder
+   accent-tinted pill — treated here as the artboard's own outlier (like the
+   21px/23px region-title size mismatch) rather than a fourth visual variant. */
+.kt-industry .kt-factstack-summary { display: flex; align-items: center; gap: 10px; padding-top: 18px; border-top: 1px solid var(--kt-color-divider); font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 18px; }
+.kt-industry .kt-factstack-summary svg { color: var(--kt-color-accent-700); flex: none; }
 
 /* A small colour-tinted square housing a heading icon (21 Sep 2026 design-board
    refresh) — generic and reusable, not Departmental-Needs-specific, so it
    lives here rather than in that module's own CSS file. */
 .kt-industry .kt-icon-tile { display: inline-flex; width: 32px; height: 32px; flex: none; align-items: center; justify-content: center; background: var(--kt-color-accent-100); color: var(--kt-color-accent-900); }
 .kt-industry .kt-icon-tile svg { flex: none; }
+
+/* ── v1.14 single-sheet page pattern (NDS-CHG-001 v1.14 §11 / KT-PAT-001 /
+     DS-REV-001, 21 Sep 2026): a KenTender page is one white sheet on the
+     grey ground. The sheet carries the header and every region; hierarchy
+     inside it comes from section titles, whitespace and hairline/accent
+     rules, never nested .kt-panel/.kt-panel-lg boxes. Spacing values below
+     are literal pixels matching what the reference artboard renders, not
+     approximated onto the existing --kt-space-N scale: the design-tool
+     export's own --space-5 disagrees with itself between a 20px task-row
+     inset and a 24px region gap, and no --kt-space-5/7 rung exists to
+     approximate either onto. Flagged to the token-scale owner as a
+     follow-up; do not resolve unilaterally here. */
+.kt-industry .kt-page { max-width: 1200px; margin: 32px auto; padding: 32px; background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); box-shadow: var(--kt-shadow-sm); display: flex; flex-direction: column; gap: 24px; }
+.kt-industry .kt-page-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--kt-space-6); }
+.kt-industry .kt-page-title { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 32px; line-height: 1.1; margin: 0; }
+.kt-industry .kt-page-desc { margin: 8px 0 0; font-size: 14px; color: var(--kt-color-neutral-800); }
+.kt-industry .kt-page-scope { display: flex; align-items: center; gap: var(--kt-space-2); margin-top: 12px; font-size: 13px; color: var(--kt-color-neutral-700); }
+.kt-industry .kt-page-actions { display: flex; gap: var(--kt-space-3); flex: none; }
+
+/* A region inside the sheet: title + open content, no box. */
+.kt-industry .kt-region > h2 { font-family: var(--kt-font-heading); font-size: 21px; margin: 0 0 var(--kt-space-3); }
+.kt-industry .kt-region.is-secondary > h2 { font-size: 17px; color: var(--kt-color-neutral-800); }
+
+/* Quiet supporting group: a hairline rule, not a card. */
+.kt-industry .kt-group { border-left: 2px solid var(--kt-color-divider); padding: 2px 0 2px 16px; }
+
+/* Level-1 task row and decision area: accent rule, no box. */
+.kt-industry .kt-task-row { border-left: 3px solid var(--kt-color-accent); padding: 4px 0 4px 20px; display: flex; align-items: center; gap: var(--kt-space-6); }
+.kt-industry .kt-decision { border-top: 2px solid var(--kt-color-accent); padding: 20px 0 0; }
+
+/* Filter bar: controls local to the records they filter. */
+.kt-industry .kt-filter-bar { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--kt-space-3); align-items: end; margin-bottom: var(--kt-space-4); }
+.kt-industry .kt-filter-bar > .is-wide { grid-column: span 2; }
+
+/* Inside a page sheet, a disclosure is a rule band, not a nested card;
+   .kt-notice/.kt-status/.table keep their own fill or rule unchanged. */
+.kt-industry .kt-page .kt-disclosure { border-left: 0; border-right: 0; border-bottom: 0; }
+
+/* Empty / filtered-empty inside the sheet — scoped so the existing
+   full-panel .kt-empty rule other modules (Planning, Tenders, system
+   setup) already consume is untouched outside a page sheet. */
+.kt-industry .kt-page .kt-empty { padding: 27px 20px; border-top: 1px solid var(--kt-color-divider); color: var(--kt-color-neutral-800); }
 
 /* Media hardening — keep when trimming (see the design-system readme). */
 @media (forced-colors: active) {
@@ -754,6 +810,7 @@
 	.kt-industry { background: #fff; color: #000; }
 	.kt-industry .kt-btn, .kt-industry .kt-dialog-backdrop, .kt-industry .kt-tabs, .kt-industry .kt-sticky-footer { display: none; }
 	.kt-industry .kt-card, .kt-industry .kt-dialog, .kt-industry .kt-panel-lg { box-shadow: none; background: #fff; border-color: #000; }
+	.kt-industry .kt-page { box-shadow: none; border-color: #000; margin: 0; }
 	.kt-industry .kt-status { background: none; color: #000; border: 1px solid #000; }
 	.kt-industry a { color: #000; }
 	.kt-industry .kt-table thead th { position: static; border-bottom-color: #000; }

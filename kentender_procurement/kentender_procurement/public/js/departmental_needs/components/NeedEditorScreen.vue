@@ -3,112 +3,96 @@
      choice are the same editor over the same six values; only the masthead,
      notice, context and footer differ. -->
 <template>
-	<div class="kt-panel-lg" style="max-width: 880px">
-		<h3 style="margin: 0; display: flex; align-items: center; gap: 10px">
-			<span class="kt-icon-tile">
-				<svg
-					v-if="mode === 'create'"
-					width="18"
-					height="18"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="1.5"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /><path d="M14 2v4a2 2 0 0 0 2 2h4" /><path d="M12 12v6M9 15h6" /></svg>
-				<svg
-					v-else
-					width="18"
-					height="18"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="1.5"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /><path d="M14 2v4a2 2 0 0 0 2 2h4" /><path d="m11 17 4-4-1.5-1.5L9.5 15.5V17z" /></svg>
-			</span>{{ heading }}
-		</h3>
-		<div v-if="reference" style="display: flex; gap: var(--kt-space-3); align-items: center; margin: 6px 0 0">
-			<span class="kt-label">{{ reference }}</span>
-			<span class="kt-status" :class="statusClass">{{ statusLabel }}</span>
-			<span v-if="revisionNote" class="text-muted" style="font-size: 12px">{{ revisionNote }}</span>
+	<div class="kt-page">
+		<div>
+			<h1 class="kt-page-title">{{ headingTitle }}</h1>
+			<!-- Only "successor" has a fixed action-name heading separate from
+			     the requirement's own business name (NDS-DES-08); draft/correct
+			     mode's heading IS the business name (NDS-DES-04/15-PERSISTED),
+			     so repeating it here would show the same text twice. -->
+			<div v-if="mode === 'successor'" style="font-family: var(--kt-font-heading); font-weight: 600; font-size: 21px; margin-top: 10px">{{ businessName }}</div>
+			<div v-if="reference" style="display: flex; align-items: center; gap: 12px; margin-top: 6px">
+				<span class="text-muted" style="font-size: 13px">{{ reference }}</span>
+				<span class="kt-status" :class="statusClass">{{ statusLabel }}</span>
+				<span v-if="revisionNote" class="text-muted" style="font-size: 12px">{{ revisionNote }}</span>
+			</div>
+			<p v-else class="kt-page-desc" style="max-width: 760px">{{ lede }}</p>
 		</div>
-		<p v-else class="text-muted" style="font-size: 13px; margin: 6px 0 0">{{ lede }}</p>
 
 		<!-- NDS-DES-04 "What needs to change" — the immutable return reason. -->
-		<div v-if="returnReason" class="kt-notice is-warning" style="margin-top: var(--kt-space-4)">
+		<div v-if="returnReason" class="kt-notice is-warning" style="max-width: 860px">
 			<div class="kt-notice-body">
-				<strong>What needs to change</strong><br />
-				{{ returnReason.reason }}
-				<div style="display: flex; gap: var(--kt-space-6); margin-top: var(--kt-space-3); font-size: 12px">
-					<div><strong style="color: var(--kt-color-text)">Returned by</strong> {{ returnReason.actor_label }}</div>
-					<div><strong style="color: var(--kt-color-text)">Returned at</strong> {{ returnReason.occurred_label }}</div>
+				<div style="font-family: var(--kt-font-heading); font-weight: 600; font-size: 16px; text-transform: uppercase; letter-spacing: 0.02em">
+					What needs to change
 				</div>
+				<p style="margin: 8px 0 0">{{ returnReason.reason }}</p>
+				<p class="text-muted" style="margin: 10px 0 0; font-size: 12px">
+					Returned by {{ returnReason.actor_label }} · {{ returnReason.occurred_label }}
+				</p>
 			</div>
 		</div>
 
 		<!-- NDS-DES-08 — the accepted source remains in effect while a proposed
 		     update is being drafted. -->
-		<div v-if="mode === 'successor'" class="kt-notice is-info" style="margin-top: var(--kt-space-4)">
+		<div v-if="mode === 'successor'" class="kt-notice" style="max-width: 860px">
 			<div class="kt-notice-body">
 				The previously accepted requirement remains in effect until these changes are
 				accepted.
 			</div>
 		</div>
 
-		<div
-			v-if="errorSummary"
-			ref="errorEl"
-			class="kt-notice is-critical"
-			style="margin-top: var(--kt-space-4)"
-			role="alert"
-			tabindex="-1"
-		>
+		<div v-if="errorSummary" ref="errorEl" class="kt-notice is-critical" style="max-width: 860px" role="alert" tabindex="-1">
 			<div class="kt-notice-body">{{ errorSummary }}</div>
 		</div>
 
-		<!-- §11.1 — read-only Department/Financial year, except NDS-DES-15's
-		     same-form selector when this Author has more than one eligible
-		     department and none is chosen yet. -->
-		<div class="kt-panel" style="margin-top: var(--kt-space-4)">
-			<div class="kt-meta-row">
-				<div v-if="departmentChoices.length > 1" class="field" style="margin: 0">
-					<label class="kt-label" for="nds-department">Department</label>
-					<select
-						id="nds-department"
-						data-testid="nds-department"
-						class="kt-input"
-						:value="selectedDepartment"
-						@change="$emit('select-department', $event.target.value)"
-					>
-						<option value="" disabled>Select department</option>
-						<option v-for="row in departmentChoices" :key="row.organisation_unit" :value="row.organisation_unit">
-							{{ row.organisation_unit_label }}
-						</option>
-					</select>
-				</div>
-				<div v-else>
-					<span class="kt-label">Department</span>
-					<span class="kt-meta-value" style="font-size: 14px">{{
-						context.organisation_unit_label || context.organisation_unit || ""
-					}}</span>
-				</div>
-				<div>
-					<span class="kt-label">Financial year</span>
-					<span class="kt-meta-value" style="font-size: 14px">{{
-						context.financial_year_label || context.financial_year || ""
-					}}</span>
-				</div>
+		<!-- §11.4 — CREATE mode offers the same-form Department choice in a
+		     compact ownership row over a hairline rule, not a card; every other
+		     mode's Department/FY are already fixed and read as a plain
+		     orientation line instead (NDS-DES-04/08). -->
+		<div
+			v-if="mode === 'create'"
+			style="display: grid; grid-template-columns: 360px 200px; gap: 24px; align-items: end; max-width: 860px; padding-bottom: 20px; border-bottom: 1px solid var(--kt-color-divider)"
+		>
+			<div v-if="departmentChoices.length > 1" class="field" style="margin: 0">
+				<label class="kt-label" for="nds-department">Department</label>
+				<select
+					id="nds-department"
+					data-testid="nds-department"
+					class="kt-input"
+					:value="selectedDepartment"
+					@change="$emit('select-department', $event.target.value)"
+				>
+					<option value="" disabled>Select department</option>
+					<option v-for="row in departmentChoices" :key="row.organisation_unit" :value="row.organisation_unit">
+						{{ row.organisation_unit_label }}
+					</option>
+				</select>
+			</div>
+			<div v-else>
+				<span class="kt-label">Department</span>
+				<div style="font-family: var(--kt-font-heading); font-weight: 600; font-size: 18px; margin-top: 4px">{{
+					context.organisation_unit_label || context.organisation_unit || ""
+				}}</div>
+			</div>
+			<div>
+				<span class="kt-label">Financial year</span>
+				<div style="font-family: var(--kt-font-heading); font-weight: 600; font-size: 18px; margin-top: 4px">{{
+					context.financial_year_label || context.financial_year || ""
+				}}</div>
 			</div>
 		</div>
+		<div v-else style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--kt-color-neutral-700)">
+			<span>{{ context.organisation_unit_label || context.organisation_unit || "" }}</span>
+			<span>·</span>
+			<span>{{ context.financial_year_label || context.financial_year || "" }}</span>
+		</div>
 
-		<!-- §11.1 six-field arrangement (21 Sep 2026 design-board refresh):
-		     title spans both columns, description/expected result side by
-		     side, quantity/unit/required-by in one row spanning both columns. -->
-		<div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--kt-space-4) var(--kt-space-6); margin-top: var(--kt-space-4)">
-			<div class="field" style="grid-column: 1 / -1">
+		<!-- §11.1 six-field arrangement (single-sheet migration): one open
+		     column, 860px measure — title, description and expected result
+		     each their own full-width row; quantity/unit share a row; required
+		     by follows on its own. -->
+		<div style="max-width: 860px; display: flex; flex-direction: column; gap: 20px">
+			<div class="field">
 				<label class="kt-label" for="nds-title">Requirement title</label>
 				<input
 					id="nds-title"
@@ -118,7 +102,7 @@
 					type="text"
 					v-model="form.title"
 				/>
-				<div class="text-muted" style="font-size: 12.5px; margin-top: 4px">
+				<div class="text-muted" style="font-size: 12px; margin-top: 5px">
 					Give the requirement a short, recognisable name.
 				</div>
 				<div v-if="fieldErrors.title" class="kt-field-error">{{ fieldErrors.title }}</div>
@@ -132,7 +116,7 @@
 					rows="2"
 					v-model="form.description"
 				></textarea>
-				<div class="text-muted" style="font-size: 12.5px; margin-top: 4px">Describe what is needed.</div>
+				<div class="text-muted" style="font-size: 12px; margin-top: 5px">Describe what is needed.</div>
 			</div>
 			<div class="field">
 				<label class="kt-label" for="nds-result">Expected result</label>
@@ -143,12 +127,12 @@
 					rows="2"
 					v-model="form.expected_operational_result"
 				></textarea>
-				<div class="text-muted" style="font-size: 12.5px; margin-top: 4px">
+				<div class="text-muted" style="font-size: 12px; margin-top: 5px">
 					What will the department be able to do when this need is met?
 				</div>
 			</div>
-			<div style="display: flex; gap: var(--kt-space-4); grid-column: 1 / -1">
-				<div class="field" style="margin: 0; flex: 1">
+			<div style="display: grid; grid-template-columns: 200px 260px; gap: 20px">
+				<div class="field">
 					<label class="kt-label" for="nds-quantity">Quantity</label>
 					<input
 						id="nds-quantity"
@@ -161,14 +145,14 @@
 						v-model="form.indicative_quantity"
 						@input="inputErrors.indicative_quantity = ''"
 					/>
-					<div class="text-muted" style="font-size: 12.5px; margin-top: 4px">
+					<div class="text-muted" style="font-size: 12px; margin-top: 5px">
 						Enter the total quantity needed.
 					</div>
 					<div v-if="inputErrors.indicative_quantity" class="kt-field-error" data-testid="nds-quantity-error">
 						{{ inputErrors.indicative_quantity }}
 					</div>
 				</div>
-				<div class="field" style="margin: 0; flex: 1">
+				<div class="field">
 					<label class="kt-label" for="nds-unit">Unit</label>
 					<div style="display: flex; gap: 8px; align-items: center">
 						<select id="nds-unit" data-testid="nds-unit" class="kt-input" v-model="form.unit" style="flex: 1">
@@ -187,31 +171,31 @@
 							+ New
 						</button>
 					</div>
-					<div class="text-muted" style="font-size: 12.5px; margin-top: 4px">
+					<div class="text-muted" style="font-size: 12px; margin-top: 5px">
 						Select the unit that describes the quantity.
 					</div>
 				</div>
-				<div class="field" style="margin: 0; flex: 1">
-					<label class="kt-label" for="nds-required-by">Required by</label>
-					<input
-						id="nds-required-by"
-						ref="requiredByEl"
-						data-testid="nds-required-by"
-						class="kt-input"
-						type="date"
-						v-model="form.required_by_date"
-						@input="inputErrors.required_by_date = ''"
-					/>
-					<div class="text-muted" style="font-size: 12.5px; margin-top: 4px">When does the department need it?</div>
-					<div v-if="inputErrors.required_by_date" class="kt-field-error" data-testid="nds-required-by-error">
-						{{ inputErrors.required_by_date }}
-					</div>
+			</div>
+			<div class="field" style="max-width: 260px">
+				<label class="kt-label" for="nds-required-by">Required by</label>
+				<input
+					id="nds-required-by"
+					ref="requiredByEl"
+					data-testid="nds-required-by"
+					class="kt-input"
+					type="date"
+					v-model="form.required_by_date"
+					@input="inputErrors.required_by_date = ''"
+				/>
+				<div class="text-muted" style="font-size: 12px; margin-top: 5px">When does the department need it?</div>
+				<div v-if="inputErrors.required_by_date" class="kt-field-error" data-testid="nds-required-by-error">
+					{{ inputErrors.required_by_date }}
 				</div>
 			</div>
 		</div>
 
 		<!-- NDS-DES-04 History — collapsed, revision timeline. -->
-		<div v-if="history.length" class="kt-disclosure" style="margin-top: var(--kt-space-4)">
+		<div v-if="history.length" class="kt-disclosure" style="max-width: 860px">
 			<div class="kt-disclosure-head" @click="historyOpen = !historyOpen">
 				<div class="kt-disclosure-title-row"><span class="kt-disclosure-title">History</span></div>
 				<svg
@@ -241,60 +225,45 @@
 			</div>
 		</div>
 
-		<!-- §11.1 form footer — destructive action at the far left; primary
-		     action right-aligned. Draft/Returned use Withdraw need; Create/
-		     successor use Cancel/Cancel update. -->
+		<!-- §11.4/§11.5/§11.9 footer — CREATE has no destructive action, so
+		     Cancel joins Save/Submit as one right-aligned group. Every other
+		     mode separates its destructive-or-quieter cancel action to the far
+		     left; only "Withdraw need" (an accepted/submitted revision's real
+		     withdrawal) is danger-styled — "Cancel update"/"Cancel" discard an
+		     unaccepted draft and stay plain secondary. -->
 		<div
-			style="display: flex; justify-content: space-between; margin-top: var(--kt-space-6); padding-top: var(--kt-space-4); border-top: 1px solid var(--kt-color-divider)"
+			v-if="mode === 'create'"
+			style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 20px; border-top: 1px solid var(--kt-color-divider); max-width: 860px"
+		>
+			<button class="kt-btn kt-btn-secondary" data-testid="nds-editor-cancel" :disabled="pending" @click="$emit('cancel')">
+				{{ cancelLabel }}
+			</button>
+			<button class="kt-btn kt-btn-secondary" data-testid="nds-save-draft" :disabled="pending || departmentRequired" @click="guardedEmit('save')">
+				{{ saveLabel }}
+			</button>
+			<button class="kt-btn kt-btn-primary" data-testid="nds-submit" :disabled="pending || departmentRequired" @click="guardedEmit('submit')">
+				{{ submitLabel }}
+			</button>
+		</div>
+		<div
+			v-else
+			style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 20px; border-top: 1px solid var(--kt-color-divider); max-width: 860px"
 		>
 			<button
-				class="kt-btn kt-btn-secondary kt-danger"
+				class="kt-btn kt-btn-secondary"
+				:class="{ 'kt-danger': cancelLabel === 'Withdraw need' }"
 				data-testid="nds-editor-cancel"
 				:disabled="pending"
 				@click="$emit('cancel')"
 			>
-				<svg
-					v-if="cancelLabel === 'Cancel update'"
-					width="15"
-					height="15"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="1.5"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				><path d="M18 6 6 18M6 6l12 12" /></svg>
-				<svg
-					v-else-if="cancelLabel === 'Withdraw need'"
-					width="15"
-					height="15"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="1.5"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				><path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg
-				>{{ cancelLabel }}
+				{{ cancelLabel }}
 			</button>
-			<div style="display: flex; gap: var(--kt-space-2)">
-				<button
-					class="kt-btn kt-btn-secondary"
-					data-testid="nds-save-draft"
-					:disabled="pending || departmentRequired"
-					@click="guardedEmit('save')"
-				>
-					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" /><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" /><path d="M7 3v4a1 1 0 0 0 1 1h7" /></svg
-					>{{ saveLabel }}
+			<div style="display: flex; gap: 12px">
+				<button class="kt-btn kt-btn-secondary" data-testid="nds-save-draft" :disabled="pending || departmentRequired" @click="guardedEmit('save')">
+					{{ saveLabel }}
 				</button>
-				<button
-					class="kt-btn kt-btn-primary"
-					data-testid="nds-submit"
-					:disabled="pending || departmentRequired"
-					@click="guardedEmit('submit')"
-				>
-					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" /><path d="m21.854 2.147-10.94 10.939" /></svg
-					>{{ submitLabel }}
+				<button class="kt-btn kt-btn-primary" data-testid="nds-submit" :disabled="pending || departmentRequired" @click="guardedEmit('submit')">
+					{{ submitLabel }}
 				</button>
 			</div>
 		</div>
@@ -423,10 +392,12 @@ watch(
 	}
 );
 
+// §11.4/§11.9 — CREATE/successor headings are a fixed action name, with the
+// requirement's own business name as a second line for every other mode
+// (matching NDS-DES-04/08's own `<h1>`/name split); "draft"/"correct" have no
+// fixed action name of their own, so the business name IS the heading.
 const HEADINGS = {
 	create: "Create a departmental need",
-	draft: () => props.revision?.title || "Departmental need",
-	correct: () => props.revision?.title || "Departmental need",
 	successor: "Update accepted need",
 };
 const LEDES = {
@@ -434,10 +405,8 @@ const LEDES = {
 };
 
 const reference = computed(() => (props.mode === "create" ? "" : props.need?.need_reference || ""));
-const heading = computed(() => {
-	const entry = HEADINGS[props.mode] || HEADINGS.create;
-	return typeof entry === "function" ? entry() : entry;
-});
+const businessName = computed(() => props.revision?.title || "Departmental need");
+const headingTitle = computed(() => HEADINGS[props.mode] || businessName.value);
 const lede = computed(() => LEDES[props.mode] || "");
 
 const STATUS_CLASSES = {

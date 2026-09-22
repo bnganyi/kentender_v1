@@ -1,7 +1,7 @@
 <!-- The one role-appropriate table §1.1 leaves in place of the retired summary
      cards and split sections. Shared by NDS-DES-01, 02 and 02b — the caller
-     supplies the columns each role sees. NDS-CHG-001 v1.13 §11.2/§11.3 render
-     this directly inside the workspace's .kt-panel-lg, with no separate
+     supplies the columns each role sees. NDS-CHG-001 v1.14 §11.2/§11.3 render
+     this directly inside the workspace's .kt-page sheet, with no separate
      bordered card of its own. -->
 <template>
 	<div>
@@ -26,6 +26,15 @@
 							<br />
 							<span style="color: var(--kt-color-neutral-600); font-size: 13px">{{
 								row.reference
+							}}</span>
+						</template>
+						<!-- KT-STD-001 §2.2 — related facts grouped into one readable unit;
+						     the artboard's "Quantity and required by" column, not two. -->
+						<template v-else-if="column.key === 'quantity_required_by'">
+							<span>{{ row.quantity_label }}</span>
+							<br />
+							<span style="color: var(--kt-color-neutral-600); font-size: 13px">{{
+								row.required_by_label
 							}}</span>
 						</template>
 						<template v-else-if="column.key === 'action'">

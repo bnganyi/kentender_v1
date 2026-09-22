@@ -97,50 +97,6 @@
 	text-decoration: underline;
 }
 
-/* NDS-DES-03/05/06/07/12 — stacked read-only field rows. */
-.kt-industry .kt-readonly-row + .kt-readonly-row {
-	margin-top: 16px;
-}
-.kt-industry .kt-readonly-label {
-	font-size: 11px;
-	letter-spacing: 0.06em;
-	text-transform: uppercase;
-	color: var(--color-neutral-600);
-	margin-bottom: 4px;
-}
-.kt-industry .kt-readonly-value {
-	font-size: 14.5px;
-}
-.kt-industry .kt-readonly-value.is-strong {
-	font-weight: 500;
-}
-
-/* NDS-DES-02 — review queue / department register tabs. */
-.kt-industry .kt-tabstrip {
-	display: flex;
-	gap: 24px;
-	border-bottom: 1px solid var(--color-neutral-200);
-	margin-bottom: 16px;
-}
-.kt-industry .kt-tabstrip .kt-tab {
-	font-family: var(--font-heading);
-	font-size: 15px;
-	font-weight: 600;
-	letter-spacing: 0.01em;
-	padding: 10px 2px;
-	cursor: pointer;
-	border-bottom: 2px solid transparent;
-	color: var(--color-neutral-600);
-	background: none;
-	border-top: 0;
-	border-left: 0;
-	border-right: 0;
-}
-.kt-industry .kt-tabstrip .kt-tab.is-selected {
-	color: var(--color-text);
-	border-bottom-color: var(--color-accent);
-}
-
 /* NDS-DES-06/12b — the destructive decision, distinct from the primary one. */
 .kt-industry .kt-btn-destructive {
 	background: none;
@@ -173,59 +129,20 @@
 	border-top: 1px solid var(--color-neutral-200);
 }
 
-/* NDS-DES-03/06/10 — sticky command footer. */
-.kt-industry .kt-page-footer {
-	position: sticky;
-	bottom: 0;
-	left: 0;
-	background: var(--color-bg);
-	border-top: 1px solid var(--color-neutral-200);
-	padding: 16px 0;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	margin-top: 16px;
-}
-
-/* NDS-DES-01/02 — page masthead. */
-.kt-industry .kt-page-kicker {
-	font-family: var(--font-heading);
-	font-size: 13px;
-	font-weight: 600;
-	letter-spacing: 0.08em;
-	color: var(--color-accent-700);
-}
-.kt-industry .kt-page-title {
-	font-family: var(--font-heading);
-	font-weight: 600;
-	font-size: 34px;
-	margin: 4px 0 8px;
-	letter-spacing: 0.01em;
-}
-.kt-industry .kt-record-title {
-	font-family: var(--font-heading);
-	font-weight: 600;
-	font-size: 30px;
-	margin: 0;
-	letter-spacing: 0.01em;
-}
-.kt-industry .kt-page-lede {
-	font-size: 15px;
-	color: var(--color-neutral-700);
-	max-width: 720px;
-	margin: 0;
-}
-.kt-industry .kt-context-grid {
-	display: grid;
-	gap: 16px;
-	align-items: start;
-}
-/* The 16px stacked-list margin between adjacent readonly rows leaks into the
-   grid, where every cell after the first is an adjacent sibling — pushing the
-   Department and Financial Year columns 16px below Procuring Entity. */
-.kt-industry .kt-context-grid > .kt-readonly-row + .kt-readonly-row {
-	margin-top: 0;
-}
+/* .kt-page-footer, .kt-page-kicker, .kt-page-title, .kt-page-lede,
+ * .kt-record-title, .kt-context-grid, .kt-readonly-row/-label/-value and
+ * .kt-tabstrip/.kt-tab were deleted here (21 Sep 2026, NDS-CHG-001 v1.14
+ * single-sheet migration): confirmed zero live NDS usage after the
+ * migration. .kt-page-title specifically collided with the new canonical
+ * .kt-page-title added to kt_industry_tokens.css (this file loads after
+ * that one, so the dead local 34px rule would otherwise have silently won
+ * the cascade over the new 32px one). .kt-record-title was a second such
+ * collision found during cleanup: kt_industry_tokens.css's own BUD-CHG-001
+ * v1.9 rule (17px, consumed by kentender_budget's BudgetApprovalTaskScreen/
+ * BudgetLineDetailScreen) was being silently overridden site-wide by this
+ * file's dead local 30px rule, since this stylesheet loads globally via
+ * app_include_css, not scoped to the Departmental Needs page. See
+ * KT-PAT-001 / DS-REV-001 in docs/mvp-1-r1/01_departmental_needs/design/handoff/. */
 .kt-industry textarea.kt-input {
 	resize: vertical;
 	min-height: 72px;
@@ -233,82 +150,10 @@
 }
 
 /* §12.8 — a validation summary the page can move focus to. */
-.kt-industry .kt-error-summary {
-	border: 1px solid oklch(55% 0.18 25);
-	background: oklch(97% 0.02 25);
-	color: oklch(40% 0.16 25);
-	border-radius: var(--radius-md);
-	padding: 12px 16px;
-	font-size: 14px;
-	margin-bottom: 16px;
-}
-.kt-industry .kt-error-summary:focus-visible {
-	outline: 2px solid oklch(55% 0.18 25);
-	outline-offset: 2px;
-}
 .kt-industry .kt-field-error {
 	color: oklch(45% 0.16 25);
 	font-size: 12.5px;
 	margin-top: 6px;
-}
-
-/* NDS-DES-01 context row (harmonised 2026-09-05 with Budget & Funding's
- * Fiscal Year control and Procurement Planning's Financial Year filter): a
- * plain inline row at text weight beneath the page description, not a
- * bordered card. */
-.kt-industry .nds-filter-strip {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 12px;
-	margin: 20px 0 16px;
-	font-size: 14px;
-}
-.kt-industry .nds-filter-field {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-}
-.kt-industry .nds-filter-label {
-	color: var(--color-neutral-700);
-	margin: 0;
-}
-.kt-industry .nds-filter-value {
-	font-family: var(--font-heading);
-	font-weight: 600;
-	color: var(--color-text);
-}
-.kt-industry .nds-filter-strip .kt-input {
-	width: auto;
-	min-width: 150px;
-	padding: 6px 28px 6px 8px;
-	font-size: 13.5px;
-}
-.kt-industry .nds-filter-link {
-	border: 0;
-	background: none;
-	padding: 0;
-	cursor: pointer;
-	font-size: 13px;
-}
-.kt-industry .nds-filter-quiet,
-.kt-industry .nds-filter-sep {
-	color: var(--color-neutral-600);
-	font-size: 13px;
-}
-
-/* 21 Sep 2026 design-board refresh — a heading icon before a .kt-card-title's
- * text (mirrors Tenders' own .tnd-section-title modifier rather than a
- * per-instance inline style). The icon itself carries the accent tint; the
- * label text inherits .kt-card-title's own colour. */
-.kt-industry .nds-section-title {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-}
-.kt-industry .nds-section-title svg {
-	flex: none;
-	color: var(--color-accent);
 }
 
 /* A leading search icon inside a text input (NDS-DES-01/02 search fields). */

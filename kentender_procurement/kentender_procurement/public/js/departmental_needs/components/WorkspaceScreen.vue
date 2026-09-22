@@ -7,7 +7,7 @@
 <template>
 	<div>
 		<!-- NDS-DES-14 LOADING -->
-		<div v-if="loading" class="kt-panel-lg" style="max-width: 900px">
+		<div v-if="loading" class="kt-page">
 			<div data-testid="nds-loading-text" style="font-size: 14px; color: var(--kt-color-neutral-700)">
 				Loading departmental needs…
 			</div>
@@ -19,19 +19,20 @@
 			</div>
 		</div>
 
-		<!-- NDS-DES-14 LOAD-FAILURE -->
-		<div
-			v-else-if="error"
-			class="kt-panel-lg"
-			style="max-width: 620px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px"
-		>
-			<div style="font-family: var(--kt-font-heading); font-size: 20px; font-weight: 600">
-				Departmental Needs could not be loaded
+		<!-- NDS-DES-14 LOAD-FAILURE — occupies the sheet alone, per KT-PAT-001
+		     §5's page-states recipe: no protected header/filters/rows behind it. -->
+		<div v-else-if="error" class="kt-page">
+			<div
+				style="max-width: 620px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px"
+			>
+				<div style="font-family: var(--kt-font-heading); font-size: 20px; font-weight: 600">
+					Departmental Needs could not be loaded
+				</div>
+				<p style="margin: 0; font-size: 14.5px; color: var(--kt-color-neutral-700)">
+					Try again. If the problem continues, contact support.
+				</p>
+				<button class="kt-btn kt-btn-secondary" @click="$emit('reload')">Try again</button>
 			</div>
-			<p style="margin: 0; font-size: 14.5px; color: var(--kt-color-neutral-700)">
-				Try again. If the problem continues, contact support.
-			</p>
-			<button class="kt-btn kt-btn-secondary" @click="$emit('reload')">Try again</button>
 		</div>
 
 		<!-- NDS-DES-14 DENIED — kept to the full four-role list (Departmental
@@ -39,199 +40,236 @@
 		     compact design-canvas card omits Procurement Planner for space, but
 		     dropping a real read-eligible role from this help text would mislead
 		     a Planner into thinking they have no path in. -->
-		<div
-			v-else-if="outcome === 'NO_AUTHORISED_CONTEXT'"
-			class="kt-panel-lg"
-			style="max-width: 620px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px"
-		>
-			<div style="font-family: var(--kt-font-heading); font-size: 20px; font-weight: 600">
-				You do not have access to Departmental Needs
+		<div v-else-if="outcome === 'NO_AUTHORISED_CONTEXT'" class="kt-page">
+			<div
+				style="max-width: 620px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px"
+			>
+				<div style="font-family: var(--kt-font-heading); font-size: 20px; font-weight: 600">
+					You do not have access to Departmental Needs
+				</div>
+				<p style="margin: 0; font-size: 14.5px; color: var(--kt-color-neutral-700)">
+					This area needs one of these responsibilities: Departmental Author, Head of User
+					Department, Procurement Planner or Auditor, assigned to an organisation unit. Ask your
+					KenTender administrator to assign one in System setup.
+				</p>
 			</div>
-			<p style="margin: 0; font-size: 14.5px; color: var(--kt-color-neutral-700)">
-				This area needs one of these responsibilities: Departmental Author, Head of User
-				Department, Procurement Planner or Auditor, assigned to an organisation unit. Ask your
-				KenTender administrator to assign one in System setup.
-			</p>
 		</div>
 
-		<template v-else>
-			<div class="kt-panel-lg" style="max-width: 1100px">
-				<div style="display: flex; justify-content: space-between; align-items: flex-start">
-					<div>
-						<h3 style="margin: 0; display: flex; align-items: center; gap: 10px">
-							<span class="kt-icon-tile"
-								><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18M3 12h18M3 19h18" /></svg
-							></span>Departmental Needs
-						</h3>
-						<p class="text-muted" style="font-size: 13px; margin: 6px 0 0">{{ lede }}</p>
+		<div v-else class="kt-page">
+			<div class="kt-page-head">
+				<div>
+					<h1 class="kt-page-title">{{ pageTitle }}</h1>
+					<p class="kt-page-desc">{{ lede }}</p>
+					<!-- §11.1/§11.2 — one compact scope line replaces the four
+					     separately labelled Department/FY/submission facts; its
+					     parts stay distinguishable through typographic grouping,
+					     not a bordered context card. -->
+					<div class="kt-page-scope">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--kt-color-accent-700)"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+						<!-- §12.1 — several departments combined (nothing resolved
+						     to one) is a normal state, not an error; name it the
+						     same way the filter option below already does rather
+						     than leaving the fact blank. -->
+						<span style="font-weight: 600" data-testid="nds-department-fact">{{
+							context.organisation_unit_label || context.organisation_unit || "All departments"
+						}}</span>
+						<span class="text-muted">·</span>
+						<span>{{ context.financial_year_label || context.financial_year || "All financial years" }}</span>
+						<template v-if="canCreate && submission.open && submission.closes_at">
+							<span class="text-muted">·</span>
+							<span class="text-muted">New submissions open until {{ formatInstant(submission.closes_at) }}</span>
+						</template>
 					</div>
-					<button
-						v-if="canCreate"
-						class="kt-btn kt-btn-primary"
-						data-testid="nds-create-need"
-						@click="$emit('create')"
-					>
+				</div>
+				<div v-if="canCreate" class="kt-page-actions">
+					<button class="kt-btn kt-btn-primary" data-testid="nds-create-need" @click="$emit('create')">
 						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14" /></svg>Create need
 					</button>
 				</div>
+			</div>
 
-				<!-- §11.1/§11.2 — four separately labelled facts, read-only; no
-				     entity row. The switching controls live in the filter row
-				     below, not here. -->
-				<div class="kt-panel" style="margin-top: var(--kt-space-4)">
-					<div class="kt-meta-row">
-						<div>
-							<span class="kt-label">Department</span>
-							<!-- §12.1 — several departments combined (nothing resolved
-							     to one) is a normal state, not an error; name it the
-							     same way the filter option below already does rather
-							     than leaving the fact blank. -->
-							<span class="kt-meta-value" style="font-size: 14px" data-testid="nds-department-fact">{{
-								context.organisation_unit_label || context.organisation_unit || "All departments"
-							}}</span>
+			<!-- NDS-DES-14 CLOSED-WORKSPACE / NO-OPEN-YEAR — the read contract
+			     does not yet distinguish "a year's flag is closed" from "no year
+			     is open" (both resolve to `{ open: false }`), so both fixtures
+			     share this one notice until that contract gains a flag. -->
+			<div
+				v-if="canCreate && !submission.open && needs.length"
+				class="kt-notice is-warning"
+				data-testid="nds-submission-closed-notice"
+			>
+				<div class="kt-notice-body">
+					New submissions are closed. You can view existing needs and save changes to
+					existing drafts.
+				</div>
+			</div>
+
+			<!-- §11.2 — the Author's own in-progress Draft/Returned correction,
+			     elevated to a dominant Level-1 task row rather than left to be
+			     found only in the register below (NDS-CHG-001 v1.14 §11.2). This
+			     need also still appears as its own row in the register — the
+			     artboard's own "2 needs" count includes it — so it needs its own
+			     testids, distinct from the register's `nds-need-row`/
+			     `nds-row-action`, or the two would collide on the same reference. -->
+			<div v-if="continueRows.length" class="kt-region">
+				<h2>Continue your work</h2>
+				<div
+					v-for="row in continueRows"
+					:key="row.name"
+					class="kt-task-row"
+					data-testid="nds-continue-row"
+					:data-reference="row.reference"
+					:data-status="row.status"
+				>
+					<div style="flex: 1; min-width: 0">
+						<div style="font-family: var(--kt-font-heading); font-weight: 600; font-size: 19px">{{ row.title || "Untitled need" }}</div>
+						<div class="text-muted" style="font-size: 12px; margin-top: 2px">{{ row.reference }}</div>
+						<div style="display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; color: var(--kt-color-neutral-800)">
+							<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--kt-color-neutral-700)"><rect width="20" height="5" x="2" y="3" rx="1" /><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" /><path d="M10 12h4" /></svg>
+							<span>{{ row.quantity_label }}</span>
+							<span class="text-muted">·</span>
+							<span>Required by {{ row.required_by_label }}</span>
 						</div>
-						<div>
-							<span class="kt-label">Financial year</span>
-							<span class="kt-meta-value" style="font-size: 14px">{{
-								context.financial_year_label || context.financial_year || "All financial years"
-							}}</span>
-						</div>
-						<div v-if="canCreate">
-							<span class="kt-label">New submissions</span>
-							<span class="kt-meta-value" style="font-size: 14px">
-								<span :class="['kt-status', submission.open ? 'is-live' : 'is-draft']">{{
-									submission.open ? "Open" : "Closed"
-								}}</span>
-							</span>
-						</div>
-						<div v-if="canCreate && submission.open && submission.closes_at">
-							<span class="kt-label">Closes at</span>
-							<span class="kt-meta-value" style="font-size: 14px">{{
-								formatInstant(submission.closes_at)
-							}}</span>
+						<div style="display: flex; align-items: center; gap: 10px; margin-top: 10px">
+							<StatusPill :label="row.status" />
+							<span style="font-size: 13px; color: var(--kt-color-neutral-800)">{{ continueNarrative(row) }}</span>
 						</div>
 					</div>
+					<button
+						v-if="row.actions[0]"
+						type="button"
+						class="kt-btn kt-btn-primary"
+						data-testid="nds-continue-action"
+						:data-action="row.actions[0].code"
+						@click="$emit('action', row, row.actions[0])"
+					>
+						{{ row.actions[0].label }}
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+					</button>
 				</div>
+			</div>
 
-				<!-- NDS-DES-14 CLOSED-WORKSPACE / NO-OPEN-YEAR — the read contract
-				     does not yet distinguish "a year's flag is closed" from "no year
-				     is open" (both resolve to `{ open: false }`), so both fixtures
-				     share this one notice until that contract gains a flag. -->
+			<!-- NDS-DES-02 first content section — a decision queue only when
+			     one exists; never a separate menu entry or role switch. -->
+			<div v-if="decisionQueue.length" class="kt-region">
+				<h2>{{ decisionQueue.length === 1 ? "1 need requires your decision" : `${decisionQueue.length} needs require your decision` }}</h2>
 				<div
-					v-if="canCreate && !submission.open && needs.length"
-					class="kt-notice is-warning"
-					style="margin-top: var(--kt-space-4)"
-					data-testid="nds-submission-closed-notice"
+					v-for="row in decisionQueue"
+					:key="row.name"
+					class="kt-task-row"
+					data-testid="nds-need-row"
+					:data-reference="row.reference"
+					:data-status="row.status"
 				>
-					<div class="kt-notice-body">
-						New submissions are closed. You can view existing needs and save changes to
-						existing drafts.
+					<div style="flex: 1; min-width: 0">
+						<div style="font-family: var(--kt-font-heading); font-weight: 600; font-size: 20px">{{ row.title || "Untitled need" }}</div>
+						<div class="text-muted" style="font-size: 12px; margin-top: 2px">{{ row.reference }}</div>
+						<div style="display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 13px; color: var(--kt-color-neutral-800)">
+							<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--kt-color-accent-700)"><path d="M16 3h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2" /><rect width="8" height="4" x="8" y="2" rx="1" ry="1" /><path d="m9 14 2 2 4-4" /></svg>
+							<span>{{ decisionNarrative(row) }}</span>
+						</div>
+						<div style="display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; color: var(--kt-color-neutral-800)">
+							<span>{{ row.quantity_label }}</span>
+							<span class="text-muted">·</span>
+							<span>Required by {{ row.required_by_label }}</span>
+						</div>
 					</div>
+					<button
+						type="button"
+						class="kt-btn kt-btn-primary"
+						data-testid="nds-row-action"
+						:data-action="row.actions[0].code"
+						@click="$emit('action', row, row.actions[0])"
+					>
+						{{ decisionActionLabel(row) }}
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+					</button>
 				</div>
+			</div>
 
-				<!-- §11.2 filters — one row: search, status, financial year,
-				     department, Clear filters (DES-01's own single-row layout;
-				     splitting this across two rows made the department select's
-				     long label read as if the row had wrapped). -->
-				<div
-					style="
-						display: flex;
-						gap: var(--kt-space-3);
-						margin: var(--kt-space-4) 0;
-						align-items: center;
-					"
-				>
-					<span class="nds-search-field"
-						><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg
-						><input
+			<div class="kt-region is-secondary">
+				<h2>{{ decisionQueue.length ? "All departmental needs" : "All my needs" }}</h2>
+
+				<!-- §11.2 filters — search, status, financial year, department,
+				     Clear filters, local to the register they filter. DES-02's
+				     fixed-scope fixture shows only Search + Status; FY/Department
+				     stay Author-only, matching the same decisionQueue.length
+				     signal already used for the register's own column set below. -->
+				<div class="kt-filter-bar">
+					<div class="field is-wide">
+						<label for="nds-workspace-search">Search title or reference</label>
+						<span class="nds-search-field"
+							><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg
+							><input
+								id="nds-workspace-search"
+								class="kt-input"
+								placeholder="Search title or reference"
+								data-testid="nds-search"
+								:value="search"
+								@input="$emit('update:search', $event.target.value)"
+						/></span>
+					</div>
+					<div class="field">
+						<label for="nds-workspace-status">Status</label>
+						<select
+							id="nds-workspace-status"
 							class="kt-input"
-							placeholder="Search title or reference"
-							data-testid="nds-search"
-							:value="search"
-							@input="$emit('update:search', $event.target.value)"
-					/></span>
-					<select
-						class="kt-input"
-						style="width: 160px"
-						data-testid="nds-status-filter"
-						:value="status"
-						@change="$emit('update:status', $event.target.value)"
-					>
-						<option value="">All statuses</option>
-						<option v-for="option in STATUSES" :key="option" :value="option">{{ option }}</option>
-					</select>
-					<select
-						class="kt-input"
-						style="width: 180px"
-						data-testid="nds-fy-filter"
-						:value="selectedFinancialYear || context.financial_year || ''"
-						@change="$emit('select-financial-year', $event.target.value)"
-					>
-						<option value="">All financial years</option>
-						<option v-for="year in financialYears" :key="year.id" :value="year.id">
-							{{ year.label }}
-						</option>
-					</select>
-					<select
-						class="kt-input"
-						style="width: 200px"
-						data-testid="nds-department-filter"
-						:value="context.organisation_unit || ''"
-						@change="$emit('select-context', $event.target.value)"
-					>
+							data-testid="nds-status-filter"
+							:value="status"
+							@change="$emit('update:status', $event.target.value)"
+						>
+							<option value="">All statuses</option>
+							<option v-for="option in STATUSES" :key="option" :value="option">{{ option }}</option>
+						</select>
+					</div>
+					<div v-if="!decisionQueue.length" class="field">
+						<label for="nds-workspace-fy">Financial year</label>
+						<select
+							id="nds-workspace-fy"
+							class="kt-input"
+							data-testid="nds-fy-filter"
+							:value="selectedFinancialYear || context.financial_year || ''"
+							@change="$emit('select-financial-year', $event.target.value)"
+						>
+							<option value="">All financial years</option>
+							<option v-for="year in financialYears" :key="year.id" :value="year.id">
+								{{ year.label }}
+							</option>
+						</select>
+					</div>
+					<div v-if="!decisionQueue.length" class="field">
+						<label for="nds-workspace-department">Department</label>
 						<!-- §12.1 — several departments "remain available through
 						     ordinary changeable filters; they do not block page
 						     entry," and clearing this filter is the visible reset
 						     back to every authorised department combined. -->
-						<option value="">All departments</option>
-						<option
-							v-for="row in contexts"
-							:key="row.organisation_unit"
-							:value="row.organisation_unit"
+						<select
+							id="nds-workspace-department"
+							class="kt-input"
+							data-testid="nds-department-filter"
+							:value="context.organisation_unit || ''"
+							@change="$emit('select-context', $event.target.value)"
 						>
-							{{ row.organisation_unit_label }}
-						</option>
-					</select>
-					<button
-						class="kt-btn kt-btn-secondary"
-						style="flex: none"
-						@click="$emit('clear-filters')"
-					>
+							<option value="">All departments</option>
+							<option
+								v-for="row in contexts"
+								:key="row.organisation_unit"
+								:value="row.organisation_unit"
+							>
+								{{ row.organisation_unit_label }}
+							</option>
+						</select>
+					</div>
+					<button type="button" class="kt-btn kt-btn-secondary" @click="$emit('clear-filters')">
 						Clear filters
 					</button>
 				</div>
 
-				<!-- NDS-DES-02 first content section — a decision queue only when
-				     one exists; never a separate menu entry or role switch. -->
-				<template v-if="decisionQueue.length">
-					<h6 class="kt-card-title nds-section-title">
-						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="m9 14 2 2 4-4" /></svg
-						><span>Needs requiring your decision</span>
-					</h6>
-					<NeedsTable
-						:needs="decisionQueue"
-						:columns="decisionColumns"
-						style="margin-bottom: var(--kt-space-2)"
-						@action="(row, action) => $emit('action', row, action)"
-					/>
-					<div class="text-muted" style="font-size: 13px; margin-bottom: var(--kt-space-8)">
-						{{ decisionQueue.length === 1 ? "1 need awaiting review" : `${decisionQueue.length} needs awaiting review` }}
-					</div>
-					<h6 class="kt-card-title nds-section-title">
-						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18M3 12h18M3 19h18" /></svg
-						><span>All departmental needs</span>
-					</h6>
-				</template>
-
 				<!-- NDS-DES-14 EMPTY-AUTHOR / EMPTY-READER / FILTERED-EMPTY -->
-				<div
-					v-if="!registerRows.length"
-					style="padding: 48px 24px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px"
-				>
+				<div v-if="!registerRows.length" class="kt-empty">
 					<div style="font-family: var(--kt-font-heading); font-size: 18px; font-weight: 600">
 						{{ emptyHeadline }}
 					</div>
-					<p style="margin: 0; font-size: 14px; color: var(--kt-color-neutral-700); max-width: 420px">
+					<p style="margin: 8px 0 0; font-size: 14px; color: var(--kt-color-neutral-700)">
 						{{ emptyBody }}
 					</p>
 				</div>
@@ -252,13 +290,14 @@
 					{{ registerCountLabel }}
 				</div>
 			</div>
-		</template>
+		</div>
 	</div>
 </template>
 
 <script setup>
 import { computed } from "vue";
 import NeedsTable from "./NeedsTable.vue";
+import StatusPill from "./StatusPill.vue";
 import { formatInstant } from "../data/format.js";
 
 const props = defineProps({
@@ -303,20 +342,49 @@ const lede = computed(() =>
 		: "Review submitted requirements and view the department's needs."
 );
 
+// §11.2/§11.3 — "My needs" for the Author's own list, "Departmental Needs"
+// once a reviewer's shared decision queue is in view.
+const pageTitle = computed(() => (canCreate.value ? "My needs" : "Departmental Needs"));
+
+// §11.2 — the Author's own in-progress work, elevated out of the register
+// into its own dominant task-row region. An "edit" action (Continue on a
+// Draft, Correct on a Returned correction) is exactly the signal the
+// workspace service already uses to mean "this row is incomplete and its
+// own author owns it" (services/workspace.py `_actions`) — reused here
+// rather than inventing a second notion of "in progress."
+const continueRows = computed(() =>
+	props.needs.filter((row) => (row.actions || [])[0]?.code === "edit")
+);
+
 // §11.3 — rows with an open decision the viewer may act on lead the page,
 // separate from the full department register below.
 const decisionQueue = computed(() =>
 	props.needs.filter((row) => ["review", "withdrawal"].includes((row.actions || [])[0]?.code))
 );
 
-const decisionColumns = [
-	{ key: "need", label: "Requirement" },
-	{ key: "author_label", label: "Submitted by" },
-	{ key: "quantity_label", label: "Quantity", align: "right" },
-	{ key: "required_by_label", label: "Required by" },
-	{ key: "review_kind", label: "Review" },
-	{ key: "action", label: "", align: "right" },
-];
+// "Initial requirement submitted by Grace Wanjiku" (NDS-DES-02) — built from
+// the same `review_kind` label the server already sends for the retired
+// decision-queue table's "Review" column, plus the requester's name.
+function decisionNarrative(row) {
+	const kind = row.actions?.[0]?.review_kind || "Requirement";
+	return `${kind} submitted by ${row.author_label || "the requester"}`;
+}
+
+function continueNarrative(row) {
+	return row.status === "Returned"
+		? "Correct this requirement before resubmission."
+		: "Continue describing this requirement before submission.";
+}
+
+// NDS-DES-02's dominant task-row action reads "Review requirement" — more
+// specific than the register's plain "Review"/"Review withdrawal" (already
+// exact from the server, kept as-is), since this button is the page's one
+// primary action rather than a row among many.
+function decisionActionLabel(row) {
+	const action = row.actions?.[0];
+	if (!action) return "";
+	return action.code === "review" ? "Review requirement" : action.label;
+}
 
 const registerColumns = computed(() =>
 	decisionQueue.value.length
@@ -326,18 +394,16 @@ const registerColumns = computed(() =>
 				// already leads the page.
 				{ key: "need", label: "Requirement" },
 				{ key: "author_label", label: "Requester" },
-				{ key: "quantity_label", label: "Quantity", align: "right" },
-				{ key: "required_by_label", label: "Required by" },
+				{ key: "quantity_required_by", label: "Quantity and required by" },
 				{ key: "status", label: "Status", status: true },
-				{ key: "action", label: "", align: "right" },
+				{ key: "action", label: "Action", align: "right" },
 			]
 		: [
 				// §11.2 — the author's own list.
 				{ key: "need", label: "Requirement" },
-				{ key: "quantity_label", label: "Quantity", align: "right" },
-				{ key: "required_by_label", label: "Required by" },
+				{ key: "quantity_required_by", label: "Quantity and required by" },
 				{ key: "status", label: "Status", status: true },
-				{ key: "action", label: "", align: "right" },
+				{ key: "action", label: "Action", align: "right" },
 			]
 );
 

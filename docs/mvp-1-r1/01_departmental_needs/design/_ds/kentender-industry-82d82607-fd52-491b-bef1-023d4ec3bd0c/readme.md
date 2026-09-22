@@ -50,12 +50,13 @@ Interactive states are themed, never browser defaults: give every interactive el
 | `.duotone` | The image wrapper — every content photograph goes through it | foundations/image.html |
 | `.kt-disclosure` (+ `-head`, `-title-row`, `-title`, `-chevron`, `-body`) | Expand/collapse panel, no corner marks | components/disclosure.html |
 | `.kt-timeline` (+ `-row`, `-dot-col`, `-dot`, `-line`, `-item`, `-item-title`, `-item-meta`) | A record's decision/approval chain — not a chart | components/timeline.html |
-| `.kt-kpi-row` / `.kt-kpi-card` (+ `-icon`, `-value`, `-dot`, `-sub`) | Summary metric card; top accent + dot appear only past a threshold | components/kpi.html |
+| `.kt-kpi-row` / `.kt-kpi-card` (+ `-icon`, `-value`, `-sub`) | Summary metric card; a top accent bar appears only past a threshold | components/kpi.html |
+| `.kt-steps` (+ `-node`, `-line`, `-label`) | Continuous multi-step progress/status track | components/steps.html |
 | `.kt-notice` (`is-info`/`is-warning`/`is-critical`/`is-live`) | Page-level advisory banner | components/notice.html |
 | `.kt-checkbox` | Square checkbox (certification-style confirmations) | components/forms.html |
 | `.kt-tabs` / `.kt-tab` | CSS-only tab row | components/forms.html |
 | `.kt-record` (+ `-main`, `-index`, `-body`, `-ref`, `-title`, `-meta`, `-value`, `-amount`, `-sub`, `-footer`, `-toggle`, `-detail`) | List-item record card with an expandable detail block | components/record.html |
-| `.kt-section` / `.kt-panel` / `.kt-meta-row` | Page-section title + optional white panel, for content with no ruled structure of its own | components/sections.html |
+| `.kt-section` / `.kt-panel` / `.kt-meta-row` | Page-section title + optional white panel, for content with no ruled structure of its own. `.kt-meta-row` distributes facts as equal grid cells across the panel width (reflows to fewer columns as it narrows); add `.is-tight` for the inline variant — two short facts that should sit together rather than span the panel | components/sections.html |
 | `.kt-app-shell` / `.kt-sidebar` / `.kt-nav-item` / `.kt-nav-group` / `.kt-topbar` / `.kt-breadcrumb` | Left-nav app shell: sidebar (brand, search, flat nav + one nested group, active-item tint + right accent bar, footer/user block) and a top bar (breadcrumb + icon actions + user block) | components/app-shell.html |
 
 States are built in: hovers and pressed states come from the accent ramp, keyboard focus is the 2px accent `:focus-visible` ring, `::selection` is an accent tint, and disabled controls use solid tokens (`--color-neutral-400` text on a `--color-surface-2` well) rather than opacity. Don't restyle them per page. The accent-to-ground pair is tuned to at least 3:1 — enough for icons, large text and interface chrome, not for body copy — so for paragraph-size text in the accent use a deep ramp step (`--color-accent-700` on this ground) rather than the accent itself.
@@ -76,6 +77,7 @@ States are built in: hovers and pressed states come from the accent ramp, keyboa
 - Do not reintroduce corner registration marks — the `.blueprint` frame is a plain hairline border. This reverses the earlier rule entirely, not just narrows it to `.card` and figures.
 - `disabled` and `checked` must carry an explicit value (`disabled="disabled"`, `checked="checked"`) in any templating context that strips valueless boolean HTML attributes — plain static HTML pages are unaffected.
 - Status/figure/KPI dots are removed entirely — state is carried by label text, fill color, and (for KPI cards) the top accent bar alone. Do not reintroduce a dot anywhere.
+- Labels are atomic: `.btn`, `.tag`, `.kt-status`, `.seg-opt` and `.kt-nav-item` never wrap internally (`white-space: nowrap`). If a label is too wide for its container, wrap the row (`flex-wrap: wrap` on the tag/button group), widen the column, or shorten the label — do not let the label fracture.
 - Do not use `--chart-*` colors for UI chrome (buttons, chips, nav) or `.kt-status` hues for chart series — each palette encodes exactly one thing.
 - Do not use thick icon strokes; the set is Lucide at 1.5.
 - Do not add decorative color beyond the steel accent. The accent's own deep step (`--color-accent-900`) may carry a full field where the deck's section dividers use it — steel as ground, type reversed to paper. (The landing's numbers sit on a drawn spec-sheet plate on the paper ground instead — its own grammar, not a field.)

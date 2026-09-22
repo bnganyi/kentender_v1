@@ -3,16 +3,16 @@
 | Control | Value |
 |---|---|
 | Document ID | KT-STD-001 |
-| Version | 1.5 |
+| Version | 1.7 |
 | Status | **Approved** |
-| Approved on | 14 September 2026 |
-| Approval record | Project Owner instruction in this review to mark KT-STD-001 v1.5 approved and use it going forward. |
-| Date | 11 September 2026 |
-| Supersedes | v1.4, approved 11 September 2026 |
+| Approved on | 21 September 2026 |
+| Approval record | Project Owner instruction on 21 September 2026: **Mark as approved, and let's move to Stage 2.** |
+| Date | 21 September 2026 |
+| Supersedes | v1.6, approved 15 September 2026; retained as historical evidence. |
 | Applies to | Every KenTender change unit, architecture decision record and module requirements document |
-| Change type | Adds §3A.6 Technical read — the one cross-cutting statement of what Administrator and System Manager see, inherited by every module and prevailing over any module clause that masks, forbids or scopes a technical reader. Found live 2026-09-11: six module documents cite AUTH-ADR-001 §8 with three different grants and masking rules with no technical exception, and a system administrator could not see complete information. |
+| Change type | Rewrites the shared design-input standard around task-led hierarchy, page archetypes, structured density, plain-language status and comprehension testing. Corrects rules that encouraged blocky, table-dominant screens. Preserves closed input, no invention, functional separation, technical read and all non-presentation controls. |
 
-**Controlling decision:** Rules that apply to every KenTender document are written once here. A change unit states its domain and cites this standard. Where a change unit repeats a rule from this standard verbatim, this standard prevails and the repetition is deleted at the next revision.
+**Controlling decision:** KenTender shall make dense public-procurement work understandable without simplifying away required information. Every ordinary screen shall lead with the actor's task, current position and lawful next action; working facts follow; audit, provenance and technical evidence remain available but subordinate. Rules that apply to every KenTender document are written once here. A change unit states its domain and cites this standard. Where a change unit repeats a rule from this standard verbatim, this standard prevails and the repetition is deleted at the next revision.
 
 ---
 
@@ -23,33 +23,37 @@ Before this standard existed, the same closed-input rules, page shell, verificat
 Precedence:
 
 1. A module document's **domain** rules always prevail for that module.
-2. This standard prevails for design-input mechanics, verification protocol, release evidence, page behaviour and shared fixtures.
+2. This standard prevails for design-input mechanics, presentation architecture, verification protocol, release evidence, page behaviour and shared fixtures.
 3. A change unit may **add** a rule in these areas. It may not silently contradict one. A deliberate departure is stated as an exception naming this document.
 
 ---
 
-## 2. Static design contract standard
+## 2. Static design and experience contract standard
 
-### 2.1 Prompt assembly
+### 2.1 Design objective and prompt assembly
 
-A Claude Design prompt consists of **section 2 of this standard plus the single design section of one change unit**. Nothing else is supplied. No requirements, service contract, business rule, acceptance criterion or functional interaction section is ever pasted into a design prompt.
+KenTender's visual objective is **simple, informative and decision-ready**. Simple means that the user does not have to reconstruct the process, interpret internal terminology or search for the next action. It does not mean hiding material evidence, reducing a complete review to a count or removing a lawful decision.
 
-Each change unit's design section states only what is specific to it: its artboards, its fixture data, and its own list of elements that must not appear.
+A Claude Design prompt consists of **section 2 of this standard plus the single design section of one change unit**. Nothing else is supplied. No service contract, lifecycle algorithm, permission expression, acceptance criterion or functional interaction section is pasted into a design prompt.
 
-### 2.2 Closed-input rules
+Each change unit's design section states only what is specific to it: the page archetype, actor task, information priority, artboards, visible content, fixture data, action presentation, state variants and its own prohibited elements. The module contract owns **what** must be shown; this standard owns the shared logic for **how it is understood**.
+
+### 2.2 Closed input and content fidelity
 
 - Produce desktop artboards at **1440 × 1024 px**. Dialogs are **520 px** wide over a dimmed parent artboard.
 - Reuse the approved KenTender visual system, spacing, type scale, tokens, cards, badges, tables, fields, buttons, tabs, empty states and dialogs.
 - The artboard starts below the Frappe Desk header. Do not draw Frappe navigation, the Desk header, breadcrumb, user menu, notifications, Help or global search.
 - Fixture context — actor, identifier, timestamp and breadcrumb — is data outside the artboard, supplied to confirm location only. It is not rendered.
-- Use only the visible labels, values, badges, controls, sections and states stated for that artboard.
+- Use only the visible facts, values, actions and states stated for that artboard. Shared structural components explicitly authorised by the chosen archetype in §2.6 may be used to present those facts; they do not authorise new data or actions.
 - Do not invent data. If a value or state is not stated, omit it. Do not substitute a placeholder, generated name, lorem ipsum or inferred content for a stated value.
 - Do not encode behaviour, validation, permissions, APIs, routing, transitions, concurrency or implementation instructions in the visual output.
-- Do not add summary cards, count cards, charts, percentages, trend arrows, illustrations, side panels, steppers, timelines, helper panels, action menus, metadata or table columns unless explicitly stated.
+- Do not invent dashboard metrics, charts, percentages, trend arrows, illustrations, steppers, timelines, side panels, metadata, actions or table columns. A stated workload count, decision result, issue summary or record summary may use the archetype's standard summary treatment; this is presentation of supplied facts, not permission to invent analytics.
 - Do not render requirement identifiers, fixture notes or implementation guidance in the artboard.
 - Generated identifiers may be displayed on saved records but never as editable fields.
 - Never represent a failure, a forbidden result or a missing configuration as an empty successful table or register.
-- **Every distinct fact gets its own labelled field, table column or table row.** Do not join an item name, a count, a location, a date, a value, or any other set of unrelated facts onto one line with `·`, a comma, or any other delimiter standing in for a heading a reader would otherwise be given. This does not forbid a genuine identifier lineage (`TND-MOH-2027-033 · REQ-MOH-2027-033-001 · Version 1`) or a status-count badge (`0 Blocking · 1 Warning`) — both name a single kind of thing read left to right. It forbids specifying an entire structured package as a bare count or a summary sentence and leaving the reader, or an implementer, to invent what's actually in it. **Correction.** This rule was first written three times, separately, in REQ-CHG-001, TPR-CHG-001 and TPUB-CHG-001, after the same defect — bare counts ("2 items", "11 rows") and dot-crammed summary lines standing in for real content — shipped to a rendered production screen and was found there before it was found here. Each document's own design section still names its own instance of the defect, as history; the rule itself now lives here, once, for every document that cites this standard to inherit.
+- **Every material fact must be distinguishable, but it does not require its own box, row or column.** Related facts may be grouped into one readable unit when the relationship is obvious—for example, `250 Each`, a title with its muted reference beneath, or a short sentence naming actor and time. Give a fact its own label when omission of the label could change meaning, when values must be compared, when the fact is editable, or when it affects a decision. Never compress a complete package into a bare count or delimiter-heavy sentence that forces the reader to infer its contents.
+- A count or short summary may orient the reader, but it never substitutes for required review content. Complete governed detail remains available in the same page or one clearly named disclosure.
+- Do not repeat the same context in a page header, context panel, filter and table unless each occurrence has a distinct task purpose.
 
 ### 2.3 Product-wide prohibitions
 
@@ -70,14 +74,163 @@ Inside every full-page artboard:
 - 32 px top and bottom page padding;
 - page header followed by 24 px vertical spacing;
 - where a tab row is present, the tab row followed by 24 px vertical spacing;
-- 16 px gaps between cards or table sections; and
+- 16 px minimum gaps between distinct work regions; and
 - no custom sidebar.
+
+The content column is a boundary, not a command to fill the page with bordered rectangles. Whitespace, typography and alignment establish hierarchy before borders or shaded containers.
 
 ### 2.5 Division of supply
 
 Frappe supplies the Desk header, breadcrumb, session controls, route lifecycle, dialogs, toasts, the tree control and accessibility primitives. KenTender supplies the established `--kt-*` tokens and shared Vue components. Claude Design supplies only the page content defined in the change unit's design section.
 
 Design export runtime files are design evidence under `docs/`. They are never imported into production.
+
+---
+
+### 2.6 Task-led screen-composition standard
+
+A static design contract must define comprehension, hierarchy and composition—not merely enumerate content or prescribe a succession of tables. Exactness remains mandatory, but exactness is not the same as visual equality.
+
+#### 2.6.1 Four questions every operational screen answers
+
+The first view of an ordinary screen shall make these answers discoverable in this order:
+
+1. **Where am I, and what am I responsible for here?**
+2. **What requires attention, or what is the current result?**
+3. **What information do I need to understand or complete the work?**
+4. **What can I do next, and what will that action mean?**
+
+The first view need not contain every audit fact. It must contain every fact that changes the actor's understanding, decision or permitted next step.
+
+#### 2.6.2 Information priority
+
+Every screen contract assigns visible content to one of three levels:
+
+| Level | Purpose | Normal treatment |
+|---|---|---|
+| **1 — Attention and action** | Current result, assigned work, material blocker, required decision and primary action | First and visually dominant; never hidden in a disclosure or diluted by register controls |
+| **2 — Working or decision information** | Facts the actor edits, compares or must understand to act correctly | Open in the main flow; grouped by the user's task rather than storage model |
+| **3 — Supporting evidence** | History, provenance, exact identifiers, calculation detail, audit evidence and technical context | Quieter and normally disclosed after the working content; still complete and accessible |
+
+Critical warnings, proposed-versus-current differences, decision consequences and facts required for lawful review are Level 1 or 2. They never become Level 3 merely because they are technically derived or historically sourced.
+
+One page may contain several sections, but it has one dominant job. A secondary register, history or evidence region must not visually compete with the work that brought the actor to the page.
+
+#### 2.6.3 Page archetypes
+
+Each full-page artboard names one primary archetype. A module may combine a primary archetype with one subordinate region, but it shall not combine two peer primary experiences on the same page.
+
+| Archetype | Dominant user job | Required composition |
+|---|---|---|
+| **Work workspace** | Find and start the work that needs this actor | Role/scope orientation; dominant actionable work; one obvious action per item; quieter existing/recent records below or through a named view. Omit empty task regions. |
+| **Register** | Find, filter and inspect many records | Compact search/filter controls local to the register; comparable rows; result count/paging where needed; no unrelated decision area competing above it. |
+| **Form or editor** | Create or correct a record | Plain purpose; logically grouped editable sections; source/read-only context visually distinct; validation beside affected work; persistent but non-obscuring action area. |
+| **Review or decision** | Understand one immutable submission and make one governed decision | Result or decision required first; complete material facts and differences; consequence beside the decision; primary and corrective actions clearly differentiated; audit evidence subordinate. |
+| **Record detail** | Understand current truth, related process position and history | Current status narrative and key facts first; pending/proposed work explicitly separated from current truth; related process information next; history/provenance last. |
+| **Setup** | Maintain controlled configuration | Effective setting and consequence; compact editable group; dependent-use warning where material; audit history subordinate; no business approval styling. |
+| **Focused dialog or panel** | Complete one bounded choice or confirmation | Exact object and consequence; minimum fields needed; Cancel and one principal completion action; parent context remains recognisable. |
+
+A workspace is not a register with a heading placed above it. A review page is not a read-only form with buttons appended. A record detail page is not an audit table with the current state mixed into history.
+
+#### 2.6.4 Component selection and structured density
+
+- Use a **table** when users must compare repeated records across common attributes, scan a substantial result set, sort, filter or page. A one- or two-item action queue ordinarily uses compact task rows or another approved action-led treatment, not a full register grid.
+- Use a **task row** when one item has one clear next action. Lead with the business name and plain-language work state; keep reference, actor and timestamp subordinate.
+- Use a **summary strip or result block** only for supplied facts that orient the current task: workload requiring action, current decision result, material totals or blockers. Equal-sized decorative KPI cards are prohibited.
+- Use **labelled fact groups** for a small set of contextual values. Size the group to its content; do not stretch two facts into an empty full-width box.
+- Use **disclosures** for Level 3 evidence and long governed text. Use no more than one disclosure depth in ordinary work. A disclosure summary must say what is inside; a bare count is insufficient where the detail matters.
+- Use **tabs** only for peer views of the same context. Do not use tabs or steppers to conceal a linear review, divide one decision into artificial stages or make the actor rediscover required facts.
+- Put **filters with the records they filter**. Filters for a secondary register do not sit above or visually govern a primary action queue unless the contract explicitly states that they affect both.
+- Avoid repeating a field merely to fill a standard component. Omit blank, default, single-value and not-applicable facts unless their absence or value changes interpretation.
+- Preserve professional density. Large padding, oversized cards and sparse consumer-dashboard treatments are as defective as cramped grids. The goal is compact, legible grouping with a clear reading order.
+
+#### 2.6.5 Action hierarchy
+
+- One task region has one visually dominant primary action. It shall not be rendered as a weak text link when it is the principal purpose of the screen or row.
+- Corrective, destructive and navigational actions remain distinct from the positive primary action. Destructive actions do not borrow the primary colour.
+- Put the consequence of a material decision immediately beside or above its action. Do not require a second generic confirmation when the consequence is already clear, except where the owning contract explicitly requires one.
+- A disabled action includes the concrete reason and recovery next to it. If no useful recovery exists in that state, omit the action rather than displaying unexplained disabled controls.
+- Do not make filters, disclosures, export or history controls visually compete with a current business decision.
+
+#### 2.6.6 Status and process explanation
+
+Formal status remains visible where useful, but ordinary users shall not have to infer its operational meaning. For every material non-terminal state, the screen contract states, using approved facts:
+
+- what has happened;
+- who or which responsibility acts next;
+- what the current actor can do; and
+- any consequence or blocker that changes the next step.
+
+This explanation may be a short status narrative rather than four labelled rows. It must not invent an SLA, priority, assignee or due date.
+
+Current truth, a proposed change, downstream usage and history are visually distinct. A pending update never looks like the accepted record; a downstream planning state never looks like the source record's own approval state.
+
+#### 2.6.7 Visual hierarchy and restraint
+
+- Establish hierarchy in this order: content order, heading scale/weight, whitespace/alignment, restrained surface contrast, then borders.
+- Use borders and shaded containers to express a real grouping or state, not around every section. Avoid nested bordered rectangles.
+- Reserve the product accent for active navigation, selected controls, key focus and primary actions. Repeated full-width accent rules are not section hierarchy.
+- Do not use all-uppercase or letter-spaced headings for ordinary section titles or every table header. Typography must remain readable at dense professional scales.
+- Status colour is supplementary. Every state has explicit text and meets contrast requirements.
+- A selected, hovered, focused and active row must have distinct meaning. Do not leave a row apparently selected when no selection model or result exists.
+- The secondary region of a page is visibly quieter through scale, spacing, surface and action treatment—not merely because it appears lower on the page.
+
+#### 2.6.8 Mandatory module screen-brief format
+
+Every new or revised module design contract uses this structure:
+
+1. **Screen identity, archetype and purpose.** Stable artboard ID, screen name, named archetype and the actor's immediate task in one sentence.
+2. **Fixture context — outside the artboard.** Actor, assignment/scope, date/time, exact record/revision and named scenario. Resolve the pictured authority and state; do not ask the designer to calculate them.
+3. **Primary question and action.** State what the actor must understand or complete and the one action that should dominate, or explicitly state that the page is read-only.
+4. **Information priority.** List Level 1, Level 2 and Level 3 content. Do not leave the designer to decide which facts matter.
+5. **Page header and orientation.** Exact title, description, status/reference treatment, visible scope and any header action. Do not duplicate context already clear from the shell or task.
+6. **Composition, top to bottom.** Name each region, its job, component type and placement. For a horizontal arrangement, give its left-to-right order. Explain why a table is required where one is used for a small set.
+7. **Controls and complete content.** Supply exact labels, values, helper text, field/control types, comparison columns and fixture rows. State how secondary evidence is subordinated. A field inventory alone is insufficient.
+8. **Actions and visible state.** For every pictured action, specify label, prominence, location and enabled/disabled/absent treatment. Do not use unresolved phrases such as “when permitted”, “where relevant” or “may appear”.
+9. **Supporting detail.** Name each disclosure/secondary section, its initial state and complete supplied content. Critical facts remain outside it.
+10. **Separate variants.** Give empty, filtered-empty, closed, error, blocked, pending and alternate-actor compositions stable IDs and definite action sets. A variant may reuse a complete base and state exact changes.
+11. **Comprehension acceptance.** State what must be obvious in the first view, what must be findable without leaving the page and what must be visually subordinate.
+
+Use short named subsections, bullets and tables where they genuinely clarify exact fields, rows or comparisons. A table is not a substitute for composition. This format authorises no new business field, metric, role, action or workflow step.
+
+### 2.7 Static specification and functional interaction mapping
+
+The static contract states what the pictured screen contains and how it is arranged. The functional section supplies a matching action map: artboard/action, destination or visible result, applicable existing command/read contract, and outcome/error behavior. These are two coordinated parts of the same module document. Do not put server permissions, API calls, transaction order, concurrency or lifecycle algorithms into the design prompt.
+
+Every visible interactive control must have an unambiguous functional mapping, including navigation, filters, disclosures, retry, Cancel, Save and decisions. The map must distinguish navigation from mutation and identify the exact record/revision being opened. A designer must never invent an action's destination, and an implementer must never infer its behavior from a button's appearance. Existing shared behavior may be cited; domain-specific effects must be explicit.
+
+A closed-input design prompt remains §2 of this standard plus the module's single static design section. Interaction maps, implementation contracts and acceptance tests are excluded from that prompt. A design-only consumer does not need the entire requirements document to find the exact visible content.
+
+### 2.8 Design-contract review gate
+
+Before sending a contract to the design system, confirm:
+
+- Every screen names one primary archetype, one dominant actor task and one primary question or read-only purpose.
+- Level 1, Level 2 and Level 3 information are explicit; the first view is not a flat inventory of equally weighted facts.
+- Every screen has an explicit top-to-bottom composition and action placement.
+- Each named fixture resolves its actor, record/revision and pictured state.
+- Every material fact is unambiguous; labels, grouping and narrative follow §2.2 instead of forcing each fact into a separate box.
+- Every table has a comparison or register purpose, complete stated columns and rows, and does not serve as the default component for a small action queue.
+- Every action has one definite visible treatment in that variant and a functional mapping outside the design input.
+- Critical consequences and required review facts are visible without compulsory navigation or disclosures.
+- Filters are local to the records they filter and do not visually dominate unrelated work.
+- Current truth, proposed work, downstream position and history are distinguishable.
+- Alternate states are separate, named variants; no optional-layout decision is delegated to the designer.
+- Fixture evidence does not reuse one exact event for conflicting outcomes on the same source revision.
+- The contract uses the current approved domain and usability decisions; an older layout example does not restore retired fields, roles or workflows.
+- The composition avoids repeated context, unnecessary containers, decorative counts, repeated accent rules and equal visual weight across primary and secondary regions.
+
+Before approval, perform a first-view comprehension check with the rendered artboard. Without reading the specification, a representative actor must be able to identify:
+
+1. the purpose of the screen;
+2. the current state or work requiring attention;
+3. the primary next action;
+4. the information that materially supports that action; and
+5. what is current, proposed or historical.
+
+For a decision screen, the actor must also identify what is being decided and the consequence of the positive decision. For a workspace, the actor must distinguish actionable work from the general register. For a form, the actor must see the current section, validation problem and completion action without reconstructing the storage model.
+
+Failure requires correcting the contract before design generation. A complete field inventory, dense requirements table or approved document status is not proof of a usable or sufficiently specified composition. Actual artboard comparison and representative-user validation remain separate evidence.
 
 ---
 
@@ -93,6 +246,8 @@ Applies to every KenTender page unless a change unit states an exception.
 - All dates display in the site timezone. Service and audit instants remain UTC.
 - Route changes unmount the Vue app and cancel stale requests. Returning to a cached Desk page re-resolves context and authorisation.
 - Do not wait for `networkidle` on a Frappe Desk page. Tests wait for DOM content plus the exact page-ready selector.
+- At narrower supported widths, preserve information meaning rather than merely shrinking the desktop composition. Tables may scroll horizontally or become labelled rows; they never drop a material comparison, result or action. Decision actions remain reachable without covering content.
+- Reading order in the DOM follows the visual information priority in §2.6.2. Keyboard and screen-reader users encounter the current result, working information and supporting evidence in the same logical order.
 
 ---
 
@@ -206,7 +361,9 @@ Every change unit's release requires:
 - a clean module suite and clean contract tests for every document the change unit cites;
 - a successful production-mode asset build;
 - a scripted browser smoke with zero page console errors and zero failed own requests;
-- visual comparison for all approved artboards at 1440 × 1024; and
+- visual comparison for all approved artboards at 1440 × 1024 and responsive verification at the module's supported narrow desktop width;
+- first-view comprehension evidence for each changed archetype: the representative actor identifies the screen purpose, current work/result, primary action and current/proposed/historical distinction without reading the specification;
+- representative-user completion of each materially changed decision or preparation task, including one dense-content and one blocked/error variant; and
 - a schema and repository scan proving every removed DocType, field, role, capability string and route named in the change unit's disposition register is absent.
 
 ---
@@ -227,7 +384,7 @@ Every KenTender change unit and architecture decision record uses this skeleton.
 | 7 | Service and command contracts | Inputs, outputs and required controls. |
 | 8 | Error contract | Code and user-visible message. Messages never name internal tables or algorithms. |
 | 9 | UI architecture, menu and routes | Canonical routes and their purpose. |
-| 10 | Static design contract | Closed visual input. Cites KT-STD-001 §2 and adds only what is specific. |
+| 10 | Static design contract | Closed visual input. Cites KT-STD-001 §2; names the archetype, actor task, information priority, exact content/actions and state variants; adds only what is module-specific. |
 | 11 | Functional interaction requirements | Runtime behaviour. Headed **excluded from design prompts**. |
 | 12 | Audit and historical integrity | What every material command records and what is immutable. |
 | 13 | Seed contract | Deterministic fixtures, citing KT-STD-001 §8 for shared actors. |
@@ -367,8 +524,22 @@ These apply to every document and every layer, not only to artboards. Section 2.
 
 ## 12. Approval effect
 
-KT-STD-001 v1.5 was approved by the Project Owner on 14 September 2026. It supersedes v1.4 and all earlier versions in full and becomes the single source for KenTender design-input mechanics, page behaviour, implementation standards, verification protocol, release evidence, document structure, shared fixtures, universal prohibitions and error-contract conventions. v1.4 was approved on 11 September 2026; this correction supersedes that approval because v1.4 stated the technical-read right in AUTH-ADR-001 §8 alone, with no single cross-cutting statement of its page-state consequences, and six module documents had already drifted into three different grants and masking rules with no technical exception. It further authorises new §3A.6 Technical read: Administrator and System Manager are never Forbidden or masked as Not found; every register, detail, task and editor route resolves for them read-only with commands absent; the sitewide Technical record search at `/app/technical-search` (AUTH-ADR-001 §8, AUTH-DES-09) is the one sanctioned direct-search mechanism; module documents cite this section rather than restate it; and seeds never grant Administrator or System Manager a business role.
+KT-STD-001 v1.7 is approved as the Stage 1 correction to KenTender's presentation architecture. It supersedes v1.6 and authorises Stage 2 rewrites of module static-design sections against §2.6; it does not approve any generated artboard or deployed interface by itself.
 
-Where a citing document conflicts with this standard, the citing document prevails only where it states the departure explicitly and gives a reason. A silent divergence is a defect, not a decision. This standard governs form and delivery; it never overrides a domain decision in an architecture decision record or a module requirements document.
+Approval makes the following corrections binding:
 
-v1.4 adds §2.2's anti-cramming rule. v1.3 adds Brian Wafula to §8.3 and corrects "Head of Procurement" to "Head of Procurement Function." v1.2 adds section 3A. v1.1 added sections 10 and 11 to v1.0, and completes the shared fixture register in §8.3 and §8.4A with the actors and instants required by STR-CHG-001, BUD-CHG-001, PLN-CHG-001 and DSP-CHG-001. Nothing else changes. Existing citations of KT-STD-001 v1.0 through v1.4 remain valid.
+- simplicity means reduced interpretation effort, not reduced governed information;
+- each screen uses a named task-led archetype and explicit information priority;
+- related facts may be grouped when meaning remains clear, replacing the v1.6 assumption that each distinct fact needs a separate visual row, field or column;
+- tables are used for comparison and registers, not as the default treatment for every queue or summary;
+- workspaces, reviews, forms, details and setup surfaces have distinct compositions;
+- action hierarchy, plain-language process position and current/proposed/history separation are mandatory; and
+- rendered comprehension and representative-user task evidence are required in addition to content-completeness checks.
+
+The complete technical-read requirement in §3A.6, closed-input/no-invention rules, functional separation, page-state behaviour, implementation controls, fixtures, test discipline and domain precedence remain unchanged except where this revision explicitly strengthens presentation or verification.
+
+Stage 2 shall revise the static-design sections of Departmental Needs, Procurement Planning and Procurement Requisitions first. It shall preserve their approved fields, ownership, lifecycle, commands, permissions, integrations, audit and acceptance rules. Existing module artboards and implementations do not become conformant merely because this standard is approved; each owning module requires its own explicit presentation rewrite and verification.
+
+A module's domain decisions remain its own authority. Any deliberate shared-standard departure must be explicitly named with its reason. This approval does not claim that module contracts have already been rewritten, artboards rendered, representative-user validation completed or software deployed.
+
+Version history: v1.6, approved 15 September 2026, added explicit composition, deterministic variants and the design-contract review gate. v1.5, approved 14 September 2026, introduced §3A.6 technical read. v1.4 introduced §2.2's separate-labelled-fact rule; v1.7 corrects its over-literal visual effect while retaining content fidelity. v1.3 added Brian Wafula and corrected Head of Procurement Function. v1.2 introduced §3A. v1.1 added universal prohibitions, error conventions and shared actors/instants. Those provisions are retained.

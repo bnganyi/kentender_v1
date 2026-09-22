@@ -3,42 +3,28 @@
      itself failing, `dependency.unavailable`). The dependency is always the
      fresh server result, never a cached button state. -->
 <template>
-	<div class="kt-panel-lg" style="max-width: 880px">
-		<h3 style="margin: 0; display: flex; align-items: center; gap: 10px">
-			<span class="kt-icon-tile"
-				><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1" /><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" /><path d="M10 12h4" /></svg
-			></span>Review withdrawal request
-		</h3>
-		<div style="font-size: 16px; font-weight: 600; margin: var(--kt-space-3) 0 2px">{{ revision.title }}</div>
-		<div class="kt-label" style="margin-bottom: var(--kt-space-3)">
-			Need {{ need.need_reference }} · Withdrawal request {{ request.name }} · Accepted revision {{ revision.revision_number }}
+	<div class="kt-page">
+		<div>
+			<h1 class="kt-page-title">Review withdrawal request</h1>
+			<div style="font-family: var(--kt-font-heading); font-weight: 600; font-size: 22px; margin-top: 10px">{{ revision.title }}</div>
+			<div style="display: flex; align-items: center; gap: 12px; margin-top: 6px">
+				<span class="text-muted" style="font-size: 13px">{{ need.need_reference }} · Accepted revision {{ revision.revision_number }}</span>
+				<span class="kt-status" :class="dependency.included ? 'is-attention' : 'is-pending'">
+					{{ dependency.included ? "Waiting for a Planning change" : "Awaiting review" }}
+				</span>
+			</div>
+			<div class="text-muted" style="font-size: 12px; margin-top: 8px">Withdrawal request {{ request.name }}</div>
 		</div>
-		<span class="kt-status" :class="dependency.included ? 'is-attention' : 'is-pending'">
-			{{ dependency.included ? "Waiting for a Planning change" : "Awaiting review" }}
-		</span>
 
-		<div v-if="errorSummary" data-testid="nds-error-summary" class="kt-notice is-critical" style="margin-top: var(--kt-space-4)">
+		<div v-if="errorSummary" data-testid="nds-error-summary" class="kt-notice is-critical" style="max-width: 900px">
 			<div class="kt-notice-body">{{ errorSummary }}</div>
 		</div>
 
-		<h6 class="kt-card-title nds-section-title" style="margin-top: var(--kt-space-6)">
-			<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1" /><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" /><path d="M10 12h4" /></svg
-			><span>Withdrawal request</span>
-		</h6>
-		<div style="display: flex; gap: var(--kt-space-6); font-size: 13px; margin: var(--kt-space-3) 0 var(--kt-space-3)">
-			<div><span class="kt-label" style="display: block">Requested by</span>{{ requesterLabel }}</div>
-			<div><span class="kt-label" style="display: block">Requested at</span><span data-volatile="true">{{ formatInstant(requestedAt) }}</span></div>
-		</div>
-		<div style="font-size: 13px">
-			<span class="kt-label" style="display: block">Reason for withdrawal</span>{{ request.reason }}
-		</div>
-
-		<!-- §11.13 second section — Planning status; blocked (STILL-ACTIVE),
+		<!-- §11.13 — Planning status leads the decision: blocked (STILL-ACTIVE),
 		     CLEAR (no Active inclusion) or NDS-DES-12-UNAVAILABLE (the check
-		     itself failed — a distinguishable provider-failure profile,
-		     separate from CLEAR; closes FOLLOW_UPS FU-27's withdrawal-screen
-		     gap). -->
-		<div v-if="dependency.unavailable" class="kt-notice is-critical" style="margin: var(--kt-space-4) 0">
+		     itself failed — a distinguishable provider-failure profile, separate
+		     from CLEAR; closes FOLLOW_UPS FU-27's withdrawal-screen gap). -->
+		<div v-if="dependency.unavailable" class="kt-notice is-critical" style="max-width: 900px">
 			<div class="kt-notice-body">
 				Planning information could not be checked. Withdrawal cannot be approved until
 				the check succeeds.
@@ -56,57 +42,77 @@
 				</div>
 			</div>
 		</div>
-		<div v-else-if="dependency.included" class="kt-notice is-warning" style="margin: var(--kt-space-4) 0">
+		<div v-else-if="dependency.included" class="kt-notice is-critical" style="max-width: 900px">
 			<div class="kt-notice-body">
-				<strong>Withdrawal cannot be approved yet.</strong> This requirement is still
-				included in the current annual plan. Procurement must review the necessary plan
-				change before withdrawal can proceed.
-				<div v-if="dependency.active_plan_item" style="font-size: 12px; margin-top: var(--kt-space-3)">
-					Item: {{ dependency.active_plan_item }}
+				<div style="font-weight: 600; color: var(--kt-color-text)">Withdrawal cannot be approved yet.</div>
+				<p style="margin: 6px 0 0">
+					This requirement is still included in the current annual plan. Procurement must
+					review the necessary plan change before withdrawal can proceed.
+				</p>
+			</div>
+		</div>
+		<div v-else class="kt-notice is-info" style="max-width: 900px">
+			<div class="kt-notice-body">This requirement is not included in the current annual plan.</div>
+		</div>
+
+		<div>
+			<h2>Why withdrawal was requested</h2>
+			<div style="max-width: 900px">
+				<p style="margin: 0; font-size: 15px; line-height: 1.55">{{ request.reason }}</p>
+				<p class="text-muted" style="margin: 12px 0 0; font-size: 12px">
+					Requested by {{ requesterLabel }} · <span data-volatile="true">{{ formatInstant(requestedAt) }}</span>
+				</p>
+			</div>
+		</div>
+
+		<div v-if="dependency.included || dependency.active_plan_item" class="kt-region is-secondary">
+			<h2>Planning dependency</h2>
+			<div class="kt-group" style="max-width: 900px">
+				<div class="kt-meta-row">
+					<div><span class="kt-label">Responsible</span><span class="kt-meta-value" style="font-size: 15px">Procurement Planner</span></div>
+					<div v-if="dependency.active_plan"><span class="kt-label">Plan</span><span class="kt-meta-value" style="font-size: 15px">{{ dependency.active_plan }}</span></div>
+					<div v-if="dependency.active_plan_item"><span class="kt-label">Item</span><span class="kt-meta-value" style="font-size: 15px">{{ dependency.active_plan_item }}</span></div>
 				</div>
 				<button
 					v-if="dependency.active_plan_item"
 					type="button"
 					class="kt-action-link"
 					data-testid="nds-view-plan-item"
-					style="font-size: 12px; margin-top: 6px"
+					style="margin-top: 12px"
 					@click="$emit('view-plan-item')"
 				>
 					View annual plan item
 				</button>
 			</div>
 		</div>
-		<div v-else class="kt-notice is-info" style="margin: var(--kt-space-4) 0">
-			<div class="kt-notice-body">This requirement is not included in the current annual plan.</div>
-		</div>
 
-		<div class="kt-panel" style="margin-bottom: var(--kt-space-4)">
-			<div class="kt-meta-row">
-				<div><span class="kt-label">Department</span><span class="kt-meta-value" style="font-size: 14px">{{ scope.organisation_unit || "" }}</span></div>
-				<div><span class="kt-label">Financial year</span><span class="kt-meta-value" style="font-size: 14px">{{ scope.financial_year || "" }}</span></div>
+		<div>
+			<h2>Accepted requirement</h2>
+			<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 13px; color: var(--kt-color-neutral-700)">
+				<span>{{ scope.organisation_unit || "" }}</span>
+				<span>·</span>
+				<span>{{ scope.financial_year || "" }}</span>
+			</div>
+			<div style="max-width: 900px">
+				<RequirementCard :revision="revision" />
 			</div>
 		</div>
 
-		<RequirementCard :revision="revision" />
-
-		<p v-if="makerCheckerBlocked" class="text-muted" style="font-size: 14.5px; margin: var(--kt-space-4) 0 0">
+		<p v-if="makerCheckerBlocked" class="text-muted" style="font-size: 14.5px; max-width: 900px">
 			You requested this withdrawal, so it must be decided by another Head of User
 			Department.
 		</p>
 
-		<div style="display: flex; justify-content: flex-end; gap: var(--kt-space-2); padding-top: var(--kt-space-4); border-top: 1px solid var(--kt-color-divider)">
-			<button
-				v-if="canDecline"
-				class="kt-btn kt-btn-secondary"
-				:disabled="pending"
-				data-testid="nds-withdrawal-decline"
-				@click="$emit('decline')"
-			>
-				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg
-				>Decline withdrawal
-			</button>
+		<div style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 20px; border-top: 1px solid var(--kt-color-divider); max-width: 900px">
 			<!-- §11.13 — blocked (still-Active) or UNAVAILABLE never offer
-			     Approve; Close replaces it as the only other footer action. -->
+			     Approve; Close replaces it as the only other footer action.
+			     Decline sits between Close and Approve so the same single
+			     button naturally reproduces both artboard orders: [Close,
+			     Decline] when blocked (Approve absent) and [Decline, Approve]
+			     when clear (Close absent) — NDS-DES-12 puts the blocked state's
+			     one real decision rightmost, the reverse of NDS-DES-12-CLEAR's
+			     Decline-then-Approve order, where Approve is rightmost as the
+			     primary action. -->
 			<button
 				v-if="dependency.included || dependency.unavailable"
 				class="kt-btn kt-btn-secondary"
@@ -117,7 +123,17 @@
 				Close
 			</button>
 			<button
-				v-else-if="canApprove"
+				v-if="canDecline"
+				class="kt-btn kt-btn-secondary"
+				:disabled="pending"
+				data-testid="nds-withdrawal-decline"
+				@click="$emit('decline')"
+			>
+				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg
+				>Decline withdrawal
+			</button>
+			<button
+				v-if="!(dependency.included || dependency.unavailable) && canApprove"
 				class="kt-btn kt-btn-primary"
 				:disabled="pending"
 				data-testid="nds-withdrawal-approve"

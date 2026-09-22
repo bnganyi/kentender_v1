@@ -3,21 +3,23 @@
 | Control | Value |
 |---|---|
 | Document ID | NDS-CHG-001 |
-| Version | 1.12 |
-| Change type | Complete successor incorporating the ten approved usability changes: readable six-field form, same-form department choice, safe single-action submission, explicit update decisions, structured Planning status and withdrawal; full 38-row re-implementation table in §18.2 |
-| Date | 13 September 2026 |
-| Status | **Approved by the Project Owner** |
-| Approved on | 13 September 2026; full v1.12 successor and incorporated NDS-UX-001–010 usability decisions |
-| Supersedes | v1.11 and all earlier Departmental Needs implementation specifications in full |
+| Version | 1.14 |
+| Change type | Stage 2 presentation rewrite under KT-STD-001 v1.7. Replaces table-led and read-only-form compositions with task-led workspace, editor, review and detail archetypes. Retains every approved business field, rule, lifecycle, permission, command, integration and corrected fixture. |
+| Date | 15 September 2026 |
+| Editorial correction | 15 September 2026: separate the accepted-exclusion fixture from the canonical Proceeding acceptance event; see NDS12-CHG-011. No business rule or approval lifecycle change. |
+| Status | **Approved** |
+| Approved on | 21 September 2026 |
+| Approval basis | Project Owner instruction on 21 September 2026: **This is substantially better. Mark as approved and move to Planning.** Functional/domain baseline remains approved NDS v1.13; presentation basis is approved KT-STD-001 v1.7. |
+| Supersedes | v1.13 and earlier Departmental Needs implementation specifications; predecessors retained as historical evidence. |
 | Module | Departmental Needs |
-| Standards | Governed by KT-STD-001 v1.4. Sections not restated here are inherited from it. |
+| Standards | Governed by approved KT-STD-001 v1.7, including task-led composition, page archetypes, information priority, comprehension gates and §3A.6 technical read; AUTH v1.7 remains the inspected owner baseline subject to the named shared-owner follow-up. |
 | Implementation posture | Clean correction in place; no compatibility layer |
 
 **Controlling decision:** Departmental Needs is an optional consultation channel through which users propose one plain-language anticipated requirement at a time. Acceptance makes a Need available to Procurement Planning; it is not a prerequisite for the HoD to plan a direct departmental requirement. Departmental Needs does not classify procurement, approve expenditure, reserve funds, create a Plan Item, create a Procurement Requisition or initiate a Tender.
 
 ## 1. Governing decision
 
-This complete successor, approved by the Project Owner on 13 September 2026, is the Departmental Needs implementation authority. It retains the optional consultation channel, six source facts, immutable revision governance and AUTH v1.7 assignments, with approved CFG v0.10, BUD v1.8 and SEED v1.3 ownership. It incorporates all ten changes in the Project Owner-approved Departmental Needs Usability Amendment v0.1. Planning v1.18 remains the established business-contract source; proposed Planning v1.19 supplies the coordinated readable presentation but is not approved by this document. Earlier §1.1 rows are historical dispositions; current sections control implementation.
+This Stage 2 successor retains the complete approved NDS v1.13 functional and domain contract and rewrites its presentation under approved KT-STD-001 v1.7. It retains the optional consultation channel, six source facts, immutable revision governance and AUTH v1.7 assignments, with approved CFG v0.10, BUD v1.8 and SEED v1.3 ownership. It retains all ten approved Departmental Needs Usability Amendment v0.1 decisions and every corrected fixture. Earlier §1.1 rows remain historical dispositions. The complete §11 now defines task-led workspaces, forms, reviews and record details; §12.10 continues to map each visible control to existing behaviour. No Need field, lifecycle step, responsibility, authority rule, command, integration or audit requirement changes.
 
 The existing application is corrected in place. Usable code and the proven Claude Design → Vue 3 → Frappe Desk page pattern may be reused. Removed legacy concepts are removed under the existing controlled cutover. Usability labels do not rename technical IDs, enums or event keys. Preserve historical source data, decisions and submitted wording; no mass rewrite of evidence.
 
@@ -39,7 +41,7 @@ Completion requires one coherent result across schema, services, permissions, sc
 | Generic source, authority, evidence, notes or contact fields | Remove. None has a named current consumer and effect. |
 | Budget Officer and Accounting Officer Departmental Needs workspaces | Remove. They have no Departmental Needs decision or task. |
 | Procurement Planner Departmental Needs landing page | Remove. Planners work in Procurement Planning and may open an accepted Need read-only. |
-| Four summary cards, separate action/waiting sections and advanced register filters | Replace with one role-appropriate table and minimal search/status filters. |
+| Four summary cards, duplicate action/waiting queues and advanced register filters | Replace with one task-led workspace: an action region only for current work, one subordinate role-appropriate register and minimal filters local to that register. |
 | Shared-task claim, release and support-lookup workflows | Remove. Review work is a scoped departmental queue; an authorised decision atomically completes the task. |
 | `/departmental-needs`, `/desk/departmental-needs` and legacy `/demands` routes | Replace with the canonical Frappe Desk routes in section 10. No redirect or alias. |
 | Accepted Need treated as permanently unchangeable | Correct. The accepted revision is immutable, but a separately reviewed successor may replace it. |
@@ -407,9 +409,11 @@ The request pins the current accepted revision. A changed accepted pointer fails
 | Head of User Department | Organisation Unit | View Needs in the assigned OU subtree; decide submitted Needs, successor updates and withdrawal requests, except own submitted revision. |
 | Procurement Planner | Site-wide | Read current accepted Need revisions through the typed source contract and exact read-only deep link; no Need decision and no separate intake-window workspace. |
 | Auditor | Site-wide or approved OU oversight scope | Read scoped Needs, revisions, decisions and lineage; no business mutation. |
-| Administrator / System Manager | Technical read-all under AUTH-ADR-001 v1.7 | Inspect all Needs, revisions, tasks and technical metadata read-only; maintain the Fiscal Year Needs-submission flag in System setup; no Need decision unless the person also has the applicable business responsibility assignment. |
+| Administrator / System Manager | KT-STD-001 v1.7 §3A.6 | Technical access is inherited from the controlling standard; NDS adds no business command or local exception. Separate setup maintenance remains CFG/AUTH-owned. |
 
 User Responsibility Assignment is the sole source of the role-to-site-wide/OU relationship. Frappe Roles are synchronized framework projections and Frappe User Permission, User Scope Assignment, Capability Profile and Operational Scope Assignment grant no Departmental Needs authority. Organisation Unit assignment includes that node and its descendants in the site tree. Fiscal Year eligibility derives from the open Needs-submission flag for initial creation and submission, or from the existing Need for later reads and decisions.
+
+All ordinary business scope/masking clauses below are subject to KT-STD-001 v1.7 §3A.6; they do not restrict a technical reader. Register this module’s root/revision/task/withdrawal read routes and record types with the shared technical search and conformance gate; do not duplicate its implementation.
 
 No global browser context is required to enter Departmental Needs. Visible department and Financial Year filters are local and changeable; no PE control is provided. It does not grant authority, cannot permanently bind later visits and is not required for a direct record or review-task route.
 
@@ -636,199 +640,589 @@ The proven Vue-in-Frappe page pattern and approved KenTender design tokens shall
 
 ## 11. Complete screen and static design contract
 
-This section supplies complete revised compositions, exact copy and fixture contexts. It replaces conflicting v1.11 screen wording. Runtime behaviour is specified in §§8 and 12; static artboards do not imply implemented transactions. Use the existing Frappe shell and KenTender components, not a new application or prototype role harness.
+This is the complete Stage 2 presentation input for Departmental Needs. Assemble **KT-STD-001 v1.7 §2 plus this section only**. Section 12.10 remains the excluded functional action map. This rewrite changes presentation architecture only; it creates no field, state, role, permission, service or lifecycle step.
 
-### 11.1 Shared design rules and closed input
+### 11.1 Shared experience contract
 
-Supply the applicable KT-STD shell/design instructions with this section. Keep fixture actor, clock and scenario provenance outside the artboard. The approved usability direction controls this module’s field labels, same-form department choice, acceptance presentation and readable Planning status.
+Use the approved KenTender content area and Frappe shell. Apply KT-STD-001 v1.7's hierarchy, archetypes and structured-density rules. Fixture lines remain outside the artboard.
 
-User-entered Need content remains exactly the six fields in §4.10. No funding, Budget Line, currency, Strategy, method, classification, supplier obligation, attachment, location, item table or generic note is added. Exact generated Need/revision/Plan references and owner-authorised evidence links remain permitted read-only context, not new input fields.
+**Required archetypes.** NDS-DES-01/02 are Work workspaces; NDS-DES-03/04/08 are Forms/editors; NDS-DES-05/07 and accepted/terminal variants are Record details; NDS-DES-06/09/12 are Reviews/decisions; NDS-DES-11/13 are Focused dialogs. NDS-DES-10 remains reserved with no screen.
 
-Use requirement names before references. Supporting detail uses labelled facts, comparison tables, spacing and restrained contrast. Put actor/time/provenance beneath the main result. A material issue remains visible outside collapsed History. Long descriptions/reasons may show a faithful preview with **Read full description** / **Read full reason**, preserving complete text and accessible keyboard reading; no clipped or rewritten evidence. Reviewers can inspect all six facts on the same page without a compulsory sequence of disclosures.
+**Information priority.** Level 1 is the actor's current work/result, material blocker and primary action. Level 2 is the six complete source facts and any comparison required for the current task. Level 3 is history, exact provenance and technical detail. A screen may display all three, but shall not give them equal visual weight.
 
-Use one coherent workspace for Author and HoD work. Source readers reuse exact detail without business actions. No forced download, review score, checklist of opened sections, arbitrary dwell time or duplicate Accept confirmation. A task opens the exact submitted revision, never whichever version happens to be latest.
+**Requirement presentation.** The six source facts remain Requirement title, Description, Expected result, Quantity, Unit and Required by. In editors, title, description and expected result are full-width fields; Quantity and Unit share one row; Required by follows. In reviews/details, present Description and Expected result as the main readable narrative. Present **{quantity} {unit} · Required by {date}** as one compact, unambiguous summary beneath them; do not create a six-row read-only form. The title already displayed in the page header is not repeated as a labelled field.
+
+**Orientation.** Lead with the requirement name; place its reference beneath in smaller muted text. Status and revision are compact secondary evidence beside or beneath the title. Department and Financial year form a concise scope line where needed; do not stretch them into a full-width empty context box or repeat them in filters without a distinct purpose.
+
+**Actions.** Each task region has one visually dominant action. Workspace decision actions use a real button or equally strong task-row control, not a weak trailing text link. Decision consequences sit with the action area. Corrective and destructive actions remain visibly secondary. History, filters and navigation do not compete with current work.
+
+**Supporting detail.** History and Planning evidence begin collapsed unless a current issue depends on them. Critical differences, return reasons, withdrawal blockers and unavailable-owner evidence remain visible. There is one disclosure depth only.
+
+**Prohibitions.** Do not add financial, Strategy, classification, supplier, attachment, location or generic-note content. Do not add dashboard analytics, performance cards, priority/SLA fields, a role switch, a second task queue, or a separate Needs configuration screen. Finance, AO, statutory actors and suppliers receive no Departmental Needs workspace.
+
+**Definite fixtures.** Every pictured action and state below is resolved. Technical-reader variants follow KT-STD-001 v1.7 §3A.6. The designer does not calculate permissions or invent optional layouts.
 
 ### 11.2 NDS-DES-01 — Author workspace
 
-Fixture: Grace Wanjiku, Departmental Author, Digital Health, 24 Nov 2026 15:00 EAT. Page **My needs**; description **Describe your department’s requirements and follow their review.** Primary **Create need** only when currently permitted. Context Department Digital Health; **New submissions** FY 2027/28, Open until 25 Nov 2026 23:59 EAT. Department code is secondary detail; no PE row, selector or role switch.
+**Archetype and purpose:** Work workspace. Find work that needs the Author and browse the Author's existing Needs.
 
-Filters: Search title or reference; Status All statuses; Financial year All financial years; Clear filters. These do not determine creation authority or the target year. Multiple departments may be filtered locally, with a visible reset.
+**Fixture — outside the artboard:** Grace Wanjiku; Departmental Author in Digital Health and HRMD; 24 Nov 2026, 15:00 EAT; Digital Health selected as the local list filter; no open proposal on accepted infrastructure.
 
-| Requirement | Quantity | Required by | Status | Action |
-|---|---|---|---|---|
-| National digital health infrastructure upgrade; secondary NDS-MOH-2027-0001 | 1 Programme | 31 Aug 2027 | Accepted for planning | View |
-| Clinical deployment laptops for digital health rollout; secondary NDS-MOH-2027-0004 | 150 Each | 31 Dec 2027 | Draft | Continue |
+**Primary question and action.** What should Grace continue or create? **Create need** is the header primary action.
 
-Footer 2 needs for this fixture. No artificial pagination on the two-row artboard; actual larger lists follow the existing supported paging contract. Omit the blanket Planning usage column. On an accepted row, an optional secondary **Annual plan: Not included** or **Annual plan: Included** may appear only from confirmed owner evidence for the appropriate revision. Drafts do not repeat Not included as if that were work to resolve. Unknown Planning information is never shown as confirmed absence.
+**Information priority.** Level 1: the editable Draft and Create need. Level 2: the existing accepted Need and list facts. Level 3: none in the workspace; record evidence belongs on detail.
 
-Changes requested rows use **Correct and resubmit** to the existing copied Draft. Submitted rows use **Awaiting Head of Department review**. Accepted records with a proposal retain acceptance and add **Changes awaiting review** or **Update in progress**, not a misleading replacement of the accepted state.
+**Header and orientation.** Title **My needs**; description **Describe your department’s requirements and follow their review.** Place enabled **Create need** at upper right. Directly beneath, one compact scope/status line: **Digital Health · FY 2027/28 · New submissions open until 25 Nov 2026, 23:59 EAT**. Its parts remain distinguishable through typographic grouping; no bordered context card, entity row or department code.
+
+**Continue your work.** First region, headed **Continue your work**. Use one compact task row for the Draft. Lead with **Clinical deployment laptops for digital health rollout** and muted **NDS-MOH-2027-0004**. Beneath, show **150 Each · Required by 31 Dec 2027** and status narrative **Draft — continue describing this requirement before submission.** Put a prominent enabled **Continue** action at row right. Do not render a table header for this single task.
+
+**All my needs.** Second, quieter region. Put the filters within this region: wide **Search title or reference**; Status **All statuses**; Financial year **All financial years**; Department **Digital Health**; **Clear filters**. Then use a compact register table with columns Requirement; Quantity and required by; Status; Action. Render:
+
+| Requirement | Quantity and required by | Status | Action |
+|---|---|---|---|
+| National digital health infrastructure upgrade; `NDS-MOH-2027-0001` beneath | 1 Programme; 31 Aug 2027 beneath | Accepted for planning | View |
+| Clinical deployment laptops for digital health rollout; `NDS-MOH-2027-0004` beneath | 150 Each; 31 Dec 2027 beneath | Draft | Continue |
+
+Below the register show **2 needs**. No pagination, page-size control, annual-plan marker or summary cards in this fixture. The register's Continue may be a secondary row action because Level 1 already exposes the prominent task action.
+
+**Comprehension acceptance.** The first view makes Create/Continue work obvious before filters. Grace can distinguish active work from the complete register; the accepted Need remains available without competing with the Draft task.
 
 ### 11.3 NDS-DES-02 — HoD work in the shared workspace
 
-Fixture: Dr Peter Kimani, HoD HRMD, 24 Nov 2026 15:00 EAT. Title **Departmental Needs**; description **Review submitted requirements and view the department’s needs.** Context Human Resources Management and Development; Financial year FY 2027/28. No Author creation action unless that responsibility is separately assigned.
+**Archetype and purpose:** Work workspace with a subordinate register. Decide submitted departmental requirements and then browse the department's records.
 
-**Needs requiring your decision** table: Requirement, Submitted by, Quantity, Required by, Review, Action. Certification programme NDS-MOH-2027-0002, Grace, 1 Programme, 31 Dec 2027, Initial requirement, Review. Updates use Proposed changes; withdrawal requests use Withdrawal request. Tasks come from actual scope/maker-checker, not the register’s status alone. Footer 1 need awaiting review in this fixture.
+**Fixture — outside the artboard:** Dr Peter Kimani; Head of User Department, HRMD; 24 Nov 2026, 15:00 EAT; no Departmental Author assignment in this fixture.
 
-**All departmental needs** remains available below with Search and Status filters, Requirement, Requester, Quantity, Required by, Status, Action. Fixture 0002 awaiting review and 0003 Changes requested (200 Each at this dated moment); footer 2 department needs. Do not add a second competing review queue or another menu. Users with both roles also see their own Author work; no role-switch prerequisite.
+**Primary question and action.** Which requirement needs Peter's decision now? **Review requirement** is the dominant action on the pending item. No header action.
+
+**Information priority.** Level 1: one pending decision and its Review action. Level 2: the departmental register. Level 3: none; exact evidence opens on the review/detail route.
+
+**Header and orientation.** Title **Departmental Needs**; description **Review submitted requirements and view the department’s needs.** Beneath, a quiet scope line **Human Resources Management and Development · FY 2027/28**. No bordered context box and no Department/FY filters above the task.
+
+**Needs requiring your decision.** Make this the dominant first region. Heading **1 need requires your decision**. Use one structured task row, not a table:
+
+- lead: **Digital health workforce certification programme** with muted **NDS-MOH-2027-0002**;
+- state narrative: **Initial requirement submitted by Grace Wanjiku**;
+- compact facts: **1 Programme · Required by 31 Dec 2027**; and
+- prominent enabled button **Review requirement** at right.
+
+Do not show a table header, duplicate count beneath the row or selected-row background.
+
+**All departmental needs.** Place this secondary region below with less surface contrast and smaller heading weight. Put its own filters directly beneath the heading: wide **Search title or reference**, Status **All statuses**, and **Clear filters** only after a filter changes. No Financial-year or Department selector in this fixed-scope fixture. Render a register table:
+
+| Requirement | Requester | Quantity and required by | Status | Action |
+|---|---|---|---|---|
+| Digital health workforce certification programme; `NDS-MOH-2027-0002` beneath | Grace Wanjiku | 1 Programme; 31 Dec 2027 beneath | Awaiting your decision | View |
+| Clinical training laptops for digital health rollout; `NDS-MOH-2027-0003` beneath | Grace Wanjiku | 200 Each; 31 Dec 2027 beneath | Changes requested from requester | View |
+
+Both View links are enabled. Below show **2 department needs**. No second queue, creation button, role switch or edit control.
+
+**Comprehension acceptance.** Without reading the specification, Peter identifies one outstanding decision and its Review action before encountering any register filter. The register is visibly supporting reference. The 0003 row remains 200 Each at this dated moment.
 
 ### 11.4 NDS-DES-03 — Create a departmental need
 
-Fixture: Grace, Digital Health, FY 2027/28, 24 Nov 2026 10:05 EAT. Title **Create a departmental need**. Introduction **Describe one requirement for your department. Your Head of Department will review it for procurement planning.** No generated reference before first save.
+**Archetype and purpose:** Form/editor. Describe one departmental requirement and submit it for review.
 
-Department is supplied read-only when there is one eligible target; multiple-target variant is §11.16. Financial year is read-only from current effective intake. No pre-entry context or selectable Fiscal Year.
+**Fixture — outside the artboard:** Grace Wanjiku; both approved Author assignments retained; 24 Nov 2026, 10:05 EAT; new unsaved form, Department already selected as Digital Health; initial submissions open.
 
-| Field | Fixture value | Guidance / control |
+**Primary question and action.** What does the department need? **Submit for review** is primary; Save draft is secondary.
+
+**Information priority.** Level 1: form purpose and submission action. Level 2: ownership context and six editable facts. Level 3: none on an unsaved form.
+
+**Header.** Title **Create a departmental need**. Under it, **Describe one requirement for your department. Your Head of Department will review it for procurement planning.** No header action, generated reference or revision badge.
+
+**Ownership row.** Directly beneath the header, place Department selector at the left, selected **Digital Health**, with choices **Digital Health** and **Human Resources Management and Development**. Place read-only Financial year **FY 2027/28** alongside it. Use a compact aligned row, not a context card. This is the same-form selection already permitted for Grace’s two Author assignments; no preliminary modal.
+
+**Below context — form.** Place the fields in the stated vertical order, with each helper directly beneath its control.
+
+**Requirement content.** Use the six-field arrangement in §11.1 with these exact controls and values.
+
+| Label | Value | Control / helper |
 |---|---|---|
-| Requirement title | National digital health infrastructure upgrade | Single line; Give the requirement a short, recognisable name. |
-| Description | Procure and implement national digital health infrastructure across priority health facilities. | Multiline; Describe what is needed. |
-| Expected result | Priority health facilities can use secure and interoperable digital health services. | Multiline; What will the department be able to do when this need is met? |
-| Quantity | 1 | Exact positive quantity; Enter the total quantity needed. |
-| Unit | Programme | Governed selectable UOM; Select the unit that describes the quantity. |
-| Required by | 31 Aug 2027 | Date within target FY; When does the department need it? |
+| Requirement title | National digital health infrastructure upgrade | Single-line text; Give the requirement a short, recognisable name. |
+| Description | Procure and implement national digital health infrastructure across priority health facilities. | Multiline text; Describe what is needed. |
+| Expected result | Priority health facilities can use secure and interoperable digital health services. | Multiline text; What will the department be able to do when this need is met? |
+| Quantity | 1 | Numeric quantity; Enter the total quantity needed. |
+| Unit | Programme | Unit selector; Select the unit that describes the quantity. |
+| Required by | 31 Aug 2027 | Date input; When does the department need it? |
 
-Quantity and Unit are adjacent; Required by follows. Retain §4.3 text/precision limits. No duplicate purpose/justification field, unit-price input, attachment or Budget validation. Footer Cancel / Save draft / Submit for review. Submit is one user intention with the explicit execution contract in §8.4, not a prior manual Save requirement. Cancel before first persistence writes nothing.
+
+
+**Footer.** Below the content, show **Cancel** / **Save draft** / **Submit for review**, in that order. **Submit for review** is the right-aligned primary action. All listed controls are enabled in this fixture; all unlisted mutation controls are absent.
+
+**Comprehension acceptance.** Ownership is distinct from the six user-entered facts. Quantity and Unit share a row; Required by follows. Submit is visibly primary without obscuring Save draft or requiring a prior-save screen.
 
 ### 11.5 NDS-DES-04 — Returned correction
 
-Fixture: Grace, HRMD, NDS-MOH-2027-0003, 24 Nov 2026 14:15 EAT. Title **Clinical training laptops for digital health rollout**; badge **Changes requested**. Secondary reference and correction Revision 2 identify the existing copied Draft.
+**Archetype and purpose:** Form/editor. Understand the requested correction and update the returned Draft.
 
-Notice **What needs to change** shows the actual stored reviewer comment: **Confirm the number of trainees to be supported and revise the laptop quantity if the approved training cohort has changed.** Returned by Dr Peter Kimani; 24 Nov 2026 13:35 EAT. This historical fixture text stays intact. New comments should be directly actionable, for example **Check how many staff need laptops and update the quantity.** Do not rewrite old recorded text to match the new example.
+**Fixture — outside the artboard:** Grace; HRMD; NDS-MOH-2027-0003; correction Revision 2; 24 Nov 2026, 14:15 EAT; initial submissions open.
 
-Use the same six-field editor: title as above; description **Laptop computers for clinical training during the national digital health rollout.**; expected result **Provide the equipment required for staff training on the deployed digital health services.**; quantity 200; Unit Each; Required by 31 Dec 2027. The author later corrects 200 to 100 under §14 chronology. Context HRMD/FY read-only. Footer Withdraw need / Save changes / Resubmit for review. History offers the exact returned submission and its decision without reopening it.
+**Primary question and action.** What must change before resubmission? **Resubmit for review** is primary after correction.
 
-Returned initial-Need correction after intake closure remains editable/saveable but cannot resubmit until that year’s initial intake is effectively open again. Returned accepted-update corrections follow the successor lifecycle independently. Do not borrow Planning’s different departmental-submission window exception.
+**Information priority.** Level 1: the exact correction request and resubmission action. Level 2: six editable facts. Level 3: the earlier reviewed Revision in History.
+
+**Header.** Full title **Clinical training laptops for digital health rollout**. Reference **NDS-MOH-2027-0003** beneath; compact badge **Changes requested** and Revision **2**. No header action.
+
+**Immediately below the header.** Use one visible correction block headed **What needs to change**. Show the full recorded reason: **Confirm the number of trainees to be supported and revise the laptop quantity if the approved training cohort has changed.** Beneath it, a quiet evidence line **Returned by Dr Peter Kimani · 24 Nov 2026, 13:35 EAT**. Do not split this evidence into separate bordered rows.
+
+**Below the reason.** Compact scope line **Human Resources Management and Development · FY 2027/28**, then the complete editable form.
+
+**Requirement content.** Use the six-field arrangement in §11.1 with these exact controls and values.
+
+| Label | Value | Control / helper |
+|---|---|---|
+| Requirement title | Clinical training laptops for digital health rollout | Single-line text; Give the requirement a short, recognisable name. |
+| Description | Laptop computers for clinical training during the national digital health rollout. | Multiline text; Describe what is needed. |
+| Expected result | Provide the equipment required for staff training on the deployed digital health services. | Multiline text; What will the department be able to do when this need is met? |
+| Quantity | 200 | Numeric quantity; Enter the total quantity needed. |
+| Unit | Each | Unit selector; Select the unit that describes the quantity. |
+| Required by | 31 Dec 2027 | Date input; When does the department need it? |
+
+
+
+**Below the fields.** A collapsed **History** disclosure. Expanded content: Revision **1**; Decision **Returned for correction**; evidence line **Dr Peter Kimani · 24 Nov 2026, 13:35 EAT**; Correction required, with the exact full reason above.
+
+**Footer.** At the far left place **Withdraw need**. Below the content, show **Withdraw need** / **Save changes** / **Resubmit for review**, in that order. **Resubmit for review** is the right-aligned primary action. All listed controls are enabled in this fixture; all unlisted mutation controls are absent.
+
+**Comprehension acceptance.** The correction request is the first task information and the editable Quantity is easy to locate. Quantity remains 200 in this pictured state; the later 100-Each correction belongs to its separate dated fixture. Historical wording is not rewritten.
 
 ### 11.6 NDS-DES-05 — Submitted detail
 
-Fixture: Grace, HRMD, certification programme NDS-MOH-2027-0002, 24 Nov 2026 after 12:20 submission. Title **Digital health workforce certification programme**; state **Awaiting Head of Department review**. Text **Your requirement has been submitted. The details cannot be edited while it is under review.** Submitted by Grace Wanjiku and submitted time shown as separate labelled facts.
+**Archetype and purpose:** Record detail. Confirm what is current and what happens next while review is pending.
 
-Department HRMD/FY 2027/28. Full six facts include the title, description **Professional certification programme for staff supporting national digital health services.**, expected result **Build internal capacity to operate and support national digital health platforms.**, quantity 1, Unit Programme, Required by 31 Dec 2027. Exact reference/Revision 1 is secondary. Do not invent a named assignee for the scoped review queue. No requester mutation, Budget details, procurement progress stepper or approval implication. Existing history is accessible where present; absence of earlier events is not a fabricated empty workflow.
+**Fixture — outside the artboard:** Grace; HRMD; NDS-MOH-2027-0002 Revision 1; 24 Nov 2026, 12:25 EAT; submitted at 12:20 EAT.
+
+**Primary question and action.** Was the Need submitted, and who acts next? The page is read-only; there is no primary action.
+
+**Information priority.** Level 1: status narrative and next responsibility. Level 2: the complete requirement. Level 3: submission history.
+
+**Header and status.** Title **Digital health workforce certification programme**; muted **NDS-MOH-2027-0002** beneath; compact **Revision 1** and badge **Awaiting Head of Department review**. Directly below, show: **Submitted for review. Your Head of Department must decide whether this requirement should be available to Procurement Planning. The details cannot be edited while review is pending.** No header action.
+
+**Orientation.** One quiet line: **Human Resources Management and Development · FY 2027/28 · Submitted by Grace Wanjiku on 24 Nov 2026, 12:20 EAT**.
+
+**Requirement.** Heading **Requirement**. Present the content as a readable narrative rather than a six-row form:
+
+- **Description:** Professional certification programme for staff supporting national digital health services.
+- **Expected result:** Build internal capacity to operate and support national digital health platforms.
+- compact summary: **1 Programme · Required by 31 Dec 2027**.
+
+**Supporting detail.** Collapsed **History**. Expanded event: **Submitted for review**; Revision **1**; **Grace Wanjiku · 24 Nov 2026, 12:20 EAT**. No named personal assignee, edit or decision footer.
+
+**Comprehension acceptance.** Grace immediately sees that submission succeeded, who acts next and why editing is unavailable. The complete requirement is readable without resembling a disabled form. History is present but subordinate.
 
 ### 11.7 NDS-DES-06 — Initial HoD review
 
-Fixture: Peter, HRMD, 24 Nov 2026 12:35 EAT; exact task for 0002 Revision 1. Title **Review departmental need**, followed by full requirement name. Requester, department, FY and submitted instant are separately labelled; all six submitted facts from §11.6 are read-only on this page.
+**Archetype and purpose:** Review/decision. Understand one submitted requirement and make the departmental decision.
 
-Decision area **Your decision**. Consequence beside the primary action: **Accepting makes this requirement available for departmental procurement planning. It does not approve spending or start procurement.** Footer Return for correction / Do not take forward / Accept for planning. Accept invokes the single guarded decision without the former repeated confirmation dialog; no reason or checkbox. Return/decline collect their existing required reason under §11.14. Declining the initial requirement ends it as Not taken forward; it is not an exclusion decision in a DPP.
+**Fixture — outside the artboard:** Peter; HRMD; open task for NDS-MOH-2027-0002 Revision 1; 24 Nov 2026, 12:35 EAT.
+
+**Primary question and action.** Should this requirement become available to Procurement Planning? **Accept for planning** is primary. Return and decline remain corrective alternatives.
+
+**Information priority.** Level 1: decision required, consequence and actions. Level 2: complete submitted content. Level 3: submission provenance beyond the compact orientation line.
+
+**Header and task statement.** Title **Review departmental need**. Beneath, full requirement name **Digital health workforce certification programme**, then muted **NDS-MOH-2027-0002 · Revision 1**. Immediately show **Decision required** and the sentence **Decide whether this requirement should be available to departmental procurement planning.** No header action.
+
+**Orientation.** One quiet line: **Submitted by Grace Wanjiku · Human Resources Management and Development · FY 2027/28 · 24 Nov 2026, 12:20 EAT**.
+
+**Submitted requirement.** Heading **What the department needs**. Present:
+
+- **Description:** Professional certification programme for staff supporting national digital health services.
+- **Expected result:** Build internal capacity to operate and support national digital health platforms.
+- prominent compact summary **1 Programme · Required by 31 Dec 2027**.
+
+Keep all content open. Do not render disabled controls or repeat the title as a labelled field.
+
+**Decision area.** Distinct region after the requirement. Show **Accepting makes this requirement available for departmental procurement planning. It does not approve spending or start procurement.** Place actions **Return for correction**, **Do not take forward**, and primary **Accept for planning**. The positive action is visually dominant; the two reason-requiring actions are secondary and open their defined dialogs.
+
+**Comprehension acceptance.** Peter can state what he is deciding, the operational consequence and the complete requirement without decoding a form or table. No acceptance reason, checklist, acknowledgement or repeated confirmation is drawn.
 
 ### 11.8 NDS-DES-07 — Accepted requirement and Planning status
 
-Fixture: Grace, Digital Health, NDS-MOH-2027-0001, 5 Jan 2027 10:15 EAT, conditional Active profile. Title **National digital health infrastructure upgrade**, badge **Accepted for planning**. Actions Create update / Request withdrawal only under existing owner/open-change rules. Accepted by Julia Njeri, Acting Head of User Department; 24 Nov 2026 14:00 EAT. Department/FY and full six accepted source facts from §11.4 remain read-only. This is not a claim that the default BASE plan is Active.
+**Archetype and purpose:** Record detail. Understand the accepted requirement and its two independent Planning positions.
 
-**Planning status** uses two labelled fact rows:
+**Fixture — outside the artboard:** Grace; Digital Health; NDS-MOH-2027-0001 Revision 1; 5 Jan 2027, 10:15 EAT; independent conditional Active profile; no later exclusion, open update or withdrawal in this primary profile.
 
-| Label | Confirmed conditional Active value | Meaning |
-|---|---|---|
-| Departmental plan | Included | The accepted departmental plan includes this requirement |
-| Current annual plan | Included | This exact requirement revision is represented in the governing Active plan |
+**Primary question and action.** What is currently accepted, and how is Planning using it? The page is primarily explanatory. **Create update** is the leading secondary action; **Request withdrawal** is quieter and consequential.
 
-Short note **These statuses do not confirm that the requirement has been purchased or delivered.** Do not add a Procurement completed badge or financial position.
+**Information priority.** Level 1: accepted state and Planning results. Level 2: accepted requirement facts. Level 3: exact Planning/decision provenance.
 
-**Planning decisions and history** contains exact requirement Revision 1; departmental plan Digital Health/FY 2027/28/Submission 1; accepted by Procurement Mercy Kilonzo; 27 Nov 2026 14:00 EAT; annual-plan item National digital health infrastructure upgrade/PPI-MOH-2027-021 and exact Plan identity from owner. Show each fact separately, with reference codes secondary. Actions **View departmental plan** / **View annual plan item** use owner-authorised exact targets; no editing/clearance event. Material mismatch/hold explanations remain outside collapsed history.
+**Header and accepted truth.** Title **National digital health infrastructure upgrade** with muted **NDS-MOH-2027-0001** beneath; badge **Accepted for planning** and compact **Revision 1**. Upper right: enabled **Create update**, then **Request withdrawal**. Beneath, one scope/evidence line: **Digital Health · FY 2027/28 · Accepted by Julia Njeri as Acting Head of User Department on 24 Nov 2026, 14:00 EAT**.
+
+**Planning position.** Place immediately after the accepted state. Heading **Where this requirement stands** with two visually distinct result rows; neither dominates the other:
+
+- **Departmental plan — Included.** The accepted departmental plan includes this requirement.
+- **Current annual plan — Included.** The current annual procurement plan includes this requirement.
+
+Below them show **These statuses do not confirm that the requirement has been purchased or delivered.** Do not use a single combined status badge.
+
+**Accepted requirement.** Heading **Accepted requirement**. Present Description **Procure and implement national digital health infrastructure across priority health facilities.** Expected result **Priority health facilities can use secure and interoperable digital health services.** Compact summary **1 Programme · Required by 31 Aug 2027**.
+
+**Supporting detail.** Collapsed **Planning decisions and history**. Expanded, show two evidence groups without nested cards:
+
+- **Departmental decision:** Requirement revision **1**; Department **Digital Health**; Financial year **FY 2027/28**; Submission **1**; Accepted by Procurement **Mercy Kilonzo**; Accepted at **27 Nov 2026, 14:00 EAT**. Enabled **View departmental plan** link beneath this group.
+- **Annual plan:** Plan **PLN-MOH-2027-001**; Version **1**; Item **National digital health infrastructure upgrade**; Item reference **PPI-MOH-2027-021**. Enabled **View annual plan item** link beneath this group.
+
+No additional footer action. No fulfilment, purchase-completed or financial-position badge.
+
+**Comprehension acceptance.** Grace can distinguish Need acceptance, departmental-plan disposition and current annual-plan inclusion without opening History. Exact evidence is available but visually subordinate. This profile contains no January exclusion event and makes no fulfilment claim.
 
 ### 11.8A NDS-DES-07A — Planning status variants
 
-Reuse the entire accepted detail. The statuses below are separately confirmed owner outcomes for the displayed exact revision, never defaulted from missing events. The Need itself remains Accepted for planning.
+**Archetype and purpose:** Record-detail variants. Explain each confirmed, mixed or unavailable Planning outcome without changing the accepted Need state.
 
-| Scenario | Main card | Supporting evidence / action |
-|---|---|---|
-| Authoritative no accepted DPP decision | Departmental plan: **No accepted departmental decision recorded**. Current annual plan: independently confirmed Not included/Included or Unavailable | No departmental link without an exact accepted submission. Draft departmental choices are not represented as accepted outcomes |
-| Accepted proceeding, absent from Active plan | Departmental plan: **Included**. Current annual plan: **Not included** | Explain only if needed: **This requirement is in the accepted departmental plan but not the current annual plan.** Exact owner links where permitted |
-| Accepted exclusion, no Active inclusion | Departmental plan: **Not included this year**. Current annual plan: **Not included** | Full reason **The department will pursue this requirement in a later annual planning cycle.** DHI Submission 1, Mercy, 27 Nov 2026 14:00 EAT in this isolated profile |
-| Accepted exclusion, still Active | Departmental plan: **Not included this year**. Current annual plan: **Still included** | Later DHI Submission 2 accepted 5 Jan 2027 10:00 EAT by Mercy. Prominent **The annual plan has not yet been updated. Withdrawal cannot be approved while this requirement remains included.** Show full reason and both authorised links |
-| Later accepted restoration | Departmental plan: **Included**; annual status independently confirmed | DHI Submission 3 accepted 6 Jan 2027 10:00 EAT by Mercy; reason omitted for Proceeding. Preserve prior exclusion and exact submission history |
-| New accepted revision, older facts still Active | **The current annual plan still uses the previously accepted details.** Show the new revision’s own departmental/annual status separately | Exact earlier revision and relevant changed date/quantity in detail; View earlier requirement / View annual plan item when permitted. Do not label the new revision Included from an older event. Withdrawal remains blocked across revisions |
-| Refreshing | **Updating Planning information…** | Last-confirmed values only with explicit time/limitation; refresh changes no source state |
-| Provider/stream unavailable | **Planning information is temporarily unavailable.** | **Try again. Withdrawal cannot be approved until the required check succeeds.** Keep still-authorised last-confirmed values clearly stale; no guessed Not included |
+**Fixture — outside the artboard:** Each variant below is an isolated copy of NDS-DES-07. Same Need 0001, accepted Revision 1 and acceptance facts, except OLDER specifies a later accepted revision. Each has its own stated owner evidence; no cross-profile event reuse.
 
-The displayed annual status must clarify if it concerns an earlier version. Historical route title **Planning status for Revision [actual number]** refers to that exact revision; current accepted evidence is a separate choice. Display strings Included/Not included this year do not change event enums `Proceeding`, `Not proceeding this financial year`, `Fully included` or `Not included`. Material conflicts remain visible without opening History. Status refresh announcements must not steal keyboard focus.
+**Shared variant placement.** Retain the NDS-DES-07 hierarchy. Replace the two result rows under **Where this requirement stands** with the exact values and explanations below. Put any full Reason directly beneath the affected departmental-plan row. Put a material mixed-state warning immediately after both results and before Accepted requirement. Keep the accepted narrative and summary visible. Create update / Request withdrawal remain enabled in NONE, PROCEEDING, EXCLUDED, STILL-ACTIVE and RESTORED. REFRESHING and UNAVAILABLE retain the last-confirmed STILL-ACTIVE header actions; no withdrawal-approval control exists on this Author page.
+
+**Exact standalone variants:**
+
+**NDS-DES-07A-NONE.** Fixture outside artboard: 25 Nov 2026, 10:05 EAT; NDS-SC-DISPOSITION-NONE.
+
+- Departmental plan: **No accepted departmental decision recorded**.
+- Current annual plan: **Not included**.
+- No reason or warning. Both departmental-plan and annual-plan links absent. Planning decisions and history shows Requirement revision 1 and “No accepted departmental decision recorded”; no fabricated decision event.
+
+**NDS-DES-07A-PROCEEDING.** Fixture outside artboard: 28 Nov 2026, 09:00 EAT; proceeding BASE, no activation.
+
+- Departmental plan: **Included**.
+- Current annual plan: **Not included**.
+- Show “This requirement is in the accepted departmental plan but not the current annual plan.” Departmental evidence: DHI Submission 1; Mercy Kilonzo; 27 Nov 2026, 14:00 EAT. View departmental plan enabled; annual-plan item link absent.
+
+**NDS-DES-07A-EXCLUDED.** Fixture outside artboard: 4 Jan 2027, 14:15 EAT; NDS-SC-DISPOSITION-EXCLUDED, no activation.
+
+- Departmental plan: **Not included this year**.
+- Current annual plan: **Not included**.
+- Reason: The department will pursue this requirement in a later annual planning cycle. Evidence: DHI Submission 2; Mercy Kilonzo; 4 Jan 2027, 14:00 EAT. View departmental plan enabled; annual-plan item link absent.
+
+**NDS-DES-07A-STILL-ACTIVE.** Fixture outside artboard: 5 Jan 2027, 10:15 EAT; NDS-SC-EXCLUDED-STILL-ACTIVE.
+
+- Departmental plan: **Not included this year**.
+- Current annual plan: **Still included**.
+- Same full exclusion reason. Evidence: DHI Submission 2; Mercy Kilonzo; 5 Jan 2027, 10:00 EAT. Both owner links enabled; Plan PLN-MOH-2027-001 Version 1, item PPI-MOH-2027-021. Warning: The annual plan has not yet been updated. Withdrawal cannot be approved while this requirement remains included.
+
+**NDS-DES-07A-RESTORED.** Fixture outside artboard: 6 Jan 2027, 10:15 EAT; NDS-SC-RESTORED, successor of STILL-ACTIVE.
+
+- Departmental plan: **Included**.
+- Current annual plan: **Included**.
+- No current reason. Evidence: DHI Submission 3; Mercy Kilonzo; 6 Jan 2027, 10:00 EAT. Both owner links enabled. Same Active plan/item retained. History keeps Submission 2 exclusion and its full reason separately from Submission 3 restoration.
+
+**NDS-DES-07A-OLDER.** Fixture outside artboard: 15 Dec 2026, 10:30 EAT; independent NDS-SC-OLDER-REVISION-ACTIVE after owner-confirmed Revision 2 acceptance.
+
+- Departmental plan: **No accepted departmental decision recorded**.
+- Current annual plan: **Not included**.
+- Display Requirement details for Revision 2 with Required by 15 Sep 2027. Separate visible block: “The current annual plan still uses the previously accepted details.” Label Included requirement revision: 1; Earlier required-by date: 31 Aug 2027. Enabled View earlier requirement and View annual plan item beneath that block. No departmental-plan link for Revision 2. Header Create update / Request withdrawal enabled; no open successor remains in this isolated profile. Replace the acceptance context with Accepted by Dr Peter Kimani, Capacity Head of User Department, Accepted at 15 Dec 2026, 10:15 EAT. This is the isolated successor-acceptance fixture specified in §14.5; the canonical Revision 1 acceptance remains unchanged.
+
+**NDS-DES-07A-REFRESHING.** Fixture outside artboard: 5 Jan 2027, 10:16 EAT; refresh in progress from STILL-ACTIVE.
+
+- Departmental plan: **Not included this year — last confirmed**.
+- Current annual plan: **Still included — last confirmed**.
+- Above the two rows show “Updating Planning information…” and separate Last confirmed: 5 Jan 2027, 10:15 EAT. Retain the full exclusion reason, still-Active warning and both still-authorised owner links. No new current result is shown.
+
+**NDS-DES-07A-UNAVAILABLE.** Fixture outside artboard: 5 Jan 2027, 10:17 EAT; failed refresh from STILL-ACTIVE.
+
+- Departmental plan: **Not included this year — last confirmed**.
+- Current annual plan: **Still included — last confirmed**.
+- Show “Planning information is temporarily unavailable.” Then “Withdrawal cannot be approved until the required check succeeds.” Last confirmed: 5 Jan 2027, 10:15 EAT. Enabled Try again directly below. Retain reason, still-Active warning and both still-authorised links.
+
+**UNAVAILABLE-NO-SNAPSHOT variant.** Same unavailable heading, explanation and Try again position, but both rows read **Unavailable**. Last confirmed, owner links and decision evidence are absent because no authorised snapshot is supplied. Do not display Not included.
+
+**Expanded evidence treatment.** Within the collapsed supporting section, keep Department, Financial year, Submission and Requirement revision separately labelled where comparison or lineage requires it. Group actor and time as one readable acceptance line. The compact fixture prose above is instruction, not literal business copy.
+
+**Comprehension acceptance.** Every first view explains both Planning positions and any mismatch without requiring History. The 4 January exclusion, 5 January still-Active exclusion and 27 November canonical inclusion retain distinct evidence. Unavailable never looks like Not included, and no state implies fulfilment.
 
 ### 11.9 NDS-DES-08 — Propose changes to an accepted Need
 
-Fixture: Grace, DHI, 15 Dec 2026 09:10 EAT; accepted infrastructure Revision 1 copied to Draft Revision 2. Title **Update accepted need**, full requirement name and secondary exact reference. Badge **Draft update**. Notice **The previously accepted requirement remains in effect until these changes are accepted.** No need to understand record replacement to proceed.
+**Archetype and purpose:** Form/editor. Propose a successor while keeping the accepted requirement visibly current.
 
-Same complete six fields and source text as §11.4; only proposed Required by changes to 15 Sep 2027. Department/FY remain fixed. Footer Cancel update / Save draft / Submit update for review. Cancel update retains a focused confirmation: **Cancel these proposed changes? The previously accepted requirement will remain in effect.** Cancel / Cancel update. It withdraws only the eligible Draft successor, not the accepted Need.
+**Fixture — outside the artboard:** Grace; Digital Health; NDS-MOH-2027-0001, accepted Revision 1 and Draft update Revision 2; 15 Dec 2026, 09:10 EAT.
 
-After submission, the accepted detail shows **Your changes are awaiting review** and a permitted **View proposed changes** link; accepted facts remain the default source. Draft proposal notice uses Continue update; returned update uses Correct and resubmit. No action appears to a different Author merely because they share a department.
+**Primary question and action.** What should change from the accepted requirement? **Submit update for review** is primary.
+
+**Information priority.** Level 1: accepted-versus-proposed distinction. Level 2: six editable proposed facts. Level 3: earlier accepted evidence through the accepted-detail link.
+
+**Header.** Title **Update accepted need**. Full infrastructure requirement name below; muted **NDS-MOH-2027-0001**. Badge **Draft update**; compact **Proposed revision 2 · Accepted revision 1**. No header action.
+
+**Below the header.** Visible notice **The previously accepted requirement remains in effect until these changes are accepted.** Then compact scope line **Digital Health · FY 2027/28**.
+
+**Requirement content.** Use the six-field arrangement in §11.1 with these exact controls and values.
+
+| Label | Value | Control / helper |
+|---|---|---|
+| Requirement title | National digital health infrastructure upgrade | Single-line text; Give the requirement a short, recognisable name. |
+| Description | Procure and implement national digital health infrastructure across priority health facilities. | Multiline text; Describe what is needed. |
+| Expected result | Priority health facilities can use secure and interoperable digital health services. | Multiline text; What will the department be able to do when this need is met? |
+| Quantity | 1 | Numeric quantity; Enter the total quantity needed. |
+| Unit | Programme | Unit selector; Select the unit that describes the quantity. |
+| Required by | 15 Sep 2027 | Date input; When does the department need it? |
+
+
+
+**Footer.** At the far left place **Cancel update**. Below the content, show **Cancel update** / **Save draft** / **Submit update for review**, in that order. **Submit update for review** is the right-aligned primary action. All listed controls are enabled in this fixture; all unlisted mutation controls are absent.
+
+**Accepted-detail variants.** Use the NDS-DES-07 record-detail arrangement with accepted Revision 1, but an isolated 15 December context with owner-confirmed no accepted DPP decision / Not included unless the named profile supplies other results. Replace its two header actions with exactly one visible update-state notice and link beneath the orientation line:
+
+- **NDS-DES-08-DRAFT:** 15 Dec 2026, 09:10 EAT; notice **Update in progress**; enabled **Continue update**.
+- **NDS-DES-08-SUBMITTED:** 15 Dec 2026, 09:50 EAT; notice **Your changes are awaiting review**; enabled **View proposed changes**. Show Submitted at **15 Dec 2026, 09:45 EAT** in the proposed-change detail.
+- **NDS-DES-08-RETURNED:** isolated returned-update presentation at 15 Dec 2026, 11:00 EAT; notice **Changes requested**; enabled **Correct and resubmit**. Full correction reason **Check the required-by date against the programme schedule.** appears beneath the notice. This alternate specimen does not alter the canonical acceptance chronology.
+
+No Create update or Request withdrawal appears in these three open-update variants. Other-author read variant retains the accepted facts and update state but all three maker links are absent.
+
+**Comprehension acceptance.** The editor cannot be mistaken for the current accepted truth. Accepted-detail variants keep accepted facts primary rather than replacing them with unaccepted edits.
 
 ### 11.10 NDS-DES-09 — HoD review of proposed changes
 
-Fixture: Peter with DHI authority effective from 1 Dec, 15 Dec 2026 10:05 EAT. Exact submitted 0001 Revision 2; Grace submitted 15 Dec 09:45. Title **Review proposed changes**, followed by requirement name. Secondary identity distinguishes proposed versus accepted revision without making it the task heading.
+**Archetype and purpose:** Review/decision. Compare a proposed successor with the accepted requirement and decide the proposal.
 
-**What changed** table: Field Required by; Previously accepted 31 Aug 2027; Proposed 15 Sep 2027. Show the complete proposed title, description, expected result, quantity 1, Unit Programme and Required by date below; the change table is not a substitute for the full proposal.
+**Fixture — outside the artboard:** Peter; DHI authority effective from 1 Dec; NDS-MOH-2027-0001 Revision 2, submitted by Grace 15 Dec 2026, 09:45 EAT; review at 10:05 EAT.
 
-Consequence: **Accepting updates the requirement available to Planning. Existing departmental and annual plans do not change automatically.** Separate sentence **Declining the changes keeps the previously accepted requirement.** Footer Return for correction / **Decline proposed changes** / **Accept proposed changes**. Underlying commands remain decline_need_revision and accept_need_revision; no generic Do not take forward label for update decline and no repeated Accept confirmation. Update decline requires the existing reason and records the successor outcome without changing the earlier accepted pointer. All prior source snapshots and reviewed history remain available.
+**Primary question and action.** Should Revision 2 replace the accepted Revision 1? **Accept proposed changes** is primary.
 
-### 11.11 NDS-DES-10 — Reserved: no Needs configuration screen
+**Information priority.** Level 1: changed facts, decision consequence and actions. Level 2: complete proposed content. Level 3: unchanged accepted evidence and history.
 
-This artboard remains reserved and unbuilt. Administrator/System Manager maintains the existing Needs submission flag and optional close instant in the Fiscal Years section of System setup under CFG v0.10. No Needs-local setup, intake approval or business-decision power is introduced. The business screen names the responsible setup role and only links to a setting if authorised.
+**Header and task statement.** Title **Review proposed changes**; full infrastructure requirement name beneath; muted **NDS-MOH-2027-0001**; compact **Proposed revision 2 · Accepted revision 1**. Show **Decision required — decide whether the proposed version should replace the accepted requirement.** No header action.
+
+**Orientation.** One quiet line: **Submitted by Grace Wanjiku · Digital Health · FY 2027/28 · 15 Dec 2026, 09:45 EAT**.
+
+**What changed.** This Level 1 comparison immediately follows orientation:
+
+| Field | Previously accepted | Proposed |
+|---|---|---|
+| Required by | 31 Aug 2027 | 15 Sep 2027 |
+
+
+
+**Complete proposal.** Below the comparison, show Description **Procure and implement national digital health infrastructure across priority health facilities.** Expected result **Priority health facilities can use secure and interoperable digital health services.** Compact summary **1 Programme · Required by 15 Sep 2027**. Do not repeat the title as a field.
+
+**Decision area.** Show **Accepting updates the requirement available to Planning. Existing departmental and annual plans do not change automatically. Declining keeps the previously accepted requirement.** Actions: **Return for correction**, **Decline proposed changes**, and primary **Accept proposed changes**. All enabled.
+
+**Comprehension acceptance.** The changed date is the first decision evidence; the complete proposal remains visible. Peter can distinguish accepting the successor from declining the existing Need. There is no generic Do not take forward action.
+
+### 11.11 NDS-DES-10 — Reserved — no Needs configuration screen
+
+**Archetype and purpose:** Reserved identifier. Retain the retirement of local Needs setup; no artboard exists.
+
+**Fixture — outside the artboard:** No artboard is supplied or drawn.
+
+No screen, local settings action, intake wizard or configuration approval form. Submission-period maintenance remains the existing CFG System setup surface. This reserved identifier is not a missing design task.
 
 ### 11.12 NDS-DES-11 — Request withdrawal
 
-Fixture: Grace, accepted infrastructure Need, 5 Jan 2027 10:20 EAT, no open successor/withdrawal. Focused dialog over accepted detail: **Request withdrawal**; **Explain why this accepted requirement should no longer be available for procurement planning.** Label **Reason for withdrawal**, required 20–1,000 characters. Fixture **The programme will not proceed in FY 2027/28 because implementation responsibility has moved outside the department.** Cancel / Request withdrawal.
+**Archetype and purpose:** Focused dialog. Explain why the accepted requirement should no longer remain available to Planning.
 
-After confirmed request, show **Withdrawal requested — awaiting Head of Department review** or the actual blocked state. The accepted Need remains in effect pending an approved withdrawal. A request does not itself clear Planning inclusion or create a task in Procurement Planning. Existing open-update/withdrawal conflict explains the open change with an authorised link; it never silently cancels another task.
+**Fixture — outside the artboard:** Grace; NDS-MOH-2027-0001 Revision 1; 5 Jan 2027, 10:20 EAT; no open update or withdrawal before this request. Parent: NDS-DES-07A-STILL-ACTIVE.
+
+**Dialog composition.** Centre the standard 520 px dialog over the dimmed accepted-detail parent. At the top place **Request withdrawal**. Below, show the full infrastructure requirement name; put reference **NDS-MOH-2027-0001** and Accepted revision **1** on separate labelled rows.
+
+Below identity, show **Explain why this accepted requirement should no longer be available for procurement planning.** Then one full-width multiline field **Reason for withdrawal**. Its exact value is **The programme will not proceed in FY 2027/28 because implementation responsibility has moved outside the department.**
+
+At the bottom, right-align enabled **Cancel** followed by primary **Request withdrawal**. No other field or decision control.
+
+**NDS-DES-11-REQUESTED.** On the accepted-detail parent after a confirmed request, remove Create update and Request withdrawal; below context show **Withdrawal requested — awaiting Head of Department review**. Keep accepted source facts and the separately confirmed Planning results. The blocked request uses **Waiting for a Planning change** instead, with the still-Active warning visible in the same region. No new Planning task is drawn.
+
+**NDS-DES-11-OPEN-UPDATE.** Use NDS-DES-08-DRAFT accepted detail; its Continue update link is enabled. Below that notice show **An update is already in progress. Complete or cancel it before requesting withdrawal.** Request withdrawal is absent.
+
+**Comprehension acceptance.** The exact accepted target, consequence and one required reason are clear. The post-request page still presents the accepted requirement as current until a decision succeeds.
 
 ### 11.13 NDS-DES-12 — Withdrawal review
 
-Fixture: Peter, DHI, 5 Jan 2027 10:30 EAT. Heading **Review withdrawal request**, full infrastructure title and exact request NDS-WDR-MOH-2027-0001 secondary. Request panel: Grace, 5 Jan 10:20 EAT, full reason from §11.12. Accepted requirement panel includes full title, description, expected result, 1 Programme, Required by 31 Aug 2027, department/FY and exact accepted revision. Do not replace the full requirement with the withdrawal reason.
+**Archetype and purpose:** Review/decision. Understand the withdrawal request, current Planning dependency and available lawful decision.
 
-| Owner result | Prominent explanation | Permitted footer |
-|---|---|---|
-| Active dependency confirmed | **Withdrawal cannot be approved yet. This requirement is still included in the current annual plan. Procurement must review the necessary plan change before withdrawal can proceed.** Responsible role Procurement Planner; exact item name/reference and View annual plan item if authorised | Decline withdrawal / Close; no Approve |
-| No Active inclusion across any accepted revision, confirmed current | **This requirement is not included in the current annual plan.** | Decline withdrawal / Approve withdrawal |
-| Dependency cannot be confirmed | **Planning information could not be checked. Withdrawal cannot be approved until the check succeeds.** | Try again / permitted Decline withdrawal / Close; no Approve |
+**Fixture — outside the artboard:** Peter; DHI; NDS-WDR-MOH-2027-0001 for infrastructure Revision 1; 5 Jan 2027, 10:30 EAT; primary profile retains Active inclusion.
 
-The readable blocked state is **Waiting for a Planning change**; the internal request state remains Awaiting planning clearance. Preserve exact older-revision dependencies. Naming Procurement Planner or linking to the item does not create a task, automatic request, notification or edit right. Planning’s downstream-use/scope rules may prevent removal, so do not promise approval will eventually become available.
+**Primary question and action.** Can this accepted requirement be withdrawn now? In the primary fixture approval is blocked; **Decline withdrawal** is the only business decision.
 
-Approval retains the focused confirmation: exact Need and accepted revision; **This withdraws the accepted requirement. Earlier decisions remain in history.** Cancel / Approve withdrawal. The actual decision rechecks the authoritative all-revision dependency under §8.3 until commit; a displayed clear result or confirmed dialog is not authority. Decline leaves the Need accepted and ends only the request.
+**Information priority.** Level 1: blocked result, reason and lawful actions. Level 2: withdrawal request and accepted requirement. Level 3: exact Plan/Item and historical evidence.
+
+**Header and result.** Title **Review withdrawal request**. Beneath, infrastructure requirement name and muted **NDS-MOH-2027-0001 · Accepted revision 1**. Put Withdrawal request **NDS-WDR-MOH-2027-0001** in supporting orientation, not as a peer title. Badge **Waiting for a Planning change**. Immediately show a visible result block: **Withdrawal cannot be approved yet. This requirement is still included in the current annual plan. Procurement must review the necessary plan change before withdrawal can proceed.** No header action.
+
+**Withdrawal request.** Heading **Why withdrawal was requested**. Show the complete reason **The programme will not proceed in FY 2027/28 because implementation responsibility has moved outside the department.** Beneath, quiet evidence **Requested by Grace Wanjiku · 5 Jan 2027, 10:20 EAT**.
+
+**Planning dependency.** Compact supporting group: Responsible **Procurement Planner**; **PLN-MOH-2027-001 · Version 1**; item **National digital health infrastructure upgrade** with muted **PPI-MOH-2027-021**. Enabled **View annual plan item**. Do not present these as a second decision.
+
+**Accepted requirement.** Scope line **Digital Health · FY 2027/28**. Description **Procure and implement national digital health infrastructure across priority health facilities.** Expected result **Priority health facilities can use secure and interoperable digital health services.** Compact summary **1 Programme · Required by 31 Aug 2027**.
+
+**Action area.** Show enabled **Decline withdrawal** and **Close**. **Approve withdrawal** is absent. The blocked explanation sits above all actions.
+
+**NDS-DES-12-CLEAR.** Separate owner-confirmed no-Active-inclusion profile across every accepted revision; same request/clock/Need. Replace the Waiting for a Planning change badge with **Awaiting review**. Replace the entire Planning-status section with **This requirement is not included in the current annual plan.** Remove plan/item facts and their link. Footer: enabled **Decline withdrawal**, primary enabled **Approve withdrawal**. Keep the full request and requirement sections.
+
+**NDS-DES-12-UNAVAILABLE.** Separate provider-failure profile at the same review clock. Badge **Awaiting review**. Planning-status section reads **Planning information could not be checked. Withdrawal cannot be approved until the check succeeds.** Put enabled **Try again** immediately below. No confirmed plan/item facts or link in this no-snapshot specimen. Footer: enabled **Decline withdrawal** / **Close**; Approve withdrawal absent.
+
+**Comprehension acceptance.** Peter sees whether approval is possible before reviewing supporting evidence. The request reason and accepted truth remain readable. CLEAR exposes one primary Approve action; BLOCKED and UNAVAILABLE do not.
 
 ### 11.14 NDS-DES-13 — Reason and confirmation dialogs
 
-| Action context | Heading / field | Required effect and exact fixture |
-|---|---|---|
-| Return initial or update | **What needs to change?**; field **Correction required** | Existing 20–1,000 character reason. Example **Check how many staff need laptops and update the quantity.** Cancel / Return for correction. Preserve submitted snapshot and copy correction |
-| Decline initial | **Do not take forward**; **Why are you declining this requirement?** | **The requirement is already covered by an existing enterprise service for FY 2027/28.** Cancel / Do not take forward; initial Need ends |
-| Decline update | **Decline proposed changes**; **Why are you declining these changes?** | Isolated example **The previously accepted delivery date is still required for the programme.** Cancel / Decline proposed changes; earlier accepted Need remains effective |
-| Decline withdrawal | **Decline withdrawal**; **Reason** | **The requirement remains valid and must remain available for departmental procurement planning.** Cancel / Decline withdrawal; preserve acceptance and usage |
-| Withdraw unaccepted Draft/correction | **Withdraw this need?**; show exact requirement | Focused confirmation of existing command; accepted withdrawal is not available through this route |
-| Cancel accepted Draft update | **Cancel these proposed changes?** | Previously accepted requirement remains; same existing cancellation command |
+**Archetype and purpose:** Focused dialogs. Capture an existing required reason or confirm the specified withdrawal/cancellation.
 
-Acceptance has no reason form, generic confirmation modal, new checkbox, score or recommendation. Return and decline reasons remain recorded exactly as entered. New wording does not bulk edit historical comments or states. Dialogs use existing controls with keyboard focus trap/restore; decision controls do not obscure facts.
+**Fixture — outside the artboard:** Each dialog is an independent state over its named parent, not a sequential chain. Use the standard centred 520 px dialog; exact record identity comes from the explicitly named parent below.
+
+**Shared placement.** Title at top left; full requirement name immediately beneath; Need reference and Revision on separately labelled muted rows. Put the explanatory sentence next, then the one multiline reason field when specified. Footer at bottom right: Cancel followed by the named primary action. Every listed action is enabled in its supplied complete fixture. No reason field on confirmation-only dialogs.
+
+**NDS-DES-13-RETURN-INITIAL.** Parent: Isolated initial review of training laptops 0003 Revision 1 by Peter at 24 Nov 2026, 13:30 EAT; six facts from NDS-DES-04, quantity 200. Heading **What needs to change?**. Field **Correction required**, exact text **Check how many staff need laptops and update the quantity.**. Footer **Cancel** / **Return for correction**. The reason field is full width; it is the only input.
+
+**NDS-DES-13-RETURN-UPDATE.** Parent: NDS-DES-09; infrastructure 0001 Revision 2. Heading **What needs to change?**. Field **Correction required**, exact text **Check the required-by date against the programme schedule.**. Footer **Cancel** / **Return for correction**. The reason field is full width; it is the only input.
+
+**NDS-DES-13-DECLINE-INITIAL.** Parent: NDS-DES-06; certification 0002 Revision 1. Heading **Do not take forward**. Field **Why are you declining this requirement?**, exact text **The requirement is already covered by an existing enterprise service for FY 2027/28.**. Footer **Cancel** / **Do not take forward**. The reason field is full width; it is the only input.
+
+**NDS-DES-13-DECLINE-UPDATE.** Parent: NDS-DES-09; infrastructure 0001 Revision 2. Heading **Decline proposed changes**. Field **Why are you declining these changes?**, exact text **The previously accepted delivery date is still required for the programme.**. Footer **Cancel** / **Decline proposed changes**. The reason field is full width; it is the only input.
+
+**NDS-DES-13-DECLINE-WITHDRAWAL.** Parent: NDS-DES-12; infrastructure 0001 Revision 1. Heading **Decline withdrawal**. Field **Reason**, exact text **The requirement remains valid and must remain available for departmental procurement planning.**. Footer **Cancel** / **Decline withdrawal**. The reason field is full width; it is the only input.
+
+**NDS-DES-13-WITHDRAW-DRAFT.** Parent NDS-DES-04, training laptops 0003 correction Revision 2. Heading **Withdraw this need?**. Text **This withdraws the unaccepted requirement. Earlier submissions and decisions remain in history.** Footer **Cancel** / primary **Withdraw need**.
+
+**NDS-DES-13-CANCEL-UPDATE.** Parent NDS-DES-08, infrastructure 0001 proposed Revision 2. Heading **Cancel these proposed changes?**. Text **The previously accepted requirement will remain in effect.** Footer **Cancel** / primary **Cancel update**.
+
+**NDS-DES-13-APPROVE-WITHDRAWAL.** Parent NDS-DES-12-CLEAR, infrastructure 0001 accepted Revision 1. Heading **Approve withdrawal?**. Text **This withdraws the accepted requirement. Earlier decisions remain in history.** Footer **Cancel** / primary **Approve withdrawal**.
+
+**Comprehension acceptance.** Every dialog identifies its target, required reason or consequence and one primary completion action. Only Return/Decline dialogs contain reason inputs. Initial and update acceptance have no additional confirmation artboard.
 
 ### 11.15 NDS-DES-14 — Shared workspace and error states
 
-Resolve authority before rendering. Denied records never paint a header/filter/placeholder containing protected content. Existing routes stay addressable with correct navigation selection. Technical read permissions remain recognised.
+**Archetype and purpose:** Shared state variants. Make empty, blocked and failed states understandable without displaying contradictory or protected content.
 
-| Condition | Exact visible text / action |
-|---|---|
-| Loading | **Loading departmental needs…** with actual-structure skeleton |
-| Empty, Author with creation authority | **No departmental needs yet. Describe the first requirement for your department.** Create need |
-| Empty, reader/reviewer without creation authority | **No departmental needs to display.** No Create action |
-| Filtered empty | **No needs match your filters. Adjust your search or clear the filters.** Clear filters |
-| Initial intake closed / no effectively open FY | **New submissions are closed. You can view existing needs and save changes to existing drafts.** Omit Create; preserve permitted existing work |
-| Initial Draft/correction cannot submit | **New submissions are closed. You can save changes to this draft and submit if submissions reopen.** Save remains available |
-| No access | **You do not have access to Departmental Needs.** This area requires the relevant Departmental Author, Head of User Department, Auditor or authorised technical read access. Ask your KenTender administrator to check your assignment. Planning source readers use their permitted exact source link |
-| Masked detail | **This requirement is not available to you.** Back to Departmental Needs; same result for missing/unauthorised existence |
-| Load failure | **Departmental Needs could not be loaded. Try again. If the problem continues, contact support with the reference shown.** Try again |
-| Save failed | **Your changes were not saved.** Preserve still-authorised input; exact field errors |
-| Save succeeded, submission failed | **Your draft was saved, but it was not submitted.** Show actual cause and permitted retry on that Draft |
-| Submit outcome unknown | **We could not confirm whether submission succeeded. Checking the existing request…** Resolve original identity; no duplicate root/task |
-| Review changed | **This review has already changed. Refresh to see the current result.** Refresh; no duplicate decision |
-| Authority changed | **You no longer have permission to perform this action.** Re-resolve allowed access; remove protected content if required |
+**Fixture — outside the artboard:** Each named variant independently replaces its stated parent. Shared-state actors inherit that parent unless explicitly changed.
 
-Closed and no-open-FY are the same effective intake condition, not new stored statuses. Accepted successors and withdrawal requests are not blocked by initial intake closure. Buttons require current server permission, not a remembered filter.
+**Page-state placement.** Loading, denied, masked-detail and load-failure variants occupy the existing page content area; no protected header, filters, rows or empty-success message appears behind them. Empty/filtered-empty and closed-intake variants retain their permitted workspace header. Inline form/command notices sit beneath the form header and above its first field or fact group.
+
+**NDS-DES-14-LOADING.** Parent/fixture: Any Needs route, verdict pending.
+
+- Visible text: **Loading departmental needs…**
+- Composition and controls: Existing-shape skeleton only; no controls.
+
+**NDS-DES-14-EMPTY-AUTHOR.** Parent/fixture: Author workspace; Grace, Digital Health filter, no records in isolated fixture; intake open.
+
+- Visible text: **No departmental needs yet. Describe the first requirement for your department.**
+- Composition and controls: Retain enabled Create need in header. Replace table/count with this text; no duplicate empty-area action.
+
+**NDS-DES-14-EMPTY-READER.** Parent/fixture: Auditor workspace; isolated no-record scope.
+
+- Visible text: **No departmental needs to display.**
+- Composition and controls: No Create action. Replace list rows/count with this text; retain permitted filters.
+
+**NDS-DES-14-FILTERED-EMPTY.** Parent/fixture: NDS-DES-01; Search value Unmatched requirement.
+
+- Visible text: **No needs match your filters. Adjust your search or clear the filters.**
+- Composition and controls: Retain header and filters. Replace table/count with text; existing Clear filters enabled; no second copy.
+
+**NDS-DES-14-CLOSED-WORKSPACE.** Parent/fixture: NDS-DES-01; isolated close-instant profile at 25 Nov 2026, 23:59 EAT, existing draft retained.
+
+- Visible text: **New submissions are closed. You can view existing needs and save changes to existing drafts.**
+- Composition and controls: Create need absent. Submission facts: FY 2027/28; New submissions Closed; Closed at 25 Nov 2026, 23:59 EAT. Existing row navigation remains enabled.
+
+**NDS-DES-14-CLOSED-EDITOR.** Parent/fixture: NDS-DES-04; isolated unaccepted correction at the same close instant.
+
+- Visible text: **New submissions are closed. You can save changes to this draft and submit if submissions reopen.**
+- Composition and controls: Withdraw need and Save changes enabled; Resubmit for review disabled. Keep full form and reason; place explanation directly above footer.
+
+**NDS-DES-14-DENIED.** Parent/fixture: Ordinary user without any Needs access; not Administrator/System Manager.
+
+- Visible text: **You do not have access to Departmental Needs.**
+- Composition and controls: Below heading: This area needs Departmental Author, Head of User Department or Auditor access. Then: Ask your KenTender administrator to check your assignment in System setup. No action or protected content.
+
+**NDS-DES-14-MASKED-DETAIL.** Parent/fixture: Ordinary actor without existence permission; never technical reader.
+
+- Visible text: **This requirement is not available to you.**
+- Composition and controls: Only Back to Departmental Needs beneath the message; no reference/title.
+
+**NDS-DES-14-LOAD-FAILURE.** Parent/fixture: Any authorised Needs route; no successful data response.
+
+- Visible text: **Departmental Needs could not be loaded. Try again. If the problem continues, contact support.**
+- Composition and controls: Enabled Try again below the text; no invented support reference.
+
+**NDS-DES-14-SAVE-FAILED.** Parent/fixture: NDS-DES-03; write failure on complete form.
+
+- Visible text: **Your changes were not saved.**
+- Composition and controls: Retain entered values; Cancel, Save draft and Submit for review enabled after failure. Field validation specimen below is separate.
+
+**NDS-DES-14-PARTIAL-SUBMIT.** Parent/fixture: NDS-DES-03; isolated newly saved infrastructure NDS-MOH-2027-0001 Draft Revision 1, initial submit rejected because intake closed.
+
+- Visible text: **Your draft was saved, but it was not submitted.**
+- Composition and controls: Below notice show the closed-editor explanation. Show saved reference NDS-MOH-2027-0001 and Revision 1 on separate labelled rows. Save draft enabled; Submit for review disabled. The displayed identifier is the prescribed result of this isolated save fixture, not a client-generated identifier.
+
+**NDS-DES-14-SUBMIT-UNKNOWN.** Parent/fixture: NDS-DES-03; submission response unknown.
+
+- Visible text: **We could not confirm whether submission succeeded. Checking the existing request…**
+- Composition and controls: Submit for review and other initiating writes disabled while checking; preserve entered facts. No success state or second submission button.
+
+**NDS-DES-14-REVIEW-CHANGED.** Parent/fixture: NDS-DES-06; stale task response.
+
+- Visible text: **This review has already changed. Refresh to see the current result.**
+- Composition and controls: Enabled Refresh beneath notice; decision buttons absent until refreshed.
+
+**NDS-DES-14-AUTHORITY-CHANGED.** Parent/fixture: Formerly permitted open form; command denied and current read denied.
+
+- Visible text: **You no longer have permission to perform this action.**
+- Composition and controls: Remove protected form content; Back to Departmental Needs enabled beneath message.
+
+**NDS-DES-14-QUANTITY-ERROR.** Parent NDS-DES-03; Quantity entered **0**. Inline under Quantity: **Enter a quantity greater than zero.** Retain all other values. Footer Cancel / Save draft / Submit for review remains visible; Submit for review is not shown as successful. No modal.
+
+**NDS-DES-14-NO-OPEN-YEAR.** Existing-author workspace with no effective open year. Use the CLOSED-WORKSPACE explanation and omit Create need. Display New submissions **Closed**; no target financial year or closing timestamp is invented. Existing-record filters and permitted row links remain.
+
+**Comprehension acceptance.** Denial/failure never looks like an empty successful list. Each variant has one definite action set; technical access follows its separate variant rather than ordinary denial.
 
 ### 11.16 NDS-DES-15 — Department choice within the new form
 
-Replace the prior separate Create need for modal with a variant of NDS-DES-03. Heading stays **Create a departmental need**. At the top, **Department** is a required selector showing only server-authorised eligible OUs; start unselected when several choices exist. Read-only **Financial year: FY 2027/28** comes from effective intake. Then the six fields and the ordinary Cancel / Save draft / Submit for review footer. No separate Continue action.
+**Archetype and purpose:** Form/editor variants. Choose the department on the same form without a separate preliminary step.
 
-One authorised target is prefilled read-only; zero eligible targets shows the proper closed/no-scope response without a write. Selection is required before first save and becomes immutable after persistence. A department browsing filter does not auto-select or grant a create target. Changing a filter never transfers a Draft’s ownership. The underlying seven route families stay unchanged; no new field/table or unrestricted Fiscal-Year chooser is added.
+**Fixture — outside the artboard:** Grace; the two actual Author assignments; 24 Nov 2026, 10:05 EAT; initial intake open.
 
-### 11.17 Existing controls, history and actor coverage
+**NDS-DES-15-MULTIPLE.** Use NDS-DES-03 exactly, but Department starts unselected with placeholder **Select department**. Choices: **Digital Health**; **Human Resources Management and Development**. Keep read-only Financial year **FY 2027/28** beside it. The six fields retain their supplied values. Footer Cancel enabled; Save draft and Submit for review disabled while this required choice is empty. No Continue button or choice dialog.
 
-Reuse Frappe/KenTender header, breadcrumbs, fields, tables, dialogs and tokens. Initial/update/withdrawal review share readable requirement detail with role-specific decisions. Planner accepted-source and Auditor historical views have no business footer. Administrator/System Manager technical metadata sits in authorised detail, not ordinary business cards. Every field, full reason and decision remains available without mandatory download or navigating all revisions.
+**NDS-DES-15-SINGLE.** Isolated reduced-assignment fixture with only Digital Health eligible, not the canonical two-assignment Grace seed. Replace the selector with read-only Department **Digital Health**. Keep all other NDS-DES-03 content and enabled footer actions.
 
-NDS-DES-01–15 retain their identifiers; 07A retains all owner-status variants, 10 remains reserved and 15 now denotes the inline choice variant. No separate dashboard or UI role is invented for Finance, AO, statutory actors or suppliers. Implement and verify keyboard reading, contrast, wrapping, focus restoration, error announcements and narrow-screen use; this specification does not claim rendered or participant-tested artboards.
+**NDS-DES-15-PERSISTED.** Named existing Draft, deployment laptops NDS-MOH-2027-0004 Revision 1 at 24 Nov 2026, 15:00 EAT. Heading **Clinical deployment laptops for digital health rollout**; muted reference and badge Draft. Department **Digital Health** read-only; FY **2027/28** read-only. Use all six deployment facts from the explicit table below. Footer Withdraw need / Save changes / Submit for review, enabled; Submit for review primary.
+
+**Requirement content.** Use the six-field arrangement in §11.1 with these exact controls and values.
+
+| Label | Value | Control / helper |
+|---|---|---|
+| Requirement title | Clinical deployment laptops for digital health rollout | Single-line text; Give the requirement a short, recognisable name. |
+| Description | Laptop computers for deployment at priority facilities during the national digital health rollout. | Multiline text; Describe what is needed. |
+| Expected result | Provide endpoint equipment required to use the deployed digital health services. | Multiline text; What will the department be able to do when this need is met? |
+| Quantity | 150 | Numeric quantity; Enter the total quantity needed. |
+| Unit | Each | Unit selector; Select the unit that describes the quantity. |
+| Required by | 31 Dec 2027 | Date input; When does the department need it? |
+
+
+
+**NDS-DES-15-NO-TARGET.** Isolated actor with existing readable needs but no eligible create target. Retain the existing workspace and row links; Create need absent. Beneath its header show **You do not have an eligible department for creating a need. Ask your KenTender administrator to check your Departmental Author assignment.** Do not show an empty create form or a department selector with no choices.
+
+**Comprehension acceptance.** The canonical multi-assignment actor sees one real same-form ownership choice. Single-target and persisted forms show fixed ownership; no financial-year chooser or preliminary workflow appears.
+
+### 11.17 NDS-DES-01–15 supplements — Reader, history and content variants
+
+**Archetype and purpose:** Reused workspace/detail variants. Complete actor and state coverage without creating new page types.
+
+**Fixture — outside the artboard:** Each supplement below names its parent, actor and independent state.
+
+**NDS-DES-01-SUBMITTED.** Grace; Digital Health; 24 Nov 2026, 16:05 EAT. Use the Author workspace with its two rows; change deployment 0004 status to **Awaiting Head of Department review** and action to enabled **View**. No Draft Continue link remains on that row. Infrastructure row unchanged; no annual-plan marker.
+
+**NDS-DES-01-RETURNED.** Grace; HRMD filter; 24 Nov 2026, 14:15 EAT. Replace table rows with certification 0002 (1 Programme; 31 Dec 2027; Awaiting Head of Department review; View) and training laptops 0003 (200 Each; 31 Dec 2027; Changes requested; Correct and resubmit). Use their full titles and references from NDS-DES-02. Context Department HRMD; remaining open-intake facts unchanged. Footer **2 needs**.
+
+**NDS-DES-01-PLAN-INCLUDED.** Grace; Digital Health; 5 Jan 2027, 10:15 EAT; independent conditional Active profile with one infrastructure record displayed. One row: full infrastructure title/reference; 1 Programme; 31 Aug 2027; Accepted for planning; View. Directly below the acceptance status, smaller text **Annual plan: Included**. Count **1 need**. Intake is Closed; Create need absent. This marker is absent in the primary 24 November artboard.
+
+**NDS-DES-01-PLAN-NOT-INCLUDED.** Same one-record layout, 4 Jan 2027, 14:15 EAT no-activation exclusion profile. Marker **Annual plan: Not included**. Full source remains Accepted for planning. No financial or fulfilment label.
+
+**NDS-DES-01-OPEN-PROPOSAL.** One-record infrastructure workspace, 15 Dec 2026, 09:10 EAT; no activation, initial intake Closed. Status **Accepted for planning**, followed by secondary **Update in progress**; action **Continue update**. Submitted variant at 09:50 replaces secondary status with **Changes awaiting review** and action **View**. Neither replaces the accepted badge or adds a separate planning-status column.
+
+**NDS-DES-02-DUAL-ROLE.** Isolated regression fixture: Grace is Author in DHI and acting HoD in HRMD. Use one workspace titled **Departmental Needs**. Header Create need enabled for her DHI Author assignment. First section **Needs requiring your decision** displays **No needs awaiting your decision** because the supplied HRMD pending item is her own submission. Below it place **My needs** using the two DHI rows from NDS-DES-01, then **All departmental needs** using the HRMD register rows from NDS-DES-02. No role-switch control. This isolated profile does not alter the canonical HoD assignments.
+
+**NDS-DES-07-PLANNER.** Mercy Kilonzo, Procurement Planner; exact accepted infrastructure Revision 1; same independent Active context as NDS-DES-07. Use its context, six read-only facts, Planning status and expanded-evidence composition. Header Create update / Request withdrawal absent. Above the title place enabled **Back to procurement planning**. No mutation footer.
+
+**NDS-DES-07-AUDITOR.** Naomi Chebet, Auditor; same exact accepted source/clock. Use NDS-DES-07 with no header mutations or decision footer. Above title place **Back to Departmental Needs**. Keep Planning decisions and history collapsed; expanded contents exactly as NDS-DES-07. No setup controls.
+
+**NDS-DES-07-HISTORICAL.** Naomi; isolated older-revision profile after Revision 2 acceptance. Heading **Planning status for Revision 1**; full infrastructure requirement name and source reference beneath. Revision 1 facts retain Required by **31 Aug 2027**. Above them a visible notice **A newer accepted revision is available.** Enabled **View current accepted requirement** beneath the notice. Keep the older Active plan evidence labelled Included requirement revision **1**. No redirect-like replacement of the pictured values or mutation footer.
+
+**NDS-DES-TECHNICAL-REGISTER.** Administrator; 24 Nov 2026, 15:00 EAT. Title **Departmental Needs**. Use the existing register filters Search title or reference, Department **All departments**, Financial year **All financial years**, Status **All statuses**, and Clear filters. Display all four dated records: infrastructure Accepted for planning, certification Awaiting Head of Department review, training laptops Changes requested with 200 Each, deployment laptops Draft with 150 Each. Use full titles, source references, quantities and dates already specified above; one View link per row. No Create need, decision section or command footer. System Manager variant has the same composition. Technical search remains the shared standard's existing surface, not a new Needs search screen.
+
+**NDS-DES-TECHNICAL-DETAIL.** Administrator or System Manager; exact certification Revision 1 and open review task at 24 Nov 2026, 12:35 EAT. Use the six facts and context of NDS-DES-06, but title **Digital health workforce certification programme**. All decision controls and their decision area are absent; a read-only **History** disclosure below facts shows the submission event from NDS-DES-05. Existing editor-route variant uses training correction Revision 2 at 14:15: same full values and return reason as NDS-DES-04, all fields read-only and all command controls absent. Below History, place a collapsed **Technical details** group. In the review-task specimen its expanded rows are Need reference **NDS-MOH-2027-0002**, Requested revision **1**, Review **Initial requirement**, Task status **Open**. In the editor-route specimen its rows are Need reference **NDS-MOH-2027-0003**, Requested revision **2**, Revision status **Draft**. No unsupplied token or task identifier is drawn in either specimen.
+
+**NDS-DES-LONG-CONTENT.** Isolated compact-preview layout over NDS-DES-04; same Grace/14:15 fixture and exact stored text. Show the Description preview **Laptop computers for clinical training…** followed directly by enabled **Read full description**. Show the correction-reason preview **Confirm the number of trainees to be supported…** followed directly by enabled **Read full reason**. The expanded variant displays the full original description and full original recorded reason from NDS-DES-04 in their same positions; replace each expansion link with **Show less**. All other fields remain visible. This short-source fixture explicitly demonstrates the expansion layout; it does not invent or rewrite long source text.
+
+**NDS-DES-TERMINAL.** Separate initial-decline specimen for certification 0002 Revision 1; read-only layout of NDS-DES-05, badge **Not taken forward**; decision reason **The requirement is already covered by an existing enterprise service for FY 2027/28.** shown in a visible block beneath context. Withdrawal-terminal specimen for the unaccepted training correction uses badge **Withdrawn** and the same complete six source facts. Decline facts: Decided by Dr Peter Kimani; Decided at 24 Nov 2026, 12:40 EAT. Withdrawal facts: Withdrawn by Grace Wanjiku; Withdrawn at 24 Nov 2026, 14:20 EAT. Display these as separate labelled rows below their state. These alternate owner-command fixtures do not change the canonical seed. No edit, submit or review controls in either state.
+
+**Comprehension acceptance.** Every actor reuses a named archetype with explicit additions/removals. Technical readers are never sent to ordinary denied/masked treatment. No new role, configuration page or dashboard is supplied.
+
 
 ## 12. Functional interaction requirements — excluded from design prompts
 
@@ -922,6 +1316,50 @@ A refresh never creates a Need decision, accepted-disposition event, Plan Item, 
 
 The record card presents **Departmental plan** and **Current annual plan** as separate labelled results, with concise explanations and exact reason, actor, date and revision evidence in supporting detail. Use §11.8A for all combinations and unknown states. The workspace omits the blanket Planning usage column; only accepted rows may show optional secondary annual-plan status from confirmed owner evidence. Historical older-revision inclusion is labelled explicitly. Test the two results with representative users; completeness alone does not establish usability.
 
+### 12.10 Complete design-to-interaction map — excluded from design prompts
+
+This is the behavior counterpart to §11. It is not passed to the static design tool. All commands retain §§8.1–8.5 and the existing authority/state/idempotency contracts; the composition rewrite changes no command semantics.
+
+| Screen/control | Navigation or visible result | Existing contract / guard |
+|---|---|---|
+| Workspace Create need | Open the new form; show inline department choice for multiple eligible targets. | §12.1; list_need_create_targets; NDS-UI-03; no write on opening. |
+| Search, Department, Status, Financial year filters | Narrow the current authorised register; Clear filters resets local values. | §§12.1–12.2; existing list read; no ownership/context change. |
+| Continue / Correct and resubmit | Open the current editable draft or server-created returned copy. | §12.3; NDS-UI-03; exact maker/current revision. |
+| View in a register | Open the selected Need’s current authorised detail. | §12.4; NDS-UI-04; current root and source states remain distinct. |
+| Review requirement in the decision region | Open the exact review task and submitted revision, or withdrawal review. | §12.2; NDS-UI-05/07; stable task ID, current token and maker-checker. |
+| Department selector on new form | Select one allowed create target on this form; no intermediate page. | §8.4 and §12.3; required before first save; fixed after persistence. |
+| Six field controls and Unit selector | Edit the draft’s source values; unit choices from the owner. | §§4.3, 4.10, 12.3; exact quantity/date/text rules; no Budget call. |
+| Cancel on new unsaved form | Return to the existing workspace without creating a Need. | §12.3; no persistence. |
+| Save draft / Save changes | Persist permitted draft values and stay on the saved form. | §§8.4, 12.3; first save returns generated root/revision; retained partial draft. |
+| Submit for review / Resubmit for review | Save then submit as one user intention; open submitted detail on confirmed success. | §8.4; separate underlying keys/results; retain saved Draft if submission fails. |
+| Return for correction | Open the appropriate reason dialog; confirmed Return records reason and produces the correction copy. | §12.5; preserve exact submitted snapshot; no unlock. |
+| Do not take forward | Open initial-decline reason dialog; confirm to end only the unaccepted initial Need. | §12.5; existing decline command and reason. |
+| Accept for planning | Perform the one guarded initial acceptance; open accepted detail. | §12.5; no second modal, acceptance reason or spending approval. |
+| Create update | Create/open the permitted draft successor using accepted facts. | §12.4; originator, Accepted state, no other open source change. |
+| Continue update / View proposed changes | Open the exact editable draft or read-only submitted proposal. | §§12.3–12.4; maker access, fixed revision; accepted facts remain current. |
+| Submit update for review | Save/submit the existing successor and return to accepted detail with pending-update notice. | §§8.4, 12.3; initial intake closure does not bar accepted successor flow. |
+| Accept proposed changes | Accept the exact submitted successor, open the new accepted detail. | §12.5; source supersession only; plans do not change automatically. |
+| Decline proposed changes | Open update-decline reason dialog; confirm to end the successor. | §12.5; retain previous accepted revision. |
+| Withdraw need on unaccepted draft/correction | Open focused confirmation; confirmed withdrawal opens terminal detail. | §12.3; existing pre-acceptance command only. |
+| Cancel update | Open focused confirmation; confirmed cancellation ends only the draft successor. | §12.3; retain accepted Need and return to accepted detail. |
+| Request withdrawal | Open one-reason dialog; confirmed request shows accepted detail and actual request state. | §12.6 and §8.3; originator/open-change guard; no Planning task. |
+| Decline withdrawal | Open reason dialog; confirmed decline ends the request and retains accepted Need. | §12.6; reviewer authority/maker-checker. |
+| Approve withdrawal | Open focused confirmation; confirm rechecks all accepted-revision dependencies through commit. | §8.3 and §12.6; fresh clear owner result; no cached-clearance authority. |
+| Cancel in any decision/confirmation dialog | Dismiss without applying that decision; return focus to its trigger. | Shared standard §3; existing parent state retained. |
+| Close in withdrawal review | Return to the existing Needs workspace without a decision. | Navigation only; no clearance/withdrawal mutation. |
+| View departmental plan / View annual plan item | Open the exact owner-authorised DPP Submission or Plan Item represented by the evidence. | §12.9 and owner-returned targets; navigation only; no guessed route or approval. |
+| View earlier requirement / View current accepted requirement | Open the explicitly selected immutable accepted revision. | NDS-UI-06; §12.4; keep historical version distinct from current. |
+| Back to procurement planning | Return to the originating authorised Planning record/context. | Existing owner entry context; no generic Procurement Home. |
+| Back to Departmental Needs | Open the existing Needs workspace and resolve current access. | NDS-UI-01; no record mutation. |
+| History / Planning decisions and history / Technical details | Expand/collapse the named same-page section. | Authorised exact version/evidence reads; no business command or forced download. |
+| Read full description / Read full reason / Show less | Expand the original stored text in place, or return to its faithful preview. | No text rewriting; keyboard focus remains on the expansion control. |
+| Try again on load or Planning failure | Repeat the corresponding read/check and replace the error only when resolved. | §§12.8–12.9; missing/unavailable does not become Not included. |
+| Refresh after a changed review | Reload the task’s authoritative current result and permitted controls. | §12.5; no replayed decision or fabricated success. |
+| Unknown submission result | Recover the original request identity/result before another mutation. | §8.4; pending initiating controls stay disabled; no duplicate root/task. |
+| Terminal detail | Show final state and preserved evidence read-only. | Existing lifecycle §§5.1–5.3; no new terminal command. |
+
+The primary Author workspace omits the optional annual-plan marker. Its explicit PLAN-INCLUDED and PLAN-NOT-INCLUDED variants exercise the existing optional presentation only with confirmed exact-revision owner data. Closed-intake editor/workspace variants, return/cancellation dialogs, maker-only links and all mixed Planning states retain their existing runtime predicates; the designer does not choose these predicates.
+
 ## 13. Audit and historical integrity
 
 - Framework audit fields identify record creation and technical updates. DepartmentalNeedDecision records business transitions.
@@ -995,6 +1433,8 @@ SEED-001 v1.3 governs the shared distinction: the default Plan with None/None pl
 
 On 25 Nov 2026 Julia certifies DHI at 10:30 EAT and Peter certifies HRMD at 11:00. Mercy accepts the DHI Submission 1 on 27 Nov at 14:00 and HRMD at 14:05. In the proceeding BASE scenario, each Need in the accepted source cohort emits its own Proceeding disposition at that DPP acceptance;0002 remains unaccepted and emits none. Infrastructure0001 and deployment 0004 refer to DHI Submission 1; training 0003 Revision 2 refers to HRMD Submission 1. Exact root/Submission IDs come from the owner fixture and are not guessed from display labels.
 
+The 27 Nov 2026, 14:00 EAT acceptance of DHI Submission 1 retains its Proceeding disposition for infrastructure 0001 Revision 1. It is not reused as an exclusion event. The no-Active-inclusion exclusion variant instead uses the distinct later DHI Submission 2 acceptance on 4 Jan 2027, 14:00 EAT in NDS-SC-DISPOSITION-EXCLUDED (§14.6A). The still-Active exclusion is a different isolated profile with its own Submission 2 acceptance on 5 Jan 2027, 10:00 EAT. Each builder supplies separate exact submission/event identities; a matching display number across isolated profiles does not make their evidence interchangeable. Annual-plan inclusion still requires the separate authoritative activation described below; DPP acceptance alone does not produce it.
+
 A separate conditional Active scenario, after all owner readiness/legal/configuration/date gates pass, includes infrastructure 0001 Revision 1 in `PPI-MOH-2027-021` and training 0003 Revision 2 plus deployment 0004 Revision 1 in `PPI-MOH-2027-033`, with exact Active Plan `PLN-MOH-2027-001`/Version1 and allocation identities from Planning. Each source is Fully included only after actual Plan activation. This conditional profile supplies NDS-DES-07 and the blocked withdrawal artboard; it never forces BASE Active or loads Active usage into November screens.
 
 Need source quantities are Programme 1, Each 100 and Each 150; laptops require31 Dec 2027 in Needs/Planning. REQ’s operational30 Sep 2027 date is a later owner field and never overwrites these source dates. Funding selection is entirely Planning-owned; BUD v1.8’s fresh HWD Entity-wide line supports both departments, with reservations 20m/30m created only at REQ authorisation and never projected as NDS funding data.
@@ -1009,7 +1449,7 @@ The successor profile copies NDS-MOH-2027-0001 Revision 1 into Revision 2 and ch
 |---|---|---|
 | Required by | 31 Aug 2027 | 15 Sep 2027 |
 
-Acceptance emits the exact supersession event without altering Revision 1.
+Acceptance emits the exact supersession event without altering Revision 1. For the explicitly isolated NDS-DES-07A-OLDER / historical-read artboards, Peter accepts infrastructure Revision 2 on 15 Dec 2026 at 10:15 EAT, after the 09:45 submission and 10:05 review. This fixture supplies the missing displayed acceptance facts; it does not change the canonical Revision 1 acceptance or imply automatic Planning inclusion.
 
 The withdrawal profile creates `NDS-WDR-MOH-2027-0001` with the exact NDS-DES-11 reason. Its blocked variant uses the Active Plan dependency in section 14.4; its cleared variant uses an authoritative Planning result with no Active inclusion of **any** accepted revision, with exact dependency revision evidence. Merely injecting a local Not included projection is not a valid withdrawal test.
 
@@ -1026,7 +1466,7 @@ This section previously held a bare, ungrounded `SRC-KEBS-ICT-00X` profile — n
 | Profile | Precondition / exact result |
 |---|---|
 | NDS-SC-DISPOSITION-NONE | Accepted Need; owner confirms both an empty accepted-disposition history and no Active inclusion. Card says no accepted decision, not implicit Proceeding. |
-| NDS-SC-DISPOSITION-EXCLUDED | DHI Submission 1 accepted 27 Nov 2026, 14:00 by Mercy with infrastructure 0001 not proceeding; exact reason from NDS-DES-07A. Need remains Accepted, usage Not included. |
+| NDS-SC-DISPOSITION-EXCLUDED | Independent BASE-derived profile with no Plan activation. After canonical DHI Submission 1, create and certify a later DHI Submission 2 through PLN’s accepted-update lifecycle; Mercy Kilonzo accepts it on 4 Jan 2027, 14:00 EAT. Infrastructure 0001 Revision 1 receives Not proceeding this financial year with the exact reason from NDS-DES-07A. Need remains Accepted; owner confirms usage Not included. This Submission 2 and its acceptance event have their own owner-generated identities, distinct from both canonical Submission 1 and the 5 Jan still-Active profile. |
 | NDS-SC-EXCLUDED-STILL-ACTIVE | Independent conditional Active baseline; later DHI Submission 2 accepted 5 Jan 2027, 10:00 with exclusion. Preserve Fully included and block withdrawal. |
 | NDS-SC-RESTORED | Successor to preceding isolated profile: DHI Submission 3 accepted 6 Jan 2027, 10:00, Proceeding/reason null; retain prior exclusion in history. No usage change from this event. |
 | NDS-SC-OLDER-REVISION-ACTIVE | Revision 2 accepted through the normal December successor profile; Revision 1 remains represented in the prior Active Plan. Current card labels both; withdrawal remains blocked. |
@@ -1168,7 +1608,7 @@ These additional criteria implement NDS-UX-001–010. Retained NDS11-AC identifi
 | NDS12-AC-010 | NDS-UX-005 | Acceptance still enforces current task token, reviewer scope, maker-checker and atomic snapshot/task/outbox rules; a stale or unauthorised click cannot decide the task. |
 | NDS12-AC-011 | NDS-UX-006 | Update review shows changed facts first and all six proposed facts on the page, labels Accept proposed changes and Decline proposed changes distinctly, and explains which requirement remains effective. |
 | NDS12-AC-012 | NDS-UX-006 | Accepting an update changes the current accepted pointer with lineage; returning creates a copied correction; declining records its reason and preserves the earlier accepted requirement and downstream history. |
-| NDS12-AC-013 | NDS-UX-007 | All §11.8A variants keep Departmental plan and Current annual plan separate, including excluded-but-still-included and newer-accepted/older-Active combinations, with readable exact supporting evidence. |
+| NDS12-AC-013 | NDS-UX-007 | All §11.8A variants keep Departmental plan and Current annual plan separate, including excluded-but-still-included and newer-accepted/older-Active combinations, with readable exact supporting evidence. The no-Active exclusion uses its distinct 4 Jan 2027, 14:00 EAT Submission 2 event; neither the canonical 27 Nov Proceeding event nor the separate 5 Jan still-Active event is reused as its evidence. Match §14.6A profile identities as well as displayed dates. |
 | NDS12-AC-014 | NDS-UX-007 | Confirmed empty, pending, failed and historical results remain distinct; authorised links open exact owner records and refresh never changes source state, creates a task or proves fulfilment/withdrawal clearance. |
 | NDS12-AC-015 | NDS-UX-008 | Withdrawal review states the blocker, responsible function and permitted next action. Clear, blocked and unavailable owner results expose the correct controls; a permitted decline remains available without falsely clearing usage. |
 | NDS12-AC-016 | NDS-UX-008 | Approve withdrawal retains the focused confirmation and authoritative all-revision serialized owner check at commit. Earlier Active inclusion, a race with activation or unknown evidence prevents approval despite a local Not included card. |
@@ -1177,6 +1617,36 @@ These additional criteria implement NDS-UX-001–010. Retained NDS11-AC identifi
 | NDS12-AC-019 | NDS-UX-010 | Author, HoD, Planner source reader, Auditor and Administrator/System Manager technical reader receive the scoped shared detail/action combinations in §6.1; no new AO, Finance or supplier Need role/workspace is introduced. |
 | NDS12-AC-020 | NDS-UX-010 | Complete facts, reasons, differences and history are readable with structured supporting detail, keyboard access, text status, adequate contrast and narrow-screen wrapping; no forced download. Record representative-user findings before claiming tested usability. |
 
+### 15.3 Explicit design-contract acceptance coverage
+
+| ID | Required result |
+|---|---|
+| NDS13-AC-001 | Each §11 artboard defines its purpose, external fixture, header, ordered regions, exact controls, supporting detail and visual check under KT-STD §§2.6–2.8. |
+| NDS13-AC-002 | Design generation uses only KT-STD v1.7 §2 plus NDS §11; runtime action mapping remains in §12.10 and no permission/API/lifecycle algorithm is drawn. |
+| NDS13-AC-003 | Primary Author workspace has exact action/filter placement, complete title/reference rows, no annual-plan marker and no unresolved optional content; its named variants provide distinct alternate layouts. |
+| NDS13-AC-004 | Canonical Grace retains both Author assignments and sees the inline selector; single-target screen uses an explicitly isolated reduced-assignment fixture; no new creation step or authority. |
+| NDS13-AC-005 | Initial, returned, submitted, accepted, update and withdrawal screens retain all six complete source facts, exact historical reasons and distinct decision consequences. |
+| NDS13-AC-006 | Every Planning variant fixes both displayed results, source evidence and link/action treatment; preserve the canonical 27 Nov event and distinct 4 Jan and 5 Jan exclusion profiles. |
+| NDS13-AC-007 | Every interactive control maps through §12.10 to its existing read/command/navigation result, including Cancel, Close, filters, disclosures, owner links and retries. |
+| NDS13-AC-008 | Loading/empty/denied/error/closed/partial/unknown states are discrete artboards with definite controls; no failed result is represented as a successful empty list or guessed source absence. |
+| NDS13-AC-009 | Technical variants conform to KT-STD v1.7 §3A.6 and shared conformance/search registration; ordinary masking and business assignment clauses cannot restrict technical read. |
+| NDS13-AC-010 | All actor/state artboards are compared against the explicit compositions and tested for readable hierarchy, keyboard/focus and narrow layouts; document completion does not imply user acceptance. |
+
+### 15.4 Stage 2 presentation acceptance
+
+| ID | Required result |
+|---|---|
+| NDS14-AC-001 | The Stage 2 rewrite changes no field, stored value, lifecycle state, responsibility, authority predicate, command, route, event, integration or audit rule from approved v1.13. |
+| NDS14-AC-002 | Every §11 screen names and follows a KT-STD-001 v1.7 archetype and assigns Level 1–3 information explicitly or through a named reused base composition. |
+| NDS14-AC-003 | The HoD workspace presents the pending decision before all register controls, uses an action-led task row for the single pending fixture and renders the departmental register as a visibly quieter secondary region. |
+| NDS14-AC-004 | Author workspaces expose Create/Continue work before the register; filters remain local to the register and repeated Department/FY context is removed. |
+| NDS14-AC-005 | Submitted, accepted and terminal details present current truth as readable narrative and compact facts rather than disabled/read-only form controls; history remains complete but subordinate. |
+| NDS14-AC-006 | Initial, update and withdrawal reviews state the decision question/result first, keep every material fact visible, place consequence with the actions and give the positive lawful action clear visual priority. |
+| NDS14-AC-007 | Accepted detail and every §11.8A variant keep Need acceptance, departmental-plan disposition and annual-plan inclusion independent and understandable without expanding provenance. Mixed and unavailable states cannot be mistaken for a source-state change or fulfilment. |
+| NDS14-AC-008 | Forms retain exactly six user-entered values, same-form Department choice and existing save/submit commands while using compact ownership orientation and non-obscuring action areas. |
+| NDS14-AC-009 | Rendered artboards use typography, spacing and restrained surface contrast before borders; no repeated full-width accent rules, unexplained selected rows, decorative KPI cards or full-width boxes containing only one or two facts. |
+| NDS14-AC-010 | Representative Author and HoD first-view tests identify purpose, current work/result, primary action and current/proposed/history distinction without reading the specification. Complete the dense, blocked, unavailable and narrow-layout scenarios before claiming Stage 2 usability. |
+
 ## 16. Implementation and test constraints
 
 ### 16.1 Frappe and UI implementation
@@ -1184,7 +1654,7 @@ These additional criteria implement NDS-UX-001–010. Retained NDS11-AC identifi
 - Implement domain records as explicit Frappe DocTypes with server-side controllers/services; do not store business state in client-only objects.
 - Mount Vue 3 pages through the existing `frappe.ui.make_app_page()` → built bundle → `createApp().mount()` pattern already proven by the Strategy pilot.
 - Port Claude Design markup and design tokens into scoped Vue single-file components. Design export runtime files remain design evidence under `docs/` and are not imported into production.
-- Reuse the existing KenTender page header, context strip, fields, buttons, badges, tables, dialogs, states and token chain before creating a module-local component.
+- Reuse the existing KenTender page header, compact orientation, task-row, field, button, badge, register, dialog, disclosure and state components before creating a module-local component. Do not retain a context strip merely because v1.13 used one.
 - Keep component styles scoped beneath one Departmental Needs root. Do not add Tailwind Preflight, a CDN, global element resets or rules that restyle Frappe Desk.
 - Use Frappe RPC/resource APIs for authorised services. Do not expose writable DocType endpoints that bypass commands.
 - Register only the canonical routes in section 10. Page controllers unmount Vue and detach listeners before remount.
@@ -1198,7 +1668,10 @@ Additional evidence for this document:
 
 - repository scan proving `NeedsIntakeWindow`, `PEFiscalYearContext`, every Frappe User Permission read and every Fiscal Year user grant are absent from Departmental Needs code, seeds and fixtures;
 - a Cartesian-product regression proving one user's Author and acting-HoD assignments do not cross Organisation Units; and
-- a browser journey proving a departmental user creates a Need from one ordinary assignment with no pre-entry context step.
+- a browser journey proving a departmental user creates a Need from one ordinary assignment with no pre-entry context step;
+- 1440 × 1024 comparison of the Author workspace, HoD workspace, initial review, accepted detail and withdrawal review against their Stage 2 compositions;
+- supported narrow-desktop verification preserving task priority, all six facts, Planning-result distinction and decision access; and
+- recorded first-view findings for Grace and Peter covering the NDS14-AC-010 scenarios.
 
 ### 16.3 Required AUTH-ADR-001 v1.7 correction slice
 
@@ -1254,14 +1727,14 @@ The universal list is KT-STD-001 §2.3 and §10. Additionally, for this document
 | Approved CFG v0.10 | Effective intake close, native UOM/precision adapter and current owner decision validation; separate Needs/DPP controls. |
 | Approved BUD v1.8 | Exact Money boundary outside NDS, source-OU line eligibility through Planning, REQ-stage reservation. The Need-origin selection wording receives the §7.3 ownership clarification. |
 | Approved SEED v1.3 | Shared actor chronology, three accepted sources, BASE/conditional Active distinction, quantities/dates. Approved NDS v1.11 resolves the infrastructure acceptance actor/instant retained in §14.3; executable shared-seed adoption still requires evidence. |
-| AUTH v1.7 / supplied KT-STD v1.4 | Role-bound scope hooks, technical read, maker-checker and common design/verification requirements. Later shared-standard citation cleanup remains separately owned. |
+| AUTH v1.7 / approved KT-STD v1.7 | AUTH-owned business assignments/maker-checker; current standard controls technical read and task-led design composition. Matching shared technical-search/conformance owner specification remains a named dependency. |
 | Approved LAW v1.1 | Legal correction/verification status and positive downstream claim limits. This document creates no new legal conclusion or verification. |
 
 Ownership controls the value/decision. NDS governs source lifecycle; PLN governs disposition/usage and its own immutable approvals; CFG governs setup; BUD governs financial positions. An event delivery or UI label never transfers that authority. No current code/test behavior is asserted from a requirements file alone.
 
 ### 18.2 Full change register for re-implementation
 
-All 28 NDS11-CHG rows remain traceable to the approved v1.11 baseline; their historical counts and screen wording describe that baseline. The ten NDS12-CHG rows below reconcile the operative usability contract. Implement this successor’s current sections and criteria wherever prior wording conflicts. Total: **38 change rows**.
+All 28 NDS11-CHG rows remain traceable to the approved v1.11 baseline; their historical counts and screen wording describe that baseline. NDS12-CHG-001–011 reconcile the usability contract and fixture correction. NDS13-CHG-001–005 retain the v1.13 explicit-contract history. NDS14-CHG-001–006 define the Stage 2 presentation rewrite. Implement this successor’s current sections and criteria wherever prior presentation wording conflicts. Total: **50 change rows**.
 
 | ID | Prior issue / gap | Complete required change | Locations | Verification |
 |---|---|---|---|---|
@@ -1303,6 +1776,19 @@ All 28 NDS11-CHG rows remain traceable to the approved v1.11 baseline; their his
 | NDS12-CHG-008 | NDS-UX-008: Withdrawal blockers lacked a clear next action | State why withdrawal cannot proceed and Procurement’s existing responsibility; keep allowed decline, focused approval confirmation and all-revision current owner validation. No new clearance workflow. | §§9, 11.12–11.14, 12.6 | NDS12-AC-015–016 |
 | NDS12-CHG-009 | NDS-UX-009: Technical errors and retry states confused users | Map all stable errors to plain explanation/recovery; distinguish failure, partial success and unknown result; preserve authorised edits, server closure rules, access protection and safe retry. | §§8.4, 9, 11.15, 12.3, 12.7–12.8 | NDS12-AC-017–018 |
 | NDS12-CHG-010 | NDS-UX-010: Actor coverage and supporting detail lacked shared usability rules | Define all five actor group journeys with shared readable facts, changes, reasons and history. Structure supporting detail, retain full evidence and enforce keyboard/contrast/narrow-screen checks. No new business roles. | §§6.1, 11.1–11.17, 12.8–12.9, 15.2 | NDS12-AC-019–020 |
+| NDS12-CHG-011 | Editorial fixture defect: §11.8A and §14.6A reused canonical DHI Submission 1 acceptance for an opposite disposition on infrastructure 0001 Revision 1 | Use distinct DHI Submission 2 accepted by Mercy Kilonzo on 4 Jan 2027, 14:00 EAT in the BASE-derived no-activation profile; require separate owner submission/event identities. Preserve canonical 27 Nov Proceeding, conditional activation and 5 Jan still-Active fixtures. Strengthen the existing variant criterion; no domain/lifecycle change. | §§11.8A, 14.4, 14.6A, 15.2 | NDS12-AC-013; NDS11-AC-083 |
+
+| NDS13-CHG-001 | Dense, cryptic screen inventory replaced spatial instructions | Historical v1.13 correction under KT-STD v1.6; retained as evidence and superseded for presentation by the v1.14 Stage 2 task-led rewrite under KT-STD v1.7. | §11 in full; §18.1 | NDS13-AC-001–002 |
+| NDS13-CHG-002 | Primary fixtures left action visibility and optional layout unresolved | Define exact Author/HoD layout and discrete status, failure, pending and content variants; keep all six source facts and exact record evidence. | §§11.2–11.17 | NDS13-AC-003, 005–006, 008 |
+| NDS13-CHG-003 | Grace single-target wording conflicted with her two supplied Author assignments | Show canonical inline Department selector; reserve single-target read-only context for a named isolated profile. Complete isolated successor acceptance/terminal display facts without changing canonical events. | §§11.4, 11.8A, 11.16–11.17, 14.5 | NDS13-AC-004–006 |
+| NDS13-CHG-004 | Control purposes scattered or implicit | Add complete action-to-result/contract map outside design input; preserve current commands, guarded multi-command submission and all owner boundaries. | §12.10 | NDS13-AC-007 |
+| NDS13-CHG-005 | Older technical-read wording and vague reader compositions | Cite current standard §3A.6; remove conflicting assignment exception; specify reader/technical variants and require common owner registration evidence. | §§6, 11.17, 15.3, 18.3 | NDS13-AC-009–010 |
+| NDS14-CHG-001 | v1.13 optimised deterministic placement without governing comprehension | Adopt approved KT-STD-001 v1.7 archetypes, four-question first view and Level 1–3 information priority; preserve all domain contracts. | §§1, 11.1, 15.4 | NDS14-AC-001–002 |
+| NDS14-CHG-002 | Workspaces presented tasks and registers as peer tables while global filters dominated the page | Use action-led task regions, local register filters and visibly subordinate registers; retain one route and all authorised rows. | §§11.2–11.3, 11.17 | NDS14-AC-003–004 |
+| NDS14-CHG-003 | Read-only details and reviews resembled disabled forms and hid the decision question in field inventory | Present current state/result first, readable requirement narratives and compact quantity/date summaries; preserve all six facts and exact decisions. | §§11.6–11.7, 11.10, 11.13 | NDS14-AC-005–006 |
+| NDS14-CHG-004 | Accepted Need, departmental disposition and annual-plan inclusion remained technically separate but visually mechanical | Use two independent explained Planning results, keep acceptance current and move exact lineage to one supporting disclosure. | §§11.8–11.8A, 12.9 | NDS14-AC-007 |
+| NDS14-CHG-005 | Context boxes, borders, uppercase headings and repeated accent rules could outweigh tasks/actions | Bind visual restraint, semantic action hierarchy and selected/focus-state meaning to the NDS artboards under the shared standard. | §§11.1–11.17, 15.4 | NDS14-AC-009 |
+| NDS14-CHG-006 | Content completeness could pass without proving first-view comprehension | Add role-based first-view, dense, blocked, unavailable and narrow-layout validation before usability or release claims. | §§15.4, 16.2, 18.3 | NDS14-AC-010 |
 
 ### 18.3 Owner dependencies and release evidence
 
@@ -1316,12 +1802,13 @@ All 28 NDS11-CHG rows remain traceable to the approved v1.11 baseline; their his
 | NDS11-XD-006 | Narrow BUD v1.8 ownership editorial | Its table still describes an “Accepted Need and selected Budget Line.” Clarify that selection belongs to the Need-origin DPP entry; do not add a Need field. The approved BUD file is not silently rewritten in this NDS review. |
 | NDS11-XD-007 | CFG native metadata and intake integration | Verify actual UOM selectable/whole-number/precision fields, effective-open transaction control and cleanup audit. NDS does not own an intake editor or hard-code native fields. |
 | NDS11-XD-008 | Data reconciliation — NDS owner | Inspect existing accepted hashes/quantities, stale projection IDs, gaps and simultaneous open successor/withdrawal records. Preserve submitted/accepted history; repair through controlled reconciliation, not blanket deletes/re-hashes. |
-| NDS11-XD-009 | UI/artboard implementation — NDS UI owner | Implement the revised §§11–12 across all actor journeys, including §11.8A and all ten approved usability changes; verify reason readability, keyboard/retry behavior, authorized links and distinct statuses with representative users. This review establishes the specification, not completed artboards or tested UX. |
+| NDS11-XD-009 | UI/artboard implementation — NDS UI owner | Implement the v1.14 §§11–12 task-led compositions across all actor journeys, including §11.8A. Verify first-view hierarchy, reason readability, keyboard/retry behaviour, authorised links, mixed Planning states and narrow layouts with representative users. This review establishes the specification, not completed artboards or tested UX. |
 | NDS11-XD-010 | CFG/LAW/SEED positive downstream prerequisites | CFG-XD-001 FY/applicability and LAW v1.1 verification items remain. A passing NDS consultation/event test does not certify the entire procurement chain or current law. |
 | NDS11-XD-011 | FU-25 REQ/TPR sibling review | REQ v1.8 has been produced as a proposed sibling successor, not approved through this NDS document; TPR and any remaining owner changes still require their own controlled review, including drawdown naming, scope/hold errors, correction outcomes and requester follow-up. This NDS edit supplies source/disposition boundaries but does not update those owners’ specifications. |
 | NDS11-XD-012 | FU-27 common-standard citation cleanup | Consolidate technical-read citations with the actual later controlling standard when supplied; preserve existing AUTH technical read without inventing a new role or extra approval. |
 | NDS12-XD-001 | UI/service orchestration — NDS implementation owner | Map §8.4 to actual save/submit RPC responses, command idempotency records and authorised outcome lookup/replay. Prove partial and unknown outcomes, no duplicate root/task, stale-write protection and effective close at each applicable command. No assumed atomic save-plus-submit or invented existing API. |
 | NDS12-XD-002 | Usability validation — NDS product/UI owner | Conduct representative Author/HoD tasks and scoped reader checks against §15.2; retain observed completion, misunderstanding and recovery findings. Verify full evidence readability and all-actor access before claiming the redesign is usable in practice. |
+| NDS13-XD-015 | Shared technical search/conformance — AUTH and kentender_core | KT-STD v1.7 retains §3A.6 and its AUTH-DES-09 / AUTH §9 conformance references; those details are absent from the supplied AUTH v1.7. Obtain the matching owner specification and implementation evidence; register NDS record types/read entries. Do not defer the mandated read right or build a duplicate module search. |
 
 Future fulfilment derivation, tender amendment for scope expansion, accounting integration and new consultation attachment/classification workflows remain outside this module unless separately approved. No “Planning information” badge substitutes for those facilities.
 
@@ -1340,8 +1827,10 @@ Future fulfilment derivation, tender amendment for scope expansion, accounting i
 
 ## 20. Approval effect
 
-**NDS-CHG-001 v1.12 is approved by the Project Owner on 13 September 2026.** Approval covers this complete consolidated successor, including the incorporated ten-change Departmental Needs Usability Amendment v0.1 and the explicit submission/recovery, interaction, acceptance and implementation contracts. The amendment’s earlier approval and this full-document approval are both recorded.
+NDS v1.14 is approved as the Stage 2 presentation successor to NDS v1.13. It supersedes v1.13 as the complete Departmental Needs implementation specification. Approved KT-STD-001 v1.7 is the current shared standard.
 
-Approved v1.12 supersedes v1.11 and earlier Departmental Needs implementation specifications in full. It retains the six-field consultation channel, accepted DPP disposition and separate Active usage, exact Quantity/UOM contracts, role/intake/withdrawal safeguards and reconciled fixtures. The full contract contains **105 acceptance criteria** (85 retained and reconciled plus 20 usability criteria), **38 change-register rows** (28 retained plus ten approved usability changes), and 14 explicit owner/verification dependencies.
+This revision replaces the v1.13 presentation architecture with task-led workspaces, forms, reviews and record details. It preserves the six-field optional consultation channel, source/disposition/Active-usage boundaries, accepted-update and withdrawal governance, routes, services, commands, events, permissions, audit rules and canonical fixture chronology. It introduces no new business field, state, approval stage, role, module or prototype stack.
 
-Approval records the design/documentation decision. It does not establish deployed code, passed owner-contract/browser/concurrency tests, participant-tested usability, a migrated live data set, verified current law or closure of §18.3. Revision names and accepted-event identity keys remain stable; any actual wire-type migration must be explicitly coordinated. Implementers use this single document’s operative rules and record concrete evidence against its acceptance criteria. Planning v1.19 and Requisitions v1.8 retain their separate proposed status.
+The full contract contains **125 acceptance criteria** (115 retained plus ten Stage 2 presentation criteria), **50 change-register rows** (44 retained plus six Stage 2 changes), and **15 named owner/verification dependencies**. The approved usability amendment remains historical direction; this document supplies the single operative screen contract. No separate UI amendment or competing design prompt is required.
+
+Approval authorises artboard regeneration and implementation correction; it does not demonstrate rendered fidelity, representative-user comprehension, shared-owner integration, source verification or production release. Complete those checks under KT-STD-001 v1.7 and this document's acceptance/dependency tables. The corrected 4 January exclusion, 5 January still-Active fixture and 27 November canonical event remain separate evidence.
