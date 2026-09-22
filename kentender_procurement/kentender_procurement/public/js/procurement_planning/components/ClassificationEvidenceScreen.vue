@@ -226,8 +226,8 @@ const RECOVERY_TEXT = {
 		"This requirement is already in a draft purchase. The purchase will need to be rebuilt before the plan can continue. "
 		+ "The accepted departmental submission will not change.",
 	plan_successor:
-		"This requirement is in a plan that is already under review or in force. That plan stays exactly as it is; "
-		+ "the corrected classification is carried in through the applicable correction or plan update.",
+		"This requirement is in a plan that is already under review or in force. The corrected classification is "
+		+ "carried in through the applicable correction or plan update; that plan stays exactly as it is until then.",
 	downstream_owner:
 		"This purchase is already in procurement and cannot be reclassified through Planning. The correction is recorded, "
 		+ "but it has not changed the existing procurement. Follow the correction or cancellation process shown for that procurement.",

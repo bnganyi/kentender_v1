@@ -1660,9 +1660,9 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 		"preparation_signature": _signature_summary(version),
 		"confirm_label": "Adopt and submit" if task_doc.stage == "Accounting Officer adoption" else "Approve Annual Procurement Plan",
 		"return_dialog": (
-			{"title": "Return Plan Version for correction?", "lede": f"The submitted Version {version.version_number} remains unchanged. State the correction required."}
+			{"title": "Return Plan Version for correction?", "lede": f"State the correction required. The submitted Version {version.version_number} remains unchanged."}
 			if task_doc.stage == "Accounting Officer adoption"
-			else {"title": "Return adopted Plan Version for correction?", "lede": f"The Accounting-Officer-adopted Version {version.version_number} remains unchanged. State the correction required."}
+			else {"title": "Return adopted Plan Version for correction?", "lede": f"State the correction required. The Accounting-Officer-adopted Version {version.version_number} remains unchanged."}
 		),
 		# v1.18 §6.3/D-register — a positive decision additionally needs a
 		# current funding basis (U11-stale); Return stays available regardless.

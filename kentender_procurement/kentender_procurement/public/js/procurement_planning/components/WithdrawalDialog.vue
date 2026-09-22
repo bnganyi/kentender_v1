@@ -58,12 +58,12 @@
 			</div>
 
 			<p class="pln-dialog-lede" data-testid="pub-withdrawal-consequence">
-				The approved plan will remain in history.
 				{{
 					isDecision
 						? "A correction draft will be prepared and will repeat the required review and approval."
 						: "If the request is approved, a correction draft will repeat the required review and approval."
 				}}
+				The approved plan will remain in history.
 			</p>
 
 			<p v-if="error" class="pln-dialog-error" role="alert" data-testid="pub-withdrawal-error">{{ error }}</p>

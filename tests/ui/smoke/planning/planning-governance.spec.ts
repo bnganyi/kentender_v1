@@ -110,7 +110,7 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		const dialog = page.locator('[data-testid="rvw-return-dialog"]');
 		await expect(dialog).toBeVisible();
 		await expect(dialog.locator(".kt-dialog-title")).toHaveText("What needs to change?");
-		await expect(dialog).toContainText("The submitted Version 1 remains unchanged. State the correction required.");
+		await expect(dialog).toContainText("State the correction required. The submitted Version 1 remains unchanged.");
 		const confirm = page.locator('[data-testid="rvw-return-confirm"]');
 		await expect(confirm).toBeDisabled();
 		await page.locator('[data-testid="rvw-return-reason"]').fill("Confirm the planned contract-signing date against the delivery completion date.");
@@ -143,7 +143,7 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		await page.locator('[data-testid="rev-secondary"]').click();
 		const dialog = page.locator('[data-testid="rvw-return-dialog"]');
 		await expect(dialog.locator(".kt-dialog-title")).toHaveText("What needs to change?");
-		await expect(dialog).toContainText("The Accounting-Officer-adopted Version 1 remains unchanged. State the correction required.");
+		await expect(dialog).toContainText("State the correction required. The Accounting-Officer-adopted Version 1 remains unchanged.");
 		await expect(dialog.locator("label")).toHaveText(["Comment"]);
 		await expect(dialog.locator("textarea")).toHaveCount(1);
 	});

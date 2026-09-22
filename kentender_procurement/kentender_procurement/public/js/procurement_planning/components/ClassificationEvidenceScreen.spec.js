@@ -187,7 +187,10 @@ describe("ClassificationEvidenceScreen — U06-CORRECT-CLASSIFICATION", () => {
 				},
 			}),
 		});
-		expect(w.find('[data-testid="pln-class-impact"]').text()).toContain("That plan stays exactly as it is");
+		expect(w.find('[data-testid="pln-class-impact"]').text()).toContain(
+			"The corrected classification is carried in through the applicable correction or plan update",
+		);
+		expect(w.find('[data-testid="pln-class-impact"]').text()).toContain("that plan stays exactly as it is until then");
 	});
 
 	it("says plainly that a scope-locked purchase cannot be reclassified through Planning", () => {
