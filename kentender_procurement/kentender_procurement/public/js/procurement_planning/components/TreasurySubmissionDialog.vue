@@ -71,27 +71,32 @@
 
 			<div class="kt-region">
 				<h2 v-if="isCorrection">Corrected details</h2>
-				<div class="kt-field">
-					<label for="pub-treasury-sent" class="kt-label">Date and time sent</label>
-					<input id="pub-treasury-sent" class="kt-input" type="datetime-local" data-testid="pub-treasury-sent" v-model="form.submitted_at">
-				</div>
-				<div class="kt-field">
-					<label for="pub-treasury-channel" class="kt-label">Submission channel</label>
-					<input id="pub-treasury-channel" class="kt-input" data-testid="pub-treasury-channel" v-model="form.channel">
-				</div>
-				<div class="kt-field">
-					<label for="pub-treasury-destination" class="kt-label">Destination</label>
-					<input id="pub-treasury-destination" class="kt-input" data-testid="pub-treasury-destination" v-model="form.destination">
-				</div>
-				<div class="kt-field">
-					<label for="pub-treasury-dispatch" class="kt-label">Dispatch/reference number</label>
-					<input id="pub-treasury-dispatch" class="kt-input" data-testid="pub-treasury-dispatch" v-model="form.dispatch_reference">
+				<!-- U13-TREASURY-FORM/-CORRECT-EVIDENCE — the four core fields sit
+				     on a two-column grid, matching the artboard; only the evidence
+				     file and the reason/confirmation below run full width. -->
+				<div class="pln-treasury-grid">
+					<div class="kt-field">
+						<label for="pub-treasury-sent" class="kt-label">Date and time sent</label>
+						<input id="pub-treasury-sent" class="kt-input" type="datetime-local" data-testid="pub-treasury-sent" v-model="form.submitted_at">
+					</div>
+					<div class="kt-field">
+						<label for="pub-treasury-channel" class="kt-label">Submission channel</label>
+						<input id="pub-treasury-channel" class="kt-input" data-testid="pub-treasury-channel" v-model="form.channel">
+					</div>
+					<div class="kt-field">
+						<label for="pub-treasury-destination" class="kt-label">Destination</label>
+						<input id="pub-treasury-destination" class="kt-input" data-testid="pub-treasury-destination" v-model="form.destination">
+					</div>
+					<div class="kt-field">
+						<label for="pub-treasury-dispatch" class="kt-label">Dispatch/reference number</label>
+						<input id="pub-treasury-dispatch" class="kt-input" data-testid="pub-treasury-dispatch" v-model="form.dispatch_reference">
+					</div>
 				</div>
 
 				<!-- §10.12 — the evidence itself. It is optional because the
 				     dispatch is recorded whether or not a copy is to hand, and
 				     recording it is what the plan's publication waits on. -->
-				<div class="kt-field">
+				<div class="kt-field pln-treasury-file">
 					<label for="pub-treasury-file" class="kt-label">Submission evidence file</label>
 					<input
 						id="pub-treasury-file"
@@ -103,7 +108,7 @@
 					>
 				</div>
 
-				<div v-if="isCorrection" class="kt-field">
+				<div v-if="isCorrection" class="kt-field pln-treasury-file">
 					<label for="pub-treasury-reason" class="kt-label">Reason for correction</label>
 					<textarea id="pub-treasury-reason" class="kt-input" rows="3" data-testid="pub-treasury-reason" v-model="form.reason"></textarea>
 				</div>
@@ -120,18 +125,24 @@
 
 			<div class="kt-dialog-actions">
 				<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" @click="$emit('cancel')">Cancel</button>
+				<div v-if="!ready" class="pln-treasury-hint-group">
+					<!-- Says what is missing, rather than leaving a dead button. -->
+					<p class="kt-muted" data-testid="pub-treasury-hint">{{ hint }}</p>
+					<button type="button" class="kt-btn kt-btn-primary" data-testid="pub-treasury-submit" disabled>
+						{{ isCorrection ? "Save corrected details" : "Record submission" }}
+					</button>
+				</div>
 				<button
+					v-else
 					type="button"
 					class="kt-btn kt-btn-primary"
 					data-testid="pub-treasury-submit"
-					:disabled="pending || !ready"
+					:disabled="pending"
 					@click="$emit('confirm', { ...form })"
 				>
 					{{ isCorrection ? "Save corrected details" : "Record submission" }}
 				</button>
 			</div>
-			<!-- Says what is missing, rather than leaving a dead button. -->
-			<p v-if="!ready" class="kt-muted" data-testid="pub-treasury-hint">{{ hint }}</p>
 		</div>
 	</div>
 </template>

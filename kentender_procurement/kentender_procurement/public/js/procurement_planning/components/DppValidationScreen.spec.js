@@ -129,6 +129,17 @@ describe("DppValidationScreen — U06 BASE", () => {
 			"It does not approve the Annual Procurement Plan.",
 		);
 	});
+
+	it("groups the statement and both buttons in one decision block, U06's own layout", () => {
+		const w = make({
+			classifications: { [INFRASTRUCTURE.entry_id]: "Works", [LAPTOPS.entry_id]: "Goods" },
+		});
+		const decision = w.find('[data-testid="pln-review-decision"]');
+		expect(decision.classes()).toContain("kt-decision");
+		expect(decision.find('[data-testid="pln-review-consequence"]').exists()).toBe(true);
+		expect(decision.find('[data-testid="pln-review-return"]').exists()).toBe(true);
+		expect(decision.find('[data-testid="pln-review-accept"]').exists()).toBe(true);
+	});
 });
 
 describe("DppValidationScreen — classification input", () => {

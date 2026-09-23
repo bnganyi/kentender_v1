@@ -1643,6 +1643,7 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 		"can_decide": can_decide,
 		"plan_reference": plan.plan_reference,
 		"version_number": version.version_number,
+		"financial_year_label": references.fy_label(plan.fiscal_year),
 		"header": {
 			"eyebrow": f"{task_doc.stage.upper()} · {plan.plan_reference} · VERSION {version.version_number}",
 			"title": plan.title,

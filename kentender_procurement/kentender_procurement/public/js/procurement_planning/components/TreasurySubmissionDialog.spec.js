@@ -45,10 +45,22 @@ describe("TreasurySubmissionDialog — U13-TREASURY-FORM", () => {
 		expect(w.find('[data-testid="pub-treasury-confirm"]').element.checked).toBe(false);
 		await fill(w);
 		expect(w.find('[data-testid="pub-treasury-submit"]').attributes("disabled")).toBeDefined();
-		// Says what is missing rather than leaving a dead button.
-		expect(w.find('[data-testid="pub-treasury-hint"]').text()).toBe(
-			"Confirm the document match to record this submission.",
-		);
+		// Says what is missing rather than leaving a dead button — in the same
+		// group as the button it explains, not floated below the action row.
+		const hint = w.find('[data-testid="pub-treasury-hint"]');
+		expect(hint.text()).toBe("Confirm the document match to record this submission.");
+		expect(hint.element.parentElement.contains(w.find('[data-testid="pub-treasury-submit"]').element)).toBe(true);
+	});
+
+	it("lays the four core fields on a two-column grid, matching the artboard", () => {
+		const w = make();
+		const grid = w.find(".pln-treasury-grid");
+		expect(grid.exists()).toBe(true);
+		for (const id of ["pub-treasury-sent", "pub-treasury-channel", "pub-treasury-destination", "pub-treasury-dispatch"]) {
+			expect(grid.find(`[data-testid="${id}"]`).exists()).toBe(true);
+		}
+		// The evidence file sits below the grid, not inside it.
+		expect(grid.find('[data-testid="pub-treasury-file"]').exists()).toBe(false);
 	});
 
 	it("records once the fields and the confirmation are both there", async () => {

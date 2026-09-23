@@ -148,3 +148,48 @@ block. `pln-item.spec.ts` calls it on the editor in its incomplete state, and
 AGENTS.md §6.6 carries the rule. Verified by reintroducing each defect in the
 live DOM: clean page reports nothing, all three are reported the moment they
 return.
+
+## The same audit, five more screens (23 Sep 2026)
+
+Offered after U09, not raised as a fresh complaint: the owner said "proceed"
+to a sweep of every screen a first text scan flagged for the same class of
+primitive misuse. Each one was re-diffed against its own literal artboard
+section, not assumed guilty from the scan alone — two of the five it named
+(`ClassificationEvidenceScreen.vue`, `departmental_needs/ReasonDialog.vue`,
+`departmental_needs/NeedEditorScreen.vue`) had already been reconciled by
+same-day earlier commits (`8dafe21e`, `99aa651d`) and needed nothing further.
+
+| Screen | Found against the real board | Fixed |
+|---|---|---|
+| `ReviewScreen.vue` (U11) | The scope line was still a four-cell facts row (Plan/Plan reference/Version/Current stage) the board replaced with one `kt-page-scope` line in every U11-HOPF/-AO/-STATUTORY/-READER render; the actor's statement notice the board shows right under the header, before any evidence, was missing entirely; the statement and buttons were split across an unstyled `<p>` and a separately-bordered, space-between footer instead of one `kt-decision` block with both buttons clustered at its right edge; U11-COLLECTIVE's required resolution-reference input sat inside the same facts row as "Decision belongs to"/"Recorded by", and U11-LATE-ADOPTION's fact-then-field order was reversed. | `kt-page-scope` line (plus the financial year label, now returned by `get_plan_governance_task`, that no U11 board omits); the statement notice restored; one `kt-decision` block holding both required fields, the statement, the missing-setting panel and the right-clustered buttons. |
+| `DppValidationScreen.vue` (U06) | Same split-footer defect as U11: the consequence line and the two decision buttons were a plain `<p>` plus a space-between `pln-footer`, where U06's own board wraps them in one `kt-decision` block, buttons right-clustered. | Same `kt-decision` regrouping. |
+| `TreasurySubmissionDialog.vue` (U13) | The board draws U13-TREASURY-FORM and U13-CORRECT-EVIDENCE as full pages (`kt-page`/`kt-page-head`/`h1`), not dialogs — confirmed deliberate by contrast with the same file's own `U13-WITHDRAWAL-REQUEST-DIALOG`/`-DECISION-DIALOG` sections, which *are* drawn as dialogs and which `WithdrawalDialog.vue` correctly matches. Kept as a dialog anyway (every other publication-step action in this app is a dialog over the workspace, and nothing here asked for a navigation-pattern change), but its four core fields were stacked one-per-row where the board runs them on a two-column grid, and the "what's missing" hint sat on its own line below both buttons instead of stacked above the one it explains. | Widened the dialog (640→720px) and laid Date sent/Channel/Destination/Dispatch on a two-column grid; the hint now sits directly above the disabled submit button, both right-aligned. |
+
+**Not fixed, flagged instead.** The same split `<p>` + space-between-`pln-footer`
+pattern `kt-decision` now replaces on U06 and U11 still appears on at least
+nine other screens (`SourceEvidenceScreen.vue`, `CorrectionRequestsScreen.vue`,
+`FinanceTaskScreen.vue`, `PublicationResultScreen.vue`, `DppPlanScreen.vue`,
+`EntryFundingPanel.vue`, `PlanItemEditorScreen.vue`, `DppEntryEditorScreen.vue`,
+`AnnualPlanScreen.vue`). Each one needs the same treatment only if its *own*
+literal board actually draws a `kt-decision` wrapper there — U06 and U11 both
+did, but that was confirmed per-screen, not assumed. Worth the same sweep
+before the next screen prompts it from a screenshot instead.
+
+**Also found, unrelated, fixed in passing.** `planning-governance.spec.ts`'s
+AO-return test still asserted the U11-RETURN lede text a same-day-earlier
+commit (`plan_read.py`, "re-diffed 22 Sep 2026") had deliberately replaced;
+the test was never updated to match. Corrected to the current, intentional
+copy.
+
+**Also found, not fixed — pre-existing, unrelated to this screen.** The
+file's first test (Accounting Officer adopts, Statutory approver approves)
+fails consistently, on a clean pre-sweep checkout as well as after these
+changes: after the Accounting Officer's live adoption, the Statutory
+approver's fresh workspace load doesn't show the resulting "Approve the
+Annual Procurement Plan" action within the assertion's 5s window, though the
+task is created correctly (confirmed directly against the database) and the
+same workspace does render it correctly moments later. Bisected by stashing
+every file this sweep touched and re-running the identical test against
+`HEAD` — same failure, same locator, same line. A timing race in
+`WorkspaceScreen`'s "actionable" read after a same-session actor handoff,
+not a defect in any screen this pass touched.

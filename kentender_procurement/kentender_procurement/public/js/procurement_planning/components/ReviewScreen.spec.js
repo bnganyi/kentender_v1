@@ -43,6 +43,7 @@ function task(overrides = {}) {
 		can_download_review_pack: true,
 		plan_reference: "PLN-MOH-2027-001",
 		version_number: 1,
+		financial_year_label: "FY 2027/28",
 		header: { title: "Ministry of Health Annual Procurement Plan 2027/28" },
 		authority_card: { capacity_detail: "Responsible Cabinet Secretary", is_board: false },
 		decision_summary: {
@@ -97,6 +98,25 @@ function make(props = {}) {
 }
 
 describe("ReviewScreen — U11-AO shared composition", () => {
+	it("shows the scope as one line in the page head, not a facts row, and reads the statement up front", () => {
+		const w = make();
+		const scope = w.find('[data-testid="rev-context"]');
+		expect(scope.classes()).toContain("kt-page-scope");
+		expect(scope.text()).toBe("PLN-MOH-2027-001· Version 1· FY 2027/28· Awaiting Accounting Officer");
+		// The plan's own title is not repeated here — no literal U11 board does.
+		expect(w.find('.kt-page-head').text()).not.toContain("Ministry of Health Annual Procurement Plan 2027/28");
+		const notice = w.find('[data-testid="rev-statement-notice"]');
+		expect(notice.text()).toContain("you adopt the complete plan shown here");
+	});
+
+	it("groups the statement, missing-setting panel and buttons in one decision block", () => {
+		const w = make();
+		const decision = w.find('[data-testid="rev-decision"]');
+		expect(decision.classes()).toContain("kt-decision");
+		expect(decision.find('[data-testid="rev-statement"]').exists()).toBe(true);
+		expect(decision.find('[data-testid="rev-footer"]').exists()).toBe(true);
+	});
+
 	it("opens with the decision summary, not with evidence", () => {
 		const w = make();
 		const summary = w.find('[data-testid="rev-summary"]');
@@ -206,7 +226,11 @@ describe("ReviewScreen — only the actor's own part changes", () => {
 		expect(collective.text()).toContain("Decision belongs to");
 		expect(collective.text()).toContain("Council");
 		expect(collective.text()).toContain("Naomi Chebet");
-		expect(w.find('[data-testid="rev-resolution"]').exists()).toBe(true);
+		// The resolution reference is an input the recorder still owes, not a
+		// fact about the decision — it lives in the decision block, not here.
+		expect(collective.find('[data-testid="rev-resolution"]').exists()).toBe(false);
+		const decision = w.find('[data-testid="rev-decision"]');
+		expect(decision.find('[data-testid="rev-resolution"]').exists()).toBe(true);
 		expect(w.find('[data-testid="rev-confirm"]').text()).toBe("Record approval");
 		// Not a personal approval, and no member-by-member voting.
 		expect(w.find('[data-testid="rev-statement"]').text()).toBe("Record approval only if the body approved this plan.");
@@ -216,9 +240,12 @@ describe("ReviewScreen — only the actor's own part changes", () => {
 		const w = make({ task: task({ can_decide: false, status: "Completed" }) });
 		expect(w.find('[data-testid="rev-title"]').text()).toBe("Annual procurement plan");
 		expect(w.find('[data-testid="rev-context"]').exists()).toBe(true);
+		expect(w.find('[data-testid="rev-context"]').text()).toBe("PLN-MOH-2027-001· Version 1· FY 2027/28· Current plan");
 		expect(w.find('.kt-page-desc').text()).toBe("Review the plan and its recorded evidence.");
 		expect(w.find('[data-testid="rev-footer"]').exists()).toBe(false);
 		expect(w.find('[data-testid="rev-statement"]').exists()).toBe(false);
+		// A reader decides nothing, so the up-front statement notice is absent too.
+		expect(w.find('[data-testid="rev-statement-notice"]').exists()).toBe(false);
 		// Not historical — no notice.
 		expect(w.find('[data-testid="rev-historical"]').exists()).toBe(false);
 		// The complete content is still there.
@@ -229,6 +256,8 @@ describe("ReviewScreen — only the actor's own part changes", () => {
 	it("U11-READER-HISTORICAL: reads under the reader title and says the Version is historical", () => {
 		const w = make({ task: task({ can_decide: false, status: "Completed", historical: true }) });
 		expect(w.find('[data-testid="rev-title"]').text()).toBe("Annual procurement plan");
+		// The notice already says "historical" — the scope line does not repeat it.
+		expect(w.find('[data-testid="rev-context"]').text()).toBe("PLN-MOH-2027-001· Version 1· FY 2027/28");
 		const notice = w.find('[data-testid="rev-historical"]');
 		expect(notice.text()).toBe("Historical plan — read only");
 		expect(notice.classes()).toContain("kt-notice");

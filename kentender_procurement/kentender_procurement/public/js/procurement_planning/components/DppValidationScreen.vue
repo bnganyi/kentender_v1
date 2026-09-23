@@ -190,23 +190,25 @@
 				<p v-if="!entries.length" class="kt-muted">No requirements in this submission.</p>
 			</div>
 
-			<!-- Decision. What acceptance does, and what it does not. -->
+			<!-- Decision. What acceptance does, and what it does not — one
+			     kt-decision block, matching the artboard: the statement and
+			     both buttons together, clustered at its right edge. -->
 			<template v-if="!task.maker_checker_blocked">
-				<p class="kt-muted" data-testid="pln-review-consequence">
-					Accepting makes the included requirements available for annual plan preparation.
-					It does not approve the Annual Procurement Plan.
-				</p>
-				<div class="pln-footer" data-testid="pln-review-footer">
-					<button
-						type="button"
-						class="kt-btn kt-btn-secondary"
-						data-testid="pln-review-return"
-						:disabled="pending || !canDecide"
-						@click="$emit('return-to-department')"
-					>
-						Return to department
-					</button>
-					<div class="pln-footer-right">
+				<div class="kt-decision" data-testid="pln-review-decision">
+					<p class="pln-decision-statement" data-testid="pln-review-consequence">
+						Accepting makes the included requirements available for annual plan preparation.
+						It does not approve the Annual Procurement Plan.
+					</p>
+					<div class="pln-footer-actions" data-testid="pln-review-footer">
+						<button
+							type="button"
+							class="kt-btn kt-btn-secondary"
+							data-testid="pln-review-return"
+							:disabled="pending || !canDecide"
+							@click="$emit('return-to-department')"
+						>
+							Return to department
+						</button>
 						<!-- Absent, not disabled, when the evidence cannot support it. -->
 						<button
 							v-if="canAccept"

@@ -321,12 +321,20 @@
 	flex: 1;
 	min-width: 320px;
 }
-.kt-pln .pln-header-actions,
-.kt-pln .pln-footer-actions {
+.kt-pln .pln-header-actions {
 	display: flex;
 	gap: 12px;
 	flex-shrink: 0;
 	padding-top: 4px;
+}
+/* U11 — both buttons cluster at the decision block's right edge, matching
+   every literal board; never spread across the row. */
+.kt-pln .pln-footer-actions {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: var(--kt-space-3);
+	flex-wrap: wrap;
 }
 .kt-pln .pln-quiet-ref {
 	font-size: 13px;
@@ -945,6 +953,16 @@
 	color: var(--kt-status-critical);
 	font-size: 14px;
 }
+/* U11 — the decision statement, matching the artboard's own sizing. */
+.kt-pln .kt-decision .pln-decision-statement {
+	margin: 0 0 var(--kt-space-4);
+	font-size: 15px;
+	max-width: 960px;
+}
+.kt-pln .kt-decision .kt-field {
+	margin-bottom: var(--kt-space-4);
+	max-width: 480px;
+}
 
 /* ==========================================================================
    PLN-CHG-001 v1.23 §10.13 / §10.15 — U14 progress, U16 correction requests
@@ -1108,16 +1126,39 @@
 }
 
 /* §10.12 — the Treasury form carries four fields and a confirmation, so it is
-   wider than a one-question dialog. */
+   wider than a one-question dialog; wide enough for the artboard's own
+   two-column field grid (U13-TREASURY-FORM/-CORRECT-EVIDENCE), which a
+   single 640px-wide stack could not fit comfortably. */
 .kt-pln .pln-treasury-dialog {
-	width: min(640px, calc(100vw - 48px));
+	width: min(720px, calc(100vw - 48px));
 	max-width: none;
+}
+.kt-pln .pln-treasury-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--kt-space-4) var(--kt-space-5);
+}
+.kt-pln .pln-treasury-file {
+	margin-top: var(--kt-space-5);
 }
 .kt-pln .pln-treasury-confirm {
 	display: flex;
 	align-items: center;
 	gap: var(--kt-space-2);
 	margin-top: var(--kt-space-3);
+}
+/* U13-TREASURY-FORM — the hint sits right above the button it explains,
+   both right-aligned, not floated below the whole action row. */
+.kt-pln .pln-treasury-hint-group {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: var(--kt-space-2);
+}
+.kt-pln .pln-treasury-hint-group .kt-muted {
+	margin: 0;
+	font-size: 13px;
+	text-align: right;
 }
 
 /* ==========================================================================

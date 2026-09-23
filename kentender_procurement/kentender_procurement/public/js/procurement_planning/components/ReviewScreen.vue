@@ -14,6 +14,13 @@
      is hidden either: an issue that would change the verdict is always in the
      summary, never behind a disclosure.
 
+     The scope line is one line in the page head (kt-page-scope), not a
+     four-cell facts row below it — every literal U11-* board agrees, and none
+     of them repeat the plan's own title there. And the statement is read
+     twice: once as a notice right under the header, before any evidence, and
+     again beside the buttons — an actor should not have to reach the bottom
+     of the page to learn what they are about to do.
+
      U11-READER/-READER-HISTORICAL — a reader who holds no decision here (no
      `can_decide`) reads a differently-titled document: header "Annual
      procurement plan", description "Review the plan and its recorded
@@ -30,6 +37,12 @@
 				<div>
 					<h1 class="kt-page-title" data-testid="rev-title">{{ actor.title }}</h1>
 					<p class="kt-page-desc">{{ actor.description }}</p>
+					<div class="kt-page-scope" data-testid="rev-context">
+						<span>{{ task.plan_reference }}</span>
+						<span>· Version {{ task.version_number }}</span>
+						<span v-if="task.financial_year_label">· {{ task.financial_year_label }}</span>
+						<span v-if="scopePhrase">· {{ scopePhrase }}</span>
+					</div>
 				</div>
 				<div v-if="task.can_download_review_pack" class="kt-page-actions">
 					<button
@@ -43,23 +56,13 @@
 				</div>
 			</div>
 
-			<div class="kt-meta-row pln-context-row" data-testid="rev-context">
-				<div>
-					<span class="kt-label">Plan</span>
-					<span class="kt-meta-value">{{ task.header?.title }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Plan reference</span>
-					<span class="kt-meta-value">{{ task.plan_reference }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Version</span>
-					<span class="kt-meta-value">{{ task.version_number }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Current stage</span>
-					<span class="kt-meta-value"><span class="kt-status is-attention">{{ stageLabel }}</span></span>
-				</div>
+			<!-- U11-HOPF/-AO/-STATUTORY — the actor reads what they are about to
+			     do up front, before any evidence, not only again by the buttons. -->
+			<div v-if="canDecideNow" class="kt-notice" data-testid="rev-statement-notice">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+					<path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z"></path><path d="M12 16v-4"></path><path d="M12 8h.01"></path>
+				</svg>
+				<div class="kt-notice-body">{{ actor.statement }}</div>
 			</div>
 
 			<!-- U11-READER-HISTORICAL — a Version that is no longer the Plan's
@@ -274,8 +277,11 @@
 			</div>
 
 			<!-- The decision comes before the collapsed evidence, not after it. -->
-			<template v-if="task.status === 'Open' && task.can_decide">
-				<!-- U11-COLLECTIVE — the body decides; the recorder records. -->
+			<template v-if="canDecideNow">
+				<!-- U11-COLLECTIVE — the body decides; the recorder records.
+				     Facts about who decides, not the input the recorder still
+				     owes — that sits in the decision block below, by the
+				     statement it belongs next to. -->
 				<div v-if="authority.is_board" class="kt-meta-row" data-testid="rev-collective">
 					<div>
 						<span class="kt-label">Decision belongs to</span>
@@ -285,7 +291,20 @@
 						<span class="kt-label">Recorded by</span>
 						<span class="kt-meta-value">{{ task.recorder_name || "—" }}</span>
 					</div>
-					<div class="kt-field">
+				</div>
+
+				<!-- U11-LATE-ADOPTION — the fact the actor must account for. -->
+				<div v-if="task.late_activation_required" class="kt-meta-row" data-testid="rev-late">
+					<div>
+						<span class="kt-label">Financial year started</span>
+						<span class="kt-meta-value">{{ task.financial_year_started_display }}</span>
+					</div>
+				</div>
+
+				<div class="kt-decision" data-testid="rev-decision">
+					<!-- U11-COLLECTIVE — required before the body's decision can be
+					     recorded; an editable field, kept out of the facts above. -->
+					<div v-if="authority.is_board" class="kt-field" data-testid="rev-resolution-field">
 						<label for="rev-resolution" class="kt-label">Resolution reference</label>
 						<input
 							id="rev-resolution"
@@ -295,49 +314,41 @@
 							@input="$emit('update:resolution', $event.target.value)"
 						>
 					</div>
-				</div>
 
-				<!-- U11-LATE-ADOPTION — the AO must say why, before deciding. -->
-				<div v-if="task.late_activation_required" class="kt-field" data-testid="rev-late">
-					<div class="kt-meta-row">
-						<div>
-							<span class="kt-label">Financial year started</span>
-							<span class="kt-meta-value">{{ task.financial_year_started_display }}</span>
-						</div>
+					<!-- U11-LATE-ADOPTION — the AO must say why, before deciding,
+					     immediately above the decision statement. -->
+					<div v-if="task.late_activation_required" class="kt-field" data-testid="rev-late-reason-field">
+						<label for="rev-late-reason" class="kt-label">Why is this initial plan being submitted after the financial year started?</label>
+						<textarea
+							id="rev-late-reason"
+							class="kt-input"
+							rows="2"
+							data-testid="rev-late-reason"
+							:value="lateReason"
+							@input="$emit('update:lateReason', $event.target.value)"
+						></textarea>
 					</div>
-					<label for="rev-late-reason" class="kt-label">Why is this initial plan being submitted after the financial year started?</label>
-					<textarea
-						id="rev-late-reason"
-						class="kt-input"
-						rows="2"
-						data-testid="rev-late-reason"
-						:value="lateReason"
-						@input="$emit('update:lateReason', $event.target.value)"
-					></textarea>
-				</div>
 
-				<p class="pln-decision-statement" data-testid="rev-statement">{{ actor.statement }}</p>
+					<p class="pln-decision-statement" data-testid="rev-statement">{{ actor.statement }}</p>
 
-				<p v-if="errorSummary" class="pln-error-summary" data-testid="rev-error">{{ errorSummary }}</p>
+					<p v-if="errorSummary" class="pln-error-summary" data-testid="rev-error">{{ errorSummary }}</p>
 
-				<!-- §10.16 C01-ROUTE-MISSING — adoption creates the statutory
-				     approval task, so an unassigned approver blocks it. Stated with
-				     the decision, immediately above it. -->
-				<MissingSettingPanel v-if="task.missing_setting" :panel="task.missing_setting" />
+					<!-- §10.16 C01-ROUTE-MISSING — adoption creates the statutory
+					     approval task, so an unassigned approver blocks it. Stated with
+					     the decision, immediately above it. -->
+					<MissingSettingPanel v-if="task.missing_setting" :panel="task.missing_setting" />
 
-				<div class="pln-footer" data-testid="rev-footer">
-					<button
-						v-if="actor.secondary"
-						type="button"
-						class="kt-btn kt-btn-secondary"
-						data-testid="rev-secondary"
-						:disabled="pending"
-						@click="actor.secondary_is_return ? $emit('open-return-dialog') : $emit('back')"
-					>
-						{{ actor.secondary }}
-					</button>
-					<span v-else></span>
-					<div class="pln-footer-right">
+					<div class="pln-footer-actions" data-testid="rev-footer">
+						<button
+							v-if="actor.secondary"
+							type="button"
+							class="kt-btn kt-btn-secondary"
+							data-testid="rev-secondary"
+							:disabled="pending"
+							@click="actor.secondary_is_return ? $emit('open-return-dialog') : $emit('back')"
+						>
+							{{ actor.secondary }}
+						</button>
 						<!-- Absent, not disabled, when a material issue blocks it:
 						     the server gates it too (§10.10). -->
 						<button
@@ -431,7 +442,15 @@ const history = computed(() => props.task.history || []);
 const authority = computed(() => props.task.authority_card || {});
 const signature = computed(() => props.task.preparation_signature);
 
-const stageLabel = computed(() => {
+const canDecideNow = computed(() => props.task.status === "Open" && props.task.can_decide);
+
+// U11-HOPF/-AO/-STATUTORY vs U11-READER/-READER-HISTORICAL — the scope
+// line's last segment: what an actor still owes, or that a reader is simply
+// looking at the current plan. Historical drops it — the notice below
+// already says so.
+const scopePhrase = computed(() => {
+	if (props.task.historical) return "";
+	if (!props.task.can_decide) return "Current plan";
 	if (props.task.stage === "Accounting Officer adoption") return "Awaiting Accounting Officer";
 	if (props.task.stage === "Statutory approval") return `Awaiting ${authority.value.capacity_detail || "statutory authority"}`;
 	return props.task.stage || "";

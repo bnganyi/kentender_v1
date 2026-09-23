@@ -110,7 +110,10 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		const dialog = page.locator('[data-testid="rvw-return-dialog"]');
 		await expect(dialog).toBeVisible();
 		await expect(dialog.locator(".kt-dialog-title")).toHaveText("What needs to change?");
-		await expect(dialog).toContainText("State the correction required. The submitted Version 1 remains unchanged.");
+		// §10.10 U11-RETURN's own drawn copy (re-diffed 22 Sep 2026, plan_read.py)
+		await expect(dialog).toContainText(
+			"The plan will return to Procurement for correction and will be submitted for review again. The plan you reviewed and your comment will remain in history.",
+		);
 		const confirm = page.locator('[data-testid="rvw-return-confirm"]');
 		await expect(confirm).toBeDisabled();
 		await page.locator('[data-testid="rvw-return-reason"]').fill("Confirm the planned contract-signing date against the delivery completion date.");
