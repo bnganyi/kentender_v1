@@ -1144,12 +1144,22 @@ def _approval_applicability(pe_type: str, county: bool, route: str) -> dict[str,
 		entity_type=pe_type,
 		county=bool(county),
 	)
-	if result.get("status") == "Resolved":
+	status = result.get("status")
+	reference = result.get("reference") or ""
+	if status in ("Resolved", "Unverified"):
 		payload_route = (result.get("payload") or {}).get("approval_route") or ""
+		# A rule that names a different authority is a conflict whether or
+		# not its sources have been checked — the disagreement is the fact.
 		if payload_route and payload_route != route:
-			return {"result": "Configuration conflict", "reference": result.get("reference") or ""}
-		return {"result": "Verified", "reference": result.get("reference") or ""}
-	return {"result": "Verification required", "reference": result.get("reference") or ""}
+			return {"result": "Configuration conflict", "reference": reference}
+		if status == "Resolved":
+			return {"result": "Verified", "reference": reference}
+		# A matching rule is in force and agrees with the configured route;
+		# only its source check is outstanding. Reported apart from "no rule
+		# at all" so a seeded site, where nothing may ever claim to be
+		# verified against primary law, does not read as unconfigured.
+		return {"result": "Rule not source-checked", "reference": reference}
+	return {"result": "Verification required", "reference": reference}
 
 
 def _require_county_consistency(pe_type: str, county: bool) -> None:

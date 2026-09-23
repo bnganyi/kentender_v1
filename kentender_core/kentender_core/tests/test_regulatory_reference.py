@@ -431,11 +431,70 @@ class TestPlanningCompatibilityRead(RegulatoryReferenceTestCase):
 		self.assertEqual(out["reservation"]["target_percent"], 30)
 		self.assertEqual(out["reservation"]["county_target_percent"], 20)
 		self.assertEqual({c["category"] for c in out["reservation"]["categories"]} >= {"None", "Youth", "Women", "Persons with disabilities"}, True)
-		self.assertFalse(out["market_price_index"]["published"])
+		# `market_price_index` is a different rule kind this test does not
+		# seed itself (CFG-CHG-002 Phase 2c seeds it separately, via
+		# `_seed_market_price_index`); whether it is published on the real
+		# canonical FY is not this test's concern.
 		by_key = {(r["procurement_category"], r["procurement_method"]): r for r in out["threshold_matrix"]}
 		self.assertEqual(by_key[("Services", "Restricted Tender")]["max_amount"], 20_000_000)
 		self.assertEqual(by_key[("Works", "Request for Quotations")]["max_amount"], 5_000_000)
 		self.assertTrue(frappe.db.exists("Requirement Type", "Works"))
+
+	def test_canonical_seed_covers_all_seven_rule_kinds_usably(self):
+		"""CFG-CHG-002 Phase 2c (tracker CFG11-202/304, FU-13) — the seed used
+		to stop at three of the seven Regulatory Reference kinds (Reservation
+		rules, Publication obligations, plus Method eligibility on its own
+		doctype); Exclusive preference, Preference margins, Market price
+		index and Approval applicability had validators and UI but no seeded
+		row. Every one of the four new seeders must produce a real, findable,
+		idempotent row — not just insert without raising."""
+		window = {
+			"effective_from": str(frappe.db.get_value("Fiscal Year", self.fy, "year_start_date")),
+			"effective_until": str(frappe.db.get_value("Fiscal Year", self.fy, "year_end_date")),
+		}
+		mid_year = str(frappe.db.get_value("Fiscal Year", self.fy, "year_start_date"))
+
+		first = site_setup._seed_exclusive_preference(effective=window, fixture_namespace=NS)
+		self.assertEqual(first["created"], 2)
+		second = site_setup._seed_exclusive_preference(effective=window, fixture_namespace=NS)
+		self.assertEqual(second["created"], 0, "a rerun over the same window must not register a second version")
+		works = register.resolve_reference(reference_kind="Exclusive preference", applicability_date=mid_year, category="Works")
+		self.assertEqual(works["status"], "Unverified", works)
+		self.assertEqual(works["payload"]["amount"], site_setup.REGULATORY_REFERENCE["exclusive_preference_works_amount"])
+		goods = register.resolve_reference(reference_kind="Exclusive preference", applicability_date=mid_year, category="Goods")
+		self.assertEqual(goods["status"], "Unverified", goods)
+		self.assertEqual(goods["payload"]["amount"], site_setup.REGULATORY_REFERENCE["exclusive_preference_goods_services_amount"])
+		self.assertNotEqual(works["reference"], goods["reference"], "Works and Goods must resolve to distinct rule versions")
+
+		self.assertEqual(site_setup._seed_preference_margins(effective=window, fixture_namespace=NS)["created"], 1)
+		self.assertEqual(site_setup._seed_preference_margins(effective=window, fixture_namespace=NS)["created"], 0)
+		margin = register.resolve_reference(reference_kind="Preference margins", applicability_date=mid_year)
+		self.assertEqual(margin["status"], "Unverified", margin)
+		self.assertEqual(margin["payload"]["margin_percent"], 15)
+
+		self.assertEqual(site_setup._seed_market_price_index(effective=window, fixture_namespace=NS)["created"], 1)
+		self.assertEqual(site_setup._seed_market_price_index(effective=window, fixture_namespace=NS)["created"], 0)
+		out = register.get_regulatory_reference(self.fy)
+		self.assertTrue(out["market_price_index"]["published"])
+		self.assertTrue(any(r["item"].startswith("Laptop") for r in out["market_price_index"]["rows"]))
+
+		self.assertEqual(site_setup._seed_approval_applicability(effective=window, fixture_namespace=NS)["created"], 1)
+		self.assertEqual(site_setup._seed_approval_applicability(effective=window, fixture_namespace=NS)["created"], 0)
+		approval = register.resolve_reference(
+			reference_kind="Approval applicability", applicability_date=mid_year,
+			entity_type=site_setup.SITE["pe_type"], county=False,
+		)
+		self.assertEqual(approval["status"], "Unverified", approval)
+		self.assertEqual(approval["payload"]["approval_route"], site_setup.SITE["statutory_approval_route"])
+
+		# Every seeded row carries a real reason and (where the doctype has
+		# the field) a real interpretation — never the blank "Not recorded" /
+		# "Not yet established" state the seed used to leave behind.
+		for name in (works["reference"], goods["reference"], margin["reference"], approval["reference"]):
+			doc = frappe.get_doc("Regulatory Reference", name)
+			self.assertTrue(doc.change_reason.strip(), f"{name} has no change_reason")
+			self.assertTrue(doc.interpretation.strip(), f"{name} has no interpretation")
+			self.assertNotIn("verification pending", doc.source_instrument.lower())
 
 	def test_tender_renderable_reservation_categories_is_a_governed_subset(self):
 		"""REQ-CHG-001 v1.6 §5A / STD-TPL-001 v0.4 §6.1 — the one list a

@@ -89,7 +89,10 @@ test.describe("System setup — Procurement settings", () => {
 		await page.click('[data-testid="kt-procset-rule-new-version"]');
 		await page.waitForSelector('[data-testid="kt-procset-method-editor"]');
 		expect(page.url()).toContain("#procurement-settings/new-method-version/MPR-OPEN-TENDER-V1");
-		await expect(page.locator('[data-testid="kt-mve-from"]')).toHaveValue("2027-05-01");
+		// The seeded window starts at the first fiscal year the site seeds
+		// (site_setup.PROFILE_EFFECTIVE), so a reseeded site always has its
+		// rules in force on the day you open it.
+		await expect(page.locator('[data-testid="kt-mve-from"]')).toHaveValue("2026-07-01");
 		await expect(page.locator('[data-testid="kt-mve-method"]')).toHaveText("Open Tender");
 		await expect(page.locator('[data-testid="kt-mve-id-0"]')).toHaveValue("G-VALUE");
 		// Every condition is editable here and nowhere else, and one can be

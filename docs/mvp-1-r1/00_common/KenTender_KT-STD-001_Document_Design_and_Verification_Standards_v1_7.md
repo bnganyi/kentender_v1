@@ -432,6 +432,7 @@ These fixtures are canonical across every KenTender document, seed and artboard.
 | Julia Njeri | `julia.njeri@moh.example.test` | Head of User Department, Acting | `OU-MOH-DHI` |
 | Mercy Kilonzo | `mercy.kilonzo@moh.example.test` | Procurement Planner | Site-wide |
 | Samuel Otieno | `samuel.otieno@moh.example.test` | Head of User Department, expired | `OU-MOH-DHP` |
+| Dr Peter Kimani | `peter.kimani@moh.example.test` | Head of User Department, succeeding Samuel from 1 Sep 2026 | `OU-MOH-DHP` |
 | Administrator | `administrator@moh.example.test` | Technical only | — |
 | Esther Muthoni | `esther.muthoni@moh.example.test` | Strategy Author | Site-wide |
 | Dr Alfred Ochieng | `alfred.ochieng@moh.example.test` | Strategy Approver | Site-wide |
@@ -444,6 +445,8 @@ These fixtures are canonical across every KenTender document, seed and artboard.
 | Brian Wafula | `brian.wafula@moh.example.test` | Procurement Officer, site-wide — Tender Preparation only | Site-wide |
 
 Grace additionally holds Head of User Department in `OU-MOH-HRMD` in the Cartesian-product regression fixture, so the same-user-different-scope test has a concrete subject.
+
+Peter succeeds Samuel at the Directorate, open-ended, because Samuel's term is deliberately expired and Julia's acting term at `OU-MOH-DHI` runs only 1 Oct – 30 Nov 2026: without a successor the whole Digital Health branch had no head on any date outside that window, including the date a site is typically reseeded, so its Needs had no reviewer and its departmental plan could not be certified. A grant reaches its unit's descendants, so this one covers `OU-MOH-DHI` as well without adding an earlier `OU-MOH-DHI`-scoped row (SEED-001 records why none was added there). Julia's appointment stays Scheduled and Samuel's Expired, which the AUTH-DES-03 register still requires.
 
 Josphat Mwangi holds two responsibilities deliberately: BUD-CHG-001 distinguishes Budget Officer, who authors budget versions, from Finance Confirmation Officer, who confirms a plan sits within budget. One person holding both exercises the no-self-approval rule.
 

@@ -121,6 +121,28 @@ class TestCanonicalSeedRun(IntegrationTestCase):
 		self.assertEqual(frappe.db.count("Organisation Unit"), units)
 		self.assertEqual(frappe.db.count("User Responsibility Assignment"), assignments)
 
+	def test_seed_through_budget_leaves_procurement_rules_fixture_verified(self):
+		"""Reported bug: a shallow reseed (`through="budget"`, well before
+		the "planning" stage) left every Procurement Rule permanently at
+		`Production verification pending` — unusable — because the upgrade
+		to `Fixture-verified — not production law` used to happen only
+		inside the Planning stage's own seed. Procurement Rules are
+		`site_setup.run()`'s own concern (seeded on every stage, "budget"
+		included), so making them usable cannot depend on how far the
+		caller happens to go afterward."""
+		frappe.set_user("Administrator")
+		result = canonical.run(through="budget", reset=False, validate=True, force=True, commit=False)
+		self.assertTrue(result["ok"])
+		from kentender_core.services import procurement_settings as settings
+
+		for doctype in (settings.METHOD_PROFILE, "Regulatory Reference"):
+			statuses = set(frappe.get_all(doctype, filters={"status": "Active"}, pluck="verification_status"))
+			self.assertTrue(statuses, f"expected at least one Active {doctype} row")
+			self.assertEqual(
+				statuses, {settings.VERIFICATION_FIXTURE},
+				f"{doctype} rows must be fixture-verified regardless of `through`, found {statuses}",
+			)
+
 	def test_validate_fails_closed_on_a_stray_budget(self):
 		frappe.set_user("Administrator")
 		canonical.run(through="budget", reset=False, validate=True, force=True, commit=False)

@@ -86,6 +86,14 @@ class DepartmentalNeedsPermissionCase(IntegrationTestCase):
 		units = _granted_units(AUTHOR, DEPARTMENTAL_AUTHOR)
 		cls.ou = units["Digital Health"]
 		cls.ou_hrmd = units["Human Resources Management and Development"]
+		# The reviewer also heads the Directorate above Digital Health
+		# (site_setup.ASSIGNMENTS — Peter succeeds Samuel there from 1 Sep
+		# 2026), and a grant reaches that unit's descendants, so it is a
+		# third unit he resolves and a third scope to drop when a test needs
+		# him to hold no covering authority at all.
+		cls.ou_directorate = frappe.db.get_value(
+			"Organisation Unit", {"unit_name": "Directorate of Digital Health and Policy"}, "name"
+		)
 
 	def setUp(self):
 		super().setUp()
@@ -229,6 +237,9 @@ class TestScopeGating(DepartmentalNeedsPermissionCase):
 		# would under the framework's own default permission semantics.
 		self.drop_scope(REVIEWER, ROLE_HEAD_OF_USER_DEPARTMENT, self.ou)
 		self.drop_scope(REVIEWER, ROLE_HEAD_OF_USER_DEPARTMENT, self.ou_hrmd)
+		# The Directorate grant covers Digital Health by descent, so "no
+		# covering assignment anywhere" is only constructed once it goes too.
+		self.drop_scope(REVIEWER, ROLE_HEAD_OF_USER_DEPARTMENT, self.ou_directorate)
 		self.assertFalse(
 			permissions.in_scope(REVIEWER, business_role=ROLE_HEAD_OF_USER_DEPARTMENT, organisation_unit=self.ou)
 		)
@@ -485,7 +496,10 @@ class TestServerSideContextPreferences(DepartmentalNeedsPermissionCase):
 		fresh = workspace.get_workspace()
 		self.assertEqual(fresh["outcome"], "READY")
 		self.assertEqual(fresh["context"]["organisation_unit"], "")
-		self.assertEqual({row["organisation_unit"] for row in fresh["contexts"]}, {self.ou, self.ou_hrmd})
+		self.assertEqual(
+			{row["organisation_unit"] for row in fresh["contexts"]},
+			{self.ou, self.ou_hrmd, self.ou_directorate},
+		)
 
 	def test_a_remembered_unit_outside_the_offer_heals_to_unselected(self):
 		"""A remembered OU the caller no longer holds resolves to "unselected"
@@ -697,7 +711,7 @@ class WorkspaceContextResolutionTest(DepartmentalNeedsPermissionCase):
 			msg="the Head of User Department must be able to open the review screen",
 		)
 		units = {row["organisation_unit"] for row in result["contexts"]}
-		self.assertEqual(units, {self.ou, self.ou_hrmd})
+		self.assertEqual(units, {self.ou, self.ou_hrmd, self.ou_directorate})
 
 	def test_planner_and_auditor_resolve_every_active_unit(self):
 		"""§14.2 — Site-wide, so every active Organisation Unit is in view."""

@@ -130,6 +130,21 @@ def _site_fiscal_years() -> set[str]:
 	return {configuration._fy_name(year) for year in site_setup.FISCAL_START_YEARS}
 
 
+def _in_force_now(row) -> bool:
+	"""Same window test `authorization._within_period` applies at resolution
+	time: a blank bound is open, and both ends are inclusive."""
+	from frappe.utils import get_datetime, now_datetime
+
+	now = now_datetime()
+	starts = row.get("effective_from")
+	ends = row.get("effective_to")
+	if starts and get_datetime(starts) > now:
+		return False
+	if ends and get_datetime(ends) < now:
+		return False
+	return True
+
+
 def _canonical_units() -> set[str]:
 	"""The site root plus every unit a canonical row still points at, with
 	its ancestors — resolved from data, never from the retired mnemonic codes."""
@@ -519,6 +534,11 @@ def seed(*, through: str = STAGES[-1]) -> dict[str, Any]:
 	"""Reseed the canonical world up to and including `through`. No commit."""
 	last = _stage_index(through)
 	report: dict[str, Any] = {"site": site_setup.run(commit=False)}
+	# Independent of `through`: the fixture world's Procurement Rules must
+	# be usable whichever stage the caller stops at, not only once the
+	# Planning stage's own seed happens to run (see
+	# `stamp_procurement_rules_fixture_verified`'s docstring).
+	report["site"]["rules_stamped_fixture_verified"] = site_setup.stamp_procurement_rules_fixture_verified()
 	if last >= STAGES.index("strategy"):
 		from kentender_strategy.seeds.kentender_mvp_v1_strategy import upsert_kentender_mvp_v1_strategy
 
@@ -605,14 +625,36 @@ def validate(*, through: str = STAGES[-1]) -> dict[str, Any]:
 	check(not strays, f"no fixture-domain users outside the register, found {strays}")
 	for local, role, _unit, _kwargs in site_setup.ASSIGNMENTS:
 		check(
-			bool(
-				frappe.db.exists(
-					"User Responsibility Assignment", {"user": f"{local}@moh.example.test", "business_role": role, "status": ["in", ["Enabled", "Scheduled"]]}
-				)
-			)
-			or bool(frappe.db.exists("User Responsibility Assignment", {"user": f"{local}@moh.example.test", "business_role": role})),
+			bool(frappe.db.exists("User Responsibility Assignment", {"user": f"{local}@moh.example.test", "business_role": role})),
 			f"assignment {local}: {role}",
 		)
+	# Every unit-scoped role a seeded assignment names must have someone
+	# holding it *now*, not merely a row somewhere. The check above only
+	# asks whether the seed wrote what it said it would; it passed happily
+	# while Digital Health had no Head of User Department at all, because
+	# the only two grants for that branch were one expired and one not yet
+	# started. A canonical world nobody can act in is not canonical.
+	scoped: set[tuple[str, str]] = {(role, unit) for _local, role, unit, _kwargs in site_setup.ASSIGNMENTS if unit}
+	for role, unit_name in sorted(scoped):
+		unit = frappe.db.get_value("Organisation Unit", {"unit_name": unit_name}, "name")
+		# A grant reaches the unit it names and that unit's descendants
+		# (`authorization.descendants_of`), so a unit is covered by its own
+		# grant or by any ancestor's — the same walk the resolver does.
+		chain: list[str] = []
+		cursor = unit
+		while cursor:
+			chain.append(cursor)
+			cursor = frappe.db.get_value("Organisation Unit", cursor, "parent_organisation_unit")
+		holders = [
+			row
+			for row in frappe.get_all(
+				"User Responsibility Assignment",
+				filters={"business_role": role, "organisation_unit": ["in", chain], "status": "Enabled"},
+				fields=["name", "effective_from", "effective_to"],
+			)
+			if _in_force_now(row)
+		]
+		check(bool(holders), f"{role} in force today for {unit_name}")
 
 	if last >= STAGES.index("strategy"):
 		plans = frappe.get_all("Strategic Plan", filters={"fixture_namespace": STRATEGY_NS}, pluck="name")

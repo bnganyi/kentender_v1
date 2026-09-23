@@ -296,7 +296,9 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 	# only, so this world seeds fixture-verified ones for its own year the
 	# way Planning's Playwright world does (added 19 Sep 2026).
 	site_setup._seed_method_profiles(effective=PROFILE_WINDOW, verification_status=VERIFICATION_FIXTURE, fixture_namespace=NS_PW)
-	site_setup._seed_schedule_profiles(effective=PROFILE_WINDOW, verification_status=VERIFICATION_FIXTURE, fixture_namespace=NS_PW, limits=PROFILE_LIMITS, estimated_delivery_default_days=DELIVERY_DEFAULT_DAYS)
+	# Open Tender only, like Planning's Playwright world; the canonical site
+	# seeds every method.
+	site_setup._seed_schedule_profiles(effective=PROFILE_WINDOW, verification_status=VERIFICATION_FIXTURE, fixture_namespace=NS_PW, limits=PROFILE_LIMITS, estimated_delivery_default_days=DELIVERY_DEFAULT_DAYS, methods=("Open Tender",))
 	if not frappe.db.exists("Currency", "KES"):
 		frappe.get_doc({"doctype": "Currency", "currency_name": "KES", "enabled": 1}).insert(ignore_permissions=True)
 	_delivery_location()

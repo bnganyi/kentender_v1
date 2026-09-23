@@ -65,8 +65,13 @@ VERIFICATION_FIXTURE = "Fixture-verified — not production law"
 # §10.2's own schedule arithmetic: tendering 21, evaluation 30 (maximum),
 # award buffer 5, notification 2, standstill 14 (minimum).
 PROFILE_LIMITS = {"bid_opening": (7, None), "evaluation_completion": (None, 30), "contract_signing": (14, None)}
-# §10.2's illustrative mandatory planning allocation: 30% of the KES 160m
-# annual procurement budget = KES 48m required.
+# The mandatory planning allocation: 30% of what the plan actually plans to
+# procure. This world plans KES 130m (KES 80m infrastructure, designated None,
+# plus the KES 50m combined laptop package, designated Youth), so KES 39m is
+# required and the KES 50m qualifying package clears it. The KES 160m approved
+# budget is the ceiling the plan fits inside, not the measure of this
+# obligation (corrected 24 Sep 2026 — see
+# `docs/mvp-1-r1/99_other/thirty_percent_reservation_rule.pdf`).
 RESERVATION_TARGET_PERCENT = 30
 
 FY = "2027-2028"
@@ -288,17 +293,22 @@ def ensure_profiles() -> dict[str, Any]:
 	from kentender_core.seeds import site_setup
 	from kentender_core.services import procurement_settings as settings
 
-	year = int(FY.split("-")[0])
 	# §10.2 anchors the canonical schedules at 1 May and 15 May 2027 while
 	# FY 2027/28 begins on 1 July 2027, so a profile window starting at the
 	# financial year would not cover the plan's own applicable dates and no
 	# rule would resolve. This is the recorded applicability-date/fixture
 	# conflict (§17.2, CFG-XD-001) — the fixture's dates are what the
-	# specification fixes, so the seed widens its own configuration window to
-	# cover them rather than relaxing the resolver or back-dating the plan.
-	# A profile's effective window is configuration; the rule it carries is
+	# specification fixes, so the configuration window is widened to cover
+	# them rather than relaxing the resolver or back-dating the plan. A
+	# profile's effective window is configuration; the rule it carries is
 	# not weakened, and nothing is marked Verified.
-	window = {"effective_from": f"{year}-01-01", "effective_until": f"{year + 1}-06-30"}
+	#
+	# That window is now `site_setup.PROFILE_EFFECTIVE` itself rather than a
+	# second one computed here. The two disagreed (1 Jan 2027 here, 1 May
+	# 2027 there), so whichever stage ran last superseded the other's rows —
+	# and seeding through this stage narrowed what the site stage had just
+	# widened. One window, owned by the seed that defines the rules.
+	window = dict(site_setup.PROFILE_EFFECTIVE)
 	methods = site_setup._seed_method_profiles(
 		effective=window, verification_status=VERIFICATION_FIXTURE, fixture_namespace=NS,
 	)
@@ -317,7 +327,16 @@ def ensure_profiles() -> dict[str, Any]:
 		fixture_namespace=NS,
 		verification_status=VERIFICATION_FIXTURE,
 		reservation_target_percent=RESERVATION_TARGET_PERCENT,
+		effective=window,
 	)
+	# CFG-CHG-002 Phase 2c — the remaining four rule kinds get the same
+	# fixture-verified treatment as Method eligibility/Reservation rules
+	# above, so a canonical world seeded through this stage has all seven
+	# "Procurement rules" kinds usable, not just the first three.
+	site_setup._seed_exclusive_preference(effective=window, fixture_namespace=NS, verification_status=VERIFICATION_FIXTURE)
+	site_setup._seed_preference_margins(effective=window, fixture_namespace=NS, verification_status=VERIFICATION_FIXTURE)
+	site_setup._seed_market_price_index(effective=window, fixture_namespace=NS, verification_status=VERIFICATION_FIXTURE)
+	site_setup._seed_approval_applicability(effective=window, fixture_namespace=NS, verification_status=VERIFICATION_FIXTURE)
 	stamped = 0
 	for doctype in (settings.METHOD_PROFILE, settings.SCHEDULE_PROFILE, "Regulatory Reference"):
 		for name in frappe.get_all(

@@ -213,9 +213,14 @@ def ensure_profiles() -> None:
 
 	frappe.set_user("Administrator")
 	site_setup._seed_method_profiles(effective=PROFILE_WINDOW, verification_status=VERIFICATION_FIXTURE, fixture_namespace=NS)
+	# Open Tender only: this world needs a method that has no schedule
+	# profile, so the `PLN_REFERENCE_UNAVAILABLE` blocker stays reachable
+	# (test_plan_workbench's Direct Procurement case). The canonical site
+	# seeds every method.
 	site_setup._seed_schedule_profiles(
 		effective=PROFILE_WINDOW, verification_status=VERIFICATION_FIXTURE, fixture_namespace=NS,
 		limits=PROFILE_LIMITS, estimated_delivery_default_days=DELIVERY_DEFAULT_DAYS,
+		methods=("Open Tender",),
 	)
 
 

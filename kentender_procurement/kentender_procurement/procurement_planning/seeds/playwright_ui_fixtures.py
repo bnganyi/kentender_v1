@@ -296,9 +296,12 @@ def ensure_profiles() -> None:
 
 	frappe.set_user("Administrator")
 	site_setup._seed_method_profiles(effective=PROFILE_WINDOW, verification_status=VERIFICATION_FIXTURE, fixture_namespace=NS_PW)
+	# Open Tender only — this fixture world's specs are written against a
+	# single scheduled method; the canonical site seeds every method.
 	site_setup._seed_schedule_profiles(
 		effective=PROFILE_WINDOW, verification_status=VERIFICATION_FIXTURE, fixture_namespace=NS_PW,
 		limits=PROFILE_LIMITS, estimated_delivery_default_days=DELIVERY_DEFAULT_DAYS,
+		methods=("Open Tender",),
 	)
 
 

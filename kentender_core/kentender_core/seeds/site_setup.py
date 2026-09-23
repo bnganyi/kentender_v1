@@ -53,6 +53,11 @@ INTAKE = {"start_year": 2027, "closes_at": "2026-11-25 23:59:00"}
 # PLN-CHG-001 v1.12 §14.1 — departmental-plan intake for FY 2027/28 closes
 # 30 Nov 2026, 23:59:59 EAT (stored UTC).
 DPP_INTAKE = {"start_year": 2027, "closes_at": "2026-11-30 20:59:59"}
+# CFG-CHG-002 v0.11 §4.3 — the third registered intake. Disposal plans are
+# called for the same year as the procurement plan; nothing consumes the
+# flag yet, but the Financial years tab lists the activity, so a seed that
+# left it closed showed one permanently unfinished row.
+DISPOSAL_INTAKE = {"start_year": 2027, "closes_at": "2026-11-30 20:59:59"}
 
 # CFG-CHG-002 v0.9 §3 — the requirement-type and procurement-method
 # catalogues Configuration & Governance owns (PLN-CHG-001 v1.12 §14.1: four
@@ -226,6 +231,30 @@ ASSIGNMENTS = (
 			"effective_to": "2026-08-31 23:59:59",
 		},
 	),
+	# Samuel's Directorate term above ends 31 Aug 2026 and is deliberately
+	# left expired (KT-STD-001 §8.3 lists him as the expired appointment;
+	# Departmental Needs' permission suite uses him as its actor who holds
+	# no current authority). Nobody succeeded him, so from 1 Sep 2026 the
+	# Directorate had no head — and, because an Organisation Unit grant
+	# reaches that unit's descendants (`authorization.descendants_of`, one
+	# direction only), neither did Digital Health underneath it. Julia's
+	# acting term does not start until 1 Oct and Peter's Digital Health
+	# term not until 1 Dec, so a site reseeded in between had no Head of
+	# User Department for that whole branch and no reviewer for its Needs.
+	#
+	# Peter succeeds Samuel at the Directorate, open-ended: he is already
+	# the substantive head the Needs, Planning and Requisitions seeds drive
+	# as reviewer. This leaves Julia's acting window and Samuel's expired
+	# one exactly as the register and the AUTH-DES-03 artboard specify —
+	# they still render Scheduled and Expired — and adds no earlier
+	# *Digital-Health-scoped* row, so SEED-001's chronology for that unit
+	# is untouched.
+	(
+		"peter.kimani",
+		"Head of User Department",
+		"Directorate of Digital Health and Policy",
+		{"effective_from": "2026-09-01 00:00:00"},
+	),
 )
 
 # BUD-CHG-001 v1.6 §15.2 — the one governed funding source every Budget
@@ -261,17 +290,35 @@ def contact_office_display(office_name: str) -> str:
 # Planning assumptions) and the Second Schedule limits above, none of which
 # has been verified against primary law here (v1.18 §15.2 prerequisite;
 # plan D16 keeps the fixture-verified set in the Planning seed).
-# `effective_from` starts on Planning's own earliest baseline invitation
-# date (`procurement_planning.seeds.kentender_mvp_v1.ITEM_VALUES`), not on
-# the FY's own start (2027-07-01): Planning invites before the FY it plans
-# for opens, and a profile scoped to exactly the FY window left that
-# invitation with no rule in force at all (SEED-OPS-001 v1.2 change log).
-PROFILE_EFFECTIVE = {"effective_from": "2027-05-01", "effective_until": "2028-06-30"}
+# The window spans every fiscal year this seed creates, derived from
+# `FISCAL_START_YEARS` rather than written out, so it moves with them.
+#
+# It used to start on Planning's own earliest baseline invitation date
+# (2027-05-01) — far enough back for the plan it seeds, but in the future
+# on any real calendar before then, which left an operator with no rule in
+# force on the day they reseeded: 10 of the 11 methods, and every
+# Regulatory Reference kind, resolved to nothing until someone widened a
+# row by hand. The lower bound is a fixture assumption, not a regulatory
+# fact (SEED-OPS-001 v1.2 says so in as many words when it moved the date
+# the first time), so it now starts at the first seeded FY. The upper
+# bound still ends with the last one. Nothing here is now-relative: these
+# are fixed dates that follow the seeded years, so a visual baseline
+# captured today still matches tomorrow.
+PROFILE_EFFECTIVE = {
+	"effective_from": f"{FISCAL_START_YEARS[0]}-07-01",
+	"effective_until": f"{FISCAL_START_YEARS[-1] + 1}-06-30",
+}
 PROFILE_SOURCE = {
-	"source_instrument": "Public Procurement and Asset Disposal Regulations — source verification pending",
+	"source_instrument": "Public Procurement and Asset Disposal Act, 2015 and Public Procurement and Asset Disposal Regulations, 2020",
 	"provision": "Verification required",
 	"applicability_basis": "Planned invitation date",
 }
+# Every rule version seeded below carries this as its `change_reason` (the
+# spec-required "Reason for this version"): it is genuinely the reason a v1
+# row exists, not a placeholder. Source-check status is unaffected — the
+# reason a version was written and whether its facts have been checked
+# against primary law are two separate questions (see `verification_status`).
+SEED_CHANGE_REASON = "Canonical seed — initial version for the KT-STD-001 §8 configuration."
 # Methods whose admissibility depends on circumstances a Planner declares and
 # a separate authorisation may govern (v1.18 §5.5.3.3; LAW §2 conditions).
 DECLARATION_METHODS = {
@@ -280,9 +327,10 @@ DECLARATION_METHODS = {
 	"Competitive Negotiations": ("s.131", "Accounting Officer", "Before invitation"),
 	"Force Account": ("reg 95", "Accounting Officer", "Before commencement"),
 }
-# Open Tender schedule profiles for the three categories (§10.1 names the
-# goods and services profiles; works follows the same example periods).
-SCHEDULE_PROFILE_CATEGORIES = (("Goods", "Open Tender — goods"), ("Services", "Open Tender — services"), ("Works", "Open Tender — works"))
+# The categories every admitted method gets a schedule profile for (§10.1
+# names the Open Tender goods and services profiles; the rest follow the
+# same example periods).
+SCHEDULE_PROFILE_CATEGORIES = ("Goods", "Services", "Works")
 SCHEDULE_MILESTONES = (
 	# (milestone, default days for the period closing at it, basis, statutory ref)
 	("invitation", None, "Statutory", "reg 42 — Third Schedule col. 9"),
@@ -294,6 +342,22 @@ SCHEDULE_MILESTONES = (
 	("delivery_completion", None, "Source-derived", "Earliest source required-by date"),
 )
 REMINDER_THRESHOLD_DAYS = 7
+
+# Kenya's fixed-date public holidays (Public Holidays Act Cap. 110, First
+# Schedule). Good Friday, Easter Monday and the two Eids are deliberately
+# absent: they move each year and are gazetted annually, so they are an
+# administrator's entry for the year concerned, not a date this seed can
+# state as fact.
+FIXED_PUBLIC_HOLIDAYS = (
+	("01-01", "New Year's Day"),
+	("05-01", "Labour Day"),
+	("06-01", "Madaraka Day"),
+	("10-10", "Huduma Day"),
+	("10-20", "Mashujaa Day"),
+	("12-12", "Jamhuri Day"),
+	("12-25", "Christmas Day"),
+	("12-26", "Boxing Day"),
+)
 
 # TPR-CHG-001 v0.8 §10.1 "Publication configuration" / plan D6 — the
 # publication rule for a national Open Tender, expressed through CFG-CHG-002
@@ -358,14 +422,20 @@ def run(*, commit: bool = True) -> dict:
 		"fiscal_years": _seed_fiscal_years(),
 		"intake": _seed_intake(),
 		"dpp_intake": _seed_dpp_intake(),
+		"disposal_intake": _seed_disposal_intake(),
 		"catalogues": _seed_catalogues(),
 		"funding_sources": _seed_funding_sources(),
 		"delivery_locations": _seed_delivery_locations(),
 		"contact_offices": _seed_contact_offices(),
-		"regulatory_reference": _seed_regulatory_reference(),
+		"regulatory_reference": _seed_regulatory_reference(effective=PROFILE_EFFECTIVE),
 		"method_profiles": _seed_method_profiles(),
 		"schedule_profiles": _seed_schedule_profiles(),
+		"business_day_calendar": _seed_business_day_calendar(),
 		"publication_obligations": _seed_publication_obligations(),
+		"exclusive_preference": _seed_exclusive_preference(),
+		"preference_margins": _seed_preference_margins(),
+		"market_price_index": _seed_market_price_index(),
+		"approval_applicability": _seed_approval_applicability(),
 		"procurement_settings": _seed_procurement_settings(),
 		"uoms": _seed_uoms(),
 		"users": _seed_users(),
@@ -375,6 +445,58 @@ def run(*, commit: bool = True) -> dict:
 	if commit:
 		frappe.db.commit()
 	return result
+
+
+def stamp_procurement_rules_fixture_verified() -> int:
+	"""Every Procurement Rule `run()` just seeded — Method eligibility,
+	Schedule profiles, or any Regulatory Reference kind — starts
+	`Production verification pending` (plan D16: legally honest, since
+	none of it has actually been checked against primary law here). That
+	default is correct for a genuinely real site, but every caller of
+	`run()` in this codebase today, directly or through
+	`kentender_core.seeds.canonical`, seeds the same fixed "Ministry of
+	Health" fixture — there is no other kind of site. Left at Pending, that
+	fixture stalls at the first governance/submission gate no matter which
+	`canonical.seed()` stage the caller stops at; the previous fix upgraded
+	it only from the Planning stage onward (`ensure_profiles()`), which is
+	why `through="budget"` (or any stage before "planning") still seeded
+	unusable rules. This stamp is `canonical.seed()`'s own unconditional
+	step, independent of `through` — it never writes `Verified`, and a rule
+	outside the seeded window is untouched."""
+	from kentender_core.services import procurement_settings as settings
+
+	stamped = 0
+	for doctype in (settings.METHOD_PROFILE, settings.SCHEDULE_PROFILE, "Regulatory Reference", settings.CALENDAR):
+		for name in frappe.get_all(
+			doctype,
+			filters={"status": "Active", "verification_status": ("!=", settings.VERIFICATION_FIXTURE)},
+			pluck="name",
+		):
+			frappe.db.set_value(doctype, name, "verification_status", settings.VERIFICATION_FIXTURE, update_modified=False)
+			stamped += 1
+	return stamped
+
+
+def refresh_procurement_rules_content(*, fixture_namespace: str = FIXTURE_TAG) -> dict[str, dict]:
+	"""Registers a fresh, superseding version of every Procurement Rule
+	from this module's own current definitions, even where a version
+	already exists for the same window — the seed's own find-or-skip
+	guards exist to stop a routine rerun climbing a version every time,
+	not to freeze a rule at whatever content an earlier version of this
+	module produced. Use this once after `site_setup.py`'s own seed data
+	changes, so the canonical world picks up the correction instead of
+	needing a full site `wipe`. Never edits in place — every existing
+	version is retained, `_supersede_overlapping` simply marks the ones
+	this call's fresh version now covers as `Superseded`."""
+	return {
+		"method_profiles": _seed_method_profiles(fixture_namespace=fixture_namespace, force=True),
+		"regulatory_reference": {"reference": _seed_regulatory_reference(fixture_namespace=fixture_namespace, force=True, effective=PROFILE_EFFECTIVE)},
+		"publication_obligations": _seed_publication_obligations(fixture_namespace=fixture_namespace, force=True),
+		"exclusive_preference": _seed_exclusive_preference(fixture_namespace=fixture_namespace, force=True),
+		"preference_margins": _seed_preference_margins(fixture_namespace=fixture_namespace, force=True),
+		"market_price_index": _seed_market_price_index(fixture_namespace=fixture_namespace, force=True),
+		"approval_applicability": _seed_approval_applicability(fixture_namespace=fixture_namespace, force=True),
+	}
 
 
 def _seed_site() -> str:
@@ -454,27 +576,74 @@ def _seed_fiscal_years() -> list[str]:
 	return out
 
 
+def _intake_closes_at(configured: str) -> str:
+	"""The documented close instant, while it is still ahead of the clock.
+
+	`open_*_submission` refuses an instant already in the past
+	(`CFG_INTAKE_CLOSE_INSTANT_INVALID`), so a seed that hardcodes one stops
+	working on the day it passes — the whole site would fail to seed rather
+	than merely show a stale deadline. Past that day the intake is opened
+	with no close instant, which is what the register's own "open" state
+	means anyway: open until an administrator closes it. The fixed instant
+	is still used whenever it is real, so nothing becomes now-relative until
+	the documented date has genuinely gone by.
+	"""
+	from frappe.utils import get_datetime, now_datetime
+
+	return configured if configured and get_datetime(configured) > now_datetime() else ""
+
+
+def _converge_intake(module_key: str, target: str, flag_closes_at: str, closes_at: str, reason: str) -> None:
+	"""Bring an already-open year's close instant to the seeded one.
+
+	The seeders used to return early on "already open" without ever writing
+	`closes_at`, so a year opened by anything else (a test, an earlier seed)
+	kept whatever instant it had — usually none, which is why every activity
+	read "No closing date" after a reseed. Only writes when it differs, so a
+	rerun adds no audit entry.
+	"""
+	current = frappe.db.get_value("Fiscal Year", target, flag_closes_at) or ""
+	if str(current)[:16] == str(closes_at)[:16]:
+		return
+	configuration.update_intake_close_instant(
+		module_key=module_key, fiscal_year=target, closes_at=closes_at, reason=reason
+	)
+
+
 def _seed_intake() -> str:
 	target = configuration._fy_name(INTAKE["start_year"])
+	closes_at = _intake_closes_at(INTAKE["closes_at"])
+	reason = "Annual needs call issued under circular MOH/PROC/2026/07."
 	if frappe.db.get_value("Fiscal Year", target, configuration.FLAG_OPEN):
+		_converge_intake("needs", target, configuration.FLAG_CLOSES_AT, closes_at, reason)
 		return f"already open: {target}"
-	configuration.open_needs_submission(
-		fiscal_year=target,
-		closes_at=INTAKE["closes_at"],
-		reason="Annual needs call issued under circular MOH/PROC/2026/07.",
-	)
+	configuration.open_needs_submission(fiscal_year=target, closes_at=closes_at, reason=reason)
 	return f"opened: {target}"
 
 
 def _seed_dpp_intake() -> str:
 	target = configuration._fy_name(DPP_INTAKE["start_year"])
+	closes_at = _intake_closes_at(DPP_INTAKE["closes_at"])
+	reason = "Departmental procurement plans called for FY 2027/28 under regulation 40(3)."
 	if frappe.db.get_value("Fiscal Year", target, configuration.DPP_FLAG_OPEN):
+		_converge_intake("dpp", target, configuration.DPP_FLAG_CLOSES_AT, closes_at, reason)
 		return f"already open: {target}"
-	configuration.open_dpp_submission(
-		fiscal_year=target,
-		closes_at=DPP_INTAKE["closes_at"],
-		reason="Departmental procurement plans called for FY 2027/28 under regulation 40(3).",
-	)
+	configuration.open_dpp_submission(fiscal_year=target, closes_at=closes_at, reason=reason)
+	return f"opened: {target}"
+
+
+def _seed_disposal_intake() -> str:
+	"""The third registered intake (CFG-CHG-002 v0.11 §4.3). The Financial
+	years tab lists it beside needs and departmental plans, so leaving it
+	the only one closed read as an unfinished setup on every reseed even
+	though no disposal workflow consumes it yet."""
+	target = configuration._fy_name(DISPOSAL_INTAKE["start_year"])
+	closes_at = _intake_closes_at(DISPOSAL_INTAKE["closes_at"])
+	reason = "Disposal plans called for FY 2027/28 alongside the annual procurement plan."
+	if frappe.db.get_value("Fiscal Year", target, configuration.DISPOSAL_FLAG_OPEN):
+		_converge_intake("disposal_plan", target, configuration.DISPOSAL_FLAG_CLOSES_AT, closes_at, reason)
+		return f"already open: {target}"
+	configuration.open_disposal_plan_submission(fiscal_year=target, closes_at=closes_at, reason=reason)
 	return f"opened: {target}"
 
 
@@ -562,21 +731,27 @@ def _seed_contact_offices() -> dict[str, int]:
 	return {"created": created, "total": len(CONTACT_OFFICES)}
 
 
-def _seed_regulatory_reference(fiscal_year: str = "", fixture_namespace: str = FIXTURE_TAG, *, verification_status: str = "Production verification pending", reservation_target_percent=None, county_target_percent=None) -> str:
+def _seed_regulatory_reference(fiscal_year: str = "", fixture_namespace: str = FIXTURE_TAG, *, verification_status: str = "Production verification pending", reservation_target_percent=None, county_target_percent=None, force: bool = False, effective: dict | None = None) -> str:
 	"""CFG-CHG-002 v0.11 Phase 2b — seeds the "Reservation rules" kind's
 	Regulatory Reference Set/Version for `fiscal_year`. `threshold_matrix`
 	is no longer seeded here at all: it is now derived at read time from
 	`Procurement Method Profile` (D10), which `_seed_method_profiles` already
 	seeds with the same Second Schedule figures — closes the former
-	duplicate-write (FU-08). Signature and find-or-create/override behaviour
-	are unchanged so every existing caller (Requisitions/Planning Playwright
-	fixtures, Planning's own test world) keeps working without modification."""
+	duplicate-write (FU-08).
+
+	`effective` overrides the window. Without it the version spans exactly
+	`fiscal_year`, which is what the isolation-year fixture worlds need; the
+	canonical seed passes `PROFILE_EFFECTIVE` so this rule is in force over
+	the same span as every other seeded rule rather than only inside the
+	planning year (a reseed before 1 July 2027 otherwise left the site with
+	no reservation rule in force at all)."""
 	from kentender_core.services import regulatory_reference as register
 
 	fiscal_year = fiscal_year or configuration._fy_name(DPP_INTAKE["start_year"])
 	fy_row = frappe.db.get_value("Fiscal Year", fiscal_year, ["year_start_date", "year_end_date"], as_dict=True)
 	if not fy_row:
 		frappe.throw(f"Unknown fiscal year: {fiscal_year}.")
+	window = effective or {"effective_from": fy_row["year_start_date"], "effective_until": fy_row["year_end_date"]}
 
 	reference_key = "RESERVATION-RULES"
 	reference_set = frappe.db.get_value(register.SET_DOCTYPE, {"reference_key": reference_key}, "name")
@@ -600,11 +775,11 @@ def _seed_regulatory_reference(fiscal_year: str = "", fixture_namespace: str = F
 		{
 			"reference_set": reference_set,
 			"status": "Active",
-			"effective_from": fy_row["year_start_date"],
+			"effective_from": window["effective_from"],
 		},
 		"name",
 	)
-	if existing:
+	if existing and not force:
 		return existing
 
 	outcome = register.save_regulatory_reference_version(
@@ -613,25 +788,33 @@ def _seed_regulatory_reference(fiscal_year: str = "", fixture_namespace: str = F
 			"obligation_code": "ANNUAL-RESERVATION-TARGET",
 			"target_percent": target,
 			"county_target_percent": county_target,
-			"denominator_basis": "AnnualProcurementBudget",
+			"denominator_basis": "AnnualProcurementValue",
 			"overlap_policy": "Independent",
 			"categories": [
 				{"category": name, "advantage_rank": rank, "is_regional": regional, "statutory_reference": ref}
 				for name, rank, regional, ref in RESERVATION_CATEGORIES
 			],
 		},
-		effective_from=fy_row["year_start_date"],
-		effective_until=fy_row["year_end_date"],
+		effective_from=window["effective_from"],
+		effective_until=window.get("effective_until", ""),
 		applicability_basis="FiscalYearStart",
 		verification_status=verification_status,
 		source_instrument=PROFILE_SOURCE["source_instrument"],
-		provision=PROFILE_SOURCE["provision"],
+		provision="s.157(4); s.157(8)(a); reg 149; reg 151; reg 163",
+		interpretation=(
+			f"At least {target}% of the value the entity plans to procure must be set aside through "
+			f"reservation for youth, women, persons with disabilities, other disadvantaged groups, MSMEs "
+			f"and regional candidates; an additional {county_target}% county-resident preference applies "
+			f"for a county entity. The approved annual budget is the ceiling the plan must fit inside, "
+			f"not the measure of this obligation: it authorises spending without obliging it."
+		),
+		change_reason=SEED_CHANGE_REASON,
 		fixture_namespace=fixture_namespace,
 	)
 	return outcome["reference"]
 
 
-def _seed_publication_obligations(*, effective: dict | None = None, fixture_namespace: str = FIXTURE_TAG, verification_status: str = "Production verification pending") -> dict[str, int]:
+def _seed_publication_obligations(*, effective: dict | None = None, fixture_namespace: str = FIXTURE_TAG, verification_status: str = "Production verification pending", force: bool = False) -> dict[str, int]:
 	"""TPR-CHG-001 v0.8 §10.1 / plan D6 — six "Publication obligations"
 	reference sets (four invitation channels, two cancellation obligations),
 	find-or-create like every sibling seed. `effective` defaults to the
@@ -646,7 +829,7 @@ def _seed_publication_obligations(*, effective: dict | None = None, fixture_name
 			{
 				"obligation_id": "LAW-OB-PUB-INVITATION", "accountable_actor_role": "Head of Procurement Function",
 				"recipient": "Public", "channel": code, "trigger_event": PUBLICATION_TRIGGER_INVITATION,
-				"due_rule": "Immediate", "source_reference": PUBLICATION_RULE,
+				"due_rule": "Immediate", "source_reference": "s.96(2)",
 			},
 		)
 		for code, label, _public_url in PUBLICATION_CHANNELS
@@ -656,7 +839,7 @@ def _seed_publication_obligations(*, effective: dict | None = None, fixture_name
 			{
 				"obligation_id": f"LAW-OB-CANCEL-{code}", "accountable_actor_role": "Accounting Officer",
 				"recipient": recipient, "channel": code, "trigger_event": PUBLICATION_TRIGGER_CANCELLATION,
-				"due_rule": due_rule, "days": days, "source_reference": PUBLICATION_RULE,
+				"due_rule": due_rule, "days": days, "source_reference": "s.138",
 			},
 		)
 		for code, label, recipient, due_rule, days in CANCELLATION_OBLIGATIONS
@@ -667,16 +850,250 @@ def _seed_publication_obligations(*, effective: dict | None = None, fixture_name
 			reference_set = register.create_regulatory_reference(
 				reference_key=reference_key, reference_kind="Publication obligations", display_name=display_name, fixture_namespace=fixture_namespace,
 			)["reference_set"]
-		if frappe.db.get_value(register.DOCTYPE, {"reference_set": reference_set, "status": "Active", "effective_from": effective["effective_from"]}, "name"):
+		if not force and frappe.db.get_value(register.DOCTYPE, {"reference_set": reference_set, "status": "Active", "effective_from": effective["effective_from"]}, "name"):
 			continue
+		is_invitation = payload["trigger_event"] == PUBLICATION_TRIGGER_INVITATION
 		register.save_regulatory_reference_version(
+			# A publication/cancellation obligation applies to any tender
+			# regardless of category — no `applicability_categories`
+			# restriction (an empty list means "all categories", the same
+			# convention `resolve_reference` uses for entity types).
 			reference_set=reference_set, payload=payload, effective_from=effective["effective_from"], effective_until=effective.get("effective_until", ""),
-			applicability_basis="InvitationDate", applicability_categories=["Goods"],
-			verification_status=verification_status, source_instrument=PROFILE_SOURCE["source_instrument"], provision=PROFILE_SOURCE["provision"],
+			applicability_basis="InvitationDate",
+			verification_status=verification_status, source_instrument=PROFILE_SOURCE["source_instrument"],
+			provision="s.96(2)" if is_invitation else "s.138",
+			interpretation=(
+				f"Every tender invitation is published to {display_name.split(' — ')[0].lower()} at the point of invitation."
+				if is_invitation
+				else f"A cancelled procurement is notified to {payload['recipient'].lower()} via {display_name.split(' — ')[0].lower()} within {payload['days']} days of cancellation."
+			),
+			change_reason=SEED_CHANGE_REASON,
 			fixture_namespace=fixture_namespace,
 		)
 		created += 1
 	return {"created": created, "total": len(rows)}
+
+
+# CFG-CHG-002 Phase 2c (tracker CFG11-202/304, FU-13) — the four Regulatory
+# Reference kinds whose payload validators and "Add rule" UI already existed
+# but had no seeded row anywhere: Exclusive preference, Preference margins,
+# Market price index, Approval applicability. Same find-or-create shape as
+# the siblings above; every row here starts `Production verification
+# pending` from `run()`, same as every sibling profile (D16).
+EXCLUSIVE_PREFERENCE_THRESHOLDS = (
+	# (reference_key suffix, display label, categories, restriction_code)
+	("WORKS", "Exclusive preference — Works", ("Works",), "WORKS-LOCAL-CONTENT", REGULATORY_REFERENCE["exclusive_preference_works_amount"]),
+	(
+		"GOODS-SERVICES",
+		"Exclusive preference — Goods and services",
+		("Goods", "Services"),
+		"GOODS-SERVICES-LOCAL-CONTENT",
+		REGULATORY_REFERENCE["exclusive_preference_goods_services_amount"],
+	),
+)
+
+
+def _seed_exclusive_preference(*, effective: dict | None = None, fixture_namespace: str = FIXTURE_TAG, verification_status: str = "Production verification pending", force: bool = False) -> dict[str, int]:
+	"""The KES ceilings below which a procurement is reserved exclusively
+	for citizen contractors (s.157(8)(a); reg 163) — one set per category
+	group since the works and goods/services ceilings differ (reg 163(2))."""
+	from kentender_core.services import regulatory_reference as register
+
+	effective = effective or PROFILE_EFFECTIVE
+	created = 0
+	for suffix, display_name, categories, restriction_code, amount in EXCLUSIVE_PREFERENCE_THRESHOLDS:
+		reference_key = f"EXCLUSIVE-PREFERENCE/{suffix}"
+		reference_set = frappe.db.get_value(register.SET_DOCTYPE, {"reference_key": reference_key}, "name")
+		if not reference_set:
+			reference_set = register.create_regulatory_reference(
+				reference_key=reference_key, reference_kind="Exclusive preference", display_name=display_name, fixture_namespace=fixture_namespace,
+			)["reference_set"]
+		if not force and frappe.db.get_value(register.DOCTYPE, {"reference_set": reference_set, "status": "Active", "effective_from": effective["effective_from"]}, "name"):
+			continue
+		register.save_regulatory_reference_version(
+			reference_set=reference_set,
+			payload={
+				"restriction_code": restriction_code,
+				# A single category when the set covers exactly one (Works);
+				# blank when it spans more than one (Goods and Services) -
+				# the payload field takes one value, `applicability_categories`
+				# below carries the real (possibly multi-category) scope.
+				"category": categories[0] if len(categories) == 1 else "",
+				# Applies regardless of procurement method (reg 163 gates on
+				# value and category, not on how the procurement is run).
+				"method": "",
+				"currency": "KES",
+				"comparator": "LessThanOrEqual",
+				"amount": amount,
+				"funding_origin_condition": "GoK-funded",
+				"local_origin_condition": "Kenyan-registered",
+				"eligible_party_classification": "Citizen contractor",
+				"source_reference": "s.157(8)(a); reg 163",
+			},
+			effective_from=effective["effective_from"],
+			effective_until=effective.get("effective_until", ""),
+			applicability_basis="InvitationDate",
+			applicability_categories=list(categories),
+			verification_status=verification_status,
+			source_instrument=PROFILE_SOURCE["source_instrument"],
+			provision="s.157(8)(a); reg 163",
+			interpretation=(
+				f"A procurement for {' or '.join(c.lower() for c in categories)} estimated at or below "
+				f"KES {amount:,.0f} is reserved exclusively for citizen contractors."
+			),
+			change_reason=SEED_CHANGE_REASON,
+			fixture_namespace=fixture_namespace,
+		)
+		created += 1
+	return {"created": created, "total": len(EXCLUSIVE_PREFERENCE_THRESHOLDS)}
+
+
+def _seed_preference_margins(*, effective: dict | None = None, fixture_namespace: str = FIXTURE_TAG, verification_status: str = "Production verification pending", force: bool = False) -> dict[str, int]:
+	"""The MSME evaluation margin under s.155: a tenderer at least 51%
+	Kenyan-owned through a micro, small or medium enterprise receives a 15%
+	margin at financial evaluation under Open Tender."""
+	from kentender_core.services import regulatory_reference as register
+
+	effective = effective or PROFILE_EFFECTIVE
+	reference_key = "PREFERENCE-MARGINS/MSME"
+	reference_set = frappe.db.get_value(register.SET_DOCTYPE, {"reference_key": reference_key}, "name")
+	if not reference_set:
+		reference_set = register.create_regulatory_reference(
+			reference_key=reference_key, reference_kind="Preference margins", display_name="Preference margins — MSME", fixture_namespace=fixture_namespace,
+		)["reference_set"]
+	if not force and frappe.db.get_value(register.DOCTYPE, {"reference_set": reference_set, "status": "Active", "effective_from": effective["effective_from"]}, "name"):
+		return {"created": 0, "total": 1}
+	register.save_regulatory_reference_version(
+		reference_set=reference_set,
+		payload={
+			"scheme_code": "MSME-MARGIN",
+			"procedure": "Open Tender",
+			"margin_percent": 15,
+			"origin_condition": "Kenyan-registered",
+			"shareholding_from": 51,
+			"shareholding_to": 100,
+			"shareholding_from_included": True,
+			"shareholding_to_included": True,
+			"evaluation_basis": "Financial evaluation",
+			"source_reference": "s.155",
+		},
+		effective_from=effective["effective_from"],
+		effective_until=effective.get("effective_until", ""),
+		applicability_basis="InvitationDate",
+		verification_status=verification_status,
+		source_instrument=PROFILE_SOURCE["source_instrument"],
+		provision="s.155",
+		interpretation=(
+			"A tenderer at least 51% owned by Kenyan citizens through a micro, small or medium "
+			"enterprise receives a 15% margin at financial evaluation under Open Tender."
+		),
+		change_reason=SEED_CHANGE_REASON,
+		fixture_namespace=fixture_namespace,
+	)
+	return {"created": 1, "total": 1}
+
+
+MARKET_PRICE_INDEX_ROWS = (
+	# (item, category, unit, indicative KES price)
+	("Laptop computer, standard office specification", "Goods", "Each", 85_000),
+	("Office desk, standard", "Goods", "Each", 25_000),
+	("Site clearance", "Works", "Hectare", 150_000),
+)
+
+
+def _seed_market_price_index(*, effective: dict | None = None, fixture_namespace: str = FIXTURE_TAG, verification_status: str = "Production verification pending", force: bool = False) -> dict[str, int]:
+	"""An indicative published price list for a few commonly procured items,
+	so Planning's market-price-index panel has real rows instead of always
+	reporting nothing published."""
+	from frappe.utils import add_days
+	from kentender_core.services import regulatory_reference as register
+
+	effective = effective or PROFILE_EFFECTIVE
+	reference_key = "MARKET-PRICE-INDEX"
+	reference_set = frappe.db.get_value(register.SET_DOCTYPE, {"reference_key": reference_key}, "name")
+	if not reference_set:
+		reference_set = register.create_regulatory_reference(
+			reference_key=reference_key, reference_kind="Market price index", display_name="Market price index", fixture_namespace=fixture_namespace,
+		)["reference_set"]
+	if not force and frappe.db.get_value(register.DOCTYPE, {"reference_set": reference_set, "status": "Active", "effective_from": effective["effective_from"]}, "name"):
+		return {"created": 0, "total": 1}
+	# A price is observed, then published, then the rule takes effect - in
+	# that order. Both dates fall before `effective_from`, never on it, so
+	# a rule that claims to already be published is not dated as if the
+	# publication happened the same day it starts applying.
+	observation_date = add_days(effective["effective_from"], -60)
+	publication_date = add_days(effective["effective_from"], -30)
+	register.save_regulatory_reference_version(
+		reference_set=reference_set,
+		payload={
+			"rows": [
+				{
+					"item": item, "category": category, "unit": unit, "currency": "KES", "price": price,
+					"observation_date": str(observation_date), "publication_date": str(publication_date),
+					"publication_reference": "Indicative price index",
+				}
+				for item, category, unit, price in MARKET_PRICE_INDEX_ROWS
+			]
+		},
+		effective_from=effective["effective_from"],
+		effective_until=effective.get("effective_until", ""),
+		applicability_basis="FiscalYearStart",
+		verification_status=verification_status,
+		source_instrument=PROFILE_SOURCE["source_instrument"],
+		provision="Indicative price index published by the Authority",
+		interpretation="Indicative unit prices for commonly procured items, published for cost estimation; not a statutory ceiling.",
+		change_reason=SEED_CHANGE_REASON,
+		fixture_namespace=fixture_namespace,
+	)
+	return {"created": 1, "total": 1}
+
+
+def _seed_approval_applicability(*, effective: dict | None = None, fixture_namespace: str = FIXTURE_TAG, verification_status: str = "Production verification pending", force: bool = False) -> dict[str, int]:
+	"""Closes FU-13: a proper seeded "Approval applicability" rule for the
+	site's own entity type, naming the Cabinet Secretary as plan-approval
+	authority (reg 40(4)) — the same route `SITE["statutory_approval_route"]`
+	already configures for this Ministry, so the rule and the configured
+	route agree rather than one being silently unset."""
+	from kentender_core.services import regulatory_reference as register
+
+	effective = effective or PROFILE_EFFECTIVE
+	reference_key = "APPROVAL-APPLICABILITY/NATIONAL-MINISTRY"
+	reference_set = frappe.db.get_value(register.SET_DOCTYPE, {"reference_key": reference_key}, "name")
+	if not reference_set:
+		reference_set = register.create_regulatory_reference(
+			reference_key=reference_key,
+			reference_kind="Approval applicability",
+			display_name="Approval applicability — National Government Ministry",
+			fixture_namespace=fixture_namespace,
+		)["reference_set"]
+	if not force and frappe.db.get_value(register.DOCTYPE, {"reference_set": reference_set, "status": "Active", "effective_from": effective["effective_from"]}, "name"):
+		return {"created": 0, "total": 1}
+	register.save_regulatory_reference_version(
+		reference_set=reference_set,
+		payload={
+			"entity_types": [SITE["pe_type"]],
+			"county_applicability": "NonCounty",
+			"required_entity_evidence": "Procuring entity registration",
+			"approval_route": SITE["statutory_approval_route"],
+			# Free text, not a governed enum (`required_capacity_code` has
+			# no validator lookup) — describes what the approval route
+			# actually requires of the approver, not an internal code.
+			"required_capacity_code": "Delegated authority to approve the annual procurement plan for this entity type",
+			"source_reference": "reg 40(4)",
+		},
+		effective_from=effective["effective_from"],
+		effective_until=effective.get("effective_until", ""),
+		applicability_basis="PlanApprovalDate",
+		applicability_entity_types=[SITE["pe_type"]],
+		applicability_county="NonCounty",
+		verification_status=verification_status,
+		source_instrument=PROFILE_SOURCE["source_instrument"],
+		provision="reg 40(4)",
+		interpretation=f"A {SITE['pe_type'].lower()}'s annual procurement plan is approved by the {SITE['statutory_approval_route']}.",
+		change_reason=SEED_CHANGE_REASON,
+		fixture_namespace=fixture_namespace,
+	)
+	return {"created": 1, "total": 1}
 
 
 def _profile_exists(doctype: str, filters: dict) -> str:
@@ -685,17 +1102,21 @@ def _profile_exists(doctype: str, filters: dict) -> str:
 	) or ""
 
 
-def _seed_method_profiles(*, effective: dict | None = None, verification_status: str | None = None, fixture_namespace: str = FIXTURE_TAG) -> dict[str, int]:
+def _seed_method_profiles(*, effective: dict | None = None, verification_status: str | None = None, fixture_namespace: str = FIXTURE_TAG, force: bool = False) -> dict[str, int]:
 	"""One `Production verification pending` eligibility profile per admitted
 	method, built from the Second Schedule bands above plus a declaration
 	condition where circumstances govern admissibility. Find-or-skip on
-	(method, effective_from); a rerun creates no second Version."""
+	(method, effective_from); a rerun creates no second Version. `force`
+	skips that check and always registers — a superseding correction (never
+	an edit-in-place) for when this function's own definition of a rule
+	changes and the canonical world must pick up the correction without a
+	full site wipe."""
 	from kentender_core.services import procurement_settings as settings
 
 	effective = effective or PROFILE_EFFECTIVE
 	created = 0
 	for method, goods, works, services, basis, reference in THRESHOLD_BANDS:
-		if _profile_exists(settings.METHOD_PROFILE, {"procurement_method": method, "effective_from": effective["effective_from"]}):
+		if not force and _profile_exists(settings.METHOD_PROFILE, {"procurement_method": method, "effective_from": effective["effective_from"]}):
 			continue
 		conditions = []
 		for category, amount in (("Goods", goods), ("Works", works), ("Services", services)):
@@ -712,6 +1133,15 @@ def _seed_method_profiles(*, effective: dict | None = None, verification_status:
 					"maximum_amount": amount,
 					"cumulative_basis": basis,
 					"mandatory": True,
+					# A "Known fact" is evaluated by the system from the
+					# Planner's own estimate, never by a named approver
+					# (`profiles.py`'s Known-fact/Declaration split) —
+					# `authorisation_actor`/`authorisation_stage` are
+					# correctly blank here, not a gap. What the fact is
+					# checked against is real, though, and belongs on the
+					# condition: the same market-survey basis Planning's
+					# own `estimate_basis` field already requires.
+					"required_evidence": "Estimated value basis (market survey and incidental costs)",
 					"statutory_reference": reference,
 				}
 			)
@@ -735,56 +1165,118 @@ def _seed_method_profiles(*, effective: dict | None = None, verification_status:
 			conditions=conditions,
 			verification_status=verification_status or settings.VERIFICATION_PENDING,
 			fixture_namespace=fixture_namespace,
+			source_instrument=PROFILE_SOURCE["source_instrument"],
+			applicability_basis=PROFILE_SOURCE["applicability_basis"],
+			provision=reference,
+			change_reason=SEED_CHANGE_REASON,
 			**effective,
-			**PROFILE_SOURCE,
 		)
 		created += 1
 	return {"created": created, "total": len(THRESHOLD_BANDS)}
 
 
-def _seed_schedule_profiles(*, effective: dict | None = None, verification_status: str | None = None, fixture_namespace: str = FIXTURE_TAG, limits: dict | None = None, estimated_delivery_default_days: int | None = None) -> dict[str, int]:
-	"""The Open Tender schedule profiles for goods, services and works at
+def _seed_schedule_profiles(*, effective: dict | None = None, verification_status: str | None = None, fixture_namespace: str = FIXTURE_TAG, limits: dict | None = None, estimated_delivery_default_days: int | None = None, methods: tuple[str, ...] | None = None) -> dict[str, int]:
+	"""A schedule profile per admitted method and category, at
 	`Production verification pending` (statutory minimum/maximum cells blank
-	= verification required; buffers labelled Planning assumption). The other
-	eight methods deliberately have none: catalogue membership is not
-	operational support (v1.18 §5.5.3.3)."""
+	= verification required; buffers labelled Planning assumption).
+
+	This used to seed Open Tender alone, on the reasoning that catalogue
+	membership is not operational support (v1.18 §5.5.3.3). The catalogue
+	does not behave that way in practice: `profiles.admissible_methods`
+	gates the Planner's dropdown on the *method* profile, which all eleven
+	have, so all eleven are offered — and choosing any of the other ten
+	then blocks readiness with `PLN_REFERENCE_UNAVAILABLE`, whose own
+	missing-setting panel sends the administrator to a System setup screen
+	that has no control capable of creating a schedule profile. The dead
+	end was unreachable by the remedy it named. Every method the catalogue
+	offers now carries the same Planning-example schedule the three
+	original rows always did — no new claim about any method's statutory
+	timings, which stay blank pending verification exactly as before.
+
+	`methods` narrows the set; the Planning and Requisitions fixture worlds
+	pass a single method so that a method with no schedule stays reachable
+	for the tests that assert that blocker.
+	"""
 	from kentender_core.services import procurement_settings as settings
 
 	effective = effective or PROFILE_EFFECTIVE
 	limits = limits or {}  # milestone → (minimum_days, maximum_days) for a fixture-verified set
+	methods = methods or PROCUREMENT_METHODS
 	created = 0
-	for category, profile_name in SCHEDULE_PROFILE_CATEGORIES:
-		if _profile_exists(settings.SCHEDULE_PROFILE, {"procurement_method": "Open Tender", "procurement_category": category, "effective_from": effective["effective_from"]}):
-			continue
-		settings.register_schedule_profile_version(
-			procurement_method="Open Tender",
-			procurement_category=category,
-			profile_name=profile_name,
-			procedure="Planning example",
-			milestones=[
-				{
-					"milestone": key,
-					"label": settings.MILESTONE_LABELS[key],
-					"sequence": index + 1,
-					"applies": True,
-					"counting_rule": "Calendar days",
-					"minimum_days": limits.get(key, (None, None))[0],
-					"maximum_days": limits.get(key, (None, None))[1],
-					"default_days": default,
-					"basis": basis,
-					"statutory_reference": ref,
-				}
-				for index, (key, default, basis, ref) in enumerate(SCHEDULE_MILESTONES)
-			],
-			counting_rule="Calendar days",
-			estimated_delivery_period_default_days=estimated_delivery_default_days,
-			verification_status=verification_status or settings.VERIFICATION_PENDING,
-			fixture_namespace=fixture_namespace,
-			**effective,
-			**PROFILE_SOURCE,
-		)
-		created += 1
-	return {"created": created, "total": len(SCHEDULE_PROFILE_CATEGORIES)}
+	total = 0
+	for method in methods:
+		for category in SCHEDULE_PROFILE_CATEGORIES:
+			total += 1
+			if _profile_exists(settings.SCHEDULE_PROFILE, {"procurement_method": method, "procurement_category": category, "effective_from": effective["effective_from"]}):
+				continue
+			settings.register_schedule_profile_version(
+				procurement_method=method,
+				procurement_category=category,
+				profile_name=f"{method} — {category.lower()}",
+				procedure="Planning example",
+				milestones=[
+					{
+						"milestone": key,
+						"label": settings.MILESTONE_LABELS[key],
+						"sequence": index + 1,
+						"applies": True,
+						"counting_rule": "Calendar days",
+						"minimum_days": limits.get(key, (None, None))[0],
+						"maximum_days": limits.get(key, (None, None))[1],
+						"default_days": default,
+						"basis": basis,
+						"statutory_reference": ref,
+					}
+					for index, (key, default, basis, ref) in enumerate(SCHEDULE_MILESTONES)
+				],
+				counting_rule="Calendar days",
+				estimated_delivery_period_default_days=estimated_delivery_default_days,
+				verification_status=verification_status or settings.VERIFICATION_PENDING,
+				fixture_namespace=fixture_namespace,
+				**effective,
+				**PROFILE_SOURCE,
+			)
+			created += 1
+	return {"created": created, "total": total}
+
+
+def _seed_business_day_calendar(*, effective: dict | None = None, fixture_namespace: str = FIXTURE_TAG, verification_status: str | None = None) -> dict[str, int]:
+	"""The working-day calendar a schedule counting in working days needs.
+
+	Nothing seeded one before, so a freshly seeded site showed "No
+	working-day calendars yet" and no schedule could be switched off
+	calendar days. Only the fixed-date statutory holidays are listed:
+	Easter and the two Eids move every year and are gazetted annually, so
+	they are an administrator's to add for the year in question rather than
+	dates this seed can state.
+	"""
+	from frappe.utils import getdate
+
+	from kentender_core.services import procurement_settings as settings
+
+	effective = effective or PROFILE_EFFECTIVE
+	name = "Kenya public holidays"
+	start, until = getdate(effective["effective_from"]), getdate(effective["effective_until"])
+	if frappe.db.get_value(settings.CALENDAR, {"calendar_name": name, "status": "Active", "effective_from": start}, "name"):
+		return {"created": 0, "holidays": 0}
+	holidays = [
+		{"holiday_date": f"{year}-{month_day}", "holiday_name": label, "source_reference": "Public Holidays Act (Cap. 110)"}
+		for year in range(start.year, until.year + 1)
+		for month_day, label in FIXED_PUBLIC_HOLIDAYS
+		if start <= getdate(f"{year}-{month_day}") <= until
+	]
+	settings.register_business_day_calendar_version(
+		calendar_name=name,
+		effective_from=effective["effective_from"],
+		effective_until=effective.get("effective_until", ""),
+		weekend_days=["Saturday", "Sunday"],
+		holidays=holidays,
+		verification_status=verification_status or settings.VERIFICATION_PENDING,
+		source_instrument="Public Holidays Act (Cap. 110)",
+		provision="First Schedule",
+		fixture_namespace=fixture_namespace,
+	)
+	return {"created": 1, "holidays": len(holidays)}
 
 
 def _seed_procurement_settings() -> dict[str, int]:
