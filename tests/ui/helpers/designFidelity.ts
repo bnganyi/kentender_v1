@@ -255,6 +255,18 @@ export function collectPageErrors(page: Page): string[] {
 		// page load in developer mode. Framework code, read-only for this repo
 		// (AGENTS.md §2); nothing in a KenTender page can cause or fix it.
 		if (/\/undefined$/.test(url)) return;
+		// Several NDS-DES-14-* fidelity states (departmental-needs-fidelity.spec.ts)
+		// deliberately fulfil or abort an `/api/method/` route — a non-2xx status
+		// (417, this suite's own sentinel; 500, simulating an ordinary unhandled
+		// server error) or a hard `route.abort()` (simulating a dropped
+		// connection) — to prove the app's own page-notice UI surfaces that
+		// failure gracefully. Chrome always logs a "Failed to load resource: …"
+		// or "net::ERR_FAILED" console entry for that response regardless of how
+		// gracefully the app handles it, so it is the mock working as intended,
+		// not an application defect. Scoped to `/api/method/` only — a real
+		// page asset (script, style, image) failing the same way is still a
+		// genuine defect and stays caught.
+		if ((text.includes("Failed to load resource") || text.includes("net::ERR_FAILED")) && url.includes("/api/method/")) return;
 		errors.push(text);
 	});
 	return errors;

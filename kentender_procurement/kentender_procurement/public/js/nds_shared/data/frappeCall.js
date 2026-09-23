@@ -24,6 +24,14 @@ export async function frappeCall(method, args) {
 		// failure (e.g. to pick the Forbidden vs Server-error empty state)
 		// without re-parsing the raw jqXHR itself.
 		err.httpStatus = xhr && xhr.status;
+		// NDS-DES-14-SUBMIT-UNKNOWN — a response with no parseable server
+		// answer at all (no `_server_messages`, no `exception`, e.g. a dropped
+		// connection or a request that never reached the server) means the
+		// caller genuinely cannot tell whether the command was received, unlike
+		// an ordinary clean rejection the server did answer. Exposed so a
+		// mutating command can show "could not confirm" instead of a plain
+		// retryable error.
+		err.ambiguous = !(xhr && xhr.responseJSON && (xhr.responseJSON._server_messages || xhr.responseJSON.exception));
 		throw err;
 	}
 }

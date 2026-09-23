@@ -1,8 +1,16 @@
-<!-- NDS-UI-04 / NDS-UI-06 need detail (§12.4) — NDS-DES-05 submitted,
-     NDS-DES-07 accepted + the Planning-status variants derivable from the
-     existing usage/disposition projections (NONE/PROCEEDING/EXCLUDED/
-     STILL-ACTIVE/RESTORED). The screen shows the exact revision it was asked
-     for and never rewrites the requested one. -->
+<!-- NDS-UI-04 / NDS-UI-06 need detail (§12.4), ported class-for-class from
+     NDS Artboards.dc.html — NDS-DES-05 submitted, NDS-DES-07 accepted + the
+     Planning-status variants derivable from the existing usage/disposition
+     projections (NONE/PROCEEDING/EXCLUDED/STILL-ACTIVE/RESTORED),
+     NDS-DES-08-DRAFT/SUBMITTED/RETURNED/OTHER-AUTHOR (an open successor's own
+     status, not the Need's root state), NDS-DES-11-REQUESTED/OPEN-UPDATE (the
+     withdrawal-blocking facts shown on this same detail page, not the
+     withdrawal review screen), and NDS-DES-TERMINAL (decline/
+     withdrawal) — the decision-reason/withdrawn-by block, content and
+     structure ported from NDS Artboards.dc.html using the live
+     `.kt-notice`/`.kt-meta-row`/`.kt-label` vocabulary rather than the
+     mockup's own inline styles. The screen shows the exact revision it was
+     asked for and never rewrites the requested one. -->
 <template>
 	<div class="kt-page">
 		<div class="kt-page-head">
@@ -53,6 +61,25 @@
 			</div>
 		</div>
 
+		<!-- NDS-DES-TERMINAL (decline/withdrawal) — "Decision reason" +
+		     Decided by/at for a declined Need, or Withdrawn by/at (no reason:
+		     §5.1's self-service withdrawal collects none) for a self-withdrawn
+		     one. Neither `editAction` nor `reviewAction` nor `showPlanning`
+		     apply to either terminal state, so this always renders directly
+		     under the header when present. -->
+		<div v-if="terminalDecision" class="kt-notice is-critical" data-testid="nds-terminal-decision">
+			<div class="kt-notice-body">
+				<template v-if="terminalDecision.reason">
+					<span class="kt-label">Decision reason</span>
+					<p class="kt-factstack-value" style="margin: 8px 0 16px">{{ terminalDecision.reason }}</p>
+				</template>
+				<div class="kt-meta-row">
+					<div><span class="kt-label">{{ decidedByLabel }}</span><span class="kt-meta-value" style="font-size: 15px">{{ terminalDecision.actor_label }}</span></div>
+					<div><span class="kt-label">{{ decidedAtLabel }}</span><span class="kt-meta-value" style="font-size: 15px">{{ terminalDecision.occurred_label }}</span></div>
+				</div>
+			</div>
+		</div>
+
 		<!-- NDS-DES-14 MASKED-DETAIL is rendered by the parent (access denied
 		     before this component mounts); a superseded pinned revision stays
 		     readable and says so. -->
@@ -93,10 +120,72 @@
 			</button>
 		</div>
 
-		<div v-if="openSuccessor" class="kt-notice is-info">
+		<!-- NDS-DES-08-DRAFT/SUBMITTED/OTHER-AUTHOR — an open successor's own
+		     revision status decides the notice, never the Need's root
+		     `current_state` (§5.2 holds that at "Accepted for planning" for
+		     the whole successor lifecycle). The action link is the maker's
+		     alone (`canOpenSuccessor` — accessProfile === owner); any other
+		     reader (OTHER-AUTHOR) sees the same fact with no link.
+		     NDS-DES-08-RETURNED (a successor sent back for correction) is not
+		     distinguishable from a fresh Draft with today's read contract — a
+		     returned successor's `current_revision` is immediately repointed
+		     to a brand-new correction copy (services/lifecycle.py
+		     `review_need`, same "preserve the snapshot, copy for editing"
+		     mechanism the primary-Need return path uses), so no field says
+		     "this Draft exists because of a return" the way the primary
+		     Need's own `current_state === 'Returned'` does. FOLLOW_UPS FU-38. -->
+		<div v-if="openSuccessor" class="kt-notice">
 			<div class="kt-notice-body">
-				The accepted revision below stays current until the update is accepted.
-				<a v-if="canOpenSuccessor" href="#" style="margin-left: 8px" @click.prevent="$emit('open-successor')">Open update</a>
+				<template v-if="successorSubmitted">
+					<div style="font-weight: 600; color: var(--kt-color-text)">Your changes are awaiting review</div>
+					<p v-if="canOpenSuccessor && submittedAt" class="text-muted" style="margin: 6px 0 0; font-size: 12px">
+						Submitted at {{ formatInstant(submittedAt) }}
+					</p>
+					<button
+						v-if="canOpenSuccessor"
+						type="button"
+						class="kt-action-link"
+						style="margin-top: 8px"
+						data-testid="nds-open-successor"
+						@click="$emit('open-successor')"
+					>
+						View proposed changes
+					</button>
+				</template>
+				<template v-else>
+					<div style="font-weight: 600; color: var(--kt-color-text)">Update in progress</div>
+					<button
+						v-if="canOpenSuccessor"
+						type="button"
+						class="kt-action-link"
+						style="margin-top: 8px"
+						data-testid="nds-open-successor"
+						@click="$emit('open-successor')"
+					>
+						Continue update
+					</button>
+					<!-- NDS-DES-11-OPEN-UPDATE — names the reason Request withdrawal is
+					     absent from the header while an update is open (ownerActions
+					     already omits it, §5.3); relevant to the maker alone. -->
+					<p v-if="canOpenSuccessor" style="margin: 12px 0 0">
+						An update is already in progress. Complete or cancel it before requesting withdrawal.
+					</p>
+				</template>
+			</div>
+		</div>
+
+		<!-- NDS-DES-11-REQUESTED — a withdrawal already open against a
+		     STILL-ACTIVE requirement leads with this headline instead of the
+		     inline "Where this requirement stands" warning below (which stays
+		     for the no-open-withdrawal STILL-ACTIVE case, NDS-DES-07A), so the
+		     same fact is never shown twice on one page. -->
+		<div v-if="withdrawalOpen && stillActive" class="kt-notice is-warning" data-testid="nds-withdrawal-waiting">
+			<div class="kt-notice-body">
+				<div style="font-weight: 600; color: var(--kt-color-text)">Waiting for a Planning change</div>
+				<p style="margin: 6px 0 0">
+					The annual plan has not yet been updated. Withdrawal cannot be approved while
+					this requirement remains included.
+				</p>
 			</div>
 		</div>
 
@@ -134,7 +223,19 @@
 					<div style="display: flex; align-items: center; gap: 10px; margin-top: 8px">
 						<span class="kt-status" :class="departmentalPlanStatus.cls">{{ departmentalPlanStatus.label }}</span>
 					</div>
-					<p style="margin: 12px 0 0; font-size: 13px; color: var(--kt-color-neutral-800)">{{ departmentalPlanStatus.explanation }}</p>
+					<!-- NDS-DES-07A-EXCLUDED/STILL-ACTIVE — a not-proceeding exclusion
+					     names its own reason under a "Reason" label, set off by a
+					     divider; every other outcome keeps the plain unlabelled
+					     sentence (NDS-DES-07/07-PLANNER/07-AUDITOR/07A-PROCEEDING/
+					     RESTORED's "Included" explanation). -->
+					<div
+						v-if="departmentalPlanStatus.cls === 'is-attention'"
+						style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--kt-color-divider)"
+					>
+						<span class="kt-label">Reason</span>
+						<p style="margin: 6px 0 0; font-size: 13px; color: var(--kt-color-neutral-800)">{{ departmentalPlanStatus.explanation }}</p>
+					</div>
+					<p v-else style="margin: 12px 0 0; font-size: 13px; color: var(--kt-color-neutral-800)">{{ departmentalPlanStatus.explanation }}</p>
 				</div>
 				<div class="kt-group">
 					<span class="kt-label">Current annual plan</span>
@@ -142,6 +243,19 @@
 						<span class="kt-status" :class="annualPlanStatus.cls">{{ annualPlanStatus.label }}</span>
 					</div>
 					<p style="margin: 12px 0 0; font-size: 13px; color: var(--kt-color-neutral-800)">{{ annualPlanStatus.explanation }}</p>
+					<!-- NDS-DES-07A-STILL-ACTIVE/RESTORED — the concrete Plan Item
+					     an Active projection names is one click away here too, not
+					     only inside the "Planning decisions and history" disclosure. -->
+					<button
+						v-if="usage.active_plan_item"
+						type="button"
+						class="kt-action-link"
+						style="margin-top: 10px"
+						data-testid="nds-view-plan-item-inline"
+						@click="$emit('view-plan-item')"
+					>
+						View annual plan item
+					</button>
 				</div>
 			</div>
 			<p class="text-muted" style="margin: 12px 0 0; font-size: 12px">
@@ -156,8 +270,11 @@
 			</div>
 			<!-- NDS-DES-07A STILL-ACTIVE — a not-proceeding departmental
 			     disposition with the requirement still Fully included blocks
-			     withdrawal until Planning clears it. -->
-			<div v-if="stillActive" class="kt-notice is-warning" style="margin-top: var(--kt-space-4)">
+			     withdrawal until Planning clears it. Absent while a withdrawal
+			     request is already open (NDS-DES-11-REQUESTED) — the top-level
+			     "Waiting for a Planning change" notice above says the same thing
+			     once, not twice. -->
+			<div v-if="stillActive && !withdrawalOpen" class="kt-notice is-warning" style="margin-top: var(--kt-space-4)">
 				<div class="kt-notice-body" style="font-size: 12px">
 					The annual plan has not yet been updated. Withdrawal cannot be approved while
 					this requirement remains included.
@@ -300,6 +417,10 @@ const props = defineProps({
 	accessProfile: { type: String, default: "" },
 	actions: { type: Array, default: () => [] },
 	latestReturn: { type: Object, default: null },
+	// NDS-DES-TERMINAL — { reason, actor_label, occurred_label }. `reason` is
+	// empty for a self-service withdrawal (§5.1 collects none); always
+	// present for a decline.
+	terminalDecision: { type: Object, default: null },
 	acceptedByLabel: { type: String, default: "" },
 	acceptedAt: { type: String, default: "" },
 	acceptedCapacity: { type: String, default: "" },
@@ -353,6 +474,12 @@ const STATUS_LABELS = {
 const statusClass = computed(() => STATUS_LABELS[props.need.current_state]?.[0] || "is-draft");
 const statusLabel = computed(() => STATUS_LABELS[props.need.current_state]?.[1] || props.need.current_state || "");
 
+// NDS-DES-TERMINAL — "Decided by/at" for a decline, "Withdrawn by/at" for a
+// self-withdrawal; the same two facts, labelled for which one actually
+// happened.
+const decidedByLabel = computed(() => (props.need.current_state === "Withdrawn" ? "Withdrawn by" : "Decided by"));
+const decidedAtLabel = computed(() => (props.need.current_state === "Withdrawn" ? "Withdrawn at" : "Decided at"));
+
 const openSuccessor = computed(
 	() =>
 		isAccepted.value &&
@@ -362,6 +489,15 @@ const openSuccessor = computed(
 );
 
 const canOpenSuccessor = computed(() => props.accessProfile === "owner");
+
+// NDS-DES-08-SUBMITTED — the open successor's own revision status, read only
+// while a successor is actually open so a plain accepted Need (no successor)
+// never falls into this branch by accident. "Draft" is the fallback for
+// every other successor state, including one just returned for correction
+// (FOLLOW_UPS FU-38 — not distinguishable from a fresh Draft today).
+const successorSubmitted = computed(
+	() => openSuccessor.value && props.revision?.revision_status === "Submitted"
+);
 
 const ownerActions = computed(() => {
 	if (props.accessProfile !== "owner" || !isAccepted.value || isHistoricalRevision.value) return [];

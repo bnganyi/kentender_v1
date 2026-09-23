@@ -1,6 +1,8 @@
 <!-- NDS-UI-05 review task (§12.5) — NDS-DES-06 initial review, NDS-DES-09
      review of proposed changes. Renders the exact immutable submitted
-     revision identified by the task, then the decision area. -->
+     revision identified by the task, then the decision area.
+     NDS-DES-14-REVIEW-CHANGED is ported class-for-class from NDS
+     Artboards.dc.html. -->
 <template>
 	<div class="kt-page">
 		<div>
@@ -44,6 +46,26 @@
 			<span>{{ scope.financial_year || "" }}</span>
 			<span>·</span>
 			<span data-volatile="true">{{ formatInstant(openedAt) }}</span>
+		</div>
+
+		<!-- NDS-DES-14-REVIEW-CHANGED — the task loaded but the server now
+		     reports no decision this viewer may still make (`permitted` empty),
+		     most commonly because someone else already decided it: without this,
+		     the decision area simply disappears with no explanation. The
+		     artboard leads with this notice, before the requirement content —
+		     Refresh is the one thing this state asks the actor to do first. -->
+		<div
+			v-if="!makerCheckerBlocked && !permitted.length"
+			class="kt-notice is-warning"
+			style="max-width: 900px"
+			data-testid="nds-review-changed"
+		>
+			<div class="kt-notice-body">
+				<p style="margin: 0">This review has already changed. Refresh to see the current result.</p>
+				<button type="button" class="kt-btn kt-btn-secondary" style="margin-top: 12px" data-testid="nds-review-refresh" @click="$emit('refresh')">
+					Refresh
+				</button>
+			</div>
 		</div>
 
 		<!-- NDS-DES-09 — the changed field(s) lead, before the full proposal. -->
@@ -117,7 +139,7 @@ const props = defineProps({
 	errorSummary: { type: String, default: "" },
 	pending: Boolean,
 });
-defineEmits(["return", "accept", "decline"]);
+defineEmits(["return", "accept", "decline", "refresh"]);
 
 const isSuccessor = computed(() => props.taskType === "Successor acceptance");
 

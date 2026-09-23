@@ -18,8 +18,11 @@ import frappe
 from frappe.utils import cstr, flt, formatdate
 
 from kentender_procurement.departmental_needs.constants import (
+	ACTION_DECLINE,
+	ACTION_WITHDRAW,
 	STATE_ACCEPTED,
 	STATE_DRAFT,
+	STATE_NOT_TAKEN_FORWARD,
 	STATE_RETURNED,
 	STATE_SUBMITTED,
 	STATE_WITHDRAWN,
@@ -497,6 +500,36 @@ def get_current_accepted_need(
 	}
 
 
+def get_need_acceptance_evidence(
+	*, need: str, need_revision: str, user: str | None = None,
+) -> dict[str, Any] | None:
+	"""§8.1 companion to `get_current_accepted_need` — who accepted this exact
+	revision for planning, and when (§10.11's "Need accepted by" evidence).
+
+	A pinned allocation may source from an earlier, since-superseded revision,
+	so this answers for the *named* revision rather than the Need's current
+	one — `get_current_accepted_need` cannot serve that case. Firm D1 boundary:
+	the only way Planning may learn this fact is through this read, never a
+	direct `Departmental Need Decision` query (test_planning_never_touches_a_needs_table).
+	Returns None rather than failing when no such decision is recorded — an
+	absent decision is Planning's caller's own question to handle, not this
+	read's to refuse."""
+	principal = actor(user)
+	name = cstr(need).strip()
+	if not frappe.db.exists("Departmental Need", name):
+		return None
+	doc = frappe.get_doc("Departmental Need", name)
+	require_view(doc, principal)
+	decision = frappe.db.get_value(
+		"Departmental Need Decision",
+		{"departmental_need": name, "need_revision": cstr(need_revision), "action": "Accept for planning"},
+		["actor", "occurred_at"], as_dict=True, order_by="occurred_at asc",
+	)
+	if not decision:
+		return None
+	return {"actor": decision.actor, "occurred_at": decision.occurred_at}
+
+
 def _scope_labels(doc) -> dict[str, str]:
 	"""Display names for the Need's scope; the artboards never show raw IDs."""
 	fy_start = frappe.db.get_value("Fiscal Year", doc.financial_year, "year_start_date")
@@ -616,6 +649,44 @@ def get_need(*, need: str, user: str | None = None) -> dict[str, Any]:
 				+ " at "
 				+ frappe.utils.format_time(row.occurred_at, "HH:mm"),
 			}
+	# NDS-DES-TERMINAL — the decline reason (with who/when) for a "Not taken
+	# forward" Need, or just who/when for a self-withdrawn ("Withdrawn") one
+	# — §5.1's self-service withdrawal collects no reason. Mirrors
+	# `latest_return` above: one dedicated read for the one terminal state
+	# a Need is actually in, never guessed from `history`.
+	terminal_decision = None
+	if doc.current_state == STATE_NOT_TAKEN_FORWARD:
+		row = frappe.db.get_value(
+			"Departmental Need Decision",
+			{"departmental_need": doc.name, "action": ACTION_DECLINE},
+			["reason", "actor", "occurred_at"],
+			order_by="occurred_at desc",
+			as_dict=True,
+		)
+		if row:
+			terminal_decision = {
+				"reason": row.reason,
+				"actor_label": frappe.db.get_value("User", row.actor, "full_name") or row.actor,
+				"occurred_label": formatdate(row.occurred_at, "d MMMM y")
+				+ " at "
+				+ frappe.utils.format_time(row.occurred_at, "HH:mm"),
+			}
+	elif doc.current_state == STATE_WITHDRAWN:
+		row = frappe.db.get_value(
+			"Departmental Need Decision",
+			{"departmental_need": doc.name, "action": ACTION_WITHDRAW},
+			["actor", "occurred_at"],
+			order_by="occurred_at desc",
+			as_dict=True,
+		)
+		if row:
+			terminal_decision = {
+				"reason": "",
+				"actor_label": frappe.db.get_value("User", row.actor, "full_name") or row.actor,
+				"occurred_label": formatdate(row.occurred_at, "d MMMM y")
+				+ " at "
+				+ frappe.utils.format_time(row.occurred_at, "HH:mm"),
+			}
 	accepted = None
 	if doc.current_state == STATE_ACCEPTED:
 		row = frappe.db.get_value(
@@ -646,6 +717,7 @@ def get_need(*, need: str, user: str | None = None) -> dict[str, Any]:
 		"current_revision": _version_facts(doc.current_revision),
 		"accepted_revision": _version_facts(doc.current_accepted_revision),
 		"latest_return": latest_return,
+		"terminal_decision": terminal_decision,
 		"history": _decision_history(doc.name),
 		"author_label": frappe.db.get_value("User", doc.owner, "full_name") or doc.owner,
 		# §4.7/§11.8 — the detail screen needs the Plan/Plan Item references

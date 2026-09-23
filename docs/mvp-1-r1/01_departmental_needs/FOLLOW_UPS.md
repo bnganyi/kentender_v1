@@ -1114,6 +1114,33 @@ until this lands.
 per-variant) Playwright tests using route interception for the failure
 cases, then flip NDS13-AC-006/AC-008 to `Done` in the tracker.
 
+**CLOSED 2026-09-23.** Built the 3 plain-data fixture builders the 5 states
+actually need (per the artboards' own fixture notes, which reuse a shared
+data profile across states rather than inventing 5 separate ones) in
+`playwright_ui_fixtures.py`: `reset_disposition_none_fixture`
+(NDS-SC-DISPOSITION-NONE, §14.6A), `reset_disposition_still_active_fixture`
+(NDS-SC-EXCLUDED-STILL-ACTIVE, §14.6A) and `reset_older_revision_fixture`
+(NDS-SC-OLDER-REVISION-ACTIVE, §14.6A — reuses the exact
+`test_older_revision_usage_walks_back_when_current_revision_is_unprojected`
+command sequence: accept, project Revision 1 Fully included, open/submit/
+accept a Revision 2 successor, never project Revision 2). REFRESHING and
+UNAVAILABLE mock `get_need_planning_status` (delay / 500) on top of the
+STILL-ACTIVE fixture; UNAVAILABLE-NO-SNAPSHOT mocks the same endpoint on top
+of the NONE fixture (no `disposition.recorded`/`usage.recorded`/`olderUsage`
+at all, confirmed as the real distinguishing condition by reading
+`NeedDetailScreen.vue`'s `hasPlanningSnapshot`); DES-12-UNAVAILABLE mocks
+`check_accepted_need_withdrawal_dependency` on top of the existing
+`reset_withdrawal_cleared_fixture`, deliberately proving the check failing
+still blocks Approve even though the real underlying state is clear (never a
+silent fallback to the favourable answer). New Playwright coverage:
+`tests/ui/smoke/departmental_needs/departmental-needs-planning-status.spec.ts`
+(REFRESHING/UNAVAILABLE/UNAVAILABLE-NO-SNAPSHOT/OLDER, 4 tests) and one new
+test in `departmental-needs-withdrawal-review.spec.ts`
+(DES-12-UNAVAILABLE). `departmental-needs-fidelity.spec.ts`'s header comment
+corrected to name these two files instead of claiming blanket, unverified
+coverage. NDS13-AC-006/AC-008 may now flip to `Done` in the tracker — not
+done here (out of this fixture/test-only scope).
+
 ---
 
 ## FU-32 — AC-048's inline multi-department flow has a Python contract test but no Playwright spec (2026-09-19)
@@ -1354,3 +1381,113 @@ filters actually are by the time it fires.
 retry). Full Departmental Needs Playwright suite (functional + visual +
 fidelity) re-run afterward with `--retries=0` throughout, to confirm this
 fix carries no regression of its own now that the retry safety net is off.
+
+---
+
+## FU-38 — Eight NDS-DES-01/02/07/08/LONG-CONTENT/TECHNICAL artboard variants are real capability gaps, not fidelity work (found 2026-09-23)
+
+**What.** Closing the structural fidelity gate's remaining low-risk group
+(structural variants of already-tested screens, plus presentation edge
+cases) landed real fixes for 17 states — see the git history around this
+entry for the exact diffs (`NeedDetailScreen.vue`'s open-successor notice
+and STILL-ACTIVE "View annual plan item" link, the register's "Correct and
+resubmit" row-action label, the "Waiting for a Planning change" notice, and
+`ReasonDialog`'s NDS-DES-11 `meta` migration) plus 17 new
+`departmental-needs-fidelity.spec.ts` cases and two new component
+`.spec.js` files. Eight sibling ids in the same artboard families turned out
+to need a genuine backend or frontend capability that does not exist today,
+not a copy/structure port, and were deliberately left uncovered:
+
+1. **NDS-DES-01-PLAN-INCLUDED / PLAN-NOT-INCLUDED / OPEN-PROPOSAL /
+   OPEN-PROPOSAL-SUBMITTED.** The workspace register (`WorkspaceScreen.vue`/
+   `NeedsTable.vue`) has no per-row secondary status line at all — the data
+   is already there (`get_needs_workspace`'s per-row `planning_usage`), it
+   is simply never rendered. OPEN-PROPOSAL additionally needs the register's
+   own action to read "Continue update" for an accepted Need with an open
+   successor; today `_actions()` (`services/workspace.py`) only ever offers
+   `edit` when the Need's own **root** `current_state` is Draft/Returned, so
+   an accepted Need with an open successor gets a bare "View" in the
+   register regardless of the successor's own status (`current_revision`
+   vs. `current_accepted_revision`, the same signal
+   `NeedDetailScreen.vue`'s `openSuccessor` already reads for the detail
+   page).
+2. **NDS-DES-02-DUAL-ROLE.** The artboard shows a "My needs" register and an
+   "All departmental needs" register on the same page for one dual-role
+   actor. `WorkspaceScreen.vue` renders exactly one register, titled either
+   "All my needs" or "All departmental needs" depending on
+   `decisionQueue.length` — never both at once. The maker-checker exclusion
+   this artboard's own fixture note calls out (the actor's own submission
+   never appears in her own decision queue) is already proven separately by
+   `departmental-needs-review-task.spec.ts`'s "the author who submitted the
+   revision is offered no decision" — only the two-register layout itself is
+   missing.
+3. **NDS-DES-07-HISTORICAL.** A dedicated "Planning status for Revision N"
+   page (its own `<h1>`, a "newer revision available" notice, an "Annual
+   plan evidence" section reading that *specific* historical revision's own
+   Planning facts) — not a variant of `NeedDetailScreen.vue`'s existing
+   pinned-revision rendering, which shows a modest inline "This revision has
+   been superseded" notice over the *current* Planning-status panel instead.
+   Building it needs Planning-status reads keyed to an arbitrary historical
+   revision, not just the current accepted one.
+4. **NDS-DES-08-RETURNED.** An open successor sent back for correction is
+   not distinguishable from a fresh, never-submitted Draft with today's read
+   contract: `review_need`'s `return` branch (`services/lifecycle.py`)
+   immediately repoints `current_revision` to a brand-new correction copy
+   (status Draft) for *both* the primary-Need and successor return paths —
+   the Returned revision itself becomes non-current history. The primary
+   path still works because it also moves the Need's **root**
+   `current_state` to `Returned` (§5.2 holds the root at `Accepted for
+   planning` for the whole successor lifecycle, so the successor path gets
+   no equivalent root-level signal); no field says "this Draft exists
+   because of a return" for a successor. `history`'s own timeline entries
+   have no exposed reason text either. See the comment on
+   `NeedDetailScreen.vue`'s `successorSubmitted`.
+5. **NDS-DES-LONG-CONTENT / LONG-CONTENT-EXPANDED.** A truncate/expand
+   "Read full description"/"Read full reason" ↔ "Show less" preview for long
+   free text, shown read-only until expanded. Neither the editor's
+   description field nor the return-reason notice have any such preview
+   mode today — the description is always a plain editable `<textarea>`.
+6. **NDS-DES-TECHNICAL-DETAIL-REVIEW / TECHNICAL-DETAIL-EDITOR.** A
+   read-only rendering mode for `ReviewTaskScreen.vue`/`NeedEditorScreen.vue`
+   (all fields/decision controls replaced with plain text) plus a new
+   "Technical details" meta-row disclosure (Need reference / Requested
+   revision / Review kind or Revision status / Task status) — neither
+   exists. `kentender_core`'s generic Technical Search page
+   (`TechnicalSearch.vue`) is a separate find-any-record tool and is not
+   what these two artboards depict (their own fixture notes: "technical
+   search remains the shared standard's existing surface"); building this is
+   cross-app in principle (a generic "technical read" mode) but the concrete
+   UI lives in `kentender_procurement`. NDS-DES-TECHNICAL-REGISTER (the
+   workspace register itself under an Administrator/System Manager's
+   "oversight" access profile) needed no such change and is covered.
+7. **"View departmental plan"** (the button/link, not the field label) is
+   absent from `NeedDetailScreen.vue` everywhere the artboards draw it
+   (NDS-DES-07/07-PLANNER/07-AUDITOR's disclosure, every NDS-DES-07A variant
+   except NONE, NDS-DES-11-REQUESTED) for the same reason as (6)'s sibling
+   gap: `NeedPlanningDispositionChanged.v1`/`Need Planning Disposition
+   Projection` carries `dpp_submission` — a bare **submission sequence
+   number** ("Submission 1", "Submission 2", …) — never a routable
+   Departmental Plan reference (`dpp_reference`, e.g. `DPP-MOH-DHI-2027-001`,
+   the kind Procurement Planning's own workspace already links
+   `["departmental-procurement-plan", dpp_reference]` from). No amount of
+   frontend work can build this link without that field.
+
+**Why not fixed here.** All eight are genuine new capabilities (new fields,
+a new read contract shape, or a new interaction mode), the same category
+FU-27 itself was scoped out of a usability/fidelity cycle for. This session
+stayed inside class-for-class ports of what the current data model already
+supports.
+
+**Fix.** A future session, roughly in ascending cost: (1) render the
+existing `planning_usage` per row plus give the register's own action
+"Continue update" for an accepted Need with an open successor (reuses
+existing data, smallest of the eight); (7) add a `dpp_reference` (or
+equivalent resolvable target) to `Need Planning Disposition Projection`/the
+disposition event schema, the one blocker both (7) and half of (6) share;
+(4) a `revision.based_on_return` flag or equivalent on
+`Departmental Need Revision`, set when `review_need`'s `return` branch
+creates the correction copy; (2) a genuine two-register "My needs" +
+department layout for a dual-role actor; (3) a historical-revision-scoped
+Planning-status read; (5)/(6) are the most speculative — a text-truncation
+UX convention and a read-only screen mode respectively, worth a proper
+design pass rather than a quick port.

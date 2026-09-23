@@ -1,7 +1,10 @@
 <!-- NDS-UI-03 need editor (§12.3) — NDS-DES-03 create, NDS-DES-04 returned
      correction, NDS-DES-08 accepted update draft and NDS-DES-15's department
      choice are the same editor over the same six values; only the masthead,
-     notice, context and footer differ. -->
+     notice, context and footer differ. The NDS-DES-14 QUANTITY-ERROR/
+     CLOSED-EDITOR/PARTIAL-SUBMIT/SUBMIT-UNKNOWN boundary states and
+     NDS-DES-15-MULTIPLE/SINGLE/PERSISTED are ported class-for-class from
+     NDS Artboards.dc.html. -->
 <template>
 	<div class="kt-page">
 		<div>
@@ -45,6 +48,30 @@
 			<div class="kt-notice-body">{{ errorSummary }}</div>
 		</div>
 
+		<!-- NDS-DES-14-PARTIAL-SUBMIT — the draft itself was saved (it now has a
+		     real reference) even though the submit that followed was refused
+		     because intake closed in between; the saved reference stays
+		     reachable here rather than only in a banner nobody can act on. -->
+		<div v-if="partialSubmit" class="kt-notice is-warning" style="max-width: 860px" data-testid="nds-partial-submit">
+			<div class="kt-notice-body">
+				<div style="font-weight: 600; color: var(--kt-color-text)">Your draft was saved, but it was not submitted.</div>
+				<p style="margin: 6px 0 0">New submissions are closed. You can save changes to this draft and submit if submissions reopen.</p>
+				<div class="kt-meta-row is-tight" style="gap: 28px; margin-top: 14px">
+					<div><span class="kt-label">Reference</span><span class="kt-meta-value">{{ partialSubmit.need_reference }}</span></div>
+					<div><span class="kt-label">Revision</span><span class="kt-meta-value">{{ partialSubmit.revision_number }}</span></div>
+				</div>
+			</div>
+		</div>
+
+		<!-- NDS-DES-14-SUBMIT-UNKNOWN — a network-level failure with no
+		     interpretable server answer (frappeCall's `ambiguous` flag): the
+		     caller genuinely cannot tell whether the command was received, so
+		     writes stay disabled until the next real load rather than offering
+		     a second submission that could double it. -->
+		<div v-if="submitUnknown" class="kt-notice" style="max-width: 860px" data-testid="nds-submit-unknown">
+			<div class="kt-notice-body">We could not confirm whether submission succeeded. Checking the existing request…</div>
+		</div>
+
 		<!-- §11.4 — CREATE mode offers the same-form Department choice in a
 		     compact ownership row over a hairline rule, not a card; every other
 		     mode's Department/FY are already fixed and read as a plain
@@ -81,10 +108,15 @@
 				}}</div>
 			</div>
 		</div>
-		<div v-else style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--kt-color-neutral-700)">
-			<span>{{ context.organisation_unit_label || context.organisation_unit || "" }}</span>
-			<span>·</span>
-			<span>{{ context.financial_year_label || context.financial_year || "" }}</span>
+		<!-- NDS-DES-15-PERSISTED — a fixed department/year context reads as a
+		     labelled `kt-meta-row`, the same established live vocabulary
+		     already used for the create-mode single-department context above
+		     and elsewhere in this module (WorkspaceScreen.vue's closed notice,
+		     NeedDetailScreen.vue's terminal decision), not the mockup's own
+		     unlabelled inline text. -->
+		<div v-else class="kt-meta-row is-tight" style="gap: 40px; max-width: 860px; padding-bottom: 20px; border-bottom: 1px solid var(--kt-color-divider)">
+			<div><span class="kt-label">Department</span><span class="kt-meta-value">{{ context.organisation_unit_label || context.organisation_unit || "" }}</span></div>
+			<div><span class="kt-label">Financial year</span><span class="kt-meta-value">{{ context.financial_year_label || context.financial_year || "" }}</span></div>
 		</div>
 
 		<!-- §11.1 six-field arrangement (single-sheet migration): one open
@@ -225,6 +257,19 @@
 			</div>
 		</div>
 
+		<!-- NDS-DES-14-CLOSED-EDITOR — a not-yet-submitted Draft's own Submit
+		     needs intake Open (NDS-BR-002/003); a Returned correction's
+		     resubmission does not (the version was already submitted before
+		     close), so this note and the Submit disable below apply to "draft"
+		     mode only, never "correct". -->
+		<p
+			v-if="mode === 'draft' && submissionClosed"
+			style="margin: 0; font-size: 14px; color: var(--kt-color-neutral-800); max-width: 860px"
+			data-testid="nds-submission-closed-note"
+		>
+			New submissions are closed. You can save changes to this draft and submit if submissions reopen.
+		</p>
+
 		<!-- §11.4/§11.5/§11.9 footer — CREATE has no destructive action, so
 		     Cancel joins Save/Submit as one right-aligned group. Every other
 		     mode separates its destructive-or-quieter cancel action to the far
@@ -238,10 +283,10 @@
 			<button class="kt-btn kt-btn-secondary" data-testid="nds-editor-cancel" :disabled="pending" @click="$emit('cancel')">
 				{{ cancelLabel }}
 			</button>
-			<button class="kt-btn kt-btn-secondary" data-testid="nds-save-draft" :disabled="pending || departmentRequired" @click="guardedEmit('save')">
+			<button class="kt-btn kt-btn-secondary" data-testid="nds-save-draft" :disabled="pending || departmentRequired || submitUnknown" @click="guardedEmit('save')">
 				{{ saveLabel }}
 			</button>
-			<button class="kt-btn kt-btn-primary" data-testid="nds-submit" :disabled="pending || departmentRequired" @click="guardedEmit('submit')">
+			<button class="kt-btn kt-btn-primary" data-testid="nds-submit" :disabled="pending || departmentRequired || !!partialSubmit || submitUnknown" @click="guardedEmit('submit')">
 				{{ submitLabel }}
 			</button>
 		</div>
@@ -262,7 +307,7 @@
 				<button class="kt-btn kt-btn-secondary" data-testid="nds-save-draft" :disabled="pending || departmentRequired" @click="guardedEmit('save')">
 					{{ saveLabel }}
 				</button>
-				<button class="kt-btn kt-btn-primary" data-testid="nds-submit" :disabled="pending || departmentRequired" @click="guardedEmit('submit')">
+				<button class="kt-btn kt-btn-primary" data-testid="nds-submit" :disabled="pending || departmentRequired || (mode === 'draft' && submissionClosed)" @click="guardedEmit('submit')">
 					{{ submitLabel }}
 				</button>
 			</div>
@@ -290,6 +335,16 @@ const props = defineProps({
 	errorSummary: { type: String, default: "" },
 	fieldErrors: { type: Object, default: () => ({}) },
 	pending: Boolean,
+	// NDS-DES-14-CLOSED-EDITOR — whether Needs submission is currently closed;
+	// only "draft" mode's own Submit is gated by it (see the footer's disabled
+	// binding for why "correct" is exempt).
+	submissionClosed: Boolean,
+	// NDS-DES-14-PARTIAL-SUBMIT — { need_reference, revision_number } once a
+	// create-mode save succeeded but the submit that followed it did not.
+	partialSubmit: { type: Object, default: null },
+	// NDS-DES-14-SUBMIT-UNKNOWN — a network-level failure with no
+	// interpretable server answer; writes stay disabled until the next load.
+	submitUnknown: Boolean,
 });
 const emit = defineEmits(["save", "submit", "cancel", "unit-created", "select-department"]);
 
@@ -324,10 +379,15 @@ function guardedEmit(event) {
 		requiredByEl.value && requiredByEl.value.validity.badInput
 			? "Required by must be a real calendar date."
 			: "";
+	// NDS-DES-14-QUANTITY-ERROR — NDS-AC-005 forbids a quantity of 0; checked
+	// client-side (no modal, no round trip) exactly like the badInput checks
+	// above, and only once badInput itself is ruled out.
 	inputErrors.indicative_quantity =
 		quantityEl.value && quantityEl.value.validity.badInput
 			? "Indicative quantity must be a number."
-			: "";
+			: form.indicative_quantity !== "" && Number(form.indicative_quantity) <= 0
+				? "Enter a quantity greater than zero."
+				: "";
 	const invalid = inputErrors.required_by_date
 		? requiredByEl.value
 		: inputErrors.indicative_quantity

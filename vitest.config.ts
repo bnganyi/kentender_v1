@@ -89,15 +89,27 @@ export default defineConfig({
 				},
 			},
 			{
-				// NDS-906 — the Departmental Needs presentation helpers. These are
-				// plain ES modules with no Vue or frappe dependency, so they need
-				// no component toolchain; the components that consume them are
-				// asserted in the browser layer (tests/ui/smoke/departmental_needs).
+				// NDS-906 — the Departmental Needs presentation helpers (plain ES
+				// modules, no Vue/frappe dependency) run under plain Node.
 				test: {
 					name: "departmental-needs",
 					environment: "node",
 					include: [
-						"kentender_procurement/kentender_procurement/public/js/departmental_needs/**/*.spec.js",
+						"kentender_procurement/kentender_procurement/public/js/departmental_needs/data/*.spec.js",
+					],
+				},
+			},
+			{
+				// NDS-DES-14/15 boundary-state remediation — real SFC component
+				// tests for the Departmental Needs screens, alongside (never
+				// instead of) the browser layer, matching the Procurement
+				// Planning/Requisitions/Tenders precedent above.
+				plugins: [vue()],
+				test: {
+					name: "departmental-needs-components",
+					environment: "jsdom",
+					include: [
+						"kentender_procurement/kentender_procurement/public/js/departmental_needs/components/*.spec.js",
 					],
 				},
 			},

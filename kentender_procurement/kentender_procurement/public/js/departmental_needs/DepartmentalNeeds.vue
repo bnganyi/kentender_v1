@@ -1,7 +1,9 @@
 <!-- Departmental Needs — NDS-CHG-001 v1.1 §10.
      One Frappe Page ("departmental-needs") carrying every §10 route; this root
      resolves the route segments and picks the screen, exactly as the Budget and
-     Strategy Vue-in-Desk pages do. -->
+     Strategy Vue-in-Desk pages do. The NDS-DES-14-MASKED-DETAIL/AUTHORITY-
+     CHANGED/LOAD-FAILURE page states it mounts via PageNotice.vue are ported
+     class-for-class from NDS Artboards.dc.html. -->
 <template>
 	<div class="kt-industry">
 		<div ref="railEl" class="kt-rail-mount"></div>
@@ -16,8 +18,34 @@
 			:data-refreshing="refreshing ? 'true' : 'false'"
 			:data-reference="needReference || ''"
 		>
+			<!-- NDS-DES-14-MASKED-DETAIL / AUTHORITY-CHANGED / LOAD-FAILURE (the
+			     non-workspace routes — WorkspaceScreen keeps its own copy of
+			     LOAD-FAILURE/DENIED for the workspace route itself), ported
+			     class-for-class from NDS Artboards.dc.html. Rendered in place of
+			     the detail/editor/task/withdrawal screen before that screen's own
+			     component ever sees denied/failed data. -->
+			<PageNotice
+				v-if="pageOutcome === 'masked' && screen !== 'workspace'"
+				heading="This requirement is not available to you."
+				action-label="Back to Departmental Needs"
+				@action="go()"
+			/>
+			<PageNotice
+				v-else-if="pageOutcome === 'authority-changed'"
+				heading="You no longer have permission to perform this action."
+				action-label="Back to Departmental Needs"
+				@action="go()"
+			/>
+			<PageNotice
+				v-else-if="pageOutcome === 'load-failure' && screen !== 'workspace'"
+				heading="Departmental Needs could not be loaded."
+				body="Try again. If the problem continues, contact support."
+				action-label="Try again"
+				@action="load({ entering: true })"
+			/>
+
 			<WorkspaceScreen
-				v-if="screen === 'workspace'"
+				v-else-if="screen === 'workspace'"
 				:loading="loading"
 				:error="error"
 				:outcome="workspace.outcome"
@@ -54,6 +82,9 @@
 				:error-summary="errorSummary"
 				:field-errors="fieldErrors"
 				:pending="pending"
+				:submission-closed="submissionClosed"
+				:partial-submit="partialSubmit"
+				:submit-unknown="submitUnknown"
 				@save="onSaveDraft"
 				@submit="onSubmit"
 				@cancel="onEditorCancel"
@@ -80,6 +111,7 @@
 				:access-profile="detail.access_profile || ''"
 				:actions="detail.actions || []"
 				:latest-return="detail.latest_return || null"
+				:terminal-decision="detail.terminal_decision || null"
 				:history="detail.history || []"
 				:withdrawal-open="withdrawalOpen"
 				@create-update="onCreateSuccessor"
@@ -107,6 +139,7 @@
 				@return="dialog = 'return'"
 				@decline="dialog = 'decline'"
 				@accept="dialog = 'accept'"
+				@refresh="load({ quiet: true })"
 			/>
 
 			<WithdrawalReviewScreen
@@ -138,6 +171,7 @@
 			:title="reasonDialog.title"
 			:subject="reasonDialog.subject || ''"
 			:subject-meta="reasonDialog.subjectMeta || ''"
+			:meta="reasonDialog.meta || []"
 			:lede="reasonDialog.lede || ''"
 			:field-label="reasonDialog.fieldLabel || 'Reason'"
 			:confirm-label="reasonDialog.confirmLabel"
@@ -154,6 +188,7 @@
 			:title="confirmDialog.title"
 			:message="confirmDialog.message"
 			:subject="confirmDialog.subject"
+			:meta="confirmDialog.meta || []"
 			:confirm-label="confirmDialog.confirmLabel"
 			:destructive="confirmDialog.destructive"
 			:pending="pending"
@@ -172,6 +207,7 @@ import { quantityWithUnit } from "./data/format.js";
 import ConfirmDialog from "./components/ConfirmDialog.vue";
 import NeedDetailScreen from "./components/NeedDetailScreen.vue";
 import NeedEditorScreen from "./components/NeedEditorScreen.vue";
+import PageNotice from "./components/PageNotice.vue";
 import ReasonDialog from "./components/ReasonDialog.vue";
 import ReviewTaskScreen from "./components/ReviewTaskScreen.vue";
 import WithdrawalReviewScreen from "./components/WithdrawalReviewScreen.vue";
@@ -189,6 +225,11 @@ const loading = ref(true);
 const refreshing = ref(false);
 const pending = ref(false);
 const error = ref("");
+// NDS-DES-14-MASKED-DETAIL/AUTHORITY-CHANGED/LOAD-FAILURE — the outcome a
+// non-workspace load or command settled on: "" | "masked" | "load-failure" |
+// "authority-changed". WorkspaceScreen keeps deciding its own LOAD-FAILURE/
+// DENIED from `error`/`workspace.outcome` directly, unaffected by this.
+const pageOutcome = ref("");
 const errorSummary = ref("");
 const fieldErrors = ref({});
 const search = ref("");
@@ -198,7 +239,18 @@ const workspace = ref({});
 const detail = ref({});
 const task = ref({});
 // get_needs_submission_state() shape: { open, financial_year, label, closes_at }.
-const submissionState = ref({ open: false, financial_year: "", label: "", closes_at: "" });
+// Defaults to `open: true` so a screen that reads it before its own fetch
+// resolves (the editor has no loading skeleton) never flashes a false
+// "closed" notice — WorkspaceScreen is unaffected, since it stays behind its
+// own `loading` skeleton until the real value has already landed.
+const submissionState = ref({ open: true, financial_year: "", label: "", closes_at: "" });
+// NDS-DES-14-PARTIAL-SUBMIT — { need, need_reference, record_version,
+// revision_number } once a create-mode save succeeded but the submit that
+// followed it was refused because intake closed in between.
+const partialSubmit = ref(null);
+// NDS-DES-14-SUBMIT-UNKNOWN — a command failed with no interpretable server
+// answer at all (frappeCall's `ambiguous` flag).
+const submitUnknown = ref(false);
 const usage = ref({});
 const disposition = ref(null);
 const olderUsage = ref(null);
@@ -364,6 +416,10 @@ const withdrawalOpen = computed(
 	() => (detail.value.open_task || {}).task_type === "Withdrawal"
 );
 
+// NDS-DES-14-CLOSED-EDITOR — see the load()'s editor branch for where this is
+// actually fetched for an existing Draft/Returned correction.
+const submissionClosed = computed(() => !submissionState.value.open);
+
 const requesterLabel = computed(
 	() => (task.value.withdrawal_request || {}).requested_by || ""
 );
@@ -488,6 +544,9 @@ async function load(opts) {
 	else loading.value = true;
 	error.value = "";
 	errorSummary.value = "";
+	pageOutcome.value = "";
+	partialSubmit.value = null;
+	submitUnknown.value = false;
 	try {
 		const loaded = await fetchFor(scr, opts);
 		if (seq !== loadSeq) return;
@@ -506,9 +565,49 @@ async function load(opts) {
 			submissionState.value = await api.getNeedsSubmissionState();
 			if (seq !== loadSeq) return;
 		}
-		if (scr === "editor") await loadUnits();
+		if (scr === "editor") {
+			await loadUnits();
+			// A direct load, a full reload or browser back/forward can land on
+			// /new without ever going through onCreateClick — previously the
+			// only place that resolved the authorised create targets. Left
+			// unresolved, editorContext fell back to the workspace's own
+			// combined-department filter (often "every department", i.e. no
+			// department at all), silently sent that as the save's
+			// organisation_unit and failed with a permission error the form had
+			// no selector and no recovery for (found live 22 Sep 2026). Resolve
+			// the same way the button does whenever creation is entered with
+			// nothing resolved yet.
+			if (!needReference.value) {
+				if (!createTargets.value) {
+					const ok = await resolveCreateTargets();
+					if (seq !== loadSeq) return;
+					if (!ok) {
+						go();
+						return;
+					}
+				}
+			} else {
+				// NDS-DES-14-CLOSED-EDITOR — an existing Draft/Returned correction
+				// needs to know whether intake is open right now, independent of
+				// the workspace's own fetch below (a direct/refreshed load straight
+				// into the editor never runs it).
+				submissionState.value = await api.getNeedsSubmissionState();
+				if (seq !== loadSeq) return;
+			}
+		}
 	} catch (e) {
-		if (seq === loadSeq) error.value = e.message;
+		if (seq === loadSeq) {
+			error.value = e.message;
+			// NDS-DES-14-MASKED-DETAIL/LOAD-FAILURE — WorkspaceScreen already
+			// derives its own copy of this from `error`/`workspace.outcome`
+			// directly; every other screen has no such handling of its own, so
+			// the root classifies it here. `require_view`'s masked denial (§9
+			// NDS_SCOPE_DENIED) always ends "not found." — never a signal to
+			// invent a support reference for.
+			if (scr !== "workspace") {
+				pageOutcome.value = /not found\.?$/i.test(e.message || "") ? "masked" : "load-failure";
+			}
+		}
 	} finally {
 		if (seq === loadSeq) {
 			loading.value = false;
@@ -589,22 +688,58 @@ async function run(action, fn) {
 	errorSummary.value = "";
 	fieldErrors.value = {};
 	reasonError.value = "";
+	submitUnknown.value = false;
 	try {
 		return await fn(api.newIdempotencyKey(action));
 	} catch (e) {
 		// Only a ReasonDialog renders `reasonError` inline; a ConfirmDialog has
 		// no error slot of its own (a failure there was previously silent —
 		// found while wiring the new withdraw-draft confirmation).
-		if (reasonDialog.value) reasonError.value = e.message;
-		else errorSummary.value = e.message;
+		if (reasonDialog.value) {
+			reasonError.value = e.message;
+		} else if (screen.value === "editor" && (action === "submit" || action === "save-before-submit") && e.ambiguous) {
+			// NDS-DES-14-SUBMIT-UNKNOWN — frappeCall's `ambiguous` flag: no
+			// interpretable server answer at all (a dropped connection, not a
+			// clean rejection), so the caller genuinely cannot tell whether the
+			// command was received. Stay put with writes disabled rather than
+			// offer a second submission the idempotency key alone does not by
+			// itself let this screen detect as already handled.
+			submitUnknown.value = true;
+		} else if (needReference.value && /not found\.?$/i.test(e.message || "")) {
+			// NDS_SCOPE_DENIED from a command that used to be permitted — the
+			// same masked message a read and a command both give (§9). Confirm
+			// the read is now denied too before calling this more than an
+			// ordinary failure: NDS-DES-14-AUTHORITY-CHANGED needs both the
+			// command AND the current read denied, not just this one refusal.
+			const stillReadable = await verifyStillReadable();
+			if (!stillReadable) pageOutcome.value = "authority-changed";
+			else errorSummary.value = e.message;
+		} else {
+			errorSummary.value = e.message;
+		}
 		return null;
 	} finally {
 		pending.value = false;
 	}
 }
 
+async function verifyStillReadable() {
+	try {
+		await api.getDepartmentalNeed(needReference.value);
+		return true;
+	} catch (e) {
+		return false;
+	}
+}
+
 function recordVersion() {
-	return (detail.value.need || {}).record_version;
+	return (detail.value.need || {}).record_version ?? partialSubmit.value?.record_version;
+}
+
+// "NDS-MOH-2027-0001-V1" -> "1", matching the parsing already used for the
+// Planning-history timeline (NeedDetailScreen.vue).
+function revisionNumberFromRevisionName(name) {
+	return (name || "").split("-V").pop()?.replace(/^0+/, "") || "1";
 }
 
 // The version stamp the next command must carry is the one the server just
@@ -615,14 +750,24 @@ function recordVersion() {
 // write ("This Departmental Need changed after it was opened") with nobody
 // else editing (2026-09-11).
 function stampSavedVersion(result) {
-	if (result && detail.value && detail.value.need) detail.value.need.record_version = result.record_version;
+	if (!result) return;
+	if (detail.value && detail.value.need) detail.value.need.record_version = result.record_version;
+	// NDS-DES-14-PARTIAL-SUBMIT — a retried Save/Submit on the still-in-place
+	// create screen needs its own up-to-date stamp; `detail.value.need` is not
+	// what this screen reads (see editorRevision's own create-mode guard).
+	if (partialSubmit.value) partialSubmit.value.record_version = result.record_version;
 }
 
 async function saveDraftCommand(action, form) {
+	// NDS-DES-14-PARTIAL-SUBMIT — once a create-mode save has already minted a
+	// reference, a retried Save/Submit must update that same record, not mint
+	// a second one; `needReference` stays "" the whole time because this
+	// screen never navigates away (see onSubmit).
+	const target = needReference.value || partialSubmit.value?.need || "";
 	return run(action, async (key) => {
 		const result = await api.saveNeedDraft({
-			need: needReference.value || "",
-			...(needReference.value ? { expected_version: recordVersion() } : contextArgs()),
+			need: target,
+			...(target ? { expected_version: recordVersion() } : contextArgs()),
 			...form,
 			idempotency_key: key,
 		});
@@ -635,8 +780,8 @@ async function onSaveDraft(form) {
 	const result = await saveDraftCommand("save-draft", form);
 	if (!result) return;
 	// §12.3 — the first save replaces the route with the generated reference.
-	if (!needReference.value) go(result.need_reference, "edit");
-	else await load({ quiet: true });
+	if (!needReference.value && !partialSubmit.value) go(result.need_reference, "edit");
+	else if (needReference.value) await load({ quiet: true });
 }
 
 async function onSubmit(form) {
@@ -649,7 +794,28 @@ async function onSubmit(form) {
 			idempotency_key: key,
 		})
 	);
-	if (result) go(result.need_reference);
+	if (result) {
+		go(result.need_reference);
+		return;
+	}
+	// NDS-DES-14-PARTIAL-SUBMIT — the draft itself was saved (a real
+	// reference now exists) even though the intake-closed refusal above means
+	// the submit did not go through. Stay on this same create screen (the
+	// artboard itself keeps the "Create a departmental need" heading rather
+	// than switching to the saved record's own edit view) but remember the
+	// reference so a retried Save/Submit updates it instead of minting a
+	// second Need. Any other submit failure (a stale write, say) keeps the
+	// plain errorSummary banner `run()` already set — NDS-DES-14-SAVE-FAILED,
+	// unchanged.
+	if (!needReference.value && !submitUnknown.value && /submission is not open/i.test(errorSummary.value || "")) {
+		partialSubmit.value = {
+			need: saved.need,
+			need_reference: saved.need_reference,
+			record_version: saved.record_version,
+			revision_number: revisionNumberFromRevisionName(saved.current_revision),
+		};
+		errorSummary.value = "";
+	}
 }
 
 function contextArgs() {
@@ -663,19 +829,17 @@ function contextArgs() {
 	};
 }
 
-// NDS-CHG-001 v1.13 §11.16/§12.1 — resolved at click time from the exact
-// authorised create targets, never from a Fiscal Year permission, the list's
-// current FY filter or a browser-stored context. A single eligible
-// department resolves silently; several go straight to the form, which hosts
-// the choice itself (NDS-DES-15-MULTIPLE) — there is no separate dialog.
-async function onCreateClick() {
+// NDS-CHG-001 v1.13 §11.16/§12.1 — resolved from the exact authorised create
+// targets, never from a Fiscal Year permission, the list's current FY filter
+// or a browser-stored context. A single eligible department resolves
+// silently; several go straight to the form, which hosts the choice itself
+// (NDS-DES-15-MULTIPLE) — there is no separate dialog. Shared by the button
+// (onCreateClick) and by `load()` for a direct/refreshed/back-forward entry
+// into create mode, so both resolve identically. Returns whether a usable
+// target was found.
+async function resolveCreateTargets() {
 	const targets = await api.listNeedCreateTargets();
-	if (!targets.open || !(targets.organisation_units || []).length) {
-		// Server state moved since the last load (flag just closed, or the
-		// actor's create scope changed) — refresh the list rather than guess.
-		await load({ quiet: true });
-		return;
-	}
+	if (!targets.open || !(targets.organisation_units || []).length) return false;
 	createTargets.value = targets;
 	const units = targets.organisation_units;
 	selectedDepartment.value = units.length === 1 ? units[0].organisation_unit : "";
@@ -685,6 +849,16 @@ async function onCreateClick() {
 		// a convenience, not what the editor itself reads (see editorContext).
 		contextKey.value = selectedDepartment.value;
 		await load({ quiet: true });
+	}
+	return true;
+}
+
+async function onCreateClick() {
+	if (!(await resolveCreateTargets())) {
+		// Server state moved since the last load (flag just closed, or the
+		// actor's create scope changed) — refresh the list rather than guess.
+		await load({ quiet: true });
+		return;
 	}
 	go("new");
 }
@@ -796,20 +970,38 @@ function openWithdrawalDialog() {
 
 const REASON_DIALOGS = {
 	// NDS-DES-13 RETURN-INITIAL / RETURN-UPDATE — same title/field label
-	// either way; only the confirm command differs.
-	return: {
-		title: "What needs to change?",
-		fieldLabel: "Correction required",
-		confirmLabel: "Return for correction",
-		onConfirm: () => decide(api.returnNeedRevision, "return"),
+	// either way; only the confirm command differs. subject/meta name the
+	// exact revision under review before the reason field (both artboards
+	// carry the same Reference/Revision meta row).
+	get return() {
+		const need = task.value.need || {};
+		const revision = task.value.revision || {};
+		return {
+			title: "What needs to change?",
+			subject: revision.title || "",
+			meta: [
+				{ label: "Reference", value: need.need_reference || "" },
+				{ label: "Revision", value: revision.revision_number || "" },
+			],
+			fieldLabel: "Correction required",
+			confirmLabel: "Return for correction",
+			onConfirm: () => decide(api.returnNeedRevision, "return"),
+		};
 	},
 	// NDS-DES-13 DECLINE-INITIAL / DECLINE-UPDATE — title, field label and
 	// confirm label all split by whether this is the initial submission or a
-	// proposed update (§8.5).
+	// proposed update (§8.5); subject/meta are the same shape either way.
 	get decline() {
 		const isSuccessor = task.value.task_type === "Successor acceptance";
+		const need = task.value.need || {};
+		const revision = task.value.revision || {};
 		return {
 			title: isSuccessor ? "Decline proposed changes" : "Do not take forward",
+			subject: revision.title || "",
+			meta: [
+				{ label: "Reference", value: need.need_reference || "" },
+				{ label: "Revision", value: revision.revision_number || "" },
+			],
 			fieldLabel: isSuccessor
 				? "Why are you declining these changes?"
 				: "Why are you declining this requirement?",
@@ -818,7 +1010,7 @@ const REASON_DIALOGS = {
 			onConfirm: () => decide(api.declineNeedRevision, "decline"),
 		};
 	},
-	// NDS-DES-11 — exact copy; subject/subjectMeta name the accepted Need
+	// NDS-DES-11 — exact copy; subject/meta name the accepted Need
 	// unambiguously before the reason field.
 	get "request-withdrawal"() {
 		const need = detail.value.need || {};
@@ -826,20 +1018,33 @@ const REASON_DIALOGS = {
 		return {
 			title: "Request withdrawal",
 			subject: revision.title || "",
-			subjectMeta: `${need.need_reference || ""} · Accepted revision ${revision.revision_number || ""}`,
+			meta: [
+				{ label: "Reference", value: need.need_reference || "" },
+				{ label: "Accepted revision", value: revision.revision_number || "" },
+			],
 			lede: "Explain why this accepted requirement should no longer be available for procurement planning.",
 			fieldLabel: "Reason for withdrawal",
 			confirmLabel: "Request withdrawal",
 			onConfirm: () => requestWithdrawal(),
 		};
 	},
-	// NDS-DES-13 DECLINE-WITHDRAWAL — exact copy.
-	"decline-withdrawal": {
-		title: "Decline withdrawal",
-		fieldLabel: "Reason",
-		confirmLabel: "Decline withdrawal",
-		destructive: true,
-		onConfirm: () => decideWithdrawal("decline"),
+	// NDS-DES-13 DECLINE-WITHDRAWAL — exact copy; subject/meta name the
+	// accepted Need being withdrawn.
+	get "decline-withdrawal"() {
+		const need = task.value.need || {};
+		const revision = task.value.revision || {};
+		return {
+			title: "Decline withdrawal",
+			subject: revision.title || "",
+			meta: [
+				{ label: "Reference", value: need.need_reference || "" },
+				{ label: "Accepted revision", value: revision.revision_number || "" },
+			],
+			fieldLabel: "Reason",
+			confirmLabel: "Decline withdrawal",
+			destructive: true,
+			onConfirm: () => decideWithdrawal("decline"),
+		};
 	},
 };
 
@@ -859,18 +1064,34 @@ const confirmDialog = computed(() => {
 		};
 	}
 	if (dialog.value === "approve-withdrawal") {
-		// NDS-DES-13 APPROVE-WITHDRAWAL — exact copy.
+		// NDS-DES-13 APPROVE-WITHDRAWAL — exact copy; subject/meta name the
+		// accepted Need being withdrawn.
+		const need = task.value.need || {};
+		const revision = task.value.revision || {};
 		return {
 			title: "Approve withdrawal?",
+			subject: revision.title || "",
+			meta: [
+				{ label: "Reference", value: need.need_reference || "" },
+				{ label: "Accepted revision", value: revision.revision_number || "" },
+			],
 			message: "This withdraws the accepted requirement. Earlier decisions remain in history.",
 			confirmLabel: "Approve withdrawal",
 			onConfirm: () => decideWithdrawal("approve"),
 		};
 	}
 	if (dialog.value === "cancel-successor") {
-		// NDS-DES-13 CANCEL-UPDATE — exact copy.
+		// NDS-DES-13 CANCEL-UPDATE — exact copy; subject/meta name the
+		// unsubmitted proposed revision being discarded.
+		const need = detail.value.need || {};
+		const revision = detail.value.current_revision || {};
 		return {
 			title: "Cancel these proposed changes?",
+			subject: revision.title || "",
+			meta: [
+				{ label: "Reference", value: need.need_reference || "" },
+				{ label: "Proposed revision", value: revision.revision_number || "" },
+			],
 			message: "The previously accepted requirement will remain in effect.",
 			confirmLabel: "Cancel update",
 			destructive: true,
@@ -878,9 +1099,17 @@ const confirmDialog = computed(() => {
 		};
 	}
 	if (dialog.value === "withdraw-draft") {
-		// NDS-DES-13 WITHDRAW-DRAFT — exact copy.
+		// NDS-DES-13 WITHDRAW-DRAFT — exact copy; subject/meta name the
+		// unaccepted revision being withdrawn.
+		const need = detail.value.need || {};
+		const revision = detail.value.current_revision || {};
 		return {
 			title: "Withdraw this need?",
+			subject: revision.title || "",
+			meta: [
+				{ label: "Reference", value: need.need_reference || "" },
+				{ label: "Revision", value: revision.revision_number || "" },
+			],
 			message:
 				"This withdraws the unaccepted requirement. Earlier submissions and decisions remain in history.",
 			confirmLabel: "Withdraw need",

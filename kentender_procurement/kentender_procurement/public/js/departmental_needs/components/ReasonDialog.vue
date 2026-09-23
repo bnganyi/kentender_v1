@@ -1,10 +1,14 @@
-<!-- NDS-DES-11 / 13a / 13b — the reason dialogs. One component: the three
-     artboards differ only in title, lede, button label and tone, and §11.13
-     forbids any extra control in all of them.
+<!-- NDS-DES-11 / NDS-DES-13 RETURN-INITIAL / RETURN-UPDATE / DECLINE-INITIAL /
+     DECLINE-UPDATE / DECLINE-WITHDRAWAL — the reason dialogs, ported from
+     NDS Artboards.dc.html (content and structure; the mockup's own raw
+     `dialog`/`field`/`btn` classes are not carried over). One component:
+     every artboard differs only in title, subject/meta, lede, field label,
+     button label and tone, and §11.13 forbids any extra control in all of
+     them.
 
      §12.8 requires focus to be trapped and restored. -->
 <template>
-	<div class="kt-dialog-backdrop" @mousedown.self="$emit('cancel')">
+	<div class="kt-dialog-backdrop" data-testid="nds-dialog" @mousedown.self="$emit('cancel')">
 		<div
 			ref="dialogEl"
 			class="kt-dialog"
@@ -16,10 +20,25 @@
 		>
 			<div :id="titleId" class="kt-dialog-title">{{ title }}</div>
 			<div class="kt-dialog-body">
-				<!-- NDS-DES-11 — the requirement name/reference/revision, so the
-				     target is unambiguous before the reason field. -->
+				<!-- NDS-DES-11 / 13 — the requirement name/reference/revision, so the
+				     target is unambiguous before the reason field. `meta` (an ordered
+				     [{label, value}] list) renders each fact as its own labelled row,
+				     matching the artboard's own `.kt-meta-row` — the same convention
+				     WithdrawalDialog.vue (Procurement Planning) and
+				     WithdrawalReviewScreen.vue already use for label/value pairs.
+				     `subjectMeta` (a single pre-joined string) is unused by every
+				     current caller (NDS-DES-11 request-withdrawal was the last one
+				     still on it) but kept as a fallback rather than removed, so a
+				     future one-off caller isn't forced to build a `meta` array for a
+				     single fact. -->
 				<p v-if="subject" style="margin: 8px 0 0; font-size: 14.5px; font-weight: 500">{{ subject }}</p>
-				<div v-if="subject" class="kt-label" style="margin-bottom: 16px">{{ subjectMeta }}</div>
+				<div v-if="meta.length" class="kt-meta-row" style="margin: 14px 0 8px">
+					<div v-for="row in meta" :key="row.label">
+						<span class="kt-label">{{ row.label }}</span>
+						<span class="kt-meta-value" style="font-size: 15px">{{ row.value }}</span>
+					</div>
+				</div>
+				<div v-else-if="subjectMeta" class="kt-label" style="margin-bottom: 16px">{{ subjectMeta }}</div>
 				<p v-if="lede" style="margin: 0 0 16px; font-size: 14.5px; color: var(--color-neutral-700)">
 					{{ lede }}
 				</p>
@@ -97,6 +116,9 @@ defineProps({
 	title: { type: String, required: true },
 	subject: { type: String, default: "" },
 	subjectMeta: { type: String, default: "" },
+	// [{label, value}], e.g. [{label:"Reference", value:"NDS-MOH-2027-0003"},
+	// {label:"Revision", value:"1"}] — NDS-DES-13's own `.kt-meta-row`.
+	meta: { type: Array, default: () => [] },
 	lede: { type: String, default: "" },
 	fieldLabel: { type: String, default: "Reason" },
 	confirmLabel: { type: String, required: true },

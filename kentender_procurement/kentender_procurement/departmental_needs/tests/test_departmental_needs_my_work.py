@@ -162,9 +162,16 @@ class TestReviewerNotificationRoute(DepartmentalNeedsCommandCase):
 		)
 
 	def test_an_author_notification_still_opens_the_record(self):
+		"""§12.1 — "Correct routes to the actor's editable current version": the
+		author's return notification lands on the correction editor, not a
+		read-only detail of the returned root (notifications.py's own
+		documented reason for the /edit suffix — this test's own expectation
+		was stale against that, pre-dating the single-sheet routing scheme
+		where DepartmentalNeeds.vue's `screen` resolver maps a trailing "edit"
+		segment to the editor)."""
 		returned = self.decide(self.submit(self.create()), "return", reason=REASON)
 		reference = frappe.db.get_value("Departmental Need", returned["need"], "need_reference")
 		self.assertEqual(
 			self.link_for(returned["need"], AUTHOR, notifications.EVENT_RETURNED),
-			f"/app/departmental-needs/{reference}",
+			f"/app/departmental-needs/{reference}/edit",
 		)

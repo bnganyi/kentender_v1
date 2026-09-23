@@ -1,5 +1,6 @@
 <!-- NDS-UI-01 requester/reviewer workspace (§12.1), rendering NDS-DES-01,
-     NDS-DES-02 and the NDS-DES-14 shared states with their exact copy.
+     NDS-DES-02 and the NDS-DES-14 shared states with their exact copy,
+     ported class-for-class from NDS Artboards.dc.html.
      NDS-CHG-001 v1.13 §11.2/§11.3 — one existing workspace route for both the
      Author and the Head of User Department; this component branches on
      content (a decision queue only exists when there is one), never on a
@@ -26,7 +27,7 @@
 				style="max-width: 620px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px"
 			>
 				<div style="font-family: var(--kt-font-heading); font-size: 20px; font-weight: 600">
-					Departmental Needs could not be loaded
+					Departmental Needs could not be loaded.
 				</div>
 				<p style="margin: 0; font-size: 14.5px; color: var(--kt-color-neutral-700)">
 					Try again. If the problem continues, contact support.
@@ -88,18 +89,32 @@
 				</div>
 			</div>
 
-			<!-- NDS-DES-14 CLOSED-WORKSPACE / NO-OPEN-YEAR — the read contract
-			     does not yet distinguish "a year's flag is closed" from "no year
-			     is open" (both resolve to `{ open: false }`), so both fixtures
-			     share this one notice until that contract gains a flag. -->
+			<!-- NDS-DES-14 CLOSED-WORKSPACE / NO-OPEN-YEAR — `isAuthor`, not
+			     `canCreate` (that one requires submission.open, which would make
+			     this condition self-contradictory and the notice unreachable —
+			     found while auditing this exact family). The read contract does
+			     not yet distinguish "a year's flag is closed" from "no year is
+			     open" (both resolve to `{ open: false, financial_year: "",
+			     closes_at: "" }`), so both fixtures share this one notice and its
+			     "New submissions" fact; the Financial year/Closed at facts render
+			     only once that data is actually present. -->
 			<div
-				v-if="canCreate && !submission.open && needs.length"
+				v-if="isAuthor && !submission.open && needs.length"
 				class="kt-notice is-warning"
 				data-testid="nds-submission-closed-notice"
 			>
 				<div class="kt-notice-body">
 					New submissions are closed. You can view existing needs and save changes to
 					existing drafts.
+					<div class="kt-meta-row is-tight" style="gap: 28px; margin-top: 14px">
+						<div v-if="submission.label || submission.financial_year">
+							<span class="kt-label">Financial year</span><span class="kt-meta-value">{{ submission.label || submission.financial_year }}</span>
+						</div>
+						<div><span class="kt-label">New submissions</span><span class="kt-meta-value">Closed</span></div>
+						<div v-if="submission.closes_at">
+							<span class="kt-label">Closed at</span><span class="kt-meta-value">{{ formatInstant(submission.closes_at) }}</span>
+						</div>
+					</div>
 				</div>
 			</div>
 
@@ -208,6 +223,14 @@
 								@input="$emit('update:search', $event.target.value)"
 						/></span>
 					</div>
+					<!-- Field order: Search, Status, Financial year, Department, Clear
+					     filters — confirmed against 5 separate NDS-DES-01/-RETURNED/
+					     -14-EMPTY-READER/-FILTERED-EMPTY/-NO-OPEN-YEAR artboard sections,
+					     all consistent. NDS-DES-TECHNICAL-REGISTER's own artboard section
+					     draws Department before Financial year before Status instead — a
+					     genuine inconsistency against the other 5, not fixable by
+					     reordering this one shared filter bar without breaking them;
+					     flagged for a design decision rather than guessed at (23 Sep 2026). -->
 					<div class="field">
 						<label for="nds-workspace-status">Status</label>
 						<select
@@ -329,22 +352,28 @@ defineEmits([
 
 const STATUSES = ["Draft", "Submitted", "Returned", "Accepted for planning", "Not taken forward"];
 
+// NDS-DES-14-CLOSED-WORKSPACE/NO-OPEN-YEAR — whether this actor authors here
+// at all, independent of whether intake happens to be Open right now: an
+// eligible Author keeps the "My needs" framing and lede while submissions
+// are closed (the artboards above keep both), only the Create button itself
+// disappears. Kept separate from `canCreate` below, which folds the flag
+// back in for exactly that button.
+const isAuthor = computed(() => props.actions.some((action) => action.code === "create"));
+
 // §12.1 — Create need needs both: the server must offer the action (only an
 // author in this context does), and Needs submission must be Open. The flag
 // check alone would show the button to a reviewer for as long as it is Open.
-const canCreate = computed(
-	() => props.actions.some((action) => action.code === "create") && !!props.submission.open
-);
+const canCreate = computed(() => isAuthor.value && !!props.submission.open);
 
 const lede = computed(() =>
-	canCreate.value
+	isAuthor.value
 		? "Describe your department's requirements and follow their review."
 		: "Review submitted requirements and view the department's needs."
 );
 
 // §11.2/§11.3 — "My needs" for the Author's own list, "Departmental Needs"
 // once a reviewer's shared decision queue is in view.
-const pageTitle = computed(() => (canCreate.value ? "My needs" : "Departmental Needs"));
+const pageTitle = computed(() => (isAuthor.value ? "My needs" : "Departmental Needs"));
 
 // §11.2 — the Author's own in-progress work, elevated out of the register
 // into its own dominant task-row region. An "edit" action (Continue on a
@@ -432,12 +461,12 @@ const filtersActive = computed(
 
 const emptyHeadline = computed(() => {
 	if (filtersActive.value) return "No needs match your filters";
-	return canCreate.value ? "No departmental needs yet" : "No departmental needs to display";
+	return isAuthor.value ? "No departmental needs yet" : "No departmental needs to display";
 });
 
 const emptyBody = computed(() => {
 	if (filtersActive.value) return "Adjust your search or clear the filters.";
-	return canCreate.value
+	return isAuthor.value
 		? "Describe the first requirement for your department."
 		: "";
 });
