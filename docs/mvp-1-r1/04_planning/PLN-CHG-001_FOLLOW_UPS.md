@@ -60,3 +60,53 @@ Items deliberately outside the v1.18 implementation cycle opened 12 September 20
 | FU-V123-09 | The "Your actions" card's generic **Start departmental plan** button (§10.3, shown for an actor who is Author or HoD across two or more organisation units at once, with one not yet started) went through `frappe.set_route()` with no case for its own route shape, so the click silently re-rendered the same page. Fixed (`a8f77281`) by routing it through the same command the single-department card already used correctly. | Caught by tracing the code paths this session, not by a test — this cycle's fixtures give every actor exactly one departmental unit, so the multi-unit case that reaches this button has no fixture at all. | Anyone acting as Author or HoD for two or more departments in the same intake window, with at least one unstarted, could click the button and see nothing happen. |
 | FU-V123-10 | Owner-driven design-fidelity sweep (19 Sep 2026), prompted by a side-by-side screenshot: the workspace's Financial year control was bare `<label>` + `<select>` + a separate Reset link, not U01's own `.tag.tag-neutral` chip; U08's "Keep separate / Combine into one purchase" choice was two bare radio labels, not U08's own `.seg`/`.seg-opt` bordered toggle. Both fixed (`1dfaa6b5`, `8d67ceeb`). | Nothing to log against — these were genuine misses, not defensible deviations, found precisely because the fidelity gate cannot see them: it does landmark-subsequence comparison over a fixed element whitelist (headings, `label`, `button`, table headers, `.kt-label`…), and a plain `.tag`/`.seg` wrapper is not one of those elements. All 5 U01 and the U08 fidelity assertions still pass unchanged after both fixes — proof the gate was blind to this class of defect, not that the screens were fine. | Swept every `.tag`/`.seg`/`.kt-kpi`/`.kt-record`/`.kt-steps` use across every Planning artboard against its live component. Everything else already matches: KPI tiles (`DppPlanScreen`, `DppValidationScreen`, `ReviewScreen`), the combined-purchase tag (`PlanItemEditorScreen`), notices, disclosures and timelines. Two smaller items intentionally left as-is: U12 draws "Accepted for planning" as a `.tag-accent`, but the shared token sheet's own rule is "decorative tags — labels only, never state (state is `.kt-status`)" — the live `.kt-status.is-live` is the more correct choice, not a miss. The KPI tiles' decorative SVG icons (list/wallet/circle-slash) are omitted everywhere consistently — a minor, low-priority polish gap, not a fidelity break. **Not yet swept:** dialogs and screens outside the 04_planning artboard pack proper (e.g. anything under `C01-C04`), and no other module has had this same `.tag`/`.seg` sweep run against it — Budget's own Financial year strip uses the identical bare `<label>`+`<select>` pattern and has not been checked against its own current artboard pack. |
 
+
+## Accepting a Need starts the departmental plan (23 Sep 2026)
+
+Owner instruction, raised while testing Needs and Planning together: a Head of
+Department who has just accepted a Departmental Need should not then have to
+press **Start departmental plan** for the same department. Accepting is the
+decision that gives the department something to plan, so the Draft now exists
+from that moment.
+
+**What was built.** Planning subscribes to the published
+`DepartmentalNeedAccepted.v2` outbox row (`hooks.py` `doc_events` →
+`procurement_planning.services.dpp_autostart`) and calls
+`dpp_lifecycle.ensure_departmental_plan`, which opens the department's root and
+Draft Submission 1 and projects the accepted Need into it. The subscriber sits
+on Planning's side, so Departmental Needs still knows nothing of Planning
+(decision D5), and it runs inside the accepting command's own transaction:
+creation from a command, never from a read, so §4.2's invariant 1 and §4.2's
+"Initial reads create nothing" both stand unchanged. Starting the plan is a
+consequence of acceptance and never a condition of it — the work runs in its
+own savepoint and a failure is logged and dropped rather than losing the
+acceptance. A department whose plan is already Submitted, Accepted or
+Withdrawn is untouched; a Withdrawn initial Draft still reopens only through
+its own §5.1.5 HoD decision. `patches/pln_start_plan_from_accepted_needs.py`
+gives the same Draft to departments whose Needs were accepted before this
+landed.
+
+**Start departmental plan stays**, and is now reached only by a department with
+no accepted Need at all — the direct-requirements-only case. Nothing about the
+intake window changed: it still governs every submission, and a Draft started
+outside it reads **Not submitted — window closed** exactly as one started by
+hand would.
+
+**Spec text to update at the next version (v1.25).**
+
+| Where | Says now | Should say |
+|---|---|---|
+| §5.1.5 transitions, row 1 | "No DPP; permitted initial intake \| Start departmental plan \| Author or HoD" | Two rows: accepting a Need opens the root and Draft Submission 1 for its department; **Start departmental plan** remains the Author/HoD action for a department with no accepted Need. Keep "no creation from a read" — it is still true. |
+| §8.2 command table | `OpenDepartmentalPlan — Author/HoD` | Add the system-initiated form: same root/Draft creation, triggered by `DepartmentalNeedAccepted.v2`, authority carried by the acceptance, recorded in the Planning Command Journal against the accepting actor. |
+| §10.3 U01-DEPARTMENT-AUTHOR / §12.1 route table | "With no DPP and open intake: **No departmental plan yet** plus primary **Start departmental plan**"; "Explicit Start departmental plan or Prepare plan update" | Keep both, qualified: the empty state is what a department with nothing accepted sees. Once a Need is accepted the same actor arrives at **Continue departmental plan**. |
+| §7.1 intake | Projection runs inside Planning commands | Add the subscriber as the first of those commands, and say a later acceptance joins the open Draft immediately rather than at the next Open command. |
+
+**Watch item.** Any test or fixture that accepts a Need now also produces a
+Departmental Plan for that department and year. The Python suites'
+`test_departmental_needs_lifecycle._drop_plans_on` clears the disposable-year
+case, `procurement_planning.seeds.playwright_ui_fixtures._wipe` clears the
+fixture year, and `kentender_core.seeds.canonical` already treats a
+Departmental Plan outside `PLANNING_NS` as non-canonical. The Departmental
+Needs Playwright fixtures cannot clear one themselves — their `seeds/` module
+is inside the D5 boundary scan — so a Needs UI world that accepts on a year
+with no seeded plan leaves one behind for the canonical clear to remove.

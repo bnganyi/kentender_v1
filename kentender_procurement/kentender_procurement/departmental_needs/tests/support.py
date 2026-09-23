@@ -47,6 +47,35 @@ TRANSITIONAL_REFERENCE = (
 )
 
 
+def _live_reviewer_assignment(unit: str) -> str:
+	"""Peter's own current Head of User Department row over *unit*, if any.
+
+	The register moved his real Digital Health authority forward (it now runs
+	from 22 September 2026, not 1 December), so the transitional grant below
+	would overlap it and `grant` refuses overlapping rows — which failed every
+	NDS suite in `setUpClass`, before a single test ran. When the real
+	assignment already covers the clock these suites run at, the scaffolding
+	has nothing to add and stands aside (NDS FOLLOW_UPS.md §FU-07's retirement
+	path, taken automatically once the register makes it redundant).
+	"""
+	for row in frappe.get_all(
+		"User Responsibility Assignment",
+		filters={
+			"user": REVIEWER,
+			"business_role": ROLE_HEAD_OF_USER_DEPARTMENT,
+			"organisation_unit": unit,
+			"status": "Enabled",
+		},
+		fields=["name", "effective_from", "effective_to"],
+	):
+		now = frappe.utils.now_datetime()
+		starts = frappe.utils.get_datetime(row.effective_from) if row.effective_from else None
+		ends = frappe.utils.get_datetime(row.effective_to) if row.effective_to else None
+		if (starts is None or starts <= now) and (ends is None or ends >= now):
+			return row.name
+	return ""
+
+
 def ensure_transitional_reviewer_grant(test_class=None) -> str:
 	"""Grant (idempotently) and register the release as a class cleanup."""
 	previous = frappe.session.user
@@ -54,6 +83,11 @@ def ensure_transitional_reviewer_grant(test_class=None) -> str:
 	try:
 		units = _granted_units(AUTHOR, DEPARTMENTAL_AUTHOR)
 		unit = units["Digital Health"]
+		live = _live_reviewer_assignment(unit)
+		if live:
+			if test_class is not None:
+				test_class.addClassCleanup(restore_shared_register)
+			return live
 		outcome = administration.grant(
 			user=REVIEWER,
 			business_role=ROLE_HEAD_OF_USER_DEPARTMENT,

@@ -424,6 +424,14 @@ doc_events = {
 	"File": {
 		"on_trash": "kentender_procurement.tender_configurations.bidder_workspace_manifest.repository.cas.prevent_cas_file_trash",
 	},
+	# Procurement Planning subscribes to the Departmental Needs published
+	# outbox (NDS §7.1): accepting a Need starts that department's Draft
+	# departmental plan, so the Head of Department never has to start it by
+	# hand after deciding. Registered on the consumer's side — Needs neither
+	# knows nor calls Planning (decision D5).
+	"Departmental Need Event": {
+		"after_insert": "kentender_procurement.procurement_planning.services.dpp_autostart.on_need_event",
+	},
 }
 
 # Scheduled Tasks

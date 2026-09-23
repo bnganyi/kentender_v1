@@ -240,6 +240,84 @@ def open_departmental_plan(
 	return result
 
 
+def ensure_departmental_plan(
+	*,
+	organisation_unit: str,
+	fiscal_year: str,
+	trigger_event: str,
+	fixture_namespace: str = "",
+	user: str | None = None,
+) -> dict[str, Any]:
+	"""Start the department's Draft plan from its own accepted Need (§5.1).
+
+	Accepting a Need is the decision that gives a department something to
+	plan, so the Draft exists from that moment on: the Head of Department who
+	accepted the Need does not have to start the plan by hand afterwards, and
+	the accepted requirement is already in the Draft the first time anyone
+	opens Procurement Planning. Only `dpp_autostart` calls this, from the
+	`DepartmentalNeedAccepted.v2` subscriber, inside the accepting command's
+	own transaction — creation from a command, never from a read (§4.2
+	invariant 1 is unchanged; `Start departmental plan` remains the only
+	control that creates a plan for a department with nothing accepted).
+
+	It never stands in for a §5.1.5 decision beside it: a Withdrawn root stays
+	withdrawn until its own actor reopens it, a submitted or accepted Version
+	is left exactly as it is, and the intake window still governs every
+	submission. The actor recorded is the accepting user, whose acceptance is
+	the authority this acts on.
+	"""
+	actor = authz.actor(user)
+	idempotency_key = f"DPP-AUTOSTART-{cstr(trigger_event).strip()}"
+	payload = {
+		"organisation_unit": organisation_unit,
+		"fiscal_year": fiscal_year,
+		"trigger_event": cstr(trigger_event).strip(),
+	}
+	replay = envelope.replay_or_none(idempotency_key, payload)
+	if replay:
+		return replay
+	# A source context the site no longer carries is not an error here: the
+	# acceptance stands, and the department's plan can still be started by
+	# hand once the context is repaired.
+	if not frappe.db.exists("Fiscal Year", fiscal_year) or frappe.db.get_value("Fiscal Year", fiscal_year, "disabled"):
+		return {"ok": False, "action": "no_context", "reason": "PLN_NO_CONTEXT"}
+	if not frappe.db.exists("Organisation Unit", organisation_unit):
+		return {"ok": False, "action": "no_context", "reason": "PLN_NO_CONTEXT"}
+
+	root = _root_by_scope(organisation_unit, fiscal_year)
+	if root is None:
+		root = frappe.get_doc(
+			{
+				"doctype": "Departmental Plan",
+				"dpp_reference": references.dpp_reference(organisation_unit, fiscal_year),
+				"fiscal_year": fiscal_year,
+				"organisation_unit": organisation_unit,
+				"current_state": "Draft",
+				"record_version": 0,
+				"fixture_namespace": fixture_namespace,
+			}
+		).insert(ignore_permissions=True)
+		version = _new_version(root, number=1)
+		envelope.bump(root, current_version=version.name)
+		needs_intake.refresh_draft_entries(version)
+		result = _result(root, version, action="opened")
+	else:
+		version = _version(root.current_version) if root.current_version else None
+		if version is not None and version.version_status == "Draft":
+			# The department is already drafting: the newly accepted Need
+			# joins that Draft now rather than at the next Open command.
+			needs_intake.refresh_draft_entries(version)
+			result = _result(root, version, action="refreshed")
+		else:
+			result = _result(root, version, action="unchanged")
+	envelope.record_command(
+		idempotency_key=idempotency_key, command="OpenDepartmentalPlan", payload=payload, result=result,
+		document_type="Departmental Plan", document_name=root.name, actor=actor,
+		fixture_namespace=cstr(root.fixture_namespace),
+	)
+	return result
+
+
 def save_need_funding(
 	*,
 	dpp_version: str,

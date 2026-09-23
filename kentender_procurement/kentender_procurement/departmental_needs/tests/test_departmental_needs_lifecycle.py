@@ -193,7 +193,25 @@ class DepartmentalNeedsCommandCase(IntegrationTestCase):
 		finally:
 			frappe.set_user(previous)
 		self.addCleanup(self._reopen_window)
+		self.addCleanup(self._drop_plans_on, name)
 		return name
+
+	def _drop_plans_on(self, fiscal_year: str) -> None:
+		"""Remove anything an acceptance started on the disposable year.
+
+		Accepting a Need opens that department's Draft departmental plan —
+		Planning subscribes to the published acceptance event — so a test
+		year can outlive its own rows as a departmental plan pointing at a
+		Fiscal Year that is no longer there.
+		"""
+		roots = frappe.get_all("Departmental Plan", filters={"fiscal_year": fiscal_year}, pluck="name")
+		if not roots:
+			return
+		versions = frappe.get_all("Departmental Plan Version", filters={"departmental_plan": ("in", roots)}, pluck="name")
+		frappe.db.delete("Departmental Plan Entry", {"dpp_version": ("in", versions or ("",))})
+		frappe.db.delete("Departmental Plan Version", {"name": ("in", versions or ("",))})
+		frappe.db.delete("Departmental Plan", {"name": ("in", roots)})
+		frappe.db.delete("Planning Command Journal", {"document_name": ("in", roots)})
 
 	def key(self) -> str:
 		return f"nds-test-{uuid4().hex}"
