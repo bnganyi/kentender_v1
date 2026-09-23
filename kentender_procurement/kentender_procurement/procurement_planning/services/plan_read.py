@@ -985,7 +985,16 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 	from kentender_procurement.procurement_planning.services import profiles, scope_lock
 
 	objectives = strategy_gateway.list_eligible_strategic_objectives()
-	objective_eligible = (not item.strategic_objective) or any(row["id"] == item.strategic_objective for row in objectives)
+	# Matches `plan_readiness` above exactly (found live 23 Sep 2026 out of
+	# sync: this read the empty case as vacuously eligible, so a Plan Item
+	# with no objective chosen yet carried no blocker and no flagged field
+	# here, though the plan-level readiness this item's own blockers are
+	# meant to mirror had already refused it a Send to Finance). Unchosen is
+	# not eligible; only a chosen one that is still in the eligible set, or
+	# any chosen one once the version is Active, is.
+	objective_eligible = bool(cstr(item.strategic_objective)) and (
+		any(row["id"] == item.strategic_objective for row in objectives) or version.version_status == "Active"
+	)
 	category = cstr(item.procurement_category) or "Services"
 	resolved = readiness.method_profile_for(item, plan.fiscal_year)
 	method_profile, schedule_profile = resolved["method"], resolved["schedule"]

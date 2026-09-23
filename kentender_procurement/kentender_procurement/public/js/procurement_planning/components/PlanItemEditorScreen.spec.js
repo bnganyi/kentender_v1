@@ -236,6 +236,18 @@ describe("PlanItemEditorScreen — footer and flagged fields", () => {
 		expect(remove.classes()).not.toContain("kt-btn-secondary");
 	});
 
+	// A Planner sent here by "Choose a strategic objective" (the current-work
+	// note on the Annual Plan screen) should meet the field itself, not a
+	// closed disclosure they then have to know to open (found live 23 Sep 2026).
+	it("opens Supporting details by default when Strategy is what's blocking the purchase", () => {
+		const w = make({
+			item: item({ blockers: [{ code: "PLN_OBJECTIVE_INELIGIBLE", field: "strategic_objective", message: "Complete the highlighted purchase details and required evidence." }] }),
+		});
+		expect(w.find('[data-testid="ppi-supporting"]').attributes("open")).toBeDefined();
+		const field = w.find('[data-testid="ppi-objective"]').element.closest(".kt-field");
+		expect(field.classList).toContain("pln-field-flagged");
+	});
+
 	// The server's blocker list is only current as of the last load; typing
 	// into a flagged field should not go on reading as still-broken until
 	// the next save re-derives it (found live 23 Sep 2026).

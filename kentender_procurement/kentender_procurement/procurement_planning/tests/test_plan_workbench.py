@@ -505,6 +505,27 @@ class TestProfilesEvidenceAndFeasibility(PlanWorkbenchCase):
 		self.assertNotIn("Low Value Procurement", item["classification"]["admissible_methods"])
 		self.assertEqual(item["scope_lock"], {"locked": False, "since": "", "first_requisition": "", "held": False, "open_requests": 0})
 
+	def test_an_unset_strategic_objective_is_the_items_own_blocker_too(self):
+		"""`get_plan_item`'s own `objective_eligible` had drifted from
+		`plan_readiness`'s (found live 23 Sep 2026): an unset objective read as
+		vacuously eligible here, so a freshly formed item carried no blocker
+		and no flagged field on its own editor page, though the plan-level
+		readiness this item's blockers are meant to mirror already refused it
+		a Send to Finance and named "Choose a strategic objective" as its
+		current work. Both reads must agree that unset is not eligible."""
+		accepted, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertEqual(item["classification"]["strategic_objective"], "")
+		self.assertTrue(
+			any(b["code"] == "PLN_OBJECTIVE_INELIGIBLE" and b.get("field") == "strategic_objective" for b in item["blockers"]),
+		)
+		# The same fact, agreed on the plan-level read this item's own
+		# blockers are meant to mirror.
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		objective_check = next(c for c in plan["readiness"] if c["check"] == "Every Plan Item has a Strategic Objective")
+		self.assertEqual(objective_check["result"], "1 to fix")
+		self.assertFalse(plan["can_request_funding"])
+
 	def test_the_item_editor_read_model_carries_a_total_quantity_and_a_restrictions_line(self):
 		"""PLN18-305 (U09 Plan Item editor): `get_plan_item()` needs one
 		aggregate quantity display (the single-source case already has its own

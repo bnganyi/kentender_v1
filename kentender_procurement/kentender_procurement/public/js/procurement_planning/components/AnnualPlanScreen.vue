@@ -276,6 +276,19 @@
 				</button>
 				<span v-else></span>
 				<div class="pln-footer-right">
+					<!-- Send to Finance is absent while a purchase still has current
+					     work (§10.6), same as Plan checks' own reserved-procurement
+					     notice — but nothing said so at the plan level, only on each
+					     purchase's own row, leaving a Planner with a plan that looks
+					     finished and no visible next step (found live 23 Sep 2026). -->
+					<p
+						v-if="incompleteItems.length && plan.mutable && !plan.can_request_funding && !plan.can_sign_and_submit && !waitingOn.notice"
+						class="kt-muted"
+						data-testid="ppl-incomplete-hint"
+					>
+						{{ incompleteItems.length === 1 ? "One purchase still needs" : `${incompleteItems.length} purchases still need` }}
+						the current work shown above before this plan can move forward.
+					</p>
 					<button
 						v-if="plan.mutable"
 						type="button"
@@ -382,6 +395,7 @@ watch(
 );
 
 const items = computed(() => props.plan.plan_items || []);
+const incompleteItems = computed(() => items.value.filter((row) => row.current_work && row.current_work !== "Ready"));
 const activeView = computed(() => props.plan.active_view);
 const missingSettings = computed(() => props.plan.missing_settings || []);
 const unallocated = computed(() => props.plan.unallocated_sources || []);

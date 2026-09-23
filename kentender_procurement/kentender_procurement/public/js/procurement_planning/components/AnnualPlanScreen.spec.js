@@ -134,6 +134,27 @@ describe("AnnualPlanScreen — U07 BASE", () => {
 		const w = make({ plan: plan({ can_request_funding: true }) });
 		expect(w.find('[data-testid="ppl-request-funding"]').text()).toBe("Send to Finance for funding review");
 	});
+
+	// A plan whose purchases still have their own current work looks
+	// finished (Plan checks can be all clear) with no visible next step
+	// otherwise — Send to Finance is correctly absent, but nothing said why
+	// (found live 23 Sep 2026).
+	it("says why nothing else is available when purchases still have current work", () => {
+		const w = make();
+		expect(w.find('[data-testid="ppl-incomplete-hint"]').text()).toBe(
+			"2 purchases still need the current work shown above before this plan can move forward.",
+		);
+	});
+
+	it("says nothing once every purchase is Ready and something else explains the wait", () => {
+		const w = make({
+			plan: plan({
+				plan_items: [{ ...INFRASTRUCTURE, current_work: "Ready" }, { ...LAPTOPS, current_work: "Ready" }],
+				waiting_on: { notice: "Ready for the Head of Procurement Function to sign and submit", people: ["Charles Mutiso"], unassigned: "" },
+			}),
+		});
+		expect(w.find('[data-testid="ppl-incomplete-hint"]').exists()).toBe(false);
+	});
 });
 
 describe("AnnualPlanScreen — U07-UNALLOCATED and selection", () => {

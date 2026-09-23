@@ -352,7 +352,7 @@
 					</svg>
 				</summary>
 				<div class="kt-disclosure-body pln-supporting">
-					<div class="kt-field pln-field-480">
+					<div class="kt-field pln-field-480" :class="flagged('strategic_objective')">
 						<label for="ppi-objective" class="kt-label">Strategy</label>
 						<select id="ppi-objective" class="kt-input" data-testid="ppi-objective" :value="draft.strategic_objective" :disabled="!item.mutable" @change="onField('strategic_objective', $event.target.value)">
 							<option value="">Select a strategic objective</option>
@@ -501,7 +501,12 @@ const draft = reactive(initial());
 const loaded = reactive(initial());
 const fullReason = ref(false);
 const fullBasis = ref(false);
-const supporting = ref(false);
+// Strategy is the one editable field Supporting details holds; when it is
+// what still blocks this purchase, opening the disclosure by default means
+// the Planner meets the actual field their "Choose a strategic objective"
+// current-work note sent them here for, not a collapsed section they then
+// have to go hunting in (found live 23 Sep 2026).
+const supporting = ref((props.item.blockers || []).some((b) => b.field === "strategic_objective"));
 const forceReservation = ref(false);
 
 // A quiet in-place refresh carries nothing new; re-hydrating would discard

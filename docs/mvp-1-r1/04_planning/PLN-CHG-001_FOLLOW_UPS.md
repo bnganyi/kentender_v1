@@ -228,6 +228,48 @@ Verified live on the reported purchase (PPI-MOH-2027-001), against
 SCHEDULE/U09-REMOVE fidelity plus the full `pln-item.spec.ts` browser suite (13
 Playwright, all green).
 
+## Annual Plan preparation: "the plan looks finished, what's next?" (23 Sep 2026)
+
+Raised live: a Planner looking at a two-purchase plan, both purchases showing
+"Current work: Choose a strategic objective" and every Plan check clear, saw
+no Send to Finance button and no explanation — only Save draft. `Artboards-
+U07-U08.dc.html`'s own fixture note on the base U07 board says plainly "Send
+to Finance is absent while a blocking check fails," and that is correct,
+intended behaviour; the board's own answer to "why" is the per-purchase
+Current work column plus Plan checks' own notices, nothing more. Two real
+gaps, though, sat underneath the report:
+
+1. **No plan-level sentence ties "purchases still have current work" to "so
+   Send to Finance is absent."** Reserved-procurement and schedule failures
+   already get their own notice-and-action in Plan checks; an incomplete
+   purchase's own gap (Strategy, method, dates, …) never did — a Planner had
+   to infer the connection themselves. `AnnualPlanScreen.vue` now shows, only
+   when nothing else already explains the wait: "N purchases still need the
+   current work shown above before this plan can move forward."
+2. **A real backend bug, found while checking the first.** `get_plan_item`
+   read an unset Strategy as vacuously eligible (`objective_eligible = (not
+   item.strategic_objective) or …`) — so the one purchase actually missing
+   it carried no blocker and no flagged field on its own editor page, though
+   `plan_readiness` (the function `get_plan_item`'s own comment says it
+   mirrors) already read the same unset value as *not* eligible and named
+   it as this plan's blocking reason. A Planner sent to the item by "Choose
+   a strategic objective" found nothing wrong on arrival. Both reads now use
+   the same rule: unset is not eligible, only a chosen objective still in
+   the eligible set (or any chosen one once the version is Active) is.
+   `PlanItemEditorScreen.vue`'s Supporting details — the one place Strategy
+   lives, closed by default — now opens by default too when this is what's
+   blocking the purchase, so the Planner meets the field, not a closed
+   section they then have to know to open.
+
+Verified live on the reported plan (PLN-MOH-2027-001) and its two purchases,
+one of which turned out to still be genuinely missing its objective (the
+other had since been completed in an earlier verification pass this
+session — a stale read on the Annual Plan screen, not a defect); against
+`test_plan_workbench.py` (37, including a new cross-check that both reads
+agree), the full planning vitest suite (294), and live U07/U09/U09-INVALID-
+SCHEDULE/U09-REMOVE fidelity plus the full `pln-annual-plan.spec.ts` and
+`pln-item.spec.ts` browser suites (13 Playwright, all green).
+
 ## U09's missing-setting panel: named, ordered, and told apart (23 Sep 2026)
 
 Raised live: a Planner picked Open Tender, saved, and on the next load found
