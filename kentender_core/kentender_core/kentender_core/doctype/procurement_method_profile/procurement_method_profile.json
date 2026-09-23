@@ -25,11 +25,14 @@
   {"fieldname": "source_instrument", "fieldtype": "Data", "label": "Source Instrument", "read_only": 1},
   {"fieldname": "provision", "fieldtype": "Data", "label": "Provision", "read_only": 1},
   {"fieldname": "source_document", "fieldtype": "Attach", "label": "Source Document", "read_only": 1},
+  {"fieldname": "section_change", "fieldtype": "Section Break", "label": "Reason for This Version"},
+  {"fieldname": "supersedes_version_ids", "fieldtype": "Data", "label": "Earlier Versions This Replaces", "read_only": 1},
+  {"fieldname": "change_reason", "fieldtype": "Small Text", "label": "Reason for Change", "read_only": 1},
   {"fieldname": "section_conditions", "fieldtype": "Section Break", "label": "Eligibility Conditions"},
   {"fieldname": "conditions", "fieldtype": "Table", "label": "Conditions", "options": "Method Profile Condition", "read_only": 1},
   {"fieldname": "fixture_namespace", "fieldtype": "Data", "label": "Fixture Namespace", "hidden": 1, "read_only": 1}
  ],
- "field_order": ["profile_reference", "procurement_method", "version_number", "status", "column_break_a", "effective_from", "effective_until", "applicability_basis", "section_source", "verification_status", "source_instrument", "provision", "source_document", "section_conditions", "conditions", "fixture_namespace"],
+ "field_order": ["profile_reference", "procurement_method", "version_number", "status", "column_break_a", "effective_from", "effective_until", "applicability_basis", "section_source", "verification_status", "source_instrument", "provision", "source_document", "section_change", "supersedes_version_ids", "change_reason", "section_conditions", "conditions", "fixture_namespace"],
  "permissions": [
   {"create": 1, "delete": 0, "read": 1, "role": "System Manager", "write": 1},
   {"read": 1, "role": "Desk User"}

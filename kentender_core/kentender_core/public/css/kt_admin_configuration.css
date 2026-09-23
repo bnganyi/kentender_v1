@@ -991,5 +991,11 @@
 .kt-industry .kt-procset-rows { display: flex; flex-direction: column; gap: 8px; margin-top: var(--kt-space-3, 12px); }
 .kt-industry .kt-procset-row { display: grid; grid-template-columns: 1.4fr 2fr 1fr 1.4fr; gap: 8px; align-items: center; }
 .kt-industry .kt-procset-row .kt-procset-num { max-width: 110px; }
+/* C03-BC — one condition of a method eligibility rule, edited as its own
+   block. A twelve-column row would be unreadable at any width, and the
+   conditions are the part of the rule an administrator actually corrects. */
+.kt-industry .kt-mve-condition { margin-bottom: var(--kt-space-3, 12px); }
+.kt-industry .kt-mve-condition-head { display: flex; align-items: center; justify-content: space-between; gap: var(--kt-space-3, 12px); margin-bottom: var(--kt-space-3, 12px); }
+
 .kt-industry .kt-visually-hidden-th { width: 1px; }
 .kt-industry .kt-btn.kt-btn-sm { padding: 4px 10px; font-size: 12px; }

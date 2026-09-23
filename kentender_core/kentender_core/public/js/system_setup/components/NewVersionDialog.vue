@@ -1,15 +1,20 @@
 <script setup>
-// "Create new version" for a method eligibility profile or a schedule
-// profile (§11.6: a referenced Version is immutable; an update is a new
-// Version with its own effective dates, source facts and verification
-// status). The current rule values are copied in for correction; the server
-// validates and supersedes any overlapping Active Version.
+// "Create new version" for a schedule profile (§11.6: a referenced Version is
+// immutable; an update is a new Version with its own effective dates, source
+// facts and verification status). The current profile's values are copied in
+// for correction; the server validates and supersedes any overlapping Active
+// Version.
+//
+// A method eligibility rule used to share this dialog, which let only a
+// condition's wording, maximum and evidence be retyped — no condition could
+// be added, removed or re-scoped, so most corrections were impossible. It has
+// its own full screen now (`MethodVersionEditor.vue`); a profile's milestone
+// rows are a fixed set of seven and still fit here.
 import { computed, nextTick, onMounted, reactive, ref } from "vue";
 import { procurementSettingsApi } from "../data/procurementSettingsApi.js";
 import { sourceCheckLabel } from "../data/format.js";
 
 const props = defineProps({
-	mode: { type: String, required: true }, // "method" | "schedule"
 	current: { type: Object, required: true },
 	verificationStatuses: { type: Array, default: () => [] },
 });
@@ -38,10 +43,9 @@ const form = reactive({
 			? ""
 			: String(props.current.estimated_delivery_period_default_days),
 });
-const conditions = ref((props.current.conditions || []).map((row) => ({ ...row })));
 const milestones = ref((props.current.milestones || []).map((row) => ({ ...row })));
 
-const title = computed(() => (props.mode === "method" ? __("Create new method eligibility version") : __("Create new schedule profile version")));
+const title = computed(() => __("Create new schedule profile version"));
 const canSave = computed(() => !busy.value && !!form.effective_from);
 
 onMounted(async () => {
@@ -55,60 +59,33 @@ function num(value) {
 
 function submit() {
 	return run(async () => {
-		if (props.mode === "method") {
-			await procurementSettingsApi.registerMethodProfileVersion({
-				procurement_method: props.current.procurement_method,
-				effective_from: form.effective_from,
-				effective_until: form.effective_until || null,
-				verification_status: form.verification_status,
-				applicability_basis: form.applicability_basis || null,
-				source_instrument: form.source_instrument || null,
-				provision: form.provision || null,
-				source_document: form.source_document || null,
-				conditions: conditions.value.map((row) => ({
-					condition_id: row.condition_id,
-					kind: row.kind,
-					description: row.description,
-					procurement_category: row.procurement_category || "",
-					minimum_amount: num(row.minimum_amount) || 0,
-					maximum_amount: num(row.maximum_amount) || 0,
-					cumulative_basis: row.cumulative_basis || "None",
-					mandatory: row.mandatory !== false,
-					required_evidence: row.required_evidence || "",
-					authorisation_actor: row.authorisation_actor || "",
-					authorisation_stage: row.authorisation_stage || "",
-					statutory_reference: row.statutory_reference || "",
-				})),
-			});
-		} else {
-			await procurementSettingsApi.registerScheduleProfileVersion({
-				procurement_method: props.current.procurement_method,
-				procurement_category: props.current.procurement_category,
-				profile_name: form.profile_name,
-				procedure: form.procedure || null,
-				effective_from: form.effective_from,
-				effective_until: form.effective_until || null,
-				counting_rule: form.counting_rule,
-				estimated_delivery_period_default_days: form.estimated_delivery_period_default_days === "" ? null : Number(form.estimated_delivery_period_default_days),
-				verification_status: form.verification_status,
-				applicability_basis: form.applicability_basis || null,
-				source_instrument: form.source_instrument || null,
-				provision: form.provision || null,
-				source_document: form.source_document || null,
-				milestones: milestones.value.map((row) => ({
-					milestone: row.milestone,
-					label: row.label,
-					sequence: row.sequence,
-					applies: row.applies !== false,
-					counting_rule: row.counting_rule || form.counting_rule,
-					minimum_days: num(row.minimum_days),
-					maximum_days: num(row.maximum_days),
-					default_days: num(row.default_days),
-					basis: row.basis,
-					statutory_reference: row.statutory_reference || "",
-				})),
-			});
-		}
+		await procurementSettingsApi.registerScheduleProfileVersion({
+			procurement_method: props.current.procurement_method,
+			procurement_category: props.current.procurement_category,
+			profile_name: form.profile_name,
+			procedure: form.procedure || null,
+			effective_from: form.effective_from,
+			effective_until: form.effective_until || null,
+			counting_rule: form.counting_rule,
+			estimated_delivery_period_default_days: form.estimated_delivery_period_default_days === "" ? null : Number(form.estimated_delivery_period_default_days),
+			verification_status: form.verification_status,
+			applicability_basis: form.applicability_basis || null,
+			source_instrument: form.source_instrument || null,
+			provision: form.provision || null,
+			source_document: form.source_document || null,
+			milestones: milestones.value.map((row) => ({
+				milestone: row.milestone,
+				label: row.label,
+				sequence: row.sequence,
+				applies: row.applies !== false,
+				counting_rule: row.counting_rule || form.counting_rule,
+				minimum_days: num(row.minimum_days),
+				maximum_days: num(row.maximum_days),
+				default_days: num(row.default_days),
+				basis: row.basis,
+				statutory_reference: row.statutory_reference || "",
+			})),
+		});
 		emit("registered");
 	});
 }
@@ -121,7 +98,7 @@ function submit() {
 			<h2 class="kt-dialog-title">{{ title }}</h2>
 			<p class="kt-confirm-body">{{ __("The current Version stays as it is. The new Version applies from its effective date and supersedes any Version whose period it overlaps.") }}</p>
 			<div class="kt-dialog-fields">
-				<div v-if="mode === 'schedule'" class="kt-field">
+				<div class="kt-field">
 					<label for="kt-nv-name">{{ __("Profile name") }}</label>
 					<input id="kt-nv-name" v-model="form.profile_name" class="kt-input" data-testid="kt-nv-profile-name">
 				</div>
@@ -159,16 +136,7 @@ function submit() {
 					</div>
 				</div>
 
-				<div v-if="mode === 'method'" class="kt-procset-rows" data-testid="kt-nv-conditions">
-					<span class="kt-label">{{ __("Eligibility conditions") }}</span>
-					<div v-for="row in conditions" :key="row.condition_id" class="kt-procset-row">
-						<span class="kt-muted">{{ row.condition_id }} · {{ row.kind }}<template v-if="row.procurement_category"> · {{ row.procurement_category }}</template></span>
-						<input v-model="row.description" class="kt-input" :aria-label="__('Condition')">
-						<input v-model="row.maximum_amount" class="kt-input kt-procset-num" inputmode="numeric" :aria-label="__('Maximum amount')">
-						<input v-model="row.required_evidence" class="kt-input" :placeholder="__('Required evidence')" :aria-label="__('Required evidence')">
-					</div>
-				</div>
-				<div v-else class="kt-procset-rows" data-testid="kt-nv-milestones">
+				<div class="kt-procset-rows" data-testid="kt-nv-milestones">
 					<span class="kt-label">{{ __("Milestones and periods") }}</span>
 					<div v-for="row in milestones" :key="row.milestone" class="kt-procset-row">
 						<span class="kt-muted">{{ row.sequence }}. {{ row.label }}</span>

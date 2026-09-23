@@ -441,6 +441,38 @@ test.describe("System setup — design fidelity", () => {
 		await art.close();
 	});
 
+	// C03BC "#version" (§4.6/§10.6) — correcting a method eligibility rule.
+	// The board draws the replacement and its effect; the live screen draws
+	// them around the whole rule, because every part of it is editable here
+	// and the record that comes out is a new immutable Version.
+	test("C03B-version — the Method eligibility editor states the replacement and its effect", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		const scope = "#version";
+		await openArtboard(art, `${DESIGN_DIR}/C03BC-Procurement-Rules.dc.html`, scope);
+		const wanted = await landmarks(art, scope);
+
+		await loginAsAdministrator(page);
+		const errors = await openSetupTab(
+			page,
+			"procurement-settings/new-method-version/MPR-OPEN-TENDER-V1",
+			'[data-testid="kt-procset-method-editor"]'
+		);
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C03B-version", [
+			{
+				landmark: "Usage",
+				because:
+					"the board's own value for it is \"Not supplied in this isolated example\"; nothing in the model counts how many decisions used a Version, and stating a usage fact the server cannot produce would be an invention.",
+			},
+		]);
+		// The board's "Unsaved changes" tag is the state this screen opens in.
+		await expect(page.locator('[data-testid="kt-mve-unsaved"]')).toHaveText("Unsaved changes");
+		// It opens on the Version it corrects, with every condition editable.
+		await expect(page.locator('[data-testid="kt-mve-id-0"]')).toHaveValue("G-VALUE");
+		await expect(page.locator('[data-testid="kt-mve-save"]')).toBeDisabled();
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
 	// Retargeted from the retired Planning board to CFG's own C03BC "#detail"
 	// (Phase 3D). The saved detail states its groups and its actions; nothing
 	// on it is editable, because a correction is a new version (§11.6).

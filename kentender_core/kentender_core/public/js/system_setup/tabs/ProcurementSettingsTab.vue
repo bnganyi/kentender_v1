@@ -12,6 +12,7 @@ import ConfirmDialog from "../components/ConfirmDialog.vue";
 import FundingSourceEditor from "../components/FundingSourceEditor.vue";
 import RuleVersionDetail from "../components/RuleVersionDetail.vue";
 import RuleEditor from "../components/RuleEditor.vue";
+import MethodVersionEditor from "../components/MethodVersionEditor.vue";
 import SourceCheckScreen from "../components/SourceCheckScreen.vue";
 import CalendarEditor from "../components/CalendarEditor.vue";
 import ScheduleProfileDetail from "../components/ScheduleProfileDetail.vue";
@@ -100,6 +101,12 @@ const verificationOptions = computed(() => data.value?.verification_statuses || 
 const entityTypes = computed(() => data.value?.entity_types || []);
 const procurementCategories = computed(() => data.value?.procurement_categories || []);
 const procurementMethods = computed(() => data.value?.procurement_methods || []);
+// §10.6 — the Method eligibility editor's closed vocabularies. They are the
+// server's, read from this same projection, so the editor cannot offer a
+// value the database will reject.
+const conditionKinds = computed(() => data.value?.condition_kinds || []);
+const cumulativeBases = computed(() => data.value?.cumulative_bases || []);
+const methodApplicabilityBases = computed(() => data.value?.method_applicability_bases || []);
 // The set + current version behind `rule/<name>`, for the new-version editor.
 // §11.6 — a correction copies the current version's own values, so the full
 // record is fetched rather than reusing the list row's summary.
@@ -232,6 +239,21 @@ async function confirmRemoveSource() {
 			@cancel="go('')"
 		/>
 
+		<!-- C03-BC — a method eligibility rule's new version: the full editor,
+		     not the reference-rule form (a different model entirely). -->
+		<MethodVersionEditor
+			v-else-if="view.kind === 'new-method-version' || view.kind === 'edit-method-rule'"
+			:name="view.name"
+			:mode="view.kind === 'edit-method-rule' ? 'correct' : 'version'"
+			:categories="procurementCategories"
+			:condition-kinds="conditionKinds"
+			:cumulative-bases="cumulativeBases"
+			:applicability-bases="methodApplicabilityBases"
+			:verification-statuses="verificationOptions"
+			@saved="(profile) => afterChange().then(() => go('rule/' + profile))"
+			@cancel="go('rule/' + view.name)"
+		/>
+
 		<!-- C04 "calendar" — a working-day calendar version -->
 		<CalendarEditor
 			v-else-if="view.kind === 'calendar' || view.kind === 'new-calendar'"
@@ -257,7 +279,8 @@ async function confirmRemoveSource() {
 			:verification-statuses="data.verification_statuses"
 			@back="go('')"
 			@registered="afterChange().then(() => go(''))"
-			@new-version="go('new-rule-version/' + view.name)"
+			@new-version="go(((rules.find((row) => row.name === view.name) || {}).source === 'method' ? 'new-method-version/' : 'new-rule-version/') + view.name)"
+			@edit-rule="go('edit-method-rule/' + view.name)"
 			@check-sources="go('check-sources/' + view.name)"
 		/>
 

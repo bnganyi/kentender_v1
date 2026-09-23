@@ -53,6 +53,10 @@ function payload(overrides = {}) {
 		],
 		reminder_threshold_days: 7,
 		verification_statuses: ["Production verification pending", "Fixture-verified — not production law", "Verified"],
+		procurement_categories: ["Goods", "Works", "Services"],
+		condition_kinds: ["Known fact", "Declaration"],
+		cumulative_bases: ["None", "Per request", "Funds allocated"],
+		method_applicability_bases: ["Planned invitation date", "Financial year start"],
 		...overrides,
 	};
 }
@@ -136,6 +140,39 @@ describe("ProcurementSettingsTab", () => {
 		const detail = await mountTab("rule/MPR-OPEN-TENDER-V1");
 		expect(detail.find('[data-testid="kt-procset-rule"]').exists()).toBe(true);
 		expect(detail.find('[data-testid="kt-procset-sources"]').exists()).toBe(false);
+	});
+
+	it("sends a method rule's new version to its own editor, and a reference rule's to the reference form", async () => {
+		const version = { profile: "MPR-OPEN-TENDER-V1", procurement_method: "Open Tender", version_number: 1, verification_status: "Production verification pending", conditions: [], effective_from: "2027-07-01", effective_until: "2028-06-30" };
+		api.getMethodProfile.mockResolvedValue(version);
+		const detail = await mountTab("rule/MPR-OPEN-TENDER-V1");
+		await detail.find('[data-testid="kt-procset-rule-new-version"]').trigger("click");
+		expect(detail.emitted("navigate").at(-1)).toEqual(["new-method-version/MPR-OPEN-TENDER-V1"]);
+
+		api.getRegulatoryReferenceVersion.mockResolvedValue({ name: "rv-1", reference_kind: "Reservation rules", version_number: 3, verification_status: "Production verification pending", payload: {}, effective_from: "2027-07-01", effective_until: "2028-06-30" });
+		const reference = await mountTab("rule/rv-1");
+		await reference.find('[data-testid="kt-procset-rule-new-version"]').trigger("click");
+		expect(reference.emitted("navigate").at(-1)).toEqual(["new-rule-version/rv-1"]);
+	});
+
+	it("the method editor sub-path opens the editor on that Version, with the server's vocabularies", async () => {
+		api.getMethodProfile.mockResolvedValue({
+			profile: "MPR-OPEN-TENDER-V1",
+			procurement_method: "Open Tender",
+			version_number: 1,
+			verification_status: "Production verification pending",
+			applicability_basis: "Planned invitation date",
+			effective_from: "2027-07-01",
+			effective_until: "2028-06-30",
+			conditions: [{ condition_id: "G-VALUE", kind: "Known fact", description: "No fixed maximum for goods.", procurement_category: "Goods", minimum_amount: 0, maximum_amount: 0, cumulative_basis: "Funds allocated", mandatory: true, required_evidence: "", authorisation_actor: "", authorisation_stage: "", statutory_reference: "" }],
+		});
+		const wrapper = await mountTab("new-method-version/MPR-OPEN-TENDER-V1");
+		const editor = wrapper.find('[data-testid="kt-procset-method-editor"]');
+		expect(editor.exists()).toBe(true);
+		expect(wrapper.find('[data-testid="kt-mve-id-0"]').element.value).toBe("G-VALUE");
+		expect(wrapper.find('[data-testid="kt-mve-basis-0"]').findAll("option").map((o) => o.element.value)).toEqual(["None", "Per request", "Funds allocated"]);
+		// The tab's own list is not rendered underneath the editor.
+		expect(wrapper.find('[data-testid="kt-procset-sources"]').exists()).toBe(false);
 	});
 
 	it("shows the setup Forbidden state as data and the load-error state with Try again", async () => {

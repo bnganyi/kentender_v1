@@ -32,6 +32,13 @@ export const procurementSettingsApi = {
 			conditions: JSON.stringify(payload.conditions || []),
 			idempotency_key: newIdempotencyKey("mpr"),
 		}),
+	// Correcting a rule in place. The server refuses once a plan pins it or it
+	// has taken effect, so this is never the caller's judgement to make.
+	updateMethodProfile: (payload) =>
+		frappeCall(PREFIX + "update_method_profile", {
+			...payload,
+			conditions: JSON.stringify(payload.conditions || []),
+		}),
 	getScheduleProfile: (name) => frappeCall(PREFIX + "get_schedule_profile", { name }),
 	registerScheduleProfileVersion: (payload) =>
 		frappeCall(PREFIX + "register_schedule_profile_version", {

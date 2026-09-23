@@ -20,6 +20,8 @@ const profile = {
 	source_instrument: "Public Procurement and Asset Disposal Regulations — source verification pending",
 	provision: "Verification required",
 	source_document: "",
+	can_edit: false,
+	edit_blocked_reason: "This rule has already taken effect, so it cannot change. Create a new version instead.",
 	conditions: [
 		{ condition_id: "G-VALUE", kind: "Known fact", description: "No fixed maximum for goods.", procurement_category: "Goods", maximum_amount: 0, cumulative_basis: "Funds allocated", required_evidence: "", authorisation_actor: "", authorisation_stage: "" },
 	],
@@ -48,6 +50,7 @@ describe("RuleVersionDetail", () => {
 			"Details",
 			"Method",
 			"Currency",
+			"Reason for this version",
 			"Which date determines the rule to use?",
 			"Entity applicability",
 			"County applicability",
@@ -65,14 +68,30 @@ describe("RuleVersionDetail", () => {
 		expect(wrapper.findAll("input").length).toBe(0);
 	});
 
-	it("Create new version opens the dialog seeded from the current Version; a masked record shows the not-available state", async () => {
+	it("offers Edit rule only while the server says the rule can still be corrected", async () => {
+		// Frozen: the fixture carries can_edit false, so the only way to change
+		// the rule is a new version.
+		const frozen = mount(RuleVersionDetail, { props: { name: "MPR-OPEN-TENDER-V1", kind: "method", verificationStatuses: [] }, global: globalMocks() });
+		await flushPromises();
+		expect(frozen.find('[data-testid="kt-procset-rule-edit"]').exists()).toBe(false);
+		expect(frozen.find('[data-testid="kt-procset-rule-new-version"]').exists()).toBe(true);
+
+		api.getMethodProfile.mockResolvedValue({ ...profile, can_edit: true, edit_blocked_reason: "" });
+		const editable = mount(RuleVersionDetail, { props: { name: "MPR-OPEN-TENDER-V1", kind: "method", verificationStatuses: [] }, global: globalMocks() });
+		await flushPromises();
+		await editable.find('[data-testid="kt-procset-rule-edit"]').trigger("click");
+		expect(editable.emitted("edit-rule")).toHaveLength(1);
+	});
+
+	it("Create new version asks the parent for the editor rather than editing anything here; a masked record shows the not-available state", async () => {
 		const wrapper = mount(RuleVersionDetail, { props: { name: "MPR-OPEN-TENDER-V1", kind: "method", verificationStatuses: ["Production verification pending", "Verified"] }, global: globalMocks() });
 		await flushPromises();
 		await wrapper.find('[data-testid="kt-procset-rule-new-version"]').trigger("click");
-		const dialog = wrapper.find('[data-testid="kt-procset-new-version"]');
-		expect(dialog.exists()).toBe(true);
-		expect(dialog.find('[data-testid="kt-nv-effective-from"]').element.value).toBe("2027-07-01");
-		expect(dialog.find('[data-testid="kt-nv-conditions"]').text()).toContain("G-VALUE");
+		expect(wrapper.emitted("new-version")).toHaveLength(1);
+		// The detail stays a read-only view of the immutable Version: no
+		// dialog opens over it and nothing on it becomes editable.
+		expect(wrapper.find('[data-testid="kt-procset-new-version"]').exists()).toBe(false);
+		expect(wrapper.findAll("input").length).toBe(0);
 
 		api.getMethodProfile.mockRejectedValueOnce(new Error("That method profile version does not exist."));
 		const masked = mount(RuleVersionDetail, { props: { name: "MPR-NOPE-V9", kind: "method" }, global: globalMocks() });

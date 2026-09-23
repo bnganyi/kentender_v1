@@ -64,7 +64,7 @@ test.describe("System setup — Procurement settings", () => {
 		expect(errors, "console errors").toEqual([]);
 	});
 
-	test("rule and profile Versions are read-only, the new-version dialog opens and cancels, sub-paths survive reload and back/forward", async ({ page }) => {
+	test("rule and profile Versions are read-only, the method editor opens and cancels, sub-paths survive reload and back/forward", async ({ page }) => {
 		const errors = collectPageErrors(page);
 		await loginAsAdministrator(page);
 		await openTab(page, '[data-testid="kt-procset-rules"]');
@@ -76,18 +76,36 @@ test.describe("System setup — Procurement settings", () => {
 		await expect(page.locator('[data-testid="kt-procset-rule-verification"]')).toHaveText("Source check needed");
 		expect(await page.locator('[data-testid="kt-procset-rule-card"] input').count()).toBe(0);
 
-		await page.click('[data-testid="kt-procset-rule-new-version"]');
-		await page.waitForSelector('[data-testid="kt-procset-new-version"]');
-		await expect(page.locator('[data-testid="kt-nv-effective-from"]')).toHaveValue("2027-05-01");
-		await page.keyboard.press("Escape");
-		await expect(page.locator('[data-testid="kt-procset-new-version"]')).toHaveCount(0);
-
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await page.waitForSelector('[data-testid="kt-procset-rule-card"]');
 		await page.goBack();
 		await page.waitForSelector('[data-testid="kt-procset-rules"]');
 		await page.goForward();
 		await page.waitForSelector('[data-testid="kt-procset-rule-card"]');
+
+		// §4.6 — a correction is a whole new Version, so "Create new version"
+		// is its own screen with the current rule copied in, conditions and
+		// all. Nothing is saved here: Cancel returns to the read-only detail.
+		await page.click('[data-testid="kt-procset-rule-new-version"]');
+		await page.waitForSelector('[data-testid="kt-procset-method-editor"]');
+		expect(page.url()).toContain("#procurement-settings/new-method-version/MPR-OPEN-TENDER-V1");
+		await expect(page.locator('[data-testid="kt-mve-from"]')).toHaveValue("2027-05-01");
+		await expect(page.locator('[data-testid="kt-mve-method"]')).toHaveText("Open Tender");
+		await expect(page.locator('[data-testid="kt-mve-id-0"]')).toHaveValue("G-VALUE");
+		// Every condition is editable here and nowhere else, and one can be
+		// added or removed — the dialog this replaced could do neither.
+		expect(await page.locator('[data-testid^="kt-mve-condition-"]').count()).toBe(3);
+		await page.click('[data-testid="kt-mve-add"]');
+		expect(await page.locator('[data-testid^="kt-mve-condition-"]').count()).toBe(4);
+		await page.click('[data-testid="kt-mve-remove-3"]');
+		expect(await page.locator('[data-testid^="kt-mve-condition-"]').count()).toBe(3);
+		// The reason for the change is required before it can be saved.
+		await expect(page.locator('[data-testid="kt-mve-save"]')).toBeDisabled();
+		await expect(page.locator('[data-testid="kt-mve-blocked"]')).toContainText("Say why this version replaces the earlier one");
+		await page.click('[data-testid="kt-mve-cancel"]');
+		await page.waitForSelector('[data-testid="kt-procset-rule-card"]');
+		expect(page.url()).toContain("#procurement-settings/rule/MPR-OPEN-TENDER-V1");
+
 		await page.click('[data-testid="kt-procset-rule-back"]');
 		await page.waitForSelector('[data-testid="kt-procset-profiles"]');
 

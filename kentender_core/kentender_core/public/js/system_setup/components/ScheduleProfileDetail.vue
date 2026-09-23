@@ -150,7 +150,6 @@ const intervals = computed(() => {
 
 			<NewVersionDialog
 				v-if="dialogOpen"
-				mode="schedule"
 				:current="profile"
 				:verification-statuses="verificationStatuses"
 				@registered="dialogOpen = false; emit('registered')"

@@ -1,10 +1,9 @@
 <script setup>
 // C03-detail — one referenced rule Version, read-only: a method eligibility
 // profile or a regulator reference ("Reservation rules"). "Create new
-// version" is the only write (never edit-in-place); the new-version dialog
+// version" is the only write (never edit-in-place); the editor it opens
 // copies the current rule values for correction (§11.6).
 import { computed, onMounted, ref } from "vue";
-import NewVersionDialog from "./NewVersionDialog.vue";
 import { procurementSettingsApi } from "../data/procurementSettingsApi.js";
 import { applicabilityBasisLabel, dash, fmtDate, sourceCheckClass, sourceCheckLabel } from "../data/format.js";
 
@@ -13,12 +12,11 @@ const props = defineProps({
 	kind: { type: String, default: "method" }, // "method" | "reference"
 	verificationStatuses: { type: Array, default: () => [] },
 });
-const emit = defineEmits(["back", "registered", "new-version", "check-sources"]);
+const emit = defineEmits(["back", "registered", "new-version", "edit-rule", "check-sources"]);
 
 const loading = ref(true);
 const loadError = ref("");
 const rule = ref(null);
-const dialogOpen = ref(false);
 const renaming = ref(false);
 const renameValue = ref("");
 const renameBusy = ref(false);
@@ -179,6 +177,9 @@ const applicabilityBasis = computed(
 						<div v-if="kind === 'method'" class="kt-meta-row">
 							<div><span class="kt-label">{{ __("Method") }}</span><span class="kt-meta-value">{{ dash(rule.procurement_method) }}</span></div>
 							<div><span class="kt-label">{{ __("Currency") }}</span><span class="kt-meta-value">{{ dash(rule.applicability_currency || "KES") }}</span></div>
+							<!-- §4.6 — a correction is a new version, so the account of
+							     why it was made belongs with the version it produced. -->
+							<div><span class="kt-label">{{ __("Reason for this version") }}</span><span class="kt-meta-value" data-testid="kt-procset-rule-change-reason">{{ rule.change_reason || __("Not recorded") }}</span></div>
 						</div>
 						<div v-else-if="payloadFacts.length" class="kt-meta-row">
 							<div v-for="fact in payloadFacts" :key="fact.key">
@@ -193,10 +194,27 @@ const applicabilityBasis = computed(
 				<div class="kt-section">
 					<h6 class="kt-card-title">{{ __("When this rule applies") }}</h6>
 					<div class="kt-panel">
-						<div class="kt-meta-row">
+						<!-- A method-eligibility profile has no
+						     entity/county field at all: the Second Schedule
+						     gates on category and estimated value, the same
+						     way for every entity, so there is a real answer
+						     here ("every entity, no restriction") rather
+						     than a gap - never show it as unestablished. -->
+						<div v-if="kind === 'method'" class="kt-meta-row">
 							<div><span class="kt-label">{{ __("Which date determines the rule to use?") }}</span><span class="kt-meta-value">{{ applicabilityBasis || __("Not yet established") }}</span></div>
-							<div><span class="kt-label">{{ __("Entity applicability") }}</span><span class="kt-meta-value">{{ (rule.applicability_entity_types || []).join(", ") || __("Not yet established") }}</span></div>
+							<div><span class="kt-label">{{ __("Entity applicability") }}</span><span class="kt-meta-value">{{ __("Every entity - governed by category and estimated value, not entity type") }}</span></div>
+							<div><span class="kt-label">{{ __("County applicability") }}</span><span class="kt-meta-value">{{ __("Not applicable to method eligibility") }}</span></div>
+						</div>
+						<!-- A blank list on a reference rule is a real,
+						     deliberate value ("no restriction" - the same
+						     convention `resolve_reference` uses), not a
+						     missing fact, so it reads as "All ..." rather
+						     than "Not yet established". -->
+						<div v-else class="kt-meta-row">
+							<div><span class="kt-label">{{ __("Which date determines the rule to use?") }}</span><span class="kt-meta-value">{{ applicabilityBasis || __("Not yet established") }}</span></div>
+							<div><span class="kt-label">{{ __("Entity applicability") }}</span><span class="kt-meta-value">{{ (rule.applicability_entity_types || []).join(", ") || __("All entity types") }}</span></div>
 							<div><span class="kt-label">{{ __("County applicability") }}</span><span class="kt-meta-value">{{ dash(rule.applicability_county) }}</span></div>
+							<div><span class="kt-label">{{ __("Category applicability") }}</span><span class="kt-meta-value">{{ (rule.applicability_categories || []).join(", ") || __("All categories") }}</span></div>
 						</div>
 					</div>
 				</div>
@@ -211,7 +229,11 @@ const applicabilityBasis = computed(
 							<div><span class="kt-label">{{ __("Edition") }}</span><span class="kt-meta-value" data-testid="kt-procset-rule-edition">{{ __("Recorded with the source check") }}</span></div>
 							<div><span class="kt-label">{{ __("Provisions") }}</span><span class="kt-meta-value">{{ rule.provision || __("Not yet established") }}</span></div>
 							<div><span class="kt-label">{{ __("Source document") }}</span><span class="kt-meta-value"><a v-if="rule.source_document" :href="rule.source_document" target="_blank" rel="noopener">{{ __("View document") }}</a><template v-else>{{ __("Not attached") }}</template></span></div>
-							<div><span class="kt-label">{{ __("Interpretation") }}</span><span class="kt-meta-value">{{ rule.interpretation || __("Not yet established") }}</span></div>
+							<!-- A method-eligibility profile has no `interpretation`
+							     field at all (its own "interpretation" is the
+							     Rule values table below); only a reference
+							     rule's blank interpretation is a real gap. -->
+							<div><span class="kt-label">{{ __("Interpretation") }}</span><span class="kt-meta-value">{{ kind === 'method' ? __("See the rule values below") : (rule.interpretation || __("Not yet established")) }}</span></div>
 						</div>
 					</div>
 				</div>
@@ -238,7 +260,14 @@ const applicabilityBasis = computed(
 							<td>{{ row.procurement_category || __("All") }}</td>
 							<td>{{ row.maximum_amount ? __("KES {0}", [Number(row.maximum_amount).toLocaleString("en-KE")]) : __("No fixed maximum") }}<span v-if="row.cumulative_basis && row.cumulative_basis !== 'None'" class="kt-muted"> · {{ row.cumulative_basis }}</span></td>
 							<td>{{ dash(row.required_evidence) }}</td>
-							<td>{{ row.authorisation_actor ? row.authorisation_actor + ' · ' + row.authorisation_stage : "—" }}</td>
+							<!-- A "Known fact" is checked by the system from
+							     the Planner's own estimate, never by a named
+							     approver (Planning's own Known-fact/
+							     Declaration split) - blank here is the real
+							     answer for that kind, not a missing one; only
+							     a Declaration condition without an approver
+							     is an actual gap. -->
+							<td>{{ row.authorisation_actor ? row.authorisation_actor + ' · ' + row.authorisation_stage : (row.kind === 'Known fact' ? __("Not required — evaluated automatically") : "—") }}</td>
 						</tr>
 					</tbody>
 				</table>
@@ -263,11 +292,27 @@ const applicabilityBasis = computed(
 				</template>
 			</div>
 
-			<!-- §10.6 saved-detail actions. A reference rule's new version and
-			     its source check are full screens (the form is far too large
-			     for a dialog); a method profile keeps its existing dialog. -->
+			<!-- §10.6 saved-detail actions. Every "Create new version" opens a
+			     full screen: a method eligibility rule's conditions, evidence
+			     and authorities are far too much for a dialog, and the dialog
+			     that used to stand in for one let only three fields of an
+			     existing condition be retyped — no condition could be added,
+			     removed or re-scoped. -->
 			<div class="kt-procset-card-actions">
-				<button v-if="kind === 'method'" type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-rule-new-version" @click="dialogOpen = true">{{ __("Create new version") }}</button>
+				<!-- A rule nothing uses and that has not taken effect is still
+				     unfinished configuration: correcting it should not cost a
+				     dead Version. The server decides which of the two this is;
+				     the screen only shows what it was told. -->
+				<button
+					v-if="kind === 'method' && rule.can_edit"
+					type="button"
+					class="kt-btn kt-btn-secondary"
+					data-testid="kt-procset-rule-edit"
+					@click="emit('edit-rule')"
+				>
+					{{ __("Edit rule") }}
+				</button>
+				<button v-if="kind === 'method'" type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-rule-new-version" @click="emit('new-version')">{{ __("Create new version") }}</button>
 				<template v-else>
 					<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-rule-new-version" @click="emit('new-version')">{{ __("Create new version") }}</button>
 					<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-rule-check-sources" @click="emit('check-sources')">{{ __("Check sources") }}</button>
@@ -301,15 +346,6 @@ const applicabilityBasis = computed(
 					</div>
 				</div>
 			</div>
-
-			<NewVersionDialog
-				v-if="dialogOpen"
-				mode="method"
-				:current="rule"
-				:verification-statuses="verificationStatuses"
-				@registered="dialogOpen = false; emit('registered')"
-				@cancel="dialogOpen = false"
-			/>
 		</template>
 	</div>
 </template>

@@ -45,6 +45,19 @@ VERIFICATION_STATUSES: tuple[str, ...] = (VERIFICATION_PENDING, VERIFICATION_FIX
 PROCUREMENT_CATEGORIES: tuple[str, ...] = ("Goods", "Works", "Services")
 COUNTING_RULES: tuple[str, ...] = ("Calendar days", "Working days")
 CONDITION_KINDS: tuple[str, ...] = ("Known fact", "Declaration")
+# §10.6's date-basis choices, in its order — which date decides the method
+# Version in force. It is stored as plain text on the Version, and rows seeded
+# before this list keep whatever they hold (the seed's "Planned invitation
+# date"); the editor offers the stored value alongside these rather than
+# rewriting a rule nobody touched.
+METHOD_APPLICABILITY_BASES: tuple[str, ...] = (
+	"Financial year start",
+	"Plan submission date",
+	"Plan approval date",
+	"Proceeding authorisation date",
+	"Invitation date",
+	"Contract signing date",
+)
 MILESTONE_BASES: tuple[str, ...] = ("Statutory", "Planning assumption", "Source-derived")
 
 # §10.1 — the seven Third Schedule milestones in order; the first is the
@@ -234,6 +247,131 @@ def _require_method(method: str) -> str:
 # --------------------------------------------------------------------------
 
 
+# Doctypes that pin a method profile Version by name. A pinned Version is the
+# rule a decision was actually made under, so it can never change afterwards.
+# Guarded like `_funding_source_referenced`: the owning app may not be
+# installed, and Configuration must not depend on it either way.
+METHOD_PROFILE_PINS: tuple[str, ...] = ("Annual Plan Item",)
+
+
+def _method_profile_referenced(name: str) -> bool:
+	for doctype in METHOD_PROFILE_PINS:
+		if frappe.db.exists("DocType", doctype) and frappe.db.has_column(doctype, "method_profile_version"):
+			if frappe.db.exists(doctype, {"method_profile_version": name}):
+				return True
+	return False
+
+
+def method_profile_editable(doc) -> tuple[bool, str]:
+	"""Whether this Version may still be corrected in place.
+
+	Owner decision, 23 Sep 2026: a rule nobody has used and that has not yet
+	taken effect is ordinary unfinished configuration — correcting it should
+	not cost a dead Version in the list. It freezes the moment either of
+	those stops being true, and from then on a correction is a new Version.
+	Both halves matter: a rule already in force is being consulted for
+	decisions that do not all pin it, and a pinned rule is the one a decision
+	was made under."""
+	if _method_profile_referenced(doc.name):
+		return False, "A plan already uses this rule, so it cannot change. Create a new version instead."
+	if doc.effective_from and getdate(doc.effective_from) <= getdate(now_datetime()):
+		return False, "This rule has already taken effect, so it cannot change. Create a new version instead."
+	return True, ""
+
+
+def update_method_profile(
+	*,
+	profile: str,
+	effective_from: str,
+	conditions: list[dict[str, Any]],
+	effective_until: str = "",
+	verification_status: str = VERIFICATION_PENDING,
+	applicability_basis: str = "Planned invitation date",
+	source_instrument: str = "",
+	provision: str = "",
+	source_document: str = "",
+	expected_version: str = "",
+) -> dict[str, Any]:
+	"""Correct a Version in place, while `method_profile_editable` allows it.
+
+	The same validation as registering one — the rule's content is held to the
+	same standard however it got there — and an audit event either way, so a
+	correction is as visible in the history as a replacement."""
+	require_configuration_administrator()
+	if not frappe.db.exists(METHOD_PROFILE, profile):
+		fail_cfg("CFG_PROFILE_INVALID", "That method profile version does not exist.")
+	doc = frappe.get_doc(METHOD_PROFILE, profile)
+	if expected_version and str(doc.modified) != str(expected_version):
+		fail_cfg("CFG_VERSION_CONFLICT")
+	editable, reason = method_profile_editable(doc)
+	if not editable:
+		# §8's governed code for "something already depends on this, so it
+		# cannot change" — the same one a referenced funding source gets.
+		fail_cfg("CFG_CATALOGUE_IN_USE", reason)
+	verification = _require_verification(verification_status)
+	rows = _method_condition_rows(conditions)
+	before = {
+		"effective_from": str(doc.effective_from or ""),
+		"effective_until": str(doc.effective_until or ""),
+		"conditions": len(doc.conditions or []),
+	}
+	doc.effective_from = getdate(effective_from)
+	doc.effective_until = getdate(effective_until) if effective_until else None
+	doc.applicability_basis = applicability_basis
+	doc.verification_status = verification
+	doc.source_instrument = source_instrument
+	doc.provision = provision
+	doc.source_document = source_document
+	doc.set("conditions", rows)
+	doc.flags.kt_correct_unused = True
+	doc.save(ignore_permissions=True)
+	superseded = _supersede_overlapping(METHOD_PROFILE, {"procurement_method": doc.procurement_method}, doc.effective_from, doc.effective_until, doc.name)
+	log_audit_event(
+		event_type="site_configuration",
+		document_type=METHOD_PROFILE,
+		document_name=doc.name,
+		action="update_method_profile",
+		metadata={"before": before, "after": {"effective_from": str(doc.effective_from or ""), "effective_until": str(doc.effective_until or ""), "conditions": len(rows)}, "superseded": superseded},
+	)
+	return {"profile": doc.name, "version_number": int(doc.version_number), "superseded": superseded, "expected_version": str(doc.modified)}
+
+
+def _method_condition_rows(conditions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+	"""Validate and normalise the eligibility conditions. Shared so a
+	correction cannot be held to a weaker standard than a new Version."""
+	if not conditions:
+		fail_cfg("CFG_PROFILE_INVALID", "A method profile needs at least one eligibility condition.")
+	rows = []
+	seen: set[str] = set()
+	for c in conditions:
+		cid = (c.get("condition_id") or "").strip()
+		if not cid or cid in seen:
+			fail_cfg("CFG_PROFILE_INVALID", "Every condition needs a unique condition id.")
+		seen.add(cid)
+		if c.get("kind") not in CONDITION_KINDS:
+			fail_cfg("CFG_PROFILE_INVALID", f"Condition {cid}: kind must be Known fact or Declaration.")
+		category = (c.get("procurement_category") or "").strip()
+		if category and category not in PROCUREMENT_CATEGORIES:
+			fail_cfg("CFG_PROFILE_INVALID", f"Condition {cid}: unknown category.")
+		rows.append(
+			{
+				"condition_id": cid,
+				"kind": c["kind"],
+				"description": (c.get("description") or "").strip(),
+				"procurement_category": category,
+				"minimum_amount": flt(c.get("minimum_amount")),
+				"maximum_amount": flt(c.get("maximum_amount")),
+				"cumulative_basis": c.get("cumulative_basis") or "None",
+				"mandatory": 1 if c.get("mandatory", True) else 0,
+				"required_evidence": (c.get("required_evidence") or "").strip(),
+				"authorisation_actor": (c.get("authorisation_actor") or "").strip(),
+				"authorisation_stage": (c.get("authorisation_stage") or "").strip(),
+				"statutory_reference": (c.get("statutory_reference") or "").strip(),
+			}
+		)
+	return rows
+
+
 def register_method_profile_version(
 	*,
 	procurement_method: str,
@@ -245,46 +383,22 @@ def register_method_profile_version(
 	source_instrument: str = "",
 	provision: str = "",
 	source_document: str = "",
+	change_reason: str = "",
+	replaces: str = "",
 	fixture_namespace: str = "",
 	idempotency_key: str = "",
 ) -> dict[str, Any]:
 	"""Register one new Version; an overlapping Active Version for the same
-	method is superseded (retained). Idempotent on the key."""
+	method is superseded (retained). Idempotent on the key. `change_reason` and
+	`replaces` are the administrator's own account of the correction; they are
+	kept on the new Version and on its audit event, so the history reads as a
+	chain of deliberate replacements rather than a pile of versions."""
 	require_configuration_administrator()
 	method = _require_method(procurement_method)
 	verification = _require_verification(verification_status)
 
 	def _do() -> dict[str, Any]:
-		if not conditions:
-			fail_cfg("CFG_PROFILE_INVALID", "A method profile needs at least one eligibility condition.")
-		rows = []
-		seen: set[str] = set()
-		for c in conditions:
-			cid = (c.get("condition_id") or "").strip()
-			if not cid or cid in seen:
-				fail_cfg("CFG_PROFILE_INVALID", "Every condition needs a unique condition id.")
-			seen.add(cid)
-			if c.get("kind") not in CONDITION_KINDS:
-				fail_cfg("CFG_PROFILE_INVALID", f"Condition {cid}: kind must be Known fact or Declaration.")
-			category = (c.get("procurement_category") or "").strip()
-			if category and category not in PROCUREMENT_CATEGORIES:
-				fail_cfg("CFG_PROFILE_INVALID", f"Condition {cid}: unknown category.")
-			rows.append(
-				{
-					"condition_id": cid,
-					"kind": c["kind"],
-					"description": (c.get("description") or "").strip(),
-					"procurement_category": category,
-					"minimum_amount": flt(c.get("minimum_amount")),
-					"maximum_amount": flt(c.get("maximum_amount")),
-					"cumulative_basis": c.get("cumulative_basis") or "None",
-					"mandatory": 1 if c.get("mandatory", True) else 0,
-					"required_evidence": (c.get("required_evidence") or "").strip(),
-					"authorisation_actor": (c.get("authorisation_actor") or "").strip(),
-					"authorisation_stage": (c.get("authorisation_stage") or "").strip(),
-					"statutory_reference": (c.get("statutory_reference") or "").strip(),
-				}
-			)
+		rows = _method_condition_rows(conditions)
 		version = _next_version(METHOD_PROFILE, {"procurement_method": method})
 		doc = frappe.get_doc(
 			{
@@ -301,18 +415,34 @@ def register_method_profile_version(
 				"provision": provision,
 				"source_document": source_document,
 				"conditions": rows,
+				"supersedes_version_ids": replaces,
+				"change_reason": change_reason.strip(),
 				"fixture_namespace": fixture_namespace,
 			}
 		)
 		doc.insert(ignore_permissions=True)
 		superseded = _supersede_overlapping(METHOD_PROFILE, {"procurement_method": method}, doc.effective_from, doc.effective_until, doc.name)
-		log_audit_event(event_type="site_configuration", document_type=METHOD_PROFILE, document_name=doc.name, action="register_method_profile_version", metadata={"version": version, "superseded": superseded, "verification_status": verification})
+		metadata = {"version": version, "superseded": superseded, "verification_status": verification}
+		if change_reason.strip():
+			metadata["change_reason"] = change_reason.strip()
+		if replaces:
+			metadata["replaces"] = replaces
+		log_audit_event(event_type="site_configuration", document_type=METHOD_PROFILE, document_name=doc.name, action="register_method_profile_version", metadata=metadata)
 		return {"profile": doc.name, "version_number": version, "superseded": superseded, "created": True}
 
 	return run_idempotent(idempotency_key, METHOD_PROFILE, method, "register_method_profile_version", _do)
 
 
+def list_cumulative_bases() -> list[str]:
+	"""What a condition's value limit is measured against. The stored Select
+	owns the vocabulary — reading it back keeps the editor and the database
+	from drifting apart."""
+	field = frappe.get_meta("Method Profile Condition").get_field("cumulative_basis")
+	return [o for o in (field.options or "").split("\n") if o.strip()]
+
+
 def _method_profile_projection(doc) -> dict[str, Any]:
+	_editable = method_profile_editable(doc)
 	return {
 		"profile": doc.name,
 		"reference_set": "Method eligibility",
@@ -326,6 +456,13 @@ def _method_profile_projection(doc) -> dict[str, Any]:
 		"source_instrument": doc.source_instrument or "",
 		"provision": doc.provision or "",
 		"source_document": doc.source_document or "",
+		"change_reason": doc.change_reason or "",
+		# The screen never decides this for itself: whether a rule may still be
+		# corrected in place is a server fact, and the reason is the one the
+		# administrator is shown.
+		"can_edit": _editable[0],
+		"edit_blocked_reason": _editable[1],
+		"supersedes_version_ids": [v for v in (doc.supersedes_version_ids or "").split(",") if v],
 		"conditions": [
 			{
 				"condition_id": r.condition_id,
@@ -769,6 +906,12 @@ def get_procurement_settings() -> dict[str, Any]:
 		"milestones": [{"milestone": m, "label": MILESTONE_LABELS[m]} for m in MILESTONES],
 		"procurement_methods": frappe.get_all("Procurement Method", filters={"status": "Active"}, pluck="name", order_by="name asc"),
 		"procurement_categories": list(PROCUREMENT_CATEGORIES),
+		# §10.6's Method eligibility editor offers only closed vocabularies
+		# the server owns: a condition is a known fact or a declaration, and
+		# a value limit is measured against one of the stored bases.
+		"condition_kinds": list(CONDITION_KINDS),
+		"cumulative_bases": list_cumulative_bases(),
+		"method_applicability_bases": list(METHOD_APPLICABILITY_BASES),
 		# §10.6's "Entity types" applicability control offers the same closed
 		# set the Procuring entity screen uses — never a free-text entity name.
 		"entity_types": list(PE_TYPES),
@@ -781,12 +924,19 @@ def get_procurement_settings() -> dict[str, Any]:
 
 
 def purge_fixture_profiles(fixture_namespace: str) -> int:
+	"""Remove a fixture namespace's Versions and the audit trail they wrote.
+
+	Version references are recycled (`MPR-OPEN-TENDER-V2` is handed out again
+	once the earlier V2 is gone), so leaving the events behind makes every
+	later run read one document's history as hundreds of unrelated ones."""
 	count = 0
 	for doctype in (METHOD_PROFILE, SCHEDULE_PROFILE, CALENDAR):
 		for name in frappe.get_all(doctype, filters={"fixture_namespace": fixture_namespace}, pluck="name"):
 			doc = frappe.get_doc(doctype, name)
 			doc.flags.kt_fixture_purge = True
 			doc.delete(ignore_permissions=True)
+			for event in frappe.get_all("Audit Event", filters={"document_type": doctype, "document_name": name}, pluck="name"):
+				frappe.delete_doc("Audit Event", event, force=True, ignore_permissions=True, delete_permanently=True)
 			count += 1
 	return count
 

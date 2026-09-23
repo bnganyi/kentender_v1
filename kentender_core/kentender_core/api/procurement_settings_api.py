@@ -80,6 +80,8 @@ def register_method_profile_version(
 	source_instrument: str | None = None,
 	provision: str | None = None,
 	source_document: str | None = None,
+	change_reason: str | None = None,
+	replaces: str | None = None,
 	idempotency_key: str | None = None,
 ) -> dict[str, Any]:
 	return settings.register_method_profile_version(
@@ -92,7 +94,38 @@ def register_method_profile_version(
 		source_instrument=source_instrument or "",
 		provision=provision or "",
 		source_document=source_document or "",
+		change_reason=change_reason or "",
+		replaces=replaces or "",
 		idempotency_key=idempotency_key or "",
+	)
+
+
+@frappe.whitelist()
+def update_method_profile(
+	profile: str,
+	effective_from: str,
+	conditions,
+	effective_until: str | None = None,
+	verification_status: str | None = None,
+	applicability_basis: str | None = None,
+	source_instrument: str | None = None,
+	provision: str | None = None,
+	source_document: str | None = None,
+	expected_version: str | None = None,
+) -> dict[str, Any]:
+	"""Correct a Version in place. The service refuses once a plan pins it or
+	it has taken effect; from then on the caller registers a new Version."""
+	return settings.update_method_profile(
+		profile=profile,
+		effective_from=effective_from,
+		conditions=_rows(conditions),
+		effective_until=effective_until or "",
+		verification_status=verification_status or settings.VERIFICATION_PENDING,
+		applicability_basis=applicability_basis or "Planned invitation date",
+		source_instrument=source_instrument or "",
+		provision=provision or "",
+		source_document=source_document or "",
+		expected_version=expected_version or "",
 	)
 
 
