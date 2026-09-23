@@ -13,6 +13,7 @@ import FundingSourceEditor from "../components/FundingSourceEditor.vue";
 import RuleVersionDetail from "../components/RuleVersionDetail.vue";
 import RuleEditor from "../components/RuleEditor.vue";
 import MethodVersionEditor from "../components/MethodVersionEditor.vue";
+import ScheduleVersionEditor from "../components/ScheduleVersionEditor.vue";
 import SourceCheckScreen from "../components/SourceCheckScreen.vue";
 import CalendarEditor from "../components/CalendarEditor.vue";
 import ScheduleProfileDetail from "../components/ScheduleProfileDetail.vue";
@@ -113,7 +114,7 @@ const methodApplicabilityBases = computed(() => data.value?.method_applicability
 const editingRule = computed(() => rules.value.find((row) => row.name === view.value.name) || null);
 const ruleVersion = ref(null);
 watch(
-	() => (view.value.kind === "new-rule-version" ? view.value.name : ""),
+	() => (["new-rule-version", "edit-rule-version"].includes(view.value.kind) ? view.value.name : ""),
 	async (name) => {
 		ruleVersion.value = null;
 		if (!name) return;
@@ -228,15 +229,16 @@ async function confirmRemoveSource() {
 
 		<!-- C03-B "add" / "version" — one editor for a new rule and a new version -->
 		<RuleEditor
-			v-else-if="view.kind === 'new-rule' || view.kind === 'new-rule-version'"
-			:reference-set="view.kind === 'new-rule-version' ? (editingRule || {}).reference_set || '' : ''"
-			:current-version="view.kind === 'new-rule-version' ? ruleVersion : null"
+			v-else-if="view.kind === 'new-rule' || view.kind === 'new-rule-version' || view.kind === 'edit-rule-version'"
+			:reference-set="view.kind === 'new-rule' ? '' : (editingRule || {}).reference_set || ''"
+			:current-version="view.kind === 'new-rule' ? null : ruleVersion"
+			:mode="view.kind === 'edit-rule-version' ? 'correct' : 'version'"
 			:kinds="ruleKinds"
 			:entity-types="entityTypes"
 			:categories="procurementCategories"
 			:methods="procurementMethods"
-			@saved="afterChange().then(() => go(''))"
-			@cancel="go('')"
+			@saved="afterChange().then(() => go(view.kind === 'edit-rule-version' ? 'rule/' + view.name : ''))"
+			@cancel="go(view.kind === 'edit-rule-version' ? 'rule/' + view.name : '')"
 		/>
 
 		<!-- C03-BC — a method eligibility rule's new version: the full editor,
@@ -252,6 +254,19 @@ async function confirmRemoveSource() {
 			:verification-statuses="verificationOptions"
 			@saved="(profile) => afterChange().then(() => go('rule/' + profile))"
 			@cancel="go('rule/' + view.name)"
+		/>
+
+		<!-- C04 — a schedule's new version, or a correction to one nothing
+		     depends on yet. Same editor, the mode the server chose. -->
+		<ScheduleVersionEditor
+			v-else-if="view.kind === 'new-schedule-version' || view.kind === 'edit-schedule'"
+			:name="view.name"
+			:mode="view.kind === 'edit-schedule' ? 'correct' : 'version'"
+			:calendars="calendars"
+			:applicability-bases="methodApplicabilityBases"
+			:verification-statuses="verificationOptions"
+			@saved="(profile) => afterChange().then(() => go('profile/' + profile))"
+			@cancel="go('profile/' + view.name)"
 		/>
 
 		<!-- C04 "calendar" — a working-day calendar version -->
@@ -280,7 +295,7 @@ async function confirmRemoveSource() {
 			@back="go('')"
 			@registered="afterChange().then(() => go(''))"
 			@new-version="go(((rules.find((row) => row.name === view.name) || {}).source === 'method' ? 'new-method-version/' : 'new-rule-version/') + view.name)"
-			@edit-rule="go('edit-method-rule/' + view.name)"
+			@edit-rule="go(((rules.find((row) => row.name === view.name) || {}).source === 'method' ? 'edit-method-rule/' : 'edit-rule-version/') + view.name)"
 			@check-sources="go('check-sources/' + view.name)"
 		/>
 
@@ -291,6 +306,8 @@ async function confirmRemoveSource() {
 			:verification-statuses="data.verification_statuses"
 			@back="go('')"
 			@registered="afterChange().then(() => go(''))"
+			@new-version="go('new-schedule-version/' + view.name)"
+			@edit-schedule="go('edit-schedule/' + view.name)"
 		/>
 
 		<template v-else>

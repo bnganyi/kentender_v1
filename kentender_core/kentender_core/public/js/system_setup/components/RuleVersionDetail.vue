@@ -40,6 +40,26 @@ async function saveName() {
 	}
 }
 
+const validityBusy = ref(false);
+const validityError = ref("");
+
+async function setValidity(valid) {
+	validityBusy.value = true;
+	validityError.value = "";
+	try {
+		await procurementSettingsApi.setVersionValidity({
+			doctype: "Procurement Method Profile",
+			name: props.name,
+			valid,
+		});
+		await load();
+	} catch (error) {
+		validityError.value = error.message;
+	} finally {
+		validityBusy.value = false;
+	}
+}
+
 async function load() {
 	loading.value = true;
 	loadError.value = "";
@@ -71,9 +91,10 @@ const title = computed(() => `${referenceSet.value} — ${__("Version {0}", [ver
 const verification = computed(() => rule.value?.verification_status || "Production verification pending");
 const verificationShort = computed(() => __(sourceCheckLabel(verification.value)));
 const conditions = computed(() => rule.value?.conditions || []);
-// C04-eligibility-reminder — an eligibility profile whose conditions are
-// not verified cannot be reported complete.
-const conditionsComplete = computed(() => props.kind === "method" && conditions.value.length > 0 && verification.value !== "Production verification pending");
+// Whether an administrator has said this version is valid. The one fact that
+// governs whether a plan using it can be submitted, stated once.
+const valid = computed(() => !!rule.value?.valid || verification.value === "Verified");
+const canSetValidity = computed(() => !!rule.value?.can_set_validity);
 // §10.7 — the validated payload rendered as labelled facts and row tables,
 // derived from the shape the server actually returned for this kind. A field
 // the payload does not carry is simply absent, never invented.
@@ -165,8 +186,17 @@ const applicabilityBasis = computed(
 					<div class="kt-fact"><span class="kt-label">{{ __("Details") }}</span><span :class="detailsComplete ? 'kt-status is-live' : 'kt-status is-pending'" data-testid="kt-procset-rule-details">{{ detailsComplete ? __("Complete") : __("Details missing") }}</span></div>
 				</div>
 
-				<div v-if="!detailsComplete || verification !== 'Verified'" class="kt-notice is-warning" data-testid="kt-procset-rule-incomplete-notice">
-					<div class="kt-notice-body">{{ __("Complete the rule details and source checks before using this version.") }}</div>
+				<!-- One statement of the one fact that blocks anything, with the
+				     action beside it. It used to say this three times — here, as
+				     a "Required conditions not yet completed" badge over the
+				     conditions, and as "Source check needed" above — all reading
+				     the same field, and none of them saying what to do. -->
+				<div v-if="!valid" class="kt-notice is-warning" data-testid="kt-procset-rule-incomplete-notice">
+					<div class="kt-notice-body">
+						{{ kind === "method"
+							? __("This rule is not marked valid, so a plan using it cannot be submitted.")
+							: __("This rule is not marked valid. Record a source check to make it usable for new decisions.") }}
+					</div>
 				</div>
 
 				<!-- §10.6's four supporting groups. "Rule details" is the kind's
@@ -250,7 +280,6 @@ const applicabilityBasis = computed(
 			<div v-if="kind === 'method'" class="kt-card kt-blueprint kt-table-card kt-procset-wide" data-testid="kt-procset-rule-values">
 				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
 				<h3 class="kt-card-title">{{ __("Rule values") }}</h3>
-				<span v-if="!conditionsComplete" class="kt-status is-attention" data-testid="kt-procset-rule-incomplete">{{ __("Required conditions not yet completed") }}</span>
 				<table class="kt-table">
 					<thead><tr><th>{{ __("Condition") }}</th><th>{{ __("Kind") }}</th><th>{{ __("Category") }}</th><th>{{ __("Limit") }}</th><th>{{ __("Evidence") }}</th><th>{{ __("Authorisation") }}</th></tr></thead>
 					<tbody>
@@ -312,14 +341,30 @@ const applicabilityBasis = computed(
 				>
 					{{ __("Edit rule") }}
 				</button>
+				<!-- Allowed while the version is in force and in use: that is
+				     exactly when a rule blocking submission needs clearing, and
+				     saying it is valid does not change what the rule says. -->
+				<button
+					v-if="canSetValidity"
+					type="button"
+					class="kt-btn kt-btn-secondary"
+					:disabled="validityBusy"
+					data-testid="kt-procset-rule-validity"
+					@click="setValidity(!valid)"
+				>
+					{{ valid ? __("Remove valid mark") : __("Mark as valid") }}
+				</button>
 				<button v-if="kind === 'method'" type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-rule-new-version" @click="emit('new-version')">{{ __("Create new version") }}</button>
 				<template v-else>
+					<button v-if="rule.can_edit" type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-rule-edit" @click="emit('edit-rule')">{{ __("Edit rule") }}</button>
 					<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-rule-new-version" @click="emit('new-version')">{{ __("Create new version") }}</button>
 					<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-rule-check-sources" @click="emit('check-sources')">{{ __("Check sources") }}</button>
 					<button type="button" class="kt-btn kt-btn-ghost" data-testid="kt-procset-rule-usage" @click="emit('check-sources')">{{ __("View usage and history") }}</button>
 					<button type="button" class="kt-btn kt-btn-ghost" data-testid="kt-procset-rule-rename" @click="renaming = true">{{ __("Edit rule name") }}</button>
 				</template>
 			</div>
+
+			<p v-if="validityError" class="kt-inline-error" role="alert" data-testid="kt-procset-rule-validity-error">{{ validityError }}</p>
 
 			<!-- §10.6 — identifier and kind are separately labelled read-only
 			     facts on the saved detail, for a method profile as much as for a

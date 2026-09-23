@@ -3,14 +3,18 @@
 
 """CFG-CHG-002 v0.11 §4.8 — one versioned, effective-dated business-day
 calendar: weekend exclusions and exceptional holiday dates with source
-evidence. Immutable once inserted, same pattern as `Procedure Schedule
-Profile`: a newer overlapping Version supersedes, the earlier one retained.
+evidence. Same pattern as `Procedure Schedule Profile`: a newer overlapping
+Version supersedes, the earlier one retained, and it freezes once a schedule
+counts days by it, once a source check is recorded against it, or once it
+takes effect (`configuration_versions.version_editable`).
 """
 
 from __future__ import annotations
 
 import frappe
 from frappe.model.document import Document
+
+from kentender_core.services.configuration_versions import guard_in_place_edit
 
 _MUTABLE_AFTER_INSERT = frozenset({"status", "modified", "modified_by", "docstatus", "idx"})
 
@@ -36,24 +40,7 @@ class BusinessDayCalendar(Document):
 			if row.holiday_date in seen:
 				frappe.throw(f"Holiday date {row.holiday_date} appears twice.", title="CFG_CALENDAR_INVALID")
 			seen.add(row.holiday_date)
-		if self.is_new():
-			return
-		before = self.get_doc_before_save()
-		if before is None or getattr(self.flags, "kt_supersede", False):
-			return
-		for field in self.meta.get_valid_columns():
-			if field in _MUTABLE_AFTER_INSERT or field.startswith("_"):
-				continue
-			if (self.get(field) or None) != (before.get(field) or None):
-				frappe.throw(
-					"A calendar version is never edited in place. Register a new version instead.",
-					title="CFG_CALENDAR_IMMUTABLE",
-				)
-		if len(self.get("holidays") or []) != len(before.get("holidays") or []):
-			frappe.throw(
-				"A calendar version is never edited in place. Register a new version instead.",
-				title="CFG_CALENDAR_IMMUTABLE",
-			)
+		guard_in_place_edit(self, mutable_fields=_MUTABLE_AFTER_INSERT, child_tables=("holidays",))
 
 	def on_trash(self):
 		if not getattr(self.flags, "kt_fixture_purge", False):

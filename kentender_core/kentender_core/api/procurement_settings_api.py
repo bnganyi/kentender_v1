@@ -130,6 +130,13 @@ def update_method_profile(
 
 
 @frappe.whitelist()
+def set_version_validity(doctype: str, name: str, valid, note: str | None = None) -> dict[str, Any]:
+	"""Mark a rule or schedule Version valid, or withdraw that. Allowed while
+	the Version is in force and in use — that is when it is needed."""
+	return settings.set_version_validity(doctype=doctype, name=name, valid=bool(_bool(valid)), note=note or "")
+
+
+@frappe.whitelist()
 def get_schedule_profile(name: str) -> dict[str, Any]:
 	return settings.get_schedule_profile(name)
 
@@ -171,6 +178,116 @@ def register_schedule_profile_version(
 		provision=provision or "",
 		source_document=source_document or "",
 		idempotency_key=idempotency_key or "",
+	)
+
+
+@frappe.whitelist()
+def update_schedule_profile(
+	profile: str,
+	profile_name: str,
+	effective_from: str,
+	milestones,
+	procedure: str | None = None,
+	effective_until: str | None = None,
+	counting_rule: str | None = None,
+	calendar: str | None = None,
+	estimated_delivery_period_default_days=None,
+	verification_status: str | None = None,
+	applicability_basis: str | None = None,
+	source_instrument: str | None = None,
+	provision: str | None = None,
+	source_document: str | None = None,
+	expected_version: str | None = None,
+) -> dict[str, Any]:
+	"""Correct a schedule Version in place. The service refuses once a plan
+	pins it or it has taken effect; from then on the caller registers a new
+	Version."""
+	default_days = None if estimated_delivery_period_default_days in (None, "") else int(estimated_delivery_period_default_days)
+	return settings.update_schedule_profile(
+		profile=profile,
+		profile_name=profile_name,
+		effective_from=effective_from,
+		milestones=_rows(milestones),
+		procedure=procedure or "",
+		effective_until=effective_until or "",
+		counting_rule=counting_rule or "Calendar days",
+		calendar=calendar or "",
+		estimated_delivery_period_default_days=default_days,
+		verification_status=verification_status or settings.VERIFICATION_PENDING,
+		applicability_basis=applicability_basis or "Planned invitation date",
+		source_instrument=source_instrument or "",
+		provision=provision or "",
+		source_document=source_document or "",
+		expected_version=expected_version or "",
+	)
+
+
+@frappe.whitelist()
+def update_business_day_calendar(
+	calendar: str,
+	calendar_name: str,
+	effective_from: str,
+	weekend_days,
+	holidays=None,
+	effective_until: str | None = None,
+	verification_status: str | None = None,
+	source_instrument: str | None = None,
+	provision: str | None = None,
+	source_document: str | None = None,
+	expected_version: str | None = None,
+) -> dict[str, Any]:
+	"""Correct a calendar Version in place, while nothing counts days by it,
+	no source check has been recorded against it and it has not taken effect."""
+	return settings.update_business_day_calendar(
+		calendar=calendar,
+		calendar_name=calendar_name,
+		effective_from=effective_from,
+		weekend_days=_list(weekend_days),
+		holidays=_rows(holidays),
+		effective_until=effective_until or "",
+		verification_status=verification_status or settings.VERIFICATION_PENDING,
+		source_instrument=source_instrument or "",
+		provision=provision or "",
+		source_document=source_document or "",
+		expected_version=expected_version or "",
+	)
+
+
+@frappe.whitelist()
+def update_regulatory_reference_version(
+	reference: str,
+	payload,
+	effective_from: str,
+	effective_until: str | None = None,
+	applicability_basis: str | None = None,
+	applicability_entity_types=None,
+	applicability_county: str | None = None,
+	applicability_categories=None,
+	applicability_currency: str | None = None,
+	source_instrument: str | None = None,
+	provision: str | None = None,
+	source_document: str | None = None,
+	interpretation: str | None = None,
+	expected_version: str | None = None,
+) -> dict[str, Any]:
+	"""Correct a reference Version in place. `verification_status` is
+	deliberately not accepted here either: a version is Pending until a
+	`Check sources` event says otherwise, and recording one freezes it."""
+	return register.update_regulatory_reference_version(
+		reference=reference,
+		payload=_obj(payload),
+		effective_from=effective_from,
+		effective_until=effective_until or "",
+		applicability_basis=applicability_basis or "",
+		applicability_entity_types=_list(applicability_entity_types),
+		applicability_county=applicability_county or "All",
+		applicability_categories=_list(applicability_categories),
+		applicability_currency=applicability_currency or "KES",
+		source_instrument=source_instrument or "",
+		provision=provision or "",
+		source_document=source_document or "",
+		interpretation=interpretation or "",
+		expected_version=expected_version or "",
 	)
 
 

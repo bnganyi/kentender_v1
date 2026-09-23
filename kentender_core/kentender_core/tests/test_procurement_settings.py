@@ -93,15 +93,15 @@ class ProcurementSettingsTestCase(IntegrationTestCase):
 
 	# --- method profiles -------------------------------------------------
 
-	def _pin_plan_item(self, profile: str) -> str:
+	def _pin_plan_item(self, profile: str, field: str = "method_profile_version") -> str:
 		"""Stand in for the one thing that pins a method rule: an Annual Plan
 		Item carrying its version. Planning owns that record, and building a
 		real one here would drag its whole world into a Configuration test, so
 		the row is written at the table level — it exists only to be seen by
 		`_method_profile_referenced`, and it is removed again."""
-		name = f"{NS}-PIN-1"
+		name = f"{NS}-PIN-{field}"
 		frappe.db.sql(
-			"insert into `tabAnnual Plan Item` (name, creation, modified, owner, modified_by, method_profile_version) "
+			f"insert into `tabAnnual Plan Item` (name, creation, modified, owner, modified_by, {field}) "
 			"values (%s, now(), now(), %s, %s, %s)",
 			(name, "Administrator", "Administrator", profile),
 		)
@@ -297,7 +297,157 @@ class ProcurementSettingsTestCase(IntegrationTestCase):
 			if used:
 				self.assertIn(used, read["cumulative_bases"])
 
+	def test_an_administrator_marks_a_rule_valid_while_it_is_in_force_and_in_use(self):
+		"""Owner decision 23 Sep 2026 — the old "Source check needed" named a
+		check that did not exist for a method rule, and once the version was in
+		force there was no way to clear it at all: the rule blocked plan
+		submission and the screen offered nothing to do about it. Validity is
+		now the administrator's own recorded statement, and it is settable
+		exactly when it is needed — in force, and pinned by a plan."""
+		out = self._register_method("2018-07-01", "2018-12-31")
+		self.assertFalse(settings.get_method_profile(out["profile"])["valid"])
+		# In force, so its content is frozen...
+		self.assertFalse(settings.get_method_profile(out["profile"])["can_edit"])
+		item = self._pin_plan_item(out["profile"])
+		try:
+			# ...and pinned by a plan, which is the hardest case there is.
+			settings.set_version_validity(doctype=settings.METHOD_PROFILE, name=out["profile"], valid=True, note="Checked against the gazette.")
+			read = settings.get_method_profile(out["profile"])
+			self.assertTrue(read["valid"])
+			self.assertEqual(read["verification_status"], settings.VERIFICATION_VERIFIED)
+			# Planning reads this same field, so the flag is live downstream.
+			self.assertEqual(
+				settings.resolve_method_profile(procurement_method="Open Tender", procurement_category="Goods", applicability_date="2018-09-01")["verification_status"],
+				settings.VERIFICATION_VERIFIED,
+			)
+			# Marking it valid says nothing new about the rule's content, which
+			# stays exactly as immutable as it was.
+			doc = frappe.get_doc(settings.METHOD_PROFILE, out["profile"])
+			doc.provision = "changed"
+			with self.assertRaises(frappe.ValidationError):
+				doc.save(ignore_permissions=True)
+			# Who said it and when is recorded either way.
+			self.assertTrue(
+				frappe.db.exists("Audit Event", {"document_type": settings.METHOD_PROFILE, "document_name": out["profile"], "action": "set_version_validity"})
+			)
+			# It can be withdrawn again, and saying it twice is not an event.
+			self.assertFalse(settings.set_version_validity(doctype=settings.METHOD_PROFILE, name=out["profile"], valid=True)["changed"])
+			settings.set_version_validity(doctype=settings.METHOD_PROFILE, name=out["profile"], valid=False)
+			self.assertFalse(settings.get_method_profile(out["profile"])["valid"])
+			self.assertEqual(settings.get_method_profile(out["profile"])["verification_status"], settings.VERIFICATION_PENDING)
+		finally:
+			self._unpin_plan_item(item)
+
+	def test_withdrawing_the_mark_does_not_delete_the_fixture_warning(self):
+		"""'Fixture-verified — not production law' warns that a row is test
+		data. Withdrawing a valid mark must put that warning back, not collapse
+		it into an ordinary unmarked rule."""
+		out = self._register_method("2017-07-01", "2017-12-31", verification_status=settings.VERIFICATION_FIXTURE)
+		self.assertEqual(settings.get_method_profile(out["profile"])["verification_status"], settings.VERIFICATION_FIXTURE)
+		settings.set_version_validity(doctype=settings.METHOD_PROFILE, name=out["profile"], valid=True)
+		self.assertTrue(settings.get_method_profile(out["profile"])["valid"])
+		settings.set_version_validity(doctype=settings.METHOD_PROFILE, name=out["profile"], valid=False)
+		self.assertEqual(settings.get_method_profile(out["profile"])["verification_status"], settings.VERIFICATION_FIXTURE)
+
+	def test_a_setting_with_a_real_source_check_does_not_take_the_flag(self):
+		"""A reference rule and a calendar have the Check sources screen and its
+		evidence trail — a real check, not a label implying one — so the flag
+		would be a second, weaker way to make the same claim."""
+		with self.assertRaises(ConfigurationError) as caught:
+			settings.set_version_validity(doctype="Regulatory Reference", name="whatever", valid=True)
+		self.assertEqual(self.code(caught), "CFG_PROFILE_INVALID")
+
 	# --- schedule profiles -----------------------------------------------
+
+	def test_a_schedule_nobody_uses_and_that_has_not_started_is_corrected_in_place(self):
+		"""The same rule as a method rule, because there is one rule: an unused,
+		not-yet-effective schedule is unfinished configuration and is corrected
+		in place; it freezes once a plan pins it or it takes effect."""
+		out = settings.register_schedule_profile_version(
+			procurement_method="Open Tender",
+			procurement_category="Goods",
+			profile_name="KT Test — correctable",
+			effective_from="2090-07-01",
+			effective_until="2090-12-31",
+			milestones=_milestones(),
+			fixture_namespace=NS,
+		)
+		before_count = len(frappe.get_all(settings.SCHEDULE_PROFILE, filters={"fixture_namespace": NS}))
+		version = settings.get_schedule_profile(out["profile"])
+		self.assertTrue(version["can_edit"])
+
+		settings.update_schedule_profile(
+			profile=out["profile"],
+			profile_name="KT Test — corrected",
+			effective_from="2090-08-01",
+			effective_until="2090-12-31",
+			milestones=_milestones(bid_opening={"default_days": 28}, award_approval={"default_days": 9}),
+			estimated_delivery_period_default_days=45,
+		)
+		corrected = settings.get_schedule_profile(out["profile"])
+		self.assertEqual(corrected["version_number"], version["version_number"], "a correction is not a new version")
+		self.assertEqual(corrected["profile_name"], "KT Test — corrected")
+		self.assertEqual(corrected["effective_from"], "2090-08-01")
+		self.assertEqual(corrected["estimated_delivery_period_default_days"], 45)
+		# Every milestone row is rewritten, not just the first one that changed.
+		self.assertEqual(corrected["periods"]["tendering_period_days"]["default_days"], 28)
+		self.assertEqual(corrected["periods"]["award_approval_buffer_days"]["default_days"], 9)
+		self.assertEqual({m["milestone"] for m in corrected["milestones"]}, set(settings.MILESTONES))
+		self.assertEqual(before_count, len(frappe.get_all(settings.SCHEDULE_PROFILE, filters={"fixture_namespace": NS})))
+		self.assertTrue(
+			frappe.db.exists("Audit Event", {"document_type": settings.SCHEDULE_PROFILE, "document_name": out["profile"], "action": "update_schedule_profile"})
+		)
+		# Held to the same standard as registering one.
+		with self.assertRaises(ConfigurationError) as caught:
+			settings.update_schedule_profile(
+				profile=out["profile"],
+				profile_name="KT Test — corrected",
+				effective_from="2090-08-01",
+				milestones=_milestones(bid_opening={"default_days": 1, "minimum_days": 21}),
+			)
+		self.assertEqual(self.code(caught), "CFG_PROFILE_INVALID")
+
+	def test_a_schedule_freezes_once_it_takes_effect_or_once_a_plan_uses_it(self):
+		in_force = settings.register_schedule_profile_version(
+			procurement_method="Open Tender",
+			procurement_category="Works",
+			profile_name="KT Test — in force",
+			effective_from="2019-07-01",
+			effective_until="2019-12-31",
+			milestones=_milestones(),
+			fixture_namespace=NS,
+		)
+		read = settings.get_schedule_profile(in_force["profile"])
+		self.assertFalse(read["can_edit"])
+		self.assertIn("already taken effect", read["edit_blocked_reason"])
+		with self.assertRaises(ConfigurationError) as caught:
+			settings.update_schedule_profile(
+				profile=in_force["profile"], profile_name="x", effective_from="2019-07-01", milestones=_milestones()
+			)
+		self.assertEqual(self.code(caught), "CFG_CATALOGUE_IN_USE")
+		doc = frappe.get_doc(settings.SCHEDULE_PROFILE, in_force["profile"])
+		doc.provision = "changed"
+		with self.assertRaises(frappe.ValidationError):
+			doc.save(ignore_permissions=True)
+
+		future = settings.register_schedule_profile_version(
+			procurement_method="Open Tender",
+			procurement_category="Services",
+			profile_name="KT Test — pinned",
+			effective_from="2089-07-01",
+			effective_until="2089-12-31",
+			milestones=_milestones(),
+			fixture_namespace=NS,
+		)
+		self.assertTrue(settings.get_schedule_profile(future["profile"])["can_edit"])
+		item = self._pin_plan_item(future["profile"], "schedule_profile_version")
+		try:
+			blocked = settings.get_schedule_profile(future["profile"])
+			self.assertFalse(blocked["can_edit"])
+			self.assertIn("plan already uses this schedule", blocked["edit_blocked_reason"])
+		finally:
+			self._unpin_plan_item(item)
+
 
 	def test_schedule_profile_reports_periods_completeness_and_gaps(self):
 		# Version numbers count every version of this method/category on the

@@ -27,6 +27,7 @@ import frappe
 from frappe.utils import flt, getdate, now_datetime
 
 from kentender_core.services.audit_event_service import log_audit_event
+from kentender_core.services.configuration_versions import version_editable
 from kentender_core.services.configuration_errors import fail_cfg
 from kentender_core.services.reference_data_idempotency import run_idempotent
 from kentender_core.services.site_configuration import PE_TYPES, require_configuration_administrator
@@ -247,36 +248,10 @@ def _require_method(method: str) -> str:
 # --------------------------------------------------------------------------
 
 
-# Doctypes that pin a method profile Version by name. A pinned Version is the
-# rule a decision was actually made under, so it can never change afterwards.
-# Guarded like `_funding_source_referenced`: the owning app may not be
-# installed, and Configuration must not depend on it either way.
-METHOD_PROFILE_PINS: tuple[str, ...] = ("Annual Plan Item",)
-
-
-def _method_profile_referenced(name: str) -> bool:
-	for doctype in METHOD_PROFILE_PINS:
-		if frappe.db.exists("DocType", doctype) and frappe.db.has_column(doctype, "method_profile_version"):
-			if frappe.db.exists(doctype, {"method_profile_version": name}):
-				return True
-	return False
-
-
 def method_profile_editable(doc) -> tuple[bool, str]:
-	"""Whether this Version may still be corrected in place.
-
-	Owner decision, 23 Sep 2026: a rule nobody has used and that has not yet
-	taken effect is ordinary unfinished configuration — correcting it should
-	not cost a dead Version in the list. It freezes the moment either of
-	those stops being true, and from then on a correction is a new Version.
-	Both halves matter: a rule already in force is being consulted for
-	decisions that do not all pin it, and a pinned rule is the one a decision
-	was made under."""
-	if _method_profile_referenced(doc.name):
-		return False, "A plan already uses this rule, so it cannot change. Create a new version instead."
-	if doc.effective_from and getdate(doc.effective_from) <= getdate(now_datetime()):
-		return False, "This rule has already taken effect, so it cannot change. Create a new version instead."
-	return True, ""
+	"""Whether this method Version may still be corrected in place. One rule
+	for every versioned setting — see `configuration_versions`."""
+	return version_editable(METHOD_PROFILE, doc)
 
 
 def update_method_profile(
@@ -462,6 +437,8 @@ def _method_profile_projection(doc) -> dict[str, Any]:
 		# administrator is shown.
 		"can_edit": _editable[0],
 		"edit_blocked_reason": _editable[1],
+		"valid": doc.verification_status == VERIFICATION_VERIFIED,
+		"can_set_validity": True,
 		"supersedes_version_ids": [v for v in (doc.supersedes_version_ids or "").split(",") if v],
 		"conditions": [
 			{
@@ -527,6 +504,214 @@ def resolve_method_profile(*, procurement_method: str, procurement_category: str
 # --------------------------------------------------------------------------
 
 
+# Settings whose validity an administrator states directly. A reference rule
+# and a calendar have the Check sources screen and its evidence trail instead,
+# which is a real check rather than a label implying one.
+VALIDITY_FLAGGABLE: tuple[str, ...] = (METHOD_PROFILE, SCHEDULE_PROFILE)
+
+
+def _withdrawn_status(doctype: str, name: str) -> str:
+	"""What a Version says once the valid mark is withdrawn.
+
+	Whatever it said before it was marked, not a blanket "not marked valid":
+	"Fixture-verified — not production law" is a *warning* that this row is
+	test data, and collapsing it into an ordinary unmarked rule would quietly
+	delete that warning. The prior value is on the event that marked it."""
+	rows = frappe.get_all(
+		"Audit Event",
+		filters={"document_type": doctype, "document_name": name, "action": "set_version_validity"},
+		fields=["metadata"],
+		order_by="creation desc",
+		limit_page_length=1,
+	)
+	if rows:
+		prior = (frappe.parse_json(rows[0]["metadata"]) or {}).get("before")
+		if prior in VERIFICATION_STATUSES and prior != VERIFICATION_VERIFIED:
+			return prior
+	return VERIFICATION_PENDING
+
+
+def set_version_validity(*, doctype: str, name: str, valid: bool, note: str = "") -> dict[str, Any]:
+	"""Mark a rule or schedule Version valid, or withdraw that.
+
+	Owner decision, 23 Sep 2026: these two settings never had a source check
+	behind the label — registering a version just offered the status on a
+	dropdown, and once the version was in force even that was gone, leaving a
+	rule that blocked plan submission with no way to clear it. So the claim is
+	what it always really was: the administrator's own statement, made
+	explicitly, recorded with their name against it, and allowed at any time —
+	including while the version is in force and in use, which is exactly when
+	it is needed.
+
+	It is deliberately not a change to the version's content: what the rule
+	says stays immutable, and only this statement about it moves."""
+	require_configuration_administrator()
+	if doctype not in VALIDITY_FLAGGABLE:
+		fail_cfg("CFG_PROFILE_INVALID", "That setting records its validity through a source check.")
+	if not frappe.db.exists(doctype, name):
+		fail_cfg("CFG_PROFILE_INVALID", "That version does not exist.")
+	doc = frappe.get_doc(doctype, name)
+	before = doc.verification_status
+	after = VERIFICATION_VERIFIED if valid else _withdrawn_status(doctype, name)
+	if after == before:
+		return {"name": doc.name, "valid": valid, "verification_status": before, "changed": False, "expected_version": str(doc.modified)}
+	doc.verification_status = after
+	doc.flags.kt_validity = True
+	doc.save(ignore_permissions=True)
+	log_audit_event(
+		event_type="site_configuration",
+		document_type=doctype,
+		document_name=doc.name,
+		action="set_version_validity",
+		metadata={"before": before, "after": after, "note": (note or "").strip()},
+	)
+	return {"name": doc.name, "valid": valid, "verification_status": after, "changed": True, "expected_version": str(doc.modified)}
+
+
+def _require_schedule_calendar(*, counting_rule: str, calendar: str, effective_from: str, effective_until: str) -> str:
+	"""§10.9 / CFG-UX-AC-20 — a working-day interval needs a *verified*
+	calendar version that actually covers this schedule's period. An
+	existing-but-unverified calendar, or one whose period does not reach the
+	schedule's, cannot pass on the strength of its name alone. A calendar-day
+	schedule counts none, so it stores none."""
+	if counting_rule != "Working days":
+		return ""
+	if not calendar or not frappe.db.exists(CALENDAR, calendar):
+		fail_cfg("CFG_CALENDAR_REQUIRED")
+	row = frappe.db.get_value(CALENDAR, calendar, ["status", "verification_status", "effective_from", "effective_until"], as_dict=True)
+	if row.status != "Active" or row.verification_status != VERIFICATION_VERIFIED:
+		fail_cfg("CFG_CALENDAR_REQUIRED", "Select a verified working-day calendar for this interval.")
+	if getdate(row.effective_from) > getdate(effective_from) or (row.effective_until and effective_until and getdate(row.effective_until) < getdate(effective_until)):
+		fail_cfg("CFG_CALENDAR_REQUIRED", "The selected working-day calendar does not cover this schedule's period.")
+	return calendar
+
+
+def _schedule_milestone_rows(milestones: list[dict[str, Any]], counting_rule: str) -> list[dict[str, Any]]:
+	"""Validate and normalise the milestone rows. Shared so a correction
+	cannot be held to a weaker standard than a new Version."""
+	if not milestones:
+		fail_cfg("CFG_PROFILE_INVALID", "A schedule profile needs its milestone rows.")
+	rows = []
+	seen: set[str] = set()
+	for m in milestones:
+		key = m.get("milestone")
+		if key not in MILESTONES or key in seen:
+			fail_cfg("CFG_PROFILE_INVALID", f"Milestone {key!r} is unknown or repeated.")
+		seen.add(key)
+		basis = m.get("basis") or "Statutory"
+		if basis not in MILESTONE_BASES:
+			fail_cfg("CFG_PROFILE_INVALID", f"Milestone {key}: basis must be Statutory, Planning assumption or Source-derived.")
+		# Frappe stores a blank Int as 0, so 0 is the one representation of
+		# "not set": a blank statutory bound reads as verification required and
+		# a blank default as a gap (C04). A genuine zero-day period is therefore
+		# not a profile value — none exists in the Third Schedule.
+		minimum = int(m.get("minimum_days") or 0)
+		maximum = int(m.get("maximum_days") or 0)
+		default = int(m.get("default_days") or 0)
+		if minimum and default and default < minimum:
+			fail_cfg("CFG_PROFILE_INVALID", f"Milestone {key}: the default is below the minimum.")
+		if maximum and default and default > maximum:
+			fail_cfg("CFG_PROFILE_INVALID", f"Milestone {key}: the default exceeds the maximum.")
+		rows.append(
+			{
+				"milestone": key,
+				"label": (m.get("label") or MILESTONE_LABELS[key]).strip(),
+				"sequence": int(m.get("sequence") or (MILESTONES.index(key) + 1)),
+				"applies": 1 if m.get("applies", True) else 0,
+				"counting_rule": m.get("counting_rule") or counting_rule,
+				"minimum_days": minimum,
+				"maximum_days": maximum,
+				"default_days": default,
+				"basis": basis,
+				"statutory_reference": (m.get("statutory_reference") or "").strip(),
+			}
+		)
+	missing = [k for k in MILESTONES if k not in seen]
+	if missing:
+		fail_cfg("CFG_PROFILE_INVALID", f"The profile must list every milestone (missing: {', '.join(missing)}).")
+	return sorted(rows, key=lambda r: r["sequence"])
+
+
+def schedule_profile_editable(doc) -> tuple[bool, str]:
+	"""Whether this schedule Version may still be corrected in place. One rule
+	for every versioned setting — see `configuration_versions`."""
+	return version_editable(SCHEDULE_PROFILE, doc)
+
+
+def update_schedule_profile(
+	*,
+	profile: str,
+	profile_name: str,
+	effective_from: str,
+	milestones: list[dict[str, Any]],
+	procedure: str = "",
+	effective_until: str = "",
+	counting_rule: str = "Calendar days",
+	calendar: str = "",
+	estimated_delivery_period_default_days: int | None = None,
+	verification_status: str = VERIFICATION_PENDING,
+	applicability_basis: str = "Planned invitation date",
+	source_instrument: str = "",
+	provision: str = "",
+	source_document: str = "",
+	expected_version: str = "",
+) -> dict[str, Any]:
+	"""Correct a schedule Version in place, while it is still correctable.
+
+	The method and category are the schedule's identity — a Version for a
+	different pair is a different schedule, not a correction of this one — so
+	they are read from the record rather than accepted from the caller."""
+	require_configuration_administrator()
+	if not frappe.db.exists(SCHEDULE_PROFILE, profile):
+		fail_cfg("CFG_PROFILE_INVALID", "That schedule profile version does not exist.")
+	doc = frappe.get_doc(SCHEDULE_PROFILE, profile)
+	if expected_version and str(doc.modified) != str(expected_version):
+		fail_cfg("CFG_VERSION_CONFLICT")
+	editable, reason = schedule_profile_editable(doc)
+	if not editable:
+		fail_cfg("CFG_CATALOGUE_IN_USE", reason)
+	if counting_rule not in COUNTING_RULES:
+		fail_cfg("CFG_PROFILE_INVALID", "Select a counting rule.")
+	verification = _require_verification(verification_status)
+	calendar = _require_schedule_calendar(counting_rule=counting_rule, calendar=calendar, effective_from=effective_from, effective_until=effective_until)
+	rows = _schedule_milestone_rows(milestones, counting_rule)
+	before = {"effective_from": str(doc.effective_from or ""), "effective_until": str(doc.effective_until or ""), "counting_rule": doc.counting_rule}
+	doc.profile_name = " ".join((profile_name or "").split())
+	doc.procedure = procedure
+	doc.effective_from = getdate(effective_from)
+	doc.effective_until = getdate(effective_until) if effective_until else None
+	doc.applicability_basis = applicability_basis
+	doc.counting_rule = counting_rule
+	doc.calendar = calendar
+	doc.estimated_delivery_period_default_days = estimated_delivery_period_default_days
+	doc.verification_status = verification
+	doc.source_instrument = source_instrument
+	doc.provision = provision
+	doc.source_document = source_document
+	doc.set("milestones", rows)
+	doc.flags.kt_correct_unused = True
+	doc.save(ignore_permissions=True)
+	superseded = _supersede_overlapping(
+		SCHEDULE_PROFILE,
+		{"procurement_method": doc.procurement_method, "procurement_category": doc.procurement_category},
+		doc.effective_from,
+		doc.effective_until,
+		doc.name,
+	)
+	log_audit_event(
+		event_type="site_configuration",
+		document_type=SCHEDULE_PROFILE,
+		document_name=doc.name,
+		action="update_schedule_profile",
+		metadata={
+			"before": before,
+			"after": {"effective_from": str(doc.effective_from or ""), "effective_until": str(doc.effective_until or ""), "counting_rule": doc.counting_rule},
+			"superseded": superseded,
+		},
+	)
+	return {"profile": doc.name, "version_number": int(doc.version_number), "superseded": superseded, "expected_version": str(doc.modified)}
+
+
 def register_schedule_profile_version(
 	*,
 	procurement_method: str,
@@ -554,72 +739,10 @@ def register_schedule_profile_version(
 	if counting_rule not in COUNTING_RULES:
 		fail_cfg("CFG_PROFILE_INVALID", "Select a counting rule.")
 	verification = _require_verification(verification_status)
-	if counting_rule == "Working days":
-		# §10.9 / CFG-UX-AC-20 — a working-day interval needs a *verified*
-		# calendar version that actually covers this profile's period. An
-		# existing-but-unverified calendar, or one whose period does not reach
-		# the profile's, cannot pass on the strength of its name alone.
-		if not calendar or not frappe.db.exists(CALENDAR, calendar):
-			fail_cfg("CFG_CALENDAR_REQUIRED")
-		row = frappe.db.get_value(
-			CALENDAR,
-			calendar,
-			["status", "verification_status", "effective_from", "effective_until"],
-			as_dict=True,
-		)
-		if row.status != "Active" or row.verification_status != VERIFICATION_VERIFIED:
-			fail_cfg("CFG_CALENDAR_REQUIRED", "Select a verified working-day calendar for this interval.")
-		if getdate(row.effective_from) > getdate(effective_from) or (
-			row.effective_until and effective_until and getdate(row.effective_until) < getdate(effective_until)
-		):
-			fail_cfg(
-				"CFG_CALENDAR_REQUIRED",
-				"The selected working-day calendar does not cover this schedule's period.",
-			)
-	else:
-		calendar = ""
+	calendar = _require_schedule_calendar(counting_rule=counting_rule, calendar=calendar, effective_from=effective_from, effective_until=effective_until)
 
 	def _do() -> dict[str, Any]:
-		if not milestones:
-			fail_cfg("CFG_PROFILE_INVALID", "A schedule profile needs its milestone rows.")
-		rows = []
-		seen: set[str] = set()
-		for m in milestones:
-			key = m.get("milestone")
-			if key not in MILESTONES or key in seen:
-				fail_cfg("CFG_PROFILE_INVALID", f"Milestone {key!r} is unknown or repeated.")
-			seen.add(key)
-			basis = m.get("basis") or "Statutory"
-			if basis not in MILESTONE_BASES:
-				fail_cfg("CFG_PROFILE_INVALID", f"Milestone {key}: basis must be Statutory, Planning assumption or Source-derived.")
-			# Frappe stores a blank Int as 0, so 0 is the one representation of
-			# "not set": a blank statutory bound reads as verification required
-			# and a blank default as a gap (C04). A genuine zero-day period is
-			# therefore not a profile value — none exists in the Third Schedule.
-			minimum = int(m.get("minimum_days") or 0)
-			maximum = int(m.get("maximum_days") or 0)
-			default = int(m.get("default_days") or 0)
-			if minimum and default and default < minimum:
-				fail_cfg("CFG_PROFILE_INVALID", f"Milestone {key}: the default is below the minimum.")
-			if maximum and default and default > maximum:
-				fail_cfg("CFG_PROFILE_INVALID", f"Milestone {key}: the default exceeds the maximum.")
-			rows.append(
-				{
-					"milestone": key,
-					"label": (m.get("label") or MILESTONE_LABELS[key]).strip(),
-					"sequence": int(m.get("sequence") or (MILESTONES.index(key) + 1)),
-					"applies": 1 if m.get("applies", True) else 0,
-					"counting_rule": m.get("counting_rule") or counting_rule,
-					"minimum_days": minimum,
-					"maximum_days": maximum,
-					"default_days": default,
-					"basis": basis,
-					"statutory_reference": (m.get("statutory_reference") or "").strip(),
-				}
-			)
-		missing = [k for k in MILESTONES if k not in seen]
-		if missing:
-			fail_cfg("CFG_PROFILE_INVALID", f"The profile must list every milestone (missing: {', '.join(missing)}).")
+		rows = _schedule_milestone_rows(milestones, counting_rule)
 		version = _next_version(SCHEDULE_PROFILE, {"procurement_method": method, "procurement_category": procurement_category})
 		doc = frappe.get_doc(
 			{
@@ -641,7 +764,7 @@ def register_schedule_profile_version(
 				"source_instrument": source_instrument,
 				"provision": provision,
 				"source_document": source_document,
-				"milestones": sorted(rows, key=lambda r: r["sequence"]),
+				"milestones": rows,
 				"fixture_namespace": fixture_namespace,
 			}
 		)
@@ -656,6 +779,7 @@ def register_schedule_profile_version(
 
 
 def _schedule_profile_projection(doc) -> dict[str, Any]:
+	_editable = schedule_profile_editable(doc)
 	milestones = sorted(doc.milestones or [], key=lambda r: int(r.sequence or 0))
 	rows = [
 		{
@@ -708,6 +832,12 @@ def _schedule_profile_projection(doc) -> dict[str, Any]:
 		"periods": periods,
 		"complete": not gaps,
 		"gaps": gaps,
+		# Whether this Version may still be corrected in place is a server
+		# fact; the screen shows the action it is told to show.
+		"can_edit": _editable[0],
+		"edit_blocked_reason": _editable[1],
+		"valid": doc.verification_status == VERIFICATION_VERIFIED,
+		"can_set_validity": True,
 		"expected_version": str(doc.modified),
 	}
 
@@ -744,6 +874,86 @@ def resolve_schedule_profile(*, procurement_method: str, procurement_category: s
 # --------------------------------------------------------------------------
 
 
+def _calendar_holiday_rows(holidays: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+	"""Shared so a correction cannot be held to a weaker standard than a new
+	Version."""
+	rows = []
+	seen: set[str] = set()
+	for h in holidays or []:
+		date = h.get("holiday_date")
+		if not date or date in seen:
+			fail_cfg("CFG_CALENDAR_REQUIRED", "Each holiday needs a distinct date.")
+		seen.add(date)
+		rows.append(
+			{
+				"holiday_date": date,
+				"holiday_name": (h.get("holiday_name") or "").strip(),
+				"source_reference": (h.get("source_reference") or "").strip(),
+			}
+		)
+	return rows
+
+
+def business_day_calendar_editable(doc) -> tuple[bool, str]:
+	"""Whether this calendar Version may still be corrected in place. One rule
+	for every versioned setting — see `configuration_versions`."""
+	return version_editable(CALENDAR, doc)
+
+
+def update_business_day_calendar(
+	*,
+	calendar: str,
+	calendar_name: str,
+	effective_from: str,
+	weekend_days: list[str],
+	holidays: list[dict[str, Any]] | None = None,
+	effective_until: str = "",
+	verification_status: str = VERIFICATION_PENDING,
+	source_instrument: str = "",
+	provision: str = "",
+	source_document: str = "",
+	expected_version: str = "",
+) -> dict[str, Any]:
+	"""Correct a calendar Version in place, while nothing counts days by it,
+	no source check has been recorded against it and it has not taken
+	effect."""
+	require_configuration_administrator()
+	if not frappe.db.exists(CALENDAR, calendar):
+		fail_cfg("CFG_CALENDAR_REQUIRED", "That calendar version does not exist.")
+	doc = frappe.get_doc(CALENDAR, calendar)
+	if expected_version and str(doc.modified) != str(expected_version):
+		fail_cfg("CFG_VERSION_CONFLICT")
+	editable, reason = business_day_calendar_editable(doc)
+	if not editable:
+		fail_cfg("CFG_CATALOGUE_IN_USE", reason)
+	name = " ".join((calendar_name or "").split())
+	if not name:
+		fail_cfg("CFG_CALENDAR_REQUIRED", "Enter the calendar name.")
+	verification = _require_verification(verification_status)
+	rows = _calendar_holiday_rows(holidays)
+	before = {"effective_from": str(doc.effective_from or ""), "effective_until": str(doc.effective_until or ""), "holidays": len(doc.holidays or [])}
+	doc.calendar_name = name
+	doc.effective_from = getdate(effective_from)
+	doc.effective_until = getdate(effective_until) if effective_until else None
+	doc.weekend_days = ",".join([d for d in (weekend_days or []) if d])
+	doc.verification_status = verification
+	doc.source_instrument = source_instrument
+	doc.provision = provision
+	doc.source_document = source_document
+	doc.set("holidays", rows)
+	doc.flags.kt_correct_unused = True
+	doc.save(ignore_permissions=True)
+	superseded = _supersede_overlapping(CALENDAR, {"calendar_name": name}, doc.effective_from, doc.effective_until, doc.name)
+	log_audit_event(
+		event_type="site_configuration",
+		document_type=CALENDAR,
+		document_name=doc.name,
+		action="update_business_day_calendar",
+		metadata={"before": before, "after": {"effective_from": str(doc.effective_from or ""), "effective_until": str(doc.effective_until or ""), "holidays": len(rows)}, "superseded": superseded},
+	)
+	return {"calendar": doc.name, "version_number": int(doc.version_number), "superseded": superseded, "expected_version": str(doc.modified)}
+
+
 def register_business_day_calendar_version(
 	*,
 	calendar_name: str,
@@ -771,20 +981,7 @@ def register_business_day_calendar_version(
 	def _do() -> dict[str, Any]:
 		reference = _code(name) or "CALENDAR"
 		version = _next_version(CALENDAR, {"calendar_name": name})
-		rows = []
-		seen: set[str] = set()
-		for h in holidays or []:
-			date = h.get("holiday_date")
-			if not date or date in seen:
-				fail_cfg("CFG_CALENDAR_REQUIRED", "Each holiday needs a distinct date.")
-			seen.add(date)
-			rows.append(
-				{
-					"holiday_date": date,
-					"holiday_name": (h.get("holiday_name") or "").strip(),
-					"source_reference": (h.get("source_reference") or "").strip(),
-				}
-			)
+		rows = _calendar_holiday_rows(holidays)
 		doc = frappe.get_doc(
 			{
 				"doctype": CALENDAR,
@@ -812,6 +1009,7 @@ def register_business_day_calendar_version(
 
 
 def _business_day_calendar_projection(doc) -> dict[str, Any]:
+	_editable = business_day_calendar_editable(doc)
 	return {
 		"calendar": doc.name,
 		"calendar_name": doc.calendar_name,
@@ -828,6 +1026,8 @@ def _business_day_calendar_projection(doc) -> dict[str, Any]:
 			{"holiday_date": str(r.holiday_date), "holiday_name": r.holiday_name, "source_reference": r.source_reference or ""}
 			for r in sorted(doc.holidays or [], key=lambda r: str(r.holiday_date))
 		],
+		"can_edit": _editable[0],
+		"edit_blocked_reason": _editable[1],
 		"expected_version": str(doc.modified),
 	}
 

@@ -22,6 +22,10 @@ const props = defineProps({
 	// the current rule, never edits it in place).
 	referenceSet: { type: String, default: "" },
 	currentVersion: { type: Object, default: null },
+	// "correct" edits `currentVersion` itself, which the server allows only
+	// while no source check has been recorded against it and it has not taken
+	// effect. Anything else saves a new version.
+	mode: { type: String, default: "version" },
 	kinds: { type: Array, default: () => [] },
 	entityTypes: { type: Array, default: () => [] },
 	categories: { type: Array, default: () => [] },
@@ -30,6 +34,7 @@ const props = defineProps({
 const emit = defineEmits(["saved", "cancel"]);
 
 const creating = computed(() => !props.referenceSet);
+const correcting = computed(() => props.mode === "correct" && !!current.value.reference);
 
 const APPLICABILITY_BASES = [
 	"FiscalYearStart",
@@ -128,6 +133,7 @@ const delegated = computed(() => kind.value === "Method eligibility");
 const canSave = computed(() => {
 	if (busy.value || delegated.value) return false;
 	if (!form.value.effective_from) return false;
+	if (correcting.value) return true;
 	if (creating.value && !partial.value) {
 		return !!(form.value.reference_key.trim() && form.value.display_name.trim() && kind.value);
 	}
@@ -157,6 +163,28 @@ async function save() {
 	busy.value = true;
 	error.value = "";
 	try {
+		if (correcting.value) {
+			// The same rule, changed in place: no new version, so nothing is
+			// superseded and no reason for a replacement is asked for.
+			await procurementSettingsApi.updateRegulatoryReferenceVersion({
+				reference: current.value.reference,
+				payload: builtPayload(),
+				effective_from: form.value.effective_from,
+				effective_until: form.value.effective_until,
+				applicability_basis: form.value.applicability_basis,
+				applicability_entity_types: form.value.applicability_entity_types,
+				applicability_county: form.value.applicability_county,
+				applicability_categories: form.value.applicability_categories,
+				applicability_currency: form.value.applicability_currency,
+				source_instrument: form.value.source_instrument,
+				provision: form.value.provision,
+				source_document: form.value.source_document,
+				interpretation: form.value.interpretation,
+				expected_version: current.value.expected_version,
+			});
+			emit("saved");
+			return;
+		}
 		let target = props.referenceSet || setCreated.value;
 		if (!target) {
 			// §7.3 step 1: the set alone. Recorded before step 2 so a failure
@@ -201,7 +229,7 @@ async function save() {
 			<div>
 				<span class="kt-eyebrow">{{ __("Procurement settings") }}</span>
 				<h2 class="kt-section-title">
-					{{ creating ? __("Add procurement rule") : __("{0} — new version", [current.reference_kind || __("Procurement rule")]) }}
+					{{ creating ? __("Add procurement rule") : __("{0} — {1}", [current.reference_kind || __("Procurement rule"), correcting ? __("edit rule") : __("new version")]) }}
 				</h2>
 			</div>
 			<button type="button" class="kt-btn kt-btn-ghost" data-testid="kt-procset-rule-editor-back" @click="emit('cancel')">← {{ __("Procurement settings") }}</button>
@@ -469,7 +497,13 @@ async function save() {
 
 				<!-- C03-B "version" — the replacement and its effect, stated before
 				     the save, never after. -->
-				<div v-if="!creating" class="kt-section" data-testid="kt-rule-replacement">
+				<div v-if="correcting" class="kt-notice" data-testid="kt-rule-correcting-notice">
+					<div class="kt-notice-body">
+						{{ __("No source check has been recorded against this rule and it has not taken effect, so it can be changed here. Once either happens, changing it means a new version.") }}
+					</div>
+				</div>
+
+				<div v-if="!creating && !correcting" class="kt-section" data-testid="kt-rule-replacement">
 					<div class="kt-field">
 						<label for="kt-rule-reason">{{ __("Reason for change") }}</label>
 						<textarea id="kt-rule-reason" v-model="form.change_reason" class="kt-input kt-textarea" rows="2" data-testid="kt-rule-reason" />
@@ -496,7 +530,7 @@ async function save() {
 		<div class="kt-procset-footer kt-procset-wide">
 			<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="kt-rule-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
 			<button type="button" class="kt-btn kt-btn-primary" :disabled="!canSave" data-testid="kt-rule-save" @click="save">
-				{{ creating ? __("Save rule version") : __("Save new version") }}
+				{{ creating ? __("Save rule version") : correcting ? __("Save changes") : __("Save new version") }}
 			</button>
 		</div>
 	</div>

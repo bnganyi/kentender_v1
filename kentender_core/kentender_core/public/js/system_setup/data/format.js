@@ -40,18 +40,23 @@ export function applicabilityBasisLabel(value) {
 	return APPLICABILITY_BASIS_LABELS[value] || String(value);
 }
 
-// §8.1 — the source-check vocabulary an administrator reads. The stored
-// values are model state ("Production verification pending"); every screen
-// shows the plain result instead, and they must all show the same one.
+// The validity vocabulary an administrator reads. The stored values are model
+// state ("Production verification pending"); every screen shows the plain
+// result instead, and they must all show the same one.
+//
+// These used to read "Source check needed", which named a check that did not
+// exist for a rule or a schedule and gave an administrator nothing to act on
+// (owner, 23 Sep 2026). What the field actually holds is whether an
+// administrator has said the version is valid, so that is what it now says.
 const SOURCE_CHECK_LABELS = {
-	Verified: "Sources verified",
-	"Fixture-verified — not production law": "Fixture-verified — not production law",
-	"Production verification pending": "Source check needed",
-	Rejected: "Source check rejected",
+	Verified: "Valid",
+	"Fixture-verified — not production law": "Fixture data — not law",
+	"Production verification pending": "Not marked valid",
+	Rejected: "Marked not valid",
 };
 
 export function sourceCheckLabel(value) {
-	return SOURCE_CHECK_LABELS[value] || "Source check needed";
+	return SOURCE_CHECK_LABELS[value] || "Not marked valid";
 }
 
 export function sourceCheckClass(value) {

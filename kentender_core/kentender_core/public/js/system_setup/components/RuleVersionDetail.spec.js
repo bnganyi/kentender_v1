@@ -3,7 +3,7 @@ import { flushPromises, mount } from "@vue/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { globalMocks } from "./spec_helpers.js";
 
-const api = vi.hoisted(() => ({ getMethodProfile: vi.fn(), getRegulatoryReferenceVersion: vi.fn(), registerMethodProfileVersion: vi.fn() }));
+const api = vi.hoisted(() => ({ getMethodProfile: vi.fn(), getRegulatoryReferenceVersion: vi.fn(), registerMethodProfileVersion: vi.fn(), setVersionValidity: vi.fn() }));
 vi.mock("../data/procurementSettingsApi.js", () => ({ procurementSettingsApi: api }));
 
 import RuleVersionDetail from "./RuleVersionDetail.vue";
@@ -21,6 +21,8 @@ const profile = {
 	provision: "Verification required",
 	source_document: "",
 	can_edit: false,
+	valid: false,
+	can_set_validity: true,
 	edit_blocked_reason: "This rule has already taken effect, so it cannot change. Create a new version instead.",
 	conditions: [
 		{ condition_id: "G-VALUE", kind: "Known fact", description: "No fixed maximum for goods.", procurement_category: "Goods", maximum_amount: 0, cumulative_basis: "Funds allocated", required_evidence: "", authorisation_actor: "", authorisation_stage: "" },
@@ -62,8 +64,7 @@ describe("RuleVersionDetail", () => {
 		]);
 		expect(wrapper.text()).toContain("1 Jul 2027");
 		expect(wrapper.text()).toContain("Not attached");
-		expect(wrapper.find('[data-testid="kt-procset-rule-verification"]').text()).toBe("Source check needed");
-		expect(wrapper.find('[data-testid="kt-procset-rule-incomplete"]').text()).toBe("Required conditions not yet completed");
+		expect(wrapper.find('[data-testid="kt-procset-rule-verification"]').text()).toBe("Not marked valid");
 		expect(wrapper.find('[data-testid="kt-procset-rule-values"]').text()).toContain("No fixed maximum for goods.");
 		expect(wrapper.findAll("input").length).toBe(0);
 	});
@@ -97,5 +98,29 @@ describe("RuleVersionDetail", () => {
 		const masked = mount(RuleVersionDetail, { props: { name: "MPR-NOPE-V9", kind: "method" }, global: globalMocks() });
 		await flushPromises();
 		expect(masked.find('[data-testid="kt-procset-rule-error"]').text()).toContain("This record isn't available to you");
+	});
+
+	it("states once that the rule is not marked valid, and offers the mark beside it", async () => {
+		api.setVersionValidity.mockResolvedValue({ name: "MPR-OPEN-TENDER-V1", valid: true, changed: true });
+		const wrapper = mount(RuleVersionDetail, { props: { name: "MPR-OPEN-TENDER-V1", kind: "method", verificationStatuses: [] }, global: globalMocks() });
+		await flushPromises();
+		// The two duplicates are gone: the badge over the conditions, and the
+		// notice that blamed "rule details and source checks" without naming one.
+		expect(wrapper.find('[data-testid="kt-procset-rule-incomplete"]').exists()).toBe(false);
+		expect(wrapper.find('[data-testid="kt-procset-rule-incomplete-notice"]').text()).toBe(
+			"This rule is not marked valid, so a plan using it cannot be submitted."
+		);
+		expect(wrapper.text()).not.toContain("Required conditions not yet completed");
+		expect(wrapper.text()).not.toContain("Source check needed");
+
+		const mark = wrapper.find('[data-testid="kt-procset-rule-validity"]');
+		expect(mark.text()).toBe("Mark as valid");
+		api.getMethodProfile.mockResolvedValue({ ...profile, valid: true, verification_status: "Verified" });
+		await mark.trigger("click");
+		await flushPromises();
+		expect(api.setVersionValidity).toHaveBeenCalledWith({ doctype: "Procurement Method Profile", name: "MPR-OPEN-TENDER-V1", valid: true });
+		// Re-read from the server, so the screen shows what was actually stored.
+		expect(wrapper.find('[data-testid="kt-procset-rule-incomplete-notice"]').exists()).toBe(false);
+		expect(wrapper.find('[data-testid="kt-procset-rule-validity"]').text()).toBe("Remove valid mark");
 	});
 });

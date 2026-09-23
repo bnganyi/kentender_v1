@@ -2,10 +2,12 @@
 // CFG-CHG-002 v0.11 §10.9 (C04 "calendar") — the working-day calendar, which
 // had a complete backend (Phase 2d) and no screen at all until now.
 //
-// A calendar version is immutable like every other versioned record here: a
-// correction is a new version, never an edit. Holiday rows are editable only
-// while the version is unsaved — the artboard is explicit that Add row /
-// Remove row appear in the editor and nowhere else.
+// A calendar version follows the one rule every versioned setting here
+// follows: it freezes once a schedule counts days by it, once a source check
+// is recorded against it, or once it takes effect. Until then it is
+// unfinished configuration and "Edit calendar" changes it in place; after
+// that "Create new version" is the only way. The server decides which, and
+// this screen shows what it was told.
 import { computed, onMounted, ref } from "vue";
 import { procurementSettingsApi } from "../data/procurementSettingsApi.js";
 import { dash, fmtDate } from "../data/format.js";
@@ -60,9 +62,12 @@ async function load() {
 }
 onMounted(load);
 
-// Saved detail is read-only; the editor is the create/new-version state.
-const editing = computed(() => props.creating || successor.value);
+// Saved detail is read-only; the form opens for a new calendar, for a
+// successor version, or to correct this one while the server still allows it.
 const successor = ref(false);
+const correcting = ref(false);
+const editing = computed(() => props.creating || successor.value || correcting.value);
+const canCorrect = computed(() => !props.creating && !!calendar.value?.can_edit);
 
 function toggleWeekend(day) {
 	const index = form.value.weekend_days.indexOf(day);
@@ -78,8 +83,16 @@ function removeHoliday(index) {
 
 function startSuccessor() {
 	successor.value = true;
+	correcting.value = false;
+	// A successor covers a different period, so it starts without one rather
+	// than silently inheriting the dates it is replacing.
 	form.value.effective_from = "";
 	form.value.effective_until = "";
+}
+
+function startCorrection() {
+	correcting.value = true;
+	successor.value = false;
 }
 
 const canSave = computed(
@@ -90,7 +103,7 @@ async function save() {
 	busy.value = true;
 	error.value = "";
 	try {
-		await procurementSettingsApi.registerBusinessDayCalendarVersion({
+		const payload = {
 			calendar_name: form.value.calendar_name.trim(),
 			effective_from: form.value.effective_from,
 			effective_until: form.value.effective_until,
@@ -99,7 +112,16 @@ async function save() {
 			source_instrument: form.value.source_instrument,
 			provision: form.value.provision,
 			source_document: form.value.source_document,
-		});
+		};
+		if (correcting.value) {
+			await procurementSettingsApi.updateBusinessDayCalendar({
+				...payload,
+				calendar: props.name,
+				expected_version: calendar.value.expected_version,
+			});
+		} else {
+			await procurementSettingsApi.registerBusinessDayCalendarVersion(payload);
+		}
 		emit("saved");
 	} catch (e) {
 		error.value = e.message;
@@ -229,12 +251,23 @@ async function save() {
 
 				<p v-if="error" class="kt-inline-error" role="alert" data-testid="kt-cal-error">{{ error }}</p>
 
+				<!-- While correcting, the screen says so: this changes the
+				     version being read, not a replacement for it. -->
+				<div v-if="correcting" class="kt-notice" data-testid="kt-cal-correcting-notice">
+					<div class="kt-notice-body">
+						{{ __("No schedule counts days by this calendar, no source check has been recorded and it has not taken effect, so it can be changed here. Once any of those happens, changing it means a new version.") }}
+					</div>
+				</div>
+
 				<div class="kt-procset-card-actions">
 					<template v-if="editing">
 						<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="kt-cal-cancel" @click="emit('back')">{{ __("Cancel") }}</button>
-						<button type="button" class="kt-btn kt-btn-primary" :disabled="!canSave" data-testid="kt-cal-save" @click="save">{{ __("Save calendar version") }}</button>
+						<button type="button" class="kt-btn kt-btn-primary" :disabled="!canSave" data-testid="kt-cal-save" @click="save">
+							{{ correcting ? __("Save changes") : __("Save calendar version") }}
+						</button>
 					</template>
 					<template v-else>
+						<button v-if="canCorrect" type="button" class="kt-btn kt-btn-secondary" data-testid="kt-cal-edit" @click="startCorrection">{{ __("Edit calendar") }}</button>
 						<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-cal-new-version" @click="startSuccessor">{{ __("Create new version") }}</button>
 					</template>
 				</div>

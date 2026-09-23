@@ -39,12 +39,37 @@ export const procurementSettingsApi = {
 			...payload,
 			conditions: JSON.stringify(payload.conditions || []),
 		}),
+	// An administrator's own statement that a rule or schedule is valid.
+	// Allowed while the Version is in force and in use, because that is when a
+	// setting blocking plan submission actually needs clearing.
+	setVersionValidity: ({ doctype, name, valid, note }) =>
+		frappeCall(PREFIX + "set_version_validity", { doctype, name, valid: valid ? 1 : 0, note: note || null }),
 	getScheduleProfile: (name) => frappeCall(PREFIX + "get_schedule_profile", { name }),
 	registerScheduleProfileVersion: (payload) =>
 		frappeCall(PREFIX + "register_schedule_profile_version", {
 			...payload,
 			milestones: JSON.stringify(payload.milestones || []),
 			idempotency_key: newIdempotencyKey("spr"),
+		}),
+	// Correcting a schedule or a calendar in place. The server refuses once
+	// something depends on the Version or it has taken effect.
+	updateScheduleProfile: (payload) =>
+		frappeCall(PREFIX + "update_schedule_profile", {
+			...payload,
+			milestones: JSON.stringify(payload.milestones || []),
+		}),
+	updateBusinessDayCalendar: (payload) =>
+		frappeCall(PREFIX + "update_business_day_calendar", {
+			...payload,
+			weekend_days: JSON.stringify(payload.weekend_days || []),
+			holidays: JSON.stringify(payload.holidays || []),
+		}),
+	updateRegulatoryReferenceVersion: (payload) =>
+		frappeCall(PREFIX + "update_regulatory_reference_version", {
+			...payload,
+			payload: JSON.stringify(payload.payload || {}),
+			applicability_entity_types: JSON.stringify(payload.applicability_entity_types || []),
+			applicability_categories: JSON.stringify(payload.applicability_categories || []),
 		}),
 	getRegulatoryReferenceVersion: (name) =>
 		frappeCall(PREFIX + "get_regulatory_reference_version", { name }),

@@ -8,6 +8,7 @@ import { globalMocks } from "./spec_helpers.js";
 const api = vi.hoisted(() => ({
 	createRegulatoryReference: vi.fn(),
 	saveRegulatoryReferenceVersion: vi.fn(),
+	updateRegulatoryReferenceVersion: vi.fn(),
 }));
 vi.mock("../data/procurementSettingsApi.js", () => ({ procurementSettingsApi: api }));
 
@@ -140,5 +141,43 @@ describe("RuleEditor", () => {
 			supersedes_version_ids: ["rv-1"],
 			change_reason: "Amended figures.",
 		});
+	});
+
+	it("corrects a reference rule in place, with no replacement claimed and no reason asked for", async () => {
+		api.updateRegulatoryReferenceVersion.mockResolvedValue({ reference: "rv-1", version_number: 1 });
+		const current = {
+			reference: "rv-1",
+			reference_set: "rs-reservation",
+			reference_kind: "Reservation rules",
+			version_number: 1,
+			effective_from: "2094-07-01",
+			effective_until: "2095-06-30",
+			applicability_basis: "FiscalYearStart",
+			applicability_entity_types: [],
+			applicability_county: "All",
+			applicability_categories: [],
+			applicability_currency: "KES",
+			source_instrument: "",
+			provision: "",
+			source_document: "",
+			interpretation: "",
+			payload: { obligation_code: "ANNUAL-TARGET", target_percent: 30 },
+			expected_version: "2026-09-23 10:00:00",
+		};
+		const wrapper = mountEditor({ referenceSet: "rs-reservation", currentVersion: current, mode: "correct" });
+		await flushPromises();
+		expect(wrapper.find('[data-testid="kt-rule-correcting-notice"]').exists()).toBe(true);
+		expect(wrapper.find('[data-testid="kt-rule-replacement"]').exists()).toBe(false);
+		expect(wrapper.find('[data-testid="kt-rule-save"]').text()).toBe("Save changes");
+
+		await wrapper.find('[data-testid="kt-rr-target"]').setValue("35");
+		await wrapper.find('[data-testid="kt-rule-save"]').trigger("click");
+		await flushPromises();
+		expect(api.saveRegulatoryReferenceVersion).not.toHaveBeenCalled();
+		const call = api.updateRegulatoryReferenceVersion.mock.calls[0][0];
+		expect(call.reference).toBe("rv-1");
+		expect(call.expected_version).toBe("2026-09-23 10:00:00");
+		expect(call.payload.target_percent).toBe(35);
+		expect(wrapper.emitted("saved")).toHaveLength(1);
 	});
 });

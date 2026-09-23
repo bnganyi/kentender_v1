@@ -123,8 +123,8 @@ describe("ProcurementSettingsTab", () => {
 		expect(rules.find('[data-testid="kt-procset-rule-noversion-rs-margins"]').text()).toBe("No version saved");
 		// §8.1 — the plain result vocabulary, the same on every screen.
 		expect(rules.findAll(".kt-status.is-attention").map((s) => s.text())).toEqual([
-			"Source check needed",
-			"Source check needed",
+			"Not marked valid",
+			"Not marked valid",
 		]);
 		expect(rules.text()).not.toContain("Verified ");
 	});

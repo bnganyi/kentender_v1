@@ -103,6 +103,34 @@ class TestVersionsAndSupersession(RegulatoryReferenceTestCase):
 		self.assertTrue(first["created"])
 		self.assertEqual(first["version_number"], 1)
 
+		# Owner decision 23 Sep 2026 — a version freezes once a source check
+		# is recorded against it or once it takes effect, whichever comes
+		# first. This one is future-dated and unchecked, so it is still
+		# ordinary unfinished configuration and is corrected in place.
+		self.assertTrue(register.get_regulatory_reference_version(first["reference"])["can_edit"])
+		register.update_regulatory_reference_version(
+			reference=first["reference"],
+			payload={"obligation_code": "KT-TEST-SUPERSEDE", "target_percent": 32},
+			effective_from="2094-07-01",
+			effective_until="2095-06-30",
+			interpretation="Corrected before anything used it",
+		)
+		corrected = register.get_regulatory_reference_version(first["reference"])
+		self.assertEqual(corrected["version_number"], 1, "a correction is not a new version")
+		self.assertEqual(corrected["payload"]["target_percent"], 32)
+		self.assertEqual(corrected["interpretation"], "Corrected before anything used it")
+
+		# Once a source check is recorded against it, it is evidenced and frozen.
+		register.record_reference_verification(
+			target_doctype=register.DOCTYPE,
+			target_name=first["reference"],
+			outcome="Pending",
+			unresolved_points="Awaiting the gazette copy.",
+			fixture_namespace=NS,
+		)
+		frozen = register.get_regulatory_reference_version(first["reference"])
+		self.assertFalse(frozen["can_edit"])
+		self.assertIn("source check has been recorded", frozen["edit_blocked_reason"])
 		doc = frappe.get_doc(register.DOCTYPE, first["reference"])
 		doc.interpretation = "Changed after the fact"
 		with self.assertRaises(frappe.ValidationError):

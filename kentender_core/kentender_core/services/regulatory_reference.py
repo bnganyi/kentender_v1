@@ -43,6 +43,7 @@ from frappe.utils import flt, getdate
 
 from kentender_core.services.audit_event_service import log_audit_event
 from kentender_core.services.configuration_errors import fail_cfg
+from kentender_core.services.configuration_versions import version_editable
 from kentender_core.services.procurement_settings import (
 	METHOD_PROFILE,
 	PROCUREMENT_CATEGORIES,
@@ -453,6 +454,108 @@ def _validate_payload(reference_kind: str, payload: dict[str, Any] | None) -> di
 # --------------------------------------------------------------------------
 
 
+def _validated_version_inputs(
+	*,
+	set_doc,
+	payload: dict[str, Any],
+	applicability_basis: str,
+	applicability_entity_types: list[str] | None,
+	applicability_county: str,
+	applicability_categories: list[str] | None,
+) -> tuple[dict[str, Any], list[str], list[str]]:
+	"""The checks a version's content must pass, whichever way it is written.
+	Shared so a correction cannot be held to a weaker standard than a new
+	Version."""
+	if applicability_basis and applicability_basis not in APPLICABILITY_BASES:
+		fail_cfg("CFG_SCHEMA_UNSUPPORTED", "Select a supported date basis.")
+	if applicability_county not in COUNTY_APPLICABILITY:
+		fail_cfg("CFG_PROFILE_INVALID", "Select the county applicability.")
+	entity_types = [e for e in (applicability_entity_types or []) if e]
+	for entity_type in entity_types:
+		if entity_type not in PE_TYPES:
+			fail_cfg("CFG_PROFILE_INVALID", f"Unknown entity type: {entity_type}.")
+	categories = [c for c in (applicability_categories or []) if c]
+	for category in categories:
+		if category not in PROCUREMENT_CATEGORIES:
+			fail_cfg("CFG_PROFILE_INVALID", "Select goods, works or services.")
+	return _validate_payload(set_doc.reference_kind, payload), entity_types, categories
+
+
+def regulatory_reference_editable(doc) -> tuple[bool, str]:
+	"""Whether this reference Version may still be corrected in place. One
+	rule for every versioned setting — see `configuration_versions`."""
+	return version_editable(DOCTYPE, doc)
+
+
+def update_regulatory_reference_version(
+	*,
+	reference: str,
+	payload: dict[str, Any],
+	effective_from: str,
+	effective_until: str = "",
+	applicability_basis: str = "",
+	applicability_entity_types: list[str] | None = None,
+	applicability_county: str = "All",
+	applicability_categories: list[str] | None = None,
+	applicability_currency: str = "KES",
+	source_instrument: str = "",
+	provision: str = "",
+	source_document: str = "",
+	interpretation: str = "",
+	verification_status: str = VERIFICATION_PENDING,
+	expected_version: str = "",
+) -> dict[str, Any]:
+	"""Correct a reference Version in place, while no source check has been
+	recorded against it and it has not taken effect.
+
+	The set and the kind are the rule's identity and are read from the record;
+	changing those is a different rule, not a correction of this one."""
+	require_configuration_administrator()
+	if not frappe.db.exists(DOCTYPE, reference):
+		fail_cfg("CFG_PROFILE_INVALID", "That reference version does not exist.")
+	doc = frappe.get_doc(DOCTYPE, reference)
+	if expected_version and str(doc.modified) != str(expected_version):
+		fail_cfg("CFG_VERSION_CONFLICT")
+	editable, reason = regulatory_reference_editable(doc)
+	if not editable:
+		fail_cfg("CFG_CATALOGUE_IN_USE", reason)
+	set_doc = frappe.get_cached_doc(SET_DOCTYPE, doc.reference_set)
+	verification = _require_verification(verification_status)
+	validated_payload, entity_types, categories = _validated_version_inputs(
+		set_doc=set_doc,
+		payload=payload,
+		applicability_basis=applicability_basis,
+		applicability_entity_types=applicability_entity_types,
+		applicability_county=applicability_county,
+		applicability_categories=applicability_categories,
+	)
+	before = {"effective_from": str(doc.effective_from or ""), "effective_until": str(doc.effective_until or "")}
+	doc.effective_from = getdate(effective_from)
+	doc.effective_until = getdate(effective_until) if effective_until else None
+	doc.applicability_basis = applicability_basis
+	doc.applicability_entity_types = ",".join(entity_types)
+	doc.applicability_county = applicability_county
+	doc.applicability_categories = ",".join(categories)
+	doc.applicability_currency = applicability_currency or "KES"
+	doc.verification_status = verification
+	doc.source_instrument = source_instrument
+	doc.provision = provision
+	doc.source_document = source_document
+	doc.interpretation = interpretation
+	doc.payload_json = json.dumps(validated_payload)
+	doc.flags.kt_correct_unused = True
+	doc.save(ignore_permissions=True)
+	superseded = _supersede_overlapping(DOCTYPE, {"reference_set": doc.reference_set}, doc.effective_from, doc.effective_until, doc.name)
+	log_audit_event(
+		event_type="site_configuration",
+		document_type=DOCTYPE,
+		document_name=doc.name,
+		action="update_regulatory_reference_version",
+		metadata={"before": before, "after": {"effective_from": str(doc.effective_from or ""), "effective_until": str(doc.effective_until or "")}, "superseded": superseded},
+	)
+	return {"reference": doc.name, "version_number": int(doc.version_number), "superseded": superseded, "expected_version": str(doc.modified)}
+
+
 def save_regulatory_reference_version(
 	*,
 	reference_set: str,
@@ -487,19 +590,14 @@ def save_regulatory_reference_version(
 		fail_cfg("CFG_PROFILE_INVALID", "That reference does not exist.")
 	set_doc = frappe.get_cached_doc(SET_DOCTYPE, reference_set)
 	verification = _require_verification(verification_status)
-	if applicability_basis and applicability_basis not in APPLICABILITY_BASES:
-		fail_cfg("CFG_SCHEMA_UNSUPPORTED", "Select a supported date basis.")
-	if applicability_county not in COUNTY_APPLICABILITY:
-		fail_cfg("CFG_PROFILE_INVALID", "Select the county applicability.")
-	entity_types = [e for e in (applicability_entity_types or []) if e]
-	for entity_type in entity_types:
-		if entity_type not in PE_TYPES:
-			fail_cfg("CFG_PROFILE_INVALID", f"Unknown entity type: {entity_type}.")
-	categories = [c for c in (applicability_categories or []) if c]
-	for category in categories:
-		if category not in PROCUREMENT_CATEGORIES:
-			fail_cfg("CFG_PROFILE_INVALID", "Select goods, works or services.")
-	validated_payload = _validate_payload(set_doc.reference_kind, payload)
+	validated_payload, entity_types, categories = _validated_version_inputs(
+		set_doc=set_doc,
+		payload=payload,
+		applicability_basis=applicability_basis,
+		applicability_entity_types=applicability_entity_types,
+		applicability_county=applicability_county,
+		applicability_categories=applicability_categories,
+	)
 	supersedes = [s for s in (supersedes_version_ids or []) if s]
 	for s in supersedes:
 		if not frappe.db.exists(DOCTYPE, {"name": s, "reference_set": reference_set}):
@@ -560,6 +658,7 @@ def _projection(name: str) -> dict[str, Any]:
 	"""The full read for one named (possibly superseded) version — the only
 	caller of the complete typed payload, behind `get_regulatory_reference_version`."""
 	doc = frappe.get_cached_doc(DOCTYPE, name)
+	editable = version_editable(DOCTYPE, doc)
 	return {
 		"reference": doc.name,
 		"reference_set": doc.reference_set,
@@ -582,6 +681,10 @@ def _projection(name: str) -> dict[str, Any]:
 		"supersedes_version_ids": [s for s in (doc.supersedes_version_ids or "").split(",") if s],
 		"change_reason": doc.change_reason or "",
 		"payload": json.loads(doc.payload_json or "{}"),
+		# Whether this Version may still be corrected in place is a server
+		# fact, decided by the one rule every versioned setting follows.
+		"can_edit": editable[0],
+		"edit_blocked_reason": editable[1],
 		"expected_version": str(doc.modified),
 	}
 
