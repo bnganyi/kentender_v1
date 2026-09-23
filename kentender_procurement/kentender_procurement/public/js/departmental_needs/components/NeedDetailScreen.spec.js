@@ -111,9 +111,15 @@ describe("NeedDetailScreen — NDS-DES-07A Planning-status variants", () => {
 		return match;
 	}
 
-	it("NONE — no accepted decision recorded, not included, no action buttons", () => {
+	it("NONE — no accepted decision recorded, so no departmental-plan fact at all", () => {
 		const w = mountAccepted({ usage: {}, disposition: { recorded: false } });
-		expect(group(w, "Departmental plan").text()).toContain("No accepted departmental decision recorded");
+		// Owner instruction, 23 Sep 2026: until Procurement accepts the
+		// departmental plan there is nothing to report, and the old
+		// "No accepted departmental decision recorded" line read as if the
+		// requirement had gone nowhere — it now sits in a Draft departmental
+		// plan that its acceptance started.
+		expect(w.findAll(".kt-group").map((g) => g.get(".kt-label").text())).not.toContain("Departmental plan");
+		expect(w.text()).not.toContain("No accepted departmental decision recorded");
 		expect(group(w, "Current annual plan").text()).toContain("Not included");
 		expect(w.find('[data-testid="nds-view-plan-item-inline"]').exists()).toBe(false);
 	});

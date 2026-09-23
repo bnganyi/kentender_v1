@@ -363,7 +363,8 @@ test.describe("Departmental Needs — design fidelity", () => {
 		// from "Departmental decision" on — has no counterpart here. Truncate
 		// rather than assert content no fixture in this file builds; same
 		// reasoning as NDS-DES-02 above.
-		const wanted = full.slice(0, full.indexOf("Departmental decision"));
+		const trimmed = withoutUndecidedDepartmentalPlan(full);
+		const wanted = trimmed.slice(0, trimmed.indexOf("Departmental decision"));
 		const errors = collectPageErrors(page);
 		await loginAsNdsFixtureAuthor(page);
 		await gotoNeeds(page, `/${fixture.need}`);
@@ -661,6 +662,24 @@ test.describe("Departmental Needs — design fidelity", () => {
 		return list.filter((landmark) => landmark !== "View departmental plan");
 	}
 
+	// Owner instruction, 23 September 2026: the detail screen no longer draws a
+	// Departmental plan fact at all while no departmental decision has been
+	// accepted. "No accepted departmental decision recorded" is gone — accepting
+	// a Need now starts the department's Draft departmental plan, so that line
+	// sat beside a plan that demonstrably existed and read as if the
+	// requirement had gone nowhere. Seven artboard panels still draw the
+	// undecided pair; this drops that half from what they ask for, only in the
+	// states whose fixture has no accepted disposition. The assertion makes it
+	// self-retiring: the moment the pack is regenerated without that status,
+	// every call site fails and the exemption goes.
+	function withoutUndecidedDepartmentalPlan(list: string[]): string[] {
+		expect(
+			list,
+			"the artboard no longer draws an undecided Departmental plan fact — drop withoutUndecidedDepartmentalPlan",
+		).toContain("Departmental plan");
+		return list.filter((landmark) => landmark !== "Departmental plan");
+	}
+
 	test("NDS-DES-01-SUBMITTED — Author workspace after submission", async ({ page, browser }) => {
 		const fixture = resetFixture<{ need: string }>("reset_review_task_fixture");
 		const { wanted: full, art } = await artboardLandmarks(browser, "NDS-DES-01-SUBMITTED");
@@ -710,7 +729,7 @@ test.describe("Departmental Needs — design fidelity", () => {
 		// beyond the coarse owner/department/planning/oversight access
 		// profile) — a genuine gap, not a copy defect; everything else is this
 		// same NeedDetailScreen.vue, unmodified, under a Planner's read.
-		const trimmed = full.filter((landmark) => landmark !== "Back to procurement planning");
+		const trimmed = withoutUndecidedDepartmentalPlan(full).filter((landmark) => landmark !== "Back to procurement planning");
 		const wanted = truncateAtDisclosure(withoutViewDepartmentalPlan(trimmed));
 		const errors = collectPageErrors(page);
 		await loginAsNdsFixturePlanner(page);
@@ -730,7 +749,7 @@ test.describe("Departmental Needs — design fidelity", () => {
 		// surface for a fidelity-only pass.
 		const fixture = resetFixture<{ need: string }>("reset_disposition_none_fixture");
 		const { wanted: full, art } = await artboardLandmarks(browser, "NDS-DES-07-AUDITOR");
-		const trimmed = full.filter((landmark) => landmark !== "Back to Departmental Needs");
+		const trimmed = withoutUndecidedDepartmentalPlan(full).filter((landmark) => landmark !== "Back to Departmental Needs");
 		const wanted = truncateAtDisclosure(withoutViewDepartmentalPlan(trimmed));
 		const errors = collectPageErrors(page);
 		await loginAsAdministrator(page);
@@ -744,7 +763,7 @@ test.describe("Departmental Needs — design fidelity", () => {
 	test("NDS-DES-07A-NONE — No accepted departmental decision", async ({ page, browser }) => {
 		const fixture = resetFixture<{ need: string }>("reset_disposition_none_fixture");
 		const { wanted: full, art } = await artboardLandmarks(browser, "NDS-DES-07A-NONE");
-		const wanted = truncateAtDisclosure(full);
+		const wanted = truncateAtDisclosure(withoutUndecidedDepartmentalPlan(full));
 		const errors = collectPageErrors(page);
 		await loginAsNdsFixtureAuthor(page);
 		await gotoNeeds(page, `/${fixture.need}`);
@@ -812,7 +831,8 @@ test.describe("Departmental Needs — design fidelity", () => {
 
 	test("NDS-DES-08-DRAFT — Accepted detail with an update in progress", async ({ page, browser }) => {
 		const fixture = resetFixture<{ need: string }>("reset_successor_draft_fixture");
-		const { wanted, art } = await artboardLandmarks(browser, "NDS-DES-08-DRAFT");
+		const { wanted: full, art } = await artboardLandmarks(browser, "NDS-DES-08-DRAFT");
+		const wanted = withoutUndecidedDepartmentalPlan(full);
 		const errors = collectPageErrors(page);
 		await loginAsNdsFixtureAuthor(page);
 		await gotoNeeds(page, `/${fixture.need}`);
@@ -824,7 +844,8 @@ test.describe("Departmental Needs — design fidelity", () => {
 
 	test("NDS-DES-08-SUBMITTED — Accepted detail with changes awaiting review", async ({ page, browser }) => {
 		const fixture = resetFixture<{ need: string }>("reset_successor_submitted_fixture");
-		const { wanted, art } = await artboardLandmarks(browser, "NDS-DES-08-SUBMITTED");
+		const { wanted: full, art } = await artboardLandmarks(browser, "NDS-DES-08-SUBMITTED");
+		const wanted = withoutUndecidedDepartmentalPlan(full);
 		const errors = collectPageErrors(page);
 		await loginAsNdsFixtureAuthor(page);
 		await gotoNeeds(page, `/${fixture.need}`);
@@ -836,7 +857,8 @@ test.describe("Departmental Needs — design fidelity", () => {
 
 	test("NDS-DES-08-OTHER-AUTHOR — update state without maker links", async ({ page, browser }) => {
 		const fixture = resetFixture<{ need: string }>("reset_successor_submitted_fixture");
-		const { wanted, art } = await artboardLandmarks(browser, "NDS-DES-08-OTHER-AUTHOR");
+		const { wanted: full, art } = await artboardLandmarks(browser, "NDS-DES-08-OTHER-AUTHOR");
+		const wanted = withoutUndecidedDepartmentalPlan(full);
 		const errors = collectPageErrors(page);
 		await loginAsNdsFixturePlanner(page);
 		await gotoNeeds(page, `/${fixture.need}`);
@@ -876,7 +898,8 @@ test.describe("Departmental Needs — design fidelity", () => {
 
 	test("NDS-DES-11-OPEN-UPDATE — Withdrawal unavailable while an update is open", async ({ page, browser }) => {
 		const fixture = resetFixture<{ need: string }>("reset_successor_draft_fixture");
-		const { wanted, art } = await artboardLandmarks(browser, "NDS-DES-11-OPEN-UPDATE");
+		const { wanted: full, art } = await artboardLandmarks(browser, "NDS-DES-11-OPEN-UPDATE");
+		const wanted = withoutUndecidedDepartmentalPlan(full);
 		const errors = collectPageErrors(page);
 		await loginAsNdsFixtureAuthor(page);
 		await gotoNeeds(page, `/${fixture.need}`);

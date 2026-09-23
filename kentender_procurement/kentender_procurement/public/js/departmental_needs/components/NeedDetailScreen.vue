@@ -218,7 +218,7 @@
 				</div>
 			</div>
 			<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 900px">
-				<div class="kt-group">
+				<div v-if="departmentalPlanStatus" class="kt-group">
 					<span class="kt-label">Departmental plan</span>
 					<div style="display: flex; align-items: center; gap: 10px; margin-top: 8px">
 						<span class="kt-status" :class="departmentalPlanStatus.cls">{{ departmentalPlanStatus.label }}</span>
@@ -557,12 +557,13 @@ const statusSuffix = computed(() =>
 const departmentalPlanStatus = computed(() => {
 	if (planningUnavailableNoSnapshot.value)
 		return { cls: "is-critical", label: "Unavailable", explanation: "" };
-	if (!props.disposition?.recorded)
-		return {
-			cls: "is-pending",
-			label: `No accepted departmental decision recorded${statusSuffix.value}`,
-			explanation: "",
-		};
+	// Owner instruction, 23 September 2026: say nothing about the departmental
+	// plan until there is a departmental decision to report. Accepting a Need
+	// now starts the department's Draft plan, so "No accepted departmental
+	// decision recorded" sat beside a plan that demonstrably existed and read
+	// as if nothing had happened. The fact returns the moment Procurement
+	// accepts the departmental plan, as Included or Not included this year.
+	if (!props.disposition?.recorded) return null;
 	return props.disposition.disposition === "Not proceeding"
 		? {
 				cls: "is-attention",

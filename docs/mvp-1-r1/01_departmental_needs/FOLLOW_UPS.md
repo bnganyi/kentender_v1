@@ -1491,3 +1491,38 @@ department layout for a dual-role actor; (3) a historical-revision-scoped
 Planning-status read; (5)/(6) are the most speculative — a text-truncation
 UX convention and a read-only screen mode respectively, worth a proper
 design pass rather than a quick port.
+
+## Accepting a Need now starts the department's procurement plan (23 Sep 2026)
+
+Nothing in Departmental Needs changed, and nothing here calls Procurement
+Planning. Planning subscribes to the `DepartmentalNeedAccepted.v2` outbox row
+this module already publishes and opens the department's Draft departmental
+plan itself, so the Head of Department no longer has to start that plan by
+hand after accepting (PLN-CHG-001 `FOLLOW_UPS.md`, "Accepting a Need starts
+the departmental plan"). Two consequences for this module:
+
+- Acceptance now has a visible effect outside Needs. A test or fixture that
+  drives `review_need(decision="accept")` also produces a `Departmental Plan`
+  for that department and year. `test_departmental_needs_lifecycle`'s
+  disposable second Fiscal Year clears its own (`_drop_plans_on`); the
+  Playwright fixtures in `seeds/` cannot, because deleting a Planning row
+  there would breach the D5 boundary the architecture guard enforces.
+- The Need detail's **Departmental plan** status is gone while no departmental
+  decision has been accepted. "No accepted departmental decision recorded" was
+  accurate — a Draft plan is not a departmental decision — but it sat beside a
+  plan that demonstrably existed and read as if the requirement had gone
+  nowhere, so the owner had it removed the same day. "Where this requirement
+  stands" now shows only **Current annual plan** until Procurement accepts the
+  departmental plan, at which point the fact returns as Included or Not
+  included this year. UNAVAILABLE-NO-SNAPSHOT still shows both facts as
+  Unavailable, unchanged.
+
+**Documents this leaves behind.** Seven artboard panels (NDS-DES-07A-NONE,
+07A-OLDER, 08-DRAFT, 08-SUBMITTED, 08-RETURNED, 08 other-author read,
+11-OPEN-UPDATE) still draw the undecided pair, as do §11.8's own state
+descriptions and NDS11-AC-071 in v1.14. Until the pack and the specification
+are reissued, `departmental-needs-fidelity.spec.ts` carries one named
+exemption, `withoutUndecidedDepartmentalPlan`, applied to the eight states
+whose fixture has no accepted disposition; it asserts the landmark is still in
+the artboard, so it fails loudly — and retires itself — the moment the pack is
+regenerated without it.
