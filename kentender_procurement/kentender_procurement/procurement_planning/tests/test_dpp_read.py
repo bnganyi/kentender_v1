@@ -98,6 +98,28 @@ class TestGetDepartmentalPlan(DppReadCase):
 		self.assertFalse(result["can_submit"])
 		self.assertFalse(result["certification"]["show"])
 
+	def test_reading_a_draft_picks_up_a_need_accepted_after_it_was_opened(self):
+		"""§5.1 — the coverage boundary is established at command time, not a
+		browser timestamp. `open_departmental_plan`'s own "reused" branch and
+		`submit_departmental_plan` both re-sync a mutable Draft against the
+		Need register; a plain read (what the workspace's "Continue"/"Review"
+		cards route straight to, never back through `open_departmental_plan`)
+		was the one caller left out, so a Need accepted after the Draft was
+		first opened stayed invisible to both the Author funding it and the
+		Head of Department reviewing it, with no error and no indication
+		anything was missing (found live 22 Sep 2026)."""
+		opened = self.opened()
+		before = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
+		self.assertEqual(before["entries"], [])
+
+		patched = patch.object(needs_intake, "current_accepted_sources", return_value=[fx.accepted_source()])
+		patched.start()
+		self.addCleanup(patched.stop)
+		after = dpp_read.get_departmental_plan(dpp_reference=opened["dpp_reference"])
+		self.assertEqual(len(after["entries"]), 1)
+		self.assertEqual(after["entries"][0]["source_label"], "Accepted Need · NEED-PLNT-0001")
+		self.assertEqual(after["entries"][0]["status"], "Funding details needed")
+
 	def test_a_not_proceeding_need_offers_only_the_way_back_in(self):
 		"""§10.4 U03-EXCLUDED-ROW — an excluded entry's own Draft action is
 		always the way back in, whatever state the rest of the plan is in."""
@@ -325,6 +347,30 @@ class TestEntryEditorRead(DppReadCase):
 		self.assertTrue(any(u["id"] == fx.UNIT for u in result["units"]))
 		self.assertEqual(len(result["budget_lines"]), 1)
 
+	def test_reading_the_editor_picks_up_a_need_accepted_after_the_draft_was_opened(self):
+		"""Same read-path gap as `get_departmental_plan`
+		(test_reading_a_draft_picks_up_a_need_accepted_after_it_was_opened,
+		found live 22 Sep 2026): the editor is what a workspace card
+		deep-links an Author straight into to fund a Need, so it must sync
+		itself rather than 404 on a legitimate entry accepted after the
+		Draft was last opened. Nothing else in this test touches the plan
+		between opening it empty and reading the editor, so the sync can
+		only have come from `get_dpp_entry_editor` itself."""
+		opened = self.opened()
+		patched = patch.object(needs_intake, "current_accepted_sources", return_value=[fx.accepted_source()])
+		patched.start()
+		self.addCleanup(patched.stop)
+		frappe.set_user(fx.AUTHOR)
+
+		dpp_read.get_dpp_entry_editor(dpp_reference=opened["dpp_reference"])
+		entry_id = frappe.db.get_value(
+			"Departmental Plan Entry", {"dpp_version": opened["current_version"], "need": fx.NEED}, "entry_id",
+		)
+		self.assertIsNotNone(entry_id, "the editor's own read should have synced the accepted Need in")
+
+		result = dpp_read.get_dpp_entry_editor(dpp_reference=opened["dpp_reference"], entry_id=entry_id)
+		self.assertEqual(result["entry"]["entry_id"], entry_id)
+
 	def test_planner_cannot_open_the_editor(self):
 		opened = self.opened()
 		frappe.set_user(fx.PLANNER)
@@ -504,6 +550,21 @@ class TestValidationTaskRead(DppReadCase):
 		)
 		self.assertFalse(result["maker_checker_blocked"])
 		self.assertEqual(result["task_token"], task.task_token)
+
+	def test_the_summary_strip_and_budget_line_carry_a_name_not_just_a_code(self):
+		"""§10.5 — U06's own DppValidationScreen.vue reads these three facts
+		from `context`, not from a separate `summary` key the read never
+		sent (found live 22 Sep 2026: the three labels rendered with nothing
+		beside them). The budget line reads name-then-code, per the artboard
+		("Test line · BL-PLNT-0001"), never the bare code alone."""
+		task, _ = self.submitted_task()
+		frappe.set_user(fx.PLANNER)
+		result = dpp_read.get_dpp_validation_task(task=task.name)
+		self.assertEqual(result["context"]["included_requirements"], 1)
+		self.assertEqual(result["context"]["included_cost_display"], "KES 1,000,000")
+		self.assertEqual(result["context"]["excluded_requirements"], 0)
+		self.assertNotIn("summary", result)
+		self.assertEqual(result["entries"][0]["budget_line_display"], f"Test line · {fx.BUDGET_LINE_REF}")
 
 	def test_the_certifier_is_flagged_maker_checker_blocked(self):
 		task, _ = self.submitted_task()

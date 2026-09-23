@@ -1,5 +1,5 @@
-<!-- PLN-CHG-001 v1.23 §10.12 — publication evidence and recovery (U13),
-     ported from U13.dc.html.
+<!-- PLN-CHG-001 v1.24 §10.12 — publication evidence and recovery (U13),
+     ported from Artboards-U12-U13.dc.html.
 
      Four facts, four rows, and none of them proves another: the plan was
      approved; the approved document was sent to Treasury; the website
@@ -24,6 +24,14 @@
 				<div class="kt-page-actions">
 					<button type="button" class="kt-btn kt-btn-ghost" data-testid="pub-view-plan" @click="$emit('navigate', ['annual-procurement-plan', task.plan_reference])">
 						View approved plan
+					</button>
+					<!-- §10.12 header — enabled alongside View approved plan; the
+					     export itself is a separate concern from this screen. -->
+					<button type="button" class="kt-btn kt-btn-ghost" data-testid="pub-download-plan" @click="$emit('download-plan')">
+						Download approved plan
+					</button>
+					<button type="button" class="kt-btn kt-btn-ghost" data-testid="pub-download-plan-data" @click="$emit('download-plan-data')">
+						Download Plan data
 					</button>
 				</div>
 			</div>
@@ -61,24 +69,41 @@
 				</table>
 			</div>
 
-			<!-- Recorded Treasury evidence, in full, once it exists. -->
-			<div v-if="treasury" class="kt-meta-row" data-testid="pub-treasury-evidence">
-				<div>
-					<span class="kt-label">Date and time sent</span>
-					<span class="kt-meta-value">{{ treasury.submitted_display }}</span>
+			<!-- Recorded Treasury evidence, in full, once it exists. §10.12
+			     U13-EVIDENCE-RECORDED — every recorded field, separately
+			     labelled, Destination included. -->
+			<div v-if="treasury">
+				<div class="kt-meta-row" data-testid="pub-treasury-evidence">
+					<div>
+						<span class="kt-label">Date and time sent</span>
+						<span class="kt-meta-value">{{ treasury.submitted_display }}</span>
+					</div>
+					<div>
+						<span class="kt-label">Channel</span>
+						<span class="kt-meta-value">{{ treasury.channel }}</span>
+					</div>
+					<div>
+						<span class="kt-label">Destination</span>
+						<span class="kt-meta-value">{{ treasury.destination }}</span>
+					</div>
+					<div>
+						<span class="kt-label">Dispatch reference</span>
+						<span class="kt-meta-value">{{ treasury.dispatch_reference }}</span>
+					</div>
+					<div>
+						<span class="kt-label">Recorded by</span>
+						<span class="kt-meta-value">{{ treasury.recorded_by_name }}</span>
+					</div>
 				</div>
-				<div>
-					<span class="kt-label">Channel</span>
-					<span class="kt-meta-value">{{ treasury.channel }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Dispatch reference</span>
-					<span class="kt-meta-value">{{ treasury.dispatch_reference }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Recorded by</span>
-					<span class="kt-meta-value">{{ treasury.recorded_by_name }}</span>
-				</div>
+				<!-- §10.12 — enabled once evidence is recorded; no Record
+				     button remains once there is something to view. -->
+				<a
+					v-if="treasury.supporting_attachment"
+					href="#"
+					class="kt-btn kt-btn-ghost"
+					data-testid="pub-view-evidence"
+					@click.prevent="$emit('view-evidence', treasury)"
+				>View submission evidence</a>
 			</div>
 
 			<!-- U13-WITHDRAWAL-REQUEST — a request that is open is its own state,
@@ -267,6 +292,7 @@ const props = defineProps({
 defineEmits([
 	"record-treasury", "correct-treasury", "retry", "reconcile",
 	"request-withdrawal", "decide-withdrawal", "explain-late", "navigate", "back",
+	"download-plan", "download-plan-data", "view-evidence",
 ]);
 
 const statusRows = computed(() => props.task.status_rows || []);

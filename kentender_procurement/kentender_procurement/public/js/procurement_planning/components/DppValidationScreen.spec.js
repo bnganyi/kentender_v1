@@ -22,7 +22,9 @@ const INFRASTRUCTURE = {
 	unit_label: "Programme",
 	required_by_display: "31 Aug 2027",
 	amount_display: "KES 80,000,000",
-	budget_line_display: "MOH-BL-DHI-2027",
+	// U06's own artboard: the budget line's name first, the code after it —
+	// never the bare code alone (dpp_read.py's own _budget_line_display).
+	budget_line_display: "Digital health infrastructure programme · MOH-BL-DHI-2027",
 	not_proceeding: false,
 	not_proceeding_reason: "",
 };
@@ -34,7 +36,7 @@ const LAPTOPS = {
 	unit_label: "Each",
 	required_by_display: "31 Dec 2027",
 	amount_display: "KES 30,000,000",
-	budget_line_display: "MOH-BL-HWD-2027",
+	budget_line_display: "Digital health workforce development · MOH-BL-HWD-2027",
 	not_proceeding: false,
 	not_proceeding_reason: "",
 };
@@ -51,13 +53,16 @@ function task(overrides = {}) {
 			badge: "Awaiting validation",
 			badge_kind: "pending",
 		},
+		// §10.5 summary strip — dpp_read.py's get_dpp_validation_task puts
+		// these three facts on `context` itself, alongside department and
+		// financial year; there is no separate `summary` key on the real
+		// contract (this fixture used to invent one, which is exactly why
+		// the mismatch it was meant to catch went unnoticed).
 		context: {
 			department: "Digital Health",
 			financial_year: "FY 2027/28",
 			submitted_by: "Julia Njeri",
 			submitted_at: "25 Nov 2026, 10:30 EAT",
-		},
-		summary: {
 			included_requirements: 2,
 			included_cost_display: "KES 110,000,000",
 			excluded_requirements: 0,
@@ -89,6 +94,35 @@ describe("DppValidationScreen — U06 BASE", () => {
 		expect(summary).toContain("Excluded requirements");
 	});
 
+	it("shows the header as one compact scope line, not four separate boxes", () => {
+		// §10.5 — matches the artboard's `.kt-page-scope`: reference,
+		// submission and year joined by "·", with the status badge inline
+		// after it, not a labelled Reference/Submission/Financial
+		// year/Status grid (found live 22 Sep 2026).
+		const w = make();
+		const scope = w.find('[data-testid="pln-review-context"]');
+		expect(scope.classes()).toContain("kt-page-scope");
+		expect(scope.text()).toBe("DPP-MOH-DHI-2027-001 · Submission 1 · FY 2027/28 Awaiting Procurement review");
+	});
+
+	it("immediately shows what decision is required", () => {
+		const w = make();
+		expect(w.find('[data-testid="pln-review-decision-required"]').text()).toContain(
+			"classify every included requirement, then accept the complete submission or return it for correction.",
+		);
+	});
+
+	it("reveals capacity and the full certification only when View certification is opened", async () => {
+		const w = make();
+		expect(w.find('[data-testid="pln-review-certified"]').text()).toBe(
+			"Certified by Julia Njeri on 25 Nov 2026, 10:30 EATView certification",
+		);
+		expect(w.find('[data-testid="pln-review-certification"]').exists()).toBe(false);
+		await w.find('[data-testid="pln-review-certification-toggle"]').trigger("click");
+		const body = w.find('[data-testid="pln-review-certification"]');
+		expect(body.text()).toContain("I certify that this plan records Digital Health's requirements for FY 2027/28.");
+	});
+
 	it("says plainly what accepting does and does not do", () => {
 		const w = make();
 		expect(w.find('[data-testid="pln-review-consequence"]').text()).toContain(
@@ -106,9 +140,15 @@ describe("DppValidationScreen — classification input", () => {
 		const categories = w.findAll('[data-testid="pln-review-category"]');
 		expect(categories[0].text()).toBe("Services");
 		expect(categories[0].element.tagName).not.toBe("SELECT");
-		expect(w.find('[data-testid="pln-review-helper"]').text()).toBe(
-			"Choose the requirement type. Category is set automatically.",
-		);
+		// U06's own third grid column, one per requirement row — not a
+		// single line shared across the whole list (found live 22 Sep 2026,
+		// where a two-requirement submission left the note disconnected
+		// from either row at the foot of the page).
+		const helpers = w.findAll('[data-testid="pln-review-helper"]');
+		expect(helpers).toHaveLength(2);
+		for (const helper of helpers) {
+			expect(helper.text()).toBe("Choose the requirement type. Category is set automatically.");
+		}
 	});
 
 	it("emits the entry and the selected type only", async () => {
@@ -139,7 +179,18 @@ describe("DppValidationScreen — U06-EXCLUDED", () => {
 			not_proceeding_reason: "The department will pursue this requirement in a later annual planning cycle.",
 		};
 		const w = make({
-			task: task({ entries: [excluded, LAPTOPS], summary: { included_requirements: 1, included_cost_display: "KES 30,000,000", excluded_requirements: 1 } }),
+			task: task({
+				entries: [excluded, LAPTOPS],
+				context: {
+					department: "Digital Health",
+					financial_year: "FY 2027/28",
+					submitted_by: "Julia Njeri",
+					submitted_at: "25 Nov 2026, 10:30 EAT",
+					included_requirements: 1,
+					included_cost_display: "KES 30,000,000",
+					excluded_requirements: 1,
+				},
+			}),
 			classifications: { [LAPTOPS.entry_id]: "Goods" },
 		});
 		const row = w.find('[data-testid="pln-review-excluded"]');

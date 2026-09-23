@@ -3,7 +3,15 @@
      due date or optional note (§11.17). Every governance return is a
      whole-plan correction — ReturnPlanVersion takes no per-purchase target —
      so the artboard's illustrative Context selector names nothing the
-     command consumes and is not built as a live control. -->
+     command consumes and is not built as a live control.
+
+     Re-diffed 22 Sep 2026 against the actual v1.24 U11-RETURN section (this
+     header previously cited that file from before it existed in the repo —
+     see kentender_core's test_artboard_provenance_gate): the template's own
+     hardcoded title and field markup already matched. The real defect was
+     upstream — `plan_read.get_plan_governance_task`'s `return_dialog.lede`
+     (the `dialog.lede` this template binds below) carried invented copy
+     that never appeared on the artboard; fixed there, not here. -->
 <template>
 	<div class="kt-dialog-backdrop" data-testid="rvw-return-dialog">
 		<div class="kt-dialog" style="width: 520px" role="dialog" aria-modal="true" aria-labelledby="rvw-return-title">

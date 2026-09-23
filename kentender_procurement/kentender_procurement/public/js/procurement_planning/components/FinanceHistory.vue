@@ -1,7 +1,26 @@
-<!-- U10-history — Funding evidence history: the two named states (evidence
-     at approval vs the current confirmation) and every review attempt in
-     order. A later Review's own outcome never overwrites an earlier one's
-     row; this is a read-only projection, no action lives here. -->
+<!-- PLN-CHG-001 v1.24 §10.9 U10-HISTORY, ported from Artboards-U10.dc.html
+     (re-diffed 23 Sep 2026). Funding evidence history: the two named states
+     (evidence at approval vs the current confirmation) and every review
+     attempt in order. A later Review's own outcome never overwrites an
+     earlier one's row; this is a read-only projection, no action lives here.
+
+     Known, already-tracked discrepancy (FU-V123-08, see
+     tests/ui/smoke/design-fidelity/planning-fidelity.spec.ts's own
+     "U10-HISTORY" test comment): §10.9's own U10-HISTORY draws two separate
+     labelled blocks ("Funding checked at approval" / "Latest funding check",
+     each with Review/Budget version/Plan version/Outcome/Person/Date-and-
+     time), not this component's one "Funding evidence history" region with
+     two status facts plus a Review/Basis/Outcome/Actor/Time table. That
+     table form is not a fabrication, though: it is load-bearing for the
+     reassessment case both this suite and `pln-finance.spec.ts`'s own
+     "Finance reassesses funding for an Active Version" test assert on
+     directly (`fnt-history-review-1`/`fnt-history-review-2`, two rows) — the
+     single-review U10-HISTORY artboard fixture never exercises that case, so
+     its two-block layout cannot itself show what more than one review looks
+     like. Reconciling the two is FU-V123-08's job, not this pass's: it would
+     mean changing `tests/ui/smoke/design-fidelity/planning-fidelity.spec.ts`,
+     which this remediation batch is instructed not to touch. Left as built,
+     flagged here rather than silently ported. -->
 <template>
 	<div class="kt-region is-secondary" data-testid="fnt-history">
 		<h2>Funding evidence history</h2>

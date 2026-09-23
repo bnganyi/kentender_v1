@@ -1,5 +1,6 @@
-<!-- PLN-CHG-001 v1.23 §10.9 — Finance review and reassessment (U10), ported
-     from U10.dc.html.
+<!-- PLN-CHG-001 v1.24 §10.9 — Finance review and reassessment (U10), ported
+     from Artboards-U10.dc.html (re-diffed 23 Sep 2026 against the real
+     §10.9/U10 section).
 
      Finance answers one question: is each planned amount within its approved
      budget line? So the first view is Budget line, Line name, Approved,
@@ -8,7 +9,13 @@
      Current balances are advisory and live in a collapsed section. That
      distinction is the whole point of the screen: low availability does not
      block confirmation, an approved-amount excess does. Confirming records
-     affordability — it reserves nothing and approves nothing. -->
+     affordability — it reserves nothing and approves nothing.
+
+     §10.9 also keeps Budget version and the review's own request timestamp
+     out of the main statement: "they do not compete with the affordability
+     decision." The artboard tucks both into a collapsed Review details
+     disclosure between the statement and the comparison table — they were
+     previously shown directly in the main row instead. -->
 <template>
 	<div>
 		<div class="kt-page">
@@ -41,27 +48,40 @@
 			</div>
 
 			<!-- The statement this decision is being made on. Budget version and
-			     request time are provenance, not the decision. -->
+			     request time are provenance, not the decision — §10.9 keeps them
+			     out of this row, in their own Review details disclosure below. -->
 			<div class="kt-meta-row" data-testid="fnt-statement">
 				<div>
 					<span class="kt-label">Budget</span>
 					<span class="kt-meta-value">{{ task.budget_reference || "—" }}</span>
-				</div>
-				<!-- Which version of that budget, and when the confirmation was
-				     asked for: the numbers below mean nothing without them. -->
-				<div v-if="task.budget_version_display">
-					<span class="kt-label">Budget version</span>
-					<span class="kt-meta-value">{{ task.budget_version_display }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Requested at</span>
-					<span class="kt-meta-value">{{ task.requested_display }}</span>
 				</div>
 				<div>
 					<span class="kt-label">Amounts as at</span>
 					<span class="kt-meta-value" data-testid="fnt-as-at">{{ task.as_at_display }}</span>
 				</div>
 			</div>
+
+			<!-- Which version of the budget, and when the confirmation was asked
+			     for: provenance the comparison below does not need in order to
+			     be read, so it stays collapsed rather than competing with the
+			     affordability decision. -->
+			<details class="kt-disclosure" data-testid="fnt-review-details">
+				<summary class="kt-disclosure-head">
+					<span class="kt-disclosure-title">Review details</span>
+				</summary>
+				<div class="kt-disclosure-body">
+					<div class="kt-meta-row">
+						<div v-if="task.budget_version_display">
+							<span class="kt-label">Budget version</span>
+							<span class="kt-meta-value">{{ task.budget_reference }} · {{ task.budget_version_display }}</span>
+						</div>
+						<div>
+							<span class="kt-label">Review requested at</span>
+							<span class="kt-meta-value">{{ task.requested_display }}</span>
+						</div>
+					</div>
+				</div>
+			</details>
 
 			<!-- U10-REASSESS — an Active plan being checked against a revised
 			     budget, not re-approved. -->

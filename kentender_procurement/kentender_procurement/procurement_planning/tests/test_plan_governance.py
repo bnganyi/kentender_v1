@@ -679,6 +679,22 @@ class TestReviewReadModel(GovernanceCase):
 		self.assertTrue(read["changes"]["is_initial"])
 		self.assertTrue(read["can_download_review_pack"])
 
+	def test_the_ao_stage_return_dialog_carries_the_artboards_own_lede(self):
+		"""§10.10 U11-RETURN's drawn copy explains the process (returns to
+		Procurement, will be resubmitted, history is kept) — not a generic
+		"remains unchanged" reassurance that never appears on the artboard
+		(found live 22 Sep 2026, re-diffing against the real v1.24 pack)."""
+		accepted, item_id = self.confirmed_item()
+		submitted = self.submit(accepted["annual_plan"])
+		task = frappe.get_doc("Plan Governance Task", submitted["task"])
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		read = plan_read.get_plan_governance_task(task=task.name)
+		self.assertEqual(
+			read["return_dialog"]["lede"],
+			"The plan will return to Procurement for correction and will be submitted for "
+			"review again. The plan you reviewed and your comment will remain in history.",
+		)
+
 	def test_the_decisions_history_lists_finance_preparation_and_each_completed_stage_in_order(self):
 		accepted, item_id = self.confirmed_item()
 		submitted = self.submit(accepted["annual_plan"])

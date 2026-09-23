@@ -1,4 +1,4 @@
-// PLN-CHG-001 v1.23 §10.9 — FinanceTaskScreen component tests (U10).
+// PLN-CHG-001 v1.24 §10.9 — FinanceTaskScreen component tests (U10).
 //
 // The distinction this screen exists to protect: an approved-amount excess
 // blocks confirmation, low current availability does not. Both must be
@@ -43,6 +43,8 @@ function task(overrides = {}) {
 			reference_line: "FNT-MOH-2027-001 · PLN-MOH-2027-001 · Version 1",
 		},
 		budget_reference: "MOH-BUD-2027-001",
+		budget_version_display: "Version 1",
+		requested_display: "3 Dec 2026, 08:00 EAT",
 		as_at_display: "3 Dec 2026, 09:00 EAT",
 		lines: [line(), line({ budget_line: "bl-hwd", budget_line_reference: "MOH-BL-HWD-2027", line_name: "Digital health workforce development", approved_display: "KES 60,000,000", planned_display: "KES 50,000,000", difference_display: "KES 10,000,000", available_display: "KES 60,000,000" })],
 		history: [],
@@ -77,6 +79,19 @@ describe("FinanceTaskScreen — U10 BASE", () => {
 		const balances = w.find('[data-testid="fnt-balances"]');
 		expect(balances.attributes("open")).toBeUndefined();
 		expect(balances.text()).toContain("advisory and do not affect the affordability decision");
+	});
+
+	it("keeps Budget version and the request timestamp out of the main statement, in a collapsed Review details disclosure", () => {
+		const w = make();
+		const statement = w.find('[data-testid="fnt-statement"]');
+		expect(statement.text()).toContain("MOH-BUD-2027-001");
+		expect(statement.text()).not.toContain("Budget version");
+		expect(statement.text()).not.toContain("Requested at");
+		const details = w.find('[data-testid="fnt-review-details"]');
+		expect(details.attributes("open")).toBeUndefined();
+		expect(details.text()).toContain("MOH-BUD-2027-001 · Version 1");
+		expect(details.text()).toContain("Review requested at");
+		expect(details.text()).toContain("3 Dec 2026, 08:00 EAT");
 	});
 
 	it("says what confirming does and does not do", () => {

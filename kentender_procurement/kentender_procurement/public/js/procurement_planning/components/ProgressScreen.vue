@@ -1,5 +1,5 @@
-<!-- PLN-CHG-001 v1.23 §10.13 — Procurement progress (U14), ported from
-     U14.dc.html.
+<!-- PLN-CHG-001 v1.24 §10.13 — Procurement progress (U14), ported from
+     Artboards-U14-U16.dc.html.
 
      The first view answers three questions and no others: what was planned,
      how much of it an authorised requisition covers, and what has actually

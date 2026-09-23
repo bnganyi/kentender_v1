@@ -34,7 +34,7 @@ import frappe
 from frappe.utils import cstr, now_datetime
 
 from kentender_procurement.procurement_planning.errors import fail
-from kentender_procurement.procurement_planning.services import envelope, scope_lock
+from kentender_procurement.procurement_planning.services import envelope, needs_intake, references, scope_lock
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import ROLE_PROCUREMENT_PLANNER
 
@@ -359,14 +359,26 @@ def get_accepted_dpp_classification(
 	authz.require_site_read((ROLE_PROCUREMENT_PLANNER,), actor)
 	rows = _classification_rows(dpp_submission, only_entry=cstr(dpp_entry_id).strip())
 	version = frappe.db.get_value("Departmental Plan Submission", dpp_submission, "dpp_version")
-	root = frappe.db.get_value("Departmental Plan Version", version, "departmental_plan")
+	root_name = frappe.db.get_value("Departmental Plan Version", version, "departmental_plan")
+	root = frappe.db.get_value(
+		"Departmental Plan", root_name, ["organisation_unit", "fiscal_year"], as_dict=True
+	) or {}
+	# U06-ACCEPTED-CLASSIFICATION's own header line: "Digital Health · FY
+	# 2027/28" beneath the title (found live 23 Sep 2026: this read supplied
+	# neither fact, so the page head could only ever show the title).
+	department_name = cstr(
+		frappe.db.get_value("Organisation Unit", root.get("organisation_unit"), "unit_name")
+		or root.get("organisation_unit")
+	)
 	return {
 		"ok": True,
 		"dpp_submission": dpp_submission,
-		"dpp_reference": cstr(frappe.db.get_value("Departmental Plan", root, "dpp_reference")),
+		"dpp_reference": cstr(frappe.db.get_value("Departmental Plan", root_name, "dpp_reference")),
 		"submission_number": int(
 			frappe.db.get_value("Departmental Plan Submission", dpp_submission, "submission_number") or 0
 		),
+		"department_name": department_name,
+		"financial_year": references.fy_label(root.get("fiscal_year")) if root.get("fiscal_year") else "",
 		"rows": rows,
 		"requirement_types": active_requirement_types(),
 		"can_correct": authz.has_site_role(ROLE_PROCUREMENT_PLANNER, actor),
@@ -387,10 +399,21 @@ def _classification_rows(dpp_submission: str, *, only_entry: str = "") -> list[d
 		excluded = bool(cstr(snapshot.get("not_proceeding_reason")).strip())
 		effective = None if excluded else effective_classification(dpp_submission, entry_id)
 		affected = _affected_items(entry_id) if effective else {"recovery": RECOVERY_NONE}
+		# U06-ACCEPTED-CLASSIFICATION/U06-CORRECT-CLASSIFICATION — the
+		# Requirement cell (and the correction panel's own subject line) name
+		# the source beneath the title, the same as every other Planning
+		# requirement table (found live 23 Sep 2026: this row carried no
+		# reference at all).
+		need_origin = snapshot.get("source_origin") == needs_intake.NEED_ORIGIN
+		reference_line = (
+			f"{snapshot.get('need')} · Revision {needs_intake.need_revision_number(snapshot.get('need_revision'))}"
+			if need_origin and snapshot.get("need") else "Direct requirement"
+		)
 		rows.append(
 			{
 				"dpp_entry_id": entry_id,
 				"title": snapshot.get("title"),
+				"reference_line": reference_line,
 				"excluded": excluded,
 				"not_proceeding_reason": snapshot.get("not_proceeding_reason"),
 				"classification": effective,

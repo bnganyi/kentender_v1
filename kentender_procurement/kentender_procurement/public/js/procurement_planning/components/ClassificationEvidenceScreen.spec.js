@@ -34,6 +34,7 @@ function row(overrides = {}) {
 	return {
 		dpp_entry_id: "DPPE-MOH-DHI-2027-001",
 		title: "National digital health infrastructure upgrade",
+		reference_line: "NDS-MOH-2027-0001 · Revision 1",
 		excluded: false,
 		can_correct: true,
 		classification: classification(),
@@ -48,6 +49,8 @@ function evidence(overrides = {}) {
 		dpp_submission: "DPPS-MOH-DHI-2027-001-V3",
 		dpp_reference: "DPP-MOH-DHI-2027-001",
 		submission_number: 3,
+		department_name: "Digital Health",
+		financial_year: "FY 2027/28",
 		rows: [row()],
 		requirement_types: TYPES,
 		can_correct: true,
@@ -65,8 +68,16 @@ describe("ClassificationEvidenceScreen — U06-ACCEPTED-CLASSIFICATION", () => {
 	it("shows the accepted type, derived category and who classified it when", () => {
 		const w = make();
 		expect(w.find('[data-testid="pln-class-title"]').text()).toBe("View accepted requirement classifications");
-		expect(w.find('[data-testid="pln-class-context"]').text()).toContain("DPP-MOH-DHI-2027-001");
+		// Department and year, beneath the title, the same as every other page
+		// head — this read used to supply neither.
+		expect(w.text()).toContain("Digital Health · FY 2027/28");
+		const scope = w.find('[data-testid="pln-class-context"]').text();
+		expect(scope).toContain("DPP-MOH-DHI-2027-001");
+		expect(scope).toContain("Submission 3");
+		expect(scope).toContain("Accepted");
 		const r = w.find('[data-testid="pln-class-row"]');
+		expect(r.text()).toContain("National digital health infrastructure upgrade");
+		expect(r.text()).toContain("NDS-MOH-2027-0001 · Revision 1");
 		expect(r.text()).toContain("Works");
 		expect(r.text()).toContain("Mercy Kilonzo");
 		expect(r.text()).toContain("29 Nov 2026, 15:00 EAT");
@@ -129,6 +140,10 @@ describe("ClassificationEvidenceScreen — U06-CORRECT-CLASSIFICATION", () => {
 	it("shows the current classification read-only and derives the new category", () => {
 		const w = make(panelProps({ newType: "Non-consulting services" }));
 		const panel = w.find('[data-testid="pln-class-panel"]');
+		// The subject line names the source, then the exact submission this
+		// evidence belongs to — the reference used to be missing entirely.
+		expect(panel.text()).toContain("National digital health infrastructure upgrade");
+		expect(panel.text()).toContain("NDS-MOH-2027-0001 · Revision 1 · DPP-MOH-DHI-2027-001 · Submission 3");
 		expect(panel.text()).toContain("Current requirement type");
 		expect(panel.text()).toContain("Works");
 		expect(w.find('[data-testid="pln-class-new-category"]').text()).toBe("Services");

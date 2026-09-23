@@ -998,7 +998,13 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 	admissible = profiles.admissible_methods(procurement_category=category, planned_value=value, applicability_date=applicable_on)
 	categories = readiness.reservation_categories(reference)
 	is_county = bool(frappe.db.get_single_value("Site Procuring Entity", "entity_is_county"))
-	blockers = readiness.item_blockers(item, allocations, plan.fiscal_year, objective_eligible=objective_eligible, stage="submission") if version.version_status == "Draft" else []
+	# §10.8 U09 — the same canonical §8 message each blocker code carries on
+	# the plan-level readiness list (`plan_readiness` above); this item's own
+	# page does not repeat its own plan_item_id in the sentence.
+	blockers = [
+		{**b, "message": MESSAGES[b["code"]]}
+		for b in (readiness.item_blockers(item, allocations, plan.fiscal_year, objective_eligible=objective_eligible, stage="submission") if version.version_status == "Draft" else [])
+	]
 	price_index = reference.get("market_price_index", {})
 	price_rows = [r for r in price_index.get("rows", []) if r.get("procurement_category") == cstr(item.procurement_category)] if price_index.get("published") else []
 	period_inputs = readiness.item_period_inputs(item)
@@ -1660,8 +1666,25 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 		"preparation_signature": _signature_summary(version),
 		"confirm_label": "Adopt and submit" if task_doc.stage == "Accounting Officer adoption" else "Approve Annual Procurement Plan",
 		"return_dialog": (
-			{"title": "Return Plan Version for correction?", "lede": f"State the correction required. The submitted Version {version.version_number} remains unchanged."}
+			# §10.10 U11-RETURN's own drawn copy (re-diffed 22 Sep 2026 — this
+			# lede previously said something the artboard never draws: "State
+			# the correction required. The submitted Version N remains
+			# unchanged."). `title` is carried for completeness but the
+			# dialog's own template hardcodes the one literal title every
+			# "return for correction" dialog in the app uses ("What needs to
+			# change?"), matching both this and U06-RETURN's artboards.
+			{
+				"title": "Return Plan Version for correction?",
+				"lede": (
+					"The plan will return to Procurement for correction and will be submitted for "
+					"review again. The plan you reviewed and your comment will remain in history."
+				),
+			}
 			if task_doc.stage == "Accounting Officer adoption"
+			# No U11-RETURN artboard is drawn for the statutory stage (only the
+			# Accounting Officer one above is), so this lede is unverified
+			# against a real artboard — left as it was rather than guessing
+			# replacement copy; flag for its own artboard before trusting it.
 			else {"title": "Return adopted Plan Version for correction?", "lede": f"State the correction required. The Accounting-Officer-adopted Version {version.version_number} remains unchanged."}
 		),
 		# v1.18 §6.3/D-register — a positive decision additionally needs a
@@ -1698,6 +1721,11 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 		"changes": _version_changes(version),
 		"history": _governance_history(version),
 		"can_download_review_pack": True,
+		# U11-READER-HISTORICAL — a version that is no longer the Plan's active
+		# one is the exact historical snapshot, and the reader is told so
+		# (mirrors `get_source_evidence`'s own `historical` computation for
+		# the same U12-HISTORICAL-PLAN concept).
+		"historical": bool(plan.active_version) and version.name != cstr(plan.active_version),
 	}
 
 
@@ -1769,14 +1797,15 @@ def get_source_evidence(*, task: str, source_key: str, user: str | None = None) 
 
 	need_accepted, has_newer_revision, newer_revision_number = None, False, None
 	if allocation.source_origin == needs_intake.NEED_ORIGIN and allocation.need:
-		need_decision = frappe.db.get_value(
-			"Departmental Need Decision", {"departmental_need": allocation.need, "need_revision": allocation.need_revision, "action": "Accept for planning"},
-			["actor", "occurred_at"], as_dict=True, order_by="occurred_at asc",
-		)
+		# Published contract only (D5) — never a direct `Departmental Need
+		# Decision` read (found by test_planning_never_touches_a_needs_table
+		# while re-verifying this session's changes; pre-existing, not
+		# introduced by any of this pass's own fixes).
+		need_decision = needs_intake.need_acceptance_evidence(allocation.need, allocation.need_revision)
 		if need_decision:
 			need_accepted = {
-				"actor": need_decision.actor, "actor_name": cstr(frappe.db.get_value("User", need_decision.actor, "full_name") or need_decision.actor),
-				"display": _eat(need_decision.occurred_at),
+				"actor": need_decision["actor"], "actor_name": cstr(frappe.db.get_value("User", need_decision["actor"], "full_name") or need_decision["actor"]),
+				"display": _eat(need_decision["occurred_at"]),
 			}
 		current_revision = needs_intake.current_accepted_revision_of(allocation.need, plan.fiscal_year)
 		if current_revision and current_revision != cstr(allocation.need_revision):
@@ -1957,6 +1986,10 @@ def get_publication_task(*, publication: str, user: str | None = None) -> dict[s
 				"recorded": True,
 				"submitted_display": _eat(treasury.submitted_at),
 				"channel": treasury.channel,
+				# §10.12 U13-EVIDENCE-RECORDED — Destination is one of the five
+				# separately labelled fields; it was already fetched above and
+				# must not be dropped from the dict that reaches the screen.
+				"destination": cstr(treasury.destination),
 				"dispatch_reference": treasury.dispatch_reference,
 				"recorded_display": _eat(treasury.recorded_at),
 				"recorded_by_name": cstr(frappe.db.get_value("User", treasury.actor, "full_name") or ""),

@@ -882,8 +882,13 @@ function onExcludeEntry(row) {
 	notProceedDialog.value = true;
 }
 
-function onViewAcceptedNeeds() {
-	frappe.set_route("departmental-needs");
+// "Correct the source requirement" names one specific Need, so it must land
+// on that Need's own record, never the bare module list (found live 22 Sep
+// 2026: the funding panel emitted no entry identity at all, so this landed
+// on an unrelated generic list with no indication which record to look for).
+function onViewAcceptedNeeds(row) {
+	if (row && row.need) frappe.set_route("departmental-needs", row.need);
+	else frappe.set_route("departmental-needs");
 }
 
 async function onSubmit() {

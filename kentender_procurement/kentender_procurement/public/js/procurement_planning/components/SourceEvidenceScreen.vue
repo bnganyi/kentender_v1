@@ -1,5 +1,5 @@
-<!-- PLN-CHG-001 v1.23 §10.11 — Exact departmental evidence (U12), ported from
-     U12.dc.html.
+<!-- PLN-CHG-001 v1.24 §10.11 — Exact departmental evidence (U12), ported from
+     Artboards-U12-U13.dc.html.
 
      One reviewed requirement, read in the order someone checking it would ask:
      what was asked for, who is paying for it, who certified and accepted it,
@@ -136,48 +136,60 @@
 
 				<div class="kt-region is-secondary">
 					<h2>Certification and Procurement review</h2>
-					<div class="kt-meta-row" data-testid="src-certification">
-						<div>
-							<span class="kt-label">Certification status</span>
-							<span class="kt-meta-value">
-								<span class="kt-status" :class="evidence.certified ? 'is-live' : 'is-attention'">{{ evidence.certification_status }}</span>
-							</span>
+					<!-- U12 — two facts, two groups: certification never reads as if
+					     it proves procurement's own acceptance, or the reverse. The
+					     department's own attestation words stay with what they
+					     certify, not stranded below an unrelated fact. -->
+					<div data-testid="src-certification">
+						<div class="kt-group">
+							<div class="kt-meta-row">
+								<div>
+									<span class="kt-label">Certification status</span>
+									<span class="kt-meta-value">
+										<span class="kt-status" :class="evidence.certified ? 'is-live' : 'is-attention'">{{ evidence.certification_status }}</span>
+									</span>
+								</div>
+								<template v-if="evidence.certified">
+									<div>
+										<span class="kt-label">Certified by</span>
+										<span class="kt-meta-value">{{ evidence.certified.actor_name }}</span>
+									</div>
+									<!-- The capacity is what makes the certification mean
+									     something; it is omitted rather than guessed. -->
+									<div v-if="evidence.certified.capacity">
+										<span class="kt-label">Capacity</span>
+										<span class="kt-meta-value">{{ evidence.certified.capacity }}</span>
+									</div>
+									<div>
+										<span class="kt-label">Certified at</span>
+										<span class="kt-meta-value">{{ evidence.certified.display }}</span>
+									</div>
+								</template>
+							</div>
+							<!-- The department's own words, where the owner supplied them. -->
+							<p v-if="evidence.certified?.attestation_text" class="kt-muted" data-testid="src-attestation">
+								{{ evidence.certified.attestation_text }}
+							</p>
 						</div>
-						<template v-if="evidence.certified">
-							<div>
-								<span class="kt-label">Certified by</span>
-								<span class="kt-meta-value">{{ evidence.certified.actor_name }}</span>
+						<div class="kt-group">
+							<div class="kt-meta-row">
+								<div>
+									<span class="kt-label">Procurement disposition</span>
+									<span class="kt-meta-value">{{ evidence.procurement_disposition }}</span>
+								</div>
+								<template v-if="evidence.accepted_for_planning">
+									<div>
+										<span class="kt-label">Accepted by</span>
+										<span class="kt-meta-value">{{ evidence.accepted_for_planning.actor_name }}</span>
+									</div>
+									<div>
+										<span class="kt-label">Accepted at</span>
+										<span class="kt-meta-value">{{ evidence.accepted_for_planning.display }}</span>
+									</div>
+								</template>
 							</div>
-							<!-- The capacity is what makes the certification mean
-							     something; it is omitted rather than guessed. -->
-							<div v-if="evidence.certified.capacity">
-								<span class="kt-label">Capacity</span>
-								<span class="kt-meta-value">{{ evidence.certified.capacity }}</span>
-							</div>
-							<div>
-								<span class="kt-label">Certified at</span>
-								<span class="kt-meta-value">{{ evidence.certified.display }}</span>
-							</div>
-						</template>
-						<div>
-							<span class="kt-label">Procurement disposition</span>
-							<span class="kt-meta-value">{{ evidence.procurement_disposition }}</span>
 						</div>
-						<template v-if="evidence.accepted_for_planning">
-							<div>
-								<span class="kt-label">Accepted by</span>
-								<span class="kt-meta-value">{{ evidence.accepted_for_planning.actor_name }}</span>
-							</div>
-							<div>
-								<span class="kt-label">Accepted at</span>
-								<span class="kt-meta-value">{{ evidence.accepted_for_planning.display }}</span>
-							</div>
-						</template>
 					</div>
-					<!-- The department's own words, where the owner supplied them. -->
-					<p v-if="evidence.certified?.attestation_text" class="kt-muted" data-testid="src-attestation">
-						{{ evidence.certified.attestation_text }}
-					</p>
 					<div v-if="evidence.need_accepted" class="kt-meta-row" data-testid="src-need-accepted">
 						<div>
 							<span class="kt-label">Need accepted by</span>

@@ -1,7 +1,6 @@
-// PLN-CHG-001 v1.2 §15.1(5) — FinanceReturnDialog component tests (D9).
-// §12.9 requires one actionable reason and no reservation; §11.17's
-// absences (no category/attachment/assignee/due date) apply to this dialog
-// too, even though no artboard names it explicitly.
+// PLN-CHG-001 v1.24 §10.9 — FinanceReturnDialog component tests (U10-RETURN).
+// One actionable reason, the whole plan as read-only context, and no reason
+// category, attachment, assignee, due date or optional note.
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import FinanceReturnDialog from "./FinanceReturnDialog.vue";
@@ -17,6 +16,8 @@ describe("FinanceReturnDialog — §12.9", () => {
 		expect(w.find(".kt-dialog-title").text()).toBe("What needs to change?");
 		expect(w.find('[data-testid="fnt-return-context"]').text()).toBe("Whole annual plan");
 		expect(w.find('[data-testid="fnt-return-confirm"]').text()).toBe("Return to planner");
+		// U10-RETURN draws no lede paragraph — only heading, Context and Reason.
+		expect(w.find(".pln-dialog-lede").exists()).toBe(false);
 	});
 
 	it("requires a reason of at least 10 characters before confirming", async () => {

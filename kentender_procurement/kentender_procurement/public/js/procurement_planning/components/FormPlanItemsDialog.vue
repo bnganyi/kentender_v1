@@ -1,5 +1,5 @@
-<!-- PLN-CHG-001 v1.23 §10.7 — Add selected requirements (U08), ported from
-     U08.dc.html.
+<!-- PLN-CHG-001 v1.24 §10.7 — Add selected requirements (U08), ported from
+     Artboards-U07-U08.dc.html.
 
      Three things in this order: what was selected, how it should be added, and
      what that will produce. The selection itself was already made on the plan

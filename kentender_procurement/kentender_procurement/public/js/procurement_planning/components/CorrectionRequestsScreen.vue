@@ -1,5 +1,5 @@
-<!-- PLN-CHG-001 v1.23 §10.15 — Plan correction requests (U16), ported from
-     U16.dc.html.
+<!-- PLN-CHG-001 v1.24 §10.15 — Plan correction requests (U16), ported from
+     Artboards-U14-U16.dc.html.
 
      The Planner reads what must change, what it is holding, and what they may
      lawfully do — in that order. Request identifiers, originating versions and

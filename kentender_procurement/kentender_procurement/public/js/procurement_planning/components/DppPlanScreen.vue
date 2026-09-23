@@ -1,5 +1,5 @@
-<!-- PLN-CHG-001 v1.23 §10.4 — the departmental plan (U02–U05), ported from
-     U02-U05.dc.html.
+<!-- PLN-CHG-001 v1.24 §10.4 — the departmental plan (U02–U05), ported
+     class-for-class from Artboards-U02-U05.dc.html.
 
      One page, two readings of it. The Author sees their own working plan and
      is told plainly that their Head of Department submits it; the HoD sees the
@@ -9,7 +9,26 @@
 
      Excluded requirements stay in the table — they are accounted for, not
      hidden — with their full reason always visible in row detail, never behind
-     a disclosure (§10.4 U03-EXCLUDED-ROW). -->
+     a disclosure (§10.4 U03-EXCLUDED-ROW).
+
+     Re-diffed 23 Sep 2026 against the actual v1.24 U02/U03/U05 sections (this
+     header previously cited a bare "U02-U05.dc.html", unresolvable against the
+     real "Artboards-U02-U05.dc.html" file — see kentender_core's
+     test_artboard_provenance_gate). Found and fixed: the U05-CORRECTION row
+     comment was labelled "What needs to change?" (the *input* label from the
+     return dialog) instead of the artboard's own display label "Procurement
+     comment"; the "Returned submission"/"Correction submission" context pair
+     never rendered for a plain pre-acceptance correction (the backing fields
+     were only ever populated on the accepted-update path); U02-CLOSED's
+     footer note was rendered as an invented warning banner near the top of
+     the page instead of the artboard's own plain paragraph "above the
+     footer", in the same slot as the Author's submit hint; that submit hint
+     itself carried invented copy ("Only the Head of User Department, or an
+     acting head, can submit this plan.") gated on plan readiness, when the
+     artboard shows the same fixed sentence on every mutable Author state
+     regardless of readiness; and U03-FUNDING's own row kept its live action
+     link while its panel was open beneath it, instead of the artboard's
+     plain "Editing" text. -->
 <template>
 	<div>
 		<div class="kt-page">
@@ -39,6 +58,13 @@
 				<div v-if="plan.accepted_submission_number">
 					<span class="kt-label">Accepted submission</span>
 					<span class="kt-meta-value">{{ plan.accepted_submission_number }}</span>
+				</div>
+				<!-- U05-CORRECTION — which submission Procurement returned, named
+				     separately from the correction draft's own eventual submission
+				     number below it. -->
+				<div v-if="plan.is_correction && plan.returned_submission_number">
+					<span class="kt-label">Returned submission</span>
+					<span class="kt-meta-value">{{ plan.returned_submission_number }}</span>
 				</div>
 				<div v-if="plan.is_correction && plan.candidate_submission_number">
 					<span class="kt-label">Correction submission</span>
@@ -82,14 +108,6 @@
 				</div>
 			</div>
 
-			<!-- U02-CLOSED — the draft stays editable; only submission is closed. -->
-			<div v-if="closedNotice" class="kt-notice is-warning" data-testid="pln-dpp-closed">
-				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-					<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
-				</svg>
-				<div class="kt-notice-body">{{ closedNotice }}</div>
-			</div>
-
 			<!-- Summary strip. The Author's cost label says "entered so far" because
 			     that is what it is: no complete departmental total exists yet. -->
 			<div class="kt-group" data-testid="pln-dpp-summary">
@@ -130,8 +148,12 @@
 							<td class="is-num">{{ row.amount_display }}</td>
 							<td><span class="kt-status" :class="`is-${row.status_kind}`">{{ row.status }}</span></td>
 							<td>
+								<!-- U03-FUNDING — the row whose panel is already open beneath
+								     it names that fact instead of repeating a now-redundant
+								     live action link. -->
+								<span v-if="fundingEntryId === row.entry_id" class="kt-btn kt-btn-ghost kt-muted" data-testid="pln-dpp-row-editing">Editing</span>
 								<a
-									v-if="row.action"
+									v-else-if="row.action"
 									href="#"
 									class="kt-btn kt-btn-ghost"
 									data-testid="pln-dpp-row-action"
@@ -172,7 +194,7 @@
 						     it is about, in full. -->
 						<tr v-for="(issue, index) in row.issues || []" :key="`${row.entry_id}-issue-${index}`" class="pln-row-detail" data-testid="pln-dpp-issue">
 							<td colspan="7">
-								<span class="kt-label">What needs to change?</span>
+								<span class="kt-label">Procurement comment</span>
 								<span>{{ issueText(issue) }}</span>
 							</td>
 						</tr>
@@ -226,12 +248,17 @@
 					Back
 				</button>
 				<div class="pln-footer-right">
-					<!-- The Author is told who submits, rather than shown a control
-					     they cannot use (§10.4). -->
-					<p v-if="plan.submit_hint" class="kt-muted" data-testid="pln-dpp-submit-hint">{{ plan.submit_hint }}</p>
-					<p v-else-if="certification.show && !certified" class="kt-muted" data-testid="pln-dpp-certify-hint">
+					<!-- U05-HOD/U05-CORRECTION, U02-CLOSED, U02-AUTHOR-DRAFT — one
+					     footer note slot, in priority order: certify, then closed
+					     (it replaces the submit hint rather than sitting beside it —
+					     §10.4's own "above the footer" placement, not a separate
+					     banner), then the Author is told who submits, rather than
+					     shown a control they cannot use. -->
+					<p v-if="certification.show && !certified" class="kt-muted" data-testid="pln-dpp-certify-hint">
 						Confirm the certification to submit this plan.
 					</p>
+					<p v-else-if="closedNotice" class="kt-muted" data-testid="pln-dpp-closed">{{ closedNotice }}</p>
+					<p v-else-if="plan.submit_hint" class="kt-muted" data-testid="pln-dpp-submit-hint">{{ plan.submit_hint }}</p>
 					<button
 						v-if="plan.mutable"
 						type="button"

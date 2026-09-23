@@ -21,6 +21,7 @@ function editor(overrides = {}) {
 		],
 		entry: {
 			entry_id: "DPPE-MOH-DH-2027-001",
+			need: "NDS-MOH-2027-0001",
 			title: "National digital health infrastructure upgrade",
 			description: "Upgrade the national digital health infrastructure.",
 			expected_operational_result: "The national platform runs on supported infrastructure.",
@@ -95,6 +96,11 @@ describe("EntryFundingPanel — U03-FUNDING", () => {
 		const text = make().find('[data-testid="dpp-funding-correct-source"]').text();
 		expect(text).toContain("Correct the source requirement");
 		expect(text).toContain("Source changes require their own Departmental Needs review.");
+	});
+
+	it("offers no source-correction link for a direct requirement — there is no source Need to correct", () => {
+		const w = make({ editor: editor({ entry: { ...editor().entry, need: "" } }) });
+		expect(w.find('[data-testid="dpp-funding-correct-source"]').exists()).toBe(false);
 	});
 
 	it("offers exclusion as its own action, not as a third field", async () => {

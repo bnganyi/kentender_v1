@@ -1,5 +1,5 @@
-<!-- PLN-CHG-001 v1.23 §10.6 — Annual plan preparation (U07), ported from
-     U07.dc.html.
+<!-- PLN-CHG-001 v1.24 §10.6 — Annual plan preparation (U07), ported from
+     Artboards-U07-U08.dc.html.
 
      Purchases lead and each one names its own next work. Then one concise Plan
      checks section: three named results, only the ones that decide what to do

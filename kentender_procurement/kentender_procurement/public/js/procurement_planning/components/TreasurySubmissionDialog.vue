@@ -1,5 +1,6 @@
-<!-- PLN-CHG-001 v1.23 §10.12 — Treasury submission evidence
-     (U13-TREASURY-FORM / U13-CORRECT-EVIDENCE), ported from U13.dc.html.
+<!-- PLN-CHG-001 v1.24 §10.12 — Treasury submission evidence
+     (U13-TREASURY-FORM / U13-CORRECT-EVIDENCE), ported from
+     Artboards-U12-U13.dc.html.
 
      This records something that happened outside the system: a document was
      sent to the National Treasury. So the Accounting Officer is asked to

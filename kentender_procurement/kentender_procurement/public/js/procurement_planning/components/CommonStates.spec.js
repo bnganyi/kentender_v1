@@ -1,22 +1,28 @@
-// PLN-CHG-001 v1.18 §10.12 — CommonStates component tests (U21-access/U21-empty).
-// Every kind's exact copy, the loading kinds' live shimmer (not the artboard's
-// static placeholder text), and the `action` emit for every kind with a button.
+// PLN-CHG-001 v1.24 §10.17 — CommonStates component tests (U21-MASKED/
+// LOAD-FAILURE and the shared empty-list fragments).
+//
+// Every kind's exact copy, the loading kinds' live shimmer (not the
+// artboard's static placeholder text), and the `action` emit for every kind
+// with a button. FORBIDDEN/NO_CONTEXT moved to WorkspaceScreen.vue (its own
+// server-supplied §3A.4 copy, not a generic empty state), and the per-screen
+// notice-banner states (changed record/authority, unsaved-save-failure,
+// uncertain command result, historical read-only) are `.kt-notice` banners
+// each screen composes inline — neither is this shared component's kind
+// vocabulary any more, so this file previously tested kinds ("forbidden-*",
+// "config-missing", "stale-action", "historical-readonly") that do not exist
+// on the component at all (found 22 Sep 2026, re-diffing CommonStates.vue
+// against the real v1.24 artboards).
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import CommonStates from "./CommonStates.vue";
 
 const KINDS_WITH_ACTION = {
-	"record-not-available": "Go to Procurement Planning",
-	"load-error": "Try again",
-	"config-missing": "Back to Annual Plan",
-	"stale-action": "Refresh",
-	"empty-search": "Clear filters",
-	"historical-readonly": "View current Active Plan",
+	masked: { heading: "This record is not available to you.", action: "Go to procurement planning" },
+	"load-failure": { heading: "Procurement Planning could not be loaded.", action: "Try again" },
+	"filtered-empty": { heading: "No requirements match this search.", action: "Clear filters" },
 };
 
 const KINDS_WITHOUT_ACTION = {
-	"forbidden-planning": "You do not have access to Procurement Planning",
-	"forbidden-system-setup": "You do not have access to System setup",
 	"empty-accepted-requirements": "No accepted departmental requirements",
 	"empty-validation-queue": "No departmental plans awaiting validation",
 	"empty-corrections": "No correction requests",
@@ -32,30 +38,38 @@ describe("CommonStates", () => {
 		});
 	}
 
-	for (const [kind, actionLabel] of Object.entries(KINDS_WITH_ACTION)) {
+	for (const [kind, { heading, action }] of Object.entries(KINDS_WITH_ACTION)) {
 		it(`renders ${kind} with its action and emits on click`, async () => {
 			const wrapper = mount(CommonStates, { props: { kind } });
+			expect(wrapper.find("h3").text()).toBe(heading);
 			const button = wrapper.get("button");
-			expect(button.text()).toBe(actionLabel);
+			expect(button.text()).toBe(action);
 			await button.trigger("click");
 			expect(wrapper.emitted("action")).toHaveLength(1);
 		});
 	}
 
-	it("renders the loading-planning kind as a live shimmer, not the artboard's placeholder text", () => {
-		const wrapper = mount(CommonStates, { props: { kind: "loading-planning" } });
+	it("carries a support reference on load-failure only when one is supplied", () => {
+		const withRef = mount(CommonStates, { props: { kind: "load-failure", supportRef: "PLN-1234" } });
+		expect(withRef.text()).toContain("Support reference: PLN-1234");
+		const withoutRef = mount(CommonStates, { props: { kind: "load-failure" } });
+		expect(withoutRef.text()).not.toContain("Support reference");
+	});
+
+	it("renders the loading-workspace kind as a live shimmer, not the artboard's placeholder text", () => {
+		const wrapper = mount(CommonStates, { props: { kind: "loading-workspace" } });
 		expect(wrapper.find("h3").exists()).toBe(false);
 		expect(wrapper.findAll(".kt-skel").length).toBeGreaterThan(0);
-		expect(wrapper.find(".pln-sr-only").text()).toBe("Loading Procurement Planning…");
+		expect(wrapper.find(".pln-sr-only").text()).toBe("Loading procurement planning…");
 	});
 
 	it("renders the loading-review kind with its own announced heading", () => {
 		const wrapper = mount(CommonStates, { props: { kind: "loading-review" } });
-		expect(wrapper.find(".pln-sr-only").text()).toBe("Loading Plan review…");
+		expect(wrapper.find(".pln-sr-only").text()).toBe("Loading plan review…");
 	});
 
 	it("respects a custom loadingRows count", () => {
-		const wrapper = mount(CommonStates, { props: { kind: "loading-planning", loadingRows: 5 } });
+		const wrapper = mount(CommonStates, { props: { kind: "loading-workspace", loadingRows: 5 } });
 		expect(wrapper.findAll(".pln-skel-row")).toHaveLength(5);
 	});
 

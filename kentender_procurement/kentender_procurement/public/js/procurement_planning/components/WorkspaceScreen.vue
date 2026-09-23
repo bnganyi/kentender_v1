@@ -24,15 +24,19 @@
 				<h3 style="font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 23px; margin: 0">
 					{{ forbidden.heading }}
 				</h3>
-				<p>{{ forbidden.text }}</p>
+				<p v-for="(line, index) in forbidden.text || []" :key="index">{{ line }}</p>
 			</div>
 		</div>
 		<div v-else-if="workspace.outcome === 'NO_CONTEXT'" class="kt-page" data-testid="pln-no-context">
 			<div class="kt-empty">
+				<!-- §8's own PLN_NO_CONTEXT row is the one authoritative
+				     user-facing message (re-diffed 22 Sep 2026 — this previously
+				     split a different, invented pair of sentences across a
+				     heading and body). No artboard draws this state; the spec's
+				     error contract is the only source, so it is used exactly. -->
 				<h3 style="font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 23px; margin: 0">
-					Procurement Planning is not available
+					Procurement Planning is not available for your responsibilities or the current setup.
 				</h3>
-				<p>No configured Financial Year is available for Planning.</p>
 			</div>
 		</div>
 
@@ -173,8 +177,8 @@
 									<span class="kt-label">Change</span><span style="font-size: 14px">{{ factValue(dominantRow.facts, 'Change') }}</span>
 								</div>
 							</div>
-							<p v-if="dominantRow.note" style="margin: var(--kt-space-3) 0 0; font-size: 14px; color: var(--kt-color-neutral-800)">{{ dominantRow.note }}</p>
-							<p v-if="dominantRow.kind === 'candidate'" style="margin: var(--kt-space-4) 0 0; font-size: 14px; color: var(--kt-color-neutral-800)">
+							<p v-if="dominantRow.note" data-testid="pln-plan-note" style="margin: var(--kt-space-3) 0 0; font-size: 14px; color: var(--kt-color-neutral-800)">{{ dominantRow.note }}</p>
+							<p v-if="dominantRow.kind === 'candidate'" data-testid="pln-update-note" style="margin: var(--kt-space-4) 0 0; font-size: 14px; color: var(--kt-color-neutral-800)">
 								{{ annualPlan.update_note || 'The current plan remains in force while this update is reviewed.' }}
 							</p>
 						</div>

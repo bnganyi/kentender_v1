@@ -1,6 +1,6 @@
-<!-- PLN-CHG-001 v1.23 §10.12 — Withdrawal for correction
+<!-- PLN-CHG-001 v1.24 §10.12 — Withdrawal for correction
      (U13-WITHDRAWAL-REQUEST-DIALOG / U13-WITHDRAWAL-DECISION-DIALOG),
-     ported from U13.dc.html.
+     ported from Artboards-U12-U13.dc.html.
 
      Two people, two dialogs, and neither can do the other's part. The
      Accounting Officer asks, stating why. The configured statutory authority

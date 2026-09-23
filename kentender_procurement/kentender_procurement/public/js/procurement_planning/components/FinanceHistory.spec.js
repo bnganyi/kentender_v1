@@ -1,6 +1,8 @@
-// PLN-CHG-001 v1.18 (PLN18-306) — FinanceHistory component tests.
-// U10-history: the two named evidence states and every review row, in
-// order — a later Review never overwrites an earlier one's own outcome.
+// PLN-CHG-001 v1.24 §10.9 — FinanceHistory component tests (U10-HISTORY).
+// The two named evidence states and every review row, in order — a later
+// Review never overwrites an earlier one's own outcome. See FinanceHistory.vue's
+// own header for the tracked (FU-V123-08) gap between this table form and
+// §10.9's literal two-block layout — not re-litigated by this file.
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import FinanceHistory from "./FinanceHistory.vue";

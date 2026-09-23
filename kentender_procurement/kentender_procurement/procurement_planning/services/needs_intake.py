@@ -89,6 +89,19 @@ def current_accepted_revision_of(need: str, financial_year: str) -> str:
 	return cstr(payload.get("accepted_revision"))
 
 
+def need_acceptance_evidence(need: str, need_revision: str) -> dict[str, Any] | None:
+	"""Who accepted this exact pinned revision for planning, and when
+	(§10.11's "Need accepted by" evidence) — through the published contract,
+	never a direct `Departmental Need Decision` read (D5)."""
+	from kentender_procurement.departmental_needs.services.workspace import (
+		get_need_acceptance_evidence,
+	)
+
+	# System principal — the same server-side consistency-check pattern as
+	# `current_accepted_revision_of` above, not a user-facing Needs read.
+	return get_need_acceptance_evidence(need=need, need_revision=need_revision, user="Administrator")
+
+
 def _facts(payload: dict[str, Any]) -> dict[str, Any]:
 	return {
 		"title": cstr(payload.get("title")),

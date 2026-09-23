@@ -1,5 +1,6 @@
-<!-- PLN-CHG-001 v1.23 §10.5 — U06-ACCEPTED-CLASSIFICATION and
-     U06-CORRECT-CLASSIFICATION, ported from U06.dc.html.
+<!-- PLN-CHG-001 v1.24 §10.5 — U06-ACCEPTED-CLASSIFICATION and
+     U06-CORRECT-CLASSIFICATION, ported class-for-class from
+     Artboards-U06.dc.html.
 
      This is the Procurement-owned classification record for an accepted
      submission, and the only lawful way to change it. Two things must stay
@@ -10,28 +11,42 @@
         department's evidence and are not reopened here.
      2. The correction is appended. The earlier decision stays in history, and
         whatever already consumed the source has its own recovery route, named
-        on the row rather than left for the Planner to work out. -->
+        on the row rather than left for the Planner to work out.
+
+     Re-diffed 23 Sep 2026 against the actual v1.24 sections (this header
+     previously cited a bare "U06.dc.html", unresolvable against the real
+     "Artboards-U06.dc.html" file — see kentender_core's
+     test_artboard_provenance_gate). Found and fixed: the header showed
+     Reference/Submission/Status as three separately labelled boxes — the
+     v1.23 layout — instead of the artboard's single `.kt-page-scope` line
+     (the same class Departmental Needs and DppValidationScreen already use
+     for exactly this) under a `.kt-page-desc` department/year line; the
+     Requirement cell (and the correction panel's own subject line) carried
+     no source reference beneath the title at all; and the derived-category
+     label read "New category (derived)" against the artboard's plain "New
+     category". Not fixed, and flagged rather than guessed at: the artboard's
+     secondary region "Draft purchase formed from this classification"
+     (Purchase / Formed at / Plan use) has no equivalent here at all — it
+     appears to be additional, always-on context distinct from the existing
+     `affectedNotices` warnings (which only fire once a correction exists),
+     and needs backend derivation (a formed-at timestamp, "Plan use" text)
+     this pass does not have evidence for. -->
 <template>
 	<div>
 		<div class="kt-page">
 			<div class="kt-page-head">
 				<div>
 					<h1 class="kt-page-title" data-testid="pln-class-title">View accepted requirement classifications</h1>
-				</div>
-			</div>
-
-			<div class="kt-meta-row pln-context-row" data-testid="pln-class-context">
-				<div>
-					<span class="kt-label">Reference</span>
-					<span class="kt-meta-value">{{ evidence.dpp_reference }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Submission</span>
-					<span class="kt-meta-value">{{ evidence.submission_number }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Status</span>
-					<span class="kt-meta-value"><span class="kt-status is-live">Accepted</span></span>
+					<p class="kt-page-desc">{{ evidence.department_name }} · {{ evidence.financial_year }}</p>
+					<!-- §10.5 U06 header — one compact scope line (reference,
+					     submission, status badge inline after it), the same
+					     `.kt-page-scope` class Departmental Needs and
+					     DppValidationScreen already use for exactly this, rather
+					     than the v1.23 layout's separately labelled boxes. -->
+					<div class="kt-page-scope" data-testid="pln-class-context">
+						{{ evidence.dpp_reference }} · Submission {{ evidence.submission_number }}
+						<span class="kt-status is-live" style="margin-left: 6px">Accepted</span>
+					</div>
 				</div>
 			</div>
 
@@ -51,7 +66,10 @@
 				<tbody>
 					<template v-for="row in rows" :key="row.dpp_entry_id">
 						<tr data-testid="pln-class-row">
-							<td>{{ row.title }}</td>
+							<td>
+								{{ row.title }}
+								<div class="kt-muted pln-row-ref">{{ row.reference_line }}</div>
+							</td>
 							<td>{{ row.excluded ? "Not applicable" : row.classification.requirement_type }}</td>
 							<td>{{ row.excluded ? "Not applicable" : row.classification.procurement_category }}</td>
 							<td>{{ row.excluded ? "—" : row.classification.actor_name }}</td>
@@ -110,7 +128,7 @@
 					<div class="pln-dialog-body">
 						<p class="pln-class-subject">
 							<strong>{{ panel.title }}</strong><br>
-							<span class="kt-muted">{{ evidence.dpp_reference }} · Submission {{ evidence.submission_number }}</span>
+							<span class="kt-muted">{{ panel.reference_line }} · {{ evidence.dpp_reference }} · Submission {{ evidence.submission_number }}</span>
 						</p>
 
 						<div class="kt-meta-row">
@@ -143,7 +161,7 @@
 						</div>
 
 						<div class="pln-class-derived">
-							<span class="kt-label">New category (derived)</span>
+							<span class="kt-label">New category</span>
 							<span class="kt-meta-value" data-testid="pln-class-new-category">{{ derivedCategory }}</span>
 						</div>
 

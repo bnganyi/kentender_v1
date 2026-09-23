@@ -1,5 +1,5 @@
-<!-- PLN-CHG-001 v1.23 §10.5 — Procurement review of a departmental plan (U06),
-     ported from U06.dc.html.
+<!-- PLN-CHG-001 v1.24 §10.5 — Procurement review of a departmental plan (U06),
+     ported from Artboards-U06.dc.html.
 
      The complete certified content comes first, then one decision. The only
      classification input anywhere is Requirement type; Category is read-only
@@ -17,54 +17,52 @@
 				<div>
 					<h1 class="kt-page-title" data-testid="pln-review-title">{{ title }}</h1>
 					<p class="kt-page-desc">Check the certified requirements before adding them to the annual plan.</p>
+					<!-- §10.5 U06 header — one compact scope line (icon, reference,
+					     submission and year joined by "·", the status badge inline
+					     after it), the same `.kt-page-scope` class Departmental Needs
+					     already uses for exactly this. This screen previously spelled
+					     the four facts out as their own labelled boxes instead — the
+					     v1.23 artboard's own layout, ported faithfully at the time but
+					     never re-diffed once v1.24 replaced it with this line (found
+					     live 22 Sep 2026). -->
+					<div class="kt-page-scope" data-testid="pln-review-context">
+						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+						{{ referenceOnly }} · Submission {{ submissionNumber }} · {{ context.financial_year }}
+						<span class="kt-status" :class="`is-${task.header?.badge_kind || 'pending'}`" style="margin-left: 6px">{{ statusLabel }}</span>
+					</div>
 				</div>
 			</div>
 
-			<div class="kt-meta-row pln-context-row" data-testid="pln-review-context">
-				<div>
-					<span class="kt-label">Reference</span>
-					<span class="kt-meta-value">{{ referenceOnly }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Submission</span>
-					<span class="kt-meta-value">{{ submissionNumber }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Financial year</span>
-					<span class="kt-meta-value">{{ context.financial_year }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Status</span>
-					<span class="kt-meta-value">
-						<span class="kt-status" :class="`is-${task.header?.badge_kind || 'pending'}`">{{ statusLabel }}</span>
-					</span>
-				</div>
+			<!-- §10.5 — "Immediately show" this the instant the screen has
+			     something to decide on; it was missing entirely, not just
+			     re-styled, in the ported version (found live 22 Sep 2026). -->
+			<div v-if="!task.maker_checker_blocked" class="kt-notice" data-testid="pln-review-decision-required">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+				<div class="kt-notice-body"><strong>Decision required</strong> — classify every included requirement, then accept the complete submission or return it for correction.</div>
 			</div>
 
-			<!-- Certification: secondary evidence, with the full immutable statement
-			     available rather than summarised away. -->
-			<div class="kt-meta-row pln-certified-by" data-testid="pln-review-certified">
-				<div>
-					<span class="kt-label">Certified by</span>
-					<span class="kt-meta-value">{{ context.submitted_by }}</span>
-				</div>
-				<!-- The capacity is what makes the certification mean something;
-				     it is omitted rather than guessed (§10.5). -->
-				<div v-if="context.submitted_capacity">
-					<span class="kt-label">Capacity</span>
-					<span class="kt-meta-value">{{ context.submitted_capacity }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Certified at</span>
-					<span class="kt-meta-value">{{ context.submitted_at }}</span>
+			<!-- Certification: one quiet line (name, date) with its trigger on
+			     the same row, per §10.5 "Certification orientation" — capacity
+			     and the full immutable statement reveal together on demand,
+			     not as their own always-visible boxes. -->
+			<div class="kt-group pln-certified-by" data-testid="pln-review-certified">
+				<div style="display: flex; align-items: center; justify-content: space-between; gap: var(--kt-space-5); flex-wrap: wrap">
+					<span style="font-size: 13.5px; color: var(--kt-color-neutral-800)">Certified by {{ context.submitted_by }} on {{ context.submitted_at }}</span>
+					<button
+						type="button"
+						class="kt-btn kt-btn-ghost"
+						data-testid="pln-review-certification-toggle"
+						:aria-expanded="showCertification"
+						@click="showCertification = !showCertification"
+					>View certification</button>
 				</div>
 			</div>
-			<details class="kt-disclosure" data-testid="pln-review-certification">
-				<summary class="kt-disclosure-head">
-					<span class="kt-disclosure-title">View certification</span>
-				</summary>
-				<div class="kt-disclosure-body">{{ certification.text }}</div>
-			</details>
+			<div v-if="showCertification" class="kt-disclosure-body" data-testid="pln-review-certification">
+				<div v-if="context.submitted_capacity" class="kt-meta-row" style="margin-bottom: var(--kt-space-3)">
+					<div><span class="kt-label">Capacity</span><span class="kt-meta-value">{{ context.submitted_capacity }}</span></div>
+				</div>
+				{{ certification.text }}
+			</div>
 
 			<!-- U06-SEGREGATION — the actor who certified this submission cannot
 			     review it. Content stays readable; both decisions are absent. -->
@@ -169,6 +167,15 @@
 								<!-- Read-only, derived, never sent: §4.4. -->
 								<div style="font-size: 15px; font-weight: 600; margin-top: 4px" data-testid="pln-review-category">{{ categoryFor(row.entry_id) }}</div>
 							</div>
+							<!-- U06's own third grid column, one per row (its own
+							     grid-template-columns already reserved this 1fr — the
+							     helper used to live once, globally, at the foot of the
+							     whole list instead, disconnected from either row's own
+							     controls when a submission carries more than one
+							     requirement (found live 22 Sep 2026). -->
+							<p class="kt-muted" style="font-size: 12.5px; margin: 0; padding-bottom: 9px" data-testid="pln-review-helper">
+								Choose the requirement type. Category is set automatically.
+							</p>
 						</div>
 						<div class="kt-group" style="margin-top: var(--kt-space-4)">
 							<span class="kt-label">Budget line</span>
@@ -182,10 +189,6 @@
 				</div>
 				<p v-if="!entries.length" class="kt-muted">No requirements in this submission.</p>
 			</div>
-
-			<p v-if="entries.some((r) => !r.not_proceeding)" class="kt-muted" data-testid="pln-review-helper">
-				Choose the requirement type. Category is set automatically.
-			</p>
 
 			<!-- Decision. What acceptance does, and what it does not. -->
 			<template v-if="!task.maker_checker_blocked">
@@ -223,7 +226,7 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 
 const props = defineProps({
 	task: { type: Object, default: () => ({}) },
@@ -233,9 +236,23 @@ const props = defineProps({
 
 defineEmits(["set-classification", "accept", "return-to-department", "view-requirement"]);
 
+// §10.5 "Certification orientation" — capacity and the full immutable
+// statement reveal together, on demand, beneath the one quiet "Certified by
+// … on …" line; never their own always-visible boxes.
+const showCertification = ref(false);
+
 const context = computed(() => props.task.context || {});
 const certification = computed(() => props.task.certification || {});
-const summary = computed(() => props.task.summary || {});
+// §10.5 summary strip — `get_dpp_validation_task` (dpp_read.py) puts these
+// three facts on `context` alongside department/financial year, never on a
+// separate `summary` key. Reading a `task.summary` that the read contract
+// never sends rendered the three labels with nothing beside them: not an
+// empty state, an undefined one (found live 22 Sep 2026).
+const summary = computed(() => ({
+	included_requirements: context.value.included_requirements,
+	included_cost_display: context.value.included_cost_display,
+	excluded_requirements: context.value.excluded_requirements,
+}));
 const entries = computed(() => props.task.entries || []);
 const requirementTypes = computed(() => props.task.requirement_types || []);
 const staleSources = computed(() => props.task.stale_sources || []);

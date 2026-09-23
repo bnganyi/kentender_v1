@@ -20,6 +20,7 @@ from kentender_procurement.procurement_planning.services import (
 	plan_read,
 	plan_workbench,
 	readiness,
+	workspace,
 )
 from kentender_procurement.procurement_planning.tests import fixtures as fx
 
@@ -701,6 +702,27 @@ class TestReservationAllocations(PlanWorkbenchCase):
 			self.assertIn("PLN_REFERENCE_UNAVAILABLE", codes)
 			self.assertNotIn("PLN_RESERVATION_SHORTFALL", codes)
 
+	def test_a_mandatory_shortfall_is_the_workspaces_current_issue(self):
+		"""U01's own drawn copy (found live 22 Sep 2026, re-diffing against
+		the real v1.24 artboard): this exact code path had never actually
+		fired before that day's separate fiscal_year fix, so its wrong
+		wording — "Allocate ... more to eligible reserved procurement",
+		never drawn on any artboard — went unnoticed until now."""
+		accepted, item_id = self.one_item()
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		plan = frappe.get_doc("Annual Plan", version.annual_plan)
+		reference = {**readiness.reference_for(plan.fiscal_year)}
+		reference["reservation"] = {**reference["reservation"], "target_percent": 30.0, "published": True}
+		reference["verification_status"] = fx.VERIFICATION_FIXTURE
+		with patch.object(readiness, "reference_for", return_value=reference):
+			current_issue = workspace.get_planning_workspace(financial_year=fx.FY_OPEN, user=fx.PLANNER)["current_issue"]
+		self.assertEqual(
+			current_issue["text"],
+			"Reserved procurement is below the required allocation by KES 60,000,000. "
+			"Resolve this before sending the plan to Finance.",
+		)
+		self.assertEqual(current_issue["action"], "Review reserved procurement")
+
 
 class TestDissolvePlanItem(PlanWorkbenchCase):
 	def test_dissolve_returns_the_source_to_the_unallocated_pool(self):
@@ -862,7 +884,10 @@ class TestSourceCorrectionRequired(PlanWorkbenchCase):
 		self.assertEqual(caught.exception.code, "PLN_SOURCE_UNAVAILABLE")
 
 		# the workspace offers only the genuinely new entry for consolidation
+		# — as the open Draft's own current issue (§7.1), not a second,
+		# separate "actionable" card repeating the same route.
 		from kentender_procurement.procurement_planning.services import workspace
 
-		ready = [a for a in workspace.get_planning_workspace(financial_year=fx.FY_OPEN, user=fx.PLANNER)["actionable"] if "ready to consolidate" in a["headline"]]
-		self.assertEqual(ready[0]["headline"], "1 accepted departmental entry ready to consolidate")
+		current_issue = workspace.get_planning_workspace(financial_year=fx.FY_OPEN, user=fx.PLANNER)["current_issue"]
+		self.assertIn("1 accepted departmental entry", current_issue["text"])
+		self.assertIn("ready to consolidate into this plan", current_issue["text"])

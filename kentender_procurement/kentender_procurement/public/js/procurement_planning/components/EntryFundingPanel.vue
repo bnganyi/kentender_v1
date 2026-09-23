@@ -1,5 +1,8 @@
-<!-- PLN-CHG-001 v1.23 §10.4 — Funding details (U03-FUNDING), ported from
-     U02-U05.dc.html.
+<!-- PLN-CHG-001 v1.24 §10.4 — Funding details (U03-FUNDING), ported from
+     Artboards-U02-U05.dc.html. Re-diffed 22 Sep 2026 (this header previously
+     cited a deleted v1.23 file — see kentender_core's
+     test_artboard_provenance_gate): meta-row, disclosure, field labels,
+     hint copy and the source-correction link all match exactly.
 
      This opens beneath the requirement it belongs to, and the rest of the
      departmental plan stays visible above and below it. Navigating away to a
@@ -130,11 +133,14 @@
 			</div>
 		</div>
 
-		<!-- The requirement's own facts are not Planning's to change, and the
-		     link says where they are changed instead. -->
-		<p class="kt-muted pln-funding-correction" data-testid="dpp-funding-correct-source">
+		<!-- §10.4 U03-FUNDING — beneath the button row, right-aligned with it;
+		     the requirement's own facts are not Planning's to change, and the
+		     link says where they are changed instead. A direct requirement (no
+		     Need behind it) has no source to correct, so the link is never
+		     offered for one. -->
+		<p v-if="entry.need" class="kt-muted pln-funding-correction" data-testid="dpp-funding-correct-source">
 			<a href="#" data-testid="dpp-funding-correct-link" @click.prevent="$emit('correct-source')">Correct the source requirement</a>
-			Source changes require their own Departmental Needs review.
+			<span class="pln-funding-correction-hint">Source changes require their own Departmental Needs review.</span>
 		</p>
 	</div>
 </template>

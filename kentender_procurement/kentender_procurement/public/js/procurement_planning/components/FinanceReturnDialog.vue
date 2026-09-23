@@ -1,8 +1,11 @@
-<!-- §10.9 U10-RETURN — the dialog is headed by the question the Officer is
-     answering, names the whole plan as its read-only context, and asks for one
-     actionable reason. No reservation is created. No reason category,
-     attachment, assignee, due date or optional note (§11.17's own absences
-     apply here too). -->
+<!-- PLN-CHG-001 v1.24 §10.9 U10-RETURN, ported from Artboards-U10.dc.html
+     (re-diffed 23 Sep 2026 against the real §10.9/U10-RETURN section: the
+     artboard draws only the heading, the read-only Context and the Reason
+     field above Cancel / Return to planner — no explanatory lede paragraph.
+     The template previously carried one ("No reservation is created. State
+     the correction required.") that the artboard never draws; removed. No
+     reason category, attachment, assignee, due date or optional note, same
+     as every other "return for correction" dialog in this app. -->
 <template>
 	<div class="kt-dialog-backdrop" data-testid="fnt-return-dialog">
 		<div class="kt-dialog" style="width: 520px" role="dialog" aria-modal="true" aria-labelledby="fnt-return-title">
@@ -11,9 +14,6 @@
 				<span class="kt-label">Context</span>
 				<div style="font-size: 14px; margin-top: 2px" data-testid="fnt-return-context">Whole annual plan</div>
 			</div>
-			<p class="pln-dialog-lede">
-				No reservation is created. State the correction required.
-			</p>
 			<div class="pln-field">
 				<label for="fnt-return-reason">Reason</label>
 				<textarea

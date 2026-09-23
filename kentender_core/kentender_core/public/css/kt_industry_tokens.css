@@ -95,7 +95,25 @@
 	--kt-space-2: 6.8px;
 	--kt-space-3: 10.2px;
 	--kt-space-4: 13.6px;
+	/* rungs 5 and 7 were missing entirely — not approximated, not aliased,
+	   simply absent — so every `var(--kt-space-5)`/`var(--kt-space-7))` in
+	   the app (a dozen-plus call sites, at least two screens) silently
+	   resolved to nothing: a `gap` or `margin` set from an undefined custom
+	   property with no fallback resets to its initial value, which for both
+	   is effectively zero, collapsing the intended spacing without an error
+	   anywhere (found live 22 Sep 2026, as adjacent facts on the DPP review
+	   screen running together with no visible gap at all). The existing six
+	   rungs are exactly 3.4px × their number; completing that same
+	   progression is not a guess at the missing values, it is the only
+	   value each one can consistently be. A prior comment here deferred
+	   resolving this to "the token-scale owner" over a genuine ambiguity in
+	   the design tool's own export (20px vs 24px for two different uses of
+	   "space-5") — that ambiguity was about which rung a given artboard
+	   inset should be *approximated onto*, not about what number rung 5
+	   itself is in this scale, so it does not block filling the gap here. */
+	--kt-space-5: 17px;
 	--kt-space-6: 20.4px;
+	--kt-space-7: 23.8px;
 	--kt-space-8: 27.2px;
 
 	--kt-radius-sm: 2px;
@@ -756,12 +774,30 @@
      inside it comes from section titles, whitespace and hairline/accent
      rules, never nested .kt-panel/.kt-panel-lg boxes. Spacing values below
      are literal pixels matching what the reference artboard renders, not
-     approximated onto the existing --kt-space-N scale: the design-tool
-     export's own --space-5 disagrees with itself between a 20px task-row
-     inset and a 24px region gap, and no --kt-space-5/7 rung exists to
-     approximate either onto. Flagged to the token-scale owner as a
-     follow-up; do not resolve unilaterally here. */
-.kt-industry .kt-page { max-width: 1200px; margin: 32px auto; padding: 32px; background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); box-shadow: var(--kt-shadow-sm); display: flex; flex-direction: column; gap: 24px; }
+     approximated onto the --kt-space-N scale: the design-tool export's own
+     --space-5 disagrees with itself between a 20px task-row inset and a
+     24px region gap, and neither is exactly this scale's own --kt-space-5
+     (17px) or --kt-space-6 (20.4px)/--kt-space-7 (23.8px) rungs. The rungs
+     themselves were simply missing before 22 Sep 2026 (every var(--kt-
+     space-5)) elsewhere in the app was silently resolving to nothing, not
+     to either 20px or 24px) and now exist as the scale's own consistent
+     3.4px progression; this section's own two literal pixel values remain
+     a deliberate local exception to that scale, not something this fix
+     retroactively resolves — still flagged to the token-scale owner. */
+/* `margin` is vertical-only, not `32px auto`: every caller mounts `.kt-page`
+   as the sole child of `.kt-shell` (kentender_core.industry.mountPageRail's
+   own centered max-width column, already `display:flex; flex-direction:
+   column`), so `.kt-page` is a flex item, not a plain block box. A
+   horizontal auto margin on a stretch-context flex item cancels the stretch
+   and sizes the item to its own content width instead — every `.kt-page`
+   screen quietly collapsed to a narrow, content-sized card floating in
+   `.kt-shell`'s middle rather than filling it (found live 22 Sep 2026, most
+   visible on the need editor's comparatively narrow form content; masked on
+   table-heavy screens like the workspace, whose wide rows happen to reach
+   close to `.kt-shell`'s own width anyway). `.kt-shell` already centers and
+   caps the column; `.kt-page` only needs its own max-width as a ceiling
+   inside that already-narrower parent, never its own second centering. */
+.kt-industry .kt-page { max-width: 1200px; margin: 32px 0; padding: 32px; background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); box-shadow: var(--kt-shadow-sm); display: flex; flex-direction: column; gap: 24px; }
 .kt-industry .kt-page-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--kt-space-6); }
 .kt-industry .kt-page-title { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 32px; line-height: 1.1; margin: 0; }
 .kt-industry .kt-page-desc { margin: 8px 0 0; font-size: 14px; color: var(--kt-color-neutral-800); }

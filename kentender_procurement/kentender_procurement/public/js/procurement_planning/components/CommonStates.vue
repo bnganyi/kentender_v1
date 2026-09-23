@@ -13,7 +13,17 @@
      states (changed record/authority, unsaved-save-failure, uncertain
      command result, historical read-only) are `.kt-notice` banners embedded
      in an otherwise still-rendering page, not a full-page replacement, so
-     each screen composes those inline rather than through this component. -->
+     each screen composes those inline rather than through this component.
+
+     Re-diffed 22 Sep 2026 against the actual v1.24 U21-MASKED/LOAD-FAILURE
+     sections (this header previously cited that file from before it existed
+     in the repo — see kentender_core's test_artboard_provenance_gate):
+     headings, body copy and actions all match. The artboard draws a distinct
+     SVG icon per state; every `.kt-empty` usage in the live app (this file,
+     AnnualPlanScreen, ProgressScreen, both modules' WorkspaceScreen) omits
+     it consistently, and `kt_industry_tokens.css`'s own `.kt-empty` rule has
+     no icon slot — a deliberate, app-wide convention, not a gap unique to
+     this component. -->
 <template>
 	<div class="kt-page" :data-testid="resolvedTestid">
 		<div v-if="isLoading" role="status">

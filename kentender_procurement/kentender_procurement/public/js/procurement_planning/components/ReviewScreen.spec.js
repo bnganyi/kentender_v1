@@ -1,4 +1,4 @@
-// PLN-CHG-001 v1.23 §10.10 — ReviewScreen component tests (U11).
+// PLN-CHG-001 v1.24 §10.10 — ReviewScreen component tests (U11).
 //
 // Every governance actor reads the same document; only the header, the prior
 // accountability, the statement and the buttons change. And the decision comes
@@ -59,7 +59,22 @@ function task(overrides = {}) {
 		items: ITEMS,
 		caption: "2 Plan Items · KES 130,000,000",
 		funding: {
-			rows: [],
+			rows: [
+				{
+					budget_line: "bl-dhi",
+					budget_line_reference: "MOH-BL-DHI-2027",
+					approved_display: "KES 100,000,000",
+					planned_display: "KES 80,000,000",
+					difference_display: "KES 20,000,000",
+					result: "Within budget",
+					result_kind: "live",
+					funding_source: "Government of Kenya",
+					reserved_display: "KES 0",
+					committed_display: "KES 0",
+					available_display: "KES 100,000,000",
+				},
+			],
+			statement_as_at: "4 Dec 2026, 10:00 EAT",
 			at_approval: { actor_name: "Josphat Mwangi", decided_at_display: "4 Dec 2026, 10:00 EAT" },
 		},
 		reservation: { required_allocation_display: "KES 48,000,000", planned_qualifying_display: "KES 50,000,000", budget_basis_reference: "MOH-BUD-2027-001", budget_version_display: "Version 1" },
@@ -140,6 +155,17 @@ describe("ReviewScreen — U11-AO shared composition", () => {
 		expect(w.find('[data-testid="rev-download"]').exists()).toBe(true);
 		expect(w.find('[data-testid="rev-confirm"]').attributes("disabled")).toBeUndefined();
 	});
+
+	it("opens current balances (funding source, availability, as-at) only on request", async () => {
+		const w = make();
+		expect(w.find('[data-testid="rev-balances"]').exists()).toBe(false);
+		await w.find('[data-testid="rev-view-balances"]').trigger("click");
+		const balances = w.find('[data-testid="rev-balances"]');
+		expect(balances.exists()).toBe(true);
+		expect(balances.text()).toContain("Government of Kenya");
+		expect(balances.text()).toContain("KES 100,000,000");
+		expect(balances.text()).toContain("Balances as at 4 Dec 2026, 10:00 EAT.");
+	});
 });
 
 describe("ReviewScreen — only the actor's own part changes", () => {
@@ -186,14 +212,26 @@ describe("ReviewScreen — only the actor's own part changes", () => {
 		expect(w.find('[data-testid="rev-statement"]').text()).toBe("Record approval only if the body approved this plan.");
 	});
 
-	it("U11-READER: shows the same document and no decision area", () => {
-		const w = make({ task: task({ can_decide: false, status: "Completed", historical: true }) });
+	it("U11-READER: shows the same document, under its own reader title, and no decision area", () => {
+		const w = make({ task: task({ can_decide: false, status: "Completed" }) });
+		expect(w.find('[data-testid="rev-title"]').text()).toBe("Annual procurement plan");
+		expect(w.find('[data-testid="rev-context"]').exists()).toBe(true);
+		expect(w.find('.kt-page-desc').text()).toBe("Review the plan and its recorded evidence.");
 		expect(w.find('[data-testid="rev-footer"]').exists()).toBe(false);
 		expect(w.find('[data-testid="rev-statement"]').exists()).toBe(false);
-		expect(w.find('[data-testid="rev-historical"]').text()).toBe("Historical plan — read only");
+		// Not historical — no notice.
+		expect(w.find('[data-testid="rev-historical"]').exists()).toBe(false);
 		// The complete content is still there.
 		expect(w.findAll('[data-testid="rev-purchase-row"]')).toHaveLength(2);
 		expect(w.find('[data-testid="rev-summary"]').exists()).toBe(true);
+	});
+
+	it("U11-READER-HISTORICAL: reads under the reader title and says the Version is historical", () => {
+		const w = make({ task: task({ can_decide: false, status: "Completed", historical: true }) });
+		expect(w.find('[data-testid="rev-title"]').text()).toBe("Annual procurement plan");
+		const notice = w.find('[data-testid="rev-historical"]');
+		expect(notice.text()).toBe("Historical plan — read only");
+		expect(notice.classes()).toContain("kt-notice");
 	});
 });
 

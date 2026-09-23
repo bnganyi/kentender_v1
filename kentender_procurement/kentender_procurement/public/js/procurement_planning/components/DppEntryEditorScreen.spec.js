@@ -64,6 +64,8 @@ describe("DppEntryEditorScreen — U04-DIRECT", () => {
 		for (const id of ["title", "description", "result", "quantity", "unit", "required-by", "budget-line", "amount"]) {
 			expect(w.find(`[data-testid="dpp-f-${id}"]`).exists()).toBe(true);
 		}
+		// U04-DIRECT's own textarea sizing: 2 rows, not 3.
+		expect(w.find('[data-testid="dpp-f-description"]').attributes("rows")).toBe("2");
 		// Exactly eight controls: none of the Need, bypass, Strategy, method,
 		// classification or attachment fields the page must not carry.
 		expect(w.findAll("input, textarea, select")).toHaveLength(8);

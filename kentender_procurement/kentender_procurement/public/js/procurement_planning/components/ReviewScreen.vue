@@ -1,5 +1,6 @@
-<!-- PLN-CHG-001 v1.23 §10.10 — the complete annual-plan review (U11), ported
-     from U11.dc.html.
+<!-- PLN-CHG-001 v1.24 §10.10 — the complete annual-plan review (U11), ported
+     from Artboards-U11.dc.html (re-diffed 23 Sep 2026 against the real
+     §10.10/U11-* sections).
 
      Every governance actor reads the same document. Only the header, the prior
      accountability shown, the decision statement and the actual buttons
@@ -11,7 +12,17 @@
      collapsed evidence. The actor must not scroll through audit evidence to
      reach the decision, and no purchase opens by itself. But nothing material
      is hidden either: an issue that would change the verdict is always in the
-     summary, never behind a disclosure. -->
+     summary, never behind a disclosure.
+
+     U11-READER/-READER-HISTORICAL — a reader who holds no decision here (no
+     `can_decide`) reads a differently-titled document: header "Annual
+     procurement plan", description "Review the plan and its recorded
+     evidence." A historical Version additionally says so with its own
+     notice. `get_plan_governance_task`'s `historical` field backs it; the
+     artboard's own "View current plan" header action is not built here —
+     wiring its navigation touches ProcurementPlanning.vue, outside this
+     component's own file. -->
+
 <template>
 	<div>
 		<div class="kt-page">
@@ -51,8 +62,15 @@
 				</div>
 			</div>
 
-			<!-- U11-READER historical variant. -->
-			<p v-if="task.historical" class="kt-muted" data-testid="rev-historical">Historical plan — read only</p>
+			<!-- U11-READER-HISTORICAL — a Version that is no longer the Plan's
+			     active one, read plainly rather than left to be inferred from
+			     the absent decision area. -->
+			<div v-if="task.historical" class="kt-notice is-info" data-testid="rev-historical">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+					<circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path>
+				</svg>
+				<div class="kt-notice-body">Historical plan — read only</div>
+			</div>
 
 			<!-- First section — Decision summary. -->
 			<div class="kt-region">
@@ -222,6 +240,37 @@
 						</tr>
 					</tbody>
 				</table>
+				<!-- §10.10 fourth section — "View current balances opens funding
+				     source, availability and the as-at instant. Do not repeat the
+				     full Finance workspace." -->
+				<div style="margin-top: var(--kt-space-3)">
+					<a
+						href="#"
+						class="kt-btn kt-btn-ghost"
+						data-testid="rev-view-balances"
+						@click.prevent="showBalances = !showBalances"
+					>View current balances</a>
+				</div>
+				<div v-if="showBalances" class="pln-row-detail" data-testid="rev-balances">
+					<table class="kt-table">
+						<thead>
+							<tr>
+								<th>Budget line</th><th>Funding source</th>
+								<th class="is-num">Reserved</th><th class="is-num">Committed</th><th class="is-num">Currently available</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr v-for="row in funding.rows || []" :key="`balance-${row.budget_line}`">
+								<td>{{ row.budget_line_reference }}</td>
+								<td>{{ row.funding_source }}</td>
+								<td class="is-num">{{ row.reserved_display }}</td>
+								<td class="is-num">{{ row.committed_display }}</td>
+								<td class="is-num">{{ row.available_display }}</td>
+							</tr>
+						</tbody>
+					</table>
+					<p class="kt-muted">Balances as at {{ funding.statement_as_at || "—" }}.</p>
+				</div>
 			</div>
 
 			<!-- The decision comes before the collapsed evidence, not after it. -->
@@ -371,6 +420,7 @@ defineEmits([
 ]);
 
 const open = ref([]);
+const showBalances = ref(false);
 
 const summary = computed(() => props.task.decision_summary || {});
 const issues = computed(() => summary.value.issues || []);
@@ -426,7 +476,17 @@ const COLLECTIVE = {
 	secondary_is_return: true,
 };
 
+// U11-READER/-READER-HISTORICAL — a reader who holds no decision here (an
+// Auditor, or anyone once the review is no longer Open) reads the same
+// complete document under its own title, never an actor's decision framing
+// they cannot act on.
+const READER = {
+	title: "Annual procurement plan",
+	description: "Review the plan and its recorded evidence.",
+};
+
 const actor = computed(() => {
+	if (!props.task.can_decide) return READER;
 	if (props.task.stage === "Statutory approval" && authority.value.is_board) {
 		return { ...COLLECTIVE, title: `Record the ${authority.value.capacity_detail}'s decision` };
 	}

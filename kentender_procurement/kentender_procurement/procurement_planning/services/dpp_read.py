@@ -120,7 +120,9 @@ def _returned_issues(version) -> tuple[dict[str, list[dict[str, str]]], list[dic
 	return by_entry, whole_plan
 
 
-def _entry_action(*, not_proceeding: bool, need_origin: bool, mutable: bool, funded: bool, can_open: bool) -> str:
+def _entry_action(
+	*, not_proceeding: bool, need_origin: bool, mutable: bool, funded: bool, has_issue: bool, can_open: bool,
+) -> str:
 	"""§10.4 — the row's action names what the department will actually do
 	there, in the artboard's own words.
 
@@ -129,12 +131,16 @@ def _entry_action(*, not_proceeding: bool, need_origin: bool, mutable: bool, fun
 	restorable. A read-only plan still opens its requirements — it just does
 	not change them. A reader the entry read would refuse (a Planner looking
 	at someone else's departmental plan) gets no action rather than a link
-	into a masked denial (§12.1's own rule about dead-end links)."""
+	into a masked denial (§12.1's own rule about dead-end links).
+
+	U05-CORRECTION — a Need-origin row Procurement returned a comment against
+	still routes to funding details, even though it is already funded: that
+	is exactly what the department is being asked to revisit."""
 	if not mutable:
 		return "View details" if can_open else ""
 	if not_proceeding:
 		return "Include in this year's departmental plan" if need_origin else ""
-	if need_origin and not funded:
+	if need_origin and (not funded or has_issue):
 		return "Enter funding details"
 	return "Review details"
 
@@ -156,6 +162,20 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 	line_labels = budget_gateway.line_labels(root.fiscal_year)
 	version_name = root.current_version or root.current_accepted_version
 	version = frappe.get_doc("Departmental Plan Version", version_name) if version_name else None
+	if version:
+		# §5.1 — the coverage boundary is established at command time, not by
+		# a browser timestamp: `open_departmental_plan`'s own "reused" branch
+		# already re-syncs a mutable Draft against the Need register on every
+		# re-open, and `submit_departmental_plan` re-syncs again just before
+		# it checks coverage. This read was the one caller left out — an
+		# Author or Head of Department who only ever *views* the record (the
+		# workspace's own "Continue"/"Review" cards route straight here, never
+		# through `open_departmental_plan` again) saw the entries as they
+		# stood when the Draft was first opened, with no visible sign that a
+		# Need accepted afterwards was missing (found live 22 Sep 2026).
+		# `refresh_draft_entries` is idempotent and a no-op on anything but a
+		# Draft, so calling it from a read is safe.
+		needs_intake.refresh_draft_entries(version)
 	entries = []
 	incomplete = 0
 	total_specified = 0.0
@@ -182,10 +202,15 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 				total_specified += flt(row.indicative_amount)
 			need_origin = row.source_origin == needs_intake.NEED_ORIGIN
 			line = line_labels.get(cstr(row.budget_line), {})
+			has_issue = bool(issues_by_entry.get(row.entry_id))
 			# §10.4's own wording: what the row *is* to the department, not an
-			# internal readiness label.
+			# internal readiness label. U05-CORRECTION — a funded row is not
+			# simply "Included" while Procurement's comment against it is
+			# still open.
 			if not_proceeding:
 				status, kind = "Not included this year", "muted"
+			elif has_issue:
+				status, kind = "Correction requested", "attention"
 			elif funded:
 				status, kind = "Included", "live"
 			else:
@@ -195,6 +220,10 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 					"entry_id": row.entry_id,
 					"source_origin": row.source_origin,
 					"title": row.title,
+					# Never shown as raw text (the artboards never print a Need's
+					# bare id) — only navigation ("Correct the source requirement")
+					# reads this, and only for a Need-origin entry.
+					"need": cstr(row.need) if need_origin else "",
 					"source_label": f"Accepted Need · {row.need}" if need_origin else "Direct requirement",
 					# §10.4 — the requirement cell is the title on its own line
 					# with its source reference and revision beneath, in muted
@@ -218,7 +247,7 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 					"disposition": "Not proceeding" if not_proceeding else "Proceeding",
 					"can_set_disposition": need_origin and version.version_status == "Draft" and access in ("author", "hod"),
 					"action": _entry_action(
-						not_proceeding=not_proceeding, need_origin=need_origin, funded=funded,
+						not_proceeding=not_proceeding, need_origin=need_origin, funded=funded, has_issue=has_issue,
 						mutable=version.version_status == "Draft" and access in ("author", "hod"),
 						can_open=access in ("author", "hod", "oversight"),
 					),
@@ -253,6 +282,18 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 	# §5.1.1 — acceptance is never replaced by the candidate's state
 	accepted_number = int(frappe.db.get_value("Departmental Plan Version", root.current_accepted_version, "version_number") or 0) if root.current_accepted_version else None
 	update_in_progress = bool(root.current_accepted_version) and bool(version) and cstr(version.name) != cstr(root.current_accepted_version) and version.version_status in ("Draft", "Submitted", "Returned")
+	is_correction = bool(version and cstr(version.returned_from_submission))
+	# U05-CORRECTION's own context row: which submission Procurement returned,
+	# a distinct fact from whichever submission is currently Accepted — a
+	# plan need never have been accepted at all for a correction cycle to
+	# exist (found live 23 Sep 2026: this and `candidate_submission_number`
+	# below only ever populated for the accepted-update path, so the
+	# artboard's "Returned submission"/"Correction submission" pair never
+	# rendered for a plain first-cycle correction).
+	returned_submission_number = (
+		int(frappe.db.get_value("Departmental Plan Submission", version.returned_from_submission, "submission_number") or 0)
+		if is_correction else None
+	)
 	display_state = "Accepted — update in progress" if update_in_progress else root.current_state
 	if update_in_progress:
 		badge, badge_kind = display_state, "live"
@@ -282,9 +323,14 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 	window = _window_display(root.fiscal_year)
 	if window["state"] == "Closed" and _has_any_submission(root):
 		window = {**window, "display": "Closed · corrections and updates may still be submitted"}
+	# U02-AUTHOR-DRAFT/U03-FUNDING/U03-EXCLUDED-ROW — this is fixed, invariant
+	# copy: it tells the Author who submits next, in every mutable state
+	# they can be in, not only once the plan happens to be ready (found live
+	# 23 Sep 2026: gating this on `ready` meant an in-progress Draft showed no
+	# footer note at all, contradicting every Author artboard).
 	submit_hint = ""
-	if mutable and ready and access != "hod":
-		submit_hint = "Only the Head of User Department, or an acting head, can submit this plan."
+	if mutable and access != "hod":
+		submit_hint = "Your Head of User Department must review and submit this plan."
 	# FU-14 — the record route never strands the actor who holds the open task
 	open_task = None
 	if access == "planner" and version and version.version_status == "Submitted":
@@ -301,8 +347,9 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 		"current_state": root.current_state,
 		"display_state": display_state,
 		"accepted_submission_number": accepted_number,
-		"candidate_submission_number": version.version_number if (version and update_in_progress) else None,
-		"is_correction": bool(version and cstr(version.returned_from_submission)),
+		"returned_submission_number": returned_submission_number,
+		"candidate_submission_number": version.version_number if version and (is_correction or update_in_progress) else None,
+		"is_correction": is_correction,
 		"fiscal_year": root.fiscal_year,
 		"version": {
 			"name": version.name if version else "",
@@ -382,6 +429,11 @@ def get_dpp_entry_editor(*, dpp_reference: str, entry_id: str | None = None, use
 		authz.not_found()
 	labels = _labels(root)
 	version = frappe.get_doc("Departmental Plan Version", root.current_version)
+	# Same read-path gap as `get_departmental_plan` (found live 22 Sep 2026):
+	# without this, an Author deep-linking straight to this editor to fund a
+	# Need accepted after the Draft was last opened gets a false "not found"
+	# below — idempotent and a no-op on anything but a Draft.
+	needs_intake.refresh_draft_entries(version)
 	payload: dict[str, Any] = {
 		"outcome": "OK",
 		"dpp_reference": root.dpp_reference,
@@ -401,6 +453,9 @@ def get_dpp_entry_editor(*, dpp_reference: str, entry_id: str | None = None, use
 		payload["entry"] = {
 			"entry_id": entry.entry_id,
 			"source_origin": entry.source_origin,
+			# Never shown as raw text — only navigation ("Correct the source
+			# requirement") reads this, and only for a Need-origin entry.
+			"need": cstr(entry.need) if entry.source_origin == needs_intake.NEED_ORIGIN else "",
 			"title": entry.title,
 			"description": entry.description,
 			"expected_operational_result": entry.expected_operational_result,
@@ -449,6 +504,19 @@ def get_dpp_validation_task(*, task: str, user: str | None = None) -> dict[str, 
 
 	submitted_by = cstr(frappe.db.get_value("User", submission.submitted_by_user, "full_name") or submission.submitted_by_user)
 	total = sum(flt(row.get("indicative_amount")) for row in snapshots if not cstr(row.get("not_proceeding_reason")).strip())
+
+	def _budget_line_display(budget_line: str) -> str:
+		# U06's own artboard reads "Digital health infrastructure programme ·
+		# MOH-BL-DHI-2027" — the name first, since that is what tells the
+		# Planner what the money is for, with the code after it. This used
+		# to show only `.get("reference")`, the bare code alone with no
+		# name at all (found live 22 Sep 2026).
+		line = line_labels.get(cstr(budget_line), {})
+		reference = cstr(line.get("reference")) or cstr(budget_line)
+		if not reference:
+			return "—"
+		return f"{line.get('title')} · {reference}" if line.get("title") else reference
+
 	rows = [
 		{
 			"entry_id": row.get("entry_id"),
@@ -458,7 +526,7 @@ def get_dpp_validation_task(*, task: str, user: str | None = None) -> dict[str, 
 			"quantity_number": _quantity_number(row.get("quantity")),
 			"unit_label": cstr(row.get("unit")),
 			"required_by_display": _date(row.get("required_by_date")),
-			"budget_line_display": line_labels.get(cstr(row.get("budget_line")), {}).get("reference") or cstr(row.get("budget_line")) or "—",
+			"budget_line_display": _budget_line_display(row.get("budget_line")),
 			# §10.5 — an excluded row shows Not applicable for cost and type;
 			# it needs neither, and an em dash would not say why.
 			"amount_display": (

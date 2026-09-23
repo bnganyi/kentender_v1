@@ -45,10 +45,13 @@ ALL_PLANNING_ROLES = DEPARTMENTAL_ROLES + SITE_WIDE_ROLES
 REQUISITION_CALLER_SITE_WIDE_ROLES = (ROLE_PROCUREMENT_PLANNER, ROLE_AUDITOR, ROLE_HEAD_OF_PROCUREMENT_FUNCTION)
 REQUISITION_CALLER_ROLES = DEPARTMENTAL_ROLES + REQUISITION_CALLER_SITE_WIDE_ROLES
 
-# PLN-DES-16 Forbidden copy names them in this order.
+# U21-DENIED's own drawn copy names them in this order (re-diffed 22 Sep
+# 2026 against the real v1.24 artboard — this previously carried an older
+# PLN-DES-16-era order and "the entity's statutory approver" wording that
+# the artboard no longer uses).
 FORBIDDEN_RESPONSIBILITIES = (
-	"Procurement Planner, Head of Procurement Function, Finance Confirmation Officer, Accounting Officer, "
-	"the entity's statutory approver, Head of User Department, Departmental Author or Auditor"
+	"Departmental Author, Head of User Department, Procurement Planner, Head of Procurement Function, "
+	"Finance Confirmation Officer, Accounting Officer, configured statutory decision-holder or Auditor"
 )
 
 

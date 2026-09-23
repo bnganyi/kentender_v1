@@ -1,4 +1,5 @@
-// PLN-CHG-001 v1.23 §10.6 — AnnualPlanScreen component tests (U07).
+// PLN-CHG-001 v1.24 §10.6 — AnnualPlanScreen component tests (U07), verified
+// against Artboards-U07-U08.dc.html.
 //
 // The preparation page's job is to say what still needs doing. Purchases lead
 // and each names its own next work; Plan checks is three results, not eight;

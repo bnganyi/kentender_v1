@@ -1078,12 +1078,17 @@
 .kt-pln .pln-funding-panel .kt-field {
 	max-width: 480px;
 }
+/* §10.4 U03-FUNDING — right-aligned under the Cancel/Save row, with its
+   explanation on its own line beneath the link (never inline beside it). */
 .kt-pln .pln-funding-correction {
 	margin-top: var(--kt-space-3);
 	font-size: 13px;
+	text-align: right;
 }
-.kt-pln .pln-funding-correction a {
-	margin-right: var(--kt-space-2);
+.kt-pln .pln-funding-correction-hint {
+	display: block;
+	margin-top: 4px;
+	color: var(--kt-color-neutral-700);
 }
 
 /* §10.4 U04 — a form for one requirement: a reading column, with Quantity and

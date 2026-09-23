@@ -1,4 +1,4 @@
-// PLN-CHG-001 v1.23 §10.8 U09-REMOVE.
+// PLN-CHG-001 v1.24 §10.8 U09-REMOVE, ported from Artboards-U09.dc.html.
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import DissolveItemDialog from "./DissolveItemDialog.vue";
@@ -20,11 +20,25 @@ describe("DissolveItemDialog", () => {
 		expect(w.text()).toContain("No funds are released.");
 	});
 
-	it("lists the requirements that will be returned", () => {
+	it("lists the requirements that will be returned, without repeating department", () => {
 		const w = make();
 		const table = w.get('[data-testid="pln-dissolve-sources"]');
 		expect(table.text()).toContain("Clinical training laptops");
 		expect(table.text()).toContain("KES 30,000,000");
+		expect(table.text()).not.toContain("HRMD");
+		expect(table.text()).not.toContain("Digital Health");
+	});
+
+	it("names the exact purchase being removed when the caller supplies it", () => {
+		const w = make({ item: { title: "Clinical training and deployment laptops for digital health rollout", plan_item_id: "PPI-MOH-2027-033" } });
+		const summary = w.get('[data-testid="pln-dissolve-item-summary"]');
+		expect(summary.text()).toContain("Clinical training and deployment laptops for digital health rollout");
+		expect(summary.text()).toContain("PPI-MOH-2027-033");
+	});
+
+	it("shows no item summary block when the caller does not supply one", () => {
+		const w = make();
+		expect(w.find('[data-testid="pln-dissolve-item-summary"]').exists()).toBe(false);
 	});
 
 	it("emits confirm and cancel", async () => {

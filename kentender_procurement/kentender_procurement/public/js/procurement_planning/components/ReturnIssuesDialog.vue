@@ -3,7 +3,13 @@
      comment ("What needs to change?") against one requirement or the whole
      departmental plan — no second problem/issue field, and no forced
      per-issue requirement (§4.4 supersedes the retired two-field, entry-only
-     contract). -->
+     contract). Re-diffed 22 Sep 2026 against the actual v1.24 U06-RETURN
+     section (this header previously cited that file from before it existed
+     in the repo — see kentender_core's test_artboard_provenance_gate):
+     title, Context/Comment fields and actions all match. "Add another
+     issue" is not drawn in the artboard's one frozen frame, but is the
+     literal §4.4 "one or more" contract a static mockup cannot depict by
+     itself — kept, not a fidelity gap. -->
 <template>
 	<div class="kt-dialog-backdrop" data-testid="dppv-return-dialog">
 		<div class="kt-dialog" style="width: 520px" role="dialog" aria-modal="true" aria-labelledby="dppv-return-title">

@@ -1,5 +1,5 @@
-<!-- PLN-CHG-001 v1.23 §10.8 — the purchase editor (U09), ported from
-     U09.dc.html.
+<!-- PLN-CHG-001 v1.24 §10.8 — the purchase editor (U09), ported from
+     Artboards-U09.dc.html.
 
      This is the screen v1.22 cut hardest, and the cut is the point. The first
      view is Purchase details, Included requirements, Estimated cost,
@@ -47,7 +47,7 @@
 				v-for="notice in notices"
 				:key="notice.kind"
 				class="kt-notice"
-				:class="notice.kind === 'scope_lock' || notice.kind === 'correction_hold' ? 'is-critical' : 'is-warning'"
+				:class="notice.kind === 'scope_locked' || notice.kind === 'correction_hold' ? 'is-critical' : 'is-warning'"
 				data-testid="ppi-notice"
 			>
 				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">

@@ -143,7 +143,10 @@ describe("WorkspaceScreen — page states", () => {
 		const w = make({
 			workspace: workspace({
 				outcome: "FORBIDDEN",
-				forbidden: { heading: "You do not have access to Procurement Planning.", text: "Ask your KenTender administrator." },
+				forbidden: {
+					heading: "You do not have access to Procurement Planning.",
+					text: ["Ask your KenTender administrator.", "Check your assignment in System setup."],
+				},
 			}),
 		});
 		expect(w.find('[data-testid="pln-forbidden"]').exists()).toBe(true);
@@ -165,7 +168,7 @@ describe("WorkspaceScreen — U01 BASE", () => {
 			workspace: workspace({
 				annual_plan: { ...workspace().annual_plan, rows: [DRAFT_ROW] },
 				current_issue: {
-					text: "Allocate KES 48,000,000 more to eligible reserved procurement before sending the plan to Finance.",
+					text: "Reserved procurement is below the required allocation by KES 48,000,000. Resolve this before sending the plan to Finance.",
 					action: "Review reserved procurement",
 					route: ["annual-procurement-plan", "PLN-MOH-2027-001"],
 				},
@@ -178,8 +181,8 @@ describe("WorkspaceScreen — U01 BASE", () => {
 		const w = base();
 		expect(w.find('[data-testid="pln-title"]').text()).toBe("Annual procurement planning");
 		const row = w.find('[data-testid="pln-plan-row-draft"]');
-		expect(row.text()).toContain("No current plan yet");
-		expect(row.text()).toContain("Draft plan");
+		expect(row.text()).toContain("Draft annual procurement plan");
+		expect(row.text()).toContain("2 purchases");
 		expect(row.text()).toContain("KES 130,000,000");
 		expect(row.find("button").text()).toBe("Continue plan");
 		expect(w.find('[data-testid="pln-plan-note"]').text()).toBe(
@@ -190,7 +193,7 @@ describe("WorkspaceScreen — U01 BASE", () => {
 	it("states the reservation shortfall once, as a sentence with one action", () => {
 		const w = base();
 		const issue = w.find('[data-testid="pln-current-issue"]');
-		expect(issue.text()).toContain("Allocate KES 48,000,000 more to eligible reserved procurement");
+		expect(issue.text()).toContain("Reserved procurement is below the required allocation by KES 48,000,000");
 		expect(issue.find('[data-testid="pln-current-issue-action"]').text()).toBe("Review reserved procurement");
 		// PLN22-AC-006: the required/qualifying/shortfall/basis arithmetic
 		// belongs to the Plan check detail, not to this page.
@@ -224,7 +227,7 @@ describe("WorkspaceScreen — U01-CURRENT and U01-CURRENT-UPDATE", () => {
 			}),
 		});
 		expect(w.find('[data-testid="pln-prepare-update"]').text()).toBe("Prepare plan update");
-		expect(w.find('[data-testid="pln-plan-row-current"]').text()).toContain("Current plan");
+		expect(w.find('[data-testid="pln-plan-row-current"]').text()).toContain("Current annual procurement plan");
 		expect(w.find('[data-testid="pln-current-issue"]').exists()).toBe(false);
 		// §11.9 — Prepare invokes the guarded successor start; it is a command,
 		// not a link to the plan.
@@ -246,7 +249,7 @@ describe("WorkspaceScreen — U01-CURRENT and U01-CURRENT-UPDATE", () => {
 			}),
 		});
 		expect(w.find('[data-testid="pln-plan-row-current"]').exists()).toBe(true);
-		expect(w.find('[data-testid="pln-plan-row-candidate"]').text()).toContain("Plan update — Draft");
+		expect(w.find('[data-testid="pln-plan-row-candidate"]').text()).toContain("Continue plan update");
 		expect(w.find('[data-testid="pln-update-note"]').text()).toBe(
 			"The current plan remains in force while this update is reviewed.",
 		);
@@ -328,7 +331,7 @@ describe("WorkspaceScreen — U01-DEPARTMENT-AUTHOR and U01-HOD", () => {
 				],
 			}),
 		});
-		expect(w.find('[data-testid="pln-your-actions-heading"]').text()).toBe("Your action");
+		expect(w.find('[data-testid="pln-your-actions-heading"]').text()).toBe("1 departmental plan requires your decision");
 		const action = w.find('[data-testid="pln-action"]');
 		expect(action.text()).toContain("Review and submit");
 		expect(action.find('[data-testid="pln-action-button"]').text()).toBe("Review departmental plan");

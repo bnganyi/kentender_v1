@@ -148,6 +148,19 @@ describe("DppPlanScreen — U03 exclusions", () => {
 	});
 });
 
+describe("DppPlanScreen — U03-FUNDING", () => {
+	it("names the open row plainly instead of repeating its live action link", () => {
+		const w = make({ fundingEntryId: INFRASTRUCTURE.entry_id });
+		const openRow = w.findAll('[data-testid="pln-dpp-row"]')[0];
+		expect(openRow.find('[data-testid="pln-dpp-row-editing"]').text()).toBe("Editing");
+		expect(openRow.find('[data-testid="pln-dpp-row-action"]').exists()).toBe(false);
+		// The other row, whose panel is not open, keeps its own action link.
+		const otherRow = w.findAll('[data-testid="pln-dpp-row"]')[1];
+		expect(otherRow.find('[data-testid="pln-dpp-row-editing"]').exists()).toBe(false);
+		expect(otherRow.find('[data-testid="pln-dpp-row-action"]').text()).toBe("Review details");
+	});
+});
+
 describe("DppPlanScreen — U05-HOD", () => {
 	function hod(extra = {}) {
 		return make({
@@ -209,7 +222,7 @@ describe("DppPlanScreen — U05-CORRECTION and U02-CLOSED", () => {
 				access: "hod",
 				can_submit: true,
 				is_correction: true,
-				accepted_submission_number: 1,
+				returned_submission_number: 1,
 				candidate_submission_number: 2,
 				certification: { show: true, text: "I certify…", checkbox_label: "I confirm this certification" },
 				entries: [
@@ -221,7 +234,17 @@ describe("DppPlanScreen — U05-CORRECTION and U02-CLOSED", () => {
 			}),
 		});
 		expect(w.find('[data-testid="pln-dpp-correction-notice"]').text()).toContain("Your plan needs a correction");
-		expect(w.find('[data-testid="pln-dpp-issue"]').text()).toContain(
+		// Returned submission 1, correction submission 2 — two distinct facts,
+		// each separately labelled (§10.4's own context-row convention).
+		const context = w.find('[data-testid="pln-dpp-context"]').text();
+		expect(context).toContain("Returned submission");
+		expect(context).toContain("Correction submission");
+		const issue = w.find('[data-testid="pln-dpp-issue"]');
+		// The artboard's own display label for a returned comment shown back
+		// to the department — "What needs to change?" is the return dialog's
+		// *input* label, a different string for a different place.
+		expect(issue.text()).toContain("Procurement comment");
+		expect(issue.text()).toContain(
 			"Explain how the KES 30,000,000 estimate for the deployment laptops was calculated",
 		);
 		expect(w.find('[data-testid="pln-dpp-submit"]').text()).toBe("Resubmit departmental plan");

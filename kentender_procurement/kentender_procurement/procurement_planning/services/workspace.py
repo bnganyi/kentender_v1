@@ -37,11 +37,15 @@ from kentender_procurement.procurement_planning.services.planning_roles import (
 PAGE = "procurement-planning"
 
 FORBIDDEN = {
-	"heading": "You do not have access to Procurement Planning",
-	"text": (
-		f"This area needs one of these responsibilities: {FORBIDDEN_RESPONSIBILITIES}. "
-		"Ask your KenTender administrator to assign one in System setup."
-	),
+	"heading": "You do not have access to Procurement Planning.",
+	# U21-DENIED draws two separate paragraphs, not one run-together
+	# sentence, and its own second sentence says "check your assignment",
+	# not "assign one" (re-diffed 22 Sep 2026 against the real v1.24
+	# artboard).
+	"text": [
+		f"This area needs one of these responsibilities: {FORBIDDEN_RESPONSIBILITIES}.",
+		"Ask your KenTender administrator to check your assignment in System setup.",
+	],
 }
 
 
@@ -130,61 +134,6 @@ def _allocated_value(version_name: str) -> float:
 	)
 
 
-# PLN-CHG-001 v1.18 §9.6 (U01) — the Annual Plan card's own fact rows and, at
-# most, one discretionary command button distinct from the "Your actions"
-# queue: a Planner-exercisable command when this actor holds it, a plain
-# "View" link for every other reader, and no button while the candidate
-# awaits a decision someone else's own task already carries (U01-F/U01-D).
-FUNDING_BADGE = {
-	"Not requested": "Not requested", "Awaiting confirmation": "Awaiting confirmation",
-	"Confirmed": "Confirmed", "Returned": "Returned", "Stale": "Stale",
-}
-
-
-def _plan_version_facts(version, *, route: list[str]) -> dict[str, Any]:
-	return {
-		"route": route,
-		"version_number": version.version_number,
-		"version_status": version.version_status,
-		"funding_state": FUNDING_BADGE.get(version.funding_state, cstr(version.funding_state)),
-		"plan_items": frappe.db.count("Annual Plan Item", {"plan_version": version.name, "item_state": ("!=", "Dissolved")}),
-		"value_display": _money(_allocated_value(version.name)),
-	}
-
-
-def _annual_plan_card(plan, active_version, open_version, *, is_planner: bool) -> list[dict[str, Any]]:
-	if not plan:
-		return []
-	route = ["annual-procurement-plan", plan.plan_reference]
-	blocks: list[dict[str, Any]] = []
-	has_distinct_candidate = bool(active_version and open_version and open_version.name != active_version.name)
-	if active_version:
-		block = {"kind": "active", **_plan_version_facts(active_version, route=route)}
-		if has_distinct_candidate:
-			block.update(action="View Active Plan", action_kind="secondary")
-		elif is_planner:
-			block.update(action="Prepare plan update", action_kind="primary")
-		else:
-			block.update(action="View Active Plan", action_kind="secondary")
-		blocks.append(block)
-	if open_version and (not active_version or has_distinct_candidate):
-		block = {"kind": "candidate" if active_version else "current", **_plan_version_facts(open_version, route=route)}
-		if not is_planner:
-			block.update(action="View", action_kind="secondary")
-		elif open_version.version_status == "Draft":
-			block.update(action="Continue Plan" if not active_version else "Continue update", action_kind="primary")
-		elif open_version.version_status == "Published — activation held":
-			block.update(action="View published Plan", action_kind="secondary")
-		else:
-			# Awaiting Accounting Officer / Awaiting statutory approval /
-			# Approved — publication pending / Publication failed / Withdrawn
-			# for correction: the decision or recovery lives on that actor's
-			# own task in "Your actions" (U01-F), never a second button here.
-			block.update(action="", action_kind="")
-		blocks.append(block)
-	return blocks
-
-
 ROOT_STATUS = {
 	"Draft": ("Draft", "attention"),
 	"Submitted": ("Awaiting validation", "attention"),
@@ -211,8 +160,15 @@ def _dpp_rows(fiscal_year: str, permitted_units: set[str] | None, window_open: b
 		entries = frappe.get_all(
 			"Departmental Plan Entry",
 			filters={"dpp_version": version_name or ""},
-			fields=["indicative_amount", "not_proceeding_reason"],
+			fields=["indicative_amount", "not_proceeding_reason", "budget_line"],
 			limit_page_length=0,
+		)
+		# Matches dpp_read.get_departmental_plan's own "complete" predicate — an
+		# entry counts once it is either funded (budget line + a positive
+		# amount) or explicitly excluded, never merely present.
+		incomplete = sum(
+			1 for e in entries
+			if not cstr(e.not_proceeding_reason).strip() and not (e.budget_line and flt(e.indicative_amount) > 0)
 		)
 		status, kind = ROOT_STATUS.get(root.current_state, (root.current_state, "muted"))
 		# §4.3 — the root's state follows its current Version, so a Draft here
@@ -236,6 +192,7 @@ def _dpp_rows(fiscal_year: str, permitted_units: set[str] | None, window_open: b
 				"version_name": version_name,
 				"state": root.current_state,
 				"requirements": len(entries),
+				"incomplete": incomplete,
 				"value": _money(sum(flt(e.indicative_amount) for e in entries if not cstr(e.not_proceeding_reason).strip())),
 				"status": status,
 				"status_kind": kind,
@@ -471,7 +428,11 @@ def _plan_rows(plan, active_version, open_version, *, is_planner: bool) -> list[
 
 def _current_issue(plan, open_version, *, is_planner: bool) -> dict[str, Any] | None:
 	"""One plain sentence and one recovery action, placed immediately below the
-	plan row. Never four accounting values (PLN22-AC-006)."""
+	plan row. Never four accounting values (PLN22-AC-006). §7.1's own
+	information priority groups the Draft plan, its one current issue and
+	the Continue action as a single unit, so this is the one place either
+	issue below belongs — never a second, separate card repeating the same
+	route with a different, less accurate heading."""
 	if not (plan and open_version and open_version.version_status == "Draft" and is_planner):
 		return None
 	from kentender_procurement.procurement_planning.services import readiness
@@ -479,17 +440,36 @@ def _current_issue(plan, open_version, *, is_planner: bool) -> dict[str, Any] | 
 	try:
 		allocations = readiness.reservation_allocations(open_version.name, plan.fiscal_year)
 	except Exception:
-		return None
-	if not allocations.get("mandatory") or allocations.get("met"):
-		return None
-	shortfall = cstr(allocations.get("shortfall"))
-	if not shortfall:
-		return None
-	return {
-		"text": f"Allocate {_money(flt(shortfall))} more to eligible reserved procurement before sending the plan to Finance.",
-		"action": "Review reserved procurement",
-		"route": ["annual-procurement-plan", plan.plan_reference],
-	}
+		allocations = {}
+	if allocations.get("mandatory") and not allocations.get("met"):
+		shortfall = cstr(allocations.get("shortfall"))
+		if shortfall:
+			return {
+				# U01's own drawn copy (re-diffed 22 Sep 2026 against the real
+				# v1.24 artboard — this previously said "Allocate ... more to
+				# eligible reserved procurement", a sentence the artboard never
+				# draws; this code path had never actually fired live before
+				# today's fiscal_year fix, so the mismatch went unnoticed).
+				"text": f"Reserved procurement is below the required allocation by {_money(flt(shortfall))}. Resolve this before sending the plan to Finance.",
+				"action": "Review reserved procurement",
+				"route": ["annual-procurement-plan", plan.plan_reference],
+			}
+	# Accepted departmental sources waiting to be formed into this same
+	# open Draft. This used to also appear, worded and routed identically,
+	# as its own "actionable" card headed "N departmental plan requires
+	# your decision" — a wrong label for a fact about the Annual Plan, not
+	# a departmental one, and a duplicate of the task row immediately above
+	# this notice, both leading to the identical open Draft (found live
+	# 22 Sep 2026).
+	count, value, departments = _accepted_unallocated(plan.fiscal_year)
+	if count:
+		plural = "entry" if count == 1 else "entries"
+		return {
+			"text": f"{count} accepted departmental {plural} from {' · '.join(departments)} ({_money(value)}) are ready to consolidate into this plan.",
+			"action": "Open Annual Plan",
+			"route": ["annual-procurement-plan", plan.plan_reference],
+		}
+	return None
 
 
 def _departmental_table(dpp_rows: list[dict[str, Any]]) -> dict[str, Any]:
@@ -516,8 +496,21 @@ def _departmental_table(dpp_rows: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def _own_departmental_section(dpp_rows, departmental_units, *, window_open: bool, financial_year_label: str) -> dict[str, Any] | None:
-	"""U01-DEPARTMENT-AUTHOR / U01-HOD — "Your departmental plan"."""
-	if not departmental_units:
+	"""U01-DEPARTMENT-AUTHOR / U01-HOD — "Your departmental plan".
+
+	The spec's own fixture for this section is a single-department Author
+	(§11 U01-DEPARTMENT-AUTHOR); there is no drawn multi-department variant.
+	The prior code picked `departmental_units[0]` regardless, so an actor who
+	authors two or more departments (the same dual-assignment shape NDS's own
+	regression fixture exercises) got this section AND its own "Your
+	actions" card pointing at the identical plan — two controls for one
+	decision, the exact confusion §1.1's task-led redesign exists to remove
+	(found live 22 Sep 2026). "Your actions" already lists every authored
+	department individually and correctly; when there is more than one, this
+	spotlight is redundant with it, not complementary, so it is omitted
+	rather than arbitrarily picking one department to duplicate.
+	"""
+	if len(departmental_units) != 1:
 		return None
 	unit = departmental_units[0]
 	row = next((r for r in dpp_rows if r["organisation_unit"] == unit["id"]), None)
@@ -592,8 +585,18 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 			# §10.3 U01-HOD — the Head of Department's own work on a draft is
 			# not the Author's. They are not continuing to write it; they are
 			# deciding whether to certify and submit it, so the card names
-			# that outcome rather than the draft's size.
-			if authz.dpp_read_profile(unit["id"], actor) == "hod":
+			# that outcome rather than the draft's size. That is only true
+			# once there is a complete plan to decide on — `dpp_read_profile`
+			# resolves "hod" for anyone who also holds Head of User Department
+			# there, whether or not the Draft has a single requirement in it
+			# yet, so an actor who is both Author and HOD (the same dual-
+			# assignment shape NDS's own regression fixture exercises) was
+			# told to "review and submit" an empty shell the instant they
+			# opened it (found live 22 Sep 2026). Route them to "Continue"
+			# instead until the plan is actually ready — at least one
+			# requirement, every one of them funded or explicitly excluded.
+			ready_to_review = row["requirements"] > 0 and not row["incomplete"]
+			if ready_to_review and authz.dpp_read_profile(unit["id"], actor) == "hod":
 				actionable.append(
 					_action(
 						"Review departmental plan",
@@ -614,12 +617,23 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 		elif row["state"] == "Returned":
 			returned = _returned_on(row["version_name"])
 			actionable.append(_action("Correct and resubmit departmental plan", f"{detail} · returned {returned}" if returned else detail, "Correct", row["route"], "critical"))
-		elif row["state"] == "Submitted":
-			waiting.append({"item": "Departmental plan awaiting validation", "scope": row["department"]})
+		# A Submitted plan adds nothing here: §10.3's own rule is "waiting
+		# work is status on its document, not a duplicate disabled task",
+		# and the artboard's own U01 register ends at the plan count with no
+		# further line — `departmental_table` (built from this same `row`,
+		# below) already carries "Awaiting validation" as that department's
+		# Status cell. This branch used to also push a plain, headerless
+		# "Departmental plan awaiting validation · <department>" paragraph
+		# to `waiting`, restating the exact same fact a second time with no
+		# heading of its own (found live 22 Sep 2026).
 
 	plan = frappe.db.get_value(
 		"Annual Plan", {"fiscal_year": fy},
-		["name", "plan_reference", "title", "active_version", "open_successor_version"], as_dict=True,
+		# `fiscal_year` itself is read back here too — `_current_issue` keys
+		# both its reservation-shortfall and accepted-entry checks off
+		# `plan.fiscal_year`, and without it those checks silently no-op
+		# (found live 22 Sep 2026, while fixing the duplicate-panel bug).
+		["name", "plan_reference", "title", "active_version", "open_successor_version", "fiscal_year"], as_dict=True,
 	)
 	open_version = None
 	if plan and (plan.open_successor_version or plan.active_version):
@@ -657,15 +671,14 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 			)
 		count, value, departments = _accepted_unallocated(fy)
 		if count and plan and open_version and open_version.version_status == "Draft":
-			plural = "entry" if count == 1 else "entries"
-			actionable.append(
-				_action(
-					f"{count} accepted departmental {plural} ready to consolidate",
-					f"{' · '.join(departments)} · {_money(value)}",
-					"Open Annual Plan",
-					["annual-procurement-plan", plan.plan_reference],
-				)
-			)
+			# §7.1 — surfaced as this open Draft's own "one current issue"
+			# (`_current_issue`, rendered directly under its task row) rather
+			# than a second, separate card repeating the identical route
+			# under a less accurate heading — this used to also be an
+			# "actionable" entry, which put "N departmental plan requires
+			# your decision" and "Annual plan work" on screen together for
+			# the same plan (found live 22 Sep 2026).
+			pass
 		elif count and plan and open_version and open_version.version_status == "Active" and not plan.open_successor_version:
 			# §5 "Active; no successor → Begin plan update": the Planner holds
 			# the command, so the workspace offers it rather than a waiting line

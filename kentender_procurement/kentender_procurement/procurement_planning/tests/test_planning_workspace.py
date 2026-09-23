@@ -81,9 +81,15 @@ class TestWorkspace(WorkspaceCase):
 		fx._user(nobody, "PLNT Nobody")
 		result = self.load(nobody)
 		self.assertEqual(result["outcome"], "FORBIDDEN")
-		self.assertEqual(result["forbidden"]["heading"], "You do not have access to Procurement Planning")
-		self.assertIn("Procurement Planner, Head of Procurement Function, Finance Confirmation Officer, Accounting Officer", result["forbidden"]["text"])
-		self.assertIn("KenTender administrator", result["forbidden"]["text"])
+		self.assertEqual(result["forbidden"]["heading"], "You do not have access to Procurement Planning.")
+		# U21-DENIED draws two separate paragraphs — the responsibilities list,
+		# then the administrator instruction — not one run-together sentence.
+		self.assertIn(
+			"Departmental Author, Head of User Department, Procurement Planner, Head of Procurement Function, "
+			"Finance Confirmation Officer, Accounting Officer, configured statutory decision-holder or Auditor",
+			result["forbidden"]["text"][0],
+		)
+		self.assertIn("check your assignment in System setup", result["forbidden"]["text"][1])
 		self.assertEqual(frappe.db.count("Departmental Plan"), before)
 		# an Author elsewhere sees an OK page with nothing of Alpha's
 		other = self.load(fx.OUTSIDER)
@@ -106,6 +112,48 @@ class TestWorkspace(WorkspaceCase):
 		# schedule-health projection; the forecast facility it measured is
 		# deferred in full (PLN23-CHG-001, AC-130 future-only).
 		self.assertNotIn("schedule_health", result)
+
+	def test_own_plan_spotlight_is_omitted_for_an_author_of_more_than_one_department(self):
+		"""§11 U01-DEPARTMENT-AUTHOR draws only a single-department fixture.
+		An actor who authors two or more departments must not have "Your
+		departmental plan" arbitrarily pick one and duplicate a card "Your
+		actions" already lists correctly for every one of them (found live
+		22 Sep 2026 — Grace's own dual-assignment shape, ported here as a
+		direct check on the pure projection rather than a new URA fixture)."""
+		one_row = [{"organisation_unit": "OU-A", "department": "Alpha", "state": "Draft", "status": "Draft", "route": ["x"]}]
+		two_units = [{"id": "OU-A", "name": "Alpha"}, {"id": "OU-B", "name": "Beta"}]
+		self.assertIsNone(
+			workspace._own_departmental_section(one_row, two_units, window_open=True, financial_year_label="FY 2101/02")
+		)
+		one_unit = [{"id": "OU-A", "name": "Alpha"}]
+		self.assertIsNotNone(
+			workspace._own_departmental_section(one_row, one_unit, window_open=True, financial_year_label="FY 2101/02")
+		)
+
+	def test_a_dual_author_and_hod_actor_is_offered_continue_not_review_until_the_plan_is_ready(self):
+		"""`dpp_read_profile` resolves "hod" for HYBRID the instant a Draft
+		exists in their own unit, whether or not it has a single requirement
+		in it — "Review departmental plan" must wait for something to
+		actually review (found live 22 Sep 2026)."""
+		frappe.set_user(fx.HYBRID)
+		opened = dpp_lifecycle.open_departmental_plan(
+			organisation_unit=fx.OU_ALPHA,
+			fiscal_year=fx.FY_OPEN, idempotency_key=key(), fixture_namespace=fx.NS,
+		)
+		empty = self.load(fx.HYBRID)
+		headlines = [row["headline"] for row in empty["actionable"]]
+		self.assertIn("Continue departmental plan", headlines)
+		self.assertNotIn("Review departmental plan", headlines)
+
+		frappe.set_user(fx.HYBRID)
+		dpp_lifecycle.save_direct_requirement(
+			dpp_version=opened["current_version"], values=fx.direct_values(),
+			expected_record_version=opened["record_version"], idempotency_key=key(),
+		)
+		ready = self.load(fx.HYBRID)
+		headlines = [row["headline"] for row in ready["actionable"]]
+		self.assertIn("Review departmental plan", headlines)
+		self.assertNotIn("Continue departmental plan", headlines)
 
 	def test_every_open_validation_task_is_offered_to_the_planner(self):
 		self.submitted()
@@ -217,6 +265,19 @@ class TestWorkspace(WorkspaceCase):
 		self.assertEqual(table["count_label"], "1 departmental plan")
 		self.assertNotIn("version", table["rows"][0])
 		self.assertEqual(result["departmental_plans"][0]["version"], 1)
+
+	def test_a_submitted_plan_is_status_on_its_own_table_row_not_a_duplicate_waiting_line(self):
+		"""§10.3's own rule: "waiting work is status on its document, not a
+		duplicate disabled task." The artboard's own U01 register ends at the
+		plan count with nothing after it, no separate "Departmental plan
+		awaiting validation" text restating what the Departmental plans
+		table's own Status cell already says for that department (found live
+		22 Sep 2026)."""
+		self.submitted()
+		result = self.load(fx.AUTHOR)
+		self.assertEqual(result["waiting"], [])
+		table_row = next(r for r in result["departmental_table"]["rows"] if r["department"] == fx.OU_ALPHA_NAME)
+		self.assertEqual(table_row["status"], "Awaiting validation")
 
 	def test_departmental_plans_switch_to_the_accepted_shape_once_one_plan_is_accepted(self):
 		"""U01-A/B/C — once any departmental plan this FY has been accepted,

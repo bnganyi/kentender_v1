@@ -1,4 +1,5 @@
-// PLN-CHG-001 v1.23 §10.7 — FormPlanItemsDialog component tests (U08).
+// PLN-CHG-001 v1.24 §10.7 — FormPlanItemsDialog component tests (U08), verified
+// against Artboards-U07-U08.dc.html.
 //
 // Selected sources, the grouping choice, and what it will produce — in that
 // order. The reason for combining is asked here; there is no partial quantity

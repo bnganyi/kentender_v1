@@ -1,4 +1,5 @@
-// PLN-CHG-001 v1.23 §10.12 — PublicationResultScreen component tests (U13).
+// PLN-CHG-001 v1.24 §10.12 — PublicationResultScreen component tests (U13),
+// ported from Artboards-U12-U13.dc.html.
 //
 // Four facts that do not prove each other, and two rules about the actions: an
 // unknown external result is never shown as failure and never offers a blind
@@ -57,10 +58,20 @@ describe("PublicationResultScreen — U13 BASE", () => {
 		expect(w.find('[data-testid="pub-retry"]').exists()).toBe(false);
 		expect(w.find('[data-testid="pub-reconcile"]').exists()).toBe(false);
 	});
+
+	it("§10.12 header: offers View approved plan, Download approved plan and Download Plan data, in that order", async () => {
+		const w = make();
+		const actions = w.findAll('[data-testid="pub-view-plan"], [data-testid="pub-download-plan"], [data-testid="pub-download-plan-data"]');
+		expect(actions.map((a) => a.text())).toEqual(["View approved plan", "Download approved plan", "Download Plan data"]);
+		await w.find('[data-testid="pub-download-plan"]').trigger("click");
+		expect(w.emitted("download-plan")).toBeTruthy();
+		await w.find('[data-testid="pub-download-plan-data"]').trigger("click");
+		expect(w.emitted("download-plan-data")).toBeTruthy();
+	});
 });
 
 describe("PublicationResultScreen — recorded evidence", () => {
-	it("U13-EVIDENCE-RECORDED: shows every field, with dispatch and recording distinct", () => {
+	it("U13-EVIDENCE-RECORDED: shows every field, with dispatch and recording distinct", async () => {
 		const w = make({
 			task: task({
 				status_rows: [
@@ -73,20 +84,46 @@ describe("PublicationResultScreen — recorded evidence", () => {
 					recorded: true,
 					submitted_display: "10 Dec 2026, 14:00 EAT",
 					channel: "Official correspondence",
+					destination: "National Treasury",
 					dispatch_reference: "MOH/APP/2027/001",
 					recorded_display: "10 Dec 2026, 14:05 EAT",
 					recorded_by_name: "Amina Hassan",
+					supporting_attachment: "Treasury-dispatch-evidence-example.pdf",
 				},
 			}),
 		});
 		const evidence = w.find('[data-testid="pub-treasury-evidence"]');
 		expect(evidence.text()).toContain("10 Dec 2026, 14:00 EAT");
 		expect(evidence.text()).toContain("Official correspondence");
+		// Destination is its own labelled field, not folded into the channel.
+		expect(evidence.text()).toContain("National Treasury");
 		expect(evidence.text()).toContain("MOH/APP/2027/001");
 		expect(evidence.text()).toContain("Amina Hassan");
 		// Recording it once does not offer to record it again.
 		expect(w.find('[data-testid="pub-record-treasury"]').exists()).toBe(false);
 		expect(w.find('[data-testid="pub-correct-treasury"]').text()).toBe("Correct submission details");
+		// §10.12 — enabled once there is something to view.
+		const viewEvidence = w.find('[data-testid="pub-view-evidence"]');
+		expect(viewEvidence.text()).toBe("View submission evidence");
+		await viewEvidence.trigger("click");
+		expect(w.emitted("view-evidence")).toBeTruthy();
+	});
+
+	it("offers no View submission evidence link when no file was recorded", () => {
+		const w = make({
+			task: task({
+				treasury_evidence: {
+					recorded: true,
+					submitted_display: "10 Dec 2026, 14:00 EAT",
+					channel: "Official correspondence",
+					destination: "National Treasury",
+					dispatch_reference: "MOH/APP/2027/001",
+					recorded_by_name: "Amina Hassan",
+					supporting_attachment: "",
+				},
+			}),
+		});
+		expect(w.find('[data-testid="pub-view-evidence"]').exists()).toBe(false);
 	});
 });
 

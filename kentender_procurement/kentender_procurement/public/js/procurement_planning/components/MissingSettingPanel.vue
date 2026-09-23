@@ -1,5 +1,5 @@
-<!-- PLN-CHG-001 v1.23 §10.16 — the Planning-side missing-setting panel
-     (C01–C04), ported from C01-C04.dc.html.
+<!-- PLN-CHG-001 v1.24 §10.16 — the Planning-side missing-setting panel
+     (C01–C04), ported from Artboards-C01-U21.dc.html.
 
      Setup itself belongs to System setup. This panel exists so that the person
      looking at the blocked action learns three things without leaving it: the

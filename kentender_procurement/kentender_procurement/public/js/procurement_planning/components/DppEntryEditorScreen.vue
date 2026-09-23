@@ -1,5 +1,6 @@
-<!-- PLN-CHG-001 v1.23 §10.4 — Add or edit a departmental requirement
-     (U04-DIRECT / U04-EDIT), ported from U02-U05.dc.html.
+<!-- PLN-CHG-001 v1.24 §10.4 — Add or edit a departmental requirement
+     (U04-DIRECT / U04-EDIT), ported class-for-class from
+     Artboards-U02-U05.dc.html.
 
      This page exists for requirements the department states itself, which did
      not come through Departmental Needs. Everything on it is the department's
@@ -8,7 +9,15 @@
 
      Funding for an *accepted* requirement is not here. It opens beneath its
      own row on the departmental plan (U03-FUNDING), where the rest of the
-     plan stays visible. -->
+     plan stays visible.
+
+     Re-diffed 23 Sep 2026 against the actual v1.24 U04-DIRECT/U04-EDIT
+     sections (this header previously cited a bare "U02-U05.dc.html",
+     unresolvable against the real "Artboards-U02-U05.dc.html" file — see
+     kentender_core's test_artboard_provenance_gate): heading, description,
+     field order, field labels, footer actions and the U04-EDIT status/remove
+     variant all already matched. Fixed one drift: the Description field's
+     textarea was 3 rows against the artboard's 2. -->
 <template>
 	<div class="pln-entry-editor">
 		<div class="kt-page">
@@ -42,7 +51,7 @@
 			</div>
 			<div class="kt-field">
 				<label for="dpp-description" class="kt-label">Description</label>
-				<textarea id="dpp-description" class="kt-input" rows="3" data-testid="dpp-f-description" :disabled="!canEdit" v-model="form.description"></textarea>
+				<textarea id="dpp-description" class="kt-input" rows="2" data-testid="dpp-f-description" :disabled="!canEdit" v-model="form.description"></textarea>
 			</div>
 			<div class="kt-field">
 				<label for="dpp-result" class="kt-label">Expected result</label>

@@ -1,4 +1,5 @@
-// PLN-CHG-001 v1.23 §10.8 — PlanItemEditorScreen component tests (U09).
+// PLN-CHG-001 v1.24 §10.8 — PlanItemEditorScreen component tests (U09),
+// verified against Artboards-U09.dc.html.
 //
 // This screen was cut hardest by v1.22, so most of these tests are about what
 // is *not* there: no resolver status or rule version as ordinary fields, no
@@ -203,6 +204,37 @@ describe("PlanItemEditorScreen — dates", () => {
 	});
 });
 
+describe("PlanItemEditorScreen — visible blockers", () => {
+	// The PLN-CHG-001 §8 error contract, not invented copy: `get_plan_item`
+	// enriches every item blocker with the exact same canonical MESSAGES[code]
+	// text the plan-level readiness list already carries (a prior drift left
+	// the item-level list without any `message` key at all, so a blocker
+	// outside the dates/reservation exclusions rendered as a blank critical
+	// notice).
+	it("shows a method blocker's real message, not a blank critical notice", () => {
+		const w = make({
+			item: item({
+				blockers: [{ code: "PLN_METHOD_NOT_ADMISSIBLE", field: "procurement_method", message: "The selected method does not meet the applicable procurement conditions." }],
+			}),
+		});
+		const notice = w.find('[data-testid="ppi-blocker"]');
+		expect(notice.exists()).toBe(true);
+		expect(notice.text()).toContain("The selected method does not meet the applicable procurement conditions.");
+	});
+
+	it("does not duplicate the schedule and reservation blockers, which already have their own dedicated treatment", () => {
+		const w = make({
+			item: item({
+				blockers: [
+					{ code: "PLN_SCHEDULE_INVALID", message: "Review the highlighted dates and the rule shown for them." },
+					{ code: "PLN_RESERVATION_REQUIRED", message: "Choose who this procurement is reserved for." },
+				],
+			}),
+		});
+		expect(w.find('[data-testid="ppi-blocker"]').exists()).toBe(false);
+	});
+});
+
 describe("PlanItemEditorScreen — material issues stay visible", () => {
 	it("C03 — names the missing setting, the action it blocks and its owner", () => {
 		const w = make({
@@ -233,36 +265,58 @@ describe("PlanItemEditorScreen — material issues stay visible", () => {
 		);
 	});
 
-	it("U09-LOCKED: shows the scope restriction and removes the remove control", () => {
+	it("U09-LOCKED: shows the scope restriction as critical and removes the remove control", () => {
+		// Kind and copy match the real read model (plan_read.py `_plan_checks`
+		// sibling `notices` builder) exactly — a mismatched `kind` string here
+		// previously let a scope-locked item render as a quiet warning instead
+		// of the critical notice the artboard draws.
 		const w = make({
 			item: item({
 				mutable: false,
 				scope_lock: { locked: true },
 				notices: [
 					{
-						kind: "scope_lock",
-						heading: "This item already has an authorised requisition",
-						text: "Add extra requirements as a separate item in a plan update.",
+						kind: "scope_locked",
+						heading: "Additional requirements need a separate Plan Item",
+						text: "This Plan Item already has an authorised Requisition. Create a separate Plan Item for the additional requirement.",
 					},
 				],
 			}),
 		});
-		expect(w.find('[data-testid="ppi-notice"]').text()).toContain("already has an authorised requisition");
+		const notice = w.find('[data-testid="ppi-notice"]');
+		expect(notice.text()).toContain("already has an authorised Requisition");
+		expect(notice.classes()).toContain("is-critical");
+		expect(notice.classes()).not.toContain("is-warning");
 		expect(w.find('[data-testid="ppi-remove"]').exists()).toBe(false);
 		expect(w.find('[data-testid="ppi-save"]').exists()).toBe(false);
+	});
+
+	it("also renders a correction hold as critical", () => {
+		const w = make({
+			item: item({
+				notices: [
+					{
+						kind: "correction_hold",
+						heading: "New Requisition authorisations are on hold",
+						text: "An unresolved correction request affects this Plan Item. Existing authorised proceedings are unchanged.",
+					},
+				],
+			}),
+		});
+		expect(w.find('[data-testid="ppi-notice"]').classes()).toContain("is-critical");
 	});
 
 	it("keeps a material issue outside Supporting details", () => {
 		const w = make({
 			item: item({
-				notices: [{ kind: "source_correction", heading: "A departmental requirement changed", text: "Rebuild this purchase." }],
+				notices: [{ kind: "correction_hold", heading: "New Requisition authorisations are on hold", text: "Rebuild this purchase." }],
 			}),
 		});
 		const supporting = w.find('[data-testid="ppi-supporting"]');
 		expect(supporting.attributes("open")).toBeUndefined();
 		// The notice is in the page body, not inside the disclosure.
 		expect(w.find('[data-testid="ppi-notice"]').exists()).toBe(true);
-		expect(supporting.text()).not.toContain("A departmental requirement changed");
+		expect(supporting.text()).not.toContain("Rebuild this purchase.");
 	});
 });
 
