@@ -93,7 +93,10 @@
 					</thead>
 					<tbody>
 						<tr v-for="row in sources" :key="row.requirement + row.department" data-testid="ppi-source-row">
-							<td>{{ row.requirement }}</td>
+							<td>
+								<div class="pln-row-title">{{ row.requirement }}</div>
+								<div v-if="sourceRefLine(row)" class="kt-muted pln-row-ref">{{ sourceRefLine(row) }}</div>
+							</td>
 							<td>{{ row.department }}</td>
 							<td class="is-num">{{ row.quantity_number }}</td>
 							<td>{{ row.unit_label }}</td>
@@ -137,7 +140,6 @@
 							:value="draft.estimate_basis"
 							@input="onField('estimate_basis', $event.target.value)"
 						></textarea>
-						<div class="kt-field-hint">What the estimate is based on, and what it includes.</div>
 					</div>
 					<div v-else class="kt-group">
 						<span class="kt-label">Estimate basis</span>
@@ -146,19 +148,23 @@
 							<a href="#" data-testid="ppi-read-basis" @click.prevent="fullBasis = !fullBasis">Read full basis</a>
 						</p>
 					</div>
-					<!-- §10.8 — shown only when an actual accessible record exists. -->
+					<!-- §10.8/§12 — an identifiable market-survey document or working-paper
+					     reference, not an attached file (the spec's own words); the
+					     placeholder carries that distinction instead of a permanent
+					     hint line, since nothing else on this form gets one by default. -->
 					<div v-if="item.mutable" class="kt-field pln-field-320" :class="flagged('estimate_basis_reference')">
-						<label for="ppi-basis-reference" class="kt-label">Supporting document</label>
+						<label for="ppi-basis-reference" class="kt-label">Supporting document reference</label>
 						<input
 							id="ppi-basis-reference"
 							class="kt-input"
 							data-testid="ppi-basis-reference"
+							placeholder="A market-survey document or working-paper reference — not a file upload"
 							:value="draft.estimate_basis_reference"
 							@input="onField('estimate_basis_reference', $event.target.value)"
 						>
 					</div>
 					<div v-else-if="draft.estimate_basis_reference" class="pln-fact">
-						<span class="kt-label">Supporting document</span>
+						<span class="kt-label">Supporting document reference</span>
 						<span class="kt-meta-value">{{ draft.estimate_basis_reference }}</span>
 					</div>
 				</div>
@@ -175,7 +181,7 @@
 				     the panel sat after every field in this section, including ones
 				     it has nothing to do with). Never resolver mechanics, and the
 				     setup control only for an actor who actually holds setup access. -->
-				<MissingSettingPanel v-for="(panel, index) in missingSettings" :key="index" :panel="panel" />
+				<MissingSettingGroup :panels="missingSettings" />
 				<!-- The artboard's paired 320px controls. These were wrapped in a
 				     `.kt-meta-row` — a bottom-aligned row built for short read-only
 				     facts — which stretched each control to its content and left
@@ -295,6 +301,10 @@
 						<label for="ppi-invitation" class="kt-label">Target invitation date</label>
 						<input id="ppi-invitation" class="kt-input" type="date" data-testid="ppi-invitation" :value="draft.baseline_invitation_date" :disabled="!item.mutable" @input="onField('baseline_invitation_date', $event.target.value)">
 					</div>
+					<!-- The board's own label text is the landmark the fidelity gate
+					     checks; the unit still needs saying for a bare number input,
+					     so it stays a hint (unlike Estimate basis's removed one,
+					     this one disambiguates the value itself, not instructs). -->
 					<div class="kt-field" :class="flagged('estimated_delivery_period_days')">
 						<label for="ppi-delivery" class="kt-label">Expected delivery period</label>
 						<input id="ppi-delivery" class="kt-input" type="number" min="0" data-testid="ppi-delivery-days" :value="draft.estimated_delivery_period_days" :disabled="!item.mutable" @input="onField('estimated_delivery_period_days', $event.target.value)">
@@ -324,7 +334,7 @@
 					{{ boundaryText }}
 				</p>
 				<div class="pln-region-gap">
-					<a href="#" class="kt-btn kt-btn-ghost" data-testid="ppi-view-dates" @click.prevent="supporting = true">View calculated dates</a>
+					<a href="#" class="kt-btn kt-btn-ghost" data-testid="ppi-view-dates" @click.prevent="viewCalculatedDates">View calculated dates</a>
 				</div>
 			</div>
 
@@ -399,7 +409,7 @@
 				<button
 					v-if="item.mutable && !item.scope_lock?.locked"
 					type="button"
-					class="kt-btn kt-btn-secondary kt-danger"
+					class="kt-btn kt-btn-primary kt-danger"
 					data-testid="ppi-remove"
 					:disabled="pending"
 					@click="$emit('remove')"
@@ -428,8 +438,8 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from "vue";
-import MissingSettingPanel from "./MissingSettingPanel.vue";
+import { computed, nextTick, reactive, ref, watch } from "vue";
+import MissingSettingGroup from "./MissingSettingGroup.vue";
 
 const props = defineProps({
 	item: { type: Object, default: () => ({}) },
@@ -483,6 +493,12 @@ function initial() {
 }
 
 const draft = reactive(initial());
+// What the server actually flagged this field against — kept only to tell
+// whether the Planner has acted on a field since the page loaded (found
+// live 23 Sep 2026: a filled-in field still showed the critical border,
+// because the flag is the server's, current only as of the last load, and
+// nothing cleared it before the next save re-derives it).
+const loaded = reactive(initial());
 const fullReason = ref(false);
 const fullBasis = ref(false);
 const supporting = ref(false);
@@ -495,6 +511,7 @@ watch(
 	(item, previous) => {
 		if (previous && (previous.record_version ?? null) === (item?.record_version ?? null)) return;
 		Object.assign(draft, initial());
+		Object.assign(loaded, initial());
 		forceReservation.value = false;
 	},
 );
@@ -504,6 +521,12 @@ const preference = computed(() => props.item.preference || {});
 const baseline = computed(() => props.item.baseline || {});
 const methodProfile = computed(() => classification.value.method_profile || {});
 const sources = computed(() => props.item.sources || []);
+// U09's own row: the need reference and revision, then the budget line —
+// found live 23 Sep 2026 missing entirely, though the read model already
+// carries both (`need_reference_line`, `budget_line`).
+function sourceRefLine(row) {
+	return [row.need_reference_line, row.budget_line_display].filter(Boolean).join(" · ");
+}
 const notices = computed(() => props.item.notices || []);
 const missingSettings = computed(() => props.item.missing_settings || []);
 
@@ -567,8 +590,13 @@ const visibleBlockers = computed(() => {
 
 // The fields those blockers name, so the sentence is literally true.
 const flaggedFields = computed(() => new Set((props.item.blockers || []).map((b) => b.field).filter(Boolean)));
+// The server's word on this field is only as current as the last load; once
+// the Planner has changed it, the highlight would be claiming something
+// about a value the server has never actually seen. Whether the new value
+// clears the blocker for real is the next save's question, not this one's.
 function flagged(field) {
-	return flaggedFields.value.has(field) ? "pln-field-flagged" : "";
+	if (!flaggedFields.value.has(field)) return "";
+	return String(draft[field]) === String(loaded[field]) ? "pln-field-flagged" : "";
 }
 
 // Every milestone row before the source boundary reads "—" until the Planner
@@ -598,5 +626,14 @@ function onField(field, value) {
 
 function scrollToDates() {
 	document.querySelector('[data-testid="ppi-invitation"]')?.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+// Opening Supporting details without moving to it reads as a dead link when
+// the section is already off-screen (found live 23 Sep 2026).
+function viewCalculatedDates() {
+	supporting.value = true;
+	nextTick(() => {
+		document.querySelector('[data-testid="ppi-milestones"], [data-testid="ppi-milestones-empty"]')?.scrollIntoView({ behavior: "smooth", block: "center" });
+	});
 }
 </script>

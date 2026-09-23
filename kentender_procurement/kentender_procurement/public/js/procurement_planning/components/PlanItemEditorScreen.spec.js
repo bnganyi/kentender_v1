@@ -19,6 +19,8 @@ const SOURCES = [
 		unit_label: "Each",
 		required_by_display: "31 Dec 2027",
 		amount_display: "KES 20,000,000",
+		need_reference_line: "NDS-MOH-2027-0003 · Revision 2",
+		budget_line_display: "MOH-BL-HWD-2027",
 	},
 	{
 		requirement: "Clinical deployment laptops for digital health rollout",
@@ -27,6 +29,8 @@ const SOURCES = [
 		unit_label: "Each",
 		required_by_display: "31 Dec 2027",
 		amount_display: "KES 30,000,000",
+		need_reference_line: "NDS-MOH-2027-0004 · Revision 1",
+		budget_line_display: "MOH-BL-HWD-2027",
 	},
 ];
 
@@ -166,6 +170,17 @@ describe("PlanItemEditorScreen — included requirements and cost", () => {
 		expect(rows[0].text()).toContain("KES 20,000,000");
 	});
 
+	it("names each requirement's own need reference, revision and budget line beneath its title", () => {
+		// U09's own row: the name leads, the reference sits beneath it in
+		// smaller muted text — found live 23 Sep 2026 missing entirely, though
+		// the read model already carries both pieces.
+		const w = make();
+		const rows = w.findAll('[data-testid="ppi-source-row"]');
+		expect(rows[0].find(".pln-row-title").text()).toBe("Clinical training laptops for digital health rollout");
+		expect(rows[0].find(".pln-row-ref").text()).toBe("NDS-MOH-2027-0003 · Revision 2 · MOH-BL-HWD-2027");
+		expect(rows[1].find(".pln-row-ref").text()).toBe("NDS-MOH-2027-0004 · Revision 1 · MOH-BL-HWD-2027");
+	});
+
 	it("previews the aggregation reason with a disclosure to the full text", async () => {
 		const w = make();
 		expect(w.find('[data-testid="ppi-combined"]').text()).toContain("Combined purchase");
@@ -205,6 +220,35 @@ describe("PlanItemEditorScreen — dates", () => {
 		expect(w.find('[data-testid="ppi-boundary"]').exists()).toBe(false);
 		expect(w.find('[data-testid="ppi-save"]').attributes("disabled")).toBeDefined();
 		expect(w.find('[data-testid="ppi-review-dates"]').exists()).toBe(true);
+	});
+});
+
+describe("PlanItemEditorScreen — footer and flagged fields", () => {
+	// U09/U09-READY's own footer button — a solid destructive action that
+	// opens the Remove confirmation, matching DissolveItemDialog's own
+	// primary+danger button, not the outlined secondary+danger treatment a
+	// choice-among-options button (like a Decline) correctly uses elsewhere.
+	it("Remove purchase is the artboard's solid danger button, not an outlined one", () => {
+		const w = make();
+		const remove = w.find('[data-testid="ppi-remove"]');
+		expect(remove.classes()).toContain("kt-btn-primary");
+		expect(remove.classes()).toContain("kt-danger");
+		expect(remove.classes()).not.toContain("kt-btn-secondary");
+	});
+
+	// The server's blocker list is only current as of the last load; typing
+	// into a flagged field should not go on reading as still-broken until
+	// the next save re-derives it (found live 23 Sep 2026).
+	it("a flagged field drops its highlight once the Planner has changed it", async () => {
+		const w = make({
+			item: item({
+				blockers: [{ code: "PLN_PLAN_CONTENTS_INCOMPLETE", field: "estimate_basis", message: "Complete the highlighted purchase details and required evidence." }],
+			}),
+		});
+		const field = w.find('[data-testid="ppi-estimate-basis"]').element.closest(".kt-field");
+		expect(field.classList).toContain("pln-field-flagged");
+		await w.find('[data-testid="ppi-estimate-basis"]').setValue("A market survey conducted across three qualified suppliers in the region.");
+		expect(field.classList).not.toContain("pln-field-flagged");
 	});
 });
 

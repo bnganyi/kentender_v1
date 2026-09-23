@@ -194,6 +194,40 @@ every file this sweep touched and re-running the identical test against
 `WorkspaceScreen`'s "actionable" read after a same-session actor handoff,
 not a defect in any screen this pass touched.
 
+## U09 purchase editor — a second pass, from live use (23 Sep 2026)
+
+The owner kept using the screen after the layout re-port above and pointed
+out seven more things, this time asking to see the exact artboard section
+first. Each was checked against it, not assumed from the screenshots alone.
+
+| # | Reported | Found against `Artboards-U09.dc.html` | Fixed |
+|---|---|---|---|
+| 1 | "View classification details" shows a different hover colour | Not a defect: `.kt-btn-ghost:hover` background is `--kt-color-accent-100`, `#e5e9fb`, byte-identical to the reference design system's own `.btn-ghost:hover`; text colour is unchanged in both. No code difference found. | Not changed. |
+| 2 | Included requirements shows "richer" detail than expected | The board draws each row's need reference, revision and budget line beneath its title in every U09/-READY/-REMOVE section; the editor showed the title alone. The read model already carries `need_reference_line` and `budget_line_display` — nothing new to compute. | Sub-line added (`pln-row-ref`, already a defined class); title given the board's own `font-weight:600`. |
+| 3 | "View calculated dates" looked like it did nothing | It is real in the board (`#U09` → `Read full basis`-style placeholder, an artboard-tool convention, not an instruction to make it inert) and already opened Supporting details — but never scrolled to it, so clicking it while the section was off-screen looked like a dead link. | Opens Supporting details and scrolls the calculated-dates table into view. |
+| 4 | "Remove purchase" looked different from other destructive buttons | Confirmed, and isolated: the board's own footer button is `btn-danger` (solid fill, white text) exactly like `DissolveItemDialog.vue`'s already-correct confirm button; this screen's own button used the outlined `kt-btn-secondary kt-danger` instead — the treatment two other danger buttons in Needs/Planning correctly use for a *choice among options* (Decline vs Approve), not for a standalone action that opens its own confirmation. One misapplied instance, not a systemic gap. | `kt-btn-secondary` → `kt-btn-primary`. |
+| 5 | "Supporting document" isn't in the design, meaning unclear | True — no generated U09 state draws it as an editable field, only the spec's own §12 prose ("Supporting document … only when an actual accessible record exists") and the required-before-submission contract table. Genuinely required (`estimate_basis_reference`, `PLN_PLAN_CONTENTS_INCOMPLETE` if empty), so removing it was not an option; its meaning was the actual gap. | Relabelled "Supporting document reference"; the spec's own words ("an identifiable market-survey document or working-paper reference — not a file upload") now sit in the placeholder, not a permanent line. |
+| 6 | Field hints are inconsistent and make the form busy by default | Confirmed: no generated U09 state shows a hint under Estimate basis or Expected delivery period at all. | Estimate basis's generic hint removed outright. Expected delivery period's hint stayed — it disambiguates a bare number input, not a generic instruction, and the fidelity gate confirmed the alternative (folding the unit into the label text) breaks the board's own exact label landmark. |
+| 7 | Mandatory fields keep their red border after the field is filled in | Confirmed, general: `flagged(field)` reads the server's `blockers` list, current only as of the last load; nothing cleared it before the next save re-derived it, so a field the Planner had just filled in still read as broken. Re-validating client-side was not an option (duplicates server business logic `AGENTS.md` already forbids — `procurement_method`'s own flag depends on a rule lookup no browser can do). | The flag now also requires the field's current draft value to still equal what was loaded; editing a flagged field drops the highlight immediately, and the next save is what actually confirms it. |
+
+**Also acted on, raised as a follow-on to (7).** However many purchases and
+rule kinds are unresolved at once, every `MissingSettingPanel` rendered
+full-size, so two already read as a wall of amber and the owner asked what
+five would look like — correctly: it would dominate the screen. No board
+draws more than one C03/C04 panel at a time, so there was nothing to port
+literally; `MissingSettingGroup.vue` is new — a single panel renders exactly
+as before, two or more collapse to one closed-by-default summary line ("N
+settings need administrator attention") that opens to the same panels.
+Wired into both places this can happen: the item editor's own pair, and the
+Annual Plan's per-purchase list (`AnnualPlanScreen.vue`), where several
+purchases missing a rule is the more likely way to actually reach five.
+
+Verified live on the reported purchase (PPI-MOH-2027-001), against
+`PlanItemEditorScreen.spec.js` (27 tests), the new `MissingSettingGroup.spec.js`
+(5), the full planning vitest suite (291), and live U07/U09/U09-INVALID-
+SCHEDULE/U09-REMOVE fidelity plus the full `pln-item.spec.ts` browser suite (13
+Playwright, all green).
+
 ## U09's missing-setting panel: named, ordered, and told apart (23 Sep 2026)
 
 Raised live: a Planner picked Open Tender, saved, and on the next load found

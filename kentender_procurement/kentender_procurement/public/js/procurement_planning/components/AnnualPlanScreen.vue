@@ -256,8 +256,12 @@
 
 			<!-- §10.16 C03-METHOD-MISSING / C04-SCHEDULE-MISSING — each missing
 			     rule with the purchase it is missing for, immediately above the
-			     actions it blocks. -->
-			<MissingSettingPanel v-for="(panel, index) in missingSettings" :key="index" :panel="panel" />
+			     actions it blocks. A plan can carry one of these per purchase per
+			     unresolved rule kind, so MissingSettingGroup collapses more than
+			     one to a summary rather than stacking every purchase's own panel
+			     full-size (found live 23 Sep 2026, on the item editor's own pair;
+			     the same scaling problem applies here at least as much). -->
+			<MissingSettingGroup :panels="missingSettings" />
 
 			<div class="pln-footer" data-testid="ppl-footer">
 				<button
@@ -340,7 +344,7 @@
 
 <script setup>
 import { computed, ref, watch } from "vue";
-import MissingSettingPanel from "./MissingSettingPanel.vue";
+import MissingSettingGroup from "./MissingSettingGroup.vue";
 
 const props = defineProps({
 	plan: { type: Object, default: () => ({}) },

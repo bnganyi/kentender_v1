@@ -897,6 +897,9 @@
 	font-size: 12px;
 	margin-top: 2px;
 }
+.kt-pln .pln-row-title {
+	font-weight: 600;
+}
 
 /* Row detail — an exclusion reason or a returned comment — belongs to the row
    above it, so it is indented and unruled at the top. */
