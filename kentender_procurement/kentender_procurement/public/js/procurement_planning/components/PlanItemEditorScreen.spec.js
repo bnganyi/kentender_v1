@@ -282,6 +282,7 @@ describe("PlanItemEditorScreen — material issues stay visible", () => {
 						affected_purchase: "Test procurement package · PPI-MOH-2027-033",
 						responsible_role: "Administrator or System Manager",
 						note: "",
+						lede: "Open Tender cannot be confirmed until the applicable method rule is verified in System setup.",
 						can_open_setup: false,
 						action: "",
 						href: "",
@@ -291,6 +292,7 @@ describe("PlanItemEditorScreen — material issues stay visible", () => {
 			}),
 		});
 		const panel = w.find('[data-testid="pln-missing-setting"]');
+		expect(panel.text()).toContain("Open Tender cannot be confirmed until the applicable method rule is verified in System setup.");
 		expect(panel.text()).toContain("Applicable procurement method rule");
 		expect(panel.text()).toContain("Send plan for governance review");
 		expect(panel.text()).toContain("Administrator or System Manager");
@@ -299,6 +301,10 @@ describe("PlanItemEditorScreen — material issues stay visible", () => {
 		expect(w.find('[data-testid="pln-ask-administrator"]').text()).toBe(
 			"Ask your KenTender administrator to complete this setting.",
 		);
+		// Stated before the field it blocks, not after the whole grid.
+		const region = w.find('[data-testid="pln-missing-setting"]').element.closest(".kt-region");
+		const html = region.innerHTML;
+		expect(html.indexOf("pln-missing-setting")).toBeLessThan(html.indexOf("ppi-method"));
 	});
 
 	it("U09-LOCKED: shows the scope restriction as critical and removes the remove control", () => {

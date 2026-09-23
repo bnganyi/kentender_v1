@@ -47,10 +47,12 @@ def panel(
 	section: str,
 	affected_purchase: str = "",
 	note: str = "",
+	lede: str = "",
 	user: str | None = None,
 ) -> dict[str, Any]:
 	"""One missing-setting panel, for placement immediately above the action
-	it blocks."""
+	it blocks. `lede` is C03-METHOD-MISSING's own leading sentence naming the
+	exact choice that is blocked; every other variant's board carries none."""
 	actor = cstr(user or frappe.session.user)
 	can_open = is_technical(actor)
 	return {
@@ -59,6 +61,7 @@ def panel(
 		"affected_purchase": affected_purchase,
 		"responsible_role": RESPONSIBLE_ROLE,
 		"note": note,
+		"lede": lede,
 		# Either a real route, or the sentence that names who to ask. Never a
 		# control the reader cannot use.
 		"can_open_setup": can_open,
@@ -171,8 +174,15 @@ def item_procurement_rules(*, item, fiscal_year: str, user: str | None = None) -
 		("schedule", "Applicable procurement schedule", "Submit annual plan"),
 	):
 		if _rule_unresolved(item, fiscal_year, which):
+			# C03-METHOD-MISSING's own leading sentence names the exact choice
+			# that stopped resolving — the method is always set here, since an
+			# unset one exits `_rule_unresolved` above before this runs.
+			lede = (
+				f"{cstr(item.procurement_method)} cannot be confirmed until the applicable method rule is verified in System setup."
+				if which == "method" else ""
+			)
 			panels.append(panel(
-				setting=setting, affected_action=action,
+				setting=setting, affected_action=action, lede=lede,
 				section=SECTION_PROCUREMENT_SETTINGS, affected_purchase=label, user=user,
 			))
 	return panels

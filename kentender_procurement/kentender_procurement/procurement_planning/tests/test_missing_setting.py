@@ -144,6 +144,13 @@ class TestC03AndC04ProcurementRules(MissingSettingCase):
 				# A maintainer cannot act on "a rule is missing" alone.
 				self.assertIn("PPI-TEST-001", panel["affected_purchase"])
 				self.assertIn("Test procurement package", panel["affected_purchase"])
+		# C03-METHOD-MISSING alone names the exact choice that stopped
+		# resolving; C04-SCHEDULE-MISSING's own board carries no such line.
+		self.assertEqual(
+			method["lede"],
+			"Open Tender cannot be confirmed until the applicable method rule is verified in System setup.",
+		)
+		self.assertEqual(schedule["lede"], "")
 
 	def test_a_purchase_with_no_method_chosen_yet_is_not_a_missing_setting(self):
 		from kentender_procurement.procurement_planning.services import readiness

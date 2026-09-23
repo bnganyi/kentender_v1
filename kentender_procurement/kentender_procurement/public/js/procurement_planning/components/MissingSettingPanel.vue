@@ -7,6 +7,13 @@
      for it. C03 and C04 add the purchase the rule is missing for, because a
      maintainer cannot act on "a rule is missing" alone.
 
+     C03-METHOD-MISSING alone carries a leading sentence, naming the exact
+     choice that is blocked ("Open Tender cannot be confirmed until…") — found
+     live 23 Sep 2026, missing entirely, which is why a Planner whose earlier
+     method choice stopped resolving saw a generic four-fact row and no
+     connection to what they had actually picked. C01/C02/C04 carry none, so
+     `lede` is optional and every caller but the method one leaves it unset.
+
      The control is real or it is absent. A maintainer gets a route to the
      exact section; everyone else gets the sentence naming who to ask. Planning
      shows no disabled setup control. -->
@@ -15,8 +22,9 @@
 		<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 			<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
 		</svg>
-		<div class="kt-notice-body">
-			<div class="kt-meta-row">
+		<div class="pln-missing-setting-body">
+			<div v-if="panel.lede" class="kt-notice-body" data-testid="pln-missing-setting-lede">{{ panel.lede }}</div>
+			<div class="kt-meta-row is-tight">
 				<div>
 					<span class="kt-label">Setting</span>
 					<span class="kt-meta-value" data-testid="pln-missing-setting-name">{{ panel.setting }}</span>

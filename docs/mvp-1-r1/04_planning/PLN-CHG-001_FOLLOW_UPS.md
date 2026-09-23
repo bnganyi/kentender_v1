@@ -193,3 +193,38 @@ every file this sweep touched and re-running the identical test against
 `HEAD` — same failure, same locator, same line. A timing race in
 `WorkspaceScreen`'s "actionable" read after a same-session actor handoff,
 not a defect in any screen this pass touched.
+
+## U09's missing-setting panel: named, ordered, and told apart (23 Sep 2026)
+
+Raised live: a Planner picked Open Tender, saved, and on the next load found
+the Procurement method dropdown empty and two identically-styled amber
+panels. All three symptoms trace to one thing, none of them a code defect
+in the choice itself — the applicability date the method-eligibility rule is
+checked against comes from the purchase's own Target invitation date once
+one is set, falling back to the plan's fiscal-year start until then; filling
+in Dates *after* Procurement approach (the form's own field order) can
+retroactively invalidate an already-saved, already-valid choice. That is
+correct, load-bearing behaviour — a method genuinely can stop being
+admissible when its applicable date changes — but the panel that explains it
+was porting `C01`/`C02`/`C04` faithfully while missing what `C03-METHOD-
+MISSING`'s own board draws differently:
+
+| Found against the real C03 board | Fixed |
+|---|---|
+| No leading sentence. C03 alone opens with one naming the exact blocked choice ("Open Tender cannot be confirmed until the applicable method rule is verified in System setup."); `MissingSettingPanel.vue` had no such line for any variant. | Optional `lede`, rendered only when a caller sets it; `item_procurement_rules()` sets it for the method variant only, matching C03; C01/C02/C04 stay exactly as drawn. |
+| Panel placement. The board states the blocked setting *before* the field it blocks; the editor rendered every missing-setting panel after the entire Procurement approach grid, including fields the panel had nothing to do with. | Moved directly under the section heading, before the field grid. |
+| Stacked panels touch with no gap anywhere in the app — found here with two, but every `v-for` over `.kt-notice` (issues, corrections, missing settings) has the same gap. | One rule in the shared `kt-industry` tokens: adjacent `.kt-notice` siblings get `margin-top`. Fixes this for every screen that stacks notices, not only this one. |
+
+Answers the "what if 5 issues occur" question the same way: each panel
+already carries its own setting/purchase/action facts, so scaling was never
+about consolidating them into one block — it was that two of them read as
+one repeated block with no lede to tell them apart. With a name and a gap,
+N of them read as N distinct things.
+
+Verified live (`http://127.0.0.1:8000` — `kentender.midas.com` was not
+resolving this session; the dev site's own `/etc/hosts` entry appears to
+have been dropped, most likely by a WSL restart regenerating the file) as
+Mercy Kilonzo on the actual purchase from the report, and against
+`test_missing_setting.py` (13 Python), `MissingSettingPanel.spec.js` (6),
+`PlanItemEditorScreen.spec.js` (24), and the live U09 fidelity and
+`pln-item.spec.ts` suites (10 Playwright, including `expectLayoutSanity`).

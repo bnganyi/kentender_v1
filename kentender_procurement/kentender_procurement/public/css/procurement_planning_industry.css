@@ -1002,15 +1002,22 @@
 	}
 }
 
-/* §10.16 — the missing-setting panel is a notice whose body is a labelled
-   fact row plus one action, so the labels stack rather than sitting inline. */
+/* §10.16 — the missing-setting panel is a notice whose body is an optional
+   leading sentence (C03), a labelled fact row and one action; the labels
+   stack rather than sitting inline. */
+.kt-pln .pln-missing-setting-body {
+	flex: 1;
+}
+.kt-pln .pln-missing-setting-body .kt-notice-body {
+	margin-bottom: var(--kt-space-3);
+}
 .kt-pln .pln-missing-setting .kt-meta-row {
 	margin-bottom: var(--kt-space-3);
 }
 .kt-pln .pln-missing-setting .kt-btn {
 	align-self: flex-start;
 }
-.kt-pln .pln-missing-setting .kt-notice-body > p:last-child {
+.kt-pln .pln-missing-setting-body > *:last-child {
 	margin-bottom: 0;
 }
 

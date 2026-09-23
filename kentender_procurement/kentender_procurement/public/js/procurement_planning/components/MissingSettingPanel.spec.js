@@ -90,4 +90,18 @@ describe("MissingSettingPanel — C03 / C04", () => {
 		expect(schedule.find('[data-testid="pln-missing-setting-action"]').text()).toBe("Submit annual plan");
 		expect(schedule.find('[data-testid="pln-missing-setting-purchase"]').text()).toContain("PPI-MOH-2027-021");
 	});
+
+	it("C03-METHOD-MISSING alone names the exact choice that stopped resolving", () => {
+		const withLede = make({
+			setting: "Applicable procurement method rule",
+			lede: "Open Tender cannot be confirmed until the applicable method rule is verified in System setup.",
+		});
+		expect(withLede.find('[data-testid="pln-missing-setting-lede"]').text()).toBe(
+			"Open Tender cannot be confirmed until the applicable method rule is verified in System setup.",
+		);
+
+		// C01/C02/C04's own boards carry none — no lede, no placeholder.
+		const withoutLede = make({ setting: "Applicable procurement schedule" });
+		expect(withoutLede.find('[data-testid="pln-missing-setting-lede"]').exists()).toBe(false);
+	});
 });

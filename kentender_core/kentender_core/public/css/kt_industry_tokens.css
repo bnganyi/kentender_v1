@@ -671,6 +671,10 @@
 
 /* Page-level advisory banner, five variants. */
 .kt-industry .kt-notice { display: flex; gap: var(--kt-space-3); align-items: flex-start; padding: var(--kt-space-4); border-left: 3px solid var(--kt-color-accent); background: var(--kt-color-accent-100); }
+/* Stacked notices (several issues, several missing settings) touch with no
+   gap otherwise, reading as one repeated block instead of as many distinct
+   ones — found live 23 Sep 2026 on a purchase missing two rules at once. */
+.kt-industry .kt-notice + .kt-notice { margin-top: var(--kt-space-3); }
 .kt-industry .kt-notice-icon { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; color: var(--kt-color-accent-700); }
 .kt-industry .kt-notice-body { font-size: 14px; color: var(--kt-color-neutral-800); }
 .kt-industry .kt-notice-body strong { color: var(--kt-color-text); }

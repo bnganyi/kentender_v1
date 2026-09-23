@@ -168,6 +168,14 @@
 			<!-- 4. Procurement approach -->
 			<div class="kt-region">
 				<h2>Procurement approach</h2>
+				<!-- §10.16 C03/C04 — the board states the blocked setting before the
+				     field it blocks, not after the whole grid: a Planner reads why
+				     the method they already chose no longer resolves before meeting
+				     what now looks like an empty control (found live 23 Sep 2026 —
+				     the panel sat after every field in this section, including ones
+				     it has nothing to do with). Never resolver mechanics, and the
+				     setup control only for an actor who actually holds setup access. -->
+				<MissingSettingPanel v-for="(panel, index) in missingSettings" :key="index" :panel="panel" />
 				<!-- The artboard's paired 320px controls. These were wrapped in a
 				     `.kt-meta-row` — a bottom-aligned row built for short read-only
 				     facts — which stretched each control to its content and left
@@ -244,10 +252,6 @@
 						<input id="ppi-lots" class="kt-input" type="number" min="2" data-testid="ppi-lot-count" :value="draft.lot_count" :disabled="!item.mutable" @input="onField('lot_count', $event.target.value)">
 					</div>
 				</div>
-				<!-- §10.16 C03/C04 — the named setting, the action it blocks and its
-				     owner, never resolver mechanics; the setup control only for an
-				     actor who actually holds setup access. -->
-				<MissingSettingPanel v-for="(panel, index) in missingSettings" :key="index" :panel="panel" />
 				<button
 					v-if="!showReservation && item.mutable"
 					type="button"
