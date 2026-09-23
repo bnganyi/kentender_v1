@@ -1119,3 +1119,97 @@
 	gap: var(--kt-space-2);
 	margin-top: var(--kt-space-3);
 }
+
+/* ==========================================================================
+   PLN-CHG-001 v1.24 §10.8 — U09 purchase editor
+   --------------------------------------------------------------------------
+   The editor is a form, and the board draws it as one: fields in a column or
+   on a fixed grid, derived results as facts beside them. It had been built
+   with `.kt-meta-row` — the bottom-aligned row for short read-only facts —
+   wrapped around real inputs, which sized every control by its content, left
+   labels and controls on different baselines and (inside `.kt-meta-value`)
+   rendered one input in the heading typeface. Measured live on
+   PPI-MOH-2027-001, 23 September 2026.
+   ========================================================================== */
+
+/* One field per line, a real gap between them, and a reading width. */
+.kt-pln .pln-form-column {
+	display: flex;
+	flex-direction: column;
+	gap: var(--kt-space-4);
+	max-width: 920px;
+}
+
+/* The board's paired fixed-width controls (Procurement approach, Dates). */
+.kt-pln .pln-field-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 320px));
+	gap: var(--kt-space-5);
+	align-items: start;
+	max-width: 1020px;
+}
+.kt-pln .pln-dates-grid {
+	grid-template-columns: repeat(auto-fit, minmax(200px, 240px));
+}
+.kt-pln .pln-field-320 { max-width: 320px; }
+.kt-pln .pln-field-480 { max-width: 480px; }
+
+/* A derived result standing beside editable fields: the same label, and a
+   value line the height of an input, so the row reads as one band. */
+.kt-pln .pln-fact {
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
+}
+.kt-pln .pln-fact .kt-meta-value {
+	display: flex;
+	align-items: center;
+	min-height: 40px;
+}
+
+/* The field a blocker names — this is what "the highlighted purchase details"
+   in the §8 message refers to. */
+.kt-pln .pln-field-flagged > .kt-input {
+	border-color: var(--kt-status-critical);
+}
+.kt-pln .pln-field-flagged > label {
+	color: var(--kt-status-critical);
+}
+
+/* A derived line under a section's own content (the classification summary,
+   the combined-purchase reason): the fact reads first, its link sits at the
+   end of the same line. */
+.kt-pln .pln-summary-line {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--kt-space-5);
+	flex-wrap: wrap;
+	margin-top: var(--kt-space-4);
+	border-left: 2px solid var(--kt-color-divider);
+	padding: 2px 0 2px 16px;
+}
+.kt-pln .pln-summary-line .kt-tag { margin-right: var(--kt-space-2); }
+
+.kt-pln .pln-region-gap { margin-top: var(--kt-space-4); }
+/* The board's own state line: a tick and the live colour when the schedule
+   meets the department's date, the critical colour when it does not. */
+.kt-pln .pln-boundary {
+	margin: var(--kt-space-4) 0 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+	color: var(--kt-status-live);
+}
+.kt-pln .pln-boundary svg { flex: none; }
+
+/* A `<details>` disclosure supplies its own chevron, so the native marker is
+   suppressed (the same treatment `.kt-record` already uses). */
+.kt-pln details.kt-disclosure > summary { list-style: none; }
+.kt-pln details.kt-disclosure > summary::-webkit-details-marker { display: none; }
+.kt-pln .pln-supporting {
+	display: flex;
+	flex-direction: column;
+	gap: var(--kt-space-5);
+}

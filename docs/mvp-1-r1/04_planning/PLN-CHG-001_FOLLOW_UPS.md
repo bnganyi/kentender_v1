@@ -110,3 +110,41 @@ Departmental Plan outside `PLANNING_NS` as non-canonical. The Departmental
 Needs Playwright fixtures cannot clear one themselves — their `seeds/` module
 is inside the D5 boundary scan — so a Needs UI world that accepts on a year
 with no seeded plan leaves one behind for the canonical clear to remove.
+
+## U09 purchase editor — layout audit and re-port (23 Sep 2026)
+
+Raised by the owner from a live screenshot of PPI-MOH-2027-001: "improper
+layout, duplicated sections, no padding, font mismatches, haphazard element
+layout". Audited against `design/Artboards-U09.dc.html` and the rendered page,
+with measurements, rather than patched from the screenshot. Everything below
+was live, and every one of U09's three fidelity assertions passed throughout.
+
+| # | Defect | Cause | Fixed |
+|---|---|---|---|
+| 1 | The same critical banner twice: "Complete the highlighted purchase details and required evidence." | `readiness.item_blockers` reports one blocker per incomplete field; several share one code and one message, and the editor rendered one banner per blocker (also a duplicate `v-for` key). | One banner per distinct sentence. |
+| 2 | Nothing was highlighted, though the sentence says "the highlighted". | The blockers carry the field they are about; the form never used them. | The named fields carry `.pln-field-flagged` (critical border and label). |
+| 3 | Estimated cost read as three ragged columns; the supporting-document input rendered in the heading typeface. | The amount, the basis textarea and the document input shared one `.kt-meta-row`, and the inputs sat inside `.kt-meta-value` (`.kt-input`'s `font: inherit` then picks up the heading family — measured: `Barlow Condensed` against `Barlow` everywhere else). | Amount is a `.pln-fact`; basis and document are `.kt-field`s in a `.pln-form-column`. |
+| 4 | Procurement approach and Dates were full-width or content-width, at mixed baselines. | Both wrapped `.kt-field`s in a `.kt-meta-row`. | `.pln-field-grid` (the board's 320px pairs) and a dates grid of two fields plus two facts, top-aligned. |
+| 5 | Fields touched each other with no separation. | `.kt-field` has no margin of its own; the board wraps them in a flex column with `gap: space-4`. | `.pln-form-column`. |
+| 6 | The classification line and the combined-purchase reason floated loose. | `.pln-summary-line` was used in the template and defined in no stylesheet. | Defined as the board's quiet group with its link at the end of the line. |
+| 7 | "Applicable rule evidence" stood over nothing once the method was cleared. | The heading was unconditional; its two facts were not. | The block renders only when a rule resolved; §10.16's missing-setting panel already carries the unresolved case. |
+| 8 | The boundary sentence appeared twice when the schedule missed the deadline. | The critical notice and the line under the dates both rendered `boundaryText`. | The notice alone, as U09-INVALID-SCHEDULE draws it; the line returns with its tick when the deadline is met. |
+| 9 | A milestone table of seven dashes before any invitation date was set. | The table rendered unconditionally. | It renders when a schedule exists; otherwise one line says what to enter. |
+| 10 | The record context was a three-cell labelled strip the board never draws; Supporting details had no chevron and no contents chip. | Ported from the prose, not the board. | `.kt-page-scope` line; the board's chevron and chip. |
+
+**Why the gate did not catch any of it.** `expectLandmarkSubsequence` compares
+an ordered subsequence of landmark *texts* — headings, labels, buttons, table
+headers. A duplicated banner adds a repeated text a subsequence check skips; a
+field built out of `.kt-meta-value` has the same label text as one built out of
+`.kt-field`; an orphaned label is still a label in the right order. The gate is
+a copy-and-order check, not a layout check, and it never opened this screen in
+its incomplete state at all.
+
+**What now enforces it.** `expectLayoutSanity(page, where)`
+(`tests/ui/helpers/designFidelity.ts`) asserts three structural rules against
+the rendered DOM: no two sibling notices carrying the same sentence, no
+editable control inside a `.kt-meta-value`, no label left standing alone in its
+block. `pln-item.spec.ts` calls it on the editor in its incomplete state, and
+AGENTS.md §6.6 carries the rule. Verified by reintroducing each defect in the
+live DOM: clean page reports nothing, all three are reported the moment they
+return.

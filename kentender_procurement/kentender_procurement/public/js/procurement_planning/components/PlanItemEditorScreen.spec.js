@@ -196,9 +196,13 @@ describe("PlanItemEditorScreen — dates", () => {
 				blockers: [{ code: "PLN_DELIVERY_BOUNDARY_INSUFFICIENT", message: "Estimated completion is after the department's required date." }],
 			}),
 		});
-		expect(w.find('[data-testid="ppi-boundary"]').text()).toBe(
+		// Said once: the critical notice carries the problem and the recovery
+		// action, exactly as U09-INVALID-SCHEDULE draws it, and the ordinary
+		// boundary line below the dates stands down rather than repeating it.
+		expect(w.find('[data-testid="ppi-review-dates"]').element.closest(".kt-notice").textContent).toContain(
 			"Expected completion is after the department's required date.",
 		);
+		expect(w.find('[data-testid="ppi-boundary"]').exists()).toBe(false);
 		expect(w.find('[data-testid="ppi-save"]').attributes("disabled")).toBeDefined();
 		expect(w.find('[data-testid="ppi-review-dates"]').exists()).toBe(true);
 	});
@@ -220,6 +224,38 @@ describe("PlanItemEditorScreen — visible blockers", () => {
 		const notice = w.find('[data-testid="ppi-blocker"]');
 		expect(notice.exists()).toBe(true);
 		expect(notice.text()).toContain("The selected method does not meet the applicable procurement conditions.");
+	});
+
+	// Found live on PPI-MOH-2027-001, 23 September 2026: `item_blockers`
+	// reports one blocker per incomplete field, so a purchase missing both the
+	// estimate basis and its supporting document stacked the same sentence
+	// twice, one banner above the other.
+	it("says one incomplete-contents sentence once, however many fields are missing", () => {
+		const w = make({
+			item: item({
+				blockers: [
+					{ code: "PLN_PLAN_CONTENTS_INCOMPLETE", field: "estimate_basis", message: "Complete the highlighted purchase details and required evidence." },
+					{ code: "PLN_PLAN_CONTENTS_INCOMPLETE", field: "estimate_basis_reference", message: "Complete the highlighted purchase details and required evidence." },
+				],
+			}),
+		});
+		expect(w.findAll('[data-testid="ppi-blocker"]')).toHaveLength(1);
+	});
+
+	// …and the sentence is only true if the fields it points at are marked.
+	it("marks the fields the blockers name, which is what 'the highlighted' means", () => {
+		const w = make({
+			item: item({
+				blockers: [
+					{ code: "PLN_PLAN_CONTENTS_INCOMPLETE", field: "estimate_basis", message: "Complete the highlighted purchase details and required evidence." },
+					{ code: "PLN_METHOD_NOT_ADMISSIBLE", field: "procurement_method", message: "The selected method does not meet the applicable procurement conditions." },
+				],
+			}),
+		});
+		const flagged = w.findAll(".pln-field-flagged").map((el) => el.get("label").text());
+		expect(flagged).toContain("Estimate basis");
+		expect(flagged).toContain("Procurement method");
+		expect(flagged).not.toContain("Title");
 	});
 
 	it("does not duplicate the schedule and reservation blockers, which already have their own dedicated treatment", () => {

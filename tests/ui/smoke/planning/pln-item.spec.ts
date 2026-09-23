@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { login } from "../../helpers/auth";
+import { expectLayoutSanity } from "../../helpers/designFidelity";
 import {
 	AUDITOR,
 	AUTHOR,
@@ -42,6 +43,11 @@ test.describe("PLN18-305 Plan Item editor", () => {
 		await login(page, PLANNER, PASSWORD);
 		await page.goto(`/app/procurement-plan-item/${state.plan_item_id}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan-item");
+		// The editor opens incomplete, which is the state its structural
+		// defects live in: one sentence per missing field stacked as identical
+		// banners, inputs built out of the read-only fact primitive, a label
+		// over an empty section (all three found live, 23 Sep 2026).
+		await expectLayoutSanity(page, "U09 purchase editor, incomplete");
 
 		await page.locator('[data-testid="ppi-estimate-basis"]').fill("Market survey of the current supplier panel including delivery and installation costs.");
 		await page.locator('[data-testid="ppi-basis-reference"]').fill("MS-2098-001");

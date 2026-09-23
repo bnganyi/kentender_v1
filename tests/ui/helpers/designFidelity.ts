@@ -407,3 +407,59 @@ export async function openSection(page: Page, relPath: string, id: string): Prom
 	await openArtboard(page, relPath, "body");
 	return sectionScope(page, id);
 }
+
+/**
+ * Structural defects a landmark comparison cannot see (23 September 2026).
+ *
+ * The fidelity gate compares an ordered subsequence of landmark *texts*:
+ * headings, labels, buttons, table headers. A screen can satisfy it while
+ * saying the same thing twice, rendering a label over nothing, or building a
+ * form out of the read-only fact primitives — none of which change the
+ * landmark sequence. The live purchase editor did all three at once, and
+ * every one of its fidelity assertions still passed.
+ *
+ * These are the rules that class of defect breaks, checked against the DOM
+ * the person actually sees:
+ *
+ *  1. No two sibling notices carry the same sentence. One problem is stated
+ *     once (the editor stacked "Complete the highlighted purchase details…"
+ *     once per incomplete field).
+ *  2. No editable control sits inside a `.kt-meta-value`. That span is the
+ *     read-only fact primitive: it sets the heading typeface and a fact's
+ *     line height, so an input inside it renders in the wrong face and the
+ *     row bottom-aligns controls of different heights.
+ *  3. No `.kt-label` or `.kt-field > label` stands with nothing after it
+ *     inside its own block — a heading over an empty section.
+ */
+export async function expectLayoutSanity(page: Page, where: string): Promise<void> {
+	const problems = await page.evaluate(() => {
+		const root = document.querySelector(".kt-industry") || document.body;
+		const found: string[] = [];
+
+		const noticeText = new Map<string, number>();
+		for (const notice of Array.from(root.querySelectorAll<HTMLElement>(".kt-notice"))) {
+			const text = (notice.innerText || "").replace(/\s+/g, " ").trim();
+			if (!text) continue;
+			noticeText.set(text, (noticeText.get(text) || 0) + 1);
+		}
+		for (const [text, count] of noticeText) {
+			if (count > 1) found.push(`the same notice ${count}×: "${text.slice(0, 80)}"`);
+		}
+
+		for (const fact of Array.from(root.querySelectorAll<HTMLElement>(".kt-meta-value"))) {
+			if (fact.querySelector("input, select, textarea")) {
+				found.push(`an editable control inside a .kt-meta-value ("${(fact.innerText || "").slice(0, 40)}")`);
+			}
+		}
+
+		for (const label of Array.from(root.querySelectorAll<HTMLElement>(".kt-label"))) {
+			const parent = label.parentElement;
+			if (!parent || parent.children.length > 1) continue;
+			const text = (parent.innerText || "").replace(/\s+/g, " ").trim();
+			const own = (label.innerText || "").replace(/\s+/g, " ").trim();
+			if (own && text === own) found.push(`a label with nothing under it: "${own.slice(0, 60)}"`);
+		}
+		return found;
+	});
+	expect(problems, `${where}: layout contract`).toEqual([]);
+}
