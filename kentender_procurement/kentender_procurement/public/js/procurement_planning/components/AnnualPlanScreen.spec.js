@@ -138,22 +138,33 @@ describe("AnnualPlanScreen — U07 BASE", () => {
 	// A plan whose purchases still have their own current work looks
 	// finished (Plan checks can be all clear) with no visible next step
 	// otherwise — Send to Finance is correctly absent, but nothing said why
-	// (found live 23 Sep 2026).
-	it("says why nothing else is available when purchases still have current work", () => {
+	// (found live 23 Sep 2026). Stated right beside the table its own
+	// "Current work" column is read from, not the footer — a sentence
+	// there that just said "shown above" needed the reader to scroll back
+	// up past three sections to see what it meant.
+	it("says why nothing else is available, right beside the table current work names", () => {
 		const w = make();
-		expect(w.find('[data-testid="ppl-incomplete-hint"]').text()).toBe(
-			"2 purchases still need the current work shown above before this plan can move forward.",
-		);
+		const notice = w.find('[data-testid="ppl-incomplete-notice"]');
+		expect(notice.text()).toContain("2 of the purchases above must show Ready in Current work");
+		// Beside the table, inside the same region — not the footer.
+		expect(notice.element.closest(".kt-region").querySelector('[data-testid="ppl-purchases"]')).toBeTruthy();
 	});
 
-	it("says nothing once every purchase is Ready and something else explains the wait", () => {
+	it("says nothing once every purchase is Ready, and still shows the table and its rows", () => {
+		// `v-else` binds to the nearest preceding `v-if`; wrapping the table
+		// and this notice in one `<template v-if="items.length">` matters,
+		// not just cosmetically — without it, "No purchases have been added
+		// yet." paired itself with the notice's own `v-if` instead of the
+		// table's, so it appeared next to a fully populated, all-Ready table
+		// (found live 23 Sep 2026, screenshotted moments after the notice
+		// above was added).
 		const w = make({
-			plan: plan({
-				plan_items: [{ ...INFRASTRUCTURE, current_work: "Ready" }, { ...LAPTOPS, current_work: "Ready" }],
-				waiting_on: { notice: "Ready for the Head of Procurement Function to sign and submit", people: ["Charles Mutiso"], unassigned: "" },
-			}),
+			plan: plan({ plan_items: [{ ...INFRASTRUCTURE, current_work: "Ready" }, { ...LAPTOPS, current_work: "Ready" }] }),
 		});
-		expect(w.find('[data-testid="ppl-incomplete-hint"]').exists()).toBe(false);
+		expect(w.find('[data-testid="ppl-incomplete-notice"]').exists()).toBe(false);
+		expect(w.find('[data-testid="ppl-purchases"]').exists()).toBe(true);
+		expect(w.findAll('[data-testid="ppl-purchase-row"]')).toHaveLength(2);
+		expect(w.find('[data-testid="ppl-purchases-empty"]').exists()).toBe(false);
 	});
 });
 

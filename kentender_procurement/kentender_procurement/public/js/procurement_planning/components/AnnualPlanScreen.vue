@@ -87,35 +87,53 @@
 
 			<div class="kt-region">
 				<h2>Purchases</h2>
-				<table v-if="items.length" class="kt-table" data-testid="ppl-purchases">
-					<thead>
-						<tr>
-							<th>Purchase</th>
-							<th class="is-num">Quantity</th>
-							<th>Unit</th>
-							<th class="is-num">Estimated cost</th>
-							<th>Required by</th>
-							<th>Current work</th>
-							<th>Action</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr v-for="row in items" :key="row.plan_item_id" data-testid="ppl-purchase-row">
-							<td>
-								{{ row.title }}
-								<div class="kt-muted pln-row-ref">{{ row.plan_item_id }}</div>
-							</td>
-							<td class="is-num">{{ row.quantity_number }}</td>
-							<td>{{ row.unit_label }}</td>
-							<td class="is-num">{{ row.value_display }}</td>
-							<td>{{ row.completion_display }}</td>
-							<td>{{ row.current_work }}</td>
-							<td>
-								<a href="#" class="kt-btn kt-btn-ghost" data-testid="ppl-edit-purchase" @click.prevent="$emit('navigate', row.route)">Edit purchase</a>
-							</td>
-						</tr>
-					</tbody>
-				</table>
+				<template v-if="items.length">
+					<table class="kt-table" data-testid="ppl-purchases">
+						<thead>
+							<tr>
+								<th>Purchase</th>
+								<th class="is-num">Quantity</th>
+								<th>Unit</th>
+								<th class="is-num">Estimated cost</th>
+								<th>Required by</th>
+								<th>Current work</th>
+								<th>Action</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr v-for="row in items" :key="row.plan_item_id" data-testid="ppl-purchase-row">
+								<td>
+									{{ row.title }}
+									<div class="kt-muted pln-row-ref">{{ row.plan_item_id }}</div>
+								</td>
+								<td class="is-num">{{ row.quantity_number }}</td>
+								<td>{{ row.unit_label }}</td>
+								<td class="is-num">{{ row.value_display }}</td>
+								<td>{{ row.completion_display }}</td>
+								<td>{{ row.current_work }}</td>
+								<td>
+									<a href="#" class="kt-btn kt-btn-ghost" data-testid="ppl-edit-purchase" @click.prevent="$emit('navigate', row.route)">Edit purchase</a>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<!-- Right beside the table its own "Current work" column is read
+					     from, not a footer sentence several sections and a scroll away
+					     that just said "shown above" — a Planner should not have to
+					     remember which rows said what after scrolling past
+					     Requirements, Plan checks and Changes and history to reach it
+					     (found live 23 Sep 2026: the first version of this notice sat
+					     only in the footer). -->
+					<div v-if="incompleteItems.length" class="kt-notice is-warning" data-testid="ppl-incomplete-notice">
+						<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+							<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
+						</svg>
+						<div class="kt-notice-body">
+							{{ incompleteItems.length === 1 ? "The purchase above" : `${incompleteItems.length} of the purchases above` }}
+							must show Ready in Current work — open it from Action to complete it — before this plan can be sent to Finance for funding review.
+						</div>
+					</div>
+				</template>
 				<div v-else class="kt-empty" data-testid="ppl-purchases-empty">No purchases have been added yet.</div>
 			</div>
 
@@ -276,19 +294,6 @@
 				</button>
 				<span v-else></span>
 				<div class="pln-footer-right">
-					<!-- Send to Finance is absent while a purchase still has current
-					     work (§10.6), same as Plan checks' own reserved-procurement
-					     notice — but nothing said so at the plan level, only on each
-					     purchase's own row, leaving a Planner with a plan that looks
-					     finished and no visible next step (found live 23 Sep 2026). -->
-					<p
-						v-if="incompleteItems.length && plan.mutable && !plan.can_request_funding && !plan.can_sign_and_submit && !waitingOn.notice"
-						class="kt-muted"
-						data-testid="ppl-incomplete-hint"
-					>
-						{{ incompleteItems.length === 1 ? "One purchase still needs" : `${incompleteItems.length} purchases still need` }}
-						the current work shown above before this plan can move forward.
-					</p>
 					<button
 						v-if="plan.mutable"
 						type="button"

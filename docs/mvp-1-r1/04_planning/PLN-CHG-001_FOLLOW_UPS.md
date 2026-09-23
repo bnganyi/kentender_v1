@@ -230,45 +230,79 @@ Playwright, all green).
 
 ## Annual Plan preparation: "the plan looks finished, what's next?" (23 Sep 2026)
 
-Raised live: a Planner looking at a two-purchase plan, both purchases showing
-"Current work: Choose a strategic objective" and every Plan check clear, saw
-no Send to Finance button and no explanation — only Save draft. `Artboards-
-U07-U08.dc.html`'s own fixture note on the base U07 board says plainly "Send
-to Finance is absent while a blocking check fails," and that is correct,
-intended behaviour; the board's own answer to "why" is the per-purchase
-Current work column plus Plan checks' own notices, nothing more. Two real
-gaps, though, sat underneath the report:
+Raised live, then followed up twice more as the story turned out to run
+deeper than the first fix reached. A Planner looking at a two-purchase plan,
+both purchases showing "Current work: Choose a strategic objective" and
+every Plan check clear, saw no Send to Finance button and no explanation —
+only Save draft. `Artboards-U07-U08.dc.html`'s own fixture note on the base
+U07 board says plainly "Send to Finance is absent while a blocking check
+fails," and that is correct, intended behaviour; the board's own answer to
+"why" is the per-purchase Current work column plus Plan checks' own
+notices, nothing more. Three real gaps sat underneath the report, found in
+this order:
 
 1. **No plan-level sentence ties "purchases still have current work" to "so
    Send to Finance is absent."** Reserved-procurement and schedule failures
    already get their own notice-and-action in Plan checks; an incomplete
-   purchase's own gap (Strategy, method, dates, …) never did — a Planner had
-   to infer the connection themselves. `AnnualPlanScreen.vue` now shows, only
-   when nothing else already explains the wait: "N purchases still need the
-   current work shown above before this plan can move forward."
-2. **A real backend bug, found while checking the first.** `get_plan_item`
-   read an unset Strategy as vacuously eligible (`objective_eligible = (not
-   item.strategic_objective) or …`) — so the one purchase actually missing
-   it carried no blocker and no flagged field on its own editor page, though
-   `plan_readiness` (the function `get_plan_item`'s own comment says it
-   mirrors) already read the same unset value as *not* eligible and named
-   it as this plan's blocking reason. A Planner sent to the item by "Choose
-   a strategic objective" found nothing wrong on arrival. Both reads now use
-   the same rule: unset is not eligible, only a chosen objective still in
-   the eligible set (or any chosen one once the version is Active) is.
-   `PlanItemEditorScreen.vue`'s Supporting details — the one place Strategy
-   lives, closed by default — now opens by default too when this is what's
-   blocking the purchase, so the Planner meets the field, not a closed
-   section they then have to know to open.
+   purchase's own gap (Strategy, method, dates, …) never did. First placed
+   in the footer, next to the missing button — but a footer sentence that
+   just said "shown above" needed the reader to scroll back up past
+   Requirements, Plan checks and Changes and history to see what it meant,
+   which is its own report ("I still don't understand — which work?").
+   Moved beside the Purchases table itself, where its own Current work
+   column is read from: "N of the purchases above must show Ready in
+   Current work — open it from Action to complete it — before this plan can
+   be sent to Finance for funding review."
+2. **A real backend bug in `get_plan_item`, found while checking the
+   first.** It read an unset Strategy as vacuously eligible
+   (`objective_eligible = (not item.strategic_objective) or …`) — so a
+   purchase actually missing it carried no blocker and no flagged field on
+   its own editor page, though `plan_readiness` (the function
+   `get_plan_item`'s own comment says it mirrors) already read the same
+   unset value as *not* eligible. Both reads now use the same rule: unset
+   is not eligible, only a chosen objective still in the eligible set (or
+   any chosen one once the version is Active) is. `PlanItemEditorScreen.vue`'s
+   Supporting details — the one place Strategy lives, closed by default —
+   now opens by default too when this is what's blocking the purchase.
+3. **The real bug, in `_item_rows` (`get_annual_plan`'s own item-list
+   query), found from "why does it still say this for an item I just gave
+   an objective to?"** `frappe.get_all`'s explicit `fields=[...]` list
+   never included `strategic_objective`, `baseline_invitation_date` or
+   `estimate_basis` — so `_current_work` (which checks exactly those three
+   in sequence) read every one of them as unset regardless of the real
+   value, for every purchase on every plan, the moment method and
+   reservation were both chosen. That is why it never agreed with the
+   editor, which reads the whole document: not "indirection" as a design
+   choice, a missing-fields bug in one query. Fixed by adding the three
+   fields. A save with every field complete now reads Ready in both places
+   (new test), and the two purchases on the reported plan both correctly
+   read Ready once this landed, with nothing further needed on either.
 
-Verified live on the reported plan (PLN-MOH-2027-001) and its two purchases,
-one of which turned out to still be genuinely missing its objective (the
-other had since been completed in an earlier verification pass this
-session — a stale read on the Annual Plan screen, not a defect); against
-`test_plan_workbench.py` (37, including a new cross-check that both reads
-agree), the full planning vitest suite (294), and live U07/U09/U09-INVALID-
-SCHEDULE/U09-REMOVE fidelity plus the full `pln-annual-plan.spec.ts` and
-`pln-item.spec.ts` browser suites (13 Playwright, all green).
+**Also fixed, self-inflicted.** Wrapping the table and item (2)'s notice
+under one `v-if="items.length"` needs a `<template>`, not just the table —
+`v-else` binds to the *nearest* preceding `v-if`, and putting the notice
+between the table and the original `<div v-else>` silently re-paired that
+`v-else` with the notice's own `v-if="incompleteItems.length"` instead. Two
+Ready purchases then rendered correctly *and* "No purchases have been added
+yet." underneath them, simultaneously — caught from a screenshot seconds
+after building it, since no existing test asserted the empty-state message's
+*absence*. Fixed, and a test now asserts both the table and its rows render
+and the empty state does not, whenever there are items.
+
+**Also found, unrelated — an environment note, not a defect.** Running
+`pln-annual-plan.spec.ts` and `pln-item.spec.ts` together in one Playwright
+invocation failed with the masked-NameError symptom
+[[playwright-test-server-runs-unannounced]] already documents; each file
+alone passed cleanly (6/6, then 7/7) both times. Not investigated further
+per that memory's own guidance — logged there, not here.
+
+Verified against `test_plan_workbench.py` (38, including a save-everything
+regression for finding 3), the full planning vitest suite (294), live on
+the reported plan and both its purchases (`current_work` now reads `Ready`
+for both, `can_request_funding` is `True`, confirmed directly against the
+database and in the browser), and U07/U09/U09-INVALID-SCHEDULE/U09-REMOVE
+fidelity plus the full `pln-annual-plan.spec.ts` and `pln-item.spec.ts`
+browser suites, each run alone (13 Playwright, all green).
 
 ## U09's missing-setting panel: named, ordered, and told apart (23 Sep 2026)
 

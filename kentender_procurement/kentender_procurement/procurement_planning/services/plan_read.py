@@ -421,7 +421,18 @@ def _item_rows(plan_version: str) -> list[dict[str, Any]]:
 	items = frappe.get_all(
 		"Annual Plan Item",
 		filters={"plan_version": plan_version, "item_state": ("!=", "Dissolved")},
-		fields=["name", "plan_item_id", "title", "item_state", "requirement_type", "procurement_method", "reservation_category", "baseline_delivery_completion_date"],
+		# `_current_work` (below) also needs `strategic_objective`,
+		# `baseline_invitation_date` and `estimate_basis` — omitted here
+		# before (found live 23 Sep 2026: `frappe.get_all`'s explicit field
+		# list silently returns None for any field left off it, which
+		# `_current_work` then reads as unset, so every item whose method and
+		# designation were already chosen read as needing a strategic
+		# objective regardless of whether it actually had one).
+		fields=[
+			"name", "plan_item_id", "title", "item_state", "requirement_type", "procurement_method",
+			"reservation_category", "baseline_delivery_completion_date", "strategic_objective",
+			"baseline_invitation_date", "estimate_basis",
+		],
 		order_by="creation asc",
 	)
 	rows = []

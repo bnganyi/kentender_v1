@@ -526,6 +526,28 @@ class TestProfilesEvidenceAndFeasibility(PlanWorkbenchCase):
 		self.assertEqual(objective_check["result"], "1 to fix")
 		self.assertFalse(plan["can_request_funding"])
 
+	def test_a_complete_item_reads_ready_on_the_annual_plan_screen_too(self):
+		"""`get_annual_plan`'s own `_item_rows` fetched `Annual Plan Item` with
+		an explicit field list that left out `strategic_objective`,
+		`baseline_invitation_date` and `estimate_basis` (found live 23 Sep
+		2026): `frappe.get_all` returns nothing for a field it was never
+		asked for, so `_current_work` read every one of those as unset
+		regardless of the real value, and a fully complete purchase went on
+		showing "Choose a strategic objective" forever — disagreeing with
+		its own editor, which reads the whole document and saw nothing
+		wrong. A save with every field set must read Ready in both places."""
+		accepted, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		plan_workbench.save_plan_item(
+			plan_item=item_id, values=fx.item_values(),
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertEqual(refreshed["blockers"], [])
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		row = next(r for r in plan["plan_items"] if r["plan_item_id"] == item_id)
+		self.assertEqual(row["current_work"], "Ready")
+
 	def test_the_item_editor_read_model_carries_a_total_quantity_and_a_restrictions_line(self):
 		"""PLN18-305 (U09 Plan Item editor): `get_plan_item()` needs one
 		aggregate quantity display (the single-source case already has its own
