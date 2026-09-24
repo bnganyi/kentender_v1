@@ -86,6 +86,7 @@ def purge(*, commit: bool = True) -> dict[str, int]:
 		# Rules a spec added through the real Add rule screen (PW- identifiers).
 		"playwright_rules": register.purge_playwright_rules(),
 		# Calendars a spec added through the real screen ("Playwright…").
+		"playwright_schedules": settings.purge_playwright_schedules(),
 		"playwright_calendars": settings.purge_playwright_calendars(),
 	}
 	if commit:

@@ -86,6 +86,7 @@ const LEGACY = {
 	"edit-method-rule": ["procurement-rules", "edit"],
 	"check-sources": ["procurement-rules", "check-sources"],
 	profile: ["schedule-profiles", ""],
+	"new-schedule": ["schedule-profiles", "new"],
 	"new-schedule-version": ["schedule-profiles", "new-version"],
 	"edit-schedule": ["schedule-profiles", "edit"],
 	calendar: ["calendars", ""],
@@ -112,7 +113,7 @@ export function routeToLegacy(route, { isMethodRule = () => false } = {}) {
 	if (tab === "fiscal-years") return id ? `year/${id}` : "";
 	if (tab !== "procurement-settings") return "";
 	if (action === "new") {
-		return { "funding-sources": "new-source", "procurement-rules": "new-rule", calendars: "new-calendar" }[section] || "";
+		return { "funding-sources": "new-source", "procurement-rules": "new-rule", "schedule-profiles": "new-schedule", calendars: "new-calendar" }[section] || "";
 	}
 	if (!id) return "";
 	if (section === "funding-sources") return `source/${id}`;

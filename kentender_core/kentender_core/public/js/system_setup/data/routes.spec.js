@@ -71,6 +71,7 @@ describe("the current tabs' internal views ⇄ §9 links (until Phase 5 re-ports
 		["procurement-settings", "edit-schedule/SP-1", "procurement-settings/schedule-profiles/SP-1/edit"],
 		["procurement-settings", "calendar/CAL-1", "procurement-settings/calendars/CAL-1"],
 		["procurement-settings", "new-calendar", "procurement-settings/calendars/new"],
+		["procurement-settings", "new-schedule", "procurement-settings/schedule-profiles/new"],
 		// C04 — the calendar's board views each have their own link.
 		["procurement-settings", "calendar-new-version/CAL-1", "procurement-settings/calendars/CAL-1/new-version"],
 		["procurement-settings", "calendar-edit/CAL-1", "procurement-settings/calendars/CAL-1/edit"],

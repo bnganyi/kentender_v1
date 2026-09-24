@@ -74,6 +74,15 @@ async function openEditor(props) {
 	return wrapper;
 }
 
+// The board's selected interval: pick the interval that closes at a
+// milestone, then set its default days.
+async function setDefault(wrapper, milestone, value) {
+	if (!wrapper.find(`[data-testid="kt-sve-select-${milestone}"][aria-pressed="true"]`).exists()) {
+		await wrapper.find(`[data-testid="kt-sve-select-${milestone}"]`).trigger("click");
+	}
+	await wrapper.find('[data-testid="kt-sve-i-default"]').setValue(value);
+}
+
 describe("ScheduleVersionEditor", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -84,17 +93,26 @@ describe("ScheduleVersionEditor", () => {
 
 	it("opens on the schedule's own values, with every milestone editable", async () => {
 		const wrapper = await openEditor();
-		expect(wrapper.find('[data-testid="kt-sve-title"]').text()).toBe("Procurement schedule — new version");
-		expect(wrapper.find('[data-testid="kt-sve-method"]').text()).toBe("Open Tender");
-		expect(wrapper.find('[data-testid="kt-sve-category"]').text()).toBe("Goods");
+		expect(wrapper.find('[data-testid="kt-sve-title"]').text()).toBe("Open Tender — goods — new version");
+		expect(wrapper.find('[data-testid="kt-sve-unsaved"]').text()).toBe("Unsaved changes");
+		// Method and category are what it covers: fixed once saved.
+		expect(wrapper.find('[data-testid="kt-sve-method"]').element.value).toBe("Open Tender");
+		expect(wrapper.find('[data-testid="kt-sve-method"]').attributes("disabled")).toBeDefined();
+		expect(wrapper.find('[data-testid="kt-sve-category"]').element.value).toBe("Goods");
 		expect(wrapper.find('[data-testid="kt-sve-name"]').element.value).toBe("Open Tender — goods");
 		expect(wrapper.findAll('[data-testid^="kt-sve-milestone-"]')).toHaveLength(7);
-		expect(wrapper.find('[data-testid="kt-sve-default-1"]').element.value).toBe("21");
-		// The dialog this replaces offered the day counts and nothing else.
-		expect(wrapper.find('[data-testid="kt-sve-counting"]').exists()).toBe(true);
-		expect(wrapper.find('[data-testid="kt-sve-applies-1"]').exists()).toBe(true);
-		expect(wrapper.find('[data-testid="kt-sve-delivery"]').exists()).toBe(true);
-		expect(wrapper.find('[data-testid="kt-sve-basis-1"]').exists()).toBe(true);
+		// Six intervals between the seven milestones, in the board's columns.
+		expect(wrapper.findAll('[data-testid^="kt-sve-interval-"]')).toHaveLength(6);
+		expect(wrapper.find('[data-testid="kt-sve-interval-bid_opening"]').text()).toContain("Invitation or advertisement");
+		expect(wrapper.find('[data-testid="kt-sve-interval-bid_opening"]').text()).toContain("Legal requirement");
+		// Selecting one opens its own controls, prefilled.
+		await wrapper.find('[data-testid="kt-sve-select-bid_opening"]').trigger("click");
+		expect(wrapper.find('[data-testid="kt-sve-selected-title"]').text()).toBe("Selected interval — Bid opening");
+		expect(wrapper.find('[data-testid="kt-sve-i-default"]').element.value).toBe("21");
+		expect(wrapper.find('[data-testid="kt-sve-i-min-status"]').element.value).toBe("Value specified");
+		expect(wrapper.find('[data-testid="kt-sve-i-max-status"]').element.value).toBe("Not yet established");
+		expect(wrapper.find('[data-testid="kt-sve-i-max"]').attributes("disabled")).toBeDefined();
+		expect(wrapper.find('[data-testid="kt-sve-i-reference"]').element.value).toBe("s.96");
 	});
 
 	it("offers only a verified calendar to count working days by, and asks for one", async () => {
@@ -110,14 +128,14 @@ describe("ScheduleVersionEditor", () => {
 
 	it("says which milestone is inconsistent instead of letting the server refuse the save", async () => {
 		const wrapper = await openEditor();
-		await wrapper.find('[data-testid="kt-sve-default-1"]').setValue("7");
+		await setDefault(wrapper, "bid_opening", "7");
 		expect(wrapper.find('[data-testid="kt-sve-blocked"]').text()).toBe("Bid opening: the default is below the minimum.");
 
-		await wrapper.find('[data-testid="kt-sve-default-1"]').setValue("21");
-		await wrapper.find('[data-testid="kt-sve-default-2"]').setValue("45");
+		await setDefault(wrapper, "bid_opening", "21");
+		await setDefault(wrapper, "evaluation_completion", "45");
 		expect(wrapper.find('[data-testid="kt-sve-blocked"]').text()).toBe("Evaluation completion: the default exceeds the maximum.");
 
-		await wrapper.find('[data-testid="kt-sve-default-2"]').setValue("30");
+		await setDefault(wrapper, "evaluation_completion", "30");
 		await wrapper.find('[data-testid="kt-sve-name"]').setValue("  ");
 		expect(wrapper.find('[data-testid="kt-sve-blocked"]').text()).toBe("Give this schedule a name.");
 		expect(api.registerScheduleProfileVersion).not.toHaveBeenCalled();
@@ -125,10 +143,12 @@ describe("ScheduleVersionEditor", () => {
 
 	it("saves a replacement with the whole schedule and the reason for it", async () => {
 		const wrapper = await openEditor();
-		await wrapper.find('[data-testid="kt-sve-default-3"]').setValue("7");
+		await setDefault(wrapper, "award_approval", "7");
 		await wrapper.find('[data-testid="kt-sve-applies-6"]').setValue(false);
 		await wrapper.find('[data-testid="kt-sve-delivery"]').setValue("45");
 		await wrapper.find('[data-testid="kt-sve-from"]').setValue("2028-07-01");
+		// Not overlapping: the footer says nothing is replaced.
+		expect(wrapper.find('[data-testid="kt-sve-replaces"]').text()).toBe("These dates do not overlap Version 1, so it is not replaced.");
 		await wrapper.find('[data-testid="kt-sve-reason"]').setValue("Award approval buffer widened after the 2028 review.");
 		await wrapper.find('[data-testid="kt-sve-save"]').trigger("click");
 		await flushPromises();
@@ -145,11 +165,13 @@ describe("ScheduleVersionEditor", () => {
 		expect(wrapper.emitted("saved")[0]).toEqual(["SPR-OPEN-TENDER-GOODS-V2"]);
 		// Starts after the one it came from ends: nothing is replaced (D16).
 		expect(call.supersedes_version_ids).toEqual([]);
+		expect(call.change_reason).toBe("Award approval buffer widened after the 2028 review.");
 	});
 
 	it("a replacement whose dates overlap the version it came from declares that version (D16)", async () => {
 		const wrapper = await openEditor();
 		await wrapper.find('[data-testid="kt-sve-from"]').setValue("2028-01-01");
+		expect(wrapper.find('[data-testid="kt-sve-replaces"]').text()).toBe("Earlier versions this replaces: Open Tender — goods Version 1.");
 		await wrapper.find('[data-testid="kt-sve-reason"]').setValue("Award approval buffer widened after the 2028 review.");
 		await wrapper.find('[data-testid="kt-sve-save"]').trigger("click");
 		await flushPromises();
@@ -159,14 +181,14 @@ describe("ScheduleVersionEditor", () => {
 	describe("correcting a schedule in place", () => {
 		it("changes this Version rather than replacing it, and asks for no reason", async () => {
 			const wrapper = await openEditor({ mode: "correct" });
-			expect(wrapper.find('[data-testid="kt-sve-title"]').text()).toBe("Procurement schedule — edit schedule");
+			expect(wrapper.find('[data-testid="kt-sve-title"]').text()).toBe("Open Tender — goods — edit schedule");
 			expect(wrapper.find('[data-testid="kt-sve-correcting-notice"]').text()).toContain("Once either happens, changing it means a new version");
 			expect(wrapper.find('[data-testid="kt-sve-replacement"]').exists()).toBe(false);
 			expect(wrapper.find('[data-testid="kt-sve-reason"]').exists()).toBe(false);
 			expect(wrapper.find('[data-testid="kt-sve-save"]').text()).toBe("Save changes");
 			expect(wrapper.find('[data-testid="kt-sve-save"]').attributes("disabled")).toBeUndefined();
 
-			await wrapper.find('[data-testid="kt-sve-default-3"]').setValue("7");
+			await setDefault(wrapper, "award_approval", "7");
 			await wrapper.find('[data-testid="kt-sve-save"]').trigger("click");
 			await flushPromises();
 
@@ -184,7 +206,7 @@ describe("ScheduleVersionEditor", () => {
 			const wrapper = await openEditor({ mode: "correct" });
 			await wrapper.find('[data-testid="kt-sve-save"]').trigger("click");
 			await flushPromises();
-			expect(wrapper.find('[data-testid="kt-sve-error"]').text()).toContain("Create a new version instead");
+			expect(wrapper.find('[data-testid="kt-rule-error"]').text()).toContain("Create a new version instead");
 			expect(wrapper.emitted("saved")).toBeFalsy();
 		});
 	});
@@ -194,5 +216,44 @@ describe("ScheduleVersionEditor", () => {
 		const wrapper = await openEditor({ name: "SPR-NOPE-V9" });
 		expect(wrapper.find('[data-testid="kt-sve-load-error"]').text()).toContain("This schedule isn't available to you");
 		expect(wrapper.find('[data-testid="kt-sve-save"]').exists()).toBe(false);
+	});
+
+	it("create: Add procurement schedule starts from the seven milestones, and saves a first version for the chosen method and category", async () => {
+		api.registerScheduleProfileVersion.mockResolvedValue({ profile: "SPR-FRAMEWORK-AGREEMENT-WORKS-V1", version_number: 1 });
+		const wrapper = await openEditor({
+			name: "",
+			mode: "create",
+			methods: ["Open Tender", "Framework Agreement"],
+			categories: ["Goods", "Works", "Services"],
+			milestoneCatalogue: MILESTONES.map(({ milestone, label }) => ({ milestone, label })),
+			schedules: [{ profile: "SPR-OPEN-TENDER-GOODS-V1", profile_name: "Open Tender — goods", procurement_method: "Open Tender", procurement_category: "Goods", status: "Active" }],
+		});
+		expect(api.getScheduleProfile).not.toHaveBeenCalled();
+		expect(wrapper.find('[data-testid="kt-sve-title"]').text()).toBe("Add procurement schedule");
+		expect(wrapper.find('[data-testid="kt-sve-unsaved"]').exists()).toBe(false);
+		expect(wrapper.find('[data-testid="kt-sve-replacement"]').exists()).toBe(false);
+		// Nothing set yet: every period is listed under Details to complete.
+		expect(wrapper.find('[data-testid="kt-sve-details"]').text()).toContain("Default days — Bid opening");
+
+		// A pair that already has a schedule points to its new version.
+		await wrapper.find('[data-testid="kt-sve-method"]').setValue("Open Tender");
+		await wrapper.find('[data-testid="kt-sve-category"]').setValue("Goods");
+		expect(wrapper.find('[data-testid="kt-sve-exists"]').text()).toContain("Open Tender — goods already covers Open Tender — Goods.");
+		await wrapper.find('[data-testid="kt-sve-open-existing"]').trigger("click");
+		expect(wrapper.emitted("open-version")[0]).toEqual(["SPR-OPEN-TENDER-GOODS-V1"]);
+
+		await wrapper.find('[data-testid="kt-sve-method"]').setValue("Framework Agreement");
+		await wrapper.find('[data-testid="kt-sve-category"]').setValue("Works");
+		await wrapper.find('[data-testid="kt-sve-name"]').setValue("Framework agreement — works");
+		await wrapper.find('[data-testid="kt-sve-from"]').setValue("2027-07-01");
+		await setDefault(wrapper, "bid_opening", "21");
+		expect(wrapper.find('[data-testid="kt-sve-save"]').text()).toBe("Save schedule version");
+		await wrapper.find('[data-testid="kt-sve-save"]').trigger("click");
+		await flushPromises();
+		const call = api.registerScheduleProfileVersion.mock.calls[0][0];
+		expect(call).toMatchObject({ procurement_method: "Framework Agreement", procurement_category: "Works", profile_name: "Framework agreement — works", supersedes_version_ids: [] });
+		expect(call.milestones.map((row) => row.milestone)).toEqual(MILESTONES.map((row) => row.milestone));
+		expect(call.milestones[1].default_days).toBe(21);
+		expect(wrapper.emitted("saved")[0]).toEqual(["SPR-FRAMEWORK-AGREEMENT-WORKS-V1"]);
 	});
 });

@@ -12,8 +12,8 @@ import { restoreSite, systemManager } from "./helpers";
  * a source check recorded on it — each view with its own link surviving
  * reload; the failed-read state; a second setup role; the narrow layout.
  *
- * Writes: calendars named "Playwright…" (and checks on them), removed by
- * restoreSite → purge_playwright_calendars.
+ * Writes: calendars and schedules named "Playwright…" (and checks on them),
+ * removed by restoreSite → purge_playwright_calendars / _schedules.
  */
 const SERVER = { timeout: 20_000 };
 const SECTION = "/app/system-setup#procurement-settings/schedule-profiles";
@@ -129,6 +129,56 @@ test.describe.serial("System setup — Procurement schedules and calendars", () 
 		// A source check freezes it: no more correction in place.
 		await expect(page.locator('[data-testid="kt-cal-readonly"]')).toBeVisible(SERVER);
 		await expect(page.locator('[data-testid="kt-cal-edit"]')).toHaveCount(0);
+		expect(errors, "console errors").toEqual([]);
+	});
+
+	test("Add procurement schedule: an existing method and category lead to its new version; versions replace only on overlap", async ({ page }) => {
+		// The canonical site already has a schedule for every method and
+		// category, so Add always meets an existing pair here; a first version
+		// for a new pair is proven by the component and service tests.
+		await loginAsAdministrator(page);
+		const errors = await openSchedules(page);
+		await page.click('[data-testid="kt-procset-schedule-add"]');
+		await page.waitForSelector('[data-testid="kt-procset-schedule-editor"]', SERVER);
+		expect(hash(page)).toBe("#procurement-settings/schedule-profiles/new");
+		await expect(page.locator('[data-testid="kt-sve-title"]')).toHaveText("Add procurement schedule");
+		await page.selectOption('[data-testid="kt-sve-method"]', "Open Tender");
+		await page.selectOption('[data-testid="kt-sve-category"]', "Services");
+		await expect(page.locator('[data-testid="kt-sve-exists"]')).toBeVisible();
+		await expect(page.locator('[data-testid="kt-sve-save"]')).toBeDisabled();
+		await page.click('[data-testid="kt-sve-open-existing"]');
+		await page.waitForSelector('[data-testid="kt-sve-reason"]', SERVER);
+		expect(hash(page)).toMatch(/^#procurement-settings\/schedule-profiles\/SPR-OPEN-TENDER-SERVICES-V\d+\/new-version$/);
+
+		// A far-future version: it overlaps nothing, so it replaces nothing.
+		await page.fill('[data-testid="kt-sve-name"]', "Playwright schedule");
+		await page.fill('[data-testid="kt-sve-from"]', "2098-07-01");
+		await page.fill('[data-testid="kt-sve-until"]', "2099-06-30");
+		await expect(page.locator('[data-testid="kt-sve-replaces"]')).toContainText("so it is not replaced");
+		await page.click('[data-testid="kt-sve-select-bid_opening"]');
+		await expect(page.locator('[data-testid="kt-sve-selected-title"]')).toHaveText("Selected interval — Bid opening");
+		await page.fill('[data-testid="kt-sve-i-default"]', "28");
+		await page.selectOption('[data-testid="kt-sve-i-basis"]', "Planning assumption");
+		await page.fill('[data-testid="kt-sve-reason"]', "Future period drafted.");
+		await page.click('[data-testid="kt-sve-save"]');
+		await page.waitForSelector('[data-testid="kt-procset-profile-table"]', SERVER);
+		await expect(page.locator('[data-testid="kt-procset-profile-title"]')).toHaveText("Playwright schedule", SERVER);
+		await expect(page.locator('[data-testid="kt-procset-interval-bid_opening"]')).toContainText("28");
+		await expect(page.locator('[data-testid="kt-procset-interval-bid_opening"]')).toContainText("Planning assumption");
+		await expect(page.locator('[data-testid="kt-procset-profile-change-reason"]')).toHaveText("Future period drafted.");
+		const first = await page.locator('[data-testid="kt-procset-profile-version"]').textContent();
+
+		// Its own successor overlaps it, so it names it and the reason.
+		await page.click('[data-testid="kt-procset-profile-new-version"]');
+		await page.waitForSelector('[data-testid="kt-sve-reason"]', SERVER);
+		await page.fill('[data-testid="kt-sve-from"]', "2099-01-01");
+		await expect(page.locator('[data-testid="kt-sve-replaces"]')).toHaveText(`Earlier versions this replaces: Playwright schedule Version ${first}.`);
+		await page.fill('[data-testid="kt-sve-reason"]', "Bid opening period confirmed.");
+		await page.click('[data-testid="kt-sve-save"]');
+		await page.waitForSelector('[data-testid="kt-procset-profile-table"]', SERVER);
+		await expect(page.locator('[data-testid="kt-procset-profile-version"]')).toHaveText(String(Number(first) + 1), SERVER);
+		await expect(page.locator('[data-testid="kt-procset-profile-change-reason"]')).toHaveText("Bid opening period confirmed.");
+		await expect(page.locator(".modal.show")).toHaveCount(0);
 		expect(errors, "console errors").toEqual([]);
 	});
 

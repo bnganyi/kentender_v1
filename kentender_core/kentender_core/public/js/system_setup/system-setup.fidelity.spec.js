@@ -62,6 +62,7 @@ import RuleFormError from "./components/RuleFormError.vue";
 import MethodVersionEditor from "./components/MethodVersionEditor.vue";
 import SourceCheckScreen from "./components/SourceCheckScreen.vue";
 import ScheduleProfileDetail from "./components/ScheduleProfileDetail.vue";
+import ScheduleVersionEditor from "./components/ScheduleVersionEditor.vue";
 import CalendarDetail from "./components/CalendarDetail.vue";
 import CalendarEditor from "./components/CalendarEditor.vue";
 import CalendarHistory from "./components/CalendarHistory.vue";
@@ -263,6 +264,16 @@ async function calendarView(component, props) {
 	settingsApi.getBusinessDayCalendar.mockResolvedValue(CALENDAR);
 	settingsApi.listVerificationHistory.mockResolvedValue([]);
 	const wrapper = mount(component, { props, global: globalMocks() });
+	await flushPromises();
+	return wrapper;
+}
+
+async function scheduleEditor(props) {
+	settingsApi.getScheduleProfile.mockResolvedValue(SCHEDULE);
+	const wrapper = mount(ScheduleVersionEditor, {
+		props: { methods: ["Open Tender"], categories: ["Goods", "Works", "Services"], milestoneCatalogue: MILESTONES.map(({ milestone, label }) => ({ milestone, label })), ...props },
+		global: globalMocks(),
+	});
 	await flushPromises();
 	return wrapper;
 }
@@ -528,7 +539,33 @@ const ARTBOARDS = [
 		mount: () => settingsTab([], { section: "schedule-profiles" }),
 	},
 	{ key: "C04#detail", select: "#detail > div", live: '[data-testid="kt-procset-profile-table"]', mount: () => scheduleDetail() },
-	{ key: "C04#add" },
+	// C04 #add draws the add form's identity (as a dialog) and the new-version
+	// footer (as a card); the editor is one page holding both (DEPARTURES).
+	{
+		key: "C04#add~identity",
+		self: true,
+		select: "#add .dialog .dialog-body > div",
+		live: '[data-testid="kt-sve-identity"]',
+		mount: () => scheduleEditor({ name: "", mode: "create" }),
+	},
+	{
+		key: "C04#add~version-footer",
+		self: true,
+		select: "#add .card > .field",
+		live: '[data-testid="kt-sve-replacement"] .kt-field',
+		mount: () => scheduleEditor({ name: SCHEDULE.profile, mode: "version" }),
+	},
+	{
+		key: "C04#detail~selected-interval",
+		self: true,
+		select: '#detail > div > div[style*="grid-template-columns"]',
+		live: '[data-testid="kt-sve-selected"]',
+		mount: async () => {
+			const wrapper = await scheduleEditor({ name: SCHEDULE.profile, mode: "version" });
+			await wrapper.find('[data-testid="kt-sve-select-contract_signing"]').trigger("click");
+			return wrapper;
+		},
+	},
 	{
 		key: "C04#calendar~working-days",
 		select: "#calendar > div:nth-child(1)",

@@ -351,16 +351,22 @@ async function confirmRemoveSource() {
 		<!-- C04 — a schedule's new version, or a correction to one nothing
 		     depends on yet. Same editor, the mode the server chose. -->
 		<ScheduleVersionEditor
-			v-else-if="view.kind === 'new-schedule-version' || view.kind === 'edit-schedule'"
+			v-else-if="['new-schedule', 'new-schedule-version', 'edit-schedule'].includes(view.kind)"
+			:key="view.kind + view.name"
 			:name="view.name"
-			:mode="view.kind === 'edit-schedule' ? 'correct' : 'version'"
+			:mode="{ 'new-schedule': 'create', 'new-schedule-version': 'version', 'edit-schedule': 'correct' }[view.kind]"
 			:calendars="calendars"
 			:applicability-bases="methodApplicabilityBases"
 			:verification-statuses="verificationOptions"
+			:methods="procurementMethods"
+			:categories="procurementCategories"
+			:milestone-catalogue="data.milestones || []"
+			:schedules="scheduleProfiles"
 			@saved="(profile) => afterChange().then(() => go('profile/' + profile))"
-			@cancel="go('profile/' + view.name)"
+			@cancel="go(view.name ? 'profile/' + view.name : 'schedule-profiles')"
+			@open-version="(profile) => go('new-schedule-version/' + profile)"
+			@refresh="afterChange"
 		/>
-
 		<!-- C04 — a working-day calendar: saved detail, its forms, its checks
 		     and history, each with its own link (/calendars/{id}[/action]). -->
 		<CalendarDetail
@@ -576,6 +582,9 @@ async function confirmRemoveSource() {
 						<h3 style="margin-bottom:4px">{{ __("Procurement schedules") }}</h3>
 						<p class="card-body" style="margin-bottom:0">{{ __("Set the time intervals used to prepare procurement schedules.") }}</p>
 					</div>
+					<button type="button" class="kt-btn kt-btn-primary" data-testid="kt-procset-schedule-add" @click="go('new-schedule')">
+						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add procurement schedule") }}
+					</button>
 				</div>
 				<div v-if="scheduleProfiles.length" class="kt-table-scroll">
 					<table class="kt-table">
@@ -601,6 +610,7 @@ async function confirmRemoveSource() {
 					<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--kt-color-neutral-400)" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" /></svg>
 					<p style="font-weight:600;margin-bottom:4px">{{ __("No procurement schedules yet") }}</p>
 					<p class="card-body">{{ __("Add a schedule for a procedure supported by this release.") }}</p>
+					<button type="button" class="kt-btn kt-btn-primary" @click="go('new-schedule')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add procurement schedule") }}</button>
 				</div>
 			</div>
 

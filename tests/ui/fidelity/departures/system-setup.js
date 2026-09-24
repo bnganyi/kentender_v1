@@ -185,6 +185,10 @@ export const COVERED = [
 	"C04#calendar-detail",
 	"C04#calendar-version",
 	"C04#calendar-history",
+	// 5F second half — 24 Sep 2026
+	"C04#add~identity",
+	"C04#add~version-footer",
+	"C04#detail~selected-interval",
 ];
 
 /**
@@ -204,7 +208,6 @@ export const REBUILD_QUEUE = {
 	"C03D#evidence":
 		"Decision-time vs current source check belongs to a consuming record's evidence detail, which no setup screen " +
 		"shows yet (FU-30).",
-	"C04#add": "the schedule editor (add and new version) is the second half of 5F",
 	"Reminders#unchanged": REPORT,
 	"Reminders#edited": UNMOUNTABLE,
 	"Reminders#zero": UNMOUNTABLE,

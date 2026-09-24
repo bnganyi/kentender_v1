@@ -1108,3 +1108,10 @@
 .kt-industry.kt-setup-root .kt-cal-grid { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; margin: 16px 0; }
 @media (max-width: 700px) { .kt-industry.kt-setup-root .kt-cal-grid { grid-template-columns: 1fr; } }
 .kt-industry.kt-setup-root .kt-schedule-calendar { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; margin-top: 16px; }
+/* C04 schedule editor (tracker CFG14-5F) — identity/common grids, the
+   selected-interval controls, the selected interval row, the version footer. */
+.kt-industry.kt-setup-root .kt-sve-grid { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; margin: 12px 0; }
+.kt-industry.kt-setup-root .kt-sve-interval-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+@media (max-width: 700px) { .kt-industry.kt-setup-root .kt-sve-grid { grid-template-columns: 1fr; } }
+.kt-industry.kt-setup-root .kt-table tr.is-selected td { background: var(--kt-color-accent-50, #eef1fb); }
+.kt-industry.kt-setup-root .kt-sve-version-footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--kt-color-divider); }

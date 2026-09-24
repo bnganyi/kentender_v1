@@ -101,3 +101,26 @@ class TestPlaywrightCalendarPurge(FrappeTestCase):
 		frappe.db.commit()
 		self.assertFalse(frappe.db.exists(settings.CALENDAR, out["calendar"]))
 		self.assertEqual(frappe.db.count(settings.CALENDAR), before - 1)
+
+
+class TestPlaywrightSchedulePurge(FrappeTestCase):
+	"""Browser specs add schedules through the screen (tracker CFG14-5F); the
+	cleanup removes schedules named "Playwright…" and nothing else."""
+
+	def setUp(self):
+		frappe.set_user("Administrator")
+		settings.purge_playwright_schedules()
+		frappe.db.commit()
+		self.addCleanup(lambda: (settings.purge_playwright_schedules(), frappe.db.commit()))
+
+	def test_removes_playwright_schedules_only(self):
+		out = api.register_schedule_profile_version(
+			procurement_method="Open Tender", procurement_category="Services", profile_name="Playwright purge schedule",
+			effective_from="2093-07-01", effective_until="2093-12-31", milestones=_milestones(),
+		)
+		frappe.db.commit()
+		before = frappe.db.count(settings.SCHEDULE_PROFILE)
+		self.assertEqual(settings.purge_playwright_schedules(), 1)
+		frappe.db.commit()
+		self.assertFalse(frappe.db.exists(settings.SCHEDULE_PROFILE, out["profile"]))
+		self.assertEqual(frappe.db.count(settings.SCHEDULE_PROFILE), before - 1)

@@ -1223,6 +1223,23 @@ def purge_fixture_profiles(fixture_namespace: str) -> int:
 	return count
 
 
+def purge_playwright_schedules(prefix: str = "Playwright") -> int:
+	"""Browser-spec cleanup only (tracker CFG14-5F): schedules a spec added
+	through the screen are named with `prefix`; they go with their audit rows.
+	Never a canonical or fixture-namespaced schedule, never off a dev/test site."""
+	if not (frappe.flags.in_test or frappe.conf.get("developer_mode") or frappe.conf.get("allow_tests")):
+		return 0
+	count = 0
+	for name in frappe.get_all(SCHEDULE_PROFILE, filters={"profile_name": ("like", f"{prefix}%"), "fixture_namespace": ("in", ["", None])}, pluck="name", order_by="creation desc"):
+		doc = frappe.get_doc(SCHEDULE_PROFILE, name)
+		doc.flags.kt_fixture_purge = True
+		doc.delete(ignore_permissions=True)
+		for audit in frappe.get_all("Audit Event", filters={"document_type": SCHEDULE_PROFILE, "document_name": name}, pluck="name"):
+			frappe.delete_doc("Audit Event", audit, force=True, ignore_permissions=True, delete_permanently=True)
+		count += 1
+	return count
+
+
 def purge_playwright_calendars(prefix: str = "Playwright") -> int:
 	"""Browser-spec cleanup only (tracker CFG14-5F): working-day calendars a spec
 	added through the screen are named with `prefix`; they go with the source
