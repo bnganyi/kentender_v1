@@ -296,7 +296,7 @@ artboard-provenance-gate:
 # lives outside tests/ui/smoke/design-fidelity/ and was being missed.
 ui-structure-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project design-fidelity
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning --project departmental-needs-components --project system-setup
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning --project departmental-needs-components --project system-setup --project desk-runtime
 
 # Visual references. Nothing ran the Departmental Needs baselines before this
 # target existed, so a spacing or rule change could only be found by a person
@@ -366,7 +366,8 @@ ui-system-setup-entity-gate:
 ui-system-setup-access-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.site_setup.run
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/system_setup/system-setup-access.spec.ts
+		tests/ui/smoke/system_setup/system-setup-access.spec.ts \
+		tests/ui/smoke/system_setup/system-setup-routing.spec.ts
 
 # BUD-CHG-001 v1.3 Phase 8 (BUD-802) — Budget & Funding screens match their
 # .dc.html artboards. Seeds via a piped `exec(open(...).read())` rather than

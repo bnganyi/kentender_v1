@@ -73,6 +73,17 @@ export default defineConfig({
 				},
 			},
 			{
+				// The shared Vue-in-Desk page runtime (kt_desk_page.js): every
+				// page's route listener, pause/resume and command runner. Run by
+				// `make ui-structure-gate` beside the screens that depend on it.
+				plugins: [vue()],
+				test: {
+					name: "desk-runtime",
+					environment: "jsdom",
+					include: ["kentender_core/kentender_core/public/js/kt_desk_page.spec.js"],
+				},
+			},
+			{
 				// AUTH-ADR-001 §10 — the Technical record search screen's own
 				// component test: Empty, No match, results + Open route, and
 				// Forbidden, alongside (never instead of) the browser layer.

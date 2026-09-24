@@ -5,6 +5,7 @@
 // one site is one PE (§1.1). Filters are visible, optional and
 // non-authoritative; the server applies the one predicate behind them.
 import { computed, onMounted, reactive, ref, watch } from "vue";
+import { onSetupRevalidate } from "../composables/useRouteState.js";
 import AssignDialog from "../components/AssignDialog.vue";
 import ResponsibilityDetail from "../components/ResponsibilityDetail.vue";
 import RevokeDialog from "../components/RevokeDialog.vue";
@@ -94,6 +95,8 @@ function backToRegister() {
 	loadRows({ quiet: true });
 }
 
+// Kept alive by the root: a return to this tab re-reads the register in place.
+onSetupRevalidate(({ quiet }) => loadRows({ quiet }));
 onMounted(() => {
 	loadOptions();
 	loadRows();

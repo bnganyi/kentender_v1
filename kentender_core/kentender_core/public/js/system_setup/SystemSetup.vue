@@ -1,20 +1,25 @@
 <script setup>
-// CFG-CHG-002 v0.11 §9–§11 — the one System setup page. The top rail
+// CFG-CHG-002 v0.14 §9–§11 — the one System setup page. The top rail
 // (breadcrumb, notifications, user identity) is the shared
 // kentender_core.industry.mountPageRail every Industry module mounts; the
 // artboard's own breadcrumb line documents that rail and is not rendered
-// again here. Below it, the module's content area ported from the boards:
-// one white blueprint card carrying the eyebrow, title, lede, the five tabs
-// and the active tab's sections. The hash selects the tab; refresh, direct
-// load and browser back/forward preserve it (CFG-AC-024).
-import { computed, onMounted, onUnmounted, ref } from "vue";
+// again here. Below it, the module's content area ported from the boards.
+//
+// Routing (AGENTS.md §6.4, plan D12): the URL is read only through
+// useRouteState, over kentender_core.desk_page.useRoute in hash mode — no
+// page-owned listener. Links follow the §9 grammar (data/routes.js); visited
+// tabs are kept alive, and the skeleton shows only while there is nothing to
+// show yet.
+import { KeepAlive, computed, onMounted, ref, watch } from "vue";
 import ProcuringEntityTab from "./tabs/ProcuringEntityTab.vue";
 import FiscalYearsTab from "./tabs/FiscalYearsTab.vue";
 import OrganisationStructureTab from "./tabs/OrganisationStructureTab.vue";
 import UserResponsibilitiesTab from "./tabs/UserResponsibilitiesTab.vue";
 import ProcurementSettingsTab from "./tabs/ProcurementSettingsTab.vue";
 import { siteConfigApi } from "./data/siteConfigApi.js";
+import { SECTIONS, legacyToRoute, routeToLegacy } from "./data/routes.js";
 import { usePageRail } from "./composables/usePageRail.js";
+import { useRouteState } from "./composables/useRouteState.js";
 
 const railEl = ref(null);
 usePageRail(
@@ -31,17 +36,22 @@ const TABS = [
 	{ key: "fiscal-years", label: __("Financial years") },
 	{ key: "organisation-structure", label: __("Organisation structure") },
 	{ key: "users-and-responsibilities", label: __("Users and responsibilities") },
-	// PLN-CHG-001 v1.18 §10.11 — the fifth tab houses the agreed
-	// catalogue/profile maintenance (C03/C04); a presentation addition, not a
-	// governance module.
 	{ key: "procurement-settings", label: __("Procurement settings") },
 ];
+const COMPONENTS = {
+	"procuring-entity": ProcuringEntityTab,
+	"fiscal-years": FiscalYearsTab,
+	"organisation-structure": OrganisationStructureTab,
+	"users-and-responsibilities": UserResponsibilitiesTab,
+	"procurement-settings": ProcurementSettingsTab,
+};
+
+const { state: route, go } = useRouteState();
 
 const loading = ref(true);
 const forbidden = ref(null);
 const loadError = ref("");
 const site = ref(null);
-const activeTab = ref("procuring-entity");
 // Set when "View affected responsibilities" jumps from the structure tab to
 // the register with that unit pre-filtered. A visible, clearable filter —
 // never authority (§14.2).
@@ -58,88 +68,94 @@ function tabDisabled(key) {
 	return false;
 }
 
-// The hash is `#<tab>` or `#<tab>/<sub-path>` (a detail or editor within
-// the Procurement settings tab, e.g. `#procurement-settings/rule/MPR-…`);
-// refresh, direct load and back/forward restore both (CFG-AC-024).
-const subpath = ref("");
+// §9 — "Default is the first incomplete structural setup tab; once
+// entity/root exist, honor the requested tab, otherwise entity."
+const defaultTab = computed(() => {
+	if (!configured.value) return "procuring-entity";
+	if (rootMissing.value) return "organisation-structure";
+	return "procuring-entity";
+});
+const activeTab = computed(() => {
+	const wanted = route.value.tab;
+	return wanted && !tabDisabled(wanted) ? wanted : defaultTab.value;
+});
 
-function parseHashString(hash) {
-	let raw = (hash || "").replace(/^#/, "");
-	try {
-		raw = decodeURIComponent(raw);
-	} catch (e) {
-		// see parseHash
+// The address always names the tab on screen: a missing or refused tab is
+// corrected in place, without adding a Back step.
+watch(
+	() => [site.value, route.value.tab, activeTab.value],
+	() => {
+		if (!site.value) return;
+		if (route.value.tab !== activeTab.value) go({ tab: activeTab.value }, { replace: true });
 	}
-	return raw;
-}
+);
 
-function parseHash() {
-	// The browser percent-encodes a sub-path with spaces (a funding source
-	// name); read it back decoded so `source/Government of Kenya` resolves.
-	let raw = (window.location.hash || "").replace(/^#/, "");
-	try {
-		raw = decodeURIComponent(raw);
-	} catch (e) {
-		// A malformed escape stays as typed; it simply matches nothing.
-	}
-	const [key, ...rest] = raw.split("/");
-	return { key: TABS.some((tab) => tab.key === key) ? key : "", sub: rest.join("/") };
-}
+// The older view names the tabs still switch on (until each is re-ported),
+// derived from the §9 link. Procurement settings translates its own, because
+// telling a method rule from a reference rule needs its data.
+const legacySubpath = computed(() => (activeTab.value === route.value.tab ? routeToLegacy(route.value) : ""));
 
-function tabFromHash() {
-	return parseHash().key;
-}
-
-function selectTab(key, { push = true, sub = "" } = {}) {
+function selectTab(key, { sub = "" } = {}) {
 	if (tabDisabled(key)) return;
-	activeTab.value = key;
-	subpath.value = sub;
-	const wanted = sub ? `${key}/${sub}` : key;
-	if (push && parseHashString(window.location.hash) !== wanted) {
-		window.location.hash = wanted;
-	}
+	go(sub ? legacyToRoute(key, sub) : { tab: key });
 }
 
 function navigateWithin(sub) {
-	selectTab(activeTab.value, { sub });
+	// A Procurement settings section named from another tab crosses to it
+	// (the Procuring entity's "View procurement rules").
+	const first = String(sub || "").split("/")[0];
+	const tab = SECTIONS.includes(first) ? "procurement-settings" : activeTab.value;
+	selectTab(tab, { sub });
 }
 
-let active = true;
-function onHashChange() {
-	if (!active) return;
-	const { key, sub } = parseHash();
-	if (key && !tabDisabled(key)) {
-		activeTab.value = key;
-		subpath.value = sub;
+const tabProps = computed(() => {
+	switch (activeTab.value) {
+		case "procuring-entity":
+			return { site: site.value, onUpdated: refreshSite };
+		case "fiscal-years":
+			return { subpath: legacySubpath.value };
+		case "procurement-settings":
+			return { route: route.value };
+		case "organisation-structure":
+			return { canRepair: !!site.value?.capabilities?.repair_root };
+		case "users-and-responsibilities":
+			return { initialUnit: uraUnitFilter.value };
+		default:
+			return {};
 	}
-}
+});
+
+// Every read carries a sequence token; only the newest may write (§6.4).
+const sequence = kentender_core.desk_page.createSequenceGuard();
 
 async function load() {
-	loading.value = true;
+	const token = sequence.next();
+	// The skeleton is for a page with nothing on it yet; a retry after an
+	// error or a refresh keeps whatever is already shown.
+	if (!site.value) loading.value = true;
 	loadError.value = "";
 	forbidden.value = null;
 	try {
 		const result = await siteConfigApi.getConfiguration();
+		if (!sequence.isCurrent(token)) return;
 		if (result && result.outcome === "FORBIDDEN") {
 			forbidden.value = result.forbidden;
 			return;
 		}
 		site.value = result;
-		const { key: wanted, sub } = parseHash();
-		if (!configured.value) selectTab("procuring-entity", { push: false });
-		else if (wanted && !tabDisabled(wanted)) selectTab(wanted, { push: false, sub });
-		else selectTab(activeTab.value && !tabDisabled(activeTab.value) ? activeTab.value : "procuring-entity", { push: false });
 	} catch (error) {
-		loadError.value = error.message;
+		if (sequence.isCurrent(token)) loadError.value = error.message;
 	} finally {
-		loading.value = false;
+		if (sequence.isCurrent(token)) loading.value = false;
 	}
 }
 
 async function refreshSite() {
 	// After a state-changing command the page re-reads authoritative data
 	// (KT-STD §3); tab availability follows the fresh projection.
-	site.value = await siteConfigApi.getConfiguration();
+	const token = sequence.next();
+	const result = await siteConfigApi.getConfiguration();
+	if (sequence.isCurrent(token) && result && result.outcome !== "FORBIDDEN") site.value = result;
 }
 
 function viewAffected(unitId) {
@@ -147,16 +163,7 @@ function viewAffected(unitId) {
 	selectTab("users-and-responsibilities");
 }
 
-onMounted(() => {
-	window.addEventListener("hashchange", onHashChange);
-	load();
-});
-onUnmounted(() => {
-	// frappe.router.off() is a framework no-op; the DOM listener here is our
-	// own, but the active flag also guards any late async callback.
-	active = false;
-	window.removeEventListener("hashchange", onHashChange);
-});
+onMounted(load);
 </script>
 
 <template>
@@ -170,7 +177,7 @@ onUnmounted(() => {
 				<p class="kt-setup-lede">
 					{{ __("Manage this site's details, financial years, responsibilities and procurement settings.") }}
 				</p>
-				<nav v-if="!forbidden && !loadError && !loading" class="kt-tabs" role="tablist" data-testid="kt-setup-tabs">
+				<nav v-if="!forbidden && !loadError && site" class="kt-tabs" role="tablist" data-testid="kt-setup-tabs">
 					<button
 						v-for="tab in TABS"
 						:key="tab.key"
@@ -202,7 +209,7 @@ onUnmounted(() => {
 				</button>
 			</div>
 
-			<div v-else-if="loading" class="kt-card kt-blueprint" data-testid="kt-setup-loading">
+			<div v-else-if="loading && !site" class="kt-card kt-blueprint" data-testid="kt-setup-loading">
 				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
 				<span class="kt-eyebrow">{{ __("Loading") }}</span>
 				<div class="kt-skel" style="width:88%" />
@@ -210,36 +217,18 @@ onUnmounted(() => {
 				<div class="kt-skel" style="width:76%" />
 			</div>
 
-			<template v-else>
-				<ProcuringEntityTab
-					v-if="activeTab === 'procuring-entity'"
-					:site="site"
-					:on-updated="refreshSite"
+			<KeepAlive v-else>
+				<component
+					:is="COMPONENTS[activeTab]"
+					:key="activeTab"
+					v-bind="tabProps"
 					@configured="refreshSite"
-					@navigate="(sub) => selectTab('procurement-settings', { sub })"
-				/>
-				<FiscalYearsTab
-					v-else-if="activeTab === 'fiscal-years'"
-					:subpath="subpath"
 					@changed="refreshSite"
-					@navigate="navigateWithin"
-				/>
-				<ProcurementSettingsTab
-					v-else-if="activeTab === 'procurement-settings'"
-					:subpath="subpath"
-					@navigate="navigateWithin"
-				/>
-				<OrganisationStructureTab
-					v-else-if="activeTab === 'organisation-structure'"
-					:can-repair="!!(site && site.capabilities && site.capabilities.repair_root)"
 					@repaired="refreshSite"
 					@view-affected="viewAffected"
+					@navigate="navigateWithin"
 				/>
-				<UserResponsibilitiesTab
-					v-else-if="activeTab === 'users-and-responsibilities'"
-					:initial-unit="uraUnitFilter"
-				/>
-			</template>
+			</KeepAlive>
 			</div>
 		</div>
 		</div>

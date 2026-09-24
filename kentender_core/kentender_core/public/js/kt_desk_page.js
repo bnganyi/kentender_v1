@@ -194,8 +194,15 @@ frappe.provide("kentender_core.desk_page");
 		return !!(r.length && pageToGroup[String(r[0])]);
 	}
 
-	function useRoute(vue, pageSlug) {
+	function useRoute(vue, pageSlug, opts) {
+		// `opts.hash`: the page keeps state in the URL fragment as well as the
+		// path (System setup's `#tab/section/id`, CFG-CHG-002 v0.14 §9). The
+		// fragment is then followed by this same listener, with the same
+		// pause-while-hidden and resume rules, instead of a page-owned
+		// `hashchange` listener.
+		var withHash = !!(opts && opts.hash);
 		var route = vue.ref(currentRoute());
+		var hash = withHash ? vue.ref(currentHash()) : undefined;
 		var epoch = vue.ref(0);
 		var active = true;
 		var paused = false;
@@ -205,15 +212,28 @@ frappe.provide("kentender_core.desk_page");
 			var r = frappe.get_route();
 			return r && r.length ? r.slice() : [pageSlug];
 		}
+		function currentHash() {
+			return String(window.location.hash || "").replace(/^#/, "");
+		}
 		function shown() {
 			var group = groupFor(pageSlug);
 			return group ? group.active : true;
 		}
 		function sync() {
 			var next = currentRoute();
-			if (next.join("/") === route.value.join("/")) return false;
-			route.value = next;
-			return true;
+			var changed = false;
+			if (next.join("/") !== route.value.join("/")) {
+				route.value = next;
+				changed = true;
+			}
+			if (withHash) {
+				var nextHash = currentHash();
+				if (nextHash !== hash.value) {
+					hash.value = nextHash;
+					changed = true;
+				}
+			}
+			return changed;
 		}
 		function applyRouteChange() {
 			if (!active || paused || !shown()) return;
@@ -254,11 +274,13 @@ frappe.provide("kentender_core.desk_page");
 
 		vue.onMounted(function () {
 			frappe.router.on("change", onRouteChange);
+			if (withHash) window.addEventListener("hashchange", onRouteChange);
 			var el = element();
 			if (el) el.addEventListener(SHOW_EVENT, onShow);
 		});
 		vue.onUnmounted(function () {
 			active = false;
+			if (withHash) window.removeEventListener("hashchange", onRouteChange);
 			var el = element();
 			if (el) el.removeEventListener(SHOW_EVENT, onShow);
 		});
@@ -293,7 +315,27 @@ frappe.provide("kentender_core.desk_page");
 			frappe.set_route.apply(frappe, [pageSlug].concat(args));
 		}
 
-		return { route: route, go: go, epoch: epoch, isShown: shown };
+		function goHash(fragment, goOpts) {
+			var next = String(fragment || "").replace(/^#/, "");
+			if (next === currentHash()) return;
+			if (goOpts && goOpts.replace) {
+				// replaceState fires no hashchange, so apply it here.
+				history.replaceState(history.state, "", "#" + next);
+				applyRouteChange();
+			} else {
+				window.location.hash = next;
+				// jsdom and some browsers deliver hashchange asynchronously; read
+				// it now so a caller sees its own navigation immediately.
+				applyRouteChange();
+			}
+		}
+
+		var api = { route: route, go: go, epoch: epoch, isShown: shown };
+		if (withHash) {
+			api.hash = hash;
+			api.goHash = goHash;
+		}
+		return api;
 	}
 
 	function createCommandRunner(vue, opts) {

@@ -41,7 +41,7 @@ function resetEdgeCases(): EdgeCaseFixture {
 }
 
 async function openYear(page: Page, fiscalYear: string, ready: string) {
-	await page.goto(`/app/system-setup#fiscal-years/year/${fiscalYear}`, { waitUntil: "domcontentloaded" });
+	await page.goto(`/app/system-setup#fiscal-years/${fiscalYear}`, { waitUntil: "domcontentloaded" });
 	await page.waitForSelector(ready, { timeout: 20_000 });
 }
 

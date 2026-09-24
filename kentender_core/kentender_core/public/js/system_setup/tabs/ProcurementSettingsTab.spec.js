@@ -18,6 +18,7 @@ const api = vi.hoisted(() => ({
 vi.mock("../data/procurementSettingsApi.js", () => ({ procurementSettingsApi: api }));
 
 import ProcurementSettingsTab from "./ProcurementSettingsTab.vue";
+import { legacyToRoute } from "../data/routes.js";
 
 function payload(overrides = {}) {
 	return {
@@ -61,8 +62,11 @@ function payload(overrides = {}) {
 	};
 }
 
+// Tests still name views by the tab's internal view names; the tab now
+// receives the parsed §9 route the root derives from the link.
 async function mountTab(subpath = "") {
-	const wrapper = mount(ProcurementSettingsTab, { props: { subpath }, global: globalMocks() });
+	const route = legacyToRoute("procurement-settings", subpath);
+	const wrapper = mount(ProcurementSettingsTab, { props: { route }, global: globalMocks() });
 	await flushPromises();
 	return wrapper;
 }
@@ -173,6 +177,17 @@ describe("ProcurementSettingsTab", () => {
 		expect(wrapper.find('[data-testid="kt-mve-basis-0"]').findAll("option").map((o) => o.element.value)).toEqual(["None", "Per request", "Funds allocated"]);
 		// The tab's own list is not rendered underneath the editor.
 		expect(wrapper.find('[data-testid="kt-procset-sources"]').exists()).toBe(false);
+	});
+
+	it("a direct link to a method rule's new version never asks for a reference version while the list is still loading", async () => {
+		// Regression (24 Sep 2026): before the list arrived, the tab could not
+		// tell a method rule from a reference rule, treated MPR-… as a
+		// reference, and the server answered "That reference version does not exist."
+		api.getRegulatoryReferenceVersion.mockClear();
+		api.getMethodProfile.mockResolvedValue({ profile: "MPR-OPEN-TENDER-V1", procurement_method: "Open Tender", version_number: 1, conditions: [] });
+		const wrapper = await mountTab("new-method-version/MPR-OPEN-TENDER-V1");
+		expect(api.getRegulatoryReferenceVersion).not.toHaveBeenCalled();
+		expect(wrapper.find('[data-testid="kt-procset-method-editor"]').exists()).toBe(true);
 	});
 
 	it("shows the setup Forbidden state as data and the load-error state with Try again", async () => {

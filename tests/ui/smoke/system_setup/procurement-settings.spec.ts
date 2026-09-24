@@ -33,7 +33,7 @@ test.describe("System setup — Procurement settings", () => {
 		if ((await row.count()) === 0) {
 			await page.click('[data-testid="kt-procset-source-add"]');
 			await page.waitForSelector('[data-testid="kt-procset-source-editor"]');
-			expect(page.url()).toContain("#procurement-settings/new-source");
+			expect(page.url()).toContain("#procurement-settings/funding-sources/new");
 			await page.fill('[data-testid="kt-fs-name"]', TEST_SOURCE);
 			await page.click('[data-testid="kt-fs-save"]');
 			await page.waitForSelector(`[data-testid="kt-procset-source-${TEST_SOURCE}"]`);
@@ -71,7 +71,7 @@ test.describe("System setup — Procurement settings", () => {
 
 		await page.click('[data-testid="kt-procset-rule-view-MPR-OPEN-TENDER-V1"]');
 		await page.waitForSelector('[data-testid="kt-procset-rule-card"]');
-		expect(page.url()).toContain("#procurement-settings/rule/MPR-OPEN-TENDER-V1");
+		expect(page.url()).toContain("#procurement-settings/procurement-rules/MPR-OPEN-TENDER-V1");
 		await expect(page.locator('[data-testid="kt-procset-rule-title"]')).toContainText("Method eligibility — Open Tender — Version 1");
 		await expect(page.locator('[data-testid="kt-procset-rule-verification"]')).toHaveText("Source check needed");
 		expect(await page.locator('[data-testid="kt-procset-rule-card"] input').count()).toBe(0);
@@ -88,7 +88,7 @@ test.describe("System setup — Procurement settings", () => {
 		// all. Nothing is saved here: Cancel returns to the read-only detail.
 		await page.click('[data-testid="kt-procset-rule-new-version"]');
 		await page.waitForSelector('[data-testid="kt-procset-method-editor"]');
-		expect(page.url()).toContain("#procurement-settings/new-method-version/MPR-OPEN-TENDER-V1");
+		expect(page.url()).toContain("#procurement-settings/procurement-rules/MPR-OPEN-TENDER-V1/new-version");
 		// The seeded window starts at the first fiscal year the site seeds
 		// (site_setup.PROFILE_EFFECTIVE), so a reseeded site always has its
 		// rules in force on the day you open it.
@@ -107,7 +107,7 @@ test.describe("System setup — Procurement settings", () => {
 		await expect(page.locator('[data-testid="kt-mve-blocked"]')).toContainText("Say why this version replaces the earlier one");
 		await page.click('[data-testid="kt-mve-cancel"]');
 		await page.waitForSelector('[data-testid="kt-procset-rule-card"]');
-		expect(page.url()).toContain("#procurement-settings/rule/MPR-OPEN-TENDER-V1");
+		expect(page.url()).toContain("#procurement-settings/procurement-rules/MPR-OPEN-TENDER-V1");
 
 		await page.click('[data-testid="kt-procset-rule-back"]');
 		await page.waitForSelector('[data-testid="kt-procset-profiles"]');

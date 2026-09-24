@@ -4,10 +4,13 @@
 // rules), schedule profiles and the reminder threshold. Ported from
 // docs/mvp-1-r1/04_planning/design/C01-C04-Setup.dc.html (frames C03,
 // C03-source-editor, C03-detail, C04, C04-eligibility-reminder), class for
-// class. Every rule is applied server-side; the sub-path (`source/<name>`,
-// `rule/<name>`, `profile/<name>`, `new-source`) lives in the page hash so
-// refresh and back/forward restore the same view.
-import { computed, onMounted, ref, watch } from "vue";
+// class. Every rule is applied server-side. The view comes from the page's
+// §9 link (`#procurement-settings/{section}/{id}…`, parsed by the root);
+// this tab still switches on its older internal view names, derived from
+// that link by data/routes.js until the Phase 5 re-port.
+import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { routeToLegacy } from "../data/routes.js";
+import { onSetupRevalidate } from "../composables/useRouteState.js";
 import ConfirmDialog from "../components/ConfirmDialog.vue";
 import FundingSourceEditor from "../components/FundingSourceEditor.vue";
 import RuleVersionDetail from "../components/RuleVersionDetail.vue";
@@ -22,7 +25,8 @@ import { procurementSettingsApi } from "../data/procurementSettingsApi.js";
 import { fmtDate, sourceCheckClass, sourceCheckLabel } from "../data/format.js";
 
 const props = defineProps({
-	subpath: { type: String, default: "" },
+	// The parsed §9 route ({tab, section, id, versionId, action}).
+	route: { type: Object, default: () => ({}) },
 });
 const emit = defineEmits(["navigate"]);
 
@@ -49,9 +53,21 @@ async function load({ quiet = false } = {}) {
 	}
 }
 onMounted(load);
+onSetupRevalidate(load);
 
+// A rule id is a method rule when the server's own list says so. Until that
+// list has arrived the two cannot be told apart, so a rule's editor view is
+// not derived at all — guessing "reference" would fetch a reference version
+// for a method rule and the server would refuse it.
+const subpath = computed(() => {
+	const r = props.route || {};
+	if (!data.value && r.section === "procurement-rules" && ["new-version", "edit"].includes(r.action)) return "";
+	return routeToLegacy(r, {
+		isMethodRule: (id) => (data.value?.method_profiles || []).some((row) => row.name === id || row.profile === id),
+	});
+});
 const view = computed(() => {
-	const [kind, ...rest] = (props.subpath || "").split("/");
+	const [kind, ...rest] = (subpath.value || "").split("/");
 	return { kind: kind || "list", name: rest.join("/") };
 });
 
@@ -155,8 +171,27 @@ function verificationClass(value) {
 	return sourceCheckClass(value);
 }
 
+// A section on its own (`#procurement-settings/procurement-rules`) opens the
+// list at that section — the Procuring entity's "View procurement rules".
+const SECTION_ANCHORS = {
+	"funding-sources": "kt-procset-sources",
+	"procurement-rules": "kt-procset-rules",
+	"schedule-profiles": "kt-procset-profiles",
+	reminders: "kt-procset-reminders",
+	calendars: "kt-procset-calendars",
+};
 watch(
-	() => props.subpath,
+	() => [props.route?.section, !!props.route?.id || !!props.route?.action, !!data.value],
+	async ([section, deep, ready]) => {
+		if (!section || deep || !ready) return;
+		await nextTick();
+		scrollTo(SECTION_ANCHORS[section]);
+	},
+	{ immediate: true }
+);
+
+watch(
+	() => subpath.value,
 	() => {
 		// Returning from a detail or editor re-reads the authoritative list
 		// (a new Version or a renamed source must be reflected, §11.6).

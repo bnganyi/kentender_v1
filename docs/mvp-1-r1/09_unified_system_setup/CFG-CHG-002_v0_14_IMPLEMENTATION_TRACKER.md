@@ -3,7 +3,7 @@
 **Authority:** `KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_14.md` (approved 24 September 2026; supersedes v0.13 in full). Shared standard KT-STD-001 v1.7; authority baseline AUTH-ADR-001 v1.9.
 **Companions:** `CFG-CHG-002_v0_14_Implementation_Plan.md` (rules, phases, verification), `FOLLOW_UPS.md`, design `design/*.dc.html`.
 **Predecessor:** `CFG-CHG-002_IMPLEMENTATION_TRACKER.md` (v0.11 cycle, 16 September 2026), kept as history. Its decisions D1–D10 stand. Its acceptance claims are **not** carried forward as Done: every one is re-audited against v0.14 and the stronger UI definition of done in the plan.
-**Status:** Phases 0–1 done 24 September 2026; Phase 2 next.
+**Status:** Phases 0–2 done 24 September 2026; Phase 3 next.
 
 ## Tracker rules
 
@@ -41,7 +41,7 @@
 |---|---|---|---|
 | CFG14-G00 | Plan, tracker, follow-ups; boards diffed and completed; committed | **Done** 2026-09-24 | CFG14-001–006 |
 | CFG14-G01 | Enforcement wired; red list recorded; other modules' gates still green | **Done** 2026-09-24 | CFG14-101–109; `ui-structure-gate` 595 passed; System setup fidelity 17, access 5, fiscal years 3, entity 1 passed; procurement-settings 3 of 4 — the 4th is pre-existing finding F2 |
-| CFG14-G02 | Shared routing runtime; route specs green | Planned | |
+| CFG14-G02 | Shared routing runtime; route specs green | **Done** 2026-09-24 | CFG14-201–204. System setup component suite 189; structure gate 609 + 35; browser: routing 5, access 5, fiscal years 3, entity 1, fidelity 17 (after rebuild), procurement settings 3 of 4 (F2, pre-existing) |
 | CFG14-G03 | Domain deltas 3a–3f green; cross-app callers green; canonical seed validates | Planned | |
 | CFG14-G04 | Fixture worlds idempotent and purge clean | Planned | |
 | CFG14-G05 | Every screen meets the UI definition of done; per-screen gates green | Planned | |
@@ -99,10 +99,18 @@
 
 | ID | Item | Status | Evidence |
 |---|---|---|---|
-| CFG14-201 | Hash-aware `useRouteState` over `desk_page.useRoute` | Planned | |
-| CFG14-202 | `SystemSetup.vue` rewired: no `hashchange` listener, KeepAlive tabs, screen cache, sequence guard, command runner, cold-load-only skeleton | Planned | |
-| CFG14-203 | Spec §9 section keys replace ad hoc sub-paths; first-incomplete-tab default; dead `navigate("procurement-rules")` fixed | Planned | |
-| CFG14-204 | Route vitest + Playwright route spec (direct load, reload, back/forward, no skeleton on return) | Planned | |
+| CFG14-201 | Hash-aware `useRouteState` over `desk_page.useRoute` | Done | The shared runtime gained an opt-in hash mode (`useRoute(vue, slug, {hash:true})` → `hash`, `goHash(fragment, {replace})`), so the fragment is followed by the one core listener with the same pause/resume rules; path-routed pages unchanged. First tests for the runtime itself: `kt_desk_page.spec.js` (5, new `desk-runtime` vitest project, in `ui-structure-gate`). `system_setup/composables/useRouteState.js` maps it onto the §9 grammar; `onSetupRevalidate` gives tabs quiet re-reads on return. Budget workspace + access browser specs re-run green (8) as a regression check on the changed runtime. |
+| CFG14-202 | `SystemSetup.vue` rewired | Done | No `hashchange` listener; tabs in `KeepAlive` via one dynamic component; skeleton only while there is no site yet; every read sequence-guarded; the address corrected in place (replace, no Back step) when a link names a missing or refused tab. `SystemSetup.spec.js` (9) mounts the root on the REAL runtime. Quiet revalidation on Financial years, Procurement settings and Responsibilities; Organisation structure still reloads visibly (its `load` has no quiet mode) — left to its 5H re-port. |
+| CFG14-203 | Spec §9 section keys replace ad hoc sub-paths; first-incomplete-tab default; dead `navigate("procurement-rules")` fixed | Done | `data/routes.js` (34 tests): `#procurement-settings/{funding-sources,procurement-rules,schedule-profiles,reminders,calendars}/{id}[/versions/{vid}][/new-version\|edit\|check-sources]`, `…/new`, `#fiscal-years/{fy}`; per-segment encoding. Tabs keep their older view names through a tested translator until Phase 5. Default: first run → entity, missing root → organisation structure. "View procurement rules" now opens the list at that section. Browser specs moved to the new links; cross-app links use tab anchors only (Planning `missing_setting.py`) — unaffected. |
+| CFG14-204 | Route vitest + Playwright route spec | Done | `system-setup-routing.spec.ts` 5 passed: all five tabs survive direct load + reload with the address naming the tab; no-link lands on entity with no Back step; Back/Forward walk tab clicks and a MutationObserver counts **0** skeleton insertions on return; a rule link survives reload and Back returns to the list; the section link scrolls into view. Added to `ui-system-setup-access-gate`. |
+
+#### Phase 2 findings
+
+| # | Finding | Disposition |
+|---|---|---|
+| F5 | Two regressions this phase introduced were caught before commit: (a) routing every tab's `navigate` to the current tab broke the Procuring entity's cross-tab "View procurement rules" (caught by the new browser spec); (b) on a direct load of a method rule's new-version link, the tab treated the rule as a reference rule before its list arrived and the server refused the lookup (caught by the fidelity spec's console check). | Both fixed test-first with component regression tests. |
+| F6 | `FIXTURE_PENDING` added to the System setup registry: C02 detail's words depend on whichever seed or spec last touched disposal-plan submissions, so it can neither be required to match nor to differ. Text comparison skipped; structure still compared. | Removed when the Phase 4 CONFIG world exists (CFG14-401). |
+| F7 | The dev site is not canonical, independently of this cycle: `make seed-canonical THROUGH=tenders` fails validation (NDS-MOH-2027-0002 is "Accepted for planning", expected Submitted; Requisition reservations 0), and a `rebuild` fails on a missing Budget reservation (`Reservation 4pfc7sdk5g not found`). Both runs rolled back; nothing changed. The site also carries Tenders/Planning/test-suite residue. | Not CFG's to fix; FOLLOW_UPS FU-23. System setup's own spec runs were purged after each run. |
 
 ### Phase 3 — domain deltas
 

@@ -9,6 +9,7 @@
 // backed (§4.3) through the existing site_configuration commands; nothing
 // here re-implements the single-open-year invariant client-side.
 import { computed, onMounted, reactive, ref, watch } from "vue";
+import { onSetupRevalidate } from "../composables/useRouteState.js";
 import AddFiscalYearDialog from "../components/AddFiscalYearDialog.vue";
 import IntakeDialog from "../components/IntakeDialog.vue";
 import DisableFiscalYearDialog from "../components/DisableFiscalYearDialog.vue";
@@ -69,6 +70,8 @@ async function load({ quiet = false } = {}) {
 	}
 }
 onMounted(load);
+// Kept alive by the root: a return to this tab re-reads the years in place.
+onSetupRevalidate(load);
 
 async function loadHistory(fiscalYear) {
 	historyLoading.value = true;

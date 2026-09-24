@@ -85,7 +85,17 @@ export const REBUILD_QUEUE = {
 export const LANDMARK_DRIFT = {
 	"C04#calendar": "the board's Holidays table and heading (added 24 Sep 2026) are not built",
 	"C04#detail": "the interval table's Minimum days / Maximum days columns (board refresh) are not built",
+};
+
+/**
+ * States whose words depend on the shared dev site's current data rather than
+ * on the screen, so they can neither be required to match nor required to
+ * differ. Their text comparison is skipped until the Phase 4 CONFIG fixture
+ * world pins the data (tracker CFG14-401), which removes every entry here.
+ * Their structural comparison still runs.
+ */
+export const FIXTURE_PENDING = {
 	"C02#detail":
-		"fixture, not product: the canonical seed opens disposal-plan submissions (SEED-OPS v1.8), so the live year has no " +
-		"'Open submissions' action where the CONFIG world (disposal closed) draws one; the Phase 4 CONFIG fixture world removes this",
+		"the board draws disposal-plan submissions Closed (CONFIG); on the dev site their state is whatever the last seed " +
+		"or spec left (the canonical seed opens them, the Financial years spec closes them)",
 };

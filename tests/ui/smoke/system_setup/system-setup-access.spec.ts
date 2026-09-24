@@ -60,7 +60,7 @@ test.describe("System setup — access and shared states", () => {
 
 		await page.click('[data-testid="kt-fy-detail-2027-2028"]');
 		await page.waitForSelector('[data-testid="kt-setup-fy-detail-card"]');
-		expect(page.url()).toContain("#fiscal-years/year/2027-2028");
+		expect(page.url()).toContain("#fiscal-years/2027-2028");
 
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await page.waitForSelector('[data-testid="kt-setup-fy-detail-card"]', { timeout: 20_000 });
