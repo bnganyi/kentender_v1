@@ -26,6 +26,7 @@ ERROR_CODES: frozenset[str] = frozenset(
 		"CFG_AUTHORITY_REQUIRED",
 		"CFG_VERSION_CONFLICT",
 		"CFG_IDEMPOTENCY_CONFLICT",
+		"CFG_CONFIGURATION_CHANGED",
 		"CFG_RULE_UNRESOLVED",
 		"CFG_COUNTY_APPLICABILITY_MISMATCH",
 		"CFG_PROFILE_INVALID",
@@ -51,6 +52,7 @@ DEFAULT_MESSAGES: dict[str, str] = {
 	"CFG_AUTHORITY_REQUIRED": "You are not authorised to change site configuration.",
 	"CFG_VERSION_CONFLICT": "This record changed after you opened it. Refresh and review the latest version.",
 	"CFG_IDEMPOTENCY_CONFLICT": "We could not save these changes with this request.",
+	"CFG_CONFIGURATION_CHANGED": "The settings have changed since this check was made.",
 	"CFG_RULE_UNRESOLVED": "Required procurement rules are missing, ambiguous or unverified for the requested date.",
 	# CFG-CHG-002 v0.11 §8/§10.2 (CFG_ENTITY_APPLICABILITY_CONFLICT's exact
 	# wording) — the code name predates the usability amendment and is left
