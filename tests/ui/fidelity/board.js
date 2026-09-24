@@ -85,3 +85,37 @@ export function boardSkeleton(relPath, id, scope = planningScope) {
 export function variantIds(relPath) {
 	return Array.from(documentFor(relPath).querySelectorAll("section[id]")).map((el) => el.id);
 }
+
+/**
+ * System setup: every artboard is an element with an `id` (`div#configured`,
+ * `div#add.dialog`), not a `<section>`, and sits beside the page frame the
+ * board repeats on every file. Artboards are addressed by selector so a
+ * sub-state inside a larger artboard (`#forms .card:nth-of-type(2)`) can be
+ * compared on its own.
+ *
+ * `self` keeps the matched element as a landmark of its own: a dialog
+ * artboard IS the dialog, and comparing only its children would let a build
+ * drop the dialog container and still pass.
+ */
+export function setupSkeleton(relPath, selector, { self = false } = {}) {
+	const el = documentFor(relPath).querySelector(selector);
+	if (!el) throw new Error(`artboard ${selector} not found in ${relPath}`);
+	return skeletonOf(self ? { children: [el] } : el);
+}
+
+/**
+ * Every artboard a System setup board draws: each element with an `id`,
+ * except ids that exist only to label a control (`aria-labelledby`,
+ * `label[for]`). Used to prove that no drawn state is left unassigned.
+ */
+export function setupArtboardIds(relPath) {
+	const doc = documentFor(relPath);
+	const labelTargets = new Set();
+	for (const el of doc.querySelectorAll("[aria-labelledby]")) {
+		for (const id of el.getAttribute("aria-labelledby").split(/\s+/)) labelTargets.add(id);
+	}
+	for (const el of doc.querySelectorAll("label[for]")) labelTargets.add(el.getAttribute("for"));
+	return Array.from(doc.querySelectorAll("[id]"))
+		.map((el) => el.id)
+		.filter((id) => !labelTargets.has(id));
+}

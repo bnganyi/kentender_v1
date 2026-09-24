@@ -3,7 +3,7 @@
 **Authority:** `KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_14.md` (approved 24 September 2026; supersedes v0.13 in full). Shared standard KT-STD-001 v1.7; authority baseline AUTH-ADR-001 v1.9.
 **Companions:** `CFG-CHG-002_v0_14_Implementation_Plan.md` (rules, phases, verification), `FOLLOW_UPS.md`, design `design/*.dc.html`.
 **Predecessor:** `CFG-CHG-002_IMPLEMENTATION_TRACKER.md` (v0.11 cycle, 16 September 2026), kept as history. Its decisions D1–D10 stand. Its acceptance claims are **not** carried forward as Done: every one is re-audited against v0.14 and the stronger UI definition of done in the plan.
-**Status:** Phase 0 done 24 September 2026; Phase 1 next.
+**Status:** Phases 0–1 done 24 September 2026; Phase 2 next.
 
 ## Tracker rules
 
@@ -40,7 +40,7 @@
 | Gate | Exit condition | Status | Evidence / gap |
 |---|---|---|---|
 | CFG14-G00 | Plan, tracker, follow-ups; boards diffed and completed; committed | **Done** 2026-09-24 | CFG14-001–006 |
-| CFG14-G01 | Enforcement wired; red list recorded; other modules' gates still green | Planned | |
+| CFG14-G01 | Enforcement wired; red list recorded; other modules' gates still green | **Done** 2026-09-24 | CFG14-101–109; `ui-structure-gate` 595 passed; System setup fidelity 17, access 5, fiscal years 3, entity 1 passed; procurement-settings 3 of 4 — the 4th is pre-existing finding F2 |
 | CFG14-G02 | Shared routing runtime; route specs green | Planned | |
 | CFG14-G03 | Domain deltas 3a–3f green; cross-app callers green; canonical seed validates | Planned | |
 | CFG14-G04 | Fixture worlds idempotent and purge clean | Planned | |
@@ -76,15 +76,24 @@
 
 | ID | Item | Status | Evidence |
 |---|---|---|---|
-| CFG14-101 | `tests/ui/fidelity/departures/system-setup.js` | Planned | |
-| CFG14-102 | Board scope/resolver for id'd `div` artboards in `tests/ui/fidelity/board.js` | Planned | |
-| CFG14-103 | Component `system-setup.fidelity.spec.js`, one case per artboard | Planned | |
-| CFG14-104 | `ui-structure-gate` runs `--project system-setup` | Planned | |
-| CFG14-105 | Test that every board-backed component is in its module's `COVERED` | Planned | |
-| CFG14-106 | Browser fidelity spec: `expectStructure` + `expectLayoutSanity`; remove false geometry claim | Planned | |
-| CFG14-107 | `system-setup-pe-stale-save.spec.ts` in a gate | Planned | |
-| CFG14-108 | `.kt-meta-row` grid + `.is-tight` in shared tokens; other modules re-checked | Planned | |
-| CFG14-109 | Record the red list | Planned | |
+| CFG14-101 | `tests/ui/fidelity/departures/system-setup.js` | Done | `DEPARTURES` (empty), `COVERED` (empty — nothing re-ported yet), `REBUILD_QUEUE` (all 46 artboards), `LANDMARK_DRIFT` (3). Keys are `Board#artboard`. |
+| CFG14-102 | Board scope/resolver for id'd `div` artboards in `tests/ui/fidelity/board.js` | Done | `setupSkeleton(file, selector, {self})` (a dialog artboard keeps itself as a landmark) and `setupArtboardIds(file)` (every id except `aria-labelledby`/`label[for]` targets). No resolver needed: no CFG board uses `sc-if`/`sc-for`. C03A and Reminders boards given stable artboard ids. |
+| CFG14-103 | Component `system-setup.fidelity.spec.js`, one case per artboard | Done | 48 tests: an inventory test (every drawn artboard has an entry; none extra), a COVERED/queue completeness test, and one comparison per artboard. 6 artboards mountable from props today (C01 configured/first-run, C02 add-year, C03A add/edit, Reminders unchanged) — all 6 differ from their boards; 40 have no props-driven component yet. Rot rule: a queued artboard that matches FAILS. |
+| CFG14-104 | `ui-structure-gate` runs `--project system-setup` | Done | `make ui-structure-gate`: 35 + 560 passed. |
+| CFG14-105 | Test that every board-backed component is in its module's `COVERED` | Done — reversed direction | `tests/ui/fidelity/covered.spec.js`: every `COVERED` entry in every registry must be named by a spec that imports that registry AND runs a structural comparison. Found Budget's three screens named by board label (`BUD-DES-02/03/06`) — made explicit via `COVERED_AS` in `departures/budget.js`. The "every board-backed component is listed" direction is enforced for System setup by its inventory test; other modules' component headers are too inconsistent to derive it (recorded, not claimed). |
+| CFG14-106 | Browser fidelity spec: `expectStructure` + `expectLayoutSanity`; remove false geometry claim | Done | All 17 browser tests now compare structure (live `.kt-setup-panel` / `.kt-dialog` vs the board scope) with the same queue rule, and 9 editor states call `expectLayoutSanity`. Header no longer claims geometry. `make ui-system-setup-fidelity-gate`: 17 passed. |
+| CFG14-107 | `system-setup-pe-stale-save.spec.ts` in a gate | Done | New `make ui-system-setup-entity-gate`. **Found:** the spec renamed the live entity and never restored it — it now reads the original name first and restores it through the UI; verified the site ends as "Ministry of Health". |
+| CFG14-108 | `.kt-meta-row` grid + `.is-tight` in shared tokens; other modules re-checked | Done — scoped | Only 3 of 11 design bundles carry the grid (Departmental Needs, Planning, System setup); 8 (Budget, Strategy, Tenders…) still draw flex, so a global change would move their screens off their boards unasked. Grid applied under `.kt-setup-root` in `kt_admin_configuration.css`; `.is-tight` added globally (no-op today). Verified live: computed `display: grid`, stylesheet `?v=` refreshed. Global adoption is FU-22. |
+| CFG14-109 | Record the red list | Done | All 46 CFG artboards queued (0 covered). Structural drift seen at component level, e.g. C01: page content wrapped in an extra `card+blueprint`, `h3`/`field`/`card-title`/`meta-row`/`notice.is-live` missing; C03A editors render a card, not a dialog; dialogs add `corner`s and an `h2`. Words drift (`LANDMARK_DRIFT`): C04 calendar Holidays table, C04 interval Minimum/Maximum days columns, and C02 detail (fixture — see findings). |
+
+#### Phase 1 findings
+
+| # | Finding | Disposition |
+|---|---|---|
+| F1 | The Procuring entity approval status used invented labels ("No rule in force", "Rule in force, not source-checked") and explanations, added by the seed fix `e2831468`; its own component test had been red since. | Fixed test-first to the spec wording: "Source check needed" for a rule in force but unchecked, "No rule covers this date" for none, and the §10.2 sentence for both. System setup component suite 145 passed. |
+| F2 | `format.js` maps the fixture-verification status to an invented label "Fixture data — not law"; on the canonical (fixture-verified) site `procurement-settings.spec.ts` expects "Source check needed" and fails. Pre-existing; not caused by this cycle. | Phase 5D: status labels come only from spec §8.1; the spec's state world comes from the Phase 4 fixtures, not the canonical seed. |
+| F3 | `system-setup-pe-stale-save.spec.ts` was in no gate and left the live entity renamed. | Fixed (CFG14-107). |
+| F4 | The canonical seed opens disposal-plan submissions (SEED-OPS v1.8), while the CONFIG world draws them closed, so the C02 detail's words differ on the canonical site. | `LANDMARK_DRIFT["C02#detail"]` until the Phase 4 CONFIG world is used. |
 
 ### Phase 2 — shared routing runtime
 

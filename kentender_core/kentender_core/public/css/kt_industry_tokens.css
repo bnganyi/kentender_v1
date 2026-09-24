@@ -729,6 +729,11 @@
 .kt-industry .kt-panel { background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); padding: var(--kt-space-4); margin-top: var(--kt-space-3); }
 .kt-industry .kt-meta-row { display: flex; gap: var(--kt-space-6); flex-wrap: wrap; align-items: flex-end; }
 .kt-industry .kt-meta-row > div { display: flex; flex-direction: column; gap: 4px; }
+/* The inline opt-out the Industry design system added with its grid fact row
+   (design/HANDOFF-kt-meta-row.md). Identical to the base rule here, where the
+   base is still the flex row, so it changes nothing until a module adopts the
+   grid (System setup: kt_admin_configuration.css). */
+.kt-industry .kt-meta-row.is-tight { display: flex; flex-wrap: wrap; }
 .kt-industry .kt-meta-value { font-family: var(--kt-font-heading); font-weight: var(--kt-font-heading-weight); font-size: 18px; }
 
 /* ── v1.13 components (Departmental Needs artboard bundle, 15 Sep 2026) ── */

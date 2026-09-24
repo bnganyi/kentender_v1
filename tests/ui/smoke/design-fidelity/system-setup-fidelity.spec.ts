@@ -1,10 +1,15 @@
 import { test, expect, Page } from "@playwright/test";
 import { loginAsAdministrator } from "../../helpers/auth";
+import { compareSkeletons, formatMismatch, skeletonOf } from "../../fidelity/skeleton.js";
+import { DEPARTURES, LANDMARK_DRIFT, REBUILD_QUEUE } from "../../fidelity/departures/system-setup.js";
+import { JSDOM } from "jsdom";
 import {
 	openArtboard,
 	landmarks,
 	expectLandmarkSubsequence,
 	collectPageErrors,
+	outerHtml,
+	expectLayoutSanity,
 } from "../../helpers/designFidelity";
 
 /**
@@ -13,10 +18,15 @@ import {
  * For every System setup screen with a `.dc.html` artboard, this spec renders
  * the artboard itself and derives the expectations from that render:
  *
- *   - the artboard's ordered structural landmarks must appear in order in the
- *     live page (composition), and
- *   - geometry measured off the artboard must match the live measurement
- *     within tolerance, where a board fixes one.
+ *   - the artboard's ordered landmark TEXTS must appear in order in the live
+ *     page (the landmark gate), and
+ *   - the containers the artboard draws, and how they nest, must be the ones
+ *     the live tab body is built from (`expectBoardStructure`, the same
+ *     comparator as `ui-structure-gate`). Boards not yet re-ported are listed
+ *     in REBUILD_QUEUE and must still differ.
+ *
+ * Geometry is NOT measured: the probes in designFidelity.ts have no call
+ * sites (AGENTS.md §6.6).
  *
  * Scope: the boards this module owns — C01, C02, C03A, C03BC, C03D, C04 and
  * Reminders. The AUTH-owned boards were removed from this folder by their
@@ -39,6 +49,44 @@ import {
 const DESIGN_DIR = "docs/mvp-1-r1/09_unified_system_setup/design";
 const LIVE_SCOPE = ".kt-setup-shell";
 const DIALOG_SCOPE = ".kt-dialog";
+// The tab body: the board's artboard is the content under the shared header
+// and tabs, so the header is compared once on its own, not in every state.
+const PANEL_SCOPE = ".kt-setup-panel";
+
+/**
+ * The structural half (tests/ui/fidelity/skeleton.js), keyed like the
+ * component spec. A board state still in REBUILD_QUEUE must still DIFFER —
+ * so fixing a screen forces its move to COVERED instead of leaving the queue
+ * to rot; any other state must match.
+ */
+/**
+ * The landmark (text-order) half. Strict, except for the few states whose
+ * refreshed board carries words the live screen does not have yet
+ * (LANDMARK_DRIFT); those must still differ, so the entry is removed the
+ * moment the screen is re-ported.
+ */
+function expectBoardLandmarks(wanted: string[], live: string[], label: string, key: string, ...rest: unknown[]): void {
+	const check = () => (expectLandmarkSubsequence as (...args: unknown[]) => void)(wanted, live, label, ...rest);
+	if (!(LANDMARK_DRIFT as Record<string, string>)[key]) return check();
+	expect(check, `${key} words now match its board — remove it from LANDMARK_DRIFT`).toThrow();
+}
+
+async function expectBoardStructure(page: Page, liveScope: string, art: Page, artScope: string, key: string): Promise<void> {
+	const liveHtml = await outerHtml(page, liveScope);
+	const artHtml = await outerHtml(art, artScope);
+	expect(liveHtml, `${key}: live scope ${liveScope} not found`).not.toBe("");
+	expect(artHtml, `${key}: board scope ${artScope} not found`).not.toBe("");
+	const root = (html: string) => new JSDOM(`<body>${html}</body>`).window.document.body.firstElementChild!;
+	const result = compareSkeletons(skeletonOf(root(artHtml)), skeletonOf(root(liveHtml)), {
+		departures: ((DEPARTURES as Record<string, unknown[]>)[key] || []) as never[],
+	});
+	const message = formatMismatch(key, result);
+	if ((REBUILD_QUEUE as Record<string, string>)[key]) {
+		expect(message, `${key} now matches its board — move it from REBUILD_QUEUE to COVERED`).not.toBe("");
+	} else {
+		expect(message, message).toBe("");
+	}
+}
 
 test.use({ viewport: { width: 1600, height: 1024 } });
 
@@ -93,7 +141,8 @@ test.describe("System setup — design fidelity", () => {
 
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "procuring-entity", '[data-testid="kt-setup-pe-record"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C01-configured");
+		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C01-configured", "C01#configured");
+		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "C01#configured");
 		expect(await page.locator('[data-testid="kt-setup-pe-route"] option').allTextContents()).toEqual([
 			"Cabinet Secretary",
 			"County Executive Committee Member",
@@ -123,7 +172,8 @@ test.describe("System setup — design fidelity", () => {
 		expect(await page.locator('[data-testid="kt-setup-pe-county-conflict"]').textContent()).toBe(
 			"Conflict. The county answer does not match the entity details."
 		);
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C01-conflict");
+		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C01-conflict", "C01#conflict");
+		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "C01#conflict");
 		// Refused before save: a reload shows the unchanged record.
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await page.waitForSelector('[data-testid="kt-setup-pe-record"]');
@@ -162,7 +212,8 @@ test.describe("System setup — design fidelity", () => {
 
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "fiscal-years", '[data-testid="kt-fy-table"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C02-overview");
+		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C02-overview", "C02#overview");
+		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "C02#overview");
 		// The third activity is the v0.11 addition; the row action is the link
 		// to that year's own submission periods, never an inline open/close.
 		await expect(page.locator('[data-testid="kt-fy-disposal_plan-2027-2028"]')).toBeVisible();
@@ -183,7 +234,8 @@ test.describe("System setup — design fidelity", () => {
 		// starts collapsed, so open it before comparing landmarks.
 		await page.click('[data-testid="kt-fy-history-toggle"]');
 		await page.waitForSelector('[data-testid="kt-fy-history-body"] table');
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C02-detail");
+		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C02-detail", "C02#detail");
+		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "C02#detail");
 		expect(errors, "console errors").toEqual([]);
 		await art.close();
 	});
@@ -203,7 +255,9 @@ test.describe("System setup — design fidelity", () => {
 		// Reach the artboard's state: a start year entered, server preview shown.
 		await page.fill('[data-testid="kt-fy-start-year"]', "2035");
 		await page.waitForSelector('[data-testid="kt-fy-preview"]', { timeout: 10_000 });
-		expectLandmarkSubsequence(wanted, await landmarks(page, DIALOG_SCOPE), "C02-add-year");
+		expectBoardLandmarks(wanted, await landmarks(page, DIALOG_SCOPE), "C02-add-year", "C02#add-year");
+		await expectBoardStructure(page, DIALOG_SCOPE, art, scope, "C02#add-year");
+		await expectLayoutSanity(page, "C02#add-year editor");
 
 		// The exact duplicate defect, and Add disabled with it (CFG-UX-AC-05).
 		// The Company defect shares that treatment and is proven server-side in
@@ -231,7 +285,9 @@ test.describe("System setup — design fidelity", () => {
 		// shows the replacement notice. Nothing is submitted.
 		await page.click('[data-testid="kt-fy-open-needs"]');
 		await page.waitForSelector('[data-testid="kt-fy-intake-replaces"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, DIALOG_SCOPE), "C02-open-form");
+		expectBoardLandmarks(wanted, await landmarks(page, DIALOG_SCOPE), "C02-open-form", "C02#forms");
+		await expectBoardStructure(page, DIALOG_SCOPE, art, scope, "C02#forms");
+		await expectLayoutSanity(page, "C02#forms editor");
 		expect(errors, "console errors").toEqual([]);
 		await art.close();
 	});
@@ -247,7 +303,9 @@ test.describe("System setup — design fidelity", () => {
 		const errors = await openSetupTab(page, "fiscal-years/year/2027-2028", '[data-testid="kt-setup-fy-detail-card"]');
 		await page.click('[data-testid="kt-fy-deadline-needs"]');
 		await page.waitForSelector('[data-testid="kt-fy-intake"][data-mode="deadline"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, DIALOG_SCOPE), "C02-deadline-form");
+		expectBoardLandmarks(wanted, await landmarks(page, DIALOG_SCOPE), "C02-deadline-form", "C02#forms");
+		await expectBoardStructure(page, DIALOG_SCOPE, art, scope, "C02#forms");
+		await expectLayoutSanity(page, "C02#forms editor");
 		expect(errors, "console errors").toEqual([]);
 		await art.close();
 	});
@@ -263,7 +321,8 @@ test.describe("System setup — design fidelity", () => {
 		const errors = await openSetupTab(page, "fiscal-years/year/2027-2028", '[data-testid="kt-setup-fy-detail-card"]');
 		await page.click('[data-testid="kt-fy-disable-open"]');
 		await page.waitForSelector('[data-testid="kt-fy-disable"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, DIALOG_SCOPE), "C02-disable");
+		expectBoardLandmarks(wanted, await landmarks(page, DIALOG_SCOPE), "C02-disable", "C02#disable");
+		await expectBoardStructure(page, DIALOG_SCOPE, art, scope, "C02#disable");
 		await expect(page.locator('[data-testid="kt-fy-disable-blocker"]').first()).toHaveText(
 			"Departmental needs submission is open for this financial year."
 		);
@@ -280,26 +339,29 @@ test.describe("System setup — design fidelity", () => {
 	// `.dialog` still finds the editor unambiguously.
 	test("C03A-list — Funding sources list with the availability column", async ({ page, browser }) => {
 		const art = await browser.newPage();
-		const scope = ".blueprint > div:nth-child(2)";
+		const scope = "#list";
 		await openArtboard(art, `${DESIGN_DIR}/C03A-Funding-Sources.dc.html`, scope);
 		const wanted = await landmarks(art, scope);
 
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "procurement-settings", '[data-testid="kt-procset-sources"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C03A-list");
+		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C03A-list", "C03A#list");
+		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "C03A#list");
 		expect(errors, "console errors").toEqual([]);
 		await art.close();
 	});
 
 	test("C03A-editor — the availability choice states what it governs, and a duplicate name is refused before submit", async ({ page, browser }) => {
 		const art = await browser.newPage();
-		const scope = ".dialog";
+		const scope = "#add";
 		await openArtboard(art, `${DESIGN_DIR}/C03A-Funding-Sources.dc.html`, scope);
 		const wanted = await landmarks(art, scope);
 
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "procurement-settings/new-source", '[data-testid="kt-procset-source-editor"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C03A-editor");
+		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C03A-editor", "C03A#add");
+		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "C03A#add");
+		await expectLayoutSanity(page, "C03A#add editor");
 
 		await page.fill('[data-testid="kt-fs-name"]', "Government of Kenya");
 		await page.waitForSelector('[data-testid="kt-fs-duplicate"]');
@@ -328,7 +390,9 @@ test.describe("System setup — design fidelity", () => {
 
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "procurement-settings/new-rule", '[data-testid="kt-procset-rule-editor"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C03B-add");
+		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C03B-add", "C03BC#add");
+		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "C03BC#add");
+		await expectLayoutSanity(page, "C03BC#add editor");
 		expect(await page.locator('[data-testid="kt-rule-kind"] option').allTextContents()).toEqual([
 			"Method eligibility",
 			"Reservation rules",
@@ -363,7 +427,9 @@ test.describe("System setup — design fidelity", () => {
 			`procurement-settings/check-sources/${reference}`,
 			'[data-testid="kt-source-check-rule"]'
 		);
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C03D-pending");
+		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C03D-pending", "C03D#pending");
+		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "C03D#pending");
+		await expectLayoutSanity(page, "C03D#pending editor");
 
 		await page.selectOption('[data-testid="kt-sc-result"]', "Verified");
 		await expect(page.locator('[data-testid="kt-sc-evidence-required"]')).toHaveText(
@@ -394,7 +460,9 @@ test.describe("System setup — design fidelity", () => {
 
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "procurement-settings/new-calendar", '[data-testid="kt-procset-calendar"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C04-calendar");
+		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C04-calendar", "C04#calendar");
+		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "C04#calendar");
+		await expectLayoutSanity(page, "C04#calendar editor");
 		await expect(page.locator('[data-testid="kt-cal-weekend-Saturday"]')).toBeChecked();
 		await expect(page.locator('[data-testid="kt-cal-weekend-Sunday"]')).toBeChecked();
 		await expect(page.locator('[data-testid="kt-cal-add-holiday"]')).toBeVisible();
@@ -418,13 +486,14 @@ test.describe("System setup — design fidelity", () => {
 	// specimen — is what scopes this one state.
 	test("Reminders — the threshold states what it sets, its unit and that it is not a deadline", async ({ page, browser }) => {
 		const art = await browser.newPage();
-		const scope = ".blueprint .blueprint";
+		const scope = "#unchanged";
 		await openArtboard(art, `${DESIGN_DIR}/Reminders.dc.html`, scope);
 		const wanted = await landmarks(art, scope);
 
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "procurement-settings", '[data-testid="kt-procset-reminder"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "Reminders");
+		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "Reminders", "Reminders#unchanged");
+		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "Reminders#unchanged");
 		const card = page.locator('[data-testid="kt-procset-reminder"]');
 		await expect(card).toContainText("Unit: Calendar days");
 		await expect(card).toContainText("This changes reminder timing, not procurement deadlines.");
@@ -457,13 +526,15 @@ test.describe("System setup — design fidelity", () => {
 			"procurement-settings/new-method-version/MPR-OPEN-TENDER-V1",
 			'[data-testid="kt-procset-method-editor"]'
 		);
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C03B-version", [
+		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C03B-version", "C03BC#version", [
 			{
 				landmark: "Usage",
 				because:
 					"the board's own value for it is \"Not supplied in this isolated example\"; nothing in the model counts how many decisions used a Version, and stating a usage fact the server cannot produce would be an invention.",
 			},
 		]);
+		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "C03BC#version");
+		await expectLayoutSanity(page, "C03BC#version editor");
 		// The board's "Unsaved changes" tag is the state this screen opens in.
 		await expect(page.locator('[data-testid="kt-mve-unsaved"]')).toHaveText("Unsaved changes");
 		// It opens on the Version it corrects, with every condition editable.
@@ -492,7 +563,8 @@ test.describe("System setup — design fidelity", () => {
 		// D10). The composition under test is the same either way.
 		const reference = await currentReservationVersion(page);
 		const errors = await openSetupTab(page, `procurement-settings/rule/${reference}`, '[data-testid="kt-procset-rule-card"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C03B-detail");
+		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C03B-detail", "C03BC#detail");
+		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "C03BC#detail");
 		// Read-only: a correction is a new version, never an edit in place.
 		expect(await page.locator('[data-testid="kt-procset-rule-card"] input').count()).toBe(0);
 		expect(errors, "console errors").toEqual([]);
@@ -513,7 +585,8 @@ test.describe("System setup — design fidelity", () => {
 
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "procurement-settings/profile/SPR-OPEN-TENDER-GOODS-V1", '[data-testid="kt-procset-profile-table"]');
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE_SCOPE), "C04-schedule");
+		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C04-schedule", "C04#detail");
+		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "C04#detail");
 		// Seven milestones, and the six intervals between them.
 		expect(await page.locator('[data-testid^="kt-procset-milestone-"]').count()).toBe(7);
 		expect(await page.locator('[data-testid^="kt-procset-interval-"]').count()).toBe(6);

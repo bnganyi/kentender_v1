@@ -140,20 +140,19 @@ const approvalStatusLabel = computed(() => {
 	const result = approval.value?.result;
 	if (result === "Verified") return __("Sources verified");
 	if (result === "Configuration conflict") return __("Configuration conflict");
-	if (result === "Rule not source-checked") return __("Rule in force, not source-checked");
-	return __("No rule in force");
+	// §8.1's closed vocabulary: a rule in force whose sources are unchecked is
+	// "Source check needed"; no rule at all is "No rule covers this date".
+	if (result === "Rule not source-checked") return __("Source check needed");
+	return __("No rule covers this date");
 });
 const approvalStatusText = computed(() => {
 	const result = approval.value?.result;
 	if (result === "Verified") return __("The configured approval authority is verified against a current rule.");
 	if (result === "Configuration conflict")
 		return __("The approval rule in force names a different authority than this entity's configured route.");
-	// Distinct from "no rule": the rule exists, is in force today and names
-	// this entity's configured authority — only the check against primary
-	// law is outstanding, which is the permanent state of fixture data.
-	if (result === "Rule not source-checked")
-		return __("A rule in force names this entity's configured approval authority. Its sources have not been checked against primary law.");
-	return __("No approval-applicability rule is in force for this entity type, so Plan approval has nothing to check against.");
+	// §10.2 — the same plain sentence whether the rule is missing or only
+	// unchecked; the status label above says which.
+	return __("The approval authority's supporting evidence must be completed before Plan approval.");
 });
 
 function goToProcurementRules() {

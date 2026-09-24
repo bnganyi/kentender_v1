@@ -27,7 +27,8 @@ function site(overrides = {}) {
 			entity_is_county: false,
 			configured_by: "Administrator",
 			configured_at_label: "29 Jun 2026, 10:10 EAT",
-			approval_applicability: { result: "Verification required", reference: "" },
+			// CONFIG (§10.2): an approval rule is in force but its sources are not yet checked.
+			approval_applicability: { result: "Rule not source-checked", reference: "APPROVAL-APPLICABILITY-V1" },
 			expected_version: "v1",
 		},
 		pe_types: ["National Government Ministry", "County Government"],
@@ -84,6 +85,19 @@ describe("ProcuringEntityTab", () => {
 		});
 		expect(conflict.find('[data-testid="kt-setup-pe-approval-status"]').classes()).toEqual(expect.arrayContaining(["kt-status", "is-critical"]));
 		expect(conflict.find('[data-testid="kt-setup-pe-approval-status"]').text()).toBe("Configuration conflict");
+	});
+
+	it("no approval rule in force for this entity reads No rule covers this date, still with the plain evidence sentence (§8.1)", () => {
+		const none = mount(ProcuringEntityTab, {
+			props: { site: site({ procuring_entity: { ...site().procuring_entity, approval_applicability: { result: "Verification required", reference: "" } } }) },
+			global: globalMocks(),
+		});
+		const status = none.find('[data-testid="kt-setup-pe-approval-status"]');
+		expect(status.text()).toBe("No rule covers this date");
+		expect(status.classes()).toEqual(expect.arrayContaining(["kt-status", "is-attention"]));
+		expect(none.find('[data-testid="kt-setup-pe-approval"]').text()).toContain(
+			"The approval authority's supporting evidence must be completed before Plan approval."
+		);
 	});
 
 	it("clicking View procurement rules emits navigate with the procurement-rules section", async () => {

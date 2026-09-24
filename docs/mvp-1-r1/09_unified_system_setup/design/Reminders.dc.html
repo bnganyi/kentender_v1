@@ -30,7 +30,7 @@
 <div>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;align-items:start;padding:28px">
 
-<div class="blueprint" style="background:var(--color-surface);padding:28px">
+<div id="unchanged" class="blueprint" style="background:var(--color-surface);padding:28px">
 <div class="tag tag-outline" style="margin-bottom:10px">Unchanged</div>
 <h3>Reminders</h3>
 <div class="field"><label>Remind users this many days before a milestone</label><input class="input" type="number" value="7" /></div>
@@ -40,7 +40,7 @@
 <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn btn-primary" disabled="disabled" type="button">Save changes</button></div>
 </div>
 
-<div class="blueprint" style="background:var(--color-surface);padding:28px">
+<div id="edited" class="blueprint" style="background:var(--color-surface);padding:28px">
 <div class="tag tag-outline" style="margin-bottom:10px">Edited</div>
 <h3>Reminders</h3>
 <div class="field"><label>Remind users this many days before a milestone</label><input class="input" type="number" value="14" /></div>
@@ -48,7 +48,7 @@
 <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn btn-primary" type="button">Save changes</button></div>
 </div>
 
-<div class="blueprint" style="background:var(--color-surface);padding:28px">
+<div id="zero" class="blueprint" style="background:var(--color-surface);padding:28px">
 <div class="tag tag-outline" style="margin-bottom:10px">Zero</div>
 <h3>Reminders</h3>
 <div class="field"><label>Remind users this many days before a milestone</label><input class="input" type="number" value="0" /></div>
@@ -56,7 +56,7 @@
 <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn btn-primary" type="button">Save changes</button></div>
 </div>
 
-<div class="blueprint" style="background:var(--color-surface);padding:28px">
+<div id="invalid" class="blueprint" style="background:var(--color-surface);padding:28px">
 <div class="tag tag-outline" style="margin-bottom:10px">Invalid range</div>
 <h3>Reminders</h3>
 <div class="field"><label>Remind users this many days before a milestone</label><input class="input" type="number" value="400" /></div>

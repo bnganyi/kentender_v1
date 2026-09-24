@@ -999,3 +999,16 @@
 
 .kt-industry .kt-visually-hidden-th { width: 1px; }
 .kt-industry .kt-btn.kt-btn-sm { padding: 4px 10px; font-size: 12px; }
+
+/* CFG-CHG-002 v0.14 boards (design/HANDOFF-kt-meta-row.md): the fact row is a
+   grid of equal cells, not a shrink-to-fit flex run that leaves most of a
+   panel empty. Scoped to System setup because only three module bundles carry
+   the grid rule; the others still draw the flex row (FOLLOW_UPS FU-22).
+   `.is-tight` is the inline opt-out for genuinely short runs. */
+.kt-industry.kt-setup-root .kt-meta-row {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+	gap: var(--kt-space-4) var(--kt-space-6);
+	align-items: end;
+}
+.kt-industry.kt-setup-root .kt-meta-row.is-tight { display: flex; flex-wrap: wrap; }

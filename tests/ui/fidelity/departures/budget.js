@@ -127,3 +127,14 @@ export const COVERED = [
 	"BudgetApprovalTaskScreen",
 	"BudgetClosureScreen",
 ];
+
+/**
+ * The label `budget-fidelity.spec.ts` gives a COVERED screen where it names
+ * the board variant rather than the component (checked by
+ * tests/ui/fidelity/covered.spec.js).
+ */
+export const COVERED_AS = {
+	RegisterAllocationScreen: "BUD-DES-02",
+	BudgetVersionEditorScreen: "BUD-DES-03",
+	BudgetLineDetailScreen: "BUD-DES-06",
+};

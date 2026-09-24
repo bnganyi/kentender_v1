@@ -27,7 +27,7 @@
 </div>
 <div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:16px;font-size:13px"><a href="C03A-Funding-Sources.dc.html" style="color:var(--color-accent-800);font-weight:600;text-decoration:none">Funding sources</a><a href="C03BC-Procurement-Rules.dc.html" style="color:var(--color-accent-2-700);text-decoration:underline;text-underline-offset:2px">Procurement rules</a><a href="C04-Schedules-Calendars.dc.html" style="color:var(--color-accent-2-700);text-decoration:underline;text-underline-offset:2px">Procurement schedules</a><a href="Reminders.dc.html" style="color:var(--color-accent-2-700);text-decoration:underline;text-underline-offset:2px">Reminders</a><a href="Tender-Formats.dc.html" style="color:var(--color-accent-2-700);text-decoration:underline;text-underline-offset:2px">Tender formats</a></div>
 </div>
-<div>
+<div id="list">
 <div style="padding:28px">
 <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
 <div><h3 style="margin-bottom:4px">Funding sources</h3><p class="card-body" style="margin-bottom:0">Maintain the sources used in procurement budgets.</p></div>
@@ -46,7 +46,7 @@
 
 <div style="border-top:1px solid var(--color-divider)">
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;align-items:start;padding:28px">
-<div class="dialog" style="position:static;max-width:340px">
+<div id="add" class="dialog" style="position:static;max-width:340px">
 <div class="dialog-title">Add funding source</div>
 <div class="dialog-body">
 <div class="field"><label>Funding source name</label><input class="input" value="Development partner" /></div>
@@ -56,7 +56,7 @@
 </div>
 <div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:6px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="flex:none;align-self:center"><path d="M12 5v14M5 12h14"/></svg>Add funding source</button></div>
 </div>
-<div class="dialog" style="position:static;max-width:340px">
+<div id="edit" class="dialog" style="position:static;max-width:340px">
 <div class="dialog-title">Edit funding source</div>
 <div class="dialog-body">
 <div class="field"><label>Funding source name</label><input class="input" value="Development partner" /></div>
@@ -66,12 +66,12 @@
 </div>
 <div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Save changes</button></div>
 </div>
-<div><div style="font-size:13px;font-weight:600;color:var(--color-neutral-700);margin-bottom:6px">Disabled specimen</div><table class="table"><thead><tr><th>Name</th><th>Available for new selection</th><th>Action</th></tr></thead><tbody><tr><td>Development partner</td><td><span class="kt-status is-critical">No</span></td><td><a href="#">Edit</a></td></tr></tbody></table></div>
-<div class="kt-notice is-critical"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body"><strong>Duplicate.</strong> A funding source with this name already exists.</div></div>
+<div id="disabled"><div style="font-size:13px;font-weight:600;color:var(--color-neutral-700);margin-bottom:6px">Disabled specimen</div><table class="table"><thead><tr><th>Name</th><th>Available for new selection</th><th>Action</th></tr></thead><tbody><tr><td>Development partner</td><td><span class="kt-status is-critical">No</span></td><td><a href="#">Edit</a></td></tr></tbody></table></div>
+<div id="duplicate" class="kt-notice is-critical"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body"><strong>Duplicate.</strong> A funding source with this name already exists.</div></div>
 </div>
 </div>
 
-<div style="border-top:1px solid var(--color-divider)">
+<div id="empty" style="border-top:1px solid var(--color-divider)">
 <div style="padding:40px;text-align:center">
 <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-400)" stroke-width="1.5" style="margin:0 auto 12px"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
 <p style="font-weight:600;margin-bottom:4px">No funding sources yet</p>
