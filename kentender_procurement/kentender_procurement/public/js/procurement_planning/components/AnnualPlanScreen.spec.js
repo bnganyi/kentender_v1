@@ -7,6 +7,7 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import AnnualPlanScreen from "./AnnualPlanScreen.vue";
+import { BASE, READY } from "./ReservationAllocation.fixtures.js";
 
 const INFRASTRUCTURE = {
 	plan_item_id: "PPI-MOH-2027-021",
@@ -61,15 +62,7 @@ function plan(overrides = {}) {
 		plan_checks: CHECKS,
 		changes: { is_initial: true },
 		history: [{ title: "Digital Health · DPP-MOH-DHI-2027-001 accepted", meta: "Mercy Kilonzo · 27 Nov 2026, 14:00 EAT" }],
-		summary: {
-			reservation_summary: [
-				{ label: "Eligible planned procurement", value: "KES 464,980" },
-				{ label: "Required allocation at 30%", value: "KES 139,494" },
-				{ label: "Reserved so far", value: "KES 0" },
-				{ label: "Still required", value: "KES 139,494" },
-				{ label: "Counting towards it", value: "No purchase yet" },
-			],
-		},
+		summary: { reservation_allocation: BASE },
 		submission_issues: [],
 		can_request_funding: false,
 		can_sign_and_submit: false,
@@ -138,9 +131,6 @@ describe("AnnualPlanScreen — U07 BASE", () => {
 		expect(checks.text()).toContain("Schedule");
 		// The failing one is stated once, in the notice — not twice.
 		expect(checks.text()).not.toContain("Reserved procurement");
-		// PLN22-AC-006: the required/qualifying/shortfall arithmetic is not
-		// repeated here.
-		expect(w.text()).not.toContain("Planned qualifying allocation");
 		expect(w.text()).not.toContain("Budget basis");
 	});
 
@@ -387,26 +377,39 @@ describe("AnnualPlanScreen — a reader who cannot change the plan", () => {
 });
 
 
-// The reservation figures used to exist only inside a refusal at Sign and
-// submit, as raw unformatted numbers with no statement of what they were a
-// share of — "Required 48000000.00, planned 0.00" against a plan of KES
-// 464,980 (found live 23 Sep 2026). The working belongs on the screen where
-// the work is done.
-describe("AnnualPlanScreen — the reserved-procurement working", () => {
-	it("shows what the target is a share of, what it comes to, and what is left", () => {
-		const summary = make().find('[data-testid="ppl-reservation-summary"]');
-		expect(summary.exists()).toBe(true);
-		expect(summary.text()).toContain("Eligible planned procurement");
-		expect(summary.text()).toContain("KES 464,980");
-		expect(summary.text()).toContain("Required allocation at 30%");
-		expect(summary.text()).toContain("KES 139,494");
-		expect(summary.text()).toContain("Reserved so far");
-		expect(summary.text()).toContain("Counting towards it");
+// PLN v1.25 — one plan-level Reservation allocation block, placed as the U07
+// boards draw it. Not met, it follows its own warning, above the quiet
+// checks (U07 base); met, it follows them (U07-FINANCE-COMPLETE). Either way
+// the reserved-procurement result leaves the quiet-checks group, because the
+// block states it.
+describe("AnnualPlanScreen — the Reservation allocation block", () => {
+	const order = (w) => {
+		const region = w.find('[data-testid="ppl-plan-checks-group"]').element.parentElement;
+		return [...region.children].map((el) => el.dataset.testid).filter(Boolean);
+	};
+
+	it("follows the warning and precedes the quiet checks while the allocation is not met", () => {
+		const w = make();
+		expect(order(w)).toEqual(["ppl-check-issue", "reservation-allocation", "ppl-plan-checks-group"]);
+		expect(w.find('[data-testid="reservation-status"]').text()).toBe("Required allocation not met");
+		expect(w.find('[data-testid="reservation-details"]').element.tagName).toBe("DETAILS");
+	});
+
+	it("follows the quiet checks once the allocation is met, and the met row is not repeated", () => {
+		const checks = [
+			{ label: "Funding", result: "Within each approved budget line", kind: "live", route: null },
+			{ label: "Reserved procurement", result: "Required allocation met", kind: "live", route: null },
+			{ label: "Schedule", result: "Both purchases meet their departmental deadlines", kind: "live", route: null },
+		];
+		const w = make({ plan: plan({ plan_checks: checks, summary: { reservation_allocation: READY } }) });
+		expect(order(w)).toEqual(["ppl-plan-checks-group", "reservation-allocation"]);
+		expect(w.find('[data-testid="ppl-plan-checks"]').text()).not.toContain("Reserved procurement");
+		expect(w.find('[data-testid="reservation-result"]').text()).toContain("38.46%");
 	});
 
 	it("says nothing at all where no reserved-procurement target is published", () => {
-		const w = make({ plan: plan({ summary: { reservation_summary: [] } }) });
-		expect(w.find('[data-testid="ppl-reservation-summary"]').exists()).toBe(false);
+		const w = make({ plan: plan({ summary: { reservation_allocation: null } }) });
+		expect(w.find('[data-testid="reservation-allocation"]').exists()).toBe(false);
 	});
 });
 
@@ -450,10 +453,7 @@ describe("AnnualPlanScreen — the structures the board draws", () => {
 		const group = make().find('[data-testid="ppl-plan-checks-group"]');
 		expect(group.exists()).toBe(true);
 		expect(group.classes()).toContain("kt-group");
-		// Both rows live inside the one rule, so the reserved-procurement
-		// working reads as part of the checks rather than a second loose band.
 		expect(group.find('[data-testid="ppl-plan-checks"]').exists()).toBe(true);
-		expect(group.find('[data-testid="ppl-reservation-summary"]').exists()).toBe(true);
 	});
 
 	it("gives Approval its own region and notice rather than loose labels", () => {

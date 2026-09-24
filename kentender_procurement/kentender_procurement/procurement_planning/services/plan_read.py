@@ -325,7 +325,8 @@ def plan_readiness(version, plan, *, stage: str = "pre_finance") -> dict[str, An
 	"""The exact blocker list and the readiness card. `pre_finance` (§5.6.4)
 	excludes Finance confirmation and the submission-only gates; `submission`
 	adds verified profiles, method evidence, feasibility and the planned
-	reservation allocations against the annual budget (§5.5.3.1)."""
+	reservation allocation against the eligible value of this plan Version
+	(PLN v1.25 §5.5.3.1)."""
 	from kentender_procurement.procurement_planning.services import plan_finance, strategy_gateway
 
 	reference = readiness.reference_for(plan.fiscal_year)
@@ -368,9 +369,9 @@ def plan_readiness(version, plan, *, stage: str = "pre_finance") -> dict[str, An
 	# still shows the true position (found live 23 Sep 2026 claiming
 	# "Required allocation met" over a KES 48,000,000 shortfall).
 	#
-	# The budget basis is no longer part of this: since the requirement is a
-	# share of planned value, a missing basis is an affordability concern
-	# and never a reason to call the reservation rule unavailable.
+	# No Budget figure is part of this: the requirement is a share of the
+	# plan's own eligible value, and the approved budget is only the ceiling
+	# the affordability check enforces.
 	if stage == "submission" and items and share["mandatory"]:
 		if not share["verified"]:
 			blockers.append({"code": "PLN_REFERENCE_UNAVAILABLE", "message": "The planned reservation allocation cannot be assessed: the verified reservation rule is missing.", "field": "reservation_category"})
@@ -380,9 +381,9 @@ def plan_readiness(version, plan, *, stage: str = "pre_finance") -> dict[str, An
 				"message": (
 					f"{MESSAGES['PLN_RESERVATION_SHORTFALL']} Required {_money(share['required'])} "
 					f"({share['target_percent']:g}% of {_money(share['eligible_value'])} planned), "
-					f"reserved {_money(share['qualifying'])}, short by {_money(share['shortfall'])}."
+					f"reserved {_money(share['qualifying'])}, short by {_money(share['remaining'])}."
 				),
-				"shortfall": share["shortfall"],
+				"shortfall": share["remaining"],
 			})
 	advisories = readiness.splitting_advisory(version.name, reference)
 	affordability = None
@@ -413,15 +414,15 @@ def plan_readiness(version, plan, *, stage: str = "pre_finance") -> dict[str, An
 		{
 			"check": "Planned reservation allocation",
 			"result": (
-				(f"Required {share['required']} · planned {share['qualifying']} · shortfall {share['shortfall']}" if share["basis"]["available"] else "Annual budget basis not available")
-				if target else f"{share['qualifying']} planned · target not published"
+				f"Required {_money(share['required'])} · planned {_money(share['qualifying'])} · remaining {_money(share['remaining'])}"
+				if target else f"{_money(share['qualifying'])} planned · target not published"
 			),
-			"kind": ("live" if share["met"] else "attention") if (target and share["basis"]["available"]) else "advisory",
+			"kind": ("live" if share["met"] else "attention") if target else "advisory",
 		},
 		{"check": "Contract splitting review", "result": ("No advisory" if not advisories else ("Confirmed" if cstr(version.splitting_confirmation).strip() else f"{len(advisories)} advisory")), "kind": "neutral" if not advisories or cstr(version.splitting_confirmation).strip() else "advisory"},
 	]
 	if is_county:
-		checks.append({"check": "County resident-tenderer reservation", "result": (f"Required {share['county']['required']} · planned {share['county']['qualifying']} · shortfall {share['county']['shortfall']}" if county_target and share["basis"]["available"] else f"{share['county']['qualifying']} planned · county target not published"), "kind": "advisory"})
+		checks.append({"check": "County resident-tenderer reservation", "result": (f"Required {_money(share['county']['required'])} · planned {_money(share['county']['qualifying'])} · remaining {_money(share['county']['remaining'])}" if county_target else f"{_money(share['county']['qualifying'])} planned · county target not published"), "kind": "advisory"})
 	return {
 		"checks": checks,
 		"blockers": blockers,
@@ -660,23 +661,54 @@ def _schedule_failure_text(count: int, *, pointer: str = "") -> str:
 	return f"{count} {purchase} {verb} not yet meet {deadline}{suffix}"
 
 
-def _reservation_summary(share) -> list[dict[str, str]]:
-	"""The reservation arithmetic as named, money-formatted facts.
+def _reservation_block(share) -> dict[str, Any] | None:
+	"""The plan-level Reservation allocation block (U07, U11, U21), as named,
+	money-formatted facts. One builder for every screen, so the preparation
+	and governance views cannot drift.
 
-	One obligation, shown once at plan level: what the target is a share of,
-	what it comes to, what is designated so far, what is left, and which
-	purchases are carrying it. Absent entirely where no target is published —
-	there is nothing to show and no obligation to explain."""
-	if not share["mandatory"]:
-		return []
-	carrying = share["qualifying_items"]
-	return [
-		{"label": "Eligible planned procurement", "value": _money(share["eligible_value"])},
-		{"label": f"Required allocation at {share['target_percent']:g}%", "value": _money(share["required"])},
-		{"label": "Reserved so far", "value": _money(share["qualifying"])},
-		{"label": "Still required", "value": _money(share["shortfall"])},
-		{"label": "Counting towards it", "value": ", ".join(carrying) if carrying else "No purchase yet"},
-	]
+	Result first (remaining, required, qualifying, share), then the working
+	behind it: the eligible value, the target, the exact Plan and rule
+	Versions, County, and each purchase with whether and why it counts.
+	Absent where no target is published — there is no obligation to show."""
+	if not share or not share.get("mandatory"):
+		return None
+	met = bool(share.get("met"))
+	qualifying = flt(share.get("qualifying"))
+	county = share.get("county") or {}
+	if not share.get("verified"):
+		status = ("The reservation rule is missing or unverified", "attention")
+	else:
+		status = ("Required allocation met", "live") if met else ("Required allocation not met", "attention")
+	return {
+		"status_label": status[0],
+		"status_kind": status[1],
+		"met": met,
+		"remaining_display": _money(share.get("remaining")),
+		"required_display": _money(share.get("required")),
+		"qualifying_display": _money(qualifying),
+		"share_display": f"{flt(share.get('qualifying_share_percent')):.2f}%" if qualifying else "",
+		"eligible_display": _money(share.get("eligible_value")),
+		"target_display": f"{flt(share.get('target_percent')):g}%",
+		"plan_basis": cstr(share.get("plan_basis")),
+		"rule_version": cstr(share.get("rule_version")),
+		"county_display": (
+			f"{flt(county.get('target_percent')):g}% of eligible planned procurement" if county.get("target_percent") else "Target not published"
+		) if county.get("applicable") else "Not applicable",
+		"restrictions_line": cstr(share.get("mandatory_restrictions")) or readiness.NO_ADDITIONAL_RESTRICTION,
+		"items": [
+			{
+				"plan_item_id": row["plan_item_id"],
+				"title": row.get("title", ""),
+				"value_display": _money(row["value"]),
+				"applicability": row["applicability"],
+				"reason": row.get("reason", ""),
+				"designation": row["designation"],
+				"qualifying_display": _money(row["qualifying"]),
+				"qualifying_is_zero": not flt(row["qualifying"]),
+			}
+			for row in share.get("items") or []
+		],
+	}
 
 
 def _plan_checks(version, plan, report) -> list[dict[str, Any]]:
@@ -708,7 +740,7 @@ def _plan_checks(version, plan, report) -> list[dict[str, Any]]:
 		reservation_result = "The reserved-procurement rule is missing or unverified"
 		reservation_kind = "critical"
 	else:
-		reservation_result = f"{_money(share['shortfall'])} more qualifying allocation required"
+		reservation_result = f"{_money(share['remaining'])} more qualifying allocation required"
 		reservation_kind = "critical"
 
 	# A distinct-purchase count, not a blocker count (found live 23 Sep 2026:
@@ -871,11 +903,11 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 			"plan_items": len(items),
 			"value_display": _money(item_value),
 			"reservation": share,
-			# The working behind the reservation check, in money and named
-			# amounts. It used to be a raw, unexplained "Required 48000000.00,
-			# planned 0.00" only on the refusal at Sign and submit, with no way
-			# to see what the figure was a share of (found live 23 Sep 2026).
-			"reservation_summary": _reservation_summary(share),
+			# The plan-level Reservation allocation block (U07): the result,
+			# then the working behind it — what the target is a share of,
+			# under which exact Plan and rule Versions, and which purchases
+			# count and why (PLN v1.25 §5.5.3.1).
+			"reservation_allocation": _reservation_block(share),
 			# U07-overview's own strip: the same accepted-entry count under its
 			# own label, plus how many departments they come from.
 			"departmental_sources": len(all_accepted),
@@ -1776,8 +1808,12 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 	funding_current = plan_finance.funding_is_current(version)
 	funding_evidence = _funding_evidence(version)
 	confirmation = funding_evidence.get("current_confirmation") or {}
-	reference = readiness.reference_for(plan.fiscal_year)
-	share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
+	# The calculation frozen at submission is this Version's immutable
+	# reservation evidence (PLN25-AC-004): a governance actor reviews exactly
+	# what was submitted, never a live recalculation. Snapshots frozen before
+	# the calculation carried its per-purchase rows fall back to live.
+	frozen = snapshot.get("reservation_allocations") or {}
+	share = frozen if "items" in frozen else readiness.reservation_allocations(version.name, plan.fiscal_year, readiness.reference_for(plan.fiscal_year))
 	return {
 		"outcome": "OK",
 		"task": task_doc.name,
@@ -1795,7 +1831,7 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 			"funding": "Within approved budget" if funding_current else "Funding needs to be checked again",
 			"funding_kind": "live" if funding_current else "critical",
 			"reservation": "Required allocation met" if share["met"] or not share["mandatory"] else (
-				f"{_money(share['shortfall'])} more qualifying allocation required"
+				f"{_money(share['remaining'])} more qualifying allocation required"
 			),
 			"reservation_kind": "live" if (share["met"] or not share["mandatory"]) else "critical",
 			"schedule": _governance_schedule_result(version, plan),
@@ -1869,24 +1905,8 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 			"current": funding_evidence.get("current"),
 		},
 		"method_and_schedule": _governance_method_and_schedule(version, user),
-		"reservation": {
-			"target_percent": share["target_percent"],
-			# What the requirement is a share of. The reviewer used to be
-			# shown the budget reference under the heading "Budget basis",
-			# directly beside the required allocation, which read as though
-			# the budget were the measure of the obligation — the very
-			# reading corrected on 24 Sep 2026.
-			"eligible_value_display": _money(share["eligible_value"]),
-			"shortfall_or_met_display": "Required allocation met" if share["met"] else _money(share["shortfall"]),
-			"required_allocation_display": _money(share["required"]) if share["required"] not in ("", None) else "Not mandatory",
-			"planned_qualifying_display": _money(share["qualifying"]),
-			"shortfall_display": _money(share["shortfall"]) if share["shortfall"] not in ("", None) else "",
-			"share_of_annual_display": f"{share['percent_of_annual']:.2f}%" if share["basis"]["available"] else "",
-			"budget_basis_reference": share["basis"]["budget_reference"],
-			"budget_version_display": f"Version {share['basis']['version_reference']}" if share["basis"]["version_reference"] else "",
-			"county_requirement_display": (f"{share['county']['target_percent']}%" if share["county"]["applicable"] else "Not applicable"),
-			"met": share["met"],
-		},
+		# The same plan-level block U07 shows, from the frozen calculation.
+		"reservation": _reservation_block(share),
 		"changes": _version_changes(version),
 		"history": _governance_history(version),
 		"can_download_review_pack": True,

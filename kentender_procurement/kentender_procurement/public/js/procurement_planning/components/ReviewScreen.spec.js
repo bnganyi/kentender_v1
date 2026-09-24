@@ -6,6 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import ReviewScreen from "./ReviewScreen.vue";
+import { READY } from "./ReservationAllocation.fixtures.js";
 
 const ITEMS = [
 	{
@@ -78,7 +79,7 @@ function task(overrides = {}) {
 			statement_as_at: "4 Dec 2026, 10:00 EAT",
 			at_approval: { actor_name: "Josphat Mwangi", decided_at_display: "4 Dec 2026, 10:00 EAT" },
 		},
-		reservation: { eligible_value_display: "KES 464,980", required_allocation_display: "KES 139,494", planned_qualifying_display: "KES 150,000", shortfall_or_met_display: "Required allocation met" },
+		reservation: READY,
 		preparation_signature: {
 			actor_name: "Charles Mutiso",
 			capacity: "Head of Procurement Function",
@@ -302,19 +303,30 @@ describe("ReviewScreen — a decision never precedes a hidden issue", () => {
 	});
 });
 
-// The approver used to be shown the approved budget Version under the heading
-// "Budget basis", right beside the required allocation, which read as though
-// the budget were the measure of the obligation. It is the ceiling the plan
-// fits inside; the Funding result above is where that belongs.
-describe("ReviewScreen — what the reserved-procurement target is a share of", () => {
-	it("names the planned value as the basis, not the budget", () => {
+// The approver sees the same plan-level Reservation allocation block U07
+// shows, frozen at submission, inside "Review Plan checks" with its working
+// inline (U11 boards). It used to name the approved budget Version as "Budget
+// basis" beside the required allocation, which read as though the budget
+// were the measure of the obligation; it is only the ceiling, under Funding.
+describe("ReviewScreen — Review Plan checks", () => {
+	it("holds the Reservation allocation block, closed by default, then the schedule", () => {
 		const w = make();
-		const body = w.find('[data-testid="rev-plan-checks"]').text();
-		expect(body).toContain("Eligible planned procurement");
-		expect(body).toContain("KES 464,980");
-		expect(body).toContain("Required allocation");
-		expect(body).toContain("KES 139,494");
-		expect(body).toContain("Still required");
-		expect(body).not.toContain("Budget basis");
+		const checks = w.find('[data-testid="rev-plan-checks"]');
+		expect(checks.attributes("open")).toBeUndefined();
+		const body = checks.find(".kt-disclosure-body");
+		const children = [...body.element.children].map((el) => el.dataset.testid);
+		expect(children).toEqual(["reservation-allocation", "rev-plan-checks-schedule"]);
+		expect(body.find('[data-testid="reservation-status"]').text()).toBe("Required allocation met");
+		expect(body.find('[data-testid="reservation-basis"]').text()).toContain("KES 130,000,000");
+		expect(body.find('[data-testid="reservation-scope"]').text()).toContain("PLN-MOH-2027-001, Version 1");
+		// no nested disclosure: the outer one already hides the working
+		expect(body.find('[data-testid="reservation-details"]').element.tagName).toBe("DIV");
+		expect(body.text()).not.toContain("Budget basis");
+	});
+
+	it("shows only the schedule where no reserved-procurement target is published", () => {
+		const w = make({ task: task({ reservation: null }) });
+		expect(w.find('[data-testid="reservation-allocation"]').exists()).toBe(false);
+		expect(w.find('[data-testid="rev-plan-checks-schedule"]').exists()).toBe(true);
 	});
 });

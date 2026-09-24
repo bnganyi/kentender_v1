@@ -115,14 +115,6 @@ def validate_plan_affordability_for_decision(
 
 
 @frappe.whitelist()
-def get_annual_procurement_budget_basis(fiscal_year: str | None = None, as_of: str | None = None):
-	"""PLN-CHG-001 v1.18 §5.5.3.1 — the complete approved annual budget and Version."""
-	from kentender_budget.services import budget_line_contracts as lines
-
-	return lines.get_annual_procurement_budget_basis(fiscal_year=fiscal_year or "", as_of=as_of)
-
-
-@frappe.whitelist()
 def get_budget_approval_task(budget_version: str | None = None):
 	from kentender_budget.services import budget_readiness_contracts as readiness
 

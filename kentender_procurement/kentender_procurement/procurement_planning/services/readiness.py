@@ -9,8 +9,9 @@ estimate basis, an estimated delivery period and a calculable schedule
 from its resolved schedule profile. Formal submission adds: verified method
 and schedule profiles in force (no Open Tender fallback), the method's
 mandatory conditions and evidence, feasibility against the source boundary,
-and the planned reservation allocations against the **annual procurement
-budget** (§5.5.3.1). Advisory: the contract-splitting assessment, which the
+and the planned reservation allocations against the **eligible value of the
+current complete plan Version** (PLN v1.25 §5.5.3.1 — never the approved
+budget, which is only the funding ceiling). Advisory: the contract-splitting assessment, which the
 Planner confirms or resolves by aggregation.
 
 Regulator reference data (reservation target, threshold matrix for the
@@ -30,6 +31,12 @@ from kentender_procurement.procurement_planning.errors import fail
 from kentender_procurement.procurement_planning.services import schedule
 
 NONE_RESERVATION = "None"
+# PLN v1.25 / RES-IMP-001 §1.1 — the planned base designations. County
+# residents is a separate measure, not a fifth category; the governed
+# catalogue's other entries are not Planning designations.
+BASE_RESERVATION_CATEGORIES = (NONE_RESERVATION, "Youth", "Women", "Persons with disabilities")
+INCLUDED = "Included"
+NO_ADDITIONAL_RESTRICTION = "No additional restriction applies"
 # PLN-CHG-001 v1.18 §4.6 — a fixed literal; unsupported horizons are rejected (PLN_MULTI_YEAR_UNSUPPORTED)
 PLAN_HORIZONS = ("Single year",)
 AGGREGATION_INDICATORS = ("Not aggregated", "Aggregated into this package", "Common-user item arrangement")
@@ -114,10 +121,12 @@ def open_tender_threshold(reference: dict[str, Any], category: str) -> float:
 
 
 def reservation_categories(reference: dict[str, Any]) -> list[dict[str, Any]]:
-	rows = reference.get("reservation", {}).get("categories", [])
-	if rows:
-		return rows
-	return [{"category": NONE_RESERVATION, "is_regional": False}]
+	"""The base designations the governed catalogue carries, in their fixed
+	order. Nothing outside `BASE_RESERVATION_CATEGORIES` is offered or
+	accepted, whatever else the catalogue lists."""
+	rows = {r.get("category"): r for r in reference.get("reservation", {}).get("categories", [])}
+	base = [rows[c] for c in BASE_RESERVATION_CATEGORIES if c in rows]
+	return base or [{"category": NONE_RESERVATION, "is_regional": False}]
 
 
 # --------------------------------------------------------------------------
@@ -177,28 +186,85 @@ def line_totals_hash(totals: dict[str, float]) -> str:
 	return hashlib.sha256(json.dumps({k: f"{v:.2f}" for k, v in sorted(totals.items())}).encode()).hexdigest()[:32]
 
 
+def item_applicability(item, rules: dict[str, Any]) -> tuple[str, str]:
+	"""Whether one Plan Item counts towards the reservation measure, and why.
+
+	The single place exclusions belong. The verified rule in force names no
+	exclusions, so every current purchase is included under it; a rule that
+	later names some (by category, method or funding) is applied here, and
+	the excluded row keeps its reason — it never silently leaves the plan
+	(PLN25-AC-003)."""
+	return INCLUDED, "Counted: the reservation rule includes all planned procurement"
+
+
+def measure_row(plan_item_id: str, title: str, value, designation: str, applicability: str = INCLUDED, reason: str = "") -> dict[str, Any]:
+	return {
+		"plan_item_id": plan_item_id,
+		"title": title,
+		"value": value,
+		"applicability": applicability,
+		"reason": reason,
+		"designation": cstr(designation) or NONE_RESERVATION,
+	}
+
+
+def reservation_measure(rows: list[dict[str, Any]], target_percent) -> dict[str, Any]:
+	"""PLN v1.25 §5.5.3.1, in exact Decimal:
+
+	eligible  = sum of the included purchases' estimated values
+	required  = target% × eligible
+	remaining = max(required − qualifying, 0)
+	share     = qualifying ÷ eligible, to two places
+
+	Sets each row's own `qualifying` amount. `target_percent` None means no
+	published target: required and remaining are None."""
+	from decimal import ROUND_HALF_UP, Decimal
+
+	cent = Decimal("0.01")
+	eligible = qualifying = Decimal(0)
+	for row in rows:
+		included = row["applicability"] == INCLUDED
+		counts = included and row["designation"] != NONE_RESERVATION
+		row["qualifying"] = row["value"] if counts else Decimal(0)
+		if included:
+			eligible += row["value"]
+		qualifying += row["qualifying"]
+	required = (eligible * Decimal(str(target_percent)) / Decimal(100)).quantize(cent, ROUND_HALF_UP) if target_percent else None
+	return {
+		"eligible": eligible.quantize(cent),
+		"qualifying": qualifying.quantize(cent),
+		"required": required,
+		"remaining": max(Decimal(0), required - qualifying).quantize(cent) if required is not None else None,
+		"share": (qualifying / eligible * 100).quantize(cent, ROUND_HALF_UP) if eligible else Decimal("0.00"),
+	}
+
+
+def rule_version_label(reference: dict[str, Any]) -> str:
+	if not reference.get("reference"):
+		return ""
+	number = reference.get("version_number")
+	return f"Reservation rules, Version {number}" if number else "Reservation rules"
+
+
 def reservation_allocations(version_name: str, fiscal_year: str, reference: dict[str, Any] | None = None) -> dict[str, Any]:
-	"""Each obligation with its own calculation, measured against the value
-	this plan actually plans to procure.
+	"""The plan-level reservation measure for one Plan Version (PLN v1.25
+	§5.5.3.1 / §7.3 reservation-measure resolver).
 
-	The denominator is the eligible planned value of the current complete
-	plan, not the approved annual budget (corrected 24 Sep 2026 on the
-	owner's written ruling). The approved budget authorises spending; it
-	does not oblige it, and using it here turned unused budget headroom into
-	a compulsory procurement target — a KES 464,980 plan under a KES
-	160,000,000 ceiling was asked for KES 48,000,000 of reserved allocation,
-	which it could not reach even with every purchase designated. The
-	ceiling's own job, that the plan must fit inside it, belongs to the
-	affordability check and is untouched; `basis` stays on the result
-	because the review screen still prints which budget Version was in force.
+	The denominator is the eligible value of this exact current plan
+	Version — the purchases the rule includes, each listed with its reason —
+	never the approved annual budget. The budget authorises spending; it
+	does not oblige it, and measuring against it once turned unused
+	headroom into a compulsory target (a KES 464,980 plan under a KES
+	160,000,000 ceiling was asked for KES 48,000,000). The ceiling's own job
+	belongs to the affordability check, and no Budget contract is read here.
 
-	Every purchase in the plan is eligible. Narrowing that needs a verified
-	rule naming the exclusions and a reason for each, which does not exist
-	yet. Money is exact Decimal at the boundary; amounts are returned as
-	decimal strings."""
+	The result names the Plan Version and rule Version it was made under;
+	frozen at submission into the Version's snapshot, it is that Version's
+	immutable calculation. County residents is a separate measure with its
+	own target. Amounts are decimal strings."""
 	from decimal import Decimal
 
-	from kentender_procurement.procurement_planning.services import budget_gateway, money as money_boundary, profiles
+	from kentender_procurement.procurement_planning.services import money as money_boundary, profiles
 
 	reference = reference if reference is not None else reference_for(fiscal_year)
 	rules = reference.get("reservation", {}) or {}
@@ -208,64 +274,50 @@ def reservation_allocations(version_name: str, fiscal_year: str, reference: dict
 	items = frappe.get_all(
 		"Annual Plan Item",
 		filters={"plan_version": version_name, "item_state": ("!=", "Dissolved")},
-		fields=["name", "plan_item_id", "reservation_category", "county_resident_reservation"],
+		fields=["name", "plan_item_id", "title", "reservation_category", "county_resident_reservation"],
+		order_by="creation asc",
 	)
-	plan_total = qualifying = county_qualifying = Decimal(0)
-	qualifying_items, county_items = [], []
+	rows, county_rows = [], []
 	for item in items:
 		value = money_boundary.sum_money(a.indicative_amount for a in _allocations(item.name))
-		plan_total += value
-		if cstr(item.reservation_category) and item.reservation_category != NONE_RESERVATION:
-			qualifying += value
-			qualifying_items.append(item.plan_item_id)
-		if item.county_resident_reservation:
-			county_qualifying += value
-			county_items.append(item.plan_item_id)
-	# The eligible planned value: every purchase the plan currently holds.
-	eligible = plan_total
-	basis = budget_gateway.annual_budget_basis(fiscal_year)
-	annual = money_boundary.parse_money(basis.get("annual_approved_amount"), allow_zero=True, allow_blank=True) if basis.get("available") else None
-	required = (eligible * Decimal(str(target)) / Decimal(100)).quantize(Decimal("0.01")) if target else None
-	shortfall = max(Decimal(0), required - qualifying) if required is not None else None
-	county_required = (eligible * Decimal(str(county_target)) / Decimal(100)).quantize(Decimal("0.01")) if (county_target and is_county) else None
-	county_shortfall = max(Decimal(0), county_required - county_qualifying) if county_required is not None else None
+		applicability, reason = item_applicability(item, rules)
+		rows.append(measure_row(item.plan_item_id, cstr(item.title), value, item.reservation_category, applicability, reason))
+		# County residents: its own measure over the same included purchases.
+		county_rows.append(measure_row(item.plan_item_id, "", value, "County" if item.county_resident_reservation else NONE_RESERVATION, applicability, reason))
+	measure = reservation_measure(rows, target)
+	county = reservation_measure(county_rows, county_target if is_county else None)
+	version = frappe.db.get_value("Annual Plan Version", version_name, ["annual_plan", "version_number"], as_dict=True) or {}
+	plan_reference = frappe.db.get_value("Annual Plan", version.get("annual_plan"), "plan_reference") if version.get("annual_plan") else ""
 	verified = cstr(reference.get("verification_status")) in profiles.VERIFIED_STATUSES
 	fmt = money_boundary.money_text
+	required, remaining = measure["required"], measure["remaining"]
 	return {
-		"plan_total": fmt(plan_total),
-		# The denominator, under the name the screens and tests use for it.
-		"eligible_value": fmt(eligible),
-		"qualifying": fmt(qualifying),
-		"qualifying_items": qualifying_items,
-		"percent_of_plan": float((qualifying / plan_total * 100) if plan_total else 0),
-		"percent_of_annual": float((qualifying / annual * 100) if annual else 0),
+		"plan_basis": f"{plan_reference}, Version {version.get('version_number')}" if plan_reference else "",
+		"rule_reference": cstr(reference.get("reference")),
+		"rule_version": rule_version_label(reference),
+		"verification_status": cstr(reference.get("verification_status")),
+		"plan_total": fmt(sum((r["value"] for r in rows), Decimal(0))),
+		"eligible_value": fmt(measure["eligible"]),
+		"qualifying": fmt(measure["qualifying"]),
+		"qualifying_items": [r["plan_item_id"] for r in rows if r["qualifying"]],
+		"qualifying_share_percent": fmt(measure["share"]),
 		"target_percent": target,
 		"required": fmt(required) if required is not None else "",
-		"shortfall": fmt(shortfall) if shortfall is not None else "",
-		"met": bool(required is not None and shortfall == 0),
+		"remaining": fmt(remaining) if remaining is not None else "",
+		"met": bool(required is not None and remaining == 0),
 		"mandatory": bool(target),
 		"verified": verified,
-		"basis": {
-			"available": bool(basis.get("available")),
-			"annual_approved_amount": fmt(annual) if annual is not None else "",
-			"budget_reference": basis.get("budget_reference", ""),
-			"version_reference": basis.get("version_reference", ""),
-			"budget_version": basis.get("budget_version", ""),
-			"rule_version": reference.get("version", "") or reference.get("name", ""),
-			"verification_status": cstr(reference.get("verification_status")),
-		},
+		"mandatory_restrictions": NO_ADDITIONAL_RESTRICTION,
+		"items": [{**r, "value": fmt(r["value"]), "qualifying": fmt(r["qualifying"])} for r in rows],
 		"county": {
 			"applicable": is_county,
 			"target_percent": county_target,
-			"qualifying": fmt(county_qualifying),
-			"qualifying_items": county_items,
-			"required": fmt(county_required) if county_required is not None else "",
-			"shortfall": fmt(county_shortfall) if county_shortfall is not None else "",
-			"met": bool(county_required is not None and county_shortfall == 0),
+			"qualifying": fmt(county["qualifying"]),
+			"qualifying_items": [r["plan_item_id"] for r in county_rows if r["qualifying"]],
+			"required": fmt(county["required"]) if county["required"] is not None else "",
+			"remaining": fmt(county["remaining"]) if county["remaining"] is not None else "",
+			"met": bool(county["required"] is not None and county["remaining"] == 0),
 		},
-		# retained for the transitional readers of the v1.12 share
-		"percent": float((qualifying / plan_total * 100) if plan_total else 0),
-		"county_percent": float((county_qualifying / plan_total * 100) if plan_total else 0),
 	}
 
 

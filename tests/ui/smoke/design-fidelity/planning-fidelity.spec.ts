@@ -339,7 +339,9 @@ test.describe("Procurement Planning — design fidelity (U07 annual plan, U08 fo
 	test.afterAll(() => restoreSite());
 
 	test("U07 — purchases first, then the plan's own checks", async ({ page, browser }) => {
-		const state = resetFixture<{ plan_reference: string }>("reset_plan_item_fixture");
+		// A published 30% target, so the plan shows the board's unmet
+		// Reservation allocation block (PLN v1.25).
+		const state = resetFixture<{ plan_reference: string }>("reset_plan_item_fixture", { reservation_target_percent: 30 });
 		const art = await wanted(browser, U07, "U07");
 		const errors = collectConsoleErrors(page);
 		await login(page, PLANNER, PASSWORD);

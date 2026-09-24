@@ -9,11 +9,13 @@ tables directly. Two contracts remain after v1.7's lifecycle simplification:
 
 	ListEligibleBudgetLines   → budget_api.list_eligible_budget_lines
 	CheckPlanAffordability    → budget_api.check_plan_affordability
-	AnnualProcurementBudgetBasis (v1.18 §5.5.3.1) → budget_api.get_annual_procurement_budget_basis
 
 Planning creates no reservation at any point (§7.3, BUD-BR-009): the v1.2
 module's check/reserve/release/revalidate gateway paths are deleted, not
 wrapped. Neither contract takes a Procuring Entity argument (§16.2).
+The approved budget is the plan's funding ceiling only: the 30%
+reservation is a share of the plan's own eligible value (PLN v1.25
+§5.5.3.1), so there is no annual-budget-basis contract here.
 """
 
 from __future__ import annotations
@@ -91,16 +93,6 @@ def check_plan_affordability(*, fiscal_year: str, planned_totals: dict[str, floa
 
 	with _system_principal():
 		return contract(fiscal_year=fiscal_year, planned_totals=planned_totals)
-
-
-def annual_budget_basis(fiscal_year: str) -> dict[str, Any]:
-	"""BUD v1.8 (owed) §5.5.3.1 — the complete approved annual procurement
-	budget and its exact Version: the reservation-allocation denominator.
-	Amounts arrive as decimal strings; `available = False` fails closed."""
-	from kentender_budget.api.budget_api import get_annual_procurement_budget_basis as contract
-
-	with _system_principal():
-		return contract(fiscal_year=fiscal_year)
 
 
 class BudgetBasisStale(Exception):

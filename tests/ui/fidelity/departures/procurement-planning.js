@@ -37,15 +37,6 @@ export const DEPARTURES = {
 			authority: "Owner review of the U07 purchases table, 23 September 2026",
 		},
 		{
-			testid: "ppl-reservation-summary",
-			because:
-				"The reserved-procurement working — what the target is a share of, what it comes to, " +
-				"what is designated and what is left. No board draws it; it existed only inside the " +
-				"refusal at Sign and submit, as raw unformatted numbers with nothing naming their " +
-				"denominator. §5.5.3.1's own Display row requires these figures and no artboard implements it.",
-			authority: "Owner ruling on the reserved-procurement rule, 24 September 2026",
-		},
-		{
 			testid: "ppl-history",
 			replaces: ["disclosure > disclosure-body > table"],
 			because:
@@ -96,11 +87,6 @@ export const DEPARTURES = {
 			because: "As U07 above — the purchases table's own outstanding-work column.",
 			authority: "Owner review of the U07 purchases table, 23 September 2026",
 		},
-		{
-			testid: "ppl-reservation-summary",
-			because: "As U07 above — the reserved-procurement working.",
-			authority: "Owner ruling on the reserved-procurement rule, 24 September 2026",
-		},
 	],
 	"ReviewScreen#U11-AO": [
 		{
@@ -110,14 +96,6 @@ export const DEPARTURES = {
 				"issue list only; a decision screen that says nothing when there is nothing wrong " +
 				"leaves the reviewer unable to tell 'checked and clear' from 'not checked'.",
 			authority: "PLN-CHG-001 §10.10 — the decision never precedes a hidden material issue",
-		},
-		{
-			testid: "rev-plan-checks",
-			because:
-				"A second disclosure holding the reserved-procurement working: what the target is a " +
-				"share of, what it comes to, what is designated and what is left. The board draws " +
-				"only the Changes-and-history disclosure.",
-			authority: "Owner ruling on the reserved-procurement rule, 24 September 2026",
 		},
 		{
 			omits: ["notice"],

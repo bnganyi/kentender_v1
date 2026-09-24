@@ -225,27 +225,20 @@
 						>{{ check.action }}</button>
 					</div>
 				</div>
-				<div class="kt-group" data-testid="ppl-plan-checks-group">
+				<!-- The Reservation allocation block states the reserved-procurement
+				     result itself, so it leaves the passing-checks group. Not met,
+				     it follows its own warning (U07 base board); met, it follows
+				     the quiet checks (U07-FINANCE-COMPLETE). -->
+				<ReservationAllocation v-if="reservationBlock && !reservationBlock.met" :block="reservationBlock" collapsible />
+				<div class="kt-group" :style="reservationBlock && !reservationBlock.met ? 'margin-top: var(--kt-space-5)' : ''" data-testid="ppl-plan-checks-group">
 				<div class="kt-meta-row pln-plan-checks" data-testid="ppl-plan-checks">
 					<div v-for="check in passingChecks" :key="check.label">
 						<span class="kt-label">{{ check.label }}</span>
 						<span class="kt-meta-value">{{ check.result }}</span>
 					</div>
 				</div>
-				<!-- The working behind the reserved-procurement result. One
-				     obligation, stated once at plan level: what the target is a
-				     share of, what it comes to, what is designated so far and
-				     what is left. It used to exist only inside the refusal at
-				     Sign and submit, as raw unformatted numbers with nothing
-				     naming their denominator (found live 23 Sep 2026). Absent
-				     entirely where no target is published. -->
-				<div v-if="reservationSummary.length" class="kt-meta-row pln-plan-checks pln-plan-checks-working" data-testid="ppl-reservation-summary">
-					<div v-for="fact in reservationSummary" :key="fact.label">
-						<span class="kt-label">{{ fact.label }}</span>
-						<span class="kt-meta-value">{{ fact.value }}</span>
-					</div>
 				</div>
-				</div>
+				<ReservationAllocation v-if="reservationBlock && reservationBlock.met" :block="reservationBlock" collapsible />
 			</div>
 
 			<!-- §10.6 — once the version is Active, its approval and publication
@@ -448,6 +441,7 @@
 <script setup>
 import { computed, ref, watch } from "vue";
 import MissingSettingGroup from "./MissingSettingGroup.vue";
+import ReservationAllocation from "./ReservationAllocation.vue";
 
 const props = defineProps({
 	plan: { type: Object, default: () => ({}) },
@@ -491,9 +485,11 @@ const missingSettings = computed(() => props.plan.missing_settings || []);
 const unallocated = computed(() => props.plan.unallocated_sources || []);
 const planChecks = computed(() => props.plan.plan_checks || []);
 const failingChecks = computed(() => planChecks.value.filter((check) => check.kind === "critical"));
-const passingChecks = computed(() => planChecks.value.filter((check) => check.kind !== "critical"));
+const reservationBlock = computed(() => (props.plan.summary || {}).reservation_allocation || null);
+const passingChecks = computed(() =>
+	planChecks.value.filter((check) => check.kind !== "critical" && !(reservationBlock.value && check.label === "Reserved procurement")),
+);
 const historyOpen = ref(false);
-const reservationSummary = computed(() => (props.plan.summary || {}).reservation_summary || []);
 const submissionIssues = computed(() => props.plan.submission_issues || []);
 const submissionIssuesHeading = computed(() => {
 	const n = submissionIssues.value.length;

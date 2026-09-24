@@ -442,15 +442,15 @@ def _current_issue(plan, open_version, *, is_planner: bool) -> dict[str, Any] | 
 	except Exception:
 		allocations = {}
 	if allocations.get("mandatory") and not allocations.get("met"):
-		shortfall = cstr(allocations.get("shortfall"))
-		if shortfall:
+		remaining = cstr(allocations.get("remaining"))
+		if remaining:
 			return {
 				# U01's own drawn copy (re-diffed 22 Sep 2026 against the real
 				# v1.24 artboard — this previously said "Allocate ... more to
 				# eligible reserved procurement", a sentence the artboard never
 				# draws; this code path had never actually fired live before
 				# today's fiscal_year fix, so the mismatch went unnoticed).
-				"text": f"Reserved procurement is below the required allocation by {_money(flt(shortfall))}. Resolve this before sending the plan to Finance.",
+				"text": f"Reserved procurement is below the required allocation by {_money(flt(remaining))}. Resolve this before sending the plan to Finance.",
 				"action": "Review reserved procurement",
 				"route": ["annual-procurement-plan", plan.plan_reference],
 			}

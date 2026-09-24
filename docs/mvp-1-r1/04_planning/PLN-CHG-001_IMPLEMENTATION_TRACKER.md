@@ -241,6 +241,21 @@ Every row starts `Planned`. A row moves to `Done` only with a named test or an o
 | PLN23-AC-001 | Planned | No forecast schema, route, API, U15 action, scheduler registration, reminder configuration or notification producer. Closes with PLN22-121..124 and the removed-construct scan |
 | PLN23-AC-002 | Planned | Both U06 artboards reviewed and inventoried before Correct classification ships |
 
+### v1.25 reservation correction — §14.11, `PLN25-AC-001..006` (24 September 2026)
+
+Authority: `KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_25.md` §5.5.3.1, §7.3, §14.11, and `99_other/KenTender_RES-IMP-001_Reservation_Correction_Implementation_Handoff_v1_0.md`. The only v1.25 change against v1.24 (whose screens were already built) is the reservation measure. Scope agreed with the owner: Budget and Planning only. Rule-driven exclusions, the System setup catalogue and rule editor, and the Requisitions handoff are follow-ups (FU-V125-01..05).
+
+| ID | Status | Evidence |
+|---|---|---|
+| PLN25-AC-001 | Done | `readiness.reservation_allocations` reads no Budget contract; the eligible value is the sum of the included current purchases. `TestReservationAllocations.test_the_approved_budget_is_not_an_input` (no `basis` / `percent_of_annual` / `shortfall` key; `budget_gateway.annual_budget_basis` absent). |
+| PLN25-AC-002 | Done | Affordability path unchanged (`check_plan_affordability`, `validate_plan_affordability_for_decision`); `test_plan_finance` untouched. Budget side: BUD20-AC-001..003. |
+| PLN25-AC-003 | Done | Every current item has a row with applicability and reason (`readiness.item_applicability`, the single place exclusions belong); an excluded row keeps its reason and leaves the denominator. `test_every_current_purchase_is_accounted_for_with_the_exact_basis`, `test_an_excluded_purchase_leaves_the_denominator_with_its_reason`. The verified rule names no exclusions, so every purchase is Included today. |
+| PLN25-AC-004 | Done | The calculation (Plan basis, rule Version, per-item rows, result) is frozen in `submitted_snapshot.reservation_allocations`; governance reads the frozen copy, never a live recalculation. A successor Draft computes its own. `test_plan_governance.test_the_review_shows_the_frozen_reservation_calculation_not_a_live_one` (rule changed 30%→50% after submission; the review still shows 30% / KES 300,000). Snapshots frozen before this change fall back to live. |
+| PLN25-AC-005 | Done | `test_the_canonical_fixture_calculates_exactly` (130m × 30% = 39m; 50m Youth = 38.46%; 0 remaining; exact Decimal). Live, canonical `PLN-MOH-2027-001` V1 (24 Sep 2026, Mercy Kilonzo, 1440 px): "Remaining allocation KES 0 · Required allocation KES 39,000,000 · Planned qualifying allocation KES 50,000,000 · Qualifying share 38.46%"; details "Eligible planned procurement KES 130,000,000 · Target 30% · Plan basis PLN-MOH-2027-001, Version 1 · Rule version Reservation rules, Version 12 · County requirement Not applicable"; U11 (Amina Hassan, AOT-MOH-2027-001-V1) shows the same figures. |
+| PLN25-AC-006 | Done (boundary) | Planning computes no actual-achievement figure (asserted in `test_the_approved_budget_is_not_an_input`). Actual achievement is a downstream reporting build item, not Planning's. |
+
+Design port (uncommitted v1.25 artboard diff): the shared `ReservationAllocation.vue` block on U07 base/ready (details in its own closed disclosure, placed after the warning when unmet and after the quiet checks when met) and inside U11/U21 "Review Plan checks", which now closes the purchases region as the boards draw it. The `ppl-reservation-summary` and `rev-plan-checks` fidelity departures are removed. Gates: Planning vitest 345/345 (structural U07, U07-FINANCE-COMPLETE, U11-AO); Playwright `U07 — purchases first` (fixture publishes a 30% target for that one reset), `U11-AO`, `U11-STATUTORY`, `planner saves Package details` green, single worker. Designations offered and accepted are the four base values only (`readiness.BASE_RESERVATION_CATEGORIES`); `reservation_category_reason` is no longer copied to successors (column drop stays with the retired-columns pass).
+
 ### Decision-specific regressions — §17.4
 
 | Group | Count | Status |

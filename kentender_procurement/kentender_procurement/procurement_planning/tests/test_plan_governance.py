@@ -763,9 +763,42 @@ class TestReviewReadModel(GovernanceCase):
 		self.assertTrue(item_detail["method"]["profile"])
 		self.assertTrue(item_detail["schedule"]["rows"])
 
-		self.assertIn("required_allocation_display", read["reservation"])
+		self.assertIn("reservation", read)  # no published target in this world: no block
 		self.assertTrue(read["changes"]["is_initial"])
 		self.assertTrue(read["can_download_review_pack"])
+
+	def test_the_review_shows_the_frozen_reservation_calculation_not_a_live_one(self):
+		"""PLN25-AC-004: the calculation frozen at submission is the Version's
+		immutable evidence. A later rule change does not move what the
+		governance actor reviews."""
+		def published(plan, percent):
+			reference = {**readiness.reference_for(plan.fiscal_year)}
+			reference["reservation"] = {**reference["reservation"], "target_percent": percent, "published": True}
+			reference["verification_status"] = fx.VERIFICATION_FIXTURE
+			return reference
+
+		accepted, item_id = self.formed_item()
+		self.complete(item_id, reservation_category="Youth")
+		self.confirm_funding(accepted["annual_plan"])
+		plan = frappe.get_doc("Annual Plan", accepted["annual_plan"])
+		with patch.object(readiness, "reference_for", return_value=published(plan, 30.0)):
+			submitted = self.submit(accepted["annual_plan"])
+		task = frappe.get_doc("Plan Governance Task", submitted["task"])
+		version = frappe.get_doc("Annual Plan Version", task.plan_version)
+		frozen = json.loads(version.submitted_snapshot)["reservation_allocations"]
+		self.assertEqual(frozen["plan_basis"], f"{plan.plan_reference}, Version {version.version_number}")
+		self.assertEqual([(r["plan_item_id"], r["applicability"], r["designation"]) for r in frozen["items"]], [(item_id, "Included", "Youth")])
+
+		frappe.set_user(fx.ACCOUNTING_OFFICER)
+		with patch.object(readiness, "reference_for", return_value=published(plan, 50.0)):
+			read = plan_read.get_plan_governance_task(task=task.name)
+		block = read["reservation"]
+		self.assertEqual(block["target_display"], "30%")
+		self.assertEqual(block["required_display"], "KES 300,000")
+		self.assertEqual(block["status_label"], "Required allocation met")
+		self.assertEqual(block["share_display"], "100.00%")
+		self.assertEqual(block["items"][0]["designation"], "Youth")
+		self.assertEqual(read["decision_summary"]["reservation"], "Required allocation met")
 
 	def test_the_ao_stage_return_dialog_carries_the_artboards_own_lede(self):
 		"""§10.10 U11-RETURN's drawn copy explains the process (returns to

@@ -122,7 +122,7 @@
 | BUD19-AC-017 | BUD-UX-009 | Done | rows per reservation with `originally_reserved` / `still_reserved`, requisition-led title; two holds stay two rows (`_line_active_reservations`) |
 | BUD19-AC-018 | BUD-UX-009 | Done | `test_needs_attention_reads_as_requires_review_with_its_reason`; no release/convert/adjust control on any Budget screen (closure + line specs); funding activity vs history stay separate tabs |
 | BUD19-AC-019 | BUD-UX-010 | Done (unchanged boundary) | Finance screen stays in Planning; `check_plan_affordability` tests (v1.5) still green; no Budget Finance surface added |
-| BUD19-AC-020 | BUD-UX-010 | Done (unchanged boundary) | `get_annual_procurement_budget_basis` tests (v1.8) still green; the live line read carries its own as-at and never replaces Finance evidence |
+| BUD19-AC-020 | BUD-UX-010 | Superseded by BUD20-AC-002 | ~~`get_annual_procurement_budget_basis` tests (v1.8) still green~~ — the contract was removed by BUD-CHG-001 v1.10; the live line read carries its own as-at and never replaces Finance evidence |
 | BUD19-AC-021 | BUD-UX-011 | Done | `TestYearEndClosure` (before year end, blocked, ready, closed, replay); closure spec three states + focused confirmation; Auditor closure read Forbidden |
 | BUD19-AC-022 | BUD-UX-011 | Done | ready with a 60m active commitment closes; commit-time revalidation under the version lock; replay returns the recorded result; Closed blocks new holds (`TestClosedBudgetRejectsNewReservations`) |
 | BUD19-AC-023 | BUD-UX-012 | Done | typed §13 results with exact amounts (`_issue` rule/detail), known/partial/unknown outcomes distinct in the editor, still-authorised input preserved on a rejected save (officer spec) |
@@ -131,3 +131,15 @@
 | BUD19-AC-026 | BUD-UX-013 | Done | technical reader gets `view_version_readonly` and a read-only review with no footer (`test_initial_review_shows_the_complete_set_without_a_predecessor`, access spec); ordinary readers restricted per scope map |
 | BUD19-AC-027 | BUD-UX-014 | Done (boundary) | Budget reads no Need field; source department derived from the Planning source allocation (D6) |
 | BUD19-AC-028 | BUD-UX-014 | Done | BUD18 rows carried above; v1.8 exclusions FU-15..FU-17; new profiles isolated (`BUD19-` prefix, own years); fixture builders use real commands and actual actors |
+
+### BUD-CHG-001 v1.10 — Budget ceiling versus Planning denominator, §16.3 `BUD20-AC-001..005` (24 September 2026)
+
+Authority: `KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_10.md` and RES-IMP-001. No Budget screen change (none showed a 30% target, share or shortfall; every Budget "shortfall" is the financial reserved + committed breach and stays).
+
+| ID | Status | Evidence |
+|---|---|---|
+| BUD20-AC-001 | Done | `test_bud_chg_001_v18_decision_basis.test_decision_validation_returns_no_denominator`: the decision statement carries no annual/reservation/denominator key. |
+| BUD20-AC-002 | Done | `get_annual_procurement_budget_basis` deleted from `services/budget_line_contracts.py` and `api/budget_api.py`, no alias; Planning's `budget_gateway.annual_budget_basis` deleted. `test_budget_publishes_no_reservation_denominator`; repo-wide grep clean. |
+| BUD20-AC-003 | Done | Planning's calculation reads no Budget contract (PLN25-AC-001), so an unused-line change cannot move or stale it. |
+| BUD20-AC-004 | Done | Planning `test_the_canonical_fixture_calculates_exactly` (130m / 39m / 38.46%); the 160m ceiling stays a Budget fact in the canonical seed. |
+| BUD20-AC-005 | Done | BUD19-AC-020 marked superseded above; FOLLOW_UPS FU-14 closed. |

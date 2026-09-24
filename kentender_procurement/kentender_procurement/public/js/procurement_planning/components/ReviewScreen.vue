@@ -197,6 +197,22 @@
 					</tbody>
 				</table>
 				<p class="kt-muted" data-testid="rev-caption">{{ task.caption }}</p>
+				<!-- U11 boards: Review Plan checks closes the purchases region. -->
+				<details class="kt-disclosure" style="margin-top: var(--kt-space-4)" data-testid="rev-plan-checks">
+					<summary class="kt-disclosure-head">
+		<div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Review Plan checks</span></div>
+		<svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg>
+	</summary>
+					<div class="kt-disclosure-body">
+						<!-- The same plan-level block U07 shows, read from the calculation
+						     frozen at submission (U11 boards; U21-TECHNICAL-DETAIL). Its
+						     details sit inline: this disclosure already hides them. -->
+						<ReservationAllocation v-if="reservation" :block="reservation" />
+						<div class="kt-meta-row" style="margin-top: var(--kt-space-5)" data-testid="rev-plan-checks-schedule">
+							<div><span class="kt-label">Schedule</span><span style="font-size: 14px">{{ summary.schedule }}</span></div>
+						</div>
+					</div>
+				</details>
 			</div>
 
 			<!-- Second section — Accountability. -->
@@ -367,40 +383,6 @@
 				</div>
 			</template>
 
-			<details class="kt-disclosure" data-testid="rev-plan-checks">
-				<summary class="kt-disclosure-head">
-	<div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Review Plan checks</span></div>
-	<svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg>
-</summary>
-				<div class="kt-disclosure-body">
-					<!-- The basis named here is the value the plan plans to
-					     procure, which is what the target is a share of. It used
-					     to name the approved budget Version instead, beside the
-					     required allocation, which read as though the budget
-					     were the measure of the obligation. The budget is the
-					     ceiling the plan fits inside, and that is the Funding
-					     check's own result above. -->
-					<div class="kt-meta-row">
-						<div>
-							<span class="kt-label">Eligible planned procurement</span>
-							<span class="kt-meta-value">{{ reservation.eligible_value_display }}</span>
-						</div>
-						<div>
-							<span class="kt-label">Required allocation</span>
-							<span class="kt-meta-value">{{ reservation.required_allocation_display }}</span>
-						</div>
-						<div>
-							<span class="kt-label">Planned qualifying allocation</span>
-							<span class="kt-meta-value">{{ reservation.planned_qualifying_display }}</span>
-						</div>
-						<div>
-							<span class="kt-label">Still required</span>
-							<span class="kt-meta-value">{{ reservation.shortfall_or_met_display }}</span>
-						</div>
-					</div>
-				</div>
-			</details>
-
 			<details class="kt-disclosure" data-testid="rev-history">
 				<summary class="kt-disclosure-head">
 	<div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Changes and history</span></div>
@@ -430,6 +412,7 @@
 <script setup>
 import { computed, ref } from "vue";
 import MissingSettingPanel from "./MissingSettingPanel.vue";
+import ReservationAllocation from "./ReservationAllocation.vue";
 
 const props = defineProps({
 	task: { type: Object, default: () => ({}) },
@@ -456,7 +439,7 @@ const summary = computed(() => props.task.decision_summary || {});
 const issues = computed(() => summary.value.issues || []);
 const items = computed(() => props.task.items || []);
 const funding = computed(() => props.task.funding || {});
-const reservation = computed(() => props.task.reservation || {});
+const reservation = computed(() => props.task.reservation || null);
 const history = computed(() => props.task.history || []);
 const authority = computed(() => props.task.authority_card || {});
 const signature = computed(() => props.task.preparation_signature);

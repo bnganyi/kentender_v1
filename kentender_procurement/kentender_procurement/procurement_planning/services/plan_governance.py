@@ -159,8 +159,11 @@ def _build_snapshot(version, plan) -> dict[str, Any]:
 	advisories = readiness.splitting_advisory(version.name, reference)
 	return {
 		"rows": rows,
-		"reserved_share_percent": round(share["percent_of_plan"], 1),
+		"reserved_share_percent": round(float(share["qualifying_share_percent"] or 0), 1),
 		"reservation_target_percent": target,
+		# The Version's immutable reservation calculation: Plan and rule
+		# Versions, every purchase with whether and why it counts, and the
+		# result. A successor recalculates its own; this is never rewritten.
 		"reservation_allocations": share,
 		"splitting_advisory_count": len(advisories),
 		"splitting_confirmation": cstr(version.splitting_confirmation),
@@ -539,7 +542,7 @@ ITEM_COPY_FIELDS = (
 	"plan_item_id", "title", "description", "strategic_objective", "strategy_plan", "strategy_plan_version",
 	"objective_path", "requirement_type", "procurement_category", "procurement_method", "aggregation_reason",
 	"plan_horizon", "aggregation_indicator", "lotting_indicator", "lot_count",
-	"reservation_category", "reservation_category_reason", "county_resident_reservation",
+	"reservation_category", "county_resident_reservation",
 	"threshold_band_at_readiness", "baseline_invitation_date", *schedule.PERIOD_FIELDS, *schedule.BASELINE_FIELDS,
 	"item_status",
 	# PLN-CHG-001 v1.18 §4.6 — stable root, rule-profile evidence, method evidence, estimate basis, periods, feasibility

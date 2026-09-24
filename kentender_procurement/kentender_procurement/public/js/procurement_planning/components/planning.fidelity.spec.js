@@ -24,6 +24,7 @@ import FinanceTaskScreen from "./FinanceTaskScreen.vue";
 import ProgressScreen from "./ProgressScreen.vue";
 import PublicationResultScreen from "./PublicationResultScreen.vue";
 import ReviewScreen from "./ReviewScreen.vue";
+import { READY } from "./ReservationAllocation.fixtures.js";
 import SourceEvidenceScreen from "./SourceEvidenceScreen.vue";
 import WorkspaceScreen from "./WorkspaceScreen.vue";
 
@@ -103,7 +104,7 @@ const SCREENS = [
 				rows: [{ plan_item_id: "PPI-MOH-2027-001", title: "Laptops", value_display: "KES 50,000,000", department: "Digital Health", method: "Open Tender", result: "Within budget", result_kind: "live", detail: [{ label: "Budget line", value: "MOH-BL-DHI-2027" }] }],
 				accountability: { prepared_by: "Mercy Kilonzo", prepared_at: "3 Dec 2026", confirmed_by: "Josphat Mwangi", confirmed_at: "4 Dec 2026" },
 				funding_evidence: [{ label: "Budget", value: "MOH-BUD-2027-001" }],
-				reservation: { eligible_value_display: "KES 130,000,000", required_allocation_display: "KES 39,000,000", planned_qualifying_display: "KES 50,000,000", shortfall_or_met_display: "Required allocation met" },
+				reservation: READY,
 				changes: { is_initial: true },
 				history: [],
 				status: "Open",

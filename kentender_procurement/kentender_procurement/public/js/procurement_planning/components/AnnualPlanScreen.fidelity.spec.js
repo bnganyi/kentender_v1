@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 
 import AnnualPlanScreen from "./AnnualPlanScreen.vue";
+import { BASE, READY } from "./ReservationAllocation.fixtures.js";
 import { boardSkeleton } from "../../../../../../tests/ui/fidelity/board.js";
 import { compareSkeletons, formatMismatch, skeletonOf } from "../../../../../../tests/ui/fidelity/skeleton.js";
 import { DEPARTURES } from "../../../../../../tests/ui/fidelity/departures/procurement-planning.js";
@@ -43,7 +44,7 @@ function plan(overrides = {}) {
 			{ label: "Reserved procurement", result: "KES 139,494 more qualifying allocation required", kind: "critical", action: "Review reserved procurement", route: ["annual-procurement-plan", "PLN-MOH-2027-001"] },
 			{ label: "Schedule", result: "All purchases meet their departmental deadlines", kind: "live", route: null },
 		],
-		summary: { reservation_summary: [{ label: "Eligible planned procurement", value: "KES 464,980" }] },
+		summary: { reservation_allocation: BASE },
 		submission_issues: [],
 		changes: { is_initial: true },
 		history: [{ title: "Digital Health accepted", meta: "Mercy Kilonzo · 27 Nov 2026" }],
@@ -82,6 +83,7 @@ describe("AnnualPlanScreen — the containers U07 draws", () => {
 			plan: plan({
 				can_request_funding: false,
 				plan_checks: [{ label: "Funding", result: "Within each approved budget line", kind: "live", route: null }],
+				summary: { reservation_allocation: READY },
 				waiting_on: { notice: "Ready for the Head of Procurement Function to sign and submit", people: ["Charles Mutiso"], unassigned: "" },
 			}),
 		});

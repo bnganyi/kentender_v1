@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -468,13 +469,13 @@ class TestSavePlanItem(PlanWorkbenchCase):
 		self.assertEqual(caught.exception.code, "PLN_RESERVATION_REQUIRED")
 		saved = plan_workbench.save_plan_item(
 			plan_item=item_id,
-			values=fx.item_values(reservation_category="Micro, small and medium enterprise", lotting_indicator="Packaged into lots", lot_count=3),
+			values=fx.item_values(reservation_category="Women", lotting_indicator="Packaged into lots", lot_count=3),
 			expected_record_version=item["record_version"], idempotency_key=key(),
 		)
 		self.assertEqual(saved["action"], "saved")
 		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
 		self.assertEqual(refreshed["preference"]["lot_count"], 3)
-		self.assertEqual(refreshed["preference"]["reservation_category"], "Micro, small and medium enterprise")
+		self.assertEqual(refreshed["preference"]["reservation_category"], "Women")
 
 	def test_save_rejects_ineligible_objective(self):
 		_, item_id = self.one_item()
@@ -779,31 +780,103 @@ class TestReservationAllocations(PlanWorkbenchCase):
 		self.assertEqual(share["plan_total"], "1000000.00")
 		self.assertEqual(share["required"], "300000.00")  # 30% of the plan, not of the budget
 		self.assertEqual(share["qualifying"], "0.00")
-		self.assertEqual(share["shortfall"], "300000.00")
+		self.assertEqual(share["remaining"], "300000.00")
+		self.assertEqual(share["qualifying_share_percent"], "0.00")
 		self.assertFalse(share["met"])
 		self.assertTrue(share["mandatory"] and share["verified"])
 
-	def test_the_approved_budget_no_longer_decides_the_requirement(self):
-		"""The budget basis stays on the read as the funding ceiling it is,
-		but nothing in the reservation arithmetic reads it any more — so a
-		plan whose budget basis is missing entirely still has a computable,
-		reachable target."""
+	def test_the_canonical_fixture_calculates_exactly(self):
+		"""PLN25-AC-005 / BUD20-AC-004: 30% of KES 130,000,000 = 39,000,000;
+		KES 50,000,000 designated Youth is 38.46% and leaves nothing
+		remaining. The KES 160,000,000 Budget ceiling is not an input."""
+		rows = [
+			readiness.measure_row("PPI-A", "Digital health infrastructure", Decimal("80000000"), "None"),
+			readiness.measure_row("PPI-B", "Clinical training laptops", Decimal("50000000"), "Youth"),
+		]
+		measure = readiness.reservation_measure(rows, 30)
+		self.assertEqual(measure["eligible"], Decimal("130000000.00"))
+		self.assertEqual(measure["required"], Decimal("39000000.00"))
+		self.assertEqual(measure["qualifying"], Decimal("50000000.00"))
+		self.assertEqual(measure["remaining"], Decimal("0.00"))
+		self.assertEqual(measure["share"], Decimal("38.46"))
+		self.assertEqual([r["qualifying"] for r in rows], [Decimal("0"), Decimal("50000000")])
+		base = readiness.reservation_measure([readiness.measure_row("PPI-A", "A", Decimal("80000000"), "None"), readiness.measure_row("PPI-B", "B", Decimal("50000000"), "None")], 30)
+		self.assertEqual(base["remaining"], Decimal("39000000.00"))
+
+	def test_an_excluded_purchase_leaves_the_denominator_with_its_reason(self):
+		"""PLN25-AC-003: the denominator is the sum of the purchases the rule
+		includes; an exclusion keeps its row and its reason, never vanishes."""
+		rows = [
+			readiness.measure_row("PPI-A", "A", Decimal("100"), "Youth"),
+			{**readiness.measure_row("PPI-B", "B", Decimal("900"), "None"), "applicability": "Excluded", "reason": "Excluded by the rule"},
+		]
+		measure = readiness.reservation_measure(rows, 30)
+		self.assertEqual(measure["eligible"], Decimal("100.00"))
+		self.assertEqual(measure["required"], Decimal("30.00"))
+		self.assertEqual(len(rows), 2)
+
+	def test_every_current_purchase_is_accounted_for_with_the_exact_basis(self):
+		"""PLN25-AC-003: every current Plan Item is included or excluded with a
+		reason, and the calculation names the exact Plan Version and rule
+		Version it was made under."""
+		accepted, item_id = self.one_item()
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		plan = frappe.get_doc("Annual Plan", version.annual_plan)
+		reference = self._published(plan)
+		share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
+		self.assertEqual([r["plan_item_id"] for r in share["items"]], [item_id])
+		row = share["items"][0]
+		self.assertEqual(row["applicability"], "Included")
+		self.assertTrue(row["reason"])
+		self.assertEqual(row["designation"], "None")
+		self.assertEqual(row["value"], "1000000.00")
+		self.assertEqual(row["qualifying"], "0.00")
+		self.assertEqual(share["plan_basis"], f"{plan.plan_reference}, Version {version.version_number}")
+		self.assertEqual(share["rule_reference"], reference["reference"])
+		self.assertTrue(share["rule_version"])
+		self.assertEqual(share["mandatory_restrictions"], "No additional restriction applies")
+
+	def test_the_approved_budget_is_not_an_input(self):
+		"""PLN25-AC-001/002, BUD20-AC-003: the calculation reads no Budget at
+		all — no basis block, no share of the annual budget — so unused
+		Budget headroom can never enter the denominator."""
 		accepted, item_id = self.one_item()
 		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
 		plan = frappe.get_doc("Annual Plan", version.annual_plan)
 		reference = self._published(plan)
 		from kentender_procurement.procurement_planning.services import budget_gateway
 
-		with patch.object(budget_gateway, "annual_budget_basis", return_value={"available": False}):
-			share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
-			self.assertEqual(share["required"], "300000.00")
-			self.assertFalse(share["basis"]["available"])
-			with patch.object(readiness, "reference_for", return_value=reference):
-				blockers = plan_read.plan_readiness(version, plan, stage="submission")["blockers"]
-		# A missing budget basis is an affordability concern, never a reason
-		# to report the reservation rule itself as unavailable.
-		self.assertEqual([b for b in blockers if b.get("field") == "reservation_category" and b["code"] == "PLN_REFERENCE_UNAVAILABLE"], [])
-		self.assertIn("PLN_RESERVATION_SHORTFALL", [b["code"] for b in blockers])
+		self.assertFalse(hasattr(budget_gateway, "annual_budget_basis"))
+		share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
+		self.assertEqual(share["required"], "300000.00")
+		for gone in ("basis", "percent_of_annual", "shortfall"):
+			self.assertNotIn(gone, share)
+		# PLN25-AC-006: Planning makes no actual-achievement figure.
+		self.assertFalse([k for k in share if "actual" in k])
+		with patch.object(readiness, "reference_for", return_value=reference):
+			report = plan_read.plan_readiness(version, plan, stage="submission")
+		self.assertIn("PLN_RESERVATION_SHORTFALL", [b["code"] for b in report["blockers"]])
+		row = next(c for c in report["checks"] if c["check"] == "Planned reservation allocation")
+		self.assertNotIn("budget", row["result"].lower())
+
+	def test_only_the_four_base_designations_are_offered_and_accepted(self):
+		"""None, Youth, Women and Persons with disabilities. County is a
+		separate measure; the catalogue's other entries are not Planning
+		designations."""
+		accepted, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertEqual(item["preference"]["reservation_categories"], list(readiness.BASE_RESERVATION_CATEGORIES))
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			plan_workbench.save_plan_item(
+				plan_item=item_id, values=fx.item_values(reservation_category="Micro, small and medium enterprise"),
+				expected_record_version=item["record_version"], idempotency_key=key(),
+			)
+		self.assertEqual(caught.exception.code, "PLN_RESERVATION_REQUIRED")
+		plan_workbench.save_plan_item(
+			plan_item=item_id, values=fx.item_values(reservation_category="Persons with disabilities"),
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		self.assertEqual(plan_read.get_plan_item(plan_item_id=item_id)["preference"]["reservation_category"], "Persons with disabilities")
 
 	def test_a_designated_purchase_can_actually_clear_the_target(self):
 		accepted, item_id = self.one_item()
@@ -812,15 +885,15 @@ class TestReservationAllocations(PlanWorkbenchCase):
 		reference = self._published(plan)
 		item = plan_read.get_plan_item(plan_item_id=item_id)
 		plan_workbench.save_plan_item(
-			plan_item=item_id, values=fx.item_values(reservation_category="Micro, small and medium enterprise"),
+			plan_item=item_id, values=fx.item_values(reservation_category="Youth"),
 			expected_record_version=item["record_version"], idempotency_key=key(),
 		)
 		share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
 		self.assertEqual(share["qualifying"], "1000000.00")
 		self.assertEqual(share["qualifying_items"], [item_id])
-		self.assertEqual(share["shortfall"], "0.00")
+		self.assertEqual(share["remaining"], "0.00")
 		self.assertTrue(share["met"])
-		self.assertAlmostEqual(share["percent_of_plan"], 100.0)
+		self.assertEqual(share["qualifying_share_percent"], "100.00")
 
 	def test_the_county_target_uses_the_same_planned_value(self):
 		accepted, item_id = self.one_item()
@@ -830,7 +903,7 @@ class TestReservationAllocations(PlanWorkbenchCase):
 		with patch.object(frappe.db, "get_single_value", return_value=True):
 			share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
 		self.assertEqual(share["county"]["required"], "200000.00")  # 20% of the plan
-		self.assertEqual(share["county"]["shortfall"], "200000.00")
+		self.assertEqual(share["county"]["remaining"], "200000.00")
 
 	def test_the_shortfall_blocks_submission_only_but_is_still_reported_on_a_draft(self):
 		"""A Draft may be incomplete, so the shortfall never refuses a

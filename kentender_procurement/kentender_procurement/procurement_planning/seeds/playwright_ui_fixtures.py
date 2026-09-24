@@ -245,6 +245,9 @@ def restore_site(*, commit: bool = True) -> dict[str, Any]:
 	_wipe()
 	purge_profiles()
 	_clear_context_preferences()
+	# a spec may have published a reservation target for its one reset
+	if frappe.db.exists("Fiscal Year", FY):
+		_publish_reservation_target(0)
 	previous_route = frappe.defaults.get_global_default(PREVIOUS_ROUTE_KEY)
 	if previous_route:
 		# §13.3's collective profile moved one site-wide value; put it back
@@ -350,7 +353,7 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 	# call to `_seed_regulatory_reference` for an overlapping date range
 	# genuinely supersedes the prior version, so a real override no longer
 	# needs the direct-write workaround this used to require.
-	site_setup._seed_regulatory_reference(fiscal_year=FY, fixture_namespace=NS_PW, verification_status=VERIFICATION_FIXTURE, reservation_target_percent=0)
+	_publish_reservation_target(0)
 	ensure_profiles()
 	if not frappe.db.exists("Currency", "KES"):
 		frappe.get_doc({"doctype": "Currency", "currency_name": "KES", "enabled": 1}).insert(ignore_permissions=True)
@@ -674,9 +677,34 @@ def _form(plan_version: str, entries: list[str], mode: str) -> list[str]:
 	return formed["created_items"]
 
 
-def reset_plan_item_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
-	"""PLN-DES-09: the single-source Plan Item formed from the accepted Need."""
+def _publish_reservation_target(percent: float) -> None:
+	"""This world's verified reservation rule, at exactly `percent`.
+
+	The seeder finds-or-creates, so a plain call keeps whatever target the
+	last caller left; a changed target is saved as a successor version, and
+	only then. Every reset's `ensure_world()` asks for 0, so a spec that
+	published a target never leaks it into the next one."""
+	from kentender_core.seeds import site_setup
+	from kentender_procurement.procurement_planning.services import readiness
+
+	current = readiness.reference_for(FY)
+	if current.get("available") and float(current["reservation"].get("target_percent") or 0) == float(percent):
+		return
+	site_setup._seed_regulatory_reference(
+		fiscal_year=FY, fixture_namespace=NS_PW, verification_status=VERIFICATION_FIXTURE,
+		reservation_target_percent=float(percent), force=bool(current.get("available")),
+	)
+
+
+def reset_plan_item_fixture(*, need: str = "", reservation_target_percent: float = 0, commit: bool = True) -> dict[str, Any]:
+	"""PLN-DES-09: the single-source Plan Item formed from the accepted Need.
+
+	`reservation_target_percent` publishes a verified reservation target for
+	this one reset (the U07 board draws the unmet Reservation allocation
+	block); the next reset's own `ensure_world()` re-seeds the world's usual
+	0, so the target never leaks into another spec."""
 	state = reset_workbench_fixture(need=need, commit=False)
+	_publish_reservation_target(reservation_target_percent)
 	entry = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": state["dpp_version"], "entry_id": state["need_entry_id"]}, "name")
 	items = _form(state["plan_version"], [entry], "each")
 	if commit:

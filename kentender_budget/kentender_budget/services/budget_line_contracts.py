@@ -540,11 +540,12 @@ def check_plan_affordability(
 
 
 # --------------------------------------------------------------------------
-# PLN-CHG-001 v1.18 §5.3.3 / §7.3 — the two Budget contracts Planning's
-# Finance decision and reservation calculation consume (BUD-CHG-001 v1.8 is
-# owed: Budget FOLLOW_UPS FU-14). Amounts on these contracts are decimal
-# strings in currency units (v1.18 §4.1); nothing here writes, reserves or
-# produces a ledger event.
+# PLN-CHG-001 v1.18 §5.3.3 / §7.3 — the Budget contract Planning's Finance
+# decision consumes: ceiling and affordability evidence only. The approved
+# budget is never the 30% reservation denominator (BUD-CHG-001 v1.10
+# BUD20-AC-001/002 — the old annual-basis contract was removed with no
+# alias). Amounts are decimal strings in currency units (v1.18 §4.1);
+# nothing here writes, reserves or produces a ledger event.
 # --------------------------------------------------------------------------
 
 import hashlib
@@ -570,46 +571,6 @@ def _planned_totals(planned_totals) -> dict[str, float]:
 		if key:
 			totals[key] = totals.get(key, 0.0) + flt(row.get("planned") if "planned" in row else row.get("amount"))
 	return totals
-
-
-def get_annual_procurement_budget_basis(fiscal_year: str, as_of=None) -> dict[str, Any]:
-	"""v1.18 §5.5.3.1 — the complete approved annual procurement budget and
-	the exact Version it comes from: the reservation-allocation denominator.
-	Never the Plan total, never only the lines a Plan uses. The Active
-	Version of the year answers; a year with no Active Version reports
-	`available = False` and the consumer fails closed."""
-	from frappe.utils import now_datetime
-
-	fiscal_year = (fiscal_year or "").strip()
-	budget_name = frappe.db.get_value("Procurement Budget", {"fiscal_year": fiscal_year}, "name") if fiscal_year else None
-	version = _active_version(budget_name) if budget_name else None
-	if not version:
-		return {"fiscal_year": fiscal_year, "available": False, "as_of": str(as_of or now_datetime())}
-	require_budget_version_read_scope(version)
-	rows = frappe.get_all(
-		"Procurement Budget Line Version",
-		filters={"budget_version": version.name},
-		fields=["name", "budget_line", "approved_amount"],
-	)
-	lines_total = sum(flt(r.approved_amount) for r in rows)
-	annual = flt(version.authorised_total) or lines_total
-	budget = frappe.db.get_value("Procurement Budget", budget_name, ["generated_reference", "currency"], as_dict=True)
-	return {
-		"fiscal_year": fiscal_year,
-		"available": True,
-		"budget": budget_name,
-		"budget_reference": budget.generated_reference or "",
-		"budget_version": version.name,
-		"version_reference": version.generated_reference or "",
-		"version_number": int(version.version_number or 0),
-		"approval_date": str(version.approval_date or ""),
-		"currency": budget.currency or "KES",
-		"currency_precision": CURRENCY_PRECISION,
-		"annual_approved_amount": money(annual),
-		"lines_approved_total": money(lines_total),
-		"line_count": len(rows),
-		"as_of": str(as_of or now_datetime()),
-	}
 
 
 def validate_plan_affordability_for_decision(

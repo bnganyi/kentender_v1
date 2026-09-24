@@ -2,8 +2,9 @@
 # For license information, please see license.txt
 
 """PLN-CHG-001 v1.18 §5.3.3 / §7.3 (Budget owner work, tracker PLN18-107) —
-`validate_plan_affordability_for_decision` and
-`get_annual_procurement_budget_basis`.
+`validate_plan_affordability_for_decision`; and BUD-CHG-001 v1.10
+BUD20-AC-002 — the annual procurement budget is not the 30% reservation
+denominator, so Budget publishes no contract that offers it as one.
 
 Run:
   bench --site kentender.midas.com run-tests --app kentender_budget \\
@@ -28,17 +29,24 @@ class TestDecisionBasis(_FinanceTestBase):
 		self._as("Administrator")
 		return budget, version, fiscal_year, dhi
 
-	def test_the_annual_basis_is_the_complete_approved_budget_and_exact_version(self):
-		budget, version, fiscal_year, _dhi = self._world()
-		basis = lines.get_annual_procurement_budget_basis(fiscal_year)
-		self.assertTrue(basis["available"])
-		self.assertEqual(basis["budget_version"], version)
-		self.assertEqual(basis["line_count"], 2)
-		self.assertEqual(basis["lines_approved_total"], "160000000.00")
-		self.assertEqual(basis["annual_approved_amount"], "160000000.00")
-		self.assertEqual(basis["currency_precision"], 2)
-		self.assertIsInstance(basis["annual_approved_amount"], str)
-		self.assertFalse(lines.get_annual_procurement_budget_basis("1900-1901")["available"])
+	def test_budget_publishes_no_reservation_denominator(self):
+		"""BUD20-AC-002: the old annual-basis contract is gone, with no alias.
+		The 30% target is a share of the plan's eligible value (Planning's
+		calculation); the approved budget is only the funding ceiling."""
+		from kentender_budget.api import budget_api
+
+		for module in (lines, budget_api):
+			self.assertFalse(hasattr(module, "get_annual_procurement_budget_basis"), module.__name__)
+			self.assertFalse(
+				[n for n in dir(module) if "annual" in n.lower() and "basis" in n.lower()],
+				f"{module.__name__} still offers an annual budget basis",
+			)
+
+	def test_decision_validation_returns_no_denominator(self):
+		"""BUD20-AC-001: the decision statement is ceiling/affordability evidence only."""
+		_budget, _version, fiscal_year, dhi = self._world()
+		out = lines.validate_plan_affordability_for_decision(fiscal_year, {dhi: 80_000_000})
+		self.assertFalse([k for k in out if "annual" in k or "reservation" in k or "denominator" in k])
 
 	def test_decision_validation_locks_validates_revisions_and_writes_nothing(self):
 		budget, version, fiscal_year, dhi = self._world()

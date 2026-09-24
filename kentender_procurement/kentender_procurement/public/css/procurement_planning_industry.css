@@ -1277,14 +1277,6 @@
 .kt-pln .pln-plan-checks {
 	max-width: 1000px;
 }
-/* The reserved-procurement working is a second row inside the same group.
-   It needs its own top gap, or the two rows' labels run together into one
-   band of small caps with no telling which value belongs to which. */
-.kt-pln .pln-plan-checks-working {
-	margin-top: var(--kt-space-4);
-	padding-top: var(--kt-space-4);
-	border-top: 1px solid var(--kt-color-neutral-200);
-}
 /* Approval — the responsible people sit under the state sentence inside the
    notice, as a labelled fact rather than joined into the sentence. */
 .kt-pln .pln-responsible {
