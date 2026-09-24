@@ -283,6 +283,16 @@ describe("ProcurementSettingsTab", () => {
 		expect(wrapper.find('[data-testid="kt-procset-sources"]').exists()).toBe(false);
 	});
 
+	it("cancelling a rule's new version returns to that rule; cancelling Add rule returns to the list", async () => {
+		api.getRegulatoryReferenceVersion.mockResolvedValue({ reference: "rv-1", reference_set: "rs-reservation", reference_kind: "Reservation rules", version_number: 3, payload: {} });
+		const version = await mountTab("new-rule-version/rv-1");
+		await version.find('[data-testid="kt-rule-cancel"]').trigger("click");
+		expect(version.emitted("navigate").at(-1)).toEqual(["rule/rv-1"]);
+		const adding = await mountTab("new-rule");
+		await adding.find('[data-testid="kt-rule-cancel"]').trigger("click");
+		expect(adding.emitted("navigate").at(-1)).toEqual(["procurement-rules"]);
+	});
+
 	it("a direct link to a method rule's new version never asks for a reference version while the list is still loading", async () => {
 		// Regression (24 Sep 2026): before the list arrived, the tab could not
 		// tell a method rule from a reference rule, treated MPR-… as a

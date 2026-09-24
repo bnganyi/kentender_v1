@@ -139,19 +139,26 @@ const methodApplicabilityBases = computed(() => data.value?.method_applicability
 // record is fetched rather than reusing the list row's summary.
 const editingRule = computed(() => rules.value.find((row) => row.name === view.value.name) || null);
 const ruleVersion = ref(null);
+async function fetchRuleVersion(name) {
+	try {
+		return await procurementSettingsApi.getRegulatoryReferenceVersion(name);
+	} catch (error) {
+		return null;
+	}
+}
 watch(
 	() => (["new-rule-version", "edit-rule-version"].includes(view.value.kind) ? view.value.name : ""),
 	async (name) => {
 		ruleVersion.value = null;
 		if (!name) return;
-		try {
-			ruleVersion.value = await procurementSettingsApi.getRegulatoryReferenceVersion(name);
-		} catch (error) {
-			ruleVersion.value = null;
-		}
+		ruleVersion.value = await fetchRuleVersion(name);
 	},
 	{ immediate: true }
 );
+// A stale save: re-read the version it came from; the editor keeps the entries.
+async function reloadRuleVersion() {
+	if (view.value.name) ruleVersion.value = await fetchRuleVersion(view.value.name);
+}
 // The table lists saved versions; a rule with none yet is its own card (§7.3).
 const versionedRules = computed(() => rules.value.filter((row) => row.has_version));
 const unversionedRules = computed(() => rules.value.filter((row) => !row.has_version));
@@ -309,8 +316,17 @@ async function confirmRemoveSource() {
 			:entity-types="entityTypes"
 			:categories="procurementCategories"
 			:methods="procurementMethods"
+			:method-rules="data.method_profiles || []"
+			:condition-kinds="conditionKinds"
+			:cumulative-bases="cumulativeBases"
+			:applicability-bases="methodApplicabilityBases"
+			:verification-statuses="verificationOptions"
 			@saved="afterChange().then(() => go(view.kind === 'edit-rule-version' ? 'rule/' + view.name : 'procurement-rules'))"
-			@cancel="go(view.kind === 'edit-rule-version' ? 'rule/' + view.name : 'procurement-rules')"
+			@cancel="go(view.kind === 'new-rule' ? 'procurement-rules' : 'rule/' + view.name)"
+			@refresh="reloadRuleVersion"
+			@review="go(view.name ? 'rule/' + view.name : 'procurement-rules')"
+			@open-method-version="(profile) => go('new-method-version/' + profile)"
+			@method-saved="(profile) => afterChange().then(() => go('rule/' + profile))"
 		/>
 
 		<!-- C03-BC — a method eligibility rule's new version: the full editor,
@@ -326,6 +342,8 @@ async function confirmRemoveSource() {
 			:verification-statuses="verificationOptions"
 			@saved="(profile) => afterChange().then(() => go('rule/' + profile))"
 			@cancel="go('rule/' + view.name)"
+			@refresh="afterChange"
+			@review="go('rule/' + view.name)"
 		/>
 
 		<!-- C04 — a schedule's new version, or a correction to one nothing

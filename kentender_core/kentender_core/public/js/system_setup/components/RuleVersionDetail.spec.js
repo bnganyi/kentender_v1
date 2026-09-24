@@ -86,10 +86,15 @@ describe("RuleVersionDetail", () => {
 		await flushPromises();
 		expect(frozen.find('[data-testid="kt-procset-rule-edit"]').exists()).toBe(false);
 		expect(frozen.find('[data-testid="kt-procset-rule-new-version"]').exists()).toBe(true);
+		// C03BC #states — the frozen version says it is read-only, with the way on.
+		expect(frozen.find('[data-testid="kt-procset-rule-readonly"]').text()).toBe("This version is read-only. Create a new version to change it.Create new version");
+		await frozen.find('[data-testid="kt-procset-rule-readonly-new"]').trigger("click");
+		expect(frozen.emitted("new-version")).toHaveLength(1);
 
 		api.getMethodProfile.mockResolvedValue({ ...profile, can_edit: true, edit_blocked_reason: "" });
 		const editable = mount(RuleVersionDetail, { props: { name: "MPR-OPEN-TENDER-V1", kind: "method", verificationStatuses: [] }, global: globalMocks() });
 		await flushPromises();
+		expect(editable.find('[data-testid="kt-procset-rule-readonly"]').exists()).toBe(false);
 		await editable.find('[data-testid="kt-procset-rule-edit"]').trigger("click");
 		expect(editable.emitted("edit-rule")).toHaveLength(1);
 	});

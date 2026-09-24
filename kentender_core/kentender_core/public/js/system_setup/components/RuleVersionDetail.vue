@@ -164,6 +164,16 @@ const applicabilityBasis = computed(
 				<div class="kt-notice-body">{{ issueText }}</div>
 			</div>
 
+			<!-- C03BC #states — a version that can no longer be corrected in place
+			     says so, with the one way to change it. -->
+			<div v-if="!rule.can_edit" class="kt-notice is-info" style="flex-direction:column;align-items:flex-start;margin-bottom:16px" data-testid="kt-procset-rule-readonly">
+				<div style="display:flex;gap:12px;align-items:flex-start">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+					<div class="kt-notice-body"><strong>{{ __("This version is read-only.") }}</strong> {{ __("Create a new version to change it.") }}</div>
+				</div>
+				<a href="#" style="margin-left:30px;font-size:13px" data-testid="kt-procset-rule-readonly-new" @click.prevent="emit('new-version')">{{ __("Create new version") }}</a>
+			</div>
+
 			<!-- With values tables the first two groups run full width: a
 			     conditions table does not fit half the card. -->
 			<div class="kt-procset-rule-groups" :class="{ 'has-values': hasValues }">

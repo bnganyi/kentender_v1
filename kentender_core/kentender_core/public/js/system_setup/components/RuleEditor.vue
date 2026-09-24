@@ -1,7 +1,8 @@
 <script setup>
-// CFG-CHG-002 v0.11 §10.6/§10.7 (C03-B "add", C03-C kind editors, C03-B
-// "version") — one form for every rule kind: the shared shell (identity,
-// when it applies, sources) plus the kind's own validated field group.
+// CFG-CHG-002 v0.14 §10.6/§10.7 (C03BC #add, #kinds, #version; tracker
+// CFG14-5D) — one form for every rule kind, ported from the board: identity
+// (new rule) or the shared new-version header, the kind's own card
+// (RuleKindFields), when it applies, and its sources.
 //
 // §7.3's creation is two commands, and the recovery matters: if the set is
 // created and the version save then fails, the set exists with no version
@@ -9,13 +10,16 @@
 // exactly what `setCreated` tracks — a retry reuses the set instead of
 // creating a second one.
 //
-// Method eligibility is owned by `Procedure Method Profile` (plan D10), so
-// this editor states that rather than offering a second, divergent form for
-// the same rule.
+// Method eligibility keeps its own model and full editor (D10, D21): choosing
+// it here picks the method, then opens that method's rule — a new version
+// when it already has one, the full editor for a first one.
 import { computed, ref, watch } from "vue";
 import { procurementSettingsApi } from "../data/procurementSettingsApi.js";
-import { datesOverlap } from "../data/format.js";
-import { applicabilityBasisLabel, fmtDate } from "../data/format.js";
+import { applicabilityBasisLabel, datesOverlap } from "../data/format.js";
+import RuleKindFields from "./RuleKindFields.vue";
+import RuleVersionHeader from "./RuleVersionHeader.vue";
+import RuleFormError from "./RuleFormError.vue";
+import MethodVersionEditor from "./MethodVersionEditor.vue";
 
 const props = defineProps({
 	// Creating a rule: no set yet. Creating a new version: the set and its
@@ -31,8 +35,16 @@ const props = defineProps({
 	entityTypes: { type: Array, default: () => [] },
 	categories: { type: Array, default: () => [] },
 	methods: { type: Array, default: () => [] },
+	// Existing method eligibility rules ({ profile, procurement_method }), so
+	// choosing a method that already has one opens it instead of a duplicate.
+	methodRules: { type: Array, default: () => [] },
+	// The method editor's closed vocabularies, for a first method rule.
+	conditionKinds: { type: Array, default: () => [] },
+	cumulativeBases: { type: Array, default: () => [] },
+	applicabilityBases: { type: Array, default: () => [] },
+	verificationStatuses: { type: Array, default: () => [] },
 });
-const emit = defineEmits(["saved", "cancel"]);
+const emit = defineEmits(["saved", "cancel", "refresh", "review", "open-method-version", "method-saved"]);
 
 const creating = computed(() => !props.referenceSet);
 const correcting = computed(() => props.mode === "correct" && !!current.value.reference);
@@ -50,34 +62,19 @@ const COUNTY_APPLICABILITY = [
 	{ value: "County", label: __("County") },
 	{ value: "NonCounty", label: __("Non-county") },
 ];
-const COMPARATORS = ["Equal", "NotEqual", "In", "NotIn", "LessThan", "LessThanOrEqual", "GreaterThan", "GreaterThanOrEqual"];
-const DUE_RULES = [
-	{ value: "Immediate", label: __("Immediately") },
-	{ value: "CalendarDaysAfter", label: __("Calendar days after the trigger") },
-	{ value: "WorkingDaysAfter", label: __("Working days after the trigger") },
-	{ value: "PeriodEndPlusDays", label: __("Days after the reporting period ends") },
-];
-// CFG-CHG-002 v0.13 §10.7 — the measure is chosen; what it is measured
-// against follows from it and is shown, never offered as a separate choice.
-// The approved Budget is never a denominator.
-const MEASURES = [
-	{ value: "PlanningAllocation", label: __("Planned allocation"), against: __("Eligible value of the current Annual Plan") },
-	{ value: "ImplementationAchievement", label: __("Actual achievement"), against: __("Applicable actual procurement value") },
-];
-const OVERLAP_POLICIES = [
-	{ value: "Independent", label: __("Targets apply independently") },
-	{ value: "MutuallyExclusive", label: __("Targets are mutually exclusive") },
-	{ value: "SpecifiedOverlap", label: __("Specified overlap") },
-];
-const APPROVAL_ROUTES = ["Cabinet Secretary", "County Executive Committee Member", "Board of Directors", "Council"];
-
+const SELECT_DEFAULTS = {
+	overlap_policy: "",
+	category: "",
+	method: "",
+	currency: "",
+	comparator: "",
+	county_applicability: "All",
+	approval_route: "",
+	due_rule: "",
+};
 const current = computed(() => props.currentVersion || {});
-// "Method eligibility" is maintained as a Procedure Method Profile (D10);
-// this form only shows a redirect notice for it (`delegated` below), never a
-// savable form. Defaulting a new rule to it silently traps an administrator
-// who starts typing without touching the dropdown — confirmed live
-// 2026-09-18 — so the default here skips it in favour of the first kind
-// this form can actually save.
+// A new rule defaults to the first kind this form saves itself; Method
+// eligibility opens its own editor once a method is chosen (D21).
 const kind = ref(current.value.reference_kind || defaultKind());
 function defaultKind() {
 	return props.kinds.find((option) => option !== "Method eligibility") || props.kinds[0] || "Reservation rules";
@@ -123,10 +120,23 @@ function seed() {
 	payload.value = { ...(version.payload || {}) };
 	delete payload.value.denominator_basis;
 	if (!payload.value.measure_stage) payload.value.measure_stage = "PlanningAllocation";
+	// Every select in the kind card needs a defined value, or it renders blank
+	// instead of its "— Select —" / "Not yet established" / "All" option.
+	for (const [field, blank] of Object.entries(SELECT_DEFAULTS)) {
+		if (payload.value[field] === undefined || payload.value[field] === null) payload.value[field] = blank;
+	}
 	priceRows.value = [...((version.payload || {}).rows || [])];
 }
 seed();
-watch(() => props.currentVersion, seed);
+// Re-seed only when a different version arrives. A re-read of the same one
+// (Review latest details after a stale save) keeps the entries for review.
+watch(
+	() => props.currentVersion,
+	(now, before) => {
+		if ((now?.reference || "") !== (before?.reference || "")) seed();
+		error.value = "";
+	}
+);
 
 // §7.3 — the set that already exists after a half-completed creation. A
 // retry must reuse it, or a second empty set is left behind every attempt.
@@ -135,7 +145,17 @@ const busy = ref(false);
 const error = ref("");
 const partial = computed(() => !!setCreated.value);
 
-const delegated = computed(() => kind.value === "Method eligibility");
+const delegated = computed(() => creating.value && kind.value === "Method eligibility");
+const methodChoice = ref("");
+const existingMethodRule = computed(() => props.methodRules.find((row) => row.procurement_method === methodChoice.value) || null);
+// D16 — the version this was opened from is replaced only when the new dates
+// overlap it; the header says which.
+const replaces = computed(
+	() =>
+		!!current.value.reference &&
+		datesOverlap(current.value.effective_from, current.value.effective_until, form.value.effective_from, form.value.effective_until)
+);
+const ruleName = computed(() => current.value.display_name || current.value.reference_kind || __("Procurement rule"));
 const canSave = computed(() => {
 	if (busy.value || delegated.value) return false;
 	if (!form.value.effective_from) return false;
@@ -153,15 +173,11 @@ function toggle(list, value) {
 }
 
 function addPriceRow() {
-	priceRows.value.push({ item: "", category: "", unit: "", currency: "KES", price: "" });
+	priceRows.value.push({ item: "", category: "", unit: "", currency: "KES", price: "", observation_date: "" });
 }
 function removePriceRow(index) {
 	priceRows.value.splice(index, 1);
 }
-
-const measuredAgainst = computed(
-	() => (MEASURES.find((option) => option.value === payload.value.measure_stage) || MEASURES[0]).against
-);
 
 function builtPayload() {
 	const values = { ...payload.value };
@@ -225,11 +241,7 @@ async function save() {
 			// D16 — the version this was opened from is declared replaced only
 			// when the new dates overlap it; the server refuses both an
 			// undeclared overlap and a declared non-overlap.
-			supersedes_version_ids:
-				current.value.reference &&
-				datesOverlap(current.value.effective_from, current.value.effective_until, form.value.effective_from, form.value.effective_until)
-					? [current.value.reference]
-					: [],
+			supersedes_version_ids: replaces.value ? [current.value.reference] : [],
 			change_reason: form.value.change_reason,
 		});
 		emit("saved");
@@ -242,30 +254,20 @@ async function save() {
 </script>
 
 <template>
-	<div class="kt-procset-view" data-testid="kt-procset-rule-editor">
-		<div class="kt-section-head">
-			<div>
-				<span class="kt-eyebrow">{{ __("Procurement settings") }}</span>
-				<h2 class="kt-section-title">
-					{{ creating ? __("Add procurement rule") : __("{0} — {1}", [current.reference_kind || __("Procurement rule"), correcting ? __("edit rule") : __("new version")]) }}
-				</h2>
+	<div class="kt-rule-editor" data-testid="kt-procset-rule-editor">
+		<!-- §7.3 recovery (C03BC #list card 3) — the rule exists, its version
+		     does not, and the entries below are still here to finish with. -->
+		<div v-if="partial" class="kt-notice is-warning" style="flex-direction:column;align-items:flex-start;margin-bottom:16px" data-testid="kt-procset-rule-partial">
+			<div style="display:flex;gap:12px;align-items:flex-start">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 3l9 16H3z" /><path d="M12 10v4M12 17h.01" /></svg>
+				<div class="kt-notice-body"><strong>{{ __("Rule created; version not saved.") }}</strong> {{ __("Your entries are retained so you can finish saving this version.") }}</div>
 			</div>
-			<button type="button" class="kt-btn kt-btn-ghost" data-testid="kt-procset-rule-editor-back" @click="emit('cancel')">← {{ __("Procurement settings") }}</button>
+			<button type="button" class="kt-btn kt-btn-primary" style="margin-left:30px" :disabled="!canSave" data-testid="kt-procset-rule-partial-save" @click="save">{{ __("Save rule version") }}</button>
 		</div>
 
-		<!-- §7.3 recovery — the set exists, the version does not, and the
-		     entries below are still here to finish with. -->
-		<div v-if="partial" class="kt-notice is-warning" data-testid="kt-procset-rule-partial">
-			<div class="kt-notice-body">
-				<strong>{{ __("Rule created; version not saved.") }}</strong>
-				{{ __("Your entries are retained so you can finish saving this version.") }}
-			</div>
-		</div>
-
-		<div class="kt-card kt-blueprint kt-procset-wide">
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-
-			<div v-if="creating" class="kt-setup-grid">
+		<template v-if="creating">
+			<h3 data-testid="kt-rule-editor-title">{{ __("Add procurement rule") }}</h3>
+			<div class="kt-rule-grid" style="margin:16px 0">
 				<div class="kt-field">
 					<label for="kt-rule-name">{{ __("Rule name") }}</label>
 					<input id="kt-rule-name" v-model="form.display_name" class="kt-input" :disabled="partial" data-testid="kt-rule-name">
@@ -274,285 +276,154 @@ async function save() {
 					<label for="kt-rule-key">{{ __("Rule identifier") }}</label>
 					<input id="kt-rule-key" v-model="form.reference_key" class="kt-input" :disabled="partial" data-testid="kt-rule-key">
 				</div>
+				<div class="kt-field" style="grid-column:1/-1">
+					<label for="kt-rule-kind">{{ __("Rule kind") }}</label>
+					<select id="kt-rule-kind" v-model="kind" class="kt-input" :disabled="partial" data-testid="kt-rule-kind">
+						<option v-for="option in kinds" :key="option" :value="option">{{ option }}</option>
+					</select>
+				</div>
 			</div>
-			<div v-if="creating" class="kt-field">
-				<label for="kt-rule-kind">{{ __("Rule kind") }}</label>
-				<select id="kt-rule-kind" v-model="kind" class="kt-input" :disabled="partial" data-testid="kt-rule-kind">
-					<option v-for="option in kinds" :key="option" :value="option">{{ option }}</option>
-				</select>
+		</template>
+		<template v-else-if="correcting">
+			<h3 style="margin-bottom:4px" data-testid="kt-rule-editor-title">{{ __("{0} — edit rule", [ruleName]) }}</h3>
+			<span class="kt-tag kt-tag-neutral">{{ __("Unsaved changes") }}</span>
+			<div class="kt-notice is-info" style="margin:12px 0" data-testid="kt-rule-correcting-notice">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></svg>
+				<div class="kt-notice-body">{{ __("No source check has been recorded against this rule and it has not taken effect, so it can be changed here. Once either happens, changing it means a new version.") }}</div>
 			</div>
-			<div v-else class="kt-meta-row">
-				<div><span class="kt-label">{{ __("Earlier version") }}</span><span class="kt-meta-value">{{ current.version_number }}</span></div>
-				<div><span class="kt-label">{{ __("Applies from") }}</span><span class="kt-meta-value">{{ fmtDate(current.effective_from) }}</span></div>
-				<div><span class="kt-label">{{ __("Applies until") }}</span><span class="kt-meta-value">{{ fmtDate(current.effective_until) }}</span></div>
+		</template>
+		<RuleVersionHeader v-else v-model="form.change_reason" :rule-name="ruleName" :current="current" :replaces="replaces" />
+
+		<!-- D21 — Method eligibility: pick the method; a method that already has
+		     a rule opens it, a new one opens the full method editor. -->
+		<template v-if="delegated">
+			<div class="kt-rule-grid" style="margin-bottom:12px">
+				<div class="kt-field">
+					<label for="kt-rule-method">{{ __("Method") }}</label>
+					<select id="kt-rule-method" v-model="methodChoice" class="kt-input" data-testid="kt-rule-method">
+						<option value="">{{ __("— Select —") }}</option>
+						<option v-for="method in methods" :key="method" :value="method">{{ method }}</option>
+					</select>
+				</div>
+			</div>
+			<div v-if="existingMethodRule" class="kt-notice is-info" style="flex-direction:column;align-items:flex-start" data-testid="kt-rule-method-exists">
+				<div style="display:flex;gap:12px;align-items:flex-start">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></svg>
+					<div class="kt-notice-body">{{ __("Method eligibility — {0} already exists. Change it by creating a new version.", [methodChoice]) }}</div>
+				</div>
+				<a href="#" style="margin-left:30px;font-size:13px" data-testid="kt-rule-method-open" @click.prevent="emit('open-method-version', existingMethodRule.profile)">{{ __("Create new version") }}</a>
+			</div>
+			<MethodVersionEditor
+				v-else-if="methodChoice"
+				:key="methodChoice"
+				name=""
+				mode="create"
+				:method="methodChoice"
+				:categories="categories"
+				:condition-kinds="conditionKinds"
+				:cumulative-bases="cumulativeBases"
+				:applicability-bases="applicabilityBases"
+				:verification-statuses="verificationStatuses"
+				@saved="(profile) => emit('method-saved', profile)"
+				@cancel="emit('cancel')"
+			/>
+			<div v-else style="display:flex;gap:8px;justify-content:flex-end">
+				<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-rule-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
+			</div>
+		</template>
+
+		<template v-else>
+			<RuleKindFields
+				:kind="kind"
+				:payload="payload"
+				:price-rows="priceRows"
+				:categories="categories"
+				:methods="methods"
+				@add-price-row="addPriceRow"
+				@remove-price-row="removePriceRow"
+			/>
+
+			<h6 class="kt-card-title" style="margin-top:20px">{{ __("When this rule applies") }}</h6>
+			<div class="kt-rule-grid" style="gap:14px;margin-bottom:14px">
+				<div class="kt-field">
+					<label for="kt-rule-from">{{ __("Applies from") }}</label>
+					<input id="kt-rule-from" v-model="form.effective_from" class="kt-input" type="date" data-testid="kt-rule-from">
+				</div>
+				<div class="kt-field">
+					<label for="kt-rule-until">{{ __("Applies until") }}</label>
+					<input id="kt-rule-until" v-model="form.effective_until" class="kt-input" type="date" data-testid="kt-rule-until">
+				</div>
+				<div class="kt-field" style="grid-column:1/-1">
+					<label for="kt-rule-basis">{{ __("Which date determines the rule to use?") }}</label>
+					<select id="kt-rule-basis" v-model="form.applicability_basis" class="kt-input" data-testid="kt-rule-basis">
+						<option value="">{{ __("— Select —") }}</option>
+						<option v-for="basis in APPLICABILITY_BASES" :key="basis" :value="basis">{{ applicabilityBasisLabel(basis) }}</option>
+					</select>
+				</div>
+				<div class="kt-field">
+					<label id="kt-rule-entity-types">{{ __("Entity types") }}</label>
+					<div style="display:flex;flex-direction:column;gap:4px" role="group" aria-labelledby="kt-rule-entity-types">
+						<label v-for="type in entityTypes" :key="type" class="kt-checkbox">
+							<input
+								type="checkbox"
+								:checked="form.applicability_entity_types.includes(type)"
+								:data-testid="'kt-rule-entity-' + type"
+								@change="toggle(form.applicability_entity_types, type)"
+							>
+							<span class="box" />{{ type }}
+						</label>
+					</div>
+				</div>
+				<div class="kt-field">
+					<label for="kt-rule-county">{{ __("County applicability") }}</label>
+					<select id="kt-rule-county" v-model="form.applicability_county" class="kt-input" data-testid="kt-rule-county">
+						<option v-for="option in COUNTY_APPLICABILITY" :key="option.value" :value="option.value">{{ option.label }}</option>
+					</select>
+				</div>
+				<div class="kt-field">
+					<label id="kt-rule-categories">{{ __("Categories") }}</label>
+					<div style="display:flex;gap:14px;flex-wrap:wrap" role="group" aria-labelledby="kt-rule-categories">
+						<label v-for="category in categories" :key="category" class="kt-checkbox">
+							<input
+								type="checkbox"
+								:checked="form.applicability_categories.includes(category)"
+								:data-testid="'kt-rule-category-' + category"
+								@change="toggle(form.applicability_categories, category)"
+							>
+							<span class="box" />{{ category }}
+						</label>
+					</div>
+				</div>
+				<div class="kt-field">
+					<label for="kt-rule-currency">{{ __("Currency") }}</label>
+					<select id="kt-rule-currency" v-model="form.applicability_currency" class="kt-input" data-testid="kt-rule-currency">
+						<option value="">{{ __("— Select —") }}</option>
+						<option value="KES">KES</option>
+					</select>
+				</div>
 			</div>
 
-				<div class="kt-section">
-					<h6 class="kt-card-title">{{ __("When this rule applies") }}</h6>
-					<div class="kt-setup-grid">
-						<div class="kt-field">
-							<label for="kt-rule-from">{{ __("Applies from") }}</label>
-							<input id="kt-rule-from" v-model="form.effective_from" class="kt-input" type="date" data-testid="kt-rule-from">
-						</div>
-						<div class="kt-field">
-							<label for="kt-rule-until">{{ __("Applies until") }}</label>
-							<input id="kt-rule-until" v-model="form.effective_until" class="kt-input" type="date" data-testid="kt-rule-until">
-						</div>
-					</div>
-					<div class="kt-field">
-						<label for="kt-rule-basis">{{ __("Which date determines the rule to use?") }}</label>
-						<select id="kt-rule-basis" v-model="form.applicability_basis" class="kt-input" data-testid="kt-rule-basis">
-							<option value="">{{ __("— Select —") }}</option>
-							<option v-for="basis in APPLICABILITY_BASES" :key="basis" :value="basis">{{ applicabilityBasisLabel(basis) }}</option>
-						</select>
-					</div>
-					<div class="kt-setup-grid">
-						<div class="kt-field">
-							<label id="kt-rule-entity-types">{{ __("Entity types") }}</label>
-							<div style="display:flex;flex-direction:column;gap:4px" role="group" aria-labelledby="kt-rule-entity-types">
-								<label v-for="type in entityTypes" :key="type" class="kt-checkbox">
-									<input
-										type="checkbox"
-										:checked="form.applicability_entity_types.includes(type)"
-										:data-testid="'kt-rule-entity-' + type"
-										@change="toggle(form.applicability_entity_types, type)"
-									>
-									<span class="box" />{{ type }}
-								</label>
-							</div>
-						</div>
-						<div class="kt-field">
-							<label for="kt-rule-county">{{ __("County applicability") }}</label>
-							<select id="kt-rule-county" v-model="form.applicability_county" class="kt-input" data-testid="kt-rule-county">
-								<option v-for="option in COUNTY_APPLICABILITY" :key="option.value" :value="option.value">{{ option.label }}</option>
-							</select>
-						</div>
-						<div class="kt-field">
-							<label id="kt-rule-categories">{{ __("Categories") }}</label>
-							<div style="display:flex;gap:14px" role="group" aria-labelledby="kt-rule-categories">
-								<label v-for="category in categories" :key="category" class="kt-checkbox">
-									<input
-										type="checkbox"
-										:checked="form.applicability_categories.includes(category)"
-										:data-testid="'kt-rule-category-' + category"
-										@change="toggle(form.applicability_categories, category)"
-									>
-									<span class="box" />{{ category }}
-								</label>
-							</div>
-						</div>
-						<div class="kt-field">
-							<label for="kt-rule-currency">{{ __("Currency") }}</label>
-							<input id="kt-rule-currency" v-model="form.applicability_currency" class="kt-input" data-testid="kt-rule-currency">
-						</div>
-					</div>
-				</div>
+			<h6 class="kt-card-title">{{ __("Sources and interpretation") }}</h6>
+			<div class="kt-rule-grid" style="gap:14px">
+				<div class="kt-field"><label for="kt-rule-instrument">{{ __("Instrument") }}</label><input id="kt-rule-instrument" v-model="form.source_instrument" class="kt-input" data-testid="kt-rule-instrument"></div>
+				<!-- §4.6 — edition and amendment history are verification evidence,
+				     appended by a source check; the version itself is immutable. -->
+				<div class="kt-field"><label for="kt-rule-edition">{{ __("Edition") }}</label><input id="kt-rule-edition" class="kt-input" :value="__('Recorded with the source check')" disabled data-testid="kt-rule-edition"></div>
+				<div class="kt-field" style="grid-column:1/-1"><label for="kt-rule-provisions">{{ __("Provisions") }}</label><input id="kt-rule-provisions" v-model="form.provision" class="kt-input" data-testid="kt-rule-provisions"></div>
+				<div class="kt-field"><label for="kt-rule-url">{{ __("Source URL") }}</label><input id="kt-rule-url" v-model="form.source_document" class="kt-input" data-testid="kt-rule-url"></div>
+				<div class="kt-field"><label for="kt-rule-document">{{ __("Source document") }}</label><input id="kt-rule-document" class="kt-input" :value="__('Not attached')" disabled data-testid="kt-rule-document"></div>
+				<div class="kt-field" style="grid-column:1/-1"><label for="kt-rule-amendments">{{ __("Effective dates and amendments") }}</label><input id="kt-rule-amendments" class="kt-input" :value="__('Recorded with the source check')" disabled data-testid="kt-rule-amendments"></div>
+				<div class="kt-field" style="grid-column:1/-1"><label for="kt-rule-interpretation">{{ __("Interpretation") }}</label><textarea id="kt-rule-interpretation" v-model="form.interpretation" class="kt-input" rows="2" data-testid="kt-rule-interpretation" /></div>
+			</div>
 
-				<!-- C03-C — the kind's own validated fields. -->
-				<div class="kt-section" data-testid="kt-rule-kind-fields">
-					<h6 class="kt-card-title">{{ kind }}</h6>
+			<RuleFormError :error="error" style="margin-top:16px" @refresh="emit('refresh')" @review="emit('review')" />
 
-					<!-- D10 — Method eligibility is maintained as a Procedure Method
-					     Profile, with its own conditions and evidence; a second
-					     field group here would be a divergent copy of the same rule. -->
-					<div v-if="delegated" class="kt-notice is-warning" data-testid="kt-rule-delegated">
-						<div class="kt-notice-body">
-							{{ __("Method eligibility is maintained as a method profile, with its own conditions and evidence. Open the method profile to add a version.") }}
-						</div>
-					</div>
-
-					<div v-else-if="kind === 'Reservation rules'" class="kt-setup-grid">
-						<div class="kt-field"><label for="kt-rr-code">{{ __("Obligation code") }}</label><input id="kt-rr-code" v-model="payload.obligation_code" class="kt-input" data-testid="kt-rr-code"></div>
-						<div class="kt-field"><label for="kt-rr-target">{{ __("Target") }}</label><input id="kt-rr-target" v-model="payload.target_percent" class="kt-input" type="number" data-testid="kt-rr-target"></div>
-						<div class="kt-field"><label for="kt-rr-county-target">{{ __("County target") }}</label><input id="kt-rr-county-target" v-model="payload.county_target_percent" class="kt-input" type="number" data-testid="kt-rr-county-target"></div>
-						<div class="kt-field">
-							<label for="kt-rr-measure">{{ __("Measure") }}</label>
-							<select id="kt-rr-measure" v-model="payload.measure_stage" class="kt-input" data-testid="kt-rr-measure">
-								<option v-for="option in MEASURES" :key="option.value" :value="option.value">{{ option.label }}</option>
-							</select>
-						</div>
-						<div class="kt-field">
-							<label for="kt-rr-basis">{{ __("Measured against") }}</label>
-							<input id="kt-rr-basis" class="kt-input" :value="measuredAgainst" disabled data-testid="kt-rr-basis">
-						</div>
-						<div class="kt-field">
-							<label for="kt-rr-overlap">{{ __("How targets overlap") }}</label>
-							<select id="kt-rr-overlap" v-model="payload.overlap_policy" class="kt-input" data-testid="kt-rr-overlap">
-								<option value="">{{ __("— Select —") }}</option>
-								<option v-for="option in OVERLAP_POLICIES" :key="option.value" :value="option.value">{{ option.label }}</option>
-							</select>
-						</div>
-					</div>
-
-					<div v-else-if="kind === 'Exclusive preference'" class="kt-setup-grid">
-						<div class="kt-field"><label for="kt-xp-code">{{ __("Restriction code") }}</label><input id="kt-xp-code" v-model="payload.restriction_code" class="kt-input" data-testid="kt-xp-code"></div>
-						<div class="kt-field">
-							<label for="kt-xp-category">{{ __("Category") }}</label>
-							<select id="kt-xp-category" v-model="payload.category" class="kt-input" data-testid="kt-xp-category">
-								<option value="">{{ __("— Select —") }}</option>
-								<option v-for="category in categories" :key="category" :value="category">{{ category }}</option>
-							</select>
-						</div>
-						<div class="kt-field">
-							<label for="kt-xp-comparator">{{ __("Comparison") }}</label>
-							<select id="kt-xp-comparator" v-model="payload.comparator" class="kt-input" data-testid="kt-xp-comparator">
-								<option value="">{{ __("— Select —") }}</option>
-								<option v-for="option in COMPARATORS" :key="option" :value="option">{{ option }}</option>
-							</select>
-						</div>
-						<div class="kt-field"><label for="kt-xp-amount">{{ __("Amount") }}</label><input id="kt-xp-amount" v-model="payload.amount" class="kt-input" type="number" data-testid="kt-xp-amount"></div>
-						<div class="kt-field"><label for="kt-xp-party">{{ __("Eligible party classification") }}</label><input id="kt-xp-party" v-model="payload.eligible_party_classification" class="kt-input" data-testid="kt-xp-party"></div>
-					</div>
-
-					<div v-else-if="kind === 'Preference margins'" class="kt-setup-grid">
-						<div class="kt-field"><label for="kt-pm-scheme">{{ __("Scheme code") }}</label><input id="kt-pm-scheme" v-model="payload.scheme_code" class="kt-input" data-testid="kt-pm-scheme"></div>
-						<div class="kt-field"><label for="kt-pm-margin">{{ __("Margin") }}</label><input id="kt-pm-margin" v-model="payload.margin_percent" class="kt-input" type="number" data-testid="kt-pm-margin"></div>
-						<div class="kt-field"><label for="kt-pm-from">{{ __("Shareholding from") }}</label><input id="kt-pm-from" v-model="payload.shareholding_from" class="kt-input" type="number" data-testid="kt-pm-from"></div>
-						<div class="kt-field"><label for="kt-pm-to">{{ __("Shareholding to") }}</label><input id="kt-pm-to" v-model="payload.shareholding_to" class="kt-input" type="number" data-testid="kt-pm-to"></div>
-						<div class="kt-field"><label for="kt-pm-origin">{{ __("Origin condition") }}</label><input id="kt-pm-origin" v-model="payload.origin_condition" class="kt-input" data-testid="kt-pm-origin"></div>
-						<div class="kt-field"><label for="kt-pm-basis">{{ __("Evaluation basis") }}</label><input id="kt-pm-basis" v-model="payload.evaluation_basis" class="kt-input" data-testid="kt-pm-basis"></div>
-					</div>
-
-					<div v-else-if="kind === 'Market price index'">
-						<table class="kt-table" data-testid="kt-mpi-rows">
-							<thead>
-								<tr><th>{{ __("Item") }}</th><th>{{ __("Category") }}</th><th>{{ __("Unit") }}</th><th>{{ __("Currency") }}</th><th>{{ __("Price") }}</th><th>{{ __("Action") }}</th></tr>
-							</thead>
-							<tbody>
-								<tr v-for="(row, index) in priceRows" :key="index">
-									<td><input v-model="row.item" class="kt-input" :data-testid="'kt-mpi-item-' + index"></td>
-									<td>
-										<select v-model="row.category" class="kt-input">
-											<option value="">{{ __("— Select —") }}</option>
-											<option v-for="category in categories" :key="category" :value="category">{{ category }}</option>
-										</select>
-									</td>
-									<td><input v-model="row.unit" class="kt-input"></td>
-									<td><input v-model="row.currency" class="kt-input"></td>
-									<td><input v-model="row.price" class="kt-input" type="number"></td>
-									<td><button type="button" class="kt-btn kt-btn-ghost kt-btn-sm" @click="removePriceRow(index)">{{ __("Remove row") }}</button></td>
-								</tr>
-								<tr v-if="!priceRows.length"><td colspan="6" class="kt-muted">{{ __("No price index has been published for this period.") }}</td></tr>
-							</tbody>
-						</table>
-						<button type="button" class="kt-btn kt-btn-ghost kt-btn-sm" style="margin-top:8px" data-testid="kt-mpi-add" @click="addPriceRow">{{ __("Add row") }}</button>
-					</div>
-
-					<div v-else-if="kind === 'Approval applicability'" class="kt-setup-grid">
-						<div class="kt-field">
-							<label id="kt-aa-entity-types">{{ __("Entity types") }}</label>
-							<div style="display:flex;flex-direction:column;gap:4px" role="group" aria-labelledby="kt-aa-entity-types">
-								<label v-for="type in entityTypes" :key="type" class="kt-checkbox">
-									<input
-										type="checkbox"
-										:checked="(payload.entity_types || []).includes(type)"
-										:data-testid="'kt-aa-entity-' + type"
-										@change="payload.entity_types = payload.entity_types || []; toggle(payload.entity_types, type)"
-									>
-									<span class="box" />{{ type }}
-								</label>
-							</div>
-						</div>
-						<div class="kt-field">
-							<label for="kt-aa-county">{{ __("County applicability") }}</label>
-							<select id="kt-aa-county" v-model="payload.county_applicability" class="kt-input" data-testid="kt-aa-county">
-								<option v-for="option in COUNTY_APPLICABILITY" :key="option.value" :value="option.value">{{ option.label }}</option>
-							</select>
-						</div>
-						<div class="kt-field">
-							<label for="kt-aa-route">{{ __("Plan approval authority") }}</label>
-							<select id="kt-aa-route" v-model="payload.approval_route" class="kt-input" data-testid="kt-aa-route">
-								<option value="">{{ __("— Select —") }}</option>
-								<option v-for="route in APPROVAL_ROUTES" :key="route" :value="route">{{ route }}</option>
-							</select>
-						</div>
-						<div class="kt-field"><label for="kt-aa-evidence">{{ __("Required entity evidence") }}</label><input id="kt-aa-evidence" v-model="payload.required_entity_evidence" class="kt-input" data-testid="kt-aa-evidence"></div>
-					</div>
-
-					<div v-else-if="kind === 'Publication obligations'" class="kt-setup-grid">
-						<div class="kt-field"><label for="kt-po-id">{{ __("Obligation") }}</label><input id="kt-po-id" v-model="payload.obligation_id" class="kt-input" data-testid="kt-po-id"></div>
-						<div class="kt-field"><label for="kt-po-actor">{{ __("Accountable actor") }}</label><input id="kt-po-actor" v-model="payload.accountable_actor_role" class="kt-input" data-testid="kt-po-actor"></div>
-						<div class="kt-field"><label for="kt-po-recipient">{{ __("Recipient") }}</label><input id="kt-po-recipient" v-model="payload.recipient" class="kt-input" data-testid="kt-po-recipient"></div>
-						<div class="kt-field"><label for="kt-po-channel">{{ __("Channel") }}</label><input id="kt-po-channel" v-model="payload.channel" class="kt-input" data-testid="kt-po-channel"></div>
-						<div class="kt-field"><label for="kt-po-trigger">{{ __("Trigger") }}</label><input id="kt-po-trigger" v-model="payload.trigger_event" class="kt-input" data-testid="kt-po-trigger"></div>
-						<div class="kt-field">
-							<label for="kt-po-due">{{ __("Due rule") }}</label>
-							<select id="kt-po-due" v-model="payload.due_rule" class="kt-input" data-testid="kt-po-due">
-								<option value="">{{ __("— Select —") }}</option>
-								<option v-for="option in DUE_RULES" :key="option.value" :value="option.value">{{ option.label }}</option>
-							</select>
-						</div>
-						<div class="kt-field"><label for="kt-po-days">{{ __("Days") }}</label><input id="kt-po-days" v-model="payload.days" class="kt-input" type="number" data-testid="kt-po-days"></div>
-						<div class="kt-field"><label for="kt-po-period">{{ __("Reporting period") }}</label><input id="kt-po-period" v-model="payload.reporting_period" class="kt-input" data-testid="kt-po-period"></div>
-					</div>
-				</div>
-
-				<div class="kt-section">
-					<h6 class="kt-card-title">{{ __("Sources and interpretation") }}</h6>
-					<div class="kt-setup-grid">
-						<div class="kt-field"><label for="kt-rule-instrument">{{ __("Instrument") }}</label><input id="kt-rule-instrument" v-model="form.source_instrument" class="kt-input" data-testid="kt-rule-instrument"></div>
-						<!-- §4.6 — edition, amendment history and the attached document
-						     are verification evidence, appended by a source check; they
-						     cannot sit on the version, which is immutable once saved.
-						     Shown here so the reader knows where they are captured. -->
-						<div class="kt-field">
-							<label for="kt-rule-edition">{{ __("Edition") }}</label>
-							<div id="kt-rule-edition" class="kt-ro" data-testid="kt-rule-edition">{{ __("Recorded with the source check") }}</div>
-						</div>
-						<div class="kt-field"><label for="kt-rule-provisions">{{ __("Provisions") }}</label><input id="kt-rule-provisions" v-model="form.provision" class="kt-input" data-testid="kt-rule-provisions"></div>
-						<div class="kt-field"><label for="kt-rule-url">{{ __("Source URL") }}</label><input id="kt-rule-url" v-model="form.source_document" class="kt-input" data-testid="kt-rule-url"></div>
-						<div class="kt-field">
-							<label for="kt-rule-document">{{ __("Source document") }}</label>
-							<div id="kt-rule-document" class="kt-ro" data-testid="kt-rule-document">{{ __("Not attached") }}</div>
-						</div>
-						<div class="kt-field">
-							<label for="kt-rule-amendments">{{ __("Effective dates and amendments") }}</label>
-							<div id="kt-rule-amendments" class="kt-ro" data-testid="kt-rule-amendments">{{ __("Recorded with the source check") }}</div>
-						</div>
-					</div>
-					<div class="kt-field">
-						<label for="kt-rule-interpretation">{{ __("Interpretation") }}</label>
-						<textarea id="kt-rule-interpretation" v-model="form.interpretation" class="kt-input kt-textarea" rows="2" data-testid="kt-rule-interpretation" />
-					</div>
-				</div>
-
-				<!-- C03-B "version" — the replacement and its effect, stated before
-				     the save, never after. -->
-				<div v-if="correcting" class="kt-notice" data-testid="kt-rule-correcting-notice">
-					<div class="kt-notice-body">
-						{{ __("No source check has been recorded against this rule and it has not taken effect, so it can be changed here. Once either happens, changing it means a new version.") }}
-					</div>
-				</div>
-
-				<div v-if="!creating && !correcting" class="kt-section" data-testid="kt-rule-replacement">
-					<div class="kt-field">
-						<label for="kt-rule-reason">{{ __("Reason for change") }}</label>
-						<textarea id="kt-rule-reason" v-model="form.change_reason" class="kt-input kt-textarea" rows="2" data-testid="kt-rule-reason" />
-					</div>
-					<p class="kt-muted" style="font-size:13px">
-						{{ __("Earlier versions this replaces: Version {0}.", [current.version_number]) }}
-					</p>
-					<h6 class="kt-card-title">{{ __("Effect of this replacement") }}</h6>
-					<div class="kt-panel">
-						<div class="kt-meta-row">
-							<div><span class="kt-label">{{ __("Coverage replaced") }}</span><span class="kt-meta-value">{{ __("Version {0}, for matching applicability within the displayed period", [current.version_number]) }}</span></div>
-							<div><span class="kt-label">{{ __("Current readiness") }}</span><span class="kt-meta-value">{{ current.verification_status === "Verified" ? __("Version {0} is verified", [current.version_number]) : __("Version {0} already needs source checks", [current.version_number]) }}</span></div>
-							<div><span class="kt-label">{{ __("Historical decisions") }}</span><span class="kt-meta-value">{{ __("Keep the exact evidence used at the time") }}</span></div>
-						</div>
-					</div>
-					<div class="kt-notice is-warning" style="margin-top:12px">
-						<div class="kt-notice-body">{{ __("The replacement will not be usable for affected new decisions until its required details and source checks are complete.") }}</div>
-					</div>
-				</div>
-
-			<p v-if="error" class="kt-inline-error" role="alert" data-testid="kt-rule-error">{{ error }}</p>
-		</div>
-
-		<div class="kt-procset-footer kt-procset-wide">
-			<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="kt-rule-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
-			<button type="button" class="kt-btn kt-btn-primary" :disabled="!canSave" data-testid="kt-rule-save" @click="save">
-				{{ creating ? __("Save rule version") : correcting ? __("Save changes") : __("Save new version") }}
-			</button>
-		</div>
+			<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="kt-rule-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
+				<button type="button" class="kt-btn kt-btn-primary" :disabled="!canSave" data-testid="kt-rule-save" @click="save">
+					{{ creating ? __("Save rule version") : correcting ? __("Save changes") : __("Save new version") }}
+				</button>
+			</div>
+		</template>
 	</div>
 </template>

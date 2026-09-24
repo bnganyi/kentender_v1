@@ -19,14 +19,22 @@
 // Every choice offered here is the server's own vocabulary (condition kinds,
 // value bases, categories, source-check statuses), read from the settings
 // projection rather than restated in the browser.
+//
+// CFG-CHG-002 v0.14 (tracker CFG14-5D, D21): the model stays as built; the
+// new-version top is the board's (#version, shared RuleVersionHeader), and a
+// "create" mode serves Add rule → Method eligibility for a method with no
+// rule yet.
 import { computed, onMounted, ref } from "vue";
 import { procurementSettingsApi } from "../data/procurementSettingsApi.js";
-import { datesOverlap } from "../data/format.js";
-import { fmtDate, sourceCheckLabel } from "../data/format.js";
+import { datesOverlap, sourceCheckLabel } from "../data/format.js";
+import RuleVersionHeader from "./RuleVersionHeader.vue";
+import RuleFormError from "./RuleFormError.vue";
 
 const props = defineProps({
 	// The Version being worked on; its values seed the form.
-	name: { type: String, required: true },
+	name: { type: String, default: "" },
+	// "create": the method a first rule is being written for (no load).
+	method: { type: String, default: "" },
 	// "version" registers a replacement; "correct" edits this Version in
 	// place, which the server allows only while nothing has pinned it and it
 	// has not taken effect. Which one is offered is the server's call, read
@@ -38,9 +46,10 @@ const props = defineProps({
 	applicabilityBases: { type: Array, default: () => [] },
 	verificationStatuses: { type: Array, default: () => [] },
 });
-const emit = defineEmits(["saved", "cancel"]);
+const emit = defineEmits(["saved", "cancel", "refresh", "review"]);
 
 const correcting = computed(() => props.mode === "correct");
+const creating = computed(() => props.mode === "create");
 
 const loading = ref(true);
 const loadError = ref("");
@@ -77,7 +86,18 @@ const basisOptions = computed(() => {
 	return options;
 });
 
+function blankForm() {
+	return { effective_from: "", effective_until: "", applicability_basis: "", verification_status: "", source_instrument: "", provision: "", source_document: "", change_reason: "" };
+}
+
 async function load() {
+	if (creating.value) {
+		current.value = { procurement_method: props.method, version_number: 0 };
+		form.value = blankForm();
+		conditions.value = [blankCondition()];
+		loading.value = false;
+		return;
+	}
 	loading.value = true;
 	loadError.value = "";
 	try {
@@ -123,10 +143,18 @@ const blocked = computed(() => {
 		if (ids.includes(id)) return __("Condition identifiers must be different from each other: {0} is used twice.", [id]);
 		ids.push(id);
 	}
-	if (!correcting.value && !form.value.change_reason.trim()) return __("Say why this version replaces the earlier one.");
+	if (!correcting.value && !creating.value && !form.value.change_reason.trim()) return __("Say why this version replaces the earlier one.");
 	return "";
 });
 const canSave = computed(() => !busy.value && !blocked.value);
+const replaces = computed(
+	() =>
+		!creating.value &&
+		!!props.name &&
+		!!current.value &&
+		datesOverlap(current.value.effective_from, current.value.effective_until, form.value?.effective_from, form.value?.effective_until)
+);
+const ruleName = computed(() => `${__("Method eligibility")} — ${current.value?.procurement_method || props.method}`);
 
 async function save() {
 	busy.value = true;
@@ -166,9 +194,7 @@ async function save() {
 				procurement_method: current.value.procurement_method,
 				change_reason: form.value.change_reason.trim(),
 				// D16 — declared only when the new dates overlap it.
-				replaces: datesOverlap(current.value.effective_from, current.value.effective_until, payload.effective_from, payload.effective_until)
-					? props.name
-					: "",
+				replaces: replaces.value ? props.name : "",
 			});
 		emit("saved", saved.profile);
 	} catch (e) {
@@ -180,40 +206,27 @@ async function save() {
 </script>
 
 <template>
-	<div class="kt-procset-view" data-testid="kt-procset-method-editor">
-		<div class="kt-section-head">
-			<div>
-				<span class="kt-eyebrow">{{ __("Procurement settings") }}</span>
-				<h2 class="kt-section-title" data-testid="kt-mve-title">{{ correcting ? __("Method eligibility — edit rule") : __("Method eligibility — new version") }}</h2>
-			</div>
-			<button type="button" class="kt-btn kt-btn-ghost" data-testid="kt-mve-back" @click="emit('cancel')">← {{ __("Procurement settings") }}</button>
+	<div class="kt-rule-editor" data-testid="kt-procset-method-editor">
+		<div v-if="loading" data-testid="kt-mve-loading">
+			<div class="kt-skel" style="width:40%" /><div class="kt-skel" style="width:70%" />
 		</div>
-
-		<div v-if="loading" class="kt-card kt-blueprint" data-testid="kt-mve-loading">
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-			<div class="kt-skel" style="width:70%" /><div class="kt-skel" style="width:50%" />
-		</div>
-		<div v-else-if="loadError" class="kt-card kt-blueprint kt-empty" data-testid="kt-mve-load-error">
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-			<h2>{{ __("This rule isn't available to you") }}</h2>
-			<p>{{ __("It may not exist, or you may not have access to it.") }}</p>
-			<button type="button" class="kt-btn kt-btn-secondary" @click="emit('cancel')">{{ __("Back to Procurement settings") }}</button>
+		<div v-else-if="loadError" class="kt-notice is-critical" role="alert" data-testid="kt-mve-load-error">
+			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+			<div class="kt-notice-body"><strong>{{ __("This rule isn't available to you.") }}</strong> {{ __("It may not exist, or you may not have access to it.") }}</div>
 		</div>
 
 		<template v-else>
-			<div class="kt-card kt-blueprint kt-procset-wide" data-testid="kt-mve-card">
-				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-
-				<span class="kt-tag kt-tag-neutral" data-testid="kt-mve-unsaved">{{ __("Unsaved changes") }}</span>
-				<div class="kt-meta-row" style="margin:12px 0">
-					<div><span class="kt-label">{{ correcting ? __("Version") : __("Earlier version") }}</span><span class="kt-meta-value">{{ current.version_number }}</span></div>
-					<div><span class="kt-label">{{ __("Applies from") }}</span><span class="kt-meta-value">{{ fmtDate(current.effective_from) }}</span></div>
-					<div><span class="kt-label">{{ __("Applies until") }}</span><span class="kt-meta-value">{{ fmtDate(current.effective_until) }}</span></div>
-				</div>
+			<div data-testid="kt-mve-card">
+				<template v-if="correcting">
+					<h3 style="margin-bottom:4px" data-testid="kt-mve-title">{{ __("{0} — edit rule", [ruleName]) }}</h3>
+					<span class="kt-tag kt-tag-neutral" data-testid="kt-mve-unsaved">{{ __("Unsaved changes") }}</span>
+				</template>
+				<RuleVersionHeader v-else-if="!creating" v-model="form.change_reason" :rule-name="ruleName" :current="current" :replaces="replaces" />
 
 				<!-- A correction changes this Version itself, so the screen says
 				     so before anything is typed, and says what ends it. -->
-				<div v-if="correcting" class="kt-notice" data-testid="kt-mve-correcting-notice">
+				<div v-if="correcting" class="kt-notice is-info" style="margin:12px 0" data-testid="kt-mve-correcting-notice">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></svg>
 					<div class="kt-notice-body">
 						{{ __("This rule has not taken effect and no plan uses it yet, so it can be changed here. Once either happens, changing it means a new version.") }}
 					</div>
@@ -227,7 +240,7 @@ async function save() {
 					<div class="kt-setup-grid">
 						<div class="kt-field">
 							<label for="kt-mve-method">{{ __("Method") }}</label>
-							<div id="kt-mve-method" class="kt-ro" data-testid="kt-mve-method">{{ current.procurement_method }}</div>
+							<div id="kt-mve-method" class="kt-ro" data-testid="kt-mve-method">{{ current.procurement_method || method }}</div>
 						</div>
 						<div class="kt-field">
 							<label for="kt-mve-currency">{{ __("Currency") }}</label>
@@ -385,36 +398,13 @@ async function save() {
 					</div>
 				</div>
 
-				<!-- C03-B "version" — the replacement and its effect, stated before
-				     the save, never after. -->
-				<div v-if="!correcting" class="kt-section" data-testid="kt-mve-replacement">
-					<div class="kt-field">
-						<label for="kt-mve-reason">{{ __("Reason for change") }}</label>
-						<textarea id="kt-mve-reason" v-model="form.change_reason" class="kt-input kt-textarea" rows="2" data-testid="kt-mve-reason" />
-					</div>
-					<p class="kt-muted" style="font-size:13px">
-						{{ __("Earlier versions this replaces: Method eligibility Version {0}.", [current.version_number]) }}
-					</p>
-					<h6 class="kt-card-title">{{ __("Effect of this replacement") }}</h6>
-					<div class="kt-panel">
-						<div class="kt-meta-row">
-							<div><span class="kt-label">{{ __("Coverage replaced") }}</span><span class="kt-meta-value">{{ __("Version {0}, for matching applicability within the displayed period", [current.version_number]) }}</span></div>
-							<div><span class="kt-label">{{ __("Current readiness") }}</span><span class="kt-meta-value">{{ current.verification_status === "Verified" ? __("Version {0} is verified", [current.version_number]) : __("Version {0} already needs source checks", [current.version_number]) }}</span></div>
-							<div><span class="kt-label">{{ __("Historical decisions") }}</span><span class="kt-meta-value">{{ __("Keep the exact evidence used at the time") }}</span></div>
-						</div>
-					</div>
-					<div class="kt-notice is-warning" style="margin-top:12px">
-						<div class="kt-notice-body">{{ __("The replacement will not be usable for affected new decisions until its required details and source checks are complete.") }}</div>
-					</div>
-				</div>
-
-				<p v-if="error" class="kt-inline-error" role="alert" data-testid="kt-mve-error">{{ error }}</p>
+				<RuleFormError :error="error" style="margin-top:16px" @refresh="emit('refresh')" @review="emit('review')" />
 			</div>
 
-			<div class="kt-procset-footer kt-procset-wide">
+			<div style="display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:16px;flex-wrap:wrap">
 				<span v-if="blocked" class="kt-blocked" data-testid="kt-mve-blocked">{{ blocked }}</span>
 				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="kt-mve-cancel" @click="emit('cancel')">{{ __("Cancel") }}</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="!canSave" data-testid="kt-mve-save" @click="save">{{ correcting ? __("Save changes") : __("Save new version") }}</button>
+				<button type="button" class="kt-btn kt-btn-primary" :disabled="!canSave" data-testid="kt-mve-save" @click="save">{{ correcting ? __("Save changes") : creating ? __("Save rule version") : __("Save new version") }}</button>
 			</div>
 		</template>
 	</div>

@@ -46,3 +46,60 @@ class TestRuleDetailsMissing(FrappeTestCase):
 			self.assertIsInstance(methods[0]["details_missing"], list)
 			# The method model has no interpretation field of its own.
 			self.assertNotIn("Interpretation", methods[0]["details_missing"])
+
+
+class TestKindFieldsTheBoardDraws(FrappeTestCase):
+	"""§10.7 (tracker CFG14-5D) — fields the board's kind sections draw that the
+	payload did not carry. Pure validation: nothing is written."""
+
+	def test_reservation_rules_keep_applicability_conditions_and_source_references(self):
+		out = register._validate_payload(
+			"Reservation rules",
+			{
+				"obligation_code": "AGPO-ANNUAL",
+				"measure_stage": "PlanningAllocation",
+				"target_percent": 30,
+				"applicability_conditions": "  Registered AGPO certificate  ",
+				"source_references": "PPADA s.157(5)",
+			},
+		)
+		self.assertEqual(out["applicability_conditions"], "Registered AGPO certificate")
+		self.assertEqual(out["source_references"], "PPADA s.157(5)")
+
+	def test_market_price_index_keeps_its_publication_facts(self):
+		out = register._validate_payload(
+			"Market price index",
+			{"publication_date": "2026-07-01", "publication_reference": "PPRA MPI 2026/27", "rows": []},
+		)
+		self.assertEqual(out["publication_date"], "2026-07-01")
+		self.assertEqual(out["publication_reference"], "PPRA MPI 2026/27")
+		# Nothing published is still "not published", whatever the header says.
+		self.assertFalse(out["published"])
+
+
+class TestPlaywrightRulePurge(FrappeTestCase):
+	"""Browser specs add real rules (tracker CFG14-5D); their cleanup removes only
+	rules whose identifier starts with PW-, with their versions."""
+
+	def setUp(self):
+		# Always remove test data: a failed run must not strand its rule.
+		register.purge_playwright_rules()
+		frappe.db.commit()
+		self.addCleanup(lambda: (register.purge_playwright_rules(), frappe.db.commit()))
+
+	def test_removes_pw_rules_and_their_versions_and_nothing_else(self):
+		frappe.set_user("Administrator")
+		out = register.create_regulatory_reference(reference_key="PW-PURGE-CHECK", reference_kind="Publication obligations", display_name="PW purge check")
+		register.save_regulatory_reference_version(
+			reference_set=out["reference_set"],
+			payload={"obligation_id": "PW-OB", "due_rule": "Immediate"},
+			effective_from="2099-07-01",
+		)
+		frappe.db.commit()
+		before = frappe.db.count(register.SET_DOCTYPE)
+		removed = register.purge_playwright_rules()
+		frappe.db.commit()
+		self.assertGreaterEqual(removed, 2)
+		self.assertFalse(frappe.db.exists(register.SET_DOCTYPE, out["reference_set"]))
+		self.assertFalse(frappe.db.exists(register.DOCTYPE, {"reference_set": out["reference_set"]}))
+		self.assertEqual(frappe.db.count(register.SET_DOCTYPE), before - 1)

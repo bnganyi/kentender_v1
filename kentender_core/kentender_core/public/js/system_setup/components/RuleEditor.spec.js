@@ -52,11 +52,26 @@ describe("RuleEditor", () => {
 		expect(wrapper.find('[data-testid="kt-rr-code"]').exists()).toBe(false);
 	});
 
-	it("Method eligibility is delegated to its method profile rather than duplicated here", async () => {
-		const wrapper = mountEditor();
+	it("Method eligibility picks the method: an existing rule opens its new version, a new one opens the full method editor (D21)", async () => {
+		const wrapper = mountEditor({
+			methods: ["Open Tender", "Framework Agreement"],
+			methodRules: [{ profile: "MPR-OPEN-TENDER-V1", procurement_method: "Open Tender" }],
+		});
 		await wrapper.find('[data-testid="kt-rule-kind"]').setValue("Method eligibility");
-		expect(wrapper.find('[data-testid="kt-rule-delegated"]').text()).toContain("maintained as a method profile");
-		expect(wrapper.find('[data-testid="kt-rule-save"]').attributes("disabled")).toBeDefined();
+		// No generic kind card or save for this kind: its own editor owns it.
+		expect(wrapper.find('[data-testid="kt-rule-kind-fields"]').exists()).toBe(false);
+		expect(wrapper.find('[data-testid="kt-rule-save"]').exists()).toBe(false);
+
+		await wrapper.find('[data-testid="kt-rule-method"]').setValue("Open Tender");
+		expect(wrapper.find('[data-testid="kt-rule-method-exists"]').text()).toContain("Method eligibility — Open Tender already exists.");
+		await wrapper.find('[data-testid="kt-rule-method-open"]').trigger("click");
+		expect(wrapper.emitted("open-method-version")[0]).toEqual(["MPR-OPEN-TENDER-V1"]);
+
+		await wrapper.find('[data-testid="kt-rule-method"]').setValue("Framework Agreement");
+		await flushPromises();
+		expect(wrapper.find('[data-testid="kt-procset-method-editor"]').exists()).toBe(true);
+		expect(wrapper.find('[data-testid="kt-mve-method"]').text()).toBe("Framework Agreement");
+		expect(wrapper.find('[data-testid="kt-mve-save"]').text()).toBe("Save rule version");
 	});
 
 	it("creating a rule runs §7.3's two commands in order and passes the kind's own payload", async () => {
@@ -155,8 +170,8 @@ describe("RuleEditor", () => {
 				payload: { obligation_code: "ANNUAL-TARGET" },
 			},
 		});
-		const replacement = wrapper.find('[data-testid="kt-rule-replacement"]');
-		expect(replacement.text()).toContain("Earlier versions this replaces: Version 1.");
+		const replacement = wrapper.find('[data-testid="kt-rule-version-head"]');
+		expect(replacement.text()).toContain("Earlier versions this replaces: Reservation rules Version 1.");
 		expect(replacement.text()).toContain("Version 1 already needs source checks");
 		expect(wrapper.find('[data-testid="kt-rule-kind"]').exists()).toBe(false);
 
@@ -196,7 +211,7 @@ describe("RuleEditor", () => {
 		const wrapper = mountEditor({ referenceSet: "rs-reservation", currentVersion: current, mode: "correct" });
 		await flushPromises();
 		expect(wrapper.find('[data-testid="kt-rule-correcting-notice"]').exists()).toBe(true);
-		expect(wrapper.find('[data-testid="kt-rule-replacement"]').exists()).toBe(false);
+		expect(wrapper.find('[data-testid="kt-rule-version-head"]').exists()).toBe(false);
 		expect(wrapper.find('[data-testid="kt-rule-save"]').text()).toBe("Save changes");
 
 		await wrapper.find('[data-testid="kt-rr-target"]').setValue("35");
@@ -208,5 +223,86 @@ describe("RuleEditor", () => {
 		expect(call.expected_version).toBe("2026-09-23 10:00:00");
 		expect(call.payload.target_percent).toBe(35);
 		expect(wrapper.emitted("saved")).toHaveLength(1);
+	});
+
+	it("the board's kind fields reach the saved payload (C03BC #kinds)", async () => {
+		api.createRegulatoryReference.mockResolvedValue({ reference_set: "rs-x" });
+		api.saveRegulatoryReferenceVersion.mockResolvedValue({ reference: "rv-x" });
+		const wrapper = mountEditor({ methods: ["Open Tender"] });
+		await wrapper.find('[data-testid="kt-rule-name"]').setValue("Reservation");
+		await wrapper.find('[data-testid="kt-rule-key"]').setValue("RES");
+		await wrapper.find('[data-testid="kt-rule-from"]').setValue("2027-07-01");
+		await wrapper.find('[data-testid="kt-rule-kind"]').setValue("Reservation rules");
+		const card = wrapper.find('[data-testid="kt-rule-kind-fields"]');
+		expect(card.find(".card-kicker").text()).toBe("Reservation rules");
+		expect(card.findAll("h6").map((h) => h.text())).toEqual(["Measure", "Annual target", "What the target is measured against", "Who qualifies", "How targets overlap"]);
+		// A new rule's selects show their empty choice, not a blank.
+		expect(wrapper.find('[data-testid="kt-rr-overlap"]').element.selectedOptions[0].text).toBe("Not yet established");
+		await wrapper.find('[data-testid="kt-rr-code"]').setValue("AGPO");
+		await wrapper.find('[data-testid="kt-rr-designation"]').setValue("Women");
+		await wrapper.find('[data-testid="kt-rr-conditions"]').setValue("Registered AGPO certificate");
+		await wrapper.find('[data-testid="kt-rr-sources"]').setValue("PPADA s.157(5)");
+		// Related obligations only apply to a specified overlap.
+		expect(wrapper.find('[data-testid="kt-rr-related"]').attributes("disabled")).toBeDefined();
+		await wrapper.find('[data-testid="kt-rule-save"]').trigger("click");
+		await flushPromises();
+		expect(api.saveRegulatoryReferenceVersion.mock.calls[0][0].payload).toMatchObject({
+			obligation_code: "AGPO",
+			eligible_designations: ["Women"],
+			applicability_conditions: "Registered AGPO certificate",
+			source_references: "PPADA s.157(5)",
+		});
+	});
+
+	it("preference margins, approval applicability and the price index keep the board's own controls", async () => {
+		const wrapper = mountEditor({ methods: ["Open Tender"] });
+		await wrapper.find('[data-testid="kt-rule-kind"]').setValue("Preference margins");
+		await wrapper.find('[data-testid="kt-pm-lower-no"]').trigger("change");
+		expect(wrapper.find('[data-testid="kt-pm-lower-no"]').element.checked).toBe(true);
+		expect(wrapper.text()).toContain("Used during evaluation; this does not decide supplier entitlement in Planning.");
+
+		await wrapper.find('[data-testid="kt-rule-kind"]').setValue("Approval applicability");
+		await wrapper.find('[data-testid="kt-aa-entity"]').setValue("State Corporation");
+		expect(wrapper.text()).toContain("Required entity evidence: Not yet established.");
+		expect(wrapper.find('[data-testid="kt-aa-capacity"]').element.value).toBe("Configured statutory capacity");
+
+		await wrapper.find('[data-testid="kt-rule-kind"]').setValue("Market price index");
+		expect(wrapper.find('[data-testid="kt-mpi-rows"]').text()).toContain("Not published");
+		await wrapper.find('[data-testid="kt-mpi-add"]').trigger("click");
+		expect(wrapper.find('[data-testid="kt-mpi-item-0"]').exists()).toBe(true);
+		await wrapper.find('[data-testid="kt-mpi-remove-0"]').trigger("click");
+		expect(wrapper.find('[data-testid="kt-mpi-item-0"]').exists()).toBe(false);
+	});
+
+	it("a stale or overlapping save shows the board's state with its way forward, and keeps the entries", async () => {
+		const version = {
+			reference: "rv-1",
+			reference_set: "rs-1",
+			reference_kind: "Reservation rules",
+			version_number: 1,
+			effective_from: "2027-07-01",
+			effective_until: "2028-06-30",
+			verification_status: "Production verification pending",
+			payload: { obligation_code: "ANNUAL-TARGET" },
+		};
+		api.saveRegulatoryReferenceVersion.mockRejectedValueOnce(new Error("This record changed after you opened it. Refresh and review the latest version."));
+		const wrapper = mountEditor({ referenceSet: "rs-1", currentVersion: version });
+		await wrapper.find('[data-testid="kt-rule-reason"]').setValue("Amended figures.");
+		await wrapper.find('[data-testid="kt-rule-save"]').trigger("click");
+		await flushPromises();
+		expect(wrapper.find('[data-testid="kt-rule-stale"]').text()).toContain("Stale. This information has changed since you opened it.");
+		await wrapper.find('[data-testid="kt-rule-review-latest"]').trigger("click");
+		expect(wrapper.emitted("refresh")).toHaveLength(1);
+		// The same version re-read keeps what was typed.
+		await wrapper.setProps({ currentVersion: { ...version, expected_version: "later" } });
+		expect(wrapper.find('[data-testid="kt-rule-reason"]').element.value).toBe("Amended figures.");
+		expect(wrapper.find('[data-testid="kt-rule-stale"]').exists()).toBe(false);
+
+		api.saveRegulatoryReferenceVersion.mockRejectedValueOnce(new Error("Select valid earlier versions and check the dates this replacement will cover."));
+		await wrapper.find('[data-testid="kt-rule-save"]').trigger("click");
+		await flushPromises();
+		expect(wrapper.find('[data-testid="kt-rule-overlap"]').text()).toContain("Overlap. Rule versions overlap for the required date.");
+		await wrapper.find('[data-testid="kt-rule-review-versions"]').trigger("click");
+		expect(wrapper.emitted("review")).toHaveLength(1);
 	});
 });

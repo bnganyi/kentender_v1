@@ -396,7 +396,7 @@ test.describe("System setup — design fidelity", () => {
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "procurement-settings/procurement-rules/new", '[data-testid="kt-procset-rule-editor"]');
 		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C03B-add", "C03BC#add");
-		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "C03BC#add");
+		await expectBoardStructure(page, '[data-testid="kt-procset-rule-editor"]', art, "#add > div", "C03BC#add");
 		await expectLayoutSanity(page, "C03BC#add editor");
 		expect(await page.locator('[data-testid="kt-rule-kind"] option').allTextContents()).toEqual([
 			"Method eligibility",
@@ -407,11 +407,12 @@ test.describe("System setup — design fidelity", () => {
 			"Approval applicability",
 			"Publication obligations",
 		]);
-		// Method eligibility is owned by its method profile (plan D10), so the
-		// editor says so rather than offering a divergent second form.
+		// Method eligibility keeps its own editor (D21): picking a method that
+		// already has a rule points to its new version instead of a duplicate.
 		await page.selectOption('[data-testid="kt-rule-kind"]', "Method eligibility");
-		await expect(page.locator('[data-testid="kt-rule-delegated"]')).toBeVisible();
-		await expect(page.locator('[data-testid="kt-rule-save"]')).toBeDisabled();
+		await page.selectOption('[data-testid="kt-rule-method"]', "Open Tender");
+		await expect(page.locator('[data-testid="kt-rule-method-exists"]')).toBeVisible();
+		await expect(page.locator('[data-testid="kt-rule-save"]')).toHaveCount(0);
 		// Each other kind brings its own validated field group.
 		await page.selectOption('[data-testid="kt-rule-kind"]', "Publication obligations");
 		await expect(page.locator('[data-testid="kt-po-id"]')).toBeVisible();
@@ -531,17 +532,13 @@ test.describe("System setup — design fidelity", () => {
 			"procurement-settings/procurement-rules/MPR-OPEN-TENDER-V1/new-version",
 			'[data-testid="kt-procset-method-editor"]'
 		);
-		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C03B-version", "C03BC#version", [
-			{
-				landmark: "Usage",
-				because:
-					"the board's own value for it is \"Not supplied in this isolated example\"; nothing in the model counts how many decisions used a Version, and stating a usage fact the server cannot produce would be an invention.",
-			},
-		]);
-		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "C03BC#version");
+		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C03B-version", "C03BC#version");
+		// A fragment comparison: the board draws the version form's top and
+		// footer; the editable groups sit between them (FRAGMENTS).
+		await expectBoardStructure(page, '[data-testid="kt-mve-card"]', art, "#version > div", "C03BC#version");
 		await expectLayoutSanity(page, "C03BC#version editor");
 		// The board's "Unsaved changes" tag is the state this screen opens in.
-		await expect(page.locator('[data-testid="kt-mve-unsaved"]')).toHaveText("Unsaved changes");
+		await expect(page.locator('[data-testid="kt-rule-unsaved"]')).toHaveText("Unsaved changes");
 		// It opens on the Version it corrects, with every condition editable.
 		await expect(page.locator('[data-testid="kt-mve-id-0"]')).toHaveValue("G-VALUE");
 		await expect(page.locator('[data-testid="kt-mve-save"]')).toBeDisabled();

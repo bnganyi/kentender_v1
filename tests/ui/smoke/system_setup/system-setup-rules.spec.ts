@@ -1,7 +1,7 @@
 import { test, expect, Page } from "@playwright/test";
 import { login, loginAsAdministrator } from "../../helpers/auth";
 import { collectPageErrors } from "../../helpers/designFidelity";
-import { systemManager } from "./helpers";
+import { restoreSite, systemManager } from "./helpers";
 
 /**
  * CFG-CHG-002 v0.14 §10.6 (tracker CFG14-5D) — the Procurement rules list and
@@ -12,7 +12,13 @@ import { systemManager } from "./helpers";
  * (restored), the rename dialog's focus and Escape, the failed-read state,
  * a second setup role, and the narrow layout.
  *
- * Writes: the Reservation rules display name, restored in the same test.
+ * and, for the add form, kind sections and new-version form: a real rule
+ * added end to end (its version save first failing, then finished from the
+ * partial-save notice), the new-version form's board header, and Method
+ * eligibility pointing to the existing rule instead of a duplicate.
+ *
+ * Writes: the Reservation rules display name (restored in the same test) and
+ * one PW- rule (removed by restoreSite → purge_playwright_rules).
  */
 const SECTION = "/app/system-setup#procurement-settings/procurement-rules";
 const LIST = '[data-testid="kt-procset-rules"]';
@@ -37,6 +43,8 @@ async function openList(page: Page): Promise<string[]> {
 }
 
 test.describe.serial("System setup — Procurement rules", () => {
+	test.afterAll(() => restoreSite());
+
 	test("the list shows Source check and Details as separate columns, and the filters narrow it in place", async ({ page }) => {
 		await loginAsAdministrator(page);
 		const errors = await openList(page);
@@ -138,5 +146,68 @@ test.describe.serial("System setup — Procurement rules", () => {
 		expect(lefts[0]).toBe(lefts[1]);
 		const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
 		expect(overflow, "horizontal overflow at 400px").toBeLessThanOrEqual(1);
+	});
+
+	test("Add rule: a version save that fails keeps the rule and the entries, and the notice finishes it", async ({ page }) => {
+		await loginAsAdministrator(page);
+		const errors = collectPageErrors(page);
+		await page.goto(`${SECTION}/new`, { waitUntil: "domcontentloaded" });
+		await page.waitForSelector('[data-testid="kt-procset-rule-editor"]', SERVER);
+		await expect(page.locator('[data-testid="kt-rule-editor-title"]')).toHaveText("Add procurement rule");
+		await page.fill('[data-testid="kt-rule-name"]', "PW publication obligation");
+		await page.fill('[data-testid="kt-rule-key"]', "PW-E2E-PUBLICATION");
+		await page.selectOption('[data-testid="kt-rule-kind"]', "Publication obligations");
+		await expect(page.locator('[data-testid="kt-rule-kind-fields"] .card-kicker')).toHaveText("Publication obligations");
+		await page.fill('[data-testid="kt-po-id"]', "PW-OB-1");
+		await page.selectOption('[data-testid="kt-po-due"]', "Immediate");
+		await page.fill('[data-testid="kt-rule-from"]', "2099-07-01");
+
+		// The rule is created, then its version save fails once.
+		const SAVE = "**/api/method/kentender_core.api.procurement_settings_api.save_regulatory_reference_version";
+		await page.route(SAVE, (route) => route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ exc_type: "Exception" }) }));
+		await page.click('[data-testid="kt-rule-save"]');
+		await expect(page.locator('[data-testid="kt-procset-rule-partial"]')).toContainText("Rule created; version not saved.", SERVER);
+		await expect(page.locator('[data-testid="kt-po-id"]')).toHaveValue("PW-OB-1");
+		await expect(page.locator('[data-testid="kt-rule-key"]')).toBeDisabled();
+		await expect(page.locator(".modal.show")).toHaveCount(0);
+		await page.unroute(SAVE);
+
+		await page.click('[data-testid="kt-procset-rule-partial-save"]');
+		await page.waitForSelector(LIST, SERVER);
+		expect(new URL(page.url()).hash).toBe("#procurement-settings/procurement-rules");
+		await expect(page.locator(`${LIST} tbody`)).toContainText("PW publication obligation", SERVER);
+		expect(errors.filter((e) => !/500|Internal Server Error/.test(e)), "console errors").toEqual([]);
+	});
+
+	test("the new-version form opens with the board's header and the kind's own card, and Cancel saves nothing", async ({ page }) => {
+		await loginAsAdministrator(page);
+		const { version, name } = await reservation(page);
+		const errors = collectPageErrors(page);
+		await page.goto(`${SECTION}/${version}/new-version`, { waitUntil: "domcontentloaded" });
+		await page.waitForSelector('[data-testid="kt-rule-version-head"]', SERVER);
+		await expect(page.locator('[data-testid="kt-rule-version-title"]')).toHaveText(`${name} — new version`);
+		await expect(page.locator('[data-testid="kt-rule-unsaved"]')).toHaveText("Unsaved changes");
+		await expect(page.locator('[data-testid="kt-rule-kind-fields"] .card-kicker')).toHaveText("Reservation rules");
+		// The measure fixes what the target is measured against.
+		await page.selectOption('[data-testid="kt-rr-measure"]', "ImplementationAchievement");
+		await expect(page.locator('[data-testid="kt-rr-basis"]')).toHaveValue("Applicable actual procurement value");
+		await page.click('[data-testid="kt-rule-cancel"]');
+		await page.waitForSelector(CARD, SERVER);
+		expect(new URL(page.url()).hash).toBe(`#procurement-settings/procurement-rules/${version}`);
+		expect(errors, "console errors").toEqual([]);
+	});
+
+	test("Add rule → Method eligibility points to an existing method's rule instead of a duplicate", async ({ page }) => {
+		await loginAsAdministrator(page);
+		const errors = collectPageErrors(page);
+		await page.goto(`${SECTION}/new`, { waitUntil: "domcontentloaded" });
+		await page.waitForSelector('[data-testid="kt-procset-rule-editor"]', SERVER);
+		await page.selectOption('[data-testid="kt-rule-kind"]', "Method eligibility");
+		await page.selectOption('[data-testid="kt-rule-method"]', "Open Tender");
+		await page.click('[data-testid="kt-rule-method-open"]');
+		await page.waitForSelector('[data-testid="kt-procset-method-editor"]', SERVER);
+		expect(new URL(page.url()).hash).toMatch(/^#procurement-settings\/procurement-rules\/MPR-OPEN-TENDER-V\d+\/new-version$/);
+		await expect(page.locator('[data-testid="kt-rule-version-title"]')).toHaveText("Method eligibility — Open Tender — new version");
+		expect(errors, "console errors").toEqual([]);
 	});
 });

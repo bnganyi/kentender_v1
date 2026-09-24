@@ -33,6 +33,8 @@ const settingsApi = vi.hoisted(() => ({
 	getMethodProfile: vi.fn(),
 	getRegulatoryReferenceVersion: vi.fn(),
 	renameRegulatoryReference: vi.fn(),
+	createRegulatoryReference: vi.fn(),
+	saveRegulatoryReferenceVersion: vi.fn(),
 	setReminderThresholdDays: vi.fn(),
 	addFundingSource: vi.fn(),
 	updateFundingSource: vi.fn(),
@@ -50,6 +52,10 @@ import ReminderSettingCard from "./components/ReminderSettingCard.vue";
 import ProcuringEntityTab from "./tabs/ProcuringEntityTab.vue";
 import RuleRenameDialog from "./components/RuleRenameDialog.vue";
 import RuleVersionDetail from "./components/RuleVersionDetail.vue";
+import RuleEditor from "./components/RuleEditor.vue";
+import RuleKindFields from "./components/RuleKindFields.vue";
+import RuleFormError from "./components/RuleFormError.vue";
+import MethodVersionEditor from "./components/MethodVersionEditor.vue";
 
 const D = "docs/mvp-1-r1/09_unified_system_setup/design/";
 const BOARDS = {
@@ -192,6 +198,15 @@ const RESERVATION_SET = (hasVersion = true, kind = "Reservation rules", key = "r
 		: null,
 });
 const rulesTab = (lists) => settingsTab([], { section: "procurement-rules", ...lists });
+
+const RULE_KINDS = ["Method eligibility", "Reservation rules", "Exclusive preference", "Preference margins", "Market price index", "Approval applicability", "Publication obligations"];
+const kindCard = (kind) => () =>
+	mount(RuleKindFields, { props: { kind, payload: {}, categories: ["Goods", "Works", "Services"], methods: ["Open Tender"] }, global: globalMocks() });
+const METHOD_VERSION = {
+	...METHOD_RULE,
+	verification_status: "Verified",
+	conditions: [{ condition_id: "G", kind: "Known fact", description: "Goods", procurement_category: "Goods", minimum_amount: 0, maximum_amount: 0, cumulative_basis: "None", mandatory: true }],
+};
 
 const ARTBOARDS = [
 	{ key: "C01#configured", mount: () => mount(ProcuringEntityTab, { props: { site: site() }, global: globalMocks() }) },
@@ -339,7 +354,23 @@ const ARTBOARDS = [
 		live: '[data-testid="kt-procset-rule-noversion-rs-res"]',
 		mount: () => rulesTab({ reference_sets: [RESERVATION_SET(false)] }),
 	},
-	{ key: "C03BC#list~partial" },
+	{
+		key: "C03BC#list~partial",
+		self: true,
+		select: "#list > div:nth-child(2) > :nth-child(3)",
+		live: '[data-testid="kt-procset-rule-partial"]',
+		mount: async () => {
+			settingsApi.createRegulatoryReference.mockResolvedValue({ reference_set: "rs-new" });
+			settingsApi.saveRegulatoryReferenceVersion.mockRejectedValueOnce(new Error("Enter the obligation code."));
+			const wrapper = mount(RuleEditor, { props: { kinds: RULE_KINDS }, global: globalMocks() });
+			await wrapper.find('[data-testid="kt-rule-name"]').setValue("Reservation rules");
+			await wrapper.find('[data-testid="kt-rule-key"]').setValue("RES");
+			await wrapper.find('[data-testid="kt-rule-from"]').setValue("2027-07-01");
+			await wrapper.find('[data-testid="kt-rule-save"]').trigger("click");
+			await flushPromises();
+			return wrapper;
+		},
+	},
 	{
 		key: "C03BC#list~not-published",
 		self: true,
@@ -365,10 +396,58 @@ const ARTBOARDS = [
 		live: ".kt-dialog",
 		mount: () => mount(RuleRenameDialog, { props: { referenceSet: "rs-me", name: "Method eligibility" }, global: globalMocks() }),
 	},
-	{ key: "C03BC#add" },
-	{ key: "C03BC#kinds" },
-	{ key: "C03BC#version" },
-	{ key: "C03BC#states" },
+	{
+		key: "C03BC#add",
+		select: "#add > div",
+		live: '[data-testid="kt-procset-rule-editor"]',
+		mount: () => mount(RuleEditor, { props: { kinds: RULE_KINDS, entityTypes: ["National Government Ministry", "County Government", "State Corporation"], categories: ["Goods", "Works", "Services"] }, global: globalMocks() }),
+	},
+	// One card per kind; Method eligibility keeps its own model and editor (D21).
+	{ key: "C03BC#kinds~method" },
+	{ key: "C03BC#kinds~reservation", self: true, select: "#kinds .card:nth-child(2)", live: '[data-testid="kt-rule-kind-fields"]', mount: kindCard("Reservation rules") },
+	{ key: "C03BC#kinds~exclusive", self: true, select: "#kinds .card:nth-child(3)", live: '[data-testid="kt-rule-kind-fields"]', mount: kindCard("Exclusive preference") },
+	{ key: "C03BC#kinds~margins", self: true, select: "#kinds .card:nth-child(4)", live: '[data-testid="kt-rule-kind-fields"]', mount: kindCard("Preference margins") },
+	{ key: "C03BC#kinds~price-index", self: true, select: "#kinds .card:nth-child(5)", live: '[data-testid="kt-rule-kind-fields"]', mount: kindCard("Market price index") },
+	{ key: "C03BC#kinds~approval", self: true, select: "#kinds .card:nth-child(6)", live: '[data-testid="kt-rule-kind-fields"]', mount: kindCard("Approval applicability") },
+	{ key: "C03BC#kinds~publication", self: true, select: "#kinds .card:nth-child(7)", live: '[data-testid="kt-rule-kind-fields"]', mount: kindCard("Publication obligations") },
+	{
+		key: "C03BC#version",
+		select: "#version > div",
+		live: '[data-testid="kt-mve-card"]',
+		mount: async () => {
+			settingsApi.getMethodProfile.mockResolvedValue(METHOD_VERSION);
+			const wrapper = mount(MethodVersionEditor, { props: { name: "MPR-OPEN-TENDER-V1", conditionKinds: ["Known fact"], cumulativeBases: ["None"] }, global: globalMocks() });
+			await flushPromises();
+			return wrapper;
+		},
+	},
+	{
+		key: "C03BC#states~read-only",
+		self: true,
+		select: "#states > div > :nth-child(1)",
+		live: '[data-testid="kt-procset-rule-readonly"]',
+		mount: async () => {
+			settingsApi.getMethodProfile.mockResolvedValue(METHOD_RULE);
+			const wrapper = mount(RuleVersionDetail, { props: { name: "MPR-OPEN-TENDER-V1", kind: "method" }, global: globalMocks() });
+			await flushPromises();
+			return wrapper;
+		},
+	},
+	{ key: "C03BC#states~no-coverage" },
+	{
+		key: "C03BC#states~overlap",
+		self: true,
+		select: "#states > div > :nth-child(3)",
+		live: '[data-testid="kt-rule-overlap"]',
+		mount: () => mount(RuleFormError, { props: { error: "Select valid earlier versions and check the dates this replacement will cover." }, global: globalMocks(), attachTo: document.body }),
+	},
+	{
+		key: "C03BC#states~stale",
+		self: true,
+		select: "#states > div > :nth-child(4)",
+		live: '[data-testid="kt-rule-stale"]',
+		mount: () => mount(RuleFormError, { props: { error: "This record changed after you opened it. Refresh and review the latest version." }, global: globalMocks(), attachTo: document.body }),
+	},
 
 	{ key: "C03D#pending" },
 	{ key: "C03D#verified" },
@@ -428,7 +507,8 @@ describe.each(ARTBOARDS)("$key", ({ key, mount: mountIt, select, self, live }) =
 		await flushPromises();
 		const { file, id } = boardOf(key);
 		const board = setupSkeleton(file, select || `#${id}`, { self });
-		const root = live ? wrapper.element.querySelector(live) : wrapper.element;
+		// The compared element may be the component's own root.
+		const root = live ? (wrapper.element.matches?.(live) ? wrapper.element : wrapper.element.querySelector(live)) : wrapper.element;
 		expect(root, `${key}: ${live} not rendered`).toBeTruthy();
 		const built = self ? skeletonOf({ children: [root] }) : skeletonOf(root);
 		const result = compareSkeletons(board, built, { departures: DEPARTURES[key] || [] });

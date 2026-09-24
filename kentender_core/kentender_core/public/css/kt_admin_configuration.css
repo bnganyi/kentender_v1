@@ -1084,3 +1084,15 @@
 .kt-industry.kt-setup-root .kt-procset-rule-groups { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
 .kt-industry.kt-setup-root .kt-procset-rule-groups.has-values { grid-template-columns: 1fr; }
 @media (max-width: 700px) { .kt-industry.kt-setup-root .kt-procset-rule-groups { grid-template-columns: 1fr; } }
+
+/* C03BC #add/#kinds/#version (tracker CFG14-5D) — the rule form's two-column
+   grids (one column when narrow), the kind card's kicker, the kind card's own
+   field grids. */
+.kt-industry.kt-setup-root .kt-rule-grid,
+.kt-industry.kt-setup-root .kt-rule-kind-grid { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; margin-bottom: 12px; }
+@media (max-width: 700px) {
+	.kt-industry.kt-setup-root .kt-rule-grid,
+	.kt-industry.kt-setup-root .kt-rule-kind-grid { grid-template-columns: 1fr; }
+}
+.kt-industry.kt-setup-root .kt-card.kt-rule-kind { margin-top: 8px; }
+.kt-industry.kt-setup-root .card-kicker { font-family: var(--kt-font-heading); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--kt-color-accent-800); margin-bottom: 6px; }

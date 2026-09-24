@@ -46,7 +46,32 @@ export const DEPARTURES = {
 	"C02#disable": DIALOG_TITLE_IS_A_HEADING,
 	"C03A#add": DIALOG_TITLE_IS_A_HEADING,
 	"C03BC#rename": DIALOG_TITLE_IS_A_HEADING,
+	"C03BC#version": [
+		{
+			omits: ["notice.is-critical"],
+			because:
+				"The board draws the live-data impact warning as a variant beside the ordinary warning. It shows only when the " +
+				"version being replaced is marked valid (the server's blocks-new-use fact); the component spec proves it there.",
+			authority: "CFG-CHG-002 v0.14 §10.6 (live-data impact variant)",
+		},
+	],
+	"C03BC#add": [
+		{
+			testid: "kt-rule-kind-fields",
+			because:
+				"The spec places the selected kind's groups between Rule kind and the common fields; the board draws those " +
+				"groups separately as #kinds cards, each compared on its own (C03BC#kinds~…).",
+			authority: "CFG-CHG-002 v0.14 §10.6 (add-rule form order), §10.7",
+		},
+	],
 	"C03BC#detail": [
+		{
+			testid: "kt-procset-rule-readonly",
+			because:
+				"The board's saved-detail specimen is still correctable. A version that can no longer be corrected in place " +
+				"shows the board's own read-only state (#states card 1) above its groups.",
+			authority: "CFG-CHG-002 v0.14 §8.1, §10.6 (C03BC #states)",
+		},
 		{
 			testid: "kt-procset-rule-values",
 			because:
@@ -88,6 +113,7 @@ export const FRAGMENTS = [
 	"C02#overview-disabled",
 	"C02#empty",
 	"C02#detail-row-variants",
+	"C03BC#version",
 ];
 
 export const COVERED = [
@@ -121,6 +147,19 @@ export const COVERED = [
 	"C03BC#list~not-published",
 	"C03BC#detail",
 	"C03BC#rename",
+	// 5D second half — 24 Sep 2026
+	"C03BC#list~partial",
+	"C03BC#add",
+	"C03BC#kinds~reservation",
+	"C03BC#kinds~exclusive",
+	"C03BC#kinds~margins",
+	"C03BC#kinds~price-index",
+	"C03BC#kinds~approval",
+	"C03BC#kinds~publication",
+	"C03BC#version",
+	"C03BC#states~read-only",
+	"C03BC#states~overlap",
+	"C03BC#states~stale",
 ];
 
 /**
@@ -132,11 +171,11 @@ export const COVERED = [
 const REPORT = "structure differs from the board (recorded by the Phase 1 red run)";
 const UNMOUNTABLE = "no component renders this state from props yet; Phase 5 builds it";
 export const REBUILD_QUEUE = {
-	"C03BC#list~partial": "the partial-save notice belongs to the add-rule form (5D, second half)",
-	"C03BC#add": UNMOUNTABLE,
-	"C03BC#kinds": UNMOUNTABLE,
-	"C03BC#version": UNMOUNTABLE,
-	"C03BC#states": UNMOUNTABLE,
+	"C03BC#kinds~method":
+		"D21 (owner, 24 Sep 2026): Method eligibility keeps its built model and full editor; the board's value-range " +
+		"statuses and fact/comparison condition rows need a model change. Its new-version top is compared as #version.",
+	"C03BC#states~no-coverage":
+		"No setup screen decides coverage for a required date yet; that is the resolver's answer to a consumer (FU-28).",
 	"C03D#pending": UNMOUNTABLE,
 	"C03D#verified": UNMOUNTABLE,
 	"C03D#rejected": UNMOUNTABLE,

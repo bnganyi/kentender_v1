@@ -83,6 +83,8 @@ def purge(*, commit: bool = True) -> dict[str, int]:
 		"regulatory_references": register.purge_fixture_references(FIXTURE_NAMESPACE),
 		"method_and_schedule_profiles": settings.purge_fixture_profiles(FIXTURE_NAMESPACE),
 		"funding_sources": settings.purge_playwright_funding_sources(),
+		# Rules a spec added through the real Add rule screen (PW- identifiers).
+		"playwright_rules": register.purge_playwright_rules(),
 	}
 	if commit:
 		frappe.db.commit()

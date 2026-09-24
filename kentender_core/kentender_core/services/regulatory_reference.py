@@ -329,6 +329,9 @@ def _validate_reservation_rules_payload(payload: dict[str, Any]) -> dict[str, An
 		"overlap_policy": overlap_policy,
 		"related_obligation_codes": [str(c).strip() for c in (payload.get("related_obligation_codes") or []) if str(c).strip()],
 		"categories": categories,
+		# §10.7 "Who qualifies" and the group's own citation.
+		"applicability_conditions": (payload.get("applicability_conditions") or "").strip(),
+		"source_references": (payload.get("source_references") or "").strip(),
 	}
 
 
@@ -353,7 +356,14 @@ def _validate_market_price_index_payload(payload: dict[str, Any]) -> dict[str, A
 				"publication_reference": (row.get("publication_reference") or "").strip(),
 			}
 		)
-	return {"published": bool(rows), "rows": rows}
+	# §10.7 "Publication and coverage": when and under what reference the index
+	# was published. Without price rows it is still not published.
+	return {
+		"published": bool(rows),
+		"publication_date": str(payload.get("publication_date") or ""),
+		"publication_reference": (payload.get("publication_reference") or "").strip(),
+		"rows": rows,
+	}
 
 
 def _validate_exclusive_preference_payload(payload: dict[str, Any]) -> dict[str, Any]:
@@ -1216,6 +1226,31 @@ def _single_in_force(reference_kind: str, date, measure_stage: str = ""):
 # --------------------------------------------------------------------------
 # Fixture cleanup
 # --------------------------------------------------------------------------
+
+
+def purge_playwright_rules(prefix: str = "PW-") -> int:
+	"""Browser-spec cleanup only (tracker CFG14-5D): rules a Playwright spec adds
+	through the real screens carry an identifier starting with `prefix`; they,
+	their versions, their source-check events and their audit rows go. Never a
+	canonical or fixture-namespaced rule, and never outside a dev/test site."""
+	if not (frappe.flags.in_test or frappe.conf.get("developer_mode") or frappe.conf.get("allow_tests")):
+		return 0
+	count = 0
+	for set_name in frappe.get_all(SET_DOCTYPE, filters={"reference_key": ("like", f"{prefix}%"), "fixture_namespace": ("in", ["", None])}, pluck="name"):
+		versions = frappe.get_all(DOCTYPE, filters={"reference_set": set_name}, pluck="name")
+		for version in versions:
+			for event in frappe.get_all(EVENT_DOCTYPE, filters={"target_doctype": DOCTYPE, "target_name": version}, pluck="name"):
+				frappe.delete_doc(EVENT_DOCTYPE, event, force=True, ignore_permissions=True)
+				count += 1
+		for doctype, names in ((DOCTYPE, versions), (SET_DOCTYPE, [set_name])):
+			for name in names:
+				doc = frappe.get_doc(doctype, name)
+				doc.flags.kt_fixture_purge = True
+				doc.delete(ignore_permissions=True)
+				for audit in frappe.get_all("Audit Event", filters={"document_type": doctype, "document_name": name}, pluck="name"):
+					frappe.delete_doc("Audit Event", audit, force=True, ignore_permissions=True, delete_permanently=True)
+				count += 1
+	return count
 
 
 def purge_fixture_references(fixture_namespace: str) -> int:

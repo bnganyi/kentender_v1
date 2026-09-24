@@ -69,6 +69,10 @@ export function sourceCheckClass(value) {
 // — matched verbatim so a stale control token gets its own recoverable
 // notice instead of the generic error paragraph (CFG-UX-AC-08).
 export const CFG_VERSION_CONFLICT_MESSAGE = "This record changed after you opened it. Refresh and review the latest version.";
+// The exact server message for `CFG_SUPERSESSION_INVALID`: a save whose dates
+// overlap a version it does not name (D16). The forms show the board's
+// Overlap state for it rather than the raw sentence.
+export const CFG_SUPERSESSION_INVALID_MESSAGE = "Select valid earlier versions and check the dates this replacement will cover.";
 
 // D16 (24 Sep 2026) — whether two inclusive date windows share a day; an
 // empty end is open-ended. ISO dates compare correctly as strings. A new

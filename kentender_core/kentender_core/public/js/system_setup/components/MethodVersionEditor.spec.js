@@ -86,7 +86,7 @@ async function openEditor(props) {
 // The editor is only usable once the reason is given; every test that
 // reaches the save button goes through this.
 async function giveReason(wrapper, text = "Goods maximum raised by the 2028 threshold review.") {
-	await wrapper.find('[data-testid="kt-mve-reason"]').setValue(text);
+	await wrapper.find('[data-testid="kt-rule-reason"]').setValue(text);
 }
 
 describe("MethodVersionEditor", () => {
@@ -99,7 +99,8 @@ describe("MethodVersionEditor", () => {
 
 	it("opens on the current Version's own values, every condition fully editable", async () => {
 		const wrapper = await openEditor();
-		expect(wrapper.find('[data-testid="kt-mve-title"]').text()).toBe("Method eligibility — new version");
+		expect(wrapper.find('[data-testid="kt-rule-version-title"]').text()).toBe("Method eligibility — Open Tender — new version");
+		expect(wrapper.find('[data-testid="kt-rule-unsaved"]').text()).toBe("Unsaved changes");
 		expect(wrapper.find('[data-testid="kt-mve-method"]').text()).toBe("Open Tender");
 		expect(wrapper.find('[data-testid="kt-mve-from"]').element.value).toBe("2027-05-01");
 		expect(wrapper.find('[data-testid="kt-mve-until"]').element.value).toBe("2028-06-30");
@@ -206,16 +207,16 @@ describe("MethodVersionEditor", () => {
 		await giveReason(wrapper);
 		await wrapper.find('[data-testid="kt-mve-save"]').trigger("click");
 		await flushPromises();
-		expect(wrapper.find('[data-testid="kt-mve-error"]').text()).toContain("unknown category");
+		expect(wrapper.find('[data-testid="kt-rule-error"]').text()).toContain("unknown category");
 		expect(wrapper.emitted("saved")).toBeFalsy();
 		expect(wrapper.find('[data-testid="kt-mve-id-0"]').element.value).toBe("G-VALUE");
-		expect(wrapper.find('[data-testid="kt-mve-reason"]').element.value).toContain("threshold review");
+		expect(wrapper.find('[data-testid="kt-rule-reason"]').element.value).toContain("threshold review");
 	});
 
 	it("states the replacement and its effect before the save, never after", async () => {
 		const wrapper = await openEditor();
-		const replacement = wrapper.find('[data-testid="kt-mve-replacement"]');
-		expect(replacement.text()).toContain("Earlier versions this replaces: Method eligibility Version 1.");
+		const replacement = wrapper.find('[data-testid="kt-rule-version-head"]');
+		expect(replacement.text()).toContain("Earlier versions this replaces: Method eligibility — Open Tender Version 1.");
 		expect(replacement.text()).toContain("Version 1 already needs source checks");
 		expect(replacement.text()).toContain("The replacement will not be usable for affected new decisions");
 	});
@@ -225,11 +226,11 @@ describe("MethodVersionEditor", () => {
 	describe("correcting a rule in place", () => {
 		it("changes this Version rather than replacing it, and asks for no reason", async () => {
 			const wrapper = await openEditor({ mode: "correct" });
-			expect(wrapper.find('[data-testid="kt-mve-title"]').text()).toBe("Method eligibility — edit rule");
+			expect(wrapper.find('[data-testid="kt-mve-title"]').text()).toBe("Method eligibility — Open Tender — edit rule");
 			expect(wrapper.find('[data-testid="kt-mve-correcting-notice"]').text()).toContain("Once either happens, changing it means a new version");
 			// Nothing is being replaced, so nothing claims to be.
-			expect(wrapper.find('[data-testid="kt-mve-replacement"]').exists()).toBe(false);
-			expect(wrapper.find('[data-testid="kt-mve-reason"]').exists()).toBe(false);
+			expect(wrapper.find('[data-testid="kt-rule-version-head"]').exists()).toBe(false);
+			expect(wrapper.find('[data-testid="kt-rule-reason"]').exists()).toBe(false);
 			expect(wrapper.find('[data-testid="kt-mve-save"]').text()).toBe("Save changes");
 			// A reason is not required here, so the form is usable as opened.
 			expect(wrapper.find('[data-testid="kt-mve-save"]').attributes("disabled")).toBeUndefined();
@@ -261,7 +262,7 @@ describe("MethodVersionEditor", () => {
 			const wrapper = await openEditor({ mode: "correct" });
 			await wrapper.find('[data-testid="kt-mve-save"]').trigger("click");
 			await flushPromises();
-			expect(wrapper.find('[data-testid="kt-mve-error"]').text()).toContain("Create a new version instead");
+			expect(wrapper.find('[data-testid="kt-rule-error"]').text()).toContain("Create a new version instead");
 			expect(wrapper.emitted("saved")).toBeFalsy();
 		});
 	});
