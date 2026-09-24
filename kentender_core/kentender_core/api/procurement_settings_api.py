@@ -459,3 +459,40 @@ def register_business_day_calendar_version(
 @frappe.whitelist()
 def set_reminder_threshold_days(days, idempotency_key: str | None = None) -> dict[str, Any]:
 	return settings.set_reminder_threshold_days(days=int(days), idempotency_key=idempotency_key or "")
+
+
+@frappe.whitelist()
+def preview_configuration_version(
+	reference_kind: str | None = None,
+	payload=None,
+	effective_from: str | None = None,
+	effective_until: str | None = None,
+	applicability_basis: str | None = None,
+	applicability_entity_types=None,
+	applicability_county: str | None = None,
+	applicability_categories=None,
+	reference_set: str | None = None,
+	reference_key: str | None = None,
+	supersedes_version_ids=None,
+	source_instrument: str | None = None,
+	provision: str | None = None,
+	interpretation: str | None = None,
+) -> dict[str, Any]:
+	"""§7.2 `PreviewConfigurationVersion` — what saving this version would
+	mean, before any write (§7.3). Read only; reports, never refuses content."""
+	return register.preview_configuration_version(
+		reference_kind=reference_kind or "",
+		payload=_obj(payload),
+		effective_from=effective_from or "",
+		effective_until=effective_until or "",
+		applicability_basis=applicability_basis or "",
+		applicability_entity_types=_list(applicability_entity_types),
+		applicability_county=applicability_county or "All",
+		applicability_categories=_list(applicability_categories),
+		reference_set=reference_set or "",
+		reference_key=reference_key or "",
+		supersedes_version_ids=_list(supersedes_version_ids),
+		source_instrument=source_instrument or "",
+		provision=provision or "",
+		interpretation=interpretation or "",
+	)

@@ -42,7 +42,7 @@ import frappe
 from frappe.utils import flt, getdate
 
 from kentender_core.services.audit_event_service import log_audit_event
-from kentender_core.services.configuration_errors import fail_cfg
+from kentender_core.services.configuration_errors import ConfigurationError, fail_cfg
 from kentender_core.services.configuration_versions import version_editable
 from kentender_core.services.procurement_settings import (
 	METHOD_PROFILE,
@@ -53,6 +53,7 @@ from kentender_core.services.procurement_settings import (
 	_code,
 	_in_force,
 	_next_version,
+	_overlaps,
 	_require_verification,
 	_supersede_overlapping,
 )
@@ -673,6 +674,135 @@ def save_regulatory_reference_version(
 	return run_idempotent(idempotency_key, DOCTYPE, reference_set, "save_regulatory_reference_version", _do, payload=request)
 
 
+# --------------------------------------------------------------------------
+# §7.2 PreviewConfigurationVersion — read only
+# --------------------------------------------------------------------------
+
+# §10.6 source-field labels, in form order: a usable version needs them, a
+# pending one may be saved without them (shown as details to complete).
+_EVIDENCE_FIELDS = (
+	("applicability_basis", "Which date determines the rule to use?"),
+	("source_instrument", "Instrument"),
+	("provision", "Provisions"),
+	("interpretation", "Interpretation"),
+)
+
+
+def preview_configuration_version(
+	*,
+	reference_kind: str,
+	payload: dict[str, Any] | None,
+	effective_from: str,
+	effective_until: str = "",
+	applicability_basis: str = "",
+	applicability_entity_types: list[str] | None = None,
+	applicability_county: str = "All",
+	applicability_categories: list[str] | None = None,
+	reference_set: str = "",
+	reference_key: str = "",
+	supersedes_version_ids: list[str] | None = None,
+	source_instrument: str = "",
+	provision: str = "",
+	interpretation: str = "",
+) -> dict[str, Any]:
+	"""CFG-CHG-002 v0.14 §7.2/§7.3 — what saving this version would mean,
+	before any write: structural defects, missing details, overlapping
+	coverage and the replacement's effect, each reported separately. Works
+	for a rule that does not exist yet (`reference_key` + kind) and for a new
+	version of an existing one (`reference_set`). Never writes, never raises
+	for content, and leaves no pop-up message behind."""
+	require_configuration_administrator()
+	errors: list[dict[str, str]] = []
+	messages_before = len(getattr(frappe.local, "message_log", []) or [])
+
+	def check(fn):
+		try:
+			return fn()
+		except ConfigurationError as error:
+			errors.append({"code": error.code, "message": str(error)})
+			return None
+
+	set_doc = None
+	if reference_set:
+		if frappe.db.exists(SET_DOCTYPE, reference_set):
+			set_doc = frappe.get_cached_doc(SET_DOCTYPE, reference_set)
+			reference_kind = set_doc.reference_kind
+		else:
+			check(lambda: fail_cfg("CFG_PROFILE_INVALID", "That reference does not exist."))
+	else:
+		key = " ".join((reference_key or "").split())
+		if not key:
+			check(lambda: fail_cfg("CFG_PROFILE_INVALID", "Enter a reference key."))
+		elif frappe.db.exists(SET_DOCTYPE, {"reference_key": key}):
+			check(lambda: fail_cfg("CFG_PROFILE_INVALID", "A rule with this identifier already exists."))
+	if reference_kind not in REFERENCE_KINDS:
+		check(lambda: fail_cfg("CFG_PROFILE_INVALID", "Select a rule kind."))
+	elif set_doc is not None or not reference_set:
+		kind_doc = set_doc or frappe._dict(reference_kind=reference_kind)
+		check(
+			lambda: _validated_version_inputs(
+				set_doc=kind_doc,
+				payload=payload or {},
+				applicability_basis=applicability_basis,
+				applicability_entity_types=applicability_entity_types,
+				applicability_county=applicability_county,
+				applicability_categories=applicability_categories,
+			)
+		)
+	if not effective_from:
+		check(lambda: fail_cfg("CFG_PROFILE_INVALID", "Enter the date this version applies from."))
+	elif effective_until and getdate(effective_until) < getdate(effective_from):
+		check(lambda: fail_cfg("CFG_PROFILE_INVALID", "The end date must be on or after the start date."))
+
+	values = {
+		"applicability_basis": applicability_basis,
+		"source_instrument": source_instrument,
+		"provision": provision,
+		"interpretation": interpretation,
+	}
+	missing = [label for field, label in _EVIDENCE_FIELDS if not (values.get(field) or "").strip()]
+
+	declared = set(s for s in (supersedes_version_ids or []) if s)
+	overlapping = []
+	if set_doc is not None and effective_from:
+		for row in frappe.get_all(
+			DOCTYPE,
+			filters={"reference_set": set_doc.name, "status": "Active"},
+			fields=["name", "version_number", "effective_from", "effective_until", "verification_status"],
+			order_by="version_number asc",
+		):
+			if _overlaps(row["effective_from"], row["effective_until"], effective_from, effective_until or None):
+				overlapping.append(
+					{
+						"reference": row["name"],
+						"version_number": int(row["version_number"]),
+						"effective_from": str(row["effective_from"] or ""),
+						"effective_until": str(row["effective_until"] or ""),
+						"verification_status": row["verification_status"] or VERIFICATION_PENDING,
+						"declared": row["name"] in declared,
+					}
+				)
+
+	# A new version is saved Pending, so replacing Verified coverage takes
+	# that coverage out of positive use until the new one is checked (§5).
+	blocks_new_use = any(row["verification_status"] == VERIFICATION_VERIFIED for row in overlapping)
+
+	if hasattr(frappe.local, "message_log") and frappe.local.message_log is not None:
+		del frappe.local.message_log[messages_before:]
+	return {
+		"reference_kind": reference_kind,
+		"schema": {"ok": not errors, "errors": errors},
+		"completeness": {"complete": not missing, "missing": missing},
+		"coverage": {"overlapping": overlapping},
+		"impact": {
+			"blocks_new_use": blocks_new_use,
+			# Nothing records which decisions used a version yet (FU-15):
+			# say so rather than report zero (§11.2).
+			"usage_known": False,
+		},
+	}
+
+
 def _projection(name: str) -> dict[str, Any]:
 	"""The full read for one named (possibly superseded) version — the only
 	caller of the complete typed payload, behind `get_regulatory_reference_version`."""
@@ -925,6 +1055,7 @@ def _empty(fiscal_year: str) -> dict[str, Any]:
 		"fiscal_year": fiscal_year,
 		"available": False,
 		"reference": "",
+		"version_number": 0,
 		"effective_from": "",
 		"gazette_reference": "",
 		"verification_status": "",
@@ -994,6 +1125,7 @@ def get_regulatory_reference(fiscal_year: str) -> dict[str, Any]:
 			{
 				"available": True,
 				"reference": reservation_doc.name,
+				"version_number": int(reservation_doc.version_number or 0),
 				"effective_from": str(reservation_doc.effective_from or ""),
 				"gazette_reference": reservation_doc.source_instrument or "",
 				"verification_status": reservation_doc.verification_status or VERIFICATION_PENDING,
