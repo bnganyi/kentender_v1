@@ -154,7 +154,7 @@ def read_probes() -> list[dict]:
 		{"label": "system_setup.get_regulatory_reference_version", "call": settings_api.get_regulatory_reference_version, "kwargs": _named("Regulatory Reference"), "setup_maintenance_exception": EX},
 		{"label": "system_setup.get_procurement_settings", "call": settings_api.get_procurement_settings, "kwargs": lambda: {}, "setup_maintenance_exception": EX},
 		{"label": "system_setup.get_system_setup_workspace", "call": site_api.get_system_setup_workspace, "kwargs": lambda: {}, "setup_maintenance_exception": EX},
-		{"label": "system_setup.list_regulatory_reference_versions", "call": settings_api.list_regulatory_reference_versions, "kwargs": _reference_set_kwargs},
+		{"label": "system_setup.list_regulatory_reference_versions", "call": settings_api.list_regulatory_reference_versions, "kwargs": _reference_set_kwargs, "setup_maintenance_exception": EX},
 		{"label": "system_setup.list_verification_history", "call": settings_api.list_verification_history, "kwargs": _history_kwargs},
 		{"label": "system_setup.get_business_day_calendar", "call": settings_api.get_business_day_calendar, "kwargs": _named("Business Day Calendar"), "setup_maintenance_exception": EX},
 	]

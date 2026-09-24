@@ -32,6 +32,12 @@ describe("parseSetupHash", () => {
 		expect(parseSetupHash("procurement-settings/nonsense/x")).toMatchObject({ tab: "procurement-settings", section: "", id: "" });
 	});
 
+	it("opens the tab itself for a v0.11 address, never a screen from its old sub-path", () => {
+		for (const old of ["rule/RR-1", "new-rule-version/RR-1", "edit-method-rule/MPR-1", "profile/SP-1", "source/FS-1", "calendar/C-1", "check-sources/RR-1-V2"]) {
+			expect(parseSetupHash(`procurement-settings/${old}`)).toEqual({ tab: "procurement-settings", section: "", id: "", versionId: "", action: "" });
+		}
+	});
+
 	it("keeps a malformed escape as typed instead of throwing", () => {
 		expect(parseSetupHash("procurement-settings/funding-sources/%E0%A4%A").id).toBe("%E0%A4%A");
 	});

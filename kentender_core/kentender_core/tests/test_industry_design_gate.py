@@ -111,9 +111,11 @@ class TestIndustryDesignGate(FrappeTestCase):
 			vue_path = (bundle_path.parent / vue_rel).resolve()
 			self.assertTrue(vue_path.is_file(), vue_path)
 			vue_src = vue_path.read_text(encoding="utf-8")
-			self.assertIn(
-				'class="kt-industry"',
+			# The root carries the class; it may carry others beside it
+			# (`class="kt-industry kt-setup-root"`).
+			self.assertRegex(
 				vue_src,
+				r'class="(?:[^"]*\s)?kt-industry(?:\s[^"]*)?"',
 				f"{vue_path}: page root must wrap class=\"kt-industry\" (AGENTS.md §6.6) "
 				f"or its bundle ({bundle_path.name}) must be added to LEGACY_BUNDLE_ALLOWLIST "
 				f"in kentender_core/tests/test_industry_design_gate.py with a tracking comment",

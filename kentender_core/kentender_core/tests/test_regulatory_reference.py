@@ -24,7 +24,12 @@ from kentender_core.services.configuration_errors import ConfigurationError
 from kentender_core.tests import v16_fixtures as fx
 
 NS = "KT_TEST_REGREF"
-Y = 2094  # far-future, purged by fiscal-year cleanup in the shared purge
+Y = 2094  # far-future; removed again by the class cleanup when this module added it
+
+
+def _drop_year_if_added(fy: str, added: bool) -> None:
+	if added and frappe.db.exists("Fiscal Year", fy):
+		frappe.delete_doc("Fiscal Year", fy, force=1, ignore_permissions=True)
 
 
 class RegulatoryReferenceTestCase(IntegrationTestCase):
@@ -34,7 +39,8 @@ class RegulatoryReferenceTestCase(IntegrationTestCase):
 		fx.ensure_site_configured()
 		site_setup._seed_catalogues()
 		cls.fy = configuration._fy_name(Y)
-		if not frappe.db.exists("Fiscal Year", cls.fy):
+		added = not frappe.db.exists("Fiscal Year", cls.fy)
+		if added:
 			configuration.add_fiscal_year(start_year=Y)
 		from kentender_core.services import procurement_settings as settings
 
@@ -43,7 +49,7 @@ class RegulatoryReferenceTestCase(IntegrationTestCase):
 		# Tender version overlaps every later suite's (D16 refuses that).
 		register.purge_fixture_references(NS)
 		settings.purge_fixture_profiles(NS)
-		cls.addClassCleanup(lambda: (register.purge_fixture_references(NS), settings.purge_fixture_profiles(NS), frappe.db.commit()))
+		cls.addClassCleanup(lambda: (register.purge_fixture_references(NS), settings.purge_fixture_profiles(NS), _drop_year_if_added(cls.fy, added), frappe.db.commit()))
 		frappe.db.commit()
 
 	def code(self, caught) -> str:
@@ -582,11 +588,11 @@ class TestReservationMeasure(RegulatoryReferenceTestCase):
 		year does not make the planning rule ambiguous."""
 		# Other tests in this module leave open-ended planning rules in force
 		# from 2094; clear this module's own rules so only these two compete.
-		# Years from 2095 on are removed by the shared test purge.
 		register.purge_fixture_references(NS)
 		fy = configuration._fy_name(2096)
 		if not frappe.db.exists("Fiscal Year", fy):
 			configuration.add_fiscal_year(start_year=2096)
+			self.addCleanup(lambda: (_drop_year_if_added(fy, True), frappe.db.commit()))
 		plan = self._save("KT-TEST-RES-READ-PLAN", {"measure_stage": "PlanningAllocation"}, effective_from="2096-07-01")
 		self._save("KT-TEST-RES-READ-ACTUAL", {"measure_stage": "ImplementationAchievement"}, effective_from="2096-07-01")
 		read = register.get_regulatory_reference(fy)
