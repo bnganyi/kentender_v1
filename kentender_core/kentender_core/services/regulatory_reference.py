@@ -56,7 +56,7 @@ from kentender_core.services.procurement_settings import (
 	_require_verification,
 	_supersede_overlapping,
 )
-from kentender_core.services.reference_data_idempotency import run_idempotent
+from kentender_core.services.reference_data_idempotency import request_payload, run_idempotent
 from kentender_core.services.site_configuration import PE_TYPES, require_configuration_administrator
 
 DOCTYPE = "Regulatory Reference"
@@ -122,6 +122,7 @@ def create_regulatory_reference(
 ) -> dict[str, Any]:
 	"""§7 `CreateRegulatoryReference` — the empty stable set; no legal
 	eligibility until a usable version resolves (§7.3 step 1 of 2)."""
+	request = request_payload(locals())
 	require_configuration_administrator()
 	key = " ".join((reference_key or "").split())
 	if not key:
@@ -149,7 +150,7 @@ def create_regulatory_reference(
 		)
 		return {"reference_set": doc.name, "reference_key": key, "reference_kind": reference_kind, "created": True}
 
-	return run_idempotent(idempotency_key, SET_DOCTYPE, _code(key), "create_regulatory_reference", _do)
+	return run_idempotent(idempotency_key, SET_DOCTYPE, _code(key), "create_regulatory_reference", _do, payload=request)
 
 
 def rename_regulatory_reference(*, reference_set: str, display_name: str, expected_version: str = "") -> dict[str, Any]:
@@ -602,6 +603,7 @@ def save_regulatory_reference_version(
 	also updates this same field — both paths are legitimate, matching the
 	existing direct-field convention every other governed record already
 	uses for fixtures and tests."""
+	request = request_payload(locals())
 	require_configuration_administrator()
 	if not frappe.db.exists(SET_DOCTYPE, reference_set):
 		fail_cfg("CFG_PROFILE_INVALID", "That reference does not exist.")
@@ -668,7 +670,7 @@ def save_regulatory_reference_version(
 			"created": True,
 		}
 
-	return run_idempotent(idempotency_key, DOCTYPE, reference_set, "save_regulatory_reference_version", _do)
+	return run_idempotent(idempotency_key, DOCTYPE, reference_set, "save_regulatory_reference_version", _do, payload=request)
 
 
 def _projection(name: str) -> dict[str, Any]:
@@ -747,6 +749,7 @@ def record_reference_verification(
 	evidence for the exact immutable version; never mutates the legal
 	payload. Verified requires complete evidence (§5); Pending/Rejected
 	record the missing or contradictory point."""
+	request = request_payload(locals())
 	require_configuration_administrator()
 	if target_doctype not in _VERIFICATION_TARGETS:
 		fail_cfg("CFG_PROFILE_INVALID", "Unknown verification target type.")
@@ -822,7 +825,7 @@ def record_reference_verification(
 		return {"event": event.name, "target": target_name, "outcome": outcome, "verification_status": target.verification_status}
 
 	return run_idempotent(
-		idempotency_key, EVENT_DOCTYPE, f"{target_doctype}:{target_name}", "record_reference_verification", _do
+		idempotency_key, EVENT_DOCTYPE, f"{target_doctype}:{target_name}", "record_reference_verification", _do, payload=request
 	)
 
 

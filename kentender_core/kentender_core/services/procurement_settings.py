@@ -29,7 +29,7 @@ from frappe.utils import flt, getdate, now_datetime
 from kentender_core.services.audit_event_service import log_audit_event
 from kentender_core.services.configuration_versions import version_editable
 from kentender_core.services.configuration_errors import fail_cfg
-from kentender_core.services.reference_data_idempotency import run_idempotent
+from kentender_core.services.reference_data_idempotency import request_payload, run_idempotent
 from kentender_core.services.site_configuration import PE_TYPES, require_configuration_administrator
 
 FUNDING_SOURCE = "Funding Source"
@@ -124,6 +124,7 @@ def list_funding_sources() -> list[dict[str, Any]]:
 
 
 def add_funding_source(*, label: str, idempotency_key: str = "") -> dict[str, Any]:
+	request = request_payload(locals())
 	require_configuration_administrator()
 	label = " ".join((label or "").split())
 
@@ -137,7 +138,7 @@ def add_funding_source(*, label: str, idempotency_key: str = "") -> dict[str, An
 		log_audit_event(event_type="site_configuration", document_type=FUNDING_SOURCE, document_name=doc.name, action="add_funding_source", metadata={"label": label})
 		return {"name": doc.name, "created": True}
 
-	return run_idempotent(idempotency_key, FUNDING_SOURCE, label, "add_funding_source", _do)
+	return run_idempotent(idempotency_key, FUNDING_SOURCE, label, "add_funding_source", _do, payload=request)
 
 
 def update_funding_source(*, name: str, label: str = "", enabled: bool | None = None, expected_version: str = "") -> dict[str, Any]:
@@ -368,6 +369,7 @@ def register_method_profile_version(
 	`replaces` are the administrator's own account of the correction; they are
 	kept on the new Version and on its audit event, so the history reads as a
 	chain of deliberate replacements rather than a pile of versions."""
+	request = request_payload(locals())
 	require_configuration_administrator()
 	method = _require_method(procurement_method)
 	verification = _require_verification(verification_status)
@@ -405,7 +407,7 @@ def register_method_profile_version(
 		log_audit_event(event_type="site_configuration", document_type=METHOD_PROFILE, document_name=doc.name, action="register_method_profile_version", metadata=metadata)
 		return {"profile": doc.name, "version_number": version, "superseded": superseded, "created": True}
 
-	return run_idempotent(idempotency_key, METHOD_PROFILE, method, "register_method_profile_version", _do)
+	return run_idempotent(idempotency_key, METHOD_PROFILE, method, "register_method_profile_version", _do, payload=request)
 
 
 def list_cumulative_bases() -> list[str]:
@@ -732,6 +734,7 @@ def register_schedule_profile_version(
 	fixture_namespace: str = "",
 	idempotency_key: str = "",
 ) -> dict[str, Any]:
+	request = request_payload(locals())
 	require_configuration_administrator()
 	method = _require_method(procurement_method)
 	if procurement_category not in PROCUREMENT_CATEGORIES:
@@ -775,7 +778,7 @@ def register_schedule_profile_version(
 		log_audit_event(event_type="site_configuration", document_type=SCHEDULE_PROFILE, document_name=doc.name, action="register_schedule_profile_version", metadata={"version": version, "superseded": superseded, "verification_status": verification})
 		return {"profile": doc.name, "version_number": version, "superseded": superseded, "created": True}
 
-	return run_idempotent(idempotency_key, SCHEDULE_PROFILE, f"{method}:{procurement_category}", "register_schedule_profile_version", _do)
+	return run_idempotent(idempotency_key, SCHEDULE_PROFILE, f"{method}:{procurement_category}", "register_schedule_profile_version", _do, payload=request)
 
 
 def _schedule_profile_projection(doc) -> dict[str, Any]:
@@ -971,6 +974,7 @@ def register_business_day_calendar_version(
 	"""§7 `SaveBusinessDayCalendarVersion` — immutable calendar version; a
 	newer overlapping version supersedes the earlier one (same pattern as
 	schedule profiles)."""
+	request = request_payload(locals())
 	require_configuration_administrator()
 	name = " ".join((calendar_name or "").split())
 	if not name:
@@ -1005,7 +1009,7 @@ def register_business_day_calendar_version(
 		log_audit_event(event_type="site_configuration", document_type=CALENDAR, document_name=doc.name, action="register_business_day_calendar_version", metadata={"version": version, "superseded": superseded, "verification_status": verification})
 		return {"calendar": doc.name, "version_number": version, "superseded": superseded, "created": True}
 
-	return run_idempotent(idempotency_key, CALENDAR, _code(name) or "CALENDAR", "register_business_day_calendar_version", _do)
+	return run_idempotent(idempotency_key, CALENDAR, _code(name) or "CALENDAR", "register_business_day_calendar_version", _do, payload=request)
 
 
 def _business_day_calendar_projection(doc) -> dict[str, Any]:
@@ -1056,6 +1060,7 @@ def get_reminder_threshold_days() -> int:
 
 
 def set_reminder_threshold_days(*, days: int, idempotency_key: str = "") -> dict[str, Any]:
+	request = request_payload(locals())
 	require_configuration_administrator()
 
 	def _do() -> dict[str, Any]:
@@ -1075,7 +1080,7 @@ def set_reminder_threshold_days(*, days: int, idempotency_key: str = "") -> dict
 		log_audit_event(event_type="site_configuration", document_type=SETTINGS, document_name=SETTINGS, action="set_reminder_threshold_days", metadata={"before": before, "after": int(days)})
 		return {"approaching_milestone_threshold_days": int(days)}
 
-	return run_idempotent(idempotency_key, SETTINGS, SETTINGS, "set_reminder_threshold_days", _do)
+	return run_idempotent(idempotency_key, SETTINGS, SETTINGS, "set_reminder_threshold_days", _do, payload=request)
 
 
 # --------------------------------------------------------------------------

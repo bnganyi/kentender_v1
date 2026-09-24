@@ -30,7 +30,7 @@ from frappe.utils import get_datetime, getdate, now_datetime
 
 from kentender_core.services.audit_event_service import log_audit_event
 from kentender_core.services.configuration_errors import fail_cfg
-from kentender_core.services.reference_data_idempotency import run_idempotent
+from kentender_core.services.reference_data_idempotency import request_payload, run_idempotent
 from kentender_core.utils.display import display_datetime, display_period
 
 SITE_PE_DOCTYPE = "Site Procuring Entity"
@@ -507,6 +507,7 @@ def configure_procuring_entity(
 	(CFG-BR-003); a failure leaves neither (CFG-AC-002). Rejected once a PE
 	exists (CFG-BR-001) — reconfiguration is `update_procuring_entity`.
 	"""
+	request = request_payload(locals())
 	actor = require_configuration_administrator()
 
 	def _do() -> dict[str, Any]:
@@ -560,7 +561,7 @@ def configure_procuring_entity(
 		}
 
 	return run_idempotent(
-		idempotency_key, SITE_PE_DOCTYPE, SITE_PE_DOCTYPE, "configure_procuring_entity", _do
+		idempotency_key, SITE_PE_DOCTYPE, SITE_PE_DOCTYPE, "configure_procuring_entity", _do, payload=request
 	)
 
 
@@ -637,6 +638,7 @@ def repair_organisation_root(*, idempotency_key: str = "") -> dict[str, Any]:
 	configuration maintenance but not this exceptional repair; the screen
 	shows them the escalation instead of the action.
 	"""
+	request = request_payload(locals())
 	require_site_administrator()
 
 	def _do() -> dict[str, Any]:
@@ -655,7 +657,7 @@ def repair_organisation_root(*, idempotency_key: str = "") -> dict[str, Any]:
 		return result
 
 	return run_idempotent(
-		idempotency_key, UNIT_DOCTYPE, "root", "repair_organisation_root", _do
+		idempotency_key, UNIT_DOCTYPE, "root", "repair_organisation_root", _do, payload=request
 	)
 
 
@@ -716,6 +718,7 @@ def add_fiscal_year(*, start_year: int, idempotency_key: str = "") -> dict[str, 
 	1 July – 30 June are generated from the start year and cannot be
 	overridden (CFG-BR-004); the ERPNext `year` follows its own convention.
 	"""
+	request = request_payload(locals())
 	require_configuration_administrator()
 
 	def _do() -> dict[str, Any]:
@@ -747,7 +750,7 @@ def add_fiscal_year(*, start_year: int, idempotency_key: str = "") -> dict[str, 
 		)
 		return {"fiscal_year": doc.name, "label": _fy_label(doc.year_start_date), "created": True}
 
-	return run_idempotent(idempotency_key, FY_DOCTYPE, _fy_name(_valid_start_year(start_year)), "add_fiscal_year", _do)
+	return run_idempotent(idempotency_key, FY_DOCTYPE, _fy_name(_valid_start_year(start_year)), "add_fiscal_year", _do, payload=request)
 
 
 def open_needs_submission(
@@ -869,6 +872,7 @@ def update_intake_close_instant(
 	"""§7 `UpdateIntakeCloseInstant` — changes only the named module's close
 	instant on its currently-open year. Never opens a year, never swaps the
 	open year, never touches another module (§5)."""
+	request = request_payload(locals())
 	if module_key not in MODULE_FLAG_FIELDS:
 		fail_cfg("CFG_PE_INVALID", "Unknown intake module.")
 	flag_open, flag_closes_at = MODULE_FLAG_FIELDS[module_key]
@@ -903,7 +907,7 @@ def update_intake_close_instant(
 		)
 		return {"fiscal_year": doc.name, "open": True, "closes_at": str(close_instant or "")}
 
-	return run_idempotent(idempotency_key, FY_DOCTYPE, fiscal_year, f"update_{module_key}_intake_close_instant", _do)
+	return run_idempotent(idempotency_key, FY_DOCTYPE, fiscal_year, f"update_{module_key}_intake_close_instant", _do, payload=request)
 
 
 def _open_intake_flag(
@@ -915,6 +919,7 @@ def _open_intake_flag(
 	expected_version: str,
 	idempotency_key: str,
 ) -> dict[str, Any]:
+	request = request_payload(locals())
 	flag_open, flag_closes_at = MODULE_FLAG_FIELDS[module_key]
 	label = ACTIVITY_LABELS[module_key]
 	actor = require_configuration_administrator()
@@ -963,7 +968,7 @@ def _open_intake_flag(
 		)
 		return {"fiscal_year": doc.name, "open": True, "closed_other_years": closed}
 
-	return run_idempotent(idempotency_key, FY_DOCTYPE, fiscal_year, f"open_{module_key}_submission", _do)
+	return run_idempotent(idempotency_key, FY_DOCTYPE, fiscal_year, f"open_{module_key}_submission", _do, payload=request)
 
 
 def _close_intake_flag(
@@ -974,6 +979,7 @@ def _close_intake_flag(
 	expected_version: str,
 	idempotency_key: str,
 ) -> dict[str, Any]:
+	request = request_payload(locals())
 	flag_open, _ = MODULE_FLAG_FIELDS[module_key]
 	label = ACTIVITY_LABELS[module_key]
 	actor = require_configuration_administrator()
@@ -994,7 +1000,7 @@ def _close_intake_flag(
 		)
 		return {"fiscal_year": doc.name, "open": False}
 
-	return run_idempotent(idempotency_key, FY_DOCTYPE, fiscal_year, f"close_{module_key}_submission", _do)
+	return run_idempotent(idempotency_key, FY_DOCTYPE, fiscal_year, f"close_{module_key}_submission", _do, payload=request)
 
 
 def set_fiscal_year_disabled(

@@ -10,6 +10,7 @@
   "document_type",
   "document_name",
   "action",
+  "payload_hash",
   "result",
   "created_at"
  ],
@@ -44,6 +45,13 @@
    "reqd": 1
   },
   {
+   "fieldname": "payload_hash",
+   "fieldtype": "Data",
+   "label": "Payload hash",
+   "read_only": 1,
+   "description": "SHA-256 of the request's canonical payload (CFG-CHG-002 §7.1); empty for callers that do not supply one."
+  },
+  {
    "fieldname": "result",
    "fieldtype": "Long Text",
    "label": "Result (JSON)",
@@ -58,7 +66,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-08-22 00:00:00.000000",
+ "modified": "2026-09-24 17:08:29.086437",
  "modified_by": "Administrator",
  "module": "Kentender Core",
  "name": "Reference Data Command Journal",
