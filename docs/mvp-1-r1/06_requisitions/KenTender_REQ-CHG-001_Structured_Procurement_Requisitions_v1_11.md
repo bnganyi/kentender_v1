@@ -3,22 +3,22 @@
 | Control | Value |
 |---|---|
 | Document ID | REQ-CHG-001 |
-| Version | 1.9 |
-| Date | 16 September 2026 |
-| Status | **Proposed — awaiting Project Owner approval** |
-| Approved on | Pending |
-| Supersedes | On approval, v1.8 and all earlier Requisition versions in full. |
+| Version | 1.11 |
+| Date | 24 September 2026 |
+| Status | **Approved** |
+| Approval record | Approved by the Project Owner on 24 September 2026. |
+| Supersession | Supersedes v1.9 and all earlier approved Requisition versions; withdraws the unapproved v1.10 proposal. |
 | Module | Procurement Requisitions |
 | First released product | Straightforward IT equipment |
-| Standards | Governed by KT-STD-001 v1.6 and STD-STD-001 v1.1. Sections not restated here are inherited from them. |
+| Standards | Governed by approved KT-STD-001 v1.7 and STD-STD-001 v1.1. Sections not restated here are inherited from them. |
 | Implementation posture | Correct the module in place; no STD Configuration dependency and no attachment-first specification model |
-| Change type | Complete successor incorporating approved REQ-UX-001 v0.3 into the current PLN v1.20/BUD v1.9/NDS v1.13/CFG v0.11/STR v1.8 owner baseline. It replaces the five-screen preparation experience with three plain-language tasks, adds atomic shared-item and standard-package operations, and preserves the existing lifecycle, source, funding, structured-requirement and audit controls. Full changes: §22.2. |
+| Change type | Reconciled successor to approved v1.9 and proposed v1.10. It retains the complete lifecycle, source, funding, structured-requirement, governance and Stage 2 usability contract; adopts current approved LAW v1.2/BUD v1.10/PLN v1.25/NDS v1.14/CFG v0.14/AUTH v1.9/KT-STD v1.7 references; corrects the nine-check count; and makes the item-level reservation boundary explicit without adding a role, user task, approval or Planning calculation. Full changes: §22.2. |
 
 **Controlling decision:** A Procurement Requisition draws one or more exact eligible source allocations from one stable Active Plan Item into one precise departmental request. For the first release, the department completes a fixed, code-owned IT Equipment Requirement Package. Structured items, technical requirements, services and acceptance checks are the authoritative requirements. Files may support those rows but cannot replace them.
 
 ## 1. Governing decision
 
-On approval, this complete successor is the sole Procurement Requisitions implementation authority. It retains the complete structured equipment catalogue, five internal validation groups, immutable governance, roles and owner controls, but presents preparation as three user tasks: **Request details**, **Requirements**, and **Review and submit**. It incorporates all 84 v1.8 acceptance results plus 34 approved usability results. REQ-UX-001 v0.3 is approval evidence, not a parallel implementation specification.
+This complete successor is the sole approved Procurement Requisitions implementation authority. It retains the complete structured equipment catalogue, five internal validation groups, immutable governance, roles and owner controls, and the three user tasks: **Request details**, **Requirements**, and **Review and submit**. It incorporates all 118 approved v1.9 acceptance results and the complete v1.10 Stage 2 presentation contract, then reconciles them with the current approved Planning, Budget, System Setup and legal baselines. Requisitions carries the exact Planning-approved item treatment into the compatible Tender product; it never recalculates the statutory APP reservation target or treats a Budget funding reservation as that target. This closes the downstream gap without adding a user task or approval step. REQ-UX-001 v0.3 remains historical approval evidence, not a parallel implementation specification.
 
 The module shall not contain an STD selector, Requirements Composer Manifest, schema editor, mapping editor or generic requirements engine. Tender Preparation selects the released Tender template after Requisition authorisation.
 
@@ -30,7 +30,7 @@ Implementation must produce one coherent result across schema, services, permiss
 |---|---|
 | Requisition binds to a Requirement Composer Manifest from STD Configuration | Removed. The first release uses the code-owned IT Equipment Requirement Package in §6. |
 | Technical specification PDF as the primary requirement | Removed. Structured rows are authoritative; TPR-CHG-001 consumes them downstream. |
-| Custom Capability Profiles, Operational Scope Assignments, native Frappe Roles, Workflow permissions and User Permissions | Removed. AUTH-ADR-001 v1.7’s role-bound `User Responsibility Assignment`, resolved through registered `permission_query_conditions` and `has_permission` hooks, is the sole authorisation mechanism. |
+| Custom Capability Profiles, Operational Scope Assignments, native Frappe Roles, Workflow permissions and User Permissions | Removed. AUTH-ADR-001 v1.9’s role-bound `User Responsibility Assignment`, resolved through registered `permission_query_conditions` and `has_permission` hooks, is the sole authorisation mechanism. |
 | `pe_fy_context_id` on the Requisition record | Removed. One site is one Procuring Entity, configured once by CFG-CHG-002 and never selected or scoped per record. Fiscal Year is inherited display data from the Plan Item, never a scope dimension. |
 | "A second budget check or reservation" named as explicitly unsupported | Corrected. §9.1A makes Requisition authorisation invoke Budget’s complete-array reservation contract. |
 | One Requisition uses one Plan Item and one requesting department | Narrowly relaxed under §§2.1 and 7.5: a Planning-approved cross-department combined item retains exactly its contributing departments; Requisition cannot add another department. |
@@ -52,6 +52,8 @@ Procurement Requisitions shall:
 - create one immutable handoff for Tender Preparation; and
 - provide clear correction routes without rewriting approved history.
 
+Requisitions consumes an **item-level Planning decision**, not the APP-wide reservation calculation. It receives the exact designation applicable to this purchase and any separate County-residents treatment, together with their verified rule snapshots. It shall not receive, derive, store or present the eligible-current-APP denominator, the statutory 30% target, aggregate qualifying allocation, aggregate shortfall, or a suggestion that this one Requisition itself satisfies the statutory target. Those calculations remain wholly in Procurement Planning.
+
 ### 2.1 First-release boundary
 
 The first release supports:
@@ -65,7 +67,7 @@ The first release supports:
 - one Requisition per proceeding and one later award package; sequential Requisitions may draw remaining original allowance under §5.1;
 - whole-number equipment quantities in `Each`;
 - structured pass/fail technical requirements;
-- the inherited reservation category and lotting indicator, carried through unedited; and
+- inherited planned designation `None`, `Youth`, `Women` or `Persons with disabilities` (stored as `reservation_category`), an independently applicable County-residents restriction, and lotting indicator `Single lot`, all carried through unedited with their exact verified rule/overlap snapshots; and
 - the released `IT-EQUIPMENT-OPEN-V1` Tender pattern.
 
 It does not support:
@@ -77,8 +79,11 @@ It does not support:
 - a Requisition drawing from a department the source Plan Item never included;
 - a generic specification editor or rich-text Terms of Reference;
 - supplier qualification, Tender security, evaluation criteria or contract clauses;
+- any reservation category, County-residents treatment or overlap that the exact installed Tender format does not support or for which no applicable verified rule is available;
 - bidder responses, prices, evidence or evaluation results; or
 - Requisition approval levels beyond those in section 8.
+
+It also does not reproduce Planning's APP-wide reservation denominator, 30% target, aggregate qualifying amount, compliance percentage or shortfall. A Budget funding reservation created at Requisition authorisation is a separate financial hold and must never be labelled or counted as the statutory reservation target.
 
 **On the cross-department relaxation.** This is deliberately narrow. It does not open Requisitions generally to spanning departments; it recognises that Planning already made a governed decision to combine sources from more than one department into one Plan Item, with its own combine rule, its own aggregation reason, and its own record of which departments contributed. The Requisition reflects that decision; it does not re-litigate it, and it cannot combine departments Planning did not already combine.
 
@@ -102,7 +107,8 @@ A stored field is permitted only when this document names:
 | Equipment items and intended use | Requesting department | Create as structured rows linked to Planning sources. |
 | Minimum technical characteristics | Requesting department | Create as structured rows using released controls. |
 | Warranty, support, related services and acceptance | Requesting department | State the required operational result in fixed controls. |
-| Budget Line, funding, planned method, schedule, reservation category and lotting indicator | Planning and Budget | Inherit read-only. Authorisation rechecks Planning availability **and creates the Budget reservation**, per §9.1A — REQ owns the authorisation decision and invocation; **Budget owns reservation records, balances, locking and ledger effects**. No direct Budget mutation by REQ. |
+| Budget Line, funding, planned method, schedule, planned designation (`reservation_category`) and lotting indicator | Planning and Budget | Inherit read-only. Authorisation rechecks Planning availability **and creates the Budget funding reservation**, per §9.1A — REQ owns the authorisation decision and invocation; **Budget owns funding-reservation records, balances, locking and ledger effects**. No direct Budget mutation by REQ. |
+| APP-wide statutory reservation denominator, 30% target, qualifying allocation and shortfall | Procurement Planning | Do not copy, calculate or display. REQ carries only this purchase's exact designation and separate County treatment. |
 | Supplier evidence, qualification and Tender choices | Procurement | Add later in Tender Preparation; never require the department to define them. |
 | Standard Tender text and released forms | Code-owned Tender template | Requisition neither selects nor edits them. |
 | Requisition authorisation | Head of Procurement Function | Decide the complete immutable submission; cannot edit it. |
@@ -140,7 +146,7 @@ Stable root for one departmental request against one Active Plan Item.
 | `requisition_id` | Immutable internal identity. |
 | `requisition_reference` | Generated `REQ-{PE code}-{FY start}-{Plan Item number}-{3 digits}`. There is no `pe_fy_context_id`; the site is implicit and the Fiscal Year is read from the Plan Item. |
 | `plan_id` / `plan_version_id` / `plan_item_id` / `plan_item_version_id` | Stable roots and exact approved content supplying this Requisition, pinned at preparation and immutable. A changed baseline requires an explicit new Requisition/follow-up against current eligible lineage; no root silently switches its approved content. |
-| `strategic_objective_id` / `strategic_objective_path` | Inherited read-only from PLN v1.20’s exact Active item and Strategy snapshot fixed at final statutory Plan approval. Carried explicitly here, and into the handoff in §5.12, rather than left reachable only by a second query back into Planning — an auditor reading the Requisition alone can see which policy objective justified it. |
+| `strategic_objective_id` / `strategic_objective_path` | Inherited read-only from PLN v1.25’s exact Active item and Strategy snapshot fixed at final statutory Plan approval. Carried explicitly here, and into the handoff in §5.12, rather than left reachable only by a second query back into Planning — an auditor reading the Requisition alone can see which policy objective justified it. |
 | `procurement_category` | **New.** Inherited read-only; `Goods` for this release, checked at compatibility per §5A. |
 | `plan_horizon` | Inherited fixed `Single year`; Multi-year is outside this MVP and fails preparation/authorisation. No editable horizon or operative multi-year justification. Historical received fields are retained as history, not accepted as spendable future-year allowance. |
 | `contributing_org_unit_ids` | One or more Organisation Units — one, in the ordinary case; more than one only where the Plan Item was itself formed at Planning as a cross-department combine, matching exactly the departments Planning's own combine recorded. Immutable. |
@@ -215,6 +221,8 @@ Stable package root created with the Requisition. It has no configurable profile
 | `current_version_id` | Current package Version. |
 | `authorised_version_id` | Authorised package Version. |
 | `reservation_category` | Read-only, inherited from the Plan Item. Never edited here. |
+| `county_resident_reservation` | Read-only, inherited independently from the Plan Item; applicable only under the verified County rule. Never inferred from supplier address or edited here. |
+| `reservation_rule_snapshot_ids` | Exact verified base-category and, where applicable, County/overlap rule Versions selected by the owner contracts. Supporting evidence only; not exposed as routine user choices. |
 | `lotting_indicator` | Read-only, inherited from the Plan Item. Confirmed as `Single lot` at product-suitability check; any other value is incompatible with this release. |
 
 ### 5.5 ITEquipmentRequirementPackageVersion
@@ -353,7 +361,7 @@ One immutable handoff is created atomically with authorisation. It contains:
 - inherited business need, description and expected operational result;
 - planned method, schedule, Budget Line and funding source;
 - the exact Budget-owned reservations produced by this handoff’s authorisation transaction, with full drawdown-to-reservation mapping;
-- reservation category and lotting indicator;
+- reservation category, independent County-residents restriction, exact verified rule/overlap snapshot identities and lotting indicator;
 - requirement title, location and latest delivery date;
 - every equipment item and `requisition_item_id`;
 - warranty and support values;
@@ -365,6 +373,8 @@ One immutable handoff is created atomically with authorisation. It contains:
 
 It contains no editable STD binding, supplier field, price, evaluation score or contract result.
 
+It also contains no APP-wide eligible-current-APP denominator, statutory 30% target, aggregate qualifying allocation, compliance percentage or shortfall. Downstream consumers receive the exact item-level `reservation_category`, County treatment and rule snapshots; they do not reconstruct Planning compliance from Requisition or Budget funding-reservation values.
+
 ### 5.13 Tender consumption and correction projections
 
 `TenderConsumptionProjection` displays exact handoff, Tender/Tender Version, template key/version and consumed time. A delayed projection is **not** the authoritative unconsumed test. `RecordHandoffConsumption` validates and records consumption against REQ’s locked handoff in the same transaction as TPR’s Draft Tender creation; revocation uses the same guard. Until this owner transaction mapping is implemented/tested, do not claim that a local absence of consumption makes revocation safe. This does not record invitation publication or any milestone actual.
@@ -375,7 +385,7 @@ It contains no editable STD binding, supplier field, price, evaluation score or 
 
 | Type / boundary | Required behavior |
 |---|---|
-| Money | Plain JSON decimal string in currency units, KES scale 2 from BUD v1.9 CurrencyBasis; e.g. `"20000000.00"`. At least 18 integral digits plus supported fractional digits in storage/calculation. Reject excess precision, JSON floats, exponent/NaN/Infinity, malformed values and overflow without rounding or epsilon. |
+| Money | Plain JSON decimal string in currency units, KES scale 2 from BUD v1.10 CurrencyBasis; e.g. `"20000000.00"`. At least 18 integral digits plus supported fractional digits in storage/calculation. Reject excess precision, JSON floats, exponent/NaN/Infinity, malformed values and overflow without rounding or epsilon. |
 | Quantity | Exact decimal string under owner UOM precision. This product additionally requires Each and positive whole numbers for items/drawdown; no fractional equipment. Addition/reconciliation is exact. Zero is allowed only in read-only remaining balances. |
 | Other numeric controls | Integer characteristics retain integer/range controls. Decimal characteristics use exact decimal arithmetic and code-owned declared scale/range; catalogue implementation must publish scale metadata and tests. No generic user-configurable schema or inferred precision. |
 | Basis snapshot | Submitted Version/handoff retains BUD currency/precision evidence, native UOM basis, exact Plan/item/allocation/source/DPP IDs and eligibility observation time. Current eligibility is rechecked independently; historical numeric values/digests are not rewritten by new configuration. |
@@ -394,14 +404,15 @@ Exact values flow through NDS/PLN/REQ/BUD owner boundaries. No REQ Budget table 
 |---|---|
 | `procurement_category` | `Goods`. A Works or Services Plan Item is not eligible for this Requisition pattern at all — this is checked before the Draft is even created, not discovered later. |
 | Requirement type | Straightforward off-the-shelf IT equipment, not a services-dominant or specialist-goods classification this package cannot express. |
-| Reservation category | `None`, `Youth`, `Women`, `Persons with disabilities` or `Other disadvantaged group` — the categories STD-TPL-001 v0.6 §6.1 supports rendering. Any other value is incompatible in this release, checked against the same list Tender Preparation uses, not a second, independently-maintained one. |
+| Planned designation (`reservation_category`) | `None`, `Youth`, `Women` or `Persons with disabilities`, supported by the exact Available `IT-EQUIPMENT-OPEN-V1` release and an applicable verified reservation-rule snapshot. Any other designation or missing rule fails before a Draft is created. Ordinary screens label this **Reserved for**, not “reservation category”. |
+| County-residents restriction | `Not applicable`; or, for a county Procuring Entity, an applicable verified County-residents rule and supported overlap treatment. This remains distinct from the base category. |
 | Lotting indicator | `Single lot`. A `Packaged into lots` Plan Item is incompatible in this release. |
 | Currency | KES. |
 | Award package | One. |
 | Planned method | Open Tender, supported by the installed fixed product and applicable owner-validated method/rule context. REQ cannot substitute another method or infer a threshold waiver. |
 | Plan horizon | Single year; completion/funding within the supported FY. Multi-year is explicitly deferred, even if an old payload contains a justification. |
 
-The eight checks are product compatibility, not a fresh legal entitlement determination. Renderable reservation categories do not establish eligible candidate status or override CFG/LAW verification. PLN’s single-year MVP boundary controls this successor; the old permissive Multi-year sentence is withdrawn.
+The nine checks are product compatibility, not a candidate-entitlement determination and not an APP-wide 30% calculation. A supported designation means only that the published Tender can lawfully ask for the category-specific declaration and evidence under the bound verified rule. It does not make any supplier eligible; Account state, address and uploaded evidence cannot do so. PLN’s single-year MVP boundary controls this successor; the old permissive Multi-year sentence is withdrawn.
 
 Any No blocks Requisition creation with no free-text bypass, returning `REQ_PRODUCT_UNSUPPORTED` and naming the failing test.
 
@@ -549,7 +560,7 @@ Before departmental routing or submission, the server rechecks:
 - product suitability, including reservation category and lotting; and
 - canonical content digest.
 
-Before Procurement authorisation, repeat all checks on the immutable submitted Version, including pinned/current eligible Plan/item/source revisions, current funding evidence, item-specific correction hold, original-scope allowance, live authorising responsibility/segregation, all eight compatibility checks and dates. Budget checks the **complete drawdown array** and aggregates requests per Budget Line under §9.1A; do not call independent per-row checks/tokens.
+Before Procurement authorisation, repeat all checks on the immutable submitted Version, including pinned/current eligible Plan/item/source revisions, current funding evidence, item-specific correction hold, original-scope allowance, live authorising responsibility/segregation, all nine compatibility checks and dates. Budget checks the **complete drawdown array** and aggregates requests per Budget Line under §9.1A; do not call independent per-row checks/tokens.
 
 The scope lock is not a blanket prohibition on further Requisitions: an otherwise eligible draw within remaining **original** allowance can proceed. A temporary correction hold blocks **new authorisation**, not historical reads or existing authorised proceedings. Display and investigation remain available; existing valid Draft work may continue under its own permissions. Draft preparation under a hold never guarantees later authorisation. Recheck the hold and allowances at commit under Planning’s stable-item guard, not from an earlier UI eligibility result.
 
@@ -627,11 +638,12 @@ For a revoked unconsumed authorisation, the existing root may instead use explic
 13. Revocation is allowed only before handoff consumption and reverses the drawdown and reservation once, together.
 14. Authorisation creates no Tender and binds no STD or Tender template.
 15. Unauthorised requests reveal no record, row, file or count existence.
-16. Reservation category and lotting indicator are read-only throughout; only `Single lot` and the reservation categories STD-TPL-001 v0.6 §6.1 renders are compatible with this release.
+16. Planned designation (`reservation_category`), independent County-residents restriction, applicable rule snapshots and lotting indicator are read-only throughout. `None`, `Youth`, `Women` and `Persons with disabilities` are compatible only with the exact supported Tender format and verified rule; County-residents additionally requires an applicable County rule and supported overlap treatment. Lotting remains `Single lot`.
+17. REQ never calculates or displays APP-wide reservation compliance. The item designation is not derived from a Budget funding reservation, and a funding reservation is not evidence that the statutory 30% target has been met.
 
 ## 8. Roles and permissions
 
-Role-bound `User Responsibility Assignment`, resolved through AUTH-ADR-001 v1.7's registered `permission_query_conditions` and `has_permission` hooks. No Frappe User Permission participates in any authorization decision in this module.
+Role-bound `User Responsibility Assignment`, resolved through AUTH-ADR-001 v1.9's registered `permission_query_conditions` and `has_permission` hooks. No Frappe User Permission participates in any authorization decision in this module.
 
 | Business role | Scope type | Exact work |
 |---|---|---|
@@ -641,7 +653,7 @@ Role-bound `User Responsibility Assignment`, resolved through AUTH-ADR-001 v1.7'
 | Procurement Planner | Site-wide | Neutral read of Planning lineage and drawdown projection; receives the `PlanItemCorrectionRequest` task in §7.4A; no Requisition decision. |
 | Procurement Officer | Site-wide | No Draft right in Requisitions by virtue of this role; consumes the authorised handoff in Tender Preparation. |
 | Auditor | Site-wide or approved OU oversight scope | Neutral read of immutable Versions, decisions, drawdowns, reservations, handoffs and consumption evidence; no business transition. |
-| Administrator / System Manager | Technical read-all under AUTH v1.7 §8 | Read Draft/submitted/authorised/stopped content and evidence; no business write or decision without the applicable live responsibility. |
+| Administrator / System Manager | Technical read-all under AUTH v1.9 §8 | Read Draft/submitted/authorised/stopped content and evidence; no business write or decision without the applicable live responsibility. |
 
 An acting Head of User Department receives a time-bound `User Responsibility Assignment` for the approved period, with an authority reference — not a scoped Frappe User Permission, and not a delegate role.
 
@@ -651,7 +663,7 @@ Every list, count, direct route, file download and command applies the same regi
 
 ### 9.1 Procurement Planning: exact provider contracts
 
-`GetRequisitionEligiblePlanItem` supplies the exact Active Plan/item/source snapshot and separately current eligibility evidence: stable/exact identities, source origin/stable key/Need revision where applicable, accepted DPP entry/Submission, full original and remaining quantities/values, contributing OUs, Budget Line/funding/currency basis, read-only category/method/Strategy snapshot, fixed Single year horizon, Plan/source completion boundaries, estimated dates and reservation/lotting. It also exposes scope-lock identity, item-specific authorisation hold/unresolved request evidence and exact expected owner revisions. No first/last-row fallback or cached browser context.
+`GetRequisitionEligiblePlanItem` supplies the exact Active Plan/item/source snapshot and separately current eligibility evidence: stable/exact identities, source origin/stable key/Need revision where applicable, accepted DPP entry/Submission, full original and remaining quantities/values, contributing OUs, Budget Line/funding/currency basis, read-only category/method/Strategy snapshot, fixed Single year horizon, Plan/source completion boundaries, estimated dates and the item-level designation/County/lotting treatment with exact verified rule snapshots. It also exposes scope-lock identity, item-specific authorisation hold/unresolved request evidence and exact expected owner revisions. It does **not** expose the APP-wide denominator, 30% target, aggregate qualifying allocation or shortfall to REQ. No first/last-row fallback or cached browser context.
 
 `AuthoriseRequisitionDrawdown` is the **one canonical Planning command**; retire `RecordRequisitionDrawdown` rather than keeping an alias. It takes trusted REQ authorisation transaction context, REQ/root/exact Version, exact eligible Plan/item/allocation IDs, positive per-source Quantity/Money, expected revisions and correlation. Planning serializes the stable item, source/allowance revisions, correction hold and successor activation; validates remaining original capacity; and records drawdown/first-authorisation scope protection inside the same owner-coordinated transaction as Budget and REQ. A copied APP item Version creates no new allowance and never resets prior consumption.
 
@@ -668,7 +680,7 @@ Draft creation/save/routing and ordinary Return perform owner reads only. The ex
 
 ### 9.1A Budget: complete-array check and reservation
 
-Follow approved BUD v1.9 §§4.5, 5, 8.3–8.4 and 9. REQ supplies its exact Version, proposed authorisation event, exact Plan/item/allocation IDs, each REQ drawdown-line ID, source OU, drawn Quantity/value, funding source/currency/precision, source-set digest and one authorisation correlation/key.
+Follow approved BUD v1.10 §§4.5, 5, 8.3–8.4 and 9. REQ supplies its exact Version, proposed authorisation event, exact Plan/item/allocation IDs, each REQ drawdown-line ID, source OU, drawn Quantity/value, funding source/currency/precision, source-set digest and one authorisation correlation/key.
 
 1. Call `check_funding` **once for the complete array**. Budget aggregates by Budget Line and returns per-row/per-line results plus **one** expiring token bound to the full immutable payload, caller/actor and owner revisions. No per-row token array, Finance task or write.
 2. In the trusted REQ transaction, call `reserve_funding` with the same complete payload/token and expected revisions. Budget owns root/line locks and rechecks aggregate current availability. Two individually affordable rows do not pass if their combined value exceeds one shared line.
@@ -697,7 +709,7 @@ Planning produces the following **new coordinated outcome schema** from its term
 | `actor`, `decision_at` | Planning’s terminal decision actor and UTC instant, verifiable against owner authority/evidence; consumer receipt time is stored separately. |
 | `item_hold_state`, `unresolved_request_count`, `eligibility_revision` | Owner snapshot of item-wide hold/current revision at disposition time; not permission to ignore later requests. Re-read and validate at any new authorisation. |
 
-Both producers/consumers must adopt this exact schema or an explicitly reviewed equivalent mapping; PLN v1.20 establishes behavior, while this owner amendment supplies its missing response details. New required fields are not silently added to an unrelated existing event.
+Both producers/consumers must adopt this exact schema or an explicitly reviewed equivalent mapping; PLN v1.25 establishes behavior, while this owner amendment supplies its missing response details. New required fields are not silently added to an unrelated existing event.
 
 Authenticate producer, validate request/REQ/Version/item ownership, deduplicate identical events and reject conflicting payload/sequence. Gap/out-of-order delivery triggers owner replay or an authoritative versioned snapshot; preserve last-confirmed status with a pending indication. Never invent replacement IDs, apply one request’s outcome to another, or use a stale zero unresolved count to clear today’s hold. Receipt updates the neutral outcome/history and durable requester notification only; stopped Version/status/digest/decisions remain unchanged. Read/retry cannot create a Draft.
 
@@ -717,7 +729,7 @@ Tender Preparation shall:
 - select or confirm the compatible released Tender template downstream; and
 - carry awarded values and obligations into contract formation without re-entry.
 
-TPR v0.7 supplies the structured consumer specification and retains two inherited source items even if the issued same-specification schedule groups them. Matching TPR v0.8 must adopt this amendment’s precision, single-year, current compatibility, consumption/revocation and correction boundaries before integration can be declared complete. This review does not certify uninspected implementation.
+Proposed TPR v0.9 supplies the current coordinated structured-consumer specification and retains two inherited source items even if the issued same-specification schedule groups them. Its product gate supports `None`, `Youth`, `Women` and `Persons with disabilities`, plus an independently applicable County-residents restriction, only with the exact compatible template and verified rule/overlap snapshots; lotting remains `Single lot`. TPR v0.9 must adopt this successor's current owner versions, precision, single-year, consumption/revocation and correction boundaries before integration can be declared complete. Until TPR v0.9 and the required STD-TPL release are approved and available, this is a coordinated proposed interface rather than certified downstream conformance. This review does not certify uninspected implementation.
 
 ### 9.3 No STD Configuration contract
 
@@ -786,7 +798,8 @@ Every command accepts an idempotency key and expected record version. The server
 | `REQ_QUANTITY_MISMATCH` | Item and drawdown quantities do not reconcile. Show the affected line. |
 | `REQ_BATCH_ITEM_INVALID` | One or more selected approved-requirement rows cannot be created or updated as the requested same-specification set. Retain the dialog values, identify each affected row and create/change none. |
 | `REQ_STANDARD_PROPOSAL_STALE` | The code-owned proposal or Draft changed after it was shown. Retain permitted input, reload the current visible proposal and require deliberate grouped confirmation again. |
-| `REQ_PRODUCT_UNSUPPORTED` | Requirement is outside straightforward IT equipment, or carries an unsupported reservation category or a lotting indicator other than Single lot. Stop; do not offer free-text bypass. |
+| `REQ_PRODUCT_UNSUPPORTED` | Requirement is outside straightforward IT equipment, carries a reservation/County treatment unsupported by the exact installed Tender format, or has a lotting indicator other than Single lot. Show **This purchase is not supported by the installed IT-equipment Tender format.** Name the incompatible fact, stop before Draft creation and offer no free-text bypass. |
+| `REQ_RESERVATION_RULE_UNAVAILABLE` | A supported reservation category or County-residents treatment has no applicable verified rule/overlap snapshot. Show **The applicable reservation rule is not ready for this purchase. Ask your KenTender administrator to complete the rule in System setup.** Stop before Draft creation; an authorised System Manager receives the exact owner route. |
 | `REQ_REQUIREMENT_RESTRICTIVE` | A brand or restrictive term lacks permitted equivalent treatment. Show the row. |
 | `REQ_FILE_INVALID` | File type, size, malware, readability, digest or row-link rule failed. |
 | `REQ_BLOCKING_FINDINGS` | Submission or authorisation has Blocking findings. Return exact links. |
@@ -821,7 +834,7 @@ Use Vue 3 single-file components mounted in Frappe Desk. Reuse the existing KenT
 | Procurement authorisation | `/app/procurement-requisitions/procurement-task/{task_id}` | Head of Procurement Function reads the complete submission and returns or authorises. |
 | Authorised Requisition | `/app/procurement-requisitions/{requisition_id}/authorised` | Read immutable handoff, drawdown, reservation and Tender-consumption status; authorized revocation/corrected-Draft actions come from server state. |
 
-The existing record route also renders the immutable stopped/returned/revoked detail and correction follow-up; no new top-level menu or correction queue is introduced. Technical readers may discover/read Draft, submitted, authorised and stopped records through these same surfaces; their available business-action set is empty unless separately assigned the required responsibility. The editor loads one server projection. Opening a route creates nothing; only the explicit **Start requisition** confirmation invokes `PrepareITEquipmentRequisition`. Per KT-STD-001 v1.6 §3A, the authorisation verdict resolves before any content renders, and a page-load denial is an inline Forbidden state, never a modal.
+The existing record route also renders the immutable stopped/returned/revoked detail and correction follow-up; no new top-level menu or correction queue is introduced. Technical readers may discover/read Draft, submitted, authorised and stopped records through these same surfaces; their available business-action set is empty unless separately assigned the required responsibility. The editor loads one server projection. Opening a route creates nothing; only the explicit **Start requisition** confirmation invokes `PrepareITEquipmentRequisition`. Per KT-STD-001 v1.7 §3A, the authorisation verdict resolves before any content renders, and a page-load denial is an inline Forbidden state, never a modal.
 
 ### 12.1 User-facing language
 
@@ -846,7 +859,30 @@ Machine enums, command names, identities and stored historical text remain uncha
 
 ## 13. Static design contract
 
-Supply **KT-STD-001 v1.6 §2 plus this section only** to the design tool. Fixture metadata remains outside the artboard. The business fixtures are isolated scenario inputs, not production-law verification. Do not add screens, fields, actions, reviewers, cards or dashboard content not defined here.
+Supply **KT-STD-001 v1.7 §2 plus this section only** to the design tool. Fixture metadata remains outside the artboard. The business fixtures are isolated scenario inputs, not production-law verification. Do not add screens, fields, actions, reviewers, cards or dashboard content not defined here. KT-STD §10 remains an implementation prohibition and is deliberately excluded from the visual prompt.
+
+**Stage 2 shared experience contract.** Requisitions is a guided request-and-decision flow, not a database viewer or a sequence of similarly weighted tables. Every composition shall visibly express one of these archetypes:
+
+| Surface | Archetype | Primary question |
+|---|---|---|
+| REQ-DES-01 | Task-led workspace | What Requisition work needs me now? |
+| REQ-DES-02, REQ-DES-04 and confirmations | Focused choice/dialog | Am I starting or committing the right scoped action? |
+| REQ-DES-03 and REQ-DES-05 | Guided form/editor | What must I complete next, and what is blocking progress? |
+| REQ-DES-06 | Submission review | Is this complete and ready for the department decision? |
+| REQ-DES-07 and REQ-DES-08 | Review/decision | What am I deciding, on what basis, and with what consequence? |
+| REQ-DES-10 | Authorised-record detail | What was authorised and what lawful work comes next? |
+| REQ-DES-11 | Exception/correction detail | What stopped, who owns the next step, and can new work start? |
+| REQ-DES-12 | Parent-surface state | What happened, what remains protected, and what can I do safely? |
+
+Use three information levels consistently:
+
+1. **Level 1 — task, decision or exception:** page purpose, current state, one material issue or consequence and the one primary action when permitted.
+2. **Level 2 — business basis:** purchase, departments, quantity/value, requirements, funding and decision evidence needed for the current task.
+3. **Level 3 — provenance and audit:** versions, canonical identities, digests, source lineage, historical decisions and technical evidence.
+
+Level 1 must be understandable within the first viewport at 1440 × 1024. Level 2 remains directly reachable without leaving the record. Level 3 uses a labelled disclosure or history area unless a provenance defect itself blocks the current action. Do not use equal-weight metric-card rows, a card around every field, repeated coloured badges, decorative uppercase labels, full-width borders between every row or colour as the only carrier of meaning. Use one primary action, quiet secondary actions, a single issue treatment and whitespace/typography before containers. A section may be table-shaped only where users must compare repeated values; narrative evidence uses labelled groups, not synthetic two-column tables.
+
+Compact orientation remains visible on every record: Requisition title, reference, state, approved purchase and submitting department where applicable. Do not repeat the same orientation facts in the header, a context card and the first section. Progress communicates the three user tasks only; it is not a second navigation bar or a five-group validation dashboard.
 
 ### 13.1 Shared fixture pack
 
@@ -864,7 +900,9 @@ Supply **KT-STD-001 v1.6 §2 plus this section only** to the design tool. Fixtur
 | Planned method | Open Tender |
 | Requirement product | IT Equipment |
 | Procurement category | Goods |
-| Reservation category | Youth |
+| Reserved for (stored as `reservation_category`) | Youth |
+| County-residents restriction | Not applicable |
+| Reservation rule | Applicable verified Youth reservation rule · Version 1 |
 | Lotting | Single lot |
 | Currency | KES |
 | Award package | One |
@@ -963,7 +1001,8 @@ Procurement-compatibility results:
 |---|---|
 | Procurement category | Goods |
 | Requirement type | Straightforward off-the-shelf IT equipment |
-| Reservation category | Youth |
+| Planned designation | Youth — supported; exact verified rule snapshot bound |
+| County-residents restriction | Not applicable |
 | Lotting indicator | Single lot |
 | Currency | KES |
 | Award package | One |
@@ -972,7 +1011,11 @@ Procurement-compatibility results:
 
 The complete fixture has no related services and no supporting materials. REQ-DES-05-REVIEW-REQUIRED and REQ-DES-05-COMPLETE contain the same eleven technical rows, six warranty/support values and five acceptance checks; their exact difference is proposal state versus confirmed Draft content and disabled versus enabled continuation.
 
+The positive design fixture assumes an isolated test release of `IT-EQUIPMENT-OPEN-V1` whose exact manifest is marked **Available** and supports the stated treatment. That assumption is solely for rendering the successful path. It does not mark the proposed STD-TPL v0.7 candidate release approved or available in production; without an approved Available release, the live positive path remains blocked.
+
 ### 13.2 REQ-DES-01 — Requisitions workspace
+
+**Archetype and hierarchy.** Task-led workspace. Level 1 is the exact Draft, returned work or approval requiring this actor; Level 2 is an approved purchase ready to start; Level 3 is the searchable Requisition register. Counts may annotate filters but never form a dashboard above the work.
 
 **Purpose.** Find the next Requisition task or continue existing work.
 
@@ -982,10 +1025,10 @@ The complete fixture has no related services and no supporting materials. REQ-DE
 
 **Composition, top to bottom.**
 
-1. Compact work summary row with **Drafts 0**, **Returned to me 0**, **My approvals 0**. Each is a local filter; omit counts for responsibilities Grace does not hold.
-2. Filter row: Search by requisition or purchase; Status **All statuses**; Department **All my departments**; Clear filters.
-3. Section **Ready to start**. One row using columns Approved purchase; Departments; Still available; Needed by; Action.
-4. Section **My requisitions**. In this base variant show empty text **You have no requisitions yet.**
+1. Section **Your work**, shown only when this actor has a Draft, returned item or assigned decision. Each row states the current task in plain language, its consequence or issue, and one action. In the base fixture this section is absent rather than rendered as three zero-count cards.
+2. Section **Ready to start**. One readable row using Approved purchase; Departments; Still available; Needed by; Action. The title and **Start requisition** form the visual anchor.
+3. Section **Your requisitions** as the secondary register. Place Search, Status **All statuses**, Department **All my departments** and Clear filters in its header. Optional inline filter labels **Drafts 0**, **Returned 0** and **Approvals 0** may appear only for responsibilities Grace holds; they are not cards and disappear when zero adds no useful distinction.
+4. In the base variant show empty text **You have no requisitions yet.** beneath the secondary register heading.
 
 Ready row values: purchase title with `PPI-MOH-2027-033` beneath it; departments **Digital Health; HR Management and Development**; **250 Each** with **KES 50,000,000.00** beneath it; **31 Dec 2027**; primary row action **Start requisition**.
 
@@ -993,14 +1036,16 @@ Ready row values: purchase title with `PPI-MOH-2027-033` beneath it; departments
 
 **Variants.**
 
-- **REQ-DES-01-DRAFT:** Ready row is absent. My requisitions contains REQ-MOH-2027-033-001; purchase title; Status **Draft — Request details need attention**; Updated **1 Mar 2027, 09:45 EAT**; action **Continue**.
-- **REQ-DES-01-ACTION:** My requisitions contains the exact assigned record; Status **Awaiting your approval**; action **Review**. Do not create a separate Tasks panel.
+- **REQ-DES-01-DRAFT:** Your work leads with REQ-MOH-2027-033-001; purchase title; task **Complete request details**; Updated **1 Mar 2027, 09:45 EAT**; action **Continue**. The same record may appear in the secondary register but not as an equally prominent duplicate. Ready row is absent.
+- **REQ-DES-01-ACTION:** Your work leads with the exact assigned record; task **Review departmental requisition** or **Decide whether to authorise**, according to responsibility; action **Review**. Do not create a second Tasks panel or lead with aggregate counts.
 - **REQ-DES-01-NONE:** Ready to start says **No approved purchases are ready for a requisition.** My requisitions remains available.
 - **REQ-DES-01-TECHNICAL:** Administrator/System Manager sees Search, Status, Department and Financial year filters plus all authorised rows site-wide; work-summary counts and all business actions are absent.
 
-**Visual check.** The next legitimate action is visible without a dashboard, duplicate record sections or knowledge of Plan Item states.
+**Comprehension acceptance.** Within the first view the actor can name the one item needing attention, or see the one purchase ready to start. The register remains available without competing with that task. The screen contains no empty metric-card strip, duplicate task list or requirement to understand Plan Item states.
 
 ### 13.3 REQ-DES-02 — Start requisition dialog
+
+**Archetype and hierarchy.** Focused choice. Level 1 is the purchase and creation consequence; Level 2 is scope, availability and product boundary; Level 3 remains outside the dialog.
 
 **Purpose.** Confirm the exact approved purchase before creating the Draft.
 
@@ -1008,7 +1053,7 @@ Ready row values: purchase title with `PPI-MOH-2027-033` beneath it; departments
 
 **Dialog.** A 520 px dialog over the workspace. Heading **Start this requisition?** Text **A Draft will be created from the approved purchase below.**
 
-Place these labelled rows vertically: Approved purchase; Departments; Still available; Plan completion boundary; Requirement product. Values are the fixture title, both departments, **250 Each and KES 50,000,000.00** as separate adjacent values, **31 Dec 2027**, and **IT Equipment**.
+Place these labelled rows vertically: Approved purchase; Departments; Still available; Plan completion boundary; Requirement product; Reserved for. Values are the fixture title, both departments, **250 Each and KES 50,000,000.00** as separate adjacent values, **31 Dec 2027**, **IT Equipment**, and **Youth**. Show **County requirement** only when applicable; omit it for this Not-applicable fixture rather than displaying a technical null.
 
 Below, show the visible notice: **This release supports straightforward off-the-shelf IT equipment. It does not support software development, integration or migration.** Then show **Digital Health will submit this combined departmental request.**
 
@@ -1016,9 +1061,13 @@ Footer left **Cancel**; right primary **Start requisition**. Both enabled. No ST
 
 **Unsupported variant.** Isolated reset: Requirement product **Software integration**, while the approved purchase title remains visible. Replace the primary action with disabled **Start requisition** and show **This approved purchase requires software integration, which this release does not support.** Keep Cancel.
 
+**Reservation-rule-unavailable variant.** Isolated reset: **Reserved for Youth**, but the applicable verified rule snapshot is unavailable. Show the rule as the failed compatibility fact. Replace the primary action with disabled **Start requisition** and show **The applicable reservation rule is not ready for this purchase. Ask your KenTender administrator to complete the rule in System setup.** Keep Cancel. Create no Draft. Use a separate unsupported-category reset for any designation the installed Tender format does not support; never use Youth itself to prove that state.
+
 **Visual check.** The user can identify the purchase, available amount and product limitation without reading Planning lineage or a separate full page.
 
 ### 13.4 REQ-DES-03 — Draft: Request details
+
+**Archetype and hierarchy.** Guided form/editor. Level 1 is the incomplete task and the exact blocker to continuing; Level 2 is request information, requested amounts and equipment; Level 3 is approved-source lineage and history.
 
 **Purpose.** State how much is requested and list the equipment.
 
@@ -1031,10 +1080,10 @@ Footer left **Cancel**; right primary **Start requisition**. Both enabled. No ST
 **Composition, top to bottom.**
 
 1. Returned-work panel, absent in the base variant.
-2. Section **Approved purchase** with title, Plan Item reference, Method, Plan completion boundary, Estimated completion, Strategic objective and Business need as separately labelled values. Start open and compact; technical lineage disclosure **Source details** starts closed.
-3. Section **Request information** with two-column form: Requirement title; Delivery location; Latest delivery date; Related services required. Values use the fixture; Related services **No**.
+2. Compact **Approved purchase** orientation: purchase title, contributing departments, **250 Each · KES 50,000,000.00 available**, method, **Reserved for Youth** and completion boundary. Show Business need as one readable sentence. Put Plan Item reference, Estimated completion, Strategic objective, exact designation/rule snapshot and technical lineage under **Purchase and source details**; start closed unless a returned issue targets them. Do not show APP-wide reservation percentages or targets.
+3. Section **Request information** with a two-column form: Requirement title; Delivery location; Latest delivery date; Related services required. Values use the fixture; Related services **No**.
 4. Section **Amounts requested from the approved plan**. Visible explanation **The full available amount is selected. Enter a smaller amount only when this requisition covers part of the approved purchase.**
-5. Approved-requirements table with columns Department; Requirement; Available quantity; Requested quantity; Available value; Requested value. Show both fixture rows. Requested values default to the full available values. Each row has secondary **Use full available amount** only after a value has been changed.
+5. Comparison table with Department and Requirement as one leading cell; Available quantity; Requested quantity; Available value; Requested value. Show both fixture rows. Requested values default to the full available values. Each row has secondary **Use full available amount** only after a value has been changed. Do not split reference, unit or currency into additional columns.
 6. Section **Equipment**. Empty state **No equipment added. Add the equipment covered by the requested quantities above.** Primary section action **Add laptop request**.
 
 **Footer.** Left **Back to Requisitions**. Right secondary **Save draft** and primary **Continue to requirements**, disabled. Immediately above the disabled action show **Add the laptop request matching the requested quantities.** A Departmental Author has no cancel/withdraw command.
@@ -1045,9 +1094,11 @@ Footer left **Cancel**; right primary **Start requisition**. Both enabled. No ST
 
 **REQ-DES-03-CONTRIBUTOR — isolated contributing-author variant.** Fixture: Asha Odhiambo; Departmental Author assigned only to Human Resources Management and Development; the combined Draft already contains both approved-requirement rows and both equipment rows. Keep the same page and full combined context. The HR Management and Development approved-requirement and equipment rows are editable. The Digital Health rows, Approved purchase section, shared Request information and every shared Requirements value are read-only. The only footer actions are **Back to Requisitions** and **Save my changes**. Do not show Cancel draft, Continue, Send, Submit, Return, Withdraw, Request Planning correction or any decision action. After save, show **Your changes are saved in the combined requisition.**
 
-**Visual check.** The user sees business need, requested amount and equipment in one task. The isolated contributor can change only their own source/item content and can still understand the combined request. “Drawdown”, canonical IDs and routing algorithms do not appear in the ordinary composition.
+**Comprehension acceptance.** The user sees the approved scope, requested amount, equipment gap and next action without first reading source provenance. The isolated contributor can change only their own source/item content and can still understand the combined request. “Drawdown”, canonical IDs and routing algorithms do not appear in the ordinary composition.
 
 ### 13.5 REQ-DES-04 — Add laptop request
+
+**Archetype and hierarchy.** Focused dialog. Level 1 is the shared equipment definition being created; Level 2 is the two department-specific quantities and intended uses; technical requirements belong to the next task and do not enter this dialog.
 
 **Purpose.** Capture one shared laptop definition while creating the two required source-linked equipment records.
 
@@ -1068,6 +1119,8 @@ Footer left **Cancel**; right primary **Add 2 equipment rows**. The action is en
 **Visual check.** The user enters shared category, name and delivery once. The implementation still retains one item per approved requirement and never merges source identities.
 
 ### 13.6 REQ-DES-05 — Draft: Requirements
+
+**Archetype and hierarchy.** Guided requirements editor. Level 1 is whether the standard package still needs review and what blocks continuation; Level 2 is the selected technical, support and acceptance content; Level 3 is proposal/version evidence. The screen is a controlled workbench, not a wall of equal tables.
 
 **Purpose.** Define the minimum supplier-facing requirements and how delivery will be accepted.
 
@@ -1096,9 +1149,11 @@ Footer left **Cancel**; right primary **Add 2 equipment rows**. The action is en
 
 **Validation variant.** Keep every valid row and entered value. Place exact issues above the affected section and bind field errors locally. Do not reset the page or show one undifferentiated blocker count.
 
-**Visual check.** The complete routine package is visible before confirmation, but the user does not create sixteen standard rows one at a time. Review required and Reviewed are never shown together. Strong headings and compact tables keep the package readable.
+**Comprehension acceptance.** The user understands that the package is suggested, identifies what must be reviewed and confirms it once without creating sixteen rows individually. Review required and Reviewed are never shown together. Use one continuous requirements workbench with strong group headings and compact rows; do not wrap each requirement in a card or repeat the target/status on every line when the group already establishes it.
 
 ### 13.7 REQ-DES-06 — Draft: Review and submit
+
+**Archetype and hierarchy.** Submission review. Level 1 is readiness, the delivery warning and the next responsible person; Level 2 is the concise complete-request summary; Level 3 is expanded structured content, history and technical identities.
 
 **Purpose.** Verify the complete request and send it to the next responsible person.
 
@@ -1110,7 +1165,7 @@ Footer left **Cancel**; right primary **Add 2 equipment rows**. The action is en
 
 **Composition, top to bottom.**
 
-1. **Purpose and approved purchase** starts open because it contains the date warning. Its summary is **Clinical training and deployment laptops · Digital Health and HR Management and Development · Open Tender**. Detail contains requirement title, business need, expected result, strategic objective, method and all three dates.
+1. **Purpose and approved purchase** starts open because it contains the date warning. Its summary is **Clinical training and deployment laptops · Digital Health and HR Management and Development · Open Tender · Reserved for Youth**. Detail contains requirement title, business need, expected result, strategic objective, method, the plain-language designation, any applicable County requirement and all three dates. Exact rule identities remain under Record details; APP-wide reservation percentages and targets do not appear.
 2. **Amounts requested** starts closed with summary **2 departments · 250 Each · KES 50,000,000.00** and **Show details**. Detail contains both source rows and totals.
 3. **Equipment** starts closed with summary **2 laptop rows · one shared specification**. Detail contains both fixture item rows.
 4. **Requirements and support** starts closed with summary **11 technical requirements · 36-month warranty · support within Kenya**. Detail contains all eleven grouped §13.1 technical rows and all six warranty/support values.
@@ -1128,6 +1183,8 @@ Each closed section retains its complete content and changes **Show details** to
 
 ### 13.8 REQ-DES-07 — Head of User Department review
 
+**Archetype and hierarchy.** Review/decision. Level 1 is the certification decision, scope and consequence; Level 2 is the complete departmental request and visible exceptions; Level 3 is source, version and audit evidence.
+
 **Purpose.** Confirm the complete departmental request or return it with one actionable correction.
 
 **Fixture outside the artboard.** Dr Peter Kimani; lead Head of User Department; immutable Version 1; 8 Mar 2027, 09:00 EAT.
@@ -1135,6 +1192,8 @@ Each closed section retains its complete content and changes **Show details** to
 **Header.** Title **Review departmental requisition**. Description **Confirm that the request accurately states the departments’ need and minimum requirements.** Badge **Awaiting your approval**. Requisition reference beneath title. No header action.
 
 **Top result.** **Ready for departmental submission**. Visible context: Prepared by Grace Wanjiku; Contributing departments both listed; Submitting department **Digital Health**.
+
+Immediately below, state the decision question: **Does this requisition accurately state both departments’ need and minimum requirements?** The certification consequence remains visible with the decision area; it is not buried in record detail.
 
 Use the result-first ordered review and disclosure states from REQ-DES-06. Above the footer show this exact certification statement in a distinct bordered panel: **I confirm that this requisition states the departments’ operational need and minimum requirements and may be submitted to Procurement.**
 
@@ -1144,9 +1203,11 @@ Use the result-first ordered review and disclosure states from REQ-DES-06. Above
 
 **Submitted HoD variant.** After submission and before authorisation, Dr Peter Kimani sees the same complete Version read-only with badge **Submitted to Procurement**. No edit, return, submit or Procurement-decision action appears. Quiet actions are **Request Planning correction** and **Withdraw requisition**, using the same dialogs. A successful withdrawal shows terminal status **Withdrawn** and no fresh Draft.
 
-**Visual check.** Peter sees one complete request and one certification decision, not a second preparation workflow or contributor-by-contributor approval chain.
+**Comprehension acceptance.** Peter can state what he is certifying, which departments it covers and where the request goes next before opening supporting detail. He sees one complete request and one certification decision, not a second preparation workflow or contributor-by-contributor approval chain.
 
 ### 13.9 REQ-DES-08 — Procurement authorisation
+
+**Archetype and hierarchy.** Review/decision. Level 1 is whether authorisation is lawful now and its immediate financial/procurement consequence; Level 2 is funding, Planning availability, certification and complete request; Level 3 is compatibility detail, transaction evidence and history.
 
 **Purpose.** Decide whether the complete requisition can proceed to Tender Preparation.
 
@@ -1156,13 +1217,15 @@ Use the result-first ordered review and disclosure states from REQ-DES-06. Above
 
 **Top result.** Green **Ready to authorise**. Directly below show **Authorising will reserve KES 50,000,000.00 and allow Tender Preparation to begin.**
 
+State the decision question beside that consequence: **Can this complete requisition lawfully use the approved-plan amount and current funding now?** Do not lead with nine compatibility checks or reservation mechanics.
+
 **Composition, top to bottom.**
 
 1. **Current funding** starts open. Render every Funding fixture fact from §13.1 and retain the two separately labelled source rows.
 2. **Planning availability** starts open: Status Eligible; Quantity available 250 Each; Value available KES 50,000,000.00; no unresolved correction hold.
 3. **Departmental certification** starts open: Submitted by Dr Peter Kimani; Lead department Digital Health; Submitted at 8 Mar 2027, 09:00 EAT.
 4. Reuse the complete review summaries and expandable detail from REQ-DES-06. Purpose and approved purchase starts open because the delivery-date warning remains part of the submitted Version. Other non-exception detail starts closed; Current funding remains the first HOPF decision evidence.
-5. **Procurement checks** starts closed with summary **8 checks passed** and **Show details**. Detail contains every §13.1 compatibility row in the same order. If any check fails, this section starts open, names the failed check and the result is not Ready to authorise.
+5. **Procurement checks** starts closed with summary **9 checks passed** and **Show details**. Detail contains every §13.1 compatibility row in the same order. If any check fails, this section starts open, names the failed check and the result is not Ready to authorise.
 6. Decision statement: **I authorise this requisition. The approved-plan amounts will be used, funding will be reserved and Tender Preparation may begin.**
 
 **Footer.** Far left **Request Planning correction**; secondary **Return to department**; right primary **Authorise requisition**. Text action **Change submitting department** appears beside Departmental certification, not in the footer.
@@ -1179,9 +1242,11 @@ Use the result-first ordered review and disclosure states from REQ-DES-06. Above
 
 **Technical-reader variant.** Same complete content and result evidence; every business action and decision statement absent.
 
-**Visual check.** Charles sees the result and financial consequence first, the complete request second and technical compatibility evidence last. No decision requires decoding transaction terminology.
+**Comprehension acceptance.** Charles can state the decision, KES 50,000,000.00 reservation effect, KES 10,000,000.00 remaining and Tender consequence before opening technical evidence. He sees the complete request second and compatibility detail last; no decision requires decoding transaction terminology.
 
 ### 13.10 REQ-DES-09 — Authorisation confirmation
+
+**Archetype and hierarchy.** Focused irreversible-action confirmation. Show only the decision, quantity/value, funding effect and consequence required to confirm it.
 
 **Purpose.** Confirm the material effects of authorisation.
 
@@ -1190,6 +1255,8 @@ Use the result-first ordered review and disclosure states from REQ-DES-06. Above
 Do not display command names, transaction boundaries or “handoff” terminology.
 
 ### 13.11 REQ-DES-10 — Authorised requisition
+
+**Archetype and hierarchy.** Authorised-record detail. Level 1 is what was authorised and whether Tender Preparation can start; Level 2 is the immutable business content and funding reservations; Level 3 is drawdown, handoff, lineage and audit evidence.
 
 **Purpose.** Read the authorised requirements and continue to the next procurement stage.
 
@@ -1215,6 +1282,8 @@ Use the complete review sections from REQ-DES-06. Add section **Funding reservat
 
 ### 13.12 REQ-DES-11 — Returned and stopped work
 
+**Archetype and hierarchy.** Exception/correction detail. Level 1 is what stopped, whether the record is editable and who owns the next step; Level 2 is the correction request/outcome and affected business scope; Level 3 is full preserved content and owner-event history. A stopped record never borrows Draft styling.
+
 **Returned Draft.** Reuse REQ-DES-03 or REQ-DES-05 according to the governed affected section. At the top show **Correction requested**, **Replace the processor wording with a measurable, supplier-neutral minimum**, Returned by **Dr Peter Kimani**, Returned at **8 Mar 2027, 09:10 EAT** and **Go to affected section**, targeting Technical requirements. The copied Draft is already open for correction; no Resume or Version-selection action.
 
 **Returned reviewed Version.** History opens the exact earlier Version as a complete read-only review with badge **Returned**, the decision actor/time, correction reason, affected section and authorised link to the current copied Draft. It has no edit, route or decision action.
@@ -1238,6 +1307,8 @@ Variants:
 
 ### 13.13 REQ-DES-12 — Common and access states
 
+**Archetype and hierarchy.** Each state inherits the parent surface's orientation and content hierarchy where disclosure is authorised. The state message and safe recovery action replace—not sit above—stale task or decision content.
+
 | Variant | Visible composition | Actions |
 |---|---|---|
 | Loading | Skeleton only; no stale header/content | None |
@@ -1246,6 +1317,8 @@ Variants:
 | Load failure | **Procurement Requisitions could not be loaded.** | Try again |
 | Stale Draft | Existing page retained with **This requisition changed after you opened it. Review the latest version before saving.** | Review latest version |
 | Unsupported product | Approved purchase fixture title; Requirement product **Software integration**; **This approved purchase requires software integration, which this release does not support.** | Back to Requisitions |
+| Reservation rule unavailable | Approved purchase fixture title; **Reserved for Youth**; Rule **Not ready**; **The applicable reservation rule is not ready for this purchase. Ask your KenTender administrator to complete the rule in System setup.** | View approved purchase; Back to Requisitions; authorised System Manager may inspect the exact rule; no Start requisition |
+| Reservation treatment unsupported | Approved purchase fixture title; name the unsupported category or County overlap; **This reservation treatment is not supported by the installed IT-equipment Tender format.** | View approved purchase; Back to Requisitions; no Start requisition |
 | Existing open requisition | **REQ-MOH-2027-033-001 · Draft · Request details need attention** | Open existing requisition |
 | Existing procurement scope | **This approved purchase already has an authorised requisition. Additional requirements must use a separate approved purchase.** Preserve the existing authorised/published proceeding and identify the affected approved requirement only when authorised. | View approved purchase; no local add-source, bypass or unlock |
 | Remaining original amount | **This request uses only the remaining amount from the original approved purchase.** Show original, previously used and still-available quantity/value separately; an isolated example is 250 Each / KES 50m original, 100 Each / KES 20m used, 150 Each / KES 30m still available. | Normal Start/Authorise remains available only when every other current guard passes |
@@ -1258,6 +1331,29 @@ Variants:
 | Technical read | Complete record in its actual state | Read/navigation/export only |
 
 All narrow artboards preserve table meaning through horizontal scrolling or labelled row cards. They do not drop Department, Requirement, Quantity, Value, Pass condition, Result or Action columns.
+
+### 13.14 Complete design inventory and Stage 2 review gate
+
+Every composition and named reset below is required design evidence. A variant missing an exact owner-generated identity, date, reason, amount or state is not sent to design until that fixture exists.
+
+| Family | Required compositions |
+|---|---|
+| REQ-DES-01 | Ready to start; Draft task; assigned decision; none ready; technical register. |
+| REQ-DES-02 | Supported purchase; unsupported product; reserved procurement unsupported. |
+| REQ-DES-03 | Empty equipment; complete shared equipment; returned correction; isolated contributing Author. |
+| REQ-DES-04 | Two-source shared item; one-source item; validation failure. |
+| REQ-DES-05 | Review required; reviewed/complete; local validation issue. |
+| REQ-DES-06 | Ready to send; warning; direct HoD; withdraw confirmation. |
+| REQ-DES-07 | HoD decision; return dialog; submitted read-only. |
+| REQ-DES-08 | Ready; return; change submitting department; Planning correction; funding shortfall; hold; technical read. |
+| REQ-DES-09 | Authorisation confirmation. |
+| REQ-DES-10 | Procurement Officer; HOPF; consumed; revoked; Auditor/technical read; revocation dialog. |
+| REQ-DES-11 | Returned Draft/version; Planning correction open/in progress/resolved/no change/unavailable/another open; Planner; eligible/ineligible fresh start. |
+| REQ-DES-12 | Every common/access state in §13.13 against its named parent surface. |
+
+Before assembling the design prompt, the module owner confirms KT-STD-001 v1.7 §§2 and 10: correct archetype and primary question; Level 1–3 hierarchy; exact first-view content; one lawful primary action; visible material issue; restrained containers, borders, badges and colour; complete narrow-layout meaning; and definite actor/state fixtures. Only KT-STD §2 and this §13 are then supplied to the design tool; §10 remains an implementation review rule. Reconcile current owner facts against LAW v1.2, PLN v1.25, NDS v1.14, CFG v0.14, AUTH v1.9, BUD v1.10 and STR v1.8 without changing this document’s functional boundary.
+
+Review each artboard twice: first viewport at 1440 × 1024 for orientation, priority and action; then complete desktop and narrow layouts for evidence reachability, keyboard order, wrapping and error recovery. The first-view reviewer must answer **What is this? What matters now? What can this actor do? What happens if they do it?** without opening a disclosure. Complete evidence must remain reachable, but simultaneous display of all evidence is not a completeness requirement. Run §18.4 representative-user tasks after static review; document or artboard approval is not usability proof.
 
 ## 14. Functional interaction requirements
 
@@ -1305,7 +1401,7 @@ All narrow artboards preserve table meaning through horizontal scrolling or labe
 
 Every new visible control must be added to this map before implementation. Labels do not rename machine commands or event schemas.
 
-Common page behaviour and accessibility follow KT-STD-001 v1.6 §3 and §3A. The exact control map above is authoritative; an artboard may not imply a second destination or effect.
+Common page behaviour and accessibility follow KT-STD-001 v1.7 §3 and §3A. The exact control map above is authoritative; an artboard may not imply a second destination or effect.
 
 ### 14.2 Workspace and preparation
 
@@ -1396,7 +1492,7 @@ Submitted, returned, authorised, withdrawn, revoked, superseded and stopped Vers
 
 ## 16. Deterministic Ministry of Health seed
 
-Use SEED v1.3’s shared Ministry of Health identities/chronology with approved BUD v1.9 and NDS v1.13 source boundaries. The complete structured package remains below. Positive REQ fixtures are conditional; they never force the default BASE Plan Active.
+Use SEED v1.3’s shared Ministry of Health identities/chronology with approved BUD v1.10 and NDS v1.14 source boundaries. The complete structured package remains below. Positive REQ fixtures are conditional; they never force the default BASE Plan Active.
 
 ### 16.1 Prerequisites and actors
 
@@ -1411,17 +1507,19 @@ Use SEED v1.3’s shared Ministry of Health identities/chronology with approved 
 | Head of Procurement Function | Charles Mutiso · `charles.mutiso@moh.example.test` |
 | Auditor | Naomi Chebet · `naomi.chebet@moh.example.test` |
 
-Each user receives only the role-bound `User Responsibility Assignment`s required by section 8 — no Frappe User Permission, no bespoke capability grant. No new actor beyond KT-STD-001 v1.6 §8.3's existing register is required.
+Each user receives only the role-bound `User Responsibility Assignment`s required by section 8 — no Frappe User Permission, no bespoke capability grant. No new actor beyond KT-STD-001 v1.7 §8.3's existing register is required.
 
-Configuration prerequisites: native FY `2027-2028` (1 Jul 2027–30 Jun 2028), exact HRMD/DHI OUs, native Each selectable/whole-number through CFG’s inspected adapter, KES scale 2 CurrencyBasis, HWD approved 60m and fully available in the pre-REQ fixture. HWD is **Entity-wide** in the fresh BUD v1.9 seed so both source OUs are eligible. No live immutable line-owner patch is authorized by a seed reset.
+Configuration prerequisites: native FY `2027-2028` (1 Jul 2027–30 Jun 2028), exact HRMD/DHI OUs, native Each selectable/whole-number through CFG’s inspected adapter, KES scale 2 CurrencyBasis, HWD approved 60m and fully available in the pre-REQ fixture. HWD is **Entity-wide** in the fresh BUD v1.10 seed so both source OUs are eligible. No live immutable line-owner patch is authorized by a seed reset.
 
-Grace has separate Author assignments in both OUs. Peter has HRMD authority and DHI authority effective from 1 Dec 2026, so his March certification is valid. Charles is **Charles Mutiso** (`charles.mutiso@moh.example.test`), the shared SEED/PLN/REQ HOPF actor. BUD v1.9’s isolated references to Charles Kariuki are an editorial defect to reconcile, not a new actor or authority; §22.3 records it.
+For the conditional positive REQ reset only, seed or simulate an exact `IT-EQUIPMENT-OPEN-V1` test release with status **Available**, the governed digest and support for Youth plus the bound rule snapshot. Name it as test evidence. Do not change the status of the proposed production candidate or infer owner approval from fixture success.
+
+Grace has separate Author assignments in both OUs. Peter has HRMD authority and DHI authority effective from 1 Dec 2026, so his March certification is valid. Charles is **Charles Mutiso** (`charles.mutiso@moh.example.test`), the shared SEED/PLN/REQ HOPF actor. Current approved owner fixtures must use this identity; an older Charles Kariuki fixture is historical editorial evidence, not a new actor or authority.
 
 Positive configuration/method/reservation eligibility uses the declared fixture-verified provenance, not production-law Verified. CFG-XD-001’s shared May 2027 versus July-start FY/applicability conflict remains a coordinated prerequisite. Do not shift Tender dates to 2028, change FY metadata or waive date checks to make a positive claim.
 
 ### 16.2 Exact Planning projection and fixture mapping
 
-BASE has a blocked Draft Plan with None/None designation and cannot start a REQ. The conditional positive READY scenario uses planned Youth on the 50m laptop item, complete mandatory owner readiness and an actually Active Plan. It does not assert candidate entitlement or current legal verification.
+BASE remains a blocked Draft Plan and cannot start a REQ, irrespective of its displayed designation. The conditional positive READY scenario uses reservation category Youth on the 50m laptop item, County-residents restriction Not applicable, complete mandatory owner readiness and an actually Active Plan. It proves only that the supported product and applicable verified rule are available; it does not assert any candidate's entitlement.
 
 | Fact | Exact positive value |
 |---|---|
@@ -1431,14 +1529,14 @@ BASE has a blocked Draft Plan with None/None designation and cannot start a REQ.
 | Estimated completion | 24 Sep 2027 |
 | REQ operational latest delivery | 30 Sep 2027 |
 | Original allowance | 250 Each / KES 50,000,000.00; not a new allowance on APP copy |
-| Reservation designation / structure | Youth / Single lot / Single year; Open Tender |
+| Reservation designation / structure | Youth / County-residents Not applicable / Single lot / Single year; Open Tender; exact verified Youth rule snapshot bound |
 
 | Human Plan-line reference | Canonical `plan_item_line_id` (allocation) | Human source reference | Canonical `source_line_id` | Exact accepted Need revision | OU | Quantity / value |
 |---|---|---|---|---|---|---|
 | PIL-MOH-033-001 | PSA-MOH-2027-033-001 | SRC-MOH-033-001 | NDS-MOH-2027-0003 | NDS-MOH-2027-0003-V002 | OU-MOH-HRMD | 100 Each / KES 20m |
 | PIL-MOH-033-002 | PSA-MOH-2027-033-002 | SRC-MOH-033-002 | NDS-MOH-2027-0004 | NDS-MOH-2027-0004-V001 | OU-MOH-DHI | 150 Each / KES 30m |
 
-This distinguishes SEED’s legacy displayed row/source references from PLN v1.20’s canonical exact-allocation/stable-source contract. REQ drawdown IDs and item IDs are separately generated/retained; an item links to its REQ drawdown, which links to this exact allocation. Freeze actual accepted DPP entry/Submission IDs and current item-version ID from the owner builder, not from guessed strings. If existing published handoffs use a different wire identity interpretation, preserve their historical data and coordinate a documented REQ/TPR cutover; do not rewrite old IDs in place.
+This distinguishes SEED’s legacy displayed row/source references from PLN v1.25’s canonical exact-allocation/stable-source contract. REQ drawdown IDs and item IDs are separately generated/retained; an item links to its REQ drawdown, which links to this exact allocation. Freeze actual accepted DPP entry/Submission IDs and current item-version ID from the owner builder, not from guessed strings. If existing published handoffs use a different wire identity interpretation, preserve their historical data and coordinate a documented REQ/TPR cutover; do not rewrite old IDs in place.
 
 No REQ seed writes Planning/Budget tables directly or sets the Plan Active. Provider-test stubs may supply an isolated eligible response but must be labelled contract fixtures; they are not end-to-end approval evidence.
 
@@ -1490,7 +1588,7 @@ Exact timeline for fixture 4, the authorised case:
 
 These are **mutually exclusive reset profiles**, not six coexisting open Requisitions against the same stable item. Use an isolated test namespace and restore it after each profile; distinct references alone cannot bypass one-open or consumed-allowance guards. The positive lifecycle uses the shared root reference with a profile-specific reset. Handoff reference may display the REQ reference; its internal handoff ID remains separately returned by the owner command, never inferred from the visible label.
 
-The correction profiles below require actual owner request/hold recording and terminal outcome handling to claim end-to-end success. An isolated mock demonstrates only the REQ provider/consumer contract. PLN v1.20 now specifies the inbound workflow; its code implementation has not been inspected in this review.
+The correction profiles below require actual owner request/hold recording and terminal outcome handling to claim end-to-end success. An isolated mock demonstrates only the REQ provider/consumer contract. PLN v1.25 specifies the inbound workflow; its code implementation has not been inspected in this review.
 
 ### 16.4A Additional isolated profiles
 
@@ -1507,7 +1605,7 @@ The correction profiles below require actual owner request/hold recording and te
 | REQ-SC-LEAD-CHANGE | HOPF chooses another contributor at review; reasoned Return retains old certification, new Draft requires new lead’s submission before authorisation. |
 | REQ-SC-REVOKE-CONSUME-RACE | TPR creation/consumption and REQ revocation serialize; exactly one succeeds, with no consumed-revoked handoff or released Tender funds. |
 | REQ-SC-PRECISION | Exact KES strings and whole-number Each across services/storage; high-precision boundary/overflow/fractional values rejected without epsilon/rounding. |
-| REQ-SC-COMPATIBILITY | Each of eight §5A checks fails independently before Draft creation; authorisation rechecks; no Multi-year or non-Open-Tender bypass. |
+| REQ-SC-COMPATIBILITY | Each of the nine §5A checks fails independently before Draft creation; authorisation rechecks; no Multi-year or non-Open-Tender bypass. |
 | REQ-SC-OPEN-SLOT | Two departments concurrently Prepare for one stable item; one root exists. Terminal outcome/fresh-start and revoked-successor attempts compete for same slot. |
 
 A current clock/source/owner fixture is required for every positive result. Shared May invitation/FY applicability conflicts remain governed by SEED/CFG, not re-dated locally. The stopped UI examples use an isolated 10-Mar request and 12-Mar outcome, not extra events added to the full 15-Mar authorisation narrative.
@@ -1524,7 +1622,7 @@ A current clock/source/owner fixture is required for every positive result. Shar
 
 ## 17. Acceptance contract
 
-All 84 v1.8 acceptance results are retained or explicitly reconciled in this single operative set. Criteria 085–118 incorporate the approved usability amendment. These are required results, not claims of tests executed during document review. Historical REQ-AC and REQ-UX-AC identifiers remain traceability only.
+All 118 approved v1.9 acceptance results are retained or explicitly reconciled in this approved successor. REQ110-AC-001–011 retain the v1.10 Stage 2 presentation and item-level reservation path. REQ111-AC-001–006 add the current-baseline, APP-wide-boundary and consistency corrections. These are required results, not claims of tests executed during document review. Historical REQ-AC and REQ-UX-AC identifiers remain traceability only.
 
 | ID | Prior criterion / source | Required result |
 |---|---|---|
@@ -1549,7 +1647,7 @@ All 84 v1.8 acceptance results are retained or explicitly reconciled in this sin
 | REQ19-AC-019 | REQ-AC-019 | A Departmental Author routes one complete locked Version to the HoD. |
 | REQ19-AC-020 | REQ-AC-020 | A Head of User Department sees the complete Version and may return or submit it. |
 | REQ19-AC-021 | REQ-AC-021 | A HoD preparing directly may submit without an invented departmental-review task. |
-| REQ19-AC-022 | REQ-AC-022 | HOPF sees the complete immutable Version, independent current original allowance/scope/hold evidence and full-array Budget availability, all eight compatibility checks and frozen departmental certification. |
+| REQ19-AC-022 | REQ-AC-022 | HOPF sees the complete immutable Version, independent current original allowance/scope/hold evidence and full-array Budget availability, all nine compatibility checks and frozen departmental certification. |
 | REQ19-AC-023 | REQ-AC-023 | No technical reviewer, Finance approver, Accounting Officer or committee stage exists in the Requisition chain. |
 | REQ19-AC-024 | REQ-AC-024 | Procurement return creates a copied Draft successor and preserves the submitted Version. |
 | REQ19-AC-025 | REQ-AC-025 | REQ authorisation, Planning drawdown/permanent first-authorisation scope marker, every Budget reservation, decision, handoff and outbox commit together or all roll back. |
@@ -1565,12 +1663,12 @@ All 84 v1.8 acceptance results are retained or explicitly reconciled in this sin
 | REQ19-AC-035 | REQ-AC-035 | Repeated seed and command execution remains idempotent. |
 | REQ19-AC-036 | REQ-AC-036 | No STD Configuration, manifest, composer profile or generic schema object exists. |
 | REQ19-AC-037 | REQ-AC-037 | No attachment-only specification can reach authorisation. |
-| REQ19-AC-038 | REQ-AC-038 | TPR receives all structured items, technical/service/acceptance rows; v0.8 matching precision/single-year/consumption contracts require actual integration evidence, not merely a document assertion. |
+| REQ19-AC-038 | REQ-AC-038 | TPR receives all structured items and technical/service/acceptance rows; TPR v0.9 matching precision/single-year/consumption contracts require actual integration evidence, not merely a document assertion. |
 | REQ19-AC-039 | REQ-AC-039 | A drawdown line's Organisation Unit must be among the Plan Item's contributing departments; any other value is rejected with `REQ_DEPARTMENT_NOT_CONTRIBUTING`. |
 | REQ19-AC-040 | REQ-AC-040 | Budget’s complete-array funding check/locked reservation rejects any per-line aggregate shortfall; exact shared-line requirement/availability/shortfall are returned and the full authorisation rolls back. |
 | REQ19-AC-041 | REQ-AC-041 | Every authorised Requisition's Budget position change is visible in BUD-CHG-001's own reservation records, matching this module's reservation IDs exactly. |
 | REQ19-AC-042 | REQ-AC-042 | No pe_fy_context_id, PE/FY user-permission scope argument or authority bypass exists. Record FY and source OU remain required eligibility facts, not forbidden financial inputs. |
-| REQ19-AC-043 | REQ-AC-043 | Reservation category and lotting indicator are read-only throughout, and an unsupported value is rejected at product-suitability check with `REQ_PRODUCT_UNSUPPORTED`. |
+| REQ19-AC-043 | REQ-AC-043 | Planned designation (`reservation_category`) and lotting indicator are read-only throughout, and an unsupported value is rejected at product-suitability check with `REQ_PRODUCT_UNSUPPORTED`. |
 | REQ19-AC-044 | REQ-AC-044 | RequestUpstreamPlanCorrection atomically preserves/stops the exact pre-authorisation Version, cancels its tasks, records the owner request and makes item hold effective; owner failure rolls back all. |
 | REQ19-AC-045 | REQ-AC-045 | HOPF cannot authorise a Version they submitted departmentally; HOPF alone cannot prepare a departmental Draft. Dual-role actors exercise exact current capacity with no self-authorisation. |
 | REQ19-AC-046 | REQ-AC-046 | Every field in this document passes the field-purpose rule in §2.2; no field exists without a stated decision, control and downstream effect. |
@@ -1596,8 +1694,8 @@ All 84 v1.8 acceptance results are retained or explicitly reconciled in this sin
 | REQ19-AC-066 | FU-25; resolved follow-up | Resolved does not resurrect the stopped Version or carry approvals/funds. Explicit fresh start binds current corrected exact lineage, fresh root/row IDs and explicit predecessor mapping. |
 | REQ19-AC-067 | FU-25; outcome idempotency | Same event/payload no-op; conflicting duplicate/schema/producer rejected; gaps/out-of-order/missing identities reconciled with pending state. Event receipt never creates a Draft or authorisation. |
 | REQ19-AC-068 | FU-25; fresh-start race | Fresh-start and normal Prepare against one stable item yield one open root across departments; exact retries return the same result, and unauthorized existing records are not disclosed. |
-| REQ19-AC-069 | BUD v1.9; one check token | REQ sends one complete array and receives one bound expiring Budget token; independent per-row tokens/subsets, Finance task arguments and changed-payload retries are rejected. |
-| REQ19-AC-070 | BUD v1.9; shared line | Two 20m/30m rows against 40m available produce 10m aggregate shortfall and no effects; a successful 50m draw produces two distinct reservations, not a merged one. |
+| REQ19-AC-069 | BUD v1.10; one check token | REQ sends one complete array and receives one bound expiring Budget token; independent per-row tokens/subsets, Finance task arguments and changed-payload retries are rejected. |
+| REQ19-AC-070 | BUD v1.10; shared line | Two 20m/30m rows against 40m available produce 10m aggregate shortfall and no effects; a successful 50m draw produces two distinct reservations, not a merged one. |
 | REQ19-AC-071 | FU-30; exact precision | Money/Quantity round-trip exactly through BUD/PLN/NDS/REQ/TPR contracts and persistence; at least 18 integral digits plus supported decimals; reject floats, excess scale, fractional Each and overflow without rounding/epsilon. |
 | REQ19-AC-072 | Wire / identity | PSA allocation IDs, stable Need/direct source IDs, Need -V revision IDs, REQ drawdown/item IDs and human PIL/SRC labels retain distinct meanings. Legacy published handoffs are not silently rekeyed or rehashed. |
 | REQ19-AC-073 | Lead governance | HOPF lead change cannot relabel previous certification; copied Draft and new lead submission precede authorisation. Deterministic default/tie and current Draft drawdown changes expose the effective lead. |
@@ -1606,9 +1704,9 @@ All 84 v1.8 acceptance results are retained or explicitly reconciled in this sin
 | REQ19-AC-076 | UI correction | Stopped detail renders the full structured package, original reason, each outcome, older/new lineage, remaining hold and exact fresh-start actions; no summary-only package or Resume/Clear hold control. |
 | REQ19-AC-077 | UI gate separation | Authorisation displays temporary hold, permanent scope lock and per-source remaining allowance separately; held and shared-line-shortfall states block positive decision without hiding the immutable content. |
 | REQ19-AC-078 | UI technical access | Administrator/System Manager have full technical read without business decisions; queues/routes/files share AUTH checks and ordinary Forbidden paints no protected content. |
-| REQ19-AC-079 | Compatibility / catalogue | All eight product gates are named independently. Network connectivity uses Required multi-select consistently; all 11 fixture technical rows apply to both exact items through All items, not an ambiguous title. |
+| REQ19-AC-079 | Compatibility / catalogue | All nine product gates are named independently. Network connectivity uses Required multi-select consistently; all 11 fixture technical rows apply to both exact items through All items, not an ambiguous title. |
 | REQ19-AC-080 | Dates | Plan/source boundary 31 Dec 2027, estimated completion 24 Sep 2027 and REQ operational date 30 Sep 2027 remain distinct; REQ does not overwrite Plan dates or publish invitation/delivery actuals. |
-| REQ19-AC-081 | Fixture integrity | BASE remains blocked Draft; positive REQ uses conditional READY/Youth plus owner prerequisites. Lifecycle fixtures reset separately, not six concurrent roots that evade one-open/allowance rules. |
+| REQ19-AC-081 | Fixture integrity | BASE remains blocked Draft; positive REQ uses conditional READY/Youth plus the exact verified reservation rule and owner prerequisites. Lifecycle fixtures reset separately, not six concurrent roots that evade one-open/allowance rules. |
 | REQ19-AC-082 | Actor/ownership consistency | Shared HOPF is Charles Mutiso with exact login; Peter’s March DHI authority is valid from 1 Dec; Budget owns reservations and CFG catalogue; no new Charles Kariuki actor is seeded. |
 | REQ19-AC-083 | Release boundaries | Only current owner evidence can close contract/precision/transaction/seed claims; LAW/CFG applicability and unprovided STD/E2E documents remain explicit, with no invented conformance or production verification. |
 | REQ19-AC-084 | Full carry-forward | All 84 v1.8 results and the complete 25-row characteristic catalogue are retained or explicitly reconciled; five validation groups map to three visible tasks, the detailed 11-row/five-check package remains available, and the full change table guides reimplementation. |
@@ -1622,7 +1720,7 @@ All 84 v1.8 acceptance results are retained or explicitly reconciled in this sin
 | REQ19-AC-092 | REQ-UX-AC-08 | Every returned Draft opens the governed affected section with the exact correction comment visible; the reviewed Version remains immutable in History. |
 | REQ19-AC-093 | REQ-UX-AC-09 | HoD and HOPF see the complete request in the same stable order, with role-specific result, statement and actions only. |
 | REQ19-AC-094 | REQ-UX-AC-10 | HOPF sees current funding, available-after amount, Planning availability and every material blocking exception before Authorise requisition. |
-| REQ19-AC-095 | REQ-UX-AC-11 | All eight compatibility checks remain independently visible and enforced; their lower placement does not reduce the gate. |
+| REQ19-AC-095 | REQ-UX-AC-11 | All nine compatibility checks remain independently visible and enforced; their lower placement does not reduce the gate. |
 | REQ19-AC-096 | REQ-UX-AC-12 | Authorisation confirmation states quantity, value, Budget Line, available-after amount and the plain-language consequence. |
 | REQ19-AC-097 | REQ-UX-AC-13 | Authorised view contains every item, requirement, support value, acceptance check and reservation; counts never replace content. |
 | REQ19-AC-098 | REQ-UX-AC-14 | Continue to Tender Preparation performs navigation only; Tender creation remains an explicit TPR command. |
@@ -1633,10 +1731,10 @@ All 84 v1.8 acceptance results are retained or explicitly reconciled in this sin
 | REQ19-AC-103 | REQ-UX-AC-19 | Save/validation failure retains still-authorised input and points to the affected section/control; no unsupported autosave is claimed. |
 | REQ19-AC-104 | REQ-UX-AC-20 | Uncertain command outcomes resolve the original idempotency identity before another decision is offered. |
 | REQ19-AC-105 | REQ-UX-AC-21 | Desktop and narrow layouts retain every decision-critical quantity, value, requirement, result and action. |
-| REQ19-AC-106 | REQ-UX-AC-22 | Keyboard, focus, contrast, long-text wrapping and dialog return comply with KT-STD-001 v1.6. |
+| REQ19-AC-106 | REQ-UX-AC-22 | Keyboard, focus, contrast, long-text wrapping and dialog return comply with KT-STD-001 v1.7. |
 | REQ19-AC-107 | REQ-UX-AC-23 | Representative Departmental Author, HoD and HOPF users complete ordinary and correction tasks without button coaching and correctly explain scope, certification, funding and authorisation consequences. |
 | REQ19-AC-108 | REQ-UX-AC-24 | Misunderstanding that an APP update expands an authorised package, authorisation creates a Tender, or a supporting file replaces structured requirements blocks acceptance and requires revision/retest. |
-| REQ19-AC-109 | REQ-UX-AC-25 | KT-STD-001 v1.6 §2 plus §13 alone supplies every exact value, control, actor/state premise and action required to render every artboard; no operative phrase depends on another unavailable section. |
+| REQ19-AC-109 | REQ-UX-AC-25 | KT-STD-001 v1.7 §2 plus §13 alone supplies every exact value, control, actor/state premise and action required to render every artboard; no operative phrase depends on another unavailable section. |
 | REQ19-AC-110 | REQ-UX-AC-26 | Every artboard and reset variant represents one internally possible state; incomplete and complete values, progress labels, issue summaries and enabled actions are never combined. |
 | REQ19-AC-111 | REQ-UX-AC-27 | Every actor in §8 maps to at least one explicit §13 artboard or named actor variant, including the isolated contributing-department Author. |
 | REQ19-AC-112 | REQ-UX-AC-28 | Every §13 business control appears in §14.1, belongs to an actor/state permitted by the lifecycle and has its exact destination or committed result stated. A Departmental Author receives no withdrawal-equivalent control. |
@@ -1646,6 +1744,33 @@ All 84 v1.8 acceptance results are retained or explicitly reconciled in this sin
 | REQ19-AC-116 | REQ-UX-AC-32 | Author, HoD, HOPF, Procurement Officer and authorised readers receive the same ordered section summaries and can reveal every exact row without leaving the record. |
 | REQ19-AC-117 | REQ-UX-AC-33 | Sections with a blocker, warning or requested correction start open and focus the exact affected content; complete non-exception sections may start closed. |
 | REQ19-AC-118 | REQ-UX-AC-34 | A collapsed summary never replaces, truncates or changes the complete record, export, digest, decision payload or accessible detail. |
+
+### 17.1 Retained v1.10 Stage 2 presentation acceptance
+
+| ID | Required result |
+|---|---|
+| REQ110-AC-001 | No field, state, role, permission, command, validation, event, integration, governance, audit or evidence requirement changes solely because of this presentation rewrite. |
+| REQ110-AC-002 | Every REQ-DES family implements its assigned archetype, primary question and Level 1–3 hierarchy from §13. |
+| REQ110-AC-003 | REQ-DES-01 leads with the actor’s exact work or one purchase ready to start; zero-count metrics and the historical register never dominate the workspace. |
+| REQ110-AC-004 | REQ-DES-03 and REQ-DES-05 expose the current completion gap and one next action before source provenance or proposal/version evidence. |
+| REQ110-AC-005 | REQ-DES-06 puts readiness, warning, scope, quantity/value and next responsible person in the first view while keeping every structured requirement reachable. |
+| REQ110-AC-006 | REQ-DES-07 and REQ-DES-08 put the actual decision, consequence and material blocker before expanded evidence; HoD certification and HOPF authorisation remain distinct. |
+| REQ110-AC-007 | REQ-DES-10 makes authorised scope and the next lawful stage immediately clear; REQ-DES-11 makes stopped ownership and fresh-start eligibility immediately clear without Draft styling. |
+| REQ110-AC-008 | Common/access states inherit their parent orientation and replace stale task/decision content; no generic state panel exposes protected facts or ambiguous controls. |
+| REQ110-AC-009 | Colour, containers, tables, borders, badges, uppercase labels and repeated metadata are restrained; emphasis communicates task, issue, state or consequence rather than decoration. |
+| REQ110-AC-010 | At 1440 × 1024 and the prescribed narrow layout, a representative actor identifies what the page is, what matters now, what they can do and the consequence without coaching; §18.4 verifies this separately from document review. |
+| REQ110-AC-011 | `IT-EQUIPMENT-OPEN-V1` accepts `None`, `Youth`, `Women` and `Persons with disabilities`, plus an independently applicable County-residents restriction, only when the exact Available template supports the treatment and the applicable verified rule/overlap snapshots are bound. Unsupported treatment or missing rules fail before Draft creation and again at authorisation; no supplier entitlement is inferred. |
+
+### 17.2 v1.11 reconciliation acceptance
+
+| ID | Required result |
+|---|---|
+| REQ111-AC-001 | REQ accepts only the exact item-level planned designation, separate County treatment and verified rule/overlap snapshots from PLN v1.25. It neither receives nor derives the eligible-current-APP denominator, 30% target, aggregate qualifying allocation, compliance percentage or shortfall. |
+| REQ111-AC-002 | A Budget funding reservation created at authorisation is labelled and treated only as a financial hold. It is never used as statutory-reservation allocation or evidence that the APP-wide 30% target is met. |
+| REQ111-AC-003 | Ordinary user screens label `reservation_category` as **Reserved for** and show **County requirement** only when applicable. Exact internal field and rule identities remain available in supporting detail and audit. |
+| REQ111-AC-004 | The supported start, Draft, review, HoD, HOPF and authorised compositions carry the same inherited item treatment without adding a task or exposing APP-wide reservation arithmetic. |
+| REQ111-AC-005 | Every product-compatibility composition, criterion and isolated failure profile consistently contains nine independent checks. No screen or test reports eight. |
+| REQ111-AC-006 | Active cross-document references use approved LAW v1.2, BUD v1.10, PLN v1.25, NDS v1.14, CFG v0.14, AUTH v1.9, KT-STD v1.7 and STR v1.8; TPR v0.9 and STD-TPL v0.7 remain identified as proposed coordinated downstream contracts until approved and available. |
 
 ## 18. Test and smoke contract
 
@@ -1658,7 +1783,7 @@ The test contract covers the complete domain, cross-module and usability result.
 3. Responsibility tests for every role, scope, list, count, direct route and File, tested against Administrator and System Manager explicitly.
 4. Database tests for uniqueness, optimistic concurrency, atomic authorisation, reversal and idempotency.
 5. Budget-contract tests for `check_funding` success, failure and rollback, and for reservation reversal on revocation.
-6. Contract tests against `GetRequisitionEligiblePlanItem` and the current Tender handoff shape TPR-CHG-001 v0.7 consumes.
+6. Contract tests against `GetRequisitionEligiblePlanItem` and the current Tender handoff shape TPR-CHG-001 v0.9 consumes.
 7. Vue component tests for the three-task progress mapping, control types, conditional fields, read-only presentation, disclosure state, row dependencies and decision dialogs.
 8. Command tests for atomic same-specification item creation/shared edits and atomic selected-package application, including partial-failure, stale-proposal and exact-retry cases.
 9. Browser smoke using the Ministry of Health fixtures, including representative actor and narrow-layout journeys.
@@ -1721,11 +1846,15 @@ Two source rows 20m/30m on one line aggregate before reservation; 40m available 
 
 HOPF lead change returns a copy for new lead certification. Independently race consumption against revocation; one valid result, no Tender tied to a revoked/released handoff. Technical reader sees all content without mutation authority.
 
+**REQ-SMK-15 — Reservation compatibility and rule availability**
+
+A Youth-reserved otherwise eligible Plan Item with its applicable verified rule and supported template remains eligible and produces no candidate-entitlement or APP-wide compliance claim. Separate isolated fixtures prove that an unsupported designation, a missing reservation rule and an unsupported County overlap each create no Requisition root, Version, package or task; the same facts fail authorisation if an older Draft reaches that boundary. The `None` fixture also remains eligible when every other guard passes. Assert that REQ never requests or stores the APP denominator, 30% target, aggregate qualifying allocation or statutory shortfall, and never labels the Budget funding reservation as statutory allocation.
+
 ### 18.3 Required release evidence
 
 - migration/build output;
 - focused unit, domain, responsibility, database, Budget-contract and contract-test results;
-- screenshots for REQ-DES-01–12 and every named reset/actor variant at 1440 × 1024 and usable narrow-width layouts;
+- screenshots for REQ-DES-01–12 and every named reset/actor variant, reviewed both as a first viewport at 1440 × 1024 and as complete desktop and usable narrow-width layouts;
 - scripted Ministry of Health happy-path and return-path walkthroughs;
 - exact generated handoff fixture and digest;
 - proof of all-or-none Planning drawdown and Budget reservation, together;
@@ -1750,13 +1879,14 @@ Give tasks without naming controls.
 | Procurement Officer | Begin Tender Preparation from an authorised requisition. | Understands navigation versus Tender creation. |
 | Auditor | Find the departmental certification, authorisation, source amounts and reservations. | Finds exact historical evidence and does not read current warnings as rewritten history. |
 
-Record completion, wrong turns, assistance, repeated entry, unnecessary expansion, misunderstood consequence and exact participant wording. Any routine need to re-enter shared Laptop details, create standard technical/acceptance rows individually, or open every detail section merely to understand the decision blocks usability acceptance. Misunderstanding of approval, included scope, funding reservation, structured requirements or Tender creation also blocks acceptance. Document approval and a successful prototype walkthrough do not count as participant evidence.
+Record first-view understanding, first action, completion, wrong turns, assistance, repeated entry, unnecessary expansion, misunderstood consequence and exact participant wording. Any routine need to re-enter shared Laptop details, create standard technical/acceptance rows individually, or open every detail section merely to understand the decision blocks usability acceptance. Misunderstanding of approval, included scope, funding reservation, structured requirements or Tender creation also blocks acceptance. Document approval and a successful prototype walkthrough do not count as participant evidence.
 
 ## 19. Implementation constraints
 
-- Implement in `kentender_procurement` with ordinary Frappe records, the registered AUTH-ADR-001 v1.7 permission hooks, private Files, transactions and audit.
+- Implement in `kentender_procurement` with ordinary Frappe records, the registered AUTH-ADR-001 v1.9 permission hooks, private Files, transactions and audit.
 - Use AUTH’s registered role/scope definitions: Author/HoD are OU; HOPF/Planner/Procurement Officer are site-wide; Auditor uses the actual approved oversight scope. Never broaden an OU-limited Auditor by this implementation sentence. Technical read grants no business decision.
-- Call BUD v1.9’s complete-array check/token/reserve contracts in §§8.3–9.1; owners implement locking. Publish actual shared serialization order and prove authorisation/hold/activation/consumption races; no raw cross-module table locks.
+- Call BUD v1.10’s complete-array check/token/reserve contracts in §§8.3–9.1; owners implement locking. Publish actual shared serialization order and prove authorisation/hold/activation/consumption races; no raw cross-module table locks.
+- Keep Planning's APP-wide statutory-reservation arithmetic outside REQ storage, services, screens, exports and handoffs. Consume only the exact item treatment and verified snapshots exposed by PLN v1.25; keep Budget funding-reservation names and events distinct in code and copy.
 - Keep the reviewed IT Equipment package under version control matching the owning Requisition Version.
 - Implement `AddSameSpecificationItems`, `UpdateSharedItemDetails` and `ApplySelectedRequirementPackage` as server-side atomic, idempotent commands; never simulate them with client-side row loops.
 - Keep `LAPTOP-REQUIREMENTS-V1` code-owned and release-versioned. Do not create a Desk configuration surface, generic profile DocType or user-selectable schema.
@@ -1783,26 +1913,28 @@ v1.2 asserted conformance with **E2E-REQ-001 v0.2 — Approved**, for the struct
 |---|---|
 | REQ-CHG-001 v1.8 | Complete predecessor domain model, lifecycle, owner transactions, catalogue, seed, 84 acceptance results and 32-row re-implementation register retained or explicitly reconciled here. |
 | REQ-UX-001 v0.3 — Approved | Governs the three-task workflow, business language, complete self-contained design contract, atomic shared-item/standard-package path, disclosure rules, actor coverage and representative-user acceptance. Incorporated into the body; not a parallel specification. |
-| PLN-CHG-001 v1.20 | Stable/exact source identity, canonical drawdown command, one-open stable item, permanent scope versus temporary correction hold, current financial basis, fixed Single year and separate date boundaries. |
-| Approved BUD v1.9 | Complete-array check/token/reserve and aggregate line availability, per-drawdown reservation identity, exact Money/currency contract, no Planning reservation. |
-| Approved NDS v1.13 / CFG v0.11 | Immutable source revisions, exact Quantity/native UOM adapter, source ownership and effective configuration. Initial Needs/DPP intake flags do not independently gate an otherwise eligible Active-plan REQ. |
+| Approved PLN-CHG-001 v1.25 | Stable/exact source identity, canonical drawdown command, one-open stable item, permanent scope versus temporary correction hold, current financial basis, fixed Single year, separate date boundaries, complete APP-wide reservation denominator and item-level designation ownership. |
+| Approved BUD v1.10 | Complete-array check/token/reserve and aggregate line availability, per-drawdown funding-reservation identity and exact Money/currency contract. Budget funding reservations are not statutory APP reservation allocation. |
+| Approved NDS v1.14 / CFG v0.14 | Immutable source revisions, exact Quantity/native UOM adapter, source ownership and effective configuration. Initial Needs/DPP intake flags do not independently gate an otherwise eligible Active-plan REQ. CFG owns verified procurement-rule configuration; REQ only consumes the applicable snapshots exposed through Planning. |
 | Approved SEED v1.3 | Two sources/items, 100/150 quantities, 20m/30m reservations, BASE versus conditional READY, authoritative Charles Mutiso and March lifecycle, distinct Plan/REQ/estimated dates. |
-| Approved LAW v1.1 | Current legal-verification prerequisites and boundary of design versus statutory interpretation. This review establishes no new legal entitlement or verified production rule. |
-| Approved STR v1.8 / AUTH v1.7 / KT-STD-001 v1.6 | Strategy snapshot, registered live responsibility hooks, immutable authority evidence, technical read, common shell and verification requirements. |
-| Supplied TPR v0.7 | Structured v1.3 handoff consumer baseline, fixed downstream template and full inherited-row ownership. Matching v0.8 is next; current code/schema not verified here. |
-| Referenced STD-STD-001 / STD-TPL-001 / E2E-REQ-001 | Source REQ references are retained, but these full documents were not supplied in the inspected set. Obtain applicable versions and verify current compatibility/rendering/conformance before release; no assertion of reviewed content. |
+| Approved LAW v1.2 | Current legal-verification prerequisites and corrected statutory-reservation interpretation: the 30% measure is APP-wide planned allocation against the eligible current APP denominator, not a per-purchase quota, supplier entitlement or Budget hold. This review establishes no new legal entitlement or production-verified rule. |
+| Approved STR v1.8 / AUTH v1.9 / KT-STD-001 v1.7 | Strategy snapshot, registered live responsibility hooks, immutable authority evidence, technical read, common shell and verification requirements. |
+| Proposed TPR v0.9 | Coordinated structured v1.3 handoff consumer baseline, fixed downstream template and full inherited-row ownership. Its gate supports `None`, `Youth`, `Women`, `Persons with disabilities` and an independently applicable County-residents restriction with exact verified rules; `Single lot` remains fixed. It is not yet an approved consumer baseline and current code/schema remains unverified. |
+| Proposed STD-TPL-001 v0.7; referenced STD-STD-001 / E2E-REQ-001 | STD-TPL-001 v0.7 was inspected and defines the same supported reservation treatment, category-specific supplier declarations/evidence, `EVG-ELIGIBILITY` mapping and `Single lot`; its candidate release still requires owner approval and availability evidence. Obtain and verify the applicable STD-STD and E2E documents before release; no assertion of their reviewed content. |
 | PLN-CHG-001_FOLLOW_UPS.md FU-25/FU-30 | Required REQ/TPR sibling contracts, correction follow-up and cross-module exact precision. |
 
-Body rules are the sole proposed REQ implementation contract. Owner APIs govern each external decision/value; no cross-module direct table access, editable source facts or documentation-only “implemented” claim. Exact historical wire identities/digests stay preserved through a coordinated adoption.
+Body rules are the sole approved REQ implementation contract. Owner APIs govern each external decision/value; no cross-module direct table access, editable source facts or documentation-only “implemented” claim. Exact historical wire identities/digests stay preserved through a coordinated adoption.
 
 ### 22.2 Full change register for re-implementation
+
+The 64 rows below comprise the 50 approved v1.9 changes, 8 retained v1.10 changes and 6 v1.11 reconciliation changes. None is an implementation or test-completion claim. Historical rows preserve their original sources; REQ110 rows retain the Stage 2 contract and REQ111 rows govern this reconciliation.
 
 | ID | Prior issue / gap | Complete required change | Locations | Verification |
 |---|---|---|---|---|
 | REQ19-CHG-001 | Drawdown naming differs across owner documents | Use AuthoriseRequisitionDrawdown only, exact owner signatures and trusted transaction; no RecordRequisitionDrawdown alias. | §§9.1, 10 | REQ19-AC-005–006, 025, 057 |
 | REQ19-CHG-002 | One-open rule lacks stable key/state definition | One open root per stable item across all departments/Plan Versions; explicit occupancy states, consumed-slot release without allowance reset, fresh-start race guard. | §§5.1, 7.4B, 10, 14.1 | REQ19-AC-001, 062, 068 |
-| REQ19-CHG-003 | Local remaining balance could reset on APP copy | Pin stable/exact original allowance/source lineage and retain cumulative draws/reversals across successors; sequential draws use only remaining original scope. | §§5.1, 9.1, 13.15, 16.4A | REQ19-AC-006, 061–062 |
-| REQ19-CHG-004 | New Need could appear covered by an old proceeding | Preserve permanent first-authorisation item scope; reject extra sources/quantity/value scope on locked item; use separately governed eligible item for new requirement. | §§7.2, 9.1, 13.15 | REQ19-AC-061–062 |
+| REQ19-CHG-003 | Local remaining balance could reset on APP copy | Pin stable/exact original allowance/source lineage and retain cumulative draws/reversals across successors; sequential draws use only remaining original scope. | §§5.1, 9.1, 13.13, 16.4A | REQ19-AC-006, 061–062 |
+| REQ19-CHG-004 | New Need could appear covered by an old proceeding | Preserve permanent first-authorisation item scope; reject extra sources/quantity/value scope on locked item; use separately governed eligible item for new requirement. | §§7.2, 9.1, 13.13 | REQ19-AC-061–062 |
 | REQ19-CHG-005 | Temporary hold unspecified on REQ side | Check item-specific unresolved correction hold inside authorisation; preserve exact PLN_ITEM_AUTHORISATION_HELD error and owner links. | §§7.2, 7.4A, 9.1, 11 | REQ19-AC-058–060 |
 | REQ19-CHG-006 | Correction request/outbox could be acknowledged before hold exists | Stop exact pre-authorisation Version/tasks and record Planning request/hold atomically; failure rolls back, competing authorisation cannot be downgraded later. | §7.4A | REQ19-AC-044, 058 |
 | REQ19-CHG-007 | One closed request could clear other unresolved work | Derive hold across all Open/In progress requests, resolve only Active correction or reasoned no-change; recheck all eligibility after release. | §§7.4A–7.4B, 9.1B | REQ19-AC-059–060 |
@@ -1812,13 +1944,13 @@ Body rules are the sole proposed REQ implementation contract. Owner APIs govern 
 | REQ19-CHG-011 | Closed without change left requester stranded or silently restarted | Show reason and unchanged facts; retain stopped evidence; allow explicit fresh linked root with current eligibility and entirely new certification/authorisation, or leave stopped. | §§7.4B, 13.14, 14.5 | REQ19-AC-065 |
 | REQ19-CHG-012 | Resolved outcome could resurrect old Version/approvals | Explicit fresh root against current corrected exact lineage; fresh IDs and predecessor mapping, Draft-only content carry, no copied approval/reservation/handoff. | §§7.4B, 9.1B, 10 | REQ19-AC-066, 068 |
 | REQ19-CHG-013 | Outcome order/idempotency and stale hold snapshot unspecified | Authenticate/deduplicate by exact payload, reconcile gaps and unknown identities, retain last-confirmed information; event receipt never creates Draft or clears current hold. | §§9.1B, 13.14, 14.5 | REQ19-AC-067 |
-| REQ19-CHG-014 | Per-row Budget checks/tokens conflict with BUD v1.9 | Send one complete drawdown array; receive one bound token; Budget aggregates shared-line demand, owns locks and emits one reservation per drawdown. | §9.1A | REQ19-AC-040, 069–070 |
+| REQ19-CHG-014 | Per-row Budget checks/tokens conflict with the Budget owner contract | Send one complete drawdown array; receive one bound token; Budget aggregates shared-line demand, owns locks and emits one funding reservation per drawdown. | §9.1A | REQ19-AC-040, 069–070 |
 | REQ19-CHG-015 | Partial orchestration could survive failed authorisation | Commit REQ decision, Planning drawdown/scope marker, complete reservation mapping, handoff and outbox together; no early remote commit disguised by compensation. | §§7.2, 9.1–9.1A | REQ19-AC-025–026, 058, 070 |
 | REQ19-CHG-016 | REQ called itself reservation owner | Budget owns records/balances/locking; REQ owns authorisation and invocation. Funding catalogue remains CFG-owned and source selection PLN-owned. | §§3–4, 7.5, 9.1A | REQ19-AC-041, 082 |
 | REQ19-CHG-017 | Money/Quantity floats or ambiguous units | Exact currency-unit decimal strings and governed precision; whole-number Each product gate, 18-integral-digit capacity, no rounding/epsilon or implicit repricing. | §§5.3, 5.6, 5.14 | REQ19-AC-071 |
 | REQ19-CHG-018 | Plan allocation/source/display/drawdown identifiers conflated | Canonical PSA/Need-or-direct source IDs with exact revisions; separate REQ drawdown/item links; human PIL/SRC reference mapping, explicit historical wire cutover. | §§4–5.6, 5.14, 16.2 | REQ19-AC-005, 007, 072 |
 | REQ19-CHG-019 | Multi-year allowed although PLN MVP rejects it | Fixed Single year compatibility gate; no operative multi-year justification or future-funding promise. Preserve historical fields only as evidence. | §§2.1, 5.1, 5.12, 5A, 13.4 | REQ19-AC-055, 079 |
-| REQ19-CHG-020 | Fixed Open-Tender template had no method compatibility test | Require Open Tender and owner-validated applicability; expand compatibility to eight independent checks, not an inferred legal waiver. | §5A, 13.11, 16.4A | REQ19-AC-052–053, 055, 079 |
+| REQ19-CHG-020 | Fixed Open-Tender template had no method compatibility test | Require Open Tender and owner-validated applicability; expand compatibility to nine independent checks, not an inferred legal waiver. | §5A, 13.11, 16.4A | REQ19-AC-052–053, 055, 079 |
 | REQ19-CHG-021 | Late lead reassignment could relabel old certification | HOPF-only reasoned Return/copy at review; frozen certified lead/actor, new routing lead and fresh lead-HoD submission; deterministic default/tie. | §§5.1–5.2, 7.3A, 10, 13.11 | REQ19-AC-047, 050, 073 |
 | REQ19-CHG-022 | Handoff referred to multiple HoD decisions contrary to one-certifier rule | Carry one lead-HoD certification covering contributors, distinct HOPF authorisation; task stores required role while actual assignment is decision evidence. | §§5.11–5.12, 7.3 | REQ19-AC-020, 045, 047 |
 | REQ19-CHG-023 | Delayed consumption projection used to authorize revocation | Authoritative REQ handoff guard shared by consumption/TPR creation and revocation; one transaction, exact consumer identity/idempotency, no released consumed handoff. | §§5.13, 9.2, 10, 13.12 | REQ19-AC-029–031, 074 |
@@ -1828,8 +1960,8 @@ Body rules are the sole proposed REQ implementation contract. Owner APIs govern 
 | REQ19-CHG-027 | Technical read and role scope could be narrowed/broadened by prose | Explicit Administrator/System Manager read-all with no business action; Auditor uses actual oversight scope; preserve source-OU eligibility vs user authority distinction. | §§8, 19 | REQ19-AC-032–033, 042, 078 |
 | REQ19-CHG-028 | Technical target and connectivity comparator drift | All 11 fixture rows target both items through exact All items; unique per-source item labels; connectivity Required multi-select matches complete retained catalogue. | §§6.3, 13.7, 13.12, 16.3 | REQ19-AC-009–011, 079, 084 |
 | REQ19-CHG-029 | Plan boundary overwritten by REQ operational date | Keep 31-Dec Plan/source boundary,24-Sep estimate and 30-Sep REQ latest delivery separate in model, gates, UI and seed. | §§5.2, 5.14, 13.2–13.5, 16.2 | REQ19-AC-080 |
-| REQ19-CHG-030 | Positive seed contradicted blocked BASE / one-open invariant | Use conditional READY Youth/Active prerequisites; reset lifecycle profiles independently; preserve two reservations and current authority/fiscal-date gates. | §16 | REQ19-AC-035, 081–083 |
-| REQ19-CHG-031 | Cross-document actor/contract/conformance claims stale | Charles Mutiso is canonical; log BUD Kariuki/Need-selection editorial correction; require matching TPR v0.8, wire/provider mapping and actual STD/E2E/legal evidence. | §§16.1, 21, 22.1–22.3 | REQ19-AC-038, 056, 082–083 |
+| REQ19-CHG-030 | Positive seed contradicted blocked BASE / one-open invariant | Use conditional READY Youth/Active prerequisites with the exact verified rule; reset lifecycle profiles independently; preserve two funding reservations and current authority/fiscal-date gates. | §16 | REQ19-AC-035, 081–083 |
+| REQ19-CHG-031 | Cross-document actor/contract/conformance claims stale | Charles Mutiso is canonical; log BUD Kariuki/Need-selection editorial correction; require matching TPR v0.9, wire/provider mapping and actual STD/E2E/legal evidence. | §§16.1, 21, 22.1–22.3 | REQ19-AC-038, 056, 082–083 |
 | REQ19-CHG-032 | No full successor change map | Retain all 84 v1.8 results and the full 25-row catalogue; this complete register links implementation locations and tests. | §§17–18, 22.2, 23 | REQ19-AC-084 |
 | REQ19-CHG-033 | Five internal validation groups were exposed as five compulsory user steps. | Present exactly three visible tasks while retaining all five validation groups, gates and audit results. | §§1, 6.1, 10.1, 12–14 | REQ19-AC-085–087 |
 | REQ19-CHG-034 | Ordinary screens were dominated by drawdown, allocation, scope-lock and handoff terminology. | Apply the §12.1 business-language map; retain exact technical identities in labelled supporting detail and audit. | §§12.1, 13 | REQ19-AC-091, 108 |
@@ -1841,25 +1973,39 @@ Body rules are the sole proposed REQ implementation contract. Owner APIs govern 
 | REQ19-CHG-040 | Technical, support, service, acceptance and supporting-material work lacked one readable hierarchy. | Consolidate them under Requirements using strong group headings and compact tables without deleting fields or catalogue options. | §§6.1, 13.6 | REQ19-AC-087, 105 |
 | REQ19-CHG-041 | One Requirements composition combined Review-required and complete states. | Separate deterministic REQ-DES-05-REVIEW-REQUIRED and REQ-DES-05-COMPLETE reset variants with exact deltas and action states. | §13.6 | REQ19-AC-090, 110 |
 | REQ19-CHG-042 | Complete review evidence was overwhelming when every section started open. | Lead with outcome/exceptions; collapse complete non-exception sections behind in-page disclosure while retaining all content. | §§13.7–13.11, 14.4 | REQ19-AC-093–097, 116–118 |
-| REQ19-CHG-043 | Procurement review led with compatibility mechanics instead of the decision and financial consequence. | Show readiness, reservation effect, current funding and Planning availability first; retain all eight checks below as enforced supporting evidence. | §§13.9–13.10 | REQ19-AC-094–096 |
+| REQ19-CHG-043 | Procurement review led with compatibility mechanics instead of the decision and financial consequence. | Show readiness, funding-reservation effect, current funding and Planning availability first; retain all nine product checks below as enforced supporting evidence. | §§13.9–13.10 | REQ19-AC-094–096 |
 | REQ19-CHG-044 | Return reasons did not reliably take the Author to the affected content. | Store an optional governed affected section on the immutable decision and open the copied Draft directly there with the exact comment. | §§5.11, 10.2, 13.4, 13.8–13.9 | REQ19-AC-092 |
 | REQ19-CHG-045 | Contributor, direct-HoD, Procurement Officer, Planner and technical-read action sets were incomplete or could inherit incorrect controls. | Define every actor/reset variant and the union-of-live-responsibilities rule; never render disabled unauthorised business actions. | §§8, 13.2–13.13 | REQ19-AC-101–102, 111–112 |
 | REQ19-CHG-046 | Departmental Author was given a destructive Cancel-draft implication not authorised by lifecycle. | Use Back to Requisitions; withdrawal remains a governed HoD action with explicit consequence. | §§7.1, 13.4, 13.7–13.8, 14.1 | REQ19-AC-101, 112 |
 | REQ19-CHG-047 | Planning-correction pages required users to interpret Versions, roots and owner events. | Present plain waiting, in-progress, completed, no-change, unavailable and another-request-open states; never imply Resume or automatic restart. | §§12.1, 13.12, 14.6 | REQ19-AC-099–100 |
 | REQ19-CHG-048 | The design contract depended on values outside the section supplied to the design tool. | Make §13 self-contained with exact technical, support, acceptance, funding, compatibility, actor/state and action fixtures. | §13 | REQ19-AC-109–112 |
 | REQ19-CHG-049 | Document completeness could be mistaken for proven usability. | Require representative-user task evidence and make misunderstanding/repeated routine work blocking release findings. | §§17, 18.3–18.4 | REQ19-AC-107–108 |
-| REQ19-CHG-050 | UI changes risked becoming a parallel amendment and leaving contradictory v1.8 artboards active. | Incorporate REQ-UX-001 v0.3 into the operative body, replace §§12–14 and treat this v1.9 as the sole successor on approval. | §§1, 12–14, 22.1, 23 | REQ19-AC-084–118 |
+| REQ19-CHG-050 | UI changes risked becoming a parallel amendment and leaving contradictory v1.8 artboards active. | Incorporate REQ-UX-001 v0.3 into the operative body, replace §§12–14 and make this approved v1.9 the sole successor. | §§1, 12–14, 22.1, 23 | REQ19-AC-084–118 |
+| REQ110-CHG-001 | Project Owner Stage 2 instruction, 22 Sep 2026: complete screens still risked rendering as dense records with equal visual weight. | Adopt KT-STD v1.7 archetypes, primary questions and Level 1–3 hierarchy across the complete Requisition inventory without changing function. | §§12–13, 17.1 | REQ110-AC-001–002 |
+| REQ110-CHG-002 | The workspace led with zero-count summaries and could become a dashboard before showing actual work. | Lead with the actor’s exact task or one approved purchase ready to start; keep counts as optional filter annotations and the register secondary. | §13.2; REQ-DES-01 | REQ110-AC-003 |
+| REQ110-CHG-003 | Request details exposed full Planning context before the current editing gap and repeated source facts across containers. | Use compact purchase orientation, lead with request/amount/equipment work and move lineage to one supporting disclosure. | §13.4; REQ-DES-03 | REQ110-AC-004 |
+| REQ110-CHG-004 | The requirements package could still read as a wall of equally weighted tables despite grouped confirmation. | Present one continuous requirements workbench with a visible review state, strong groups, compact rows and one grouped action; retain every governed row. | §13.6; REQ-DES-05 | REQ110-AC-004, 009 |
+| REQ110-CHG-005 | Submission, HoD and HOPF screens contained the right facts but did not uniformly foreground the actual question and consequence. | Put readiness/decision, scope, material issue, financial or certification consequence and one primary action before expanded evidence. | §§13.7–13.10; REQ-DES-06–09 | REQ110-AC-005–006 |
+| REQ110-CHG-006 | Authorised, stopped and common-state surfaces could regress to record dumps or generic panels detached from their parent task. | Give authorised and exception records explicit detail archetypes; require shared states to inherit orientation, preserve protected content and expose only safe recovery. | §§13.11–13.13; REQ-DES-10–12 | REQ110-AC-007–008 |
+| REQ110-CHG-007 | Correct content could still be rendered with excessive cards, tables, borders, badges and repeated metadata. | Add a complete Stage 2 inventory, visual-restraint rules, first-viewport review, narrow-layout evidence checks and representative-user comprehension acceptance. | §§13, 17.1, 18.3–18.4 | REQ110-AC-009–010 |
+| REQ110-CHG-008 | A proposed `None`-only correction contradicted the statutory reservation path and the existing Planning/Bid Youth fixtures. | Support `None`, `Youth`, `Women` and `Persons with disabilities`, plus independently applicable County-residents treatment, only with the exact compatible Tender format and verified rule/overlap snapshots; fail unsupported or missing-rule treatment before Draft creation and again at authorisation; never infer candidate entitlement. | §§2.1, 5A, 7.2, 11, 13.3, 13.13–13.14, 16–18, 22.1 | REQ110-AC-011 |
+| REQ111-CHG-001 | Active owner references were stale after approval of LAW v1.2, BUD v1.10, PLN v1.25 and CFG v0.14. | Replace active baselines throughout; preserve historical evidence without presenting old versions as current authority. | Control; §§5, 9, 13, 16–19, 22–23 | REQ111-AC-006 |
+| REQ111-CHG-002 | The document carried item designations but did not expressly exclude the misinterpreted per-Requisition 30% calculation. | Keep the eligible-current-APP denominator, 30% target, aggregate qualifying allocation, compliance and shortfall wholly in Planning; REQ consumes only exact item treatment. | §§1–3, 5.12, 5A, 7.5, 9.1, 17–19 | REQ111-AC-001–002 |
+| REQ111-CHG-003 | “Reservation category” and “Budget reservation” could appear to users as the same mechanism. | Use **Reserved for** and conditional **County requirement** in ordinary UI; retain `reservation_category` in schema/audit and call Budget effects funding reservations. | §§2–3, 5A, 7, 9, 12–13 | REQ111-AC-002–004 |
+| REQ111-CHG-004 | §5A defined nine compatibility checks while two seed/design/acceptance references still said eight. | Use nine consistently in design summaries, isolated failures, criteria and tests. | §§5A, 13.9, 16.4A, 17 | REQ111-AC-005 |
+| REQ111-CHG-005 | Downstream proposed documents could be mistaken for approved conformance authorities. | Identify TPR v0.9 and STD-TPL v0.7 as coordinated proposed contracts; require approval, exact release availability and implementation evidence before conformance is claimed. | §§9.2, 18.1, 22.1, 22.3, 23 | REQ111-AC-006 |
+| REQ111-CHG-006 | Item treatment was present in the model but not consistently visible across the complete user journey. | Carry one concise read-only **Reserved for** fact through start, Draft, review, decisions and authorised detail; show County treatment only when applicable and keep rule identities in supporting detail. | §13 | REQ111-AC-003–004 |
 
 ### 22.3 Owner dependencies and release evidence
 
 | ID | Outstanding owner work | Required evidence / status |
 |---|---|---|
-| REQ19-XD-001 | PLN/REQ drawdown, request/hold and correction outcome | Map exact named APIs and schemas, stable/exact identity, owner transaction and outbox boundaries; implement full request/outcome/fresh-start cases. PLN v1.20 specifies the inbound workflow; this MD does not claim current code implements it. |
+| REQ19-XD-001 | PLN/REQ drawdown, request/hold and correction outcome | Map exact named APIs and schemas, stable/exact identity, owner transaction and outbox boundaries; implement full request/outcome/fresh-start cases. PLN v1.25 specifies the inbound workflow; this MD does not claim current code implements it. |
 | REQ19-XD-002 | BUD/REQ complete-array reservation | Replace legacy per-line token calls; prove same-line aggregation, owner lock order, idempotency and full authorisation rollback with actual Budget records. |
 | REQ19-XD-003 | FU-30 precision/wire adoption — BUD/NDS/PLN/REQ/TPR | Inspect physical numeric columns, float paths, v1.3 handoff serialization and content-hash mapping; publish coordinated producer/consumer cutover if incompatible. Preserve old values/IDs/digests rather than reinterpreting them. |
-| REQ19-XD-004 | TPR v0.8 sibling amendment | Adopt single-year/eight-gate compatibility, exact structured source and reservation lineage, authoritative consumption/revocation coordination and approved invitation-event ownership/envelope. Tender grouping retains both item/source IDs. |
+| REQ19-XD-004 | TPR v0.9 sibling reconciliation | The document-level reservation fixture remains Youth and binds the exact verified rule; isolated fixtures prove `None`, other supported categories, County applicability and failure states. Still required: adopt REQ v1.11 and current owner versions, exact structured source/funding-reservation lineage, authoritative consumption/revocation coordination and approved invitation-event ownership/envelope. Tender grouping retains both item/source IDs. TPR v0.9 remains proposed until separately approved. |
 | REQ19-XD-005 | REQ/TPR handoff transaction | Prove Draft Tender creation and authoritative consumption are atomic, compatible with revocation. Late passive projection cannot certify unconsumed state. Keep consumer creation gated until proven. |
-| REQ19-XD-006 | Requisition governance/UI | Implement the three-task workflow, atomic shared-item and grouped-package commands, lead-return/recertification, stopped/fresh-start outcomes, full immutable disclosure and exact errors. Prove keyboard, narrow-screen, action-set and representative-user journeys; document completeness is not tested UX. |
+| REQ19-XD-006 | Requisition governance/UI | Implement the three-task Stage 2 hierarchy, atomic shared-item and grouped-package commands, lead-return/recertification, stopped/fresh-start outcomes, full immutable disclosure and exact errors. Prove first-viewport comprehension, visual restraint, keyboard, narrow-screen, action-set and representative-user journeys; document completeness is not tested UX. |
 | REQ19-XD-007 | Shared seed and live-data reconciliation | Freeze owner-generated exact item/DPP/drawdown/handoff IDs and source-reference mapping; use independent reset worlds, not multiple simultaneous roots. Inspect real reservations/consumption before any migration; no fixture-based overwriting of live histories. |
 | REQ19-XD-008 | BUD editorial follow-through | Correct its Charles Kariuki references to shared Charles Mutiso and clarify “Need and selected Budget Line” as the Need-origin **DPP entry’s** selection. BUD’s approved file is not silently rewritten in this REQ review; no new actor/Need field is created. |
 | REQ19-XD-009 | CFG/LAW/SEED date and verification prerequisites | Resolve CFG-XD-001’s May 2027 versus FY/profile July-start issue and applicable LAW verification items before positive production/end-to-end claims; do not move dates/FY or mark fixture-verified rules production Verified. |
@@ -1871,6 +2017,8 @@ Multi-year funding, scope expansion through Tender amendment, unsupported produc
 
 ## 23. Approval effect
 
-**REQ-CHG-001 v1.9 is proposed and awaits Project Owner approval.** On approval it supersedes v1.8 and all earlier Requisition versions in full, and REQ-UX-001 v0.3 remains approval evidence rather than a parallel implementation contract. This successor contains the complete structured product, current owner/governance/precision contracts, the three-task usability model, 12 complete artboards with governed variants, 118 acceptance criteria and the 50-row re-implementation register.
+**REQ-CHG-001 v1.11 was approved by the Project Owner on 24 September 2026 and is the controlling Requisitions implementation specification.** It supersedes v1.9 and all earlier approved Requisition versions in full and withdraws the unapproved v1.10 proposal. REQ-UX-001 v0.3 remains historical approval evidence rather than a parallel implementation contract.
+
+The approved specification retains the complete structured product, lifecycle, authority, owner/governance/precision contracts, three-task workflow, atomic shared-item/package operations and immutable evidence; retains the Stage 2 task-led hierarchy; and reconciles item-level reservation treatment with LAW v1.2 and PLN v1.25 without importing APP-wide arithmetic. It contains 12 complete design families with governed variants, 135 acceptance criteria and the 64-row re-implementation register. REQ110-AC-001–010 govern the retained Stage 2 presentation boundary; REQ110-AC-011 governs supported item treatment; REQ111-AC-001–006 govern this reconciliation.
 
 Approval is a requirements/design decision. It does not certify code deployment, current primary-law verification, referenced-but-unseen standard conformance, completed artboards, safe migration of unseen live records or passing transactional/precision/browser tests. Implementers must attach concrete evidence to the acceptance criteria and §22.3 dependencies. Historical stopped/submitted/authorised content, exact source identities, decisions and digests remain immutable; fresh work always follows the named guarded command and appropriate new governance.
