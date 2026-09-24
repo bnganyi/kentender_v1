@@ -332,3 +332,71 @@ class TestCloseDueDisposal(IntakeControlTestCase):
 		self.assertIn(y1, result["needs"]["closed"])
 		self.assertIn(y2, result["dpp"]["closed"])
 		self.assertIn(y3, result["disposal_plan"]["closed"])
+
+
+class TestIntakeChangeEvidence(IntakeControlTestCase):
+	"""CFG-CHG-002 v0.14 §4.3/§12 — every intake change appends one evidence
+	record naming the module, the year, the year it displaced, the flag and
+	closing instant before and after, the reason and the command identity;
+	a close keeps the closing instant it clears."""
+
+	def _events(self, fiscal_year: str, action: str):
+		rows = frappe.get_all(
+			"Audit Event",
+			filters={"document_type": "Fiscal Year", "document_name": fiscal_year, "action": action},
+			fields=["metadata"],
+			order_by="creation desc",
+			limit_page_length=1,
+		)
+		self.assertTrue(rows, f"no {action} evidence for {fiscal_year}")
+		return frappe.parse_json(rows[0]["metadata"])
+
+	def test_open_records_module_years_before_after_reason_and_command(self):
+		y1, y2 = self.fy(Y1), self.fy(Y2)
+		configuration.open_disposal_plan_submission(fiscal_year=y1, closes_at="2199-01-01 12:00:00", reason="First call.")
+		try:
+			configuration.open_disposal_plan_submission(
+				fiscal_year=y2, reason="Second call.", idempotency_key="kt-test-intake-evidence-open"
+			)
+			opened = self._events(y2, "open_disposal_plan_submission")
+			self.assertEqual(opened["module"], "disposal_plan")
+			self.assertEqual(opened["fiscal_year"], y2)
+			self.assertEqual(opened["previous_fiscal_year"], y1)
+			self.assertEqual(opened["before"], {"open": False, "closes_at": ""})
+			self.assertEqual(opened["after"], {"open": True, "closes_at": ""})
+			self.assertEqual(opened["reason"], "Second call.")
+			self.assertEqual(opened["command"]["idempotency_key"], "kt-test-intake-evidence-open")
+			self.assertTrue(opened["command"]["correlation_id"])
+
+			displaced = self._events(y1, "close_disposal_plan_submission")
+			self.assertEqual(displaced["module"], "disposal_plan")
+			self.assertEqual(displaced["before"], {"open": True, "closes_at": "2199-01-01 12:00:00"})
+			self.assertEqual(displaced["after"], {"open": False, "closes_at": ""})
+			self.assertEqual(displaced["replaced_by"], y2)
+			# One command, one correlated evidence set (§5 "Open intake").
+			self.assertEqual(displaced["command"]["correlation_id"], opened["command"]["correlation_id"])
+		finally:
+			configuration.close_disposal_plan_submission(fiscal_year=y2, reason="Test reset.")
+
+	def test_close_keeps_the_closing_instant_it_clears(self):
+		y1 = self.fy(Y1)
+		configuration.open_disposal_plan_submission(fiscal_year=y1, closes_at="2199-02-01 09:00:00", reason="Call.")
+		configuration.close_disposal_plan_submission(fiscal_year=y1, reason="Closed early.")
+		closed = self._events(y1, "close_disposal_plan_submission")
+		self.assertEqual(closed["before"], {"open": True, "closes_at": "2199-02-01 09:00:00"})
+		self.assertEqual(closed["after"], {"open": False, "closes_at": ""})
+		self.assertEqual(closed["reason"], "Closed early.")
+
+	def test_a_deadline_change_records_before_and_after_in_the_same_shape(self):
+		y1 = self.fy(Y1)
+		configuration.open_disposal_plan_submission(fiscal_year=y1, closes_at="2199-03-01 09:00:00", reason="Call.")
+		try:
+			configuration.update_intake_close_instant(
+				module_key="disposal_plan", fiscal_year=y1, closes_at="2199-04-01 09:00:00", reason="Extended."
+			)
+			changed = self._events(y1, "update_disposal_plan_intake_close_instant")
+			self.assertEqual(changed["module"], "disposal_plan")
+			self.assertEqual(changed["before"], {"open": True, "closes_at": "2199-03-01 09:00:00"})
+			self.assertEqual(changed["after"], {"open": True, "closes_at": "2199-04-01 09:00:00"})
+		finally:
+			configuration.close_disposal_plan_submission(fiscal_year=y1, reason="Test reset.")

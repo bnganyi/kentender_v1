@@ -900,7 +900,14 @@ def update_intake_close_instant(
 			document_name=doc.name,
 			action=f"update_{module_key}_intake_close_instant",
 			metadata={
-				"reason": reason or "",
+				**_intake_evidence(
+					module_key,
+					doc.name,
+					{"open": True, "closes_at": str(before_closes_at or "")},
+					{"open": True, "closes_at": str(close_instant or "")},
+					reason,
+					_intake_command(idempotency_key),
+				),
 				"before_closes_at": str(before_closes_at or ""),
 				"after_closes_at": str(close_instant or ""),
 			},
@@ -939,11 +946,14 @@ def _open_intake_flag(
 			if close_instant <= now_datetime():
 				fail_cfg("CFG_INTAKE_CLOSE_INSTANT_INVALID")
 
+		command = _intake_command(idempotency_key)
+		before = _intake_state(doc, module_key)
 		previously_open = frappe.get_all(FY_DOCTYPE, filters={flag_open: 1}, pluck="name", limit_page_length=0)
 		closed: list[str] = []
 		for other in previously_open:
 			if other == doc.name:
 				continue
+			other_before = _intake_state(frappe.get_doc(FY_DOCTYPE, other), module_key)
 			_write_flag(other, module_key=module_key, open_flag=0, closes_at=None, actor=actor)
 			closed.append(other)
 			log_audit_event(
@@ -951,7 +961,10 @@ def _open_intake_flag(
 				document_type=FY_DOCTYPE,
 				document_name=other,
 				action=f"close_{module_key}_submission",
-				metadata={"reason": f"Replaced by {doc.name}", "replaced_by": doc.name},
+				metadata={
+					**_intake_evidence(module_key, other, other_before, {"open": False, "closes_at": ""}, f"Replaced by {doc.name}", command),
+					"replaced_by": doc.name,
+				},
 			)
 
 		_write_flag(doc.name, module_key=module_key, open_flag=1, closes_at=close_instant, actor=actor)
@@ -961,7 +974,10 @@ def _open_intake_flag(
 			document_name=doc.name,
 			action=f"open_{module_key}_submission",
 			metadata={
-				"reason": reason or "",
+				**_intake_evidence(
+					module_key, doc.name, before, {"open": True, "closes_at": str(close_instant or "")}, reason, command,
+					previous_fiscal_year=closed[0] if closed else "",
+				),
 				"closes_at": str(close_instant or ""),
 				"closed_other_years": closed,
 			},
@@ -990,13 +1006,17 @@ def _close_intake_flag(
 		doc = _locked_fiscal_year(fiscal_year, expected_version)
 		if not doc.get(flag_open):
 			fail_cfg("CFG_INTAKE_NOT_OPEN", f"{label} submissions are not open for this financial year.")
+		# §4.3 — the closing instant this clears is kept in the evidence.
+		before = _intake_state(doc, module_key)
 		_write_flag(doc.name, module_key=module_key, open_flag=0, closes_at=None, actor=actor)
 		log_audit_event(
 			event_type="site_configuration",
 			document_type=FY_DOCTYPE,
 			document_name=doc.name,
 			action=f"close_{module_key}_submission",
-			metadata={"reason": reason or ""},
+			metadata=_intake_evidence(
+				module_key, doc.name, before, {"open": False, "closes_at": ""}, reason, _intake_command(idempotency_key)
+			),
 		)
 		return {"fiscal_year": doc.name, "open": False}
 
@@ -1067,6 +1087,41 @@ def close_expired_intakes() -> dict[str, Any]:
 	}
 
 
+def _intake_state(doc, module_key: str) -> dict[str, Any]:
+	flag_open, flag_closes_at = MODULE_FLAG_FIELDS[module_key]
+	return {"open": bool(doc.get(flag_open)), "closes_at": str(doc.get(flag_closes_at) or "")}
+
+
+def _intake_command(idempotency_key: str) -> dict[str, str]:
+	"""One command identity shared by every evidence row that command
+	writes (a swap closes one year and opens another as one change)."""
+	return {"idempotency_key": idempotency_key or "", "correlation_id": frappe.generate_hash(length=16)}
+
+
+def _intake_evidence(
+	module_key: str,
+	fiscal_year: str,
+	before: dict[str, Any],
+	after: dict[str, Any],
+	reason: str,
+	command: dict[str, str],
+	*,
+	previous_fiscal_year: str = "",
+) -> dict[str, Any]:
+	"""CFG-CHG-002 v0.14 §4.3 `IntakeChange` — module, target year, the year
+	this displaced, flag and closing instant before and after, reason and
+	command identity. The actor and UTC instant are the Audit Event's own."""
+	return {
+		"module": module_key,
+		"fiscal_year": fiscal_year,
+		"previous_fiscal_year": previous_fiscal_year,
+		"before": before,
+		"after": after,
+		"reason": reason or "",
+		"command": command,
+	}
+
+
 def _close_due(module_key: str) -> dict[str, Any]:
 	flag_open, flag_closes_at = MODULE_FLAG_FIELDS[module_key]
 	if not frappe.db.has_column(FY_DOCTYPE, flag_open):
@@ -1090,7 +1145,14 @@ def _close_due(module_key: str) -> dict[str, Any]:
 			action=f"close_{module_key}_submission",
 			performed_by="Administrator",
 			metadata={
-				"reason": "Scheduled close instant reached.",
+				**_intake_evidence(
+					module_key,
+					row["name"],
+					{"open": True, "closes_at": str(scheduled_close_at or "")},
+					{"open": False, "closes_at": ""},
+					"Scheduled close instant reached.",
+					_intake_command(""),
+				),
 				"actor": "System",
 				# §4.3 — "records the observed cleanup instant and scheduled
 				# effective-close instant separately; never backdate the
