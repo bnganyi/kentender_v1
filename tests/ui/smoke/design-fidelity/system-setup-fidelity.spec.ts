@@ -552,9 +552,23 @@ test.describe("System setup — design fidelity", () => {
 	// Retargeted from the retired Planning board to CFG's own C03BC "#detail"
 	// (Phase 3D). The saved detail states its groups and its actions; nothing
 	// on it is editable, because a correction is a new version (§11.6).
+	test("C03BC-list — the rules list with Source check and Details as separate columns", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		const scope = "#list > div:first-child";
+		await openArtboard(art, `${DESIGN_DIR}/C03BC-Procurement-Rules.dc.html`, "#list");
+		const wanted = await landmarks(art, scope);
+
+		await loginAsAdministrator(page);
+		const errors = await openSetupTab(page, "procurement-settings/procurement-rules", '[data-testid="kt-procset-rules"]');
+		expectBoardLandmarks(wanted, await landmarks(page, '[data-testid="kt-procset-rules"]'), "C03BC-list", "C03BC#list");
+		await expectBoardStructure(page, '[data-testid="kt-procset-rules"]', art, scope, "C03BC#list");
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
 	test("C03B-detail — a saved rule Version, read-only", async ({ page, browser }) => {
 		const art = await browser.newPage();
-		const scope = "#detail";
+		const scope = "#detail > div";
 		await openArtboard(art, `${DESIGN_DIR}/C03BC-Procurement-Rules.dc.html`, scope);
 		// Kind-specific values are the fixture's own (the board samples a
 		// method-eligibility rule); this asserts the composition, not the data.
@@ -569,7 +583,7 @@ test.describe("System setup — design fidelity", () => {
 		const reference = await currentReservationVersion(page);
 		const errors = await openSetupTab(page, `procurement-settings/procurement-rules/${reference}`, '[data-testid="kt-procset-rule-card"]');
 		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C03B-detail", "C03BC#detail");
-		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "C03BC#detail");
+		await expectBoardStructure(page, '[data-testid="kt-procset-rule-card"]', art, scope, "C03BC#detail");
 		// Read-only: a correction is a new version, never an edit in place.
 		expect(await page.locator('[data-testid="kt-procset-rule-card"] input').count()).toBe(0);
 		expect(errors, "console errors").toEqual([]);

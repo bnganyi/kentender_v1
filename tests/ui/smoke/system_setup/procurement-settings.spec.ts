@@ -32,8 +32,11 @@ test.describe("System setup — Procurement settings", () => {
 		await page.click('[data-testid="kt-procset-rule-view-MPR-OPEN-TENDER-V1"]');
 		await page.waitForSelector('[data-testid="kt-procset-rule-card"]');
 		expect(page.url()).toContain("#procurement-settings/procurement-rules/MPR-OPEN-TENDER-V1");
-		await expect(page.locator('[data-testid="kt-procset-rule-title"]')).toContainText("Method eligibility — Open Tender — Version 1");
-		await expect(page.locator('[data-testid="kt-procset-rule-verification"]')).toHaveText("Source check needed");
+		await expect(page.locator('[data-testid="kt-procset-rule-title"]')).toHaveText("Method eligibility — Open Tender");
+		await expect(page.locator('[data-testid="kt-procset-rule-version"]')).toHaveText("1");
+		// Owner decision 23 Sep 2026, kept over the v0.14 wording (D20): the
+		// canonical rules are fixture data and say so.
+		await expect(page.locator('[data-testid="kt-procset-rule-verification"]')).toHaveText("Fixture data — not law");
 		expect(await page.locator('[data-testid="kt-procset-rule-card"] input').count()).toBe(0);
 
 		await page.reload({ waitUntil: "domcontentloaded" });
@@ -69,8 +72,8 @@ test.describe("System setup — Procurement settings", () => {
 		await page.waitForSelector('[data-testid="kt-procset-rule-card"]');
 		expect(page.url()).toContain("#procurement-settings/procurement-rules/MPR-OPEN-TENDER-V1");
 
-		// Back returns to the rules section; schedules are their own section.
-		await page.click('[data-testid="kt-procset-rule-back"]');
+		// The section links stay on the detail; schedules are their own section.
+		await page.click('[data-testid="kt-procset-link-procurement-rules"]');
 		await page.waitForSelector('[data-testid="kt-procset-rules"]');
 		expect(new URL(page.url()).hash).toBe("#procurement-settings/procurement-rules");
 		await page.click('[data-testid="kt-procset-link-schedule-profiles"]');
@@ -82,7 +85,10 @@ test.describe("System setup — Procurement settings", () => {
 		// §10.9 — the milestones and the intervals between them are two tables.
 		expect(await page.locator('[data-testid^="kt-procset-milestone-"]').count()).toBe(7);
 		expect(await page.locator('[data-testid^="kt-procset-interval-"]').count()).toBe(6);
-		await expect(page.locator('[data-testid="kt-procset-profile-notice"]')).toContainText("cannot support Plan submission");
+		// The canonical schedule has every period, so the missing-periods notice
+		// (owner wording, 23 Sep 2026) is absent; its presence is proven in
+		// ScheduleProfileDetail.spec on an incomplete profile.
+		await expect(page.locator('[data-testid="kt-procset-profile-notice"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="kt-procset-profile-delivery-default"]')).toHaveText("Not set");
 		expect(errors, "console errors").toEqual([]);
 	});

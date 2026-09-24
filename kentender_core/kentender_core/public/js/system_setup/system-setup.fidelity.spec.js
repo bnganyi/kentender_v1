@@ -30,6 +30,9 @@ const siteApi = vi.hoisted(() => ({
 vi.mock("./data/siteConfigApi.js", () => ({ siteConfigApi: siteApi }));
 const settingsApi = vi.hoisted(() => ({
 	get: vi.fn(),
+	getMethodProfile: vi.fn(),
+	getRegulatoryReferenceVersion: vi.fn(),
+	renameRegulatoryReference: vi.fn(),
 	setReminderThresholdDays: vi.fn(),
 	addFundingSource: vi.fn(),
 	updateFundingSource: vi.fn(),
@@ -45,6 +48,8 @@ import FundingSourceDialog from "./components/FundingSourceDialog.vue";
 import ProcurementSettingsTab from "./tabs/ProcurementSettingsTab.vue";
 import ReminderSettingCard from "./components/ReminderSettingCard.vue";
 import ProcuringEntityTab from "./tabs/ProcuringEntityTab.vue";
+import RuleRenameDialog from "./components/RuleRenameDialog.vue";
+import RuleVersionDetail from "./components/RuleVersionDetail.vue";
 
 const D = "docs/mvp-1-r1/09_unified_system_setup/design/";
 const BOARDS = {
@@ -136,15 +141,57 @@ const SOURCES = ["Government of Kenya", "Development partner", "Appropriation in
 	referenced: true,
 	expected_version: "v1",
 }));
-async function settingsTab(fundingSources) {
-	settingsApi.get.mockResolvedValue({ outcome: "OK", funding_sources: fundingSources, method_profiles: [], reference_sets: [], schedule_profiles: [], calendars: [] });
+async function settingsTab(fundingSources, { section = "funding-sources", ...lists } = {}) {
+	settingsApi.get.mockResolvedValue({
+		outcome: "OK",
+		funding_sources: fundingSources,
+		method_profiles: [],
+		reference_sets: [],
+		schedule_profiles: [],
+		calendars: [],
+		reference_kinds: ["Method eligibility", "Reservation rules", "Exclusive preference", "Preference margins", "Market price index", "Approval applicability", "Publication obligations"],
+		verification_statuses: ["Production verification pending", "Verified", "Rejected"],
+		...lists,
+	});
 	const wrapper = mount(ProcurementSettingsTab, {
-		props: { route: { tab: "procurement-settings", section: "funding-sources", id: "", versionId: "", action: "" } },
+		props: { route: { tab: "procurement-settings", section, id: "", versionId: "", action: "" } },
 		global: globalMocks(),
 	});
 	await flushPromises();
 	return wrapper;
 }
+
+// C03BC — the CONFIG specimen: Method eligibility and Reservation rules, each
+// Version 1, source check needed, details missing.
+const PENDING = "Production verification pending";
+const METHOD_RULE = {
+	profile: "MPR-OPEN-TENDER-V1",
+	procurement_method: "Open Tender",
+	version_number: 1,
+	status: "Active",
+	effective_from: "2027-07-01",
+	effective_until: "2028-06-30",
+	applicability_basis: "",
+	verification_status: PENDING,
+	source_instrument: "Public Procurement and Asset Disposal Regulations — source verification pending",
+	provision: "",
+	source_document: "",
+	can_edit: false,
+	can_set_validity: false,
+	conditions: [],
+	details_missing: ["Which date determines the rule to use?", "Provisions", "Conditions and evidence"],
+};
+const RESERVATION_SET = (hasVersion = true, kind = "Reservation rules", key = "rs-res") => ({
+	reference_set: key,
+	reference_key: "RESERVATION-RULES",
+	reference_kind: kind,
+	display_name: kind,
+	has_version: hasVersion,
+	version: hasVersion
+		? { name: "rv-1", version_number: 1, verification_status: PENDING, effective_from: "2027-07-01", effective_until: "2028-06-30", details_missing: ["Instrument"] }
+		: null,
+});
+const rulesTab = (lists) => settingsTab([], { section: "procurement-rules", ...lists });
 
 const ARTBOARDS = [
 	{ key: "C01#configured", mount: () => mount(ProcuringEntityTab, { props: { site: site() }, global: globalMocks() }) },
@@ -270,9 +317,54 @@ const ARTBOARDS = [
 	},
 	{ key: "C03A#empty", self: true, select: "#empty > div", live: '[data-testid="kt-procset-sources-empty"]', mount: () => settingsTab([]) },
 
-	{ key: "C03BC#list" },
-	{ key: "C03BC#detail" },
-	{ key: "C03BC#rename" },
+	{
+		key: "C03BC#list",
+		select: "#list > div:first-child",
+		live: '[data-testid="kt-procset-rules"]',
+		mount: () => rulesTab({ method_profiles: [METHOD_RULE], reference_sets: [RESERVATION_SET()] }),
+	},
+	// The board draws four specimen cards under the list; no one screen shows
+	// all four, so each is compared on its own (`~` names a card inside #list).
+	{
+		key: "C03BC#list~empty",
+		self: true,
+		select: "#list > div:nth-child(2) > :nth-child(1)",
+		live: '[data-testid="kt-procset-rules-empty"]',
+		mount: () => rulesTab({}),
+	},
+	{
+		key: "C03BC#list~no-version",
+		self: true,
+		select: "#list > div:nth-child(2) > :nth-child(2)",
+		live: '[data-testid="kt-procset-rule-noversion-rs-res"]',
+		mount: () => rulesTab({ reference_sets: [RESERVATION_SET(false)] }),
+	},
+	{ key: "C03BC#list~partial" },
+	{
+		key: "C03BC#list~not-published",
+		self: true,
+		select: "#list > div:nth-child(2) > :nth-child(4)",
+		live: '[data-testid="kt-procset-rule-unpublished-rs-mpi"]',
+		mount: () => rulesTab({ reference_sets: [RESERVATION_SET(false, "Market price index", "rs-mpi")] }),
+	},
+	{
+		key: "C03BC#detail",
+		select: "#detail > div",
+		live: '[data-testid="kt-procset-rule-card"]',
+		mount: async () => {
+			settingsApi.getMethodProfile.mockResolvedValue(METHOD_RULE);
+			const wrapper = mount(RuleVersionDetail, { props: { name: "MPR-OPEN-TENDER-V1", kind: "method" }, global: globalMocks() });
+			await flushPromises();
+			return wrapper;
+		},
+	},
+	{
+		key: "C03BC#rename",
+		self: true,
+		select: "#rename .dialog",
+		live: ".kt-dialog",
+		mount: () => mount(RuleRenameDialog, { props: { referenceSet: "rs-me", name: "Method eligibility" }, global: globalMocks() }),
+	},
 	{ key: "C03BC#add" },
 	{ key: "C03BC#kinds" },
 	{ key: "C03BC#version" },
@@ -309,7 +401,8 @@ function boardOf(key) {
 
 describe("System setup board inventory", () => {
 	it("assigns every artboard every CFG board draws — none silently unbuilt", () => {
-		const listed = new Set(ARTBOARDS.map((a) => a.key));
+		// `board#id~card` compares one specimen card inside a drawn artboard.
+		const listed = new Set(ARTBOARDS.map((a) => a.key.split("~")[0]));
 		const drawn = Object.keys(BOARDS).flatMap((board) => setupArtboardIds(`${D}${BOARDS[board]}`).map((id) => `${board}#${id}`));
 		expect(drawn.filter((key) => !listed.has(key)), "drawn artboards with no entry here").toEqual([]);
 		expect([...listed].filter((key) => !drawn.includes(key)), "entries for artboards no board draws").toEqual([]);

@@ -497,7 +497,14 @@ def _method_profile_projection(doc) -> dict[str, Any]:
 			for r in (doc.conditions or [])
 		],
 		"expected_version": str(doc.modified),
+		"details_missing": _method_details_missing(doc),
 	}
+
+
+def _method_details_missing(doc) -> list[str]:
+	from kentender_core.services.regulatory_reference import rule_details_missing
+
+	return rule_details_missing(doc.as_dict(), conditions=list(doc.conditions or []))
 
 
 def list_method_profiles() -> list[dict[str, Any]]:

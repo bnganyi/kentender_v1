@@ -45,6 +45,16 @@ export const DEPARTURES = {
 	"C02#add-year": DIALOG_TITLE_IS_A_HEADING,
 	"C02#disable": DIALOG_TITLE_IS_A_HEADING,
 	"C03A#add": DIALOG_TITLE_IS_A_HEADING,
+	"C03BC#rename": DIALOG_TITLE_IS_A_HEADING,
+	"C03BC#detail": [
+		{
+			testid: "kt-procset-rule-values",
+			because:
+				"The board's saved detail is the pending specimen, with no values yet. A saved rule shows what it says: a " +
+				"method rule's conditions and a reference rule's typed rows, as tables inside Rule details (never raw JSON).",
+			authority: "CFG-CHG-002 v0.14 §10.7 (no JSON editor; typed rows); KT-STD-001 §3 (a record shows its content)",
+		},
+	],
 	"C03A#edit": DIALOG_TITLE_IS_A_HEADING,
 	"C01#configured": [SAVED_NOTICE_IS_A_LATER_STATE],
 	"C01#first-run": [
@@ -104,6 +114,13 @@ export const COVERED = [
 	"C03A#disabled",
 	"C03A#duplicate",
 	"C03A#empty",
+	// 5D Procurement rules, first half — 24 Sep 2026
+	"C03BC#list",
+	"C03BC#list~empty",
+	"C03BC#list~no-version",
+	"C03BC#list~not-published",
+	"C03BC#detail",
+	"C03BC#rename",
 ];
 
 /**
@@ -115,9 +132,7 @@ export const COVERED = [
 const REPORT = "structure differs from the board (recorded by the Phase 1 red run)";
 const UNMOUNTABLE = "no component renders this state from props yet; Phase 5 builds it";
 export const REBUILD_QUEUE = {
-	"C03BC#list": UNMOUNTABLE,
-	"C03BC#detail": UNMOUNTABLE,
-	"C03BC#rename": UNMOUNTABLE,
+	"C03BC#list~partial": "the partial-save notice belongs to the add-rule form (5D, second half)",
 	"C03BC#add": UNMOUNTABLE,
 	"C03BC#kinds": UNMOUNTABLE,
 	"C03BC#version": UNMOUNTABLE,

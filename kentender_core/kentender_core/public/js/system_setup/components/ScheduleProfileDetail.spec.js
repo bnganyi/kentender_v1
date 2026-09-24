@@ -86,6 +86,15 @@ describe("ScheduleProfileDetail", () => {
 		expect(wrapper.findAll("input").length).toBe(0);
 	});
 
+	it("a profile missing periods says so and what to do", async () => {
+		api.getScheduleProfile.mockResolvedValueOnce({ ...profile, complete: false, gaps: ["bid_opening"] });
+		const wrapper = mount(ScheduleProfileDetail, { props: { name: "SPR-OPEN-TENDER-GOODS-V1", verificationStatuses: [] }, global: globalMocks() });
+		await flushPromises();
+		expect(wrapper.find('[data-testid="kt-procset-profile-notice"]').text()).toBe(
+			"This schedule is missing periods, so it cannot be used to plan dates. Edit it to fill them in."
+		);
+	});
+
 	it("a Verified, complete profile shows no notice, and Create new version asks the parent for the editor", async () => {
 		api.getScheduleProfile.mockResolvedValueOnce({ ...profile, verification_status: "Verified" });
 		const wrapper = mount(ScheduleProfileDetail, { props: { name: "SPR-OPEN-TENDER-GOODS-V1", verificationStatuses: ["Verified"] }, global: globalMocks() });

@@ -202,10 +202,24 @@ def list_reference_sets(reference_kind: str = "") -> list[dict[str, Any]]:
 		active = frappe.get_all(
 			DOCTYPE,
 			filters={"reference_set": name, "status": "Active"},
-			fields=["name", "version_number", "verification_status", "effective_from", "effective_until"],
+			fields=[
+				"name",
+				"version_number",
+				"verification_status",
+				"effective_from",
+				"effective_until",
+				"applicability_basis",
+				"source_instrument",
+				"provision",
+				"interpretation",
+			],
 			order_by="effective_from desc, version_number desc",
 			limit_page_length=0,
 		)
+		for row in active:
+			row["details_missing"] = rule_details_missing(row)
+			for field in ("applicability_basis", "source_instrument", "provision", "interpretation"):
+				row.pop(field)
 		# The version a reader means by "the current rule" is the one in force
 		# today — not merely the highest-numbered Active row. A set can carry
 		# several non-overlapping Active versions for different periods (a
@@ -691,6 +705,19 @@ _EVIDENCE_FIELDS = (
 )
 
 
+def rule_details_missing(values: dict[str, Any], *, conditions: list | None = None) -> list[str]:
+	"""§10.6/§10.8 — the required details a version still lacks, by the labels
+	the screen shows. "Details" is its own status beside "Source check"; the
+	list, the saved detail and the preview all read this one rule. Method
+	eligibility (its own model, no interpretation field) passes its
+	conditions; any other kind passes none."""
+	fields = _EVIDENCE_FIELDS if conditions is None else tuple(f for f in _EVIDENCE_FIELDS if f[0] != "interpretation")
+	missing = [label for field, label in fields if not str(values.get(field) or "").strip()]
+	if conditions is not None and not conditions:
+		missing.append("Conditions and evidence")
+	return missing
+
+
 def preview_configuration_version(
 	*,
 	reference_kind: str,
@@ -763,7 +790,7 @@ def preview_configuration_version(
 		"provision": provision,
 		"interpretation": interpretation,
 	}
-	missing = [label for field, label in _EVIDENCE_FIELDS if not (values.get(field) or "").strip()]
+	missing = rule_details_missing(values)
 
 	declared = set(s for s in (supersedes_version_ids or []) if s)
 	overlapping = []
@@ -816,6 +843,8 @@ def _projection(name: str) -> dict[str, Any]:
 		"reference_set": doc.reference_set,
 		"reference_key": doc.reference_key,
 		"reference_kind": doc.reference_kind,
+		# The rule's own name heads its saved detail (§10.6); it lives on the set.
+		"display_name": frappe.db.get_value(SET_DOCTYPE, doc.reference_set, "display_name") or doc.reference_kind,
 		"version_number": int(doc.version_number),
 		"status": doc.status,
 		"effective_from": str(doc.effective_from or ""),
@@ -833,6 +862,7 @@ def _projection(name: str) -> dict[str, Any]:
 		"supersedes_version_ids": [s for s in (doc.supersedes_version_ids or "").split(",") if s],
 		"change_reason": doc.change_reason or "",
 		"payload": json.loads(doc.payload_json or "{}"),
+		"details_missing": rule_details_missing(doc.as_dict()),
 		# Whether this Version may still be corrected in place is a server
 		# fact, decided by the one rule every versioned setting follows.
 		"can_edit": editable[0],

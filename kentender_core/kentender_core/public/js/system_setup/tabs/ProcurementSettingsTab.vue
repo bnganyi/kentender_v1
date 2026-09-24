@@ -97,6 +97,7 @@ const rules = computed(() => {
 		version_number: row.version_number,
 		status: row.status,
 		verification_status: row.verification_status,
+		details_missing: row.details_missing || [],
 		has_version: true,
 	}));
 	const references = (data.value?.reference_sets || []).map((row) => ({
@@ -111,6 +112,7 @@ const rules = computed(() => {
 		version_number: row.version?.version_number || "",
 		status: row.version?.status || "",
 		verification_status: row.version?.verification_status || "",
+		details_missing: row.version?.details_missing || [],
 		has_version: !!row.has_version,
 	}));
 	return [...methods, ...references];
@@ -150,9 +152,12 @@ watch(
 	},
 	{ immediate: true }
 );
+// The table lists saved versions; a rule with none yet is its own card (§7.3).
+const versionedRules = computed(() => rules.value.filter((row) => row.has_version));
+const unversionedRules = computed(() => rules.value.filter((row) => !row.has_version));
 const visibleRules = computed(() => {
 	const text = ruleSearch.value.trim().toLowerCase();
-	return rules.value.filter((row) => {
+	return versionedRules.value.filter((row) => {
 		if (text && !`${row.rule} ${row.name}`.toLowerCase().includes(text)) return false;
 		if (ruleKind.value !== "All" && row.kind !== ruleKind.value) return false;
 		if (ruleCheck.value !== "All" && row.verification_status !== ruleCheck.value) return false;
@@ -258,6 +263,22 @@ async function confirmRemoveSource() {
 
 <template>
 	<section class="kt-setup-section kt-procset is-flow" data-testid="kt-procset">
+		<!-- §10.1 section links: each opens its own view. Tender formats is
+		     deferred this cycle (D11), so it has no link. The real href keeps
+		     open-in-new-tab working; `.stop` keeps Frappe's body-level link
+		     handler from re-routing the click and overwriting the Back step. -->
+		<nav v-if="!loading && !loadError" class="kt-setup-subnav" :aria-label="__('Procurement settings sections')" data-testid="kt-procset-subnav">
+			<a
+				v-for="[key, text] in SECTION_LINKS"
+				:key="key"
+				:href="'#procurement-settings/' + key"
+				:class="{ 'is-active': activeSection === key }"
+				:aria-current="activeSection === key ? 'page' : undefined"
+				:data-testid="'kt-procset-link-' + key"
+				@click.stop.prevent="go(key)"
+			>{{ __(text) }}</a>
+		</nav>
+
 		<div v-if="loading" class="kt-card kt-blueprint" data-testid="kt-procset-loading">
 			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
 			<span class="kt-eyebrow">{{ __("Loading procurement settings…") }}</span>
@@ -345,6 +366,7 @@ async function confirmRemoveSource() {
 			:verification-statuses="data.verification_statuses"
 			@back="go('procurement-rules')"
 			@registered="afterChange().then(() => go('procurement-rules'))"
+			@renamed="afterChange"
 			@new-version="go(((rules.find((row) => row.name === view.name) || {}).source === 'method' ? 'new-method-version/' : 'new-rule-version/') + view.name)"
 			@edit-rule="go(((rules.find((row) => row.name === view.name) || {}).source === 'method' ? 'edit-method-rule/' : 'edit-rule-version/') + view.name)"
 			@check-sources="go('check-sources/' + view.name)"
@@ -362,21 +384,6 @@ async function confirmRemoveSource() {
 		/>
 
 		<template v-else-if="listView">
-			<!-- §10.1 section links: each opens its own view. Tender formats is
-			     deferred this cycle (D11), so it has no link. The real href keeps
-			     open-in-new-tab working; `.stop` keeps Frappe's body-level link
-			     handler from re-routing the click and overwriting the Back step. -->
-			<nav class="kt-setup-subnav" :aria-label="__('Procurement settings sections')" data-testid="kt-procset-subnav">
-				<a
-					v-for="[key, text] in SECTION_LINKS"
-					:key="key"
-					:href="'#procurement-settings/' + key"
-					:class="{ 'is-active': activeSection === key }"
-					:aria-current="activeSection === key ? 'page' : undefined"
-					:data-testid="'kt-procset-link-' + key"
-					@click.stop.prevent="go(key)"
-				>{{ __(text) }}</a>
-			</nav>
 
 			<!-- CFG-CHG-002 v0.14 §10.5 — C03A #list and #empty, ported element
 			     by element. The availability column states what the setting
@@ -422,67 +429,92 @@ async function confirmRemoveSource() {
 				</div>
 			</div>
 
-			<!-- C03 procurement rules -->
-			<div v-if="activeSection === 'procurement-rules'" id="kt-procset-rules" class="kt-card kt-blueprint kt-table-card" data-testid="kt-procset-rules">
-				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-				<div class="kt-section-head">
+			<!-- CFG-CHG-002 v0.14 §10.6 — C03BC #list, ported element by element:
+			     header row, the three filters, the seven-column table ("Source
+			     check" and "Details" separate), then the board's cards for a rule
+			     with no version yet (or an unpublished price index) and the empty
+			     catalogue. -->
+			<div v-if="activeSection === 'procurement-rules'" id="kt-procset-rules" data-testid="kt-procset-rules">
+				<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
 					<div>
-						<h3 class="kt-card-title">{{ __("Procurement rules") }}</h3>
-						<p class="kt-muted">{{ __("Maintain procurement rules and their supporting sources.") }}</p>
+						<h3 style="margin-bottom:4px">{{ __("Procurement rules") }}</h3>
+						<p class="card-body" style="margin-bottom:0">{{ __("Maintain procurement rules and their supporting sources.") }}</p>
 					</div>
 					<button type="button" class="kt-btn kt-btn-primary" data-testid="kt-procset-rule-add" @click="go('new-rule')">
-						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add rule") }}
+						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add rule") }}
 					</button>
 				</div>
-				<div v-if="rules.length" class="kt-procset-filters" style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0">
-					<div class="kt-field" style="flex:1;min-width:200px">
-						<label for="kt-procset-rule-search">{{ __("Search") }}</label>
-						<input id="kt-procset-rule-search" v-model="ruleSearch" class="kt-input" data-testid="kt-procset-rule-search">
+				<template v-if="versionedRules.length">
+					<div style="display:flex;gap:12px;flex-wrap:wrap;margin:12px 0">
+						<div class="kt-field" style="flex:1;min-width:200px">
+							<label for="kt-procset-rule-search">{{ __("Search") }}</label>
+							<input id="kt-procset-rule-search" v-model="ruleSearch" class="kt-input" data-testid="kt-procset-rule-search">
+						</div>
+						<div class="kt-field" style="min-width:160px">
+							<label for="kt-procset-rule-kind">{{ __("Rule kind") }}</label>
+							<select id="kt-procset-rule-kind" v-model="ruleKind" class="kt-input" data-testid="kt-procset-rule-kind">
+								<option value="All">{{ __("All") }}</option>
+								<option v-for="kind in ruleKinds" :key="kind" :value="kind">{{ kind }}</option>
+							</select>
+						</div>
+						<div class="kt-field" style="min-width:160px">
+							<label for="kt-procset-rule-check">{{ __("Source check") }}</label>
+							<select id="kt-procset-rule-check" v-model="ruleCheck" class="kt-input" data-testid="kt-procset-rule-check">
+								<option value="All">{{ __("All") }}</option>
+								<option v-for="status in verificationOptions" :key="status" :value="status">{{ verificationLabel(status) }}</option>
+							</select>
+						</div>
 					</div>
-					<div class="kt-field" style="min-width:160px">
-						<label for="kt-procset-rule-kind">{{ __("Rule kind") }}</label>
-						<select id="kt-procset-rule-kind" v-model="ruleKind" class="kt-input" data-testid="kt-procset-rule-kind">
-							<option value="All">{{ __("All") }}</option>
-							<option v-for="kind in ruleKinds" :key="kind" :value="kind">{{ kind }}</option>
-						</select>
-					</div>
-					<div class="kt-field" style="min-width:160px">
-						<label for="kt-procset-rule-check">{{ __("Source check") }}</label>
-						<select id="kt-procset-rule-check" v-model="ruleCheck" class="kt-input" data-testid="kt-procset-rule-check">
-							<option value="All">{{ __("All") }}</option>
-							<option v-for="status in verificationOptions" :key="status" :value="status">{{ verificationLabel(status) }}</option>
-						</select>
-					</div>
-				</div>
-				<table v-if="rules.length" class="kt-table">
-					<thead>
-						<tr><th>{{ __("Rule") }}</th><th>{{ __("Applies from") }}</th><th>{{ __("Applies until") }}</th><th>{{ __("Version") }}</th><th>{{ __("Source check") }}</th><th>{{ __("Action") }}</th></tr>
-					</thead>
-					<tbody>
-						<tr v-for="row in visibleRules" :key="row.key" :data-testid="'kt-procset-rule-' + row.name" :data-status="row.status">
-							<!-- Only an explicitly non-active status is superseded; the set
-							     projection carries no status at all for its current version. -->
-							<td class="kt-row-name">{{ row.rule }}<span v-if="row.has_version && row.status && row.status !== 'Active'" class="kt-tag kt-tag-neutral kt-procset-superseded">{{ __("Superseded") }}</span></td>
-							<!-- §7.3 — a rule whose set exists with no version yet is a real
-							     recoverable state, not an empty row pretending to be a version. -->
-							<template v-if="row.has_version">
+					<table class="kt-table">
+						<thead>
+							<tr><th>{{ __("Rule") }}</th><th>{{ __("Applies from") }}</th><th>{{ __("Applies until") }}</th><th>{{ __("Version") }}</th><th>{{ __("Source check") }}</th><th>{{ __("Details") }}</th><th>{{ __("Action") }}</th></tr>
+						</thead>
+						<tbody>
+							<tr v-for="row in visibleRules" :key="row.key" :data-testid="'kt-procset-rule-' + row.name" :data-status="row.status">
+								<!-- Only an explicitly non-active status is superseded; the set
+								     projection carries no status for its current version. -->
+								<td>{{ row.rule }}<span v-if="row.status && row.status !== 'Active'" class="kt-tag kt-tag-neutral kt-procset-superseded">{{ __("Superseded") }}</span></td>
 								<td>{{ fmtDate(row.effective_from) }}</td>
 								<td>{{ fmtDate(row.effective_until) }}</td>
 								<td>{{ row.version_number }}</td>
 								<td><span :class="verificationClass(row.verification_status)">{{ verificationLabel(row.verification_status) }}</span></td>
-								<td class="kt-row-actions"><a href="#" :data-testid="'kt-procset-rule-view-' + row.name" @click.prevent="go('rule/' + row.name)">{{ __("View") }}</a></td>
-							</template>
-							<template v-else>
-								<td colspan="4"><span class="kt-status is-pending" :data-testid="'kt-procset-rule-noversion-' + row.name">{{ __("No version saved") }}</span></td>
-								<td class="kt-row-actions"><span class="kt-muted">{{ __("Add first version") }}</span></td>
-							</template>
-						</tr>
-					</tbody>
-				</table>
-				<div v-else class="kt-empty" data-testid="kt-procset-rules-empty">
-					<h2>{{ __("No procurement rules yet") }}</h2>
-					<p>{{ __("Add rules for the procurement procedures supported by this release.") }}</p>
-					<button type="button" class="kt-btn kt-btn-primary" @click="go('new-rule')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add rule") }}</button>
+								<td>
+									<span
+										:class="row.details_missing.length ? 'kt-status is-pending' : 'kt-status is-live'"
+										:title="row.details_missing.join(', ')"
+										:data-testid="'kt-procset-rule-details-' + row.name"
+									>{{ row.details_missing.length ? __("Details missing") : __("Details complete") }}</span>
+								</td>
+								<td><a href="#" :data-testid="'kt-procset-rule-view-' + row.name" @click.prevent="go('rule/' + row.name)">{{ __("View") }}</a></td>
+							</tr>
+							<tr v-if="!visibleRules.length"><td colspan="7" class="text-muted" data-testid="kt-procset-rules-none-match">{{ __("No rules match these filters.") }}</td></tr>
+						</tbody>
+					</table>
+				</template>
+				<div v-if="!rules.length || unversionedRules.length" class="kt-procset-rule-cards">
+					<div v-if="!rules.length" class="kt-card kt-procset-empty-card" data-testid="kt-procset-rules-empty">
+						<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--kt-color-neutral-400)" stroke-width="1.5" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" /></svg>
+						<p style="font-weight:600;margin-bottom:4px">{{ __("No procurement rules yet") }}</p>
+						<p class="card-body">{{ __("Add rules for the procurement procedures supported by this release.") }}</p>
+						<button type="button" class="kt-btn kt-btn-primary kt-btn-block" @click="go('new-rule')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add rule") }}</button>
+					</div>
+					<template v-for="row in unversionedRules" :key="row.key">
+						<!-- §8.1 — an optional price index with nothing published is
+						     informational, not a missing version. -->
+						<div v-if="row.kind === 'Market price index'" class="kt-card" :data-testid="'kt-procset-rule-unpublished-' + row.name">
+							<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+								<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8v4M12 16h.01" /></svg>
+								<span class="kt-tag kt-tag-neutral">{{ __("Not published") }}</span>
+							</div>
+							<p class="card-body">{{ __("No price index has been published for this period.") }}</p>
+						</div>
+						<!-- §7.3 — a rule saved with no version is recoverable in place. -->
+						<div v-else class="kt-card" :data-testid="'kt-procset-rule-noversion-' + row.name">
+							<div class="kt-status is-pending" style="margin-bottom:6px">{{ __("No version saved") }}</div>
+							<div class="kt-meta-row"><div><span class="kt-label">{{ __("Rule") }}</span><span class="kt-meta-value">{{ row.rule }}</span></div></div>
+							<button type="button" class="kt-btn kt-btn-secondary" style="margin-top:8px" :data-testid="'kt-procset-rule-first-version-' + row.name" @click="go('new-rule-version/' + row.name)">{{ __("Add first version") }}</button>
+						</div>
+					</template>
 				</div>
 			</div>
 

@@ -1074,3 +1074,13 @@
 .kt-industry.kt-setup-root .kt-procset-empty { padding: 40px; text-align: center; }
 .kt-industry.kt-setup-root .kt-procset-empty svg { display: block; margin: 0 auto 12px; }
 .kt-industry.kt-setup-root .kt-procset-remove { margin-left: 12px; color: var(--kt-status-critical); }
+
+/* CFG-CHG-002 v0.14 §10.6 (C03BC #list/#detail; tracker CFG14-5D) — the rule
+   cards grid under the list, the centred empty card, and the detail's
+   two-column supporting groups (one column when narrow). */
+.kt-industry.kt-setup-root .kt-procset-rule-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; align-items: start; margin-top: 20px; }
+.kt-industry.kt-setup-root .kt-card.kt-procset-empty-card { align-items: center; text-align: center; }
+.kt-industry.kt-setup-root .kt-card.kt-procset-empty-card svg { display: block; margin: 0 auto 12px; }
+.kt-industry.kt-setup-root .kt-procset-rule-groups { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
+.kt-industry.kt-setup-root .kt-procset-rule-groups.has-values { grid-template-columns: 1fr; }
+@media (max-width: 700px) { .kt-industry.kt-setup-root .kt-procset-rule-groups { grid-template-columns: 1fr; } }

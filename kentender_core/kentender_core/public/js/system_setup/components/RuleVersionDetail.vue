@@ -1,9 +1,14 @@
 <script setup>
-// C03-detail — one referenced rule Version, read-only: a method eligibility
-// profile or a regulator reference ("Reservation rules"). "Create new
-// version" is the only write (never edit-in-place); the editor it opens
-// copies the current rule values for correction (§11.6).
+// CFG-CHG-002 v0.14 §10.6 (C03BC #detail; tracker CFG14-5D) — one saved rule
+// version, read-only, ported from the board: the heading, the six facts in
+// one row, the one visible issue, the four supporting groups, the actions
+// and the identifier. "Source check" and "Details" are separate statuses,
+// both from the server. Kept beyond the board, each a recorded decision:
+// "Edit rule" for a version nothing uses yet (D15), "Mark as valid" on a
+// method rule (owner, 23 Sep 2026, D20) and the method rule's conditions,
+// which are what the rule says.
 import { computed, onMounted, ref } from "vue";
+import RuleRenameDialog from "./RuleRenameDialog.vue";
 import { procurementSettingsApi } from "../data/procurementSettingsApi.js";
 import { applicabilityBasisLabel, dash, fmtDate, sourceCheckClass, sourceCheckLabel } from "../data/format.js";
 
@@ -12,33 +17,12 @@ const props = defineProps({
 	kind: { type: String, default: "method" }, // "method" | "reference"
 	verificationStatuses: { type: Array, default: () => [] },
 });
-const emit = defineEmits(["back", "registered", "new-version", "edit-rule", "check-sources"]);
+const emit = defineEmits(["back", "registered", "renamed", "new-version", "edit-rule", "check-sources"]);
 
 const loading = ref(true);
 const loadError = ref("");
 const rule = ref(null);
 const renaming = ref(false);
-const renameValue = ref("");
-const renameBusy = ref(false);
-const renameError = ref("");
-
-async function saveName() {
-	renameBusy.value = true;
-	renameError.value = "";
-	try {
-		await procurementSettingsApi.renameRegulatoryReference(
-			rule.value.reference_set,
-			renameValue.value.trim(),
-			""
-		);
-		renaming.value = false;
-		emit("registered");
-	} catch (error) {
-		renameError.value = error.message;
-	} finally {
-		renameBusy.value = false;
-	}
-}
 
 const validityBusy = ref(false);
 const validityError = ref("");
@@ -68,7 +52,6 @@ async function load() {
 			props.kind === "reference"
 				? await procurementSettingsApi.getRegulatoryReferenceVersion(props.name)
 				: await procurementSettingsApi.getMethodProfile(props.name);
-		renameValue.value = rule.value?.display_name || rule.value?.reference_kind || "";
 	} catch (error) {
 		loadError.value = error.message;
 	} finally {
@@ -81,13 +64,7 @@ onMounted(load);
 // number, so neither is inferred from the record id any more (version ids are
 // hashes under the new envelope; the old suffix-parsing produced "1" for
 // every reference version).
-const referenceSet = computed(() =>
-	props.kind === "reference"
-		? rule.value?.reference_kind || __("Procurement rule")
-		: `${__("Method eligibility")} — ${rule.value?.procurement_method || ""}`
-);
 const versionNumber = computed(() => rule.value?.version_number || "");
-const title = computed(() => `${referenceSet.value} — ${__("Version {0}", [versionNumber.value])}`);
 const verification = computed(() => rule.value?.verification_status || "Production verification pending");
 const verificationShort = computed(() => __(sourceCheckLabel(verification.value)));
 const conditions = computed(() => rule.value?.conditions || []);
@@ -130,15 +107,29 @@ const payloadTables = computed(() => {
 			return { key, label: humanise(key), rows, columns };
 		});
 });
-// §10.6 — "Details" is about the rule's own content, and is deliberately
-// separate from the source check: a rule can be fully written and still
-// unverified, or verified in principle with its details still outstanding.
-const detailsComplete = computed(() => {
-	if (props.kind === "method") return conditions.value.length > 0;
-	const payload = rule.value?.payload || {};
-	return Object.values(payload).some((value) =>
-		Array.isArray(value) ? value.length > 0 : value !== "" && value !== null && value !== undefined
-	);
+// §10.6 — "Details" is the rule's own content, separate from the source
+// check; which details are missing is the server's answer.
+const detailsMissing = computed(() => rule.value?.details_missing || []);
+const detailsComplete = computed(() => !detailsMissing.value.length);
+// §10.6's one visible issue. Under the owner's 23 Sep wording (D20) a method
+// rule that is complete but not marked valid says exactly that.
+const issue = computed(() => {
+	if (detailsComplete.value && valid.value) return "";
+	if (props.kind === "method" && detailsComplete.value) return __("This rule is not marked valid, so a plan using it cannot be submitted.");
+	return __("Complete the rule details and source checks before using this version.");
+});
+const hasValues = computed(() => (props.kind === "method" ? conditions.value.length > 0 : payloadTables.value.length > 0));
+const issueText = computed(() =>
+	detailsMissing.value.length ? `${issue.value} ${__("Missing: {0}.", [detailsMissing.value.join(", ")])}` : issue.value
+);
+const heading = computed(() =>
+	props.kind === "reference"
+		? rule.value?.display_name || rule.value?.reference_kind || __("Procurement rule")
+		: `${__("Method eligibility")} — ${rule.value?.procurement_method || ""}`
+);
+const categories = computed(() => {
+	const found = [...new Set(conditions.value.map((row) => row.procurement_category).filter(Boolean))];
+	return found.length ? found.join(", ") : __("All categories");
 });
 
 const applicabilityBasis = computed(
@@ -149,63 +140,39 @@ const applicabilityBasis = computed(
 </script>
 
 <template>
-	<div class="kt-procset-view" data-testid="kt-procset-rule">
-		<div class="kt-section-head">
-			<div>
-				<span class="kt-eyebrow">{{ __("Procurement settings") }}</span>
-				<h2 class="kt-section-title" data-testid="kt-procset-rule-title">{{ loading ? __("Loading…") : title }}</h2>
+	<div class="kt-procset-rule" data-testid="kt-procset-rule">
+		<div v-if="loading" data-testid="kt-procset-rule-loading">
+			<div class="kt-skel" style="width:40%" /><div class="kt-skel" style="width:70%" /><div class="kt-skel" style="width:55%" />
+		</div>
+		<div v-else-if="loadError" class="kt-notice is-critical" role="alert" data-testid="kt-procset-rule-error">
+			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+			<div class="kt-notice-body"><strong>{{ __("This record isn't available to you.") }}</strong> {{ __("It may not exist, or you may not have access to it.") }}</div>
+		</div>
+
+		<div v-else data-testid="kt-procset-rule-card">
+			<h3 style="margin-bottom:4px" data-testid="kt-procset-rule-title">{{ heading }}</h3>
+			<div class="kt-meta-row" style="margin-bottom:12px">
+				<div><span class="kt-label">{{ __("Rule kind") }}</span><span class="kt-meta-value" data-testid="kt-procset-rule-kind">{{ kind === "method" ? __("Method eligibility") : dash(rule.reference_kind) }}</span></div>
+				<div><span class="kt-label">{{ __("Version") }}</span><span class="kt-meta-value" data-testid="kt-procset-rule-version">{{ versionNumber }}</span></div>
+				<div><span class="kt-label">{{ __("Applies from") }}</span><span class="kt-meta-value">{{ fmtDate(rule.effective_from) }}</span></div>
+				<div><span class="kt-label">{{ __("Applies until") }}</span><span class="kt-meta-value">{{ fmtDate(rule.effective_until) }}</span></div>
+				<div><span class="kt-label">{{ __("Source check") }}</span><span class="kt-meta-value"><span :class="sourceCheckClass(verification)" data-testid="kt-procset-rule-verification">{{ verificationShort }}</span></span></div>
+				<div><span class="kt-label">{{ __("Details") }}</span><span class="kt-meta-value"><span :class="detailsComplete ? 'kt-status is-live' : 'kt-status is-pending'" data-testid="kt-procset-rule-details">{{ detailsComplete ? __("Details complete") : __("Details missing") }}</span></span></div>
 			</div>
-			<button type="button" class="kt-btn kt-btn-ghost" data-testid="kt-procset-rule-back" @click="emit('back')">← {{ __("Procurement settings") }}</button>
-		</div>
+			<div v-if="issue" class="kt-notice is-warning" style="margin-bottom:16px" data-testid="kt-procset-rule-incomplete-notice">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 3l9 16H3z" /><path d="M12 10v4M12 17h.01" /></svg>
+				<div class="kt-notice-body">{{ issueText }}</div>
+			</div>
 
-		<div v-if="loading" class="kt-card kt-blueprint" data-testid="kt-procset-rule-loading">
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-			<div class="kt-skel" style="width:70%" /><div class="kt-skel" style="width:50%" />
-		</div>
-		<div v-else-if="loadError" class="kt-card kt-blueprint kt-empty" data-testid="kt-procset-rule-error">
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-			<h2>{{ __("This record isn't available to you") }}</h2>
-			<p>{{ __("It may not exist, or you may not have access to it.") }}</p>
-			<button type="button" class="kt-btn kt-btn-secondary" @click="emit('back')">{{ __("Back to Procurement settings") }}</button>
-		</div>
-
-		<template v-else>
-			<div class="kt-card kt-blueprint kt-procset-wide" data-testid="kt-procset-rule-card">
-				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-				<div class="kt-facts-row">
-					<div class="kt-fact"><span class="kt-label">{{ __("Rule kind") }}</span><span class="kt-fact-val" data-testid="kt-procset-rule-kind">{{ kind === "method" ? __("Method eligibility") : dash(rule.reference_kind) }}</span></div>
-					<div class="kt-fact"><span class="kt-label">{{ __("Version") }}</span><span class="kt-fact-val">{{ versionNumber }}</span></div>
-					<div class="kt-fact"><span class="kt-label">{{ __("Which date determines the rule to use?") }}</span><span class="kt-fact-val">{{ applicabilityBasis }}</span></div>
-				</div>
-				<div class="kt-facts-row">
-					<div class="kt-fact"><span class="kt-label">{{ __("Applies from") }}</span><span class="kt-fact-val">{{ fmtDate(rule.effective_from) }}</span></div>
-					<div class="kt-fact"><span class="kt-label">{{ __("Applies until") }}</span><span class="kt-fact-val">{{ fmtDate(rule.effective_until) }}</span></div>
-				</div>
-				<div class="kt-facts-row">
-					<div class="kt-fact"><span class="kt-label">{{ __("Source check") }}</span><span :class="sourceCheckClass(verification)" data-testid="kt-procset-rule-verification">{{ verificationShort }}</span></div>
-					<div class="kt-fact"><span class="kt-label">{{ __("Details") }}</span><span :class="detailsComplete ? 'kt-status is-live' : 'kt-status is-pending'" data-testid="kt-procset-rule-details">{{ detailsComplete ? __("Complete") : __("Details missing") }}</span></div>
-				</div>
-
-				<!-- One statement of the one fact that blocks anything, with the
-				     action beside it. It used to say this three times — here, as
-				     a "Required conditions not yet completed" badge over the
-				     conditions, and as "Source check needed" above — all reading
-				     the same field, and none of them saying what to do. -->
-				<div v-if="!valid" class="kt-notice is-warning" data-testid="kt-procset-rule-incomplete-notice">
-					<div class="kt-notice-body">
-						{{ kind === "method"
-							? __("This rule is not marked valid, so a plan using it cannot be submitted.")
-							: __("This rule is not marked valid. Record a source check to make it usable for new decisions.") }}
-					</div>
-				</div>
-
-				<!-- §10.6's four supporting groups. "Rule details" is the kind's
-				     own content; the rest are shared by every kind. -->
+			<!-- With values tables the first two groups run full width: a
+			     conditions table does not fit half the card. -->
+			<div class="kt-procset-rule-groups" :class="{ 'has-values': hasValues }">
 				<div class="kt-section" data-testid="kt-procset-rule-details-group">
 					<h6 class="kt-card-title">{{ __("Rule details") }}</h6>
 					<div class="kt-panel">
 						<div v-if="kind === 'method'" class="kt-meta-row">
 							<div><span class="kt-label">{{ __("Method") }}</span><span class="kt-meta-value">{{ dash(rule.procurement_method) }}</span></div>
+							<div><span class="kt-label">{{ __("Category") }}</span><span class="kt-meta-value">{{ categories }}</span></div>
 							<div><span class="kt-label">{{ __("Currency") }}</span><span class="kt-meta-value">{{ dash(rule.applicability_currency || "KES") }}</span></div>
 							<!-- §4.6 — a correction is a new version, so the account of
 							     why it was made belongs with the version it produced. -->
@@ -218,28 +185,51 @@ const applicabilityBasis = computed(
 							</div>
 						</div>
 						<span v-else class="kt-meta-value" data-testid="kt-procset-rule-values-empty">{{ __("Not yet established") }}</span>
+						<!-- What the rule says, beyond the board's pending specimen: a
+						     method rule's conditions and a reference rule's typed rows
+						     (never raw JSON). See DEPARTURES. -->
+						<table v-if="kind === 'method' && conditions.length" class="kt-table" style="margin-top:12px" data-testid="kt-procset-rule-values">
+							<thead><tr><th>{{ __("Condition") }}</th><th>{{ __("Kind") }}</th><th>{{ __("Category") }}</th><th>{{ __("Limit") }}</th><th>{{ __("Evidence") }}</th><th>{{ __("Authorisation") }}</th></tr></thead>
+							<tbody>
+								<tr v-for="row in conditions" :key="row.condition_id">
+									<td>{{ row.description }}</td>
+									<td>{{ row.kind }}</td>
+									<td>{{ row.procurement_category || __("All") }}</td>
+									<td>{{ row.maximum_amount ? __("KES {0}", [Number(row.maximum_amount).toLocaleString("en-KE")]) : __("No fixed maximum") }}<span v-if="row.cumulative_basis && row.cumulative_basis !== 'None'" class="text-muted"> · {{ row.cumulative_basis }}</span></td>
+									<td>{{ dash(row.required_evidence) }}</td>
+									<!-- A Known fact is checked by the system from the
+									     Planner's own estimate, never by a named approver;
+									     only a Declaration without an approver is a gap. -->
+									<td>{{ row.authorisation_actor ? row.authorisation_actor + ' · ' + row.authorisation_stage : (row.kind === 'Known fact' ? __("Not required — evaluated automatically") : "—") }}</td>
+								</tr>
+							</tbody>
+						</table>
+						<template v-for="table in (kind === 'method' ? [] : payloadTables)" :key="table.key">
+							<h6 class="kt-card-title" style="margin-top:12px">{{ table.label }}</h6>
+							<table class="kt-table" data-testid="kt-procset-rule-values" :data-key="table.key">
+								<thead><tr><th v-for="column in table.columns" :key="column.key">{{ column.label }}</th></tr></thead>
+								<tbody>
+									<tr v-for="(row, index) in table.rows" :key="index">
+										<td v-for="column in table.columns" :key="column.key">{{ cellText(row[column.key]) }}</td>
+									</tr>
+								</tbody>
+							</table>
+						</template>
 					</div>
 				</div>
 
 				<div class="kt-section">
 					<h6 class="kt-card-title">{{ __("When this rule applies") }}</h6>
 					<div class="kt-panel">
-						<!-- A method-eligibility profile has no
-						     entity/county field at all: the Second Schedule
-						     gates on category and estimated value, the same
-						     way for every entity, so there is a real answer
-						     here ("every entity, no restriction") rather
-						     than a gap - never show it as unestablished. -->
+						<!-- Method eligibility gates on category and estimated value,
+						     the same for every entity: a real answer, not a gap. -->
 						<div v-if="kind === 'method'" class="kt-meta-row">
 							<div><span class="kt-label">{{ __("Which date determines the rule to use?") }}</span><span class="kt-meta-value">{{ applicabilityBasis || __("Not yet established") }}</span></div>
 							<div><span class="kt-label">{{ __("Entity applicability") }}</span><span class="kt-meta-value">{{ __("Every entity - governed by category and estimated value, not entity type") }}</span></div>
 							<div><span class="kt-label">{{ __("County applicability") }}</span><span class="kt-meta-value">{{ __("Not applicable to method eligibility") }}</span></div>
 						</div>
-						<!-- A blank list on a reference rule is a real,
-						     deliberate value ("no restriction" - the same
-						     convention `resolve_reference` uses), not a
-						     missing fact, so it reads as "All ..." rather
-						     than "Not yet established". -->
+						<!-- A blank list on a reference rule means "no restriction"
+						     (as `resolve_reference` reads it), not a missing fact. -->
 						<div v-else class="kt-meta-row">
 							<div><span class="kt-label">{{ __("Which date determines the rule to use?") }}</span><span class="kt-meta-value">{{ applicabilityBasis || __("Not yet established") }}</span></div>
 							<div><span class="kt-label">{{ __("Entity applicability") }}</span><span class="kt-meta-value">{{ (rule.applicability_entity_types || []).join(", ") || __("All entity types") }}</span></div>
@@ -249,7 +239,7 @@ const applicabilityBasis = computed(
 					</div>
 				</div>
 
-				<div class="kt-section">
+				<div class="kt-section" style="grid-column:1/-1">
 					<h6 class="kt-card-title">{{ __("Sources and interpretation") }}</h6>
 					<div class="kt-panel">
 						<div class="kt-meta-row">
@@ -259,91 +249,29 @@ const applicabilityBasis = computed(
 							<div><span class="kt-label">{{ __("Edition") }}</span><span class="kt-meta-value" data-testid="kt-procset-rule-edition">{{ __("Recorded with the source check") }}</span></div>
 							<div><span class="kt-label">{{ __("Provisions") }}</span><span class="kt-meta-value">{{ rule.provision || __("Not yet established") }}</span></div>
 							<div><span class="kt-label">{{ __("Source document") }}</span><span class="kt-meta-value"><a v-if="rule.source_document" :href="rule.source_document" target="_blank" rel="noopener">{{ __("View document") }}</a><template v-else>{{ __("Not attached") }}</template></span></div>
-							<!-- A method-eligibility profile has no `interpretation`
-							     field at all (its own "interpretation" is the
-							     Rule values table below); only a reference
-							     rule's blank interpretation is a real gap. -->
-							<div><span class="kt-label">{{ __("Interpretation") }}</span><span class="kt-meta-value">{{ kind === 'method' ? __("See the rule values below") : (rule.interpretation || __("Not yet established")) }}</span></div>
+							<!-- The method model has no interpretation field; its
+							     conditions are its interpretation. -->
+							<div><span class="kt-label">{{ __("Interpretation") }}</span><span class="kt-meta-value">{{ kind === 'method' ? __("See the conditions under Rule details") : (rule.interpretation || __("Not yet established")) }}</span></div>
 						</div>
 					</div>
 				</div>
 
-				<div class="kt-section">
+				<div class="kt-section" style="grid-column:1/-1">
 					<h6 class="kt-card-title">{{ __("Usage and history") }}</h6>
 					<div class="kt-panel">
-						<span class="kt-meta-value">{{ __("Version history and source-check history are shown with this rule's source checks.") }}</span>
+						<span class="kt-meta-value" data-testid="kt-procset-rule-usage-note">{{ __("Which decisions used this version is not recorded yet.") }}</span>
 					</div>
 				</div>
 			</div>
 
-			<!-- Rule values -->
-			<div v-if="kind === 'method'" class="kt-card kt-blueprint kt-table-card kt-procset-wide" data-testid="kt-procset-rule-values">
-				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-				<h3 class="kt-card-title">{{ __("Rule values") }}</h3>
-				<table class="kt-table">
-					<thead><tr><th>{{ __("Condition") }}</th><th>{{ __("Kind") }}</th><th>{{ __("Category") }}</th><th>{{ __("Limit") }}</th><th>{{ __("Evidence") }}</th><th>{{ __("Authorisation") }}</th></tr></thead>
-					<tbody>
-						<tr v-for="row in conditions" :key="row.condition_id">
-							<td>{{ row.description }}</td>
-							<td>{{ row.kind }}</td>
-							<td>{{ row.procurement_category || __("All") }}</td>
-							<td>{{ row.maximum_amount ? __("KES {0}", [Number(row.maximum_amount).toLocaleString("en-KE")]) : __("No fixed maximum") }}<span v-if="row.cumulative_basis && row.cumulative_basis !== 'None'" class="kt-muted"> · {{ row.cumulative_basis }}</span></td>
-							<td>{{ dash(row.required_evidence) }}</td>
-							<!-- A "Known fact" is checked by the system from
-							     the Planner's own estimate, never by a named
-							     approver (Planning's own Known-fact/
-							     Declaration split) - blank here is the real
-							     answer for that kind, not a missing one; only
-							     a Declaration condition without an approver
-							     is an actual gap. -->
-							<td>{{ row.authorisation_actor ? row.authorisation_actor + ' · ' + row.authorisation_stage : (row.kind === 'Known fact' ? __("Not required — evaluated automatically") : "—") }}</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
-			<!-- CFG-CHG-002 v0.11 §10.7 — the version's own typed payload. Each
-			     of the six reference kinds carries a different validated shape,
-			     so scalars render as separately labelled facts and row sets as
-			     their own tables; the raw JSON is never shown. -->
-			<div v-else-if="payloadTables.length" class="kt-card kt-blueprint kt-table-card kt-procset-wide" data-testid="kt-procset-rule-values">
-				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-				<h3 class="kt-card-title">{{ __("Rule values") }}</h3>
-				<template v-for="table in payloadTables" :key="table.key">
-					<h6 class="kt-card-title" style="margin-top:16px">{{ table.label }}</h6>
-					<table class="kt-table" :data-testid="'kt-procset-rule-rows-' + table.key">
-						<thead><tr><th v-for="column in table.columns" :key="column.key">{{ column.label }}</th></tr></thead>
-						<tbody>
-							<tr v-for="(row, index) in table.rows" :key="index">
-								<td v-for="column in table.columns" :key="column.key">{{ cellText(row[column.key]) }}</td>
-							</tr>
-						</tbody>
-					</table>
-				</template>
-			</div>
-
-			<!-- §10.6 saved-detail actions. Every "Create new version" opens a
-			     full screen: a method eligibility rule's conditions, evidence
-			     and authorities are far too much for a dialog, and the dialog
-			     that used to stand in for one let only three fields of an
-			     existing condition be retyped — no condition could be added,
-			     removed or re-scoped. -->
-			<div class="kt-procset-card-actions">
-				<!-- A rule nothing uses and that has not taken effect is still
-				     unfinished configuration: correcting it should not cost a
-				     dead Version. The server decides which of the two this is;
-				     the screen only shows what it was told. -->
-				<button
-					v-if="kind === 'method' && rule.can_edit"
-					type="button"
-					class="kt-btn kt-btn-secondary"
-					data-testid="kt-procset-rule-edit"
-					@click="emit('edit-rule')"
-				>
-					{{ __("Edit rule") }}
-				</button>
-				<!-- Allowed while the version is in force and in use: that is
-				     exactly when a rule blocking submission needs clearing, and
-				     saying it is valid does not change what the rule says. -->
+			<!-- §10.6 saved-detail actions, then the decided extras. -->
+			<div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+				<button v-if="rule.can_edit" type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-rule-edit" @click="emit('edit-rule')">{{ __("Edit rule") }}</button>
+				<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-rule-new-version" @click="emit('new-version')">{{ __("Create new version") }}</button>
+				<button v-if="kind !== 'method'" type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-rule-check-sources" @click="emit('check-sources')">{{ __("Check sources") }}</button>
+				<!-- Owner, 23 Sep 2026 (D20): a method rule has no source check
+				     behind it; its validity is the administrator's own statement,
+				     allowed while the version is in force and in use. -->
 				<button
 					v-if="canSetValidity"
 					type="button"
@@ -351,46 +279,26 @@ const applicabilityBasis = computed(
 					:disabled="validityBusy"
 					data-testid="kt-procset-rule-validity"
 					@click="setValidity(!valid)"
-				>
-					{{ valid ? __("Remove valid mark") : __("Mark as valid") }}
-				</button>
-				<button v-if="kind === 'method'" type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-rule-new-version" @click="emit('new-version')">{{ __("Create new version") }}</button>
-				<template v-else>
-					<button v-if="rule.can_edit" type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-rule-edit" @click="emit('edit-rule')">{{ __("Edit rule") }}</button>
-					<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-rule-new-version" @click="emit('new-version')">{{ __("Create new version") }}</button>
-					<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-rule-check-sources" @click="emit('check-sources')">{{ __("Check sources") }}</button>
-					<button type="button" class="kt-btn kt-btn-ghost" data-testid="kt-procset-rule-usage" @click="emit('check-sources')">{{ __("View usage and history") }}</button>
-					<button type="button" class="kt-btn kt-btn-ghost" data-testid="kt-procset-rule-rename" @click="renaming = true">{{ __("Edit rule name") }}</button>
-				</template>
+				>{{ valid ? __("Remove valid mark") : __("Mark as valid") }}</button>
+				<button v-if="kind !== 'method'" type="button" class="kt-btn kt-btn-ghost" data-testid="kt-procset-rule-usage" @click="emit('check-sources')">{{ __("View usage and history") }}</button>
+				<button v-if="kind !== 'method'" type="button" class="kt-btn kt-btn-ghost" data-testid="kt-procset-rule-rename" @click="renaming = true">{{ __("Edit rule name") }}</button>
 			</div>
-
-			<p v-if="validityError" class="kt-inline-error" role="alert" data-testid="kt-procset-rule-validity-error">{{ validityError }}</p>
-
-			<!-- §10.6 — identifier and kind are separately labelled read-only
-			     facts on the saved detail, for a method profile as much as for a
-			     reference rule. -->
+			<div v-if="validityError" class="kt-notice is-critical" role="alert" style="margin-top:12px" data-testid="kt-procset-rule-validity-error">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+				<div class="kt-notice-body">{{ validityError }}</div>
+			</div>
+			<!-- §10.6 — identifier and kind are separate read-only facts. -->
 			<div class="kt-meta-row" style="margin-top:16px">
 				<div><span class="kt-label">{{ __("Rule identifier") }}</span><span class="kt-meta-value" data-testid="kt-procset-rule-identifier">{{ dash(rule.reference_key || rule.profile || name) }}</span></div>
 			</div>
 
-			<!-- C03-B "rename" — the display name only. -->
-			<div v-if="renaming" class="kt-dialog-backdrop">
-				<div class="kt-dialog kt-blueprint kt-narrow" role="dialog" aria-modal="true" :aria-label="__('Edit rule name')" data-testid="kt-procset-rule-rename-dialog" @keydown.esc="renaming = false">
-					<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-					<h2 class="kt-dialog-title">{{ __("Edit rule name") }}</h2>
-					<div class="kt-dialog-fields">
-						<div class="kt-field">
-							<label for="kt-rule-rename">{{ __("Rule name") }}</label>
-							<input id="kt-rule-rename" v-model="renameValue" class="kt-input" data-testid="kt-procset-rule-rename-input">
-						</div>
-						<p v-if="renameError" class="kt-inline-error" role="alert" data-testid="kt-procset-rule-rename-error">{{ renameError }}</p>
-					</div>
-					<div class="kt-dialog-actions">
-						<button type="button" class="kt-btn kt-btn-secondary" :disabled="renameBusy" @click="renaming = false">{{ __("Cancel") }}</button>
-						<button type="button" class="kt-btn kt-btn-primary" :disabled="renameBusy || !renameValue.trim()" data-testid="kt-procset-rule-rename-save" @click="saveName">{{ __("Save changes") }}</button>
-					</div>
-				</div>
-			</div>
-		</template>
+			<RuleRenameDialog
+				v-if="renaming"
+				:reference-set="rule.reference_set"
+				:name="rule.display_name || rule.reference_kind || ''"
+				@saved="renaming = false; load(); emit('renamed')"
+				@cancel="renaming = false"
+			/>
+		</div>
 	</div>
 </template>

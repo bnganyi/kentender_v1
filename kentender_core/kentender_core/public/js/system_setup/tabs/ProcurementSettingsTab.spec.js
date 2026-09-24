@@ -221,7 +221,13 @@ describe("ProcurementSettingsTab", () => {
 		expect(rules.text()).toContain("30 Jun 2028");
 		// §7.3 — a set with no version yet is its own recoverable row, never an
 		// empty version row.
-		expect(rules.find('[data-testid="kt-procset-rule-noversion-rs-margins"]').text()).toBe("No version saved");
+		const card = rules.find('[data-testid="kt-procset-rule-noversion-rs-margins"]');
+		expect(card.text()).toBe("No version savedRulePreference marginsAdd first version");
+		// The table lists saved versions only, with "Details" beside "Source check".
+		expect(rules.find('[data-testid="kt-procset-rule-rs-margins"]').exists()).toBe(false);
+		expect(rules.findAll("th").map((th) => th.text())).toEqual(["Rule", "Applies from", "Applies until", "Version", "Source check", "Details", "Action"]);
+		await card.find('[data-testid="kt-procset-rule-first-version-rs-margins"]').trigger("click");
+		expect(wrapper.emitted("navigate").at(-1)).toEqual(["new-rule-version/rs-margins"]);
 		// §8.1 — the plain result vocabulary, the same on every screen.
 		expect(rules.findAll(".kt-status.is-attention").map((s) => s.text())).toEqual([
 			"Not marked valid",
