@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<style>a{color:var(--color-accent-700)}a:hover{color:var(--color-accent-900)}@keyframes ktpulse{0%,100%{opacity:1}50%{opacity:.55}}</style>
+</helmet>
+<main style="max-width:1200px;margin:0 auto;padding:32px 24px 96px">
+<div class="blueprint" style="background:var(--color-surface)">
+<div style="padding:32px 32px 0">
+<div class="kt-breadcrumb" style="margin-bottom:14px">Home &gt; Configuration and Governance &gt; <strong>System setup</strong></div>
+<div style="font-family:var(--font-heading);font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700)">Configuration and governance</div>
+<h1 style="margin:6px 0 10px">System setup</h1>
+<p class="text-muted" style="max-width:62ch;margin:0">Manage this site's details, financial years, responsibilities and procurement settings.</p>
+<div class="kt-tabs" style="margin-top:26px">
+<a class="kt-tab" href="C01-Procuring-Entity.dc.html" style="color:var(--color-neutral-700);text-decoration:none">Procuring entity</a>
+<a class="kt-tab" href="C02-Financial-Years.dc.html" style="color:var(--color-neutral-700);text-decoration:none">Financial years</a>
+<a class="kt-tab" href="C05-Organisation-Structure.dc.html" style="color:var(--color-neutral-700);text-decoration:none">Organisation structure</a>
+<a class="kt-tab" href="C06-Users-Responsibilities.dc.html" style="color:var(--color-accent-800);font-weight:600;text-decoration:none;border-bottom:2px solid var(--color-accent);margin-bottom:-1px">Users and responsibilities</a>
+<a class="kt-tab" href="C03A-Funding-Sources.dc.html" style="color:var(--color-neutral-700);text-decoration:none">Procurement settings</a>
+</div>
+</div>
+
+<div id="auth-des-03" data-screen-label="AUTH-DES-03 Register" style="padding:24px 32px 32px">
+<div style="margin-bottom:14px"><span class="tag tag-outline">AUTH-DES-03</span></div>
+<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:20px">
+<div><div style="font-family:var(--font-heading);font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700)">System setup</div>
+<h2 style="margin:4px 0 6px">Users and responsibilities</h2>
+<p class="card-body" style="margin:0">Assign each user a business responsibility in its exact organisational scope.</p></div>
+<button type="button" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:6px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14"></path></svg>Assign responsibility</button>
+</div>
+<div class="kt-filter-bar" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;align-items:end;margin-bottom:16px">
+<div class="field is-wide" style="margin:0"><label for="f-q">Search</label><div style="position:relative"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="1.5" style="position:absolute;left:10px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg><input class="input" id="f-q" type="search" placeholder="Search user or responsibility" style="padding-left:32px;width:100%"></div></div>
+<div class="field" style="margin:0"><label for="f-ou">Organisation unit</label><select class="input" id="f-ou"><option>All organisation units</option></select></div>
+<div class="field" style="margin:0"><label for="f-r">Responsibility</label><select class="input" id="f-r"><option>All responsibilities</option></select></div>
+<div class="field" style="margin:0"><label for="f-s">Status</label><select class="input" id="f-s"><option>All statuses</option></select></div>
+<button type="button" class="btn btn-secondary">Clear filters</button>
+</div>
+<div style="overflow-x:auto"><table class="table">
+<thead><tr><th>User</th><th>Responsibility</th><th>Scope</th><th>Coverage</th><th>Appointment</th><th>Effective period</th><th>Status</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td><div style="font-weight:600">Grace Wanjiku</div><div class="text-muted" style="font-size:13px">grace.wanjiku@moh.example.test</div></td><td>Departmental Author</td><td>Digital Health</td><td>This unit only</td><td>Permanent</td><td>From now · No scheduled end</td><td><span class="kt-status is-live">Active</span></td><td><a href="#auth-des-06">View</a></td></tr>
+<tr><td><div style="font-weight:600">Dr Peter Kimani</div><div class="text-muted" style="font-size:13px">peter.kimani@moh.example.test</div></td><td>Head of User Department</td><td>Human Resources Management and Development</td><td>This unit only</td><td>Permanent</td><td>From now · No scheduled end</td><td><span class="kt-status is-live">Active</span></td><td><a href="#">View</a></td></tr>
+<tr><td><div style="font-weight:600">Julia Njeri</div><div class="text-muted" style="font-size:13px">julia.njeri@moh.example.test</div></td><td>Head of User Department</td><td>Digital Health</td><td>This unit only</td><td>Acting</td><td>1 Oct 2026 – 30 Nov 2026</td><td><span class="kt-status is-draft">Scheduled</span></td><td><a href="#auth-des-06-scheduled">View</a></td></tr>
+<tr><td><div style="font-weight:600">Mercy Kilonzo</div><div class="text-muted" style="font-size:13px">mercy.kilonzo@moh.example.test</div></td><td>Procurement Planner</td><td>Site-wide</td><td>Entire entity</td><td>Permanent</td><td>From now · No scheduled end</td><td><span class="kt-status is-live">Active</span></td><td><a href="#">View</a></td></tr>
+<tr><td><div style="font-weight:600">Samuel Otieno</div><div class="text-muted" style="font-size:13px">samuel.otieno@moh.example.test</div></td><td>Head of User Department</td><td>Directorate of Digital Health and Policy</td><td>This unit and 1 descendant</td><td>Permanent</td><td>From 1 Jan 2026 · Until 31 Aug 2026</td><td><span class="kt-status is-pending">Expired</span></td><td><a href="#">View</a></td></tr>
+</tbody></table></div>
+<p class="text-muted" style="font-size:13px;margin:12px 0 0">5 responsibilities</p>
+</div>
+
+<div id="auth-des-04" data-screen-label="AUTH-DES-04 Assign Permanent" style="border-top:1px solid var(--color-divider);padding:24px 32px 32px">
+<div style="display:flex;gap:10px;align-items:center;margin-bottom:14px"><span class="tag tag-outline">AUTH-DES-04</span><span class="text-muted" style="font-size:13px">Dialog over dimmed AUTH-DES-03 · Organisation Unit scope, Permanent</span></div>
+<div style="background:rgba(22,24,26,.45);padding:48px 24px;display:flex;justify-content:center">
+<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-04" style="position:static;width:520px;max-width:100%">
+<div class="dialog-title" id="dlg-04">Assign responsibility</div>
+<div class="dialog-body" style="display:flex;flex-direction:column;gap:14px">
+<div class="field"><label>User</label><div style="position:relative"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="1.5" style="position:absolute;left:10px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg><input class="input" type="text" value="Grace Wanjiku · grace.wanjiku@moh.example.test" style="padding-left:32px;width:100%"></div></div>
+<div class="field"><label>Responsibility</label><select class="input"><option>Departmental Author · Organisation Unit</option></select></div>
+<div class="field"><label>Organisation Unit</label><div style="position:relative"><input class="input" type="text" readonly="readonly" value="Ministry of Health › Directorate of Digital Health and Policy › Digital Health" style="width:100%;padding-right:32px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="1.5" style="position:absolute;right:10px;top:50%;transform:translateY(-50%)"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+<div class="field"><label>Appointment</label><div class="seg" role="radiogroup" style="align-self:flex-start"><label class="seg-opt"><input type="radio" name="appt04" checked="checked">Permanent</label><label class="seg-opt"><input type="radio" name="appt04">Acting</label></div></div>
+<div class="field"><label>Effective from <span class="text-muted" style="font-weight:400">(optional)</span></label><input class="input" type="text" placeholder="Leave blank to start immediately"></div>
+<div class="kt-group" style="margin-top:4px"><div class="kt-label" style="margin-bottom:4px">Responsibility summary</div><p style="margin:0">Grace Wanjiku will be Departmental Author for Digital Health from now with no scheduled end.</p></div>
+</div>
+<div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Assign responsibility</button></div>
+</div>
+</div>
+</div>
+
+<div id="auth-des-05" data-screen-label="AUTH-DES-05 Assign Acting" style="border-top:1px solid var(--color-divider);padding:24px 32px 32px">
+<div style="display:flex;gap:10px;align-items:center;margin-bottom:14px"><span class="tag tag-outline">AUTH-DES-05</span><span class="text-muted" style="font-size:13px">Dialog over dimmed AUTH-DES-03 · Acting with descendants, office already held</span></div>
+<div style="background:rgba(22,24,26,.45);padding:48px 24px;display:flex;justify-content:center">
+<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-05" style="position:static;width:520px;max-width:100%">
+<div class="dialog-title" id="dlg-05">Assign responsibility</div>
+<div class="dialog-body" style="display:flex;flex-direction:column;gap:14px">
+<div class="field"><label>User</label><div style="position:relative"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="1.5" style="position:absolute;left:10px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg><input class="input" type="text" value="Julia Njeri · julia.njeri@moh.example.test" style="padding-left:32px;width:100%"></div></div>
+<div class="field"><label>Responsibility</label><select class="input"><option>Head of User Department · Organisation Unit</option></select></div>
+<div class="field"><label>Organisation Unit</label><div style="position:relative"><input class="input" type="text" readonly="readonly" value="Ministry of Health › Directorate of Digital Health and Policy" style="width:100%;padding-right:32px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="1.5" style="position:absolute;right:10px;top:50%;transform:translateY(-50%)"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+<div class="field"><label>Appointment</label><div class="seg" role="radiogroup" style="align-self:flex-start"><label class="seg-opt"><input type="radio" name="appt05">Permanent</label><label class="seg-opt"><input type="radio" name="appt05" checked="checked">Acting</label></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div class="field"><label>Effective from</label><input class="input" type="text" value="1 Oct 2026, 00:00"></div>
+<div class="field"><label>Effective to</label><input class="input" type="text" value="30 Nov 2026, 23:59"></div>
+</div>
+<div class="field"><label>Authority reference</label><input class="input" type="text" value="MOH/HR/ACT/2026/041"></div>
+<div class="kt-group" style="margin-top:4px"><div class="kt-label" style="margin-bottom:4px">Responsibility summary</div><p style="margin:0 0 6px">Julia Njeri will be Head of User Department for Directorate of Digital Health and Policy from 1 Oct 2026 until 30 Nov 2026.</p><p style="margin:0">This includes 1 subordinate organisation unit. <a href="#"><strong>View included units.</strong></a></p></div>
+<div class="kt-notice is-warning" role="alert" style="align-items:flex-start"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg><div class="kt-notice-body"><strong style="display:block;margin-bottom:2px">This office is already held</strong>Dr Peter Kimani holds Head of User Department for this scope until 30 Nov 2026. Revoke that assignment before creating an overlapping one.</div></div>
+</div>
+<div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary" disabled="disabled">Assign responsibility</button></div>
+</div>
+</div>
+</div>
+
+<div id="auth-des-06" data-screen-label="AUTH-DES-06 Detail Active" style="border-top:1px solid var(--color-divider);padding:24px 32px 0">
+<div style="margin-bottom:14px"><span class="tag tag-outline">AUTH-DES-06 · Active</span></div>
+<div style="font-family:var(--font-heading);font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700)">URA-2026-0001</div>
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:4px 0 24px"><h2 style="margin:0">Grace Wanjiku — Departmental Author</h2><span class="kt-status is-live">Active</span></div>
+<div style="display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:32px;align-items:start">
+<div><h3 style="margin:0 0 10px">Assignment</h3>
+<dl style="display:grid;grid-template-columns:170px minmax(0,1fr);margin:0;border-top:1px solid var(--color-divider)">
+<dt class="kt-label" style="padding:9px 0;border-bottom:1px solid var(--color-divider)">User</dt><dd style="margin:0;padding:9px 0;border-bottom:1px solid var(--color-divider)">Grace Wanjiku · grace.wanjiku@moh.example.test</dd>
+<dt class="kt-label" style="padding:9px 0;border-bottom:1px solid var(--color-divider)">Responsibility</dt><dd style="margin:0;padding:9px 0;border-bottom:1px solid var(--color-divider)">Departmental Author</dd>
+<dt class="kt-label" style="padding:9px 0;border-bottom:1px solid var(--color-divider)">Scope classification</dt><dd style="margin:0;padding:9px 0;border-bottom:1px solid var(--color-divider)">Organisation Unit</dd>
+<dt class="kt-label" style="padding:9px 0;border-bottom:1px solid var(--color-divider)">Organisation Unit</dt><dd style="margin:0;padding:9px 0;border-bottom:1px solid var(--color-divider)">Ministry of Health › Directorate of Digital Health and Policy › Digital Health</dd>
+<dt class="kt-label" style="padding:9px 0;border-bottom:1px solid var(--color-divider)">Included units</dt><dd style="margin:0;padding:9px 0;border-bottom:1px solid var(--color-divider)">This unit only</dd>
+<dt class="kt-label" style="padding:9px 0;border-bottom:1px solid var(--color-divider)">Appointment</dt><dd style="margin:0;padding:9px 0;border-bottom:1px solid var(--color-divider)">Permanent</dd>
+<dt class="kt-label" style="padding:9px 0;border-bottom:1px solid var(--color-divider)">Effective period</dt><dd style="margin:0;padding:9px 0;border-bottom:1px solid var(--color-divider)">From 1 Sep 2026, 09:00 EAT · No scheduled end</dd>
+</dl></div>
+<div class="kt-group"><h4 style="margin:0 0 10px">Audit</h4>
+<dl style="display:grid;grid-template-columns:150px minmax(0,1fr);gap:8px 12px;margin:0">
+<dt class="kt-label">Assigned by</dt><dd style="margin:0">Administrator</dd>
+<dt class="kt-label">Assigned at</dt><dd style="margin:0">1 Sep 2026, 09:00 EAT</dd>
+<dt class="kt-label">Frappe role projection</dt><dd style="margin:0">Synchronised</dd>
+</dl></div>
+</div>
+<div class="kt-disclosure" style="margin-top:24px"><div class="kt-disclosure-head" aria-expanded="false"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Access diagnostics</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+<h3 style="margin:24px 0 10px;font-size:17px">Administrative history</h3>
+<div style="overflow-x:auto"><table class="table"><thead><tr><th>When</th><th>Actor</th><th>Event</th></tr></thead><tbody><tr><td>1 Sep 2026, 09:00 EAT</td><td>Administrator</td><td>Responsibility assigned</td></tr></tbody></table></div>
+<div style="position:sticky;bottom:0;margin:24px -32px 0;padding:14px 32px;border-top:1px solid var(--color-divider);background:var(--color-surface);display:flex;justify-content:flex-end;gap:8px"><button type="button" class="btn btn-danger">Revoke responsibility</button></div>
+</div>
+
+<div id="auth-des-07" data-screen-label="AUTH-DES-07 Revoke" style="border-top:1px solid var(--color-divider);padding:24px 32px 32px">
+<div style="display:flex;gap:10px;align-items:center;margin-bottom:14px"><span class="tag tag-outline">AUTH-DES-07</span><span class="text-muted" style="font-size:13px">Dialog over dimmed AUTH-DES-06</span></div>
+<div style="background:rgba(22,24,26,.45);padding:48px 24px;display:flex;justify-content:center">
+<div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dlg-07" style="position:static;width:520px;max-width:100%">
+<div class="dialog-title" id="dlg-07">Revoke responsibility?</div>
+<div class="dialog-body" style="display:flex;flex-direction:column;gap:14px">
+<p style="margin:0">Grace Wanjiku will immediately lose Departmental Author authority for Digital Health. Existing decisions and audit history will remain unchanged.</p>
+<div class="field"><label for="rev-r">Reason for revocation</label><textarea class="input" id="rev-r" rows="3">Officer has transferred to the Directorate of Preventive Health with effect from 1 September 2026.</textarea></div>
+</div>
+<div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-danger">Revoke responsibility</button></div>
+</div>
+</div>
+</div>
+
+<div id="auth-des-06-scheduled" data-screen-label="AUTH-DES-06 Detail Scheduled" style="border-top:1px solid var(--color-divider);padding:24px 32px 0">
+<div style="margin-bottom:14px"><span class="tag tag-outline">AUTH-DES-06 · Scheduled</span></div>
+<div style="font-family:var(--font-heading);font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700)">URA-2026-0003</div>
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:4px 0 24px"><h2 style="margin:0">Julia Njeri — Head of User Department</h2><span class="kt-status is-draft">Scheduled</span></div>
+<div style="display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:32px;align-items:start">
+<div><h3 style="margin:0 0 10px">Assignment</h3>
+<dl style="display:grid;grid-template-columns:170px minmax(0,1fr);margin:0;border-top:1px solid var(--color-divider)">
+<dt class="kt-label" style="padding:9px 0;border-bottom:1px solid var(--color-divider)">User</dt><dd style="margin:0;padding:9px 0;border-bottom:1px solid var(--color-divider)">Julia Njeri · julia.njeri@moh.example.test</dd>
+<dt class="kt-label" style="padding:9px 0;border-bottom:1px solid var(--color-divider)">Responsibility</dt><dd style="margin:0;padding:9px 0;border-bottom:1px solid var(--color-divider)">Head of User Department</dd>
+<dt class="kt-label" style="padding:9px 0;border-bottom:1px solid var(--color-divider)">Scope classification</dt><dd style="margin:0;padding:9px 0;border-bottom:1px solid var(--color-divider)">Organisation Unit</dd>
+<dt class="kt-label" style="padding:9px 0;border-bottom:1px solid var(--color-divider)">Organisation Unit</dt><dd style="margin:0;padding:9px 0;border-bottom:1px solid var(--color-divider)">Ministry of Health › Directorate of Digital Health and Policy › Digital Health</dd>
+<dt class="kt-label" style="padding:9px 0;border-bottom:1px solid var(--color-divider)">Included units</dt><dd style="margin:0;padding:9px 0;border-bottom:1px solid var(--color-divider)">This unit only</dd>
+<dt class="kt-label" style="padding:9px 0;border-bottom:1px solid var(--color-divider)">Appointment</dt><dd style="margin:0;padding:9px 0;border-bottom:1px solid var(--color-divider)">Acting</dd>
+<dt class="kt-label" style="padding:9px 0;border-bottom:1px solid var(--color-divider)">Effective period</dt><dd style="margin:0;padding:9px 0;border-bottom:1px solid var(--color-divider)">1 Oct 2026, 00:00 EAT – 30 Nov 2026, 23:59 EAT</dd>
+<dt class="kt-label" style="padding:9px 0;border-bottom:1px solid var(--color-divider)">Authority reference</dt><dd style="margin:0;padding:9px 0;border-bottom:1px solid var(--color-divider)">MOH/HR/ACT/2026/041</dd>
+</dl></div>
+<div class="kt-group"><h4 style="margin:0 0 10px">Audit</h4>
+<dl style="display:grid;grid-template-columns:150px minmax(0,1fr);gap:8px 12px;margin:0">
+<dt class="kt-label">Assigned by</dt><dd style="margin:0">Administrator</dd>
+<dt class="kt-label">Assigned at</dt><dd style="margin:0">1 Sep 2026, 10:05 EAT</dd>
+<dt class="kt-label">Frappe role projection</dt><dd style="margin:0">Not yet required</dd>
+</dl></div>
+</div>
+<div class="kt-disclosure" style="margin-top:24px"><div class="kt-disclosure-head" aria-expanded="false"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Access diagnostics</span></div><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+<h3 style="margin:24px 0 10px;font-size:17px">Administrative history</h3>
+<div style="overflow-x:auto"><table class="table"><thead><tr><th>When</th><th>Actor</th><th>Event</th></tr></thead><tbody><tr><td>1 Sep 2026, 10:05 EAT</td><td>Administrator</td><td>Responsibility assigned</td></tr></tbody></table></div>
+<div style="position:sticky;bottom:0;margin:24px -32px 0;padding:14px 32px;border-top:1px solid var(--color-divider);background:var(--color-surface);display:flex;justify-content:flex-end;gap:8px"><button type="button" class="btn btn-secondary">Edit scheduled assignment</button><button type="button" class="btn btn-danger">Revoke responsibility</button></div>
+</div>
+
+<div id="auth-edit-scheduled" data-screen-label="Edit scheduled assignment" style="border-top:1px solid var(--color-divider);padding:24px 32px 32px">
+<div style="display:flex;gap:10px;align-items:center;margin-bottom:14px"><span class="tag tag-outline">AUTH-DES-05 · Edit scheduled assignment</span><span class="text-muted" style="font-size:13px">Dialog over dimmed Scheduled detail · prefilled with current values</span></div>
+<div style="background:rgba(22,24,26,.45);padding:48px 24px;display:flex;justify-content:center">
+<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-edit" style="position:static;width:520px;max-width:100%">
+<div class="dialog-title" id="dlg-edit">Edit scheduled assignment</div>
+<div class="dialog-body" style="display:flex;flex-direction:column;gap:14px">
+<div class="kt-notice is-info" style="align-items:flex-start"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg><div class="kt-notice-body"><em>This assignment has not started yet, so any of its details can still be changed. Clear Effective from to bring it into force now.</em></div></div>
+<div class="field"><label>User</label><div style="position:relative"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="1.5" style="position:absolute;left:10px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg><input class="input" type="text" value="Julia Njeri · julia.njeri@moh.example.test" style="padding-left:32px;width:100%"></div></div>
+<div class="field"><label>Responsibility</label><select class="input"><option>Head of User Department · Organisation Unit</option></select></div>
+<div class="field"><label>Organisation Unit</label><div style="position:relative"><input class="input" type="text" readonly="readonly" value="Ministry of Health › Directorate of Digital Health and Policy › Digital Health" style="width:100%;padding-right:32px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="1.5" style="position:absolute;right:10px;top:50%;transform:translateY(-50%)"><path d="M6 9l6 6 6-6"></path></svg></div></div>
+<div class="field"><label>Appointment</label><div class="seg" role="radiogroup" style="align-self:flex-start"><label class="seg-opt"><input type="radio" name="apptE">Permanent</label><label class="seg-opt"><input type="radio" name="apptE" checked="checked">Acting</label></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div class="field"><label>Effective from</label><input class="input" type="text" value="1 Oct 2026, 00:00"></div>
+<div class="field"><label>Effective to</label><input class="input" type="text" value="30 Nov 2026, 23:59"></div>
+</div>
+<div class="field"><label>Authority reference</label><input class="input" type="text" value="MOH/HR/ACT/2026/041"></div>
+<div class="kt-group" style="margin-top:4px"><div class="kt-label" style="margin-bottom:4px">Responsibility summary</div><p style="margin:0">Julia Njeri will be Head of User Department for Digital Health from 1 Oct 2026 until 30 Nov 2026.</p></div>
+</div>
+<div class="dialog-actions"><button type="button" class="btn btn-secondary">Cancel</button><button type="button" class="btn btn-primary">Save changes</button></div>
+</div>
+</div>
+</div>
+
+<div id="auth-changed-history" data-screen-label="Scheduled — changed history" style="border-top:1px solid var(--color-divider);padding:24px 32px 32px">
+<div style="display:flex;gap:10px;align-items:center;margin-bottom:14px"><span class="tag tag-outline">AUTH-DES-06 · Scheduled · after Save changes</span><span class="text-muted" style="font-size:13px">Administrative history region; rest of the detail as above</span></div>
+<h3 style="margin:0 0 10px;font-size:17px">Administrative history</h3>
+<div style="overflow-x:auto"><table class="table"><thead><tr><th>When</th><th>Actor</th><th>Event</th></tr></thead><tbody>
+<tr><td style="vertical-align:top">1 Sep 2026, 10:30 EAT</td><td style="vertical-align:top">Administrator</td><td><div style="font-weight:600">Scheduled assignment changed</div><div style="margin-top:4px;font-size:14px">Effective to: 30 Nov 2026, 23:59 EAT → 31 Dec 2026, 23:59 EAT</div></td></tr>
+<tr><td>1 Sep 2026, 10:05 EAT</td><td>Administrator</td><td>Responsibility assigned</td></tr>
+</tbody></table></div>
+</div>
+
+<div id="auth-des-08" data-screen-label="AUTH-DES-08 Common states" style="border-top:1px solid var(--color-divider);padding:24px 32px 32px">
+<div style="margin-bottom:18px"><span class="tag tag-outline">AUTH-DES-08 · Loading · Empty · Forbidden · Error</span></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(460px,1fr));gap:32px">
+
+<div><div class="kt-label" style="margin-bottom:10px">Loading</div>
+<h2 style="margin:0 0 16px;font-size:22px">Users and responsibilities</h2>
+<div role="status" aria-live="polite"><p class="text-muted" style="margin:0 0 10px">Loading responsibilities…</p>
+<div style="overflow-x:auto"><table class="table"><thead><tr><th>User</th><th>Responsibility</th><th>Scope</th><th>Status</th></tr></thead><tbody>
+<tr><td><div style="height:12px;width:70%;background:var(--color-surface-2);animation:ktpulse 1.4s infinite"></div></td><td><div style="height:12px;width:80%;background:var(--color-surface-2);animation:ktpulse 1.4s infinite"></div></td><td><div style="height:12px;width:60%;background:var(--color-surface-2);animation:ktpulse 1.4s infinite"></div></td><td><div style="height:12px;width:50%;background:var(--color-surface-2);animation:ktpulse 1.4s infinite"></div></td></tr>
+<tr><td><div style="height:12px;width:55%;background:var(--color-surface-2);animation:ktpulse 1.4s infinite"></div></td><td><div style="height:12px;width:70%;background:var(--color-surface-2);animation:ktpulse 1.4s infinite"></div></td><td><div style="height:12px;width:75%;background:var(--color-surface-2);animation:ktpulse 1.4s infinite"></div></td><td><div style="height:12px;width:50%;background:var(--color-surface-2);animation:ktpulse 1.4s infinite"></div></td></tr>
+<tr><td><div style="height:12px;width:65%;background:var(--color-surface-2);animation:ktpulse 1.4s infinite"></div></td><td><div style="height:12px;width:60%;background:var(--color-surface-2);animation:ktpulse 1.4s infinite"></div></td><td><div style="height:12px;width:50%;background:var(--color-surface-2);animation:ktpulse 1.4s infinite"></div></td><td><div style="height:12px;width:50%;background:var(--color-surface-2);animation:ktpulse 1.4s infinite"></div></td></tr>
+</tbody></table></div></div></div>
+
+<div><div class="kt-label" style="margin-bottom:10px">Empty register</div>
+<h2 style="margin:0 0 16px;font-size:22px">Users and responsibilities</h2>
+<div style="border-top:1px solid var(--color-divider);padding:36px 16px;text-align:center">
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-500)" stroke-width="1.5" style="margin:0 auto 12px;display:block"><circle cx="9" cy="8" r="4"></circle><path d="M2 21v-1a7 7 0 0 1 14 0v1"></path><path d="M19 8v6M16 11h6"></path></svg>
+<p style="font-weight:600;margin:0 0 4px">No responsibilities assigned yet</p>
+<p class="card-body" style="margin:0 0 16px">Assign the first business responsibility for this entity.</p>
+<button type="button" class="btn btn-primary">Assign responsibility</button></div></div>
+
+<div><div class="kt-label" style="margin-bottom:10px">Forbidden</div>
+<div style="border-top:1px solid var(--color-divider);padding:36px 16px;text-align:center">
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-500)" stroke-width="1.5" style="margin:0 auto 12px;display:block"><rect x="4" y="11" width="16" height="10"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+<p style="font-weight:600;margin:0 0 4px">You do not have access to System setup</p>
+<p class="card-body" style="margin:0;max-width:52ch;margin-left:auto;margin-right:auto">This area needs Administrator or System Manager access. Ask your KenTender administrator to grant it.</p></div></div>
+
+<div><div class="kt-label" style="margin-bottom:10px">Error</div>
+<h2 style="margin:0 0 16px;font-size:22px">Users and responsibilities</h2>
+<div style="border-top:1px solid var(--color-divider);padding:36px 16px;text-align:center" role="alert">
+<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--status-critical)" stroke-width="1.5" style="margin:0 auto 12px;display:block"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16h.01"></path></svg>
+<p style="font-weight:600;margin:0 0 4px">Responsibilities could not be loaded</p>
+<p class="card-body" style="margin:0 0 16px">Try again. If the problem continues, contact support.</p>
+<button type="button" class="btn btn-secondary">Try again</button></div></div>
+
+</div>
+</div>
+
+</div>
+</main>
+</x-dc>
+</body>
+</html>
