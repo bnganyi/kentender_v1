@@ -10,6 +10,7 @@ const api = vi.hoisted(() => ({
 	listRegulatoryReferenceVersions: vi.fn(),
 	listVerificationHistory: vi.fn(),
 	recordReferenceVerification: vi.fn(),
+	getBusinessDayCalendar: vi.fn(),
 }));
 vi.mock("../data/procurementSettingsApi.js", () => ({ procurementSettingsApi: api }));
 
@@ -145,5 +146,29 @@ describe("SourceCheckScreen", () => {
 		await wrapper.find('[data-testid="kt-sc-version-view-1"]').trigger("click");
 		expect(wrapper.emitted("view-version")[0]).toEqual(["rv-1"]);
 		expect(wrapper.find('[data-testid="kt-sc-usage-none"]').text()).toBe("Which decisions used this version is not recorded yet.");
+	});
+
+	it("checks a working-day calendar the same way: its own facts, its own versions, the calendar as target", async () => {
+		api.getBusinessDayCalendar.mockResolvedValue({ calendar: "CAL-V1", calendar_name: "Kenya public holidays", version_number: 1 });
+		api.listVerificationHistory.mockResolvedValue([]);
+		api.recordReferenceVerification.mockResolvedValue({ event: "ev-1" });
+		const wrapper = mount(SourceCheckScreen, {
+			props: {
+				name: "CAL-V1",
+				targetDoctype: "Business Day Calendar",
+				calendarVersions: [
+					{ calendar: "CAL-V1", calendar_name: "Kenya public holidays", version_number: 1 },
+					{ calendar: "OTHER-V1", calendar_name: "Other", version_number: 1 },
+				],
+			},
+			global: globalMocks(),
+		});
+		await flushPromises();
+		expect(wrapper.find(".kt-meta-row").text()).toBe("Record kindWorking-day calendarCalendarKenya public holidaysVersion1");
+		expect(wrapper.findAll('[data-testid^="kt-sc-version-view-"]')).toHaveLength(1);
+		await wrapper.find('[data-testid="kt-sc-unresolved"]').setValue("Holiday list not gazetted yet.");
+		await wrapper.find('[data-testid="kt-sc-record"]').trigger("click");
+		await flushPromises();
+		expect(api.recordReferenceVerification.mock.calls[0][0]).toMatchObject({ target_doctype: "Business Day Calendar", target_name: "CAL-V1" });
 	});
 });

@@ -53,6 +53,13 @@
    "description": "CFG-CHG-002 v0.14 §4.6/§4.8 — the exact same-record versions this one was declared to replace (D16: an undeclared overlap is refused)."
   },
   {
+   "fieldname": "change_reason",
+   "fieldtype": "Small Text",
+   "label": "Reason for change",
+   "read_only": 1,
+   "description": "Why this version replaces the earlier one (CFG-CHG-002 v0.14 §10.9)."
+  },
+  {
    "fieldname": "column_break_a",
    "fieldtype": "Column Break"
   },
@@ -136,6 +143,7 @@
   "version_number",
   "status",
   "supersedes_version_ids",
+  "change_reason",
   "column_break_a",
   "effective_from",
   "effective_until",
@@ -163,5 +171,5 @@
   }
  ],
  "track_changes": 1,
- "modified": "2026-09-24 17:31:53.594135"
+ "modified": "2026-09-24 22:00:00.000000"
 }

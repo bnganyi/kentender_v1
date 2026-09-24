@@ -13,13 +13,16 @@
 // server enforces both and this states them before the round trip.
 import { computed, onMounted, ref } from "vue";
 import { procurementSettingsApi } from "../data/procurementSettingsApi.js";
-import { dash, fmtDate, sourceCheckClass, sourceCheckLabel } from "../data/format.js";
 import RuleFormError from "./RuleFormError.vue";
+import VersionHistory from "./VersionHistory.vue";
 
 const props = defineProps({
 	name: { type: String, required: true },
 	targetDoctype: { type: String, default: "Regulatory Reference" },
+	// A calendar's versions come from the settings read the tab holds (C04).
+	calendarVersions: { type: Array, default: () => [] },
 });
+const isCalendar = computed(() => props.targetDoctype === "Business Day Calendar");
 const emit = defineEmits(["back", "recorded", "view-version"]);
 
 // §8.1's plain result vocabulary over the model's own outcome values.
@@ -56,7 +59,9 @@ async function load() {
 	loadError.value = "";
 	try {
 		const first = !version.value;
-		version.value = await procurementSettingsApi.getRegulatoryReferenceVersion(props.name);
+		version.value = isCalendar.value
+			? await procurementSettingsApi.getBusinessDayCalendar(props.name)
+			: await procurementSettingsApi.getRegulatoryReferenceVersion(props.name);
 		// Prefilled once from the version; a re-read after a stale save keeps
 		// what was typed for review.
 		if (first) {
@@ -65,10 +70,12 @@ async function load() {
 			form.value.source_document = version.value.source_document || "";
 		}
 		const [allVersions, events] = await Promise.all([
-			procurementSettingsApi.listRegulatoryReferenceVersions(version.value.reference_set),
+			isCalendar.value
+				? Promise.resolve(props.calendarVersions.filter((row) => row.calendar_name === version.value.calendar_name))
+				: procurementSettingsApi.listRegulatoryReferenceVersions(version.value.reference_set),
 			procurementSettingsApi.listVerificationHistory(props.targetDoctype, props.name),
 		]);
-		versions.value = allVersions;
+		versions.value = allVersions.map((row) => ({ ...row, id: row.reference || row.calendar }));
 		history.value = events;
 		// The latest check this form was opened on; recording against a
 		// different one means someone else recorded meanwhile (stale).
@@ -80,15 +87,6 @@ async function load() {
 	}
 }
 onMounted(load);
-
-function outcomeLabel(value) {
-	return (OUTCOMES.find((option) => option.value === value) || {}).label || value;
-}
-function outcomeClass(value) {
-	if (value === "Verified") return "kt-status is-live";
-	if (value === "Rejected") return "kt-status is-critical";
-	return "kt-status is-attention";
-}
 
 // The same completeness rule the server applies, stated before the submit so
 // "Sources verified" is never offered as if it would be accepted.
@@ -128,13 +126,6 @@ async function record() {
 	}
 }
 
-// "Earlier versions replaced": the version numbers, not a count.
-function replacedLabel(row) {
-	const ids = row.supersedes_version_ids || [];
-	if (!ids.length) return "—";
-	const numbers = ids.map((id) => (versions.value.find((v) => v.reference === id) || {}).version_number).filter(Boolean);
-	return numbers.length ? numbers.map((n) => __("Version {0}", [n])).join(", ") : String(ids.length);
-}
 </script>
 
 <template>
@@ -153,8 +144,8 @@ function replacedLabel(row) {
 				<h3>{{ __("Check sources") }}</h3>
 				<!-- Fixed target: the check is about this exact version. -->
 				<div class="kt-meta-row" style="margin-bottom:14px">
-					<div><span class="kt-label">{{ __("Record kind") }}</span><span class="kt-meta-value">{{ __("Procurement rule") }}</span></div>
-					<div><span class="kt-label">{{ __("Rule") }}</span><span class="kt-meta-value" data-testid="kt-source-check-rule">{{ version.display_name || version.reference_kind }}</span></div>
+					<div><span class="kt-label">{{ __("Record kind") }}</span><span class="kt-meta-value">{{ isCalendar ? __("Working-day calendar") : __("Procurement rule") }}</span></div>
+					<div><span class="kt-label">{{ isCalendar ? __("Calendar") : __("Rule") }}</span><span class="kt-meta-value" data-testid="kt-source-check-rule">{{ isCalendar ? version.calendar_name : version.display_name || version.reference_kind }}</span></div>
 					<div><span class="kt-label">{{ __("Version") }}</span><span class="kt-meta-value" data-testid="kt-source-check-version">{{ version.version_number }}</span></div>
 				</div>
 				<div class="kt-field">
@@ -220,65 +211,7 @@ function replacedLabel(row) {
 			</div>
 
 			<!-- C03D #history — version, source-check and usage histories. -->
-			<div class="kt-sc-history" data-testid="kt-source-check-history">
-				<div>
-					<h6 class="kt-card-title">{{ __("Version history") }}</h6>
-					<div class="kt-table-scroll">
-						<table class="kt-table">
-							<thead>
-								<tr><th>{{ __("Version") }}</th><th>{{ __("Applies from") }}</th><th>{{ __("Applies until") }}</th><th>{{ __("Recorded at") }}</th><th>{{ __("Recorded by") }}</th><th>{{ __("Earlier versions replaced") }}</th><th>{{ __("Source check") }}</th><th>{{ __("Action") }}</th></tr>
-							</thead>
-							<tbody>
-								<tr v-for="row in versions" :key="row.reference" :data-testid="'kt-sc-version-' + row.version_number">
-									<td>{{ row.version_number }}</td>
-									<td>{{ fmtDate(row.effective_from) }}</td>
-									<td>{{ fmtDate(row.effective_until) }}</td>
-									<td>{{ fmtDate(row.recorded_at) }}</td>
-									<td>{{ dash(row.recorded_by) }}</td>
-									<td>{{ replacedLabel(row) }}</td>
-									<td><span :class="sourceCheckClass(row.verification_status)">{{ __(sourceCheckLabel(row.verification_status)) }}</span></td>
-									<td><a href="#" :data-testid="'kt-sc-version-view-' + row.version_number" @click.prevent="emit('view-version', row.reference)">{{ __("View") }}</a></td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-				</div>
-				<div>
-					<h6 class="kt-card-title">{{ __("Source-check history") }}</h6>
-					<div class="kt-table-scroll">
-						<table class="kt-table">
-							<thead>
-								<tr><th>{{ __("Result") }}</th><th>{{ __("Source-check date") }}</th><th>{{ __("Recorded at") }}</th><th>{{ __("Recorded by") }}</th><th>{{ __("Evidence") }}</th><th>{{ __("Reason") }}</th></tr>
-							</thead>
-							<tbody>
-								<tr v-for="row in history" :key="row.event" data-testid="kt-sc-history-row">
-									<td><span :class="outcomeClass(row.outcome)">{{ outcomeLabel(row.outcome) }}</span></td>
-									<td>{{ fmtDate(row.source_check_date) }}</td>
-									<td>{{ fmtDate(row.recorded_at) }}</td>
-									<td>{{ dash(row.recorded_by) }}</td>
-									<td>{{ row.evidence_complete ? __("Complete") : __("Incomplete") }}</td>
-									<td>{{ dash(row.change_reason || row.unresolved_points) }}</td>
-								</tr>
-								<tr v-if="!history.length"><td colspan="6" class="text-muted">{{ __("No source check has been recorded yet.") }}</td></tr>
-							</tbody>
-						</table>
-					</div>
-				</div>
-				<div>
-					<h6 class="kt-card-title">{{ __("Usage") }}</h6>
-					<div class="kt-table-scroll">
-						<table class="kt-table">
-							<thead>
-								<tr><th>{{ __("Consumer") }}</th><th>{{ __("Record reference") }}</th><th>{{ __("Exact version") }}</th><th>{{ __("Decision date") }}</th><th>{{ __("Action") }}</th></tr>
-							</thead>
-							<tbody>
-								<!-- Nothing records which decisions used a version yet (FU-15). -->
-								<tr><td colspan="5" class="text-muted" data-testid="kt-sc-usage-none">{{ __("Which decisions used this version is not recorded yet.") }}</td></tr>
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</div>
+			<VersionHistory :versions="versions" :checks="history" @view-version="(id) => emit('view-version', id)" />
 		</template>
 	</div>
 </template>

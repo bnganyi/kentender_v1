@@ -50,7 +50,9 @@ describe("ScheduleProfileDetail", () => {
 		const wrapper = mount(ScheduleProfileDetail, { props: { name: "SPR-OPEN-TENDER-GOODS-V1" }, global: globalMocks() });
 		await flushPromises();
 		expect(wrapper.find('[data-testid="kt-procset-profile-title"]').text()).toBe("Open Tender — goods");
-		expect(wrapper.findAll(".kt-procset-meta .kt-label").map((l) => l.text())).toEqual(["Name", "Which date determines the rule to use?", "Method", "Procedure", "Version", "Applies"]);
+		expect(wrapper.findAll(".kt-meta-row")[0].findAll(".kt-label").map((l) => l.text())).toEqual([
+			"Name", "Which date determines the rule to use?", "Method", "Procedure", "Category", "Version", "Applies from", "Applies until", "Source check",
+		]);
 		// §10.9 keeps the milestones and the intervals between them as two
 		// separate tables.
 		expect(wrapper.findAll("thead th").map((h) => h.text())).toEqual([
@@ -62,7 +64,9 @@ describe("ScheduleProfileDetail", () => {
 			"To",
 			"Days counted",
 			"Minimum status",
+			"Minimum days",
 			"Maximum status",
+			"Maximum days",
 			"Default days",
 			"Default basis",
 		]);
@@ -73,9 +77,11 @@ describe("ScheduleProfileDetail", () => {
 		// milestone, so they are read from the interval row.
 		const award = wrapper.find('[data-testid="kt-procset-interval-award_approval"]');
 		expect(award.text()).toContain("Planning assumption");
-		expect(award.findAll("td")[5].text()).toBe("5");
+		expect(award.findAll("td")[7].text()).toBe("5");
+		// The board's vocabulary over the model's values (§10.9).
 		const bid = wrapper.find('[data-testid="kt-procset-interval-bid_opening"]');
-		expect(bid.text()).toContain("Verification required");
+		expect(bid.findAll("td")[8].text()).toBe("Legal requirement");
+		expect(bid.findAll("td")[3].text()).toBe("Not yet established");
 		expect(bid.findAll("td")[4].text()).toBe("—");
 		expect(wrapper.find('[data-testid="kt-procset-profile-delivery-default"]').text()).toBe("Not set");
 		// The fixture's periods are complete, so the one thing standing in the
@@ -93,6 +99,23 @@ describe("ScheduleProfileDetail", () => {
 		expect(wrapper.find('[data-testid="kt-procset-profile-notice"]').text()).toBe(
 			"This schedule is missing periods, so it cannot be used to plan dates. Edit it to fill them in."
 		);
+		// …and which, by the labels on screen (§10.9 Details to complete).
+		expect(wrapper.find('[data-testid="kt-procset-profile-details"]').text()).toBe("Details to completeDefault days — Bid opening");
+	});
+
+	it("working days: names the calendar and links to it, or says a verified one is needed", async () => {
+		api.getScheduleProfile.mockResolvedValueOnce({ ...profile, counting_rule: "Working days", calendar: { calendar: "CAL-V1", calendar_name: "Kenya public holidays" } });
+		const withCalendar = mount(ScheduleProfileDetail, { props: { name: "SPR-OPEN-TENDER-GOODS-V1" }, global: globalMocks() });
+		await flushPromises();
+		expect(withCalendar.find('[data-testid="kt-procset-profile-calendar"]').text()).toContain("Kenya public holidays");
+		await withCalendar.find('[data-testid="kt-procset-profile-view-calendar"]').trigger("click");
+		expect(withCalendar.emitted("view-calendar")[0]).toEqual(["CAL-V1"]);
+
+		api.getScheduleProfile.mockResolvedValueOnce({ ...profile, counting_rule: "Working days", calendar: null, complete: false, gaps: ["working_day_calendar"] });
+		const without = mount(ScheduleProfileDetail, { props: { name: "SPR-OPEN-TENDER-GOODS-V1" }, global: globalMocks() });
+		await flushPromises();
+		expect(without.find('[data-testid="kt-procset-profile-calendar-missing"]').text()).toBe("Select a verified working-day calendar for this interval.");
+		expect(without.find('[data-testid="kt-procset-profile-details"]').text()).toContain("Working-day calendar");
 	});
 
 	it("a Verified, complete profile shows no notice, and Create new version asks the parent for the editor", async () => {
@@ -129,7 +152,8 @@ describe("ScheduleProfileDetail", () => {
 		const wrapper = mount(ScheduleProfileDetail, { props: { name: "SPR-GONE-V9", verificationStatuses: [] }, global: globalMocks() });
 		await flushPromises();
 		expect(wrapper.find('[data-testid="kt-procset-profile-error"]').exists()).toBe(true);
-		expect(wrapper.find('[data-testid="kt-procset-profile-title"]').text()).toBe("Procurement schedule");
+		// Nothing of the schedule is drawn when it could not be read.
+		expect(wrapper.find('[data-testid="kt-procset-profile-title"]').exists()).toBe(false);
 		expect(wrapper.find('[data-testid="kt-procset-profile-edit"]').exists()).toBe(false);
 		expect(wrapper.find('[data-testid="kt-procset-profile-new-version"]').exists()).toBe(false);
 	});

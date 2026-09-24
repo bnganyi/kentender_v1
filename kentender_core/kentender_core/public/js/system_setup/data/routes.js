@@ -17,7 +17,7 @@
 // (plan Phase 5), so the URL is already the spec's while the screens change.
 export const TABS = ["procuring-entity", "fiscal-years", "organisation-structure", "users-and-responsibilities", "procurement-settings"];
 export const SECTIONS = ["funding-sources", "procurement-rules", "schedule-profiles", "reminders", "calendars"];
-const ACTIONS = ["new-version", "edit", "check-sources"];
+const ACTIONS = ["new-version", "edit", "check-sources", "history"];
 
 function decode(segment) {
 	try {
@@ -90,6 +90,10 @@ const LEGACY = {
 	"edit-schedule": ["schedule-profiles", "edit"],
 	calendar: ["calendars", ""],
 	"new-calendar": ["calendars", "new"],
+	"calendar-new-version": ["calendars", "new-version"],
+	"calendar-edit": ["calendars", "edit"],
+	"calendar-check-sources": ["calendars", "check-sources"],
+	"calendar-history": ["calendars", "history"],
 };
 
 export function legacyToRoute(tab, legacy) {
@@ -112,7 +116,10 @@ export function routeToLegacy(route, { isMethodRule = () => false } = {}) {
 	}
 	if (!id) return "";
 	if (section === "funding-sources") return `source/${id}`;
-	if (section === "calendars") return `calendar/${id}`;
+	if (section === "calendars") {
+		const kind = { "new-version": "calendar-new-version", edit: "calendar-edit", "check-sources": "calendar-check-sources", history: "calendar-history" }[action];
+		return `${kind || "calendar"}/${id}`;
+	}
 	if (section === "schedule-profiles") {
 		if (action === "new-version") return `new-schedule-version/${id}`;
 		if (action === "edit") return `edit-schedule/${id}`;

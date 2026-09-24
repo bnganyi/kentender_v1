@@ -159,6 +159,7 @@ def register_schedule_profile_version(
 	provision: str | None = None,
 	source_document: str | None = None,
 	supersedes_version_ids=None,
+	change_reason: str | None = None,
 	idempotency_key: str | None = None,
 ) -> dict[str, Any]:
 	default_days = None if estimated_delivery_period_default_days in (None, "") else int(estimated_delivery_period_default_days)
@@ -179,6 +180,7 @@ def register_schedule_profile_version(
 		provision=provision or "",
 		source_document=source_document or "",
 		supersedes_version_ids=_list(supersedes_version_ids),
+		change_reason=change_reason or "",
 		idempotency_key=idempotency_key or "",
 	)
 
@@ -440,6 +442,7 @@ def register_business_day_calendar_version(
 	provision: str | None = None,
 	source_document: str | None = None,
 	supersedes_version_ids=None,
+	change_reason: str | None = None,
 	idempotency_key: str | None = None,
 ) -> dict[str, Any]:
 	days = weekend_days
@@ -456,6 +459,7 @@ def register_business_day_calendar_version(
 		provision=provision or "",
 		source_document=source_document or "",
 		supersedes_version_ids=_list(supersedes_version_ids),
+		change_reason=change_reason or "",
 		idempotency_key=idempotency_key or "",
 	)
 

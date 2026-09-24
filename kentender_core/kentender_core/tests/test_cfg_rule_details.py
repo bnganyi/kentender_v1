@@ -162,8 +162,12 @@ class TestFixturePurgeTakesScreenRecordedChecks(FrappeTestCase):
 			fixture_namespace=self.NS,
 		)
 		version = saved.get("reference") or saved.get("name")
-		# As the screen records it: no fixture namespace on the event.
-		register.record_reference_verification(target_doctype=register.DOCTYPE, target_name=version, outcome="Pending", unresolved_points="x")
+		# As the screen records it: no fixture namespace on the event. A second
+		# check links to the first, so the purge must go newest first.
+		first = register.record_reference_verification(target_doctype=register.DOCTYPE, target_name=version, outcome="Pending", unresolved_points="x")
+		register.record_reference_verification(
+			target_doctype=register.DOCTYPE, target_name=version, outcome="Pending", unresolved_points="y", expected_prior_event=first.get("event") or first.get("name") or ""
+		)
 		frappe.db.commit()
 		register.purge_fixture_references(self.NS)
 		frappe.db.commit()

@@ -777,6 +777,7 @@ def register_schedule_profile_version(
 	provision: str = "",
 	source_document: str = "",
 	supersedes_version_ids: list[str] | None = None,
+	change_reason: str = "",
 	fixture_namespace: str = "",
 	idempotency_key: str = "",
 ) -> dict[str, Any]:
@@ -814,6 +815,7 @@ def register_schedule_profile_version(
 				"provision": provision,
 				"source_document": source_document,
 				"milestones": rows,
+				"change_reason": (change_reason or "").strip(),
 				"fixture_namespace": fixture_namespace,
 			}
 		)
@@ -897,6 +899,7 @@ def _schedule_profile_projection(doc) -> dict[str, Any]:
 		"valid": doc.verification_status == VERIFICATION_VERIFIED,
 		"can_set_validity": True,
 		"expected_version": str(doc.modified),
+		**_version_record_facts(doc),
 	}
 
 
@@ -1025,6 +1028,7 @@ def register_business_day_calendar_version(
 	provision: str = "",
 	source_document: str = "",
 	supersedes_version_ids: list[str] | None = None,
+	change_reason: str = "",
 	fixture_namespace: str = "",
 	idempotency_key: str = "",
 ) -> dict[str, Any]:
@@ -1058,6 +1062,7 @@ def register_business_day_calendar_version(
 				"provision": provision,
 				"source_document": source_document,
 				"holidays": rows,
+				"change_reason": (change_reason or "").strip(),
 				"fixture_namespace": fixture_namespace,
 			}
 		)
@@ -1093,6 +1098,18 @@ def _business_day_calendar_projection(doc) -> dict[str, Any]:
 		"can_edit": _editable[0],
 		"edit_blocked_reason": _editable[1],
 		"expected_version": str(doc.modified),
+		**_version_record_facts(doc),
+	}
+
+
+def _version_record_facts(doc) -> dict[str, Any]:
+	"""§10.8/§10.9 version history facts every versioned setting's read carries:
+	what it replaced, why, and who recorded it when."""
+	return {
+		"supersedes_version_ids": [v for v in (doc.get("supersedes_version_ids") or "").split(",") if v],
+		"change_reason": doc.get("change_reason") or "",
+		"recorded_at": str(doc.creation),
+		"recorded_by": doc.owner,
 	}
 
 
@@ -1203,6 +1220,28 @@ def purge_fixture_profiles(fixture_namespace: str) -> int:
 			for event in frappe.get_all("Audit Event", filters={"document_type": doctype, "document_name": name}, pluck="name"):
 				frappe.delete_doc("Audit Event", event, force=True, ignore_permissions=True, delete_permanently=True)
 			count += 1
+	return count
+
+
+def purge_playwright_calendars(prefix: str = "Playwright") -> int:
+	"""Browser-spec cleanup only (tracker CFG14-5F): working-day calendars a spec
+	added through the screen are named with `prefix`; they go with the source
+	checks recorded on them (which otherwise block the delete) and their audit
+	rows. Never a canonical or fixture-namespaced calendar, never off a
+	dev/test site."""
+	if not (frappe.flags.in_test or frappe.conf.get("developer_mode") or frappe.conf.get("allow_tests")):
+		return 0
+	from kentender_core.services.regulatory_reference import EVENT_DOCTYPE, purge_verification_events
+
+	count = 0
+	for name in frappe.get_all(CALENDAR, filters={"calendar_name": ("like", f"{prefix}%"), "fixture_namespace": ("in", ["", None])}, pluck="name"):
+		purge_verification_events(frappe.get_all(EVENT_DOCTYPE, filters={"target_doctype": CALENDAR, "target_name": name}, pluck="name"))
+		doc = frappe.get_doc(CALENDAR, name)
+		doc.flags.kt_fixture_purge = True
+		doc.delete(ignore_permissions=True)
+		for audit in frappe.get_all("Audit Event", filters={"document_type": CALENDAR, "document_name": name}, pluck="name"):
+			frappe.delete_doc("Audit Event", audit, force=True, ignore_permissions=True, delete_permanently=True)
+		count += 1
 	return count
 
 

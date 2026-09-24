@@ -36,6 +36,8 @@ const settingsApi = vi.hoisted(() => ({
 	createRegulatoryReference: vi.fn(),
 	listRegulatoryReferenceVersions: vi.fn(),
 	listVerificationHistory: vi.fn(),
+	getScheduleProfile: vi.fn(),
+	getBusinessDayCalendar: vi.fn(),
 	saveRegulatoryReferenceVersion: vi.fn(),
 	setReminderThresholdDays: vi.fn(),
 	addFundingSource: vi.fn(),
@@ -59,6 +61,10 @@ import RuleKindFields from "./components/RuleKindFields.vue";
 import RuleFormError from "./components/RuleFormError.vue";
 import MethodVersionEditor from "./components/MethodVersionEditor.vue";
 import SourceCheckScreen from "./components/SourceCheckScreen.vue";
+import ScheduleProfileDetail from "./components/ScheduleProfileDetail.vue";
+import CalendarDetail from "./components/CalendarDetail.vue";
+import CalendarEditor from "./components/CalendarEditor.vue";
+import CalendarHistory from "./components/CalendarHistory.vue";
 
 const D = "docs/mvp-1-r1/09_unified_system_setup/design/";
 const BOARDS = {
@@ -223,6 +229,41 @@ async function sourceCheck(outcome = "Pending") {
 	await flushPromises();
 	await wrapper.find('[data-testid="kt-sc-result"]').setValue(outcome);
 	if (outcome !== "Verified") await wrapper.find('[data-testid="kt-sc-unresolved"]').setValue("The applicable amended source and interpretation have not been established.");
+	return wrapper;
+}
+
+// C04 — the CONFIG schedule (Open Tender — goods, Version 1) and a calendar.
+const MILESTONES = [
+	["invitation", "Invitation or advertisement", null, "Statutory"],
+	["bid_opening", "Bid opening", 21, ""],
+	["evaluation_completion", "Evaluation completion", 30, ""],
+	["award_approval", "Tender award approval", 5, "Planning assumption"],
+	["award_notification", "Notification of award", 2, "Planning assumption"],
+	["contract_signing", "Contract signing", 14, ""],
+	["delivery_completion", "Delivery or implementation completion", null, "Source-derived"],
+].map(([milestone, label, def, basis], i) => ({ milestone, label, sequence: i + 1, applies: true, counting_rule: "Calendar days", minimum_days: null, maximum_days: null, default_days: def, basis }));
+const SCHEDULE = {
+	profile: "SPR-OPEN-TENDER-GOODS-V1", profile_name: "Open Tender — goods", procurement_method: "Open Tender", procedure: "Planning example",
+	procurement_category: "Goods", version_number: 1, effective_from: "2027-07-01", effective_until: "2028-06-30", applicability_basis: "InvitationDate",
+	counting_rule: "Calendar days", calendar: null, estimated_delivery_period_default_days: null, verification_status: "Production verification pending",
+	complete: false, gaps: ["bid_opening"], milestones: MILESTONES, can_edit: false, can_set_validity: true, status: "Active",
+};
+async function scheduleDetail(overrides = {}) {
+	settingsApi.getScheduleProfile.mockResolvedValue({ ...SCHEDULE, ...overrides });
+	const wrapper = mount(ScheduleProfileDetail, { props: { name: SCHEDULE.profile }, global: globalMocks() });
+	await flushPromises();
+	return wrapper;
+}
+const CALENDAR = {
+	calendar: "CAL-V1", calendar_name: "", version_number: 1, effective_from: "", effective_until: "", weekend_days: ["Saturday", "Sunday"],
+	holidays: [], verification_status: "Production verification pending", source_instrument: "", can_edit: false,
+	recorded_at: "2026-09-12 10:00:00", recorded_by: "Administrator", supersedes_version_ids: [],
+};
+async function calendarView(component, props) {
+	settingsApi.getBusinessDayCalendar.mockResolvedValue(CALENDAR);
+	settingsApi.listVerificationHistory.mockResolvedValue([]);
+	const wrapper = mount(component, { props, global: globalMocks() });
+	await flushPromises();
 	return wrapper;
 }
 
@@ -473,13 +514,36 @@ const ARTBOARDS = [
 	{ key: "C03D#history", select: "#history > div", live: '[data-testid="kt-source-check-history"]', mount: () => sourceCheck("Pending") },
 	{ key: "C03D#evidence" },
 
-	{ key: "C04#list" },
-	{ key: "C04#detail" },
+	{
+		key: "C04#list",
+		select: "#list > div:first-child",
+		live: '[data-testid="kt-procset-profiles"]',
+		mount: () => settingsTab([], { section: "schedule-profiles", schedule_profiles: [SCHEDULE] }),
+	},
+	{
+		key: "C04#list~empty",
+		self: true,
+		select: "#list > div:nth-child(2)",
+		live: '[data-testid="kt-procset-profiles-empty"]',
+		mount: () => settingsTab([], { section: "schedule-profiles" }),
+	},
+	{ key: "C04#detail", select: "#detail > div", live: '[data-testid="kt-procset-profile-table"]', mount: () => scheduleDetail() },
 	{ key: "C04#add" },
-	{ key: "C04#calendar" },
-	{ key: "C04#calendar-detail" },
-	{ key: "C04#calendar-version" },
-	{ key: "C04#calendar-history" },
+	{
+		key: "C04#calendar~working-days",
+		select: "#calendar > div:nth-child(1)",
+		live: '[data-testid="kt-procset-profile-calendar"]',
+		mount: () => scheduleDetail({ counting_rule: "Working days", calendar: null, gaps: ["working_day_calendar"] }),
+	},
+	{ key: "C04#calendar~editor", select: "#calendar > div:nth-child(2)", live: '[data-testid="kt-calendar-editor"]', mount: () => calendarView(CalendarEditor, { mode: "create" }) },
+	{ key: "C04#calendar-detail", select: "#calendar-detail > div", live: '[data-testid="kt-calendar-detail"]', mount: () => calendarView(CalendarDetail, { name: "CAL-V1" }) },
+	{ key: "C04#calendar-version", select: "#calendar-version > div", live: '[data-testid="kt-calendar-editor"]', mount: () => calendarView(CalendarEditor, { mode: "version", name: "CAL-V1" }) },
+	{
+		key: "C04#calendar-history",
+		select: "#calendar-history > div",
+		live: '[data-testid="kt-calendar-history"]',
+		mount: () => calendarView(CalendarHistory, { name: "CAL-V1", calendarVersions: [{ ...CALENDAR }] }),
+	},
 
 	{ key: "Reminders#unchanged", mount: () => mount(ReminderSettingCard, { props: { days: 7 }, global: globalMocks() }) },
 	{ key: "Reminders#edited" },

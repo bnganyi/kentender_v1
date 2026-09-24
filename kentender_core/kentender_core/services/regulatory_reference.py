@@ -1237,6 +1237,21 @@ def _single_in_force(reference_kind: str, date, measure_stage: str = ""):
 # --------------------------------------------------------------------------
 
 
+def purge_verification_events(names) -> int:
+	"""Test/fixture cleanup only. Each check links to the one before it
+	(`previous_event`), so they are deleted newest first or the delete of an
+	earlier one is refused (LinkExistsError)."""
+	names = list(names)
+	if not names:
+		return 0
+	ordered = frappe.get_all(EVENT_DOCTYPE, filters={"name": ("in", names)}, pluck="name", order_by="creation desc")
+	for name in ordered:
+		doc = frappe.get_doc(EVENT_DOCTYPE, name)
+		doc.flags.kt_fixture_purge = True
+		doc.delete(ignore_permissions=True)
+	return len(ordered)
+
+
 def purge_playwright_rules(prefix: str = "PW-") -> int:
 	"""Browser-spec cleanup only (tracker CFG14-5D): rules a Playwright spec adds
 	through the real screens carry an identifier starting with `prefix`; they,
@@ -1247,12 +1262,10 @@ def purge_playwright_rules(prefix: str = "PW-") -> int:
 	count = 0
 	for set_name in frappe.get_all(SET_DOCTYPE, filters={"reference_key": ("like", f"{prefix}%"), "fixture_namespace": ("in", ["", None])}, pluck="name"):
 		versions = frappe.get_all(DOCTYPE, filters={"reference_set": set_name}, pluck="name")
-		for version in versions:
-			for event in frappe.get_all(EVENT_DOCTYPE, filters={"target_doctype": DOCTYPE, "target_name": version}, pluck="name"):
-				doc = frappe.get_doc(EVENT_DOCTYPE, event)
-				doc.flags.kt_fixture_purge = True
-				doc.delete(ignore_permissions=True)
-				count += 1
+		if versions:
+			count += purge_verification_events(
+				frappe.get_all(EVENT_DOCTYPE, filters={"target_doctype": DOCTYPE, "target_name": ("in", versions)}, pluck="name")
+			)
 		for doctype, names in ((DOCTYPE, versions), (SET_DOCTYPE, [set_name])):
 			for name in names:
 				doc = frappe.get_doc(doctype, name)
@@ -1279,11 +1292,7 @@ def purge_fixture_references(fixture_namespace: str) -> int:
 	events = set(frappe.get_all(EVENT_DOCTYPE, filters={"fixture_namespace": fixture_namespace}, pluck="name"))
 	if versions:
 		events |= set(frappe.get_all(EVENT_DOCTYPE, filters={"target_doctype": DOCTYPE, "target_name": ("in", versions)}, pluck="name"))
-	for name in events:
-		doc = frappe.get_doc(EVENT_DOCTYPE, name)
-		doc.flags.kt_fixture_purge = True
-		doc.delete(ignore_permissions=True)
-		count += 1
+	count += purge_verification_events(events)
 	for name in frappe.get_all(DOCTYPE, filters={"fixture_namespace": fixture_namespace}, pluck="name"):
 		doc = frappe.get_doc(DOCTYPE, name)
 		doc.flags.kt_fixture_purge = True

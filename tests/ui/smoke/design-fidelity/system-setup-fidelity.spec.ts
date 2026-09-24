@@ -457,7 +457,9 @@ test.describe("System setup — design fidelity", () => {
 		// calendar editor as plain sibling blocks (no distinguishing class
 		// since the C03/C04 header refresh), so the editor — always the last
 		// of the three direct children — is selected positionally.
-		const scope = "#calendar > div:last-child";
+		// The editor is the second of #calendar's two blocks (the first is a
+		// schedule's working-days notice, compared in the component gate).
+		const scope = "#calendar > div:nth-child(2)";
 		await openArtboard(art, `${DESIGN_DIR}/C04-Schedules-Calendars.dc.html`, scope);
 		// This one board documents both states at once: the unsaved editor
 		// (Cancel / Save calendar version, Add row) and the saved detail
@@ -470,7 +472,7 @@ test.describe("System setup — design fidelity", () => {
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "procurement-settings/calendars/new", '[data-testid="kt-procset-calendar"]');
 		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C04-calendar", "C04#calendar");
-		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "C04#calendar");
+		await expectBoardStructure(page, '[data-testid="kt-calendar-editor"]', art, scope, "C04#calendar~editor");
 		await expectLayoutSanity(page, "C04#calendar editor");
 		await expect(page.locator('[data-testid="kt-cal-weekend-Saturday"]')).toBeChecked();
 		await expect(page.locator('[data-testid="kt-cal-weekend-Sunday"]')).toBeChecked();
@@ -482,6 +484,7 @@ test.describe("System setup — design fidelity", () => {
 			await page.goto(`/app/system-setup#procurement-settings/calendars/${calendar}`, { waitUntil: "domcontentloaded" });
 			await page.waitForSelector('[data-testid="kt-cal-name-ro"]', { timeout: 20_000 });
 			await expect(page.locator('[data-testid="kt-cal-new-version"]')).toBeVisible();
+			await expectBoardStructure(page, '[data-testid="kt-calendar-detail"]', art, "#calendar-detail > div", "C04#calendar-detail");
 			await expect(page.locator('[data-testid="kt-cal-add-holiday"]')).toHaveCount(0);
 		}
 		// Nothing is saved: a calendar version is immutable once written.
@@ -600,12 +603,19 @@ test.describe("System setup — design fidelity", () => {
 		// carries its own status through its register command. The source-check
 		// actions are asserted on the calendar, where they apply.
 		const VERIFICATION_TARGET_ACTIONS = ["Check sources", "View usage and history"];
-		const wanted = (await landmarks(art, scope)).filter((text) => !VERIFICATION_TARGET_ACTIONS.includes(text));
+		// The board's selected-interval editor lives in the schedule editor,
+		// because a saved version is read-only (DEPARTURES C04#detail).
+		// Its words are dropped as one span, from the heading to the end of its
+		// field grid, since some ("From", "To") also head the interval table.
+		const all = await landmarks(art, scope);
+		const start = all.indexOf("Selected interval — Contract signing");
+		const end = all.indexOf("Source reference", start);
+		const wanted = [...all.slice(0, start), ...all.slice(end + 1)].filter((text) => !VERIFICATION_TARGET_ACTIONS.includes(text));
 
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "procurement-settings/schedule-profiles/SPR-OPEN-TENDER-GOODS-V1", '[data-testid="kt-procset-profile-table"]');
 		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C04-schedule", "C04#detail");
-		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "C04#detail");
+		await expectBoardStructure(page, '[data-testid="kt-procset-profile-table"]', art, "#detail > div", "C04#detail");
 		// Seven milestones, and the six intervals between them.
 		expect(await page.locator('[data-testid^="kt-procset-milestone-"]').count()).toBe(7);
 		expect(await page.locator('[data-testid^="kt-procset-interval-"]').count()).toBe(6);

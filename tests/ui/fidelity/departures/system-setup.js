@@ -46,6 +46,15 @@ export const DEPARTURES = {
 	"C02#disable": DIALOG_TITLE_IS_A_HEADING,
 	"C03A#add": DIALOG_TITLE_IS_A_HEADING,
 	"C03BC#rename": DIALOG_TITLE_IS_A_HEADING,
+	"C04#detail": [
+		{
+			omits: ["field"],
+			because:
+				"The board draws the selected-interval editor on the saved detail. A saved version is read-only, so those " +
+				"controls live in the schedule editor (new version / correction), not here.",
+			authority: "CFG-CHG-002 v0.14 §4.6 (versions are immutable), §10.9 (selected interval editor)",
+		},
+	],
 	"C03BC#version": [
 		{
 			omits: ["notice.is-critical"],
@@ -167,6 +176,15 @@ export const COVERED = [
 	"C03D#verified",
 	"C03D#rejected",
 	"C03D#history",
+	// 5F Schedules and calendars, first half — 24 Sep 2026
+	"C04#list",
+	"C04#list~empty",
+	"C04#detail",
+	"C04#calendar~working-days",
+	"C04#calendar~editor",
+	"C04#calendar-detail",
+	"C04#calendar-version",
+	"C04#calendar-history",
 ];
 
 /**
@@ -186,13 +204,7 @@ export const REBUILD_QUEUE = {
 	"C03D#evidence":
 		"Decision-time vs current source check belongs to a consuming record's evidence detail, which no setup screen " +
 		"shows yet (FU-30).",
-	"C04#list": UNMOUNTABLE,
-	"C04#detail": UNMOUNTABLE,
-	"C04#add": UNMOUNTABLE,
-	"C04#calendar": UNMOUNTABLE,
-	"C04#calendar-detail": UNMOUNTABLE,
-	"C04#calendar-version": UNMOUNTABLE,
-	"C04#calendar-history": UNMOUNTABLE,
+	"C04#add": "the schedule editor (add and new version) is the second half of 5F",
 	"Reminders#unchanged": REPORT,
 	"Reminders#edited": UNMOUNTABLE,
 	"Reminders#zero": UNMOUNTABLE,
@@ -208,8 +220,8 @@ export const REBUILD_QUEUE = {
  * entry whose words now match fails until it is removed.
  */
 export const LANDMARK_DRIFT = {
-	"C04#calendar": "the board's Holidays table and heading (added 24 Sep 2026) are not built",
-	"C04#detail": "the interval table's Minimum days / Maximum days columns (board refresh) are not built",
+	// Emptied by 5F (24 Sep 2026): the calendar's Holidays heading and the
+	// interval table's Minimum/Maximum days columns are built.
 };
 
 /**

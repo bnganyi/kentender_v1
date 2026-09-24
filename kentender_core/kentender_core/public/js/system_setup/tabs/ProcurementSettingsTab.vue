@@ -19,6 +19,8 @@ import MethodVersionEditor from "../components/MethodVersionEditor.vue";
 import ScheduleVersionEditor from "../components/ScheduleVersionEditor.vue";
 import SourceCheckScreen from "../components/SourceCheckScreen.vue";
 import CalendarEditor from "../components/CalendarEditor.vue";
+import CalendarDetail from "../components/CalendarDetail.vue";
+import CalendarHistory from "../components/CalendarHistory.vue";
 import ScheduleProfileDetail from "../components/ScheduleProfileDetail.vue";
 import ReminderSettingCard from "../components/ReminderSettingCard.vue";
 import { procurementSettingsApi } from "../data/procurementSettingsApi.js";
@@ -359,15 +361,42 @@ async function confirmRemoveSource() {
 			@cancel="go('profile/' + view.name)"
 		/>
 
-		<!-- C04 "calendar" — a working-day calendar version -->
-		<CalendarEditor
-			v-else-if="view.kind === 'calendar' || view.kind === 'new-calendar'"
-			:name="view.kind === 'calendar' ? view.name : ''"
-			:creating="view.kind === 'new-calendar'"
-			@back="go('schedule-profiles')"
-			@saved="afterChange().then(() => go('schedule-profiles'))"
+		<!-- C04 — a working-day calendar: saved detail, its forms, its checks
+		     and history, each with its own link (/calendars/{id}[/action]). -->
+		<CalendarDetail
+			v-else-if="view.kind === 'calendar'"
+			:key="'cal-' + view.name"
+			:name="view.name"
+			@edit="go('calendar-edit/' + view.name)"
+			@new-version="go('calendar-new-version/' + view.name)"
+			@check-sources="go('calendar-check-sources/' + view.name)"
+			@history="go('calendar-history/' + view.name)"
 		/>
-
+		<CalendarEditor
+			v-else-if="['new-calendar', 'calendar-new-version', 'calendar-edit'].includes(view.kind)"
+			:key="view.kind + view.name"
+			:name="view.name"
+			:mode="{ 'new-calendar': 'create', 'calendar-new-version': 'version', 'calendar-edit': 'correct' }[view.kind]"
+			@cancel="go(view.name ? 'calendar/' + view.name : 'schedule-profiles')"
+			@saved="(calendar) => afterChange().then(() => go('calendar/' + calendar))"
+		/>
+		<SourceCheckScreen
+			v-else-if="view.kind === 'calendar-check-sources'"
+			:key="'calcheck-' + view.name"
+			:name="view.name"
+			target-doctype="Business Day Calendar"
+			:calendar-versions="calendars"
+			@back="go('calendar/' + view.name)"
+			@recorded="afterChange().then(() => go('calendar/' + view.name))"
+			@view-version="(id) => go('calendar/' + id)"
+		/>
+		<CalendarHistory
+			v-else-if="view.kind === 'calendar-history'"
+			:key="'calhist-' + view.name"
+			:name="view.name"
+			:calendar-versions="calendars"
+			@view-version="(id) => go('calendar/' + id)"
+		/>
 		<!-- C03-D — Check sources against one exact version, with both histories -->
 		<SourceCheckScreen
 			v-else-if="view.kind === 'check-sources'"
@@ -400,6 +429,7 @@ async function confirmRemoveSource() {
 			@registered="afterChange().then(() => go('schedule-profiles'))"
 			@new-version="go('new-schedule-version/' + view.name)"
 			@edit-schedule="go('edit-schedule/' + view.name)"
+			@view-calendar="(calendar) => go('calendar/' + calendar)"
 		/>
 
 		<template v-else-if="listView">
@@ -537,43 +567,54 @@ async function confirmRemoveSource() {
 				</div>
 			</div>
 
-			<!-- C04 schedule profiles (list; detail is its own frame) -->
-			<div v-if="activeSection === 'schedule-profiles'" id="kt-procset-profiles" class="kt-card kt-blueprint kt-table-card" data-testid="kt-procset-profiles">
-				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-				<h3 class="kt-card-title">{{ __("Procurement schedules") }}</h3>
-				<p class="kt-muted">{{ __("Set the time intervals used to prepare procurement schedules.") }}</p>
-				<table class="kt-table">
-					<thead>
-						<tr><th>{{ __("Profile") }}</th><th>{{ __("Method") }}</th><th>{{ __("Category") }}</th><th>{{ __("Version") }}</th><th>{{ __("Effective") }}</th><th>{{ __("Source verification") }}</th><th class="kt-visually-hidden-th"><span class="kt-visually-hidden">{{ __("Actions") }}</span></th></tr>
-					</thead>
-					<tbody>
-						<tr v-for="row in scheduleProfiles" :key="row.profile" :data-testid="'kt-procset-profile-' + row.profile" :data-status="row.status">
-							<td class="kt-row-name">{{ row.profile_name }}<span v-if="row.status !== 'Active'" class="kt-tag kt-tag-neutral kt-procset-superseded">{{ __("Superseded") }}</span></td>
-							<td>{{ row.procurement_method }}</td>
-							<td>{{ row.procurement_category }}</td>
-							<td>{{ row.version_number }}</td>
-							<td>{{ fmtDate(row.effective_from) }} – {{ fmtDate(row.effective_until) }}</td>
-							<td><span :class="verificationClass(row.verification_status)">{{ verificationLabel(row.verification_status) }}</span></td>
-							<td class="kt-row-actions"><a href="#" :data-testid="'kt-procset-profile-view-' + row.profile" @click.prevent="go('profile/' + row.profile)">{{ __("View") }}</a></td>
-						</tr>
-						<tr v-if="!scheduleProfiles.length"><td colspan="7" class="kt-muted">{{ __("No schedule profiles have been registered.") }}</td></tr>
-					</tbody>
-				</table>
+			<!-- CFG-CHG-002 v0.14 §10.9 — C04 #list, ported element by element:
+			     header row, the nine-column table with Source check separate, and
+			     the centred empty state. -->
+			<div v-if="activeSection === 'schedule-profiles'" id="kt-procset-profiles" data-testid="kt-procset-profiles">
+				<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+					<div>
+						<h3 style="margin-bottom:4px">{{ __("Procurement schedules") }}</h3>
+						<p class="card-body" style="margin-bottom:0">{{ __("Set the time intervals used to prepare procurement schedules.") }}</p>
+					</div>
+				</div>
+				<div v-if="scheduleProfiles.length" class="kt-table-scroll">
+					<table class="kt-table">
+						<thead>
+							<tr><th>{{ __("Name") }}</th><th>{{ __("Method") }}</th><th>{{ __("Procedure") }}</th><th>{{ __("Category") }}</th><th>{{ __("Version") }}</th><th>{{ __("Applies from") }}</th><th>{{ __("Applies until") }}</th><th>{{ __("Source check") }}</th><th>{{ __("Action") }}</th></tr>
+						</thead>
+						<tbody>
+							<tr v-for="row in scheduleProfiles" :key="row.profile" :data-testid="'kt-procset-profile-' + row.profile" :data-status="row.status">
+								<td>{{ row.profile_name }}<span v-if="row.status !== 'Active'" class="kt-tag kt-tag-neutral kt-procset-superseded">{{ __("Superseded") }}</span></td>
+								<td>{{ row.procurement_method }}</td>
+								<td>{{ row.procedure || "—" }}</td>
+								<td>{{ row.procurement_category }}</td>
+								<td>{{ row.version_number }}</td>
+								<td>{{ fmtDate(row.effective_from) }}</td>
+								<td>{{ fmtDate(row.effective_until) }}</td>
+								<td><span :class="verificationClass(row.verification_status)">{{ verificationLabel(row.verification_status) }}</span></td>
+								<td><a href="#" :data-testid="'kt-procset-profile-view-' + row.profile" @click.prevent="go('profile/' + row.profile)">{{ __("View") }}</a></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				<div v-else class="kt-procset-empty" data-testid="kt-procset-profiles-empty">
+					<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--kt-color-neutral-400)" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" /></svg>
+					<p style="font-weight:600;margin-bottom:4px">{{ __("No procurement schedules yet") }}</p>
+					<p class="card-body">{{ __("Add a schedule for a procedure supported by this release.") }}</p>
+				</div>
 			</div>
 
-			<!-- CFG-CHG-002 v0.11 §10.9 (C04 "calendar") — working-day calendars
-			     are their own versioned record, drawn as their own states rather
-			     than folded into the schedule card (plan D4). A schedule's
-			     working-day interval cannot resolve without one. -->
-			<div v-if="activeSection === 'schedule-profiles'" id="kt-procset-calendars" class="kt-card kt-blueprint kt-table-card" data-testid="kt-procset-calendars">
-				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-				<div class="kt-section-head">
+			<!-- Working-day calendars: the board opens a calendar from a schedule's
+			     working-days interval and draws no list; without one a calendar no
+			     schedule uses yet could not be reached or added (DEPARTURES). -->
+			<div v-if="activeSection === 'schedule-profiles'" id="kt-procset-calendars" class="kt-procset-calendars" data-testid="kt-procset-calendars">
+				<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
 					<div>
-						<h3 class="kt-card-title">{{ __("Working-day calendars") }}</h3>
-						<p class="kt-muted">{{ __("Set the weekends and holidays that working-day intervals count against.") }}</p>
+						<h3 style="margin-bottom:4px">{{ __("Working-day calendars") }}</h3>
+						<p class="card-body" style="margin-bottom:0">{{ __("Set the weekends and holidays that working-day intervals count against.") }}</p>
 					</div>
-					<button type="button" class="kt-btn kt-btn-primary" data-testid="kt-procset-calendar-add" @click="go('new-calendar')">
-						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add calendar") }}
+					<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-calendar-add" @click="go('new-calendar')">
+						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add calendar") }}
 					</button>
 				</div>
 				<table v-if="calendars.length" class="kt-table">
@@ -582,20 +623,16 @@ async function confirmRemoveSource() {
 					</thead>
 					<tbody>
 						<tr v-for="row in calendars" :key="row.calendar" :data-testid="'kt-procset-calendar-' + row.calendar">
-							<td class="kt-row-name">{{ row.calendar_name }}<span v-if="row.status !== 'Active'" class="kt-tag kt-tag-neutral kt-procset-superseded">{{ __("Superseded") }}</span></td>
+							<td>{{ row.calendar_name }}<span v-if="row.status !== 'Active'" class="kt-tag kt-tag-neutral kt-procset-superseded">{{ __("Superseded") }}</span></td>
 							<td>{{ row.version_number }}</td>
 							<td>{{ fmtDate(row.effective_from) }}</td>
 							<td>{{ fmtDate(row.effective_until) }}</td>
 							<td><span :class="verificationClass(row.verification_status)">{{ verificationLabel(row.verification_status) }}</span></td>
-							<td class="kt-row-actions"><a href="#" :data-testid="'kt-procset-calendar-view-' + row.calendar" @click.prevent="go('calendar/' + row.calendar)">{{ __("View calendar") }}</a></td>
+							<td><a href="#" :data-testid="'kt-procset-calendar-view-' + row.calendar" @click.prevent="go('calendar/' + row.calendar)">{{ __("View calendar") }}</a></td>
 						</tr>
 					</tbody>
 				</table>
-				<div v-else class="kt-empty" data-testid="kt-procset-calendars-empty">
-					<h2>{{ __("No working-day calendars yet") }}</h2>
-					<p>{{ __("Add a calendar before a schedule can count working days.") }}</p>
-					<button type="button" class="kt-btn kt-btn-primary" @click="go('new-calendar')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add calendar") }}</button>
-				</div>
+				<p v-else class="text-muted" style="margin-top:12px" data-testid="kt-procset-calendars-empty">{{ __("No working-day calendar yet. Add one before a schedule can count working days.") }}</p>
 			</div>
 
 			<!-- C04-eligibility-reminder — the reminder threshold -->

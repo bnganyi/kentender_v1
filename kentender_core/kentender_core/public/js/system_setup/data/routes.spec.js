@@ -71,6 +71,11 @@ describe("the current tabs' internal views ⇄ §9 links (until Phase 5 re-ports
 		["procurement-settings", "edit-schedule/SP-1", "procurement-settings/schedule-profiles/SP-1/edit"],
 		["procurement-settings", "calendar/CAL-1", "procurement-settings/calendars/CAL-1"],
 		["procurement-settings", "new-calendar", "procurement-settings/calendars/new"],
+		// C04 — the calendar's board views each have their own link.
+		["procurement-settings", "calendar-new-version/CAL-1", "procurement-settings/calendars/CAL-1/new-version"],
+		["procurement-settings", "calendar-edit/CAL-1", "procurement-settings/calendars/CAL-1/edit"],
+		["procurement-settings", "calendar-check-sources/CAL-1", "procurement-settings/calendars/CAL-1/check-sources"],
+		["procurement-settings", "calendar-history/CAL-1", "procurement-settings/calendars/CAL-1/history"],
 		["fiscal-years", "year/2027-2028", "fiscal-years/2027-2028"],
 	])("%s: %s ⇄ %s", (tab, legacy, hash) => {
 		const route = legacyToRoute(tab, legacy);
