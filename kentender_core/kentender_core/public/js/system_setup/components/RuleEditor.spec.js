@@ -84,6 +84,35 @@ describe("RuleEditor", () => {
 		expect(wrapper.emitted("saved")).toBeTruthy();
 	});
 
+	it("Reservation rules asks for the measure and fixes what it is measured against (CFG-CHG-002 v0.13 §10.7)", async () => {
+		api.createRegulatoryReference.mockResolvedValue({ reference_set: "rs-1" });
+		api.saveRegulatoryReferenceVersion.mockResolvedValue({ reference: "rv-1" });
+		const wrapper = mountEditor();
+		await wrapper.find('[data-testid="kt-rule-kind"]').setValue("Reservation rules");
+		const measure = wrapper.find('[data-testid="kt-rr-measure"]');
+		expect(measure.findAll("option").map((o) => o.text())).toEqual(["Planned allocation", "Actual achievement"]);
+		expect(measure.element.value).toBe("PlanningAllocation");
+		// Measured against is a consequence of the measure, never a free choice,
+		// and the retired budget-based options are gone.
+		const against = wrapper.find('[data-testid="kt-rr-basis"]');
+		expect(against.element.tagName).toBe("INPUT");
+		expect(against.element.value).toBe("Eligible value of the current Annual Plan");
+		expect(against.attributes("disabled")).toBeDefined();
+		expect(wrapper.text()).not.toContain("Annual procurement budget");
+		await measure.setValue("ImplementationAchievement");
+		expect(wrapper.find('[data-testid="kt-rr-basis"]').element.value).toBe("Applicable actual procurement value");
+
+		await wrapper.find('[data-testid="kt-rule-name"]').setValue("Reservation rules");
+		await wrapper.find('[data-testid="kt-rule-key"]').setValue("RESERVATION-RULES");
+		await wrapper.find('[data-testid="kt-rule-from"]').setValue("2027-07-01");
+		await wrapper.find('[data-testid="kt-rr-code"]').setValue("AGPO-30");
+		await wrapper.find('[data-testid="kt-rule-save"]').trigger("click");
+		await flushPromises();
+		const sent = api.saveRegulatoryReferenceVersion.mock.calls[0][0].payload;
+		expect(sent.measure_stage).toBe("ImplementationAchievement");
+		expect(sent).not.toHaveProperty("denominator_basis");
+	});
+
 	it("§7.3 recovery: a failed version save keeps the entries and reuses the set instead of creating a second one", async () => {
 		api.createRegulatoryReference.mockResolvedValue({ reference_set: "rs-1" });
 		api.saveRegulatoryReferenceVersion.mockRejectedValueOnce(new Error("Enter the obligation code."));

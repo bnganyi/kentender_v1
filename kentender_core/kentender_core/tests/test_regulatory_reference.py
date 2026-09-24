@@ -51,6 +51,7 @@ class RegulatoryReferenceTestCase(IntegrationTestCase):
 			reference_set=reference_set,
 			payload={
 				"obligation_code": "ANNUAL-RESERVATION-TARGET",
+				"measure_stage": "PlanningAllocation",
 				"target_percent": target_percent,
 				"county_target_percent": 20,
 				"categories": [
@@ -110,7 +111,7 @@ class TestVersionsAndSupersession(RegulatoryReferenceTestCase):
 		self.assertTrue(register.get_regulatory_reference_version(first["reference"])["can_edit"])
 		register.update_regulatory_reference_version(
 			reference=first["reference"],
-			payload={"obligation_code": "KT-TEST-SUPERSEDE", "target_percent": 32},
+			payload={"obligation_code": "KT-TEST-SUPERSEDE", "measure_stage": "PlanningAllocation", "target_percent": 32},
 			effective_from="2094-07-01",
 			effective_until="2095-06-30",
 			interpretation="Corrected before anything used it",
@@ -149,7 +150,7 @@ class TestVersionsAndSupersession(RegulatoryReferenceTestCase):
 		with self.assertRaises(ConfigurationError) as caught:
 			register.save_regulatory_reference_version(
 				reference_set=out["reference_set"],
-				payload={"obligation_code": "X", "target_percent": 150},
+				payload={"obligation_code": "X", "measure_stage": "PlanningAllocation", "target_percent": 150},
 				effective_from="2094-07-01",
 				fixture_namespace=NS,
 			)
@@ -430,6 +431,8 @@ class TestPlanningCompatibilityRead(RegulatoryReferenceTestCase):
 		self.assertTrue(out["available"])
 		self.assertEqual(out["reservation"]["target_percent"], 30)
 		self.assertEqual(out["reservation"]["county_target_percent"], 20)
+		self.assertEqual(out["reservation"]["measure_stage"], "PlanningAllocation")
+		self.assertEqual(out["reservation"]["denominator_basis"], "EligibleCurrentAPPValue")
 		self.assertEqual({c["category"] for c in out["reservation"]["categories"]} >= {"None", "Youth", "Women", "Persons with disabilities"}, True)
 		# `market_price_index` is a different rule kind this test does not
 		# seed itself (CFG-CHG-002 Phase 2c seeds it separately, via
@@ -512,3 +515,76 @@ class TestPlanningCompatibilityRead(RegulatoryReferenceTestCase):
 			renderable,
 			["None", "Youth", "Women", "Persons with disabilities", "Other disadvantaged group"],
 		)
+
+
+class TestReservationMeasure(RegulatoryReferenceTestCase):
+	"""CFG-CHG-002 v0.13/v0.14 §4.7 + LAW-REG-001 v1.2 §5.1 (CFG13-AC-001,
+	002, 004; CFG10-AC-047) — a reservation obligation states its measure
+	stage, and the stage fixes what it is measured against: planned
+	allocation against the eligible value of the current Annual Plan, actual
+	achievement against applicable actual procurement value. The approved
+	Budget (and its unused headroom) is never a denominator."""
+
+	def _save(self, key, payload, effective_from="2094-07-01"):
+		ref = self._create(key)
+		return register.save_regulatory_reference_version(
+			reference_set=ref["reference_set"],
+			payload={"obligation_code": "AGPO-30", "target_percent": 30, **payload},
+			effective_from=effective_from,
+			applicability_basis="FiscalYearStart",
+			fixture_namespace=NS,
+		)
+
+	def _payload(self, out):
+		import json
+
+		return json.loads(frappe.db.get_value("Regulatory Reference", out["reference"], "payload_json"))
+
+	def test_planned_allocation_is_measured_against_the_eligible_current_annual_plan(self):
+		out = self._save("KT-TEST-RES-PLAN", {"measure_stage": "PlanningAllocation"})
+		payload = self._payload(out)
+		self.assertEqual(payload["measure_stage"], "PlanningAllocation")
+		self.assertEqual(payload["denominator_basis"], "EligibleCurrentAPPValue")
+
+	def test_actual_achievement_is_measured_against_applicable_actual_procurement_value(self):
+		out = self._save("KT-TEST-RES-ACTUAL", {"measure_stage": "ImplementationAchievement"})
+		payload = self._payload(out)
+		self.assertEqual(payload["denominator_basis"], "ApplicableActualProcurementValue")
+
+	def test_a_measure_stage_is_required(self):
+		with self.assertRaises(ConfigurationError) as caught:
+			self._save("KT-TEST-RES-NOSTAGE", {})
+		self.assertEqual(self.code(caught), "CFG_SCHEMA_UNSUPPORTED")
+
+	def test_the_retired_budget_based_denominators_are_refused(self):
+		for index, retired in enumerate(("AnnualProcurementBudget", "AnnualProcurementValue")):
+			with self.assertRaises(ConfigurationError) as caught:
+				self._save(f"KT-TEST-RES-OLD-{index}", {"measure_stage": "PlanningAllocation", "denominator_basis": retired})
+			self.assertEqual(self.code(caught), "CFG_SCHEMA_UNSUPPORTED")
+
+	def test_a_stage_cannot_be_paired_with_the_other_stage_denominator(self):
+		with self.assertRaises(ConfigurationError) as caught:
+			self._save(
+				"KT-TEST-RES-MISMATCH",
+				{"measure_stage": "PlanningAllocation", "denominator_basis": "ApplicableActualProcurementValue"},
+			)
+		self.assertEqual(self.code(caught), "CFG_SCHEMA_UNSUPPORTED")
+
+	def test_planning_read_names_the_exact_rule_version_and_its_measure(self):
+		"""CFG13-AC-002 — Planning receives the exact version and the basis it
+		must calculate on, and an actual-achievement rule in force for the same
+		year does not make the planning rule ambiguous."""
+		# Other tests in this module leave open-ended planning rules in force
+		# from 2094; clear this module's own rules so only these two compete.
+		# Years from 2095 on are removed by the shared test purge.
+		register.purge_fixture_references(NS)
+		fy = configuration._fy_name(2096)
+		if not frappe.db.exists("Fiscal Year", fy):
+			configuration.add_fiscal_year(start_year=2096)
+		plan = self._save("KT-TEST-RES-READ-PLAN", {"measure_stage": "PlanningAllocation"}, effective_from="2096-07-01")
+		self._save("KT-TEST-RES-READ-ACTUAL", {"measure_stage": "ImplementationAchievement"}, effective_from="2096-07-01")
+		read = register.get_regulatory_reference(fy)
+		self.assertEqual(read["reference"], plan["reference"])
+		self.assertEqual(read["reservation"]["measure_stage"], "PlanningAllocation")
+		self.assertEqual(read["reservation"]["denominator_basis"], "EligibleCurrentAPPValue")
+

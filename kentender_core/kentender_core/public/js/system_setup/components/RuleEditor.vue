@@ -56,9 +56,12 @@ const DUE_RULES = [
 	{ value: "WorkingDaysAfter", label: __("Working days after the trigger") },
 	{ value: "PeriodEndPlusDays", label: __("Days after the reporting period ends") },
 ];
-const DENOMINATOR_BASES = [
-	{ value: "AnnualProcurementBudget", label: __("Annual procurement budget") },
-	{ value: "AnnualProcurementValue", label: __("Annual procurement value") },
+// CFG-CHG-002 v0.13 §10.7 — the measure is chosen; what it is measured
+// against follows from it and is shown, never offered as a separate choice.
+// The approved Budget is never a denominator.
+const MEASURES = [
+	{ value: "PlanningAllocation", label: __("Planned allocation"), against: __("Eligible value of the current Annual Plan") },
+	{ value: "ImplementationAchievement", label: __("Actual achievement"), against: __("Applicable actual procurement value") },
 ];
 const OVERLAP_POLICIES = [
 	{ value: "Independent", label: __("Targets apply independently") },
@@ -117,6 +120,8 @@ function seed() {
 		change_reason: "",
 	};
 	payload.value = { ...(version.payload || {}) };
+	delete payload.value.denominator_basis;
+	if (!payload.value.measure_stage) payload.value.measure_stage = "PlanningAllocation";
 	priceRows.value = [...((version.payload || {}).rows || [])];
 }
 seed();
@@ -153,8 +158,13 @@ function removePriceRow(index) {
 	priceRows.value.splice(index, 1);
 }
 
+const measuredAgainst = computed(
+	() => (MEASURES.find((option) => option.value === payload.value.measure_stage) || MEASURES[0]).against
+);
+
 function builtPayload() {
 	const values = { ...payload.value };
+	if (kind.value !== "Reservation rules") delete values.measure_stage;
 	if (kind.value === "Market price index") values.rows = priceRows.value;
 	return values;
 }
@@ -348,11 +358,14 @@ async function save() {
 						<div class="kt-field"><label for="kt-rr-target">{{ __("Target") }}</label><input id="kt-rr-target" v-model="payload.target_percent" class="kt-input" type="number" data-testid="kt-rr-target"></div>
 						<div class="kt-field"><label for="kt-rr-county-target">{{ __("County target") }}</label><input id="kt-rr-county-target" v-model="payload.county_target_percent" class="kt-input" type="number" data-testid="kt-rr-county-target"></div>
 						<div class="kt-field">
-							<label for="kt-rr-basis">{{ __("Measured against") }}</label>
-							<select id="kt-rr-basis" v-model="payload.denominator_basis" class="kt-input" data-testid="kt-rr-basis">
-								<option value="">{{ __("— Select —") }}</option>
-								<option v-for="option in DENOMINATOR_BASES" :key="option.value" :value="option.value">{{ option.label }}</option>
+							<label for="kt-rr-measure">{{ __("Measure") }}</label>
+							<select id="kt-rr-measure" v-model="payload.measure_stage" class="kt-input" data-testid="kt-rr-measure">
+								<option v-for="option in MEASURES" :key="option.value" :value="option.value">{{ option.label }}</option>
 							</select>
+						</div>
+						<div class="kt-field">
+							<label for="kt-rr-basis">{{ __("Measured against") }}</label>
+							<input id="kt-rr-basis" class="kt-input" :value="measuredAgainst" disabled data-testid="kt-rr-basis">
 						</div>
 						<div class="kt-field">
 							<label for="kt-rr-overlap">{{ __("How targets overlap") }}</label>

@@ -731,6 +731,15 @@ def _seed_contact_offices() -> dict[str, int]:
 	return {"created": created, "total": len(CONTACT_OFFICES)}
 
 
+def _reservation_has_measure(version_name: str) -> bool:
+	import json
+
+	from kentender_core.services import regulatory_reference as register
+
+	payload = json.loads(frappe.db.get_value(register.DOCTYPE, version_name, "payload_json") or "{}")
+	return bool(payload.get("measure_stage"))
+
+
 def _seed_regulatory_reference(fiscal_year: str = "", fixture_namespace: str = FIXTURE_TAG, *, verification_status: str = "Production verification pending", reservation_target_percent=None, county_target_percent=None, force: bool = False, effective: dict | None = None) -> str:
 	"""CFG-CHG-002 v0.11 Phase 2b — seeds the "Reservation rules" kind's
 	Regulatory Reference Set/Version for `fiscal_year`. `threshold_matrix`
@@ -779,16 +788,21 @@ def _seed_regulatory_reference(fiscal_year: str = "", fixture_namespace: str = F
 		},
 		"name",
 	)
-	if existing and not force:
+	# A version saved before the v0.13 measure correction has no measure
+	# stage, so Planning's read cannot use it; converge by saving a corrected
+	# successor rather than keeping the old shape forever.
+	if existing and not force and _reservation_has_measure(existing):
 		return existing
 
 	outcome = register.save_regulatory_reference_version(
 		reference_set=reference_set,
 		payload={
 			"obligation_code": "ANNUAL-RESERVATION-TARGET",
+			# CFG-CHG-002 v0.13 §4.7 — the planning measure; its denominator
+			# (the eligible value of the current Annual Plan) follows from it.
+			"measure_stage": "PlanningAllocation",
 			"target_percent": target,
 			"county_target_percent": county_target,
-			"denominator_basis": "AnnualProcurementValue",
 			"overlap_policy": "Independent",
 			"categories": [
 				{"category": name, "advantage_rank": rank, "is_regional": regional, "statutory_reference": ref}

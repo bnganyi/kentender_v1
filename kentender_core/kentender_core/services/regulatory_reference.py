@@ -249,6 +249,12 @@ def list_regulatory_reference_versions(reference_set: str) -> list[dict[str, Any
 # --------------------------------------------------------------------------
 
 
+MEASURE_DENOMINATORS = {
+	"PlanningAllocation": "EligibleCurrentAPPValue",
+	"ImplementationAchievement": "ApplicableActualProcurementValue",
+}
+
+
 def _validate_reservation_rules_payload(payload: dict[str, Any]) -> dict[str, Any]:
 	obligation_code = (payload.get("obligation_code") or "").strip()
 	if not obligation_code:
@@ -267,9 +273,19 @@ def _validate_reservation_rules_payload(payload: dict[str, Any]) -> dict[str, An
 			fail_cfg("CFG_SCHEMA_UNSUPPORTED", "The county target must be between 0 and 100.")
 	else:
 		county_target = None
-	denominator_basis = payload.get("denominator_basis") or ""
-	if denominator_basis and denominator_basis not in ("AnnualProcurementBudget", "AnnualProcurementValue"):
-		fail_cfg("CFG_SCHEMA_UNSUPPORTED", "Select a supported denominator basis.")
+	# CFG-CHG-002 v0.13/v0.14 §4.7, LAW-REG-001 v1.2 §5.1 — the measure stage
+	# fixes the denominator: planned allocation is measured against the
+	# eligible value of the current complete Annual Plan, actual achievement
+	# against applicable actual procurement value. The approved Budget and its
+	# unused headroom are never a denominator, so the retired budget-based
+	# values are refused rather than mapped.
+	measure_stage = (payload.get("measure_stage") or "").strip()
+	if measure_stage not in MEASURE_DENOMINATORS:
+		fail_cfg("CFG_SCHEMA_UNSUPPORTED", "Select whether this target measures planned allocation or actual achievement.")
+	denominator_basis = MEASURE_DENOMINATORS[measure_stage]
+	supplied_basis = (payload.get("denominator_basis") or "").strip()
+	if supplied_basis and supplied_basis != denominator_basis:
+		fail_cfg("CFG_SCHEMA_UNSUPPORTED", "This target's measure fixes what it is measured against.")
 	overlap_policy = payload.get("overlap_policy") or "Independent"
 	if overlap_policy not in ("Independent", "MutuallyExclusive", "SpecifiedOverlap"):
 		fail_cfg("CFG_SCHEMA_UNSUPPORTED", "Select a supported overlap policy.")
@@ -288,6 +304,7 @@ def _validate_reservation_rules_payload(payload: dict[str, Any]) -> dict[str, An
 		)
 	return {
 		"obligation_code": obligation_code,
+		"measure_stage": measure_stage,
 		"target_percent": target,
 		"county_target_percent": county_target,
 		"denominator_basis": denominator_basis,
@@ -962,7 +979,9 @@ def get_regulatory_reference(fiscal_year: str) -> dict[str, Any]:
 	if not row:
 		return _empty(fiscal_year)
 	date = getdate(row)
-	reservation_doc = _single_in_force("Reservation rules", date)
+	# Planning measures planned allocation only; an actual-achievement rule
+	# for the same period is a different obligation stage, not a rival.
+	reservation_doc = _single_in_force("Reservation rules", date, measure_stage="PlanningAllocation")
 	out = _empty(fiscal_year)
 	out["threshold_matrix"] = _threshold_matrix_from_method_profiles(date)
 	if reservation_doc:
@@ -984,6 +1003,8 @@ def get_regulatory_reference(fiscal_year: str) -> dict[str, Any]:
 					"target_percent": payload.get("target_percent"),
 					"county_target_percent": payload.get("county_target_percent"),
 					"categories": categories,
+					"measure_stage": payload.get("measure_stage") or "",
+					"denominator_basis": payload.get("denominator_basis") or "",
 				},
 			}
 		)
@@ -1005,14 +1026,19 @@ def get_regulatory_reference(fiscal_year: str) -> dict[str, Any]:
 	return out
 
 
-def _single_in_force(reference_kind: str, date):
+def _single_in_force(reference_kind: str, date, measure_stage: str = ""):
 	"""The one in-force version of `reference_kind` across every set of that
 	kind, if unambiguous — the simple compatibility case Planning's read
-	needs; `resolve_reference` is the strict, filtered §5 algorithm."""
+	needs; `resolve_reference` is the strict, filtered §5 algorithm.
+	`measure_stage` narrows Reservation rules to one obligation stage."""
 	sets = frappe.get_all(SET_DOCTYPE, filters={"reference_kind": reference_kind}, pluck="name")
 	candidates = []
 	for set_name in sets:
 		for row in _in_force(DOCTYPE, {"reference_set": set_name}, date):
+			if measure_stage:
+				stage = json.loads(frappe.db.get_value(DOCTYPE, row["name"], "payload_json") or "{}").get("measure_stage")
+				if stage != measure_stage:
+					continue
 			candidates.append(row["name"])
 	if len(candidates) != 1:
 		return None
