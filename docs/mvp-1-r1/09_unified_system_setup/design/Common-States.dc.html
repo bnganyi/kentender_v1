@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+</helmet>
+<main style="max-width:960px;margin:0 auto;padding:32px 24px 96px">
+<!-- Page-level states (CFG §10.12). Nothing of the System setup page (header, tabs, content)
+     is painted until the verdict resolves, so each state is the whole content area. -->
+
+<div id="loading" class="blueprint" style="background:var(--color-surface);margin-bottom:32px">
+<div class="kt-breadcrumb" style="padding:24px 32px 0">Home &gt; Configuration and Governance &gt; <strong>System setup</strong></div>
+<div class="kt-empty" role="status" aria-live="polite" style="text-align:center;padding:48px 12px">
+<p class="card-body" style="margin:0">Loading System setup…</p>
+</div>
+</div>
+
+<div id="denied" class="blueprint" style="background:var(--color-surface);margin-bottom:32px">
+<div class="kt-breadcrumb" style="padding:24px 32px 0">Home &gt; Configuration and Governance &gt; <strong>System setup</strong></div>
+<div style="padding:32px">
+<div class="kt-notice is-critical"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><div class="kt-notice-body"><strong>You do not have access to System setup.</strong><br/>This area needs Administrator or System Manager access.<br/>Ask your KenTender administrator to grant it.</div></div>
+</div>
+</div>
+
+<div id="load-error" class="blueprint" style="background:var(--color-surface)">
+<div class="kt-breadcrumb" style="padding:24px 32px 0">Home &gt; Configuration and Governance &gt; <strong>System setup</strong></div>
+<div style="padding:32px">
+<div class="kt-notice is-critical"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg><div class="kt-notice-body"><strong>System setup could not be loaded.</strong><br/>Try again. If the problem continues, contact support.</div></div>
+<div style="margin-top:14px"><button type="button" class="btn btn-secondary">Try again</button></div>
+</div>
+</div>
+
+</main>
+</x-dc>
+</body>
+</html>

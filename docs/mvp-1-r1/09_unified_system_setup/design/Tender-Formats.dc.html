@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<style>a{color:var(--color-accent-2-700)}a:hover{color:var(--color-accent-2-800)}</style>
+</helmet>
+<main style="max-width:1040px;margin:0 auto;padding:32px 24px 96px">
+<div class="blueprint" style="background:var(--color-surface)">
+<div style="padding:32px 32px 0">
+<div class="kt-breadcrumb" style="margin-bottom:14px">Home &gt; Configuration and Governance &gt; System setup / <strong>Tender formats</strong></div>
+<div style="font-family:var(--font-heading);font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--color-neutral-700)">Configuration and governance</div>
+<h1 style="margin:6px 0 10px">System setup</h1>
+<p class="text-muted" style="max-width:62ch;margin:0">Manage this site's details, financial years, responsibilities and procurement settings.</p>
+<div class="kt-tabs" style="margin-top:26px">
+<a class="kt-tab" href="C01-Procuring-Entity.dc.html" style="color:var(--color-neutral-700);text-decoration:none">Procuring entity</a>
+<a class="kt-tab" href="C02-Financial-Years.dc.html" style="color:var(--color-neutral-700);text-decoration:none">Financial years</a>
+<span class="kt-tab" style="color:var(--color-neutral-700);text-decoration:none">Organisation structure</span>
+<span class="kt-tab" style="color:var(--color-neutral-700);text-decoration:none">Users and responsibilities</span>
+<a class="kt-tab" href="C03A-Funding-Sources.dc.html" style="color:var(--color-accent-800);font-weight:600;text-decoration:none;border-bottom:2px solid var(--color-accent);margin-bottom:-1px">Procurement settings</a>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:16px;font-size:13px"><a href="C03A-Funding-Sources.dc.html" style="color:var(--color-accent-2-700);text-decoration:underline;text-underline-offset:2px">Funding sources</a><a href="C03BC-Procurement-Rules.dc.html" style="color:var(--color-accent-2-700);text-decoration:underline;text-underline-offset:2px">Procurement rules</a><a href="C04-Schedules-Calendars.dc.html" style="color:var(--color-accent-2-700);text-decoration:underline;text-underline-offset:2px">Procurement schedules</a><a href="Reminders.dc.html" style="color:var(--color-accent-2-700);text-decoration:underline;text-underline-offset:2px">Reminders</a><a href="Tender-Formats.dc.html" style="color:var(--color-accent-800);font-weight:600;text-decoration:none">Tender formats</a></div>
+</div>
+
+<div id="list" data-screen-label="05A List" style="padding:28px">
+<div style="font-family:var(--font-heading);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:14px">CFG-DES-05A · List — Unavailable (primary)</div>
+<h3 style="margin-bottom:4px">Tender formats</h3>
+<p class="card-body" style="margin-bottom:16px">See the Tender formats installed on this site and whether they are ready to use.</p>
+<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
+<div class="field" style="flex:1;min-width:240px"><label>Search</label><input class="input" placeholder="Search by name or release" /></div>
+<div class="field" style="min-width:200px"><label>Status</label><select class="input"><option>All statuses</option><option>Available</option><option>Unavailable</option><option>Superseded</option><option>Withdrawn</option></select></div>
+</div>
+<table class="table">
+<thead><tr><th>Tender format</th><th>Release</th><th>Supported use</th><th>Status</th><th>Official source</th><th>Last verified</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td style="font-weight:600;border-bottom:0">IT Equipment Open Tender</td><td style="border-bottom:0">1.1</td><td style="border-bottom:0"><div>Goods · Open Tender · Single lot</div><div style="font-size:13px;color:var(--color-neutral-700);margin-top:2px">Unreserved, Youth, Women or Persons with disabilities; County residents where applicable</div></td><td style="border-bottom:0"><span class="kt-status is-attention">Unavailable</span></td><td style="border-bottom:0">PPRA Goods Standard Tender Document</td><td style="border-bottom:0;white-space:nowrap">21 Sep 2026</td><td style="border-bottom:0"><a href="#detail">View</a></td></tr>
+<tr><td colspan="7" style="padding-top:0;font-size:13px;color:var(--color-neutral-700)">Checks for all reservation options and owner approval are still required. This release cannot be used to publish a Tender.</td></tr>
+</tbody></table>
+<p style="font-size:13px;color:var(--color-neutral-700);margin:10px 0 0">1 Tender format</p>
+</div>
+
+<div data-screen-label="05A List variants" style="border-top:1px solid var(--color-divider);padding:28px">
+<div style="font-family:var(--font-heading);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:4px">05A · List variants</div>
+<p class="text-muted" style="font-size:12px;margin:0 0 16px">Each replaces the single fixture row; they are alternative states, not additional installed releases.</p>
+<div style="display:grid;gap:24px">
+<sc-for list="{{ listVariants }}" as="lv" hint-placeholder-count="4">
+<div>
+<div style="font-size:13px;font-weight:600;margin-bottom:6px">{{ lv.name }}</div>
+<table class="table">
+<thead><tr><th>Tender format</th><th>Release</th><th>Supported use</th><th>Status</th><th>Official source</th><th>Last verified</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td style="font-weight:600;border-bottom:0">IT Equipment Open Tender</td><td style="border-bottom:0">1.1</td><td style="border-bottom:0"><div>Goods · Open Tender · Single lot</div><div style="font-size:13px;color:var(--color-neutral-700);margin-top:2px">Unreserved, Youth, Women or Persons with disabilities; County residents where applicable</div></td><td style="border-bottom:0"><span class="{{ lv.cls }}">{{ lv.badge }}</span></td><td style="border-bottom:0">PPRA Goods Standard Tender Document</td><td style="border-bottom:0;white-space:nowrap">21 Sep 2026</td><td style="border-bottom:0"><a href="#">View</a></td></tr>
+<tr><td colspan="7" style="padding-top:0;font-size:13px;color:var(--color-neutral-700)">{{ lv.text }}</td></tr>
+</tbody></table>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div data-screen-label="05A Empty states" style="border-top:1px solid var(--color-divider);padding:28px">
+<div style="font-family:var(--font-heading);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:14px">05A · Filtered-empty and installed-empty</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:32px;align-items:start">
+<div>
+<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
+<div class="field" style="flex:1;min-width:160px"><label>Search</label><input class="input" value="Laptops" /></div>
+<div class="field" style="min-width:150px"><label>Status</label><select class="input"><option>All statuses</option><option>Available</option><option>Unavailable</option><option>Superseded</option><option selected="selected">Withdrawn</option></select></div>
+<button type="button" class="btn btn-ghost">Clear filters</button>
+</div>
+<div class="kt-empty" style="text-align:center;padding:28px 12px">
+<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-500)" stroke-width="1.5" style="margin:0 auto 10px;display:block"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+<p style="margin:0 0 12px">No Tender formats match these filters.</p>
+<button type="button" class="btn btn-secondary">Clear filters</button>
+</div>
+</div>
+<div class="kt-empty" style="text-align:center;padding:28px 12px">
+<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-500)" stroke-width="1.5" style="margin:0 auto 10px;display:block"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>
+<p style="font-weight:600;margin:0 0 4px">No Tender formats are installed.</p>
+<p class="card-body" style="margin:0">Ask the controlled Tender-format owner to install an approved release.</p>
+</div>
+</div>
+</div>
+
+<div id="detail" data-screen-label="05B Detail" style="border-top:1px solid var(--color-divider);padding:28px">
+<div style="font-family:var(--font-heading);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:14px">CFG-DES-05B · Detail — Unavailable</div>
+<a href="#list" style="display:inline-flex;align-items:center;gap:6px;font-size:14px;margin-bottom:14px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back to Tender formats</a>
+<h2 style="margin:0 0 8px">IT Equipment Open Tender</h2>
+<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><span style="font-weight:600">Release 1.1</span><span class="kt-status is-attention">Unavailable</span></div>
+<div>Goods · Open Tender · Single lot</div>
+<div style="font-size:14px;color:var(--color-neutral-700);margin-top:4px">Unreserved or reserved for Youth, Women or Persons with disabilities; County residents where applicable.</div>
+<div class="kt-notice is-warning" style="margin-top:18px"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg><div class="kt-notice-body"><strong style="display:block;margin-bottom:2px">Release requirements outstanding</strong>Complete the checks for the remaining reservation options and obtain owner approval of the exact manifest before this release can be used to publish a Tender.</div></div>
+
+<section style="margin-top:32px">
+<h3 style="margin:0 0 14px">Overview</h3>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));column-gap:32px">
+<sc-for list="{{ overview }}" as="o" hint-placeholder-count="11">
+<div style="display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;padding:9px 0;border-bottom:1px solid var(--color-neutral-200)"><div style="font-size:13px;font-weight:600;color:var(--color-neutral-700)">{{ o.l }}</div><div style="text-wrap:pretty">{{ o.v }}</div></div>
+</sc-for>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;margin-top:20px">
+<div><div style="font-weight:600;margin-bottom:4px">Designed for:</div><p style="margin:0;text-wrap:pretty">straightforward single-lot procurement of IT equipment such as laptops, desktops, tablets, monitors, printers, scanners, network equipment, power-protection equipment and peripherals; unreserved procurement or the supported reserved treatments above; delivery, installation, configuration, testing or orientation only when ancillary to the Goods.</p></div>
+<div><div style="font-weight:600;margin-bottom:4px">Not designed for:</div><p style="margin:0;text-wrap:pretty">Works; consulting or non-consulting services; software development or complex IT implementation as the main purpose; another reservation category; County-residents treatment without the applicable verified rule and overlap treatment; multiple lots; multiple currencies; weighted technical scoring; or another procurement method.</p></div>
+</div>
+<details class="kt-disclosure" style="margin-top:20px">
+<summary class="kt-disclosure-head" style="list-style:none"><span class="kt-disclosure-title">Technical details</span><svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></summary>
+<div class="kt-disclosure-body">
+<sc-for list="{{ tech }}" as="t" hint-placeholder-count="7">
+<div style="display:grid;grid-template-columns:200px minmax(0,1fr);gap:12px;padding:7px 0;border-bottom:1px solid var(--color-neutral-200)"><div style="font-size:13px;font-weight:600;color:var(--color-neutral-700)">{{ t.l }}</div><code style="font-size:13px;overflow-wrap:anywhere">{{ t.v }}</code></div>
+</sc-for>
+</div>
+</details>
+</section>
+
+<section style="margin-top:32px;padding-top:24px;border-top:1px solid var(--color-neutral-200)">
+<h3 style="margin:0 0 14px">Tender content</h3>
+<div style="display:flex;flex-wrap:wrap;gap:12px 32px;margin-bottom:18px">
+<sc-for list="{{ strip }}" as="s" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--status-live)" stroke-width="1.5"><path d="M20 6 9 17l-5-5"/></svg><span><strong>{{ s.n }}</strong> {{ s.t }}</span></div>
+</sc-for>
+</div>
+<table class="table">
+<thead><tr><th>Content</th><th>What it contains</th><th>Action</th></tr></thead>
+<tbody>
+<sc-for list="{{ content }}" as="c" hint-placeholder-count="3">
+<tr><td style="font-weight:600">{{ c.c }}</td><td>{{ c.w }}</td><td><button type="button" class="btn btn-secondary" style="display:inline-flex;align-items:center;gap:6px"><sc-if value="{{ c.dl }}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg></sc-if><sc-if value="{{ c.pv }}" hint-placeholder-val="{{ true }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></sc-if>{{ c.a }}</button></td></tr>
+</sc-for>
+</tbody></table>
+<div style="display:grid;gap:14px;margin-top:20px">
+<sc-for list="{{ sources }}" as="s" hint-placeholder-count="3">
+<div><div style="font-weight:600;margin-bottom:2px">{{ s.l }}</div><p style="margin:0;text-wrap:pretty">{{ s.v }}</p></div>
+</sc-for>
+</div>
+</section>
+
+<section style="margin-top:32px;padding-top:24px;border-top:1px solid var(--color-neutral-200)">
+<h3 style="margin:0 0 14px">Bid response and downstream use</h3>
+<h4 style="margin:0 0 10px">Supplier tasks</h4>
+<ol style="list-style:none;padding:0;margin:0 0 22px;display:grid;gap:10px">
+<sc-for list="{{ tasks }}" as="t" hint-placeholder-count="5">
+<li style="display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:baseline"><span style="font-family:var(--font-heading);font-weight:600;font-size:18px;color:var(--color-accent-700)">{{ t.n }}</span><div><strong>{{ t.t }}</strong> — {{ t.p }}</div></li>
+</sc-for>
+</ol>
+<h4 style="margin:0 0 8px">Supported answer types</h4>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:22px">
+<sc-for list="{{ answers }}" as="a" hint-placeholder-count="10"><span class="tag tag-outline">{{ a }}</span></sc-for>
+</div>
+<h4 style="margin:0 0 8px">Ministry of Health proof fixture</h4>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));column-gap:28px;margin-bottom:24px">
+<sc-for list="{{ fixture }}" as="f" hint-placeholder-count="10">
+<div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--color-neutral-200)"><span style="font-size:13px;font-weight:600;color:var(--color-neutral-700)">{{ f.l }}</span><span style="text-align:right">{{ f.v }}</span></div>
+</sc-for>
+</div>
+<h4 style="margin:0 0 8px">How responses are used</h4>
+<table class="table">
+<thead><tr><th>Response group</th><th>Evaluation</th><th>Contract use</th></tr></thead>
+<tbody>
+<sc-for list="{{ responses }}" as="r" hint-placeholder-count="10">
+<tr><td style="font-weight:600">{{ r.g }}</td><td>{{ r.e }}</td><td>{{ r.c }}</td></tr>
+</sc-for>
+</tbody></table>
+<p class="text-muted" style="font-size:13px;margin:10px 0 0">Every supplier response has a declared evaluation and contract destination, or an explicit not-applicable result. Administrators cannot change those mappings here.</p>
+</section>
+
+<section style="margin-top:32px;padding-top:24px;border-top:1px solid var(--color-neutral-200)">
+<h3 style="margin:0 0 14px">Verification</h3>
+<table class="table">
+<thead><tr><th>Check</th><th>Result</th></tr></thead>
+<tbody>
+<sc-for list="{{ verifyPrimary }}" as="r" hint-placeholder-count="7">
+<tr><td>{{ r.check }}</td><td><span style="display:inline-flex;align-items:center;gap:6px;font-weight:600"><sc-if value="{{ r.p }}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--status-live)" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></sc-if><sc-if value="{{ r.i }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--status-attention)" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></sc-if><sc-if value="{{ r.f }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--status-critical)" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg></sc-if>{{ r.result }}</span><sc-if value="{{ r.note }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--color-neutral-700);margin-top:4px">{{ r.note }}</div></sc-if></td></tr>
+</sc-for>
+</tbody></table>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));column-gap:28px;margin-top:14px">
+<div style="padding:8px 0;border-bottom:1px solid var(--color-neutral-200)"><span style="font-size:13px;font-weight:600;color:var(--color-neutral-700)">Candidate review completed:</span> 21 Sep 2026</div>
+<div style="padding:8px 0;border-bottom:1px solid var(--color-neutral-200)"><span style="font-size:13px;font-weight:600;color:var(--color-neutral-700)">Owner decision:</span> Pending</div>
+<div style="padding:8px 0;border-bottom:1px solid var(--color-neutral-200)"><span style="font-size:13px;font-weight:600;color:var(--color-neutral-700)">Installed status:</span> Unavailable</div>
+</div>
+<div class="kt-notice is-warning" style="margin-top:18px"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg><div class="kt-notice-body"><strong>Release requirements outstanding.</strong> Complete the checks for the remaining reservation options and obtain owner approval of the exact manifest before this release can be used.</div></div>
+</section>
+</div>
+
+<div data-screen-label="05B Technical details expanded" style="border-top:1px solid var(--color-divider);padding:28px">
+<div style="font-family:var(--font-heading);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:14px">05B · Technical details — expanded state</div>
+<div class="kt-disclosure">
+<div class="kt-disclosure-head"><span class="kt-disclosure-title">Technical details</span><svg class="kt-disclosure-chevron is-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div>
+<div class="kt-disclosure-body">
+<sc-for list="{{ tech }}" as="t" hint-placeholder-count="7">
+<div style="display:grid;grid-template-columns:200px minmax(0,1fr);gap:12px;padding:7px 0;border-bottom:1px solid var(--color-neutral-200)"><div style="font-size:13px;font-weight:600;color:var(--color-neutral-700)">{{ t.l }}</div><code style="font-size:13px;overflow-wrap:anywhere">{{ t.v }}</code></div>
+</sc-for>
+</div>
+</div>
+</div>
+
+<div data-screen-label="05B Viewer entry" style="border-top:1px solid var(--color-divider);padding:28px">
+<div style="font-family:var(--font-heading);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:14px">05B · Document-viewer entry states</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px">
+<sc-for list="{{ viewers }}" as="v" hint-placeholder-count="2">
+<div class="dialog" style="position:static;max-width:none">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+<div style="display:flex;gap:10px;align-items:flex-start"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent-700)" stroke-width="1.5" style="flex:none;margin-top:2px"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><div><div class="dialog-title" style="margin:0">{{ v.t }}</div><div style="font-size:13px;color:var(--color-neutral-700)">IT Equipment Open Tender · Release 1.1 · read-only</div></div></div>
+<button type="button" class="btn btn-ghost btn-icon" aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+</div>
+<div style="margin-top:16px;border:1px solid var(--color-divider);background:var(--color-surface-2);padding:20px;display:grid;gap:10px">
+<div style="height:10px;width:60%;background:var(--color-neutral-200)"></div>
+<div style="height:10px;width:90%;background:var(--color-neutral-200)"></div>
+<div style="height:10px;width:80%;background:var(--color-neutral-200)"></div>
+<div style="height:10px;width:45%;background:var(--color-neutral-200)"></div>
+</div>
+<p style="font-size:13px;color:var(--color-neutral-700);margin:10px 0 0">Opening {{ v.o }}…</p>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div data-screen-label="05B Detail variants" style="border-top:1px solid var(--color-divider);padding:28px">
+<div style="font-family:var(--font-heading);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:4px">05B · Detail variants</div>
+<p class="text-muted" style="font-size:12px;margin:0 0 20px">Mutually exclusive alternative artboards. Only the header, notice and changed facts are shown; all other sections are as in the Unavailable detail.</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:40px 32px;align-items:start">
+
+<div>
+<div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--color-neutral-700)">Available</div>
+<h3 style="margin:0 0 6px">IT Equipment Open Tender</h3>
+<div style="display:flex;gap:10px;align-items:center;margin-bottom:16px"><span style="font-weight:600">Release 1.1</span><span class="kt-status is-live">Available</span></div>
+<h4 style="margin:0 0 10px">Verification</h4>
+<div class="kt-notice is-live" style="margin-bottom:12px"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg><div class="kt-notice-body"><strong style="display:block;margin-bottom:2px">Ready for new Tenders</strong>This release may be used only within the supported use above.</div></div>
+<table class="table"><thead><tr><th>Check</th><th>Result</th></tr></thead><tbody>
+<sc-for list="{{ verifyAvailable }}" as="r" hint-placeholder-count="7">
+<tr><td>{{ r.check }}</td><td><span style="display:inline-flex;align-items:center;gap:6px;font-weight:600"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--status-live)" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>{{ r.result }}</span><sc-if value="{{ r.note }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--color-neutral-700);margin-top:4px">{{ r.note }}</div></sc-if></td></tr>
+</sc-for>
+</tbody></table>
+<div style="margin-top:12px">
+<div style="display:grid;grid-template-columns:170px minmax(0,1fr);gap:12px;padding:8px 0;border-bottom:1px solid var(--color-neutral-200)"><span style="font-size:13px;font-weight:600;color:var(--color-neutral-700)">Approved by</span><span>bnganyi (product owner)</span></div>
+<div style="display:grid;grid-template-columns:170px minmax(0,1fr);gap:12px;padding:8px 0;border-bottom:1px solid var(--color-neutral-200)"><span style="font-size:13px;font-weight:600;color:var(--color-neutral-700)">Approved at</span><span>21 Sep 2026, 17:00 EAT</span></div>
+<div style="display:grid;grid-template-columns:170px minmax(0,1fr);gap:12px;padding:8px 0;border-bottom:1px solid var(--color-neutral-200)"><span style="font-size:13px;font-weight:600;color:var(--color-neutral-700)">Installed status</span><span>Available</span></div>
+<div style="display:grid;grid-template-columns:170px minmax(0,1fr);gap:12px;padding:8px 0;border-bottom:1px solid var(--color-neutral-200)"><span style="font-size:13px;font-weight:600;color:var(--color-neutral-700)">Release-manifest SHA-256</span><code style="font-size:13px;overflow-wrap:anywhere">c088722a5afedd5110ab21bdfc7dd171fc15ddf13653e15938c7c9eab1d8480e</code></div>
+</div>
+</div>
+
+<div>
+<div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--color-neutral-700)">Failed verification</div>
+<h3 style="margin:0 0 6px">IT Equipment Open Tender</h3>
+<div style="display:flex;gap:10px;align-items:center;margin-bottom:14px"><span style="font-weight:600">Release 1.1</span><span class="kt-status is-attention">Unavailable</span></div>
+<div class="kt-notice is-critical" style="margin-bottom:16px"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg><div class="kt-notice-body"><strong style="display:block;margin-bottom:2px">Release verification failed</strong>Evaluation and contract mappings did not pass. This release cannot be used until its controlled owner issues a corrected release.<div style="margin-top:6px">Contact the controlled Tender-format owner.</div></div></div>
+<h4 style="margin:0 0 10px">Verification</h4>
+<table class="table"><thead><tr><th>Check</th><th>Result</th></tr></thead><tbody>
+<sc-for list="{{ verifyFailed }}" as="r" hint-placeholder-count="7">
+<tr><td>{{ r.check }}</td><td><span style="display:inline-flex;align-items:center;gap:6px;font-weight:600"><sc-if value="{{ r.p }}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--status-live)" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></sc-if><sc-if value="{{ r.i }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--status-attention)" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></sc-if><sc-if value="{{ r.f }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--status-critical)" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg></sc-if>{{ r.result }}</span><sc-if value="{{ r.note }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--color-neutral-700);margin-top:4px">{{ r.note }}</div></sc-if></td></tr>
+</sc-for>
+</tbody></table>
+</div>
+
+<div>
+<div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--color-neutral-700)">Superseded</div>
+<h3 style="margin:0 0 6px">IT Equipment Open Tender</h3>
+<div style="display:flex;gap:10px;align-items:center;margin-bottom:14px"><span style="font-weight:600">Release 1.1</span><span class="kt-status is-pending">Superseded</span></div>
+<div class="kt-notice is-info"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg><div class="kt-notice-body"><strong style="display:block;margin-bottom:2px">Not available for new Tenders</strong>Existing published Tenders keep this release. Select the current Available release when starting a new Tender.</div></div>
+</div>
+
+<div>
+<div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--color-neutral-700)">Withdrawn</div>
+<h3 style="margin:0 0 6px">IT Equipment Open Tender</h3>
+<div style="display:flex;gap:10px;align-items:center;margin-bottom:14px"><span style="font-weight:600">Release 1.1</span><span class="kt-status is-critical">Withdrawn</span></div>
+<div class="kt-notice is-critical"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/></svg><div class="kt-notice-body"><strong style="display:block;margin-bottom:2px">Release withdrawn</strong>This release cannot be selected. Existing published Tenders remain preserved for authorised audit and incident handling.</div></div>
+</div>
+
+</div>
+</div>
+
+<div data-screen-label="390px cards" style="border-top:1px solid var(--color-divider);padding:28px">
+<div style="font-family:var(--font-heading);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:14px">390 px · Labelled-card rendering</div>
+<div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+
+<div style="width:390px;max-width:100%;border:1px solid var(--color-divider);padding:16px">
+<h3 style="margin:0 0 4px">Tender formats</h3>
+<p class="card-body" style="margin-bottom:12px">See the Tender formats installed on this site and whether they are ready to use.</p>
+<div class="field" style="margin-bottom:10px"><label>Search</label><input class="input" placeholder="Search by name or release" /></div>
+<div class="field" style="margin-bottom:14px"><label>Status</label><select class="input"><option>All statuses</option></select></div>
+<div style="border-top:1px solid var(--color-divider);padding-top:12px">
+<sc-for list="{{ listCard }}" as="k" hint-placeholder-count="6">
+<div style="padding:7px 0;border-bottom:1px solid var(--color-neutral-200)"><div style="font-size:12px;font-weight:600;color:var(--color-neutral-700)">{{ k.l }}</div><div>{{ k.v }}</div><sc-if value="{{ k.v2 }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--color-neutral-700)">{{ k.v2 }}</div></sc-if><sc-if value="{{ k.badge }}" hint-placeholder-val="{{ false }}"><span class="kt-status is-attention">Unavailable</span></sc-if></div>
+</sc-for>
+<p style="font-size:13px;color:var(--color-neutral-700);margin:10px 0 12px">Checks for all reservation options and owner approval are still required. This release cannot be used to publish a Tender.</p>
+<button type="button" class="btn btn-secondary btn-block">View</button>
+</div>
+<p style="font-size:13px;color:var(--color-neutral-700);margin:12px 0 0">1 Tender format</p>
+</div>
+
+<div style="width:390px;max-width:100%;border:1px solid var(--color-divider);padding:16px">
+<a href="#" style="display:inline-flex;align-items:center;gap:6px;font-size:14px;margin-bottom:10px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>Back to Tender formats</a>
+<h3 style="margin:0 0 6px">IT Equipment Open Tender</h3>
+<div style="display:flex;gap:10px;align-items:center;margin-bottom:6px"><span style="font-weight:600">Release 1.1</span><span class="kt-status is-attention">Unavailable</span></div>
+<div>Goods · Open Tender · Single lot</div>
+<div style="font-size:13px;color:var(--color-neutral-700);margin-top:4px">Unreserved or reserved for Youth, Women or Persons with disabilities; County residents where applicable.</div>
+<div class="kt-notice is-warning" style="margin-top:12px"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg><div class="kt-notice-body"><strong style="display:block;margin-bottom:2px">Release requirements outstanding</strong>Complete the checks for the remaining reservation options and obtain owner approval of the exact manifest before this release can be used to publish a Tender.</div></div>
+<h4 style="margin:18px 0 6px">Overview</h4>
+<sc-for list="{{ overview }}" as="o" hint-placeholder-count="11">
+<div style="padding:6px 0;border-bottom:1px solid var(--color-neutral-200)"><div style="font-size:12px;font-weight:600;color:var(--color-neutral-700)">{{ o.l }}</div><div>{{ o.v }}</div></div>
+</sc-for>
+<h4 style="margin:18px 0 6px">Tender content</h4>
+<div style="display:grid;gap:12px">
+<sc-for list="{{ content }}" as="c" hint-placeholder-count="3">
+<div style="border-bottom:1px solid var(--color-neutral-200);padding-bottom:12px"><div style="font-size:12px;font-weight:600;color:var(--color-neutral-700)">Content</div><div style="font-weight:600">{{ c.c }}</div><div style="font-size:12px;font-weight:600;color:var(--color-neutral-700);margin-top:6px">What it contains</div><div style="margin-bottom:8px">{{ c.w }}</div><button type="button" class="btn btn-secondary btn-block">{{ c.a }}</button></div>
+</sc-for>
+</div>
+<h4 style="margin:18px 0 6px">Supplier tasks</h4>
+<ol style="list-style:none;padding:0;margin:0;display:grid;gap:8px">
+<sc-for list="{{ tasks }}" as="t" hint-placeholder-count="5">
+<li style="display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px"><span style="font-family:var(--font-heading);font-weight:600;color:var(--color-accent-700)">{{ t.n }}</span><div><strong>{{ t.t }}</strong> — {{ t.p }}</div></li>
+</sc-for>
+</ol>
+<h4 style="margin:18px 0 6px">How responses are used</h4>
+<sc-for list="{{ responses }}" as="r" hint-placeholder-count="10">
+<div style="padding:8px 0;border-bottom:1px solid var(--color-neutral-200)"><div style="font-weight:600">{{ r.g }}</div><div style="font-size:12px;font-weight:600;color:var(--color-neutral-700);margin-top:4px">Evaluation</div><div>{{ r.e }}</div><div style="font-size:12px;font-weight:600;color:var(--color-neutral-700);margin-top:4px">Contract use</div><div>{{ r.c }}</div></div>
+</sc-for>
+<h4 style="margin:18px 0 6px">Verification</h4>
+<sc-for list="{{ verifyPrimary }}" as="r" hint-placeholder-count="7">
+<div style="padding:7px 0;border-bottom:1px solid var(--color-neutral-200)"><div style="font-size:12px;font-weight:600;color:var(--color-neutral-700)">{{ r.check }}</div><div style="font-weight:600">{{ r.result }}</div><sc-if value="{{ r.note }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:var(--color-neutral-700)">{{ r.note }}</div></sc-if></div>
+</sc-for>
+</div>
+
+</div>
+</div>
+
+</div>
+</main>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const P = (check) => ({ check, result: 'Passed', p: true, i: false, f: false, note: '' });
+    const base = ['Official source', 'Tender documents', 'Supplier responses', 'Evaluation and contract mappings', 'Addendum identity rules', 'Ministry of Health Youth fixture'];
+    const remainingIncomplete = { check: 'Remaining reservation variants', result: 'Incomplete', p: false, i: true, f: false, note: 'Women, Persons with disabilities and County-residents coverage still requires isolated deterministic fixtures.' };
+    const verifyPrimary = [...base.map(P), remainingIncomplete];
+    const verifyAvailable = [...base.map(P), { ...P('Remaining reservation variants'), note: 'All four base treatments and the County-residents overlay are covered by their isolated fixtures.' }];
+    const verifyFailed = [...base.map(c => c === 'Evaluation and contract mappings' ? { check: c, result: 'Failed', p: false, i: false, f: true, note: '' } : P(c)), remainingIncomplete];
+    return {
+      verifyPrimary, verifyAvailable, verifyFailed,
+      listVariants: [
+        { name: 'Available', badge: 'Available', cls: 'kt-status is-live', text: 'This release is ready for new Tenders within its supported use.' },
+        { name: 'Superseded', badge: 'Superseded', cls: 'kt-status is-pending', text: 'Existing published Tenders keep this release. It cannot be selected for a new Tender.' },
+        { name: 'Withdrawn', badge: 'Withdrawn', cls: 'kt-status is-critical', text: 'This release cannot be selected. Existing published Tenders remain available for authorised audit and incident handling.' },
+        { name: 'Failed verification', badge: 'Unavailable', cls: 'kt-status is-attention', text: 'Evaluation and contract mappings did not pass. This release cannot be used until its controlled owner issues a corrected release.' }
+      ],
+      overview: [
+        { l: 'Category', v: 'Goods — IT equipment' },
+        { l: 'Procurement method', v: 'Open Tender' },
+        { l: 'Lotting', v: 'Single lot' },
+        { l: 'Currency', v: 'KES' },
+        { l: 'Price basis', v: 'Fixed price' },
+        { l: 'Reservation treatment', v: 'Unreserved; Youth; Women; Persons with disabilities' },
+        { l: 'County residents', v: 'Separately supported only for an applicable county entity with a verified rule and explicit overlap treatment' },
+        { l: 'Official source', v: 'Standard Tender Documents for Procurement of Goods (Doc. 4)' },
+        { l: 'Source issue', v: 'Issued 22 Apr 2021; amended forms issued 20 Apr 2022' },
+        { l: 'Retrieved', v: '28 Aug 2026' },
+        { l: 'Source reviewed by', v: 'bnganyi (product owner)' }
+      ],
+      tech: [
+        { l: 'Template key', v: 'IT-EQUIPMENT-OPEN-V1' },
+        { l: 'Release', v: '1.1 candidate' },
+        { l: 'Product profile', v: 'GOODS-IT-SIMPLE-V1' },
+        { l: 'Bid workspace renderer', v: 'BDS-GOODS-IT-V1' },
+        { l: 'Official source SHA-256', v: '95726a88642730e85a212389b4257f26970ecf3f23de872578d11172063ae1ee' },
+        { l: 'Release-manifest SHA-256', v: 'c088722a5afedd5110ab21bdfc7dd171fc15ddf13653e15938c7c9eab1d8480e' },
+        { l: 'Installed bundle SHA-256', v: '08faf2811edd8cd67ae7adec567c0b95461d81790e2be428ee3b3821f9c1e026' }
+      ],
+      strip: [
+        { n: '296 of 296', t: 'source rows reviewed' },
+        { n: '28', t: 'forms accounted for' },
+        { n: '2', t: 'Tender documents ready' }
+      ],
+      content: [
+        { c: 'Invitation to Tender', w: 'The separate supplier-facing invitation for the issued Tender', a: 'Preview Invitation', pv: true, dl: false },
+        { c: 'Complete issued Tender', w: 'Cover, contents and Sections I–VIII', a: 'Preview issued Tender', pv: true, dl: false },
+        { c: 'Release review pack', w: 'Source, coverage, forms, mappings, fixture results and release evidence', a: 'Download review pack', pv: false, dl: true }
+      ],
+      sources: [
+        { l: 'Inherited from the authorised Requisition:', v: 'goods descriptions, categories, quantities, units, delivery facts, technical requirements, warranty/support, related services, acceptance requirements, reservation and lotting.' },
+        { l: 'Entered during Tender preparation:', v: 'Tender dates and validity; permitted Tender-security choice; permitted supplier-evidence requirements; permitted contract terms.' },
+        { l: 'Generated by the system:', v: 'Tender reference, opening date/time, schedules, response identities, calculations, forms, documents, mappings and digests.' }
+      ],
+      tasks: [
+        { n: '1', t: 'Tender documents and addenda', p: 'View and acknowledge the current published package.' },
+        { n: '2', t: 'Company, declarations and tender security', p: 'Complete supplier facts, declarations and the applicable security response.' },
+        { n: '3', t: 'Requirements and supporting evidence', p: 'Respond to Goods, technical, warranty, experience, service, acceptance and evidence requirements.' },
+        { n: '4', t: 'Price', p: 'Complete the published Goods and related-service price schedules.' },
+        { n: '5', t: 'Review and submit', p: 'Resolve blockers, review, sign and submit the exact package.' }
+      ],
+      answers: ['Confirmation', 'Yes/No', 'Controlled choice', 'Short text', 'Long text', 'Integer', 'Decimal', 'Money', 'Date', 'Evidence reference'],
+      fixture: [
+        { l: 'Goods lines', v: '1' },
+        { l: 'Technical requirements', v: '11' },
+        { l: 'Warranty and support facts', v: '6' },
+        { l: 'Related services', v: '0' },
+        { l: 'Acceptance requirements', v: '5' },
+        { l: 'Price schedules', v: '1' },
+        { l: 'Reservation treatment', v: 'Youth' },
+        { l: 'County residents', v: 'Not applicable' },
+        { l: 'Reservation response', v: '1 declaration and AGPO evidence' },
+        { l: 'Eligibility mapping', v: 'EVG-ELIGIBILITY' }
+      ],
+      responses: [
+        { g: 'General declarations and Tender security', e: 'Submission — pass/fail', c: 'Not carried forward' },
+        { g: 'Reservation declaration and evidence, when applicable', e: 'Eligibility — pass/fail against the published category and exact rule', c: 'Not carried forward; category, County-residents treatment and result remain available to Award and statutory reporting' },
+        { g: 'Goods offer and delivery commitment', e: 'Technical compliance — mandatory pass/fail', c: 'Goods and delivery schedule' },
+        { g: 'Technical requirements', e: 'One shared Technical compliance group; individual mandatory results retained; no weights', c: 'Technical obligation schedule' },
+        { g: 'Warranty and support', e: 'Technical compliance — mandatory pass/fail', c: 'Warranty and support terms' },
+        { g: 'Comparable experience and linked evidence', e: 'The published eligibility or technical group', c: 'Not carried forward unless it proves a carried obligation' },
+        { g: 'Related services, when present', e: 'Technical compliance — mandatory pass/fail', c: 'Related-services schedule' },
+        { g: 'Acceptance confirmations', e: 'Technical compliance — mandatory pass/fail', c: 'Inspection and acceptance schedule' },
+        { g: 'Price schedule', e: 'Arithmetic and financial evaluation', c: 'Contract price schedules' },
+        { g: 'Package acknowledgement and administrative contacts', e: 'Not evaluated', c: 'Not carried forward' }
+      ],
+      viewers: [
+        { t: 'Invitation to Tender', o: 'the installed Invitation to Tender' },
+        { t: 'Complete issued Tender', o: 'the installed issued Tender' }
+      ],
+      listCard: [
+        { l: 'Tender format', v: 'IT Equipment Open Tender', v2: '', badge: false },
+        { l: 'Release', v: '1.1', v2: '', badge: false },
+        { l: 'Status', v: '', v2: '', badge: true },
+        { l: 'Supported use', v: 'Goods · Open Tender · Single lot', v2: 'Unreserved, Youth, Women or Persons with disabilities; County residents where applicable', badge: false },
+        { l: 'Official source', v: 'PPRA Goods Standard Tender Document', v2: '', badge: false },
+        { l: 'Last verified', v: '21 Sep 2026', v2: '', badge: false }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
