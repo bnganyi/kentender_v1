@@ -143,6 +143,17 @@ describe("ScheduleVersionEditor", () => {
 		expect(call.milestones[3].default_days).toBe(7);
 		expect(call.milestones[6].applies).toBe(false);
 		expect(wrapper.emitted("saved")[0]).toEqual(["SPR-OPEN-TENDER-GOODS-V2"]);
+		// Starts after the one it came from ends: nothing is replaced (D16).
+		expect(call.supersedes_version_ids).toEqual([]);
+	});
+
+	it("a replacement whose dates overlap the version it came from declares that version (D16)", async () => {
+		const wrapper = await openEditor();
+		await wrapper.find('[data-testid="kt-sve-from"]').setValue("2028-01-01");
+		await wrapper.find('[data-testid="kt-sve-reason"]').setValue("Award approval buffer widened after the 2028 review.");
+		await wrapper.find('[data-testid="kt-sve-save"]').trigger("click");
+		await flushPromises();
+		expect(api.registerScheduleProfileVersion.mock.calls[0][0].supersedes_version_ids).toEqual(["SPR-OPEN-TENDER-GOODS-V1"]);
 	});
 
 	describe("correcting a schedule in place", () => {

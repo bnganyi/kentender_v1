@@ -75,6 +75,19 @@ describe("CalendarEditor", () => {
 		expect(wrapper.find('[data-testid="kt-cal-from"]').element.value).toBe("");
 	});
 
+	it("a successor that overlaps the saved version declares it; a brand-new calendar declares nothing (D16)", async () => {
+		api.getBusinessDayCalendar.mockResolvedValue(SAVED);
+		api.registerBusinessDayCalendarVersion.mockResolvedValue({ calendar: "KENYA-PUBLIC-HOLIDAYS-V2" });
+		const wrapper = mount(CalendarEditor, { props: { name: SAVED.calendar }, global: globalMocks() });
+		await flushPromises();
+		await wrapper.find('[data-testid="kt-cal-new-version"]').trigger("click");
+		await wrapper.find('[data-testid="kt-cal-name"]').setValue("Kenya public holidays");
+		await wrapper.find('[data-testid="kt-cal-from"]').setValue("2028-01-01");
+		await wrapper.find('[data-testid="kt-cal-save"]').trigger("click");
+		await flushPromises();
+		expect(api.registerBusinessDayCalendarVersion.mock.calls[0][0].supersedes_version_ids).toEqual([SAVED.calendar]);
+	});
+
 	it("corrects the calendar in place while the server allows it, and offers a successor otherwise", async () => {
 		api.getBusinessDayCalendar.mockResolvedValue({ ...SAVED, can_edit: false, edit_blocked_reason: "A schedule already uses this calendar, so it cannot change. Create a new version instead." });
 		const frozen = mount(CalendarEditor, { props: { name: SAVED.calendar }, global: globalMocks() });

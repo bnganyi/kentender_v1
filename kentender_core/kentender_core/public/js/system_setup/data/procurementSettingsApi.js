@@ -49,6 +49,7 @@ export const procurementSettingsApi = {
 		frappeCall(PREFIX + "register_schedule_profile_version", {
 			...payload,
 			milestones: JSON.stringify(payload.milestones || []),
+			supersedes_version_ids: JSON.stringify(payload.supersedes_version_ids || []),
 			idempotency_key: newIdempotencyKey("spr"),
 		}),
 	// Correcting a schedule or a calendar in place. The server refuses once
@@ -115,6 +116,7 @@ export const procurementSettingsApi = {
 			...payload,
 			weekend_days: JSON.stringify(payload.weekend_days || []),
 			holidays: JSON.stringify(payload.holidays || []),
+			supersedes_version_ids: JSON.stringify(payload.supersedes_version_ids || []),
 			idempotency_key: newIdempotencyKey("cal"),
 		}),
 	setReminderThresholdDays: (days) =>

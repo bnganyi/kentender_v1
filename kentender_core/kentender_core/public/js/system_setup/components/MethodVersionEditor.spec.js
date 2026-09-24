@@ -150,7 +150,9 @@ describe("MethodVersionEditor", () => {
 		await wrapper.find('[data-testid="kt-mve-evidence-1"]').setValue("Signed declaration");
 		await wrapper.find('[data-testid="kt-mve-actor-1"]').setValue("Accounting Officer");
 		await wrapper.find('[data-testid="kt-mve-stage-1"]').setValue("Before invitation");
-		await wrapper.find('[data-testid="kt-mve-from"]').setValue("2028-07-01");
+		// Overlaps the version it was opened from, so it is a declared
+		// replacement (D16); a non-overlapping one would replace nothing.
+		await wrapper.find('[data-testid="kt-mve-from"]').setValue("2028-01-01");
 		await giveReason(wrapper);
 
 		await wrapper.find('[data-testid="kt-mve-save"]').trigger("click");
@@ -158,7 +160,7 @@ describe("MethodVersionEditor", () => {
 
 		const call = api.registerMethodProfileVersion.mock.calls[0][0];
 		expect(call.procurement_method).toBe("Open Tender");
-		expect(call.effective_from).toBe("2028-07-01");
+		expect(call.effective_from).toBe("2028-01-01");
 		expect(call.replaces).toBe("MPR-OPEN-TENDER-V1");
 		expect(call.change_reason).toBe("Goods maximum raised by the 2028 threshold review.");
 		expect(call.conditions.map((row) => row.condition_id)).toEqual(["G-VALUE", "S-DECLARE"]);

@@ -134,7 +134,7 @@ class ProcurementSettingsTestCase(IntegrationTestCase):
 		# Works has no condition row on this profile → not supported for it.
 		self.assertFalse(settings.resolve_method_profile(procurement_method="Open Tender", procurement_category="Works", applicability_date="2094-09-01")["category_supported"])
 
-		second = self._register_method("2095-01-01", "2095-06-30", verification_status=settings.VERIFICATION_FIXTURE)
+		second = self._register_method("2095-01-01", "2095-06-30", verification_status=settings.VERIFICATION_FIXTURE, replaces=first["profile"])
 		self.assertIn(first["profile"], second["superseded"])
 		self.assertEqual(frappe.db.get_value(settings.METHOD_PROFILE, first["profile"], "status"), "Superseded")
 		self.assertEqual(second["version_number"], first["version_number"] + 1)
@@ -151,7 +151,7 @@ class ProcurementSettingsTestCase(IntegrationTestCase):
 
 	def test_two_active_versions_on_one_date_fail_closed(self):
 		a = self._register_method("2093-07-01", "2093-12-31")
-		b = self._register_method("2093-07-01", "2093-12-31")
+		b = self._register_method("2093-07-01", "2093-12-31", replaces=a["profile"])
 		older = frappe.get_doc(settings.METHOD_PROFILE, a["profile"])
 		older.flags.kt_supersede = True
 		older.status = "Active"

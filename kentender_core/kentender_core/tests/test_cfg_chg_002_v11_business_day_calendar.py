@@ -94,13 +94,18 @@ class TestCalendarRegistration(CalendarTestCase):
 
 	def test_a_new_overlapping_version_supersedes_the_earlier_one(self):
 		first = self._register_calendar(name="KT Test Overlap Calendar", effective_until="2095-06-30")
-		second = self._register_calendar(name="KT Test Overlap Calendar", effective_from="2094-09-01")
+		# D16 — the replacement is declared, never inferred from the overlap.
+		second = self._register_calendar(name="KT Test Overlap Calendar", effective_from="2094-09-01", supersedes_version_ids=[first["calendar"]])
 		self.assertIn(first["calendar"], second["superseded"])
 		self.assertEqual(frappe.db.get_value("Business Day Calendar", first["calendar"], "status"), "Superseded")
 		self.assertEqual(frappe.db.get_value("Business Day Calendar", second["calendar"], "status"), "Active")
 
-	def test_a_calendar_version_is_never_edited_in_place_or_deleted(self):
-		out = self._register_calendar(name="KT Test Immutable Calendar")
+	def test_a_calendar_version_in_force_is_never_edited_in_place_or_deleted(self):
+		# D15 (owner, 23 Sep 2026; confirmed 24 Sep): an unused version that has
+		# not taken effect may be corrected in place through its command; one
+		# already in force is frozen. A past window keeps clear of the live
+		# calendar, as the method-profile test does.
+		out = self._register_calendar(name="KT Test Immutable Calendar", effective_from="2019-07-01", effective_until="2019-12-31")
 		doc = frappe.get_doc("Business Day Calendar", out["calendar"])
 		doc.source_instrument = "Changed after the fact"
 		with self.assertRaises(frappe.ValidationError):

@@ -54,6 +54,7 @@ from kentender_core.services.procurement_settings import (
 	_in_force,
 	_next_version,
 	_overlaps,
+	_require_declared_supersession,
 	_require_verification,
 	_supersede_overlapping,
 )
@@ -562,6 +563,7 @@ def update_regulatory_reference_version(
 	doc.source_document = source_document
 	doc.interpretation = interpretation
 	doc.payload_json = json.dumps(validated_payload)
+	_require_declared_supersession(DOCTYPE, {"reference_set": doc.reference_set}, doc.effective_from, doc.effective_until, doc.supersedes_version_ids or "", exclude=doc.name, strict=False)
 	doc.flags.kt_correct_unused = True
 	doc.save(ignore_permissions=True)
 	superseded = _supersede_overlapping(DOCTYPE, {"reference_set": doc.reference_set}, doc.effective_from, doc.effective_until, doc.name)
@@ -652,6 +654,7 @@ def save_regulatory_reference_version(
 				"fixture_namespace": fixture_namespace,
 			}
 		)
+		_require_declared_supersession(DOCTYPE, {"reference_set": reference_set}, doc.effective_from, doc.effective_until, supersedes)
 		doc.insert(ignore_permissions=True)
 		superseded = _supersede_overlapping(
 			DOCTYPE, {"reference_set": reference_set}, doc.effective_from, doc.effective_until, doc.name

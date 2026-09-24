@@ -10,6 +10,7 @@
 // this screen shows what it was told.
 import { computed, onMounted, ref } from "vue";
 import { procurementSettingsApi } from "../data/procurementSettingsApi.js";
+import { datesOverlap } from "../data/format.js";
 import { dash, fmtDate } from "../data/format.js";
 
 const props = defineProps({
@@ -120,7 +121,16 @@ async function save() {
 				expected_version: calendar.value.expected_version,
 			});
 		} else {
-			await procurementSettingsApi.registerBusinessDayCalendarVersion(payload);
+			// A successor opened from a saved version declares it when their
+			// dates overlap; a brand-new calendar replaces nothing (D16).
+			const predecessor = !props.creating && props.name && calendar.value ? calendar.value : null;
+			await procurementSettingsApi.registerBusinessDayCalendarVersion({
+				...payload,
+				supersedes_version_ids:
+					predecessor && datesOverlap(predecessor.effective_from, predecessor.effective_until, payload.effective_from, payload.effective_until)
+						? [props.name]
+						: [],
+			});
 		}
 		emit("saved");
 	} catch (e) {

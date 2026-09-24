@@ -129,9 +129,11 @@ def reset_config_rules(*, commit: bool = True) -> dict[str, Any]:
 			display_name="Reservation rules",
 			fixture_namespace=FIXTURE_NAMESPACE,
 		)["reference_set"]
-	reservation = register.save_regulatory_reference_version(
+	from kentender_core.seeds.site_setup import _seed_save_reference_version
+
+	reservation = _seed_save_reference_version(
 		reference_set=reservation_set,
-		payload={"obligation_code": "ANNUAL-RESERVATION-TARGET"},
+		payload={"obligation_code": "ANNUAL-RESERVATION-TARGET", "measure_stage": "PlanningAllocation"},
 		effective_from="2027-07-01",
 		effective_until="2028-06-30",
 		fixture_namespace=FIXTURE_NAMESPACE,

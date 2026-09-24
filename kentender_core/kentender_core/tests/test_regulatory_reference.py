@@ -36,8 +36,14 @@ class RegulatoryReferenceTestCase(IntegrationTestCase):
 		cls.fy = configuration._fy_name(Y)
 		if not frappe.db.exists("Fiscal Year", cls.fy):
 			configuration.add_fiscal_year(start_year=Y)
+		from kentender_core.services import procurement_settings as settings
+
+		# This module also registers method profiles (threshold_matrix is
+		# derived from them); purge those too, or a leftover open-ended Open
+		# Tender version overlaps every later suite's (D16 refuses that).
 		register.purge_fixture_references(NS)
-		cls.addClassCleanup(lambda: (register.purge_fixture_references(NS), frappe.db.commit()))
+		settings.purge_fixture_profiles(NS)
+		cls.addClassCleanup(lambda: (register.purge_fixture_references(NS), settings.purge_fixture_profiles(NS), frappe.db.commit()))
 		frappe.db.commit()
 
 	def code(self, caught) -> str:
@@ -139,7 +145,7 @@ class TestVersionsAndSupersession(RegulatoryReferenceTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			frappe.delete_doc(register.DOCTYPE, first["reference"], ignore_permissions=True)
 
-		second = self._save_reservation_version(out["reference_set"], target_percent=35, effective_from="2094-09-01")
+		second = self._save_reservation_version(out["reference_set"], target_percent=35, effective_from="2094-09-01", supersedes_version_ids=[first["reference"]])
 		self.assertEqual(second["version_number"], 2)
 		self.assertIn(first["reference"], second["superseded"])
 		self.assertEqual(frappe.db.get_value(register.DOCTYPE, first["reference"], "status"), "Superseded")

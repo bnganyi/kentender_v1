@@ -17,6 +17,7 @@
 // method eligibility editor.
 import { computed, onMounted, ref } from "vue";
 import { procurementSettingsApi } from "../data/procurementSettingsApi.js";
+import { datesOverlap } from "../data/format.js";
 import { fmtDate, sourceCheckLabel } from "../data/format.js";
 
 const props = defineProps({
@@ -158,6 +159,9 @@ async function save() {
 				...payload,
 				procurement_method: current.value.procurement_method,
 				procurement_category: current.value.procurement_category,
+				supersedes_version_ids: datesOverlap(current.value.effective_from, current.value.effective_until, payload.effective_from, payload.effective_until)
+					? [props.name]
+					: [],
 			});
 		emit("saved", saved.profile);
 	} catch (e) {

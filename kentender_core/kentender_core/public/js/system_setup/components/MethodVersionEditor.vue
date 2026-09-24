@@ -21,6 +21,7 @@
 // projection rather than restated in the browser.
 import { computed, onMounted, ref } from "vue";
 import { procurementSettingsApi } from "../data/procurementSettingsApi.js";
+import { datesOverlap } from "../data/format.js";
 import { fmtDate, sourceCheckLabel } from "../data/format.js";
 
 const props = defineProps({
@@ -164,7 +165,10 @@ async function save() {
 				...payload,
 				procurement_method: current.value.procurement_method,
 				change_reason: form.value.change_reason.trim(),
-				replaces: props.name,
+				// D16 — declared only when the new dates overlap it.
+				replaces: datesOverlap(current.value.effective_from, current.value.effective_until, payload.effective_from, payload.effective_until)
+					? props.name
+					: "",
 			});
 		emit("saved", saved.profile);
 	} catch (e) {

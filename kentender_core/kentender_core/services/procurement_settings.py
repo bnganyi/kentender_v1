@@ -207,6 +207,41 @@ def _overlaps(a_from, a_until, b_from, b_until) -> bool:
 	return True
 
 
+def _require_declared_supersession(
+	doctype: str,
+	filters: dict[str, Any],
+	effective_from,
+	effective_until,
+	declared: list[str] | str | None,
+	*,
+	exclude: str = "",
+	strict: bool = True,
+) -> list[str]:
+	"""CFG-CHG-002 v0.14 §5 + owner decision D16 — checked BEFORE any write.
+
+	Every Active version of the same record whose dates overlap the new ones
+	must be named in `declared`, or the save is refused with
+	CFG_SUPERSESSION_INVALID: an overlap is a declared replacement, never a
+	silent one (the settings suite once retired the site's own rules this
+	way). With `strict`, every declared version must also be such an overlap —
+	a new version cannot claim to replace something it does not. A correction
+	in place (D15) passes `strict=False`: its stored declaration may name
+	versions it already replaced."""
+	if isinstance(declared, str):
+		declared = [d.strip() for d in declared.split(",")]
+	named = {d for d in (declared or []) if d}
+	overlapping = {
+		row["name"]
+		for row in frappe.get_all(
+			doctype, filters={**filters, "status": "Active"}, fields=["name", "effective_from", "effective_until"]
+		)
+		if row["name"] != exclude and _overlaps(row["effective_from"], row["effective_until"], effective_from, effective_until)
+	}
+	if overlapping - named or (strict and named - overlapping):
+		fail_cfg("CFG_SUPERSESSION_INVALID")
+	return sorted(named)
+
+
 def _supersede_overlapping(doctype: str, filters: dict[str, Any], effective_from, effective_until, keep: str) -> list[str]:
 	superseded: list[str] = []
 	for row in frappe.get_all(doctype, filters={**filters, "status": "Active", "name": ("!=", keep)}, fields=["name", "effective_from", "effective_until"]):
@@ -299,6 +334,7 @@ def update_method_profile(
 	doc.provision = provision
 	doc.source_document = source_document
 	doc.set("conditions", rows)
+	_require_declared_supersession(METHOD_PROFILE, {"procurement_method": doc.procurement_method}, doc.effective_from, doc.effective_until, doc.get("supersedes_version_ids") or "", exclude=doc.name, strict=False)
 	doc.flags.kt_correct_unused = True
 	doc.save(ignore_permissions=True)
 	superseded = _supersede_overlapping(METHOD_PROFILE, {"procurement_method": doc.procurement_method}, doc.effective_from, doc.effective_until, doc.name)
@@ -397,6 +433,7 @@ def register_method_profile_version(
 				"fixture_namespace": fixture_namespace,
 			}
 		)
+		_require_declared_supersession(METHOD_PROFILE, {"procurement_method": method}, doc.effective_from, doc.effective_until, replaces)
 		doc.insert(ignore_permissions=True)
 		superseded = _supersede_overlapping(METHOD_PROFILE, {"procurement_method": method}, doc.effective_from, doc.effective_until, doc.name)
 		metadata = {"version": version, "superseded": superseded, "verification_status": verification}
@@ -691,6 +728,7 @@ def update_schedule_profile(
 	doc.provision = provision
 	doc.source_document = source_document
 	doc.set("milestones", rows)
+	_require_declared_supersession(SCHEDULE_PROFILE, {"procurement_method": doc.procurement_method, "procurement_category": doc.procurement_category}, doc.effective_from, doc.effective_until, doc.get("supersedes_version_ids") or "", exclude=doc.name, strict=False)
 	doc.flags.kt_correct_unused = True
 	doc.save(ignore_permissions=True)
 	superseded = _supersede_overlapping(
@@ -731,6 +769,7 @@ def register_schedule_profile_version(
 	source_instrument: str = "",
 	provision: str = "",
 	source_document: str = "",
+	supersedes_version_ids: list[str] | None = None,
 	fixture_namespace: str = "",
 	idempotency_key: str = "",
 ) -> dict[str, Any]:
@@ -770,6 +809,15 @@ def register_schedule_profile_version(
 				"milestones": rows,
 				"fixture_namespace": fixture_namespace,
 			}
+		)
+		doc.supersedes_version_ids = ",".join(
+			_require_declared_supersession(
+				SCHEDULE_PROFILE,
+				{"procurement_method": method, "procurement_category": procurement_category},
+				doc.effective_from,
+				doc.effective_until,
+				supersedes_version_ids,
+			)
 		)
 		doc.insert(ignore_permissions=True)
 		superseded = _supersede_overlapping(
@@ -944,6 +992,7 @@ def update_business_day_calendar(
 	doc.provision = provision
 	doc.source_document = source_document
 	doc.set("holidays", rows)
+	_require_declared_supersession(CALENDAR, {"calendar_name": name}, doc.effective_from, doc.effective_until, doc.get("supersedes_version_ids") or "", exclude=doc.name, strict=False)
 	doc.flags.kt_correct_unused = True
 	doc.save(ignore_permissions=True)
 	superseded = _supersede_overlapping(CALENDAR, {"calendar_name": name}, doc.effective_from, doc.effective_until, doc.name)
@@ -968,6 +1017,7 @@ def register_business_day_calendar_version(
 	source_instrument: str = "",
 	provision: str = "",
 	source_document: str = "",
+	supersedes_version_ids: list[str] | None = None,
 	fixture_namespace: str = "",
 	idempotency_key: str = "",
 ) -> dict[str, Any]:
@@ -1003,6 +1053,9 @@ def register_business_day_calendar_version(
 				"holidays": rows,
 				"fixture_namespace": fixture_namespace,
 			}
+		)
+		doc.supersedes_version_ids = ",".join(
+			_require_declared_supersession(CALENDAR, {"calendar_name": name}, doc.effective_from, doc.effective_until, supersedes_version_ids)
 		)
 		doc.insert(ignore_permissions=True)
 		superseded = _supersede_overlapping(CALENDAR, {"calendar_name": name}, doc.effective_from, doc.effective_until, doc.name)

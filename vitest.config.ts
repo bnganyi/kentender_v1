@@ -26,6 +26,10 @@ export default defineConfig({
 				plugins: [vue()],
 				test: {
 					name: "procurement-planning",
+					// Board comparisons parse whole .dc.html files with JSDOM; under
+					// `make ui-structure-gate`'s parallel load that legitimately
+					// exceeds the 5 s default (measured 24 Sep 2026: 5.3–9.2 s).
+					testTimeout: 30_000,
 					environment: "jsdom",
 					include: [
 						"kentender_procurement/kentender_procurement/public/js/procurement_planning/**/*.spec.js",
@@ -63,6 +67,10 @@ export default defineConfig({
 				plugins: [vue()],
 				test: {
 					name: "system-setup",
+					// Board comparisons parse whole .dc.html files with JSDOM; under
+					// `make ui-structure-gate`'s parallel load that legitimately
+					// exceeds the 5 s default (measured 24 Sep 2026: 5.3–9.2 s).
+					testTimeout: 30_000,
 					environment: "jsdom",
 					setupFiles: [
 						"kentender_core/kentender_core/public/js/system_setup/vitest.setup.js",
@@ -118,6 +126,10 @@ export default defineConfig({
 				plugins: [vue()],
 				test: {
 					name: "departmental-needs-components",
+					// Board comparisons parse whole .dc.html files with JSDOM; under
+					// `make ui-structure-gate`'s parallel load that legitimately
+					// exceeds the 5 s default (measured 24 Sep 2026: 5.3–9.2 s).
+					testTimeout: 30_000,
 					environment: "jsdom",
 					include: [
 						"kentender_procurement/kentender_procurement/public/js/departmental_needs/components/*.spec.js",

@@ -69,3 +69,14 @@ export function sourceCheckClass(value) {
 // — matched verbatim so a stale control token gets its own recoverable
 // notice instead of the generic error paragraph (CFG-UX-AC-08).
 export const CFG_VERSION_CONFLICT_MESSAGE = "This record changed after you opened it. Refresh and review the latest version.";
+
+// D16 (24 Sep 2026) — whether two inclusive date windows share a day; an
+// empty end is open-ended. ISO dates compare correctly as strings. A new
+// version declares the one it came from as replaced only when they overlap;
+// the server refuses an undeclared overlap and a declared non-overlap alike.
+export function datesOverlap(aFrom, aUntil, bFrom, bUntil) {
+	if (!aFrom || !bFrom) return false;
+	if (aUntil && aUntil < bFrom) return false;
+	if (bUntil && bUntil < aFrom) return false;
+	return true;
+}

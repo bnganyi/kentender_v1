@@ -14,6 +14,7 @@
 // the same rule.
 import { computed, ref, watch } from "vue";
 import { procurementSettingsApi } from "../data/procurementSettingsApi.js";
+import { datesOverlap } from "../data/format.js";
 import { applicabilityBasisLabel, fmtDate } from "../data/format.js";
 
 const props = defineProps({
@@ -221,7 +222,14 @@ async function save() {
 			provision: form.value.provision,
 			source_document: form.value.source_document,
 			interpretation: form.value.interpretation,
-			supersedes_version_ids: current.value.reference ? [current.value.reference] : [],
+			// D16 — the version this was opened from is declared replaced only
+			// when the new dates overlap it; the server refuses both an
+			// undeclared overlap and a declared non-overlap.
+			supersedes_version_ids:
+				current.value.reference &&
+				datesOverlap(current.value.effective_from, current.value.effective_until, form.value.effective_from, form.value.effective_until)
+					? [current.value.reference]
+					: [],
 			change_reason: form.value.change_reason,
 		});
 		emit("saved");

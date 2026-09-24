@@ -731,6 +731,69 @@ def _seed_contact_offices() -> dict[str, int]:
 	return {"created": created, "total": len(CONTACT_OFFICES)}
 
 
+# --------------------------------------------------------------------------
+# D16 (24 Sep 2026) — an overlapping save must name what it replaces. The
+# seed owns every record it writes, so when a re-run replaces its own earlier
+# version it declares that replacement explicitly instead of relying on the
+# silent supersession the services no longer perform.
+# --------------------------------------------------------------------------
+
+
+def _seed_replaces(doctype: str, filters: dict, effective_from, effective_until) -> list[str]:
+	from kentender_core.services.procurement_settings import _overlaps
+
+	return [
+		row["name"]
+		for row in frappe.get_all(doctype, filters={**filters, "status": "Active"}, fields=["name", "effective_from", "effective_until"])
+		if _overlaps(row["effective_from"], row["effective_until"], effective_from, effective_until or None)
+	]
+
+
+def _seed_save_reference_version(**kwargs):
+	from kentender_core.services import regulatory_reference as register
+
+	kwargs.setdefault(
+		"supersedes_version_ids",
+		_seed_replaces(register.DOCTYPE, {"reference_set": kwargs["reference_set"]}, kwargs["effective_from"], kwargs.get("effective_until")),
+	)
+	return register.save_regulatory_reference_version(**kwargs)
+
+
+def _seed_register_method_profile_version(**kwargs):
+	from kentender_core.services import procurement_settings as settings
+
+	kwargs.setdefault(
+		"replaces",
+		",".join(_seed_replaces(settings.METHOD_PROFILE, {"procurement_method": kwargs["procurement_method"]}, kwargs["effective_from"], kwargs.get("effective_until"))),
+	)
+	return settings.register_method_profile_version(**kwargs)
+
+
+def _seed_register_schedule_profile_version(**kwargs):
+	from kentender_core.services import procurement_settings as settings
+
+	kwargs.setdefault(
+		"supersedes_version_ids",
+		_seed_replaces(
+			settings.SCHEDULE_PROFILE,
+			{"procurement_method": kwargs["procurement_method"], "procurement_category": kwargs["procurement_category"]},
+			kwargs["effective_from"],
+			kwargs.get("effective_until"),
+		),
+	)
+	return settings.register_schedule_profile_version(**kwargs)
+
+
+def _seed_register_business_day_calendar_version(**kwargs):
+	from kentender_core.services import procurement_settings as settings
+
+	kwargs.setdefault(
+		"supersedes_version_ids",
+		_seed_replaces(settings.CALENDAR, {"calendar_name": kwargs["calendar_name"]}, kwargs["effective_from"], kwargs.get("effective_until")),
+	)
+	return settings.register_business_day_calendar_version(**kwargs)
+
+
 def _reservation_has_measure(version_name: str) -> bool:
 	import json
 
@@ -794,7 +857,7 @@ def _seed_regulatory_reference(fiscal_year: str = "", fixture_namespace: str = F
 	if existing and not force and _reservation_has_measure(existing):
 		return existing
 
-	outcome = register.save_regulatory_reference_version(
+	outcome = _seed_save_reference_version(
 		reference_set=reference_set,
 		payload={
 			"obligation_code": "ANNUAL-RESERVATION-TARGET",
@@ -867,7 +930,7 @@ def _seed_publication_obligations(*, effective: dict | None = None, fixture_name
 		if not force and frappe.db.get_value(register.DOCTYPE, {"reference_set": reference_set, "status": "Active", "effective_from": effective["effective_from"]}, "name"):
 			continue
 		is_invitation = payload["trigger_event"] == PUBLICATION_TRIGGER_INVITATION
-		register.save_regulatory_reference_version(
+		_seed_save_reference_version(
 			# A publication/cancellation obligation applies to any tender
 			# regardless of category — no `applicability_categories`
 			# restriction (an empty list means "all categories", the same
@@ -924,7 +987,7 @@ def _seed_exclusive_preference(*, effective: dict | None = None, fixture_namespa
 			)["reference_set"]
 		if not force and frappe.db.get_value(register.DOCTYPE, {"reference_set": reference_set, "status": "Active", "effective_from": effective["effective_from"]}, "name"):
 			continue
-		register.save_regulatory_reference_version(
+		_seed_save_reference_version(
 			reference_set=reference_set,
 			payload={
 				"restriction_code": restriction_code,
@@ -977,7 +1040,7 @@ def _seed_preference_margins(*, effective: dict | None = None, fixture_namespace
 		)["reference_set"]
 	if not force and frappe.db.get_value(register.DOCTYPE, {"reference_set": reference_set, "status": "Active", "effective_from": effective["effective_from"]}, "name"):
 		return {"created": 0, "total": 1}
-	register.save_regulatory_reference_version(
+	_seed_save_reference_version(
 		reference_set=reference_set,
 		payload={
 			"scheme_code": "MSME-MARGIN",
@@ -1037,7 +1100,7 @@ def _seed_market_price_index(*, effective: dict | None = None, fixture_namespace
 	# publication happened the same day it starts applying.
 	observation_date = add_days(effective["effective_from"], -60)
 	publication_date = add_days(effective["effective_from"], -30)
-	register.save_regulatory_reference_version(
+	_seed_save_reference_version(
 		reference_set=reference_set,
 		payload={
 			"rows": [
@@ -1082,7 +1145,7 @@ def _seed_approval_applicability(*, effective: dict | None = None, fixture_names
 		)["reference_set"]
 	if not force and frappe.db.get_value(register.DOCTYPE, {"reference_set": reference_set, "status": "Active", "effective_from": effective["effective_from"]}, "name"):
 		return {"created": 0, "total": 1}
-	register.save_regulatory_reference_version(
+	_seed_save_reference_version(
 		reference_set=reference_set,
 		payload={
 			"entity_types": [SITE["pe_type"]],
@@ -1174,7 +1237,7 @@ def _seed_method_profiles(*, effective: dict | None = None, verification_status:
 					"statutory_reference": ref,
 				}
 			)
-		settings.register_method_profile_version(
+		_seed_register_method_profile_version(
 			procurement_method=method,
 			conditions=conditions,
 			verification_status=verification_status or settings.VERIFICATION_PENDING,
@@ -1223,7 +1286,7 @@ def _seed_schedule_profiles(*, effective: dict | None = None, verification_statu
 			total += 1
 			if _profile_exists(settings.SCHEDULE_PROFILE, {"procurement_method": method, "procurement_category": category, "effective_from": effective["effective_from"]}):
 				continue
-			settings.register_schedule_profile_version(
+			_seed_register_schedule_profile_version(
 				procurement_method=method,
 				procurement_category=category,
 				profile_name=f"{method} — {category.lower()}",
@@ -1279,7 +1342,7 @@ def _seed_business_day_calendar(*, effective: dict | None = None, fixture_namesp
 		for month_day, label in FIXED_PUBLIC_HOLIDAYS
 		if start <= getdate(f"{year}-{month_day}") <= until
 	]
-	settings.register_business_day_calendar_version(
+	_seed_register_business_day_calendar_version(
 		calendar_name=name,
 		effective_from=effective["effective_from"],
 		effective_until=effective.get("effective_until", ""),
