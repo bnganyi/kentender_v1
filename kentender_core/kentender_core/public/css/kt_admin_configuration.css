@@ -719,6 +719,11 @@
 	flex-direction: column;
 	gap: 24px;
 }
+/* A section re-ported from its board keeps the board's own block flow and
+   margins (C02 #overview); the stacked gap above would add 24px to each. */
+.kt-industry .kt-setup-panel .kt-setup-section.is-flow {
+	display: block;
+}
 .kt-industry .kt-setup-panel .kt-card.kt-blueprint {
 	border: 0;
 	padding: 0;
@@ -1031,3 +1036,26 @@
 }
 /* The page lede wraps at the board's 62ch. */
 .kt-industry .kt-setup-lede { max-width: 62ch; }
+
+/* C02 re-port (tracker CFG14-5B). */
+/* #narrow — the year table becomes one card per year below 700px, keeping
+   every activity and deadline (§10.3); only one of the two is shown. */
+.kt-industry.kt-setup-root .kt-fy-narrow { display: none; }
+@media (max-width: 700px) {
+	.kt-industry.kt-setup-root .kt-fy-wide { display: none; }
+	.kt-industry.kt-setup-root .kt-fy-narrow { display: grid; gap: 12px; }
+}
+.kt-industry.kt-setup-root .kt-card.kt-fy-card { padding: var(--kt-space-3); gap: var(--kt-space-2); }
+/* #forms — the focused open/close/deadline form, the board's plain card. */
+.kt-industry.kt-setup-root .kt-card.kt-intake-form { padding: var(--kt-space-3); gap: var(--kt-space-2); max-width: 560px; }
+.kt-industry.kt-setup-root .kt-intake-title {
+	font-family: var(--kt-font-heading);
+	font-weight: var(--kt-font-heading-weight);
+	font-size: 16px;
+	line-height: 1.2;
+}
+/* #empty — centred, no card. */
+.kt-industry.kt-setup-root .kt-fy-empty { padding: 40px; text-align: center; }
+.kt-industry.kt-setup-root .kt-fy-empty svg { display: block; }
+/* The board's dialog body text. */
+.kt-industry.kt-setup-root .dialog-body { margin: 0; font-size: 14px; color: var(--kt-color-neutral-800); }

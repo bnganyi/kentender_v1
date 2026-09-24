@@ -400,3 +400,28 @@ class TestIntakeChangeEvidence(IntakeControlTestCase):
 			self.assertEqual(changed["after"], {"open": True, "closes_at": "2199-04-01 09:00:00"})
 		finally:
 			configuration.close_disposal_plan_submission(fiscal_year=y1, reason="Test reset.")
+
+
+class TestExpiredPeriodProjection(IntakeControlTestCase):
+	"""CFG-CHG-002 v0.14 §10.3 (C02 row variants) — a period whose closing
+	instant has passed reads Closed with its own "Closed at" fact, even
+	before the hourly cleanup clears the flag."""
+
+	def test_an_expired_period_is_closed_and_says_when(self):
+		from frappe.utils import add_to_date
+
+		y1 = self.fy(Y1)
+		frappe.db.set_value(
+			"Fiscal Year",
+			y1,
+			{configuration.DISPOSAL_FLAG_OPEN: 1, configuration.DISPOSAL_FLAG_CLOSES_AT: add_to_date(now_datetime(), minutes=-5)},
+			update_modified=False,
+		)
+		try:
+			row = next(r for r in configuration.list_fiscal_years()["fiscal_years"] if r["fiscal_year"] == y1)
+			self.assertFalse(row["disposal_plan_submission_open"])
+			self.assertTrue(row["disposal_plan_submission_closed_at_label"].endswith("EAT"))
+		finally:
+			frappe.db.set_value(
+				"Fiscal Year", y1, {configuration.DISPOSAL_FLAG_OPEN: 0, configuration.DISPOSAL_FLAG_CLOSES_AT: None}, update_modified=False
+			)

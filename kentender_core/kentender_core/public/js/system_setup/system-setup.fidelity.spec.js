@@ -20,13 +20,22 @@ import { compareSkeletons, formatMismatch, skeletonOf } from "../../../../../tes
 import { COVERED, DEPARTURES, FRAGMENTS, REBUILD_QUEUE } from "../../../../../tests/ui/fidelity/departures/system-setup.js";
 import { globalMocks } from "./components/spec_helpers.js";
 
-const siteApi = vi.hoisted(() => ({ previewFiscalYear: vi.fn(async () => null), configure: vi.fn(), update: vi.fn() }));
+const siteApi = vi.hoisted(() => ({
+	previewFiscalYear: vi.fn(async () => null),
+	configure: vi.fn(),
+	update: vi.fn(),
+	listFiscalYears: vi.fn(),
+	listFiscalYearIntakeHistory: vi.fn(),
+}));
 vi.mock("./data/siteConfigApi.js", () => ({ siteConfigApi: siteApi }));
 vi.mock("./data/procurementSettingsApi.js", () => ({
 	procurementSettingsApi: { setReminderThresholdDays: vi.fn(), addFundingSource: vi.fn(), updateFundingSource: vi.fn() },
 }));
 
 import AddFiscalYearDialog from "./components/AddFiscalYearDialog.vue";
+import DisableFiscalYearDialog from "./components/DisableFiscalYearDialog.vue";
+import IntakeForm from "./components/IntakeForm.vue";
+import FiscalYearsTab from "./tabs/FiscalYearsTab.vue";
 import FundingSourceEditor from "./components/FundingSourceEditor.vue";
 import ReminderSettingCard from "./components/ReminderSettingCard.vue";
 import ProcuringEntityTab from "./tabs/ProcuringEntityTab.vue";
@@ -68,6 +77,46 @@ function site(overrides = {}) {
 	};
 }
 
+// C02 CONFIG fixture rows, as the board draws them (§10.3).
+function fyRow(overrides = {}) {
+	return {
+		fiscal_year: "2027-2028",
+		label: "FY 2027/28",
+		period_label: "1 Jul 2027–30 Jun 2028",
+		phase: "Upcoming",
+		disabled: false,
+		reference_count: 0,
+		expected_version: "v1",
+		needs_submission_open: true,
+		needs_submission_closes_label: "25 Nov 2026, 23:59 EAT",
+		dpp_submission_open: true,
+		dpp_submission_closes_label: "30 Nov 2026, 23:59 EAT",
+		disposal_plan_submission_open: false,
+		disposal_plan_submission_closes_label: "",
+		...overrides,
+	};
+}
+const CURRENT_YEAR = fyRow({
+	fiscal_year: "2026-2027",
+	label: "FY 2026/27",
+	period_label: "1 Jul 2026–30 Jun 2027",
+	phase: "Current",
+	needs_submission_open: false,
+	needs_submission_closes_label: "",
+	dpp_submission_open: false,
+	dpp_submission_closes_label: "",
+});
+async function yearsTab(rows, props = {}) {
+	siteApi.listFiscalYears.mockResolvedValue({ fiscal_years: rows, count: rows.length });
+	siteApi.listFiscalYearIntakeHistory.mockResolvedValue({
+		count: 1,
+		entries: [{ activity: "Departmental needs", financial_year: "FY 2027/28", change: "Open", previous_value: "—", new_value: "25 Nov 2026, 23:59 EAT", reason: "Annual needs call.", changed_by: "Administrator", changed_at: "1 Nov 2026, 08:02 EAT" }],
+	});
+	const wrapper = mount(FiscalYearsTab, { props, global: globalMocks() });
+	await flushPromises();
+	return wrapper;
+}
+
 // Every artboard, by board. `mount` returns the element to compare, or is
 // absent when no component can render the state from props today. `self`
 // compares the artboard element itself as a landmark (a dialog artboard IS the
@@ -99,16 +148,60 @@ const ARTBOARDS = [
 		},
 	},
 
-	{ key: "C02#overview" },
-	{ key: "C02#overview-disabled" },
-	{ key: "C02#narrow" },
-	{ key: "C02#empty" },
-	{ key: "C02#add-year", self: true, select: "#add-year .dialog", mount: () => mount(AddFiscalYearDialog, { global: globalMocks() }) },
-	{ key: "C02#detail" },
-	{ key: "C02#detail-row-variants" },
-	{ key: "C02#disable" },
-	{ key: "C02#forms" },
-	{ key: "C02#form-states" },
+	{ key: "C02#overview", mount: () => yearsTab([fyRow(), CURRENT_YEAR]) },
+	{
+		key: "C02#overview-disabled",
+		mount: async () => {
+			const wrapper = await yearsTab([fyRow({ disabled: true, needs_submission_open: false, dpp_submission_open: false })]);
+			await wrapper.find('[data-testid="kt-fy-include-disabled"] input').setValue(true);
+			return wrapper;
+		},
+	},
+	{ key: "C02#narrow", live: '[data-testid="kt-fy-cards"]', select: "#narrow > div", mount: () => yearsTab([fyRow()]) },
+	{ key: "C02#empty", mount: () => yearsTab([]) },
+	{
+		key: "C02#add-year",
+		self: true,
+		select: "#add-year .dialog",
+		mount: async () => {
+			siteApi.previewFiscalYear.mockResolvedValue({ fiscal_year: "2028-2029", label: "FY 2028/29", period_label: "1 Jul 2028–30 Jun 2029", exists: false, company_missing: false });
+			const wrapper = mount(AddFiscalYearDialog, { global: globalMocks() });
+			await wrapper.find('[data-testid="kt-fy-start-year"]').setValue("2028");
+			return wrapper;
+		},
+	},
+	{ key: "C02#detail", mount: () => yearsTab([fyRow(), CURRENT_YEAR], { subpath: "year/2027-2028" }) },
+	{
+		key: "C02#detail-row-variants",
+		mount: () =>
+			yearsTab([fyRow({ dpp_submission_closes_label: "", needs_submission_open: false, needs_submission_closed_at_label: "25 Nov 2026, 23:59 EAT" })], {
+				subpath: "year/2027-2028",
+			}),
+	},
+	{
+		key: "C02#disable",
+		self: true,
+		select: "#disable .dialog",
+		mount: () => mount(DisableFiscalYearDialog, { props: { row: fyRow(), blockers: ["Departmental needs submissions are still open."] }, global: globalMocks() }),
+	},
+	{
+		key: "C02#forms",
+		self: true,
+		select: "#forms .card",
+		mount: () => mount(IntakeForm, { props: { mode: "open", row: fyRow() }, global: globalMocks() }),
+	},
+	{
+		// #form-states draws the three mutually exclusive form-state notices side
+		// by side. Compared: the deadline-error notice as the form renders it
+		// (icon included); the expired and stale notices share its shape and are
+		// asserted with their own icons and copy in IntakeForm.spec.
+		key: "C02#form-states",
+		self: true,
+		select: "#form-states .kt-notice",
+		live: '[data-testid="kt-fy-intake-deadline-error"]',
+		mount: () =>
+			mount(IntakeForm, { props: { mode: "open", row: fyRow(), error: "Enter a closing time later than the current time." }, global: globalMocks() }),
+	},
 
 	{ key: "C03A#list" },
 	{ key: "C03A#add", self: true, mount: () => mount(FundingSourceEditor, { props: { creating: true }, global: globalMocks() }) },
@@ -174,7 +267,7 @@ describe("System setup board inventory", () => {
 	});
 });
 
-describe.each(ARTBOARDS)("$key", ({ key, mount: mountIt, select, self }) => {
+describe.each(ARTBOARDS)("$key", ({ key, mount: mountIt, select, self, live }) => {
 	const fragment = FRAGMENTS.includes(key);
 	it("is built out of the board's own containers", async () => {
 		const queued = REBUILD_QUEUE[key];
@@ -186,7 +279,9 @@ describe.each(ARTBOARDS)("$key", ({ key, mount: mountIt, select, self }) => {
 		await flushPromises();
 		const { file, id } = boardOf(key);
 		const board = setupSkeleton(file, select || `#${id}`, { self });
-		const built = self ? skeletonOf({ children: [wrapper.element] }) : skeletonOf(wrapper.element);
+		const root = live ? wrapper.element.querySelector(live) : wrapper.element;
+		expect(root, `${key}: ${live} not rendered`).toBeTruthy();
+		const built = self ? skeletonOf({ children: [root] }) : skeletonOf(root);
 		const result = compareSkeletons(board, built, { departures: DEPARTURES[key] || [] });
 		// A specimen board draws a fragment of the screen: every container it
 		// draws must be present in order, and the rest of the screen is not

@@ -382,6 +382,16 @@ def list_fiscal_years() -> dict[str, Any]:
 			entry[f"{key}_submission_closes_label"] = (
 				display_datetime(row.get(flag_closes_at)) if is_open and row.get(flag_closes_at) else ""
 			)
+			# §10.3 row variant — a period whose closing instant has passed is
+			# Closed and states when, until the hourly cleanup clears it.
+			expired = (
+				not is_open
+				and _module_flag_fields_ready(key)
+				and row.get(flag_open)
+				and row.get(flag_closes_at)
+				and get_datetime(row.get(flag_closes_at)) <= now_datetime()
+			)
+			entry[f"{key}_submission_closed_at_label"] = display_datetime(row.get(flag_closes_at)) if expired else ""
 		out.append(entry)
 	return {"fiscal_years": out, "count": len(out)}
 

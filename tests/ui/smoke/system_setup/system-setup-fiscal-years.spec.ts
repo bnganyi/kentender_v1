@@ -53,11 +53,10 @@ test.describe("System setup — Financial years behaviour", () => {
 
 		await page.click('[data-testid="kt-fy-open-needs"]');
 		await page.waitForSelector('[data-testid="kt-fy-intake-replaces"]');
-		await expect(page.locator('[data-testid="kt-fy-intake-replaces"]')).toContainText("This will close FY 2027/28");
-		await expect(page.locator('[data-testid="kt-fy-intake-replaces"]')).toContainText(
-			"Departmental plan and Disposal plan submissions will stay as they are."
+		await expect(page.locator('[data-testid="kt-fy-intake-replaces"]')).toHaveText(
+			"This will close departmental needs submissions for FY 2027/28. Departmental plan and disposal plan submissions will stay as they are."
 		);
-		await page.click('[data-testid="kt-fy-intake"] .kt-btn-secondary');
+		await page.click('[data-testid="kt-fy-intake-cancel"]');
 		await expect(page.locator('[data-testid="kt-fy-intake"]')).toHaveCount(0);
 
 		// Refused before any submit: reloading shows the canonical year untouched.
@@ -67,7 +66,7 @@ test.describe("System setup — Financial years behaviour", () => {
 		expect(errors, "console errors").toEqual([]);
 	});
 
-	test("an intake whose closing instant has passed reads as Closed with no closing date shown, without any scheduled job running", async ({ page }) => {
+	test("an intake whose closing instant has passed reads as Closed with the instant it closed at, without any scheduled job running", async ({ page }) => {
 		const fixture = resetEdgeCases();
 		const errors = collectPageErrors(page);
 		await loginAsAdministrator(page);
@@ -75,7 +74,8 @@ test.describe("System setup — Financial years behaviour", () => {
 
 		const row = page.locator('[data-testid="kt-fy-activity-disposal_plan"]');
 		await expect(row).toContainText("Closed");
-		await expect(row).toContainText("Not set");
+		// The flag is still set; the server projects it as closed, and names when.
+		await expect(row).toContainText("Closed at:");
 		await expect(page.locator('[data-testid="kt-fy-open-disposal_plan"]')).toBeVisible();
 		await expect(page.locator('[data-testid="kt-fy-close-disposal_plan"]')).toHaveCount(0);
 		expect(errors, "console errors").toEqual([]);
@@ -110,7 +110,7 @@ test.describe("System setup — Financial years behaviour", () => {
 		const stale = page.locator('[data-testid="kt-fy-intake-stale"]');
 		await expect(stale).toBeVisible({ timeout: 10_000 });
 		await expect(stale).toContainText("These submission settings have changed since you opened them.");
-		await expect(page.locator('[data-testid="kt-fy-intake"] .kt-inline-error')).toHaveCount(0);
+		await expect(page.locator('[data-testid="kt-fy-intake-error"]')).toHaveCount(0);
 
 		await stale.locator("a").click();
 		await expect(page.locator('[data-testid="kt-fy-intake"]')).toHaveCount(0);

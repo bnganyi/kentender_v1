@@ -131,7 +131,8 @@ describe("FiscalYearsTab", () => {
 		await wrapper.find('[data-testid="kt-fy-disable-open"]').trigger("click");
 		const confirm = wrapper.find('[data-testid="kt-fy-disable-confirm"]');
 		expect(confirm.attributes("disabled")).toBeDefined();
-		expect(wrapper.text()).toContain("Departmental needs submission is open for this financial year.");
+		// §10.3 blocked-disable reason, the spec's own words.
+		expect(wrapper.text()).toContain("Departmental needs submissions are still open.");
 	});
 
 	it("disable succeeds once unblocked, and a disabled year offers Enable financial year instead", async () => {
@@ -165,7 +166,7 @@ describe("FiscalYearsTab", () => {
 				},
 			],
 		});
-		expect(wrapper.find('[data-testid="kt-fy-history-toggle"]').text()).toContain("1 entries");
+		expect(wrapper.find('[data-testid="kt-fy-history-toggle"]').text()).toContain("1 entry");
 		await wrapper.find('[data-testid="kt-fy-history-toggle"]').trigger("click");
 		const body = wrapper.find('[data-testid="kt-fy-history-body"]');
 		expect(body.text()).toContain("Annual needs call issued.");

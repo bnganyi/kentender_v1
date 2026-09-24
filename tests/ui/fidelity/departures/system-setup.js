@@ -19,7 +19,31 @@ const SAVED_NOTICE_IS_A_LATER_STATE = {
 	authority: "CFG-CHG-002 v0.14 §10.2 (saved notice); KT-STD-001 §3 (states are distinct)",
 };
 
+const DIALOG_TITLE_REASON = {
+	because:
+		"The board titles a dialog with a styled <div class=\"dialog-title\">; the build uses <h2 class=\"kt-dialog-title\"> " +
+		"so the dialog has an accessible name — more structure than the board, not less (Budget records the same).",
+	authority: "KT-STD-001 §3 (dialog focus and naming); design system's own .kt-dialog-title",
+};
+// The component harness roots the skeleton above the dialog; the browser
+// gate scopes to the dialog itself, where the title's path is just "h2".
+const DIALOG_TITLE_IS_A_HEADING = [
+	{ path: "dialog > h2", ...DIALOG_TITLE_REASON },
+	{ path: "h2", ...DIALOG_TITLE_REASON },
+];
+
 export const DEPARTURES = {
+	"C02#overview": [
+		{
+			path: "card",
+			because:
+				"One card per year: the narrow-width composition (§10.3, board #narrow), rendered beside the table and shown only " +
+				"below 700px; compared on its own as C02#narrow.",
+			authority: "CFG-CHG-002 v0.14 §10.3 narrow-width composition",
+		},
+	],
+	"C02#add-year": DIALOG_TITLE_IS_A_HEADING,
+	"C02#disable": DIALOG_TITLE_IS_A_HEADING,
 	"C01#configured": [SAVED_NOTICE_IS_A_LATER_STATE],
 	"C01#first-run": [
 		SAVED_NOTICE_IS_A_LATER_STATE,
@@ -46,7 +70,13 @@ export const DEPARTURES = {
  * specimen's business, so additions are not reported. Shared by the
  * component and browser specs.
  */
-export const FRAGMENTS = ["C01#conflict", "C01#missing-authority"];
+export const FRAGMENTS = [
+	"C01#conflict",
+	"C01#missing-authority",
+	"C02#overview-disabled",
+	"C02#empty",
+	"C02#detail-row-variants",
+];
 
 export const COVERED = [
 	// 5A Procuring entity — 24 Sep 2026
@@ -54,6 +84,17 @@ export const COVERED = [
 	"C01#first-run",
 	"C01#conflict",
 	"C01#missing-authority",
+	// 5B Financial years — 24 Sep 2026
+	"C02#overview",
+	"C02#overview-disabled",
+	"C02#narrow",
+	"C02#empty",
+	"C02#add-year",
+	"C02#detail",
+	"C02#detail-row-variants",
+	"C02#disable",
+	"C02#forms",
+	"C02#form-states",
 ];
 
 /**
@@ -65,16 +106,6 @@ export const COVERED = [
 const REPORT = "structure differs from the board (recorded by the Phase 1 red run)";
 const UNMOUNTABLE = "no component renders this state from props yet; Phase 5 builds it";
 export const REBUILD_QUEUE = {
-	"C02#overview": UNMOUNTABLE,
-	"C02#overview-disabled": UNMOUNTABLE,
-	"C02#narrow": UNMOUNTABLE,
-	"C02#empty": UNMOUNTABLE,
-	"C02#add-year": REPORT,
-	"C02#detail": UNMOUNTABLE,
-	"C02#detail-row-variants": UNMOUNTABLE,
-	"C02#disable": UNMOUNTABLE,
-	"C02#forms": UNMOUNTABLE,
-	"C02#form-states": UNMOUNTABLE,
 	"C03A#list": UNMOUNTABLE,
 	"C03A#add": REPORT,
 	"C03A#edit": REPORT,

@@ -49,6 +49,8 @@ import {
 const DESIGN_DIR = "docs/mvp-1-r1/09_unified_system_setup/design";
 const LIVE_SCOPE = ".kt-setup-shell";
 const DIALOG_SCOPE = ".kt-dialog";
+// The focused open/close/deadline form is an inline panel in the year detail (D18).
+const FORM_SCOPE = '[data-testid="kt-fy-intake"]';
 // The tab body: the board's artboard is the content under the shared header
 // and tabs, so the header is compared once on its own, not in every state.
 const PANEL_SCOPE = ".kt-setup-panel";
@@ -269,7 +271,7 @@ test.describe("System setup — design fidelity", () => {
 		await page.fill('[data-testid="kt-fy-start-year"]', "2027");
 		await page.waitForSelector('[data-testid="kt-fy-duplicate"]');
 		await expect(page.locator('[data-testid="kt-fy-duplicate"]')).toHaveText(
-			"Duplicate. This financial year already exists."
+			"Duplicate. This financial year already exists.View financial year"
 		);
 		await expect(page.locator('[data-testid="kt-fy-add-confirm"]')).toBeDisabled();
 		expect(errors, "console errors").toEqual([]);
@@ -278,19 +280,20 @@ test.describe("System setup — design fidelity", () => {
 
 	test("C02-open-form — Open submissions form with the cross-year replacement notice", async ({ page, browser }) => {
 		const art = await browser.newPage();
-		// First card in the forms grid: Open · Departmental needs.
-		const scope = "#forms .card";
+		// Third card in the forms grid: Open · Departmental plans, the one that
+		// draws the cross-year replacement notice.
+		const scope = "#forms .card:nth-child(3)";
 		await openArtboard(art, `${DESIGN_DIR}/C02-Financial-Years.dc.html`, scope);
 		const wanted = await landmarks(art, scope);
 
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "fiscal-years/2026-2027", '[data-testid="kt-setup-fy-detail-card"]');
-		// §8.4 world: 2027/28 holds needs intake, so opening it for 2026/27
-		// shows the replacement notice. Nothing is submitted.
-		await page.click('[data-testid="kt-fy-open-needs"]');
+		// CONFIG world: 2027/28 holds departmental plans, so opening them for
+		// 2026/27 shows the replacement notice. Nothing is submitted.
+		await page.click('[data-testid="kt-fy-open-dpp"]');
 		await page.waitForSelector('[data-testid="kt-fy-intake-replaces"]');
-		expectBoardLandmarks(wanted, await landmarks(page, DIALOG_SCOPE), "C02-open-form", "C02#forms");
-		await expectBoardStructure(page, DIALOG_SCOPE, art, scope, "C02#forms");
+		expectBoardLandmarks(wanted, await landmarks(page, FORM_SCOPE), "C02-open-form", "C02#forms");
+		await expectBoardStructure(page, FORM_SCOPE, art, scope, "C02#forms");
 		await expectLayoutSanity(page, "C02#forms editor");
 		expect(errors, "console errors").toEqual([]);
 		await art.close();
@@ -307,8 +310,8 @@ test.describe("System setup — design fidelity", () => {
 		const errors = await openSetupTab(page, "fiscal-years/2027-2028", '[data-testid="kt-setup-fy-detail-card"]');
 		await page.click('[data-testid="kt-fy-deadline-needs"]');
 		await page.waitForSelector('[data-testid="kt-fy-intake"][data-mode="deadline"]');
-		expectBoardLandmarks(wanted, await landmarks(page, DIALOG_SCOPE), "C02-deadline-form", "C02#forms");
-		await expectBoardStructure(page, DIALOG_SCOPE, art, scope, "C02#forms");
+		expectBoardLandmarks(wanted, await landmarks(page, FORM_SCOPE), "C02-deadline-form", "C02#forms");
+		await expectBoardStructure(page, FORM_SCOPE, art, scope, "C02#forms");
 		await expectLayoutSanity(page, "C02#forms editor");
 		expect(errors, "console errors").toEqual([]);
 		await art.close();
@@ -328,7 +331,7 @@ test.describe("System setup — design fidelity", () => {
 		expectBoardLandmarks(wanted, await landmarks(page, DIALOG_SCOPE), "C02-disable", "C02#disable");
 		await expectBoardStructure(page, DIALOG_SCOPE, art, scope, "C02#disable");
 		await expect(page.locator('[data-testid="kt-fy-disable-blocker"]').first()).toHaveText(
-			"Departmental needs submission is open for this financial year."
+			"Departmental needs submissions are still open."
 		);
 		await expect(page.locator('[data-testid="kt-fy-disable-confirm"]')).toBeDisabled();
 		expect(errors, "console errors").toEqual([]);

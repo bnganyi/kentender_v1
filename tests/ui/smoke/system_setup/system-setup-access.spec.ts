@@ -75,10 +75,12 @@ test.describe("System setup — access and shared states", () => {
 		const errors = await openSetup(page, "fiscal-years", '[data-testid="kt-fy-table"]');
 
 		// CFG-UX-AC-06 — all three submission periods are visible at desktop
-		// and narrow widths.
+		// and narrow widths. Below 700px the table gives way to one card per
+		// year (C02 #narrow) that keeps every activity.
 		await page.setViewportSize({ width: 400, height: 900 });
+		await expect(page.locator('[data-testid="kt-fy-table"]')).toBeHidden();
 		for (const key of ["needs", "dpp", "disposal_plan"]) {
-			await expect(page.locator(`[data-testid="kt-fy-${key}-2027-2028"]`)).toBeVisible();
+			await expect(page.locator(`[data-testid="kt-fy-card-${key}-2027-2028"]`)).toBeVisible();
 		}
 		// The page itself must not scroll sideways at that width.
 		const overflow = await page.evaluate(
