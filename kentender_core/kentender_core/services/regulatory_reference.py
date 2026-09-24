@@ -873,6 +873,9 @@ def _projection(name: str) -> dict[str, Any]:
 		"change_reason": doc.change_reason or "",
 		"payload": json.loads(doc.payload_json or "{}"),
 		"details_missing": rule_details_missing(doc.as_dict()),
+		# §10.8 Version history: who recorded this version, and when.
+		"recorded_at": str(doc.creation),
+		"recorded_by": doc.owner,
 		# Whether this Version may still be corrected in place is a server
 		# fact, decided by the one rule every versioned setting follows.
 		"can_edit": editable[0],
@@ -1018,6 +1021,12 @@ def list_verification_history(target_doctype: str, target_name: str) -> list[dic
 				"outcome": doc.outcome,
 				"reviewer": doc.reviewer,
 				"recorded_at": str(doc.creation),
+				"recorded_by": doc.owner,
+				# The same four facts "Sources verified" requires (§5).
+				"evidence_complete": all(
+					(doc.get(field) or "").strip()
+					for field in ("instrument_edition", "effective_dates_and_amendments", "applicability_date_basis_explanation", "interpretation_evidence")
+				),
 				"source_check_date": str(doc.source_check_date or ""),
 				"unresolved_points": doc.unresolved_points or "",
 				"change_reason": doc.change_reason or "",
@@ -1240,7 +1249,9 @@ def purge_playwright_rules(prefix: str = "PW-") -> int:
 		versions = frappe.get_all(DOCTYPE, filters={"reference_set": set_name}, pluck="name")
 		for version in versions:
 			for event in frappe.get_all(EVENT_DOCTYPE, filters={"target_doctype": DOCTYPE, "target_name": version}, pluck="name"):
-				frappe.delete_doc(EVENT_DOCTYPE, event, force=True, ignore_permissions=True)
+				doc = frappe.get_doc(EVENT_DOCTYPE, event)
+				doc.flags.kt_fixture_purge = True
+				doc.delete(ignore_permissions=True)
 				count += 1
 		for doctype, names in ((DOCTYPE, versions), (SET_DOCTYPE, [set_name])):
 			for name in names:
@@ -1262,7 +1273,13 @@ def purge_fixture_references(fixture_namespace: str) -> int:
 	versions.
 	"""
 	count = 0
-	for name in frappe.get_all(EVENT_DOCTYPE, filters={"fixture_namespace": fixture_namespace}, pluck="name"):
+	# Events stamped with the namespace, and any recorded through the real
+	# screen against one of its versions (those carry no namespace).
+	versions = frappe.get_all(DOCTYPE, filters={"fixture_namespace": fixture_namespace}, pluck="name")
+	events = set(frappe.get_all(EVENT_DOCTYPE, filters={"fixture_namespace": fixture_namespace}, pluck="name"))
+	if versions:
+		events |= set(frappe.get_all(EVENT_DOCTYPE, filters={"target_doctype": DOCTYPE, "target_name": ("in", versions)}, pluck="name"))
+	for name in events:
 		doc = frappe.get_doc(EVENT_DOCTYPE, name)
 		doc.flags.kt_fixture_purge = True
 		doc.delete(ignore_permissions=True)

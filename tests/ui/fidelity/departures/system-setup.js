@@ -114,6 +114,8 @@ export const FRAGMENTS = [
 	"C02#empty",
 	"C02#detail-row-variants",
 	"C03BC#version",
+	"C03D#verified",
+	"C03D#rejected",
 ];
 
 export const COVERED = [
@@ -160,6 +162,11 @@ export const COVERED = [
 	"C03BC#states~read-only",
 	"C03BC#states~overlap",
 	"C03BC#states~stale",
+	// 5E Source checks — 24 Sep 2026
+	"C03D#pending",
+	"C03D#verified",
+	"C03D#rejected",
+	"C03D#history",
 ];
 
 /**
@@ -176,11 +183,9 @@ export const REBUILD_QUEUE = {
 		"statuses and fact/comparison condition rows need a model change. Its new-version top is compared as #version.",
 	"C03BC#states~no-coverage":
 		"No setup screen decides coverage for a required date yet; that is the resolver's answer to a consumer (FU-28).",
-	"C03D#pending": UNMOUNTABLE,
-	"C03D#verified": UNMOUNTABLE,
-	"C03D#rejected": UNMOUNTABLE,
-	"C03D#history": UNMOUNTABLE,
-	"C03D#evidence": UNMOUNTABLE,
+	"C03D#evidence":
+		"Decision-time vs current source check belongs to a consuming record's evidence detail, which no setup screen " +
+		"shows yet (FU-30).",
 	"C04#list": UNMOUNTABLE,
 	"C04#detail": UNMOUNTABLE,
 	"C04#add": UNMOUNTABLE,

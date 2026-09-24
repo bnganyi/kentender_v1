@@ -34,6 +34,8 @@ const settingsApi = vi.hoisted(() => ({
 	getRegulatoryReferenceVersion: vi.fn(),
 	renameRegulatoryReference: vi.fn(),
 	createRegulatoryReference: vi.fn(),
+	listRegulatoryReferenceVersions: vi.fn(),
+	listVerificationHistory: vi.fn(),
 	saveRegulatoryReferenceVersion: vi.fn(),
 	setReminderThresholdDays: vi.fn(),
 	addFundingSource: vi.fn(),
@@ -56,6 +58,7 @@ import RuleEditor from "./components/RuleEditor.vue";
 import RuleKindFields from "./components/RuleKindFields.vue";
 import RuleFormError from "./components/RuleFormError.vue";
 import MethodVersionEditor from "./components/MethodVersionEditor.vue";
+import SourceCheckScreen from "./components/SourceCheckScreen.vue";
 
 const D = "docs/mvp-1-r1/09_unified_system_setup/design/";
 const BOARDS = {
@@ -207,6 +210,21 @@ const METHOD_VERSION = {
 	verification_status: "Verified",
 	conditions: [{ condition_id: "G", kind: "Known fact", description: "Goods", procurement_category: "Goods", minimum_amount: 0, maximum_amount: 0, cumulative_basis: "None", mandatory: true }],
 };
+
+// C03D — a pending Reservation rules version with one recorded check.
+const CHECK_VERSION = { reference: "rv-1", reference_set: "rs-1", reference_kind: "Reservation rules", display_name: "Reservation rules", version_number: 1, effective_from: "2027-07-01", effective_until: "2028-06-30", verification_status: "Production verification pending", recorded_at: "2026-09-12 10:00:00", recorded_by: "Administrator" };
+async function sourceCheck(outcome = "Pending") {
+	settingsApi.getRegulatoryReferenceVersion.mockResolvedValue(CHECK_VERSION);
+	settingsApi.listRegulatoryReferenceVersions.mockResolvedValue([CHECK_VERSION]);
+	settingsApi.listVerificationHistory.mockResolvedValue([
+		{ event: "ev-1", outcome: "Pending", source_check_date: "2026-09-12", recorded_at: "2026-09-12 10:00:00", recorded_by: "Administrator", evidence_complete: false, change_reason: "Record the remaining verification work for this reference version." },
+	]);
+	const wrapper = mount(SourceCheckScreen, { props: { name: "rv-1" }, global: globalMocks() });
+	await flushPromises();
+	await wrapper.find('[data-testid="kt-sc-result"]').setValue(outcome);
+	if (outcome !== "Verified") await wrapper.find('[data-testid="kt-sc-unresolved"]').setValue("The applicable amended source and interpretation have not been established.");
+	return wrapper;
+}
 
 const ARTBOARDS = [
 	{ key: "C01#configured", mount: () => mount(ProcuringEntityTab, { props: { site: site() }, global: globalMocks() }) },
@@ -449,10 +467,10 @@ const ARTBOARDS = [
 		mount: () => mount(RuleFormError, { props: { error: "This record changed after you opened it. Refresh and review the latest version." }, global: globalMocks(), attachTo: document.body }),
 	},
 
-	{ key: "C03D#pending" },
-	{ key: "C03D#verified" },
-	{ key: "C03D#rejected" },
-	{ key: "C03D#history" },
+	{ key: "C03D#pending", select: "#pending > div", live: '[data-testid="kt-source-check-form"]', mount: () => sourceCheck("Pending") },
+	{ key: "C03D#verified", select: "#verified > div", live: '[data-testid="kt-source-check-form"]', mount: () => sourceCheck("Verified") },
+	{ key: "C03D#rejected", select: "#rejected > div", live: '[data-testid="kt-source-check-form"]', mount: () => sourceCheck("Rejected") },
+	{ key: "C03D#history", select: "#history > div", live: '[data-testid="kt-source-check-history"]', mount: () => sourceCheck("Pending") },
 	{ key: "C03D#evidence" },
 
 	{ key: "C04#list" },

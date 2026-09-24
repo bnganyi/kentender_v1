@@ -104,4 +104,46 @@ describe("SourceCheckScreen", () => {
 		expect(rows[1].text()).toContain("Source check needed");
 		expect(rows[1].text()).toContain("Outstanding.");
 	});
+
+	it("marks each missing evidence control when Sources verified is chosen (§10.8 errors at the controls)", async () => {
+		const wrapper = await mountScreen();
+		await wrapper.find('[data-testid="kt-sc-result"]').setValue("Verified");
+		for (const id of ["kt-sc-instrument", "kt-sc-dates", "kt-sc-applicability", "kt-sc-interpretation"]) {
+			expect(wrapper.find(`[data-testid="${id}"]`).attributes("aria-invalid"), id).toBe("true");
+		}
+		await wrapper.find('[data-testid="kt-sc-dates"]').setValue("As amended 2022");
+		expect(wrapper.find('[data-testid="kt-sc-dates"]').attributes("aria-invalid")).toBe("false");
+	});
+
+	it("records against the check it was opened on; a stale answer offers Review latest details and keeps the entries", async () => {
+		const prior = { event: "ev-1", outcome: "Pending", source_check_date: "2026-09-12", recorded_at: "2026-09-12 10:00:00", recorded_by: "Administrator", evidence_complete: false, unresolved_points: "Edition" };
+		const wrapper = await mountScreen([prior]);
+		await wrapper.find('[data-testid="kt-sc-unresolved"]').setValue("Amendments not traced.");
+		api.recordReferenceVerification.mockRejectedValueOnce(new Error("This record changed after you opened it. Refresh and review the latest version."));
+		await wrapper.find('[data-testid="kt-sc-record"]').trigger("click");
+		await flushPromises();
+		expect(api.recordReferenceVerification.mock.calls[0][0].expected_prior_event).toBe("ev-1");
+		expect(wrapper.find('[data-testid="kt-rule-stale"]').exists()).toBe(true);
+
+		api.listVerificationHistory.mockResolvedValue([{ ...prior, event: "ev-2" }, prior]);
+		await wrapper.find('[data-testid="kt-rule-review-latest"]').trigger("click");
+		await flushPromises();
+		expect(wrapper.find('[data-testid="kt-sc-unresolved"]').element.value).toBe("Amendments not traced.");
+		expect(wrapper.findAll('[data-testid="kt-sc-history-row"]')).toHaveLength(2);
+	});
+
+	it("the histories show who recorded each row and when, the evidence state, and a View per version", async () => {
+		const wrapper = await mountScreen([
+			{ event: "ev-1", outcome: "Pending", source_check_date: "2026-09-12", recorded_at: "2026-09-12 10:00:00", recorded_by: "Administrator", evidence_complete: false, change_reason: "Remaining work." },
+		]);
+		const history = wrapper.find('[data-testid="kt-source-check-history"]');
+		expect(history.findAll("h6").map((h) => h.text())).toEqual(["Version history", "Source-check history", "Usage"]);
+		const event = wrapper.find('[data-testid="kt-sc-history-row"]');
+		expect(event.text()).toContain("Administrator");
+		expect(event.text()).toContain("Incomplete");
+		expect(event.text()).toContain("12 Sep 2026");
+		await wrapper.find('[data-testid="kt-sc-version-view-1"]').trigger("click");
+		expect(wrapper.emitted("view-version")[0]).toEqual(["rv-1"]);
+		expect(wrapper.find('[data-testid="kt-sc-usage-none"]').text()).toBe("Which decisions used this version is not recorded yet.");
+	});
 });

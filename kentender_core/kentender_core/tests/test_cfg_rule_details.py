@@ -103,3 +103,69 @@ class TestPlaywrightRulePurge(FrappeTestCase):
 		self.assertFalse(frappe.db.exists(register.SET_DOCTYPE, out["reference_set"]))
 		self.assertFalse(frappe.db.exists(register.DOCTYPE, {"reference_set": out["reference_set"]}))
 		self.assertEqual(frappe.db.count(register.SET_DOCTYPE), before - 1)
+
+
+class TestSourceCheckHistoryFacts(FrappeTestCase):
+	"""§10.8 (tracker CFG14-5E) — the version and source-check histories carry
+	who recorded each row and when, and whether a check's evidence was
+	complete, from the server. Writes one PW- rule; purged before and after."""
+
+	def setUp(self):
+		register.purge_playwright_rules()
+		frappe.db.commit()
+		self.addCleanup(lambda: (register.purge_playwright_rules(), frappe.db.commit()))
+
+	def test_histories_carry_recorder_time_and_evidence(self):
+		frappe.set_user("Administrator")
+		out = register.create_regulatory_reference(reference_key="PW-HISTORY-CHECK", reference_kind="Publication obligations", display_name="PW history check")
+		saved = register.save_regulatory_reference_version(
+			reference_set=out["reference_set"],
+			payload={"obligation_id": "PW-OB", "due_rule": "Immediate"},
+			effective_from="2099-07-01",
+		)
+		version = saved.get("reference") or saved.get("name")
+		register.record_reference_verification(
+			target_doctype=register.DOCTYPE, target_name=version, outcome="Pending", unresolved_points="Edition not established."
+		)
+		frappe.db.commit()
+
+		row = register.list_regulatory_reference_versions(out["reference_set"])[0]
+		self.assertEqual(row["recorded_by"], "Administrator")
+		self.assertTrue(row["recorded_at"])
+
+		event = register.list_verification_history(register.DOCTYPE, version)[0]
+		self.assertEqual(event["recorded_by"], "Administrator")
+		self.assertFalse(event["evidence_complete"])
+
+
+class TestFixturePurgeTakesScreenRecordedChecks(FrappeTestCase):
+	"""A browser spec records a source check through the real screen on a
+	fixture rule; that event has no fixture namespace, and the namespace purge
+	must still remove it with the version it targets (tracker CFG14-5E)."""
+
+	NS = "KT_TEST_RULE_DETAILS"
+
+	def setUp(self):
+		register.purge_fixture_references(self.NS)
+		frappe.db.commit()
+		self.addCleanup(lambda: (register.purge_fixture_references(self.NS), frappe.db.commit()))
+
+	def test_purge_removes_events_recorded_without_the_namespace(self):
+		frappe.set_user("Administrator")
+		out = register.create_regulatory_reference(
+			reference_key="KT-TEST-RD-PURGE", reference_kind="Publication obligations", display_name="Purge check", fixture_namespace=self.NS
+		)
+		saved = register.save_regulatory_reference_version(
+			reference_set=out["reference_set"],
+			payload={"obligation_id": "OB", "due_rule": "Immediate"},
+			effective_from="2099-07-01",
+			fixture_namespace=self.NS,
+		)
+		version = saved.get("reference") or saved.get("name")
+		# As the screen records it: no fixture namespace on the event.
+		register.record_reference_verification(target_doctype=register.DOCTYPE, target_name=version, outcome="Pending", unresolved_points="x")
+		frappe.db.commit()
+		register.purge_fixture_references(self.NS)
+		frappe.db.commit()
+		self.assertFalse(frappe.db.exists(register.DOCTYPE, version))
+		self.assertFalse(frappe.db.exists(register.EVENT_DOCTYPE, {"target_name": version}))

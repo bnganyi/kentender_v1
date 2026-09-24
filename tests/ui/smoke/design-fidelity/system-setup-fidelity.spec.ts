@@ -433,8 +433,11 @@ test.describe("System setup — design fidelity", () => {
 			`procurement-settings/procurement-rules/${reference}/check-sources`,
 			'[data-testid="kt-source-check-rule"]'
 		);
+		// The board's pending specimen has its unresolved point written.
+		await page.fill('[data-testid="kt-sc-unresolved"]', "The applicable amended source and interpretation have not been established.");
 		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C03D-pending", "C03D#pending");
-		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "C03D#pending");
+		await expectBoardStructure(page, '[data-testid="kt-source-check-form"]', art, "#pending > div", "C03D#pending");
+		await expectBoardStructure(page, '[data-testid="kt-source-check-history"]', art, "#history > div", "C03D#history");
 		await expectLayoutSanity(page, "C03D#pending editor");
 
 		await page.selectOption('[data-testid="kt-sc-result"]', "Verified");

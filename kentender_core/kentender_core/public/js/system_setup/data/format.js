@@ -1,10 +1,17 @@
 // Display helpers shared by the System setup tabs (KT-STD-001 §2.2: dates as
 // "1 Jul 2027"; blanks as an em dash, never an empty cell).
+// "24 Nov 2026". The month names are fixed here: newer locale data gives
+// "Sept" for September, which is not the spec's format.
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 export function fmtDate(iso) {
 	if (!iso) return "—";
-	const date = new Date(String(iso).slice(0, 10) + "T00:00:00");
-	if (Number.isNaN(date.getTime())) return String(iso);
-	return date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+	const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
+	if (!match) return String(iso);
+	const [, year, month, day] = match;
+	const index = Number(month) - 1;
+	if (index < 0 || index > 11) return String(iso);
+	return `${Number(day)} ${MONTHS[index]} ${year}`;
 }
 
 export function fmtDays(value) {

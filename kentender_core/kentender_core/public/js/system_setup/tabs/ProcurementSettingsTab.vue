@@ -374,6 +374,7 @@ async function confirmRemoveSource() {
 			:name="view.name"
 			@back="go('rule/' + view.name)"
 			@recorded="afterChange().then(() => go('rule/' + view.name))"
+			@view-version="(reference) => go('rule/' + reference)"
 		/>
 
 		<!-- C03-detail — a rule Version (method eligibility or reservation rules) -->
