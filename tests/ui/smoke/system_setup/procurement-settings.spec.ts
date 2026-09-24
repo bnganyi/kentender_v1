@@ -125,7 +125,7 @@ test.describe("System setup — Procurement settings", () => {
 			route.fulfill({ status: 500, contentType: "application/json", body: JSON.stringify({ exc_type: "Exception" }) })
 		);
 		await page.goto(TAB, { waitUntil: "domcontentloaded" });
-		await expect(page.getByRole("heading", { name: "Procurement settings could not be loaded" })).toBeVisible({ timeout: 20_000 });
+		await expect(page.locator('[data-testid="kt-procset-error"]')).toContainText("Procurement settings could not be loaded.", { timeout: 20_000 });
 		await expect(page.locator('[data-testid="kt-procset-retry"]')).toBeVisible();
 		expect(await page.locator(".modal:visible").count()).toBe(0);
 		await page.unroute("**/api/method/kentender_core.api.procurement_settings_api.get_procurement_settings");

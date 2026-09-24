@@ -323,6 +323,10 @@ onUnmounted(() => {
 			<div v-if="state === 'empty_root'" class="kt-setup-notice" data-testid="kt-org-empty">
 				<h3>{{ __("No departments or units yet") }}</h3>
 				<p>{{ __("Add the first organisation unit beneath {0}.", [selected ? selected.name : rootId]) }}</p>
+				<!-- AUTH-ADR-001 v1.9 §13.9: the empty state's own primary action. -->
+				<button type="button" class="kt-btn kt-btn-primary" data-testid="kt-org-empty-add" @click="openDialog('add')">
+					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add organisation unit") }}
+				</button>
 			</div>
 
 			<div class="kt-org-columns">

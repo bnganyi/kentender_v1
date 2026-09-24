@@ -156,6 +156,45 @@ describe("SystemSetup root", () => {
 		expect(window.location.hash).toBe("#fiscal-years");
 	});
 
+	it("Common-States: loading, denied and failed-to-load paint only the state, never the page heading or tabs", async () => {
+		let resolve;
+		api.getConfiguration.mockImplementationOnce(() => new Promise((r) => (resolve = r)));
+		at("procuring-entity");
+		const loading = mountLive();
+		await nextTick();
+		expect(loading.find('[data-testid="kt-setup-loading"]').text()).toBe("Loading System setup…");
+		expect(loading.find('[data-testid="kt-setup-loading"]').attributes("role")).toBe("status");
+		expect(loading.find(".kt-setup-head").exists()).toBe(false);
+		resolve(CONFIGURED);
+		await flushPromises();
+		expect(loading.find(".kt-setup-head").exists()).toBe(true);
+
+		api.getConfiguration.mockResolvedValueOnce({
+			outcome: "FORBIDDEN",
+			forbidden: { heading: "You do not have access to System setup", text: "This area needs Administrator or System Manager access. Ask your KenTender administrator to grant it." },
+		});
+		const denied = await mountRoot();
+		const notice = denied.find('[data-testid="kt-setup-forbidden"]');
+		expect(notice.classes()).toEqual(expect.arrayContaining(["kt-notice", "is-critical"]));
+		expect(notice.findAll(".kt-notice-body br")).toHaveLength(2);
+		expect(notice.text()).toBe(
+			"You do not have access to System setup.This area needs Administrator or System Manager access.Ask your KenTender administrator to grant it."
+		);
+		expect(denied.find(".kt-setup-head").exists()).toBe(false);
+		expect(denied.find('[data-testid="kt-setup-tabs"]').exists()).toBe(false);
+
+		api.getConfiguration.mockRejectedValueOnce(new Error("boom"));
+		const failed = await mountRoot();
+		expect(failed.find('[data-testid="kt-setup-error"] .kt-notice').text()).toBe(
+			"System setup could not be loaded.Try again. If the problem continues, contact support."
+		);
+		expect(failed.find(".kt-setup-head").exists()).toBe(false);
+		api.getConfiguration.mockResolvedValueOnce(CONFIGURED);
+		await failed.find('[data-testid="kt-setup-retry"]').trigger("click");
+		await flushPromises();
+		expect(failed.find(".kt-setup-head").exists()).toBe(true);
+	});
+
 	it("shows the loading skeleton only on a cold load; a later refresh keeps the content on screen", async () => {
 		let resolve;
 		api.getConfiguration.mockImplementationOnce(() => new Promise((r) => (resolve = r)));

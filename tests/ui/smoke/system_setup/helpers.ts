@@ -131,3 +131,13 @@ export async function asEmpty(
 		});
 	}
 }
+
+const STRUCTURE = "**/api/method/kentender_core.api.organisation_structure_api.get_organisation_structure";
+
+/** AUTH-DES-08 empty root: the server's own structure, read as having no units yet. */
+export async function asEmptyOrganisation(page: Page): Promise<void> {
+	await transform(page, STRUCTURE, (message) => {
+		if (message.state === "ready") message.state = "empty_root";
+	});
+}
+

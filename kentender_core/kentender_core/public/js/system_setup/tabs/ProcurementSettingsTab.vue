@@ -288,24 +288,23 @@ async function confirmRemoveSource() {
 			>{{ __(text) }}</a>
 		</nav>
 
-		<div v-if="loading" class="kt-card kt-blueprint" data-testid="kt-procset-loading">
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-			<span class="kt-eyebrow">{{ __("Loading procurement settings…") }}</span>
-			<div class="kt-skel" style="width:84%" />
-			<div class="kt-skel" style="width:62%" />
+		<!-- Common-States pattern inside the tab: a status line, a denial,
+		     or a failed load with Try again — never an empty success. -->
+		<div v-if="loading" class="kt-empty kt-setup-state-loading" role="status" aria-live="polite" data-testid="kt-procset-loading">
+			<p class="card-body" style="margin:0">{{ __("Loading procurement settings…") }}</p>
 		</div>
 
-		<div v-else-if="loadError === 'FORBIDDEN'" class="kt-card kt-blueprint kt-empty" data-testid="kt-procset-forbidden">
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-			<h2>{{ __("You do not have access to System setup") }}</h2>
-			<p>{{ __("This area needs Administrator or System Manager access.") }}</p>
+		<div v-else-if="loadError === 'FORBIDDEN'" class="kt-notice is-critical" role="alert" data-testid="kt-procset-forbidden">
+			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+			<div class="kt-notice-body"><strong>{{ __("You do not have access to System setup.") }}</strong><br>{{ __("This area needs Administrator or System Manager access.") }}<br>{{ __("Ask your KenTender administrator to grant it.") }}</div>
 		</div>
 
-		<div v-else-if="loadError" class="kt-card kt-blueprint kt-empty" data-testid="kt-procset-error">
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-			<h2>{{ __("Procurement settings could not be loaded") }}</h2>
-			<p>{{ __("Try again. If the problem continues, contact support.") }}</p>
-			<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-retry" @click="load">{{ __("Try again") }}</button>
+		<div v-else-if="loadError" data-testid="kt-procset-error">
+			<div class="kt-notice is-critical" role="alert">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+				<div class="kt-notice-body"><strong>{{ __("Procurement settings could not be loaded.") }}</strong><br>{{ __("Try again. If the problem continues, contact support.") }}</div>
+			</div>
+			<div style="margin-top:14px"><button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-retry" @click="load">{{ __("Try again") }}</button></div>
 		</div>
 
 		<!-- C03-B "add" / "version" — one editor for a new rule and a new version -->

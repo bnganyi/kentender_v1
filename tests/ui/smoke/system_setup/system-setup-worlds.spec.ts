@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { loginAsAdministrator } from "../../helpers/auth";
 import { collectPageErrors } from "../../helpers/designFidelity";
-import { asEmpty, asFirstRun, resetWorld, restoreSite } from "./helpers";
+import { asEmpty, asEmptyOrganisation, asFirstRun, resetWorld, restoreSite } from "./helpers";
 
 /**
  * CFG-CHG-002 v0.14 §10.1 (tracker CFG14-401) — each fixture world puts the
@@ -38,6 +38,20 @@ test.describe.serial("System setup — fixture worlds", () => {
 		// Each Procurement settings section is its own view.
 		await page.click('[data-testid="kt-procset-link-procurement-rules"]');
 		await expect(page.locator('[data-testid="kt-procset-rules-empty"]')).toBeVisible();
+	});
+
+	test("AUTH-DES-08 empty organisation: the v1.9 copy and its own Add organisation unit, which opens the add dialog", async ({ page }) => {
+		const errors = collectPageErrors(page);
+		await loginAsAdministrator(page);
+		await asEmptyOrganisation(page);
+		await page.goto("/app/system-setup#organisation-structure", { waitUntil: "domcontentloaded" });
+		const empty = page.locator('[data-testid="kt-org-empty"]');
+		await expect(empty).toContainText("No departments or units yet", { timeout: 20_000 });
+		await page.click('[data-testid="kt-org-empty-add"]');
+		await expect(page.locator(".kt-dialog-title")).toHaveText("Add organisation unit");
+		await page.keyboard.press("Escape");
+		// Nothing was added.
+		expect(errors, "console errors").toEqual([]);
 	});
 
 	test("CONFIG: disposal plans are closed and the other two activities open for the upcoming year", async ({ page }) => {

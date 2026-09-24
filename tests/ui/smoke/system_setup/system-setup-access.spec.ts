@@ -25,6 +25,15 @@ test.describe("System setup — access and shared states", () => {
 	test("a business user without configuration authority is refused with an explanation, not an empty page or a crash", async ({ page }) => {
 		const errors = collectPageErrors(page);
 		await login(page, DENIED_USER, DENIED_PASSWORD);
+		// Record whether the page heading is ever painted, even for a moment,
+		// before the refusal is known (plan: "denied without painting any
+		// content first").
+		await page.addInitScript(() => {
+			(window as any).__ktHeadPainted = false;
+			new MutationObserver(() => {
+				if (document.querySelector(".kt-setup-head")) (window as any).__ktHeadPainted = true;
+			}).observe(document, { childList: true, subtree: true });
+		});
 		await page.goto("/app/system-setup#procurement-settings", { waitUntil: "domcontentloaded" });
 
 		// §8.1 — a refusal is a stated outcome, never a blank screen.
@@ -34,6 +43,12 @@ test.describe("System setup — access and shared states", () => {
 		// And no maintenance control is offered behind the refusal.
 		await expect(page.locator('[data-testid="kt-procset-source-add"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="kt-procset-rule-add"]')).toHaveCount(0);
+		// Common-States #denied: the page paints only the refusal — no heading,
+		// lede or tabs — with the board's three lines.
+		await expect(page.locator('[data-testid="kt-setup-forbidden"]')).toContainText("Ask your KenTender administrator to grant it.");
+		await expect(page.locator(".kt-setup-head")).toHaveCount(0);
+		await expect(page.locator('[data-testid="kt-setup-tabs"]')).toHaveCount(0);
+		expect(await page.evaluate(() => (window as any).__ktHeadPainted), "page heading painted before the refusal").toBe(false);
 		expect(errors, "console errors").toEqual([]);
 	});
 

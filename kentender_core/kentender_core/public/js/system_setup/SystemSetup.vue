@@ -164,6 +164,13 @@ function viewAffected(unitId) {
 }
 
 onMounted(load);
+
+// A page-wide state replaces the page, heading included (Common-States board).
+const pageState = computed(() => !!forbidden.value || !!loadError.value || (loading.value && !site.value));
+// The server's denial text, one sentence per line as the board draws it.
+function sentences(text) {
+	return String(text || "").split(/(?<=\.)\s+/).filter(Boolean);
+}
 </script>
 
 <template>
@@ -171,7 +178,10 @@ onMounted(load);
 		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-setup-shell">
 		<div class="kt-setup-page kt-blueprint">
-			<header class="kt-setup-head">
+			<!-- Common-States board: loading, denied and failed-to-load paint
+			     only the state — no heading, lede or tabs (and nothing of the
+			     page before a denial is known). -->
+			<header v-if="!pageState" class="kt-setup-head">
 				<span class="kt-eyebrow">{{ __("Configuration and governance") }}</span>
 				<h1 class="kt-setup-title">{{ __("System setup") }}</h1>
 				<p class="kt-setup-lede">
@@ -193,28 +203,27 @@ onMounted(load);
 			</header>
 
 			<div class="kt-setup-panel">
-			<!-- CFG-DES-07 forbidden/error/loading — never an empty success -->
-			<div v-if="forbidden" class="kt-card kt-blueprint kt-empty" data-testid="kt-setup-forbidden">
-				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-				<h2>{{ __(forbidden.heading) }}</h2>
-				<p>{{ __(forbidden.text) }}</p>
+			<!-- Common-States #denied / #load-error / #loading — never an empty success. -->
+			<div v-if="forbidden" class="kt-notice is-critical" role="alert" data-testid="kt-setup-forbidden">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+				<div class="kt-notice-body">
+					<strong>{{ __(forbidden.heading) }}.</strong>
+					<template v-for="line in sentences(forbidden.text)" :key="line"><br>{{ line }}</template>
+				</div>
 			</div>
 
-			<div v-else-if="loadError" class="kt-card kt-blueprint kt-empty" data-testid="kt-setup-error">
-				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-				<h2>{{ __("System setup could not be loaded") }}</h2>
-				<p>{{ __("Try again. If the problem continues, contact support.") }}</p>
-				<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-setup-retry" @click="load">
-					{{ __("Try again") }}
-				</button>
+			<div v-else-if="loadError" data-testid="kt-setup-error">
+				<div class="kt-notice is-critical" role="alert">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+					<div class="kt-notice-body"><strong>{{ __("System setup could not be loaded.") }}</strong><br>{{ __("Try again. If the problem continues, contact support.") }}</div>
+				</div>
+				<div style="margin-top:14px">
+					<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-setup-retry" @click="load">{{ __("Try again") }}</button>
+				</div>
 			</div>
 
-			<div v-else-if="loading && !site" class="kt-card kt-blueprint" data-testid="kt-setup-loading">
-				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-				<span class="kt-eyebrow">{{ __("Loading") }}</span>
-				<div class="kt-skel" style="width:88%" />
-				<div class="kt-skel" style="width:64%" />
-				<div class="kt-skel" style="width:76%" />
+			<div v-else-if="loading && !site" class="kt-empty kt-setup-state-loading" role="status" aria-live="polite" data-testid="kt-setup-loading">
+				<p class="card-body" style="margin:0">{{ __("Loading System setup…") }}</p>
 			</div>
 
 			<KeepAlive v-else>

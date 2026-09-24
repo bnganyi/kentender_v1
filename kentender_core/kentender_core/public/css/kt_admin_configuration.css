@@ -1118,3 +1118,5 @@
 /* Reminders (tracker CFG14-5G) — a small whole number; the field keeps the
    board's card width rather than stretching across the page. */
 .kt-industry.kt-setup-root .kt-reminders .kt-field { max-width: 320px; }
+/* Common-States (tracker CFG14-5H) — the page-wide loading line, centred. */
+.kt-industry.kt-setup-root .kt-setup-state-loading { text-align: center; padding: 48px 12px; }

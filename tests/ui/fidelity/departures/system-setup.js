@@ -194,6 +194,10 @@ export const COVERED = [
 	"Reminders#edited",
 	"Reminders#zero",
 	"Reminders#invalid",
+	// 5H Common states — 24 Sep 2026
+	"Common#loading",
+	"Common#denied",
+	"Common#load-error",
 ];
 
 /**
@@ -213,9 +217,6 @@ export const REBUILD_QUEUE = {
 	"C03D#evidence":
 		"Decision-time vs current source check belongs to a consuming record's evidence detail, which no setup screen " +
 		"shows yet (FU-30).",
-	"Common#loading": UNMOUNTABLE,
-	"Common#denied": UNMOUNTABLE,
-	"Common#load-error": UNMOUNTABLE,
 };
 
 /**

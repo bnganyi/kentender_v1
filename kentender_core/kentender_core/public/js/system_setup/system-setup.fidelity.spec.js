@@ -594,9 +594,42 @@ const ARTBOARDS = [
 	{ key: "Reminders#zero", mount: () => reminder("0") },
 	{ key: "Reminders#invalid", mount: () => reminder("400") },
 
-	{ key: "Common#loading" },
-	{ key: "Common#denied" },
-	{ key: "Common#load-error" },
+	// Common-States: the Procurement settings tab draws these three states with
+	// the same markup as the page (SystemSetup.spec proves the page's own,
+	// heading hidden).
+	{
+		key: "Common#loading",
+		self: true,
+		select: "#loading .kt-empty",
+		live: '[data-testid="kt-procset-loading"]',
+		mount: () => {
+			settingsApi.get.mockImplementation(() => new Promise(() => {}));
+			return mount(ProcurementSettingsTab, { props: { route: { tab: "procurement-settings", section: "", id: "", versionId: "", action: "" } }, global: globalMocks() });
+		},
+	},
+	{
+		key: "Common#denied",
+		self: true,
+		select: "#denied .kt-notice",
+		live: '[data-testid="kt-procset-forbidden"]',
+		mount: async () => {
+			settingsApi.get.mockResolvedValue({ outcome: "FORBIDDEN" });
+			const wrapper = mount(ProcurementSettingsTab, { props: { route: { tab: "procurement-settings", section: "", id: "", versionId: "", action: "" } }, global: globalMocks() });
+			await flushPromises();
+			return wrapper;
+		},
+	},
+	{
+		key: "Common#load-error",
+		select: "#load-error > div:nth-child(2)",
+		live: '[data-testid="kt-procset-error"]',
+		mount: async () => {
+			settingsApi.get.mockRejectedValue(new Error("boom"));
+			const wrapper = mount(ProcurementSettingsTab, { props: { route: { tab: "procurement-settings", section: "", id: "", versionId: "", action: "" } }, global: globalMocks() });
+			await flushPromises();
+			return wrapper;
+		},
+	},
 ];
 
 function boardOf(key) {
