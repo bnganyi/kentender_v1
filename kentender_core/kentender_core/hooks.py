@@ -364,3 +364,9 @@ kentender_scope_map: dict[str, str] = {}
 # ------------
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
+
+# CFG-CHG-002 v0.14 §7.4 / KT-STD-001 v1.7 §3A.6 — System setup's records in
+# the shared Technical record search, and its reads in the technical-read
+# conformance gate (AUTH-ADR-001 v1.9 §9).
+kt_technical_reference_resolvers = ["kentender_core.services.technical_read.reference_resolvers"]
+kt_technical_read_probes = ["kentender_core.services.technical_read.read_probes"]

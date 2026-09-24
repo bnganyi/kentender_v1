@@ -56,7 +56,14 @@ async function runSearch() {
 }
 
 function openRecord(row) {
-	frappe.set_route(...row.route);
+	// A resolver whose page keeps record state in the URL fragment (System
+	// setup's `#tab/section/id`) ends its route with a "#…" part: open the
+	// page by its path, then the fragment, which the page's route adapter
+	// follows (desk_page.useRoute hash mode).
+	const route = [...(row.route || [])];
+	const fragment = route.length && String(route[route.length - 1]).startsWith("#") ? route.pop() : "";
+	const done = frappe.set_route(...route);
+	if (fragment) Promise.resolve(done).then(() => (window.location.hash = fragment.slice(1)));
 }
 
 onMounted(verify);

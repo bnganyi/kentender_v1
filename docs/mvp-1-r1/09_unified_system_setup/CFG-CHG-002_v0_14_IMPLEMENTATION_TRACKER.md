@@ -3,7 +3,7 @@
 **Authority:** `KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_14.md` (approved 24 September 2026; supersedes v0.13 in full). Shared standard KT-STD-001 v1.7; authority baseline AUTH-ADR-001 v1.9.
 **Companions:** `CFG-CHG-002_v0_14_Implementation_Plan.md` (rules, phases, verification), `FOLLOW_UPS.md`, design `design/*.dc.html`.
 **Predecessor:** `CFG-CHG-002_IMPLEMENTATION_TRACKER.md` (v0.11 cycle, 16 September 2026), kept as history. Its decisions D1–D10 stand. Its acceptance claims are **not** carried forward as Done: every one is re-audited against v0.14 and the stronger UI definition of done in the plan.
-**Status:** Phases 0–2 done 24 September 2026; Phase 3 next.
+**Status:** Phases 0–3 done 24 September 2026 (two owner questions open, Q1–Q2); Phase 4 next.
 
 ## Tracker rules
 
@@ -42,7 +42,7 @@
 | CFG14-G00 | Plan, tracker, follow-ups; boards diffed and completed; committed | **Done** 2026-09-24 | CFG14-001–006 |
 | CFG14-G01 | Enforcement wired; red list recorded; other modules' gates still green | **Done** 2026-09-24 | CFG14-101–109; `ui-structure-gate` 595 passed; System setup fidelity 17, access 5, fiscal years 3, entity 1 passed; procurement-settings 3 of 4 — the 4th is pre-existing finding F2 |
 | CFG14-G02 | Shared routing runtime; route specs green | **Done** 2026-09-24 | CFG14-201–204. System setup component suite 189; structure gate 609 + 35; browser: routing 5, access 5, fiscal years 3, entity 1, fidelity 17 (after rebuild), procurement settings 3 of 4 (F2, pre-existing) |
-| CFG14-G03 | Domain deltas 3a–3f green; cross-app callers green; canonical seed validates | Planned | |
+| CFG14-G03 | Domain deltas 3a–3f green; cross-app callers green; canonical seed validates | **Done except canonical validation** 2026-09-24 | 3a–3f green; Planning callers green; structure gate 617 + 35; System setup browser fidelity 17, routing 5, procurement settings 3 of 4 (F2). Canonical validation fails for pre-existing reasons (FU-23), not from this phase |
 | CFG14-G04 | Fixture worlds idempotent and purge clean | Planned | |
 | CFG14-G05 | Every screen meets the UI definition of done; per-screen gates green | Planned | |
 | CFG14-G06 | Release evidence; acceptance map complete with evidence or named gap | Planned | |
@@ -116,12 +116,24 @@
 
 | ID | Item | Status | Evidence |
 |---|---|---|---|
-| CFG14-301 | 3a Reservation `measure_stage` + new `denominator_basis`; old values refused; seed updated | Planned | |
-| CFG14-302 | 3b Idempotency payload hash → `CFG_IDEMPOTENCY_CONFLICT`; key required | Planned | |
-| CFG14-303 | 3c `preview_configuration_version` | Planned | |
-| CFG14-304 | 3d `resolve_procurement_configuration` result envelope | Planned | |
-| CFG14-305 | 3e Intake change evidence complete | Planned | |
-| CFG14-306 | 3f Technical-read resolvers + probes for CFG record types | Planned | |
+| CFG14-301 | 3a Reservation `measure_stage` + new `denominator_basis`; old values refused; seed updated | Done — `570b6cdc` | Validator requires `measure_stage` (PlanningAllocation / ImplementationAchievement) and derives the denominator (EligibleCurrentAPPValue / ApplicableActualProcurementValue); retired budget-based values and mismatched pairs refused (CFG_SCHEMA_UNSUPPORTED). Planning read selects the planning-stage rule and returns measure + basis. Seed writes the measure and replaces an old-shape rule with a corrected successor; editor asks for Measure and shows Measured against read-only. test_regulatory_reference 29 OK; Planning test_plan_workbench 45 + test_plan_governance 38 OK; vitest 190. |
+| CFG14-302 | 3b Idempotency payload hash → `CFG_IDEMPOTENCY_CONFLICT` | Done — `6eed5e1f` | Journal gains `payload_hash`; `run_idempotent(..., payload=)` refuses same key/different content; all 14 CFG commands pass `request_payload(locals())`; legacy reference-data and STD-configuration callers unchanged. test_cfg_idempotency 4 OK. **Not done:** making the key required at the API layer, and the screens reusing the original key on an ambiguous retry (they mint a new key per attempt) — Phase 5D (§7.3). |
+| CFG14-303 | 3c `preview_configuration_version` | Done — `bc86e35b` | Read-only: schema defects as data (no Frappe pop-up), missing legal details, overlaps each marked declared/undeclared, replacement blocking new use, usage reported unknown (FU-15). Whitelisted API. test_cfg_preview 9 OK. |
+| CFG14-304 | 3d `resolve_procurement_configuration` result envelope | Done — `d41a05cc` | New `configuration_resolver.py`: closed §4.10 statuses, exact selected version + verification, payload, resolution hash; `validate_procurement_configuration_for_decision` refuses a changed configuration (CFG_CONFIGURATION_CHANGED). Existing callers unchanged (FU-21). test_cfg_resolver 8 OK. |
+| CFG14-305 | 3e Intake change evidence complete | Done — `9db808a6` | Open/close/deadline/scheduled close record module, year, displaced year, before/after flag + closing instant, reason, command identity (key + correlation id shared across a swap). Intake control 18 OK. |
+| CFG14-306 | 3f Technical-read resolvers + probes | Done | `services/technical_read.py` + both hooks in `kentender_core/hooks.py`: rules, method profiles, schedules, calendars, funding sources, submission controls resolve to `system-setup` + `#…` links; the shared search opens a trailing `#` part as the fragment (TechnicalSearch 6 tests). Versions/source-check events are hash-named (gate admits real fields only) and Singles cannot be listed — reached via their rule link and probes. Conformance gate: a probe may name `setup_maintenance_exception: CFG11-EX-001` (only known value) to keep the setup commands §3.1 grants the technical roles; denials still fail. test_cfg_technical_read 3 + test_technical_read_conformance 3 OK. |
+
+#### Phase 3 findings and open owner questions
+
+| # | Finding | Disposition |
+|---|---|---|
+| F8 | `test_site_configuration.test_approval_applicability_is_verification_required_with_no_matching_rule` fails on the committed code before this phase: it assumes no approval rule exists, but the seed now creates one. Test depends on live data. | Rewrite against an isolated fixture in Phase 4. |
+| F9 | `test_cfg_chg_002_v11_business_day_calendar.test_a_calendar_version_is_never_edited_in_place_or_deleted` fails on the committed code before this phase: in-place correction of unused versions was added later (owner, 23 Sep). | Depends on Q1. |
+| F10 | Numeric payload values (e.g. exclusive-preference amount) go through `flt` (binary float); §4.1 requires exact decimal strings. | Phase 5D, with the typed editors. |
+| F11 | `CFG_VERSION_CONFLICT`'s message differs from §8 ("This information has changed since you opened it."). | Phase 5H common states. |
+| F12 | The canonical-world gap widened after cleaning Planning test residue: validation also reports no Tender on the canonical Requisition. | FU-23. |
+| **Q1** | **Spec vs owner decision.** v0.14 §4.6: "Every saved version is immutable, even before first use… Corrections use Create new version." The code (owner decision 23 Sep 2026, `configuration_versions.version_editable`) lets an unused, unchecked, not-yet-effective version be corrected in place. | **Owner to decide** which governs. |
+| **Q2** | **Spec vs code.** §5: an unrelated overlap is rejected on save; supersession must be declared. `save_regulatory_reference_version` silently supersedes any overlapping active version of the set. The preview now reports undeclared overlaps, but save does not refuse them. | **Owner to confirm** save should refuse an undeclared overlap (changes seeds and the new-version editor). |
 
 ### Phase 4 — fixture worlds
 
@@ -205,7 +217,7 @@ All 117 criteria in v0.14. "v0.11 claim" is what the previous tracker said; it i
 | CFG10-AC-044 | Pending/rejected replacement or confidence withdrawal blocks affected new positive decisions; historical decision evidence remains visible and unmodified. | Done | 3 / 5D | Re-audit | |
 | CFG10-AC-045 | Rule/route/intake verification and consumer write serialize; concurrent configuration edits cannot commit a decision on mixed evidence. | Done | 3 / 5D | Re-audit | |
 | CFG10-AC-046 | Unsupported condition code/schema/operator is rejected; owner-condition evidence cannot be supplied as an unchecked boolean. | Done | 3 / 5D | Re-audit | |
-| CFG10-AC-047 | Eligible-current-APP Planning basis, applicable-actual-procurement achievement basis, Budget ceiling, county basis and overlap policies remain separate; no missing-to-zero, unused-headroom or planned-to-actual fallback. | Done | 3a | **Reopened** | |
+| CFG10-AC-047 | Eligible-current-APP Planning basis, applicable-actual-procurement achievement basis, Budget ceiling, county basis and overlap policies remain separate; no missing-to-zero, unused-headroom or planned-to-actual fallback. | Done | 3a | Done (domain; UI in 5D)ï0b6cdc |
 | CFG10-AC-048 | Preference margins and highest-advantage entitlement stay downstream; a planned designation cannot decide candidate eligibility. | N/A yet — kind doesn't exist | 5D | Planned | |
 | CFG10-AC-049 | Seven milestone semantics, endpoints, min/max/defaults and assumptions are explicit; absent profile/mandatory bounds never use Open Tender or 5/2-day fallback. | Done | 5F | Re-audit | |
 | CFG10-AC-050 | A WorkingDays interval requires a verified complete calendar/version; weekends alone or an empty holiday list are not legal verification. | Gap — no calendar doctype | 5F | Planned | |
@@ -271,8 +283,8 @@ All 117 criteria in v0.14. "v0.11 claim" is what the previous tracker said; it i
 | CFG14-AC-004 | The Available variant exists only when every supported base treatment and County-residents overlay has passed its required fixture/evidence/mapping checks and the exact manifest has owner approval. | — | Deferred | Deferred (D11) | |
 | CFG14-AC-005 | Bid-response inspection shows the applicable reservation declaration/evidence as a separate eligibility pass/fail mapping, not a Planning result or contract obligation; category, County treatment and evaluated result remain available to Award/reporting. | — | Deferred | Deferred (D11) | |
 | CFG14-AC-006 | This correction adds no format editor, activation, approval, override, upload or repair action. System setup remains a read-only inspection surface. | — | Deferred | Deferred (D11) | |
-| CFG13-AC-001 | The AGPO Planning rule resolves only to `EligibleCurrentAPPValue`; no approved Budget amount or unused headroom is accepted as its denominator. | — | 3a | Planned | |
+| CFG13-AC-001 | The AGPO Planning rule resolves only to `EligibleCurrentAPPValue`; no approved Budget amount or unused headroom is accepted as its denominator. | — | 3a | Done (domain; UI in 5D)ï0b6cdc |
 | CFG13-AC-002 | The resolver returns the exact obligation/rule Version and enough applicability data for Planning to evidence every included or excluded current Plan Item. | — | 3a / 3d | Planned | |
 | CFG13-AC-003 | A successor APP Version causes a new calculation snapshot; historical decisions retain their earlier Plan/rule Versions. | — | 3a | Planned | |
-| CFG13-AC-004 | Actual achievement accepts authoritative downstream actual procurement values only and cannot be calculated from APP estimates. County and other obligations remain separate. | — | 3a | Planned | |
+| CFG13-AC-004 | Actual achievement accepts authoritative downstream actual procurement values only and cannot be calculated from APP estimates. County and other obligations remain separate. | — | 3a | Done (domain; UI in 5D)ï0b6cdc |
 | CFG13-AC-005 | Ordinary setup copy says **Planned allocation**, **Actual achievement**, **Eligible value of the current Annual Plan** and **Applicable actual procurement value**; it does not expose obsolete denominator choices. | — | 5D | Planned | |
