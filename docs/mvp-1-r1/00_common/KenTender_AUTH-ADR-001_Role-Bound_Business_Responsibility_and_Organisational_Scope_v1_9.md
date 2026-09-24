@@ -8,9 +8,9 @@
 | Approved | 21 September 2026 |
 | Status | **Approved** |
 | Supersedes | v1.8, proposed 11 September 2026 — superseded in full by this amendment |
-| Change type | Lets an assignment that has not yet come into force be changed in any attribute, on the product owner's decision of 21 September 2026: adds `UpdateScheduledResponsibility` and the `assignment` parameter of the preview (§9.2), the field rule in §4.5, the **Edit scheduled assignment** action on the Scheduled detail (§13.7, §14.4), the appended change history (§15), the corrected AUTH-AC-030 and the new AUTH-AC-042 (§17), and the tests in §18. An assignment that has ever been in force is still never edited — the record itself now refuses it. Earlier: v1.8 names the owner and shape of the §8 direct search the previous version left unowned — kentender_core's Technical record search (§8, §9 read contracts, §13.10 AUTH-DES-09) — and points every page-state consequence of technical read at KT-STD-001 v1.5 §3A.6 so module documents stop restating it. Unifies the System setup Forbidden copy with KT-STD-001 §3A.4. Earlier: v1.7 corrects §8, found via a real gap in BUD-CHG-001: the Administrator/System Manager technical-read right was stated but never given a concrete mechanism, and a module built against this document scoped a detail-read route to three statuses, silently excluding the rest for a technical reader. Earlier still: v1.6 was an editorial successor recording the version bump caused by extracting shared standards material into KT-STD-001; no decision, model, rule, contract or acceptance criterion changed from v1.5. |
+| Change type | Lets an assignment that has not yet come into force be changed in any attribute, on the product owner's decision of 21 September 2026: adds `UpdateScheduledResponsibility` and the `assignment` parameter of the preview (§9.2), the field rule in §4.5, the **Edit scheduled assignment** action on the Scheduled detail (§13.7, §14.4), the appended change history (§15), the corrected AUTH-AC-030 and the new AUTH-AC-042 (§17), and the tests in §18. An assignment that has ever been in force is still never edited — the record itself now refuses it. Earlier: v1.8 names the owner and shape of the §8 direct search the previous version left unowned — kentender_core's Technical record search (§8, §9 read contracts, §13.10 AUTH-DES-09) — and points every page-state consequence of technical read at the shared standard so module documents stop restating it. Unifies the System setup Forbidden copy with the shared standard. Earlier: v1.7 corrects §8, found via a real gap in BUD-CHG-001: the Administrator/System Manager technical-read right was stated but never given a concrete mechanism, and a module built against this document scoped a detail-read route to three statuses, silently excluding the rest for a technical reader. Earlier still: v1.6 was an editorial successor recording the version bump caused by extracting shared standards material into KT-STD-001; no decision, model, rule, contract or acceptance criterion changed from v1.5. This maintained approved copy updates current citations to KT-STD-001 v1.7 and CFG-CHG-002 v0.12 without changing the approved responsibility model. |
 | Applies to | Every KenTender module, list, count, detail, task, file, export, report, screen and business command |
-| Standards | Governed by KT-STD-001 v1.4 for design input, page behaviour, implementation, verification, release evidence, shared fixtures, universal prohibitions and error-contract conventions |
+| Standards | Governed by **KT-STD-001 v1.7** for design input, page behaviour, implementation, verification, release evidence, shared fixtures, universal prohibitions and error-contract conventions |
 | Implementation owner | `kentender_core` for the role registry, assignment, resolver and Users-and-responsibilities surface; Configuration & Governance for the site PE, Organisation Unit and Fiscal Year records; each domain app for record-state and business rules |
 
 **Controlling decision:** One KenTender site represents exactly one Procuring Entity. Within that site, one role-bound record — **User Responsibility Assignment** — binds a user to a business responsibility, an organisational scope and an effective period. It is the sole source of KenTender business authority. Authorization is enforced through native Frappe permission hooks, not through a parallel permission framework.
@@ -48,7 +48,7 @@ There is no fallback chain. Where no Active assignment matches, the result is a 
 | Blanket removal of Frappe User Permission rows at cutover | Correct. Cleanup is scoped to KenTender link doctypes only. ERPNext and HRMS User Permissions are load-bearing and are never touched. |
 | `Procurement Department` as a scope hierarchy | Remove. Map each record to one exact Organisation Unit before cutover. |
 | `kt_primary_department` | Remove. If retained for display, label it a default view and never read it in an authorization path. |
-| Separate `/app/organisation-structure` and `/app/user-responsibilities` routes | Remove. Both are sections of `/app/system-setup` under CFG-CHG-002 v0.9. No alias or redirect is maintained after cutover. |
+| Separate `/app/organisation-structure` and `/app/user-responsibilities` routes | Remove. Both are sections of `/app/system-setup` under CFG-CHG-002 v0.12. No alias or redirect is maintained after cutover. |
 | Assignment approval, submission or review workflow | Remove. Setup writes take effect on save and are audited. |
 | `Delegate`, `Acting Approver`, `Applicable final authority` or `Workflow approver` roles | Remove. An acting officer holds the same business role through one dated Acting assignment. |
 | Bespoke access-diagnostics screen separate from the assignment record | Remove. Diagnostics are a collapsed section of the responsibility detail. |
@@ -77,7 +77,7 @@ No part of this ADR shall be extended, reinterpreted or partially implemented to
 
 | Item | Owning document |
 |---|---|
-| Optional scheduled close instant on the Needs-submission flag, so an announced deadline closes without a manual action | CFG-CHG-002 v0.9 |
+| Optional scheduled close instant on the Needs-submission flag, so an announced deadline closes without a manual action | CFG-CHG-002 v0.12 |
 | Whether closing Needs submission freezes existing Drafts or only blocks creation and submission | NDS-CHG-001 |
 
 Both are recorded here because they were raised during this review. Neither is decided by this ADR.
@@ -356,7 +356,7 @@ Administrator and System Manager hold technical read access to all KenTender rec
 
 **Every module's per-record detail-read route resolves for Administrator and System Manager regardless of the record's status** — Draft, Submitted, Active, Superseded, Closed, Cancelled, Returned or any other status a business role's lifecycle defines — returning the same full technical detail its business audience sees for that status, read-only, with no business assignment required. A detail route may restrict *which* statuses its business audience sees; it may never restrict which statuses a technical reader sees. Where a status is normally reached only through an edit-shaped route because no separate read-only route exists for it, that same route resolves for a technical reader with every mutation control removed or disabled — it is not permitted to return Not Found instead.
 
-The direct search is one sitewide surface, owned by kentender_core: the **Technical record search** at `/app/technical-search` (AUTH-DES-09), available only to Administrator and System Manager, which resolves any KenTender reference or title to the record's own route. Every module registers its record types with it through the `kt_technical_reference_resolvers` hook and its read entry points with the technical-read conformance gate through `kt_technical_read_probes` (§9). Page-state consequences — never Forbidden, never masked, registers complete, commands absent — are stated once in KT-STD-001 v1.5 §3A.6 and are not restated in module documents.
+The direct search is one sitewide surface, owned by kentender_core: the **Technical record search** at `/app/technical-search` (AUTH-DES-09), available only to Administrator and System Manager, which resolves any KenTender reference or title to the record's own route. Every module registers its record types with it through the `kt_technical_reference_resolvers` hook and its read entry points with the technical-read conformance gate through `kt_technical_read_probes` (§9). Page-state consequences — never Forbidden, never masked, registers complete, commands absent — are stated once in KT-STD-001 v1.7 §3A.6 and are not restated in module documents.
 
 Seeds, fixtures and test profiles shall not grant business roles to Administrator to make a journey pass.
 
@@ -466,7 +466,7 @@ After step 8, no production code may fall back to Frappe User Permission, `User 
 
 ## 12. UI architecture, menu and routes
 
-Authorization administration is two sections of the single Configuration & Governance **System setup** page defined by CFG-CHG-002 v0.9.
+Authorization administration is two sections of the single Configuration & Governance **System setup** page defined by CFG-CHG-002 v0.12.
 
 | Surface | Route | Purpose |
 |---|---|---|
@@ -487,11 +487,11 @@ This section is the complete input to Claude Design. It defines static visual co
 
 ### 13.1 Closed-input rules
 
-Supply **KT-STD-001 §2 plus this section** to Claude Design. Nothing else. The closed-input rules, product-wide prohibitions and approved desktop shell are in KT-STD-001 §2.2–2.4 and are not repeated here.
+Supply **KT-STD-001 v1.7 §2 plus this §13** to Claude Design. Nothing else. The closed-input, task-led composition, product-wide prohibitions and approved desktop shell are in KT-STD-001 v1.7 §2 and are not repeated here.
 
 Additional prohibitions specific to this document: do not show a module control, capability control, profile control, task control, approver control or generic notes control on any assignment surface.
 
-The shared page header and tab row are defined by CFG-CHG-002 v0.9 §10.2. Every artboard in this section renders inside the tab body of that page.
+The shared page header and five-tab row are defined by CFG-CHG-002 v0.12 §10.1. Every System setup artboard in this section renders inside the applicable tab body of that page. AUTH-DES-09 remains the separate Technical record search page specified here.
 
 The Organisation Unit tree in AUTH-DES-01 is rendered at runtime by the Frappe tree control. Claude Design draws it as a static indented list using the approved list styling, to establish spacing and the surrounding composition only. It shall not design expand/collapse affordances, drag handles or tree toolbars.
 
@@ -699,7 +699,7 @@ Do not show an Edit action for an Active, Expired or Revoked assignment, a Procu
 
 ### 13.9 AUTH-DES-08 — Common states
 
-Produce five separate variants using the AUTH-DES-03 shell, section header and content position.
+Produce six separate variants using the AUTH-DES-03 shell, section header and content position, except the two Organisation-structure variants which use the AUTH-DES-01 shell as stated below.
 
 | Variant | Exact visible content |
 |---|---|
@@ -844,7 +844,7 @@ The exclusive-office conflict shown in AUTH-DES-05 is an artboard-only fixture u
 | AUTH-AC-015 | Acting responsibility starts and ends at the configured instants without a new role label, and is enforced at command time rather than by a scheduled job. |
 | AUTH-AC-016 | An expired assignment leaves no orphan Frappe Role projection after reconciliation runs. |
 | AUTH-AC-017 | An exclusive office rejects a second overlapping Active assignment and returns the exact conflicting record. |
-| AUTH-AC-018 | Administrator and System Manager inspect all data without business assignments but cannot make a business decision without one, and is never Forbidden, masked or stranded on any module surface (KT-STD-001 v1.5 §3A.6). |
+| AUTH-AC-018 | Administrator and System Manager inspect all data without business assignments but cannot make a business decision without one, and is never Forbidden, masked or stranded on any module surface (KT-STD-001 v1.7 §3A.6). |
 | AUTH-AC-019 | System setup completes a grant and a revocation without raw User Permission editing or a seed script. |
 | AUTH-AC-020 | Organisation Unit is the sole business scope tree; exactly one root exists and no `procuring_entity` field is present on any Organisation Unit or assignment. |
 | AUTH-AC-021 | No Procuring Entity selector, switcher or column appears on any screen, and creating a second Procuring Entity is structurally impossible. |
@@ -954,7 +954,7 @@ This document is the single KenTender authorization authority. Its model, resolv
 
 Where another approved document owns a value or decision, its domain authority prevails for that value:
 
-1. **CFG-CHG-002 v0.9** for the site Procuring Entity record, ERPNext Fiscal Year surfacing, module flags, Organisation Unit identity, unit catalogue and the System setup page shell.
+1. **CFG-CHG-002 v0.12** for the site Procuring Entity record, ERPNext Fiscal Year surfacing, module flags, Organisation Unit identity, unit catalogue and the System setup page shell.
 2. **This document** for role-bound assignment, organisational scope semantics, resolution, administrator inspection and the two System setup sections listed in section 12.
 3. **Each module document** for its approved business roles, record ownership, states, tasks, approvals, segregation and domain invariants.
 
@@ -980,6 +980,6 @@ If an implementation ambiguity would add a field, action, screen, object or role
 
 AUTH-ADR-001 v1.9 was approved by the product owner on 21 September 2026. It supersedes v1.8, v1.7, v1.6, v1.5, v1.4, v1.3, v1.2, v1.1 and v1.0 in full and is the only KenTender authorization document to consult. v1.7 was approved on 11 September 2026; v1.8 (proposed the same day) and this amendment supersede that approval — v1.8 because v1.7 left the direct-search surface unowned and unnamed, and this version because the owner decided on 21 September 2026 that an assignment which has not yet come into force may be changed rather than revoked and re-created.
 
-This approval authorises the change-before-start of a Scheduled assignment: `UpdateScheduledResponsibility` and the preview's `assignment` parameter in §9.2, the §4.5 field rule and its enforcement by the record itself, the **Edit scheduled assignment** action in §13.7 and §14.4, the appended change history in §15, the corrected AUTH-AC-030 and the new AUTH-AC-042. It further authorises everything v1.8 established — the Technical record search named and owned in §8, §9 and §13.10: the `/app/technical-search` surface owned by `kentender_core`, restricted to Administrator and System Manager; the `kt_technical_reference_resolvers` and `kt_technical_read_probes` hooks through which every module registers its record types and read entry points; the `SearchTechnicalRecords` and `ResolveTechnicalReference` read contracts in §9.1; the AUTH-DES-09 static design contract; the unified System setup Forbidden copy in §13.9 matching KT-STD-001 §3A.4 and CFG-CHG-002 v0.9 §10.7; and AUTH-AC-018's extension and new AUTH-AC-041. It further authorises citing KT-STD-001 v1.5 §3A.6 as the single statement of technical-read page-state consequences, and everything v1.7 already established: the corrected §8 technical-read mechanism, and everything v1.5 established — the `User Responsibility Assignment` DocType and the two System setup sections in section 12; the code-owned role registry with two scope types; the site Procuring Entity as a Single DocType; `Organisation Unit` as the single site-local nested-set tree without a PE field; the shared predicate registered through both Frappe permission hooks; Frappe Role synchronisation as a projection with expiry reconciliation; adoption of the ERPNext `Fiscal Year`; retirement of Frappe User Permission, `User Scope Assignment` and the older capability stores as KenTender authority; removal of per-user Fiscal Year grants, `PE Fiscal Year Context`, PE selectors and authoritative browser context; the controlled migration and scoped cleanup in section 11; and full successor versions of the affected module documents in section 20.
+This approval authorises the change-before-start of a Scheduled assignment: `UpdateScheduledResponsibility` and the preview's `assignment` parameter in §9.2, the §4.5 field rule and its enforcement by the record itself, the **Edit scheduled assignment** action in §13.7 and §14.4, the appended change history in §15, the corrected AUTH-AC-030 and the new AUTH-AC-042. It further authorises everything v1.8 established — the Technical record search named and owned in §8, §9 and §13.10: the `/app/technical-search` surface owned by `kentender_core`, restricted to Administrator and System Manager; the `kt_technical_reference_resolvers` and `kt_technical_read_probes` hooks through which every module registers its record types and read entry points; the `SearchTechnicalRecords` and `ResolveTechnicalReference` read contracts in §9.1; the AUTH-DES-09 static design contract; the unified System setup Forbidden copy in §13.9 matching KT-STD-001 v1.7 §3A.4 and CFG-CHG-002 v0.12 §10.12; and AUTH-AC-018's extension and new AUTH-AC-041. It further authorises citing KT-STD-001 v1.7 §3A.6 as the single statement of technical-read page-state consequences, and everything v1.7 of this ADR already established: the corrected §8 technical-read mechanism, and everything v1.5 established — the `User Responsibility Assignment` DocType and the two System setup sections in section 12; the code-owned role registry with two scope types; the site Procuring Entity as a Single DocType; `Organisation Unit` as the single site-local nested-set tree without a PE field; the shared predicate registered through both Frappe permission hooks; Frappe Role synchronisation as a projection with expiry reconciliation; adoption of the ERPNext `Fiscal Year`; retirement of Frappe User Permission, `User Scope Assignment` and the older capability stores as KenTender authority; removal of per-user Fiscal Year grants, `PE Fiscal Year Context`, PE selectors and authoritative browser context; the controlled migration and scoped cleanup in section 11; and full successor versions of the affected module documents in section 20.
 
 Implementers shall not retain v1.4's separate Organisation structure and User responsibilities routes, its Procuring Entity scope dimension, its `Global` scope type or its bespoke resolver API as active product surfaces; nor a module-specific direct-search or filter built in place of the Technical record search.
