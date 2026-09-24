@@ -24,6 +24,7 @@
 
 		<!-- NDS-DES-04 "What needs to change" — the immutable return reason. -->
 		<div v-if="returnReason" class="kt-notice is-warning" style="max-width: 860px">
+			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
 			<div class="kt-notice-body">
 				<div style="font-family: var(--kt-font-heading); font-weight: 600; font-size: 16px; text-transform: uppercase; letter-spacing: 0.02em">
 					What needs to change

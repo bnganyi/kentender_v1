@@ -69,7 +69,12 @@
 		</div>
 
 		<!-- NDS-DES-09 — the changed field(s) lead, before the full proposal. -->
-		<div v-if="isSuccessor && changedFields.length">
+		<!-- A titled section is a `.kt-region`: that is what puts its heading
+		     in the section typeface and its content on the section rhythm.
+		     Five headings in this module stood in bare divs, so they were
+		     styled by nothing and drifted from the sections beside them
+		     (found live 24 Sep 2026). -->
+		<div v-if="isSuccessor && changedFields.length" class="kt-region">
 			<h2>What changed</h2>
 			<table class="kt-table" style="max-width: 900px; width: 100%">
 				<thead><tr><th>Field</th><th>Previously accepted</th><th>Proposed</th></tr></thead>
@@ -83,7 +88,7 @@
 			</table>
 		</div>
 
-		<div>
+		<div class="kt-region">
 			<h2>{{ isSuccessor ? "Complete proposal" : "What the department needs" }}</h2>
 			<div style="max-width: 900px">
 				<RequirementCard :revision="revision" />

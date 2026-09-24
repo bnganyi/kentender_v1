@@ -66,6 +66,7 @@
 					:continue-label="continueLabel"
 					:pending="pending"
 					:show-upstream-correction="(editor.permitted_actions || {}).can_request_upstream_correction"
+					:can-edit="(editor.permitted_actions || {}).can_edit"
 					@go-to-step="activeStep = $event"
 					@save-draft="onSaveDraft(false)"
 					@continue="onSaveDraft(true)"
@@ -102,7 +103,10 @@
 					<StepReview v-else-if="activeStep === 5" :editor="editor" />
 					<template v-if="activeStep === 5" #footer>
 						<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" @click="activeStep = 4">Back</button>
-						<div class="req-actions">
+						<!-- Back is plain navigation, open to any reader; the
+						     mutating actions below are not (found live 23 Sep
+						     2026 — see EditorShell's own default footer). -->
+						<div v-if="(editor.permitted_actions || {}).can_edit" class="req-actions">
 							<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" @click="onSaveDraft(false)">Save draft</button>
 							<button
 								v-if="(editor.permitted_actions || {}).can_submit_directly"
@@ -125,6 +129,7 @@
 								Send for department approval
 							</button>
 						</div>
+						<span v-else class="kt-status is-pending" data-testid="req-read-only">Read only</span>
 					</template>
 				</EditorShell>
 				<ItemDialog

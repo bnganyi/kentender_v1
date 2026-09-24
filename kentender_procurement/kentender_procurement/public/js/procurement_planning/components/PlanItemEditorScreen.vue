@@ -73,7 +73,7 @@
 						<textarea id="ppi-description" class="kt-input" rows="3" data-testid="ppi-description" :value="draft.description" :disabled="!item.mutable" @input="onField('description', $event.target.value)"></textarea>
 					</div>
 				</div>
-				<div class="pln-summary-line">
+				<div class="kt-group pln-summary-line">
 					<!-- Derived from the included requirements; not editable here, and
 					     Plan horizon is a fixed literal so it is not shown at all. -->
 					<span class="kt-muted" data-testid="ppi-summary-line">{{ item.summary_line }}</span>
@@ -105,7 +105,7 @@
 						</tr>
 					</tbody>
 				</table>
-				<div v-if="item.combined" class="pln-summary-line" data-testid="ppi-combined">
+				<div v-if="item.combined" class="kt-group pln-summary-line" data-testid="ppi-combined">
 					<span>
 						<span class="kt-tag kt-tag-neutral">Combined purchase</span>
 						<span class="kt-muted">{{ item.aggregation_reason_preview }}</span>
@@ -194,6 +194,13 @@
 							<option value="">Select a procurement method</option>
 							<option v-for="method in classification.admissible_methods || []" :key="method" :value="method">{{ method }}</option>
 						</select>
+						<!-- A control that offers nothing says why it offers
+						     nothing. This list is not a catalogue: it is every
+						     method whose rule is in force on the date below, so
+						     an empty one is a fact about that date, not a fault
+						     of the Planner's (found live 23 Sep 2026 rendering
+						     as a blank dropdown with no explanation at all). -->
+						<div v-if="noMethodsHint" class="kt-field-hint" data-testid="ppi-method-none">{{ noMethodsHint }}</div>
 					</div>
 					<!-- Shown only when the Planner must choose one or one is set;
 					     "None" is never displayed to prove the field exists. -->
@@ -203,6 +210,15 @@
 							<option value="">Select a designation</option>
 							<option v-for="option in preference.reservation_categories || []" :key="option" :value="option">{{ option }}</option>
 						</select>
+						<!-- None is a legitimate answer, and the Planner gave it
+						     four times before learning at the final refusal that
+						     the sum of those answers failed a plan-level rule
+						     (found live 23 Sep 2026). What it costs is said here,
+						     where it is chosen. The amounts stay on U07: one
+						     obligation, stated once at plan level. -->
+						<div v-if="draft.reservation_category === 'None'" class="kt-field-hint" data-testid="ppi-reservation-none">
+							Not reserved. This purchase will not count towards the plan's reserved-procurement target.
+						</div>
 					</div>
 					<!-- §10.8 — a condition-specific input appears only when the chosen
 					     method actually requires the Planner to supply it. A method
@@ -439,6 +455,7 @@
 
 <script setup>
 import { computed, nextTick, reactive, ref, watch } from "vue";
+import { formatDate } from "../data/format.js";
 import MissingSettingGroup from "./MissingSettingGroup.vue";
 
 const props = defineProps({
@@ -522,6 +539,14 @@ watch(
 );
 
 const classification = computed(() => props.item.classification || {});
+const noMethodsHint = computed(() => {
+	if ((classification.value.admissible_methods || []).length) return "";
+	const on = formatDate(classification.value.applicability_date);
+	if (!on) return "No procurement method is available for this purchase yet.";
+	return classification.value.applicability_basis === "invitation"
+		? `No procurement method rule is in force on ${on}, this purchase's planned invitation date. Change the date, or ask your KenTender administrator to add a rule covering it.`
+		: `No procurement method rule is in force on ${on}, the start of this purchase's financial year. Set a planned invitation date, or ask your KenTender administrator to add a rule covering it.`;
+});
 const preference = computed(() => props.item.preference || {});
 const baseline = computed(() => props.item.baseline || {});
 const methodProfile = computed(() => classification.value.method_profile || {});

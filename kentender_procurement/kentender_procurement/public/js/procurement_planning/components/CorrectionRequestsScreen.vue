@@ -17,21 +17,14 @@
 			<div class="kt-page-head">
 				<div>
 					<h1 class="kt-page-title" data-testid="cor-title">Planning change required</h1>
-				</div>
-			</div>
-
-			<div class="kt-meta-row pln-context-row" data-testid="cor-context">
-				<div>
-					<span class="kt-label">Purchase</span>
-					<span class="kt-meta-value">{{ task.title }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Reference</span>
-					<span class="kt-meta-value">{{ task.plan_item_id }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Current plan version</span>
-					<span class="kt-meta-value">{{ task.version_number }}</span>
+					<!-- The board identifies the record with one scope line inside
+					     the head, not a labelled fact row below it (found live 24
+					     Sep 2026). -->
+					<div class="kt-page-scope" data-testid="cor-context">
+						<span>{{ task.title }}</span>
+						<span>· {{ task.plan_item_id }}</span>
+						<span>· Plan Version {{ task.version_number }}</span>
+					</div>
 				</div>
 			</div>
 

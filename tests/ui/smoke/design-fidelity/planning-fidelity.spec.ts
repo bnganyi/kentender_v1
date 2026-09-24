@@ -1,7 +1,17 @@
 import { expect, test } from "@playwright/test";
 
 import { login, loginAsAdministrator } from "../../helpers/auth";
-import { LandmarkExemption, expectLandmarkSubsequence, landmarks, onceEach, openSection } from "../../helpers/designFidelity";
+import {
+	LandmarkExemption,
+	expectLandmarkSubsequence,
+	expectLayoutSanity,
+	expectStructure,
+	landmarks,
+	onceEach,
+	openSection,
+	outerHtml,
+} from "../../helpers/designFidelity";
+import { DEPARTURES } from "../../fidelity/departures/procurement-planning.js";
 import {
 	ACCOUNTING_OFFICER,
 	AUTHOR,
@@ -75,6 +85,26 @@ const U21 = `${DESIGN}/Artboards-C01-U21.dc.html`;
  * Playwright chain does not build; a fixture that adds two Accepted DPPs
  * without an Annual Plan removes this exemption.
  */
+/**
+ * U07 draws a failing check as a warning notice naming it in `<strong>`, and
+ * the passing ones as quiet labelled facts below — so whichever check is
+ * failing has no `.kt-label` on either side, and the landmark sequence depends
+ * on *which* check fails. The board's own fixture fails Reserved procurement
+ * and passes Schedule; `reset_plan_item_fixture` is the other way round, so
+ * each world moves the other's label into its notice.
+ *
+ * This is a fixture-state difference, not a structural one, and the structural
+ * assertion beside this call proves the notice and the group are both built as
+ * the board draws them.
+ */
+const U07_FAILING_CHECK: LandmarkExemption[] = [
+	{
+		landmark: "Schedule",
+		because:
+			"U07's board fails Reserved procurement and states it in the notice, leaving Funding and Schedule as facts; reset_plan_item_fixture fails Schedule instead, so Schedule is the one in the notice and Reserved procurement is the fact. Whichever check fails is named in <strong>, which is not a landmark on either side.",
+	},
+];
+
 const U01_NO_PLAN_TABLE: LandmarkExemption[] = ["Department", "Status", "Requirements", "Estimated cost", "Action"].map(
 	(landmark) => ({
 		landmark,
@@ -121,6 +151,22 @@ async function wanted(browser: any, file: string, id: string, subScope = ""): Pr
 	try {
 		const scope = await openSection(art, file, id);
 		return await landmarks(art, subScope ? `${scope} ${subScope}` : scope);
+	} finally {
+		await art.close();
+	}
+}
+
+/**
+ * The same section's markup, for the structural half of the gate. The landmark
+ * comparison above reads the artboard's *text*; this reads what it is built
+ * out of — the containers and their nesting, which no text comparison can see
+ * (see `tests/ui/fidelity/skeleton.js`).
+ */
+async function wantedStructure(browser: any, file: string, id: string, subScope = ""): Promise<string> {
+	const art = await browser.newPage();
+	try {
+		const scope = await openSection(art, file, id);
+		return await outerHtml(art, subScope ? `${scope} ${subScope} .kt-page` : `${scope} .kt-page`);
 	} finally {
 		await art.close();
 	}
@@ -305,7 +351,14 @@ test.describe("Procurement Planning — design fidelity (U07 annual plan, U08 fo
 		// take it up here too, then compare the same state.
 		await page.locator('[data-testid="ppl-add-project-name"]').click();
 		await expect(page.locator('[data-testid="ppl-project-name"]')).toBeVisible();
-		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U07");
+		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U07", U07_FAILING_CHECK);
+		// The containers, not just the copy: the `.kt-group` around Plan checks
+		// was dropped and every landmark assertion still passed (24 Sep 2026).
+		await expectStructure(page, `${LIVE} .kt-page`, await wantedStructure(browser, U07, "U07"), "U07", DEPARTURES["AnnualPlanScreen#U07"]);
+		// AGENTS.md §6.6/§6.11 — repeated notices, controls inside a fact, and a
+		// label over nothing. The rule already said every editor journey should
+		// call this; one did.
+		await expectLayoutSanity(page, "U07");
 		expect(errors, "console errors").toEqual([]);
 	});
 

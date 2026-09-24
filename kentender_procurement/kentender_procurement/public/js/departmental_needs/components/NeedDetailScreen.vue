@@ -315,7 +315,12 @@
 			</div>
 		</div>
 
-		<div>
+		<!-- A titled section is a `.kt-region`: that is what puts its heading
+		     in the section typeface and its content on the section rhythm.
+		     Five headings in this module stood in bare divs, so they were
+		     styled by nothing and drifted from the sections beside them
+		     (found live 24 Sep 2026). -->
+		<div class="kt-region">
 			<h2>{{ isAccepted ? "Accepted requirement" : "Requirement" }}</h2>
 			<div style="max-width: 900px">
 				<RequirementCard :revision="shownRevision" />

@@ -13,38 +13,23 @@
 <template>
 	<div>
 		<div class="kt-page">
+			<!-- The board's own head: the title, the plan it belongs to, and
+			     one scope line identifying the record. This was a six-cell
+			     `.kt-meta-row` below the head — the same shape U09 was already
+			     corrected away from, left behind here — which read as the
+			     page's first section rather than as the record's identity
+			     (found live 24 Sep 2026). -->
 			<div class="kt-page-head">
 				<div>
 					<h1 class="kt-page-title" data-testid="ppl-title">{{ title }}</h1>
-				</div>
-			</div>
-
-			<div class="kt-meta-row pln-context-row" data-testid="ppl-context">
-				<div>
-					<span class="kt-label">Plan</span>
-					<span class="kt-meta-value">{{ plan.header?.title }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Reference</span>
-					<span class="kt-meta-value">{{ plan.plan_reference }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Version</span>
-					<span class="kt-meta-value">{{ plan.version_number }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Status</span>
-					<span class="kt-meta-value">
+					<p class="kt-page-desc">{{ plan.header?.title }}</p>
+					<div class="kt-page-scope" data-testid="ppl-context">
+						<span>{{ plan.plan_reference }}</span>
+						<span>· Version {{ plan.version_number }}</span>
+						<span>· {{ plan.financial_year_label }}</span>
+						<span v-if="plan.is_successor && currentVersion">· Current plan Version {{ currentVersion }}</span>
 						<span class="kt-status" :class="badgeClass">{{ statusLabel }}</span>
-					</span>
-				</div>
-				<div>
-					<span class="kt-label">Financial year</span>
-					<span class="kt-meta-value">{{ plan.financial_year_label }}</span>
-				</div>
-				<div v-if="plan.is_successor && currentVersion">
-					<span class="kt-label">Current plan</span>
-					<span class="kt-meta-value">Version {{ currentVersion }}</span>
+					</div>
 				</div>
 			</div>
 
@@ -110,9 +95,16 @@
 								<td>{{ row.unit_label }}</td>
 								<td class="is-num">{{ row.value_display }}</td>
 								<td>{{ row.completion_display }}</td>
-								<td>{{ row.current_work }}</td>
 								<td>
-									<a href="#" class="kt-btn kt-btn-ghost" data-testid="ppl-edit-purchase" @click.prevent="$emit('navigate', row.route)">Edit purchase</a>
+									<span class="kt-status" :class="row.current_work === 'Ready' ? 'is-live' : 'is-attention'" data-testid="ppl-current-work">{{ row.current_work }}</span>
+								</td>
+								<td>
+									<!-- A reader who cannot act on this plan (e.g. a Finance
+									     Confirmation Officer) reaches the same, correctly
+									     read-only editor — but the row's own label must not
+									     promise a control the viewer does not have (found
+									     live 23 Sep 2026). -->
+									<a href="#" class="kt-btn kt-btn-ghost" data-testid="ppl-purchase-action" @click.prevent="$emit('navigate', row.route)">{{ plan.mutable ? "Edit purchase" : "View purchase" }}</a>
 								</td>
 							</tr>
 						</tbody>
@@ -138,7 +130,7 @@
 			</div>
 
 			<!-- U07-UNALLOCATED — the sources still waiting to become purchases. -->
-			<div class="kt-region" :class="{ 'is-secondary': !unallocated.length }">
+			<div class="kt-region" :class="{ 'is-secondary': !unallocated.length }" data-testid="ppl-requirements">
 				<h2>Requirements ready to add</h2>
 				<template v-if="unallocated.length">
 					<table class="kt-table" data-testid="ppl-unallocated">
@@ -198,24 +190,61 @@
 				<p v-else class="kt-muted" data-testid="ppl-all-allocated">{{ allAllocatedText }}</p>
 			</div>
 
-			<!-- Plan checks: three results, each naming its own correction. -->
+			<!-- Plan checks: three results, each naming its own correction.
+			     The board binds them in a `.kt-group` — a left rule with the
+			     facts indented under the heading — and bounds the row's width.
+			     Both were dropped in the port, so the facts floated flat across
+			     the full page and, once a second row joined them, read as one
+			     unstructured band (found live 24 Sep 2026). -->
 			<div class="kt-region">
 				<h2>Plan checks</h2>
-				<div class="kt-meta-row pln-plan-checks" data-testid="ppl-plan-checks">
-					<div v-for="check in planChecks" :key="check.label">
-						<span class="kt-label">{{ check.label }}</span>
-						<span class="kt-meta-value">
-							<span v-if="check.kind === 'critical'" class="kt-status is-critical">{{ check.result }}</span>
-							<span v-else>{{ check.result }}</span>
-							<a
-								v-if="check.action"
-								href="#"
-								class="pln-check-action"
-								data-testid="ppl-check-action"
-								@click.prevent="$emit('navigate', check.route)"
-							>{{ check.action }}</a>
-						</span>
+				<!-- A failing check is the board's dominant issue: its own
+				     warning notice, naming the check and carrying the exact
+				     correction as a button. The passing ones stay quiet facts
+				     in the group below. All three were built as one flat row
+				     of facts with the failing one as a badge, which is why a
+				     KES 139,494 shortfall read no louder than "Schedule — all
+				     purchases meet their deadlines" (found live 24 Sep 2026). -->
+				<div
+					v-for="check in failingChecks"
+					:key="check.label"
+					class="kt-notice is-warning"
+					data-testid="ppl-check-issue"
+				>
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+						<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
+					</svg>
+					<div class="pln-check-issue-body">
+						<div class="kt-notice-body"><strong>{{ check.label }}</strong> — {{ check.result }}</div>
+						<button
+							v-if="check.action"
+							type="button"
+							class="kt-btn kt-btn-secondary"
+							data-testid="ppl-check-action"
+							@click="$emit('navigate', check.route)"
+						>{{ check.action }}</button>
 					</div>
+				</div>
+				<div class="kt-group" data-testid="ppl-plan-checks-group">
+				<div class="kt-meta-row pln-plan-checks" data-testid="ppl-plan-checks">
+					<div v-for="check in passingChecks" :key="check.label">
+						<span class="kt-label">{{ check.label }}</span>
+						<span class="kt-meta-value">{{ check.result }}</span>
+					</div>
+				</div>
+				<!-- The working behind the reserved-procurement result. One
+				     obligation, stated once at plan level: what the target is a
+				     share of, what it comes to, what is designated so far and
+				     what is left. It used to exist only inside the refusal at
+				     Sign and submit, as raw unformatted numbers with nothing
+				     naming their denominator (found live 23 Sep 2026). Absent
+				     entirely where no target is published. -->
+				<div v-if="reservationSummary.length" class="kt-meta-row pln-plan-checks pln-plan-checks-working" data-testid="ppl-reservation-summary">
+					<div v-for="fact in reservationSummary" :key="fact.label">
+						<span class="kt-label">{{ fact.label }}</span>
+						<span class="kt-meta-value">{{ fact.value }}</span>
+					</div>
+				</div>
 				</div>
 			</div>
 
@@ -259,16 +288,57 @@
 				</a>
 			</div>
 
-			<!-- Changes and history: secondary, closed by default. -->
-			<details class="kt-disclosure" data-testid="ppl-history">
+			<!-- Changes and history: secondary, closed by default. Each
+			     acceptance is one timeline entry (§9.4's .kt-timeline,
+			     already established in Departmental Needs, Strategy and
+			     Tenders) rather than a paragraph per row — a plan built from
+			     several departments' acceptances read as a dense wall of
+			     text otherwise, for no reason this section needs. -->
+			<!-- The board's own disclosure head: the title in its row, and the
+			     chevron that says the section opens at all. Both were dropped
+			     in the port, leaving a bare small-caps line with no affordance
+			     — it read as an orphaned heading over empty space (found live
+			     24 Sep 2026). -->
+			<details class="kt-disclosure" data-testid="ppl-history" @toggle="historyOpen = $event.target.open">
 				<summary class="kt-disclosure-head">
-					<span class="kt-disclosure-title">Changes and history</span>
+					<div class="kt-disclosure-title-row">
+						<span class="kt-disclosure-title">Changes and history</span>
+					</div>
+					<svg class="kt-disclosure-chevron" :class="{ 'is-open': historyOpen }" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+						<path d="M6 9l6 6 6-6"></path>
+					</svg>
 				</summary>
 				<div class="kt-disclosure-body">
-					<p class="kt-muted">{{ changesText }}</p>
-					<p v-for="(row, index) in history" :key="index" class="kt-muted">{{ row }}</p>
+					<p v-if="changesText" class="kt-muted">{{ changesText }}</p>
+					<div v-if="history.length" class="kt-timeline" data-testid="ppl-history-timeline">
+						<div v-for="(row, index) in history" :key="index" class="kt-timeline-row">
+							<div class="kt-timeline-dot-col">
+								<div class="kt-timeline-dot is-live"></div>
+								<div v-if="index < history.length - 1" class="kt-timeline-line"></div>
+							</div>
+							<div class="kt-timeline-item">
+								<div class="kt-timeline-item-title">{{ row.title }}</div>
+								<div class="kt-timeline-item-meta">{{ row.meta }}</div>
+							</div>
+						</div>
+					</div>
 				</div>
 			</details>
+
+			<!-- Everything still standing between this plan and submission, for
+			     the one actor who holds that action. Without it they met these
+			     one at a time: the server computed the whole list and raised
+			     only the first, so each correction earned the next refusal
+			     (found live 23 Sep 2026). -->
+			<div v-if="submissionIssues.length" data-testid="ppl-submission-issues">
+				<p class="kt-label">{{ submissionIssuesHeading }}</p>
+				<div v-for="issue in submissionIssues" :key="issue" class="kt-notice is-critical" data-testid="ppl-submission-issue">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+						<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
+					</svg>
+					<div class="kt-notice-body">{{ issue }}</div>
+				</div>
+			</div>
 
 			<p v-if="errorSummary" class="pln-error-summary" data-testid="ppl-error">{{ errorSummary }}</p>
 
@@ -280,6 +350,43 @@
 			     full-size (found live 23 Sep 2026, on the item editor's own pair;
 			     the same scaling problem applies here at least as much). -->
 			<MissingSettingGroup :panels="missingSettings" />
+
+			<!-- U07-FINANCE-COMPLETE — who is waited on, named, comes before
+			     the final action, not after it (found live 23 Sep 2026: this
+			     sat below the footer, so Save draft read as the page's last
+			     word even once nothing further was the Planner's to do). -->
+			<!-- §10.6 U07-FINANCE-COMPLETE — its own section, as the board
+			     draws it: a secondary region, its heading, and the state in a
+			     notice. A previous port made it a bare `.kt-meta-row` of
+			     labelled facts citing this same variant, which the board does
+			     not draw; with no heading and no notice it read as two more
+			     loose labels at the bottom of a flat page (found live 24 Sep
+			     2026). The people stay a labelled fact rather than being
+			     joined into the sentence — the board names one person and
+			     several is ordinary here. -->
+			<div v-if="waitingOn.notice" class="kt-region is-secondary" data-testid="ppl-waiting-on">
+				<h2>Approval</h2>
+				<div class="kt-notice">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z"></path><path d="M12 16v-4"></path><path d="M12 8h.01"></path>
+					</svg>
+					<div class="kt-notice-body">
+						<div>{{ waitingOn.notice }}</div>
+						<div v-if="waitingOn.people.length" class="pln-responsible">
+							<span class="kt-label">{{ waitingOn.people.length === 1 ? "Responsible person" : "Responsible people" }}</span>
+							<span class="kt-meta-value" data-testid="ppl-waiting-on-person">
+								<span v-for="(name, index) in waitingOn.people" :key="name" class="pln-responsible-name">
+									{{ index ? ", " : "" }}{{ name }}
+								</span>
+							</span>
+						</div>
+						<div v-else-if="waitingOn.unassigned" class="pln-responsible">
+							<span class="kt-label">Responsible person</span>
+							<span class="kt-meta-value" data-testid="ppl-waiting-on-unassigned">{{ waitingOn.unassigned }}</span>
+						</div>
+					</div>
+				</div>
+			</div>
 
 			<div class="pln-footer" data-testid="ppl-footer">
 				<button
@@ -326,28 +433,6 @@
 					>
 						Sign and submit Annual Plan
 					</button>
-				</div>
-			</div>
-
-			<!-- U07-FINANCE-COMPLETE — who is waited on, named. -->
-			<!-- §10.6 U07-FINANCE-COMPLETE — the notice and the responsible person
-			     are two labelled facts, never one delimiter-joined line (§12.1). -->
-			<div v-if="waitingOn.notice" class="kt-meta-row" data-testid="ppl-waiting-on">
-				<div>
-					<span class="kt-label">Approval</span>
-					<span class="kt-meta-value">{{ waitingOn.notice }}</span>
-				</div>
-				<div v-if="waitingOn.people.length">
-					<span class="kt-label">{{ waitingOn.people.length === 1 ? "Responsible person" : "Responsible people" }}</span>
-					<span class="kt-meta-value" data-testid="ppl-waiting-on-person">
-						<span v-for="(name, index) in waitingOn.people" :key="name" class="pln-responsible-name">
-							{{ index ? ", " : "" }}{{ name }}
-						</span>
-					</span>
-				</div>
-				<div v-else-if="waitingOn.unassigned">
-					<span class="kt-label">Responsible person</span>
-					<span class="kt-meta-value" data-testid="ppl-waiting-on-unassigned">{{ waitingOn.unassigned }}</span>
 				</div>
 			</div>
 
@@ -405,7 +490,16 @@ const activeView = computed(() => props.plan.active_view);
 const missingSettings = computed(() => props.plan.missing_settings || []);
 const unallocated = computed(() => props.plan.unallocated_sources || []);
 const planChecks = computed(() => props.plan.plan_checks || []);
-const history = computed(() => props.plan.history_lines || []);
+const failingChecks = computed(() => planChecks.value.filter((check) => check.kind === "critical"));
+const passingChecks = computed(() => planChecks.value.filter((check) => check.kind !== "critical"));
+const historyOpen = ref(false);
+const reservationSummary = computed(() => (props.plan.summary || {}).reservation_summary || []);
+const submissionIssues = computed(() => props.plan.submission_issues || []);
+const submissionIssuesHeading = computed(() => {
+	const n = submissionIssues.value.length;
+	return `${n} ${n === 1 ? "issue" : "issues"} must be resolved before this plan can be submitted`;
+});
+const history = computed(() => props.plan.history || []);
 const currentVersion = computed(() => props.plan.current_version_number);
 
 const title = computed(() => (props.plan.is_successor ? "Prepare plan update" : "Prepare the annual procurement plan"));

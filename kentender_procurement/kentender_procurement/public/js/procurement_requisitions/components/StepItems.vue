@@ -8,7 +8,7 @@
 	<div class="req-step-content">
 		<div class="req-step-content-header">
 			<div class="kt-card-title req-no-margin">Equipment items</div>
-			<button type="button" class="kt-btn kt-btn-secondary" data-testid="req-add-item" @click="$emit('add-item')">Add equipment item</button>
+			<button v-if="canEdit" type="button" class="kt-btn kt-btn-secondary" data-testid="req-add-item" @click="$emit('add-item')">Add equipment item</button>
 		</div>
 
 		<table class="kt-table" data-testid="req-items-table">
@@ -32,9 +32,16 @@
 					<td>{{ item.intended_use }}</td>
 					<td>{{ deliveryLabel(item) }}</td>
 					<td>
-						<a href="#" class="req-quiet-link" @click.prevent="$emit('edit-item', item)">Edit</a>
-						·
-						<a href="#" class="req-quiet-link" @click.prevent="$emit('remove-item', item)">Remove</a>
+						<!-- A reader who cannot act on this Draft (e.g. a
+						     department reader with no author or HoD
+						     assignment on it) must not be offered an action
+						     the server would only refuse (found live 23 Sep
+						     2026) — the row simply carries no action. -->
+						<template v-if="canEdit">
+							<a href="#" class="req-quiet-link" @click.prevent="$emit('edit-item', item)">Edit</a>
+							·
+							<a href="#" class="req-quiet-link" @click.prevent="$emit('remove-item', item)">Remove</a>
+						</template>
 					</td>
 				</tr>
 			</tbody>
@@ -67,9 +74,11 @@
 						<td>{{ proposedValue(row) }}</td>
 						<td>
 							<span class="kt-status is-attention">Proposed</span>
-							<a href="#" class="req-quiet-link req-confirm-link" :data-testid="`req-confirm-${row.technical_requirement_id}`" @click.prevent="$emit('confirm-requirement', row)">Confirm</a>
-							·
-							<a href="#" class="req-quiet-link" @click.prevent="$emit('remove-requirement', row)">Remove</a>
+							<template v-if="canEdit">
+								<a href="#" class="req-quiet-link req-confirm-link" :data-testid="`req-confirm-${row.technical_requirement_id}`" @click.prevent="$emit('confirm-requirement', row)">Confirm</a>
+								·
+								<a href="#" class="req-quiet-link" @click.prevent="$emit('remove-requirement', row)">Remove</a>
+							</template>
 						</td>
 					</tr>
 				</tbody>
@@ -87,6 +96,7 @@ const props = defineProps({
 
 defineEmits(["add-item", "edit-item", "remove-item", "confirm-requirement", "remove-requirement"]);
 
+const canEdit = computed(() => Boolean((props.editor.permitted_actions || {}).can_edit));
 const items = computed(() => (props.editor.package || {}).items || []);
 const technicalRequirements = computed(() => (props.editor.package || {}).technical_requirements || []);
 const catalogueByKey = computed(() => {

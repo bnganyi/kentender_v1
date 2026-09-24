@@ -583,7 +583,7 @@ const hasPendingSave = computed(() => hasPendingAttempt(saveScope.value) || hasP
 		<p v-if="errorSummary" class="kt-field-error" data-testid="str-validation-summary" style="font-size: 14px; margin: 0 0 10px" role="alert">{{ errorSummary }}</p>
 
 		<div class="kt-editor-grid">
-			<div class="kt-card kt-blueprint" data-testid="str-hierarchy">
+			<div data-testid="str-hierarchy">
 				<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px">
 					<div class="kt-card-title" style="margin: 0; padding-bottom: 0; border-bottom: none">{{ __("Plan structure") }}</div>
 					<button v-if="editable" type="button" class="kt-add-child" data-testid="str-add-pillar" @click="addPillar">{{ __("Add pillar") }}</button>
@@ -595,7 +595,7 @@ const hasPendingSave = computed(() => hasPendingAttempt(saveScope.value) || hasP
 				</template>
 			</div>
 
-			<div class="kt-card kt-blueprint" style="position: sticky; top: 80px" data-testid="str-node-panel">
+			<div style="position: sticky; top: 80px" data-testid="str-node-panel">
 				<template v-if="selected">
 					<div class="kt-card-title" style="margin-bottom: 4px" data-testid="str-selected-type">{{ selectedTypeLabel }}</div>
 					<div style="font-size: 12px; color: var(--kt-color-neutral-700); margin-bottom: 13.6px" data-testid="str-selected-path">

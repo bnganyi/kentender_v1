@@ -213,6 +213,14 @@ function approve() {
 			<div v-else-if="serverError" class="kt-card kt-blueprint kt-empty" data-testid="bud-task-server-error"><h2>{{ __("This approval task could not be loaded.") }}</h2><button type="button" class="kt-btn kt-btn-primary" @click="load()">{{ __("Try again") }}</button></div>
 
 			<template v-else-if="task">
+				<!-- Live breach banner: the board draws it ABOVE the card, full width, not inside
+				     it — a blocking breach is about the whole task, not about the section it
+				     happens to sit over. Still outside collapsed sections and on every tab
+				     (§11.20), which the board's placement satisfies just as well. -->
+				<div v-if="breach && task.version.status === 'Submitted for approval'" class="kt-notice is-critical" style="margin: 0 0 20px" data-testid="bud-task-breach">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+					<div class="kt-notice-body"><strong>{{ breach.message }}</strong> {{ __("Approval is unavailable until the update covers this amount; you can still return it for correction.") }}</div>
+				</div>
 				<div class="kt-card kt-blueprint" style="padding: 0">
 				<div style="padding: 28px 24px 0">
 				<div style="margin-bottom: 20px" data-testid="bud-task-header">
@@ -228,12 +236,16 @@ function approve() {
 
 				<KtErrorBanner :message="actingError" style="margin-bottom: 12px" @dismiss="actingError = null" />
 				<div v-if="stale" class="kt-notice is-warning" style="margin-bottom: 12px" data-testid="bud-task-stale">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
 					<div class="kt-notice-body">{{ __("This budget has changed since you opened it.") }} <a href="#" @click.prevent="load({ quiet: true })">{{ __("Refresh to see the current details") }}</a></div>
 				</div>
 				<div v-if="task.capabilities.is_technical_reader" class="kt-notice is-info" style="margin-bottom: 12px" data-testid="bud-task-technical">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" v-if="task.version.status === 'Active'"><path d="M20 6L9 17l-5-5"/></svg>
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" v-else><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
 					<div class="kt-notice-body">{{ __("Read-only technical view. Decisions on this review need the Budget Approver responsibility.") }}</div>
 				</div>
 				<div v-if="task.decision && task.version.status !== 'Submitted for approval'" class="kt-notice" :class="task.version.status === 'Active' ? 'is-live' : 'is-warning'" style="margin-bottom: 12px" data-testid="bud-task-decided">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
 					<div class="kt-notice-body">
 						<strong>{{ task.version.status === "Active" ? __("Approved and activated by {0}, {1}.", [task.decision.decided_by, task.decision.decided_at_display]) : __("Returned for correction by {0}, {1}.", [task.decision.decided_by, task.decision.decided_at_display]) }}</strong>
 						<template v-if="task.decision.return_reason"> {{ task.decision.return_reason }}</template>
@@ -248,11 +260,8 @@ function approve() {
 				</div>
 				</div>
 
-				<!-- Live breach banner: outside collapsed sections, on every tab (§11.20). -->
-				<div v-if="breach && task.version.status === 'Submitted for approval'" class="kt-notice is-critical" style="margin: 0; border-top: 1px solid var(--kt-color-divider)" data-testid="bud-task-breach">
-					<div class="kt-notice-body"><strong>{{ breach.message }}</strong> {{ __("Approval is unavailable until the update covers this amount; you can still return it for correction.") }}</div>
-				</div>
 				<div v-if="task.protection.unavailable" class="kt-notice is-warning" style="margin: 0; border-top: 1px solid var(--kt-color-divider)" data-testid="bud-task-protection-unavailable">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
 					<div class="kt-notice-body">{{ __("The live funding position could not be checked. Refresh before deciding; approval is unavailable until it can be checked.") }}</div>
 				</div>
 
@@ -335,6 +344,7 @@ function approve() {
 							</div>
 						</div>
 						<div v-if="task.evidence.document.url && docAvailable === false" class="kt-notice is-warning" style="margin-top: 16px" data-testid="bud-task-document-unavailable">
+							<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
 							<div class="kt-notice-body">{{ __("The submitted approval document could not be opened. Try again.") }}</div>
 						</div>
 						<div v-else-if="task.evidence.document.url && isPdf && docAvailable === true && !docPreviewFailed" style="margin-top: 16px">
@@ -344,7 +354,7 @@ function approve() {
 
 					<div style="padding: 16px 24px; border-top: 1px solid var(--kt-color-divider); display: flex; flex-direction: column; gap: 10px">
 						<details class="kt-record" data-testid="bud-task-line-details">
-							<summary><div class="kt-record-main"><div class="kt-record-body"><div class="kt-record-title">{{ __("Budget line details") }}</div><div class="kt-record-meta"><span>{{ __("Department and funding source") }}</span></div></div><div class="kt-record-toggle"><span class="when-closed">{{ __("Show") }}</span><span class="when-open">{{ __("Hide") }}</span></div></div></summary>
+							<summary><div class="kt-record-main"><div class="kt-record-body"><div class="kt-record-title">{{ __("Budget line details") }}</div><div class="kt-record-meta"><span>{{ __("Department and funding source") }}</span></div></div><div class="kt-record-toggle"><span class="when-closed">{{ __("Show") }}</span><span class="when-open">{{ __("Hide") }}</span><svg class="kt-disclosure-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg></div></div></summary>
 							<div class="kt-record-detail" style="padding: 0; overflow-x: auto">
 								<table class="kt-table">
 									<thead><tr><th>{{ __("Budget line") }}</th><th>{{ __("Available to") }}</th><th>{{ __("Funding source") }}</th></tr></thead>
@@ -355,7 +365,7 @@ function approve() {
 							</div>
 						</details>
 						<details class="kt-record" data-testid="bud-task-submission">
-							<summary><div class="kt-record-main"><div class="kt-record-body"><div class="kt-record-title">{{ __("Submission and history") }}</div><div class="kt-record-meta"><span>{{ __("Submitted by {0} · {1}", [task.submission.submitted_by || "—", task.submission.submitted_at_display || "—"]) }}</span></div></div><div class="kt-record-toggle"><span class="when-closed">{{ __("Show") }}</span><span class="when-open">{{ __("Hide") }}</span></div></div></summary>
+							<summary><div class="kt-record-main"><div class="kt-record-body"><div class="kt-record-title">{{ __("Submission and history") }}</div><div class="kt-record-meta"><span>{{ __("Submitted by {0} · {1}", [task.submission.submitted_by || "—", task.submission.submitted_at_display || "—"]) }}</span></div></div><div class="kt-record-toggle"><span class="when-closed">{{ __("Show") }}</span><span class="when-open">{{ __("Hide") }}</span><svg class="kt-disclosure-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg></div></div></summary>
 							<div class="kt-record-detail">
 								<table v-if="history" class="kt-table">
 									<thead><tr><th>{{ __("When") }}</th><th>{{ __("Event") }}</th><th>{{ __("Actor") }}</th></tr></thead>
@@ -365,7 +375,8 @@ function approve() {
 						</details>
 					</div>
 
-					<div class="kt-notice is-info" style="margin: 0; border-top: 1px solid var(--kt-color-divider)" data-testid="bud-task-consequence"><div class="kt-notice-body">{{ consequence }}</div></div>
+					<div class="kt-notice is-info" style="margin: 0; border-top: 1px solid var(--kt-color-divider)" data-testid="bud-task-consequence">
+						<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg><div class="kt-notice-body">{{ consequence }}</div></div>
 				</template>
 
 				<!-- Budget Lines (BUD-DES-09 / 13) -->

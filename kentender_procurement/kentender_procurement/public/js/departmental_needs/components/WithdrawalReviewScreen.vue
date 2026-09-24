@@ -55,7 +55,12 @@
 			<div class="kt-notice-body">This requirement is not included in the current annual plan.</div>
 		</div>
 
-		<div>
+		<!-- A titled section is a `.kt-region`: that is what puts its heading
+		     in the section typeface and its content on the section rhythm.
+		     Five headings in this module stood in bare divs, so they were
+		     styled by nothing and drifted from the sections beside them
+		     (found live 24 Sep 2026). -->
+		<div class="kt-region">
 			<h2>Why withdrawal was requested</h2>
 			<div style="max-width: 900px">
 				<p style="margin: 0; font-size: 15px; line-height: 1.55">{{ request.reason }}</p>
@@ -86,7 +91,7 @@
 			</div>
 		</div>
 
-		<div>
+		<div class="kt-region">
 			<h2>Accepted requirement</h2>
 			<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 13px; color: var(--kt-color-neutral-700)">
 				<span>{{ scope.organisation_unit || "" }}</span>

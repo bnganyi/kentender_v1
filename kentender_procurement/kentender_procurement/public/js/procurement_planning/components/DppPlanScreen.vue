@@ -40,7 +40,10 @@
 			</div>
 
 			<!-- Record context: separately labelled values, names before codes. -->
-			<div class="kt-meta-row pln-context-row" data-testid="pln-dpp-context">
+			<!-- U02-U05 is the one board that genuinely draws the context row
+			     outside the head — and draws it tight, so the facts sit together
+			     instead of spreading across the sheet. -->
+			<div class="kt-meta-row is-tight pln-context-row" data-testid="pln-dpp-context">
 				<div>
 					<span class="kt-label">Department</span>
 					<span class="kt-meta-value">{{ context.department }}</span>

@@ -78,6 +78,10 @@
 			<!-- First section — Decision summary. -->
 			<div class="kt-region">
 				<h2>Decision summary</h2>
+				<!-- The board states the plan's totals and its checks as one row
+				     of six facts. Split into two rows, the checks read as a
+				     second section rather than as part of the same summary
+				     (found live 24 Sep 2026). -->
 				<div class="kt-meta-row" data-testid="rev-summary" style="margin-bottom: var(--kt-space-4)">
 					<div>
 						<span class="kt-label">Estimated cost</span>
@@ -91,9 +95,7 @@
 						<span class="kt-label">Departments</span>
 						<span class="kt-meta-value">{{ summary.departments }}</span>
 					</div>
-				</div>
-				<div class="kt-meta-row" data-testid="rev-checks" style="margin-bottom: var(--kt-space-4)">
-					<div>
+					<div data-testid="rev-checks">
 						<span class="kt-label">Funding</span>
 						<span class="kt-meta-value" style="font-size: 14px">{{ summary.funding }}</span>
 					</div>
@@ -366,9 +368,23 @@
 			</template>
 
 			<details class="kt-disclosure" data-testid="rev-plan-checks">
-				<summary class="kt-disclosure-head"><span class="kt-disclosure-title">Review Plan checks</span></summary>
+				<summary class="kt-disclosure-head">
+	<div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Review Plan checks</span></div>
+	<svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg>
+</summary>
 				<div class="kt-disclosure-body">
+					<!-- The basis named here is the value the plan plans to
+					     procure, which is what the target is a share of. It used
+					     to name the approved budget Version instead, beside the
+					     required allocation, which read as though the budget
+					     were the measure of the obligation. The budget is the
+					     ceiling the plan fits inside, and that is the Funding
+					     check's own result above. -->
 					<div class="kt-meta-row">
+						<div>
+							<span class="kt-label">Eligible planned procurement</span>
+							<span class="kt-meta-value">{{ reservation.eligible_value_display }}</span>
+						</div>
 						<div>
 							<span class="kt-label">Required allocation</span>
 							<span class="kt-meta-value">{{ reservation.required_allocation_display }}</span>
@@ -378,15 +394,18 @@
 							<span class="kt-meta-value">{{ reservation.planned_qualifying_display }}</span>
 						</div>
 						<div>
-							<span class="kt-label">Budget basis</span>
-							<span class="kt-meta-value">{{ reservation.budget_basis_reference }} · {{ reservation.budget_version_display }}</span>
+							<span class="kt-label">Still required</span>
+							<span class="kt-meta-value">{{ reservation.shortfall_or_met_display }}</span>
 						</div>
 					</div>
 				</div>
 			</details>
 
 			<details class="kt-disclosure" data-testid="rev-history">
-				<summary class="kt-disclosure-head"><span class="kt-disclosure-title">Changes and history</span></summary>
+				<summary class="kt-disclosure-head">
+	<div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Changes and history</span></div>
+	<svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg>
+</summary>
 				<div class="kt-disclosure-body">
 					<p class="kt-muted">{{ task.changes?.is_initial ? "First annual plan" : "" }}</p>
 					<table class="kt-table">

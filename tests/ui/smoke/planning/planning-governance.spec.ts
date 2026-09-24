@@ -8,6 +8,7 @@ import {
 	STATUTORY,
 	collectConsoleErrors,
 	contextValue,
+	scopeLine,
 	expectReady,
 	gotoPlanning,
 	resetFixture,
@@ -124,10 +125,10 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		await login(page, PLANNER, PASSWORD);
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
-		await expect(contextValue(page, "ppl-context", "Version")).toHaveText("2");
+		await expect(scopeLine(page, "ppl-context")).toContainText("Version 2");
 		// A returned version comes back as an ordinary Draft — §10.6 has no
 		// separate correction badge; what says so is the submission action.
-		await expect(contextValue(page, "ppl-context", "Status")).toHaveText("Draft");
+		await expect(scopeLine(page, "ppl-context")).toContainText("Draft");
 		await expect(page.locator('[data-testid="ppl-purchases"] tbody tr')).toHaveCount(1);
 		// §6.2 — signing and submitting belongs to the Head of Procurement
 		// Function, never the Planner, so §10.6 names who is waited on instead

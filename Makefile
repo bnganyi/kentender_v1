@@ -6,7 +6,7 @@ BENCH_ROOT ?= /home/midasuser/frappe-bench
 KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency,frontend,
 INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency frontend
 
-.PHONY: artboard-provenance-gate departmental-needs-domain-gate ui-departmental-needs-fidelity-gate tenders-schema-gate tenders-services-gate ui-tenders-workspace-gate ui-tenders-start-gate ui-tenders-details-gate ui-tenders-requirements-gate ui-tenders-review-gate ui-tenders-approval-gate ui-tenders-authorisation-gate ui-tenders-publication-gate ui-tenders-published-gate ui-tenders-addendum-gate ui-tenders-cancel-gate ui-tenders-history-gate ui-tenders-fidelity-gate ui-tenders-release-evidence-gate ui-system-setup-procurement-settings-gate ui-system-setup-fiscal-years-gate ui-system-setup-access-gate help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke seed-canonical seed-canonical-dry-run seed-canonical-validate ui-smoke tender-templates-bundle-gate ui-workspace-pattern-gate ui-strategy-gate ui-strategy-fidelity-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-system-setup-fidelity-gate ui-budget-fidelity-gate ui-budget-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-departmental-gate ui-planning-fidelity-gate ui-planning-release-evidence-gate ui-planning-annual-plan-gate ui-planning-item-gate ui-planning-finance-gate ui-planning-governance-gate ui-planning-publication-gate planning-requisition-gate planning-seed-gate ui-req-workspace-gate ui-req-start-gate ui-req-editor-a-gate ui-req-editor-b-gate ui-req-department-gate ui-req-procurement-gate ui-req-authorised-gate ui-req-fidelity-gate ui-req-release-evidence-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate vue-desk-bundle-translation-binding-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
+.PHONY: ui-structure-gate ui-visual-gate ui-fidelity-gate artboard-provenance-gate departmental-needs-domain-gate ui-departmental-needs-fidelity-gate tenders-schema-gate tenders-services-gate ui-tenders-workspace-gate ui-tenders-start-gate ui-tenders-details-gate ui-tenders-requirements-gate ui-tenders-review-gate ui-tenders-approval-gate ui-tenders-authorisation-gate ui-tenders-publication-gate ui-tenders-published-gate ui-tenders-addendum-gate ui-tenders-cancel-gate ui-tenders-history-gate ui-tenders-fidelity-gate ui-tenders-release-evidence-gate ui-system-setup-procurement-settings-gate ui-system-setup-fiscal-years-gate ui-system-setup-access-gate help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke seed-canonical seed-canonical-dry-run seed-canonical-validate ui-smoke tender-templates-bundle-gate ui-workspace-pattern-gate ui-strategy-gate ui-strategy-fidelity-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-system-setup-fidelity-gate ui-budget-fidelity-gate ui-budget-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-departmental-gate ui-planning-fidelity-gate ui-planning-release-evidence-gate ui-planning-annual-plan-gate ui-planning-item-gate ui-planning-finance-gate ui-planning-governance-gate ui-planning-publication-gate planning-requisition-gate planning-seed-gate ui-req-workspace-gate ui-req-start-gate ui-req-editor-a-gate ui-req-editor-b-gate ui-req-department-gate ui-req-procurement-gate ui-req-authorised-gate ui-req-fidelity-gate ui-req-release-evidence-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate vue-desk-bundle-translation-binding-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
 .PHONY:
 
 help:
@@ -35,15 +35,18 @@ help:
 	@echo "  make ui-smoke — Phase La: npm run test:ui:smoke (needs Node, running site, apps/kentender_v1/.env.ui)"
 	@echo "  make ui-workspace-pattern-gate — workspace contract tests (selection, scroll, anti-flicker)"
 	@echo "  make ui-strategy-gate — STR-CHG-001 v1.8 §16.2 browser journeys (author, approver, access states) on the §14 profiles"
-	@echo "  make ui-strategy-fidelity-gate — Strategy screens match the v1.8 STR-DES artboards: landmark order measured from the artboard render (FU-01)"
+	@echo "  make ui-strategy-fidelity-gate — Strategy screens match the v1.8 STR-DES artboards: landmark text order AND container structure"
 	@echo "  make ui-stitch-desk-chrome-gate — Shared Stitch Desk chrome baseline (Win98/select/Espresso) — required before Stitch Desk UI Done"
 	@echo "  make ui-industry-design-gate — Industry design system is canonical (AGENTS.md §6.6): kt-industry root class + no forked token files + computed-style parity"
-	@echo "  make artboard-provenance-gate — every 'ported ... from X.dc.html' header names a file that exists and predates the component's last edit (informational until Departmental Needs / Procurement Planning remediation clears it)"
-	@echo "  make ui-system-setup-fidelity-gate — System setup screens match their .dc.html artboards: landmark order + geometry measured from the artboard render"
+	@echo "  make ui-structure-gate — the containers each screen is built from match its .dc.html board, and the shared vocabulary rules hold (no browser)"
+	@echo "  make ui-visual-gate — visual references for Departmental Needs and Procurement Planning at 1440x1024"
+	@echo "  make ui-fidelity-gate — everything that compares a screen against its board: structure, landmarks, provenance, visual"
+	@echo "  make artboard-provenance-gate — every 'ported ... from X.dc.html' header names a file that exists and predates the component's last edit (informational: one open finding — the Requisitions fidelity spec names a board that was renamed)"
+	@echo "  make ui-system-setup-fidelity-gate — System setup screens match their .dc.html artboards: landmark text order (geometry is NOT enforced — see AGENTS.md 6.6)"
 	@echo "  make ui-system-setup-procurement-settings-gate — PLN-CHG-001 v1.18 C01–C04: System setup component tests + the Procurement settings browser spec (Administrator + refused business user), test funding source purged after"
 	@echo "  make ui-system-setup-fiscal-years-gate — CFG-CHG-002 v0.11 C02: Financial years cross-year replacement, expiry and stale-write recovery browser specs"
 	@echo "  make ui-system-setup-access-gate — CFG-CHG-002 v0.11 §6/§11.1: who may use System setup, the refusal state, sub-path durability, narrow/200% and keyboard focus"
-	@echo "  make ui-budget-fidelity-gate — BUD-CHG-001 v1.9: Budget & Funding screens match their reconciled .dc.html boards, state by state (landmark order)"
+	@echo "  make ui-budget-fidelity-gate — BUD-CHG-001 v1.9: Budget & Funding screens match their reconciled .dc.html boards, state by state (landmark text order AND container structure)"
 	@echo "  make ui-budget-gate — BUD-CHG-001 v1.9: the five Budget browser journeys (workspace, officer, approver, closure, access), single worker"
 	@echo "  make ui-create-demand-strategy-gate — (retired) DIA create-demand gate; no-op until Demands MVP-1"
 	@echo "  make ui-civic-ledger-queue-gate — Civic Ledger queue/list contract (chrome, filters, table footer)"
@@ -265,19 +268,60 @@ ui-industry-design-gate:
 # still exists, and the component's own last commit must not predate that
 # file's first appearance — the exact defect class found in Procurement
 # Planning's stale v1.24 reconciliation (a component edited before its
-# claimed artboard was ever added to the repo). Informational until the
-# Departmental Needs / Procurement Planning remediation drives it to zero,
-# then it joins the default gate chain.
+# claimed artboard was ever added to the repo). Check C additionally reads the
+# design-fidelity SPECS, not just component headers: a spec that opens a board
+# by a path that no longer exists fails every test in its serial describe on
+# ERR_FILE_NOT_FOUND, which is how the Requisitions fidelity suite stopped
+# comparing anything against a board without anyone noticing.
+#
+# Informational, and blocked on exactly one open finding: requisitions-fidelity
+# .spec.ts still names 'REQ-CHG-001 Artboards.dc.html', renamed to
+# 'Requisitions - Design Board.dc.html'. Re-port that spec against the new
+# board and this target joins the default gate chain.
 artboard-provenance-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests \
 		--module kentender_core.tests.test_artboard_provenance_gate
 
+# The structural half of design fidelity (AGENTS.md §6.6). The landmark gates
+# compare the artboard's ordered landmark *text*; this compares what the screen
+# is built out of — the containers the board draws and how they nest, which no
+# text comparison can see. Runs in Node over the artboard markup and a mounted
+# component: no site, no login, seconds.
+#
+# Covers the comparator itself plus the two modules that have component test
+# projects. Strategy and Budget have no such project, so their structural
+# comparison runs in the browser only, inside ui-fidelity-gate below — which is
+# why that target now also names Strategy's fidelity spec: it is the one that
+# lives outside tests/ui/smoke/design-fidelity/ and was being missed.
+ui-structure-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project design-fidelity
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning --project departmental-needs-components
+
+# Visual references. Nothing ran the Departmental Needs baselines before this
+# target existed, so a spacing or rule change could only be found by a person
+# looking at the screen.
+ui-visual-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/departmental_needs/departmental-needs-visual.spec.ts \
+		tests/ui/smoke/planning/planning-visual.spec.ts
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site
+
+# Everything that compares a screen against its board, in one place: structure,
+# landmarks, provenance and visual references.
+ui-fidelity-gate: ui-structure-gate artboard-provenance-gate
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/design-fidelity \
+		tests/ui/smoke/strategy/strategy-fidelity.spec.ts
+	$(MAKE) ui-visual-gate
+
 # Design fidelity (AGENTS.md §6.6 enforcement) — every System setup screen is
 # diffed against its .dc.html artboard rendered in the same browser: the
 # artboard's ordered structural landmarks must appear in order in the live
-# page, and geometry measured off the artboard (column ratios, row heights,
-# 520px dialogs, grid label columns, truncation of named fixture text) must
-# match within tolerance. Seeds the KT-STD §8 world first (idempotent).
+# page. This gate compares landmark TEXT only. It does not compare containers
+# (that is ui-structure-gate) and it does not measure geometry at all: the
+# geometry probes in designFidelity.ts have zero call sites, and this comment
+# claimed otherwise for three weeks. Seeds the KT-STD §8 world first
+# (idempotent).
 ui-system-setup-fidelity-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.site_setup.run
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \

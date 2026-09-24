@@ -35,7 +35,8 @@
 
 		<details class="kt-disclosure" data-testid="dpp-funding-requirement-details">
 			<summary class="kt-disclosure-head">
-				<span class="kt-disclosure-title">View requirement details</span>
+				<div class="kt-disclosure-title-row"><span class="kt-disclosure-title">View requirement details</span></div>
+				<svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg>
 			</summary>
 			<div class="kt-disclosure-body">
 				<div class="kt-meta-row">

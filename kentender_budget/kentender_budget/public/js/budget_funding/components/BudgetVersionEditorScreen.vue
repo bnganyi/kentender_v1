@@ -498,21 +498,17 @@ function restoreLine(o) {
 
 				<KtErrorBanner :message="actingError" style="margin-bottom: 12px" @dismiss="actingError = null" />
 				<div v-if="stale" class="kt-notice is-warning" style="margin-bottom: 12px" data-testid="bud-editor-stale">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
 					<div class="kt-notice-body">{{ __("This budget has changed since you opened it.") }} <a href="#" @click.prevent="loadDraft({ quiet: true })">{{ __("Refresh to see the current details") }}</a></div>
 				</div>
 				<div v-if="savedNotSubmitted" class="kt-notice is-warning" style="margin-bottom: 12px" data-testid="bud-editor-saved-not-submitted">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
 					<div class="kt-notice-body"><strong>{{ __("Your changes were saved, but the allocation was not submitted.") }}</strong> {{ __("Resolve the items below and submit again.") }}</div>
 				</div>
 				<ul v-if="blockers.length" class="kt-card kt-blueprint" style="margin: 0 0 12px; padding: 14px 14px 14px 30px; font-size: 14px" data-testid="bud-editor-blockers">
 					<li v-for="b in blockers" :key="b.code">{{ b.message }}</li>
 				</ul>
 
-				<div v-if="draft.returned" class="kt-notice is-warning" style="margin-bottom: 16px" data-testid="bud-editor-returned">
-					<div class="kt-notice-body">
-						<strong>{{ __("Changes requested by {0}, {1}.", [draft.returned.by, draft.returned.at]) }}</strong> {{ returnedReasonPunctuated }}
-						{{ __("Correct the draft and submit it again; the earlier submission and its document are retained.") }}
-					</div>
-				</div>
 
 				<div class="kt-tabs" role="tablist" style="margin-bottom: 0">
 					<div class="kt-tab" role="tab" :aria-selected="tab === 'details'" tabindex="0" data-testid="bud-editor-tab-overview" @click="switchTab('details')" @keydown.enter="switchTab('details')">{{ __("Approval details") }}</div>
@@ -521,9 +517,18 @@ function restoreLine(o) {
 				</div>
 				</div>
 
+				<div v-if="draft.returned" class="kt-notice is-warning" style="margin: 0; border-top: 1px solid var(--kt-color-divider)" data-testid="bud-editor-returned">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+					<div class="kt-notice-body">
+						<strong>{{ __("Changes requested by {0}, {1}.", [draft.returned.by, draft.returned.at]) }}</strong> {{ returnedReasonPunctuated }}
+						{{ __("Correct the draft and submit it again; the earlier submission and its document are retained.") }}
+					</div>
+				</div>
+
 				<!-- Approval details (BUD-DES-14 / BUD-DES-02 fields) -->
 				<template v-if="tab === 'details'">
 					<div v-if="isSuccessor" class="kt-notice is-info" style="margin: 0; border-top: 1px solid var(--kt-color-divider)" data-testid="bud-editor-successor-note">
+						<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
 						<div class="kt-notice-body">{{ __("The current allocation stays in use until this update is approved.") }}</div>
 					</div>
 					<div style="padding: 22px 24px; border-top: 1px solid var(--kt-color-divider)">
@@ -591,6 +596,9 @@ function restoreLine(o) {
 							<div class="kt-kpi-card"><svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 7V4H6l6 8-6 8h12v-3" /></svg><div class="kt-kpi-value">{{ formatKes(previewTotals.entered, currency) }}</div><div class="kt-kpi-sub">{{ __("Total entered") }}</div></div>
 						</div>
 						<div class="kt-notice" :class="previewTotals.match ? 'is-live' : previewTotals.still ? 'is-warning' : 'is-critical'" style="margin: 0" data-testid="bud-editor-reconcile">
+							<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" v-if="previewTotals.match"><path d="M20 6L9 17l-5-5"/></svg>
+							<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" v-else-if="previewTotals.still"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+							<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" v-else><path d="M18 6L6 18M6 6l12 12"/></svg>
 							<div class="kt-notice-body">
 								<template v-if="previewTotals.match">{{ __("Budget lines match the approved allocation.") }}</template>
 								<template v-else-if="previewTotals.still">{{ __("Amount still to assign: {0}", [formatKes(previewTotals.still, currency)]) }}</template>

@@ -7,6 +7,7 @@ import {
 	PLANNER,
 	collectConsoleErrors,
 	contextValue,
+	scopeLine,
 	expectReady,
 	gotoPlanning,
 	resetFixture,
@@ -75,8 +76,8 @@ test.describe("Publication, recovery and the plan in force", () => {
 		// §5.2.3 — the guarded successor start, from the workspace.
 		await page.locator('[data-testid="pln-prepare-update"]').click();
 		await expectReady(page, "plan");
-		await expect(contextValue(page, "ppl-context", "Version")).toHaveText("2");
-		await expect(contextValue(page, "ppl-context", "Status")).toHaveText("Draft update");
+		await expect(scopeLine(page, "ppl-context")).toContainText("Version 2");
+		await expect(scopeLine(page, "ppl-context")).toContainText("Draft update");
 		await expect(page.locator('[data-testid="ppl-purchase-row"]')).toHaveCount(1);
 
 		await gotoPlanning(page);

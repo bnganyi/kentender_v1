@@ -1,5 +1,8 @@
 import { Page, expect } from "@playwright/test";
 import * as path from "path";
+import { JSDOM } from "jsdom";
+
+import { compareSkeletons, formatMismatch, skeletonOf } from "../fidelity/skeleton.js";
 
 /**
  * Design-fidelity gate helpers (AGENTS.md §6.6).
@@ -462,4 +465,47 @@ export async function expectLayoutSanity(page: Page, where: string): Promise<voi
 		return found;
 	});
 	expect(problems, `${where}: layout contract`).toEqual([]);
+}
+
+/**
+ * The structural half of the gate: what containers a screen is built from and
+ * how they nest — the question `landmarks()` above cannot ask, because it
+ * compares the *text* of headings, labels and buttons and discards every
+ * element and every nesting relationship (`landmarks`, lines 77-92).
+ *
+ * Three defect classes live in that blind spot, and all three have shipped:
+ * a container dropped (a wrapper has no text of its own), an element demoted
+ * to another element with the same words, and anything without text at all —
+ * a disclosure chevron is an SVG. See `tests/ui/fidelity/skeleton.js` for the
+ * comparator and the reasoning; it runs in Node over HTML, so the component
+ * tests and this browser gate use one implementation.
+ *
+ * Usage mirrors the landmark pair already at every call site:
+ *
+ *     const artHtml = await outerHtml(art, artScope);
+ *     await expectStructure(page, LIVE, artHtml, "U07", DEPARTURES["…#U07"]);
+ */
+export async function outerHtml(page: Page, scope: string): Promise<string> {
+	return page.evaluate((sel) => {
+		const el = document.querySelector(sel);
+		return el ? el.outerHTML : "";
+	}, scope);
+}
+
+export async function expectStructure(
+	page: Page,
+	liveScope: string,
+	artboardHtml: string,
+	label: string,
+	departures: unknown[] = []
+): Promise<void> {
+	const liveHtml = await outerHtml(page, liveScope);
+	expect(liveHtml, `${label}: live scope ${liveScope} not found`).not.toBe("");
+	const root = (html: string) => new JSDOM(`<body>${html}</body>`).window.document.body.firstElementChild!;
+
+	const result = compareSkeletons(skeletonOf(root(artboardHtml)), skeletonOf(root(liveHtml)), {
+		departures: departures as never[],
+	});
+	const message = formatMismatch(label, result);
+	expect(message, message).toBe("");
 }

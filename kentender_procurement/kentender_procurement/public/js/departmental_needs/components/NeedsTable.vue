@@ -25,7 +25,10 @@
 						<template v-if="column.key === 'need'">
 							<span style="font-weight: 500">{{ row.title || "Untitled need" }}</span>
 							<br />
-							<span style="color: var(--kt-color-neutral-600); font-size: 13px">{{
+							<!-- Fixture-build data: a generated reference differs on every
+							     build, so an unmasked visual baseline churns on run order
+							     rather than on design (found live 24 Sep 2026). -->
+							<span style="color: var(--kt-color-neutral-600); font-size: 13px" data-volatile="true">{{
 								row.reference
 							}}</span>
 						</template>

@@ -87,6 +87,15 @@ describe("EditorShell — §13.1/§13.5 shared chrome", () => {
 		expect(buttons[1].attributes("disabled")).toBeDefined();
 	});
 
+	// A reader who cannot act on this Draft must not be offered Save draft
+	// or Continue — the command would only refuse it server-side (found
+	// live 23 Sep 2026).
+	it("replaces the default footer with a Read only notice when the caller cannot edit", () => {
+		const w = make({ canEdit: false });
+		expect(w.find(".req-editor-footer button").exists()).toBe(false);
+		expect(w.find('[data-testid="req-read-only"]').text()).toBe("Read only");
+	});
+
 	it("shows the Request-upstream-correction trigger only when the server permits it, and emits on click", async () => {
 		const hidden = make();
 		expect(hidden.find('[data-testid="req-upstream-trigger"]').exists()).toBe(false);

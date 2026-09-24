@@ -57,7 +57,11 @@
 					>View certification</button>
 				</div>
 			</div>
-			<div v-if="showCertification" class="kt-disclosure-body" data-testid="pln-review-certification">
+			<!-- Not a disclosure: U06 draws no disclosure at all, and this block
+			     had a body class with neither a `.kt-disclosure` around it nor a
+			     head to open it — a class borrowed for its padding (found live 24
+			     Sep 2026). The board draws certification as a plain group. -->
+			<div v-if="showCertification" class="kt-group" data-testid="pln-review-certification">
 				<div v-if="context.submitted_capacity" class="kt-meta-row" style="margin-bottom: var(--kt-space-3)">
 					<div><span class="kt-label">Capacity</span><span class="kt-meta-value">{{ context.submitted_capacity }}</span></div>
 				</div>

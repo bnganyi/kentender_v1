@@ -78,7 +78,7 @@ function task(overrides = {}) {
 			statement_as_at: "4 Dec 2026, 10:00 EAT",
 			at_approval: { actor_name: "Josphat Mwangi", decided_at_display: "4 Dec 2026, 10:00 EAT" },
 		},
-		reservation: { required_allocation_display: "KES 48,000,000", planned_qualifying_display: "KES 50,000,000", budget_basis_reference: "MOH-BUD-2027-001", budget_version_display: "Version 1" },
+		reservation: { eligible_value_display: "KES 464,980", required_allocation_display: "KES 139,494", planned_qualifying_display: "KES 150,000", shortfall_or_met_display: "Required allocation met" },
 		preparation_signature: {
 			actor_name: "Charles Mutiso",
 			capacity: "Head of Procurement Function",
@@ -124,10 +124,13 @@ describe("ReviewScreen — U11-AO shared composition", () => {
 		expect(summary.text()).toContain("Estimated cost");
 		expect(summary.text()).toContain("Purchases");
 		expect(summary.text()).toContain("Departments");
-		const checks = w.find('[data-testid="rev-checks"]');
-		expect(checks.text()).toContain("Within approved budget");
-		expect(checks.text()).toContain("Required allocation met");
-		expect(checks.text()).toContain("All purchases meet departmental deadlines");
+		// The board states the totals and the checks as one row of six facts,
+		// not two rows — the checks are part of the summary, not a section
+		// after it (found live 24 Sep 2026).
+		expect(summary.text()).toContain("Within approved budget");
+		expect(summary.text()).toContain("Required allocation met");
+		expect(summary.text()).toContain("All purchases meet departmental deadlines");
+		expect(w.findAll('[data-testid="rev-summary"]')).toHaveLength(1);
 	});
 
 	it("says there are no blocking issues only when there are none", () => {
@@ -296,5 +299,22 @@ describe("ReviewScreen — a decision never precedes a hidden issue", () => {
 		expect(w.find('[data-testid="rev-late-reason"]').exists()).toBe(true);
 		// No backdating control.
 		expect(w.findAll('input[type="date"]')).toHaveLength(0);
+	});
+});
+
+// The approver used to be shown the approved budget Version under the heading
+// "Budget basis", right beside the required allocation, which read as though
+// the budget were the measure of the obligation. It is the ceiling the plan
+// fits inside; the Funding result above is where that belongs.
+describe("ReviewScreen — what the reserved-procurement target is a share of", () => {
+	it("names the planned value as the basis, not the budget", () => {
+		const w = make();
+		const body = w.find('[data-testid="rev-plan-checks"]').text();
+		expect(body).toContain("Eligible planned procurement");
+		expect(body).toContain("KES 464,980");
+		expect(body).toContain("Required allocation");
+		expect(body).toContain("KES 139,494");
+		expect(body).toContain("Still required");
+		expect(body).not.toContain("Budget basis");
 	});
 });

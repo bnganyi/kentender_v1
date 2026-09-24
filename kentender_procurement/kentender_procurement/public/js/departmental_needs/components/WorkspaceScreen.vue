@@ -78,7 +78,7 @@
 						<span>{{ context.financial_year_label || context.financial_year || "All financial years" }}</span>
 						<template v-if="canCreate && submission.open && submission.closes_at">
 							<span class="text-muted">·</span>
-							<span class="text-muted">New submissions open until {{ formatInstant(submission.closes_at) }}</span>
+							<span class="text-muted" data-volatile="true">New submissions open until {{ formatInstant(submission.closes_at) }}</span>
 						</template>
 					</div>
 				</div>
@@ -137,7 +137,7 @@
 				>
 					<div style="flex: 1; min-width: 0">
 						<div style="font-family: var(--kt-font-heading); font-weight: 600; font-size: 19px">{{ row.title || "Untitled need" }}</div>
-						<div class="text-muted" style="font-size: 12px; margin-top: 2px">{{ row.reference }}</div>
+						<div class="text-muted" style="font-size: 12px; margin-top: 2px" data-volatile="true">{{ row.reference }}</div>
 						<div style="display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; color: var(--kt-color-neutral-800)">
 							<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--kt-color-neutral-700)"><rect width="20" height="5" x="2" y="3" rx="1" /><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" /><path d="M10 12h4" /></svg>
 							<span>{{ row.quantity_label }}</span>
@@ -177,7 +177,7 @@
 				>
 					<div style="flex: 1; min-width: 0">
 						<div style="font-family: var(--kt-font-heading); font-weight: 600; font-size: 20px">{{ row.title || "Untitled need" }}</div>
-						<div class="text-muted" style="font-size: 12px; margin-top: 2px">{{ row.reference }}</div>
+						<div class="text-muted" style="font-size: 12px; margin-top: 2px" data-volatile="true">{{ row.reference }}</div>
 						<div style="display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 13px; color: var(--kt-color-neutral-800)">
 							<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--kt-color-accent-700)"><path d="M16 3h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2" /><rect width="8" height="4" x="8" y="2" rx="1" ry="1" /><path d="m9 14 2 2 4-4" /></svg>
 							<span>{{ decisionNarrative(row) }}</span>

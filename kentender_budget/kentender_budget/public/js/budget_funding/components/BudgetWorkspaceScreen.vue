@@ -330,6 +330,7 @@ function openLine(line) {
 						</div>
 						<p style="font-size: 14px; margin: 0 0 12px" class="kt-muted">{{ pendingCopy.body }}</p>
 						<div v-if="pending.is_returned && pending.return" class="kt-notice is-warning" style="margin-bottom: 12px" data-testid="budget-pending-return">
+							<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
 							<div class="kt-notice-body">
 								<strong>{{ __("Changes requested by {0}, {1}.", [pending.return.by, pending.return.at_display]) }}</strong>
 								{{ pending.return.reason }}
@@ -368,6 +369,7 @@ function openLine(line) {
 								<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Approval date") }}</div><div style="font-size: 14px">{{ workspace.version.approval_date_display }}</div></div>
 							</div>
 							<div v-if="isClosed" class="kt-notice is-info" style="margin-top: 14px" data-testid="budget-closed-note">
+								<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
 								<div class="kt-notice-body">
 									<strong>{{ __("Closed by {0}, {1}.", [workspace.closure.closed_by, workspace.closure.closed_at_display]) }}</strong>
 									{{ __("No new reservations, conversions or commitment increases. Existing commitments and history remain.") }}

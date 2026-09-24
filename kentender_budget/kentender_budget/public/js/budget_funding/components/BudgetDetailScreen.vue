@@ -174,6 +174,11 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 				</div>
 				</div>
 
+				<div v-if="actions.includes('close_budget') && detail.closure.fy_end_date_display" class="kt-notice is-info" style="margin: 0; border-top: 1px solid var(--kt-color-divider)" data-testid="budget-detail-close-note">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
+					<div class="kt-notice-body">{{ __("This budget can be closed only after {0}.", [detail.closure.fy_end_date_display]) }} <a href="#" @click.prevent="go(budgetIdParam, 'close')">{{ __("Check closure") }}</a></div>
+				</div>
+
 				<!-- Overview (BUD-DES-04/04A + closure notes §11.18) -->
 				<template v-if="tab === 'overview'">
 					<div v-if="isClosed" style="padding: 22px 24px; border-top: 1px solid var(--kt-color-divider)" data-testid="budget-detail-closure">
@@ -227,9 +232,6 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 							<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Submitted by") }}</div><div style="font-size: 14px">{{ detail.activation.submitted_by || "—" }}</div></div>
 							<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Approved and activated by") }}</div><div style="font-size: 14px">{{ detail.activation.decided_by || "—" }}</div></div>
 							<div><div class="kt-label" style="margin-bottom: 3px">{{ __("Activated") }}</div><div style="font-size: 14px">{{ detail.activation.decided_at || "—" }}</div></div>
-						</div>
-						<div v-if="actions.includes('close_budget') && detail.closure.fy_end_date_display" class="kt-notice is-info" style="margin-top: 16px" data-testid="budget-detail-close-note">
-							<div class="kt-notice-body">{{ __("This budget can be closed only after {0}.", [detail.closure.fy_end_date_display]) }} <a href="#" @click.prevent="go(budgetIdParam, 'close')">{{ __("Check closure") }}</a></div>
 						</div>
 					</div>
 				</template>
@@ -288,6 +290,7 @@ const barReserved = computed(() => (detail.value?.positions.approved ? Math.min(
 					</div>
 					<div v-if="!activity" style="padding: 0 24px 20px"><div class="kt-skel" style="width: 240px; height: 16px"></div></div>
 					<div v-else-if="!activity.rows.length" class="kt-notice is-info" style="margin: 0 24px 20px" data-testid="budget-detail-activity-empty">
+						<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
 						<div class="kt-notice-body">
 							<template v-if="activityFilterLine || activityFilterEvent">{{ __("No funding events match these filters.") }} <a href="#" data-testid="budget-detail-activity-clear-filters" @click.prevent="clearActivityFilters">{{ __("Clear filters") }}</a></template>
 							<template v-else>{{ __("No funding activity has been recorded for this budget.") }}</template>

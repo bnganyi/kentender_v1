@@ -326,6 +326,7 @@ function nodePath(node) {
 			<div v-for="i in 5" :key="i" class="kt-skel" style="height: 16px; margin-bottom: 10px"></div>
 		</div>
 		<div v-else-if="notFound" class="kt-notice is-warning" data-testid="str-not-found">
+			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
 			<div class="kt-notice-body"><strong>{{ __("This plan record is not available to you.") }}</strong></div>
 		</div>
 		<div v-else-if="forbidden" class="kt-notice is-critical" data-testid="str-forbidden">
@@ -337,6 +338,7 @@ function nodePath(node) {
 		</div>
 		<div v-else-if="loadError && !workspace" data-testid="str-error">
 			<div class="kt-notice is-warning">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
 				<div class="kt-notice-body"><strong>{{ __("Strategy information could not be loaded.") }}</strong> {{ __("Try again. If the problem continues, contact KenTender support.") }}</div>
 			</div>
 			<div style="margin-top: 10px"><button type="button" class="kt-btn kt-btn-secondary" @click="loadWorkspace">{{ __("Try again") }}</button></div>
@@ -380,6 +382,7 @@ function nodePath(node) {
 
 				<!-- §11.3 — pending update, separate from the current facts. -->
 				<div v-if="pendingUpdate && tab !== 'structure'" class="kt-notice" style="margin: 0 20.4px 20.4px" data-testid="str-pending-update" :data-kind="pendingUpdate.kind">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
 					<div class="kt-notice-body">
 						<strong>{{ pendingUpdate.kind === 'draft' ? __("Update in progress.") : __("Update awaiting Strategy Approver review.") }}</strong>
 						{{ __("The current plan remains in use until the changes are approved.") }}
@@ -388,15 +391,18 @@ function nodePath(node) {
 					</div>
 				</div>
 				<div v-if="version && version.status === 'Draft' && version.return_reason" class="kt-notice is-warning" style="margin: 0 20.4px 20.4px" data-testid="str-return-reason">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
 					<div class="kt-notice-body"><strong>{{ __("Changes requested.") }}</strong> {{ version.return_reason }}</div>
 				</div>
 				<div v-if="version && version.status === 'Submitted for approval' && tab !== 'structure'" class="kt-notice" style="margin: 0 20.4px 20.4px" data-testid="str-awaiting-review">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
 					<div class="kt-notice-body">
 						<strong>{{ __("Awaiting Strategy Approver review.") }}</strong> {{ __("No further edits until an authorised Return.") }}
 						<a v-if="workspace.routes.approval" href="#" data-testid="str-open-approval" @click.prevent="navigate(workspace.routes.approval)">{{ __("Open approval task") }}</a>
 					</div>
 				</div>
-				<div v-if="tab === 'structure' && editable && isUpdate" class="kt-notice" style="margin: 0 20.4px 20.4px" data-testid="str-editor-notice">
+				<div v-if="tab === 'structure' && editable && isUpdate" class="kt-notice is-info" style="margin: 0 20.4px 20.4px" data-testid="str-editor-notice">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
 					<div class="kt-notice-body">{{ __("The current plan remains in use until these changes are approved.") }}</div>
 				</div>
 
@@ -476,6 +482,7 @@ function nodePath(node) {
 
 						<!-- §11.3 readiness — actual actionable items, not a green checklist -->
 						<div v-if="isDraft && readinessFailures.length" class="kt-notice is-warning" style="margin: 0 20.4px 20.4px" data-testid="str-readiness-failures">
+							<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
 							<div class="kt-notice-body">
 								<strong>{{ __("Before this plan can be submitted:") }}</strong>
 								<span v-for="f in readinessFailures" :key="f.rule" style="display: block">{{ f.message }}</span>
@@ -524,42 +531,43 @@ function nodePath(node) {
 						<VersionTimeline :events="history" />
 					</div>
 				</template>
-			</div>
-
-			<template v-if="tab === 'structure'">
-				<StructureEditor
-					v-if="editable"
-					ref="editorRef"
-					:plan="workspace.plan"
-					:version="version"
-					:editable="true"
-					@dirty="editorDirty = $event"
-					@saved="onSaved"
-					@submitted="onSubmitted"
-				/>
-				<div v-else class="kt-editor-grid">
-					<div class="kt-card kt-blueprint" data-testid="str-hierarchy">
-						<div class="kt-card-title" style="margin-bottom: 4px">{{ __("Plan structure") }}</div>
-						<div style="font-size: 12px; color: var(--kt-color-neutral-700); margin-bottom: 13.6px">{{ __("Read-only") }} &middot; {{ version.status_label }}</div>
-						<StructureTree :nodes="readTree.tree" :read-only="true" :selected-id="readSelected?.id" @select="readSelected = $event" />
-						<p v-if="!readTree.tree.length" class="kt-muted" style="margin: 0" data-testid="str-no-structure">{{ __("No structure recorded.") }}</p>
-					</div>
-					<div class="kt-card kt-blueprint" style="position: sticky; top: 80px" data-testid="str-node-panel">
-						<template v-if="readSelected">
-							<div class="kt-card-title" style="margin-bottom: 4px" data-testid="str-selected-type">{{ typeLabel(readSelected.node_type) }}</div>
-							<div v-if="nodePath(readSelected)" style="font-size: 12px; color: var(--kt-color-neutral-700); margin-bottom: 13.6px">{{ nodePath(readSelected) }}</div>
-							<div v-if="readSelected.node_type === 'Performance Target'"><div class="kt-label">{{ __("Target") }}</div><div style="font-size: 14px; margin-top: 3px">{{ readSelected.result_label }} &middot; {{ readSelected.period_label }}</div></div>
-							<template v-else-if="readSelected.node_type === 'Performance Indicator'">
-								<div><div class="kt-label">{{ __("Indicator") }}</div><div style="font-size: 14px; margin-top: 3px">{{ readSelected.title }}</div></div>
-								<div style="margin-top: 10px"><div class="kt-label">{{ __("How it is measured") }}</div><div style="font-size: 13px; margin-top: 3px; color: var(--kt-color-neutral-800)">{{ readSelected.definition }}</div></div>
-								<div style="margin-top: 10px"><div class="kt-label">{{ __("Unit") }}</div><div style="font-size: 14px; margin-top: 3px">{{ readSelected.unit }}</div></div>
+				<template v-if="tab === 'structure'">
+					<div style="padding: 20.4px">
+					<StructureEditor
+						v-if="editable"
+						ref="editorRef"
+						:plan="workspace.plan"
+						:version="version"
+						:editable="true"
+						@dirty="editorDirty = $event"
+						@saved="onSaved"
+						@submitted="onSubmitted"
+					/>
+					<div v-else class="kt-editor-grid">
+						<div data-testid="str-hierarchy">
+							<div class="kt-card-title" style="margin-bottom: 4px">{{ __("Plan structure") }}</div>
+							<div style="font-size: 12px; color: var(--kt-color-neutral-700); margin-bottom: 13.6px">{{ __("Read-only") }} &middot; {{ version.status_label }}</div>
+							<StructureTree :nodes="readTree.tree" :read-only="true" :selected-id="readSelected?.id" @select="readSelected = $event" />
+							<p v-if="!readTree.tree.length" class="kt-muted" style="margin: 0" data-testid="str-no-structure">{{ __("No structure recorded.") }}</p>
+						</div>
+						<div style="position: sticky; top: 80px" data-testid="str-node-panel">
+							<template v-if="readSelected">
+								<div class="kt-card-title" style="margin-bottom: 4px" data-testid="str-selected-type">{{ typeLabel(readSelected.node_type) }}</div>
+								<div v-if="nodePath(readSelected)" style="font-size: 12px; color: var(--kt-color-neutral-700); margin-bottom: 13.6px">{{ nodePath(readSelected) }}</div>
+								<div v-if="readSelected.node_type === 'Performance Target'"><div class="kt-label">{{ __("Target") }}</div><div style="font-size: 14px; margin-top: 3px">{{ readSelected.result_label }} &middot; {{ readSelected.period_label }}</div></div>
+								<template v-else-if="readSelected.node_type === 'Performance Indicator'">
+									<div><div class="kt-label">{{ __("Indicator") }}</div><div style="font-size: 14px; margin-top: 3px">{{ readSelected.title }}</div></div>
+									<div style="margin-top: 10px"><div class="kt-label">{{ __("How it is measured") }}</div><div style="font-size: 13px; margin-top: 3px; color: var(--kt-color-neutral-800)">{{ readSelected.definition }}</div></div>
+									<div style="margin-top: 10px"><div class="kt-label">{{ __("Unit") }}</div><div style="font-size: 14px; margin-top: 3px">{{ readSelected.unit }}</div></div>
+								</template>
+								<div v-else><div class="kt-label">{{ typeLabel(readSelected.node_type) }}</div><div style="font-size: 14px; margin-top: 3px">{{ readSelected.title }}</div></div>
 							</template>
-							<div v-else><div class="kt-label">{{ typeLabel(readSelected.node_type) }}</div><div style="font-size: 14px; margin-top: 3px">{{ readSelected.title }}</div></div>
-						</template>
-						<p v-else class="kt-muted" style="margin: 0">{{ __("Select an item to read its complete facts.") }}</p>
+							<p v-else class="kt-muted" style="margin: 0">{{ __("Select an item to read its complete facts.") }}</p>
+						</div>
 					</div>
-				</div>
-			</template>
+					</div>
+				</template>
+			</div>
 		</template>
 
 		<ConfirmDialog

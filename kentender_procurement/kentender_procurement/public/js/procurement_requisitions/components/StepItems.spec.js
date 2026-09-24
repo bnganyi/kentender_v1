@@ -6,6 +6,7 @@ import { mount } from "@vue/test-utils";
 import StepItems from "./StepItems.vue";
 
 const EDITOR = {
+	permitted_actions: { can_edit: true },
 	package: {
 		items: [
 			{ requisition_item_id: "RQI-001", plan_item_line_id: "DL-001", equipment_category: "Laptop", item_name: "Business laptops", quantity: 100, unit: "Each", intended_use: "Clinical training for Human Resources Management and Development staff", delivery_location: "Nairobi", latest_delivery_date: "2027-09-30" },
@@ -82,6 +83,21 @@ describe("StepItems — REQ-DES-04", () => {
 		const row = banner.findAll("tbody tr")[0];
 		await row.findAll("a")[1].trigger("click");
 		expect(w.emitted("remove-requirement")[0][0].technical_requirement_id).toBe("TECH-001");
+	});
+
+	// A reader who cannot act on this Draft (e.g. a department reader with
+	// no author or Head of User Department assignment on it) reaches this
+	// same screen but must not be offered Add/Edit/Remove/Confirm — the
+	// server would only refuse them (found live 23 Sep 2026).
+	it("offers no item or requirement actions to a reader who cannot edit", () => {
+		const w = make({ permitted_actions: { can_edit: false } });
+		expect(w.find('[data-testid="req-add-item"]').exists()).toBe(false);
+		const row = w.findAll('[data-testid="req-items-table"] tbody tr')[0];
+		expect(row.findAll("a")).toHaveLength(0);
+		const banner = w.find('[data-testid="req-baseline-banner-RQI-001"]');
+		expect(banner.findAll("a")).toHaveLength(0);
+		// The status itself is not an action — it still shows.
+		expect(banner.find(".kt-status").text()).toBe("Proposed");
 	});
 
 	it("omits every banner once nothing is left Proposed", () => {

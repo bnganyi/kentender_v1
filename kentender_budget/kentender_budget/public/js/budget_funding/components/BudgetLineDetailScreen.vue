@@ -123,7 +123,8 @@ function pad(i) {
 						</div>
 						<div class="kt-bar" style="margin-bottom: 8px"><i class="kt-bar-committed" :style="{ width: barCommitted + '%' }"></i><i class="kt-bar-reserved" :style="{ width: barReserved + '%' }"></i></div>
 						<p class="kt-muted" style="font-size: 12px; margin: 0" data-testid="bud-line-as-at">{{ __("Funding position as at {0}", [line.as_at_display]) }}</p>
-						<div v-if="line.explanation" class="kt-notice is-info" style="margin-top: 16px" data-testid="bud-line-explanation"><div class="kt-notice-body">{{ line.explanation }}</div></div>
+						<div v-if="line.explanation" class="kt-notice is-info" style="margin-top: 16px" data-testid="bud-line-explanation">
+							<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg><div class="kt-notice-body">{{ line.explanation }}</div></div>
 					</div>
 
 					<div style="padding: 22px 28px; border-bottom: 1px solid var(--kt-color-divider)">
@@ -144,6 +145,7 @@ function pad(i) {
 							{{ __("Active reservations") }}
 						</h3>
 						<div v-if="!line.reservations.length" class="kt-notice is-info" data-testid="bud-line-reservations-empty">
+							<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
 							<div class="kt-notice-body"><strong>{{ __("No active reservations.") }}</strong> {{ __("This Budget Line has no confirmed funding reservations.") }}</div>
 						</div>
 						<div v-else class="kt-record-list" data-testid="bud-line-reservations">
@@ -167,14 +169,22 @@ function pad(i) {
 											<span v-else-if="rsv.requisition_reference" class="kt-muted">{{ rsv.requisition_reference }}</span>
 											<a v-if="rsv.plan_item_url" :href="rsv.plan_item_url" style="margin-left: 12px" @click.stop>{{ __("View Plan Item") }}</a>
 										</span>
-										<span class="kt-record-toggle"><span class="when-closed">{{ __("Show detail") }}</span><span class="when-open">{{ __("Hide detail") }}</span></span>
+										<span class="kt-record-toggle"><span class="when-closed">{{ __("Show detail") }}</span><span class="when-open">{{ __("Hide detail") }}</span><svg class="kt-disclosure-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg></span>
 									</div>
 								</summary>
 								<div class="kt-record-detail" style="padding: 0">
 									<div v-if="rsv.requires_review && rsv.review" class="kt-notice is-warning" style="margin: 14px" data-testid="bud-line-requires-review">
+										<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
 										<div class="kt-notice-body"><strong>{{ __("Requires review — funds remain reserved.") }}</strong> {{ rsv.review.reason }} {{ rsv.review.owner_hint }} {{ __("Nothing is released from this screen.") }}</div>
 									</div>
-									<table class="kt-table">
+									<!-- BUD-DES-06B / §11.19: the four-row reconciliation is the evidence for a
+									     PARTIALLY converted reservation — "original 80m = remaining 20m + converted
+									     60m + released 0". A reservation with nothing converted or released has
+									     nothing to reconcile, and §11.6A asks only for original/remaining, which the
+									     record's own row already states. The board draws this table under hasPartial
+									     alone; it was built unconditional, so a plain reservation showed three rows
+									     of KES 0. -->
+									<table v-if="rsv.converted || rsv.released" class="kt-table">
 										<thead><tr><th>{{ __("Value") }}</th><th class="is-num">{{ __("Amount") }}</th></tr></thead>
 										<tbody>
 											<tr><td>{{ __("Originally reserved") }}</td><td class="is-num">{{ formatKes(rsv.originally_reserved, currency) }}</td></tr>

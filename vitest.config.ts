@@ -113,6 +113,18 @@ export default defineConfig({
 					],
 				},
 			},
+			{
+				// The structural half of design fidelity: the containers a
+				// board draws and how they nest, which the landmark gate in
+				// tests/ui/helpers/designFidelity.ts cannot see because it
+				// compares text. Runs in Node over HTML strings — the same
+				// comparator serves the browser gates.
+				test: {
+					name: "design-fidelity",
+					environment: "node",
+					include: ["tests/ui/fidelity/**/*.spec.js"],
+				},
+			},
 		],
 	},
 });

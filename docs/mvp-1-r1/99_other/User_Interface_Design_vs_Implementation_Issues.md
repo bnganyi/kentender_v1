@@ -35,3 +35,20 @@ A remedy for each mechanism, in the same order:
 **Write tests that name the sentence they're proving.** A test that checks a field exists doesn't catch two screens disagreeing about what that field should say. Tying each acceptance test to the specific spec line it verifies means a reviewer can tell whether the test actually protects the rule, not just the shape of the response.
 
 If I had to pick the one with the most leverage: the first. Almost everything else here would have been caught by someone actually reading the artboard and the spec paragraph next to the finished screen before moving on, since the answer was usually already sitting in writing a few lines away from the mistake.
+# What was actually done about it (24 September 2026)
+
+The remedy above put the most leverage on the first mechanism: *"the fix isn't a new tool, it's actually doing the comparison — reopen the spec paragraph and the artboard image, and read them against the code line by line."*
+
+That was tried and it did not hold. Between it and this note there were five reconciliation passes across Procurement Planning and Departmental Needs, and two mechanical gates. The owner still found deviations on the first screen he looked at, every time he looked.
+
+The reason is narrower than "people forgot". The gate that existed **did** compare against the artboard, but it compared the artboard's ordered landmark **text** — the words in headings, labels, table headers and buttons. Three things are invisible to that, by construction:
+
+- **A container.** A wrapper has no text of its own, so dropping the `.kt-group` around Plan checks changed no landmark.
+- **An element demoted to another element.** "Approval" as a `.kt-label` where the board titles a region with `h2` is the same string in the same position.
+- **Anything without text.** A disclosure chevron is an SVG. Eight disclosure heads had lost both their title row and their chevron.
+
+That is the whole of the "green tests get read as matches-the-design" mechanism, made specific. The defects were not subtle and nobody was careless; the instrument could not see them.
+
+So the remedy changed from a discipline to a check. `tests/ui/fidelity/skeleton.js` reduces both the board and the built screen to their landmark skeletons and compares them as a contract — every container the board draws, in order, under the same chain of landmark ancestors — with non-landmark elements transparent, so an implementation-only wrapper stays legal. Structure the board does not draw is recorded in `tests/ui/fidelity/departures/<module>.js` with a reason and an authority, and a stale entry fails, because the previous register of departures had already rotted unnoticed: `PLN-CHG-001_FOLLOW_UPS.md` still names four landmark exemptions that no longer exist in any spec file.
+
+One more mechanism worth naming, because it is the same shape as the original list and was not on it: **claims of enforcement outran the enforcement.** The geometry probes are described as enforced in `AGENTS.md` and in the `Makefile` and have no call sites at all. `expectLayoutSanity` is required by the rules on every editor journey and was wired into one. A rule that describes a check nobody runs is not neutral — it is read as assurance. The rule added alongside this work is that a rule and the thing that fails when it is broken land in the same change.

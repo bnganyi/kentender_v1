@@ -129,7 +129,59 @@ def _find_references() -> list[_Reference]:
 	return refs
 
 
+#: A `.dc.html` path written into a UI test, e.g. the `ARTBOARD_FILE` constant
+#: every design-fidelity spec opens. Quoted, so the pattern is the quote body.
+SPEC_BOARD_RE = re.compile(r"[\"'`]([^\"'`\n]*\.dc\.html)[\"'`]")
+
+
+def _spec_board_references() -> list[tuple[Path, str]]:
+	"""Every artboard path a UI test names.
+
+	Check A watches component headers. It does not watch the specs, and a spec
+	is where the whole gate is wired up — so when the Requisitions board was
+	renamed from `REQ-CHG-001 Artboards.dc.html` to `Requisitions - Design
+	Board.dc.html`, its fidelity spec kept pointing at the old name, every one
+	of its eleven tests died on `ERR_FILE_NOT_FOUND`, and nothing said so
+	(found live 24 Sep 2026: the suite had simply stopped comparing anything).
+	"""
+	root = _repo_root() / "tests" / "ui"
+	out: list[tuple[Path, str]] = []
+	if not root.exists():
+		return out
+	for spec in root.rglob("*.ts"):
+		for line in spec.read_text(encoding="utf-8", errors="ignore").splitlines():
+			stripped = line.strip()
+			# A path written in prose is documentation, not a reference the
+			# suite will open.
+			if stripped.startswith(("*", "//", "/*")):
+				continue
+			for match in SPEC_BOARD_RE.finditer(line):
+				claimed = match.group(1).strip()
+				# A bare suffix is half of a concatenation, and an interpolated
+				# path is only knowable at run time.
+				if claimed == ".dc.html" or "${" in claimed:
+					continue
+				out.append((spec, claimed))
+	return out
+
+
 class TestArtboardProvenanceGate(FrappeTestCase):
+	def test_every_artboard_a_ui_test_opens_actually_exists(self):
+		"""Check C. A design-fidelity spec that names a `.dc.html` file must
+		name one that is in the repo. A missing board does not fail loudly —
+		it fails as `ERR_FILE_NOT_FOUND` inside one test, and in a serial
+		describe it takes every test after it down with it, silently."""
+		missing = []
+		for spec, claimed in _spec_board_references():
+			candidate = _repo_root() / claimed
+			if candidate.exists():
+				continue
+			if list(_docs_root().rglob(Path(claimed).name)):
+				continue
+			missing.append(f"{spec.relative_to(_repo_root())} names {claimed!r}, which is not in the repo")
+		self.assertEqual(missing, [], "\n".join(["A UI test opens an artboard that does not exist:", *missing]))
+
+
 	def test_ported_from_references_an_artboard_that_exists(self):
 		"""Check A. A header claiming a `.dc.html` source names a file that is
 		actually still in the repo — not one a later commit deleted out from

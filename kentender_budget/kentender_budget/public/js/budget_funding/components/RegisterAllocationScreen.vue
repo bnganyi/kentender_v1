@@ -208,6 +208,7 @@ function cancel() {
 				<KtErrorBanner :message="actingError" style="margin-bottom: 16px" @dismiss="actingError = null" />
 
 				<div v-if="savedButLost" class="kt-notice is-warning" style="margin-bottom: 16px" data-testid="bud-reg-saved-lost">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
 					<div class="kt-notice-body">
 						<strong>{{ __("Your allocation was saved.") }}</strong> {{ __("The next screen could not be opened.") }}
 						<a href="#" @click.prevent="go(savedButLost.budget.code, 'version', String(savedButLost.version.version_number), 'edit', 'lines')">{{ __("Open saved draft") }}</a>

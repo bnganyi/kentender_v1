@@ -76,7 +76,9 @@ test.describe("§14 persona pass on the seeded world", () => {
 
 		await page.goto(`/app/annual-procurement-plan/${PLAN}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
-		await expect(page.locator('[data-testid="ppl-context"]')).toContainText("Ministry of Health Annual Procurement Plan 2027/28");
+		// The plan's name is the head's description; the scope line carries the
+		// record's identity — reference, version and year (24 September 2026).
+		await expect(page.locator(".kt-page-desc")).toContainText("Ministry of Health Annual Procurement Plan 2027/28");
 		await expect(page.locator('[data-testid="ppl-context"]')).toContainText("FY 2027/28");
 		// §10.6 — an active plan states its own approval and publication.
 		const governance = page.locator('[data-testid="ppl-governance"]');

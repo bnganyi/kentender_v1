@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
 
 import { login } from "../../helpers/auth";
-import { collectPageErrors, expectLandmarkSubsequence, landmarks, openArtboard } from "../../helpers/designFidelity";
+import { collectPageErrors, expectLandmarkSubsequence, expectStructure, landmarks, openArtboard, outerHtml } from "../../helpers/designFidelity";
+import { DEPARTURES } from "../../fidelity/departures/strategy.js";
 import { APPROVER, AUDITOR, AUTHOR, PASSWORD, expectScreen, gotoStrategy, resetFixture, type DefaultFixture, type SuccessorFixture } from "./helpers";
 
 /**
@@ -51,8 +52,10 @@ test.describe("Strategy design fidelity — v1.8 artboards", () => {
 	test("STR-DES-01 Strategic plans and STR-DES-02 Create strategic plan (Author)", async ({ page }) => {
 		await openArtboard(page, `${DESIGN}/STR-DES-01.dc.html`, "[data-screen-label='STR-DES-01']");
 		const want01 = wanted(await landmarks(page, "[data-screen-label='STR-DES-01']"));
+		const html01 = await outerHtml(page, "[data-screen-label='STR-DES-01']");
 		await openArtboard(page, `${DESIGN}/STR-DES-02.dc.html`, "[data-screen-label='STR-DES-02']");
 		const want02 = wanted(await landmarks(page, "x-dc"));
+		const html02 = await outerHtml(page, "x-dc");
 		// Page errors are collected for the live routes only; the artboard
 		// renders deliberately abort support.js (see openArtboard).
 		const errors = collectPageErrors(page);
@@ -61,21 +64,25 @@ test.describe("Strategy design fidelity — v1.8 artboards", () => {
 		await gotoStrategy(page);
 		await expectScreen(page, "portfolio");
 		expectLandmarkSubsequence(want01, await landmarks(page, '[data-testid="str-portfolio"]'), "STR-DES-01");
+		await expectStructure(page, '[data-testid="str-portfolio"]', html01, "STR-DES-01", DEPARTURES["PortfolioScreen#STR-DES-01"] || []);
 		await expect(page.locator('[data-testid="str-tab-plans"]')).toBeVisible();
 		await page.locator('[data-testid="str-new-plan"]').click();
 		await expect(page.locator('[data-testid="str-new-plan-form"]')).toBeVisible();
 		expectLandmarkSubsequence(want02, await landmarks(page, '[data-testid="str-portfolio"]'), "STR-DES-02");
+		await expectStructure(page, '[data-testid="str-portfolio"]', html02, "STR-DES-02", DEPARTURES["PortfolioScreen#STR-DES-02"] || []);
 		expect(errors).toEqual([]);
 	});
 
 	test("STR-DES-03 Current plan overview (Auditor)", async ({ page }) => {
 		await openArtboard(page, `${DESIGN}/STR-DES-03.dc.html`, "[data-screen-label='STR-DES-03']");
 		const want = wanted(await landmarks(page, "[data-screen-label='STR-DES-03']"));
+		const html = await outerHtml(page, "[data-screen-label='STR-DES-03']");
 		const errors = collectPageErrors(page);
 		await login(page, AUDITOR, PASSWORD);
 		await gotoStrategy(page, `/plan/${fixture.plan_reference}`);
 		await expectScreen(page, "plan");
 		expectLandmarkSubsequence(want, await landmarks(page, '[data-testid="str-plan"]'), "STR-DES-03");
+		await expectStructure(page, '[data-testid="str-plan"]', html, "STR-DES-03", DEPARTURES["PlanWorkspaceScreen#STR-DES-03"] || []);
 		expect(errors).toEqual([]);
 	});
 
@@ -83,8 +90,10 @@ test.describe("Strategy design fidelity — v1.8 artboards", () => {
 		const draft = resetFixture<SuccessorFixture>("reset_draft_fixture");
 		await openArtboard(page, `${DESIGN}/STR-DES-04.dc.html`, "[data-screen-label='STR-DES-04']");
 		const want04 = wanted(await landmarks(page, "[data-screen-label='STR-DES-04']"));
+		const html04 = await outerHtml(page, "[data-screen-label='STR-DES-04']");
 		await openArtboard(page, `${DESIGN}/STR-DES-05-AddTarget.dc.html`, "[data-screen-label^='STR-DES-05']");
 		const want05 = wanted(await landmarks(page, "[data-screen-label^='STR-DES-05']"));
+		const html05 = await outerHtml(page, "[data-screen-label^='STR-DES-05']");
 		const errors = collectPageErrors(page);
 
 		await login(page, AUTHOR, PASSWORD);
@@ -92,6 +101,7 @@ test.describe("Strategy design fidelity — v1.8 artboards", () => {
 		await expectScreen(page, "plan");
 		await page.locator('[data-testid="str-tree-node"][data-node-type="Strategic Objective"]').first().click();
 		expectLandmarkSubsequence(want04, await landmarks(page, '[data-testid="str-plan"]'), "STR-DES-04");
+		await expectStructure(page, '[data-testid="str-plan"]', html04, "STR-DES-04", DEPARTURES["PlanWorkspaceScreen#STR-DES-04"] || []);
 		await page.locator('[data-testid="str-tree-node"][data-node-type="Performance Indicator"]').first().click();
 		await page.locator('[data-testid="str-add-target"]').click();
 		await expect(page.locator('[data-testid="str-target-editor"]')).toBeVisible();
@@ -108,10 +118,12 @@ test.describe("Strategy design fidelity — v1.8 artboards", () => {
 	test("STR-DES-06..09 Approval task and STR-DES-06-Return (Approver)", async ({ page }) => {
 		const submitted = resetFixture<SuccessorFixture>("reset_submitted_fixture");
 		const wants: Record<string, string[]> = {};
+		const htmls: Record<string, string> = {};
 		for (const id of ["06", "07", "08", "09", "06-Return"]) {
 			const scope = `[data-screen-label^='STR-DES-${id.startsWith("06") ? "06" : id}']`;
 			await openArtboard(page, `${DESIGN}/STR-DES-${id}.dc.html`, scope);
 			wants[id] = wanted(await landmarks(page, "x-dc"));
+			htmls[id] = await outerHtml(page, "x-dc");
 		}
 		const errors = collectPageErrors(page);
 
@@ -119,15 +131,19 @@ test.describe("Strategy design fidelity — v1.8 artboards", () => {
 		await gotoStrategy(page, `/approval/${submitted.v2_reference}`);
 		await expectScreen(page, "approval");
 		expectLandmarkSubsequence(wants["06"], await landmarks(page, '[data-testid="str-approval"]'), "STR-DES-06");
+		await expectStructure(page, '[data-testid="str-approval"]', htmls["06"], "STR-DES-06", DEPARTURES["ApprovalTaskScreen#STR-DES-06"] || []);
 		await page.locator('[data-testid="str-atab-structure"]').click();
 		await expect(page.locator('[data-testid="str-approval-structure"]')).toBeVisible();
 		expectLandmarkSubsequence(wants["07"], await landmarks(page, '[data-testid="str-approval"]'), "STR-DES-07");
+		await expectStructure(page, '[data-testid="str-approval"]', htmls["07"], "STR-DES-07", DEPARTURES["ApprovalTaskScreen#STR-DES-07"] || []);
 		await page.locator('[data-testid="str-atab-changes"]').click();
 		await expect(page.locator('[data-testid="str-approval-changes"]')).toBeVisible();
 		expectLandmarkSubsequence(wants["08"], await landmarks(page, '[data-testid="str-approval"]'), "STR-DES-08");
+		await expectStructure(page, '[data-testid="str-approval"]', htmls["08"], "STR-DES-08", DEPARTURES["ApprovalTaskScreen#STR-DES-08"] || []);
 		await page.locator('[data-testid="str-atab-history"]').click();
 		await expect(page.locator('[data-testid="str-approval-history"]')).toBeVisible();
 		expectLandmarkSubsequence(wants["09"], await landmarks(page, '[data-testid="str-approval"]'), "STR-DES-09");
+		await expectStructure(page, '[data-testid="str-approval"]', htmls["09"], "STR-DES-09", DEPARTURES["ApprovalTaskScreen#STR-DES-09"] || []);
 		await page.locator('[data-testid="str-atab-overview"]').click();
 		await page.locator('[data-testid="str-return"]').click();
 		await expect(page.locator('[data-testid="str-return-dialog"]')).toBeVisible();

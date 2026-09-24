@@ -116,11 +116,13 @@ function confirmClose() {
 						<KtErrorBanner :message="actingError" style="margin-bottom: 12px" @dismiss="actingError = null" />
 
 						<div v-if="state === 'before_year_end'" class="kt-notice is-info" data-testid="bud-close-before" style="margin: 0">
+							<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
 							<div class="kt-notice-body">{{ __("This budget can be closed only after {0}.", [status.fiscal_year.end_date_display]) }}</div>
 						</div>
 
 						<template v-else-if="state === 'blocked'">
 							<div class="kt-notice is-critical" style="margin-bottom: 16px" data-testid="bud-close-blocked">
+								<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
 								<div class="kt-notice-body">
 									<strong>{{ __("This budget cannot be closed yet.") }}</strong>
 									{{ __("{0} remains reserved for requisitions. Resolve the remaining reservations through their owning Requisition or Contract process, then check again.", [formatKes(status.remaining_total, currency)]) }}
@@ -142,11 +144,13 @@ function confirmClose() {
 						</template>
 
 						<div v-else-if="state === 'unavailable'" class="kt-notice is-warning" style="margin: 0" data-testid="bud-close-unavailable">
+							<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
 							<div class="kt-notice-body">{{ __("The funding position could not be checked. Try again before closing this budget.") }}</div>
 						</div>
 
 						<template v-else-if="state === 'ready'">
 							<div class="kt-notice is-live" style="margin-bottom: 16px" data-testid="bud-close-ready">
+								<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
 								<div class="kt-notice-body"><strong>{{ __("The financial year has ended and no reservation remains.") }}</strong> {{ __("Closing stops new reservations, conversions and commitment increases. Existing commitments and history remain.") }}</div>
 							</div>
 							<div class="kt-card kt-blueprint" style="margin: 0">

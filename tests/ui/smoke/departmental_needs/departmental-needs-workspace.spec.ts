@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 import { loginAsNdsFixtureAuthor } from "../../helpers/auth";
+import { expectLayoutSanity } from "../../helpers/designFidelity";
 import {
 	clearFixtures,
 	collectConsoleErrors,
@@ -129,6 +130,11 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 			await expect(page.locator(`[data-testid="${field}"]`)).toHaveValue("");
 		}
 		await expect(page.getByText("Returned for correction")).toHaveCount(0);
+		// AGENTS.md 6.6 — an editor opened in an incomplete state is where a
+		// repeated notice, a control built inside a fact, or a heading left
+		// standing over resolved-away content hides. A blank create editor is
+		// the most incomplete state this screen has.
+		await expectLayoutSanity(page, "NDS create editor, blank");
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
@@ -210,6 +216,7 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		// Nothing was sent: no server summary, and the route did not change.
 		await expect(page.locator('[data-testid="nds-error-summary"]')).toHaveCount(0);
 		await expect(page).toHaveURL(/\/departmental-needs\/new$/);
+		await expectLayoutSanity(page, "NDS create editor, refused submit");
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 	test("filters refresh the table in place — no skeleton flash", async ({ page }) => {

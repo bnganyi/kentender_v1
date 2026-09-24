@@ -20,6 +20,13 @@
 					<p class="kt-page-desc">
 						Record when the approved plan was sent to the National Treasury and attach the submission evidence.
 					</p>
+					<!-- The board identifies the record with one scope line inside the
+					     head, not a labelled fact row below it (found live 24 Sep 2026). -->
+					<div class="kt-page-scope" data-testid="pub-context">
+						<span>{{ task.plan_reference }}</span>
+						<span>· Version {{ task.version?.number }}</span>
+						<span class="kt-status" :class="`is-${task.header?.badge_kind}`">{{ stateLabel }}</span>
+					</div>
 				</div>
 				<div class="kt-page-actions">
 					<button type="button" class="kt-btn kt-btn-ghost" data-testid="pub-view-plan" @click="$emit('navigate', ['annual-procurement-plan', task.plan_reference])">
@@ -33,23 +40,6 @@
 					<button type="button" class="kt-btn kt-btn-ghost" data-testid="pub-download-plan-data" @click="$emit('download-plan-data')">
 						Download Plan data
 					</button>
-				</div>
-			</div>
-
-			<div class="kt-meta-row pln-context-row" data-testid="pub-context">
-				<div>
-					<span class="kt-label">Plan</span>
-					<span class="kt-meta-value">{{ task.plan_reference }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Version</span>
-					<span class="kt-meta-value">{{ task.version?.number }}</span>
-				</div>
-				<div>
-					<span class="kt-label">State</span>
-					<span class="kt-meta-value">
-						<span class="kt-status" :class="`is-${task.header?.badge_kind}`">{{ stateLabel }}</span>
-					</span>
 				</div>
 			</div>
 
@@ -73,26 +63,29 @@
 			     U13-EVIDENCE-RECORDED — every recorded field, separately
 			     labelled, Destination included. -->
 			<div v-if="treasury">
-				<div class="kt-meta-row" data-testid="pub-treasury-evidence">
-					<div>
-						<span class="kt-label">Date and time sent</span>
-						<span class="kt-meta-value">{{ treasury.submitted_display }}</span>
-					</div>
-					<div>
-						<span class="kt-label">Channel</span>
-						<span class="kt-meta-value">{{ treasury.channel }}</span>
-					</div>
-					<div>
-						<span class="kt-label">Destination</span>
-						<span class="kt-meta-value">{{ treasury.destination }}</span>
-					</div>
-					<div>
-						<span class="kt-label">Dispatch reference</span>
-						<span class="kt-meta-value">{{ treasury.dispatch_reference }}</span>
-					</div>
-					<div>
-						<span class="kt-label">Recorded by</span>
-						<span class="kt-meta-value">{{ treasury.recorded_by_name }}</span>
+				<!-- The board binds the recorded evidence in a group rule. -->
+				<div class="kt-group">
+					<div class="kt-meta-row" data-testid="pub-treasury-evidence">
+						<div>
+							<span class="kt-label">Date and time sent</span>
+							<span class="kt-meta-value">{{ treasury.submitted_display }}</span>
+						</div>
+						<div>
+							<span class="kt-label">Channel</span>
+							<span class="kt-meta-value">{{ treasury.channel }}</span>
+						</div>
+						<div>
+							<span class="kt-label">Destination</span>
+							<span class="kt-meta-value">{{ treasury.destination }}</span>
+						</div>
+						<div>
+							<span class="kt-label">Dispatch reference</span>
+							<span class="kt-meta-value">{{ treasury.dispatch_reference }}</span>
+						</div>
+						<div>
+							<span class="kt-label">Recorded by</span>
+							<span class="kt-meta-value">{{ treasury.recorded_by_name }}</span>
+						</div>
 					</div>
 				</div>
 				<!-- §10.12 — enabled once evidence is recorded; no Record
@@ -259,7 +252,10 @@
 			</section>
 
 			<details v-if="attempts.length" class="kt-disclosure" data-testid="pub-attempts">
-				<summary class="kt-disclosure-head"><span class="kt-disclosure-title">Publication attempts</span></summary>
+				<summary class="kt-disclosure-head">
+	<div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Publication attempts</span></div>
+	<svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg>
+</summary>
 				<div class="kt-disclosure-body">
 					<table class="kt-table">
 						<thead><tr><th>Attempt</th><th>Result</th><th>Attempted</th><th>External reference</th></tr></thead>

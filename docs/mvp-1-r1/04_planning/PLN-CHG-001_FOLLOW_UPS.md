@@ -338,3 +338,10 @@ Mercy Kilonzo on the actual purchase from the report, and against
 `test_missing_setting.py` (13 Python), `MissingSettingPanel.spec.js` (6),
 `PlanItemEditorScreen.spec.js` (24), and the live U09 fidelity and
 `pln-item.spec.ts` suites (10 Playwright, including `expectLayoutSanity`).
+
+
+## Correction, 24 September 2026 — the exemption constants named above no longer exist
+
+FU-V123-01, FU-V123-05 and FU-V123-07 each point at a named landmark exemption in `planning-fidelity.spec.ts` as the mechanism keeping the departure honest: `U14_EXECUTION_COLUMNS`, `U11_DECISION_TABLE`, `U09_SCHEDULE_LABELS`, `U09_REMOVE_ACTION`. None of the four is in that file, or anywhere else in the repository. They were lost in the v1.23 to v1.24 rewrite of the spec, and the loss was not noticed because nothing checks that a register entry still has an implementation.
+
+Departures are now recorded in `tests/ui/fidelity/departures/<module>.js`, where a stale entry fails the gate rather than sitting in a document. The rows above stand as history; the mechanism they describe does not.

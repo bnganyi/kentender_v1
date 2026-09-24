@@ -26,25 +26,15 @@
 					<div>
 						<h1 class="kt-page-title" data-testid="prg-title">Procurement progress</h1>
 						<p class="kt-page-desc">Follow authorised procurement against the current annual plan.</p>
-					</div>
-				</div>
-
-				<div class="kt-meta-row pln-context-row" data-testid="prg-context">
-					<div>
-						<span class="kt-label">Plan</span>
-						<span class="kt-meta-value">{{ progress.plan_reference }}</span>
-					</div>
-					<div>
-						<span class="kt-label">Version</span>
-						<span class="kt-meta-value">{{ progress.version_number }}</span>
-					</div>
-					<div>
-						<span class="kt-label">Status</span>
-						<span class="kt-meta-value"><span class="kt-status is-live">{{ progress.status }}</span></span>
-					</div>
-					<div>
-						<span class="kt-label">Financial year</span>
-						<span class="kt-meta-value">{{ progress.financial_year_label }}</span>
+						<!-- The board identifies the record with one scope line inside
+						     the head, not a labelled fact row below it (found live 24
+						     Sep 2026). -->
+						<div class="kt-page-scope" data-testid="prg-context">
+							<span>{{ progress.plan_reference }}</span>
+							<span>· Version {{ progress.version_number }}</span>
+							<span>· {{ progress.financial_year_label }}</span>
+							<span class="kt-status is-live">{{ progress.status }}</span>
+						</div>
 					</div>
 				</div>
 
@@ -100,7 +90,8 @@
 									<td colspan="6">
 										<details class="kt-disclosure" data-testid="prg-evidence">
 											<summary class="kt-disclosure-head">
-												<span class="kt-disclosure-title">View procurement evidence</span>
+												<div class="kt-disclosure-title-row"><span class="kt-disclosure-title">View procurement evidence</span></div>
+												<svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg>
 											</summary>
 											<div class="kt-disclosure-body">
 												<table class="kt-table">

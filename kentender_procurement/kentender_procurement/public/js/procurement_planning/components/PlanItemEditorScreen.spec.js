@@ -472,3 +472,73 @@ describe("PlanItemEditorScreen — a method that asks something of the Planner",
 	});
 });
 
+
+// The method list is computed from the rules in force on the purchase's own
+// applicable date, not from a stored catalogue. Found live 23 Sep 2026: the
+// single backdated rule version that covered these purchases was superseded
+// in System setup, every method disappeared at once, and the control rendered
+// as an empty dropdown that explained nothing.
+describe("a method list with nothing in it", () => {
+	const empty = (over) => item({
+		classification: { ...item().classification, admissible_methods: [], ...over },
+	});
+
+	it("says nothing at all while methods are on offer", () => {
+		expect(make({ item: item() }).find('[data-testid="ppi-method-none"]').exists()).toBe(false);
+	});
+
+	it("names the date it is judging against and both ways out of it", () => {
+		const w = make({ item: empty({ applicability_date: "2026-12-01", applicability_basis: "invitation" }) });
+		const text = w.find('[data-testid="ppi-method-none"]').text();
+		expect(text).toContain("No procurement method rule is in force on 1 Dec 2026");
+		expect(text).toContain("planned invitation date");
+		expect(text).toContain("Change the date");
+		expect(text).toContain("ask your KenTender administrator");
+	});
+
+	it("does not call the financial year's first day a date the purchase was given", () => {
+		const w = make({ item: empty({ applicability_date: "2026-07-01", applicability_basis: "fiscal_year" }) });
+		const text = w.find('[data-testid="ppi-method-none"]').text();
+		expect(text).toContain("1 Jul 2026, the start of this purchase's financial year");
+		expect(text).toContain("Set a planned invitation date");
+	});
+
+	it("still says something when there is no applicable date to name", () => {
+		const w = make({ item: empty({ applicability_date: "", applicability_basis: "fiscal_year" }) });
+		expect(w.find('[data-testid="ppi-method-none"]').text()).toBe(
+			"No procurement method is available for this purchase yet.",
+		);
+	});
+});
+
+// A Planner set every purchase to None, correctly, and learned only at the
+// final refusal that the sum of those answers failed a plan-level rule
+// (found live 23 Sep 2026). What None costs is said where None is chosen —
+// without repeating the plan-level arithmetic, which lives once on U07.
+describe("what a designation of None means", () => {
+	const designated = (value) => item({
+		preference: { ...item().preference, reservation_category: value },
+		blockers: [{ code: "PLN_RESERVATION_REQUIRED", message: "Choose who this procurement is reserved for." }],
+	});
+
+	it("says the purchase will not count towards the target", () => {
+		const w = make({ item: designated("None") });
+		expect(w.find('[data-testid="ppi-reservation-none"]').text()).toBe(
+			"Not reserved. This purchase will not count towards the plan's reserved-procurement target.",
+		);
+	});
+
+	it("says nothing once a designation is chosen", () => {
+		const w = make({ item: designated("Youth") });
+		expect(w.find('[data-testid="ppi-reservation-none"]').exists()).toBe(false);
+	});
+
+	it("still repeats none of the plan-level arithmetic", () => {
+		// The purchase's own estimated cost is its own business; what must
+		// not appear here is the plan-wide reservation calculation.
+		const text = make({ item: designated("None") }).text();
+		for (const forbidden of ["Required allocation", "Planned qualifying allocation", "shortfall", "Still required", "Eligible planned procurement"]) {
+			expect(text).not.toContain(forbidden);
+		}
+	});
+});

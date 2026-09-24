@@ -23,34 +23,26 @@
 				<div>
 					<h1 class="kt-page-title" data-testid="fnt-title">{{ title }}</h1>
 					<p class="kt-page-desc">{{ description }}</p>
-				</div>
-			</div>
-
-			<div class="kt-meta-row pln-context-row" data-testid="fnt-context">
-				<div>
-					<span class="kt-label">Plan</span>
-					<span class="kt-meta-value">{{ task.header?.title }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Reference</span>
-					<span class="kt-meta-value">{{ planReference }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Version</span>
-					<span class="kt-meta-value">{{ versionNumber }}</span>
-				</div>
-				<div>
-					<span class="kt-label">Review status</span>
-					<span class="kt-meta-value">
+					<!-- The board identifies the record with one scope line inside
+					     the head, not a labelled fact row below it (found live 24
+					     Sep 2026). -->
+					<div class="kt-page-scope" data-testid="fnt-context">
+						<span>{{ task.header?.title }}</span>
+						<span>· {{ planReference }}</span>
+						<span>· Version {{ versionNumber }}</span>
 						<span class="kt-status" :class="badgeClass" data-testid="fnt-badge">{{ reviewStatus }}</span>
-					</span>
+					</div>
 				</div>
 			</div>
 
 			<!-- The statement this decision is being made on. Budget version and
 			     request time are provenance, not the decision — §10.9 keeps them
 			     out of this row, in their own Review details disclosure below. -->
-			<div class="kt-meta-row" data-testid="fnt-statement">
+			<!-- The board binds the statement facts in a group rule and keeps
+			     them tight; built as a bare fact grid they spread edge to edge
+			     (found live 24 Sep 2026). -->
+			<div class="kt-group">
+			<div class="kt-meta-row is-tight" data-testid="fnt-statement">
 				<div>
 					<span class="kt-label">Budget</span>
 					<span class="kt-meta-value">{{ task.budget_reference || "—" }}</span>
@@ -60,6 +52,7 @@
 					<span class="kt-meta-value" data-testid="fnt-as-at">{{ task.as_at_display }}</span>
 				</div>
 			</div>
+			</div>
 
 			<!-- Which version of the budget, and when the confirmation was asked
 			     for: provenance the comparison below does not need in order to
@@ -67,7 +60,8 @@
 			     affordability decision. -->
 			<details class="kt-disclosure" data-testid="fnt-review-details">
 				<summary class="kt-disclosure-head">
-					<span class="kt-disclosure-title">Review details</span>
+					<div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Review details</span></div>
+					<svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg>
 				</summary>
 				<div class="kt-disclosure-body">
 					<div class="kt-meta-row">
@@ -191,7 +185,8 @@
 			     approved-versus-planned decision. -->
 			<details class="kt-disclosure" data-testid="fnt-balances">
 				<summary class="kt-disclosure-head">
-					<span class="kt-disclosure-title">Current balances</span>
+					<div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Current balances</span></div>
+					<svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg>
 				</summary>
 				<div class="kt-disclosure-body">
 					<table class="kt-table">
@@ -223,6 +218,12 @@
 			     nothing, so the table drew its headings over an empty body. -->
 			<FinanceHistory v-if="history.length" :history="history" :funding-evidence="task.funding_evidence || {}" />
 
+			<!-- The board draws the consequence and the actions together as one
+			     decision block, separated from the evidence above by its own rule.
+			     Built as a loose paragraph plus a footer, the sentence read as a
+			     trailing aside rather than as part of the decision (found live 24
+			     Sep 2026). -->
+			<div class="kt-decision" data-testid="fnt-decision">
 			<p class="kt-muted" data-testid="fnt-consequence">
 				Confirming records affordability. It does not reserve funds or approve the plan.
 			</p>
@@ -257,6 +258,7 @@
 						Confirm plan funding
 					</button>
 				</div>
+			</div>
 			</div>
 		</div>
 	</div>

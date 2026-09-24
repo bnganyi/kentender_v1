@@ -36,7 +36,7 @@ const CHECKS = [
 	{ label: "Funding", result: "Not yet checked", kind: "neutral", route: null },
 	{
 		label: "Reserved procurement",
-		result: "KES 48,000,000 more qualifying allocation required",
+		result: "KES 139,494 more qualifying allocation required",
 		kind: "critical",
 		action: "Review reserved procurement",
 		route: ["annual-procurement-plan", "PLN-MOH-2027-001"],
@@ -60,7 +60,17 @@ function plan(overrides = {}) {
 		unallocated_sources: [],
 		plan_checks: CHECKS,
 		changes: { is_initial: true },
-		history_lines: ["Digital Health acceptance: Mercy Kilonzo, 27 Nov 2026, 14:00 EAT"],
+		history: [{ title: "Digital Health · DPP-MOH-DHI-2027-001 accepted", meta: "Mercy Kilonzo · 27 Nov 2026, 14:00 EAT" }],
+		summary: {
+			reservation_summary: [
+				{ label: "Eligible planned procurement", value: "KES 464,980" },
+				{ label: "Required allocation at 30%", value: "KES 139,494" },
+				{ label: "Reserved so far", value: "KES 0" },
+				{ label: "Still required", value: "KES 139,494" },
+				{ label: "Counting towards it", value: "No purchase yet" },
+			],
+		},
+		submission_issues: [],
 		can_request_funding: false,
 		can_sign_and_submit: false,
 		can_cancel_update: false,
@@ -89,14 +99,45 @@ describe("AnnualPlanScreen — U07 BASE", () => {
 		expect(w.text()).not.toContain("Review required");
 	});
 
-	it("shows exactly three plan checks, with the failing one linking to its correction", () => {
+	// A subtle per-row hint distinguishes an outstanding purchase from a
+	// Ready one at a glance, using the same status-badge language every
+	// other table in the app already uses for a row's state.
+	it("marks each row's Current work with a status badge, not just plain text", () => {
+		const w = make({
+			plan: plan({ plan_items: [{ ...INFRASTRUCTURE, current_work: "Ready" }, LAPTOPS] }),
+		});
+		const rows = w.findAll('[data-testid="ppl-purchase-row"]');
+		expect(rows[0].find(".kt-status").classes()).toContain("is-live");
+		expect(rows[1].find(".kt-status").classes()).toContain("is-attention");
+	});
+
+	// A reader who cannot act on this plan — a Finance Confirmation Officer,
+	// an Auditor — reaches the same read-only editor, but the row must not
+	// promise a control the viewer does not have (found live 23 Sep 2026).
+	it("names the row action View purchase for a reader who cannot act, Edit purchase for one who can", () => {
+		const reader = make({ plan: plan({ mutable: false }) });
+		expect(reader.find('[data-testid="ppl-purchase-action"]').text()).toBe("View purchase");
+
+		const planner = make({ plan: plan({ mutable: true }) });
+		expect(planner.find('[data-testid="ppl-purchase-action"]').text()).toBe("Edit purchase");
+	});
+
+	it("makes a failing check the dominant issue and keeps the passing ones quiet", () => {
+		// The board draws a failing check as its own warning notice carrying
+		// the correction, and the passing ones as quiet facts below. Built as
+		// one flat row of facts, a KES 139,494 shortfall read no louder than
+		// "all purchases meet their deadlines" (found live 24 Sep 2026).
 		const w = make();
+		const issue = w.find('[data-testid="ppl-check-issue"]');
+		expect(issue.classes()).toContain("is-warning");
+		expect(issue.text()).toContain("Reserved procurement");
+		expect(issue.text()).toContain("KES 139,494 more qualifying allocation required");
+		expect(w.find('[data-testid="ppl-check-action"]').text()).toBe("Review reserved procurement");
 		const checks = w.find('[data-testid="ppl-plan-checks"]');
 		expect(checks.text()).toContain("Funding");
-		expect(checks.text()).toContain("Reserved procurement");
 		expect(checks.text()).toContain("Schedule");
-		expect(checks.text()).toContain("KES 48,000,000 more qualifying allocation required");
-		expect(w.find('[data-testid="ppl-check-action"]').text()).toBe("Review reserved procurement");
+		// The failing one is stated once, in the notice — not twice.
+		expect(checks.text()).not.toContain("Reserved procurement");
 		// PLN22-AC-006: the required/qualifying/shortfall arithmetic is not
 		// repeated here.
 		expect(w.text()).not.toContain("Planned qualifying allocation");
@@ -119,6 +160,29 @@ describe("AnnualPlanScreen — U07 BASE", () => {
 		const history = w.find('[data-testid="ppl-history"]');
 		expect(history.attributes("open")).toBeUndefined();
 		expect(history.text()).toContain("This is the first version of the annual plan.");
+	});
+
+	// A dense paragraph per acceptance read as a wall of text with no reason
+	// to (found live 23 Sep 2026); the same .kt-timeline used for history
+	// elsewhere in the app (Departmental Needs, Strategy, Tenders) applies
+	// here too.
+	it("shows each departmental acceptance as a timeline entry, not a paragraph", () => {
+		const w = make({
+			plan: plan({
+				history: [
+					{ title: "Digital Health · DPP-MOH-DHI-2027-001 accepted", meta: "Mercy Kilonzo · 27 Nov 2026, 14:00 EAT" },
+					{ title: "Human Resources Management and Development · DPP-MOH-HRMD-2027-001 accepted", meta: "Mercy Kilonzo · 27 Nov 2026, 14:05 EAT" },
+				],
+			}),
+		});
+		const timeline = w.find('[data-testid="ppl-history-timeline"]');
+		const rows = timeline.findAll(".kt-timeline-row");
+		expect(rows).toHaveLength(2);
+		expect(rows[0].text()).toContain("Digital Health · DPP-MOH-DHI-2027-001 accepted");
+		expect(rows[0].text()).toContain("Mercy Kilonzo · 27 Nov 2026, 14:00 EAT");
+		// A connecting line between entries, none trailing the last one.
+		expect(rows[0].find(".kt-timeline-line").exists()).toBe(true);
+		expect(rows[1].find(".kt-timeline-line").exists()).toBe(false);
 	});
 
 	it("omits Send to Finance while a blocking check fails, and never shows Submit or Approve", () => {
@@ -269,6 +333,20 @@ describe("AnnualPlanScreen — U07-FINANCE-COMPLETE", () => {
 		expect(w.find('[data-testid="ppl-waiting-on"]').text()).not.toContain(" / ");
 	});
 
+	// The artboard (U07-FINANCE-COMPLETE) draws the Approval notice, then the
+	// final Save draft button beneath a divider — in that order. Save draft
+	// used to render first, so it read as the page's last word even once
+	// nothing further was the Planner's to do (found live 23 Sep 2026).
+	it("names who this is waiting on before the final Save draft action, not after", () => {
+		const w = make({
+			plan: plan({
+				waiting_on: { notice: "Ready for the Head of Procurement Function to sign and submit", people: ["Charles Mutiso"], unassigned: "" },
+			}),
+		});
+		const positions = [...w.element.querySelectorAll('[data-testid="ppl-waiting-on"], [data-testid="ppl-footer"]')].map((el) => el.getAttribute("data-testid"));
+		expect(positions).toEqual(["ppl-waiting-on", "ppl-footer"]);
+	});
+
 	it("U07-FINANCE-COMPLETE: no holder names the configuration issue, never an assignee (§6.5)", () => {
 		const w = make({
 			plan: plan({
@@ -308,3 +386,112 @@ describe("AnnualPlanScreen — a reader who cannot change the plan", () => {
 	});
 });
 
+
+// The reservation figures used to exist only inside a refusal at Sign and
+// submit, as raw unformatted numbers with no statement of what they were a
+// share of — "Required 48000000.00, planned 0.00" against a plan of KES
+// 464,980 (found live 23 Sep 2026). The working belongs on the screen where
+// the work is done.
+describe("AnnualPlanScreen — the reserved-procurement working", () => {
+	it("shows what the target is a share of, what it comes to, and what is left", () => {
+		const summary = make().find('[data-testid="ppl-reservation-summary"]');
+		expect(summary.exists()).toBe(true);
+		expect(summary.text()).toContain("Eligible planned procurement");
+		expect(summary.text()).toContain("KES 464,980");
+		expect(summary.text()).toContain("Required allocation at 30%");
+		expect(summary.text()).toContain("KES 139,494");
+		expect(summary.text()).toContain("Reserved so far");
+		expect(summary.text()).toContain("Counting towards it");
+	});
+
+	it("says nothing at all where no reserved-procurement target is published", () => {
+		const w = make({ plan: plan({ summary: { reservation_summary: [] } }) });
+		expect(w.find('[data-testid="ppl-reservation-summary"]').exists()).toBe(false);
+	});
+});
+
+// Each correction used to earn the next refusal: the server computed the
+// whole blocker list and raised only the first (found live 23 Sep 2026).
+describe("AnnualPlanScreen — what still stands in the way of submission", () => {
+	const ISSUES = [
+		"Reserved procurement is below the required amount. Review the shortfall shown. Required KES 139,494 (30% of KES 464,980 planned), reserved KES 0, short by KES 139,494.",
+		"Choose a strategic objective currently available for this plan. (PPI-MOH-2027-033)",
+	];
+
+	it("names every outstanding issue at once, with the count", () => {
+		const w = make({ plan: plan({ submission_issues: ISSUES }) });
+		const block = w.find('[data-testid="ppl-submission-issues"]');
+		expect(block.text()).toContain("2 issues must be resolved before this plan can be submitted");
+		const rows = w.findAll('[data-testid="ppl-submission-issue"]');
+		expect(rows).toHaveLength(2);
+		expect(rows[0].text()).toContain("KES 139,494");
+		expect(rows[1].text()).toContain("Choose a strategic objective");
+	});
+
+	it("counts one issue in the singular", () => {
+		const w = make({ plan: plan({ submission_issues: [ISSUES[0]] }) });
+		expect(w.find('[data-testid="ppl-submission-issues"]').text()).toContain(
+			"1 issue must be resolved before this plan can be submitted",
+		);
+	});
+
+	it("is absent when nothing stands in the way", () => {
+		expect(make().find('[data-testid="ppl-submission-issues"]').exists()).toBe(false);
+	});
+});
+
+// Structure, against Artboards-U07-U08.dc.html. Found live 24 Sep 2026: the
+// page read as a flat wall of labelled text once the Planner had nothing left
+// to do on it. Three structures the board draws had been dropped — the group
+// rule around Plan checks, the width bound on its rows, and Approval's own
+// region and notice.
+describe("AnnualPlanScreen — the structures the board draws", () => {
+	it("binds Plan checks inside a group, as the board does", () => {
+		const group = make().find('[data-testid="ppl-plan-checks-group"]');
+		expect(group.exists()).toBe(true);
+		expect(group.classes()).toContain("kt-group");
+		// Both rows live inside the one rule, so the reserved-procurement
+		// working reads as part of the checks rather than a second loose band.
+		expect(group.find('[data-testid="ppl-plan-checks"]').exists()).toBe(true);
+		expect(group.find('[data-testid="ppl-reservation-summary"]').exists()).toBe(true);
+	});
+
+	it("gives Approval its own region and notice rather than loose labels", () => {
+		const w = make({
+			plan: plan({ waiting_on: { notice: "Ready for the Head of Procurement Function to sign and submit", people: ["Charles Mutiso"], unassigned: "" } }),
+		});
+		const region = w.find('[data-testid="ppl-waiting-on"]');
+		expect(region.classes()).toContain("kt-region");
+		expect(region.classes()).toContain("is-secondary");
+		expect(region.find("h2").text()).toBe("Approval");
+		expect(region.find(".kt-notice").exists()).toBe(true);
+		expect(region.text()).toContain("Ready for the Head of Procurement Function to sign and submit");
+		expect(w.find('[data-testid="ppl-waiting-on-person"]').text()).toContain("Charles Mutiso");
+	});
+
+	it("names several responsible people without inventing a delimiter row", () => {
+		const w = make({
+			plan: plan({ waiting_on: { notice: "Ready to sign and submit", people: ["Charles Mutiso", "Asha Njeri"], unassigned: "" } }),
+		});
+		expect(w.find('[data-testid="ppl-waiting-on-person"]').text()).toContain("Charles Mutiso, Asha Njeri");
+		expect(w.find('[data-testid="ppl-waiting-on"]').text()).toContain("Responsible people");
+	});
+
+	it("still says who is unassigned where nobody holds it", () => {
+		const w = make({
+			plan: plan({ waiting_on: { notice: "Waiting", people: [], unassigned: "No Head of Procurement Function is assigned" } }),
+		});
+		expect(w.find('[data-testid="ppl-waiting-on-unassigned"]').text()).toBe("No Head of Procurement Function is assigned");
+	});
+});
+
+// The board's disclosure head carries a title row and a chevron; the port had
+// only a bare span, so the section read as an orphaned small-caps heading over
+// empty space with nothing saying it opened (found live 24 Sep 2026).
+describe("AnnualPlanScreen — Changes and history", () => {
+	it("says it opens", () => {
+		const head = make().find('[data-testid="ppl-history"] .kt-disclosure-head');
+		expect(head.find(".kt-disclosure-title-row").text()).toBe("Changes and history");
+		expect(head.find(".kt-disclosure-chevron").exists()).toBe(true);
+	});
+});

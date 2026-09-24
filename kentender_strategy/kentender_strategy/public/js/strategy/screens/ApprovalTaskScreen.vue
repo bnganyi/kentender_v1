@@ -195,6 +195,7 @@ async function submitApprove() {
 			<div v-for="i in 5" :key="i" class="kt-skel" style="height: 16px; margin-bottom: 10px"></div>
 		</div>
 		<div v-else-if="notFound" class="kt-notice is-warning" data-testid="str-not-found">
+			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
 			<div class="kt-notice-body"><strong>{{ __("This plan record is not available to you.") }}</strong></div>
 		</div>
 		<div v-else-if="forbidden" class="kt-notice is-critical" data-testid="str-forbidden">
@@ -206,6 +207,7 @@ async function submitApprove() {
 		</div>
 		<div v-else-if="loadError && !overview" data-testid="str-error">
 			<div class="kt-notice is-warning">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
 				<div class="kt-notice-body"><strong>{{ __("Strategy information could not be loaded.") }}</strong> {{ __("Try again. If the problem continues, contact KenTender support.") }}</div>
 			</div>
 			<div style="margin-top: 10px"><button type="button" class="kt-btn kt-btn-secondary" @click="load">{{ __("Try again") }}</button></div>
@@ -236,6 +238,7 @@ async function submitApprove() {
 				<p v-if="actingError" class="kt-field-error" data-testid="str-action-error" style="font-size: 14px; margin: 0 20.4px 20.4px">{{ actingError }}</p>
 
 				<div v-if="!isSubmitted" class="kt-notice" style="margin: 0 20.4px 20.4px" data-testid="str-approval-settled">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
 					<div class="kt-notice-body">
 						{{ __("This version is no longer awaiting a decision.") }}
 						<a href="#" data-testid="str-open-plan" @click.prevent="frappe.set_route(...overview.routes.plan)">{{ __("Open plan") }}</a>
@@ -251,12 +254,14 @@ async function submitApprove() {
 					</div>
 				</div>
 				<div v-if="isSubmitted && readinessFailures.length" class="kt-notice is-critical" style="margin: 0 20.4px 20.4px" data-testid="str-readiness-failures">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
 					<div class="kt-notice-body">
 						<strong>{{ __("This version cannot be approved yet.") }}</strong>
 						<span v-for="f in readinessFailures" :key="f.rule" style="display: block">{{ f.message }}</span>
 					</div>
 				</div>
 				<div v-if="isSubmitted && overview.self_approval_blocked" class="kt-notice" style="margin: 0 20.4px 20.4px" data-testid="str-self-approval">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
 					<div class="kt-notice-body"><strong>{{ __("Another Strategy Approver must review this version.") }}</strong></div>
 				</div>
 

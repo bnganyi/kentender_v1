@@ -48,25 +48,19 @@
 					</div>
 				</div>
 
+				<!-- The board identifies the record with one scope line inside the
+				     head. Built as a separate labelled fact row below it, the
+				     identity read as the page's first section rather than as the
+				     record's own (found live 24 Sep 2026). -->
 				<div class="kt-page-head">
 					<div>
 						<h1 class="kt-page-title" data-testid="src-title">Departmental requirement</h1>
 						<p class="kt-page-desc">{{ evidence.title }}</p>
-					</div>
-				</div>
-
-				<div class="kt-meta-row pln-context-row" data-testid="src-context">
-					<div>
-						<span class="kt-label">Need reference</span>
-						<span class="kt-meta-value">{{ evidence.need_reference || "Direct departmental requirement" }}</span>
-					</div>
-					<div v-if="evidence.need_revision_number">
-						<span class="kt-label">Revision</span>
-						<span class="kt-meta-value">{{ evidence.need_revision_number }}</span>
-					</div>
-					<div>
-						<span class="kt-label">Status</span>
-						<span class="kt-meta-value"><span class="kt-status is-live">Accepted for planning</span></span>
+						<div class="kt-page-scope" data-testid="src-context">
+							<span>{{ evidence.need_reference || "Direct departmental requirement" }}</span>
+							<span v-if="evidence.need_revision_number">· Revision {{ evidence.need_revision_number }}</span>
+							<span class="kt-status is-live">Accepted for planning</span>
+						</div>
 					</div>
 				</div>
 
@@ -84,7 +78,7 @@
 
 				<div class="kt-region">
 					<h2>Requirement details</h2>
-					<div class="kt-meta-row" data-testid="src-requirement">
+					<div class="kt-meta-row is-tight" data-testid="src-requirement">
 						<div>
 							<span class="kt-label">Requirement title</span>
 							<span class="kt-meta-value">{{ evidence.title }}</span>
@@ -114,22 +108,25 @@
 
 				<div class="kt-region is-secondary">
 					<h2>Departmental funding</h2>
-					<div class="kt-meta-row" data-testid="src-funding">
-						<div>
-							<span class="kt-label">Department</span>
-							<span class="kt-meta-value">{{ evidence.department }}</span>
-						</div>
-						<div v-if="evidence.budget_line_name">
-							<span class="kt-label">Budget line name</span>
-							<span class="kt-meta-value">{{ evidence.budget_line_name }}</span>
-						</div>
-						<div>
-							<span class="kt-label">Budget line</span>
-							<span class="kt-meta-value">{{ evidence.budget_line_reference }}</span>
-						</div>
-						<div>
-							<span class="kt-label">Amount</span>
-							<span class="kt-meta-value">{{ evidence.planning_amount_display }}</span>
+					<!-- The board binds these facts in a group rule under the heading. -->
+					<div class="kt-group">
+						<div class="kt-meta-row" data-testid="src-funding">
+							<div>
+								<span class="kt-label">Department</span>
+								<span class="kt-meta-value">{{ evidence.department }}</span>
+							</div>
+							<div v-if="evidence.budget_line_name">
+								<span class="kt-label">Budget line name</span>
+								<span class="kt-meta-value">{{ evidence.budget_line_name }}</span>
+							</div>
+							<div>
+								<span class="kt-label">Budget line</span>
+								<span class="kt-meta-value">{{ evidence.budget_line_reference }}</span>
+							</div>
+							<div>
+								<span class="kt-label">Amount</span>
+								<span class="kt-meta-value">{{ evidence.planning_amount_display }}</span>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -202,7 +199,8 @@
 				     "should this be in the plan". -->
 				<details class="kt-disclosure" data-testid="src-record-details">
 					<summary class="kt-disclosure-head">
-						<span class="kt-disclosure-title">Record details</span>
+						<div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Record details</span></div>
+						<svg class="kt-disclosure-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg>
 					</summary>
 					<div class="kt-disclosure-body">
 						<div class="kt-meta-row">

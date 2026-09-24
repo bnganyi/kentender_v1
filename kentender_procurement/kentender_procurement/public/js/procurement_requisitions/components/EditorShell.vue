@@ -40,10 +40,16 @@
 		</div>
 		<footer class="req-editor-footer">
 			<slot name="footer">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" @click="$emit('save-draft')">Save draft</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="pending" @click="$emit('continue')">
-					{{ continueLabel }}
-				</button>
+				<!-- A reader who can only read this Draft (not its author or
+				     Head of User Department) must not be offered a control
+				     the server will refuse (found live 23 Sep 2026). -->
+				<template v-if="canEdit">
+					<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" @click="$emit('save-draft')">Save draft</button>
+					<button type="button" class="kt-btn kt-btn-primary" :disabled="pending" @click="$emit('continue')">
+						{{ continueLabel }}
+					</button>
+				</template>
+				<span v-else class="kt-status is-pending" data-testid="req-read-only">Read only</span>
 			</slot>
 		</footer>
 	</div>
@@ -61,6 +67,7 @@ const props = defineProps({
 	continueLabel: { type: String, default: "Continue" },
 	pending: Boolean,
 	showUpstreamCorrection: Boolean,
+	canEdit: { type: Boolean, default: true },
 });
 
 defineEmits(["go-to-step", "save-draft", "continue", "request-upstream-correction"]);

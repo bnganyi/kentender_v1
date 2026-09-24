@@ -330,50 +330,57 @@ async function submitDraft() {
 
 		<template v-else>
 			<div style="padding-bottom: 90px; max-width: 820px">
-				<h1 style="font-size: 30px; margin: 0 0 8px">{{ __("Create strategic plan") }}</h1>
-				<p style="color: var(--kt-color-neutral-800); font-size: 14px; margin: 0 0 20.4px; max-width: 560px">{{ __("Enter the plan details, then add its objectives and targets.") }}</p>
-				<div class="kt-card kt-blueprint" style="max-width: 640px" data-testid="str-new-plan-form">
-					<div class="kt-card-title">{{ __("Plan identity") }}</div>
-					<div style="display: grid; gap: 13.6px">
-						<div class="kt-field">
-							<label for="str-plan-title">{{ __("Plan title") }}</label>
-							<input id="str-plan-title" v-model="draft.title" class="kt-input" type="text" data-testid="str-plan-title" :aria-invalid="fieldErrors.title ? 'true' : 'false'" />
-							<p v-if="fieldErrors.title" class="kt-field-error" data-testid="str-field-error-title">{{ fieldErrors.title }}</p>
-						</div>
-						<div class="kt-field">
-							<label for="str-plan-role">{{ __("Plan type") }}</label>
-							<select id="str-plan-role" v-model="draft.plan_role" class="kt-input" style="max-width: 260px" data-testid="str-plan-role">
-								<option value="Primary">{{ __("Main strategic plan") }}</option>
-								<option value="Supporting Framework">{{ __("Supporting framework") }}</option>
-							</select>
-						</div>
-						<div v-if="draft.plan_role === 'Supporting Framework'" class="kt-field">
-							<label for="str-plan-parent">{{ __("Main plan") }}</label>
-							<select id="str-plan-parent" v-model="draft.parent_primary_plan_id" class="kt-input" data-testid="str-plan-parent">
-								<option value="">{{ __("Select a main strategic plan") }}</option>
-								<option v-for="p in primaryPlans" :key="p.id" :value="p.id">{{ p.title }} · {{ p.reference }}</option>
-							</select>
-							<div class="kt-field-hint">{{ __("A supporting framework sits under a main strategic plan.") }}</div>
-							<p v-if="fieldErrors.parent_primary_plan_id" class="kt-field-error" data-testid="str-field-error-parent">{{ fieldErrors.parent_primary_plan_id }}</p>
-						</div>
-						<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 13.6px">
-							<div class="kt-field">
-								<label for="str-period-start">{{ __("Start date") }}</label>
-								<input id="str-period-start" v-model="draft.period_start" class="kt-input" type="date" data-testid="str-period-start" />
-								<p v-if="fieldErrors.period_start" class="kt-field-error" data-testid="str-field-error-period-start">{{ fieldErrors.period_start }}</p>
+				<div class="kt-card kt-blueprint" style="padding: 0; max-width: 820px">
+					<div style="padding: 24px">
+						<div class="kt-eyebrow" style="margin-bottom: 6px">{{ __("Strategy Alignment") }}</div>
+						<h1 style="font-size: 30px; margin: 0 0 8px">{{ __("Create strategic plan") }}</h1>
+						<p style="color: var(--kt-color-neutral-800); font-size: 14px; margin: 0; max-width: 560px">{{ __("Enter the plan details, then add its objectives and targets.") }}</p>
+					</div>
+					<div style="padding: 24px; border-top: 1px solid var(--kt-color-divider)">
+						<div style="max-width: 640px" data-testid="str-new-plan-form">
+							<div class="kt-card-title">{{ __("Plan identity") }}</div>
+							<div style="display: grid; gap: 13.6px">
+								<div class="kt-field">
+									<label for="str-plan-title">{{ __("Plan title") }}</label>
+									<input id="str-plan-title" v-model="draft.title" class="kt-input" type="text" data-testid="str-plan-title" :aria-invalid="fieldErrors.title ? 'true' : 'false'" />
+									<p v-if="fieldErrors.title" class="kt-field-error" data-testid="str-field-error-title">{{ fieldErrors.title }}</p>
+								</div>
+								<div class="kt-field">
+									<label for="str-plan-role">{{ __("Plan type") }}</label>
+									<select id="str-plan-role" v-model="draft.plan_role" class="kt-input" style="max-width: 260px" data-testid="str-plan-role">
+										<option value="Primary">{{ __("Main strategic plan") }}</option>
+										<option value="Supporting Framework">{{ __("Supporting framework") }}</option>
+									</select>
+								</div>
+								<div v-if="draft.plan_role === 'Supporting Framework'" class="kt-field">
+									<label for="str-plan-parent">{{ __("Main plan") }}</label>
+									<select id="str-plan-parent" v-model="draft.parent_primary_plan_id" class="kt-input" data-testid="str-plan-parent">
+										<option value="">{{ __("Select a main strategic plan") }}</option>
+										<option v-for="p in primaryPlans" :key="p.id" :value="p.id">{{ p.title }} · {{ p.reference }}</option>
+									</select>
+									<div class="kt-field-hint">{{ __("A supporting framework sits under a main strategic plan.") }}</div>
+									<p v-if="fieldErrors.parent_primary_plan_id" class="kt-field-error" data-testid="str-field-error-parent">{{ fieldErrors.parent_primary_plan_id }}</p>
+								</div>
+								<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 13.6px">
+									<div class="kt-field">
+										<label for="str-period-start">{{ __("Start date") }}</label>
+										<input id="str-period-start" v-model="draft.period_start" class="kt-input" type="date" data-testid="str-period-start" />
+										<p v-if="fieldErrors.period_start" class="kt-field-error" data-testid="str-field-error-period-start">{{ fieldErrors.period_start }}</p>
+									</div>
+									<div class="kt-field">
+										<label for="str-period-end">{{ __("End date") }}</label>
+										<input id="str-period-end" v-model="draft.period_end" class="kt-input" type="date" data-testid="str-period-end" />
+										<p v-if="fieldErrors.period_end" class="kt-field-error" data-testid="str-field-error-period-end">{{ fieldErrors.period_end }}</p>
+									</div>
+								</div>
 							</div>
-							<div class="kt-field">
-								<label for="str-period-end">{{ __("End date") }}</label>
-								<input id="str-period-end" v-model="draft.period_end" class="kt-input" type="date" data-testid="str-period-end" />
-								<p v-if="fieldErrors.period_end" class="kt-field-error" data-testid="str-field-error-period-end">{{ fieldErrors.period_end }}</p>
-							</div>
+							<p v-if="saveError" class="kt-field-error" data-testid="str-save-error" style="font-size: 14px">{{ saveError }}</p>
+							<p v-if="savedDraftRoute" data-testid="str-open-saved-draft" style="font-size: 14px; margin: 0">
+								{{ __("The plan was created.") }}
+								<a href="#" @click.prevent="openRoute(savedDraftRoute)">{{ __("Open saved draft") }}</a>
+							</p>
 						</div>
 					</div>
-					<p v-if="saveError" class="kt-field-error" data-testid="str-save-error" style="font-size: 14px">{{ saveError }}</p>
-					<p v-if="savedDraftRoute" data-testid="str-open-saved-draft" style="font-size: 14px; margin: 0">
-						{{ __("The plan was created.") }}
-						<a href="#" @click.prevent="openRoute(savedDraftRoute)">{{ __("Open saved draft") }}</a>
-					</p>
 				</div>
 			</div>
 			<div class="kt-sticky-footer">

@@ -206,3 +206,18 @@ export function contextValue(page: Page, testId: string, label: string): Locator
 		.filter({ has: page.getByText(label, { exact: true }) })
 		.locator(".kt-meta-value");
 }
+
+/**
+ * The record's own identity line inside the page head — `PLN-MOH-2027-001 ·
+ * Version 1 · FY 2027/28` with its state badge.
+ *
+ * The boards draw this as one `.kt-page-scope` line in the head; several
+ * Planning screens had it as a labelled `.kt-meta-row` below the head instead,
+ * which read as the page's first section rather than as the record's identity
+ * (corrected 24 September 2026). `contextValue` above still serves the screens
+ * whose board genuinely draws a labelled context row outside the head —
+ * U02–U05's departmental plan is the one that does.
+ */
+export function scopeLine(page: Page, testId: string): Locator {
+	return page.locator(`[data-testid="${testId}"]`);
+}
