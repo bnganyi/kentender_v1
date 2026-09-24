@@ -324,9 +324,10 @@ ui-fidelity-gate: ui-structure-gate artboard-provenance-gate
 # claimed otherwise for three weeks. Seeds the KT-STD §8 world first
 # (idempotent).
 ui-system-setup-fidelity-gate:
-	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.site_setup.run
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.playwright_ui_fixtures.reset_config
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/design-fidelity/system-setup-fidelity.spec.ts
+		tests/ui/smoke/design-fidelity/system-setup-fidelity.spec.ts; status=$$?; \
+		cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.playwright_ui_fixtures.restore_site; exit $$status
 
 # PLN-CHG-001 v1.18 §10.11 C01–C04 (tracker PLN18-106) — the System setup
 # component suite plus the Procurement settings browser journey; the spec's
@@ -367,7 +368,8 @@ ui-system-setup-access-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.site_setup.run
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
 		tests/ui/smoke/system_setup/system-setup-access.spec.ts \
-		tests/ui/smoke/system_setup/system-setup-routing.spec.ts
+		tests/ui/smoke/system_setup/system-setup-routing.spec.ts \
+		tests/ui/smoke/system_setup/system-setup-worlds.spec.ts
 
 # BUD-CHG-001 v1.3 Phase 8 (BUD-802) — Budget & Funding screens match their
 # .dc.html artboards. Seeds via a piped `exec(open(...).read())` rather than

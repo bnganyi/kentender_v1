@@ -3,7 +3,7 @@
 **Authority:** `KenTender_CFG-CHG-002_Site_Configuration_and_System_Setup_v0_14.md` (approved 24 September 2026; supersedes v0.13 in full). Shared standard KT-STD-001 v1.7; authority baseline AUTH-ADR-001 v1.9.
 **Companions:** `CFG-CHG-002_v0_14_Implementation_Plan.md` (rules, phases, verification), `FOLLOW_UPS.md`, design `design/*.dc.html`.
 **Predecessor:** `CFG-CHG-002_IMPLEMENTATION_TRACKER.md` (v0.11 cycle, 16 September 2026), kept as history. Its decisions D1–D10 stand. Its acceptance claims are **not** carried forward as Done: every one is re-audited against v0.14 and the stronger UI definition of done in the plan.
-**Status:** Phases 0–3 done 24 September 2026 (two owner questions open, Q1–Q2); Phase 4 next.
+**Status:** Phases 0–4 done 24 September 2026; Phase 5 (screen by screen) next.
 
 ## Tracker rules
 
@@ -25,6 +25,7 @@
 | 2026-09-24 | **D14 Boards completed before code.** Missing states in the spec's artboard inventory are authored into the CFG boards (Phase 0); AUTH-owned boards are not edited here. | A design-tool export can drop states; closed-input rule forbids inventing them in Vue. AUTH owns its compositions (spec §10.1 exception). |
 | 2026-09-24 | **D15 In-place correction kept** (answers Q1). An unused, unchecked, not-yet-effective version may be corrected in place through its command (owner decision 23 Sep 2026, `configuration_versions.version_editable`); anything used, source-checked or in force needs a new version. A named exception to v0.14 §4.6 "every saved version is immutable". | Owner choice, 24 Sep 2026. |
 | 2026-09-24 | **D16 Undeclared overlaps refused** (answers Q2). Saving any rule, method, schedule or calendar version — new or corrected in place — whose dates overlap an Active version of the same record must name it; otherwise `CFG_SUPERSESSION_INVALID`, checked before any write. A declared version must actually overlap. | Owner choice, 24 Sep 2026; follows v0.14 §5. |
+| 2026-09-24 | **D17 First-run and empty states are browser-side worlds.** CONFIG-FIRST and CONFIG-EMPTY transform the server's own responses in the browser; the shared site is never unconfigured or emptied. The first-run save is proved by the Python suite. | Unconfiguring the one dev site would break every module mid-run; §13 calls these "isolated UI scenarios". |
 
 ## Risks
 
@@ -45,7 +46,7 @@
 | CFG14-G01 | Enforcement wired; red list recorded; other modules' gates still green | **Done** 2026-09-24 | CFG14-101–109; `ui-structure-gate` 595 passed; System setup fidelity 17, access 5, fiscal years 3, entity 1 passed; procurement-settings 3 of 4 — the 4th is pre-existing finding F2 |
 | CFG14-G02 | Shared routing runtime; route specs green | **Done** 2026-09-24 | CFG14-201–204. System setup component suite 189; structure gate 609 + 35; browser: routing 5, access 5, fiscal years 3, entity 1, fidelity 17 (after rebuild), procurement settings 3 of 4 (F2, pre-existing) |
 | CFG14-G03 | Domain deltas 3a–3f green; cross-app callers green; canonical seed validates | **Done except canonical validation** 2026-09-24 | 3a–3f green; Planning callers green; structure gate 617 + 35; System setup browser fidelity 17, routing 5, procurement settings 3 of 4 (F2). Canonical validation fails for pre-existing reasons (FU-23), not from this phase |
-| CFG14-G04 | Fixture worlds idempotent and purge clean | Planned | |
+| CFG14-G04 | Fixture worlds idempotent and purge clean | **Done** 2026-09-24 | CFG14-401 |
 | CFG14-G05 | Every screen meets the UI definition of done; per-screen gates green | Planned | |
 | CFG14-G06 | Release evidence; acceptance map complete with evidence or named gap | Planned | |
 
@@ -143,7 +144,7 @@
 
 | ID | Item | Status | Evidence |
 |---|---|---|---|
-| CFG14-401 | CONFIG, CONFIG-FIRST, CONFIG-SWAP, CONFIG-RULES, CONFIG-EMPTY builders + purges | Planned | |
+| CFG14-401 | CONFIG, CONFIG-FIRST, CONFIG-SWAP, CONFIG-RULES, CONFIG-EMPTY builders + purges | Done | Site worlds from real commands, idempotent: `reset_config` (canonical + disposal plans closed, as §10.1 draws), `reset_config_rules` (pending Reservation rules V1), `reset_config_swap` (plans open for FY 2026/27, no closing date); `restore_site` undoes all (purge, canonical seed, re-stamp). CONFIG-FIRST/-EMPTY are browser-side substitutes over the server's own responses (`asFirstRun`/`asEmpty`, helpers.ts) — never an unconfigured or emptied shared site (D17). test_system_setup_fixtures 4 OK; system-setup-worlds.spec 4 passed (first run with the other four tabs disabled — first browser evidence for FU-14; empty states; CONFIG; SWAP), in the access gate. Fidelity gate now builds CONFIG first and restores after; `FIXTURE_PENDING` emptied — C02 detail passes its strict text comparison (17 passed). F8 fixed: the approval test asks for an entity type no rule covers (35 OK). Site verified restored (plans and disposal open on FY 2027/28). |
 
 ### Phase 5 — screen by screen
 

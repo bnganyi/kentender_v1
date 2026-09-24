@@ -23,15 +23,22 @@ service commands (never a direct doctype write) and is `bench execute`-able.
                           incomplete — the rule list/detail/source-check
                           specimens.
 
-CONFIG-FIRST (no entity/root configured), CONFIG-SWAP (a same-module
-cross-year opening) and CONFIG-EMPTY (an isolated no-data world) are
-deliberately not built here yet: each needs the concrete screen that
-consumes it decided first (CONFIG-FIRST in particular means temporarily
-unconfiguring the site, which only the specific first-run test should ever
-do, scoped to its own setUp/tearDown — see
-`kentender_core.tests.test_site_configuration.ConfigurationTestCase.blank_site`
-for the existing safe pattern). Add them here once the owning Phase 3
-sub-phase needs them, not speculatively.
+- `reset_config_swap`  — §10.1 CONFIG-SWAP: departmental plans open for FY
+                          2026/27 with no closing date (closing FY 2027/28's).
+- `restore_site`       — undoes every world: purge, canonical seed (reopens
+                          the canonical year's plans and disposal plans),
+                          seeded rules re-stamped fixture-verified. Every
+                          browser spec that builds a world calls it last.
+
+CONFIG itself differs from the canonical seed in one fact: disposal plans are
+closed, as §10.1 draws them (the seed opens them, SEED-OPS v1.8).
+
+CONFIG-FIRST (no entity/root) and CONFIG-EMPTY (no years, sources, rules or
+schedules) are NOT site worlds: unconfiguring or emptying the one shared dev
+site would break every other module. They are browser-side substitutes that
+transform the server's own responses (`asFirstRun`/`asEmpty` in
+tests/ui/smoke/system_setup/helpers.ts). The first-run save itself is proved
+by the Python suite (atomic entity + root). Owner decision D17, 24 Sep 2026.
 """
 
 from __future__ import annotations
@@ -88,6 +95,11 @@ def reset_config(*, commit: bool = True) -> dict[str, Any]:
 	_guard()
 	seed = site_setup.run(commit=False)
 	removed = purge(commit=False)
+	# §10.1 CONFIG draws disposal plans Closed; the canonical seed opens them
+	# (SEED-OPS v1.8). Closed through the real command; `restore_site`
+	# reopens them.
+	for year in frappe.get_all("Fiscal Year", filters={configuration.DISPOSAL_FLAG_OPEN: 1}, pluck="name"):
+		configuration.close_disposal_plan_submission(fiscal_year=year, reason="Playwright CONFIG world: disposal plans closed.")
 	site = configuration.get_site_configuration()
 	fy_open = configuration._fy_name(site_setup.DPP_INTAKE["start_year"])
 	fy_current = configuration._fy_name(site_setup.DPP_INTAKE["start_year"] - 1)
@@ -145,6 +157,42 @@ def reset_config_rules(*, commit: bool = True) -> dict[str, Any]:
 		**base,
 		"reservation_reference_set": reservation_set,
 		"reservation_version": reservation["reference"],
+	}
+
+
+def reset_config_swap(*, commit: bool = True) -> dict[str, Any]:
+	"""§10.1 CONFIG-SWAP — departmental plans open for FY 2026/27 with no
+	closing date (which, one year at a time, closes FY 2027/28's); every
+	other activity as CONFIG. Opened through the real command so the swap
+	evidence is the real one; `restore_site` swaps back."""
+	base = reset_config(commit=False)
+	configuration.open_dpp_submission(
+		fiscal_year=base["fiscal_year_current"], reason="Playwright CONFIG-SWAP world: departmental plans for the current year."
+	)
+	if commit:
+		frappe.db.commit()
+	return {**base, "dpp_submission": configuration.get_site_configuration().get("dpp_submission")}
+
+
+def restore_site(*, commit: bool = True) -> dict[str, Any]:
+	"""Undo every System setup world: drop this module's fixture rows, then
+	re-run the canonical seed, which reopens the canonical year's
+	departmental plans (closing any year a spec opened) and its disposal
+	plans, and re-stamp the seeded rules fixture-verified. Safe to call when
+	nothing was moved; every spec calls it last."""
+	_guard()
+	frappe.set_user("Administrator")
+	removed = purge(commit=False)
+	site_setup.run(commit=False)
+	site_setup.stamp_procurement_rules_fixture_verified()
+	if commit:
+		frappe.db.commit()
+	site = configuration.get_site_configuration()
+	return {
+		"removed": removed,
+		"needs_submission": site.get("needs_submission"),
+		"dpp_submission": site.get("dpp_submission"),
+		"disposal_plan_submission": site.get("disposal_plan_submission"),
 	}
 
 

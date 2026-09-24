@@ -95,7 +95,6 @@ export const LANDMARK_DRIFT = {
  * Their structural comparison still runs.
  */
 export const FIXTURE_PENDING = {
-	"C02#detail":
-		"the board draws disposal-plan submissions Closed (CONFIG); on the dev site their state is whatever the last seed " +
-		"or spec left (the canonical seed opens them, the Financial years spec closes them)",
-};
+	// Emptied 24 Sep 2026 (tracker CFG14-401): C02 detail now runs on the
+	// CONFIG world (make ui-system-setup-fidelity-gate builds it first).
+}

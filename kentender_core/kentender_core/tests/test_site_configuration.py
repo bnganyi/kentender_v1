@@ -122,11 +122,14 @@ class TestSitePE(ConfigurationTestCase):
 		self.assertEqual(out["root_unit"]["id"], self.root)
 
 	def test_approval_applicability_is_verification_required_with_no_matching_rule(self):
-		"""CFG-CHG-002 v0.11 §4.2 — no "Approval applicability" reference
-		exists yet in the canonical world, so this stays an honest
-		"Verification required", never a silent pass."""
-		out = configuration.get_site_configuration()
-		self.assertEqual(out["procuring_entity"]["approval_applicability"]["result"], "Verification required")
+		"""CFG-CHG-002 v0.14 §4.2 — with no "Approval applicability" rule for
+		the entity, the result is an honest "Verification required", never a
+		silent pass. Asked for an entity type the canonical rule does not
+		cover, instead of assuming the site has no rule at all (the seed now
+		creates one — tracker F8)."""
+		out = configuration._approval_applicability("Public University", False, "Council")
+		self.assertEqual(out["result"], "Verification required")
+		self.assertEqual(out["reference"], "")
 
 	def test_configuring_twice_is_structurally_refused(self):
 		"""CFG-AC-003 — the Single holds one identity; the command refuses."""
