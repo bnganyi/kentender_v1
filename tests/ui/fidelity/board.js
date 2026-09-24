@@ -72,6 +72,37 @@ export function needsScope(doc, id) {
 }
 
 /**
+ * Procurement Requisitions (REQ-CHG-001 v1.11 board v2): each family is a
+ * `div#desNN` holding its base frame (`.kt-panel-lg`, or `.dialog` for a
+ * dialog artboard), and a sibling "variants" block whose frames each open with
+ * a `.sub` caption naming the variant ("REQ-DES-01-DRAFT · …"). A frame is
+ * addressed by family id ("REQ-DES-01") or by the caption it opens with
+ * ("REQ-DES-01-DRAFT", or any caption prefix such as "Return dialog").
+ *
+ * `.cap`/`.sub` captions are design-tool annotation, not screen content, and
+ * are stripped. A dialog frame keeps itself as a landmark (the dialog IS the
+ * artboard); a page frame is compared by its children, since the build's own
+ * page container is the frame.
+ */
+export function requisitionsScope(doc, id) {
+	let frame = null;
+	const family = /^REQ-DES-(\d\d)$/.exec(id);
+	if (family) {
+		const block = doc.querySelector(`div#des${family[1]}`);
+		if (!block) throw new Error(`artboard family ${id} not found`);
+		frame = block.querySelector(":scope > .kt-panel-lg, :scope > .dialog, :scope > div > div > .dialog, :scope > div > .kt-panel-lg");
+	} else {
+		const caption = Array.from(doc.querySelectorAll(".sub")).find((el) => el.textContent.trim().startsWith(id));
+		if (!caption) throw new Error(`artboard variant ${id} not found`);
+		frame = caption.closest(".kt-panel-lg") || caption.nextElementSibling;
+	}
+	if (!frame) throw new Error(`artboard ${id} draws no frame`);
+	const clone = frame.cloneNode(true);
+	for (const note of clone.querySelectorAll(".sub, .cap")) note.remove();
+	return clone.classList.contains("dialog") ? { children: [clone] } : clone;
+}
+
+/**
  * The board's landmark skeleton for one variant.
  *
  * `scope` defaults to Planning's, which is the shape every later board export

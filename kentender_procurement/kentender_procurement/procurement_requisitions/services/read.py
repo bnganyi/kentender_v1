@@ -1,15 +1,12 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""REQ-CHG-001 v1.6 §10.1 — the seven read services. Reads never create a
-root, Version, package, row, task, decision, drawdown, reservation or
-handoff (§10.1's own closing line); every function here only loads and
-projects.
+"""REQ-CHG-001 v1.11 §10.1 — every read, verdict first (KT-STD-001 §3A).
 
-`GetRequisitionWorkspace` is verdict-first per KT-STD-001 §3A: the caller's
-page-level verdict (`holds_any_requisition_responsibility`) is resolved
-before anything else runs, exactly the way `plan_read.py`'s own workspace
-read starts (see AGENTS.md §6.4/§4.3 — never rely on a client check).
+Reads never create a root, Version, package, row, task, decision, drawdown,
+reservation or handoff. Each returns one server projection shaped for its
+REQ-DES board; permitted actions are computed from the same gates the
+commands use (read/offer parity), never from a second copy of the rule.
 """
 
 from __future__ import annotations
@@ -18,94 +15,48 @@ import json
 from typing import Any
 
 import frappe
-from frappe.utils import cstr, flt, fmt_money, formatdate
+from frappe.utils import cstr
 
 from kentender_procurement.procurement_requisitions.services import (
+	authorise as authorise_service,
 	catalogue,
 	compatibility,
+	correction,
 	digest,
 	eligibility_gateway,
+	envelope,
 	funding_gateway,
+	handoff as handoff_service,
+	precision,
+	presenters as p,
+	records,
 	validation,
 )
-from kentender_procurement.procurement_requisitions.services import handoff as handoff_service
 from kentender_procurement.procurement_requisitions.services import requisition_authorization as authz
-from kentender_procurement.procurement_requisitions.services.draft_commands import _contributing_units, _load, _package_dict, _version_dict
 from kentender_procurement.procurement_requisitions.services.errors import ProcurementRequisitionsError, fail
-from kentender_procurement.procurement_requisitions.services.requisition_roles import ROLE_HEAD_OF_PROCUREMENT_FUNCTION, TENDER_SEAM_READER_ROLES
+from kentender_procurement.procurement_requisitions.services.requisition_roles import (
+	FORBIDDEN_MESSAGE,
+	ROLE_AUDITOR,
+	ROLE_DEPARTMENTAL_AUTHOR,
+	ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
+	ROLE_HEAD_OF_USER_DEPARTMENT,
+	ROLE_PROCUREMENT_OFFICER,
+	ROLE_PROCUREMENT_PLANNER,
+	TENDER_SEAM_READER_ROLES,
+)
 
-
-def _money(amount: float) -> str:
-	"""§13.2's fixture values are always written to two decimal places
-	("KES 50,000,000.00"), never a rounded whole number."""
-	return f"KES {fmt_money(flt(amount), precision=2, currency=None).strip()}"
-
-
-def _date(value) -> str:
-	return formatdate(value, "d MMM yyyy") if value else ""
-
-
-def _eat(value) -> str:
-	"""A UTC instant rendered as EAT (mirrors Planning's own `plan_read._eat`,
-	§12.13's convention) — found live via REQ-402's own evidence-capture
-	screenshot showing the raw stored UTC string instead of the artboard's
-	"15 Mar 2027, 10:00 EAT" form."""
-	if not value:
-		return ""
-	from frappe.utils import convert_utc_to_timezone, format_datetime, get_datetime
-
-	local = convert_utc_to_timezone(get_datetime(value), "Africa/Nairobi")
-	return f"{format_datetime(local, 'd MMM yyyy, HH:mm')} EAT"
-
-
-def _ou_label(ou: str) -> str:
-	return cstr(frappe.db.get_value("Organisation Unit", ou, "unit_name") or ou) if ou else ""
-
-
-def _delivery_location_label(location: str) -> str:
-	return cstr(frappe.db.get_value("Delivery Location", location, "location_name") or location) if location else ""
-
-
-def _business_need_and_result(sources: list[dict[str, Any]]) -> tuple[str, str]:
-	"""§13.4/§13.5's combined "one line per Plan Item" business need and
-	expected operational result — the same rule `handoff.py::build_payload`
-	already applies, so every screen and the handoff itself derive these two
-	lines from one place, never a second independently-drifting copy."""
-	business_need = "; ".join(sorted({s.get("description", "") for s in sources if s.get("description")}))
-	expected_result = "; ".join(sorted({s.get("expected_operational_result", "") for s in sources if s.get("expected_operational_result")}))
-	return business_need, expected_result
-
-
-def list_delivery_locations() -> list[dict[str, str]]:
-	"""§13.5's "Delivery location" control — a Location Link — needs real
-	options, not a single hardcoded fixture value; Active locations only
-	(§2 D2: a Retired location is never offered for a new choice)."""
-	return frappe.get_all("Delivery Location", filters={"status": "Active"}, fields=["name", "location_name"], order_by="location_name asc", limit_page_length=0)
-
-
-def _objective_label(strategic_objective: str) -> str:
-	"""§13.4's "Strategic Objective" line needs the objective's own title —
-	the projection's own `objective_path` is deliberately ancestor-only
-	(`strategy_gateway.list_eligible_strategic_objectives`'s own comment:
-	"the objective's title is the field above it"), so this is a direct
-	Link-target label read, the same pattern `_ou_label` already uses.
-
-	Deliberately returns "" (not the id again) when the node cannot be
-	found: a Plan Item's frozen `strategic_objective` snapshot can outlive
-	the Strategy Node it once pointed to (a live, pre-existing dangling
-	reference was found this way on the real MOH-2027-002 fixture item
-	while browser-verifying this screen) — falling back to the id would
-	render "rmndhav4vq — rmndhav4vq", which reads as broken rather than as
-	the graceful degradation it actually is."""
-	if not strategic_objective:
-		return ""
-	return cstr(frappe.db.get_value("Strategy Node", strategic_objective, "title") or "")
+STATE_BADGES = {
+	"Draft": ("Draft", "is-draft"),
+	"Awaiting Department Approval": ("Awaiting department approval", "is-attention"),
+	"Submitted to Procurement": ("Submitted to Procurement", "is-draft"),
+	"Authorised": ("Authorised", "is-live"),
+	"Withdrawn": ("Withdrawn", "is-critical"),
+	"Revoked": ("Authorisation revoked", "is-critical"),
+	"Upstream correction required": ("Planning correction requested", "is-attention"),
+}
 
 
 def _can(fn, *args, **kwargs) -> bool:
-	"""Read-offer parity: true only if the exact command gate that guards
-	the action would let this actor through — never a second, drifting
-	copy of the rule."""
 	try:
 		fn(*args, **kwargs)
 		return True
@@ -113,616 +64,859 @@ def _can(fn, *args, **kwargs) -> bool:
 		return False
 
 
-def _requisition_summary(root) -> dict[str, Any]:
+def _has(actor: str, role: str, unit: str = "") -> bool:
+	from kentender_core.services.authorization import PURPOSE_COMMAND, authorise_record
+
+	return authorise_record(user=actor, business_role=role, organisation_unit=cstr(unit), purpose=PURPOSE_COMMAND).allowed
+
+
+def _forbidden() -> dict[str, Any]:
+	return {"outcome": "FORBIDDEN", "message": FORBIDDEN_MESSAGE}
+
+
+def _reader(requisition: str, actor: str):
+	root = records.require_root(requisition, lock=False)
+	authz.require_requisition_reader(actor, contributing_org_units=records.contributing_units(root))
+	return root
+
+
+def _projection(root) -> dict[str, Any]:
+	try:
+		return eligibility_gateway.get_requisition_eligible_plan_item(root.plan_item_id)
+	except frappe.DoesNotExistError:
+		return {"sources": [], "eligible": False}
+
+
+def list_delivery_locations() -> list[dict[str, str]]:
+	return frappe.get_all("Delivery Location", filters={"status": "Active"}, fields=["name", "location_name", "address"], order_by="location_name asc", limit_page_length=0)
+
+
+def _header(root, version, *, badge: tuple[str, str] | None = None, description: str = "") -> dict[str, Any]:
+	label, tone = badge or STATE_BADGES.get(root.current_state, (root.current_state, "is-draft"))
 	return {
-		"requisition": root.name,
-		"requisition_reference": root.requisition_reference,
-		"plan_item_id": root.plan_item_id,
-		"title": frappe.db.get_value("Requisition Version", root.current_version, "requirement_title") or "",
-		"current_state": root.current_state,
-		"lead_org_unit": root.lead_org_unit,
-		"lead_org_unit_label": _ou_label(root.lead_org_unit),
-		"contributing_org_unit_ids": sorted(_contributing_units(root)),
-		"record_version": root.record_version,
-		# PLN-CHG-001 v1.18 §5.4.5 — the neutral outcome Planning returned for
-		# an upstream correction this Requisition raised (blank until then).
-		"upstream_correction": {
-			"outcome": root.get("upstream_correction_outcome") or "",
-			"reason": root.get("upstream_correction_reason") or "",
-			"reference": root.get("upstream_correction_reference") or "",
-			"outcome_at": str(root.get("upstream_correction_outcome_at") or ""),
-		},
+		"requisition": root.name, "reference": root.requisition_reference, "title": version.requirement_title,
+		"state": root.current_state, "badge": {"label": label, "tone": tone}, "description": description,
+		"record_version": root.record_version, "version": version.name, "version_number": version.version_number,
+		"version_record_version": version.record_version,
 	}
 
 
-def _department_label_list(contributing_units: list[str], values_by_unit: dict[str, float], *, sep: str = ", ") -> str:
-	"""§13.2/13.3/13.4 order departments by their own contributed value,
-	largest first — the same rule that names the lead department (§5.1) —
-	rather than an arbitrary alphabetical or insertion order. Different
-	screens join this list with a different separator (the workspace card
-	uses ", ", the Start screen's source panel uses " · "), so the caller
-	picks it rather than this function guessing which screen is asking."""
-	ordered = sorted(contributing_units, key=lambda u: values_by_unit.get(u, 0), reverse=True)
-	return sep.join(_ou_label(u) for u in ordered)
-
-
-def _ready_to_prepare_card(actor: str) -> dict[str, Any] | None:
-	"""REQ-DES-01 — one card, present only when at least one Plan Item is
-	both eligible and not already the subject of an open Requisition; one
-	row per eligible item (never a table), under a single count headline.
-
-	Read-offer parity with `prepare_it_equipment_requisition`'s own gate
-	(`require_draft_author_for_any`): only a Departmental Author or Head of
-	User Department for one of an item's own contributing units sees a row
-	for it. Every other Requisitions-holding role (Head of Procurement
-	Function, Procurement Planner, Auditor) legitimately reads the rest of
-	the workspace but is never offered an action the command layer would
-	itself refuse — confirmed live: Charles Mutiso (Head of Procurement
-	Function) clicking "Prepare Requisition" hit a masked `REQ_NOT_FOUND`
-	from the command's own gate before this fix."""
-	eligible_items = eligibility_gateway.list_requisition_eligible_plan_items()
-	open_by_plan_item = set(
-		frappe.get_list(
-			"Procurement Requisition", filters={"current_state": ("not in", ("Authorised", "Withdrawn", "Revoked"))}, pluck="plan_item_id",
-		)
-	)
-	rows = []
-	for item in eligible_items:
-		if item["plan_item_id"] in open_by_plan_item:
-			continue
-		units = item.get("contributing_org_unit_ids") or []
-		if not _can(authz.require_draft_author_for_any, set(units), actor, masked=False):
-			continue
-		# per-unit value is not returned by the listing projection (only the
-		# item total); the detail projection's own `sources` carries it, but
-		# calling it per row here would be one extra round trip per row —
-		# acceptable at workspace scale, and the same cost `get_eligible_plan_item_detail`
-		# already pays once a user opens the Start screen for this same item.
-		detail = eligibility_gateway.get_requisition_eligible_plan_item(item["plan_item_id"])
-		values_by_unit: dict[str, float] = {}
-		for source in detail.get("sources", []):
-			values_by_unit[source["organisation_unit"]] = values_by_unit.get(source["organisation_unit"], 0) + flt(source.get("remaining_amount"))
-		rows.append(
-			{
-				"plan_item_id": item["plan_item_id"],
-				"supporting": f"{item['title']} · {_department_label_list(units, values_by_unit)} · {_money(item['remaining_value'])}",
-				"route": ["procurement-requisitions", "new", item["plan_item_id"]],
-			}
-		)
-	if not rows:
-		return None
-	noun = "Plan Item" if len(rows) == 1 else "Plan Items"
-	return {"headline": f"{len(rows)} {noun} ready to prepare", "rows": rows}
-
-
-_STATE_STATUS: dict[str, tuple[str, str]] = {
-	"Draft": ("Draft", "is-draft"),
-	"Awaiting Department Approval": ("Awaiting Department Approval", "is-draft"),
-	"Submitted to Procurement": ("Submitted to Procurement", "is-draft"),
-	"Authorised": ("Authorised", "is-live"),
-	"Withdrawn": ("Withdrawn", "is-draft"),
-	"Revoked": ("Revoked", "is-draft"),
-	"Upstream correction required": ("Upstream correction required", "is-attention"),
-}
-
-
-def _your_requisitions_rows(actor: str) -> list[dict[str, Any]]:
-	"""REQ-DES-01 — one connected list: every Requisition this actor has a
-	stake in (visible under the same permission scope `permission_query_conditions`
-	enforces), whatever its stage. A row awaiting this actor's own open
-	decision reads as that decision, not a plain state label (§13.3)."""
-	roots = frappe.get_list(
-		"Procurement Requisition",
-		fields=["name", "requisition_reference", "plan_item_id", "current_version", "current_state", "lead_org_unit"],
-		order_by="modified desc", limit_page_length=0,
-	)
-	if not roots:
-		return []
-	open_tasks = frappe.get_all(
-		"Requisition Task", filters={"requisition": ("in", [r.name for r in roots]), "status": "Open"},
-		fields=["name", "requisition", "business_role", "organisation_unit"],
-	)
-	tasks_by_requisition: dict[str, Any] = {t.requisition: t for t in open_tasks}
-	titles = {
-		v.name: v.requirement_title
-		for v in frappe.get_all("Requisition Version", filters={"name": ("in", [r.current_version for r in roots if r.current_version])}, fields=["name", "requirement_title"])
-	}
-	rows = []
-	for root in roots:
-		title = titles.get(root.current_version) or ""
-		status, status_kind = _STATE_STATUS.get(root.current_state, (root.current_state, "is-draft"))
-		action_label, route = "", []
-		task = tasks_by_requisition.get(root.name)
-		if task and task.business_role == "Head of User Department" and _can(authz.require_hod_for_any, {task.organisation_unit}, actor, masked=False):
-			status, status_kind = "Awaiting your approval", "is-attention"
-			action_label, route = "Review", ["procurement-requisitions", "department-task", task.name]
-		elif task and task.business_role == ROLE_HEAD_OF_PROCUREMENT_FUNCTION and _can(authz.require_hopf, actor, masked=False):
-			status, status_kind = "Awaiting your approval", "is-attention"
-			action_label, route = "Review", ["procurement-requisitions", "procurement-task", task.name]
-		elif root.current_state == "Draft":
-			action_label, route = "Continue", ["procurement-requisitions", root.name]
-		elif root.current_state == "Authorised":
-			action_label, route = "View", ["procurement-requisitions", root.name, "authorised"]
-		rows.append(
-			{
-				"requisition": root.name, "requisition_reference": root.requisition_reference, "plan_item_title": title,
-				"status": status, "status_kind": status_kind, "action_label": action_label, "route": route,
-			}
-		)
+def _decision_chain(root, version) -> list[dict[str, Any]]:
+	"""The board's read-only Decision chain (owner D2) — recorded decisions
+	only, plus the next stages not yet reached."""
+	prepared = f"{p.date_label(version.creation)} · {p.user_name(version.prepared_by)} · {records.unit_name(root.lead_org_unit_id)}"
+	rows = [{"title": "Draft prepared", "meta": prepared, "tone": "is-live"}]
+	submit = records.decision_of(version.name, "Submit to Procurement")
+	authorise = records.decision_of(version.name, "Authorise requisition")
+	state = root.current_state
+	if submit:
+		rows.append({"title": "Certified and submitted by the department", "meta": f"{p.eat(submit.decided_at)} · {p.user_name(submit.actor)}", "tone": "is-live"})
+	else:
+		rows.append({"title": "Head of User Department approval", "meta": "Awaiting your decision" if state == "Awaiting Department Approval" else "Not yet reached", "tone": "is-attention" if state == "Awaiting Department Approval" else "is-pending", "upcoming": state != "Awaiting Department Approval"})
+	if authorise:
+		rows.append({"title": "Authorised by Procurement", "meta": f"{p.eat(authorise.decided_at)} · {p.user_name(authorise.actor)} · funding reserved", "tone": "is-live"})
+	elif submit:
+		rows.append({"title": "Procurement authorisation", "meta": "Awaiting your decision" if state == "Submitted to Procurement" else "Not yet reached", "tone": "is-attention", "upcoming": False})
+	else:
+		rows.append({"title": "Procurement authorisation", "meta": "Not yet reached", "tone": "is-pending", "upcoming": True})
+	consumed = bool(root.handoff_consumed_at)
+	if authorise:
+		rows.append({"title": "Tender Preparation", "meta": "Started" if consumed else "Ready to start · not yet consumed", "tone": "is-live" if consumed else "is-attention", "upcoming": False})
+	else:
+		rows.append({"title": "Tender Preparation", "meta": "Not started", "tone": "is-pending", "upcoming": True})
 	return rows
 
 
-def get_requisition_workspace(*, user: str | None = None) -> dict[str, Any]:
-	"""§10.1/§13.3/§14.1 — the "Ready to prepare" card and the one connected
-	"Your Requisitions" list, verdict-first (KT-STD-001 §3A)."""
-	from kentender_procurement.procurement_requisitions.services.requisition_roles import FORBIDDEN_RESPONSIBILITIES
+# --------------------------------------------------------------------------
+# REQ-DES-01 — workspace
+# --------------------------------------------------------------------------
 
+
+def _next_task(root) -> tuple[str, str]:
+	version = frappe.get_doc("Requisition Version", root.current_version)
+	package_version = frappe.get_doc("IT Equipment Requirement Package Version", version.package_version)
+	report = validation.validate(version=records.version_dict(version), package=records.package_dict(package_version), eligibility=_projection(root))
+	pending = next((t for t in report["tasks"] if t["status"] != "Complete"), None)
+	returned = bool(version.based_on_version)
+	labels = {"request_details": "Complete request details", "requirements": "Complete requirements", "review_submit": "Review and submit"}
+	blocker = next((f["message"] for f in report["findings"] if f["severity"] == "Blocking" and (pending is None or f["task"] == pending["key"])), "")
+	task_label = labels.get(pending["key"], "Review and submit") if pending else "Review and submit"
+	if returned:
+		last = records.decision_of(version.based_on_version, "Return for correction") or records.decision_of(version.based_on_version, "Return to department") or records.decision_of(version.based_on_version, "Change submitting department and return")
+		if last:
+			return "Correct returned requisition", cstr(last.reason)
+	return task_label, blocker
+
+
+def get_requisition_workspace(*, filters: dict[str, Any] | None = None, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	if not authz.holds_any_requisition_responsibility(actor):
-		return {
-			"outcome": "FORBIDDEN",
-			"forbidden": {
-				"heading": "You do not have access to Procurement Requisitions.",
-				"text": f"This area needs one of these responsibilities: {FORBIDDEN_RESPONSIBILITIES}. Ask your KenTender administrator to assign one in System setup.",
-			},
+		return _forbidden()
+	filters = filters or {}
+	technical = authz.is_technical(actor)
+	is_hopf = _has(actor, ROLE_HEAD_OF_PROCUREMENT_FUNCTION)
+	author_units = set()
+	hod_units = set()
+	from kentender_core.services.authorization import permitted_ou_scopes
+
+	author_units = set(permitted_ou_scopes(actor, ROLE_DEPARTMENTAL_AUTHOR) or ())
+	hod_units = set(permitted_ou_scopes(actor, ROLE_HEAD_OF_USER_DEPARTMENT) or ())
+	draft_units = author_units | hod_units
+
+	readable = frappe.get_list(
+		"Procurement Requisition", fields=["name", "requisition_reference", "plan_item_id", "current_state", "current_version", "lead_org_unit_id", "modified"],
+		order_by="modified desc", limit_page_length=0,
+	) if not technical else frappe.get_all(
+		"Procurement Requisition", fields=["name", "requisition_reference", "plan_item_id", "current_state", "current_version", "lead_org_unit_id", "modified"],
+		order_by="modified desc", limit_page_length=0,
+	)
+	register = []
+	your_work = []
+	plan_years: dict[str, str] = {}
+	references: dict[str, str] = {}
+	counts = {"Drafts": 0, "Returned": 0, "Approvals": 0}
+	for row in readable:
+		root = frappe.get_doc("Procurement Requisition", row.name)
+		version = frappe.get_doc("Requisition Version", root.current_version) if root.current_version else None
+		units = sorted(records.contributing_units(root))
+		label, tone = STATE_BADGES.get(root.current_state, (root.current_state, "is-draft"))
+		if version and root.current_state == "Draft" and version.based_on_version:
+			label = "Draft correction"
+		if root.plan_id not in plan_years:
+			plan_years[root.plan_id] = cstr(frappe.db.get_value("Annual Plan", root.plan_id, "fiscal_year"))
+		if root.plan_item_id not in references:
+			references[root.plan_item_id] = cstr(frappe.db.get_value("Plan Item", root.plan_item_id, "plan_item_reference"))
+		entry = {
+			"requisition": root.name, "reference": root.requisition_reference, "title": version.requirement_title if version else "",
+			"plan_item_id": root.plan_item_id, "plan_item_reference": references[root.plan_item_id], "fiscal_year": plan_years[root.plan_id],
+			"status": label, "tone": tone, "state": root.current_state, "departments": p.departments_label(p.ordered_units(records.child_rows(version, "drawdown_lines") if version else [], root.lead_org_unit_id)),
+			"units": units, "updated": p.eat(root.modified), "route": f"/app/procurement-requisitions/{root.name}" + ("/authorised" if root.current_state in ("Authorised", "Revoked") else ""),
 		}
+		register.append(entry)
+		if technical:
+			continue
+		if root.current_state == "Draft" and set(units) & draft_units:
+			task_label, detail = _next_task(root)
+			returned = bool(version.based_on_version)
+			counts["Returned" if returned else "Drafts"] += 1
+			your_work.append({**entry, "task": task_label, "detail": detail, "meta": f"{root.requisition_reference} · Updated {p.eat(root.modified)}", "action": "Continue", "kind": "returned" if returned else "draft"})
+	if not technical:
+		for task in frappe.get_all("Requisition Task", filters={"status": "Open"}, fields=["name", "requisition", "requisition_version", "business_role", "organisation_unit", "creation"]):
+			if task.business_role == ROLE_HEAD_OF_USER_DEPARTMENT and task.organisation_unit in hod_units:
+				label, route, detail = "Review departmental requisition", f"/app/procurement-requisitions/department-task/{task.name}", "Certify that it states both departments’ need and minimum requirements, or return it for correction."
+			elif task.business_role == ROLE_HEAD_OF_PROCUREMENT_FUNCTION and is_hopf:
+				label, route, detail = "Decide whether to authorise", f"/app/procurement-requisitions/procurement-task/{task.name}", "Check current funding and procurement checks, then authorise or return it."
+			else:
+				continue
+			root = frappe.get_doc("Procurement Requisition", task.requisition)
+			version = frappe.get_doc("Requisition Version", task.requisition_version)
+			counts["Approvals"] += 1
+			your_work.append(
+				{
+					"requisition": root.name, "reference": root.requisition_reference, "title": version.requirement_title, "task": label, "detail": detail,
+					"meta": f"{root.requisition_reference} · Submitted for your decision {p.eat(task.creation)}", "action": "Review", "route": route, "kind": "decision", "task_id": task.name,
+				}
+			)
 
-	rows = _your_requisitions_rows(actor)
-	return {
-		"outcome": "OK",
-		"ready_to_prepare": _ready_to_prepare_card(actor),
-		"requisitions": rows,
-		"count_label": f"{len(rows)} Requisition" + ("" if len(rows) == 1 else "s"),
-	}
+	ready = []
+	if not technical and draft_units:
+		for item in eligibility_gateway.list_requisition_eligible_plan_items():
+			if not set(item.get("contributing_org_unit_ids") or []) & draft_units:
+				continue
+			open_root = records.open_root_for(item["plan_item_id"])
+			detail = eligibility_gateway.get_requisition_eligible_plan_item(item["plan_item_id"])
+			lines = [{"contributing_org_unit": s["organisation_unit"], "requested_value": s["remaining_amount"]} for s in detail.get("sources", [])]
+			units = p.ordered_units(lines, records.default_lead(lines))
+			existing = None
+			if open_root:
+				ex = frappe.get_doc("Procurement Requisition", open_root)
+				ex_version = frappe.get_doc("Requisition Version", ex.current_version)
+				task_label, _ = _next_task(ex) if ex.current_state == "Draft" else (STATE_BADGES.get(ex.current_state, (ex.current_state, ""))[0], "")
+				existing = {"requisition": ex.name, "summary": f"{ex.requisition_reference} · {STATE_BADGES.get(ex.current_state, (ex.current_state,''))[0]} · {task_label.replace('Complete request details', 'Request details need attention')}", "route": f"/app/procurement-requisitions/{ex.name}"}
+				if any(w["requisition"] == ex.name for w in your_work):
+					continue
+			ready.append(
+				{
+					"plan_item_id": item["plan_item_id"], "plan_item_reference": item.get("plan_item_reference") or "", "title": item.get("title"), "departments": p.departments_label(units),
+					"available_quantity": precision.display_quantity(precision.planning_quantity(item.get("remaining_quantity") or "0")),
+					"available_value": precision.display_money(item.get("remaining_value") or "0"),
+					"needed_by": p.date_label(detail.get("plan_completion_boundary")), "route": f"/app/procurement-requisitions/new/{item['plan_item_id']}",
+					"existing": existing,
+				}
+			)
 
-
-def get_eligible_plan_item_detail(*, plan_item_id: str, user: str | None = None) -> dict[str, Any]:
-	"""§10.1/§13.4 `GetEligiblePlanItemDetail` — the complete Planning
-	projection, current remaining balances, reservation category and
-	lotting indicator. No mutation; Planning's own gate decides visibility.
-
-	`contributing_departments_label` and the combined `business_need`/
-	`expected_operational_result` lines are computed here (not left to the
-	client) so the Start screen (§13.4) and the eventual handoff payload
-	(`handoff.py::build_payload`) derive the same "one line per Plan Item"
-	summary from the same rule, never two independently-drifting copies.
-
-	`can_prepare` is read-offer parity with `prepare_it_equipment_requisition`'s
-	own gate: a Head of Procurement Function/Planner/Auditor can legitimately
-	load this screen (they hold a Requisitions responsibility, so the
-	workspace's own row can still route them here) but is never offered the
-	one action the command layer would itself refuse."""
-	actor = authz.actor(user)
-	projection = eligibility_gateway.get_requisition_eligible_plan_item(plan_item_id)
-	compat = compatibility.check(projection)
-	sources = projection.get("sources", [])
-	units = projection.get("contributing_org_unit_ids") or []
-	values_by_unit: dict[str, float] = {}
-	for source in sources:
-		values_by_unit[source["organisation_unit"]] = values_by_unit.get(source["organisation_unit"], 0) + flt(source.get("remaining_amount"))
-	business_need, expected_result = _business_need_and_result(sources)
-	return {
-		"outcome": "OK", "projection": projection,
-		"contributing_departments_label": _department_label_list(units, values_by_unit, sep=" · "),
-		# Planning's own `sources[].organisation_unit` is a bare id — the
-		# published `get_requisition_eligible_plan_item` contract has its
-		# own field-completeness test this module must never grow beyond
-		# by mutating that dict, so the display label is a companion map
-		# alongside it instead.
-		"organisation_unit_labels": {u: _ou_label(u) for u in units},
-		"strategic_objective_title": _objective_label(projection.get("strategic_objective")),
-		"business_need": business_need,
-		"expected_operational_result": expected_result,
-		"compatibility": [{"test": r.test, "required": r.required, "actual": r.actual, "ok": r.ok} for r in compat],
-		"is_compatible": all(r.ok for r in compat),
-		"open_requisition": frappe.db.get_value("Procurement Requisition", {"plan_item_id": plan_item_id, "current_state": ("not in", ("Authorised", "Withdrawn", "Revoked"))}, "name") or "",
-		"can_prepare": _can(authz.require_draft_author_for_any, set(units), actor, masked=False),
-	}
-
-
-def _drawdown_context(version_dict: dict[str, Any], projection: dict[str, Any]) -> list[dict[str, Any]]:
-	"""§13.5/13.10's drawdown table: each Draft (or locked) drawdown line
-	paired with its own live Planning source (department label, current
-	remaining balance) — the same shape `authorise.py` itself reads at
-	submission time, so every screen that shows this table shows the exact
-	numbers a submit/authorise would recheck."""
-	sources_by_line = {s["plan_item_line_id"]: s for s in projection.get("sources", [])}
-	return [
-		{
-			"drawdown_line_id": line["drawdown_line_id"],
-			"organisation_unit": line["contributing_org_unit"],
-			"organisation_unit_label": _ou_label(line["contributing_org_unit"]),
-			"source_title": (sources_by_line.get(line["plan_item_line_id"]) or {}).get("title", ""),
-			"remaining_quantity": line.get("remaining_quantity"),
-			"remaining_value": line.get("remaining_value"),
-			"unit": line.get("unit"),
-		}
-		for line in version_dict.get("drawdown_lines", [])
+	status = cstr(filters.get("status"))
+	department = cstr(filters.get("department"))
+	search = cstr(filters.get("search")).lower().strip()
+	fiscal_year = cstr(filters.get("fiscal_year"))
+	shown = [
+		r for r in register
+		if (not status or r["state"] == status) and (not department or department in r["units"]) and (not fiscal_year or r["fiscal_year"] == fiscal_year)
+		and (not search or search in (r["reference"] + " " + r["title"]).lower())
 	]
+	departments = sorted({u for r in register for u in r["units"]} | (set() if technical else draft_units | hod_units))
+	return {
+		"outcome": "OK", "actor": actor, "mode": "technical" if technical else "business",
+		"your_work": [] if technical else your_work, "ready_to_start": ready, "register": shown, "register_total": len(register),
+		"counts": {k: v for k, v in counts.items() if (k != "Approvals" or is_hopf or hod_units) and not technical},
+		"filters": {
+			"statuses": [{"value": s, "label": STATE_BADGES[s][0]} for s in STATE_BADGES],
+			"departments": [{"value": u, "label": records.unit_name(u)} for u in departments],
+			"fiscal_years": [{"value": fy, "label": p.fiscal_year_label(fy)} for fy in sorted({r["fiscal_year"] for r in register if r["fiscal_year"]}, reverse=True)] if technical else [],
+		},
+		"department_filter_label": "All departments" if technical else "All my departments",
+	}
 
 
-# §13.11's compatibility table renders friendlier prose for a passing row
-# than `compatibility.py`'s own internal test/actual identifiers carry —
-# that module's own docstring is explicit these are validation identifiers,
-# not display copy, so the translation lives here, at the read boundary,
-# never inside the shared validation service. A failing row always shows
-# its own real `actual` value instead — the friendly gloss only describes
-# the confirmed-good state, never something to hide a real mismatch behind.
-_COMPATIBILITY_TEST_LABELS: dict[str, str] = {
-	"procurement_category": "procurement_category", "requirement_type": "Requirement type",
-	"reservation_category": "Reservation category", "lotting_indicator": "Lotting indicator",
-	"currency": "Currency", "award_packages": "Award package",
+# --------------------------------------------------------------------------
+# REQ-DES-02 — start dialog (and the DES-12 purchase states)
+# --------------------------------------------------------------------------
+
+
+_FAILURE_MESSAGES = {
+	"requirement_type": "This approved purchase requires {result}, which this release does not support.",
+	"reservation_category": "This reservation treatment is not supported by the installed IT-equipment Tender format.",
+	"county_resident_reservation": "This reservation treatment is not supported by the installed IT-equipment Tender format.",
+	"plan_horizon": "This release supports purchases completed within one financial year.",
 }
-_COMPATIBILITY_OK_GLOSS: dict[str, str] = {"requirement_type": "Straightforward IT equipment", "award_packages": "One"}
 
 
-def _compatibility_rows(compat: list) -> list[dict[str, Any]]:
-	return [
-		{
-			"test": _COMPATIBILITY_TEST_LABELS.get(r.test, r.test),
-			"actual": _COMPATIBILITY_OK_GLOSS.get(r.test, r.actual) if r.ok else r.actual,
-			"ok": r.ok,
-		}
-		for r in compat
-	]
-
-
-def _prepared_by(root) -> dict[str, str]:
-	"""§13.10's "Prepared by <name>, <role>" line: the actual preparer is
-	whoever created the root (`prepare_it_equipment_requisition`'s own
-	actor) — resolved to their real held responsibility for the lead
-	department rather than assumed, since a Head of User Department may
-	also prepare directly (REQ-AC-021)."""
-	full_name = cstr(frappe.db.get_value("User", root.owner, "full_name") or root.owner)
-	role = "Head of User Department" if _can(authz.require_hod_for_any, {root.lead_org_unit}, root.owner) else "Departmental Author"
-	return {"name": full_name, "role": role}
-
-
-def _deciding_hod_label(actor: str, org_unit: str) -> dict[str, str]:
-	"""§13.10's "Decision by <name>, Head of User Department for
-	<department>" line — named for whichever contributing department the
-	deciding actor's own Head of User Department assignment actually
-	matched (`require_hod_for_any`'s own resolved unit — not assumed to be
-	the lead department, since §9.1A's command gate accepts any
-	contributing department's HoD, not the lead one exclusively)."""
-	full_name = cstr(frappe.db.get_value("User", actor, "full_name") or actor)
-	return {"name": full_name, "role": f"Head of User Department for {_ou_label(org_unit)}"}
-
-
-def get_requisition_editor(*, requisition: str, user: str | None = None) -> dict[str, Any]:
-	"""§10.1 `GetRequisitionEditor` — one server projection: Planning
-	context, Draft values, package rows, validation, step status and
-	permitted actions, all derived from the exact objects the command
-	layer would load and gate (§14.2 — no separate client-side model)."""
-	actor = authz.actor(user)
-	if not requisition or not frappe.db.exists("Procurement Requisition", requisition):
-		authz.not_found()
-	root = frappe.get_doc("Procurement Requisition", requisition)
-	contributing_units = _contributing_units(root)
-	authz.require_requisition_reader(actor, contributing_org_units=contributing_units)
-	_root, version, package_version = _load(requisition)
-	projection = eligibility_gateway.get_requisition_eligible_plan_item(root.plan_item_id)
-	version_dict = _version_dict(version)
-	package_dict = _package_dict(package_version)
-	report = validation.validate(version=version_dict, package=package_dict, eligibility=projection)
-
-	is_draft = version.version_status == "Draft"
+def _remaining_original(projection: dict[str, Any]) -> dict[str, Any]:
+	"""REQ-DES-12 Remaining original amount — shown only once an earlier
+	requisition has used part of the approved purchase."""
 	sources = projection.get("sources", [])
-	business_need, expected_result = _business_need_and_result(sources)
-	organisation_unit_labels = {u: _ou_label(u) for u in (projection.get("contributing_org_unit_ids") or [])}
-	drawdown_context = _drawdown_context(version_dict, projection)
-
+	zero_qty = precision.planning_quantity("0")
+	qty = sum((precision.planning_quantity(s.get("remaining_quantity") or "0") for s in sources), zero_qty)
+	used_qty = sum((precision.planning_quantity(s.get("approved_quantity") or "0") - precision.planning_quantity(s.get("remaining_quantity") or "0") for s in sources), zero_qty)
+	approved_value = sum((precision.stored_money(s.get("allocated_amount")) for s in sources), precision.stored_money("0"))
+	remaining_value = precision.stored_money(projection.get("remaining_value") or "0")
 	return {
-		"outcome": "OK",
-		"requisition": _requisition_summary(root),
-		"version": {**version_dict, "requisition_version": version.name, "version_status": version.version_status, "version_number": version.version_number, "content_digest": version.content_digest, "record_version": version.record_version},
-		"package": {**package_dict, "package_version": package_version.name, "version_status": package_version.version_status, "catalogue_version": package_version.catalogue_version, "record_version": package_version.record_version},
-		"planning_projection": projection,
-		"business_need": business_need,
-		"expected_operational_result": expected_result,
-		"organisation_unit_labels": organisation_unit_labels,
-		"drawdown_context": drawdown_context,
-		"delivery_location_label": _delivery_location_label(version.delivery_location),
-		"delivery_locations": list_delivery_locations(),
-		"validation": report,
-		"catalogue": {
-			"version": catalogue.CATALOGUE_VERSION,
-			"characteristics": [c.as_dict() for c in catalogue.CHARACTERISTICS],
-			"equipment_categories": list(catalogue.EQUIPMENT_CATEGORIES),
-			"service_types": list(catalogue.SERVICE_TYPES),
-			"service_acceptance_evidence": list(catalogue.SERVICE_ACCEPTANCE_EVIDENCE),
-			"acceptance_check_types": list(catalogue.ACCEPTANCE_CHECK_TYPES),
-			"acceptance_evidence_types": list(catalogue.ACCEPTANCE_EVIDENCE_TYPES),
-			"supporting_material_types": list(catalogue.SUPPORTING_MATERIAL_TYPES),
-		},
-		"permitted_actions": {
-			"can_edit": is_draft and _can(authz.require_draft_author_for_any, contributing_units, actor),
-			"can_send_for_department_approval": is_draft and _can(authz.require_draft_author_for_any, contributing_units, actor),
-			"can_submit_directly": is_draft and _can(authz.require_hod_for_any, contributing_units, actor),
-			"can_withdraw": root.current_state in ("Awaiting Department Approval", "Submitted to Procurement") and _can(authz.require_hod_for_any, contributing_units, actor),
-			# Read-offer-parity with lifecycle.py's `_require_hod_or_hopf` gate
-			# (§7.4A step 1): Head of User Department or Head of Procurement
-			# Function only — never offered to a plain Departmental Author.
-			"can_request_upstream_correction": root.current_state in ("Draft", "Returned", "Awaiting Department Approval", "Submitted to Procurement")
-			and (_can(authz.require_hopf, actor) or _can(authz.require_hod_for_any, contributing_units, actor)),
-		},
+		"shown": used_qty > 0,
+		"original": {"quantity": precision.display_quantity(used_qty + qty), "value": precision.display_money(approved_value)},
+		"used": {"quantity": precision.display_quantity(used_qty), "value": precision.display_money(approved_value - remaining_value)},
+		"available": {"quantity": precision.display_quantity(qty), "value": precision.display_money(remaining_value)},
 	}
+
+
+def get_start_preview(*, plan_item_id: str, user: str | None = None) -> dict[str, Any]:
+	"""§13.3 — the concise start dialog. Opening it creates nothing."""
+	actor = authz.actor(user)
+	if not authz.holds_any_requisition_responsibility(actor):
+		return _forbidden()
+	try:
+		projection = eligibility_gateway.get_requisition_eligible_plan_item(plan_item_id)
+	except frappe.DoesNotExistError:
+		return {"outcome": "NOT_FOUND"}
+	units = set(projection.get("contributing_org_unit_ids") or [])
+	may_prepare = _can(authz.require_draft_author_for_any, units, actor)
+	lines = [{"contributing_org_unit": s["organisation_unit"], "requested_value": s["remaining_amount"]} for s in projection.get("sources", []) if precision.stored_money(s.get("remaining_amount")) > 0]
+	lead = records.default_lead(lines)
+	checks = compatibility.check(projection)
+	failure = next((c for c in checks if not c.ok), None)
+	qty = sum((precision.planning_quantity(s.get("remaining_quantity") or "0") for s in projection.get("sources", [])), precision.planning_quantity("0"))
+	rule = projection.get("reservation_rule") or {}
+	existing = records.open_root_for(projection.get("plan_item_id") or plan_item_id)
+	existing_row = None
+	if existing and _can(authz.require_requisition_reader, actor, contributing_org_units=records.contributing_units(frappe.get_doc("Procurement Requisition", existing))):
+		ex = frappe.get_doc("Procurement Requisition", existing)
+		existing_row = {"requisition": ex.name, "reference": ex.requisition_reference, "route": f"/app/procurement-requisitions/{ex.name}", "summary": f"{ex.requisition_reference} · {STATE_BADGES.get(ex.current_state, (ex.current_state,''))[0]}"}
+	state = "ready"
+	message = ""
+	if existing:
+		state = "existing_open"
+	elif failure:
+		state = {"reservation_category": "rule_unavailable" if failure.code == "REQ_RESERVATION_RULE_UNAVAILABLE" else "reservation_unsupported", "county_resident_reservation": "reservation_unsupported" if failure.code != "REQ_RESERVATION_RULE_UNAVAILABLE" else "rule_unavailable", "plan_horizon": "multi_year"}.get(failure.test, "unsupported")
+		if failure.code == "REQ_RESERVATION_RULE_UNAVAILABLE":
+			message = "The applicable reservation rule is not ready for this purchase. Ask your KenTender administrator to complete the rule in System setup."
+		else:
+			message = _FAILURE_MESSAGES.get(failure.test, failure.failure).format(result=failure.result.lower())
+	elif not projection.get("eligible"):
+		state = "scope_locked" if (projection.get("scope") or {}).get("locked") else "ineligible"
+		message = "This approved purchase already has an authorised requisition. Additional requirements must use a separate approved purchase." if state == "scope_locked" else "This approved purchase is not currently eligible for a requisition."
+	remaining_value = precision.stored_money(projection.get("remaining_value") or "0")
+	return {
+		"outcome": "OK", "state": state, "message": message, "may_start": state == "ready" and may_prepare,
+		"plan_item_id": projection.get("plan_item_id"), "plan_item_reference": projection.get("plan_item_reference") or "", "title": projection.get("title"),
+		"departments": p.departments_label(p.ordered_units(lines, lead)),
+		"available_quantity": precision.display_quantity(qty), "available_value": precision.display_money(remaining_value),
+		"plan_completion_boundary": p.date_label(projection.get("plan_completion_boundary")),
+		"requirement_product": "IT Equipment" if projection.get("requirement_type") == "Goods" else cstr(projection.get("requirement_type")),
+		"reserved_for": p.reserved_for(projection.get("reservation_category")),
+		"county_requirement": "County residents" if projection.get("county_resident_reservation") else "",
+		"reservation_rule": {"label": f"Applicable verified {p.reserved_for(projection.get('reservation_category'))} reservation rule · Version {rule.get('version_number')}" if rule.get("available") else "Not ready", "available": bool(rule.get("available")), "snapshot_id": rule.get("snapshot_id")},
+		"plan_horizon": projection.get("plan_horizon"), "failed_check": failure.label if failure else "",
+		"submitting_department": records.unit_name(lead), "combined": len(units) > 1,
+		"existing": existing_row,
+		"remaining_original": _remaining_original(projection),
+		"is_system_manager": authz.is_technical(actor),
+	}
+
+
+# --------------------------------------------------------------------------
+# The record route (§12) — editable or immutable by server state
+# --------------------------------------------------------------------------
+
+
+def get_requisition_record(*, requisition: str, version: str | None = None, user: str | None = None) -> dict[str, Any]:
+	"""One route, server-chosen rendering (§14.6): a Draft the actor may edit
+	opens the editor; everything else renders read-only in its actual state."""
+	actor = authz.actor(user)
+	if not authz.holds_any_requisition_responsibility(actor):
+		return _forbidden()
+	try:
+		root = _reader(requisition, actor)
+	except frappe.DoesNotExistError:
+		return {"outcome": "NOT_FOUND"}
+	if version and version != root.current_version:
+		return get_version_review(root=root, version_name=version, actor=actor)
+	if root.current_state == "Draft":
+		return get_requisition_editor(root=root, actor=actor)
+	if root.current_state == "Upstream correction required":
+		return get_stopped_requisition(root=root, actor=actor)
+	if root.current_state in ("Authorised", "Revoked"):
+		return get_authorised_requisition(root=root, actor=actor)
+	return get_locked_requisition(root=root, actor=actor)
+
+
+# --------------------------------------------------------------------------
+# REQ-DES-03/05/06 — the Draft editor
+# --------------------------------------------------------------------------
+
+
+def _catalogue_meta() -> dict[str, Any]:
+	return {
+		"categories": list(catalogue.EQUIPMENT_CATEGORIES), "characteristics": [c.as_dict() for c in catalogue.CHARACTERISTICS],
+		"groups": [{"group": g, "keys": list(k)} for g, k in catalogue.TECHNICAL_GROUPS],
+		"service_types": list(catalogue.SERVICE_TYPES), "check_types": list(catalogue.ACCEPTANCE_CHECK_TYPES),
+		"evidence_types": list(catalogue.ACCEPTANCE_EVIDENCE_TYPES), "service_evidence": list(catalogue.SERVICE_ACCEPTANCE_EVIDENCE),
+		"material_types": list(catalogue.SUPPORTING_MATERIAL_TYPES), "service_locations": ["None", "Within Kenya", "At delivery location"],
+		"affected_sections": ["Request details", "Equipment", "Technical requirements", "Warranty and support", "Services", "Acceptance", "Supporting materials", "Whole requisition"],
+	}
+
+
+def _return_panel(version) -> dict[str, Any] | None:
+	if not version.based_on_version:
+		return None
+	decision = None
+	for name in ("Return for correction", "Return to department", "Change submitting department and return"):
+		decision = records.decision_of(version.based_on_version, name)
+		if decision:
+			break
+	if not decision:
+		return None
+	target = {"Request details": ("request_details", "request_information"), "Equipment": ("request_details", "equipment"), "Technical requirements": ("requirements", "technical"), "Warranty and support": ("requirements", "warranty_support"), "Services": ("requirements", "services"), "Acceptance": ("requirements", "acceptance"), "Supporting materials": ("requirements", "supporting_materials")}.get(cstr(decision.affected_section), ("request_details", ""))
+	return {
+		"reason": decision.reason, "returned_by": p.user_name(decision.actor), "returned_at": p.eat(decision.decided_at),
+		"affected_section": decision.affected_section, "task": target[0], "section": target[1], "decision": decision.decision,
+		"earlier_lead": records.unit_name(frappe.db.get_value("Requisition Version", version.based_on_version, "certified_lead_org_unit_id")),
+		"new_lead": records.unit_name(decision.new_lead_org_unit_id) if decision.new_lead_org_unit_id else "",
+		"earlier_version_route": f"/app/procurement-requisitions/{version.requisition}/version/{version.based_on_version}",
+	}
+
+
+def _purchase(root, projection: dict[str, Any], version_dict: dict[str, Any]) -> dict[str, Any]:
+	units = p.ordered_units(version_dict.get("drawdown_lines") or [], root.lead_org_unit_id)
+	qty = sum((precision.stored_quantity(l.get("remaining_quantity")) for l in version_dict.get("drawdown_lines") or []), precision.stored_quantity("0"))
+	value = sum((precision.stored_money(l.get("remaining_value")) for l in version_dict.get("drawdown_lines") or []), precision.stored_money("0"))
+	package = frappe.db.get_value("IT Equipment Requirement Package", {"requisition": root.name}, ["reservation_category", "county_resident_reservation", "lotting_indicator", "reservation_rule_snapshot_ids"], as_dict=True) or {}
+	rule = projection.get("reservation_rule") or {}
+	need = "; ".join(sorted({s.get("description", "") for s in projection.get("sources", []) if s.get("description")}))
+	return {
+		"title": projection.get("title") or version_dict.get("requirement_title"), "departments": p.departments_label(units),
+		"available": f"{precision.display_quantity(qty)} · {precision.display_money(value)} available",
+		"method": projection.get("procurement_method"), "reserved_for": p.reserved_for(package.get("reservation_category")),
+		"county_requirement": "County residents" if package.get("county_resident_reservation") else "",
+		"plan_completion_boundary": p.date_label(projection.get("plan_completion_boundary")), "business_need": need,
+		"source_details": [
+			{"label": "Plan Item reference", "value": cstr(frappe.db.get_value("Plan Item", root.plan_item_id, "plan_item_reference")) or root.plan_item_id},
+			{"label": "Estimated completion", "value": p.date_label(projection.get("estimated_completion_date"))},
+			{"label": "Lotting", "value": cstr(package.get("lotting_indicator"))},
+			{"label": "Strategic objective", "value": " · ".join(v for v in (p.objective_title(root.strategic_objective_id), p.objective_reference(root.strategic_objective_id)) if v)},
+			{"label": "Reserved for", "value": f"{p.reserved_for(package.get('reservation_category'))} · Applicable verified {p.reserved_for(package.get('reservation_category'))} reservation rule · Version {rule.get('version_number')}" if rule.get("snapshot_id") else p.reserved_for(package.get("reservation_category"))},
+			{"label": "Approved requirements", "value": "; ".join(l.get("source_line_id") for l in version_dict.get("drawdown_lines") or [])},
+		],
+	}
+
+
+def _requirements_view(package_dict: dict[str, Any], package_version) -> dict[str, Any]:
+	review_state = package_dict.get("standard_package_review_state") or "Not generated"
+	return {
+		"review_state": review_state, "profile_key": package_version.standard_profile_key, "profile_version": package_version.standard_profile_version,
+		"proposal_digest": package_version.proposal_digest, "is_laptop_profile": package_version.standard_profile_key == catalogue.STANDARD_PROFILE_KEY,
+		"technical_groups": p.technical_groups(package_dict), "acceptance": p.acceptance_rows(package_dict),
+		"support": {f: package_dict.get(f) for f in ("minimum_warranty_months", "onsite_support_required", "maximum_support_response_hours", "manufacturer_support_required", "service_location_constraint", "support_description")},
+		"services": [{**s, "applies_to": p.applies_to_label(s.get("applies_to_scope"), s.get("applies_to_id"), package_dict), "completion_date_label": p.date_label(s.get("completion_date"))} for s in package_dict.get("related_services") or []],
+		"materials": [{**m, "linked": records.json_list(m.get("linked_requirement_ids_json"))} for m in package_dict.get("supporting_materials") or []],
+	}
+
+
+def get_requisition_editor(*, root, actor: str) -> dict[str, Any]:
+	root, version, package_version = records.load(root.name)
+	projection = _projection(root)
+	vdict = records.version_dict(version)
+	pdict = records.package_dict(package_version)
+	report = validation.validate(version=vdict, package=pdict, eligibility=projection)
+	scope = records.edit_scope(root, actor)
+	technical = authz.is_technical(actor) or not scope["units"]
+	contributor = bool(scope["units"]) and not scope["shared"]
+	is_lead_hod = _has(actor, ROLE_HEAD_OF_USER_DEPARTMENT, root.lead_org_unit_id)
+	is_lead_author = _has(actor, ROLE_DEPARTMENTAL_AUTHOR, root.lead_org_unit_id)
+	sources = {s["plan_item_line_id"]: s for s in projection.get("sources", [])}
+	returned = _return_panel(version)
+	badge = ("Draft correction", "is-draft") if version.based_on_version else ("Draft", "is-draft")
+	blocking = [f for f in report["findings"] if f["severity"] == "Blocking"]
+	footer_hint = {t["key"]: next((f["message"] for f in blocking if f["task"] == t["key"]), "") for t in report["tasks"]}
+	direct_hod = is_lead_hod and cstr(version.prepared_capacity) == ROLE_HEAD_OF_USER_DEPARTMENT
+	actions = {
+		"save": bool(scope["units"]) and not technical, "save_label": "Save my changes" if contributor else "Save draft",
+		"edit_shared": scope["shared"] and not technical,
+		"send_for_department_approval": scope["shared"] and is_lead_author and not direct_hod and not technical,
+		"submit_to_procurement": is_lead_hod and not technical and (direct_hod or not is_lead_author),
+		"withdraw": is_lead_hod and not technical,
+		"request_planning_correction": (is_lead_hod or _has(actor, ROLE_HEAD_OF_PROCUREMENT_FUNCTION)) and not technical,
+		"contributor": contributor,
+	}
+	review = {
+		"result": ("Ready to submit to Procurement" if actions["submit_to_procurement"] else "Ready to send for department approval") if report["ready"] else "",
+		"sections": p.review_sections(root=root, version=vdict, package=pdict, projection=projection, findings=report["findings"], lead=root.lead_org_unit_id),
+		"warnings": [f for f in report["findings"] if f["severity"] == "Warning"],
+		"dates": [
+			{"label": "Estimated completion", "value": p.date_label(projection.get("estimated_completion_date"))},
+			{"label": "Latest delivery date", "value": p.date_label(version.latest_delivery_date)},
+			{"label": "Plan completion boundary", "value": p.date_label(projection.get("plan_completion_boundary"))},
+		],
+	}
+	return {
+		"outcome": "OK", "kind": "editor", "mode": "technical" if technical else ("contributor" if contributor else "editor"),
+		"header": _header(root, version, badge=badge, description="Complete the request using the approved purchase shown below."),
+		"package_record_version": package_version.record_version, "lead_org_unit_id": root.lead_org_unit_id,
+		"lead_department": records.unit_name(root.lead_org_unit_id),
+		"tasks": report["tasks"], "groups": report["groups"], "findings": report["findings"], "footer_hints": footer_hint,
+		"returned": returned, "purchase": _purchase(root, projection, vdict), "remaining_original": _remaining_original(projection),
+		"request_information": {
+			"requirement_title": version.requirement_title, "delivery_location": version.delivery_location, "delivery_location_label": p.location_label(version.delivery_location),
+			"latest_delivery_date": cstr(version.latest_delivery_date or ""), "latest_delivery_date_label": p.date_label(version.latest_delivery_date),
+			"related_services_required": bool(version.related_services_required), "locations": list_delivery_locations(),
+		},
+		"amounts": p.amounts_rows(vdict, sources, editable_units=scope["units"]),
+		"equipment": {
+			"rows": [{**r, "editable": r["contributing_org_unit"] in scope["units"]} for r in p.item_rows(vdict, pdict)], "shared_specification": p.shared_specification(pdict),
+			"add_rows": [
+				{"drawdown_line_id": l["drawdown_line_id"], "department": records.unit_name(l["contributing_org_unit"]), "source_reference": l["source_line_id"], "quantity": int(precision.stored_quantity(l["requested_quantity"])) - sum(int(i.get("quantity") or 0) for i in pdict["items"] if i.get("drawdown_line_id") == l["drawdown_line_id"]), "unit": "Each", "editable": l["contributing_org_unit"] in scope["units"]}
+				for l in vdict["drawdown_lines"] if precision.stored_quantity(l["requested_quantity"]) > 0
+			],
+		},
+		"requirements": _requirements_view(pdict, package_version),
+		"review": review, "decision_chain": _decision_chain(root, version),
+		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection),
+		"actions": actions, "catalogue": _catalogue_meta(),
+	}
+
+
+# --------------------------------------------------------------------------
+# Locked, task and authorised reads (REQ-DES-07/08/10/12)
+# --------------------------------------------------------------------------
+
+
+def _locked_bundle(root, version_name: str):
+	version = frappe.get_doc("Requisition Version", version_name)
+	package_version = frappe.get_doc("IT Equipment Requirement Package Version", version.package_version)
+	projection = _projection(root)
+	vdict = records.version_dict(version)
+	pdict = records.package_dict(package_version)
+	report = validation.validate(version=vdict, package=pdict, eligibility=projection) if version.version_status in ("Awaiting Department Approval", "Submitted to Procurement") else {"findings": [], "blocking_count": 0}
+	# §13.8/13.9 — the submitted Version's own date warning stays part of it.
+	findings = [f for f in report["findings"] if f["severity"] == "Warning"] or [
+		f for f in validation.validate(version=vdict, package=pdict, eligibility=projection)["findings"] if f["code"] == "DATE_AFTER_ESTIMATE"
+	]
+	sections = p.review_sections(root=root, version=vdict, package=pdict, projection=projection, findings=findings, lead=root.lead_org_unit_id)
+	return version, package_version, projection, vdict, pdict, report, sections
+
+
+def _prepared_line(version) -> dict[str, str]:
+	return {"prepared_by": p.user_name(version.prepared_by), "capacity": cstr(version.prepared_capacity)}
 
 
 def get_department_approval_task(*, task: str, user: str | None = None) -> dict[str, Any]:
-	"""§10.1 `GetDepartmentApprovalTask` — the complete immutable Version
-	and package for the exact HoD task (§13.10: drawdown, items, technical
-	rows, digest, and who prepared it)."""
 	actor = authz.actor(user)
+	if not authz.holds_any_requisition_responsibility(actor):
+		return _forbidden()
 	if not task or not frappe.db.exists("Requisition Task", task):
-		authz.not_found()
+		return {"outcome": "NOT_FOUND"}
 	task_doc = frappe.get_doc("Requisition Task", task)
 	root = frappe.get_doc("Procurement Requisition", task_doc.requisition)
-	contributing_units = _contributing_units(root)
-	mode, _assignment, matched_unit = authz.require_department_task_access(contributing_units, actor, masked=True)
-	is_decider = mode == "decider"
-	version = frappe.get_doc("Requisition Version", task_doc.requisition_version)
-	package_version = frappe.get_doc("IT Equipment Requirement Package Version", version.package_version)
-	version_dict = _version_dict(version)
-	projection = eligibility_gateway.get_requisition_eligible_plan_item(root.plan_item_id)
-	report = validation.validate(version=version_dict, package=_package_dict(package_version), eligibility=projection)
-	task_open = task_doc.status == "Open" and root.current_state == "Awaiting Department Approval"
+	try:
+		mode, _assignment, _unit = authz.require_department_task_access(records.contributing_units(root), actor)
+	except frappe.DoesNotExistError:
+		return {"outcome": "NOT_FOUND"}
+	version, package_version, projection, vdict, pdict, report, sections = _locked_bundle(root, task_doc.requisition_version)
+	decider = mode == "decider" and _has(actor, ROLE_HEAD_OF_USER_DEPARTMENT, root.lead_org_unit_id) and task_doc.status == "Open"
+	lead_hod_pre = (
+		not authz.is_technical(actor) and _has(actor, ROLE_HEAD_OF_USER_DEPARTMENT, root.lead_org_unit_id)
+		and root.current_state in ("Awaiting Department Approval", "Submitted to Procurement") and root.current_version == task_doc.requisition_version
+	)
+	units = p.ordered_units(vdict["drawdown_lines"], root.lead_org_unit_id)
+	both = "both departments’" if len(units) == 2 else ("the departments’" if len(units) > 2 else "the department’s")
+	badge = ("Awaiting your approval", "is-attention") if decider else STATE_BADGES.get(root.current_state, (root.current_state, "is-draft"))
 	return {
-		"outcome": "OK", "task": {"task": task_doc.name, "status": task_doc.status, "record_version": task_doc.record_version, "task_token": task_doc.task_token},
-		"requisition": _requisition_summary(root),
-		"version": {**version_dict, "requisition_version": version.name, "version_number": version.version_number, "content_digest": version.content_digest},
-		"package": {**_package_dict(package_version), "package_version": package_version.name, "content_digest": package_version.content_digest},
-		"drawdown_context": _drawdown_context(version_dict, projection),
-		"prepared_by": _prepared_by(root),
-		# KT-STD-001 §3A.6 — an oversight reader (Administrator/System
-		# Manager/Auditor) never certified this and is never attributed the
-		# certifying HoD's own name.
-		"deciding_actor": _deciding_hod_label(actor, matched_unit) if is_decider else {},
-		"catalogue": {"characteristics": [{"key": c.key, "label": c.label} for c in catalogue.CHARACTERISTICS]},
-		"validation": report,
-		"can_act": task_open,
-		# §3A.6's decision capabilities: False for every oversight reader,
-		# regardless of task/root state — the decide commands
-		# (`send_for_department_approval` et al.) keep their own
-		# `require_hod_for_any` gate independently of this read.
-		"can_certify": is_decider and task_open,
-		"can_return": is_decider and task_open,
+		"outcome": "OK", "kind": "department_task", "mode": "decider" if decider else "reader",
+		"header": {**_header(root, version, badge=badge, description="Confirm that the request accurately states the departments’ need and minimum requirements."), "title": "Review departmental requisition", "requirement_title": version.requirement_title},
+		"task": {"task": task_doc.name, "status": task_doc.status, "record_version": task_doc.record_version},
+		"result": "Ready for departmental submission" if not report.get("blocking_count") else "This requisition has issues that must be resolved first.",
+		"context": [
+			{"label": "Result", "value": "Ready for departmental submission" if not report.get("blocking_count") else "Not ready"},
+			{"label": "Prepared by", "value": p.user_name(version.prepared_by)},
+			{"label": "Contributing departments", "value": p.departments_label(units)},
+			{"label": "Submitting department", "value": records.unit_name(root.lead_org_unit_id)},
+		],
+		"question": f"Does this requisition accurately state {both} need and minimum requirements?",
+		"certification": "I confirm that this requisition states the departments’ operational need and minimum requirements and may be submitted to Procurement.",
+		"decision_chain": _decision_chain(root, version), "sections": sections, "findings": report["findings"],
+		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection),
+		"actions": {
+			"submit_to_procurement": decider and not report.get("blocking_count"), "return_for_correction": decider,
+			# REQ-DES-07-SUBMITTED: before authorisation the lead HoD keeps
+			# Withdraw and Request Planning correction on the read-only task.
+			"withdraw": decider or lead_hod_pre, "request_planning_correction": decider or lead_hod_pre,
+		},
+		"catalogue": {"affected_sections": _catalogue_meta()["affected_sections"]},
+		"requisition": root.name, "root_record_version": root.record_version,
 	}
+
+
+def _funding(root, version, projection) -> dict[str, Any]:
+	"""§13.9 — current funding for the whole submission: rows sharing a Budget
+	Line are totalled before comparing with its availability, exactly as
+	Budget's complete-array check does. Display only; authorisation rechecks."""
+	from decimal import Decimal
+
+	rows = authorise_service.funding_rows(version, projection)
+	sources = [{"department": records.unit_name(r["source_organisation_unit"]), "requested_value": precision.display_money(r["amount"])} for r in rows]
+	positions = funding_gateway.line_positions([r["budget_line"] for r in rows])
+	required: dict[str, Decimal] = {}
+	for row in rows:
+		required[row["budget_line"]] = required.get(row["budget_line"], Decimal(0)) + precision.stored_money(row["amount"])
+	lines = []
+	for line, need in sorted(required.items()):
+		pos = (positions.get(line) or {}).get("positions") or {}
+		approved = precision.parse_money(format(Decimal(repr(float(pos.get("approved") or 0))), ".2f"), allow_zero=True)
+		available = precision.parse_money(format(Decimal(repr(float(pos.get("available") or 0))), ".2f"), allow_zero=True)
+		sufficient = available >= need
+		share = int((need / available * 100).to_integral_value()) if available and sufficient else 100
+		lines.append(
+			{
+				"budget_line": (positions.get(line) or {}).get("code") or line, "approved": precision.display_money(approved), "available_now": precision.display_money(available),
+				"this_requisition": precision.display_money(need), "available_after": precision.display_money(available - need) if sufficient else "",
+				"sufficient": sufficient, "shortfall": precision.display_money(max(Decimal(0), need - available)), "reserved_share": share, "free_share": max(0, 100 - share),
+			}
+		)
+	return {"available": bool(positions), "all_sufficient": all(l["sufficient"] for l in lines), "lines": lines, "sources": sources}
 
 
 def get_procurement_authorisation_task(*, task: str, user: str | None = None) -> dict[str, Any]:
-	"""§10.1 `GetProcurementAuthorisationTask` — the complete submitted
-	Version, package, files, validation snapshot, fresh Planning
-	availability and fresh Budget affordability (a preview only: this
-	function never calls `reserve_funding`, so it creates nothing)."""
 	actor = authz.actor(user)
+	if not authz.holds_any_requisition_responsibility(actor):
+		return _forbidden()
 	if not task or not frappe.db.exists("Requisition Task", task):
-		authz.not_found()
+		return {"outcome": "NOT_FOUND"}
 	task_doc = frappe.get_doc("Requisition Task", task)
 	root = frappe.get_doc("Procurement Requisition", task_doc.requisition)
-	mode, _assignment = authz.require_procurement_task_access(actor, masked=True)
-	is_decider = mode == "decider"
-	version = frappe.get_doc("Requisition Version", task_doc.requisition_version)
-	package_version = frappe.get_doc("IT Equipment Requirement Package Version", version.package_version)
-	projection = eligibility_gateway.get_requisition_eligible_plan_item(root.plan_item_id)
-	report = validation.validate(version=_version_dict(version), package=_package_dict(package_version), eligibility=projection)
-	compat = compatibility.check(projection)
-
-	sources_by_line = {s["plan_item_line_id"]: s for s in projection.get("sources", [])}
-	affordability = []
-	# Budget's `check_funding` is deliberately gated to Finance Confirmation
-	# Officer / Head of Procurement Function only (§8.2/§9.1/§12.6 — "Budget
-	# never trusts a caller's own route visibility as authority"), even
-	# though the call itself is non-mutating. That is Budget's own
-	# authority boundary, not a technical-read gap: only `is_decider` is
-	# about to act on this number, so only they need a live re-check.
-	# An oversight reader (KT-STD-001 §3A.6) sees the task read-only from
-	# `planning_availability` alone, with no live affordability probe
-	# (found 2026-09-12 — the probe raised `frappe.PermissionError`, which
-	# the pre-existing `except ValidationError` below never caught).
-	if is_decider and not report["blocking_count"] and all(r.ok for r in compat) and projection.get("eligible"):
-		try:
-			allocations = [
-				{"budget_line": sources_by_line[line.plan_item_line_id]["budget_line"], "plan_source_allocation": line.plan_item_line_id, "amount": line.requested_value}
-				for line in version.drawdown_lines if line.plan_item_line_id in sources_by_line
-			]
-			if allocations:
-				checked = funding_gateway.check_funding(
-					plan_item=root.plan_item_id, plan_version=root.plan_version_id,
-					source_set_hash=digest.sha256_hex({"lines": sorted(a["plan_source_allocation"] for a in allocations)}),
-					allocations=allocations, correlation_id=f"{root.name}:preview:{frappe.generate_hash(length=8)}",
-					caller_reference=root.requisition_reference,
-				)
-				affordability = checked.get("allocations", [])
-				# §13.11's card names the Budget Line by its own reference
-				# ("MOH-BL-HWD-2027"), never the internal docname
-				# `check_funding` itself returns — found live: the card
-				# title rendered a raw hash-like docname instead.
-				for row in affordability:
-					row["budget_line_label"] = cstr(frappe.db.get_value("Procurement Budget Line", row["budget_line"], "generated_reference") or row["budget_line"])
-		except (frappe.ValidationError, frappe.PermissionError):
-			affordability = []
-
-	remaining_quantity = sum(flt(s.get("remaining_quantity")) for s in projection.get("sources", []))
-	remaining_amount = sum(flt(s.get("remaining_amount")) for s in projection.get("sources", []))
-
-	# §13.11's "Submitted by <name> · <date>" line: the decision recorded
-	# when a HoD submitted from the Department task — direct-from-Draft
-	# submission (REQ-AC-021) records no such decision, so this degrades to
-	# empty rather than a guessed actor.
-	submitted = frappe.get_all(
-		"Requisition Decision", filters={"requisition_version": version.name, "decision": "Submit to Procurement"},
-		fields=["actor", "decided_at"], order_by="decided_at desc", limit_page_length=1,
-	)
-	submitted_by = {}
-	if submitted:
-		submitted_by = {"name": cstr(frappe.db.get_value("User", submitted[0].actor, "full_name") or submitted[0].actor), "decided_at": _eat(submitted[0].decided_at)}
-
+	try:
+		mode, _assignment = authz.require_procurement_task_access(actor)
+	except frappe.DoesNotExistError:
+		return {"outcome": "NOT_FOUND"}
+	version, package_version, projection, vdict, pdict, report, sections = _locked_bundle(root, task_doc.requisition_version)
+	checks = compatibility.check(projection)
+	hold = projection.get("hold") or {}
+	funding = _funding(root, version, projection) if task_doc.status == "Open" else {"available": False, "sources": []}
+	qty, value = p.totals(vdict)
+	failing = [c for c in checks if not c.ok]
+	baseline_ok = cstr(projection.get("plan_item_version_id")) == cstr(root.plan_item_version_id)
+	if hold.get("held"):
+		result = {"tone": "is-warning", "title": "Authorisation is on hold while Planning reviews a correction request.", "detail": " · ".join(f"{r['correction_request']} · {r['status']}" for r in hold.get("unresolved_requests") or [])}
+	elif funding.get("available") and not funding.get("all_sufficient"):
+		result = {"tone": "is-critical", "title": "Cannot authorise — insufficient funding", "detail": ""}
+	elif failing or report.get("blocking_count") or not projection.get("eligible") or not baseline_ok:
+		result = {"tone": "is-critical", "title": "Cannot authorise — a procurement check failed", "detail": failing[0].failure if failing else ""}
+	else:
+		result = {"tone": "is-live", "title": "Ready to authorise", "detail": f"Authorising will reserve {precision.display_money(value)} and allow Tender Preparation to begin."}
+	decider = mode == "decider" and task_doc.status == "Open"
+	can_authorise = decider and result["title"] == "Ready to authorise" and cstr(version.submitted_by) != actor
+	submit = records.decision_of(version.name, "Submit to Procurement")
+	units = sorted(records.contributing_units(root))
+	after = funding.get("lines", [{}])[0].get("available_after", "") if funding.get("lines") else ""
 	return {
-		"outcome": "OK", "task": {"task": task_doc.name, "status": task_doc.status, "record_version": task_doc.record_version, "task_token": task_doc.task_token},
-		"requisition": _requisition_summary(root),
-		"version": {**_version_dict(version), "requisition_version": version.name, "version_number": version.version_number},
-		"package": {**_package_dict(package_version), "package_version": package_version.name},
-		"planning_projection": projection,
-		"planning_availability": {"eligible": bool(projection.get("eligible")), "remaining_quantity": remaining_quantity, "remaining_amount": remaining_amount, "unit": (projection.get("sources") or [{}])[0].get("unit", "")},
-		"compatibility": _compatibility_rows(compat),
-		"validation": report,
-		"budget_affordability": affordability,
-		"objective_label": _objective_label(root.strategic_objective),
-		"submitted_by": submitted_by,
-		"contributing_org_unit_labels": {u: _ou_label(u) for u in _contributing_units(root)},
-		"can_act": task_doc.status == "Open" and root.current_state == "Submitted to Procurement",
-		# §3A.6 — decision capabilities False for an oversight reader
-		# (Administrator/System Manager/Auditor); the decide commands
-		# (`authorise_requisition`, `change_lead_organisation_unit`) keep
-		# their own `require_hopf` gate independently of this read.
-		"can_authorise": is_decider and task_doc.status == "Open" and root.current_state == "Submitted to Procurement",
-		"can_return": is_decider and task_doc.status == "Open" and root.current_state == "Submitted to Procurement",
-		"can_change_lead_unit": is_decider and len(_contributing_units(root)) > 1,
+		"outcome": "OK", "kind": "procurement_task", "mode": "decider" if decider else "reader",
+		"header": {**_header(root, version, badge=("Submitted to Procurement", "is-draft"), description="Review the request, current funding and procurement checks before authorising it."), "title": "Authorise requisition", "requirement_title": version.requirement_title},
+		"task": {"task": task_doc.name, "status": task_doc.status, "record_version": task_doc.record_version},
+		"result": result, "question": "Can this complete requisition lawfully use the approved-plan amount and current funding now?",
+		"funding": funding,
+		"planning": {
+			"status": "Eligible" if projection.get("eligible") and baseline_ok else "Not eligible",
+			"quantity_available": precision.display_quantity(sum((precision.planning_quantity(s.get("remaining_quantity") or "0") for s in projection.get("sources", [])), precision.planning_quantity("0"))),
+			"value_available": precision.display_money(projection.get("remaining_value") or "0"),
+			"hold": "None unresolved" if not hold.get("held") else f"{len(hold.get('unresolved_requests') or [])} unresolved",
+			"hold_requests": hold.get("unresolved_requests") or [],
+			"scope": "Existing procurement scope" if (projection.get("scope") or {}).get("locked") else "No authorised requisition yet",
+		},
+		"certification": {
+			"submitted_by": p.user_name(version.submitted_by), "lead_department": records.unit_name(version.certified_lead_org_unit_id),
+			"submitted_at": p.eat(version.submitted_at), "decision": submit.name if submit else "",
+		},
+		"change_department": {"available": decider and len(units) > 1, "options": [{"value": u, "label": records.unit_name(u)} for u in units], "current": root.lead_org_unit_id},
+		"checks": {"summary": f"{sum(1 for c in checks if c.ok)} checks passed" if not failing else f"{len(failing)} check{'s' if len(failing) != 1 else ''} failed", "rows": [c.as_dict() for c in checks], "open": bool(failing)},
+		"decision_chain": _decision_chain(root, version), "sections": sections,
+		"statement": "I authorise this requisition. The approved-plan amounts will be used, funding will be reserved and Tender Preparation may begin.",
+		"confirmation": {
+			"quantity": precision.display_quantity(qty), "value": precision.display_money(value),
+			"budget_line": ", ".join(l["budget_line"] for l in funding.get("lines", [])), "available_after": after,
+			"text": f"The approved-plan amounts will be used, {'two' if len(vdict['drawdown_lines']) == 2 else len(vdict['drawdown_lines'])} funding reservation{'s' if len(vdict['drawdown_lines']) != 1 else ''} will be created and Tender Preparation may begin.",
+		},
+		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection),
+		"actions": {
+			"authorise": can_authorise, "return_to_department": decider, "request_planning_correction": decider,
+			"change_submitting_department": decider and len(units) > 1, "refresh": decider, "view_planning_request": bool(hold.get("held")),
+		},
+		"catalogue": {"affected_sections": _catalogue_meta()["affected_sections"]},
+		"requisition": root.name, "root_record_version": root.record_version,
 	}
+
+
+def get_locked_requisition(*, root, actor: str) -> dict[str, Any]:
+	"""A pre-authorisation locked record read outside its task route
+	(REQ-DES-07-SUBMITTED, Withdrawn), plus the technical reader."""
+	version, package_version, projection, vdict, pdict, report, sections = _locked_bundle(root, root.current_version)
+	is_lead_hod = _has(actor, ROLE_HEAD_OF_USER_DEPARTMENT, root.lead_org_unit_id) and not authz.is_technical(actor)
+	withdrawn = records.decision_of(version.name, "Withdraw requisition") if root.current_state == "Withdrawn" else None
+	pre = root.current_state in ("Awaiting Department Approval", "Submitted to Procurement")
+	return {
+		"outcome": "OK", "kind": "locked", "mode": "technical" if authz.is_technical(actor) else "reader",
+		"header": _header(root, version, description=""), "sections": sections, "decision_chain": _decision_chain(root, version),
+		"withdrawn": {"by": p.user_name(withdrawn.actor), "at": p.eat(withdrawn.decided_at), "reason": withdrawn.reason} if withdrawn else None,
+		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection),
+		"actions": {"withdraw": is_lead_hod and pre, "request_planning_correction": pre and (is_lead_hod or _has(actor, ROLE_HEAD_OF_PROCUREMENT_FUNCTION)), "export": True},
+		"requisition": root.name, "root_record_version": root.record_version,
+	}
+
+
+def get_version_review(*, root, version_name: str, actor: str) -> dict[str, Any]:
+	"""History: the exact earlier Version as a complete read-only review."""
+	if not frappe.db.exists("Requisition Version", {"name": version_name, "requisition": root.name}):
+		return {"outcome": "NOT_FOUND"}
+	version, package_version, projection, vdict, pdict, report, sections = _locked_bundle(root, version_name)
+	decision = None
+	for name in ("Return for correction", "Return to department", "Change submitting department and return", "Withdraw requisition", "Revoke authorisation"):
+		decision = records.decision_of(version.name, name)
+		if decision:
+			break
+	return {
+		"outcome": "OK", "kind": "version", "header": _header(root, version, badge=(version.version_status, "is-critical" if version.version_status == "Returned" else "is-draft")),
+		"decision": {"by": p.user_name(decision.actor), "at": p.eat(decision.decided_at), "reason": decision.reason, "affected_section": decision.affected_section, "decision": decision.decision} if decision else None,
+		"current_draft_route": f"/app/procurement-requisitions/{root.name}" if root.current_state == "Draft" else "",
+		"sections": sections, "record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection),
+		"actions": {"export": True}, "requisition": root.name,
+	}
+
+
+def get_authorised_requisition(*, root, actor: str) -> dict[str, Any]:
+	"""§13.11 REQ-DES-10 — the authorised (or revoked) record."""
+	version_name = root.authorised_version or root.current_version
+	if root.current_state == "Revoked":
+		version_name = frappe.db.get_value("Requisition Version", {"requisition": root.name, "version_status": "Revoked"}, "name", order_by="version_number desc") or version_name
+	version, package_version, projection, vdict, pdict, report, sections = _locked_bundle(root, version_name)
+	handoff = frappe.get_doc("Authorised Requisition Handoff", {"requisition_version": version.name}) if frappe.db.exists("Authorised Requisition Handoff", {"requisition_version": version.name}) else None
+	payload = json.loads(handoff.payload_json or "{}") if handoff else {}
+	lines = payload.get("drawdown_lines") or []
+	authorise = records.decision_of(version.name, "Authorise requisition")
+	revoke = records.decision_of(version.name, "Revoke authorisation")
+	consumed = bool(handoff and handoff.consumed_at)
+	tender = cstr(handoff.tender) if handoff else ""
+	tender_ref = cstr(frappe.db.get_value("Tender", tender, "tender_reference") or tender) if tender and frappe.db.exists("DocType", "Tender") and frappe.db.exists("Tender", tender) else tender
+	is_hopf = _has(actor, ROLE_HEAD_OF_PROCUREMENT_FUNCTION)
+	is_officer = _has(actor, ROLE_PROCUREMENT_OFFICER)
+	scope = records.edit_scope(root, actor)
+	qty, value = p.totals(vdict)
+	reservations = []
+	for line in lines:
+		code = cstr(frappe.db.get_value("Funding Reservation", line.get("reservation_id"), "generated_reference") or line.get("reservation_reference") or line.get("reservation_id"))
+		reservations.append({"reservation": code, "department": records.unit_name(line.get("contributing_org_unit")), "value": precision.display_money(line.get("requested_value") or "0")})
+	correction_draft = False
+	if root.current_state == "Revoked" and scope["shared"] and not authz.is_technical(actor):
+		correction_draft = cstr(projection.get("plan_item_version_id")) == cstr(root.plan_item_version_id) and bool(projection.get("eligible")) and not records.open_root_for(root.plan_item_id)
+	vwith = {**vdict, "content_digest": version.content_digest, "drawdown_lines": [{**l, "reservation_code": r["reservation"]} for l, r in zip(vdict["drawdown_lines"], reservations)] if reservations else vdict["drawdown_lines"]}
+	revoked = None
+	if revoke:
+		revoked = {"by": p.user_name(revoke.actor), "at": p.eat(revoke.decided_at), "reason": revoke.reason, "planning_reversal": "; ".join(f"REV-{l.get('planning_drawdown_reference')}" for l in lines if l.get("planning_drawdown_reference")), "funding_releases": "; ".join(r["reservation"] for r in reservations)}
+	badge = ("Authorisation revoked", "is-critical") if root.current_state == "Revoked" else ("Authorised", "is-live")
+	return {
+		"outcome": "OK", "kind": "authorised", "state": root.current_state,
+		"mode": "technical" if authz.is_technical(actor) else ("hopf" if is_hopf else ("officer" if is_officer else "reader")),
+		"header": {**_header(root, version, badge=badge, description="This requisition is authorised and ready for Tender Preparation." if root.current_state == "Authorised" and not consumed else ""), "tagline": " · ".join(v for v in (projection.get("procurement_method"), f"Reserved for {p.reserved_for(payload.get('reservation_category'))}" if payload else "", payload.get("lotting_indicator")) if v)},
+		"facts": [
+			{"label": "Authorised by", "value": p.user_name(authorise.actor) if authorise else ""},
+			{"label": "Authorised at", "value": p.eat(authorise.decided_at) if authorise else ""},
+			{"label": "Requisition value", "value": precision.display_money(value)},
+			{"label": "Tender Preparation", "value": "Started" if consumed else "Not started"},
+		],
+		"consumed": {"tender": tender, "tender_reference": tender_ref, "route": f"/app/tenders/{tender}" if tender else ""} if consumed else None,
+		"revoked": revoked, "decision_chain": _decision_chain(root, version), "sections": sections, "reservations": reservations,
+		"handoff": {"handoff": handoff.name, "digest": handoff.handoff_digest, "version": handoff.handoff_version} if handoff else None,
+		"record_details": p.record_details(root=root, version=vwith, projection=projection, handoff=handoff),
+		"actions": {
+			"continue_to_tender_preparation": root.current_state == "Authorised" and not consumed and is_officer and not authz.is_technical(actor),
+			"open_tender": consumed, "revoke": root.current_state == "Authorised" and not consumed and is_hopf and not authz.is_technical(actor),
+			"start_corrected_draft": correction_draft, "export": True,
+		},
+		"tender_route": f"/app/tenders/new/{handoff.name}" if handoff and not consumed else "",
+		"requisition": root.name, "root_record_version": root.record_version,
+	}
+
+
+def export_requisition(*, requisition: str, version: str | None = None, user: str | None = None) -> dict[str, Any]:
+	"""§13.13 Export — the authorised read-only export of the exact displayed
+	Version: the same read, with the same masking, minus the actor's controls.
+	No lifecycle change and no wider access than the read itself."""
+	record = get_requisition_record(requisition=requisition, version=version, user=user)
+	if record.get("outcome") != "OK":
+		return {"outcome": record.get("outcome")}
+	document = {k: v for k, v in record.items() if k not in ("actions", "catalogue", "outcome")}
+	header = record.get("header") or {}
+	filename = f"{header.get('reference') or requisition}-v{header.get('version_number') or ''}.json"
+	return {"outcome": "OK", "filename": filename, "content": json.dumps(document, default=str, indent=2, ensure_ascii=False)}
+
+
+# --------------------------------------------------------------------------
+# REQ-DES-11 — stopped work
+# --------------------------------------------------------------------------
+
+
+def get_stopped_requisition(*, root, actor: str) -> dict[str, Any]:
+	version, package_version, projection, vdict, pdict, report, sections = _locked_bundle(root, root.current_version)
+	try:
+		facts = eligibility_gateway.correction_request_facts(requisition_reference=root.requisition_reference)
+		unavailable = False
+	except Exception:  # noqa: BLE001 — owner read unavailable is shown, never guessed
+		facts, unavailable = [], True
+	request = next((f for f in facts if f["correction_request"] == root.planning_correction_request_id), None)
+	outcome = correction.terminal_outcome(root)
+	status = request["status"] if request else "Open"
+	started = next((d for d in (request or {}).get("dispositions", []) if d["action"] == "Start"), None)
+	if outcome:
+		status = outcome.outcome
+	labels = {
+		"Open": ("Awaiting Planning correction", "is-attention"), "In progress": ("Planning correction in progress", "is-attention"),
+		"Resolved": ("Planning correction completed", "is-live"), "Closed without change": ("Planning request closed without change", "is-pending"),
+	}
+	label, tone = labels.get(status, labels["Open"])
+	others = [r for r in (projection.get("hold") or {}).get("unresolved_requests") or [] if r["correction_request"] != root.planning_correction_request_id]
+	is_planner = _has(actor, ROLE_PROCUREMENT_PLANNER)
+	scope = records.edit_scope(root, actor)
+	may_start = False
+	fresh = None
+	if outcome and scope["units"] and not authz.is_technical(actor):
+		fresh_item = json.loads(outcome.replacement_lineage_json or "{}").get("plan_item_id") if outcome.outcome == "Resolved" else root.plan_item_id
+		try:
+			current = eligibility_gateway.get_requisition_eligible_plan_item(fresh_item or root.plan_item_id)
+		except frappe.DoesNotExistError:
+			current = {"eligible": False}
+		checks_ok = compatibility.first_failure(current) is None if current.get("eligible") else False
+		may_start = bool(current.get("eligible")) and checks_ok and not records.open_root_for(fresh_item or root.plan_item_id)
+		fresh = {
+			"heading": "Start a new requisition?",
+			"text": "Use the Active corrected Planning facts shown. Earlier decisions and funding reservations will not be copied." if outcome.outcome == "Resolved" else "Use the unchanged approved Planning facts. Complete departmental submission and Procurement authorisation again.",
+			"facts": [
+				{"label": "Stopped requisition", "value": root.requisition_reference},
+				{"label": "Current Plan", "value": cstr(current.get("plan_reference"))},
+				{"label": "Current Plan Version", "value": cstr(current.get("plan_version_id"))},
+				{"label": "Current eligibility", "value": "Eligible" if may_start else "Not eligible"},
+			],
+			"blocked_message": "" if may_start else "A new requisition cannot be prepared: current Plan funding confirmation is required." if current.get("funding_state") not in (None, "Confirmed") else ("" if may_start else "A new requisition cannot be prepared against the current approved purchase."),
+		}
+	stop = records.decision_of(version.name, "Request Planning correction")
+	chain = [
+		{"title": "Requisition submitted to Procurement", "meta": f"{p.date_label(version.submitted_at)} · {p.user_name(version.submitted_by)}", "tone": "is-live"} if version.submitted_at else {"title": "Draft prepared", "meta": f"{p.date_label(version.creation)} · {p.user_name(version.prepared_by)}", "tone": "is-live"},
+		{"title": "Planning correction requested · work stopped", "meta": f"{p.eat(stop.decided_at) if stop else ''} · {root.planning_correction_request_id}", "tone": "is-critical"},
+		{"title": "Planning review", "meta": f"{p.user_name(started['actor'])} began review on {p.eat(started['disposed_at'])}" if started else "Awaiting Procurement Planner", "tone": "is-live" if outcome else "is-attention", "upcoming": False},
+		{"title": "Outcome recorded", "meta": status if outcome else "This requisition will not reopen automatically", "tone": "is-live" if outcome else "is-pending", "upcoming": not outcome},
+	]
+	outcome_text = ""
+	if outcome and outcome.outcome == "Resolved":
+		lineage = json.loads(outcome.replacement_lineage_json or "{}")
+		outcome_text = f"{outcome.correcting_plan_version_id} is Active; replacement {lineage.get('plan_item_id')} item version {lineage.get('plan_item_version_id')} is eligible; resolved by {p.user_name(outcome.decided_by)}."
+	elif outcome:
+		outcome_text = f"{outcome.reason} Decided by {p.user_name(outcome.decided_by)}."
+	return {
+		"outcome": "OK", "kind": "stopped", "status": status, "status_label": label, "status_tone": tone,
+		"header": {**_header(root, version, badge=(label, tone), description="Planning is reviewing an approved-plan issue. This requisition is preserved and cannot be edited or resumed.")},
+		"request": {
+			"reference": root.planning_correction_request_id, "status": f"{root.planning_correction_request_id} · {request['status'] if request else 'Open'}",
+			"plan_item": root.plan_item_id, "reason": (request or {}).get("reason") or (stop.reason if stop else ""),
+			"requested_by": p.user_name((request or {}).get("requested_by") or (stop.actor if stop else "")), "requested_at": p.eat((request or {}).get("requested_at") or (stop.decided_at if stop else "")),
+			"started": f"{p.user_name(started['actor'])} began review on {p.eat(started['disposed_at'])}" if started else "",
+		},
+		"outcome_text": outcome_text, "unchanged_notice": "The approved Planning facts have not changed. This requisition will not restart." if outcome and outcome.outcome == "Closed without change" else "",
+		"unavailable": unavailable, "other_unresolved": [{"reference": r["correction_request"], "status": r["status"]} for r in others],
+		"hold_notice": f"Authorisation remains on hold: {len(others)} Planning request{' is' if len(others) == 1 else 's are'} still unresolved." if others else "",
+		"correction_chain": chain, "sections": sections, "fresh_start": fresh,
+		"record_details": p.record_details(root=root, version={**vdict, "content_digest": version.content_digest}, projection=projection),
+		"actions": {
+			"view_planning_request": not is_planner, "open_planning_task": is_planner, "start_new_requisition": may_start,
+			"try_again": unavailable, "export": True,
+		},
+		"planning_route": f"/app/procurement-planning/correction/{root.planning_correction_request_id}",
+		"requisition": root.name, "root_record_version": root.record_version,
+	}
+
+
+# --------------------------------------------------------------------------
+# Handoff and history
+# --------------------------------------------------------------------------
 
 
 def get_authorised_requisition_handoff(*, requisition: str, user: str | None = None) -> dict[str, Any]:
-	"""§10.1/§13.12 `GetAuthorisedRequisitionHandoff` — the exact immutable
-	v1.3 handoff for an authorised consumer, plus the display-ready extras
-	REQ-DES-10 itself needs (reservation/budget-line labels, package row
-	counts, who authorised it and when, Tender-consumption status)."""
 	actor = authz.actor(user)
-	if not requisition or not frappe.db.exists("Procurement Requisition", requisition):
-		authz.not_found()
-	root = frappe.get_doc("Procurement Requisition", requisition)
-	authz.require_requisition_reader(actor, contributing_org_units=_contributing_units(root))
+	root = _reader(requisition, actor)
 	if not root.handoff:
-		fail("REQ_STALE_VERSION", "This Requisition has no authorised handoff.")
-	handoff = frappe.get_doc("Authorised Requisition Handoff", root.handoff)
-	payload = json.loads(handoff.payload_json)
-
-	# §13.12's own reservation table names the Reservation and Budget Line
-	# by their real references, not the internal hash-like docnames stored
-	# on the drawdown line (the same class of gap found and fixed in
-	# REQ-307's own Budget-affordability card).
-	drawdown_display = []
-	for line in payload.get("drawdown_lines", []):
-		reservation_id = line.get("reservation_id") or ""
-		reservation_label = cstr(frappe.db.get_value("Funding Reservation", reservation_id, "generated_reference") or reservation_id) if reservation_id else ""
-		budget_line = cstr(frappe.db.get_value("Funding Reservation", reservation_id, "budget_line") or "") if reservation_id else ""
-		budget_line_label = cstr(frappe.db.get_value("Procurement Budget Line", budget_line, "generated_reference") or budget_line) if budget_line else ""
-		drawdown_display.append(
-			{
-				"reservation_label": reservation_label, "organisation_unit_label": _ou_label(line.get("contributing_org_unit")),
-				"requested_value": line.get("requested_value"), "budget_line_label": budget_line_label,
-			}
-		)
-
-	decisions = payload.get("decisions") or []
-	authorised_by = {}
-	if decisions:
-		decision_doc = frappe.db.get_value("Requisition Decision", decisions[0].get("decision"), ["actor", "decided_at"], as_dict=True)
-		if decision_doc:
-			authorised_by = {
-				"name": cstr(frappe.db.get_value("User", decision_doc.actor, "full_name") or decision_doc.actor),
-				"role": decisions[0].get("capacity", ""), "decided_at": _eat(decision_doc.decided_at),
-			}
-
-	return {
-		"outcome": "OK", "requisition": _requisition_summary(root), "handoff": handoff.name, "handoff_version": handoff.handoff_version, "handoff_digest": handoff.handoff_digest,
-		"generated_at": cstr(handoff.generated_at), "payload": payload,
-		"drawdown_display": drawdown_display,
-		"package_summary": {"items": len(payload.get("items", [])), "technical_requirements": len(payload.get("technical_requirements", [])), "acceptance_requirements": len(payload.get("acceptance_requirements", []))},
-		"authorised_by": authorised_by,
-		"consumption": {
-			"tender": handoff.tender, "tender_version": handoff.tender_version, "template_key": handoff.template_key,
-			"template_version": handoff.template_version, "consumed_at": cstr(handoff.consumed_at),
-		},
-		# §9.1A's revoke gate is Head of Procurement Function only — never
-		# offered to a plain reader, matching this module's own
-		# read-offer-parity discipline.
-		"can_revoke": root.current_state == "Authorised" and not root.handoff_consumed_at and _can(authz.require_hopf, actor),
-	}
+		authz.not_found()
+	doc = frappe.get_doc("Authorised Requisition Handoff", root.handoff)
+	return {"handoff": doc.name, "handoff_version": doc.handoff_version, "handoff_digest": doc.handoff_digest, "payload": json.loads(doc.payload_json or "{}"), "consumed_at": cstr(doc.consumed_at), "tender": doc.tender}
 
 
 def list_eligible_handoffs(*, user: str | None = None) -> list[dict[str, Any]]:
-	"""TPR-CHG-001 v0.6 §10.2 "Eligible handoff" / §11.1 workspace / plan D7 —
-	every `AuthorisedRequisitionHandoff v1.3` that a Tender may still start
-	from: its Requisition is Authorised (never revoked, withdrawn or
-	superseded) and no Tender has consumed it. Read purpose, Site-wide: a
-	Procurement Officer, Head of Procurement Function or Auditor; anyone
-	else (including an actor with only departmental responsibilities)
-	receives an empty list, never a scope code. A read: creates nothing."""
+	"""Authorised, unconsumed v1.4 handoffs a Tender may start from."""
 	principal = cstr(user or frappe.session.user)
 	if not principal or principal == "Guest":
 		return []
 	if not any(authz.can_read_site(role, principal) for role in TENDER_SEAM_READER_ROLES) and not authz.is_technical(principal):
 		return []
-	rows = frappe.get_all(
-		"Authorised Requisition Handoff",
-		filters={"consumed_at": ("is", "not set"), "handoff_version": handoff_service.HANDOFF_VERSION},
-		fields=["name", "requisition", "requisition_version", "handoff_digest", "handoff_version", "generated_at"],
-		order_by="generated_at asc",
-	)
-	out: list[dict[str, Any]] = []
-	for row in rows:
-		root = frappe.db.get_value(
-			"Procurement Requisition", row.requisition,
-			["name", "requisition_reference", "plan_item_id", "current_state", "handoff", "handoff_consumed_at"], as_dict=True,
-		)
-		if not root or root.current_state != "Authorised" or root.handoff != row.name or root.handoff_consumed_at:
+	out = []
+	for row in frappe.get_all("Authorised Requisition Handoff", filters={"consumed_at": ("is", "not set"), "handoff_version": handoff_service.HANDOFF_VERSION}, fields=["name", "requisition", "requisition_version", "handoff_digest", "handoff_version", "generated_at"], order_by="generated_at asc"):
+		root = frappe.db.get_value("Procurement Requisition", row.requisition, ["name", "requisition_reference", "plan_item_id", "current_state", "handoff"], as_dict=True)
+		if not root or root.current_state != "Authorised" or root.handoff != row.name:
 			continue
 		payload = json.loads(frappe.db.get_value("Authorised Requisition Handoff", row.name, "payload_json") or "{}")
 		out.append(
 			{
-				"handoff": row.name, "handoff_version": row.handoff_version, "handoff_digest": row.handoff_digest,
-				"generated_at": cstr(row.generated_at), "authorised_at": _eat(row.generated_at),
+				"handoff": row.name, "handoff_version": row.handoff_version, "handoff_digest": row.handoff_digest, "authorised_at": p.eat(row.generated_at),
 				"requisition": root.name, "requisition_reference": root.requisition_reference, "requisition_version": row.requisition_version,
-				"plan_item_id": root.plan_item_id, "requirement_title": payload.get("requirement_title", ""),
-				"planned_method": payload.get("planned_method", ""), "product_pattern": payload.get("product_pattern", ""),
-				"reservation_category": payload.get("reservation_category_value", ""), "lotting_indicator": payload.get("lotting_indicator", ""),
-				"latest_delivery_date": payload.get("latest_delivery_date", ""), "latest_delivery_date_label": _date(payload.get("latest_delivery_date")),
-				"item_count": len(payload.get("items", [])), "technical_requirement_count": len(payload.get("technical_requirements", [])),
-				"related_service_count": len(payload.get("related_services", [])), "acceptance_requirement_count": len(payload.get("acceptance_requirements", [])),
-				"supporting_material_count": len(payload.get("supporting_materials", [])),
+				"plan_item_id": root.plan_item_id, "requirement_title": payload.get("requirement_title", ""), "planned_method": payload.get("planned_method", ""),
+				"reservation_category": payload.get("reservation_category", ""), "lotting_indicator": payload.get("lotting_indicator", ""),
+				"latest_delivery_date": payload.get("latest_delivery_date", ""), "latest_delivery_date_label": p.date_label(payload.get("latest_delivery_date")),
 			}
 		)
 	return out
 
 
 def get_requisition_history(*, requisition: str, user: str | None = None) -> dict[str, Any]:
-	"""§10.1/§15 `GetRequisitionHistory` — versions, decisions, drawdown,
-	reservation, reversal, upstream-correction and handoff-consumption
-	evidence. No mutation."""
 	actor = authz.actor(user)
-	if not requisition or not frappe.db.exists("Procurement Requisition", requisition):
-		authz.not_found()
-	root = frappe.get_doc("Procurement Requisition", requisition)
-	authz.require_requisition_reader(actor, contributing_org_units=_contributing_units(root))
-
-	versions = frappe.get_all(
-		"Requisition Version", filters={"requisition": root.name},
-		fields=["name", "version_number", "version_status", "based_on_version", "content_digest"],
-		order_by="version_number asc",
-	)
-	tasks = frappe.get_all("Requisition Task", filters={"requisition": root.name}, fields=["name"], pluck="name")
-	decisions = frappe.get_all(
-		"Requisition Decision", filters={"task": ("in", tasks or ("",))},
-		fields=["name", "task", "requisition_version", "actor", "legal_capacity", "decision", "return_reason", "decided_at"],
-		order_by="decided_at asc",
-	)
-	drawdown_lines = frappe.get_all(
-		"Requisition Drawdown Line", filters={"parent": ("in", [v.name for v in versions] or ("",))},
-		fields=["parent", "drawdown_line_id", "contributing_org_unit", "requested_quantity", "requested_value", "reservation_id", "planning_drawdown_reference"],
-	)
-	events = frappe.get_all(
-		"Requisition Event", filters={"requisition": root.name},
-		fields=["event_id", "event_type", "sequence", "occurred_at", "status"], order_by="sequence asc",
-	)
-	handoff = None
-	if root.handoff:
-		h = frappe.get_doc("Authorised Requisition Handoff", root.handoff)
-		handoff = {
-			"handoff": h.name, "handoff_digest": h.handoff_digest, "generated_at": cstr(h.generated_at),
-			"tender": h.tender, "consumed_at": cstr(h.consumed_at),
-		}
+	root = _reader(requisition, actor)
+	versions = frappe.get_all("Requisition Version", filters={"requisition": root.name}, fields=["name", "version_number", "version_status", "based_on_version", "content_digest", "certified_lead_org_unit_id", "submitted_by", "submitted_at"], order_by="version_number asc")
+	decisions = frappe.get_all("Requisition Decision", filters={"requisition_version": ("in", [v.name for v in versions] or ("",))}, fields=["name", "requisition_version", "actor", "legal_capacity", "decision", "reason", "affected_section", "new_lead_org_unit_id", "decided_at"], order_by="decided_at asc")
+	outcomes = frappe.get_all("Requisition Correction Outcome", filters={"requisition": root.name}, fields=["name", "event_id", "correction_request_id", "outcome", "producer_sequence", "status", "received_at", "quarantine_reason"], order_by="creation asc")
+	events_rows = frappe.get_all("Requisition Event", filters={"requisition": root.name}, fields=["event_id", "event_type", "sequence", "occurred_at", "status"], order_by="sequence asc")
 	return {
-		"outcome": "OK", "requisition": _requisition_summary(root),
-		"versions": versions, "decisions": decisions, "drawdown_lines": drawdown_lines, "events": events, "handoff": handoff,
+		"requisition": root.name, "reference": root.requisition_reference,
+		"versions": [{**v, "submitted_at": p.eat(v.submitted_at), "route": f"/app/procurement-requisitions/{root.name}?version={v.name}"} for v in versions],
+		"decisions": [{**d, "actor_name": p.user_name(d.actor), "decided_at": p.eat(d.decided_at)} for d in decisions],
+		"outcomes": outcomes, "events": events_rows, "prior_requisition": root.prior_requisition_id,
 	}

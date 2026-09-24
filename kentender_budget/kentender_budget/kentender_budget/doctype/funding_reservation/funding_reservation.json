@@ -15,6 +15,9 @@
   "section_source",
   "plan_item",
   "plan_source_allocation",
+  "drawdown_line_id",
+  "source_organisation_unit",
+  "payload_digest",
   "col_b",
   "original_amount",
   "remaining_amount",
@@ -100,6 +103,28 @@
    "unique": 0,
    "search_index": 1,
    "description": "Distinguishes multiple source allocations; no longer globally unique (REQ-CHG-001 v1.6 D1) \u2014 a revoked reservation's allocation, or a later unrelated Requisition drawing the remaining balance, may reserve again. Oversubscription is prevented by the locked line-level position check, not by this column."
+  },
+  {
+   "fieldname": "drawdown_line_id",
+   "fieldtype": "Data",
+   "label": "Drawdown line",
+   "read_only": 1,
+   "unique": 1,
+   "description": "BUD-CHG-001 v1.10 \u00a74.5 \u2014 the exact REQ drawdown line this reservation funds; one reservation per drawdown line (BUD-BR-011). Empty for Planning-era reservations."
+  },
+  {
+   "fieldname": "source_organisation_unit",
+   "fieldtype": "Data",
+   "label": "Source organisation unit",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payload_digest",
+   "fieldtype": "Data",
+   "label": "Payload digest",
+   "read_only": 1,
+   "hidden": 1,
+   "description": "Digest of the exact checked payload; same key + changed payload is refused."
   },
   {
    "fieldname": "col_b",

@@ -13,6 +13,7 @@ module's own test suite."""
 
 from __future__ import annotations
 
+from decimal import Decimal
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -25,6 +26,7 @@ from kentender_procurement.procurement_planning.services import (
 	dpp_lifecycle,
 	dpp_validation,
 	needs_intake,
+	outcome_event,
 	plan_finance,
 	plan_governance,
 	plan_publication,
@@ -70,6 +72,12 @@ class RequisitionCase(IntegrationTestCase):
 		)
 		eligible_patch.start()
 		self.addCleanup(eligible_patch.stop)
+		# REQ-CHG-001 v1.11 §9.1B — this file is Planning's own suite; the
+		# emitted outcome is asserted as a payload, never by running the
+		# registered Requisitions consumer against synthetic REQ records.
+		outcome_patch = patch.object(outcome_event, "deliver")
+		outcome_patch.start()
+		self.addCleanup(outcome_patch.stop)
 
 	def complete_and_confirm(self, item_id: str, **value_overrides) -> None:
 		frappe.set_user(fx.PLANNER)
@@ -193,12 +201,12 @@ class TestEligibility(RequisitionCase):
 		read = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)
 		self.assertTrue(read["eligible"])
 		self.assertEqual(read["plan_reference"], accepted["annual_plan"])
-		self.assertEqual(read["total_value"], 1000000)
-		self.assertEqual(read["remaining_value"], 1000000)
+		self.assertEqual(read["total_value"], "1000000.00")
+		self.assertEqual(read["remaining_value"], "1000000.00")
 		self.assertEqual(len(read["sources"]), 1)
 		source = read["sources"][0]
 		self.assertEqual(source["remaining_quantity"], source["approved_quantity"])
-		self.assertEqual(source["remaining_amount"], 1000000)
+		self.assertEqual(source["remaining_amount"], "1000000.00")
 		self.assertTrue(read["funding_confirmation_references"])
 		self.assertTrue(read["evaluated_at"])
 
@@ -234,7 +242,7 @@ class TestEligibility(RequisitionCase):
 		item_id = formed["created_items"][0]
 		read = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)
 		self.assertFalse(read["eligible"])
-		self.assertEqual(read["remaining_value"], 0)
+		self.assertEqual(read["remaining_value"], "0.00")
 
 	def test_active_but_no_longer_current_funding_is_not_eligible(self):
 		"""§7.4's own "Finance evidence remains current" condition — proven by
@@ -264,8 +272,7 @@ class TestDrawdownAndReversal(RequisitionCase):
 		frappe.set_user(fx.HOPF)
 		return plan_requisition.authorise_requisition_drawdown(
 			plan_item_id=item_id, requisition_reference=ref or f"REQ-{key()[:8]}",
-			requesting_org_unit=fx.OU_ALPHA,
-			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": quantity, "amount": amount}],
+			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": str(quantity), "amount": str(amount)}],
 			expected_record_version=read["record_version"], idempotency_key=key(),
 		)
 
@@ -277,14 +284,14 @@ class TestDrawdownAndReversal(RequisitionCase):
 		self.assertEqual(first["action"], "recorded")
 		read = self.read_as_planner(item_id)
 		self.assertTrue(read["eligible"])
-		self.assertAlmostEqual(read["remaining_value"], 600000)
+		self.assertEqual(read["remaining_value"], "600000.00")
 
 		second = self.record(item_id, allocation_id, quantity=0.6, amount=600000)
 		self.assertEqual(second["action"], "recorded")
 		read = self.read_as_planner(item_id)
 		self.assertFalse(read["eligible"])
-		self.assertAlmostEqual(read["remaining_value"], 0)
-		self.assertAlmostEqual(read["remaining_quantity"], 0)
+		self.assertEqual(read["remaining_value"], "0.00")
+		self.assertEqual(read["remaining_quantity"], "0")
 
 	def test_a_drawdown_exceeding_the_balance_is_refused_and_creates_nothing(self):
 		accepted, item_id = self.active_item(indicative_amount=1000000)
@@ -295,7 +302,7 @@ class TestDrawdownAndReversal(RequisitionCase):
 			frappe.db.count("Plan Drawdown Reference", {"plan_item_id": item_id}), 0
 		)
 		read = self.read_as_planner(item_id)
-		self.assertAlmostEqual(read["remaining_value"], 1000000)
+		self.assertEqual(read["remaining_value"], "1000000.00")
 
 	def test_a_combined_items_all_or_none_atomicity_across_two_allocations(self):
 		"""One allocation's request is fine on its own; the other's exceeds
@@ -361,10 +368,9 @@ class TestDrawdownAndReversal(RequisitionCase):
 		with self.assertRaises(frappe.ValidationError):
 			plan_requisition.authorise_requisition_drawdown(
 				plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}",
-				requesting_org_unit=fx.OU_ALPHA,
 				allocations=[
-					{"plan_source_allocation_id": ids[0], "quantity": 0.1, "amount": 100000},
-					{"plan_source_allocation_id": ids[1], "quantity": 0.9, "amount": 900000},
+					{"plan_source_allocation_id": ids[0], "quantity": "0.1", "amount": "100000"},
+					{"plan_source_allocation_id": ids[1], "quantity": "0.9", "amount": "900000"},
 				],
 				expected_record_version=read["record_version"], idempotency_key=key(),
 			)
@@ -376,7 +382,7 @@ class TestDrawdownAndReversal(RequisitionCase):
 		accepted, item_id = self.active_item(indicative_amount=1000000)
 		allocation_id = self.allocation_id_of(item_id)
 		recorded = self.record(item_id, allocation_id, quantity=1, amount=1000000)
-		drawdown = recorded["drawdown_references"][0]
+		drawdown = recorded["drawdowns"][0]
 
 		read = self.read_as_planner(item_id)
 		self.assertFalse(read["eligible"])
@@ -393,7 +399,7 @@ class TestDrawdownAndReversal(RequisitionCase):
 		)
 		read = self.read_as_planner(item_id)
 		self.assertTrue(read["eligible"])
-		self.assertAlmostEqual(read["remaining_value"], 1000000)
+		self.assertEqual(read["remaining_value"], "1000000.00")
 
 		frappe.set_user(fx.HOPF)
 		with self.assertRaises(frappe.ValidationError):
@@ -409,18 +415,18 @@ class TestDrawdownAndReversal(RequisitionCase):
 		frappe.set_user(fx.HOPF)
 		record_key = key()
 		args = dict(
-			plan_item_id=item_id, requisition_reference="REQ-REPLAY-1", requesting_org_unit=fx.OU_ALPHA,
-			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": 0.5, "amount": 500000}],
+			plan_item_id=item_id, requisition_reference="REQ-REPLAY-1",
+			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": "0.5", "amount": "500000"}],
 			expected_record_version=read["record_version"], idempotency_key=record_key,
 		)
 		first = plan_requisition.authorise_requisition_drawdown(**args)
 		second = plan_requisition.authorise_requisition_drawdown(**args)
-		self.assertEqual(first["drawdown_references"], second["drawdown_references"])
+		self.assertEqual(first["drawdowns"], second["drawdowns"])
 		self.assertEqual(frappe.db.count("Plan Drawdown Reference", {"plan_item_id": item_id}), 1)
 		self.assertFalse(first["idempotent"])
 		self.assertTrue(second["idempotent"])
 
-		drawdown = first["drawdown_references"][0]
+		drawdown = first["drawdowns"][0]
 		reverse_key = key()
 		reverse_args = dict(
 			drawdown_reference=drawdown["drawdown_reference"],
@@ -439,13 +445,12 @@ class TestDrawdownAndReversal(RequisitionCase):
 		with self.assertRaises(frappe.DoesNotExistError):
 			plan_requisition.authorise_requisition_drawdown(
 				plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}",
-				requesting_org_unit=fx.OU_ALPHA,
-				allocations=[{"plan_source_allocation_id": allocation_id, "quantity": 0.1, "amount": 100000}],
+				allocations=[{"plan_source_allocation_id": allocation_id, "quantity": "0.1", "amount": "100000"}],
 				expected_record_version=0, idempotency_key=key(),
 			)
 
 		recorded = self.record(item_id, allocation_id, quantity=0.1, amount=100000)
-		drawdown = recorded["drawdown_references"][0]
+		drawdown = recorded["drawdowns"][0]
 		frappe.set_user(fx.PLANNER)
 		with self.assertRaises(frappe.DoesNotExistError):
 			plan_requisition.reverse_requisition_drawdown(
@@ -558,7 +563,7 @@ class TestListRequisitionEligiblePlanItems(RequisitionCase):
 		self.assertIn(item_id, [r["plan_item_id"] for r in rows])
 		row = next(r for r in rows if r["plan_item_id"] == item_id)
 		self.assertEqual(row["contributing_org_unit_ids"], [fx.OU_ALPHA])
-		self.assertGreater(row["remaining_value"], 0)
+		self.assertGreater(Decimal(row["remaining_value"]), 0)
 
 	def test_author_of_a_contributing_unit_sees_it_too(self):
 		accepted, item_id = self.active_item()
@@ -578,7 +583,7 @@ class TestListRequisitionEligiblePlanItems(RequisitionCase):
 		allocation = read["sources"][0]
 		frappe.set_user(fx.HOPF)
 		plan_requisition.authorise_requisition_drawdown(
-			plan_item_id=item_id, requisition_reference="REQ-EXHAUST-001", requesting_org_unit=fx.OU_ALPHA,
+			plan_item_id=item_id, requisition_reference="REQ-EXHAUST-001",
 			allocations=[{"plan_source_allocation_id": allocation["plan_source_allocation_id"], "quantity": allocation["remaining_quantity"], "amount": allocation["remaining_amount"]}],
 			expected_record_version=read["record_version"], idempotency_key=key(),
 		)
@@ -676,26 +681,16 @@ class TestPlanItemCorrectionRequest(RequisitionCase):
 		self.assertTrue(frappe.db.get_value("Plan Item", item_id, "authorisation_hold"))
 		self.assertTrue(any(r["task_id"] == received["correction_request"] for r in my_work_provider.my_work_rows(user=fx.PLANNER)["assigned"]))
 
-		# §5.4.5's neutral REQ notification is this file's only real caller of
-		# the sibling module's contract; a minimal Requisition root stands in
-		# for the REQ-owned document (this file never builds REQ's own,
-		# heavier fixtures — mirrors the existing opaque-string treatment
-		# `requisition_reference`/`requisition_version` already get above).
-		req_root = frappe.get_doc(
-			{
-				"doctype": "Procurement Requisition", "requisition_reference": "REQ-TEST-CORR-6",
-				"plan_id": accepted["annual_plan"], "plan_version_id": accepted["annual_plan_version"],
-				"plan_item_id": item_id, "current_state": "Upstream correction required", "record_version": 0,
-			}
-		).insert(ignore_permissions=True)
-		self.addCleanup(frappe.db.delete, "Procurement Requisition", {"name": req_root.name})
-
+		# REQ-CHG-001 v1.11 §9.1B — the terminal outcome reaches Requisitions
+		# only as the emitted `PlanItemCorrectionOutcome.v1` payload; this file
+		# asserts that payload, not the consumer's own records.
 		correcting_version = self.correcting_active_version(accepted["annual_plan"])
 		doc.reload()
-		resolved = plan_requisition.resolve_plan_item_correction_request(
-			correction_request=doc.name, correcting_plan_version=correcting_version,
-			expected_record_version=doc.record_version, idempotency_key=key(),
-		)
+		with patch.object(outcome_event, "deliver") as deliver:
+			resolved = plan_requisition.resolve_plan_item_correction_request(
+				correction_request=doc.name, correcting_plan_version=correcting_version,
+				expected_record_version=doc.record_version, idempotency_key=key(),
+			)
 		self.assertEqual(resolved["action"], "resolved")
 		self.assertEqual(resolved["replacement_plan_item_id"], item_id)
 		self.assertEqual(frappe.db.get_value("Plan Item Correction Request", doc.name, "status"), "Resolved")
@@ -704,9 +699,10 @@ class TestPlanItemCorrectionRequest(RequisitionCase):
 
 		disposition = frappe.get_doc("Plan Item Correction Disposition", {"correction_request": doc.name, "action": "Resolve"})
 		self.assertEqual(disposition.correcting_plan_version, correcting_version)
-		req_root.reload()
-		self.assertEqual(req_root.upstream_correction_outcome, "Resolved")
-		self.assertIn(correcting_version, req_root.upstream_correction_reference)
+		event = deliver.call_args.args[0]
+		self.assertEqual(event["outcome"], "Resolved")
+		self.assertEqual(event["requesting_requisition_id"], "REQ-TEST-CORR-6")
+		self.assertEqual(event["correcting_plan_version_id"], correcting_version)
 
 	def test_resolve_requires_the_correcting_version_to_be_active(self):
 		accepted, item_id = self.active_item()
@@ -760,33 +756,26 @@ class TestPlanItemCorrectionRequest(RequisitionCase):
 			reason="Closed without change once the Planner confirms nothing needs correcting.",
 			idempotency_key=key(),
 		)
-		req_root = frappe.get_doc(
-			{
-				"doctype": "Procurement Requisition", "requisition_reference": "REQ-TEST-CORR-8",
-				"plan_id": accepted["annual_plan"], "plan_version_id": accepted["annual_plan_version"],
-				"plan_item_id": item_id, "current_state": "Upstream correction required", "record_version": 0,
-			}
-		).insert(ignore_permissions=True)
-		self.addCleanup(frappe.db.delete, "Procurement Requisition", {"name": req_root.name})
-
 		frappe.set_user(fx.PLANNER)
 		doc = frappe.get_doc("Plan Item Correction Request", received["correction_request"])
 		with self.assertRaises(frappe.ValidationError):
 			plan_requisition.close_plan_item_correction_without_change(
 				correction_request=doc.name, reason="Too short.", expected_record_version=doc.record_version, idempotency_key=key(),
 			)
-		closed = plan_requisition.close_plan_item_correction_without_change(
-			correction_request=doc.name, reason="The Plan Item already reflects the department's confirmed requirement.",
-			expected_record_version=doc.record_version, idempotency_key=key(),
-		)
+		with patch.object(outcome_event, "deliver") as deliver:
+			closed = plan_requisition.close_plan_item_correction_without_change(
+				correction_request=doc.name, reason="The Plan Item already reflects the department's confirmed requirement.",
+				expected_record_version=doc.record_version, idempotency_key=key(),
+			)
 		self.assertEqual(closed["action"], "closed_without_change")
 		self.assertEqual(frappe.db.get_value("Plan Item Correction Request", doc.name, "status"), "Closed without change")
 		self.assertFalse(frappe.db.get_value("Plan Item", item_id, "authorisation_hold"))
 		disposition = frappe.get_doc("Plan Item Correction Disposition", {"correction_request": doc.name, "action": "Close without change"})
 		self.assertTrue(disposition.reason)
-		req_root.reload()
-		self.assertEqual(req_root.upstream_correction_outcome, "Closed without change")
-		self.assertEqual(req_root.current_state, "Upstream correction required")  # never silently restarted
+		event = deliver.call_args.args[0]
+		self.assertEqual(event["outcome"], "Closed without change")
+		self.assertEqual(event["reason"], "The Plan Item already reflects the department's confirmed requirement.")
+		self.assertIsNone(event["replacement_lineage"])  # nothing here restarts the Requisition
 
 		doc.reload()
 		with self.assertRaises(frappe.ValidationError) as caught:
@@ -814,8 +803,8 @@ class TestScopeLockEngagesOnAuthorisation(RequisitionCase):
 		first_ref = f"REQ-{key()[:8]}"
 		read = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)
 		plan_requisition.authorise_requisition_drawdown(
-			plan_item_id=item_id, requisition_reference=first_ref, requesting_org_unit=fx.OU_ALPHA,
-			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": 0.4, "amount": 400000}],
+			plan_item_id=item_id, requisition_reference=first_ref,
+			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": "0.4", "amount": "400000"}],
 			expected_record_version=read["record_version"], idempotency_key=key(),
 		)
 		state = scope_lock.status(item_id)
@@ -829,8 +818,8 @@ class TestScopeLockEngagesOnAuthorisation(RequisitionCase):
 		read = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)
 		frappe.set_user(fx.HOPF)
 		plan_requisition.authorise_requisition_drawdown(
-			plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}", requesting_org_unit=fx.OU_ALPHA,
-			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": 0.6, "amount": 600000}],
+			plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}",
+			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": "0.6", "amount": "600000"}],
 			expected_record_version=read["record_version"], idempotency_key=key(),
 		)
 		state = scope_lock.status(item_id)
@@ -843,8 +832,8 @@ class TestScopeLockEngagesOnAuthorisation(RequisitionCase):
 		frappe.set_user(fx.HOPF)
 		read = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)
 		plan_requisition.authorise_requisition_drawdown(
-			plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}", requesting_org_unit=fx.OU_ALPHA,
-			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": 0.4, "amount": 400000}],
+			plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}",
+			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": "0.4", "amount": "400000"}],
 			expected_record_version=read["record_version"], idempotency_key=key(),
 		)
 		self.assertTrue(scope_lock.status(item_id)["locked"])
@@ -872,8 +861,8 @@ class TestScopeLockEngagesOnAuthorisation(RequisitionCase):
 		self.assertTrue(read["eligible"])
 		frappe.set_user(fx.HOPF)
 		remaining = plan_requisition.authorise_requisition_drawdown(
-			plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}", requesting_org_unit=fx.OU_ALPHA,
-			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": 0.6, "amount": 600000}],
+			plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}",
+			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": "0.6", "amount": "600000"}],
 			expected_record_version=read["record_version"], idempotency_key=key(),
 		)
 		self.assertEqual(remaining["action"], "recorded")
@@ -926,22 +915,9 @@ class TestCorrectionRequestHoldsNewAuthorisation(RequisitionCase):
 	release requires every relevant request to reach a terminal
 	disposition, and then re-evaluates ordinary eligibility."""
 
-	def _req_root(self, accepted, item_id, reference: str):
-		root = frappe.get_doc(
-			{
-				"doctype": "Procurement Requisition", "requisition_reference": reference,
-				"plan_id": accepted["annual_plan"], "plan_version_id": accepted["annual_plan_version"],
-				"plan_item_id": item_id, "current_state": "Upstream correction required", "record_version": 0,
-			}
-		).insert(ignore_permissions=True)
-		self.addCleanup(frappe.db.delete, "Procurement Requisition", {"name": root.name})
-		return root
-
 	def test_the_hold_blocks_a_new_drawdown_until_disposed_and_release_reevaluates_eligibility(self):
 		accepted, item_id = self.active_item(indicative_amount=1000000)
 		allocation_id = self.allocation_id_of(item_id)
-		self._req_root(accepted, item_id, "REQ-HOLD-1")
-		self._req_root(accepted, item_id, "REQ-HOLD-2")
 		frappe.set_user(fx.HOD)
 		plan_requisition.receive_plan_item_correction_request(
 			plan_item_id=item_id, requisition_reference="REQ-HOLD-1", requisition_version="RQV-HOLD-1",
@@ -955,8 +931,8 @@ class TestCorrectionRequestHoldsNewAuthorisation(RequisitionCase):
 		frappe.set_user(fx.HOPF)
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			plan_requisition.authorise_requisition_drawdown(
-				plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}", requesting_org_unit=fx.OU_ALPHA,
-				allocations=[{"plan_source_allocation_id": allocation_id, "quantity": 0.5, "amount": 500000}],
+				plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}",
+				allocations=[{"plan_source_allocation_id": allocation_id, "quantity": "0.5", "amount": "500000"}],
 				expected_record_version=read["record_version"], idempotency_key=key(),
 			)
 		self.assertEqual(caught.exception.code, "PLN_ITEM_AUTHORISATION_HELD")
@@ -988,8 +964,8 @@ class TestCorrectionRequestHoldsNewAuthorisation(RequisitionCase):
 		frappe.set_user(fx.HOPF)
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			plan_requisition.authorise_requisition_drawdown(
-				plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}", requesting_org_unit=fx.OU_ALPHA,
-				allocations=[{"plan_source_allocation_id": allocation_id, "quantity": 0.5, "amount": 500000}],
+				plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}",
+				allocations=[{"plan_source_allocation_id": allocation_id, "quantity": "0.5", "amount": "500000"}],
 				expected_record_version=read["record_version"], idempotency_key=key(),
 			)
 		self.assertEqual(caught.exception.code, "PLN_ITEM_AUTHORISATION_HELD")
@@ -1009,8 +985,8 @@ class TestCorrectionRequestHoldsNewAuthorisation(RequisitionCase):
 		self.assertTrue(read["eligible"])
 		frappe.set_user(fx.HOPF)
 		released = plan_requisition.authorise_requisition_drawdown(
-			plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}", requesting_org_unit=fx.OU_ALPHA,
-			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": 0.5, "amount": 500000}],
+			plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}",
+			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": "0.5", "amount": "500000"}],
 			expected_record_version=read["record_version"], idempotency_key=key(),
 		)
 		self.assertEqual(released["action"], "recorded")
@@ -1034,8 +1010,8 @@ class TestPlanItemNoticesCarryTheSpecCopy(RequisitionCase):
 		frappe.set_user(fx.HOPF)
 		eligible = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)
 		plan_requisition.authorise_requisition_drawdown(
-			plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}", requesting_org_unit=fx.OU_ALPHA,
-			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": 0.4, "amount": 400000}],
+			plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}",
+			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": "0.4", "amount": "400000"}],
 			expected_record_version=eligible["record_version"], idempotency_key=key(),
 		)
 		frappe.set_user(fx.PLANNER)
@@ -1099,18 +1075,18 @@ class TestRequestShapedEndpoints(RequisitionCase):
 		frappe.set_user(fx.HOPF)
 		recorded = self.call(
 			"authorise_requisition_drawdown", plan_item_id=item_id,
-			requisition_reference="REQ-HTTP-1", requesting_org_unit=fx.OU_ALPHA,
+			requisition_reference="REQ-HTTP-1",
 			allocations=json.dumps(
-				[{"plan_source_allocation_id": allocation_id, "quantity": 0.5, "amount": 500000}]
+				[{"plan_source_allocation_id": allocation_id, "quantity": "0.5", "amount": "500000"}]
 			),
 			expected_record_version=str(read["record_version"]), idempotency_key=key(),
 		)
 		self.assertEqual(recorded["action"], "recorded")
-		drawdown = recorded["drawdown_references"][0]
+		drawdown = recorded["drawdowns"][0]
 
 		frappe.set_user(fx.PLANNER)
 		read = self.call("get_requisition_eligible_plan_item", plan_item_id=item_id)
-		self.assertAlmostEqual(read["remaining_value"], 500000)
+		self.assertEqual(read["remaining_value"], "500000.00")
 
 		frappe.set_user(fx.HOPF)
 		reversed_result = self.call(
@@ -1122,7 +1098,7 @@ class TestRequestShapedEndpoints(RequisitionCase):
 
 		frappe.set_user(fx.PLANNER)
 		read = self.call("get_requisition_eligible_plan_item", plan_item_id=item_id)
-		self.assertAlmostEqual(read["remaining_value"], 1000000)
+		self.assertEqual(read["remaining_value"], "1000000.00")
 
 
 class TestOpenSuccessorKeepsTheActiveItemEligible(RequisitionCase):
@@ -1154,7 +1130,7 @@ class TestOpenSuccessorKeepsTheActiveItemEligible(RequisitionCase):
 		self.assertTrue(read["eligible"])
 		self.assertEqual(read["version_reference"], frappe.db.get_value("Annual Plan Item", active_name, "plan_version"))
 		self.assertEqual(read["contributing_org_unit_ids"], [fx.OU_ALPHA])
-		self.assertEqual(read["remaining_value"], 1000000)
+		self.assertEqual(read["remaining_value"], "1000000.00")
 		self.assertEqual(len(read["sources"]), 1)
 
 	def test_the_workspace_listing_and_the_detail_name_the_same_item(self):
@@ -1173,16 +1149,16 @@ class TestOpenSuccessorKeepsTheActiveItemEligible(RequisitionCase):
 		allocation_id = read["sources"][0]["plan_source_allocation_id"]
 		frappe.set_user(fx.HOPF)
 		result = plan_requisition.authorise_requisition_drawdown(
-			plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}", requesting_org_unit=fx.OU_ALPHA,
-			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": 0.4, "amount": 400000}],
+			plan_item_id=item_id, requisition_reference=f"REQ-{key()[:8]}",
+			allocations=[{"plan_source_allocation_id": allocation_id, "quantity": "0.4", "amount": "400000"}],
 			expected_record_version=read["record_version"], idempotency_key=key(),
 		)
 		self.assertEqual(result["action"], "recorded")
-		drawdown = frappe.get_doc("Plan Drawdown Reference", result["drawdown_references"][0]["drawdown_reference"])
+		drawdown = frappe.get_doc("Plan Drawdown Reference", result["drawdowns"][0]["drawdown_reference"])
 		self.assertEqual(drawdown.plan_item, active_name)
 		self.assertEqual(frappe.db.count("Plan Drawdown Reference", {"plan_item": draft_name}), 0)
 		frappe.set_user(fx.PLANNER)
-		self.assertAlmostEqual(plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)["remaining_value"], 600000)
+		self.assertEqual(plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item_id)["remaining_value"], "600000.00")
 
 	def test_a_correction_request_is_gated_on_the_active_copys_contributing_units(self):
 		accepted, item_id, active_name, draft_name = self.active_item_with_open_successor()

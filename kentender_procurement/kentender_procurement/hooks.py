@@ -630,11 +630,9 @@ fixtures = [
 	},
 ]
 
-
-
-
-
-
-
-
-
+# REQ-CHG-001 v1.11 §9.1B — Planning emits PlanItemCorrectionOutcome.v1 to
+# these consumers inside its terminal disposition transaction; Planning never
+# imports the Requisitions lifecycle.
+kt_plan_item_correction_outcome_consumers = [
+	"kentender_procurement.procurement_requisitions.services.correction.record_plan_item_correction_outcome",
+]

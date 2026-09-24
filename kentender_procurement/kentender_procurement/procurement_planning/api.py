@@ -539,13 +539,24 @@ def get_requisition_eligible_plan_item(plan_item_id: str) -> dict[str, Any]:
 
 
 @frappe.whitelist()
-def authorise_requisition_drawdown(plan_item_id: str, requisition_reference: str, requesting_org_unit: str, allocations, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+def authorise_requisition_drawdown(
+	plan_item_id: str, requisition_reference: str, allocations, expected_record_version, idempotency_key: str,
+	requisition_version: str = "", correlation_id: str = "",
+) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import plan_requisition
 
 	return plan_requisition.authorise_requisition_drawdown(
-		plan_item_id=plan_item_id, requisition_reference=requisition_reference, requesting_org_unit=requesting_org_unit,
+		plan_item_id=plan_item_id, requisition_reference=requisition_reference,
 		allocations=_parse_json(allocations, []), expected_record_version=expected_record_version, idempotency_key=idempotency_key,
+		requisition_version=requisition_version, correlation_id=correlation_id,
 	)
+
+
+@frappe.whitelist()
+def list_requisition_drawdowns(requisition_reference: str) -> list[dict[str, Any]]:
+	from kentender_procurement.procurement_planning.services import plan_requisition
+
+	return plan_requisition.list_requisition_drawdowns(requisition_reference=requisition_reference)
 
 
 @frappe.whitelist()

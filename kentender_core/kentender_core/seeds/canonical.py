@@ -818,6 +818,13 @@ def run(
 	if force:
 		frappe.flags.in_test = True
 	try:
+		# A loaded Requisitions demo profile (REQ-CHG-001 v1.11 §16.4A) holds
+		# Budget reservations and Planning requests on the canonical item; undo
+		# it through the real commands first, so the reset below never leaves a
+		# Requisition row pointing at a reservation it deleted.
+		from kentender_procurement.procurement_requisitions.seeds.profiles import release_loaded_profile
+
+		result["released_profile"] = release_loaded_profile()
 		if rebuild or wipe:
 			result["rebuild"] = clear_canonical_modules()
 		if wipe:

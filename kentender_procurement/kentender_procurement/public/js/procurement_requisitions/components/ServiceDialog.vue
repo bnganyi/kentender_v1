@@ -1,122 +1,86 @@
-<!-- REQ-DES-06's "Add related service" dialog (§5.8). Not in the artboard
-     file itself, same as ItemDialog.vue — built on kt_industry_tokens.css's
-     shared .kt-dialog chrome. -->
+<!-- Add or edit one related service (REQ-DES-05 "When Yes, show service
+     table and Add service"). Not drawn on the board; built from the shared
+     dialog and field primitives. -->
 <template>
-	<div class="kt-dialog-backdrop" data-testid="req-service-dialog" @keydown.esc="$emit('cancel')">
-		<div class="kt-dialog" role="dialog" aria-modal="true" ref="dialogEl" tabindex="-1">
-			<div class="kt-dialog-title">Add related service</div>
-
+	<DialogFrame :title="row ? 'Edit related service' : 'Add related service'" :width="520" :busy="busy" testid="req-service-dialog" @close="$emit('close')">
+		<div class="req-grid-2-tight">
 			<div class="kt-field">
-				<label for="svc-type">Service type</label>
-				<select id="svc-type" class="kt-input" v-model="fields.service_type">
-					<option value="" disabled>Select a service type</option>
-					<option v-for="t in serviceTypes" :key="t" :value="t">{{ t }}</option>
+				<label :for="`${id}-type`">Service</label>
+				<select :id="`${id}-type`" v-model="form.service_type" class="kt-input" :class="{ 'is-invalid': fieldError('service_type') }" data-testid="req-service-type">
+					<option value="">Select a service</option>
+					<option v-for="t in catalogue.service_types || []" :key="t" :value="t">{{ t }}</option>
 				</select>
-				<p v-if="errors.service_type" class="req-field-error">{{ errors.service_type }}</p>
+				<span v-if="fieldError('service_type')" class="req-field-error">{{ fieldError("service_type") }}</span>
 			</div>
-
 			<div class="kt-field">
-				<label for="svc-applies-to">Applies to</label>
-				<select id="svc-applies-to" class="kt-input" v-model="appliesTo">
-					<option value="__all__">All items</option>
-					<option v-for="item in items" :key="item.requisition_item_id" :value="item.requisition_item_id">{{ item.item_name }} — {{ item.plan_item_line_id }}</option>
-				</select>
-			</div>
-
-			<div class="kt-field">
-				<label for="svc-result">Required result</label>
-				<textarea id="svc-result" class="kt-input" rows="2" minlength="10" maxlength="500" :value="fields.required_result" @input="fields.required_result = $event.target.value"></textarea>
-				<p v-if="errors.required_result" class="req-field-error">{{ errors.required_result }}</p>
-			</div>
-
-			<div class="req-field-grid">
-				<div class="kt-field">
-					<label for="svc-coverage">Quantity or coverage</label>
-					<input id="svc-coverage" class="kt-input" maxlength="120" :value="fields.quantity_or_coverage" @input="fields.quantity_or_coverage = $event.target.value" />
-					<p v-if="errors.quantity_or_coverage" class="req-field-error">{{ errors.quantity_or_coverage }}</p>
-				</div>
-				<div class="kt-field">
-					<label for="svc-date">Completion date</label>
-					<input id="svc-date" type="date" class="kt-input" :value="fields.completion_date" @input="fields.completion_date = $event.target.value" />
-					<p v-if="errors.completion_date" class="req-field-error">{{ errors.completion_date }}</p>
-				</div>
-			</div>
-
-			<div class="kt-field">
-				<label for="svc-evidence">Acceptance evidence</label>
-				<select id="svc-evidence" class="kt-input" v-model="fields.acceptance_evidence">
-					<option value="" disabled>Select evidence</option>
-					<option v-for="e in evidenceTypes" :key="e" :value="e">{{ e }}</option>
-				</select>
-				<p v-if="errors.acceptance_evidence" class="req-field-error">{{ errors.acceptance_evidence }}</p>
-			</div>
-			<div class="kt-field" v-if="fields.acceptance_evidence === 'Other stated record'">
-				<label for="svc-other-evidence">Other evidence name</label>
-				<input id="svc-other-evidence" class="kt-input" maxlength="120" :value="fields.other_evidence_name" @input="fields.other_evidence_name = $event.target.value" />
-				<p v-if="errors.other_evidence_name" class="req-field-error">{{ errors.other_evidence_name }}</p>
-			</div>
-
-			<p v-if="error" class="req-field-error" role="alert">{{ error }}</p>
-
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" @click="$emit('cancel')">Cancel</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="req-service-dialog-confirm" @click="confirm">Add service</button>
+				<label :for="`${id}-coverage`">Quantity or coverage</label>
+				<input :id="`${id}-coverage`" v-model="form.quantity_or_coverage" class="kt-input" :class="{ 'is-invalid': fieldError('quantity_or_coverage') }" data-testid="req-service-coverage" />
+				<span v-if="fieldError('quantity_or_coverage')" class="req-field-error">{{ fieldError("quantity_or_coverage") }}</span>
 			</div>
 		</div>
-	</div>
+		<div class="kt-field">
+			<label :for="`${id}-result`">Required result</label>
+			<textarea :id="`${id}-result`" v-model="form.required_result" class="kt-input" rows="2" :class="{ 'is-invalid': fieldError('required_result') }" data-testid="req-service-result"></textarea>
+			<span v-if="fieldError('required_result')" class="req-field-error">{{ fieldError("required_result") }}</span>
+		</div>
+		<div class="req-grid-2-tight">
+			<div class="kt-field">
+				<label :for="`${id}-date`">Completion date</label>
+				<DateField :id="`${id}-date`" v-model="form.completion_date" :max="(view.request_information || {}).latest_delivery_date || ''" :invalid="!!fieldError('completion_date')" />
+				<span v-if="fieldError('completion_date')" class="req-field-error">{{ fieldError("completion_date") }}</span>
+			</div>
+			<div class="kt-field">
+				<label :for="`${id}-evidence`">Acceptance evidence</label>
+				<select :id="`${id}-evidence`" v-model="form.acceptance_evidence" class="kt-input" :class="{ 'is-invalid': fieldError('acceptance_evidence') }">
+					<option value="">Select the evidence</option>
+					<option v-for="t in catalogue.service_evidence || []" :key="t" :value="t">{{ t }}</option>
+				</select>
+				<span v-if="fieldError('acceptance_evidence')" class="req-field-error">{{ fieldError("acceptance_evidence") }}</span>
+			</div>
+		</div>
+		<div v-if="form.acceptance_evidence === 'Other stated record'" class="kt-field">
+			<label :for="`${id}-other`">Name of the evidence record</label>
+			<input :id="`${id}-other`" v-model="form.other_evidence_name" class="kt-input" />
+		</div>
+		<Notice v-if="otherError" tone="critical">{{ otherError }}</Notice>
+		<template #actions>
+			<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="$emit('close')">Cancel</button>
+			<button type="button" class="kt-btn kt-btn-primary" :disabled="busy" data-testid="req-service-confirm" @click="confirm">Save related service</button>
+		</template>
+	</DialogFrame>
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, reactive, ref } from "vue";
+import { computed, reactive } from "vue";
+import { useReq } from "../data/context.js";
+import DateField from "./shared/DateField.vue";
+import DialogFrame from "./shared/DialogFrame.vue";
+import Notice from "./shared/Notice.vue";
 
-const props = defineProps({
-	editor: { type: Object, required: true },
-	pending: Boolean,
-	error: { type: String, default: "" },
+const props = defineProps({ view: { type: Object, required: true }, row: { type: Object, default: null } });
+const emit = defineEmits(["close"]);
+const ctx = useReq();
+const busy = computed(() => ctx.pending.value);
+const id = `req-svc-${Math.random().toString(36).slice(2, 8)}`;
+const catalogue = computed(() => props.view.catalogue || {});
+const r = props.row || {};
+const form = reactive({
+	service_type: r.service_type || "", required_result: r.required_result || "", quantity_or_coverage: r.quantity_or_coverage || "",
+	completion_date: r.completion_date || "", acceptance_evidence: r.acceptance_evidence || "", other_evidence_name: r.other_evidence_name || "",
+	applies_to_scope: r.applies_to_scope || "All items", applies_to_id: r.applies_to_id || "",
 });
-
-const emit = defineEmits(["confirm", "cancel"]);
-
-const dialogEl = ref(null);
-const items = computed(() => (props.editor.package || {}).items || []);
-const catalogue = computed(() => props.editor.catalogue || {});
-const serviceTypes = computed(() => catalogue.value.service_types || []);
-const evidenceTypes = computed(() => catalogue.value.service_acceptance_evidence || []);
-
-const appliesTo = ref("__all__");
-const fields = reactive({
-	service_type: "",
-	required_result: "",
-	quantity_or_coverage: "",
-	completion_date: "",
-	acceptance_evidence: "",
-	other_evidence_name: "",
-});
-const errors = reactive({});
-
-function validate() {
-	const next = {};
-	if (!fields.service_type) next.service_type = "A service type is required.";
-	if (fields.required_result.trim().length < 10) next.required_result = "10-500 characters describing the required result is required.";
-	if (!fields.quantity_or_coverage.trim()) next.quantity_or_coverage = "Quantity or coverage is required.";
-	if (!fields.completion_date) next.completion_date = "A completion date is required.";
-	if (!fields.acceptance_evidence) next.acceptance_evidence = "Acceptance evidence is required.";
-	if (fields.acceptance_evidence === "Other stated record" && !fields.other_evidence_name.trim()) next.other_evidence_name = "Other evidence name is required.";
-	Object.keys(errors).forEach((k) => delete errors[k]);
-	Object.assign(errors, next);
-	return Object.keys(next).length === 0;
+const LABEL = props.row ? "update-service" : "add-service";
+const error = computed(() => (ctx.commandError.value && ctx.commandError.value.label === LABEL ? ctx.commandError.value : null));
+function fieldError(field) {
+	return (error.value && error.value.detail && error.value.detail.fields && error.value.detail.fields[field]) || "";
 }
+const otherError = computed(() => (error.value && !(error.value.detail && error.value.detail.fields) ? error.value.message : ""));
 
-function confirm() {
-	if (!validate()) return;
-	emit("confirm", {
-		...fields,
-		applies_to_scope: appliesTo.value === "__all__" ? "All items" : "Item",
-		applies_to_id: appliesTo.value === "__all__" ? "" : appliesTo.value,
-	});
+async function confirm() {
+	const base = { requisition: props.view.header.requisition, values: { ...form }, expected_record_version: props.view.package_record_version };
+	const done = props.row
+		? await ctx.run(LABEL, (key) => ctx.api.updateService({ ...base, service_requirement_id: props.row.service_requirement_id, idempotency_key: key }))
+		: await ctx.run(LABEL, (key) => ctx.api.addService({ ...base, idempotency_key: key }));
+	if (done) emit("close");
 }
-
-onMounted(() => {
-	nextTick(() => dialogEl.value && dialogEl.value.focus());
-});
 </script>

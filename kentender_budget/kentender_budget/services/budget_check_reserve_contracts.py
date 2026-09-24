@@ -1,11 +1,15 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""BUD-CHG-001 v1.3 §8.2/§9.1 — the Finance confirmation boundary. `check_funding`
-is non-mutating and returns a short-lived check token; `reserve_funding`
-re-validates every allocation under a stable-order row lock and creates one
-reservation per source allocation, atomically (all-or-none). Repeating the
-same correlation_id returns the original effective result (BUD-BR-011).
+"""BUD-CHG-001 v1.10 §8.3/§9.1 — the funding confirmation boundary. `check_funding`
+is non-mutating: it validates the complete array, totals the rows that share a
+Budget Line before testing availability, and returns per-row and per-line
+results plus one short-lived token bound to the exact payload digest.
+`reserve_funding` re-validates that payload under a stable-order row lock and
+creates one reservation per drawdown line (one per source allocation for
+Planning-era callers with no drawdown line), all or none, inside the caller's
+transaction — it never commits. Same key + same payload returns the original
+mapping; same key + changed payload is refused (BUD-BR-011).
 
 Caller authority — the assigned Finance Confirmation Officer or Head of
 Procurement Function Site-wide responsibility, task, source-set and amount
@@ -26,6 +30,10 @@ one, Requisitions does not (it has no Finance task at all).
 
 from __future__ import annotations
 
+import hashlib
+import json
+import re
+from decimal import Decimal
 from typing import Any
 
 import frappe
@@ -36,6 +44,56 @@ from kentender_budget.services.budget_line_contracts import format_kes_full
 from kentender_budget.services.budget_reference import allocate_reservation_reference
 
 _CHECK_TOKEN_TTL_SECONDS = 300
+
+# BUD-CHG-001 v1.10 §4.8 Money at this boundary: currency units, KES scale 2,
+# at most 18 integral digits. Accepted: a plain decimal string, an int or a
+# Decimal. Refused without rounding: a float, exponent notation, NaN/Infinity,
+# excess scale, overflow. Budget's own storage is still Currency (its FU-30),
+# so stored positions are read back through `_stored_money`.
+_MONEY_SCALE = 2
+_MONEY_TEXT = re.compile(r"^\d{1,18}(\.\d{1,2})?$")
+_QUANTUM = Decimal(1).scaleb(-_MONEY_SCALE)
+
+
+def _money_error(value) -> None:
+	frappe.throw(
+		_("Amount {0} is not an exact amount in currency units with at most 2 decimal places").format(repr(value)),
+		frappe.ValidationError,
+		title="BUDGET_MONEY_PRECISION_INVALID",
+	)
+
+
+def _exact_money(value) -> Decimal:
+	if isinstance(value, bool) or isinstance(value, float) or value is None:
+		_money_error(value)
+	if isinstance(value, int):
+		amount = Decimal(value)
+	elif isinstance(value, Decimal):
+		amount = value
+	else:
+		text = str(value).strip()
+		if not _MONEY_TEXT.match(text):
+			_money_error(value)
+		amount = Decimal(text)
+	if not amount.is_finite() or amount != amount.quantize(_QUANTUM) or len(str(int(abs(amount)))) > 18:
+		_money_error(value)
+	if amount <= 0:
+		frappe.throw(_("Requested amount must be greater than zero"), frappe.ValidationError, title="BUDGET_MONEY_PRECISION_INVALID")
+	return amount.quantize(_QUANTUM)
+
+
+def _stored_money(value) -> Decimal:
+	"""A Currency value read back from Budget's own storage."""
+	return Decimal(repr(flt(value))).quantize(_QUANTUM)
+
+
+def _text(amount: Decimal) -> str:
+	return f"{amount.quantize(_QUANTUM):f}"
+
+
+def _payload_digest(context: dict[str, Any], rows: list[dict[str, Any]]) -> str:
+	body = json.dumps({"context": context, "rows": rows}, sort_keys=True, separators=(",", ":"))
+	return hashlib.sha256(body.encode()).hexdigest()
 
 
 # REQ-CHG-001 v1.6 D1 — either Site-wide responsibility may call
@@ -96,6 +154,55 @@ def _line_active_version_and_position(budget_line_doc):
 	return version, line_version, _line_position(budget_line_doc.name, line_version)
 
 
+def _normalise_rows(allocations: list[dict[str, Any]]) -> list[dict[str, Any]]:
+	rows = []
+	for alloc in allocations:
+		rows.append(
+			{
+				"budget_line": (alloc.get("budget_line") or "").strip(),
+				"plan_source_allocation": alloc.get("plan_source_allocation") or "",
+				"drawdown_line_id": (alloc.get("drawdown_line_id") or "").strip(),
+				"source_organisation_unit": (alloc.get("source_organisation_unit") or "").strip(),
+				"funding_source": (alloc.get("funding_source") or "").strip(),
+				"amount": _text(_exact_money(alloc.get("amount"))),
+			}
+		)
+	drawdowns = [r["drawdown_line_id"] for r in rows if r["drawdown_line_id"]]
+	if len(drawdowns) != len(set(drawdowns)):
+		frappe.throw(_("A drawdown line appears more than once in one funding check"), frappe.ValidationError, title="BUDGET_RESERVATION_CONFLICT")
+	return rows
+
+
+def _line_totals(rows: list[dict[str, Any]], line_docs: dict[str, Any]) -> tuple[dict[str, dict[str, Any]], Any]:
+	"""BUD-CHG-001 v1.10 §8.3 — total every row that shares a Budget Line,
+	then test the total against that line's availability."""
+	totals: dict[str, dict[str, Any]] = {}
+	budget = None
+	for row in rows:
+		line_doc = line_docs[row["budget_line"]]
+		if budget is None:
+			budget = frappe.get_doc("Procurement Budget", line_doc.budget)
+		entry = totals.get(line_doc.name)
+		if entry is None:
+			version, line_version, position = _line_active_version_and_position(line_doc)
+			entry = totals[line_doc.name] = {
+				"version": version,
+				"line_version": line_version,
+				"available": _stored_money(position["available"]),
+				"required": Decimal(0),
+			}
+		# BUD-BR-008 — the allocation's funding source shall equal the Budget
+		# Line's, independently of any upstream filtering.
+		if row["funding_source"] and row["funding_source"] != entry["line_version"].funding_source:
+			frappe.throw(
+				_("{0} funding source does not match the allocation").format(entry["line_version"].title),
+				frappe.ValidationError,
+				title="BUDGET_LINE_NOT_ELIGIBLE",
+			)
+		entry["required"] += Decimal(row["amount"])
+	return totals, budget
+
+
 def check_funding(
 	plan_item: str,
 	plan_version: str,
@@ -107,71 +214,63 @@ def check_funding(
 	calling_module: str = "Procurement Planning",
 	caller_reference: str = "",
 ) -> dict[str, Any]:
-	"""§9.1 `check_funding` — non-mutating per-allocation eligibility, positions,
-	required amounts, after-confirmation balances and a short-lived check token."""
+	"""§9.1 `check_funding` — non-mutating, complete-array check. Rows sharing a
+	Budget Line are totalled before availability is tested (BUD-CHG-001 v1.10
+	§8.3); returns per-row and per-line results and one token bound to the
+	exact payload digest."""
 	allocations = allocations or []
 	if not allocations:
 		frappe.throw(_("At least one allocation is required"), frappe.ValidationError)
+	_require_check_reserve_capability()
 
-	results = []
-	all_sufficient = True
-	budget = None
-	for alloc in allocations:
-		line_doc = _resolve_line(alloc.get("budget_line") or "")
-		if budget is None:
-			budget = frappe.get_doc("Procurement Budget", line_doc.budget)
-		_require_check_reserve_capability()
-		version, line_version, position = _line_active_version_and_position(line_doc)
-		# BUD-BR-008 — the allocation's funding source shall equal the Budget
-		# Line's, independently of any upstream filtering (list_eligible_budget_lines
-		# already filters by funding_source, but a caller bypassing that read
-		# must not be able to reserve against a mismatched line).
-		requested_funding_source = (alloc.get("funding_source") or "").strip()
-		if requested_funding_source and requested_funding_source != line_version.funding_source:
-			frappe.throw(
-				_("{0} funding source does not match the allocation").format(line_version.title),
-				frappe.ValidationError,
-				title="BUDGET_LINE_NOT_ELIGIBLE",
-			)
-		requested = flt(alloc.get("amount"))
-		if requested <= 0:
-			frappe.throw(_("Requested amount must be greater than zero"), frappe.ValidationError)
-		sufficient = position["available"] >= requested
-		all_sufficient = all_sufficient and sufficient
-		results.append(
+	rows = _normalise_rows(allocations)
+	line_docs = {r["budget_line"]: _resolve_line(r["budget_line"]) for r in rows}
+	rows = [{**r, "budget_line": line_docs[r["budget_line"]].name} for r in rows]
+	line_docs = {doc.name: doc for doc in line_docs.values()}
+	totals, budget = _line_totals(rows, line_docs)
+
+	lines = []
+	for name in sorted(totals):
+		entry = totals[name]
+		sufficient = entry["available"] >= entry["required"]
+		lines.append(
 			{
-				"budget_line": line_doc.name,
-				"plan_source_allocation": alloc.get("plan_source_allocation") or "",
-				"requested_amount": requested,
-				"available_before": position["available"],
-				"available_after": max(0.0, position["available"] - requested) if sufficient else position["available"],
+				"budget_line": name,
+				"required_amount": _text(entry["required"]),
+				"available_before": _text(entry["available"]),
+				"available_after": _text(entry["available"] - entry["required"]) if sufficient else _text(entry["available"]),
 				"sufficient": sufficient,
-				"shortfall": 0.0 if sufficient else (requested - position["available"]),
-				"budget_version_at_check": version.name,
+				"shortfall": _text(Decimal(0)) if sufficient else _text(entry["required"] - entry["available"]),
+				"budget_version_at_check": entry["version"].name,
 			}
 		)
+	by_line = {line["budget_line"]: line for line in lines}
+	all_sufficient = all(line["sufficient"] for line in lines)
+	results = [
+		{
+			"budget_line": row["budget_line"],
+			"plan_source_allocation": row["plan_source_allocation"],
+			"drawdown_line_id": row["drawdown_line_id"],
+			"requested_amount": row["amount"],
+			"available_before": by_line[row["budget_line"]]["available_before"],
+			"sufficient": by_line[row["budget_line"]]["sufficient"],
+			"budget_version_at_check": by_line[row["budget_line"]]["budget_version_at_check"],
+		}
+		for row in rows
+	]
 
+	context = {
+		"plan_item": plan_item,
+		"plan_version": plan_version,
+		"finance_task": finance_task,
+		"source_set_hash": source_set_hash,
+		"calling_module": calling_module,
+		"caller_reference": caller_reference,
+	}
 	token = frappe.generate_hash(length=24)
 	frappe.cache().set_value(
 		f"budget_check_token:{token}",
-		{
-			"plan_item": plan_item,
-			"plan_version": plan_version,
-			"finance_task": finance_task,
-			"source_set_hash": source_set_hash,
-			"correlation_id": correlation_id,
-			"calling_module": calling_module,
-			"caller_reference": caller_reference,
-			"allocations": [
-				{
-					"budget_line": r["budget_line"],
-					"plan_source_allocation": r["plan_source_allocation"],
-					"amount": r["requested_amount"],
-					"funding_source": (a.get("funding_source") or "").strip(),
-				}
-				for r, a in zip(results, allocations)
-			],
-		},
+		{**context, "correlation_id": correlation_id, "allocations": rows, "payload_digest": _payload_digest(context, rows)},
 		expires_in_sec=_CHECK_TOKEN_TTL_SECONDS,
 	)
 
@@ -186,7 +285,7 @@ def check_funding(
 		downstream_reference=caller_reference or plan_item,
 	)
 
-	return {"token": token, "all_sufficient": all_sufficient, "allocations": results}
+	return {"token": token, "all_sufficient": all_sufficient, "allocations": results, "lines": lines, "token_ttl_seconds": _CHECK_TOKEN_TTL_SECONDS}
 
 
 def _existing_reservations_for_correlation(correlation_id: str) -> list[Any] | None:
@@ -204,16 +303,27 @@ def reserve_funding(
 	finance_task: str | None = None,
 	actor: str | None = None,
 ) -> dict[str, Any]:
-	"""§9.1/§8.2 `reserve_funding` — locks all affected lines in stable ID
-	order, reloads every position, creates one reservation per source
-	allocation or none (BUD-BR-010/011/013)."""
+	"""§9.1/§8.3 `reserve_funding` — validates the same token and exact payload
+	inside the caller's transaction, locks the affected lines in stable ID
+	order, rechecks the per-line totals and creates one reservation per
+	drawdown line or none. Never commits (BUD-CHG-001 v1.10 §8.3: the REQ
+	authorisation commits every owner's effects together or none of them)."""
 	_require_check_reserve_capability()
 	correlation_id = idempotency_key
+	cached = frappe.cache().get_value(f"budget_check_token:{token}")
 	existing = _existing_reservations_for_correlation(correlation_id)
 	if existing:
+		# Same key + same payload replays the original mapping, even after a
+		# later release; same key + changed payload is refused (§8.3).
+		stored = {r.payload_digest for r in existing if r.payload_digest}
+		if cached and stored and cached.get("payload_digest") not in stored:
+			frappe.throw(
+				_("This request differs from the original attempt. Check the original result before retrying; no new effect was created."),
+				frappe.ValidationError,
+				title="BUDGET_IDEMPOTENCY_CONFLICT",
+			)
 		return {"ok": True, "reused": True, "reservations": [_reservation_result(r) for r in existing]}
 
-	cached = frappe.cache().get_value(f"budget_check_token:{token}")
 	# finance_task is optional (REQ-CHG-001 v1.6 D1): compare only when the
 	# check actually recorded one. A caller with no finance_task at check
 	# time (Requisitions) must reserve with no finance_task at reserve time
@@ -222,84 +332,81 @@ def reserve_funding(
 		frappe.throw(_("The funding check has expired or no longer matches this task"), frappe.ValidationError, title="BUDGET_CHECK_STALE")
 	calling_module = cached.get("calling_module") or "Procurement Planning"
 	caller_reference = cached.get("caller_reference") or ""
+	rows = cached["allocations"]
 
-	allocations = cached["allocations"]
-	line_docs = {a["budget_line"]: _resolve_line(a["budget_line"]) for a in allocations}
-	budget_lines_sorted = sorted(line_docs.keys())
-
+	line_docs = {r["budget_line"]: _resolve_line(r["budget_line"]) for r in rows}
 	# Lock all affected lines in stable ID order (§8.2 step 5) before reloading
 	# any position, to prevent concurrent oversubscription (BUD-BR-013).
 	frappe.db.sql(
 		"select name from `tabProcurement Budget Line` where name in %s order by name for update",
-		(budget_lines_sorted,),
+		(tuple(sorted(line_docs)),),
 	)
 
-	actor_name = (actor or frappe.session.user or "System").strip()
-	prepared: list[dict[str, Any]] = []
-	for alloc in allocations:
-		line_doc = line_docs[alloc["budget_line"]]
-		budget = frappe.get_doc("Procurement Budget", line_doc.budget)
-		version, line_version, position = _line_active_version_and_position(line_doc)
-		requested_funding_source = (alloc.get("funding_source") or "").strip()
-		if requested_funding_source and requested_funding_source != line_version.funding_source:
-			frappe.throw(
-				_("{0} funding source does not match the allocation").format(line_version.title),
-				frappe.ValidationError,
-				title="BUDGET_LINE_NOT_ELIGIBLE",
-			)
-		# `plan_source_allocation` is no longer unique on Funding Reservation
-		# (REQ-CHG-001 v1.6 D1) — a released reservation, or a different
-		# caller's own independent reservation, may coexist against the same
-		# allocation; the locked line-level position check still stops
-		# oversubscription. Only a genuine double-authorise is a conflict: an
-		# Active/Partially Converted reservation for the *same* caller_reference
-		# under a *different* correlation (BUD-BR-011/§13
-		# BUDGET_RESERVATION_CONFLICT). The whole-correlation reuse check above
-		# already handled the same-correlation retry case.
+	for row in rows:
+		if row.get("drawdown_line_id"):
+			# BUD-BR-011 — each authorised REQ drawdown line receives exactly
+			# one reservation; a new key cannot duplicate it.
+			if frappe.db.exists("Funding Reservation", {"drawdown_line_id": row["drawdown_line_id"]}):
+				frappe.throw(
+					_("This drawdown line already has funding reserved"),
+					frappe.ValidationError,
+					title="BUDGET_RESERVATION_CONFLICT",
+				)
+			continue
+		# Planning-era rows carry no drawdown line: an Active/Partially
+		# Converted reservation for the same allocation from the same caller
+		# under a different correlation is a double-authorise (REQ v1.6 D1).
 		clashing = frappe.db.get_value(
 			"Funding Reservation",
-			{"plan_source_allocation": alloc["plan_source_allocation"], "status": ["in", ("Active", "Partially Converted")]},
+			{"plan_source_allocation": row["plan_source_allocation"], "status": ["in", ("Active", "Partially Converted")]},
 			["name", "correlation_id", "caller_reference"],
 			as_dict=True,
 		)
-		if (
-			clashing
-			and clashing.correlation_id != correlation_id
-			and (clashing.caller_reference or "") == (caller_reference or "")
-		):
+		if clashing and clashing.correlation_id != correlation_id and (clashing.caller_reference or "") == caller_reference:
 			frappe.throw(
 				_("This allocation already has a different effective reservation from the same caller"),
 				frappe.ValidationError,
 				title="BUDGET_RESERVATION_CONFLICT",
 			)
-		requested = flt(alloc["amount"])
-		if position["available"] < requested:
+
+	totals, _budget = _line_totals(rows, line_docs)
+	for name in sorted(totals):
+		entry = totals[name]
+		if entry["available"] < entry["required"]:
 			frappe.throw(
-				_("Insufficient funding for {0}: available {1}, requested {2}").format(
-					line_version.title, format_kes_full(position["available"]), format_kes_full(requested)
+				_("Insufficient funding for {0}: available {1}, requested {2}, shortfall {3}").format(
+					entry["line_version"].title,
+					format_kes_full(float(entry["available"])),
+					format_kes_full(float(entry["required"])),
+					format_kes_full(float(entry["required"] - entry["available"])),
 				),
 				frappe.ValidationError,
 				title="BUDGET_INSUFFICIENT_FUNDS",
 			)
-		prepared.append({"line_doc": line_doc, "budget": budget, "version": version, "requested": requested, "plan_source_allocation": alloc["plan_source_allocation"]})
 
+	actor_name = (actor or frappe.session.user or "System").strip()
 	created = []
-	for p in prepared:
-		ref = allocate_reservation_reference()
+	for row in rows:
+		line_doc = line_docs[row["budget_line"]]
+		budget = frappe.get_doc("Procurement Budget", line_doc.budget)
+		version = totals[line_doc.name]["version"]
 		doc = frappe.get_doc(
 			{
 				"doctype": "Funding Reservation",
-				"generated_reference": ref,
-				"budget": p["budget"].name,
-				"budget_version_at_creation": p["version"].name,
-				"budget_line": p["line_doc"].name,
+				"generated_reference": allocate_reservation_reference(),
+				"budget": budget.name,
+				"budget_version_at_creation": version.name,
+				"budget_line": line_doc.name,
 				"status": "Active",
 				"plan_item": cached["plan_item"],
-				"plan_source_allocation": p["plan_source_allocation"],
-				"original_amount": p["requested"],
-				"remaining_amount": p["requested"],
-				"currency": p["budget"].currency,
+				"plan_source_allocation": row["plan_source_allocation"],
+				"drawdown_line_id": row.get("drawdown_line_id") or None,
+				"source_organisation_unit": row.get("source_organisation_unit") or "",
+				"original_amount": row["amount"],
+				"remaining_amount": row["amount"],
+				"currency": budget.currency,
 				"correlation_id": correlation_id,
+				"payload_digest": cached.get("payload_digest") or "",
 				"calling_module": calling_module,
 				"caller_reference": caller_reference,
 			}
@@ -310,16 +417,16 @@ def reserve_funding(
 		from kentender_budget.services.budget_audit_contracts import EVENT_RESERVED, safe_record_event
 
 		safe_record_event(
-			budget=p["budget"].name,
-			budget_line=p["line_doc"].name,
+			budget=budget.name,
+			budget_line=line_doc.name,
 			reservation=doc.name,
 			event_type=EVENT_RESERVED,
 			actor=actor_name,
 			correlation_id=correlation_id,
 			calling_module=calling_module,
 			downstream_reference=(caller_reference or cached["plan_item"]) + f" · {doc.name}",
-			amount=p["requested"],
-			currency=p["budget"].currency,
+			amount=flt(row["amount"]),
+			currency=budget.currency,
 		)
 
 	frappe.cache().delete_value(f"budget_check_token:{token}")
@@ -333,8 +440,10 @@ def _reservation_result(doc) -> dict[str, Any]:
 		"status": doc.status,
 		"budget_line": doc.budget_line,
 		"plan_source_allocation": doc.plan_source_allocation,
-		"original_amount": flt(doc.original_amount),
-		"remaining_amount": flt(doc.remaining_amount),
+		"drawdown_line_id": doc.drawdown_line_id or "",
+		"source_organisation_unit": doc.source_organisation_unit or "",
+		"original_amount": _text(_stored_money(doc.original_amount)),
+		"remaining_amount": _text(_stored_money(doc.remaining_amount)),
 		"currency": doc.currency,
 		"calling_module": doc.calling_module,
 		"caller_reference": doc.caller_reference,

@@ -1,209 +1,155 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""REQ-CHG-001 v1.6 §9.1A/§7 — AuthoriseRequisition / RevokeUnconsumedAuthorisation."""
+"""REQ-CHG-001 v1.11 §7.2/§9.1A/§9.2 — one-transaction authorisation,
+revocation and guarded consumption (REQ19-AC-025/026/027/028/029/030/031/040/
+041/045/057/058/069/070/074, REQ-SMK-01/08/09/13/14)."""
 
 from __future__ import annotations
 
+import json
 from unittest.mock import patch
 
 import frappe
-from frappe.tests import IntegrationTestCase
 
-from kentender_procurement.procurement_requisitions.services import authorise, draft_commands as cmd, lifecycle
+from kentender_procurement.procurement_requisitions.services import authorise as authorise_service, handoff, lifecycle, records
 from kentender_procurement.procurement_requisitions.services.errors import ProcurementRequisitionsError
 from kentender_procurement.procurement_requisitions.tests import fixtures as fx
+from kentender_procurement.procurement_requisitions.tests.test_draft_commands import RequisitionCase
 
 
-class RequisitionAuthoriseCase(IntegrationTestCase):
-	@classmethod
-	def setUpClass(cls):
-		super().setUpClass()
-		frappe.set_user("Administrator")
-		fx.ensure_world()
-		cls.addClassCleanup(fx.restore_site)
-
-	def setUp(self):
-		super().setUp()
-		frappe.set_user("Administrator")
-		fx.wipe_requisition_rows()
-		fx.wipe_planning_rows()
-		if not frappe.db.exists("Delivery Location", "Test Delivery Location — Requisitions"):
-			frappe.get_doc({"doctype": "Delivery Location", "location_name": "Test Delivery Location — Requisitions", "address": "1 Test Street", "status": "Active"}).insert(ignore_permissions=True)
-		self.location = "Test Delivery Location — Requisitions"
-		self.addCleanup(frappe.set_user, "Administrator")
-
-	def _complete_draft(self, prepared: dict) -> None:
-		frappe.set_user(fx.AUTHOR)
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
-		version = frappe.get_doc("Requisition Version", prepared["requisition_version"])
-		cmd.save_requisition_summary(
-			requisition=prepared["requisition"], values={"delivery_location": self.location, "latest_delivery_date": "2102-04-30"},
-			expected_record_version=version.record_version, idempotency_key=fx.key(),
-		)
-		cmd.add_requisition_item(
-			requisition=prepared["requisition"],
-			values={"plan_item_line_id": "DL-001", "equipment_category": "Laptop", "item_name": "Business laptops", "quantity": 1, "intended_use": "Clinical training"},
-			expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-		)
-		fx.confirm_all_proposed_requirements(prepared["requisition"], package_version)
-		cmd.add_acceptance_requirement(
-			requisition=prepared["requisition"],
-			values={"applies_to_scope": "All items", "check_type": "Quantity", "pass_condition": "Delivered quantities equal the authorised schedule", "evidence_type": "Inspection record"},
-			expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-		)
-
-	def _submitted_via_hod_direct(self, *, indicative_amount: float = 50_000_000) -> tuple[dict, dict]:
-		_, item_id = fx.active_item(indicative_amount=indicative_amount)
-		frappe.set_user(fx.HOD)
-		prepared = cmd.prepare_it_equipment_requisition(plan_item_id=item_id, idempotency_key=fx.key())
-		self._complete_draft(prepared)
-		frappe.set_user(fx.HOD)
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		submitted = lifecycle.submit_requisition_to_procurement(requisition=prepared["requisition"], expected_record_version=root.record_version, idempotency_key=fx.key())
-		return prepared, submitted
+def _effects(item_id: str, reference: str) -> tuple[int, int]:
+	return (
+		frappe.db.count("Funding Reservation", {"caller_reference": reference, "status": ("in", ("Active", "Partially Converted"))}),
+		frappe.db.count("Plan Drawdown Reference", {"plan_item_id": item_id, "drawdown_state": "Active"}),
+	)
 
 
-class TestAuthoriseHappyPath(RequisitionAuthoriseCase):
-	def test_authorise_creates_reservation_drawdown_and_handoff(self):
-		prepared, submitted = self._submitted_via_hod_direct()
-		frappe.set_user(fx.HOPF)
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		result = authorise.authorise_requisition(requisition=prepared["requisition"], task=submitted["task"], expected_record_version=root.record_version, idempotency_key=fx.key())
-		self.assertEqual(result["action"], "authorised")
-		self.assertEqual(len(result["reservations"]), 1)
-		self.assertEqual(len(result["planning_drawdown_references"]), 1)
-
-		root.reload()
+class TestAuthorise(RequisitionCase):
+	def test_one_transaction_creates_every_effect_one_reservation_per_line_and_a_v14_handoff(self):
+		_, item_id = fx.active_combined_item()
+		requisition = fx.submitted(item_id)
+		result = fx.authorise(requisition)
+		root, version, _ = records.load(requisition)
 		self.assertEqual(root.current_state, "Authorised")
-		self.assertEqual(root.authorised_version, result["requisition_version"])
-		self.assertTrue(root.handoff)
+		self.assertEqual(len(result["reservations"]), 2)
+		self.assertEqual(len(set(result["reservations"])), 2)
+		self.assertEqual({l.reservation_id for l in version.drawdown_lines}, set(result["reservations"]))
+		self.assertEqual(_effects(item_id, root.requisition_reference), (2, 2))
+		self.assertTrue(frappe.db.get_value("Plan Item", item_id, "scope_locked_since"))
+		payload = json.loads(frappe.db.get_value("Authorised Requisition Handoff", root.handoff, "payload_json"))
+		self.assertEqual(payload["handoff_version"], "1.4")
+		self.assertEqual(len(payload["drawdown_lines"]), 2)
+		self.assertTrue(all(isinstance(l["requested_value"], str) for l in payload["drawdown_lines"]))
+		self.assertEqual(len(payload["compatibility"]), 9)
+		self.assertEqual(len(payload["technical_requirements"]), 11)
+		self.assertEqual(len(payload["acceptance_requirements"]), 5)
+		self.assertIn("reservation_rule_snapshot_ids", payload)
+		self.assertNotIn("target_percent", json.dumps(payload))
+		self.assertEqual(frappe.db.count("Tender", {"requisition_handoff": root.handoff}) if frappe.db.exists("DocType", "Tender") else 0, 0)
+		# still open until Tender Preparation consumes it
+		self.assertEqual(root.open_slot_key, item_id)
 
-		version = frappe.get_doc("Requisition Version", result["requisition_version"])
-		self.assertEqual(version.version_status, "Authorised")
-		line = version.drawdown_lines[0]
-		self.assertTrue(line.reservation_id)
-		self.assertTrue(line.planning_drawdown_reference)
-		reservation = frappe.get_doc("Funding Reservation", line.reservation_id)
-		self.assertEqual(reservation.calling_module, "Procurement Requisitions")
-		self.assertEqual(reservation.caller_reference, root.requisition_reference)
-
-		handoff = frappe.get_doc("Authorised Requisition Handoff", root.handoff)
-		self.assertEqual(handoff.handoff_version, "1.3")
-		self.assertTrue(handoff.handoff_digest)
-		self.assertEqual(frappe.db.count("Requisition Event", {"requisition": root.name, "event_type": "ProcurementRequisitionAuthorised.v1.3"}), 1)
-
-	def test_authorise_is_idempotent_by_key(self):
-		prepared, submitted = self._submitted_via_hod_direct()
-		frappe.set_user(fx.HOPF)
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		key = fx.key()
-		first = authorise.authorise_requisition(requisition=prepared["requisition"], task=submitted["task"], expected_record_version=root.record_version, idempotency_key=key)
-		second = authorise.authorise_requisition(requisition=prepared["requisition"], task=submitted["task"], expected_record_version=root.record_version, idempotency_key=key)
-		self.assertEqual(first["handoff"], second["handoff"])
-		self.assertTrue(second["idempotent"])
-
-
-class TestAuthoriseSegregationOfDuties(RequisitionAuthoriseCase):
-	def test_hopf_who_prepared_directly_cannot_also_authorise(self):
+	def test_a_forced_failure_after_the_owner_calls_rolls_every_effect_back(self):
 		_, item_id = fx.active_item()
-		frappe.set_user(fx.HOPF)
-		prepared = cmd.prepare_it_equipment_requisition(plan_item_id=item_id, idempotency_key=fx.key())
-		self._complete_draft(prepared)
-		frappe.set_user(fx.HOPF)
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		submitted = lifecycle.submit_requisition_to_procurement(requisition=prepared["requisition"], expected_record_version=root.record_version, idempotency_key=fx.key())
-		root.reload()
-		with self.assertRaises(ProcurementRequisitionsError) as ctx:
-			authorise.authorise_requisition(requisition=prepared["requisition"], task=submitted["task"], expected_record_version=root.record_version, idempotency_key=fx.key())
-		self.assertEqual(ctx.exception.code, "REQ_SOD_BLOCKED")
-
-
-class TestAuthoriseAtomicity(RequisitionAuthoriseCase):
-	def test_a_forced_internal_failure_rolls_back_this_modules_own_writes_only(self):
-		"""Proves the `envelope.atomic()` savepoint actually works: a failure
-		injected after the external Budget/Planning calls have already
-		committed leaves THIS module's own state exactly as it was
-		(Submitted to Procurement, no decision, no handoff, no event) —
-		the documented D6 residual risk, not a silent corruption."""
-		prepared, submitted = self._submitted_via_hod_direct()
-		frappe.set_user(fx.HOPF)
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		with patch(
-			"kentender_procurement.procurement_requisitions.services.handoff.build_and_insert",
-			side_effect=RuntimeError("forced failure inside the atomic block"),
-		):
+		requisition = fx.submitted(item_id)
+		reference = frappe.db.get_value("Procurement Requisition", requisition, "requisition_reference")
+		with patch.object(handoff, "build_and_insert", side_effect=RuntimeError("handoff failed")):
 			with self.assertRaises(RuntimeError):
-				authorise.authorise_requisition(requisition=prepared["requisition"], task=submitted["task"], expected_record_version=root.record_version, idempotency_key=fx.key())
+				fx.authorise(requisition)
+		self.assertEqual(_effects(item_id, reference), (0, 0))
+		self.assertEqual(frappe.db.get_value("Procurement Requisition", requisition, "current_state"), "Submitted to Procurement")
+		self.assertFalse(frappe.db.get_value("Plan Item", item_id, "scope_locked_since"))
 
-		root.reload()
-		self.assertEqual(root.current_state, "Submitted to Procurement", "root state must roll back to before the atomic block")
-		self.assertIsNone(root.handoff or None)
-		self.assertEqual(frappe.db.count("Authorised Requisition Handoff", {"requisition": root.name}), 0)
-		self.assertEqual(frappe.db.count("Requisition Decision", {"requisition_version": submitted["requisition_version"]}), 0)
-		version = frappe.get_doc("Requisition Version", submitted["requisition_version"])
-		self.assertEqual(version.version_status, "Submitted to Procurement")
+	def test_insufficient_funding_creates_nothing(self):
+		_, item_id = fx.active_item()
+		requisition = fx.submitted(item_id)
+		reference = frappe.db.get_value("Procurement Requisition", requisition, "requisition_reference")
+		real = authorise_service.funding_gateway.check_funding
 
-		# The documented residual risk: the external calls already committed.
-		line = version.drawdown_lines[0]
-		self.assertTrue(
-			frappe.db.exists("Funding Reservation", {"caller_reference": root.requisition_reference}),
-			"the Budget reservation from before the forced failure is expected to remain (D6)",
-		)
+		def short(**kwargs):
+			result = real(**kwargs)
+			result["all_sufficient"] = False
+			result["lines"] = [{**l, "sufficient": False, "shortfall": "10000000.00"} for l in result["lines"]]
+			return result
+
+		with patch.object(authorise_service.funding_gateway, "check_funding", side_effect=short):
+			with self.assertRaises(ProcurementRequisitionsError) as ctx:
+				fx.authorise(requisition)
+		self.assertCode(ctx, "REQ_FUNDING_UNAVAILABLE")
+		self.assertEqual(ctx.exception.detail["lines"][0]["shortfall"], "10000000.00")
+		self.assertEqual(_effects(item_id, reference), (0, 0))
+
+	def test_the_submitting_hod_cannot_authorise(self):
+		_, item_id = fx.active_item()
+		requisition = fx.complete_draft(item_id, fx.HOPF)
+		frappe.set_user(fx.HOPF)
+		lifecycle.submit_requisition_to_procurement(requisition=requisition, expected_record_version=fx.root_version(requisition), idempotency_key=fx.key())
+		with self.assertRaises(ProcurementRequisitionsError) as ctx:
+			fx.authorise(requisition)
+		self.assertCode(ctx, "REQ_SOD_BLOCKED")
+
+	def test_a_planning_hold_blocks_authorisation_with_plannings_own_code(self):
+		from kentender_procurement.procurement_planning.services import plan_requisition
+
+		_, item_id = fx.active_item()
+		requisition = fx.submitted(item_id)
+		frappe.set_user(fx.HOD)
+		plan_requisition.receive_plan_item_correction_request(plan_item_id=item_id, requisition_reference="REQ-OTHER-HOLD", requisition_version="RQV-OTHER", reason="Another requisition found a wrong Budget Line on this item.", idempotency_key=fx.key())
+		with self.assertRaises(ProcurementRequisitionsError) as ctx:
+			fx.authorise(requisition)
+		self.assertCode(ctx, "PLN_ITEM_AUTHORISATION_HELD")
 
 
-class TestRevoke(RequisitionAuthoriseCase):
+class TestRevokeAndConsume(RequisitionCase):
 	def _authorised(self):
-		prepared, submitted = self._submitted_via_hod_direct()
-		frappe.set_user(fx.HOPF)
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		result = authorise.authorise_requisition(requisition=prepared["requisition"], task=submitted["task"], expected_record_version=root.record_version, idempotency_key=fx.key())
-		return prepared, result
+		_, item_id = fx.active_item()
+		requisition = fx.submitted(item_id)
+		fx.authorise(requisition)
+		return item_id, requisition
 
-	def test_revoke_releases_reservation_and_reverses_drawdown(self):
-		prepared, authorised = self._authorised()
-		version = frappe.get_doc("Requisition Version", authorised["requisition_version"])
-		reservation_id = version.drawdown_lines[0].reservation_id
-		drawdown_ref = version.drawdown_lines[0].planning_drawdown_reference
+	def test_revoke_reverses_each_drawdown_and_reservation_once_and_keeps_the_scope_marker(self):
+		item_id, requisition = self._authorised()
+		reference = frappe.db.get_value("Procurement Requisition", requisition, "requisition_reference")
 		frappe.set_user(fx.HOPF)
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		result = authorise.revoke_unconsumed_authorisation(requisition=prepared["requisition"], reason="The department's stated need changed materially after authorisation.", expected_record_version=root.record_version, idempotency_key=fx.key())
-		self.assertEqual(result["action"], "revoked")
-		root.reload()
-		self.assertEqual(root.current_state, "Revoked")
-		self.assertEqual(frappe.db.get_value("Funding Reservation", reservation_id, "status"), "Released")
-		self.assertEqual(frappe.db.get_value("Plan Drawdown Reference", drawdown_ref, "drawdown_state"), "Reversed")
+		authorise_service.revoke_unconsumed_authorisation(requisition=requisition, reason="The authorised warranty terms must be corrected before tendering.", expected_record_version=fx.root_version(requisition), idempotency_key=fx.key())
+		self.assertEqual(frappe.db.get_value("Procurement Requisition", requisition, "current_state"), "Revoked")
+		self.assertEqual(_effects(item_id, reference), (0, 0))
+		self.assertTrue(frappe.db.get_value("Plan Item", item_id, "scope_locked_since"))
 
-	def test_revoke_is_blocked_after_handoff_consumption(self):
-		prepared, authorised = self._authorised()
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-		frappe.db.set_value("Procurement Requisition", root.name, "handoff_consumed_at", frappe.utils.now_datetime())
-		frappe.set_user(fx.HOPF)
-		root.reload()
+	def test_consumption_binds_one_tender_frees_the_slot_and_blocks_revocation(self):
+		item_id, requisition = self._authorised()
+		root = frappe.get_doc("Procurement Requisition", requisition)
+		handoff.record_handoff_consumption(handoff=root.handoff, tender="TND-TEST-1", tender_version="TNV-1", template_key="IT-EQUIPMENT-OPEN-V1", template_version="1.1", idempotency_key=fx.key())
+		again = handoff.record_handoff_consumption(handoff=root.handoff, tender="TND-TEST-1", tender_version="TNV-1", template_key="IT-EQUIPMENT-OPEN-V1", template_version="1.1", idempotency_key=fx.key())
+		self.assertTrue(again["idempotent"])
 		with self.assertRaises(ProcurementRequisitionsError) as ctx:
-			authorise.revoke_unconsumed_authorisation(requisition=prepared["requisition"], reason="Attempted revoke after consumption, must be refused.", expected_record_version=root.record_version, idempotency_key=fx.key())
-		self.assertEqual(ctx.exception.code, "REQ_HANDOFF_CONSUMED")
-
-
-class TestFundingAndBalanceGuards(RequisitionAuthoriseCase):
-	def test_authorisation_fails_with_a_named_shortfall_when_budget_is_insufficient(self):
-		prepared, submitted = self._submitted_via_hod_direct(indicative_amount=50_000_000)
-		# Exhaust the line's headroom between submission and authorisation.
+			handoff.record_handoff_consumption(handoff=root.handoff, tender="TND-TEST-2", tender_version="TNV-2", template_key="IT-EQUIPMENT-OPEN-V1", template_version="1.1", idempotency_key=fx.key())
+		self.assertCode(ctx, "REQ_HANDOFF_CONFLICT")
+		self.assertFalse(frappe.db.get_value("Procurement Requisition", requisition, "open_slot_key"))
 		frappe.set_user(fx.HOPF)
-		from kentender_procurement.procurement_planning.tests import fixtures as pln_fx
-		from kentender_budget.api.budget_api import check_funding as budget_check, reserve_funding as budget_reserve
-
-		checked = budget_check(
-			plan_item="EXHAUST", plan_version="EXHAUST-V1", source_set_hash="exhaust-hash",
-			allocations=[{"budget_line": pln_fx.BUDGET_LINE, "amount": 100_000_000, "plan_source_allocation": "EXHAUST-PSA"}], correlation_id=fx.key(),
-			calling_module="Procurement Requisitions", caller_reference="EXHAUST",
-		)
-		budget_reserve(token=checked["token"], source_set_hash="exhaust-hash", idempotency_key=fx.key())
-
-		frappe.set_user(fx.HOPF)
-		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
 		with self.assertRaises(ProcurementRequisitionsError) as ctx:
-			authorise.authorise_requisition(requisition=prepared["requisition"], task=submitted["task"], expected_record_version=root.record_version, idempotency_key=fx.key())
-		self.assertEqual(ctx.exception.code, "REQ_FUNDING_UNAVAILABLE")
-		root.reload()
-		self.assertEqual(root.current_state, "Submitted to Procurement")
+			authorise_service.revoke_unconsumed_authorisation(requisition=requisition, reason="Too late: Tender Preparation already began.", expected_record_version=fx.root_version(requisition), idempotency_key=fx.key())
+		self.assertCode(ctx, "REQ_HANDOFF_CONSUMED")
+
+	def test_a_revoked_handoff_cannot_be_consumed(self):
+		item_id, requisition = self._authorised()
+		frappe.set_user(fx.HOPF)
+		authorise_service.revoke_unconsumed_authorisation(requisition=requisition, reason="The authorised warranty terms must be corrected before tendering.", expected_record_version=fx.root_version(requisition), idempotency_key=fx.key())
+		handoff_name = frappe.db.get_value("Procurement Requisition", requisition, "handoff")
+		with self.assertRaises(ProcurementRequisitionsError) as ctx:
+			handoff.record_handoff_consumption(handoff=handoff_name, tender="TND-TEST-3", tender_version="TNV-3", template_key="IT-EQUIPMENT-OPEN-V1", template_version="1.1", idempotency_key=fx.key())
+		self.assertCode(ctx, "REQ_HANDOFF_CONFLICT")
+
+	def test_a_revoked_root_can_open_a_corrected_draft_while_its_baseline_is_eligible(self):
+		from kentender_procurement.procurement_requisitions.services import correction
+
+		item_id, requisition = self._authorised()
+		frappe.set_user(fx.HOPF)
+		authorise_service.revoke_unconsumed_authorisation(requisition=requisition, reason="The authorised warranty terms must be corrected before tendering.", expected_record_version=fx.root_version(requisition), idempotency_key=fx.key())
+		frappe.set_user(fx.AUTHOR)
+		correction.create_requisition_correction_draft(requisition=requisition, expected_record_version=fx.root_version(requisition), idempotency_key=fx.key())
+		root, version, package_version = records.load(requisition)
+		self.assertEqual((root.current_state, version.version_status, root.open_slot_key), ("Draft", "Draft", item_id))
+		self.assertEqual(package_version.standard_package_review_state, "Review required")
+		self.assertFalse(any(l.reservation_id for l in version.drawdown_lines))

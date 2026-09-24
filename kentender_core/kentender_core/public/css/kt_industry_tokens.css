@@ -727,6 +727,21 @@
 /* Page sections for content with no ruled structure of its own. */
 .kt-industry .kt-section { margin-bottom: var(--kt-space-8); }
 .kt-industry .kt-panel { background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); padding: var(--kt-space-4); margin-top: var(--kt-space-3); }
+/* Inline segmented control (REQ-CHG-001 v1.11 board: Yes/No answers). The
+   board draws it inline with a solid accent selection; `.kt-seg-inline` keeps
+   that look distinct from System setup's full-width `.kt-seg`. Options are
+   real radio inputs (keyboard and screen readers) visually hidden. */
+.kt-industry .kt-seg.kt-seg-inline { display: inline-flex; width: auto; overflow: hidden; background: var(--kt-color-surface); border: 1px solid var(--kt-color-divider); }
+.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt { flex: none; position: relative; padding: 7px 12px; font-size: 13px; font-weight: 400; background: transparent; color: var(--kt-color-text); border: 0; }
+.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt + .kt-seg-opt { border-left: 1px solid var(--kt-color-divider); }
+.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt:has(input:checked) { background: var(--kt-color-accent); color: #fff; }
+.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt:not(:has(input:checked)):hover { background: var(--kt-color-neutral-100); }
+.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt:has(input:focus-visible) { outline: 2px solid var(--kt-color-accent); outline-offset: -2px; }
+.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt:has(input:disabled) { cursor: default; }
+@media (forced-colors: active) {
+	.kt-industry .kt-seg.kt-seg-inline .kt-seg-opt:has(input:checked) { background: Highlight; color: HighlightText; }
+}
 .kt-industry .kt-meta-row { display: flex; gap: var(--kt-space-6); flex-wrap: wrap; align-items: flex-end; }
 .kt-industry .kt-meta-row > div { display: flex; flex-direction: column; gap: 4px; }
 /* The inline opt-out the Industry design system added with its grid fact row

@@ -53,7 +53,7 @@ class TestCheckFundingNonMutating(_FinanceTestBase):
 			correlation_id=frappe.generate_hash(length=12),
 		)
 		self.assertTrue(result["all_sufficient"])
-		self.assertEqual(result["allocations"][0]["available_before"], 100_000_000)
+		self.assertEqual(result["allocations"][0]["available_before"], "100000000.00")
 		self.assertEqual(frappe.db.count("Funding Reservation", {"budget_line": line}), before_count)
 
 
@@ -127,7 +127,7 @@ class TestShortfallRejection(_FinanceTestBase):
 			correlation_id=frappe.generate_hash(length=12),
 		)
 		self.assertFalse(token2["all_sufficient"])
-		self.assertEqual(token2["allocations"][0]["shortfall"], 10_000_000)
+		self.assertEqual(token2["lines"][0]["shortfall"], "10000000.00")
 
 		before = frappe.db.count("Funding Reservation", {"budget_line": line})
 		with self.assertRaises(frappe.ValidationError):

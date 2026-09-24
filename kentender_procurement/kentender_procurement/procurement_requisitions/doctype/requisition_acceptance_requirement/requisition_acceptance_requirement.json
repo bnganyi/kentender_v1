@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "acceptance_requirement_id",
+  "row_state",
   "applies_to_scope",
   "applies_to_id",
   "check_type",
@@ -21,6 +22,14 @@
    "fieldtype": "Data",
    "label": "Acceptance Requirement Id",
    "reqd": 1
+  },
+  {
+   "fieldname": "row_state",
+   "fieldtype": "Select",
+   "options": "Proposed\nConfirmed",
+   "default": "Confirmed",
+   "label": "Row state",
+   "read_only": 0
   },
   {
    "fieldname": "applies_to_scope",

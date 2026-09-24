@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""REQ-CHG-001 v1.6 — schema contract tests (REQ-107).
+"""REQ-CHG-001 v1.11 — schema contract tests.
 
 Guards: (1) every doctype exists with exactly its allow-listed fields (§2.2
 field-purpose rule: an undocumented field is a defect, not an option); (2) no
@@ -21,79 +21,86 @@ from frappe.tests import IntegrationTestCase
 MODULE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 EXPECTED_FIELDS: dict[str, set[str]] = {
-	"Procurement Requisition": {
-		"requisition_reference", "plan_id", "plan_version_id", "plan_item_id", "strategic_objective",
-		"strategic_objective_path", "procurement_category", "plan_horizon", "multi_year_justification",
-		"contributing_org_units", "lead_org_unit", "current_version", "authorised_version", "current_state",
-		"planning_drawdown_reference", "handoff", "handoff_consumed_at", "record_version", "fixture_namespace",
-		"upstream_correction_outcome",
-		"upstream_correction_reason",
-		"upstream_correction_reference",
-		"upstream_correction_outcome_at",
-	},
-	"Requisition Contributing Unit": {"organisation_unit"},
-	"Requisition Version": {
-		"requisition", "version_number", "based_on_version", "version_status", "requirement_title",
-		"delivery_location", "delivery_address_snapshot", "latest_delivery_date", "related_services_required",
-		"package_version", "content_digest", "drawdown_lines", "record_version", "fixture_namespace",
-	},
-	"Requisition Drawdown Line": {
-		"drawdown_line_id", "plan_item_line_id", "source_line_id", "contributing_org_unit", "approved_quantity",
-		"approved_value", "remaining_quantity", "remaining_value", "requested_quantity", "requested_value",
-		"unit", "reservation_id", "planning_drawdown_reference",
+	"Authorised Requisition Handoff": {
+		"consumed_at", "fixture_namespace", "generated_at", "handoff_digest", "handoff_version", "payload_json",
+		"requisition", "requisition_version", "template_key", "template_version", "tender", "tender_version",
 	},
 	"IT Equipment Requirement Package": {
-		"requisition", "product_pattern", "current_version", "authorised_version", "reservation_category",
-		"lotting_indicator", "record_version", "fixture_namespace",
+		"authorised_version", "county_resident_reservation", "current_version", "fixture_namespace", "lotting_indicator",
+		"product_pattern", "record_version", "requisition", "reservation_category", "reservation_rule_snapshot_ids",
 	},
 	"IT Equipment Requirement Package Version": {
-		"package", "version_number", "based_on_version", "version_status", "minimum_warranty_months",
-		"onsite_support_required", "maximum_support_response_hours", "manufacturer_support_required",
-		"service_location_constraint", "support_description", "items", "technical_requirements",
-		"related_services", "acceptance_requirements", "supporting_materials", "catalogue_version",
-		"content_digest", "record_version", "fixture_namespace",
+		"acceptance_requirements", "based_on_version", "catalogue_version", "content_digest", "fixture_namespace", "items",
+		"manufacturer_support_required", "maximum_support_response_hours", "minimum_warranty_months",
+		"onsite_support_required", "package", "proposal_digest", "record_version", "related_services",
+		"service_location_constraint", "standard_package_review_state", "standard_profile_key", "standard_profile_version",
+		"support_description", "supporting_materials", "technical_requirements", "version_number", "version_status",
 	},
-	"Requisition Item": {
-		"requisition_item_id", "plan_item_line_id", "equipment_category", "item_name", "quantity", "unit",
-		"intended_use", "delivery_location", "latest_delivery_date", "row_order",
-	},
-	"Requisition Technical Requirement": {
-		"technical_requirement_id", "applies_to_scope", "applies_to_id", "characteristic_key", "comparison",
-		"required_value_json", "required_value_display", "unit", "other_value", "mandatory", "reason",
-		"row_status", "proposed_by_rule", "row_order",
-	},
-	"Requisition Related Service": {
-		"service_requirement_id", "service_type", "applies_to_scope", "applies_to_id", "required_result",
-		"quantity_or_coverage", "completion_date", "acceptance_evidence", "other_evidence_name", "row_order",
+	"Procurement Requisition": {
+		"authorised_version", "contributing_org_units", "current_state", "current_version", "fixture_namespace", "handoff",
+		"handoff_consumed_at", "lead_org_unit_id", "open_slot_key", "plan_horizon", "plan_id", "plan_item_id",
+		"plan_item_version_id", "plan_version_id", "planning_correction_outcome_event_id", "planning_correction_request_id",
+		"planning_drawdown_reference", "prior_requisition_id", "prior_requisition_version_id", "procurement_category",
+		"record_version", "requisition_reference", "strategic_objective_id", "strategic_objective_path",
 	},
 	"Requisition Acceptance Requirement": {
-		"acceptance_requirement_id", "applies_to_scope", "applies_to_id", "check_type", "pass_condition",
-		"evidence_type", "other_evidence_name", "row_order",
-	},
-	"Requisition Supporting Material": {
-		"supporting_material_id", "title", "document_type", "other_document_type", "purpose", "file",
-		"file_digest", "file_check_result", "treatment", "linked_requirement_ids_json", "document_version",
-	},
-	"Requisition Task": {
-		"requisition", "requisition_version", "business_role", "organisation_unit", "status", "decision",
-		"task_token", "record_version", "fixture_namespace",
-	},
-	"Requisition Decision": {
-		"task", "requisition_version", "actor", "legal_capacity", "decision", "return_reason",
-		"authority_snapshot", "decided_at", "command_idempotency_key", "fixture_namespace",
-	},
-	"Authorised Requisition Handoff": {
-		"requisition", "requisition_version", "payload_json", "handoff_digest", "handoff_version",
-		"generated_at", "tender", "tender_version", "template_key", "template_version", "consumed_at",
-		"fixture_namespace",
+		"acceptance_requirement_id", "applies_to_id", "applies_to_scope", "check_type", "evidence_type",
+		"other_evidence_name", "pass_condition", "row_order", "row_state",
 	},
 	"Requisition Command Journal": {
-		"idempotency_key", "command", "document_type", "document_name", "request_fingerprint", "actor",
-		"result", "occurred_at", "fixture_namespace",
+		"actor", "command", "document_name", "document_type", "fixture_namespace", "idempotency_key", "occurred_at",
+		"request_fingerprint", "result",
+	},
+	"Requisition Contributing Unit": {
+		"organisation_unit",
+	},
+	"Requisition Correction Outcome": {
+		"correcting_plan_version_id", "correction_request_id", "decided_by", "decision_at", "eligibility_revision",
+		"event_id", "fixture_namespace", "item_hold_state", "outcome", "payload_digest", "plan_item_id", "producer",
+		"producer_sequence", "quarantine_reason", "reason", "received_at", "replacement_lineage_json",
+		"requested_plan_item_version_id", "requested_plan_version_id", "requisition", "requisition_version",
+		"schema_version", "status", "unresolved_request_count",
+	},
+	"Requisition Decision": {
+		"actor", "affected_section", "authority_snapshot", "command_idempotency_key", "decided_at", "decision",
+		"fixture_namespace", "legal_capacity", "new_lead_org_unit_id", "reason", "requisition_version", "resulting_state",
+		"task",
+	},
+	"Requisition Drawdown Line": {
+		"approved_quantity", "approved_value", "contributing_org_unit", "drawdown_line_id", "plan_item_line_id",
+		"planning_drawdown_reference", "remaining_quantity", "remaining_value", "requested_quantity", "requested_value",
+		"reservation_id", "source_line_id", "unit",
 	},
 	"Requisition Event": {
-		"event_id", "event_type", "requisition", "sequence", "requisition_version", "occurred_at", "payload",
-		"status", "consumer", "delivered_at", "fixture_namespace",
+		"consumer", "delivered_at", "event_id", "event_type", "fixture_namespace", "occurred_at", "payload", "requisition",
+		"requisition_version", "sequence", "status",
+	},
+	"Requisition Item": {
+		"delivery_location", "drawdown_line_id", "equipment_category", "intended_use", "item_name", "latest_delivery_date",
+		"plan_item_line_id", "quantity", "requisition_item_id", "row_order", "unit",
+	},
+	"Requisition Related Service": {
+		"acceptance_evidence", "applies_to_id", "applies_to_scope", "completion_date", "other_evidence_name",
+		"quantity_or_coverage", "required_result", "row_order", "service_requirement_id", "service_type",
+	},
+	"Requisition Supporting Material": {
+		"document_type", "document_version", "file", "file_check_result", "file_digest", "linked_requirement_ids_json",
+		"other_document_type", "purpose", "supporting_material_id", "title", "treatment",
+	},
+	"Requisition Task": {
+		"business_role", "decision", "fixture_namespace", "organisation_unit", "record_version", "requisition",
+		"requisition_version", "status", "task_token",
+	},
+	"Requisition Technical Requirement": {
+		"applies_to_id", "applies_to_scope", "characteristic_key", "comparison", "mandatory", "other_value", "reason",
+		"required_value_display", "required_value_json", "row_order", "row_state", "technical_requirement_id", "unit",
+	},
+	"Requisition Version": {
+		"based_on_version", "basis_snapshot_json", "certified_lead_org_unit_id", "content_digest",
+		"delivery_address_snapshot", "delivery_location", "drawdown_lines", "fixture_namespace", "latest_delivery_date",
+		"lead_routing_directive", "package_version", "prepared_authority_snapshot", "prepared_by", "prepared_capacity",
+		"record_version", "related_services_required", "requirement_title", "requisition", "submitted_at",
+		"submitted_authority_snapshot", "submitted_by", "submitted_capacity", "version_number", "version_status",
 	},
 }
 
@@ -102,11 +109,17 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 PROHIBITED_TOKENS: tuple[str, ...] = (
 	"pe_fy_context", "STD Configuration", "Requirements Composer", "composer_profile", "capability_profile",
 	"Frappe User Permission", "manifest_editor", "schema_editor",
+	# REQ-CHG-001 v1.11 — removed commands and the float money path (§5.14).
+	"release_handoff_consumption", "confirm_proposed_requirement", "record_requisition_drawdown", "change_lead_organisation_unit",
+	"flt(", "1e-6",
 )
 
 # Files that legitimately mention a prohibited word in a comment explaining
 # why it is prohibited (this test file itself, most obviously).
-_ALLOWED_MENTIONS = {("tests/test_requisitions_schema.py", token) for token in PROHIBITED_TOKENS}
+_ALLOWED_MENTIONS = {("tests/test_requisitions_schema.py", token) for token in PROHIBITED_TOKENS} | {
+	# asserts Planning no longer publishes the removed per-row drawdown command
+	("tests/test_gateway_contracts.py", "record_requisition_drawdown"),
+}
 
 
 class TestRequisitionsSchema(IntegrationTestCase):

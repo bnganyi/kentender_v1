@@ -17,8 +17,7 @@
   "other_value",
   "mandatory",
   "reason",
-  "row_status",
-  "proposed_by_rule",
+  "row_state",
   "row_order"
  ],
  "fields": [
@@ -88,16 +87,11 @@
    "length": 300
   },
   {
-   "fieldname": "row_status",
+   "fieldname": "row_state",
    "fieldtype": "Select",
-   "label": "Row Status",
+   "label": "Row state",
    "options": "Proposed\nConfirmed",
    "default": "Proposed"
-  },
-  {
-   "fieldname": "proposed_by_rule",
-   "fieldtype": "Data",
-   "label": "Proposed By Rule"
   },
   {
    "fieldname": "row_order",

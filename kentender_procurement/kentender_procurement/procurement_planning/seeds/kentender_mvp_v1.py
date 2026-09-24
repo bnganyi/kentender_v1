@@ -1230,8 +1230,8 @@ def validate_planning_seed() -> list[dict[str, Any]]:
 		))
 		eligibility = plan_requisition.get_requisition_eligible_plan_item(plan_item_id=item["plan_item_id"], user=PLANNER)
 		check("eligibility.eligible", eligibility["eligible"])
-		check("eligibility.remaining_80m", eligibility["remaining_value"] == 80000000)
-		check("eligibility.qty_1", eligibility["remaining_quantity"] == 1)
+		check("eligibility.remaining_80m", eligibility["remaining_value"] == "80000000.00")
+		check("eligibility.qty_1", eligibility["remaining_quantity"] == "1")
 	if view and len(view["items"]) > 1:
 		combined = view["items"][1]
 		combined_detail = plan_read.get_plan_item(plan_item_id=combined["plan_item_id"], user=PLANNER)
@@ -1248,8 +1248,8 @@ def validate_planning_seed() -> list[dict[str, Any]]:
 		drawn_down = bool(frappe.db.exists("Plan Drawdown Reference", {"plan_item_id": combined["plan_item_id"], "drawdown_state": "Active"}))
 		if not drawn_down:
 			check("combined.eligibility.eligible", combined_eligibility["eligible"])
-			check("combined.eligibility.remaining_50m", combined_eligibility["remaining_value"] == 50000000)
-			check("combined.eligibility.qty_250", combined_eligibility["remaining_quantity"] == 250)
+			check("combined.eligibility.remaining_50m", combined_eligibility["remaining_value"] == "50000000.00")
+			check("combined.eligibility.qty_250", combined_eligibility["remaining_quantity"] == "250")
 	version = plan_row.active_version
 	finance = frappe.db.get_value(
 		"Plan Finance Decision",

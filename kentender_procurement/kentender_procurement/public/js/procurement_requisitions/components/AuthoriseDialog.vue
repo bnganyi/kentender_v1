@@ -1,50 +1,30 @@
-<!-- §13.13 "Authorise Requisition?" — ported class-for-class: the total
-     quantity/value line, the fixed commitment notice naming the Budget
-     line(s) it reserves against, and Cancel/Authorise actions. -->
+<!-- REQ-DES-09 — Authorisation confirmation: the material effects, in plain
+     words, before the one authorising command. -->
 <template>
-	<div class="kt-dialog-backdrop" data-testid="req-authorise-dialog" @keydown.esc="$emit('cancel')">
-		<div class="kt-dialog" role="dialog" aria-modal="true" ref="dialogEl" tabindex="-1">
-			<div class="kt-dialog-title">Authorise Requisition?</div>
-			<div class="req-context-body">
-				{{ totalQuantity }} {{ unit }} · {{ money(totalValue) }}<br />
-				This commits the Planning drawdown, reserves the requested value against {{ budgetLines }}, and creates the immutable Tender Preparation handoff.
+	<DialogFrame title="Authorise this requisition?" :width="480" :busy="busy" testid="req-authorise-dialog" @close="$emit('close')">
+		<div class="req-rule">
+			<div class="kt-meta-row">
+				<div><span class="kt-label">Quantity</span><span class="kt-meta-value" style="font-size: 14px">{{ confirmation.quantity }}</span></div>
+				<div><span class="kt-label">Requisition value</span><span class="kt-meta-value" style="font-size: 14px">{{ confirmation.value }}</span></div>
 			</div>
-			<p v-if="error" class="req-field-error" role="alert">{{ error }}</p>
-			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" @click="$emit('cancel')">Cancel</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="req-authorise-dialog-confirm" @click="$emit('confirm')">Authorise</button>
+			<div class="kt-meta-row" style="margin-top: 10px">
+				<div><span class="kt-label">Budget line</span><span class="kt-meta-value" style="font-size: 14px">{{ confirmation.budget_line }}</span></div>
+				<div><span class="kt-label">Available after authorisation</span><span class="kt-meta-value" style="font-size: 14px">{{ confirmation.available_after }}</span></div>
 			</div>
 		</div>
-	</div>
+		<p class="req-dialog-body">{{ confirmation.text }}</p>
+		<Notice v-if="error" tone="critical"><span data-testid="req-authorise-error">{{ error }}</span></Notice>
+		<template #actions>
+			<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="$emit('close')">Cancel</button>
+			<button type="button" class="kt-btn kt-btn-primary" :disabled="busy" data-testid="req-authorise-confirm" @click="$emit('confirm')">{{ busy ? "Authorising…" : "Authorise requisition" }}</button>
+		</template>
+	</DialogFrame>
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, ref } from "vue";
-import { formatMoney } from "../data/format.js";
+import DialogFrame from "./shared/DialogFrame.vue";
+import Notice from "./shared/Notice.vue";
 
-const props = defineProps({
-	task: { type: Object, required: true },
-	pending: Boolean,
-	error: { type: String, default: "" },
-});
-
-defineEmits(["confirm", "cancel"]);
-
-const dialogEl = ref(null);
-const drawdownLines = computed(() => (props.task.version || {}).drawdown_lines || []);
-const totalQuantity = computed(() => drawdownLines.value.reduce((sum, l) => sum + (l.requested_quantity || 0), 0));
-const totalValue = computed(() => drawdownLines.value.reduce((sum, l) => sum + (l.requested_value || 0), 0));
-const unit = computed(() => drawdownLines.value[0]?.unit || "Each");
-const budgetLines = computed(() => {
-	const names = [...new Set((props.task.budget_affordability || []).map((r) => r.budget_line_label || r.budget_line))];
-	return names.length ? names.join(", ") : "the approved Budget Line";
-});
-
-function money(amount) {
-	return formatMoney(amount);
-}
-
-onMounted(() => {
-	nextTick(() => dialogEl.value && dialogEl.value.focus());
-});
+defineProps({ confirmation: { type: Object, required: true }, busy: { type: Boolean, default: false }, error: { type: String, default: "" } });
+defineEmits(["close", "confirm"]);
 </script>

@@ -37,7 +37,7 @@ class ProgressCase(RequisitionCase):
 		allocation = read["sources"][0]
 		frappe.set_user(fx.HOPF)
 		result = plan_requisition.authorise_requisition_drawdown(
-			plan_item_id=item_id, requisition_reference=reference, requesting_org_unit=fx.OU_ALPHA,
+			plan_item_id=item_id, requisition_reference=reference,
 			allocations=[{
 				"plan_source_allocation_id": allocation["plan_source_allocation_id"],
 				"quantity": allocation["remaining_quantity"] if quantity is None else quantity,
@@ -117,8 +117,8 @@ class TestProcurementProgress(ProgressCase):
 		drawn = self.draw(item_id, reference="REQ-PROGRESS-002", quantity=1, amount=1000000)
 		frappe.set_user(fx.HOPF)
 		plan_requisition.reverse_requisition_drawdown(
-			drawdown_reference=drawn["drawdown_references"][0]["drawdown_reference"],
-			expected_record_version=drawn["drawdown_references"][0]["record_version"],
+			drawdown_reference=drawn["drawdowns"][0]["drawdown_reference"],
+			expected_record_version=drawn["drawdowns"][0]["record_version"],
 			idempotency_key=key(),
 		)
 		row = next(r for r in self.progress(accepted["annual_plan"])["items"] if r["plan_item_id"] == item_id)

@@ -12,7 +12,10 @@
   "actor",
   "legal_capacity",
   "decision",
-  "return_reason",
+  "reason",
+  "affected_section",
+  "new_lead_org_unit_id",
+  "resulting_state",
   "authority_snapshot",
   "decided_at",
   "command_idempotency_key",
@@ -24,9 +27,10 @@
    "fieldtype": "Link",
    "label": "Task",
    "options": "Requisition Task",
-   "reqd": 1,
+   "reqd": 0,
    "read_only": 1,
-   "search_index": 1
+   "search_index": 1,
+   "description": "The decided task, when the decision closes one; direct submission, withdrawal, revocation and a Planning correction request decide without a task (REQ-CHG-001 v1.11 \u00a77.1)."
   },
   {
    "fieldname": "requisition_version",
@@ -59,9 +63,29 @@
    "in_list_view": 1
   },
   {
-   "fieldname": "return_reason",
+   "fieldname": "reason",
    "fieldtype": "Small Text",
-   "label": "Return Reason",
+   "label": "Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "affected_section",
+   "fieldtype": "Select",
+   "options": "\nRequest details\nEquipment\nTechnical requirements\nWarranty and support\nServices\nAcceptance\nSupporting materials\nWhole requisition",
+   "label": "Affected section",
+   "read_only": 1
+  },
+  {
+   "fieldname": "new_lead_org_unit_id",
+   "fieldtype": "Link",
+   "options": "Organisation Unit",
+   "label": "New submitting department",
+   "read_only": 1
+  },
+  {
+   "fieldname": "resulting_state",
+   "fieldtype": "Data",
+   "label": "Resulting state",
    "read_only": 1
   },
   {

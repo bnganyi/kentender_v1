@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""REQ-CHG-001 v1.6 §8 — the Frappe-framework permission hooks themselves.
+"""REQ-CHG-001 v1.11 §8 — the Frappe-framework permission hooks themselves.
 
 Every other test file proves the *service-layer* gates (a command or read
 function masks or refuses correctly); this file proves the two Frappe
@@ -18,7 +18,7 @@ from __future__ import annotations
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from kentender_procurement.procurement_requisitions.services import draft_commands as cmd
+from kentender_procurement.procurement_requisitions.services import draft_commands as cmd, lifecycle
 from kentender_procurement.procurement_requisitions.tests import fixtures as fx
 
 
@@ -35,9 +35,7 @@ class RequisitionAuthorizationCase(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		fx.wipe_requisition_rows()
 		fx.wipe_planning_rows()
-		if not frappe.db.exists("Delivery Location", "Test Delivery Location — Requisitions"):
-			frappe.get_doc({"doctype": "Delivery Location", "location_name": "Test Delivery Location — Requisitions", "address": "1 Test Street", "status": "Active"}).insert(ignore_permissions=True)
-		self.location = "Test Delivery Location — Requisitions"
+		self.addCleanup(fx.wipe_requisition_rows)
 		self.addCleanup(frappe.set_user, "Administrator")
 
 	def _prepared(self) -> dict:
@@ -46,24 +44,9 @@ class RequisitionAuthorizationCase(IntegrationTestCase):
 		return cmd.prepare_it_equipment_requisition(plan_item_id=item_id, idempotency_key=fx.key())
 
 	def _complete_draft(self, prepared: dict) -> None:
-		frappe.set_user(fx.AUTHOR)
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
-		version = frappe.get_doc("Requisition Version", prepared["requisition_version"])
-		cmd.save_requisition_summary(
-			requisition=prepared["requisition"], values={"delivery_location": self.location, "latest_delivery_date": "2102-04-30"},
-			expected_record_version=version.record_version, idempotency_key=fx.key(),
-		)
-		cmd.add_requisition_item(
-			requisition=prepared["requisition"],
-			values={"plan_item_line_id": "DL-001", "equipment_category": "Laptop", "item_name": "Business laptops", "quantity": 1, "intended_use": "Clinical training"},
-			expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-		)
-		fx.confirm_all_proposed_requirements(prepared["requisition"], package_version)
-		cmd.add_acceptance_requirement(
-			requisition=prepared["requisition"],
-			values={"applies_to_scope": "All items", "check_type": "Quantity", "pass_condition": "Delivered quantities equal the authorised schedule", "evidence_type": "Inspection record"},
-			expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-		)
+		fx.fill_request_information(prepared["requisition"])
+		fx.add_laptops(prepared["requisition"])
+		fx.apply_standard_package(prepared["requisition"])
 
 
 class TestPermissionQueryConditions(RequisitionAuthorizationCase):

@@ -11,25 +11,26 @@
   "plan_id",
   "plan_version_id",
   "plan_item_id",
-  "strategic_objective",
+  "plan_item_version_id",
+  "open_slot_key",
+  "strategic_objective_id",
   "strategic_objective_path",
   "procurement_category",
   "plan_horizon",
-  "multi_year_justification",
   "col_a",
   "contributing_org_units",
-  "lead_org_unit",
+  "lead_org_unit_id",
   "current_version",
   "authorised_version",
   "current_state",
   "section_handoff",
   "planning_drawdown_reference",
-  "upstream_correction_outcome",
-  "upstream_correction_reason",
-  "upstream_correction_reference",
-  "upstream_correction_outcome_at",
   "handoff",
   "handoff_consumed_at",
+  "prior_requisition_id",
+  "prior_requisition_version_id",
+  "planning_correction_request_id",
+  "planning_correction_outcome_event_id",
   "record_version",
   "fixture_namespace"
  ],
@@ -68,9 +69,25 @@
    "search_index": 1
   },
   {
-   "fieldname": "strategic_objective",
+   "fieldname": "plan_item_version_id",
    "fieldtype": "Data",
-   "label": "Strategic Objective",
+   "label": "Plan item version",
+   "description": "REQ-CHG-001 v1.11 \u00a75.1 \u2014 the exact approved item Version pinned at preparation; immutable.",
+   "read_only": 1
+  },
+  {
+   "fieldname": "open_slot_key",
+   "fieldtype": "Data",
+   "label": "Open slot",
+   "read_only": 1,
+   "unique": 1,
+   "hidden": 1,
+   "description": "REQ-CHG-001 v1.11 \u00a75.1 \u2014 the stable plan_item_id while this root is open (Draft, awaiting, submitted, or authorised with an unconsumed handoff); empty otherwise. The database unique index is the authoritative one-open-per-item guard."
+  },
+  {
+   "fieldname": "strategic_objective_id",
+   "fieldtype": "Data",
+   "label": "Strategic objective",
    "read_only": 1
   },
   {
@@ -92,12 +109,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "multi_year_justification",
-   "fieldtype": "Small Text",
-   "label": "Multi Year Justification",
-   "read_only": 1
-  },
-  {
    "fieldname": "col_a",
    "fieldtype": "Column Break",
    "label": "Col A"
@@ -109,12 +120,12 @@
    "options": "Requisition Contributing Unit"
   },
   {
-   "fieldname": "lead_org_unit",
+   "fieldname": "lead_org_unit_id",
    "fieldtype": "Link",
-   "label": "Lead Org Unit",
+   "label": "Lead department",
    "options": "Organisation Unit",
    "read_only": 1,
-   "description": "REQ-CHG-001 v1.6 §5.1 — the OU whose Head of User Department certifies when more than one department contributed. Changeable only by the Head of Procurement Function at authorisation review (§13.11)."
+   "description": "REQ-CHG-001 v1.6 \u00a75.1 \u2014 the OU whose Head of User Department certifies when more than one department contributed. Changeable only by the Head of Procurement Function at authorisation review (\u00a713.11)."
   },
   {
    "fieldname": "current_version",
@@ -134,7 +145,7 @@
    "fieldname": "current_state",
    "fieldtype": "Select",
    "label": "Current State",
-   "options": "Draft\nAwaiting Department Approval\nSubmitted to Procurement\nReturned\nAuthorised\nWithdrawn\nRevoked\nUpstream correction required\nSuperseded",
+   "options": "Draft\nAwaiting Department Approval\nSubmitted to Procurement\nAuthorised\nWithdrawn\nRevoked\nUpstream correction required",
    "reqd": 1,
    "default": "Draft",
    "in_list_view": 1,
@@ -150,33 +161,7 @@
    "fieldtype": "Small Text",
    "label": "Planning Drawdown Reference",
    "read_only": 1,
-   "description": "Comma-separated Plan Drawdown Reference names — one per requesting Organisation Unit (Planning issues one per requesting OU, not one per Requisition)."
-  },
-  {
-   "fieldname": "upstream_correction_outcome",
-   "fieldtype": "Select",
-   "label": "Upstream Correction Outcome",
-   "options": "\nResolved\nClosed without change",
-   "read_only": 1
-  },
-  {
-   "fieldname": "upstream_correction_reason",
-   "fieldtype": "Small Text",
-   "label": "Upstream Correction Outcome Reason",
-   "read_only": 1
-  },
-  {
-   "fieldname": "upstream_correction_reference",
-   "fieldtype": "Data",
-   "label": "Upstream Correction Reference",
-   "read_only": 1,
-   "description": "The correction request and, when Resolved, the Active corrected Plan Version."
-  },
-  {
-   "fieldname": "upstream_correction_outcome_at",
-   "fieldtype": "Datetime",
-   "label": "Upstream Correction Outcome At",
-   "read_only": 1
+   "description": "Comma-separated Plan Drawdown Reference names \u2014 one per requesting Organisation Unit (Planning issues one per requesting OU, not one per Requisition)."
   },
   {
    "fieldname": "handoff",
@@ -189,6 +174,33 @@
    "fieldname": "handoff_consumed_at",
    "fieldtype": "Datetime",
    "label": "Handoff Consumed At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prior_requisition_id",
+   "fieldtype": "Link",
+   "options": "Procurement Requisition",
+   "label": "Prior requisition",
+   "description": "\u00a75.1 \u2014 the stopped root this fresh Requisition follows, after a Planning outcome.",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prior_requisition_version_id",
+   "fieldtype": "Link",
+   "options": "Requisition Version",
+   "label": "Prior requisition version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "planning_correction_request_id",
+   "fieldtype": "Data",
+   "label": "Planning correction request",
+   "read_only": 1
+  },
+  {
+   "fieldname": "planning_correction_outcome_event_id",
+   "fieldtype": "Data",
+   "label": "Planning correction outcome",
    "read_only": 1
   },
   {

@@ -88,12 +88,11 @@ def consume(*, handoff: str, tender: str, tender_version: str, template_key: str
 
 
 def release(*, handoff: str, tender: str, reason: str, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
-	try:
-		return req_handoff.release_handoff_consumption(handoff=handoff, tender=tender, reason=reason, idempotency_key=idempotency_key, user=user)
-	except ProcurementRequisitionsError as exc:
-		if exc.code == "REQ_RESPONSIBILITY_REQUIRED":
-			fail("TND_RESPONSIBILITY_REQUIRED")
-		fail("TND_HANDOFF_INVALID", detail={"requisition_error": exc.code})
+	"""REQ-CHG-001 v1.11 §7.4 removed handoff release: once Tender Preparation
+	consumes a handoff the Requisition can no longer be revoked. This route
+	stays unavailable until the Tenders revamp defines its own correction
+	route (REQ plan D15, REQ FOLLOW_UPS FU-30)."""
+	fail("TND_HANDOFF_INVALID", "A consumed requisition handoff can no longer be released. The Tender correction route is being revised.", detail={"handoff": handoff})
 	return {}  # unreachable
 
 

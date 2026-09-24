@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""REQ-CHG-001 v1.6 §10 — the command envelope's own low-level mechanics
+"""REQ-CHG-001 v1.11 §10 — the command envelope's own low-level mechanics
 (idempotency replay/conflict, record-version staleness, row locking,
 `bump()`, and the `atomic()` savepoint), tested directly rather than only
 through the higher-level command tests that already exercise it indirectly.
@@ -95,7 +95,7 @@ class TestRecordVersionAndLocking(RequisitionEnvelopeCase):
 		prepared = self._prepared()
 		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
 		before = root.record_version
-		envelope.bump(root, lead_org_unit=root.lead_org_unit)
+		envelope.bump(root, lead_org_unit_id=root.lead_org_unit_id)
 		self.assertEqual(root.record_version, before + 1)
 		root.reload()
 		self.assertEqual(root.record_version, before + 1)
@@ -103,15 +103,15 @@ class TestRecordVersionAndLocking(RequisitionEnvelopeCase):
 
 class TestAtomicSavepoint(RequisitionEnvelopeCase):
 	def test_a_successful_block_keeps_its_writes(self):
-		prepared_from = None
 		_, item_id = fx.active_item()
 		frappe.set_user(fx.AUTHOR)
 		prepared = cmd.prepare_it_equipment_requisition(plan_item_id=item_id, idempotency_key=fx.key())
 		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
+		before = root.record_version
 		with envelope.atomic("test"):
-			envelope.bump(root, lead_org_unit=root.lead_org_unit)
+			envelope.bump(root, lead_org_unit_id=root.lead_org_unit_id)
 		root.reload()
-		self.assertEqual(root.record_version, 1)
+		self.assertEqual(root.record_version, before + 1)
 
 	def test_a_failing_block_rolls_back_only_its_own_writes(self):
 		_, item_id = fx.active_item()
@@ -119,11 +119,11 @@ class TestAtomicSavepoint(RequisitionEnvelopeCase):
 		prepared = cmd.prepare_it_equipment_requisition(plan_item_id=item_id, idempotency_key=fx.key())
 		root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
 		# a write that happens BEFORE the savepoint is opened must survive
-		envelope.bump(root, lead_org_unit=root.lead_org_unit)
+		envelope.bump(root, lead_org_unit_id=root.lead_org_unit_id)
 		version_before_failure = root.record_version
 		with self.assertRaises(RuntimeError):
 			with envelope.atomic("test"):
-				envelope.bump(root, lead_org_unit=root.lead_org_unit)
+				envelope.bump(root, lead_org_unit_id=root.lead_org_unit_id)
 				raise RuntimeError("forced failure inside the savepoint")
 		root.reload()
 		self.assertEqual(root.record_version, version_before_failure)

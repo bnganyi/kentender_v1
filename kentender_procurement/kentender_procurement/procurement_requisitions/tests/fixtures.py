@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""REQ-CHG-001 v1.6 test world (D13) — extends Procurement Planning's own
+"""REQ-CHG-001 v1.11 test world (D13) — extends Procurement Planning's own
 `KENTENDER_TEST` world rather than building a second one: an eligible Plan
 Item can only come from Planning's own commands, and Planning's fixture
 actors (`AUTHOR`/`HOD`/`HOPF`/`PLANNER`/`AUDITOR`/`OUTSIDER`) already hold
@@ -47,6 +47,17 @@ ACCOUNTING_OFFICER = pln_fx.ACCOUNTING_OFFICER
 STATUTORY = pln_fx.STATUTORY
 
 
+#: REQ-CHG-001 v1.11 §2.1/§7.3A — a second contributing department for the
+#: combined-item cases: a Departmental Author assigned only there (the
+#: REQ-DES-03-CONTRIBUTOR actor) and that department's Head.
+CONTRIBUTOR = "reqt.contributor@example.test"
+HOD_BETA = "reqt.hodbeta@example.test"
+COMBINATION_REASON = (
+	"Both departments require the same laptop specification for one programme; combining secures better unit pricing "
+	"and one delivery schedule."
+)
+
+
 def _ou_alpha() -> str:
 	"""`pln_fx.OU_ALPHA` is only filled in by `ensure_world()` (a `global`
 	rebinding inside Planning's own module) — a static alias captured at
@@ -70,6 +81,15 @@ def ensure_world() -> None:
 	from kentender_core.services import responsibility_administration as administration
 
 	administration.grant(user=pln_fx.HOPF, business_role="Head of User Department", organisation_unit=_ou_alpha(), fixture_namespace=NS, actor="Administrator")
+	pln_fx._user(CONTRIBUTOR, "REQ Test Contributor")
+	pln_fx._user(HOD_BETA, "REQ Test Head Beta")
+	pln_fx._grant(CONTRIBUTOR, "Departmental Author", pln_fx.OU_BETA)
+	pln_fx._grant(HOD_BETA, "Departmental Author", pln_fx.OU_BETA)
+	pln_fx._grant(HOD_BETA, "Head of User Department", pln_fx.OU_BETA)
+	# The combined-item Author holds both departments (REQ-DES-03's Grace).
+	pln_fx._grant(pln_fx.AUTHOR, "Departmental Author", pln_fx.OU_BETA)
+	if not frappe.db.exists("Delivery Location", {"status": "Active"}):
+		frappe.get_doc({"doctype": "Delivery Location", "location_name": "REQ Test Delivery Point", "address": "Test Road, Nairobi", "status": "Active", "fixture_namespace": NS}).insert(ignore_permissions=True)
 
 
 def restore_site() -> None:
@@ -88,7 +108,7 @@ def wipe_requisition_rows() -> None:
 	for doctype in (
 		"Requisition Event", "Requisition Decision", "Requisition Task", "Authorised Requisition Handoff",
 		"Requisition Version", "IT Equipment Requirement Package Version", "IT Equipment Requirement Package",
-		"Procurement Requisition", "Requisition Command Journal",
+		"Procurement Requisition", "Requisition Command Journal", "Requisition Correction Outcome",
 	):
 		frappe.db.delete(doctype)
 	# authorise_requisition() reserves funding in Budget (D1) under
@@ -197,25 +217,206 @@ def active_item(*, indicative_amount: float = 50_000_000) -> tuple[dict, str]:
 	return accepted, item_id
 
 
-# A baseline rule that proposes no default (Memory, Storage capacity) needs
-# a value supplied before it can be confirmed — every test building a Draft
-# through Step 3 hits this, so it lives here once rather than as six
-# separately-drifting inline loops.
-_VALUE_LESS_BASELINE_DEFAULTS = {"memory": 16, "storage_capacity": 512}
+def ou_beta() -> str:
+	return pln_fx.OU_BETA
 
 
-def confirm_all_proposed_requirements(requisition: str, package_version) -> None:
+def ou_alpha() -> str:
+	return _ou_alpha()
+
+
+def delivery_location() -> str:
+	return frappe.db.get_value("Delivery Location", {"status": "Active"}, "name")
+
+
+def _accepted_direct_entry(*, unit: str, author: str, hod: str, indicative_amount: float, quantity: int, title: str) -> tuple[dict, str, str]:
+	with patch.object(needs_intake, "current_accepted_sources", return_value=[]):
+		frappe.set_user(author)
+		opened = dpp_lifecycle.open_departmental_plan(organisation_unit=unit, fiscal_year=pln_fx.FY_OPEN, idempotency_key=key(), fixture_namespace=NS)
+		added = dpp_lifecycle.save_direct_requirement(
+			dpp_version=opened["current_version"], values=pln_fx.direct_values(title=title, indicative_amount=indicative_amount, quantity=quantity),
+			expected_record_version=opened["record_version"], idempotency_key=key(),
+		)
+		frappe.set_user(hod)
+		submitted = dpp_lifecycle.submit_departmental_plan(
+			dpp_version=opened["current_version"], certification_confirmed=True, expected_record_version=added["record_version"], idempotency_key=key(),
+		)
+	task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
+	frappe.set_user(PLANNER)
+	accepted = dpp_validation.accept_departmental_plan(task=task.name, classifications={added["entry_id"]: "Goods"}, task_token=task.task_token, idempotency_key=key())
+	entry = frappe.db.get_value("Departmental Plan Entry", {"dpp_version": opened["current_version"], "entry_id": added["entry_id"]}, "name")
+	return accepted, entry, opened["current_version"]
+
+
+def active_combined_item(*, alpha_amount: float = 30_000_000, beta_amount: float = 20_000_000, alpha_quantity: int = 150, beta_quantity: int = 100) -> tuple[dict, str]:
+	"""§13.1 in miniature: one Plan Item formed by Planning from two
+	departments' approved requirements (Alpha leads on value)."""
+	accepted, alpha_entry, _ = _accepted_direct_entry(unit=_ou_alpha(), author=AUTHOR, hod=HOD, indicative_amount=alpha_amount, quantity=alpha_quantity, title="Business laptops")
+	accepted, beta_entry, _ = _accepted_direct_entry(unit=pln_fx.OU_BETA, author=HOD_BETA, hod=HOD_BETA, indicative_amount=beta_amount, quantity=beta_quantity, title="Business laptops")
+	frappe.set_user(PLANNER)
+	plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+	formed = plan_workbench.form_plan_items(
+		plan_version=accepted["annual_plan_version"], dpp_entries=[alpha_entry, beta_entry], mode="combined", combination_reason=COMBINATION_REASON,
+		expected_record_version=plan["record_version"], idempotency_key=key(),
+	)
+	item_id = formed["created_items"][0]
+	complete_and_confirm(item_id, aggregation_reason="Both laptop batches ship in a single combined tender lot.", aggregation_indicator="Aggregated into this package")
+	activate(accepted["annual_plan"])
+	return accepted, item_id
+
+
+# --------------------------------------------------------------------------
+# Driving a Draft through the real commands
+# --------------------------------------------------------------------------
+
+
+def editor(requisition: str, user: str = AUTHOR) -> dict:
+	from kentender_procurement.procurement_requisitions.services import read
+
+	frappe.set_user(user)
+	return read.get_requisition_record(requisition=requisition)
+
+
+def prepare(item_id: str, user: str = AUTHOR) -> dict:
 	from kentender_procurement.procurement_requisitions.services import draft_commands as cmd
 
-	package_version.reload()
-	for row in package_version.technical_requirements:
-		if row.row_status != "Proposed":
-			continue
-		extra = {}
-		if not row.required_value_json:
-			extra["value"] = _VALUE_LESS_BASELINE_DEFAULTS[row.characteristic_key]
-		cmd.confirm_proposed_requirement(
-			requisition=requisition, technical_requirement_id=row.technical_requirement_id,
-			expected_record_version=package_version.record_version, idempotency_key=key(), **extra,
-		)
-		package_version.reload()
+	frappe.set_user(user)
+	return cmd.prepare_it_equipment_requisition(plan_item_id=item_id, idempotency_key=key())
+
+
+def fill_request_information(requisition: str, user: str = AUTHOR, *, latest: str = "2102-04-30") -> None:
+	from kentender_procurement.procurement_requisitions.services import draft_commands as cmd
+
+	view = editor(requisition, user)
+	cmd.save_requisition_summary(
+		requisition=requisition, values={"delivery_location": delivery_location(), "latest_delivery_date": latest},
+		expected_record_version=view["header"]["version_record_version"], idempotency_key=key(),
+	)
+
+
+def add_laptops(requisition: str, user: str = AUTHOR, *, item_name: str = "Business laptops") -> dict:
+	from kentender_procurement.procurement_requisitions.services import draft_commands as cmd
+
+	view = editor(requisition, user)
+	rows = [
+		{"drawdown_line_id": r["drawdown_line_id"], "quantity": r["quantity"], "intended_use": f"Field deployment for {r['department']} staff"}
+		for r in view["equipment"]["add_rows"] if r["quantity"] > 0
+	]
+	return cmd.add_same_specification_items(
+		requisition=requisition, shared={"equipment_category": "Laptop", "item_name": item_name},
+		rows=rows, expected_record_version=view["package_record_version"], idempotency_key=key(),
+	)
+
+
+def visible_proposal(view: dict) -> tuple[list[dict], list[dict], dict]:
+	"""Exactly what the Requirements workbench shows: every row selected."""
+	technical = [
+		{"technical_requirement_id": r["technical_requirement_id"], "characteristic_key": r["characteristic_key"], "value": _raw(r["value"]), "selected": True}
+		for g in view["requirements"]["technical_groups"] for r in g["rows"]
+	]
+	acceptance = [
+		{"acceptance_requirement_id": a["acceptance_requirement_id"], "check_type": a["check_type"], "pass_condition": a["pass_condition"], "evidence_type": a["evidence_type"], "applies_to_scope": a["applies_to_scope"], "applies_to_id": a["applies_to_id"], "selected": True}
+		for a in view["requirements"]["acceptance"]
+	]
+	return technical, acceptance, dict(view["requirements"]["support"])
+
+
+def _raw(value: dict):
+	if "ports" in value:
+		return value["ports"]
+	if "values" in value:
+		return value["values"]
+	return value.get("value")
+
+
+def apply_standard_package(requisition: str, user: str = AUTHOR) -> dict:
+	from kentender_procurement.procurement_requisitions.services import draft_commands as cmd
+
+	view = editor(requisition, user)
+	technical, acceptance, support = visible_proposal(view)
+	req = view["requirements"]
+	return cmd.apply_selected_requirement_package(
+		requisition=requisition, profile_key=req["profile_key"], profile_version=req["profile_version"], proposal_digest=req["proposal_digest"],
+		technical=technical, acceptance=acceptance, support=support, expected_record_version=view["package_record_version"], idempotency_key=key(),
+	)
+
+
+def complete_draft(item_id: str, user: str = AUTHOR) -> str:
+	"""Prepare and complete all three visible tasks; returns the root name."""
+	prepared = prepare(item_id, user)
+	requisition = prepared["requisition"]
+	fill_request_information(requisition, user)
+	add_laptops(requisition, user)
+	apply_standard_package(requisition, user)
+	return requisition
+
+
+def root_version(requisition: str) -> int:
+	return int(frappe.db.get_value("Procurement Requisition", requisition, "record_version"))
+
+
+def open_task(requisition: str, role: str) -> str:
+	return frappe.db.get_value("Requisition Task", {"requisition": requisition, "business_role": role, "status": "Open"}, "name")
+
+
+def submit_as_hod(requisition: str, hod: str = HOD) -> dict:
+	from kentender_procurement.procurement_requisitions.services import lifecycle
+
+	frappe.set_user(hod)
+	task = open_task(requisition, "Head of User Department")
+	return lifecycle.submit_requisition_to_procurement(requisition=requisition, task=task, expected_record_version=root_version(requisition), idempotency_key=key())
+
+
+def send(requisition: str, user: str = AUTHOR) -> dict:
+	from kentender_procurement.procurement_requisitions.services import lifecycle
+
+	frappe.set_user(user)
+	return lifecycle.send_for_department_approval(requisition=requisition, expected_record_version=root_version(requisition), idempotency_key=key())
+
+
+def submitted(item_id: str) -> str:
+	requisition = complete_draft(item_id)
+	send(requisition)
+	submit_as_hod(requisition)
+	return requisition
+
+
+def authorise(requisition: str, user: str = HOPF) -> dict:
+	from kentender_procurement.procurement_requisitions.services import authorise as authorise_service
+
+	frappe.set_user(user)
+	return authorise_service.authorise_requisition(
+		requisition=requisition, task=open_task(requisition, "Head of Procurement Function"),
+		expected_record_version=root_version(requisition), idempotency_key=key(),
+	)
+
+
+def confirm_funding(plan_reference: str) -> None:
+	frappe.set_user(PLANNER)
+	plan = plan_read.get_annual_plan(plan_reference=plan_reference)
+	requested = plan_finance.request_plan_funding_confirmation(plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=key())
+	task = frappe.get_doc("Plan Finance Task", requested["task"])
+	frappe.set_user(FINANCE_OFFICER)
+	plan_finance.confirm_plan_funding(task=task.name, task_token=task.task_token, idempotency_key=key())
+	frappe.set_user(PLANNER)
+
+
+def correcting_active_version(plan_reference: str) -> str:
+	"""Planning's own test helper: an ordinary successor carried to Active,
+	standing in for the correcting Active Plan Version (same stable item)."""
+	from kentender_procurement.procurement_planning.services import plan_publication
+
+	frappe.set_user(PLANNER)
+	plan_publication.begin_plan_update(plan_reference=plan_reference, idempotency_key=key())
+	confirm_funding(plan_reference)
+	activate(plan_reference)
+	return frappe.db.get_value("Annual Plan", {"plan_reference": plan_reference}, "active_version")
+
+
+def stop_for_planning_correction(item_id: str, reason: str = "The approved source allocation refers to the wrong Budget Line.") -> tuple[str, str]:
+	from kentender_procurement.procurement_requisitions.services import lifecycle
+
+	requisition = submitted(item_id)
+	frappe.set_user(HOPF)
+	result = lifecycle.request_upstream_plan_correction(requisition=requisition, reason=reason, expected_record_version=root_version(requisition), idempotency_key=key())
+	return requisition, result["correction_request"]

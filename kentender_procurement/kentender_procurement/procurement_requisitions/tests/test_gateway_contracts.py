@@ -1,100 +1,48 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""REQ-CHG-001 v1.6 — contract pins against the two sibling services this
-module depends on (REQ-107). These are the Requisitions-side half of the
-same contract Planning's own `test_plan_requisition.py` and Budget's own
-`test_check_reserve_requisition_caller.py` pin from their side; a change to
-either sibling that breaks these pins is a defect in the contract, not in
-this module (§9.1/§9.1A/§5A).
-"""
+"""REQ-CHG-001 v1.11 §9 — the owner contracts this module depends on, pinned
+from the consumer's side (REQ19-AC-056/057/069). A signature change in
+Planning or Budget fails here before it reaches a live authorisation."""
 
 from __future__ import annotations
 
+import ast
 import inspect
+import unittest
 
-from frappe.tests import IntegrationTestCase
-
-from kentender_procurement.procurement_planning.services import plan_requisition
 from kentender_budget.services import budget_check_reserve_contracts as budget_cr
-
-REQUIRED_PROJECTION_FIELDS = (
-	"outcome", "eligible", "plan_reference", "version_reference", "plan_item_id", "record_version",
-	"fiscal_year", "requirement_type", "procurement_category", "procurement_method", "strategic_objective",
-	"objective_path", "strategic_objective_path", "title", "reservation_category", "lotting_indicator", "lot_count",
-	# PLN-CHG-001 v1.18 §4.6: `plan_horizon` is a fixed literal; the multi-year justification key is gone (REQ-CHG-001 v1.8 owed, FU-24)
-	"plan_horizon", "contributing_org_unit_ids", "currency", "award_packages",
-	# PLN-CHG-001 v1.23 §7.5/§15.3 (PLN23-CHG-001): Planning keeps no forecast
-	# records, so `forecast_dates` is gone from the projection rather than
-	# shipped as seven permanently empty strings.
-	"planned_dates", "funding_confirmation_references", "funding_state", "total_quantity",
-	"total_value", "remaining_quantity", "remaining_value", "sources", "evaluated_at",
-)
-
-REQUIRED_SOURCE_FIELDS = (
-	"plan_source_allocation_id", "plan_item_line_id", "source_line_id", "source_origin", "dpp_entry",
-	"need", "need_revision", "organisation_unit", "title", "description", "expected_operational_result",
-	"approved_quantity", "remaining_quantity", "unit", "required_by_date", "budget_line", "allocated_amount",
-	"remaining_amount",
-)
+from kentender_procurement.procurement_planning.services import outcome_event, plan_requisition
 
 
-class TestPlanningProjectionContract(IntegrationTestCase):
-	def test_projection_function_signature_is_unchanged(self):
-		sig = inspect.signature(plan_requisition.get_requisition_eligible_plan_item)
-		self.assertIn("plan_item_id", sig.parameters)
-		self.assertIn("user", sig.parameters)
-
-	def test_drawdown_functions_exist_with_expected_shape(self):
-		sig = inspect.signature(plan_requisition.authorise_requisition_drawdown)
-		for name in ("plan_item_id", "requisition_reference", "requesting_org_unit", "allocations",
-					 "expected_record_version", "idempotency_key"):
-			self.assertIn(name, sig.parameters)
-		rev_sig = inspect.signature(plan_requisition.reverse_requisition_drawdown)
-		for name in ("drawdown_reference", "expected_record_version", "idempotency_key"):
-			self.assertIn(name, rev_sig.parameters)
-
-	def test_correction_request_functions_exist(self):
-		self.assertTrue(callable(plan_requisition.receive_plan_item_correction_request))
-		self.assertTrue(callable(plan_requisition.resolve_plan_item_correction_request))
+def _params(fn) -> set[str]:
+	return set(inspect.signature(fn).parameters)
 
 
-class TestBudgetReservationContract(IntegrationTestCase):
-	def test_check_funding_accepts_requisitions_calling_module_and_optional_finance_task(self):
-		sig = inspect.signature(budget_cr.check_funding)
-		for name in ("plan_item", "plan_version", "source_set_hash", "allocations", "correlation_id",
-					 "finance_task", "calling_module", "caller_reference"):
-			self.assertIn(name, sig.parameters)
-		self.assertIsNone(sig.parameters["finance_task"].default)
+class TestPlanningContracts(unittest.TestCase):
+	def test_the_one_canonical_drawdown_command_takes_the_whole_authorisation_context(self):
+		params = _params(plan_requisition.authorise_requisition_drawdown)
+		self.assertTrue({"plan_item_id", "requisition_reference", "requisition_version", "correlation_id", "allocations", "expected_record_version", "idempotency_key"} <= params)
+		self.assertNotIn("requesting_org_unit", params)
+		self.assertFalse(hasattr(plan_requisition, "record_requisition_drawdown"))
 
-	def test_reserve_funding_no_longer_requires_finance_task(self):
-		sig = inspect.signature(budget_cr.reserve_funding)
-		self.assertIsNone(sig.parameters["finance_task"].default)
+	def test_published_reads_used_instead_of_planning_tables(self):
+		self.assertEqual(_params(plan_requisition.list_requisition_drawdowns), {"requisition_reference", "user"})
+		self.assertEqual(_params(plan_requisition.correction_request_facts), {"correction_request", "requisition_reference"})
 
-	def test_reservation_result_carries_caller_identity(self):
-		import ast
-
-		source = inspect.getsource(budget_cr._reservation_result)
-		tree = ast.parse(source)
-		keys = {
-			node.value
-			for fn in ast.walk(tree)
-			if isinstance(fn, ast.Dict)
-			for node in fn.keys
-			if isinstance(node, ast.Constant)
-		}
-		self.assertIn("calling_module", keys)
-		self.assertIn("caller_reference", keys)
+	def test_the_outcome_event_schema_is_v1(self):
+		self.assertEqual(outcome_event.SCHEMA_VERSION, 1)
+		self.assertEqual(outcome_event.HOOK, "kt_plan_item_correction_outcome_consumers")
+		source = inspect.getsource(outcome_event.build)
+		for field in ("event_id", "schema_version", "producer_sequence", "correction_request_id", "requesting_requisition_id", "requesting_requisition_version_id", "plan_item_id", "requested_plan_version_id", "requested_plan_item_version_id", "outcome", "reason", "correcting_plan_version_id", "replacement_lineage", "actor", "decision_at", "item_hold_state", "unresolved_request_count", "eligibility_revision"):
+			self.assertIn(f'"{field}"', source, field)
 
 
-class TestRequisitionEligibilityProjectionCompleteness(IntegrationTestCase):
-	"""REQ-AC-056, pinned from the consumer's own test suite (not just
-	Planning's `test_every_req_chg_001_v16_field_is_present`): every field
-	this document's §5.1/§5A depend on is enumerated, by name, here too."""
+class TestBudgetContracts(unittest.TestCase):
+	def test_check_funding_takes_the_complete_array_with_caller_identity(self):
+		self.assertTrue({"plan_item", "plan_version", "source_set_hash", "allocations", "correlation_id", "calling_module", "caller_reference"} <= _params(budget_cr.check_funding))
 
-	def test_the_required_field_lists_match_what_this_module_actually_uses(self):
-		# A change to either list without updating the other is the defect
-		# REQ-AC-056 exists to catch; this test simply keeps both lists
-		# honest against each other, independent of a live Plan Item.
-		self.assertEqual(len(REQUIRED_PROJECTION_FIELDS), len(set(REQUIRED_PROJECTION_FIELDS)))
-		self.assertEqual(len(REQUIRED_SOURCE_FIELDS), len(set(REQUIRED_SOURCE_FIELDS)))
+	def test_reservation_results_carry_the_drawdown_line(self):
+		tree = ast.parse(inspect.getsource(budget_cr._reservation_result))
+		keys = {k.value for node in ast.walk(tree) if isinstance(node, ast.Dict) for k in node.keys if isinstance(k, ast.Constant)}
+		self.assertTrue({"reservation_id", "reservation_code", "drawdown_line_id", "original_amount", "caller_reference"} <= keys)

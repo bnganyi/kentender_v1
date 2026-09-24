@@ -34,7 +34,7 @@
    "fieldname": "event_type",
    "fieldtype": "Select",
    "label": "Event Type",
-   "options": "ProcurementRequisitionAuthorised.v1.3\nProcurementRequisitionRevoked.v1\nProcurementRequisitionWithdrawn.v1",
+   "options": "ProcurementRequisitionAuthorised.v1.3\nProcurementRequisitionAuthorised.v1.4\nProcurementRequisitionRevoked.v1\nProcurementRequisitionWithdrawn.v1\nProcurementRequisitionCorrectionRequested\nPlanItemCorrectionOutcomeReceived",
    "reqd": 1,
    "in_list_view": 1,
    "read_only": 1,

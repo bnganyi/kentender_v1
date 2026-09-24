@@ -4,7 +4,7 @@ import path from "node:path";
 import { expect, Page } from "@playwright/test";
 
 /**
- * Shared plumbing for the REQ-CHG-001 v1.6 browser specs (tracker REQ-402).
+ * Shared plumbing for the REQ-CHG-001 v1.11 browser specs.
  *
  * Fixtures come from `procurement_requisitions.seeds.playwright_ui_fixtures`:
  * a self-contained world on Fiscal Year **2099-2100**, distinct from both the
@@ -26,9 +26,12 @@ const FIXTURES = "kentender_procurement.procurement_requisitions.seeds.playwrigh
 
 export const PASSWORD = "Test@123";
 export const FY = "2099-2100";
-export const OU_NAME = "Playwright — Procurement Requisitions";
+export const OU_NAME = "Playwright — Digital Health";
+export const OU_B_NAME = "Playwright — HR Management and Development";
 export const AUTHOR = "pw.req.author@example.test";
 export const HOD = "pw.req.hod@example.test";
+export const CONTRIBUTOR = "pw.req.contributor@example.test";
+export const HOD_B = "pw.req.hodb@example.test";
 export const HOPF = "pw.req.hopf@example.test";
 export const AUDITOR = "pw.req.auditor@example.test";
 export const OUTSIDER = "pw.req.outsider@example.test";
@@ -98,6 +101,10 @@ export function collectConsoleErrors(page: Page): string[] {
 		const text = message.text();
 		if (text.includes("socket.io") || text.includes("ERR_CONNECTION_REFUSED")) return;
 		if (text.includes("Failed to load resource")) return;
+		// Developer mode prints the server traceback of every refused request;
+		// a §11 business refusal the screen renders inline is expected output,
+		// not a page defect (any other exception still counts).
+		if (text.includes("ProcurementRequisitionsError")) return;
 		if (message.type() === "error") errors.push(url ? `${text} (${url})` : text);
 	});
 	page.on("pageerror", (error) => errors.push(String(error)));

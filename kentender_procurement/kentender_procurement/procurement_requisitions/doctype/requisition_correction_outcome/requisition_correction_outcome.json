@@ -1,0 +1,241 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:RCO-{#####}",
+ "creation": "2026-09-24 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "description": "REQ-CHG-001 v1.11 \u00a75.13/\u00a79.1B \u2014 the read-only projection of one PlanItemCorrectionOutcome.v1 event. Producer evidence, never a Requisition lifecycle decision.",
+ "field_order": [
+  "event_id",
+  "schema_version",
+  "producer",
+  "producer_sequence",
+  "correction_request_id",
+  "requisition",
+  "requisition_version",
+  "plan_item_id",
+  "requested_plan_version_id",
+  "requested_plan_item_version_id",
+  "outcome",
+  "reason",
+  "correcting_plan_version_id",
+  "replacement_lineage_json",
+  "decided_by",
+  "decision_at",
+  "item_hold_state",
+  "unresolved_request_count",
+  "eligibility_revision",
+  "payload_digest",
+  "received_at",
+  "status",
+  "quarantine_reason",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "event_id",
+   "fieldtype": "Data",
+   "label": "Event",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "schema_version",
+   "fieldtype": "Int",
+   "label": "Schema version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "producer",
+   "fieldtype": "Data",
+   "label": "Producer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "producer_sequence",
+   "fieldtype": "Int",
+   "label": "Producer sequence",
+   "read_only": 1
+  },
+  {
+   "fieldname": "correction_request_id",
+   "fieldtype": "Data",
+   "label": "Planning correction request",
+   "read_only": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "requisition",
+   "fieldtype": "Link",
+   "label": "Requisition",
+   "read_only": 1,
+   "options": "Procurement Requisition",
+   "search_index": 1
+  },
+  {
+   "fieldname": "requisition_version",
+   "fieldtype": "Link",
+   "label": "Stopped Version",
+   "read_only": 1,
+   "options": "Requisition Version"
+  },
+  {
+   "fieldname": "plan_item_id",
+   "fieldtype": "Data",
+   "label": "Plan Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requested_plan_version_id",
+   "fieldtype": "Data",
+   "label": "Questioned Plan Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requested_plan_item_version_id",
+   "fieldtype": "Data",
+   "label": "Questioned item Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "outcome",
+   "fieldtype": "Select",
+   "label": "Outcome",
+   "read_only": 1,
+   "options": "Resolved\nClosed without change"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Owner reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "correcting_plan_version_id",
+   "fieldtype": "Data",
+   "label": "Correcting Plan Version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "replacement_lineage_json",
+   "fieldtype": "Long Text",
+   "label": "Replacement lineage",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_by",
+   "fieldtype": "Data",
+   "label": "Decided by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decision_at",
+   "fieldtype": "Data",
+   "label": "Decided at (UTC)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "item_hold_state",
+   "fieldtype": "Check",
+   "label": "Item hold at disposition",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unresolved_request_count",
+   "fieldtype": "Int",
+   "label": "Unresolved requests at disposition",
+   "read_only": 1
+  },
+  {
+   "fieldname": "eligibility_revision",
+   "fieldtype": "Int",
+   "label": "Eligibility revision",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payload_digest",
+   "fieldtype": "Data",
+   "label": "Payload digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "received_at",
+   "fieldtype": "Datetime",
+   "label": "Received at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Recorded\nQuarantined"
+  },
+  {
+   "fieldname": "quarantine_reason",
+   "fieldtype": "Small Text",
+   "label": "Quarantine reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-24 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Requisitions",
+ "name": "Requisition Correction Outcome",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Planner",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "search_fields": "correction_request_id,requisition"
+}

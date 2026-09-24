@@ -1,21 +1,22 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""REQ-CHG-001 v1.6 §10.2 — Draft-stage command tests, against a real
-single-source Active, funded Plan Item from Procurement Planning's own
-fixture world (D13)."""
+"""REQ-CHG-001 v1.11 §10.2 Draft commands against the real Planning world
+(REQ19-AC-001/002/004/005/006/008/011/039/048/049/051/088–090/113–115)."""
 
 from __future__ import annotations
+
+from unittest.mock import patch
 
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from kentender_procurement.procurement_requisitions.services import draft_commands as cmd
+from kentender_procurement.procurement_requisitions.services import catalogue, draft_commands as cmd, records
 from kentender_procurement.procurement_requisitions.services.errors import ProcurementRequisitionsError
 from kentender_procurement.procurement_requisitions.tests import fixtures as fx
 
 
-class RequisitionDraftCase(IntegrationTestCase):
+class RequisitionCase(IntegrationTestCase):
 	@classmethod
 	def setUpClass(cls):
 		super().setUpClass()
@@ -27,316 +28,237 @@ class RequisitionDraftCase(IntegrationTestCase):
 		super().setUp()
 		frappe.set_user("Administrator")
 		fx.wipe_requisition_rows()
-		fx.wipe_planning_rows()  # Planning's own per-test isolation; without
-		# this, active_item() reuses the prior test's already-progressed DPP
-		# (PLN_DPP_STALE) instead of starting a fresh one.
+		fx.wipe_planning_rows()
 		self.addCleanup(frappe.set_user, "Administrator")
+		self.addCleanup(fx.wipe_requisition_rows)
 
-	def prepare(self, **kwargs) -> dict:
-		_, item_id = fx.active_item(**kwargs)
-		frappe.set_user(fx.AUTHOR)
-		return cmd.prepare_it_equipment_requisition(plan_item_id=item_id, idempotency_key=fx.key())
+	def assertCode(self, ctx, code):
+		self.assertEqual(getattr(ctx.exception, "code", None), code, str(ctx.exception))
 
 
-class TestPrepare(RequisitionDraftCase):
-	def test_prepare_creates_a_draft_root_version_and_package(self):
-		result = self.prepare()
-		self.assertEqual(result["action"], "created")
-		root = frappe.get_doc("Procurement Requisition", result["requisition"])
+class TestPrepare(RequisitionCase):
+	def test_creates_one_draft_with_exact_default_amounts_and_no_budget_or_planning_effect(self):
+		_, item_id = fx.active_combined_item()
+		prepared = fx.prepare(item_id)
+		self.assertEqual(prepared["action"], "created")
+		root, version, package_version = records.load(prepared["requisition"])
 		self.assertEqual(root.current_state, "Draft")
-		self.assertTrue(root.requisition_reference.startswith("REQ-MOH-"))
-		version = frappe.get_doc("Requisition Version", result["requisition_version"])
-		self.assertEqual(version.version_status, "Draft")
-		self.assertEqual(len(version.drawdown_lines), 1)
-		self.assertAlmostEqual(version.drawdown_lines[0].requested_value, 50_000_000)
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", result["package_version"])
-		self.assertEqual(package_version.version_status, "Draft")
+		self.assertEqual(root.open_slot_key, item_id)
+		self.assertTrue(root.plan_item_version_id)
+		self.assertEqual({row.organisation_unit for row in root.contributing_org_units}, {fx.ou_alpha(), fx.ou_beta()})
+		self.assertEqual(root.lead_org_unit_id, fx.ou_alpha())  # the larger drawn value leads
+		self.assertEqual(sorted((l.requested_quantity, l.requested_value) for l in version.drawdown_lines), [("100", "20000000.00"), ("150", "30000000.00")])
+		self.assertEqual(version.prepared_by, fx.AUTHOR)
+		self.assertEqual(package_version.standard_package_review_state, "Not generated")
+		self.assertEqual(frappe.db.count("Funding Reservation", {"calling_module": "Procurement Requisitions"}), 0)
+		self.assertEqual(frappe.db.count("Plan Drawdown Reference", {"plan_item_id": item_id}), 0)
 
-	def test_prepare_is_idempotent_by_key(self):
-		_, item_id = fx.active_item()
-		frappe.set_user(fx.AUTHOR)
-		key = fx.key()
-		first = cmd.prepare_it_equipment_requisition(plan_item_id=item_id, idempotency_key=key)
-		second = cmd.prepare_it_equipment_requisition(plan_item_id=item_id, idempotency_key=key)
-		self.assertEqual(first["requisition"], second["requisition"])
-		self.assertTrue(second["idempotent"])
+	def test_a_second_prepare_by_another_department_returns_the_open_record_not_a_duplicate(self):
+		_, item_id = fx.active_combined_item()
+		first = fx.prepare(item_id)
+		again = fx.prepare(item_id, fx.HOD_BETA)
+		self.assertEqual(again["action"], "existing")
+		self.assertEqual(again["requisition"], first["requisition"])
+		self.assertEqual(frappe.db.count("Procurement Requisition", {"plan_item_id": item_id}), 1)
 
-	def test_prepare_reuses_the_open_draft_on_a_second_distinct_call(self):
+	def test_the_database_guard_refuses_a_second_open_slot_even_when_the_read_missed_it(self):
 		_, item_id = fx.active_item()
-		frappe.set_user(fx.AUTHOR)
-		first = cmd.prepare_it_equipment_requisition(plan_item_id=item_id, idempotency_key=fx.key())
-		second = cmd.prepare_it_equipment_requisition(plan_item_id=item_id, idempotency_key=fx.key())
-		self.assertEqual(second["action"], "reused")
-		self.assertEqual(first["requisition"], second["requisition"])
+		fx.prepare(item_id)
+		with patch.object(records, "open_root_for", return_value=""):
+			with self.assertRaises(ProcurementRequisitionsError) as ctx:
+				fx.prepare(item_id)
+		self.assertCode(ctx, "REQ_OPEN_EXISTS")
+		self.assertEqual(frappe.db.count("Procurement Requisition", {"plan_item_id": item_id}), 1)
 
-	def test_a_plain_planner_cannot_prepare(self):
+	def test_an_incompatible_item_creates_nothing(self):
 		_, item_id = fx.active_item()
-		frappe.set_user(fx.PLANNER)
+		with patch("kentender_procurement.procurement_requisitions.services.compatibility.template_support", return_value={"template_key": "IT-EQUIPMENT-OPEN-V1", "available": True, "categories": ("None",), "county_residents": False, "method": "Restricted Tender"}):
+			with self.assertRaises(ProcurementRequisitionsError) as ctx:
+				fx.prepare(item_id)
+		self.assertCode(ctx, "REQ_PRODUCT_UNSUPPORTED")
+		self.assertEqual(ctx.exception.detail["test"], "procurement_method")
+		self.assertEqual(frappe.db.count("Procurement Requisition", {"plan_item_id": item_id}), 0)
+
+	def test_an_outsider_is_masked(self):
+		_, item_id = fx.active_item()
 		with self.assertRaises(frappe.DoesNotExistError):
-			cmd.prepare_it_equipment_requisition(plan_item_id=item_id, idempotency_key=fx.key())
+			fx.prepare(item_id, fx.PLANNER)
 
-	def test_head_of_user_department_may_prepare_directly(self):
+
+class TestRequestDetails(RequisitionCase):
+	def test_a_contributor_edits_only_their_own_line_and_never_shared_fields(self):
+		_, item_id = fx.active_combined_item()
+		requisition = fx.prepare(item_id)["requisition"]
+		view = fx.editor(requisition, fx.CONTRIBUTOR)
+		self.assertEqual(view["mode"], "contributor")
+		beta = next(r for r in view["amounts"] if r["contributing_org_unit"] == fx.ou_beta())
+		alpha = next(r for r in view["amounts"] if r["contributing_org_unit"] == fx.ou_alpha())
+		self.assertTrue(beta["editable"])
+		self.assertFalse(alpha["editable"])
+		cmd.save_requisition_summary(requisition=requisition, values={"drawdown_lines": [{"drawdown_line_id": beta["drawdown_line_id"], "requested_quantity": "80", "requested_value": "16000000.00"}]}, expected_record_version=view["header"]["version_record_version"], idempotency_key=fx.key())
+		view = fx.editor(requisition, fx.CONTRIBUTOR)
+		with self.assertRaises(ProcurementRequisitionsError) as ctx:
+			cmd.save_requisition_summary(requisition=requisition, values={"requirement_title": "A contributor retitling the shared request"}, expected_record_version=view["header"]["version_record_version"], idempotency_key=fx.key())
+		self.assertCode(ctx, "REQ_RESPONSIBILITY_REQUIRED")
+		with self.assertRaises(ProcurementRequisitionsError) as ctx:
+			cmd.save_requisition_summary(requisition=requisition, values={"drawdown_lines": [{"drawdown_line_id": alpha["drawdown_line_id"], "requested_quantity": "1", "requested_value": "1.00"}]}, expected_record_version=view["header"]["version_record_version"], idempotency_key=fx.key())
+		self.assertCode(ctx, "REQ_RESPONSIBILITY_REQUIRED")
+
+	def test_amounts_are_exact_and_bounded_by_what_remains(self):
 		_, item_id = fx.active_item()
-		frappe.set_user(fx.HOD)
-		result = cmd.prepare_it_equipment_requisition(plan_item_id=item_id, idempotency_key=fx.key())
-		self.assertEqual(result["action"], "created")
+		requisition = fx.prepare(item_id)["requisition"]
+		view = fx.editor(requisition)
+		line = view["amounts"][0]
+		for value, code in (("50000000.01", "REQ_BALANCE_CHANGED"), ("1.005", "REQ_MONEY_PRECISION_INVALID"), (100.0, "REQ_MONEY_PRECISION_INVALID")):
+			with self.subTest(value=value):
+				with self.assertRaises(ProcurementRequisitionsError) as ctx:
+					cmd.save_requisition_summary(requisition=requisition, values={"drawdown_lines": [{"drawdown_line_id": line["drawdown_line_id"], "requested_quantity": "1", "requested_value": value}]}, expected_record_version=view["header"]["version_record_version"], idempotency_key=fx.key())
+				self.assertCode(ctx, code)
+
+	def test_the_lead_follows_the_drawn_amounts(self):
+		_, item_id = fx.active_combined_item()
+		requisition = fx.prepare(item_id)["requisition"]
+		view = fx.editor(requisition)
+		alpha = next(r for r in view["amounts"] if r["contributing_org_unit"] == fx.ou_alpha())
+		cmd.save_requisition_summary(requisition=requisition, values={"drawdown_lines": [{"drawdown_line_id": alpha["drawdown_line_id"], "requested_quantity": "10", "requested_value": "1000000.00"}]}, expected_record_version=view["header"]["version_record_version"], idempotency_key=fx.key())
+		self.assertEqual(frappe.db.get_value("Procurement Requisition", requisition, "lead_org_unit_id"), fx.ou_beta())
 
 
-class TestSummaryAndItems(RequisitionDraftCase):
-	def test_save_summary_updates_title_location_date(self):
-		prepared = self.prepare()
-		frappe.set_user(fx.AUTHOR)
-		result = cmd.save_requisition_summary(
-			requisition=prepared["requisition"],
-			values={"requirement_title": "Updated title", "delivery_location": "", "latest_delivery_date": "2027-09-30"},
-			expected_record_version=0, idempotency_key=fx.key(),
-		)
-		self.assertEqual(result["action"], "saved")
-		version = frappe.get_doc("Requisition Version", prepared["requisition_version"])
-		self.assertEqual(version.requirement_title, "Updated title")
-
-	def test_add_item_proposes_baseline_rows(self):
-		prepared = self.prepare()
-		frappe.set_user(fx.AUTHOR)
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
-		result = cmd.add_requisition_item(
-			requisition=prepared["requisition"],
-			values={"plan_item_line_id": frappe.get_doc("Requisition Version", prepared["requisition_version"]).drawdown_lines[0].drawdown_line_id, "equipment_category": "Laptop", "item_name": "Business laptops", "quantity": 100, "intended_use": "Clinical training"},
-			expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-		)
-		self.assertEqual(result["action"], "added")
-		package_version.reload()
-		proposed_keys = {r.characteristic_key for r in package_version.technical_requirements if r.applies_to_id == result["row_id"]}
-		self.assertIn("electrical_compatibility", proposed_keys)
-		self.assertIn("new_unused_equipment", proposed_keys)
-		self.assertIn("storage_type", proposed_keys)
-		for row in package_version.technical_requirements:
-			self.assertEqual(row.row_status, "Proposed")
-
-	def test_a_second_item_of_the_same_category_widens_the_shared_baseline_to_all_items(self):
-		"""§13.7's own fixture: two Business laptops items share one set of
-		baseline characteristics — "applies_to is All items, so nothing is
-		entered twice." Confirmed live: without this, the naive per-item
-		version doubled every shared characteristic (22 rows instead of the
-		fixture's 11) the moment a second same-category item was added."""
-		prepared = self.prepare()
-		frappe.set_user(fx.AUTHOR)
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
-		line_id = frappe.get_doc("Requisition Version", prepared["requisition_version"]).drawdown_lines[0].drawdown_line_id
-		first = cmd.add_requisition_item(
-			requisition=prepared["requisition"],
-			values={"plan_item_line_id": line_id, "equipment_category": "Laptop", "item_name": "Business laptops", "quantity": 100, "intended_use": "Clinical training"},
-			expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-		)
-		package_version.reload()
-		second = cmd.add_requisition_item(
-			requisition=prepared["requisition"],
-			values={"plan_item_line_id": line_id, "equipment_category": "Laptop", "item_name": "Business laptops", "quantity": 150, "intended_use": "Field deployment"},
-			expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-		)
-		package_version.reload()
-		rows_by_key = {}
-		for row in package_version.technical_requirements:
-			rows_by_key.setdefault(row.characteristic_key, []).append(row)
-		for key in ("electrical_compatibility", "new_unused_equipment", "storage_type"):
-			self.assertEqual(len(rows_by_key[key]), 1, f"{key} should appear once, not once per item")
-			self.assertEqual(rows_by_key[key][0].applies_to_scope, "All items")
-		# A value-less proposal (e.g. Memory) still widens by key alone —
-		# both items get the same "not yet set" placeholder to confirm once.
-		self.assertEqual(len(rows_by_key["memory"]), 1)
-		self.assertEqual(rows_by_key["memory"][0].applies_to_scope, "All items")
-
-	def test_a_baseline_row_proposed_with_a_default_value_carries_its_display_text(self):
-		"""Found live on the Department task screen (REQ-DES-08), which
-		renders `required_value_display` directly with no fallback parser:
-		a baseline proposal with a default (e.g. "storage_type": "NVMe
-		SSD") had `required_value_json` but never `required_value_display`,
-		so the screen showed a blank cell for a Confirmed row."""
-		prepared = self.prepare()
-		frappe.set_user(fx.AUTHOR)
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
-		cmd.add_requisition_item(
-			requisition=prepared["requisition"],
-			values={"plan_item_line_id": frappe.get_doc("Requisition Version", prepared["requisition_version"]).drawdown_lines[0].drawdown_line_id, "equipment_category": "Laptop", "item_name": "Business laptops", "quantity": 100, "intended_use": "Clinical training"},
-			expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-		)
-		package_version.reload()
-		storage_type_row = next(r for r in package_version.technical_requirements if r.characteristic_key == "storage_type")
-		self.assertEqual(storage_type_row.required_value_display, "NVMe SSD")
-
-	def test_remove_item_blocked_while_technical_row_still_references_it(self):
-		prepared = self.prepare()
-		frappe.set_user(fx.AUTHOR)
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
-		added = cmd.add_requisition_item(
-			requisition=prepared["requisition"],
-			values={"plan_item_line_id": "DL-001", "equipment_category": "Monitor", "item_name": "Monitor", "quantity": 1, "intended_use": "Test"},
-			expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-		)
-		package_version.reload()
-		with self.assertRaises(ProcurementRequisitionsError) as ctx:
-			cmd.remove_requisition_item(
-				requisition=prepared["requisition"], requisition_item_id=added["row_id"],
-				expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-			)
-		self.assertEqual(ctx.exception.code, "REQ_QUANTITY_MISMATCH")
-
-
-class TestTechnicalRequirements(RequisitionDraftCase):
-	def _prepared_with_item(self):
-		prepared = self.prepare()
-		frappe.set_user(fx.AUTHOR)
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
-		added = cmd.add_requisition_item(
-			requisition=prepared["requisition"],
-			values={"plan_item_line_id": "DL-001", "equipment_category": "Laptop", "item_name": "Business laptops", "quantity": 100, "intended_use": "Clinical training"},
-			expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-		)
-		return prepared, added["row_id"]
-
-	def test_confirm_proposed_requirement_flips_status(self):
-		prepared, item_row_id = self._prepared_with_item()
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
-		row = next(r for r in package_version.technical_requirements if r.characteristic_key == "electrical_compatibility")
-		result = cmd.confirm_proposed_requirement(
-			requisition=prepared["requisition"], technical_requirement_id=row.technical_requirement_id,
-			expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-		)
-		self.assertEqual(result["action"], "updated")
-		package_version.reload()
-		confirmed = next(r for r in package_version.technical_requirements if r.technical_requirement_id == row.technical_requirement_id)
-		self.assertEqual(confirmed.row_status, "Confirmed")
-
-	def test_confirming_a_value_less_proposed_row_without_a_value_is_rejected(self):
-		"""A baseline rule that proposes no default (Memory, Storage
-		capacity) must not be confirmable bare — that would silently
-		produce a "Confirmed" row requiring nothing, the exact failure
-		REQ-AC-011's visible confirm-or-remove moment exists to prevent."""
-		prepared, item_row_id = self._prepared_with_item()
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
-		row = next(r for r in package_version.technical_requirements if r.characteristic_key == "memory")
-		with self.assertRaises(ProcurementRequisitionsError) as ctx:
-			cmd.confirm_proposed_requirement(
-				requisition=prepared["requisition"], technical_requirement_id=row.technical_requirement_id,
-				expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-			)
-		self.assertEqual(ctx.exception.code, "REQ_CONTROL_INVALID")
-
-	def test_confirming_a_value_less_proposed_row_with_a_value_sets_it_and_confirms(self):
-		prepared, item_row_id = self._prepared_with_item()
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
-		row = next(r for r in package_version.technical_requirements if r.characteristic_key == "memory")
-		result = cmd.confirm_proposed_requirement(
-			requisition=prepared["requisition"], technical_requirement_id=row.technical_requirement_id,
-			expected_record_version=package_version.record_version, idempotency_key=fx.key(), value=16,
-		)
-		self.assertEqual(result["action"], "updated")
-		package_version.reload()
-		confirmed = next(r for r in package_version.technical_requirements if r.technical_requirement_id == row.technical_requirement_id)
-		self.assertEqual(confirmed.row_status, "Confirmed")
-		self.assertEqual(confirmed.required_value_display, "16 GB")
-
-	def test_add_technical_requirement_validates_against_the_catalogue(self):
-		prepared, item_row_id = self._prepared_with_item()
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
-		with self.assertRaises(ProcurementRequisitionsError) as ctx:
-			cmd.add_technical_requirement(
-				requisition=prepared["requisition"],
-				values={"characteristic_key": "memory", "value": 100000, "applies_to_scope": "All items"},
-				expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-			)
-		self.assertEqual(ctx.exception.code, "REQ_CONTROL_INVALID")
-
-	def test_add_technical_requirement_with_a_valid_value_succeeds(self):
-		prepared, item_row_id = self._prepared_with_item()
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
-		result = cmd.add_technical_requirement(
-			requisition=prepared["requisition"],
-			values={"characteristic_key": "processor_requirement", "value": "64-bit business-class processor, minimum 10 cores or equivalent benchmark", "applies_to_scope": "All items"},
-			expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-		)
-		self.assertEqual(result["action"], "added")
-
-
-class TestWarrantyServiceAcceptance(RequisitionDraftCase):
-	def test_save_warranty_and_support(self):
-		prepared = self.prepare()
-		frappe.set_user(fx.AUTHOR)
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
-		result = cmd.save_warranty_and_support(
-			requisition=prepared["requisition"],
-			values={"minimum_warranty_months": 36, "onsite_support_required": 1, "maximum_support_response_hours": 8, "manufacturer_support_required": 1, "service_location_constraint": "Within Kenya"},
-			expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-		)
-		self.assertEqual(result["action"], "saved")
-		package_version.reload()
+class TestSameSpecificationItems(RequisitionCase):
+	def test_one_shared_definition_creates_one_item_per_source_and_the_laptop_proposal(self):
+		_, item_id = fx.active_combined_item()
+		requisition = fx.prepare(item_id)["requisition"]
+		result = fx.add_laptops(requisition)
+		self.assertEqual(len(result["items"]), 2)
+		self.assertEqual(result["review_state"], "Review required")
+		root, version, package_version = records.load(requisition)
+		self.assertEqual({(i.drawdown_line_id, i.quantity) for i in package_version.items}, {(l.drawdown_line_id, int(l.requested_quantity)) for l in version.drawdown_lines})
+		self.assertEqual(package_version.standard_profile_key, "LAPTOP-REQUIREMENTS-V1")
+		self.assertEqual(sum(1 for r in package_version.technical_requirements if r.row_state == "Proposed"), 11)
+		self.assertEqual(sum(1 for r in package_version.acceptance_requirements if r.row_state == "Proposed"), 5)
 		self.assertEqual(package_version.minimum_warranty_months, 36)
 
-	def test_save_warranty_and_support_rejects_an_out_of_range_warranty(self):
-		prepared = self.prepare()
-		frappe.set_user(fx.AUTHOR)
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
+	def test_a_bad_row_creates_nothing(self):
+		_, item_id = fx.active_combined_item()
+		requisition = fx.prepare(item_id)["requisition"]
+		view = fx.editor(requisition)
+		rows = [{"drawdown_line_id": r["drawdown_line_id"], "quantity": r["quantity"], "intended_use": "Field deployment for staff"} for r in view["equipment"]["add_rows"]]
+		rows[1]["quantity"] = rows[1]["quantity"] - 10
 		with self.assertRaises(ProcurementRequisitionsError) as ctx:
-			cmd.save_warranty_and_support(
-				requisition=prepared["requisition"],
-				values={"minimum_warranty_months": 121},
-				expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-			)
-		self.assertEqual(ctx.exception.code, "REQ_CONTROL_INVALID")
+			cmd.add_same_specification_items(requisition=requisition, shared={"equipment_category": "Laptop", "item_name": "Business laptops"}, rows=rows, expected_record_version=view["package_record_version"], idempotency_key=fx.key())
+		self.assertCode(ctx, "REQ_BATCH_ITEM_INVALID")
+		self.assertIn(rows[1]["drawdown_line_id"], ctx.exception.detail["rows"])
+		# REQ-DES-04-VALIDATION: the field says what it must be; the notice
+		# states the whole mismatch in the board's words.
+		wanted = rows[1]["quantity"] + 10
+		self.assertEqual(ctx.exception.detail["rows"][rows[1]["drawdown_line_id"]], f"Must be {wanted:,} Each")
+		name = next(r["department"] for r in view["equipment"]["add_rows"] if r["drawdown_line_id"] == rows[1]["drawdown_line_id"])
+		self.assertEqual(str(ctx.exception), f"Requested equipment quantity for {name} is {wanted - 10:,} Each but the approved requirement requests {wanted:,} Each")
+		self.assertEqual(len(records.load(requisition)[2].items), 0)
 
-	def test_save_warranty_and_support_requires_support_response_hours_only_when_onsite_is_yes(self):
-		prepared = self.prepare()
-		frappe.set_user(fx.AUTHOR)
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
+	def test_shared_edit_changes_every_named_item_and_a_category_change_regenerates_the_proposal(self):
+		_, item_id = fx.active_combined_item()
+		requisition = fx.prepare(item_id)["requisition"]
+		fx.add_laptops(requisition)
+		fx.apply_standard_package(requisition)
+		view = fx.editor(requisition)
+		ids = [r["requisition_item_id"] for r in view["equipment"]["rows"]]
+		cmd.update_shared_item_details(requisition=requisition, requisition_item_ids=ids, shared={"equipment_category": "Desktop computer", "item_name": "Business desktops"}, expected_record_version=view["package_record_version"], idempotency_key=fx.key())
+		package_version = records.load(requisition)[2]
+		self.assertEqual({i.item_name for i in package_version.items}, {"Business desktops"})
+		self.assertEqual(package_version.standard_package_review_state, "Review required")
+		self.assertEqual(package_version.standard_profile_key, catalogue.CATALOGUE_PROFILE_KEY)
+		# confirmed history is kept, the fresh proposal is added as Proposed
+		self.assertTrue(any(r.row_state == "Confirmed" for r in package_version.technical_requirements))
+
+
+class TestStandardPackage(RequisitionCase):
+	def _ready(self):
+		_, item_id = fx.active_item()
+		requisition = fx.prepare(item_id)["requisition"]
+		fx.fill_request_information(requisition)
+		fx.add_laptops(requisition)
+		return requisition
+
+	def test_apply_records_exactly_the_visible_selection_and_marks_reviewed(self):
+		requisition = self._ready()
+		view = fx.editor(requisition)
+		technical, acceptance, support = fx.visible_proposal(view)
+		technical[4]["selected"] = False  # clear Storage type
+		acceptance[0]["pass_condition"] = "Delivered quantities equal the authorised delivery schedule"
+		req = view["requirements"]
+		cmd.apply_selected_requirement_package(requisition=requisition, profile_key=req["profile_key"], profile_version=req["profile_version"], proposal_digest=req["proposal_digest"], technical=technical, acceptance=acceptance, support=support, expected_record_version=view["package_record_version"], idempotency_key=fx.key())
+		package_version = records.load(requisition)[2]
+		self.assertEqual(package_version.standard_package_review_state, "Reviewed")
+		self.assertEqual(len(package_version.technical_requirements), 10)
+		self.assertTrue(all(r.row_state == "Confirmed" for r in package_version.technical_requirements + package_version.acceptance_requirements))
+		self.assertNotIn("storage_type", {r.characteristic_key for r in package_version.technical_requirements})
+		self.assertEqual(package_version.acceptance_requirements[0].pass_condition, "Delivered quantities equal the authorised delivery schedule")
+		tasks = {t["key"]: t["status"] for t in fx.editor(requisition)["tasks"]}
+		self.assertEqual(tasks, {"request_details": "Complete", "requirements": "Complete", "review_submit": "Not started"})
+
+	def test_a_stale_proposal_is_refused_and_nothing_changes(self):
+		requisition = self._ready()
+		view = fx.editor(requisition)
+		technical, acceptance, support = fx.visible_proposal(view)
 		with self.assertRaises(ProcurementRequisitionsError) as ctx:
-			cmd.save_warranty_and_support(
-				requisition=prepared["requisition"],
-				values={"onsite_support_required": 0, "maximum_support_response_hours": 8},
-				expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-			)
-		self.assertEqual(ctx.exception.code, "REQ_CONTROL_INVALID")
+			cmd.apply_selected_requirement_package(requisition=requisition, profile_key="LAPTOP-REQUIREMENTS-V1", profile_version="1", proposal_digest="not-what-was-shown", technical=technical, acceptance=acceptance, support=support, expected_record_version=view["package_record_version"], idempotency_key=fx.key())
+		self.assertCode(ctx, "REQ_STANDARD_PROPOSAL_STALE")
+		self.assertEqual(records.load(requisition)[2].standard_package_review_state, "Review required")
 
-	def test_save_warranty_and_support_rejects_an_out_of_range_support_response(self):
-		prepared = self.prepare()
-		frappe.set_user(fx.AUTHOR)
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
+	def test_clearing_every_acceptance_check_is_refused(self):
+		requisition = self._ready()
+		view = fx.editor(requisition)
+		technical, acceptance, support = fx.visible_proposal(view)
+		for row in acceptance:
+			row["selected"] = False
+		req = view["requirements"]
 		with self.assertRaises(ProcurementRequisitionsError) as ctx:
-			cmd.save_warranty_and_support(
-				requisition=prepared["requisition"],
-				values={"onsite_support_required": 1, "maximum_support_response_hours": 169},
-				expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-			)
-		self.assertEqual(ctx.exception.code, "REQ_CONTROL_INVALID")
+			cmd.apply_selected_requirement_package(requisition=requisition, profile_key=req["profile_key"], profile_version=req["profile_version"], proposal_digest=req["proposal_digest"], technical=technical, acceptance=acceptance, support=support, expected_record_version=view["package_record_version"], idempotency_key=fx.key())
+		self.assertCode(ctx, "REQ_CONTROL_INVALID")
 
-	def test_save_warranty_and_support_rejects_an_unknown_service_location(self):
-		prepared = self.prepare()
+	def test_save_draft_keeps_review_required_and_confirms_nothing(self):
+		requisition = self._ready()
+		view = fx.editor(requisition)
+		technical, acceptance, support = fx.visible_proposal(view)
+		technical[0]["selected"] = False
+		cmd.save_requirement_proposal_draft(requisition=requisition, proposal_digest=view["requirements"]["proposal_digest"], technical=technical, acceptance=acceptance, support=support, expected_record_version=view["package_record_version"], idempotency_key=fx.key())
+		package_version = records.load(requisition)[2]
+		self.assertEqual(package_version.standard_package_review_state, "Review required")
+		self.assertEqual(len(package_version.technical_requirements), 10)
+		self.assertTrue(all(r.row_state == "Proposed" for r in package_version.technical_requirements))
+
+	def test_reset_restores_the_code_owned_proposal(self):
+		requisition = self._ready()
+		view = fx.editor(requisition)
+		technical, acceptance, support = fx.visible_proposal(view)
+		cmd.save_requirement_proposal_draft(requisition=requisition, proposal_digest=view["requirements"]["proposal_digest"], technical=technical[:3], acceptance=acceptance, support=support, expected_record_version=view["package_record_version"], idempotency_key=fx.key())
+		view = fx.editor(requisition)
+		cmd.reset_standard_values(requisition=requisition, expected_record_version=view["package_record_version"], idempotency_key=fx.key())
+		package_version = records.load(requisition)[2]
+		self.assertEqual(len([r for r in package_version.technical_requirements if r.row_state == "Proposed"]), 11)
+		self.assertEqual(package_version.standard_package_review_state, "Review required")
+
+
+class TestEditorProjection(RequisitionCase):
+	def test_a_page_read_creates_nothing(self):
+		_, item_id = fx.active_item()
+		before = frappe.db.count("Procurement Requisition")
+		from kentender_procurement.procurement_requisitions.services import read
+
 		frappe.set_user(fx.AUTHOR)
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
-		with self.assertRaises(ProcurementRequisitionsError) as ctx:
-			cmd.save_warranty_and_support(
-				requisition=prepared["requisition"],
-				values={"service_location_constraint": "Overseas"},
-				expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-			)
-		self.assertEqual(ctx.exception.code, "REQ_CONTROL_INVALID")
+		preview = read.get_start_preview(plan_item_id=item_id)
+		self.assertEqual(preview["state"], "ready")
+		self.assertTrue(preview["may_start"])
+		self.assertEqual(frappe.db.count("Procurement Requisition"), before)
 
-	def test_add_acceptance_requirement(self):
-		prepared = self.prepare()
-		frappe.set_user(fx.AUTHOR)
-		package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
-		result = cmd.add_acceptance_requirement(
-			requisition=prepared["requisition"],
-			values={"applies_to_scope": "All items", "check_type": "Quantity", "pass_condition": "Delivered quantities equal the authorised schedule", "evidence_type": "Inspection record"},
-			expected_record_version=package_version.record_version, idempotency_key=fx.key(),
-		)
-		self.assertEqual(result["action"], "added")
-		self.assertTrue(result["row_id"].startswith("ACC-"))
-
-
-class TestValidateRequisition(RequisitionDraftCase):
-	def test_validate_reports_blocking_findings_for_an_empty_draft(self):
-		prepared = self.prepare()
-		frappe.set_user(fx.AUTHOR)
-		report = cmd.validate_requisition(requisition=prepared["requisition"])
-		self.assertGreater(report["blocking_count"], 0)
-		self.assertFalse(report["steps"][5]["complete"])
+	def test_the_des03_base_projection(self):
+		_, item_id = fx.active_combined_item()
+		requisition = fx.prepare(item_id)["requisition"]
+		view = fx.editor(requisition)
+		self.assertEqual(view["kind"], "editor")
+		self.assertEqual([(t["label"], t["status"]) for t in view["tasks"]], [("Request details", "Needs attention"), ("Requirements", "Not started"), ("Review and submit", "Not started")])
+		self.assertEqual(view["header"]["badge"]["label"], "Draft")
+		self.assertEqual(len(view["amounts"]), 2)
+		self.assertFalse(any(r["changed"] for r in view["amounts"]))
+		self.assertEqual(view["footer_hints"]["request_details"], "Select the delivery location.")
