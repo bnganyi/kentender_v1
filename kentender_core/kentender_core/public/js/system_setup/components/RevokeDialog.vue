@@ -1,5 +1,6 @@
 <script setup>
-// AUTH-ADR-001 v1.6 §13.8/§14.4 — one explicit action with a required reason.
+// AUTH-DES-07, ported from C06 #auth-des-07 — one explicit action with a
+// required reason.
 // Built in-Vue rather than with frappe.confirm(), which renders outside the
 // Vue root and inherits neither its state nor its Industry styles.
 import { nextTick, onMounted, ref } from "vue";
@@ -25,36 +26,38 @@ onMounted(async () => {
 <template>
 	<div class="kt-dialog-backdrop">
 		<div
-			class="kt-dialog kt-blueprint kt-narrow"
-			role="dialog"
+			class="kt-dialog kt-narrow"
+			role="alertdialog"
 			aria-modal="true"
-			:aria-label="__('Revoke responsibility?')"
+			aria-labelledby="kt-revoke-title"
 			data-testid="kt-ura-revoke"
-			@keydown.esc="emit('cancel')"
+			@keydown.esc.stop="emit('cancel')"
 		>
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-			<h2 class="kt-dialog-title">{{ __("Revoke responsibility?") }}</h2>
-			<p class="kt-revoke-body">
-				{{ __("{0} will immediately lose {1} authority for {2}. Existing decisions and audit history will remain unchanged.",
-					[assignment.user_full_name, assignment.business_role, assignment.organisation_unit_label || __("the entire entity")]) }}
-			</p>
-			<div class="kt-field">
-				<label for="kt-revoke-reason">{{ __("Reason for revocation") }}</label>
-				<textarea
-					id="kt-revoke-reason"
-					ref="field"
-					v-model="reason"
-					class="kt-input kt-textarea"
-					rows="3"
-					:maxlength="REASON_MAX"
-					data-testid="kt-ura-revoke-reason"
-				/>
-				<p v-if="error" class="kt-inline-error" role="alert">{{ error }}</p>
+			<h2 id="kt-revoke-title" class="kt-dialog-title">{{ __("Revoke responsibility?") }}</h2>
+			<div class="dialog-body" style="display:flex;flex-direction:column;gap:14px">
+				<p style="margin:0">
+					{{ __("{0} will immediately lose {1} authority for {2}. Existing decisions and audit history will remain unchanged.",
+						[assignment.user_full_name, assignment.business_role, assignment.organisation_unit_label || __("the entire entity")]) }}
+				</p>
+				<div class="kt-field">
+					<label for="kt-revoke-reason">{{ __("Reason for revocation") }}</label>
+					<textarea
+						id="kt-revoke-reason"
+						ref="field"
+						v-model="reason"
+						class="kt-input kt-textarea"
+						rows="3"
+						:maxlength="REASON_MAX"
+						data-testid="kt-ura-revoke-reason"
+					/>
+				</div>
+				<div v-if="error" class="kt-notice is-critical" role="alert" data-testid="kt-ura-revoke-error">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+					<div class="kt-notice-body">{{ error }}</div>
+				</div>
 			</div>
 			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="emit('cancel')">
-					{{ __("Cancel") }}
-				</button>
+				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="emit('cancel')">{{ __("Cancel") }}</button>
 				<button
 					type="button"
 					class="kt-btn kt-btn-primary kt-danger"

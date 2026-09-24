@@ -43,6 +43,12 @@ export const DEPARTURES = {
 		},
 	],
 	"C02#add-year": DIALOG_TITLE_IS_A_HEADING,
+	// C05/C06, the AUTH tabs (D24) — every dialog titles itself the same way.
+	"C05#auth-des-02": DIALOG_TITLE_IS_A_HEADING,
+	"C06#auth-des-04": DIALOG_TITLE_IS_A_HEADING,
+	"C06#auth-des-05": DIALOG_TITLE_IS_A_HEADING,
+	"C06#auth-des-07": DIALOG_TITLE_IS_A_HEADING,
+	"C06#auth-edit-scheduled": DIALOG_TITLE_IS_A_HEADING,
 	"C02#disable": DIALOG_TITLE_IS_A_HEADING,
 	"C03A#add": DIALOG_TITLE_IS_A_HEADING,
 	"C03BC#rename": DIALOG_TITLE_IS_A_HEADING,
@@ -125,6 +131,8 @@ export const FRAGMENTS = [
 	"C03BC#version",
 	"C03D#verified",
 	"C03D#rejected",
+	// The board draws only the history region after Save changes.
+	"C06#auth-changed-history",
 ];
 
 export const COVERED = [
@@ -198,6 +206,25 @@ export const COVERED = [
 	"Common#loading",
 	"Common#denied",
 	"Common#load-error",
+	// AUTH tabs re-ported from C05/C06 — 25 Sep 2026 (D24)
+	"C05#auth-des-01",
+	"C05#auth-des-02",
+	"C05#auth-des-08-empty",
+	"C05#auth-des-08-root-admin",
+	"C05#auth-des-08-root-sm",
+	"C05#auth-des-08-ambiguous",
+	"C06#auth-des-03",
+	"C06#auth-des-04",
+	"C06#auth-des-05",
+	"C06#auth-des-06",
+	"C06#auth-des-07",
+	"C06#auth-des-06-scheduled",
+	"C06#auth-edit-scheduled",
+	"C06#auth-changed-history",
+	"C06#auth-des-08~loading",
+	"C06#auth-des-08~empty",
+	"C06#auth-des-08~forbidden",
+	"C06#auth-des-08~error",
 ];
 
 /**

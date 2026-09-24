@@ -85,3 +85,29 @@ class TestSystemSetupWorlds(IntegrationTestCase):
 		# The CONFIG-RULES specimen would otherwise make Planning's reservation
 		# read ambiguous (two planning rules in force).
 		self.assertTrue(register.get_regulatory_reference(UPCOMING)["available"])
+
+
+class TestResponsibilitiesWorld(IntegrationTestCase):
+	"""C06 browser journeys assign, edit and revoke for one dedicated test
+	user; the world is idempotent and `restore_site` leaves nothing of it."""
+
+	def tearDown(self):
+		worlds.restore_site()
+
+	def test_the_world_is_a_desk_user_with_no_business_role_or_assignment_and_restore_removes_it(self):
+		from kentender_core.services import responsibility_administration as administration
+
+		world = worlds.reset_responsibilities()
+		self.assertEqual(world, worlds.reset_responsibilities())
+		self.assertEqual(frappe.get_all("Has Role", filters={"parent": world["user"], "role": ("not in", ("All", "Guest", "Desk User"))}, pluck="role"), [])
+		self.assertFalse(frappe.db.exists("User Responsibility Assignment", {"user": world["user"]}))
+		self.assertTrue(frappe.db.exists("Organisation Unit", world["unit"]))
+
+		granted = administration.grant(user=world["user"], business_role="Departmental Author", organisation_unit=world["unit"])
+		worlds.reset_responsibilities()
+		self.assertFalse(frappe.db.exists("User Responsibility Assignment", granted["assignment"]))
+
+		administration.grant(user=world["user"], business_role="Departmental Author", organisation_unit=world["unit"])
+		worlds.restore_site()
+		self.assertFalse(frappe.db.exists("User", world["user"]))
+		self.assertFalse(frappe.db.exists("User Responsibility Assignment", {"user": world["user"]}))

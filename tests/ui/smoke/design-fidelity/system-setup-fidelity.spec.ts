@@ -28,12 +28,9 @@ import {
  * Geometry is NOT measured: the probes in designFidelity.ts have no call
  * sites (AGENTS.md §6.6).
  *
- * Scope: the boards this module owns — C01, C02, C03A, C03BC, C03D, C04 and
- * Reminders. The AUTH-owned boards were removed from this folder by their
- * owner and their tests with them (plan D2, FOLLOW_UPS FU-11): CFG cannot
- * assert fidelity against artboards it does not own. The AUTH tabs still
- * render inside this page; their behaviour is covered by the responsibility
- * and access specs, not here.
+ * Scope: C01, C02, C03A, C03BC, C03D, C04, Reminders, and — since the owner
+ * supplied them on 25 Sep 2026 (D24) — C05/C06, the AUTH-owned tabs drawn in
+ * this page's frame. Their journeys are system-setup-responsibilities.spec.
  *
  * Prerequisite state: the KT-STD §8 seed world
  * (`bench execute kentender_core.seeds.site_setup.run` — idempotent; the
@@ -121,6 +118,25 @@ async function currentReservationVersion(page: Page): Promise<string> {
 	);
 	expect(set?.version?.name, "a current Reservation rules version").toBeTruthy();
 	return set.version.name;
+}
+
+/** A unit's id by its name, from the server's own tree read. */
+async function unitId(page: Page, name: string): Promise<string> {
+	const response = await page.request.get(
+		"/api/method/kentender_core.api.organisation_structure_api.get_organisation_structure"
+	);
+	const body = await response.json();
+	const find = (nodes: any[]): string => {
+		for (const node of nodes || []) {
+			if (node.name === name) return node.id;
+			const hit = find(node.children);
+			if (hit) return hit;
+		}
+		return "";
+	};
+	const id = find(body.message?.tree);
+	expect(id, `unit ${name}`).toBeTruthy();
+	return id;
 }
 
 /** The first registered working-day calendar, or "" when none exists yet. */
@@ -626,4 +642,43 @@ test.describe("System setup — design fidelity", () => {
 		await art.close();
 	});
 
+	// C05 #auth-des-01 — the tree beside the selected unit, on the unit's own
+	// link (the board selects the directorate). The tree rows are the Frappe
+	// control's (AUTH v1.9 §13.1), so only the composition is compared.
+	test("C05-structure — Organisation structure: tree beside the selected unit's facts and actions", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		const scope = "#auth-des-01";
+		await openArtboard(art, `${DESIGN_DIR}/C05-Organisation-Structure.dc.html`, scope);
+
+		await loginAsAdministrator(page);
+		const directorate = await unitId(page, "Directorate of Digital Health and Policy");
+		const errors = await openSetupTab(page, `organisation-structure/${directorate}`, '[data-testid="kt-ou-detail"]');
+		await expect(page.locator('[data-testid="kt-ou-detail"] h3')).toHaveText("Directorate of Digital Health and Policy");
+		await expectBoardStructure(page, '[data-testid="kt-setup-org"]', art, scope, "C05#auth-des-01");
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
+
+	// C06 #auth-des-03 / #auth-des-06 — the register and an active detail.
+	test("C06-register — Users and responsibilities register and an Active responsibility", async ({ page, browser }) => {
+		const art = await browser.newPage();
+		await openArtboard(art, `${DESIGN_DIR}/C06-Users-Responsibilities.dc.html`, "#auth-des-03");
+		const wanted = (await landmarks(art, "#auth-des-03")).filter((text) => text !== "AUTH-DES-03");
+
+		await loginAsAdministrator(page);
+		const errors = await openSetupTab(page, "users-and-responsibilities", '[data-testid="kt-ura-table"]');
+		await expectBoardStructure(page, '[data-testid="kt-setup-ura"]', art, "#auth-des-03", "C06#auth-des-03");
+		const live = await landmarks(page, '[data-testid="kt-setup-ura"]');
+		for (const text of ["Assign responsibility", "Search", "Organisation unit", "Responsibility", "Status", "Clear filters"]) {
+			expect(wanted, `board draws ${text}`).toContain(text);
+			expect(live, `live draws ${text}`).toContain(text);
+		}
+
+		await page.locator('tr:has-text("grace.wanjiku") [data-testid^="kt-ura-view-"]').first().click();
+		await page.waitForSelector('[data-testid="kt-ura-detail"]', { timeout: 20_000 });
+		await openArtboard(art, `${DESIGN_DIR}/C06-Users-Responsibilities.dc.html`, "#auth-des-06");
+		await expectBoardStructure(page, '[data-testid="kt-ura-detail"]', art, "#auth-des-06", "C06#auth-des-06");
+		expect(errors, "console errors").toEqual([]);
+		await art.close();
+	});
 });

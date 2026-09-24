@@ -1,20 +1,22 @@
 <script setup>
-// AUTH-ADR-001 v1.6 §13.7/§14.4, ported from AUTH-DES-06: eyebrow + title
-// with the status badge inline, then an Assignment card of labelled rows, an
-// Audit card, the collapsed Access-diagnostics row, the Administrative
-// history table, and the destructive command alone in the bottom action bar.
+// AUTH-DES-06, ported from C06 #auth-des-06 (Active) and
+// #auth-des-06-scheduled: the reference as eyebrow, the title with its
+// status, the Assignment facts beside the Audit group, the collapsed Access
+// diagnostics, the Administrative history (a change made before the start is
+// one event with a line per changed field, #auth-changed-history) and the
+// sticky footer.
 //
 // An assignment already in force is never edited: an incorrect one is
 // revoked and replaced so historical authority is never rewritten. One that
 // has not started yet may still be changed (owner decision 21 Sep 2026) —
-// the Edit action, like Revoke, appears only because the server said so
-// (`can_edit` / `can_revoke`). No Procuring Entity row exists (§13.7).
+// Edit, like Revoke, appears only because the server said so (`can_edit` /
+// `can_revoke`). No Procuring Entity row exists (AUTH §13.7).
 import { ref } from "vue";
 
 defineProps({
 	assignment: { type: Object, required: true },
 });
-const emit = defineEmits(["revoke", "edit", "back"]);
+const emit = defineEmits(["revoke", "edit"]);
 
 const diagnosticsOpen = ref(false);
 
@@ -27,168 +29,124 @@ const STATUS_KIND = {
 </script>
 
 <template>
-	<div class="kt-detail-stack" data-testid="kt-ura-detail">
-		<div>
-			<a href="#" class="kt-back" data-testid="kt-ura-back-to-register" @click.prevent="emit('back')">
-				← {{ __("Users and responsibilities") }}
-			</a>
-			<div class="kt-detail-head">
-				<div class="kt-eyebrow">{{ assignment.assignment }}</div>
-				<h2 class="kt-detail-title">
-					{{ assignment.user_full_name }} — {{ assignment.business_role }}
-					<span class="kt-status" :class="STATUS_KIND[assignment.status]">{{ assignment.status }}</span>
-				</h2>
-			</div>
+	<div class="kt-ura-detail" data-testid="kt-ura-detail">
+		<div class="kt-eyebrow">{{ assignment.assignment }}</div>
+		<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:4px 0 24px">
+			<h2 style="margin:0">{{ assignment.user_full_name }} — {{ assignment.business_role }}</h2>
+			<span class="kt-status" :class="STATUS_KIND[assignment.status]" data-testid="kt-ura-detail-status">{{ assignment.status }}</span>
 		</div>
 
-		<!-- AUTH-DES-06 — Assignment card -->
-		<div class="kt-card kt-blueprint">
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-			<div class="kt-card-title">{{ __("Assignment") }}</div>
-			<div class="kt-detail-rows">
-				<div class="kt-detail-row">
-					<span class="kt-label">{{ __("User") }}</span>
-					<span>{{ assignment.user_full_name }} · {{ assignment.user }}</span>
-				</div>
-				<div class="kt-detail-row">
-					<span class="kt-label">{{ __("Responsibility") }}</span>
-					<span>{{ assignment.business_role }}</span>
-				</div>
-				<div class="kt-detail-row">
-					<span class="kt-label">{{ __("Scope classification") }}</span>
-					<span>{{ assignment.scope_type }}</span>
-				</div>
-				<div class="kt-detail-row">
-					<span class="kt-label">{{ __("Organisation Unit") }}</span>
-					<span>{{ assignment.organisation_unit_path || __("Site-wide") }}</span>
-				</div>
-				<div class="kt-detail-row">
-					<span class="kt-label">{{ __("Included units") }}</span>
-					<span>{{ assignment.coverage }}</span>
-				</div>
-				<div class="kt-detail-row">
-					<span class="kt-label">{{ __("Appointment") }}</span>
-					<span>{{ assignment.appointment_type }}</span>
-				</div>
-				<div v-if="assignment.authority_reference" class="kt-detail-row">
-					<span class="kt-label">{{ __("Authority reference") }}</span>
-					<span>{{ assignment.authority_reference }}</span>
-				</div>
-				<div class="kt-detail-row">
-					<span class="kt-label">{{ __("Effective period") }}</span>
-					<span>{{ assignment.effective_label }}</span>
-				</div>
+		<div class="kt-ura-detail-grid">
+			<div>
+				<h3 style="margin:0 0 10px">{{ __("Assignment") }}</h3>
+				<dl class="kt-setup-facts is-wide">
+					<dt class="kt-label">{{ __("User") }}</dt>
+					<dd>{{ assignment.user_full_name }} · {{ assignment.user }}</dd>
+					<dt class="kt-label">{{ __("Responsibility") }}</dt>
+					<dd>{{ assignment.business_role }}</dd>
+					<dt class="kt-label">{{ __("Scope classification") }}</dt>
+					<dd>{{ assignment.scope_type }}</dd>
+					<dt class="kt-label">{{ __("Organisation Unit") }}</dt>
+					<dd>{{ assignment.organisation_unit_path || __("Site-wide") }}</dd>
+					<dt class="kt-label">{{ __("Included units") }}</dt>
+					<dd>{{ assignment.coverage }}</dd>
+					<dt class="kt-label">{{ __("Appointment") }}</dt>
+					<dd>{{ assignment.appointment_type }}</dd>
+					<dt class="kt-label">{{ __("Effective period") }}</dt>
+					<dd>{{ assignment.effective_label }}</dd>
+					<template v-if="assignment.authority_reference">
+						<dt class="kt-label">{{ __("Authority reference") }}</dt>
+						<dd>{{ assignment.authority_reference }}</dd>
+					</template>
+				</dl>
+			</div>
+			<div class="kt-group">
+				<h4 style="margin:0 0 10px">{{ __("Audit") }}</h4>
+				<dl class="kt-setup-facts is-plain">
+					<dt class="kt-label">{{ __("Assigned by") }}</dt>
+					<dd>{{ assignment.assigned_by || "—" }}</dd>
+					<dt class="kt-label">{{ __("Assigned at") }}</dt>
+					<dd>{{ assignment.assigned_at_label || "—" }}</dd>
+					<template v-if="assignment.revoked_by">
+						<dt class="kt-label">{{ __("Revoked by") }}</dt>
+						<dd>{{ assignment.revoked_by }}</dd>
+						<dt class="kt-label">{{ __("Revoked at") }}</dt>
+						<dd>{{ assignment.revoked_at_label }}</dd>
+						<dt class="kt-label">{{ __("Revocation reason") }}</dt>
+						<dd>{{ assignment.revocation_reason }}</dd>
+					</template>
+					<dt class="kt-label">{{ __("Frappe role projection") }}</dt>
+					<dd>{{ assignment.diagnostics.projection_present ? __("Synchronised") : assignment.status === "Scheduled" ? __("Not yet required") : __("Missing") }}</dd>
+				</dl>
 			</div>
 		</div>
-
-		<!-- AUTH-DES-06 — Audit card -->
-		<div class="kt-card kt-blueprint">
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-			<div class="kt-card-title">{{ __("Audit") }}</div>
-			<div class="kt-detail-rows">
-				<div class="kt-detail-row">
-					<span class="kt-label">{{ __("Assigned by") }}</span>
-					<span>{{ assignment.assigned_by || "—" }}</span>
-				</div>
-				<div class="kt-detail-row">
-					<span class="kt-label">{{ __("Assigned at") }}</span>
-					<span>{{ assignment.assigned_at_label || "—" }}</span>
-				</div>
-				<div v-if="assignment.revoked_by" class="kt-detail-row">
-					<span class="kt-label">{{ __("Revoked by") }}</span>
-					<span>{{ assignment.revoked_by }}</span>
-				</div>
-				<div v-if="assignment.revoked_by" class="kt-detail-row">
-					<span class="kt-label">{{ __("Revoked at") }}</span>
-					<span>{{ assignment.revoked_at_label }}</span>
-				</div>
-				<div v-if="assignment.revoked_by" class="kt-detail-row">
-					<span class="kt-label">{{ __("Revocation reason") }}</span>
-					<span>{{ assignment.revocation_reason }}</span>
-				</div>
-				<div class="kt-detail-row">
-					<span class="kt-label">{{ __("Frappe role projection") }}</span>
-					<span>{{ assignment.diagnostics.projection_present ? __("Synchronised") : __("Missing") }}</span>
-				</div>
-			</div>
-		</div>
-
-		<!-- AUTH-DES-06 — Access diagnostics, collapsed as a row-card -->
-		<button
-			type="button"
-			class="kt-card kt-blueprint kt-diag-card"
-			:aria-expanded="diagnosticsOpen"
-			data-testid="kt-ura-diagnostics-toggle"
-			@click="diagnosticsOpen = !diagnosticsOpen"
-		>
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-			<span class="kt-diag-card-title">{{ __("Access diagnostics") }}</span>
-			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m9 6 6 6-6 6" /></svg>
-		</button>
 
 		<!-- §14.4 — read-only; never repairs or broadens, and never shows a
 		     protected record's content. -->
-		<div v-if="diagnosticsOpen" class="kt-card kt-blueprint" data-testid="kt-ura-diagnostics">
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-			<div class="kt-diagnostics">
-				<div class="kt-diag-row">
-					<span class="kt-muted">{{ __("Required & present Frappe Role projection") }}</span>
-					<span>
+		<div class="kt-disclosure" style="margin-top:24px">
+			<div
+				class="kt-disclosure-head"
+				role="button"
+				tabindex="0"
+				:aria-expanded="diagnosticsOpen ? 'true' : 'false'"
+				data-testid="kt-ura-diagnostics-toggle"
+				@click="diagnosticsOpen = !diagnosticsOpen"
+				@keydown.enter.prevent="diagnosticsOpen = !diagnosticsOpen"
+				@keydown.space.prevent="diagnosticsOpen = !diagnosticsOpen"
+			>
+				<div class="kt-disclosure-title-row"><span class="kt-disclosure-title">{{ __("Access diagnostics") }}</span></div>
+				<svg class="kt-disclosure-chevron" :class="{ 'is-open': diagnosticsOpen }" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+			</div>
+			<div v-if="diagnosticsOpen" class="kt-disclosure-body" data-testid="kt-ura-diagnostics">
+				<dl class="kt-setup-facts is-plain">
+					<dt class="kt-label">{{ __("Required Frappe Role projection") }}</dt>
+					<dd>
 						{{ assignment.diagnostics.required_projection.join(", ") }} —
 						{{ assignment.diagnostics.projection_present ? __("present") : __("missing") }}
-					</span>
-				</div>
-				<div class="kt-diag-row">
-					<span class="kt-muted">{{ __("Resolved organisational coverage") }}</span>
-					<span>{{ assignment.diagnostics.coverage }}</span>
-				</div>
-				<div class="kt-diag-row">
-					<span class="kt-muted">{{ __("Configuration conflicts or overlaps") }}</span>
-					<span>{{ assignment.diagnostics.overlapping.length ? assignment.diagnostics.overlapping.length : __("None found") }}</span>
-				</div>
-				<div class="kt-diag-row">
-					<span class="kt-muted">{{ __("Orphan Frappe Roles") }}</span>
-					<span>{{ assignment.diagnostics.projection_orphaned.length ? assignment.diagnostics.projection_orphaned.join(", ") : __("None") }}</span>
-				</div>
-				<div class="kt-diag-row">
-					<span class="kt-muted">{{ __("Obsolete records awaiting migration") }}</span>
-					<span>
+					</dd>
+					<dt class="kt-label">{{ __("Resolved organisational coverage") }}</dt>
+					<dd>{{ assignment.diagnostics.coverage }}</dd>
+					<dt class="kt-label">{{ __("Configuration conflicts or overlaps") }}</dt>
+					<dd>{{ assignment.diagnostics.overlapping.length ? assignment.diagnostics.overlapping.length : __("None found") }}</dd>
+					<dt class="kt-label">{{ __("Orphan Frappe Roles") }}</dt>
+					<dd>{{ assignment.diagnostics.projection_orphaned.length ? assignment.diagnostics.projection_orphaned.join(", ") : __("None") }}</dd>
+					<dt class="kt-label">{{ __("Obsolete records awaiting migration") }}</dt>
+					<dd>
 						{{ Object.values(assignment.diagnostics.obsolete_rows || {}).some((n) => n)
 							? Object.entries(assignment.diagnostics.obsolete_rows).filter(([, n]) => n).map(([k, n]) => k + ": " + n).join(" · ")
 							: __("None") }}
-					</span>
-				</div>
+					</dd>
+				</dl>
 			</div>
 		</div>
 
-		<!-- AUTH-DES-06 — Administrative history -->
-		<div class="kt-card kt-blueprint kt-history-card" data-testid="kt-ura-history">
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-			<div class="kt-card-title">{{ __("Administrative history") }}</div>
-			<div class="kt-table-scroll">
-				<table class="kt-table">
-					<thead>
-						<tr>
-							<th>{{ __("When") }}</th>
-							<th>{{ __("Actor") }}</th>
-							<th>{{ __("Event") }}</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr v-for="event in assignment.history" :key="event.event + event.when">
-							<td>{{ event.when }}</td>
-							<td>{{ event.actor }}</td>
-							<td>
-								{{ event.event }}
-								<div v-if="event.detail" class="kt-history-detail">{{ event.detail }}</div>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
+		<h3 style="margin:24px 0 10px;font-size:17px">{{ __("Administrative history") }}</h3>
+		<div class="kt-table-scroll" data-testid="kt-ura-history">
+			<table class="kt-table">
+				<thead>
+					<tr>
+						<th>{{ __("When") }}</th>
+						<th>{{ __("Actor") }}</th>
+						<th>{{ __("Event") }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr v-for="event in assignment.history" :key="event.event + event.when">
+						<td style="vertical-align:top">{{ event.when }}</td>
+						<td style="vertical-align:top">{{ event.actor }}</td>
+						<td>
+							<template v-if="(event.changes || []).length">
+								<div style="font-weight:600">{{ event.event }}</div>
+								<div v-for="change in event.changes" :key="change" class="kt-ura-change">{{ change }}</div>
+							</template>
+							<template v-else>{{ event.event }}</template>
+						</td>
+					</tr>
+				</tbody>
+			</table>
 		</div>
 
-		<div v-if="assignment.can_revoke || assignment.can_edit" class="kt-action-bar">
+		<div v-if="assignment.can_revoke || assignment.can_edit" class="kt-sticky-footer kt-ura-footer">
 			<button
 				v-if="assignment.can_edit"
 				type="button"

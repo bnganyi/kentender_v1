@@ -195,6 +195,58 @@ class TestZRootRepair(StructureTestCase):
 		self.assertFalse(result["created"])
 		self.assertEqual(result["id"], self.root)
 
+	def _detach(self, unit: str, parent: str | None):
+		"""Corrupt one parent link directly (no controller), restored after."""
+		before = frappe.db.get_value("Organisation Unit", unit, "parent_organisation_unit")
+		frappe.db.set_value("Organisation Unit", unit, "parent_organisation_unit", parent, update_modified=False)
+		self.addCleanup(lambda: (frappe.db.set_value("Organisation Unit", unit, "parent_organisation_unit", before, update_modified=False), frappe.db.commit()))
+
+	def test_a_second_top_level_unit_is_ambiguous_and_the_repair_refuses_it(self):
+		"""CFG v0.14 §4.4/§10.12, CFG10-AC-022 — two roots are never resolved
+		by picking one; the structure lists the conflict and the repair
+		refuses rather than silently repairing it."""
+		self._detach(self.leaf, None)
+		out = structure.get_organisation_structure()
+		self.assertEqual(out["state"], "ambiguous")
+		self.assertEqual(out["tree"], [])
+		leaf_code = frappe.db.get_value("Organisation Unit", self.leaf, "unit_code")
+		self.assertTrue(any(leaf_code in conflict for conflict in out["conflicts"]), out["conflicts"])
+		from kentender_core.services.configuration_errors import ConfigurationError
+
+		with self.assertRaises(ConfigurationError) as caught:
+			configuration.repair_organisation_root()
+		self.assertEqual(self.code(caught), "CFG_ROOT_UNIT_CONFLICT")
+
+	def test_a_unit_whose_parent_is_gone_beside_a_root_is_ambiguous(self):
+		self._detach(self.leaf, "OU-DOES-NOT-EXIST")
+		out = structure.get_organisation_structure()
+		self.assertEqual(out["state"], "ambiguous")
+		leaf_code = frappe.db.get_value("Organisation Unit", self.leaf, "unit_code")
+		self.assertTrue(any(leaf_code in conflict for conflict in out["conflicts"]), out["conflicts"])
+
+	def test_no_responsibility_is_granted_while_the_structure_is_ambiguous(self):
+		"""CFG10-AC-022 — responsibilities are unavailable until the structure
+		is resolved, at the command, not only by disabling the tab."""
+		from kentender_core.services import responsibility_administration as administration
+
+		grantee = fx.user("os.ambiguous.grantee")
+		self._detach(self.leaf, None)
+		with self.assertRaises(ResponsibilityError) as caught:
+			administration.grant(user=grantee, business_role="Departmental Author", organisation_unit=self.directorate)
+		self.assertEqual(self.code(caught), "AUTH_CONFIGURATION_INVALID")
+		self.assertIn("Organisation structure needs repair", str(caught.exception))
+		self.assertFalse(frappe.db.exists("User Responsibility Assignment", {"user": grantee}))
+
+	def test_the_site_read_reports_an_ambiguous_structure(self):
+		self._detach(self.leaf, None)
+		self.assertTrue(configuration.get_site_configuration()["structure_ambiguous"])
+
+	def test_the_missing_root_message_is_the_cfg_wording(self):
+		from kentender_core.services.configuration_errors import DEFAULT_MESSAGES
+
+		self.assertEqual(DEFAULT_MESSAGES["CFG_ROOT_UNIT_MISSING"], "The top-level organisation unit is missing.")
+		self.assertEqual(DEFAULT_MESSAGES["CFG_ROOT_UNIT_CONFLICT"], "The organisation structure cannot be repaired automatically.")
+
 	def test_z_missing_root_reports_needs_repair_then_the_governed_repair_heals(self):
 		"""§13.9 + CFG-AC-022 — never an empty successful tree; the repair
 		recreates the root and adopts every orphaned subtree top."""

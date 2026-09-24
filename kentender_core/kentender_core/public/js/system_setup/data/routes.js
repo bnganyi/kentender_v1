@@ -18,6 +18,7 @@
 export const TABS = ["procuring-entity", "fiscal-years", "organisation-structure", "users-and-responsibilities", "procurement-settings"];
 export const SECTIONS = ["funding-sources", "procurement-rules", "schedule-profiles", "reminders", "calendars"];
 const ACTIONS = ["new-version", "edit", "check-sources", "history"];
+const ID_TABS = ["fiscal-years", "organisation-structure", "users-and-responsibilities"];
 
 function decode(segment) {
 	try {
@@ -36,7 +37,8 @@ export function parseSetupHash(hash) {
 		.map(decode);
 	if (!TABS.includes(parts[0])) return route;
 	route.tab = parts[0];
-	if (route.tab === "fiscal-years") {
+	// A year, an organisation unit and a responsibility each open by id.
+	if (ID_TABS.includes(route.tab)) {
 		route.id = parts[1] || "";
 		return route;
 	}
@@ -60,7 +62,7 @@ export function parseSetupHash(hash) {
 export function buildSetupHash({ tab = "", section = "", id = "", versionId = "", action = "" } = {}) {
 	if (!tab) return "";
 	const parts = [tab];
-	if (tab === "fiscal-years") {
+	if (ID_TABS.includes(tab)) {
 		if (id) parts.push(id);
 		return parts.map((p, i) => (i ? encodeURIComponent(p) : p)).join("/");
 	}

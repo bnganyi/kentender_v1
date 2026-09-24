@@ -442,6 +442,10 @@ class TestUpdateScheduled(AdministrationTestCase):
 		)
 		self.assertIn("Effective from: 1 Jan 2097", detail["history"][1]["detail"])
 		self.assertIn("→ now", detail["history"][1]["detail"])
+		# AUTH-DES-06 "changed history": one line per changed field.
+		self.assertEqual(len(detail["history"][1]["changes"]), 1)
+		self.assertTrue(detail["history"][1]["changes"][0].startswith("Effective from: 1 Jan 2097"))
+		self.assertEqual(detail["history"][0]["changes"], [])
 
 	def test_every_attribute_can_change_before_the_start(self):
 		user, granted = self.scheduled("adm.edit.all")
@@ -486,6 +490,18 @@ class TestUpdateScheduled(AdministrationTestCase):
 			self._update(granted, effective_to="2097-01-01 00:00:00")
 		self.assertEqual(self.code(caught), "AUTH_STATE_CHANGED")
 		self.assertIn("already started", str(caught.exception))
+
+	def test_an_expired_assignment_offers_no_edit(self):
+		"""AUTH v1.9 §13.7 / CFG12-AC-014 — Edit only while Scheduled; an
+		assignment whose period has ended reads Expired with no Edit."""
+		user, granted = self.scheduled(
+			"adm.edit.expired", appointment_type="Acting", authority_reference="KT/TEST/EXP/1",
+			effective_to="2097-12-31 23:59:59",
+		)
+		later = administration.get_assignment_detail(granted, at="2098-06-01 00:00:00")
+		self.assertEqual(later["status"], "Expired")
+		self.assertFalse(later["can_edit"])
+		self.assertTrue(administration.get_assignment_detail(granted)["can_edit"])
 
 	def test_a_revoked_assignment_cannot_be_changed(self):
 		user, granted = self.scheduled("adm.edit.revoked")

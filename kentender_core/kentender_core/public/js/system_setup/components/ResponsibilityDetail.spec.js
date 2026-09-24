@@ -73,22 +73,33 @@ describe("ResponsibilityDetail", () => {
 		expect(revoked.find(".kt-action-bar").exists()).toBe(false);
 	});
 
-	it("renders a change in the administrative history with what moved", () => {
+	it("renders a change in the administrative history as the event, then a line per field that moved (C06 #auth-changed-history)", () => {
 		const wrapper = mountDetail({
 			history: [
-				{ when: "1 Sep 2026, 09:00 EAT", actor: "Administrator", event: "Responsibility assigned", detail: "" },
+				{ when: "1 Sep 2026, 10:05 EAT", actor: "Administrator", event: "Responsibility assigned", detail: "", changes: [] },
 				{
-					when: "21 Sep 2026, 16:10 EAT",
+					when: "1 Sep 2026, 10:30 EAT",
 					actor: "Administrator",
 					event: "Scheduled assignment changed",
-					detail: "Effective from: 1 Dec 2026, 00:00 EAT → now",
+					detail: "Effective to: 30 Nov 2026, 23:59 EAT → 31 Dec 2026, 23:59 EAT; Authority reference: A → B",
+					changes: ["Effective to: 30 Nov 2026, 23:59 EAT → 31 Dec 2026, 23:59 EAT", "Authority reference: A → B"],
 				},
 			],
 		});
 		const rows = wrapper.findAll('[data-testid="kt-ura-history"] tbody tr');
 		expect(rows).toHaveLength(2);
-		expect(rows[1].text()).toContain("Scheduled assignment changed");
-		expect(rows[1].find(".kt-history-detail").text()).toBe("Effective from: 1 Dec 2026, 00:00 EAT → now");
-		expect(rows[0].find(".kt-history-detail").exists()).toBe(false);
+		expect(rows[1].find("td:last-child > div").text()).toBe("Scheduled assignment changed");
+		expect(rows[1].findAll(".kt-ura-change").map((line) => line.text())).toEqual([
+			"Effective to: 30 Nov 2026, 23:59 EAT → 31 Dec 2026, 23:59 EAT",
+			"Authority reference: A → B",
+		]);
+		expect(rows[0].findAll(".kt-ura-change")).toHaveLength(0);
+		expect(rows[0].find("td:last-child").text()).toBe("Responsibility assigned");
+	});
+
+	it("says the role projection is not yet required while the assignment is Scheduled", () => {
+		const diagnostics = { required_projection: ["Head of User Department"], projection_present: false, projection_missing: [], projection_orphaned: [], coverage: "This unit only", overlapping: [], obsolete_rows: {} };
+		expect(mountDetail({ status: "Scheduled", diagnostics }).text()).toContain("Not yet required");
+		expect(mountDetail({ status: "Active", diagnostics }).text()).toContain("Missing");
 	});
 });

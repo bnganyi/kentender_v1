@@ -75,6 +75,12 @@ export function systemManager(): { user: string; password: string } {
 	return parseResult<{ user: string; password: string }>("ensure_system_manager", bench(`execute ${FIXTURES}.ensure_system_manager`));
 }
 
+/** C06: one Desk user with no business role or assignment (removed by restoreSite). */
+export type ResponsibilitiesWorld = { user: string; full_name: string; unit: string; unit_name: string };
+export function resetResponsibilities(): ResponsibilitiesWorld {
+	return parseResult<ResponsibilitiesWorld>("reset_responsibilities", bench(`execute ${FIXTURES}.reset_responsibilities`));
+}
+
 /** Undo every site world (idempotent). Call in afterAll of every spec that built one. */
 export function restoreSite(): void {
 	bench(`execute ${FIXTURES}.restore_site`);

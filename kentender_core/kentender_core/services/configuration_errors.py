@@ -18,6 +18,7 @@ ERROR_CODES: frozenset[str] = frozenset(
 		"CFG_PE_CODE_IMMUTABLE",
 		"CFG_PE_INVALID",
 		"CFG_ROOT_UNIT_MISSING",
+		"CFG_ROOT_UNIT_CONFLICT",
 		"CFG_FY_ALREADY_EXISTS",
 		"CFG_FY_IN_USE",
 		"CFG_FY_COMPANY_MISSING",
@@ -43,7 +44,9 @@ DEFAULT_MESSAGES: dict[str, str] = {
 	"CFG_PE_ALREADY_CONFIGURED": "This site already has a Procuring Entity.",
 	"CFG_PE_CODE_IMMUTABLE": "The Procuring Entity code cannot be changed after it is set.",
 	"CFG_PE_INVALID": "Complete the required Procuring Entity information.",
-	"CFG_ROOT_UNIT_MISSING": "The root organisation unit is missing. Run the governed repair before assigning responsibilities.",
+	# CFG-CHG-002 v0.14 §8.1 / §10.12 (D24).
+	"CFG_ROOT_UNIT_MISSING": "The top-level organisation unit is missing.",
+	"CFG_ROOT_UNIT_CONFLICT": "The organisation structure cannot be repaired automatically.",
 	"CFG_FY_ALREADY_EXISTS": "This financial year already exists.",
 	"CFG_FY_IN_USE": "This financial year cannot be disabled while the listed records reference it.",
 	"CFG_FY_COMPANY_MISSING": "The accounting company must be configured before you can add a financial year.",

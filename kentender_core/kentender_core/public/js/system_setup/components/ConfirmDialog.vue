@@ -1,6 +1,8 @@
 <script setup>
 // §12.1.2 — Deactivate is confirmed with its impact, not performed silently.
 // Reactivate reuses the same dialog with its own copy.
+import { nextTick, onMounted, ref } from "vue";
+
 const props = defineProps({
 	title: { type: String, required: true },
 	body: { type: String, required: true },
@@ -14,26 +16,35 @@ const props = defineProps({
 	testid: { type: String, default: "kt-ou-confirm" },
 });
 const emit = defineEmits(["confirm", "cancel"]);
+
+// The dialog takes focus when it opens, on the safe choice.
+const cancelButton = ref(null);
+onMounted(async () => {
+	await nextTick();
+	cancelButton.value?.focus();
+});
 </script>
 
 <template>
 	<div class="kt-dialog-backdrop">
 		<div
-			class="kt-dialog kt-blueprint kt-narrow"
-			role="dialog"
+			class="kt-dialog kt-narrow"
+			:role="destructive ? 'alertdialog' : 'dialog'"
 			aria-modal="true"
 			:aria-label="title"
 			:data-testid="testid"
-			@keydown.esc="emit('cancel')"
+			@keydown.esc.stop="emit('cancel')"
 		>
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
 			<h2 class="kt-dialog-title">{{ title }}</h2>
-			<p class="kt-confirm-body">{{ body }}</p>
-			<p v-if="error" class="kt-inline-error" role="alert">{{ error }}</p>
+			<div class="dialog-body" style="display:flex;flex-direction:column;gap:14px">
+				<p style="margin:0">{{ body }}</p>
+				<div v-if="error" class="kt-notice is-critical" role="alert">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+					<div class="kt-notice-body">{{ error }}</div>
+				</div>
+			</div>
 			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="emit('cancel')">
-					{{ __("Cancel") }}
-				</button>
+				<button ref="cancelButton" type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="emit('cancel')">{{ __("Cancel") }}</button>
 				<button
 					type="button"
 					class="kt-btn kt-btn-primary"

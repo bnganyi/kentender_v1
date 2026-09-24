@@ -1,14 +1,14 @@
 <script setup>
-// AUTH-ADR-001 v1.6 §13.5/§13.6/§14.3 — the guided assign dialog, ported
-// from AUTH-DES-04/05. Fields 3–7 appear only as the selected registry
-// role's scope and appointment require: a Site-wide role hides the
+// The guided assign dialog, ported from C06 #auth-des-04 (Permanent),
+// #auth-des-05 (Acting, office already held) and #auth-edit-scheduled (the
+// same dialog prefilled, AUTH v1.9 §13.7). Fields appear only as the selected
+// registry role's scope and appointment require: a Site-wide role hides the
 // Organisation Unit control entirely, Permanent hides Effective to and
 // Authority reference. There is no Procuring Entity control (§13.1).
 //
-// The Responsibility and Organisation Unit controls are drawn as the
-// artboard draws them — the role beside its scope tag, the unit as its full
-// path — which a native <select> cannot render, so both are lightweight
-// in-dialog listboxes over the same server-supplied options.
+// Responsibility is the board's select ("Role · Scope"); the Organisation
+// Unit is the board's read-only path field that opens a list of units (a
+// tree select), over the same server-supplied options.
 //
 // The dialog computes nothing it could get wrong: required fields, the exact
 // scope description, descendant counts, exclusive-office findings and the
@@ -64,6 +64,7 @@ const ouOpen = ref(false);
 const preview = ref(null);
 const previewing = ref(false);
 const firstField = ref(null);
+const titleId = computed(() => (props.editing ? "kt-assign-edit-title" : "kt-assign-title"));
 
 const registryEntry = computed(() =>
 	props.responsibilities.find((r) => r.business_role === form.value.business_role) || null
@@ -96,9 +97,23 @@ function pickUser(match) {
 	refreshPreview();
 }
 
-function clearUser() {
-	form.value.user = "";
-	refreshPreview();
+// The field shows the chosen user as "Name · login", or what is being typed;
+// typing over a choice drops it (the input is bound to the user's own
+// selection, never to a server echo).
+const userText = computed(() => (form.value.user ? `${userLabel.value} · ${form.value.user}` : userQuery.value));
+function onUserInput(event) {
+	userQuery.value = event.target.value;
+	if (form.value.user) {
+		form.value.user = "";
+		userLabel.value = "";
+		refreshPreview();
+	}
+	searchUsers();
+}
+
+function onRoleChange(event) {
+	const role = props.responsibilities.find((r) => r.business_role === event.target.value);
+	if (role) pickRole(role);
 }
 
 function pickRole(role) {
@@ -151,7 +166,7 @@ function problemFor(field) {
 }
 
 function onEscape() {
-	// Esc closes an open listbox first; a second Esc closes the dialog.
+	// Esc closes the open unit list first; a second Esc closes the dialog.
 	if (roleOpen.value || ouOpen.value) {
 		roleOpen.value = false;
 		ouOpen.value = false;
@@ -171,144 +186,109 @@ const blockedReason = computed(() => {
 <template>
 	<div class="kt-dialog-backdrop">
 		<div
-			class="kt-dialog kt-blueprint kt-assign"
+			class="kt-dialog kt-narrow"
 			role="dialog"
 			aria-modal="true"
-			:aria-label="isEdit ? __('Edit scheduled assignment') : __('Assign responsibility')"
+			:aria-labelledby="titleId"
 			data-testid="kt-ura-assign"
-			@keydown.esc="onEscape"
+			@keydown.esc.stop="onEscape"
 		>
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-			<h2 class="kt-dialog-title">{{ isEdit ? __("Edit scheduled assignment") : __("Assign responsibility") }}</h2>
+			<h2 :id="titleId" class="kt-dialog-title">{{ isEdit ? __("Edit scheduled assignment") : __("Assign responsibility") }}</h2>
 
-			<div class="kt-assign-body">
-				<div v-if="isEdit" class="kt-notice is-info" data-testid="kt-ura-edit-notice">
-					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9" /><path d="M12 8h.01M11 12h1v5h1" /></svg>
-					<div class="kt-notice-body">
-						{{ __("This assignment has not started yet, so any of its details can still be changed. Clear Effective from to bring it into force now.") }}
-					</div>
+			<div class="dialog-body kt-assign-body">
+				<div v-if="isEdit" class="kt-notice is-info" style="align-items:flex-start" data-testid="kt-ura-edit-notice">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8h.01M11 12h1v5h1" /></svg>
+					<div class="kt-notice-body"><em>{{ __("This assignment has not started yet, so any of its details can still be changed. Clear Effective from to bring it into force now.") }}</em></div>
 				</div>
 
-				<!-- 1 User — AUTH-DES-04's stacked name and login -->
+				<!-- User: a person search showing "Name · login" once chosen -->
 				<div class="kt-field">
 					<label for="kt-assign-user">{{ __("User") }}</label>
-					<button
-						v-if="form.user"
-						type="button"
-						class="kt-input kt-picked-user"
-						data-testid="kt-ura-user-picked"
-						@click="clearUser"
-					>
-						<span class="kt-picked-id">
-							<span>{{ userLabel }}</span>
-							<span>{{ form.user }}</span>
-						</span>
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-					</button>
-					<template v-else>
+					<div class="kt-input-icon">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
 						<input
 							id="kt-assign-user"
 							ref="firstField"
-							v-model="userQuery"
 							class="kt-input"
-							type="search"
+							type="text"
+							autocomplete="off"
+							:value="userText"
 							:placeholder="__('Search by name or login')"
-							data-testid="kt-ura-user"
-							@input="searchUsers"
+							:aria-invalid="problemFor('user') ? 'true' : 'false'"
+							:data-testid="form.user ? 'kt-ura-user-picked' : 'kt-ura-user'"
+							@input="onUserInput"
 						>
-						<ul v-if="userMatches.length" class="kt-matches">
-							<li v-for="match in userMatches" :key="match.id">
-								<button type="button" @click="pickUser(match)">
-									<span>{{ match.label }}</span>
-									<span class="kt-muted">{{ match.id }}</span>
-								</button>
-							</li>
-						</ul>
-					</template>
-					<p v-if="problemFor('user')" class="kt-inline-error">{{ problemFor("user") }}</p>
-				</div>
-
-				<!-- 2 Responsibility — the role beside its scope tag (AUTH-DES-04) -->
-				<div class="kt-field kt-select-wrap">
-					<label id="kt-assign-role-label">{{ __("Responsibility") }}</label>
-					<button
-						type="button"
-						class="kt-input kt-select"
-						aria-haspopup="listbox"
-						:aria-expanded="roleOpen"
-						aria-labelledby="kt-assign-role-label"
-						data-testid="kt-ura-role"
-						@click="roleOpen = !roleOpen; ouOpen = false"
-					>
-						<span v-if="registryEntry" class="kt-select-value">
-							<span>{{ registryEntry.business_role }}</span>
-							<span class="kt-tag kt-tag-accent">{{ registryEntry.scope_type }}</span>
-						</span>
-						<span v-else class="kt-select-placeholder">{{ __("Select a responsibility") }}</span>
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6" /></svg>
-					</button>
-					<ul v-if="roleOpen" class="kt-matches" role="listbox">
-						<li v-for="role in responsibilities" :key="role.business_role">
-							<button
-								type="button"
-								role="option"
-								:aria-selected="role.business_role === form.business_role"
-								:data-testid="'kt-ura-role-option-' + role.business_role"
-								@click="pickRole(role)"
-							>
-								<span>{{ role.business_role }}</span>
-								<span class="kt-tag kt-tag-accent">{{ role.scope_type }}</span>
+					</div>
+					<ul v-if="!form.user && userMatches.length" class="kt-matches">
+						<li v-for="match in userMatches" :key="match.id">
+							<button type="button" @click="pickUser(match)">
+								<span>{{ match.label }}</span>
+								<span class="kt-muted">{{ match.id }}</span>
 							</button>
 						</li>
 					</ul>
-					<p v-if="problemFor('business_role')" class="kt-inline-error">{{ problemFor("business_role") }}</p>
+					<p v-if="problemFor('user')" class="kt-field-error">{{ problemFor("user") }}</p>
 				</div>
 
-				<!-- 3 Organisation Unit — OU-scoped roles only; shown as its full
-				     path, active units only -->
-				<div v-if="needsUnit" class="kt-field kt-select-wrap" data-testid="kt-ura-ou">
-					<label id="kt-assign-ou-label">{{ __("Organisation Unit") }}</label>
-					<button
-						type="button"
-						class="kt-input kt-select"
-						aria-haspopup="listbox"
-						:aria-expanded="ouOpen"
-						aria-labelledby="kt-assign-ou-label"
-						data-testid="kt-ura-ou-toggle"
-						@click="ouOpen = !ouOpen; roleOpen = false"
+				<!-- Responsibility: "Role · Scope", as the board's select -->
+				<div class="kt-field">
+					<label for="kt-assign-role">{{ __("Responsibility") }}</label>
+					<select
+						id="kt-assign-role"
+						class="kt-input"
+						:value="form.business_role"
+						:aria-invalid="problemFor('business_role') ? 'true' : 'false'"
+						data-testid="kt-ura-role"
+						@change="onRoleChange"
 					>
-						<span v-if="selectedUnit" class="kt-select-value">
-							<span>{{ selectedUnit.path_label || selectedUnit.label }}</span>
-						</span>
-						<span v-else class="kt-select-placeholder">{{ __("Select an Organisation Unit") }}</span>
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h6" /><path d="M3 12h10" /><path d="M3 18h10" /><path d="M17 9v9" /><path d="m14 15 3 3 3-3" /></svg>
-					</button>
-					<ul v-if="ouOpen" class="kt-matches" role="listbox">
+						<option value="" disabled>{{ __("Select a responsibility") }}</option>
+						<option v-for="role in responsibilities" :key="role.business_role" :value="role.business_role">
+							{{ role.business_role }} · {{ role.scope_type }}
+						</option>
+					</select>
+					<p v-if="problemFor('business_role')" class="kt-field-error">{{ problemFor("business_role") }}</p>
+				</div>
+
+				<!-- Organisation Unit: OU-scoped roles only; its full path, opening
+				     the list of active units -->
+				<div v-if="needsUnit" class="kt-field" data-testid="kt-ura-ou">
+					<label for="kt-assign-ou">{{ __("Organisation Unit") }}</label>
+					<div class="kt-input-icon is-trailing">
+						<input
+							id="kt-assign-ou"
+							class="kt-input"
+							type="text"
+							readonly
+							role="combobox"
+							aria-haspopup="listbox"
+							:aria-expanded="ouOpen ? 'true' : 'false'"
+							:value="selectedUnit ? selectedUnit.path_label || selectedUnit.label : ''"
+							:placeholder="__('Select an Organisation Unit')"
+							data-testid="kt-ura-ou-toggle"
+							@click="ouOpen = !ouOpen"
+							@keydown.enter.prevent="ouOpen = !ouOpen"
+							@keydown.space.prevent="ouOpen = !ouOpen"
+						>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 6h6" /><path d="M3 12h10" /><path d="M3 18h10" /><path d="M17 9v9" /><path d="m14 15 3 3 3-3" /></svg>
+					</div>
+					<ul v-if="ouOpen" class="kt-matches" role="listbox" :aria-label="__('Organisation units')">
 						<li v-for="unit in organisationUnits" :key="unit.id">
 							<button
 								type="button"
 								role="option"
-								:aria-selected="unit.id === form.organisation_unit"
+								:aria-selected="unit.id === form.organisation_unit ? 'true' : 'false'"
 								:data-testid="'kt-ura-ou-option-' + unit.id"
 								@click="pickUnit(unit)"
-							>
-								<span>{{ unit.path_label || unit.label }}</span>
-							</button>
+							>{{ unit.path_label || unit.label }}</button>
 						</li>
 					</ul>
-					<p v-if="problemFor('organisation_unit')" class="kt-inline-error">{{ problemFor("organisation_unit") }}</p>
+					<p v-if="problemFor('organisation_unit')" class="kt-field-error">{{ problemFor("organisation_unit") }}</p>
 				</div>
 
-				<!-- 4 Appointment -->
-				<fieldset class="kt-field kt-fieldset">
-					<legend>{{ __("Appointment") }}</legend>
-					<div class="kt-seg">
-						<label
-							v-for="kind in ['Permanent', 'Acting']"
-							:key="kind"
-							class="kt-seg-opt"
-							:class="{ 'is-selected': form.appointment_type === kind }"
-						>
+				<div class="kt-field">
+					<label id="kt-assign-appointment">{{ __("Appointment") }}</label>
+					<div class="kt-seg kt-seg-inline" role="radiogroup" aria-labelledby="kt-assign-appointment" style="align-self:flex-start">
+						<label v-for="kind in ['Permanent', 'Acting']" :key="kind" class="kt-seg-opt">
 							<input
 								v-model="form.appointment_type"
 								type="radio"
@@ -316,91 +296,74 @@ const blockedReason = computed(() => {
 								:value="kind"
 								:data-testid="'kt-ura-appointment-' + kind.toLowerCase()"
 								@change="onAppointmentChange"
-							>
-							<span>{{ kind === "Permanent" ? __("Permanent") : __("Acting") }}</span>
+							>{{ kind === "Permanent" ? __("Permanent") : __("Acting") }}
 						</label>
-					</div>
-				</fieldset>
-
-				<!-- 5/6 Effective period — the artboard's empty date field reads
-				     "Leave blank to start immediately" -->
-				<div class="kt-dates" :class="{ 'is-single': !isActing }">
-					<div class="kt-field">
-						<label for="kt-assign-from">{{ __("Effective from") }}</label>
-						<div class="kt-date-field" :class="{ 'is-empty': !form.effective_from }">
-							<input
-								id="kt-assign-from"
-								v-model="form.effective_from"
-								class="kt-input"
-								type="date"
-								data-testid="kt-ura-from"
-							>
-							<span class="kt-date-placeholder">{{ __("Leave blank to start immediately") }}</span>
-						</div>
-						<p v-if="problemFor('effective_from')" class="kt-inline-error">{{ problemFor("effective_from") }}</p>
-					</div>
-					<div v-if="isActing" class="kt-field">
-						<label for="kt-assign-to">{{ __("Effective to") }}</label>
-						<input id="kt-assign-to" v-model="form.effective_to" class="kt-input" type="date" data-testid="kt-ura-to">
-						<p v-if="problemFor('effective_to')" class="kt-inline-error">{{ problemFor("effective_to") }}</p>
 					</div>
 				</div>
 
-				<!-- 7 Authority reference — Acting only -->
+				<!-- Permanent: one optional start; Acting: the period side by side -->
+				<div v-if="!isActing" class="kt-field">
+						<label for="kt-assign-from">{{ __("Effective from") }} <span class="text-muted" style="font-weight:400">{{ __("(optional)") }}</span></label>
+						<div class="kt-date-field" :class="{ 'is-empty': !form.effective_from }">
+							<input id="kt-assign-from" v-model="form.effective_from" class="kt-input" type="date" data-testid="kt-ura-from">
+							<span class="kt-date-placeholder">{{ __("Leave blank to start immediately") }}</span>
+						</div>
+					<p v-if="problemFor('effective_from')" class="kt-field-error">{{ problemFor("effective_from") }}</p>
+				</div>
+				<div v-if="isActing" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+					<div class="kt-field">
+						<label for="kt-assign-from-acting">{{ __("Effective from") }}</label>
+						<input id="kt-assign-from-acting" v-model="form.effective_from" class="kt-input" type="date" data-testid="kt-ura-from">
+						<p v-if="problemFor('effective_from')" class="kt-field-error">{{ problemFor("effective_from") }}</p>
+					</div>
+					<div class="kt-field">
+						<label for="kt-assign-to">{{ __("Effective to") }}</label>
+						<input id="kt-assign-to" v-model="form.effective_to" class="kt-input" type="date" data-testid="kt-ura-to">
+						<p v-if="problemFor('effective_to')" class="kt-field-error">{{ problemFor("effective_to") }}</p>
+					</div>
+				</div>
+
 				<div v-if="isActing" class="kt-field">
-					<label for="kt-assign-authority" :class="{ 'is-error': problemFor('authority_reference') }">
-						{{ __("Authority reference") }}
-					</label>
+					<label for="kt-assign-authority">{{ __("Authority reference") }}</label>
 					<input
 						id="kt-assign-authority"
 						v-model="form.authority_reference"
 						class="kt-input"
-						:class="{ 'is-error': problemFor('authority_reference') }"
+						:aria-invalid="problemFor('authority_reference') ? 'true' : 'false'"
 						:placeholder="__('Required for Acting assignments')"
 						data-testid="kt-ura-authority"
 					>
-					<p v-if="problemFor('authority_reference')" class="kt-inline-error">{{ problemFor("authority_reference") }}</p>
+					<p v-if="problemFor('authority_reference')" class="kt-field-error">{{ problemFor("authority_reference") }}</p>
 				</div>
 
-				<!-- AUTH-DES-04's "Responsibility summary" box: the server's words,
-				     with the role and scope emphasised; the descendant note per
-				     §13.6 -->
-				<div v-if="preview && preview.summary" class="kt-summary" data-testid="kt-ura-summary">
-					<span class="kt-label">{{ __("Responsibility summary") }}</span>
-					<p>
-						<template v-if="preview.summary_parts">
-							{{ preview.summary_parts.user }} {{ __("will be") }}
-							<strong>{{ preview.summary_parts.role }}</strong> {{ __("for") }}
-							<strong>{{ preview.summary_parts.scope }}</strong>
-							{{ preview.summary_parts.period }}.
-						</template>
-						<template v-else>{{ preview.summary }}</template>
-						<template v-if="preview.descendant_count">
-							{{ preview.descendant_count === 1
-								? __("This includes 1 subordinate organisation unit.")
-								: __("This includes {0} subordinate organisation units.", [preview.descendant_count]) }}
-						</template>
+				<!-- The server's summary sentence, and the descendant note -->
+				<div v-if="preview && preview.summary" class="kt-group" style="margin-top:4px" data-testid="kt-ura-summary">
+					<div class="kt-label" style="margin-bottom:4px">{{ __("Responsibility summary") }}</div>
+					<p style="margin:0">{{ preview.summary }}</p>
+					<p v-if="preview.descendant_count" style="margin:6px 0 0">
+						{{ preview.descendant_count === 1
+							? __("This includes 1 subordinate organisation unit.")
+							: __("This includes {0} subordinate organisation units.", [preview.descendant_count]) }}
 					</p>
 				</div>
 
-				<!-- Server-detected conflict — the exclusive-office notice carries the
-				     AUTH-DES-05 heading; never resolved by an invented client rule -->
-				<div v-if="preview && preview.conflict" class="kt-conflict" role="alert" data-testid="kt-ura-conflict">
-					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
-					<span>
-						<strong v-if="preview.conflict.heading" class="kt-conflict-heading">{{ preview.conflict.heading }}</strong>
-						{{ preview.conflict.message }}
-					</span>
+				<!-- The server-detected exclusive office; never an invented client rule -->
+				<div v-if="preview && preview.conflict" class="kt-notice is-warning" role="alert" style="align-items:flex-start" data-testid="kt-ura-conflict">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+					<div class="kt-notice-body">
+						<strong v-if="preview.conflict.heading" style="display:block;margin-bottom:2px">{{ preview.conflict.heading }}</strong>{{ preview.conflict.message }}
+					</div>
 				</div>
 
-				<p v-if="error" class="kt-inline-error" role="alert">{{ error }}</p>
+				<div v-if="error" class="kt-notice is-critical" role="alert" data-testid="kt-ura-assign-error">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+					<div class="kt-notice-body">{{ error }}</div>
+				</div>
 			</div>
 
-			<div class="kt-dialog-actions kt-assign-actions">
-				<div v-if="blockedReason" class="kt-blocked">{{ blockedReason }}</div>
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="emit('cancel')">
-					{{ __("Cancel") }}
-				</button>
+			<div class="kt-dialog-actions">
+				<span v-if="blockedReason" class="kt-blocked" data-testid="kt-ura-blocked">{{ blockedReason }}</span>
+				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="emit('cancel')">{{ __("Cancel") }}</button>
 				<button
 					type="button"
 					class="kt-btn kt-btn-primary"

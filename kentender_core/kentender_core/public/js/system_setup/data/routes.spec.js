@@ -10,6 +10,8 @@ describe("parseSetupHash", () => {
 		["", { tab: "", section: "", id: "", versionId: "", action: "" }],
 		["fiscal-years", { tab: "fiscal-years", section: "", id: "", versionId: "", action: "" }],
 		["fiscal-years/2027-2028", { tab: "fiscal-years", section: "", id: "2027-2028", versionId: "", action: "" }],
+		["organisation-structure/OU-MOH-DHP", { tab: "organisation-structure", section: "", id: "OU-MOH-DHP", versionId: "", action: "" }],
+		["users-and-responsibilities/URA-2026-0003", { tab: "users-and-responsibilities", section: "", id: "URA-2026-0003", versionId: "", action: "" }],
 		["procurement-settings", { tab: "procurement-settings", section: "", id: "", versionId: "", action: "" }],
 		["procurement-settings/procurement-rules", { tab: "procurement-settings", section: "procurement-rules", id: "", versionId: "", action: "" }],
 		["procurement-settings/funding-sources/new", { tab: "procurement-settings", section: "funding-sources", id: "", versionId: "", action: "new" }],
@@ -48,6 +50,8 @@ describe("buildSetupHash", () => {
 		for (const hash of [
 			"fiscal-years",
 			"fiscal-years/2027-2028",
+			"organisation-structure/OU-MOH-DHP",
+			"users-and-responsibilities/URA-2026-0003",
 			"procurement-settings/procurement-rules",
 			"procurement-settings/funding-sources/new",
 			"procurement-settings/procurement-rules/RR-1/versions/RR-1-V2",

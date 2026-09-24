@@ -16,62 +16,6 @@
  * it belongs in kt_industry_tokens.css instead.
  */
 
-/* — OrganisationStructure.vue — */
-.kt-industry .kt-ou-root {
-	min-height: 100vh;
-	display: flex;
-	flex-direction: column;
-}
-.kt-industry .kt-ou-shell {
-	padding-top: 36px;
-}
-.kt-industry .kt-back-link {
-	font-size: 13px;
-	color: var(--kt-color-neutral-700);
-	align-self: flex-start;
-}
-.kt-industry .kt-ou-header {
-	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: 24px;
-	flex-wrap: wrap;
-}
-.kt-industry .kt-ou-title {
-	font-size: 30px;
-	margin: 6px 0 8px;
-}
-.kt-industry .kt-ou-lede {
-	margin: 0;
-	max-width: 56ch;
-	font-size: 14px;
-	color: var(--kt-color-neutral-800);
-}
-.kt-industry .kt-pe-field {
-	width: 240px;
-	flex: none;
-	margin: 0;
-}
-.kt-industry .kt-ou-workspace {
-	display: grid;
-	grid-template-columns: 320px minmax(0, 1fr);
-	gap: 24px;
-	align-items: start;
-}
-.kt-industry .kt-ou-column {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-}
-.kt-industry .kt-tree-card {
-	padding: 8px;
-	gap: 0;
-}
-.kt-industry .kt-tree-none {
-	margin: 0;
-	padding: 12px 8px;
-	font-size: 13px;
-}
 .kt-industry .kt-visually-hidden {
 	position: absolute;
 	width: 1px;
@@ -80,66 +24,8 @@
 	clip: rect(0 0 0 0);
 	white-space: nowrap;
 }
-@media (max-width: 900px) {
-	.kt-industry .kt-ou-workspace {
-			grid-template-columns: minmax(0, 1fr);
-		
-	}
-}
 
-/* — UnitTree.vue — */
-.kt-industry .kt-unit-name {
-	flex: 1;
-	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-.kt-industry .kt-unit-name.is-root {
-	font-family: var(--kt-font-heading);
-	font-weight: var(--kt-font-heading-weight);
-}
-.kt-industry .kt-unit-flag {
-	font-size: 11px;
-	padding: 1px 8px;
-}
-
-/* — UnitDetail.vue — AUTH-DES-01's "Selected unit" panel: labelled rows on
-   a 130px label column, divider-ruled, then the action row and the affected
-   link. */
-.kt-industry .kt-panel-rows {
-	margin-top: 4px;
-}
-.kt-industry .kt-panel-row {
-	display: grid;
-	grid-template-columns: 130px 1fr;
-	gap: 10px;
-	padding: 9px 0;
-	align-items: center;
-}
-.kt-industry .kt-panel-row + .kt-panel-row {
-	border-top: 1px solid var(--kt-color-divider);
-}
-.kt-industry .kt-panel-rows .kt-panel-row:last-child {
-	border-bottom: 1px solid var(--kt-color-divider);
-}
-.kt-industry .kt-panel-row .kt-panel-name {
-	font-size: 14.5px;
-	font-weight: 600;
-}
-.kt-industry .kt-panel-row .kt-panel-code {
-	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-	font-size: 13px;
-}
-.kt-industry .kt-panel-row .kt-panel-value {
-	font-size: 13.5px;
-}
-.kt-industry .kt-unit-actions {
-	display: flex;
-	gap: 10px;
-	margin-top: 20px;
-	flex-wrap: wrap;
-}
+/* — UnitDetail.vue — the affected-responsibilities link. */
 .kt-industry .kt-affected {
 	display: inline-flex;
 	align-items: center;
@@ -153,7 +39,7 @@
 	color: var(--kt-color-accent-800);
 }
 
-/* — PromptDialog.vue — */
+/* — dialogs — */
 /* KT-STD-001 §2.2 — dialogs are 520px over the dimmed parent. */
 .kt-industry .kt-dialog.kt-narrow {
 	/* Must out-rank the tokens sheet's 620px .kt-dialog base (it is loaded
@@ -165,68 +51,9 @@
 	flex-direction: column;
 	gap: 12px;
 }
-.kt-industry .kt-inline-error {
-	margin: 4px 0 0;
-	font-size: 12px;
-	color: var(--kt-status-critical);
-}
 
-/* — ConfirmDialog.vue — */
-.kt-industry .kt-confirm-body {
-	margin: 0;
-	font-size: 14px;
-	line-height: 1.5;
-}
-.kt-industry .kt-inline-error {
-	margin: 0;
-	font-size: 12px;
-	color: var(--kt-status-critical);
-}
-
-/* — UserResponsibilities.vue — */
-.kt-industry .kt-ura-root {
-	min-height: 100vh;
-	display: flex;
-	flex-direction: column;
-}
-.kt-industry .kt-ura-shell {
-	padding-top: 36px;
-}
-.kt-industry .kt-ura-header {
-	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: 24px;
-	flex-wrap: wrap;
-}
-.kt-industry .kt-ura-title {
-	font-size: 30px;
-	margin: 6px 0 8px;
-}
-.kt-industry .kt-ura-lede {
-	margin: 0;
-	max-width: 56ch;
-	font-size: 14px;
-	color: var(--kt-color-neutral-800);
-}
 /* AUTH-DES-03 — a bordered surface panel with a label above every control. */
-.kt-industry .kt-filters {
-	display: grid;
-	grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.9fr) auto;
-	gap: 12px;
-	align-items: end;
-	padding: 16px;
-	background: var(--kt-color-surface);
-	border: 1px solid var(--kt-color-divider);
-}
-.kt-industry .kt-filters .kt-btn-ghost {
-	height: 36px;
-}
-@media (max-width: 900px) {
-	.kt-industry .kt-filters {
-		grid-template-columns: 1fr 1fr;
-	}
-}
+
 .kt-industry .kt-card.kt-table-card {
 	padding: 0;
 	gap: 0;
@@ -234,12 +61,7 @@
 .kt-industry .kt-table-scroll {
 	overflow-x: auto;
 }
-.kt-industry .kt-row-name {
-	font-weight: 600;
-}
-.kt-industry .kt-row-login {
-	font-size: 12px;
-}
+
 /* AUTH-DES-03/CFG-DES-03 — the count line sits below the table card. */
 .kt-industry .kt-count {
 	margin: 14px 0 0;
@@ -287,9 +109,7 @@
 }
 
 /* — AssignDialog.vue — */
-.kt-industry .kt-dialog.kt-assign {
-	width: min(520px, 100%);
-}
+
 .kt-industry .kt-assign-body {
 	display: flex;
 	flex-direction: column;
@@ -297,16 +117,7 @@
 	max-height: 62vh;
 	overflow-y: auto;
 }
-.kt-industry .kt-picked {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 8px;
-}
-.kt-industry .kt-clear {
-	height: auto;
-	font-size: 12px;
-}
+
 .kt-industry .kt-matches {
 	list-style: none;
 	margin: 4px 0 0;
@@ -332,17 +143,7 @@
 .kt-industry .kt-matches button:hover {
 	background: color-mix(in srgb, var(--kt-color-text) 6%, transparent);
 }
-.kt-industry .kt-fieldset {
-	border: 0;
-	margin: 0;
-	padding: 0;
-}
-.kt-industry .kt-fieldset legend {
-	font-size: 12px;
-	margin-bottom: 5px;
-	padding: 0;
-	color: color-mix(in srgb, var(--kt-color-text) 70%, transparent);
-}
+
 /* The segmented control has no shared class yet; it is the only composition
    on these dialogs the token sheet does not already provide. */
 .kt-industry .kt-seg {
@@ -369,81 +170,9 @@
 	color: var(--kt-color-accent-800);
 	font-weight: 600;
 }
-.kt-industry .kt-dates {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 12px;
-}
-.kt-industry .kt-dates.is-single {
-	grid-template-columns: 1fr;
-}
+
 /* AUTH-DES-04 — controls drawn as the artboard draws them. */
-.kt-industry .kt-select {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 10px;
-	width: 100%;
-	text-align: left;
-	font: inherit;
-	font-size: 14px;
-	cursor: pointer;
-}
-.kt-industry .kt-select .kt-select-value {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	min-width: 0;
-}
-.kt-industry .kt-select .kt-select-value > span:first-child {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-.kt-industry .kt-select svg {
-	flex: none;
-	color: var(--kt-color-neutral-700);
-}
-.kt-industry .kt-select-placeholder {
-	color: var(--kt-color-neutral-700);
-}
-.kt-industry .kt-select-wrap {
-	position: relative;
-}
-.kt-industry .kt-select-wrap .kt-matches {
-	position: absolute;
-	left: 0;
-	right: 0;
-	top: calc(100% + 2px);
-	z-index: 5;
-	box-shadow: 0 6px 18px rgb(22 24 26 / 12%);
-}
-.kt-industry .kt-picked-user {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 10px;
-	height: auto;
-	padding-top: 7px;
-	padding-bottom: 7px;
-	cursor: pointer;
-	width: 100%;
-	text-align: left;
-	font: inherit;
-}
-.kt-industry .kt-picked-user .kt-picked-id {
-	display: flex;
-	flex-direction: column;
-	min-width: 0;
-}
-.kt-industry .kt-picked-user .kt-picked-id > span:first-child {
-	font-size: 14px;
-	font-weight: 600;
-}
-.kt-industry .kt-picked-user .kt-picked-id > span:last-child {
-	font-size: 12px;
-	color: var(--kt-color-neutral-700);
-}
+
 .kt-industry .kt-date-field {
 	position: relative;
 	max-width: 280px;
@@ -468,165 +197,34 @@
 .kt-industry .kt-date-field:not(.is-empty) .kt-date-placeholder {
 	display: none;
 }
-.kt-industry .kt-summary .kt-label {
-	display: block;
-	margin-bottom: 8px;
-}
+
 /* AUTH-DES-04's "Responsibility summary" box: bordered surface, kt-label
    heading, 14.5px sentence with the role and scope bolded. */
-.kt-industry .kt-summary {
-	background: var(--kt-color-surface-2);
-	border: 1px solid var(--kt-color-divider);
-	padding: 14px 16px;
-	font-size: 14.5px;
-	line-height: 1.45;
-}
-.kt-industry .kt-summary p {
-	margin: 0;
-}
-.kt-industry .kt-conflict {
-	display: flex;
-	gap: 8px;
-	align-items: flex-start;
-	background: var(--kt-status-attention-bg);
-	color: var(--kt-status-attention);
-	padding: 10px 12px;
-	font-size: 13px;
-	line-height: 1.4;
-}
-.kt-industry .kt-conflict svg {
-	flex: none;
-	margin-top: 1px;
-}
-.kt-industry .kt-assign-actions {
-	flex-wrap: wrap;
-}
+
 .kt-industry .kt-blocked {
 	width: 100%;
 	font-size: 12px;
 	color: var(--kt-color-neutral-600);
 	text-align: right;
 }
-.kt-industry .kt-inline-error, .kt-industry label.is-error {
-	color: var(--kt-status-critical);
-}
-.kt-industry .kt-inline-error {
-	margin: 4px 0 0;
-	font-size: 12px;
-}
+
 .kt-industry .kt-input.is-error {
 	border-color: var(--kt-status-critical);
 }
 
 /* — RevokeDialog.vue — */
-.kt-industry .kt-revoke-body {
-	margin: 0;
-	font-size: 14px;
-	line-height: 1.5;
-}
+
 .kt-industry .kt-textarea {
 	height: auto;
 	padding: 8px 10px;
 	resize: vertical;
-}
-.kt-industry .kt-hint {
-	margin: 4px 0 0;
-	font-size: 12px;
-	color: var(--kt-color-neutral-600);
 }
 
 /* — ResponsibilityDetail.vue — AUTH-DES-06: eyebrow + 32px title with the
    status badge inline, then a 16px stack of cards (Assignment, Audit, the
    collapsed Access-diagnostics row, Administrative history) and a bottom
    action bar carrying the destructive command. */
-.kt-industry .kt-back {
-	font-size: 13px;
-	color: var(--kt-color-neutral-700);
-	text-decoration: none;
-}
-.kt-industry .kt-detail-head {
-	margin: 14px 0 24px;
-}
-.kt-industry .kt-detail-title {
-	margin: 0;
-	font-family: var(--kt-font-heading);
-	font-size: 32px;
-	line-height: 1.1;
-	display: flex;
-	align-items: center;
-	gap: 14px;
-	flex-wrap: wrap;
-}
-.kt-industry .kt-detail-title .kt-status {
-	font-size: 13px;
-}
-.kt-industry .kt-detail-stack {
-	display: flex;
-	flex-direction: column;
-	gap: 16px;
-}
-.kt-industry .kt-detail-rows {
-	margin-top: 8px;
-}
-.kt-industry .kt-detail-row {
-	display: grid;
-	grid-template-columns: 200px 1fr;
-	gap: 10px;
-	padding: 9px 0;
-}
-.kt-industry .kt-detail-row + .kt-detail-row {
-	border-top: 1px solid var(--kt-color-divider);
-}
-.kt-industry .kt-detail-rows .kt-detail-row:last-child {
-	border-bottom: 1px solid var(--kt-color-divider);
-}
-.kt-industry .kt-detail-row > span:last-child {
-	font-size: 14px;
-}
-.kt-industry .kt-card.kt-diag-card {
-	flex-direction: row;
-	align-items: center;
-	justify-content: space-between;
-	gap: 12px;
-	padding: 16px 20px;
-	cursor: pointer;
-	background: none;
-	width: 100%;
-	text-align: left;
-	font: inherit;
-}
-.kt-industry .kt-diag-card-title {
-	font-family: var(--kt-font-heading);
-	font-weight: 600;
-	font-size: 15px;
-}
-.kt-industry .kt-diag-card svg {
-	transition: transform 0.15s ease;
-}
-.kt-industry .kt-diag-card[aria-expanded="true"] svg {
-	transform: rotate(90deg);
-}
-.kt-industry .kt-diagnostics {
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
-	font-size: 13px;
-}
-.kt-industry .kt-diag-row {
-	display: flex;
-	justify-content: space-between;
-	gap: 12px;
-}
-.kt-industry .kt-card.kt-history-card {
-	padding: 0;
-	gap: 0;
-}
-.kt-industry .kt-history-card .kt-card-title {
-	margin: 18px 20px 0;
-}
-.kt-industry .kt-history-card .kt-table {
-	margin-top: 6px;
-}
+
 .kt-industry .kt-history-detail {
 	font-size: 12px;
 	color: var(--kt-color-neutral-700);
@@ -645,12 +243,6 @@
 	background: var(--kt-color-bg);
 	border-top: 1px solid var(--kt-color-divider);
 	z-index: 2;
-}
-@media (max-width: 700px) {
-	.kt-industry .kt-detail-row {
-		grid-template-columns: 1fr;
-		gap: 2px;
-	}
 }
 
 /* ==========================================================================
@@ -835,13 +427,11 @@
 
 .kt-industry .kt-org-columns {
 	display: grid;
-	/* AUTH-DES-01 — 46% tree column. */
-	grid-template-columns: 46% minmax(0, 1fr);
-	gap: 16px;
+	/* C05 #auth-des-01 — tree and selected unit side by side, stacking
+	   below 360px per column. */
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+	gap: 32px;
 	align-items: start;
-}
-@media (max-width: 900px) {
-	.kt-industry .kt-org-columns { grid-template-columns: 1fr; }
 }
 /* AUTH-DES-01 — the tree card: a card title, then 42px rows carrying the
    unit name, a monospace code chip and a status badge. The rows are the
@@ -855,7 +445,7 @@
 	margin: 16px 20px 4px;
 }
 .kt-industry .kt-org-tree-host {
-	padding-bottom: 12px;
+	border-top: 1px solid var(--kt-color-divider);
 }
 .kt-industry .kt-org-tree-host .tree {
 	padding: 0 12px;
@@ -953,6 +543,112 @@
 	border-radius: var(--kt-radius-sm);
 }
 .kt-industry .kt-tree-badge { margin-left: 6px; }
+
+/* — The AUTH tabs, re-ported from C05/C06 (CFG-CHG-002 v0.14 D24). Values
+   are the boards' own inline ones. — */
+/* Read-only facts as a definition list: label column, divider-ruled rows
+   (C05 #auth-des-01 160px, C06 #auth-des-06 170px); `.is-plain` is the
+   Audit group's unruled 150px list. */
+.kt-industry .kt-setup-facts {
+	display: grid;
+	grid-template-columns: 160px minmax(0, 1fr);
+	margin: 0;
+	border-top: 1px solid var(--kt-color-divider);
+}
+.kt-industry .kt-setup-facts.is-wide { grid-template-columns: 170px minmax(0, 1fr); }
+.kt-industry .kt-setup-facts > dt,
+.kt-industry .kt-setup-facts > dd {
+	margin: 0;
+	padding: 10px 0;
+	border-bottom: 1px solid var(--kt-color-divider);
+}
+.kt-industry .kt-setup-facts.is-wide > dt,
+.kt-industry .kt-setup-facts.is-wide > dd { padding: 9px 0; }
+.kt-industry .kt-setup-facts.is-plain {
+	grid-template-columns: 150px minmax(0, 1fr);
+	gap: 8px 12px;
+	border-top: 0;
+}
+.kt-industry .kt-setup-facts.is-plain > dt,
+.kt-industry .kt-setup-facts.is-plain > dd { padding: 0; border-bottom: 0; }
+@media (max-width: 560px) {
+	.kt-industry .kt-setup-facts,
+	.kt-industry .kt-setup-facts.is-wide,
+	.kt-industry .kt-setup-facts.is-plain { grid-template-columns: minmax(0, 1fr); }
+	.kt-industry .kt-setup-facts > dt { border-bottom: 0; padding-bottom: 0; }
+}
+.kt-industry .kt-unit-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	margin-top: 18px;
+}
+.kt-industry .kt-unit-actions .kt-btn { display: inline-flex; align-items: center; gap: 6px; }
+.kt-industry .kt-unit-actions .kt-affected { margin-left: 8px; font-size: 14px; }
+/* A stacked notice body: heading, lines, then its action (C05 #auth-des-08-*). */
+.kt-industry .kt-notice-body.kt-notice-stack { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.kt-industry .kt-org-conflicts { margin: 4px 0 0; padding-left: 18px; }
+.kt-industry .kt-org-empty,
+.kt-industry .kt-ura-state {
+	border-top: 1px solid var(--kt-color-divider);
+	padding: 40px 16px;
+	text-align: center;
+}
+.kt-industry .kt-ura-state { padding: 36px 16px; }
+.kt-industry .kt-org-empty .kt-btn,
+.kt-industry .kt-ura-state .kt-btn { display: inline-flex; align-items: center; gap: 6px; }
+.kt-industry .kt-ura-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 16px;
+	flex-wrap: wrap;
+	margin-bottom: 20px;
+}
+.kt-industry .kt-ura-head .kt-btn { display: inline-flex; align-items: center; gap: 6px; }
+.kt-industry .kt-filter-bar.kt-ura-filters {
+	display: grid;
+	/* C06 #auth-des-03 wraps its filters on a 200px grid rather than the
+	   shared bar's single row. */
+	grid-auto-flow: row;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 12px;
+	align-items: end;
+	margin-bottom: 16px;
+}
+.kt-industry .kt-ura-filters .kt-field { margin: 0; }
+.kt-industry .kt-ura-filters > .kt-btn { justify-self: start; }
+/* An input with an icon inside it: leading (search) or trailing (tree). */
+.kt-industry .kt-input-icon { position: relative; }
+.kt-industry .kt-input-icon > svg {
+	position: absolute;
+	left: 10px;
+	top: 50%;
+	transform: translateY(-50%);
+	color: var(--kt-color-neutral-700);
+	pointer-events: none;
+}
+.kt-industry .kt-input-icon > .kt-input { width: 100%; padding-left: 32px; }
+.kt-industry .kt-input-icon.is-trailing > svg { left: auto; right: 10px; }
+.kt-industry .kt-input-icon.is-trailing > .kt-input { padding-left: 10px; padding-right: 32px; cursor: pointer; }
+.kt-industry .kt-ura-detail-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+	gap: 32px;
+	align-items: start;
+}
+@media (max-width: 900px) {
+	.kt-industry .kt-ura-detail-grid { grid-template-columns: minmax(0, 1fr); }
+}
+.kt-industry .kt-ura-change { margin-top: 4px; font-size: 14px; }
+/* C06 #auth-des-06 — the footer runs the width of the section, on the card. */
+.kt-industry .kt-sticky-footer.kt-ura-footer {
+	margin: 24px -32px 0;
+	padding: 14px 32px;
+	background: var(--kt-color-surface);
+	gap: 8px;
+}
 
 .kt-industry .kt-uom-link { margin-top: 10px; }
 .kt-industry .kt-uom-link a { font-size: 14px; font-weight: 600; }

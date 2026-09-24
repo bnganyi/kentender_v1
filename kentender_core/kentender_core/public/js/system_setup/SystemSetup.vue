@@ -58,7 +58,9 @@ const site = ref(null);
 const uraUnitFilter = ref("");
 
 const configured = computed(() => !!site.value?.configured);
-const rootMissing = computed(() => configured.value && !site.value?.root_unit);
+// CFG v0.14 §4.4 — an ambiguous tree holds responsibilities back exactly as
+// a missing root does, until it is repaired.
+const rootMissing = computed(() => configured.value && (!site.value?.root_unit || !!site.value?.structure_ambiguous));
 
 function tabDisabled(key) {
 	// §11.1 — with no PE, only the Procuring entity tab is available; with a
@@ -117,9 +119,9 @@ const tabProps = computed(() => {
 		case "procurement-settings":
 			return { route: route.value };
 		case "organisation-structure":
-			return { canRepair: !!site.value?.capabilities?.repair_root };
+			return { canRepair: !!site.value?.capabilities?.repair_root, unitId: route.value.id };
 		case "users-and-responsibilities":
-			return { initialUnit: uraUnitFilter.value };
+			return { initialUnit: uraUnitFilter.value, assignmentId: route.value.id };
 		default:
 			return {};
 	}
@@ -156,6 +158,12 @@ async function refreshSite() {
 	const token = sequence.next();
 	const result = await siteConfigApi.getConfiguration();
 	if (sequence.isCurrent(token) && result && result.outcome !== "FORBIDDEN") site.value = result;
+}
+
+// An organisation unit or a responsibility opens by its own link, so reload
+// and Back return to it; an empty id returns to the tab's list.
+function openRecord(id) {
+	go({ tab: activeTab.value, id: id || "" });
 }
 
 function viewAffected(unitId) {
@@ -236,6 +244,7 @@ function sentences(text) {
 					@repaired="refreshSite"
 					@view-affected="viewAffected"
 					@navigate="navigateWithin"
+					@open="openRecord"
 				/>
 			</KeepAlive>
 			</div>

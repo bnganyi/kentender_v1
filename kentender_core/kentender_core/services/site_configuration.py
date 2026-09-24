@@ -216,6 +216,9 @@ def get_site_configuration() -> dict[str, Any]:
 		"capabilities": {"repair_root": is_site_administrator()},
 		"timezones": _timezone_options(single.timezone or "Africa/Nairobi"),
 		"root_unit": root,
+		# CFG v0.14 §4.4 — an ambiguous tree keeps responsibilities
+		# unavailable exactly as a missing root does.
+		"structure_ambiguous": bool(configured and _structure_conflicts()),
 		"needs_submission": (
 			{
 				"fiscal_year": open_year["name"],
@@ -654,6 +657,12 @@ def repair_organisation_root(*, idempotency_key: str = "") -> dict[str, Any]:
 	def _do() -> dict[str, Any]:
 		if not is_configured():
 			fail_cfg("CFG_PE_NOT_CONFIGURED")
+		from kentender_core.services.organisation_structure import structure_conflicts
+
+		# §4.4 — recreate only a demonstrably missing root; never repair an
+		# ambiguous tree by reparenting or choosing between roots.
+		if structure_conflicts():
+			fail_cfg("CFG_ROOT_UNIT_CONFLICT")
 		single = frappe.get_cached_doc(SITE_PE_DOCTYPE)
 		result = _ensure_root_unit(single.pe_name, single.pe_code)
 		if result["created"]:
@@ -1370,3 +1379,9 @@ def _acquire_intake_control(module_key: str) -> dict[str, Any]:
 	token = (frappe.db.get_value(INTAKE_CONTROL_DOCTYPE, module_key, "control_token") or 0) + 1
 	frappe.db.set_value(INTAKE_CONTROL_DOCTYPE, module_key, "control_token", token, update_modified=True)
 	return {"module_key": module_key, "control_token": token}
+
+
+def _structure_conflicts() -> list[str]:
+	from kentender_core.services.organisation_structure import structure_conflicts
+
+	return structure_conflicts()

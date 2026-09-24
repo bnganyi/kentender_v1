@@ -181,6 +181,9 @@ def reset_config_swap(*, commit: bool = True) -> dict[str, Any]:
 
 SYSTEM_MANAGER = "pw.cfg.sysmgr@example.test"
 FIXTURE_PASSWORD = "Test@123"
+# C06 journeys (D24): the one user they assign, edit and revoke.
+GRANTEE = "pw.cfg.grantee@example.test"
+GRANTEE_UNIT_NAME = "Digital Health"
 
 
 def ensure_system_manager(*, commit: bool = True) -> dict[str, str]:
@@ -213,6 +216,51 @@ def ensure_system_manager(*, commit: bool = True) -> dict[str, str]:
 	return {"user": SYSTEM_MANAGER, "password": FIXTURE_PASSWORD}
 
 
+def _purge_grantee_assignments() -> int:
+	names = frappe.get_all("User Responsibility Assignment", filters={"user": GRANTEE}, pluck="name")
+	if names:
+		for event in frappe.get_all(
+			"Audit Event",
+			filters={"document_type": "User Responsibility Assignment", "document_name": ("in", names)},
+			pluck="name",
+		):
+			frappe.delete_doc("Audit Event", event, force=True, ignore_permissions=True)
+	for name in names:
+		frappe.delete_doc("User Responsibility Assignment", name, force=True, ignore_permissions=True)
+	return len(names)
+
+
+def reset_responsibilities(*, commit: bool = True) -> dict[str, Any]:
+	"""C06 — one enabled Desk user with no business role and no assignment, and the
+	canonical unit the journeys assign in. Idempotent; the assignments a
+	spec makes, their history and the user are removed by `restore_site`."""
+	_guard()
+	frappe.set_user("Administrator")
+	if not frappe.db.exists("User", GRANTEE):
+		frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": GRANTEE,
+				"first_name": "Playwright",
+				"last_name": "Grantee",
+				"send_welcome_email": 0,
+				"user_type": "System User",
+			}
+		).insert(ignore_permissions=True)
+	_purge_grantee_assignments()
+	user = frappe.get_doc("User", GRANTEE)
+	user.enabled = 1
+	# Desk access only, as the seed gives a plain business user; no business
+	# role, so every responsibility it holds is one a spec granted.
+	user.set("roles", [])
+	user.append("roles", {"role": "Desk User"})
+	user.save(ignore_permissions=True)
+	unit = frappe.db.get_value("Organisation Unit", {"unit_name": GRANTEE_UNIT_NAME, "status": "Active"}, "name")
+	if commit:
+		frappe.db.commit()
+	return {"user": GRANTEE, "full_name": "Playwright Grantee", "unit": unit, "unit_name": GRANTEE_UNIT_NAME}
+
+
 def restore_site(*, commit: bool = True) -> dict[str, Any]:
 	"""Undo every System setup world: drop this module's fixture rows, then
 	re-run the canonical seed, which reopens the canonical year's
@@ -225,6 +273,10 @@ def restore_site(*, commit: bool = True) -> dict[str, Any]:
 	if frappe.db.exists("User", SYSTEM_MANAGER):
 		frappe.delete_doc("User", SYSTEM_MANAGER, force=True, ignore_permissions=True)
 		removed["system_manager"] = 1
+	removed["grantee_assignments"] = _purge_grantee_assignments()
+	if frappe.db.exists("User", GRANTEE):
+		frappe.delete_doc("User", GRANTEE, force=True, ignore_permissions=True)
+		removed["grantee"] = 1
 	site_setup.run(commit=False)
 	site_setup.stamp_procurement_rules_fixture_verified()
 	if commit:

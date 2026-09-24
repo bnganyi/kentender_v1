@@ -1,8 +1,9 @@
 // AUTH §18.2 items 20/22 — the assign dialog's field variants come only from
 // the selected registry role's scope and appointment (§14.3), and the primary
 // button stays disabled with a visible reason until the server preview is ok.
-// The Responsibility and Organisation Unit controls are the AUTH-DES-04
-// listboxes (role beside its scope tag, unit as its full path).
+// Ported from C06 #auth-des-04/05 and #auth-edit-scheduled: Responsibility is
+// the board's select ("Role · Scope"), the Organisation Unit its read-only
+// path field opening the list of units.
 import { flushPromises, mount } from "@vue/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -41,8 +42,7 @@ function mountDialog() {
 }
 
 async function pickRole(wrapper, role) {
-	await wrapper.find('[data-testid="kt-ura-role"]').trigger("click");
-	await wrapper.find(`[data-testid="kt-ura-role-option-${role}"]`).trigger("click");
+	await wrapper.find('[data-testid="kt-ura-role"]').setValue(role);
 	await flushPromises();
 }
 
@@ -73,12 +73,15 @@ describe("AssignDialog", () => {
 		expect(wrapper.emitted("cancel")).toHaveLength(1);
 	});
 
-	it("renders the role beside its scope tag and units as their full path", async () => {
+	it("names each responsibility with its scope, as the board's select does, and units by their full path", async () => {
 		const wrapper = mountDialog();
 		await pickRole(wrapper, "Departmental Author");
 		const roleControl = wrapper.find('[data-testid="kt-ura-role"]');
-		expect(roleControl.text()).toContain("Departmental Author");
-		expect(roleControl.find(".kt-tag").text()).toBe("Organisation Unit");
+		expect(roleControl.element.tagName).toBe("SELECT");
+		expect(roleControl.element.value).toBe("Departmental Author");
+		const labels = roleControl.findAll("option").map((option) => option.text());
+		expect(labels).toContain("Departmental Author · Organisation Unit");
+		expect(labels).toContain("Procurement Planner · Site-wide");
 
 		await wrapper.find('[data-testid="kt-ura-ou-toggle"]').trigger("click");
 		expect(wrapper.find('[data-testid="kt-ura-ou-option-OU-MOH-00001"]').text()).toContain(
@@ -114,7 +117,7 @@ describe("AssignDialog", () => {
 		expect(wrapper.find(".kt-blocked").text()).toContain("Complete every required field to continue");
 	});
 
-	it("renders the labelled server summary with bolded role and scope, the descendant note and the exclusive-office conflict verbatim", async () => {
+	it("renders the labelled server summary, the descendant note and the exclusive-office warning verbatim", async () => {
 		responsibilityApi.preview.mockResolvedValue({
 			ok: false,
 			problems: [],
@@ -137,12 +140,13 @@ describe("AssignDialog", () => {
 		const wrapper = mountDialog();
 		await pickRole(wrapper, "Departmental Author");
 		const summary = wrapper.find('[data-testid="kt-ura-summary"]');
+		expect(summary.classes()).toContain("kt-group");
 		expect(summary.find(".kt-label").text()).toBe("Responsibility summary");
-		const bolded = summary.findAll("strong").map((node) => node.text());
-		expect(bolded).toContain("Head of User Department");
-		expect(bolded).toContain("Digital Health");
+		expect(summary.text()).toContain("Julia Njeri will be Head of User Department for Digital Health from now with no scheduled end.");
 		expect(summary.text()).toContain("This includes 1 subordinate organisation unit.");
 		const conflict = wrapper.find('[data-testid="kt-ura-conflict"]');
+		expect(conflict.classes()).toEqual(expect.arrayContaining(["kt-notice", "is-warning"]));
+		expect(conflict.find("strong").text()).toBe("This office is already held");
 		expect(conflict.text()).toContain("This office is already held");
 		expect(conflict.text()).toContain("Dr Peter Kimani");
 		expect(wrapper.find(".kt-blocked").text()).toContain("Resolve the conflicting assignment to continue");
@@ -171,7 +175,7 @@ describe("AssignDialog", () => {
 		await flushPromises();
 		expect(wrapper.find(".kt-dialog-title").text()).toBe("Edit scheduled assignment");
 		expect(wrapper.find('[data-testid="kt-ura-edit-notice"]').text()).toContain("has not started yet");
-		expect(wrapper.find('[data-testid="kt-ura-user-picked"]').text()).toContain("Dr Peter Kimani");
+		expect(wrapper.find('[data-testid="kt-ura-user-picked"]').element.value).toBe("Dr Peter Kimani · peter.kimani@moh.example.test");
 		expect(wrapper.find('[data-testid="kt-ura-role"]').text()).toContain("Departmental Author");
 		expect(wrapper.find('[data-testid="kt-ura-from"]').element.value).toBe("2026-12-01");
 		expect(wrapper.find('[data-testid="kt-ura-assign-confirm"]').text()).toBe("Save changes");
@@ -185,5 +189,22 @@ describe("AssignDialog", () => {
 		const last = responsibilityApi.preview.mock.calls.at(-1)[0];
 		expect(last.effective_from).toBe("");
 		expect(last.assignment).toBe("URA-00009");
+	});
+
+	it("drops a chosen user as soon as the field is typed over, and searches instead", async () => {
+		const wrapper = mountDialog();
+		await flushPromises();
+		await wrapper.find('[data-testid="kt-ura-user"]').setValue("gra");
+		await flushPromises();
+		await wrapper.find(".kt-matches button").trigger("click");
+		await flushPromises();
+		const picked = wrapper.find('[data-testid="kt-ura-user-picked"]');
+		expect(picked.element.value).toBe("Grace Wanjiku · grace.wanjiku@moh.example.test");
+		expect(responsibilityApi.preview.mock.calls.at(-1)[0].user).toBe("grace.wanjiku@moh.example.test");
+
+		await picked.setValue("Grace Wanjiku · grace.wanjiku@moh.example.tes");
+		await flushPromises();
+		expect(wrapper.find('[data-testid="kt-ura-user-picked"]').exists()).toBe(false);
+		expect(responsibilityApi.preview.mock.calls.at(-1)[0].user).toBe("");
 	});
 });

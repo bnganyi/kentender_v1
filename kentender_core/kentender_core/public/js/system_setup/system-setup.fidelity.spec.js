@@ -45,6 +45,16 @@ const settingsApi = vi.hoisted(() => ({
 	deleteFundingSource: vi.fn(),
 }));
 vi.mock("./data/procurementSettingsApi.js", () => ({ procurementSettingsApi: settingsApi }));
+const orgApi = vi.hoisted(() => ({ getStructure: vi.fn(), getUnit: vi.fn() }));
+vi.mock("./data/orgStructureApi.js", () => ({ orgStructureApi: orgApi }));
+const uraApi = vi.hoisted(() => ({
+	listRows: vi.fn(),
+	formOptions: vi.fn(),
+	searchUsers: vi.fn(async () => []),
+	preview: vi.fn(),
+	detail: vi.fn(),
+}));
+vi.mock("./data/responsibilityApi.js", () => ({ responsibilityApi: uraApi }));
 
 import AddFiscalYearDialog from "./components/AddFiscalYearDialog.vue";
 import DisableFiscalYearDialog from "./components/DisableFiscalYearDialog.vue";
@@ -66,6 +76,12 @@ import ScheduleVersionEditor from "./components/ScheduleVersionEditor.vue";
 import CalendarDetail from "./components/CalendarDetail.vue";
 import CalendarEditor from "./components/CalendarEditor.vue";
 import CalendarHistory from "./components/CalendarHistory.vue";
+import OrganisationStructureTab from "./tabs/OrganisationStructureTab.vue";
+import PromptDialog from "./components/PromptDialog.vue";
+import UserResponsibilitiesTab from "./tabs/UserResponsibilitiesTab.vue";
+import AssignDialog from "./components/AssignDialog.vue";
+import ResponsibilityDetail from "./components/ResponsibilityDetail.vue";
+import RevokeDialog from "./components/RevokeDialog.vue";
 
 const D = "docs/mvp-1-r1/09_unified_system_setup/design/";
 const BOARDS = {
@@ -77,6 +93,8 @@ const BOARDS = {
 	C04: "C04-Schedules-Calendars.dc.html",
 	Reminders: "Reminders.dc.html",
 	Common: "Common-States.dc.html",
+	C05: "C05-Organisation-Structure.dc.html",
+	C06: "C06-Users-Responsibilities.dc.html",
 };
 
 const ROUTES = ["Cabinet Secretary", "County Executive Committee Member", "Board of Directors", "Council"];
@@ -284,6 +302,111 @@ async function reminder(entered) {
 	await wrapper.find('[data-testid="kt-reminder-days"]').setValue(entered);
 	return wrapper;
 }
+
+// C05/C06 — the AUTH-DES fixtures the boards draw (AUTH v1.9 §13).
+const DHP = {
+	id: "OU-MOH-DHP",
+	name: "Directorate of Digital Health and Policy",
+	code: "OU-MOH-DHP",
+	status: "Active",
+	path: ["Ministry of Health", "Directorate of Digital Health and Policy"],
+	descendant_count: 1,
+	active_assignments: 2,
+	is_root: false,
+	actions: { add_child: true, rename: true, deactivate: true, reactivate: false },
+};
+async function orgTab(result, props = {}) {
+	// frappe.ui.Tree draws the rows itself; only the composition around it is
+	// the board's (AUTH v1.9 §13.1).
+	globalThis.frappe = { ...(globalThis.frappe || {}), ui: { Tree: class { constructor() { this.nodes = {}; this.root_node = null; } } } };
+	globalThis.$ = (el) => el;
+	orgApi.getStructure.mockResolvedValue(result);
+	const wrapper = mount(OrganisationStructureTab, { props: { canRepair: true, ...props }, global: globalMocks() });
+	await flushPromises();
+	return wrapper;
+}
+const URA_ROWS = [
+	["Grace Wanjiku", "grace.wanjiku", "Departmental Author", "Digital Health", "This unit only", "Permanent", "From now · No scheduled end", "Active"],
+	["Dr Peter Kimani", "peter.kimani", "Head of User Department", "Human Resources Management and Development", "This unit only", "Permanent", "From now · No scheduled end", "Active"],
+	["Julia Njeri", "julia.njeri", "Head of User Department", "Digital Health", "This unit only", "Acting", "1 Oct 2026 – 30 Nov 2026", "Scheduled"],
+	["Mercy Kilonzo", "mercy.kilonzo", "Procurement Planner", "Site-wide", "Entire entity", "Permanent", "From now · No scheduled end", "Active"],
+	["Samuel Otieno", "samuel.otieno", "Head of User Department", "Directorate of Digital Health and Policy", "This unit and 1 descendant", "Permanent", "From 1 Jan 2026 · Until 31 Aug 2026", "Expired"],
+].map(([name, login, role, scope, coverage, appointment, period, status], index) => ({
+	assignment: `URA-2026-000${index + 1}`,
+	user_full_name: name,
+	user: `${login}@moh.example.test`,
+	business_role: role,
+	scope_label: scope,
+	coverage,
+	appointment_type: appointment,
+	period_label: period,
+	status,
+}));
+const URA_OPTIONS = {
+	responsibilities: [
+		{ business_role: "Departmental Author", scope_type: "Organisation Unit", requires_organisation_unit: true },
+		{ business_role: "Head of User Department", scope_type: "Organisation Unit", requires_organisation_unit: true },
+	],
+	organisation_units: [
+		{ id: "OU-MOH-DHI", label: "Digital Health", path_label: "Ministry of Health › Directorate of Digital Health and Policy › Digital Health" },
+		{ id: "OU-MOH-DHP", label: "Directorate of Digital Health and Policy", path_label: "Ministry of Health › Directorate of Digital Health and Policy" },
+	],
+	statuses: ["Active", "Scheduled", "Expired", "Revoked"],
+};
+async function uraTab({ rows = URA_ROWS, listRows, props = {} } = {}) {
+	uraApi.formOptions.mockResolvedValue(URA_OPTIONS);
+	if (listRows) uraApi.listRows.mockImplementation(listRows);
+	else uraApi.listRows.mockResolvedValue({ rows, total: rows.length });
+	const wrapper = mount(UserResponsibilitiesTab, { props, global: globalMocks() });
+	await flushPromises();
+	return wrapper;
+}
+const GRACE = {
+	assignment: "URA-2026-0001",
+	user: "grace.wanjiku@moh.example.test",
+	user_full_name: "Grace Wanjiku",
+	business_role: "Departmental Author",
+	scope_type: "Organisation Unit",
+	organisation_unit: "OU-MOH-DHI",
+	organisation_unit_path: "Ministry of Health › Directorate of Digital Health and Policy › Digital Health",
+	organisation_unit_label: "Digital Health",
+	coverage: "This unit only",
+	appointment_type: "Permanent",
+	authority_reference: "",
+	effective_from: "",
+	effective_to: "",
+	effective_label: "From 1 Sep 2026, 09:00 EAT · No scheduled end",
+	status: "Active",
+	assigned_by: "Administrator",
+	assigned_at_label: "1 Sep 2026, 09:00 EAT",
+	can_edit: false,
+	can_revoke: true,
+	expected_version: "v1",
+	history: [{ when: "1 Sep 2026, 09:00 EAT", actor: "Administrator", event: "Responsibility assigned", detail: "", changes: [] }],
+	diagnostics: { required_projection: ["Departmental Author"], projection_present: true, projection_missing: [], projection_orphaned: [], coverage: "This unit only", overlapping: [], obsolete_rows: {} },
+};
+const JULIA = {
+	...GRACE,
+	assignment: "URA-2026-0003",
+	user: "julia.njeri@moh.example.test",
+	user_full_name: "Julia Njeri",
+	business_role: "Head of User Department",
+	appointment_type: "Acting",
+	authority_reference: "MOH/HR/ACT/2026/041",
+	effective_from: "2026-10-01 00:00:00",
+	effective_to: "2026-11-30 23:59:59",
+	effective_label: "1 Oct 2026, 00:00 EAT – 30 Nov 2026, 23:59 EAT",
+	status: "Scheduled",
+	assigned_at_label: "1 Sep 2026, 10:05 EAT",
+	can_edit: true,
+	history: [{ when: "1 Sep 2026, 10:05 EAT", actor: "Administrator", event: "Responsibility assigned", detail: "", changes: [] }],
+	diagnostics: { ...GRACE.diagnostics, required_projection: ["Head of User Department"], projection_present: false },
+};
+function assignDialog(props, preview) {
+	uraApi.preview.mockResolvedValue(preview);
+	return mount(AssignDialog, { props: { responsibilities: URA_OPTIONS.responsibilities, organisationUnits: URA_OPTIONS.organisation_units, ...props }, global: globalMocks() });
+}
+const SUMMARY = (sentence, extra = {}) => ({ ok: true, problems: [], conflict: null, summary: sentence, descendant_count: 0, ...extra });
 
 const ARTBOARDS = [
 	{ key: "C01#configured", mount: () => mount(ProcuringEntityTab, { props: { site: site() }, global: globalMocks() }) },
@@ -629,6 +752,125 @@ const ARTBOARDS = [
 			await flushPromises();
 			return wrapper;
 		},
+	},
+
+	// C05 — Organisation structure (AUTH-DES-01/02/08, CFG §10.12).
+	{
+		key: "C05#auth-des-01",
+		live: '[data-testid="kt-setup-org"]',
+		mount: () => orgTab({ state: "ready", root: "OU-MOH", tree: [{ unit_code: "PE-MOH", status: "Active", name: "Ministry of Health" }], selected: DHP }),
+	},
+	{
+		key: "C05#auth-des-02",
+		self: true,
+		select: "#auth-des-02 .dialog",
+		live: '[data-testid="kt-ou-prompt"]',
+		mount: () => mount(PromptDialog, {
+			props: {
+				title: "Add organisation unit",
+				label: "Organisation unit name",
+				confirmLabel: "Add organisation unit",
+				modelValue: "Health Information Systems",
+				context: [{ label: "Parent organisation unit", value: "Ministry of Health › Directorate of Digital Health and Policy" }],
+				hint: "The unit code is generated when you save.",
+			},
+			global: globalMocks(),
+		}),
+	},
+	{
+		key: "C05#auth-des-08-empty",
+		live: '[data-testid="kt-setup-org"]',
+		mount: () => orgTab({ state: "empty_root", root: "OU-MOH", tree: [], selected: { ...DHP, id: "OU-MOH", name: "Ministry of Health", is_root: true } }),
+	},
+	{ key: "C05#auth-des-08-root-admin", live: '[data-testid="kt-setup-org"]', mount: () => orgTab({ state: "needs_repair", tree: [] }) },
+	{ key: "C05#auth-des-08-root-sm", live: '[data-testid="kt-setup-org"]', mount: () => orgTab({ state: "needs_repair", tree: [] }, { canRepair: false }) },
+	{ key: "C05#auth-des-08-ambiguous", live: '[data-testid="kt-setup-org"]', mount: () => orgTab({ state: "ambiguous", tree: [], conflicts: [] }) },
+
+	// C06 — Users and responsibilities (AUTH-DES-03–08).
+	{ key: "C06#auth-des-03", live: '[data-testid="kt-setup-ura"]', mount: () => uraTab() },
+	{
+		key: "C06#auth-des-04",
+		self: true,
+		select: "#auth-des-04 .dialog",
+		live: '[data-testid="kt-ura-assign"]',
+		mount: async () => {
+			const wrapper = assignDialog({}, SUMMARY("Grace Wanjiku will be Departmental Author for Digital Health from now with no scheduled end."));
+			await flushPromises();
+			await wrapper.find('[data-testid="kt-ura-role"]').setValue("Departmental Author");
+			await flushPromises();
+			return wrapper;
+		},
+	},
+	{
+		key: "C06#auth-des-05",
+		self: true,
+		select: "#auth-des-05 .dialog",
+		live: '[data-testid="kt-ura-assign"]',
+		mount: async () => {
+			const wrapper = assignDialog(
+				{ editing: null },
+				SUMMARY("Julia Njeri will be Head of User Department for Directorate of Digital Health and Policy from 1 Oct 2026 until 30 Nov 2026.", {
+					ok: false,
+					descendant_count: 1,
+					conflict: { heading: "This office is already held", message: "Dr Peter Kimani holds Head of User Department for this scope until 30 Nov 2026. Revoke that assignment before creating an overlapping one." },
+				})
+			);
+			await flushPromises();
+			await wrapper.find('[data-testid="kt-ura-role"]').setValue("Head of User Department");
+			await wrapper.find('[data-testid="kt-ura-appointment-acting"]').setValue(true);
+			await flushPromises();
+			return wrapper;
+		},
+	},
+	{ key: "C06#auth-des-06", live: '[data-testid="kt-ura-detail"]', mount: () => mount(ResponsibilityDetail, { props: { assignment: GRACE }, global: globalMocks() }) },
+	{
+		key: "C06#auth-des-07",
+		self: true,
+		select: "#auth-des-07 .dialog",
+		live: '[data-testid="kt-ura-revoke"]',
+		mount: () => mount(RevokeDialog, { props: { assignment: GRACE }, global: globalMocks() }),
+	},
+	{ key: "C06#auth-des-06-scheduled", live: '[data-testid="kt-ura-detail"]', mount: () => mount(ResponsibilityDetail, { props: { assignment: JULIA }, global: globalMocks() }) },
+	{
+		key: "C06#auth-edit-scheduled",
+		self: true,
+		select: "#auth-edit-scheduled .dialog",
+		live: '[data-testid="kt-ura-assign"]',
+		mount: async () => {
+			const wrapper = assignDialog({ editing: JULIA }, SUMMARY("Julia Njeri will be Head of User Department for Digital Health from 1 Oct 2026 until 30 Nov 2026."));
+			await flushPromises();
+			return wrapper;
+		},
+	},
+	{
+		key: "C06#auth-changed-history",
+		live: '[data-testid="kt-ura-detail"]',
+		mount: () => mount(ResponsibilityDetail, {
+			props: {
+				assignment: {
+					...JULIA,
+					history: [
+						{ when: "1 Sep 2026, 10:30 EAT", actor: "Administrator", event: "Scheduled assignment changed", changes: ["Effective to: 30 Nov 2026, 23:59 EAT → 31 Dec 2026, 23:59 EAT"] },
+						...JULIA.history,
+					],
+				},
+			},
+			global: globalMocks(),
+		}),
+	},
+	{ key: "C06#auth-des-08~loading", select: "#auth-des-08 > div > div:nth-child(1)", live: '[data-testid="kt-setup-ura"]', mount: () => uraTab({ listRows: () => new Promise(() => {}) }) },
+	{ key: "C06#auth-des-08~empty", select: "#auth-des-08 > div > div:nth-child(2)", live: '[data-testid="kt-setup-ura"]', mount: () => uraTab({ rows: [] }) },
+	{
+		key: "C06#auth-des-08~forbidden",
+		select: "#auth-des-08 > div > div:nth-child(3)",
+		live: '[data-testid="kt-setup-ura"]',
+		mount: () => uraTab({ listRows: () => Promise.reject(Object.assign(new Error("no"), { httpStatus: 403 })) }),
+	},
+	{
+		key: "C06#auth-des-08~error",
+		select: "#auth-des-08 > div > div:nth-child(4)",
+		live: '[data-testid="kt-setup-ura"]',
+		mount: () => uraTab({ listRows: () => Promise.reject(new Error("boom")) }),
 	},
 ];
 

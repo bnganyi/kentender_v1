@@ -1,6 +1,7 @@
 <script setup>
-// One in-Vue dialog for the two single-field commands (§12.1.2's add dialog and
-// Edit name). frappe.confirm()/frappe.ui.Dialog render outside the Vue root and
+// One in-Vue dialog for the two single-field commands: AUTH-DES-02's Add
+// organisation unit (ported from C05 #auth-des-02 — context shown as a
+// read-only field, the helper line under the name) and Edit name. frappe.confirm()/frappe.ui.Dialog render outside the Vue root and
 // inherit neither its state nor its Industry styles (AGENTS.md §6.3), so every
 // dialog on these surfaces is built here instead.
 import { nextTick, onMounted, ref, watch } from "vue";
@@ -31,40 +32,41 @@ onMounted(async () => {
 <template>
 	<div class="kt-dialog-backdrop">
 		<div
-			class="kt-dialog kt-blueprint kt-narrow"
+			class="kt-dialog kt-narrow"
 			role="dialog"
 			aria-modal="true"
-			:aria-label="title"
+			aria-labelledby="kt-prompt-title"
 			data-testid="kt-ou-prompt"
-			@keydown.esc="emit('cancel')"
+			@keydown.esc.stop="emit('cancel')"
 		>
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-			<h2 class="kt-dialog-title">{{ title }}</h2>
-			<div class="kt-dialog-fields">
-				<div v-for="row in context" :key="row.label" class="kt-field">
-					<label>{{ row.label }}</label>
-					<div class="kt-ro">{{ row.value }}</div>
+			<h2 id="kt-prompt-title" class="kt-dialog-title">{{ title }}</h2>
+			<div class="dialog-body" style="display:flex;flex-direction:column;gap:14px">
+				<div v-for="(row, index) in context" :key="row.label" class="kt-field">
+					<label :for="'kt-prompt-context-' + index">{{ row.label }}</label>
+					<input :id="'kt-prompt-context-' + index" class="kt-input" type="text" readonly :value="row.value" style="background:var(--kt-color-surface-2)">
 				</div>
 				<div class="kt-field">
-					<label :for="'kt-prompt-input'">{{ label }}</label>
+					<label for="kt-prompt-input">{{ label }}</label>
 					<input
 						id="kt-prompt-input"
 						ref="field"
 						class="kt-input"
+						type="text"
 						:value="modelValue"
-						:aria-invalid="!!error"
+						:aria-invalid="error ? 'true' : 'false'"
 						data-testid="kt-ou-prompt-input"
 						@input="emit('update:modelValue', $event.target.value)"
 						@keydown.enter.prevent="emit('confirm')"
 					>
-					<p v-if="hint" class="kt-hint">{{ hint }}</p>
-					<p v-if="error" class="kt-inline-error" role="alert">{{ error }}</p>
+					<span v-if="hint" class="text-muted" style="font-size:13px">{{ hint }}</span>
+				</div>
+				<div v-if="error" class="kt-notice is-critical" role="alert" data-testid="kt-ou-prompt-error">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+					<div class="kt-notice-body">{{ error }}</div>
 				</div>
 			</div>
 			<div class="kt-dialog-actions">
-				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="emit('cancel')">
-					{{ __("Cancel") }}
-				</button>
+				<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" @click="emit('cancel')">{{ __("Cancel") }}</button>
 				<button
 					type="button"
 					class="kt-btn kt-btn-primary"

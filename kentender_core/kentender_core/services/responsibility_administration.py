@@ -104,6 +104,9 @@ def grant(
 	check and both insert.
 	"""
 	principal = require_assignment_administrator(business_role, actor)
+	from kentender_core.services.organisation_structure import require_whole_structure
+
+	require_whole_structure()
 	entry = require_registered(business_role)
 	_require_enabled_user(user)
 
@@ -248,6 +251,9 @@ def update_scheduled(
 	principal = require_assignment_administrator(doc.business_role, actor)
 	if business_role != doc.business_role:
 		require_assignment_administrator(business_role, actor)
+	from kentender_core.services.organisation_structure import require_whole_structure
+
+	require_whole_structure()
 	if expected_version and str(doc.modified) != str(expected_version):
 		fail("AUTH_STATE_CHANGED", "This assignment changed. Reload and try again.")
 	if derived_status(doc.as_dict()) != DERIVED_SCHEDULED:
@@ -982,6 +988,7 @@ def _history(doc) -> list[dict[str, Any]]:
 				"actor": doc.assigned_by or "",
 				"event": "Responsibility assigned",
 				"detail": "",
+				"changes": [],
 			},
 		)
 	]
@@ -997,6 +1004,7 @@ def _history(doc) -> list[dict[str, Any]]:
 		limit_page_length=0,
 	):
 		meta = frappe.parse_json(event.get("metadata")) or {}
+		changes = [f"{change['label']}: {change['before']} → {change['after']}" for change in meta.get("changes", [])]
 		entries.append(
 			(
 				get_datetime(event["timestamp"]),
@@ -1004,10 +1012,8 @@ def _history(doc) -> list[dict[str, Any]]:
 					"when": display_datetime(event["timestamp"]),
 					"actor": event.get("performed_by") or "",
 					"event": "Scheduled assignment changed",
-					"detail": "; ".join(
-						f"{change['label']}: {change['before']} → {change['after']}"
-						for change in meta.get("changes", [])
-					),
+					"detail": "; ".join(changes),
+					"changes": changes,
 				},
 			)
 		)
@@ -1020,6 +1026,7 @@ def _history(doc) -> list[dict[str, Any]]:
 					"actor": doc.revoked_by or "",
 					"event": "Responsibility revoked",
 					"detail": "",
+					"changes": [],
 				},
 			)
 		)
