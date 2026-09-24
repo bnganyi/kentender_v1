@@ -50,8 +50,16 @@ describe("ProcuringEntityTab", () => {
 		expect(wrapper.text()).toContain("Who approves the Annual Procurement Plan?");
 		expect(wrapper.find('[data-testid="kt-setup-pe-county-yes"] input').element.checked).toBe(false);
 		expect(wrapper.find('[data-testid="kt-setup-pe-county-no"] input').element.checked).toBe(true);
-		expect(wrapper.find('[data-testid="kt-setup-pe-tz"]').text()).toBe("Africa/Nairobi");
-		expect(wrapper.find('[data-testid="kt-setup-pe-code-ro"]').text()).toBe("PE-MOH");
+		// C01 draws the fixed code and the timezone as disabled inputs.
+		const tz = wrapper.find('[data-testid="kt-setup-pe-tz"]');
+		expect(tz.element.value).toBe("Africa/Nairobi");
+		expect(tz.attributes("disabled")).toBeDefined();
+		const code = wrapper.find('[data-testid="kt-setup-pe-code"]');
+		expect(code.element.value).toBe("PE-MOH");
+		expect(code.attributes("disabled")).toBeDefined();
+		// The title is the board's h3, not a styled div; no card within the card.
+		expect(wrapper.find("h3").text()).toBe("Procuring entity");
+		expect(wrapper.find(".kt-card").exists()).toBe(false);
 		expect(wrapper.find('[data-testid="kt-setup-pe-submit"]').text()).toBe("Save changes");
 		expect(wrapper.find('[data-testid="kt-setup-pe-submit"]').attributes("disabled")).toBeDefined();
 	});
@@ -106,12 +114,16 @@ describe("ProcuringEntityTab", () => {
 		expect(wrapper.emitted("navigate")).toEqual([["procurement-rules"]]);
 	});
 
-	it("first run: the card itself is titled Configure this site, and Configure site enables only once the route and an explicit county answer are set", async () => {
+	it("first run: titled Configure this site; pressing Configure without an approval authority shows the board's Missing notice instead of sending", async () => {
 		const wrapper = mount(ProcuringEntityTab, {
 			props: { site: site({ configured: false, procuring_entity: null, root_unit: null }) },
 			global: globalMocks(),
 		});
-		expect(wrapper.find('[data-testid="kt-setup-pe-card"]').find(".kt-card-title").text()).toBe("Configure this site");
+		expect(wrapper.find("h3").text()).toBe("Configure this site");
+		// Empty selects read "— Select —" (C01 first run); no invented hints.
+		expect(wrapper.find('[data-testid="kt-setup-pe-type"] option').text()).toBe("— Select —");
+		expect(wrapper.find('[data-testid="kt-setup-pe-route"] option').text()).toBe("— Select —");
+		expect(wrapper.find('[data-testid="kt-setup-pe-ppra"]').attributes("placeholder") || "").toBe("");
 		expect(wrapper.text()).toContain("Other four tabs unavailable until this save succeeds.");
 		expect(wrapper.find('[data-testid="kt-setup-pe-county-yes"] input').element.checked).toBe(false);
 		expect(wrapper.find('[data-testid="kt-setup-pe-county-no"] input').element.checked).toBe(false);
@@ -120,10 +132,22 @@ describe("ProcuringEntityTab", () => {
 		await wrapper.find('[data-testid="kt-setup-pe-code"]').setValue("PE-X");
 		await wrapper.find('[data-testid="kt-setup-pe-name"]').setValue("Test Entity");
 		await wrapper.find('[data-testid="kt-setup-pe-type"]').setValue("County Government");
-		await wrapper.find('[data-testid="kt-setup-pe-route"]').setValue("County Executive Committee Member");
-		expect(wrapper.find('[data-testid="kt-setup-pe-submit"]').attributes("disabled")).toBeDefined();
 		await wrapper.find('[data-testid="kt-setup-pe-county-yes"] input').trigger("change");
-		expect(wrapper.find('[data-testid="kt-setup-pe-submit"]').attributes("disabled")).toBeUndefined();
+
+		// C01 missing-authority: Configure is pressed without an approval
+		// authority; the board's notice appears beside that field, focus moves
+		// to it, and nothing is sent.
+		await wrapper.find('[data-testid="kt-setup-pe-submit"]').trigger("click");
+		await flushPromises();
+		const missing = wrapper.find('[data-testid="kt-setup-pe-route-missing"]');
+		expect(missing.exists()).toBe(true);
+		expect(missing.classes()).toEqual(expect.arrayContaining(["kt-notice", "is-critical"]));
+		expect(missing.find(".kt-notice-icon").exists()).toBe(true);
+		expect(missing.text()).toBe("Missing. Select who approves this entity's Annual Procurement Plan.");
+		expect(api.configure).not.toHaveBeenCalled();
+
+		await wrapper.find('[data-testid="kt-setup-pe-route"]').setValue("County Executive Committee Member");
+		expect(wrapper.find('[data-testid="kt-setup-pe-route-missing"]').exists()).toBe(false);
 		await wrapper.find('[data-testid="kt-setup-pe-submit"]').trigger("click");
 		await flushPromises();
 		expect(api.configure.mock.calls[0][0]).toMatchObject({
@@ -144,6 +168,7 @@ describe("ProcuringEntityTab", () => {
 		expect(conflict.exists()).toBe(true);
 		expect(conflict.classes()).toEqual(expect.arrayContaining(["kt-notice", "is-critical"]));
 		expect(conflict.text()).toBe("Conflict. The county answer does not match the entity details.");
+		expect(conflict.find(".kt-notice-icon").exists()).toBe(true);
 		expect(wrapper.find('[data-testid="kt-setup-pe-error"]').exists()).toBe(false);
 	});
 });

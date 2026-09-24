@@ -70,6 +70,11 @@ export function resetWorld(fn: "reset_config" | "reset_config_rules" | "reset_co
 	return parseResult<ConfigWorld>(fn, bench(`execute ${FIXTURES}.${fn}`));
 }
 
+/** A System-Manager-only login for the second setup role (removed by restoreSite). */
+export function systemManager(): { user: string; password: string } {
+	return parseResult<{ user: string; password: string }>("ensure_system_manager", bench(`execute ${FIXTURES}.ensure_system_manager`));
+}
+
 /** Undo every site world (idempotent). Call in afterAll of every spec that built one. */
 export function restoreSite(): void {
 	bench(`execute ${FIXTURES}.restore_site`);

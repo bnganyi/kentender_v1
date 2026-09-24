@@ -787,9 +787,9 @@
 .kt-industry .kt-setup-grid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
-	gap: 16px 24px;
-	max-width: 860px;
-	margin-top: 14px;
+	gap: 16px;
+	/* C01 draws the two columns across the full content width, 20px above and below. */
+	margin: 20px 0;
 }
 @media (max-width: 900px) {
 	.kt-industry .kt-setup-grid { grid-template-columns: 1fr; }
@@ -1012,3 +1012,22 @@
 	align-items: end;
 }
 .kt-industry.kt-setup-root .kt-meta-row.is-tight { display: flex; flex-wrap: wrap; }
+
+/* CFG-CHG-002 v0.14 re-port (tracker CFG14-5A): the design system's own text
+   classes the boards use. Frappe's Bootstrap gives `.card-body` card padding,
+   which indented every lede; the board's `.card-body` is plain body text. */
+.kt-industry.kt-setup-root .card-body {
+	padding: 0;
+	margin: 0;
+	flex: none;
+	font-size: 16px;
+	color: var(--kt-color-neutral-800);
+}
+.kt-industry.kt-setup-root .text-muted { color: var(--kt-color-neutral-700); }
+/* Board links: the rust link colour with the browser underline, offset. */
+.kt-industry.kt-setup-root .kt-setup-panel a:not(.kt-btn):not(.kt-tab) {
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+/* The page lede wraps at the board's 62ch. */
+.kt-industry .kt-setup-lede { max-width: 62ch; }

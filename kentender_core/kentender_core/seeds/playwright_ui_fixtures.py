@@ -174,6 +174,40 @@ def reset_config_swap(*, commit: bool = True) -> dict[str, Any]:
 	return {**base, "dpp_submission": configuration.get_site_configuration().get("dpp_submission")}
 
 
+SYSTEM_MANAGER = "pw.cfg.sysmgr@example.test"
+FIXTURE_PASSWORD = "Test@123"
+
+
+def ensure_system_manager(*, commit: bool = True) -> dict[str, str]:
+	"""A System-Manager-only user (no Administrator, no business role —
+	KT-STD-001 §3A.6/§8.6) so browser specs prove the second setup role
+	(CFG11-EX-001) and its limits (no missing-root repair). Removed by
+	`restore_site`."""
+	_guard()
+	from frappe.utils.password import update_password
+
+	if not frappe.db.exists("User", SYSTEM_MANAGER):
+		user = frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": SYSTEM_MANAGER,
+				"first_name": "Playwright",
+				"last_name": "System Manager",
+				"send_welcome_email": 0,
+				"user_type": "System User",
+			}
+		)
+		user.insert(ignore_permissions=True)
+	user = frappe.get_doc("User", SYSTEM_MANAGER)
+	user.set("roles", [])
+	user.append("roles", {"role": "System Manager"})
+	user.save(ignore_permissions=True)
+	update_password(SYSTEM_MANAGER, FIXTURE_PASSWORD)
+	if commit:
+		frappe.db.commit()
+	return {"user": SYSTEM_MANAGER, "password": FIXTURE_PASSWORD}
+
+
 def restore_site(*, commit: bool = True) -> dict[str, Any]:
 	"""Undo every System setup world: drop this module's fixture rows, then
 	re-run the canonical seed, which reopens the canonical year's
@@ -183,6 +217,9 @@ def restore_site(*, commit: bool = True) -> dict[str, Any]:
 	_guard()
 	frappe.set_user("Administrator")
 	removed = purge(commit=False)
+	if frappe.db.exists("User", SYSTEM_MANAGER):
+		frappe.delete_doc("User", SYSTEM_MANAGER, force=True, ignore_permissions=True)
+		removed["system_manager"] = 1
 	site_setup.run(commit=False)
 	site_setup.stamp_procurement_rules_fixture_verified()
 	if commit:

@@ -45,7 +45,7 @@ help:
 	@echo "  make ui-system-setup-fidelity-gate — System setup screens match their .dc.html artboards: landmark text order AND container structure; boards not yet re-ported are queued in tests/ui/fidelity/departures/system-setup.js (geometry is NOT enforced — see AGENTS.md 6.6)"
 	@echo "  make ui-system-setup-procurement-settings-gate — PLN-CHG-001 v1.18 C01–C04: System setup component tests + the Procurement settings browser spec (Administrator + refused business user), test funding source purged after"
 	@echo "  make ui-system-setup-fiscal-years-gate — CFG-CHG-002 v0.11 C02: Financial years cross-year replacement, expiry and stale-write recovery browser specs"
-	@echo "  make ui-system-setup-entity-gate — CFG-CHG-002 v0.14 C01: Procuring entity journeys (stale-save race; Phase 5A adds the rest)"
+	@echo "  make ui-system-setup-entity-gate — CFG-CHG-002 v0.14 C01: Procuring entity journeys (first paint, save/reload, conflict, missing authority, narrow/200%, keyboard, System Manager, stale-save race)"
 	@echo "  make ui-system-setup-access-gate — CFG-CHG-002 v0.11 §6/§11.1: who may use System setup, the refusal state, sub-path durability, narrow/200% and keyboard focus"
 	@echo "  make ui-budget-fidelity-gate — BUD-CHG-001 v1.9: Budget & Funding screens match their reconciled .dc.html boards, state by state (landmark text order AND container structure)"
 	@echo "  make ui-budget-gate — BUD-CHG-001 v1.9: the five Budget browser journeys (workspace, officer, approver, closure, access), single worker"
@@ -357,6 +357,7 @@ ui-system-setup-fiscal-years-gate:
 ui-system-setup-entity-gate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.site_setup.run
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
+		tests/ui/smoke/system_setup/system-setup-entity.spec.ts \
 		tests/ui/smoke/system_setup/system-setup-pe-stale-save.spec.ts
 
 # CFG-CHG-002 v0.11 §6/§11.1 (tracker CFG11-308) — access and the shared

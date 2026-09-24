@@ -17,12 +17,11 @@ import { describe, expect, it, vi } from "vitest";
 
 import { setupArtboardIds, setupSkeleton } from "../../../../../tests/ui/fidelity/board.js";
 import { compareSkeletons, formatMismatch, skeletonOf } from "../../../../../tests/ui/fidelity/skeleton.js";
-import { COVERED, DEPARTURES, REBUILD_QUEUE } from "../../../../../tests/ui/fidelity/departures/system-setup.js";
+import { COVERED, DEPARTURES, FRAGMENTS, REBUILD_QUEUE } from "../../../../../tests/ui/fidelity/departures/system-setup.js";
 import { globalMocks } from "./components/spec_helpers.js";
 
-vi.mock("./data/siteConfigApi.js", () => ({
-	siteConfigApi: { previewFiscalYear: vi.fn(async () => null), configure: vi.fn(), update: vi.fn() },
-}));
+const siteApi = vi.hoisted(() => ({ previewFiscalYear: vi.fn(async () => null), configure: vi.fn(), update: vi.fn() }));
+vi.mock("./data/siteConfigApi.js", () => ({ siteConfigApi: siteApi }));
 vi.mock("./data/procurementSettingsApi.js", () => ({
 	procurementSettingsApi: { setReminderThresholdDays: vi.fn(), addFundingSource: vi.fn(), updateFundingSource: vi.fn() },
 }));
@@ -79,8 +78,26 @@ const ARTBOARDS = [
 		key: "C01#first-run",
 		mount: () => mount(ProcuringEntityTab, { props: { site: site({ configured: false, procuring_entity: null, root_unit: null }) }, global: globalMocks() }),
 	},
-	{ key: "C01#conflict" },
-	{ key: "C01#missing-authority" },
+	{
+		// A specimen: the board draws only the type, the county answer and the
+		// notice — compared as a fragment of the full screen.
+		key: "C01#conflict",
+		mount: async () => {
+			siteApi.update.mockRejectedValueOnce(new Error("The county answer does not match the entity details."));
+			const wrapper = mount(ProcuringEntityTab, { props: { site: site() }, global: globalMocks() });
+			await wrapper.find('[data-testid="kt-setup-pe-type"]').setValue("County Government");
+			await wrapper.find('[data-testid="kt-setup-pe-submit"]').trigger("click");
+			return wrapper;
+		},
+	},
+	{
+		key: "C01#missing-authority",
+		mount: async () => {
+			const wrapper = mount(ProcuringEntityTab, { props: { site: site({ configured: false, procuring_entity: null, root_unit: null }) }, global: globalMocks() });
+			await wrapper.find('[data-testid="kt-setup-pe-submit"]').trigger("click");
+			return wrapper;
+		},
+	},
 
 	{ key: "C02#overview" },
 	{ key: "C02#overview-disabled" },
@@ -158,18 +175,23 @@ describe("System setup board inventory", () => {
 });
 
 describe.each(ARTBOARDS)("$key", ({ key, mount: mountIt, select, self }) => {
+	const fragment = FRAGMENTS.includes(key);
 	it("is built out of the board's own containers", async () => {
 		const queued = REBUILD_QUEUE[key];
 		if (!mountIt) {
 			expect(queued, `${key}: nothing renders it and it is not queued`).toBeTruthy();
 			return;
 		}
-		const wrapper = mountIt();
+		const wrapper = await mountIt();
 		await flushPromises();
 		const { file, id } = boardOf(key);
 		const board = setupSkeleton(file, select || `#${id}`, { self });
 		const built = self ? skeletonOf({ children: [wrapper.element] }) : skeletonOf(wrapper.element);
 		const result = compareSkeletons(board, built, { departures: DEPARTURES[key] || [] });
+		// A specimen board draws a fragment of the screen: every container it
+		// draws must be present in order, and the rest of the screen is not
+		// the specimen's business.
+		if (fragment) result.extra = [];
 		const message = formatMismatch(key, result);
 		if (queued) {
 			expect(message, `${key} now matches its board — move it from REBUILD_QUEUE to COVERED`).not.toBe("");

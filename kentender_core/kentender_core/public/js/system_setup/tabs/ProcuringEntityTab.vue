@@ -1,14 +1,13 @@
 <script setup>
-// CFG-CHG-002 v0.11 §10.2/§11.2 (C01) — the Procuring entity tab, ported
-// class-for-class from design/C01-Procuring-Entity.dc.html.
-//
-// First run: the card's own title/lede change to "Configure this site" /
-// "Enter the procuring entity's details to set up this site." — there is no
-// separate outer notice. Configured: the code is read-only, "Save changes"
-// stays disabled until a field changes, and the card carries two more
-// sections — the setup record facts and the Plan approval authority
-// readiness (never a generic "Ready" badge — CFG-UX-AC-04).
-import { computed, reactive, ref, watch } from "vue";
+// CFG-CHG-002 v0.14 §10.2 (C01) — the Procuring entity tab, re-ported
+// class-for-class from design/C01-Procuring-Entity.dc.html (tracker
+// CFG14-5A): the content sits directly in the page's one card (no card within
+// the card), titled by the board's h3, with the fixed code and timezone as
+// disabled inputs. Artboards: #configured, #first-run, #conflict (the county
+// notice directly after the county answer), #missing-authority (the notice
+// directly after the approval-authority field). The saved notices follow the
+// footer, as the board places them. Never a generic "Ready" badge.
+import { computed, nextTick, reactive, ref, watch } from "vue";
 import { siteConfigApi } from "../data/siteConfigApi.js";
 
 const props = defineProps({
@@ -73,21 +72,31 @@ const dirty = computed(() => {
 // save; shown as its own critical notice, not folded into the generic error.
 const countyConflict = computed(() => /county answer does not match/i.test(error.value || ""));
 
+// C01 missing-authority — pressing Configure without an approval authority
+// shows the board's notice beside that field and moves focus to it; the
+// server refuses the same (CFG_APPROVAL_ROUTE_REQUIRED). Any other missing
+// fact is refused by the server with its own message.
+const routeMissing = ref(false);
+const routeSelect = ref(null);
+watch(
+	() => form.statutory_approval_route,
+	(value) => {
+		if (value) routeMissing.value = false;
+	}
+);
+
 const canSubmit = computed(() => {
 	if (busy.value) return false;
-	if (!configured.value) {
-		return !!(
-			form.pe_name.trim() &&
-			form.pe_code.trim() &&
-			form.pe_type &&
-			form.statutory_approval_route &&
-			form.entity_is_county !== null
-		);
-	}
-	return dirty.value;
+	return configured.value ? dirty.value : true;
 });
 
-function submit() {
+async function submit() {
+	if (!form.statutory_approval_route) {
+		routeMissing.value = true;
+		await nextTick();
+		routeSelect.value?.focus();
+		return;
+	}
 	return run(async () => {
 		if (!configured.value) {
 			await siteConfigApi.configure({
@@ -163,10 +172,9 @@ function goToProcurementRules() {
 
 <template>
 	<section class="kt-setup-section" data-testid="kt-setup-pe">
-		<div class="kt-card kt-blueprint" data-testid="kt-setup-pe-card">
-			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-			<div class="kt-card-title">{{ configured ? __("Procuring entity") : __("Configure this site") }}</div>
-			<p class="kt-muted kt-card-lede">
+		<div data-testid="kt-setup-pe-card">
+			<h3>{{ configured ? __("Procuring entity") : __("Configure this site") }}</h3>
+			<p class="card-body">
 				{{
 					configured
 						? __("This site represents one procuring entity. Its code is fixed after setup.")
@@ -181,50 +189,59 @@ function goToProcurementRules() {
 				</div>
 				<div class="kt-field">
 					<label for="kt-pe-code">{{ __("Entity code") }}</label>
-					<div v-if="configured" class="kt-ro" data-testid="kt-setup-pe-code-ro">{{ form.pe_code }}</div>
 					<input
-						v-else
 						id="kt-pe-code"
 						v-model="form.pe_code"
 						class="kt-input"
+						:disabled="configured"
 						data-testid="kt-setup-pe-code"
 					>
 				</div>
 				<div class="kt-field">
 					<label for="kt-pe-type">{{ __("Entity type") }}</label>
 					<select id="kt-pe-type" v-model="form.pe_type" class="kt-input" data-testid="kt-setup-pe-type">
-						<option value="">{{ __("Select the entity type") }}</option>
+						<option v-if="!form.pe_type" value="">{{ __("— Select —") }}</option>
 						<option v-for="kind in peTypes" :key="kind" :value="kind">{{ kind }}</option>
 					</select>
 				</div>
 				<div class="kt-field">
 					<label for="kt-pe-ppra">{{ __("PPRA registration") }}</label>
-					<input
-						id="kt-pe-ppra"
-						v-model="form.ppra_registration"
-						class="kt-input"
-						:placeholder="__('Optional')"
-						data-testid="kt-setup-pe-ppra"
-					>
+					<input id="kt-pe-ppra" v-model="form.ppra_registration" class="kt-input" data-testid="kt-setup-pe-ppra">
 				</div>
 				<div class="kt-field">
 					<label for="kt-pe-tz">{{ __("Timezone") }}</label>
-					<div class="kt-ro" data-testid="kt-setup-pe-tz">{{ form.timezone }}</div>
+					<input id="kt-pe-tz" :value="form.timezone" class="kt-input" disabled data-testid="kt-setup-pe-tz">
 				</div>
-				<!-- C01 — "Who approves the Annual Procurement Plan?" (four values, no None) -->
 				<div class="kt-field">
 					<label for="kt-pe-route">{{ __("Who approves the Annual Procurement Plan?") }}</label>
-					<select id="kt-pe-route" v-model="form.statutory_approval_route" class="kt-input" data-testid="kt-setup-pe-route">
-						<option v-if="!form.statutory_approval_route" value="">{{ __("Select who approves this entity's Annual Procurement Plan.") }}</option>
+					<select
+						id="kt-pe-route"
+						ref="routeSelect"
+						v-model="form.statutory_approval_route"
+						class="kt-input"
+						:aria-invalid="routeMissing ? 'true' : 'false'"
+						:aria-describedby="routeMissing ? 'kt-pe-route-missing' : undefined"
+						data-testid="kt-setup-pe-route"
+					>
+						<option v-if="!form.statutory_approval_route" value="">{{ __("— Select —") }}</option>
 						<option v-for="route in routes" :key="route" :value="route">{{ route }}</option>
 					</select>
 				</div>
+				<div
+					v-if="routeMissing"
+					id="kt-pe-route-missing"
+					class="kt-notice is-critical"
+					role="alert"
+					style="grid-column:1/-1"
+					data-testid="kt-setup-pe-route-missing"
+				>
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+					<div class="kt-notice-body"><strong>{{ __("Missing.") }}</strong> {{ __("Select who approves this entity's Annual Procurement Plan.") }}</div>
+				</div>
 			</div>
 
-			<!-- C01 — "Is this a county entity?" is an explicit Yes/No choice
-			     (regulation 40(5)), never a checkbox standing in for a tri-state
-			     question. -->
-			<div class="kt-field" data-testid="kt-setup-pe-county">
+			<!-- An explicit Yes/No choice (regulation 40(5)), never a checkbox. -->
+			<div class="kt-field" style="margin-bottom:20px" data-testid="kt-setup-pe-county">
 				<label id="kt-pe-county-label">{{ __("Is this a county entity?") }}</label>
 				<div style="display:flex;gap:16px" role="radiogroup" aria-labelledby="kt-pe-county-label">
 					<label class="kt-radio" data-testid="kt-setup-pe-county-yes">
@@ -248,8 +265,14 @@ function goToProcurementRules() {
 				</div>
 			</div>
 
+			<!-- C01 #conflict — directly after the county answer it concerns. -->
+			<div v-if="countyConflict" class="kt-notice is-critical" role="alert" data-testid="kt-setup-pe-county-conflict">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+				<div class="kt-notice-body"><strong>{{ __("Conflict.") }}</strong> {{ error }}</div>
+			</div>
+
 			<template v-if="configured">
-				<div class="kt-section" data-testid="kt-setup-pe-record">
+				<div class="kt-section" style="margin-bottom:16px" data-testid="kt-setup-pe-record">
 					<h6 class="kt-card-title">{{ __("Setup record") }}</h6>
 					<div class="kt-panel">
 						<div class="kt-meta-row">
@@ -261,41 +284,28 @@ function goToProcurementRules() {
 					</div>
 				</div>
 
-				<div class="kt-section" data-testid="kt-setup-pe-approval">
+				<div class="kt-section" style="margin-bottom:20px" data-testid="kt-setup-pe-approval">
 					<h6 class="kt-card-title">{{ __("Plan approval authority") }}</h6>
 					<div class="kt-panel">
 						<div style="margin-bottom:8px">
 							<span class="kt-status" :class="approvalStatusClass" data-testid="kt-setup-pe-approval-status">{{ approvalStatusLabel }}</span>
 						</div>
-						<p style="margin:0 0 8px">{{ approvalStatusText }}</p>
+						<p class="card-body">{{ approvalStatusText }}</p>
 						<a href="#" data-testid="kt-setup-pe-approval-link" @click.prevent="goToProcurementRules">{{ __("View procurement rules") }}</a>
 					</div>
 				</div>
 			</template>
 
-			<p v-else class="kt-muted" style="font-size:13px" data-testid="kt-setup-pe-first-run-note">
+			<p v-else class="text-muted" style="font-size:13px" data-testid="kt-setup-pe-first-run-note">
 				{{ __("Other four tabs unavailable until this save succeeds.") }}
 			</p>
 
-			<div
-				v-if="countyConflict"
-				class="kt-notice is-critical"
-				role="alert"
-				data-testid="kt-setup-pe-county-conflict"
-			><strong>{{ __("Conflict.") }}</strong> {{ error }}</div>
-			<div
-				v-else-if="error"
-				class="kt-notice is-critical"
-				role="alert"
-				data-testid="kt-setup-pe-error"
-			>{{ error }}</div>
-			<div v-else-if="notice" class="kt-notice is-live" data-testid="kt-setup-pe-success">{{ notice }}</div>
+			<div v-if="error && !countyConflict" class="kt-notice is-critical" role="alert" data-testid="kt-setup-pe-error">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+				<div class="kt-notice-body">{{ error }}</div>
+			</div>
 
-			<!-- C01's own footer sits in normal flow inside the card, not a
-			     page-wide sticky bar — `.kt-setup-footer`'s sticky-bottom
-			     positioning would otherwise render on top of (hiding) this
-			     card's own critical/success notice on a short page. -->
-			<div style="display:flex;justify-content:flex-end;margin-top:16px">
+			<div style="display:flex;justify-content:flex-end">
 				<button
 					type="button"
 					class="kt-btn kt-btn-primary"
@@ -304,6 +314,12 @@ function goToProcurementRules() {
 					@click="submit"
 				>{{ configured ? __("Save changes") : __("Configure site") }}</button>
 			</div>
+		</div>
+
+		<!-- C01 places the saved/configured notice after the form it reports on. -->
+		<div v-if="notice && !error" class="kt-notice is-live" role="status" data-testid="kt-setup-pe-success">
+			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>
+			<div class="kt-notice-body">{{ notice }}</div>
 		</div>
 	</section>
 </template>

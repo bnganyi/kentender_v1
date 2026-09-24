@@ -11,14 +11,50 @@
  * an element id rather than a `<section>`, so the key names the board and the
  * id, not a component.
  */
-export const DEPARTURES = {};
+const SAVED_NOTICE_IS_A_LATER_STATE = {
+	omits: ["notice.is-live"],
+	because:
+		"The board draws the 'Site details saved' / 'Site configured' notice under the form as the state after a save. " +
+		"The screen shows it only after one; tabs/ProcuringEntityTab.spec.js asserts it in that state.",
+	authority: "CFG-CHG-002 v0.14 §10.2 (saved notice); KT-STD-001 §3 (states are distinct)",
+};
+
+export const DEPARTURES = {
+	"C01#configured": [SAVED_NOTICE_IS_A_LATER_STATE],
+	"C01#first-run": [
+		SAVED_NOTICE_IS_A_LATER_STATE,
+		{
+			omits: ["tabs"],
+			because:
+				"The first-run board repeats the page's tab bar inside the artboard to show the other four tabs disabled. " +
+				"The live tab bar is the page header's own (SystemSetup.vue), compared with the header, and its disabled " +
+				"state is proved by system-setup-worlds.spec.ts.",
+			authority: "CFG-CHG-002 v0.14 §9 (one shell, five tabs) / §10.2 (first run disables the other four tabs)",
+		},
+	],
+};
 
 /**
  * Artboards whose built screen is compared and matches. Moved here from
  * REBUILD_QUEUE one by one as each screen is re-ported (plan Phase 5); a
  * screen is not done until it is here.
  */
-export const COVERED = [];
+/**
+ * Specimen artboards: the board draws only a fragment of the screen (the
+ * fields a state concerns and its notice). Every container the fragment
+ * draws must be present, in order; the rest of the screen is not the
+ * specimen's business, so additions are not reported. Shared by the
+ * component and browser specs.
+ */
+export const FRAGMENTS = ["C01#conflict", "C01#missing-authority"];
+
+export const COVERED = [
+	// 5A Procuring entity — 24 Sep 2026
+	"C01#configured",
+	"C01#first-run",
+	"C01#conflict",
+	"C01#missing-authority",
+];
 
 /**
  * Artboards not yet built faithfully, recorded 24 Sep 2026 (tracker CFG14-109)
@@ -29,10 +65,6 @@ export const COVERED = [];
 const REPORT = "structure differs from the board (recorded by the Phase 1 red run)";
 const UNMOUNTABLE = "no component renders this state from props yet; Phase 5 builds it";
 export const REBUILD_QUEUE = {
-	"C01#configured": REPORT,
-	"C01#first-run": REPORT,
-	"C01#conflict": UNMOUNTABLE,
-	"C01#missing-authority": UNMOUNTABLE,
 	"C02#overview": UNMOUNTABLE,
 	"C02#overview-disabled": UNMOUNTABLE,
 	"C02#narrow": UNMOUNTABLE,

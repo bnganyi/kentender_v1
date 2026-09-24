@@ -1,7 +1,7 @@
 import { test, expect, Page } from "@playwright/test";
 import { loginAsAdministrator } from "../../helpers/auth";
 import { compareSkeletons, formatMismatch, skeletonOf } from "../../fidelity/skeleton.js";
-import { DEPARTURES, FIXTURE_PENDING, LANDMARK_DRIFT, REBUILD_QUEUE } from "../../fidelity/departures/system-setup.js";
+import { DEPARTURES, FIXTURE_PENDING, FRAGMENTS, LANDMARK_DRIFT, REBUILD_QUEUE } from "../../fidelity/departures/system-setup.js";
 import { JSDOM } from "jsdom";
 import {
 	openArtboard,
@@ -82,6 +82,8 @@ async function expectBoardStructure(page: Page, liveScope: string, art: Page, ar
 	const result = compareSkeletons(skeletonOf(root(artHtml)), skeletonOf(root(liveHtml)), {
 		departures: ((DEPARTURES as Record<string, unknown[]>)[key] || []) as never[],
 	});
+	// A specimen board draws a fragment of the screen (FRAGMENTS).
+	if ((FRAGMENTS as string[]).includes(key)) result.extra = [];
 	const message = formatMismatch(key, result);
 	if ((REBUILD_QUEUE as Record<string, string>)[key]) {
 		expect(message, `${key} now matches its board — move it from REBUILD_QUEUE to COVERED`).not.toBe("");
