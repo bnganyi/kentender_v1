@@ -500,12 +500,14 @@ test.describe("System setup — design fidelity", () => {
 		const art = await browser.newPage();
 		const scope = "#unchanged";
 		await openArtboard(art, `${DESIGN_DIR}/Reminders.dc.html`, scope);
-		const wanted = await landmarks(art, scope);
+		// The board's state tags label its specimens and are not drawn.
+		const STATE_TAGS = ["Unchanged", "Edited", "Zero", "Invalid range"];
+		const wanted = (await landmarks(art, scope)).filter((text) => !STATE_TAGS.includes(text));
 
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "procurement-settings/reminders", '[data-testid="kt-procset-reminder"]');
 		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "Reminders", "Reminders#unchanged");
-		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "Reminders#unchanged");
+		await expectBoardStructure(page, '[data-testid="kt-procset-reminder"]', art, scope, "Reminders#unchanged");
 		const card = page.locator('[data-testid="kt-procset-reminder"]');
 		await expect(card).toContainText("Unit: Calendar days");
 		await expect(card).toContainText("This changes reminder timing, not procurement deadlines.");
@@ -513,10 +515,11 @@ test.describe("System setup — design fidelity", () => {
 
 		// 0–365 is the rule, stated before the round trip (the server refuses
 		// the same range — kentender_core.tests.test_procurement_settings).
-		await page.fill('[data-testid="kt-reminder-days"]', "366");
+		await page.fill('[data-testid="kt-reminder-days"]', "400");
 		await expect(page.locator('[data-testid="kt-reminder-range-error"]')).toHaveText(
 			"Enter a whole number from 0 to 365."
 		);
+		await expectBoardStructure(page, '[data-testid="kt-procset-reminder"]', art, "#invalid", "Reminders#invalid");
 		await expect(page.locator('[data-testid="kt-reminder-save"]')).toBeDisabled();
 		expect(errors, "console errors").toEqual([]);
 		await art.close();

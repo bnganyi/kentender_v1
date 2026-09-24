@@ -278,6 +278,13 @@ async function scheduleEditor(props) {
 	return wrapper;
 }
 
+// Reminders — the saved threshold 7, then an entered value.
+async function reminder(entered) {
+	const wrapper = mount(ReminderSettingCard, { props: { days: 7 }, global: globalMocks() });
+	await wrapper.find('[data-testid="kt-reminder-days"]').setValue(entered);
+	return wrapper;
+}
+
 const ARTBOARDS = [
 	{ key: "C01#configured", mount: () => mount(ProcuringEntityTab, { props: { site: site() }, global: globalMocks() }) },
 	{
@@ -583,9 +590,9 @@ const ARTBOARDS = [
 	},
 
 	{ key: "Reminders#unchanged", mount: () => mount(ReminderSettingCard, { props: { days: 7 }, global: globalMocks() }) },
-	{ key: "Reminders#edited" },
-	{ key: "Reminders#zero" },
-	{ key: "Reminders#invalid" },
+	{ key: "Reminders#edited", mount: () => reminder("14") },
+	{ key: "Reminders#zero", mount: () => reminder("0") },
+	{ key: "Reminders#invalid", mount: () => reminder("400") },
 
 	{ key: "Common#loading" },
 	{ key: "Common#denied" },

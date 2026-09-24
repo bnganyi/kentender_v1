@@ -1,5 +1,10 @@
 <script setup>
-// CFG-CHG-002 v0.11 §10.10 (Reminders.dc.html) — the approaching-milestone
+// CFG-CHG-002 v0.14 §10.10 (Reminders #unchanged/#edited/#zero/#invalid;
+// tracker CFG14-5G) — ported from the board, flat in the Procurement settings
+// view like the other sections. The board's "Unchanged / Edited / Zero /
+// Invalid range" tags label its specimens and are not drawn.
+//
+// The approaching-milestone
 // threshold, stated as what the administrator is actually setting ("Remind
 // users this many days before a milestone") with its unit and both
 // consequences spelled out: this is reminder timing, expressly not a
@@ -18,11 +23,11 @@ const { pending: busy, run } = kentender_core.desk_page.createCommandRunner(
 	{ ref },
 	{ onStart: () => { error.value = ""; notice.value = ""; }, onError: (e) => (error.value = e.message) }
 );
-const dirty = computed(() => String(props.days) !== value.value.trim());
+const dirty = computed(() => String(props.days) !== String(value.value).trim());
 // §10.10 — a whole number of calendar days, 0–365; the server refuses the
 // same range, this only states it before the round trip.
 const valid = computed(() => {
-	const text = value.value.trim();
+	const text = String(value.value).trim();
 	return /^\d+$/.test(text) && Number(text) <= 365;
 });
 const canSave = computed(() => !busy.value && dirty.value && valid.value);
@@ -30,7 +35,7 @@ const rangeError = computed(() => (dirty.value && !valid.value ? __("Enter a who
 
 function save() {
 	return run(async () => {
-		await procurementSettingsApi.setReminderThresholdDays(Number(value.value.trim()));
+		await procurementSettingsApi.setReminderThresholdDays(Number(String(value.value).trim()));
 		notice.value = __("Changes saved.");
 		emit("saved");
 	});
@@ -38,20 +43,35 @@ function save() {
 </script>
 
 <template>
-	<div class="kt-card kt-blueprint kt-procset-narrow" data-testid="kt-procset-reminder">
-		<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-		<h3 class="kt-card-title">{{ __("Reminders") }}</h3>
-		<div class="kt-field kt-procset-days">
+	<div class="kt-reminders" data-testid="kt-procset-reminder">
+		<h3>{{ __("Reminders") }}</h3>
+		<div class="kt-field">
 			<label for="kt-reminder-days">{{ __("Remind users this many days before a milestone") }}</label>
-			<input id="kt-reminder-days" v-model="value" class="kt-input" inputmode="numeric" data-testid="kt-reminder-days">
+			<input
+				id="kt-reminder-days"
+				v-model="value"
+				class="kt-input"
+				type="number"
+				min="0"
+				max="365"
+				inputmode="numeric"
+				:aria-invalid="rangeError ? 'true' : 'false'"
+				data-testid="kt-reminder-days"
+			>
 		</div>
-		<p class="kt-hint">{{ __("Unit: Calendar days") }}</p>
-		<p class="kt-hint">{{ __("This changes reminder timing, not procurement deadlines.") }}</p>
-		<p class="kt-hint">{{ __("Use 0 to begin reminders on the milestone date; overdue reminders still apply.") }}</p>
-		<p v-if="rangeError" class="kt-inline-error" role="alert" data-testid="kt-reminder-range-error">{{ rangeError }}</p>
-		<p v-else-if="error" class="kt-inline-error" role="alert" data-testid="kt-reminder-error">{{ error }}</p>
-		<p v-else-if="notice" class="kt-setup-success" data-testid="kt-reminder-success">{{ notice }}</p>
-		<div class="kt-procset-card-actions">
+		<p class="text-muted" style="font-size:12px">{{ __("Unit: Calendar days") }}</p>
+		<p class="text-muted" style="font-size:12px">{{ __("This changes reminder timing, not procurement deadlines.") }}</p>
+		<p class="text-muted" style="font-size:12px">{{ __("Use 0 to begin reminders on the milestone date; overdue reminders still apply.") }}</p>
+		<div v-if="rangeError || error" class="kt-notice is-critical" role="alert" :data-testid="rangeError ? 'kt-reminder-range-error' : 'kt-reminder-error'">
+			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12" /></svg>
+			<div class="kt-notice-body">{{ rangeError || error }}</div>
+		</div>
+		<!-- After a save only (a later state than the board's specimens). -->
+		<div v-else-if="notice" class="kt-notice is-live" role="status" data-testid="kt-reminder-success">
+			<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12l5 5L20 7" /></svg>
+			<div class="kt-notice-body">{{ notice }}</div>
+		</div>
+		<div style="display:flex;justify-content:flex-end;margin-top:12px">
 			<button type="button" class="kt-btn kt-btn-primary" :disabled="!canSave" data-testid="kt-reminder-save" @click="save">{{ __("Save changes") }}</button>
 		</div>
 	</div>

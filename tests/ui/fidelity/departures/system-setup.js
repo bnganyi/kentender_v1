@@ -189,6 +189,11 @@ export const COVERED = [
 	"C04#add~identity",
 	"C04#add~version-footer",
 	"C04#detail~selected-interval",
+	// 5G Reminders — 24 Sep 2026
+	"Reminders#unchanged",
+	"Reminders#edited",
+	"Reminders#zero",
+	"Reminders#invalid",
 ];
 
 /**
@@ -208,10 +213,6 @@ export const REBUILD_QUEUE = {
 	"C03D#evidence":
 		"Decision-time vs current source check belongs to a consuming record's evidence detail, which no setup screen " +
 		"shows yet (FU-30).",
-	"Reminders#unchanged": REPORT,
-	"Reminders#edited": UNMOUNTABLE,
-	"Reminders#zero": UNMOUNTABLE,
-	"Reminders#invalid": UNMOUNTABLE,
 	"Common#loading": UNMOUNTABLE,
 	"Common#denied": UNMOUNTABLE,
 	"Common#load-error": UNMOUNTABLE,

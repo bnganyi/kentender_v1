@@ -14,7 +14,7 @@ describe("ReminderSettingCard", () => {
 	it("shows the threshold with its helper and saves only a changed whole number", async () => {
 		api.setReminderThresholdDays.mockResolvedValue({ approaching_milestone_threshold_days: 10 });
 		const wrapper = mount(ReminderSettingCard, { props: { days: 7 }, global: globalMocks() });
-		expect(wrapper.find(".kt-card-title").text()).toBe("Reminders");
+		expect(wrapper.find("h3").text()).toBe("Reminders");
 		expect(wrapper.find("label").text()).toBe("Remind users this many days before a milestone");
 		expect(wrapper.find('[data-testid="kt-reminder-days"]').element.value).toBe("7");
 		expect(wrapper.text()).toContain("Unit: Calendar days");

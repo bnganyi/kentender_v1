@@ -1115,3 +1115,6 @@
 @media (max-width: 700px) { .kt-industry.kt-setup-root .kt-sve-grid { grid-template-columns: 1fr; } }
 .kt-industry.kt-setup-root .kt-table tr.is-selected td { background: var(--kt-color-accent-50, #eef1fb); }
 .kt-industry.kt-setup-root .kt-sve-version-footer { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--kt-color-divider); }
+/* Reminders (tracker CFG14-5G) — a small whole number; the field keeps the
+   board's card width rather than stretching across the page. */
+.kt-industry.kt-setup-root .kt-reminders .kt-field { max-width: 320px; }
