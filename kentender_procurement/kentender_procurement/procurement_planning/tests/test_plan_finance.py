@@ -128,6 +128,19 @@ class TestRequestPlanFundingConfirmation(PlanFinanceCase):
 			self.request(accepted["annual_plan"])
 		self.assertEqual(caught.exception.code, "PLN_RESERVATION_REQUIRED")
 
+	def test_a_multi_issue_refusal_names_the_action_the_actor_actually_took(self):
+		"""Sending to Finance and signing a plan are different actions, and a
+		refusal that names the wrong one tells the actor to look in the wrong
+		place."""
+		from kentender_procurement.procurement_planning.services.plan_finance import _refusal
+
+		issues = ["First issue.", "Second issue."]
+		self.assertIn("can be sent to Finance for funding review.", _refusal(issues, "pre_finance"))
+		self.assertIn("can be submitted.", _refusal(issues, "submission"))
+		# One issue is stated on its own, with no count and no preamble.
+		self.assertEqual(_refusal(["Only issue."], "submission"), "Only issue.")
+		self.assertEqual(_refusal([], "submission"), "")
+
 	def test_request_replays_idempotently_and_reuses_the_open_task(self):
 		accepted, item_id = self.ready_item()
 		frappe.set_user(fx.PLANNER)

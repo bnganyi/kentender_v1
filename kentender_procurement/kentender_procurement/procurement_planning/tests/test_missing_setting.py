@@ -127,9 +127,13 @@ class TestC03AndC04ProcurementRules(MissingSettingCase):
 		item = frappe._dict({
 			"name": "APIR-TEST", "plan_item_id": "PPI-TEST-001", "title": "Test procurement package",
 			"procurement_method": "Open Tender", "procurement_category": "Goods",
+			"baseline_invitation_date": "2026-12-01",
 			"schedule_profile_version": "", "method_profile_version": "",
 		})
-		unresolved = {"method": {"found": False}, "schedule": {"found": False}, "unresolved": {"method", "schedule"}}
+		# No rule covers the date — not two rules covering it, which is a
+		# different cause and now reads as a different sentence.
+		absent = {"found": False, "reason": "no_profile"}
+		unresolved = {"method": absent, "schedule": absent, "unresolved": set(), "applicability_date": "2026-12-01"}
 		with patch.object(readiness, "method_profile_for", return_value=unresolved):
 			panels = missing_setting.item_procurement_rules(item=item, fiscal_year=fx.FY_OPEN, user=fx.PLANNER)
 
@@ -148,7 +152,8 @@ class TestC03AndC04ProcurementRules(MissingSettingCase):
 		# resolving; C04-SCHEDULE-MISSING's own board carries no such line.
 		self.assertEqual(
 			method["lede"],
-			"Open Tender cannot be confirmed until the applicable method rule is verified in System setup.",
+			"No procurement method rule is in force on 1 Dec 2026 (this purchase's planned invitation date), "
+			"so Open Tender cannot be confirmed.",
 		)
 		self.assertEqual(schedule["lede"], "")
 
@@ -160,12 +165,100 @@ class TestC03AndC04ProcurementRules(MissingSettingCase):
 			"procurement_method": "", "procurement_category": "Goods",
 			"schedule_profile_version": "", "method_profile_version": "",
 		})
-		resolved = {"method": {"found": False}, "schedule": {"found": True}, "unresolved": {"method"}}
+		resolved = {"method": {"found": False}, "schedule": {"found": True, "verification_status": "Verified"}, "unresolved": {"method"}}
 		with patch.object(readiness, "method_profile_for", return_value=resolved):
 			panels = missing_setting.item_procurement_rules(item=item, fiscal_year=fx.FY_OPEN, user=fx.PLANNER)
 		# The Planner has not chosen a method yet: that is their own work to
-		# finish, not a setting an administrator must add.
+		# finish, not a setting an administrator must add. The schedule side
+		# is a resolved, verified profile — no panel of its own either.
 		self.assertEqual(panels, [])
+
+	def test_a_rule_that_is_found_but_not_verified_is_a_missing_setting_too(self):
+		"""The check only looked at whether a rule existed, never whether it
+		was marked valid (found live 23 Sep 2026): the currently active
+		version can carry `Production verification pending`, which then only
+		surfaced as a raw, unexplained error at Sign and submit."""
+		from kentender_procurement.procurement_planning.services import readiness
+
+		item = self._item("PPI-TEST-003")
+		resolved = {
+			"method": {"found": True, "verification_status": "Production verification pending"},
+			"schedule": {"found": True, "verification_status": "Verified"},
+			"unresolved": set(),
+			"applicability_date": "2026-12-01",
+		}
+		with patch.object(readiness, "method_profile_for", return_value=resolved):
+			panels = missing_setting.item_procurement_rules(item=item, fiscal_year=fx.FY_OPEN, user=fx.PLANNER)
+		self.assertEqual(len(panels), 1)
+		self.assertEqual(panels[0]["setting"], "Applicable procurement method rule")
+		self.assertIn("PPI-TEST-003", panels[0]["affected_purchase"])
+		self.assertEqual(
+			panels[0]["lede"],
+			"The Open Tender rule in force on 1 Dec 2026 (this purchase's planned invitation date) "
+			"is not marked valid in System setup, so Open Tender cannot be confirmed.",
+		)
+		# A rule that exists is not a rule that is missing: nothing invites
+		# the reader to add one.
+		self.assertEqual(panels[0]["note"], "")
+
+	def _item(self, plan_item_id: str, *, invitation: str = "2026-12-01"):
+		return frappe._dict({
+			"name": "APIR-TEST", "plan_item_id": plan_item_id, "title": "Test procurement package",
+			"procurement_method": "Open Tender", "procurement_category": "Goods",
+			"baseline_invitation_date": invitation,
+			"schedule_profile_version": "", "method_profile_version": "",
+		})
+
+	def test_a_missing_rule_names_the_two_ways_out_of_it(self):
+		"""The purchase's own date is half the answer. An administrator adds
+		a rule that covers it; the Planner can instead move the date to one
+		an existing rule already covers — and only the first was ever said."""
+		from kentender_procurement.procurement_planning.services import readiness
+
+		absent = {"found": False, "reason": "no_profile"}
+		resolved = {"method": absent, "schedule": {"found": True, "verification_status": "Verified"},
+			"unresolved": set(), "applicability_date": "2026-12-01"}
+		with patch.object(readiness, "method_profile_for", return_value=resolved):
+			panels = missing_setting.item_procurement_rules(item=self._item("PPI-TEST-004"), fiscal_year=fx.FY_OPEN, user=fx.PLANNER)
+		self.assertEqual(
+			panels[0]["note"],
+			"Either a rule covering that date is added in System setup, or this purchase's planned "
+			"invitation date moves to one an existing rule already covers.",
+		)
+
+	def test_a_purchase_with_no_invitation_date_yet_is_judged_on_its_financial_year(self):
+		"""`profiles.applicability_date` falls back to the plan financial
+		year's first day, so the sentence must not call that date a planned
+		invitation date the purchase does not have."""
+		from kentender_procurement.procurement_planning.services import readiness
+
+		absent = {"found": False, "reason": "no_profile"}
+		resolved = {"method": absent, "schedule": {"found": True, "verification_status": "Verified"},
+			"unresolved": set(), "applicability_date": "2026-07-01"}
+		item = self._item("PPI-TEST-005", invitation="")
+		with patch.object(readiness, "method_profile_for", return_value=resolved):
+			panels = missing_setting.item_procurement_rules(item=item, fiscal_year=fx.FY_OPEN, user=fx.PLANNER)
+		self.assertEqual(
+			panels[0]["lede"],
+			"No procurement method rule is in force on 1 Jul 2026 (the start of this purchase's "
+			"financial year), so Open Tender cannot be confirmed.",
+		)
+
+	def test_two_rules_in_force_at_once_is_said_as_that_and_not_as_a_missing_one(self):
+		"""An ambiguous configuration is the opposite problem from an absent
+		rule, and telling a maintainer to add one makes it worse."""
+		from kentender_procurement.procurement_planning.services import readiness
+
+		resolved = {"method": {"found": False}, "schedule": {"found": True, "verification_status": "Verified"},
+			"unresolved": {"method"}, "applicability_date": "2026-12-01"}
+		with patch.object(readiness, "method_profile_for", return_value=resolved):
+			panels = missing_setting.item_procurement_rules(item=self._item("PPI-TEST-006"), fiscal_year=fx.FY_OPEN, user=fx.PLANNER)
+		self.assertEqual(
+			panels[0]["lede"],
+			"More than one procurement method rule is in force for Open Tender on 1 Dec 2026 "
+			"(this purchase's planned invitation date), so it cannot be confirmed until one of them is retired.",
+		)
+		self.assertEqual(panels[0]["note"], "")
 
 
 class TestPlanRulePanels(RequisitionCase):
@@ -204,3 +297,88 @@ class TestPlanRulePanels(RequisitionCase):
 		# The rules that governed it resolved at submission; an approved plan
 		# is not a setup problem.
 		self.assertEqual(plan["missing_settings"], [])
+
+
+class TestOneSettingIsOnePanel(MissingSettingCase):
+	"""A setting is wrong once, not once per purchase.
+
+	Found live 24 Sep 2026: one unresolvable method rule produced four
+	identical panels on a four-purchase plan, and four identical lines in the
+	submission-issue list above them — the same sentence eight times for one
+	missing rule. On a hundred-purchase plan that is two hundred rows, and
+	the administrator still has exactly one thing to fix.
+	"""
+
+	def _item(self, n: int, *, invitation: str = "2026-12-01", method: str = "Open Tender"):
+		return frappe._dict({
+			"name": f"APIR-{n}", "plan_item_id": f"PPI-TEST-{n:03d}", "title": f"Purchase {n}",
+			"procurement_method": method, "procurement_category": "Goods",
+			"baseline_invitation_date": invitation,
+			"schedule_profile_version": "", "method_profile_version": "",
+		})
+
+	def test_one_missing_rule_across_many_purchases_is_one_panel(self):
+		from kentender_procurement.procurement_planning.services import readiness
+
+		absent = {"found": False, "reason": "no_profile"}
+		resolved = {"method": absent, "schedule": {"found": True, "verification_status": "Verified"},
+			"unresolved": set(), "applicability_date": "2026-12-01"}
+		items = [self._item(n) for n in range(1, 5)]
+		with patch.object(readiness, "method_profile_for", return_value=resolved):
+			panels = missing_setting.rule_panels(items=items, fiscal_year=fx.FY_OPEN, user=fx.PLANNER)
+
+		self.assertEqual(len(panels), 1)
+		self.assertEqual(panels[0]["setting"], "Applicable procurement method rule")
+		self.assertEqual(panels[0]["affected_count"], 4)
+		self.assertEqual(
+			panels[0]["affected_purchase"],
+			"4 purchases: PPI-TEST-001, PPI-TEST-002, PPI-TEST-003 and 1 more",
+		)
+
+	def test_a_hundred_purchases_still_produce_one_panel_and_a_readable_line(self):
+		from kentender_procurement.procurement_planning.services import readiness
+
+		absent = {"found": False, "reason": "no_profile"}
+		resolved = {"method": absent, "schedule": {"found": True, "verification_status": "Verified"},
+			"unresolved": set(), "applicability_date": "2026-12-01"}
+		items = [self._item(n) for n in range(1, 101)]
+		with patch.object(readiness, "method_profile_for", return_value=resolved):
+			panels = missing_setting.rule_panels(items=items, fiscal_year=fx.FY_OPEN, user=fx.PLANNER)
+
+		self.assertEqual(len(panels), 1)
+		self.assertEqual(panels[0]["affected_count"], 100)
+		self.assertIn("100 purchases:", panels[0]["affected_purchase"])
+		self.assertIn("and 97 more", panels[0]["affected_purchase"])
+
+	def test_a_single_affected_purchase_is_still_named_in_full(self):
+		from kentender_procurement.procurement_planning.services import readiness
+
+		absent = {"found": False, "reason": "no_profile"}
+		resolved = {"method": absent, "schedule": {"found": True, "verification_status": "Verified"},
+			"unresolved": set(), "applicability_date": "2026-12-01"}
+		with patch.object(readiness, "method_profile_for", return_value=resolved):
+			panels = missing_setting.rule_panels(items=[self._item(7)], fiscal_year=fx.FY_OPEN, user=fx.PLANNER)
+		self.assertEqual(panels[0]["affected_count"], 1)
+		self.assertEqual(panels[0]["affected_purchase"], "Purchase 7 · PPI-TEST-007")
+
+	def test_different_causes_stay_different_panels(self):
+		"""Grouping is by what is actually wrong, never by the setting alone:
+		a rule that is missing and a rule that is not marked valid want
+		different work from the administrator."""
+		from kentender_procurement.procurement_planning.services import readiness
+
+		absent = {"method": {"found": False, "reason": "no_profile"}, "schedule": {"found": True, "verification_status": "Verified"},
+			"unresolved": set(), "applicability_date": "2026-12-01"}
+		unmarked = {"method": {"found": True, "verification_status": "Production verification pending"},
+			"schedule": {"found": True, "verification_status": "Verified"},
+			"unresolved": set(), "applicability_date": "2027-06-01"}
+
+		def by_item(item, fiscal_year, **kw):
+			return absent if item.plan_item_id == "PPI-TEST-001" else unmarked
+
+		with patch.object(readiness, "method_profile_for", side_effect=by_item):
+			panels = missing_setting.rule_panels(items=[self._item(1), self._item(2), self._item(3)], fiscal_year=fx.FY_OPEN, user=fx.PLANNER)
+		self.assertEqual(len(panels), 2)
+		self.assertEqual([p["affected_count"] for p in panels], [1, 2])
+		self.assertIn("No procurement method rule is in force", panels[0]["lede"])
+		self.assertIn("is not marked valid", panels[1]["lede"])

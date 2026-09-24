@@ -28,6 +28,7 @@ from kentender_procurement.procurement_planning.services import (
 	plan_governance,
 	plan_read,
 	plan_workbench,
+	readiness,
 )
 from kentender_procurement.procurement_planning.tests import fixtures as fx
 
@@ -187,6 +188,93 @@ class TestSubmitConsolidatedPlan(GovernanceCase):
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			self.submit(accepted["annual_plan"])
 		self.assertEqual(caught.exception.code, "PLN_FINANCE_STALE")
+
+	def test_a_refusal_names_every_outstanding_issue_not_only_the_first(self):
+		"""The actor used to fix one issue, press the button again and meet
+		the next (found live 23 Sep 2026): the complete blocker list was
+		computed and all but `blockers[0]` thrown away."""
+		accepted, item_id = self.confirmed_item()
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		plan = frappe.get_doc("Annual Plan", version.annual_plan)
+		# Two unrelated blockers at once: no strategic objective, and a
+		# reserved-procurement target the plan does not meet.
+		frappe.db.set_value("Annual Plan Item", frappe.db.get_value("Annual Plan Item", {"plan_item_id": item_id}, "name"), "strategic_objective", "", update_modified=False)
+		reference = {**readiness.reference_for(plan.fiscal_year)}
+		reference["reservation"] = {**reference["reservation"], "target_percent": 30.0, "published": True}
+		reference["verification_status"] = fx.VERIFICATION_FIXTURE
+		with patch.object(readiness, "reference_for", return_value=reference):
+			with self.assertRaises(ProcurementPlanningError) as caught:
+				self.submit(accepted["annual_plan"])
+		message = str(caught.exception)
+		self.assertIn("2 issues must be resolved before this plan can be submitted.", message)
+		self.assertIn("Choose a strategic objective currently available for this plan.", message)
+		# Said once, with the working, not twice in two different wordings.
+		self.assertIn("Required KES 300,000 (30% of KES 1,000,000 planned), reserved KES 0, short by KES 300,000.", message)
+		self.assertEqual(message.count("Reserved procurement is below"), 1)
+
+	def test_the_sign_and_submit_action_is_absent_while_a_submission_issue_stands(self):
+		"""The button was offered off the pre-Finance blocker list, which
+		never carries the reservation shortfall — so it appeared, was
+		pressed, and refused."""
+		accepted, item_id = self.confirmed_item()
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		plan = frappe.get_doc("Annual Plan", version.annual_plan)
+		reference = {**readiness.reference_for(plan.fiscal_year)}
+		reference["reservation"] = {**reference["reservation"], "target_percent": 30.0, "published": True}
+		reference["verification_status"] = fx.VERIFICATION_FIXTURE
+		frappe.set_user(fx.HOPF)
+		with patch.object(readiness, "reference_for", return_value=reference):
+			read = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		self.assertFalse(read["can_sign_and_submit"])
+		self.assertEqual(
+			[i for i in read["submission_issues"] if "Reserved procurement" in i],
+			["Reserved procurement is below the required amount. Review the shortfall shown. "
+			 "Required KES 300,000 (30% of KES 1,000,000 planned), reserved KES 0, short by KES 300,000."],
+		)
+
+	def test_one_cause_is_one_issue_however_many_purchases_it_blocks(self):
+		"""Found live 24 Sep 2026: one unresolvable method rule filled this
+		list with four identical sentences while the missing-setting panels
+		below repeated all four again — eight rows for one thing to fix."""
+		accepted, first_id = self.confirmed_item()
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		plan = frappe.get_doc("Annual Plan", version.annual_plan)
+		# Strip the objective from the one purchase so exactly one per-item
+		# cause stands, and confirm it is reported once with its purchase named.
+		frappe.db.set_value("Annual Plan Item", frappe.db.get_value("Annual Plan Item", {"plan_item_id": first_id}, "name"), "strategic_objective", "", update_modified=False)
+		frappe.set_user(fx.HOPF)
+		read = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		objective = [i for i in read["submission_issues"] if "strategic objective" in i]
+		self.assertEqual(len(objective), 1)
+		self.assertIn(first_id, objective[0])
+
+	def test_a_missing_rule_is_left_to_its_own_panel_and_not_said_twice(self):
+		"""The C03/C04 panel states the setting, the cause, the affected
+		purchases and who owns it. The issue list repeating it as a bare
+		error is the same fact twice, and worse the second time."""
+		from kentender_procurement.procurement_planning.services import readiness as rdy
+
+		accepted, item_id = self.confirmed_item()
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		plan = frappe.get_doc("Annual Plan", version.annual_plan)
+		absent = {"method": {"found": False, "reason": "no_profile"}, "schedule": {"found": True, "verification_status": "Verified"},
+			"unresolved": set(), "applicability_date": "2026-12-01"}
+		frappe.set_user(fx.HOPF)
+		with patch.object(rdy, "method_profile_for", return_value=absent):
+			read = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		self.assertEqual([i for i in read["submission_issues"] if "procurement rule or calculation basis" in i], [])
+		# It is still said — once, by the panel that can actually be acted on.
+		self.assertEqual(len(read["missing_settings"]), 1)
+		self.assertEqual(read["missing_settings"][0]["setting"], "Applicable procurement method rule")
+		self.assertFalse(read["can_sign_and_submit"])
+
+	def test_the_issue_list_belongs_to_the_actor_who_holds_the_action(self):
+		accepted, item_id = self.confirmed_item()
+		frappe.set_user(fx.PLANNER)
+		read = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		# The Planner has their own per-purchase work and Plan checks; the
+		# submission list is the signatory's view of the same facts.
+		self.assertEqual(read["submission_issues"], [])
 
 	def test_submit_refuses_an_unconfigured_statutory_route(self):
 		accepted, item_id = self.confirmed_item()

@@ -30,7 +30,7 @@
 					<span class="kt-meta-value" data-testid="pln-missing-setting-name">{{ panel.setting }}</span>
 				</div>
 				<div v-if="panel.affected_purchase">
-					<span class="kt-label">Affected purchase</span>
+					<span class="kt-label">{{ (panel.affected_count || 1) > 1 ? "Affected purchases" : "Affected purchase" }}</span>
 					<span class="kt-meta-value" data-testid="pln-missing-setting-purchase">{{ panel.affected_purchase }}</span>
 				</div>
 				<div>

@@ -339,7 +339,14 @@ def plan_readiness(version, plan, *, stage: str = "pre_finance") -> dict[str, An
 			blockers.append({"code": "PLN_SOURCE_CORRECTION_REQUIRED", "plan_item_id": item.plan_item_id, "message": f"{MESSAGES['PLN_SOURCE_CORRECTION_REQUIRED']} ({item.plan_item_id})"})
 		objective_ok = bool(cstr(item.strategic_objective)) and (cstr(item.strategic_objective) in eligible or version.version_status == "Active")
 		for blocker in readiness.item_blockers(item, allocations, plan.fiscal_year, objective_eligible=objective_ok, stage=stage):
-			blockers.append({**blocker, "plan_item_id": item.plan_item_id, "message": f"{MESSAGES[blocker['code']]} ({item.plan_item_id})"})
+			# `base_message` is the same sentence without this purchase's id,
+			# so a list that speaks for the whole plan can group identical
+			# causes instead of repeating one sentence per purchase.
+			blockers.append({
+				**blocker, "plan_item_id": item.plan_item_id,
+				"base_message": MESSAGES[blocker["code"]],
+				"message": f"{MESSAGES[blocker['code']]} ({item.plan_item_id})",
+			})
 			key = {
 				"PLN_OBJECTIVE_INELIGIBLE": "objective", "PLN_RESERVATION_REQUIRED": "reservation",
 				"PLN_PLAN_CONTENTS_INCOMPLETE": "contents", "PLN_ENTRY_INCOMPLETE": "contents",
@@ -355,11 +362,28 @@ def plan_readiness(version, plan, *, stage: str = "pre_finance") -> dict[str, An
 	target = share["target_percent"]
 	county_target = share["county"]["target_percent"]
 	is_county = share["county"]["applicable"]
+	# A Draft may be incomplete, so the reservation refuses only the final
+	# submission — but it is computed at every stage, and `_plan_checks`
+	# reads the calculation rather than this list precisely so that a Draft
+	# still shows the true position (found live 23 Sep 2026 claiming
+	# "Required allocation met" over a KES 48,000,000 shortfall).
+	#
+	# The budget basis is no longer part of this: since the requirement is a
+	# share of planned value, a missing basis is an affordability concern
+	# and never a reason to call the reservation rule unavailable.
 	if stage == "submission" and items and share["mandatory"]:
-		if not share["basis"]["available"] or not share["verified"]:
-			blockers.append({"code": "PLN_REFERENCE_UNAVAILABLE", "message": "The planned reservation allocation cannot be assessed: the annual budget basis or the verified reservation rule is missing.", "field": "reservation_category"})
+		if not share["verified"]:
+			blockers.append({"code": "PLN_REFERENCE_UNAVAILABLE", "message": "The planned reservation allocation cannot be assessed: the verified reservation rule is missing.", "field": "reservation_category"})
 		elif not share["met"]:
-			blockers.append({"code": "PLN_RESERVATION_SHORTFALL", "message": f"{MESSAGES['PLN_RESERVATION_SHORTFALL']} Required {share['required']}, planned {share['qualifying']}, shortfall {share['shortfall']}.", "shortfall": share["shortfall"]})
+			blockers.append({
+				"code": "PLN_RESERVATION_SHORTFALL",
+				"message": (
+					f"{MESSAGES['PLN_RESERVATION_SHORTFALL']} Required {_money(share['required'])} "
+					f"({share['target_percent']:g}% of {_money(share['eligible_value'])} planned), "
+					f"reserved {_money(share['qualifying'])}, short by {_money(share['shortfall'])}."
+				),
+				"shortfall": share["shortfall"],
+			})
 	advisories = readiness.splitting_advisory(version.name, reference)
 	affordability = None
 	if items:
@@ -417,24 +441,27 @@ def plan_readiness(version, plan, *, stage: str = "pre_finance") -> dict[str, An
 # --------------------------------------------------------------------------
 
 
-def _item_rows(plan_version: str) -> list[dict[str, Any]]:
+def _item_rows(plan_version: str, blockers: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
 	items = frappe.get_all(
 		"Annual Plan Item",
 		filters={"plan_version": plan_version, "item_state": ("!=", "Dissolved")},
-		# `_current_work` (below) also needs `strategic_objective`,
-		# `baseline_invitation_date` and `estimate_basis` — omitted here
-		# before (found live 23 Sep 2026: `frappe.get_all`'s explicit field
-		# list silently returns None for any field left off it, which
-		# `_current_work` then reads as unset, so every item whose method and
-		# designation were already chosen read as needing a strategic
-		# objective regardless of whether it actually had one).
 		fields=[
 			"name", "plan_item_id", "title", "item_state", "requirement_type", "procurement_method",
-			"reservation_category", "baseline_delivery_completion_date", "strategic_objective",
-			"baseline_invitation_date", "estimate_basis",
+			"reservation_category", "baseline_delivery_completion_date",
 		],
 		order_by="creation asc",
 	)
+	# §9.4 — grouped from the exact same blocker list `plan_readiness` (the
+	# Plan checks section below) computed, so this column can never disagree
+	# with it (found live 23 Sep 2026: this used to re-derive a simplified
+	# subset of the same rules by hand and never checked the delivery-
+	# boundary blocker at all, so a purchase could read "Ready" here while
+	# Plan checks' Schedule count still included it).
+	codes_by_item: dict[str, set[str]] = {}
+	for blocker in blockers or []:
+		plan_item_id = blocker.get("plan_item_id")
+		if plan_item_id:
+			codes_by_item.setdefault(plan_item_id, set()).add(blocker["code"])
 	rows = []
 	for item in items:
 		allocations = readiness._allocations(item.name)
@@ -457,7 +484,7 @@ def _item_rows(plan_version: str) -> list[dict[str, Any]]:
 				"source_correction_required": any(source_correction_required(a.dpp_entry) for a in allocations),
 				# §10.6 — the row names the next thing to do to this purchase,
 				# never a generic "Review required" badge (§9.4).
-				"current_work": _current_work(item, allocations),
+				"current_work": _current_work(codes_by_item.get(item.plan_item_id, set())),
 				"route": ["procurement-plan-item", item.plan_item_id],
 			}
 		)
@@ -481,21 +508,30 @@ CURRENT_WORK = {
 	"PLN_SOURCE_CORRECTION_REQUIRED": "Rebuild this purchase after a source correction",
 }
 
+#: The order a Planner would naturally resolve these in — identity and
+#: eligibility before schedule before narrative detail. The first code from
+#: this list present on an item is what "Current work" names.
+_CURRENT_WORK_PRIORITY = [
+	"PLN_SOURCE_CORRECTION_REQUIRED",
+	"PLN_REFERENCE_UNAVAILABLE",
+	"PLN_METHOD_NOT_ADMISSIBLE",
+	"PLN_METHOD_EVIDENCE_REQUIRED",
+	"PLN_RESERVATION_REQUIRED",
+	"PLN_RESERVATION_SHORTFALL",
+	"PLN_OBJECTIVE_INELIGIBLE",
+	"PLN_DELIVERY_PERIOD_REQUIRED",
+	"PLN_SCHEDULE_INVALID",
+	"PLN_DELIVERY_BOUNDARY_INSUFFICIENT",
+	"PLN_PLAN_CONTENTS_INCOMPLETE",
+	"PLN_ENTRY_INCOMPLETE",
+]
 
-def _current_work(item, allocations) -> str:
+
+def _current_work(codes: set[str]) -> str:
 	"""The first thing this purchase still needs, named."""
-	if any(source_correction_required(a.dpp_entry) for a in allocations):
-		return CURRENT_WORK["PLN_SOURCE_CORRECTION_REQUIRED"]
-	if not cstr(item.procurement_method):
-		return CURRENT_WORK["PLN_REFERENCE_UNAVAILABLE"]
-	if not cstr(item.reservation_category):
-		return CURRENT_WORK["PLN_RESERVATION_REQUIRED"]
-	if not cstr(item.strategic_objective):
-		return CURRENT_WORK["PLN_OBJECTIVE_INELIGIBLE"]
-	if not item.baseline_invitation_date:
-		return CURRENT_WORK["PLN_SCHEDULE_INVALID"]
-	if not cstr(item.estimate_basis).strip():
-		return CURRENT_WORK["PLN_PLAN_CONTENTS_INCOMPLETE"]
+	for code in _CURRENT_WORK_PRIORITY:
+		if code in codes:
+			return CURRENT_WORK[code]
 	return "Ready"
 
 
@@ -583,14 +619,15 @@ def _publication_status_rows(doc, version, *, treasury_current: bool) -> list[di
 	]
 
 
-def _acceptance_history(fiscal_year: str) -> list[str]:
+def _acceptance_history(fiscal_year: str) -> list[dict[str, str]]:
 	"""Who accepted each departmental plan, and when — the provenance of the
-	sources this plan is built from."""
-	lines = []
+	sources this plan is built from. One row per timeline entry (§9.4's
+	.kt-timeline, not a dense paragraph per row)."""
+	rows = []
 	for task in frappe.get_all(
 		"Departmental Plan Validation Task",
 		filters={"fiscal_year": fiscal_year, "status": "Completed"},
-		fields=["organisation_unit", "decision"],
+		fields=["organisation_unit", "decision", "dpp_version"],
 		order_by="creation asc",
 		limit_page_length=0,
 	):
@@ -600,15 +637,52 @@ def _acceptance_history(fiscal_year: str) -> list[str]:
 		if not decision or decision.decision != "Accept departmental plan":
 			continue
 		actor = cstr(frappe.db.get_value("User", decision.actor, "full_name") or decision.actor)
-		lines.append(f"{_ou_label(task.organisation_unit)} acceptance: {actor}, {_eat(decision.decided_at)}")
-	return lines
+		dpp_reference = ""
+		plan_name = frappe.db.get_value("Departmental Plan Version", task.dpp_version, "departmental_plan") if task.dpp_version else None
+		if plan_name:
+			dpp_reference = cstr(frappe.db.get_value("Departmental Plan", plan_name, "dpp_reference"))
+		title = _ou_label(task.organisation_unit)
+		if dpp_reference:
+			title = f"{title} · {dpp_reference}"
+		rows.append({"title": f"{title} accepted", "meta": f"{actor} · {_eat(decision.decided_at)}"})
+	return rows
+
+
+def _schedule_failure_text(count: int, *, pointer: str = "") -> str:
+	"""Plain, grammatically correct English for N failing purchases, with an
+	optional pointer to where the fix lives (found live 23 Sep 2026: 'N
+	purchases do not meet its departmental deadline' was possessive-
+	mismatched and named no way to resolve it)."""
+	purchase = "purchase" if count == 1 else "purchases"
+	verb = "does" if count == 1 else "do"
+	deadline = "its departmental deadline" if count == 1 else "their departmental deadlines"
+	suffix = f" — {pointer}" if pointer else ""
+	return f"{count} {purchase} {verb} not yet meet {deadline}{suffix}"
+
+
+def _reservation_summary(share) -> list[dict[str, str]]:
+	"""The reservation arithmetic as named, money-formatted facts.
+
+	One obligation, shown once at plan level: what the target is a share of,
+	what it comes to, what is designated so far, what is left, and which
+	purchases are carrying it. Absent entirely where no target is published —
+	there is nothing to show and no obligation to explain."""
+	if not share["mandatory"]:
+		return []
+	carrying = share["qualifying_items"]
+	return [
+		{"label": "Eligible planned procurement", "value": _money(share["eligible_value"])},
+		{"label": f"Required allocation at {share['target_percent']:g}%", "value": _money(share["required"])},
+		{"label": "Reserved so far", "value": _money(share["qualifying"])},
+		{"label": "Still required", "value": _money(share["shortfall"])},
+		{"label": "Counting towards it", "value": ", ".join(carrying) if carrying else "No purchase yet"},
+	]
 
 
 def _plan_checks(version, plan, report) -> list[dict[str, Any]]:
 	"""Funding, Reserved procurement and Schedule, each as one current result
 	with a link to the exact correction when it fails."""
 	blockers = report["blockers"]
-	codes = {b["code"] for b in blockers}
 	plan_route = ["annual-procurement-plan", plan.plan_reference]
 
 	funding_state = cstr(version.funding_state)
@@ -620,21 +694,30 @@ def _plan_checks(version, plan, report) -> list[dict[str, Any]]:
 		"Stale": "Funding needs to be checked again",
 	}.get(funding_state, funding_state)
 
-	reservation = next((b for b in blockers if b["code"] in ("PLN_RESERVATION_SHORTFALL", "PLN_REFERENCE_UNAVAILABLE") and b.get("field") == "reservation_category"), None)
-	shortfall = next((b for b in blockers if b["code"] == "PLN_RESERVATION_SHORTFALL"), None)
-	if shortfall:
-		reservation_result = f"{_money(flt(shortfall.get('shortfall') or 0))} more qualifying allocation required"
-		reservation_kind = "critical"
-	elif reservation:
-		reservation_result = "The reserved-procurement rule or budget basis is missing"
-		reservation_kind = "critical"
-	else:
+	# Read from the calculation, never from whether a blocker happens to be
+	# in this stage's list. This row is rendered on a Draft, whose blockers
+	# are computed at `pre_finance`, where the reservation shortfall is
+	# deliberately absent — so looking for the blocker meant reading its
+	# absence as success, and the row reported "Required allocation met"
+	# over a KES 48,000,000 shortfall (found live 23 Sep 2026).
+	share = report["reservation"]
+	if not share["mandatory"] or share["met"]:
 		reservation_result = "Required allocation met"
 		reservation_kind = "live"
+	elif not share["verified"]:
+		reservation_result = "The reserved-procurement rule is missing or unverified"
+		reservation_kind = "critical"
+	else:
+		reservation_result = f"{_money(share['shortfall'])} more qualifying allocation required"
+		reservation_kind = "critical"
 
-	schedule_failing = [b["plan_item_id"] for b in blockers if b["code"] in ("PLN_SCHEDULE_INVALID", "PLN_DELIVERY_BOUNDARY_INSUFFICIENT", "PLN_DELIVERY_PERIOD_REQUIRED") and b.get("plan_item_id")]
+	# A distinct-purchase count, not a blocker count (found live 23 Sep 2026:
+	# a purchase missing both its invitation date and its delivery period
+	# carries two schedule-coded blockers, so a list here counted it twice —
+	# "4 purchases" when only 2 were actually affected).
+	schedule_failing = {b["plan_item_id"] for b in blockers if b["code"] in ("PLN_SCHEDULE_INVALID", "PLN_DELIVERY_BOUNDARY_INSUFFICIENT", "PLN_DELIVERY_PERIOD_REQUIRED") and b.get("plan_item_id")}
 	if schedule_failing:
-		schedule_result = f"{len(schedule_failing)} purchase{'s do' if len(schedule_failing) != 1 else ' does'} not meet its departmental deadline"
+		schedule_result = _schedule_failure_text(len(schedule_failing), pointer="see Current work above")
 		schedule_kind = "critical"
 	else:
 		schedule_result = "All purchases meet their departmental deadlines"
@@ -741,13 +824,23 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 			"is already held by a purchase whose scope was fixed by an authorised requisition."
 			if scope_lock.locked_items_for_sources(plan.fiscal_year, [row["dpp_entry"]]) else ""
 		)
-	items = _item_rows(version.name)
-	item_value = sum(flt(a.indicative_amount) for a in frappe.get_all("Plan Source Allocation", filters={"plan_version": version.name, "allocation_state": ("in", ("Draft", "Active"))}, fields=["indicative_amount"]))
 	readiness_report = plan_readiness(version, plan) if version.version_status == "Draft" else None
+	# Both tiers, because they gate different actions. `pre_finance` decides
+	# whether the plan may go to Finance; `submission` decides whether it may
+	# be signed and submitted — and the submit button used to be offered off
+	# the pre-Finance list, which is exactly how a Head of Procurement
+	# Function came to press it and be refused (found live 23 Sep 2026).
+	submission_report = plan_readiness(version, plan, stage="submission") if version.version_status == "Draft" else None
+	items = _item_rows(version.name, readiness_report["blockers"] if readiness_report else None)
+	item_value = sum(flt(a.indicative_amount) for a in frappe.get_all("Plan Source Allocation", filters={"plan_version": version.name, "allocation_state": ("in", ("Draft", "Active"))}, fields=["indicative_amount"]))
 	mutable = version.version_status == "Draft" and can_act and version.funding_state != "Awaiting confirmation"
 	no_blockers = bool(readiness_report) and not readiness_report["blockers"]
+	ready_to_submit = bool(submission_report) and not submission_report["blockers"]
 	share = readiness_report["reservation"] if readiness_report else readiness.reservation_allocations(version.name, plan.fiscal_year)
-	target = share["target_percent"]
+	submission_issues = plan_issues(
+		version, plan, funding_current=bool(readiness_report and readiness_report["funding_current"]),
+		report=submission_report,
+	) if submission_report else []
 	return {
 		"outcome": "OK",
 		"plan_reference": plan.plan_reference,
@@ -777,8 +870,12 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 			"allocated": len(all_accepted) - len(unallocated),
 			"plan_items": len(items),
 			"value_display": _money(item_value),
-			"reserved_share_display": (f"{share['qualifying']} planned reservation · required {share['required']}" if (target and share["basis"]["available"]) else f"{share['qualifying']} planned reservation"),
 			"reservation": share,
+			# The working behind the reservation check, in money and named
+			# amounts. It used to be a raw, unexplained "Required 48000000.00,
+			# planned 0.00" only on the refusal at Sign and submit, with no way
+			# to see what the figure was a share of (found live 23 Sep 2026).
+			"reservation_summary": _reservation_summary(share),
 			# U07-overview's own strip: the same accepted-entry count under its
 			# own label, plus how many departments they come from.
 			"departmental_sources": len(all_accepted),
@@ -798,7 +895,7 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 		"unallocated_sources": unallocated,
 		"unallocated_caption": f"{len(unallocated)} entr{'y' if len(unallocated) == 1 else 'ies'} available" if unallocated else "",
 		# §10.6 — the departmental acceptances behind this plan, as history.
-		"history_lines": _acceptance_history(plan.fiscal_year),
+		"history": _acceptance_history(plan.fiscal_year),
 		"current_version_number": int(
 			frappe.db.get_value("Annual Plan Version", plan.active_version, "version_number") or 0
 		) if plan.active_version else None,
@@ -821,8 +918,11 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 		# affordability gate, exposed here for direct display.
 		"affordability": readiness_report["affordability"] if readiness_report else None,
 		# v1.18 §6.2 — **Sign and submit Annual Plan** belongs to the Head of Procurement Function
-		"can_submit": can_sign and no_blockers and not unallocated and bool(readiness_report and readiness_report["funding_current"]),
-		"can_sign_and_submit": can_sign and no_blockers and not unallocated and bool(readiness_report and readiness_report["funding_current"]),
+		"can_submit": can_sign and ready_to_submit and not unallocated and bool(readiness_report and readiness_report["funding_current"]),
+		"can_sign_and_submit": can_sign and ready_to_submit and not unallocated and bool(readiness_report and readiness_report["funding_current"]),
+		# Named in full, for the one actor who would otherwise press the
+		# button and meet them one at a time.
+		"submission_issues": submission_issues if can_sign else [],
 		# §10.6 U07-UPDATE — only the Planner, only on an open successor.
 		"can_cancel_update": bool(can_act and version.based_on_version and version.version_status == "Draft"),
 		# §10.6 U07-FINANCE-COMPLETE / §6.5 — name the actual responsible
@@ -1113,6 +1213,13 @@ def get_plan_item(*, plan_item_id: str, user: str | None = None) -> dict[str, An
 			"strategic_objectives": objectives,
 			"procurement_method": cstr(item.procurement_method),
 			"admissible_methods": admissible,
+			# Why the choice set can be empty, said on the field itself. The
+			# set is computed from the rules in force on this date, never a
+			# stored list — found live 23 Sep 2026, when every method vanished
+			# at once because the one backdated rule version covering these
+			# purchases had been superseded, and the control just went blank.
+			"applicability_date": cstr(applicable_on),
+			"applicability_basis": "invitation" if cstr(item.baseline_invitation_date) else "fiscal_year",
 			"proposed_method": readiness.OPEN_TENDER if readiness.OPEN_TENDER in admissible else (admissible[0] if admissible else ""),
 			"value_band": (
 				f"{method_profile.get('profile')} · {method_profile.get('verification_status')}" if method_profile.get("found")
@@ -1332,8 +1439,6 @@ def get_finance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 	totals = readiness.line_totals(version.name)
 	used = [line for line in statement.get("lines", []) if flt(line.get("planned")) > 0]
 	items = frappe.db.count("Annual Plan Item", {"plan_version": version.name, "item_state": ("!=", "Dissolved")})
-	share = readiness.reservation_allocations(version.name, plan.fiscal_year)
-	target = share["target_percent"]
 	within_approved = bool(statement.get("within_approved"))
 	within_available = bool(statement.get("within_available"))
 	can_decide = authz.has_site_role(ROLE_FINANCE_CONFIRMATION_OFFICER, actor) and not decided and not authz.is_segregated(actor, authz.ACTION_FINANCE_DECIDE, plan_version=version.name)
@@ -1357,7 +1462,6 @@ def get_finance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 			"plan_items": items,
 			"value_display": _money(sum(totals.values())),
 			"lines_used": len(used),
-			"reserved_share_display": (f"{share['qualifying']} planned reservation · required {share['required']}" if (target and share["basis"]["available"]) else f"{share['qualifying']} planned reservation"),
 		},
 		"as_at_display": _eat(statement.get("as_at")),
 		# §10.9 — the provenance of the numbers being decided on: which budget,
@@ -1474,21 +1578,37 @@ _GOVERNANCE_STAGE_OUTCOME = {"Adopt and submit": "Adopted and submitted", "Appro
 
 def _governance_schedule_result(version, plan) -> str:
 	report = plan_readiness(version, plan, stage="submission")
-	failing = [
-		b for b in report["blockers"]
-		if b["code"] in ("PLN_SCHEDULE_INVALID", "PLN_DELIVERY_BOUNDARY_INSUFFICIENT", "PLN_DELIVERY_PERIOD_REQUIRED")
-	]
+	# A distinct-purchase count, not a blocker count — see `_plan_checks`.
+	failing = {
+		b["plan_item_id"] for b in report["blockers"]
+		if b["code"] in ("PLN_SCHEDULE_INVALID", "PLN_DELIVERY_BOUNDARY_INSUFFICIENT", "PLN_DELIVERY_PERIOD_REQUIRED") and b.get("plan_item_id")
+	}
 	if not failing:
 		return "All purchases meet departmental deadlines"
-	return f"{len(failing)} purchase{'s do' if len(failing) != 1 else ' does'} not meet its departmental deadline"
+	return _schedule_failure_text(len(failing))
 
 
-def _governance_issues(version, plan, *, funding_current: bool, share) -> list[str]:
-	"""Every material issue, in the actor's words, before their decision.
+#: Fields whose reference problems the C03/C04 missing-setting panels state in
+#: full — the setting, the cause, the affected purchases and who owns it. The
+#: plan-level issue list leaves those to the panel rather than repeating them
+#: as bare errors, exactly as the purchase editor already does.
+PANEL_OWNED_FIELDS = ("procurement_method", "method_profile_version", "schedule_profile_version")
 
-	§10.10: the decision never precedes a hidden material issue. An empty list
-	means the screen says "No blocking issues" — which it may only do when
-	there genuinely are none.
+
+def plan_issues(version, plan, *, funding_current: bool, report=None) -> list[str]:
+	"""Every material issue standing between this Version and submission, in
+	the actor's words.
+
+	§10.10: the decision never precedes a hidden material issue. An empty
+	list means a screen may say "No blocking issues" — which it may only do
+	when there genuinely are none.
+
+	Shared by the reviewer's decision screen and the preparation screen: the
+	Head of Procurement Function used to meet these one at a time, because
+	`validate_plan_ready` raised the first blocker and discarded the rest, so
+	each correction simply earned the next refusal (found live 23 Sep 2026).
+	`report` lets a caller that has already computed the submission-stage
+	readiness pass it in rather than recomputing it.
 	"""
 	issues: list[str] = []
 	if not funding_current:
@@ -1496,14 +1616,35 @@ def _governance_issues(version, plan, *, funding_current: bool, share) -> list[s
 			"The budget has changed since Finance checked this plan. "
 			"Procurement must obtain a new funding check before this plan can be adopted."
 		)
-	if share["mandatory"] and not share["met"]:
-		issues.append(f"Reserved procurement is below the required amount by {_money(share['shortfall'])}.")
-	report = plan_readiness(version, plan, stage="submission")
+	# The reservation is stated once, by its own blocker below, which carries
+	# the working (required, what it is a share of, reserved so far). A
+	# second hand-written sentence here said the same thing in different
+	# words and the de-duplication could not see it, so the list read "3
+	# issues" for two.
+	report = report if report is not None else plan_readiness(version, plan, stage="submission")
+	# One issue per cause, naming the purchases it affects — not one row per
+	# purchase. A single unresolvable rule used to fill this list with four
+	# identical sentences while the missing-setting panels below repeated all
+	# four again (found live 24 Sep 2026); at a hundred purchases that is two
+	# hundred rows for one thing to fix.
+	grouped: dict[str, list[tuple[str, str]]] = {}
 	for blocker in report["blockers"]:
-		message = cstr(blocker.get("message"))
-		if message and message not in issues:
-			issues.append(message)
+		# Said in full by its own missing-setting panel, which names the
+		# setting, the cause and who owns it. Repeating it here as a bare
+		# error is the same fact twice, worse.
+		if blocker["code"] == "PLN_REFERENCE_UNAVAILABLE" and blocker.get("field") in PANEL_OWNED_FIELDS:
+			continue
+		message = cstr(blocker.get("base_message")) or cstr(blocker.get("message"))
+		if not message:
+			continue
+		grouped.setdefault(message, []).append((cstr(blocker.get("plan_item_id")), ""))
+	for message, rows in grouped.items():
+		named = [r for r in rows if r[0]]
+		line = f"{message} ({missing_setting.affected_purchases(named)})" if named else message
+		if line not in issues:
+			issues.append(line)
 	return issues
+
 
 
 def _governance_history(version) -> list[dict[str, Any]]:
@@ -1658,7 +1799,7 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 			),
 			"reservation_kind": "live" if (share["met"] or not share["mandatory"]) else "critical",
 			"schedule": _governance_schedule_result(version, plan),
-			"issues": _governance_issues(version, plan, funding_current=funding_current, share=share),
+			"issues": plan_issues(version, plan, funding_current=funding_current),
 		},
 		"can_decide": can_decide,
 		"plan_reference": plan.plan_reference,
@@ -1730,6 +1871,13 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 		"method_and_schedule": _governance_method_and_schedule(version, user),
 		"reservation": {
 			"target_percent": share["target_percent"],
+			# What the requirement is a share of. The reviewer used to be
+			# shown the budget reference under the heading "Budget basis",
+			# directly beside the required allocation, which read as though
+			# the budget were the measure of the obligation — the very
+			# reading corrected on 24 Sep 2026.
+			"eligible_value_display": _money(share["eligible_value"]),
+			"shortfall_or_met_display": "Required allocation met" if share["met"] else _money(share["shortfall"]),
 			"required_allocation_display": _money(share["required"]) if share["required"] not in ("", None) else "Not mandatory",
 			"planned_qualifying_display": _money(share["qualifying"]),
 			"shortfall_display": _money(share["shortfall"]) if share["shortfall"] not in ("", None) else "",

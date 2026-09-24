@@ -178,10 +178,24 @@ def line_totals_hash(totals: dict[str, float]) -> str:
 
 
 def reservation_allocations(version_name: str, fiscal_year: str, reference: dict[str, Any] | None = None) -> dict[str, Any]:
-	"""§5.5.3.1 — each obligation with its own calculation. The denominator
-	is the complete approved annual procurement budget from Budget & Funding
-	(exact Version), never the Plan total or the lines the Plan uses. Money
-	is exact Decimal at the boundary; amounts are returned as decimal strings."""
+	"""Each obligation with its own calculation, measured against the value
+	this plan actually plans to procure.
+
+	The denominator is the eligible planned value of the current complete
+	plan, not the approved annual budget (corrected 24 Sep 2026 on the
+	owner's written ruling). The approved budget authorises spending; it
+	does not oblige it, and using it here turned unused budget headroom into
+	a compulsory procurement target — a KES 464,980 plan under a KES
+	160,000,000 ceiling was asked for KES 48,000,000 of reserved allocation,
+	which it could not reach even with every purchase designated. The
+	ceiling's own job, that the plan must fit inside it, belongs to the
+	affordability check and is untouched; `basis` stays on the result
+	because the review screen still prints which budget Version was in force.
+
+	Every purchase in the plan is eligible. Narrowing that needs a verified
+	rule naming the exclusions and a reason for each, which does not exist
+	yet. Money is exact Decimal at the boundary; amounts are returned as
+	decimal strings."""
 	from decimal import Decimal
 
 	from kentender_procurement.procurement_planning.services import budget_gateway, money as money_boundary, profiles
@@ -207,16 +221,20 @@ def reservation_allocations(version_name: str, fiscal_year: str, reference: dict
 		if item.county_resident_reservation:
 			county_qualifying += value
 			county_items.append(item.plan_item_id)
+	# The eligible planned value: every purchase the plan currently holds.
+	eligible = plan_total
 	basis = budget_gateway.annual_budget_basis(fiscal_year)
 	annual = money_boundary.parse_money(basis.get("annual_approved_amount"), allow_zero=True, allow_blank=True) if basis.get("available") else None
-	required = (annual * Decimal(str(target)) / Decimal(100)).quantize(Decimal("0.01")) if (annual is not None and target) else None
+	required = (eligible * Decimal(str(target)) / Decimal(100)).quantize(Decimal("0.01")) if target else None
 	shortfall = max(Decimal(0), required - qualifying) if required is not None else None
-	county_required = (annual * Decimal(str(county_target)) / Decimal(100)).quantize(Decimal("0.01")) if (annual is not None and county_target and is_county) else None
+	county_required = (eligible * Decimal(str(county_target)) / Decimal(100)).quantize(Decimal("0.01")) if (county_target and is_county) else None
 	county_shortfall = max(Decimal(0), county_required - county_qualifying) if county_required is not None else None
 	verified = cstr(reference.get("verification_status")) in profiles.VERIFIED_STATUSES
 	fmt = money_boundary.money_text
 	return {
 		"plan_total": fmt(plan_total),
+		# The denominator, under the name the screens and tests use for it.
+		"eligible_value": fmt(eligible),
 		"qualifying": fmt(qualifying),
 		"qualifying_items": qualifying_items,
 		"percent_of_plan": float((qualifying / plan_total * 100) if plan_total else 0),

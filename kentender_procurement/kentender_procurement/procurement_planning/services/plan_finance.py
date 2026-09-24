@@ -52,16 +52,38 @@ def affordability_statement(plan, version) -> dict[str, Any]:
 
 
 def validate_plan_ready(version, plan, *, stage: str = "pre_finance") -> dict[str, Any]:
-	"""§5.6.4 — the exact blocker list for the stage; raises the first
-	blocking code. `pre_finance` for the funding request, `submission` for
-	Sign and submit."""
+	"""§5.6.4 — the exact blocker list for the stage. `pre_finance` for the
+	funding request, `submission` for Sign and submit.
+
+	The refusal names every outstanding issue, not just the first. It used to
+	raise `blockers[0]` and discard the rest, so each correction earned the
+	next refusal and the actor never learned how much work was actually left
+	(found live 23 Sep 2026). The raised **code** is still the first
+	blocker's, keeping the §8 error contract intact; only the sentence grew.
+	`.detail` does not survive the trip to the browser, so the list has to
+	travel in the message."""
 	from kentender_procurement.procurement_planning.services import plan_read
 
 	report = plan_read.plan_readiness(version, plan, stage=stage)
 	if report["blockers"]:
 		first = report["blockers"][0]
-		fail(first["code"], first.get("message") or "", {k: v for k, v in first.items() if k != "code"})
+		issues = plan_read.plan_issues(version, plan, funding_current=report["funding_current"], report=report)
+		fail(first["code"], _refusal(issues, stage) or first.get("message") or "", {k: v for k, v in first.items() if k != "code"})
 	return report
+
+
+def _refusal(issues: list[str], stage: str) -> str:
+	"""One sentence naming how many issues stand in the way, then each of
+	them — so the actor sees the whole of the remaining work at once, named
+	against the action they actually took."""
+	if not issues:
+		return ""
+	if len(issues) == 1:
+		return issues[0]
+	action = "submitted" if stage == "submission" else "sent to Finance for funding review"
+	return f"{len(issues)} issues must be resolved before this plan can be {action}. " + " ".join(
+		f"{n}. {issue}" for n, issue in enumerate(issues, start=1)
+	)
 
 
 def funding_is_current(version, statement: dict[str, Any] | None = None) -> bool:

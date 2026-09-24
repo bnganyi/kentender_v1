@@ -548,6 +548,49 @@ class TestProfilesEvidenceAndFeasibility(PlanWorkbenchCase):
 		row = next(r for r in plan["plan_items"] if r["plan_item_id"] == item_id)
 		self.assertEqual(row["current_work"], "Ready")
 
+	def test_an_infeasible_but_dated_schedule_is_not_ready_either(self):
+		"""`_current_work` used to check only whether `baseline_invitation_date`
+		was set, never whether the resulting completion actually meets the
+		departmental deadline — so a purchase with a date entered but an
+		infeasible delivery estimate read "Ready" on this screen while Plan
+		checks' Schedule count still counted it (found live 23 Sep 2026).
+		Current work must name the same blocker Plan checks counts, and the
+		count's own wording must be grammatical and point back to it."""
+		accepted, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		plan_workbench.save_plan_item(
+			plan_item=item_id, values=fx.item_values(estimated_delivery_period_days=3650),
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
+		self.assertIn("PLN_DELIVERY_BOUNDARY_INSUFFICIENT", [b["code"] for b in refreshed["blockers"]])
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		row = next(r for r in plan["plan_items"] if r["plan_item_id"] == item_id)
+		self.assertEqual(row["current_work"], "Review the dates against the departmental deadline")
+		schedule_check = next(c for c in plan["plan_checks"] if c["label"] == "Schedule")
+		self.assertEqual(schedule_check["result"], "1 purchase does not yet meet its departmental deadline — see Current work above")
+
+	def test_the_schedule_check_counts_distinct_purchases_not_blockers(self):
+		"""A purchase missing both its invitation date and its delivery
+		period carries two schedule-coded blockers at once; the Schedule
+		count must read the distinct purchases affected, not the blocker
+		entries (found live 23 Sep 2026: a plan with one such purchase read
+		"2 purchases do not meet their departmental deadlines")."""
+		accepted, item_id = self.one_item()
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		plan_workbench.save_plan_item(
+			plan_item=item_id,
+			values=fx.item_values(baseline_invitation_date="", estimated_delivery_period_days=""),
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
+		refreshed = plan_read.get_plan_item(plan_item_id=item_id)
+		codes = [b["code"] for b in refreshed["blockers"]]
+		self.assertIn("PLN_SCHEDULE_INVALID", codes)
+		self.assertIn("PLN_DELIVERY_PERIOD_REQUIRED", codes)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		schedule_check = next(c for c in plan["plan_checks"] if c["label"] == "Schedule")
+		self.assertEqual(schedule_check["result"], "1 purchase does not yet meet its departmental deadline — see Current work above")
+
 	def test_the_item_editor_read_model_carries_a_total_quantity_and_a_restrictions_line(self):
 		"""PLN18-305 (U09 Plan Item editor): `get_plan_item()` needs one
 		aggregate quantity display (the single-source case already has its own
@@ -706,24 +749,67 @@ class TestScopeLock(PlanWorkbenchCase):
 
 
 class TestReservationAllocations(PlanWorkbenchCase):
-	"""PLN-CHG-001 v1.18 §5.5.3.1 — the annual procurement budget is the denominator."""
+	"""The reserved-procurement target is a share of what the plan actually
+	plans to buy, not of the approved budget ceiling.
 
-	def test_required_planned_and_shortfall_use_the_annual_budget_not_the_plan_total(self):
+	Corrected 24 Sep 2026 on the owner's written ruling
+	(`docs/mvp-1-r1/99_other/thirty_percent_reservation_rule.pdf`). The
+	approved budget authorises spending; it does not oblige it. Measuring the
+	30% against it turned unused budget headroom into a compulsory
+	procurement target: a plan of KES 464,980 against a KES 160,000,000
+	ceiling was asked for KES 48,000,000 of reserved allocation, which it
+	could not reach even if every purchase in it were designated. The
+	ceiling's own job — the plan must fit inside it — belongs to the
+	affordability check and is untouched.
+	"""
+
+	def _published(self, plan, **over):
+		reference = {**readiness.reference_for(plan.fiscal_year)}
+		reference["reservation"] = {**reference["reservation"], "target_percent": 30.0, "published": True, **over}
+		reference["verification_status"] = fx.VERIFICATION_FIXTURE
+		return reference
+
+	def test_required_and_shortfall_are_a_share_of_the_planned_value(self):
 		accepted, item_id = self.one_item()
 		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
 		plan = frappe.get_doc("Annual Plan", version.annual_plan)
-		reference = {**readiness.reference_for(plan.fiscal_year)}
-		reference["reservation"] = {**reference["reservation"], "target_percent": 30.0, "published": True}
-		reference["verification_status"] = fx.VERIFICATION_FIXTURE
+		reference = self._published(plan)
 		share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
-		self.assertTrue(share["basis"]["available"])
-		self.assertEqual(share["basis"]["annual_approved_amount"], "200000000.00")  # the test world's authorised total
-		self.assertEqual(share["required"], "60000000.00")
-		self.assertEqual(share["qualifying"], "0.00")
+		self.assertEqual(share["eligible_value"], "1000000.00")
 		self.assertEqual(share["plan_total"], "1000000.00")
-		self.assertEqual(share["shortfall"], "60000000.00")
+		self.assertEqual(share["required"], "300000.00")  # 30% of the plan, not of the budget
+		self.assertEqual(share["qualifying"], "0.00")
+		self.assertEqual(share["shortfall"], "300000.00")
 		self.assertFalse(share["met"])
 		self.assertTrue(share["mandatory"] and share["verified"])
+
+	def test_the_approved_budget_no_longer_decides_the_requirement(self):
+		"""The budget basis stays on the read as the funding ceiling it is,
+		but nothing in the reservation arithmetic reads it any more — so a
+		plan whose budget basis is missing entirely still has a computable,
+		reachable target."""
+		accepted, item_id = self.one_item()
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		plan = frappe.get_doc("Annual Plan", version.annual_plan)
+		reference = self._published(plan)
+		from kentender_procurement.procurement_planning.services import budget_gateway
+
+		with patch.object(budget_gateway, "annual_budget_basis", return_value={"available": False}):
+			share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
+			self.assertEqual(share["required"], "300000.00")
+			self.assertFalse(share["basis"]["available"])
+			with patch.object(readiness, "reference_for", return_value=reference):
+				blockers = plan_read.plan_readiness(version, plan, stage="submission")["blockers"]
+		# A missing budget basis is an affordability concern, never a reason
+		# to report the reservation rule itself as unavailable.
+		self.assertEqual([b for b in blockers if b.get("field") == "reservation_category" and b["code"] == "PLN_REFERENCE_UNAVAILABLE"], [])
+		self.assertIn("PLN_RESERVATION_SHORTFALL", [b["code"] for b in blockers])
+
+	def test_a_designated_purchase_can_actually_clear_the_target(self):
+		accepted, item_id = self.one_item()
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		plan = frappe.get_doc("Annual Plan", version.annual_plan)
+		reference = self._published(plan)
 		item = plan_read.get_plan_item(plan_item_id=item_id)
 		plan_workbench.save_plan_item(
 			plan_item=item_id, values=fx.item_values(reservation_category="Micro, small and medium enterprise"),
@@ -732,18 +818,52 @@ class TestReservationAllocations(PlanWorkbenchCase):
 		share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
 		self.assertEqual(share["qualifying"], "1000000.00")
 		self.assertEqual(share["qualifying_items"], [item_id])
-		self.assertEqual(share["shortfall"], "59000000.00")
+		self.assertEqual(share["shortfall"], "0.00")
+		self.assertTrue(share["met"])
 		self.assertAlmostEqual(share["percent_of_plan"], 100.0)
-		self.assertAlmostEqual(share["percent_of_annual"], 0.5)
+
+	def test_the_county_target_uses_the_same_planned_value(self):
+		accepted, item_id = self.one_item()
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		plan = frappe.get_doc("Annual Plan", version.annual_plan)
+		reference = self._published(plan, county_target_percent=20.0)
+		with patch.object(frappe.db, "get_single_value", return_value=True):
+			share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
+		self.assertEqual(share["county"]["required"], "200000.00")  # 20% of the plan
+		self.assertEqual(share["county"]["shortfall"], "200000.00")
+
+	def test_the_shortfall_blocks_submission_only_but_is_still_reported_on_a_draft(self):
+		"""A Draft may be incomplete, so the shortfall never refuses a
+		funding request. It must still be visible while the plan is being
+		prepared: the Plan checks row reads it from the calculation, not
+		from the blocker list, which is how it came to claim "Required
+		allocation met" over a KES 48,000,000 shortfall (found live 23 Sep
+		2026)."""
+		accepted, item_id = self.one_item()
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		plan = frappe.get_doc("Annual Plan", version.annual_plan)
+		reference = self._published(plan)
 		with patch.object(readiness, "reference_for", return_value=reference):
-			report = plan_read.plan_readiness(version, plan, stage="submission")
-			self.assertIn("PLN_RESERVATION_SHORTFALL", [b["code"] for b in report["blockers"]])
-			self.assertNotIn("PLN_RESERVATION_SHORTFALL", [b["code"] for b in plan_read.plan_readiness(version, plan)["blockers"]])
-			pending = {**reference, "verification_status": "Production verification pending"}
+			self.assertIn("PLN_RESERVATION_SHORTFALL", [b["code"] for b in plan_read.plan_readiness(version, plan, stage="submission")["blockers"]])
+			report = plan_read.plan_readiness(version, plan)
+			self.assertNotIn("PLN_RESERVATION_SHORTFALL", [b["code"] for b in report["blockers"]])
+			row = next(c for c in plan_read._plan_checks(version, plan, report) if c["label"] == "Reserved procurement")
+		self.assertEqual(row["result"], "KES 300,000 more qualifying allocation required")
+		self.assertEqual(row["kind"], "critical")
+		self.assertEqual(row["action"], "Review reserved procurement")
+
+	def test_an_unverified_rule_is_named_as_that_and_never_as_a_shortfall(self):
+		accepted, item_id = self.one_item()
+		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
+		plan = frappe.get_doc("Annual Plan", version.annual_plan)
+		pending = {**self._published(plan), "verification_status": "Production verification pending"}
 		with patch.object(readiness, "reference_for", return_value=pending):
 			codes = [b["code"] for b in plan_read.plan_readiness(version, plan, stage="submission")["blockers"]]
-			self.assertIn("PLN_REFERENCE_UNAVAILABLE", codes)
-			self.assertNotIn("PLN_RESERVATION_SHORTFALL", codes)
+			row = next(c for c in plan_read._plan_checks(version, plan, plan_read.plan_readiness(version, plan)) if c["label"] == "Reserved procurement")
+		self.assertIn("PLN_REFERENCE_UNAVAILABLE", codes)
+		self.assertNotIn("PLN_RESERVATION_SHORTFALL", codes)
+		self.assertEqual(row["result"], "The reserved-procurement rule is missing or unverified")
+		self.assertEqual(row["kind"], "critical")
 
 	def test_a_mandatory_shortfall_is_the_workspaces_current_issue(self):
 		"""U01's own drawn copy (found live 22 Sep 2026, re-diffing against
@@ -754,14 +874,12 @@ class TestReservationAllocations(PlanWorkbenchCase):
 		accepted, item_id = self.one_item()
 		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
 		plan = frappe.get_doc("Annual Plan", version.annual_plan)
-		reference = {**readiness.reference_for(plan.fiscal_year)}
-		reference["reservation"] = {**reference["reservation"], "target_percent": 30.0, "published": True}
-		reference["verification_status"] = fx.VERIFICATION_FIXTURE
+		reference = self._published(plan)
 		with patch.object(readiness, "reference_for", return_value=reference):
 			current_issue = workspace.get_planning_workspace(financial_year=fx.FY_OPEN, user=fx.PLANNER)["current_issue"]
 		self.assertEqual(
 			current_issue["text"],
-			"Reserved procurement is below the required allocation by KES 60,000,000. "
+			"Reserved procurement is below the required allocation by KES 300,000. "
 			"Resolve this before sending the plan to Finance.",
 		)
 		self.assertEqual(current_issue["action"], "Review reserved procurement")

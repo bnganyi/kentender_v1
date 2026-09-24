@@ -105,3 +105,23 @@ describe("MissingSettingPanel — C03 / C04", () => {
 		expect(withoutLede.find('[data-testid="pln-missing-setting-lede"]').exists()).toBe(false);
 	});
 });
+
+// One wrong setting is one panel, however many purchases it blocks, so the
+// label has to agree with what the value actually lists.
+describe("MissingSettingPanel — a setting that blocks several purchases", () => {
+	it("names them plurally", () => {
+		const w = mount(MissingSettingPanel, {
+			props: { panel: { setting: "Applicable procurement method rule", affected_action: "Send plan for governance review", responsible_role: "Administrator or System Manager", affected_purchase: "4 purchases: PPI-001, PPI-002, PPI-003 and 1 more", affected_count: 4, lede: "", note: "", can_open_setup: false, action: "", href: "", ask_text: "Ask your KenTender administrator to complete this setting." } },
+		});
+		expect(w.text()).toContain("Affected purchases");
+		expect(w.find('[data-testid="pln-missing-setting-purchase"]').text()).toContain("and 1 more");
+	});
+
+	it("stays singular for one purchase", () => {
+		const w = mount(MissingSettingPanel, {
+			props: { panel: { setting: "Applicable procurement method rule", affected_action: "Send plan for governance review", responsible_role: "Administrator or System Manager", affected_purchase: "Laptops · PPI-001", affected_count: 1, lede: "", note: "", can_open_setup: false, action: "", href: "", ask_text: "" } },
+		});
+		expect(w.text()).toContain("Affected purchase");
+		expect(w.text()).not.toContain("Affected purchases");
+	});
+});
