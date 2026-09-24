@@ -77,14 +77,89 @@ describe("ProcurementSettingsTab", () => {
 		api.get.mockResolvedValue(payload());
 	});
 
-	it("renders the C03 sections in order: funding sources, procurement rules, schedule profiles, reminders", async () => {
+	it("each section is its own view behind the section links; with no section named, Funding sources opens", async () => {
 		const wrapper = await mountTab();
-		const html = wrapper.html();
-		expect(html.indexOf('data-testid="kt-procset-sources"')).toBeLessThan(html.indexOf('data-testid="kt-procset-rules"'));
-		expect(html.indexOf('data-testid="kt-procset-rules"')).toBeLessThan(html.indexOf('data-testid="kt-procset-profiles"'));
-		expect(html.indexOf('data-testid="kt-procset-profiles"')).toBeLessThan(html.indexOf('data-testid="kt-procset-reminder"'));
-		expect(wrapper.find('[data-testid="kt-procset-subnav"]').text()).toContain("Funding sources");
-		expect(wrapper.text()).toContain("Add funding source");
+		const links = wrapper.findAll('[data-testid="kt-procset-subnav"] a');
+		// Tender formats is deferred this cycle, so it has no link (D11).
+		expect(links.map((a) => a.text())).toEqual(["Funding sources", "Procurement rules", "Procurement schedules", "Reminders"]);
+		expect(links[0].attributes("aria-current")).toBe("page");
+		expect(links[0].classes()).toContain("is-active");
+		expect(wrapper.find('[data-testid="kt-procset-sources"]').exists()).toBe(true);
+		for (const other of ["kt-procset-rules", "kt-procset-profiles", "kt-procset-calendars", "kt-procset-reminder"]) {
+			expect(wrapper.find(`[data-testid="${other}"]`).exists(), other).toBe(false);
+		}
+		await links[1].trigger("click");
+		expect(wrapper.emitted("navigate").at(-1)).toEqual(["procurement-rules"]);
+
+		const rules = await mountTab("procurement-rules");
+		expect(rules.find('[data-testid="kt-procset-rules"]').exists()).toBe(true);
+		expect(rules.find('[data-testid="kt-procset-sources"]').exists()).toBe(false);
+		expect(rules.find('[data-testid="kt-procset-link-procurement-rules"]').attributes("aria-current")).toBe("page");
+
+		// Working-day calendars open inside Procurement schedules.
+		const schedules = await mountTab("schedule-profiles");
+		expect(schedules.find('[data-testid="kt-procset-profiles"]').exists()).toBe(true);
+		expect(schedules.find('[data-testid="kt-procset-calendars"]').exists()).toBe(true);
+		const reminders = await mountTab("reminders");
+		expect(reminders.find('[data-testid="kt-procset-reminder"]').exists()).toBe(true);
+	});
+
+	it("the board's funding-source list: heading, description, Add, and the three columns", async () => {
+		const wrapper = await mountTab();
+		const list = wrapper.find('[data-testid="kt-procset-sources"]');
+		expect(list.find("h3").text()).toBe("Funding sources");
+		expect(list.find("p.card-body").text()).toBe("Maintain the sources used in procurement budgets.");
+		expect(list.find('[data-testid="kt-procset-source-add"]').text()).toBe("Add funding source");
+		expect(list.findAll("th").map((th) => th.text())).toEqual(["Name", "Available for new selection", "Action"]);
+		// No budget amount, reason or approval controls (§10.5).
+		expect(list.text()).not.toMatch(/amount|reason|approv/i);
+	});
+
+	it("an empty catalogue is its own centred state with the board's copy and Add", async () => {
+		api.get.mockResolvedValue(payload({ funding_sources: [] }));
+		const wrapper = await mountTab();
+		const empty = wrapper.find('[data-testid="kt-procset-sources-empty"]');
+		expect(empty.text()).toBe("No funding sources yetAdd the sources used by this site's procurement budgets.Add funding source");
+		expect(wrapper.find('[data-testid="kt-procset-sources"] table').exists()).toBe(false);
+		await empty.find("button").trigger("click");
+		expect(wrapper.emitted("navigate").at(-1)).toEqual(["new-source"]);
+	});
+
+	it("add and edit open the dialog over the list; Cancel returns to the section, and a save re-reads it", async () => {
+		const adding = await mountTab("new-source");
+		expect(adding.find('[data-testid="kt-procset-sources"]').exists()).toBe(true);
+		expect(adding.find('[data-testid="kt-procset-source-editor"] .kt-dialog-title').text()).toBe("Add funding source");
+		await adding.find('[data-testid="kt-fs-cancel"]').trigger("click");
+		expect(adding.emitted("navigate").at(-1)).toEqual(["funding-sources"]);
+
+		const editing = await mountTab("source/Development partner");
+		expect(editing.find('[data-testid="kt-fs-name"]').element.value).toBe("Development partner");
+		api.updateFundingSource.mockResolvedValue({ name: "Development partner", enabled: true });
+		await editing.find('[data-testid="kt-fs-enabled-yes"] input').trigger("change");
+		const reads = api.get.mock.calls.length;
+		await editing.find('[data-testid="kt-fs-save"]').trigger("click");
+		await flushPromises();
+		expect(api.updateFundingSource).toHaveBeenCalledWith("Development partner", { label: "Development partner", enabled: true }, "v2");
+		expect(api.get.mock.calls.length).toBeGreaterThan(reads);
+		expect(editing.emitted("navigate").at(-1)).toEqual(["funding-sources"]);
+
+		// Focus returns to the Edit link that opened the dialog.
+		const returning = await mountTab();
+		document.body.appendChild(returning.element);
+		const edit = returning.find('[data-testid="kt-procset-source-edit-Development partner"]');
+		edit.element.focus();
+		await edit.trigger("click");
+		await returning.setProps({ route: legacyToRoute("procurement-settings", "source/Development partner") });
+		await flushPromises();
+		expect(returning.find('[data-testid="kt-procset-source-editor"]').exists()).toBe(true);
+		await returning.setProps({ route: legacyToRoute("procurement-settings", "funding-sources") });
+		await flushPromises();
+		expect(document.activeElement).toBe(returning.find('[data-testid="kt-procset-source-edit-Development partner"]').element);
+		returning.unmount();
+
+		// A link to a source that does not exist opens no dialog.
+		const missing = await mountTab("source/Nope");
+		expect(missing.find('[data-testid="kt-procset-source-editor"]').exists()).toBe(false);
 	});
 
 	it("funding sources show availability as Yes/No and an Edit link per row", async () => {
@@ -115,8 +190,30 @@ describe("ProcurementSettingsTab", () => {
 		expect(wrapper.find('[data-testid="kt-procset-source-remove-confirm"]').exists()).toBe(false);
 	});
 
+	it("an older list read that answers late never overwrites a newer one (Remove right after closing the dialog)", async () => {
+		// Regression (24 Sep 2026, browser): closing the dialog starts a quiet
+		// re-read; a Remove confirmed before it answered started a second one.
+		// The first answered last and put the removed source back on screen.
+		const wrapper = await mountTab("source/Development partner");
+		let answerStale;
+		api.get.mockImplementationOnce(() => new Promise((resolve) => (answerStale = resolve)));
+		await wrapper.setProps({ route: legacyToRoute("procurement-settings", "funding-sources") });
+		await flushPromises();
+
+		api.deleteFundingSource.mockResolvedValue({ name: "Development partner", deleted: true });
+		api.get.mockResolvedValueOnce(payload({ funding_sources: [payload().funding_sources[0]] }));
+		await wrapper.find('[data-testid="kt-procset-source-remove-Development partner"]').trigger("click");
+		await wrapper.find('[data-testid="kt-procset-source-remove-confirm"] [data-testid="kt-ou-confirm-accept"]').trigger("click");
+		await flushPromises();
+		expect(wrapper.find('[data-testid="kt-procset-source-Development partner"]').exists()).toBe(false);
+
+		answerStale(payload());
+		await flushPromises();
+		expect(wrapper.find('[data-testid="kt-procset-source-Development partner"]').exists()).toBe(false);
+	});
+
 	it("procurement rules list every method profile and reference Version with its source verification", async () => {
-		const wrapper = await mountTab();
+		const wrapper = await mountTab("procurement-rules");
 		const rules = wrapper.find('[data-testid="kt-procset-rules"]');
 		expect(rules.text()).toContain("Method eligibility — Open Tender");
 		expect(rules.text()).toContain("Reservation rules");
@@ -134,11 +231,12 @@ describe("ProcurementSettingsTab", () => {
 	});
 
 	it("View routes to the rule or profile sub-path; the sub-path selects the view", async () => {
-		const wrapper = await mountTab();
+		const wrapper = await mountTab("procurement-rules");
 		await wrapper.find('[data-testid="kt-procset-rule-view-MPR-OPEN-TENDER-V1"]').trigger("click");
 		expect(wrapper.emitted("navigate").at(-1)).toEqual(["rule/MPR-OPEN-TENDER-V1"]);
-		await wrapper.find('[data-testid="kt-procset-profile-view-SPR-OPEN-TENDER-GOODS-V1"]').trigger("click");
-		expect(wrapper.emitted("navigate").at(-1)).toEqual(["profile/SPR-OPEN-TENDER-GOODS-V1"]);
+		const schedules = await mountTab("schedule-profiles");
+		await schedules.find('[data-testid="kt-procset-profile-view-SPR-OPEN-TENDER-GOODS-V1"]').trigger("click");
+		expect(schedules.emitted("navigate").at(-1)).toEqual(["profile/SPR-OPEN-TENDER-GOODS-V1"]);
 
 		api.getMethodProfile.mockResolvedValue({ profile: "MPR-OPEN-TENDER-V1", procurement_method: "Open Tender", version_number: 1, verification_status: "Production verification pending", conditions: [], effective_from: "2027-07-01", effective_until: "2028-06-30" });
 		const detail = await mountTab("rule/MPR-OPEN-TENDER-V1");

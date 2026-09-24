@@ -28,4 +28,9 @@ globalThis.kentender_core.desk_page = globalThis.kentender_core.desk_page || {
 			},
 		};
 	},
+	// Same contract as kt_desk_page.js: only the newest ticket is current.
+	createSequenceGuard() {
+		let token = 0;
+		return { next: () => ++token, isCurrent: (candidate) => candidate === token };
+	},
 };

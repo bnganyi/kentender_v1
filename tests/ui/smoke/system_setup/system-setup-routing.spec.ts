@@ -19,7 +19,7 @@ const READY: Record<string, string> = {
 	"fiscal-years": '[data-testid="kt-fy-table"]',
 	"organisation-structure": '[data-testid="kt-ou-detail"]',
 	"users-and-responsibilities": '[data-testid="kt-ura-table"]',
-	"procurement-settings": '[data-testid="kt-procset-rules"]',
+	"procurement-settings": '[data-testid="kt-procset-subnav"]',
 };
 
 async function countSkeletons(page: Page): Promise<void> {
@@ -104,18 +104,20 @@ test.describe("System setup — links and navigation", () => {
 		expect(new URL(page.url()).hash).toBe(link);
 
 		await page.goBack();
-		await page.waitForSelector(READY["procurement-settings"], { timeout: 20_000 });
+		await page.waitForSelector('[data-testid="kt-procset-rules"]', { timeout: 20_000 });
 		await expect(page.locator('[data-testid="kt-procset-rule-card"]')).toHaveCount(0);
 		expect(errors, "console errors").toEqual([]);
 	});
 
-	test("a link to a section opens the list scrolled to that section (the Procuring entity's View procurement rules)", async ({ page }) => {
+	test("a link to a section opens that section's own view (the Procuring entity's View procurement rules)", async ({ page }) => {
 		await loginAsAdministrator(page);
 		await page.goto("/app/system-setup#procuring-entity", { waitUntil: "domcontentloaded" });
 		await page.waitForSelector(READY["procuring-entity"], { timeout: 20_000 });
 		await page.click('[data-testid="kt-setup-pe-approval-link"]');
 		await page.waitForSelector(READY["procurement-settings"], { timeout: 20_000 });
 		expect(new URL(page.url()).hash).toBe("#procurement-settings/procurement-rules");
-		await expect(page.locator('[data-testid="kt-procset-rules"]')).toBeInViewport({ ratio: 0.1 });
+		await expect(page.locator('[data-testid="kt-procset-rules"]')).toBeVisible();
+		await expect(page.locator('[data-testid="kt-procset-sources"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="kt-procset-link-procurement-rules"]')).toHaveAttribute("aria-current", "page");
 	});
 });

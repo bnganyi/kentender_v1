@@ -12,7 +12,7 @@ import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { routeToLegacy } from "../data/routes.js";
 import { onSetupRevalidate } from "../composables/useRouteState.js";
 import ConfirmDialog from "../components/ConfirmDialog.vue";
-import FundingSourceEditor from "../components/FundingSourceEditor.vue";
+import FundingSourceDialog from "../components/FundingSourceDialog.vue";
 import RuleVersionDetail from "../components/RuleVersionDetail.vue";
 import RuleEditor from "../components/RuleEditor.vue";
 import MethodVersionEditor from "../components/MethodVersionEditor.vue";
@@ -34,11 +34,18 @@ const loading = ref(true);
 const loadError = ref("");
 const data = ref(null);
 
+// Reads overlap (a quiet re-read on returning to the list, another after a
+// command); only the newest answer is applied, so an older one arriving late
+// can never put back a row a later command removed.
+const sequence = kentender_core.desk_page.createSequenceGuard();
+
 async function load({ quiet = false } = {}) {
+	const ticket = sequence.next();
 	if (!quiet) loading.value = true;
 	loadError.value = "";
 	try {
 		const result = await procurementSettingsApi.get();
+		if (!sequence.isCurrent(ticket)) return;
 		if (result && result.outcome === "FORBIDDEN") {
 			loadError.value = "FORBIDDEN";
 			data.value = null;
@@ -46,10 +53,11 @@ async function load({ quiet = false } = {}) {
 		}
 		data.value = result;
 	} catch (error) {
+		if (!sequence.isCurrent(ticket)) return;
 		loadError.value = error.message;
 		data.value = null;
 	} finally {
-		loading.value = false;
+		if (sequence.isCurrent(ticket)) loading.value = false;
 	}
 }
 onMounted(load);
@@ -158,11 +166,6 @@ function go(sub) {
 	emit("navigate", sub);
 }
 
-function scrollTo(id) {
-	const el = document.getElementById(id);
-	if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
 function verificationLabel(value) {
 	return __(sourceCheckLabel(value));
 }
@@ -171,31 +174,54 @@ function verificationClass(value) {
 	return sourceCheckClass(value);
 }
 
-// A section on its own (`#procurement-settings/procurement-rules`) opens the
-// list at that section — the Procuring entity's "View procurement rules".
-const SECTION_ANCHORS = {
-	"funding-sources": "kt-procset-sources",
-	"procurement-rules": "kt-procset-rules",
-	"schedule-profiles": "kt-procset-profiles",
-	reminders: "kt-procset-reminders",
-	calendars: "kt-procset-calendars",
-};
-watch(
-	() => [props.route?.section, !!props.route?.id || !!props.route?.action, !!data.value],
-	async ([section, deep, ready]) => {
-		if (!section || deep || !ready) return;
-		await nextTick();
-		scrollTo(SECTION_ANCHORS[section]);
-	},
-	{ immediate: true }
-);
+// CFG-CHG-002 v0.14 §9/§10.1 (D19) — each section is its own view behind the
+// section links, as the boards draw them (one board per section, the active
+// link bold). `#procurement-settings` opens the first, Funding sources.
+// Calendars open inside Procurement schedules, not as a section of their own.
+const SECTION_LINKS = [
+	["funding-sources", "Funding sources"],
+	["procurement-rules", "Procurement rules"],
+	["schedule-profiles", "Procurement schedules"],
+	["reminders", "Reminders"],
+];
+const activeSection = computed(() => {
+	const section = props.route?.section || "";
+	if (section === "calendars") return "schedule-profiles";
+	return SECTION_LINKS.some(([key]) => key === section) ? section : "funding-sources";
+});
+// The funding-source dialog is drawn over the list (C03A #add/#edit), so the
+// list stays rendered underneath it.
+const sourceDialog = computed(() => {
+	if (view.value.kind === "new-source") return { creating: true, source: null };
+	if (view.value.kind === "source") {
+		const source = fundingSources.value.find((row) => row.name === view.value.name);
+		return source ? { creating: false, source } : null;
+	}
+	return null;
+});
+const listView = computed(() => ["list", "source", "new-source"].includes(view.value.kind));
+// Focus returns to the control that opened the dialog (Add, or the row's
+// Edit) when it closes. Held here, not in the dialog: by the time the dialog
+// exists the route change has already moved focus off the trigger.
+let sourceTrigger = null;
+function openSource(sub, event) {
+	sourceTrigger = event?.currentTarget || null;
+	go(sub);
+}
+watch(sourceDialog, async (now, before) => {
+	if (!before || now) return;
+	const trigger = sourceTrigger;
+	sourceTrigger = null;
+	await nextTick();
+	if (trigger && trigger.isConnected) trigger.focus();
+});
 
 watch(
 	() => subpath.value,
 	() => {
 		// Returning from a detail or editor re-reads the authoritative list
 		// (a new Version or a renamed source must be reflected, §11.6).
-		if (view.value.kind === "list" && data.value) load({ quiet: true });
+		if (listView.value && !sourceDialog.value && data.value) load({ quiet: true });
 	}
 );
 
@@ -231,7 +257,7 @@ async function confirmRemoveSource() {
 </script>
 
 <template>
-	<section class="kt-setup-section kt-procset" data-testid="kt-procset">
+	<section class="kt-setup-section kt-procset is-flow" data-testid="kt-procset">
 		<div v-if="loading" class="kt-card kt-blueprint" data-testid="kt-procset-loading">
 			<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
 			<span class="kt-eyebrow">{{ __("Loading procurement settings…") }}</span>
@@ -252,16 +278,6 @@ async function confirmRemoveSource() {
 			<button type="button" class="kt-btn kt-btn-secondary" data-testid="kt-procset-retry" @click="load">{{ __("Try again") }}</button>
 		</div>
 
-		<!-- C03-source-editor / new source -->
-		<FundingSourceEditor
-			v-else-if="view.kind === 'source' || view.kind === 'new-source'"
-			:source="view.kind === 'source' ? fundingSources.find((row) => row.name === view.name) || null : null"
-			:creating="view.kind === 'new-source'"
-			:existing="fundingSources"
-			@saved="afterChange().then(() => go(''))"
-			@cancel="go('')"
-		/>
-
 		<!-- C03-B "add" / "version" — one editor for a new rule and a new version -->
 		<RuleEditor
 			v-else-if="view.kind === 'new-rule' || view.kind === 'new-rule-version' || view.kind === 'edit-rule-version'"
@@ -272,8 +288,8 @@ async function confirmRemoveSource() {
 			:entity-types="entityTypes"
 			:categories="procurementCategories"
 			:methods="procurementMethods"
-			@saved="afterChange().then(() => go(view.kind === 'edit-rule-version' ? 'rule/' + view.name : ''))"
-			@cancel="go(view.kind === 'edit-rule-version' ? 'rule/' + view.name : '')"
+			@saved="afterChange().then(() => go(view.kind === 'edit-rule-version' ? 'rule/' + view.name : 'procurement-rules'))"
+			@cancel="go(view.kind === 'edit-rule-version' ? 'rule/' + view.name : 'procurement-rules')"
 		/>
 
 		<!-- C03-BC — a method eligibility rule's new version: the full editor,
@@ -309,8 +325,8 @@ async function confirmRemoveSource() {
 			v-else-if="view.kind === 'calendar' || view.kind === 'new-calendar'"
 			:name="view.kind === 'calendar' ? view.name : ''"
 			:creating="view.kind === 'new-calendar'"
-			@back="go('')"
-			@saved="afterChange().then(() => go(''))"
+			@back="go('schedule-profiles')"
+			@saved="afterChange().then(() => go('schedule-profiles'))"
 		/>
 
 		<!-- C03-D — Check sources against one exact version, with both histories -->
@@ -327,8 +343,8 @@ async function confirmRemoveSource() {
 			:name="view.name"
 			:kind="(rules.find((row) => row.name === view.name) || {}).source || 'reference'"
 			:verification-statuses="data.verification_statuses"
-			@back="go('')"
-			@registered="afterChange().then(() => go(''))"
+			@back="go('procurement-rules')"
+			@registered="afterChange().then(() => go('procurement-rules'))"
 			@new-version="go(((rules.find((row) => row.name === view.name) || {}).source === 'method' ? 'new-method-version/' : 'new-rule-version/') + view.name)"
 			@edit-rule="go(((rules.find((row) => row.name === view.name) || {}).source === 'method' ? 'edit-method-rule/' : 'edit-rule-version/') + view.name)"
 			@check-sources="go('check-sources/' + view.name)"
@@ -339,34 +355,40 @@ async function confirmRemoveSource() {
 			v-else-if="view.kind === 'profile'"
 			:name="view.name"
 			:verification-statuses="data.verification_statuses"
-			@back="go('')"
-			@registered="afterChange().then(() => go(''))"
+			@back="go('schedule-profiles')"
+			@registered="afterChange().then(() => go('schedule-profiles'))"
 			@new-version="go('new-schedule-version/' + view.name)"
 			@edit-schedule="go('edit-schedule/' + view.name)"
 		/>
 
-		<template v-else>
-			<!-- C03 section links: document anchors, not steps -->
-			<nav class="kt-setup-subnav" data-testid="kt-procset-subnav">
-				<a href="#" class="is-active" @click.prevent="scrollTo('kt-procset-sources')">{{ __("Funding sources") }}</a>
-				<a href="#" @click.prevent="scrollTo('kt-procset-rules')">{{ __("Procurement rules") }}</a>
-				<a href="#" @click.prevent="scrollTo('kt-procset-profiles')">{{ __("Procurement schedules") }}</a>
-				<a href="#" @click.prevent="scrollTo('kt-procset-reminders')">{{ __("Reminders") }}</a>
+		<template v-else-if="listView">
+			<!-- §10.1 section links: each opens its own view. Tender formats is
+			     deferred this cycle (D11), so it has no link. The real href keeps
+			     open-in-new-tab working; `.stop` keeps Frappe's body-level link
+			     handler from re-routing the click and overwriting the Back step. -->
+			<nav class="kt-setup-subnav" :aria-label="__('Procurement settings sections')" data-testid="kt-procset-subnav">
+				<a
+					v-for="[key, text] in SECTION_LINKS"
+					:key="key"
+					:href="'#procurement-settings/' + key"
+					:class="{ 'is-active': activeSection === key }"
+					:aria-current="activeSection === key ? 'page' : undefined"
+					:data-testid="'kt-procset-link-' + key"
+					@click.stop.prevent="go(key)"
+				>{{ __(text) }}</a>
 			</nav>
 
-			<!-- CFG-CHG-002 v0.11 §10.5 (C03-A) — funding sources, ported
-			     class-for-class: the availability column states what the
-			     setting governs ("Available for new selection"), never a bare
-			     "Enabled" flag. -->
-			<div id="kt-procset-sources" class="kt-card kt-blueprint kt-table-card" data-testid="kt-procset-sources">
-				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
-				<div class="kt-section-head">
+			<!-- CFG-CHG-002 v0.14 §10.5 — C03A #list and #empty, ported element
+			     by element. The availability column states what the setting
+			     governs ("Available for new selection"), never a bare flag. -->
+			<div v-if="activeSection === 'funding-sources'" id="kt-procset-sources" data-testid="kt-procset-sources">
+				<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
 					<div>
-						<h3 class="kt-card-title">{{ __("Funding sources") }}</h3>
-						<p class="kt-muted">{{ __("Maintain the sources used in procurement budgets.") }}</p>
+						<h3 style="margin-bottom:4px">{{ __("Funding sources") }}</h3>
+						<p class="card-body" style="margin-bottom:0">{{ __("Maintain the sources used in procurement budgets.") }}</p>
 					</div>
-					<button type="button" class="kt-btn kt-btn-primary" data-testid="kt-procset-source-add" @click="go('new-source')">
-						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add funding source") }}
+					<button type="button" class="kt-btn kt-btn-primary" data-testid="kt-procset-source-add" @click="openSource('new-source', $event)">
+						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add funding source") }}
 					</button>
 				</div>
 				<table v-if="fundingSources.length" class="kt-table">
@@ -375,14 +397,16 @@ async function confirmRemoveSource() {
 					</thead>
 					<tbody>
 						<tr v-for="row in fundingSources" :key="row.name" :data-testid="'kt-procset-source-' + row.name">
-							<td class="kt-row-name">{{ row.label }}</td>
+							<td>{{ row.label }}</td>
 							<td><span :class="row.enabled ? 'kt-status is-live' : 'kt-status is-critical'">{{ row.enabled ? __("Yes") : __("No") }}</span></td>
-							<td class="kt-row-actions">
-								<a href="#" :data-testid="'kt-procset-source-edit-' + row.name" @click.prevent="go('source/' + row.name)">{{ __("Edit") }}</a>
+							<td>
+								<a href="#" :data-testid="'kt-procset-source-edit-' + row.name" @click.prevent="openSource('source/' + row.name, $event)">{{ __("Edit") }}</a>
+								<!-- A source nothing has ever used can be removed outright
+								     (owner decision, 18 Sep 2026); see DEPARTURES. -->
 								<a
 									v-if="!row.referenced"
 									href="#"
-									style="margin-left:10px;color:var(--kt-status-critical)"
+									class="kt-procset-remove"
 									:data-testid="'kt-procset-source-remove-' + row.name"
 									@click.prevent="askRemoveSource(row)"
 								>{{ __("Remove") }}</a>
@@ -390,15 +414,16 @@ async function confirmRemoveSource() {
 						</tr>
 					</tbody>
 				</table>
-				<div v-else class="kt-empty" data-testid="kt-procset-sources-empty">
-					<h2>{{ __("No funding sources yet") }}</h2>
-					<p>{{ __("Add the sources used by this site's procurement budgets.") }}</p>
-					<button type="button" class="kt-btn kt-btn-primary" @click="go('new-source')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add funding source") }}</button>
+				<div v-else class="kt-procset-empty" data-testid="kt-procset-sources-empty">
+					<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--kt-color-neutral-400)" stroke-width="1.5" aria-hidden="true"><path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" /></svg>
+					<p style="font-weight:600;margin-bottom:4px">{{ __("No funding sources yet") }}</p>
+					<p class="card-body">{{ __("Add the sources used by this site's procurement budgets.") }}</p>
+					<button type="button" class="kt-btn kt-btn-primary" @click="openSource('new-source', $event)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{{ __("Add funding source") }}</button>
 				</div>
 			</div>
 
 			<!-- C03 procurement rules -->
-			<div id="kt-procset-rules" class="kt-card kt-blueprint kt-table-card" data-testid="kt-procset-rules">
+			<div v-if="activeSection === 'procurement-rules'" id="kt-procset-rules" class="kt-card kt-blueprint kt-table-card" data-testid="kt-procset-rules">
 				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
 				<div class="kt-section-head">
 					<div>
@@ -462,7 +487,7 @@ async function confirmRemoveSource() {
 			</div>
 
 			<!-- C04 schedule profiles (list; detail is its own frame) -->
-			<div id="kt-procset-profiles" class="kt-card kt-blueprint kt-table-card" data-testid="kt-procset-profiles">
+			<div v-if="activeSection === 'schedule-profiles'" id="kt-procset-profiles" class="kt-card kt-blueprint kt-table-card" data-testid="kt-procset-profiles">
 				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
 				<h3 class="kt-card-title">{{ __("Procurement schedules") }}</h3>
 				<p class="kt-muted">{{ __("Set the time intervals used to prepare procurement schedules.") }}</p>
@@ -489,7 +514,7 @@ async function confirmRemoveSource() {
 			     are their own versioned record, drawn as their own states rather
 			     than folded into the schedule card (plan D4). A schedule's
 			     working-day interval cannot resolve without one. -->
-			<div id="kt-procset-calendars" class="kt-card kt-blueprint kt-table-card" data-testid="kt-procset-calendars">
+			<div v-if="activeSection === 'schedule-profiles'" id="kt-procset-calendars" class="kt-card kt-blueprint kt-table-card" data-testid="kt-procset-calendars">
 				<i class="kt-corner tl" /><i class="kt-corner tr" /><i class="kt-corner bl" /><i class="kt-corner br" />
 				<div class="kt-section-head">
 					<div>
@@ -523,10 +548,20 @@ async function confirmRemoveSource() {
 			</div>
 
 			<!-- C04-eligibility-reminder — the reminder threshold -->
-			<div id="kt-procset-reminders">
+			<div v-if="activeSection === 'reminders'" id="kt-procset-reminders">
 				<ReminderSettingCard :days="data.reminder_threshold_days" @saved="afterChange" />
 			</div>
 		</template>
+
+		<FundingSourceDialog
+			v-if="sourceDialog && !loading && !loadError"
+			:key="sourceDialog.source ? sourceDialog.source.name : 'new'"
+			:source="sourceDialog.source"
+			:creating="sourceDialog.creating"
+			:existing="fundingSources"
+			@saved="afterChange().then(() => go('funding-sources'))"
+			@cancel="go('funding-sources')"
+		/>
 
 		<ConfirmDialog
 			v-if="deletingSource"

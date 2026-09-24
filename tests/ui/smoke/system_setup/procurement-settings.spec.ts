@@ -9,65 +9,25 @@ import { collectPageErrors } from "../../helpers/designFidelity";
  * business user is refused with the setup Forbidden state; sub-paths survive
  * reload and back/forward; a server failure is an actionable state.
  *
- * Writes are limited to the "Playwright test funding source" entry (purged
- * by the gate's teardown) and the reminder threshold (restored to its
- * previous value in the same test). No rule Version is created here: the
+ * Funding sources have their own journey since the v0.14 re-port
+ * (system-setup-funding-sources.spec.ts). Writes here are limited to the
+ * reminder threshold (restored to its previous value in the same test). No rule Version is created here: the
  * new-version dialog is opened and cancelled; the register commands are
  * proven in kentender_core.tests.test_procurement_settings.
  */
 const TAB = "/app/system-setup#procurement-settings";
 const TEST_SOURCE = "Playwright test funding source";
 
-async function openTab(page: Page, ready: string) {
-	await page.goto(TAB, { waitUntil: "domcontentloaded" });
+async function openTab(page: Page, ready: string, section = "") {
+	await page.goto(TAB + section, { waitUntil: "domcontentloaded" });
 	await page.waitForSelector(ready, { timeout: 20_000 });
 }
 
 test.describe("System setup — Procurement settings", () => {
-	test("Administrator adds, disables and re-enables a funding source; every change is re-read from the server", async ({ page }) => {
-		const errors = collectPageErrors(page);
-		await loginAsAdministrator(page);
-		await openTab(page, '[data-testid="kt-procset-sources"]');
-
-		const row = page.locator(`[data-testid="kt-procset-source-${TEST_SOURCE}"]`);
-		if ((await row.count()) === 0) {
-			await page.click('[data-testid="kt-procset-source-add"]');
-			await page.waitForSelector('[data-testid="kt-procset-source-editor"]');
-			expect(page.url()).toContain("#procurement-settings/funding-sources/new");
-			await page.fill('[data-testid="kt-fs-name"]', TEST_SOURCE);
-			await page.click('[data-testid="kt-fs-save"]');
-			await page.waitForSelector(`[data-testid="kt-procset-source-${TEST_SOURCE}"]`);
-		}
-		// Disable, then re-enable: the list re-renders from the server each time.
-		// CFG-CHG-002 v0.11 §10.5 — availability is an explicit Yes/No choice
-		// ("Available for new selection"), not an "Enabled" checkbox.
-		await page.click(`[data-testid="kt-procset-source-edit-${TEST_SOURCE}"]`);
-		await page.waitForSelector('[data-testid="kt-fs-enabled-yes"]');
-		const wasEnabled = await page.isChecked('[data-testid="kt-fs-enabled-yes"]');
-		await page.click(wasEnabled ? '[data-testid="kt-fs-enabled-no"]' : '[data-testid="kt-fs-enabled-yes"]');
-		await page.click('[data-testid="kt-fs-save"]');
-		await page.waitForSelector(`[data-testid="kt-procset-source-${TEST_SOURCE}"]`);
-		await expect(row).toContainText(wasEnabled ? "No" : "Yes");
-		await page.click(`[data-testid="kt-procset-source-edit-${TEST_SOURCE}"]`);
-		await page.waitForSelector('[data-testid="kt-fs-enabled-yes"]');
-		await page.click(wasEnabled ? '[data-testid="kt-fs-enabled-yes"]' : '[data-testid="kt-fs-enabled-no"]');
-		await page.click('[data-testid="kt-fs-save"]');
-		await page.waitForSelector(`[data-testid="kt-procset-source-${TEST_SOURCE}"]`);
-		await expect(row).toContainText(wasEnabled ? "Yes" : "No");
-
-		// The referenced canonical source explains it cannot be renamed.
-		await page.click('[data-testid="kt-procset-source-edit-Government of Kenya"]');
-		await page.waitForSelector('[data-testid="kt-fs-name"]');
-		await expect(page.locator('[data-testid="kt-procset-source-editor"]')).toContainText("cannot be renamed");
-		await page.click('[data-testid="kt-fs-cancel"]');
-		await page.waitForSelector('[data-testid="kt-procset-sources"]');
-		expect(errors, "console errors").toEqual([]);
-	});
-
 	test("rule and profile Versions are read-only, the method editor opens and cancels, sub-paths survive reload and back/forward", async ({ page }) => {
 		const errors = collectPageErrors(page);
 		await loginAsAdministrator(page);
-		await openTab(page, '[data-testid="kt-procset-rules"]');
+		await openTab(page, '[data-testid="kt-procset-rules"]', "/procurement-rules");
 
 		await page.click('[data-testid="kt-procset-rule-view-MPR-OPEN-TENDER-V1"]');
 		await page.waitForSelector('[data-testid="kt-procset-rule-card"]');
@@ -109,7 +69,11 @@ test.describe("System setup — Procurement settings", () => {
 		await page.waitForSelector('[data-testid="kt-procset-rule-card"]');
 		expect(page.url()).toContain("#procurement-settings/procurement-rules/MPR-OPEN-TENDER-V1");
 
+		// Back returns to the rules section; schedules are their own section.
 		await page.click('[data-testid="kt-procset-rule-back"]');
+		await page.waitForSelector('[data-testid="kt-procset-rules"]');
+		expect(new URL(page.url()).hash).toBe("#procurement-settings/procurement-rules");
+		await page.click('[data-testid="kt-procset-link-schedule-profiles"]');
 		await page.waitForSelector('[data-testid="kt-procset-profiles"]');
 
 		await page.click('[data-testid="kt-procset-profile-view-SPR-OPEN-TENDER-GOODS-V1"]');
@@ -126,7 +90,7 @@ test.describe("System setup — Procurement settings", () => {
 	test("the reminder threshold saves and is restored", async ({ page }) => {
 		const errors = collectPageErrors(page);
 		await loginAsAdministrator(page);
-		await openTab(page, '[data-testid="kt-procset-reminder"]');
+		await openTab(page, '[data-testid="kt-procset-reminder"]', "/reminders");
 		const before = await page.inputValue('[data-testid="kt-reminder-days"]');
 		const changed = String(Number(before) === 9 ? 8 : 9);
 		await page.fill('[data-testid="kt-reminder-days"]', changed);

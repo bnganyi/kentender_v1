@@ -1059,3 +1059,18 @@
 .kt-industry.kt-setup-root .kt-fy-empty svg { display: block; }
 /* The board's dialog body text. */
 .kt-industry.kt-setup-root .dialog-body { margin: 0; font-size: 14px; color: var(--kt-color-neutral-800); }
+
+/* CFG-CHG-002 v0.14 §10.1/§10.5 (C03A; tracker CFG14-5C) — the Procurement
+   settings section links as the boards draw them: the active section bold in
+   the accent, the others underlined links; then the Funding sources list,
+   its centred empty state, and the Remove link beside Edit. */
+/* Scoped under the panel so they outrank the design system's generic link
+   rule (.kt-industry a:not(…)), which otherwise paints the active link. The
+   board sets the links 16px under the tab bar; the panel's own top padding
+   is 28px. */
+.kt-industry.kt-setup-root .kt-setup-panel .kt-setup-subnav { gap: 20px; flex-wrap: wrap; margin: -12px 0 28px; }
+.kt-industry.kt-setup-root .kt-setup-panel .kt-setup-subnav a { color: var(--kt-color-accent-2-700); text-decoration: underline; text-underline-offset: 2px; }
+.kt-industry.kt-setup-root .kt-setup-panel .kt-setup-subnav a.is-active { color: var(--kt-color-accent-800); font-weight: 600; text-decoration: none; border-bottom: 0; }
+.kt-industry.kt-setup-root .kt-procset-empty { padding: 40px; text-align: center; }
+.kt-industry.kt-setup-root .kt-procset-empty svg { display: block; margin: 0 auto 12px; }
+.kt-industry.kt-setup-root .kt-procset-remove { margin-left: 12px; color: var(--kt-status-critical); }

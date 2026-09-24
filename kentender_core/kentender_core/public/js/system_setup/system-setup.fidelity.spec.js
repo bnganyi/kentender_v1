@@ -28,15 +28,21 @@ const siteApi = vi.hoisted(() => ({
 	listFiscalYearIntakeHistory: vi.fn(),
 }));
 vi.mock("./data/siteConfigApi.js", () => ({ siteConfigApi: siteApi }));
-vi.mock("./data/procurementSettingsApi.js", () => ({
-	procurementSettingsApi: { setReminderThresholdDays: vi.fn(), addFundingSource: vi.fn(), updateFundingSource: vi.fn() },
+const settingsApi = vi.hoisted(() => ({
+	get: vi.fn(),
+	setReminderThresholdDays: vi.fn(),
+	addFundingSource: vi.fn(),
+	updateFundingSource: vi.fn(),
+	deleteFundingSource: vi.fn(),
 }));
+vi.mock("./data/procurementSettingsApi.js", () => ({ procurementSettingsApi: settingsApi }));
 
 import AddFiscalYearDialog from "./components/AddFiscalYearDialog.vue";
 import DisableFiscalYearDialog from "./components/DisableFiscalYearDialog.vue";
 import IntakeForm from "./components/IntakeForm.vue";
 import FiscalYearsTab from "./tabs/FiscalYearsTab.vue";
-import FundingSourceEditor from "./components/FundingSourceEditor.vue";
+import FundingSourceDialog from "./components/FundingSourceDialog.vue";
+import ProcurementSettingsTab from "./tabs/ProcurementSettingsTab.vue";
 import ReminderSettingCard from "./components/ReminderSettingCard.vue";
 import ProcuringEntityTab from "./tabs/ProcuringEntityTab.vue";
 
@@ -121,6 +127,25 @@ async function yearsTab(rows, props = {}) {
 // absent when no component can render the state from props today. `self`
 // compares the artboard element itself as a landmark (a dialog artboard IS the
 // dialog).
+// C03A — the funding sources the board draws, all referenced by a Budget
+// line (so no Remove) except where a test says otherwise.
+const SOURCES = ["Government of Kenya", "Development partner", "Appropriation in Aid"].map((label, index) => ({
+	name: `FS-${index + 1}`,
+	label,
+	enabled: true,
+	referenced: true,
+	expected_version: "v1",
+}));
+async function settingsTab(fundingSources) {
+	settingsApi.get.mockResolvedValue({ outcome: "OK", funding_sources: fundingSources, method_profiles: [], reference_sets: [], schedule_profiles: [], calendars: [] });
+	const wrapper = mount(ProcurementSettingsTab, {
+		props: { route: { tab: "procurement-settings", section: "funding-sources", id: "", versionId: "", action: "" } },
+		global: globalMocks(),
+	});
+	await flushPromises();
+	return wrapper;
+}
+
 const ARTBOARDS = [
 	{ key: "C01#configured", mount: () => mount(ProcuringEntityTab, { props: { site: site() }, global: globalMocks() }) },
 	{
@@ -203,16 +228,47 @@ const ARTBOARDS = [
 			mount(IntakeForm, { props: { mode: "open", row: fyRow(), error: "Enter a closing time later than the current time." }, global: globalMocks() }),
 	},
 
-	{ key: "C03A#list" },
-	{ key: "C03A#add", self: true, mount: () => mount(FundingSourceEditor, { props: { creating: true }, global: globalMocks() }) },
+	{ key: "C03A#list", live: '[data-testid="kt-procset-sources"]', mount: () => settingsTab(SOURCES) },
+	{
+		key: "C03A#add",
+		self: true,
+		select: "#add",
+		live: ".kt-dialog",
+		mount: async () => {
+			const wrapper = mount(FundingSourceDialog, { props: { creating: true }, global: globalMocks() });
+			await wrapper.find('[data-testid="kt-fs-name"]').setValue("Development partner");
+			return wrapper;
+		},
+	},
 	{
 		key: "C03A#edit",
 		self: true,
-		mount: () => mount(FundingSourceEditor, { props: { source: { name: "FS-2", label: "Development partner", enabled: true, expected_version: "v1" } }, global: globalMocks() }),
+		select: "#edit",
+		live: ".kt-dialog",
+		mount: () =>
+			mount(FundingSourceDialog, {
+				props: { source: { name: "FS-2", label: "Development partner", enabled: false, referenced: false, expected_version: "v1" } },
+				global: globalMocks(),
+			}),
 	},
-	{ key: "C03A#disabled" },
-	{ key: "C03A#duplicate", self: true },
-	{ key: "C03A#empty" },
+	{
+		key: "C03A#disabled",
+		self: true,
+		select: "#disabled table",
+		live: '[data-testid="kt-procset-sources"] table',
+		mount: () => settingsTab([{ ...SOURCES[1], enabled: false }]),
+	},
+	{
+		key: "C03A#duplicate",
+		self: true,
+		live: '[data-testid="kt-fs-duplicate"]',
+		mount: async () => {
+			const wrapper = mount(FundingSourceDialog, { props: { creating: true, existing: SOURCES }, global: globalMocks() });
+			await wrapper.find('[data-testid="kt-fs-name"]').setValue("Development partner");
+			return wrapper;
+		},
+	},
+	{ key: "C03A#empty", self: true, select: "#empty > div", live: '[data-testid="kt-procset-sources-empty"]', mount: () => settingsTab([]) },
 
 	{ key: "C03BC#list" },
 	{ key: "C03BC#detail" },

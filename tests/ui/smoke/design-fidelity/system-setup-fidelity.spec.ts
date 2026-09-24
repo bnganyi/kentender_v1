@@ -338,12 +338,10 @@ test.describe("System setup — design fidelity", () => {
 		await art.close();
 	});
 
-	// CFG-CHG-002 v0.11 §10.5 — C03A-Funding-Sources.dc.html (Phase 3C). The
-	// board carries no anchor ids. Every C01-Reminders board now shares one
-	// page-level `.blueprint` (breadcrumb, title, tabs, sub-nav) with the
-	// content sections as its next siblings, so the list — the section right
-	// after that shared header — is the second direct child; the first
-	// `.dialog` still finds the editor unambiguously.
+	// CFG-CHG-002 v0.14 §10.5 — C03A-Funding-Sources.dc.html (tracker
+	// CFG14-5C): the list against #list, the add dialog against #add. The
+	// edit, disabled, duplicate and empty artboards are compared by the
+	// component structure gate.
 	test("C03A-list — Funding sources list with the availability column", async ({ page, browser }) => {
 		const art = await browser.newPage();
 		const scope = "#list";
@@ -353,7 +351,7 @@ test.describe("System setup — design fidelity", () => {
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "procurement-settings", '[data-testid="kt-procset-sources"]');
 		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C03A-list", "C03A#list");
-		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "C03A#list");
+		await expectBoardStructure(page, '[data-testid="kt-procset-sources"]', art, scope, "C03A#list");
 		expect(errors, "console errors").toEqual([]);
 		await art.close();
 	});
@@ -367,7 +365,7 @@ test.describe("System setup — design fidelity", () => {
 		await loginAsAdministrator(page);
 		const errors = await openSetupTab(page, "procurement-settings/funding-sources/new", '[data-testid="kt-procset-source-editor"]');
 		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "C03A-editor", "C03A#add");
-		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "C03A#add");
+		await expectBoardStructure(page, DIALOG_SCOPE, art, scope, "C03A#add");
 		await expectLayoutSanity(page, "C03A#add editor");
 
 		await page.fill('[data-testid="kt-fs-name"]', "Government of Kenya");
@@ -498,7 +496,7 @@ test.describe("System setup — design fidelity", () => {
 		const wanted = await landmarks(art, scope);
 
 		await loginAsAdministrator(page);
-		const errors = await openSetupTab(page, "procurement-settings", '[data-testid="kt-procset-reminder"]');
+		const errors = await openSetupTab(page, "procurement-settings/reminders", '[data-testid="kt-procset-reminder"]');
 		expectBoardLandmarks(wanted, await landmarks(page, LIVE_SCOPE), "Reminders", "Reminders#unchanged");
 		await expectBoardStructure(page, PANEL_SCOPE, art, scope, "Reminders#unchanged");
 		const card = page.locator('[data-testid="kt-procset-reminder"]');

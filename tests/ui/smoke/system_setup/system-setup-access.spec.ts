@@ -43,7 +43,7 @@ test.describe("System setup — access and shared states", () => {
 
 		for (const [tab, ready] of [
 			["fiscal-years", '[data-testid="kt-fy-table"]'],
-			["procurement-settings", '[data-testid="kt-procset-rules"]'],
+			["procurement-settings", '[data-testid="kt-procset-sources"]'],
 			["organisation-structure", '[data-testid="kt-ou-detail"]'],
 			["users-and-responsibilities", '[data-testid="kt-ura-table"]'],
 		] as const) {

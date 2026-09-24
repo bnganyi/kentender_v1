@@ -44,6 +44,8 @@ export const DEPARTURES = {
 	],
 	"C02#add-year": DIALOG_TITLE_IS_A_HEADING,
 	"C02#disable": DIALOG_TITLE_IS_A_HEADING,
+	"C03A#add": DIALOG_TITLE_IS_A_HEADING,
+	"C03A#edit": DIALOG_TITLE_IS_A_HEADING,
 	"C01#configured": [SAVED_NOTICE_IS_A_LATER_STATE],
 	"C01#first-run": [
 		SAVED_NOTICE_IS_A_LATER_STATE,
@@ -95,6 +97,13 @@ export const COVERED = [
 	"C02#disable",
 	"C02#forms",
 	"C02#form-states",
+	// 5C Funding sources — 24 Sep 2026
+	"C03A#list",
+	"C03A#add",
+	"C03A#edit",
+	"C03A#disabled",
+	"C03A#duplicate",
+	"C03A#empty",
 ];
 
 /**
@@ -106,12 +115,6 @@ export const COVERED = [
 const REPORT = "structure differs from the board (recorded by the Phase 1 red run)";
 const UNMOUNTABLE = "no component renders this state from props yet; Phase 5 builds it";
 export const REBUILD_QUEUE = {
-	"C03A#list": UNMOUNTABLE,
-	"C03A#add": REPORT,
-	"C03A#edit": REPORT,
-	"C03A#disabled": UNMOUNTABLE,
-	"C03A#duplicate": UNMOUNTABLE,
-	"C03A#empty": UNMOUNTABLE,
 	"C03BC#list": UNMOUNTABLE,
 	"C03BC#detail": UNMOUNTABLE,
 	"C03BC#rename": UNMOUNTABLE,

@@ -35,6 +35,8 @@ test.describe.serial("System setup — fixture worlds", () => {
 		await expect(page.locator('[data-testid^="kt-fy-row-"]')).toHaveCount(0);
 		await page.goto("/app/system-setup#procurement-settings", { waitUntil: "domcontentloaded" });
 		await expect(page.locator('[data-testid="kt-procset-sources-empty"]')).toBeVisible({ timeout: 20_000 });
+		// Each Procurement settings section is its own view.
+		await page.click('[data-testid="kt-procset-link-procurement-rules"]');
 		await expect(page.locator('[data-testid="kt-procset-rules-empty"]')).toBeVisible();
 	});
 
