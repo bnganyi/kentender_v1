@@ -143,3 +143,17 @@ Authority: `KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_10.md` and RES-IMP
 | BUD20-AC-003 | Done | Planning's calculation reads no Budget contract (PLN25-AC-001), so an unused-line change cannot move or stale it. |
 | BUD20-AC-004 | Done | Planning `test_the_canonical_fixture_calculates_exactly` (130m / 39m / 38.46%); the 160m ceiling stays a Budget fact in the canonical seed. |
 | BUD20-AC-005 | Done | BUD19-AC-020 marked superseded above; FOLLOW_UPS FU-14 closed. |
+
+---
+
+### BUD-CHG-001 v1.11 — Planning budget revision request, §16.4 (25 September 2026)
+
+Built in the Planning v1.27 workflow-guidance cycle (`../04_planning/PLN-CHG-001_IMPLEMENTATION_TRACKER.md`, gates PLN27-G03 and PLN27-G12). Design source: `design/Budget & Funding Workspace.dc.html` variants `18` (request row) and `19` (decline dialog), merged into the HEAD board on 25 Sep 2026 after the regenerated Budget boards were found to have dropped existing states.
+
+| Row | Scope | Status | Evidence |
+|---|---|---|---|
+| BUD21-01 | Budget Revision Request record (§4.10); receive / decline / withdraw commands; registered Planning principal; idempotency | Planned | |
+| BUD21-02 | Revised-on-activation (BUD-BR-029); `close_budget` resolution (BUD-BR-030); successor link | Planned | |
+| BUD21-03 | Transactional outbox + `BudgetRevisionRequestOutcome.v1`, ordered idempotent delivery; joint rollback with Planning (BUD21-XD-001) | Planned | |
+| BUD21-04 | Workspace read rows (§11.1B), Budget Officer My Work row, line-detail quiet line | Planned | |
+| BUD21-05 | BUD-DES-18 row + BUD-DES-19 decline dialog; fidelity + browser | Planned | |

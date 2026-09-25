@@ -280,3 +280,62 @@ Design port (uncommitted v1.25 artboard diff): the shared `ReservationAllocation
 | 7 | Two unresolved correction requests hold only the affected item | Planned |
 | 8 | Two sequential proceedings retain distinct actuals; forecast comparison is a **future-facility** journey, excluded | Partial — forecast half excluded |
 | 9 | Full authorised review and export; back-navigation restores context; every artboard state completed at the prescribed viewport | Planned |
+
+---
+
+# v1.27 workflow-guidance cycle (KT-STD-001 v1.8 §2.9/§3B)
+
+**Authority:** `KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_27.md` (approved 25 Sep 2026), `../00_common/KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_8.md` (approved 25 Sep 2026), `../03_budget/KenTender_BUD-CHG-001_Clean_Budget_and_Funding_v1_11.md` (approved 25 Sep 2026) for the Budget receiving side.
+**Plan:** approved 25 Sep 2026 (session plan file, summarised in the phases below).
+**Design source:** `design/*.dc.html` as regenerated 25 Sep 2026 — tracker drawn as `data-kt="journey"`, next step as `data-kt="next-step"`; new variants U01-CURRENT-UPDATE-OVER-BUDGET, U01-CURRENT-UPDATE-WAITING-BUDGET, U07-UPDATE-OVER-BUDGET, U07-WAITING-BUDGET-REVISION, U11-PLANNER.
+**Status:** In progress, 25 Sep 2026.
+
+The tracker rules above apply unchanged. Slice gate: `PLN-CHG-001_Implementation_Plan.md` §4 plus (11) the elements the spec says the block replaces are gone from the DOM, (12) the first working region stays inside the first 1440 × 1024 view or the tracker uses its reduced form, (13) the screen is on the fidelity registry's `COVERED` list.
+
+## Decision log
+
+| Date | Decision | Why |
+|---|---|---|
+| 2026-09-25 | **O1** Build BUD v1.11's receiving side in this cycle. | A Request budget revision button with no receiver is a stub that blocks completion (AGENTS §5). |
+| 2026-09-25 | **O2** Keep `planning.dpp_update_required` (My Work "Update {department} departmental plan", added 25 Sep). Not a v1.27 §7.7 row; recorded here as a departure citing the Workflow Guidance Standard §7.3 ("update needed") and the live finding of 25 Sep (a Need accepted after its plan was accepted looked stranded). Flag for §7.7 in the next PLN version. | Owner instruction. |
+| 2026-09-25 | **O3** U11-HOPF/AO/STATUTORY follow the regenerated boards: the next-step line occupies the top slot and the actor statement appears once, beside the buttons (the boards dropped the duplicate top notice; v1.26 §10.10 places the line "where v1.25 places the actor statement"). | Owner instruction; ambiguity between v1.25 "show the actor statement near the top" and v1.26. |
+| 2026-09-25 | **O4** Failed or unknown publication is the one exception to KT-STD-001 v1.8 §3B.6: the authorised technical operator gets Your turn on U13 only (PLN §5.7 row, U13-FAILED/UNKNOWN boards). No My Work item; technical My Work stays empty (§3A.6). | Owner instruction; PLN §5.7 contradicts its own closing sentence and KT-STD §3B.6. |
+| 2026-09-25 | **O5** BUD-DES-18/19 are built from the Budget workspace board's variants `18`/`19`. | Owner instruction. |
+| 2026-09-25 | The regenerated Budget boards were lossy (six 01B workspace states and the Approval Task V2 states gone). All Budget boards restored to HEAD; only variants `18`/`19` merged into `Budget & Funding Workspace.dc.html` (+56/−3, the −3 being logic lines extended). Regenerated copies kept in `../03_budget/design/_regenerated_2026-09-25/`. Rendered: 01B Returned, 01B Closed, 18 and 19 all display. | Owner confirmed the restore. |
+| 2026-09-25 | U07 BASE reservation wording: the spec wins over the regenerated board — "KES 39,000,000 more qualifying allocation required" plus "Resolve this before the plan can be signed and submitted." (§10.6 v1.27 correction). Registered as a departure. | AGENTS §6.6: a requirement that contradicts the board wins, and is registered. |
+| 2026-09-25 | Display facts the new boards invented ("5 departmental requirements included", "All five departmental requirements are included…") are fixture text: the build derives them from data. | KT-STD §2.9.3 rule 8. |
+
+## Gate register
+
+| Gate | Exit condition | Status | Evidence / gap |
+|---|---|---|---|
+| PLN27-G00 | Phase 0: boards audited and repaired; decision log; checkpoint commit of approved docs | In progress | |
+| PLN27-G01 | Phase 1 `[core]`: `next_step.py` contract + tests; `JourneyTracker`/`NextStep` mount helpers + Vitest; token CSS; structure-gate landmarks; My Work holder/since | Planned | |
+| PLN27-G02 | Phase 2: D2 readiness; `guards.py` read/command parity; `next_step.py` + read attachments; budget fit / Finance confirmation; `BudgetRevisionRequest` + command; §7.7 My Work rows; UPDATE-OVER-BUDGET fixtures | Planned | |
+| PLN27-G03 | Phase 3 `[budget]`: BUD v1.11 request record, receive/decline/withdraw, outbox + outcome event, workspace + My Work rows | Planned | |
+| PLN27-G04 | Slice 4A U07 | Planned | |
+| PLN27-G05 | Slice 4B U01 | Planned | |
+| PLN27-G06 | Slice 4C U06 | Planned | |
+| PLN27-G07 | Slice 4D U02–U05 | Planned | |
+| PLN27-G08 | Slice 4E U10 | Planned | |
+| PLN27-G09 | Slice 4F U11 (incl. U11-PLANNER) | Planned | |
+| PLN27-G10 | Slice 4G U13 | Planned | |
+| PLN27-G11 | Slice 4H C01/C02/C04 + U21-TECHNICAL-DETAIL | Planned | |
+| PLN27-G12 | Slice 4I `[budget]` BUD-DES-18/19 | Planned | |
+| PLN27-G13 | Slice 4J My Work waiting items | Planned | |
+| PLN27-G14 | Phase 5: dead-end matrix clean (`make planning-dead-end-gate`); guidance browser check; over-budget persona journey; suites; build; evidence | Planned | |
+
+## Acceptance map — §14.12 `PLN27-AC-001..010`
+
+| ID | Status | Evidence |
+|---|---|---|
+| PLN27-AC-001 | Planned | |
+| PLN27-AC-002 | Planned | |
+| PLN27-AC-003 | Planned | |
+| PLN27-AC-004 | Planned | |
+| PLN27-AC-005 | Planned | |
+| PLN27-AC-006 | Planned | |
+| PLN27-AC-007 | Planned | |
+| PLN27-AC-008 | Planned | |
+| PLN27-AC-009 | Planned | |
+| PLN27-AC-010 | Planned | |

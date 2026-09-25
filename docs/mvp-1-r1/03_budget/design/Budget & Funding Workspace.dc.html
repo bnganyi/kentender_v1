@@ -33,6 +33,9 @@
     <button type="button" class="{{btnCurrentDraft}}" onclick="{{setCurrentDraft}}" style="font-size:12px;padding:6px 12px;">01B Current + draft update</button>
     <button type="button" class="{{btnCurrentSubmitted}}" onclick="{{setCurrentSubmitted}}" style="font-size:12px;padding:6px 12px;">01A/01B Current + update awaiting review</button>
     <button type="button" class="{{btnClosed}}" onclick="{{setClosed}}" style="font-size:12px;padding:6px 12px;">01B Closed</button>
+    <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-left:10px;">v1.11:</span>
+    <button type="button" class="{{btnRequest}}" onclick="{{setRequest}}" style="font-size:12px;padding:6px 12px;">18 Revision request</button>
+    <button type="button" class="{{btnDecline}}" onclick="{{setDecline}}" style="font-size:12px;padding:6px 12px;">19 Decline dialog</button>
   </div>
 
   <sc-if value="{{showWorkspace}}" hint-placeholder-val="{{true}}">
@@ -91,6 +94,26 @@
         </div>
       </div>
 
+      <sc-if value="{{showTask}}" hint-placeholder-val="{{false}}">
+      <div data-screen-label="BUD-DES-18 Revision request row" style="padding:20px 24px;border-bottom:1px solid var(--color-divider);">
+        <div style="border-left:3px solid var(--color-accent);padding:4px 0 4px 18px;display:flex;justify-content:space-between;align-items:flex-start;gap:24px;flex-wrap:wrap;">
+          <div style="flex:1 1 520px;min-width:0;">
+            <h2 style="font-family:var(--font-heading);font-weight:600;font-size:19px;margin:0 0 6px;letter-spacing:.01em;">Budget revision requested for Digital health workforce development</h2>
+            <p style="font-size:14px;margin:0 0 10px;max-width:78ch;text-wrap:pretty;">Procurement Planning's plan update needs KES 62,000,000 on this line. The registered allocation is KES 60,000,000, so it is over by KES 2,000,000. An increase needs external approval before you record it as an allocation update.</p>
+            <div style="display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--color-neutral-700);">
+              <div>Requested by Mercy Kilonzo, Procurement Planner</div>
+              <div>Requested 15 Dec 2026, 10:00 EAT</div>
+              <div>Plan PLN-MOH-2027-001, Version 2</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button type="button" class="btn btn-secondary" onclick="{{setDecline}}">Decline request</button>
+            <button type="button" class="btn btn-primary">Update registered allocation</button>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
       <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);">
         <div class="kt-kpi-row" style="margin-bottom:8px;">
           <div class="kt-kpi-card">
@@ -130,6 +153,30 @@
       </sc-if>
     </div>
   </div>
+  <sc-if value="{{showDialog}}" hint-placeholder-val="{{false}}">
+  <div class="dialog-backdrop" data-screen-label="BUD-DES-19 Decline request dialog">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="decline-title" style="width:min(520px,100%);">
+      <h2 id="decline-title" class="dialog-title" style="margin:0;">Decline this budget revision request?</h2>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 16px;">
+        <div><div class="kt-label" style="margin-bottom:3px;">Line</div><div style="font-size:14px;">Digital health workforce development</div></div>
+        <div><div class="kt-label" style="margin-bottom:3px;">Over by</div><div style="font-size:14px;">KES 2,000,000</div></div>
+        <div><div class="kt-label" style="margin-bottom:3px;">Requested by</div><div style="font-size:14px;">Mercy Kilonzo</div></div>
+      </div>
+      <div class="field">
+        <label for="decline-reason">Reason for declining</label>
+        <textarea id="decline-reason" class="input" maxlength="500" value="{{reason}}" onChange="{{onReason}}" aria-describedby="decline-help"></textarea>
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--color-neutral-700);margin-top:4px;">
+          <span>10–500 characters</span><span>{{reasonCount}}</span>
+        </div>
+      </div>
+      <p id="decline-help" class="dialog-body" style="margin:0;">The plan update stays over budget. Procurement Planning will see your reason.</p>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" onclick="{{setRequest}}">Cancel</button>
+        <button type="button" class="btn btn-primary" disabled="{{declineDisabled}}">Decline request</button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
   </sc-if>
 
   <sc-if value="{{isLoading}}" hint-placeholder-val="{{false}}">
@@ -185,12 +232,14 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { view: 'active' };
+  state = { view: 'active', reason: '' };
   renderVals() {
     const v = this.state.view;
     const cls = (name) => v === name ? 'btn btn-primary' : 'btn btn-secondary';
     const pendingViews = ['initialDraft', 'initialSubmitted', 'returned', 'currentDraft', 'currentSubmitted'];
-    const hasCurrent = v === 'active' || v === 'currentDraft' || v === 'currentSubmitted' || v === 'closed';
+    const req = v === 'request' || v === 'decline';
+    const len = this.state.reason.trim().length;
+    const hasCurrent = v === 'active' || v === 'currentDraft' || v === 'currentSubmitted' || v === 'closed' || req;
     const march = v === 'currentDraft' || v === 'currentSubmitted';
     const copy = {
       initialDraft: { heading: 'Allocation draft', status: 'Draft', statusClass: 'kt-status is-draft', body: 'Continue recording the approved allocation. No allocation is current in KenTender yet.', action: 'Continue draft', btn: 'btn btn-primary', version: 'Version 1', who: 'Created by', whenLabel: 'Last saved', when: '1 Oct 2026, 15:55 EAT' },
@@ -206,6 +255,10 @@ class Component extends DCLogic {
       setInitialDraft: () => this.setState({ view: 'initialDraft' }), setInitialSubmitted: () => this.setState({ view: 'initialSubmitted' }),
       setReturned: () => this.setState({ view: 'returned' }), setCurrentDraft: () => this.setState({ view: 'currentDraft' }),
       setCurrentSubmitted: () => this.setState({ view: 'currentSubmitted' }), setClosed: () => this.setState({ view: 'closed' }),
+      setRequest: () => this.setState({ view: 'request', reason: '' }), setDecline: () => this.setState({ view: 'decline', reason: '' }),
+      btnRequest: cls('request'), btnDecline: cls('decline'), showTask: req, showDialog: v === 'decline',
+      reason: this.state.reason, onReason: (e) => this.setState({ reason: e.target.value }),
+      reasonCount: this.state.reason.length + ' / 500', declineDisabled: len < 10 || len > 500,
       showWorkspace: v !== 'loading' && v !== 'nobaseline' && v !== 'forbidden' && v !== 'servererror',
       isActive: hasCurrent, isLoading: v === 'loading', isNoBaseline: v === 'nobaseline', isForbidden: v === 'forbidden', isServerError: v === 'servererror',
       isPendingCard: pendingViews.includes(v), isReturned: v === 'returned',
@@ -216,7 +269,7 @@ class Component extends DCLogic {
       currentStatus: v === 'closed' ? 'Closed' : 'Current', currentStatusClass: v === 'closed' ? 'kt-status is-critical' : 'kt-status is-live',
       reserved: march ? 'KES 80,000,000' : 'KES 0', available: march ? 'KES 80,000,000' : 'KES 160,000,000',
       dhiReserved: march ? 'KES 80,000,000' : 'KES 0', dhiAvailable: march ? 'KES 20,000,000' : 'KES 100,000,000',
-      asAt: march ? '16 Mar 2027, 10:15 EAT' : (v === 'closed' ? '1 Jul 2028, 09:12 EAT (closed)' : '10 Dec 2026, 15:05 EAT'),
+      asAt: march ? '16 Mar 2027, 10:15 EAT' : (v === 'closed' ? '1 Jul 2028, 09:12 EAT (closed)' : (req ? '15 Dec 2026, 10:30 EAT' : '10 Dec 2026, 15:05 EAT')),
     };
   }
 }

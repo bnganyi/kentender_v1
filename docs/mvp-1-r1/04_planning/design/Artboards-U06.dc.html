@@ -25,12 +25,14 @@
 <nav style="position:sticky;top:0;flex:none;width:252px;height:100vh;overflow-y:auto;background:var(--color-surface);border-right:1px solid var(--color-divider);padding:0 0 40px">
   <div style="padding:18px 14px 12px;border-bottom:1px solid var(--color-divider);position:sticky;top:0;background:var(--color-surface);z-index:2">
     <div style="font-family:var(--font-heading);font-size:19px;line-height:1.1">Planning artboards</div>
-    <div style="font-size:11.5px;color:var(--color-neutral-700);margin-top:4px">PLN-CHG-001 §10 · KT-STD-001 v1.7 §2</div>
+    <div style="font-size:11.5px;color:var(--color-neutral-700);margin-top:4px">PLN-CHG-001 v1.27 §10 · KT-STD-001 v1.8 §2</div>
   </div>
   <div class="navgrp">U01 — Planning workspace</div>
   <a class="navlink" href="Artboards-U01.dc.html#U01" style="color:var(--color-neutral-600)">U01 · Planner, BASE draft</a>
   <a class="navlink" href="Artboards-U01.dc.html#U01-CURRENT" style="color:var(--color-neutral-600)">U01-CURRENT</a>
   <a class="navlink" href="Artboards-U01.dc.html#U01-CURRENT-UPDATE" style="color:var(--color-neutral-600)">U01-CURRENT-UPDATE</a>
+  <a class="navlink" href="Artboards-U01.dc.html#U01-CURRENT-UPDATE-OVER-BUDGET" style="color:var(--color-neutral-600)">U01-CURRENT-UPDATE-OVER-BUDGET</a>
+  <a class="navlink" href="Artboards-U01.dc.html#U01-CURRENT-UPDATE-WAITING-BUDGET" style="color:var(--color-neutral-600)">U01-CURRENT-UPDATE-WAITING-BUDGET</a>
   <a class="navlink" href="Artboards-U01.dc.html#U01-NO-PLAN" style="color:var(--color-neutral-600)">U01-NO-PLAN</a>
   <a class="navlink" href="Artboards-U01.dc.html#U01-DEPARTMENT-AUTHOR" style="color:var(--color-neutral-600)">U01-DEPARTMENT-AUTHOR</a>
   <a class="navlink" href="Artboards-U01.dc.html#U01-DEPARTMENT-AUTHOR-NONE" style="color:var(--color-neutral-600)">U01-DEPARTMENT-AUTHOR · no plan</a>
@@ -66,6 +68,8 @@
   <a class="navlink" href="Artboards-U07-U08.dc.html#U07-WAITING-FINANCE" style="color:var(--color-neutral-600)">U07-WAITING-FINANCE · awaiting fixture</a>
   <a class="navlink" href="Artboards-U07-U08.dc.html#U07-FINANCE-COMPLETE" style="color:var(--color-neutral-600)">U07-FINANCE-COMPLETE</a>
   <a class="navlink" href="Artboards-U07-U08.dc.html#U07-UPDATE" style="color:var(--color-neutral-600)">U07-UPDATE · awaiting fixture</a>
+  <a class="navlink" href="Artboards-U07-U08.dc.html#U07-UPDATE-OVER-BUDGET" style="color:var(--color-neutral-600)">U07-UPDATE-OVER-BUDGET</a>
+  <a class="navlink" href="Artboards-U07-U08.dc.html#U07-WAITING-BUDGET-REVISION" style="color:var(--color-neutral-600)">U07-WAITING-BUDGET-REVISION</a>
   <div class="navgrp">U08 — Add selected requirements</div>
   <a class="navlink" href="Artboards-U07-U08.dc.html#U08" style="color:var(--color-neutral-600)">U08 · combine</a>
   <a class="navlink" href="Artboards-U07-U08.dc.html#U08-SEPARATE" style="color:var(--color-neutral-600)">U08-SEPARATE</a>
@@ -93,6 +97,7 @@
   <a class="navlink" href="Artboards-U11.dc.html#U11-AO" style="color:var(--color-neutral-600)">U11-AO</a>
   <a class="navlink" href="Artboards-U11.dc.html#U11-STATUTORY" style="color:var(--color-neutral-600)">U11-STATUTORY</a>
   <a class="navlink" href="Artboards-U11.dc.html#U11-READER" style="color:var(--color-neutral-600)">U11-READER</a>
+  <a class="navlink" href="Artboards-U11.dc.html#U11-PLANNER" style="color:var(--color-neutral-600)">U11-PLANNER</a>
   <a class="navlink" href="Artboards-U11.dc.html#U11-READER-HISTORICAL" style="color:var(--color-neutral-600)">U11-READER · historical</a>
   <a class="navlink" href="Artboards-U11.dc.html#U11-RETURN" style="color:var(--color-neutral-600)">U11-RETURN</a>
   <a class="navlink" href="Artboards-U11.dc.html#U11-STALE-EVIDENCE" style="color:var(--color-neutral-600)">U11-STALE-EVIDENCE</a>
@@ -186,14 +191,12 @@
         <div class="kt-page-scope">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
           DPP-MOH-DHI-2027-001 · Submission 1 · FY 2027/28
-          <span class="kt-status is-attention" style="margin-left:6px">Awaiting Procurement review</span>
         </div>
-      </div></div>
+      
+        <p data-kt="next-step" style="margin:var(--space-4) 0 0;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;font-size:15px;line-height:1.35"><span style="font-size:12px;font-weight:600;color:var(--color-neutral-700)">Your turn</span><span style="font-weight:600;color:var(--color-text)">Classify every included requirement, then accept or return the submission</span></p></div></div>
+      <div data-kt="journey" aria-label="Journey" style="display:flex;align-items:flex-end;gap:var(--space-6);margin:0 0 var(--space-6)"><ol style="list-style:none;margin:0;padding:0;flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-2)"><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Preparation</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Certification</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-accent);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;font-weight:600;color:var(--color-text)">Procurement review</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-accent-800);font-weight:600">Current <span style="font-weight:400;color:var(--color-neutral-800)">· Mercy Kilonzo</span></div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Accepted</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-neutral-700);">Not started</div></li></ol></div>
 
-      <div class="kt-notice">
-        <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-        <div class="kt-notice-body"><strong>Decision required</strong> — classify every included requirement, then accept the complete submission or return it for correction.</div>
-      </div>
+      
 
       <div class="kt-group">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-5);flex-wrap:wrap">
@@ -277,7 +280,9 @@
         <h1 class="kt-page-title">Review Digital Health’s departmental plan</h1>
         <p class="kt-page-desc">Check the certified requirements before adding them to the annual plan.</p>
         <div class="kt-page-scope">DPP-MOH-DHI-2027-001 · Submission 1 · FY 2027/28</div>
-      </div></div>
+      
+        <p data-kt="next-step" style="margin:var(--space-4) 0 0;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;font-size:15px;line-height:1.35"><span style="font-size:12px;font-weight:600;color:var(--color-neutral-700)">Your turn</span><span style="font-weight:600;color:var(--color-text)">Classify every included requirement, then accept or return the submission</span></p></div></div>
+      <div data-kt="journey" aria-label="Journey" style="display:flex;align-items:flex-end;gap:var(--space-6);margin:0 0 var(--space-6)"><ol style="list-style:none;margin:0;padding:0;flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-2)"><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Preparation</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Certification</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-accent);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;font-weight:600;color:var(--color-text)">Procurement review</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-accent-800);font-weight:600">Current <span style="font-weight:400;color:var(--color-neutral-800)">· Mercy Kilonzo</span></div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Accepted</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-neutral-700);">Not started</div></li></ol></div>
       <div class="kt-region">
         <h2>Certified requirements</h2>
         <div class="kt-meta-row" style="max-width:760px">
@@ -313,12 +318,11 @@
       <div class="kt-page-head"><div>
         <h1 class="kt-page-title">Review Digital Health’s departmental plan</h1>
         <p class="kt-page-desc">Check the certified requirements before adding them to the annual plan.</p>
-        <div class="kt-page-scope">DPP-MOH-DHI-2027-001 · Submission 1 · FY 2027/28 <span class="kt-status is-attention" style="margin-left:6px">Awaiting Procurement review</span></div>
-      </div></div>
-      <div class="kt-notice">
-        <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-        <div class="kt-notice-body"><strong>Decision required</strong> — classify every included requirement, then accept the complete submission or return it for correction.</div>
-      </div>
+        <div class="kt-page-scope">DPP-MOH-DHI-2027-001 · Submission 1 · FY 2027/28</div>
+      
+        <p data-kt="next-step" style="margin:var(--space-4) 0 0;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;font-size:15px;line-height:1.35"><span style="font-size:12px;font-weight:600;color:var(--color-neutral-700)">Your turn</span><span style="font-weight:600;color:var(--color-text)">Classify every included requirement, then accept or return the submission</span></p></div></div>
+      <div data-kt="journey" aria-label="Journey" style="display:flex;align-items:flex-end;gap:var(--space-6);margin:0 0 var(--space-6)"><ol style="list-style:none;margin:0;padding:0;flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-2)"><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Preparation</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Certification</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-accent);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;font-weight:600;color:var(--color-text)">Procurement review</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-accent-800);font-weight:600">Current <span style="font-weight:400;color:var(--color-neutral-800)">· Mercy Kilonzo</span></div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Accepted</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-neutral-700);">Not started</div></li></ol></div>
+      
       <div class="kt-region">
         <h2>Certified requirements</h2>
         <div class="kt-meta-row" style="max-width:760px;margin-bottom:var(--space-5)">
@@ -374,12 +378,11 @@
       <div class="kt-page-head"><div>
         <h1 class="kt-page-title">Review Digital Health’s departmental plan</h1>
         <p class="kt-page-desc">Check the certified requirements before adding them to the annual plan.</p>
-        <div class="kt-page-scope">DPP-MOH-DHI-2027-001 · Submission 1 · FY 2027/28 <span class="kt-status is-attention" style="margin-left:6px">Awaiting Procurement review</span></div>
-      </div></div>
-      <div class="kt-notice">
-        <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-        <div class="kt-notice-body"><strong>Decision required</strong> — classify every included requirement, then accept the complete submission or return it for correction.</div>
-      </div>
+        <div class="kt-page-scope">DPP-MOH-DHI-2027-001 · Submission 1 · FY 2027/28</div>
+      
+        <p data-kt="next-step" style="margin:var(--space-4) 0 0;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;font-size:15px;line-height:1.35"><span style="font-size:12px;font-weight:600;color:var(--color-neutral-700)">Your turn</span><span style="font-weight:600;color:var(--color-text)">Select the requirement type for 1 requirement, then accept</span></p></div></div>
+      <div data-kt="journey" aria-label="Journey" style="display:flex;align-items:flex-end;gap:var(--space-6);margin:0 0 var(--space-6)"><ol style="list-style:none;margin:0;padding:0;flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-2)"><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Preparation</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Certification</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-accent);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;font-weight:600;color:var(--color-text)">Procurement review</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-accent-800);font-weight:600">Current <span style="font-weight:400;color:var(--color-neutral-800)">· Mercy Kilonzo</span></div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Accepted</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-neutral-700);">Not started</div></li></ol></div>
+      
       <div class="kt-region">
         <h2>Certified requirements</h2>
         <div style="border-top:1px solid var(--color-divider);padding:var(--space-4) 0">
@@ -435,8 +438,10 @@
       <div class="kt-page-head"><div>
         <h1 class="kt-page-title">View accepted requirement classifications</h1>
         <p class="kt-page-desc">Digital Health · FY 2027/28</p>
-        <div class="kt-page-scope">DPP-MOH-DHI-2027-001 · Submission 3 <span class="kt-status is-live" style="margin-left:6px">Accepted</span></div>
-      </div></div>
+        <div class="kt-page-scope">DPP-MOH-DHI-2027-001 · Submission 3</div>
+      
+        <p data-kt="next-step" style="margin:var(--space-4) 0 0;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;font-size:15px;line-height:1.35"><span style="font-size:12px;font-weight:600;color:var(--color-neutral-700)">Done</span><span style="font-weight:600;color:var(--color-text)">Accepted by Mercy Kilonzo on 29 Nov 2026, 15:00 EAT</span></p></div></div>
+      <div data-kt="journey" aria-label="Journey" style="display:flex;align-items:flex-end;gap:var(--space-6);margin:0 0 var(--space-6)"><ol style="list-style:none;margin:0;padding:0;flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-2)"><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Preparation</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Certification</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Procurement review</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Accepted</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li></ol></div>
       <div class="kt-region">
         <h2>Accepted classifications</h2>
         <table class="table">
@@ -482,8 +487,10 @@
       <div class="kt-page-head"><div>
         <h1 class="kt-page-title">View accepted requirement classifications</h1>
         <p class="kt-page-desc">Digital Health · FY 2027/28</p>
-        <div class="kt-page-scope">DPP-MOH-DHI-2027-001 · Submission 3 <span class="kt-status is-live" style="margin-left:6px">Accepted</span></div>
-      </div></div>
+        <div class="kt-page-scope">DPP-MOH-DHI-2027-001 · Submission 3</div>
+      
+        <p data-kt="next-step" style="margin:var(--space-4) 0 0;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;font-size:15px;line-height:1.35"><span style="font-size:12px;font-weight:600;color:var(--color-neutral-700)">Done</span><span style="font-weight:600;color:var(--color-text)">Accepted by Mercy Kilonzo on 29 Nov 2026, 15:00 EAT</span></p></div></div>
+      <div data-kt="journey" aria-label="Journey" style="display:flex;align-items:flex-end;gap:var(--space-6);margin:0 0 var(--space-6)"><ol style="list-style:none;margin:0;padding:0;flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-2)"><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Preparation</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Certification</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Procurement review</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Accepted</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li></ol></div>
       <div class="kt-region">
         <h2>Accepted classifications</h2>
         <table class="table">
@@ -549,7 +556,9 @@
         <h1 class="kt-page-title">Review Digital Health’s departmental plan</h1>
         <p class="kt-page-desc">Check the certified requirements before adding them to the annual plan.</p>
         <div class="kt-page-scope">DPP-MOH-DHI-2027-001 · Submission 1 · FY 2027/28 <span class="kt-status is-attention" style="margin-left:6px">Awaiting Procurement review</span></div>
-      </div></div>
+      
+        <p data-kt="next-step" style="margin:var(--space-4) 0 0;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;font-size:15px;line-height:1.35"><span style="font-size:12px;font-weight:600;color:var(--color-neutral-700)">Waiting</span><span style="font-weight:600;color:var(--color-text)">Waiting for Procurement review by another Procurement Planner</span><span style="font-size:13px;color:var(--color-neutral-700)">since <span class="kt-status is-attention">Awaiting fixture</span></span></p></div></div>
+      <div data-kt="journey" aria-label="Journey" style="display:flex;align-items:flex-end;gap:var(--space-6);margin:0 0 var(--space-6)"><ol style="list-style:none;margin:0;padding:0;flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-2)"><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Preparation</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Certification</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--status-live);font-weight:600">Done</div></li><li style="border-top:2px solid var(--color-accent);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;font-weight:600;color:var(--color-text)">Procurement review</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-accent-800);font-weight:600">Current</div></li><li style="border-top:2px solid var(--color-neutral-300);padding-top:6px;min-width:0"><div style="font-size:13px;line-height:1.3;color:var(--color-neutral-800)">Accepted</div><div style="font-size:12px;line-height:1.35;margin-top:2px;color:var(--color-neutral-700);">Not started</div></li></ol></div>
       <div class="kt-notice is-critical">
         <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
         <div class="kt-notice-body">You cannot review a departmental plan you certified.</div>
