@@ -613,6 +613,7 @@ async function load(opts) {
 			loading.value = false;
 			refreshing.value = false;
 			inFlightKey = "";
+			settleLoadWaiters(key);
 			if (pendingQuietOpts) {
 				const next = pendingQuietOpts;
 				pendingQuietOpts = null;
@@ -733,7 +734,7 @@ async function verifyStillReadable() {
 }
 
 function recordVersion() {
-	return (detail.value.need || {}).record_version ?? partialSubmit.value?.record_version;
+	return (detail.value.need || {}).record_version;
 }
 
 // "NDS-MOH-2027-0001-V1" -> "1", matching the parsing already used for the
@@ -752,18 +753,13 @@ function revisionNumberFromRevisionName(name) {
 function stampSavedVersion(result) {
 	if (!result) return;
 	if (detail.value && detail.value.need) detail.value.need.record_version = result.record_version;
-	// NDS-DES-14-PARTIAL-SUBMIT — a retried Save/Submit on the still-in-place
-	// create screen needs its own up-to-date stamp; `detail.value.need` is not
-	// what this screen reads (see editorRevision's own create-mode guard).
 	if (partialSubmit.value) partialSubmit.value.record_version = result.record_version;
 }
 
 async function saveDraftCommand(action, form) {
-	// NDS-DES-14-PARTIAL-SUBMIT — once a create-mode save has already minted a
-	// reference, a retried Save/Submit must update that same record, not mint
-	// a second one; `needReference` stays "" the whole time because this
-	// screen never navigates away (see onSubmit).
-	const target = needReference.value || partialSubmit.value?.need || "";
+	// A create-mode save always moves the route to the Need it minted (see
+	// onSaveDraft/onSubmit), so every later Save/Submit targets that record.
+	const target = needReference.value || "";
 	return run(action, async (key) => {
 		const result = await api.saveNeedDraft({
 			need: target,
@@ -780,13 +776,49 @@ async function onSaveDraft(form) {
 	const result = await saveDraftCommand("save-draft", form);
 	if (!result) return;
 	// §12.3 — the first save replaces the route with the generated reference.
-	if (!needReference.value && !partialSubmit.value) go(result.need_reference, "edit");
+	if (!needReference.value) go(result.need_reference, "edit");
 	else if (needReference.value) await load({ quiet: true });
 }
 
+// Resolves once a load for `key` (a screenKey) has finished — used to hold a
+// multi-command action until the route it just replaced has actually loaded.
+const loadWaiters = [];
+function settleLoadWaiters(key) {
+	for (let i = loadWaiters.length - 1; i >= 0; i--) {
+		if (loadWaiters[i].key === key) loadWaiters.splice(i, 1)[0].resolve(true);
+	}
+}
+function waitForLoad(key, timeoutMs = 20000) {
+	return new Promise((resolve) => {
+		const waiter = { key, resolve };
+		loadWaiters.push(waiter);
+		setTimeout(() => {
+			const i = loadWaiters.indexOf(waiter);
+			if (i >= 0) loadWaiters.splice(i, 1)[0].resolve(false);
+		}, timeoutMs);
+	});
+}
+
 async function onSubmit(form) {
+	const wasNew = !needReference.value;
 	const saved = await saveDraftCommand("save-before-submit", form);
 	if (!saved) return;
+	if (wasNew) {
+		// §8.4 "New unsaved form" — on a confirmed save, replace the new-form
+		// route with the saved Need's own identity *before* submitting, so a
+		// refused or unknown submit leaves the author on that exact Draft
+		// (refresh-safe) and every retry targets it, never a new root. Writes
+		// stay disabled across the route change: `run` re-enabled them, and a
+		// second click still on /new would mint a second Need (found live
+		// 25 Sep 2026 — a corrected retry after a refused first submit did
+		// exactly that).
+		pending.value = true;
+		const loaded = waitForLoad(`need:${saved.need_reference}`);
+		go(saved.need_reference, "edit");
+		const ok = await loaded;
+		pending.value = false;
+		if (!ok || needReference.value !== saved.need_reference || pageOutcome.value || error.value) return;
+	}
 	const result = await run("submit", (key) =>
 		api.submitNeedRevision({
 			need: saved.need,
@@ -798,21 +830,20 @@ async function onSubmit(form) {
 		go(result.need_reference);
 		return;
 	}
-	// NDS-DES-14-PARTIAL-SUBMIT — the draft itself was saved (a real
-	// reference now exists) even though the intake-closed refusal above means
-	// the submit did not go through. Stay on this same create screen (the
-	// artboard itself keeps the "Create a departmental need" heading rather
-	// than switching to the saved record's own edit view) but remember the
-	// reference so a retried Save/Submit updates it instead of minting a
-	// second Need. Any other submit failure (a stale write, say) keeps the
-	// plain errorSummary banner `run()` already set — NDS-DES-14-SAVE-FAILED,
-	// unchanged.
-	if (!needReference.value && !submitUnknown.value && /submission is not open/i.test(errorSummary.value || "")) {
+	// NDS-DES-14-PARTIAL-SUBMIT / §8.4 "Save succeeds, Submit fails" — this
+	// action created the Draft (now on its own route) but the submit was
+	// refused, for whatever reason: report the saved draft with the actual
+	// refusal reason. Only a closed intake keeps Submit disabled. A
+	// page-level outcome (authority changed) already replaced the editor and
+	// is left alone.
+	if (wasNew && !submitUnknown.value && !pageOutcome.value && errorSummary.value) {
 		partialSubmit.value = {
 			need: saved.need,
 			need_reference: saved.need_reference,
 			record_version: saved.record_version,
 			revision_number: revisionNumberFromRevisionName(saved.current_revision),
+			intake_closed: /submission is not open/i.test(errorSummary.value),
+			reason: errorSummary.value,
 		};
 		errorSummary.value = "";
 	}

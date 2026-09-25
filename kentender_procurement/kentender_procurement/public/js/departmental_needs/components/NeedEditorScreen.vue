@@ -45,18 +45,23 @@
 			</div>
 		</div>
 
-		<div v-if="errorSummary" ref="errorEl" class="kt-notice is-critical" style="max-width: 860px" role="alert" tabindex="-1">
+		<div v-if="errorSummary" ref="errorEl" class="kt-notice is-critical" style="max-width: 860px" role="alert" tabindex="-1" data-testid="nds-error-summary">
 			<div class="kt-notice-body">{{ errorSummary }}</div>
 		</div>
 
 		<!-- NDS-DES-14-PARTIAL-SUBMIT — the draft itself was saved (it now has a
-		     real reference) even though the submit that followed was refused
-		     because intake closed in between; the saved reference stays
-		     reachable here rather than only in a banner nobody can act on. -->
+		     real reference) even though the submit that followed was refused;
+		     the saved reference stays reachable here rather than only in a
+		     banner nobody can act on. §8.4 "Save succeeds, Submit fails" applies
+		     to every refusal, showing its actual reason: intake closing in
+		     between gets the closed-editor explanation and keeps Submit
+		     disabled; any other reason (a missing field, a Required-by date
+		     outside the year) leaves Submit enabled for the corrected retry. -->
 		<div v-if="partialSubmit" class="kt-notice is-warning" style="max-width: 860px" data-testid="nds-partial-submit">
 			<div class="kt-notice-body">
 				<div style="font-weight: 600; color: var(--kt-color-text)">Your draft was saved, but it was not submitted.</div>
-				<p style="margin: 6px 0 0">New submissions are closed. You can save changes to this draft and submit if submissions reopen.</p>
+				<p v-if="partialSubmit.intake_closed" style="margin: 6px 0 0">New submissions are closed. You can save changes to this draft and submit if submissions reopen.</p>
+				<p v-else style="margin: 6px 0 0" data-testid="nds-partial-submit-reason">{{ partialSubmit.reason }}</p>
 				<div class="kt-meta-row is-tight" style="gap: 28px; margin-top: 14px">
 					<div><span class="kt-label">Reference</span><span class="kt-meta-value">{{ partialSubmit.need_reference }}</span></div>
 					<div><span class="kt-label">Revision</span><span class="kt-meta-value">{{ partialSubmit.revision_number }}</span></div>
@@ -287,7 +292,7 @@
 			<button class="kt-btn kt-btn-secondary" data-testid="nds-save-draft" :disabled="pending || departmentRequired || submitUnknown" @click="guardedEmit('save')">
 				{{ saveLabel }}
 			</button>
-			<button class="kt-btn kt-btn-primary" data-testid="nds-submit" :disabled="pending || departmentRequired || !!partialSubmit || submitUnknown" @click="guardedEmit('submit')">
+			<button class="kt-btn kt-btn-primary" data-testid="nds-submit" :disabled="pending || departmentRequired || !!partialSubmit?.intake_closed || submitUnknown" @click="guardedEmit('submit')">
 				{{ submitLabel }}
 			</button>
 		</div>
@@ -308,7 +313,7 @@
 				<button class="kt-btn kt-btn-secondary" data-testid="nds-save-draft" :disabled="pending || departmentRequired" @click="guardedEmit('save')">
 					{{ saveLabel }}
 				</button>
-				<button class="kt-btn kt-btn-primary" data-testid="nds-submit" :disabled="pending || departmentRequired || (mode === 'draft' && submissionClosed)" @click="guardedEmit('submit')">
+				<button class="kt-btn kt-btn-primary" data-testid="nds-submit" :disabled="pending || departmentRequired || (mode === 'draft' && submissionClosed) || !!partialSubmit?.intake_closed || submitUnknown" @click="guardedEmit('submit')">
 					{{ submitLabel }}
 				</button>
 			</div>

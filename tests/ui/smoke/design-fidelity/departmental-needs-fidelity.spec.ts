@@ -1246,7 +1246,16 @@ test.describe("Departmental Needs — design fidelity", () => {
 		await expect(page.getByTestId("nds-partial-submit")).toContainText("Revision");
 		await expect(page.locator('[data-testid="nds-submit"]')).toBeDisabled();
 		await expect(page.locator('[data-testid="nds-save-draft"]')).toBeEnabled();
-		expectLandmarkSubsequence(wanted, await liveLandmarks(page), "NDS-DES-14-PARTIAL-SUBMIT");
+		// Owner decision 25 Sep 2026: §8.4's "New unsaved form" rule (replace the
+		// new-form route with the saved Need's identity, then submit) wins over
+		// this board, which still draws the state on the create screen. The
+		// author therefore lands on the saved Draft's own editor, whose footer
+		// is the persisted-draft one (Withdraw need / Save changes / Submit for
+		// review, NDS-DES-15-PERSISTED) rather than the create footer the board
+		// shows. Compare the board up to the footer; pin the route instead.
+		await expect(page).toHaveURL(/\/departmental-needs\/NDS-[A-Z0-9-]+\/edit$/);
+		const beforeFooter = wanted.slice(0, wanted.indexOf("Cancel"));
+		expectLandmarkSubsequence(beforeFooter, await liveLandmarks(page), "NDS-DES-14-PARTIAL-SUBMIT");
 		expect(errors).toEqual([]);
 		await art.close();
 	});

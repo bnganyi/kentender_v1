@@ -532,8 +532,10 @@ const orientationLine = computed(() => {
 		const when = props.acceptedAt ? ` on ${formatInstant(props.acceptedAt)}` : "";
 		if (actor) parts.push(`Accepted by ${actor}${capacity}${when}`);
 	} else if (props.authorLabel) {
-		const when = props.submittedAt ? ` on ${formatInstant(props.submittedAt)}` : "";
-		parts.push(`Submitted by ${props.authorLabel}${when}`);
+		// A Draft never submitted has no submission to report — "Submitted by"
+		// on one misstated the fact (found live 25 Sep 2026).
+		if (props.submittedAt) parts.push(`Submitted by ${props.authorLabel} on ${formatInstant(props.submittedAt)}`);
+		else parts.push(`Created by ${props.authorLabel}`);
 	}
 	return parts.filter(Boolean).join(" · ");
 });

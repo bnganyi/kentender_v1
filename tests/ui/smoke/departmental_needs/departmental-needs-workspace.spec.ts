@@ -7,8 +7,10 @@ import {
 	collectConsoleErrors,
 	expectScreen,
 	gotoNeeds,
+	purgeUntaggedNeedsSince,
 	resetFixture,
 	selectContext,
+	siteNow,
 } from "./helpers";
 
 /**
@@ -218,6 +220,53 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		await expect(page).toHaveURL(/\/departmental-needs\/new$/);
 		await expectLayoutSanity(page, "NDS create editor, refused submit");
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
+	test("a refused first submit lands on the saved draft and the retry updates it", async ({ page }) => {
+		/**
+		 * Reported live 2026-09-25: the first Submit for review on /new saved a
+		 * Draft, then the server refused the submit (a Required-by date outside
+		 * the financial year). The retry, after correcting the form, minted a
+		 * second Need and left the first behind as an orphan Draft with the
+		 * same title. Only the intake-closed refusal used to remember the
+		 * reference the first save had minted; any refusal must.
+		 */
+		const since = siteNow();
+		try {
+			// No console-error assertion here: the refused submit is deliberate and
+			// the server's 417 + traceback land in the console by design.
+			const saves: string[] = [];
+			page.on("request", (request) => {
+				if (request.url().endsWith(".save_need_draft")) {
+					saves.push(new URLSearchParams(request.postData() || "").get("need") || "");
+				}
+			});
+			await loginAsNdsFixtureAuthor(page);
+			await gotoNeeds(page, "/new");
+			await expectScreen(page, "editor");
+
+			// Title only: the save goes through, the submit is refused server-side.
+			await page.locator('[data-testid="nds-title"]').fill("Refused-then-corrected submit");
+			await page.locator('[data-testid="nds-submit"]').click();
+			// §8.4 "Save succeeds, Submit fails": the saved draft is reported with
+			// the server's actual reason, and Submit stays available to retry.
+			const notice = page.locator('[data-testid="nds-partial-submit"]');
+			await expect(notice).toContainText("Your draft was saved, but it was not submitted.");
+			await expect(page.locator('[data-testid="nds-partial-submit-reason"]')).toContainText("Description");
+			await expect(page.locator('[data-testid="nds-submit"]')).toBeEnabled();
+			// §8.4 "New unsaved form" — the confirmed save replaced /new with the
+			// saved Need's own route before the submit ran, so a refresh keeps it.
+			await expect(page).toHaveURL(/\/departmental-needs\/NDS-[A-Z0-9-]+\/edit$/);
+			const reference = page.url().split("/departmental-needs/")[1].split("/")[0];
+			expect(saves).toEqual([""]);
+
+			// A second attempt must target the Need the first save created.
+			await page.locator('[data-testid="nds-description"]').fill("Corrected description for the retry.");
+			await page.locator('[data-testid="nds-submit"]').click();
+			await expect.poll(() => saves.length).toBe(2);
+			expect(saves[1], "the retry must update the Need the first save created").toBe(reference);
+		} finally {
+			purgeUntaggedNeedsSince(since);
+		}
 	});
 	test("filters refresh the table in place — no skeleton flash", async ({ page }) => {
 		/**

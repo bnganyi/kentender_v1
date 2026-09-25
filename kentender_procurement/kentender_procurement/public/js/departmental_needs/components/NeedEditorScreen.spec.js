@@ -76,7 +76,7 @@ describe("NeedEditorScreen — NDS-DES-14-CLOSED-EDITOR", () => {
 describe("NeedEditorScreen — NDS-DES-14-PARTIAL-SUBMIT", () => {
 	it("names the saved-but-not-submitted fact with the real reference and revision, Submit disabled", () => {
 		const w = make({
-			partialSubmit: { need: "NDS-1", need_reference: "NDS-MOH-2027-0001", record_version: 1, revision_number: "1" },
+			partialSubmit: { need: "NDS-1", need_reference: "NDS-MOH-2027-0001", record_version: 1, revision_number: "1", intake_closed: true, reason: "Needs submission is not open." },
 		});
 		const notice = w.get('[data-testid="nds-partial-submit"]');
 		expect(notice.text()).toContain("Your draft was saved, but it was not submitted.");
@@ -87,6 +87,38 @@ describe("NeedEditorScreen — NDS-DES-14-PARTIAL-SUBMIT", () => {
 		expect(notice.text()).toContain("1");
 		expect(w.get('[data-testid="nds-submit"]').attributes("disabled")).toBeDefined();
 		expect(w.get('[data-testid="nds-save-draft"]').attributes("disabled")).toBeUndefined();
+	});
+	it("any other refusal shows its actual reason and leaves Submit enabled for the corrected retry", () => {
+		const w = make({
+			partialSubmit: {
+				need: "NDS-1",
+				need_reference: "NDS-MOH-2027-0005",
+				record_version: 1,
+				revision_number: "1",
+				intake_closed: false,
+				reason: "Required-by date must fall within the target financial year.",
+			},
+		});
+		const notice = w.get('[data-testid="nds-partial-submit"]');
+		expect(notice.text()).toContain("Your draft was saved, but it was not submitted.");
+		expect(notice.text()).not.toContain("New submissions are closed.");
+		expect(w.get('[data-testid="nds-partial-submit-reason"]').text()).toBe(
+			"Required-by date must fall within the target financial year.",
+		);
+		expect(notice.text()).toContain("NDS-MOH-2027-0005");
+		expect(w.get('[data-testid="nds-submit"]').attributes("disabled")).toBeUndefined();
+		expect(w.get('[data-testid="nds-save-draft"]').attributes("disabled")).toBeUndefined();
+	});
+	it("on the saved Draft's own route (§8.4), a closed-intake refusal disables Submit even before intake state reloads", () => {
+		const w = make({
+			mode: "draft",
+			need: { need_reference: "NDS-MOH-2027-0001" },
+			revision: { revision_status: "Draft", revision_number: 1 },
+			submissionClosed: false,
+			partialSubmit: { need: "NDS-1", need_reference: "NDS-MOH-2027-0001", record_version: 1, revision_number: "1", intake_closed: true, reason: "Needs submission is not open." },
+		});
+		expect(w.get('[data-testid="nds-partial-submit"]').text()).toContain("Your draft was saved, but it was not submitted.");
+		expect(w.get('[data-testid="nds-submit"]').attributes("disabled")).toBeDefined();
 	});
 });
 
