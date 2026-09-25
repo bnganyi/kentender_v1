@@ -136,6 +136,10 @@ export function requestBudgetRevision(args) {
 	return frappeCall(`${BASE}.request_budget_revision`, args);
 }
 
+export function requestDepartmentalPlanUpdate(args) {
+	return frappeCall(`${BASE}.request_departmental_plan_update`, args);
+}
+
 export function requestPlanFundingConfirmation(args) {
 	return frappeCall(`${BASE}.request_plan_funding_confirmation`, args);
 }

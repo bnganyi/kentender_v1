@@ -369,7 +369,15 @@ def _narrative(answer: dict[str, Any] | None) -> dict[str, str] | None:
 	states the next-step answer instead, when it is blocked or waiting."""
 	kind = (answer or {}).get("kind")
 	if kind == "your_turn_blocked":
-		return {"tone": "blocked", "headline": cstr(answer.get("headline")), "since": ""}
+		# a declined budget revision is said here too, not only on the plan
+		decline = next(
+			(b["figures"]["budget_revision"] for b in answer.get("blockers") or [] if (b.get("figures") or {}).get("budget_revision")),
+			None,
+		)
+		detail = ""
+		if decline:
+			detail = f"Budget revision declined by {decline['by']}" + (f": {decline['reason']}" if decline.get("reason") else "")
+		return {"tone": "blocked", "headline": cstr(answer.get("headline")), "since": "", "detail": detail}
 	if kind == "waiting":
 		return {"tone": "waiting", "headline": cstr(answer.get("headline")), "since": cstr((answer.get("since") or {}).get("display"))}
 	return None

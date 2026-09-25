@@ -114,6 +114,7 @@ Never rely on hidden fields, disabled buttons, or client checks for authorizatio
 - Let the Frappe request lifecycle manage commits and rollbacks. Do not call `frappe.db.commit()` from ordinary request services.
 - Long work belongs in a background job. Jobs must be idempotent, scoped, observable, safe to retry, and explicit about transaction boundaries.
 - Cache only derived/read data. Invalidate it on authoritative writes and never use cache as the system of record.
+- **Instants (owner decision 26 Sep 2026).** Store every instant as a naive datetime in the site timezone — Frappe's own rule: write `now_datetime()`, never `utcnow()` or a UTC-converted value — and show it as stored with `kentender_core.utils.display.display_datetime`. `creation`/`modified` follow the same rule. Only a serialized message between modules (an event or outbox payload, anything that leaves the site) carries ISO-8601 UTC with a trailing `Z`; build it with `kentender_core.utils.instants.to_utc_iso` and turn a received one back into site time with `from_utc_iso` before storing it. A direct in-process service call passes site time. Seeds and fixtures state their clock in site time. (This supersedes "service and audit instants remain UTC" in KT-STD-001 v1.8 §3 until its next version says the same.)
 
 ### 4.5 Idempotency, audit, and identity
 

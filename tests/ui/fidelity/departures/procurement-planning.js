@@ -92,6 +92,15 @@ export const DEPARTURES = {
 	// fixture): the same history departure as U07.
 	"AnnualPlanScreen#U07-UPDATE-OVER-BUDGET": [
 		{
+			path: "notice+next-step.is-warning > meta-row.is-tight",
+			because:
+				"The over-budget block states where the line's cost comes from ('Requirements on this line' " +
+				"and the departments), and after a decline who declined it, when and why. The board draws " +
+				"'Reduce a purchase', an edit the purchase editor does not allow; the departmental correction " +
+				"route (Request budget revision / Request departmental plan update) replaces it.",
+			authority: "Owner decision 26 Sep 2026 (departmental correction route); PLN-CHG-001 FU-V127-04/05",
+		},
+		{
 			testid: "ppl-history-timeline",
 			because:
 				"The update's Changes and history draws the changed-purchases table (built) plus one " +

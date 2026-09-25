@@ -393,6 +393,23 @@ describe("WorkspaceScreen — U01-CURRENT-UPDATE-OVER-BUDGET and -WAITING-BUDGET
 		expect(w.find(".kt-journey").exists()).toBe(false);
 	});
 
+	it("says a declined budget revision under the blocked headline", () => {
+		// Found live 25 Sep 2026: after the decline the row read exactly as
+		// before the request.
+		const w = updateWith({
+			...UPDATE_ROW,
+			facts: [["Work", "Plan update — Draft"], ["Version", "2"], ["Proposed value", "KES 142,000,000"]],
+			narrative: {
+				tone: "blocked", headline: "Over budget by KES 2,000,000 on Digital health workforce development", since: "",
+				detail: "Budget revision declined by Josphat Mwangi: No further allocation is available this year.",
+			},
+		});
+		const row = w.find('[data-testid="pln-plan-row-candidate"]');
+		expect(row.find('[data-testid="pln-row-narrative"]').text()).toBe("Over budget by KES 2,000,000 on Digital health workforce development");
+		expect(row.find('[data-testid="pln-row-narrative-detail"]').text()).toBe("Budget revision declined by Josphat Mwangi: No further allocation is available this year.");
+		expect(updateWith({ ...UPDATE_ROW, narrative: { tone: "blocked", headline: "Over budget", since: "", detail: "" } }).find('[data-testid="pln-row-narrative-detail"]').exists()).toBe(false);
+	});
+
 	it("names who it waits on and since when, and offers only to view it", () => {
 		const w = updateWith({
 			...UPDATE_ROW,

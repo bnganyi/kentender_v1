@@ -17,7 +17,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
-from frappe.utils import cstr
+from frappe.utils import cstr, flt
 
 from kentender_core.services import next_step as ns
 from kentender_core.services.authorization import is_technical
@@ -109,6 +109,51 @@ def open_budget_revision_requests(plan_version: str) -> dict[str, Any]:
 		limit_page_length=0,
 	)
 	return {row.budget_line: row for row in rows}
+
+
+def line_departments(plan_version: str) -> dict[str, list[dict[str, Any]]]:
+	"""Each budget line's departments — where the line's cost comes from —
+	and whether each has an Open request to update its departmental plan."""
+	from kentender_procurement.procurement_planning.services import departmental_update
+
+	requested = departmental_update.open_requests(plan_version)
+	return {
+		line: [
+			{"unit": unit, "name": departmental_update.unit_name(unit), "requested": (line, unit) in requested}
+			for unit in units
+		]
+		for line, units in departmental_update.line_units(plan_version).items()
+	}
+
+
+def declined_budget_revision_requests(plan_version: str) -> dict[str, dict[str, Any]]:
+	"""Budget lines of this Version whose latest answered request was
+	Declined — who declined it, when (Nairobi display) and why — so the
+	Planner is told, not returned silently to the state before asking."""
+	rows = frappe.get_all(
+		"Plan Budget Revision Request",
+		filters={"plan_version": plan_version, "status": ("in", ("Revised", "Declined", "Withdrawn"))},
+		fields=["budget_line", "status", "outcome_by", "outcome_at", "outcome_reason", "approved_amount", "planned_amount"],
+		order_by="outcome_at desc, requested_at desc",
+		limit_page_length=0,
+	)
+	out: dict[str, dict[str, Any]] = {}
+	seen: set[str] = set()
+	for row in rows:
+		if row.budget_line in seen:
+			continue
+		seen.add(row.budget_line)
+		if row.status == "Declined":
+			since = _since(row.outcome_at)
+			out[row.budget_line] = {
+				"by": cstr(row.outcome_by) or guards.ROLE_BUDGET_OFFICER,
+				"at": since["display"] if since else "",
+				"reason": cstr(row.outcome_reason),
+				# the basis Budget declined: a fresh request needs a new one
+				"approved": flt(row.approved_amount),
+				"planned": flt(row.planned_amount),
+			}
+	return out
 
 
 # --------------------------------------------------------------------------
@@ -257,7 +302,10 @@ def _draft_state(version, plan, *, actor, roles, report, submission_report, unal
 	# Preparation: Not requested, Returned, Stale, or a confirmation the
 	# current plan no longer matches.
 	requests = open_budget_revision_requests(version.name)
-	readiness = guards.pre_finance(report, unallocated=unallocated, open_requests=set(requests))
+	readiness = guards.pre_finance(
+		report, unallocated=unallocated, open_requests=set(requests),
+		declined=declined_budget_revision_requests(version.name), departments=line_departments(version.name),
+	)
 	request = guards.request_funding(version, actor=actor, readiness_guard=readiness)
 	result = {"stage": STAGE_PREPARATION, "stage_holder": _names(planner), "guards": {"request_funding": request, "pre_finance": readiness}}
 	others = _waiting(f"Waiting for {planner['display']} to prepare the {'update' if is_update else 'plan'}", stage=STAGE_PREPARATION, holder=planner)
@@ -278,10 +326,33 @@ def _draft_state(version, plan, *, actor, roles, report, submission_report, unal
 		return result
 
 	result["blocked"] = True
+	from kentender_procurement.procurement_planning.services import departmental_update
+
+	asked_departments = departmental_update.open_requests(version.name)
+	asked_lines = {line for line, _unit in asked_departments}
 	waiting_on_budget = [b for b in blockers if b["reason_code"] == "PLN_PLAN_NOT_AFFORDABLE" and b["figures"].get("budget_line") in requests]
-	if waiting_on_budget and len(waiting_on_budget) == len(blockers):
+	in_hand = [b for b in blockers if b["reason_code"] == "PLN_PLAN_NOT_AFFORDABLE" and (b["figures"].get("budget_line") in requests or b["figures"].get("budget_line") in asked_lines)]
+	if in_hand and len(in_hand) == len(blockers) and not waiting_on_budget:
+		# Every remaining over-budget line is with a department the Planner
+		# asked to update its plan (owner decision 26 Sep 2026): the Planner
+		# waits on that department, named, since the request.
+		first = min((row for key, row in asked_departments.items()), key=lambda row: row.requested_at)
+		department = departmental_update.unit_name(first.organisation_unit)
+		people = ou_holders("Departmental Author", first.organisation_unit)["people"] + [
+			name for name in ou_holders("Head of User Department", first.organisation_unit)["people"]
+		]
+		holder = ns.holder(department, list(dict.fromkeys(people)))
+		waiting = ns.answer(
+			ns.KIND_WAITING, headline=f"Waiting for {department} to update its departmental plan",
+			stage=STAGE_PREPARATION, holder=holder, since=_since(first.requested_at),
+		)
+		result["others"] = waiting
+		result["stage_holder"] = department
+		result["mine"] = waiting if roles[ROLE_PROCUREMENT_PLANNER] else None
+		return result
+	if waiting_on_budget and len(in_hand) == len(blockers):
 		# §5.7: every remaining blocker is a line the Budget Officer has been
-		# asked to revise — the Planner waits (Reduce a purchase stays
+		# asked to revise — the Planner waits (Draft editing stays
 		# available as ordinary Draft editing).
 		officer = guards.holder(guards.ROLE_BUDGET_OFFICER)
 		first = requests[waiting_on_budget[0]["figures"]["budget_line"]]
@@ -290,9 +361,27 @@ def _draft_state(version, plan, *, actor, roles, report, submission_report, unal
 			stage=STAGE_PREPARATION, holder=officer, since=_since(first.requested_at),
 		)
 		# Every reader, not only the Planner, is told it is with the Budget
-		# Officer — not "waiting for the Planner to prepare" (found live).
+		# Officer — not "waiting for the Planner to prepare" (found live) —
+		# and the tracker names the same holder as the line.
 		result["others"] = waiting
+		result["stage_holder"] = _names(officer)
 		result["mine"] = waiting if roles[ROLE_PROCUREMENT_PLANNER] else None
+		if authz.has_site_role(guards.ROLE_BUDGET_OFFICER, actor):
+			# A Budget Officer who can read the plan (found live 25 Sep 2026:
+			# Josphat Mwangi also confirms funding) holds this step: the turn
+			# is theirs, decided in Budget (§5.7 "Budget Officer: Your turn in
+			# BUD"), never "waiting for" themselves.
+			line = waiting_on_budget[0]["figures"]
+			result["mine"] = ns.answer(
+				ns.KIND_YOUR_TURN,
+				headline=f"Revise {line.get('title') or line.get('reference')} for the plan update",
+				stage=STAGE_PREPARATION,
+				fixes=[ns.fix(
+					"Open the request in Budget & Funding", responsibility=guards.ROLE_BUDGET_OFFICER,
+					kind=ns.FIX_ROUTE, fix_id="open_budget_revision_request",
+					target=["budget-funding", {"fiscal_year": plan.fiscal_year}],
+				)],
+			)
 		return result
 
 	result["mine"] = ns.answer(
@@ -317,7 +406,10 @@ def _pre_finance_sentence(blockers: list[dict[str, Any]]) -> str:
 		return "You can request the funding check once all of these are resolved."
 	code = blockers[0]["reason_code"]
 	if code == "PLN_PLAN_NOT_AFFORDABLE":
-		return "You can request the funding check once every budget line fits. Choose one way to fix it."
+		return (
+			"Purchase costs come from the departments' accepted requirements and cannot be lowered in the plan. "
+			"You can request the funding check once the line's approved amount covers them."
+		)
 	if code == "PLN_PLAN_CONTENTS_INCOMPLETE" and "procurement method" in blockers[0]["headline"]:
 		return "You can request the funding check once a method is chosen."
 	return "You can request the funding check once this is resolved."
@@ -438,7 +530,10 @@ def ou_holders(role: str, organisation_unit: str) -> dict[str, Any]:
 	names = []
 	for row in frappe.get_all(
 		"User Responsibility Assignment",
-		filters={"business_role": role, "status": "Enabled", "organisation_unit": ("not in", ("", None))},
+		# "is set", not `not in ("", None)`: SQL `x NOT IN ('', NULL)` is never
+		# true, so that filter matched no one and every department step named
+		# the role alone (found in the named-user pass 26 Sep 2026).
+		filters={"business_role": role, "status": "Enabled", "organisation_unit": ("is", "set")},
 		fields=["user", "organisation_unit", "effective_from", "effective_to"],
 		limit_page_length=0,
 	):
@@ -470,6 +565,7 @@ def dpp_guidance(
 	is_correction: bool,
 	update_in_progress: bool,
 	reduced: bool = False,
+	update_requested_at=None,
 ) -> dict[str, Any]:
 	"""`{"next_step", "journey"}` for a departmental plan (U02–U05).
 
@@ -535,8 +631,17 @@ def dpp_guidance(
 		return _dpp_result(mine, others, stage=DPP_REVIEW, holder=_names(planner), technical=technical, department=department or access == "planner", reduced=reduced)
 
 	if root.current_state == "Accepted" and root.current_accepted_version:
-		done = ns.answer(ns.KIND_DONE, headline=accepted_line(root.current_accepted_version), stage=DPP_ACCEPTED)
 		journey = ns.journey(DPP_STAGES, complete=True, reduced=reduced)
+		if update_requested_at:
+			# Procurement asked the department to update its accepted plan
+			# (owner decision 26 Sep 2026): the department's turn, everyone
+			# else waits on the department.
+			holders = ns.holder("Departmental Author or Head of User Department", list(dict.fromkeys(authors["people"] + hod["people"])))
+			others = _waiting("Waiting for the department to update its plan", stage=DPP_ACCEPTED, holder=holders, since=update_requested_at)
+			mine = ns.answer(ns.KIND_YOUR_TURN, headline="Update this plan as Procurement asked", stage=DPP_ACCEPTED, primary_action="create_update") if department else None
+			answer = others if technical or not mine else mine
+			return {"next_step": answer, "journey": journey}
+		done = ns.answer(ns.KIND_DONE, headline=accepted_line(root.current_accepted_version), stage=DPP_ACCEPTED)
 		return {"next_step": done, "journey": journey}
 	return {"next_step": ns.not_involved(), "journey": None}
 

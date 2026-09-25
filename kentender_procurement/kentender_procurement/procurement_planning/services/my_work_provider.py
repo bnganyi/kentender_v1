@@ -15,6 +15,8 @@ would accept — the same resolver, the same §6.1 segregation check.
 
 from __future__ import annotations
 
+import re
+
 from typing import Any
 
 import frappe
@@ -242,6 +244,57 @@ def _update_required_rows(user: str) -> list[dict[str, Any]]:
 	return rows
 
 
+def _update_request_rows(user: str) -> list[dict[str, Any]]:
+	"""Procurement asked this department to update its accepted departmental
+	plan because a line of the plan update is over budget (owner decision
+	26 Sep 2026). One row per Open request, for the department's own authors
+	and Head of Department; it clears when the request is Answered (its next
+	update accepted) or Withdrawn, never on view."""
+	from kentender_procurement.procurement_planning.services import departmental_update
+	from kentender_procurement.procurement_planning.services import next_step as plan_next_step
+	from kentender_procurement.procurement_planning.services.guards import money
+
+	units: set[str] = set()
+	for role in (ROLE_DEPARTMENTAL_AUTHOR, ROLE_HEAD_OF_USER_DEPARTMENT):
+		scope = authz.permitted_ou_scopes(user, role)
+		if scope:
+			units |= scope
+	if not units:
+		return []
+	rows = []
+	for request in frappe.get_all(
+		departmental_update.DOCTYPE, filters={"organisation_unit": ("in", sorted(units)), "status": departmental_update.OPEN},
+		fields=["name", "departmental_plan", "organisation_unit", "budget_line_title", "budget_line_reference", "over_amount", "requested_at"],
+		order_by="requested_at asc", limit_page_length=0,
+	):
+		root = frappe.db.get_value("Departmental Plan", request.departmental_plan, ["dpp_reference", "fiscal_year", "record_version"], as_dict=True)
+		if not root or authz.dpp_read_profile(request.organisation_unit, user) not in ("author", "hod"):
+			continue
+		since = plan_next_step._since(request.requested_at)
+		rows.append({
+			"task_id": request.name,
+			"task_type": "planning.dpp_update_requested",
+			"title": _("Update {0} departmental plan").format(departmental_update.unit_name(request.organisation_unit)),
+			"reference": cstr(root.dpp_reference),
+			"module": "Procurement Planning",
+			"stage": _("Procurement asks: {0} is over budget by {1}").format(request.budget_line_title or request.budget_line_reference, money(request.over_amount)),
+			"fiscal_year": cstr(root.fiscal_year),
+			"financial_year": cstr(root.fiscal_year),
+			"organisation_unit": cstr(request.organisation_unit),
+			"assignment": _("Departmental plan"),
+			"status": _("Assigned"),
+			"received_at": since["display"] if since else "",
+			"due_at": "",
+			"action_label": _("Open departmental plan"),
+			"route": ["departmental-procurement-plan", cstr(root.dpp_reference)],
+			"route_options": {},
+			"concurrency_token": cstr(root.record_version),
+			"can_claim": False,
+			"can_open": True,
+		})
+	return rows
+
+
 # --------------------------------------------------------------------------
 # PLN v1.27 §7.7 hand-off register — rows with no task record behind them,
 # each derived from the record's own state so it appears with the event and
@@ -318,6 +371,8 @@ def _plan_handoff_rows(user: str) -> tuple[list[dict[str, Any]], list[dict[str, 
 				assigned.append(row)
 		elif step["kind"] == "waiting":
 			title = _waiting_title(doc, stage, roles)
+			if title and stage == "preparation" and step["headline"].endswith("to update its departmental plan"):
+				title = _("Waiting for the departmental plan update")
 			if title:
 				waiting.append(_handoff_row(
 					task_id=f"{doc.name}:waiting:{stage}", task_type="planning.waiting", title=title,
@@ -342,7 +397,12 @@ def _assigned_for(doc, plan, step, roles, base) -> dict[str, Any] | None:
 		if doc.funding_state == "Returned":
 			return row("finance_return", _("Correct the plan returned by Finance"), ROLE_PROCUREMENT_PLANNER, _finance_return_reason(doc.name))
 		if returned:
-			return row("budget_outcome", _("Continue plan update"), ROLE_PROCUREMENT_PLANNER, returned)
+			# received when Budget answered, not when the Draft last changed
+			return _handoff_row(
+				task_id=f"{doc.name}:budget_outcome", task_type="planning.budget_outcome", title=_("Continue plan update"),
+				stage=returned["text"], assignment=ROLE_PROCUREMENT_PLANNER, action_label=_("Open plan"),
+				received_at=returned["at"] or doc.modified, **base,
+			)
 		if doc.correction_of_plan_version:
 			return row("governance_return", _("Correct the returned plan"), ROLE_PROCUREMENT_PLANNER)
 		if step["headline"] == "Add the accepted requirements to purchases":
@@ -383,19 +443,25 @@ def _waiting_title(doc, stage: str, roles) -> str:
 	return ""
 
 
-def _latest_budget_outcome(plan_version: str) -> str:
+def _latest_budget_outcome(plan_version: str) -> dict[str, str] | None:
 	"""A Revised or Declined budget revision outcome the Planner has not yet
 	acted on: it clears once funding is requested or the update cancelled
-	(the Draft leaves the preparation stage)."""
+	(the Draft leaves the preparation stage). `text` names it; `at` is when
+	Budget answered, as the Nairobi display."""
+	from kentender_procurement.procurement_planning.services import next_step as plan_next_step
+
 	row = frappe.db.get_value(
 		"Plan Budget Revision Request", {"plan_version": plan_version, "status": ("in", ("Revised", "Declined"))},
-		["status", "outcome_reason", "budget_line_title"], as_dict=True, order_by="outcome_at desc",
+		["status", "outcome_reason", "outcome_at", "budget_line_title"], as_dict=True, order_by="outcome_at desc",
 	)
 	if not row or frappe.db.exists("Plan Budget Revision Request", {"plan_version": plan_version, "status": "Open"}):
-		return ""
+		return None
+	since = plan_next_step._since(row.outcome_at)
+	at = since["display"] if since else ""
 	if row.status == "Declined":
-		return _("Budget revision declined for {0}: {1}").format(row.budget_line_title, row.outcome_reason) if row.outcome_reason else _("Budget revision declined for {0}").format(row.budget_line_title)
-	return _("Budget revised for {0}").format(row.budget_line_title)
+		text = _("Budget revision declined for {0}: {1}").format(row.budget_line_title, row.outcome_reason) if row.outcome_reason else _("Budget revision declined for {0}").format(row.budget_line_title)
+		return {"text": text, "at": at}
+	return {"text": _("Budget revised for {0}").format(row.budget_line_title), "at": at}
 
 
 def _finance_return_reason(plan_version: str) -> str:
@@ -492,6 +558,9 @@ def _unallocated_for(root) -> bool:
 	)
 
 
+_RAW_INSTANT = re.compile(r"^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}")
+
+
 def my_work_rows(*, user: str) -> dict[str, list[dict[str, Any]]]:
 	"""`kt_my_work_providers` entry: the caller's open Planning decisions."""
 	if not user or user == "Guest":
@@ -501,7 +570,7 @@ def my_work_rows(*, user: str) -> dict[str, list[dict[str, Any]]]:
 	buckets = {
 		"assigned": (
 			_validation_rows(user) + _finance_rows(user) + _governance_rows(user)
-			+ _correction_request_rows(user) + _update_required_rows(user)
+			+ _correction_request_rows(user) + _update_required_rows(user) + _update_request_rows(user)
 			+ plan_assigned + dpp_assigned
 		),
 		"claimable": [],
@@ -510,7 +579,16 @@ def my_work_rows(*, user: str) -> dict[str, list[dict[str, Any]]]:
 	# The My Work page shows the core row's `financial_year`; Planning's rows
 	# named it `fiscal_year`, so every Planning item's year column was blank
 	# (found in the browser 25 Sep 2026).
+	# The page shows `received_at` as given: a stored instant is formatted
+	# here like every other time on screen, never a raw timestamp (found in
+	# the named-user pass 26 Sep 2026: "2026-09-26 01:19:03.296127").
+	from kentender_core.utils.display import display_datetime
+
 	for rows in buckets.values():
 		for row in rows:
 			row.setdefault("financial_year", row.get("fiscal_year", ""))
+			received = row.get("received_at")
+			raw = received and (not isinstance(received, str) or _RAW_INSTANT.match(received))
+			if raw:
+				row["received_at"] = display_datetime(received)
 	return buckets

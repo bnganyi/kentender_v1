@@ -54,13 +54,14 @@ def _date(value) -> str:
 
 
 def _eat(value) -> str:
-	"""A UTC instant rendered as EAT (§12.13)."""
-	if not value:
-		return ""
-	from frappe.utils import convert_utc_to_timezone, format_datetime, get_datetime
+	"""A stored instant as "25 Nov 2026, 10:00 EAT" (§12.13).
 
-	local = convert_utc_to_timezone(get_datetime(value), "Africa/Nairobi")
-	return f"{format_datetime(local, 'd MMM yyyy, HH:mm')} EAT"
+	Instants are stored in the site timezone, Frappe's own rule, and shown as
+	stored (owner decision 26 Sep 2026, FU-V127-01): converting them from UTC
+	here read every command-written time three hours ahead."""
+	from kentender_core.utils.display import display_datetime
+
+	return display_datetime(value)
 
 
 def _unit_label(unit: str) -> str:
@@ -375,7 +376,11 @@ def plan_readiness(version, plan, *, stage: str = "pre_finance") -> dict[str, An
 	for item in items:
 		allocations = readiness._allocations(item.name)
 		if any(source_correction_required(a.dpp_entry) for a in allocations):
-			blockers.append({"code": "PLN_SOURCE_CORRECTION_REQUIRED", "plan_item_id": item.plan_item_id, "message": f"{MESSAGES['PLN_SOURCE_CORRECTION_REQUIRED']} ({item.plan_item_id})"})
+			blockers.append({
+				"code": "PLN_SOURCE_CORRECTION_REQUIRED", "plan_item_id": item.plan_item_id, "title": cstr(item.title),
+				"budget_lines": sorted({cstr(a.budget_line) for a in allocations if a.budget_line}),
+				"message": f"{MESSAGES['PLN_SOURCE_CORRECTION_REQUIRED']} ({item.plan_item_id})",
+			})
 		objective_ok = bool(cstr(item.strategic_objective)) and (cstr(item.strategic_objective) in eligible or version.version_status == "Active")
 		for blocker in readiness.item_blockers(item, allocations, plan.fiscal_year, objective_eligible=objective_ok, stage=stage):
 			# `base_message` is the same sentence without this purchase's id,

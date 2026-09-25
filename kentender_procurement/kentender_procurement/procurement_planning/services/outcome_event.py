@@ -31,15 +31,9 @@ HOOK = "kt_plan_item_correction_outcome_consumers"
 def _utc(value) -> str:
 	"""The site stores naive system-timezone datetimes; §9.1B wants a UTC
 	instant."""
-	from datetime import timezone
-	from zoneinfo import ZoneInfo
+	from kentender_core.utils.instants import to_utc_iso
 
-	from frappe.utils import get_datetime, get_system_timezone
-
-	if not value:
-		return ""
-	local = get_datetime(value).replace(tzinfo=ZoneInfo(get_system_timezone()))
-	return local.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+	return to_utc_iso(value)
 
 
 def replacement_lineage(correcting_plan_version: str, plan_item_id: str) -> dict[str, Any]:

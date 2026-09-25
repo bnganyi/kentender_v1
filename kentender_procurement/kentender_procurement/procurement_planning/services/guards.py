@@ -24,6 +24,7 @@ from kentender_core.services import next_step as ns
 from kentender_procurement.procurement_planning.errors import MESSAGES
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import (
+	ROLE_DEPARTMENTAL_AUTHOR,
 	ROLE_HEAD_OF_PROCUREMENT_FUNCTION,
 	ROLE_PROCUREMENT_PLANNER,
 )
@@ -31,7 +32,10 @@ from kentender_procurement.procurement_planning.services.planning_roles import (
 ROLE_BUDGET_OFFICER = "Budget Officer"
 
 FIX_REQUEST_BUDGET_REVISION = "request_budget_revision"
-FIX_REDUCE_PURCHASE = "reduce_purchase"
+FIX_WAITING_BUDGET_REVISION = "waiting_budget_revision"
+FIX_REQUEST_DEPARTMENTAL_UPDATE = "request_departmental_update"
+FIX_REBUILD_FIRST = "rebuild_first"
+FIX_WAITING_DEPARTMENTAL_UPDATE = "waiting_departmental_update"
 FIX_CHOOSE_METHOD = "choose_method"
 FIX_REVIEW_RESERVATION = "review_reservation"
 FIX_EDIT_PURCHASE = "edit_purchase"
@@ -83,44 +87,113 @@ def _item_route(plan_item_id: str) -> list[str]:
 	return ["procurement-plan-item", plan_item_id]
 
 
-def _budget_guards(blocker: dict[str, Any], *, open_requests: set[str]) -> list[dict[str, Any]]:
-	"""`PLN_PLAN_NOT_AFFORDABLE`: one guard per over-budget line (§10.1A.5)."""
+def _budget_guards(
+	blocker: dict[str, Any], *, open_requests: set[str], declined: dict[str, dict[str, Any]], departments: dict[str, list[dict[str, Any]]],
+	rebuild_lines: set[str] = frozenset(),
+) -> list[dict[str, Any]]:
+	"""`PLN_PLAN_NOT_AFFORDABLE`: one guard per over-budget line (§10.1A.5).
+
+	A purchase's cost is copied from the departments' accepted requirements
+	and cannot be lowered in the plan (§4.6 "no source/quantity/value
+	override"). Owner decision 26 Sep 2026 — the two recovery paths are
+	**Request budget revision** (the Budget Officer) and **Request
+	departmental plan update** (each department whose requirements make up
+	the line decides whether to correct the estimate, change the requirement
+	or mark it not proceeding). After Budget declines, its reason is shown
+	and the departmental path leads; a fresh budget request is offered only
+	on a new basis (the line's approved or planned amount has changed since
+	the decline), never as an endless "ask again"."""
 	out = []
 	officer = person_or_role(ROLE_BUDGET_OFFICER)
 	for line in blocker.get("lines") or []:
-		fixes = []
-		if line["budget_line"] not in open_requests:
-			fixes.append(ns.fix(
-				f"Request budget revision from {officer}",
-				responsibility=ROLE_BUDGET_OFFICER, person=officer, kind=ns.FIX_COMMAND,
-				fix_id=FIX_REQUEST_BUDGET_REVISION, target={"budget_line": line["budget_line"]}, primary=True,
+		budget_line = line["budget_line"]
+		if budget_line in rebuild_lines:
+			# A purchase on this line still draws on a departmental requirement
+			# the department has since changed: its total is stale until that
+			# purchase is rebuilt, so nothing is asked of anyone yet (found in
+			# the named-user pass 26 Sep 2026: the department that had just
+			# answered was offered again).
+			facts = [("Requirements on this line", ", ".join(d["name"] for d in departments.get(budget_line) or []))] if departments.get(budget_line) else []
+			out.append(ns.guard(
+				False, reason_code="PLN_PLAN_NOT_AFFORDABLE", message=MESSAGES["PLN_PLAN_NOT_AFFORDABLE"],
+				headline=f"Over budget by {money(line['over'])} on {line['title'] or line['reference']}",
+				figures=dict(line), facts=facts,
+				fixes=[ns.fix(
+					"Rebuild the purchase first: the department's update changes this line's total",
+					responsibility=ROLE_PROCUREMENT_PLANNER, kind=ns.FIX_TEXT, fix_id=FIX_REBUILD_FIRST,
+				)],
 			))
-		fixes.append(ns.fix(
-			"Reduce a purchase", responsibility=ROLE_PROCUREMENT_PLANNER, kind=ns.FIX_FOCUS,
-			fix_id=FIX_REDUCE_PURCHASE, target=FOCUS_PURCHASES,
-		))
+			continue
+		waiting_on_budget = budget_line in open_requests
+		decline = declined.get(budget_line) if not waiting_on_budget else None
+		new_basis = not decline or (
+			abs(flt(decline.get("planned")) - flt(line.get("planned"))) > 0.005
+			or abs(flt(decline.get("approved")) - flt(line.get("approved"))) > 0.005
+		)
+		budget_fixes = []
+		if waiting_on_budget:
+			budget_fixes.append(ns.fix(
+				f"Waiting for {officer} to revise this line", responsibility=ROLE_BUDGET_OFFICER, person=officer,
+				kind=ns.FIX_TEXT, fix_id=FIX_WAITING_BUDGET_REVISION,
+			))
+		elif new_basis:
+			budget_fixes.append(ns.fix(
+				f"Request budget revision {'again ' if decline else ''}from {officer}",
+				responsibility=ROLE_BUDGET_OFFICER, person=officer, kind=ns.FIX_COMMAND,
+				fix_id=FIX_REQUEST_BUDGET_REVISION, target={"budget_line": budget_line}, primary=not decline,
+			))
+		department_fixes = []
+		for department in departments.get(budget_line) or []:
+			if department.get("requested"):
+				department_fixes.append(ns.fix(
+					f"Waiting for {department['name']} to update its departmental plan",
+					responsibility=ROLE_DEPARTMENTAL_AUTHOR, person=department["name"], kind=ns.FIX_TEXT,
+					fix_id=f"{FIX_WAITING_DEPARTMENTAL_UPDATE}:{department['unit']}",
+				))
+			else:
+				department_fixes.append(ns.fix(
+					f"Request departmental plan update from {department['name']}",
+					responsibility=ROLE_DEPARTMENTAL_AUTHOR, person=department["name"], kind=ns.FIX_COMMAND,
+					fix_id=FIX_REQUEST_DEPARTMENTAL_UPDATE, target={"budget_line": budget_line, "organisation_unit": department["unit"]},
+					primary=bool(decline) and not any(f.get("primary") for f in department_fixes),
+				))
+		# after a decline the departmental path leads
+		fixes = department_fixes + budget_fixes if decline else budget_fixes + department_fixes
+		facts = []
+		names = [d["name"] for d in departments.get(budget_line) or []]
+		if names:
+			facts.append(("Requirements on this line", ", ".join(names)))
+		if decline:
+			facts.append(("Budget revision", f"Declined by {decline['by']} on {decline['at']}" if decline["at"] else f"Declined by {decline['by']}"))
+			if decline["reason"]:
+				facts.append(("Reason", decline["reason"]))
 		out.append(ns.guard(
 			False,
 			reason_code="PLN_PLAN_NOT_AFFORDABLE",
 			message=MESSAGES["PLN_PLAN_NOT_AFFORDABLE"],
 			headline=f"Over budget by {money(line['over'])} on {line['title'] or line['reference']}",
-			figures=dict(line),
+			figures={**line, **({"budget_revision": {"outcome": "Declined", **decline}} if decline else {})},
 			fixes=fixes,
+			facts=facts,
 		))
 	return out
 
 
-def blocker_guards(blockers: list[dict[str, Any]], *, open_requests: set[str] | None = None) -> list[dict[str, Any]]:
+def blocker_guards(
+	blockers: list[dict[str, Any]], *, open_requests: set[str] | None = None, declined: dict[str, dict[str, Any]] | None = None,
+	departments: dict[str, list[dict[str, Any]]] | None = None,
+) -> list[dict[str, Any]]:
 	"""Every readiness blocker as a guard, grouped so one cause is stated once
 	with the purchases it affects (§10.1A.5: headline figure only; the
 	supporting figures stay in the working region)."""
 	open_requests = open_requests or set()
 	guards: list[dict[str, Any]] = []
 	grouped: dict[tuple[str, str], list[dict[str, Any]]] = {}
+	rebuild_lines = {line for b in blockers if b["code"] == "PLN_SOURCE_CORRECTION_REQUIRED" for line in b.get("budget_lines") or []}
 	for blocker in blockers:
 		code = blocker["code"]
 		if code == "PLN_PLAN_NOT_AFFORDABLE":
-			guards.extend(_budget_guards(blocker, open_requests=open_requests))
+			guards.extend(_budget_guards(blocker, open_requests=open_requests, declined=declined or {}, departments=departments or {}, rebuild_lines=rebuild_lines))
 		elif code == "PLN_RESERVATION_SHORTFALL":
 			guards.append(ns.guard(
 				False, reason_code=code, message=MESSAGES[code],
@@ -138,7 +211,21 @@ def blocker_guards(blockers: list[dict[str, Any]], *, open_requests: set[str] | 
 			grouped.setdefault((code, cstr(blocker.get("field"))), []).append(blocker)
 	for (code, field), rows in grouped.items():
 		items = sorted({cstr(r.get("plan_item_id")) for r in rows if r.get("plan_item_id")})
-		if code == "PLN_PLAN_CONTENTS_INCOMPLETE" and field == "procurement_method":
+		if code == "PLN_SOURCE_CORRECTION_REQUIRED":
+			# The department's accepted update changed a requirement this
+			# purchase draws on: the purchase is removed and re-formed from the
+			# new accepted source (§7.1 correction, never an automatic move).
+			titles = [cstr(r.get("title")) or cstr(r.get("plan_item_id")) for r in rows]
+			headline = (
+				f"Rebuild {titles[0]} from the department's updated plan" if len(rows) == 1
+				else f"Rebuild {len(rows)} purchases from the departments' updated plans"
+			)
+			guards.append(ns.guard(
+				False, reason_code=code, message=MESSAGES[code], headline=headline,
+				figures={"plan_items": items, "field": field},
+				fixes=[ns.fix("Edit purchase", responsibility=ROLE_PROCUREMENT_PLANNER, kind=ns.FIX_ROUTE, fix_id=FIX_EDIT_PURCHASE, target=_item_route(items[0]) if items else None, primary=True)],
+			))
+		elif code == "PLN_PLAN_CONTENTS_INCOMPLETE" and field == "procurement_method":
 			guards.append(ns.guard(
 				False, reason_code=code, message=MESSAGES[code],
 				headline=f"{_purchases(len(items))} {_needs(len(items))} a procurement method",
@@ -190,9 +277,12 @@ def unallocated_guard(unallocated: list) -> dict[str, Any] | None:
 	)
 
 
-def pre_finance(report: dict | None, *, unallocated: list, open_requests: set[str] | None = None) -> dict[str, Any]:
+def pre_finance(
+	report: dict | None, *, unallocated: list, open_requests: set[str] | None = None, declined: dict[str, dict[str, Any]] | None = None,
+	departments: dict[str, list[dict[str, Any]]] | None = None,
+) -> dict[str, Any]:
 	"""The plan's pre-Finance readiness as one guard (§5.6 item 4, D2)."""
-	guards = blocker_guards((report or {}).get("blockers") or [], open_requests=open_requests)
+	guards = blocker_guards((report or {}).get("blockers") or [], open_requests=open_requests, declined=declined, departments=departments)
 	extra = unallocated_guard(unallocated)
 	return ns.combine(*(guards + ([extra] if extra else [])))
 

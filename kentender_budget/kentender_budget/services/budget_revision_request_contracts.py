@@ -307,15 +307,9 @@ def _utc_iso(value) -> str:
 	"""BUD v1.11 §6 — an instant crossing the contract is ISO-8601 UTC.
 	Budget stores naive site-timezone datetimes (`now_datetime()`), so the
 	value is read in that zone before conversion."""
-	from datetime import timezone
-	from zoneinfo import ZoneInfo
+	from kentender_core.utils.instants import to_utc_iso
 
-	from frappe.utils import get_datetime, get_system_timezone
-
-	if not value:
-		return ""
-	local = get_datetime(value).replace(tzinfo=ZoneInfo(get_system_timezone()))
-	return local.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+	return to_utc_iso(value)
 
 
 def publish_outcome(request, *, line_version: str = "", approved: float | None = None) -> str:

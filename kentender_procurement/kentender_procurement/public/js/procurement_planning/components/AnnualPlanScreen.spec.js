@@ -492,7 +492,7 @@ describe("AnnualPlanScreen — the next step and its fixes", () => {
 		const w = make({ plan: overBudget() });
 		const block = w.find('[data-testid="ppl-next-step-block"] .kt-next-step-block');
 		expect(block.text()).toContain("Over budget by KES 2,000,000 on Digital health workforce development");
-		expect(block.text()).toContain("Choose one way to fix it.");
+		expect(block.text()).toContain("cannot be lowered in the plan");
 		expect(w.find('[data-testid="ppl-budget-fit-over"]').text()).toContain("Over by KES 2,000,000 on one budget line");
 		expect(w.find('[data-testid="ppl-budget-fit-table"] .pln-fit-over-cell').text()).toBe("Over by KES 2,000,000");
 		expect(w.find('[data-testid="ppl-budget-lines"]').exists()).toBe(false);
@@ -509,21 +509,17 @@ describe("AnnualPlanScreen — the next step and its fixes", () => {
 		expect(w.find('[data-fix="request_budget_revision"]').classes()).toContain("kt-btn-primary");
 	});
 
-	it("takes Reduce a purchase to the purchases, not to another page", async () => {
-		const scroll = vi.fn();
-		const w = mount(AnnualPlanScreen, {
-			props: { plan: overBudget(), selected: [], pending: false, errorSummary: "" },
-			attachTo: document.body,
-		});
-		const region = w.find('[data-testid="ppl-purchases-region"]').element;
-		region.scrollIntoView = scroll;
-		await w.find('[data-fix="reduce_purchase"]').trigger("click");
-		await new Promise((resolve) => setTimeout(resolve));
-		expect(scroll).toHaveBeenCalled();
-		expect(document.activeElement).toBe(region);
-		expect(w.emitted("guidance-command")).toBeUndefined();
-		expect(w.emitted("navigate")).toBeUndefined();
-		w.unmount();
+	it("hands Request departmental plan update to the page as a command, with the line and the department", async () => {
+		// Owner decision 26 Sep 2026: the departmental correction route replaces
+		// "Reduce a purchase", which offered an edit the purchase editor locks.
+		const w = make({ plan: overBudget() });
+		expect(w.find('[data-fix="reduce_purchase"]').exists()).toBe(false);
+		await w.find('[data-fix="request_departmental_update"]').trigger("click");
+		const [fix] = w.emitted("guidance-command")[0];
+		expect(fix.fix_id).toBe("request_departmental_update");
+		expect(fix.target).toEqual({ budget_line: "MOH-BL-HWD-2027", organisation_unit: "OU-HRMD" });
+		expect(w.find('[data-fix="request_departmental_update"]').text()).toBe("Request departmental plan update from Human Resources Management and Development");
+		expect(w.find(".kt-next-step-block").text()).toContain("Requirements on this line");
 	});
 
 	it("opens the purchase when the fix is Choose a procurement method", async () => {
@@ -535,7 +531,7 @@ describe("AnnualPlanScreen — the next step and its fixes", () => {
 	it("holds every fix while a command is in flight", () => {
 		const w = make({ plan: overBudget(), pending: true });
 		expect(w.find('[data-fix="request_budget_revision"]').attributes("disabled")).toBeDefined();
-		expect(w.find('[data-fix="reduce_purchase"]').attributes("disabled")).toBeDefined();
+		expect(w.find('[data-fix="request_departmental_update"]').attributes("disabled")).toBeDefined();
 	});
 
 	it("says it is waiting on the Budget Officer once the revision is requested, with no fix to repeat", () => {

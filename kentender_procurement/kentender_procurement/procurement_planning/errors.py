@@ -59,6 +59,9 @@ ERROR_CODES: frozenset[str] = frozenset(
 		"PLN_PLAN_NOT_AFFORDABLE",
 		"PLN_BUDGET_REVISION_NOT_REQUIRED",
 		"PLN_BUDGET_REVISION_ALREADY_REQUESTED",
+		"PLN_BUDGET_REVISION_ALREADY_DECLINED",
+		"PLN_DEPARTMENTAL_UPDATE_NOT_REQUIRED",
+		"PLN_DEPARTMENTAL_UPDATE_ALREADY_REQUESTED",
 		"PLN_FINANCE_STALE",
 		"PLN_REVIEW_STALE",
 		"PLN_SEGREGATION_CONFLICT",
@@ -118,6 +121,11 @@ MESSAGES: dict[str, str] = {
 	# PLN v1.27 §8 — RequestBudgetRevision's two refusals.
 	"PLN_BUDGET_REVISION_NOT_REQUIRED": "This budget line is within its approved amount. No budget revision is needed.",
 	"PLN_BUDGET_REVISION_ALREADY_REQUESTED": "A budget revision has already been requested for this line.",
+	# Owner decision 26 Sep 2026 — the departmental correction route. A fresh
+	# budget request needs a new basis, never an endless "ask again".
+	"PLN_BUDGET_REVISION_ALREADY_DECLINED": "Budget declined a revision of this line for the same amounts. Ask the department to update its plan, or request again once the amounts change.",
+	"PLN_DEPARTMENTAL_UPDATE_NOT_REQUIRED": "This department has no requirement on a budget line that is over its approved amount.",
+	"PLN_DEPARTMENTAL_UPDATE_ALREADY_REQUESTED": "This department has already been asked to update its plan for this line.",
 	"PLN_FINANCE_STALE": "Funding needs to be checked again. Follow the action shown for this plan.",
 	"PLN_REVIEW_STALE": "This review has changed. Refresh before deciding.",
 	"PLN_SEGREGATION_CONFLICT": "You cannot make this decision because of your earlier role in this plan. An authorised, independent decision-maker is required.",

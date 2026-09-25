@@ -154,15 +154,31 @@ class TestAnnualPlanNextStep(PlanFinanceCase):
 		self.assertEqual(view["next_step"]["fixes"], [])
 		self.assertEqual(view["next_step"]["primary_action"], "")
 
-	def test_an_over_budget_draft_is_blocked_with_both_fixes_and_the_line_figure(self):
+	def test_an_over_budget_draft_offers_the_budget_and_the_departmental_recovery_paths(self):
+		# Owner decision 26 Sep 2026: a purchase's cost is copied from the
+		# departments' accepted requirements and cannot be lowered in the plan,
+		# so "Reduce a purchase" (found live: the editor locks the amount) is
+		# not offered. The two recovery paths are a budget revision and an
+		# update of the departmental plan behind the line.
 		accepted, item_id = self.ready_item(indicative_amount=150_000_000)
 		view = self.read(accepted["annual_plan"], fx.PLANNER)
 		step = view["next_step"]
 		self.assertEqual(step["kind"], "your_turn_blocked")
 		self.assertTrue(step["headline"].startswith("Over budget by KES 50,000,000 on "))
-		self.assertEqual(step["sentence"], "You can request the funding check once every budget line fits. Choose one way to fix it.")
-		self.assertEqual([f["fix_id"] for f in step["fixes"]], ["request_budget_revision", "reduce_purchase"])
+		self.assertEqual(
+			step["sentence"],
+			"Purchase costs come from the departments' accepted requirements and cannot be lowered in the plan. "
+			"You can request the funding check once the line's approved amount covers them.",
+		)
+		self.assertEqual([f["fix_id"] for f in step["fixes"]], ["request_budget_revision", "request_departmental_update"])
 		self.assertEqual(step["fixes"][0]["responsibility"], "Budget Officer")
+		self.assertTrue(step["fixes"][0]["primary"])
+		department = step["fixes"][1]
+		self.assertEqual(department["label"], f"Request departmental plan update from {fx.OU_ALPHA_NAME}")
+		self.assertEqual(department["target"], {"budget_line": fx.BUDGET_LINE, "organisation_unit": fx.OU_ALPHA})
+		self.assertFalse(department["primary"])
+		facts = {f["label"]: f["value"] for f in step["blockers"][0]["facts"]}
+		self.assertEqual(facts["Requirements on this line"], fx.OU_ALPHA_NAME)
 		self.assertFalse(view["can_request_funding"])
 		self.assertEqual(self.stages(view)["preparation"], "blocked")
 		# budget fit: the live comparison, never "not yet checked"
@@ -180,6 +196,17 @@ class TestAnnualPlanNextStep(PlanFinanceCase):
 		self.assertEqual(step["headline"], "1 purchase needs a procurement method")
 		self.assertEqual(step["sentence"], "You can request the funding check once a method is chosen.")
 		self.assertEqual(step["fixes"][0]["target"], ["procurement-plan-item", item_id])
+
+	def test_a_time_written_by_a_planning_command_reads_as_the_nairobi_clock(self):
+		# FU-V127-01, owner decision 26 Sep 2026: every module stores times in
+		# the site timezone (Frappe's own rule) and shows them as stored. The
+		# funding request's Finance task is written by a command, now; the
+		# Planner's "since" must be Nairobi's wall clock, not three hours on.
+		accepted, item_id = self.ready_item()
+		self.request(accepted["annual_plan"])
+		step = self.read(accepted["annual_plan"], fx.PLANNER)["next_step"]
+		self.assertEqual(step["kind"], "waiting")
+		self.assertIn(step["since"]["display"], _nairobi_now_displays())
 
 	def test_the_funding_request_moves_the_turn_to_finance_and_confirmation_to_the_signer(self):
 		accepted, item_id = self.ready_item()
@@ -225,6 +252,10 @@ class TestDepartmentalPlanNextStep(PlanFinanceCase):
 		author = dpp_read.get_departmental_plan(dpp_reference=reference)
 		self.assertEqual(author["next_step"]["kind"], "waiting")
 		self.assertIn("to certify and submit the departmental plan", author["next_step"]["headline"])
+		# the Head of Department by name, not only the role (found in the
+		# named-user pass 26 Sep 2026: the holder lookup matched no one)
+		self.assertIn(_name(fx.HOD), author["next_step"]["holder"]["people"])
+		self.assertIn(_name(fx.HOD), author["journey"]["reduced_text"])
 		self.assertTrue(author["journey"]["reduced"])
 		self.assertEqual(author["journey"]["current"], "certification")
 		frappe.set_user(fx.HOD)
@@ -317,6 +348,28 @@ class TestBudgetRevisionHandOff(PlanFinanceCase):
 		self.assertEqual(technical["kind"], "waiting")
 		self.assertTrue(technical["headline"].endswith("(Budget Officer) to revise the budget line"))
 
+	def test_the_budget_officer_reading_the_plan_is_sent_to_budget_not_told_to_wait_for_themselves(self):
+		# Found live 25 Sep 2026: Josphat Mwangi (Finance Confirmation Officer
+		# and Budget Officer) opened the waiting update and read "Waiting for
+		# Josphat Mwangi (Budget Officer) to revise the budget line", beside a
+		# tracker naming Mercy as the holder of the blocked stage.
+		accepted, plan = self.over_budget()
+		self.ask(plan)
+		officer = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"], user=fx.FINANCE_BUDGET)
+		step = officer["next_step"]
+		self.assertEqual(step["kind"], "your_turn")
+		self.assertTrue(step["headline"].startswith("Revise ") and step["headline"].endswith(" for the plan update"), step["headline"])
+		route = [f for f in step["fixes"] if f["kind"] == "route"]
+		self.assertEqual(len(route), 1)
+		self.assertEqual(route[0]["target"], ["budget-funding", {"fiscal_year": officer["fiscal_year"]}])
+		self.assertEqual(officer["journey"]["current"], step["stage"])
+		# The tracker names who holds the blocked stage now — the Budget
+		# Officers the line waits on — for every reader, not the Planner.
+		for user in (fx.PLANNER, fx.FINANCE_BUDGET):
+			holder = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"], user=user)["journey"]["stages"][0]["holder"]
+			self.assertIn(_name(fx.BUDGET_OFFICER), holder)
+			self.assertNotIn(_name(fx.PLANNER), holder)
+
 	def test_ac_006_a_second_request_is_refused_and_a_replay_returns_the_first(self):
 		accepted, plan = self.over_budget()
 		idem = key()
@@ -353,15 +406,67 @@ class TestBudgetRevisionHandOff(PlanFinanceCase):
 		self.assertRegex(decided_at, r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
 		mine = frappe.get_doc("Plan Budget Revision Request", result["request"])
 		self.assertEqual(mine.status, "Declined")
-		self.assertEqual(frappe.utils.get_datetime(mine.outcome_at).strftime("%Y-%m-%dT%H:%M:%SZ"), decided_at)
+		# stored in site time (owner decision 26 Sep 2026), the same instant
+		from kentender_core.utils.instants import to_utc_iso
+
+		self.assertEqual(to_utc_iso(mine.outcome_at), decided_at)
 		self.assertEqual(mine.outcome_reason, "No further allocation is available this year.")
 		frappe.set_user(fx.PLANNER)
 		step = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])["next_step"]
 		self.assertEqual(step["kind"], "your_turn_blocked")
-		self.assertIn("request_budget_revision", [f["fix_id"] for f in step["fixes"]])
+		self.assertEqual([f["fix_id"] for f in step["fixes"]], ["request_departmental_update"])
 		# a closed request cannot be declined again
 		frappe.set_user(fx.BUDGET_OFFICER)
 		self.assertEqual(bud.decline_budget_revision_request({"budget_revision_request": theirs, "reason": "Second decline attempt."})["code"], "BUDGET_REVISION_REQUEST_CLOSED")
+
+	def test_after_a_decline_the_planner_is_told_who_declined_it_when_and_why(self):
+		# Found live 25 Sep 2026: once Josphat Mwangi declined, Mercy's plan
+		# read exactly as before she asked — the decline and its reason were
+		# nowhere on the plan or the workspace.
+		from kentender_budget.services import budget_revision_request_contracts as bud
+		from kentender_procurement.procurement_planning.services import my_work_provider, workspace
+		from kentender_procurement.procurement_planning.services import next_step as plan_next_step
+
+		accepted, plan = self.over_budget()
+		result = self.ask(plan)
+		frappe.set_user(fx.BUDGET_OFFICER)
+		theirs = frappe.db.get_value("Budget Revision Request", {"planning_request_id": result["request"]}, "name")
+		bud.decline_budget_revision_request({"budget_revision_request": theirs, "reason": "No further allocation is available this year."})
+		when = plan_next_step._since(frappe.db.get_value("Plan Budget Revision Request", result["request"], "outcome_at"))["display"]
+
+		frappe.set_user(fx.PLANNER)
+		step = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])["next_step"]
+		self.assertEqual(step["kind"], "your_turn_blocked")
+		over = next(b for b in step["blockers"] if b["reason_code"] == "PLN_PLAN_NOT_AFFORDABLE")
+		facts = {f["label"]: f["value"] for f in over["facts"]}
+		self.assertEqual(facts["Budget revision"], f"Declined by {_name(fx.BUDGET_OFFICER)} on {when}")
+		self.assertEqual(facts["Reason"], "No further allocation is available this year.")
+		# Owner decision 26 Sep 2026: after a decline the departmental path
+		# leads, and a budget request on the same amounts is neither offered
+		# nor accepted — no endless "ask again".
+		self.assertEqual([f["fix_id"] for f in over["fixes"]], ["request_departmental_update"])
+		self.assertTrue(over["fixes"][0]["primary"])
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			self.ask(plan_read.get_annual_plan(plan_reference=accepted["annual_plan"]))
+		self.assertEqual(caught.exception.code, "PLN_BUDGET_REVISION_ALREADY_DECLINED")
+		# The workspace row and the My Work item say it too, at the decline's time.
+		self.assertEqual(workspace._narrative(step)["detail"], f"Budget revision declined by {_name(fx.BUDGET_OFFICER)}: No further allocation is available this year.")
+		item = [r for r in my_work_provider.my_work_rows(user=fx.PLANNER)["assigned"] if r["task_type"] == "planning.budget_outcome" and r["reference"].startswith(accepted["annual_plan"])]
+		self.assertEqual(len(item), 1)
+		self.assertIn("No further allocation is available this year.", item[0]["stage"])
+		self.assertEqual(item[0]["received_at"], when)
+		# A new basis (here the planned amount changes; fixture-only override)
+		# makes a fresh request possible again, and asking replaces the
+		# explanation with the wait.
+		for name in frappe.get_all("Plan Source Allocation", filters={"plan_version": accepted["annual_plan_version"]}, pluck="name"):
+			frappe.db.set_value("Plan Source Allocation", name, "indicative_amount", 140_000_000, update_modified=False)
+		renewed = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		fixes = {f["fix_id"]: f for f in renewed["next_step"]["fixes"]}
+		self.assertTrue(fixes["request_budget_revision"]["label"].startswith("Request budget revision again from "), fixes["request_budget_revision"]["label"])
+		self.assertTrue(fixes["request_departmental_update"]["primary"])
+		self.ask(renewed)
+		again = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])["next_step"]
+		self.assertEqual(again["kind"], "waiting")
 
 	def test_ac_008_outcomes_apply_once_and_in_order(self):
 		from kentender_procurement.procurement_planning.services import budget_revision
@@ -411,6 +516,122 @@ class TestBudgetRevisionHandOff(PlanFinanceCase):
 		self.assertEqual(frappe.db.get_value("Plan Budget Revision Request", result["request"], "status"), "Withdrawn")
 
 
+class TestDepartmentalUpdateRoute(PlanFinanceCase):
+	"""Owner decision 26 Sep 2026 — the departmental correction route for an
+	over-budget line: the Planner asks the department, the department decides
+	in an update of its accepted plan (here it corrects the estimate), and
+	the Planner rebuilds the purchase from the new accepted source."""
+
+	def over_budget(self) -> tuple[dict, dict]:
+		accepted, item_id = self.ready_item(indicative_amount=150_000_000)
+		frappe.set_user(fx.PLANNER)
+		return accepted, plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+
+	def ask_department(self, plan: dict) -> dict:
+		from kentender_procurement.procurement_planning.services import departmental_update
+
+		frappe.set_user(fx.PLANNER)
+		return departmental_update.request_departmental_plan_update(
+			plan_version=plan["version_reference"], budget_line=fx.BUDGET_LINE, organisation_unit=fx.OU_ALPHA,
+			expected_record_version=plan["record_version"], idempotency_key=key(),
+		)
+
+	def test_the_department_updates_its_plan_and_the_planner_rebuilds_the_purchase(self):
+		from kentender_procurement.procurement_planning.services import dpp_lifecycle, dpp_read, dpp_validation, my_work_provider
+
+		accepted, plan = self.over_budget()
+		result = self.ask_department(plan)
+		self.assertEqual(result["action"], "requested")
+		with self.assertRaises(ProcurementPlanningError) as caught:
+			self.ask_department(plan_read.get_annual_plan(plan_reference=accepted["annual_plan"]))
+		self.assertEqual(caught.exception.code, "PLN_DEPARTMENTAL_UPDATE_ALREADY_REQUESTED")
+
+		# The Planner waits on the named department, and so does the tracker.
+		mine = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		self.assertEqual(mine["next_step"]["kind"], "waiting")
+		self.assertEqual(mine["next_step"]["headline"], f"Waiting for {fx.OU_ALPHA_NAME} to update its departmental plan")
+		self.assertTrue(mine["next_step"]["since"])
+		self.assertEqual(mine["journey"]["stages"][0]["holder"], fx.OU_ALPHA_NAME)
+		waits = [r for r in my_work_provider.my_work_rows(user=fx.PLANNER)["waiting"] if r["reference"].startswith(accepted["annual_plan"])]
+		self.assertEqual([r["title"] for r in waits], ["Waiting for the departmental plan update"])
+
+		# The department is told what was asked, in My Work and on its plan.
+		for user in (fx.AUTHOR, fx.HOD):
+			rows = [r for r in my_work_provider.my_work_rows(user=user)["assigned"] if r["task_id"] == result["request"]]
+			self.assertEqual(len(rows), 1, user)
+			self.assertIn("over budget by KES 50,000,000", rows[0]["stage"])
+		frappe.set_user(fx.AUTHOR)
+		dpp = dpp_read.get_departmental_plan(dpp_reference=accepted["dpp_reference"])
+		self.assertEqual((dpp["next_step"]["kind"], dpp["next_step"]["headline"]), ("your_turn", "Update this plan as Procurement asked"))
+		self.assertIn("is over by KES 50,000,000", dpp["update_request_notice"]["text"])
+		self.assertTrue(dpp["update_request_notice"]["asked"].startswith(f"Asked by {_name(fx.PLANNER)} on "))
+		self.assertTrue(dpp["can_create_update"])
+
+		# The department corrects the estimate in an update; Procurement accepts it.
+		entry_id = frappe.db.get_value("Departmental Plan Entry", frappe.get_all("Plan Source Allocation", filters={"plan_version": accepted["annual_plan_version"]}, pluck="dpp_entry")[0], "entry_id")
+		root = frappe.db.get_value("Departmental Plan", {"dpp_reference": accepted["dpp_reference"]})
+		frappe.set_user(fx.HOD)
+		update = dpp_lifecycle.create_departmental_plan_update(
+			departmental_plan=root, expected_record_version=frappe.db.get_value("Departmental Plan", root, "record_version"), idempotency_key=key(),
+		)
+		changed = dpp_lifecycle.save_direct_requirement(
+			dpp_version=update["current_version"], entry_id=entry_id, values=fx.direct_values(indicative_amount=90_000_000),
+			expected_record_version=update["record_version"], idempotency_key=key(),
+		)
+		frappe.set_user(fx.AUTHOR)
+		self.assertIsNotNone(dpp_read.get_departmental_plan(dpp_reference=accepted["dpp_reference"])["update_request_notice"])
+		frappe.set_user(fx.HOD)
+		submitted = dpp_lifecycle.submit_departmental_plan(
+			dpp_version=update["current_version"], certification_confirmed=True,
+			expected_record_version=changed["record_version"], idempotency_key=key(),
+		)
+		task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
+		frappe.set_user(fx.PLANNER)
+		dpp_validation.accept_departmental_plan(task=task.name, classifications={entry_id: "Goods"}, task_token=task.task_token, idempotency_key=key())
+
+		self.assertEqual(frappe.db.get_value("Departmental Plan Update Request", result["request"], "status"), "Answered")
+		for user in (fx.AUTHOR, fx.HOD):
+			self.assertEqual([r for r in my_work_provider.my_work_rows(user=user)["assigned"] if r["task_id"] == result["request"]], [], user)
+
+		# The Planner rebuilds the purchase from the new accepted source.
+		frappe.set_user(fx.PLANNER)
+		stale = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		self.assertEqual(stale["next_step"]["kind"], "your_turn_blocked")
+		blockers = {b["reason_code"]: b for b in stale["next_step"]["blockers"]}
+		# The purchase is named with why it needs rebuilding (found in the
+		# named-user pass 26 Sep 2026: "…after a source correction for 1 purchase").
+		rebuild = blockers["PLN_SOURCE_CORRECTION_REQUIRED"]
+		title = stale["plan_items"][0]["title"]
+		self.assertEqual(rebuild["headline"], f"Rebuild {title} from the department's updated plan")
+		self.assertEqual([f["fix_id"] for f in rebuild["fixes"]], ["edit_purchase"])
+		self.assertTrue(rebuild["fixes"][0]["primary"])
+		# Until then the line's total is stale: no request is offered on it
+		# (the department just answered), only the order of work.
+		over = blockers["PLN_PLAN_NOT_AFFORDABLE"]
+		self.assertEqual([f["kind"] for f in over["fixes"]], ["text"])
+		self.assertEqual(over["fixes"][0]["label"], "Rebuild the purchase first: the department's update changes this line's total")
+		item_id = stale["plan_items"][0]["plan_item_id"]
+		plan_workbench.dissolve_plan_item(plan_item=item_id, expected_record_version=stale["record_version"], idempotency_key=key())
+		refreshed = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		formed = plan_workbench.form_plan_items(
+			plan_version=accepted["annual_plan_version"], dpp_entries=[refreshed["unallocated_sources"][0]["dpp_entry"]],
+			mode="each", expected_record_version=refreshed["record_version"], idempotency_key=key(),
+		)
+		item = plan_read.get_plan_item(plan_item_id=formed["created_items"][0])
+		plan_workbench.save_plan_item(plan_item=formed["created_items"][0], values=fx.item_values(), expected_record_version=item["record_version"], idempotency_key=key())
+		ready = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		self.assertEqual(ready["next_step"]["kind"], "your_turn", ready["next_step"])
+		self.assertTrue(ready["budget_fit"]["all_within"])
+
+	def test_sending_the_plan_to_finance_withdraws_an_open_departmental_request(self):
+		accepted, plan = self.over_budget()
+		result = self.ask_department(plan)
+		for name in frappe.get_all("Plan Source Allocation", filters={"plan_version": accepted["annual_plan_version"]}, pluck="name"):
+			frappe.db.set_value("Plan Source Allocation", name, "indicative_amount", 1_000_000, update_modified=False)
+		self.request(accepted["annual_plan"])
+		self.assertEqual(frappe.db.get_value("Departmental Plan Update Request", result["request"], "status"), "Withdrawn")
+
+
 class TestHandOffRegister(PlanFinanceCase):
 	"""PLN27-AC-007 — every §7.7 row puts the next holder's item and the
 	sender's waiting-on item in My Work with the event, and clears each only
@@ -455,6 +676,10 @@ class TestHandOffRegister(PlanFinanceCase):
 		self.assertIn(_name(fx.FINANCE_OFFICER), waiting[0]["holder"]["people"])
 		self.assertTrue(waiting[0]["since"])
 		self.assertEqual(len(self.rows(fx.FINANCE_OFFICER, "assigned", "planning.finance")), 1)
+		# Every row's Received reads as a time, never a raw timestamp (found in
+		# the named-user pass 26 Sep 2026: "2026-09-26 01:19:03.296127").
+		for row in self.rows(fx.FINANCE_OFFICER, "assigned") + self.rows(fx.PLANNER, "waiting"):
+			self.assertRegex(row["received_at"], r"^\d{1,2} [A-Z][a-z]{2} \d{4}, \d{2}:\d{2} EAT$", row)
 
 		task = frappe.get_doc("Plan Finance Task", {"plan_version": accepted["annual_plan_version"], "status": "Open"})
 		frappe.set_user(fx.FINANCE_OFFICER)
@@ -526,6 +751,7 @@ class TestHandOffRegister(PlanFinanceCase):
 		cont = self.rows(fx.PLANNER, "assigned", "planning.budget_outcome")
 		self.assertEqual(len(cont), 1)
 		self.assertEqual(cont[0]["title"], "Continue plan update")
+
 		self.assertIn("declined", cont[0]["stage"])
 
 	def test_dpp_hand_offs_to_procurement_review_and_back(self):

@@ -192,6 +192,14 @@ def cancel_plan_update(*, plan_reference: str, expected_record_version, idempote
 		frappe.db.set_value("Plan Finance Task", task, "status", "Cancelled", update_modified=False)
 	envelope.bump(successor, version_status="Cancelled")
 	frappe.db.set_value("Annual Plan", plan.name, "open_successor_version", "", update_modified=False)
+	# Nobody is left holding work for a cancelled update: its Open budget
+	# revision requests are withdrawn (Budget is told) and its departmental
+	# update requests close.
+	from kentender_procurement.procurement_planning.services import budget_revision, departmental_update
+
+	successor.reload()
+	budget_revision.withdraw_fitting_requests(successor, actor=actor)
+	departmental_update.withdraw_for_version(successor.name, reason="The plan update was cancelled.")
 	result = {"ok": True, "idempotent": False, "action": "cancelled", "successor_version": successor.name}
 	envelope.record_command(
 		idempotency_key=idempotency_key, command="CancelPlanUpdate", payload=payload, result=result,

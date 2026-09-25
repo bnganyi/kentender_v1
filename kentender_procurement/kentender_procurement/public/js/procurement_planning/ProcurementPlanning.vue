@@ -1270,6 +1270,22 @@ async function onDissolvePlanItem() {
 // revision invokes RequestBudgetRevision for the exact over-budget line of the
 // displayed Draft (no form); the reload then shows U07-WAITING-BUDGET-REVISION.
 async function onPlanGuidanceCommand(fix) {
+	if (fix.fix_id === "request_departmental_update") {
+		// Owner decision 26 Sep 2026 — the departmental correction route: the
+		// department named on the fix is asked to update its plan for the line.
+		await run("request-departmental-update", async (key) => {
+			const r = await api.requestDepartmentalPlanUpdate({
+				plan_version: annualPlan.value.version_reference,
+				budget_line: fix.target?.budget_line,
+				organisation_unit: fix.target?.organisation_unit,
+				expected_record_version: annualPlan.value.record_version,
+				idempotency_key: key,
+			});
+			await load({ quiet: true });
+			return r;
+		});
+		return;
+	}
 	if (fix.fix_id !== "request_budget_revision") return;
 	await run("request-budget-revision", async (key) => {
 		const r = await api.requestBudgetRevision({

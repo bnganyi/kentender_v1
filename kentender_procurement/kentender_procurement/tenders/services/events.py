@@ -22,6 +22,7 @@ from uuid import uuid4
 import frappe
 from frappe.utils import cstr
 
+from kentender_core.utils.instants import to_utc_iso
 from kentender_procurement.tenders.services import clock, digest, serializer
 
 PRODUCER = "tenders"
@@ -59,7 +60,9 @@ def emit(
 		"actor": actor or frappe.session.user,
 		"assignment_snapshot": json.loads(assignment_snapshot) if assignment_snapshot else {},
 		"session": cstr(getattr(frappe.local, "session", None) and frappe.local.session.get("sid") or ""),
-		"occurred_at_utc": occurred.isoformat(sep=" "),
+		# a serialized message carries UTC (owner decision 26 Sep 2026); this
+		# held the site time under a UTC name
+		"occurred_at_utc": to_utc_iso(occurred),
 		"occurred_at_eat": serializer.fmt_datetime_short(occurred),
 		"previous_status": previous_status,
 		"resulting_status": resulting_status,

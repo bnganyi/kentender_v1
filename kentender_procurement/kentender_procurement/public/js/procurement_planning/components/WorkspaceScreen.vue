@@ -186,7 +186,12 @@
 								data-testid="pln-row-narrative"
 							>{{ dominantRow.narrative.headline }}</p>
 							<p
-								v-else-if="dominantRow.narrative"
+								v-if="dominantRow.narrative && dominantRow.narrative.tone === 'blocked' && dominantRow.narrative.detail"
+								class="pln-row-narrative-detail"
+								data-testid="pln-row-narrative-detail"
+							>{{ dominantRow.narrative.detail }}</p>
+							<p
+								v-else-if="dominantRow.narrative && dominantRow.narrative.tone !== 'blocked'"
 								class="pln-row-narrative is-waiting"
 								data-testid="pln-row-narrative"
 							><strong>{{ dominantRow.narrative.headline }}</strong><template v-if="dominantRow.narrative.since">{{ " " }}<span class="pln-row-narrative-since">since {{ dominantRow.narrative.since }}</span></template></p>

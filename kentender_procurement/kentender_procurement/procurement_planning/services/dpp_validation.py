@@ -206,6 +206,10 @@ def accept_departmental_plan(
 	if prior_accepted and prior_accepted != version.name:
 		frappe.db.set_value("Departmental Plan Version", prior_accepted, "version_status", "Superseded", update_modified=False)
 	envelope.bump(root, current_state="Accepted", current_version=version.name, current_accepted_version=version.name)
+	# The department's answer to any Procurement request to update its plan.
+	from kentender_procurement.procurement_planning.services import departmental_update
+
+	departmental_update.answer_on_acceptance(root.name, version.name)
 	plan = ensure_annual_plan(fiscal_year=task_doc.fiscal_year, fixture_namespace=cstr(root.fixture_namespace))
 	_publish_dispositions(snapshots, submission=task_doc.submission, decision_name=decision.name, actor=actor)
 	result = {

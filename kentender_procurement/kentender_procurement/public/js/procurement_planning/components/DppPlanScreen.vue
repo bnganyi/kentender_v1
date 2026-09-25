@@ -101,6 +101,20 @@
 				</div>
 			</div>
 
+			<!-- Procurement's request to update this plan: a line of the annual
+			     plan update is over its approved budget (owner decision
+			     26 Sep 2026). -->
+			<div v-if="plan.update_request_notice" class="kt-notice is-warning" data-testid="pln-dpp-update-request">
+				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+					<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
+				</svg>
+				<div class="kt-notice-body">
+					<strong>{{ plan.update_request_notice.title }}</strong>
+					<p>{{ plan.update_request_notice.text }}</p>
+					<p class="pln-dpp-update-request-asked">{{ plan.update_request_notice.asked }}</p>
+				</div>
+			</div>
+
 			<div v-if="plan.update_notice" class="kt-notice is-warning" data-testid="pln-dpp-update-notice">
 				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 					<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>

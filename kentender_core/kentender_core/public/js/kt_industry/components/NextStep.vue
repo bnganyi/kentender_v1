@@ -17,6 +17,9 @@
 		     without these the line's text (and a screen reader) runs them
 		     together as "WaitingWaiting for…". -->
 		<span class="kt-next-step-label">{{ answer.label }}</span>{{ " " }}<span class="kt-next-step-headline" data-testid="kt-next-step-headline">{{ answer.headline }}</span><template v-if="answer.kind === 'waiting' && answer.since">{{ " " }}<span class="kt-next-step-since">since {{ answer.since.display }}</span></template>
+		<!-- A turn held on another page (a Budget Officer's revision request,
+		     read from the plan) carries its one way there on the line. -->
+		<template v-for="item in lineLinks" :key="item.fix_id">{{ " " }}<button type="button" class="kt-next-step-link" :data-fix="item.fix_id" @click="$emit('fix', item)">{{ item.label }}</button></template>
 	</p>
 	<div v-else-if="showBlock" class="kt-notice is-warning kt-next-step-block" data-kt="next-step" :data-kind="answer.kind" role="status">
 		<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -58,6 +61,11 @@
 			<ul v-else class="kt-next-step-blockers">
 				<li v-for="entry in blockers" :key="entry.reason_code + entry.headline" :data-reason="entry.reason_code">
 					<span class="kt-next-step-blocker-headline">{{ entry.headline }}</span>
+					<!-- A blocker's own facts (a declined budget revision: who,
+					     when, why) stay with it in the list form too. -->
+					<span v-if="entry.facts && entry.facts.length" class="kt-next-step-blocker-facts">
+						<span v-for="fact in entry.facts" :key="fact.label"><span class="kt-label">{{ fact.label }}</span>{{ " " }}{{ fact.value }}</span>
+					</span>
 					<template v-for="item in entry.fixes" :key="item.fix_id">
 						<span v-if="item.kind === 'text'" class="kt-next-step-fix-text">{{ item.label }}</span>
 						<button
@@ -94,6 +102,9 @@ const showBlock = computed(
 	() => !!props.answer && props.placement === "body" && props.answer.kind === "your_turn_blocked" && !!props.answer.headline,
 );
 const blockers = computed(() => (props.answer && props.answer.blockers) || []);
+const lineLinks = computed(() =>
+	props.answer && props.answer.kind === "your_turn" ? (props.answer.fixes || []).filter((item) => item.kind === "route") : [],
+);
 
 function hasPrimary(entry) {
 	return (entry.fixes || []).some((item) => item.primary);

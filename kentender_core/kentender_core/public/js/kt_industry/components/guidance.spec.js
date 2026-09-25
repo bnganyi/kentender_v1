@@ -138,6 +138,38 @@ describe("NextStep", () => {
 		expect(w.findAll("button")).toHaveLength(3);
 	});
 
+	it("keeps each blocker's facts when several blockers are listed", () => {
+		// A declined budget revision is stated as facts on the over-budget
+		// blocker; a second blocker must not hide it (found live 25 Sep 2026).
+		const declined = {
+			reason_code: "PLN_PLAN_NOT_AFFORDABLE", headline: "Over budget by KES 2,000,000 on Digital health workforce development",
+			facts: [{ label: "Budget revision", value: "Declined by Josphat Mwangi on 25 Sep 2026, 23:51 EAT" }, { label: "Reason", value: "No further allocation this year." }],
+			fixes: [],
+		};
+		const method = { reason_code: "PLN_PLAN_CONTENTS_INCOMPLETE", headline: "Choose a procurement method for Clinical laptops", facts: [], fixes: [] };
+		const w = mount(NextStep, { props: { answer: { kind: "your_turn_blocked", label: "Your turn, blocked", headline: "2 issues stop this plan going to Finance", blockers: [declined, method] }, placement: "body" } });
+		const row = w.find('[data-reason="PLN_PLAN_NOT_AFFORDABLE"]');
+		expect(row.text()).toContain("Declined by Josphat Mwangi on 25 Sep 2026, 23:51 EAT");
+		expect(row.text()).toContain("No further allocation this year.");
+		expect(w.find('[data-reason="PLN_PLAN_CONTENTS_INCOMPLETE"] .kt-next-step-blocker-facts').exists()).toBe(false);
+	});
+
+	it("puts a Your-turn route fix on the line itself, so a turn held on another page has a way there", async () => {
+		// Found live 25 Sep 2026: a Budget Officer reading the plan was told
+		// it was their turn with nothing to press.
+		const open = { fix_id: "open_budget_revision_request", label: "Open the request in Budget & Funding", kind: "route", target: ["budget-funding"] };
+		const turn = { kind: "your_turn", label: "Your turn", headline: "Revise Digital health workforce development for the plan update", blockers: [], fixes: [open] };
+		const w = mount(NextStep, { props: { answer: turn, placement: "head" } });
+		const link = w.find("[data-kt=next-step] [data-fix=open_budget_revision_request]");
+		expect(link.text()).toBe("Open the request in Budget & Funding");
+		await link.trigger("click");
+		expect(w.emitted("fix")[0][0]).toEqual(open);
+		// A waiting line never carries a control, and a turn without a route
+		// fix draws only its words.
+		expect(mount(NextStep, { props: { answer: { ...turn, kind: "waiting", label: "Waiting" }, placement: "head" } }).find("[data-fix]").exists()).toBe(false);
+		expect(mount(NextStep, { props: { answer: { ...turn, fixes: [] }, placement: "head" } }).find("[data-fix]").exists()).toBe(false);
+	});
+
 	it("draws nothing for Not involved or an absent answer", () => {
 		expect(mount(NextStep, { props: { answer: { kind: "not_involved", label: "", headline: "", blockers: [] } } }).find("[data-kt]").exists()).toBe(false);
 		expect(mount(NextStep, { props: { answer: null } }).find("[data-kt]").exists()).toBe(false);

@@ -28,7 +28,7 @@ NS = "KENTENDER_TEST"
 
 FY_OPEN = "2101-2102"
 FY_CLOSED = "2103-2104"
-INTAKE_CLOSES_AT = "2102-05-31 20:59:59"  # 31 May 2102, 23:59 EAT — pinned, never now-relative
+INTAKE_CLOSES_AT = "2102-05-31 23:59:59"  # 31 May 2102, 23:59 EAT (site time) — pinned, never now-relative
 FY_OPEN_START = 2101
 FY_CLOSED_START = 2103
 BUDGET_FISCAL_YEAR = FY_OPEN
@@ -58,12 +58,15 @@ OUTSIDER = "plnt.outsider@example.test"
 HOPF = "plnt.hopf@example.test"
 # PLN v1.27 §7.7 — the receiving holder of a budget revision request.
 BUDGET_OFFICER = "plnt.budget@example.test"
+# Found live 25 Sep 2026 (Josphat Mwangi): one person may hold the funding
+# check and the budget line, so reads the plan while holding its budget step.
+FINANCE_BUDGET = "plnt.financebudget@example.test"
 # §6.1: role combinations are permitted — the conflict is between actions.
 HYBRID = "plnt.hybrid@example.test"
 HYBRID_FINANCE = "plnt.hybridfinance@example.test"
 HYBRID_AO = "plnt.hybridao@example.test"
 HYBRID_HOPF_AO = "plnt.hybridhopfao@example.test"  # v1.18 §6.4: the signer cannot adopt
-ACTORS = (AUTHOR, HOD, PLANNER, FINANCE_OFFICER, ACCOUNTING_OFFICER, STATUTORY, AUDITOR, OUTSIDER, HYBRID, HYBRID_HOPF_AO, HYBRID_FINANCE, HYBRID_AO, HOPF, BUDGET_OFFICER)
+ACTORS = (AUTHOR, HOD, PLANNER, FINANCE_OFFICER, ACCOUNTING_OFFICER, STATUTORY, AUDITOR, OUTSIDER, HYBRID, HYBRID_HOPF_AO, HYBRID_FINANCE, HYBRID_AO, HOPF, BUDGET_OFFICER, FINANCE_BUDGET)
 
 NEED = "NEED-PLNT-0001"
 NEED_V1 = "NEED-PLNT-0001-V1"
@@ -167,6 +170,7 @@ def ensure_world() -> None:
 		(HOPF, "PLNT Head of Procurement Function"),
 		(HYBRID_HOPF_AO, "PLNT Hybrid Head of Function and AO"),
 		(BUDGET_OFFICER, "PLNT Budget Officer"),
+		(FINANCE_BUDGET, "PLNT Finance and Budget Officer"),
 	):
 		_user(email, name)
 	_grant(AUTHOR, "Departmental Author", OU_ALPHA)
@@ -190,6 +194,8 @@ def ensure_world() -> None:
 	_grant(HYBRID_HOPF_AO, "Head of Procurement Function")
 	_grant(HYBRID_HOPF_AO, "Accounting Officer")
 	_grant(BUDGET_OFFICER, "Budget Officer")
+	_grant(FINANCE_BUDGET, "Finance Confirmation Officer")
+	_grant(FINANCE_BUDGET, "Budget Officer")
 
 	# the single-valued intake flag: move it onto the test year, remember
 	# what was open so restore_site() can put it back
@@ -317,6 +323,8 @@ def wipe_planning_rows() -> None:
 		frappe.db.delete("Budget Revision Request Event", {"budget_revision_request": ("in", budget_side or ("",))})
 		frappe.db.delete("Budget Revision Request", {"name": ("in", budget_side or ("",))})
 	frappe.db.delete("Plan Budget Revision Request", {"name": ("in", requests or ("",))})
+	# owner decision 26 Sep 2026 — the departmental correction route's requests
+	frappe.db.delete("Departmental Plan Update Request", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Plan Source Allocation", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan Item", {"plan_version": ("in", plan_versions or ("",))})
 	roots = frappe.get_all("Plan Item", filters={"annual_plan": ("in", plans or ("",))}, pluck="name")

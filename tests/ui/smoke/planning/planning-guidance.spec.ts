@@ -15,8 +15,10 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { login } from "../../helpers/auth";
 import {
+	AUTHOR,
 	BUDGET_OFFICER,
 	FY,
+	OU_NAME,
 	PASSWORD,
 	PLANNER,
 	collectConsoleErrors,
@@ -86,17 +88,42 @@ test.describe("Over budget: the Planner asks, the Budget Officer decides", () =>
 		await expect(dialog).toHaveCount(0);
 		await expect(request).toHaveCount(0);
 
-		// 4. The Planner: blocked again with the request offered again, and
-		// the outcome as their own My Work item.
+		// 4. The Planner: blocked again with the decline, its reason and the
+		// departmental path leading — no second budget request on the same
+		// amounts (owner decision 26 Sep 2026) — and the outcome as their own
+		// My Work item.
 		await login(page, PLANNER, PASSWORD);
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
 		await expectReady(page, "plan");
 		await expect(block).toContainText("Over budget by KES 2,000,000");
-		await expect(block.getByRole("button", { name: /^Request budget revision from / })).toBeVisible();
+		await expect(block).toContainText("No further allocation is available on this line this year.");
+		await expect(block.getByRole("button", { name: /^Request departmental plan update from / })).toHaveClass(/kt-btn-primary/);
+		await expect(block.getByRole("button", { name: /^Request budget revision/ })).toHaveCount(0);
 		rows = await myWork(page, "assigned");
 		await expect(rows.filter({ hasText: "Continue plan update" }).filter({ hasText: state.plan_reference })).toHaveCount(1);
 		rows = await myWork(page, "waiting");
 		await expect(rows.filter({ hasText: "Waiting for the budget revision" }).filter({ hasText: state.plan_reference })).toHaveCount(0);
+
+		// 5. The departmental correction route (owner decision 26 Sep 2026):
+		// the Planner asks the department, waits on it by name, and the
+		// department finds the request in My Work and on its own plan.
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`, { waitUntil: "domcontentloaded" });
+		await expectReady(page, "plan");
+		await block.getByRole("button", { name: /^Request departmental plan update from / }).click();
+		await expect(line).toContainText(`Waiting for ${OU_NAME} to update its departmental plan`);
+		await expect(page.locator(".kt-journey-stage").first()).toContainText(OU_NAME);
+		rows = await myWork(page, "waiting");
+		await expect(rows.filter({ hasText: "Waiting for the departmental plan update" }).filter({ hasText: state.plan_reference })).toHaveCount(1);
+
+		await login(page, AUTHOR, PASSWORD);
+		rows = await myWork(page, "assigned");
+		const ask = rows.filter({ hasText: `Update ${OU_NAME} departmental plan` }).filter({ hasText: "over budget by KES 2,000,000" });
+		await expect(ask).toHaveCount(1);
+		await ask.locator("[data-open]").click();
+		await expectReady(page, "dpp");
+		await expect(page.locator('[data-testid="pln-dpp-update-request"]')).toContainText("is over by KES 2,000,000");
+		await expect(page.locator(".kt-page-head .kt-next-step")).toContainText("Update this plan as Procurement asked");
+		await expect(page.locator('[data-testid="pln-dpp-create-update"]')).toBeVisible();
 
 		expect(errors, "console errors").toEqual([]);
 	});

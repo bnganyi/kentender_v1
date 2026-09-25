@@ -584,7 +584,8 @@ class TestUpdateRowNarrative(RequisitionCase):
 			"kind": "your_turn_blocked", "headline": "Over budget by KES 2,000,000 on Digital health workforce development",
 			"blockers": [{"reason_code": "PLN_PLAN_NOT_AFFORDABLE", "headline": "x", "fixes": []}], "fixes": [], "since": None,
 		})
-		self.assertEqual(row["narrative"], {"tone": "blocked", "headline": "Over budget by KES 2,000,000 on Digital health workforce development", "since": ""})
+		# no budget revision declined on this line, so no detail under it
+		self.assertEqual(row["narrative"], {"tone": "blocked", "headline": "Over budget by KES 2,000,000 on Digital health workforce development", "since": "", "detail": ""})
 		self.assertEqual([label for label, _ in row["facts"] if label in ("Affected purchase", "Change")], [])
 		self.assertEqual((row["action"], row["action_kind"]), ("Continue update", "primary"))
 		# the row carries it; no second notice repeats it

@@ -110,6 +110,14 @@ class TestDeadEndProblems(IntegrationTestCase):
 		self.assertIn("blocker PLN_X offers no fix", ns.problems(ns.answer(ns.KIND_BLOCKED, headline="Blocked", blockers=[ns.blocker(bare)])))
 		self.assertEqual(ns.problems(ns.answer(ns.KIND_BLOCKED, headline="Over", blockers=[ns.blocker(OVER)])), [])
 
+	def test_your_turn_must_offer_a_way_to_act(self):
+		bare = ns.answer(ns.KIND_YOUR_TURN, headline="Revise the line")
+		self.assertIn("your turn without an action or a way to act", ns.problems(bare))
+		self.assertEqual(ns.problems(bare, has_enabled_action=True), [])
+		self.assertEqual(ns.problems(ns.answer(ns.KIND_YOUR_TURN, headline="Sign", primary_action="sign_and_submit")), [])
+		link = ns.fix("Open the request", responsibility="Budget Officer", kind=ns.FIX_ROUTE, target=["budget-funding"])
+		self.assertEqual(ns.problems(ns.answer(ns.KIND_YOUR_TURN, headline="Revise the line", fixes=[link])), [])
+
 	def test_no_answer_is_a_dead_end_unless_an_action_is_enabled(self):
 		self.assertEqual(ns.problems(None), ["no next-step answer"])
 		self.assertEqual(ns.problems(None, has_enabled_action=True), [])

@@ -500,9 +500,10 @@ const reservationEl = ref(null);
 const linesOpen = ref(false);
 
 // §11.9 v1.27 — each fix maps to this page's own handler: a hand-off command
-// goes to the root's command runner; Reduce a purchase / Review reserved
-// procurement move focus on this page; Choose a procurement method opens the
-// purchase. The wording and the choice of fixes are the server's.
+// goes to the root's command runner (Request budget revision / Request
+// departmental plan update); Review reserved procurement moves focus on this
+// page; Choose a procurement method opens the purchase. The wording and the
+// choice of fixes are the server's.
 const FOCUS = { purchases: purchasesEl, reservation: reservationEl, requirements: requirementsEl };
 function focusRegion(target) {
 	const el = (FOCUS[target] || checksEl).value || checksEl.value;

@@ -185,6 +185,14 @@ DEFERRED_MENTIONS: dict[tuple[str, str], str] = {
 # with the forecast facility. They stay registered in `errors.py` only so the
 # dormant code that raises them keeps importing; nothing routed can reach them.
 DORMANT_CODES = {"PLN_FORECAST_REASON_REQUIRED", "PLN_CASCADE_INCLUDES_ACTUAL_MILESTONE"}
+# Owner decision 26 Sep 2026 (the departmental correction route, PLN
+# FU-V127-05): three codes built ahead of the next PLN version's §8. Remove
+# them from here when the spec table carries them.
+OWED_TO_SPEC = {
+	"PLN_BUDGET_REVISION_ALREADY_DECLINED",
+	"PLN_DEPARTMENTAL_UPDATE_NOT_REQUIRED",
+	"PLN_DEPARTMENTAL_UPDATE_ALREADY_REQUESTED",
+}
 
 SCAN_DIRS = ("doctype", "services", "tests", "page", "seeds")
 SCAN_SUFFIXES = (".py", ".json")
@@ -297,9 +305,9 @@ class TestPlanningV123Schema(IntegrationTestCase):
 		# PLN_CASCADE_INCLUDES_ACTUAL_MILESTONE from the user-facing table with
 		# the forecast facility, so errors.py is a strict superset of the spec
 		# table by exactly those two dormant codes and by nothing else.
-		self.assertEqual(set(errors.ERROR_CODES) - set(table), DORMANT_CODES)
+		self.assertEqual(set(errors.ERROR_CODES) - set(table), DORMANT_CODES | OWED_TO_SPEC)
 		self.assertEqual(set(table) - set(errors.ERROR_CODES), set())
-		self.assertEqual(table, {k: v for k, v in errors.MESSAGES.items() if k not in DORMANT_CODES})
+		self.assertEqual(table, {k: v for k, v in errors.MESSAGES.items() if k not in DORMANT_CODES | OWED_TO_SPEC})
 		for removed in ("PLN_RESERVATION_RELEASE_FAILED", "PLN_TENDERING_PERIOD_BELOW_MINIMUM", "PLN_EVALUATION_PERIOD_ABOVE_MAXIMUM", "PLN_STANDSTILL_BELOW_MINIMUM"):
 			self.assertNotIn(removed, errors.ERROR_CODES)
 			with self.assertRaises(ValueError):

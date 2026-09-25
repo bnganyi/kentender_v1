@@ -50,15 +50,16 @@ export const METHOD_BLOCKED = {
 export const OVER_BUDGET = {
 	...METHOD_BLOCKED,
 	headline: "Over budget by KES 2,000,000 on Digital health workforce development",
-	sentence: "You can request the funding check once every budget line fits. Choose one way to fix it.",
+	sentence: "Purchase costs come from the departments' accepted requirements and cannot be lowered in the plan. You can request the funding check once the line's approved amount covers them.",
 	blockers: [
 		{
 			reason_code: "PLN_PLAN_NOT_AFFORDABLE",
 			headline: "Over budget by KES 2,000,000 on Digital health workforce development",
-			facts: [],
+			facts: [{ label: "Requirements on this line", value: "Human Resources Management and Development" }],
+			// Owner decision 26 Sep 2026 — the two recovery paths.
 			fixes: [
 				{ fix_id: "request_budget_revision", label: "Request budget revision from Josphat Mwangi", kind: "command", target: { budget_line: "MOH-BL-HWD-2027" }, primary: true, responsibility: "Budget Officer" },
-				{ fix_id: "reduce_purchase", label: "Reduce a purchase", kind: "focus", target: "purchases", primary: false, responsibility: "Procurement Planner" },
+				{ fix_id: "request_departmental_update", label: "Request departmental plan update from Human Resources Management and Development", kind: "command", target: { budget_line: "MOH-BL-HWD-2027", organisation_unit: "OU-HRMD" }, primary: false, responsibility: "Departmental Author" },
 			],
 		},
 	],

@@ -284,6 +284,11 @@ def problems(result: dict[str, Any] | None, *, has_enabled_action: bool = False)
 	if kind == KIND_YOUR_TURN:
 		if not result.get("headline"):
 			out.append("your turn without a headline")
+		if not (has_enabled_action or result.get("primary_action") or result.get("fixes")):
+			# "Your turn" with nothing to press is the dead end §3B.7 forbids
+			# (found live 25 Sep 2026: a Budget Officer told to revise a line
+			# on a page that offered no way to do it).
+			out.append("your turn without an action or a way to act")
 	elif kind == KIND_BLOCKED:
 		if not result.get("headline"):
 			out.append("blocked without a headline")

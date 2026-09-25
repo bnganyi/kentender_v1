@@ -51,13 +51,15 @@ UNITS = (
 FISCAL_START_YEARS = (2026, 2027)
 INTAKE = {"start_year": 2027, "closes_at": "2026-11-25 23:59:00"}
 # PLN-CHG-001 v1.12 §14.1 — departmental-plan intake for FY 2027/28 closes
-# 30 Nov 2026, 23:59:59 EAT (stored UTC).
-DPP_INTAKE = {"start_year": 2027, "closes_at": "2026-11-30 20:59:59"}
+# 30 Nov 2026, 23:59:59 EAT, stored in site time like every instant (owner
+# decision 26 Sep 2026; it was stored as UTC, so the gate, which compares
+# against the site clock, closed it at 20:59 EAT).
+DPP_INTAKE = {"start_year": 2027, "closes_at": "2026-11-30 23:59:59"}
 # CFG-CHG-002 v0.11 §4.3 — the third registered intake. Disposal plans are
 # called for the same year as the procurement plan; nothing consumes the
 # flag yet, but the Financial years tab lists the activity, so a seed that
 # left it closed showed one permanently unfinished row.
-DISPOSAL_INTAKE = {"start_year": 2027, "closes_at": "2026-11-30 20:59:59"}
+DISPOSAL_INTAKE = {"start_year": 2027, "closes_at": "2026-11-30 23:59:59"}
 
 # CFG-CHG-002 v0.9 §3 — the requirement-type and procurement-method
 # catalogues Configuration & Governance owns (PLN-CHG-001 v1.12 §14.1: four

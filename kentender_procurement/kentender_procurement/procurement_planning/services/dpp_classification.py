@@ -42,18 +42,12 @@ def _full_name(user: str) -> str:
 	return cstr(frappe.db.get_value("User", user, "full_name") or user)
 
 
-#: §4.1 — instants are UTC in storage and shown in Africa/Nairobi.
-NAIROBI = "Africa/Nairobi"
-
-
 def _eat(value) -> str:
-	"""A UTC instant rendered as EAT, the same way every other Planning read
-	does it."""
-	if not value:
-		return ""
-	from frappe.utils import convert_utc_to_timezone, format_datetime, get_datetime
+	"""A stored (site-timezone) instant as "25 Nov 2026, 10:00 EAT", the same
+	way every other Planning read does it — see `plan_read._eat`."""
+	from kentender_core.utils.display import display_datetime
 
-	return f"{format_datetime(convert_utc_to_timezone(get_datetime(value), NAIROBI), 'd MMM yyyy, HH:mm')} EAT"
+	return display_datetime(value)
 
 
 REASON_MIN = 20

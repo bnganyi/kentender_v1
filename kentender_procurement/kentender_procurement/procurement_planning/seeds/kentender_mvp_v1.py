@@ -184,22 +184,40 @@ COMBINED_ITEM_VALUES = {
 	"baseline_invitation_date": "2027-05-15",
 }
 
-# §14.4–14.6 design-clock instants, stored as the UTC equivalents of the
-# stated EAT times (read models render EAT, §12.13).
+# §14.4–14.6 design-clock instants, stored in the site timezone like every
+# other instant (owner decision 26 Sep 2026, FU-V127-01; they were UTC
+# equivalents while Planning's reads converted from UTC).
 CLOCK = {
-	"dpp_submitted": "2026-11-25 07:00:00",  # 25 Nov 2026, 10:00 EAT
-	"dpp_accepted": "2026-11-27 11:00:00",  # 27 Nov 2026, 14:00 EAT
-	"finance_confirmed": "2026-12-04 07:00:00",  # 4 Dec 2026, 10:00 EAT
-	"plan_submitted": "2026-12-05 07:00:00",  # 5 Dec 2026, 10:00 EAT
-	"ao_adopted": "2026-12-08 07:00:00",  # 8 Dec 2026, 10:00 EAT
-	"statutory_approved": "2026-12-09 08:00:00",  # 9 Dec 2026, 11:00 EAT
-	"publication_attempted": "2026-12-10 11:55:00",  # 10 Dec 2026, 14:55 EAT
-	"publication_acknowledged": "2026-12-10 12:00:00",  # 10 Dec 2026, 15:00 EAT
-	"treasury_submitted": "2026-12-10 11:00:00",  # 10 Dec 2026, 14:00 EAT (§10.12)
+	"dpp_submitted": "2026-11-25 10:00:00",
+	"dpp_accepted": "2026-11-27 14:00:00",
+	"finance_confirmed": "2026-12-04 10:00:00",
+	"plan_submitted": "2026-12-05 10:00:00",
+	"ao_adopted": "2026-12-08 10:00:00",
+	"statutory_approved": "2026-12-09 11:00:00",
+	"publication_attempted": "2026-12-10 14:55:00",
+	"publication_acknowledged": "2026-12-10 15:00:00",
+	"treasury_submitted": "2026-12-10 14:00:00",  # §10.12
+}
+#: The UTC values CLOCK held before 26 Sep 2026 — the one-off patch that
+#: moves already-seeded rows to site time matches these exactly.
+CLOCK_BEFORE_SITE_TIME = {
+	"dpp_submitted": "2026-11-25 07:00:00",
+	"dpp_accepted": "2026-11-27 11:00:00",
+	"finance_confirmed": "2026-12-04 07:00:00",
+	"plan_submitted": "2026-12-05 07:00:00",
+	"ao_adopted": "2026-12-08 07:00:00",
+	"statutory_approved": "2026-12-09 08:00:00",
+	"publication_attempted": "2026-12-10 11:55:00",
+	"publication_acknowledged": "2026-12-10 12:00:00",
+	"treasury_submitted": "2026-12-10 11:00:00",
 }
 
 _DOCTYPES = (
 	# dependents first, roots last
+	# PLN v1.27 / owner decision 26 Sep 2026 — the over-budget hand-offs
+	# (a budget revision request's Budget side goes with its Budget).
+	"Plan Budget Revision Request",
+	"Departmental Plan Update Request",
 	"Plan Drawdown Reference",
 	# PLN-CHG-001 v1.18 §5.5.2 publication chain. These were absent from the
 	# purge, so a reset left the previous run's Approved Plan Snapshot behind

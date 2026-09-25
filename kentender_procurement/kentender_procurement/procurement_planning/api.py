@@ -313,6 +313,18 @@ def request_budget_revision(plan_version: str, budget_line: str, expected_record
 
 
 @frappe.whitelist()
+def request_departmental_plan_update(plan_version: str, budget_line: str, organisation_unit: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	"""Owner decision 26 Sep 2026 — ask one department to update its accepted
+	departmental plan for an over-budget line; line and amounts server-derived."""
+	from kentender_procurement.procurement_planning.services import departmental_update
+
+	return departmental_update.request_departmental_plan_update(
+		plan_version=plan_version, budget_line=budget_line, organisation_unit=organisation_unit,
+		expected_record_version=expected_record_version, idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
 def withdraw_budget_revision_request(request: str, idempotency_key: str) -> dict[str, Any]:
 	"""PLN v1.27 §7.2 — withdraw an Open request once the line fits."""
 	from kentender_procurement.procurement_planning.services import budget_revision

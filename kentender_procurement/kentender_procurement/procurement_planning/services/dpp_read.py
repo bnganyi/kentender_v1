@@ -15,15 +15,13 @@ import json
 from typing import Any
 
 import frappe
-from frappe.utils import cstr, flt, fmt_money, format_datetime, formatdate
+from frappe.utils import cstr, flt, fmt_money, formatdate
 
 from kentender_core.services import site_configuration
 from kentender_procurement.procurement_planning.services import budget_gateway, dpp_classification, missing_setting, needs_intake, references
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.dpp_lifecycle import ATTESTATION, _has_any_submission, entry_is_complete
 from kentender_procurement.procurement_planning.services.planning_roles import ROLE_AUDITOR, ROLE_PROCUREMENT_PLANNER
-
-NAIROBI = "Africa/Nairobi"
 
 
 def _money(amount: float) -> str:
@@ -35,13 +33,11 @@ def _date(value) -> str:
 
 
 def _eat(value) -> str:
-	"""A UTC instant rendered as EAT (§12.13)."""
-	if not value:
-		return ""
-	from frappe.utils import convert_utc_to_timezone, get_datetime
+	"""A stored (site-timezone) instant as "25 Nov 2026, 10:00 EAT" — see
+	`plan_read._eat`."""
+	from kentender_core.utils.display import display_datetime
 
-	local = convert_utc_to_timezone(get_datetime(value), NAIROBI)
-	return f"{format_datetime(local, 'd MMM yyyy, HH:mm')} EAT"
+	return display_datetime(value)
 
 
 def _labels(root) -> dict[str, str]:
@@ -345,11 +341,18 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 	# line, because the summary strip and table already fill the first view.
 	from kentender_procurement.procurement_planning.services import next_step as plan_next_step
 
+	# Owner decision 26 Sep 2026 — Procurement's request to update this plan
+	# because a budget line of the plan update is over its approved amount.
+	from kentender_procurement.procurement_planning.services import departmental_update
+
+	requests = departmental_update.open_requests_for_plan(root.name)
+	request_notice = _request_notice(requests) if requests and access in ("author", "hod", "planner") else None
 	guidance = plan_next_step.dpp_guidance(
 		root, version, actor=actor, access=access, ready=ready, incomplete=incomplete,
 		entry_count=len(entries), window_closed=window["state"] == "Closed" and not _has_any_submission(root),
 		is_correction=is_correction, update_in_progress=update_in_progress,
 		reduced=access == "author" and bool(version) and version.version_status == "Draft",
+		update_requested_at=requests[0].requested_at if requests else None,
 	)
 	return {
 		"outcome": "OK",
@@ -406,6 +409,7 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 		"can_submit": mutable and ready and access == "hod",
 		"can_create_update": can_create_update,
 		"update_notice": update_notice,
+		"update_request_notice": request_notice,
 		"has_returned_issues": bool(issues_by_entry) or bool(plan_issues),
 		# §4.4 — an issue against the whole submission rather than one entry.
 		"plan_issues": plan_issues,
@@ -675,4 +679,25 @@ def get_dpp_validation_task(*, task: str, user: str | None = None) -> dict[str, 
 			"signed_line": f"Certified by {submitted_by} · {_eat(submission.submitted_at)}",
 		},
 		"decided": decided,
+	}
+
+
+def _request_notice(requests: list) -> dict[str, str]:
+	"""What Procurement asked of the department, in its words: which line,
+	by how much, the three choices, and who asked when."""
+	from kentender_procurement.procurement_planning.services.guards import money
+
+	lines = "; ".join(
+		f"{cstr(r.budget_line_title or r.budget_line_reference)} is over by {money(r.over_amount)}" for r in requests
+	)
+	first = requests[0]
+	asked_by = cstr(frappe.db.get_value("User", first.requested_by, "full_name") or first.requested_by)
+	return {
+		"title": "Procurement asks you to update this plan",
+		"text": (
+			f"The annual plan update is over its approved budget: {lines}. "
+			"In an update of this plan, correct the estimate, change the requirement, or mark it Do not proceed this financial year, "
+			"then submit the update for Procurement review."
+		),
+		"asked": f"Asked by {asked_by} on {_eat(first.requested_at)}",
 	}

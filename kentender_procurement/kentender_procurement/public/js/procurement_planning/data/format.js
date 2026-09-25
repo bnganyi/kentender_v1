@@ -32,19 +32,6 @@ export function formatDate(value) {
 	return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
-// East Africa Time is UTC+3 with no daylight-saving offset — the fixed
-// conversion `services/plan_read.py::_eat()` also uses for every governance/
-// publication instant.
-export function formatEat(value) {
-	if (!value) return "";
-	const d = new Date(String(value).replace(" ", "T") + (String(value).includes("Z") ? "" : "Z"));
-	if (Number.isNaN(d.getTime())) return value;
-	const eat = new Date(d.getTime() + 3 * 60 * 60 * 1000);
-	const hours = String(eat.getUTCHours()).padStart(2, "0");
-	const minutes = String(eat.getUTCMinutes()).padStart(2, "0");
-	return `${eat.getUTCDate()} ${MONTHS[eat.getUTCMonth()]} ${eat.getUTCFullYear()}, ${hours}:${minutes} EAT`;
-}
-
 // §4.1 quantities carry a governed UOM precision as a decimal string too
 // (`services/money.py::quantity_text`) — format without a float round-trip.
 export function formatQuantity(value, unit) {

@@ -93,6 +93,18 @@ def _delete_budget_graph(budget_name: str, deleted: dict[str, int]) -> None:
 				frappe.delete_doc("Procurement Budget Line Version", name, force=1, ignore_permissions=True)
 				deleted["Procurement Budget Line Version"] = deleted.get("Procurement Budget Line Version", 0) + 1
 
+	# BUD v1.11 — Planning's budget revision requests on this Budget and
+	# their outcome outbox (the outbox links the request, not the Budget).
+	if frappe.db.exists("DocType", "Budget Revision Request"):
+		request_names = frappe.get_all("Budget Revision Request", filters={"budget": budget_name}, pluck="name")
+		if request_names and frappe.db.exists("DocType", "Budget Revision Request Event"):
+			for name in frappe.get_all("Budget Revision Request Event", filters={"budget_revision_request": ["in", request_names]}, pluck="name"):
+				frappe.delete_doc("Budget Revision Request Event", name, force=1, ignore_permissions=True)
+				deleted["Budget Revision Request Event"] = deleted.get("Budget Revision Request Event", 0) + 1
+		for name in request_names:
+			frappe.delete_doc("Budget Revision Request", name, force=1, ignore_permissions=True)
+			deleted["Budget Revision Request"] = deleted.get("Budget Revision Request", 0) + 1
+
 	for doctype in _BUDGET_CHILD_DOCTYPES:
 		if not frappe.db.exists("DocType", doctype):
 			continue

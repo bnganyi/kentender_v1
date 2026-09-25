@@ -47,7 +47,7 @@ from kentender_core.services import site_configuration
 NS_PW = "KENTENDER_REQ_PLAYWRIGHT"
 FY_START = 2099
 FY = "2099-2100"
-INTAKE_CLOSES_AT = f"{FY_START}-12-31 20:59:59"  # 31 Dec, 23:59 EAT — pinned
+INTAKE_CLOSES_AT = f"{FY_START}-12-31 23:59:59"  # 31 Dec, 23:59 EAT (site time) — pinned
 PREVIOUS_FLAGS_KEY = "kt_req_playwright_previous_flags"
 UNIT = "Each"
 DELIVERY_LOCATION = "Playwright — Requisitions Delivery Location"
@@ -113,7 +113,7 @@ DIRECT_ITEM_VALUES = {
 # §16.4's own timeline instants, reused verbatim for the authorised fixture
 # (a screen that renders an exact date/time needs a pinned one, not `now`).
 CLOCK = {
-	"authorised": f"{FY_START}-09-15 07:00:00",  # 15 Sep, 10:00 EAT
+	"authorised": f"{FY_START}-09-15 10:00:00",  # 15 Sep, 10:00 EAT (site time)
 }
 
 

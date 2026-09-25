@@ -45,7 +45,7 @@ NS_PW = "KENTENDER_PLAYWRIGHT"
 FY_START = 2098
 FY = "2098-2099"
 FY_LABEL = "FY 2098/99"
-INTAKE_CLOSES_AT = "2099-05-31 20:59:59"  # 31 May 2099, 23:59 EAT — pinned
+INTAKE_CLOSES_AT = "2099-05-31 23:59:59"  # 31 May 2099, 23:59 EAT (site time) — pinned
 PREVIOUS_FLAGS_KEY = "kt_pln_playwright_previous_flags"
 #: §13.3 Collective authority — the statutory route is one site-wide value,
 #: so a Council profile must put back whatever the site had before.
@@ -437,6 +437,8 @@ def _wipe() -> None:
 		frappe.db.delete("Budget Revision Request Event", {"budget_revision_request": ("in", budget_side or ("",))})
 		frappe.db.delete("Budget Revision Request", {"name": ("in", budget_side or ("",))})
 	frappe.db.delete("Plan Budget Revision Request", {"name": ("in", requests or ("",))})
+	# owner decision 26 Sep 2026 — the departmental correction route's requests
+	frappe.db.delete("Departmental Plan Update Request", {"plan_version": ("in", plan_versions or ("",))})
 	for task_doctype, decision_doctype in (("Plan Finance Task", "Plan Finance Decision"), ("Plan Governance Task", "Plan Governance Decision")):
 		task_rows = frappe.get_all(task_doctype, filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
 		frappe.db.delete(decision_doctype, {"task": ("in", task_rows or ("",))})

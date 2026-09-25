@@ -12,7 +12,8 @@ row the four §3B.7 rules are asserted:
    reason (`kentender_core.services.next_step.problems`);
 2. every blocker carries a reason code and a fix (same helper);
 3. every route fix opens a Planning (or System setup) page;
-4. the next step's stage is the stage the tracker shows as current.
+4. the next step's stage is the stage the tracker shows as current;
+5. no reader is told to wait for themselves (found live 25 Sep 2026).
 
 Plus §3B.6: a technical reader never gets Your turn except on the one named
 exception (O4, publication recovery). The matrix is written to
@@ -29,6 +30,7 @@ from kentender_core.services import next_step as ns
 from kentender_procurement.procurement_planning.errors import ProcurementPlanningError
 from kentender_procurement.procurement_planning.services import (
 	budget_revision,
+	departmental_update,
 	dpp_read,
 	plan_finance,
 	plan_governance,
@@ -45,6 +47,10 @@ READERS = (
 	("Head of Department", fx.HOD),
 	("Finance Confirmation Officer", fx.FINANCE_OFFICER),
 	("Budget Officer", fx.BUDGET_OFFICER),
+	# one person holding two responsibilities (§6.1 permits combinations) —
+	# found live 25 Sep 2026 told to wait for themselves
+	("Finance Confirmation Officer and Budget Officer", fx.FINANCE_BUDGET),
+	("Procurement Planner and Finance Confirmation Officer", fx.HYBRID_FINANCE),
 	("Head of Procurement Function", fx.HOPF),
 	("Accounting Officer", fx.ACCOUNTING_OFFICER),
 	("Statutory approver", fx.STATUTORY),
@@ -52,7 +58,9 @@ READERS = (
 	("Technical reader", "Administrator"),
 	("Outsider", fx.OUTSIDER),
 )
-ROUTES = {"annual-procurement-plan", "procurement-plan-item", "departmental-procurement-plan", "procurement-planning", "system-setup"}
+# Planning's own pages, System setup, and Budget (where a budget revision
+# request is decided — BUD presents the Budget Officer's turn, §5.7).
+ROUTES = {"annual-procurement-plan", "procurement-plan-item", "departmental-procurement-plan", "procurement-planning", "system-setup", "budget-funding"}
 TURNS = (ns.KIND_YOUR_TURN, ns.KIND_BLOCKED)
 # O4 — the one named exception to §3B.6.
 TECHNICAL_TURN_STATES = {"Publication failed"}
@@ -103,6 +111,8 @@ class TestPlanningDeadEndMatrix(PublicationCase):
 			current = journey.get("current")
 			if kind in (*TURNS, ns.KIND_WAITING) and current and step.get("stage") and step["stage"] != current:
 				problems.append(f"stage {step['stage']} is not the tracker's {current}")
+			if kind == ns.KIND_WAITING and frappe.db.get_value("User", user, "full_name") in ((step.get("holder") or {}).get("people") or []):
+				problems.append("the reader is told to wait for themselves")
 			if user == "Administrator" and kind in TURNS and state not in TECHNICAL_TURN_STATES:
 				problems.append("a technical reader was given a turn")
 			result = "pass" if not problems else "FAIL: " + "; ".join(problems)
@@ -142,6 +152,16 @@ class TestPlanningDeadEndMatrix(PublicationCase):
 		for name in allocations:
 			frappe.db.set_value("Plan Source Allocation", name, "indicative_amount", 150_000_000, update_modified=False)
 		failures += self.check("Draft — over budget", self.plan(reference))
+		# owner decision 26 Sep 2026 — the departmental correction route
+		frappe.set_user(fx.PLANNER)
+		view = plan_read.get_annual_plan(plan_reference=reference)
+		departmental_update.request_departmental_plan_update(
+			plan_version=view["version_reference"], budget_line=fx.BUDGET_LINE, organisation_unit=fx.OU_ALPHA,
+			expected_record_version=view["record_version"], idempotency_key=key(),
+		)
+		failures += self.check("Draft — waiting for a departmental plan update", self.plan(reference))
+		dpp_reference = frappe.db.get_value("Departmental Plan", dpp, "dpp_reference")
+		failures += self.check("Departmental plan — update requested", lambda user: dpp_read.get_departmental_plan(dpp_reference=dpp_reference, user=user))
 		frappe.set_user(fx.PLANNER)
 		view = plan_read.get_annual_plan(plan_reference=reference)
 		budget_revision.request_budget_revision(

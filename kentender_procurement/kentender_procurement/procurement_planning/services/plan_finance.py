@@ -173,6 +173,9 @@ def request_plan_funding_confirmation(*, plan_version: str, expected_record_vers
 		from kentender_procurement.procurement_planning.services import budget_revision
 
 		budget_revision.withdraw_fitting_requests(version, actor=actor)
+		from kentender_procurement.procurement_planning.services import departmental_update
+
+		departmental_update.withdraw_for_version(version.name, reason="The plan update was sent to Finance.")
 
 	basis, statement = financial_basis.capture(plan, version, correlation=idempotency_key)
 	if not statement.get("within_approved"):

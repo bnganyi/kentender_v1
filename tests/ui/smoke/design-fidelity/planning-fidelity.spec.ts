@@ -479,7 +479,10 @@ test.describe("Procurement Planning — design fidelity (U07 annual plan, U08 fo
 		const block = page.locator(".kt-next-step-block");
 		await expect(block).toContainText("Over budget by KES 2,000,000");
 		await expect(block.getByRole("button", { name: /^Request budget revision from / })).toBeVisible();
-		await expect(block.getByRole("button", { name: "Reduce a purchase" })).toBeVisible();
+		// Owner decision 26 Sep 2026: the departmental correction route replaces
+		// "Reduce a purchase" (the purchase editor locks the amount).
+		await expect(block.getByRole("button", { name: /^Request departmental plan update from / })).toBeVisible();
+		await expect(block.getByRole("button", { name: "Reduce a purchase" })).toHaveCount(0);
 		await expect(page.locator('[data-testid="ppl-budget-fit-table"]')).toContainText("Over by KES 2,000,000");
 		await expect(page.locator(`${LIVE}`)).not.toContainText("Not yet checked");
 		await expect(page.locator(".kt-journey-stage.is-blocked")).toContainText("Preparation");
