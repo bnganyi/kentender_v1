@@ -6,6 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import FinanceTaskScreen from "./FinanceTaskScreen.vue";
+import { FINANCE_RETURN, FINANCE_TURN, NOT_INVOLVED, REASSESS_TURN, planJourney } from "./guidance.fixtures.js";
 
 function line(overrides = {}) {
 	return {
@@ -48,6 +49,8 @@ function task(overrides = {}) {
 		as_at_display: "3 Dec 2026, 09:00 EAT",
 		lines: [line(), line({ budget_line: "bl-hwd", budget_line_reference: "MOH-BL-HWD-2027", line_name: "Digital health workforce development", approved_display: "KES 60,000,000", planned_display: "KES 50,000,000", difference_display: "KES 10,000,000", available_display: "KES 60,000,000" })],
 		history: [],
+		next_step: FINANCE_TURN,
+		journey: planJourney("funding", { holder: "Josphat Mwangi" }),
 		...overrides,
 	};
 }
@@ -61,7 +64,14 @@ describe("FinanceTaskScreen — U10 BASE", () => {
 		const w = make();
 		expect(w.find('[data-testid="fnt-title"]').text()).toBe("Check funding for the annual plan");
 		expect(w.text()).toContain("Confirm whether each planned amount is within its approved budget line.");
-		expect(w.find('[data-testid="fnt-badge"]').text()).toBe("Your decision required");
+	});
+
+	it("says whose turn it is and where the plan stands, in place of the status badge", () => {
+		const w = make();
+		expect(w.find('[data-testid="fnt-badge"]').exists()).toBe(false);
+		expect(w.find(".kt-page-head .kt-next-step").text()).toBe("Your turn Confirm plan funding or return the plan to the planner");
+		expect(w.find(".kt-journey-stage.is-current").text()).toContain("Funding confirmation");
+		expect(w.find(".kt-journey-stage.is-current").text()).toContain("Josphat Mwangi");
 	});
 
 	it("puts approved, planned, difference and result in the first view", () => {
@@ -125,6 +135,7 @@ describe("FinanceTaskScreen — availability versus affordability", () => {
 		const w = make({
 			task: task({
 				can_confirm: false,
+				next_step: FINANCE_RETURN,
 				lines: [
 					line({
 						approved_display: "KES 70,000,000",
@@ -143,12 +154,16 @@ describe("FinanceTaskScreen — availability versus affordability", () => {
 		);
 		expect(w.find('[data-testid="fnt-confirm"]').exists()).toBe(false);
 		expect(w.find('[data-testid="fnt-return"]').attributes("disabled")).toBeUndefined();
+		expect(w.find(".kt-page-head .kt-next-step").text()).toBe("Your turn Return the plan to the planner");
 	});
 });
 
 describe("FinanceTaskScreen — other states", () => {
 	it("U10-REASSESS: retitles and says it is evidence, not re-approval", () => {
-		const w = make({ task: task({ is_reassessment: true }) });
+		const w = make({ task: task({ is_reassessment: true, next_step: REASSESS_TURN, journey: null }) });
+		// outside the approval journey (§5.3.4): the line, no tracker
+		expect(w.find(".kt-page-head .kt-next-step").text()).toBe("Your turn Check the current plan against the revised budget");
+		expect(w.find(".kt-journey").exists()).toBe(false);
 		expect(w.find('[data-testid="fnt-title"]').text()).toBe("Check funding again for the current plan");
 		expect(w.find('[data-testid="fnt-reassessment-notice"]').text()).toContain(
 			"does not change or re-approve the plan",
@@ -177,8 +192,11 @@ describe("FinanceTaskScreen — other states", () => {
 	});
 
 	it("shows no decision area once the review is decided", () => {
-		const w = make({ task: task({ status: "Completed", can_decide: false, can_confirm: false }) });
+		const w = make({ task: task({ status: "Completed", can_decide: false, can_confirm: false, next_step: NOT_INVOLVED, journey: planJourney("in_force", {}) }) });
 		expect(w.find('[data-testid="fnt-footer"]').exists()).toBe(false);
+		// U10-HISTORY: not involved — no line; the tracker still orients
+		expect(w.find(".kt-next-step").exists()).toBe(false);
+		expect(w.find(".kt-journey").exists()).toBe(true);
 		expect(w.find('[data-testid="fnt-comparison"]').exists()).toBe(true);
 	});
 });

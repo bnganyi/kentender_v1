@@ -46,9 +46,11 @@ test.describe("PLN18-306 Finance task", () => {
 		await page.locator('[data-testid="ppl-open-task"]').click();
 		await expectReady(page, "finance");
 		await expect(page).toHaveURL(new RegExp(`/procurement-planning/finance/${state.task}$`));
-		// §10.9 — the badge names what this reader has to do, not which queue
-		// the record is sitting in.
-		await expect(page.locator('[data-testid="fnt-badge"]')).toHaveText("Your decision required");
+		// PLN v1.27 §10.9 — the next-step line (which replaced the badge) says
+		// what this reader has to do, and the tracker where the plan stands.
+		await expect(page.locator('[data-testid="fnt-badge"]')).toHaveCount(0);
+		await expect(page.locator(".kt-page-head .kt-next-step")).toHaveText(/^Your turn\s+Confirm plan funding or return the plan to the planner$/);
+		await expect(page.locator(".kt-journey-stage.is-current")).toContainText("Funding confirmation");
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
@@ -81,6 +83,10 @@ test.describe("PLN18-306 Finance task", () => {
 		await expect(page.locator('[data-testid="fnt-return"]')).toHaveCount(0);
 		// U10-history — the decided review is on record, with its outcome.
 		await expect(page.locator('[data-testid="fnt-history"]')).toContainText("Confirmed");
+		// PLN v1.27 U10-HISTORY — read after the fact it involves no one: no
+		// next-step line, and the tracker shows funding confirmation done.
+		await expect(page.locator(".kt-next-step, .kt-next-step-block")).toHaveCount(0);
+		await expect(page.locator(".kt-journey-stage").nth(1)).toHaveClass(/is-done/);
 	});
 
 	test("Finance returns a plan to the planner with a reason", async ({ page }) => {

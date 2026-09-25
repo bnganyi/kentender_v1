@@ -41,8 +41,10 @@
 						<span>{{ task.plan_reference }}</span>
 						<span>· Version {{ task.version_number }}</span>
 						<span v-if="task.financial_year_label">· {{ task.financial_year_label }}</span>
-						<span v-if="scopePhrase">· {{ scopePhrase }}</span>
 					</div>
+					<!-- PLN v1.27 §10.10 — the next step takes the orientation slot;
+					     the tracker carries the stage the scope line used to name. -->
+					<div ref="headEl" class="kt-guidance-mount" data-testid="rev-next-step-line"></div>
 				</div>
 				<div v-if="task.can_download_review_pack" class="kt-page-actions">
 					<button
@@ -56,14 +58,11 @@
 				</div>
 			</div>
 
-			<!-- U11-HOPF/-AO/-STATUTORY — the actor reads what they are about to
-			     do up front, before any evidence, not only again by the buttons. -->
-			<div v-if="canDecideNow" class="kt-notice" data-testid="rev-statement-notice">
-				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-					<path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z"></path><path d="M12 16v-4"></path><path d="M12 8h.01"></path>
-				</svg>
-				<div class="kt-notice-body">{{ actor.statement }}</div>
-			</div>
+			<!-- Owner decision O3 (25 Sep 2026): the actor statement is stated
+			     once, beside the buttons; the next-step line above is the
+			     up-front orientation. -->
+			<div ref="journeyEl" class="kt-guidance-mount" data-testid="rev-journey"></div>
+			<div ref="bodyEl" class="kt-guidance-mount" data-testid="rev-next-step-block"></div>
 
 			<!-- U11-READER-HISTORICAL — a Version that is no longer the Plan's
 			     active one, read plainly rather than left to be inferred from
@@ -220,11 +219,14 @@
 				<h2>Accountability</h2>
 				<div class="kt-group">
 					<div class="kt-meta-row">
-						<div>
-							<span class="kt-label">Funding</span>
-							<span class="kt-meta-value" style="font-size: 14px">{{ fundingAt.actor_name ? "Within each approved budget line" : "Not yet checked" }}</span>
-						</div>
+						<!-- PLN v1.27 — never "Not yet checked": a plan reaches this
+						     review only after Finance confirmed it, so the fact is
+						     stated when recorded and omitted otherwise. -->
 						<template v-if="fundingAt.actor_name">
+							<div>
+								<span class="kt-label">Funding</span>
+								<span class="kt-meta-value" style="font-size: 14px">Within each approved budget line</span>
+							</div>
 							<div><span class="kt-label">Checked by</span><span class="kt-meta-value" style="font-size: 14px">{{ fundingAt.actor_name }}</span></div>
 							<div><span class="kt-label">Checked at</span><span class="kt-meta-value" style="font-size: 14px">{{ fundingAt.decided_at_display }}</span></div>
 						</template>
@@ -354,7 +356,8 @@
 					<!-- §10.16 C01-ROUTE-MISSING — adoption creates the statutory
 					     approval task, so an unassigned approver blocks it. Stated with
 					     the decision, immediately above it. -->
-					<MissingSettingPanel v-if="task.missing_setting" :panel="task.missing_setting" />
+					<!-- §10.16 — not repeated beside a next-step block that states it. -->
+					<MissingSettingPanel v-if="task.missing_setting && !settingsStated(task.next_step).has(task.missing_setting.setting)" :panel="task.missing_setting" />
 
 					<div class="pln-footer-actions" data-testid="rev-footer">
 						<button
@@ -413,6 +416,7 @@
 import { computed, ref } from "vue";
 import MissingSettingPanel from "./MissingSettingPanel.vue";
 import ReservationAllocation from "./ReservationAllocation.vue";
+import { settingsStated, useGuidance } from "../../pln_shared/composables/useGuidance.js";
 
 const props = defineProps({
 	task: { type: Object, default: () => ({}) },
@@ -446,17 +450,10 @@ const signature = computed(() => props.task.preparation_signature);
 
 const canDecideNow = computed(() => props.task.status === "Open" && props.task.can_decide);
 
-// U11-HOPF/-AO/-STATUTORY vs U11-READER/-READER-HISTORICAL — the scope
-// line's last segment: what an actor still owes, or that a reader is simply
-// looking at the current plan. Historical drops it — the notice below
-// already says so.
-const scopePhrase = computed(() => {
-	if (props.task.historical) return "";
-	if (!props.task.can_decide) return "Current plan";
-	if (props.task.stage === "Accounting Officer adoption") return "Awaiting Accounting Officer";
-	if (props.task.stage === "Statutory approval") return `Awaiting ${authority.value.capacity_detail || "statutory authority"}`;
-	return props.task.stage || "";
-});
+const headEl = ref(null);
+const journeyEl = ref(null);
+const bodyEl = ref(null);
+useGuidance({ journeyEl, headEl, bodyEl }, { answer: () => props.task.next_step, journey: () => props.task.journey, pending: () => props.pending });
 
 const fundingAt = computed(() => funding.value.at_approval || {});
 

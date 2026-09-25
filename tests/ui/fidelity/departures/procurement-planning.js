@@ -88,6 +88,96 @@ export const DEPARTURES = {
 			authority: "Owner review of the U07 purchases table, 23 September 2026",
 		},
 	],
+	// PLN v1.27 §10.6 — the two new update variants (UPDATE-OVER-BUDGET
+	// fixture): the same history departure as U07.
+	"AnnualPlanScreen#U07-UPDATE-OVER-BUDGET": [
+		{
+			testid: "ppl-history-timeline",
+			because:
+				"The update's Changes and history draws the changed-purchases table (built) plus one " +
+				"provenance line; the build keeps the shared acceptance timeline beneath the table, as " +
+				"on U07, rather than a paragraph per acceptance.",
+			authority: "PLN-CHG-001 §9.4 shared timeline pattern (as AnnualPlanScreen#U07)",
+		},
+	],
+	"AnnualPlanScreen#U07-WAITING-BUDGET-REVISION": [
+		{
+			testid: "ppl-history-timeline",
+			because:
+				"The update's Changes and history draws the changed-purchases table (built) plus one " +
+				"provenance line; the build keeps the shared acceptance timeline beneath the table, as " +
+				"on U07, rather than a paragraph per acceptance.",
+			authority: "PLN-CHG-001 §9.4 shared timeline pattern (as AnnualPlanScreen#U07)",
+		},
+	],
+	// PLN v1.27 §10.5 — the grouped-requirements review (owner decision 25 Sep).
+	// PLN v1.27 §10.4 — U02–U05 variants that abbreviate the summary strip.
+	"DppPlanScreen#U02-CLOSED": [
+		{
+			testid: "pln-dpp-summary",
+			because:
+				"This variant's board is drawn from its parent and leaves out the summary strip " +
+				"(requirements, cost, requirements needing details) that U02-AUTHOR-DRAFT and U05-HOD " +
+				"draw; the build keeps the same strip on every U02–U05 state, so the counts do not " +
+				"appear and disappear between states of one plan.",
+			authority: "PLN-CHG-001 §10.4 U02 summary strip, inherited by its variants",
+		},
+	],
+	"DppPlanScreen#U05-CORRECTION": [
+		{
+			testid: "pln-dpp-summary",
+			because:
+				"This variant's board is drawn from its parent and leaves out the summary strip " +
+				"(requirements, cost, requirements needing details) that U02-AUTHOR-DRAFT and U05-HOD " +
+				"draw; the build keeps the same strip on every U02–U05 state, so the counts do not " +
+				"appear and disappear between states of one plan.",
+			authority: "PLN-CHG-001 §10.4 U02 summary strip, inherited by its variants",
+		},
+	],
+	"DppValidationScreen#U06": [
+		{
+			testid: "pln-review-row",
+			replaces: ["region > group"],
+			because:
+				"The board draws each certified requirement as bare lines with its budget line and the " +
+				"Planner's classification in one group. Three requirements read as one undivided stack of " +
+				"titles, selects and budget lines, so each requirement is its own numbered block: the " +
+				"department's facts (budget line included) together, then the Planner's decision in its own strip.",
+			authority: "Owner decision on the U06 review layout, 25 September 2026",
+		},
+	],
+	"DppValidationScreen#U06-SEGREGATION": [
+		{
+			testid: "pln-review-row",
+			replaces: ["region > table"],
+			because:
+				"The board draws the certifier's read-only view as a table; the build keeps the same " +
+				"grouped requirement blocks as the Planner's review (without any classification control), " +
+				"so the two readings of one submission look alike.",
+			authority: "Owner decision on the U06 review layout, 25 September 2026",
+		},
+	],
+	// PLN v1.27 §10.10 U11-PLANNER — the reader layout, "same complete content".
+	"PublicationResultScreen#U13": [
+		{
+			testid: "pub-context",
+			because:
+				"The U13 board stacks the plan title, reference and version as three unstyled lines; " +
+				"U13-FAILED-AO and every other Planning header draw the one `.kt-page-scope` line, " +
+				"which the build uses on every U13 state (found live 24 Sep 2026).",
+			authority: "PLN-CHG-001 §10.12 header; U13-FAILED-AO board",
+		},
+	],
+	"ReviewScreen#U11-PLANNER": [
+		{
+			testid: "rev-no-issues",
+			because:
+				"The reader boards (U11-READER, U11-PLANNER) leave the Decision summary's " +
+				"'No blocking issues' line out; §10.10 gives a reader the same complete content as " +
+				"the deciding actor, and that line is part of the Decision summary.",
+			authority: "PLN-CHG-001 §10.10 U11-READER ('Same complete content')",
+		},
+	],
 	"ReviewScreen#U11-AO": [
 		{
 			testid: "rev-no-issues",
@@ -171,9 +261,22 @@ export const DEPARTURES = {
 export const COVERED = [
 	"AnnualPlanScreen#U07",
 	"AnnualPlanScreen#U07-FINANCE-COMPLETE",
+	"AnnualPlanScreen#U07-UPDATE-OVER-BUDGET",
+	"AnnualPlanScreen#U07-WAITING-BUDGET-REVISION",
+	"DppPlanScreen#U02-AUTHOR-DRAFT",
+	"DppPlanScreen#U02-CLOSED",
+	"DppPlanScreen#U05-HOD",
+	"DppPlanScreen#U05-CORRECTION",
+	"DppValidationScreen#U06",
+	"DppValidationScreen#U06-SEGREGATION",
+	"WorkspaceScreen#U01",
+	"WorkspaceScreen#U01-CURRENT-UPDATE-OVER-BUDGET",
+	"WorkspaceScreen#U01-CURRENT-UPDATE-WAITING-BUDGET",
 	"WorkspaceScreen#U01-HOD",
 	"FinanceTaskScreen#U10",
+	"PublicationResultScreen#U13",
 	"ReviewScreen#U11-AO",
+	"ReviewScreen#U11-PLANNER",
 	"SourceEvidenceScreen#U12",
 	"ProgressScreen#U14",
 	"CorrectionRequestsScreen#U16",

@@ -16,6 +16,7 @@ from kentender_procurement.procurement_planning.services import (
 	dpp_lifecycle,
 	dpp_read,
 	dpp_validation,
+	my_work_provider,
 	needs_intake,
 )
 from kentender_procurement.procurement_planning.tests import fixtures as fx
@@ -458,6 +459,17 @@ class TestAcceptedPlanUpdate(DppReadCase):
 		frappe.set_user(fx.PLANNER)
 		self.assertFalse(dpp_read.get_departmental_plan(dpp_reference=reference)["can_create_update"])
 
+	def test_several_later_needs_are_named_in_the_plural(self):
+		reference = self.accepted()
+		sources = [fx.accepted_source(), fx.accepted_source("NEED-PLNT-0002", version="NEED-PLNT-0002-V1")]
+		patched = patch.object(needs_intake, "current_accepted_sources", return_value=sources)
+		patched.start()
+		self.addCleanup(patched.stop)
+		frappe.set_user(fx.AUTHOR)
+		notice = dpp_read.get_departmental_plan(dpp_reference=reference)["update_notice"]
+		self.assertEqual(notice["title"], "2 accepted needs are not in this plan")
+		self.assertIn("to carry them into", notice["text"])
+
 	def test_a_need_accepted_later_is_named_and_the_update_carries_it(self):
 		reference = self.accepted()
 		patched = patch.object(needs_intake, "current_accepted_sources", return_value=[fx.accepted_source()])
@@ -467,6 +479,21 @@ class TestAcceptedPlanUpdate(DppReadCase):
 		view = dpp_read.get_departmental_plan(dpp_reference=reference)
 		self.assertEqual(view["update_notice"]["title"], "1 accepted need is not in this plan")
 		self.assertIn("NEED-PLNT-0001", view["update_notice"]["text"])
+		self.assertIn("to carry it into", view["update_notice"]["text"])
+
+		# The department is told in My Work, not only on a page it has to think
+		# to open (found live 25 Sep 2026: a Need accepted after its plan was
+		# accepted looked stranded). Same rule as the page's Create update.
+		def update_rows(user):
+			return [r for r in my_work_provider.my_work_rows(user=user)["assigned"] if r["task_type"] == "planning.dpp_update_required"]
+
+		for user in (fx.AUTHOR, fx.HOD):
+			rows = [r for r in update_rows(user) if r["reference"] == reference]
+			self.assertEqual(len(rows), 1, user)
+			self.assertEqual(rows[0]["route"], ["departmental-procurement-plan", reference])
+			self.assertEqual(rows[0]["action_label"], "Create update")
+			self.assertIn("1 accepted need not in plan", rows[0]["stage"])
+		self.assertEqual([r for r in update_rows(fx.PLANNER) if r["reference"] == reference], [])
 
 		update = dpp_lifecycle.create_departmental_plan_update(
 			departmental_plan=reference, expected_record_version=view["record_version"], idempotency_key=key(),
@@ -475,6 +502,7 @@ class TestAcceptedPlanUpdate(DppReadCase):
 		after = dpp_read.get_departmental_plan(dpp_reference=reference)
 		self.assertFalse(after["can_create_update"])
 		self.assertIsNone(after["update_notice"])
+		self.assertEqual([r for r in update_rows(fx.AUTHOR) if r["reference"] == reference], [])
 		self.assertTrue(after["mutable"])
 		# the window gates only a first submission (§5.1) — say so on the update
 		fx.close_test_intake()
@@ -592,6 +620,29 @@ class TestValidationTaskRead(DppReadCase):
 		)
 		result = dpp_read.get_dpp_validation_task(task=own_task.name)
 		self.assertTrue(result["maker_checker_blocked"])
+		# PLN v1.27 §10.5 U06-SEGREGATION — Waiting, naming the other
+		# Planners who can review it (never the certifier), since submission.
+		step = result["next_step"]
+		self.assertEqual(step["kind"], "waiting")
+		self.assertEqual(step["headline"], "Waiting for Procurement review by another Procurement Planner")
+		planner_name = frappe.db.get_value("User", fx.PLANNER, "full_name")
+		hybrid_name = frappe.db.get_value("User", fx.HYBRID, "full_name")
+		self.assertIn(planner_name, step["holder"]["people"])
+		self.assertNotIn(hybrid_name, step["holder"]["people"])
+		self.assertTrue(step["since"]["display"].endswith("EAT"))
+
+	def test_the_review_supplies_its_own_wording_for_an_unclassified_requirement(self):
+		"""§10.5 U06-CLASSIFICATION-MISSING — the count depends on the
+		Planner's unsaved choices, so the read supplies the words and the
+		screen only fills in the number."""
+		task, _ = self.submitted_task()
+		frappe.set_user(fx.PLANNER)
+		result = dpp_read.get_dpp_validation_task(task=task.name)
+		self.assertEqual(result["next_step"]["headline"], "Classify every included requirement, then accept or return the submission")
+		self.assertEqual(result["classification_prompt"], {
+			"one": "Select the requirement type for 1 requirement, then accept",
+			"many": "Select the requirement type for {count} requirements, then accept",
+		})
 
 	def test_non_planner_gets_not_found(self):
 		task, _ = self.submitted_task()

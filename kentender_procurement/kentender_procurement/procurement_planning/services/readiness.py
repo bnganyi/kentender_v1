@@ -392,28 +392,50 @@ def item_blockers(item, allocations: list, fiscal_year: str, *, objective_eligib
 	category = cstr(item.get("procurement_category")) or "Services"
 	resolved = method_profile_for(item, fiscal_year)
 	method_profile, schedule_profile = resolved["method"], resolved["schedule"]
-	if "method" in resolved["unresolved"] or not method_profile.get("found"):
-		blockers.append({"code": "PLN_REFERENCE_UNAVAILABLE", "field": "procurement_method"})
-	else:
+	submission = stage == "submission"
+	# PLN v1.27 D2 (§5.6 item 4): every purchase needs a selected method before
+	# the funding request — it is purchase content, so an unselected method is
+	# `PLN_PLAN_CONTENTS_INCOMPLETE` on that purchase, never a missing rule or
+	# setting. It used to surface as `PLN_REFERENCE_UNAVAILABLE`, which the
+	# issue list then suppressed as panel-owned, so the refusal blamed "the
+	# setting shown" for a purchase that simply had no method yet.
+	method_selected = bool(cstr(item.get("procurement_method")).strip())
+	if not method_selected:
+		blockers.append({"code": "PLN_PLAN_CONTENTS_INCOMPLETE", "field": "procurement_method"})
+	elif "method" in resolved["unresolved"] or not method_profile.get("found"):
+		# A selected method whose profile is missing or unverified blocks only
+		# Sign and submit Annual Plan (§5.5.1, §5.5.3.3).
+		if submission:
+			blockers.append({"code": "PLN_REFERENCE_UNAVAILABLE", "field": "procurement_method"})
+	elif submission:
+		# Method conditions and their evidence gate submission, not the funding
+		# request: §5.5.3.3 permits Draft work and blocks submission where the
+		# method's eligibility or evidence is incomplete.
 		outcome = profiles.method_conditions(method_profile, procurement_category=category, planned_value=value, evidence_rows=item_evidence(item))
 		if not outcome["admissible"]:
 			blockers.append({"code": "PLN_METHOD_NOT_ADMISSIBLE", "field": "procurement_method"})
-		if stage == "submission":
-			if not outcome["evidence_complete"]:
-				blockers.append({"code": "PLN_METHOD_EVIDENCE_REQUIRED", "field": "method_condition_evidence"})
-			if not profiles.is_verified(method_profile):
-				blockers.append({"code": "PLN_REFERENCE_UNAVAILABLE", "field": "method_profile_version"})
-	if "schedule" in resolved["unresolved"] or not schedule_profile.get("found"):
-		blockers.append({"code": "PLN_REFERENCE_UNAVAILABLE", "field": "schedule_profile_version"})
-	elif stage == "submission" and (not schedule_profile.get("complete") or not profiles.is_verified(schedule_profile)):
+		if not outcome["evidence_complete"]:
+			blockers.append({"code": "PLN_METHOD_EVIDENCE_REQUIRED", "field": "method_condition_evidence"})
+		if not profiles.is_verified(method_profile):
+			blockers.append({"code": "PLN_REFERENCE_UNAVAILABLE", "field": "method_profile_version"})
+	# The schedule is calculated from the method's profile, so it can only be
+	# assessed once a method with a found schedule profile exists. Before that
+	# it is not a separate failure (the U07 BASE Schedule result: "calculated
+	# once a procurement method is chosen").
+	schedule_calculable = method_selected and "schedule" not in resolved["unresolved"] and bool(schedule_profile.get("found"))
+	if not schedule_calculable:
+		if submission and method_selected:
+			blockers.append({"code": "PLN_REFERENCE_UNAVAILABLE", "field": "schedule_profile_version"})
+	elif submission and (not schedule_profile.get("complete") or not profiles.is_verified(schedule_profile)):
 		blockers.append({"code": "PLN_REFERENCE_UNAVAILABLE", "field": "schedule_profile_version"})
 	delivery_days = item_delivery_days(item)
 	if delivery_days is None:
 		blockers.append({"code": "PLN_DELIVERY_PERIOD_REQUIRED", "field": "estimated_delivery_period_days"})
-	if not schedule.baseline_complete(item, schedule_profile):
-		blockers.append({"code": "PLN_SCHEDULE_INVALID", "field": "baseline_invitation_date"})
-	elif delivery_days is not None and not schedule.delivery_boundary_ok({f: item.get(f) for f in schedule.BASELINE_FIELDS}, delivery_days):
-		blockers.append({"code": "PLN_DELIVERY_BOUNDARY_INSUFFICIENT", "field": "baseline_invitation_date"})
+	if schedule_calculable:
+		if not schedule.baseline_complete(item, schedule_profile):
+			blockers.append({"code": "PLN_SCHEDULE_INVALID", "field": "baseline_invitation_date"})
+		elif delivery_days is not None and not schedule.delivery_boundary_ok({f: item.get(f) for f in schedule.BASELINE_FIELDS}, delivery_days):
+			blockers.append({"code": "PLN_DELIVERY_BOUNDARY_INSUFFICIENT", "field": "baseline_invitation_date"})
 	return blockers
 
 

@@ -152,8 +152,22 @@ Built in the Planning v1.27 workflow-guidance cycle (`../04_planning/PLN-CHG-001
 
 | Row | Scope | Status | Evidence |
 |---|---|---|---|
-| BUD21-01 | Budget Revision Request record (§4.10); receive / decline / withdraw commands; registered Planning principal; idempotency | Planned | |
-| BUD21-02 | Revised-on-activation (BUD-BR-029); `close_budget` resolution (BUD-BR-030); successor link | Planned | |
-| BUD21-03 | Transactional outbox + `BudgetRevisionRequestOutcome.v1`, ordered idempotent delivery; joint rollback with Planning (BUD21-XD-001) | Planned | |
-| BUD21-04 | Workspace read rows (§11.1B), Budget Officer My Work row, line-detail quiet line | Planned | |
-| BUD21-05 | BUD-DES-18 row + BUD-DES-19 decline dialog; fidelity + browser | Planned | |
+| BUD21-01 | Budget Revision Request record (§4.10); receive / decline / withdraw commands; registered Planning principal; idempotency | Partial | 2026-09-25. `budget_revision_request` doctype; `budget_revision_request_contracts.py` receive (registered Planning principal flag + the Planner's live assignment), decline (10–500-character reason; a closed request refuses with BUDGET_REVISION_REQUEST_CLOSED), withdraw; idempotent receive. Proven through Planning's `test_plan_v127_guidance` (one request each side; second refused, replay returns the first; within-budget refused; principal-only). **Owed:** Budget's own test module (§16.4). |
+| BUD21-02 | Revised-on-activation (BUD-BR-029); `close_budget` resolution (BUD-BR-030); successor link | Partial | 2026-09-25. `link_successor` from `create_budget_successor_version`, `revise_on_activation` after activation, `decline_on_close` after close. BUD-BR-029 proven in Planning's `test_bud_br_029_activating_a_changed_line_marks_the_request_revised`; BUD-BR-030 not yet tested. |
+| BUD21-03 | Transactional outbox + `BudgetRevisionRequestOutcome.v1`, ordered idempotent delivery; joint rollback with Planning (BUD21-XD-001) | Partial | 2026-09-25. `Budget Revision Request Event` outbox, delivery in a savepoint to `kt_budget_revision_outcome_consumers`, hourly `retry_pending_outcomes`; `decided_at` is ISO-8601 UTC (§6, test-first). Ordered/idempotent apply proven in Planning's `test_ac_008_outcomes_apply_once_and_in_order`. **Owed:** BUD21-XD-001 joint-rollback test. |
+| BUD21-04 | Workspace read rows (§11.1B), Budget Officer My Work row, line-detail quiet line | Done | 2026-09-25. `get_budget_workspace.revision_requests` (Budget Officer only), `budget_my_work_provider` "Revise {line} for the plan update" (clears on the outcome — proven in Planning's hand-off register test), `get_budget_line_position.revision_request_note`. |
+| BUD21-05 | BUD-DES-18 row + BUD-DES-19 decline dialog; fidelity + browser | Partial | 2026-09-25. `BudgetWorkspaceScreen.vue` ports variant 18 (accent-ruled row: title, narrative, requested by / at / plan; Decline request + Update registered allocation or Continue update) and variant 19 (Line / Over by / Requested by; reason 10–500 characters with live count; Decline disabled until valid; Cancel) with scoped CSS from the board's inline styles; `declineBudgetRevisionRequest` in `budgetApi.js`. Live as Josphat on FY 2027/28: the row for BRR-268F78BD36 reads exactly as the board (KES 62,000,000 / 60,000,000 / over by 2,000,000; requested by Mercy Kilonzo, 25 Sep 2026, 19:02 EAT; PLN-MOH-2027-001, Version 2); dialog opens with Decline disabled, still disabled at 5 characters, count shown; zero console errors. Bundle `budget_funding.bundle.TI42ZOJV.js`. **Owed:** a Playwright spec (the decline itself is exercised in the persona journey), and the board's variants are client toggles the structure gate cannot select. |
+
+**Acceptance map — BUD v1.11 §16.4 (25 Sep 2026).** Proven so far only through Planning's `test_plan_v127_guidance` and the browser; Budget's own test module is owed (FU-V127-02).
+
+| ID | Status | Evidence / gap |
+|---|---|---|
+| BUD21-AC-001 | Partial | One Open request in Planning's transaction, idempotent replay, no amount changed (Planning hand-off tests). Line-revision check not separately tested. |
+| BUD21-AC-002 | Partial | `BUDGET_REVISION_NOT_REQUIRED` via Planning's within-budget test. Stale basis (`BUDGET_DECISION_BASIS_STALE`) not tested. |
+| BUD21-AC-003 | Not tested | Built (`link_successor`; Update registered allocation reuses the open successor); no test yet. |
+| BUD21-AC-004 | Partial | Revised on activation of a changed line tested (BUD-BR-029); "unchanged line stays Open" not tested. |
+| BUD21-AC-005 | Partial | Decline + 10–500 reason + second answer closed tested; Withdraw via Planning tested; `close_budget` → Declined not tested. |
+| BUD21-AC-006 | Done | Outbox event Delivered, ordered/idempotent apply, ISO-UTC `decided_at` (Planning tests). |
+| BUD21-AC-007 | Partial | Row shown to the Budget Officer only, clears on the outcome (hand-off test; live check); Approver/Auditor/technical absence not tested. |
+| BUD21-AC-008 | Done | The row and dialog carry no Planner, Finance or Plan-editing control (built; browser `planning-guidance.spec.ts`). |
+| BUD21-XD-001 | Not tested | Joint commit/rollback not yet proven. |

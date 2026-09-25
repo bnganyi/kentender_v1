@@ -122,6 +122,25 @@ class TestAcceptance(ValidationCase):
 		# no Plan Item, no reservation from acceptance (PLN-AC-012/023)
 		self.assertEqual(frappe.db.count("Annual Plan Item", {"fixture_namespace": fx.NS}), 0)
 
+	def test_a_decided_review_reads_back_the_recorded_classification(self):
+		"""A completed review showed empty disabled selects and still said
+		"Decision required" (found live 25 Sep 2026): the reader has to get
+		the classification the decision recorded, per requirement."""
+		task = self.submitted_task()
+		frappe.set_user(fx.PLANNER)
+		before = dpp_read.get_dpp_validation_task(task=task.name)
+		self.assertEqual(before["entries"][0]["recorded_requirement_type"], "")
+		self.accept(task)
+		frappe.set_user(fx.PLANNER)
+		after = dpp_read.get_dpp_validation_task(task=task.name)
+		self.assertEqual(after["status"], "Completed")
+		self.assertFalse(after["can_decide"])
+		row = next(r for r in after["entries"] if r["entry_id"] == self.entry_id)
+		self.assertEqual(row["recorded_requirement_type"], "Consulting services")
+		self.assertEqual(row["recorded_category"], "Services")
+		self.assertEqual(after["decided"]["decision"], "Accept departmental plan")
+		self.assertTrue(after["decided"]["decided_at_display"])
+
 	def test_second_acceptance_reuses_the_one_annual_plan_root(self):
 		task = self.submitted_task()
 		first = self.accept(task)

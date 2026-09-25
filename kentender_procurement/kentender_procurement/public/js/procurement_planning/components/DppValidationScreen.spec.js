@@ -7,6 +7,7 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import DppValidationScreen from "./DppValidationScreen.vue";
+import { CLASSIFICATION_PROMPT, REVIEW_ACCEPTED, REVIEW_SEGREGATED, REVIEW_TURN, dppJourney } from "./guidance.fixtures.js";
 
 const TYPES = [
 	{ requirement_type: "Consulting services", procurement_category: "Services" },
@@ -71,6 +72,9 @@ function task(overrides = {}) {
 		requirement_types: TYPES,
 		stale_sources: [],
 		certification: { text: "I certify that this plan records Digital Health's requirements for FY 2027/28." },
+		next_step: REVIEW_TURN,
+		journey: dppJourney("review", { holder: "Mercy Kilonzo" }),
+		classification_prompt: CLASSIFICATION_PROMPT,
 		...overrides,
 	};
 }
@@ -86,7 +90,6 @@ describe("DppValidationScreen — U06 BASE", () => {
 		const w = make();
 		expect(w.find('[data-testid="pln-review-title"]').text()).toBe("Review Digital Health's departmental plan");
 		expect(w.find('[data-testid="pln-review-context"]').text()).toContain("DPP-MOH-DHI-2027-001");
-		expect(w.find('[data-testid="pln-review-context"]').text()).toContain("Awaiting Procurement review");
 		expect(w.find('[data-testid="pln-review-certified"]').text()).toContain("Julia Njeri");
 		const summary = w.find('[data-testid="pln-review-summary"]').text();
 		expect(summary).toContain("Included requirements");
@@ -94,22 +97,26 @@ describe("DppValidationScreen — U06 BASE", () => {
 		expect(summary).toContain("Excluded requirements");
 	});
 
-	it("shows the header as one compact scope line, not four separate boxes", () => {
-		// §10.5 — matches the artboard's `.kt-page-scope`: reference,
-		// submission and year joined by "·", with the status badge inline
-		// after it, not a labelled Reference/Submission/Financial
-		// year/Status grid (found live 22 Sep 2026).
+	it("shows the header as one compact scope line, with no status badge", () => {
+		// §10.5 — the artboard's `.kt-page-scope`: reference, submission and
+		// year joined by "·". PLN v1.27 replaces the "Awaiting Procurement
+		// review" badge with the next-step line beneath it.
 		const w = make();
 		const scope = w.find('[data-testid="pln-review-context"]');
 		expect(scope.classes()).toContain("kt-page-scope");
-		expect(scope.text()).toBe("DPP-MOH-DHI-2027-001 · Submission 1 · FY 2027/28 Awaiting Procurement review");
+		expect(scope.text()).toBe("DPP-MOH-DHI-2027-001 · Submission 1 · FY 2027/28");
+		expect(scope.find(".kt-status").exists()).toBe(false);
 	});
 
-	it("immediately shows what decision is required", () => {
+	it("says whose turn it is in the page head and where the plan stands, replacing 'Decision required'", () => {
 		const w = make();
-		expect(w.find('[data-testid="pln-review-decision-required"]').text()).toContain(
-			"classify every included requirement, then accept the complete submission or return it for correction.",
-		);
+		const line = w.find(".kt-page-head .kt-next-step");
+		expect(line.attributes("data-kind")).toBe("your_turn");
+		expect(line.text()).toBe("Your turn Classify every included requirement, then accept or return the submission");
+		expect(w.find('[data-testid="pln-review-decision-required"]').exists()).toBe(false);
+		expect(w.text()).not.toContain("Decision required");
+		expect(w.find(".kt-journey-stage.is-current").text()).toContain("Procurement review");
+		expect(w.findAll(".kt-journey-stage.is-done")).toHaveLength(2);
 	});
 
 	it("reveals capacity and the full certification only when View certification is opened", async () => {
@@ -216,6 +223,17 @@ describe("DppValidationScreen — U06-EXCLUDED", () => {
 });
 
 describe("DppValidationScreen — corrective actions stay available", () => {
+	it("U06-CLASSIFICATION-MISSING: the line counts the requirements still without a type, in the server's words", async () => {
+		const w = make({ classifications: { [LAPTOPS.entry_id]: "Goods" } });
+		expect(w.find(".kt-page-head .kt-next-step").text()).toContain("Select the requirement type for 1 requirement, then accept");
+		// nothing chosen yet is the base instruction, not a count of two
+		await w.setProps({ classifications: {} });
+		expect(w.find(".kt-page-head .kt-next-step").text()).toContain("Classify every included requirement");
+		// three included, one chosen: the plural wording
+		await w.setProps({ task: task({ entries: [INFRASTRUCTURE, LAPTOPS, { ...LAPTOPS, entry_id: "DPPE-3" }] }), classifications: { [LAPTOPS.entry_id]: "Goods" } });
+		expect(w.find(".kt-page-head .kt-next-step").text()).toContain("Select the requirement type for 2 requirements, then accept");
+	});
+
 	it("U06-CLASSIFICATION-MISSING: removes Accept, keeps Return, names the missing input", () => {
 		const w = make({ classifications: { [LAPTOPS.entry_id]: "Goods" } });
 		expect(w.find('[data-testid="pln-review-accept"]').exists()).toBe(false);
@@ -248,12 +266,74 @@ describe("DppValidationScreen — corrective actions stay available", () => {
 	});
 
 	it("U06-SEGREGATION: removes both decisions but keeps the content readable", () => {
-		const w = make({ task: task({ maker_checker_blocked: true, can_decide: false }) });
+		const w = make({ task: task({ maker_checker_blocked: true, can_decide: false, next_step: REVIEW_SEGREGATED, journey: dppJourney("review") }) });
+		const line = w.find(".kt-page-head .kt-next-step");
+		expect(line.text()).toContain("Waiting for Procurement review by another Procurement Planner");
+		expect(line.text()).toContain("since 25 Nov 2026, 10:30 EAT");
 		expect(w.find('[data-testid="pln-review-segregation"]').text()).toBe(
 			"You cannot review a departmental plan you certified.",
 		);
 		expect(w.find('[data-testid="pln-review-accept"]').exists()).toBe(false);
 		expect(w.find('[data-testid="pln-review-return"]').exists()).toBe(false);
 		expect(w.findAll('[data-testid="pln-review-row"]')).toHaveLength(2);
+		// read-only: no classification controls, disabled or otherwise, and
+		// no "Certified by" line naming the reader to themselves (board)
+		expect(w.find('[data-testid="pln-review-type"]').exists()).toBe(false);
+		expect(w.find('[data-testid="pln-review-certified"]').exists()).toBe(false);
+	});
+});
+
+describe("DppValidationScreen — grouped requirements (owner decision 25 Sep 2026)", () => {
+	it("numbers each requirement and keeps its certified facts apart from the Planner's classification", () => {
+		const w = make();
+		const rows = w.findAll('[data-testid="pln-review-row"]');
+		expect(rows).toHaveLength(2);
+		expect(rows[0].text()).toContain("Requirement 1 of 2");
+		expect(rows[1].text()).toContain("Requirement 2 of 2");
+		// Budget line sits with the department's facts, above the decision strip.
+		const head = rows[0].find(".pln-review-row-head");
+		expect(head.text()).toContain("Digital health infrastructure programme · MOH-BL-DHI-2027");
+		const strip = rows[0].find(".pln-review-classify");
+		expect(strip.text()).toContain("Your classification");
+		expect(strip.find('[data-testid="pln-review-type"]').exists()).toBe(true);
+		expect(strip.text()).not.toContain("MOH-BL-DHI-2027");
+	});
+});
+
+describe("DppValidationScreen — a decided review", () => {
+	const decided = () =>
+		make({
+			task: task({
+				status: "Completed",
+				can_decide: false,
+				header: { reference_line: "DPP-MOH-DHI-2027-001 · Submission 1", badge: "Completed", badge_kind: "live" },
+				decided: { decision: "Accept departmental plan", actor_name: "Mercy Kilonzo", decided_at_display: "29 Nov 2026, 15:00 EAT" },
+				next_step: REVIEW_ACCEPTED,
+				journey: dppJourney("accepted", { complete: true }),
+				entries: [
+					{ ...INFRASTRUCTURE, recorded_requirement_type: "Non-consulting services", recorded_category: "Services" },
+					{ ...LAPTOPS, recorded_requirement_type: "Goods", recorded_category: "Goods" },
+				],
+			}),
+		});
+
+	it("says what was decided instead of asking for a decision", () => {
+		const w = decided();
+		expect(w.find('[data-testid="pln-review-decision-required"]').exists()).toBe(false);
+		expect(w.find('[data-testid="pln-review-decision"]').exists()).toBe(false);
+		// PLN v1.27 — the decided notice became the Done line (server words).
+		expect(w.find('[data-testid="pln-review-decided"]').exists()).toBe(false);
+		const line = w.find(".kt-page-head .kt-next-step");
+		expect(line.attributes("data-kind")).toBe("done");
+		expect(line.text()).toBe("Done Accepted by Mercy Kilonzo on 29 Nov 2026, 15:00 EAT");
+		expect(w.findAll(".kt-journey-stage.is-done")).toHaveLength(4);
+	});
+
+	it("shows the recorded classification as text, not empty disabled selects", () => {
+		const w = decided();
+		expect(w.find('[data-testid="pln-review-type"]').exists()).toBe(false);
+		const recorded = w.findAll('[data-testid="pln-review-recorded-type"]').map((n) => n.text());
+		expect(recorded).toEqual(["Non-consulting services", "Goods"]);
+		expect(w.find('[data-testid="pln-review-row-error"]').exists()).toBe(false);
 	});
 });

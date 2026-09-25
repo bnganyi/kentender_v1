@@ -45,6 +45,7 @@ export const STATUTORY = "pw.pln.statutory@example.test";
 export const AUDITOR = "pw.pln.auditor@example.test";
 export const OUTSIDER = "pw.pln.outsider@example.test";
 export const NOBODY = "pw.pln.nobody@example.test";
+export const BUDGET_OFFICER = "pw.pln.budget@example.test";
 
 /** §14.4's exact Need text, on this world's year. */
 const NEED_CONTENT = {
@@ -70,7 +71,7 @@ const NEED_BACKED = new Set([
 	"reset_collective_fixture", "reset_publication_unknown_fixture", "reset_late_activation_fixture", "reset_finance_excess_fixture",
 	"reset_ready_for_funding_fixture", "reset_item_config_missing_fixture", "reset_item_lots_fixture",
 	"reset_item_direct_procurement_fixture", "reset_item_feasibility_fail_fixture",
-	"reset_finance_reassessment_fixture",
+	"reset_finance_reassessment_fixture", "reset_update_over_budget_fixture", "reset_waiting_budget_revision_fixture",
 ]);
 
 export function bench(command: string): string {

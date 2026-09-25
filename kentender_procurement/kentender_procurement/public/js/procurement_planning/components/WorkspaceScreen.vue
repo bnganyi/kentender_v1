@@ -177,6 +177,19 @@
 									<span class="kt-label">Change</span><span style="font-size: 14px">{{ factValue(dominantRow.facts, 'Change') }}</span>
 								</div>
 							</div>
+							<!-- PLN v1.27 §10.3 — a workspace carries no tracker: a blocked or
+							     waiting update states the next-step answer on its row
+							     (U01-CURRENT-UPDATE-OVER-BUDGET / -WAITING-BUDGET). -->
+							<p
+								v-if="dominantRow.narrative && dominantRow.narrative.tone === 'blocked'"
+								class="pln-row-narrative is-blocked"
+								data-testid="pln-row-narrative"
+							>{{ dominantRow.narrative.headline }}</p>
+							<p
+								v-else-if="dominantRow.narrative"
+								class="pln-row-narrative is-waiting"
+								data-testid="pln-row-narrative"
+							><strong>{{ dominantRow.narrative.headline }}</strong><template v-if="dominantRow.narrative.since">{{ " " }}<span class="pln-row-narrative-since">since {{ dominantRow.narrative.since }}</span></template></p>
 							<p v-if="dominantRow.note" data-testid="pln-plan-note" style="margin: var(--kt-space-3) 0 0; font-size: 14px; color: var(--kt-color-neutral-800)">{{ dominantRow.note }}</p>
 							<p v-if="dominantRow.kind === 'candidate'" data-testid="pln-update-note" style="margin: var(--kt-space-4) 0 0; font-size: 14px; color: var(--kt-color-neutral-800)">
 								{{ annualPlan.update_note || 'The current plan remains in force while this update is reviewed.' }}
@@ -218,24 +231,30 @@
 					<p>{{ annualPlan.empty_text }}</p>
 				</div>
 
-				<!-- Immediately below the plan row — the one current issue. -->
-				<div v-if="currentIssue" class="kt-notice is-warning" style="margin-top: var(--kt-space-5)" data-testid="pln-current-issue">
-					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-						<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
-					</svg>
-					<div style="flex: 1">
-						<div class="kt-notice-body">{{ currentIssue.text }}</div>
-						<button
-							type="button"
-							class="kt-btn kt-btn-secondary"
-							style="margin-top: var(--kt-space-3)"
-							data-testid="pln-current-issue-action"
-							@click="$emit('navigate', currentIssue.route)"
-						>
-							{{ currentIssue.action }}
-						</button>
+				<!-- Immediately below the plan row (PLN v1.27 §10.3, D2): what stops
+				     the funding request as the warning, then what stops only
+				     signature as a quieter line — each with its one action. -->
+				<template v-for="(issue, index) in issues" :key="`${issue.tone}-${index}`">
+					<div v-if="issue.tone === 'dominant'" class="kt-notice is-warning" style="margin-top: var(--kt-space-5)" data-testid="pln-issue">
+						<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path>
+						</svg>
+						<div style="flex: 1">
+							<div class="kt-notice-body"><template v-for="(part, i) in issueParts(issue)" :key="i"><strong v-if="part.strong">{{ part.text }}</strong><template v-else>{{ part.text }}</template></template></div>
+							<button
+								type="button"
+								class="kt-btn kt-btn-secondary"
+								style="margin-top: var(--kt-space-3)"
+								data-testid="pln-issue-action"
+								@click="$emit('navigate', issue.route)"
+							>{{ issue.action }}</button>
+						</div>
 					</div>
-				</div>
+					<div v-else class="pln-quiet-issue" data-testid="pln-issue">
+						<p><template v-for="(part, i) in issueParts(issue)" :key="i"><strong v-if="part.strong">{{ part.text }}</strong><template v-else>{{ part.text }}</template></template></p>
+						<button type="button" class="kt-btn kt-btn-secondary" data-testid="pln-issue-action" @click="$emit('navigate', issue.route)">{{ issue.action }}</button>
+					</div>
+				</template>
 
 				<!-- A late accepted requirement that no departmental plan could
 				     include: an explanation, never a bypass. -->
@@ -347,7 +366,20 @@ const candidateRow = computed(() => planRows.value.find((row) => row.kind === "c
 // U01-CURRENT-UPDATE demotes the current plan to a compact read-only summary
 // once a candidate exists; only one row is ever the interactive task row.
 const dominantRow = computed(() => candidateRow.value || currentRow.value || planRows.value.find((row) => row.kind === "draft") || null);
-const currentIssue = computed(() => props.workspace.current_issue || null);
+const issues = computed(() => props.workspace.issues || []);
+// The server words each issue once, as one sentence, and names the part the
+// board emboldens; split on it rather than re-wording anything here.
+function issueParts(issue) {
+	const text = issue.text || "";
+	const strong = issue.strong || "";
+	const at = strong ? text.indexOf(strong) : -1;
+	if (at < 0) return [{ text, strong: false }];
+	return [
+		{ text: text.slice(0, at), strong: false },
+		{ text: strong, strong: true },
+		{ text: text.slice(at + strong.length), strong: false },
+	].filter((part) => part.text);
+}
 const ownPlan = computed(() => props.workspace.your_departmental_plan || null);
 const table = computed(() => props.workspace.departmental_table || { columns: [], rows: [] });
 
@@ -374,8 +406,10 @@ const PLAN_ROW_TITLE = {
 	candidate: "Continue plan update",
 };
 
+// The server names the row by its real state (a submitted first plan is not
+// a "Draft"); the kind-based title is only the fallback for older payloads.
 function planRowTitle(row) {
-	return PLAN_ROW_TITLE[row.kind] || row.kind;
+	return row.title || PLAN_ROW_TITLE[row.kind] || row.kind;
 }
 
 function planRowSubtitle(row) {
@@ -406,10 +440,8 @@ const ownPlanNarrative = computed(() => {
 // U01-HOD — the Head of Department's own decision heading names the count;
 // U01-DEPARTMENT-AUTHOR's "Continue departmental plan" work never reaches
 // this region at all (§10.3 routes it through "Your departmental plan").
-const actionableHeading = computed(() => {
-	const n = actionable.value.length;
-	return `${n} departmental plan${n === 1 ? "" : "s"} require${n === 1 ? "s" : ""} your decision`;
-});
+// The server words the heading from what the decisions are about.
+const actionableHeading = computed(() => props.workspace.actionable_heading || "");
 
 function actionTitle(row) {
 	return factValue(row.facts, "Departmental plan") || row.headline;

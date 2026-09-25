@@ -73,6 +73,34 @@ def capacity_for_site() -> str:
 	return CAPACITY_BY_ROUTE[route]
 
 
+def statutory_route_configured() -> bool:
+	"""The guard form of `capacity_for_site` — a reason, not a raise
+	(KT-STD-001 v1.8 §3B.1)."""
+	return statutory_route() in CAPACITY_BY_ROUTE
+
+
+#: PLN v1.27 §10.1A.1 — the journey tracker's stage 5 label follows the
+#: configured capacity; every Plan passes through it (§6.1).
+STATUTORY_STAGE_LABEL = {
+	"Cabinet Secretary": "Cabinet Secretary approval",
+	"County Executive Committee Member": "County Executive Committee Member approval",
+	"Board of Directors": "Board decision",
+	"Council": "Council decision",
+}
+
+#: Short form used in next-step lines, e.g. "Daniel Rotich (Cabinet Secretary)".
+STATUTORY_HOLDER_LABEL = {
+	"Cabinet Secretary": "Cabinet Secretary",
+	"County Executive Committee Member": "County Executive Committee Member",
+	"Board of Directors": "Board of Directors",
+	"Council": "Council",
+}
+
+
+def statutory_stage_label() -> str:
+	return STATUTORY_STAGE_LABEL.get(statutory_route(), "Statutory approval")
+
+
 def is_collective_capacity(capacity: str) -> bool:
 	return cstr(capacity) in {CAPACITY_BY_ROUTE[r] for r in COLLECTIVE_ROUTES} or cstr(capacity) == "Governing body"
 

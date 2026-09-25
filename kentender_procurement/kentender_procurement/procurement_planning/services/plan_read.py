@@ -27,7 +27,7 @@ import json
 from typing import Any
 
 import frappe
-from frappe.utils import cstr, flt, fmt_money, formatdate
+from frappe.utils import cstr, flt, fmt_money, formatdate, get_datetime
 
 from kentender_procurement.procurement_planning.errors import MESSAGES
 from kentender_procurement.procurement_planning.services import missing_setting, needs_intake, readiness, references, schedule, scope_lock
@@ -321,6 +321,44 @@ def _item_docs(version_name: str) -> list:
 	return [frappe.get_doc("Annual Plan Item", n) for n in frappe.get_all("Annual Plan Item", filters={"plan_version": version_name, "item_state": ("!=", "Dissolved")}, order_by="creation asc", pluck="name")]
 
 
+#: A blocker's own sentence when its code alone would be vague about what is
+#: missing (PLN v1.27 D2: a purchase with no procurement method).
+FIELD_MESSAGES = {
+	("PLN_PLAN_CONTENTS_INCOMPLETE", "procurement_method"): "Choose a procurement method for this purchase.",
+}
+
+BUDGET_UNREADABLE = "The approved budget could not be read, so this plan's budget fit cannot be checked. Try again shortly."
+
+
+def over_budget_lines(affordability: dict[str, Any]) -> list[dict[str, Any]]:
+	"""Every line whose planned total exceeds its approved amount, with its
+	name and figures; a planned line Budget does not know is over by all of
+	it (§5.3.1)."""
+	out = []
+	for line in affordability.get("lines") or []:
+		if not line.get("within_approved"):
+			out.append({
+				"budget_line": line["budget_line"],
+				"reference": cstr(line.get("reference")),
+				"title": cstr(line.get("title")),
+				"approved": flt(line.get("approved")),
+				"planned": flt(line.get("planned")),
+				"over": flt(line.get("excess_over_approved")),
+			})
+	known = {row["budget_line"] for row in out}
+	for failing in affordability.get("failing_lines") or []:
+		if failing["budget_line"] not in known and failing["budget_line"] in (affordability.get("unknown_lines") or []):
+			out.append({
+				"budget_line": failing["budget_line"],
+				"reference": cstr(failing.get("reference")),
+				"title": cstr(failing.get("reference")) or failing["budget_line"],
+				"approved": 0.0,
+				"planned": flt(failing.get("excess")),
+				"over": flt(failing.get("excess")),
+			})
+	return out
+
+
 def plan_readiness(version, plan, *, stage: str = "pre_finance") -> dict[str, Any]:
 	"""The exact blocker list and the readiness card. `pre_finance` (§5.6.4)
 	excludes Finance confirmation and the submission-only gates; `submission`
@@ -343,10 +381,11 @@ def plan_readiness(version, plan, *, stage: str = "pre_finance") -> dict[str, An
 			# `base_message` is the same sentence without this purchase's id,
 			# so a list that speaks for the whole plan can group identical
 			# causes instead of repeating one sentence per purchase.
+			base = FIELD_MESSAGES.get((blocker["code"], blocker.get("field", "")), MESSAGES[blocker["code"]])
 			blockers.append({
 				**blocker, "plan_item_id": item.plan_item_id,
-				"base_message": MESSAGES[blocker["code"]],
-				"message": f"{MESSAGES[blocker['code']]} ({item.plan_item_id})",
+				"base_message": base,
+				"message": f"{base} ({item.plan_item_id})",
 			})
 			key = {
 				"PLN_OBJECTIVE_INELIGIBLE": "objective", "PLN_RESERVATION_REQUIRED": "reservation",
@@ -355,9 +394,12 @@ def plan_readiness(version, plan, *, stage: str = "pre_finance") -> dict[str, An
 				"PLN_METHOD_NOT_ADMISSIBLE": "method", "PLN_REFERENCE_UNAVAILABLE": "method", "PLN_METHOD_EVIDENCE_REQUIRED": "evidence",
 			}[blocker["code"]]
 			per_check[key].append(item.plan_item_id)
-	for pid in readiness.low_value_cumulative_breaches(version.name, reference):
-		blockers.append({"code": "PLN_METHOD_NOT_ADMISSIBLE", "plan_item_id": pid, "message": f"Low value procurement exceeds the per-item annual limit ({pid})."})
-		per_check["method"].append(pid)
+	# A method condition, so it gates submission with the other method
+	# conditions (PLN v1.27 D2; §5.5.3.3), not the funding request.
+	if stage == "submission":
+		for pid in readiness.low_value_cumulative_breaches(version.name, reference):
+			blockers.append({"code": "PLN_METHOD_NOT_ADMISSIBLE", "plan_item_id": pid, "message": f"Low value procurement exceeds the per-item annual limit ({pid})."})
+			per_check["method"].append(pid)
 
 	share = readiness.reservation_allocations(version.name, plan.fiscal_year, reference)
 	target = share["target_percent"]
@@ -387,14 +429,35 @@ def plan_readiness(version, plan, *, stage: str = "pre_finance") -> dict[str, An
 			})
 	advisories = readiness.splitting_advisory(version.name, reference)
 	affordability = None
+	budget_unreadable = False
 	if items:
 		try:
 			affordability = plan_finance.affordability_statement(plan, version)
 		except Exception:
+			# A Budget read failure is never silence: it used to leave no
+			# blocker at all, so the plan read as affordable (PLN v1.27 §5.3.1;
+			# KT-STD-001 v1.8 §3B.3 — a computable condition is never unknown
+			# without saying so).
+			frappe.log_error(title="Planning budget fit could not be read", message=frappe.get_traceback())
 			affordability = None
+			budget_unreadable = True
 	within_approved = bool(affordability and affordability.get("within_approved"))
-	if items and affordability and not within_approved:
-		blockers.append({"code": "PLN_PLAN_NOT_AFFORDABLE", "message": MESSAGES["PLN_PLAN_NOT_AFFORDABLE"], "failing_lines": affordability.get("failing_lines", [])})
+	plan_level: list[dict[str, Any]] = []
+	if budget_unreadable:
+		plan_level.append({"code": "PLN_REFERENCE_UNAVAILABLE", "field": "budget_basis", "message": BUDGET_UNREADABLE, "base_message": BUDGET_UNREADABLE})
+	elif items and affordability and not within_approved:
+		# PLN v1.27 D2 (§5.3.1): blocking for the funding request too. Every
+		# affected line with its name and the figures behind the verdict, so
+		# the next-step block and the budget-fit table need no second read.
+		plan_level.append({
+			"code": "PLN_PLAN_NOT_AFFORDABLE",
+			"message": MESSAGES["PLN_PLAN_NOT_AFFORDABLE"],
+			"failing_lines": affordability.get("failing_lines", []),
+			"lines": over_budget_lines(affordability),
+		})
+	# Plan-level blockers lead: one budget overrun is the headline problem,
+	# and the refusal's code is the first blocker's (PLN27-AC-001).
+	blockers[:0] = plan_level
 	funding_current = plan_finance.funding_is_current(version, affordability) if items and affordability else False
 
 	def _state(started: bool, failing: list[str]) -> tuple[str, str]:
@@ -462,7 +525,12 @@ def _item_rows(plan_version: str, blockers: list[dict[str, Any]] | None = None) 
 	for blocker in blockers or []:
 		plan_item_id = blocker.get("plan_item_id")
 		if plan_item_id:
-			codes_by_item.setdefault(plan_item_id, set()).add(blocker["code"])
+			code = blocker["code"]
+			# PLN v1.27 D2: a purchase with no method reads "Choose a
+			# procurement method" (U07 board), not the generic contents gap.
+			if code == "PLN_PLAN_CONTENTS_INCOMPLETE" and blocker.get("field") == "procurement_method":
+				code = METHOD_NOT_CHOSEN
+			codes_by_item.setdefault(plan_item_id, set()).add(code)
 	rows = []
 	for item in items:
 		allocations = readiness._allocations(item.name)
@@ -507,13 +575,19 @@ CURRENT_WORK = {
 	"PLN_METHOD_EVIDENCE_REQUIRED": "Provide the evidence the method requires",
 	"PLN_REFERENCE_UNAVAILABLE": "Choose a procurement method",
 	"PLN_SOURCE_CORRECTION_REQUIRED": "Rebuild this purchase after a source correction",
+	"METHOD_NOT_CHOSEN": "Choose a procurement method",
 }
+
+#: Not a §8 code: the Current work key for a purchase whose only method
+#: problem is that none is chosen yet (see `_plan_rows`).
+METHOD_NOT_CHOSEN = "METHOD_NOT_CHOSEN"
 
 #: The order a Planner would naturally resolve these in — identity and
 #: eligibility before schedule before narrative detail. The first code from
 #: this list present on an item is what "Current work" names.
 _CURRENT_WORK_PRIORITY = [
 	"PLN_SOURCE_CORRECTION_REQUIRED",
+	"METHOD_NOT_CHOSEN",
 	"PLN_REFERENCE_UNAVAILABLE",
 	"PLN_METHOD_NOT_ADMISSIBLE",
 	"PLN_METHOD_EVIDENCE_REQUIRED",
@@ -717,15 +791,6 @@ def _plan_checks(version, plan, report) -> list[dict[str, Any]]:
 	blockers = report["blockers"]
 	plan_route = ["annual-procurement-plan", plan.plan_reference]
 
-	funding_state = cstr(version.funding_state)
-	funding = {
-		"Not requested": "Not yet checked",
-		"Awaiting confirmation": "Finance is reviewing the funding",
-		"Confirmed": "Within each approved budget line",
-		"Returned": "Returned by Finance",
-		"Stale": "Funding needs to be checked again",
-	}.get(funding_state, funding_state)
-
 	# Read from the calculation, never from whether a blocker happens to be
 	# in this stage's list. This row is rendered on a Draft, whose blockers
 	# are computed at `pre_finance`, where the reservation shortfall is
@@ -755,10 +820,35 @@ def _plan_checks(version, plan, report) -> list[dict[str, Any]]:
 		schedule_result = "All purchases meet their departmental deadlines"
 		schedule_kind = "live"
 
+	# PLN v1.27 §10.6 D2 — a purchase with no method yet has no calculable
+	# schedule; say so rather than claim a schedule it does not have.
+	no_method = [
+		cstr(row.title) for row in frappe.get_all(
+			"Annual Plan Item", filters={"plan_version": version.name, "item_state": ("!=", "Dissolved")},
+			fields=["title", "procurement_method"],
+		) if not cstr(row.procurement_method).strip()
+	]
+	if no_method and not schedule_failing:
+		with_method = [
+			cstr(row.title) for row in frappe.get_all(
+				"Annual Plan Item", filters={"plan_version": version.name, "item_state": ("!=", "Dissolved")},
+				fields=["title", "procurement_method"],
+			) if cstr(row.procurement_method).strip()
+		]
+		lead = ""
+		if with_method:
+			lead = f"{', '.join(with_method)} {'meets its' if len(with_method) == 1 else 'meet their'} departmental deadline. "
+		schedule_result = f"{lead}The schedule for {', '.join(no_method)} is calculated once a procurement method is chosen."
+
+	# PLN v1.27 §10.1A.3: the Funding entry is removed from every U07 variant
+	# and replaced by budget fit (computed now) and Finance confirmation (a
+	# formal step) — `budget_fit` and `finance_confirmation` on the read.
+	# The reservation shortfall is a signature blocker (D2): its result stays,
+	# with the added sentence naming when it must be resolved.
 	return [
-		{"label": "Funding", "result": funding, "kind": "live" if funding_state == "Confirmed" else "neutral", "route": None},
 		{
 			"label": "Reserved procurement", "result": reservation_result, "kind": reservation_kind,
+			"detail": "Resolve this before the plan can be signed and submitted." if reservation_kind == "critical" else "",
 			"action": "Review reserved procurement" if reservation_kind == "critical" else "",
 			"route": plan_route if reservation_kind == "critical" else None,
 		},
@@ -823,7 +913,38 @@ def _version_changes(version) -> dict[str, Any]:
 		"source_set_changed": before_set != after_set,
 		"quantities_changed": before_qty != after_qty,
 		"value_changed": before_value != after_value,
+		# PLN v1.27 §10.6 U07 update family — the purchases this update adds,
+		# changes or removes against the plan in force (Purchase; Field;
+		# Current value; Proposed value), matched on the stable Plan Item.
+		"rows": _purchase_changes(version.based_on_version, version.name),
 	}
+
+
+def _item_values(version_name: str) -> dict[str, dict[str, Any]]:
+	out = {}
+	for item in frappe.get_all("Annual Plan Item", filters={"plan_version": version_name, "item_state": ("!=", "Dissolved")}, fields=["name", "plan_item", "plan_item_id", "title"]):
+		allocations = readiness._allocations(item.name)
+		out[cstr(item.plan_item) or item.plan_item_id] = {
+			"plan_item_id": item.plan_item_id,
+			"title": item.title,
+			"value": sum(flt(a.indicative_amount) for a in allocations),
+		}
+	return out
+
+
+def _purchase_changes(before_version: str, after_version: str) -> list[dict[str, Any]]:
+	before, after = _item_values(before_version), _item_values(after_version)
+	rows = []
+	for key, item in after.items():
+		prior = before.get(key)
+		if prior is None:
+			rows.append({"plan_item_id": item["plan_item_id"], "title": item["title"], "field": "Estimated cost", "current": "Not in the current plan", "proposed": _money(item["value"])})
+		elif abs(prior["value"] - item["value"]) > 1e-9:
+			rows.append({"plan_item_id": item["plan_item_id"], "title": item["title"], "field": "Estimated cost", "current": _money(prior["value"]), "proposed": _money(item["value"])})
+	for key, prior in before.items():
+		if key not in after:
+			rows.append({"plan_item_id": prior["plan_item_id"], "title": prior["title"], "field": "Estimated cost", "current": _money(prior["value"]), "proposed": "Removed from the plan"})
+	return rows
 
 
 def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str, Any]:
@@ -873,8 +994,27 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 		version, plan, funding_current=bool(readiness_report and readiness_report["funding_current"]),
 		report=submission_report,
 	) if submission_report else []
+	# PLN v1.27 §5.7 — the next step and journey for this viewer, from the
+	# same guards the funding and signature commands use (KT-STD-001 v1.8
+	# §3B.2): the offers below are those guards' verdicts, never a second
+	# hand-written rule.
+	from kentender_procurement.procurement_planning.services import next_step as plan_next_step
+
+	guidance = plan_next_step.plan_guidance(
+		version, plan, actor=actor, report=readiness_report, submission_report=submission_report,
+		unallocated=unallocated, accepted_entries=len(all_accepted),
+	)
+	request_guard = guidance["guards"].get("request_funding")
+	sign_guard = guidance["guards"].get("sign_and_submit")
 	return {
 		"outcome": "OK",
+		"next_step": guidance["next_step"],
+		"journey": guidance["journey"],
+		# §10.1A.3 — budget fit (computed now) and Finance confirmation (a
+		# formal step) are two separate facts; neither is ever "not yet
+		# checked" when the server can say (KT-STD-001 v1.8 §3B.3).
+		"budget_fit": _budget_fit(readiness_report["affordability"] if readiness_report else None, version),
+		"finance_confirmation": _finance_confirmation(version),
 		"plan_reference": plan.plan_reference,
 		"version_reference": version.name,
 		"version_status": version.version_status,
@@ -941,7 +1081,7 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 		"splitting_advisories": readiness_report["advisories"] if readiness_report else [],
 		"splitting_confirmation": cstr(version.splitting_confirmation),
 		"can_request_funding": (
-			(mutable and no_blockers and not unallocated and version.funding_state in ("Not requested", "Returned", "Stale"))
+			(mutable and bool(request_guard and request_guard["allowed"]) and version.funding_state in ("Not requested", "Returned", "Stale"))
 			or (version.version_status == "Active" and can_act and version.funding_state in ("Stale", "Returned"))  # §5.3.4 reassessment
 		),
 		"funding_evidence": _funding_evidence(version),
@@ -950,8 +1090,8 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 		# affordability gate, exposed here for direct display.
 		"affordability": readiness_report["affordability"] if readiness_report else None,
 		# v1.18 §6.2 — **Sign and submit Annual Plan** belongs to the Head of Procurement Function
-		"can_submit": can_sign and ready_to_submit and not unallocated and bool(readiness_report and readiness_report["funding_current"]),
-		"can_sign_and_submit": can_sign and ready_to_submit and not unallocated and bool(readiness_report and readiness_report["funding_current"]),
+		"can_submit": bool(can_sign and sign_guard and sign_guard["allowed"]),
+		"can_sign_and_submit": bool(can_sign and sign_guard and sign_guard["allowed"]),
 		# Named in full, for the one actor who would otherwise press the
 		# button and meet them one at a time.
 		"submission_issues": submission_issues if can_sign else [],
@@ -966,6 +1106,59 @@ def get_annual_plan(*, plan_reference: str, user: str | None = None) -> dict[str
 		"latest_publication": _latest_publication(version.name),
 		"active_view": _active_view(version, plan) if version.version_status == "Active" else None,
 	}
+
+
+def _budget_fit(affordability: dict[str, Any] | None, version) -> dict[str, Any] | None:
+	"""PLN v1.27 §10.1A.3 — the live per-line comparison: Budget line;
+	Approved; This plan; Difference. `None` only when there is nothing to
+	compare (no purchase yet) — a read failure is a blocker, not a blank."""
+	if not affordability or version.version_status != "Draft":
+		return None
+	rows = []
+	total_over = 0.0
+	over_lines = 0
+	for line in affordability.get("lines") or []:
+		approved, planned = flt(line.get("approved")), flt(line.get("planned"))
+		if not planned and not approved:
+			continue
+		over = planned > approved + 1e-9
+		difference = abs(approved - planned)
+		if over:
+			total_over += planned - approved
+			over_lines += 1
+		rows.append({
+			"budget_line": line["budget_line"],
+			"title": cstr(line.get("title")),
+			"reference": cstr(line.get("reference")),
+			"approved_display": _money(approved),
+			"planned_display": _money(planned),
+			"difference_display": f"{'Over' if over else 'Within'} by {_money(difference)}",
+			"over": over,
+		})
+	all_within = over_lines == 0
+	return {
+		"all_within": all_within,
+		"result": (
+			"Within each approved budget line" if all_within
+			else f"Over by {_money(total_over)} on {'one budget line' if over_lines == 1 else f'{over_lines} budget lines'}"
+		),
+		"lines": rows,
+	}
+
+
+#: §5.2.2 — the funding-evidence state names, shown as they are.
+def _finance_confirmation(version) -> dict[str, Any]:
+	from kentender_procurement.procurement_planning.services import plan_finance
+
+	state = cstr(version.funding_state) or "Not requested"
+	if state == "Confirmed" and version.version_status == "Draft" and not plan_finance.funding_is_current(version):
+		state = "Stale"
+	out: dict[str, Any] = {"state": state, "checked_by": "", "checked_at": ""}
+	if state == "Confirmed":
+		evidence = _funding_evidence(version).get("current_confirmation") or {}
+		out["checked_by"] = evidence.get("actor_name", "")
+		out["checked_at"] = evidence.get("decided_at_display", "")
+	return out
 
 
 def _decision_line(version_name: str, stage: str) -> str:
@@ -1448,6 +1641,55 @@ def _affordability_rows(statement: dict[str, Any]) -> list[dict[str, Any]]:
 	]
 
 
+def _guidance_for(version, plan, actor: str, *, reduced: bool = False) -> dict[str, Any]:
+	"""PLN v1.27 §5.7 — the Plan's next step and journey for a task or
+	publication screen (U10, U11, U13), from the same guards as U07."""
+	from kentender_procurement.procurement_planning.services import next_step as plan_next_step
+
+	report = submission_report = None
+	unallocated: list = []
+	if version.version_status == "Draft" and version.funding_state != "Awaiting confirmation":
+		report = plan_readiness(version, plan)
+		submission_report = plan_readiness(version, plan, stage="submission")
+		allocated = _allocated_dpp_entries(version.name)
+		unallocated = [row for row in _accepted_entry_rows(plan.fiscal_year) if row["dpp_entry"] not in allocated]
+	guidance = plan_next_step.plan_guidance(
+		version, plan, actor=actor, report=report, submission_report=submission_report,
+		unallocated=unallocated, reduced=reduced,
+	)
+	return {"next_step": guidance["next_step"], "journey": guidance["journey"]}
+
+
+def _is_reassessment(task_doc, version) -> bool:
+	"""U10-REASSESS is a check requested for the plan already in force
+	(§5.3.4). The plan's own confirmation, decided before activation, stays
+	that confirmation once the plan is Active (U10-HISTORY)."""
+	if version.version_status != "Active":
+		return False
+	activated = version.get("activated_at")
+	return not activated or get_datetime(task_doc.creation) > get_datetime(activated)
+
+
+def _finance_task_guidance(version, plan, actor: str, *, decided: bool, can_decide: bool, within_approved: bool, reassessment: bool) -> dict[str, Any]:
+	"""PLN v1.27 §10.9 — U10's answer is about this task: a decided task
+	read as history involves no one; a reassessment of the plan in force is
+	outside the approval journey (no tracker); a plan over its approved
+	amount leaves the Officer only the return. Otherwise the plan's own
+	answer (Your turn to confirm, or Waiting for Finance)."""
+	from kentender_core.services import next_step as ns
+
+	guidance = _guidance_for(version, plan, actor, reduced=False)
+	if decided:
+		return {**guidance, "next_step": ns.not_involved()}
+	if reassessment:
+		if can_decide:
+			return {"next_step": ns.answer(ns.KIND_YOUR_TURN, headline="Check the current plan against the revised budget", stage="funding"), "journey": None}
+		return {**guidance, "journey": None}
+	if can_decide and not within_approved:
+		return {**guidance, "next_step": ns.answer(ns.KIND_YOUR_TURN, headline="Return the plan to the planner", stage="funding", primary_action="return")}
+	return guidance
+
+
 def get_finance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import plan_finance
 
@@ -1475,8 +1717,10 @@ def get_finance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 	within_available = bool(statement.get("within_available"))
 	can_decide = authz.has_site_role(ROLE_FINANCE_CONFIRMATION_OFFICER, actor) and not decided and not authz.is_segregated(actor, authz.ACTION_FINANCE_DECIDE, plan_version=version.name)
 	rows = _affordability_rows(statement)
+	reassessment = _is_reassessment(task_doc, version)
 	return {
 		"outcome": "OK",
+		**_finance_task_guidance(version, plan, actor, decided=decided, can_decide=can_decide, within_approved=within_approved, reassessment=reassessment),
 		"task": task_doc.name,
 		"task_reference": task_doc.task_reference,
 		"task_token": task_doc.task_token,
@@ -1488,7 +1732,6 @@ def get_finance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 			"eyebrow": "PLAN FUNDING CONFIRMATION",
 			"title": plan.title,
 			"reference_line": f"{task_doc.task_reference} · {plan.plan_reference} · Version {version.version_number}",
-			"badge": "Awaiting Finance" if task_doc.status == "Open" else task_doc.status,
 		},
 		"summary": {
 			"plan_items": items,
@@ -1521,7 +1764,7 @@ def get_finance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 		# v1.18 §4.7 — the immutable basis this review decides on
 		"financial_basis": basis_summary,
 		"basis_current": (financial_basis.current_digest(plan, version) == cstr(basis.basis_digest)) if (basis and not decided) else None,
-		"is_reassessment": version.version_status == "Active",
+		"is_reassessment": reassessment,
 		"version_status": version.version_status,
 		"version_number": version.version_number,
 		"history": _finance_history(version),
@@ -1746,6 +1989,18 @@ def _reviewed_sources(version_name: str, plan_item_id: str, task: str) -> list[d
 	return rows
 
 
+def _governance_task_guidance(version, plan, actor: str) -> dict[str, Any]:
+	"""PLN v1.27 §10.10 — U11 carries the plan's answer, except a historical
+	Version (superseded or cancelled), which is read only: no next step and
+	no tracker (U11-READER, historical); its read-only notice stays. An
+	update still under review beside the plan in force is not historical."""
+	from kentender_core.services import next_step as ns
+
+	if version.version_status in ("Superseded", "Cancelled"):
+		return {"next_step": ns.not_involved(), "journey": None}
+	return _guidance_for(version, plan, actor, reduced=False)
+
+
 def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import plan_finance, plan_governance
 
@@ -1816,6 +2071,7 @@ def get_plan_governance_task(*, task: str, user: str | None = None) -> dict[str,
 	share = frozen if "items" in frozen else readiness.reservation_allocations(version.name, plan.fiscal_year, readiness.reference_for(plan.fiscal_year))
 	return {
 		"outcome": "OK",
+		**_governance_task_guidance(version, plan, actor),
 		"task": task_doc.name,
 		"task_reference": task_doc.task_reference,
 		"task_token": task_doc.task_token,
@@ -2153,6 +2409,7 @@ def get_publication_task(*, publication: str, user: str | None = None) -> dict[s
 	}.get(doc.publication_state, ("Pending", "attention"))
 	return {
 		"outcome": "OK",
+		**_guidance_for(version, plan, actor, reduced=True),
 		"publication": doc.name,
 		"publication_id": doc.publication_id,
 		"header": {"eyebrow": "ANNUAL PLAN PUBLICATION", "title": "Publication result", "reference_line": f"{plan.plan_reference} · Version {version.version_number}", "badge": badge, "badge_kind": badge_kind},

@@ -65,7 +65,11 @@ def my_work_rows(*, user: str) -> dict[str, list[dict[str, Any]]]:
 	empty: dict[str, list[dict[str, Any]]] = {"assigned": [], "claimable": [], "waiting": []}
 	if user in ("Guest", ""):
 		return empty
+	# BUD v1.11 / PLN v1.27 §7.7 — the Budget Officer's item for each Open
+	# Planning budget revision request ("Revise {line} for the plan update").
+	requests = _revision_request_rows(user)
 	if ROLE_BUDGET_APPROVER not in frappe.get_roles(user):
+		empty["assigned"] = requests
 		return empty
 	versions = frappe.get_all(
 		"Procurement Budget Version",
@@ -85,5 +89,36 @@ def my_work_rows(*, user: str) -> dict[str, list[dict[str, Any]]]:
 		if not budget:
 			continue
 		rows.append(_row(version, budget))
-	empty["assigned"] = rows
+	empty["assigned"] = rows + requests
 	return empty
+
+
+def _revision_request_rows(user: str) -> list[dict[str, Any]]:
+	"""One row per Open budget revision request the Budget Officer can
+	answer; clears when the request is Revised, Declined or Withdrawn."""
+	from kentender_budget.services.budget_revision_request_contracts import open_requests_for_workspace
+
+	out = []
+	for budget in frappe.get_all("Procurement Budget", fields=["name", "fiscal_year"]):
+		for row in open_requests_for_workspace(budget.name, user):
+			out.append({
+				"task_id": row["budget_revision_request_id"],
+				"task_type": "budget.revision_request",
+				"title": _("Revise {0} for the plan update").format(row["line_title"]),
+				"reference": row["budget_revision_request_id"],
+				"module": "Budget & Funding",
+				"stage": _("Over by {0}").format(row["over_display"]),
+				"financial_year": cstr(budget.fiscal_year),
+				"organisation_unit": "",
+				"assignment": _("Budget Officer"),
+				"status": _("Assigned"),
+				"received_at": row["requested_at_display"],
+				"due_at": "",
+				"action_label": _("Open budget"),
+				"route": ["budget-funding"],
+				"route_options": {"fiscal_year": cstr(budget.fiscal_year)},
+				"concurrency_token": "",
+				"can_claim": False,
+				"can_open": True,
+			})
+	return out

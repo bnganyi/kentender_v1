@@ -310,11 +310,12 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 		gaps = needs_intake.coverage_gaps(version)
 		if gaps:
 			plural = "need is" if len(gaps) == 1 else "needs are"
+			pronoun = "it" if len(gaps) == 1 else "them"
 			update_notice = {
 				"title": f"{len(gaps)} accepted {plural} not in this plan",
 				"text": (
 					f"{', '.join(gaps)} accepted after this plan was accepted. "
-					"Create an update to carry it into a new draft version, fund it and resubmit."
+					f"Create an update to carry {pronoun} into a new draft version, fund {pronoun} and resubmit."
 				),
 			}
 	attestation = ATTESTATION.format(department=labels["department_name"], financial_year=labels["financial_year"])
@@ -339,8 +340,21 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 		)
 		if task and not authz.is_segregated(actor, authz.ACTION_DPP_VALIDATE, submission=task.submission):
 			open_task = {"label": "Review submission", "route": ["procurement-planning", "dpp-review", task.name]}
+	# PLN v1.27 §5.7 second table / §10.1A.2 — the next step and journey
+	# for this viewer. On the Author's own Draft the tracker is reduced to one
+	# line, because the summary strip and table already fill the first view.
+	from kentender_procurement.procurement_planning.services import next_step as plan_next_step
+
+	guidance = plan_next_step.dpp_guidance(
+		root, version, actor=actor, access=access, ready=ready, incomplete=incomplete,
+		entry_count=len(entries), window_closed=window["state"] == "Closed" and not _has_any_submission(root),
+		is_correction=is_correction, update_in_progress=update_in_progress,
+		reduced=access == "author" and bool(version) and version.version_status == "Draft",
+	)
 	return {
 		"outcome": "OK",
+		"next_step": guidance["next_step"],
+		"journey": guidance["journey"],
 		"access": access,
 		"dpp_reference": root.dpp_reference,
 		"record_version": int(root.record_version or 0),
@@ -486,6 +500,48 @@ def _snapshot_role(snapshot: str) -> str:
 		return ""
 
 
+def _json_map(value) -> dict[str, str]:
+	"""A decision's JSON column reads back as text or already decoded."""
+	if isinstance(value, dict):
+		return {cstr(k): cstr(v) for k, v in value.items()}
+	try:
+		parsed = json.loads(cstr(value) or "{}")
+	except ValueError:
+		return {}
+	return {cstr(k): cstr(v) for k, v in parsed.items()} if isinstance(parsed, dict) else {}
+
+
+def _validation_guidance(root, version, task_doc, actor: str) -> dict[str, Any]:
+	from kentender_core.services import next_step as ns
+	from kentender_procurement.procurement_planning.services import next_step as plan_next_step
+
+	if task_doc.status == "Open":
+		# The review task is the Planner's screen: a Planner who is also the
+		# department's certifier reads it as a Planner, so segregation (not
+		# the department's "waiting for Procurement") is what they are told.
+		access = "planner" if authz.has_site_role(ROLE_PROCUREMENT_PLANNER, actor) else (
+			authz.dpp_read_profile(root.organisation_unit, actor) or "oversight"
+		)
+		return plan_next_step.dpp_guidance(
+			root, version, actor=actor, access=access, ready=True, incomplete=0, entry_count=1,
+			window_closed=False, is_correction=False, update_in_progress=False,
+		)
+	decision = frappe.db.get_value("Departmental Plan Validation Decision", task_doc.decision, ["decision", "actor", "decided_at"], as_dict=True) if task_doc.decision else None
+	if not decision:
+		return {"next_step": ns.not_involved(), "journey": None}
+	who = cstr(frappe.db.get_value("User", decision.actor, "full_name") or decision.actor)
+	accepted = decision.decision == "Accept departmental plan"
+	verb = "Accepted" if accepted else "Returned to the department"
+	done = ns.answer(ns.KIND_DONE, headline=f"{verb} by {who} on {_eat(decision.decided_at)}", stage=plan_next_step.DPP_ACCEPTED if accepted else plan_next_step.DPP_PREPARATION)
+	journey = (
+		ns.journey(plan_next_step.DPP_STAGES, complete=True) if accepted
+		# §10.1A.1 return rule applied to §10.1A.2: the correction restarts
+		# at Preparation; the return itself stays in the history.
+		else ns.journey(plan_next_step.DPP_STAGES, current=plan_next_step.DPP_PREPARATION)
+	)
+	return {"next_step": done, "journey": journey}
+
+
 def get_dpp_validation_task(*, task: str, user: str | None = None) -> dict[str, Any]:
 	"""§8.1 GetDPPValidationTask / PLN-UI-06 — the exact immutable submission,
 	all entry details and the current decision controls (PLN-DES-06)."""
@@ -517,10 +573,29 @@ def get_dpp_validation_task(*, task: str, user: str | None = None) -> dict[str, 
 			return "—"
 		return f"{line.get('title')} · {reference}" if line.get("title") else reference
 
+	# A decided review shows what the decision recorded, per requirement —
+	# not empty disabled selects (found live 25 Sep 2026). Read before the
+	# rows so each can carry its own recorded pair.
+	decision_ref = cstr(task_doc.decision)
+	decided = None
+	recorded_types: dict[str, str] = {}
+	recorded_categories: dict[str, str] = {}
+	if decision_ref:
+		decided = frappe.db.get_value(
+			"Departmental Plan Validation Decision", decision_ref,
+			["decision", "decided_at", "actor", "classifications", "derived_categories"], as_dict=True,
+		)
+		recorded_types = _json_map(decided.pop("classifications", None))
+		recorded_categories = _json_map(decided.pop("derived_categories", None))
+		decided["decided_at_display"] = _eat(decided.get("decided_at"))
+		decided["actor_name"] = cstr(frappe.db.get_value("User", decided.get("actor"), "full_name") or decided.get("actor"))
+
 	rows = [
 		{
 			"entry_id": row.get("entry_id"),
 			"title": row.get("title"),
+			"recorded_requirement_type": recorded_types.get(cstr(row.get("entry_id")), ""),
+			"recorded_category": recorded_categories.get(cstr(row.get("entry_id")), ""),
 			"source_label": f"Accepted Need · {row.get('need')}" if row.get("need") else "Direct requirement",
 			"quantity_display": _quantity_display(row.get("quantity"), cstr(row.get("unit"))),
 			"quantity_number": _quantity_number(row.get("quantity")),
@@ -543,13 +618,22 @@ def get_dpp_validation_task(*, task: str, user: str | None = None) -> dict[str, 
 	# §4.4 — the Planner picks a type; the category comes with it so the screen
 	# can show the derived value beside the selector without a round trip.
 	requirement_types = dpp_classification.active_requirement_types()
-	decision_ref = cstr(task_doc.decision)
-	decided = None
-	if decision_ref:
-		decided = frappe.db.get_value("Departmental Plan Validation Decision", decision_ref, ["decision", "decided_at"], as_dict=True)
 	maker_checker_blocked = authz.is_segregated(actor, authz.ACTION_DPP_VALIDATE, submission=submission.name)
+	# PLN v1.27 §10.5 — U06's next step and DPP journey. An open review is
+	# the Planner's turn (or Waiting under segregation); a decided one states
+	# the recorded decision, whatever the plan has done since, never
+	# "Decision required" over disabled controls (found live 25 Sep 2026).
+	guidance = _validation_guidance(root, version, task_doc, actor)
 	return {
 		"outcome": "OK",
+		"next_step": guidance["next_step"],
+		"journey": guidance["journey"],
+		# §10.5 U06-CLASSIFICATION-MISSING — the count is the Planner's unsaved
+		# choices, which only the screen holds; the words stay the server's.
+		"classification_prompt": {
+			"one": "Select the requirement type for 1 requirement, then accept",
+			"many": "Select the requirement type for {count} requirements, then accept",
+		},
 		"task": task_doc.name,
 		"task_reference": task_doc.task_reference,
 		"task_token": task_doc.task_token,

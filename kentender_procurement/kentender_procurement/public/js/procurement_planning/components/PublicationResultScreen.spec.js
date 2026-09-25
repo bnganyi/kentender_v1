@@ -7,6 +7,7 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import PublicationResultScreen from "./PublicationResultScreen.vue";
+import { RETRY_TURN, TREASURY_TURN, WAITING_OPERATOR, planJourney } from "./guidance.fixtures.js";
 
 const APPROVED_ROWS = [
 	{ label: "Plan approval", state: "Approved", kind: "live" },
@@ -30,6 +31,8 @@ function task(overrides = {}) {
 		can_record_treasury: true,
 		can_retry: false,
 		can_reconcile: false,
+		next_step: TREASURY_TURN,
+		journey: planJourney("publication", { holder: "Amina Hassan", reduced: true }),
 		...overrides,
 	};
 }
@@ -50,6 +53,14 @@ describe("PublicationResultScreen — U13 BASE", () => {
 			expect.stringContaining("Use for procurement"),
 		]);
 		expect(rows[3].text()).toContain("This plan is not yet active");
+	});
+
+	it("replaces the header state badge with the next step and a one-line tracker", () => {
+		const w = make();
+		expect(w.find('[data-testid="pub-context"] .kt-status').exists()).toBe(false);
+		expect(w.find(".kt-page-head .kt-next-step").text()).toBe("Your turn Record the Treasury submission");
+		expect(w.find(".kt-journey.is-reduced").text()).toBe("Stage 6 of 7: Publication — Amina Hassan");
+		expect(w.find('[data-testid="pub-responsible"]').exists()).toBe(false);
 	});
 
 	it("offers the AO the record action and no technical controls", () => {
@@ -142,25 +153,32 @@ describe("PublicationResultScreen — failure is not uncertainty", () => {
 				treasury_evidence: { recorded: true, submitted_display: "x", channel: "y", dispatch_reference: "z", recorded_by_name: "Amina Hassan" },
 				can_record_treasury: false,
 				can_retry: true,
+				next_step: RETRY_TURN,
 			}),
 		});
 		expect(technical.find('[data-testid="pub-retry"]').text()).toBe("Retry publication");
+		// O4 — the one exception: the technical operator's turn.
+		expect(technical.find(".kt-page-head .kt-next-step").text()).toBe("Your turn Retry publication");
 		expect(technical.find('[data-testid="pub-reconcile"]').exists()).toBe(false);
 
 		// A reader who is not that operator is told whose action it is.
 		const reader = make({
-			task: task({ publication_state: "Failed", can_record_treasury: false, can_retry: false, treasury_evidence: { recorded: true, recorded_by_name: "Amina Hassan" } }),
+			task: task({ publication_state: "Failed", can_record_treasury: false, can_retry: false, treasury_evidence: { recorded: true, recorded_by_name: "Amina Hassan" }, next_step: WAITING_OPERATOR }),
 		});
 		expect(reader.find('[data-testid="pub-retry"]').exists()).toBe(false);
-		expect(reader.find('[data-testid="pub-responsible"]').text()).toContain("Authorised technical operator");
+		// v1.27 — the waiting line names whose it is and since when, replacing
+		// the "Responsible role" sentence.
+		expect(reader.find(".kt-page-head .kt-next-step").text()).toContain("Waiting for an authorised technical operator to retry publication");
+		expect(reader.find(".kt-page-head .kt-next-step").text()).toContain("since 10 Dec 2026, 11:55 EAT");
+		expect(reader.find('[data-testid="pub-responsible"]').exists()).toBe(false);
 
 		// And the Accounting Officer is still told whose the recovery is, even
 		// though they hold a Treasury action of their own on the same screen.
 		const ao = make({
-			task: task({ publication_state: "Failed", can_record_treasury: true, can_retry: false, treasury_evidence: null }),
+			task: task({ publication_state: "Failed", can_record_treasury: true, can_retry: false, treasury_evidence: null, next_step: WAITING_OPERATOR }),
 		});
 		expect(ao.find('[data-testid="pub-retry"]').exists()).toBe(false);
-		expect(ao.find('[data-testid="pub-responsible"]').text()).toContain("Authorised technical operator");
+		expect(ao.find(".kt-page-head .kt-next-step").text()).toContain("authorised technical operator");
 	});
 
 	it("§10.14: the Accounting Officer is offered the late-start explanation, and it appends", () => {

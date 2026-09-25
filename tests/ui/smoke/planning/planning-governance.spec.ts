@@ -40,7 +40,12 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		await expectReady(page, "governance");
 
 		// PLN-DES-11 exact composition from the immutable snapshot
-		await expect(page.locator('[data-testid="rev-context"]')).toContainText("Awaiting Accounting Officer");
+		// PLN v1.27 §10.10 — the stage is the tracker's, not a scope token;
+		// the next step takes the orientation slot (owner decision O3).
+		await expect(page.locator('[data-testid="rev-context"]')).not.toContainText("Awaiting");
+		await expect(page.locator(".kt-page-head .kt-next-step")).toHaveText(/^Your turn\s+Adopt and submit the plan, or return it for correction$/);
+		await expect(page.locator(".kt-journey-stage.is-current")).toContainText("AO adoption");
+		await expect(page.locator('[data-testid="rev-statement-notice"]')).toHaveCount(0);
 		const row = page.locator('[data-testid="rev-purchase-row"]');
 		await expect(row).toHaveCount(1);
 		await expect(row).toContainText("Digital health infrastructure package");
@@ -66,12 +71,16 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		await expectReady(page, "workspace");
 		const action = page.locator('[data-testid="pln-action"]');
 		// §10.3 — the card leads with the outcome the actor is being asked for.
-		await expect(action.locator(".kt-meta-value").first()).toHaveText("Approve the Annual Procurement Plan");
+		await expect(action.locator(".pln-task-title").first()).toHaveText("Approve the Annual Procurement Plan");
+		// The heading names what is being decided: the annual plan.
+		await expect(page.locator('[data-testid="pln-your-actions-heading"]')).toHaveText("1 annual plan requires your decision");
 		await action.locator('[data-testid="pln-action-button"]').click();
 		await expectReady(page, "governance");
-		// §10.10 — the stage names the authority that is actually being waited
-		// on, not the internal name of the step.
-		await expect(page.locator('[data-testid="rev-context"]')).toContainText("Awaiting Responsible Cabinet Secretary");
+		// PLN v1.27 §10.10 — the next step and the tracker carry the stage; the
+		// tracker's stage 5 is named for the authority actually waited on.
+		await expect(page.locator('[data-testid="rev-context"]')).not.toContainText("Awaiting");
+		await expect(page.locator(".kt-page-head .kt-next-step")).toHaveText(/^Your turn\s+Approve the annual plan, or return it for correction$/);
+		await expect(page.locator(".kt-journey-stage.is-current")).toContainText("approval");
 		const authority = page.locator('[data-testid="rev-accountability"]');
 		await expect(authority).toContainText("Playwright Finance Officer");
 		await expect(authority).toContainText("Head of Procurement Function");
@@ -134,9 +143,10 @@ test.describe("PLN-UI-11/12 Annual Plan decisions", () => {
 		// Function, never the Planner, so §10.6 names who is waited on instead
 		// of offering a control this reader does not hold.
 		await expect(page.locator('[data-testid="ppl-sign-submit"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="ppl-waiting-on"]')).toContainText(
-			"Ready for the Head of Procurement Function to sign and submit"
-		);
+		// PLN v1.27 §10.6 — the next-step line (which replaced the Approval
+		// region) names the signer and since when.
+		await expect(page.locator(".kt-page-head .kt-next-step")).toContainText("(Head of Procurement Function) to sign and submit");
+		await expect(page.locator(".kt-page-head .kt-next-step .kt-next-step-since")).toContainText(/EAT$/);
 	});
 
 	test("the statutory return dialog carries its own copy", async ({ page }) => {

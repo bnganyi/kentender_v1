@@ -25,8 +25,10 @@
 					<div class="kt-page-scope" data-testid="pub-context">
 						<span>{{ task.plan_reference }}</span>
 						<span>· Version {{ task.version?.number }}</span>
-						<span class="kt-status" :class="`is-${task.header?.badge_kind}`">{{ stateLabel }}</span>
 					</div>
+					<!-- PLN v1.27 §10.12 — the next-step line replaces the header
+					     state badge. -->
+					<div ref="headEl" class="kt-guidance-mount" data-testid="pub-next-step-line"></div>
 				</div>
 				<div class="kt-page-actions">
 					<button type="button" class="kt-btn kt-btn-ghost" data-testid="pub-view-plan" @click="$emit('navigate', ['annual-procurement-plan', task.plan_reference])">
@@ -42,6 +44,11 @@
 					</button>
 				</div>
 			</div>
+
+			<!-- Always the reduced tracker: the four status rows below are the
+			     working detail of stage 6, not a second tracker. -->
+			<div ref="journeyEl" class="kt-guidance-mount" data-testid="pub-journey"></div>
+			<div ref="bodyEl" class="kt-guidance-mount" data-testid="pub-next-step-block"></div>
 
 			<!-- The four facts, each with its own label and state. -->
 			<div class="kt-region">
@@ -210,11 +217,9 @@
 				</div>
 			</div>
 
-			<!-- When neither action belongs to this reader, name who it belongs
-			     to rather than showing a disabled control (§10.12). -->
-			<p v-if="responsibleRole" class="kt-muted" data-testid="pub-responsible">
-				Responsible role: {{ responsibleRole }}
-			</p>
+			<!-- Whose action it is when not this reader's: the waiting line above
+			     names the holder and since when (PLN v1.27 replaces the old
+			     "Responsible role" sentence). -->
 
 			<!-- §10.14 / §6.3 — the Accounting Officer's own listed action when the
 			     plan only became active after the financial year began. The facts
@@ -275,7 +280,8 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
+import { useGuidance } from "../../pln_shared/composables/useGuidance.js";
 
 import LateExplanationHistory from "./LateExplanationHistory.vue";
 
@@ -295,18 +301,6 @@ const statusRows = computed(() => props.task.status_rows || []);
 const attempts = computed(() => props.task.attempts || []);
 const treasury = computed(() => props.task.treasury_evidence);
 
-const stateLabel = computed(() => {
-	if (props.task.publication_state === "Acknowledged" && props.task.version?.status === "Active") return "Published";
-	if (!treasury.value) return "Approved — Treasury submission details needed";
-	return props.task.header?.badge || "";
-});
-
-// §10.13 U13-FAILED — "for AO/reader show Responsible role Authorised
-// technical operator and no button". The statement belongs to the recovery
-// the reader cannot perform, so holding some other action here (recording or
-// correcting the Treasury submission) must not silence it: an Accounting
-// Officer looking at a failed publication would otherwise be shown no retry
-// and no word of whose it is.
 const lateActivation = computed(() => ({
 	applicable: false,
 	financial_year_started_display: "",
@@ -316,13 +310,8 @@ const lateActivation = computed(() => ({
 	...(props.task.late_activation || {}),
 }));
 
-const responsibleRole = computed(() => {
-	const unrecovered =
-		props.task.publication_state === "Failed" || props.task.publication_state === "Indeterminate";
-	if (unrecovered && !props.task.can_retry && !props.task.can_reconcile) {
-		return "Authorised technical operator";
-	}
-	if (!treasury.value && !props.task.can_record_treasury) return "Accounting Officer";
-	return "";
-});
+const headEl = ref(null);
+const journeyEl = ref(null);
+const bodyEl = ref(null);
+useGuidance({ journeyEl, headEl, bodyEl }, { answer: () => props.task.next_step, journey: () => props.task.journey, pending: () => props.pending });
 </script>

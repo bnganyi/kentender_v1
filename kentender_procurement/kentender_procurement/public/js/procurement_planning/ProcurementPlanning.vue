@@ -268,6 +268,7 @@
 						@cancel-update="cancelUpdateDialog = true"
 						@open-task="(route) => frappe.set_route(...route)"
 						@save-details="onSaveVersionDetails"
+						@guidance-command="onPlanGuidanceCommand"
 					/>
 					<CancelUpdateDialog
 						v-if="cancelUpdateDialog"
@@ -1265,6 +1266,23 @@ async function onDissolvePlanItem() {
 }
 
 // §5.2 — one plan-level Finance confirmation per Version
+// PLN v1.27 §11.9 — a next-step fix that is a governed command. Request budget
+// revision invokes RequestBudgetRevision for the exact over-budget line of the
+// displayed Draft (no form); the reload then shows U07-WAITING-BUDGET-REVISION.
+async function onPlanGuidanceCommand(fix) {
+	if (fix.fix_id !== "request_budget_revision") return;
+	await run("request-budget-revision", async (key) => {
+		const r = await api.requestBudgetRevision({
+			plan_version: annualPlan.value.version_reference,
+			budget_line: fix.target?.budget_line,
+			expected_record_version: annualPlan.value.record_version,
+			idempotency_key: key,
+		});
+		await load({ quiet: true });
+		return r;
+	});
+}
+
 async function onRequestPlanFunding() {
 	// RUN-CHG-001 — reload inside the guarded function (same-screen command).
 	await run("request-plan-funding", async (key) => {

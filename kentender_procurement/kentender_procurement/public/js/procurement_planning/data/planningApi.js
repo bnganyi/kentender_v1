@@ -131,6 +131,11 @@ export function savePlanVersionDetails(args) {
 
 // --- plan-level finance (§5.2, one task per Version) --------------------
 
+// PLN v1.27 §7.2 RequestBudgetRevision — line and amounts are server-derived.
+export function requestBudgetRevision(args) {
+	return frappeCall(`${BASE}.request_budget_revision`, args);
+}
+
 export function requestPlanFundingConfirmation(args) {
 	return frappeCall(`${BASE}.request_plan_funding_confirmation`, args);
 }

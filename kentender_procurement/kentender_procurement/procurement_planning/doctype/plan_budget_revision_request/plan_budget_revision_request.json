@@ -1,0 +1,250 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:request_reference",
+ "creation": "2026-09-25 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "request_reference",
+  "plan_version",
+  "budget_line",
+  "budget_line_reference",
+  "budget_line_title",
+  "budget_line_revision",
+  "approved_amount",
+  "planned_amount",
+  "over_amount",
+  "status",
+  "requested_by",
+  "authority_snapshot",
+  "requested_at",
+  "bud_request_reference",
+  "outcome_at",
+  "outcome_by",
+  "outcome_reason",
+  "resulting_line_version",
+  "resulting_approved_amount",
+  "outcome_sequence",
+  "idempotency_key",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "request_reference",
+   "fieldtype": "Data",
+   "label": "Request",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "plan_version",
+   "fieldtype": "Link",
+   "label": "Plan Version",
+   "options": "Annual Plan Version",
+   "reqd": 1,
+   "search_index": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "budget_line",
+   "fieldtype": "Link",
+   "label": "Budget line",
+   "options": "Procurement Budget Line",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "budget_line_reference",
+   "fieldtype": "Data",
+   "label": "Budget line reference"
+  },
+  {
+   "fieldname": "budget_line_title",
+   "fieldtype": "Data",
+   "label": "Budget line"
+  },
+  {
+   "fieldname": "budget_line_revision",
+   "fieldtype": "Data",
+   "label": "Budget line revision"
+  },
+  {
+   "fieldname": "approved_amount",
+   "fieldtype": "Currency",
+   "label": "Approved at request"
+  },
+  {
+   "fieldname": "planned_amount",
+   "fieldtype": "Currency",
+   "label": "Planned at request"
+  },
+  {
+   "fieldname": "over_amount",
+   "fieldtype": "Currency",
+   "label": "Over by at request"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Open\nRevised\nDeclined\nWithdrawn",
+   "default": "Open",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Requested by",
+   "options": "User"
+  },
+  {
+   "fieldname": "authority_snapshot",
+   "fieldtype": "Long Text",
+   "label": "Authority snapshot"
+  },
+  {
+   "fieldname": "requested_at",
+   "fieldtype": "Datetime",
+   "label": "Requested at"
+  },
+  {
+   "fieldname": "bud_request_reference",
+   "fieldtype": "Data",
+   "label": "Budget request reference"
+  },
+  {
+   "fieldname": "outcome_at",
+   "fieldtype": "Datetime",
+   "label": "Outcome at"
+  },
+  {
+   "fieldname": "outcome_by",
+   "fieldtype": "Data",
+   "label": "Outcome by"
+  },
+  {
+   "fieldname": "outcome_reason",
+   "fieldtype": "Small Text",
+   "label": "Outcome reason"
+  },
+  {
+   "fieldname": "resulting_line_version",
+   "fieldtype": "Data",
+   "label": "Resulting line Version"
+  },
+  {
+   "fieldname": "resulting_approved_amount",
+   "fieldtype": "Currency",
+   "label": "Resulting approved amount"
+  },
+  {
+   "fieldname": "outcome_sequence",
+   "fieldtype": "Int",
+   "label": "Outcome sequence",
+   "default": "0"
+  },
+  {
+   "fieldname": "idempotency_key",
+   "fieldtype": "Data",
+   "label": "Idempotency key"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-25 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement Planning",
+ "name": "Plan Budget Revision Request",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Procurement Planner",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Head of Procurement Function",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Finance Confirmation Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Accounting Officer",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 1,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Auditor",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "sort_field": "requested_at",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "is_submittable": 0
+}

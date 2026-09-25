@@ -403,7 +403,16 @@ def get_budget_line_position(budget_line: str, *, as_at_version: str | None = No
 			"status": owning_version.status,
 		},
 		"reservations": reservations,
+		# BUD v1.11 §11 line detail — one quiet line while Planning's request
+		# for this line is Open; no action on this page.
+		"revision_request_note": _revision_request_note(line.name),
 	}
+
+
+def _revision_request_note(budget_line: str) -> str:
+	from kentender_budget.services.budget_revision_request_contracts import open_request_line_note
+
+	return open_request_line_note(budget_line)
 
 
 def _active_version_name_for_line(budget_line: str) -> str | None:
@@ -676,6 +685,11 @@ def get_budget_workspace(fiscal_year: str | None = None) -> dict[str, Any]:
 		return result
 
 	result["can_create_revision"] = not pending and has_budget_version_capability(frappe.session.user, CAP_EDIT, version)
+	# BUD v1.11 §11.1B BUD-DES-18 — one task row per Open budget revision
+	# request, for the Budget Officer only.
+	from kentender_budget.services.budget_revision_request_contracts import open_requests_for_workspace
+
+	result["revision_requests"] = open_requests_for_workspace(budget_name, frappe.session.user)
 	result["available_actions"].append("view_budget")
 	if result["can_create_revision"]:
 		result["available_actions"].append("update_allocation")
@@ -1077,7 +1091,14 @@ def create_budget_successor_version(budget: str, payload: dict | str | None = No
 	require_budget_version_capability(frappe.session.user, CAP_EDIT, active)
 
 	existing_draft = _draft_version(doc.name)
+	request_id = (payload.get("budget_revision_request_id") or "").strip()
 	if existing_draft:
+		# BUD v1.11 §9.2 — answering a revision request reuses the one open
+		# successor and records the link; it is otherwise the ordinary route.
+		if request_id:
+			from kentender_budget.services.budget_revision_request_contracts import link_successor
+
+			link_successor(request_id, existing_draft.name)
 		# §12.3 — a second open successor is rejected and the existing route returned.
 		pending = _pending_version_summary(doc.name, frappe.session.user)
 		return {
@@ -1105,4 +1126,8 @@ def create_budget_successor_version(budget: str, payload: dict | str | None = No
 		"revision_type": payload.get("revision_type"),
 	}
 	version = _create_draft_version(doc, seeded, based_on=active)
+	if request_id:
+		from kentender_budget.services.budget_revision_request_contracts import link_successor
+
+		link_successor(request_id, version.name)
 	return {"ok": True, "version": _version_summary(version)}

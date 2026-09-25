@@ -32,7 +32,7 @@ from kentender_procurement.procurement_planning import errors
 MODULE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SPEC = os.path.join(
 	os.path.dirname(frappe.get_app_path("kentender_procurement")), "..", "docs", "mvp-1-r1", "04_planning",
-	"KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_23.md",
+	"KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_27.md",
 )
 
 MILESTONES = ("invitation", "bid_opening", "evaluation_completion", "award_approval", "award_notification", "contract_signing", "delivery_completion")
@@ -78,7 +78,9 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 	"Plan Governance Decision": {"decision_reference", "task", "plan_version", "stage", "decision", "capacity", "collective_resolution_reference", "return_reason", "actor", "authority_snapshot", "decided_at", "command_idempotency_key", "fixture_namespace"},
 	"Late Activation Explanation": {"plan_version", "reason", "actor", "authority_snapshot", "recorded_at", "supersedes", "fixture_namespace"},
 	# --- downstream use, correction, operational evidence (§4.8) --------------
-	"Plan Drawdown Reference": {"plan_item", "plan_item_id", "allocation", "requisition_reference", "requesting_org_unit", "quantity", "amount", "drawdown_state", "reversal_reference", "record_version", "fixture_namespace"},
+	# REQ-CHG-001 v1.11 (commit f24b1b65) added the exact requisition version and
+	# the correlation id to each drawdown; the allow-list had not followed.
+	"Plan Drawdown Reference": {"plan_item", "plan_item_id", "allocation", "requisition_reference", "requisition_version", "correlation_id", "requesting_org_unit", "quantity", "amount", "drawdown_state", "reversal_reference", "record_version", "fixture_namespace"},
 	"Plan Item Correction Request": {"plan_item", "plan_item_id", "plan_version", "requisition_reference", "requisition_version", "reason", "requested_by", "requested_role", "requested_at", "producer_event_id", "status", "resolved_by", "resolved_at", "resolution_note", "idempotency_key", "record_version", "fixture_namespace"},
 	"Plan Item Correction Disposition": {"correction_request", "action", "actor", "authority_snapshot", "disposed_at", "reason", "correcting_plan_version", "replacement_lineage", "producer_event_id", "command_idempotency_key", "fixture_namespace"},
 	"Milestone Actual Event": {"producer", "event_id", "schema_version", "proceeding_type", "proceeding_id", "requisition_reference", "plan_version", "plan_item", "plan_item_id", "allocation", "milestone", "actual_date", "recorded_at", "producer_sequence", "supersedes_event_id", "source_evidence_reference", "fixture_namespace"},
@@ -290,7 +292,7 @@ class TestPlanningV123Schema(IntegrationTestCase):
 
 	def test_error_contract_equals_spec_section_8(self):
 		table = spec_error_table()
-		self.assertEqual(len(table), 52)
+		self.assertEqual(len(table), 54)  # v1.27 §8 adds PLN_BUDGET_REVISION_NOT_REQUIRED / _ALREADY_REQUESTED
 		# v1.23 §8 dropped PLN_FORECAST_REASON_REQUIRED and
 		# PLN_CASCADE_INCLUDES_ACTUAL_MILESTONE from the user-facing table with
 		# the forecast facility, so errors.py is a strict superset of the spec

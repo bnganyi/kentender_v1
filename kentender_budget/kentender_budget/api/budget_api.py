@@ -28,6 +28,14 @@ def get_budget_workspace(fiscal_year: str | None = None):
 
 
 @frappe.whitelist()
+def decline_budget_revision_request(payload: dict | str | None = None):
+	"""BUD v1.11 §9.2 — the Budget Officer's decline (BUD-DES-19)."""
+	from kentender_budget.services import budget_revision_request_contracts as requests
+
+	return requests.decline_budget_revision_request(payload)
+
+
+@frappe.whitelist()
 def save_budget_version_draft(payload: dict | str | None = None):
 	return contracts.save_budget_version_draft(payload)
 
@@ -327,3 +335,22 @@ def adjust_commitment(
 		variation_event_type=variation_event_type or "",
 		idempotency_key=idempotency_key or "",
 	)
+
+
+
+# BUD-CHG-001 v1.11 §6 / §9.2 — the Planning service principal's two calls.
+# Published for Procurement Planning's gateway, deliberately NOT whitelisted:
+# no browser or HTTP caller may send or withdraw a request; the service
+# checks the registered principal flag Planning's gateway sets.
+
+
+def receive_budget_revision_request(payload: dict | str | None = None):
+	from kentender_budget.services import budget_revision_request_contracts as requests
+
+	return requests.receive_budget_revision_request(payload)
+
+
+def withdraw_budget_revision_request(payload: dict | str | None = None):
+	from kentender_budget.services import budget_revision_request_contracts as requests
+
+	return requests.withdraw_budget_revision_request(payload)

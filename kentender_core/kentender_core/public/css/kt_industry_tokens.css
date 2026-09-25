@@ -839,6 +839,49 @@
 .kt-industry .kt-task-row { border-left: 3px solid var(--kt-color-accent); padding: 4px 0 4px 20px; display: flex; align-items: center; gap: var(--kt-space-6); }
 .kt-industry .kt-decision { border-top: 2px solid var(--kt-color-accent); padding: 20px 0 0; }
 
+/* KT-STD-001 v1.8 §2.9 — the journey tracker and the next-step block, drawn by
+   kt_industry_guidance.bundle.js. Ported from the Planning boards' inline
+   styles on data-kt="journey" / data-kt="next-step" (25 Sep 2026); the
+   design system had no class for either. Quiet by default (§2.9.3 rule 6):
+   accent only on the current stage, status colour only on Blocked and Done,
+   always with text; the blocked kind is the only one with a container. */
+/* A host element a module mounts the components into: it has no box of its
+   own, so an empty host (Not involved, no tracker) adds no gap to the
+   page's flex column, and a drawn component sits where the board puts it. */
+.kt-industry .kt-guidance-mount { display: contents; }
+.kt-industry .kt-journey { display: flex; align-items: flex-end; gap: var(--kt-space-6); margin: 0; }
+.kt-industry .kt-journey-stages { list-style: none; margin: 0; padding: 0; flex: 1; display: grid; gap: var(--kt-space-2); }
+.kt-industry .kt-journey-stage { border-top: 2px solid var(--kt-color-neutral-300); padding-top: 6px; min-width: 0; }
+.kt-industry .kt-journey-stage.is-current,
+.kt-industry .kt-journey-stage.is-blocked { border-top-color: var(--kt-color-accent); }
+.kt-industry .kt-journey-label { font-size: 13px; line-height: 1.3; color: var(--kt-color-neutral-800); }
+.kt-industry .kt-journey-stage.is-current .kt-journey-label,
+.kt-industry .kt-journey-stage.is-blocked .kt-journey-label { font-weight: 600; color: var(--kt-color-text); }
+.kt-industry .kt-journey-marker { font-size: 12px; line-height: 1.35; margin-top: 2px; color: var(--kt-color-neutral-700); }
+.kt-industry .kt-journey-stage.is-done .kt-journey-marker { color: var(--kt-status-live); font-weight: 600; }
+.kt-industry .kt-journey-stage.is-current .kt-journey-marker { color: var(--kt-color-accent-800); font-weight: 600; }
+.kt-industry .kt-journey-stage.is-blocked .kt-journey-marker { color: var(--kt-status-attention); font-weight: 600; }
+.kt-industry .kt-journey-holder { font-weight: 400; color: var(--kt-color-neutral-800); }
+.kt-industry .kt-journey-link { font-size: 13px; white-space: nowrap; padding-bottom: 2px; }
+.kt-industry .kt-journey.is-reduced { display: block; font-size: 13.5px; color: var(--kt-color-neutral-800); }
+.kt-industry .kt-journey-current { font-weight: 600; color: var(--kt-color-accent-800); }
+.kt-industry .kt-next-step { margin: var(--kt-space-4) 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 15px; line-height: 1.35; }
+.kt-industry .kt-next-step-label { font-size: 12px; font-weight: 600; color: var(--kt-color-neutral-700); }
+.kt-industry .kt-next-step-headline { font-weight: 600; color: var(--kt-color-text); }
+.kt-industry .kt-next-step-since { font-size: 13px; color: var(--kt-color-neutral-700); }
+.kt-industry .kt-notice.kt-next-step-block { margin: 0; }
+.kt-industry .kt-next-step-block-body { flex: 1; min-width: 0; }
+.kt-industry .kt-next-step-block .kt-next-step-label { color: var(--kt-color-neutral-800); }
+.kt-industry .kt-next-step-block-headline { font-family: var(--kt-font-heading); font-size: 22px; line-height: 1.2; margin-top: 2px; color: var(--kt-color-text); }
+.kt-industry .kt-next-step-sentence { margin: var(--kt-space-2) 0 0; font-size: 14px; color: var(--kt-color-text); }
+.kt-industry .kt-meta-row.kt-next-step-facts { gap: var(--kt-space-8); margin-top: var(--kt-space-3); }
+.kt-industry .kt-next-step-fact { font-size: 14px; }
+.kt-industry .kt-next-step-fixes { display: flex; gap: var(--kt-space-3); flex-wrap: wrap; align-items: center; margin-top: var(--kt-space-4); }
+.kt-industry .kt-next-step-fix-text { font-size: 14px; }
+.kt-industry .kt-next-step-blockers { list-style: none; margin: var(--kt-space-3) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--kt-space-3); }
+.kt-industry .kt-next-step-blockers > li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--kt-space-3); }
+.kt-industry .kt-next-step-blocker-headline { font-size: 14px; font-weight: 600; color: var(--kt-color-text); }
+
 /* Filter bar: controls local to the records they filter. */
 .kt-industry .kt-filter-bar { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--kt-space-3); align-items: end; margin-bottom: var(--kt-space-4); }
 .kt-industry .kt-filter-bar > .is-wide { grid-column: span 2; }

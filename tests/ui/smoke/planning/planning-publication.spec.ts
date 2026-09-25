@@ -106,16 +106,25 @@ test.describe("Publication, recovery and the plan in force", () => {
 		await gotoPlan(page, failed.plan_reference);
 		await page.locator('[data-testid="pln-open-publication"]').click();
 		await expectReady(page, "publication");
-		await expect(page.locator('[data-testid="pub-context"]')).toContainText("Publication failed");
+		// PLN v1.27 §10.12 — the waiting line (which replaced the state badge
+		// and "Responsible role") names whose the recovery is and since when;
+		// the tracker is the one-line reduced form.
+		await expect(page.locator(".kt-page-head .kt-next-step")).toContainText("Waiting for an authorised technical operator to retry publication");
+		await expect(page.locator(".kt-page-head .kt-next-step .kt-next-step-since")).toContainText(/EAT$/);
+		await expect(page.locator(".kt-journey.is-reduced")).toContainText(/^Stage 6 of 7: Publication/);
+		await expect(page.locator('[data-testid="pub-responsible"]')).toHaveCount(0);
 		// The business actor never sees the technical recovery (§10.12).
 		await expect(page.locator('[data-testid="pub-retry"]')).toHaveCount(0);
-		await expect(page.locator('[data-testid="pub-responsible"]')).toContainText("Authorised technical operator");
 
 		await loginAsAdministrator(page);
 		await gotoPlanning(page, `/publication/${failed.publication}`);
 		await expectReady(page, "publication");
+		// Owner decision O4 — the one named exception to KT-STD §3B.6.
+		await expect(page.locator(".kt-page-head .kt-next-step")).toHaveText(/^Your turn\s+Retry publication$/);
 		await page.locator('[data-testid="pub-retry"]').click();
 		await expect(page.locator('[data-testid="pub-status-row"]').nth(2)).toContainText("Published", { timeout: 30_000 });
+		// Redrawn in place: the retry is no longer anyone's turn.
+		await expect(page.locator(".kt-page-head .kt-next-step")).not.toContainText("Retry publication");
 	});
 
 	test("the Accounting Officer asks for a withdrawal; the approving authority decides it", async ({ page }) => {

@@ -8,6 +8,7 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import DppPlanScreen from "./DppPlanScreen.vue";
+import { AUTHOR_DRAFT_TURN, CLOSED_BLOCKED, CORRECTION_TURN, HOD_TURN, dppJourney } from "./guidance.fixtures.js";
 
 const INFRASTRUCTURE = {
 	entry_id: "DPPE-MOH-DHI-2027-001",
@@ -64,6 +65,8 @@ function plan(overrides = {}) {
 		submit_hint: "",
 		open_task: null,
 		update_notice: null,
+		next_step: AUTHOR_DRAFT_TURN,
+		journey: dppJourney("preparation", { holder: "Grace Wanjiku", reduced: true }),
 		...overrides,
 	};
 }
@@ -75,6 +78,13 @@ function make(props = {}) {
 }
 
 describe("DppPlanScreen — U02-AUTHOR-DRAFT", () => {
+	it("says whose turn it is in the head and where the plan stands in one reduced line, instead of a Status cell", () => {
+		const w = make();
+		expect(w.find(".kt-page-head .kt-next-step").text()).toBe("Your turn Enter funding details for 1 requirement");
+		expect(w.find(".kt-journey.is-reduced").text()).toBe("Stage 1 of 4: Preparation — Grace Wanjiku");
+		expect(w.find('[data-testid="pln-dpp-context"]').text()).not.toContain("Status");
+	});
+
 	it("uses the Author's own heading and summary labels", () => {
 		const w = make();
 		expect(w.find('[data-testid="pln-dpp-title"]').text()).toBe("Your departmental procurement plan");
@@ -177,10 +187,20 @@ describe("DppPlanScreen — U05-HOD", () => {
 					text: "I certify that this plan records Digital Health's procurement requirements for FY 2027/28.",
 					checkbox_label: "I confirm this certification",
 				},
+				next_step: HOD_TURN,
+				journey: dppJourney("certification", { holder: "Julia Njeri" }),
 				...extra,
 			}),
 		});
 	}
+
+	it("asks the Head of Department to certify, keeps the Status cell and the full tracker", () => {
+		const w = hod();
+		expect(w.find(".kt-page-head .kt-next-step").text()).toBe("Your turn Certify and submit the departmental plan");
+		expect(w.find(".kt-journey").classes()).not.toContain("is-reduced");
+		expect(w.find(".kt-journey-stage.is-current").text()).toContain("Certification");
+		expect(w.find('[data-testid="pln-dpp-context"]').text()).toContain("Status");
+	});
 
 	it("reads as a complete review of the department's plan", () => {
 		const w = hod();
@@ -222,6 +242,8 @@ describe("DppPlanScreen — U05-CORRECTION and U02-CLOSED", () => {
 				access: "hod",
 				can_submit: true,
 				is_correction: true,
+				next_step: CORRECTION_TURN,
+				journey: dppJourney("preparation"),
 				returned_submission_number: 1,
 				candidate_submission_number: 2,
 				certification: { show: true, text: "I certify…", checkbox_label: "I confirm this certification" },
@@ -233,7 +255,11 @@ describe("DppPlanScreen — U05-CORRECTION and U02-CLOSED", () => {
 				],
 			}),
 		});
-		expect(w.find('[data-testid="pln-dpp-correction-notice"]').text()).toContain("Your plan needs a correction");
+		// PLN v1.27 — the next-step line replaces the "Your plan needs a
+		// correction" notice; Procurement's comment stays beside its row.
+		expect(w.find('[data-testid="pln-dpp-correction-notice"]').exists()).toBe(false);
+		expect(w.find(".kt-page-head .kt-next-step").text()).toBe("Your turn Correct and resubmit the departmental plan");
+		expect(w.find(".kt-journey-stage.is-current").text()).toContain("Preparation");
 		// Returned submission 1, correction submission 2 — two distinct facts,
 		// each separately labelled (§10.4's own context-row convention).
 		const context = w.find('[data-testid="pln-dpp-context"]').text();
@@ -255,13 +281,26 @@ describe("DppPlanScreen — U05-CORRECTION and U02-CLOSED", () => {
 		);
 	});
 
-	it("keeps a closed-intake draft editable while saying it cannot be submitted", () => {
+	it("keeps a closed-intake draft editable while saying, once, why it cannot be submitted", () => {
 		const w = make({
-			plan: plan({ context: { ...plan().context, window: { state: "Closed", display: "Closed" } } }),
+			plan: plan({
+				context: { ...plan().context, window: { state: "Closed", display: "Closed" } },
+				next_step: CLOSED_BLOCKED,
+				journey: dppJourney("preparation", { holder: "Grace Wanjiku" }),
+				missing_setting: { title: "Departmental plan submissions are closed", items: [] },
+			}),
 		});
-		expect(w.find('[data-testid="pln-dpp-closed"]').text()).toBe(
-			"Initial submissions are closed. You can keep editing this draft, but it cannot be submitted now.",
-		);
+		// PLN v1.27 — the blocked next-step block replaces the footer sentence
+		// and carries the D3 fix; the missing-setting panel does not repeat it.
+		const block = w.find(".kt-next-step-block");
+		expect(block.text()).toContain("Initial submissions are closed");
+		expect(block.text()).toContain("You can keep editing this draft, but it cannot be submitted now.");
+		expect(block.text()).toContain("Ask your KenTender administrator to complete this setting.");
+		expect(block.find("button").exists()).toBe(false);
+		expect(w.find('[data-testid="pln-dpp-closed"]').exists()).toBe(false);
+		expect(w.text().match(/Initial submissions are closed/g)).toHaveLength(1);
+		expect(w.find('[data-testid="pln-missing-setting"]').exists()).toBe(false);
+		expect(w.find('[data-testid="pln-dpp-context"]').text()).toContain("Status");
 		expect(w.find('[data-testid="pln-dpp-save"]').exists()).toBe(true);
 		expect(w.find('[data-testid="pln-dpp-submit"]').exists()).toBe(false);
 	});

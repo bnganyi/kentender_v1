@@ -1306,3 +1306,57 @@
 .kt-pln details.kt-disclosure[open] > .kt-disclosure-head .kt-disclosure-chevron {
 	transform: rotate(180deg);
 }
+
+/* U06 review — one block per certified requirement (owner decision 25 Sep
+   2026). The board drew bare rows separated by a hairline, and the ported
+   `.pln-review-row` had no rule at all, so three requirements read as one
+   undivided stack of titles, selects and budget lines. Still inside the one
+   white sheet (no nested card): a numbered head, the department's facts
+   together, then the Planner's decision in its own tinted, accent-ruled
+   strip. */
+.kt-pln .pln-review-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--kt-color-divider); }
+.kt-pln .pln-review-row { padding: 24px 0 28px; border-bottom: 1px solid var(--kt-color-divider); }
+.kt-pln .pln-review-row-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--kt-space-6); }
+.kt-pln .pln-review-count { font-size: 11.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--kt-color-neutral-700); margin-bottom: 4px; }
+.kt-pln .pln-review-row-title { font-family: var(--kt-font-heading); font-size: 19px; line-height: 1.25; }
+.kt-pln .pln-review-facts { display: flex; flex-wrap: wrap; gap: 6px var(--kt-space-5); margin-top: 6px; font-size: 13.5px; color: var(--kt-color-neutral-800); }
+.kt-pln .pln-review-budget { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-top: 6px; font-size: 13.5px; color: var(--kt-color-neutral-800); }
+.kt-pln .pln-review-budget .kt-label { margin: 0; }
+.kt-pln .pln-review-classify { margin-top: var(--kt-space-4); padding: 14px 18px 16px; background: var(--kt-color-neutral-100); border-left: 3px solid var(--kt-color-accent); }
+.kt-pln .pln-review-classify.is-muted { border-left-color: var(--kt-color-divider); }
+.kt-pln .pln-review-classify.is-missing { border-left-color: var(--kt-status-critical); }
+.kt-pln .pln-review-classify-title { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--kt-color-neutral-800); margin-bottom: 10px; }
+.kt-pln .pln-review-classify-grid { display: grid; grid-template-columns: 260px 200px 1fr; gap: var(--kt-space-5); align-items: end; }
+.kt-pln .pln-review-classify-grid .kt-input { background-color: var(--kt-color-surface); }
+@media (max-width: 900px) {
+	.kt-pln .pln-review-classify-grid { grid-template-columns: 1fr; gap: var(--kt-space-3); }
+	.kt-pln .pln-review-row-head { flex-direction: column; gap: var(--kt-space-3); }
+}
+
+/* PLN v1.27 U07 Plan checks — budget fit and its per-line comparison, and a
+   failing check as a plain row with its correction, ported from the U07 /
+   U07-UPDATE-OVER-BUDGET boards' inline styles. */
+.kt-pln .pln-fit-head { display: flex; align-items: baseline; gap: var(--kt-space-4); flex-wrap: wrap; margin-bottom: var(--kt-space-3); }
+.kt-pln .pln-fit-title { font-family: var(--kt-font-heading); font-size: 17px; }
+.kt-pln .pln-fit-over { font-size: 14px; font-weight: 600; color: var(--kt-status-attention); }
+.kt-pln .pln-fit-line { font-weight: 600; }
+.kt-pln .pln-row-ref { font-size: 12px; margin-top: 2px; }
+.kt-pln .kt-table td.pln-fit-over-cell { color: var(--kt-status-attention); font-weight: 600; }
+.kt-pln .pln-check-value { font-size: 14px; }
+.kt-pln .pln-check-row { display: flex; align-items: center; justify-content: space-between; gap: var(--kt-space-5); flex-wrap: wrap; }
+.kt-pln .pln-check-row + .pln-check-row { margin-top: var(--kt-space-4); }
+.kt-pln .pln-check-row-text { margin: 0; font-size: 14px; color: var(--kt-color-text); }
+
+/* PLN v1.27 U01 — the plan task row states a blocked or waiting next step
+   (no tracker on a workspace), and the signature-only issue follows the
+   warning as a quieter line (U01 BASE, U01-CURRENT-UPDATE-* boards). */
+.kt-pln .pln-row-narrative { margin: var(--kt-space-4) 0 0; font-size: 14px; color: var(--kt-color-text); }
+.kt-pln .pln-row-narrative.is-blocked { font-weight: 600; color: var(--kt-status-attention); }
+.kt-pln .pln-row-narrative-since { color: var(--kt-color-neutral-700); }
+.kt-pln .pln-quiet-issue { display: flex; align-items: center; justify-content: space-between; gap: var(--kt-space-5); flex-wrap: wrap; margin-top: var(--kt-space-4); padding: 0 var(--kt-space-4); }
+.kt-pln .pln-quiet-issue p { margin: 0; font-size: 14px; color: var(--kt-color-neutral-800); }
+/* U01 task-row titles (every U01 board: heading font, 22px; the empty
+   state 21px). `.pln-task-title` had no rule, so the workspace's Level 1
+   task read at body size (found live 25 Sep 2026). */
+.kt-pln .kt-task-row .pln-task-title { font-family: var(--kt-font-heading); font-size: 22px; line-height: 1.15; }
+.kt-pln .kt-empty .pln-task-title { font-family: var(--kt-font-heading); font-size: 21px; }

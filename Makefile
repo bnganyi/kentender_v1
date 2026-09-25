@@ -77,6 +77,7 @@ help:
 	@echo "  make ui-planning-annual-plan-gate — PLN-CHG-001 v1.18 PLN18-304: U07 Annual Plan (5-tab) + U08 Form Plan Items domain + vitest + Playwright"
 	@echo "  make ui-planning-item-gate — PLN-CHG-001 v1.18 PLN18-305: U09 Plan Item editor domain + vitest + Playwright (incl. stale-save race)"
 	@echo "  make ui-planning-fidelity-gate — PLN-CHG-001 v1.12 D14: artboard landmark fidelity on the live screens"
+	@echo "  make planning-dead-end-gate — PLN-CHG-001 v1.27 / KT-STD-001 v1.8 §3B.7: every Planning state × reader, writes evidence/v1_27/dead_end_matrix.md"
 	@echo "  make departmental-needs-domain-gate — the whole Needs-owned Python domain suite (mirrors planning-domain-gate)"
 	@echo "  make ui-departmental-needs-fidelity-gate — NDS Artboards.dc.html structural fidelity on the live screens (mirrors ui-planning-fidelity-gate)"
 	@echo "  make ui-planning-release-evidence-gate — PLN-CHG-001 v1.12 Phase 8: every Planning browser spec + fidelity + §14 persona pass, single-worker"
@@ -536,6 +537,13 @@ ui-demands-workspace-gate:
 planning-domain-gate:
 	cd $(BENCH_ROOT) && for m in $$(cd apps/kentender_v1/kentender_procurement/kentender_procurement/procurement_planning/tests && ls test_*.py | sed 's/\.py$$//'); do \
 		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.procurement_planning.tests.$$m || exit 1; done
+
+# PLN-CHG-001 v1.27 / KT-STD-001 v1.8 §3B.7 — the Planning dead-end matrix:
+# every workflow state × every reader, the four §3B.7 rules, written to
+# docs/mvp-1-r1/04_planning/evidence/v1_27/dead_end_matrix.md. A failure
+# blocks the release. Never run alongside a Playwright run (shared site).
+planning-dead-end-gate:
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.procurement_planning.tests.test_dead_end_matrix
 
 # Departmental Needs — the whole Needs-owned Python domain suite, mirroring
 # planning-domain-gate's own shape (discovered dynamically; each test

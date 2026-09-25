@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import ReviewScreen from "./ReviewScreen.vue";
 import { READY } from "./ReservationAllocation.fixtures.js";
+import { AO_ROUTE_BLOCKED, AO_TURN, NOT_INVOLVED, ROUTE_PANEL, STALE_EVIDENCE_TURN, WAITING_AO, planJourney } from "./guidance.fixtures.js";
 
 const ITEMS = [
 	{
@@ -88,6 +89,8 @@ function task(overrides = {}) {
 		history: [],
 		changes: { is_initial: true },
 		late_activation_required: false,
+		next_step: AO_TURN,
+		journey: planJourney("ao", { holder: "Amina Hassan" }),
 		...overrides,
 	};
 }
@@ -99,15 +102,23 @@ function make(props = {}) {
 }
 
 describe("ReviewScreen — U11-AO shared composition", () => {
-	it("shows the scope as one line in the page head, not a facts row, and reads the statement up front", () => {
+	it("shows the scope as one line in the page head, with no stage token, and the next step beneath it", () => {
 		const w = make();
 		const scope = w.find('[data-testid="rev-context"]');
 		expect(scope.classes()).toContain("kt-page-scope");
-		expect(scope.text()).toBe("PLN-MOH-2027-001· Version 1· FY 2027/28· Awaiting Accounting Officer");
+		// PLN v1.27 §10.10 — the tracker carries the stage now.
+		expect(scope.text()).toBe("PLN-MOH-2027-001· Version 1· FY 2027/28");
 		// The plan's own title is not repeated here — no literal U11 board does.
 		expect(w.find('.kt-page-head').text()).not.toContain("Ministry of Health Annual Procurement Plan 2027/28");
-		const notice = w.find('[data-testid="rev-statement-notice"]');
-		expect(notice.text()).toContain("you adopt the complete plan shown here");
+		expect(w.find(".kt-page-head .kt-next-step").text()).toBe("Your turn Adopt and submit the plan, or return it for correction");
+		expect(w.find(".kt-journey-stage.is-current").text()).toContain("AO adoption");
+	});
+
+	it("states the decision once, beside the buttons, not again up front (owner decision O3)", () => {
+		const w = make();
+		expect(w.find('[data-testid="rev-statement-notice"]').exists()).toBe(false);
+		expect(w.text().match(/you adopt the complete plan shown here/g)).toHaveLength(1);
+		expect(w.find('[data-testid="rev-decision"] [data-testid="rev-statement"]').text()).toContain("you adopt the complete plan shown here");
 	});
 
 	it("groups the statement, missing-setting panel and buttons in one decision block", () => {
@@ -161,6 +172,11 @@ describe("ReviewScreen — U11-AO shared composition", () => {
 			expect(w.find(`[data-testid="${id}"]`).attributes("open")).toBeUndefined();
 		}
 		expect(w.find('[data-testid="rev-funding-evidence"] table').exists()).toBe(true);
+	});
+
+	it("never says funding is not yet checked; with no recorded check it states nothing", () => {
+		const w = make({ task: task({ funding: { ...task().funding, at_approval: {} } }) });
+		expect(w.text()).not.toContain("Not yet checked");
 	});
 
 	it("shows funding and preparation accountability as two compact rows", () => {
@@ -241,10 +257,13 @@ describe("ReviewScreen — only the actor's own part changes", () => {
 	});
 
 	it("U11-READER: shows the same document, under its own reader title, and no decision area", () => {
-		const w = make({ task: task({ can_decide: false, status: "Completed" }) });
+		const w = make({ task: task({ can_decide: false, status: "Completed", next_step: NOT_INVOLVED, journey: planJourney("in_force") }) });
 		expect(w.find('[data-testid="rev-title"]').text()).toBe("Annual procurement plan");
 		expect(w.find('[data-testid="rev-context"]').exists()).toBe(true);
-		expect(w.find('[data-testid="rev-context"]').text()).toBe("PLN-MOH-2027-001· Version 1· FY 2027/28· Current plan");
+		// v1.27 §10.10 U11-READER replaces the orientation token with the tracker.
+		expect(w.find('[data-testid="rev-context"]').text()).toBe("PLN-MOH-2027-001· Version 1· FY 2027/28");
+		expect(w.find(".kt-next-step").exists()).toBe(false);
+		expect(w.find(".kt-journey").exists()).toBe(true);
 		expect(w.find('.kt-page-desc').text()).toBe("Review the plan and its recorded evidence.");
 		expect(w.find('[data-testid="rev-footer"]').exists()).toBe(false);
 		expect(w.find('[data-testid="rev-statement"]').exists()).toBe(false);
@@ -257,8 +276,18 @@ describe("ReviewScreen — only the actor's own part changes", () => {
 		expect(w.find('[data-testid="rev-summary"]').exists()).toBe(true);
 	});
 
+	it("U11-PLANNER: the Planner reads where the submitted plan stands and who holds it", () => {
+		const w = make({ task: task({ can_decide: false, next_step: WAITING_AO }) });
+		const line = w.find(".kt-page-head .kt-next-step");
+		expect(line.text()).toContain("Waiting for Amina Hassan (Accounting Officer) to adopt or return the plan");
+		expect(line.text()).toContain("since 7 Dec 2026, 10:00 EAT");
+		expect(w.find('[data-testid="rev-footer"]').exists()).toBe(false);
+	});
+
 	it("U11-READER-HISTORICAL: reads under the reader title and says the Version is historical", () => {
-		const w = make({ task: task({ can_decide: false, status: "Completed", historical: true }) });
+		const w = make({ task: task({ can_decide: false, status: "Completed", historical: true, next_step: NOT_INVOLVED, journey: null }) });
+		// historical: tracker not drawn; the notice stays
+		expect(w.find(".kt-journey").exists()).toBe(false);
 		expect(w.find('[data-testid="rev-title"]').text()).toBe("Annual procurement plan");
 		// The notice already says "historical" — the scope line does not repeat it.
 		expect(w.find('[data-testid="rev-context"]').text()).toBe("PLN-MOH-2027-001· Version 1· FY 2027/28");
@@ -273,6 +302,8 @@ describe("ReviewScreen — a decision never precedes a hidden issue", () => {
 		const w = make({
 			task: task({
 				can_decide_positive: false,
+				next_step: STALE_EVIDENCE_TURN,
+				journey: planJourney("ao", { blocked: true, holder: "Amina Hassan" }),
 				decision_summary: {
 					...task().decision_summary,
 					funding: "Funding needs to be checked again",
@@ -288,6 +319,8 @@ describe("ReviewScreen — a decision never precedes a hidden issue", () => {
 		expect(w.find('[data-testid="rev-confirm"]').exists()).toBe(false);
 		// The corrective action stays available.
 		expect(w.find('[data-testid="rev-secondary"]').text()).toBe("Return for correction");
+		expect(w.find(".kt-page-head .kt-next-step").text()).toBe("Your turn Return the plan for a new funding check");
+		expect(w.find(".kt-journey-stage.is-blocked").text()).toContain("AO adoption");
 	});
 
 	it("U11-LATE-ADOPTION: asks why before the decision, with no editable date", () => {
@@ -328,5 +361,27 @@ describe("ReviewScreen — Review Plan checks", () => {
 		const w = make({ task: task({ reservation: null }) });
 		expect(w.find('[data-testid="reservation-allocation"]').exists()).toBe(false);
 		expect(w.find('[data-testid="rev-plan-checks-schedule"]').exists()).toBe(true);
+	});
+});
+
+// PLN v1.27 §10.16 — a missing setting is the blocker in the next-step block,
+// never a separate panel beside it; a technical reader (whose answer carries
+// no fixes) keeps the panel and its Open System setup route.
+describe("ReviewScreen — C01-ROUTE-MISSING", () => {
+	it("states the missing approval authority once, as the AO's blocker", () => {
+		const w = make({ task: task({ missing_setting: ROUTE_PANEL, next_step: AO_ROUTE_BLOCKED }) });
+		const block = w.find(".kt-next-step-block");
+		expect(block.text()).toContain("Annual Plan approval authority is not set up");
+		expect(block.text()).toContain("Adopt and submit");
+		expect(block.text()).toContain("Administrator or System Manager");
+		expect(block.text()).toContain("Ask your KenTender administrator to complete this setting.");
+		expect(w.find('[data-testid="pln-missing-setting"]').exists()).toBe(false);
+		expect(w.text().match(/Ask your KenTender administrator/g)).toHaveLength(1);
+	});
+
+	it("keeps the panel where the next step does not state the setting", () => {
+		const technicalPanel = { ...ROUTE_PANEL, can_open_setup: true, action: "Open System setup", href: "/app/system-setup#responsibilities", ask_text: "" };
+		const w = make({ task: task({ missing_setting: technicalPanel, next_step: NOT_INVOLVED }) });
+		expect(w.find('[data-testid="pln-missing-setting"]').exists()).toBe(true);
 	});
 });

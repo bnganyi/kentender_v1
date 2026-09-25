@@ -57,6 +57,8 @@ ERROR_CODES: frozenset[str] = frozenset(
 		"PLN_BASELINE_LOCKED",
 		"PLN_ACTUAL_NOT_WRITABLE",
 		"PLN_PLAN_NOT_AFFORDABLE",
+		"PLN_BUDGET_REVISION_NOT_REQUIRED",
+		"PLN_BUDGET_REVISION_ALREADY_REQUESTED",
 		"PLN_FINANCE_STALE",
 		"PLN_REVIEW_STALE",
 		"PLN_SEGREGATION_CONFLICT",
@@ -113,6 +115,9 @@ MESSAGES: dict[str, str] = {
 	"PLN_BASELINE_LOCKED": "This submitted plan cannot be edited. Use the available correction or update action.",
 	"PLN_ACTUAL_NOT_WRITABLE": "Actual dates must come from the process that recorded the event.",
 	"PLN_PLAN_NOT_AFFORDABLE": "The planned amount exceeds the approved budget on the lines shown.",
+	# PLN v1.27 §8 — RequestBudgetRevision's two refusals.
+	"PLN_BUDGET_REVISION_NOT_REQUIRED": "This budget line is within its approved amount. No budget revision is needed.",
+	"PLN_BUDGET_REVISION_ALREADY_REQUESTED": "A budget revision has already been requested for this line.",
 	"PLN_FINANCE_STALE": "Funding needs to be checked again. Follow the action shown for this plan.",
 	"PLN_REVIEW_STALE": "This review has changed. Refresh before deciding.",
 	"PLN_SEGREGATION_CONFLICT": "You cannot make this decision because of your earlier role in this plan. An authorised, independent decision-maker is required.",

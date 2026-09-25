@@ -350,3 +350,10 @@ Mercy Kilonzo on the actual purchase from the report, and against
 FU-V123-01, FU-V123-05 and FU-V123-07 each point at a named landmark exemption in `planning-fidelity.spec.ts` as the mechanism keeping the departure honest: `U14_EXECUTION_COLUMNS`, `U11_DECISION_TABLE`, `U09_SCHEDULE_LABELS`, `U09_REMOVE_ACTION`. None of the four is in that file, or anywhere else in the repository. They were lost in the v1.23 to v1.24 rewrite of the spec, and the loss was not noticed because nothing checks that a register entry still has an implementation.
 
 Departures are now recorded in `tests/ui/fidelity/departures/<module>.js`, where a stale entry fails the gate rather than sitting in a document. The rows above stand as history; the mechanism they describe does not.
+
+## v1.27 workflow-guidance cycle (25 Sep 2026)
+
+| ID | Follow-up | Owner decision needed |
+|---|---|---|
+| FU-V127-01 | **Planning instants display three hours ahead.** PLN §4 says service instants are stored as UTC and shown in Africa/Nairobi; `plan_read._eat`, `dpp_read._eat` and `dpp_classification._eat` convert from UTC accordingly, but every Planning command writes `now_datetime()` — the site's own Nairobi clock — so every command-written time on a Planning screen (submissions, decisions, signatures, publication, "since" on the next-step line) reads +3h. Seeded instants are written as UTC and read correctly, which is why the fixture-driven gates never saw it. Found live 25 Sep 2026 on the new "since" line. The v1.27 budget-revision records already store UTC. | Yes: either (a) convert every Planning write to UTC and patch existing rows (seeded rows are already UTC — the patch must tell them apart), or (b) declare site-timezone storage (Budget's documented convention, Tenders' conditional conversion) and change the three formatters and the seed to match. |
+| FU-V127-02 | Budget has no test module of its own for the revision request (BUD v1.11 §16.4); it is proven only through Planning's `test_plan_v127_guidance`. | No — owed in this cycle's Phase 5. |

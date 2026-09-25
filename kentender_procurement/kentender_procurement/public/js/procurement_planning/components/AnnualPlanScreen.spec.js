@@ -4,10 +4,21 @@
 // The preparation page's job is to say what still needs doing. Purchases lead
 // and each names its own next work; Plan checks is three results, not eight;
 // and the arithmetic behind a failing check stays where the correction is.
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import AnnualPlanScreen from "./AnnualPlanScreen.vue";
 import { BASE, READY } from "./ReservationAllocation.fixtures.js";
+import {
+	FINANCE_CONFIRMED,
+	FINANCE_NOT_REQUESTED,
+	FIT_OVER,
+	FIT_WITHIN,
+	METHOD_BLOCKED,
+	OVER_BUDGET,
+	WAITING_BUDGET,
+	WAITING_SIGNATURE,
+	planJourney,
+} from "./guidance.fixtures.js";
 
 const INFRASTRUCTURE = {
 	plan_item_id: "PPI-MOH-2027-021",
@@ -33,8 +44,9 @@ const LAPTOPS = {
 	route: ["procurement-plan-item", "PPI-MOH-2027-033"],
 };
 
+// PLN v1.27 — "Funding: Not yet checked" is retired; budget fit and Finance
+// confirmation are their own facts (budget_fit / finance_confirmation).
 const CHECKS = [
-	{ label: "Funding", result: "Not yet checked", kind: "neutral", route: null },
 	{
 		label: "Reserved procurement",
 		result: "KES 139,494 more qualifying allocation required",
@@ -68,7 +80,10 @@ function plan(overrides = {}) {
 		can_sign_and_submit: false,
 		can_cancel_update: false,
 		open_task: null,
-		waiting_on: { notice: "", people: [], unassigned: "" },
+		next_step: METHOD_BLOCKED,
+		journey: planJourney("preparation", { blocked: true, holder: "Mercy Kilonzo" }),
+		budget_fit: FIT_WITHIN,
+		finance_confirmation: FINANCE_NOT_REQUESTED,
 		...overrides,
 	};
 }
@@ -115,23 +130,34 @@ describe("AnnualPlanScreen — U07 BASE", () => {
 		expect(planner.find('[data-testid="ppl-purchase-action"]').text()).toBe("Edit purchase");
 	});
 
-	it("makes a failing check the dominant issue and keeps the passing ones quiet", () => {
-		// The board draws a failing check as its own warning notice carrying
-		// the correction, and the passing ones as quiet facts below. Built as
-		// one flat row of facts, a KES 139,494 shortfall read no louder than
-		// "all purchases meet their deadlines" (found live 24 Sep 2026).
+	// PLN v1.27 D2: the reservation shortfall blocks only signature, so it is
+	// a plain row carrying its correction; the page's one warning is the
+	// next-step block, which names what stops the funding request.
+	it("states the reservation shortfall as a plain row with its correction, not a second warning", () => {
 		const w = make();
 		const issue = w.find('[data-testid="ppl-check-issue"]');
-		expect(issue.classes()).toContain("is-warning");
+		expect(issue.classes()).not.toContain("is-warning");
 		expect(issue.text()).toContain("Reserved procurement");
 		expect(issue.text()).toContain("KES 139,494 more qualifying allocation required");
 		expect(w.find('[data-testid="ppl-check-action"]').text()).toBe("Review reserved procurement");
+		expect(w.find('[data-testid="ppl-plan-checks-region"] .kt-notice.is-warning').exists()).toBe(false);
+		expect(w.find(".kt-next-step-block").exists()).toBe(true);
 		const checks = w.find('[data-testid="ppl-plan-checks"]');
-		expect(checks.text()).toContain("Funding");
 		expect(checks.text()).toContain("Schedule");
-		// The failing one is stated once, in the notice — not twice.
+		// The failing one is stated once, in its row — not twice.
 		expect(checks.text()).not.toContain("Reserved procurement");
 		expect(w.text()).not.toContain("Budget basis");
+	});
+
+	it("never says funding is not yet checked: budget fit is live and Finance confirmation is its own fact", () => {
+		const w = make();
+		expect(w.text()).not.toContain("Not yet checked");
+		expect(w.find('[data-testid="ppl-budget-fit"]').text()).toContain("Budget fit, checked now");
+		expect(w.find('[data-testid="ppl-budget-fit"]').text()).toContain("Within each approved budget line");
+		expect(w.find('[data-testid="ppl-finance-confirmation"]').text()).toContain("Not requested");
+		// Within budget, the per-line table waits behind "View budget lines".
+		expect(w.find('[data-testid="ppl-budget-lines"]').element.tagName).toBe("DETAILS");
+		expect(w.find('[data-testid="ppl-budget-fit-table"]').exists()).toBe(false);
 	});
 
 	it("omits the project-name field when blank, offering to add one instead", () => {
@@ -179,7 +205,8 @@ describe("AnnualPlanScreen — U07 BASE", () => {
 		const w = make();
 		expect(w.find('[data-testid="ppl-request-funding"]').exists()).toBe(false);
 		expect(w.find('[data-testid="ppl-save"]').exists()).toBe(true);
-		expect(w.text()).not.toContain("Approve");
+		const buttons = w.findAll("button").map((b) => b.text());
+		expect(buttons.some((label) => /^(Submit|Approve)/.test(label))).toBe(false);
 		// No Approval and publication section while the Draft is being prepared.
 		expect(w.text()).not.toContain("Approval and publication");
 	});
@@ -283,72 +310,51 @@ describe("AnnualPlanScreen — U07-UPDATE", () => {
 });
 
 describe("AnnualPlanScreen — U07-FINANCE-COMPLETE", () => {
-	it("names the responsible person rather than offering the Planner a handover control", () => {
-		const w = make({
-			plan: plan({
-				can_request_funding: false,
-				plan_checks: [
-					{ label: "Funding", result: "Within each approved budget line", kind: "live", route: null },
-					{ label: "Reserved procurement", result: "Required allocation met", kind: "live", route: null },
-					{ label: "Schedule", result: "All purchases meet their departmental deadlines", kind: "live", route: null },
-				],
-				waiting_on: {
-					notice: "Ready for the Head of Procurement Function to sign and submit",
-					people: ["Charles Mutiso"],
-					unassigned: "",
-				},
-			}),
+	const financeComplete = (overrides = {}) =>
+		plan({
+			can_request_funding: false,
+			plan_checks: [
+				{ label: "Reserved procurement", result: "Required allocation met", kind: "live", route: null },
+				{ label: "Schedule", result: "All purchases meet their departmental deadlines", kind: "live", route: null },
+			],
+			next_step: WAITING_SIGNATURE,
+			journey: planJourney("signature", { holder: "Charles Mutiso (Head of Procurement Function)" }),
+			finance_confirmation: FINANCE_CONFIRMED,
+			summary: { reservation_allocation: READY },
+			...overrides,
 		});
-		// §10.6 — the notice and the person are separately labelled facts.
-		const waiting = w.find('[data-testid="ppl-waiting-on"]');
-		expect(waiting.text()).toContain("Ready for the Head of Procurement Function to sign and submit");
-		expect(waiting.text()).toContain("Responsible person");
-		expect(w.find('[data-testid="ppl-waiting-on-person"]').text()).toBe("Charles Mutiso");
+
+	// KT-STD-001 v1.8 §3B.3 — the next-step line names the person and how
+	// long it has waited, in the page head; it replaces the old Approval
+	// region and its "Responsible person" label.
+	it("names who it is waiting on, and since when, in the page head rather than an Approval region", () => {
+		const w = make({ plan: financeComplete() });
+		const line = w.find('[data-testid="ppl-next-step-line"] .kt-next-step');
+		expect(line.exists()).toBe(true);
+		expect(line.attributes("data-kind")).toBe("waiting");
+		expect(line.text()).toContain("Waiting for Charles Mutiso (Head of Procurement Function) to sign and submit");
+		expect(line.text()).toContain("since 4 Dec 2026, 10:00 EAT");
+		expect(w.find(".kt-page-head").element.contains(line.element)).toBe(true);
+		expect(w.find('[data-testid="ppl-waiting-on"]').exists()).toBe(false);
+		expect(w.text()).not.toContain("Responsible person");
 		// The Planner gets no approval or handover action of their own.
 		expect(w.find('[data-testid="ppl-sign-submit"]').exists()).toBe(false);
+		expect(w.find(".kt-next-step-block").exists()).toBe(false);
 	});
 
-	it("U07-FINANCE-COMPLETE: several holders are a list of people, not a slash-run", () => {
-		const w = make({
-			plan: plan({
-				waiting_on: {
-					notice: "Ready for the Head of Procurement Function to sign and submit",
-					people: ["Ada Kimani", "Charles Mutiso"],
-					unassigned: "",
-				},
-			}),
-		});
-		expect(w.find('[data-testid="ppl-waiting-on"]').text()).toContain("Responsible people");
-		expect(w.find('[data-testid="ppl-waiting-on-person"]').text()).toBe("Ada Kimani, Charles Mutiso");
-		expect(w.find('[data-testid="ppl-waiting-on"]').text()).not.toContain(" / ");
+	it("marks Signature as the current stage of the plan's journey", () => {
+		const w = make({ plan: financeComplete() });
+		const current = w.find('[data-testid="ppl-journey"] .kt-journey-stage.is-current');
+		expect(current.text()).toContain("Signature");
+		expect(w.findAll('[data-testid="ppl-journey"] .kt-journey-stage.is-done')).toHaveLength(2);
 	});
 
-	// The artboard (U07-FINANCE-COMPLETE) draws the Approval notice, then the
-	// final Save draft button beneath a divider — in that order. Save draft
-	// used to render first, so it read as the page's last word even once
-	// nothing further was the Planner's to do (found live 23 Sep 2026).
-	it("names who this is waiting on before the final Save draft action, not after", () => {
-		const w = make({
-			plan: plan({
-				waiting_on: { notice: "Ready for the Head of Procurement Function to sign and submit", people: ["Charles Mutiso"], unassigned: "" },
-			}),
-		});
-		const positions = [...w.element.querySelectorAll('[data-testid="ppl-waiting-on"], [data-testid="ppl-footer"]')].map((el) => el.getAttribute("data-testid"));
-		expect(positions).toEqual(["ppl-waiting-on", "ppl-footer"]);
-	});
-
-	it("U07-FINANCE-COMPLETE: no holder names the configuration issue, never an assignee (§6.5)", () => {
-		const w = make({
-			plan: plan({
-				waiting_on: {
-					notice: "Ready for the Head of Procurement Function to sign and submit",
-					people: [],
-					unassigned: "No one currently holds that responsibility — ask your KenTender administrator.",
-				},
-			}),
-		});
-		expect(w.find('[data-testid="ppl-waiting-on-person"]').exists()).toBe(false);
-		expect(w.find('[data-testid="ppl-waiting-on-unassigned"]').text()).toContain("ask your KenTender administrator");
+	it("shows who confirmed funding and when, beside the live budget fit", () => {
+		const w = make({ plan: financeComplete() });
+		const checks = w.find('[data-testid="ppl-plan-checks"]');
+		expect(checks.text()).toContain("Confirmed");
+		expect(checks.text()).toContain("Josphat Mwangi");
+		expect(checks.text()).toContain("4 Dec 2026, 10:00 EAT");
 	});
 
 	it("offers Sign and submit only to the actor who holds it", () => {
@@ -385,7 +391,9 @@ describe("AnnualPlanScreen — a reader who cannot change the plan", () => {
 describe("AnnualPlanScreen — the Reservation allocation block", () => {
 	const order = (w) => {
 		const region = w.find('[data-testid="ppl-plan-checks-group"]').element.parentElement;
-		return [...region.children].map((el) => el.dataset.testid).filter(Boolean);
+		// The block sits in a focusable host (the "Review reserved
+		// procurement" fix scrolls to it), so read the host's child.
+		return [...region.children].map((el) => el.dataset.testid || el.firstElementChild?.dataset.testid).filter(Boolean);
 	};
 
 	it("follows the warning and precedes the quiet checks while the allocation is not met", () => {
@@ -397,7 +405,6 @@ describe("AnnualPlanScreen — the Reservation allocation block", () => {
 
 	it("follows the quiet checks once the allocation is met, and the met row is not repeated", () => {
 		const checks = [
-			{ label: "Funding", result: "Within each approved budget line", kind: "live", route: null },
 			{ label: "Reserved procurement", result: "Required allocation met", kind: "live", route: null },
 			{ label: "Schedule", result: "Both purchases meet their departmental deadlines", kind: "live", route: null },
 		];
@@ -456,32 +463,10 @@ describe("AnnualPlanScreen — the structures the board draws", () => {
 		expect(group.find('[data-testid="ppl-plan-checks"]').exists()).toBe(true);
 	});
 
-	it("gives Approval its own region and notice rather than loose labels", () => {
-		const w = make({
-			plan: plan({ waiting_on: { notice: "Ready for the Head of Procurement Function to sign and submit", people: ["Charles Mutiso"], unassigned: "" } }),
-		});
-		const region = w.find('[data-testid="ppl-waiting-on"]');
-		expect(region.classes()).toContain("kt-region");
-		expect(region.classes()).toContain("is-secondary");
-		expect(region.find("h2").text()).toBe("Approval");
-		expect(region.find(".kt-notice").exists()).toBe(true);
-		expect(region.text()).toContain("Ready for the Head of Procurement Function to sign and submit");
-		expect(w.find('[data-testid="ppl-waiting-on-person"]').text()).toContain("Charles Mutiso");
-	});
-
-	it("names several responsible people without inventing a delimiter row", () => {
-		const w = make({
-			plan: plan({ waiting_on: { notice: "Ready to sign and submit", people: ["Charles Mutiso", "Asha Njeri"], unassigned: "" } }),
-		});
-		expect(w.find('[data-testid="ppl-waiting-on-person"]').text()).toContain("Charles Mutiso, Asha Njeri");
-		expect(w.find('[data-testid="ppl-waiting-on"]').text()).toContain("Responsible people");
-	});
-
-	it("still says who is unassigned where nobody holds it", () => {
-		const w = make({
-			plan: plan({ waiting_on: { notice: "Waiting", people: [], unassigned: "No Head of Procurement Function is assigned" } }),
-		});
-		expect(w.find('[data-testid="ppl-waiting-on-unassigned"]').text()).toBe("No Head of Procurement Function is assigned");
+	it("draws no Approval region: the next-step line replaced it", () => {
+		const w = make({ plan: plan({ next_step: WAITING_SIGNATURE }) });
+		expect(w.find('[data-testid="ppl-waiting-on"]').exists()).toBe(false);
+		expect(w.findAll("h2").map((h) => h.text())).not.toContain("Approval");
 	});
 });
 
@@ -493,5 +478,88 @@ describe("AnnualPlanScreen — Changes and history", () => {
 		const head = make().find('[data-testid="ppl-history"] .kt-disclosure-head');
 		expect(head.find(".kt-disclosure-title-row").text()).toBe("Changes and history");
 		expect(head.find(".kt-disclosure-chevron").exists()).toBe(true);
+	});
+});
+
+// PLN v1.27 §10.6 U07-UPDATE-OVER-BUDGET / U07-WAITING-BUDGET-REVISION — the
+// next-step block names what stops the funding request and carries the fixes;
+// the screen maps each fix to its own handler and computes no wording.
+describe("AnnualPlanScreen — the next step and its fixes", () => {
+	const overBudget = (overrides = {}) =>
+		plan({ is_successor: true, next_step: OVER_BUDGET, budget_fit: FIT_OVER, ...overrides });
+
+	it("names the over-budget line in the blocked block, and opens the line comparison", () => {
+		const w = make({ plan: overBudget() });
+		const block = w.find('[data-testid="ppl-next-step-block"] .kt-next-step-block');
+		expect(block.text()).toContain("Over budget by KES 2,000,000 on Digital health workforce development");
+		expect(block.text()).toContain("Choose one way to fix it.");
+		expect(w.find('[data-testid="ppl-budget-fit-over"]').text()).toContain("Over by KES 2,000,000 on one budget line");
+		expect(w.find('[data-testid="ppl-budget-fit-table"] .pln-fit-over-cell').text()).toBe("Over by KES 2,000,000");
+		expect(w.find('[data-testid="ppl-budget-lines"]').exists()).toBe(false);
+		// The head line is reserved for Your turn / Waiting / Done.
+		expect(w.find('[data-testid="ppl-next-step-line"] .kt-next-step').exists()).toBe(false);
+	});
+
+	it("hands Request budget revision to the page as a command, with its budget line", async () => {
+		const w = make({ plan: overBudget() });
+		await w.find('[data-fix="request_budget_revision"]').trigger("click");
+		const [fix] = w.emitted("guidance-command")[0];
+		expect(fix.fix_id).toBe("request_budget_revision");
+		expect(fix.target).toEqual({ budget_line: "MOH-BL-HWD-2027" });
+		expect(w.find('[data-fix="request_budget_revision"]').classes()).toContain("kt-btn-primary");
+	});
+
+	it("takes Reduce a purchase to the purchases, not to another page", async () => {
+		const scroll = vi.fn();
+		const w = mount(AnnualPlanScreen, {
+			props: { plan: overBudget(), selected: [], pending: false, errorSummary: "" },
+			attachTo: document.body,
+		});
+		const region = w.find('[data-testid="ppl-purchases-region"]').element;
+		region.scrollIntoView = scroll;
+		await w.find('[data-fix="reduce_purchase"]').trigger("click");
+		await new Promise((resolve) => setTimeout(resolve));
+		expect(scroll).toHaveBeenCalled();
+		expect(document.activeElement).toBe(region);
+		expect(w.emitted("guidance-command")).toBeUndefined();
+		expect(w.emitted("navigate")).toBeUndefined();
+		w.unmount();
+	});
+
+	it("opens the purchase when the fix is Choose a procurement method", async () => {
+		const w = make();
+		await w.find('[data-fix="choose_method"]').trigger("click");
+		expect(w.emitted("navigate")[0]).toEqual([["procurement-plan-item", "PPI-MOH-2027-021"]]);
+	});
+
+	it("holds every fix while a command is in flight", () => {
+		const w = make({ plan: overBudget(), pending: true });
+		expect(w.find('[data-fix="request_budget_revision"]').attributes("disabled")).toBeDefined();
+		expect(w.find('[data-fix="reduce_purchase"]').attributes("disabled")).toBeDefined();
+	});
+
+	it("says it is waiting on the Budget Officer once the revision is requested, with no fix to repeat", () => {
+		const w = make({ plan: overBudget({ next_step: WAITING_BUDGET }) });
+		const line = w.find('[data-testid="ppl-next-step-line"] .kt-next-step');
+		expect(line.text()).toContain("Waiting for Josphat Mwangi (Budget Officer) to revise the budget line");
+		expect(line.text()).toContain("since 15 Dec 2026, 10:00 EAT");
+		expect(w.find('[data-fix="request_budget_revision"]').exists()).toBe(false);
+		expect(w.find(".kt-next-step-block").exists()).toBe(false);
+	});
+
+	it("redraws the next step in place when the server answer changes", async () => {
+		const w = make({ plan: overBudget() });
+		expect(w.find(".kt-next-step-block").exists()).toBe(true);
+		await w.setProps({ plan: overBudget({ next_step: WAITING_BUDGET }) });
+		await new Promise((resolve) => setTimeout(resolve));
+		expect(w.find(".kt-next-step-block").exists()).toBe(false);
+		expect(w.find('[data-testid="ppl-next-step-line"]').text()).toContain("Waiting for Josphat Mwangi");
+	});
+
+	it("draws nothing at all where the server supplies no next step", () => {
+		const w = make({ plan: plan({ next_step: null, journey: null }) });
+		expect(w.find(".kt-next-step").exists()).toBe(false);
+		expect(w.find(".kt-next-step-block").exists()).toBe(false);
+		expect(w.find(".kt-journey").exists()).toBe(false);
 	});
 });

@@ -157,6 +157,22 @@ def request_plan_funding_confirmation(*, plan_version: str, expected_record_vers
 		fail("PLN_STALE_WRITE")
 	else:
 		validate_plan_ready(version, plan)
+		# PLN v1.27 §5.7 / KT-STD-001 v1.8 §3B.2 — the command refuses exactly
+		# what the screen withholds: the read never offered the request while
+		# accepted requirements were still outside every purchase, but the
+		# command used to accept it (`guards.unallocated_guard`).
+		from kentender_procurement.procurement_planning.services import plan_read
+
+		allocated = plan_read._allocated_dpp_entries(version.name)
+		if any(row["dpp_entry"] not in allocated for row in plan_read._accepted_entry_rows(plan.fiscal_year)):
+			fail("PLN_ENTRY_INCOMPLETE", "Add every accepted requirement to a purchase first.")
+		# Readiness passed, so every line fits: an Open budget revision
+		# request is now moot. Sending the plan to Finance is the Planner's
+		# decision to withdraw it (§7.2), so the Budget Officer is not left
+		# holding work nobody needs.
+		from kentender_procurement.procurement_planning.services import budget_revision
+
+		budget_revision.withdraw_fitting_requests(version, actor=actor)
 
 	basis, statement = financial_basis.capture(plan, version, correlation=idempotency_key)
 	if not statement.get("within_approved"):

@@ -64,7 +64,8 @@ STATUTORY = "pw.pln.statutory@example.test"
 AUDITOR = "pw.pln.auditor@example.test"
 OUTSIDER = "pw.pln.outsider@example.test"  # Departmental Author elsewhere
 NOBODY = "pw.pln.nobody@example.test"  # a stale Frappe Role, no responsibility assignment
-ACTORS = (AUTHOR, HOD, PLANNER, HOPF, FINANCE, ACCOUNTING_OFFICER, STATUTORY, AUDITOR, OUTSIDER, NOBODY)
+BUDGET_OFFICER = "pw.pln.budget@example.test"  # PLN v1.27 §7.7: receives a budget revision request
+ACTORS = (AUTHOR, HOD, PLANNER, HOPF, FINANCE, ACCOUNTING_OFFICER, STATUTORY, AUDITOR, OUTSIDER, NOBODY, BUDGET_OFFICER)
 
 PASSWORD = TEST_PASSWORD
 UNIT = "Each"
@@ -366,6 +367,7 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 		(FINANCE, "Playwright Finance Officer"), (ACCOUNTING_OFFICER, "Playwright Accounting Officer"),
 		(STATUTORY, "Playwright Statutory Approver"), (AUDITOR, "Playwright Auditor"),
 		(OUTSIDER, "Playwright Outsider Author"), (NOBODY, "Playwright Nobody"),
+		(BUDGET_OFFICER, "Playwright Budget Officer"),
 	):
 		_user(email, name)
 	_grant(AUTHOR, "Departmental Author", OU)
@@ -377,6 +379,7 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 	_grant(ACCOUNTING_OFFICER, "Accounting Officer")
 	_grant(STATUTORY, "Plan Statutory Approver")
 	_grant(AUDITOR, "Auditor")
+	_grant(BUDGET_OFFICER, "Budget Officer")
 	_grant(OUTSIDER, "Departmental Author", OUTSIDER_OU)
 	# PLN-AC-111..113 — a Frappe Role alone is not authority (AUTH §4): this
 	# actor reaches the Page through a stale role and must get the Forbidden
@@ -426,6 +429,14 @@ def _wipe() -> None:
 	frappe.db.delete("Plan Item Correction Disposition", {"correction_request": ("in", frappe.get_all("Plan Item Correction Request", filters={"plan_item_id": ("in", roots or ("",))}, pluck="name") or ("",))})
 	frappe.db.delete("Plan Item Correction Request", {"plan_item_id": ("in", roots or ("",))})
 	frappe.db.delete("Plan Item", {"name": ("in", roots or ("",))})
+	# PLN v1.27 §7.2 — a budget revision request exists on both sides of the
+	# hand-off (BUD v1.11 §8.5); the Budget side and its outbox go with it.
+	requests = frappe.get_all("Plan Budget Revision Request", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
+	if requests and frappe.db.exists("DocType", "Budget Revision Request"):
+		budget_side = frappe.get_all("Budget Revision Request", filters={"planning_request_id": ("in", requests)}, pluck="name")
+		frappe.db.delete("Budget Revision Request Event", {"budget_revision_request": ("in", budget_side or ("",))})
+		frappe.db.delete("Budget Revision Request", {"name": ("in", budget_side or ("",))})
+	frappe.db.delete("Plan Budget Revision Request", {"name": ("in", requests or ("",))})
 	for task_doctype, decision_doctype in (("Plan Finance Task", "Plan Finance Decision"), ("Plan Governance Task", "Plan Governance Decision")):
 		task_rows = frappe.get_all(task_doctype, filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
 		frappe.db.delete(decision_doctype, {"task": ("in", task_rows or ("",))})
@@ -465,6 +476,30 @@ def reset_all(*, commit: bool = True) -> dict[str, Any]:
 	if commit:
 		frappe.db.commit()
 	return {"ok": True, "namespace": NS_PW, "fiscal_year": FY}
+
+
+def purge_planning_rows_for_namespace(*, namespace: str, commit: bool = True) -> dict[str, Any]:
+	"""Planning rows another module's Playwright run caused, by its namespace.
+
+	Accepting a Need in the Departmental Needs Playwright suite fires Planning's
+	own `dpp_autostart` subscriber, which opens a Draft departmental plan
+	stamped with that suite's namespace. Needs' cleanup removes only its own
+	rows (Needs knows nothing about Planning), so those plans accumulated —
+	one still pointed at a since-reused Need reference (found 25 Sep 2026).
+	The Needs Playwright helper calls this Planning-owned entry point too.
+	"""
+	_guard()
+	namespace = cstr(namespace).strip()
+	if not namespace or namespace == "KENTENDER_MVP_1_R1_NDS":
+		# never an empty filter, never the canonical seed's own namespace
+		return {"ok": False, "reason": "namespace required"}
+	from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import clear_planning_fixture_rows
+
+	frappe.set_user("Administrator")
+	deleted = clear_planning_fixture_rows(include_canonical=False, include_playwright=False, namespaces=(namespace,))
+	if commit:
+		frappe.db.commit()
+	return {"ok": True, "namespace": namespace, "deleted": {k: v for k, v in deleted.items() if v}}
 
 
 def _pin_fixture_year() -> None:
@@ -1084,6 +1119,56 @@ def reset_update_candidate_fixture(*, need: str = "", commit: bool = True) -> di
 	if commit:
 		frappe.db.commit()
 	return {**state, "successor_version": successor["successor_version"], "successor_item_id": item_id}
+
+
+OVER_BUDGET_PLANNED_AMOUNT = 102_000_000  # the line approves 100,000,000
+
+
+def reset_update_over_budget_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""PLN v1.27 §10.2 UPDATE-OVER-BUDGET / U07-UPDATE-OVER-BUDGET — an open
+	plan update that takes its budget line over the approved amount.
+
+	From the candidate update: a 30% reserved-procurement target is
+	published and the Planner reserves the purchase for Youth (a real edit),
+	so the allocation is met as the board draws; then the update's one
+	source allocation is raised from KES 80,000,000 to 102,000,000 — a
+	fixture-only override standing in for the added requirements §10.2
+	describes — so the live affordability check itself finds the KES
+	2,000,000 overrun on the unchanged 100,000,000 line and the update's
+	"What changed" table shows the cost change."""
+	from kentender_procurement.procurement_planning.services import plan_read, plan_workbench
+
+	state = reset_update_candidate_fixture(need=need, commit=False)
+	_publish_reservation_target(30)
+	with _as(PLANNER):
+		item = plan_read.get_plan_item(plan_item_id=state["successor_item_id"])
+		plan_workbench.save_plan_item(
+			plan_item=state["successor_item_id"], values={"reservation_category": "Youth"},
+			expected_record_version=item["record_version"], idempotency_key=_key(),
+		)
+	for allocation in frappe.get_all("Plan Source Allocation", filters={"plan_version": state["successor_version"]}, pluck="name"):
+		frappe.db.set_value("Plan Source Allocation", allocation, "indicative_amount", OVER_BUDGET_PLANNED_AMOUNT, update_modified=False)
+	if commit:
+		frappe.db.commit()
+	return {**state, "budget_line": BUDGET_LINE}
+
+
+def reset_waiting_budget_revision_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:
+	"""PLN v1.27 U07-WAITING-BUDGET-REVISION — the over-budget update after
+	the Planner asked the Budget Officer to revise the line: one request on
+	each side (BUD v1.11 §8.5) and the Planner now waiting."""
+	from kentender_procurement.procurement_planning.services import budget_revision, plan_read
+
+	state = reset_update_over_budget_fixture(need=need, commit=False)
+	with _as(PLANNER):
+		plan = plan_read.get_annual_plan(plan_reference=state["plan_reference"])
+		requested = budget_revision.request_budget_revision(
+			plan_version=plan["version_reference"], budget_line=BUDGET_LINE,
+			expected_record_version=plan["record_version"], idempotency_key=_key(),
+		)
+	if commit:
+		frappe.db.commit()
+	return {**state, "request": requested["request"], "bud_request_reference": requested["bud_request_reference"]}
 
 
 def reset_finance_reassessment_fixture(*, need: str = "", commit: bool = True) -> dict[str, Any]:

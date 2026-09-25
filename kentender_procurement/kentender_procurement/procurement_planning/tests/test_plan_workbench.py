@@ -938,24 +938,35 @@ class TestReservationAllocations(PlanWorkbenchCase):
 		self.assertEqual(row["result"], "The reserved-procurement rule is missing or unverified")
 		self.assertEqual(row["kind"], "critical")
 
-	def test_a_mandatory_shortfall_is_the_workspaces_current_issue(self):
-		"""U01's own drawn copy (found live 22 Sep 2026, re-diffing against
-		the real v1.24 artboard): this exact code path had never actually
-		fired before that day's separate fiscal_year fix, so its wrong
-		wording — "Allocate ... more to eligible reserved procurement",
-		never drawn on any artboard — went unnoticed until now."""
+	def test_a_mandatory_shortfall_is_the_workspaces_second_quieter_issue(self):
+		"""PLN v1.27 §10.3 (D2): the missing method is the dominant pre-Finance
+		issue; the reservation shortfall follows it, quieter, and blocks only
+		signature. The v1.24 sentence "Resolve this before sending the plan
+		to Finance" contradicted §5.5.3.1 and is retired."""
 		accepted, item_id = self.one_item()
+		# as §10.3's BASE fixture: everything complete except the method
+		item = plan_read.get_plan_item(plan_item_id=item_id)
+		plan_workbench.save_plan_item(
+			plan_item=item_id, values=fx.item_values(procurement_method=""),
+			expected_record_version=item["record_version"], idempotency_key=key(),
+		)
 		version = frappe.get_doc("Annual Plan Version", accepted["annual_plan_version"])
 		plan = frappe.get_doc("Annual Plan", version.annual_plan)
 		reference = self._published(plan)
 		with patch.object(readiness, "reference_for", return_value=reference):
-			current_issue = workspace.get_planning_workspace(financial_year=fx.FY_OPEN, user=fx.PLANNER)["current_issue"]
+			issues = workspace.get_planning_workspace(financial_year=fx.FY_OPEN, user=fx.PLANNER)["issues"]
+		self.assertEqual([i["tone"] for i in issues], ["dominant", "quiet"])
+		self.assertEqual(issues[0]["strong"], "1 purchase needs a procurement method.")
+		self.assertEqual(issues[0]["text"], "1 purchase needs a procurement method. Choose it before sending the plan to Finance.")
+		self.assertEqual(issues[0]["action"], "Choose a procurement method")
+		self.assertEqual(issues[0]["route"], ["procurement-plan-item", item_id])
 		self.assertEqual(
-			current_issue["text"],
+			issues[1]["text"],
 			"Reserved procurement is below the required allocation by KES 300,000. "
-			"Resolve this before sending the plan to Finance.",
+			"Resolve this before the plan can be signed and submitted.",
 		)
-		self.assertEqual(current_issue["action"], "Review reserved procurement")
+		self.assertEqual(issues[1]["strong"], "KES 300,000")
+		self.assertEqual(issues[1]["action"], "Review reserved procurement")
 
 
 class TestDissolvePlanItem(PlanWorkbenchCase):
@@ -1122,6 +1133,7 @@ class TestSourceCorrectionRequired(PlanWorkbenchCase):
 		# separate "actionable" card repeating the same route.
 		from kentender_procurement.procurement_planning.services import workspace
 
-		current_issue = workspace.get_planning_workspace(financial_year=fx.FY_OPEN, user=fx.PLANNER)["current_issue"]
-		self.assertIn("1 accepted departmental entry", current_issue["text"])
-		self.assertIn("ready to consolidate into this plan", current_issue["text"])
+		issues = workspace.get_planning_workspace(financial_year=fx.FY_OPEN, user=fx.PLANNER)["issues"]
+		consolidate = [i for i in issues if "ready to consolidate into this plan" in i["text"]]
+		self.assertEqual(len(consolidate), 1)
+		self.assertIn("1 accepted departmental entry", consolidate[0]["text"])

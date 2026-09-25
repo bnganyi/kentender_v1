@@ -95,6 +95,39 @@ def check_plan_affordability(*, fiscal_year: str, planned_totals: dict[str, floa
 		return contract(fiscal_year=fiscal_year, planned_totals=planned_totals)
 
 
+#: BUD v1.11 §6 — Planning's registered principal for the revision-request
+#: calls; Budget checks this flag, never a browser-supplied value.
+PLANNING_PRINCIPAL_FLAG = "kt_budget_service_principal"
+
+
+@contextmanager
+def _planning_principal():
+	with _system_principal():
+		previous = frappe.flags.get(PLANNING_PRINCIPAL_FLAG)
+		frappe.flags[PLANNING_PRINCIPAL_FLAG] = "procurement_planning"
+		try:
+			yield
+		finally:
+			frappe.flags[PLANNING_PRINCIPAL_FLAG] = previous
+
+
+def receive_budget_revision_request(payload: dict[str, Any]) -> dict[str, Any]:
+	"""BUD v1.11 §8.5 item 1 — inside Planning's `RequestBudgetRevision`
+	transaction; Budget records one Open request or refuses."""
+	from kentender_budget.api.budget_api import receive_budget_revision_request as contract
+
+	with _planning_principal():
+		return contract(payload)
+
+
+def withdraw_budget_revision_request(payload: dict[str, Any]) -> dict[str, Any]:
+	"""BUD v1.11 §8.5 item 4 — Planning withdraws its own Open request."""
+	from kentender_budget.api.budget_api import withdraw_budget_revision_request as contract
+
+	with _planning_principal():
+		return contract(payload)
+
+
 class BudgetBasisStale(Exception):
 	"""Budget refused the positive decision: its authoritative basis changed
 	since the review (`BUD_BASIS_STALE`) or is unavailable (`BUD_BASIS_UNAVAILABLE`)."""

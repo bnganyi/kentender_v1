@@ -10,6 +10,7 @@ import { mount } from "@vue/test-utils";
 
 import AnnualPlanScreen from "./AnnualPlanScreen.vue";
 import { BASE, READY } from "./ReservationAllocation.fixtures.js";
+import { FINANCE_CONFIRMED, FINANCE_NOT_REQUESTED, FIT_OVER, FIT_WITHIN, METHOD_BLOCKED, OVER_BUDGET, UPSTREAM, WAITING_BUDGET, WAITING_SIGNATURE, planJourney } from "./guidance.fixtures.js";
 import { boardSkeleton } from "../../../../../../tests/ui/fidelity/board.js";
 import { compareSkeletons, formatMismatch, skeletonOf } from "../../../../../../tests/ui/fidelity/skeleton.js";
 import { DEPARTURES } from "../../../../../../tests/ui/fidelity/departures/procurement-planning.js";
@@ -38,12 +39,17 @@ function plan(overrides = {}) {
 		header: { title: "Ministry of Health Annual Procurement Plan 2027/28", badge: "Draft" },
 		plan_items: [ITEM],
 		unallocated_sources: [],
-		// The state the board drew: one failing check and two quiet ones.
+		// PLN v1.27 U07 BASE: the method is the pre-Finance blocker (next-step
+		// block); the reservation shortfall is a signature blocker (plain row);
+		// budget fit and Finance confirmation replace the Funding cell.
 		plan_checks: [
-			{ label: "Funding", result: "Not yet checked", kind: "neutral", route: null },
-			{ label: "Reserved procurement", result: "KES 139,494 more qualifying allocation required", kind: "critical", action: "Review reserved procurement", route: ["annual-procurement-plan", "PLN-MOH-2027-001"] },
+			{ label: "Reserved procurement", result: "KES 39,000,000 more qualifying allocation required", detail: "Resolve this before the plan can be signed and submitted.", kind: "critical", action: "Review reserved procurement", route: ["annual-procurement-plan", "PLN-MOH-2027-001"] },
 			{ label: "Schedule", result: "All purchases meet their departmental deadlines", kind: "live", route: null },
 		],
+		next_step: METHOD_BLOCKED,
+		journey: planJourney("preparation", { blocked: true, holder: "Mercy Kilonzo", upstream: UPSTREAM }),
+		budget_fit: FIT_WITHIN,
+		finance_confirmation: FINANCE_NOT_REQUESTED,
 		summary: { reservation_allocation: BASE },
 		submission_issues: [],
 		changes: { is_initial: true },
@@ -52,7 +58,6 @@ function plan(overrides = {}) {
 		can_sign_and_submit: false,
 		can_cancel_update: false,
 		open_task: null,
-		waiting_on: { notice: "", people: [], unassigned: "" },
 		...overrides,
 	};
 }
@@ -82,9 +87,59 @@ describe("AnnualPlanScreen — the containers U07 draws", () => {
 		const { result, message } = check("U07-FINANCE-COMPLETE", {
 			plan: plan({
 				can_request_funding: false,
-				plan_checks: [{ label: "Funding", result: "Within each approved budget line", kind: "live", route: null }],
+				plan_checks: [{ label: "Schedule", result: "Both purchases meet their departmental deadlines", kind: "live", route: null }],
 				summary: { reservation_allocation: READY },
-				waiting_on: { notice: "Ready for the Head of Procurement Function to sign and submit", people: ["Charles Mutiso"], unassigned: "" },
+				next_step: WAITING_SIGNATURE,
+				journey: planJourney("signature", { holder: "Charles Mutiso" }),
+				finance_confirmation: FINANCE_CONFIRMED,
+			}),
+		});
+		expect(message, message).toBe("");
+		expect(result).toEqual({ missing: [], extra: [] });
+	});
+
+	it("builds U07-UPDATE-OVER-BUDGET out of the board's own containers", () => {
+		const { result, message } = check("U07-UPDATE-OVER-BUDGET", {
+			plan: plan({
+				is_successor: true,
+				current_version_number: 1,
+				version_number: 2,
+				plan_checks: [{ label: "Schedule", result: "All purchases meet their departmental deadlines", kind: "live", route: null }],
+				summary: { reservation_allocation: READY },
+				next_step: OVER_BUDGET,
+				journey: planJourney("preparation", { blocked: true, holder: "Mercy Kilonzo", upstream: { ...UPSTREAM, label: "5 departmental requirements included" } }),
+				budget_fit: FIT_OVER,
+				changes: {
+					is_initial: false,
+					rows: [
+						{ plan_item_id: "PPI-MOH-2027-051", title: "Digital health workforce certification programme", field: "Estimated cost", current: "Not in the current plan", proposed: "KES 10,000,000" },
+						{ plan_item_id: "PPI-MOH-2027-052", title: "Digital health training assessment materials", field: "Estimated cost", current: "Not in the current plan", proposed: "KES 2,000,000" },
+					],
+				},
+			}),
+		});
+		expect(message, message).toBe("");
+		expect(result).toEqual({ missing: [], extra: [] });
+	});
+
+	it("builds U07-WAITING-BUDGET-REVISION out of the board's own containers", () => {
+		const { result, message } = check("U07-WAITING-BUDGET-REVISION", {
+			plan: plan({
+				is_successor: true,
+				current_version_number: 1,
+				version_number: 2,
+				plan_checks: [{ label: "Schedule", result: "All purchases meet their departmental deadlines", kind: "live", route: null }],
+				summary: { reservation_allocation: READY },
+				next_step: WAITING_BUDGET,
+				journey: planJourney("preparation", { blocked: true, holder: "Mercy Kilonzo", upstream: { ...UPSTREAM, label: "5 departmental requirements included" } }),
+				budget_fit: FIT_OVER,
+				changes: {
+					is_initial: false,
+					rows: [
+						{ plan_item_id: "PPI-MOH-2027-051", title: "Digital health workforce certification programme", field: "Estimated cost", current: "Not in the current plan", proposed: "KES 10,000,000" },
+						{ plan_item_id: "PPI-MOH-2027-052", title: "Digital health training assessment materials", field: "Estimated cost", current: "Not in the current plan", proposed: "KES 2,000,000" },
+					],
+				},
 			}),
 		});
 		expect(message, message).toBe("");

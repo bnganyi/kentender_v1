@@ -28,24 +28,22 @@
 					<div class="kt-page-scope" data-testid="pln-review-context">
 						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
 						{{ referenceOnly }} · Submission {{ submissionNumber }} · {{ context.financial_year }}
-						<span class="kt-status" :class="`is-${task.header?.badge_kind || 'pending'}`" style="margin-left: 6px">{{ statusLabel }}</span>
 					</div>
+					<!-- PLN v1.27 §10.5 — the next-step line replaces the status badge
+					     and the "Decision required" notice; a decided review's Done
+					     line replaces the decided notice. -->
+					<div ref="headEl" class="kt-guidance-mount" data-testid="pln-review-next-step-line"></div>
 				</div>
 			</div>
-
-			<!-- §10.5 — "Immediately show" this the instant the screen has
-			     something to decide on; it was missing entirely, not just
-			     re-styled, in the ported version (found live 22 Sep 2026). -->
-			<div v-if="!task.maker_checker_blocked" class="kt-notice" data-testid="pln-review-decision-required">
-				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
-				<div class="kt-notice-body"><strong>Decision required</strong> — classify every included requirement, then accept the complete submission or return it for correction.</div>
-			</div>
+			<div ref="journeyEl" class="kt-guidance-mount" data-testid="pln-review-journey"></div>
+			<div ref="bodyEl" class="kt-guidance-mount" data-testid="pln-review-next-step-block"></div>
 
 			<!-- Certification: one quiet line (name, date) with its trigger on
 			     the same row, per §10.5 "Certification orientation" — capacity
 			     and the full immutable statement reveal together on demand,
-			     not as their own always-visible boxes. -->
-			<div class="kt-group pln-certified-by" data-testid="pln-review-certified">
+			     not as their own always-visible boxes. U06-SEGREGATION omits it:
+			     the reader is the certifier, and the notice below says so. -->
+			<div v-if="!task.maker_checker_blocked" class="kt-group pln-certified-by" data-testid="pln-review-certified">
 				<div style="display: flex; align-items: center; justify-content: space-between; gap: var(--kt-space-5); flex-wrap: wrap">
 					<span style="font-size: 13.5px; color: var(--kt-color-neutral-800)">Certified by {{ context.submitted_by }} on {{ context.submitted_at }}</span>
 					<button
@@ -61,7 +59,7 @@
 			     had a body class with neither a `.kt-disclosure` around it nor a
 			     head to open it — a class borrowed for its padding (found live 24
 			     Sep 2026). The board draws certification as a plain group. -->
-			<div v-if="showCertification" class="kt-group" data-testid="pln-review-certification">
+			<div v-if="showCertification && !task.maker_checker_blocked" class="kt-group" data-testid="pln-review-certification">
 				<div v-if="context.submitted_capacity" class="kt-meta-row" style="margin-bottom: var(--kt-space-3)">
 					<div><span class="kt-label">Capacity</span><span class="kt-meta-value">{{ context.submitted_capacity }}</span></div>
 				</div>
@@ -109,95 +107,110 @@
 					<div><span class="kt-label">Excluded requirements</span><span class="kt-meta-value">{{ summary.excluded_requirements }}</span></div>
 				</div>
 
-				<!-- One line of source facts, one line of decision — not a
-				     nine-column grid of individually labelled facts. -->
-				<div
-					v-for="row in entries"
-					:key="row.entry_id"
-					class="pln-review-row"
-					data-testid="pln-review-row"
-				>
-					<div style="display: flex; align-items: flex-start; justify-content: space-between; gap: var(--kt-space-6)">
-						<div style="flex: 1">
-							<div style="font-family: var(--kt-font-heading); font-size: 19px">{{ row.title }}</div>
-							<div style="display: flex; gap: var(--kt-space-5); margin-top: 6px; font-size: 13.5px; color: var(--kt-color-neutral-800)">
-								<span>{{ row.quantity_number }} {{ row.unit_label }}</span>
-								<span>Required by {{ row.required_by_display }}</span>
-								<span style="font-variant-numeric: tabular-nums">{{ row.amount_display }}</span>
+				<!-- One block per requirement (owner decision 25 Sep 2026, over the
+				     U06 board's hairline-only rows, which read as one undivided
+				     stack once a submission carries several requirements): a
+				     numbered title, the department's certified facts together —
+				     budget line included, it is a certified fact too, not a
+				     Planner input — then the Planner's one decision in its own
+				     marked strip. -->
+				<ol class="pln-review-list">
+					<li
+						v-for="(row, index) in entries"
+						:key="row.entry_id"
+						class="pln-review-row"
+						:class="{ 'is-excluded': row.not_proceeding }"
+						data-testid="pln-review-row"
+					>
+						<div class="pln-review-row-head">
+							<div style="flex: 1; min-width: 0">
+								<div class="pln-review-count">Requirement {{ index + 1 }} of {{ entries.length }}</div>
+								<div class="pln-review-row-title">{{ row.title }}</div>
+								<div class="pln-review-facts">
+									<span>{{ row.quantity_number }} {{ row.unit_label }}</span>
+									<span>Required by {{ row.required_by_display }}</span>
+									<span style="font-variant-numeric: tabular-nums">{{ row.amount_display }}</span>
+								</div>
+								<div v-if="!row.not_proceeding" class="pln-review-budget">
+									<span class="kt-label">Budget line</span>
+									<span>{{ row.budget_line_display }}</span>
+								</div>
+							</div>
+							<a href="#" class="kt-btn kt-btn-ghost" data-testid="pln-review-view" @click.prevent="$emit('view-requirement', row)">View requirement</a>
+						</div>
+
+						<div v-if="row.not_proceeding" class="pln-review-classify is-muted" data-testid="pln-review-excluded">
+							<div class="kt-meta-row">
+								<div>
+									<span class="kt-label">Status</span>
+									<span class="kt-meta-value"><span class="kt-status is-muted">Not included this year</span></span>
+								</div>
+								<div>
+									<span class="kt-label">Requirement type</span>
+									<span class="kt-meta-value">Not applicable</span>
+								</div>
+							</div>
+							<p class="kt-muted" style="margin: var(--kt-space-2) 0 0">{{ row.not_proceeding_reason }}</p>
+						</div>
+
+						<!-- A decided review: what the decision recorded, read-only. -->
+						<div v-else-if="!isOpen" class="pln-review-classify is-muted" data-testid="pln-review-recorded">
+							<div class="pln-review-classify-title">Recorded classification</div>
+							<div class="kt-meta-row">
+								<div><span class="kt-label">Requirement type</span><span class="kt-meta-value" data-testid="pln-review-recorded-type">{{ row.recorded_requirement_type || "—" }}</span></div>
+								<div><span class="kt-label">Category</span><span class="kt-meta-value">{{ row.recorded_category || "—" }}</span></div>
 							</div>
 						</div>
-						<a href="#" class="kt-btn kt-btn-ghost" data-testid="pln-review-view" @click.prevent="$emit('view-requirement', row)">View requirement</a>
-					</div>
 
-					<div v-if="row.not_proceeding" class="pln-review-excluded" data-testid="pln-review-excluded">
-						<div class="kt-meta-row">
-							<div>
-								<span class="kt-label">Status</span>
-								<span class="kt-meta-value"><span class="kt-status is-muted">Not included this year</span></span>
+						<!-- The Planner's one input, and what it derives. -->
+						<!-- U06-SEGREGATION: read-only content, no classification
+						     controls at all — never disabled selects for a reader
+						     who may not classify. -->
+						<div v-else-if="!task.maker_checker_blocked" class="pln-review-classify" :class="{ 'is-missing': missingClassification(row) }">
+							<div class="pln-review-classify-title">Your classification</div>
+							<div class="pln-review-classify-grid">
+								<div class="kt-field">
+									<label :for="`type-${row.entry_id}`">Requirement type</label>
+									<!-- Addressable per requirement: a submission with several
+									     needs one classification each, and a test (or a
+									     screen-reader) has to be able to tell them apart. -->
+									<select
+										:id="`type-${row.entry_id}`"
+										class="kt-input"
+										data-testid="pln-review-type"
+										:data-entry="row.entry_id"
+										:disabled="!canDecide"
+										:value="classifications[row.entry_id] || ''"
+										@change="$emit('set-classification', { entry_id: row.entry_id, requirement_type: $event.target.value })"
+									>
+										<option value="">Select a requirement type</option>
+										<option v-for="option in requirementTypes" :key="option.requirement_type" :value="option.requirement_type">
+											{{ option.requirement_type }}
+										</option>
+									</select>
+								</div>
+								<div>
+									<span class="kt-label">Category</span>
+									<!-- Read-only, derived, never sent: §4.4. -->
+									<div style="font-size: 15px; font-weight: 600; margin-top: 4px" data-testid="pln-review-category">{{ categoryFor(row.entry_id) }}</div>
+								</div>
+								<p class="kt-muted" style="font-size: 12.5px; margin: 0; padding-bottom: 9px" data-testid="pln-review-helper">
+									Choose the requirement type. Category is set automatically.
+								</p>
 							</div>
-							<div>
-								<span class="kt-label">Requirement type</span>
-								<span class="kt-meta-value">Not applicable</span>
-							</div>
-						</div>
-						<p class="kt-muted">{{ row.not_proceeding_reason }}</p>
-					</div>
-
-					<!-- The second line: the one Planner input, and what it derives. -->
-					<template v-else>
-						<div style="display: grid; grid-template-columns: 260px 240px 1fr; gap: var(--kt-space-5); align-items: end; margin-top: var(--kt-space-4)">
-							<div class="kt-field">
-								<label :for="`type-${row.entry_id}`">Requirement type</label>
-								<!-- Addressable per requirement: a submission with several
-								     needs one classification each, and a test (or a
-								     screen-reader) has to be able to tell them apart. -->
-								<select
-									:id="`type-${row.entry_id}`"
-									class="kt-input"
-									data-testid="pln-review-type"
-									:data-entry="row.entry_id"
-									:disabled="!canDecide"
-									:value="classifications[row.entry_id] || ''"
-									@change="$emit('set-classification', { entry_id: row.entry_id, requirement_type: $event.target.value })"
-								>
-									<option value="">Select a requirement type</option>
-									<option v-for="option in requirementTypes" :key="option.requirement_type" :value="option.requirement_type">
-										{{ option.requirement_type }}
-									</option>
-								</select>
-							</div>
-							<div>
-								<span class="kt-label">Category</span>
-								<!-- Read-only, derived, never sent: §4.4. -->
-								<div style="font-size: 15px; font-weight: 600; margin-top: 4px" data-testid="pln-review-category">{{ categoryFor(row.entry_id) }}</div>
-							</div>
-							<!-- U06's own third grid column, one per row (its own
-							     grid-template-columns already reserved this 1fr — the
-							     helper used to live once, globally, at the foot of the
-							     whole list instead, disconnected from either row's own
-							     controls when a submission carries more than one
-							     requirement (found live 22 Sep 2026). -->
-							<p class="kt-muted" style="font-size: 12.5px; margin: 0; padding-bottom: 9px" data-testid="pln-review-helper">
-								Choose the requirement type. Category is set automatically.
+							<p v-if="missingClassification(row)" class="pln-error-summary" style="margin: var(--kt-space-3) 0 0" data-testid="pln-review-row-error">
+								Select the requirement type before accepting this departmental plan.
 							</p>
 						</div>
-						<div class="kt-group" style="margin-top: var(--kt-space-4)">
-							<span class="kt-label">Budget line</span>
-							<div style="font-size: 14px; margin-top: 2px">{{ row.budget_line_display }}</div>
-						</div>
-					</template>
-
-					<p v-if="!row.not_proceeding && missingClassification(row)" class="pln-error-summary" data-testid="pln-review-row-error">
-						Select the requirement type before accepting this departmental plan.
-					</p>
-				</div>
+					</li>
+				</ol>
 				<p v-if="!entries.length" class="kt-muted">No requirements in this submission.</p>
 			</div>
 
 			<!-- Decision. What acceptance does, and what it does not — one
 			     kt-decision block, matching the artboard: the statement and
 			     both buttons together, clustered at its right edge. -->
-			<template v-if="!task.maker_checker_blocked">
+			<template v-if="!task.maker_checker_blocked && isOpen">
 				<div class="kt-decision" data-testid="pln-review-decision">
 					<p class="pln-decision-statement" data-testid="pln-review-consequence">
 						Accepting makes the included requirements available for annual plan preparation.
@@ -233,6 +246,7 @@
 
 <script setup>
 import { computed, ref } from "vue";
+import { useGuidance } from "../../pln_shared/composables/useGuidance.js";
 
 const props = defineProps({
 	task: { type: Object, default: () => ({}) },
@@ -263,16 +277,33 @@ const entries = computed(() => props.task.entries || []);
 const requirementTypes = computed(() => props.task.requirement_types || []);
 const staleSources = computed(() => props.task.stale_sources || []);
 const canDecide = computed(() => Boolean(props.task.can_decide));
-
+// A task with no status yet (an older payload) is treated as still open.
+const isOpen = computed(() => !props.task.status || props.task.status === "Open");
 const title = computed(() => `Review ${context.value.department || "the"}'s departmental plan`);
 const referenceOnly = computed(() => (props.task.header?.reference_line || "").split(" · ")[0]);
 const submissionNumber = computed(() => {
 	const match = /Submission (\d+)/.exec(props.task.header?.reference_line || "");
 	return match ? match[1] : "";
 });
-const statusLabel = computed(() =>
-	props.task.status === "Open" ? "Awaiting Procurement review" : props.task.header?.badge || "",
-);
+// §10.5 U06-CLASSIFICATION-MISSING — the unsaved choices live only here, so
+// the screen counts them and picks the server's own words for that count.
+// Nothing chosen yet is the base instruction, not "select … for every one".
+const unclassified = computed(() => entries.value.filter((row) => !row.not_proceeding && !props.classifications[row.entry_id]).length);
+const included = computed(() => entries.value.filter((row) => !row.not_proceeding).length);
+const answer = computed(() => {
+	const base = props.task.next_step || null;
+	const prompt = props.task.classification_prompt;
+	if (!base || base.kind !== "your_turn" || !canDecide.value || !prompt) return base;
+	const missing = unclassified.value;
+	if (!missing || missing === included.value) return base;
+	const headline = missing === 1 ? prompt.one : prompt.many.replace("{count}", String(missing));
+	return { ...base, headline };
+});
+
+const headEl = ref(null);
+const journeyEl = ref(null);
+const bodyEl = ref(null);
+useGuidance({ journeyEl, headEl, bodyEl }, { answer: () => answer.value, journey: () => props.task.journey, pending: () => props.pending });
 
 function categoryFor(entryId) {
 	const selected = props.classifications[entryId];

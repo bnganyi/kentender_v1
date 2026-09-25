@@ -36,8 +36,15 @@
 				<div>
 					<h1 class="kt-page-title" data-testid="pln-dpp-title">{{ heading.title }}</h1>
 					<p class="kt-page-desc">{{ heading.description }}</p>
+					<!-- PLN v1.27 §10.4 — the next step (Your turn / Waiting / Done). -->
+					<div ref="headEl" class="kt-guidance-mount" data-testid="pln-dpp-next-step-line"></div>
 				</div>
 			</div>
+			<!-- The DPP journey — reduced to one line on the Author's own draft,
+			     where the summary strip and table already fill the first view —
+			     then a blocked answer (U02-CLOSED) above the context row. -->
+			<div ref="journeyEl" class="kt-guidance-mount" data-testid="pln-dpp-journey"></div>
+			<div ref="bodyEl" class="kt-guidance-mount" data-testid="pln-dpp-next-step-block"></div>
 
 			<!-- Record context: separately labelled values, names before codes. -->
 			<!-- U02-U05 is the one board that genuinely draws the context row
@@ -52,7 +59,9 @@
 					<span class="kt-label">Financial year</span>
 					<span class="kt-meta-value">{{ context.financial_year }}</span>
 				</div>
-				<div>
+				<!-- U02-AUTHOR-DRAFT: the reduced tracker states the stage, so the
+				     Status cell goes (v1.27 §10.4); every other variant keeps it. -->
+				<div v-if="!plan.journey?.reduced">
 					<span class="kt-label">Status</span>
 					<span class="kt-meta-value">
 						<span class="kt-status" :class="`is-${plan.header?.badge_kind || 'draft'}`">{{ plan.header?.badge }}</span>
@@ -73,15 +82,6 @@
 					<span class="kt-label">Correction submission</span>
 					<span class="kt-meta-value">{{ plan.candidate_submission_number }}</span>
 				</div>
-			</div>
-
-			<!-- U05-CORRECTION — the correction notice leads, before the table it
-			     affects. -->
-			<div v-if="plan.is_correction" class="kt-notice is-warning" data-testid="pln-dpp-correction-notice">
-				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-					<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
-				</svg>
-				<div class="kt-notice-body">Your plan needs a correction</div>
 			</div>
 
 			<!-- §4.4 — a returned issue against the whole submission rather
@@ -243,7 +243,8 @@
 			<p v-if="errorSummary" class="pln-error-summary" data-testid="pln-dpp-error">{{ errorSummary }}</p>
 
 			<!-- §10.16 C02-DPP-CLOSED — immediately above the action it blocks. -->
-			<MissingSettingPanel v-if="plan.missing_setting" :panel="plan.missing_setting" />
+			<!-- …unless the next-step block already states it with its fix (D3). -->
+			<MissingSettingPanel v-if="plan.missing_setting && !windowClosedBlocker" :panel="plan.missing_setting" />
 
 			<!-- Action area, after all decision content. -->
 			<div class="pln-footer" data-testid="pln-dpp-footer">
@@ -260,8 +261,8 @@
 					<p v-if="certification.show && !certified" class="kt-muted" data-testid="pln-dpp-certify-hint">
 						Confirm the certification to submit this plan.
 					</p>
-					<p v-else-if="closedNotice" class="kt-muted" data-testid="pln-dpp-closed">{{ closedNotice }}</p>
-					<p v-else-if="plan.submit_hint" class="kt-muted" data-testid="pln-dpp-submit-hint">{{ plan.submit_hint }}</p>
+					<!-- U02-CLOSED: the blocked next-step block above says it. -->
+					<p v-else-if="plan.submit_hint && !intakeClosed" class="kt-muted" data-testid="pln-dpp-submit-hint">{{ plan.submit_hint }}</p>
 					<button
 						v-if="plan.mutable"
 						type="button"
@@ -306,7 +307,8 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
+import { useGuidance } from "../../pln_shared/composables/useGuidance.js";
 import MissingSettingPanel from "./MissingSettingPanel.vue";
 import EntryFundingPanel from "./EntryFundingPanel.vue";
 
@@ -390,10 +392,19 @@ const summary = computed(() => {
 	};
 });
 
-const closedNotice = computed(() => {
+const headEl = ref(null);
+const journeyEl = ref(null);
+const bodyEl = ref(null);
+useGuidance({ journeyEl, headEl, bodyEl }, { answer: () => props.plan.next_step, journey: () => props.plan.journey, pending: () => props.pending });
+const windowClosedBlocker = computed(() =>
+	(props.plan.next_step?.blockers || []).some((blocker) => blocker.reason_code === "PLN_WINDOW_CLOSED"),
+);
+
+// The initial window is closed for this ordinary draft (not a correction or
+// update): the submit hint gives way to the blocked next-step block.
+const intakeClosed = computed(() => {
 	const window = context.value.window || {};
-	if (window.state !== "Closed" || !props.plan.mutable || props.plan.is_correction) return "";
-	return "Initial submissions are closed. You can keep editing this draft, but it cannot be submitted now.";
+	return window.state === "Closed" && Boolean(props.plan.mutable) && !props.plan.is_correction;
 });
 
 function onRowAction(row) {

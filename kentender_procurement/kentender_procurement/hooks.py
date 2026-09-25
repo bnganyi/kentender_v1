@@ -636,3 +636,10 @@ fixtures = [
 kt_plan_item_correction_outcome_consumers = [
 	"kentender_procurement.procurement_requisitions.services.correction.record_plan_item_correction_outcome",
 ]
+
+# BUD-CHG-001 v1.11 §8.5 / PLN-CHG-001 v1.27 §7.3 — Planning consumes
+# BudgetRevisionRequestOutcome.v1 from Budget's outbox (Budget calls the
+# consumers; it never imports Planning).
+kt_budget_revision_outcome_consumers = [
+	"kentender_procurement.procurement_planning.services.budget_revision.receive_budget_revision_outcome",
+]

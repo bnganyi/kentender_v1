@@ -30,10 +30,15 @@
 						<span>{{ task.header?.title }}</span>
 						<span>· {{ planReference }}</span>
 						<span>· Version {{ versionNumber }}</span>
-						<span class="kt-status" :class="badgeClass" data-testid="fnt-badge">{{ reviewStatus }}</span>
 					</div>
+					<!-- PLN v1.27 §10.9 — the next-step line replaces the status
+					     badge; the plan's journey follows the head (not drawn for a
+					     reassessment of the plan in force, §5.3.4). -->
+					<div ref="headEl" class="kt-guidance-mount" data-testid="fnt-next-step-line"></div>
 				</div>
 			</div>
+			<div ref="journeyEl" class="kt-guidance-mount" data-testid="fnt-journey"></div>
+			<div ref="bodyEl" class="kt-guidance-mount" data-testid="fnt-next-step-block"></div>
 
 			<!-- The statement this decision is being made on. Budget version and
 			     request time are provenance, not the decision — §10.9 keeps them
@@ -267,6 +272,7 @@
 <script setup>
 import { computed, ref } from "vue";
 import FinanceHistory from "./FinanceHistory.vue";
+import { useGuidance } from "../../pln_shared/composables/useGuidance.js";
 
 const props = defineProps({
 	task: { type: Object, default: () => ({}) },
@@ -297,9 +303,8 @@ const versionNumber = computed(() => {
 	return match ? match[1] : "";
 });
 
-const reviewStatus = computed(() => {
-	if (props.task.status !== "Open") return props.task.status;
-	return props.task.can_decide ? "Your decision required" : "Awaiting Finance";
-});
-const badgeClass = computed(() => (props.task.status === "Open" ? "is-attention" : "is-live"));
+const headEl = ref(null);
+const journeyEl = ref(null);
+const bodyEl = ref(null);
+useGuidance({ journeyEl, headEl, bodyEl }, { answer: () => props.task.next_step, journey: () => props.task.journey, pending: () => props.pending });
 </script>

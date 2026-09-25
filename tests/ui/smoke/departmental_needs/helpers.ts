@@ -77,9 +77,17 @@ export function resetFixture<T = Record<string, unknown>>(fn: string): T {
 	}
 }
 
-/** Remove every Playwright-owned row, leaving the §14 seed untouched. */
+/**
+ * Remove every Playwright-owned row, leaving the §14 seed untouched —
+ * including the Draft departmental plans Planning's own `dpp_autostart`
+ * opened when this suite accepted a Need (stamped with this suite's
+ * namespace, but Planning-owned, so Planning's purge removes them).
+ */
 export function clearFixtures(): void {
 	bench(`execute ${FIXTURES}.reset_all --kwargs "{'commit': True}"`);
+	bench(
+		`execute kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.purge_planning_rows_for_namespace --kwargs "{'namespace': 'KENTENDER_NDS_PLAYWRIGHT', 'commit': True}"`,
+	);
 }
 
 /**

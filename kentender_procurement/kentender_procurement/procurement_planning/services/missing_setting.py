@@ -205,8 +205,13 @@ def _rule_states(item, fiscal_year: str) -> dict[str, tuple[str, str]]:
 
 	out: dict[str, tuple[str, str]] = {}
 	resolved = None
+	no_method = not cstr(item.get("procurement_method")).strip()
 	for which in ("method", "schedule"):
-		if which == "method" and not cstr(item.get("procurement_method")).strip():
+		# A method the Planner has not chosen yet is their unfinished work,
+		# not a missing setting — and the schedule rule is resolved from the
+		# method, so it cannot be missing either until one is chosen (PLN
+		# v1.27 D2: that purchase is a contents gap, not a C04 panel).
+		if no_method:
 			out[which] = (RULE_IN_FORCE, "")
 			continue
 		if resolved is None:

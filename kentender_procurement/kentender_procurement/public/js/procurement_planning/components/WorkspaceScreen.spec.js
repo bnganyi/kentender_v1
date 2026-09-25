@@ -113,7 +113,7 @@ function workspace(overrides = {}) {
 			empty_text: "The draft annual plan will appear after Procurement accepts a departmental plan.",
 			read_only: false,
 		},
-		current_issue: null,
+		issues: [],
 		your_departmental_plan: null,
 		actionable: [],
 		waiting: [],
@@ -162,16 +162,31 @@ describe("WorkspaceScreen — page states", () => {
 	});
 });
 
+// PLN v1.27 §10.3 (D2) — the pre-Finance blocker first and dominant, the
+// reservation shortfall second and quieter (it blocks only signature).
+const ISSUES = [
+	{
+		tone: "dominant",
+		text: "1 purchase needs a procurement method. Choose it before sending the plan to Finance.",
+		strong: "1 purchase needs a procurement method.",
+		action: "Choose a procurement method",
+		route: ["procurement-plan-item", "PPI-MOH-2027-021"],
+	},
+	{
+		tone: "quiet",
+		text: "Reserved procurement is below the required allocation by KES 39,000,000. Resolve this before the plan can be signed and submitted.",
+		strong: "KES 39,000,000",
+		action: "Review reserved procurement",
+		route: ["annual-procurement-plan", "PLN-MOH-2027-001"],
+	},
+];
+
 describe("WorkspaceScreen — U01 BASE", () => {
 	function base() {
 		return make({
 			workspace: workspace({
 				annual_plan: { ...workspace().annual_plan, rows: [DRAFT_ROW] },
-				current_issue: {
-					text: "Reserved procurement is below the required allocation by KES 48,000,000. Resolve this before sending the plan to Finance.",
-					action: "Review reserved procurement",
-					route: ["annual-procurement-plan", "PLN-MOH-2027-001"],
-				},
+				issues: ISSUES,
 				departmental_table: DEPT_TABLE,
 			}),
 		});
@@ -190,11 +205,21 @@ describe("WorkspaceScreen — U01 BASE", () => {
 		);
 	});
 
-	it("states the reservation shortfall once, as a sentence with one action", () => {
+	it("puts the missing method first, as the warning, and the reservation shortfall second and quieter", async () => {
 		const w = base();
-		const issue = w.find('[data-testid="pln-current-issue"]');
-		expect(issue.text()).toContain("Reserved procurement is below the required allocation by KES 48,000,000");
-		expect(issue.find('[data-testid="pln-current-issue-action"]').text()).toBe("Review reserved procurement");
+		const issues = w.findAll('[data-testid="pln-issue"]');
+		expect(issues).toHaveLength(2);
+		expect(issues[0].classes()).toEqual(expect.arrayContaining(["kt-notice", "is-warning"]));
+		expect(issues[0].find("strong").text()).toBe("1 purchase needs a procurement method.");
+		expect(issues[0].text()).toContain("Choose it before sending the plan to Finance.");
+		expect(issues[1].classes()).not.toContain("kt-notice");
+		expect(issues[1].find("strong").text()).toBe("KES 39,000,000");
+		expect(issues[1].text()).toContain("Resolve this before the plan can be signed and submitted.");
+		expect(w.text()).not.toContain("before sending the plan to Finance.Resolve");
+		const actions = w.findAll('[data-testid="pln-issue-action"]');
+		expect(actions.map((a) => a.text())).toEqual(["Choose a procurement method", "Review reserved procurement"]);
+		await actions[0].trigger("click");
+		expect(w.emitted("navigate")[0]).toEqual([["procurement-plan-item", "PPI-MOH-2027-021"]]);
 		// PLN22-AC-006: the required/qualifying/shortfall/basis arithmetic
 		// belongs to the Plan check detail, not to this page.
 		expect(w.text()).not.toContain("Required allocation");
@@ -228,7 +253,7 @@ describe("WorkspaceScreen — U01-CURRENT and U01-CURRENT-UPDATE", () => {
 		});
 		expect(w.find('[data-testid="pln-prepare-update"]').text()).toBe("Prepare plan update");
 		expect(w.find('[data-testid="pln-plan-row-current"]').text()).toContain("Current annual procurement plan");
-		expect(w.find('[data-testid="pln-current-issue"]').exists()).toBe(false);
+		expect(w.find('[data-testid="pln-issue"]').exists()).toBe(false);
 		// §11.9 — Prepare invokes the guarded successor start; it is a command,
 		// not a link to the plan.
 		w.find('[data-testid="pln-prepare-update"]').trigger("click");
@@ -329,11 +354,83 @@ describe("WorkspaceScreen — U01-DEPARTMENT-AUTHOR and U01-HOD", () => {
 						facts: [{ label: "Departmental plan", value: "Digital Health FY 2027/28" }],
 					},
 				],
+				actionable_heading: "1 departmental plan requires your decision",
 			}),
 		});
 		expect(w.find('[data-testid="pln-your-actions-heading"]').text()).toBe("1 departmental plan requires your decision");
 		const action = w.find('[data-testid="pln-action"]');
 		expect(action.text()).toContain("Review and submit");
 		expect(action.find('[data-testid="pln-action-button"]').text()).toBe("Review departmental plan");
+	});
+});
+
+describe("WorkspaceScreen — U01-CURRENT-UPDATE-OVER-BUDGET and -WAITING-BUDGET", () => {
+	const updateWith = (row) =>
+		make({
+			workspace: workspace({
+				annual_plan: {
+					...workspace().annual_plan,
+					rows: [CURRENT_ROW, row],
+					can_prepare_update: false,
+					update_note: "The current plan remains in force while this update is reviewed.",
+				},
+				departmental_table: DEPT_TABLE,
+			}),
+		});
+
+	it("states the blocked headline in place of what the update changes", () => {
+		const w = updateWith({
+			...UPDATE_ROW,
+			facts: [["Work", "Plan update — Draft"], ["Version", "2"], ["Proposed value", "KES 142,000,000"]],
+			narrative: { tone: "blocked", headline: "Over budget by KES 2,000,000 on Digital health workforce development", since: "" },
+		});
+		const row = w.find('[data-testid="pln-plan-row-candidate"]');
+		expect(row.find('[data-testid="pln-row-narrative"]').text()).toBe("Over budget by KES 2,000,000 on Digital health workforce development");
+		expect(row.find('[data-testid="pln-row-narrative"]').classes()).toContain("is-blocked");
+		expect(row.text()).not.toContain("Affected purchase");
+		expect(row.find("button").text()).toBe("Continue update");
+		// no tracker on a workspace (§10.3)
+		expect(w.find(".kt-journey").exists()).toBe(false);
+	});
+
+	it("names who it waits on and since when, and offers only to view it", () => {
+		const w = updateWith({
+			...UPDATE_ROW,
+			facts: [["Work", "Plan update — Draft"], ["Version", "2"], ["Proposed value", "KES 142,000,000"]],
+			narrative: { tone: "waiting", headline: "Waiting for Josphat Mwangi (Budget Officer) to revise the budget line", since: "15 Dec 2026, 10:00 EAT" },
+			action: "View update",
+			action_kind: "secondary",
+		});
+		const narrative = w.find('[data-testid="pln-row-narrative"]');
+		expect(narrative.find("strong").text()).toBe("Waiting for Josphat Mwangi (Budget Officer) to revise the budget line");
+		expect(narrative.text()).toContain("since 15 Dec 2026, 10:00 EAT");
+		const button = w.find('[data-testid="pln-plan-row-candidate"] button');
+		expect(button.text()).toBe("View update");
+		expect(button.classes()).toContain("kt-btn-secondary");
+	});
+});
+
+describe("WorkspaceScreen — a submitted first plan", () => {
+	it("is named for its state and says who holds it, not 'Draft … being prepared'", () => {
+		const w = make({
+			workspace: workspace({
+				annual_plan: {
+					...workspace().annual_plan,
+					rows: [{
+						...DRAFT_ROW,
+						title: "Annual procurement plan",
+						note: "Awaiting Accounting Officer. It cannot yet be used to authorise procurement.",
+						narrative: { tone: "waiting", headline: "Waiting for Amina Hassan (Accounting Officer) to adopt or return the plan", since: "7 Dec 2026, 10:00 EAT" },
+						action: "View plan", action_kind: "secondary",
+					}],
+				},
+			}),
+		});
+		const row = w.find('[data-testid="pln-plan-row-draft"]');
+		expect(row.find(".pln-task-title").text()).toBe("Annual procurement plan");
+		expect(row.text()).not.toContain("Draft annual procurement plan");
+		expect(row.text()).not.toContain("being prepared");
+		expect(row.find('[data-testid="pln-row-narrative"] strong').text()).toBe("Waiting for Amina Hassan (Accounting Officer) to adopt or return the plan");
+		expect(w.find('[data-testid="pln-plan-note"]').text()).toBe("Awaiting Accounting Officer. It cannot yet be used to authorise procurement.");
 	});
 });

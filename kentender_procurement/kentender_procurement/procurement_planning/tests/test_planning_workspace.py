@@ -563,3 +563,90 @@ class TestUpdateRowNamesItsPurchase(RequisitionCase):
 		read = workspace.get_planning_workspace(financial_year=fx.FY_OPEN, user=fx.PLANNER)
 		candidate = next(r for r in read["annual_plan"]["rows"] if r["kind"] == "candidate")
 		self.assertEqual(dict(candidate["facts"])["Affected purchase"], "A renamed purchase")
+
+
+class TestUpdateRowNarrative(RequisitionCase):
+	"""PLN v1.27 §10.3 U01-CURRENT-UPDATE-OVER-BUDGET / -WAITING-BUDGET — the
+	update row states the next-step answer; no tracker on a workspace."""
+
+	def update_row(self, answer: dict) -> dict:
+		from kentender_procurement.procurement_planning.services import plan_read
+
+		accepted, item_id = self.active_item()
+		frappe.set_user(fx.PLANNER)
+		plan_publication.begin_plan_update(plan_reference=accepted["annual_plan"], idempotency_key=key())
+		with patch.object(plan_read, "_guidance_for", return_value={"next_step": answer, "journey": None}):
+			read = workspace.get_planning_workspace(financial_year=fx.FY_OPEN, user=fx.PLANNER)
+		return read, next(r for r in read["annual_plan"]["rows"] if r["kind"] == "candidate")
+
+	def test_a_blocked_update_states_its_headline_in_place_of_the_change_facts(self):
+		read, row = self.update_row({
+			"kind": "your_turn_blocked", "headline": "Over budget by KES 2,000,000 on Digital health workforce development",
+			"blockers": [{"reason_code": "PLN_PLAN_NOT_AFFORDABLE", "headline": "x", "fixes": []}], "fixes": [], "since": None,
+		})
+		self.assertEqual(row["narrative"], {"tone": "blocked", "headline": "Over budget by KES 2,000,000 on Digital health workforce development", "since": ""})
+		self.assertEqual([label for label, _ in row["facts"] if label in ("Affected purchase", "Change")], [])
+		self.assertEqual((row["action"], row["action_kind"]), ("Continue update", "primary"))
+		# the row carries it; no second notice repeats it
+		self.assertEqual([i for i in read["issues"] if i["tone"] == "dominant"], [])
+
+	def test_a_waiting_update_names_the_holder_and_since_and_is_only_viewed(self):
+		read, row = self.update_row({
+			"kind": "waiting", "headline": "Waiting for Josphat Mwangi (Budget Officer) to revise the budget line",
+			"blockers": [], "fixes": [], "since": {"at": "2026-12-15 07:00:00", "display": "15 Dec 2026, 10:00 EAT"},
+		})
+		self.assertEqual(row["narrative"], {"tone": "waiting", "headline": "Waiting for Josphat Mwangi (Budget Officer) to revise the budget line", "since": "15 Dec 2026, 10:00 EAT"})
+		self.assertEqual((row["action"], row["action_kind"]), ("View update", "secondary"))
+
+	def test_an_update_that_is_the_planners_turn_keeps_its_change_facts(self):
+		read, row = self.update_row({"kind": "your_turn", "headline": "Send the update to Finance", "blockers": [], "fixes": [], "since": None})
+		self.assertIsNone(row.get("narrative"))
+		self.assertEqual((row["action"], row["action_kind"]), ("Continue update", "primary"))
+
+
+class TestSubmittedFirstPlanRow(RequisitionCase):
+	"""Found in the browser 25 Sep 2026: once submitted, a first plan (no plan
+	in force yet) still read "Draft annual procurement plan — This plan is
+	being prepared". It states its real status and who holds it instead."""
+
+	def test_a_submitted_first_plan_is_not_called_a_draft(self):
+		from kentender_procurement.procurement_planning.services import plan_governance, plan_read
+
+		accepted, item_id = self.confirmed_item()
+		frappe.set_user(fx.PLANNER)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		frappe.set_user(fx.HOPF)
+		plan_governance.submit_consolidated_plan(
+			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=key(),
+		)
+		read = workspace.get_planning_workspace(financial_year=fx.FY_OPEN, user=fx.PLANNER)
+		row = next(r for r in read["annual_plan"]["rows"] if r["kind"] == "draft")
+		self.assertEqual(row["title"], "Annual procurement plan")
+		self.assertEqual(row["note"], "Awaiting Accounting Officer. It cannot yet be used to authorise procurement.")
+		self.assertEqual(row["narrative"]["tone"], "waiting")
+		self.assertIn("(Accounting Officer) to adopt or return the plan", row["narrative"]["headline"])
+		self.assertEqual(read["issues"], [])
+
+	def test_an_annual_plan_decision_is_not_headed_as_a_departmental_plan(self):
+		"""Found in the browser 25 Sep 2026: the Accounting Officer's and the
+		statutory approver's workspaces headed the annual-plan decision
+		"1 departmental plan requires your decision"."""
+		from kentender_procurement.procurement_planning.services import plan_governance, plan_read
+
+		accepted, item_id = self.confirmed_item()
+		frappe.set_user(fx.PLANNER)
+		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
+		frappe.set_user(fx.HOPF)
+		plan_governance.submit_consolidated_plan(
+			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=key(),
+		)
+		read = workspace.get_planning_workspace(financial_year=fx.FY_OPEN, user=fx.ACCOUNTING_OFFICER)
+		self.assertEqual(len(read["actionable"]), 1)
+		self.assertEqual(read["actionable_heading"], "1 annual plan requires your decision")
+
+	def test_a_draft_first_plan_keeps_its_draft_wording(self):
+		accepted, item_id = self.confirmed_item()
+		read = workspace.get_planning_workspace(financial_year=fx.FY_OPEN, user=fx.PLANNER)
+		row = next(r for r in read["annual_plan"]["rows"] if r["kind"] == "draft")
+		self.assertEqual(row["title"], "Draft annual procurement plan")
+		self.assertEqual(row["note"], "This plan is being prepared. It cannot yet be used to authorise procurement.")

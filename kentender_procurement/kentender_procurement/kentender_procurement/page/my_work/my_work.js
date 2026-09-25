@@ -9,12 +9,25 @@
 		frappe.route_options = Object.assign({}, row.route_options || {});
 		frappe.set_route.apply(frappe, row.route);
 	}
+	// KT-STD-001 v1.8 §3B.4 — a waiting-on item names who holds the work and
+	// since when, from the provider's `holder`/`since` (server-computed, never
+	// composed here), and opens the record when the provider gives a route.
+	// Engine tasks carry neither and keep the original line.
+	function waitingHtml(row) {
+		var text = row.holder && row.holder.display
+			? __("Waiting for {0}", [esc(row.holder.display)]) + (row.since && row.since.display ? " · " + __("since {0}", [esc(row.since.display)]) : "")
+			: __("No decision is available while another actor owns this task.");
+		var view = row.route && row.route.length
+			? ' <button class="btn btn-default btn-sm" data-open="' + esc(row.task_id) + '">' + esc(row.action_label || __("View")) + "</button>"
+			: "";
+		return "<span>" + text + "</span>" + view;
+	}
 	function rowHtml(row, bucket) {
 		var action = bucket === "assigned"
 			? '<button class="btn btn-primary btn-sm" data-open="' + esc(row.task_id) + '">' + esc(row.action_label) + "</button>"
 			: bucket === "claimable"
 				? '<button class="btn btn-default btn-sm" data-claim="' + esc(row.task_id) + '">' + __("Claim") + "</button>"
-				: '<span>' + __("No decision is available while another actor owns this task.") + "</span>";
+				: waitingHtml(row);
 		return '<article class="kt-mw-row"><div><strong>' + esc(row.title) + '</strong><span class="kt-mw-ref">' + esc(row.reference) +
 			'</span></div><div><i>' + __("Module and stage") + '</i><strong>' + esc(row.module) + '</strong><span>' + esc(row.stage) +
 			'</span></div><div><i>' + __("Scope") + '</i><strong>' + esc(row.procuring_entity) + '</strong><span>' + esc(row.financial_year) +

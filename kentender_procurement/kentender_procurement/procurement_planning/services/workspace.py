@@ -347,7 +347,46 @@ def _affected_purchases(active_version, open_version) -> str:
 	return " · ".join(sorted(set(changed)))
 
 
-def _plan_rows(plan, active_version, open_version, *, is_planner: bool) -> list[dict[str, Any]]:
+def _actionable_heading(actionable: list[dict[str, Any]]) -> str:
+	"""The "Your actions" heading names what the decisions are about: U01-HOD
+	draws "1 departmental plan requires your decision"; an Accounting Officer
+	or statutory approver is deciding on the annual plan, not a departmental
+	one (found in the browser 25 Sep 2026)."""
+	n = len(actionable)
+	if not n:
+		return ""
+	departmental = {"departmental-procurement-plan", "dpp-review"}
+	subjects = {
+		"departmental plan" if (set(action.get("route") or []) & departmental) else "annual plan"
+		for action in actionable
+	}
+	subject = subjects.pop() if len(subjects) == 1 else "item"
+	return f"{n} {subject}{'' if n == 1 else 's'} require{'s' if n == 1 else ''} your decision"
+
+
+def _narrative(answer: dict[str, Any] | None) -> dict[str, str] | None:
+	"""PLN v1.27 §10.3 — a workspace carries no tracker; the plan task row
+	states the next-step answer instead, when it is blocked or waiting."""
+	kind = (answer or {}).get("kind")
+	if kind == "your_turn_blocked":
+		return {"tone": "blocked", "headline": cstr(answer.get("headline")), "since": ""}
+	if kind == "waiting":
+		return {"tone": "waiting", "headline": cstr(answer.get("headline")), "since": cstr((answer.get("since") or {}).get("display"))}
+	return None
+
+
+def _plan_answer(plan, open_version, actor: str) -> dict[str, Any] | None:
+	"""The open (not yet in force) Version's §5.7 answer for this reader —
+	the same one U07 draws, so the workspace never words it differently."""
+	if not (plan and open_version) or open_version.name == plan.active_version:
+		return None
+	from kentender_procurement.procurement_planning.services import plan_read
+
+	version = frappe.get_doc("Annual Plan Version", open_version.name)
+	return plan_read._guidance_for(version, frappe.get_doc("Annual Plan", plan.name), actor)["next_step"]
+
+
+def _plan_rows(plan, active_version, open_version, *, is_planner: bool, answer: dict[str, Any] | None = None) -> list[dict[str, Any]]:
 	"""The Annual plan section: one labelled row per independently existing
 	thing. §9.1 requires Active and candidate to stay separate rows, each
 	saying what it represents, and a Current plan link to resolve the actual
@@ -385,22 +424,29 @@ def _plan_rows(plan, active_version, open_version, *, is_planner: bool) -> list[
 	if open_version and (not active_version or distinct_candidate):
 		value = _allocated_value(open_version.name)
 		items = frappe.db.count("Annual Plan Item", {"plan_version": open_version.name, "item_state": ("!=", "Dissolved")})
+		narrative = None
 		if active_version:
 			facts = [
 				("Work", "Plan update — Draft" if open_version.version_status == "Draft" else open_version.version_status),
 				("Version", str(open_version.version_number)),
 				("Proposed value", _money(value)),
 			]
-			# §10.3 U01-CURRENT-UPDATE — an update is about something. Naming
-			# the purchase it affects is what tells the reader whether it
-			# concerns them; "Version 2" alone does not.
-			affected = _affected_purchases(active_version, open_version)
-			if affected:
-				facts.append(("Affected purchase", affected))
-			change = cstr(open_version.get("change_reason"))
-			if change:
-				facts.append(("Change", change))
-			action = "Continue update" if (is_planner and open_version.version_status == "Draft") else "View plan update"
+			# PLN v1.27 §10.3 U01-CURRENT-UPDATE-OVER-BUDGET / -WAITING-BUDGET:
+			# a blocked or waiting update states that answer in place of what
+			# it changes; otherwise it names the purchase it affects, which is
+			# what tells the reader whether it concerns them (U01-CURRENT-UPDATE).
+			narrative = _narrative(answer)
+			if not narrative:
+				affected = _affected_purchases(active_version, open_version)
+				if affected:
+					facts.append(("Affected purchase", affected))
+				change = cstr(open_version.get("change_reason"))
+				if change:
+					facts.append(("Change", change))
+			if narrative and narrative["tone"] == "waiting":
+				action = "View update"
+			else:
+				action = "Continue update" if (is_planner and open_version.version_status == "Draft") else "View plan update"
 			note = ""
 		else:
 			facts = [
@@ -412,11 +458,23 @@ def _plan_rows(plan, active_version, open_version, *, is_planner: bool) -> list[
 				("Plan reference", plan.plan_reference),
 			]
 			action = "Continue plan" if (is_planner and open_version.version_status == "Draft") else "View plan"
-			note = "This plan is being prepared. It cannot yet be used to authorise procurement."
+			if open_version.version_status == "Draft":
+				note = "This plan is being prepared. It cannot yet be used to authorise procurement."
+			else:
+				# Submitted and beyond: say what it is and who holds it — never
+				# "being prepared" (found in the browser 25 Sep 2026).
+				note = f"{open_version.version_status}. It cannot yet be used to authorise procurement."
+				narrative = _narrative(answer)
 		rows.append(
 			{
 				"kind": "candidate" if active_version else "draft",
+				"title": (
+					"Continue plan update" if active_version
+					else "Draft annual procurement plan" if open_version.version_status == "Draft"
+					else "Annual procurement plan"
+				),
 				"facts": facts,
+				"narrative": narrative,
 				"note": note,
 				"action": action,
 				"action_kind": "primary" if action.startswith("Continue") else "secondary",
@@ -426,50 +484,78 @@ def _plan_rows(plan, active_version, open_version, *, is_planner: bool) -> list[
 	return rows
 
 
-def _current_issue(plan, open_version, *, is_planner: bool) -> dict[str, Any] | None:
-	"""One plain sentence and one recovery action, placed immediately below the
-	plan row. Never four accounting values (PLN22-AC-006). §7.1's own
-	information priority groups the Draft plan, its one current issue and
-	the Continue action as a single unit, so this is the one place either
-	issue below belongs — never a second, separate card repeating the same
-	route with a different, less accurate heading."""
+def _dominant_issue(answer: dict[str, Any], blockers: list[dict[str, Any]], plan_route: list[str]) -> dict[str, Any]:
+	"""PLN v1.27 §10.3 (D2) — what stops the funding request, in the U01 BASE
+	wording: the blocker's own headline, then when it must be resolved, with
+	its one recovery route. A fix that is not a route (a command or a focus
+	on the plan page) is reached by opening the plan, and says so."""
+	if len(blockers) == 1:
+		blocker = blockers[0]
+		strong = f"{cstr(blocker.get('headline')).rstrip('.')}."
+		fixes = blocker.get("fixes") or []
+		primary = next((f for f in fixes if f.get("primary")), fixes[0] if fixes else None)
+		method = bool(primary and primary.get("fix_id") == "choose_method")
+		sentence = "Choose it before sending the plan to Finance." if method else "Resolve this before sending the plan to Finance."
+	else:
+		strong = f"{cstr(answer.get('headline')).rstrip('.')}."
+		primary = None
+		sentence = "Resolve them before sending the plan to Finance."
+	routed = bool(primary and primary.get("kind") == "route" and primary.get("target"))
+	return {
+		"tone": "dominant",
+		"text": f"{strong} {sentence}",
+		"strong": strong,
+		"action": primary["label"] if routed else "Open annual plan",
+		"route": primary["target"] if routed else plan_route,
+	}
+
+
+def _issues(plan, open_version, answer: dict[str, Any] | None, rows: list[dict[str, Any]], *, is_planner: bool) -> list[dict[str, Any]]:
+	"""The issues beneath the plan task row, in §10.3's order: first the one
+	that stops the funding request (dominant), then the ones that stop only
+	signature (quiet). Never four accounting values (PLN22-AC-006). An update
+	row already states its blocked headline (`_narrative`), so it is not
+	repeated here."""
 	if not (plan and open_version and open_version.version_status == "Draft" and is_planner):
-		return None
+		return []
 	from kentender_procurement.procurement_planning.services import readiness
 
-	try:
-		allocations = readiness.reservation_allocations(open_version.name, plan.fiscal_year)
-	except Exception:
-		allocations = {}
-	if allocations.get("mandatory") and not allocations.get("met"):
-		remaining = cstr(allocations.get("remaining"))
-		if remaining:
-			return {
-				# U01's own drawn copy (re-diffed 22 Sep 2026 against the real
-				# v1.24 artboard — this previously said "Allocate ... more to
-				# eligible reserved procurement", a sentence the artboard never
-				# draws; this code path had never actually fired live before
-				# today's fiscal_year fix, so the mismatch went unnoticed).
-				"text": f"Reserved procurement is below the required allocation by {_money(flt(remaining))}. Resolve this before sending the plan to Finance.",
-				"action": "Review reserved procurement",
-				"route": ["annual-procurement-plan", plan.plan_reference],
-			}
-	# Accepted departmental sources waiting to be formed into this same
-	# open Draft. This used to also appear, worded and routed identically,
-	# as its own "actionable" card headed "N departmental plan requires
-	# your decision" — a wrong label for a fact about the Annual Plan, not
-	# a departmental one, and a duplicate of the task row immediately above
-	# this notice, both leading to the identical open Draft (found live
+	plan_route = ["annual-procurement-plan", plan.plan_reference]
+	stated_in_row = any(row.get("narrative") for row in rows)
+	issues: list[dict[str, Any]] = []
+	if not stated_in_row and (answer or {}).get("kind") == "your_turn_blocked":
+		# The accepted requirements still outside a purchase have their own,
+		# richer sentence below (count, departments, value).
+		blockers = [b for b in answer.get("blockers") or [] if b.get("reason_code") != "PLN_ENTRY_INCOMPLETE"]
+		if blockers:
+			issues.append(_dominant_issue(answer, blockers, plan_route))
+	# Accepted departmental sources waiting to be formed into this same open
+	# Draft: one issue on the plan, never a separate "N departmental plan
+	# requires your decision" card leading to the identical Draft (found live
 	# 22 Sep 2026).
 	count, value, departments = _accepted_unallocated(plan.fiscal_year)
-	if count:
+	if count and not stated_in_row:
 		plural = "entry" if count == 1 else "entries"
-		return {
+		issues.append({
+			"tone": "dominant",
 			"text": f"{count} accepted departmental {plural} from {' · '.join(departments)} ({_money(value)}) are ready to consolidate into this plan.",
+			"strong": "",
 			"action": "Open Annual Plan",
-			"route": ["annual-procurement-plan", plan.plan_reference],
-		}
-	return None
+			"route": plan_route,
+		})
+	allocations = readiness.reservation_allocations(open_version.name, plan.fiscal_year)
+	if allocations.get("mandatory") and not allocations.get("met") and cstr(allocations.get("remaining")):
+		amount = _money(flt(allocations.get("remaining")))
+		# §10.3 v1.27 correction: the shortfall blocks signature (§5.5.3.1),
+		# not the funding request.
+		issues.append({
+			"tone": "quiet",
+			"text": f"Reserved procurement is below the required allocation by {amount}. Resolve this before the plan can be signed and submitted.",
+			"strong": amount,
+			"action": "Review reserved procurement",
+			"route": plan_route,
+		})
+	return issues
 
 
 def _departmental_table(dpp_rows: list[dict[str, Any]]) -> dict[str, Any]:
@@ -629,7 +715,7 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 
 	plan = frappe.db.get_value(
 		"Annual Plan", {"fiscal_year": fy},
-		# `fiscal_year` itself is read back here too — `_current_issue` keys
+		# `fiscal_year` itself is read back here too — `_issues` keys
 		# both its reservation-shortfall and accepted-entry checks off
 		# `plan.fiscal_year`, and without it those checks silently no-op
 		# (found live 22 Sep 2026, while fixing the duplicate-panel bug).
@@ -672,7 +758,7 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 		count, value, departments = _accepted_unallocated(fy)
 		if count and plan and open_version and open_version.version_status == "Draft":
 			# §7.1 — surfaced as this open Draft's own "one current issue"
-			# (`_current_issue`, rendered directly under its task row) rather
+			# (`_issues`, rendered directly under its task row) rather
 			# than a second, separate card repeating the identical route
 			# under a less accurate heading — this used to also be an
 			# "actionable" entry, which put "N departmental plan requires
@@ -728,7 +814,8 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 					)
 				)
 
-	rows = _plan_rows(plan, active_version_doc, open_version, is_planner=is_planner)
+	answer = _plan_answer(plan, open_version, actor)
+	rows = _plan_rows(plan, active_version_doc, open_version, is_planner=is_planner, answer=answer)
 	# §10.3 U01-CURRENT: the Planner may start an update only while no candidate
 	# exists; U01-CURRENT-UPDATE removes the control rather than disabling it.
 	can_prepare_update = bool(
@@ -759,13 +846,14 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 			# A departmental actor reads the annual plan; they never act on it.
 			"read_only": not is_planner,
 		},
-		"current_issue": _current_issue(plan, open_version, is_planner=is_planner),
+		"issues": _issues(plan, open_version, answer, rows, is_planner=is_planner),
 		"your_departmental_plan": _own_departmental_section(
 			dpp_rows, departmental_units, window_open=window_open,
 			financial_year_label=cstr(context.get("financial_year_label")) or cstr(fy),
 		),
 		# §9.1 — "Omit an empty Your actions section."
 		"actionable": actionable,
+		"actionable_heading": _actionable_heading(actionable),
 		"waiting": waiting,
 		"departmental_table": _departmental_table(dpp_rows),
 		"departmental_plans": dpp_rows,

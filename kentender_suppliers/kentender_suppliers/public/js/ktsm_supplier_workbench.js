@@ -152,6 +152,15 @@
 
 	function removeKtsmShellIfWrongRoute() {
 		var el = document.getElementById("kt-smw-landing");
+		// The 400 ms poll calls this on every other Desk page too: touch the
+		// DOM only when there is something to undo. An unconditional
+		// classList.remove still rewrites <body class> (a mutation record every
+		// tick on every screen), the one periodic DOM write left on an idle
+		// page — suspected of closing native <select> popups (25 Sep 2026).
+		if (!el && !document.body.classList.contains("kt-ktsm-shell")) {
+			bindScheduled = false;
+			return;
+		}
 		if (el && el.classList.contains("ktsm-injected-mount")) {
 			el.remove();
 		}

@@ -678,6 +678,11 @@ def _approve_budget_version(payload: dict[str, Any]) -> dict[str, Any]:
 	version.decided_by = frappe.session.user
 	version.decided_at = now_datetime()
 	version.save(ignore_permissions=True)
+	# BUD-BR-029 — in this activation transaction: every Open budget revision
+	# request on a line this successor changed or omitted becomes Revised.
+	from kentender_budget.services.budget_revision_request_contracts import revise_on_activation
+
+	revise_on_activation(version)
 
 	correlation_id = frappe.generate_hash(length=12)
 	from kentender_budget.services.budget_audit_contracts import EVENT_APPROVED, EVENT_SUPERSEDED, safe_record_event
@@ -852,6 +857,10 @@ def _close_budget(payload: dict[str, Any]) -> dict[str, Any]:
 	version.closed_by = frappe.session.user
 	version.closed_at = now_datetime()
 	version.save(ignore_permissions=True)
+	# BUD-BR-030 — closing declines every remaining Open revision request.
+	from kentender_budget.services.budget_revision_request_contracts import decline_on_close
+
+	decline_on_close(doc.name)
 
 	from kentender_budget.services.budget_audit_contracts import EVENT_CLOSED, safe_record_event
 

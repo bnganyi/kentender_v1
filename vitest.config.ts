@@ -31,6 +31,9 @@ export default defineConfig({
 					// exceeds the 5 s default (measured 24 Sep 2026: 5.3–9.2 s).
 					testTimeout: 30_000,
 					environment: "jsdom",
+					// The shared guidance components mount through kentender_core's
+					// real bundle (KT-STD-001 v1.8 §2.9).
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/procurement_planning/vitest.setup.js"],
 					include: [
 						"kentender_procurement/kentender_procurement/public/js/procurement_planning/**/*.spec.js",
 					],
@@ -88,7 +91,12 @@ export default defineConfig({
 				test: {
 					name: "desk-runtime",
 					environment: "jsdom",
-					include: ["kentender_core/kentender_core/public/js/kt_desk_page.spec.js"],
+					// KT-STD-001 v1.8 §2.9 — the shared journey tracker and next-step
+					// block (kt_industry_guidance.bundle.js) are shared runtime too.
+					include: [
+						"kentender_core/kentender_core/public/js/kt_desk_page.spec.js",
+						"kentender_core/kentender_core/public/js/kt_industry/**/*.spec.js",
+					],
 				},
 			},
 			{

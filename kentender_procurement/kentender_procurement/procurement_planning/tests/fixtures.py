@@ -56,12 +56,14 @@ AUDITOR = "plnt.auditor@example.test"
 OUTSIDER = "plnt.outsider@example.test"
 # REQ-CHG-001 v1.6 §9.1A — the sole authoriser of a Requisition's drawdown.
 HOPF = "plnt.hopf@example.test"
+# PLN v1.27 §7.7 — the receiving holder of a budget revision request.
+BUDGET_OFFICER = "plnt.budget@example.test"
 # §6.1: role combinations are permitted — the conflict is between actions.
 HYBRID = "plnt.hybrid@example.test"
 HYBRID_FINANCE = "plnt.hybridfinance@example.test"
 HYBRID_AO = "plnt.hybridao@example.test"
 HYBRID_HOPF_AO = "plnt.hybridhopfao@example.test"  # v1.18 §6.4: the signer cannot adopt
-ACTORS = (AUTHOR, HOD, PLANNER, FINANCE_OFFICER, ACCOUNTING_OFFICER, STATUTORY, AUDITOR, OUTSIDER, HYBRID, HYBRID_HOPF_AO, HYBRID_FINANCE, HYBRID_AO, HOPF)
+ACTORS = (AUTHOR, HOD, PLANNER, FINANCE_OFFICER, ACCOUNTING_OFFICER, STATUTORY, AUDITOR, OUTSIDER, HYBRID, HYBRID_HOPF_AO, HYBRID_FINANCE, HYBRID_AO, HOPF, BUDGET_OFFICER)
 
 NEED = "NEED-PLNT-0001"
 NEED_V1 = "NEED-PLNT-0001-V1"
@@ -164,6 +166,7 @@ def ensure_world() -> None:
 		(HYBRID, "PLNT Hybrid"), (HYBRID_FINANCE, "PLNT Hybrid Finance"), (HYBRID_AO, "PLNT Hybrid AO"),
 		(HOPF, "PLNT Head of Procurement Function"),
 		(HYBRID_HOPF_AO, "PLNT Hybrid Head of Function and AO"),
+		(BUDGET_OFFICER, "PLNT Budget Officer"),
 	):
 		_user(email, name)
 	_grant(AUTHOR, "Departmental Author", OU_ALPHA)
@@ -186,6 +189,7 @@ def ensure_world() -> None:
 	_grant(HOPF, "Head of Procurement Function")
 	_grant(HYBRID_HOPF_AO, "Head of Procurement Function")
 	_grant(HYBRID_HOPF_AO, "Accounting Officer")
+	_grant(BUDGET_OFFICER, "Budget Officer")
 
 	# the single-valued intake flag: move it onto the test year, remember
 	# what was open so restore_site() can put it back
@@ -303,6 +307,16 @@ def wipe_planning_rows() -> None:
 	plan_versions = frappe.get_all("Annual Plan Version", filters={"annual_plan": ("in", plans or ("",))}, pluck="name")
 	items = frappe.get_all("Annual Plan Item", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
 	frappe.db.delete("Plan Drawdown Reference", {"plan_item": ("in", items or ("",))})
+	# PLN v1.27 §4.7 / BUD v1.11 §4.10 — both sides of a budget revision
+	# request and Budget's outcome outbox for these plan Versions. Version
+	# names are reused after a wipe, so a leftover Open request would make the
+	# next test's first request read as "already requested".
+	requests = frappe.get_all("Plan Budget Revision Request", filters={"plan_version": ("in", plan_versions or ("",))}, pluck="name")
+	if requests and frappe.db.exists("DocType", "Budget Revision Request"):
+		budget_side = frappe.get_all("Budget Revision Request", filters={"planning_request_id": ("in", requests)}, pluck="name")
+		frappe.db.delete("Budget Revision Request Event", {"budget_revision_request": ("in", budget_side or ("",))})
+		frappe.db.delete("Budget Revision Request", {"name": ("in", budget_side or ("",))})
+	frappe.db.delete("Plan Budget Revision Request", {"name": ("in", requests or ("",))})
 	frappe.db.delete("Plan Source Allocation", {"plan_version": ("in", plan_versions or ("",))})
 	frappe.db.delete("Annual Plan Item", {"plan_version": ("in", plan_versions or ("",))})
 	roots = frappe.get_all("Plan Item", filters={"annual_plan": ("in", plans or ("",))}, pluck="name")

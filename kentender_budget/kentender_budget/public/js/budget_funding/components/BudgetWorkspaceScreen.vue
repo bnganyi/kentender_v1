@@ -5,7 +5,7 @@ import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
 import { useFiscalYearFilter } from "../../budget_shared/composables/useFiscalYearFilter.js";
 import { formatKes, mintKey } from "../../budget_shared/data/formatKes.js";
 import KtErrorBanner from "./KtErrorBanner.vue";
-import { getBudgetWorkspace, createBudgetSuccessorVersion } from "../data/budgetApi.js";
+import { getBudgetWorkspace, createBudgetSuccessorVersion, declineBudgetRevisionRequest } from "../data/budgetApi.js";
 
 // BUD-UI-01 — BUD-DES-01 / 01A / 01B / 16 (BUD-CHG-001 v1.9 §11.1, §11.1A,
 // §11.1B, §11.16, §12.1). The server decides the state and the permitted
@@ -195,6 +195,47 @@ async function updateAllocation() {
 	}
 }
 
+// BUD v1.11 §11.1B — BUD-DES-18: Procurement Planning's open budget revision
+// requests, each with its own decision; BUD-DES-19: the decline dialog.
+const revisionRequests = computed(() => workspace.value?.revision_requests || []);
+function runRequestAction(request) {
+	if (request.primary_action === "update_allocation") return updateAllocation();
+	const p = workspace.value?.pending_version;
+	if (p) return go(workspace.value.budget.code, "version", String(p.version_number), "edit");
+}
+const declining = ref(null);
+const declineReason = ref("");
+const declineBusy = ref(false);
+const declineError = ref("");
+const declineInput = ref(null);
+const declineLength = computed(() => declineReason.value.trim().length);
+const declineValid = computed(() => declineLength.value >= 10 && declineLength.value <= 500);
+function openDecline(request) {
+	declining.value = request;
+	declineReason.value = "";
+	declineError.value = "";
+	setTimeout(() => declineInput.value?.focus());
+}
+async function submitDecline() {
+	if (!declineValid.value || declineBusy.value) return;
+	declineBusy.value = true;
+	declineError.value = "";
+	try {
+		const result = await declineBudgetRevisionRequest(declining.value.budget_revision_request_id, declineReason.value.trim());
+		if (!result.ok) {
+			declineError.value = Object.values(result.errors || {}).join(" ") || result.message || __("The request could not be declined.");
+			return;
+		}
+		declining.value = null;
+		frappe.show_alert({ message: __("Request declined"), indicator: "orange" });
+		await refresh({ quiet: true });
+	} catch (e) {
+		declineError.value = e.message || String(e);
+	} finally {
+		declineBusy.value = false;
+	}
+}
+
 function openLine(line) {
 	go("line", line.code);
 }
@@ -380,6 +421,30 @@ function openLine(line) {
 							</div>
 						</div>
 
+						<!-- BUD-DES-18 — one row per open request from Procurement Planning. -->
+						<div
+							v-for="request in revisionRequests"
+							:key="request.budget_revision_request_id"
+							class="bud-revision-request"
+							data-testid="budget-revision-request"
+						>
+							<div class="bud-revision-request-body">
+								<div class="bud-revision-request-text">
+									<h2>{{ request.title }}</h2>
+									<p>{{ request.narrative }}</p>
+									<div class="bud-revision-request-meta">
+										<div>{{ __("Requested by {0}", [request.requested_by]) }}</div>
+										<div>{{ __("Requested {0}", [request.requested_at_display]) }}</div>
+										<div>{{ __("Plan {0}", [request.plan_label]) }}</div>
+									</div>
+								</div>
+								<div class="bud-revision-request-actions">
+									<button v-if="request.can_decline" type="button" class="kt-btn kt-btn-secondary" data-testid="budget-revision-decline" @click="openDecline(request)">{{ __("Decline request") }}</button>
+									<button type="button" class="kt-btn kt-btn-primary" data-testid="budget-revision-primary" :disabled="updating" @click="runRequestAction(request)">{{ request.primary_label }}</button>
+								</div>
+							</div>
+						</div>
+
 						<div style="padding: 20px 24px; border-bottom: 1px solid var(--kt-color-divider)">
 							<div class="kt-kpi-row" style="margin-bottom: 8px" data-testid="budget-position-cards">
 								<div class="kt-kpi-card">
@@ -443,10 +508,93 @@ function openLine(line) {
 				</div>
 			</template>
 		</div>
+			<!-- BUD-DES-19 — decline a budget revision request. -->
+		<div v-if="declining" class="kt-dialog-backdrop" tabindex="-1" @keydown.esc.stop="declining = null">
+			<div class="kt-dialog" style="width: min(520px, 100%)" role="dialog" aria-modal="true" aria-labelledby="bud-decline-title" data-testid="budget-decline-dialog">
+				<h2 id="bud-decline-title" class="kt-dialog-title">{{ __("Decline this budget revision request?") }}</h2>
+				<div class="bud-decline-facts">
+					<div><div class="kt-label">{{ __("Line") }}</div><div>{{ declining.line_title }}</div></div>
+					<div><div class="kt-label">{{ __("Over by") }}</div><div>{{ declining.over_display }}</div></div>
+					<div><div class="kt-label">{{ __("Requested by") }}</div><div>{{ declining.requested_by_name }}</div></div>
+				</div>
+				<div class="kt-field">
+					<label for="bud-decline-reason">{{ __("Reason for declining") }}</label>
+					<textarea id="bud-decline-reason" ref="declineInput" v-model="declineReason" class="kt-input" style="width: 100%; height: auto" rows="4" maxlength="500" aria-describedby="bud-decline-help" data-testid="budget-decline-reason"></textarea>
+					<div class="bud-decline-count"><span>{{ __("10–500 characters") }}</span><span data-testid="budget-decline-count">{{ declineLength }}</span></div>
+				</div>
+				<p id="bud-decline-help" class="kt-dialog-body" style="margin: 0">{{ __("The plan update stays over budget. Procurement Planning will see your reason.") }}</p>
+				<p v-if="declineError" class="kt-field-error" data-testid="budget-decline-error">{{ declineError }}</p>
+				<div class="kt-dialog-actions">
+					<button type="button" class="kt-btn kt-btn-secondary" @click="declining = null">{{ __("Cancel") }}</button>
+					<button type="button" class="kt-btn kt-btn-primary" :disabled="!declineValid || declineBusy" data-testid="budget-decline-confirm" @click="submitDecline">{{ __("Decline request") }}</button>
+				</div>
+			</div>
+		</div>
 	</div>
 </template>
 
 <style scoped>
+/* BUD v1.11 BUD-DES-18 / BUD-DES-19 — ported from the workspace board's
+   variants 18 and 19. */
+.bud-revision-request {
+	padding: 20px 24px;
+	border-bottom: 1px solid var(--kt-color-divider);
+}
+.bud-revision-request-body {
+	border-left: 3px solid var(--kt-color-accent);
+	padding: 4px 0 4px 18px;
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 24px;
+	flex-wrap: wrap;
+}
+.bud-revision-request-text {
+	flex: 1 1 520px;
+	min-width: 0;
+}
+.bud-revision-request-text h2 {
+	font-size: 19px;
+	margin: 0 0 6px;
+}
+.bud-revision-request-text p {
+	font-size: 14px;
+	margin: 0 0 10px;
+	max-width: 78ch;
+}
+.bud-revision-request-meta {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	font-size: 13px;
+	color: var(--kt-color-neutral-700);
+}
+.bud-revision-request-actions {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+.bud-decline-facts {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 12px 16px;
+	font-size: 14px;
+}
+.bud-decline-facts .kt-label {
+	margin-bottom: 3px;
+}
+.bud-decline-count {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	font-size: 12px;
+	color: var(--kt-color-neutral-700);
+	margin-top: 4px;
+}
+.kt-dialog-body {
+	font-size: 14px;
+	color: var(--kt-color-text);
+}
 @media (max-width: 900px) {
 	.kt-ws-facts {
 		grid-template-columns: 1fr 1fr !important;

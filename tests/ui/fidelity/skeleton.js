@@ -137,6 +137,9 @@ const MODIFIERS = ["is-secondary", "is-tight", "is-warning", "is-critical", "is-
  */
 const DATA_SEVERITY = new Set(["kpi-card", "bar"]);
 
+/** Attribute-marked landmarks (see `landmarkOf`). */
+const GUIDANCE = ["journey", "next-step"];
+
 /** Headings are landmarks in their own right: a region titled by an `h2` and a
  *  region titled by a styled `div` are not the same structure, and only the
  *  first survives a stylesheet change. */
@@ -163,7 +166,15 @@ function classesOf(el) {
 function landmarkOf(el) {
 	if (HEADING_TAGS.includes(el.tagName)) return { names: [el.tagName.toLowerCase()], mods: [] };
 	const classes = classesOf(el);
-	if (!classes.length) return null;
+	// KT-STD-001 v1.8 §2.9 — the boards draw the journey tracker and the
+	// next-step block only as `data-kt="journey"` / `data-kt="next-step"`
+	// (inline-styled, no class), and the shared components carry the same
+	// attribute. Without this both would be transparent, and a screen that
+	// dropped its tracker or put the blocked block in the wrong place would
+	// still pass.
+	const guidance = (el.getAttribute && el.getAttribute("data-kt")) || "";
+	const guidanceNames = GUIDANCE.includes(guidance) ? [guidance] : [];
+	if (!classes.length && !guidanceNames.length) return null;
 	// An element is usually several landmarks at once — the frame in both
 	// Strategy and Budget is a single element carrying `kt-card kt-blueprint`,
 	// and an empty state is `kt-card kt-blueprint kt-empty`. Taking only the
@@ -172,7 +183,7 @@ function landmarkOf(el) {
 	// the vocabulary's own order so the rendered path is stable.
 	const names = LANDMARKS.filter((landmark) => landmark.classes.some((candidate) => classes.includes(candidate))).map(
 		(landmark) => landmark.name
-	);
+	).concat(guidanceNames);
 	if (!names.length) return null;
 	const mods = names.some((name) => DATA_SEVERITY.has(name)) ? [] : MODIFIERS.filter((mod) => classes.includes(mod));
 	return { names, mods };

@@ -30,11 +30,23 @@
 						<span v-if="plan.is_successor && currentVersion">· Current plan Version {{ currentVersion }}</span>
 						<span class="kt-status" :class="badgeClass">{{ statusLabel }}</span>
 					</div>
+					<!-- KT-STD-001 v1.8 §2.9.1 — Your turn / Waiting / Done, one line
+					     in the header after the scope line (U07-FINANCE-COMPLETE). -->
+					<div ref="headEl" class="kt-guidance-mount" data-testid="ppl-next-step-line"></div>
 				</div>
 			</div>
 
-			<!-- U07-UPDATE — a successor must say why it exists. -->
-			<div v-if="plan.is_successor" class="kt-field pln-plan-field" data-testid="ppl-change-reason">
+			<!-- PLN v1.27 §10.1A.1 — the journey tracker directly below the
+			     header, then the blocked next-step block when one is drawn. They
+			     replace the Funding "Not yet checked" cell and the old Approval
+			     waiting notice (§10.6 v1.26 table). -->
+			<div ref="journeyEl" class="kt-guidance-mount" data-testid="ppl-journey"></div>
+			<div ref="bodyEl" class="kt-guidance-mount" data-testid="ppl-next-step-block"></div>
+
+			<!-- U07-UPDATE — a successor must say why it exists. The board holds
+			     the field in its own region (U07 update family). -->
+			<div v-if="plan.is_successor" class="kt-region">
+			<div class="kt-field pln-plan-field" data-testid="ppl-change-reason">
 				<label for="ppl-change-reason" class="kt-label">Reason for updating the plan</label>
 				<textarea
 					id="ppl-change-reason"
@@ -44,6 +56,7 @@
 					:disabled="!plan.mutable"
 					@input="changeReasonDraft = $event.target.value"
 				></textarea>
+			</div>
 			</div>
 
 			<!-- §10.6 — Project name is omitted when blank. A whole-plan field with
@@ -70,7 +83,7 @@
 				Add a project name
 			</button>
 
-			<div class="kt-region">
+			<div ref="purchasesEl" class="kt-region" tabindex="-1" data-testid="ppl-purchases-region">
 				<h2>Purchases</h2>
 				<template v-if="items.length">
 					<table class="kt-table" data-testid="ppl-purchases">
@@ -130,7 +143,7 @@
 			</div>
 
 			<!-- U07-UNALLOCATED — the sources still waiting to become purchases. -->
-			<div class="kt-region" :class="{ 'is-secondary': !unallocated.length }" data-testid="ppl-requirements">
+			<div ref="requirementsEl" class="kt-region" :class="{ 'is-secondary': !unallocated.length }" tabindex="-1" data-testid="ppl-requirements">
 				<h2>Requirements ready to add</h2>
 				<template v-if="unallocated.length">
 					<table class="kt-table" data-testid="ppl-unallocated">
@@ -190,55 +203,88 @@
 				<p v-else class="kt-muted" data-testid="ppl-all-allocated">{{ allAllocatedText }}</p>
 			</div>
 
-			<!-- Plan checks: three results, each naming its own correction.
-			     The board binds them in a `.kt-group` — a left rule with the
-			     facts indented under the heading — and bounds the row's width.
-			     Both were dropped in the port, so the facts floated flat across
-			     the full page and, once a second row joined them, read as one
-			     unstructured band (found live 24 Sep 2026). -->
-			<div class="kt-region">
+			<!-- Plan checks (PLN v1.27 §10.1A.3, U07 boards): budget fit is a
+			     live computed result, never "not yet checked", and Finance
+			     confirmation is its own labelled fact (KT-STD-001 v1.8 §3B.3).
+			     When a line is over its approved amount the comparison opens as
+			     its own table; when every line fits it is one quiet fact with
+			     the table behind "View budget lines". The reservation shortfall
+			     is a signature blocker (D2), so it is a plain row with its
+			     correction, not the page's dominant warning. -->
+			<div ref="checksEl" class="kt-region" tabindex="-1" data-testid="ppl-plan-checks-region">
 				<h2>Plan checks</h2>
-				<!-- A failing check is the board's dominant issue: its own
-				     warning notice, naming the check and carrying the exact
-				     correction as a button. The passing ones stay quiet facts
-				     in the group below. All three were built as one flat row
-				     of facts with the failing one as a badge, which is why a
-				     KES 139,494 shortfall read no louder than "Schedule — all
-				     purchases meet their deadlines" (found live 24 Sep 2026). -->
-				<div
-					v-for="check in failingChecks"
-					:key="check.label"
-					class="kt-notice is-warning"
-					data-testid="ppl-check-issue"
-				>
-					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-						<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
-					</svg>
-					<div class="pln-check-issue-body">
-						<div class="kt-notice-body"><strong>{{ check.label }}</strong> — {{ check.result }}</div>
-						<button
-							v-if="check.action"
-							type="button"
-							class="kt-btn kt-btn-secondary"
-							data-testid="ppl-check-action"
-							@click="$emit('navigate', check.route)"
-						>{{ check.action }}</button>
+				<template v-if="budgetFit && !budgetFit.all_within">
+					<div class="pln-fit-head" data-testid="ppl-budget-fit-over">
+						<span class="pln-fit-title">Budget fit, checked now</span>
+						<span class="pln-fit-over">{{ budgetFit.result }}</span>
 					</div>
+					<table class="kt-table" data-testid="ppl-budget-fit-table">
+						<thead><tr><th>Budget line</th><th class="is-num">Approved</th><th class="is-num">This plan</th><th class="is-num">Difference</th></tr></thead>
+						<tbody>
+							<tr v-for="line in budgetFit.lines" :key="line.budget_line">
+								<td><div class="pln-fit-line">{{ line.title }}</div><div class="kt-muted pln-row-ref">{{ line.reference }}</div></td>
+								<td class="is-num">{{ line.approved_display }}</td>
+								<td class="is-num">{{ line.planned_display }}</td>
+								<td class="is-num" :class="{ 'pln-fit-over-cell': line.over }">{{ line.difference_display }}</td>
+							</tr>
+						</tbody>
+					</table>
+				</template>
+				<div v-for="check in failingChecks" :key="check.label" class="pln-check-row" data-testid="ppl-check-issue">
+					<p class="pln-check-row-text"><strong>{{ check.label }}</strong> {{ check.result }}<template v-if="check.detail"> {{ check.detail }}</template></p>
+					<button
+						v-if="check.action"
+						type="button"
+						class="kt-btn kt-btn-secondary"
+						data-testid="ppl-check-action"
+						@click="focusRegion('reservation')"
+					>{{ check.action }}</button>
 				</div>
-				<!-- The Reservation allocation block states the reserved-procurement
-				     result itself, so it leaves the passing-checks group. Not met,
-				     it follows its own warning (U07 base board); met, it follows
-				     the quiet checks (U07-FINANCE-COMPLETE). -->
-				<ReservationAllocation v-if="reservationBlock && !reservationBlock.met" :block="reservationBlock" collapsible />
-				<div class="kt-group" :style="reservationBlock && !reservationBlock.met ? 'margin-top: var(--kt-space-5)' : ''" data-testid="ppl-plan-checks-group">
-				<div class="kt-meta-row pln-plan-checks" data-testid="ppl-plan-checks">
-					<div v-for="check in passingChecks" :key="check.label">
-						<span class="kt-label">{{ check.label }}</span>
-						<span class="kt-meta-value">{{ check.result }}</span>
+				<div v-if="reservationBlock && !reservationBlock.met" ref="reservationEl" tabindex="-1" class="pln-reservation-host">
+					<ReservationAllocation :block="reservationBlock" collapsible />
+				</div>
+				<div class="kt-group" :style="(budgetFit && !budgetFit.all_within) || failingChecks.length ? 'margin-top: var(--kt-space-5)' : ''" data-testid="ppl-plan-checks-group">
+					<div class="kt-meta-row pln-plan-checks" data-testid="ppl-plan-checks">
+						<div v-if="budgetFit && budgetFit.all_within" data-testid="ppl-budget-fit">
+							<span class="kt-label">Budget fit, checked now</span>
+							<span class="pln-check-value">{{ budgetFit.result }}</span>
+						</div>
+						<div data-testid="ppl-finance-confirmation">
+							<span class="kt-label">Finance confirmation</span>
+							<span class="pln-check-value">{{ financeConfirmation.state }}</span>
+						</div>
+						<template v-if="financeConfirmation.checked_by">
+							<div><span class="kt-label">Checked by</span><span class="pln-check-value">{{ financeConfirmation.checked_by }}</span></div>
+							<div><span class="kt-label">Checked at</span><span class="pln-check-value">{{ financeConfirmation.checked_at }}</span></div>
+						</template>
+						<div v-for="check in passingChecks" :key="check.label">
+							<span class="kt-label">{{ check.label }}</span>
+							<span class="pln-check-value">{{ check.result }}</span>
+						</div>
 					</div>
+					<details v-if="budgetFit && budgetFit.all_within" class="kt-disclosure" data-testid="ppl-budget-lines" @toggle="linesOpen = $event.target.open">
+						<summary class="kt-disclosure-head">
+							<div class="kt-disclosure-title-row"><span class="kt-disclosure-title">View budget lines</span></div>
+							<svg class="kt-disclosure-chevron" :class="{ 'is-open': linesOpen }" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg>
+						</summary>
+						<div class="kt-disclosure-body">
+							<table class="kt-table">
+								<thead><tr><th>Budget line</th><th class="is-num">Approved</th><th class="is-num">This plan</th><th class="is-num">Difference</th></tr></thead>
+								<tbody>
+									<tr v-for="line in budgetFit.lines" :key="line.budget_line">
+										<td><div class="pln-fit-line">{{ line.title }}</div><div class="kt-muted pln-row-ref">{{ line.reference }}</div></td>
+										<td class="is-num">{{ line.approved_display }}</td>
+										<td class="is-num">{{ line.planned_display }}</td>
+										<td class="is-num">{{ line.difference_display }}</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</details>
 				</div>
+				<div v-if="reservationBlock && reservationBlock.met" ref="reservationEl" tabindex="-1" class="pln-reservation-host">
+					<ReservationAllocation :block="reservationBlock" collapsible />
 				</div>
-				<ReservationAllocation v-if="reservationBlock && reservationBlock.met" :block="reservationBlock" collapsible />
 			</div>
 
 			<!-- §10.6 — once the version is Active, its approval and publication
@@ -292,7 +338,7 @@
 			     in the port, leaving a bare small-caps line with no affordance
 			     — it read as an orphaned heading over empty space (found live
 			     24 Sep 2026). -->
-			<details class="kt-disclosure" data-testid="ppl-history" @toggle="historyOpen = $event.target.open">
+			<details class="kt-disclosure" data-testid="ppl-history" :open="changeRows.length > 0 || null" @toggle="historyOpen = $event.target.open">
 				<summary class="kt-disclosure-head">
 					<div class="kt-disclosure-title-row">
 						<span class="kt-disclosure-title">Changes and history</span>
@@ -303,6 +349,20 @@
 				</summary>
 				<div class="kt-disclosure-body">
 					<p v-if="changesText" class="kt-muted">{{ changesText }}</p>
+					<!-- §10.6 update family — what this update adds, changes or
+					     removes against the plan in force; the section starts open
+					     when there is any. -->
+					<table v-if="changeRows.length" class="kt-table" data-testid="ppl-changes">
+						<thead><tr><th>Purchase</th><th>Field</th><th>Current value</th><th>Proposed value</th></tr></thead>
+						<tbody>
+							<tr v-for="row in changeRows" :key="row.plan_item_id + row.field">
+								<td><div class="pln-fit-line">{{ row.title }}</div><div class="kt-muted pln-row-ref">{{ row.plan_item_id }}</div></td>
+								<td>{{ row.field }}</td>
+								<td>{{ row.current }}</td>
+								<td>{{ row.proposed }}</td>
+							</tr>
+						</tbody>
+					</table>
 					<div v-if="history.length" class="kt-timeline" data-testid="ppl-history-timeline">
 						<div v-for="(row, index) in history" :key="index" class="kt-timeline-row">
 							<div class="kt-timeline-dot-col">
@@ -344,43 +404,9 @@
 			     the same scaling problem applies here at least as much). -->
 			<MissingSettingGroup :panels="missingSettings" />
 
-			<!-- U07-FINANCE-COMPLETE — who is waited on, named, comes before
-			     the final action, not after it (found live 23 Sep 2026: this
-			     sat below the footer, so Save draft read as the page's last
-			     word even once nothing further was the Planner's to do). -->
-			<!-- §10.6 U07-FINANCE-COMPLETE — its own section, as the board
-			     draws it: a secondary region, its heading, and the state in a
-			     notice. A previous port made it a bare `.kt-meta-row` of
-			     labelled facts citing this same variant, which the board does
-			     not draw; with no heading and no notice it read as two more
-			     loose labels at the bottom of a flat page (found live 24 Sep
-			     2026). The people stay a labelled fact rather than being
-			     joined into the sentence — the board names one person and
-			     several is ordinary here. -->
-			<div v-if="waitingOn.notice" class="kt-region is-secondary" data-testid="ppl-waiting-on">
-				<h2>Approval</h2>
-				<div class="kt-notice">
-					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-						<path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z"></path><path d="M12 16v-4"></path><path d="M12 8h.01"></path>
-					</svg>
-					<div class="kt-notice-body">
-						<div>{{ waitingOn.notice }}</div>
-						<div v-if="waitingOn.people.length" class="pln-responsible">
-							<span class="kt-label">{{ waitingOn.people.length === 1 ? "Responsible person" : "Responsible people" }}</span>
-							<span class="kt-meta-value" data-testid="ppl-waiting-on-person">
-								<span v-for="(name, index) in waitingOn.people" :key="name" class="pln-responsible-name">
-									{{ index ? ", " : "" }}{{ name }}
-								</span>
-							</span>
-						</div>
-						<div v-else-if="waitingOn.unassigned" class="pln-responsible">
-							<span class="kt-label">Responsible person</span>
-							<span class="kt-meta-value" data-testid="ppl-waiting-on-unassigned">{{ waitingOn.unassigned }}</span>
-						</div>
-					</div>
-				</div>
-			</div>
-
+			<!-- The v1.25 Approval waiting notice and Responsible person field are
+			     replaced by the next-step line in the header (§10.6 v1.26 table,
+			     U07-FINANCE-COMPLETE). -->
 			<div class="pln-footer" data-testid="ppl-footer">
 				<button
 					v-if="plan.can_cancel_update"
@@ -439,7 +465,8 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
+import { settingsStated, useGuidance } from "../../pln_shared/composables/useGuidance.js";
 import MissingSettingGroup from "./MissingSettingGroup.vue";
 import ReservationAllocation from "./ReservationAllocation.vue";
 
@@ -460,7 +487,42 @@ const emit = defineEmits([
 	"cancel-update",
 	"open-task",
 	"save-details",
+	"guidance-command",
 ]);
+
+const headEl = ref(null);
+const journeyEl = ref(null);
+const bodyEl = ref(null);
+const purchasesEl = ref(null);
+const requirementsEl = ref(null);
+const checksEl = ref(null);
+const reservationEl = ref(null);
+const linesOpen = ref(false);
+
+// §11.9 v1.27 — each fix maps to this page's own handler: a hand-off command
+// goes to the root's command runner; Reduce a purchase / Review reserved
+// procurement move focus on this page; Choose a procurement method opens the
+// purchase. The wording and the choice of fixes are the server's.
+const FOCUS = { purchases: purchasesEl, reservation: reservationEl, requirements: requirementsEl };
+function focusRegion(target) {
+	const el = (FOCUS[target] || checksEl).value || checksEl.value;
+	if (!el) return;
+	nextTick(() => {
+		el.scrollIntoView({ behavior: "smooth", block: "start" });
+		el.focus({ preventScroll: true });
+	});
+}
+function onGuidance(item) {
+	if (!item) return;
+	if (item.kind === "command") emit("guidance-command", item);
+	else if (item.kind === "focus") focusRegion(item.target);
+	else if (item.kind === "route" && item.target) emit("navigate", item.target);
+}
+useGuidance(
+	{ journeyEl, headEl, bodyEl },
+	{ answer: () => props.plan.next_step, journey: () => props.plan.journey, pending: () => props.pending },
+	{ onFix: onGuidance, onLink: onGuidance },
+);
 
 const projectNameDraft = ref(props.plan.project_name || "");
 const changeReasonDraft = ref(props.plan.change_reason || "");
@@ -481,15 +543,23 @@ watch(
 const items = computed(() => props.plan.plan_items || []);
 const incompleteItems = computed(() => items.value.filter((row) => row.current_work && row.current_work !== "Ready"));
 const activeView = computed(() => props.plan.active_view);
-const missingSettings = computed(() => props.plan.missing_settings || []);
+// §10.16 — a setting the next-step block already states is not drawn again
+// as its own panel beside it.
+const missingSettings = computed(() => {
+	const stated = settingsStated(props.plan.next_step);
+	return (props.plan.missing_settings || []).filter((panel) => !stated.has(panel.setting));
+});
 const unallocated = computed(() => props.plan.unallocated_sources || []);
 const planChecks = computed(() => props.plan.plan_checks || []);
 const failingChecks = computed(() => planChecks.value.filter((check) => check.kind === "critical"));
+const budgetFit = computed(() => props.plan.budget_fit || null);
+const financeConfirmation = computed(() => ({ state: "Not requested", checked_by: "", checked_at: "", ...(props.plan.finance_confirmation || {}) }));
 const reservationBlock = computed(() => (props.plan.summary || {}).reservation_allocation || null);
 const passingChecks = computed(() =>
 	planChecks.value.filter((check) => check.kind !== "critical" && !(reservationBlock.value && check.label === "Reserved procurement")),
 );
-const historyOpen = ref(false);
+const changeRows = computed(() => props.plan.changes?.rows || []);
+const historyOpen = ref(changeRows.value.length > 0);
 const submissionIssues = computed(() => props.plan.submission_issues || []);
 const submissionIssuesHeading = computed(() => {
 	const n = submissionIssues.value.length;
@@ -501,12 +571,6 @@ const currentVersion = computed(() => props.plan.current_version_number);
 const title = computed(() => (props.plan.is_successor ? "Prepare plan update" : "Prepare the annual procurement plan"));
 const statusLabel = computed(() => (props.plan.is_successor ? "Draft update" : props.plan.header?.badge));
 
-const waitingOn = computed(() => ({
-	notice: "",
-	people: [],
-	unassigned: "",
-	...(props.plan.waiting_on || {}),
-}));
 
 const changesText = computed(() =>
 	props.plan.changes?.is_initial ? "This is the first version of the annual plan." : "",

@@ -305,6 +305,22 @@ def confirm_splitting_advisory(plan_version: str, confirmation: str, expected_re
 
 
 @frappe.whitelist()
+def request_budget_revision(plan_version: str, budget_line: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	"""PLN v1.27 §7.2 RequestBudgetRevision — line and amounts server-derived."""
+	from kentender_procurement.procurement_planning.services import budget_revision
+
+	return budget_revision.request_budget_revision(plan_version=plan_version, budget_line=budget_line, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def withdraw_budget_revision_request(request: str, idempotency_key: str) -> dict[str, Any]:
+	"""PLN v1.27 §7.2 — withdraw an Open request once the line fits."""
+	from kentender_procurement.procurement_planning.services import budget_revision
+
+	return budget_revision.withdraw_budget_revision_request(request=request, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
 def request_plan_funding_confirmation(plan_version: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
 	from kentender_procurement.procurement_planning.services import plan_finance
 

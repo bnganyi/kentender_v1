@@ -37,6 +37,11 @@ EVENT_COMMITMENT = "Contract commitment recorded"
 EVENT_COMMITMENT_ADJUSTED = "Commitment adjusted"
 EVENT_PERMISSION_DENIED = "Permission denied"
 EVENT_CONCURRENCY_CONFLICT = "Concurrency conflict"
+# BUD-CHG-001 v1.11 §12 — a Planning budget revision request and each outcome.
+EVENT_REVISION_REQUEST_RECEIVED = "Budget revision request received"
+EVENT_REVISION_REQUEST_DECLINED = "Budget revision request declined"
+EVENT_REVISION_REQUEST_WITHDRAWN = "Budget revision request withdrawn"
+EVENT_REVISION_REQUEST_REVISED = "Budget revision request revised"
 
 # §12.3 "History contains Budget Version lifecycle events only; it does not
 # duplicate the funding ledger." — the two tabs are disjoint partitions.

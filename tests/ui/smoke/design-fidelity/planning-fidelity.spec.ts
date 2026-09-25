@@ -86,7 +86,7 @@ const U21 = `${DESIGN}/Artboards-C01-U21.dc.html`;
  * without an Annual Plan removes this exemption.
  */
 /**
- * U07 draws a failing check as a warning notice naming it in `<strong>`, and
+ * U07 draws a failing check as its own row naming it in `<strong>`, and
  * the passing ones as quiet labelled facts below — so whichever check is
  * failing has no `.kt-label` on either side, and the landmark sequence depends
  * on *which* check fails. The board's own fixture fails Reserved procurement
@@ -101,7 +101,20 @@ const U07_FAILING_CHECK: LandmarkExemption[] = [
 	{
 		landmark: "Schedule",
 		because:
-			"U07's board fails Reserved procurement and states it in the notice, leaving Funding and Schedule as facts; reset_plan_item_fixture fails Schedule instead, so Schedule is the one in the notice and Reserved procurement is the fact. Whichever check fails is named in <strong>, which is not a landmark on either side.",
+			"U07's board fails Reserved procurement and states it in its own row, leaving Schedule as a fact beside Budget fit and Finance confirmation (PLN v1.27 retired the Funding cell); reset_plan_item_fixture fails Schedule instead, so Schedule is the one in the row and Reserved procurement is the fact. Whichever check fails is named in <strong>, which is not a landmark on either side.",
+	},
+];
+
+/**
+ * U03-FUNDING opens over U02-AUTHOR-DRAFT and "keeps the rest of U02 visible"
+ * (§10.4). PLN v1.27 replaced that draft's context-row Status cell with the
+ * reduced tracker, but the U03 board was not redrawn and still shows it (a
+ * panel carries neither guidance component, §10.1A.4, so it was left as is).
+ */
+const U03_OVER_AUTHOR_DRAFT: LandmarkExemption[] = [
+	{
+		landmark: "Status",
+		because: "The U03-FUNDING board predates PLN v1.27's U02-AUTHOR-DRAFT change: its parent's context-row Status cell is now the reduced tracker line, so the only Status left is the table column.",
 	},
 ];
 
@@ -216,6 +229,46 @@ test.describe("Procurement Planning — design fidelity (U01 workspace)", () => 
 		expect(errors, "console errors").toEqual([]);
 	});
 
+	// PLN v1.27 §10.3 — no tracker on a workspace: the update row states the
+	// next-step answer in place of what the update changes.
+	test("U01-CURRENT-UPDATE-OVER-BUDGET — the update row states the blocked headline", async ({ page, browser }) => {
+		resetFixture("reset_update_over_budget_fixture");
+		const errors = collectConsoleErrors(page);
+		await login(page, PLANNER, PASSWORD);
+		await page.setViewportSize({ width: 1440, height: 1024 });
+		await gotoPlanning(page);
+		await expectReady(page, "workspace");
+		await expectStructure(
+			page, `${LIVE} .kt-page`, await wantedStructure(browser, U01, "U01-CURRENT-UPDATE-OVER-BUDGET"),
+			"U01-CURRENT-UPDATE-OVER-BUDGET", DEPARTURES["WorkspaceScreen#U01-CURRENT-UPDATE-OVER-BUDGET"],
+		);
+		const row = page.locator('[data-testid="pln-plan-row-candidate"]');
+		await expect(row.locator('[data-testid="pln-row-narrative"]')).toHaveText(/^Over budget by KES 2,000,000 on /);
+		await expect(row).not.toContainText("Affected purchase");
+		await expect(row.getByRole("button", { name: "Continue update" })).toBeVisible();
+		await expect(page.locator(".kt-journey")).toHaveCount(0);
+		expect(errors, "console errors").toEqual([]);
+	});
+
+	test("U01-CURRENT-UPDATE-WAITING-BUDGET — the update row names who it waits on and since when", async ({ page, browser }) => {
+		resetFixture("reset_waiting_budget_revision_fixture");
+		const errors = collectConsoleErrors(page);
+		await login(page, PLANNER, PASSWORD);
+		await page.setViewportSize({ width: 1440, height: 1024 });
+		await gotoPlanning(page);
+		await expectReady(page, "workspace");
+		await expectStructure(
+			page, `${LIVE} .kt-page`, await wantedStructure(browser, U01, "U01-CURRENT-UPDATE-WAITING-BUDGET"),
+			"U01-CURRENT-UPDATE-WAITING-BUDGET", DEPARTURES["WorkspaceScreen#U01-CURRENT-UPDATE-WAITING-BUDGET"],
+		);
+		const narrative = page.locator('[data-testid="pln-plan-row-candidate"] [data-testid="pln-row-narrative"]');
+		await expect(narrative.locator("strong")).toContainText("Playwright Budget Officer");
+		await expect(narrative.locator("strong")).toContainText("(Budget Officer) to revise the budget line");
+		await expect(narrative).toContainText(/since \d{1,2} \w{3} \d{4}, \d{2}:\d{2} EAT$/);
+		await expect(page.locator('[data-testid="pln-plan-row-candidate"] button')).toHaveText("View update");
+		expect(errors, "console errors").toEqual([]);
+	});
+
 	test("U01-DEPARTMENT-AUTHOR — the Author's own reading of the same workspace", async ({ page, browser }) => {
 		resetFixture("reset_dpp_fixture");
 		const art = await wanted(browser, U01, "U01-DEPARTMENT-AUTHOR");
@@ -256,6 +309,12 @@ test.describe("Procurement Planning — design fidelity (U02–U05 departmental)
 		await gotoDpp(page, state.dpp_reference);
 		await expectReady(page, "dpp");
 		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U02-AUTHOR-DRAFT");
+		// PLN v1.27 §10.4 — Your turn in the head, the reduced tracker naming
+		// the Author, and no Status cell; the containers match the board.
+		await expect(page.locator(".kt-page-head .kt-next-step")).toContainText(/^Your turn\s+(Enter funding details for \d+ requirements?|Add the department's requirements to the plan)$/);
+		await expect(page.locator(".kt-journey.is-reduced")).toContainText(/^Stage 1 of 4: Preparation — /);
+		await expect(page.locator('[data-testid="pln-dpp-context"]')).not.toContainText("Status");
+		await expectStructure(page, `${LIVE} .kt-page`, await wantedStructure(browser, U0205, "U02-AUTHOR-DRAFT"), "U02-AUTHOR-DRAFT", DEPARTURES["DppPlanScreen#U02-AUTHOR-DRAFT"]);
 		expect(errors, "console errors").toEqual([]);
 	});
 
@@ -271,7 +330,7 @@ test.describe("Procurement Planning — design fidelity (U02–U05 departmental)
 		// The rest of the plan stays visible: that is the whole point of the
 		// panel opening in place rather than on its own page.
 		await expect(page.locator('[data-testid="pln-dpp-table"]')).toBeVisible();
-		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U03-FUNDING");
+		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U03-FUNDING", U03_OVER_AUTHOR_DRAFT);
 		expect(errors, "console errors").toEqual([]);
 	});
 
@@ -294,6 +353,9 @@ test.describe("Procurement Planning — design fidelity (U02–U05 departmental)
 		await gotoDpp(page, state.dpp_reference);
 		await expectReady(page, "dpp");
 		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U05-HOD");
+		await expect(page.locator(".kt-page-head .kt-next-step")).toHaveText(/^Your turn\s+Certify and submit the departmental plan$/);
+		await expect(page.locator(".kt-journey-stage.is-current")).toContainText("Certification");
+		await expectStructure(page, `${LIVE} .kt-page`, await wantedStructure(browser, U0205, "U05-HOD"), "U05-HOD", DEPARTURES["DppPlanScreen#U05-HOD"]);
 		expect(errors, "console errors").toEqual([]);
 	});
 });
@@ -308,6 +370,17 @@ test.describe("Procurement Planning — design fidelity (U06 validation)", () =>
 		await login(page, PLANNER, PASSWORD);
 		await gotoPlanning(page, `/dpp-review/${state.task}`);
 		await expectReady(page, "dpp-review");
+		// PLN v1.27 §10.5 — the next-step line and the DPP journey replace the
+		// status badge and "Decision required"; the containers match the board.
+		const line = page.locator(".kt-page-head .kt-next-step");
+		await expect(line).toHaveText(/^Your turn\s+Classify every included requirement, then accept or return the submission$/);
+		await expect(page.locator(".kt-journey-stage.is-current")).toContainText("Procurement review");
+		await expect(page.getByText("Decision required")).toHaveCount(0);
+		await expectStructure(page, `${LIVE} .kt-page`, await wantedStructure(browser, U06, "U06"), "U06", DEPARTURES["DppValidationScreen#U06"]);
+		// One of two chosen: the line counts what is left, in the server's words.
+		const first = page.locator('[data-testid="pln-review-type"]').first();
+		await first.selectOption({ index: 1 });
+		await expect(line).toContainText("Select the requirement type for 1 requirement, then accept");
 		// The artboard's base state has the requirement type chosen, which is
 		// what makes the acceptance available: the control is absent until the
 		// evidence supports it, not disabled (§10.5).
@@ -319,7 +392,20 @@ test.describe("Procurement Planning — design fidelity (U06 validation)", () =>
 			await types.nth(i).selectOption({ index: 1 });
 		}
 		await expect(page.locator('[data-testid="pln-review-accept"]')).toBeVisible();
-		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U06");
+		// Owner decision 25 Sep 2026 over this board: each requirement is one
+		// grouped block — the department's certified facts together (Budget
+		// line included) above the Planner's own classification strip — so
+		// each row's "Budget line" moves ahead of its "Requirement type".
+		const grouped: string[] = [];
+		for (let i = 0; i < art.length; i += 1) {
+			if (art[i] === "Requirement type" && art[i + 1] === "Category" && art[i + 2] === "Budget line") {
+				grouped.push("Budget line", "Requirement type", "Category");
+				i += 2;
+			} else {
+				grouped.push(art[i]);
+			}
+		}
+		expectLandmarkSubsequence(grouped, await landmarks(page, LIVE), "U06");
 		expect(errors, "console errors").toEqual([]);
 	});
 
@@ -373,6 +459,57 @@ test.describe("Procurement Planning — design fidelity (U07 annual plan, U08 fo
 		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`);
 		await expectReady(page, "plan");
 		expectLandmarkSubsequence(art, await landmarks(page, LIVE), "U07-UNALLOCATED");
+		expect(errors, "console errors").toEqual([]);
+	});
+
+	// PLN v1.27 §10.6 — an update blocked by one over-budget line: the blocked
+	// next-step block names the line and offers both fixes, and the per-line
+	// comparison opens because a line is over (never "Funding: Not yet checked").
+	test("U07-UPDATE-OVER-BUDGET — the update blocked by one budget line, with both fixes", async ({ page, browser }) => {
+		const state = resetFixture<{ plan_reference: string }>("reset_update_over_budget_fixture");
+		const errors = collectConsoleErrors(page);
+		await login(page, PLANNER, PASSWORD);
+		await page.setViewportSize({ width: 1440, height: 1024 });
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`);
+		await expectReady(page, "plan");
+		await expectStructure(
+			page, `${LIVE} .kt-page`, await wantedStructure(browser, U07, "U07-UPDATE-OVER-BUDGET"),
+			"U07-UPDATE-OVER-BUDGET", DEPARTURES["AnnualPlanScreen#U07-UPDATE-OVER-BUDGET"],
+		);
+		const block = page.locator(".kt-next-step-block");
+		await expect(block).toContainText("Over budget by KES 2,000,000");
+		await expect(block.getByRole("button", { name: /^Request budget revision from / })).toBeVisible();
+		await expect(block.getByRole("button", { name: "Reduce a purchase" })).toBeVisible();
+		await expect(page.locator('[data-testid="ppl-budget-fit-table"]')).toContainText("Over by KES 2,000,000");
+		await expect(page.locator(`${LIVE}`)).not.toContainText("Not yet checked");
+		await expect(page.locator(".kt-journey-stage.is-blocked")).toContainText("Preparation");
+		// First-view budget: the first working region starts on the first screen.
+		const purchasesTop = await page.locator('[data-testid="ppl-purchases-region"]').evaluate((el) => el.getBoundingClientRect().top);
+		expect(purchasesTop).toBeLessThan(1024);
+		await expectLayoutSanity(page, "U07-UPDATE-OVER-BUDGET");
+		expect(errors, "console errors").toEqual([]);
+	});
+
+	// The same update once the Planner handed the fix to the Budget Officer:
+	// the turn moves to a named person with the time it was asked, and the
+	// request fix is gone — asking twice is refused on the server too.
+	test("U07-WAITING-BUDGET-REVISION — waiting on the Budget Officer, named, since when", async ({ page, browser }) => {
+		const state = resetFixture<{ plan_reference: string }>("reset_waiting_budget_revision_fixture");
+		const errors = collectConsoleErrors(page);
+		await login(page, PLANNER, PASSWORD);
+		await page.setViewportSize({ width: 1440, height: 1024 });
+		await page.goto(`/app/annual-procurement-plan/${state.plan_reference}`);
+		await expectReady(page, "plan");
+		await expectStructure(
+			page, `${LIVE} .kt-page`, await wantedStructure(browser, U07, "U07-WAITING-BUDGET-REVISION"),
+			"U07-WAITING-BUDGET-REVISION", DEPARTURES["AnnualPlanScreen#U07-WAITING-BUDGET-REVISION"],
+		);
+		const line = page.locator(".kt-page-head .kt-next-step");
+		await expect(line).toContainText("Playwright Budget Officer");
+		await expect(line).toContainText("(Budget Officer) to revise the budget line");
+		await expect(line.locator(".kt-next-step-since")).toContainText(/^since \d{1,2} \w{3} \d{4}, \d{2}:\d{2} EAT$/);
+		await expect(page.locator(".kt-next-step-block")).toHaveCount(0);
+		await expect(page.getByRole("button", { name: /Request budget revision/ })).toHaveCount(0);
 		expect(errors, "console errors").toEqual([]);
 	});
 

@@ -330,3 +330,36 @@ describe("names the design system does not define", () => {
 		expect(compare(board, built).missing.map((m) => m.path)).toEqual(["field"]);
 	});
 });
+
+describe("KT-STD-001 v1.8 §2.9 guidance components (data-kt landmarks)", () => {
+	const BOARD = `
+		<div class="kt-page">
+			<div class="kt-page-head"><div><h1>Prepare plan update</h1><div class="kt-page-scope">PLN · Version 2</div></div></div>
+			<div data-kt="journey"><ol><li><div>Preparation</div></li></ol></div>
+			<div data-kt="next-step" class="kt-notice is-warning"><svg class="kt-notice-icon"></svg><div>Over budget</div></div>
+			<div class="kt-region"><h2>Purchases</h2></div>
+		</div>`;
+
+	it("passes the shared components, which carry the same attributes", () => {
+		const built = `
+			<div class="kt-page">
+				<div class="kt-page-head"><div><h1>Prepare plan update</h1><div class="kt-page-scope">PLN · Version 2</div></div></div>
+				<div class="kt-journey" data-kt="journey"><ol class="kt-journey-stages"><li class="kt-journey-stage"><div class="kt-journey-label">Preparation</div></li></ol></div>
+				<div class="kt-notice is-warning kt-next-step-block" data-kt="next-step"><svg class="kt-notice-icon"></svg><div class="kt-next-step-block-body">Over budget</div></div>
+				<div class="kt-region"><h2>Purchases</h2></div>
+			</div>`;
+		const result = compare(BOARD, built);
+		expect(result.missing).toEqual([]);
+		expect(result.extra).toEqual([]);
+	});
+
+	it("catches a dropped tracker", () => {
+		const built = BOARD.replace(/<div data-kt="journey">.*?<\/ol><\/div>/s, "");
+		expect(compare(BOARD, built).missing.map((m) => m.path)).toContain("page > journey");
+	});
+
+	it("catches a blocked block that lost its next-step marker (a plain warning in its place)", () => {
+		const built = BOARD.replace('data-kt="next-step" ', "");
+		expect(compare(BOARD, built).missing.length).toBeGreaterThan(0);
+	});
+});

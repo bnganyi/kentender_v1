@@ -106,3 +106,12 @@ export function closeBudget(budget, expectedModified, idempotencyKey) {
 		payload: { budget, expected_modified: expectedModified, idempotency_key: idempotencyKey },
 	});
 }
+
+// BUD-CHG-001 v1.11 §9.2 — the Budget Officer declines a budget revision
+// request from Procurement Planning (BUD-DES-19); the reason (10–500
+// characters) reaches the Planner through the outcome event.
+export function declineBudgetRevisionRequest(budgetRevisionRequest, reason) {
+	return frappeCall(`${APP}.decline_budget_revision_request`, {
+		payload: { budget_revision_request: budgetRevisionRequest, reason },
+	});
+}

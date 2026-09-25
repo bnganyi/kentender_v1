@@ -145,6 +145,11 @@ def _provider_rows(user: str) -> dict[str, list[dict[str, Any]]]:
 	still surface here, so My Work stays the one operational queue. A provider
 	failure never breaks the queue for everything else.
 
+	KT-STD-001 v1.8 §3B.4 — a provider row may add `holder` ({role, people,
+	display}) and `since` ({at, display}) from
+	`kentender_core.services.next_step`; the My Work page shows them on
+	waiting-on rows, which a provider may also give a read-only `route`.
+
 	KT-STD-001 v1.5 §3A.6 — a technical reader (Administrator/System Manager,
 	`kentender_core.services.authorization.is_technical`) decides nothing:
 	every provider is skipped for them, so their My Work is always empty
