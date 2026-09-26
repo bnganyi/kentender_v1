@@ -17,6 +17,10 @@
   "col_a",
   "ppra_report_due_by",
   "candidate_notice_due_by",
+  "ppra_report_status",
+  "ppra_report_evidence_id",
+  "candidate_notice_status",
+  "notice_publication_status",
   "cancellation_digest",
   "notice_document_digest",
   "section_obl",
@@ -98,6 +102,31 @@
    "read_only": 1
   },
   {
+   "fieldname": "ppra_report_status",
+   "fieldtype": "Select",
+   "label": "PPRA report",
+   "read_only": 1,
+   "options": "Not due\nDue\nRecorded\nOverdue"
+  },
+  {
+   "fieldname": "ppra_report_evidence_id",
+   "fieldtype": "Data",
+   "label": "PPRA report evidence",
+   "read_only": 1
+  },
+  {
+   "fieldname": "candidate_notice_status",
+   "fieldtype": "Data",
+   "label": "Candidate notices",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notice_publication_status",
+   "fieldtype": "Data",
+   "label": "Notice publication",
+   "read_only": 1
+  },
+  {
    "fieldname": "cancellation_digest",
    "fieldtype": "Data",
    "label": "Cancellation digest",
@@ -135,7 +164,7 @@
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-19 00:00:00.000000",
+ "modified": "2026-09-26 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Tenders",
  "name": "Tender Cancellation",

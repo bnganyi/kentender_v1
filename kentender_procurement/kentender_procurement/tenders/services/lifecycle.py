@@ -23,14 +23,14 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_procurement.tenders.services import clock, compatibility, documents, draft_commands, envelope, events, render_service, review, serializer, template_binding
+from kentender_procurement.tenders.services import bid_definition, clock, compatibility, documents, draft_commands, envelope, events, handoffs, render_service, review, serializer, template_binding
 from kentender_procurement.tenders.services import snapshot as snap
 from kentender_procurement.tenders.services import tender_authorization as authz
 from kentender_procurement.tenders.services.errors import fail
 from kentender_procurement.tenders.services.tender_roles import ROLE_ACCOUNTING_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION
 
-TASK_HOPF_APPROVAL = "HOPF approval"
-TASK_AO_AUTHORISATION = "AO publication authorisation"
+TASK_HOPF_APPROVAL = handoffs.HOPF_APPROVAL
+TASK_AO_AUTHORISATION = handoffs.AO_AUTHORISATION
 AFFECTED_TASKS = ("Tender details", "Supplier and contract requirements", "Review and generated documents")
 AFFECTED_TASK_KEYS = {"Tender details": "details", "Supplier and contract requirements": "requirements", "Review and generated documents": "review"}
 
@@ -38,17 +38,6 @@ AFFECTED_TASK_KEYS = {"Tender details": "details", "Supplier and contract requir
 # --------------------------------------------------------------------------
 # tasks and decisions
 # --------------------------------------------------------------------------
-
-
-def new_task(root, version, *, task_type: str, business_role: str, subject_type: str = "", subject_id: str = "") -> Any:
-	return envelope.insert(
-		frappe.get_doc(
-			{
-				"doctype": "Tender Task", "tender": root.name, "tender_version": version.name if version else None, "task_type": task_type, "business_role": business_role,
-				"subject_type": subject_type, "subject_id": subject_id, "status": "Open", "task_token": envelope.token(), "record_version": 0, "fixture_namespace": root.fixture_namespace,
-			}
-		)
-	)
 
 
 def open_task(root, *, task_type: str, subject_id: str = "") -> Any | None:
@@ -133,7 +122,7 @@ def submit_tender_for_approval(*, tender: str, expected_record_version, idempote
 	envelope.check_record_version(root, expected_record_version)
 	bound = template_binding.require_bound(version, "continue")
 	snapshot = snap.load(version)
-	compatibility.require_supported(snapshot, bound["supported_reservation_categories"])
+	compatibility.require_supported(snapshot, bound)
 	result = review.run(root, version, with_renders=True)
 	if result["must_fix_count"]:
 		review.store(version, result)
@@ -149,12 +138,14 @@ def submit_tender_for_approval(*, tender: str, expected_record_version, idempote
 		stored = _freeze_documents(root, version, renders)
 		envelope.bump(version, status="Submitted", submitted_by=actor, submitted_at=clock.now())
 		decision = record_decision(root, version, decision="Submit for approval", actor=actor, business_role="Procurement Officer", assignment=assignment, idempotency_key=idempotency_key)
-		task = new_task(root, version, task_type=TASK_HOPF_APPROVAL, business_role=ROLE_HEAD_OF_PROCUREMENT_FUNCTION)
+		# §5.11: a corrected or reopened Draft's correction item clears on submission
+		handoffs.close_open(root, task_types=(handoffs.CORRECT_RETURNED, handoffs.CORRECT_REOPENED))
+		task = handoffs.open_task(root, version, task_type=TASK_HOPF_APPROVAL, sender=actor)
 		envelope.bump(root, overall_status="Awaiting procurement approval", submission_deadline=serializer.officer_state(version).get("submission_deadline"), clarification_deadline=serializer.officer_state(version).get("clarification_deadline"))
 		events.emit(
 			tender=root.name, event_type="TenderSubmitted", command="SubmitTenderForApproval", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment),
 			previous_status="Draft", resulting_status="Awaiting procurement approval", record_version=root.record_version, subject_type="Tender Version", subject_id=version.name,
-			payload={"package_digest": version.package_digest, "invitation_digest": version.invitation_digest, "issued_tender_digest": version.issued_tender_digest, "documents": stored, "compatibility": [c.as_dict() for c in compatibility.evaluate(snapshot, bound["supported_reservation_categories"])], "decision": decision.name, "task": task.name},
+			payload={"package_digest": version.package_digest, "invitation_digest": version.invitation_digest, "issued_tender_digest": version.issued_tender_digest, "documents": stored, "compatibility": [c.as_dict() for c in compatibility.evaluate(snapshot, bound)], "decision": decision.name, "task": task.name},
 			fixture_namespace=root.fixture_namespace,
 		)
 	out = {"ok": True, "idempotent": False, "action": "submitted", "tender": root.name, "record_version": root.record_version, "version": draft_commands.version_dict(version), "task": task.name, "package_digest": version.package_digest}
@@ -194,6 +185,7 @@ def return_tender_for_correction(*, tender: str, reason: str, affected_task: str
 		draft = copy_draft(root, version, actor=cstr(version.prepared_by) or actor)
 		if open_approval:
 			complete_task(open_approval, decision.name)
+		handoffs.open_task(root, draft, task_type=handoffs.CORRECT_RETURNED, holder=cstr(version.prepared_by), comment=reason)
 		envelope.bump(root, overall_status="Draft", current_version=draft.name)
 		events.emit(
 			tender=root.name, event_type="TenderReturned", command="ReturnTenderForCorrection", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment),
@@ -238,7 +230,7 @@ def approve_tender_package(*, tender: str, expected_record_version, idempotency_
 		envelope.assert_task_token(open_approval, task_token)
 	bound = template_binding.require_bound(version, "continue")
 	snapshot = snap.load(version)
-	compatibility.require_supported(snapshot, bound["supported_reservation_categories"])
+	compatibility.require_supported(snapshot, bound)
 	submitted_package_digest = cstr(version.package_digest)
 	check = review.run(root, version, with_renders=True)
 	if check["must_fix_count"]:
@@ -254,13 +246,18 @@ def approve_tender_package(*, tender: str, expected_record_version, idempotency_
 	with envelope.atomic("approve"):
 		version.invitation_digest = renders["invitation_digest"]
 		version.issued_tender_digest = renders["issued_tender_digest"]
+		# §4.2: the approved Version's component digests describe exactly the
+		# approved content (the approval enters the compiled declarations), so
+		# they reconcile with the definition frozen at publication authorisation.
+		version.approved_by, version.approved_at = actor, approved_at
+		version.update(bid_definition.component_digests(root, version))
 		version.package_digest = serializer.package_digest(root, version, snapshot, renders=renders)
 		stored = _freeze_documents(root, version, renders)
 		envelope.bump(version, status="Approved", approved_by=actor, approved_at=approved_at)
 		decision = record_decision(root, version, decision="Approve Tender package", actor=actor, business_role=ROLE_HEAD_OF_PROCUREMENT_FUNCTION, assignment=assignment, idempotency_key=idempotency_key)
 		if open_approval:
 			complete_task(open_approval, decision.name)
-		ao_task = new_task(root, version, task_type=TASK_AO_AUTHORISATION, business_role=ROLE_ACCOUNTING_OFFICER)
+		ao_task = handoffs.open_task(root, version, task_type=TASK_AO_AUTHORISATION, sender=actor)
 		envelope.bump(root, overall_status="Approved", approved_version=version.name)
 		events.emit(
 			tender=root.name, event_type="TenderApproved", command="ApproveTenderPackage", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment),
@@ -301,6 +298,8 @@ def reopen_approved_tender(*, tender: str, reason: str, expected_record_version,
 		decision = record_decision(root, version, decision="Reopen Tender", actor=actor, business_role=ROLE_HEAD_OF_PROCUREMENT_FUNCTION, assignment=assignment, idempotency_key=idempotency_key, reason=reason)
 		draft = copy_draft(root, version, actor=cstr(version.prepared_by) or actor, predecessor_fields={"reopen_reason": reason})
 		cancel_open_tasks(root, task_types=(TASK_AO_AUTHORISATION,))
+		handoffs.close_open(root, task_types=(handoffs.REVIEW_WITHDRAWN,), decision=decision.name)
+		handoffs.open_task(root, draft, task_type=handoffs.CORRECT_REOPENED, holder=cstr(version.prepared_by), comment=reason)
 		envelope.bump(root, overall_status="Draft", current_version=draft.name, approved_version=None)
 		events.emit(
 			tender=root.name, event_type="TenderReopened", command="ReopenApprovedTender", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment),

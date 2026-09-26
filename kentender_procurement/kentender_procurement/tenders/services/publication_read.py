@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""TPR-CHG-001 v0.8 §7.1 `GetTenderPublication` projections used by
+"""TPR-CHG-001 v0.12 §7.1 `GetTenderPublication` projections used by
 `GetTender` (Phase 5 fills the publication commands; the read shape is
 declared here so the record read is complete from Phase 4). Reads create
 nothing and never claim a channel is confirmed without its record."""
@@ -42,7 +42,7 @@ def publication_summary(root, *, actor: str, roles: dict[str, bool]) -> dict[str
 	if not root.publication or not frappe.db.exists("Tender Publication", root.publication):
 		return None
 	pub = frappe.get_doc("Tender Publication", root.publication)
-	channels = confirmation_rows(subject_type="Publication", subject_id=pub.name)
+	channels = confirmation_rows(subject_type="Tender package", subject_id=pub.name)
 	confirmed = [c for c in channels if c["status"] == "Confirmed"]
 	import json
 
@@ -61,35 +61,40 @@ def publication_summary(root, *, actor: str, roles: dict[str, bool]) -> dict[str
 def open_period_summary(root, *, actor: str, roles: dict[str, bool]) -> dict[str, Any] | None:
 	if not root.publication:
 		return None
-	addenda = frappe.get_all("Tender Addendum", filters={"tender": root.name}, fields=["name", "addendum_number", "addendum_reference", "status", "change_class", "affected_area", "affected_reference", "previous_value", "revised_value", "reason", "materiality_statement", "deadline_extension_required", "revised_submission_deadline", "issued_by", "issued_at", "effective_at", "drafted_by", "drafted_at", "record_version"], order_by="addendum_number asc", limit_page_length=0)
+	# Returned and Discarded rows are history, not current addenda (plan W5).
+	addenda = frappe.get_all("Tender Addendum", filters={"tender": root.name, "status": ("not in", ("Returned", "Discarded"))}, fields=["name", "addendum_number", "addendum_reference", "status", "change_class", "affected_area", "affected_reference", "affected_reference_key", "previous_value", "revised_value", "reason", "materiality_statement", "deadline_extension_required", "revised_submission_deadline", "issue_decided_by", "issue_decided_at", "issued_at", "drafted_by", "drafted_at", "cancellation_review_status", "record_version"], order_by="addendum_number asc", limit_page_length=0)
 	for row in addenda:
+		row["issue_decided_at_label"] = serializer.fmt_datetime_short(row["issue_decided_at"]) if row["issue_decided_at"] else ""
 		row["issued_at_label"] = serializer.fmt_datetime_short(row["issued_at"]) if row["issued_at"] else ""
-		row["effective_at_label"] = serializer.fmt_datetime_short(row["effective_at"]) if row["effective_at"] else ""
 		row["revised_submission_deadline_label"] = serializer.fmt_datetime_short(row["revised_submission_deadline"]) if row["revised_submission_deadline"] else ""
-		row["issued_by_name"] = _full_name(row["issued_by"])
+		row["issue_decided_by_name"] = _full_name(row["issue_decided_by"])
 		row["change_summary"] = _change_summary(row)
 		row["channels"] = confirmation_rows(subject_type="Addendum", subject_id=row["name"]) if row["status"] in ("Awaiting publication confirmation", "Issued") else []
-	inquiries = frappe.get_all("Tender Addendum Inquiry", filters={"tender": root.name}, fields=["name", "addendum", "question", "received_at", "status", "response", "affects_requirements", "responded_by", "responded_at", "broadcast_status", "record_version"], order_by="received_at asc", limit_page_length=0)
-	for row in inquiries:
+	from kentender_procurement.tenders.services import candidate_notices
+
+	clarifications = frappe.get_all("Tender Clarification", filters={"tender": root.name}, fields=["name", "related_addendum", "question", "received_at", "status", "response", "response_audience", "affects_published_tender", "required_addendum", "responded_by", "responded_at", "record_version"], order_by="received_at asc", limit_page_length=0)
+	for row in clarifications:
 		row["received_at_label"] = serializer.fmt_datetime_short(row["received_at"]) if row["received_at"] else ""
 		row["responded_at_label"] = serializer.fmt_datetime_short(row["responded_at"]) if row["responded_at"] else ""
-		row["addendum_reference"] = cstr(frappe.db.get_value("Tender Addendum", row["addendum"], "addendum_reference")) if row["addendum"] else ""
-		row["candidate_label"] = "Verified supplier account"
-		row["response_status"] = "Answered" if row["status"] == "Answered" else ("Late" if row["status"] == "Late" else "Awaiting response")
+		row["related_notice"] = cstr(frappe.db.get_value("Tender Addendum", row["related_addendum"], "addendum_reference")) if row["related_addendum"] else "None"
+		row["candidate_label"] = "Registered Tender candidate"
+		row["response_status"] = row["status"]
+		row["candidate_notice"] = candidate_notices.delivery_summary(row["name"], notice_type="Clarification response")["label"] if row["status"] == "Answered" else ""
 	cancellation = None
 	if root.cancellation and frappe.db.exists("Tender Cancellation", root.cancellation):
 		doc = frappe.get_doc("Tender Cancellation", root.cancellation)
 		cancellation = {
 			"name": doc.name, "ground": cstr(doc.ground), "ground_label": cstr(doc.ground_label), "reason": cstr(doc.reason), "decided_by_name": _full_name(doc.decided_by), "decided_at_label": serializer.fmt_datetime_short(doc.decided_at) if doc.decided_at else "",
 			"ppra_report_due_by": serializer.fmt_date_short(doc.ppra_report_due_by), "candidate_notice_due_by": serializer.fmt_date_short(doc.candidate_notice_due_by),
+			"ppra_report_status": cstr(doc.ppra_report_status), "candidate_notice_status": cstr(doc.candidate_notice_status), "notice_publication_status": cstr(doc.notice_publication_status),
 			"recommendation": _recommendation(doc), "obligations": [{"obligation_id": o.obligation_id, "obligation_type": o.obligation_type, "channel": cstr(o.channel), "label": o.label, "due_by": serializer.fmt_date_short(o.due_by), "status": o.status, "evidence_reference": cstr(o.evidence_reference), "recorded_by_name": _full_name(o.recorded_by), "recorded_at_label": serializer.fmt_datetime_short(o.recorded_at) if o.recorded_at else ""} for o in doc.obligations],
 			"cancellation_digest": cstr(doc.cancellation_digest), "notice_document_digest": cstr(doc.notice_document_digest), "record_version": int(doc.record_version or 0),
 		}
 	effective_addenda = [a for a in addenda if a["status"] == "Issued"]
 	return {
 		"addenda": addenda, "effective_addenda_count": len(effective_addenda), "current_addendum": effective_addenda[-1] if effective_addenda else None,
-		"inquiries": inquiries, "cancellation": cancellation,
-		"empty_addenda_text": "No addenda have been issued." if not effective_addenda else "", "empty_inquiries_text": "No addendum inquiries have been received." if not inquiries else "",
+		"clarifications": clarifications, "cancellation": cancellation,
+		"empty_addenda_text": "No addenda have been issued." if not effective_addenda else "", "empty_clarifications_text": "No supplier clarifications have been received." if not clarifications else "",
 	}
 
 

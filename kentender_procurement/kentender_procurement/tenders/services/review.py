@@ -1,12 +1,12 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""TPR-CHG-001 v0.8 §5.4 — the review result (plan D17): a deterministic
+"""TPR-CHG-001 v0.12 §5.4 — the review result (plan D17): a deterministic
 projection, not a workflow state. A Draft may be incomplete; submission,
 approval and publication authorisation may not. Findings are **Must fix**
 (prevents the decision and links to the exact task/field/owner route) or
 **Review note** (visible through every later decision, never dismissed).
-The result verifies the source handoff, template release, the eight
+The result verifies the source handoff, template release, the nine
 compatibility checks, officer fields, dates, inherited completeness,
 grouping lineage, schedules, response schema, evaluation/contract
 mappings, file treatments, security/contract values, both renders and the
@@ -21,6 +21,7 @@ from frappe.utils import cstr, get_datetime, getdate
 
 from kentender_procurement.tenders.services import compatibility, controls, digest, evidence, handoff_gateway, render_service, serializer, template_binding
 from kentender_procurement.tenders.services import snapshot as snap
+from kentender_procurement.tenders.services.errors import TendersError
 
 MUST_FIX = "Must fix"
 REVIEW_NOTE = "Review note"
@@ -36,6 +37,7 @@ FINDING_CODES: frozenset[str] = frozenset(
 	}
 )
 MANUFACTURER_NOTE = "Confirm that manufacturer authorisation is proportionate for this purchase."
+MAPPING_MESSAGE = "A published requirement is not fully connected to its supplier response and downstream treatment."
 TASK_ROUTE_LABELS = {controls.TASK_DETAILS: "Review Tender details", controls.TASK_REQUIREMENTS: "Review supplier requirements", "contract": "Review contract terms", controls.TASK_REVIEW: "Review and generated documents"}
 
 
@@ -61,12 +63,12 @@ def _missing_message(field: str, label: str) -> str:
 _mapping_projection = None
 
 
-def _mappings(state: dict[str, Any], snapshot: dict[str, Any], evidence_rows: list[dict[str, Any]]) -> dict[str, set[str]]:
-	projection = {
-		"supplier response": {r["technical_requirement_id"] for r in serializer.supplier_response_schema(snapshot, evidence_rows)["technical"]},
-		"evaluation": {r["technical_requirement_id"] for r in serializer.evaluation_contract(state, snapshot, evidence_rows)["technical_pass_fail"]},
-		"contract": {r["technical_requirement_id"] for r in serializer.contract_obligations(state, snapshot)["technical"]},
-	}
+def _mappings(tender, version) -> dict[str, set[str]]:
+	"""§5.8(6) from the compiled Published Bid Definition (plan D25). A compile
+	failure is itself the finding (raised as a TendersError)."""
+	from kentender_procurement.tenders.services import bid_definition
+
+	projection = bid_definition.technical_mapping_sets(bid_definition.compile_version(tender, version))
 	if _mapping_projection:
 		projection = _mapping_projection(projection)
 	return projection
@@ -99,10 +101,10 @@ def run(tender, version, *, approval: dict[str, str] | None = None, with_renders
 	problems = template_binding.verify(version)
 	for problem in problems:
 		findings.append(_finding("TEMPLATE_UNAVAILABLE", problem, task=controls.TASK_DETAILS))
-	bound_categories = template_binding.bound_categories(version) if not problems else ()
+	bound_support = template_binding.bound_support(version) if not problems else ()
 
-	# 3. the eight compatibility checks
-	for check in compatibility.evaluate(snapshot, bound_categories):
+	# 3. the nine compatibility checks (TPR-CHG-001 v0.12 §5.3)
+	for check in compatibility.evaluate(snapshot, bound_support):
 		if not check.ok:
 			findings.append(_finding("COMPATIBILITY_FAILED", f"{check.check}: required {check.required}; found {check.actual}.", task=controls.TASK_DETAILS))
 
@@ -138,11 +140,19 @@ def run(tender, version, *, approval: dict[str, str] | None = None, with_renders
 	if len(serializer.price_schedule(snapshot)["rows"]) != len(lines) + len(snapshot.get("related_services") or []):
 		findings.append(_finding("SCHEDULE_MISMATCH", "The price schedule does not reconcile to the goods and services schedules.", task=controls.TASK_REVIEW))
 
-	# 8. every published technical requirement has one response, evaluation and contract mapping
+	# 8. every published technical requirement has one response, evaluation and
+	# contract mapping in the compiled definition (only once the Version is
+	# complete enough to compile; the missing values are findings already)
 	published = {r.get("technical_requirement_id") for r in snapshot.get("technical_requirements") or []}
-	for kind, ids in _mappings(state, snapshot, evidence_rows).items():
-		for missing_id in sorted(published - ids):
-			findings.append(_finding("MAPPING_INCOMPLETE", f"{missing_id} has no {kind} mapping.", task=controls.TASK_REVIEW, field=missing_id))
+	if not [f for f in findings if f["finding_code"] in ("CONTROL_MISSING", "HANDOFF_INVALID", "TEMPLATE_UNAVAILABLE", "COMPATIBILITY_FAILED", "DATE_ORDER")]:
+		try:
+			mapped = _mappings(tender, version)
+		except TendersError as exc:
+			findings.append(_finding("MAPPING_INCOMPLETE", f"{MAPPING_MESSAGE} {(exc.detail or {}).get('reason') or ''}".strip(), task=controls.TASK_REVIEW))
+		else:
+			for kind, ids in mapped.items():
+				for missing_id in sorted(published - ids):
+					findings.append(_finding("MAPPING_INCOMPLETE", f"{missing_id} has no {kind} mapping.", task=controls.TASK_REVIEW, field=missing_id))
 
 	# 9. evidence rows prove a published requirement
 	for row_id in evidence.unlinked_rows(evidence_rows, snapshot):
@@ -206,11 +216,18 @@ def store(version, result: dict[str, Any]) -> None:
 		version.invitation_digest = renders["invitation_digest"]
 		version.issued_tender_digest = renders["issued_tender_digest"]
 	snapshot = snap.load(version)
-	generated = serializer.generated_digests(serializer.officer_state(version), snapshot, evidence.rows_as_dicts(version))
-	version.response_schema_digest = generated["response_schema_digest"]
-	version.evaluation_contract_digest = generated["evaluation_contract_digest"]
-	version.contract_projection_digest = generated["contract_projection_digest"]
 	tender = frappe.get_doc("Tender", version.tender)
+	components = {"response_schema_digest": "", "evaluation_contract_digest": "", "contract_projection_digest": ""}
+	if not result["must_fix_count"]:
+		from kentender_procurement.tenders.services import bid_definition
+
+		try:
+			components = bid_definition.component_digests(tender, version)
+		except TendersError:
+			pass
+	version.response_schema_digest = components["response_schema_digest"]
+	version.evaluation_contract_digest = components["evaluation_contract_digest"]
+	version.contract_projection_digest = components["contract_projection_digest"]
 	version.package_digest = serializer.package_digest(tender, version, snapshot, renders=renders)
 
 

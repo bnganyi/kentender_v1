@@ -4,6 +4,7 @@
 // when nothing is supplied (§2.9.3 rule 8).
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
+import GuidanceRegion from "./GuidanceRegion.vue";
 import JourneyTracker from "./JourneyTracker.vue";
 import NextStep from "./NextStep.vue";
 
@@ -48,20 +49,33 @@ const OVER = {
 describe("JourneyTracker", () => {
 	it("draws one row with a marker per stage and names only the current stage's holder", () => {
 		const w = mount(JourneyTracker, { props: { journey: journey({ current: 0, blocked: true, holder: "Mercy Kilonzo" }) } });
-		const stages = w.findAll(".kt-journey-stage");
+		const stages = w.findAll("ol.kt-journey > .kt-journey-stage");
 		expect(stages).toHaveLength(7);
 		expect(stages[0].classes()).toContain("is-blocked");
-		expect(stages[0].text()).toBe("PreparationBlocked · Mercy Kilonzo");
-		expect(stages[1].text()).toBe("Funding confirmationNot started");
-		expect(w.findAll(".kt-journey-holder")).toHaveLength(1);
-		expect(w.get("[data-kt=journey]").attributes("aria-label")).toBe("Journey");
+		// design-system handoff §3: bar, numbered label, state line
+		expect(stages[0].find(".kt-journey-bar").exists()).toBe(true);
+		expect(stages[0].get(".kt-journey-num").text()).toBe("1");
+		expect(stages[0].get(".kt-journey-state").text()).toBe("Blocked · Mercy Kilonzo");
+		expect(stages[1].get(".kt-journey-state").text()).toBe("Not started");
+		expect(w.findAll(".kt-journey-state").filter((s) => s.text().includes("Mercy Kilonzo"))).toHaveLength(1);
+		expect(w.get("ol.kt-journey").attributes("aria-label")).toBe("Journey");
+		expect(stages[0].attributes("aria-current")).toBe("step");
 	});
 
 	it("draws the reduced one-line form when asked", () => {
 		const w = mount(JourneyTracker, { props: { journey: journey({ current: 5, holder: "Amina Hassan", reduced: true }) } });
-		expect(w.get("p.kt-journey.is-reduced").text()).toBe("Stage 6 of 7: Publication — Amina Hassan");
+		expect(w.get(".kt-journey.is-reduced").text()).toBe("Stage 6 of 7: Publication — Amina Hassan");
 		expect(w.get(".kt-journey-current").text()).toBe("Publication");
+		expect(w.findAll(".kt-journey-bars > span")).toHaveLength(7);
 		expect(w.find(".kt-journey-stage").exists()).toBe(false);
+	});
+
+	it("marks done stages with a check and keeps a compact copy for narrow hosts", () => {
+		const w = mount(JourneyTracker, { props: { journey: journey({ current: 2, holder: "Josphat Mwangi" }) } });
+		expect(w.findAll("ol.kt-journey .kt-journey-state")[0].text()).toBe("✓ Done");
+		// the one-line copy the container query shows under 600px
+		expect(w.get(".kt-journey-compact .kt-journey-reduced-text").text()).toBe("Stage 3 of 7: Signature — Josphat Mwangi");
+		expect(w.findAll(".kt-journey.is-reduced")).toHaveLength(0);
 	});
 
 	it("emits the upstream link instead of navigating itself", async () => {
@@ -78,13 +92,29 @@ describe("JourneyTracker", () => {
 
 describe("NextStep", () => {
 	it("draws Your turn, Waiting and Done as one line in the header placement only", () => {
-		const waiting = { kind: "waiting", label: "Waiting", headline: "Waiting for Amina Hassan (Accounting Officer) to adopt or return the plan", since: { at: "x", display: "7 Dec 2026, 10:00 EAT" }, blockers: [] };
+		const waiting = { kind: "waiting", label: "Waiting on someone", headline: "Waiting for Amina Hassan (Accounting Officer) to adopt or return the plan", since: { at: "x", display: "7 Dec 2026, 10:00 EAT" }, blockers: [] };
 		const head = mount(NextStep, { props: { answer: waiting, placement: "head" } });
-		expect(head.get("p.kt-next-step").text()).toBe("Waiting Waiting for Amina Hassan (Accounting Officer) to adopt or return the plan since 7 Dec 2026, 10:00 EAT");
+		const line = head.get("div.kt-next-step.is-waiting");
+		expect(line.get(".kt-next-step-label").text()).toBe("Waiting on someone");
+		expect(line.get(".kt-next-step-headline").text()).toBe("Waiting for Amina Hassan (Accounting Officer) to adopt or return the plan since 7 Dec 2026, 10:00 EAT");
 		expect(mount(NextStep, { props: { answer: waiting, placement: "body" } }).find("[data-kt=next-step]").exists()).toBe(false);
 		const done = mount(NextStep, { props: { answer: { kind: "done", label: "Done", headline: "Accepted by Mercy Kilonzo on 29 Nov 2026, 15:00 EAT", blockers: [] } } });
-		expect(done.get("p.kt-next-step").text()).toBe("Done Accepted by Mercy Kilonzo on 29 Nov 2026, 15:00 EAT");
+		expect(done.get("div.kt-next-step.is-done .kt-next-step-headline").text()).toBe("Accepted by Mercy Kilonzo on 29 Nov 2026, 15:00 EAT");
 		expect(done.find(".kt-next-step-since").exists()).toBe(false);
+	});
+
+	it("draws Your turn with its accent rule and one optional sentence", () => {
+		const turn = { kind: "your_turn", label: "Your turn", headline: "Prepare an addendum or recommend cancellation if the open Tender needs it.", sentence: "These are available options, not overdue work.", blockers: [], fixes: [] };
+		const w = mount(NextStep, { props: { answer: turn, placement: "region" } });
+		expect(w.get("div.kt-next-step.is-turn .kt-next-step-sentence").text()).toBe("These are available options, not overdue work.");
+		expect(w.find("button").exists()).toBe(false);
+	});
+
+	it("never repeats a since fact the headline already states", () => {
+		const waiting = { kind: "waiting", label: "Waiting on someone", headline: "Grace Wanjiku, Departmental Author, is correcting the requisition since 21 Apr 2027, 09:00 EAT.", since: { at: "x", display: "21 Apr 2027, 09:00 EAT" }, blockers: [] };
+		const w = mount(NextStep, { props: { answer: waiting, placement: "region" } });
+		expect(w.find(".kt-next-step-since").exists()).toBe(false);
+		expect(w.get(".kt-next-step-headline").text()).toBe("Grace Wanjiku, Departmental Author, is correcting the requisition since 21 Apr 2027, 09:00 EAT.");
 	});
 
 	it("draws the blocked kind as the one container, in the body placement, with one control per fix", async () => {
@@ -173,5 +203,18 @@ describe("NextStep", () => {
 	it("draws nothing for Not involved or an absent answer", () => {
 		expect(mount(NextStep, { props: { answer: { kind: "not_involved", label: "", headline: "", blockers: [] } } }).find("[data-kt]").exists()).toBe(false);
 		expect(mount(NextStep, { props: { answer: null } }).find("[data-kt]").exists()).toBe(false);
+	});
+});
+
+describe("GuidanceRegion", () => {
+	it("draws the tracker above the next step in one region, and the blocked kind in the same region", () => {
+		const w = mount(GuidanceRegion, { props: { journey: journey({ current: 1, holder: "Charles Mutiso" }), answer: OVER, label: "Tender journey" } });
+		const region = w.get("section.kt-guidance");
+		expect(region.get("ol.kt-journey").attributes("aria-label")).toBe("Tender journey");
+		expect(region.get("[data-kt=next-step]").classes()).toContain("kt-notice");
+	});
+
+	it("draws nothing for a Not involved reader with no tracker", () => {
+		expect(mount(GuidanceRegion, { props: { journey: null, answer: { kind: "not_involved", label: "", headline: "" } } }).html()).toBe("<!--v-if-->");
 	});
 });

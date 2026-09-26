@@ -1,7 +1,7 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""TPR-CHG-001 v0.8 — Tenders API surface (§7.1 reads, §7.2–7.4 commands).
+"""TPR-CHG-001 v0.12 — Tenders API surface (§7.1 reads, §7.2–7.4 commands).
 
 Every endpoint keeps an explicit signature: the framework passes the whole
 `form_dict` (including `cmd`/`csrf_token`) into a whitelisted method that
@@ -18,7 +18,7 @@ from typing import Any
 
 import frappe
 
-from kentender_procurement.tenders.services import addenda, cancellation, correction, documents, draft_commands as cmd, history, inquiries, lifecycle, open_period_read, publication, read, submission_close
+from kentender_procurement.tenders.services import addenda, cancellation, candidate_gateway, candidate_notices, clarifications, correction, documents, draft_commands as cmd, history, lifecycle, open_period_read, publication, read, submission_close
 
 
 def _parse_json(value, default):
@@ -190,8 +190,8 @@ def get_tender_addendum(tender: str, addendum: str = "") -> dict[str, Any]:
 
 
 @frappe.whitelist()
-def get_addendum_inquiry(tender: str, inquiry: str) -> dict[str, Any]:
-	return _masked_read(open_period_read.get_addendum_inquiry, dict(tender=tender, inquiry=inquiry))
+def get_tender_clarification(tender: str, clarification: str) -> dict[str, Any]:
+	return _masked_read(open_period_read.get_tender_clarification, dict(tender=tender, clarification=clarification))
 
 
 @frappe.whitelist()
@@ -238,13 +238,43 @@ def confirm_addendum_publication_channel(tender: str, addendum: str, channel: st
 
 
 @frappe.whitelist()
-def receive_addendum_inquiry(tender: str, addendum: str, candidate_identity: str, question: str, received_at: str, inbound_event_id: str) -> dict[str, Any]:
-	return inquiries.receive_addendum_inquiry(tender=tender, addendum=addendum, candidate_identity=candidate_identity, question=question, received_at=received_at, inbound_event_id=inbound_event_id)
+def discard_addendum_draft(tender: str, addendum: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return addenda.discard_addendum_draft(tender=tender, addendum=addendum, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
 
 
 @frappe.whitelist()
-def respond_to_addendum_inquiry(tender: str, inquiry: str, response: str, affects_requirements, expected_record_version, idempotency_key: str) -> dict[str, Any]:
-	return inquiries.respond_to_addendum_inquiry(tender=tender, inquiry=inquiry, response=response, affects_requirements=affects_requirements, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+def request_tender_cancellation_review(tender: str, addendum: str, reason: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return addenda.request_tender_cancellation_review(tender=tender, addendum=addendum, reason=reason, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def close_tender_cancellation_review(tender: str, addendum: str, reason: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return addenda.close_tender_cancellation_review(tender=tender, addendum=addendum, reason=reason, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def receive_tender_clarification(tender: str, candidate_registration_id: str, question: str, inbound_event_id: str, received_at: str = "", related_addendum: str = "") -> dict[str, Any]:
+	"""Bid Submission owner event (service identity only)."""
+	return clarifications.receive_tender_clarification(tender=tender, candidate_registration_id=candidate_registration_id, question=question, inbound_event_id=inbound_event_id, received_at=received_at or None, related_addendum=related_addendum)
+
+
+@frappe.whitelist()
+def respond_to_tender_clarification(tender: str, clarification: str, response: str, affects_published_tender, expected_record_version, idempotency_key: str, response_audience: str = "", required_addendum: str = "") -> dict[str, Any]:
+	return clarifications.respond_to_tender_clarification(
+		tender=tender, clarification=clarification, response=response, affects_published_tender=affects_published_tender, response_audience=response_audience,
+		required_addendum=required_addendum, expected_record_version=expected_record_version, idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist()
+def retry_failed_candidate_notice(tender: str, notice: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return candidate_notices.retry_failed_candidate_notice(tender=tender, notice=notice, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
+def register_tender_candidate(tender: str, bidder_arrangement_id: str, candidate_name: str, notice_address: str, registered_at: str = "") -> dict[str, Any]:
+	"""Plan W2 stand-in for Bid Submission's Start bid (service identity only)."""
+	return candidate_gateway.register_stand_in_candidate(tender=tender, bidder_arrangement_id=bidder_arrangement_id, candidate_name=candidate_name, notice_address=notice_address, registered_at=registered_at or None)
 
 
 @frappe.whitelist()

@@ -31,11 +31,13 @@ KIND_NOT_INVOLVED = "not_involved"
 PRECEDENCE = (KIND_YOUR_TURN, KIND_BLOCKED, KIND_WAITING, KIND_DONE, KIND_NOT_INVOLVED)
 TURN_KINDS = frozenset({KIND_YOUR_TURN, KIND_BLOCKED})
 
-# §2.9.1 — the words the boards draw before each headline.
+# §2.9.1 — the words the boards draw before each headline ("Waiting on
+# someone" is KT-STD-001 v1.8 §2.9.1's own name for the kind; TPR-CHG-001
+# v0.12 plan OD-1 made the shared component say it for every module).
 KIND_LABELS = {
 	KIND_YOUR_TURN: "Your turn",
 	KIND_BLOCKED: "Your turn, blocked",
-	KIND_WAITING: "Waiting",
+	KIND_WAITING: "Waiting on someone",
 	KIND_DONE: "Done",
 	KIND_NOT_INVOLVED: "",
 }
@@ -50,6 +52,13 @@ FIX_ROUTE = "route"
 FIX_FOCUS = "focus"
 FIX_TEXT = "text"
 FIX_KINDS = frozenset({FIX_COMMAND, FIX_ROUTE, FIX_FOCUS, FIX_TEXT})
+
+# The one-line reduced tracker (§2.9.2 rule 5). Each module's approved
+# change unit fixes its own wording: Planning (PLN-CHG-001 v1.27) reads
+# "Stage {n} of {N}: {label} — {holder}"; Tenders (TPR-CHG-001 v0.12 §10.17)
+# reads "{label} · {n} of {N} · {holder}".
+REDUCED_STAGE_OF = "stage_of"
+REDUCED_POSITION = "position"
 
 MARKER_DONE = "done"
 MARKER_CURRENT = "current"
@@ -329,6 +338,7 @@ def journey(
 	reduced: bool = False,
 	upstream: dict[str, Any] | None = None,
 	downstream: dict[str, Any] | None = None,
+	reduced_style: str = REDUCED_STAGE_OF,
 ) -> dict[str, Any]:
 	"""One row of a record's own formal stages with one marker each.
 
@@ -366,15 +376,24 @@ def journey(
 	if current_row:
 		# The reduced line styles the stage label on its own, so its parts are
 		# sent too; the client joins them and never composes the wording.
-		reduced_parts = {
-			"prefix": f"Stage {index + 1} of {len(rows)}: ",
-			"label": current_row["label"],
-			"suffix": f" — {current_row['holder']}" if current_row["holder"] else "",
-		}
+		if reduced_style == REDUCED_POSITION:
+			qualifier = " (blocked)" if current_row["marker"] == MARKER_BLOCKED else (" (done)" if current_row["marker"] == MARKER_DONE else "")
+			reduced_parts = {
+				"prefix": "",
+				"label": current_row["label"] + qualifier,
+				"suffix": f" · {index + 1} of {len(rows)}" + (f" · {current_row['holder']}" if current_row["holder"] else ""),
+			}
+		else:
+			reduced_parts = {
+				"prefix": f"Stage {index + 1} of {len(rows)}: ",
+				"label": current_row["label"],
+				"suffix": f" — {current_row['holder']}" if current_row["holder"] else "",
+			}
 		reduced_text = reduced_parts["prefix"] + reduced_parts["label"] + reduced_parts["suffix"]
 	return {
 		"stages": rows,
 		"current": current_row["code"] if current_row else "",
+		"reduced_style": reduced_style,
 		"reduced": bool(reduced),
 		"reduced_text": reduced_text,
 		"reduced_parts": reduced_parts,

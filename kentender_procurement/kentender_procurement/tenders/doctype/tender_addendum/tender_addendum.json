@@ -34,9 +34,19 @@
   "returned_at",
   "return_reason",
   "col_b",
-  "issued_by",
+  "issue_decided_by",
+  "issue_decided_at",
   "issued_at",
-  "effective_at",
+  "successor_bid_definition",
+  "successor_bid_definition_id",
+  "successor_definition_version",
+  "successor_definition_digest",
+  "predecessor_addendum",
+  "cancellation_review_status",
+  "cancellation_review_reason",
+  "cancellation_review_closed_reason",
+  "discarded_by",
+  "discarded_at",
   "record_version",
   "fixture_namespace"
  ],
@@ -73,7 +83,7 @@
   {
    "fieldname": "status",
    "fieldtype": "Select",
-   "options": "Draft\nReturned\nAwaiting issue\nAwaiting publication confirmation\nIssued",
+   "options": "Draft\nReturned\nAwaiting issue\nAwaiting publication confirmation\nIssued\nDiscarded",
    "label": "Status",
    "read_only": 1,
    "in_list_view": 1
@@ -214,22 +224,86 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "issued_by",
+   "fieldname": "issue_decided_by",
    "fieldtype": "Link",
    "options": "User",
-   "label": "Issued by",
+   "label": "Issue decided by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "issue_decided_at",
+   "fieldtype": "Datetime",
+   "label": "Issue decided at",
    "read_only": 1
   },
   {
    "fieldname": "issued_at",
    "fieldtype": "Datetime",
-   "label": "Issued at",
+   "label": "Issued (effective) at",
    "read_only": 1
   },
   {
-   "fieldname": "effective_at",
+   "fieldname": "successor_bid_definition",
+   "fieldtype": "Link",
+   "label": "Successor definition record",
+   "read_only": 1,
+   "options": "Tender Bid Definition"
+  },
+  {
+   "fieldname": "successor_bid_definition_id",
+   "fieldtype": "Data",
+   "label": "Successor definition",
+   "read_only": 1
+  },
+  {
+   "fieldname": "successor_definition_version",
+   "fieldtype": "Int",
+   "label": "Successor definition version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "successor_definition_digest",
+   "fieldtype": "Data",
+   "label": "Successor definition digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "predecessor_addendum",
+   "fieldtype": "Link",
+   "label": "Predecessor addendum",
+   "read_only": 1,
+   "options": "Tender Addendum"
+  },
+  {
+   "fieldname": "cancellation_review_status",
+   "fieldtype": "Select",
+   "label": "Cancellation review",
+   "read_only": 1,
+   "options": "\nRequested\nClosed"
+  },
+  {
+   "fieldname": "cancellation_review_reason",
+   "fieldtype": "Small Text",
+   "label": "Cancellation review request reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancellation_review_closed_reason",
+   "fieldtype": "Small Text",
+   "label": "Cancellation review closed reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "discarded_by",
+   "fieldtype": "Link",
+   "label": "Discarded by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "discarded_at",
    "fieldtype": "Datetime",
-   "label": "Effective at",
+   "label": "Discarded at",
    "read_only": 1
   },
   {
@@ -248,7 +322,7 @@
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-19 00:00:00.000000",
+ "modified": "2026-09-26 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Tenders",
  "name": "Tender Addendum",

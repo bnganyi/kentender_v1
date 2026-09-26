@@ -1,11 +1,11 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""Stable Tenders service errors (TPR-CHG-001 v0.8 §8).
+"""Stable Tenders service errors (TPR-CHG-001 v0.12 §8).
 
-§8 defines a closed set of twenty-eight codes; TPR-CHG-001 v0.11 §8 adds
-the two bound-release codes (`TND_TEMPLATE_RELEASE_WITHDRAWN`,
-`TND_TEMPLATE_RELEASE_INTEGRITY_FAILED`), thirty in all. They are stable service
+§8 defines a closed set of thirty-five codes: v0.8's twenty-eight less the
+retired inquiry-deadline code, the two v0.11 bound-release codes, and the six
+v0.10/v0.12 reservation, clarification and candidate-notice codes. They are stable service
 results; `fail()` refuses any code outside the contract — an invented code is
 a defect in the caller, not a new error type. Record-existence masking follows
 AUTH-ADR-001: a record outside the actor's authorised responsibility is
@@ -24,6 +24,8 @@ ERROR_CODES: frozenset[str] = frozenset(
 		"TND_HANDOFF_INVALID",
 		"TND_HANDOFF_CONFLICT",
 		"TND_PRODUCT_UNSUPPORTED",
+		"TND_RESERVATION_UNSUPPORTED",
+		"TND_RESERVATION_RULE_UNAVAILABLE",
 		"TND_TEMPLATE_UNAVAILABLE",
 		"TND_TEMPLATE_RELEASE_WITHDRAWN",
 		"TND_TEMPLATE_RELEASE_INTEGRITY_FAILED",
@@ -45,7 +47,10 @@ ERROR_CODES: frozenset[str] = frozenset(
 		"TND_ADDENDUM_STALE",
 		"TND_ADDENDUM_MATERIAL",
 		"TND_ADDENDUM_DEADLINE_REQUIRED",
-		"TND_INQUIRY_LATE",
+		"TND_CLARIFICATION_LATE",
+		"TND_CLARIFICATION_CANDIDATE_REQUIRED",
+		"TND_CLARIFICATION_ADDENDUM_REQUIRED",
+		"TND_NOTICE_DELIVERY_FAILED",
 		"TND_CANCELLATION_GROUND_INVALID",
 		"TND_CANCELLED",
 		"TND_IDEMPOTENCY_CONFLICT",
@@ -58,12 +63,14 @@ MESSAGES: dict[str, str] = {
 	"TND_HANDOFF_INVALID": "The authorised requisition is no longer available to start this Tender.",
 	"TND_HANDOFF_CONFLICT": "A Tender has already been started for this requisition.",
 	"TND_PRODUCT_UNSUPPORTED": "This requisition is not supported by the current IT-equipment Tender format.",
-	"TND_TEMPLATE_UNAVAILABLE": "The standard IT-equipment Tender format is not available.",
+	"TND_RESERVATION_UNSUPPORTED": "This reservation treatment is not supported by the installed Tender format.",
+	"TND_RESERVATION_RULE_UNAVAILABLE": "The applicable reservation rule is not ready for this Tender.",
+	"TND_TEMPLATE_UNAVAILABLE": "The IT-equipment Tender format is not available.",
 	"TND_TEMPLATE_RELEASE_WITHDRAWN": "This Tender cannot continue because its Tender format was withdrawn.",
 	"TND_TEMPLATE_RELEASE_INTEGRITY_FAILED": "The Tender format bound to this Tender could not be verified.",
 	"TND_CONTROL_INVALID": "Check the highlighted value.",
 	"TND_INHERITED_EDIT": "Authorised requisition information cannot be changed here.",
-	"TND_MAPPING_INCOMPLETE": "A published requirement is not fully connected to supplier response, evaluation and contract records.",
+	"TND_MAPPING_INCOMPLETE": "A published requirement is not fully connected to its supplier response and downstream treatment.",
 	"TND_FILE_INVALID": "A supporting file could not be verified.",
 	"TND_MUST_FIX": "Fix the listed items before continuing.",
 	"TND_STALE_VERSION": "Another user changed this Tender. Reload before continuing.",
@@ -79,7 +86,10 @@ MESSAGES: dict[str, str] = {
 	"TND_ADDENDUM_STALE": "The published wording has changed. Reload before preparing this addendum.",
 	"TND_ADDENDUM_MATERIAL": "This change is too significant for an addendum. Cancel and start a newly governed Tender if procurement must continue.",
 	"TND_ADDENDUM_DEADLINE_REQUIRED": "Set a lawful revised submission deadline for this addendum.",
-	"TND_INQUIRY_LATE": "The inquiry deadline has passed.",
+	"TND_CLARIFICATION_LATE": "The clarification deadline has passed.",
+	"TND_CLARIFICATION_CANDIDATE_REQUIRED": "Start a bid before asking a question about this Tender.",
+	"TND_CLARIFICATION_ADDENDUM_REQUIRED": "This answer would change the published Tender. Issue an addendum before sending it.",
+	"TND_NOTICE_DELIVERY_FAILED": "A candidate notice could not be delivered.",
 	"TND_CANCELLATION_GROUND_INVALID": "Select an applicable cancellation ground.",
 	"TND_CANCELLED": "This Tender has been cancelled and cannot accept further work.",
 	"TND_IDEMPOTENCY_CONFLICT": "This request was already used with different information. Stop and refresh.",
@@ -107,7 +117,7 @@ class TendersError(frappe.ValidationError):
 def fail(code: str, message: str = "", detail: dict | None = None) -> None:
 	if code not in ERROR_CODES:
 		raise ValueError(
-			f"{code!r} is not part of the TPR-CHG-001 v0.8 §8 error contract. "
+			f"{code!r} is not part of the TPR-CHG-001 v0.12 §8 error contract. "
 			f"Map the condition onto one of: {', '.join(sorted(ERROR_CODES))}."
 		)
 	raise TendersError(code, message or MESSAGES[code], detail)

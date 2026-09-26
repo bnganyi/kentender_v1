@@ -73,29 +73,32 @@ class TestFrameworkHooks(TendersAuthorizationCase):
 		alpha, beta = pln_fx.OU_ALPHA, pln_fx.OU_BETA
 		mine = self._tender(lead_unit=alpha)
 		theirs = self._tender(lead_unit=beta)
+		# only this test's two Tenders (the live canonical Tender may exist too)
+		ours = {"name": ("in", (mine, theirs))}
+		our_versions = {"tender": ("in", (mine, theirs))}
 		frappe.set_user(fx.AUDITOR)
-		self.assertEqual(set(frappe.get_list("Tender", pluck="name")), {mine, theirs})
+		self.assertEqual(set(frappe.get_list("Tender", filters=ours, pluck="name")), {mine, theirs})
 		frappe.set_user(fx.OFFICER)
-		self.assertEqual(set(frappe.get_list("Tender", pluck="name")), {mine, theirs})
-		self.assertEqual(len(frappe.get_list("Tender Version", pluck="name")), 2)
+		self.assertEqual(set(frappe.get_list("Tender", filters=ours, pluck="name")), {mine, theirs})
+		self.assertEqual(len(frappe.get_list("Tender Version", filters=our_versions, pluck="name")), 2)
 		frappe.set_user(fx.DEPARTMENTAL)
-		self.assertEqual(frappe.get_list("Tender", pluck="name"), [mine])
+		self.assertEqual(frappe.get_list("Tender", filters=ours, pluck="name"), [mine])
 		self.assertTrue(frappe.has_permission("Tender", doc=mine))
 		self.assertFalse(frappe.has_permission("Tender", doc=theirs))
-		versions = frappe.get_list("Tender Version", pluck="tender")
+		versions = frappe.get_list("Tender Version", filters=our_versions, pluck="tender")
 		self.assertEqual(versions, [mine])
 		frappe.set_user(fx.NOBODY)
 		# No responsibility at all → no projected Frappe Role → the framework
 		# refuses the list outright (never an empty success), and the record
 		# check is False.
 		with self.assertRaises(frappe.PermissionError):
-			frappe.get_list("Tender", pluck="name")
+			frappe.get_list("Tender", filters=ours, pluck="name")
 		self.assertFalse(frappe.has_permission("Tender", doc=mine))
 		frappe.set_user(fx.OUTSIDER)  # a departmental reader in the other unit: only that unit's Tender
-		self.assertEqual(frappe.get_list("Tender", pluck="name"), [theirs])
+		self.assertEqual(frappe.get_list("Tender", filters=ours, pluck="name"), [theirs])
 		self.assertFalse(frappe.has_permission("Tender", doc=mine))
 		frappe.set_user("Administrator")
-		self.assertEqual(len(frappe.get_list("Tender", pluck="name")), 2)
+		self.assertEqual(len(frappe.get_list("Tender", filters=ours, pluck="name")), 2)
 
 	def test_the_installed_std_release_registry_is_not_a_tenders_list(self):
 		# STD-TPL-IMP-001 v1.0: releases are read only through STD Templates

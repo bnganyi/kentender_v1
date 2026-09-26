@@ -41,6 +41,9 @@ def binding_facts(release) -> dict[str, Any]:
 		"supported_renderer_version": release.supported_renderer_version,
 		"official_source_digest": release.official_source_digest,
 		"bundle_digest": release.bundle_digest,
+		"response_rules_digest": release.response_rules_digest,
+		"downstream_rules_digest": release.downstream_rules_digest,
+		"addendum_identity_rules_digest": release.addendum_identity_rules_digest,
 		"lifecycle_status": release.lifecycle_status,
 		"site_switch": release.site_switch,
 	}

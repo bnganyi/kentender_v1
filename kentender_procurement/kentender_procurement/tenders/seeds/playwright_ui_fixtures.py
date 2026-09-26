@@ -49,14 +49,18 @@ CHANNELS = ("STATE_PORTAL", "MINISTRY_WEBSITE", "NOTICE_BOARD", "NATIONAL_NEWSPA
 CLOCK = {
 	"start": "2027-03-20 09:00:00", "submit": "2027-03-20 11:40:00", "return": "2027-03-25 14:00:00", "resubmit": "2027-04-15 09:15:00",
 	"approve": "2027-04-20 10:00:00", "authorise": "2027-05-15 07:55:00", "confirm": "2027-05-15 08:03:00", "addendum": "2027-05-31 08:30:00",
-	"addendum_confirm": "2027-05-31 09:00:00", "inquiry": "2027-06-01 09:00:00", "respond": "2027-06-01 11:00:00", "cancel": "2027-06-10 09:30:00", "close": "2027-06-12 11:00:00",
+	"addendum_confirm": "2027-05-31 09:00:00", "candidate": "2027-05-19 09:20:00", "clarification": "2027-05-26 09:00:00", "respond": "2027-05-26 11:00:00",
+	"cancel": "2027-06-04 14:00:00", "close": "2027-06-12 11:00:00",
 }
 AVAILABLE = {"STATE_PORTAL": "2027-05-15 08:00:00", "MINISTRY_WEBSITE": "2027-05-15 08:00:00", "NOTICE_BOARD": "2027-05-15 08:15:00", "NATIONAL_NEWSPAPERS": "2027-05-15 08:20:00"}
 
 TENDER_DOCTYPES = (
-	"Tender Event", "Tender Document", "Tender Submission Handoff", "Tender Channel Confirmation", "Tender Addendum Inquiry", "Tender Addendum",
-	"Tender Cancellation", "Tender Publication", "Tender Decision", "Tender Task", "Tender Version", "Tender",
+	"Tender Event", "Tender Document", "Tender Submission Handoff", "Tender Channel Confirmation", "Tender Candidate Notice", "Tender Clarification",
+	"Tender Candidate Registration", "Tender Bid Definition", "Tender Addendum", "Tender Cancellation", "Tender Publication", "Tender Decision", "Tender Task",
+	"Tender Version", "Tender",
 )
+CANDIDATE = {"bidder_arrangement_id": "ARR-PW-TND-001", "candidate_name": "Afya Digital Supplies Limited", "notice_address": "tenders@afyadigital.example"}
+FAILED_CANDIDATE = {"bidder_arrangement_id": "ARR-PW-TND-009", "candidate_name": "Failed Delivery Supplies", "notice_address": "procurement@failed-delivery.example"}
 
 
 def _key() -> str:
@@ -101,13 +105,13 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 	from kentender_core.seeds import site_setup
 	from kentender_core.services.business_role_registry import ensure_roles
 	from kentender_procurement.std_templates.services import installer as std_installer
-	from kentender_procurement.tenders.services import inquiries
+	from kentender_procurement.tenders.services import candidate_gateway
 	from kentender_procurement.tenders.services.tender_roles import INQUIRY_PRODUCER_ROLE
 
 	ensure_roles()
 	for email, name in ((OFFICER, "Playwright Tenders Officer"), (AO, "Playwright Tenders AO"), (BOTH, "Playwright Tenders Both"), (PRODUCER, "Playwright Tenders Bidder Service")):
 		_user(email, name)
-	inquiries.ensure_producer_role()
+	candidate_gateway.ensure_producer_role()
 	producer = frappe.get_doc("User", PRODUCER)
 	if INQUIRY_PRODUCER_ROLE not in {r.role for r in producer.roles}:
 		producer.add_roles(INQUIRY_PRODUCER_ROLE)
@@ -365,14 +369,16 @@ def reset_publication_fixture(*, commit: bool = True, confirmed: int = 2) -> dic
 	return _done(state, commit)
 
 
-def reset_published_fixture(*, commit: bool = True, with_addendum: bool = False, with_inquiry: bool = False) -> dict[str, Any]:
-	"""TPR-DES-09 opening state: Published — open; optionally one issued,
-	fully confirmed addendum and one inquiry awaiting response."""
+def reset_published_fixture(*, commit: bool = True, with_addendum: bool = False, with_clarification: bool = False, answered: bool = False) -> dict[str, Any]:
+	"""TPR-DES-09 opening state: Published — open with one registered
+	candidate; optionally its general clarification (awaiting or answered)
+	and one issued, fully confirmed addendum."""
 	state = reset_publication_fixture(commit=False, confirmed=4)
-	if with_addendum or with_inquiry:
+	state.update(_candidate(state["tender"]))
+	if with_clarification:
+		state.update(_clarification(state["tender"], answered=answered))
+	if with_addendum:
 		state.update(_issued_addendum(state["tender"]))
-	if with_inquiry:
-		state.update(_inquiry(state["tender"], state["addendum"]))
 	return _done(state, commit)
 
 
@@ -421,13 +427,44 @@ def _issued_addendum(name: str) -> dict[str, Any]:
 	return state
 
 
-def _inquiry(name: str, addendum: str, *, late: bool = False) -> dict[str, Any]:
-	from kentender_procurement.tenders.services import inquiries
+def _candidate(name: str, candidate: dict[str, str] | None = None) -> dict[str, Any]:
+	"""A Tender-bound candidate through the Start-bid stand-in (plan W2)."""
+	from kentender_procurement.tenders.services import candidate_gateway
 
-	_clock("inquiry")
+	candidate = candidate or CANDIDATE
+	_clock("candidate")
 	with _as(PRODUCER):
-		received = inquiries.receive_addendum_inquiry(tender=name, addendum=addendum, candidate_identity="SUP-PW-0001", question="Does the clarified delivery point in the addendum apply to all lots, or only the lot originally delivered to the Central Warehouse?", received_at="2027-06-10 09:00:00" if late else CLOCK["inquiry"], inbound_event_id=_key())
-	return {"inquiry": received["inquiry"], "inquiry_status": received["status"]}
+		candidate_gateway.register_stand_in_candidate(tender=name, registered_at=CLOCK["candidate"], **candidate)
+	return {"candidate": candidate["bidder_arrangement_id"]}
+
+
+def _delivered(notice) -> dict[str, Any]:
+	return {"result": "Delivered", "provider_reference": f"pw-delivery:{notice.name}", "failure_reason": ""}
+
+
+def _failed(notice) -> dict[str, Any]:
+	return {"result": "Failed", "provider_reference": "", "failure_reason": "Mailbox unavailable (provider bounce)."}
+
+
+def _clarification(name: str, *, answered: bool = False, question: str = "May the two comparable contracts be from different customers?") -> dict[str, Any]:
+	from kentender_procurement.tenders.services import clarifications
+
+	_clock("clarification")
+	with _as(PRODUCER):
+		received = clarifications.receive_tender_clarification(tender=name, candidate_registration_id=CANDIDATE["bidder_arrangement_id"], question=question, received_at=CLOCK["clarification"], inbound_event_id=_key())
+	state = {"clarification": received["clarification"]}
+	if answered:
+		_clock("respond")
+		frappe.flags.kt_tenders_notice_sync, frappe.flags.kt_tenders_notice_transport = True, _delivered
+		try:
+			with _as(OFFICER):
+				clarifications.respond_to_tender_clarification(
+					tender=name, clarification=received["clarification"], response="Yes. The Tender requires two comparable contracts and does not require both contracts to be from the same customer.",
+					affects_published_tender=False, response_audience="All registered candidates", expected_record_version=_root(name).record_version, idempotency_key=_key(),
+				)
+		finally:
+			frappe.flags.kt_tenders_notice_sync, frappe.flags.kt_tenders_notice_transport = False, None
+	return state
 
 
 def reset_addendum_draft_fixture(*, commit: bool = True, saved: bool = True) -> dict[str, Any]:
@@ -457,10 +494,9 @@ def reset_addendum_confirming_fixture(*, commit: bool = True) -> dict[str, Any]:
 	return _done(state, commit)
 
 
-def reset_inquiry_fixture(*, commit: bool = True, late: bool = False) -> dict[str, Any]:
-	"""TPR-DES-11 opening state: one inquiry awaiting response (or Late)."""
-	state = reset_published_fixture(commit=False, with_addendum=True)
-	state.update(_inquiry(state["tender"], state["addendum"], late=late))
+def reset_clarification_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""TPR-DES-11 opening state: one general clarification awaiting response."""
+	state = reset_published_fixture(commit=False, with_clarification=True)
 	return _done(state, commit)
 
 

@@ -180,7 +180,7 @@ class TestCanonicalSeedFullChain(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		first = canonical.run(through="tenders", reset=False, validate=True, force=True, commit=False)
 		self.assertTrue(first["ok"])
-		counts = {dt: frappe.db.count(dt) for dt in ("Procurement Requisition", "Tender", "Tender Addendum", "Tender Addendum Inquiry", "Tender Submission Handoff")}
+		counts = {dt: frappe.db.count(dt) for dt in ("Procurement Requisition", "Tender", "Tender Addendum", "Tender Clarification", "Tender Submission Handoff")}
 
 		second = canonical.run(through="tenders", reset=False, validate=True, force=True, commit=False)
 		self.assertTrue(second["ok"])

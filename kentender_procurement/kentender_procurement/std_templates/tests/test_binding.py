@@ -74,6 +74,11 @@ class TestMatrix(BindingCase):
 		facts = binding.require(release, "new_binding")
 		self.assertEqual(facts["template_release_id"], release)
 		self.assertEqual(facts["renderer_profile_id"], "BDS-GOODS-IT-V1")
+		# TPR-CHG-001 v0.12 §4.1–4.2: a Tender binds the three rule digests too.
+		doc = frappe.get_doc("Installed STD Release", release)
+		for field in ("response_rules_digest", "downstream_rules_digest", "addendum_identity_rules_digest"):
+			self.assertTrue(doc.get(field), field)
+			self.assertEqual(facts[field], doc.get(field), field)
 		self.assertEqual(binding.available_release("IT-EQUIPMENT-OPEN-V1").name, release)
 		self.assertEqual(binding.require(release, "publication")["notice"], "")
 

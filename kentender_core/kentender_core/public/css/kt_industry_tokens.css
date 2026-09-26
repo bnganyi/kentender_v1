@@ -840,52 +840,103 @@
 .kt-industry .kt-decision { border-top: 2px solid var(--kt-color-accent); padding: 20px 0 0; }
 
 /* KT-STD-001 v1.8 §2.9 — the journey tracker and the next-step block, drawn by
-   kt_industry_guidance.bundle.js. Ported from the Planning boards' inline
-   styles on data-kt="journey" / data-kt="next-step" (25 Sep 2026); the
-   design system had no class for either. Quiet by default (§2.9.3 rule 6):
-   accent only on the current stage, status colour only on Blocked and Done,
-   always with text; the blocked kind is the only one with a container. */
-/* A host element a module mounts the components into: it has no box of its
-   own, so an empty host (Not involved, no tracker) adds no gap to the
-   page's flex column, and a drawn component sits where the board puts it. */
+   kt_industry_guidance.bundle.js to the Industry design-system handoff
+   "Journey tracker and next-step block" (Project Owner approved for
+   formalisation 26 Sep 2026; applied to every module by TPR-CHG-001 v0.12
+   plan OD-1). Quiet by default (§2.9.3 rule 6): accent only on the current
+   stage and the Your-turn rule (which counts as the page's task rule),
+   status colour only on Done and Blocked, always with text; the blocked kind
+   is the only one with a container. */
+/* A host element a module mounts the components into: no box of its own, so
+   an empty host (Not involved, no tracker) adds no gap to the page column. */
 .kt-industry .kt-guidance-mount { display: contents; }
-.kt-industry .kt-journey { display: flex; align-items: flex-end; gap: var(--kt-space-6); margin: 0; }
-.kt-industry .kt-journey-stages { list-style: none; margin: 0; padding: 0; flex: 1; display: grid; gap: var(--kt-space-2); }
-.kt-industry .kt-journey-stage { border-top: 2px solid var(--kt-color-neutral-300); padding-top: 6px; min-width: 0; }
-.kt-industry .kt-journey-stage.is-current,
-.kt-industry .kt-journey-stage.is-blocked { border-top-color: var(--kt-color-accent); }
-.kt-industry .kt-journey-label { font-size: 13px; line-height: 1.3; color: var(--kt-color-neutral-800); }
-.kt-industry .kt-journey-stage.is-current .kt-journey-label,
-.kt-industry .kt-journey-stage.is-blocked .kt-journey-label { font-weight: 600; color: var(--kt-color-text); }
-.kt-industry .kt-journey-marker { font-size: 12px; line-height: 1.35; margin-top: 2px; color: var(--kt-color-neutral-700); }
-.kt-industry .kt-journey-stage.is-done .kt-journey-marker { color: var(--kt-status-live); font-weight: 600; }
-.kt-industry .kt-journey-stage.is-current .kt-journey-marker { color: var(--kt-color-accent-800); font-weight: 600; }
-.kt-industry .kt-journey-stage.is-blocked .kt-journey-marker { color: var(--kt-status-attention); font-weight: 600; }
-.kt-industry .kt-journey-holder { font-weight: 400; color: var(--kt-color-neutral-800); }
-.kt-industry .kt-journey-link { font-size: 13px; white-space: nowrap; padding-bottom: 2px; }
-.kt-industry .kt-journey.is-reduced { display: block; font-size: 13.5px; color: var(--kt-color-neutral-800); }
-.kt-industry .kt-journey-current { font-weight: 600; color: var(--kt-color-accent-800); }
-.kt-industry .kt-next-step { margin: var(--kt-space-4) 0 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 15px; line-height: 1.35; }
-.kt-industry .kt-next-step-label { font-size: 12px; font-weight: 600; color: var(--kt-color-neutral-700); }
-.kt-industry .kt-next-step-headline { font-weight: 600; color: var(--kt-color-text); }
-.kt-industry .kt-next-step-since { font-size: 13px; color: var(--kt-color-neutral-700); }
+/* One guidance region below the page header (handoff §2). */
+.kt-industry .kt-guidance { display: grid; gap: 18px; padding: 20px 24px 22px; border-bottom: 1px solid var(--kt-color-divider); }
+/* Tracker: N equal columns of bar / numbered label / state line (§3). */
+.kt-industry .kt-journey-host { container-type: inline-size; display: grid; gap: var(--kt-space-2); min-width: 0; }
+.kt-industry .kt-journey { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(var(--kt-journey-n, 5), minmax(0, 1fr)); gap: 6px; }
+.kt-industry .kt-journey-stage { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.kt-industry .kt-journey-bar { display: block; height: 4px; background: var(--kt-color-neutral-300); }
+.kt-industry .kt-journey-title { display: flex; gap: 6px; align-items: baseline; font-size: 14px; line-height: 1.3; font-weight: 500; color: var(--kt-color-neutral-700); text-wrap: pretty; min-width: 0; }
+.kt-industry .kt-journey-num { flex: none; font-family: var(--kt-font-heading); font-size: 15px; font-weight: 600; color: var(--kt-color-neutral-600); }
+.kt-industry .kt-journey-state { padding-left: 16px; font-size: 12px; line-height: 1.3; font-weight: 600; color: var(--kt-color-neutral-600); }
+.kt-industry .kt-journey-stage.is-done .kt-journey-bar { background: var(--kt-status-live); }
+.kt-industry .kt-journey-stage.is-done .kt-journey-title,
+.kt-industry .kt-journey-stage.is-done .kt-journey-num { color: var(--kt-color-text); }
+.kt-industry .kt-journey-stage.is-done .kt-journey-state { color: var(--kt-status-live); }
+.kt-industry .kt-journey-stage.is-current .kt-journey-bar { background: var(--kt-color-accent); }
+.kt-industry .kt-journey-stage.is-current .kt-journey-title,
+.kt-industry .kt-journey-stage.is-current .kt-journey-num,
+.kt-industry .kt-journey-stage.is-current .kt-journey-state { color: var(--kt-color-accent-700); }
+.kt-industry .kt-journey-stage.is-current .kt-journey-title { font-weight: 700; }
+.kt-industry .kt-journey-stage.is-blocked .kt-journey-bar { background: var(--kt-status-attention); }
+.kt-industry .kt-journey-stage.is-blocked .kt-journey-num,
+.kt-industry .kt-journey-stage.is-blocked .kt-journey-state { color: var(--kt-status-attention); }
+.kt-industry .kt-journey-stage.is-blocked .kt-journey-title { color: var(--kt-color-text); font-weight: 700; }
+/* Reduced one-line form: mini bars + "{stage} · {n} of {N} · {holder}" (§3). */
+.kt-industry .kt-journey.is-reduced,
+.kt-industry .kt-journey-compact { display: grid; gap: 8px; }
+.kt-industry .kt-journey-compact { display: none; }
+.kt-industry .kt-journey-bars { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; }
+.kt-industry .kt-journey-bars > span { display: block; height: 4px; background: var(--kt-color-neutral-300); }
+.kt-industry .kt-journey-bars > .is-done { background: var(--kt-status-live); }
+.kt-industry .kt-journey-bars > .is-current { background: var(--kt-color-accent); }
+.kt-industry .kt-journey-bars > .is-blocked { background: var(--kt-status-attention); }
+.kt-industry .kt-journey-reduced-text { margin: 0; font-size: 14px; color: var(--kt-color-neutral-700); }
+.kt-industry .kt-journey-current { font-weight: 700; color: var(--kt-color-accent-700); }
+.kt-industry .kt-journey-links { display: flex; gap: var(--kt-space-6); }
+.kt-industry .kt-journey-link { font-size: 13px; white-space: nowrap; }
+/* Under 600px of host width the row becomes the one line, never a sideways
+   scroll (handoff §7; TPR-CHG-001 v0.12 §10.17 at 390px). */
+@container (max-width: 600px) {
+	.kt-industry .kt-journey-host > .kt-journey:not(.is-reduced) { display: none; }
+	.kt-industry .kt-journey-host > .kt-journey-compact { display: grid; }
+}
+/* Next step (§4): Your turn / Waiting on someone / Done carry a 3px rule
+   and no container; the blocked kind is a warning notice. */
+.kt-industry .kt-next-step { display: grid; gap: 3px; margin: 0; }
+.kt-industry .kt-next-step.is-turn,
+.kt-industry .kt-next-step.is-waiting,
+.kt-industry .kt-next-step.is-done { border-left: 3px solid var(--kt-color-neutral-400); padding: 2px 0 2px 14px; }
+.kt-industry .kt-next-step.is-turn { border-left-color: var(--kt-color-accent); }
+.kt-industry .kt-next-step-label { font-size: 12px; font-weight: 700; color: var(--kt-color-neutral-700); }
+.kt-industry .kt-next-step.is-turn .kt-next-step-label { color: var(--kt-color-accent-700); }
+.kt-industry .kt-next-step-headline { margin: 0; font-size: 17px; font-weight: 600; line-height: 1.4; color: var(--kt-color-text); text-wrap: pretty; }
+.kt-industry .kt-next-step-sentence { margin: 0; font-size: 14px; color: var(--kt-color-neutral-700); }
+.kt-industry .kt-next-step-since { font-size: 14px; font-weight: 400; color: var(--kt-color-neutral-700); }
+.kt-industry .kt-next-step-links { display: flex; gap: var(--kt-space-4); flex-wrap: wrap; margin-top: 4px; }
 .kt-industry .kt-next-step-link { background: none; border: 0; padding: 0; font: inherit; font-size: 14px; font-weight: 600; color: var(--kt-color-accent-2-700); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .kt-industry .kt-next-step-link:hover { color: var(--kt-color-accent-2-800); }
 .kt-industry .kt-next-step-link:focus-visible { outline: 2px solid var(--kt-color-accent); outline-offset: 2px; }
-.kt-industry .kt-notice.kt-next-step-block { margin: 0; }
-.kt-industry .kt-next-step-block-body { flex: 1; min-width: 0; }
-.kt-industry .kt-next-step-block .kt-next-step-label { color: var(--kt-color-neutral-800); }
-.kt-industry .kt-next-step-block-headline { font-family: var(--kt-font-heading); font-size: 22px; line-height: 1.2; margin-top: 2px; color: var(--kt-color-text); }
-.kt-industry .kt-next-step-sentence { margin: var(--kt-space-2) 0 0; font-size: 14px; color: var(--kt-color-text); }
+.kt-industry .kt-notice.kt-next-step { margin: 0; display: flex; }
+.kt-industry .kt-notice.kt-next-step .kt-next-step-label,
+.kt-industry .kt-notice.kt-next-step .kt-next-step-sentence { color: inherit; }
+.kt-industry .kt-next-step-block-body { flex: 1; min-width: 0; display: grid; gap: 3px; }
 .kt-industry .kt-meta-row.kt-next-step-facts { gap: var(--kt-space-8); margin-top: var(--kt-space-3); }
 .kt-industry .kt-next-step-fact { font-size: 14px; }
-.kt-industry .kt-next-step-fixes { display: flex; gap: var(--kt-space-3); flex-wrap: wrap; align-items: center; margin-top: var(--kt-space-4); }
+.kt-industry .kt-next-step-fixes { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 7px; }
 .kt-industry .kt-next-step-fix-text { font-size: 14px; }
 .kt-industry .kt-next-step-blockers { list-style: none; margin: var(--kt-space-3) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--kt-space-3); }
 .kt-industry .kt-next-step-blockers > li { display: flex; flex-wrap: wrap; align-items: center; gap: var(--kt-space-3); }
 .kt-industry .kt-next-step-blocker-headline { font-size: 14px; font-weight: 600; color: var(--kt-color-text); }
 .kt-industry .kt-next-step-blocker-facts { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 2px var(--kt-space-6); font-size: 14px; color: var(--kt-color-text); }
 .kt-industry .kt-next-step-blocker-facts .kt-label { margin-right: 4px; }
+/* Forced colours and print: the bars keep a visible edge; the state stays in
+   the state line's text (handoff §6). */
+@media (forced-colors: active) {
+	.kt-industry .kt-journey-bar,
+	.kt-industry .kt-journey-bars > span { background: none; border-top: 4px solid CanvasText; }
+}
+@media print {
+	.kt-industry .kt-journey-bar,
+	.kt-industry .kt-journey-bars > span { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+/* Companion pattern (handoff §8): a Yes/No switch in a fixed right column;
+   its dependent fields directly beneath, behind a 2px rule. */
+.kt-industry .kt-choice-row { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 8px 24px; align-items: center; padding: 12px 0; border-top: 1px solid var(--kt-color-divider); }
+.kt-industry .kt-choice-row .seg,
+.kt-industry .kt-choice-row .kt-seg { width: fit-content; }
+.kt-industry .kt-dependent { grid-column: 1 / -1; border-left: 2px solid var(--kt-color-divider); padding: 4px 0 4px 16px; margin-top: 4px; }
 
 /* Filter bar: controls local to the records they filter. */
 .kt-industry .kt-filter-bar { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--kt-space-3); align-items: end; margin-bottom: var(--kt-space-4); }

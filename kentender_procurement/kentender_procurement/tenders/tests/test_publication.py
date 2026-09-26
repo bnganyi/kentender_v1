@@ -115,7 +115,7 @@ class TestAuthorise(PublicationCase):
 			with self.assertRaises(TendersError) as ctx:
 				publication.authorise_tender_publication(tender=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AO, task=approved["task"])
 		self.assertEqual(ctx.exception.code, "TND_PUBLICATION_RULE_UNAVAILABLE")
-		self.assertEqual(frappe.db.count("Tender Publication"), 0)
+		self.assertEqual(frappe.db.count("Tender Publication", {"tender": root.name}), 0)
 
 	def test_an_integrated_channel_is_refused(self):
 		name, approved = self._approved()
@@ -158,6 +158,10 @@ class TestConfirmChannels(PublicationCase):
 		with self.assertRaises(TendersError) as ctx:  # §15.3(5) invalid media
 			self._confirm(name, "STATE_PORTAL", evidence=frappe.get_doc({"doctype": "File", "file_name": "PPIP-MOH-2027-035.exe", "is_private": 1, "content": b"MZ\x00\x00"}).insert(ignore_permissions=True).name)
 		self.assertEqual(ctx.exception.code, "TND_PUBLICATION_EVIDENCE_INVALID")
+		# §10.17 DES-08: the refusal carries its blocked next step and fixes
+		step = ctx.exception.detail["next_step"]
+		self.assertEqual((step["kind"], step["headline"], step["stage"]), ("your_turn_blocked", "State Portal evidence could not be accepted.", "PUBLICATION"))
+		self.assertEqual([f["label"] for f in step["blockers"][0]["fixes"]], ["Choose evidence file", "Confirm publication"])
 		self.assertEqual(frappe.db.count("Tender Channel Confirmation", {"publication": root.publication, "status": "Confirmed"}), 0)
 
 	def test_confirmations_are_attested_idempotent_and_conflicts_are_preserved(self):
@@ -176,6 +180,8 @@ class TestConfirmChannels(PublicationCase):
 		with self.assertRaises(TendersError) as ctx:  # §15.3(3) different availability time
 			self._confirm(name, "STATE_PORTAL", available_at="2027-05-15 09:30:00", evidence=row.evidence_file)
 		self.assertEqual(ctx.exception.code, "TND_PUBLICATION_ALREADY_CONFIRMED")
+		step = ctx.exception.detail["next_step"]
+		self.assertEqual((step["kind"], step["headline"], [f["label"] for f in step["fixes"]]), ("your_turn", "Continue with the channels still awaiting confirmation.", ["View confirmation for State Portal"]))
 		row.reload()
 		self.assertEqual(str(row.available_at), AVAILABLE)
 		self.assertTrue(events.exists(tender=name, event_type="ConfirmationConflictRejected"))
@@ -226,7 +232,8 @@ class TestConfirmChannels(PublicationCase):
 		pub = frappe.get_doc("Tender Publication", withdrawn["publication"])
 		self.assertEqual((root.overall_status, root.publication, pub.publication_status, pub.withdrawn_by), ("Approved", None, "Withdrawn before confirmation", fx.AO))
 		self.assertEqual(frappe.db.get_value("Tender Task", out["task"], "status"), "Cancelled")
-		self.assertTrue(frappe.db.exists("Tender Task", {"tender": name, "task_type": "AO publication authorisation", "status": "Open"}))
+		# §5.11: the HOPF reviews the withdrawn authorisation (not a new AO item)
+		self.assertTrue(frappe.db.exists("Tender Task", {"tender": name, "task_type": "Review withdrawn authorisation", "status": "Open"}))
 		self.assertIn("reopen_tender", read.get_tender(tender=name, user=fx.HOPF)["allowed_actions"])
 
 

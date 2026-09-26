@@ -9,6 +9,7 @@
 // component (KT-STD-001 v1.8 §10); it passes the server's `next_step` and
 // `journey` answers here unchanged.
 import { createApp, h, reactive } from "vue";
+import GuidanceRegion from "./components/GuidanceRegion.vue";
 import JourneyTracker from "./components/JourneyTracker.vue";
 import NextStep from "./components/NextStep.vue";
 
@@ -48,5 +49,17 @@ kentender_core.industry.mountNextStep = function (el, opts) {
 		NextStep,
 		{ answer: opts.answer || null, placement: opts.placement || "head", pending: !!opts.pending },
 		{ onFix: opts.onFix || (() => {}) },
+	);
+};
+
+// opts: { journey, answer, label, pending, onFix(fix), onLink(link) } — the
+// tracker and the next step together in one region (TPR-CHG-001 v0.12 §10.17).
+kentender_core.industry.mountGuidance = function (el, opts) {
+	opts = opts || {};
+	return mount(
+		el,
+		GuidanceRegion,
+		{ journey: opts.journey || null, answer: opts.answer || null, label: opts.label || "Journey", pending: !!opts.pending },
+		{ onFix: opts.onFix || (() => {}), onLink: opts.onLink || (() => {}) },
 	);
 };

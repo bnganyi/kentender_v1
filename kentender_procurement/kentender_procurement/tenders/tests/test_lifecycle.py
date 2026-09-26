@@ -90,7 +90,7 @@ class TestStartTender(TenderLifecycleCase):
 		self.assertEqual((again["action"], again["tender"]), ("existing", started["tender"]))
 		replay = cmd.start_tender(handoff=authorised["handoff"], idempotency_key=fx.key(), user=fx.OFFICER)
 		self.assertEqual(replay["tender"], started["tender"])
-		self.assertEqual(frappe.db.count("Tender"), 1)
+		self.assertEqual(len(fx.test_tenders()), 1)
 
 	def test_only_a_procurement_officer_starts_and_an_unsupported_product_creates_nothing(self):
 		authorised = fx.authorised_handoff()
@@ -108,16 +108,22 @@ class TestStartTender(TenderLifecycleCase):
 			cmd.start_tender(handoff=authorised["handoff"], idempotency_key=fx.key(), user=fx.OFFICER)
 		self.assertEqual(ctx.exception.code, "TND_PRODUCT_UNSUPPORTED")
 		self.assertEqual(ctx.exception.detail["check"], "Method")
-		self.assertEqual(frappe.db.count("Tender"), 0)
+		self.assertEqual(len(fx.test_tenders()), 0)
 		self.assertFalse(frappe.db.get_value("Authorised Requisition Handoff", authorised["handoff"], "consumed_at"))
 
-	def test_the_eight_compatibility_checks_on_the_fixture(self):
+	def test_the_nine_compatibility_checks_on_the_fixture(self):
 		snapshot, _ = sample.sample_snapshot()
 		checks = compatibility.evaluate(snapshot)
-		self.assertEqual([c.check for c in checks], ["Procurement category", "Product", "Method", "Reservation", "Lotting", "Currency", "Award package", "Plan horizon"])
+		self.assertEqual([c.check for c in checks], ["Procurement category", "Product", "Method", "Reservation", "County-residents restriction", "Lotting", "Currency", "Award package", "Plan horizon"])
 		self.assertTrue(compatibility.is_supported(checks))
-		snapshot["reservation_category_value"] = "Unknown group"
-		self.assertEqual(compatibility.first_failure(compatibility.evaluate(snapshot)).check, "Reservation")
+		# TPR09-AC-082 / §8: an unsupported category and a missing rule have their own codes
+		unsupported = dict(snapshot, reservation_category_value="Unknown group")
+		self.assertEqual((compatibility.first_failure(compatibility.evaluate(unsupported)).check, compatibility.first_failure(compatibility.evaluate(unsupported)).code), ("Reservation", "TND_RESERVATION_UNSUPPORTED"))
+		no_rule = dict(snapshot, reservation_rule_snapshot_ids=[])
+		self.assertEqual(compatibility.first_failure(compatibility.evaluate(no_rule)).code, "TND_RESERVATION_RULE_UNAVAILABLE")
+		# TPR09-AC-089: County residents need a county Procuring Entity, template support and a verified rule
+		county = dict(snapshot, county_resident_reservation=True)
+		self.assertEqual((compatibility.first_failure(compatibility.evaluate(county)).check, compatibility.first_failure(compatibility.evaluate(county)).code), ("County-residents restriction", "TND_RESERVATION_UNSUPPORTED"))
 
 
 class TestSaveDraft(TenderLifecycleCase):
@@ -225,7 +231,7 @@ class TestSubmitReturnApprove(TenderLifecycleCase):
 		self.assertEqual((version.status, version.approved_by, root.overall_status, root.approved_version), ("Approved", fx.HOPF, "Approved", version.name))
 		ao_task = frappe.get_doc("Tender Task", approved["task"])
 		self.assertEqual((ao_task.task_type, ao_task.business_role, ao_task.status), ("AO publication authorisation", "Accounting Officer", "Open"))
-		self.assertEqual(frappe.db.count("Tender Channel Confirmation"), 0)
+		self.assertEqual(frappe.db.count("Tender Channel Confirmation", {"tender": root.name}), 0)
 		self.assertIsNone(root.published_at)
 		self.assertIsNone(root.publication)
 		self.assertIn("Charles" if False else version.approved_by, [version.approved_by])
@@ -267,7 +273,7 @@ class TestSubmitReturnApprove(TenderLifecycleCase):
 
 
 class TestRequisitionCorrection(TenderLifecycleCase):
-	def test_correction_stops_the_version_releases_the_handoff_and_a_successor_continues(self):
+	def test_correction_stops_the_version_hands_off_to_the_author_and_a_successor_continues(self):
 		authorised, started = self._started()
 		root = frappe.get_doc("Tender", started["tender"])
 		with self.assertRaises(TendersError):
@@ -276,13 +282,22 @@ class TestRequisitionCorrection(TenderLifecycleCase):
 		root.reload()
 		stopped = frappe.get_doc("Tender Version", requested["stopped_version"])
 		self.assertEqual((root.overall_status, stopped.status, stopped.stopped_by), ("Requisition correction requested", "Stopped for requisition correction", fx.HOPF))
-		self.assertFalse(frappe.db.get_value("Authorised Requisition Handoff", authorised["handoff"], "consumed_at"))
+		# §5.11: the Requisition's Departmental Author holds the correction; the requester waits
+		author = frappe.db.get_value("Requisition Version", root.requisition_version, "prepared_by")
+		item = frappe.db.get_value("Tender Task", {"tender": root.name, "task_type": "Requisition correction", "status": "Open"}, ["holder", "sender", "comment"], as_dict=True)
+		self.assertEqual((item.holder, item.sender, item.comment), (author, fx.HOPF, "The authorised battery-runtime requirement must be corrected before this Tender can continue."))
+		# REQ-CHG-001 v1.11 removed handoff release (REQ FU-30): the consumed handoff stays consumed
+		self.assertTrue(frappe.db.get_value("Authorised Requisition Handoff", authorised["handoff"], "consumed_at"))
 		with self.assertRaises(TendersError) as ctx:  # no local override
 			cmd.save_tender_draft(tender=root.name, values={"tender_title": "x"}, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		self.assertEqual(ctx.exception.code, "TND_STALE_VERSION")
 		state = correction.correction_state(root, user=fx.OFFICER)
 		self.assertEqual(state["requested_by"], fx.HOPF)
-		# the released handoff is itself the authorised successor in this world (Requisitions re-authorises the same Plan Item)
+		self.assertIsNone(state["successor"])
+		# Owner-contract stand-in (§15.1 step 2): Requisitions' governed correction
+		# re-authorises the same Plan Item's handoff (REQ FOLLOW_UPS FU-30 owns the real route).
+		frappe.db.set_value("Authorised Requisition Handoff", authorised["handoff"], {"consumed_at": None, "tender": None, "tender_version": None}, update_modified=False)
+		state = correction.correction_state(root, user=fx.OFFICER)
 		self.assertEqual(state["successor"]["handoff"], authorised["handoff"])
 		continued = correction.start_corrected_tender_version(tender=root.name, handoff=authorised["handoff"], expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		root.reload()
@@ -290,3 +305,4 @@ class TestRequisitionCorrection(TenderLifecycleCase):
 		self.assertEqual((root.overall_status, draft.version_number, draft.predecessor_version, draft.status), ("Draft", 2, stopped.name, "Draft"))
 		self.assertEqual(frappe.db.get_value("Tender Version", stopped.name, "status"), "Stopped for requisition correction")
 		self.assertEqual(frappe.db.get_value("Authorised Requisition Handoff", authorised["handoff"], "tender_version"), draft.name)
+		self.assertFalse(frappe.db.exists("Tender Task", {"tender": root.name, "task_type": "Requisition correction", "status": "Open"}))

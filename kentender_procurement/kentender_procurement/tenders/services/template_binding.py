@@ -39,7 +39,13 @@ _CODE = {
 VERSION_FIELDS = (
 	"template_release_id", "template_key", "template_release", "product_profile_id", "renderer_profile_id",
 	"supported_renderer_version", "official_source_digest", "bundle_digest",
+	# TPR-CHG-001 v0.12 §4.1–4.2: the exact response, downstream and
+	# addendum-identity rule assets are bound and re-verified too.
+	"response_rules_digest", "downstream_rules_digest", "addendum_identity_rules_digest",
 )
+#: Digests re-verified at every later action (a missing one on a Tender bound
+#: before v0.12 is back-filled at the next action, never treated as a match).
+DIGEST_FIELDS = ("official_source_digest", "bundle_digest", "response_rules_digest", "downstream_rules_digest", "addendum_identity_rules_digest")
 
 
 def _facts(facts: dict[str, Any]) -> dict[str, Any]:
@@ -54,6 +60,7 @@ def _facts(facts: dict[str, Any]) -> dict[str, Any]:
 		"template_version": facts["template_release"],
 		"official_source_title": cstr(release.official_source_title),
 		"supported_reservation_categories": list(use.get("reservation_categories") or ()),
+		"supports_county_residents": bool((use.get("county_residents") or {}).get("released")),
 		"lifecycle_status": facts["lifecycle_status"],
 		"notice": facts.get("notice") or "",
 		"std_template_route": [STD_TEMPLATES_PAGE, facts["template_release_id"]],
@@ -98,8 +105,9 @@ def require_bound(record, purpose: str = "continue") -> dict[str, Any]:
 	except STDTemplateError as exc:
 		_raise(exc, release_id)
 		return {}  # unreachable
-	if facts["bundle_digest"] != cstr(record.bundle_digest) or facts["official_source_digest"] != cstr(record.official_source_digest):
-		fail("TND_TEMPLATE_RELEASE_INTEGRITY_FAILED", detail={"reason": "The installed release no longer matches the digests this Tender bound.", "template_release_id": release_id, "std_template_route": _session_route(release_id)})
+	mismatched = [field for field in DIGEST_FIELDS if cstr(record.get(field)) and facts[field] != cstr(record.get(field))]
+	if mismatched or not cstr(record.get("bundle_digest")):
+		fail("TND_TEMPLATE_RELEASE_INTEGRITY_FAILED", detail={"reason": "The installed release no longer matches the digests this Tender bound.", "digests": mismatched, "template_release_id": release_id, "std_template_route": _session_route(release_id)})
 	return _facts(facts)
 
 
@@ -117,15 +125,20 @@ def verify(version, purpose: str = "continue") -> list[str]:
 	return []
 
 
-def bound_categories(record) -> tuple[str, ...]:
-	"""The reservation categories the bound release supports (no checks)."""
+def bound_support(record) -> dict[str, Any]:
+	"""The reservation treatments the bound release supports (no checks), in
+	the shape `compatibility.support_of` reads."""
 	from kentender_procurement.std_templates.services.installer import load_json
 
 	try:
 		release = std_runtime.release_doc(cstr(record.template_release_id))
 	except STDTemplateError:
-		return ()
-	return tuple((load_json(release.supported_use_summary) or {}).get("reservation_categories") or ())
+		return {"supported_reservation_categories": [], "supports_county_residents": False}
+	use = load_json(release.supported_use_summary) or {}
+	return {
+		"supported_reservation_categories": list(use.get("reservation_categories") or ()),
+		"supports_county_residents": bool((use.get("county_residents") or {}).get("released")),
+	}
 
 
 def bound_fields(facts: dict[str, Any]) -> dict[str, Any]:

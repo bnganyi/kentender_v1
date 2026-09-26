@@ -5,10 +5,12 @@
 Requisition-owned correction route (TPR08-AC-010).
 
 `RequestRequisitionCorrection` stops the current pre-publication Version
-(immutable, `Stopped for requisition correction`), releases the handoff
-consumption through Requisitions' published seam — which is what lets the
-Head of Procurement Function revoke and re-authorise the Requisition under
-Requisitions' own governance — and never edits inherited content. Work
+(immutable, `Stopped for requisition correction`), never edits inherited
+content, and hands the correction to the Requisition's Departmental Author
+(§5.11: **Correct Requisition …** with the reason, and the requester's
+**Waiting for … to correct the requisition**). Requisitions owns how a
+corrected successor is authorised; REQ-CHG-001 v1.11 removed handoff
+release (REQ FOLLOW_UPS FU-30), so Tenders no longer calls it. Work
 continues only from a newly authorised successor handoff on the same Plan
 Item: `StartCorrectedTenderVersion` consumes it and creates a linked Draft
 with a regenerated snapshot while the stopped history stays untouched."""
@@ -21,7 +23,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_procurement.tenders.services import clock, compatibility, controls, draft_commands, envelope, events, handoff_gateway, lifecycle, review, serializer, template_binding
+from kentender_procurement.tenders.services import clock, compatibility, controls, draft_commands, envelope, events, handoff_gateway, handoffs, lifecycle, review, serializer, template_binding
 from kentender_procurement.tenders.services import snapshot as snap
 from kentender_procurement.tenders.services import tender_authorization as authz
 from kentender_procurement.tenders.services.errors import fail
@@ -55,15 +57,22 @@ def request_requisition_correction(*, tender: str, reason: str, expected_record_
 		lifecycle.cancel_open_tasks(root)
 		previous = root.overall_status
 		envelope.bump(root, overall_status=CORRECTION_REQUESTED, approved_version=None)
-		release = handoff_gateway.release(handoff=cstr(root.requisition_handoff), tender=root.name, reason=reason, idempotency_key=f"{idempotency_key}:release", user=actor)
+		author = requisition_author(root)
+		handoffs.open_task(root, version, task_type=handoffs.REQUISITION_CORRECTION, subject_type="Procurement Requisition", subject_id=cstr(root.requisition), holder=author, sender=actor, comment=reason)
 		events.emit(
 			tender=root.name, event_type="TenderRequisitionCorrectionRequested", command="RequestRequisitionCorrection", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment),
 			previous_status=previous, resulting_status=CORRECTION_REQUESTED, record_version=root.record_version, subject_type="Tender Version", subject_id=version.name, reason=reason,
-			payload={"requisition_handoff": root.requisition_handoff, "release": release, "decision": decision.name}, fixture_namespace=root.fixture_namespace,
+			payload={"requisition_handoff": root.requisition_handoff, "requisition_author": author, "decision": decision.name}, fixture_namespace=root.fixture_namespace,
 		)
 	out = {"ok": True, "idempotent": False, "action": "correction_requested", "tender": root.name, "record_version": root.record_version, "stopped_version": version.name, "requisition": root.requisition, "requisition_reference": root.requisition_reference}
 	envelope.record_command(idempotency_key=idempotency_key, command="RequestRequisitionCorrection", payload=payload, result=out, document_type="Tender", document_name=root.name, actor=actor, fixture_namespace=root.fixture_namespace)
 	return out
+
+
+def requisition_author(root) -> str:
+	"""The Departmental Author who prepared the authorised Requisition Version
+	(§5.11: the correction's holder)."""
+	return cstr(frappe.db.get_value("Requisition Version", cstr(root.requisition_version), "prepared_by"))
 
 
 def correction_state(root, *, user: str | None = None) -> dict[str, Any]:
@@ -104,7 +113,7 @@ def start_corrected_tender_version(*, tender: str, handoff: str, expected_record
 	# TPR-CHG-001 v0.11 §5.3: a corrected Version keeps the release this
 	# Tender bound (never rebinds); it may be Available or Superseded.
 	binding = template_binding.require_bound(root, "continue")
-	compatibility.require_supported(snapshot, binding["supported_reservation_categories"])
+	compatibility.require_supported(snapshot, binding)
 	previous_state = serializer.officer_state(stopped)
 	with envelope.atomic("start-corrected"):
 		number = int(stopped.version_number) + 1
@@ -123,6 +132,7 @@ def start_corrected_tender_version(*, tender: str, handoff: str, expected_record
 		result = review.run(root, draft, with_renders=True)
 		review.store(draft, result)
 		envelope.bump(draft)
+		handoffs.close_open(root, task_types=(handoffs.REQUISITION_CORRECTION,))
 		envelope.bump(
 			root, overall_status="Draft", current_version=draft.name, requisition_handoff=handoff_doc.name, requisition=handoff_doc.requisition,
 			requisition_reference=snapshot.get("requisition_reference"), requisition_version=handoff_doc.requisition_version, requirement_title=snapshot.get("requirement_title"),

@@ -1,9 +1,10 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""TPR-CHG-001 v0.8 §10.11–10.13 reads: one addendum (draft / HoPF issue /
-material-change blocked, with the affected-reference catalogue and the
-deadline rule), one inquiry, and the cancellation screen (grounds,
+"""TPR-CHG-001 v0.12 §10.11–10.13 reads: one addendum (draft / HoPF issue /
+publication confirmation / issued / material-change blocked and its
+cancellation review, with the affected-reference catalogue and the deadline
+rule), one supplier clarification, and the cancellation screen (grounds,
 consequences preview, recommendation, cancelled detail). Reads create
 nothing."""
 
@@ -14,7 +15,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_procurement.tenders.services import addenda, cancellation, channel_confirmation, draft_commands, publication_read, read, serializer
+from kentender_procurement.tenders.services import addenda, cancellation, channel_confirmation, draft_commands, guidance, publication_read, read, serializer
 from kentender_procurement.tenders.services import tender_authorization as authz
 
 
@@ -25,6 +26,12 @@ def _load(tender: str, user: str | None):
 	if mode == "department":
 		authz.not_found()
 	return actor, root, read.actor_roles(actor)
+
+
+def _guidance(root, actor: str, roles: dict[str, bool], context: str, subject=None) -> dict[str, Any]:
+	"""§10.17 — the answer for this screen's subject (an addendum, a
+	clarification) or the cancellation screen."""
+	return guidance.guidance(root, actor=actor, roles=roles, mode="technical" if roles["technical"] else "site", context=context, subject=subject.as_dict() if subject is not None else None)
 
 
 def get_tender_addendum(*, tender: str, addendum: str = "", user: str | None = None) -> dict[str, Any]:
@@ -41,7 +48,10 @@ def get_tender_addendum(*, tender: str, addendum: str = "", user: str | None = N
 	reference = catalogue.get(cstr(doc.affected_reference_key)) if doc else None
 	material = bool(reference and reference["material"])
 	rule = addenda.deadline_rule(root, change_class=cstr(doc.change_class) if doc else "")
-	editable = bool(doc) and doc.status in ("Draft", "Returned") and (roles["officer"] or roles["hopf"]) and root.overall_status == "Published — open"
+	review_status = cstr(doc.cancellation_review_status) if doc else ""
+	drafter = roles["officer"] or roles["hopf"]
+	open_tender = root.overall_status == "Published — open"
+	editable = bool(doc) and doc.status == "Draft" and drafter and open_tender and not review_status
 	actions: list[str] = []
 	if editable:
 		actions += ["save_addendum_draft", "submit_addendum_for_issue"]
@@ -51,6 +61,14 @@ def get_tender_addendum(*, tender: str, addendum: str = "", user: str | None = N
 		actions.append("confirm_addendum_channel")
 	if material:
 		actions = [a for a in actions if a not in ("submit_addendum_for_issue", "issue_addendum")]
+		if doc and doc.status == "Draft" and drafter and open_tender and not review_status:
+			actions.append("request_cancellation_review")
+		if doc and review_status == "Requested" and roles["ao"]:
+			actions.append("close_cancellation_review")
+	if doc and doc.status == "Draft" and drafter and open_tender and review_status != "Requested":
+		actions.append("discard_addendum_draft")
+	if material and drafter:
+		actions.append("view_cancellation_requirements")
 	channels = publication_read.confirmation_rows(subject_type="Addendum", subject_id=doc.name) if doc and doc.status in ("Awaiting publication confirmation", "Issued") else []
 	import json
 
@@ -63,8 +81,11 @@ def get_tender_addendum(*, tender: str, addendum: str = "", user: str | None = N
 			"affected_reference_key": cstr(doc.affected_reference_key), "affected_reference": cstr(doc.affected_reference), "previous_value": cstr(doc.previous_value), "revised_value": cstr(doc.revised_value), "reason": cstr(doc.reason),
 			"materiality_statement": cstr(doc.materiality_statement), "deadline_extension_required": bool(doc.deadline_extension_required), "revised_submission_deadline": cstr(doc.revised_submission_deadline),
 			"revised_submission_deadline_label": serializer.fmt_datetime_short(doc.revised_submission_deadline) if doc.revised_submission_deadline else "", "addendum_digest": cstr(doc.addendum_digest),
-			"drafted_by_name": read._full_name(doc.drafted_by), "submitted_by_name": read._full_name(doc.submitted_by), "issued_by_name": read._full_name(doc.issued_by), "issued_at_label": serializer.fmt_datetime_short(doc.issued_at) if doc.issued_at else "",
-			"effective_at_label": serializer.fmt_datetime_short(doc.effective_at) if doc.effective_at else "", "return_reason": cstr(doc.return_reason), "record_version": int(doc.record_version or 0),
+			"drafted_by_name": read._full_name(doc.drafted_by), "submitted_by_name": read._full_name(doc.submitted_by), "issue_decided_by_name": read._full_name(doc.issue_decided_by),
+			"issue_decided_at_label": serializer.fmt_datetime_short(doc.issue_decided_at) if doc.issue_decided_at else "", "issued_at_label": serializer.fmt_datetime_short(doc.issued_at) if doc.issued_at else "",
+			"confirmation_completed_at_label": _completed_label(doc), "return_reason": cstr(doc.return_reason), "predecessor_addendum": cstr(doc.predecessor_addendum),
+			"cancellation_review_status": review_status, "cancellation_review_reason": cstr(doc.cancellation_review_reason), "cancellation_review_closed_reason": cstr(doc.cancellation_review_closed_reason),
+			"record_version": int(doc.record_version or 0),
 		} if doc else None,
 		"references": references, "change_classes": list(addenda.CHANGE_CLASSES), "affected_areas": list(addenda.AFFECTED_AREAS),
 		"material": material, "material_text": addenda.MATERIAL_TEXT if material else "", "deadline_rule": rule,
@@ -72,7 +93,17 @@ def get_tender_addendum(*, tender: str, addendum: str = "", user: str | None = N
 		"attestations": {c["channel"]: channel_confirmation.attestation_text(subject_type=channel_confirmation.SUBJECT_ADDENDUM, channel_label=c["label"]) for c in original_channels},
 		"ready_to_issue": bool(doc and doc.status == "Awaiting issue" and not material), "editable": editable, "allowed_actions": actions,
 		"task": _task_for(root, "HOPF addendum issue", doc.name) if doc else None,
+		"guidance": _guidance(root, actor, roles, "addendum", doc),
 	}
+
+
+def _completed_label(doc) -> str:
+	"""§10.11 Issued: "confirmation completed" = the final attestation time."""
+	if doc.status != "Issued":
+		return ""
+	rows = frappe.get_all("Tender Channel Confirmation", filters={"subject_type": "Addendum", "subject_id": doc.name, "status": "Confirmed"}, pluck="attested_at")
+	latest = max((r for r in rows if r), default=None)
+	return serializer.fmt_datetime_short(latest) if latest else ""
 
 
 def _task_for(root, task_type: str, subject_id: str) -> dict[str, Any] | None:
@@ -80,24 +111,43 @@ def _task_for(root, task_type: str, subject_id: str) -> dict[str, Any] | None:
 	return {"name": name.name, "task_token": name.task_token} if name else None
 
 
-def get_addendum_inquiry(*, tender: str, inquiry: str, user: str | None = None) -> dict[str, Any]:
+def get_tender_clarification(*, tender: str, clarification: str, user: str | None = None) -> dict[str, Any]:
+	"""§10.12 — one supplier clarification. The candidate's identity and
+	notice destinations are protected: authorised procurement, audit and
+	technical readers only (§12.3(7)); a broadcast never names the asker."""
+	from kentender_procurement.tenders.services import candidate_gateway, candidate_notices
+
 	actor, root, roles = _load(tender, user)
-	if cstr(frappe.db.get_value("Tender Addendum Inquiry", inquiry, "tender")) != root.name:
+	if cstr(frappe.db.get_value("Tender Clarification", clarification, "tender")) != root.name:
 		authz.not_found()
-	doc = frappe.get_doc("Tender Addendum Inquiry", inquiry)
-	oversight = roles["auditor"] or roles["technical"]
+	doc = frappe.get_doc("Tender Clarification", clarification)
+	protected = roles["officer"] or roles["hopf"] or roles["auditor"] or roles["technical"]
+	issued = frappe.get_all("Tender Addendum", filters={"tender": root.name, "status": "Issued"}, fields=["name", "addendum_reference"], order_by="addendum_number asc")
+	notices = candidate_notices.rows_for(doc.name, notice_type="Clarification response", protected=protected)
+	actions: list[str] = []
+	if root.overall_status == "Published — open" and (roles["officer"] or roles["hopf"]):
+		if doc.status in ("Awaiting response", "Awaiting addendum"):
+			actions += ["send_response", "prepare_addendum"]
+		if any(n["status"] == "Failed" for n in notices):
+			actions.append("retry_notice")
 	return {
 		"outcome": "OK", "roles": roles,
-		"tender": {"name": root.name, "tender_reference": root.tender_reference, "overall_status": cstr(root.overall_status), "record_version": int(root.record_version or 0)},
-		"inquiry": {
-			"name": doc.name, "addendum": cstr(doc.addendum), "addendum_reference": cstr(frappe.db.get_value("Tender Addendum", doc.addendum, "addendum_reference")), "candidate_label": "Verified supplier account",
-			"candidate_identity": cstr(doc.candidate_identity) if oversight else "", "question": cstr(doc.question), "received_at_label": serializer.fmt_datetime_short(doc.received_at), "status": doc.status,
-			"response": cstr(doc.response), "affects_requirements": bool(doc.affects_requirements), "responded_by_name": read._full_name(doc.responded_by), "responded_at_label": serializer.fmt_datetime_short(doc.responded_at) if doc.responded_at else "",
-			"broadcast_status": cstr(doc.broadcast_status), "broadcast_digest": cstr(doc.broadcast_digest), "record_version": int(doc.record_version or 0),
+		"tender": {"name": root.name, "tender_reference": root.tender_reference, "overall_status": cstr(root.overall_status), "record_version": int(root.record_version or 0), "clarification_deadline_label": serializer.fmt_datetime_short(root.clarification_deadline) if root.clarification_deadline else ""},
+		"clarification": {
+			"name": doc.name, "candidate_label": "Registered Tender candidate",
+			"candidate_name": candidate_gateway.candidate_name(tender=root.name, candidate_registration_id=doc.candidate_registration_id) if protected else "",
+			"question": cstr(doc.question), "received_at_label": serializer.fmt_datetime_short(doc.received_at), "status": doc.status,
+			"related_addendum": cstr(doc.related_addendum), "related_addendum_reference": cstr(frappe.db.get_value("Tender Addendum", doc.related_addendum, "addendum_reference")) if doc.related_addendum else "None",
+			"response": cstr(doc.response), "response_audience": cstr(doc.response_audience), "affects_published_tender": bool(doc.affects_published_tender),
+			"required_addendum": cstr(doc.required_addendum), "required_addendum_reference": cstr(frappe.db.get_value("Tender Addendum", doc.required_addendum, "addendum_reference")) if doc.required_addendum else "",
+			"responded_by_name": read._full_name(doc.responded_by), "responded_at_label": serializer.fmt_datetime_short(doc.responded_at) if doc.responded_at else "",
+			"record_version": int(doc.record_version or 0),
 		},
-		"effect_texts": {"no": "The response will be sent to the candidate and recorded.", "yes": "The response will be sent to every registered candidate without identifying who asked."},
-		"allowed_actions": ["send_response"] if doc.status == "Awaiting response" and (roles["officer"] or roles["hopf"]) and root.overall_status == "Published — open" else [],
-		"late_text": "The inquiry deadline has passed." if doc.status == "Late" else "",
+		"issued_addenda": [{"name": a.name, "addendum_reference": a.addendum_reference} for a in issued],
+		"notices": notices, "notice_summary": candidate_notices.delivery_summary(doc.name, notice_type="Clarification response"),
+		"audiences": [{"value": "Asker only", "label": "Only the supplier who asked"}, {"value": "All registered candidates", "label": "All registered candidates"}],
+		"allowed_actions": actions,
+		"guidance": _guidance(root, actor, roles, "clarification", doc),
 	}
 
 
@@ -132,4 +182,5 @@ def get_tender_cancellation(*, tender: str, user: str | None = None) -> dict[str
 		"notice_channels": publication_read.confirmation_rows(subject_type="Cancellation notice", subject_id=root.cancellation) if root.cancellation else [],
 		"allowed_actions": [a for a in read.allowed_actions(root, version, actor, roles) if a in ("cancel_tender", "recommend_cancellation", "record_cancellation_evidence")],
 		"warning_text": "Cancellation is final for this Tender. It does not restore the Requisition or create a replacement Tender.",
+		"guidance": _guidance(root, actor, roles, "cancellation"),
 	}

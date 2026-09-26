@@ -28,18 +28,27 @@ EVENT_TYPE = "TenderSubmissionPeriodEnded"
 CONSUMER = "bid-submission"
 
 
+def _effective_definition(root) -> dict[str, Any]:
+	from kentender_procurement.tenders.services import bid_definition
+
+	current = bid_definition.current(root.name)
+	return {"bid_definition_id": current["bid_definition_id"], "definition_version": current["definition_version"], "definition_digest": current["definition_digest"]} if current else {}
+
+
 def build_handoff_payload(root) -> dict[str, Any]:
 	publication = frappe.get_doc("Tender Publication", root.publication)
 	version = frappe.get_doc("Tender Version", publication.tender_version)
-	addenda = frappe.get_all("Tender Addendum", filters={"tender": root.name, "status": "Issued"}, fields=["name", "addendum_reference", "addendum_number", "addendum_digest", "affected_reference_key", "previous_value", "revised_value", "revised_submission_deadline", "effective_at"], order_by="addendum_number asc")
+	addenda = frappe.get_all("Tender Addendum", filters={"tender": root.name, "status": "Issued"}, fields=["name", "addendum_reference", "addendum_number", "addendum_digest", "affected_reference_key", "previous_value", "revised_value", "revised_submission_deadline", "issued_at", "successor_bid_definition_id", "successor_definition_digest"], order_by="addendum_number asc")
 	return {
 		"handoff_version": HANDOFF_VERSION,
 		"tender": {"name": root.name, "tender_reference": root.tender_reference, "plan_item_id": cstr(root.plan_item_id), "requisition_reference": cstr(root.requisition_reference), "fiscal_year": cstr(root.fiscal_year)},
 		"tender_version": {"name": version.name, "version_number": int(version.version_number), "package_digest": cstr(version.package_digest), "invitation_digest": cstr(version.invitation_digest), "issued_tender_digest": cstr(version.issued_tender_digest), "response_schema_digest": cstr(version.response_schema_digest), "evaluation_contract_digest": cstr(version.evaluation_contract_digest), "contract_projection_digest": cstr(version.contract_projection_digest), "requisition_snapshot_digest": cstr(version.requisition_snapshot_digest), "template_release_id": cstr(version.template_release_id), "bundle_digest": cstr(version.bundle_digest)},
 		"publication": {"name": publication.name, "published_at": cstr(publication.published_at), "publication_digest": cstr(publication.publication_digest), "rule_snapshot_id": cstr(publication.rule_snapshot_id), "required_channels": json.loads(publication.required_channels_json or "[]"), "confirmations_digest": channel_confirmation.confirmation_digest(channel_confirmation.SUBJECT_PUBLICATION, publication.name)},
+		# §4.5.4: the exact frozen Published Bid Definition bidders were given.
+		"bid_definition": _effective_definition(root),
 		"effective_submission_deadline": cstr(root.submission_deadline),
 		"opening_datetime": cstr(root.submission_deadline),
-		"addenda": [{**dict(a), "revised_submission_deadline": cstr(a.revised_submission_deadline), "effective_at": cstr(a.effective_at), "confirmations_digest": channel_confirmation.confirmation_digest(channel_confirmation.SUBJECT_ADDENDUM, a.name)} for a in addenda],
+		"addenda": [{**dict(a), "revised_submission_deadline": cstr(a.revised_submission_deadline), "issued_at": cstr(a.issued_at), "confirmations_digest": channel_confirmation.confirmation_digest(channel_confirmation.SUBJECT_ADDENDUM, a.name)} for a in addenda],
 		"documents": [{"kind": d.kind, "digest": d.digest, "addendum": cstr(d.addendum)} for d in documents.list_for_tender(root.name) if d.kind != documents.KIND_CANCELLATION and (not d.tender_version or d.tender_version == version.name)],
 		"closed_at": cstr(clock.now()),
 	}

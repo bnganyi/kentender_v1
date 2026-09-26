@@ -41,8 +41,8 @@ CONTACT_OFFICE = "Test Contact Office — Tenders"
 
 TENDER_DOCTYPES = (
 	"Tender Event", "Tender Command Journal", "Tender Document", "Tender Submission Handoff", "Tender Channel Confirmation",
-	"Tender Addendum Inquiry", "Tender Addendum", "Tender Cancellation", "Tender Publication", "Tender Decision", "Tender Task",
-	"Tender Version", "Tender",
+	"Tender Candidate Notice", "Tender Clarification", "Tender Candidate Registration", "Tender Bid Definition", "Tender Addendum",
+	"Tender Cancellation", "Tender Publication", "Tender Decision", "Tender Task", "Tender Version", "Tender",
 )
 
 
@@ -73,10 +73,10 @@ def ensure_world() -> None:
 	ensure_roles()
 	for email, name in ((OFFICER, "TNDT Procurement Officer"), (BOTH, "TNDT Officer and Approver"), (NOBODY, "TNDT Nobody"), (PRODUCER, "TNDT Bidder Service"), (DEPARTMENTAL, "TNDT Departmental Reader")):
 		_user(email, name)
-	from kentender_procurement.tenders.services import inquiries
+	from kentender_procurement.tenders.services import candidate_gateway
 	from kentender_procurement.tenders.services.tender_roles import INQUIRY_PRODUCER_ROLE
 
-	inquiries.ensure_producer_role()
+	candidate_gateway.ensure_producer_role()
 	frappe.get_doc("User", PRODUCER).add_roles(INQUIRY_PRODUCER_ROLE)
 	_grant(OFFICER, "Procurement Officer")
 	_grant(BOTH, "Procurement Officer")
@@ -99,8 +99,15 @@ def ensure_world() -> None:
 
 
 def test_tenders() -> list[str]:
-	"""Tenders that belong to a test world (a test fiscal year, plan §5)."""
-	return [row.name for row in frappe.get_all("Tender", fields=["name", "fiscal_year"]) if req_fx.is_test_fiscal_year(row.fiscal_year)]
+	"""Tenders that belong to a test world (plan §5): a test fiscal year, no
+	fiscal year at all (the `sample` module's direct inserts), or the test
+	fixture namespace. A canonical Tender always carries a real year and no
+	test namespace."""
+	return [
+		row.name
+		for row in frappe.get_all("Tender", fields=["name", "fiscal_year", "fixture_namespace"])
+		if req_fx.is_test_fiscal_year(row.fiscal_year) or not row.fiscal_year or row.fixture_namespace == NS
+	]
 
 
 def wipe_tender_rows() -> None:

@@ -1,12 +1,14 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""TPR-CHG-001 v0.8 §4.5 — the one canonical serializer (plan D4).
+"""TPR-CHG-001 v0.12 §4.5 — the canonical serializer (plan D4, D25).
 
-Every schedule, supplier-response definition (§4.5.1), evaluation contract
-(§4.5.2), contract-obligation projection (§4.5.3), render context and
-package digest is a projection of the Version's immutable snapshot plus its
-officer values, computed here and nowhere else. Goods lines group
+Every display schedule, render context and package digest is a projection
+of the Version's immutable snapshot plus its officer values, computed here.
+The supplier-response definition (§4.5.1), evaluation contract (§4.5.2) and
+contract-obligation projection (§4.5.3) are NOT built here: they are the
+compiled Published Bid Definition from the installed STD release
+(`bid_definition.py`; §16(28)). Goods lines group
 Requisition items that share one specification into one rendered line while
 keeping every `requisition_item_id`, quantity and source allocation (owner
 ruling 8 Sep 2026; STD-TPL-001 v0.6 §8.4(2); SEED-001 §5.2). Internal
@@ -36,12 +38,12 @@ PLATFORM_NAME = "KenTender"
 FIXED_PRICE = True
 TAX_TREATMENT = "Shown separately"
 PERFORMANCE_SECURITY_FORM = "Unconditional Demand Bank Guarantee"
-EVALUATION_STAGES = (
-	"Submission and eligibility",
-	"Pass/fail technical compliance",
-	"Arithmetic and financial evaluation",
-	"Award to the lowest evaluated responsive Tender",
-)
+#: TPR-CHG-001 v0.12 §4.5.2 — display labels of the four fixed evaluation
+#: groups (EVG-ELIGIBILITY, EVG-TECHNICAL-COMPLIANCE, EVG-FINANCIAL,
+#: EVG-AWARD). The groups and every mapping come from the compiled Published
+#: Bid Definition (`bid_definition.py`), never from this module.
+EVALUATION_STAGES = ("Eligibility", "Technical compliance", "Financial", "Award")
+EVALUATION_BASIS = "Lowest evaluated responsive Tender"
 BANK_GUARANTEE_EXTRA_DAYS = 30
 INSURANCE_GUARANTEE_EXTRA_DAYS = 28
 SUPPLIER = "Completed by supplier"
@@ -272,59 +274,6 @@ def price_schedule(snapshot: dict[str, Any]) -> dict[str, Any]:
 	return {"currency": "KES", "fixed_price": FIXED_PRICE, "tax_display_treatment": TAX_TREATMENT, "rows": rows, "tender_total": CALCULATED}
 
 
-_CONTROL_MAP = {
-	req_catalogue.YES_NO: "select", req_catalogue.SELECT: "select", req_catalogue.MULTI_SELECT: "multi_select", req_catalogue.INTEGER: "integer",
-	req_catalogue.DECIMAL: "decimal", req_catalogue.TEXT: "text", req_catalogue.PORT_LIST: "port_list",
-}
-
-
-def supplier_response_schema(snapshot: dict[str, Any], evidence_rows: list[dict[str, Any]]) -> dict[str, Any]:
-	"""§4.5.1 — one structured response row per published goods line,
-	mandatory technical requirement, service, warranty/support obligation,
-	acceptance requirement and evidence requirement, each keeping the
-	published stable identifier."""
-	from kentender_procurement.tenders.services import evidence as ev
-
-	evidence_ids = ev.technical_ids_with_evidence(evidence_rows)
-	technical = []
-	for row in technical_rows(snapshot, evidence_ids):
-		offered = {"control": _CONTROL_MAP.get(row["control"], "text"), "unit": row["unit"], "max_length": 300}
-		if offered["control"] == "select":
-			offered["options"] = row["options"]
-		technical.append(
-			{
-				"technical_requirement_id": row["technical_requirement_id"], "published_requirement": row["label"], "comparison": row["comparison"],
-				"required_value": row["required_value"], "unit": row["unit"], "applies_to": row["applies_to"],
-				"compliance": {"control": "radio", "options": ["Comply", "Do not comply"], "required": True},
-				"offered_value": offered, "comment": {"control": "text", "max_length": 500, "required": False},
-				"evidence_references": {"required": row["evidence_required"]},
-			}
-		)
-	return {
-		"goods": [
-			{
-				"line": f"{line['line_number']}", "identity": line["source_item_ids"], "description": line["description"], "quantity": line["quantity"], "unit": line["unit"],
-				"offered_make_model": {"control": "text", "max_length": 160, "required": True}, "unit_price": {"control": "money", "currency": "KES", "required": True},
-				"total_price": {"control": "money", "currency": "KES", "calculated": True}, "delivery_commitment": {"control": "date", "not_later_than": line["latest_delivery_date_iso"]},
-				"evidence_references": {"required": True},
-			}
-			for line in goods_lines(snapshot)
-		],
-		"technical": technical,
-		"services": [
-			{"service_requirement_id": s["service_requirement_id"], "confirmation": {"control": "radio", "options": ["Yes", "No"]}, "offered_completion_date": {"control": "date", "not_later_than": s["completion_date_iso"]}, "price_line": f"S{i}", "evidence_references": {"required": True}}
-			for i, s in enumerate(related_services(snapshot), start=1)
-		],
-		"warranty_support": {
-			"identity": snap.WARRANTY_ID, "confirmation": {"control": "radio", "options": ["Yes", "No"], "required": True},
-			"offered_term_months": {"control": "integer", "minimum": snapshot.get("minimum_warranty_months")},
-			"service_escalation_details": {"control": "text", "max_length": 500, "required": True}, "evidence_references": {"required": True},
-		},
-		"acceptance": [{"acceptance_requirement_id": a["acceptance_requirement_id"], "confirmation": "Accepted with the Tender submission — becomes a contract obligation"} for a in acceptance_rows(snapshot)],
-		"evidence": [{"evidence_requirement_id": r["evidence_requirement_id"], "label": r["label"], "linked_requirement_type": r["linked_requirement_type"], "linked_requirement_id": r["linked_requirement_id"], "mandatory": r["mandatory"], "references": {"minimum": 1 if r["mandatory"] else 0}} for r in evidence_rows],
-	}
-
-
 def qualification_criteria(state: dict[str, Any]) -> list[dict[str, Any]]:
 	return [
 		{"criterion": "Manufacturer's authorisation", "required": bool(state.get("manufacturer_authorisation_required"))},
@@ -334,52 +283,6 @@ def qualification_criteria(state: dict[str, Any]) -> list[dict[str, Any]]:
 		{"criterion": "After-sales support evidence", "required": bool(state.get("after_sales_evidence_required")), "evidence": state.get("after_sales_evidence") if state.get("after_sales_evidence_required") else None},
 	]
 
-
-def evaluation_contract(state: dict[str, Any], snapshot: dict[str, Any], evidence_rows: list[dict[str, Any]]) -> dict[str, Any]:
-	"""§4.5.2 — the fixed governed stage order, one pass/fail check per
-	mandatory technical requirement identity, the published eligibility and
-	evidence checklist, and nothing hidden."""
-	from kentender_procurement.tenders.services import evidence as ev
-
-	return {
-		"stages": list(EVALUATION_STAGES),
-		"eligibility_checklist": [{"evidence_requirement_id": r["evidence_requirement_id"], "label": r["label"], "linked_requirement_type": r["linked_requirement_type"], "linked_requirement_id": r["linked_requirement_id"], "mandatory": r["mandatory"]} for r in evidence_rows],
-		"qualification_criteria": qualification_criteria(state),
-		"technical_pass_fail": [{"technical_requirement_id": row["technical_requirement_id"], "published_requirement": row["label"], "comparison": row["comparison"], "required_value": row["required_value"], "unit": row["unit"], "mandatory": True, "evidence_required": row["evidence_required"]} for row in technical_rows(snapshot, ev.technical_ids_with_evidence(evidence_rows))],
-		"financial": {"currency": "KES", "basis": "Lowest evaluated responsive Tender", "award_packages": 1, "fixed_price": FIXED_PRICE, "tax_display_treatment": TAX_TREATMENT},
-		"hidden_criteria": [],
-	}
-
-
-def contract_obligations(state: dict[str, Any], snapshot: dict[str, Any]) -> dict[str, Any]:
-	"""§4.5.3 — identified obligations for every item/source allocation,
-	technical requirement, service, warranty/support value, acceptance
-	requirement, price row and finite officer-authored parameter."""
-	lines_by_id = {line.get("drawdown_line_id"): line for line in snapshot.get("drawdown_lines") or []}
-	return {
-		"items": [
-			{
-				"requisition_item_id": i.get("requisition_item_id"), "item_name": i.get("item_name"), "quantity": i.get("quantity"), "unit": i.get("unit"),
-				"plan_item_line_id": i.get("plan_item_line_id"), "plan_source_allocation_id": (lines_by_id.get(i.get("plan_item_line_id")) or {}).get("plan_item_line_id"),
-				"reservation_id": (lines_by_id.get(i.get("plan_item_line_id")) or {}).get("reservation_id"),
-				"delivery_location": snapshot.get("delivery_location"), "latest_delivery_date": snapshot.get("latest_delivery_date"),
-			}
-			for i in snapshot.get("items") or []
-		],
-		"price_rows": [{"line": r["line"], "identity": r["identity"], "quantity": r["quantity"], "unit": r["unit"], "agreed_price": "From awarded response"} for r in price_schedule(snapshot)["rows"]],
-		"technical": [{"technical_requirement_id": r["technical_requirement_id"], "published_requirement": r["label"], "comparison": r["comparison"], "required_value": r["required_value"], "unit": r["unit"], "mandatory": True, "accepted_offered_value": "From awarded response"} for r in technical_rows(snapshot)],
-		"services": [{"service_requirement_id": s["service_requirement_id"], "service_type": s["service_type"], "required_result": s["required_result"], "completion_date": s["completion_date_iso"], "acceptance_evidence": s["acceptance_evidence"]} for s in related_services(snapshot)],
-		"warranty_support": warranty_support(snapshot),
-		"acceptance": acceptance_rows(snapshot),
-		"parameters": {
-			"payment_timing_days": state.get("payment_timing_days"), "performance_security_required": bool(state.get("performance_security_required")),
-			"performance_security_percent": state.get("performance_security_percent") if state.get("performance_security_required") else None,
-			"performance_security_form": PERFORMANCE_SECURITY_FORM if state.get("performance_security_required") else None,
-			"delay_damages_per_week_percent": state.get("delay_damages_per_week_percent"), "maximum_delay_damages_percent": state.get("maximum_delay_damages_percent"),
-			"inspection_location": state.get("inspection_location"), "contract_contact_office": state.get("contract_contact_office"),
-			"tender_validity_days": state.get("tender_validity_days"),
-		},
-	}
 
 
 # --------------------------------------------------------------------------
@@ -528,21 +431,16 @@ def public_context(context: dict[str, Any]) -> dict[str, Any]:
 # --------------------------------------------------------------------------
 
 
-def generated(state: dict[str, Any], snapshot: dict[str, Any], evidence_rows: list[dict[str, Any]]) -> dict[str, Any]:
+def generated(version, snapshot: dict[str, Any]) -> dict[str, Any]:
+	"""The generated content a package digest covers: the goods and price
+	schedules plus the Version's component digests of its compiled Published
+	Bid Definition (§4.2; `bid_definition.component_digests`)."""
 	return {
 		"goods": goods_lines(snapshot), "price_schedule": price_schedule(snapshot),
-		"supplier_response_schema": supplier_response_schema(snapshot, evidence_rows),
-		"evaluation_contract": evaluation_contract(state, snapshot, evidence_rows), "contract_obligations": contract_obligations(state, snapshot),
-	}
-
-
-def generated_digests(state: dict[str, Any], snapshot: dict[str, Any], evidence_rows: list[dict[str, Any]]) -> dict[str, str]:
-	"""§4.2 `response_schema_digest`, `evaluation_contract_digest`,
-	`contract_projection_digest`."""
-	return {
-		"response_schema_digest": digest.sha256_hex(supplier_response_schema(snapshot, evidence_rows)),
-		"evaluation_contract_digest": digest.sha256_hex(evaluation_contract(state, snapshot, evidence_rows)),
-		"contract_projection_digest": digest.sha256_hex(contract_obligations(state, snapshot)),
+		"components": {
+			"response_schema_digest": cstr(version.response_schema_digest), "evaluation_contract_digest": cstr(version.evaluation_contract_digest),
+			"contract_projection_digest": cstr(version.contract_projection_digest),
+		},
 	}
 
 
@@ -560,7 +458,7 @@ def content_material(tender, version, snapshot: dict[str, Any]) -> dict[str, Any
 		"requisition_snapshot_digest": version.requisition_snapshot_digest,
 		"officer_values": state,
 		"evidence": evidence_rows,
-		"generated": generated(state, snapshot, evidence_rows),
+		"generated": generated(version, snapshot),
 	}
 
 

@@ -83,7 +83,7 @@ class TestWorkspaceAndStart(TenderReadCase):
 		start = read.get_tender_start(handoff=authorised["handoff"], user=fx.OFFICER)
 		self.assertEqual((start["outcome"], start["supported"], start["can_start"]), ("OK", True, True))
 		self.assertEqual(start["result_text"], "Supported — IT equipment using the standard Open Tender format.")
-		self.assertEqual([c["check"] for c in start["compatibility"]], ["Procurement category", "Product", "Method", "Reservation", "Lotting", "Currency", "Award package", "Plan horizon"])
+		self.assertEqual([c["check"] for c in start["compatibility"]], ["Procurement category", "Product", "Method", "Reservation", "County-residents restriction", "Lotting", "Currency", "Award package", "Plan horizon"])
 		self.assertEqual(start["summary"]["method"], "Open Tender")
 		self.assertTrue(start["template"]["available"])
 		self.assertEqual(frappe.db.count("Tender"), before)
@@ -138,7 +138,8 @@ class TestRecordReview(TenderReadCase):
 		self.assertEqual((row["status_label"], row["action_label"]), ("Awaiting your approval", "Review"))
 		self.assertEqual(ws["counts"][0], {"key": "awaiting_approval", "label": "Awaiting procurement approval", "value": 1, "sub": "Tenders submitted for procurement approval"})
 		rows = my_work_provider.my_work_rows(user=fx.HOPF)["assigned"]
-		self.assertEqual((rows[0]["task_id"], rows[0]["route"], rows[0]["action_label"]), (submitted["task"], ["tenders", root.tender_reference], "Review Tender package"))
+		# §5.11 / §11.2: "Review Tender {ref}", opened with the workspace's "Review"
+		self.assertEqual((rows[0]["task_id"], rows[0]["route"], rows[0]["action_label"], rows[0]["title"]), (submitted["task"], ["tenders", root.tender_reference], "Review", f"Review Tender {root.tender_reference}"))
 		self.assertEqual(my_work_provider.my_work_rows(user=fx.OFFICER)["assigned"], [])
 
 		root.reload()
@@ -194,7 +195,7 @@ class TestApiSurface(TenderReadCase):
 		offenders = [n.name for n in tree.body if isinstance(n, ast.FunctionDef) and n.args.kwarg is not None]
 		self.assertEqual(offenders, [])
 		whitelisted = [n.name for n in tree.body if isinstance(n, ast.FunctionDef) and any(getattr(d, "attr", None) == "whitelist" or getattr(getattr(d, "func", None), "attr", None) == "whitelist" for d in n.decorator_list)]
-		self.assertEqual(len(whitelisted), 37)
+		self.assertEqual(len(whitelisted), 42)
 
 	def test_the_journey_over_the_request_path(self):
 		authorised = fx.authorised_handoff(items=(("Business laptops", 1, "Clinical training"),))

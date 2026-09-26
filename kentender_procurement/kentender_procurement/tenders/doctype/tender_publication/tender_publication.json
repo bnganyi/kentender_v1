@@ -9,6 +9,13 @@
   "tender",
   "tender_version",
   "package_digest",
+  "bid_definition",
+  "bid_definition_id",
+  "definition_version",
+  "definition_digest",
+  "response_schema_digest",
+  "evaluation_contract_digest",
+  "contract_projection_digest",
   "authorised_by",
   "authorised_at",
   "col_a",
@@ -49,6 +56,49 @@
    "fieldname": "package_digest",
    "fieldtype": "Data",
    "label": "Package digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bid_definition",
+   "fieldtype": "Link",
+   "label": "Bid definition record",
+   "read_only": 1,
+   "options": "Tender Bid Definition"
+  },
+  {
+   "fieldname": "bid_definition_id",
+   "fieldtype": "Data",
+   "label": "Bid definition",
+   "read_only": 1
+  },
+  {
+   "fieldname": "definition_version",
+   "fieldtype": "Int",
+   "label": "Definition version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "definition_digest",
+   "fieldtype": "Data",
+   "label": "Definition digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "response_schema_digest",
+   "fieldtype": "Data",
+   "label": "Response schema digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evaluation_contract_digest",
+   "fieldtype": "Data",
+   "label": "Evaluation contract digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "contract_projection_digest",
+   "fieldtype": "Data",
+   "label": "Contract projection digest",
    "read_only": 1
   },
   {
@@ -163,7 +213,7 @@
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-19 00:00:00.000000",
+ "modified": "2026-09-26 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Tenders",
  "name": "Tender Publication",

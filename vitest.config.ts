@@ -59,6 +59,9 @@ export default defineConfig({
 				test: {
 					name: "tenders",
 					environment: "jsdom",
+					// TPR-CHG-001 v0.12 §10.17 — the shared guidance region mounts
+					// through kentender_core's real bundle.
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/tenders/vitest.setup.js"],
 					include: ["kentender_procurement/kentender_procurement/public/js/tenders/**/*.spec.js"],
 				},
 			},

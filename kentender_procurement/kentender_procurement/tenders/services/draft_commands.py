@@ -103,7 +103,7 @@ def start_tender(*, handoff: str, idempotency_key: str, user: str | None = None,
 		fail("TND_HANDOFF_CONFLICT", detail={"handoff": handoff_doc.name, "tender": cstr(handoff_doc.tender)})
 	binding = template_binding.require_available()
 	snapshot, snapshot_digest = snap.build(handoff_doc)
-	compatibility.require_supported(snapshot, binding["supported_reservation_categories"])
+	compatibility.require_supported(snapshot, binding)
 
 	with envelope.atomic("start"):
 		reference = references.tender_reference(fiscal_year=cstr(snapshot.get("fiscal_year")), plan_item_id_value=cstr(snapshot.get("plan_item_id")))

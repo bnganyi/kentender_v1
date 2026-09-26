@@ -399,8 +399,8 @@ has_permission.update({
 _TND_AUTHZ = "kentender_procurement.tenders.services.tender_authorization"
 _TND_FAMILY = (
 	"Tender", "Tender Version", "Tender Task", "Tender Decision", "Tender Publication", "Tender Channel Confirmation",
-	"Tender Addendum", "Tender Addendum Inquiry", "Tender Cancellation", "Tender Document", "Tender Event",
-	"Tender Submission Handoff",
+	"Tender Addendum", "Tender Clarification", "Tender Candidate Notice", "Tender Bid Definition", "Tender Candidate Registration",
+	"Tender Cancellation", "Tender Document", "Tender Event", "Tender Submission Handoff",
 )
 permission_query_conditions.update({doctype: f"{_TND_AUTHZ}.permission_query_conditions" for doctype in _TND_FAMILY})
 has_permission.update({doctype: f"{_TND_AUTHZ}.has_permission" for doctype in _TND_FAMILY})
@@ -437,6 +437,9 @@ scheduler_events: dict[str, list[str]] = {
 	# TPR-CHG-001 v0.8 §5.1 / plan D9 — the submission period closes by the
 	# system, one Tender per transaction, idempotent.
 	"hourly": ["kentender_procurement.tenders.services.submission_close.close_due_submission_periods"],
+	# TPR-CHG-001 v0.12 §4.9A — dispatch Queued candidate notices (the outbox
+	# sweep; every scheduler tick).
+	"all": ["kentender_procurement.tenders.services.candidate_notices.dispatch_pending"],
 }
 
 # scheduler_events = {

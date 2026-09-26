@@ -55,7 +55,7 @@ _NOT_KENTENDER_DESK_ROLES: frozenset[str] = frozenset(
 		# Supplier portal — portal users, not Desk users
 		"KenTender External Supplier",
 		# TPR-CHG-001 bidder-facing inquiry service identity: created with
-		# desk_access 0 (`tenders.services.inquiries.ensure_producer_role`),
+		# desk_access 0 (`tenders.services.candidate_gateway.ensure_producer_role`),
 		# it calls one API and never opens Desk.
 		"Tender Inquiry Producer",
 	}

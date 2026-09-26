@@ -25,13 +25,13 @@ from typing import Any
 import frappe
 from frappe.utils import cstr, get_datetime, getdate
 
-from kentender_procurement.tenders.services import channel_confirmation, clock, compatibility, configuration_gateway, digest, draft_commands, envelope, events, lifecycle, planning_gateway, review, serializer, template_binding
+from kentender_procurement.tenders.services import bid_definition, channel_confirmation, clock, compatibility, configuration_gateway, digest, draft_commands, envelope, events, handoffs, lifecycle, planning_gateway, review, serializer, template_binding
 from kentender_procurement.tenders.services import snapshot as snap
 from kentender_procurement.tenders.services import tender_authorization as authz
 from kentender_procurement.tenders.services.errors import fail
 from kentender_procurement.tenders.services.tender_roles import ROLE_ACCOUNTING_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION
 
-TASK_HOPF_CONFIRMATION = "HOPF channel confirmation"
+TASK_HOPF_CONFIRMATION = handoffs.CHANNEL_CONFIRMATION
 STATUS_EVIDENCE_REQUIRED = "Evidence required"
 STATUS_PUBLISHED = "Published"
 STATUS_WITHDRAWN = "Withdrawn before confirmation"
@@ -67,7 +67,7 @@ def authorise_tender_publication(*, tender: str, expected_record_version, idempo
 		envelope.assert_task_token(ao_task, task_token)
 	bound = template_binding.require_bound(version, "publication")
 	snapshot = snap.load(version)
-	compatibility.require_supported(snapshot, bound["supported_reservation_categories"])
+	compatibility.require_supported(snapshot, bound)
 	check = review.run(root, version, with_renders=False)
 	if check["must_fix_count"]:
 		fail("TND_MUST_FIX", detail={"findings": [f for f in check["findings"] if f["severity"] == review.MUST_FIX]})
@@ -89,16 +89,27 @@ def authorise_tender_publication(*, tender: str, expected_record_version, idempo
 				}
 			)
 		)
+		# §4.5.4 / §7.3: the Published Bid Definition is compiled and frozen in
+		# this same transaction; any failure rolls the whole authorisation
+		# back (no publication, no partial definition).
+		built = bid_definition.build(root, version, publication_id=publication.name)
+		definition = built["definition"]
+		definition_row = bid_definition.store(root, version, definition=definition, publication=publication.name, status="Frozen")
+		envelope.bump(
+			publication, bid_definition=definition_row.name, bid_definition_id=definition["bid_definition_id"], definition_version=int(definition["definition_version"]),
+			definition_digest=definition["definition_digest"], **built["components"],
+		)
 		rows = channel_confirmation.create_rows(root=root, publication_name=publication.name, subject_type=channel_confirmation.SUBJECT_PUBLICATION, subject_id=publication.name, subject_digest=cstr(version.package_digest), channels=rule["channels"])
 		decision = lifecycle.record_decision(root, version, decision="Authorise publication", actor=actor, business_role=ROLE_ACCOUNTING_OFFICER, assignment=assignment, idempotency_key=idempotency_key, subject_type="Tender Publication", subject_id=publication.name)
 		if ao_task:
 			lifecycle.complete_task(ao_task, decision.name)
-		confirmation_task = lifecycle.new_task(root, version, task_type=TASK_HOPF_CONFIRMATION, business_role=ROLE_HEAD_OF_PROCUREMENT_FUNCTION, subject_type="Tender Publication", subject_id=publication.name)
+		handoffs.close_open(root, task_types=(handoffs.REVIEW_WITHDRAWN,), decision=decision.name)
+		confirmation_task = handoffs.open_task(root, version, task_type=TASK_HOPF_CONFIRMATION, subject_type="Tender Publication", subject_id=publication.name, sender=actor)
 		envelope.bump(root, overall_status="Publication authorised", publication=publication.name, submission_deadline=state.get("submission_deadline"), clarification_deadline=state.get("clarification_deadline"))
 		events.emit(
 			tender=root.name, event_type="PublicationAuthorised", command="AuthoriseTenderPublication", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment),
 			previous_status="Approved", resulting_status="Publication authorised", record_version=root.record_version, subject_type="Tender Publication", subject_id=publication.name,
-			payload={"package_digest": version.package_digest, "rule_snapshot_id": rule["rule_snapshot_id"], "contributing_versions": rule["contributing_versions"], "required_channels": [c["channel"] for c in rule["channels"]], "minimum_preparation_days": rule["minimum_preparation_days"], "confirmations": [r.name for r in rows], "decision": decision.name, "task": confirmation_task.name, "external_call": None},
+			payload={"package_digest": version.package_digest, "bid_definition_id": definition["bid_definition_id"], "definition_digest": definition["definition_digest"], "rule_snapshot_id": rule["rule_snapshot_id"], "contributing_versions": rule["contributing_versions"], "required_channels": [c["channel"] for c in rule["channels"]], "minimum_preparation_days": rule["minimum_preparation_days"], "confirmations": [r.name for r in rows], "decision": decision.name, "task": confirmation_task.name, "external_call": None},
 			fixture_namespace=root.fixture_namespace,
 		)
 	out = {"ok": True, "idempotent": False, "action": "publication_authorised", "tender": root.name, "record_version": root.record_version, "publication": publication.name, "required_channels": [c["channel"] for c in rule["channels"]], "confirmations": [r.name for r in rows], "task": confirmation_task.name}
@@ -146,6 +157,9 @@ def confirm_tender_published(root, rows, *, actor: str, assignment, idempotency_
 		fail("TND_PUBLICATION_PERIOD_INVALID", detail={"published_at": cstr(published_at), "submission_deadline": cstr(state.get("submission_deadline")), "minimum_preparation_days": int(publication.minimum_preparation_days or 0)})
 	publication_digest = digest.sha256_hex({"decision": {"authorised_by": publication.authorised_by, "authorised_at": cstr(publication.authorised_at)}, "package_digest": publication.package_digest, "rule_snapshot_id": publication.rule_snapshot_id, "channels": channel_confirmation.confirmation_digest(channel_confirmation.SUBJECT_PUBLICATION, publication.name), "published_at": cstr(published_at)})
 	envelope.bump(publication, publication_status=STATUS_PUBLISHED, published_at=published_at, publication_digest=publication_digest)
+	# BDS receives the exact frozen definition only now (§4.5.4).
+	if publication.bid_definition:
+		bid_definition.activate(root, publication.bid_definition, at=published_at)
 	envelope.bump(root, overall_status="Published — open", published_at=published_at, submission_deadline=state.get("submission_deadline"))
 	task = lifecycle.open_task(root, task_type=TASK_HOPF_CONFIRMATION, subject_id=publication.name)
 	if task:
@@ -162,7 +176,7 @@ def confirm_tender_published(root, rows, *, actor: str, assignment, idempotency_
 		events.emit(
 			tender=root.name, event_type="TenderOpenForSubmission", command="ConfirmTenderPublished", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment),
 			previous_status="Publication authorised", resulting_status="Published — open", record_version=root.record_version, subject_type="Tender Publication", subject_id=publication.name,
-			status="Pending", consumer="bidder-service", payload={"tender_reference": root.tender_reference, "published_at": cstr(published_at), "submission_deadline": cstr(state.get("submission_deadline")), "package_digest": publication.package_digest, "invitation_digest": version.invitation_digest, "issued_tender_digest": version.issued_tender_digest},
+			status="Pending", consumer="bidder-service", payload={"tender_reference": root.tender_reference, "bid_definition_id": cstr(publication.bid_definition_id), "definition_digest": cstr(publication.definition_digest), "published_at": cstr(published_at), "submission_deadline": cstr(state.get("submission_deadline")), "package_digest": publication.package_digest, "invitation_digest": version.invitation_digest, "issued_tender_digest": version.issued_tender_digest},
 			fixture_namespace=root.fixture_namespace,
 		)
 	return {"ok": True, "idempotent": False, "published_at": cstr(published_at), "publication_digest": publication_digest, "planning": planning}
@@ -195,9 +209,14 @@ def withdraw_publication_authorisation(*, tender: str, reason: str, evidence: st
 		fail("TND_PUBLICATION_WITHDRAWAL_BLOCKED")
 	with envelope.atomic("withdraw"):
 		envelope.bump(publication, publication_status=STATUS_WITHDRAWN, withdrawn_by=actor, withdrawn_at=clock.now(), withdrawal_reason=reason, withdrawal_evidence=evidence)
+		if publication.bid_definition:
+			# never became bidder-current; kept as the withdrawn record
+			envelope.bump(frappe.get_doc("Tender Bid Definition", publication.bid_definition), status="Superseded")
 		decision = lifecycle.record_decision(root, version, decision="Withdraw publication authorisation", actor=actor, business_role=ROLE_ACCOUNTING_OFFICER, assignment=assignment, idempotency_key=idempotency_key, reason=reason, subject_type="Tender Publication", subject_id=publication.name)
 		lifecycle.cancel_open_tasks(root, task_types=(TASK_HOPF_CONFIRMATION,))
-		ao_task = lifecycle.new_task(root, version, task_type=lifecycle.TASK_AO_AUTHORISATION, business_role=ROLE_ACCOUNTING_OFFICER)
+		# §5.11: the HOPF reviews the withdrawn authorisation (clears on reopen
+		# or a new authorisation decision).
+		ao_task = handoffs.open_task(root, version, task_type=handoffs.REVIEW_WITHDRAWN, subject_type="Tender Publication", subject_id=publication.name, comment=reason)
 		envelope.bump(root, overall_status="Approved", publication=None)
 		events.emit(
 			tender=root.name, event_type="PublicationAuthorisationWithdrawn", command="WithdrawPublicationAuthorisation", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment),
@@ -215,7 +234,7 @@ def withdraw_publication_authorisation(*, tender: str, reason: str, evidence: st
 
 
 def get_tender_publication(*, tender: str, user: str | None = None) -> dict[str, Any]:
-	from kentender_procurement.tenders.services import publication_read, read
+	from kentender_procurement.tenders.services import guidance, publication_read, read
 
 	actor = authz.actor(user)
 	root = frappe.get_doc("Tender", draft_commands.resolve_tender_name(tender))
@@ -251,4 +270,5 @@ def get_tender_publication(*, tender: str, user: str | None = None) -> dict[str,
 		"attestations": {c["channel"]: channel_confirmation.attestation_text(subject_type=channel_confirmation.SUBJECT_PUBLICATION, channel_label=c["label"]) for c in ((summary or {}).get("required_channels") or [])},
 		"allowed_actions": read.allowed_actions(root, version, actor, roles),
 		"segregation_message": read.segregation_message(root, version, actor, roles),
+		"guidance": guidance.guidance(root, actor=actor, roles=roles, mode=mode, context="publication"),
 	}

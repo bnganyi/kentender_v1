@@ -1,26 +1,29 @@
 {
  "actions": [],
  "allow_rename": 0,
- "creation": "2026-09-19 00:00:00.000000",
+ "creation": "2026-09-26 00:00:00.000000",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "tender",
-  "addendum",
+  "publication",
+  "bid_definition_id",
+  "related_addendum",
+  "candidate_registration_id",
   "producer",
   "inbound_event_id",
-  "candidate_identity",
   "question",
   "received_at",
   "status",
-  "col_a",
   "response",
-  "affects_requirements",
+  "response_audience",
+  "affects_published_tender",
+  "required_addendum",
   "responded_by",
   "responded_at",
-  "broadcast_status",
-  "broadcast_digest",
+  "closed_reason",
+  "response_digest",
   "record_version",
   "fixture_namespace"
  ],
@@ -28,19 +31,38 @@
   {
    "fieldname": "tender",
    "fieldtype": "Link",
-   "options": "Tender",
    "label": "Tender",
-   "reqd": 1,
    "read_only": 1,
+   "options": "Tender",
+   "reqd": 1,
    "in_list_view": 1
   },
   {
-   "fieldname": "addendum",
+   "fieldname": "publication",
    "fieldtype": "Link",
-   "options": "Tender Addendum",
-   "label": "Addendum",
+   "label": "Publication",
    "read_only": 1,
-   "in_list_view": 1
+   "options": "Tender Publication"
+  },
+  {
+   "fieldname": "bid_definition_id",
+   "fieldtype": "Data",
+   "label": "Bid definition at receipt",
+   "read_only": 1
+  },
+  {
+   "fieldname": "related_addendum",
+   "fieldtype": "Link",
+   "label": "Related addendum",
+   "read_only": 1,
+   "options": "Tender Addendum"
+  },
+  {
+   "fieldname": "candidate_registration_id",
+   "fieldtype": "Data",
+   "label": "Candidate registration",
+   "read_only": 1,
+   "reqd": 1
   },
   {
    "fieldname": "producer",
@@ -55,12 +77,6 @@
    "read_only": 1
   },
   {
-   "fieldname": "candidate_identity",
-   "fieldtype": "Data",
-   "label": "Candidate identity",
-   "read_only": 1
-  },
-  {
    "fieldname": "question",
    "fieldtype": "Small Text",
    "label": "Question",
@@ -70,19 +86,16 @@
    "fieldname": "received_at",
    "fieldtype": "Datetime",
    "label": "Received at",
-   "read_only": 1
-  },
-  {
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "options": "Awaiting response\nAnswered\nLate",
-   "label": "Status",
    "read_only": 1,
    "in_list_view": 1
   },
   {
-   "fieldname": "col_a",
-   "fieldtype": "Column Break"
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Awaiting response\nAwaiting addendum\nAnswered\nClosed with reason",
+   "in_list_view": 1
   },
   {
    "fieldname": "response",
@@ -91,17 +104,32 @@
    "read_only": 1
   },
   {
-   "fieldname": "affects_requirements",
+   "fieldname": "response_audience",
+   "fieldtype": "Select",
+   "label": "Response audience",
+   "read_only": 1,
+   "options": "\nAsker only\nAll registered candidates"
+  },
+  {
+   "fieldname": "affects_published_tender",
    "fieldtype": "Check",
-   "label": "Affects requirements",
-   "read_only": 1
+   "label": "Affects published Tender",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "required_addendum",
+   "fieldtype": "Link",
+   "label": "Required addendum",
+   "read_only": 1,
+   "options": "Tender Addendum"
   },
   {
    "fieldname": "responded_by",
    "fieldtype": "Link",
-   "options": "User",
    "label": "Responded by",
-   "read_only": 1
+   "read_only": 1,
+   "options": "User"
   },
   {
    "fieldname": "responded_at",
@@ -110,23 +138,23 @@
    "read_only": 1
   },
   {
-   "fieldname": "broadcast_status",
-   "fieldtype": "Select",
-   "options": "\nNot required\nBroadcast",
-   "label": "Broadcast status",
+   "fieldname": "closed_reason",
+   "fieldtype": "Small Text",
+   "label": "Closed reason",
    "read_only": 1
   },
   {
-   "fieldname": "broadcast_digest",
+   "fieldname": "response_digest",
    "fieldtype": "Data",
-   "label": "Broadcast digest",
+   "label": "Response digest",
    "read_only": 1
   },
   {
    "fieldname": "record_version",
    "fieldtype": "Int",
    "label": "Record version",
-   "read_only": 1
+   "read_only": 1,
+   "default": "0"
   },
   {
    "fieldname": "fixture_namespace",
@@ -138,17 +166,17 @@
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-19 00:00:00.000000",
+ "modified": "2026-09-26 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Tenders",
- "name": "Tender Addendum Inquiry",
+ "name": "Tender Clarification",
  "owner": "Administrator",
  "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
  "track_changes": 1,
- "autoname": "format:TDI-{#####}",
+ "autoname": "format:TCQ-{#####}",
  "permissions": [
   {
    "create": 1,

@@ -27,6 +27,9 @@
   "supported_renderer_version",
   "official_source_digest",
   "bundle_digest",
+  "response_rules_digest",
+  "downstream_rules_digest",
+  "addendum_identity_rules_digest",
   "current_version",
   "approved_version",
   "overall_status",
@@ -171,6 +174,24 @@
    "read_only": 1
   },
   {
+   "fieldname": "response_rules_digest",
+   "fieldtype": "Data",
+   "label": "Response rules digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "downstream_rules_digest",
+   "fieldtype": "Data",
+   "label": "Downstream rules digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "addendum_identity_rules_digest",
+   "fieldtype": "Data",
+   "label": "Addendum identity rules digest",
+   "read_only": 1
+  },
+  {
    "fieldname": "current_version",
    "fieldtype": "Link",
    "options": "Tender Version",
@@ -187,7 +208,7 @@
   {
    "fieldname": "overall_status",
    "fieldtype": "Select",
-   "options": "Draft\nAwaiting procurement approval\nApproved\nPublication authorised\nPublished \u2014 open\nSubmission period ended\nCancelled\nRequisition correction requested",
+   "options": "Draft\nAwaiting procurement approval\nApproved\nPublication authorised\nPublished — open\nSubmission period ended\nCancelled\nRequisition correction requested",
    "label": "Overall status",
    "read_only": 1,
    "in_list_view": 1
@@ -251,7 +272,7 @@
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-19 00:00:00.000000",
+ "modified": "2026-09-26 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Tenders",
  "name": "Tender",

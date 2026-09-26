@@ -1,15 +1,15 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""TPR-CHG-001 v0.8 — schema contract tests (tracker TND-207).
+"""TPR-CHG-001 v0.12 — schema contract tests (v0.8 tracker TND-207; v0.12 TND12-102..104).
 
 Guards: (1) every doctype exists with exactly its allow-listed fields (§4 —
 an undocumented field is a defect, not an option); (2) no spec-prohibited
 concept token survives in the module's server code (§16 prohibited
 shortcuts, tracker rule 3); (3) `bench migrate` produced real tables; (4)
 DocPerms are exactly the §6 readers and no role can write the installed STD
-release registry; (5) the error contract is exactly the thirty §8 codes (v0.8's twenty-eight
-plus the two v0.11 bound-release codes).
+release registry; (5) the error contract is exactly the thirty-five v0.12 §8
+codes.
 """
 
 from __future__ import annotations
@@ -29,12 +29,14 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 		"tender_reference", "requirement_title", "requisition_handoff", "requisition", "requisition_reference", "requisition_version",
 		"plan_item_id", "plan_item_version_id", "fiscal_year", "lead_org_unit", "contributing_org_unit_ids", "product_key",
 		"template_release_id", "template_key", "template_release", "product_profile_id", "renderer_profile_id", "supported_renderer_version",
-		"official_source_digest", "bundle_digest", "current_version", "approved_version", "overall_status",
+		"official_source_digest", "bundle_digest", "response_rules_digest", "downstream_rules_digest", "addendum_identity_rules_digest",
+		"current_version", "approved_version", "overall_status",
 		"publication", "published_at", "submission_deadline", "clarification_deadline", "cancellation", "submission_handoff", *AUDIT,
 	},
 	"Tender Version": {
 		"tender", "version_number", "status", "predecessor_version", "requisition_handoff", "requisition_version", "template_release_id",
-		"template_key", "template_release", "product_profile_id", "renderer_profile_id", "supported_renderer_version", "official_source_digest", "bundle_digest", "requisition_snapshot_digest", "requisition_snapshot_json", "officer_payload_json",
+		"template_key", "template_release", "product_profile_id", "renderer_profile_id", "supported_renderer_version", "official_source_digest", "bundle_digest",
+		"response_rules_digest", "downstream_rules_digest", "addendum_identity_rules_digest", "requisition_snapshot_digest", "requisition_snapshot_json", "officer_payload_json",
 		"evidence_requirements", "review_findings", "review_result_digest", "invitation_digest", "issued_tender_digest",
 		"response_schema_digest", "evaluation_contract_digest", "contract_projection_digest", "package_digest", "prepared_by",
 		"prepared_at", "submitted_by", "submitted_at", "approved_by", "approved_at", "returned_by", "returned_at", "return_reason",
@@ -46,9 +48,10 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 		"tender", "tender_version", "decision", "subject_type", "subject_id", "actor", "business_role", "reason", "affected_task",
 		"authority_snapshot", "decided_at", "command_idempotency_key", "fixture_namespace",
 	},
-	"Tender Task": {"tender", "tender_version", "task_type", "business_role", "subject_type", "subject_id", "status", "decision", "task_token", *AUDIT},
+	"Tender Task": {"tender", "tender_version", "task_type", "business_role", "holder", "sender", "comment", "subject_type", "subject_id", "status", "decision", "task_token", *AUDIT},
 	"Tender Publication": {
-		"tender", "tender_version", "package_digest", "authorised_by", "authorised_at", "rule_snapshot_id", "rule_snapshot_json",
+		"tender", "tender_version", "package_digest", "bid_definition", "bid_definition_id", "definition_version", "definition_digest",
+		"response_schema_digest", "evaluation_contract_digest", "contract_projection_digest", "authorised_by", "authorised_at", "rule_snapshot_id", "rule_snapshot_json",
 		"threshold_snapshot_json", "required_channels_json", "minimum_preparation_days", "publication_status", "published_at",
 		"publication_digest", "withdrawn_by", "withdrawn_at", "withdrawal_reason", "withdrawal_evidence", *AUDIT,
 	},
@@ -61,15 +64,32 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 		"tender", "publication", "addendum_number", "addendum_reference", "status", "change_class", "affected_area", "affected_reference",
 		"affected_reference_key", "previous_value", "revised_value", "reason", "materiality_statement", "deadline_extension_required",
 		"revised_submission_deadline", "baseline_digest", "addendum_digest", "drafted_by", "drafted_at", "submitted_by", "submitted_at",
-		"returned_by", "returned_at", "return_reason", "issued_by", "issued_at", "effective_at", *AUDIT,
+		"returned_by", "returned_at", "return_reason", "issue_decided_by", "issue_decided_at", "issued_at", "successor_bid_definition",
+		"successor_bid_definition_id", "successor_definition_version", "successor_definition_digest", "predecessor_addendum",
+		"cancellation_review_status", "cancellation_review_reason", "cancellation_review_closed_reason", "discarded_by", "discarded_at", *AUDIT,
 	},
-	"Tender Addendum Inquiry": {
-		"tender", "addendum", "producer", "inbound_event_id", "candidate_identity", "question", "received_at", "status", "response",
-		"affects_requirements", "responded_by", "responded_at", "broadcast_status", "broadcast_digest", *AUDIT,
+	"Tender Clarification": {
+		"tender", "publication", "bid_definition_id", "related_addendum", "candidate_registration_id", "producer", "inbound_event_id",
+		"question", "received_at", "status", "response", "response_audience", "affects_published_tender", "required_addendum",
+		"responded_by", "responded_at", "closed_reason", "response_digest", *AUDIT,
+	},
+	"Tender Candidate Notice": {
+		"tender", "notice_type", "subject_type", "subject_id", "subject_digest", "audience_frozen_at", "candidate_registration_id",
+		"destination_snapshot", "destination_version", "content_digest", "status", "attempt_count", "last_attempt_at",
+		"provider_reference", "failure_reason", "delivered_at", "attempts", *AUDIT,
+	},
+	"Tender Candidate Notice Attempt": {"attempt_number", "attempted_at", "transport", "result", "provider_reference", "failure_reason", "actor"},
+	"Tender Bid Definition": {
+		"tender", "tender_version", "publication", "addendum", "bid_definition_id", "definition_version", "definition_digest", "status",
+		"definition_json", "response_schema_digest", "evaluation_contract_digest", "contract_projection_digest", "frozen_at", "effective_at", *AUDIT,
+	},
+	"Tender Candidate Registration": {
+		"tender", "bidder_arrangement_id", "candidate_name", "notice_address", "notice_address_version", "status", "registered_at", "registered_by", *AUDIT,
 	},
 	"Tender Cancellation": {
 		"tender", "publication", "ground", "ground_label", "reason", "recommendation", "decided_by", "decided_at", "ppra_report_due_by",
-		"candidate_notice_due_by", "cancellation_digest", "notice_document_digest", "obligations", *AUDIT,
+		"candidate_notice_due_by", "ppra_report_status", "ppra_report_evidence_id", "candidate_notice_status", "notice_publication_status",
+		"cancellation_digest", "notice_document_digest", "obligations", *AUDIT,
 	},
 	"Tender Cancellation Obligation": {
 		"obligation_id", "obligation_type", "channel", "label", "due_by", "status", "evidence_reference", "evidence_file", "evidence_digest",
@@ -80,7 +100,7 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 	"Tender Event": {"event_id", "event_type", "tender", "sequence", "subject_type", "subject_id", "occurred_at", "payload", "status", "consumer", "delivered_at", "fixture_namespace"},
 	"Tender Submission Handoff": {"tender", "tender_version", "publication", "handoff_version", "payload_json", "handoff_digest", "effective_submission_deadline", "closed_at", "fixture_namespace"},
 }
-CHILD_TABLES = ("Tender Evidence Requirement", "Tender Review Finding", "Tender Cancellation Obligation")
+CHILD_TABLES = ("Tender Evidence Requirement", "Tender Review Finding", "Tender Cancellation Obligation", "Tender Candidate Notice Attempt")
 SITE_READERS = {"Procurement Officer", "Head of Procurement Function", "Accounting Officer", "Auditor"}
 
 # §16 / tracker rule 3: concepts this module must never reference. Proven by
@@ -88,6 +108,8 @@ SITE_READERS = {"Procurement Officer", "Head of Procurement Function", "Accounti
 PROHIBITED_TOKENS: tuple[str, ...] = (
 	"tender_preparation", "Prepared Tender", "TenderPublicationHandoff", "TPR_TEMPLATE", "Procurement Tender", "Mark as published",
 	"pe_fy_context", "Frappe User Permission", "manifest_editor", "schema_editor", "showPeSwitcher: true", "kt_cl_surface_registry",
+	# TPR-CHG-001 v0.12 tracker rule 3 — the retired v0.8 inquiry model.
+	"Tender Addendum Inquiry", "TND_INQUIRY_LATE", "receive_addendum_inquiry", "respond_to_addendum_inquiry",
 )
 _ALLOWED_MENTIONS = {("tests/test_tender_schema.py", token) for token in PROHIBITED_TOKENS}
 
@@ -145,7 +167,7 @@ class TestTendersSchema(IntegrationTestCase):
 		self.assertFalse(any(p.write or p.create for p in template_perms), "no role writes the installed STD release registry")
 
 	def test_the_error_contract_is_exactly_the_section_8_set(self):
-		self.assertEqual(len(errors.ERROR_CODES), 30)
+		self.assertEqual(len(errors.ERROR_CODES), 35)
 		self.assertEqual(set(errors.MESSAGES), errors.ERROR_CODES)
 		with self.assertRaises(ValueError):
 			errors.fail("TND_SOMETHING_ELSE")

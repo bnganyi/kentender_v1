@@ -25,7 +25,7 @@ import frappe
 from frappe.utils import cstr, getdate
 
 from kentender_core.services import file_integrity
-from kentender_procurement.tenders.services import channel_confirmation, clock, configuration_gateway, digest, documents, draft_commands, envelope, events, lifecycle, notices, serializer
+from kentender_procurement.tenders.services import candidate_notices, channel_confirmation, clarifications, clock, configuration_gateway, digest, documents, draft_commands, envelope, events, handoffs, lifecycle, notices, serializer
 from kentender_procurement.tenders.services import tender_authorization as authz
 from kentender_procurement.tenders.services.errors import fail
 from kentender_procurement.tenders.services.tender_roles import ROLE_ACCOUNTING_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION, ROLE_PROCUREMENT_OFFICER
@@ -158,7 +158,26 @@ def cancel_tender(*, tender: str, ground: str, reason: str, expected_record_vers
 		channels = json.loads(publication.required_channels_json or "[]")
 		rows = channel_confirmation.create_rows(root=root, publication_name=publication.name, subject_type=channel_confirmation.SUBJECT_CANCELLATION, subject_id=doc.name, subject_digest=cancellation_digest, channels=[{"channel": c["channel"], "label": c["label"]} for c in channels])
 		decision = lifecycle.record_decision(root, version, decision="Cancel Tender", actor=actor, business_role=ROLE_ACCOUNTING_OFFICER, assignment=assignment, idempotency_key=idempotency_key, reason=text, affected_task=ground, subject_type=DOCTYPE, subject_id=doc.name)
+		# §5.11: an open cancellation review clears on the AO's cancellation
+		# decision; every other open item ends with the proceeding.
+		handoffs.close_open(root, task_types=(handoffs.CANCELLATION_REVIEW,), decision=decision.name)
 		lifecycle.cancel_open_tasks(root)
+		clarifications.close_open_for_cancellation(root, reason="The Tender was cancelled.")
+		dispatched = candidate_notices.freeze(
+			root, notice_type="Tender cancelled", subject_type=DOCTYPE, subject_id=doc.name, subject_digest=cancellation_digest,
+			content={"tender_reference": root.tender_reference, "cancellation": doc.name, "ground": GROUND_LABELS[ground], "decided_at": cstr(decided_at), "notice_digest": rendered["digest"]},
+		)
+		if not dispatched:
+			# §5.7: absence of candidates is recorded from the registry, never assumed.
+			for row in doc.obligations:
+				if row.obligation_type == "Candidate notice":
+					row.status, row.evidence_reference, row.recorded_by, row.recorded_at = "Recorded", "No Tender-bound candidates were registered when the Tender was cancelled.", actor, decided_at
+		envelope.bump(
+			doc, ppra_report_status="Due", notice_publication_status="Awaiting confirmation",
+			candidate_notice_status=candidate_notices.delivery_summary(doc.name, notice_type="Tender cancelled")["label"],
+		)
+		approved = frappe.get_doc("Tender Version", publication.tender_version)
+		handoffs.open_task(root, approved, task_type=handoffs.CANCELLATION_COMPLIANCE, subject_type=DOCTYPE, subject_id=doc.name, holder=cstr(approved.prepared_by), sender=actor)
 		envelope.bump(publication, publication_status="Cancelled")
 		envelope.bump(root, overall_status="Cancelled", cancellation=doc.name)
 		events.emit(tender=root.name, event_type="TenderCancelled", command="CancelTender", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment), previous_status="Published — open", resulting_status="Cancelled", record_version=root.record_version, subject_type=DOCTYPE, subject_id=doc.name, reason=text, payload={"ground": ground, "ground_label": GROUND_LABELS[ground], "recommendation": recommendation, "cancellation_digest": cancellation_digest, "notice_digest": rendered["digest"], "document": document, "obligations": obligations, "channels": [r.channel for r in rows], "decision": decision.name}, fixture_namespace=root.fixture_namespace)
@@ -172,23 +191,36 @@ def cancel_tender(*, tender: str, ground: str, reason: str, expected_record_vers
 # --------------------------------------------------------------------------
 
 
-def obligation_status(row, *, today=None) -> str:
+def obligation_status(row, *, today=None, cancellation: str = "") -> str:
 	if row.status == "Recorded" or row.evidence_reference:
 		return "Recorded"
+	if row.obligation_type == "Candidate notice" and cancellation:
+		# §4.10: derived from the candidate registry and dispatch evidence.
+		summary = candidate_notices.delivery_summary(cancellation, notice_type="Tender cancelled")
+		if summary["total"] and summary["delivered"] == summary["total"]:
+			return "Recorded"
 	if row.due_by and getdate(row.due_by) < getdate(today or clock.today()):
 		return "Overdue"
 	return "Due"
 
 
+def _headline_statuses(doc) -> dict[str, str]:
+	ppra = next((o.status for o in doc.obligations if o.obligation_type == "PPRA report"), "Not due")
+	channels = [o.status for o in doc.obligations if o.obligation_type == "Notice channel"]
+	notice = "Confirmed" if channels and all(c == "Recorded" for c in channels) else ("Overdue" if "Overdue" in channels else "Awaiting confirmation")
+	return {"ppra_report_status": ppra, "notice_publication_status": notice, "candidate_notice_status": candidate_notices.delivery_summary(doc.name, notice_type="Tender cancelled")["label"]}
+
+
 def refresh_obligation_statuses(doc) -> None:
 	changed = False
 	for row in doc.obligations:
-		status = obligation_status(row)
+		status = obligation_status(row, cancellation=doc.name)
 		if row.status != status:
 			row.status = status
 			changed = True
-	if changed:
-		envelope.bump(doc)
+	headline = _headline_statuses(doc)
+	if changed or any(cstr(doc.get(k)) != v for k, v in headline.items()):
+		envelope.bump(doc, **headline)
 
 
 def record_cancellation_compliance_evidence(*, tender: str, obligation_id: str, evidence_reference: str, evidence_file: str = "", expected_record_version, idempotency_key: str, user: str | None = None, available_at=None, public_url: str = "", url_not_applicable_reason: str = "", attestation_confirmed: bool = False) -> dict[str, Any]:
@@ -215,12 +247,15 @@ def record_cancellation_compliance_evidence(*, tender: str, obligation_id: str, 
 		fail("TND_CONTROL_INVALID", "Enter the evidence reference (1–160 characters).", {"fields": {"evidence_reference": "Enter the evidence reference (1–160 characters)."}})
 	checked = {"digest": "", "check_result": ""}
 	if row.obligation_type == "Notice channel":
-		# A notice channel is evidenced exactly like the original publication: through the channel engine.
-		if role != ROLE_HEAD_OF_PROCUREMENT_FUNCTION:
-			fail("TND_RESPONSIBILITY_REQUIRED", f"This action requires {ROLE_HEAD_OF_PROCUREMENT_FUNCTION}.")
+		# A notice channel is evidenced exactly like the original publication:
+		# through the channel engine. §10.17 DES-12 gives this work to the
+		# cancellation-compliance holder (the Procurement Officer in the
+		# fixture) or the HOPF (FOLLOW_UPS FU-30). The attester's own
+		# attestation and stated availability time are required exactly as for
+		# the original publication; nothing is defaulted.
 		confirmation = channel_confirmation.confirm_channel(
-			subject_type=channel_confirmation.SUBJECT_CANCELLATION, subject_id=doc.name, channel=cstr(row.channel), available_at=available_at or clock.now(), evidence_reference=reference, public_url=public_url,
-			url_not_applicable_reason=url_not_applicable_reason or ("Physical channel" if cstr(row.channel) not in configuration_gateway.ONLINE_CHANNELS else ""), evidence_file=evidence_file, attestation_confirmed=attestation_confirmed or True,
+			subject_type=channel_confirmation.SUBJECT_CANCELLATION, subject_id=doc.name, channel=cstr(row.channel), available_at=available_at, evidence_reference=reference, public_url=public_url,
+			url_not_applicable_reason=url_not_applicable_reason, evidence_file=evidence_file, attestation_confirmed=attestation_confirmed,
 			package_digest=cstr(doc.cancellation_digest), expected_record_version=root.record_version, idempotency_key=f"{idempotency_key}:channel", user=actor, command="RecordCancellationNoticeEvidence",
 		)
 		root.reload()
@@ -231,7 +266,10 @@ def record_cancellation_compliance_evidence(*, tender: str, obligation_id: str, 
 		doc = envelope.locked(DOCTYPE, root.cancellation)
 		row = next(o for o in doc.obligations if o.obligation_id == obligation_id)
 		row.evidence_reference, row.evidence_file, row.evidence_digest, row.recorded_by, row.recorded_at, row.status = reference, cstr(evidence_file).strip() or None, checked["digest"], actor, clock.now(), "Recorded"
-		envelope.bump(doc)
+		envelope.bump(doc, **{**_headline_statuses(doc), **({"ppra_report_evidence_id": reference} if row.obligation_type == "PPRA report" else {})})
+		if all(o.status == "Recorded" for o in doc.obligations):
+			# §5.11: the compliance item clears when every notice/report is evidenced.
+			handoffs.close_open(root, task_types=(handoffs.CANCELLATION_COMPLIANCE,))
 		envelope.bump(root)
 		events.emit(tender=root.name, event_type="CancellationObligationRecorded", command="RecordCancellationComplianceEvidence", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment), previous_status="Cancelled", resulting_status="Cancelled", record_version=root.record_version, subject_type=DOCTYPE, subject_id=doc.name, payload={"obligation_id": obligation_id, "obligation_type": row.obligation_type, "evidence_reference": reference, "evidence_digest": checked["digest"]}, fixture_namespace=root.fixture_namespace)
 	result = {"ok": True, "idempotent": False, "action": "recorded", "tender": root.name, "record_version": root.record_version, "obligation_id": obligation_id, "status": "Recorded"}

@@ -1,12 +1,13 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""TPR-CHG-001 v0.8 §4.5 — the canonical serializer on the §10.1 fixture:
+"""TPR-CHG-001 v0.12 §4.5 — the canonical serializer on the §10.1 fixture:
 grouping with lineage (AC-018), eleven technical rows (AC-019), six
 warranty values and five acceptance checks (AC-020), absent optional
-schedules (AC-021), traceable evaluation mappings (AC-022), the response
-schema (§4.5.1), the contract projection (§4.5.3), determinism (AC-024) and
-the internal-only boundary (§4.3)."""
+schedules (AC-021), determinism (AC-024) and the internal-only boundary
+(§4.3). The response schema, evaluation mappings and contract projection
+(§4.5.1–4.5.3, AC-022) come from the compiled Published Bid Definition
+(`bid_definition`, plan D25), never from this module."""
 
 from __future__ import annotations
 
@@ -18,7 +19,7 @@ from frappe.tests import IntegrationTestCase
 from kentender_procurement.std_templates.compiler import projection as std_projection
 from kentender_procurement.std_templates.services import installer as std_installer
 from kentender_procurement.std_templates.services import runtime as std_runtime
-from kentender_procurement.tenders.services import controls, digest, serializer
+from kentender_procurement.tenders.services import bid_definition, controls, digest, serializer
 from kentender_procurement.tenders.services import snapshot as snap
 from kentender_procurement.tenders.tests import fixtures as fx, sample
 
@@ -74,34 +75,20 @@ class TestSchedules(SerializerCase):
 	def test_optional_schedules_are_absent_when_their_sources_are_empty(self):
 		self.assertEqual(serializer.related_services(self.snapshot), [])
 		self.assertEqual(serializer.supporting_materials(self.snapshot), [])
-		self.assertEqual(serializer.supplier_response_schema(self.snapshot, [])["services"], [])
 
 
 class TestMappings(SerializerCase):
 	def test_every_published_requirement_maps_once_into_response_evaluation_and_contract(self):
-		state = controls.normalise(self.values)
-		evidence = [{"evidence_requirement_id": "EV-001", "label": "Electrical compatibility certificate", "evidence_type": "Certificate", "linked_requirement_type": "Technical requirement", "linked_requirement_id": "TECH-001", "mandatory": True, "row_order": 1}]
-		schema = serializer.supplier_response_schema(self.snapshot, evidence)
-		evaluation = serializer.evaluation_contract(state, self.snapshot, evidence)
-		contract = serializer.contract_obligations(state, self.snapshot)
-		published = [f"TECH-{i:03d}" for i in range(1, 12)]
-		self.assertEqual([r["technical_requirement_id"] for r in schema["technical"]], published)
-		self.assertEqual([r["technical_requirement_id"] for r in evaluation["technical_pass_fail"]], published)
-		self.assertEqual([r["technical_requirement_id"] for r in contract["technical"]], published)
-		self.assertTrue(schema["technical"][0]["evidence_references"]["required"])
-		self.assertFalse(schema["technical"][1]["evidence_references"]["required"])
-		self.assertEqual(evaluation["stages"], list(serializer.EVALUATION_STAGES))
-		self.assertEqual(evaluation["hidden_criteria"], [])
-		self.assertEqual(evaluation["eligibility_checklist"][0]["evidence_requirement_id"], "EV-001")
-		self.assertEqual([c["required"] for c in evaluation["qualification_criteria"]], [True, True, True, True, True])
-		self.assertEqual(evaluation["qualification_criteria"][3]["minimum_contracts"], 2)
-		self.assertEqual([i["requisition_item_id"] for i in contract["items"]], ["SRC-MOH-033-001", "SRC-MOH-033-002"])
-		self.assertEqual(contract["items"][1]["reservation_id"], "RES-SAMPLE-002")
-		self.assertEqual(len(contract["acceptance"]), 5)
-		self.assertEqual(contract["parameters"]["performance_security_percent"], 10)
-		self.assertEqual(schema["warranty_support"]["identity"], snap.WARRANTY_ID)
-		self.assertEqual(len(schema["goods"]), 1)
-		self.assertEqual(schema["goods"][0]["quantity"], "250")
+		evidence = [{"label": "Electrical compatibility certificate", "evidence_type": "Certificate", "linked_requirement_type": "Technical requirement", "linked_requirement_id": "TECH-001", "mandatory": True}]
+		tender, version = sample.insert_tender_with_version(values=self.values, fixture_namespace=fx.NS, evidence=evidence)
+		definition = bid_definition.compile_version(tender, version)
+		published = {f"TECH-{i:03d}" for i in range(1, 12)}
+		for kind, ids in bid_definition.technical_mapping_sets(definition).items():
+			self.assertEqual(ids, published, kind)
+		goods = {r["group_key"] for r in definition["response_rows"] if r["identity"]["source_family"] == "goods"}
+		self.assertEqual(len(goods), 1)  # two items sharing one specification = one supplier line
+		self.assertFalse([r for r in definition["response_rows"] if r["identity"]["source_family"] == "related_service"])  # AC-021
+		self.assertIn("EVG-TECHNICAL-COMPLIANCE", {m["evaluation_group_id"] for m in definition["evaluation_mappings"]})
 
 
 class TestRenderContextAndDigests(SerializerCase):
@@ -151,8 +138,9 @@ class TestRenderContextAndDigests(SerializerCase):
 		reloaded = frappe.get_doc("Tender Version", version.name)
 		second = serializer.package_digest(frappe.get_doc("Tender", tender.name), reloaded, snap.load(reloaded))
 		self.assertEqual(first, second)
-		generated = serializer.generated_digests(serializer.officer_state(version), snap.load(version), [])
+		generated = bid_definition.component_digests(tender, version)
 		self.assertEqual(set(generated), {"response_schema_digest", "evaluation_contract_digest", "contract_projection_digest"})
+		self.assertEqual(bid_definition.component_digests(frappe.get_doc("Tender", tender.name), reloaded), generated)
 		self.assertEqual(snap.recompute_digest(snap.load(reloaded)), reloaded.requisition_snapshot_digest)
 		self.assertEqual(len(digest.sha256_hex({"a": 1})), 64)
 

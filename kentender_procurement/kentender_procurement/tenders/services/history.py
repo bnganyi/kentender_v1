@@ -2,9 +2,9 @@
 # For license information, please see license.txt
 
 """TPR-CHG-001 v0.8 §7.1 `GetTenderHistory` — Versions, decisions,
-correction lineage, channel confirmations, addenda, inquiries, cancellation
+correction lineage, channel confirmations, addenda, clarifications, cancellation
 and downstream events, read-only, for the actor's permitted audience.
-Protected inquiry-source identity is exposed to Auditor/technical readers
+Protected clarification-source identity and notice destinations are exposed to Auditor/technical readers
 only (§12.3(7))."""
 
 from __future__ import annotations
@@ -43,5 +43,8 @@ def get_tender_history(*, tender: str, user: str | None = None) -> dict[str, Any
 		] if internal else [],
 	}
 	if oversight:
-		out["protected"] = {"inquiry_sources": frappe.get_all("Tender Addendum Inquiry", filters={"tender": root.name}, fields=["name", "candidate_identity", "producer", "inbound_event_id"], limit_page_length=0)}
+		out["protected"] = {
+			"clarification_sources": frappe.get_all("Tender Clarification", filters={"tender": root.name}, fields=["name", "candidate_registration_id", "producer", "inbound_event_id"], limit_page_length=0),
+			"candidate_notices": frappe.get_all("Tender Candidate Notice", filters={"tender": root.name}, fields=["name", "notice_type", "subject_id", "candidate_registration_id", "destination_snapshot", "status", "attempt_count", "failure_reason"], order_by="creation asc", limit_page_length=0),
+		}
 	return out

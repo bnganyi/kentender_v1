@@ -71,7 +71,7 @@ def handoff_payload(*, delivery_location: str = "Ministry of Health Headquarters
 		"related_services": [],
 		"acceptance_requirements": [{"acceptance_requirement_id": aid, "applies_to_scope": "All items", "applies_to_id": None, "check_type": check, "pass_condition": condition, "evidence_type": evidence} for aid, check, condition, evidence in ACCEPTANCE],
 		"supporting_materials": [],
-		"product_pattern": "IT Equipment", "reservation_category_value": "Youth", "lotting_indicator": "Single lot",
+		"product_pattern": "IT Equipment", "reservation_category_value": "Youth", "county_resident_reservation": False, "reservation_rule_snapshot_ids": ["RULE-RES-YOUTH-V1"], "lotting_indicator": "Single lot",
 		"handoff_version": "1.3", "generated_at": "2027-03-15 10:00:00",
 		"decisions": [{"actor": "charles.mutiso@moh.example.test", "capacity": "Head of Procurement Function", "decision": "RQD-SAMPLE"}],
 		"handoff_digest": "d" * 64,
@@ -115,6 +115,7 @@ def insert_tender_with_version(*, reference: str = "TND-MOH-2027-033", values: d
 	# The site's installed release, with placeholder digests (so verify()
 	# names the drift while renders still use the exact installed masters).
 	release_id = std_installer.ensure_site_release()
+	release = frappe.db.get_value("Installed STD Release", release_id, ["template_key", "template_release", "product_profile_id", "renderer_profile_id", "supported_renderer_version"], as_dict=True)
 	tender = envelope.insert(
 		frappe.get_doc(
 			{
@@ -129,7 +130,7 @@ def insert_tender_with_version(*, reference: str = "TND-MOH-2027-033", values: d
 	version = frappe.get_doc(
 		{
 			"doctype": "Tender Version", "tender": tender.name, "version_number": 1, "status": status, "requisition_handoff": snapshot["handoff"],
-			"requisition_version": snapshot["requisition_version"], "template_release_id": release_id, "official_source_digest": "o" * 64,
+			"requisition_version": snapshot["requisition_version"], "template_release_id": release_id, **dict(release), "official_source_digest": "o" * 64,
 			"bundle_digest": "b" * 64, "requisition_snapshot_digest": snapshot_digest, "requisition_snapshot_json": json.dumps(snapshot, sort_keys=True),
 			"officer_payload_json": json.dumps(controls.normalise(values or {}), sort_keys=True, default=str), "record_version": 0, "fixture_namespace": fixture_namespace,
 		}

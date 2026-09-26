@@ -19,6 +19,7 @@ from frappe.utils import cstr
 from kentender_core.services.authorization import is_technical
 from kentender_procurement.std_templates.compiler.errors import STDTemplateError
 from kentender_procurement.tenders.services import compatibility, controls, correction, documents, draft_commands, evidence, handoff_gateway, lifecycle, review, serializer, template_binding
+from kentender_procurement.tenders.services import guidance as guide
 from kentender_procurement.tenders.services import snapshot as snap
 from kentender_procurement.tenders.services import tender_authorization as authz
 from kentender_procurement.tenders.services.errors import TendersError
@@ -89,7 +90,7 @@ def _was_returned(version) -> bool:
 def _outstanding_confirmations(root) -> list[str]:
 	if not root.publication:
 		return []
-	return frappe.get_all("Tender Channel Confirmation", filters={"publication": root.publication, "subject_type": "Publication", "status": "Awaiting confirmation"}, pluck="channel_label", order_by="creation asc")
+	return frappe.get_all("Tender Channel Confirmation", filters={"publication": root.publication, "subject_type": "Tender package", "status": "Awaiting confirmation"}, pluck="channel_label", order_by="creation asc")
 
 
 def tender_row(root, actor: str, roles: dict[str, bool]) -> dict[str, Any]:
@@ -245,7 +246,7 @@ def get_tender_start(*, handoff: str, user: str | None = None) -> dict[str, Any]
 		template = {"available": True, "display_name": binding["display_name"], "template_version": binding["template_version"], "official_source_title": binding["official_source_title"], "official_source_digest": binding["official_source_digest"], "bundle_digest": binding["bundle_digest"]}
 	except STDTemplateError as exc:
 		template = {"available": False, "reason": exc.message, "std_template_route": template_binding.inspection_route(actor)}
-	checks = compatibility.evaluate(payload, binding["supported_reservation_categories"] if binding else ())
+	checks = compatibility.evaluate(payload, binding if binding else ())
 	items = payload.get("items") or []
 	unit = cstr((items[0].get("unit") if items else "") or "Each")
 	supported = compatibility.is_supported(checks) and template["available"]
@@ -329,7 +330,7 @@ def allowed_actions(root, version, actor: str, roles: dict[str, bool]) -> list[s
 	if status == "Publication authorised":
 		if roles["hopf"]:
 			actions.append("confirm_publication_channel")
-		if roles["ao"] and not frappe.db.exists("Tender Channel Confirmation", {"publication": root.publication, "subject_type": "Publication", "status": "Confirmed"}):
+		if roles["ao"] and not frappe.db.exists("Tender Channel Confirmation", {"publication": root.publication, "subject_type": "Tender package", "status": "Confirmed"}):
 			actions.append("withdraw_publication_authorisation")
 	if status == "Published — open":
 		if roles["officer"] or roles["hopf"]:
@@ -483,6 +484,10 @@ def get_tender(*, tender: str, user: str | None = None) -> dict[str, Any]:
 		"allowed_actions": allowed_actions(root, version, actor, roles) if mode != "department" else ["view_history"],
 		"segregation_message": segregation_message(root, version, actor, roles),
 		"correction": correction.correction_state(root, user=actor) if root.overall_status == "Requisition correction requested" else None,
+		# §5.9 / §10.17: the server-derived next step and Tender journey; the
+		# editor's two tasks carry their own answers (DES-03 / DES-04)
+		"guidance": guide.guidance(root, actor=actor, roles=roles, mode=mode),
+		"task_steps": guide.task_steps(root, actor=actor, roles=roles, mode=mode) if root.overall_status == "Draft" and roles["officer"] and mode != "department" else {},
 		"key_facts": key_facts(root, version, snapshot, internal=internal),
 		"publication": publication_read.publication_summary(root, actor=actor, roles=roles) if internal else None,
 		"open_period": publication_read.open_period_summary(root, actor=actor, roles=roles) if internal else None,
@@ -530,9 +535,24 @@ def review_sections(root, version, snapshot: dict[str, Any], summary: dict[str, 
 			{"label": "Performance security", "value": f"{serializer.fmt_number(state.get('performance_security_percent'))}% of contract value" if state.get("performance_security_required") else "Not required"},
 			{"label": "Delay damages", "value": f"{serializer.fmt_number(state.get('delay_damages_per_week_percent'))}% of contract value per week, capped at {serializer.fmt_number(state.get('maximum_delay_damages_percent'))}%"},
 		], "fields": [{"label": controls.CATALOGUE[f]["label"], "value": _display_value(f, state)} for f in controls.FIELDS_BY_TASK[controls.TASK_REQUIREMENTS] if controls.CATALOGUE[f]["group"] == "contract" and controls.applies(f, state)]}},
-		{"key": "technical", "title": "Technical evidence", "summary": f"Template {cstr(version.template_release_id)} · {len(lines)} rendered line{'s' if len(lines) != 1 else ''} from {len(snapshot.get('items') or [])} items", "open": False, "details": {"template_release_id": cstr(version.template_release_id), "official_source_digest": cstr(version.official_source_digest), "bundle_digest": cstr(version.bundle_digest), "requisition_snapshot_digest": cstr(version.requisition_snapshot_digest), "package_digest": cstr(version.package_digest), "invitation_digest": cstr(version.invitation_digest), "issued_tender_digest": cstr(version.issued_tender_digest), "response_schema_digest": cstr(version.response_schema_digest), "evaluation_contract_digest": cstr(version.evaluation_contract_digest), "contract_projection_digest": cstr(version.contract_projection_digest), "lineage": [{"line": l["line_number"], "description": l["description"], "quantity": l["quantity"], "source_items": l["source_items"] if internal else [{"requisition_item_id": s["requisition_item_id"], "quantity": s["quantity"]} for s in l["source_items"]]} for l in lines], "mappings": {"technical_requirements": len(snapshot.get("technical_requirements") or []), "responses": len(serializer.supplier_response_schema(snapshot, evidence.rows_as_dicts(version))["technical"]), "evaluation": len(serializer.evaluation_contract(state, snapshot, evidence.rows_as_dicts(version))["technical_pass_fail"]), "contract": len(serializer.contract_obligations(state, snapshot)["technical"])}}},
+		{"key": "technical", "title": "Technical evidence", "summary": f"Template {cstr(version.template_release_id)} · {len(lines)} rendered line{'s' if len(lines) != 1 else ''} from {len(snapshot.get('items') or [])} items", "open": False, "details": {"template_release_id": cstr(version.template_release_id), "official_source_digest": cstr(version.official_source_digest), "bundle_digest": cstr(version.bundle_digest), "requisition_snapshot_digest": cstr(version.requisition_snapshot_digest), "package_digest": cstr(version.package_digest), "invitation_digest": cstr(version.invitation_digest), "issued_tender_digest": cstr(version.issued_tender_digest), "response_schema_digest": cstr(version.response_schema_digest), "evaluation_contract_digest": cstr(version.evaluation_contract_digest), "contract_projection_digest": cstr(version.contract_projection_digest), "lineage": [{"line": l["line_number"], "description": l["description"], "quantity": l["quantity"], "source_items": l["source_items"] if internal else [{"requisition_item_id": s["requisition_item_id"], "quantity": s["quantity"]} for s in l["source_items"]]} for l in lines], "mappings": _mapping_counts(root, version, snapshot)}},
 	]
 	return sections
+
+
+def _mapping_counts(root, version, snapshot: dict[str, Any]) -> dict[str, Any]:
+	"""§10.6 item 7 — how many published technical requirements the compiled
+	Published Bid Definition maps to a response, an evaluation group and a
+	contract obligation (none while the Version cannot compile yet)."""
+	from kentender_procurement.tenders.services import bid_definition
+
+	out: dict[str, Any] = {"technical_requirements": len(snapshot.get("technical_requirements") or []), "responses": 0, "evaluation": 0, "contract": 0}
+	try:
+		sets = bid_definition.technical_mapping_sets(bid_definition.compile_version(root, version))
+	except (TendersError, frappe.ValidationError):
+		return out
+	out.update({"responses": len(sets["supplier response"]), "evaluation": len(sets["evaluation"]), "contract": len(sets["contract"])})
+	return out
 
 
 def _display_value(field: str, state: dict[str, Any]) -> str:
@@ -590,4 +610,5 @@ def get_tender_review(*, tender: str, user: str | None = None) -> dict[str, Any]
 		"allowed_actions": allowed_actions(root, version, actor, roles) if mode != "department" else ["view_history"],
 		"segregation_message": segregation_message(root, version, actor, roles),
 		"submit_blocked_text": "Fix the item above before submitting." if summary["must_fix_count"] else "",
+		"guidance": guide.guidance(root, actor=actor, roles=roles, mode=mode, context="review", review_summary=summary),
 	}

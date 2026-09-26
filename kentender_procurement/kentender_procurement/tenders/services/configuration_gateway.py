@@ -85,7 +85,10 @@ def resolve_publication_rule(*, applicability_date, procurement_category: str = 
 		if cstr(payload.get("integration_evidence_contract_code")).strip():
 			fail("TND_PUBLICATION_RULE_UNAVAILABLE", "A publication channel is configured for an integrated acknowledgement, which is not available in this release (TPR-CHG-001 v0.8 §5.5.1).", detail={"channel": code})
 		seen.add(code)
-		rule_ids.add(cstr(payload.get("source_reference")) or version["reference_key"])
+		# The rule identity is the reference-set key's rule prefix
+		# ("PUB-RULE-MOH-OT-2027-01/STATE_PORTAL"); `source_reference` is the
+		# statutory citation ("s.96(2)") since the 24 Sep 2026 seed change.
+		rule_ids.add(cstr(version["reference_key"]).split("/", 1)[0] or cstr(payload.get("source_reference")))
 		channels.append(
 			{
 				"channel": code, "label": channel_label(code), "confirmation_mode": CONFIRMATION_MODE, "public_url_expected": code in ONLINE_CHANNELS,
