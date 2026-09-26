@@ -704,7 +704,7 @@ planning-seed-gate:
 # TPR-CHG-001 v0.12 plan §5 — refuse to start a Tenders Python gate while a
 # Playwright run is mutating the same site (both drive shared test worlds).
 tenders-preflight:
-	@if pgrep -f "playwright test" >/dev/null; then echo "A Playwright run is active on this site; run the Tenders Python gates after it finishes."; exit 1; fi
+	@if pgrep -f "[p]laywright test" >/dev/null; then echo "A Playwright run is active on this site; run the Tenders Python gates after it finishes."; exit 1; fi
 
 # TPR-CHG-001 — Tenders Python gates.
 tenders-schema-gate: tenders-preflight
