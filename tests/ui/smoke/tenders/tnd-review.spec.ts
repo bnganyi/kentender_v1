@@ -38,10 +38,12 @@ test.describe("TPR-DES-05 Review and submit", () => {
 		await expect(page.locator('[data-testid="tnd-review-notes"]')).toContainText("review note");
 		await expect(page.locator('[data-testid="tnd-key-facts"] .kt-label')).toHaveText(["Requisition", "Quantity", "Approved value", "Method", "Submission deadline", "Tender security", "Reservation", "Latest delivery"]);
 		await expect(page.locator(".kt-disclosure-title")).toHaveText(["Tender details", "Requirements from the authorised requisition", "Supplier pricing schedule", "Supplier and evaluation requirements", "Contract terms", "Technical evidence"]);
-		// no officer price input anywhere: the schedule is completed by the supplier
-		await page.locator('[data-testid="tnd-section-pricing"] .kt-disclosure-head').click();
+		// no officer price input anywhere: the schedule is completed by the supplier.
+		// TPR-DES-05 alone draws the pricing body open, so it needs no click.
 		await expect(page.locator('[data-testid="tnd-section-pricing"]')).toContainText("Completed by supplier");
 		await expect(page.locator('[data-testid="tnd-section-pricing"] input')).toHaveCount(0);
+		await page.locator('[data-testid="tnd-section-pricing"] .kt-disclosure-head').click();
+		await expect(page.locator('[data-testid="tnd-section-pricing"]')).not.toContainText("Completed by supplier");
 
 		await page.locator('[data-testid="tnd-preview-invitation"]').click();
 		const doc = page.locator('[data-testid="tnd-document-dialog"]');

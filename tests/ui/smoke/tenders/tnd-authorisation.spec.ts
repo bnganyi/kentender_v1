@@ -41,7 +41,12 @@ test.describe("TPR-DES-07 AO publication authorisation", () => {
 		await expect(page.locator('[data-testid="tnd-authorise-dialog"]')).toContainText("It does not itself publish the Tender or edit the package.");
 		await page.locator('[data-testid="tnd-authorise-dialog-confirm"]').click();
 		await expectReady(page, "publication");
-		await expect(page.locator('[data-testid="tnd-publication-progress"]')).toContainText("0 of 4 required channels confirmed.");
+		// TPR-DES-08: the AO now waits on the HOPF; the guidance replaces the old progress notice
+		const step = page.locator('[data-kt="next-step"]');
+		await expect(step).toHaveAttribute("data-kind", "waiting");
+		await expect(step).toContainText("is confirming publication");
+		await expect(page.locator('[data-testid="tnd-publication-progress"]')).toHaveCount(0);
+		await expect(page.locator('tr[data-status="Awaiting confirmation"]')).toHaveCount(4);
 		// the AO never confirms a channel
 		await expect(page.locator('[data-testid="tnd-confirm-channel"]')).toHaveCount(0);
 		await page.reload();
