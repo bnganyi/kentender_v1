@@ -37,9 +37,11 @@ FORBIDDEN_RESPONSIBILITIES = (
 	"Head of User Department, Auditor or Authorised technical operator"
 )
 
-# §7.4 `ReceiveAddendumInquiry` — the inbound producer is a service identity,
-# never a business responsibility (plan D8). Registered as a Frappe Role so a
-# service user can carry it; it grants no Desk read of anything.
+# TPR-CHG-001 v0.12 §7.4 `ReceiveTenderClarification` — the inbound producer
+# is a service identity, never a business responsibility (plan D8′).
+# Registered as a Frappe Role so a service user can carry it; it grants no
+# Desk read of anything. The stored role name predates v0.12's supplier
+# clarifications and is kept (renaming it needs a migration: FOLLOW_UPS).
 INQUIRY_PRODUCER_ROLE = "Tender Inquiry Producer"
 
 

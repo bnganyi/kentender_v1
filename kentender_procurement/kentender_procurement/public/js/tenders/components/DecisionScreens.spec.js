@@ -124,7 +124,7 @@ describe("PublicationScreen — TPR-DES-08", () => {
 });
 
 describe("PublishedScreen — TPR-DES-09", () => {
-	const base = { tender: { ...TENDER, badge: "Published — open", overall_status: "Published — open", published_at_label: "15 May 2027, 08:00 EAT", submission_deadline_label: "12 Jun 2027, 11:00 EAT" }, publication: { authorised_by_name: "Amina Hassan", channels: [], published_at_label: "15 May 2027, 08:00 EAT" }, open_period: { addenda: [], inquiries: [], effective_addenda_count: 0, empty_addenda_text: "No addenda have been issued.", empty_inquiries_text: "No addendum inquiries have been received." }, documents: [], decisions: [], allowed_actions: [] };
+	const base = { tender: { ...TENDER, badge: "Published — open", overall_status: "Published — open", published_at_label: "15 May 2027, 08:00 EAT", submission_deadline_label: "12 Jun 2027, 11:00 EAT" }, publication: { authorised_by_name: "Amina Hassan", channels: [], published_at_label: "15 May 2027, 08:00 EAT" }, open_period: { addenda: [], clarifications: [], effective_addenda_count: 0, empty_addenda_text: "No addenda have been issued." }, documents: [], decisions: [], allowed_actions: [] };
 	it("HoPF: Recommend cancellation + Prepare addendum; AO: Cancel Tender; reader: no action", () => {
 		const hopf = mount(PublishedScreen, { props: { record: { ...base, allowed_actions: ["prepare_addendum", "recommend_cancellation", "view_history"] }, review: {}, pending: false } });
 		expect(hopf.findAll(".tnd-footer button").map((b) => b.text())).toEqual(["Recommend cancellation", "Prepare addendum"]);

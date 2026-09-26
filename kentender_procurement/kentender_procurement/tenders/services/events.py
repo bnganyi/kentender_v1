@@ -8,7 +8,7 @@ Every successful command writes one event carrying the §12.1 minimum
 hash, actor + responsibility snapshot, UTC/EAT time, previous/resulting
 status, affected identities, reason, digests, snapshots). Outbox events
 (`status = Pending`) are the internal contract for Planning's invitation
-actual, the bidder-facing open-Tender event, the inquiry broadcast and the
+actual, the bidder-facing open-Tender event, the clarification broadcast and the
 Bid Submission handoff; replay never emits a second one (§5.5(7)).
 Rejected commands never create a business event."""
 
