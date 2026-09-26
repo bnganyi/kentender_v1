@@ -103,21 +103,80 @@ def wipe_planning_rows() -> None:
 	pln_fx.wipe_planning_rows()
 
 
+#: Test worlds live in fiscal years that start in 2100 or later (Planning's
+#: 2101-2102/2103-2104, the Playwright worlds' 2100-2101). A real site year
+#: never does.
+TEST_YEAR_FLOOR = 2100
+
+
+def is_test_fiscal_year(fiscal_year: str) -> bool:
+	head = (fiscal_year or "")[:4]
+	return head.isdigit() and int(head) >= TEST_YEAR_FLOOR
+
+
+def _real_plans() -> set[str]:
+	return {
+		row.name
+		for row in frappe.get_all("Annual Plan", fields=["name", "fiscal_year"])
+		if not is_test_fiscal_year(row.fiscal_year)
+	}
+
+
+def test_requisitions() -> list[str]:
+	"""Requisitions that belong to a test world: their Annual Plan is in a
+	test fiscal year, or no longer exists at all (a test world's plan wiped
+	first). A requisition on a live plan in a real year is never included."""
+	real = _real_plans()
+	return [row.name for row in frappe.get_all("Procurement Requisition", fields=["name", "plan_id"]) if row.plan_id not in real]
+
+
+def test_reservations() -> list[str]:
+	"""Requisitions-owned Funding Reservations against a test-year (or
+	missing) budget."""
+	real_budgets = {
+		row.name
+		for row in frappe.get_all("Procurement Budget", fields=["name", "fiscal_year"])
+		if not is_test_fiscal_year(row.fiscal_year)
+	}
+	return [
+		row.name
+		for row in frappe.get_all("Funding Reservation", filters={"calling_module": "Procurement Requisitions"}, fields=["name", "budget"])
+		if row.budget not in real_budgets
+	]
+
+
 def wipe_requisition_rows() -> None:
+	"""Removes test-world Requisitions only (TPR-CHG-001 v0.12 plan §5): until
+	26 Sep 2026 this deleted every Requisition on the site, canonical data
+	included."""
 	frappe.set_user("Administrator")
-	for doctype in (
-		"Requisition Event", "Requisition Decision", "Requisition Task", "Authorised Requisition Handoff",
-		"Requisition Version", "IT Equipment Requirement Package Version", "IT Equipment Requirement Package",
-		"Procurement Requisition", "Requisition Command Journal", "Requisition Correction Outcome",
+	requisitions = test_requisitions() or [""]
+	versions = frappe.get_all("Requisition Version", filters={"requisition": ("in", requisitions)}, pluck="name") or [""]
+	packages = frappe.get_all("IT Equipment Requirement Package", filters={"requisition": ("in", requisitions)}, pluck="name") or [""]
+	package_versions = frappe.get_all("IT Equipment Requirement Package Version", filters={"package": ("in", packages)}, pluck="name") or [""]
+	names = set(requisitions) | set(versions) | set(packages) | set(package_versions)
+	for doctype, field, values in (
+		("Requisition Event", "requisition", requisitions),
+		("Requisition Decision", "requisition_version", versions),
+		("Requisition Task", "requisition", requisitions),
+		("Authorised Requisition Handoff", "requisition", requisitions),
+		("Requisition Correction Outcome", "requisition", requisitions),
 	):
-		frappe.db.delete(doctype)
+		names |= set(frappe.get_all(doctype, filters={field: ("in", values)}, pluck="name"))
+		frappe.db.delete(doctype, {field: ("in", values)})
+	frappe.db.delete("Requisition Command Journal", {"document_name": ("in", list(names - {""}) or [""])})
+	frappe.db.delete("Requisition Version", {"name": ("in", versions)})
+	frappe.db.delete("IT Equipment Requirement Package Version", {"name": ("in", package_versions)})
+	frappe.db.delete("IT Equipment Requirement Package", {"name": ("in", packages)})
+	frappe.db.delete("Procurement Requisition", {"name": ("in", requisitions)})
 	# authorise_requisition() reserves funding in Budget (D1) under
 	# `calling_module="Procurement Requisitions"`; those rows live outside
 	# this app and are never touched by `wipe_planning_rows()`, so a prior
 	# test's still-Active reservation on the same (deterministically
 	# re-issued) plan_source_allocation blocks the next test's reserve call
-	# with BUDGET_RESERVATION_CONFLICT unless wiped here too.
-	frappe.db.delete("Funding Reservation", {"calling_module": "Procurement Requisitions"})
+	# with BUDGET_RESERVATION_CONFLICT unless wiped here too — test-year
+	# budgets only.
+	frappe.db.delete("Funding Reservation", {"name": ("in", test_reservations() or [""])})
 	frappe.db.commit()
 
 

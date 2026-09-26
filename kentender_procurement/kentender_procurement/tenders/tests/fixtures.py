@@ -98,13 +98,35 @@ def ensure_world() -> None:
 	site_setup._seed_publication_obligations()
 
 
+def test_tenders() -> list[str]:
+	"""Tenders that belong to a test world (a test fiscal year, plan §5)."""
+	return [row.name for row in frappe.get_all("Tender", fields=["name", "fiscal_year"]) if req_fx.is_test_fiscal_year(row.fiscal_year)]
+
+
 def wipe_tender_rows() -> None:
+	"""Removes test-world Tenders and everything hanging off them only
+	(TPR-CHG-001 v0.12 plan §5): until 26 Sep 2026 this deleted every Tender
+	on the site, canonical data included."""
 	frappe.set_user("Administrator")
-	for doctype in TENDER_DOCTYPES:
-		for name in frappe.get_all(doctype, pluck="name"):
+	tenders = test_tenders()
+	if not tenders:
+		return
+	names: set[str] = set(tenders)
+
+	def _drop(doctype: str, rows: list[str]) -> None:
+		for name in rows:
 			doc = frappe.get_doc(doctype, name)
 			doc.flags.kt_fixture_wipe = True
 			doc.delete(ignore_permissions=True, force=True)
+
+	for doctype in TENDER_DOCTYPES:
+		if doctype in ("Tender", "Tender Command Journal") or not frappe.db.exists("DocType", doctype):
+			continue
+		rows = frappe.get_all(doctype, filters={"tender": ("in", tenders)}, pluck="name")
+		names |= set(rows)
+		_drop(doctype, rows)
+	_drop("Tender Command Journal", frappe.get_all("Tender Command Journal", filters={"document_name": ("in", list(names))}, pluck="name"))
+	_drop("Tender", tenders)
 	frappe.db.commit()
 
 

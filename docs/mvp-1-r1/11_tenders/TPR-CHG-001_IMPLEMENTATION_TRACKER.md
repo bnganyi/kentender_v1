@@ -3,7 +3,7 @@
 **Authority:** `KenTender_TPR-CHG-001_Tenders_v0_12.md` (control table: Approved 26 September 2026).
 **Companions:** `TPR-CHG-001_Implementation_Plan.md` (decisions D2′–D26, W1–W8; conflicts C17–C24), `TPR-CHG-001_FOLLOW_UPS.md`, `design/` (26 Sep 2026 board set), `evidence/v0_12/`.
 **Predecessor tracking:** `retired/TPR-CHG-001_v0_8_IMPLEMENTATION_TRACKER.md` (v0.8, Phases 0–9 Done 19 Sep 2026). v0.8 evidence proves the kept mechanics only; every v0.12 row needs its own evidence.
-**Status:** Phase 0 in progress.
+**Status:** Phase 0 Done; Phase 1 in progress.
 **Started:** 26 September 2026.
 
 ## Tracker rules
@@ -26,7 +26,7 @@
 
 | Gate | Condition | Status | Evidence |
 |---|---|---|---|
-| TND12-G00 | Docs; design set committed; scoped fixture wipes proven | In progress | |
+| TND12-G00 | Docs; design set committed; scoped fixture wipes proven | Done | 2026-09-26. TND12-001..004. |
 | TND12-G01 | Schema, errors, compatibility, STD digests, Published Bid Definition; schema + services gates | Planned | |
 | TND12-G02 (CP1) | Shared guidance; Tenders guidance/guards/hand-offs; dead-end matrix; Planning re-verified; fidelity harness | Planned | |
 | TND12-G03 | Slice A DES-03/04/05 | Planned | |
@@ -45,10 +45,10 @@
 
 | ID | Item | Status | Evidence |
 |---|---|---|---|
-| TND12-001 | Retire v0.8 spec/plan/tracker/follow-ups to `retired/` with banner; author v0.12 plan, tracker, follow-ups | In progress | |
-| TND12-002 | Commit the 26 Sep design set (+ handoff note, TenderGuidance, DES-11 rename); delete `retired/design/*:Zone.Identifier` | Planned | |
-| TND12-003 | Scope `tenders/tests/fixtures.py` and `procurement_requisitions/tests/fixtures.py` wipes; `test_fixture_scope.py` counts test | Planned | |
-| TND12-004 | `make tenders-preflight` (process check) wired into the `tenders-*` gates | Planned | |
+| TND12-001 | Retire v0.8 spec/plan/tracker/follow-ups to `retired/` with banner; author v0.12 plan, tracker, follow-ups | Done | 2026-09-26. `git mv` ×4 to `retired/` (`KenTender_…v0_8.md`, `TPR-CHG-001_v0_8_{Implementation_Plan,IMPLEMENTATION_TRACKER,FOLLOW_UPS}.md`) with banner; new plan/tracker (134 AC + 96 IMP rows generated from spec §§14, 19)/follow-ups (20 carried verbatim + FU-21..27). Commit `2c741140`. |
+| TND12-002 | Commit the 26 Sep design set (+ handoff note, TenderGuidance, DES-11 rename); delete `retired/design/*:Zone.Identifier` | Done | 2026-09-26. Six Zone.Identifier files deleted; boards + `retired/design/` committed in `2c741140` (DES-11 recorded as a rename into `retired/design/`). |
+| TND12-003 | Scope `tenders/tests/fixtures.py` and `procurement_requisitions/tests/fixtures.py` wipes; `test_fixture_scope.py` counts test | Done | 2026-09-26. Backup `20260926_100434`. Red: `test_fixture_scope` 2 errors (`no attribute 'test_tenders'`). Green: 2/2 OK. Test rows = fiscal year starting ≥ 2100, or a Requisition whose plan no longer exists; live site after the run keeps `PRQ-150718` (PLN-MOH-2027-001) and `TDR-150730` (2027-2028); the orphan test Requisition `PRQ-150633` (PLN-MOH-2101-001) was removed. |
+| TND12-004 | `make tenders-preflight` (process check) wired into the `tenders-*` gates | Done | 2026-09-26. Target added; prerequisite of `tenders-schema-gate` and `tenders-services-gate`; `make tenders-preflight` exits 0 with no Playwright process. |
 
 ## Work register — Phase 1: schema, errors, contracts, definition
 
