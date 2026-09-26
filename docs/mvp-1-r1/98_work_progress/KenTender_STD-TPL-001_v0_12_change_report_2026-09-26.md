@@ -70,3 +70,15 @@ Extended in place (original text kept, text added): the Status row, the Template
 - Whether the official PPRA source requires a general acknowledgement of the tendering document; the Form of Tender text was not reread for this change.
 - The effect on the **STD Templates** artboards: the release 1.1 fixture is unchanged, and no release 1.2 artboard exists.
 - Legal review of the new purpose wording: not verified against the primary source.
+
+## 10. Approval (added 26 September 2026)
+
+The Project Owner approved v0.12 on 26 September 2026: "v0.12 approved,  v0.10 was approved earlier".
+
+- **Document.** Changed only as the approval step allows: Status **Approved**; Approved on 26 September 2026; the Approval record quotes the instruction and keeps the earlier status and record wording as read; Supersedes "v0.11 (proposed, carried forward) and v0.10 (approved)"; the §19.0 heading and sentence now say approved. `preservation_check.py` PASS with `--allow-control-table` and two `--allow` patterns for the §19.0 heading and its first sentence, as the approval step requires. `consistency_check.py`: 0 errors; the same 2 warnings and 4 information notes as before.
+- **Register (KT-DOC-CTRL-001).** The STD-TPL-001 entry now gives version 0.12, the v0.12 filename, a supersedes note, and an added release 1.2 action. `requirement_status` and `approval_date` were already "Approved requirement" and 2026-09-26. Implementation, verification and release statuses are unchanged. Two audit findings were added: AUD-017 (v0.12 approved, Resolved) and AUD-018 (the repository copy of v0.10 still reads Proposed for approval, Open). `register_check.py` now shows no STD-TPL-001 version or status error. Its other 12 errors are unchanged and concern other entries.
+- **Not done, for the documentation owner.**
+  - About 30 decision, interface, delivery-item and audit entries still cite "STD-TPL-001 v0.10" as their owning document (register-check warnings). v0.12 carries that content forward, so they remain accurate.
+  - The `library_file_id` still points at the library copy of v0.10.
+  - The companion workbook `KenTender_Documentation_Control_Register.xlsx` is generated outside this repository and needs regenerating.
+  - The register file was not committed, because it carries other uncommitted edits made outside this change.

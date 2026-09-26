@@ -5,10 +5,10 @@
 | Document ID | STD-TPL-001 |
 | Version | 0.12 |
 | Date | 26 September 2026 |
-| Status | **Proposed — v0.11 was also proposed and is not approved; approval of v0.12 is required** (v0.11 read: **Proposed — v0.10 was Project Owner review; re-approval required** (v0.10 was never approved; v0.10 read: **Proposed for approval**)) |
-| Approved on | Not yet approved |
-| Approval record | None for v0.12 or v0.11. KT-DOC-CTRL-001 records v0.10 as approved on 26 September 2026 and does not list v0.11, while v0.11 states that v0.10 was never approved; that disagreement is reported for the documentation owner. |
-| Supersedes | v0.11 (proposed) and v0.10, on approval |
+| Status | **Approved** |
+| Approved on | 26 September 2026 |
+| Approval record | Project Owner, 26 September 2026: "v0.12 approved,  v0.10 was approved earlier". The approval of v0.12 also approves the v0.11 content it carries forward (owner decision OD5); v0.11 was not approved separately. The same instruction confirms that v0.10 was approved, as KT-DOC-CTRL-001 records (26 September 2026); v0.11's statement that v0.10 was never approved is therefore incorrect and is retained only as read. (Proposed-state read: None for v0.12 or v0.11. KT-DOC-CTRL-001 records v0.10 as approved on 26 September 2026 and does not list v0.11, while v0.11 states that v0.10 was never approved; that disagreement is reported for the documentation owner.) Status before approval read: **Proposed — v0.11 was also proposed and is not approved; approval of v0.12 is required** (v0.11 read: **Proposed — v0.10 was Project Owner review; re-approval required** (v0.10 was never approved; v0.10 read: **Proposed for approval**)). |
+| Supersedes | v0.11 (proposed, carried forward) and v0.10 (approved) |
 | Template key | `IT-EQUIPMENT-OPEN-V1` |
 | Template release | 1.1 (v0.10 read: 1.1 candidate; owner decision OD5 retired the Candidate lifecycle state, §14.1). The v0.12 change to §8.1 applies from successor release 1.2 (Project Owner decision OD-E, 26 September 2026, recorded in the BDS-CHG-001 v0.8 implementation tracker); release 1.1 keeps its earlier wording. |
 | Product profile | `GOODS-IT-SIMPLE-V1` |
@@ -1153,9 +1153,9 @@ Decision basis, quoted:
 
 ## 19. Approval effect
 
-### 19.0 v0.12 (proposed)
+### 19.0 v0.12 (approved)
 
-v0.12 is proposed for Project Owner approval. On approval it supersedes v0.11 and v0.10 and carries forward everything v0.11 proposed, including owner decision OD5, except the first supplier task in §8.1, which changes from release 1.2 onwards (§18.4). It does not change release 1.1 or any Tender bound to it, and it does not itself install, switch, supersede or withdraw a release.
+v0.12 is approved by the Project Owner on 26 September 2026. It supersedes v0.11 and v0.10 and carries forward everything v0.11 proposed, including owner decision OD5, except the first supplier task in §8.1, which changes from release 1.2 onwards (§18.4). It does not change release 1.1 or any Tender bound to it, and it does not itself install, switch, supersede or withdraw a release.
 
 ### 19.1 v0.11 (proposed; retained, carried forward by v0.12)
 
