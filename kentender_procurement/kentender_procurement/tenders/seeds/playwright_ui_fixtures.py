@@ -504,9 +504,30 @@ def reset_addendum_confirming_fixture(*, commit: bool = True) -> dict[str, Any]:
 	return _done(state, commit)
 
 
-def reset_clarification_fixture(*, commit: bool = True) -> dict[str, Any]:
-	"""TPR-DES-11 opening state: one general clarification awaiting response."""
+def reset_clarification_fixture(*, commit: bool = True, failed: bool = False) -> dict[str, Any]:
+	"""TPR-DES-11 opening state: one general clarification awaiting response;
+	`failed` answers it to every registered candidate with the second
+	candidate's notice failing three times (§10.12 delivery-failure)."""
 	state = reset_published_fixture(commit=False, with_clarification=True)
+	if failed:
+		from kentender_procurement.tenders.services import candidate_notices, clarifications
+
+		state.update(_candidate(state["tender"], FAILED_CANDIDATE))
+		_clock("respond")
+		transport = lambda notice: _failed(notice) if notice.destination_snapshot == FAILED_CANDIDATE["notice_address"] else _delivered(notice)
+		frappe.flags.kt_tenders_notice_sync, frappe.flags.kt_tenders_notice_transport = True, transport
+		try:
+			root = frappe.get_doc("Tender", state["tender"])
+			with _as(OFFICER):
+				clarifications.respond_to_tender_clarification(tender=root.name, clarification=state["clarification"], response="Yes. The Tender requires two comparable contracts and does not require both contracts to be from the same customer.", affects_published_tender=False, response_audience="All registered candidates", expected_record_version=root.record_version, idempotency_key=_key())
+			notice = frappe.db.get_value("Tender Candidate Notice", {"subject_id": state["clarification"], "status": "Failed"}, "name")
+			for _ in range(2):
+				root.reload()
+				with _as(HOPF):
+					candidate_notices.retry_failed_candidate_notice(tender=root.name, notice=notice, expected_record_version=root.record_version, idempotency_key=_key())
+		finally:
+			frappe.flags.kt_tenders_notice_sync, frappe.flags.kt_tenders_notice_transport = False, None
+		state["failed_notice"] = notice
 	return _done(state, commit)
 
 

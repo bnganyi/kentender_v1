@@ -1,5 +1,8 @@
-<!-- TPR-DES-09 Published Tender (every actor variant, no-addendum and
-     submission-ended), ported class-for-class. It also serves as the plain
+<!-- TPR-DES-09 Published Tender (§10.10: every actor variant, no-addendum and
+     submission-ended), ported class-for-class — the §10.17 guidance region
+     states the viewer's option (never an obligation), the facts carry no
+     second status narrative, and "Changes and notices" lists the addenda and
+     the supplier clarifications with their candidate-notice delivery. It also serves as the plain
      record view for a reader on any other status (§10.4 "record"): the
      same head, facts, content sections and history — no business action. -->
 <template>
@@ -25,7 +28,7 @@
 				<button v-if="openPeriod.current_addendum" type="button" class="kt-btn kt-btn-secondary" data-testid="tnd-view-current-addendum" @click="$emit('open-addendum', openPeriod.current_addendum.name)">View current addendum</button>
 			</div>
 			<div v-if="publication" class="tnd-section">
-				<div class="kt-card-title" style="margin-bottom: 12px">Publication channels</div>
+				<div class="tnd-block-title tnd-block-title--section">Publication channels</div>
 				<table class="kt-table" data-testid="tnd-published-channels">
 					<thead><tr><th>Channel</th><th>Result</th><th>Available at</th><th>Confirmation</th></tr></thead>
 					<tbody>
@@ -34,22 +37,29 @@
 				</table>
 			</div>
 			<div v-if="publication" class="tnd-section">
-				<div class="kt-card-title" style="margin-bottom: 12px">Changes and notices</div>
+				<div class="tnd-block-title tnd-block-title--section">Changes and notices</div>
 				<table v-if="addenda.length" class="kt-table" style="margin-bottom: 16px" data-testid="tnd-addenda-table">
 					<thead><tr><th>Addendum</th><th>Change</th><th>Issued</th><th>Deadline</th><th></th></tr></thead>
 					<tbody><tr v-for="a in addenda" :key="a.name" :data-status="a.status"><td>{{ a.addendum_reference }}</td><td>{{ a.change_summary }}<span v-if="a.status !== 'Issued'" class="tnd-sub">{{ a.status }}</span></td><td>{{ a.issued_at_label || "—" }}</td><td>{{ a.revised_submission_deadline_label || tender.submission_deadline_label }}</td><td><button type="button" class="tnd-link-btn" data-testid="tnd-open-addendum" @click="$emit('open-addendum', a.name)">View</button></td></tr></tbody>
 				</table>
 				<p v-else class="tnd-card-body" data-testid="tnd-no-addenda">{{ openPeriod.empty_addenda_text || "No addenda have been issued." }}</p>
-				<table v-if="inquiries.length" class="kt-table" data-testid="tnd-inquiries-table">
-					<thead><tr><th>Addendum</th><th>Question</th><th>Received</th><th>Response status</th><th></th></tr></thead>
-					<tbody><tr v-for="q in inquiries" :key="q.name"><td>{{ q.addendum_reference }}</td><td>{{ q.question }}</td><td>{{ q.received_at_label }}</td><td><span class="kt-status" :class="q.response_status === 'Answered' ? 'is-live' : q.response_status === 'Late' ? 'is-critical' : 'is-attention'">{{ q.response_status }}</span></td><td><button type="button" class="tnd-link-btn" data-testid="tnd-open-inquiry" @click="$emit('open-inquiry', q.name)">View</button></td></tr></tbody>
+				<table v-if="clarifications.length" class="kt-table" data-testid="tnd-clarifications-table">
+					<thead><tr><th>Question</th><th>Related notice</th><th>Received</th><th>Response status</th><th>Candidate notice</th><th>Action</th></tr></thead>
+					<tbody>
+						<tr v-for="q in clarifications" :key="q.name" :data-status="q.status">
+							<td>{{ q.question }}</td><td>{{ q.related_notice }}</td><td>{{ q.received_at_label }}</td>
+							<td><span class="kt-status" :class="q.status === 'Answered' ? 'is-live' : q.status === 'Closed with reason' ? 'is-pending' : 'is-attention'">{{ q.response_status }}</span></td>
+							<td>{{ q.candidate_notice || "—" }}</td>
+							<td><button type="button" class="tnd-link-btn" data-testid="tnd-open-clarification" @click="$emit('open-clarification', q.name)">View</button></td>
+						</tr>
+					</tbody>
 				</table>
-				<p v-else class="tnd-card-body" data-testid="tnd-no-inquiries">{{ openPeriod.empty_inquiries_text || "No addendum inquiries have been received." }}</p>
+				<p v-else class="tnd-card-body" data-testid="tnd-no-clarifications">No supplier clarifications have been received.</p>
 			</div>
 			<div class="tnd-section tnd-section--content">
-				<div class="kt-card-title tnd-content-title">Tender content</div>
+				<div class="tnd-block-title tnd-block-title--section">Tender content</div>
 				<ContentSections :sections="review.sections || []" />
-				<div class="kt-card-title tnd-content-title tnd-content-title--later">History and evidence</div>
+				<div class="tnd-block-title tnd-block-title--section tnd-block-title--later">History and evidence</div>
 				<div class="kt-disclosure" style="margin-top: 10px">
 					<div class="kt-disclosure-head" role="button" tabindex="0" @click="historyOpen = !historyOpen" @keydown.enter.prevent="historyOpen = !historyOpen"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Decisions and attempts</span></div><svg class="kt-disclosure-chevron" :class="{ 'is-open': historyOpen }" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div>
 					<div v-if="historyOpen" class="kt-disclosure-body">
@@ -91,7 +101,7 @@ const props = defineProps({
 	review: { type: Object, default: () => ({}) },
 	pending: Boolean,
 });
-defineEmits(["view-document", "view-confirmation", "open-addendum", "open-inquiry", "prepare-addendum", "cancel-screen", "history", "reopen", "request-correction", "publication", "fix"]);
+defineEmits(["view-document", "view-confirmation", "open-addendum", "open-clarification", "prepare-addendum", "cancel-screen", "history", "reopen", "request-correction", "publication", "fix"]);
 
 const historyOpen = ref(false);
 const tender = computed(() => props.record.tender || {});
@@ -103,7 +113,7 @@ const badgeTone = computed(() => (ended.value ? "is-pending" : published.value ?
 const lede = computed(() => (ended.value ? "Supplier submission is closed. The proceeding has moved to the next procurement stage." : published.value ? "Published and open for supplier submissions." : ""));
 const channels = computed(() => (publication.value || {}).channels || []);
 const addenda = computed(() => openPeriod.value.addenda || []);
-const inquiries = computed(() => openPeriod.value.inquiries || []);
+const clarifications = computed(() => openPeriod.value.clarifications || []);
 const documents = computed(() => props.record.documents || []);
 const headlineDocuments = computed(() => {
 	const seen = new Set();

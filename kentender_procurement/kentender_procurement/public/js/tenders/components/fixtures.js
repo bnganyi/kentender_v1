@@ -206,3 +206,60 @@ export function publicationData(variant = "") {
 		_conflict: variant === "CONFLICT" ? channels[0] : null,
 	};
 }
+
+const QUESTION = "May the two comparable contracts be from different customers?";
+const ANSWER = "Yes. The Tender requires two comparable contracts and does not require both contracts to be from the same customer.";
+
+/** TPR-DES-11 — `GetTenderClarification` for the officer ("" ordinary, "CHANGE" published change, "FAILURE" delivery failure). */
+export function clarificationData(variant = "") {
+	const failure = variant === "FAILURE";
+	const changeAnswer = guidance("D/D/D/D/B", "Brian Wafula", blockedStep("Issue an addendum before sending this answer.", ["Prepare addendum"], "TND_CLARIFICATION_ADDENDUM_REQUIRED"));
+	changeAnswer.next_step.sentence = "A clarification cannot change requirements, criteria, dates or supplier obligations on its own.";
+	return {
+		outcome: "OK",
+		tender: { name: "TDR-0001", tender_reference: "TND-MOH-2027-033", overall_status: "Published — open", record_version: 12, clarification_deadline_label: "27 May 2027, 17:00 EAT" },
+		clarification: {
+			name: "TCQ-0001", candidate_label: "Registered Tender candidate", candidate_name: "Afya Digital Supplies Limited", question: QUESTION, received_at_label: "26 May 2027, 09:00 EAT",
+			status: failure ? "Answered" : "Awaiting response", related_addendum_reference: "None", response: failure ? ANSWER : "", response_audience: failure ? "All registered candidates" : "",
+			affects_published_tender: false, required_addendum: "", required_addendum_reference: "", responded_by_name: failure ? "Brian Wafula" : "", responded_at_label: failure ? "26 May 2027, 11:00 EAT" : "", record_version: 1,
+		},
+		notices: failure ? [{ name: "TCN-0009", candidate_registration_id: "ARR-MOH-2027-033-009", destination_snapshot: "procurement@failed-delivery.example", attempt_count: 3, status: "Failed" }] : [],
+		audiences: [{ value: "Asker only", label: "Only the supplier who asked" }, { value: "All registered candidates", label: "All registered candidates" }],
+		allowed_actions: failure ? ["retry_notice"] : ["send_response", "prepare_addendum"],
+		guidance: failure
+			? guidance("D/D/D/D/B", "Charles Mutiso", blockedStep("1 candidate notice failed delivery; the Tender remains open.", ["Retry notice"], "TND_NOTICE_DELIVERY_FAILED"))
+			: guidance("D/D/D/D/C", "Brian Wafula", step("your_turn", "Send the answer to all registered candidates.")),
+		guidance_if_published_change: failure ? null : changeAnswer,
+	};
+}
+
+/** TPR-DES-09 — `GetTender` + `GetTenderReview` on a published Tender, per viewer ("HOPF", "AO", "PO", "READER") and variant ("", "NO-ADDENDUM", "ENDED"). */
+export function publishedData(role = "HOPF", variant = "") {
+	const ended = variant === "ENDED";
+	const noAddendum = variant === "NO-ADDENDUM";
+	const channels = ["State Portal", "Ministry website", "Notice board", "Two national newspapers"].map((label, i) => ({ name: `TCC-${i}`, channel: `C${i}`, channel_label: label, status: "Confirmed", result_label: "Confirmed", available_at_label: "15 May 2027, 08:00 EAT" }));
+	const addendum = { name: "TDA-0001", addendum_reference: "ADD-MOH-2027-033-001", status: "Issued", change_summary: "Delivery point clarified", issued_at_label: "31 May 2027, 09:00 EAT", revised_submission_deadline_label: "12 Jun 2027, 11:00 EAT" };
+	const actions = { HOPF: ["prepare_addendum", "recommend_cancellation"], AO: ["cancel_tender"], PO: ["prepare_addendum"], READER: [] }[role];
+	const steps = {
+		HOPF: ["Charles Mutiso", step("your_turn", "Prepare an addendum or recommend cancellation if the open Tender needs it.", { sentence: "These are available options, not overdue work." })],
+		PO: ["Brian Wafula", step("your_turn", "Prepare an addendum if the published Tender needs a non-material correction.", { sentence: "This is an available option, not assigned work." })],
+		AO: ["Amina Hassan", step("your_turn", "You can cancel this open Tender on an applicable ground.", { sentence: "This is an available option, not an assigned cancellation review." })],
+		READER: ["", step("not_involved", "")],
+	}[role];
+	return {
+		record: {
+			outcome: "OK", mode: "site", screen: "published",
+			tender: { ...TENDER, overall_status: ended ? "Submission period ended" : "Published — open", badge: ended ? "Submission period ended" : "Published — open", published_at_label: "15 May 2027, 08:00 EAT", submission_deadline_label: noAddendum ? "5 Jun 2027, 11:00 EAT" : "12 Jun 2027, 11:00 EAT" },
+			publication: { channels, authorised_by_name: "Amina Hassan", published_at_label: "15 May 2027, 08:00 EAT" },
+			open_period: {
+				addenda: noAddendum ? [] : [addendum], effective_addenda_count: noAddendum ? 0 : 1, current_addendum: noAddendum ? null : addendum,
+				clarifications: [{ name: "TCQ-0001", question: "May the two comparable contracts be from different customers?", related_notice: "None", received_at_label: "26 May 2027, 09:00 EAT", status: "Answered", response_status: "Answered", candidate_notice: "1 of 1 delivered" }],
+			},
+			documents: [{ kind: "Invitation", digest: "d1" }, { kind: "Complete Tender", digest: "d2" }],
+			decisions: [{ decision: "Approved", actor_name: "Charles Mutiso", decided_at_label: "20 Apr 2027, 10:00 EAT", version_number: 2 }, { decision: "Publication authorised", actor_name: "Amina Hassan", decided_at_label: "15 May 2027, 07:55 EAT" }],
+			allowed_actions: ended ? ["view_history"] : [...actions, "view_history"],
+			guidance: ended ? guidance("D/D/D/D/D", "", step("done", "The system closed supplier submission at 12 Jun 2027, 11:00 EAT.")) : guidance("D/D/D/D/C", steps[0], steps[1]),
+		},
+		review: { sections: reviewData().sections.map((s) => ({ ...s, open: false, tag: "" })) },
+	};
+}

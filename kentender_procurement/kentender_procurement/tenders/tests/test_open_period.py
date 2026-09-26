@@ -281,6 +281,12 @@ class TestClarifications(OpenPeriodCase):
 	def test_an_answer_that_changes_the_tender_waits_for_an_issued_addendum(self):
 		received = self._receive()
 		root = self._root()
+		# §10.17 DES-11: the read carries the answer an unsaved Yes would give
+		before = open_period_read.get_tender_clarification(tender=self.name, clarification=received["clarification"], user=fx.OFFICER)
+		change = before["guidance_if_published_change"]["next_step"]
+		self.assertEqual((change["kind"], change["headline"], [f["label"] for f in change["blockers"][0]["fixes"]]), ("your_turn_blocked", "Issue an addendum before sending this answer.", ["Prepare addendum"]))
+		self.assertEqual(change["sentence"], "A clarification cannot change requirements, criteria, dates or supplier obligations on its own.")
+		self.assertEqual([s["marker"] for s in before["guidance_if_published_change"]["journey"]["stages"]][-1], "blocked")
 		awaiting = clarifications.respond_to_tender_clarification(tender=self.name, clarification=received["clarification"], response="The delivery point is the 3rd Floor Procurement Stores.", affects_published_tender=True, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		self.assertEqual((awaiting["status"], awaiting["reason_code"]), ("Awaiting addendum", "TND_CLARIFICATION_ADDENDUM_REQUIRED"))
 		self.assertEqual(self.sent, [])  # TPR10-AC-005: nothing is sent
@@ -294,8 +300,12 @@ class TestClarifications(OpenPeriodCase):
 		root.reload()
 		still = clarifications.respond_to_tender_clarification(tender=self.name, clarification=received["clarification"], response="The delivery point is the 3rd Floor Procurement Stores.", affects_published_tender=True, required_addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		self.assertEqual(still["status"], "Awaiting addendum")  # TPR10-AC-006: issued AND effective
+		waiting = open_period_read.get_tender_clarification(tender=self.name, clarification=received["clarification"], user=fx.OFFICER)
+		self.assertEqual((waiting["guidance"]["next_step"]["kind"], waiting["required_addendum_effective"], waiting["allowed_actions"]), ("your_turn_blocked", False, ["prepare_addendum"]))
 		for channel in CHANNELS:
 			self._confirm("addendum", channel, addendum=name, available_at="2027-05-26 12:30:00")
+		ready = open_period_read.get_tender_clarification(tender=self.name, clarification=received["clarification"], user=fx.OFFICER)
+		self.assertEqual((ready["guidance"]["next_step"]["headline"], ready["required_addendum_effective"], ready["allowed_actions"]), ("Send the answer to all registered candidates.", True, ["send_response"]))
 		self.assertEqual(len([n for n in frappe.get_all("Tender Candidate Notice", filters={"subject_id": name}, pluck="status")]), 2)  # addendum notices (one per candidate)
 		root.reload()
 		self.sent.clear()

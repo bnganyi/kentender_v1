@@ -34,6 +34,14 @@ export const DEPARTURES = {
 	"PublicationScreen#TPR-DES-08": [CORNERS],
 	"PublicationScreen#TPR-DES-08-INVALID": [CORNERS],
 	"PublicationScreen#TPR-DES-08-CONFLICT": [CORNERS],
+	"PublishedScreen#TPR-DES-09-HOPF": [CORNERS],
+	"PublishedScreen#TPR-DES-09-AO": [CORNERS],
+	"PublishedScreen#TPR-DES-09-PO": [CORNERS],
+	"PublishedScreen#TPR-DES-09-READER": [CORNERS],
+	"PublishedScreen#TPR-DES-09-HOPF-NO-ADDENDUM": [CORNERS],
+	"PublishedScreen#TPR-DES-09-HOPF-ENDED": [CORNERS],
+	"ClarificationScreen#TPR-DES-11": [CORNERS],
+	"ClarificationScreen#TPR-DES-11-FAILURE": [CORNERS],
 };
 
 export const COVERED = Object.keys(DEPARTURES);

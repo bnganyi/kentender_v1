@@ -17,7 +17,9 @@ import ReviewScreen from "./ReviewScreen.vue";
 import ApprovalScreen from "./ApprovalScreen.vue";
 import AuthorisationScreen from "./AuthorisationScreen.vue";
 import PublicationScreen from "./PublicationScreen.vue";
-import { approvalData, authorisationData, editorRecord, publicationData, reviewData, reviewRecord } from "./fixtures.js";
+import PublishedScreen from "./PublishedScreen.vue";
+import ClarificationScreen from "./ClarificationScreen.vue";
+import { approvalData, authorisationData, clarificationData, editorRecord, publicationData, publishedData, reviewData, reviewRecord } from "./fixtures.js";
 
 const DESIGN = "docs/mvp-1-r1/11_tenders/design";
 
@@ -41,6 +43,13 @@ const SCREENS = [
 			component: PublicationScreen, props: { pub: data, refusal: data._refusal, conflict: data._conflict },
 		};
 	}),
+	...[["HOPF", "", "turn"], ["AO", "", "turn"], ["PO", "", "turn"], ["READER", "", "none"], ["HOPF", "NO-ADDENDUM", "turn"], ["HOPF", "ENDED", "done"]].map(([role, v, kind]) => ({
+		name: "PublishedScreen", variant: `TPR-DES-09-${role}${v ? `-${v}` : ""}`, board: "Published Tender.dc.html", label: "TPR-DES-09 Published Tender",
+		options: { guidance: kind, ...(v === "NO-ADDENDUM" ? { show: ["noAddenda"], hide: ["hasAddenda"] } : v === "ENDED" ? { show: ["isEnded"], hide: ["isOpen"] } : {}) },
+		component: PublishedScreen, props: publishedData(role, v),
+	})),
+	{ name: "ClarificationScreen", variant: "TPR-DES-11", board: "Respond to Supplier Clarification.dc.html", label: "TPR-DES-11 Respond to supplier clarification", options: { guidance: "turn" }, component: ClarificationScreen, props: { data: clarificationData() } },
+	{ name: "ClarificationScreen", variant: "TPR-DES-11-FAILURE", board: "Respond to Supplier Clarification.dc.html", label: "TPR-DES-11 Respond to supplier clarification", options: { guidance: "blocked", show: ["isFailure"], hide: ["isEditable", "isOrdinary"] }, component: ClarificationScreen, props: { data: clarificationData("FAILURE") } },
 ];
 
 describe.each(SCREENS)("$name — the structure $variant carries", ({ name, variant, board, label, options, component, props }) => {

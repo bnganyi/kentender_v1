@@ -38,8 +38,8 @@ export function previewTenderDocuments(tender) {
 export function getTenderAddendum(tender, addendum) {
 	return frappeCall(`${BASE}.get_tender_addendum`, { tender, addendum: addendum || "" });
 }
-export function getAddendumInquiry(tender, inquiry) {
-	return frappeCall(`${BASE}.get_addendum_inquiry`, { tender, inquiry });
+export function getTenderClarification(tender, clarification) {
+	return frappeCall(`${BASE}.get_tender_clarification`, { tender, clarification });
 }
 export function getTenderCancellation(tender) {
 	return frappeCall(`${BASE}.get_tender_cancellation`, { tender });
@@ -76,7 +76,11 @@ export const submitAddendumForIssue = (args) => frappeCall(`${BASE}.submit_adden
 export const returnAddendumForCorrection = (args) => frappeCall(`${BASE}.return_addendum_for_correction`, args);
 export const issueAddendum = (args) => frappeCall(`${BASE}.issue_addendum`, args);
 export const confirmAddendumPublicationChannel = (args) => frappeCall(`${BASE}.confirm_addendum_publication_channel`, args);
-export const respondToAddendumInquiry = (args) => frappeCall(`${BASE}.respond_to_addendum_inquiry`, args);
+export const discardAddendumDraft = (args) => frappeCall(`${BASE}.discard_addendum_draft`, args);
+export const requestTenderCancellationReview = (args) => frappeCall(`${BASE}.request_tender_cancellation_review`, args);
+export const closeTenderCancellationReview = (args) => frappeCall(`${BASE}.close_tender_cancellation_review`, args);
+export const respondToTenderClarification = (args) => frappeCall(`${BASE}.respond_to_tender_clarification`, args);
+export const retryFailedCandidateNotice = (args) => frappeCall(`${BASE}.retry_failed_candidate_notice`, args);
 export const recommendTenderCancellation = (args) => frappeCall(`${BASE}.recommend_tender_cancellation`, args);
 export const cancelTender = (args) => frappeCall(`${BASE}.cancel_tender`, args);
 export const recordCancellationComplianceEvidence = (args) => frappeCall(`${BASE}.record_cancellation_compliance_evidence`, args);

@@ -1,9 +1,11 @@
-// TPR-DES-10/11/12 — addendum variants, inquiry effect choice, cancellation
+// TPR-DES-10/11/12 — addendum variants, the clarification answer, cancellation
 // grounds/consequences/obligations, and the confirmation dialog's own checks.
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
+import { nextTick } from "vue";
+import { clarificationData } from "./fixtures.js";
 import AddendumScreen from "./AddendumScreen.vue";
-import InquiryScreen from "./InquiryScreen.vue";
+import ClarificationScreen from "./ClarificationScreen.vue";
 import CancelScreen from "./CancelScreen.vue";
 import ChannelConfirmationDialog from "./ChannelConfirmationDialog.vue";
 import EvidenceDialog from "./EvidenceDialog.vue";
@@ -40,22 +42,39 @@ describe("AddendumScreen — TPR-DES-10", () => {
 	});
 });
 
-describe("InquiryScreen — TPR-DES-11", () => {
-	const data = { tender: TENDER, inquiry: { name: "TDI-1", addendum_reference: "ADD-MOH-2027-033-001", candidate_label: "Verified supplier account", candidate_identity: "", question: "Does the clarified delivery point apply to all lots?", received_at_label: "1 Jun 2027, 09:00 EAT", status: "Awaiting response" }, effect_texts: { no: "The response will be sent to the candidate and recorded.", yes: "The response will be sent to every registered candidate without identifying who asked." }, allowed_actions: ["send_response"] };
-	it("never shows the candidate identity to the responder and switches the effect text", async () => {
-		const w = mount(InquiryScreen, { props: { data, pending: false, error: "" } });
-		expect(w.find('[data-testid="tnd-inq-candidate"]').text()).toBe("Verified supplier account");
-		expect(w.find('[data-testid="tnd-inq-effect"]').text()).toBe("The response will be sent to the candidate and recorded.");
-		await w.find('[data-testid="tnd-inq-affects-yes"]').trigger("change");
-		expect(w.find('[data-testid="tnd-inq-effect"]').text()).toContain("without identifying who asked");
-		await w.find('[data-testid="tnd-inq-response"]').setValue("Yes, it applies to all lots.");
-		await w.find('[data-testid="tnd-inq-send"]').trigger("click");
-		expect(w.emitted("send")[0][0]).toEqual({ response: "Yes, it applies to all lots.", affects_requirements: true });
+describe("ClarificationScreen — TPR-DES-11", () => {
+	it("an ordinary answer: the registration caveat, the audience choice, Send response", async () => {
+		const w = mount(ClarificationScreen, { props: { data: clarificationData(), pending: false, error: "" }, attachTo: document.body });
+		await nextTick();
+		expect(w.find('[data-testid="tnd-clarification-candidate"]').text()).toBe("Registered Tender candidate");
+		expect(w.text()).toContain("It does not confirm supplier qualification or eligibility.");
+		expect(w.find('[data-kt="next-step"]').text()).toContain("Send the answer to all registered candidates.");
+		await w.find('[data-testid="tnd-clar-response"]').setValue("Yes, they may be from different customers.");
+		await w.find('[data-testid="tnd-clar-send"]').trigger("click");
+		expect(w.emitted("send")[0][0]).toEqual({ response: "Yes, they may be from different customers.", affects_published_tender: false, response_audience: "All registered candidates", required_addendum: "" });
+		w.unmount();
 	});
-	it("late: the deadline notice and no Send control", () => {
-		const w = mount(InquiryScreen, { props: { data: { ...data, inquiry: { ...data.inquiry, status: "Late" }, allowed_actions: [], late_text: "The inquiry deadline has passed." }, pending: false, error: "" } });
-		expect(w.find('[data-testid="tnd-inq-late"]').text()).toContain("The inquiry deadline has passed.");
-		expect(w.find('[data-testid="tnd-inq-send"]').exists()).toBe(false);
+	it("an unsaved Yes shows the server's published-change answer: no audience, no Send, Prepare addendum", async () => {
+		const w = mount(ClarificationScreen, { props: { data: clarificationData("CHANGE"), pending: false, error: "" }, attachTo: document.body });
+		await nextTick();
+		await w.find('[data-testid="tnd-clar-changes-yes"]').trigger("change");
+		await nextTick();
+		const step = w.find('[data-kt="next-step"]');
+		expect(step.classes()).toContain("is-warning");
+		expect(step.text()).toContain("A clarification cannot change requirements, criteria, dates or supplier obligations on its own.");
+		expect(step.find("button").text()).toBe("Prepare addendum");
+		expect(w.find('[data-testid="tnd-clar-audience"]').exists()).toBe(false);
+		expect(w.find('[data-testid="tnd-clar-send"]').exists()).toBe(false);
+		w.unmount();
+	});
+	it("a delivery failure: the recorded answer, the protected recipient and Retry notice", async () => {
+		const w = mount(ClarificationScreen, { props: { data: clarificationData("FAILURE"), pending: false, error: "" }, attachTo: document.body });
+		await nextTick();
+		expect(w.find('[data-testid="tnd-clar-recorded-response"]').text()).toContain("does not require both contracts");
+		expect(w.find('[data-testid="tnd-clar-notices"] tbody').text()).toContain("procurement@failed-delivery.example");
+		expect(w.find('[data-kt="next-step"] button').text()).toBe("Retry notice");
+		expect(w.find('[data-testid="tnd-clar-send"]').exists()).toBe(false);
+		w.unmount();
 	});
 });
 

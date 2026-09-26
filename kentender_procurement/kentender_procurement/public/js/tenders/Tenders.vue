@@ -8,7 +8,7 @@
        /app/tenders/{ref}/publication            publication confirmation (TPR-DES-08) or
                                                  AO authorisation (TPR-DES-07)
        /app/tenders/{ref}/addenda/{a}            addendum (TPR-DES-10)
-       /app/tenders/{ref}/inquiries/{i}          inquiry (TPR-DES-11)
+       /app/tenders/{ref}/clarifications/{c}     supplier clarification (TPR-DES-11)
        /app/tenders/{ref}/cancel                 cancellation (TPR-DES-12)
        /app/tenders/{ref}/history                history (D22)
      The root reads the route through core's useRoute adapter, keeps one
@@ -38,7 +38,7 @@
 				<PublicationScreen v-else-if="screen === 'publication'" :pub="pub" :refusal="refusalAnswer" :conflict="conflictRow" :withdrawn="withdrawnText" :pending="pending" @confirm-channel="channelDialog = { row: $event, subject: 'publication' }" @view-confirmation="confirmationView = $event" @view-document="onViewDocument" @withdraw="withdrawDialog = true" @fix="onFix" />
 				<CorrectionRequestedScreen v-else-if="screen === 'correction'" :record="record" :pending="pending" @start-corrected="onStartCorrected" @view-requisition="onViewRequisition" @history="go(tenderRef, 'history')" />
 				<CancelScreen v-else-if="screen === 'cancelled'" :data="cancelData" :pending="pending" :error="dialogError" @back="go()" @record-evidence="obligationDialog = { row: $event }" />
-				<PublishedScreen v-else :record="record" :review="review" :pending="pending" @view-document="onViewDocument" @view-confirmation="confirmationView = $event" @open-addendum="go(tenderRef, 'addenda', $event)" @open-inquiry="go(tenderRef, 'inquiries', $event)" @prepare-addendum="onPrepareAddendum" @cancel-screen="go(tenderRef, 'cancel')" @history="go(tenderRef, 'history')" @reopen="reopenDialog = true" @request-correction="correctionDialog = true" @publication="go(tenderRef, 'publication')" @fix="onFix" />
+				<PublishedScreen v-else :record="record" :review="review" :pending="pending" @view-document="onViewDocument" @view-confirmation="confirmationView = $event" @open-addendum="go(tenderRef, 'addenda', $event)" @open-clarification="go(tenderRef, 'clarifications', $event)" @prepare-addendum="onPrepareAddendum" @cancel-screen="go(tenderRef, 'cancel')" @history="go(tenderRef, 'history')" @reopen="reopenDialog = true" @request-correction="correctionDialog = true" @publication="go(tenderRef, 'publication')" @fix="onFix" />
 			</template>
 
 			<template v-else-if="kind === 'addendum'">
@@ -47,9 +47,9 @@
 				<div v-if="error && !loading" class="tnd-page" style="padding-top: 12px"><div class="kt-notice is-critical" role="alert" data-testid="tnd-command-error"><div class="kt-notice-body">{{ error }}</div></div></div>
 			</template>
 
-			<template v-else-if="kind === 'inquiry'">
+			<template v-else-if="kind === 'clarification'">
 				<div v-if="loading" class="tnd-page"><div class="kt-card kt-blueprint" style="padding: 0; overflow: hidden" data-testid="tnd-record-loading"><div v-for="row in 3" :key="row" class="tnd-skel-row"><div class="kt-skel" style="width: 72%"></div></div></div></div>
-				<InquiryScreen v-else :data="inquiryData" :pending="pending" :error="error" @back="go(tenderRef)" @send="onSendResponse" />
+				<ClarificationScreen v-else ref="clarificationRef" :data="clarificationData" :errors="fieldErrors" :pending="pending" :error="error" @back="go(tenderRef)" @send="onSendResponse" @fix="onFix" />
 			</template>
 
 			<template v-else-if="kind === 'cancel'">
@@ -105,7 +105,7 @@ import PublicationScreen from "./components/PublicationScreen.vue";
 import PublishedScreen from "./components/PublishedScreen.vue";
 import CorrectionRequestedScreen from "./components/CorrectionRequestedScreen.vue";
 import AddendumScreen from "./components/AddendumScreen.vue";
-import InquiryScreen from "./components/InquiryScreen.vue";
+import ClarificationScreen from "./components/ClarificationScreen.vue";
 import CancelScreen from "./components/CancelScreen.vue";
 import HistoryScreen from "./components/HistoryScreen.vue";
 import ConfirmDialog from "./components/ConfirmDialog.vue";
@@ -138,7 +138,8 @@ const record = ref({ tender: {} });
 const review = ref({});
 const pub = ref({ tender: {} });
 const addendumData = ref({ tender: {} });
-const inquiryData = ref({ tender: {}, inquiry: {} });
+const clarificationData = ref({ tender: {}, clarification: {} });
+const clarificationRef = ref(null);
 const cancelData = ref({ tender: {} });
 const historyData = ref({ tender: {} });
 
@@ -181,7 +182,7 @@ const kind = computed(() => {
 	if (!segments.value.length) return "workspace";
 	if (segments.value[0] === "new") return "start";
 	if (sub.value === "addenda" && subId.value) return "addendum";
-	if (sub.value === "inquiries" && subId.value) return "inquiry";
+	if (sub.value === "clarifications" && subId.value) return "clarification";
 	if (sub.value === "cancel") return "cancel";
 	if (sub.value === "history") return "history";
 	return "record";
@@ -207,7 +208,7 @@ const screen = computed(() => {
 
 const state = computed(() => {
 	if (error.value && staleWrite.value) return { kind: "stale" };
-	if (error.value && !dialogOpen.value && kind.value !== "addendum" && kind.value !== "inquiry" && kind.value !== "cancel" && !(kind.value === "record" && ["details", "requirements"].includes(record.value.screen === "editor" ? (TASKS.includes(sub.value) ? sub.value : "details") : ""))) return { kind: "failure" };
+	if (error.value && !dialogOpen.value && kind.value !== "addendum" && kind.value !== "clarification" && kind.value !== "cancel" && !(kind.value === "record" && ["details", "requirements"].includes(record.value.screen === "editor" ? (TASKS.includes(sub.value) ? sub.value : "details") : ""))) return { kind: "failure" };
 	if (kind.value === "workspace" || kind.value === "start") {
 		if (workspace.value.outcome === "FORBIDDEN") return { kind: "forbidden", ...(workspace.value.forbidden || {}) };
 		if (kind.value === "start" && startDetail.value.outcome) {
@@ -219,7 +220,7 @@ const state = computed(() => {
 		}
 		return null;
 	}
-	const data = { record: record.value, addendum: addendumData.value, inquiry: inquiryData.value, cancel: cancelData.value, history: historyData.value }[kind.value] || record.value;
+	const data = { record: record.value, addendum: addendumData.value, clarification: clarificationData.value, cancel: cancelData.value, history: historyData.value }[kind.value] || record.value;
 	if (data && data.outcome === "NOT_FOUND") return { kind: "not-found", heading: data.heading, text: data.text };
 	if (kind.value === "record" && pub.value && pub.value.rule_error === "TND_PUBLICATION_RULE_UNAVAILABLE" && record.value.screen === "authorisation") return { kind: "rule-unavailable" };
 	return null;
@@ -263,8 +264,8 @@ async function fetchFor() {
 		}
 		case "addendum":
 			return { addendumData: await api.getTenderAddendum(tenderRef.value, subId.value) };
-		case "inquiry":
-			return { inquiryData: await api.getAddendumInquiry(tenderRef.value, subId.value) };
+		case "clarification":
+			return { clarificationData: await api.getTenderClarification(tenderRef.value, subId.value) };
 		case "cancel":
 			return { cancelData: await api.getTenderCancellation(tenderRef.value) };
 		case "history":
@@ -280,7 +281,7 @@ function applyLoaded(loaded) {
 	if (loaded.review) review.value = loaded.review;
 	if (loaded.pub) pub.value = loaded.pub;
 	if (loaded.addendumData) addendumData.value = loaded.addendumData;
-	if (loaded.inquiryData) inquiryData.value = loaded.inquiryData;
+	if (loaded.clarificationData) clarificationData.value = loaded.clarificationData;
 	if (loaded.cancelData) cancelData.value = loaded.cancelData;
 	if (loaded.historyData) historyData.value = loaded.historyData;
 }
@@ -617,6 +618,16 @@ function onFix(fix) {
 		return;
 	}
 	if (id === "submit_for_approval") submitDialog.value = true;
+	if (id === "prepare_addendum") {
+		if (kind.value === "clarification") onPrepareAddendumForClarification();
+		else onPrepareAddendum();
+		return;
+	}
+	if (id === "retry_notice") {
+		if (kind.value === "clarification" || (target && target.notice)) onRetryNotice(target);
+		else if (target && target.clarification) go(tenderRef.value, "clarifications", target.clarification);
+		return;
+	}
 	const channels = ((pub.value.publication || {}).channels) || [];
 	if (id === "choose_evidence_file" && channelDraft.value) {
 		const row = channels.find((c) => c.channel === channelDraft.value.channel);
@@ -686,14 +697,40 @@ async function onIssueAddendum() {
 	}, { dialog: true });
 	if (result) closeDialogs();
 }
-async function onSendResponse({ response, affects_requirements }) {
+async function onSendResponse({ response, affects_published_tender, response_audience, required_addendum }) {
 	const result = await run(async () => {
-		const r = await api.respondToAddendumInquiry({ tender: tenderRef.value, inquiry: subId.value, response, affects_requirements, expected_record_version: (inquiryData.value.tender || {}).record_version, idempotency_key: api.newIdempotencyKey("respond") });
+		const r = await api.respondToTenderClarification({ tender: tenderRef.value, clarification: subId.value, response, affects_published_tender: affects_published_tender ? 1 : 0, response_audience, required_addendum: required_addendum || "", expected_record_version: (clarificationData.value.tender || {}).record_version, idempotency_key: api.newIdempotencyKey("respond") });
 		cache.set(`record:${tenderRef.value}`, null);
 		await load({ quiet: true });
 		return r;
 	});
-	if (result) go(tenderRef.value);
+	if (result && result.status === "Answered") go(tenderRef.value);
+}
+// §10.12 published-change variant: "Prepare addendum" opens the addendum
+// draft and links this answer to it (kept, nothing sent), so the answer can
+// be sent once that addendum is Issued and effective.
+async function onPrepareAddendumForClarification() {
+	const form = (clarificationRef.value && clarificationRef.value.form) || {};
+	const tenderVersion = () => (clarificationData.value.tender || {}).record_version;
+	const created = await run(() => api.createAddendumDraft({ tender: tenderRef.value, expected_record_version: tenderVersion(), idempotency_key: api.newIdempotencyKey("addendum") }));
+	if (!created) return;
+	const addendum = created.addendum.name;
+	await run(() => api.respondToTenderClarification({ tender: tenderRef.value, clarification: subId.value, response: form.response || "", affects_published_tender: 1, response_audience: "All registered candidates", required_addendum: addendum, expected_record_version: created.record_version, idempotency_key: api.newIdempotencyKey("respond-awaiting-addendum") }));
+	cache.set(`record:${tenderRef.value}`, null);
+	go(tenderRef.value, "addenda", addendum);
+}
+async function onRetryNotice(target) {
+	const notices = (clarificationData.value.notices || []).filter((n) => n.status === "Failed").map((n) => n.name);
+	const names = target && target.notice ? [target.notice] : notices;
+	for (const notice of names) {
+		const ok = await run(async () => {
+			const version = kind.value === "clarification" ? (clarificationData.value.tender || {}).record_version : rv();
+			return api.retryFailedCandidateNotice({ tender: tenderRef.value, notice, expected_record_version: version, idempotency_key: api.newIdempotencyKey("retry-notice") });
+		});
+		if (!ok) break;
+	}
+	cache.set(`record:${tenderRef.value}`, null);
+	await load({ quiet: true });
 }
 async function onRecommend() {
 	const v = recommendDialog.value;
@@ -764,7 +801,7 @@ const railTrail = computed(() => {
 	const trail = [{ label: __("Home"), route: ["Workspaces", "Procurement Home"] }, { label: "Tenders", route: [PAGE] }];
 	if (kind.value === "start") trail.push({ label: "Start Tender" });
 	if (tenderRef.value) trail.push({ label: tenderRef.value, route: [PAGE, tenderRef.value] });
-	const subLabels = { publication: "Publication", addenda: "Addendum", inquiries: "Inquiry", cancel: "Cancellation", history: "History", review: "Review", requirements: "Requirements", details: "Details" };
+	const subLabels = { publication: "Publication", addenda: "Addendum", clarifications: "Clarification", cancel: "Cancellation", history: "History", review: "Review", requirements: "Requirements", details: "Details" };
 	if (sub.value && subLabels[sub.value]) trail.push({ label: subLabels[sub.value] });
 	return trail;
 });

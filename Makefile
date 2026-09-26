@@ -852,7 +852,7 @@ ui-tenders-published-gate:
 ui-tenders-addendum-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project tenders
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx playwright test --workers=1 \
-		tests/ui/smoke/tenders/tnd-addendum.spec.ts tests/ui/smoke/tenders/tnd-inquiry.spec.ts
+		tests/ui/smoke/tenders/tnd-addendum.spec.ts tests/ui/smoke/tenders/tnd-clarification.spec.ts
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.tenders.seeds.playwright_ui_fixtures.restore_site
 
 ui-tenders-cancel-gate:

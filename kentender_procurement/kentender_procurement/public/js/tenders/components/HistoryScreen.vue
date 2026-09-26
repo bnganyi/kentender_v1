@@ -1,6 +1,6 @@
 <!-- /app/tenders/{ref}/history — plan D22: no board (fidelity-exempt). The
      GetTenderHistory projection as plain tables: versions, decisions,
-     documents (by digest), publication + confirmations, addenda, inquiries,
+     documents (by digest), publication + confirmations, addenda, clarifications,
      cancellation, and the event log (payloads for oversight readers only). -->
 <template>
 	<div class="tnd-page" data-screen-label="Tender history">
@@ -36,10 +36,10 @@
 				<p class="tnd-card-body" style="margin: 0 0 10px">{{ data.publication.publication_status }} · authorised by {{ data.publication.authorised_by_name }}, {{ data.publication.authorised_at_label }}<span v-if="data.publication.published_at_label"> · published {{ data.publication.published_at_label }}</span> · rule {{ data.publication.rule_snapshot_id }}</p>
 				<table class="kt-table" data-testid="tnd-history-channels"><thead><tr><th>Channel</th><th>Result</th><th>Available at</th><th>Attested by</th></tr></thead><tbody><tr v-for="c in data.publication.channels || []" :key="c.channel"><td>{{ c.channel_label }}</td><td>{{ c.result_label }}</td><td>{{ c.available_at_label || "—" }}</td><td>{{ c.attested_by_name || "—" }}<div class="tnd-sub">{{ c.attested_at_label }}</div></td></tr></tbody></table>
 			</div>
-			<div v-if="openPeriod && ((openPeriod.addenda || []).length || (openPeriod.inquiries || []).length || openPeriod.cancellation)" class="tnd-section">
+			<div v-if="openPeriod && ((openPeriod.addenda || []).length || (openPeriod.clarifications || []).length || openPeriod.cancellation)" class="tnd-section">
 				<div class="kt-card-title" style="margin-bottom: 12px">Open period</div>
 				<table v-if="(openPeriod.addenda || []).length" class="kt-table" style="margin-bottom: 12px" data-testid="tnd-history-addenda"><thead><tr><th>Addendum</th><th>Status</th><th>Change</th><th>Issued</th><th>Effective</th></tr></thead><tbody><tr v-for="a in openPeriod.addenda" :key="a.name"><td>{{ a.addendum_reference }}</td><td>{{ a.status }}</td><td>{{ a.change_summary }}</td><td>{{ a.issued_at_label || "—" }}</td><td>{{ a.effective_at_label || "—" }}</td></tr></tbody></table>
-				<table v-if="(openPeriod.inquiries || []).length" class="kt-table" style="margin-bottom: 12px" data-testid="tnd-history-inquiries"><thead><tr><th>Inquiry</th><th>Received</th><th>Status</th><th>Responded</th></tr></thead><tbody><tr v-for="q in openPeriod.inquiries" :key="q.name"><td>{{ q.question }}</td><td>{{ q.received_at_label }}</td><td>{{ q.response_status }}</td><td>{{ q.responded_by_name || "—" }}<div class="tnd-sub">{{ q.responded_at_label }}</div></td></tr></tbody></table>
+				<table v-if="(openPeriod.clarifications || []).length" class="kt-table" style="margin-bottom: 12px" data-testid="tnd-history-clarifications"><thead><tr><th>Clarification</th><th>Received</th><th>Status</th><th>Responded</th></tr></thead><tbody><tr v-for="q in openPeriod.clarifications" :key="q.name"><td>{{ q.question }}</td><td>{{ q.received_at_label }}</td><td>{{ q.response_status }}</td><td>{{ q.responded_at_label || "—" }}</td></tr></tbody></table>
 				<p v-if="openPeriod.cancellation" class="tnd-card-body" data-testid="tnd-history-cancellation">Cancelled by {{ openPeriod.cancellation.decided_by_name }}, {{ openPeriod.cancellation.decided_at_label }} — {{ openPeriod.cancellation.ground_label }}: {{ openPeriod.cancellation.reason }}</p>
 			</div>
 			<div class="tnd-section tnd-section--last">

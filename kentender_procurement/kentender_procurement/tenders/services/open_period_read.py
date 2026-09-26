@@ -125,9 +125,13 @@ def get_tender_clarification(*, tender: str, clarification: str, user: str | Non
 	issued = frappe.get_all("Tender Addendum", filters={"tender": root.name, "status": "Issued"}, fields=["name", "addendum_reference"], order_by="addendum_number asc")
 	notices = candidate_notices.rows_for(doc.name, notice_type="Clarification response", protected=protected)
 	actions: list[str] = []
+	required_effective = bool(doc.required_addendum) and frappe.db.get_value("Tender Addendum", doc.required_addendum, "status") == "Issued"
 	if root.overall_status == "Published — open" and (roles["officer"] or roles["hopf"]):
-		if doc.status in ("Awaiting response", "Awaiting addendum"):
+		if doc.status == "Awaiting response":
 			actions += ["send_response", "prepare_addendum"]
+		elif doc.status == "Awaiting addendum":
+			# §10.12: the kept answer is sent only once its addendum is Issued
+			actions += ["send_response"] if required_effective else ["prepare_addendum"]
 		if any(n["status"] == "Failed" for n in notices):
 			actions.append("retry_notice")
 	return {
@@ -147,7 +151,9 @@ def get_tender_clarification(*, tender: str, clarification: str, user: str | Non
 		"notices": notices, "notice_summary": candidate_notices.delivery_summary(doc.name, notice_type="Clarification response"),
 		"audiences": [{"value": "Asker only", "label": "Only the supplier who asked"}, {"value": "All registered candidates", "label": "All registered candidates"}],
 		"allowed_actions": actions,
+		"required_addendum_effective": required_effective,
 		"guidance": _guidance(root, actor, roles, "clarification", doc),
+		"guidance_if_published_change": guidance.clarification_change_guidance(root, doc.as_dict(), actor=actor, roles=roles) if not roles["technical"] else None,
 	}
 
 

@@ -308,12 +308,15 @@ def confirmation_conflict(channel_label: str = "", *, stage: str = PUBLICATION) 
 
 
 def _failed_notice_blocker(root) -> dict[str, Any] | None:
-	failed = frappe.db.count("Tender Candidate Notice", {"tender": root.name, "status": "Failed"})
+	failed = frappe.get_all("Tender Candidate Notice", filters={"tender": root.name, "status": "Failed"}, fields=["name", "subject_type", "subject_id"], order_by="creation asc")
 	if not failed:
 		return None
+	first = failed[0]
+	# the fix names the exact notice (and, for a clarification, where it is read)
+	target = {"notice": first.name, **({"clarification": first.subject_id} if first.subject_type == "Tender Clarification" else {})}
 	return _refusal(
-		"TND_NOTICE_DELIVERY_FAILED", f"{failed} candidate notice{'s' if failed != 1 else ''} failed delivery; the Tender remains open.", figures={"failed": failed},
-		fixes=[ns.fix("Retry notice", responsibility=f"{ROLE_HEAD_OF_PROCUREMENT_FUNCTION} or {ROLE_PROCUREMENT_OFFICER}", kind=ns.FIX_COMMAND, fix_id="retry_notice", primary=True)],
+		"TND_NOTICE_DELIVERY_FAILED", f"{len(failed)} candidate notice{'s' if len(failed) != 1 else ''} failed delivery; the Tender remains open.", figures={"failed": len(failed)},
+		fixes=[ns.fix("Retry notice", responsibility=f"{ROLE_HEAD_OF_PROCUREMENT_FUNCTION} or {ROLE_PROCUREMENT_OFFICER}", kind=ns.FIX_COMMAND, fix_id="retry_notice", primary=True, target=target)],
 	)
 
 
@@ -440,6 +443,28 @@ def _addendum_answer(root, addendum: dict[str, Any], *, actor: str, roles: dict[
 	return None
 
 
+CLARIFICATION_CHANGE_SENTENCE = "A clarification cannot change requirements, criteria, dates or supplier obligations on its own."
+
+
+def published_change_answer(clarification: dict[str, Any], *, actor: str, role: str) -> dict[str, Any]:
+	"""§10.17 DES-11 published-change: Your turn, blocked — Issue an addendum
+	before sending this answer — with Prepare addendum as the one fix."""
+	headline = "Issue an addendum before sending this answer."
+	prepare = ns.fix("Prepare addendum", responsibility=f"{ROLE_PROCUREMENT_OFFICER} or {ROLE_HEAD_OF_PROCUREMENT_FUNCTION}", kind=ns.FIX_COMMAND, fix_id="prepare_addendum", primary=True)
+	return _blocked(OPEN_MANAGEMENT, headline, holder_users=[actor], role=role, sentence=CLARIFICATION_CHANGE_SENTENCE, blockers=[ns.blocker(_refusal("TND_CLARIFICATION_ADDENDUM_REQUIRED", headline, figures={"clarification": clarification["name"]}, fixes=[prepare]))])
+
+
+def clarification_change_guidance(root, clarification: dict[str, Any], *, actor: str, roles: dict[str, bool]) -> dict[str, Any] | None:
+	"""The answer an unanswered clarification would give once its officer says
+	the response changes the published Tender (the screen shows it for the
+	unsaved Yes; the browser never composes it)."""
+	if cstr(clarification.get("status")) != "Awaiting response" or not (roles.get("officer") or roles.get("hopf")) or cstr(root.overall_status) != "Published — open":
+		return None
+	role = ROLE_PROCUREMENT_OFFICER if roles.get("officer") else ROLE_HEAD_OF_PROCUREMENT_FUNCTION
+	answer = published_change_answer(clarification, actor=actor, role=role)
+	return {"next_step": answer, "journey": _journey(OPEN_MANAGEMENT, blocked=True, holder_display=_name(actor))}
+
+
 def _clarification_answer(root, clarification: dict[str, Any], *, actor: str, roles: dict[str, bool]) -> dict[str, Any] | None:
 	"""§10.17 DES-11 rows for one clarification; any reader who does not
 	answer clarifications gets the truthful waiting or done answer (§5.9)."""
@@ -453,16 +478,19 @@ def _clarification_answer(root, clarification: dict[str, Any], *, actor: str, ro
 		since = clarification.get("received_at")
 		return _waiting(OPEN_MANAGEMENT, f"{_subject(answerers, ROLE_PROCUREMENT_OFFICER)} is answering this clarification{_since_text(since)}.", holder_users=answerers, role=ROLE_PROCUREMENT_OFFICER, since=since)
 	if status == "Awaiting addendum":
+		required = cstr(clarification.get("required_addendum"))
+		effective = bool(required) and frappe.db.get_value("Tender Addendum", required, "status") == "Issued"
 		if holder:
-			headline = "Issue an addendum before sending this answer."
-			prepare = ns.fix("Prepare addendum", responsibility=f"{ROLE_PROCUREMENT_OFFICER} or {ROLE_HEAD_OF_PROCUREMENT_FUNCTION}", kind=ns.FIX_COMMAND, fix_id="prepare_addendum", primary=True)
-			return _blocked(OPEN_MANAGEMENT, headline, holder_users=[actor], role=role, blockers=[ns.blocker(_refusal("TND_CLARIFICATION_ADDENDUM_REQUIRED", headline, figures={"clarification": clarification["name"]}, fixes=[prepare]))])
+			if effective:
+				# §10.12: once the linked addendum is Issued, the kept answer is sent to all
+				return _turn(OPEN_MANAGEMENT, "Send the answer to all registered candidates.", holder_users=[actor], role=role, primary="send_response")
+			return published_change_answer(clarification, actor=actor, role=role)
 		return _waiting(OPEN_MANAGEMENT, f"{_subject(answerers, ROLE_PROCUREMENT_OFFICER)} is preparing the addendum this answer needs.", holder_users=answerers, role=ROLE_PROCUREMENT_OFFICER)
 	if status == "Answered":
 		failed = frappe.db.count("Tender Candidate Notice", {"subject_id": clarification["name"], "status": "Failed"})
 		if failed and holder:
 			headline = f"{failed} candidate notice{'s' if failed != 1 else ''} failed delivery; the Tender remains open."
-			retry = ns.fix("Retry notice", responsibility=f"{ROLE_HEAD_OF_PROCUREMENT_FUNCTION} or {ROLE_PROCUREMENT_OFFICER}", kind=ns.FIX_COMMAND, fix_id="retry_notice", primary=True)
+			retry = ns.fix("Retry notice", responsibility=f"{ROLE_HEAD_OF_PROCUREMENT_FUNCTION} or {ROLE_PROCUREMENT_OFFICER}", kind=ns.FIX_COMMAND, fix_id="retry_notice", primary=True, target={"clarification": clarification["name"]})
 			return _blocked(OPEN_MANAGEMENT, headline, holder_users=[actor], role=role, blockers=[ns.blocker(_refusal("TND_NOTICE_DELIVERY_FAILED", headline, figures={"failed": failed}, fixes=[retry]))])
 		return _done(OPEN_MANAGEMENT, f"{_name(cstr(clarification.get('responded_by')))} answered this clarification on {serializer.fmt_datetime_short(clarification.get('responded_at'))}.")
 	if status == "Closed with reason":
