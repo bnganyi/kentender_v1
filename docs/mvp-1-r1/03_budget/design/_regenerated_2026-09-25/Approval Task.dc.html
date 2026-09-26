@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+  <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; }
+    a { color: var(--color-accent-700); }
+    a:hover { color: var(--color-accent-900); }
+  </style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:120px;">
+
+  <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
+    <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">Version:</span>
+    <button type="button" class="{{btnV1}}" onclick="{{setV1}}" style="font-size:12px;padding:6px 12px;">13 · V1 baseline</button>
+    <button type="button" class="{{btnV2}}" onclick="{{setV2}}" style="font-size:12px;padding:6px 12px;">08-11 · V2 transfer</button>
+    <button type="button" class="{{btnBlocked}}" onclick="{{setBlocked}}" style="font-size:12px;padding:6px 12px;">08 · V2 blocked</button>
+  </div>
+
+  <div data-screen-label="BUD-DES-08 Approval task" style="max-width:1100px;margin:0 auto;padding:32px 40px 0;">
+
+    <sc-if value="{{isBlocked}}" hint-placeholder-val="{{false}}">
+      <div class="kt-notice is-critical" style="margin-bottom:20px;">
+        <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        <div class="kt-notice-body"><strong>Infrastructure cannot be reduced to KES 90,000,000</strong> because KES 95,000,000 is already reserved or committed. Shortfall: KES 5,000,000.</div>
+      </div>
+    </sc-if>
+
+    <div class="card blueprint elev-sm" style="padding:0;">
+
+      <div style="padding:28px 24px 0;">
+        <div style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-neutral-700);margin-bottom:6px;">{{eyebrow}}</div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+          <h1 style="font-family:var(--font-heading);font-weight:600;font-size:30px;margin:0;letter-spacing:.01em;">{{heading}}</h1>
+          <span class="kt-status is-pending">Awaiting review</span>
+        </div>
+        <div class="kt-tabs" role="tablist" style="margin-bottom:0;">
+          <label class="kt-tab"><input type="radio" name="atab" checked="{{isOverview}}" onchange="{{setOverview}}" />Overview</label>
+          <label class="kt-tab"><input type="radio" name="atab" checked="{{isLines}}" onchange="{{setLines}}" />Budget Lines</label>
+          <label class="kt-tab"><input type="radio" name="atab" checked="{{isChanges}}" onchange="{{setChanges}}" />Changes</label>
+          <label class="kt-tab"><input type="radio" name="atab" checked="{{isHistory}}" onchange="{{setHistory}}" />History</label>
+        </div>
+      </div>
+
+      <sc-if value="{{isOverview}}" hint-placeholder-val="{{true}}">
+        <div style="padding:22px 24px;border-top:1px solid var(--color-divider);">
+          <h3 class="kt-card-title" style="margin:0 0 14px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>Version identity</h3>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+            <div><div class="kt-label" style="margin-bottom:3px;">Procurement budget</div><div style="font-size:14px;">Ministry of Health procurement budget 2027/28</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Financial Year</div><div style="font-size:14px;">FY 2027/28</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Currency</div><div style="font-size:14px;">KES</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Submitted version</div><div style="font-size:14px;">{{submittedVersion}}</div></div>
+            <sc-if value="{{isV2}}" hint-placeholder-val="{{true}}">
+              <div><div class="kt-label" style="margin-bottom:3px;">Based on</div><div style="font-size:14px;">Active Version 1</div></div>
+              <div><div class="kt-label" style="margin-bottom:3px;">Type of change</div><div style="font-size:14px;">Transfer</div></div>
+            </sc-if>
+          </div>
+        </div>
+
+        <div style="padding:22px 24px;border-top:1px solid var(--color-divider);">
+          <h3 class="kt-card-title" style="margin:0 0 14px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg>External approval</h3>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;">
+            <div><div class="kt-label" style="margin-bottom:3px;">Approval reference</div><div style="font-size:14px;">{{approvalRef}}</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Approval date</div><div style="font-size:14px;">{{approvalDate}}</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Approved allocation</div><div style="font-size:14px;">KES 160,000,000</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Approval document</div>
+              <a href="#" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
+                {{approvalDoc}}
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:22px 24px;border-top:1px solid var(--color-divider);">
+          <h3 class="kt-card-title" style="margin:0 0 14px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>Submission authority</h3>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;">
+            <div><div class="kt-label" style="margin-bottom:3px;">Submitted by</div><div style="font-size:14px;">Josphat Mwangi</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Submitted</div><div style="font-size:14px;">{{submittedAt}}</div></div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isLines}}" hint-placeholder-val="{{false}}">
+        <sc-if value="{{isV2}}" hint-placeholder-val="{{true}}">
+          <div style="border-top:1px solid var(--color-divider);overflow-x:auto;">
+            <table class="table" style="table-layout:fixed;width:100%;">
+              <thead><tr><th style="width:32%;">Budget Line</th><th style="width:15%;">Available to</th><th style="width:17%;">Funding source</th><th style="width:12%;text-align:right;">Proposed amount</th><th style="width:12%;text-align:right;">Current floor</th><th style="width:12%;text-align:right;">{{headroomHeader}}</th></tr></thead>
+              <tbody>
+                <tr><td><div>Digital health infrastructure programme</div><div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px;">MOH-BL-DHI-2027</div></td><td>Digital Health</td><td>Government of Kenya</td><td class="is-num">KES 90,000,000</td><td class="is-num">{{dhiFloor}}</td><td class="is-num" style="{{headroomStyle}}">{{dhiHeadroom}}</td></tr>
+                <tr><td><div>Digital health workforce development</div><div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px;">MOH-BL-HWD-2027</div></td><td>All departments</td><td>Government of Kenya</td><td class="is-num">KES 70,000,000</td><td class="is-num is-zero">KES 0</td><td class="is-num">KES 70,000,000</td></tr>
+                <tr style="font-weight:600;"><td>Total</td><td>—</td><td>—</td><td class="is-num">KES 160,000,000</td><td class="is-num">{{dhiFloor}}</td><td class="is-num">{{totalHeadroom}}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </sc-if>
+        <sc-if value="{{isV1}}" hint-placeholder-val="{{false}}">
+          <div style="border-top:1px solid var(--color-divider);overflow-x:auto;">
+            <table class="table">
+              <thead><tr><th>Budget Line</th><th>Available to</th><th>Funding source</th><th class="is-num">Submitted amount</th></tr></thead>
+              <tbody>
+                <tr><td><div>Digital health infrastructure programme</div><div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px;">MOH-BL-DHI-2027</div></td><td>Digital Health</td><td>Government of Kenya</td><td class="is-num">KES 100,000,000</td></tr>
+                <tr><td><div>Digital health workforce development</div><div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px;">MOH-BL-HWD-2027</div></td><td>All departments</td><td>Government of Kenya</td><td class="is-num">KES 60,000,000</td></tr>
+                <tr style="font-weight:600;"><td>Total</td><td>—</td><td>—</td><td class="is-num">KES 160,000,000</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{isChanges}}" hint-placeholder-val="{{false}}">
+        <sc-if value="{{isV2}}" hint-placeholder-val="{{true}}">
+          <h3 class="kt-card-title" style="margin:0;padding:22px 24px 14px;border-top:1px solid var(--color-divider);display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></svg>Changes from Active Version 1</h3>
+          <div style="overflow-x:auto;">
+            <table class="table">
+              <thead><tr><th>Budget Line</th><th class="is-num">Active Version 1</th><th class="is-num">Submitted Version 2</th><th class="is-num">Change</th></tr></thead>
+              <tbody>
+                <tr><td><div>Digital health infrastructure programme</div><div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px;">MOH-BL-DHI-2027</div></td><td class="is-num">KES 100,000,000</td><td class="is-num">KES 90,000,000</td><td class="is-num">− KES 10,000,000</td></tr>
+                <tr><td><div>Digital health workforce development</div><div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px;">MOH-BL-HWD-2027</div></td><td class="is-num">KES 60,000,000</td><td class="is-num">KES 70,000,000</td><td class="is-num">+ KES 10,000,000</td></tr>
+                <tr style="font-weight:600;"><td>Total</td><td class="is-num">KES 160,000,000</td><td class="is-num">KES 160,000,000</td><td class="is-num is-zero">KES 0</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="padding:22px 24px;border-top:1px solid var(--color-divider);">
+            <h3 class="kt-card-title" style="margin:0 0 14px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Funding impact</h3>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+              <div><div class="kt-label" style="margin-bottom:3px;">Active reservations affected</div><div style="font-size:14px;">1</div></div>
+              <div><div class="kt-label" style="margin-bottom:3px;">Active commitments affected</div><div style="font-size:14px;color:var(--color-neutral-500);">0</div></div>
+              <div><div class="kt-label" style="margin-bottom:3px;">Floor breaches</div><div style="font-size:14px;{{floorBreachStyle}}">{{floorBreaches}}</div></div>
+              <div><div class="kt-label" style="margin-bottom:3px;">Transfer difference</div><div style="font-size:14px;color:var(--color-neutral-500);">KES 0</div></div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{isV1}}" hint-placeholder-val="{{false}}">
+          <div style="padding:22px 24px 0;border-top:1px solid var(--color-divider);">
+            <h3 class="kt-card-title" style="margin:0 0 6px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>Initial allocation</h3>
+            <p style="font-size:14px;color:var(--color-neutral-700);margin:0 0 16px;">Review the complete submitted budget lines.</p>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="table">
+              <thead><tr><th>Budget Line</th><th class="is-num">Submitted Version 1</th></tr></thead>
+              <tbody>
+                <tr><td><div>Digital health infrastructure programme</div><div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px;">MOH-BL-DHI-2027</div></td><td class="is-num">KES 100,000,000</td></tr>
+                <tr><td><div>Digital health workforce development</div><div style="font-size:11px;color:var(--color-neutral-600);margin-top:2px;">MOH-BL-HWD-2027</div></td><td class="is-num">KES 60,000,000</td></tr>
+                <tr style="font-weight:600;"><td>Total</td><td class="is-num">KES 160,000,000</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{isHistory}}" hint-placeholder-val="{{false}}">
+        <div style="padding:22px 24px;border-top:1px solid var(--color-divider);">
+        <sc-if value="{{isV2}}" hint-placeholder-val="{{true}}">
+          <div class="kt-timeline">
+            <div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-live"></i><i class="kt-timeline-line"></i></div><div class="kt-timeline-item"><div class="kt-timeline-item-title">Submitted for review</div><div class="kt-timeline-item-meta">15 Mar 2027, 16:20 EAT · Josphat Mwangi</div></div></div>
+            <div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-live"></i><i class="kt-timeline-line"></i></div><div class="kt-timeline-item"><div class="kt-timeline-item-title">Draft saved</div><div class="kt-timeline-item-meta">15 Mar 2027, 15:55 EAT · Josphat Mwangi</div></div></div>
+            <div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-live"></i></div><div class="kt-timeline-item"><div class="kt-timeline-item-title">Successor Version 2 created</div><div class="kt-timeline-item-meta">15 Mar 2027, 13:10 EAT · Josphat Mwangi</div></div></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{isV1}}" hint-placeholder-val="{{false}}">
+          <div class="kt-timeline">
+            <div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-live"></i><i class="kt-timeline-line"></i></div><div class="kt-timeline-item"><div class="kt-timeline-item-title">Submitted for review</div><div class="kt-timeline-item-meta">1 Oct 2026, 16:20 EAT · Josphat Mwangi</div></div></div>
+            <div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-live"></i><i class="kt-timeline-line"></i></div><div class="kt-timeline-item"><div class="kt-timeline-item-title">Draft saved</div><div class="kt-timeline-item-meta">1 Oct 2026, 15:55 EAT · Josphat Mwangi</div></div></div>
+            <div class="kt-timeline-row"><div class="kt-timeline-dot-col"><i class="kt-timeline-dot is-live"></i></div><div class="kt-timeline-item"><div class="kt-timeline-item-title">Budget Version 1 created</div><div class="kt-timeline-item-meta">1 Oct 2026, 09:20 EAT · Josphat Mwangi</div></div></div>
+          </div>
+        </sc-if>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+
+  <div style="position:sticky;bottom:0;background:var(--color-surface);border-top:1px solid var(--color-divider);padding:16px 40px;display:flex;justify-content:flex-end;gap:12px;">
+    <button type="button" class="btn" style="border-color:var(--status-critical);color:var(--status-critical);background:transparent;">Return for correction</button>
+    <button type="button" class="{{approveClass}}" disabled="{{isBlocked}}">Approve allocation update</button>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { version: 'v2', tab: 'overview' };
+  renderVals() {
+    const { version, tab } = this.state;
+    const isV2 = version === 'v2' || version === 'v2blocked';
+    const isV1 = version === 'v1';
+    const isBlocked = version === 'v2blocked';
+    const btnCls = (val, cur) => val === cur ? 'btn btn-primary' : 'btn btn-secondary';
+    return {
+      setV1: () => this.setState({ version: 'v1' }),
+      setV2: () => this.setState({ version: 'v2' }),
+      setBlocked: () => this.setState({ version: 'v2blocked' }),
+      btnV1: btnCls('v1', version),
+      btnV2: btnCls('v2', version),
+      btnBlocked: btnCls('v2blocked', version),
+      isV1, isV2, isBlocked,
+      setOverview: () => this.setState({ tab: 'overview' }),
+      setLines: () => this.setState({ tab: 'lines' }),
+      setChanges: () => this.setState({ tab: 'changes' }),
+      setHistory: () => this.setState({ tab: 'history' }),
+      isOverview: tab === 'overview',
+      isLines: tab === 'lines',
+      isChanges: tab === 'changes',
+      isHistory: tab === 'history',
+      eyebrow: isV2 ? 'MOH-BUD-2027-001 · VERSION 2' : 'MOH-BUD-2027-001 · VERSION 1',
+      heading: isV2 ? 'Review allocation changes' : 'Review registered allocation',
+      submittedVersion: isV2 ? 'Version 2' : 'Version 1',
+      approvalRef: isV2 ? 'MOH-FIN-BUD-2027-02 (Demo)' : 'MOH-FIN-BUD-2027-01 (Demo)',
+      approvalDate: isV2 ? '14 Mar 2027' : '30 Sep 2026',
+      approvalDoc: isV2 ? 'MOH Approved Procurement Budget Transfer 2027-28 (Demo).pdf' : 'MOH Approved Procurement Budget 2027-28 (Demo).pdf',
+      submittedAt: isV2 ? '15 Mar 2027, 16:20 EAT' : '1 Oct 2026, 16:20 EAT',
+      dhiFloor: isBlocked ? 'KES 95,000,000' : 'KES 80,000,000',
+      dhiHeadroom: isBlocked ? '− KES 5,000,000' : 'KES 10,000,000',
+      totalHeadroom: isBlocked ? '− KES 5,000,000 shortfall' : 'KES 80,000,000',
+      headroomHeader: isBlocked ? 'Shortfall' : 'Headroom',
+      headroomStyle: isBlocked ? 'color:var(--status-critical);font-weight:600;' : '',
+      floorBreaches: isBlocked ? '1' : '0',
+      floorBreachStyle: isBlocked ? 'color:var(--status-critical);font-weight:600;' : 'color:var(--color-neutral-500);',
+      approveClass: isBlocked ? 'btn' : 'btn btn-primary',
+    };
+  }
+}
+
+</script>
+</body>
+</html>
