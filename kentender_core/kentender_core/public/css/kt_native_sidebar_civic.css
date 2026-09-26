@@ -196,6 +196,10 @@
 .body-sidebar .sidebar-item-container[data-id="Supplier Management"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
 	content: "group";
 }
+.body-sidebar .sidebar-item-container[data-id="STD Templates"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+	/* STD-TPL-IMP-001 v1.0: the installed standard tender document releases. */
+	content: "library_books";
+}
 .body-sidebar .sidebar-item-container[data-id="System setup"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
 	content: "settings";
 }
