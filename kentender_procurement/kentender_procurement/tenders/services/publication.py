@@ -277,6 +277,8 @@ def get_tender_publication(*, tender: str, user: str | None = None) -> dict[str,
 		"proposed_channels": [{"channel": c["channel"], "label": c["label"], "how": "HOPF confirmation with evidence", "result": "Not started"} for c in (rule or {}).get("channels", [])],
 		"rule": {"rule_snapshot_id": rule["rule_snapshot_id"], "minimum_preparation_days": rule["minimum_preparation_days"], "contributing_versions": rule["contributing_versions"]} if rule else None,
 		"rule_error": rule_error,
+		# §10.15 "Publication not configured": a System Manager configures the rule
+		"can_configure": "System Manager" in frappe.get_roles(actor),
 		"publication": summary,
 		"ao_task": {"name": ao_task.name, "task_token": ao_task.task_token} if ao_task else None,
 		"attestations": {c["channel"]: channel_confirmation.attestation_text(subject_type=channel_confirmation.SUBJECT_PUBLICATION, channel_label=c["label"]) for c in ((summary or {}).get("required_channels") or [])},

@@ -48,6 +48,9 @@ class TestReleaseNotice(TemplateBindingCase):
 		self.assertIn("release 9.0-test", notice["text"])
 		self.assertEqual(notice["std_template_route"], ["std-templates", self.release.name])
 		self.assertEqual(template_binding.release_notice(self.record(), "Guest")["std_template_route"], [])
+		# §10.15 / W8: before publication a full-page state; a reader keeps the bound format, never continues
+		self.assertEqual((notice["full_page"], notice["can_continue"]), (True, False))
+		self.assertTrue(notice["text"].endswith("Existing work retains the bound format."))
 
 	def test_withdrawn_before_and_after_publication(self):
 		lifecycle.withdraw(self.release.name, reason="Legal defect in the reservation clause.", release_owner="test release owner")

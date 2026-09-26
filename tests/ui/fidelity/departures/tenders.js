@@ -19,6 +19,14 @@ const CORNERS = {
 // spec content, the content is restored and registered here.
 const W1 = "TPR-CHG-001 v0.12 plan W1 — boards govern structure, the spec governs content";
 
+// The TPR-DES-14 board lays every common state out on one sheet under its own
+// title; the live screen is one state's card alone.
+const STATE_SHEET = {
+	omits: ["h1"],
+	because: "The board sheet's own title (\"Common states\") above the list of variants; a live state is its card alone.",
+	authority: "TPR-CHG-001 v0.12 §10.15 — each is a full inline state",
+};
+
 export const DEPARTURES = {
 	"EditorScreen#TPR-DES-03": [CORNERS],
 	"EditorScreen#TPR-DES-03-PHYSICAL": [CORNERS],
@@ -56,6 +64,7 @@ export const DEPARTURES = {
 	"CancelScreen#TPR-DES-12-CANCELLED-READER": [CORNERS],
 	"CorrectionRequestedScreen#TPR-DES-13-REQUESTED": [CORNERS],
 	"CorrectionRequestedScreen#TPR-DES-13-SUCCESSOR": [CORNERS],
+	...Object.fromEntries(["forbidden", "not-found", "requisition-unavailable", "release-superseded", "rule-unavailable", "stale", "failure"].map((kind) => [`CommonState#TPR-DES-14-${kind}`, [STATE_SHEET, { ...CORNERS, path: "card+blueprint > corner" }]])),
 };
 
 export const COVERED = Object.keys(DEPARTURES);

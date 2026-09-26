@@ -19,7 +19,7 @@
 		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-shell" data-testid="tnd-shell" :data-screen="screen" :data-loading="loading ? 'true' : 'false'" :data-refreshing="refreshing ? 'true' : 'false'" :data-pending="pending ? 'true' : 'false'">
 			<!-- inline states first: a verdict never renders behind content (KT-STD-001 §3A) -->
-			<CommonState v-if="state" :kind="state.kind" :heading="state.heading" :text="state.text" :link="state.link || null" :support-ref="state.kind === 'failure' ? supportRef : ''" @action="onStateAction" @link="onNavigate" />
+			<CommonState v-if="state" :kind="state.kind" :heading="state.heading" :text="state.text" :label="state.label || ''" :tone="state.tone || ''" :actions="state.actions || null" :support-ref="state.kind === 'failure' ? supportRef : ''" @action="onStateAction" />
 
 			<template v-else-if="kind === 'workspace' || kind === 'start'">
 				<div :class="{ 'tnd-blurred': kind === 'start' }">
@@ -29,7 +29,6 @@
 			</template>
 
 			<template v-else-if="kind === 'record'">
-				<ReleaseNotice v-if="!loading && (record.tender || {}).template_notice" :notice="record.tender.template_notice" @navigate="onNavigate" />
 				<div v-if="loading" class="tnd-page"><div class="kt-card kt-blueprint" style="padding: 0; overflow: hidden" data-testid="tnd-record-loading"><div v-for="row in 3" :key="row" class="tnd-skel-row"><div class="kt-skel" style="width: 72%"></div><div class="kt-skel" style="width: 52%"></div><div class="kt-skel" style="width: 44%"></div></div></div></div>
 				<EditorScreen v-else-if="screen === 'details' || screen === 'requirements'" ref="editorRef" :record="record" :task="screen" :field-errors="fieldErrors" :error="error" :pending="pending" @open-drawer="drawer = 'context'" @add-evidence="evidenceDialog = { row: null }" @edit-evidence="evidenceDialog = { row: $event }" @remove-evidence="removeEvidenceDialog = $event" @save="onSaveDraft(false)" @continue="onSaveDraft(true)" @back="onEditorBack" @request-correction="correctionDialog = true" @fix="onFix" />
 				<ReviewScreen v-else-if="screen === 'review'" :record="record" :review="review" :pending="pending" @back="goTask('requirements')" @submit="submitDialog = true" @preview="onPreview" @go-finding="onGoFinding" @fix="onFix" />
@@ -95,7 +94,6 @@ import { usePageRail } from "../tnd_shared/composables/usePageRail.js";
 import * as api from "./data/tendersApi.js";
 import { fileSize } from "./data/format.js";
 import CommonState from "./components/CommonState.vue";
-import ReleaseNotice from "./components/ReleaseNotice.vue";
 import WorkspaceScreen from "./components/WorkspaceScreen.vue";
 import StartTenderDialog from "./components/StartTenderDialog.vue";
 import EditorScreen from "./components/EditorScreen.vue";
@@ -221,16 +219,43 @@ const state = computed(() => {
 			const o = startDetail.value.outcome;
 			if (o === "NOT_FOUND") return { kind: "not-found" };
 			if (o === "SOURCE_UNAVAILABLE") return { kind: "source-unavailable", heading: startDetail.value.heading, text: startDetail.value.text };
-			if (o === "ALREADY_STARTED") return { kind: "already-started", heading: startDetail.value.heading, text: startDetail.value.text };
-			if (o === "OK" && startDetail.value.template && startDetail.value.template.available === false) return { kind: "template-unavailable", link: (startDetail.value.template.std_template_route || []).length ? { label: "View STD Template", route: startDetail.value.template.std_template_route } : null };
+			if (o === "ALREADY_STARTED") return startDetail.value.can_open ? { kind: "already-started", heading: startDetail.value.heading, text: startDetail.value.text } : { kind: "requisition-unavailable" };
+				if (o === "OK" && startDetail.value.template && startDetail.value.template.available === false) return { kind: "template-unavailable", actions: [stdOrBack(startDetail.value.template.std_template_route)] };
 		}
 		return null;
 	}
 	const data = { record: record.value, addendum: addendumData.value, clarification: clarificationData.value, cancel: cancelData.value, history: historyData.value }[kind.value] || record.value;
 	if (data && data.outcome === "NOT_FOUND") return { kind: "not-found", heading: data.heading, text: data.text };
-	if (kind.value === "record" && pub.value && pub.value.rule_error === "TND_PUBLICATION_RULE_UNAVAILABLE" && record.value.screen === "authorisation") return { kind: "rule-unavailable" };
+	if (kind.value === "record" && pub.value && pub.value.rule_error === "TND_PUBLICATION_RULE_UNAVAILABLE" && record.value.screen === "authorisation") {
+		// §10.15: a System Manager opens System setup; a routine reader goes back
+		return pub.value.can_configure
+			? { kind: "rule-unavailable", text: "The publication rule is not configured for this Tender. Configure the governed rule in System setup.", actions: [{ key: "system-setup", label: "Open System setup" }] }
+			: { kind: "rule-unavailable" };
+	}
+	const release = kind.value === "record" && !loading.value ? (record.value.tender || {}).template_notice : null;
+	if (release && release.full_page && !(release.can_continue && continuedRelease.value === releaseKey(release))) {
+		const actions = [stdOrBack(release.std_template_route)];
+		if (release.can_continue) actions.push({ key: "continue", label: "Continue", primary: true });
+		return { kind: `release-${String(release.state).toLowerCase()}`, text: release.text, actions };
+	}
 	return null;
 });
+// §10.15 bound-release states: View STD Template only for a user who may
+// inspect templates, otherwise Back to Tenders; Continue (Superseded, a
+// business holder) is remembered for this browser session only (plan W8).
+function stdOrBack(route) {
+	return route && route.length ? { key: "std-template", label: "View STD Template", route } : { key: "back", label: "Back to Tenders" };
+}
+function releaseKey(release) {
+	return `${tenderRef.value}:${(release && release.state) || ""}:${(record.value.tender || {}).template_release_id || ""}`;
+}
+const continuedRelease = ref((() => {
+	try {
+		return window.sessionStorage.getItem("kt-tnd-release-continue") || "";
+	} catch (e) {
+		return "";
+	}
+})());
 const dialogOpen = computed(() => !!(reviewRequestDialog.value || reviewCloseDialog.value || discardDialog.value || evidenceDialog.value || removeEvidenceDialog.value || submitDialog.value || returnDialog.value || approveDialog.value || reopenDialog.value || correctionDialog.value || authoriseDialog.value || channelDialog.value || withdrawDialog.value || issueDialog.value || addendumReturnDialog.value || recommendDialog.value || cancelDialog.value || obligationDialog.value));
 
 function go(...parts) {
@@ -328,19 +353,34 @@ function onFilter(next) {
 	cache.set(screenKey.value, null);
 	load({ quiet: true });
 }
-function onStateAction(k) {
-	if (k === "stale" || k === "failure") {
+function onStateAction(action) {
+	const key = (action && action.key) || "back";
+	if (key === "reload" || key === "retry") {
 		error.value = "";
 		staleWrite.value = false;
 		load({ quiet: !!cache.get(screenKey.value) });
 		return;
 	}
-	if (k === "already-started" && startDetail.value.route) {
+	if (key === "open-tender" && startDetail.value.route) {
 		onNavigate(startDetail.value.route);
 		return;
 	}
-	if (k === "rule-unavailable") {
+	if (key === "system-setup") {
 		frappe.set_route("system-setup");
+		return;
+	}
+	if (key === "std-template" && action.route) {
+		onNavigate(action.route);
+		return;
+	}
+	if (key === "continue") {
+		const release = (record.value.tender || {}).template_notice;
+		continuedRelease.value = releaseKey(release);
+		try {
+			window.sessionStorage.setItem("kt-tnd-release-continue", continuedRelease.value);
+		} catch (e) {
+			// private window: the choice lasts until the page is left
+		}
 		return;
 	}
 	go();

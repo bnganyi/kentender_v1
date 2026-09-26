@@ -1,26 +1,28 @@
-<!-- TPR-DES-14 Common states, ported class-for-class: each is a full inline
-     state under KT-STD-001 §3A. Successful content never renders behind it.
-     `kind` picks the card; `heading`/`text` may override the board copy with
-     the server's own verdict text (Forbidden and Not found carry it). -->
+<!-- TPR-DES-14 Common states (§10.15), ported class-for-class: each is a full
+     inline state under KT-STD-001 §3A — the blueprint card, the tone icon and
+     variant label, the heading, the message and the state's own actions.
+     Successful content never renders behind it, and no state carries the
+     §10.17 journey or next step. The root gives the variant (`kind`), any
+     server wording that replaces the board copy, and the exact actions this
+     viewer may take (e.g. View STD Template only for a user who may inspect
+     templates, Open System setup only for a System Manager). -->
 <template>
 	<div class="tnd-page">
 		<div class="kt-card kt-blueprint tnd-state-card" :data-testid="`tnd-state-${kind}`" data-screen-label="TPR-DES-14 Common states">
 			<i class="kt-corner tl"></i><i class="kt-corner tr"></i><i class="kt-corner bl"></i><i class="kt-corner br"></i>
-			<div class="tnd-state-icon" :class="tone">
-				<svg v-if="kind === 'forbidden'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-				<svg v-else-if="kind === 'not-found'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M8 11h6"/></svg>
-				<svg v-else-if="kind === 'source-unavailable'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6"/><path d="m9.5 12.5 5 5"/><path d="m14.5 12.5-5 5"/></svg>
-				<svg v-else-if="kind === 'already-started'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/></svg>
-				<svg v-else-if="kind === 'template-unavailable'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6"/><path d="M12 11v4"/><path d="M12 18h.01"/></svg>
-				<svg v-else-if="kind === 'rule-unavailable'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-				<svg v-else-if="kind === 'stale'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
-				<svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+			<div class="tnd-state-head">
+				<div class="tnd-state-icon" :class="toneClass">
+					<svg v-if="toneClass === 'is-critical'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+					<svg v-else-if="toneClass === 'is-draft'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+					<svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+				</div>
+				<div class="tnd-state-kind" :class="toneClass">{{ label || copy.label }}</div>
 			</div>
-			<div class="tnd-state-kind" :class="tone">{{ copy.kind }}</div>
 			<h2>{{ heading || copy.heading }}</h2>
-			<p class="tnd-card-body">{{ text || copy.text }}</p>
-			<button v-if="copy.action" type="button" class="kt-btn kt-btn-secondary" :data-testid="`tnd-state-action`" @click="$emit('action', kind)">{{ copy.action }}</button>
-			<button v-if="link" type="button" class="kt-btn kt-btn-secondary" data-testid="tnd-state-link" @click="$emit('link', link.route)">{{ link.label }}</button>
+			<p class="tnd-card-body" data-testid="tnd-state-text">{{ text || copy.text }}</p>
+			<div v-if="shownActions.length" class="tnd-actions">
+				<button v-for="action in shownActions" :key="action.key" type="button" class="kt-btn" :class="action.primary ? 'kt-btn-primary' : 'kt-btn-secondary'" :data-testid="`tnd-state-action-${action.key}`" @click="$emit('action', action)">{{ action.label }}</button>
+			</div>
 			<p v-if="supportRef" class="tnd-support-ref">Support reference: {{ supportRef }}</p>
 		</div>
 	</div>
@@ -33,25 +35,32 @@ const props = defineProps({
 	kind: { type: String, required: true },
 	heading: { type: String, default: "" },
 	text: { type: String, default: "" },
+	label: { type: String, default: "" },
+	tone: { type: String, default: "" },
+	// [{ key, label, primary?, route? }] — when absent, the variant's own default
+	actions: { type: Array, default: null },
 	supportRef: { type: String, default: "" },
-	// TPR-CHG-001 v0.11 §8 **View STD Template**, only when the server
-	// returned a route for this user.
-	link: { type: Object, default: null },
 });
-defineEmits(["action", "link"]);
+defineEmits(["action"]);
 
-// TPR-DES-14 — the eight cards, verbatim.
+// TPR-DES-14 — the board's variants, verbatim.
+const BACK = { key: "back", label: "Back to Tenders" };
 const COPY = {
-	forbidden: { tone: "is-critical", kind: "Forbidden", heading: "You do not have access to Tenders", text: "This area needs one of these responsibilities: Procurement Officer, Head of Procurement Function, Accounting Officer, Departmental Author, Head of User Department, Auditor or Authorised technical operator. Ask your KenTender administrator to assign one in System setup.", action: "" },
-	"not-found": { tone: "is-critical", kind: "Not found", heading: "Tender not found", text: "This Tender is unavailable or you do not have permission to view it.", action: "Back to Tenders" },
-	"source-unavailable": { tone: "is-attention", kind: "Source unavailable", heading: "Authorised requisition unavailable", text: "The requisition is no longer available to start this Tender.", action: "Back to Tenders" },
-	"already-started": { tone: "is-draft", kind: "Already started", heading: "Tender already started", text: "This requisition is linked to a Tender.", action: "Open Tender" },
-	"template-unavailable": { tone: "is-attention", kind: "Template unavailable", heading: "Tender format unavailable", text: "The standard IT-equipment Tender format is not available.", action: "Back to Tenders" },
-	"rule-unavailable": { tone: "is-attention", kind: "Publication not configured", heading: "Publication rule unavailable", text: "The publication rule is not configured for this Tender.", action: "Contact administrator" },
-	stale: { tone: "is-attention", kind: "Stale write", heading: "Tender changed", text: "Another user changed this Tender.", action: "Reload" },
-	failure: { tone: "is-critical", kind: "Load failure", heading: "Tenders could not be loaded", text: "Try again.", action: "Try again" },
+	forbidden: { tone: "is-critical", label: "Forbidden", heading: "You do not have access to Tenders", text: "This area needs one of these responsibilities: Procurement Officer, Head of Procurement Function, Accounting Officer, Departmental Author, Head of User Department, Auditor or Authorised technical operator. Ask your KenTender administrator to assign one in System setup.", actions: [] },
+	"not-found": { tone: "is-critical", label: "Not found", heading: "Tender not found", text: "This Tender is unavailable or you do not have permission to view it.", actions: [BACK] },
+	"source-unavailable": { tone: "is-attention", label: "Source unavailable", heading: "Authorised requisition unavailable", text: "The requisition is no longer available to start this Tender.", actions: [BACK] },
+	"already-started": { tone: "is-draft", label: "Already started", heading: "Tender already started", text: "This requisition is linked to a Tender.", actions: [{ key: "open-tender", label: "Open Tender" }] },
+	"requisition-unavailable": { tone: "is-attention", label: "Already started", heading: "Requisition unavailable", text: "This requisition cannot be used to start a Tender.", actions: [BACK] },
+	"template-unavailable": { tone: "is-attention", label: "Template unavailable", heading: "Tender format unavailable", text: "The standard IT-equipment Tender format is not available.", actions: [BACK] },
+	"release-superseded": { tone: "is-draft", label: "Bound release Superseded", heading: "Tender format has a newer release", text: "", actions: [BACK] },
+	"release-withdrawn": { tone: "is-critical", label: "Bound release Withdrawn", heading: "Tender format withdrawn", text: "", actions: [BACK] },
+	"release-failed": { tone: "is-critical", label: "Bound release integrity failed", heading: "Tender format could not be verified", text: "", actions: [BACK] },
+	"rule-unavailable": { tone: "is-attention", label: "Publication not configured", heading: "Publication rule unavailable", text: "The publication rule is not configured for this Tender. A System Manager must configure it.", actions: [BACK] },
+	stale: { tone: "is-attention", label: "Stale write", heading: "Tender changed", text: "Another user changed this Tender.", actions: [{ key: "reload", label: "Reload" }] },
+	failure: { tone: "is-critical", label: "Load failure", heading: "Tenders could not be loaded", text: "Try again.", actions: [{ key: "retry", label: "Try again" }] },
 };
 
 const copy = computed(() => COPY[props.kind] || COPY.failure);
-const tone = computed(() => copy.value.tone);
+const toneClass = computed(() => props.tone || copy.value.tone);
+const shownActions = computed(() => props.actions || copy.value.actions);
 </script>

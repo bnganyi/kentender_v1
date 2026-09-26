@@ -178,10 +178,30 @@ def release_notice(record, user: str) -> dict[str, Any] | None:
 	else:
 		return None
 	tone, heading, text = (_NOTICE_PUBLISHED if published else _NOTICE_UNPUBLISHED)[state]
+	route = inspection_route(user, cstr(record.get("template_release_id")))
+	# TPR-CHG-001 v0.12 §10.15 (plan W8): before publication the bound
+	# release's state is a full-page state. Superseded lets a business holder
+	# continue (the browser remembers the choice for the session only) and
+	# says so; a reader is told existing work keeps the bound format.
+	can_continue = state == "Superseded" and not published and row.integrity_status != "Failed" and _may_continue(user)
+	if state == "Superseded" and not published:
+		text = _SUPERSEDED_CONTINUE if can_continue else _SUPERSEDED_READER
 	return {
 		"state": state, "tone": tone, "heading": heading, "text": text.format(release=row.template_release),
-		"std_template_route": inspection_route(user, cstr(record.get("template_release_id"))),
+		"std_template_route": route, "full_page": not published, "can_continue": can_continue,
 	}
+
+
+_SUPERSEDED_CONTINUE = "This Tender remains on release {release}. Its integrity and renderer checks passed; KenTender will not change the format automatically."
+_SUPERSEDED_READER = "This Tender remains on release {release}. Existing work retains the bound format."
+
+
+def _may_continue(user: str) -> bool:
+	"""A business holder who can still work on this Tender (not a reader)."""
+	from kentender_procurement.tenders.services import tender_authorization as authz
+	from kentender_procurement.tenders.services.tender_roles import ROLE_ACCOUNTING_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION, ROLE_PROCUREMENT_OFFICER
+
+	return any(authz.has_site_role(role, user) for role in (ROLE_PROCUREMENT_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION, ROLE_ACCOUNTING_OFFICER))
 
 
 def inspection_route(user: str, release_id: str = "") -> list[str]:

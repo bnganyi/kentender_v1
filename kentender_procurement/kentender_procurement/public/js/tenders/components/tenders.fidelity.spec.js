@@ -22,6 +22,7 @@ import ClarificationScreen from "./ClarificationScreen.vue";
 import AddendumScreen from "./AddendumScreen.vue";
 import CancelScreen from "./CancelScreen.vue";
 import CorrectionRequestedScreen from "./CorrectionRequestedScreen.vue";
+import CommonState from "./CommonState.vue";
 import { addendumData, cancelData, correctionRecord, approvalData, authorisationData, clarificationData, editorRecord, publicationData, publishedData, reviewData, reviewRecord } from "./fixtures.js";
 
 const DESIGN = "docs/mvp-1-r1/11_tenders/design";
@@ -77,6 +78,10 @@ const SCREENS = [
 	})),
 	{ name: "CorrectionRequestedScreen", variant: "TPR-DES-13-REQUESTED", board: "Requisition Correction.dc.html", label: "TPR-DES-13 Requisition correction", component: CorrectionRequestedScreen, props: { record: correctionRecord("REQUESTED") } },
 	{ name: "CorrectionRequestedScreen", variant: "TPR-DES-13-SUCCESSOR", board: "Requisition Correction.dc.html", label: "TPR-DES-13 Requisition correction", options: { show: ["isSuccessor"], hide: ["isRequested"] }, component: CorrectionRequestedScreen, props: { record: correctionRecord("SUCCESSOR") } },
+	...["forbidden", "not-found", "requisition-unavailable", "release-superseded", "rule-unavailable", "stale", "failure"].map((kind) => ({
+		name: "CommonState", variant: `TPR-DES-14-${kind}`, board: "Common States.dc.html", label: "TPR-DES-14 Common states", component: CommonState,
+		props: kind === "release-superseded" ? { kind, text: "This Tender remains on release 1.1.", actions: [{ key: "std-template", label: "View STD Template" }, { key: "continue", label: "Continue", primary: true }] } : { kind },
+	})),
 ];
 
 describe.each(SCREENS)("$name — the structure $variant carries", ({ name, variant, board, label, options, component, props }) => {

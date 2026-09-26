@@ -14,6 +14,14 @@
 				</template>
 			</RecordHead>
 			<TenderGuidance :guidance="record.guidance || null" :pending="pending" @fix="$emit('fix', $event)" />
+			<!-- after publication the bound release's state is information, not a
+			     stop: the published documents and Bid definition remain the record -->
+			<div v-if="releaseInfo" class="tnd-section tnd-section--plain" data-testid="tnd-template-notice">
+				<div class="kt-notice is-info" role="status">
+					<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+					<div class="kt-notice-body"><strong>{{ releaseInfo.heading }}.</strong> {{ releaseInfo.text }}</div>
+				</div>
+			</div>
 			<div v-if="published" class="tnd-section tnd-grid-4" data-testid="tnd-published-facts">
 				<div class="tnd-fact"><div class="kt-label">Published at</div><div class="tnd-fact-value">{{ tender.published_at_label }}</div></div>
 				<div class="tnd-fact"><div class="kt-label">Current submission deadline</div><div class="tnd-fact-value">{{ tender.submission_deadline_label }}{{ ended ? " (ended)" : "" }}</div></div>
@@ -107,6 +115,10 @@ const historyOpen = ref(false);
 const tender = computed(() => props.record.tender || {});
 const publication = computed(() => props.record.publication || null);
 const openPeriod = computed(() => props.record.open_period || {});
+const releaseInfo = computed(() => {
+	const notice = tender.value.template_notice;
+	return notice && !notice.full_page ? notice : null;
+});
 const published = computed(() => ["Published — open", "Submission period ended"].includes(tender.value.overall_status));
 const ended = computed(() => tender.value.overall_status === "Submission period ended");
 const badgeTone = computed(() => (ended.value ? "is-pending" : published.value ? "is-live" : ""));

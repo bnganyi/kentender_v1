@@ -53,13 +53,19 @@ describe("WorkspaceScreen — TPR-DES-01", () => {
 		expect(nf.find("button").text()).toBe("Back to Tenders");
 	});
 
-	it("Template unavailable offers View STD Template only when the server sent a route", async () => {
+	it("Template unavailable offers View STD Template only when the server sent a route, otherwise Back to Tenders", async () => {
 		const plain = mount(CommonState, { props: { kind: "template-unavailable" } });
-		expect(plain.find('[data-testid="tnd-state-link"]').exists()).toBe(false);
-		const w = mount(CommonState, { props: { kind: "template-unavailable", link: { label: "View STD Template", route: ["std-templates", "stdr-1"] } } });
-		const link = w.find('[data-testid="tnd-state-link"]');
-		expect(link.text()).toBe("View STD Template");
+		expect(plain.findAll("button").map((b) => b.text())).toEqual(["Back to Tenders"]);
+		const w = mount(CommonState, { props: { kind: "template-unavailable", actions: [{ key: "std-template", label: "View STD Template", route: ["std-templates", "stdr-1"] }] } });
+		const link = w.find('[data-testid="tnd-state-action-std-template"]');
+		expect(w.findAll("button").map((b) => b.text())).toEqual(["View STD Template"]);
 		await link.trigger("click");
-		expect(w.emitted("link")[0][0]).toEqual(["std-templates", "stdr-1"]);
+		expect(w.emitted("action")[0][0].route).toEqual(["std-templates", "stdr-1"]);
+	});
+	it("a Superseded release offers Continue only to a business holder, with no journey or next step", () => {
+		const w = mount(CommonState, { props: { kind: "release-superseded", text: "This Tender remains on release 1.1.", actions: [{ key: "std-template", label: "View STD Template" }, { key: "continue", label: "Continue", primary: true }] } });
+		expect(w.findAll("button").map((b) => b.text())).toEqual(["View STD Template", "Continue"]);
+		expect(w.find('[data-kt="journey"]').exists()).toBe(false);
+		expect(w.find('[data-kt="next-step"]').exists()).toBe(false);
 	});
 });

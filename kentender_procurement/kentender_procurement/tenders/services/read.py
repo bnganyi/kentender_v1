@@ -237,8 +237,13 @@ def get_tender_start(*, handoff: str, user: str | None = None) -> dict[str, Any]
 		return {"outcome": "SOURCE_UNAVAILABLE", "heading": "Authorised requisition unavailable", "text": "The requisition is no longer available to start this Tender."}
 	consumer = handoff_gateway.consumer_tender(handoff_doc)
 	if consumer:
+		# §10.15: a viewer who cannot read the linked Tender learns nothing
+		# about it — no reference, title or owner (TND_HANDOFF_CONFLICT)
+		can_open = _can(lambda: frappe.get_doc("Tender", consumer).check_permission("read")) if not (roles["officer"] or roles["hopf"] or roles["auditor"] or roles["technical"]) else True
+		if not can_open:
+			return {"outcome": "ALREADY_STARTED", "heading": "Requisition unavailable", "text": "This requisition cannot be used to start a Tender.", "can_open": False}
 		root = frappe.db.get_value("Tender", consumer, ["name", "tender_reference"], as_dict=True)
-		return {"outcome": "ALREADY_STARTED", "heading": "Tender already started", "text": f"This requisition is linked to {root.tender_reference}.", "tender": root.name, "tender_reference": root.tender_reference, "route": [PAGE, root.tender_reference], "can_open": roles["officer"] or roles["hopf"] or roles["auditor"] or roles["technical"]}
+		return {"outcome": "ALREADY_STARTED", "heading": "Tender already started", "text": f"This requisition is linked to {root.tender_reference}.", "tender": root.name, "tender_reference": root.tender_reference, "route": [PAGE, root.tender_reference], "can_open": True}
 	payload = handoff_gateway.payload_of(handoff_doc)
 	binding = None
 	try:
