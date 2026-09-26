@@ -11,7 +11,7 @@ Industry is a wireframe: royal indigo on a light technical ground, Barlow Conden
 
 ## Direction
 
-Modular grid layouts — content in equal-width cells, strong horizontal and vertical rhythm, visible structure. A KenTender page is one white sheet on the light technical ground: the sheet carries the page header and every region. Inside the sheet, hierarchy comes from section titles, whitespace and hairline rules; do not nest bordered boxes inside it. Cards and panels remain the right object for genuinely detached content — a card grid, a tile, content on a ground with no page sheet. Cards, figures and major sections are wireframe objects: square-cornered, thin-bordered — never soft filled rounded blocks. Buttons keep the square corners and hairline border, identified by their fill and border alone. Images and figures get the same treatment: square and hairline-framed, never rounded or clipped. Corner registration marks have been removed system-wide — no component carries them. Wrap hero and inline images in the `.duotone` class — they are desaturated and washed in the accent, like a screen print that re-colors with the theme.
+Modular grid layouts — content in equal-width cells, strong horizontal and vertical rhythm, visible structure. Cards, figures and major sections are wireframe objects: square-cornered, thin-bordered — never soft filled rounded blocks. Buttons keep the square corners and hairline border, identified by their fill and border alone. Images and figures get the same treatment: square and hairline-framed, never rounded or clipped. Corner registration marks have been removed system-wide — no component carries them. Wrap hero and inline images in the `.duotone` class — they are desaturated and washed in the accent, like a screen print that re-colors with the theme.
 
 ## Color
 
@@ -50,33 +50,18 @@ Interactive states are themed, never browser defaults: give every interactive el
 | `.duotone` | The image wrapper — every content photograph goes through it | foundations/image.html |
 | `.kt-disclosure` (+ `-head`, `-title-row`, `-title`, `-chevron`, `-body`) | Expand/collapse panel, no corner marks | components/disclosure.html |
 | `.kt-timeline` (+ `-row`, `-dot-col`, `-dot`, `-line`, `-item`, `-item-title`, `-item-meta`) | A record's decision/approval chain — not a chart | components/timeline.html |
-| `.kt-kpi-row` / `.kt-kpi-card` (+ `-icon`, `-value`, `-sub`) | Summary metric card; a top accent bar appears only past a threshold | components/kpi.html |
-| `.kt-steps` (+ `-node`, `-line`, `-label`) | Continuous multi-step progress/status track | components/steps.html |
+| `.kt-kpi-row` / `.kt-kpi-card` (+ `-icon`, `-value`, `-dot`, `-sub`) | Summary metric card; top accent + dot appear only past a threshold | components/kpi.html |
 | `.kt-notice` (`is-info`/`is-warning`/`is-critical`/`is-live`) | Page-level advisory banner | components/notice.html |
 | `.kt-checkbox` | Square checkbox (certification-style confirmations) | components/forms.html |
 | `.kt-tabs` / `.kt-tab` | CSS-only tab row | components/forms.html |
 | `.kt-record` (+ `-main`, `-index`, `-body`, `-ref`, `-title`, `-meta`, `-value`, `-amount`, `-sub`, `-footer`, `-toggle`, `-detail`) | List-item record card with an expandable detail block | components/record.html |
-| `.kt-page` (+ `-head`, `-title`, `-desc`, `-scope`, `-actions`) | The one white sheet a page is drawn on — carries the page header and every region | components/page-shell.html |
-| `.kt-region` (+ `.is-secondary`) | A titled region inside the sheet: 21px title (17px secondary) over open content, no box | components/page-shell.html |
-| `.kt-group` | Quiet supporting facts behind a 2px divider left rule instead of a second panel | components/page-shell.html |
-| `.kt-task-row` / `.kt-decision` | Level-1 emphasis: a 3px accent left rule on the actor's task, a 2px accent top rule above the decision area. At most two accent rules per page | components/page-shell.html |
-| `.kt-guidance` | Region at the top of a record's content column, below the page header: holds one `.kt-journey` and at most one `.kt-next-step`. No card, shadow or band. Record detail, Review or decision, Form or editor only | components/guidance.html |
-| `.kt-journey` (+ `-stage`, `-bar`, `-title`, `-num`, `-state`; `.is-done` / `.is-current` / `.is-blocked`; `.is-reduced`) | Lifecycle stages as an `<ol>` of equal columns: 4px bar, number + label, visible state line. Set `--kt-journey-n` for stage count. Pair with `.is-reduced.is-fallback` to auto-switch under 600px sheet width. `.kt-journey-links` holds at most one upstream and one `.is-downstream` text link, each stated by the change unit. Orientation only — no links, dates, past actors or connectors | components/guidance.html |
-| `.kt-next-step` (`.is-turn` / `.is-waiting` / `.is-done`; blocked = `.kt-notice.is-warning.kt-next-step`) | The actor's position: label, headline copied from the change unit, optional one sentence. Only the blocked kind takes a container and carries fix buttons; omit when not involved | components/guidance.html |
-| `.kt-choice-row` / `.kt-dependent` | Yes/No switch in a fixed 220px right column; dependent fields sit beneath behind a 2px divider rule. `.is-stacked` inside a two-column field grid | components/guidance.html |
-| `.kt-filter-bar` (+ `.is-wide` on a cell) | Equal-width control cells directly above the records they filter, inside the sheet | components/page-shell.html |
-| `.kt-empty` | Empty / filtered-empty state inside the sheet: hairline top rule, thin-stroke glyph, a sentence with the recovery in it | components/page-shell.html |
-| `.kt-section` / `.kt-panel` / `.kt-meta-row` | `.kt-panel` is the wrapper for detached content on a ground with **no** page sheet — inside `.kt-page` use `.kt-region` / `.kt-group` instead. `.kt-meta-row` distributes facts as equal grid cells across the measure (reflows to fewer columns as it narrows); add `.is-tight` for two short facts that belong together | components/sections.html |
+| `.kt-section` / `.kt-panel` / `.kt-meta-row` | Page-section title + optional white panel, for content with no ruled structure of its own | components/sections.html |
 | `.kt-app-shell` / `.kt-sidebar` / `.kt-nav-item` / `.kt-nav-group` / `.kt-topbar` / `.kt-breadcrumb` | Left-nav app shell: sidebar (brand, search, flat nav + one nested group, active-item tint + right accent bar, footer/user block) and a top bar (breadcrumb + icon actions + user block) | components/app-shell.html |
 
 States are built in: hovers and pressed states come from the accent ramp, keyboard focus is the 2px accent `:focus-visible` ring, `::selection` is an accent tint, and disabled controls use solid tokens (`--color-neutral-400` text on a `--color-surface-2` well) rather than opacity. Don't restyle them per page. The accent-to-ground pair is tuned to at least 3:1 — enough for icons, large text and interface chrome, not for body copy — so for paragraph-size text in the accent use a deep ramp step (`--color-accent-700` on this ground) rather than the accent itself.
 
 ## Do
 
-- Draw every page inside one `.kt-page` sheet. Every group of interactive controls therefore sits on `--color-surface`; the grey ground carries the sheet and nothing else.
-- Put filters in a `.kt-filter-bar` directly above the records they filter.
-- Use `.kt-group` for quiet supporting facts and `.kt-task-row` / `.kt-decision` for Level-1 emphasis, so importance is carried by rule and scale rather than by a box.
-- Inside the sheet, only these keep their own surface: `.table`, `.kt-notice`, `.kt-status`, `.kt-disclosure` (side and bottom borders dropped), inputs and controls, `.dialog`, and loading skeletons. Everything else is open content.
 - Frame cards and figures as blueprint objects: the `.blueprint` class — a hairline border, nothing more. No component carries corner registration marks.
 - Use `--color-accent-2` (violet) for links or secondary emphasis that must read as distinct from the primary action; reserve `--chart-*` strictly for data-visualization series.
 - Keep the grid visible — equal cells, strong horizontal and vertical rhythm.
@@ -87,18 +72,10 @@ States are built in: hovers and pressed states come from the accent ramp, keyboa
 
 ## Don't
 
-- On KenTender artboards, do not use `.kt-steps` or `.kt-timeline`: KT-STD-001 §2.2 prohibits steppers and timelines, and `.kt-journey` is the only authorised exception. Use `.kt-journey` for lifecycle position and the page's history disclosure for who acted and when.
-- Do not use `.kt-kpi-row` as a row of equal decorative metrics (KT-STD-001 §2.6.4). Use it only for supplied workload or result facts that orient the current task.
-- Do not set section titles or table headers in uppercase or letter-spaced type (KT-STD-001 §2.6.7). Sentence case, weight 600.
-
-- Do not place a `.field`, `.input`, `.seg` or `.kt-checkbox` on the `--color-bg` ground. A bare control on grey is the single most common defect in this system.
-- Do not wrap a region inside `.kt-page` in `.card` or `.kt-panel` — that is the nested rectangle the system prohibits. `.card`, `.kt-panel`, `.kt-kpi-card`, `.kt-record` and `.blueprint` stay correct on a ground with no page sheet.
-- Do not stack a shadow inside the sheet — elevation belongs to the sheet and to dialogs — and do not use the accent rule decoratively or on more than two regions. `.kt-next-step.is-turn` carries the actor's 3px accent left rule and counts as the page's `.kt-task-row`, so a page with a Your-turn line adds no other `.kt-task-row` (one `.kt-decision` is still allowed). Waiting and Done use the same rule in `--color-neutral-400`. Only **Your turn, blocked** takes a container (`.kt-notice.is-warning`).
 - Do not round cards, figures or buttons — square corners throughout. Figures (image frames) stay unfilled line drawings; cards and dialogs are filled (the primary button, cards and dialogs are the deliberate exceptions to "line drawing").
 - Do not reintroduce corner registration marks — the `.blueprint` frame is a plain hairline border. This reverses the earlier rule entirely, not just narrows it to `.card` and figures.
 - `disabled` and `checked` must carry an explicit value (`disabled="disabled"`, `checked="checked"`) in any templating context that strips valueless boolean HTML attributes — plain static HTML pages are unaffected.
 - Status/figure/KPI dots are removed entirely — state is carried by label text, fill color, and (for KPI cards) the top accent bar alone. Do not reintroduce a dot anywhere.
-- Labels are atomic: `.btn`, `.tag`, `.kt-status`, `.seg-opt` and `.kt-nav-item` never wrap internally (`white-space: nowrap`). If a label is too wide for its container, wrap the row (`flex-wrap: wrap` on the tag/button group), widen the column, or shorten the label — do not let the label fracture.
 - Do not use `--chart-*` colors for UI chrome (buttons, chips, nav) or `.kt-status` hues for chart series — each palette encodes exactly one thing.
 - Do not use thick icon strokes; the set is Lucide at 1.5.
 - Do not add decorative color beyond the steel accent. The accent's own deep step (`--color-accent-900`) may carry a full field where the deck's section dividers use it — steel as ground, type reversed to paper. (The landing's numbers sit on a drawn spec-sheet plate on the paper ground instead — its own grammar, not a field.)

@@ -24,6 +24,7 @@
 | 2026-09-26 | Cancellation-notice channels may be attested by the cancellation-compliance holder (Procurement Officer) or the HOPF; the Tender package and addenda stay HOPF-only. | §10.17 DES-12 gives the notices to the compliance holder; TPR09-AC-046 names the HOPF only. Built to both; FU-30 asks for one rule. |
 | 2026-09-26 | Seed departures: the addendum notice is Delivered at 09:08 (not 09:02) and §13.3's 1 Jun no-effect response is not seeded. | The addendum's audience is frozen only when it becomes effective (09:07); DES-09 draws one clarification. FU-28, FU-29. |
 | 2026-09-26 | The stored role `Tender Inquiry Producer` and its producer user keep their names. | Renaming stored identifiers needs a migration; copy and comments say clarification (8bd85d59). FU-32. |
+| 2026-09-26 | BDS-CHG-001 v0.8 (approved 26 Sep 2026) adds strictly additive Tenders seams, built from the Bid Submission plan and recorded below as TND12-B01…B05; it also executes FU-25. No existing Tenders behaviour changes. | BDS-CHG-001 v0.8 plan D3 (`12_bid_submission/BDS-CHG-001_v0_8_Implementation_Plan.md`); the 21 Sep owner answer (v0.4 plan OQ-3) that Tenders tracker addendum rows record such additions. |
 
 ## Gate register
 
@@ -103,6 +104,18 @@
 | TND12-1302 | Persona pass (Brian, Charles, Amina, Naomi, Grace) at 1440 / 390 / 200% | Done | `tnd-release-evidence` › Brian starts, drafts and submits; Charles returns then approves; Amina authorises and confirms; the Tender publishes and closes — guidance asserted at each hand-off; 390 px one-line journey and no sideways scroll at 390 px and 200% zoom. Naomi (Auditor) reads in `tnd-workspace` / `tnd-history`; Grace (Departmental Author) waiting line in `tnd-correction` and the dead-end matrix. |
 | TND12-1303 | Evidence pack, bundle hash, gates, prohibited-token scan, runbooks, AC map | Done | Bundles under test: `tenders.bundle.FTN25OHR.js`, `kt_industry_guidance.bundle.XPDRXKAW.js` (no source newer than either). Evidence pack: 15 screens in `evidence/v0_12/screens/` (`tnd-evidence-pack`); landmark fidelity 14/14; `ui-structure-gate` runs the Tenders project; prohibited-token test + comment/copy scan (`8bd85d59`); RUNBOOKS §§1, 2, 5, 8 updated and §§9–10 added; AC map above. |
 | TND12-1304 | Representative-user sessions (TPR-IMP-052, TPR09-AC-080) | Planned — owner | Not run by the build; needs real Procurement Officer, HOPF and AO users. |
+
+## Work register: BDS-CHG-001 v0.8 seams (addendum, 26 Sep 2026)
+
+These are built and evidenced under the Bid Submission tracker (`12_bid_submission/BDS-CHG-001_v0_8_IMPLEMENTATION_TRACKER.md`, rows BDS8-203, BDS8-204 and BDS8-503). The rows are recorded here because they change Tenders-owned code.
+
+| ID | Item | Status | Evidence |
+|---|---|---|---|
+| TND12-B01 | `services/bidder_projection.py`: allowlisted public Tender list and detail, guest-safe public document stream (no digest or file URL), anonymous public answers (changed-content answers withheld until the addendum is effective), and a candidate view of own questions and notice states | Planned | — |
+| TND12-B02 | `bid_definition.definition_for(tender, version)` and `bid_definition.map_bid_definition_addendum(tender, from_version, to_version)` (= BDS §7.4 `MapBidDefinitionAddendum`); the successor identity map stored immutably (`identity_map_json`, `identity_map_digest`) with a backfill patch | Planned | — |
+| TND12-B03 | `events.pending_for_consumer(event_type, consumer)`, so Bid Submission consumes `TenderSubmissionPeriodEnded` and `TenderOpenForSubmission` (closes FU-13) | Planned | — |
+| TND12-B04 | `candidate_gateway`: a test-only provider override through `frappe.flags` | Planned | — |
+| TND12-B05 | FU-25: Bid Submission registers `kt_tender_candidate_registry`; the stand-in `Tender Candidate Registration` and `register_stand_in_candidate` are removed by patch; Tenders tests move to the fake provider; the canonical seed's `CLOCK["candidate"]` step becomes BDS `StartBid` | Planned | — |
 
 ## Board map
 

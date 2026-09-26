@@ -5,19 +5,19 @@
 | Document ID | BDS-CHG-001 |
 | Version | **0.8** |
 | Date | 26 September 2026 |
-| Status | **Approved** |
-| Revision record | 26 September 2026, initial v0.8 proposal: owner alignment, OD5, KT-STD-001 v1.8 and supplier guidance. Same-day design-readiness corrections: fixture chronology, variant inventory, recovery, receipt history and distinct certificate/custody outcomes. Same-day follow-up correction: split signing and custody outage results, align Draft Version terminology and close the remaining actor/time/notice fixtures. These were revisions within the unapproved v0.8 proposal before the subsequent Project Owner approval recorded above. |
-| Approved on | 26 September 2026 |
-| Approval record | Project Owner instruction on 26 September 2026: **BDS-CHG-001 is also approved.** This approval applies to v0.8. v0.7 had no approval record and remains historical proposal evidence. |
-| Supersedes | v0.7 (proposed, never approved) and v0.6 in full; earlier versions remain historical evidence. |
+| Status | **Proposed — v0.7 was Proposed for Project Owner review and was not approved; re-approval required** |
+| Revision record | 26 September 2026, initial v0.8 proposal: owner alignment, OD5, KT-STD-001 v1.8 and supplier guidance. Same-day design-readiness corrections: fixture chronology, variant inventory, recovery, receipt history and distinct certificate/custody outcomes. Same-day follow-up correction: split signing and custody outage results, align Draft Version terminology and close the remaining actor/time/notice fixtures. These are revisions within the unapproved v0.8 proposal, not approval or a change to an approved baseline. |
+| Approved on | Not yet approved |
+| Approval record | None for v0.8. v0.7 had no approval record; it was Proposed for Project Owner review. |
+| Supersedes | On approval, v0.7 (proposed, not approved) and v0.6 in full (v0.7 read: On approval, v0.6 in full) |
 | User-facing areas | **Tenders**, **My bids**, **Account** |
 | Product | `IT-EQUIPMENT-OPEN-V1` — straightforward off-the-shelf IT equipment using the PPRA Goods Standard Tender Document |
 | Starts from | One Published — open Tender and one authenticated supplier arrangement |
 | Ends at | One current bid that is Draft, Submitted into the electronic tender box, Withdrawn before deadline, or closed without submission |
 | Governing standard | KT-STD-001 v1.8 |
 | Owner contracts | Approved TPR-CHG-001 v0.12, STD-TPL-001 v0.10 and STD-TPL-IMP-001 v1.1; CFG-CHG-002 v0.16, LAW-REG-001 v1.2, AUTH-ADR-001 v1.10 and SEED-001 v1.3; approved upstream REQ-CHG-001 v1.12; PLN-CHG-001 v1.27 and BUD-CHG-001 v1.11. The published-state clarification in proposed TPR-CHG-001 v0.13 must be approved before the affected BDS behavior is implementation authority. |
-| Implementation authority | Approved v0.8 requirements authorise implementation of the unconditional contract. Production submission remains disabled until the operating and release gates in §§5.10 and 15 pass. The published-Tender Superseded/Withdrawn branch remains conditional on TPR-CHG-001 v0.13 approval. |
-| Change type | Approved successor to v0.7. Aligns OD5 release checks and current owner versions, adds KT-STD-001 v1.8 next-step, guard, journey and hand-off contracts, and completes public/supplier guidance. No additional supplier qualification or approval stage is introduced. |
+| Implementation authority | None until Project Owner approval and satisfaction of the production gates in §§5.10 and 15 |
+| Change type | Proposed successor to v0.7. Aligns OD5 release checks and current owner versions, adds KT-STD-001 v1.8 next-step, guard, journey and hand-off contracts, and completes public/supplier guidance. No additional supplier qualification or approval stage is introduced. |
 | v0.8 decision basis | Owner decision OD5, Project Owner, 26 September 2026: “I don't want this complicated admin overhead regarding approvals and commissioning of templates. It is unnecessary, adds no value and is vexing. Allow development work to contine without this friction. Template release is purely an on and off switch on an affected site. Update this decision as a follow up to reflect in affected documents if necessary”. Project Owner instruction, 26 September 2026: “Close the open issues”. OD5 is recorded in the STD-TPL-IMP-001 v1.1 implementation tracker decision log and in the release 1.1 review record. |
 | v0.8 change scope | Tenders alone binds the one Available release switched On for a new Tender. Bid work on an already-bound release uses exact integrity, adapter and effective-definition checks. Published-state Supersession and Withdrawal follow the proposed TPR v0.13 clarification only after its approval. §§5.12–5.14 and 10.19 add the required actor-specific guidance without turning the five supplier tasks into approval stages. §18.1 records the remaining G1 reconciliation. Retained “v0.7 read” notes identify superseded wording only. |
 | v0.7 closure scope (retained) | Closes the public/vendor MVP through sealed Bid Submission: **Start bid** atomically creates the Tender-bound candidate registration and workspace; BDS submits general pre-bid questions through Tenders; mandatory notice contacts and delivery-safe presentation are explicit; public support/legal links come from CFG; and one controlled deployment flag keeps production submission disabled until the approved operating profile is complete. Future Bid Opening, Evaluation/Award, Supplier Management/prequalification and additional method/product releases remain outside this contract. |
@@ -2235,7 +2235,7 @@ The locally available 2020 Regulations text is a historical official source, not
 
 ### 18.1 v0.8 approval effect
 
-v0.8 is **approved** as the successor to v0.7. Its approval:
+v0.8 is **proposed** as the successor to v0.7 for Project Owner review. Approval of v0.8 will:
 
 1. have every effect listed for v0.7 in §18.2, with the unapproved v0.7 also retained only as reference history;
 2. establish the bound-release rule for publication, addendum definition builds and **Start bid** in §4.4.4 and BDS05-AC-001; and
@@ -2245,9 +2245,7 @@ Approval of v0.8 does not install, approve or switch on a template release, chan
 
 **Owner-document dependency.** STD-TPL-001 v0.10 and STD-TPL-IMP-001 v1.1 already incorporate OD5: an intact installed Available release has an On/Off site switch; On is needed for new binding, while Off does not strand an already-bound Tender. Approved TPR-CHG-001 v0.12 controls Tender actions now. Its §5.8 item 14 explicitly limits the Superseded continuation to an unpublished Tender, while item 16 and the STD runtime allow a broader continuation. Proposed TPR-CHG-001 v0.13 resolves the published-Tender branch, including addendum issue, Bid start and submission, and the Withdrawn boundary. The §4.4.4 published-state branch and tests are conditional on that owner approval; implementation must not take the proposed branch as already authorised. G1-REG-001 v1.2 is a proposed coordination register and cannot override a module owner.
 
-### 18.2 v0.7 proposed approval effect (retained as history)
-
-The following is retained v0.7 proposal wording. v0.7 was never approved; v0.8 approval gives effect to the applicable outcomes through §18.1.
+### 18.2 v0.7 approval effect (retained)
 
 This document is **Proposed for Project Owner review**. Approval will:
 

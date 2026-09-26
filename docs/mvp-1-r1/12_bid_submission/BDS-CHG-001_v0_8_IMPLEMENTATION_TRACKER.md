@@ -1,0 +1,628 @@
+# BDS-CHG-001 v0.8: Supplier Portal and Electronic Bid Submission, tracker
+
+| Control | Value |
+|---|---|
+| Version | 0.8-tracker.1 |
+| Date | 26 September 2026 |
+| Status | Phase 0 in progress |
+
+**Authority:** `KenTender_BDS-CHG-001_Supplier_and_Electronic_Bid_Submission_v0_8.md`, Approved 26 Sep 2026.
+
+**Plan:** `BDS-CHG-001_v0_8_Implementation_Plan.md`. It holds owner decisions OD-A…OD-H and technical decisions D1–D19.
+
+**Companions:**
+- `BDS-CHG-001_v0_8_FOLLOW_UPS.md`;
+- `reconciliation/` (artboard inventory, error contract, hand-off register, fixture chronology, legacy inventory, definition-to-board matrix);
+- later: `evidence/v0_8/` and `RUNBOOKS.md`.
+
+**Supersedes in tracking:** `BDS-CHG-001_IMPLEMENTATION_TRACKER.md` (v0.4, 21 Sep 2026). That file is retained unchanged as history and received no work beyond its own Phase 0.
+
+**Status:** Phase 0 in progress. No product code written. Site untouched.
+
+**Started:** 26 September 2026.
+
+## Tracker rules
+
+1. **Rows are permanent.** Vocabulary: `Planned` / `In progress` / `Blocked` / `Partial` / `Done`. Reversed decisions are struck through in place, never deleted.
+2. **`Done` needs the row's own evidence.** That is a command with result counts, a named test, a commit, or a described browser observation with literal rendered strings. Never record a result that was not observed. An honestly incomplete row is `Partial`.
+3. **Prohibited in new code:**
+   - `Electronic Bid Submission`, `IT Bid Opening Record`, `Electronic Bid Audit Event` (retired);
+   - a link from Supplier Accounts code to `KTSM Supplier Profile` or ERPNext `Supplier` (plan D2);
+   - `User Responsibility Assignment` as the authority for a supplier command (plan D12);
+   - `frappe.msgprint` or a raw Frappe dialog for portal input, and the website `frappe.call` in portal code (plan OD-B);
+   - `vue-router`;
+   - a homemade certificate authority, signature, encryption or tender box (BDS-CHG-001 §16);
+   - `production_bid_submission_enabled` read anywhere except `availability.py`;
+   - simulation adapters loading without `kt_bds_simulation_environment`;
+   - any bidder-visible `RSP-`/`COMP-`/`CTL-`/`RR-`/`EVG-`/`DM-` identifier, digest, schema or storage path (plan D11);
+   - `/app/tender-security-receipts` (the correct route is `/desk/tender-security-receipts`).
+4. **Governing sections:**
+   - BDS-CHG-001 §10 and the v3 boards govern visual and content fidelity, with the definition winning for bidder fields (OD-E).
+   - BDS-CHG-001 §11 governs behaviour, BDS-CHG-001 §8 error copy (`reconciliation/error_contract.md`, verbatim), BDS-CHG-001 §12 audit and BDS-CHG-001 §13 seeds.
+   - Browser literals come from BDS-CHG-001 §10.1/BDS-CHG-001 §13 or the definition, never from board placeholder data.
+5. **Every visible action maps to exactly one BDS-CHG-001 §7 command or BDS-CHG-001 §11 read.** New commands exist only where an owner decision names them (OD-D suspend/restore; OD-G/H intake and match).
+6. **Site safety:**
+   - Never run a Bid Submission or Supplier Accounts Python module while a Playwright process is active.
+   - `bench run-tests` has no rollback: purge after every run.
+   - Run `make ui-queue-check` before UI runs.
+   - Canonical reseeds use `REBUILD=True` after gates that release reservations.
+7. **Production gate:** no row may claim `Done` by exercising a production signing or custody path. Every submission proof runs on a site with `kt_bds_simulation_environment: 1` and says so in its evidence. The BDS-CHG-001 §15.3–15.6 rows are closed only by recorded owner evidence.
+8. **The AC map closes a row only with its proving test, spec or observation.**
+
+## Decision log
+
+| Date | Decision | Rationale |
+|---|---|---|
+| 2026-09-26 | Plan approved; owner decisions OD-A (CFG Supplier portal built here), OD-B (one Vue portal), OD-C (simulated services on test sites), OD-D (minimal suspend/restore) | Owner answers in the planning session (plan "Owner decisions") |
+| 2026-09-26 | OD-E: reconcile the template before completing the bid journey; successor release 1.2; 1.1 switched Off, never altered; hold Company/Requirements/Review/Submit until 1.2 passes | Owner instruction, quoted in `reconciliation/definition_to_board_matrix.md` |
+| 2026-09-26 | OD-F: TM2 bid slice and route collisions now; rest of TM2 in a later clean-up | Owner answer |
+| 2026-09-26 | OD-G: DES-15 becomes a blind physical-original intake with an opaque receipt; no candidate list, bid status or match indication | Owner instruction |
+| 2026-09-26 | OD-H: private server-side match; only the matched supplier's own bid shows "recorded" | Owner answer |
+| 2026-09-26 | Carried from 21 Sep: legacy bid records deleted outright; BWMF/STD-wizard untouched (FU-05); the KT-STD-001 §8.3 persona register wins where it has the role | v0.4 tracker decision log (retained) |
+| 2026-09-26 | Phase 0 refinement: TM2 bid doctypes stay until the OD-F clean-up (TM2 officer workbench reads them); `e1-nssf-*` / `bw-manifest-*` gates stay (they test BWMF) | `reconciliation/legacy_inventory.md` BDS-CHG-001 §2–3 |
+
+## Gate register
+
+| Gate | Condition | Status | Evidence |
+|---|---|---|---|
+| BDS-G00 | Phase 0: v0.8 plan, tracker and follow-ups; reconciliation matrices; Tenders/STD tracker addendum rows; boards committed; `make artboard-provenance-gate` green | In progress | — |
+| BDS-G01 | Phase 1: legacy bid slice retired; `bds-retirement-gate`; migrate clean twice | Planned | — |
+| BDS-G02 | Phase 2: CFG Supplier portal (2A), Tenders/STD seams (2B), portal walking skeleton (2C) | Planned | — |
+| BDS-G03 | Phase 3: successor template release 1.2 reconciled, validated, installed On; 1.1 Off and unchanged | Planned | Gates slices 11.8, 11.9, 11.11, 11.12 |
+| BDS-G04 | Phase 4: Supplier Accounts identity and Account | Planned | — |
+| BDS-G05 | Phase 5: definition binding, Start bid, candidate provider (TPR FU-25) | Planned | — |
+| BDS-G06 | Phase 6: preparation services | Planned | — |
+| BDS-G07 | Phase 7: tender security, price, blind intake and private match | Planned | — |
+| BDS-G08 | Phase 8: signature, submission, custody, availability | Planned | — |
+| BDS-G09 | Phase 9: replacement, withdrawal, close, Bid Opening hand-off | Planned | — |
+| BDS-G10 | Phase 10: guidance, hand-offs, incidents; dead-end gate | Planned | — |
+| BDS-G11 | Phase 11: every portal slice gate plus the fidelity gate at both sizes | Planned | — |
+| BDS-G12 | Phase 12: canonical seed twice, worlds, release evidence | Planned | — |
+| BDS-G13 | Phase 13: TPR v0.13 branch | Blocked — TPR-CHG-001 v0.13 approval | BDS-CHG-001 §18.1; BDS08-AC-008 |
+
+## Work register: Phase 0 (documents and reconciliation)
+
+| ID | Item | Status | Evidence |
+|---|---|---|---|
+| BDS8-001 | v0.8 plan, tracker and follow-ups (new versioned files; v0.4 set retained unchanged) | Done | 2026-09-26. `BDS-CHG-001_v0_8_{Implementation_Plan, IMPLEMENTATION_TRACKER, FOLLOW_UPS}.md`. |
+| BDS8-002 | `reconciliation/artboard_inventory.md` | Done | 2026-09-26. Script extraction of 79 `data-screen-label` values plus captions: 73 Covered, 3 Conditional, 3 Replaced. |
+| BDS8-003 | `reconciliation/error_contract.md` (BDS-CHG-001 §8 verbatim) | Done | 2026-09-26. 34 codes (spec lines 765–798); a whole-document scan finds no code outside the table. |
+| BDS8-004 | `reconciliation/hand_off_register.md` (BDS-CHG-001 §5.14 verbatim plus implementation mapping) | Done | 2026-09-26. 8 spec rows, 8 implementation rows. |
+| BDS8-005 | `reconciliation/fixture_chronology.md` | Done | 2026-09-26. Interleaved Tenders `CLOCK` plus BDS-CHG-001 §13.3; isolated worlds from BDS-CHG-001 §13.4/BDS-CHG-001 §10.1; conflicts FX-1…FX-6. |
+| BDS8-006 | `reconciliation/legacy_inventory.md` | Done | 2026-09-26. Read-only repository scan; refinement recorded (TM2 bid doctypes deferred; e1-nssf/bw-manifest kept). |
+| BDS8-007 | `reconciliation/definition_to_board_matrix.md` | Done | 2026-09-26. Release 1.1 MOH definition: 123 response rows, 2 price rows, 7 texts. Preliminary classes: A ×3, B ×5, C1 ×5, C2 ×1, decisions ×4. Source coverage registers not yet read (Phase 3). |
+| BDS8-008 | Addendum rows in the Tenders tracker (D3 seams, FU-25) and the STD-TPL-IMP-001 tracker (release 1.2) | Done | 2026-09-26. `11_tenders/TPR-CHG-001_IMPLEMENTATION_TRACKER.md`: decision-log row plus TND12-B01…B05. `07_std_configuration/STD-TPL-IMP-001_v1_0_IMPLEMENTATION_TRACKER.md`: decision-log row plus Phase C STI-C01…C03. |
+| BDS8-009 | Commit the v3 boards, the `retired/` move and the approved v0.8 working copy (owner/user action), then `make artboard-provenance-gate` | Planned | Needs the user's go-ahead to commit. |
+
+## Work register: Phases 1–13
+
+| ID | Phase | Item | Status | Evidence |
+|---|---|---|---|---|
+| BDS8-101 | 1 | Hooks: remove 22 `/tenders/<publication_ref>…` rules, `/supplier/tenders/<code>`, `bidder_workspace_renderer.js`, `bid-submissions` / `it-electronic-bidder-workspace` page_js | Planned | — |
+| BDS8-102 | 1 | Delete `www/tenders/**`, `www/supplier/**`, the two pages, bidder JS/CSS/templates | Planned | — |
+| BDS8-103 | 1 | Delete the bid and bidder-section services and their tests; strip bid endpoints from `tender_configurations/__init__.py` / `api.py` | Planned | — |
+| BDS8-104 | 1 | Patch `bds_chg_001_v08_retire_bid_slice` (3 doctypes; rows children first) | Planned | — |
+| BDS8-105 | 1 | Core demo-seed bid calls stubbed; sidebar "Bid Submissions" removed; legacy make targets and smoke dirs removed; empty `bid_submission_opening/` removed | Planned | — |
+| BDS8-106 | 1 | `test_legacy_retirement.py`; `make bds-retirement-gate`; migrate clean twice | Planned | — |
+| BDS8-201 | 2A | `Public Portal Settings` (+ change log), `public_portal.py`, API, CFG codes, technical read, seed | Planned | — |
+| BDS8-202 | 2A | Supplier portal section in System setup Procurement settings (4 states) | Planned | — |
+| BDS8-203 | 2B | `tenders/services/bidder_projection.py` (list, detail, public document stream, public answers, candidate view) | Planned | — |
+| BDS8-204 | 2B | `bid_definition.definition_for`, `map_bid_definition_addendum`, stored identity map plus backfill; `events.pending_for_consumer`; candidate-gateway test override; `runtime.bid_work_status` | Planned | — |
+| BDS8-205 | 2C | Portal shell `kt_portal`, hook `kt_portal_surfaces`, runtime bundle, shell CSS, portal test helpers; DES-01 walking skeleton | Planned | — |
+| BDS8-301 | 3 | Read source coverage registers; close every matrix row with a final class | Planned | — |
+| BDS8-302 | 3 | Correct release assets (Class A), rebuild, validator, manifest, change report; renderer version if needed | Planned | — |
+| BDS8-303 | 3 | Install 1.2 On; 1.1 Off; parity vectors; Tenders definition tests on 1.2 | Planned | — |
+| BDS8-401 | 4 | Supplier Accounts doctypes and services (registration, verification, assignments, evidence, access OD-D, read, guidance, provider contract) | Planned | — |
+| BDS8-402 | 4 | Business role "Supplier Account Support Officer"; `supplier_account_contract.py` | Planned | — |
+| BDS8-501 | 5 | Bid Submission module, doctypes, errors, envelope, references, gateways, product profile, definition runtime | Planned | — |
+| BDS8-502 | 5 | `StartBid`, candidate registry provider, notice contact, clarification, snapshot refresh | Planned | — |
+| BDS8-503 | 5 | TPR FU-25 stand-in retirement patch; Tenders tests on the fake provider | Planned | — |
+| BDS8-601 | 6 | Controls, validation, handles, tasks, save, evidence plus scan gateway, addendum migration, reads, status | Planned | — |
+| BDS8-701 | 7 | Price; tender security; blind intake; private match; DES-15 replacement Desk page | Planned | — |
+| BDS8-801 | 8 | Gateways plus simulations; availability; package; signature; two-phase submission; reconciler; receipts | Planned | — |
+| BDS8-901 | 9 | Replacement; withdrawal; close; Bid Opening hand-off; consume Tenders events | Planned | — |
+| BDS8-1001 | 10 | Guidance, guards, hand-offs, incidents, My Work provider; dead-end matrices | Planned | — |
+| BDS8-1101…1115 | 11 | Slices 11.1–11.15 (see the artboard inventory); runtime completion; fidelity infrastructure | Planned | — |
+| BDS8-1201 | 12 | Canonical `bid_submission` stage; Tenders dated steps; worlds; release evidence; runbooks | Planned | — |
+| BDS8-1202 | 12 | Owner evidence: BDS-CHG-001 §5.10 operating profile, BDS-CHG-001 §15.3 security review, BDS-CHG-001 §15.5 representative users, BDS-CHG-001 §15.6 release record | Planned — owner | — |
+| BDS8-1301 | 13 | TPR v0.13 branch | Blocked — TPR-CHG-001 v0.13 approval | — |
+
+## Board map and error contract
+
+See `reconciliation/artboard_inventory.md` (79 labels, slice and status per label) and `reconciliation/error_contract.md` (34 codes, verbatim).
+
+## Acceptance criteria map
+
+All 180 criteria from BDS-CHG-001 §14 are copied verbatim by script (26 Sep 2026), including BDS01-AC-028A–D and 042A/B. "Target phase" is a plan proposal. Every row starts `Planned`.
+
+### Spec 14.1 Public access, Account and organisation scope
+
+| ID | Criterion (verbatim) | Target phase | Status | Evidence |
+|---|---|---|---|---|
+| BDS01-AC-001 | Anyone can view the available-Tenders list, current public Tender, documents, addenda, clarification answers and cancellation notice without creating an Account or business record. | 2B, 11.1–11.2 | Planned | — |
+| BDS01-AC-002 | Public and portal DTOs expose only bidder-task information and omit internal package, schema, digest, configuration, database, security and audit metadata. | 2B, 11.1–11.2 | Planned | — |
+| BDS01-AC-003 | Start bid requires authentication and returns safely to the same Tender after sign-in. | 2B, 11.1–11.2 | Planned | — |
+| BDS01-AC-004 | Organisation registration captures only the fields in §4.1 and explicitly states that Account activation is not qualification or eligibility approval. | 4 (+11.3–11.5) | Planned | — |
+| BDS01-AC-005 | Communication verification is displayed only as channel control, never as proof of company, tax or reservation status. | 4 (+11.3–11.5) | Planned | — |
+| BDS01-AC-006 | Cross-organisation reads and commands are denied and mask whether another organisation has a Draft or submission. | 4 (+11.3–11.5) | Planned | — |
+| BDS01-AC-007 | A Supplier Representative can prepare but cannot submit, replace or withdraw. | 4 (+11.3–11.5) | Planned | — |
+| BDS01-AC-008 | An Authorised Signatory command requires an active assignment, authority evidence and effective window at command time. | 4 (+11.3–11.5) | Planned | — |
+| BDS01-AC-009 | One person can act for several organisations only through separate assignments and an explicit active-organisation context. | 4 (+11.3–11.5) | Planned | — |
+| BDS01-AC-010 | A suspended Account cannot start, edit or submit, but its authorised recovery route preserves receipts and records. | 4 (+11.3–11.5) | Planned | — |
+| BDS01-AC-011 | A joint venture is available only when permitted by the published Tender and records lead, members, agreement evidence and exact signatory. | 5 | Planned | — |
+| BDS01-AC-012 | One Tender and supplier arrangement can create at most one active workspace under concurrent/repeated Start bid requests. | 5 | Planned | — |
+
+### Spec 14.2 Published definition and bid preparation
+
+| ID | Criterion (verbatim) | Target phase | Status | Evidence |
+|---|---|---|---|---|
+| BDS01-AC-013 | Start bid binds the exact Published Tender, template release, addendum set and supported definition Version atomically. | 5 | Planned | — |
+| BDS01-AC-014 | An unsupported response definition creates no partial workspace and shows the exact unavailable state. | 5 | Planned | — |
+| BDS01-AC-015 | For `IT-EQUIPMENT-OPEN-V1`, the bidder workspace presents exactly five visible tasks in the order defined in §5.3. | 6 (+11.6–11.9) | Planned | — |
+| BDS01-AC-016 | Every response row originates from the Published Tender and retains stable response, evaluation and contract mappings server-side. | 6 (+11.6–11.9) | Planned | — |
+| BDS01-AC-017 | Unknown, hidden, inapplicable or client-invented response fields are rejected and never stored. | 6 (+11.6–11.9) | Planned | — |
+| BDS01-AC-018 | Tender quantities, units, requirements, declaration texts, price rows, currency and tax treatment are read-only to the bidder. | 6 (+11.6–11.9) | Planned | — |
+| BDS01-AC-019 | Draft saves accept incomplete valid work and derive task/readiness status without implying submission. | 6 (+11.6–11.9) | Planned | — |
+| BDS01-AC-020 | Concurrent Draft edits use record versions; a stale save cannot overwrite another organisation member's change. | 6 (+11.6–11.9) | Planned | — |
+| BDS01-AC-021 | All eleven technical rows, six warranty/support rows and five acceptance obligations from the published fixture remain accounted for in the response/evaluation/contract chain. | 3, 6 | Planned | — |
+| BDS01-AC-022 | Large requirement sets are grouped for navigation without changing identity, order, wording, applicability or completeness. | 6 (+11.6–11.9) | Planned | — |
+| BDS01-AC-023 | Known organisation values are reused once and changes require explicit Draft refresh; silent Account-to-Draft mutation is impossible. | 6 (+11.6–11.9) | Planned | — |
+| BDS01-AC-024 | Locked declaration text is fully viewable, never preselected and explicitly confirmed against its exact published Version. | 6 (+11.6–11.9) | Planned | — |
+| BDS01-AC-025 | Completing a declaration or task remains reversible in Draft and is not an evaluation or legal-success decision. | 6 (+11.6–11.9) | Planned | — |
+| BDS01-AC-026 | PDF documents are view/download references only; no filled PDF, ZIP or spreadsheet can replace required structured responses. | 6 (+11.6–11.9) | Planned | — |
+| BDS01-AC-027 | The bidder sees one plain next action derived by the server and never sees a schema, renderer, manifest or internal status key. | 6 (+11.6–11.9) | Planned | — |
+| BDS01-AC-028 | The primary fixture can be completed through the five tasks without duplicate entry of company identity, Tender facts, requirements or total price. | 6 (+11.6–11.9) | Planned | — |
+| BDS01-AC-028A | The Published Bid Definition carries the exact base reservation category, any independent County-residents restriction, bound rule/overlap snapshots and category-specific declaration/evidence requirements; each required response maps to `EVG-ELIGIBILITY`. | 3, 5, 6 | Planned | — |
+| BDS01-AC-028B | Account state, organisation address, reusable evidence and file upload never establish reservation entitlement; the bidder supplies the published evidence and the authorised Evaluation owner records the pass/fail result. | 3, 5, 6 | Planned | — |
+| BDS01-AC-028C | BDS neither receives nor calculates the eligible-current-APP denominator, 30% target, planned qualifying share, Planning shortfall, Budget ceiling or unused headroom; none appears in a supplier projection, readiness decision, signed package or eligibility result. | 3, 5, 6 | Planned | — |
+| BDS01-AC-028D | A missing, unverified or unsupported reservation category, County-residents rule, evidence treatment or overlap treatment blocks the affected Tender definition/publication and Start bid; it never falls back to unreserved procurement or a generic upload. | 3, 5, 6 | Planned | — |
+
+### Spec 14.3 Evidence, tender security and price
+
+| ID | Criterion (verbatim) | Target phase | Status | Evidence |
+|---|---|---|---|---|
+| BDS01-AC-029 | Every evidence item links to one visible published requirement, declaration or permitted form; miscellaneous unrequested evidence cannot become a criterion. | 6 | Planned | — |
+| BDS01-AC-030 | An uploaded file is unusable until media/size/integrity/malware checks return Accepted. | 6 | Planned | — |
+| BDS01-AC-031 | Rejected evidence immediately identifies the safe technical reason and prevents affected task completion without claiming criterion failure. | 6 | Planned | — |
+| BDS01-AC-032 | Reusing Account evidence freezes an exact bid-bound copy; later Account replacement cannot alter a submitted bid. | 6 | Planned | — |
+| BDS01-AC-033 | Evidence metadata is captured only when required by the published definition and no storage path/digest is bidder-visible. | 6 | Planned | — |
+| BDS01-AC-034 | Tender-security type, issuer, reference, amount, currency, validity and proof follow the published rule and cannot be replaced by a generic upload. | 7 | Planned | — |
+| BDS01-AC-035 | The procurement receipt owner can record physical tender-security receipt without access to responses, price or Draft status. | 7 (re-scoped by OD-G/H) | Planned | — |
+| BDS01-AC-036 | Physical receipt records server actor/time and classifies before/after deadline immutably. | 7 (re-scoped by OD-G/H) | Planned | — |
+| BDS01-AC-037 | An outstanding physical original produces the exact warning but does not falsely prevent electronic submission or fabricate disqualification. | 7 | Planned | — |
+| BDS01-AC-038 | Quantity, unit, line identity and currency are read-only in Price; only published bidder price/tax fields are editable. | 7 | Planned | — |
+| BDS01-AC-039 | Decimal arithmetic and rounding deterministically produce the §10.1 subtotal, tax and bid total. | 7 | Planned | — |
+| BDS01-AC-040 | The Form of Tender projection consumes the one current Price total without re-entry or independent edit. | 7 | Planned | — |
+| BDS01-AC-041 | The bidder never sees the authorised estimate, Budget, source allocation or internal reservation value. | 7 | Planned | — |
+| BDS01-AC-042 | Another currency, alternative price, new line, unrequested discount and spreadsheet import are rejected for this product. | 7 | Planned | — |
+| BDS01-AC-042A | County-resident eligibility is never inferred from the supplier's address; where applicable, the separately published declaration and evidence are required and evaluated under the verified County rule. | 6, 7 | Planned | — |
+| BDS01-AC-042B | Reservation evidence is not projected as a contract obligation, but the published category, County-residents treatment and evaluated result remain available to governed award and statutory-reporting consumers. | 6, 9 | Planned | — |
+
+### Spec 14.4 Addenda, clarifications and readiness
+
+| ID | Criterion (verbatim) | Target phase | Status | Evidence |
+|---|---|---|---|---|
+| BDS01-AC-043 | The portal displays every issued addendum and authoritative clarification answer applicable to the Tender. | 2B, 11.7 | Planned | — |
+| BDS01-AC-044 | A new addendum creates a new immutable definition and never edits an earlier definition, Draft Version or submitted Version. | 6 | Planned | — |
+| BDS01-AC-045 | Submission is blocked until every current required addendum is acknowledged. | 6 | Planned | — |
+| BDS01-AC-046 | Stable unaffected responses may copy forward; every affected response becomes Needs attention with an exact issue link. | 6 | Planned | — |
+| BDS01-AC-047 | A submitted bid remains sealed after an addendum; changing it requires a replacement before the revised deadline. | 6 | Planned | — |
+| BDS01-AC-048 | The effective deadline shown and enforced is the latest lawfully issued Tender/addendum deadline. | 6 | Planned | — |
+| BDS01-AC-049 | Only an Active Tender-bound candidate registration may submit a question before the clarification deadline; BDS uses the Tenders owner contract and creates no parallel clarification store. | 5 | Planned | — |
+| BDS01-AC-050 | A general answer is displayed without identifying the questioner; an answer that would change published content is unavailable until its linked addendum is Issued and the successor definition is effective. | 2B | Planned | — |
+| BDS01-AC-051 | Validation recomputes the exact current definition, arrangement, responses, evidence, acknowledgements, security and price. | 6 | Planned | — |
+| BDS01-AC-052 | Every Must fix issue blocks submission and links to the exact task/row; a Review note does not block unless the published rule requires it. | 6 | Planned | — |
+| BDS01-AC-053 | A Supplier Representative sees the same complete review but no Submit control and the page names the Authorised Signatory. | 6 | Planned | — |
+
+### Spec 14.5 Digital signature, submission and receipt
+
+| ID | Criterion (verbatim) | Target phase | Status | Evidence |
+|---|---|---|---|---|
+| BDS01-AC-054 | Production Submit bid is unavailable until the exact operating profile in §5.10 is approved, configured and healthy. | 8 (production flag false; OD-C simulation) | Planned | — |
+| BDS01-AC-055 | The final action is plain-language Submit bid; its consequence states signature, locking, tender-box deposit and no opening/evaluation. | 8 | Planned | — |
+| BDS01-AC-056 | The server rechecks readiness, authority, definition, deadline, totals and evidence immediately before signing and immediately before deposit. | 8 | Planned | — |
+| BDS01-AC-057 | Submission requires a valid digital signature certificate from the approved licensed trust chain and binds the exact canonical package. | 8 | Planned | — |
+| BDS01-AC-058 | Typed name, checkbox, uploaded signature image, login password, staff override or client flag cannot satisfy the signature requirement. | 8 | Planned | — |
+| BDS01-AC-059 | A signature for another person, organisation, package or expired/revoked certificate is rejected and nothing is submitted. | 8 | Planned | — |
+| BDS01-AC-060 | The complete signed request must reach the trusted server before the effective deadline; client time and dialog-open time are ignored. | 8 | Planned | — |
+| BDS01-AC-061 | All evidence is Accepted before final submission; no hidden post-deadline evidence upload can complete the bid. | 8 | Planned | — |
+| BDS01-AC-062 | Submitted state and receipt commit only after the approved tender box accepts the exact signed envelope. | 8 | Planned | — |
+| BDS01-AC-063 | A definite tender-box rejection leaves the Draft unchanged and creates no receipt. | 8 | Planned | — |
+| BDS01-AC-064 | An uncertain result shows Confirmation pending, prevents duplicate dispatch and reconciles the same correlation to one outcome. | 8 | Planned | — |
+| BDS01-AC-065 | Identical replay returns the original receipt; changed content under the same idempotency key is rejected. | 8 | Planned | — |
+| BDS01-AC-066 | The receipt contains all §4.10 human-readable facts and omits hashes, keys, certificate internals, schemas and storage data. | 8 | Planned | — |
+| BDS01-AC-067 | The receipt explicitly says that submission is not opening, evaluation or award. | 8 | Planned | — |
+| BDS01-AC-068 | Supplier-facing Submitted appears only from authoritative accepted custody evidence, never from a save, upload, validation, signature start, queue or internal record insert. | 8 | Planned | — |
+
+### Spec 14.6 Replacement, withdrawal, closing and handoff
+
+| ID | Criterion (verbatim) | Target phase | Status | Evidence |
+|---|---|---|---|---|
+| BDS01-AC-069 | Prepare replacement leaves the current submitted Version and receipt effective. | 9 | Planned | — |
+| BDS01-AC-070 | A replacement becomes current only when its new signed envelope is accepted; predecessor Superseded and new receipt commit atomically. | 9 | Planned | — |
+| BDS01-AC-071 | If a replacement Draft is abandoned or the deadline passes, the prior submitted Version remains current. | 9 | Planned | — |
+| BDS01-AC-072 | Withdrawal requires the active Authorised Signatory, exact current Version, reason, confirmation and trusted pre-deadline time. | 9 | Planned | — |
+| BDS01-AC-073 | Withdrawal produces an electronic acknowledgement and retains the envelope, signature, receipt and complete history. | 9 | Planned | — |
+| BDS01-AC-074 | A withdrawn arrangement may submit a new replacement before deadline with a new Version and receipt. | 9 | Planned | — |
+| BDS01-AC-075 | Submit, replacement and withdrawal arriving after the deadline are rejected without status change or misleading acknowledgement. | 9 | Planned | — |
+| BDS01-AC-076 | The tender box closes automatically at the effective deadline and no business/technical user can reopen, extend or backdate it. | 9 | Planned | — |
+| BDS01-AC-077 | Unsubmitted Drafts become Closed without submission and never appear in the opening inventory. | 9 | Planned | — |
+| BDS01-AC-078 | The Bid Opening handoff contains only closed-box, sealed-envelope, receipt/change lineage and custody evidence; BDS provides no open/decrypt command. | 9 | Planned | — |
+
+### Spec 14.7 Confidentiality, usability, accessibility and audit
+
+| ID | Criterion (verbatim) | Target phase | Status | Evidence |
+|---|---|---|---|---|
+| BDS01-AC-079 | Before governed opening, Procuring Entity business users cannot see bidder identities, bid count, responses, evidence filenames, prices or content from the tender box. | 8, 12 | Planned | — |
+| BDS01-AC-080 | Technical and administrator views expose only authorised service/custody metadata and cannot decrypt, preview, download or search submitted content. | 8, 12 | Planned | — |
+| BDS01-AC-081 | Draft and submitted-content values never appear in logs, search indexes, analytics, traces or error messages. | 8, 12 | Planned | — |
+| BDS01-AC-082 | Submitted content is protected under the approved custody design and secrets/private keys are absent from application data/configuration/fixtures. | 8, 12 | Planned | — |
+| BDS01-AC-083 | Every artboard can be produced from §10 plus KT-STD-001 v1.8 §2 without invented content or behavior. | 11, 12 | Planned | — |
+| BDS01-AC-084 | Every visible action has exactly one mapping in §11 and is absent when the server does not permit it. | 11, 12 | Planned | — |
+| BDS01-AC-085 | Public and supplier tasks use ordinary language and expose no internal workflow, schema, rendering, package or cryptographic terminology. | 11, 12 | Planned | — |
+| BDS01-AC-086 | For the current Goods/IT product, a representative user can find a Tender, set up an Account, prepare the five tasks and understand who must submit without moderator explanation. | 11, 12 | Planned | — |
+| BDS01-AC-087 | An Authorised Signatory can review, submit and identify the authoritative receipt without mistaking submission for opening or award. | 11, 12 | Planned | — |
+| BDS01-AC-088 | All portal and Desk receipt surfaces meet the keyboard, focus, status-text, error-linking and responsive rules in §§10–11 and KT-STD-001. | 11, 12 | Planned | — |
+| BDS01-AC-089 | Every successful Account, response, evidence, acknowledgement, security-receipt, signature, submission, replacement, withdrawal and close fact records the minimum evidence in §12. | 4–9 | Planned | — |
+| BDS01-AC-090 | The §13 seed reruns without duplication, isolates opposing outcomes and never presents simulated trust/custody evidence as production compliance. | 12 | Planned | — |
+
+### Spec 14.8 STD-derived definition and rendering acceptance
+
+| ID | Criterion (verbatim) | Target phase | Status | Evidence |
+|---|---|---|---|---|
+| BDS02-AC-001 | The exact released STD bundle, Tender Version, authorised source rows and effective addenda deterministically produce one ordered immutable `PublishedBidDefinition`; repeated generation produces no semantic drift. | 3, 5 | Planned | — |
+| BDS02-AC-002 | Every task, group, response, evidence requirement, declaration and price/schedule row has one stable published identity, visible published source and supported product-profile treatment. | 3, 5 | Planned | — |
+| BDS02-AC-003 | Publication fails if a required response lacks validation or an evaluation/contract destination or explicit N/A, if human-readable and structured schedules disagree, or if the definition introduces an unpublished obligation. | 3, 5 | Planned | — |
+| BDS02-AC-004 | The runtime resolves an exact code-owned product profile and renderer Version. An unknown template family, component, response type or named rule creates no partial workspace and has no generic fallback. | 3, 5 | Planned | — |
+| BDS02-AC-005 | The bidder client selects no template, executes no arbitrary metadata logic and saves only typed values against stable published identities; the server independently revalidates every save. | 6 | Planned | — |
+| BDS02-AC-006 | Every bidder-editable field has a current visible purpose and a validation, evidence, evaluation, calculation or contract consumer; storage-only and speculative metadata create no field. | 6 | Planned | — |
+| BDS02-AC-007 | Conditional applicability is resolved by reviewed named rules; newly required work becomes incomplete and newly inapplicable values are excluded from readiness/final packaging without erasing Draft audit history. | 6 | Planned | — |
+| BDS02-AC-008 | Addendum migration uses the exact `unchanged`, `converted`, `fresh_response_required`, `removed` or `new` identity map. No response copies through label, row position, text similarity or client inference. | 6 | Planned | — |
+| BDS02-AC-009 | The issued Tender PDF is reference/output only and is never parsed at runtime to generate bidder controls, validation or downstream mappings. | 5 | Planned | — |
+| BDS02-AC-010 | `IT-EQUIPMENT-OPEN-V1` retains its approved five-task Goods composition. Works or Services cannot use it merely because their data fits shared primitive controls; each requires a separately approved release, renderer profile, fixtures, artboards and acceptance tests. | 5 | Planned | — |
+
+### Spec 14.9 Artboard consistency and recovery acceptance
+
+| ID | Criterion (verbatim) | Target phase | Status | Evidence |
+|---|---|---|---|---|
+| BDS03-AC-001 | Every artboard fixture time is at or after every fact rendered as already completed; the primary My bids/workspace fixture is 10 Jun 2027, 14:20 EAT and is consistent with the 13:50 save and 14:15 read-only review. | 12 | Planned | — |
+| BDS03-AC-002 | Workspace and task badges use only the exact §4.5 and §4.6 status values; issue counts are supporting text, never replacement statuses. | 11 | Planned | — |
+| BDS03-AC-003 | A recorded physical tender-security original is displayed as a satisfied supporting fact; only an outstanding original is an amber Review note. | 7, 11 | Planned | — |
+| BDS03-AC-004 | Every common state that maps to a §8 error reproduces that error text exactly before any fixture-specific context or recovery action. | 11.15 | Planned | — |
+| BDS03-AC-005 | Supplier artboards use the Website shell and BDS-DES-15 alone uses the internal Desk shell; neither shell exposes the other's navigation or authority. | 2C, 7 (DES-15 replaced by OD-G) | Planned | — |
+| BDS03-AC-006 | Registration creates an organisation Account only. A single-organisation or joint-venture arrangement/candidate registration is created atomically with the exact Tender workspace during Start bid and never as a Tender-free fact. | 4, 5 | Planned | — |
+| BDS03-AC-007 | The Submit page visibly shows the trusted current server time with EAT and never presents the browser clock as authority. | 8, 11.12 | Planned | — |
+| BDS03-AC-008 | BDS-DES-13-CLOSED uses a dedicated already-submitted, post-deadline fixture; it never uses a never-submitted late-attempt fixture to prove a valid receipt. | 12 | Planned | — |
+| BDS03-AC-009 | A new Account remains Pending verification until the configured communication challenge succeeds; the complete registration and Account artboards cover that transition explicitly. | 4, 11.3 | Planned | — |
+| BDS03-AC-010 | A Suspended Account cannot start, edit, submit, replace or withdraw, while existing receipts remain reachable through an authorised recovery route. | 4, 11.5 | Planned | — |
+| BDS03-AC-011 | `BDS_IDEMPOTENCY_CONFLICT` and `BDS_REPLACEMENT_CONFLICT` each have a deterministic common state, exact message, safe action and isolated fixture. | 8, 9 | Planned | — |
+| BDS03-AC-012 | Cross-organisation denial, definitive custody failure, uncertain custody and late submission each have exact actors, times and safe correlation/support facts sufficient for deterministic rendering and testing. | 8, 12 | Planned | — |
+| BDS03-AC-013 | Every supplier artboard and dialog has a 390 × 844 px derivative in which grids stack and table rows become labelled cards without losing values or actions; BDS-DES-15 obeys the equivalent Desk rule. | 11 | Planned | — |
+| BDS03-AC-014 | A receipt shows `received_at` and `accepted_at` as separately labelled EAT instants and never collapses them into one ambiguous Received value. | 8, 11.13 | Planned | — |
+| BDS03-AC-015 | Every price row labels its pre-tax line amount unambiguously; tax and Bid total are separately labelled once in the totals panel. | 7, 11.10 | Planned | — |
+| BDS03-AC-016 | The withdrawal dialog labels the required reason and visibly states the 10–500 character rule before submission. | 9, 11.14 | Planned | — |
+| BDS03-AC-017 | **Submit bid** is the single visible terminal action label on the page and confirmation dialog; the consequence explains that digital signing occurs. | 8, 11.12 | Planned | — |
+| BDS03-AC-018 | Rejected-evidence and addendum-change review failures use separate isolated BDS-DES-11 variants and never combine independent reset fixtures into one state. | 6, 11.11 | Planned | — |
+
+### Spec 14.10 Residual artboard-boundary acceptance
+
+| ID | Criterion (verbatim) | Target phase | Status | Evidence |
+|---|---|---|---|---|
+| BDS04-AC-001 | Opening or viewing Review creates no business fact and never changes an Updated or Last updated timestamp; the primary Draft continues to show David's 13:50 save. | 6, 11 | Planned | — |
+| BDS04-AC-002 | **View receipts**, **Refresh**, **View current receipt**, **Choose another file** and **Back to Account** each have exactly one §11 mapping; `/account/receipts` is the explicit read-only recovery route for authorised access to existing receipts. | 4, 11.5 | Planned | — |
+| BDS04-AC-003 | List and summary surfaces derive **Submitted** from `accepted_at` and omit seconds without rounding; the authoritative receipt shows `received_at` and `accepted_at` separately to the second. | 8, 11 | Planned | — |
+| BDS04-AC-004 | Every §10.18 inventory row is incomplete until its base artboard, variants and dialogs are rendered at both the listed desktop and 390 × 844 sizes. | 11 | Planned | — |
+| BDS04-AC-005 | Both pending-verification surfaces use the exact control label **Resend verification link**, and **Back to Account** is a mapped read-only navigation action. | 4, 11.3 | Planned | — |
+| BDS04-AC-006 | **Review and submit** is Complete only when server-derived readiness for the exact current definition has no Must fix issue; opening Review alone never changes status or time. | 6, 11 | Planned | — |
+
+### Spec 14.11 Template release and downstream-mapping acceptance
+
+| ID | Criterion (verbatim) | Target phase | Status | Evidence |
+|---|---|---|---|---|
+| BDS05-AC-001 | Publication and Start bid fail closed unless the exact template release bound to the Tender is in a lifecycle state permitted by §4.4.4 — Available with its site switch On or Off, or Superseded — and all bound source, bundle, response, downstream, identity and profile digests verify and its renderer is supported. A Withdrawn bound release blocks both. Switching a release Off never blocks an already-bound Tender, and no lifecycle or switch change rebinds a Tender (v0.7 read: “Publication and Start bid fail closed unless the exact template release is Available and all bound source, bundle, response, downstream, identity and profile digests verify.”). | 3, 5 | Planned | — |
+| BDS05-AC-002 | The Goods/IT workspace is generated from the released response rules and exact Published Bid Definition, never by parsing the issued PDF. | 6 | Planned | — |
+| BDS05-AC-003 | Every bidder-editable response has one supported final control type, stable identity, validation and visible published source. | 3, 6 | Planned | — |
+| BDS05-AC-004 | Multiple mandatory technical responses may feed one shared Technical compliance group while retaining individual results and reasons; no weight or runtime criterion builder exists. | 6 | Planned | — |
+| BDS05-AC-005 | Every response has an evaluation and contract destination or explicit N/A; an absent disposition blocks publication. | 3 | Planned | — |
+| BDS05-AC-006 | The canonical signed package retains exact response identities and published downstream mappings for Opening, Evaluation and Contract consumers. | 8 | Planned | — |
+| BDS05-AC-007 | Addendum migration consumes the released identity rules and complete Tender-produced identity map; it cannot invent a mapping. | 6 | Planned | — |
+| BDS05-AC-008 | An unavailable or unsupported template creates no partial new workspace and never changes an existing saved Draft or submitted Version. | 5 | Planned | — |
+
+### Spec 14.12 Focused baseline-reconciliation acceptance
+
+| ID | Criterion (verbatim) | Target phase | Status | Evidence |
+|---|---|---|---|---|
+| BDS06-AC-001 | Every owner reference and integration test uses STD-TPL-001 v0.10, CFG-CHG-002 v0.16, TPR-CHG-001 v0.12, LAW-REG-001 v1.2, PLN-CHG-001 v1.27, BUD-CHG-001 v1.11 and REQ-CHG-001 v1.12 for the boundaries those documents own; no obsolete template-inspection, clarification or denominator contract remains active. The published-Tender Superseded/Withdrawn branch in §4.4.4 is conditional on approval of proposed TPR-CHG-001 v0.13; approved v0.12 controls in the meantime. | 0, 2B | Planned | — |
+| BDS06-AC-002 | No BDS persistence field, service payload, portal projection, readiness rule, signed package or downstream eligibility result contains or derives the eligible-current-APP denominator, 30% target, planned qualifying share, Planning shortfall, Budget ceiling or unused Budget headroom. | 5, 6, 8 | Planned | — |
+| BDS06-AC-003 | The Published Bid Definition carries only the exact Tender-specific reservation category, separately applicable County-residents treatment, verified rule/overlap snapshots and bidder declaration/evidence rules. A Planning designation never proves bidder entitlement. | 3, 5 | Planned | — |
+| BDS06-AC-004 | A reserved treatment unsupported by the exact template release bound to the Tender (v0.7 read: “the exact Available template release”) or lacking its verified declaration, evidence or overlap treatment fails closed before a bid workspace is created; there is no silent `None` fallback or generic evidence field. | 5 | Planned | — |
+| BDS06-AC-005 | The earlier residual corrections remain mandatory: canonical workspace/task statuses; recorded physical security shown as satisfied; exact common-state error copy; BDS-DES-15 in the internal Desk shell only; Tender-bound joint-venture creation; and trusted current server time on Submit. | 11 | Planned | — |
+
+### Spec 14.13 Coordinated STD/Tenders/BDS contract acceptance
+
+| ID | Criterion (verbatim) | Target phase | Status | Evidence |
+|---|---|---|---|---|
+| BDS06-AC-006 | BDS consumes the exact `PublishedBidDefinition v1` field contract shared with STD-TPL v0.10 and TPR v0.12; no alias, omitted digest or BDS-only row is introduced. | 5 | Planned | — |
+| BDS06-AC-007 | `template_family` equals the installed STD `template_key`; `template_release_id` is the opaque installed `release_id`; product/renderer identities and `supported_renderer_version` match exactly. | 5 | Planned | — |
+| BDS06-AC-008 | Addendum migration accepts only `unchanged`, `converted`, `fresh_response_required`, `removed` and `new` and implements their exact copy/re-entry semantics. | 6 | Planned | — |
+| BDS06-AC-009 | Controlled multi-select and structured ports response compositions render, save, review, sign and submit without flattening, arbitrary nesting or a generic fallback. | 6, 11 | Planned | — |
+| BDS06-AC-010 | Eligibility, Technical compliance, Financial and Award are the four exact evaluation groups; individual mandatory rows retain result/reason while feeding the appropriate shared group. | 6, 8 | Planned | — |
+| BDS06-AC-011 | Account-owned facts, Tender-specific bidder facts, published declarations and bid-specific responses follow §4.4.8; a Draft never silently mutates Account and Account evidence never becomes automatic qualification. | 4, 5, 6 | Planned | — |
+| BDS06-AC-012 | Administrator/System Manager release inspection uses `/app/std-templates/{release_id}`; BDS exposes no template-administration or System setup Tender-format route. | 11 | Planned | — |
+| BDS06-AC-013 | One closed round-trip fixture preserves exact identities, obligations and mappings from `AuthorisedRequisitionHandoff v1.3` through Tender publication, all five bidder tasks, signed submission and downstream evaluation/contract projections. | 12 | Planned | — |
+| BDS06-AC-014 | `definition_digest` is present and verified whenever a definition is bound, refreshed, validated, signed or handed downstream; the digest is neither inferred nor optional. | 5, 8, 9 | Planned | — |
+| BDS06-AC-015 | The runtime accepts controlled multi-select and the reviewed structured-ports list only with the bounded semantics in §4.4.3; unknown options, arbitrary nested rows and generic fallback are rejected. | 6 | Planned | — |
+| BDS06-AC-016 | Account changes never flow silently into a Draft: bid start freezes an organisation snapshot, **Update Account** changes only the Account, and **Use updated details** explicitly replaces only the Draft snapshot after a visible comparison; the Tender contact remains bid-specific. | 5 | Planned | — |
+| BDS06-AC-017 | Every submitted Version retains the exact organisation snapshot it signed; later Account or Draft refreshes cannot alter the submission or receipt. | 8 | Planned | — |
+
+### Spec 14.14 v0.7 public/vendor closure acceptance
+
+| ID | Criterion (verbatim) | Target phase | Status | Evidence |
+|---|---|---|---|---|
+| BDS07-AC-001 | One `StartBid` transaction creates or returns the Tender-bound arrangement/candidate registration, mandatory-notice contact and workspace; a failure leaves none partially created. | 5 | Planned | — |
+| BDS07-AC-002 | There is no separate Declare interest, Follow Tender or standalone arrangement-creation action in this MVP. | 1, 5 | Planned | — |
+| BDS07-AC-003 | Starting a bid establishes no submission, eligibility, participation promise or PE access to Draft content. | 5 | Planned | — |
+| BDS07-AC-004 | A Tender notice address must be a verified Account email. Mandatory clarification, addendum, deadline and cancellation notices cannot be opted out of. | 5 | Planned | — |
+| BDS07-AC-005 | A notice-contact change is versioned, affects future Tenders audience snapshots only and does not rewrite or automatically resend earlier notice evidence. | 5 | Planned | — |
+| BDS07-AC-006 | A registered candidate can send one 10–2,000-character question before the clarification deadline and receives the authoritative Tenders identity/time; no BDS response store is created. | 5 | Planned | — |
+| BDS07-AC-007 | Public readers see all authoritative general answers. The source relationship is visible only to the source candidate and authorised procurement/audit roles. | 2B, 11.7 | Planned | — |
+| BDS07-AC-008 | A published-changing answer appears only after final required channel confirmation makes the linked addendum, definition and deadline effective together. | 2B | Planned | — |
+| BDS07-AC-009 | Supplier notice status uses Tenders evidence and never collapses Queued, Sent, Delivered and Delivery problem. A delivery problem leaves the authoritative Tender information accessible in the portal. | 11.7 | Planned | — |
+| BDS07-AC-010 | Every supplier/public page shows CFG-owned Supplier support, Privacy and data use, Terms of portal use and Accessibility links without hard-coded placeholder destinations. | 2A, 2C | Planned | — |
+| BDS07-AC-011 | Missing required public portal information keeps Tender reading and existing Draft/receipt reads available but blocks new Start, production Submit and replacement acceptance with the canonical safe state. | 2A, 5, 8 | Planned | — |
+| BDS07-AC-012 | The server-side `production_bid_submission_enabled` flag defaults false, has no Desk/portal control and cannot be overridden by a client, business role or Tender record. Its disabled message never calls this a temporary outage. | 8 | Planned | — |
+| BDS07-AC-013 | Signature preparation, initial submission and replacement use one authoritative submission-availability check; false/unhealthy creates no signature request, envelope, receipt or Submitted state. Distinct failed dependencies return the §5.10 codes. | 8 | Planned | — |
+| BDS07-AC-014 | All new question, notice-contact, delivery-state, footer and unavailable variants are rendered at desktop and 390 × 844 and pass keyboard/focus/content tests. | 11 | Planned | — |
+| BDS07-AC-015 | The complete current MVP ends with the sealed Bid Opening handoff. Approval creates no Bid Opening, Evaluation/Award, Supplier Management/prequalification or unsupported product/method behavior. | 9, 12 | Planned | — |
+
+### Spec 14.15 v0.8 public guidance and owner-boundary acceptance
+
+| ID | Criterion (verbatim) | Target phase | Status | Evidence |
+|---|---|---|---|---|
+| BDS08-AC-001 | Every signed-in Account and Bid record read returns the server-derived KT-STD-001 v1.8 §3B `next_step`, all applicable guard reasons and fixes; §5.12 stage and §10.19 tracker agree for every actor/state fixture, including denial and technical read. Public discovery does not fabricate a personal journey. | 10 | Planned | — |
+| BDS08-AC-002 | The dead-end matrix covers every state, record read and permitted actor: an action or named holder with reason, a reason for each withheld workflow action, a real fix route for its holder, and matching stage. The browser renders the server answer without recomputation. | 10 | Planned | — |
+| BDS08-AC-003 | Every §5.14 hand-off creates and clears the precise holder/waiting items on state change, not on notification read; technical incidents remain in their governed queue and never grant Administrator/System Manager business action. Optional replacement/withdrawal after acceptance creates no overdue My Work. | 10 | Planned | — |
+| BDS08-AC-004 | All §10.19 variants render at the §10.18 sizes and 200% zoom with the first working region visible, no second status narrative, and keyboard/focus accessibility; the tracker is absent on public lists, registers, dialogs, Work workspace and full-page error states. | 11 | Planned | — |
+| BDS08-AC-005 | Tenders Queued, Sent without delivery proof, Delivered and Failed/Delivery problem remain distinct; changed-content answers appear only when the linked addendum is effective after final required channel confirmation. Supplier copy identifies where to read authoritative information independent of notice delivery. | 2B, 11.7 | Planned | — |
+| BDS08-AC-006 | Incomplete CFG projection blocks new Start, Submit and replacement acceptance while authorised public Tender, existing Draft and receipt reads remain available; each of the three §10.17 supplier variants gives its correct recovery action. | 2A, 5, 11 | Planned | — |
+| BDS08-AC-007 | A false production flag returns `BDS_PRODUCTION_SUBMISSION_NOT_ENABLED` and the non-temporary §10.13/§10.17 guidance. Enabled signing/trust and time/custody outages return `BDS_SIGNATURE_UNAVAILABLE` and `BDS_SUBMISSION_SERVICE_UNAVAILABLE` respectively; a pending correlation never offers retry, allows safe page exit and resolves to one authoritative receipt or definitive failure. No branch invents acceptance. | 8, 11.12 | Planned | — |
+| BDS08-AC-008 | For already-bound published Tenders, the Superseded/Withdrawn state-action matrix in §4.4.4 is implemented only after approval of TPR-CHG-001 v0.13. Until then, approved TPR v0.12 controls; no implementation infers broader published continuation from this BDS proposal. Existing Drafts, receipts and public history are preserved in every denied branch. | 13 (TPR v0.13 gated) | Planned | — |
+| BDS08-AC-009 | Every §10.18 variant and dialog has complete, chronologically valid §10.1/§13 facts and a direct action map. DES-02 shows only information already published at its fixture instant; DES-07 question, closed and addendum states are distinct; DES-17 preserves authorised receipt retrieval under Account suspension. No designer invents a time, supplier, JV fact or destination. | 12 | Planned | — |
+| BDS08-AC-010 | Missing signatory certificate, signing-service outage, custody-service outage and definitive custody rejection have distinct reason codes, actor/holder, copy and recovery actions. Only the definitive, server-authorised pre-deadline rejection offers another attempt. The §10.19 replacement rule removes contradictory badges and banners while keeping factual validation, task and receipt states. | 8, 10, 11.12 | Planned | — |
+
+## Re-implementation register map (BDS-CHG-001 §19)
+
+All 168 rows from BDS-CHG-001 §19 are copied verbatim by script (26 Sep 2026). "Target phase" is a plan proposal.
+
+### Spec 19.1 Public access, Account and scope
+
+| ID | Required implementation (verbatim) | Contract | Completion evidence (spec) | Target phase | Status |
+|---|---|---|---|---|---|
+| BDS01-IMP-001 | Provide one public **Tenders** list with search, closing filter, deadline, method, category and **View Tender**; a public read creates no supplier or bid fact. | §§2, 5.1, 10.2 | Public-route and no-side-effect tests; BDS-DES-01. | 2B, 11.1–11.2 | Planned |
+| BDS01-IMP-002 | Provide one public Tender overview with authoritative deadline in EAT, current addenda, documents, eligibility summary and **Start bid**. | §§3, 5.1, 10.3 | Projection/version tests; BDS-DES-02. | 2B, 11.1–11.2 | Planned |
+| BDS01-IMP-003 | Route unauthenticated **Start bid** through sign-in/registration and return to the same Tender without creating a workspace prematurely. | §§5.1, 11.2 | Redirect and duplicate-prevention tests. | 2B, 11.1–11.2 | Planned |
+| BDS01-IMP-004 | Implement supplier-organisation registration with legal name, registration number, KRA PIN, contact and address; label all data self-declared until separately verified. | §§4.1, 10.4 | Validation, duplicate and copy review; BDS-DES-03. | 4 | Planned |
+| BDS01-IMP-005 | State plainly that registration creates portal access and is not prequalification, eligibility approval or assurance of award. | §§2.3, 5.2, 10.4 | Content assertion and representative-user test. | 4 | Planned |
+| BDS01-IMP-006 | Implement a supplier **Account** area for organisation facts, users, responsibilities and signature readiness without exposing technical certificate internals. | §§4.1–4.2, 10.5 | Permission and artboard tests; BDS-DES-04. | 4 | Planned |
+| BDS01-IMP-007 | Limit supplier-side responsibilities to Supplier Representative and Authorised Signatory; enforce active, time-bounded assignments. | §§4.2, 6 | Authorisation matrix and boundary-time tests. | 4 | Planned |
+| BDS01-IMP-008 | Require separate users for preparation and final signature where the approved segregation policy requires it; never permit technical staff to assume supplier authority. | §§6, 12.3 | Segregation and impersonation tests. | 4 | Planned |
+| BDS01-IMP-009 | Support one single-entity or permitted joint-venture/association arrangement with disclosed members and one authorised signatory authority. | §§2.2, 4.3, 5.2 | Arrangement validation and fixture tests. | 5 | Planned |
+| BDS01-IMP-010 | Enforce supplier-organisation, arrangement and Tender isolation on every read, write, file and command. | §§5.11, 12.3 | Cross-tenant penetration tests. | 4, 5 | Planned |
+| BDS01-IMP-011 | Make external registry/certificate verification truthful: use only approved interfaces and otherwise show supplier-provided evidence without a verified claim. | §§3, 5.2 | Adapter-contract and no-integration variant tests. | 4 | Planned |
+| BDS01-IMP-012 | Provide one **My bids** queue showing Tender, deadline, status, task progress and one next action, with no large dashboard cards or internal lifecycle labels. | §§9, 10.6 | BDS-DES-05 and usability test. | 11.5 | Planned |
+
+### Spec 19.2 Published definition and workspace
+
+| ID | Required implementation (verbatim) | Contract | Completion evidence (spec) | Target phase | Status |
+|---|---|---|---|---|---|
+| BDS01-IMP-013 | Generate one immutable `PublishedBidDefinition` from the exact published Tender/template release, including product profile, response, evaluation and contract mappings. | §§3, 4.4.1–4.4.4 | Release-generation, immutability and mapping tests. | 2B, 5 | Planned |
+| BDS01-IMP-014 | Keep the published definition internal; do not expose a manifest, schema, renderer, field key or rule identity to bidders. | §§3, 10.1, 16 | HTML/API/accessibility-output scan. | 5, 6 | Planned |
+| BDS01-IMP-015 | Create at most one active workspace for one Tender and supplier arrangement using an idempotent **Start bid** command. | §§4.5, 5.1, 5.11 | Concurrent-start and replay tests. | 5 | Planned |
+| BDS01-IMP-016 | Store the exact published-definition version and addendum state used by the Draft and each submitted Version. | §§4.5, 4.9 | Persistence and lineage tests. | 5 | Planned |
+| BDS01-IMP-017 | For `IT-EQUIPMENT-OPEN-V1`, present exactly five visible tasks: documents/addenda; company/declarations/security; requirements/evidence; price; review/submit. | §§1, 5.3, 9, 10.7 | BDS-DES-06 and navigation assertions. | 6 | Planned |
+| BDS01-IMP-018 | Show one clear next action plus section status; link every readiness issue to the exact field or task that resolves it. | §§5.5, 10.7, 10.12 | Error-link and first-time-user tests. | 6 | Planned |
+| BDS01-IMP-019 | Save section Drafts independently without calling them submitted, accepted, signed or received. | §§1, 5.5, 11.4 | State-transition and terminology tests. | 6 | Planned |
+| BDS01-IMP-020 | Retain stable response identifiers through preparation, opening, evaluation and contract handoff; prevent bidders from adding unpublished criteria or price rows. | §§4.4, 4.6, 5.3 | Referential-integrity and malicious-request tests. | 6 | Planned |
+| BDS01-IMP-021 | Render the issued Tender PDF and schedules as reference downloads, never as the primary response surface. | §§2.1, 5.3, 10.8 | UI and endpoint tests. | 6 | Planned |
+| BDS01-IMP-022 | Provide short, structured supporting detail with progressive disclosure; keep task names, labels and help in ordinary bidder language. | §§10.1, 15.5 | Content review and representative-user test. | 6 | Planned |
+| BDS01-IMP-023 | Reuse eligible Account facts and evidence only by copying an explicit immutable snapshot into the bid; later Account changes do not alter a submitted Version. | §§4.4.8, 4.5, 4.7, 5.3 | Snapshot and mutation tests. | 6 | Planned |
+| BDS01-IMP-024 | Reject a Draft command against a withdrawn, cancelled, closed, wrong-Tender or superseded definition. | §§5.1, 5.11, 8 | State/definition mismatch tests. | 5 | Planned |
+| BDS02-IMP-001 | Encode `IT-EQUIPMENT-OPEN-V1` as one code-owned released product profile containing the reviewed tasks, groups, response rows, evidence rules, declarations, schedules, validation and downstream mappings. | §§4.4.1–4.4.3 | Released-bundle inventory, source coverage and mapping review. | 3 | Planned |
+| BDS02-IMP-002 | Implement one deterministic definition builder from exact template/Tender/Requisition/addendum inputs; freeze the original definition with publication authorisation and each complete successor with addendum issue, exposing the successor only after final channel confirmation. | §§4.4.4, 4.4.6, 7.4 | Repeat-build, ordering, identity, package-binding, activation and transaction tests. | 2B, 3 | Planned |
+| BDS02-IMP-003 | Validate before publication that every obligation is visible in the Tender, every editable field has a consumer, every mapping target exists and every schedule/price fact reconciles. | §§4.4.2, 4.4.4 | Missing-source, hidden-obligation, orphan-field, broken-mapping and mismatch tests. | 3 | Planned |
+| BDS02-IMP-004 | Maintain a code-owned registry resolving exact template family/release/renderer Version to an approved product profile; block unknown combinations with no fallback. | §§4.4.3, 7.4, 8 | Registry, unsupported-Version and no-partial-workspace tests. | 5 | Planned |
+| BDS02-IMP-005 | Render only supported definition units through shared approved controls and the Goods/IT composition profile; expose no generic schema or runtime form editor. | §§4.4.2–4.4.5, 10 | Component allowlist, UI snapshot and schema-leakage tests. | 6, 11 | Planned |
+| BDS02-IMP-006 | Revalidate every save server-side against the exact Draft definition, including type, option, applicability, calculation, evidence and record Version. | §§4.4.5, 7.4 | Tampering, stale, hidden, inapplicable and invented-value tests. | 6 | Planned |
+| BDS02-IMP-007 | Implement conditional applicability through reviewed named rules only; update completeness/final packaging correctly while retaining Draft audit history. | §§4.4.2, 4.4.5 | Controlling-response and audit-history tests. | 6 | Planned |
+| BDS02-IMP-008 | Require exact addendum identity maps and migrate only `unchanged` or expressly `converted` responses; require fresh input for `fresh_response_required` and surface every affected item for review. | §§4.4.6, 5.4, 7.4 | Exact five-value vocabulary and no-heuristic-migration tests. | 2B, 6 | Planned |
+| BDS02-IMP-009 | Keep the issued PDF outside the runtime generation path; prove the bidder UI and server validation can be reproduced from the released definition without parsing the document. | §§4.4.1, 4.4.7, 16 | Dependency scan and definition-only reconstruction test. | 5 | Planned |
+| BDS02-IMP-010 | Gate every future Goods, Works or Services product on its own curated STD release, renderer profile, deterministic fixtures, complete artboards and product acceptance evidence. | §4.4.7 | New-product admission checklist and negative attempt to use the Goods profile for Works. | 5 | Planned |
+
+### Spec 19.3 Bid content, evidence, security and price
+
+| ID | Required implementation (verbatim) | Contract | Completion evidence (spec) | Target phase | Status |
+|---|---|---|---|---|---|
+| BDS01-IMP-025 | Capture the baseline company forms, bidder information, declarations, code-of-ethics commitments and permitted joint-venture facts as structured responses. | §§4.6, 5.3, 10.9 | Published-definition coverage and fixture tests. | 6 | Planned |
+| BDS01-IMP-026 | Capture all 11 published technical requirements as direct structured responses with applicable supporting evidence. | §§5.3, 10.10, 13.3 | Row-count, stable-ID and response tests. | 6 | Planned |
+| BDS01-IMP-027 | Capture the six published warranty/support commitments and the required comparable-contract evidence without imposing invented three- or five-year options. | §§4.4, 5.3, 10.10 | Definition-driven option and fixture tests. | 6 | Planned |
+| BDS01-IMP-028 | Render choice, number, date, text, table and evidence controls only from approved typed definitions through the exact product profile; reject unrecognised types, components or options safely. | §§4.4.2–4.4.5, 4.6 | Renderer allowlist and invalid-definition tests. | 6 | Planned |
+| BDS01-IMP-029 | Implement evidence upload with published type/size rules, server-side malware scan, safe storage and immutable accepted-file identity. | §§4.7, 5.3, 7, 8 | Clean/infected/timeout/oversize/type tests. | 6 | Planned |
+| BDS01-IMP-030 | Keep an evidence item unavailable to the bid until scan acceptance; a rejected or unavailable file cannot satisfy readiness. | §§4.7, 5.3 | Asynchronous-state and readiness tests. | 6 | Planned |
+| BDS01-IMP-031 | Show bidder-friendly filename, document purpose, scan status and replacement action; hide digest, bucket, path and scanner internals. | §§4.7, 10.10, 16 | Render/API redaction tests. | 6 | Planned |
+| BDS01-IMP-032 | Implement exact-evidence replacement before submission while retaining audit lineage and preventing mutation of evidence already bound to a Version. | §§4.7, 12 | Replacement and immutability tests. | 6 | Planned |
+| BDS01-IMP-033 | Capture tender-security instrument facts and electronic proof separately from receipt of the physical original. | §§4.8, 5.4, 10.9 | Domain and UI separation tests. | 7 | Planned |
+| BDS01-IMP-034 | Provide the authorised PE receipt owner a minimal Desk surface to record the original instrument reference, receipt time and receiving officer without bid-content access. | §§6, 7, 10.16 | Permission tests; BDS-DES-15. | 7 (re-scoped by OD-G/H) | Planned |
+| BDS01-IMP-035 | Show the supplier the truthful physical-security receipt status and reference; absence warns but does not block or falsify electronic bid receipt. | §§5.4, 10.9 | Receipt-present/absent variants. | 7 | Planned |
+| BDS01-IMP-036 | Leave any disqualification consequence of missing/invalid tender security to the lawful downstream decision owner; BDS records facts only. | §§3, 5.4 | No-auto-decision and handoff tests. | 7 | Planned |
+| BDS01-IMP-037 | Render the exact published price lines, quantity, unit and KES currency; make published quantities and line identities read-only. | §§4.6, 5.3, 10.11 | Schedule-fidelity tests. | 7 | Planned |
+| BDS01-IMP-038 | Calculate subtotals, tax and total on the server under one rounding rule and reproduce 250 × KES 160,000 plus KES 6,400,000 tax = KES 46,400,000 in the seed. | §§5.3, 10.11, 13.3 | Independent total/rounding tests. | 7 | Planned |
+| BDS01-IMP-039 | Prevent a client, import or API caller from writing derived totals, currency or unpublished price rows. | §§5.3, 16 | Tampering and mass-assignment tests. | 7 | Planned |
+| BDS01-IMP-040 | Store declaration text/version, response value, confirmer and time so the final signatory can review the exact statements being signed. | §§4.6, 12.2 | Versioning and audit tests. | 6 | Planned |
+| BDS01-IMP-041 | Implement deterministic section validation from the same published rules used for readiness; UI and server may not disagree. | §§5.5, 7 | Contract and parity tests. | 6 | Planned |
+| BDS01-IMP-042 | Ensure validation messages identify what the bidder must do and where, without revealing evaluation scoring or internal rule keys. | §§5.5, 8, 10.17 | Copy review, field-link and leakage tests. | 6 | Planned |
+
+### Spec 19.4 Addenda, clarifications and readiness
+
+| ID | Required implementation (verbatim) | Contract | Completion evidence (spec) | Target phase | Status |
+|---|---|---|---|---|---|
+| BDS01-IMP-043 | Consume issued addenda and clarification answers from Tenders through an immutable bidder-safe projection; BDS cannot author them. | §§3, 5.4, 10.8 | Owner-boundary and projection tests. | 2B | Planned |
+| BDS01-IMP-044 | Display current deadline and addendum effect everywhere from one authoritative value; never retain a stale date in the workspace or receipt flow. | §§5.4, 5.9 | Addendum propagation tests. | 6 | Planned |
+| BDS01-IMP-045 | Require acknowledgement of every issued addendum configured as acknowledgement-required, with actor and trusted time. | §§5.4, 12.2 | Acknowledgement and readiness tests. | 6 | Planned |
+| BDS01-IMP-046 | Detect an addendum that changes the response definition; preserve prior values where valid and require explicit review of every affected response. | §§4.5, 5.4 | Compatibility and affected-response tests. | 6 | Planned |
+| BDS01-IMP-047 | Never rewrite a Draft, price or submitted Version silently when an addendum is issued. | §§5.4, 5.11 | Mutation and immutable-Version tests. | 6 | Planned |
+| BDS01-IMP-048 | Submit a general pre-bid question only from the exact Tender-bound candidate before deadline, consume the Tenders-owned receipt/answer and retain no parallel clarification store. | §§3, 5.4, 7.2 | Cross-module, deadline, idempotency, privacy and no-duplicate-store tests. | 5 | Planned |
+| BDS01-IMP-049 | Calculate readiness on the server from current definition, required responses, evidence, declarations, price, addenda, arrangement and signatory authority. | §§5.5, 7 | Complete/incomplete/stale fixtures. | 6 | Planned |
+| BDS01-IMP-050 | Present one review page with the five task summaries, total, signatory, physical-security fact and exact issue links. | §§10.12, 11.5 | BDS-DES-11 and accessibility tests. | 6, 11.11 | Planned |
+| BDS01-IMP-051 | Keep **Submit bid** absent or disabled until readiness and production operating-profile conditions are satisfied; explain the bidder-resolvable reason. | §§5.5, 5.10, 10.12 | Permission/profile/readiness variants. | 6, 11.11 | Planned |
+| BDS01-IMP-052 | Recheck every readiness fact in the final server transaction; never trust a previously rendered green status. | §§5.7, 14.5 | Race and stale-client tests. | 6, 11.11 | Planned |
+
+### Spec 19.5 Signature, deposit and receipt
+
+| ID | Required implementation (verbatim) | Contract | Completion evidence (spec) | Target phase | Status |
+|---|---|---|---|---|---|
+| BDS01-IMP-053 | Approve and configure one real production electronic-procurement operating profile covering authority, portal role, receipt, trust, custody, time and recovery. | §§5.10, 15.4 | Signed profile and production-equivalent evidence. | Owner evidence | Planned |
+| BDS01-IMP-054 | Integrate an approved licensed digital-signature/trust service; bind the signatory, supplier arrangement, Tender, Version and exact canonical package. | §§5.7, 7, 12 | Valid-signature and package-binding tests. | 8 (interface + simulation); real integration owner evidence | Planned |
+| BDS01-IMP-055 | Validate certificate chain, purpose, person, organisation, validity and revocation under the approved profile immediately before deposit. | §§5.7, 15.2 | Expired/revoked/wrong-identity tests. | 8 (interface + simulation); real integration owner evidence | Planned |
+| BDS01-IMP-056 | Reject typed names, signature images, checkboxes, passwords, staff overrides and client flags as substitutes for the required digital signature. | §§5.7, 16 | Negative signature tests. | 8 | Planned |
+| BDS01-IMP-057 | Present a plain-language **Submit bid** confirmation stating the Tender, supplier, total, deadline and that the bid will be signed, locked and placed in the tender box—not opened or evaluated. | §§5.7, 10.13 | BDS-DES-12 and comprehension test. | 8 | Planned |
+| BDS01-IMP-058 | Assemble the canonical package only from current server-held responses and accepted evidence; perform no hidden large upload in the final transaction. | §§4.9, 5.7 | Package determinism and timing tests. | 8 | Planned |
+| BDS01-IMP-059 | Check the complete signed request against trusted server time and the effective deadline in the committing flow; browser time and dialog-open time have no authority. | §§5.7, 5.9 | Boundary and clock-manipulation tests. | 8 | Planned |
+| BDS01-IMP-060 | Deposit through the approved tender-box custody service and create Submitted state only from authoritative acceptance of that exact signed envelope. | §§4.9–4.10, 5.7 | Accepted/rejected/correlation tests. | 8 | Planned |
+| BDS01-IMP-061 | Use one idempotency key and correlation per submission attempt; identical replay returns the original outcome and changed payload replay is rejected. | §§5.7, 7 | Retry and collision tests. | 8 | Planned |
+| BDS01-IMP-062 | Treat a timeout or indeterminate callback as **Submission being confirmed**, block duplicate dispatch and reconcile the same correlation to one final outcome. | §§5.10, 8, 10.17 | Uncertain-result and recovery exercise. | 8 | Planned |
+| BDS01-IMP-063 | Generate the bidder receipt only from authoritative accepted custody evidence and show reference, Tender, supplier, Version, accepted time in EAT, deadline, status and replacement lineage. | §§4.10, 10.14 | Receipt contract and BDS-DES-13. | 8 | Planned |
+| BDS01-IMP-064 | Omit hashes, keys, certificate internals, schemas, database IDs, paths and encryption details from the receipt; state that receipt is not opening, evaluation or award. | §§4.10, 10.14 | Receipt snapshot and leakage tests. | 8 | Planned |
+
+### Spec 19.6 Replacement, withdrawal, close and handoff
+
+| ID | Required implementation (verbatim) | Contract | Completion evidence (spec) | Target phase | Status |
+|---|---|---|---|---|---|
+| BDS01-IMP-065 | Provide **Prepare replacement** before deadline by copying an authorised working snapshot while the current submitted Version remains effective and sealed. | §§5.8, 10.15 | BDS-DES-14 and current-Version tests. | 9 | Planned |
+| BDS01-IMP-066 | Require the replacement to pass the same readiness, signature, deadline and custody rules as an initial submission. | §§5.7–5.8 | Replacement negative-path tests. | 9 | Planned |
+| BDS01-IMP-067 | Mark the old Version Superseded and the new one current only in the same atomic outcome that records tender-box acceptance and the new receipt. | §§4.9, 5.8 | Transaction/failure-injection tests. | 9 | Planned |
+| BDS01-IMP-068 | If replacement fails, is abandoned or misses the deadline, preserve the prior current Version and receipt unchanged. | §§5.8, 14.6 | Failure and deadline tests. | 9 | Planned |
+| BDS01-IMP-069 | Provide **Withdraw bid** only to the active Authorised Signatory before deadline, with current Version, reason and explicit confirmation. | §§4.11, 5.8, 10.15 | Permission, concurrency and boundary tests. | 9 | Planned |
+| BDS01-IMP-070 | Produce an electronic withdrawal acknowledgement and preserve envelope, signature, receipt and full lineage; withdrawal never deletes evidence. | §§4.11, 5.8, 12 | Acknowledgement and retention tests. | 9 | Planned |
+| BDS01-IMP-071 | Permit a withdrawn arrangement to submit a new Version before deadline under the same full controls and new receipt. | §§5.8, 14.6 | Withdraw-then-resubmit fixture. | 9 | Planned |
+| BDS01-IMP-072 | Close the electronic tender box automatically at the effective deadline; no business, administrator or technical role can reopen, extend or backdate it. | §§5.9, 16 | Scheduled-close and privilege tests. | 9 | Planned |
+| BDS01-IMP-073 | Mark never-submitted Drafts **Closed without submission** and exclude them from the opening inventory. | §§4.5, 5.9 | Close and inventory tests. | 9 | Planned |
+| BDS01-IMP-074 | Build a sealed Bid Opening handoff containing closed-box identity, deadline evidence, envelope identities, receipts, replacement/withdrawal lineage and custody proofs only. | §§3, 5.9, 12.3 | Handoff schema and access tests. | 9 | Planned |
+| BDS01-IMP-075 | Keep every open/decrypt/inspect operation outside BDS and subject to the separately governed opening ceremony and credentials. | §§2.3, 5.9 | Capability and permission review. | 9 | Planned |
+| BDS01-IMP-076 | Resolve the current lawful bidder-controlled encryption/password treatment in the operating profile; do not accept unsupported encrypted uploads. | §§5.10, 15.4, 16 | Approved decision and interoperability tests. | Owner evidence | Planned |
+
+### Spec 19.7 Confidentiality, audit, UX and release
+
+| ID | Required implementation (verbatim) | Contract | Completion evidence (spec) | Target phase | Status |
+|---|---|---|---|---|---|
+| BDS01-IMP-077 | Prevent Procuring Entity business users from seeing pre-opening bidder identity, bid count, prices, responses, filenames or evidence content. | §§5.9, 12.3 | Role/API/UI/side-channel tests. | 8, 12 | Planned |
+| BDS01-IMP-078 | Restrict technical operators to authorised service and custody metadata; prohibit decrypt, render, download, export and content search. | §§6, 12.3 | Technical-role penetration tests. | 8, 12 | Planned |
+| BDS01-IMP-079 | Exclude Draft and submitted values from logs, traces, analytics, search indexes, alerts, emails and support exports. | §§12.3, 16 | Observability and data-flow inspection. | 8, 12 | Planned |
+| BDS01-IMP-080 | Protect submitted content and backups using the independently approved custody design; keep private keys and production secrets out of application data, code, configuration and fixtures. | §§12.3, 15.3 | Architecture review, secret scan and recovery test. | 8, 12 | Planned |
+| BDS01-IMP-081 | Record the minimum event and business evidence for Account changes, responses, files, addenda, validation, security receipt, signature, deposit, replacement, withdrawal and close. | §§12.1–12.2 | Audit completeness and immutability tests. | 8, 12 | Planned |
+| BDS01-IMP-082 | Implement all 17 artboards and every isolated state from the self-contained §10 design contract at both §10.18 render sizes, using KT-STD-001 v1.8 §2. | §§10–11 | Desktop/narrow artboard inventory and visual acceptance. | 11 | Planned |
+| BDS01-IMP-083 | Provide keyboard operation, visible focus, programmatic labels, status text independent of colour, error summary links and usable small-screen reflow. | §§10.1, 11.8 | Accessibility audit and device tests. | 11 | Planned |
+| BDS01-IMP-084 | Map every visible action to exactly one service/command and omit it when not server-permitted; page refresh must reproduce authoritative state. | §11 | Action-map and stale-client tests. | 11 | Planned |
+| BDS01-IMP-085 | Use the §13 deterministic seed for primary, opposing and recovery states; keep simulated signature/custody data unmistakably non-production. | §13 | Repeatable seed and isolation tests. | 12 | Planned |
+| BDS01-IMP-086 | Complete representative-supplier usability tests for registration, task completion, signature, receipt, replacement and withdrawal; treat material misunderstandings as blockers. | §15.5 | Moderated findings and resolved defect log. | Owner evidence | Planned |
+| BDS01-IMP-087 | Complete independent threat modelling, security architecture review, penetration testing and uncertain-result/disaster-recovery exercises. | §§15.2–15.3 | Approved reports and retest evidence. | Owner evidence | Planned |
+| BDS01-IMP-088 | Trace every acceptance criterion in §14 and every register row to an automated, manual, legal, security or usability verification result. | §§14–15 | Complete bidirectional traceability matrix. | 12 | Planned |
+| BDS01-IMP-089 | Keep production **Submit bid** unavailable until current-law, operating-model, portal, trust, custody, time, security and recovery gates are all approved. | §§5.10, 15.4 | Deployment guard and signed approvals. | 8 (flag); owner evidence | Planned |
+| BDS01-IMP-090 | Remove or quarantine earlier bidder-workspace implementation artifacts as non-authoritative so runtime and design tools consume this contract only. | §§18–19 | Repository/content inventory and owner sign-off. | 1 | Planned |
+
+### Spec 19.8 v0.3 artboard consistency and recovery corrections
+
+| ID | Required implementation (verbatim) | Contract | Completion evidence (spec) | Target phase | Status |
+|---|---|---|---|---|---|
+| BDS03-IMP-001 | Render the primary My bids/workspace only at 10 Jun 2027, 14:20 EAT or later so the 13:50 save and 14:15 read-only review are already true; reject visual fixtures containing future-completed facts. | §§10.6–10.7, 13.3, 14.9 | Chronology assertion across every displayed event and artboard snapshot. | 12 | Planned |
+| BDS03-IMP-002 | Bind every workspace badge and task result to the exact §4.5/§4.6 enum; render counts such as **2 tasks need attention** as supporting text only. | §§4.5–4.6, 10.6–10.7 | Enum-to-copy test and visual review of complete/in-progress variants. | 11 | Planned |
+| BDS03-IMP-003 | Render a received physical tender-security original as a green satisfied fact and reserve the amber Review note for the outstanding-original variant. | §§10.9, 10.12 | Recorded/outstanding paired snapshots and semantic-colour accessibility test. | 7, 11 | Planned |
+| BDS03-IMP-004 | Source common-state messages from the §8 error catalogue or assert exact equality; append fixture context separately without rewriting the canonical message. | §§8, 10.17 | Automated copy equality test for every common-state error. | 11.15 | Planned |
+| BDS03-IMP-005 | Implement separate supplier Website and internal Desk shells; bind BDS-DES-15 exclusively to `/desk/tender-security-receipts` with no supplier navigation or bid content. | §§9, 10.1, 10.16 | Route-shell snapshots, permission tests and navigation leakage scan. | 7 (DES-15 replaced by OD-G) | Planned |
+| BDS03-IMP-006 | Remove Tender-free JV creation from registration; capture the exact single/JV arrangement only inside the atomic Start bid transaction for the identified Tender and workspace. | §§4.3, 10.3–10.4, 11.2–11.3 | Registration negative test, rollback test and permitted/prohibited Tender JV start tests. | 4, 5 | Planned |
+| BDS03-IMP-007 | Return and display trusted current server time on BDS-DES-12 in EAT and recheck it in the committing flow without trusting browser time. | §§5.7, 10.13, 11.1 | Clock-manipulation, refresh and deadline-boundary tests. | 8 | Planned |
+| BDS03-IMP-008 | Seed a submitted Version accepted before deadline and render its receipt after deadline with change actions closed; keep it isolated from the late rejected attempt. | §§10.1, 10.14, 13.4 | BDS-DES-13-CLOSED snapshot and receipt/late-attempt isolation test. | 12 | Planned |
+| BDS03-IMP-009 | Implement Pending verification creation, challenge/resend, successful activation and explicit registration/Account states; activation proves channel control only. | §§4.1, 5.1–5.2, 7.2, 10.4–10.5 | Challenge lifecycle, replay/rate-limit and copy tests. | 4 | Planned |
+| BDS03-IMP-010 | Block every preparation/change command for a Suspended Account while retaining authorised read access to existing receipts. | §§5.2, 8, 10.17 | Command-matrix denial tests and receipt-recovery test. | 4, 5 | Planned |
+| BDS03-IMP-011 | Render deterministic idempotency-conflict and replacement-conflict states with exact §8 messages and non-mutating recovery actions. | §§8, 10.1, 10.17, 13.4 | Conflicting-replay and stale-replacement tests with unchanged original evidence. | 8, 9 | Planned |
+| BDS03-IMP-012 | Seed exact cross-organisation, definitive custody failure, uncertain custody and late submission fixtures with actors, EAT times, correlation/support references and stated no-receipt outcomes. | §§10.1, 13.4 | Seed inventory, cross-tenant redaction, correlation and late-boundary tests. | 12 | Planned |
+| BDS03-IMP-013 | Produce 390 × 844 px derivatives for all supplier artboards/dialogs and equivalent responsive BDS-DES-15 output; reflow tables to labelled cards without dropping data/actions. | §§10.1, 11.8 | Desktop/narrow visual suite, keyboard run and horizontal-overflow assertion. | 11 | Planned |
+| BDS03-IMP-014 | Persist and display tender-box `received_at` and `accepted_at` independently on receipts using the exact fixture instants and EAT labels. | §§4.9–4.10, 10.1, 10.14 | Receipt schema/API/snapshot tests and ordering assertion. | 8 | Planned |
+| BDS03-IMP-015 | Rename the calculated row value to **Line amount before tax** and present subtotal, tax and Bid total once as separately labelled totals. | §§5.6, 10.1, 10.11 | Arithmetic test and one-row/multi-row semantic UI review. | 7, 11.10 | Planned |
+| BDS03-IMP-016 | Add **Reason for withdrawal** and visible **Enter 10–500 characters** helper; enforce the same rule server-side before `WithdrawBid`. | §§4.11, 10.15, 11.6 | 9/10/500/501-character boundary and accessibility tests. | 9 | Planned |
+| BDS03-IMP-017 | Use **Submit bid** for both terminal controls while retaining the plain-language digital-signature consequence and exact command sequence. | §§5.7, 10.13, 11.5 | Copy/action-map snapshot and representative-signatory comprehension test. | 8, 11.12 | Planned |
+| BDS03-IMP-018 | Implement separate evidence-attention and addendum-attention BDS-DES-11 variants, each backed by one isolated fixture and one exact issue link. | §§10.12, 10.18, 13.4 | Paired isolated snapshots and fixture-identity assertion. | 6, 11.11 | Planned |
+
+### Spec 19.9 v0.4 residual artboard-boundary corrections
+
+| ID | Required implementation (verbatim) | Contract | Completion evidence (spec) | Target phase | Status |
+|---|---|---|---|---|---|
+| BDS04-IMP-001 | Keep `GetBidReview` read-only: show 13:50 as Last updated/Updated for the primary Draft and never stamp Mary's 14:15 view as a mutation. | §§7.1, 10.6–10.7, 11.1, 13.3 | Read-side-effect assertion and paired My bids/workspace snapshots. | 6 | Planned |
+| BDS04-IMP-002 | Map **View receipts**, **Refresh**, **View current receipt**, **Choose another file** and **Back to Account** exactly once; implement `/account/receipts` as an authorised read-only recovery route that grants no bid-change capability. | §§5.2, 9, 10.17, 11.8 | Action-map coverage, Suspended Account receipt read and mutation-denial tests. | 4, 11.5 | Planned |
+| BDS04-IMP-003 | Derive every list/summary **Submitted** time from `accepted_at`, displayed in EAT to the minute without rounding; retain second precision for both receipt instants. | §§4.9–4.10, 10.3, 10.6, 10.14–10.15, 11.1 | Cross-surface timestamp assertion using 14:32:01 accepted and 14:31:58 received. | 8, 11 | Planned |
+| BDS04-IMP-004 | Track both desktop and 390 × 844 completion for every §10.18 base artboard, named variant and dialog; reject desktop-only inventory completion. | §§10.1, 10.18 | Two-size inventory matrix and visual regression suite. | 11 | Planned |
+| BDS04-IMP-005 | Standardise the control label **Resend verification link** on BDS-DES-03 and BDS-DES-04; map **Back to Account** to a non-mutating Account read. | §§10.4–10.5, 11.3, 11.8 | Copy equality and navigation/no-side-effect tests. | 4, 11.3 | Planned |
+| BDS04-IMP-006 | Derive the **Review and submit** task as Complete only when the exact current readiness result has no Must fix issue; opening the review changes neither status nor `last_saved_at`. | §§4.5–4.6, 5.3, 10.7, 11.4 | Complete/blocking/Review-note fixtures and repeated-read immutability test. | 6 | Planned |
+
+### Spec 19.10 v0.5 template-release and downstream-mapping corrections
+
+| ID | Required implementation (verbatim) | Contract | Completion evidence (spec) | Target phase | Status |
+|---|---|---|---|---|---|
+| BDS05-IMP-001 | Verify exact template status, profiles and all frozen release digests before publication and Start bid. | §§4.4, 7.4, 14.11 | Available/unavailable, mismatch and stale-release tests; from v0.8 also Available with site switch On and Off, Superseded with passing and failing integrity or renderer checks, and Withdrawn, per §4.4.4. | 3, 5 | Planned |
+| BDS05-IMP-002 | Generate the Goods/IT workspace only from released response rules and the exact Published Bid Definition. | §§4.4.1–4.4.5 | Structured fixture and no-PDF-parser tests. | 6 | Planned |
+| BDS05-IMP-003 | Resolve every source-derived response to one supported final control type before publication. | §§4.4.2–4.4.4 | Catalogue-control and unknown-type tests. | 3 | Planned |
+| BDS05-IMP-004 | Preserve row-level mandatory checks while deriving one shared Technical compliance group result with no weights. | §§4.4, 5.3, 14.11 | Multi-row group-result and evaluator-contract tests. | 6 | Planned |
+| BDS05-IMP-005 | Require an evaluation and contract destination or explicit N/A for every response. | §§4.4.2–4.4.4 | Mapping-completeness and hidden-obligation tests. | 3 | Planned |
+| BDS05-IMP-006 | Preserve response identities and downstream mappings in the canonical signed package and governed handoffs. | §§4.9–4.10, 12 | Package, receipt-lineage and consumer-contract tests. | 8 | Planned |
+| BDS05-IMP-007 | Consume only complete released addendum identity rules and the exact Tender-produced identity map. | §4.4.6 | Add/replace/remove/copy and heuristic-rejection tests. | 6 | Planned |
+| BDS05-IMP-008 | Fail closed without mutating an existing Draft when the release/profile is unavailable or unsupported. | §§8, 14.11 | Existing-Draft preservation and no-partial-workspace tests. | 5 | Planned |
+| BDS05-IMP-009 | Materialise the exact reservation treatment, declarations, evidence rules and `EVG-ELIGIBILITY` mappings from the released template and Published Tender. | §§4.4, 5.3, 14.2–14.3 | None/Youth/Women/PWD, County-residents, missing-rule and no-inferred-entitlement tests. | 3, 5 | Planned |
+| BDS05-IMP-010 | Preserve the category, County-residents treatment and evaluated eligibility result for award/reporting while excluding supplier eligibility evidence from contract obligations. | §§4.4, 14.3 | Downstream handoff and contract-projection tests. | 9 | Planned |
+
+### Spec 19.11 v0.6 focused baseline reconciliation
+
+| ID | Required implementation (verbatim) | Contract | Completion evidence (spec) | Target phase | Status |
+|---|---|---|---|---|---|
+| BDS06-IMP-001 | Use STD-TPL v0.10 and IMP v1.1, CFG v0.16, approved TPR v0.12, LAW v1.2, REQ v1.12, PLN v1.27 and BUD v1.11 at their exact owner boundaries; remove obsolete template-inspection, clarification and denominator dependencies. | Control table, §§3, 17 | Dependency scan and owner-contract integration matrix. | 0, 2B | Planned |
+| BDS06-IMP-002 | Keep every APP denominator, 30% target, planned qualifying share, Planning shortfall, Budget ceiling and unused-headroom value outside BDS schema, services, portal projections, readiness, packages and eligibility handoffs. | §§3, 4.4, 5.3.1, 5.6, 14.12 | Schema/API/package negative assertions and supplier-output scan. | 5, 6, 8 | Planned |
+| BDS06-IMP-003 | Materialise only the exact Tender-specific reservation treatment and category/County declaration-evidence rules; never infer entitlement from Planning, Account, address or an uploaded certificate. | §§4.4, 5.3.1, 14.2, 14.12 | None/Youth/Women/PWD/County fixtures and no-inference tests. | 5 | Planned |
+| BDS06-IMP-004 | Fail publication and Start bid when the affected reserved treatment is unsupported, unverified or missing its evidence/overlap treatment; preserve any existing Draft and never downgrade to unreserved. | §§4.4, 5.3.1, 8, 14.12 | Unsupported-rule, missing-evidence, overlap and Draft-preservation tests. | 5 | Planned |
+| BDS06-IMP-005 | Retain automated non-regression coverage for the six previously corrected residuals: statuses, physical-security presentation, exact error copy, internal receipt-owner shell, Tender-bound joint venture and trusted Submit time. | §§4.5–4.6, 8–11, 14.9, 14.12 | Targeted status/copy/shell/JV/time snapshots and command tests. | 11 | Planned |
+| BDS06-IMP-006 | Consume the exact `PublishedBidDefinition v1` schema and reject aliases, missing digests and unknown rows before workspace creation. | §§4.4, 14.13 | Schema compatibility and fail-closed tests. | 5 | Planned |
+| BDS06-IMP-007 | Enforce canonical template/release/profile/renderer identity semantics across TPR, STD and BDS. | §§4.4, 14.13 | Cross-document identity and runtime-registry tests. | 5 | Planned |
+| BDS06-IMP-008 | Implement the exact five-value addendum migration vocabulary and semantics. | §4.4.6, §14.13 | All-classification and no-heuristic tests. | 6 | Planned |
+| BDS06-IMP-009 | Render and validate controlled multi-select and structured ports without flattening or generic fallback. | §§4.4.2–4.4.5, 14.13 | Save/review/sign/submit round-trip tests. | 6, 11 | Planned |
+| BDS06-IMP-010 | Consume exactly four evaluation groups, including `EVG-AWARD`, while retaining row-level mandatory outcomes and reasons. | §§4.4, 14.13 | Vocabulary and downstream mapping tests. | 6 | Planned |
+| BDS06-IMP-011 | Separate Account-owned facts, Tender-specific arrangement/contact facts, locked declarations and bid responses as specified in §4.4.8. | §§4.4.8, 10.9, 14.13 | Account-no-mutation, prefill, freeze and comprehension tests. | 4, 5, 6 | Planned |
+| BDS06-IMP-012 | Replace any System setup Tender-format recovery link with `/app/std-templates/{release_id}` for authorised Administrator/System Manager users. | §§7.4, 14.13 | Route and permission tests plus absent-old-route scan. | 11 | Planned |
+| BDS06-IMP-013 | Run the closed REQ→TPR→STD→BDS fixture through sealed Bid Opening handoff with exact identities, digests, obligations and published downstream mappings; do not invoke a future Evaluation/Contract workflow. | §§13–15 | Signed coordinated end-to-end report and mapping-payload inspection. | 12 | Planned |
+| BDS06-IMP-014 | Require and verify `definition_digest` at every definition boundary and include it in canonical signed/downstream lineage. | §§4.4, 4.9, 14.13 | Missing/mismatch, signature-binding and handoff tests. | 5, 8, 9 | Planned |
+| BDS06-IMP-015 | Align the runtime allowlist with STD-TPL v0.10 for controlled multi-select and the bounded structured-ports composition. | §§4.4.3–4.4.5, 14.13 | Valid/invalid option, row-shape and no-fallback tests. | 6 | Planned |
+| BDS06-IMP-016 | Create a versioned organisation snapshot at Start bid; implement the explicit compare-and-refresh flow; and keep the Tender contact bid-specific without Account or submitted-Version mutation. | §§4.3, 4.4.8, 4.5, 7.2, 10.9, 11.4 | Account-change comparison, refresh, Tender-contact scope, keep-current and submission-immutability tests. | 5 | Planned |
+
+### Spec 19.12 v0.7 public/vendor closure implementation
+
+| ID | Required implementation (verbatim) | Contract | Completion evidence (spec) | Target phase | Status |
+|---|---|---|---|---|---|
+| BDS07-IMP-001 | Replace the two-step arrangement/start sequence with one atomic `StartBid` command carrying the single/JV payload and verified mandatory-notice email. | §§4.3, 5.1–5.2, 7.2, 11.2 | Transaction failure, replay and concurrency tests proving no partial arrangement/workspace. | 5 | Planned |
+| BDS07-IMP-002 | Publish the exact Active candidate IDs and notice-contact Versions to Tenders through `GetTenderCandidateAudience`; expose no Draft/submission content or qualification claim. | §§3–4, 7.4 | Owner-authentication, field-allowlist and cross-Tender tests. | 5 | Planned |
+| BDS07-IMP-003 | Implement versioned Tender notice-contact selection from verified Account emails and future-only update semantics. | §§4.3, 5.2, 7.2, 10.9 | Verification, update, earlier-notice immutability and opt-out negative tests. | 5 | Planned |
+| BDS07-IMP-004 | Implement `SubmitTenderClarification` with exact candidate identity, trusted deadline, idempotency and Tenders-owned receipt; retain no parallel response store. | §§5.4, 7.2, 10.8, 11.2 | Before/at/after deadline, replay, forgery and no-duplicate-store tests. | 5 | Planned |
+| BDS07-IMP-005 | Render authoritative clarification answers and notice states from Tenders, including issued-addendum gating and Delivery problem without source-candidate disclosure. | §§5.4, 10.3, 10.7–10.8 | Public/candidate views, privacy and state-copy tests. | 2B, 11.7 | Planned |
+| BDS07-IMP-006 | Consume CFG v0.16 Supplier support, Privacy and data use, Terms of portal use and Accessibility destinations in one quiet footer on every public/supplier page. | §§3, 7.4, 9–10 | Route/link inventory, missing-config and no-placeholder scans. | 2A, 2C | Planned |
+| BDS07-IMP-007 | Add the ask-question, notice-contact, clarification-closed, notice-problem and supplier-information-unavailable variants to the two-size artboard/browser suite. | §§10–11 | Complete desktop/390 px inventory, keyboard/focus and action-map evidence. | 11 | Planned |
+| BDS07-IMP-008 | Implement one server-side default-false `production_bid_submission_enabled` deployment flag and central submission-availability service used by signature, initial submission and replacement. | §§5.10, 7.4, 14.14–15 | No-UI/client override scan, false/true/health transition tests and release evidence. | 8 | Planned |
+| BDS07-IMP-009 | Re-run the complete public Tender→Start bid→question/answer→addendum notice→five tasks→signature→receipt→replacement/withdrawal→automatic close→sealed handoff journey. | §§13–15 | Signed end-to-end report with no Bid Opening/Evaluation/Supplier Management runtime dependency. | 12 | Planned |
+| BDS07-IMP-010 | Remove or quarantine superseded addendum-only inquiry endpoints, standalone arrangement creation, placeholder portal contacts and any per-Tender/user-controlled submission switch. | §§5, 7, 16 | Repository/API/UI negative inventory and migration tests. | 1 | Planned |
+
+### Spec 19.13 v0.8 next-step, guidance and boundary implementation
+
+| ID | Required implementation (verbatim) | Contract | Completion evidence (spec) | Target phase | Status |
+|---|---|---|---|---|---|
+| BDS08-IMP-001 | Return actor-specific `next_step`, all guard reasons, fixes and stage markers from Account/Bid reads; never calculate them in the browser. | §§5.12–5.13, 7.1, 14.15 | Full state/actor/read dead-end matrix, cross-organisation masking and technical-reader negative checks. | 4, 10 | Planned |
+| BDS08-IMP-002 | Produce the §5.14 business hand-off and waiting items, and separately route CFG/deployment/technical events into controlled operational queues without giving a technical reader supplier business authority. | §§5.14, 6, 14.15 | Creation, clearing, notification, no-bid-content and no-mark-read-as-clear checks. | 10 | Planned |
+| BDS08-IMP-003 | Render the exact §10.19 block/tracker content on permitted archetypes, replacing duplicate status narratives; complete both render sizes, 200% zoom and keyboard checks for each named variant. | §§10.1–10.19, 14.15 | Artboard inventory, first-view, responsive, visual and accessibility review. | 11 | Planned |
+| BDS08-IMP-004 | Separate default-off production flag, enabled-service outage, definite failure and uncertain attempt; preserve Draft/receipt reads and route only permitted recovery actions. | §§5.10, 8, 10.13, 10.17, 14.15 | False/true/unhealthy/indeterminate matrix, no-double-dispatch and definitive custody reconciliation. | 8 | Planned |
+| BDS08-IMP-005 | Reconcile final-channel addendum effectiveness, four notice states and CFG incomplete projection against TPR and CFG owners. | §§5.4, 5.13, 8, 10.7–10.8, 14.15 | Owner integration and public/supplier copy tests; existing Draft and receipt recovery. | 2A, 2B, 6 | Planned |
+| BDS08-IMP-006 | Gate the published Tender Superseded/Withdrawn branch on Project Owner approval of TPR v0.13, then test every §4.4.4 state/action boundary without rebinding or rewriting history. | §§4.4.4, 18.1 | Approval dependency and lifecycle/integrity/renderer/definition matrix. | 13 (TPR v0.13 gated) | Planned |
+| BDS08-IMP-007 | Render all distinct §10.18 variants including DES-17 receipt history; bind public/question/addendum/JV fixtures to their exact instants and verify every visible recovery action's destination. | §§10.1–10.20, 11, 13, 14.15 | Chronology and cross-organisation tests, artboard/route inventory, narrow/zoom/focus and saved-receipt access. | 11, 12 | Planned |
+| BDS08-IMP-008 | Separate missing certificate from signing-service failure and definitive custody rejection from enabled outage in guards, next steps, error catalogue and submission UI. | §§5.7, 5.12–5.13, 8, 10.13, 10.17–10.19 | Actor/guard/copy snapshots, certificate recheck, no-receipt and no-duplicate-deposit tests. | 8, 10 | Planned |

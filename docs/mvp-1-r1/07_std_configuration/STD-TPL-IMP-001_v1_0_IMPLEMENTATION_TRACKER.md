@@ -25,6 +25,7 @@
 | 2026-09-26 | R13 (new, owner to confirm): golden vectors are compiled against the *input* bundle digest (every asset except generated outputs), because a vector cannot contain the digest of the bundle that contains it; published Tenders use the installed full bundle digest. | Circular digest otherwise (plan §4). |
 | 2026-09-26 | The installer reads the pack directly (`docs/mvp-1-r1/07_tender_templates/it_equipment_open_v1`) instead of a second in-app byte copy (plan B2 said copy): the pack is ~36 MB and a copy would duplicate it in git; installed private Files are the runtime source. | Avoids a duplicated, drift-prone copy. |
 | 2026-09-25 | Owner answers to Q1–Q4, quoted. Q1 "Confirm the missing runtime files should be built from the existing folder contents. - Confirmed". Q2 "Approve the two documents, or authorise building against them as proposed. - Authorised". Q3 "Accept or change the proposed defaults for the document conflicts. - Accepted" (R1–R12 defaults now binding). Q4 "Confirm you are the named release owner for install and withdraw actions. - Confirmed" (bnganyi) | The build is authorised against the proposed text. This is not document approval; the register's requirement_status is unchanged |
+| 2026-09-26 | OD-E (BDS-CHG-001 v0.8 planning): reconcile the release 1.1 bid content before the bid journey completes, and issue a successor release 1.2 for new bindings. Release 1.1 keeps its identity and is switched Off. See Phase C rows STI-C01…C03. | Owner instruction quoted in `12_bid_submission/reconciliation/definition_to_board_matrix.md` |
 
 ## Gate register
 
@@ -89,6 +90,18 @@
 | STI-B15 | Retire `std_configuration/`, `Supported Tender Template`, old `tender_templates/`, 9 roles and the stale workspace; archive | Done | 2026-09-26. Archived to `archive/std-configuration-retired-2026-09/`; drop patch applied on the dev site (STI-G09). |
 | STI-B16 | Close CFG FU-18; record required corrections (R10, R11) | Done | 2026-09-26. CFG FU-18 closed as superseded by CFG v0.15 CFG15-CHG-001 / STD Templates. OD5 document revisions done (FU-01): STD-TPL-001 v0.11, STD-TPL-IMP-001 v1.1, TPR v0.12, REQ v1.13, BDS v0.8, G1-REG v1.2; register updated (DEC-024). |
 | STI-B17 | Release evidence and runbook | Planned | — |
+
+## Work register: Phase C, successor release 1.2 (BDS-CHG-001 v0.8, owner decision OD-E)
+
+Owner decision OD-E (26 Sep 2026) is quoted in full in `12_bid_submission/reconciliation/definition_to_board_matrix.md`. In short: reconcile the release 1.1 bid content against the approved template pack, source coverage, Published Tender and BDS contract; correct the controlled template assets; issue a successor release for new bindings; and never alter release 1.1 or an existing Published Bid Definition.
+
+The work is planned and evidenced in the Bid Submission tracker (rows BDS8-301…303, gate BDS-G03). It is recorded here because it changes the STD release pack and its lifecycle.
+
+| ID | Item | Status | Evidence |
+|---|---|---|---|
+| STI-C01 | Read the source coverage registers (`03_registers/`) and close every row of the definition-to-board matrix with a final class (A template gap / B owned elsewhere / C board). Any correction needing STD-TPL-001 text goes to its document owner. | Planned | — |
+| STI-C02 | Correct the Class A assets in `06_runtime/` (per-obligation warranty/support responses; security `valid_until`; structured JV members from the arrangement) and the coverage registers. `make std-release-rebuild`: validator, fixtures, expected definition, manifest and change report. Bump `supported_renderer_version` if a new control or composition is needed. | Planned | — |
+| STI-C03 | Install release 1.2 (Available, switched On). Switch release 1.1 **Off**, not Superseded, so no already-published Tender enters the proposed TPR v0.13 branch. Parity vectors on both adapters. The Tenders definition tests pass on 1.2; Tenders bound to 1.1 keep their frozen definitions. | Planned | — |
 
 ## Acceptance map
 
