@@ -569,6 +569,9 @@ def _open(root, version, *, actor: str, roles: dict[str, bool], context: str, su
 			answer = _turn(OPEN_MANAGEMENT, "You can cancel this open Tender on an applicable ground.", holder_users=[actor], role=ROLE_ACCOUNTING_OFFICER, primary="cancel_tender", sentence="This is an available option, not an assigned cancellation review.")
 	else:
 		answer = ns.not_involved(OPEN_MANAGEMENT)
+	# §10.17 DES-09: the viewer holding an option is named on the current stage
+	if answer["kind"] in ns.TURN_KINDS:
+		holder_display = _name(actor)
 	return answer, _journey(OPEN_MANAGEMENT, holder_display=holder_display)
 
 

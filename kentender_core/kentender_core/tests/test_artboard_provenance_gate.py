@@ -106,11 +106,19 @@ def _component_last_commit(component_path: Path) -> str | None:
 	return out or None
 
 
+def _live_boards(name: str) -> list[Path]:
+	"""Boards by file name, excluding superseded copies: a board under a
+	`retired/` or `archive/` folder is history, not a design source (TPR-CHG-001
+	v0.12 moved the v0.8 Tender boards to `11_tenders/retired/design/` under the
+	same file names as their replacements)."""
+	return [p for p in _docs_root().rglob(name) if not ({"retired", "archive"} & {part.lower() for part in p.parts})]
+
+
 class _Reference:
 	def __init__(self, component: Path, claimed_name: str):
 		self.component = component
 		self.claimed_name = claimed_name
-		matches = list(_docs_root().rglob(claimed_name))
+		matches = _live_boards(claimed_name)
 		self.resolved = matches[0] if len(matches) == 1 else None
 		self.ambiguous = len(matches) > 1
 
@@ -176,7 +184,7 @@ class TestArtboardProvenanceGate(FrappeTestCase):
 			candidate = _repo_root() / claimed
 			if candidate.exists():
 				continue
-			if list(_docs_root().rglob(Path(claimed).name)):
+			if _live_boards(Path(claimed).name):
 				continue
 			missing.append(f"{spec.relative_to(_repo_root())} names {claimed!r}, which is not in the repo")
 		self.assertEqual(missing, [], "\n".join(["A UI test opens an artboard that does not exist:", *missing]))

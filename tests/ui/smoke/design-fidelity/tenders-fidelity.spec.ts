@@ -171,7 +171,11 @@ test.describe("Tenders — design fidelity", () => {
 
 	test("TPR-DES-08 — Publication confirmation", async ({ page, browser }) => {
 		const state = resetFixture<{ tender_reference: string }>("reset_publication_fixture", { confirmed: 2 });
-		const wanted = await artboardLandmarks(browser, "Publication Progress and Evidence.dc.html", "TPR-DES-08 Publication confirmation");
+		// The invalid-evidence variant's State Portal row sits in an `sc-if`
+		// inside <tbody>; the HTML parser hoists the wrapper out of the table,
+		// so the row paints even though its hint hides it. The repeated
+		// "Confirm publication" is that artifact, not a live-page gap.
+		const wanted = onceEach(await artboardLandmarks(browser, "Publication Progress and Evidence.dc.html", "TPR-DES-08 Publication confirmation"));
 		const errors = collectPageErrors(page);
 		await login(page, HOPF, PASSWORD);
 		await gotoTenders(page, `/${state.tender_reference}/publication`);
@@ -181,7 +185,7 @@ test.describe("Tenders — design fidelity", () => {
 	});
 
 	test("TPR-DES-09 — Published Tender", async ({ page, browser }) => {
-		const state = resetFixture<{ tender_reference: string }>("reset_published_fixture", { with_inquiry: true });
+		const state = resetFixture<{ tender_reference: string }>("reset_published_fixture", { with_addendum: true, with_clarification: true, answered: true });
 		const wanted = await artboardLandmarks(browser, "Published Tender.dc.html", "TPR-DES-09 Published Tender");
 		const errors = collectPageErrors(page);
 		await login(page, HOPF, PASSWORD);
@@ -202,13 +206,13 @@ test.describe("Tenders — design fidelity", () => {
 		expect(errors, "console errors").toEqual([]);
 	});
 
-	test("TPR-DES-11 — Respond to addendum inquiry", async ({ page, browser }) => {
-		const state = resetFixture<{ tender_reference: string; inquiry: string }>("reset_inquiry_fixture");
-		const wanted = await artboardLandmarks(browser, "Respond to Addendum Inquiry.dc.html", "TPR-DES-11 Respond to addendum inquiry");
+	test("TPR-DES-11 — Respond to supplier clarification", async ({ page, browser }) => {
+		const state = resetFixture<{ tender_reference: string; clarification: string }>("reset_clarification_fixture");
+		const wanted = await artboardLandmarks(browser, "Respond to Supplier Clarification.dc.html", "TPR-DES-11 Respond to supplier clarification");
 		const errors = collectPageErrors(page);
 		await login(page, OFFICER, PASSWORD);
-		await gotoTenders(page, `/${state.tender_reference}/inquiries/${state.inquiry}`);
-		await expectReady(page, "inquiry");
+		await gotoTenders(page, `/${state.tender_reference}/clarifications/${state.clarification}`);
+		await expectReady(page, "clarification");
 		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE), "TPR-DES-11");
 		expect(errors, "console errors").toEqual([]);
 	});
@@ -224,60 +228,36 @@ test.describe("Tenders — design fidelity", () => {
 		expect(errors, "console errors").toEqual([]);
 	});
 
-	// TPR-DES-13's default artboard state is "Returned" — the copied Draft's
-	// own requirements-task view, which EditorScreen renders as its returned
-	// notice over the ordinary editor (there is no separate correction screen
-	// for that variant; "Correction requested"/"Corrected successor ready" are
-	// covered by tnd-correction.spec.ts, whose fixtures exercise both branches
-	// of CorrectionRequestedScreen).
-	test("TPR-DES-13 — Requisition correction (Returned)", async ({ page, browser }) => {
-		const state = resetFixture<{ tender_reference: string }>("reset_returned_fixture");
-		const art = await (browser as any).newPage();
-		const scope = `[data-screen-label="TPR-DES-13 Requisition correction"]`;
-		await openArtboard(art, `${DESIGN}/Requisition Correction.dc.html`, scope);
-		// only the "Returned" sc-if branch is visible by default; scope to it directly
-		const returnedScope = `${scope} sc-if[value*="isReturned"]`;
-		const wanted = await landmarks(art, (await art.locator(returnedScope).count()) ? returnedScope : scope);
-		await art.close();
+	// TPR-DES-13's default artboard state is "Correction requested" (the
+	// "Returned" Draft is TPR-DES-04's returned variant, compared there).
+	test("TPR-DES-13 — Requisition correction", async ({ page, browser }) => {
+		const state = resetFixture<{ tender_reference: string }>("reset_correction_requested_fixture");
+		const wanted = await artboardLandmarks(browser, "Requisition Correction.dc.html", "TPR-DES-13 Requisition correction");
 		const errors = collectPageErrors(page);
 		await login(page, OFFICER, PASSWORD);
-		await gotoTenders(page, `/${state.tender_reference}/requirements`);
-		await expectReady(page, "requirements");
-		// The artboard's "Returned" branch is a condensed summary card with a
-		// bare "Save"/"Review" pair and no editable field at all — a dead end
-		// for the very officer it is meant to send back to fix something. The
-		// live route goes straight to the real, editable requirements task
-		// (with the same returned notice above it) and names its actions
-		// consistently with every other editor screen: "Save draft" and
-		// "Review Tender" rather than the artboard's bare "Save"/"Review".
-		const RETURNED_EXEMPTIONS: LandmarkExemption[] = [
-			{ landmark: "Save", because: 'The live editor names this action "Save draft", consistent with every other Tenders editor screen.' },
-			{ landmark: "Review", because: 'The live editor names this action "Review Tender", consistent with every other Tenders editor screen.' },
-		];
-		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE), "TPR-DES-13", RETURNED_EXEMPTIONS);
+		await gotoTenders(page, `/${state.tender_reference}`);
+		await expectReady(page, "correction");
+		expectLandmarkSubsequence(wanted, await landmarks(page, LIVE), "TPR-DES-13");
 		expect(errors, "console errors").toEqual([]);
 	});
 
-	// TPR-DES-14 draws all eight common states side by side in one page; the
-	// live app renders exactly one per route. Each card is checked against
-	// its own live route rather than the whole artboard against one screen.
-	test("TPR-DES-14 — Common states", async ({ page, browser }) => {
-		const art = await browser.newPage();
-		await art.route("**/support.js", (route: any) => route.abort());
-		await art.goto(artboardUrl(`${DESIGN}/Common States.dc.html`), { waitUntil: "load" });
-		const cardTitles = ["Forbidden", "Not found", "Source unavailable", "Already started", "Template unavailable", "Publication not configured", "Stale write", "Load failure"];
-		const liveByKind: Record<string, string> = { Forbidden: "forbidden", "Not found": "not-found", "Source unavailable": "source-unavailable", "Already started": "already-started", "Template unavailable": "template-unavailable", "Publication not configured": "rule-unavailable", "Stale write": "stale", "Load failure": "failure" };
-		for (const title of cardTitles) {
-			const cardScope = `.card.blueprint:has-text("${title}")`;
-			const count = await art.locator(cardScope).count();
-			expect(count, `${title} card present on the artboard`).toBeGreaterThan(0);
-		}
-		await art.close();
-		// Not found and Load failure are exercised live in tnd-common-states.spec.ts
-		// and tnd-workspace.spec.ts respectively; this test only confirms every
-		// card the board draws has a live counterpart component (CommonState.vue
-		// renders the same eight kinds from one shared component — see its own
-		// vitest coverage for the per-kind copy).
-		expect(Object.keys(liveByKind)).toHaveLength(cardTitles.length);
+	// TPR-DES-14 (v0.12) draws its states from a list in the board's own
+	// script, so the raw markup holds one template card. Every variant the
+	// board lists must be one the live CommonState draws (its copy and
+	// actions are compared per kind by the component tests).
+	test("TPR-DES-14 — Common states", async () => {
+		const fs = await import("node:fs");
+		const path = await import("node:path");
+		const source = fs.readFileSync(path.resolve(__dirname, "../../../../", `${DESIGN}/Common States.dc.html`), "utf8");
+		const variants = Array.from(source.matchAll(/\['(?:critical|attention|info)', '([^']+)'/g)).map((m) => m[1]);
+		expect(variants.length).toBeGreaterThanOrEqual(16);
+		const LIVE_KIND: Array<[RegExp, string]> = [
+			[/^Forbidden/, "forbidden"], [/^Not found/, "not-found"], [/^Source unavailable/, "source-unavailable"], [/^Already started — Brian/, "already-started"],
+			[/^Already started — viewer without/, "requisition-unavailable"], [/^Template unavailable/, "template-unavailable"], [/^Bound release Superseded/, "release-superseded"],
+			[/^Bound release Withdrawn/, "release-withdrawn"], [/^Bound release integrity failed/, "release-failed"], [/^Publication not configured/, "rule-unavailable"],
+			[/^Stale write/, "stale"], [/^Load failure/, "failure"],
+		];
+		const unmapped = variants.filter((v) => !LIVE_KIND.some(([re]) => re.test(v)));
+		expect(unmapped, "board variants with no live common state").toEqual([]);
 	});
 });
