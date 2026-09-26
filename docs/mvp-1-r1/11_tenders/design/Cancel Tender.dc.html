@@ -10,65 +10,66 @@
 <helmet>
   <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
   <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
-  <style>body{margin:0;} a{color:var(--color-accent-700);} a:hover{color:var(--color-accent-900);}</style>
+  <style>body{margin:0;} a{color:var(--color-accent-700);} a:hover{color:var(--color-accent-900);} .table th,.table thead th{text-transform:none;letter-spacing:0;} .kt-disclosure-title{text-transform:none;letter-spacing:0;font-size:15px;}
+  </style>
 </helmet>
 <div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:100px;position:relative;">
-  <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+  <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
     <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
-    <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">TPR-DES-12:</span>
-    <button type="button" class="{{btnDecision}}" onclick="{{setDecision}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Decision (base)</button>
-    <button type="button" class="{{btnRecommend}}" onclick="{{setRecommend}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">With HOPF recommendation</button>
-    <button type="button" class="{{btnCancelled}}" onclick="{{setCancelled}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Cancelled detail</button>
+    <span style="color:#fff;opacity:.7;font-size:12px;">TPR-DES-12:</span>
+    <sc-for list="{{variants}}" as="vv" hint-placeholder-count="5">
+      <button type="button" class="{{vv.cls}}" onclick="{{vv.select}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">{{vv.label}}</button>
+    </sc-for>
   </div>
 
-  <div data-screen-label="TPR-DES-12 Cancel Tender" style="max-width:900px;margin:0 auto;padding:32px 40px 0;">
+  <div data-screen-label="TPR-DES-12 Cancel Tender" style="max-width:1100px;margin:0 auto;padding:32px 40px 0;">
     <div class="card blueprint elev-sm" style="padding:0;">
 
       <div style="padding:28px 24px 20px;border-bottom:1px solid var(--color-divider);">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;">
           <h1 style="font-family:var(--font-heading);font-weight:600;font-size:28px;margin:0;letter-spacing:.01em;">Cancel Tender</h1>
-          <sc-if value="{{isCancelled}}" hint-placeholder-val="{{false}}"><span class="kt-status is-critical">Cancelled</span></sc-if>
-          <sc-if value="{{isNotCancelled}}" hint-placeholder-val="{{true}}"><span class="kt-status is-live">Published &mdash; open</span></sc-if>
+          <span class="{{badgeCls}}">{{badge}}</span>
         </div>
-        <p style="font-size:13px;color:var(--color-neutral-600);margin:0 0 10px;">TND-MOH-2027-033</p>
-        <sc-if value="{{isNotCancelled}}" hint-placeholder-val="{{true}}"><p style="font-size:14px;color:var(--color-neutral-700);margin:0;">Cancel this procurement proceeding using an applicable statutory ground.</p></sc-if>
+        <p style="font-size:13px;color:var(--color-neutral-600);margin:0 0 10px;">{{refLine}}</p>
+        <sc-if value="{{isOpenAny}}" hint-placeholder-val="{{true}}"><p style="font-size:14px;color:var(--color-neutral-700);margin:0;">Cancel this procurement proceeding using an applicable statutory ground.</p></sc-if>
       </div>
 
-      <sc-if value="{{isNotCancelled}}" hint-placeholder-val="{{true}}">
-        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);">
+      <dc-import name="TenderGuidance" markers="{{g.markers}}" holder="{{g.holder}}" kind="{{g.kind}}" headline="{{g.headline}}" hint-size="100%,96px"></dc-import>
+
+      <sc-if value="{{isDecision}}" hint-placeholder-val="{{true}}">
+        <div style="padding:20px 24px 0;">
           <div class="kt-notice is-critical">
             <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-            <div class="kt-notice-body"><strong>Cancellation is final for this Tender.</strong> It does not restore the Requisition or create a replacement Tender.</div>
+            <div class="kt-notice-body">Cancellation is final for this Tender. It does not restore the Requisition or create a replacement Tender.</div>
           </div>
         </div>
+      </sc-if>
 
-        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-          <div><div class="kt-label" style="margin-bottom:3px;">Purchase</div><div style="font-size:14px;">Supply and delivery of business laptops</div></div>
-          <div><div class="kt-label" style="margin-bottom:3px;">Tender</div><div style="font-size:14px;">TND-MOH-2027-033</div></div>
-          <div><div class="kt-label" style="margin-bottom:3px;">Published at</div><div style="font-size:14px;">15 May 2027, 08:00 EAT</div></div>
-          <div><div class="kt-label" style="margin-bottom:3px;">Submission deadline</div><div style="font-size:14px;">5 Jun 2027, 11:00 EAT</div></div>
-          <div><div class="kt-label" style="margin-bottom:3px;">Required channels</div><div style="font-size:14px;">4</div></div>
+      <sc-if value="{{isCancelFixture}}" hint-placeholder-val="{{true}}">
+        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;">
+          <div style="grid-column:span 2;"><div class="kt-label" style="margin-bottom:3px;">Purchase</div><div style="font-size:14px;">Supply and delivery of district clinic printers</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Published at</div><div style="font-size:14px;">20 May 2027, 08:00 EAT</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Submission deadline</div><div style="font-size:14px;">10 Jun 2027, 11:00 EAT</div></div>
+          <div style="grid-column:span 4;"><div class="kt-label" style="margin-bottom:3px;">Required channels</div><div style="font-size:14px;">State Portal · Ministry website · Notice board · Two national newspapers</div></div>
         </div>
+      </sc-if>
 
-        <sc-if value="{{isRecommend}}" hint-placeholder-val="{{false}}">
-          <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);">
-            <div class="kt-notice is-attention">
-              <svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-              <div class="kt-notice-body"><strong>Recommended by Charles Mutiso, HOPF.</strong> Delivery timeline no longer meets user-department need following supplier market changes.</div>
-            </div>
-          </div>
-        </sc-if>
-
-        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);">
-          <div class="field"><label>Ground</label>
-            <select class="input"><option selected="selected">Inadequate budgetary provision</option><option>Circumstances that make completion impossible</option><option>Persistent unresponsive bidding</option></select>
-          </div>
-          <div class="field"><label>Reason</label><textarea class="input" rows="3">The confirmed budget available for this procurement is insufficient to proceed.</textarea></div>
+      <sc-if value="{{isRecommend}}" hint-placeholder-val="{{false}}">
+        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);display:grid;gap:6px;">
+          <h2 style="font-family:var(--font-heading);font-size:19px;font-weight:600;margin:0;">HOPF recommendation</h2>
+          <p style="font-size:14px;margin:0;">I recommend cancellation because the confirmed budget is insufficient to complete this procurement.</p>
+          <p style="font-size:13px;color:var(--color-neutral-700);margin:0;">Charles Mutiso, Head of Procurement Function · 4 Jun 2027, 13:30 EAT</p>
         </div>
+      </sc-if>
 
+      <sc-if value="{{isDecision}}" hint-placeholder-val="{{true}}">
+        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);display:grid;gap:14px;">
+          <div class="field" style="margin:0;max-width:460px;"><label>Ground</label><select class="input"><option selected="selected">Inadequate budgetary provision</option></select></div>
+          <div class="field" style="margin:0;"><label>Reason</label><textarea class="input" rows="3">The confirmed budget available for this procurement is insufficient to proceed.</textarea></div>
+        </div>
         <div style="padding:20px 24px;">
-          <div class="kt-card-title" style="margin-bottom:12px;">Consequences</div>
-          <ul style="margin:0;padding-left:18px;font-size:14px;color:var(--color-neutral-700);line-height:1.7;">
+          <h2 style="font-family:var(--font-heading);font-size:19px;font-weight:600;margin:0 0 10px;">Consequences</h2>
+          <ul style="margin:0;padding-left:18px;font-size:14px;line-height:1.7;">
             <li>Tender closes immediately.</li>
             <li>Cancellation notice published through all original channels.</li>
             <li>PPRA report due 18 Jun 2027.</li>
@@ -78,20 +79,35 @@
         </div>
       </sc-if>
 
-      <sc-if value="{{isCancelled}}" hint-placeholder-val="{{false}}">
-        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-          <div><div class="kt-label" style="margin-bottom:3px;">Decided by</div><div style="font-size:14px;">Amina Hassan, Accounting Officer</div></div>
-          <div><div class="kt-label" style="margin-bottom:3px;">Decided at</div><div style="font-size:14px;">10 Jun 2027, 09:30 EAT</div></div>
-          <div><div class="kt-label" style="margin-bottom:3px;">Ground</div><div style="font-size:14px;">Inadequate budgetary provision</div></div>
-          <div><div class="kt-label" style="margin-bottom:3px;">Reason</div><div style="font-size:14px;">The confirmed budget available for this procurement is insufficient to proceed.</div></div>
+      <sc-if value="{{isRequest}}" hint-placeholder-val="{{false}}">
+        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;">
+          <div style="grid-column:span 2;"><div class="kt-label" style="margin-bottom:3px;">Purchase</div><div style="font-size:14px;">Supply and delivery of field laptops</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Requested by</div><div style="font-size:14px;">Brian Wafula, Procurement Officer</div></div>
         </div>
         <div style="padding:20px 24px;">
-          <div class="kt-card-title" style="margin-bottom:12px;">Compliance obligations</div>
+          <h2 style="font-family:var(--font-heading);font-size:19px;font-weight:600;margin:0 0 4px;">Proposed change that cannot be made by addendum</h2>
+          <p style="font-size:13px;color:var(--color-neutral-700);margin:0 0 12px;">An addendum cannot expand the purchase. This is a request to consider cancellation, not a cancellation decision.</p>
           <table class="table">
-            <thead><tr><th>Obligation</th><th>Due</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Field</th><th>Current published</th><th>Proposed</th><th>Reason</th></tr></thead>
+            <tbody><tr><td>Business laptops — Quantity</td><td>250 Each</td><td style="font-weight:600;">300 Each</td><td>Additional deployment sites require 50 more laptops</td></tr></tbody>
+          </table>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isCancelled}}" hint-placeholder-val="{{false}}">
+        <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;">
+          <div><div class="kt-label" style="margin-bottom:3px;">Decided by</div><div style="font-size:14px;">Amina Hassan, Accounting Officer</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Decided at</div><div style="font-size:14px;">4 Jun 2027, 14:00 EAT</div></div>
+          <div style="grid-column:span 2;"><div class="kt-label" style="margin-bottom:3px;">Ground</div><div style="font-size:14px;">Inadequate budgetary provision</div></div>
+          <div style="grid-column:span 4;"><div class="kt-label" style="margin-bottom:3px;">Reason</div><div style="font-size:14px;">The confirmed budget available for this procurement is insufficient to proceed.</div></div>
+        </div>
+        <div style="padding:20px 24px;">
+          <h2 style="font-family:var(--font-heading);font-size:19px;font-weight:600;margin:0 0 12px;">Compliance obligations</h2>
+          <table class="table">
+            <thead><tr><th>Obligation</th><th>Due</th><th>Status</th><sc-if value="{{isHolder}}" hint-placeholder-val="{{true}}"><th>Action</th></sc-if></tr></thead>
             <tbody>
-              <tr><td>Candidate notices</td><td>18 Jun 2027</td><td><span class="kt-status is-attention">Outstanding</span></td><td><button type="button" class="btn btn-secondary">Record evidence</button></td></tr>
-              <tr><td>PPRA report</td><td>18 Jun 2027</td><td><span class="kt-status is-attention">Outstanding</span></td><td><button type="button" class="btn btn-secondary">Record evidence</button></td></tr>
+              <tr><td>Cancellation notices</td><td>18 Jun 2027</td><td><span class="kt-status is-attention">Outstanding</span></td><sc-if value="{{isHolder}}" hint-placeholder-val="{{true}}"><td><button type="button" class="btn btn-secondary">Record cancellation notice evidence</button></td></sc-if></tr>
+              <tr><td>PPRA report</td><td>18 Jun 2027</td><td><span class="kt-status is-attention">Outstanding</span></td><sc-if value="{{isHolder}}" hint-placeholder-val="{{true}}"><td><button type="button" class="btn btn-secondary">Record PPRA report evidence</button></td></sc-if></tr>
             </tbody>
           </table>
         </div>
@@ -100,12 +116,13 @@
     </div>
   </div>
 
-  <sc-if value="{{isNotCancelled}}" hint-placeholder-val="{{true}}">
-    <div style="position:sticky;bottom:0;background:var(--color-surface);border-top:1px solid var(--color-divider);padding:16px 40px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
-      <a href="Published Tender.dc.html" style="align-self:center;font-size:13px;">Back</a>
-      <button type="button" class="btn btn-danger" onclick="{{openConfirm}}">Cancel Tender</button>
+  <div style="position:sticky;bottom:0;background:var(--color-surface);border-top:1px solid var(--color-divider);padding:16px 40px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+    <a href="Published Tender.dc.html" style="font-size:13px;">Back</a>
+    <div style="display:flex;gap:12px;">
+      <sc-if value="{{isRequest}}" hint-placeholder-val="{{false}}"><button type="button" class="btn btn-secondary" onclick="{{openClose}}">Close cancellation review</button></sc-if>
+      <sc-if value="{{isOpenAny}}" hint-placeholder-val="{{true}}"><button type="button" class="btn btn-danger" onclick="{{openConfirm}}">Cancel Tender</button></sc-if>
     </div>
-  </sc-if>
+  </div>
 
   <sc-if value="{{confirmOpen}}" hint-placeholder-val="{{false}}">
     <div style="position:fixed;inset:0;z-index:50;">
@@ -115,45 +132,67 @@
           <div class="dialog-body">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
               <div><div class="kt-label" style="margin-bottom:3px;">Ground</div><div style="font-size:14px;">Inadequate budgetary provision</div></div>
-              <div><div class="kt-label" style="margin-bottom:3px;">Tender</div><div style="font-size:14px;">TND-MOH-2027-033</div></div>
-              <div><div class="kt-label" style="margin-bottom:3px;">Decision date</div><div style="font-size:14px;">10 Jun 2027</div></div>
+              <div><div class="kt-label" style="margin-bottom:3px;">Tender</div><div style="font-size:14px;">TND-MOH-2027-034</div></div>
+              <div><div class="kt-label" style="margin-bottom:3px;">Decision date</div><div style="font-size:14px;">4 Jun 2027</div></div>
               <div><div class="kt-label" style="margin-bottom:3px;">Channels</div><div style="font-size:14px;">4</div></div>
             </div>
             <p style="font-size:13px;color:var(--color-neutral-700);margin:0;">The decision is final and the cancellation notices and reports will remain due until evidence is recorded.</p>
           </div>
           <div class="dialog-actions">
-            <button type="button" class="btn btn-secondary" onclick="{{closeConfirm}}">Keep Tender</button>
-            <button type="button" class="btn btn-danger" onclick="{{closeConfirm}}">Cancel Tender</button>
+            <button type="button" class="btn btn-secondary" onclick="{{closeDialogs}}">Keep Tender</button>
+            <button type="button" class="btn btn-danger" onclick="{{closeDialogs}}">Cancel Tender</button>
           </div>
         </div>
       </div>
     </div>
   </sc-if>
 
+  <sc-if value="{{closeOpen}}" hint-placeholder-val="{{false}}">
+    <div style="position:fixed;inset:0;z-index:50;">
+      <div class="dialog-backdrop" style="position:fixed;">
+        <div class="dialog" role="dialog" aria-modal="true">
+          <div class="dialog-title">Close this cancellation review?</div>
+          <div class="dialog-body">
+            <div class="field"><label>Reason</label><textarea class="input" rows="3"></textarea></div>
+            <p style="font-size:13px;color:var(--color-neutral-700);margin:0;">The Tender stays open, the addendum stays blocked and all published content is unchanged.</p>
+          </div>
+          <div class="dialog-actions">
+            <button type="button" class="btn btn-secondary" onclick="{{closeDialogs}}">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="{{closeDialogs}}">Close cancellation review</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
 </div>
-
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { variant: 'base', confirmOpen: false };
+  state = { v: 'base', confirmOpen: false, closeOpen: false };
   renderVals() {
-    const v = this.state.variant;
-    const cls = (name) => v === name ? 'btn btn-primary' : 'btn';
+    const v = this.state.v;
+    const list = [['base', 'AO cancellation'], ['recommend', 'HOPF recommendation'], ['request', 'Cancellation-review request'], ['cancelledPo', 'Cancelled — procurement holder'], ['cancelledAo', 'Cancelled — AO/reader']];
+    const cancelled = v === 'cancelledPo' || v === 'cancelledAo';
+    const G = {
+      base: ['D/D/D/D/C', 'Amina Hassan', 'turn', 'Decide whether to cancel this Tender for inadequate budgetary provision.'],
+      recommend: ['D/D/D/D/C', 'Amina Hassan', 'turn', 'Decide whether to cancel this Tender for inadequate budgetary provision.'],
+      request: ['D/D/D/D/C', 'Amina Hassan', 'turn', 'Consider the request to cancel TND-MOH-2027-039 because the proposed quantity increase cannot be issued by addendum.'],
+      cancelledPo: ['D/D/D/D/C', 'Brian Wafula', 'turn', 'Record the outstanding cancellation notices and PPRA report by 18 Jun 2027.'],
+      cancelledAo: ['D/D/D/D/D', '', 'done', 'Amina Hassan cancelled this Tender on 4 Jun 2027, 14:00 EAT.'],
+    }[v];
     return {
-      setDecision: () => this.setState({ variant: 'base' }),
-      setRecommend: () => this.setState({ variant: 'recommend' }),
-      setCancelled: () => this.setState({ variant: 'cancelled' }),
-      btnDecision: cls('base'), btnRecommend: cls('recommend'), btnCancelled: cls('cancelled'),
-      isCancelled: v === 'cancelled',
-      isNotCancelled: v !== 'cancelled',
-      isRecommend: v === 'recommend',
-      openConfirm: () => this.setState({ confirmOpen: true }),
-      closeConfirm: () => this.setState({ confirmOpen: false }),
-      confirmOpen: this.state.confirmOpen,
+      variants: list.map(([k, label]) => ({ label, cls: k === v ? 'btn btn-primary' : 'btn', select: () => this.setState({ v: k, confirmOpen: false, closeOpen: false }) })),
+      g: { markers: G[0], holder: G[1], kind: G[2], headline: G[3] },
+      badge: cancelled ? 'Cancelled' : 'Published — open', badgeCls: cancelled ? 'kt-status is-critical' : 'kt-status is-live',
+      refLine: v === 'request' ? 'TND-MOH-2027-039' : 'TND-MOH-2027-034',
+      isDecision: v === 'base' || v === 'recommend', isRecommend: v === 'recommend', isRequest: v === 'request',
+      isCancelFixture: v !== 'request', isCancelled: cancelled, isHolder: v === 'cancelledPo', isOpenAny: !cancelled,
+      openConfirm: () => this.setState({ confirmOpen: true }), openClose: () => this.setState({ closeOpen: true }),
+      closeDialogs: () => this.setState({ confirmOpen: false, closeOpen: false }),
+      confirmOpen: this.state.confirmOpen, closeOpen: this.state.closeOpen,
     };
   }
 }
-
 </script>
 </body>
 </html>

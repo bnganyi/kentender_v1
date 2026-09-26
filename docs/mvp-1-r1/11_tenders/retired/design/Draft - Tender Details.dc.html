@@ -14,14 +14,13 @@
     body { margin: 0; }
     a { color: var(--color-accent-700); }
     a:hover { color: var(--color-accent-900); }
-   .table th,.table thead th{text-transform:none;letter-spacing:0;} .kt-disclosure-title{text-transform:none;letter-spacing:0;font-size:15px;}
   </style>
 </helmet>
 <div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:100px;position:relative;">
 
   <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
-    <span style="color:#fff;opacity:.7;font-size:12px;">TPR-DES-03 meeting:</span>
+    <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">TPR-DES-03 meeting:</span>
     <button type="button" class="{{btnNo}}" onclick="{{setNo}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">No meeting</button>
     <button type="button" class="{{btnPhysical}}" onclick="{{setPhysical}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Physical</button>
     <button type="button" class="{{btnOnline}}" onclick="{{setOnline}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Online</button>
@@ -39,11 +38,32 @@
         <p style="font-size:14px;color:var(--color-neutral-700);margin:0;">Set the dates and security suppliers must follow.</p>
       </div>
 
-      <dc-import name="TenderGuidance" markers="C/N/N/N/N" holder="Brian Wafula" kind="turn" headline="Set the Tender dates, security and meeting details." hint-size="100%,96px"></dc-import>
+      <div style="padding:24px 24px 20px;border-bottom:1px solid var(--color-divider);">
+        <div style="display:flex;align-items:center;">
+          <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-weight:600;flex:none;background:var(--color-accent);color:#fff;box-shadow:0 0 0 3px var(--color-accent-100);">1</div>
+          <div style="flex:1;height:2px;margin:0 8px;background:var(--color-neutral-300);"></div>
+          <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-weight:600;flex:none;background:var(--color-surface-2);color:var(--color-neutral-600);">2</div>
+          <div style="flex:1;height:2px;margin:0 8px;background:var(--color-neutral-300);"></div>
+          <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-weight:600;flex:none;background:var(--color-surface-2);color:var(--color-neutral-600);">3</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:12px;">
+        <div style="text-align:left;min-width:0;">
+          <div style="font-size:14px;font-weight:700;margin-bottom:6px;color:var(--color-accent-700);text-wrap:pretty;">Tender details</div>
+          <span class="kt-status is-attention">Needs attention</span>
+        </div>
+        <div style="text-align:center;min-width:0;">
+          <div style="font-size:14px;font-weight:600;margin-bottom:6px;text-wrap:pretty;">Supplier and contract requirements</div>
+          <span class="kt-status is-pending">Not started</span>
+        </div>
+        <div style="text-align:right;min-width:0;">
+          <div style="font-size:14px;font-weight:600;margin-bottom:6px;text-wrap:pretty;">Review and submit</div>
+          <span class="kt-status is-pending">Not started</span>
+        </div>
+        </div>      </div>
 
       <div style="padding:16px 24px;border-bottom:1px solid var(--color-divider);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;">
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px 24px;flex:1;">
-          <div><div class="kt-label" style="margin-bottom:3px;">Purchase</div><div style="font-size:14px;">Clinical training and deployment laptops for digital health rollout</div></div>
+          <div><div class="kt-label" style="margin-bottom:3px;">Purchase</div><div style="font-size:14px;">Clinical training and deployment laptops</div></div>
           <div><div class="kt-label" style="margin-bottom:3px;">Method</div><div style="font-size:14px;">Open Tender</div></div>
           <div><div class="kt-label" style="margin-bottom:3px;">Quantity</div><div style="font-size:14px;">250 Each</div></div>
           <div><div class="kt-label" style="margin-bottom:3px;">Latest delivery</div><div style="font-size:14px;">30 Sep 2027</div></div>
@@ -55,7 +75,7 @@
       </div>
 
       <div style="padding:22px 24px;border-bottom:1px solid var(--color-divider);">
-        <h3 style="font-family:var(--font-heading);font-size:19px;font-weight:600;letter-spacing:0;text-transform:none;border:0;padding-bottom:0;color:var(--color-text);margin:0 0 16px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>Tender dates</h3>
+        <h3 class="kt-card-title" style="margin:0 0 16px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>Tender dates</h3>
         <div class="field" style="margin-bottom:14px;"><label>Tender title</label><input class="input" value="Supply and delivery of business laptops" /></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px;">
           <div class="field" style="margin:0;"><label>Issue date</label><div class="date-field"><span>15 May 2027</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div></div>
@@ -70,7 +90,7 @@
       </div>
 
       <div style="padding:22px 24px;border-bottom:1px solid var(--color-divider);">
-        <h3 style="font-family:var(--font-heading);font-size:19px;font-weight:600;letter-spacing:0;text-transform:none;border:0;padding-bottom:0;color:var(--color-text);margin:0 0 16px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Tender security</h3>
+        <h3 class="kt-card-title" style="margin:0 0 16px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>Tender security</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
           <div><div class="kt-label" style="margin-bottom:3px;">Treatment</div><div style="font-size:14px;color:var(--color-neutral-700);">Fixed by template</div></div>
           <div><div class="kt-label" style="margin-bottom:3px;">Currency</div><div style="font-size:14px;color:var(--color-neutral-700);">KES</div></div>
@@ -79,19 +99,16 @@
       </div>
 
       <div style="padding:22px 24px;">
-        <h3 style="font-family:var(--font-heading);font-size:19px;font-weight:600;letter-spacing:0;text-transform:none;border:0;padding-bottom:0;color:var(--color-text);margin:0 0 16px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Pre-tender meeting</h3>
-        <div class="field" style="margin:0;"><label>Hold a pre-tender meeting?</label>
-          <div class="seg" role="radiogroup" style="width:fit-content;">
-            <label class="seg-opt"><input type="radio" name="meeting" checked="{{noChecked}}" onchange="{{setNo}}" />No</label>
-            <label class="seg-opt"><input type="radio" name="meeting" checked="{{yesChecked}}" onchange="{{setPhysicalIfNone}}" />Yes</label>
-          </div>
+        <h3 class="kt-card-title" style="margin:0 0 16px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Pre-tender meeting</h3>
+        <div class="seg" role="radiogroup" style="margin-bottom:16px;width:fit-content;">
+          <label class="seg-opt"><input type="radio" name="meeting" checked="{{noChecked}}" onchange="{{setNo}}" />No</label>
+          <label class="seg-opt"><input type="radio" name="meeting" checked="{{yesChecked}}" onchange="{{setPhysicalIfNone}}" />Yes</label>
         </div>
         <sc-if value="{{hasMeeting}}" hint-placeholder-val="{{false}}">
-          <div style="border-left:2px solid var(--color-divider);padding:4px 0 4px 16px;margin-top:14px;display:grid;gap:14px;">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
             <div class="field" style="margin:0;"><label>Meeting date/time</label><div class="date-field"><span>22 May 2027, 10:00 EAT</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg></div></div>
             <div class="field" style="margin:0;"><label>Meeting mode</label>
-              <div class="seg" role="radiogroup" style="width:fit-content;">
+              <div class="seg" role="radiogroup">
                 <label class="seg-opt"><input type="radio" name="mode" checked="{{physicalChecked}}" onchange="{{setPhysical}}" />Physical</label>
                 <label class="seg-opt"><input type="radio" name="mode" checked="{{onlineChecked}}" onchange="{{setOnline}}" />Online</label>
               </div>
@@ -103,7 +120,6 @@
           <sc-if value="{{isOnline}}" hint-placeholder-val="{{false}}">
             <div class="field" style="margin:0;"><label>Online joining information</label><input class="input" value="Microsoft Teams — https://meet.example.test/tnd-moh-2027-033" /></div>
           </sc-if>
-          </div>
         </sc-if>
       </div>
 
@@ -122,10 +138,10 @@
     <div style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:40;" onclick="{{closeDrawer}}"></div>
     <div style="position:fixed;top:0;right:0;bottom:0;width:440px;background:var(--color-surface);box-shadow:var(--shadow-lg);z-index:41;overflow-y:auto;padding:24px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <h3 style="font-family:var(--font-heading);font-size:19px;font-weight:600;letter-spacing:0;text-transform:none;border:0;padding-bottom:0;color:var(--color-text);margin:0;">Authorised requisition</h3>
+        <h3 class="kt-card-title" style="margin:0;">Authorised requisition</h3>
         <button type="button" class="btn-icon" onclick="{{closeDrawer}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
       </div>
-      <h4 style="font-size:12px;color:var(--color-neutral-700);margin:16px 0 8px;">Approved purchase and policy context</h4>
+      <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-neutral-700);margin:16px 0 8px;">Approved purchase and policy context</h4>
       <p style="font-size:12px;color:var(--color-neutral-600);margin:0 0 12px;">For internal review only — not included in supplier documents.</p>
       <div style="display:grid;gap:10px;font-size:13px;margin-bottom:20px;">
         <div><span class="kt-label">Plan Item</span> PPI-MOH-2027-033</div>
@@ -138,11 +154,14 @@
         <div><span class="kt-label">Template</span> IT Equipment — Open Tender · Version 1.1</div>
         <div><span class="kt-label">Opening date/time</span> 5 Jun 2027, 11:00 EAT (generated, equal to submission deadline)</div>
       </div>
-      <h4 style="font-size:12px;color:var(--color-neutral-700);margin:16px 0 8px;">Authorised requirements</h4>
-      <table class="table" style="font-size:12px;"><thead><tr><th>Item</th><th>Approved requirement</th><th class="is-num">Quantity</th><th>Delivery</th></tr></thead><tbody><tr><td>Business laptops</td><td>Human Resources Management and Development</td><td class="is-num">100 Each</td><td>Afya House, Nairobi · 30 Sep 2027</td></tr><tr><td>Business laptops</td><td>Digital Health</td><td class="is-num">150 Each</td><td>Afya House, Nairobi · 30 Sep 2027</td></tr></tbody></table>
-      <table class="table" style="font-size:12px;margin-top:12px;"><thead><tr><th>Technical requirement</th><th>Value</th></tr></thead><tbody><tr><td>Electrical compatibility</td><td>Yes — suitable for Kenyan mains supply</td></tr><tr><td>New and unused equipment</td><td>Yes</td></tr><tr><td>Memory</td><td>Minimum 16 GB</td></tr><tr><td>Storage capacity</td><td>Minimum 512 GB</td></tr><tr><td>Storage type</td><td>NVMe SSD</td></tr><tr><td>Display size</td><td>Minimum 14.0 inches</td></tr><tr><td>Battery runtime</td><td>Minimum 8 hours</td></tr><tr><td>Processor requirement</td><td>64-bit business-class processor, minimum 10 cores or equivalent benchmark</td></tr><tr><td>Operating-system compatibility</td><td>Approved organisational Windows environment</td></tr><tr><td>Network connectivity</td><td>Wi-Fi 6 and Bluetooth 5 or later</td></tr><tr><td>Required ports</td><td>USB-C ×2; USB-A ×2; HDMI ×1</td></tr></tbody></table>
-      <table class="table" style="font-size:12px;margin-top:12px;"><thead><tr><th>Warranty and support</th><th>Value</th></tr></thead><tbody><tr><td>Minimum warranty</td><td>36 months</td></tr><tr><td>On-site support required</td><td>Yes</td></tr><tr><td>Maximum support response</td><td>8 hours</td></tr><tr><td>Manufacturer support required</td><td>Yes</td></tr><tr><td>Service location constraint</td><td>Within Kenya</td></tr><tr><td>Support description</td><td>Supplier to provide escalation and warranty-contact details.</td></tr></tbody></table>
-      <table class="table" style="font-size:12px;margin-top:12px;"><thead><tr><th>Acceptance check</th><th>Pass condition</th><th>Evidence</th></tr></thead><tbody><tr><td>Quantity</td><td>Delivered quantities equal the authorised schedule</td><td>Inspection record</td></tr><tr><td>Physical condition</td><td>No visible damage and all listed accessories are present</td><td>Inspection record</td></tr><tr><td>Required specification</td><td>Every delivered unit complies with all mandatory technical rows</td><td>Inspection record</td></tr><tr><td>Functional test</td><td>Each device powers on and completes the agreed basic functional test</td><td>Test result</td></tr><tr><td>Documents received</td><td>Warranty and delivery documents are received and verified</td><td>Certificate</td></tr></tbody></table>
+      <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--color-neutral-700);margin:16px 0 8px;">Authorised requirements</h4>
+      <table class="table" style="font-size:12px;">
+        <thead><tr><th>Item</th><th style="text-align:right;">Quantity</th></tr></thead>
+        <tbody>
+          <tr><td>Business laptops</td><td class="is-num">250 Each</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:12px;color:var(--color-neutral-600);margin-top:8px;">11 technical requirements · 6 warranty/support facts · 5 acceptance checks carried in full.</p>
     </div>
   </sc-if>
 

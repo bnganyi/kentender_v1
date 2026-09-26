@@ -10,17 +10,19 @@
 <helmet>
   <link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
   <script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
-  <style>body{margin:0;} a{color:var(--color-accent-700);} a:hover{color:var(--color-accent-900);}</style>
+  <style>body{margin:0;} a{color:var(--color-accent-700);} a:hover{color:var(--color-accent-900);} .table th,.table thead th{text-transform:none;letter-spacing:0;} .kt-disclosure-title{text-transform:none;letter-spacing:0;font-size:15px;}
+  </style>
 </helmet>
 <div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:100px;position:relative;">
   <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
-    <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">TPR-DES-09:</span>
+    <span style="color:#fff;opacity:.7;font-size:12px;">TPR-DES-09:</span>
     <button type="button" class="{{btnHopf}}" onclick="{{setHopf}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">HOPF</button>
     <button type="button" class="{{btnAo}}" onclick="{{setAo}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Accounting Officer</button>
     <button type="button" class="{{btnPo}}" onclick="{{setPo}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Procurement Officer</button>
     <button type="button" class="{{btnReader}}" onclick="{{setReader}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Reader</button>
-    <button type="button" class="{{btnEnded}}" onclick="{{setEnded}}" style="font-size:12px;padding:6px 12px;margin-left:auto;">Submission ended</button>
+    <button type="button" class="{{btnNoAdd}}" onclick="{{setNoAdd}}" style="font-size:12px;padding:6px 12px;margin-left:auto;color:#fff;border-color:rgba(255,255,255,.45);">No addendum</button>
+    <button type="button" class="{{btnEnded}}" onclick="{{setEnded}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Submission ended</button>
   </div>
 
   <div data-screen-label="TPR-DES-09 Published Tender" style="max-width:1100px;margin:0 auto;padding:32px 40px 0;">
@@ -34,17 +36,16 @@
             <sc-if value="{{isOpen}}" hint-placeholder-val="{{true}}"><span class="kt-status is-live">Published &mdash; open</span></sc-if>
           </div>
           <p style="font-size:13px;color:var(--color-neutral-600);margin:0 0 10px;">TND-MOH-2027-033</p>
-          <p style="font-size:14px;color:var(--color-neutral-700);margin:0;">
-            <sc-if value="{{isOpen}}" hint-placeholder-val="{{true}}">Published and open for supplier submissions.</sc-if>
-            <sc-if value="{{isEnded}}" hint-placeholder-val="{{false}}">Supplier submission is closed. The proceeding has moved to the next procurement stage.</sc-if>
-          </p>
+          <sc-if value="{{isOpen}}" hint-placeholder-val="{{true}}"><p style="font-size:14px;color:var(--color-neutral-700);margin:0;">Published and open for supplier submissions.</p></sc-if>
         </div>
         <button type="button" class="btn btn-secondary" style="flex-shrink:0;">View public Tender</button>
       </div>
 
+      <dc-import name="TenderGuidance" markers="{{gMarkers}}" holder="{{gHolder}}" kind="{{gKind}}" headline="{{gHeadline}}" sentence="{{gSentence}}" hint-size="100%,96px"></dc-import>
+
       <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
         <div><div class="kt-label" style="margin-bottom:3px;">Published at</div><div style="font-size:14px;">15 May 2027, 08:00 EAT</div></div>
-        <div><div class="kt-label" style="margin-bottom:3px;">Current submission deadline</div><div style="font-size:14px;"><sc-if value="{{isOpen}}" hint-placeholder-val="{{true}}">12 Jun 2027, 11:00 EAT</sc-if><sc-if value="{{isEnded}}" hint-placeholder-val="{{false}}">12 Jun 2027, 11:00 EAT (ended)</sc-if></div></div>
+        <div><div class="kt-label" style="margin-bottom:3px;">Current submission deadline</div><div style="font-size:14px;">{{deadline}}</div></div>
         <div><div class="kt-label" style="margin-bottom:3px;">Publication authorised by</div><div style="font-size:14px;">Amina Hassan</div></div>
         <div><div class="kt-label" style="margin-bottom:3px;">Effective addenda</div><div style="font-size:14px;"><sc-if value="{{hasAddenda}}" hint-placeholder-val="{{true}}">1</sc-if><sc-if value="{{noAddenda}}" hint-placeholder-val="{{false}}">0</sc-if></div></div>
       </div>
@@ -56,56 +57,43 @@
       </div>
 
       <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);">
-        <div class="kt-card-title" style="margin-bottom:12px;">Publication channels</div>
+        <div style="font-family:var(--font-heading);font-size:19px;font-weight:600;letter-spacing:0;text-transform:none;border:0;padding-bottom:0;color:var(--color-text);margin-bottom:12px;">Publication channels</div>
         <table class="table">
           <thead><tr><th>Channel</th><th>Result</th><th>Available at</th><th>Confirmation</th></tr></thead>
           <tbody>
             <tr><td>State Portal</td><td><span class="kt-status is-live">Confirmed</span></td><td>15 May 08:00</td><td><a href="#">View confirmation</a></td></tr>
             <tr><td>Ministry website</td><td><span class="kt-status is-live">Confirmed</span></td><td>15 May 08:00</td><td><a href="#">View confirmation</a></td></tr>
-            <tr><td>Notice board</td><td><span class="kt-status is-live">Confirmed</span></td><td>15 May 08:15</td><td><a href="#">View confirmation</a></td></tr>
-            <tr><td>Two national newspapers</td><td><span class="kt-status is-live">Confirmed</span></td><td>15 May 08:20</td><td><a href="#">View confirmation</a></td></tr>
+            <tr><td>Notice board</td><td><span class="kt-status is-live">Confirmed</span></td><td>15 May 08:00</td><td><a href="#">View confirmation</a></td></tr>
+            <tr><td>Two national newspapers</td><td><span class="kt-status is-live">Confirmed</span></td><td>15 May 08:00</td><td><a href="#">View confirmation</a></td></tr>
           </tbody>
         </table>
       </div>
 
       <div style="padding:20px 24px;border-bottom:1px solid var(--color-divider);">
-        <div class="kt-card-title" style="margin-bottom:12px;">Changes and notices</div>
+        <div style="font-family:var(--font-heading);font-size:19px;font-weight:600;letter-spacing:0;text-transform:none;border:0;padding-bottom:0;color:var(--color-text);margin-bottom:12px;">Changes and notices</div>
         <sc-if value="{{hasAddenda}}" hint-placeholder-val="{{true}}">
           <table class="table" style="margin-bottom:16px;">
             <thead><tr><th>Addendum</th><th>Change</th><th>Issued</th><th>Deadline</th><th></th></tr></thead>
             <tbody><tr><td>ADD-MOH-2027-033-001</td><td>Delivery point clarified</td><td>31 May 2027, 09:00 EAT</td><td>12 Jun 2027, 11:00 EAT</td><td><a href="#">View</a></td></tr></tbody>
           </table>
         </sc-if>
-        <sc-if value="{{noAddenda}}" hint-placeholder-val="{{false}}"><p class="card-body">No addenda have been issued.</p></sc-if>
-
-        <sc-if value="{{hasAddenda}}" hint-placeholder-val="{{true}}">
-          <table class="table">
-            <thead><tr><th>Addendum</th><th>Question</th><th>Received</th><th>Response status</th><th></th></tr></thead>
-            <tbody><tr><td>ADD-MOH-2027-033-001</td><td>Does the clarified delivery point apply to all lots?</td><td>1 Jun 2027, 09:00 EAT</td><td><span class="kt-status is-live">Answered</span></td><td><a href="#">View</a></td></tr></tbody>
-          </table>
-        </sc-if>
-        <sc-if value="{{noAddenda}}" hint-placeholder-val="{{false}}"><p class="card-body">No addendum inquiries have been received.</p></sc-if>
+        <sc-if value="{{noAddenda}}" hint-placeholder-val="{{false}}"><p class="card-body" style="margin:0 0 16px;">No addenda have been issued.</p></sc-if>
+        <table class="table">
+          <thead><tr><th>Question</th><th>Related notice</th><th>Received</th><th>Response status</th><th>Candidate notice</th><th>Action</th></tr></thead>
+          <tbody><tr><td>{{clarQuestion}}</td><td>None</td><td>26 May 2027, 09:00 EAT</td><td><span class="kt-status is-live">Answered</span></td><td>1 of 1 delivered</td><td><a href="#">View</a></td></tr></tbody>
+        </table>
       </div>
 
       <div style="padding:8px 24px 22px;">
-        <div class="kt-card-title" style="margin:14px 0 4px;">Tender content</div>
-        <div class="kt-disclosure" style="margin-top:10px;"><div class="kt-disclosure-head" onclick="{{t0}}"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Tender details</span></div><svg class="kt-disclosure-chevron {{c0}}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div><sc-if value="{{o0}}" hint-placeholder-val="{{false}}"><div class="kt-disclosure-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;"><div><div class="kt-label" style="margin-bottom:3px;">Purchase</div><div style="font-size:14px;">Supply and delivery of business laptops</div></div><div><div class="kt-label" style="margin-bottom:3px;">Method</div><div style="font-size:14px;">Open Tender</div></div><div><div class="kt-label" style="margin-bottom:3px;">Reservation category</div><div style="font-size:14px;">Youth</div></div><div><div class="kt-label" style="margin-bottom:3px;">Delivery terms</div><div style="font-size:14px;">DAP Central Warehouse, Nairobi &middot; 30 Sep 2027 latest delivery</div></div></div></div></sc-if></div>
-        <div class="kt-disclosure" style="margin-top:10px;"><div class="kt-disclosure-head" onclick="{{t1}}"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Requirements from the authorised requisition</span></div><svg class="kt-disclosure-chevron {{c1}}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div><sc-if value="{{o1}}" hint-placeholder-val="{{false}}"><div class="kt-disclosure-body"><table class="table"><thead><tr><th>Item</th><th>Specification</th><th class="is-num">Quantity</th></tr></thead><tbody><tr><td>Business laptop</td><td>Intel i5, 16GB RAM, 512GB SSD, 14&Prime; display</td><td class="is-num">250 Each</td></tr></tbody></table></div></sc-if></div>
-        <div class="kt-disclosure" style="margin-top:10px;"><div class="kt-disclosure-head" onclick="{{t2}}"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Supplier pricing schedule</span></div><svg class="kt-disclosure-chevron {{c2}}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div><sc-if value="{{o2}}" hint-placeholder-val="{{false}}"><div class="kt-disclosure-body"><table class="table"><thead><tr><th>Line</th><th class="is-num">Quantity</th><th class="is-num">Unit price</th><th class="is-num">Total</th></tr></thead><tbody><tr><td>Business laptops</td><td class="is-num">250 Each</td><td class="is-num" style="color:var(--color-neutral-600);">Completed by supplier</td><td class="is-num" style="color:var(--color-neutral-600);">Calculated from supplier response</td></tr></tbody></table></div></sc-if></div>
-        <div class="kt-disclosure" style="margin-top:10px;"><div class="kt-disclosure-head" onclick="{{t3}}"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Supplier and evaluation requirements</span></div><svg class="kt-disclosure-chevron {{c3}}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div><sc-if value="{{o3}}" hint-placeholder-val="{{false}}"><div class="kt-disclosure-body"><table class="table">
-              <thead><tr><th>Requirement</th><th>Detail</th></tr></thead>
-              <tbody>
-                <tr><td>Manufacturer authorisation</td><td>Required</td></tr>
-                <tr><td>Product datasheets</td><td>Required</td></tr>
-                <tr><td>Warranty confirmation</td><td>Required</td></tr>
-                <tr><td>Past supply experience</td><td>2 contracts / 5 years</td></tr>
-                <tr><td>After-sales support evidence</td><td>Kenya service-centre details</td></tr>
-              </tbody>
-            </table></div></sc-if></div>
-        <div class="kt-disclosure" style="margin-top:10px;"><div class="kt-disclosure-head" onclick="{{t4}}"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Contract terms</span></div><svg class="kt-disclosure-chevron {{c4}}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div><sc-if value="{{o4}}" hint-placeholder-val="{{false}}"><div class="kt-disclosure-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;"><div><div class="kt-label" style="margin-bottom:3px;">Inspection and acceptance location</div><div style="font-size:14px;">Ministry of Health Central Warehouse, Loading Bay 3, Nairobi</div></div><div><div class="kt-label" style="margin-bottom:3px;">Payment timing</div><div style="font-size:14px;">30 days from acceptance</div></div><div><div class="kt-label" style="margin-bottom:3px;">Performance security</div><div style="font-size:14px;">10% of contract value</div></div><div><div class="kt-label" style="margin-bottom:3px;">Delay damages</div><div style="font-size:14px;">0.5% of contract value per week, capped at 10%</div></div></div></div></sc-if></div>
-        <div class="kt-disclosure" style="margin-top:10px;"><div class="kt-disclosure-head" onclick="{{t5}}"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Technical evidence</span></div><svg class="kt-disclosure-chevron {{c5}}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div><sc-if value="{{o5}}" hint-placeholder-val="{{false}}"><div class="kt-disclosure-body"><table class="table"><thead><tr><th>Evidence</th><th>Proves</th><th>Status</th></tr></thead><tbody><tr><td>Manufacturer authorisation letter</td><td>Manufacturer authorisation</td><td><span class="kt-status is-live">Verified</span></td></tr><tr><td>Product datasheet</td><td>Technical specification</td><td><span class="kt-status is-live">Verified</span></td></tr></tbody></table></div></sc-if></div>
+        <div style="font-family:var(--font-heading);font-size:19px;font-weight:600;letter-spacing:0;text-transform:none;border:0;padding-bottom:0;color:var(--color-text);margin:14px 0 4px;">Tender content</div>
+        <div class="kt-disclosure" style="margin-top:10px;"><div class="kt-disclosure-head" onclick="{{t0}}"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Tender details</span></div><svg class="kt-disclosure-chevron {{c0}}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div><sc-if value="{{o0}}" hint-placeholder-val="{{false}}"><div class="kt-disclosure-body"><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 24px;"><div style="grid-column:span 2;"><div class="kt-label" style="margin-bottom:3px;">Tender title</div><div style="font-size:14px;">Supply and delivery of business laptops</div></div><div><div class="kt-label" style="margin-bottom:3px;">Issue date</div><div style="font-size:14px;">15 May 2027</div></div><div><div class="kt-label" style="margin-bottom:3px;">Clarification deadline</div><div style="font-size:14px;">27 May 2027, 17:00 EAT</div></div><div><div class="kt-label" style="margin-bottom:3px;">Submission deadline</div><div style="font-size:14px;">5 Jun 2027, 11:00 EAT</div></div><div><div class="kt-label" style="margin-bottom:3px;">Tender validity</div><div style="font-size:14px;">120 days</div></div><div><div class="kt-label" style="margin-bottom:3px;">Tender security</div><div style="font-size:14px;">KES 500,000.00</div></div><div><div class="kt-label" style="margin-bottom:3px;">Pre-tender meeting</div><div style="font-size:14px;">No</div></div></div></div></sc-if></div>
+        <div class="kt-disclosure" style="margin-top:10px;"><div class="kt-disclosure-head" onclick="{{t1}}"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Requirements from the authorised requisition</span></div><svg class="kt-disclosure-chevron {{c1}}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div><sc-if value="{{o1}}" hint-placeholder-val="{{false}}"><div class="kt-disclosure-body"><div><h4 style="font-size:14px;font-weight:700;margin:0 0 8px;">Equipment</h4><table class="table"><thead><tr><th>Item</th><th>Approved requirement</th><th class="is-num">Quantity</th><th>Intended use</th><th>Delivery</th></tr></thead><tbody><tr><td>Business laptops</td><td>Human Resources Management and Development</td><td class="is-num">100 Each</td><td>Clinical training</td><td>Afya House, Nairobi · 30 Sep 2027</td></tr><tr><td>Business laptops</td><td>Digital Health</td><td class="is-num">150 Each</td><td>Field digital-health deployment</td><td>Afya House, Nairobi · 30 Sep 2027</td></tr></tbody></table><h4 style="font-size:14px;font-weight:700;margin:18px 0 8px;">Technical requirements</h4><table class="table"><thead><tr><th>Requirement</th><th>Comparison</th><th>Value</th><th>Unit</th></tr></thead><tbody><tr><td>Electrical compatibility</td><td>Required</td><td>Yes — suitable for Kenyan mains supply</td><td>—</td></tr><tr><td>New and unused equipment</td><td>Required</td><td>Yes</td><td>—</td></tr><tr><td>Memory</td><td>Minimum</td><td>16</td><td>GB</td></tr><tr><td>Storage capacity</td><td>Minimum</td><td>512</td><td>GB</td></tr><tr><td>Storage type</td><td>One of</td><td>NVMe SSD</td><td>—</td></tr><tr><td>Display size</td><td>Minimum</td><td>14.0</td><td>inches</td></tr><tr><td>Battery runtime</td><td>Minimum</td><td>8</td><td>hours</td></tr><tr><td>Processor requirement</td><td>Minimum</td><td>64-bit business-class processor, minimum 10 cores or equivalent benchmark</td><td>—</td></tr><tr><td>Operating-system compatibility</td><td>Required</td><td>Approved organisational Windows environment</td><td>—</td></tr><tr><td>Network connectivity</td><td>Required</td><td>Wi-Fi 6 and Bluetooth 5 or later</td><td>—</td></tr><tr><td>Required ports</td><td>Required</td><td>USB-C ×2; USB-A ×2; HDMI ×1</td><td>—</td></tr></tbody></table><h4 style="font-size:14px;font-weight:700;margin:18px 0 8px;">Warranty and support</h4><table class="table"><thead><tr><th>Label</th><th>Value</th></tr></thead><tbody><tr><td>Minimum warranty</td><td>36 months</td></tr><tr><td>On-site support required</td><td>Yes</td></tr><tr><td>Maximum support response</td><td>8 hours</td></tr><tr><td>Manufacturer support required</td><td>Yes</td></tr><tr><td>Service location constraint</td><td>Within Kenya</td></tr><tr><td>Support description</td><td>Supplier to provide escalation and warranty-contact details.</td></tr></tbody></table><h4 style="font-size:14px;font-weight:700;margin:18px 0 8px;">Acceptance checks</h4><table class="table"><thead><tr><th>Check</th><th>Applies to</th><th>Pass condition</th><th>Evidence</th></tr></thead><tbody><tr><td>Quantity</td><td>All items</td><td>Delivered quantities equal the authorised schedule</td><td>Inspection record</td></tr><tr><td>Physical condition</td><td>All items</td><td>No visible damage and all listed accessories are present</td><td>Inspection record</td></tr><tr><td>Required specification</td><td>All items</td><td>Every delivered unit complies with all mandatory technical rows</td><td>Inspection record</td></tr><tr><td>Functional test</td><td>All items</td><td>Each device powers on and completes the agreed basic functional test</td><td>Test result</td></tr><tr><td>Documents received</td><td>All items</td><td>Warranty and delivery documents are received and verified</td><td>Certificate</td></tr></tbody></table></div></div></sc-if></div>
+        <div class="kt-disclosure" style="margin-top:10px;"><div class="kt-disclosure-head" onclick="{{t2}}"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Supplier pricing schedule</span></div><svg class="kt-disclosure-chevron {{c2}}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div><sc-if value="{{o2}}" hint-placeholder-val="{{false}}"><div class="kt-disclosure-body"><table class="table"><thead><tr><th>Line</th><th class="is-num">Quantity</th><th>Unit price</th><th>Tax</th><th>Total</th></tr></thead><tbody><tr><td>Business laptops</td><td class="is-num">250 Each</td><td><span style="color:var(--color-neutral-700);">Completed by supplier</span></td><td><span style="color:var(--color-neutral-700);">Completed by supplier</span></td><td><span style="color:var(--color-neutral-700);">Calculated from supplier response</span></td></tr></tbody></table></div></sc-if></div>
+        <div class="kt-disclosure" style="margin-top:10px;"><div class="kt-disclosure-head" onclick="{{t3}}"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Supplier and evaluation requirements</span></div><svg class="kt-disclosure-chevron {{c3}}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div><sc-if value="{{o3}}" hint-placeholder-val="{{false}}"><div class="kt-disclosure-body"><div><table class="table"><thead><tr><th>Requirement</th><th>Detail</th></tr></thead><tbody><tr><td>Youth reservation declaration and evidence</td><td>Suppliers must declare Youth eligibility and provide the published certificate reference, validity and evidence</td></tr><tr><td>Manufacturer authorisation</td><td>Yes</td></tr><tr><td>Product datasheets or brochures</td><td>Yes</td></tr><tr><td>Warranty confirmation</td><td>Yes — required by authorised requisition</td></tr><tr><td>Past supply experience</td><td>Yes; 2 comparable contracts in 5 years</td></tr><tr><td>After-sales support evidence</td><td>Kenya service-centre details and escalation contacts</td></tr></tbody></table><h4 style="font-size:14px;font-weight:700;margin:18px 0 8px;">How suppliers will be evaluated</h4><ol style="margin:0;padding-left:18px;font-size:14px;line-height:1.7;"><li>Eligibility</li><li>Technical compliance</li><li>Financial</li><li>Award</li></ol></div></div></sc-if></div>
+        <div class="kt-disclosure" style="margin-top:10px;"><div class="kt-disclosure-head" onclick="{{t4}}"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Contract terms</span></div><svg class="kt-disclosure-chevron {{c4}}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div><sc-if value="{{o4}}" hint-placeholder-val="{{false}}"><div class="kt-disclosure-body"><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 24px;"><div style="grid-column:span 2;"><div class="kt-label" style="margin-bottom:3px;">Inspection and acceptance location</div><div style="font-size:14px;">Ministry of Health Headquarters, Afya House, Nairobi</div></div><div><div class="kt-label" style="margin-bottom:3px;">Payment timing</div><div style="font-size:14px;">30 days</div></div><div><div class="kt-label" style="margin-bottom:3px;">Performance security</div><div style="font-size:14px;">Yes; 10%</div></div><div><div class="kt-label" style="margin-bottom:3px;">Delay damages</div><div style="font-size:14px;">0.5% per week; maximum 10%</div></div><div><div class="kt-label" style="margin-bottom:3px;">Contract contact office</div><div style="font-size:14px;">Ministry of Health Procurement Office</div></div></div></div></sc-if></div>
+        <div class="kt-disclosure" style="margin-top:10px;"><div class="kt-disclosure-head" onclick="{{t5}}"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Technical evidence</span></div><svg class="kt-disclosure-chevron {{c5}}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div><sc-if value="{{o5}}" hint-placeholder-val="{{false}}"><div class="kt-disclosure-body"><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 24px;"><div><div class="kt-label" style="margin-bottom:3px;">Template</div><div style="font-size:14px;">IT Equipment — Open Tender · Version 1.1</div></div><div><div class="kt-label" style="margin-bottom:3px;">Reservation rule</div><div style="font-size:14px;">Applicable verified Youth reservation rule · Version 1</div></div><div><div class="kt-label" style="margin-bottom:3px;">Requisition</div><div style="font-size:14px;">REQ-MOH-2027-033-001 · Authorised · Version 1</div></div><div><div class="kt-label" style="margin-bottom:3px;">Plan Item</div><div style="font-size:14px;">PPI-MOH-2027-033</div></div><div style="grid-column:span 2;"><div class="kt-label" style="margin-bottom:3px;">Item/source lineage</div><div style="font-size:14px;">SRC-MOH-033-001 · 100 Each; SRC-MOH-033-002 · 150 Each</div></div></div></div></sc-if></div>
 
-        <div class="kt-card-title" style="margin:20px 0 4px;">History and evidence</div>
+        <div style="font-family:var(--font-heading);font-size:19px;font-weight:600;letter-spacing:0;text-transform:none;border:0;padding-bottom:0;color:var(--color-text);margin:20px 0 4px;">History and evidence</div>
         <div class="kt-disclosure" style="margin-top:10px;"><div class="kt-disclosure-head" onclick="{{t6}}"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Decisions and attempts</span></div><svg class="kt-disclosure-chevron {{c6}}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div>
           <sc-if value="{{o6}}" hint-placeholder-val="{{false}}">
             <div class="kt-disclosure-body">
@@ -122,7 +110,9 @@
     </div>
   </div>
 
-  <div style="position:sticky;bottom:0;background:var(--color-surface);border-top:1px solid var(--color-divider);padding:16px 40px;display:flex;justify-content:flex-end;align-items:center;gap:12px;">
+  <div style="position:sticky;bottom:0;background:var(--color-surface);border-top:1px solid var(--color-divider);padding:16px 40px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+    <a href="Tenders Workspace.dc.html" style="font-size:13px;">Back to Tenders</a>
+    <div style="display:flex;gap:12px;">
     <sc-if value="{{showHopfActions}}" hint-placeholder-val="{{true}}">
       <button type="button" class="btn btn-secondary">Recommend cancellation</button>
       <button type="button" class="btn btn-primary">Prepare addendum</button>
@@ -133,9 +123,7 @@
     <sc-if value="{{showAoActions}}" hint-placeholder-val="{{false}}">
       <button type="button" class="btn btn-danger">Cancel Tender</button>
     </sc-if>
-    <sc-if value="{{showReaderActions}}" hint-placeholder-val="{{false}}">
-      <span style="font-size:13px;color:var(--color-neutral-600);">No business action available for this role.</span>
-    </sc-if>
+    </div>
   </div>
 
 </div>
@@ -143,7 +131,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { role: 'hopf', ended: false, open: [false,false,false,false,false,false,false] };
+  state = { role: 'hopf', ended: false, noAdd: false, open: [false,false,false,false,false,false,false] };
   renderVals() {
     const r = this.state.role;
     const cls = (name) => r === name ? 'btn btn-primary' : 'btn';
@@ -165,8 +153,22 @@ class Component extends DCLogic {
       btnEnded: this.state.ended ? 'btn btn-primary' : 'btn',
       isOpen: !this.state.ended,
       isEnded: this.state.ended,
-      hasAddenda: true,
-      noAddenda: false,
+      setNoAdd: () => this.setState((s) => ({ noAdd: !s.noAdd })),
+      btnNoAdd: this.state.noAdd ? 'btn btn-primary' : 'btn',
+      hasAddenda: !this.state.noAdd,
+      noAddenda: this.state.noAdd,
+      deadline: this.state.noAdd ? '5 Jun 2027, 11:00 EAT' : '12 Jun 2027, 11:00 EAT',
+      clarQuestion: 'May the two comparable contracts be from different customers?',
+      ...(() => {
+        if (this.state.ended) return { gMarkers: 'D/D/D/D/D', gHolder: '', gKind: 'done', gHeadline: 'The system closed supplier submission at 12 Jun 2027, 11:00 EAT.', gSentence: '' };
+        const m = {
+          hopf: ['Charles Mutiso', 'turn', 'Prepare an addendum or recommend cancellation if the open Tender needs it.', 'These are available options, not overdue work.'],
+          po: ['Brian Wafula', 'turn', 'Prepare an addendum if the published Tender needs a non-material correction.', 'This is an available option, not assigned work.'],
+          ao: ['Amina Hassan', 'turn', 'You can cancel this open Tender on an applicable ground.', 'This is an available option, not an assigned cancellation review.'],
+          reader: ['', 'none', '', ''],
+        }[r];
+        return { gMarkers: 'D/D/D/D/C', gHolder: m[0], gKind: m[1], gHeadline: m[2], gSentence: m[3] };
+      })(),
       showHopfActions: !this.state.ended && r === 'hopf',
       showPoActions: !this.state.ended && r === 'po',
       showAoActions: !this.state.ended && r === 'ao',

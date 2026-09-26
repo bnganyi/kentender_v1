@@ -16,14 +16,13 @@
     a:hover { color: var(--color-accent-900); }
     .dialog-demo { position: relative; min-height: 640px; }
     .dialog-demo .dialog-backdrop { position: absolute; }
-   .table th,.table thead th{text-transform:none;letter-spacing:0;} .kt-disclosure-title{text-transform:none;letter-spacing:0;font-size:15px;}
   </style>
 </helmet>
 <div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);padding-bottom:60px;">
 
   <div style="background:var(--color-accent-900);padding:12px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
     <a href="Index.dc.html" style="color:#fff;opacity:.75;font-size:12px;text-decoration:none;margin-right:10px;">&larr; Index</a>
-    <span style="color:#fff;opacity:.7;font-size:12px;">TPR-DES-02:</span>
+    <span style="color:#fff;opacity:.55;font-size:11px;text-transform:uppercase;letter-spacing:.06em;">TPR-DES-02:</span>
     <button type="button" class="{{btnSupported}}" onclick="{{setSupported}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Supported requisition</button>
     <button type="button" class="{{btnUnsupported}}" onclick="{{setUnsupported}}" style="font-size:12px;padding:6px 12px;color:#fff;border-color:rgba(255,255,255,.45);">Unsupported product</button>
   </div>
@@ -31,7 +30,7 @@
   <div class="dialog-demo" style="max-width:1100px;margin:0 auto;">
     <div style="padding:36px 40px 0;filter:blur(1px);opacity:.55;">
       <div class="card blueprint elev-sm" style="padding:24px;">
-        <div style="font-family:var(--font-heading);font-size:19px;font-weight:600;letter-spacing:0;text-transform:none;border:0;padding-bottom:0;color:var(--color-text);margin-bottom:10px;">Tenders</div>
+        <div class="kt-card-title" style="margin-bottom:10px;">Tenders</div>
         <div style="height:12px;width:60%;background:var(--color-neutral-200);margin-bottom:8px;"></div>
         <div style="height:12px;width:40%;background:var(--color-neutral-200);"></div>
       </div>
@@ -45,13 +44,13 @@
         </div>
         <div class="dialog-body">
           <p style="margin:0 0 16px;">A Draft Tender will be created from the authorised requisition below.</p>
-          <div style="display:grid;margin-bottom:16px;border-top:1px solid var(--color-divider);">
-            <div style="display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px;padding:8px 0;border-bottom:1px solid var(--color-divider);"><div class="kt-label">Purchase</div><div style="font-size:14px;">{{purchase}}</div></div>
-            <div style="display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px;padding:8px 0;border-bottom:1px solid var(--color-divider);"><div class="kt-label">Requisition</div><div style="font-size:14px;">{{requisition}}</div></div>
-            <div style="display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px;padding:8px 0;border-bottom:1px solid var(--color-divider);"><div class="kt-label">Quantity</div><div style="font-size:14px;">{{quantity}}</div></div>
-            <div style="display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px;padding:8px 0;border-bottom:1px solid var(--color-divider);"><div class="kt-label">Approved value</div><div style="font-size:14px;">{{value}}</div></div>
-            <div style="display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px;padding:8px 0;border-bottom:1px solid var(--color-divider);"><div class="kt-label">Method</div><div style="font-size:14px;">Open Tender</div></div>
-            <div style="display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px;padding:8px 0;border-bottom:1px solid var(--color-divider);"><div class="kt-label">Latest delivery</div><div style="font-size:14px;">{{delivery}}</div></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin-bottom:16px;">
+            <div><div class="kt-label" style="margin-bottom:3px;">Purchase</div><div style="font-size:14px;">{{purchase}}</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Requisition</div><div style="font-size:14px;">{{requisition}}</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Quantity</div><div style="font-size:14px;">{{quantity}}</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Approved value</div><div style="font-size:14px;">{{value}}</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Method</div><div style="font-size:14px;">Open Tender</div></div>
+            <div><div class="kt-label" style="margin-bottom:3px;">Latest delivery</div><div style="font-size:14px;">{{delivery}}</div></div>
           </div>
 
           <sc-if value="{{isSupported}}" hint-placeholder-val="{{true}}">
@@ -69,7 +68,7 @@
                   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:13px;">
                     <div>Category: Goods</div><div>Product: Straightforward off-the-shelf IT equipment</div>
                     <div>Method: Open Tender</div><div>Reservation: Youth</div>
-                    <div>County-residents restriction: Not applicable</div><div>Lotting: Single lot</div><div>Currency: KES</div>
+                    <div>Lotting: Single lot</div><div>Currency: KES</div>
                     <div>Award package: One</div><div>Plan horizon: Single year</div>
                   </div>
                 </div>
@@ -82,7 +81,7 @@
               </div>
               <sc-if value="{{templateOpen}}" hint-placeholder-val="{{false}}">
                 <div class="kt-disclosure-body">
-                  <div style="font-size:13px;">Template: IT Equipment — Open Tender · Version 1.1<br />Official source: PPRA Goods Standard Tender Document<br />Reservation rule: Applicable verified Youth reservation rule · Version 1</div>
+                  <div style="font-size:13px;">Template: IT Equipment — Open Tender · Version 1.1<br />Official source: REQ-MOH-2027-033-001 · Version 1</div>
                 </div>
               </sc-if>
             </div>
