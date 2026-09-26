@@ -17,10 +17,10 @@ windows, catalogues, the governed funding source, the regulatory reference,
 UOMs, actors and their responsibility assignments), ``strategy`` the
 STR-CHG-001 §14 plan, ``budget`` the BUD-CHG-001 §15.3 Active baseline,
 ``needs`` the NDS-CHG-001 §14.3 default Needs, ``planning`` the
-PLN-CHG-001 §14 integrated baseline, ``requisitions`` the REQ-CHG-001 v1.6
+PLN-CHG-001 §14 integrated baseline, ``requisitions`` the REQ-CHG-001 v1.11
 §16 Authorised Requisition on the one eligible combined Plan Item, and
-``tenders`` the TPR-CHG-001 v0.8 §13.3 primary Tender lifecycle on that
-Requisition's handoff (added by the Tenders module). Each stage calls the owning
+``tenders`` the TPR-CHG-001 v0.12 §13.3 primary Tender lifecycle on that
+Requisition's handoff. Each stage calls the owning
 module's own canonical-shaped seed function directly — never the legacy
 multi-PE `kentender_core.seeds.kentender_mvp_v1.orchestrator` — so seeding
 through any stage never creates `PE-CGKIS` or any second Procuring Entity.
@@ -75,10 +75,12 @@ REGISTER_LOCAL_PARTS: tuple[str, ...] = (
 	"daniel.rotich",
 	"charles.mutiso",
 	"brian.wafula",
-	# TPR-CHG-001 v0.8 §13.1 (plan D8) — the bidder-facing service identity
-	# that delivers addendum inquiries; a canonical service account, never a
-	# person, but on the same fixture e-mail domain as every other seeded
-	# actor and so registered the same way.
+	# TPR-CHG-001 v0.8 §13.1 (plan D8, D8′ in v0.12) — the bidder-facing
+	# service identity that receives supplier clarifications (the account
+	# name predates v0.12's clarifications and is kept: Tenders FU-32); a
+	# canonical service account, never a person, but on the same fixture
+	# e-mail domain as every other seeded actor and so registered the same
+	# way.
 	"tender.inquiry.producer",
 )
 REGISTER_USERS = frozenset(f"{local}@moh.example.test" for local in REGISTER_LOCAL_PARTS)
@@ -182,6 +184,49 @@ def _fiscal_year_referenced(fy: str) -> bool:
 	return False
 
 
+def _kentender_doctypes(**filters) -> list[str]:
+	modules = [module for app in frappe.get_installed_apps() if app.startswith("kentender") for module in frappe.get_module_list(app)]
+	return frappe.get_all("DocType", filters={"module": ("in", modules), "is_virtual": 0, **filters}, pluck="name")
+
+
+def _orphaned_child_rows() -> dict[str, list[str]]:
+	"""Child-table rows of KenTender doctypes whose parent record no longer
+	exists. A module clean-up that deletes a record raw leaves its child
+	rows behind, and no screen can ever reach them again (found 26 Sep
+	2026: about 50,000 on the dev site, from Requisitions, Tenders and the
+	Regulatory Reference)."""
+	out: dict[str, list[str]] = {}
+	for child in _kentender_doctypes(istable=1):
+		if not frappe.db.table_exists(child):
+			continue
+		for parenttype in frappe.db.sql_list(f"select distinct parenttype from `tab{child}`"):
+			if not parenttype or not frappe.db.exists("DocType", {"name": parenttype, "issingle": 0, "is_virtual": 0}):
+				continue
+			names = frappe.db.sql_list(
+				f"select c.name from `tab{child}` c left join `tab{parenttype}` p on p.name = c.parent "
+				"where c.parenttype = %s and p.name is null",
+				parenttype,
+			)
+			if names:
+				out.setdefault(child, []).extend(names)
+	return out
+
+
+def _orphaned_attachments() -> list[str]:
+	"""Files attached to a named KenTender record that no longer exists
+	(found 26 Sep 2026: 1,734 from deleted Tender documents)."""
+	doctypes = set(_kentender_doctypes(istable=0, issingle=0))
+	names: list[str] = []
+	for doctype in frappe.db.sql_list("select distinct attached_to_doctype from `tabFile` where ifnull(attached_to_doctype, '') != ''"):
+		if doctype in doctypes:
+			names += frappe.db.sql_list(
+				f"select f.name from `tabFile` f left join `tab{doctype}` d on d.name = f.attached_to_name "
+				"where f.attached_to_doctype = %s and ifnull(f.attached_to_name, '') != '' and d.name is null",
+				doctype,
+			)
+	return names
+
+
 def collect_non_canonical() -> dict[str, list[str]]:
 	"""Everything `reset` would remove, as `{doctype: [names]}` — read-only."""
 	plan: dict[str, list[str]] = {}
@@ -237,6 +282,13 @@ def collect_non_canonical() -> dict[str, list[str]]:
 		if frappe.db.exists("DocType", doctype):
 			add(doctype, frappe.get_all(doctype, pluck="name"))
 
+	# Tenders: everything not on the canonical Requisition (the module's own
+	# rule, `tenders.seeds.clear`).
+	from kentender_procurement.tenders.seeds.clear import tender_rows_to_clear
+
+	for doctype, names in tender_rows_to_clear().items():
+		add(doctype, names)
+
 	# Assignments outside the canonical namespaces, or on a non-register fixture user.
 	uras = frappe.get_all("User Responsibility Assignment", fields=["name", "user", "fixture_namespace"])
 	add(
@@ -284,6 +336,9 @@ def collect_non_canonical() -> dict[str, list[str]]:
 			if fy not in site_fys and not _fiscal_year_referenced(fy)
 		],
 	)
+	for child, names in _orphaned_child_rows().items():
+		add(child, names)
+	add("File", _orphaned_attachments())
 	return plan
 
 
@@ -364,6 +419,10 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 	# residue, matching how Planning/Needs rows survive `reset`.
 	playwright_ok = _playwright_cleanup_allowed()
 
+	from kentender_procurement.tenders.seeds.clear import clear_tender_fixture_rows
+
+	_fold(clear_tender_fixture_rows())
+
 	from kentender_procurement.procurement_requisitions.seeds.clear import clear_requisition_fixture_rows
 
 	_fold(clear_requisition_fixture_rows(include_canonical=False, include_playwright=playwright_ok))
@@ -420,15 +479,6 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 		finally:
 			frappe.flags.allow_budget_audit_purge = False
 		_delete_docs("Procurement Budget Version", [version], deleted)
-	# Attachments whose owning document is gone.
-	for row in frappe.get_all(
-		"File",
-		filters={"attached_to_doctype": ["in", ["Procurement Budget Version", "Procurement Budget"]]},
-		fields=["name", "attached_to_doctype", "attached_to_name"],
-	):
-		if not frappe.db.exists(row.attached_to_doctype, row.attached_to_name):
-			frappe.delete_doc("File", row.name, force=1, ignore_permissions=True)
-			deleted["File"] = deleted.get("File", 0) + 1
 
 	# The document's own fixture-purge switch (regulatory_reference.on_trash).
 	_delete_docs("Regulatory Reference", plan.get("Regulatory Reference", []), deleted, kt_fixture_purge=True)
@@ -465,6 +515,14 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 	site_fys = _site_fiscal_years()
 	candidate_fys = [fy for fy in frappe.get_all("Fiscal Year", filters={"name": ["not like", "_Test%"]}, pluck="name") if fy not in site_fys]
 	_delete_docs("Fiscal Year", [fy for fy in candidate_fys if not _fiscal_year_referenced(fy)], deleted)
+
+	# Last, and recomputed like the years: the deletions above leave child
+	# rows and attachments of their own behind.
+	for child, names in _orphaned_child_rows().items():
+		for start in range(0, len(names), 500):
+			frappe.db.delete(child, {"name": ("in", names[start : start + 500])})
+		deleted[child] = deleted.get(child, 0) + len(names)
+	_delete_docs("File", _orphaned_attachments(), deleted)
 	return deleted
 
 

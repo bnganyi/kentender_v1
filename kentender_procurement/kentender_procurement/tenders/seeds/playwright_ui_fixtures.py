@@ -28,6 +28,7 @@ from uuid import uuid4
 import frappe
 
 from kentender_procurement.procurement_requisitions.seeds import playwright_ui_fixtures as req_pw
+from kentender_procurement.tenders.seeds import clear as tender_clear
 
 NS_PW = "KENTENDER_TND_PLAYWRIGHT"
 OFFICER = "pw.tnd.officer@example.test"
@@ -54,11 +55,6 @@ CLOCK = {
 }
 AVAILABLE = {"STATE_PORTAL": "2027-05-15 08:00:00", "MINISTRY_WEBSITE": "2027-05-15 08:00:00", "NOTICE_BOARD": "2027-05-15 08:15:00", "NATIONAL_NEWSPAPERS": "2027-05-15 08:20:00"}
 
-TENDER_DOCTYPES = (
-	"Tender Event", "Tender Document", "Tender Submission Handoff", "Tender Channel Confirmation", "Tender Candidate Notice", "Tender Clarification",
-	"Tender Candidate Registration", "Tender Bid Definition", "Tender Addendum", "Tender Cancellation", "Tender Publication", "Tender Decision", "Tender Task",
-	"Tender Version", "Tender",
-)
 CANDIDATE = {"bidder_arrangement_id": "ARR-PW-TND-001", "candidate_name": "Afya Digital Supplies Limited", "notice_address": "tenders@afyadigital.example"}
 FAILED_CANDIDATE = {"bidder_arrangement_id": "ARR-PW-TND-009", "candidate_name": "Failed Delivery Supplies", "notice_address": "procurement@failed-delivery.example"}
 
@@ -142,14 +138,9 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 
 
 def _wipe_tenders() -> None:
-	"""Every Tender this world's actors created, children first, at the
-	database level (controllers refuse plain deletes by design)."""
-	names = frappe.get_all("Tender", filters={"owner": ("in", ALL_ACTORS)}, pluck="name")
-	if names:
-		for doctype in TENDER_DOCTYPES[:-1]:
-			frappe.db.delete(doctype, {"tender": ("in", names)})
-		frappe.db.delete("Tender Command Journal", {"document_name": ("in", names)})
-		frappe.db.delete("Tender", {"name": ("in", names)})
+	"""Every Tender this world's actors created, with everything hanging off
+	it (controllers refuse plain deletes by design)."""
+	tender_clear.delete_tenders(frappe.get_all("Tender", filters={"owner": ("in", ALL_ACTORS)}, pluck="name"))
 	frappe.db.delete("Tender Command Journal", {"idempotency_key": ("like", "tnd-pw-%")})
 	frappe.db.delete("Tender Command Journal", {"actor": ("in", ALL_ACTORS)})
 	frappe.db.delete("Notification Log", {"for_user": ("in", TND_ACTORS)})

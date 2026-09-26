@@ -46,6 +46,8 @@ from uuid import uuid4
 import frappe
 from frappe.utils import cstr
 
+from kentender_procurement.tenders.seeds import clear
+
 NS = "KENTENDER_MVP_1_R1_TND"
 
 OFFICER = "brian.wafula@moh.example.test"
@@ -392,13 +394,6 @@ def upsert_tenders_base(*, commit: bool = False) -> dict[str, Any]:
 	return {"ok": True, "idempotent": False, "tender": name, "addendum": addendum, "clarification": clarification, "handoff": closed.get("handoff")}
 
 
-TENDER_DOCTYPES = (
-	"Tender Event", "Tender Document", "Tender Submission Handoff", "Tender Channel Confirmation", "Tender Candidate Notice", "Tender Clarification",
-	"Tender Candidate Registration", "Tender Bid Definition", "Tender Addendum", "Tender Cancellation", "Tender Publication", "Tender Decision", "Tender Task",
-	"Tender Version", "Tender",
-)
-
-
 def reset_tenders_seed(*, commit: bool = False) -> dict[str, int]:
 	"""Removes the canonical Tender (every child row, then the root). Never
 	touches the Requisitions stage's own rows — this stage owns only what it
@@ -413,14 +408,7 @@ def reset_tenders_seed(*, commit: bool = False) -> dict[str, int]:
 	requisition = frappe.db.get_value("Procurement Requisition", {"plan_item_id": plan_item_id}, "name") if plan_item_id else None
 	tender = frappe.db.get_value("Tender", {"requisition": requisition}, "name") if requisition else None
 	if tender:
-		for doctype in TENDER_DOCTYPES[:-1]:
-			count = frappe.db.count(doctype, {"tender": tender})
-			frappe.db.delete(doctype, {"tender": tender})
-			if count:
-				deleted[doctype] = count
-		frappe.db.delete("Tender Command Journal", {"document_name": tender})
-		frappe.db.delete("Tender", {"name": tender})
-		deleted["Tender"] = 1
+		deleted = clear.delete_tenders([tender])
 	frappe.db.delete("Tender Command Journal", {"idempotency_key": ("like", "tnd-seed:%")})
 	# REQ-CHG-001 v1.11 (handoff v1.4) has no command that releases a consumed
 	# handoff: consumption is final. This stage therefore never touches the
@@ -441,14 +429,7 @@ def wipe_all_tenders() -> dict[str, int]:
 	by some other, unrelated cycle has no parent left to be found through,
 	and survives every wipe forever. Only safe unconditionally under a
 	full site `wipe`, which clears Requisitions/Planning in the same pass."""
-	deleted: dict[str, int] = {}
-	for doctype in TENDER_DOCTYPES:
-		deleted[doctype] = frappe.db.count(doctype)
-		frappe.db.delete(doctype)
-	journal = frappe.db.count("Tender Command Journal")
-	frappe.db.delete("Tender Command Journal")
-	deleted["Tender Command Journal"] = journal
-	return deleted
+	return clear.wipe_all_tender_rows()
 
 
 def validate_tenders_seed() -> list[dict[str, Any]]:

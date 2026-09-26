@@ -98,6 +98,12 @@ default (unchanged, so other modules' own gates are not affected); pass
 `THROUGH=tenders` explicitly for the full chain including the canonical
 Tender.
 
+The clear step removes every Tender that is not on the canonical
+Requisition, with its child-table rows, command-journal entries and
+attached files, so a Tender left by an interrupted browser run does not
+survive a reseed (SEED-OPS-001 v1.10 §3.1; before 26 Sep 2026 nothing in
+the clear looked at Tenders).
+
 **If it refuses with `REQ_PLAN_INELIGIBLE`** ("This Plan Item is not
 currently eligible"): a Requisition was dropped earlier (a Tender
 Playwright/test run, a manual delete) without releasing its Planning

@@ -97,6 +97,62 @@ class TestCanonicalSelection(IntegrationTestCase):
 			# purge goes raw for exactly this reason; mirror it here.
 			frappe.db.delete("Departmental Need", {"name": need.name})
 
+	def test_reset_removes_a_stray_tender_and_keeps_the_canonical_one(self):
+		"""Found 26 Sep 2026: nothing in the clear looked at Tenders, so a
+		Tender left by an interrupted browser run survived every reseed."""
+		from kentender_procurement.tenders.seeds import clear as tender_clear
+
+		tag = uuid4().hex[:8]
+		tender = f"TDR-CS-{tag}"
+		# Raw insert: selection reads only the Requisition link, and the
+		# Tender controller refuses ordinary inserts and deletes by design.
+		frappe.get_doc({"doctype": "Tender", "name": tender, "tender_reference": f"CS-{tag}", "requisition": f"PRQ-CS-{tag}"}).db_insert()
+		self.addCleanup(frappe.db.delete, "Tender", {"name": tender})
+		kept = sorted(tender_clear.canonical_tenders())
+
+		plan = canonical.collect_non_canonical()
+		self.assertIn(tender, plan.get("Tender", []))
+		self.assertFalse(set(kept) & set(plan.get("Tender", [])), "a canonical Tender was selected")
+		canonical.clear_non_canonical()
+		self.assertFalse(frappe.db.exists("Tender", tender))
+		self.assertEqual(sorted(tender_clear.canonical_tenders()), kept)
+
+	def test_reset_removes_child_rows_and_files_whose_record_is_gone(self):
+		"""Found 26 Sep 2026: about 50,000 child-table rows and 1,734 files
+		on the dev site belonged to records that no longer existed — module
+		clean-ups that delete a record directly leave both behind, and no
+		screen can ever reach them again."""
+		tag = uuid4().hex[:8]
+		row = f"CS-{tag}"
+		frappe.get_doc(
+			{
+				"doctype": "Requisition Contributing Unit",
+				"name": row,
+				"parenttype": "Procurement Requisition",
+				"parent": f"PRQ-GONE-{tag}",
+				"parentfield": "contributing_org_units",
+			}
+		).db_insert()
+		self.addCleanup(frappe.db.delete, "Requisition Contributing Unit", {"name": row})
+		orphan_file = frappe.get_doc(
+			{
+				"doctype": "File",
+				"file_name": f"canonical-orphan-{tag}.txt",
+				"content": tag.encode(),
+				"attached_to_doctype": "Tender Document",
+				"attached_to_name": f"TDOC-GONE-{tag}",
+				"is_private": 1,
+			}
+		).insert(ignore_permissions=True)
+		self._cleanup.append(("File", orphan_file.name))
+
+		plan = canonical.collect_non_canonical()
+		self.assertIn(row, plan.get("Requisition Contributing Unit", []))
+		self.assertIn(orphan_file.name, plan.get("File", []))
+		canonical.clear_non_canonical()
+		self.assertFalse(frappe.db.exists("Requisition Contributing Unit", row))
+		self.assertFalse(frappe.db.exists("File", orphan_file.name))
+
 
 class TestCanonicalSeedRun(IntegrationTestCase):
 	"""Runs the real seed on the test site (the seed is idempotent and only
