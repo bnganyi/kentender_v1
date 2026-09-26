@@ -87,9 +87,9 @@ def ensure_world() -> None:
 			if doctype == "Contact Office":
 				values.update({"contact_email": "procurement@example.test", "contact_phone": "+254 700 000000"})
 			frappe.get_doc(values).insert(ignore_permissions=True)
-	from kentender_procurement.tender_templates import registry
+	from kentender_procurement.std_templates.services import installer as std_installer
 
-	registry.install()
+	std_installer.ensure_site_release()
 	# The publication rule the §10.1 fixture cites (site rows; find-or-create).
 	from kentender_core.seeds import site_setup
 

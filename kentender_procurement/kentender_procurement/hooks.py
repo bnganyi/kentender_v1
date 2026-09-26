@@ -230,6 +230,8 @@ page_js = {
 	"procurement-planning": "public/js/procurement_planning_page.js",
 	"procurement-requisitions": "public/js/procurement_requisitions_page.js",
 	"tenders": "public/js/tenders_page.js",
+	# STD-TPL-IMP-001 v1.0 §11 — STD Templates (list + release detail).
+	"std-templates": "public/js/std_templates_page.js",
 	"departmental-procurement-plan": "public/js/departmental_procurement_plan_page.js",
 	"annual-procurement-plan": "public/js/annual_procurement_plan_page.js",
 	"procurement-plan-item": "public/js/procurement_plan_item_page.js",
@@ -237,19 +239,8 @@ page_js = {
 	"published-tender-overview": "public/js/published_tender_overview_page.js",
 	"bid-submissions": "public/js/bid_submissions_page.js",
 	"it-electronic-bidder-workspace": "public/js/it_electronic_bidder_workspace_page.js",
-	# STD-CHG-001 v1.3 Phase 11 — Vue-in-Desk STD Configuration surfaces
-	# (STD-UI-*/PCFG-*/STD-WF-*). The legacy "std-*" STD engine route family
-	# that used to sit below these was retired outright on 2026-09-05.
-	"std-cfg-documents": "public/js/std_cfg_documents_page.js",
-	# "std-cfg-package" (unsuffixed) collides with the auto-generated Desk
-	# route for the "STD Cfg Package" DocType — confirmed live: it opened the
-	# DocType's form view instead of this Vue page. "-home" avoids every
-	# current and future "STD Cfg *" DocType's own auto-slug.
-	"std-cfg-package-home": "public/js/std_cfg_package_page.js",
-	"std-cfg-area": "public/js/std_cfg_area_page.js",
-	"std-cfg-readiness": "public/js/std_cfg_readiness_page.js",
-	"std-cfg-review": "public/js/std_cfg_review_page.js",
-	"std-cfg-comparison": "public/js/std_cfg_comparison_page.js",
+	# The STD-CHG-001 v1.3 "std-cfg-*" STD Configuration pages were retired
+	# with that module (STD-TPL-IMP-001 v1.0, OD4; archive/std-configuration-retired-2026-09/).
 }
 
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
@@ -413,8 +404,6 @@ _TND_FAMILY = (
 )
 permission_query_conditions.update({doctype: f"{_TND_AUTHZ}.permission_query_conditions" for doctype in _TND_FAMILY})
 has_permission.update({doctype: f"{_TND_AUTHZ}.has_permission" for doctype in _TND_FAMILY})
-permission_query_conditions["Supported Tender Template"] = f"{_TND_AUTHZ}.template_permission_query_conditions"
-has_permission["Supported Tender Template"] = f"{_TND_AUTHZ}.template_has_permission"
 
 # Document Events
 # ---------------
@@ -559,8 +548,9 @@ scheduler_events: dict[str, list[str]] = {
 
 after_migrate = [
 	"kentender_procurement.setup.after_migrate_navigation.run",
-	# TPR-CHG-001 v0.8 §3 — idempotent installer of the read-only template registry row.
-	"kentender_procurement.tender_templates.registry.after_migrate",
+	# STD-TPL-IMP-001 v1.0: STD releases are installed only by
+	# `make std-release-install` (never on migrate); the old
+	# `tender_templates.registry.after_migrate` auto-install is retired.
 ]
 
 boot_session = [
@@ -585,7 +575,7 @@ kt_technical_reference_resolvers = [
 	"kentender_procurement.procurement_planning.services.technical_read.reference_resolvers",
 	"kentender_procurement.procurement_requisitions.services.technical_read.reference_resolvers",
 	"kentender_procurement.tenders.services.technical_read.reference_resolvers",
-	"kentender_procurement.std_configuration.services.technical_read.reference_resolvers",
+	"kentender_procurement.std_templates.services.technical_read.reference_resolvers",
 ]
 
 kt_technical_read_probes = [
@@ -593,7 +583,7 @@ kt_technical_read_probes = [
 	"kentender_procurement.procurement_planning.services.technical_read.read_probes",
 	"kentender_procurement.procurement_requisitions.services.technical_read.read_probes",
 	"kentender_procurement.tenders.services.technical_read.read_probes",
-	"kentender_procurement.std_configuration.services.technical_read.read_probes",
+	"kentender_procurement.std_templates.services.technical_read.read_probes",
 ]
 
 # Optional hooks for downstream tendering implementations (v2+). Each path: dotted ``callable(payload: dict)``.
@@ -608,7 +598,6 @@ fixtures = [
 				"name",
 				"in",
 				[
-					"Governance & Configuration",
 					"Procurement Home",
 				],
 			]

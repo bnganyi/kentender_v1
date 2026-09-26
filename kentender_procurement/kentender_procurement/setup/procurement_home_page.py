@@ -91,18 +91,11 @@ LANDING_ROLES: tuple[str, ...] = (
 	# Procurement Planning). Head of Procurement Function is the one
 	# genuinely new office this module's cutover slice registers.
 	"Head of Procurement Function",
-	# --- Tender preparation and STD administration -----------------------
+	# --- Tender preparation ---------------------------------------------
+	# (The nine STD administration roles were retired with the STD
+	# Configuration module — STD-TPL-IMP-001 v1.0, OD4.)
 	"Procurement Officer",
 	"Tender Initiator",
-	"STD Configurator",
-	"STD Reviewer",
-	"STD Technical Inspector",
-	"STD Template Activator",
-	"STD Template Administrator",
-	"STD Template Approver",
-	"STD Template Auditor",
-	"STD Template Importer",
-	"STD Template Reviewer",
 	# --- Configuration and Governance (CFG-CHG-002 v0.4) -----------------
 	"Reference Data Manager",
 	"PE Configuration Steward",

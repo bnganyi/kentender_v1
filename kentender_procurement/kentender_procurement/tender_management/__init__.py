@@ -1,1 +1,1 @@
-"""Tender Management slice (admin / Governance & Configuration)."""
+"""Tender Management slice (legacy admin surfaces)."""

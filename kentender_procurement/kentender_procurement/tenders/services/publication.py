@@ -25,7 +25,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr, get_datetime, getdate
 
-from kentender_procurement.tenders.services import channel_confirmation, clock, compatibility, configuration_gateway, digest, draft_commands, envelope, events, lifecycle, planning_gateway, review, serializer
+from kentender_procurement.tenders.services import channel_confirmation, clock, compatibility, configuration_gateway, digest, draft_commands, envelope, events, lifecycle, planning_gateway, review, serializer, template_binding
 from kentender_procurement.tenders.services import snapshot as snap
 from kentender_procurement.tenders.services import tender_authorization as authz
 from kentender_procurement.tenders.services.errors import fail
@@ -65,8 +65,9 @@ def authorise_tender_publication(*, tender: str, expected_record_version, idempo
 		fail("TND_STALE_VERSION", "This task has already changed. Reload to see the current decision.")
 	if task_token and ao_task:
 		envelope.assert_task_token(ao_task, task_token)
+	bound = template_binding.require_bound(version, "publication")
 	snapshot = snap.load(version)
-	compatibility.require_supported(snapshot)
+	compatibility.require_supported(snapshot, bound["supported_reservation_categories"])
 	check = review.run(root, version, with_renders=False)
 	if check["must_fix_count"]:
 		fail("TND_MUST_FIX", detail={"findings": [f for f in check["findings"] if f["severity"] == review.MUST_FIX]})
@@ -115,6 +116,9 @@ def confirm_publication_channel(*, tender: str, channel: str, available_at, evid
 	publication = cstr(frappe.db.get_value("Tender", name, "publication"))
 	if not publication:
 		fail("TND_STALE_VERSION", "Publication has not been authorised for this Tender.")
+	root = frappe.get_doc("Tender", name)
+	if not root.published_at:
+		template_binding.require_bound(root, "publication")
 	return channel_confirmation.confirm_channel(
 		subject_type=channel_confirmation.SUBJECT_PUBLICATION, subject_id=publication, channel=channel, available_at=available_at, evidence_reference=evidence_reference, public_url=public_url,
 		url_not_applicable_reason=url_not_applicable_reason, evidence_file=evidence_file, evidence_notes=evidence_notes, attestation_confirmed=attestation_confirmed, package_digest=package_digest,

@@ -82,27 +82,11 @@ class TestWorkspaceSidebarFastpath(IntegrationTestCase):
 				items,
 				msg=f"G0-012 workspace {key!r} requires boot sidebar fast-path key",
 			)
-		self.assertIn(
-			"governance & configuration",
-			items,
-			msg="Governance & Configuration workspace hard refresh requires boot sidebar key",
-		)
-
-	def test_governance_workspace_boot_key_for_limited_roles(self):
-		if not frappe.db.exists("Workspace Sidebar", "Procurement"):
-			self.skipTest("Procurement Workspace Sidebar not on site")
-		bootinfo: dict = {"workspace_sidebar_item": {}}
-		with patch(
-			"kentender_procurement.setup.workspace_permissions.frappe.get_roles",
-			return_value=["Accounts User"],
-		):
-			patch_bootinfo(bootinfo)
-		items = bootinfo.get("workspace_sidebar_item") or {}
-		self.assertIn(
-			"governance & configuration",
-			items,
-			msg="Governance workspace must remain reachable without STD-only roles",
-		)
+		# STD-TPL-IMP-001 v1.0 (OD4): the stale Governance & Configuration
+		# workspace is retired, so its boot key must not come back.
+		self.assertNotIn("governance & configuration", items)
+		self.assertFalse(frappe.db.exists("Workspace", "Governance & Configuration"))
+		self.assertIn("std-templates", items)
 
 	def test_procurement_sidebar_one_workspace_row_for_governance(self):
 		"""Configuration (incl. Governance workspace) is Disabled for deployment; STD Administration is retired."""

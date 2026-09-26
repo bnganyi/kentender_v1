@@ -94,12 +94,15 @@ def run(tender, version, *, approval: dict[str, str] | None = None, with_renders
 		if cstr(handoff.handoff_digest) != cstr(snapshot.get("handoff_digest")) or cstr(handoff.requisition_version) != cstr(version.requisition_version):
 			findings.append(_finding("HANDOFF_DIGEST_CHANGED", "The source Requisition Version or digest changed after this Tender bound it.", task=controls.TASK_DETAILS))
 
-	# 2. template available and digests match
-	for problem in template_binding.verify(version):
+	# 2. the bound release may still be used and its digests match
+	# (TPR-CHG-001 v0.11 §5.3; never rebinds)
+	problems = template_binding.verify(version)
+	for problem in problems:
 		findings.append(_finding("TEMPLATE_UNAVAILABLE", problem, task=controls.TASK_DETAILS))
+	bound_categories = template_binding.bound_categories(version) if not problems else ()
 
 	# 3. the eight compatibility checks
-	for check in compatibility.evaluate(snapshot):
+	for check in compatibility.evaluate(snapshot, bound_categories):
 		if not check.ok:
 			findings.append(_finding("COMPATIBILITY_FAILED", f"{check.check}: required {check.required}; found {check.actual}.", task=controls.TASK_DETAILS))
 

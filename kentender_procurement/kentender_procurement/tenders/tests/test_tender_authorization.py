@@ -97,11 +97,13 @@ class TestFrameworkHooks(TendersAuthorizationCase):
 		frappe.set_user("Administrator")
 		self.assertEqual(len(frappe.get_list("Tender", pluck="name")), 2)
 
-	def test_the_template_registry_is_listed_only_by_site_readers(self):
-		frappe.set_user(fx.AUDITOR)
-		self.assertTrue(frappe.get_list("Supported Tender Template", pluck="name"))
-		frappe.set_user(fx.OUTSIDER)
-		self.assertFalse(frappe.has_permission("Supported Tender Template", doc=frappe.get_all("Supported Tender Template", pluck="name")[0]))
-		frappe.set_user(fx.NOBODY)
-		with self.assertRaises(frappe.PermissionError):
-			frappe.get_list("Supported Tender Template", pluck="name")
+	def test_the_installed_std_release_registry_is_not_a_tenders_list(self):
+		# STD-TPL-IMP-001 v1.0: releases are read only through STD Templates
+		# (Procurement Officer / HOPF / technical readers); the retired
+		# `Supported Tender Template` registry is gone and no Tenders role
+		# lists `Installed STD Release` rows directly.
+		self.assertFalse(frappe.db.exists("DocType", "Supported Tender Template"))
+		for user in (fx.AUDITOR, fx.OUTSIDER, fx.NOBODY):
+			frappe.set_user(user)
+			with self.assertRaises(frappe.PermissionError):
+				frappe.get_list("Installed STD Release", pluck="name")

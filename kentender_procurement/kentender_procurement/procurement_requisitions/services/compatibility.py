@@ -43,27 +43,28 @@ class Check:
 
 
 def template_support() -> dict[str, Any]:
-	"""The installed release's own declared treatment, read through the
-	template owner's published loader/registry. Unavailable is a fact here,
-	not an exception."""
-	from kentender_procurement.tender_templates import loader, registry
+	"""The switched-on installed release's own declared treatment, read
+	through the STD Templates owner's published binding service (REQ-CHG-001
+	v1.12 §5A; owner decision OD5: a release is usable when it is installed,
+	intact and switched On). Unavailable is a fact here, not an exception."""
+	from kentender_procurement.std_templates.compiler.errors import STDTemplateError
+	from kentender_procurement.std_templates.services import binding
+	from kentender_procurement.std_templates.services.installer import load_json
 
 	try:
-		meta = loader.metadata()
-	except Exception:  # noqa: BLE001 — a missing bundle is simply "not available"
-		meta = {}
-	available = False
-	try:
-		registry.resolve()
-		available = True
-	except Exception:  # noqa: BLE001 — TND_TEMPLATE_UNAVAILABLE or not installed
-		available = False
+		release = binding.available_release(TEMPLATE_KEY)
+		binding.require(release.name, "new_binding")
+	except STDTemplateError:
+		return {"template_key": TEMPLATE_KEY, "available": False, "categories": (), "county_residents": False, "method": "Open Tender", "template_release_id": ""}
+	use = load_json(release.supported_use_summary) or {}
+	county = use.get("county_residents") or {}
 	return {
-		"template_key": meta.get("template_key") or TEMPLATE_KEY,
-		"available": available and (meta.get("template_key") == TEMPLATE_KEY),
-		"categories": tuple(c for c in (meta.get("supported_reservation_categories") or ()) if c in BASE_DESIGNATIONS),
-		"county_residents": bool(meta.get("supports_county_residents")),
-		"method": meta.get("supported_method") or "Open Tender",
+		"template_key": release.template_key,
+		"available": True,
+		"categories": tuple(c for c in (use.get("reservation_categories") or ()) if c in BASE_DESIGNATIONS),
+		"county_residents": bool(county.get("released")),
+		"method": use.get("procurement_method") or "Open Tender",
+		"template_release_id": release.name,
 	}
 
 

@@ -258,18 +258,6 @@ def permission_query_conditions(user: str | None = None, doctype: str | None = N
 	return f"`tab{doctype}`.`{field}` in (select name from `tab{ROOT}` where {root_condition})"
 
 
-def template_permission_query_conditions(user: str | None = None, doctype: str | None = None) -> str:
-	"""`Supported Tender Template`: readable by every Site-wide Tenders role
-	and technical readers; nobody else lists it."""
-	principal = cstr(user or frappe.session.user)
-	return "" if _site_wide_condition(principal) is not None else "1=0"
-
-
-def template_has_permission(doc=None, ptype: str = "read", user: str | None = None):
-	principal = cstr(user or frappe.session.user)
-	return _site_wide_condition(principal) is not None
-
-
 def _root_of(doctype: str, name: str) -> str:
 	if doctype == ROOT:
 		return name

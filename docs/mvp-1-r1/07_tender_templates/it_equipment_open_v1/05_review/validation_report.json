@@ -1,0 +1,167 @@
+{
+  "checks": [
+    {
+      "affected_asset": "pack",
+      "check_id": "C01",
+      "message": "142 controlled files inventoried; 103 source page images.",
+      "result": "Passed",
+      "title": "Required path inventory and absence of unapproved assets"
+    },
+    {
+      "affected_asset": "01_source; 06_runtime",
+      "check_id": "C02",
+      "message": "Source 95726a886427…; release stdr-0e81b40c-d548-498c-855a-d4f80764af40 IT-EQUIPMENT-OPEN-V1 1.1.",
+      "result": "Passed",
+      "title": "Source, schema and release identities"
+    },
+    {
+      "affected_asset": "03_registers",
+      "check_id": "C03",
+      "message": "296 source rows (290 Reviewed, 6 awaiting review); 28 forms; 80 insertion points; treatments {'Rendered': 188, 'Structured input': 30, 'Conditional': 11, 'Excluded with reason': 60, 'Not applicable': 7}.",
+      "result": "Passed",
+      "title": "Complete coverage, form and insertion classifications"
+    },
+    {
+      "affected_asset": "02_master",
+      "check_id": "C04",
+      "message": "Every master key is registered; strict renders of the MoH and variant inputs have no unresolved authoring text.",
+      "result": "Passed",
+      "title": "Jinja key use, strict fixture rendering and unresolved authoring text"
+    },
+    {
+      "affected_asset": "02_master",
+      "check_id": "C05",
+      "message": "The Invitation is separate from the issued Tender and every shared value appears in both.",
+      "result": "Passed",
+      "title": "Invitation/issued-Tender separation and shared-value equality"
+    },
+    {
+      "affected_asset": "06_runtime",
+      "check_id": "C06",
+      "message": "Every response has a unique five-part identity, a stable key, a visible purpose and a named validation.",
+      "result": "Passed",
+      "title": "Unique stable IDs and response identity tuples"
+    },
+    {
+      "affected_asset": "06_runtime/product_profile.json",
+      "check_id": "C07",
+      "message": "BDS-GOODS-IT-V1 1.0.0 supports every released control and composition; document engine wkhtmltopdf 0.12.6.1 (with patched qt).",
+      "result": "Passed",
+      "title": "Supported controls, compositions, validations and renderer profile"
+    },
+    {
+      "affected_asset": "06_runtime/downstream_rules.json",
+      "check_id": "C08",
+      "message": "24 response rules, 24 mapping rows, no orphan.",
+      "result": "Passed",
+      "title": "One mapping for every response rule and no orphan mapping"
+    },
+    {
+      "affected_asset": "06_runtime/downstream_rules.json",
+      "check_id": "C09",
+      "message": "Evaluation treatments: {'EVG-ELIGIBILITY': 13, 'EVG-FINANCIAL': 2, 'EVG-TECHNICAL-COMPLIANCE': 7, 'Not evaluated': 2}.",
+      "result": "Passed",
+      "title": "Valid evaluation group and explicit evaluated/not-evaluated treatment"
+    },
+    {
+      "affected_asset": "06_runtime/downstream_rules.json",
+      "check_id": "C10",
+      "message": "Contract treatments: {'CD-CONTRACT-PRICE-SCHEDULES': 2, 'CD-GOODS-DELIVERY-SCHEDULE': 1, 'CD-INSPECTION-ACCEPTANCE-SCHEDULE': 1, 'CD-RELATED-SERVICES-SCHEDULE': 1, 'CD-SCC-WARRANTY-SUPPORT': 1, 'CD-TECHNICAL-OBLIGATION-SCHEDULE': 1, 'Not carried forward': 17}.",
+      "result": "Passed",
+      "title": "Valid contract destination and explicit carried/not-carried treatment"
+    },
+    {
+      "affected_asset": "06_runtime/response_rules.json; 02_master",
+      "check_id": "C11",
+      "message": "7 locked declarations reconcile word for word with the issued Tender; every rule is registered and anchored.",
+      "result": "Passed",
+      "title": "Response/document obligation and locked-text reconciliation"
+    },
+    {
+      "affected_asset": "04_fixture/moh_input.json",
+      "check_id": "C12",
+      "message": "1 goods line from 2 Requisition items; 11 technical, 5 acceptance and 2 price rows reconcile.",
+      "result": "Passed",
+      "title": "Goods, service, evidence and price-schedule lineage and reconciliation"
+    },
+    {
+      "affected_asset": "04_fixture/reservation_variants",
+      "check_id": "C13",
+      "message": "none: Publishable (Complete); women: Publishable (Complete); persons_with_disabilities: Publishable (Complete); county_residents: Blocking (Incomplete); unsupported_overlap: Blocking (Complete); MoH Youth: Publishable (Complete).",
+      "result": "Passed",
+      "title": "Reservation and County variants, including unsupported overlap failure"
+    },
+    {
+      "affected_asset": "06_runtime/addendum_identity_rules.json",
+      "check_id": "C14",
+      "message": "Label-only change keeps TECH-003; material change needs a fresh response; removal keeps history only; a new mandatory requirement begins incomplete.",
+      "result": "Passed",
+      "title": "Addendum identity and migration fixtures"
+    },
+    {
+      "affected_asset": "04_fixture; 06_runtime",
+      "check_id": "C15",
+      "message": "MoH Invitation, issued Tender and Published Bid Definition (digest 89a44e6b347b…) reproduce byte for byte.",
+      "result": "Passed",
+      "title": "Exact reproduction of all MoH expected HTML and JSON outputs"
+    },
+    {
+      "affected_asset": "04_fixture",
+      "check_id": "C16",
+      "message": "Both PDFs exist with readable text, every section, the anchored response schedules and the page footer.",
+      "result": "Passed",
+      "title": "PDF existence, readable text, required sections and document anchors"
+    },
+    {
+      "affected_asset": "05_review",
+      "check_id": "C17",
+      "message": "2 open decision(s): item 53, item 70; 9 register rows awaiting review (COV-291, COV-292, COV-293, COV-294, COV-295, COV-296, FORM-TCR, FORM-RSC, FORM-ARC); 1 named gate review(s) recorded.",
+      "result": "Passed",
+      "title": "Review blockers and mandatory reviewer decisions"
+    },
+    {
+      "affected_asset": "pack",
+      "check_id": "C18",
+      "message": "input bundle digest 96bc41b29fa8539d1ec8d55c1a896db5d9aa820184b490d07164b22f9a39ef39; constituents product_profile ba54b83bf154…, response_rules ca98cc540644…, downstream_rules 857156d8564b…, addendum_identity_rules 3101e1f0802f…; 142 files.",
+      "result": "Passed",
+      "title": "Constituent SHA-256 values and the candidate bundle digest"
+    },
+    {
+      "affected_asset": "05_review/gate_reviews.json",
+      "check_id": "C19",
+      "message": "Structured gate reviews are well-formed and the source check names its checker, time and outcome.",
+      "result": "Passed",
+      "title": "Complete structured gate rows, evidence references and source-check facts"
+    },
+    {
+      "affected_asset": "04_fixture/build_definition_fixture.py",
+      "check_id": "C20",
+      "message": "The CLI adapter delegates to the one shared, Frappe-free compiler; production parity is proven by the runtime parity test recorded under GATE-COMPILER-PARITY.",
+      "result": "Passed",
+      "title": "Exact compiler parity between fixture and production test vectors"
+    },
+    {
+      "affected_asset": "05_review/release_change_report.json",
+      "check_id": "C21",
+      "message": "Compared with release 1.0: 155 changes; Breaking — not interchangeable with the preceding release.",
+      "result": "Passed",
+      "title": "Generation and internal consistency of the preceding-release change report"
+    }
+  ],
+  "input_bundle_digest": "96bc41b29fa8539d1ec8d55c1a896db5d9aa820184b490d07164b22f9a39ef39",
+  "release_id": "stdr-0e81b40c-d548-498c-855a-d4f80764af40",
+  "schema_version": 1,
+  "summary": {
+    "blocking": false,
+    "failed": 0,
+    "passed": 21
+  },
+  "template_key": "IT-EQUIPMENT-OPEN-V1",
+  "template_release": "1.1",
+  "tool_versions": {
+    "jinja2": "3.1.6",
+    "pdftotext": "pdftotext version 22.02.0",
+    "python": "3.10.12",
+    "wkhtmltopdf": "wkhtmltopdf 0.12.6.1 (with patched qt)"
+  }
+}

@@ -7,8 +7,9 @@ Guards: (1) every doctype exists with exactly its allow-listed fields (§4 —
 an undocumented field is a defect, not an option); (2) no spec-prohibited
 concept token survives in the module's server code (§16 prohibited
 shortcuts, tracker rule 3); (3) `bench migrate` produced real tables; (4)
-DocPerms are exactly the §6 readers and no role can write the template
-registry; (5) the error contract is exactly the twenty-eight §8 codes.
+DocPerms are exactly the §6 readers and no role can write the installed STD
+release registry; (5) the error contract is exactly the thirty §8 codes (v0.8's twenty-eight
+plus the two v0.11 bound-release codes).
 """
 
 from __future__ import annotations
@@ -27,12 +28,13 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 	"Tender": {
 		"tender_reference", "requirement_title", "requisition_handoff", "requisition", "requisition_reference", "requisition_version",
 		"plan_item_id", "plan_item_version_id", "fiscal_year", "lead_org_unit", "contributing_org_unit_ids", "product_key",
-		"template_release_id", "official_source_digest", "bundle_digest", "current_version", "approved_version", "overall_status",
+		"template_release_id", "template_key", "template_release", "product_profile_id", "renderer_profile_id", "supported_renderer_version",
+		"official_source_digest", "bundle_digest", "current_version", "approved_version", "overall_status",
 		"publication", "published_at", "submission_deadline", "clarification_deadline", "cancellation", "submission_handoff", *AUDIT,
 	},
 	"Tender Version": {
 		"tender", "version_number", "status", "predecessor_version", "requisition_handoff", "requisition_version", "template_release_id",
-		"official_source_digest", "bundle_digest", "requisition_snapshot_digest", "requisition_snapshot_json", "officer_payload_json",
+		"template_key", "template_release", "product_profile_id", "renderer_profile_id", "supported_renderer_version", "official_source_digest", "bundle_digest", "requisition_snapshot_digest", "requisition_snapshot_json", "officer_payload_json",
 		"evidence_requirements", "review_findings", "review_result_digest", "invitation_digest", "issued_tender_digest",
 		"response_schema_digest", "evaluation_contract_digest", "contract_projection_digest", "package_digest", "prepared_by",
 		"prepared_at", "submitted_by", "submitted_at", "approved_by", "approved_at", "returned_by", "returned_at", "return_reason",
@@ -77,10 +79,6 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 	"Tender Command Journal": {"idempotency_key", "command", "document_type", "document_name", "request_fingerprint", "actor", "result", "occurred_at", "fixture_namespace"},
 	"Tender Event": {"event_id", "event_type", "tender", "sequence", "subject_type", "subject_id", "occurred_at", "payload", "status", "consumer", "delivered_at", "fixture_namespace"},
 	"Tender Submission Handoff": {"tender", "tender_version", "publication", "handoff_version", "payload_json", "handoff_digest", "effective_submission_deadline", "closed_at", "fixture_namespace"},
-	"Supported Tender Template": {
-		"template_key", "template_version", "display_name", "supported_category", "supported_method", "official_source_title",
-		"official_source_digest", "bundle_digest", "availability", "installed_at", "last_verified_at", "verification_note", "fixture_namespace",
-	},
 }
 CHILD_TABLES = ("Tender Evidence Requirement", "Tender Review Finding", "Tender Cancellation Obligation")
 SITE_READERS = {"Procurement Officer", "Head of Procurement Function", "Accounting Officer", "Auditor"}
@@ -143,11 +141,11 @@ class TestTendersSchema(IntegrationTestCase):
 				if perm.role == "System Manager":
 					continue
 				self.assertFalse(perm.write or perm.create or perm.delete, f"{doctype}: {perm.role} may write")
-		template_perms = frappe.get_meta("Supported Tender Template").permissions
-		self.assertFalse(any(p.write or p.create for p in template_perms), "no role writes the template registry")
+		template_perms = frappe.get_meta("Installed STD Release").permissions
+		self.assertFalse(any(p.write or p.create for p in template_perms), "no role writes the installed STD release registry")
 
 	def test_the_error_contract_is_exactly_the_section_8_set(self):
-		self.assertEqual(len(errors.ERROR_CODES), 28)
+		self.assertEqual(len(errors.ERROR_CODES), 30)
 		self.assertEqual(set(errors.MESSAGES), errors.ERROR_CODES)
 		with self.assertRaises(ValueError):
 			errors.fail("TND_SOMETHING_ELSE")

@@ -10,7 +10,7 @@
 <section class="cover-page no-break">
   <p class="pe-name">{{ procuring_entity.name }}</p>
   <p class="pe-address">{{ procuring_entity.address }}</p>
-  <h1>TENDER DOCUMENT</h1>
+  <h1 id="tender-document">TENDER DOCUMENT</h1>
   <p class="tender-identity">
     <strong>Tender Reference:</strong> {{ tender.reference }}<br>
     <strong>Tender Name:</strong> {{ tender.title }}<br>
@@ -618,7 +618,9 @@
 
 {% if reservation.category != "None" %}
 <h4>Reserved procurement under regulation 149</h4>
+<div id="decl-reservation">
 <p>This Tender is reserved for enterprises owned by {{ reservation.category | lower }}, in accordance with section 155 of the Public Procurement and Asset Disposal Act, 2015 and regulation 149 of the Public Procurement and Asset Disposal Regulations, 2020. Only a Tenderer that holds a valid registration under the Access to Government Procurement Opportunities programme in the category <strong>{{ reservation.category }}</strong> at the Tender submission deadline is eligible. The Tenderer shall submit its valid registration certificate with its Tender. A Tender from a Tenderer that does not hold the required registration shall be determined non-responsive at the Preliminary Examination and shall not be considered further.</p>
+</div>
 {% endif %}
 
 <h4>2.2.1 Evaluation of Technical Aspects of the Tender</h4>
@@ -639,7 +641,7 @@
 <h4>4.1 Post-Qualification Criteria (ITT 37.1)</h4>
 <p>The tender that has been determined to be the lowest evaluated tenderer shall be considered for contract award, subject to meeting each of the qualification requirements specified below (post-qualification criteria applied on a GO/NO GO basis). The Procuring Entity shall carry out the post-qualification of the Tenderer in accordance with ITT 37, using only the requirements specified herein. Requirements not included below shall not be used in the evaluation of the Tenderer's qualifications.</p>
 
-<h4>4.2 Qualification Requirements</h4>
+<h4 id="qualification-requirements">4.2 Qualification Requirements</h4>
 <table class="no-break">
   <tr><th>Requirement</th><th>Evidence required</th></tr>
   <tr>
@@ -700,11 +702,12 @@
 
 <h2 class="section-heading">Section IV - Tendering Forms</h2>
 
-<h3>Form of Tender</h3>
+<h3 id="form-of-tender">Form of Tender</h3>
 <p><em>All italicized text is to help the Tenderer in preparing this form. The Tenderer must prepare this Form of Tender on stationery with its letterhead clearly showing the Tenderer's complete name and business address. This is a mandatory requirement. The Tenderer must complete and sign the Certificate of Independent Tender Determination and the Self-Declaration Forms of the Tenderer as listed under (s) below.</em></p>
 <p>Date of this Tender submission: _______________________</p>
 <p>Tender Name and Identification: {{ tender.title }} ({{ tender.reference }})</p>
 <p>To: {{ procuring_entity.name }}</p>
+<div id="decl-form-of-tender">
 <ul>
   <li>a) No reservations: We have examined and have no reservations to the Tendering document, including Addenda issued in accordance with Instructions to Tenderers (ITT 7);</li>
   <li>b) Eligibility: We meet the eligibility requirements and have no conflict of interest in accordance with ITT 3;</li>
@@ -746,6 +749,7 @@
   </li>
 </ul>
 <p>Further, we confirm that we have read and understood the full content and scope of fraud and corruption as informed in &ldquo;Appendix 1 - Fraud and Corruption&rdquo; attached to the Form of Tender.</p>
+</div>
 <p>Name of the tenderer: _______________________</p>
 <p>Name of the person duly authorized to sign the Tender on behalf of the tenderer: _______________________</p>
 <p>Title of the person signing the Tender: _______________________</p>
@@ -753,6 +757,7 @@
 <p>Date signed: _______________________</p>
 
 <h3>Certificate of Independent Tender Determination</h3>
+<div id="decl-citd">
 <p>I, the undersigned, in submitting the accompanying Letter of Tender to {{ procuring_entity.name }} for {{ tender.title }} ({{ tender.reference }}), in response to the request for tenders, do hereby make the following statements that I certify to be true and complete in every respect:</p>
 <p>I certify, on behalf of the Tenderer, that:</p>
 <ol>
@@ -782,6 +787,7 @@
   <li>In addition, there has been no consultation, communication, agreement or arrangement with any competitor regarding the quality, quantity, specifications or delivery particulars of the works or services to which this request for tenders relates, except as specifically authorized by the procuring authority or as specifically disclosed pursuant to paragraph (5)(b) above;</li>
   <li>the terms of the Tender have not been, and will not be, knowingly disclosed by the Tenderer, directly or indirectly, to any competitor, prior to the date and time of the official tender opening, or of the awarding of the Contract, whichever comes first, unless otherwise required by law or as specifically disclosed pursuant to paragraph (5)(b) above.</li>
 </ol>
+</div>
 <p>Name: _______________________</p>
 <p>Title: _______________________</p>
 <p>Date: _______________________</p>
@@ -792,16 +798,19 @@
 <h4>FORM SD1 - Self-Declaration that the Person/Tenderer is not Debarred</h4>
 <p>IN THE MATTER OF THE PUBLIC PROCUREMENT AND ASSET DISPOSAL ACT 2015.</p>
 <p>I _______________________ of Post Office Box _______________________ being a resident of _______________________ in the Republic of _______________________ do hereby make a statement as follows:-</p>
+<div id="decl-sd1">
 <ol>
   <li>THAT I am the Company Secretary/Chief Executive/Managing Director/Principal Officer/Director of _______________________ (name of the Company) who is a Bidder in respect of Tender No. {{ tender.reference }} for {{ tender.title }} for {{ procuring_entity.name }} and duly authorized and competent to make this statement.</li>
   <li>THAT the aforesaid Bidder, its Directors and subcontractors have not been debarred from participating in procurement proceeding under Part IV of the Act.</li>
   <li>THAT what is deponed to herein above is true to the best of my knowledge, information and belief.</li>
 </ol>
+</div>
 <p>(Title) _______________________ (Signature) _______________________ (Date) _______________________</p>
 <p>Bidder Official Stamp</p>
 
 <h4>FORM SD2 - Self-Declaration that the Person/Tenderer will not Engage in Corrupt or Fraudulent Practice</h4>
 <p>I, _______________________ of P.O. Box _______________________ being a resident of _______________________ in the Republic of _______________________ do hereby make a statement as follows:-</p>
+<div id="decl-sd2">
 <ol>
   <li>THAT I am the Chief Executive/Managing Director/Principal Officer/Director of _______________________ (name of the Company) who is a Bidder in respect of Tender No. {{ tender.reference }} for {{ tender.title }} for {{ procuring_entity.name }} and duly authorized and competent to make this statement.</li>
   <li>THAT the aforesaid Bidder, its servants and/or agents/subcontractors will not engage in any corrupt or fraudulent practice and has not been requested to pay any inducement to any member of the Board, Management, Staff and/or employees and/or agents of {{ procuring_entity.name }}, which is the procuring entity.</li>
@@ -809,12 +818,15 @@
   <li>THAT the aforesaid Bidder will not engage/has not engaged in any corrosive practice with other bidders participating in the subject tender.</li>
   <li>THAT what is deponed to herein above is true to the best of my knowledge information and belief.</li>
 </ol>
+</div>
 <p>(Title) _______________________ (Signature) _______________________ (Date) _______________________</p>
 <p>Bidder's Official Stamp</p>
 
 <h3>Declaration and Commitment to the Code of Ethics</h3>
+<div id="decl-code-of-ethics">
 <p>I, _______________________ (Person) on behalf of (Name of the Business/Company/Firm) _______________________ declare that I have read and fully understood the contents of the Public Procurement &amp; Asset Disposal Act, 2015, Regulations and the Code of Ethics for persons participating in Public Procurement and Asset Disposal and my responsibilities under the Code.</p>
 <p>I do hereby commit to abide by the provisions of the Code of Ethics for persons participating in Public Procurement and Asset Disposal.</p>
+</div>
 <p>Name of Authorized signatory: _______________________</p>
 <p>Sign: _______________________</p>
 <p>Position: _______________________</p>
@@ -873,7 +885,7 @@
   <li>f) Pursuant to Section 62 of the above Act, requires Applicants/Tenderers to submit along with their Applications/Tenders/Proposals a &ldquo;Self-Declaration Form&rdquo; as included in the procurement document declaring that they and all parties involved in the procurement process and contract execution have not engaged/will not engage in any corrupt or fraudulent practices.</li>
 </ul>
 
-<h3>Tenderer Information Form</h3>
+<h3 id="form-tenderer-information">Tenderer Information Form</h3>
 <p><em>The Tenderer shall fill in this Form in accordance with the instructions indicated below. No alterations to its format shall be permitted and no substitutions shall be accepted.</em></p>
 <p>Date: _______________________</p>
 <p>Tender Name and Identification: {{ tender.title }} ({{ tender.reference }})</p>
@@ -918,6 +930,7 @@
   <tr><td>2</td><td>_______________________</td><td>_______________________</td><td>_______________________</td><td>_______________________</td></tr>
   <tr><td>3</td><td>_______________________</td><td>_______________________</td><td>_______________________</td><td>_______________________</td></tr>
 </table>
+<div id="decl-cbq">
 <h4>(e) Disclosure of Interest</h4>
 <p>(i) Are there any person/persons in {{ procuring_entity.name }} who has an interest or relationship in this firm? Yes/No _______________________. If yes, provide names, designation in the Procuring Entity and the interest or relationship with the Tenderer.</p>
 <p>(ii) Conflict of interest disclosure - for each of the following, the Tenderer discloses Yes/No and, if Yes, the details of the relationship:</p>
@@ -934,6 +947,7 @@
 </ol>
 <h4>(f) Certification</h4>
 <p>On behalf of the Tenderer, I certify that the information given above is correct.</p>
+</div>
 <p>Full Name: _______________________</p>
 <p>Title or Designation: _______________________</p>
 <p>(Signature) _______________________ (Date) _______________________</p>
@@ -956,7 +970,7 @@
 <h3>Price Schedule Forms</h3>
 <p><em>The Tenderer shall fill in these Price Schedule Forms in accordance with the instructions indicated. The list of line items in column 1 of the Price Schedules shall coincide with the List of Goods and Related Services specified by the Procuring Entity in the Schedule of Requirements.</em></p>
 
-<h4>Price Schedule - Goods</h4>
+<h4 id="schedule-price-goods">Price Schedule - Goods</h4>
 <p><em>One schedule covers goods manufactured in Kenya, goods manufactured outside Kenya and already imported, and goods manufactured outside Kenya and to be imported. The Tenderer states the country of origin and import status for each line item and completes the columns applicable to that item; columns that do not apply to a particular item are marked N/A.</em></p>
 <table class="no-break">
   <tr><th>Line item</th><th>Description of Goods</th><th>Country of origin</th><th>Import status (Kenya-manufactured / already imported / to be imported)</th><th>Quantity and unit</th><th>Delivery date as defined by Incoterms</th><th>Unit price (EXW for Kenya-manufactured goods; CIP named place of destination for imported goods)</th><th>Customs duties and import taxes paid per unit (already-imported goods only; N/A otherwise)</th><th>Cost of local labour, raw materials and components from origin in Kenya, as % of unit price (Kenya-manufactured goods only; N/A otherwise)</th><th>Price per line item</th><th>Price per line item for inland transportation and other services required in Kenya to convey the Goods to their final destination specified in the TDS</th><th>Sales and other taxes payable per line item if Contract is awarded</th><th>Total Price per line item</th></tr>
@@ -982,7 +996,7 @@
 <p>Name of tenderer: _______________________ Signature of tenderer: _______________________ Date: _______________________</p>
 
 {% if requisition.related_services_authorized %}
-<h4>Price and Completion Schedule - Related Services</h4>
+<h4 id="schedule-price-services">Price and Completion Schedule - Related Services</h4>
 <table class="no-break">
   <tr><th>Service No.</th><th>Service ID</th><th>Description of Services</th><th>Applies to</th><th>Completion date</th><th>Price per service</th></tr>
   {% for item in related_services %}
@@ -1000,7 +1014,7 @@
 <p>Name of tenderer: _______________________ Signature of tenderer: _______________________ Date: _______________________</p>
 {% endif %}
 
-<h3>Form of Tender Security - Option 1: Demand Bank Guarantee</h3>
+<h3 id="form-tender-security">Form of Tender Security - Option 1: Demand Bank Guarantee</h3>
 <p>Beneficiary: {{ procuring_entity.name }}</p>
 <p>Request for Tenders No: {{ tender.reference }}</p>
 <p>Date: _______________________</p>
@@ -1043,7 +1057,7 @@
 <p><em>Note: All italicized text is for use in preparing this form and shall be deleted from the final product.</em></p>
 
 {% if submission.manufacturer_authorisation_required %}
-<h3>Manufacturer's Authorization Form</h3>
+<h3 id="form-manufacturer-authorisation">Manufacturer's Authorization Form</h3>
 <p><em>The tenderer shall require the Manufacturer to fill in this Form in accordance with the instructions indicated. This letter of authorization should be on the letterhead of the Manufacturer and should be signed by a person with the proper authority to sign documents that are binding on the Manufacturer.</em></p>
 <p>Date: _______________________</p>
 <p>ITT No.: {{ tender.reference }}</p>
@@ -1057,7 +1071,7 @@
 <p>Dated on _______________________ day of _______________________, _______________________</p>
 {% endif %}
 
-<h3>Technical Compliance Response</h3>
+<h3 id="form-technical-compliance">Technical Compliance Response</h3>
 <p><em>The Tenderer shall complete one row for every technical requirement published in Section V.3. Compliance is stated as &ldquo;Comply&rdquo; or &ldquo;Do not comply&rdquo;; the offered value states the characteristic of the Goods offered in the unit shown; the evidence reference names the datasheet, brochure or certificate submitted where evidence is required. A requirement marked &ldquo;Do not comply&rdquo;, or left blank, renders the Tender non-responsive under Section III, paragraph 2.2.1.</em></p>
 <table class="no-break">
   <tr><th>Requirement ID</th><th>Requirement</th><th>Comparison</th><th>Required value</th><th>Applies to</th><th>Compliance (Comply / Do not comply)</th><th>Offered value</th><th>Comment</th><th>Evidence reference</th></tr>
@@ -1079,7 +1093,7 @@
 <p>Name of tenderer: _______________________ Signature of tenderer: _______________________ Date: _______________________</p>
 
 {% if requisition.related_services_authorized %}
-<h3>Related Services Confirmation</h3>
+<h3 id="form-related-services-confirmation">Related Services Confirmation</h3>
 <p><em>The Tenderer shall confirm each Related Service published in Section V.2 and state the completion date offered, which shall not be later than the completion date required.</em></p>
 <table class="no-break">
   <tr><th>Service ID</th><th>Service</th><th>Required result</th><th>Completion date required</th><th>Confirmed (Yes / No)</th><th>Completion date offered</th></tr>
@@ -1097,7 +1111,7 @@
 <p>Name of tenderer: _______________________ Signature of tenderer: _______________________ Date: _______________________</p>
 {% endif %}
 
-<h3>Acceptance Requirements Confirmation</h3>
+<h3 id="form-acceptance-confirmation">Acceptance Requirements Confirmation</h3>
 <p><em>The Tenderer confirms, by submitting its Tender, that the Goods will be delivered so as to satisfy each acceptance requirement published in Section V.6, and that the evidence type stated for each requirement will be made available at inspection and acceptance.</em></p>
 <table class="no-break">
   <tr><th>Acceptance ID</th><th>Check</th><th>Pass condition</th><th>Evidence type</th><th>Applies to</th></tr>
@@ -1115,7 +1129,7 @@
 
 <h2 class="section-heading">Section V - Schedule of Requirements</h2>
 
-<h3>V.1 List of Goods and Delivery Schedule</h3>
+<h3 id="schedule-goods">V.1 List of Goods and Delivery Schedule</h3>
 <table class="no-break">
   <tr>
     <th>Item No.</th>
@@ -1145,7 +1159,7 @@
 <p><em>Where several authorised Requisition items share one specification, they are listed as one item with the combined quantity; every contributing Requisition item ID is shown. The &ldquo;Offered Delivery Date&rdquo; column is completed by the Tenderer at Tender submission.</em></p>
 
 {% if requisition.related_services_authorized %}
-<h3>V.2 List of Related Services and Completion Schedule</h3>
+<h3 id="schedule-related-services">V.2 List of Related Services and Completion Schedule</h3>
 <table class="no-break">
   <tr>
     <th>Service No.</th>
@@ -1169,11 +1183,11 @@
   {% endfor %}
 </table>
 {% else %}
-<h3>V.2 List of Related Services and Completion Schedule</h3>
+<h3 id="schedule-related-services">V.2 List of Related Services and Completion Schedule</h3>
 <p>No Related Services are required under this Tender.</p>
 {% endif %}
 
-<h3>V.3 Technical Requirements</h3>
+<h3 id="schedule-technical">V.3 Technical Requirements</h3>
 <p>The Goods shall comply with every technical requirement listed below. Each requirement carries a stable requirement ID; the Tenderer responds to each requirement individually in the Technical Compliance Response in Section IV, and technical compliance is assessed requirement by requirement on a pass/fail basis under Section III, paragraph 2.2.1. Where a requirement names a brand, model or standard, an equivalent that meets or exceeds the stated characteristic is acceptable.</p>
 <table class="no-break">
   <tr><th>Requirement ID</th><th>Requirement</th><th>Comparison</th><th>Required value</th><th>Applies to</th></tr>
@@ -1188,7 +1202,7 @@
   {% endfor %}
 </table>
 
-<h3>V.4 Warranty and Support Requirements</h3>
+<h3 id="schedule-warranty-support">V.4 Warranty and Support Requirements</h3>
 <table class="no-break">
   <tr><th>Minimum warranty</th><td>{{ warranty_support.minimum_warranty_months }} months from the date of delivery to and acceptance at the final destination, for every item supplied.</td></tr>
   <tr><th>On-site support</th><td>{% if warranty_support.onsite_support_required %}Required. On-site support shall be provided {{ warranty_support.service_location_constraint | lower }} for the duration of the warranty.{% else %}Not required.{% endif %}</td></tr>
@@ -1216,7 +1230,7 @@
 <p>No drawings or supporting materials are published with this Tender. The requirements in this Section are complete in themselves.</p>
 {% endif %}
 
-<h3>V.6 Inspections, Tests and Acceptance Requirements</h3>
+<h3 id="schedule-acceptance">V.6 Inspections, Tests and Acceptance Requirements</h3>
 <p>Inspections and tests of the Goods shall be conducted at {{ contract.inspection_acceptance_office }}, in accordance with Section VI, General Conditions of Contract, Clause 26. The Goods are accepted only when every acceptance requirement below is satisfied and the stated evidence is provided.</p>
 <table class="no-break">
   <tr><th>Acceptance ID</th><th>Check</th><th>Pass condition</th><th>Evidence type</th><th>Applies to</th></tr>

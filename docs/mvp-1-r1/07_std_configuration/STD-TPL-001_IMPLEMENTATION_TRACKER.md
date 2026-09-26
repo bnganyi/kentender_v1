@@ -1,5 +1,7 @@
 # STD-TPL-001 — tracker
 
+> **25 September 2026:** release 1.1 construction under STD-TPL-001 v0.10, and the runtime under STD-TPL-IMP-001 v1.0, are tracked in `STD-TPL-IMP-001_v1_0_IMPLEMENTATION_TRACKER.md`. Gates TPL-G07 and TPL-G08 below are superseded by STI-G01 and STI-G05 there. v0.10 folds the response definition into release 1.1, so there is no separate "1.2". Rows below are kept unchanged as history.
+
 **Authority:** STD-TPL-001 v0.3 - Proposed for curation review (supersedes v0.2; adds the two-output Invitation/issued-Tender boundary)
 **Status:** IT-EQUIPMENT-OPEN-V1 Version 1.0 LOCKED 2026-08-28; **Version 1.1 delta in progress from 2026-09-08 under TPR-CHG-001 v0.6 Phase 1 (gate TPL-G07 below, per STD-TPL-001 v0.5)**; **Version 1.2 delta proposed 2026-09-21 under BDS-CHG-001 v0.4 planning, blocked on the document owner at gate TPL-G08 (a proposal exists, no spec authorization yet)**. Version 1.0 history: All six passes and Gates A-F complete; decision APPROVE FOR IMPLEMENTATION PACK (`05_review/review_record.md`). No further curation edits to the locked files — a future change is a new version with its own gate sequence. Implementation-pack authorization is a separate, not-yet-started step
 **Started:** 2026-08-28

@@ -177,11 +177,11 @@ def upsert_tenders_base(*, commit: bool = False) -> dict[str, Any]:
 	submission period, built through the real commands. Idempotent: a
 	rerun that finds the canonical Tender already ended returns it
 	untouched."""
-	from kentender_procurement.tender_templates import registry
+	from kentender_procurement.std_templates.services import installer as std_installer
 	from kentender_procurement.tenders.services import addenda, cancellation, channel_confirmation, configuration_gateway, draft_commands as cmd, inquiries, lifecycle, publication, submission_close
 
 	_guard()
-	registry.install()
+	std_installer.ensure_site_release()
 	from kentender_core.seeds import site_setup
 
 	site_setup._seed_publication_obligations()

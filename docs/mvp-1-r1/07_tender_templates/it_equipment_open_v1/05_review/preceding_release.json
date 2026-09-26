@@ -1,0 +1,804 @@
+{
+  "assets": [
+    {
+      "path": "01_source/pages/page-001.png",
+      "sha256": "412612332e16490582fc55bde90e6e862b2fad1fe7c699a3caa9d6249eacc26f"
+    },
+    {
+      "path": "01_source/pages/page-002.png",
+      "sha256": "e5882fbfa05af3b0f166838d4c42674929fae51ed8cd924e7eee47d8fcccf934"
+    },
+    {
+      "path": "01_source/pages/page-003.png",
+      "sha256": "8d199219a27c6086808effa6fe42add3b2795841e35d31f0fedd5e680c765d31"
+    },
+    {
+      "path": "01_source/pages/page-004.png",
+      "sha256": "fe150e4565e5eb6f70f04bd5991872d185dbf1592b5a656486b2c73fc3ac2d0a"
+    },
+    {
+      "path": "01_source/pages/page-005.png",
+      "sha256": "59d13caf9550a94ba990ad62ce44efa09665879f219e19270c3a7f2799cd96ce"
+    },
+    {
+      "path": "01_source/pages/page-006.png",
+      "sha256": "a166e59621d57573d8dfb24f9f213e9d254d0d5b7b27d3b0665d4f64f19e1647"
+    },
+    {
+      "path": "01_source/pages/page-007.png",
+      "sha256": "a635f8398cc2759315dd134bbb2812117b26d136e6879e2d735873347fd81316"
+    },
+    {
+      "path": "01_source/pages/page-008.png",
+      "sha256": "1c50190599336b92a9cf35942bbdf53be4d0c3d510852059544362180dc87a7f"
+    },
+    {
+      "path": "01_source/pages/page-009.png",
+      "sha256": "d304ace2e095d29f28a557154863ea6cc7ddf12c8dcada8d01377d49b985285d"
+    },
+    {
+      "path": "01_source/pages/page-010.png",
+      "sha256": "0b60ca9861230e4a3d6118d3e14df5866edead800cb435e3b791a6183ed29598"
+    },
+    {
+      "path": "01_source/pages/page-011.png",
+      "sha256": "ec83c05010f1c96e64be84ac456abbab74fe47ae346286931fc6e055f523633c"
+    },
+    {
+      "path": "01_source/pages/page-012.png",
+      "sha256": "eee107159a2f7e11a06c17a17f6c6030191b8b1f54f4499c6597ea765c2b56d0"
+    },
+    {
+      "path": "01_source/pages/page-013.png",
+      "sha256": "74f42c560a1ef50029cd27636073031328e0f36aa61f799e6b1848f61c6ce52f"
+    },
+    {
+      "path": "01_source/pages/page-014.png",
+      "sha256": "9aadb038fb2190668f82a72d8698d3dd978687bd17ebccda577713eb76430235"
+    },
+    {
+      "path": "01_source/pages/page-015.png",
+      "sha256": "53b9295c131b4cd846b5779c7186bd609b369091f66adee9cd6d0d603d413465"
+    },
+    {
+      "path": "01_source/pages/page-016.png",
+      "sha256": "58bfed30020890945e6f86bb19327db8385fbeecb9162eabead7c96a6f1a4139"
+    },
+    {
+      "path": "01_source/pages/page-017.png",
+      "sha256": "48d9832e30f764de2617e649e54b01d8b265dba86e8be170c22bcd52cff0300d"
+    },
+    {
+      "path": "01_source/pages/page-018.png",
+      "sha256": "51c7771fbf965ed731c052cbdc4e22e4d0fdcc5ab9dfa3c98d8a4cbdd44fc61b"
+    },
+    {
+      "path": "01_source/pages/page-019.png",
+      "sha256": "6973b30b555876be0f2835f88dadb0c9be1190bb43c77b5cf926751806afa048"
+    },
+    {
+      "path": "01_source/pages/page-020.png",
+      "sha256": "20647353e118cf0c68e1e1c2543c188458eefc80e6e71da3620d681aabef1c75"
+    },
+    {
+      "path": "01_source/pages/page-021.png",
+      "sha256": "7b928c6ef1e75249b5881bff8dd9cef5986dce930ddc0803cb2b12edf2a80108"
+    },
+    {
+      "path": "01_source/pages/page-022.png",
+      "sha256": "5780fd8a6d33b3d1600da7729563bfe0481da12ab6c9cf792689986249f7bf7e"
+    },
+    {
+      "path": "01_source/pages/page-023.png",
+      "sha256": "cb0e010a82cbde536d12acacdd94d006948f06c2bfce979a1e2bf91926982ba4"
+    },
+    {
+      "path": "01_source/pages/page-024.png",
+      "sha256": "9ee294e869c3e20f52bfd34754eb08c27fb8142b65bf98e391faf2b4343dfa63"
+    },
+    {
+      "path": "01_source/pages/page-025.png",
+      "sha256": "9fa7df989857b0f19a426db013238345155ca96a8967d7cfec8e7ede26ff1975"
+    },
+    {
+      "path": "01_source/pages/page-026.png",
+      "sha256": "d11bcc7a323de5f5517f8014120009269b61acd8d0faab1a459da31a04663dde"
+    },
+    {
+      "path": "01_source/pages/page-027.png",
+      "sha256": "b2d29853988a43d4d4ae50621a0e1522b4ae6d9de9fc3f12db3798cc55ddc25b"
+    },
+    {
+      "path": "01_source/pages/page-028.png",
+      "sha256": "c0355a58c75ef1eff760dbb2905bc14a5f2b0aba46c3395bd47cacde8d7c0e83"
+    },
+    {
+      "path": "01_source/pages/page-029.png",
+      "sha256": "e115b3393e35c09c5dcaee3088e94366d1992e9d206698659869775236fe9a5a"
+    },
+    {
+      "path": "01_source/pages/page-030.png",
+      "sha256": "9e07bafcd8910b73af4c893a8bc66d8ec6f1aaf03fa72e4a816b3abb6adb5801"
+    },
+    {
+      "path": "01_source/pages/page-031.png",
+      "sha256": "5b3c13534f028c7bc6a0b7e86b13b0e43a1eadcc3fb54b6deb7de9ef7f298749"
+    },
+    {
+      "path": "01_source/pages/page-032.png",
+      "sha256": "e1b67470d52412504767d3716913404faa1d1f680ec282fe8f020248c07bd4c2"
+    },
+    {
+      "path": "01_source/pages/page-033.png",
+      "sha256": "27fc826fff11914e44635870adcbb01d4d262104c3425e504a50e5226157937b"
+    },
+    {
+      "path": "01_source/pages/page-034.png",
+      "sha256": "51f98a2aed5cbad85efd43ada1099c1fa98ebca6abd4d0fa9f18326a348dde12"
+    },
+    {
+      "path": "01_source/pages/page-035.png",
+      "sha256": "93f18becc8803c189e4c43e90d79cee0d151767fff8a1e4a4e910f2cfb60dbcd"
+    },
+    {
+      "path": "01_source/pages/page-036.png",
+      "sha256": "ec98a6ed0acaa90e168a0c2714a6cb49b1b5341ff6a21027a2953e5114de2323"
+    },
+    {
+      "path": "01_source/pages/page-037.png",
+      "sha256": "e586ea345577414cbf1313737795d9603448e678f03ade02f4b7eaa9b43e3184"
+    },
+    {
+      "path": "01_source/pages/page-038.png",
+      "sha256": "110d853ac4daeb9bb17745278ebac0316931e7e4c2457d010c84cb383d70b1dd"
+    },
+    {
+      "path": "01_source/pages/page-039.png",
+      "sha256": "dfeaeaad65dbf51f3f2dfbd2bf15a33395c780be66d037e635210d343aad3c3c"
+    },
+    {
+      "path": "01_source/pages/page-040.png",
+      "sha256": "6d7940e125ee0096d937ef4fd1880626e8ccdc4e5a0cdc7b1cd08735659b82c3"
+    },
+    {
+      "path": "01_source/pages/page-041.png",
+      "sha256": "47d8506f20e01e483807423d2a871aaf54ac6b386c48189a448fedbfb7fbc62c"
+    },
+    {
+      "path": "01_source/pages/page-042.png",
+      "sha256": "e4e249ba9e226fe3052b1ec4c88e44f09ea950316390e8caa0bd85fa8b9f5bdc"
+    },
+    {
+      "path": "01_source/pages/page-043.png",
+      "sha256": "f91d304df69f24d440cf425c1862eb0cb77a2542cfdcb766f644813178a7fe28"
+    },
+    {
+      "path": "01_source/pages/page-044.png",
+      "sha256": "0bb934616f59f1413a4bb7e669cc4081b67394a90661a3e05f46de0ae9fc2aab"
+    },
+    {
+      "path": "01_source/pages/page-045.png",
+      "sha256": "2bd854dfb85ebe9bcf4d55046c32efb052eb1c1488eeba9a776fd98948808203"
+    },
+    {
+      "path": "01_source/pages/page-046.png",
+      "sha256": "cb3b328ef5560948154a478f5305754c629d0590cdf623eb463854db500a96cf"
+    },
+    {
+      "path": "01_source/pages/page-047.png",
+      "sha256": "7d98d7103a13a9610d837ca2051486241654535af91eccc9e868f584f9c68ec0"
+    },
+    {
+      "path": "01_source/pages/page-048.png",
+      "sha256": "dd8f0a647e555f0326b1ea067dcbf5f760f0a163e020eae50bc1e4f72ece1533"
+    },
+    {
+      "path": "01_source/pages/page-049.png",
+      "sha256": "e6c6d092bea91be12ad4e68dd53138fb4e967400cd6b79420451fade7f7d81eb"
+    },
+    {
+      "path": "01_source/pages/page-050.png",
+      "sha256": "73386ed4ea787ab74b8186d8afebb5c5908253d134c20046de9d0f1f9cb658e2"
+    },
+    {
+      "path": "01_source/pages/page-051.png",
+      "sha256": "cc093f1dcd02929b7b96508ac3013c69044bcc85d777269ebe7c16cc193b2257"
+    },
+    {
+      "path": "01_source/pages/page-052.png",
+      "sha256": "4c0547d58268bc508b738707a5dba3274fd0b9a4b7c1d2eba25087e86b653dcc"
+    },
+    {
+      "path": "01_source/pages/page-053.png",
+      "sha256": "4a6f3ae3e00776428f8ce6e3df42d8b9cd917ee929ab899e7a1052022120ced6"
+    },
+    {
+      "path": "01_source/pages/page-054.png",
+      "sha256": "e634ec6e739ee7c21a35f3bd1870c937f5fa24fd4b4385262b34d61d850e6b0c"
+    },
+    {
+      "path": "01_source/pages/page-055.png",
+      "sha256": "bdf0b6d7fd54e2ce55886212f7304694fb108825ee588c0a415d000f724612f8"
+    },
+    {
+      "path": "01_source/pages/page-056.png",
+      "sha256": "6b94136eea5de93eda5e167b63e6ad1a50d08cabf4f03ce7358658d4a964b175"
+    },
+    {
+      "path": "01_source/pages/page-057.png",
+      "sha256": "42dc37b9ea807e2c73e7eb5b9a1d7f1cc41f5a46f356cbf69846a74293edc85d"
+    },
+    {
+      "path": "01_source/pages/page-058.png",
+      "sha256": "15bce54d0686fa1d643388ef792dd0ba0f15f96c5817b3377efa3d7686efa44b"
+    },
+    {
+      "path": "01_source/pages/page-059.png",
+      "sha256": "59b9a1057710a83918a35494591a22dbe615b1eb1be0eef8f87609165d6e2548"
+    },
+    {
+      "path": "01_source/pages/page-060.png",
+      "sha256": "5db38d34d64214bc0a6b858faee287350f3e70b965600d5d4516c4d007ad0d51"
+    },
+    {
+      "path": "01_source/pages/page-061.png",
+      "sha256": "a9b387949e7e620bd65b2693dbf0c3fce4f3e4f1ec7db1379396f027dc30e3ae"
+    },
+    {
+      "path": "01_source/pages/page-062.png",
+      "sha256": "631abe7f355fdc1e1e016590e05061da70c91c3e19e1d75a073bfd358888ff54"
+    },
+    {
+      "path": "01_source/pages/page-063.png",
+      "sha256": "ab0b3d21fb3f1bf8b6dffc6c519c57de03d6df2193ba5b73e491a77767ea166f"
+    },
+    {
+      "path": "01_source/pages/page-064.png",
+      "sha256": "e7d40a99bcfc2bb8a4ae3ec931f2f0fe38877753cfa535dbd2e5f2ad86b2f5a0"
+    },
+    {
+      "path": "01_source/pages/page-065.png",
+      "sha256": "af38a9ce77d0fef9656ca22da9a7d03c66765f8aa541257f659131056617fae7"
+    },
+    {
+      "path": "01_source/pages/page-066.png",
+      "sha256": "3456f955a2945e265fc1e5ce8ec33b3378295032a1d1a27a0b679a129a91ae54"
+    },
+    {
+      "path": "01_source/pages/page-067.png",
+      "sha256": "c526e42ffc945ed2fc9814068cb84da4091a77094b84af5cf9b0e519dcbfde21"
+    },
+    {
+      "path": "01_source/pages/page-068.png",
+      "sha256": "f6e9bf9dfa608e75593b16a46dcfb69268ea3c08ccc3f06b22b8cf36312ac8f6"
+    },
+    {
+      "path": "01_source/pages/page-069.png",
+      "sha256": "902ed1e2415495ce695587c3547fa74a613514a191e32dc3b7b47f52dd7af843"
+    },
+    {
+      "path": "01_source/pages/page-070.png",
+      "sha256": "1e3de018f74dd0270c52893399f9a25d75dc6cf3d5608463ff2e127d42f026ad"
+    },
+    {
+      "path": "01_source/pages/page-071.png",
+      "sha256": "136023586ea702c7aab14450754925a77b77089245b4d55a457426c3f3761e52"
+    },
+    {
+      "path": "01_source/pages/page-072.png",
+      "sha256": "9f718dad6164f7ae6968783e295c795ddab194e53b063b667110ea6a8f850a84"
+    },
+    {
+      "path": "01_source/pages/page-073.png",
+      "sha256": "b4c4d1ff612e3f3927c1dc3cabdd753601b2c792bcce695905cde3ea11bf3c33"
+    },
+    {
+      "path": "01_source/pages/page-074.png",
+      "sha256": "91f765a879e7807e0572aadef69ff7847519e331e1ada229e62236f1255a3463"
+    },
+    {
+      "path": "01_source/pages/page-075.png",
+      "sha256": "bd3d3c85ebd62e59d39380c8ca1c865d5cfcedcb88dabdac53da33c6cb28c13d"
+    },
+    {
+      "path": "01_source/pages/page-076.png",
+      "sha256": "d8f0775094e9f4e93e0f1aa5150e75160ea83f157e28a70f58472857c33dcf4d"
+    },
+    {
+      "path": "01_source/pages/page-077.png",
+      "sha256": "2880b4c98499d6dfae707ab9369cf30304bbfa1d91e33a9b349b86ab8b2c335d"
+    },
+    {
+      "path": "01_source/pages/page-078.png",
+      "sha256": "bb7a93212815535900b433816eb9b7ccfc186bb26b6d3f2c85746b3b362d1971"
+    },
+    {
+      "path": "01_source/pages/page-079.png",
+      "sha256": "c3da21cf7eeab0b5de381e0df05b5e58a4b5295e83e3ff2a57930d07eda8c5ee"
+    },
+    {
+      "path": "01_source/pages/page-080.png",
+      "sha256": "b36b6dd4e69d6a544e6504420220878eeb40bbdcd60b04df9a5404e71f87a7f2"
+    },
+    {
+      "path": "01_source/pages/page-081.png",
+      "sha256": "46257b6e15ba664a25d7ba14dfcb78d64da62ce1fbcfd65988eef25103ea277d"
+    },
+    {
+      "path": "01_source/pages/page-082.png",
+      "sha256": "cbe5663ebfd420705c078f10810af37416a26a6eeee337edf051970c76a837ce"
+    },
+    {
+      "path": "01_source/pages/page-083.png",
+      "sha256": "cfcc83be7b2edd38b3e007cd20b5b1ca70c92c1ae499b79badd271190e7f5788"
+    },
+    {
+      "path": "01_source/pages/page-084.png",
+      "sha256": "6e59bfe0d3857e3b7df4d2c72abe6d81daa3cb1f95a843733deac82cdc26cced"
+    },
+    {
+      "path": "01_source/pages/page-085.png",
+      "sha256": "03a050e4573c27dc357b3c72c5b42d3fc52f96710f84d72d3ba07a5cc7ba016e"
+    },
+    {
+      "path": "01_source/pages/page-086.png",
+      "sha256": "6f9cef5e636016456e944f67a2eba48b84ddb34eda1a9d2b0a26342bd4f932f7"
+    },
+    {
+      "path": "01_source/pages/page-087.png",
+      "sha256": "dbfe8c9712776e351416ca772a68142894c04e26a282e44d23ee786734b3aa26"
+    },
+    {
+      "path": "01_source/pages/page-088.png",
+      "sha256": "241a9d62a206ba71b92187c7a9a03b72b178bfe37ff6032460b220c40b7e44eb"
+    },
+    {
+      "path": "01_source/pages/page-089.png",
+      "sha256": "a8c488f810c7150d22ddcb60770b2e87226ed9c2cde70b4cc4ce3ef7c61ee855"
+    },
+    {
+      "path": "01_source/pages/page-090.png",
+      "sha256": "a8b1e94d25e1b7e34eb042a2e33b5b61c00f492a625093906321c5f30ee364dc"
+    },
+    {
+      "path": "01_source/pages/page-091.png",
+      "sha256": "1d74918c5b9883282b538da83b1a07fb805cca6e1cd09da2c471d6bc97f2308d"
+    },
+    {
+      "path": "01_source/pages/page-092.png",
+      "sha256": "9bfe649fdadcfad4697b1f918cc34e8165b1238dcec6bde7123fc80ee67012f6"
+    },
+    {
+      "path": "01_source/pages/page-093.png",
+      "sha256": "9e4888576ba787f8cc1e450ff8ca48b1ac3c1aafec2fc7244fb928040696a0df"
+    },
+    {
+      "path": "01_source/pages/page-094.png",
+      "sha256": "1d5fcc912f96b15d40c4c27559c4eba824ff02188a55141bef8df4f8171b06f1"
+    },
+    {
+      "path": "01_source/pages/page-095.png",
+      "sha256": "bd6fc52212e9c2b4f38afbb0e070e20077f6bd0b1242b32395ecbb09a7a42c58"
+    },
+    {
+      "path": "01_source/pages/page-096.png",
+      "sha256": "74e09ef7787dd098f2093d07d0abfec3433bd2eeeeb4f389c884ebd4844b7565"
+    },
+    {
+      "path": "01_source/pages/page-097.png",
+      "sha256": "1a7e0da3abfa91349eff25bc30d0a39fabbeacf8e2f67e2ac8bdd2fbbb6ba8f9"
+    },
+    {
+      "path": "01_source/pages/page-098.png",
+      "sha256": "0e89c6eed838c70f480fa13375aa769a1659c24f9c488c487e9244381f1c2f9a"
+    },
+    {
+      "path": "01_source/pages/page-099.png",
+      "sha256": "6b5d1bd1d68d7ce6971f27d1c07322b0a9a5d17ffba3910635c0c34889af7de3"
+    },
+    {
+      "path": "01_source/pages/page-100.png",
+      "sha256": "a88cfb046e52beaad199f73011ca8fe95af3002661c4b83f653ddb4a7fc1c7e9"
+    },
+    {
+      "path": "01_source/pages/page-101.png",
+      "sha256": "aeafc2cfd95e25961d178e94611214201ef73d2b70d32de9a0d8c77236b48fbf"
+    },
+    {
+      "path": "01_source/pages/page-102.png",
+      "sha256": "1e423da3db88f19004e1fa4574d0b24f71f0d36da9916b1ee84bee4a2920dbe9"
+    },
+    {
+      "path": "01_source/pages/page-103.png",
+      "sha256": "041f8495bd04a5f47c81978e723832d6bac8b413c466edddec73e34c43d1dc40"
+    },
+    {
+      "path": "01_source/ppra_goods_std_official.pdf",
+      "sha256": "95726a88642730e85a212389b4257f26970ecf3f23de872578d11172063ae1ee"
+    },
+    {
+      "path": "02_master/complete_tender.html",
+      "sha256": "56584474813c5532c4dac82d958e7de2582cbeebd2853b1666517817a68dbb6a"
+    },
+    {
+      "path": "02_master/invitation_to_tender.html",
+      "sha256": "4d058a3c2ad4af8bc8bb9e0c32fdbba11333620219a353d1109d59f01e74eb53"
+    },
+    {
+      "path": "02_master/print.css",
+      "sha256": "7a753ed264a586d0654249aaad573bae65ad5067e11184d947a55999cb80a4d4"
+    },
+    {
+      "path": "03_registers/coverage_register.csv",
+      "sha256": "b827a18bdaa6e6468d5e80506f9ba99a6f91ae634ef4f931f8bdbc4c84ff65ae"
+    },
+    {
+      "path": "03_registers/forms_register.csv",
+      "sha256": "2f2716e0c6f6677c5f78babbf8b3853089297ae7667809cde437120837f2071d"
+    },
+    {
+      "path": "03_registers/insertion_points.csv",
+      "sha256": "886ce58b3630f5ef3d1a92a44b055ac5d0a5ea7526b0f3d100a2eabcc2caee09"
+    },
+    {
+      "path": "04_fixture/kebs_expected.html",
+      "sha256": "cbba367c9dc6793a0520a7f3f7e4119fa3b2e8ce7871b907f3a225f024a0ceaa"
+    },
+    {
+      "path": "04_fixture/kebs_expected.pdf",
+      "sha256": "4f978b534d950e093173b13071706eb06f223fc317154865dc1fa9749a5b78f8"
+    },
+    {
+      "path": "04_fixture/kebs_input.json",
+      "sha256": "e2269202cbc0429dd76022c473faaf7909b7aecba0154d8c45ec95f76557a9ca"
+    },
+    {
+      "path": "04_fixture/kebs_invitation_expected.html",
+      "sha256": "7debf3804e33da3056175907fa8cb9d14fa5261381e357e37bc2bd4f26e2af7b"
+    },
+    {
+      "path": "04_fixture/kebs_invitation_expected.pdf",
+      "sha256": "e2a3cdbc1c278c442adfc332b401d5bdfcfe5b094e04155200692fad240422f5"
+    },
+    {
+      "path": "04_fixture/kebs_technical_specification.pdf",
+      "sha256": "f3556acf6d3809a981bc625082fd12eb63b13a06d541f6a231db66918b8d5326"
+    },
+    {
+      "path": "04_fixture/package_index.md",
+      "sha256": "57219b24d478837117c93f77553ecb4ba7158419efa60a0d70763818b3b1dda4"
+    },
+    {
+      "path": "04_fixture/render_fixture.py",
+      "sha256": "9272954f50c5f0208c019e5878fca0f338e23ed6912d48ce3ab804e4a02647a5"
+    }
+  ],
+  "contract_mappings": [],
+  "coverage_treatments": {
+    "COV-001": "Not used by this released pattern",
+    "COV-002": "Not used by this released pattern",
+    "COV-003": "Not used by this released pattern",
+    "COV-004": "Not used by this released pattern",
+    "COV-005": "Generated",
+    "COV-006": "Generated",
+    "COV-007": "Inherited",
+    "COV-008": "Not used by this released pattern",
+    "COV-009": "Not used by this released pattern",
+    "COV-010": "Not used by this released pattern",
+    "COV-011": "Generated",
+    "COV-012": "Not used by this released pattern",
+    "COV-013": "Inherited",
+    "COV-014": "Officer value",
+    "COV-015": "Officer value",
+    "COV-016": "Not used by this released pattern",
+    "COV-017": "Generated",
+    "COV-018": "Not used by this released pattern",
+    "COV-019": "Not used by this released pattern",
+    "COV-020": "Not used by this released pattern",
+    "COV-021": "Generated",
+    "COV-022": "Locked",
+    "COV-023": "Locked",
+    "COV-024": "Locked",
+    "COV-025": "Locked",
+    "COV-026": "Locked",
+    "COV-027": "Locked",
+    "COV-028": "Locked",
+    "COV-029": "Locked",
+    "COV-030": "Locked",
+    "COV-031": "Locked",
+    "COV-032": "Locked",
+    "COV-033": "Locked",
+    "COV-034": "Locked",
+    "COV-035": "Locked",
+    "COV-036": "Locked",
+    "COV-037": "Locked",
+    "COV-038": "Locked",
+    "COV-039": "Locked",
+    "COV-040": "Locked",
+    "COV-041": "Locked",
+    "COV-042": "Locked",
+    "COV-043": "Locked",
+    "COV-044": "Locked",
+    "COV-045": "Locked",
+    "COV-046": "Locked",
+    "COV-047": "Locked",
+    "COV-048": "Locked",
+    "COV-049": "Locked",
+    "COV-050": "Locked",
+    "COV-051": "Locked",
+    "COV-052": "Locked",
+    "COV-053": "Locked",
+    "COV-054": "Locked",
+    "COV-055": "Locked",
+    "COV-056": "Locked",
+    "COV-057": "Locked",
+    "COV-058": "Locked",
+    "COV-059": "Locked",
+    "COV-060": "Locked",
+    "COV-061": "Locked",
+    "COV-062": "Locked",
+    "COV-063": "Locked",
+    "COV-064": "Locked",
+    "COV-065": "Locked",
+    "COV-066": "Locked",
+    "COV-067": "Locked",
+    "COV-068": "Locked",
+    "COV-069": "Locked",
+    "COV-070": "Locked",
+    "COV-071": "Locked",
+    "COV-072": "Locked",
+    "COV-073": "Locked",
+    "COV-074": "Locked",
+    "COV-075": "Locked",
+    "COV-076": "Locked",
+    "COV-077": "Locked",
+    "COV-078": "Locked",
+    "COV-079": "Locked",
+    "COV-080": "Locked",
+    "COV-081": "Locked",
+    "COV-082": "Locked",
+    "COV-083": "Locked",
+    "COV-084": "Locked",
+    "COV-085": "Locked",
+    "COV-086": "Locked",
+    "COV-087": "Locked",
+    "COV-088": "Locked",
+    "COV-089": "Locked",
+    "COV-090": "Locked",
+    "COV-091": "Locked",
+    "COV-092": "Locked",
+    "COV-093": "Locked",
+    "COV-094": "Locked",
+    "COV-095": "Locked",
+    "COV-096": "Locked",
+    "COV-097": "Locked",
+    "COV-098": "Locked",
+    "COV-099": "Locked",
+    "COV-100": "Locked",
+    "COV-101": "Locked",
+    "COV-102": "Locked",
+    "COV-103": "Locked",
+    "COV-104": "Locked",
+    "COV-105": "Locked",
+    "COV-106": "Locked",
+    "COV-107": "Locked",
+    "COV-108": "Locked",
+    "COV-109": "Locked",
+    "COV-110": "Locked",
+    "COV-111": "Locked",
+    "COV-112": "Locked",
+    "COV-113": "Locked",
+    "COV-114": "Locked",
+    "COV-115": "Locked",
+    "COV-116": "Generated",
+    "COV-117": "Generated",
+    "COV-118": "Generated",
+    "COV-119": "Not used by this released pattern",
+    "COV-120": "Officer value",
+    "COV-121": "Locked",
+    "COV-122": "Locked",
+    "COV-123": "Inherited",
+    "COV-124": "Officer value",
+    "COV-125": "Generated",
+    "COV-126": "Inherited",
+    "COV-127": "Not used by this released pattern",
+    "COV-128": "Not used by this released pattern",
+    "COV-129": "Not used by this released pattern",
+    "COV-130": "Not used by this released pattern",
+    "COV-131": "Officer value",
+    "COV-132": "Officer value",
+    "COV-133": "Officer value",
+    "COV-134": "Not used by this released pattern",
+    "COV-135": "Officer value",
+    "COV-136": "Officer value",
+    "COV-137": "Officer value",
+    "COV-138": "Officer value",
+    "COV-139": "Not used by this released pattern",
+    "COV-140": "Officer value",
+    "COV-141": "Not used by this released pattern",
+    "COV-142": "Supplier response",
+    "COV-143": "Not used by this released pattern",
+    "COV-144": "Generated",
+    "COV-145": "Generated",
+    "COV-146": "Not used by this released pattern",
+    "COV-147": "Locked",
+    "COV-148": "Not used by this released pattern",
+    "COV-149": "Not used by this released pattern",
+    "COV-150": "Generated",
+    "COV-151": "Not used by this released pattern",
+    "COV-152": "Not used by this released pattern",
+    "COV-153": "Not used by this released pattern",
+    "COV-154": "Officer value",
+    "COV-155": "Inherited",
+    "COV-156": "Locked",
+    "COV-157": "Locked",
+    "COV-158": "Locked",
+    "COV-159": "Not used by this released pattern",
+    "COV-160": "Locked",
+    "COV-161": "Locked",
+    "COV-162": "Not used by this released pattern",
+    "COV-163": "Not used by this released pattern",
+    "COV-164": "Not used by this released pattern",
+    "COV-165": "Not used by this released pattern",
+    "COV-166": "Not used by this released pattern",
+    "COV-167": "Not used by this released pattern",
+    "COV-168": "Not used by this released pattern",
+    "COV-169": "Not used by this released pattern",
+    "COV-170": "Not used by this released pattern",
+    "COV-171": "Not used by this released pattern",
+    "COV-172": "Locked",
+    "COV-173": "Locked",
+    "COV-174": "Not used by this released pattern",
+    "COV-175": "Officer value",
+    "COV-176": "Not used by this released pattern",
+    "COV-177": "Not used by this released pattern",
+    "COV-178": "Not used by this released pattern",
+    "COV-179": "Not used by this released pattern",
+    "COV-180": "Not used by this released pattern",
+    "COV-181": "Locked",
+    "COV-182": "Locked",
+    "COV-183": "Supplier response",
+    "COV-184": "Inherited",
+    "COV-185": "Not used by this released pattern",
+    "COV-186": "Generated",
+    "COV-187": "Supplier response",
+    "COV-188": "Supplier response",
+    "COV-189": "Supplier response",
+    "COV-190": "Supplier response",
+    "COV-191": "Inherited",
+    "COV-192": "Supplier response",
+    "COV-193": "Locked",
+    "COV-194": "Locked",
+    "COV-195": "Inherited",
+    "COV-196": "Supplier response",
+    "COV-197": "Supplier response",
+    "COV-198": "Locked",
+    "COV-199": "Locked",
+    "COV-200": "Inherited",
+    "COV-201": "Supplier response",
+    "COV-202": "Locked",
+    "COV-203": "Inherited",
+    "COV-204": "Locked",
+    "COV-205": "Supplier response",
+    "COV-206": "Locked",
+    "COV-207": "Locked",
+    "COV-208": "Inherited",
+    "COV-209": "Not used by this released pattern",
+    "COV-210": "Supplier response",
+    "COV-211": "Supplier response",
+    "COV-212": "Locked",
+    "COV-213": "Inherited",
+    "COV-214": "Supplier response",
+    "COV-215": "Supplier response",
+    "COV-216": "Supplier response",
+    "COV-217": "Supplier response",
+    "COV-218": "Locked",
+    "COV-219": "Not used by this released pattern",
+    "COV-220": "Not used by this released pattern",
+    "COV-221": "Generated",
+    "COV-222": "Generated",
+    "COV-223": "Supplier response",
+    "COV-224": "Locked",
+    "COV-225": "Generated",
+    "COV-226": "Locked",
+    "COV-227": "Not used by this released pattern",
+    "COV-228": "Not used by this released pattern",
+    "COV-229": "Not used by this released pattern",
+    "COV-230": "Officer value",
+    "COV-231": "Inherited",
+    "COV-232": "Not used by this released pattern",
+    "COV-233": "Supplier response",
+    "COV-234": "Locked",
+    "COV-235": "Not used by this released pattern",
+    "COV-236": "Generated",
+    "COV-237": "Generated",
+    "COV-238": "Not used by this released pattern",
+    "COV-239": "Governed document",
+    "COV-240": "Not used by this released pattern",
+    "COV-241": "Officer value",
+    "COV-242": "Generated",
+    "COV-243": "Locked",
+    "COV-244": "Inherited",
+    "COV-245": "Locked",
+    "COV-246": "Locked",
+    "COV-247": "Inherited",
+    "COV-248": "Not used by this released pattern",
+    "COV-249": "Locked",
+    "COV-250": "Not used by this released pattern",
+    "COV-251": "Officer value",
+    "COV-252": "Not used by this released pattern",
+    "COV-253": "Officer value",
+    "COV-254": "Officer value",
+    "COV-255": "Not used by this released pattern",
+    "COV-256": "Locked",
+    "COV-257": "Locked",
+    "COV-258": "Locked",
+    "COV-259": "Generated",
+    "COV-260": "Officer value",
+    "COV-261": "Officer value",
+    "COV-262": "Officer value",
+    "COV-263": "Officer value",
+    "COV-264": "Generated",
+    "COV-265": "Not used by this released pattern",
+    "COV-266": "Generated",
+    "COV-267": "Not used by this released pattern",
+    "COV-268": "Locked",
+    "COV-269": "Award-derived",
+    "COV-270": "Award-derived",
+    "COV-271": "Inherited",
+    "COV-272": "Award-derived",
+    "COV-273": "Generated",
+    "COV-274": "Inherited",
+    "COV-275": "Locked",
+    "COV-276": "Award-derived",
+    "COV-277": "Award-derived",
+    "COV-278": "Award-derived",
+    "COV-279": "Award-derived",
+    "COV-280": "Officer value",
+    "COV-281": "Award-derived",
+    "COV-282": "Not used by this released pattern",
+    "COV-283": "Not used by this released pattern",
+    "COV-284": "Award-derived",
+    "COV-285": "Locked",
+    "COV-286": "Inherited",
+    "COV-287": "Award-derived",
+    "COV-288": "Award-derived",
+    "COV-289": "Not used by this released pattern",
+    "COV-290": "Not used by this released pattern"
+  },
+  "decided_at": "2026-08-28",
+  "decided_by": "bnganyi (product owner)",
+  "decision": "APPROVE FOR IMPLEMENTATION PACK",
+  "declarations": [],
+  "document_anchors": [],
+  "evaluation_groups": [],
+  "evaluation_mappings": [],
+  "evidence": [
+    "05_review/review_record.md, section 'Released bundle digest — Version 1.0' (15-file locked digest list)",
+    "Repository commit 74793a0d (curate and lock IT-EQUIPMENT-OPEN-V1 v1.0 per STD-TPL-001)",
+    "STD-TPL-001 v0.3 §2 binding decisions (repository commit 74793a0d)",
+    "01_source/pages/page-001..103.png committed with release 1.0 in commit 74793a0d (not listed in the 15-file digest block; digests taken from the committed blobs)"
+  ],
+  "renderer": {
+    "document_engine": "wkhtmltopdf (no registered adapter)",
+    "renderer_profile_id": null,
+    "supported_renderer_version": null
+  },
+  "response_rules": [],
+  "schema_version": 1,
+  "supported_use": {
+    "award_packages": 1,
+    "currency": "One Tender currency",
+    "financial_evaluation": "Lowest evaluated responsive Tender, subject to the approved official rules",
+    "procurement_category": "Goods",
+    "procurement_method": "Open Tender",
+    "product": "Laptops, desktops, tablets, peripherals and closely related delivery services",
+    "reservation_categories": [
+      "None"
+    ],
+    "technical_evaluation": "Pass/fail compliance",
+    "technical_specification": "Approved Requisition document plus a small goods and delivery schedule"
+  },
+  "template_key": "IT-EQUIPMENT-OPEN-V1",
+  "template_release": "1.0"
+}

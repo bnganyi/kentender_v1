@@ -1,0 +1,575 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:release_id",
+ "creation": "2026-09-26 00:00:00.000000",
+ "description": "STD-TPL-IMP-001 v1.0 §4.1 — one immutable installed STD release. Written only by the installer and the lifecycle commands.",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "identity_section",
+  "release_id",
+  "template_key",
+  "template_release",
+  "display_name",
+  "lifecycle_status",
+  "product_profile_id",
+  "renderer_profile_id",
+  "supported_renderer_version",
+  "switch_section",
+  "site_switch",
+  "switched_by",
+  "switched_at",
+  "source_section",
+  "official_source_title",
+  "official_source_digest",
+  "source_retrieved_at",
+  "source_checked_by",
+  "source_checked_at",
+  "source_check_outcome",
+  "digest_section",
+  "bundle_digest",
+  "manifest_digest",
+  "input_bundle_digest",
+  "validation_report_digest",
+  "release_gates_digest",
+  "release_change_report_digest",
+  "product_profile_digest",
+  "response_rules_digest",
+  "downstream_rules_digest",
+  "addendum_identity_rules_digest",
+  "decision_section",
+  "owner_decision",
+  "owner_approved_by",
+  "owner_approved_at",
+  "owner_decision_record",
+  "installation_section",
+  "installed_by",
+  "installed_at",
+  "repository_commit",
+  "built_by",
+  "built_at",
+  "manifest_file",
+  "review_record_file",
+  "owner_decision_file",
+  "verification_section",
+  "integrity_status",
+  "integrity_problem",
+  "last_verified_at",
+  "last_successful_verification_at",
+  "projection_section",
+  "supported_use_summary",
+  "rejected_use_summary",
+  "document_summary",
+  "response_summary",
+  "evaluation_summary",
+  "contract_summary",
+  "reservation_support",
+  "verification_results",
+  "blockers",
+  "gate_results",
+  "tool_versions",
+  "lifecycle_section",
+  "superseded_by_release_id",
+  "superseded_at",
+  "superseded_by_actor",
+  "withdrawal_reason",
+  "withdrawn_by",
+  "withdrawn_at",
+  "withdrawal_successor_release_id",
+  "assets_section",
+  "assets"
+ ],
+ "fields": [
+  {
+   "fieldname": "identity_section",
+   "fieldtype": "Section Break",
+   "label": "Release"
+  },
+  {
+   "fieldname": "release_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Release ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "template_key",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Template key",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "template_release",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Template release",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "display_name",
+   "fieldtype": "Data",
+   "label": "Display name",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "lifecycle_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Lifecycle status",
+   "options": "Available\nSuperseded\nWithdrawn",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "product_profile_id",
+   "fieldtype": "Data",
+   "label": "Product profile",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "renderer_profile_id",
+   "fieldtype": "Data",
+   "label": "Renderer profile",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "supported_renderer_version",
+   "fieldtype": "Data",
+   "label": "Supported renderer version",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "switch_section",
+   "fieldtype": "Section Break",
+   "label": "Site switch"
+  },
+  {
+   "default": "On",
+   "fieldname": "site_switch",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Site switch",
+   "options": "On\nOff",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "switched_by",
+   "fieldtype": "Data",
+   "label": "Switched by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "switched_at",
+   "fieldtype": "Datetime",
+   "label": "Switched at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_section",
+   "fieldtype": "Section Break",
+   "label": "Official source"
+  },
+  {
+   "fieldname": "official_source_title",
+   "fieldtype": "Data",
+   "label": "Official source title",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "official_source_digest",
+   "fieldtype": "Data",
+   "label": "Official source digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_retrieved_at",
+   "fieldtype": "Data",
+   "label": "Source retrieved",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_checked_by",
+   "fieldtype": "Data",
+   "label": "Source checked by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_checked_at",
+   "fieldtype": "Data",
+   "label": "Source checked at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "source_check_outcome",
+   "fieldtype": "Data",
+   "label": "Source check outcome",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "digest_section",
+   "fieldtype": "Section Break",
+   "label": "Digests"
+  },
+  {
+   "fieldname": "bundle_digest",
+   "fieldtype": "Data",
+   "label": "Bundle digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "manifest_digest",
+   "fieldtype": "Data",
+   "label": "Manifest digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "input_bundle_digest",
+   "fieldtype": "Data",
+   "label": "Input bundle digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "validation_report_digest",
+   "fieldtype": "Data",
+   "label": "Validation report digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "release_gates_digest",
+   "fieldtype": "Data",
+   "label": "Release gates digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "release_change_report_digest",
+   "fieldtype": "Data",
+   "label": "Release change report digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "product_profile_digest",
+   "fieldtype": "Data",
+   "label": "Product profile digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "response_rules_digest",
+   "fieldtype": "Data",
+   "label": "Response rules digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "downstream_rules_digest",
+   "fieldtype": "Data",
+   "label": "Downstream rules digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "addendum_identity_rules_digest",
+   "fieldtype": "Data",
+   "label": "Addendum identity rules digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "decision_section",
+   "fieldtype": "Section Break",
+   "label": "Owner decision"
+  },
+  {
+   "fieldname": "owner_decision",
+   "fieldtype": "Data",
+   "label": "Owner decision",
+   "read_only": 1
+  },
+  {
+   "fieldname": "owner_approved_by",
+   "fieldtype": "Data",
+   "label": "Owner approved by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "owner_approved_at",
+   "fieldtype": "Data",
+   "label": "Owner approved at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "owner_decision_record",
+   "fieldtype": "Small Text",
+   "label": "Owner decision record",
+   "read_only": 1
+  },
+  {
+   "fieldname": "installation_section",
+   "fieldtype": "Section Break",
+   "label": "Installation"
+  },
+  {
+   "fieldname": "installed_by",
+   "fieldtype": "Data",
+   "label": "Installed by",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "installed_at",
+   "fieldtype": "Datetime",
+   "label": "Installed at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "repository_commit",
+   "fieldtype": "Data",
+   "label": "Repository commit",
+   "read_only": 1
+  },
+  {
+   "fieldname": "built_by",
+   "fieldtype": "Data",
+   "label": "Built by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "built_at",
+   "fieldtype": "Data",
+   "label": "Built at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "manifest_file",
+   "fieldtype": "Data",
+   "label": "Manifest file",
+   "read_only": 1
+  },
+  {
+   "fieldname": "review_record_file",
+   "fieldtype": "Data",
+   "label": "Review record file",
+   "read_only": 1
+  },
+  {
+   "fieldname": "owner_decision_file",
+   "fieldtype": "Data",
+   "label": "Owner decision file",
+   "read_only": 1
+  },
+  {
+   "fieldname": "verification_section",
+   "fieldtype": "Section Break",
+   "label": "Verification"
+  },
+  {
+   "fieldname": "integrity_status",
+   "fieldtype": "Select",
+   "label": "Integrity",
+   "options": "Verified\nFailed",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "integrity_problem",
+   "fieldtype": "Small Text",
+   "label": "Integrity problem",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_verified_at",
+   "fieldtype": "Datetime",
+   "label": "Last verified",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_successful_verification_at",
+   "fieldtype": "Datetime",
+   "label": "Last successful verification",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "projection_section",
+   "fieldtype": "Section Break",
+   "label": "Read projections"
+  },
+  {
+   "fieldname": "supported_use_summary",
+   "fieldtype": "JSON",
+   "label": "Supported use",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rejected_use_summary",
+   "fieldtype": "JSON",
+   "label": "Rejected use",
+   "read_only": 1
+  },
+  {
+   "fieldname": "document_summary",
+   "fieldtype": "JSON",
+   "label": "Document summary",
+   "read_only": 1
+  },
+  {
+   "fieldname": "response_summary",
+   "fieldtype": "JSON",
+   "label": "Response summary",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evaluation_summary",
+   "fieldtype": "JSON",
+   "label": "Evaluation summary",
+   "read_only": 1
+  },
+  {
+   "fieldname": "contract_summary",
+   "fieldtype": "JSON",
+   "label": "Contract summary",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reservation_support",
+   "fieldtype": "JSON",
+   "label": "Reservation support",
+   "read_only": 1
+  },
+  {
+   "fieldname": "verification_results",
+   "fieldtype": "JSON",
+   "label": "Verification results",
+   "read_only": 1
+  },
+  {
+   "fieldname": "blockers",
+   "fieldtype": "JSON",
+   "label": "Open review items (evidence)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gate_results",
+   "fieldtype": "JSON",
+   "label": "Gate results",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tool_versions",
+   "fieldtype": "JSON",
+   "label": "Tool versions",
+   "read_only": 1
+  },
+  {
+   "fieldname": "lifecycle_section",
+   "fieldtype": "Section Break",
+   "label": "Lifecycle"
+  },
+  {
+   "fieldname": "superseded_by_release_id",
+   "fieldtype": "Link",
+   "label": "Superseded by",
+   "options": "Installed STD Release",
+   "read_only": 1
+  },
+  {
+   "fieldname": "superseded_at",
+   "fieldtype": "Datetime",
+   "label": "Superseded at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "superseded_by_actor",
+   "fieldtype": "Data",
+   "label": "Superseded by (actor)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "withdrawal_reason",
+   "fieldtype": "Small Text",
+   "label": "Withdrawal reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "withdrawn_by",
+   "fieldtype": "Data",
+   "label": "Withdrawn by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "withdrawn_at",
+   "fieldtype": "Datetime",
+   "label": "Withdrawn at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "withdrawal_successor_release_id",
+   "fieldtype": "Link",
+   "label": "Withdrawal successor",
+   "options": "Installed STD Release",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "assets_section",
+   "fieldtype": "Section Break",
+   "label": "Assets"
+  },
+  {
+   "fieldname": "assets",
+   "fieldtype": "Table",
+   "label": "Assets",
+   "options": "Installed STD Release Asset",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "links": [],
+ "modified": "2026-09-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "STD Templates",
+ "name": "Installed STD Release",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "display_name",
+ "track_changes": 0
+}

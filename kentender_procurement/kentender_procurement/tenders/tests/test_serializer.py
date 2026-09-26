@@ -15,7 +15,9 @@ import json
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from kentender_procurement.tender_templates import loader
+from kentender_procurement.std_templates.compiler import projection as std_projection
+from kentender_procurement.std_templates.services import installer as std_installer
+from kentender_procurement.std_templates.services import runtime as std_runtime
 from kentender_procurement.tenders.services import controls, digest, serializer
 from kentender_procurement.tenders.services import snapshot as snap
 from kentender_procurement.tenders.tests import fixtures as fx, sample
@@ -106,14 +108,23 @@ class TestRenderContextAndDigests(SerializerCase):
 	def _pair(self, **kwargs):
 		return sample.insert_tender_with_version(values=self.values, fixture_namespace=fx.NS, **kwargs)
 
-	def test_the_render_context_has_exactly_the_installed_fixture_shape(self):
+	def test_the_render_context_carries_every_key_the_installed_release_consumes(self):
 		tender, version = self._pair()
 		context = serializer.render_context(tender, version, snap.load(version))
-		fixture = json.loads(loader.read_text("fixtures/moh_input.json"))
-		self.assertEqual(set(serializer.public_context(context)), set(fixture))
+		# The context the installed release's masters consume for its MoH fixture.
+		release = std_runtime.release_doc(version.template_release_id)
+		projection = json.loads((std_installer.DEFAULT_PACKAGE / "04_fixture/moh_input.json").read_text(encoding="utf-8"))
+		fixture = std_projection.document_context(projection, std_runtime.document_constants(release))
+		# Release 1.1's masters never read `price` or `plan_item` (no template
+		# tag names either); the serializer still supplies them, and nothing else.
+		self.assertEqual(set(serializer.public_context(context)) - set(fixture), {"price", "plan_item"})
+		self.assertEqual(set(fixture) - set(serializer.public_context(context)), set())
+		# Every sub-key the release's masters are rendered with is supplied
+		# (StrictUndefined would fail the render otherwise); the serializer may
+		# carry more, as it does for `requisition`.
 		for key, value in fixture.items():
 			if isinstance(value, dict):
-				self.assertEqual(set(context[key]), set(value), key)
+				self.assertLessEqual(set(value), set(context[key]), key)
 		self.assertEqual(context["tender"]["submission_deadline"], "5 June 2027, 11:00 EAT")
 		self.assertEqual(context["tender"]["opening_datetime"], "5 June 2027, 11:00 EAT")
 		self.assertEqual(context["tender"]["validity_date"], "3 October 2027")

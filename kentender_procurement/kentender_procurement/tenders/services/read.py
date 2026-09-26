@@ -17,6 +17,7 @@ import frappe
 from frappe.utils import cstr
 
 from kentender_core.services.authorization import is_technical
+from kentender_procurement.std_templates.compiler.errors import STDTemplateError
 from kentender_procurement.tenders.services import compatibility, controls, correction, documents, draft_commands, evidence, handoff_gateway, lifecycle, review, serializer, template_binding
 from kentender_procurement.tenders.services import snapshot as snap
 from kentender_procurement.tenders.services import tender_authorization as authz
@@ -238,12 +239,13 @@ def get_tender_start(*, handoff: str, user: str | None = None) -> dict[str, Any]
 		root = frappe.db.get_value("Tender", consumer, ["name", "tender_reference"], as_dict=True)
 		return {"outcome": "ALREADY_STARTED", "heading": "Tender already started", "text": f"This requisition is linked to {root.tender_reference}.", "tender": root.name, "tender_reference": root.tender_reference, "route": [PAGE, root.tender_reference], "can_open": roles["officer"] or roles["hopf"] or roles["auditor"] or roles["technical"]}
 	payload = handoff_gateway.payload_of(handoff_doc)
-	checks = compatibility.evaluate(payload)
+	binding = None
 	try:
 		binding = template_binding.bind()
 		template = {"available": True, "display_name": binding["display_name"], "template_version": binding["template_version"], "official_source_title": binding["official_source_title"], "official_source_digest": binding["official_source_digest"], "bundle_digest": binding["bundle_digest"]}
-	except Exception as exc:
-		template = {"available": False, "reason": str(exc)}
+	except STDTemplateError as exc:
+		template = {"available": False, "reason": exc.message, "std_template_route": template_binding.inspection_route(actor)}
+	checks = compatibility.evaluate(payload, binding["supported_reservation_categories"] if binding else ())
 	items = payload.get("items") or []
 	unit = cstr((items[0].get("unit") if items else "") or "Each")
 	supported = compatibility.is_supported(checks) and template["available"]
@@ -463,6 +465,7 @@ def get_tender(*, tender: str, user: str | None = None) -> dict[str, Any]:
 			"overall_status": cstr(root.overall_status), "badge": badge_for(root, version, roles), "published_at": cstr(root.published_at), "published_at_label": serializer.fmt_datetime_short(root.published_at) if root.published_at else "",
 			"submission_deadline": cstr(root.submission_deadline), "submission_deadline_label": serializer.fmt_datetime_short(root.submission_deadline) if root.submission_deadline else "",
 			"publication": cstr(root.publication), "cancellation": cstr(root.cancellation), "record_version": int(root.record_version or 0), "template_release_id": cstr(root.template_release_id),
+			"template_release": cstr(root.template_release), "std_template_route": template_binding.inspection_route(actor, cstr(root.template_release_id)) if root.template_key else [],
 		},
 		"version": version_summary(version),
 		"tasks": draft_commands.task_statuses(version),

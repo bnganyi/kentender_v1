@@ -100,7 +100,7 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 	world = req_pw.ensure_world(commit=False)
 	from kentender_core.seeds import site_setup
 	from kentender_core.services.business_role_registry import ensure_roles
-	from kentender_procurement.tender_templates import registry
+	from kentender_procurement.std_templates.services import installer as std_installer
 	from kentender_procurement.tenders.services import inquiries
 	from kentender_procurement.tenders.services.tender_roles import INQUIRY_PRODUCER_ROLE
 
@@ -122,7 +122,7 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 			if doctype == "Contact Office":
 				values.update({"contact_email": "procurement@example.test", "contact_phone": "+254 700 000000"})
 			frappe.get_doc(values).insert(ignore_permissions=True)
-	registry.install()
+	std_installer.ensure_site_release()
 	site_setup._seed_publication_obligations()
 	if commit:
 		frappe.db.commit()

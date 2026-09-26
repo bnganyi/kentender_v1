@@ -1,0 +1,17 @@
+{
+  "definition_digest": null,
+  "eligibility_mappings": [],
+  "expected_error": {
+    "code": "STD_INPUT_UNSUPPORTED",
+    "identity": "overlap_treatment"
+  },
+  "expected_result": "Blocking",
+  "incomplete_reason": "",
+  "input": "unsupported_overlap_input.json",
+  "release_status": "Complete",
+  "reservation_document_anchors": [],
+  "reservation_evidence_requirements": [],
+  "reservation_treatment": null,
+  "response_rule_ids": [],
+  "schema_version": 1
+}

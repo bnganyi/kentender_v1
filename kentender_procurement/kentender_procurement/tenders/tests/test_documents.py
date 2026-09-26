@@ -1,8 +1,8 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""TPR-CHG-001 v0.8 §4.5 / §7.1 — template binding (§3), the two renders
-through the installed bundle (AC-023/024), the Tenders-owned notice
+"""TPR-CHG-001 v0.8 §4.5 / §7.1 — template binding (§3; v0.11 §5.3: the
+installed STD release), the two renders through its exact masters (AC-023/024), the Tenders-owned notice
 templates (plan D5) and the immutable digest-addressed document store
 with its audience masking (§12.3(3), AC-077)."""
 
@@ -12,7 +12,7 @@ import frappe
 from frappe.tests import IntegrationTestCase
 from jinja2 import UndefinedError
 
-from kentender_procurement.tender_templates import checks, loader
+from kentender_procurement.std_templates.renderers import checks
 from kentender_procurement.tenders.services import documents, notices, render_service, snapshot as snap, template_binding
 from kentender_procurement.tenders.services.errors import TendersError
 from kentender_procurement.tenders.tests import fixtures as fx, sample
@@ -37,8 +37,9 @@ class DocumentsCase(IntegrationTestCase):
 class TestTemplateBinding(DocumentsCase):
 	def test_bind_returns_the_installed_release_and_its_digests(self):
 		binding = template_binding.bind()
-		self.assertEqual((binding["template_key"], binding["template_version"]), (loader.TEMPLATE_KEY, loader.TEMPLATE_VERSION))
-		self.assertEqual(binding["template_release_id"], f"{loader.TEMPLATE_KEY}-{loader.TEMPLATE_VERSION}")
+		self.assertEqual((binding["template_key"], binding["template_release"]), (template_binding.TEMPLATE_KEY, "1.1"))
+		self.assertTrue(binding["template_release_id"].startswith("stdr-"))
+		self.assertEqual((binding["renderer_profile_id"], binding["supported_renderer_version"]), ("BDS-GOODS-IT-V1", "1.0.0"))
 		self.assertEqual(len(binding["bundle_digest"]), 64)
 		self.assertIn("Youth", binding["supported_reservation_categories"])
 

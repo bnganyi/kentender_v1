@@ -6,7 +6,7 @@ BENCH_ROOT ?= /home/midasuser/frappe-bench
 KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency,frontend,
 INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency frontend
 
-.PHONY: ui-system-setup-responsibilities-gate seed-req-profiles seed-req-profile seed-req-profile-restore ui-structure-gate ui-visual-gate ui-fidelity-gate artboard-provenance-gate departmental-needs-domain-gate ui-departmental-needs-fidelity-gate tenders-schema-gate tenders-services-gate ui-tenders-workspace-gate ui-tenders-start-gate ui-tenders-details-gate ui-tenders-requirements-gate ui-tenders-review-gate ui-tenders-approval-gate ui-tenders-authorisation-gate ui-tenders-publication-gate ui-tenders-published-gate ui-tenders-addendum-gate ui-tenders-cancel-gate ui-tenders-history-gate ui-tenders-fidelity-gate ui-tenders-release-evidence-gate ui-system-setup-procurement-settings-gate ui-system-setup-fiscal-years-gate ui-system-setup-access-gate ui-system-setup-entity-gate ui-system-setup-funding-sources-gate ui-system-setup-rules-gate ui-system-setup-source-checks-gate ui-system-setup-schedules-gate help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke seed-canonical seed-canonical-dry-run seed-canonical-validate ui-smoke tender-templates-bundle-gate ui-workspace-pattern-gate ui-strategy-gate ui-strategy-fidelity-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-system-setup-fidelity-gate ui-budget-fidelity-gate ui-budget-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-departmental-gate ui-planning-fidelity-gate ui-planning-release-evidence-gate ui-planning-annual-plan-gate ui-planning-item-gate ui-planning-finance-gate ui-planning-governance-gate ui-planning-publication-gate planning-requisition-gate planning-seed-gate ui-req-workspace-gate ui-req-start-gate ui-req-editor-a-gate ui-req-editor-b-gate ui-req-department-gate ui-req-procurement-gate ui-req-authorised-gate ui-req-fidelity-gate ui-req-release-evidence-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate vue-desk-bundle-translation-binding-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
+.PHONY: ui-system-setup-responsibilities-gate seed-req-profiles seed-req-profile seed-req-profile-restore ui-structure-gate ui-visual-gate ui-fidelity-gate artboard-provenance-gate departmental-needs-domain-gate ui-departmental-needs-fidelity-gate tenders-schema-gate tenders-services-gate ui-tenders-workspace-gate ui-tenders-start-gate ui-tenders-details-gate ui-tenders-requirements-gate ui-tenders-review-gate ui-tenders-approval-gate ui-tenders-authorisation-gate ui-tenders-publication-gate ui-tenders-published-gate ui-tenders-addendum-gate ui-tenders-cancel-gate ui-tenders-history-gate ui-tenders-fidelity-gate ui-tenders-release-evidence-gate ui-system-setup-procurement-settings-gate ui-system-setup-fiscal-years-gate ui-system-setup-access-gate ui-system-setup-entity-gate ui-system-setup-funding-sources-gate ui-system-setup-rules-gate ui-system-setup-source-checks-gate ui-system-setup-schedules-gate help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke seed-canonical seed-canonical-dry-run seed-canonical-validate ui-smoke ui-workspace-pattern-gate ui-strategy-gate ui-strategy-fidelity-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-system-setup-fidelity-gate ui-budget-fidelity-gate ui-budget-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-departmental-gate ui-planning-fidelity-gate ui-planning-release-evidence-gate ui-planning-annual-plan-gate ui-planning-item-gate ui-planning-finance-gate ui-planning-governance-gate ui-planning-publication-gate planning-requisition-gate planning-seed-gate ui-req-workspace-gate ui-req-start-gate ui-req-editor-a-gate ui-req-editor-b-gate ui-req-department-gate ui-req-procurement-gate ui-req-authorised-gate ui-req-fidelity-gate ui-req-release-evidence-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-domain-gate bw-a0-domain-gate bw-a2-domain-gate bw-a3-domain-gate bw-a4-domain-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed ui-bidder-a0-gate ui-bidder-a1-gate ui-bidder-a2-gate ui-bidder-a3-gate ui-bidder-a4-gate bw-x100-domain-gate bw-s300-domain-gate ui-bidder-s300-cbq-gate bw-fot-domain-gate ui-bidder-fot-gate bw-statutory-domain-gate ui-bidder-statutory-gate bw-tender-security-domain-gate ui-bidder-tender-security-gate bw-preliminary-domain-gate ui-bidder-preliminary-gate tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate vue-desk-bundle-translation-binding-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate seed-demand-to-bidder-journey
 .PHONY:
 
 help:
@@ -92,7 +92,10 @@ help:
 	@echo "  make ui-tenders-<slice>-gate — TPR-CHG-001 v0.8 Phase 7 slice gates: workspace start details requirements review approval authorisation publication published addendum cancel history (vitest project tenders + the slice's Playwright spec on the Tenders Playwright world, then restore_site)"
 	@echo "  make ui-tenders-fidelity-gate — TPR-CHG-001 v0.8: every TPR-DES board's landmarks in order on the live screen"
 	@echo "  make ui-tenders-release-evidence-gate — TPR-CHG-001 v0.8 Phase 9: every Tenders browser spec + fidelity + persona pass"
-	@echo "  make tender-templates-bundle-gate SITE=$(SITE) — TPR-CHG-001 v0.6 Phase 3: IT-EQUIPMENT-OPEN-V1 1.1 bundle loader, registry and renderer tests"
+	@echo "  make std-release-rebuild — STD-TPL-001 v0.10 §13: regenerate the IT-EQUIPMENT-OPEN-V1 1.1 pack outputs, run validate_release.py and write the manifest (PDF=1 also re-renders the fixture PDFs)"
+	@echo "  make std-release-install SITE=$(SITE) [RELEASE_OWNER=...] [SWITCH=Off] — STD-TPL-IMP-001 §5 + owner decision OD5: install the exact release pack, switched On (checks and decisions are evidence only)"
+	@echo "  make std-release-switch SITE=$(SITE) STATE=On|Off [RELEASE_ID=...] [RELEASE_OWNER=...] — owner decision OD5: switch an installed release on or off on this site (Off stops new Tenders starting on it)"
+	@echo "  make std-templates-gate SITE=$(SITE) — STD-TPL-IMP-001 §16: compiler, installer, services and binding tests"
 	@echo "  make ui-req-workspace-gate — REQ-CHG-001 v1.6 Slice 3a: Requisitions workspace (REQ-DES-01) + Playwright (REQ-402 world)"
 	@echo "  make ui-req-start-gate — REQ-CHG-001 v1.6 Slice 3b: Start Requisition (REQ-DES-02)"
 	@echo "  make ui-req-editor-a-gate — REQ-CHG-001 v1.6 Slice 3c-i: Editor steps 1-2 (REQ-DES-03/04)"
@@ -305,7 +308,7 @@ artboard-provenance-gate:
 # lives outside tests/ui/smoke/design-fidelity/ and was being missed.
 ui-structure-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project design-fidelity
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning --project departmental-needs-components --project system-setup --project desk-runtime --project procurement-requisitions
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning --project departmental-needs-components --project system-setup --project desk-runtime --project procurement-requisitions --project std-templates
 
 # Visual references. Nothing ran the Departmental Needs baselines before this
 # target existed, so a spacing or rule change could only be found by a person
@@ -708,9 +711,8 @@ tenders-services-gate:
 	cd $(BENCH_ROOT) && for m in $$(cd apps/kentender_v1/kentender_procurement/kentender_procurement/tenders/tests && ls test_*.py | sed 's/\.py$$//'); do \
 		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.tenders.tests.$$m || exit 1; done
 
-tender-templates-bundle-gate:
-	cd $(BENCH_ROOT) && for m in test_loader test_registry test_renderer; do \
-		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.tender_templates.tests.$$m || exit 1; done
+# (tender-templates-bundle-gate retired with the old `tender_templates` package —
+# STD-TPL-IMP-001 v1.0; the installed-release tests are `make std-templates-gate`.)
 
 # REQ-CHG-001 v1.6 — Procurement Requisitions slice gates (tracker rule 6).
 # Each gate runs the shared vitest project (component tests aren't split per
@@ -1281,3 +1283,24 @@ seed-demo-platform-reset:
 
 seed-demo-platform-validate:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_core.seeds.seed_demo_platform.validate
+
+# STD-TPL-IMP-001 v1.0 — installed STD template runtime (STD Templates).
+.PHONY: std-release-rebuild std-release-install std-release-switch std-templates-gate
+STD_RELEASE_PACK ?= $(CURDIR)/docs/mvp-1-r1/07_tender_templates/it_equipment_open_v1
+RELEASE_OWNER ?= bnganyi
+RELEASE_ID ?= stdr-0e81b40c-d548-498c-855a-d4f80764af40
+std-release-rebuild:
+	python3 docs/mvp-1-r1/07_tender_templates/tools/rebuild_release.py $(if $(PDF),--pdf,) --built-by "$(RELEASE_OWNER)" --built-at "$$(date -Iseconds)"
+
+std-release-install:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.std_templates.services.installer.install \
+		--kwargs "{'package': '$(STD_RELEASE_PACK)', 'installed_by': '$(RELEASE_OWNER)', 'switch': '$(if $(SWITCH),$(SWITCH),On)'}"
+
+std-release-switch:
+	@test -n "$(STATE)" || (echo "STATE=On or STATE=Off is required" && exit 2)
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.std_templates.services.lifecycle.switch \
+		--kwargs "{'release_id': '$(RELEASE_ID)', 'state': '$(STATE)', 'actor': '$(RELEASE_OWNER)'}"
+
+std-templates-gate:
+	cd $(BENCH_ROOT) && for m in test_compiler test_installer test_services test_binding; do \
+		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.std_templates.tests.$$m || exit 1; done

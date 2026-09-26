@@ -21,7 +21,6 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_procurement.tender_templates import loader
 from kentender_procurement.tenders.services import clock, compatibility, controls, draft_commands, envelope, events, handoff_gateway, lifecycle, review, serializer, template_binding
 from kentender_procurement.tenders.services import snapshot as snap
 from kentender_procurement.tenders.services import tender_authorization as authz
@@ -102,16 +101,18 @@ def start_corrected_tender_version(*, tender: str, handoff: str, expected_record
 	snapshot, snapshot_digest = snap.build(handoff_doc)
 	if cstr(snapshot.get("plan_item_id")) != cstr(root.plan_item_id):
 		fail("TND_HANDOFF_INVALID", "The corrected requisition belongs to a different Plan Item.")
-	binding = template_binding.require_available()
-	compatibility.require_supported(snapshot)
+	# TPR-CHG-001 v0.11 §5.3: a corrected Version keeps the release this
+	# Tender bound (never rebinds); it may be Available or Superseded.
+	binding = template_binding.require_bound(root, "continue")
+	compatibility.require_supported(snapshot, binding["supported_reservation_categories"])
 	previous_state = serializer.officer_state(stopped)
 	with envelope.atomic("start-corrected"):
 		number = int(stopped.version_number) + 1
 		draft = frappe.get_doc(
 			{
 				"doctype": "Tender Version", "tender": root.name, "version_number": number, "status": "Draft", "predecessor_version": stopped.name,
-				"requisition_handoff": handoff_doc.name, "requisition_version": handoff_doc.requisition_version, "template_release_id": binding["template_release_id"],
-				"official_source_digest": binding["official_source_digest"], "bundle_digest": binding["bundle_digest"], "requisition_snapshot_digest": snapshot_digest,
+				"requisition_handoff": handoff_doc.name, "requisition_version": handoff_doc.requisition_version, **template_binding.bound_fields(binding),
+				"requisition_snapshot_digest": snapshot_digest,
 				"requisition_snapshot_json": json.dumps(snapshot, sort_keys=True, default=str),
 				# Officer values carry over (§5.1: "linked Draft"), with the title defaulted afresh from the corrected requirement.
 				"officer_payload_json": json.dumps(controls.normalise({**previous_state, "tender_title": previous_state.get("tender_title") or controls.defaults(snapshot)["tender_title"]}), sort_keys=True, default=str),
@@ -125,9 +126,8 @@ def start_corrected_tender_version(*, tender: str, handoff: str, expected_record
 		envelope.bump(
 			root, overall_status="Draft", current_version=draft.name, requisition_handoff=handoff_doc.name, requisition=handoff_doc.requisition,
 			requisition_reference=snapshot.get("requisition_reference"), requisition_version=handoff_doc.requisition_version, requirement_title=snapshot.get("requirement_title"),
-			template_release_id=binding["template_release_id"], official_source_digest=binding["official_source_digest"], bundle_digest=binding["bundle_digest"],
 		)
-		handoff_gateway.consume(handoff=handoff_doc.name, tender=root.name, tender_version=draft.name, template_key=loader.TEMPLATE_KEY, template_version=loader.TEMPLATE_VERSION, idempotency_key=f"{idempotency_key}:consume")
+		handoff_gateway.consume(handoff=handoff_doc.name, tender=root.name, tender_version=draft.name, template_key=binding["template_key"], template_version=binding["template_release"], idempotency_key=f"{idempotency_key}:consume")
 		events.emit(
 			tender=root.name, event_type="TenderCorrectedVersionStarted", command="StartCorrectedTenderVersion", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment),
 			previous_status=CORRECTION_REQUESTED, resulting_status="Draft", record_version=root.record_version, subject_type="Tender Version", subject_id=draft.name,

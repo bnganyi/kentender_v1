@@ -85,6 +85,7 @@ _KT_WORKSPACE_TO_SIDEBAR: dict[str, str] = {
 	"procurement requisitions": "Procurement",
 	"procurement-requisitions": "Procurement",
 	"tenders": "Procurement",
+	"std-templates": "Procurement",
 	"packages": "Procurement",
 	"procurement-planning/releases": "Procurement",
 	"releases": "Procurement",
@@ -106,8 +107,8 @@ _KT_WORKSPACE_TO_SIDEBAR: dict[str, str] = {
 	"contract-management": "Procurement",
 	"ktsm supplier registry": "Procurement",
 	"ktsm-supplier-registry": "Procurement",
-	"governance & configuration": "Procurement",
-	"governance-and-configuration": "Procurement",
+	# "Governance & Configuration" was retired with the STD Configuration
+	# module (STD-TPL-IMP-001 v1.0, OD4).
 	# Cross-app lifecycle workspaces: keep the Procurement rail when users follow
 	# G0-012 sidebar links (same pattern as DIA / Planning).
 	"strategy management": "Procurement",
@@ -165,6 +166,7 @@ _KT_ROUTE_TO_SIDEBAR.update(
 		"procurement-planning": "Procurement",
 		"procurement-requisitions": "Procurement",
 		"tenders": "Procurement",
+		"std-templates": "Procurement",
 		"strategy-builder": "Procurement",
 		"strategy-management": "Procurement",
 		"procurement-home": "Procurement",

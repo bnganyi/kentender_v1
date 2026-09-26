@@ -1,0 +1,223 @@
+{
+  "gates": [
+    {
+      "checked_at": "2026-08-28",
+      "checked_by": "bnganyi (product owner)",
+      "evidence_refs": [
+        "05_review/validation_report.json#C02",
+        "05_review/validation_report.json#C19",
+        "01_source/source_record.md",
+        "05_review/review_record.md#Confirmations (Gate A)",
+        "05_review/preceding_release.json#assets"
+      ],
+      "gate_id": "GATE-SOURCE",
+      "label": "Source",
+      "message": "Gate A confirmed the official PPRA Goods STD file and SHA-256 95726a88…ae1ee on 28 August 2026; the source bytes are unchanged since.",
+      "required_proof": "Exact official source, record, pages and digest",
+      "result": "Passed"
+    },
+    {
+      "checked_at": "2026-09-26",
+      "checked_by": "06_runtime/validate_release.py",
+      "evidence_refs": [
+        "05_review/validation_report.json#C02",
+        "05_review/validation_report.json#C13"
+      ],
+      "gate_id": "GATE-APPLICABILITY",
+      "label": "Applicability",
+      "message": "Applicability: every mapped machine check passed.",
+      "required_proof": "Supported and rejected uses are deterministic",
+      "result": "Passed"
+    },
+    {
+      "checked_at": "2026-09-26",
+      "checked_by": "06_runtime/validate_release.py",
+      "evidence_refs": [
+        "05_review/validation_report.json#C13"
+      ],
+      "gate_id": "GATE-RESERVATION",
+      "label": "Reservation",
+      "message": "Reservation: machine checks passed; the named review is not recorded.",
+      "required_proof": "Every supported reservation category and the County-residents overlay has exact wording, responses, evidence, eligibility mapping, award/reporting disposition and isolated fixture coverage; no designation treated as entitlement",
+      "result": "Pending"
+    },
+    {
+      "checked_at": "2026-09-26",
+      "checked_by": "06_runtime/validate_release.py",
+      "evidence_refs": [
+        "05_review/validation_report.json#C03"
+      ],
+      "gate_id": "GATE-COVERAGE",
+      "label": "Coverage",
+      "message": "Coverage: machine checks passed; the named review is not recorded.",
+      "required_proof": "Every source row and form has an approved treatment",
+      "result": "Pending"
+    },
+    {
+      "checked_at": "2026-09-26",
+      "checked_by": "06_runtime/validate_release.py",
+      "evidence_refs": [
+        "05_review/validation_report.json#C04",
+        "05_review/validation_report.json#C05",
+        "05_review/validation_report.json#C11",
+        "05_review/validation_report.json#C16"
+      ],
+      "gate_id": "GATE-DOCUMENTS",
+      "label": "Documents",
+      "message": "Documents: machine checks passed; the named review is not recorded.",
+      "required_proof": "Invitation and issued Tender render completely and reconcile",
+      "result": "Pending"
+    },
+    {
+      "checked_at": "2026-09-26",
+      "checked_by": "06_runtime/validate_release.py",
+      "evidence_refs": [
+        "05_review/validation_report.json#C03",
+        "05_review/validation_report.json#C12"
+      ],
+      "gate_id": "GATE-DATA-OWNERSHIP",
+      "label": "Data ownership",
+      "message": "Data ownership: machine checks passed; the named review is not recorded.",
+      "required_proof": "Inherited facts cannot be re-entered; officer decisions are finite",
+      "result": "Pending"
+    },
+    {
+      "checked_at": "2026-09-26",
+      "checked_by": "06_runtime/validate_release.py",
+      "evidence_refs": [
+        "05_review/validation_report.json#C06",
+        "05_review/validation_report.json#C11"
+      ],
+      "gate_id": "GATE-RESPONSES",
+      "label": "Responses",
+      "message": "Responses: machine checks passed; the named review is not recorded.",
+      "required_proof": "Every bidder-editable field has identity, purpose, type and validation",
+      "result": "Pending"
+    },
+    {
+      "checked_at": "2026-09-26",
+      "checked_by": "06_runtime/validate_release.py",
+      "evidence_refs": [
+        "05_review/validation_report.json#C08",
+        "05_review/validation_report.json#C09"
+      ],
+      "gate_id": "GATE-EVALUATION",
+      "label": "Evaluation",
+      "message": "Evaluation: machine checks passed; the named review is not recorded.",
+      "required_proof": "Every evaluated response maps to one published group; no hidden criterion",
+      "result": "Pending"
+    },
+    {
+      "checked_at": "2026-09-26",
+      "checked_by": "06_runtime/validate_release.py",
+      "evidence_refs": [
+        "05_review/validation_report.json#C08",
+        "05_review/validation_report.json#C10"
+      ],
+      "gate_id": "GATE-CONTRACT",
+      "label": "Contract",
+      "message": "Contract: machine checks passed; the named review is not recorded.",
+      "required_proof": "Every applicable accepted response maps to an obligation or explicit N/A",
+      "result": "Pending"
+    },
+    {
+      "checked_at": "2026-09-26",
+      "checked_by": "06_runtime/validate_release.py",
+      "evidence_refs": [
+        "05_review/validation_report.json#C14"
+      ],
+      "gate_id": "GATE-ADDENDA",
+      "label": "Addenda",
+      "message": "Addenda: every mapped machine check passed.",
+      "required_proof": "Identity migration is deterministic and safe",
+      "result": "Passed"
+    },
+    {
+      "checked_at": "2026-09-26",
+      "checked_by": "06_runtime/validate_release.py",
+      "evidence_refs": [
+        "05_review/validation_report.json#C07",
+        "05_review/validation_report.json#C16"
+      ],
+      "gate_id": "GATE-RENDERER",
+      "label": "Renderer",
+      "message": "Renderer: every mapped machine check passed.",
+      "required_proof": "Every control, composition and rule is supported by the exact renderer profile",
+      "result": "Passed"
+    },
+    {
+      "checked_at": "2026-09-26",
+      "checked_by": "06_runtime/validate_release.py",
+      "evidence_refs": [
+        "05_review/validation_report.json#C12",
+        "05_review/validation_report.json#C15"
+      ],
+      "gate_id": "GATE-FIXTURE",
+      "label": "Fixture",
+      "message": "Fixture: every mapped machine check passed.",
+      "required_proof": "Document and structured MoH outputs reproduce and reconcile",
+      "result": "Passed"
+    },
+    {
+      "checked_at": "2026-09-26",
+      "checked_by": "06_runtime/validate_release.py",
+      "evidence_refs": [],
+      "gate_id": "GATE-USABILITY",
+      "label": "Usability",
+      "message": "Usability: machine checks passed; the named review is not recorded.",
+      "required_proof": "Officer and supplier journeys pass representative-user review",
+      "result": "Pending"
+    },
+    {
+      "checked_at": "2026-09-26",
+      "checked_by": "06_runtime/validate_release.py",
+      "evidence_refs": [],
+      "gate_id": "GATE-INSPECTION",
+      "label": "Inspection",
+      "message": "Inspection: machine checks passed; the named review is not recorded.",
+      "required_proof": "Administrator, System Manager, Procurement Officer and Head of Procurement Function can see installed content, coverage, changes, mappings, evidence and blockers through STD Templates",
+      "result": "Pending"
+    },
+    {
+      "checked_at": "2026-09-26",
+      "checked_by": "06_runtime/validate_release.py",
+      "evidence_refs": [
+        "05_review/validation_report.json#C20"
+      ],
+      "gate_id": "GATE-COMPILER-PARITY",
+      "label": "Compiler parity",
+      "message": "Compiler parity: machine checks passed; the named review is not recorded.",
+      "required_proof": "Fixture and production paths invoke one deterministic compiler and reproduce the canonical vectors exactly",
+      "result": "Pending"
+    },
+    {
+      "checked_at": "2026-09-26",
+      "checked_by": "06_runtime/validate_release.py",
+      "evidence_refs": [
+        "05_review/validation_report.json#C21"
+      ],
+      "gate_id": "GATE-CHANGE-CONTROL",
+      "label": "Change control",
+      "message": "Change control: machine checks passed; the named review is not recorded.",
+      "required_proof": "Generated preceding-release comparison is complete and its compatibility result is reviewed",
+      "result": "Pending"
+    },
+    {
+      "checked_at": "2026-09-26",
+      "checked_by": "06_runtime/validate_release.py",
+      "evidence_refs": [
+        "05_review/validation_report.json#C01",
+        "05_review/validation_report.json#C18"
+      ],
+      "gate_id": "GATE-INTEGRITY",
+      "label": "Integrity",
+      "message": "Integrity: every mapped machine check passed.",
+      "required_proof": "Source, assets, outputs and bundle have immutable digests",
+      "result": "Passed"
+    }
+  ],
+  "release_id": "stdr-0e81b40c-d548-498c-855a-d4f80764af40",
+  "schema_version": 1,
+  "template_key": "IT-EQUIPMENT-OPEN-V1",
+  "template_release": "1.1"
+}

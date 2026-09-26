@@ -19,7 +19,7 @@
 		<div ref="railEl" class="kt-rail-mount"></div>
 		<div class="kt-shell" data-testid="tnd-shell" :data-screen="screen" :data-loading="loading ? 'true' : 'false'" :data-refreshing="refreshing ? 'true' : 'false'" :data-pending="pending ? 'true' : 'false'">
 			<!-- inline states first: a verdict never renders behind content (KT-STD-001 §3A) -->
-			<CommonState v-if="state" :kind="state.kind" :heading="state.heading" :text="state.text" :support-ref="state.kind === 'failure' ? supportRef : ''" @action="onStateAction" />
+			<CommonState v-if="state" :kind="state.kind" :heading="state.heading" :text="state.text" :link="state.link || null" :support-ref="state.kind === 'failure' ? supportRef : ''" @action="onStateAction" @link="onNavigate" />
 
 			<template v-else-if="kind === 'workspace' || kind === 'start'">
 				<div :class="{ 'tnd-blurred': kind === 'start' }">
@@ -207,7 +207,7 @@ const state = computed(() => {
 			if (o === "NOT_FOUND") return { kind: "not-found" };
 			if (o === "SOURCE_UNAVAILABLE") return { kind: "source-unavailable", heading: startDetail.value.heading, text: startDetail.value.text };
 			if (o === "ALREADY_STARTED") return { kind: "already-started", heading: startDetail.value.heading, text: startDetail.value.text };
-			if (o === "OK" && startDetail.value.template && startDetail.value.template.available === false) return { kind: "template-unavailable" };
+			if (o === "OK" && startDetail.value.template && startDetail.value.template.available === false) return { kind: "template-unavailable", link: (startDetail.value.template.std_template_route || []).length ? { label: "View STD Template", route: startDetail.value.template.std_template_route } : null };
 		}
 		return null;
 	}
@@ -667,8 +667,9 @@ async function onRecordObligation(values) {
 
 // ---------------------------------------------------------------- derived
 const templateLabel = computed(() => {
-	const id = (record.value.tender || {}).template_release_id || "";
-	return id ? `IT Equipment — Open Tender · ${id}` : "";
+	const t = record.value.tender || {};
+	if (t.template_release) return `IT Equipment — Open Tender · Release ${t.template_release}`;
+	return t.template_release_id ? `IT Equipment — Open Tender · ${t.template_release_id}` : "";
 });
 const openingLabel = computed(() => {
 	const v = record.value.officer_values || {};

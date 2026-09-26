@@ -20,6 +20,7 @@
 			<h2>{{ heading || copy.heading }}</h2>
 			<p class="tnd-card-body">{{ text || copy.text }}</p>
 			<button v-if="copy.action" type="button" class="kt-btn kt-btn-secondary" :data-testid="`tnd-state-action`" @click="$emit('action', kind)">{{ copy.action }}</button>
+			<button v-if="link" type="button" class="kt-btn kt-btn-secondary" data-testid="tnd-state-link" @click="$emit('link', link.route)">{{ link.label }}</button>
 			<p v-if="supportRef" class="tnd-support-ref">Support reference: {{ supportRef }}</p>
 		</div>
 	</div>
@@ -33,8 +34,11 @@ const props = defineProps({
 	heading: { type: String, default: "" },
 	text: { type: String, default: "" },
 	supportRef: { type: String, default: "" },
+	// TPR-CHG-001 v0.11 §8 **View STD Template**, only when the server
+	// returned a route for this user.
+	link: { type: Object, default: null },
 });
-defineEmits(["action"]);
+defineEmits(["action", "link"]);
 
 // TPR-DES-14 — the eight cards, verbatim.
 const COPY = {

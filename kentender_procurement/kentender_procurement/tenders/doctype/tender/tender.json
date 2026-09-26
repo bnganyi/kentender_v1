@@ -20,6 +20,11 @@
   "col_a",
   "product_key",
   "template_release_id",
+  "template_key",
+  "template_release",
+  "product_profile_id",
+  "renderer_profile_id",
+  "supported_renderer_version",
   "official_source_digest",
   "bundle_digest",
   "current_version",
@@ -121,6 +126,36 @@
    "fieldname": "template_release_id",
    "fieldtype": "Data",
    "label": "Template release",
+   "read_only": 1
+  },
+  {
+   "fieldname": "template_key",
+   "fieldtype": "Data",
+   "label": "Template key",
+   "read_only": 1
+  },
+  {
+   "fieldname": "template_release",
+   "fieldtype": "Data",
+   "label": "Template release (display)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "product_profile_id",
+   "fieldtype": "Data",
+   "label": "Product profile",
+   "read_only": 1
+  },
+  {
+   "fieldname": "renderer_profile_id",
+   "fieldtype": "Data",
+   "label": "Renderer profile",
+   "read_only": 1
+  },
+  {
+   "fieldname": "supported_renderer_version",
+   "fieldtype": "Data",
+   "label": "Supported renderer version",
    "read_only": 1
   },
   {

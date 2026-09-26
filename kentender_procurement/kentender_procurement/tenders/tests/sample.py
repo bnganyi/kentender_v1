@@ -110,6 +110,11 @@ def insert_tender_with_version(*, reference: str = "TND-MOH-2027-033", values: d
 	"""A Tender + Version pair carrying the sample snapshot, for tests below
 	the command layer. Commands (Phase 4) build these the real way."""
 	snapshot, snapshot_digest = sample_snapshot()
+	from kentender_procurement.std_templates.services import installer as std_installer
+
+	# The site's installed release, with placeholder digests (so verify()
+	# names the drift while renders still use the exact installed masters).
+	release_id = std_installer.ensure_site_release()
 	tender = envelope.insert(
 		frappe.get_doc(
 			{
@@ -124,7 +129,7 @@ def insert_tender_with_version(*, reference: str = "TND-MOH-2027-033", values: d
 	version = frappe.get_doc(
 		{
 			"doctype": "Tender Version", "tender": tender.name, "version_number": 1, "status": status, "requisition_handoff": snapshot["handoff"],
-			"requisition_version": snapshot["requisition_version"], "template_release_id": "IT-EQUIPMENT-OPEN-V1-1.1", "official_source_digest": "o" * 64,
+			"requisition_version": snapshot["requisition_version"], "template_release_id": release_id, "official_source_digest": "o" * 64,
 			"bundle_digest": "b" * 64, "requisition_snapshot_digest": snapshot_digest, "requisition_snapshot_json": json.dumps(snapshot, sort_keys=True),
 			"officer_payload_json": json.dumps(controls.normalise(values or {}), sort_keys=True, default=str), "record_version": 0, "fixture_namespace": fixture_namespace,
 		}

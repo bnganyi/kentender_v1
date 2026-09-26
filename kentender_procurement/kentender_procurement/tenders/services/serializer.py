@@ -12,8 +12,9 @@ keeping every `requisition_item_id`, quantity and source allocation (owner
 ruling 8 Sep 2026; STD-TPL-001 v0.6 §8.4(2); SEED-001 §5.2). Internal
 policy context (Strategic objective, plan horizon, authorised value, funding
 evidence) is carried under `_internal` only, never in a supplier-visible key
-(§4.3). The render context reproduces the shape of the installed template's
-own fixture (`tender_templates/it_equipment_open_v1/fixtures/moh_input.json`).
+(§4.3). The render context reproduces the shape the installed STD release's
+masters consume for its own MoH fixture (STD Templates
+`compiler.projection.document_context`).
 """
 
 from __future__ import annotations

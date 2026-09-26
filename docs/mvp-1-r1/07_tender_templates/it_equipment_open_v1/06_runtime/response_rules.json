@@ -1,0 +1,2064 @@
+{
+  "product_profile_id": "GOODS-IT-SIMPLE-V1",
+  "release_id": "stdr-0e81b40c-d548-498c-855a-d4f80764af40",
+  "renderer_profile_id": "BDS-GOODS-IT-V1",
+  "rules": [
+    {
+      "applicability": {
+        "rule_id": "AP-ALWAYS"
+      },
+      "composition_id": "COMP-DOC-ACK",
+      "contract_mapping_id": "DM-DOC-ACK",
+      "document_anchor": "complete_tender.html#tender-document",
+      "evaluation_mapping_id": "DM-DOC-ACK",
+      "field_definitions": [
+        {
+          "control_id": "CTL-CONFIRMATION",
+          "evidence_rule": null,
+          "field_key": "acknowledged",
+          "help_text": "",
+          "label": "I have read the current published Tender documents and every effective addendum.",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-CONFIRMED",
+          "validation_parameters": {},
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "ACK",
+      "order": 10,
+      "rule_id": "RR-DOC-ACK",
+      "source_family": "document",
+      "source_selector": {
+        "selector": "SEL-DOCUMENT-PACKAGE"
+      },
+      "task_id": "TASK-DOCUMENTS"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-ALWAYS"
+      },
+      "composition_id": "COMP-SUPPLIER-DETAILS",
+      "contract_mapping_id": "DM-SUPPLIER-DETAILS",
+      "document_anchor": "complete_tender.html#form-tenderer-information",
+      "evaluation_mapping_id": "DM-SUPPLIER-DETAILS",
+      "field_definitions": [
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "legal_name",
+          "help_text": "",
+          "label": "Tenderer's legal name",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 160,
+            "min_length": 3
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-SINGLE-CHOICE",
+          "evidence_rule": null,
+          "field_key": "bidder_arrangement",
+          "help_text": "",
+          "label": "Tendering as",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Single organisation",
+              "Joint venture"
+            ]
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-LONG-TEXT",
+          "evidence_rule": null,
+          "field_key": "joint_venture_members",
+          "help_text": "",
+          "label": "Joint venture members (legal name, country and year of registration, address and authorised representative of each member)",
+          "required_rule": {
+            "field_key": "bidder_arrangement",
+            "rule_id": "RQ-WHEN-FIELD-EQUALS",
+            "value": "Joint venture"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 4000,
+            "min_length": 20
+          },
+          "visibility_rule": {
+            "field_key": "bidder_arrangement",
+            "rule_id": "VS-WHEN-FIELD-EQUALS",
+            "value": "Joint venture"
+          }
+        },
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "country_of_registration",
+          "help_text": "",
+          "label": "Actual or intended country of registration",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 80,
+            "min_length": 2
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-INTEGER",
+          "evidence_rule": null,
+          "field_key": "year_of_registration",
+          "help_text": "",
+          "label": "Year of registration",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-INTEGER-RANGE",
+          "validation_parameters": {
+            "maximum": 2100,
+            "minimum": 1800
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-LONG-TEXT",
+          "evidence_rule": null,
+          "field_key": "registered_address",
+          "help_text": "",
+          "label": "Address in the country of registration",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 500,
+            "min_length": 10
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "representative_name",
+          "help_text": "",
+          "label": "Authorised representative's name",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 160,
+            "min_length": 3
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "representative_email",
+          "help_text": "",
+          "label": "Authorised representative's email",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 200,
+            "min_length": 5
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "representative_telephone",
+          "help_text": "",
+          "label": "Authorised representative's telephone",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 40,
+            "min_length": 5
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "SUP",
+      "order": 10,
+      "rule_id": "RR-SUPPLIER-DETAILS",
+      "source_family": "supplier",
+      "source_selector": {
+        "selector": "SEL-SUPPLIER"
+      },
+      "task_id": "TASK-COMPANY"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-ALWAYS"
+      },
+      "composition_id": "COMP-LOCKED-DECLARATION",
+      "contract_mapping_id": "DM-DECL-FORM-OF-TENDER",
+      "document_anchor": "complete_tender.html#decl-form-of-tender",
+      "evaluation_mapping_id": "DM-DECL-FORM-OF-TENDER",
+      "field_definitions": [
+        {
+          "control_id": "CTL-LONG-TEXT",
+          "evidence_rule": null,
+          "field_key": "discounts",
+          "help_text": "Item (f) of the Form of Tender.",
+          "label": "Discounts offered and the methodology for their application (or \"none\")",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 1000,
+            "min_length": 4
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-YES-NO",
+          "evidence_rule": null,
+          "field_key": "state_owned_enterprise",
+          "help_text": "Item (k) of the Form of Tender.",
+          "label": "Is the Tenderer a state-owned enterprise or institution?",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Yes",
+              "No"
+            ]
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-LONG-TEXT",
+          "evidence_rule": null,
+          "field_key": "commissions_gratuities_fees",
+          "help_text": "Item (l) of the Form of Tender.",
+          "label": "Commissions, gratuities or fees paid or payable (or \"none\")",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 1000,
+            "min_length": 4
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-CONFIRMATION",
+          "evidence_rule": null,
+          "field_key": "confirmed",
+          "help_text": "",
+          "label": "I confirm the Form of Tender statements above on behalf of the Tenderer.",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-CONFIRMED",
+          "validation_parameters": {},
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "FOT",
+      "locked_text": "a) No reservations: We have examined and have no reservations to the Tendering document, including Addenda issued in accordance with Instructions to Tenderers (ITT 7); b) Eligibility: We meet the eligibility requirements and have no conflict of interest in accordance with ITT 3; c) Tender Security: We confirm that we have furnished the Tender Security required in accordance with ITT 18; d) Conformity: We offer to supply in conformity with the Tendering document and in accordance with the Delivery Schedules specified in the Schedule of Requirements the following Goods and Related Services: e) Tender Price: The total price of our Tender, excluding any discounts offered in item (f) below, is: _______________________ (in words and figures, indicating the currency); f) Discounts: The discounts offered and the methodology for their application are: _______________________ (or “none”); g) Tender Validity Period: Our Tender shall be valid for the period specified in TDS ITT 17.1 ({{ tender.validity_days }} days) from the date fixed for the Tender submission deadline specified in TDS ITT 21.1, and it shall remain binding upon us and may be accepted at any time before the expiration of that period; h) Performance Security: If our Tender is accepted, we commit to obtain a performance security in accordance with the Tendering document; i) One Tender per Tenderer: We are not submitting any other Tender(s) as an individual tenderer, and we are not participating in any other Tender(s) as a Joint Venture member, or as a subcontractor, and meet the requirements of ITT 3.9; j) Suspension and Debarment: We, along with any of our subcontractors, suppliers, consultants, manufacturers, or service providers for any part of the contract, are not subject to, and not controlled by any entity or individual that is subject to, a temporary suspension or a debarment imposed by the Procuring Entity. Further, we are not ineligible under the Kenya laws or official regulations or pursuant to a decision of the United Nations Security Council; k) State-owned enterprise or institution: _______________________ (Tenderer states whether or not it is a state-owned enterprise or institution and, if so, confirms that it meets the requirements of ITT 3.8); l) Commissions, gratuities, fees: We have paid, or will pay, the following commissions, gratuities, or fees with respect to the Tendering process or execution of the Contract: _______________________ (or “none”); m) Binding Contract: We understand that this Tender, together with your written acceptance thereof included in your Letter of Acceptance, shall constitute a binding contract between us, until a formal contract is prepared and executed; n) Procuring Entity Not Bound to Accept: We understand that you are not bound to accept the lowest evaluated cost Tender, the Best Evaluated Tender or any other Tender that you may receive; and o) Fraud and Corruption: We hereby certify that we have taken steps to ensure that no person acting for us or on our behalf engages in any type of Fraud and Corruption. p) Code of Ethical Conduct: We undertake to adhere by the Code of Ethics for Persons Participating in Public Procurement and Asset Disposal, copy available from {{ procuring_entity.contact_office }}, during the procurement process and the execution of any resulting contract. q) Collusive practices: We hereby certify and confirm that the tender is genuine, non-collusive and made with the intention of accepting the contract if awarded. To this effect we have signed the “Certificate of Independent Tender Determination” attached below. r) Beneficial Ownership Information: We commit to provide to the procuring entity the Beneficial Ownership Information in conformity with the Beneficial Ownership Disclosure Form upon receipt of notification of intention to enter into a contract in the event we are the successful tenderer in this subject procurement proceeding. s) We, the Tenderer, have duly completed, signed and stamped the following Forms as part of our Tender: i. Tenderer's Eligibility; Confidential Business Questionnaire - to establish we are not in any conflict of interest; ii. Certificate of Independent Tender Determination - to declare that we completed the tender without colluding with other tenderers; iii. Self-Declaration of the Tenderer - to declare that we will, if awarded a contract, not engage in any form of fraud and corruption; and iv. Declaration and Commitment to the Code of Ethics for Persons Participating in Public Procurement. Further, we confirm that we have read and understood the full content and scope of fraud and corruption as informed in “Appendix 1 - Fraud and Corruption” attached to the Form of Tender.",
+      "order": 20,
+      "rule_id": "RR-DECL-FORM-OF-TENDER",
+      "source_family": "declaration",
+      "source_locator": "PPRA Goods STD Section IV, Form of Tender, items (a)–(s) (source pp. 40–42)",
+      "source_selector": {
+        "form_id": "FORM-TENDER",
+        "selector": "SEL-DECLARATION"
+      },
+      "source_text_digest": "d302495f8639d1e240b6313235d197a8c92cf2c1d5065d3127fce6bb769196af",
+      "task_id": "TASK-COMPANY",
+      "text_version": "1"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-ALWAYS"
+      },
+      "composition_id": "COMP-LOCKED-DECLARATION",
+      "contract_mapping_id": "DM-DECL-CITD",
+      "document_anchor": "complete_tender.html#decl-citd",
+      "evaluation_mapping_id": "DM-DECL-CITD",
+      "field_definitions": [
+        {
+          "control_id": "CTL-SINGLE-CHOICE",
+          "evidence_rule": null,
+          "field_key": "disclosure",
+          "help_text": "",
+          "label": "Paragraph 5 disclosure",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Arrived at the Tender independently",
+              "Consulted with one or more competitors"
+            ]
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-LONG-TEXT",
+          "evidence_rule": null,
+          "field_key": "consultation_details",
+          "help_text": "",
+          "label": "Names of the competitors and the nature of, and reasons for, the consultations",
+          "required_rule": {
+            "field_key": "disclosure",
+            "rule_id": "RQ-WHEN-FIELD-EQUALS",
+            "value": "Consulted with one or more competitors"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 4000,
+            "min_length": 20
+          },
+          "visibility_rule": {
+            "field_key": "disclosure",
+            "rule_id": "VS-WHEN-FIELD-EQUALS",
+            "value": "Consulted with one or more competitors"
+          }
+        },
+        {
+          "control_id": "CTL-CONFIRMATION",
+          "evidence_rule": null,
+          "field_key": "confirmed",
+          "help_text": "",
+          "label": "I certify the Certificate of Independent Tender Determination on behalf of the Tenderer.",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-CONFIRMED",
+          "validation_parameters": {},
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "CITD",
+      "locked_text": "I, the undersigned, in submitting the accompanying Letter of Tender to {{ procuring_entity.name }} for {{ tender.title }} ({{ tender.reference }}), in response to the request for tenders, do hereby make the following statements that I certify to be true and complete in every respect: I certify, on behalf of the Tenderer, that: I have read and I understand the contents of this Certificate; I understand that the Tender will be disqualified if this Certificate is found not to be true and complete in every respect; I am the authorized representative of the Tenderer with authority to sign this Certificate, and to submit the Tender on behalf of the Tenderer; For the purposes of this Certificate and the Tender, I understand that the word “competitor” shall include any individual or organization, other than the Tenderer, whether or not affiliated with the Tenderer, who: a) has been requested to submit a Tender in response to this request for tenders; b) could potentially submit a tender in response to this request for tenders, based on their qualifications, abilities or experience; The Tenderer discloses that (check one of the following, as applicable): a) The Tenderer has arrived at the Tender independently from, and without consultation, communication, agreement or arrangement with, any competitor; b) the Tenderer has entered into consultations, communications, agreements or arrangements with one or more competitors regarding this request for tenders, and the Tenderer discloses, in the attached document(s), complete details thereof, including the names of the competitors and the nature of, and reasons for, such consultations, communications, agreements or arrangements; In particular, without limiting the generality of paragraphs (5)(a) or (5)(b) above, there has been no consultation, communication, agreement or arrangement with any competitor regarding: a) prices; b) methods, factors or formulas used to calculate prices; c) the intention or decision to submit, or not to submit, a tender; or d) the submission of a tender which does not meet the specifications of the request for Tenders; except as specifically disclosed pursuant to paragraph (5)(b) above; In addition, there has been no consultation, communication, agreement or arrangement with any competitor regarding the quality, quantity, specifications or delivery particulars of the works or services to which this request for tenders relates, except as specifically authorized by the procuring authority or as specifically disclosed pursuant to paragraph (5)(b) above; the terms of the Tender have not been, and will not be, knowingly disclosed by the Tenderer, directly or indirectly, to any competitor, prior to the date and time of the official tender opening, or of the awarding of the Contract, whichever comes first, unless otherwise required by law or as specifically disclosed pursuant to paragraph (5)(b) above.",
+      "order": 30,
+      "rule_id": "RR-DECL-CITD",
+      "source_family": "declaration",
+      "source_locator": "PPRA Goods STD Section IV, Certificate of Independent Tender Determination (source pp. 43–44)",
+      "source_selector": {
+        "form_id": "FORM-CITD",
+        "selector": "SEL-DECLARATION"
+      },
+      "source_text_digest": "ee0750fc1d41ef19de6a3b9bcc51251e6553add20f353dac0d974a07fe60c61e",
+      "task_id": "TASK-COMPANY",
+      "text_version": "1"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-ALWAYS"
+      },
+      "composition_id": "COMP-LOCKED-DECLARATION",
+      "contract_mapping_id": "DM-DECL-SD1",
+      "document_anchor": "complete_tender.html#decl-sd1",
+      "evaluation_mapping_id": "DM-DECL-SD1",
+      "field_definitions": [
+        {
+          "control_id": "CTL-CONFIRMATION",
+          "evidence_rule": null,
+          "field_key": "confirmed",
+          "help_text": "",
+          "label": "I make Self-Declaration SD1 on behalf of the Tenderer.",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-CONFIRMED",
+          "validation_parameters": {},
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "SD1",
+      "locked_text": "THAT I am the Company Secretary/Chief Executive/Managing Director/Principal Officer/Director of _______________________ (name of the Company) who is a Bidder in respect of Tender No. {{ tender.reference }} for {{ tender.title }} for {{ procuring_entity.name }} and duly authorized and competent to make this statement. THAT the aforesaid Bidder, its Directors and subcontractors have not been debarred from participating in procurement proceeding under Part IV of the Act. THAT what is deponed to herein above is true to the best of my knowledge, information and belief.",
+      "order": 40,
+      "rule_id": "RR-DECL-SD1",
+      "source_family": "declaration",
+      "source_locator": "PPRA Goods STD Section IV, Form SD1 (source p. 44)",
+      "source_selector": {
+        "form_id": "FORM-SD1",
+        "selector": "SEL-DECLARATION"
+      },
+      "source_text_digest": "41332ba5d6d6e826b76c4215db8618e804ce86fd8bb2079b92d1b9a1060c0b91",
+      "task_id": "TASK-COMPANY",
+      "text_version": "1"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-ALWAYS"
+      },
+      "composition_id": "COMP-LOCKED-DECLARATION",
+      "contract_mapping_id": "DM-DECL-SD2",
+      "document_anchor": "complete_tender.html#decl-sd2",
+      "evaluation_mapping_id": "DM-DECL-SD2",
+      "field_definitions": [
+        {
+          "control_id": "CTL-CONFIRMATION",
+          "evidence_rule": null,
+          "field_key": "confirmed",
+          "help_text": "",
+          "label": "I make Self-Declaration SD2 on behalf of the Tenderer.",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-CONFIRMED",
+          "validation_parameters": {},
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "SD2",
+      "locked_text": "THAT I am the Chief Executive/Managing Director/Principal Officer/Director of _______________________ (name of the Company) who is a Bidder in respect of Tender No. {{ tender.reference }} for {{ tender.title }} for {{ procuring_entity.name }} and duly authorized and competent to make this statement. THAT the aforesaid Bidder, its servants and/or agents/subcontractors will not engage in any corrupt or fraudulent practice and has not been requested to pay any inducement to any member of the Board, Management, Staff and/or employees and/or agents of {{ procuring_entity.name }}, which is the procuring entity. THAT the aforesaid Bidder, its servants and/or agents/subcontractors have not offered any inducement to any member of the Board, Management, Staff and/or employees and/or agents of {{ procuring_entity.name }}. THAT the aforesaid Bidder will not engage/has not engaged in any corrosive practice with other bidders participating in the subject tender. THAT what is deponed to herein above is true to the best of my knowledge information and belief.",
+      "order": 50,
+      "rule_id": "RR-DECL-SD2",
+      "source_family": "declaration",
+      "source_locator": "PPRA Goods STD Section IV, Form SD2 (source pp. 44–45)",
+      "source_selector": {
+        "form_id": "FORM-SD2",
+        "selector": "SEL-DECLARATION"
+      },
+      "source_text_digest": "9a3609b70722725c0ff487cef7d12468e23a4094c3183dfe24e87c584150b1d6",
+      "task_id": "TASK-COMPANY",
+      "text_version": "1"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-ALWAYS"
+      },
+      "composition_id": "COMP-LOCKED-DECLARATION",
+      "contract_mapping_id": "DM-DECL-CODE-OF-ETHICS",
+      "document_anchor": "complete_tender.html#decl-code-of-ethics",
+      "evaluation_mapping_id": "DM-DECL-CODE-OF-ETHICS",
+      "field_definitions": [
+        {
+          "control_id": "CTL-CONFIRMATION",
+          "evidence_rule": null,
+          "field_key": "confirmed",
+          "help_text": "",
+          "label": "I make the Declaration and Commitment to the Code of Ethics on behalf of the Tenderer.",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-CONFIRMED",
+          "validation_parameters": {},
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "COE",
+      "locked_text": "I, _______________________ (Person) on behalf of (Name of the Business/Company/Firm) _______________________ declare that I have read and fully understood the contents of the Public Procurement & Asset Disposal Act, 2015, Regulations and the Code of Ethics for persons participating in Public Procurement and Asset Disposal and my responsibilities under the Code. I do hereby commit to abide by the provisions of the Code of Ethics for persons participating in Public Procurement and Asset Disposal.",
+      "order": 60,
+      "rule_id": "RR-DECL-CODE-OF-ETHICS",
+      "source_family": "declaration",
+      "source_locator": "PPRA Goods STD Section IV, Declaration and Commitment to the Code of Ethics (source pp. 45–46)",
+      "source_selector": {
+        "form_id": "FORM-COE",
+        "selector": "SEL-DECLARATION"
+      },
+      "source_text_digest": "9cfa44e1faaba957e9fad359b682b909b3dfdd8d1efd91f1b5409b0b61eb994a",
+      "task_id": "TASK-COMPANY",
+      "text_version": "1"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-ALWAYS"
+      },
+      "composition_id": "COMP-LOCKED-DECLARATION",
+      "contract_mapping_id": "DM-DECL-CBQ",
+      "document_anchor": "complete_tender.html#decl-cbq",
+      "evaluation_mapping_id": "DM-DECL-CBQ",
+      "field_definitions": [
+        {
+          "control_id": "CTL-SINGLE-CHOICE",
+          "evidence_rule": null,
+          "field_key": "business_structure",
+          "help_text": "",
+          "label": "Business structure",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Sole proprietor",
+              "Partnership",
+              "Registered company"
+            ]
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-LONG-TEXT",
+          "evidence_rule": null,
+          "field_key": "ownership_details",
+          "help_text": "",
+          "label": "Owner, partner or director details (name, nationality, citizenship and percentage of shares owned)",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 4000,
+            "min_length": 10
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "trade_licence",
+          "help_text": "",
+          "label": "Current trade licence number and expiry date",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 120,
+            "min_length": 3
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-MONEY",
+          "evidence_rule": null,
+          "field_key": "maximum_business_value",
+          "help_text": "",
+          "label": "Maximum value of business the Tenderer handles",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-MONEY",
+          "validation_parameters": {
+            "currency": "KES",
+            "minimum": "0.00",
+            "scale": 2
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-YES-NO",
+          "evidence_rule": null,
+          "field_key": "procuring_entity_interest",
+          "help_text": "",
+          "label": "Does any person in the Procuring Entity have an interest or relationship in this firm?",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Yes",
+              "No"
+            ]
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-LONG-TEXT",
+          "evidence_rule": null,
+          "field_key": "procuring_entity_interest_details",
+          "help_text": "",
+          "label": "Names, designation in the Procuring Entity and the interest or relationship",
+          "required_rule": {
+            "field_key": "procuring_entity_interest",
+            "rule_id": "RQ-WHEN-FIELD-EQUALS",
+            "value": "Yes"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 2000,
+            "min_length": 10
+          },
+          "visibility_rule": {
+            "field_key": "procuring_entity_interest",
+            "rule_id": "VS-WHEN-FIELD-EQUALS",
+            "value": "Yes"
+          }
+        },
+        {
+          "control_id": "CTL-YES-NO",
+          "evidence_rule": null,
+          "field_key": "conflict_01",
+          "help_text": "Disclosure of Interest item (ii) 1.",
+          "label": "Conflict of interest item 1",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Yes",
+              "No"
+            ]
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-YES-NO",
+          "evidence_rule": null,
+          "field_key": "conflict_02",
+          "help_text": "Disclosure of Interest item (ii) 2.",
+          "label": "Conflict of interest item 2",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Yes",
+              "No"
+            ]
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-YES-NO",
+          "evidence_rule": null,
+          "field_key": "conflict_03",
+          "help_text": "Disclosure of Interest item (ii) 3.",
+          "label": "Conflict of interest item 3",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Yes",
+              "No"
+            ]
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-YES-NO",
+          "evidence_rule": null,
+          "field_key": "conflict_04",
+          "help_text": "Disclosure of Interest item (ii) 4.",
+          "label": "Conflict of interest item 4",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Yes",
+              "No"
+            ]
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-YES-NO",
+          "evidence_rule": null,
+          "field_key": "conflict_05",
+          "help_text": "Disclosure of Interest item (ii) 5.",
+          "label": "Conflict of interest item 5",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Yes",
+              "No"
+            ]
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-YES-NO",
+          "evidence_rule": null,
+          "field_key": "conflict_06",
+          "help_text": "Disclosure of Interest item (ii) 6.",
+          "label": "Conflict of interest item 6",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Yes",
+              "No"
+            ]
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-YES-NO",
+          "evidence_rule": null,
+          "field_key": "conflict_07",
+          "help_text": "Disclosure of Interest item (ii) 7.",
+          "label": "Conflict of interest item 7",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Yes",
+              "No"
+            ]
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-YES-NO",
+          "evidence_rule": null,
+          "field_key": "conflict_08",
+          "help_text": "Disclosure of Interest item (ii) 8.",
+          "label": "Conflict of interest item 8",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Yes",
+              "No"
+            ]
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-YES-NO",
+          "evidence_rule": null,
+          "field_key": "conflict_09",
+          "help_text": "Disclosure of Interest item (ii) 9.",
+          "label": "Conflict of interest item 9",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Yes",
+              "No"
+            ]
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-LONG-TEXT",
+          "evidence_rule": null,
+          "field_key": "conflict_details",
+          "help_text": "",
+          "label": "Details of each conflict of interest answered Yes",
+          "required_rule": {
+            "field_keys": [
+              "conflict_01",
+              "conflict_02",
+              "conflict_03",
+              "conflict_04",
+              "conflict_05",
+              "conflict_06",
+              "conflict_07",
+              "conflict_08",
+              "conflict_09"
+            ],
+            "rule_id": "RQ-WHEN-ANY-FIELD-EQUALS",
+            "value": "Yes"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 4000,
+            "min_length": 10
+          },
+          "visibility_rule": {
+            "field_keys": [
+              "conflict_01",
+              "conflict_02",
+              "conflict_03",
+              "conflict_04",
+              "conflict_05",
+              "conflict_06",
+              "conflict_07",
+              "conflict_08",
+              "conflict_09"
+            ],
+            "rule_id": "VS-WHEN-ANY-FIELD-EQUALS",
+            "value": "Yes"
+          }
+        },
+        {
+          "control_id": "CTL-CONFIRMATION",
+          "evidence_rule": null,
+          "field_key": "confirmed",
+          "help_text": "",
+          "label": "I certify that the information given in this questionnaire is correct.",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-CONFIRMED",
+          "validation_parameters": {},
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "CBQ",
+      "locked_text": "(e) Disclosure of Interest (i) Are there any person/persons in {{ procuring_entity.name }} who has an interest or relationship in this firm? Yes/No _______________________. If yes, provide names, designation in the Procuring Entity and the interest or relationship with the Tenderer. (ii) Conflict of interest disclosure - for each of the following, the Tenderer discloses Yes/No and, if Yes, the details of the relationship: Tenderer is directly or indirectly controlled by or is under common control with another tenderer. Tenderer receives or has received any direct or indirect subsidy from another tenderer. Tenderer has the same legal representative as another tenderer. Tenderer has a relationship with another tenderer, directly or through common third parties, that puts it in a position to influence the tender of another tenderer, or influence the decisions of the Procuring Entity regarding this tendering process. Any of the Tenderer's affiliates participated as a consultant in the preparation of the design or technical specifications of the works that are the subject of the tender. Tenderer would be providing goods, works, non-consulting services or consulting services during implementation of the contract specified in this Tender Document. Tenderer has a close business or family relationship with a professional staff of the Procuring Entity who are directly or indirectly involved in the preparation of the Tender document or specifications of the Contract, and/or the Tender evaluation process of such contract. Tenderer has a close business or family relationship with a professional staff of the Procuring Entity who would be involved in the implementation or supervision of the Contract. Has the conflict stemming from such relationship stated in items 7 and 8 above been resolved in a manner acceptable to the Procuring Entity throughout the tendering process and execution of the Contract? (f) Certification On behalf of the Tenderer, I certify that the information given above is correct.",
+      "order": 70,
+      "rule_id": "RR-DECL-CBQ",
+      "source_family": "declaration",
+      "source_locator": "PPRA Goods STD Section IV, Confidential Business Questionnaire, parts (e) and (f) (source pp. 50–52)",
+      "source_selector": {
+        "form_id": "FORM-CBQ",
+        "selector": "SEL-DECLARATION"
+      },
+      "source_text_digest": "55e241f4a8c621a4124f78e9b5cca43d61f1736bf7d91630e9597c42bdb6c0f8",
+      "task_id": "TASK-COMPANY",
+      "text_version": "1"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-RESERVATION-APPLIES"
+      },
+      "composition_id": "COMP-RESERVATION-ELIGIBILITY",
+      "contract_mapping_id": "DM-RESERVATION",
+      "document_anchor": "complete_tender.html#decl-reservation",
+      "evaluation_mapping_id": "DM-RESERVATION",
+      "field_definitions": [
+        {
+          "control_id": "CTL-SINGLE-CHOICE",
+          "evidence_rule": null,
+          "field_key": "certificate_category",
+          "help_text": "",
+          "label": "Registration category on the certificate",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": {
+              "source_fact": "permitted_categories"
+            }
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "certificate_number",
+          "help_text": "",
+          "label": "Access to Government Procurement Opportunities registration certificate number",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 60,
+            "min_length": 3
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-DATE",
+          "evidence_rule": null,
+          "field_key": "certificate_valid_until",
+          "help_text": "",
+          "label": "Certificate valid until",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-DATE-RANGE",
+          "validation_parameters": {
+            "not_before": {
+              "source_fact": "submission_deadline_date"
+            }
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-EVIDENCE-REFERENCE",
+          "evidence_rule": {
+            "evidence_type": "Access to Government Procurement Opportunities registration certificate",
+            "linkage_target": "this_response",
+            "mandatory": true,
+            "maximum": 1,
+            "minimum": 1
+          },
+          "field_key": "certificate_evidence",
+          "help_text": "",
+          "label": "Registration certificate",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-EVIDENCE-COUNT",
+          "validation_parameters": {
+            "maximum": 1,
+            "minimum": 1
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-CONFIRMATION",
+          "evidence_rule": null,
+          "field_key": "confirmed",
+          "help_text": "",
+          "label": "I declare that the Tenderer holds the registration stated above in the published category.",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-CONFIRMED",
+          "validation_parameters": {},
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "RES",
+      "locked_text": "This Tender is reserved for enterprises owned by {{ reservation.category | lower }}, in accordance with section 155 of the Public Procurement and Asset Disposal Act, 2015 and regulation 149 of the Public Procurement and Asset Disposal Regulations, 2020. Only a Tenderer that holds a valid registration under the Access to Government Procurement Opportunities programme in the category {{ reservation.category }} at the Tender submission deadline is eligible. The Tenderer shall submit its valid registration certificate with its Tender. A Tender from a Tenderer that does not hold the required registration shall be determined non-responsive at the Preliminary Examination and shall not be considered further.",
+      "order": 80,
+      "rule_id": "RR-RESERVATION",
+      "source_family": "reservation",
+      "source_locator": "PPADA 2015 s.155 and PPADR 2020 reg. 149 reserved-procurement eligibility clause, Section III (KenTender generated clause, coverage COV-291)",
+      "source_selector": {
+        "selector": "SEL-RESERVATION"
+      },
+      "source_text_digest": "871fe28a6895e4467911de21aabf135bd26b6c8958e19195fdf4e2f5c85bc597",
+      "task_id": "TASK-COMPANY",
+      "text_version": "1"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-TENDER-SECURITY-REQUIRED"
+      },
+      "composition_id": "COMP-TENDER-SECURITY",
+      "contract_mapping_id": "DM-TENDER-SECURITY",
+      "document_anchor": "complete_tender.html#form-tender-security",
+      "evaluation_mapping_id": "DM-TENDER-SECURITY",
+      "field_definitions": [
+        {
+          "control_id": "CTL-SINGLE-CHOICE",
+          "evidence_rule": null,
+          "field_key": "security_form",
+          "help_text": "",
+          "label": "Form of Tender Security",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": {
+              "source_fact": "permitted_forms"
+            }
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "issuer",
+          "help_text": "",
+          "label": "Issuing bank or insurer",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 160,
+            "min_length": 3
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "guarantee_reference",
+          "help_text": "",
+          "label": "Guarantee number",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 80,
+            "min_length": 2
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-EVIDENCE-REFERENCE",
+          "evidence_rule": {
+            "evidence_type": "Tender Security instrument",
+            "linkage_target": "this_response",
+            "mandatory": true,
+            "maximum": 1,
+            "minimum": 1
+          },
+          "field_key": "security_evidence",
+          "help_text": "",
+          "label": "Tender Security instrument",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-EVIDENCE-COUNT",
+          "validation_parameters": {
+            "maximum": 1,
+            "minimum": 1
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "TS",
+      "order": 90,
+      "rule_id": "RR-TENDER-SECURITY",
+      "source_family": "tender_security",
+      "source_selector": {
+        "selector": "SEL-TENDER-SECURITY"
+      },
+      "task_id": "TASK-COMPANY"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-ALWAYS"
+      },
+      "composition_id": "COMP-EVIDENCE-LIST",
+      "contract_mapping_id": "DM-EVIDENCE-ELIGIBILITY-DOCUMENTS",
+      "document_anchor": "complete_tender.html#form-tenderer-information",
+      "evaluation_mapping_id": "DM-EVIDENCE-ELIGIBILITY-DOCUMENTS",
+      "field_definitions": [
+        {
+          "control_id": "CTL-EVIDENCE-REFERENCE",
+          "evidence_rule": {
+            "evidence_type": "Eligibility and registration documents",
+            "linkage_target": "this_response",
+            "mandatory": true,
+            "maximum": 10,
+            "minimum": 1
+          },
+          "field_key": "evidence",
+          "help_text": "",
+          "label": "Tax compliance, registration and constitution documents",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-EVIDENCE-COUNT",
+          "validation_parameters": {
+            "maximum": 10,
+            "minimum": 1
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "ELIG",
+      "order": 100,
+      "rule_id": "RR-EVIDENCE-ELIGIBILITY-DOCUMENTS",
+      "source_family": "evidence_requirement",
+      "source_selector": {
+        "evidence_kind": "ELIGIBILITY-DOCUMENTS",
+        "selector": "SEL-EVIDENCE"
+      },
+      "task_id": "TASK-REQUIREMENTS"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-ALWAYS"
+      },
+      "composition_id": "COMP-GOODS-OFFER",
+      "contract_mapping_id": "DM-GOODS-OFFER",
+      "document_anchor": "complete_tender.html#schedule-goods",
+      "evaluation_mapping_id": "DM-GOODS-OFFER",
+      "field_definitions": [
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "offered_make_model",
+          "help_text": "",
+          "label": "Offered make and model",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 160,
+            "min_length": 3
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-DATE",
+          "evidence_rule": null,
+          "field_key": "offered_delivery_date",
+          "help_text": "",
+          "label": "Offered delivery date",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-DATE-RANGE",
+          "validation_parameters": {
+            "not_after": {
+              "source_fact": "latest_delivery_date"
+            }
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-EVIDENCE-REFERENCE",
+          "evidence_rule": {
+            "evidence_type": "Datasheet, brochure or certificate",
+            "linkage_target": "this_response",
+            "mandatory": false,
+            "maximum": 5,
+            "minimum": 0
+          },
+          "field_key": "evidence",
+          "help_text": "",
+          "label": "Supporting evidence for the offered goods",
+          "required_rule": {
+            "rule_id": "RQ-NEVER"
+          },
+          "validation_id": "VAL-EVIDENCE-COUNT",
+          "validation_parameters": {
+            "maximum": 5,
+            "minimum": 0
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "GDS",
+      "order": 10,
+      "rule_id": "RR-GOODS-OFFER",
+      "source_family": "goods",
+      "source_selector": {
+        "selector": "SEL-GOODS-GROUPS"
+      },
+      "task_id": "TASK-REQUIREMENTS"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-ALWAYS"
+      },
+      "composition_id": "COMP-TECHNICAL-COMPLIANCE",
+      "contract_mapping_id": "DM-TECHNICAL",
+      "document_anchor": "complete_tender.html#form-technical-compliance",
+      "evaluation_mapping_id": "DM-TECHNICAL",
+      "field_definitions": [
+        {
+          "control_id": "CTL-SINGLE-CHOICE",
+          "evidence_rule": null,
+          "field_key": "compliance",
+          "help_text": "",
+          "label": "Compliance",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Comply",
+              "Do not comply"
+            ]
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CHARACTERISTIC",
+          "evidence_rule": null,
+          "field_key": "offered_value",
+          "help_text": "",
+          "label": "Offered value",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "CHARACTERISTIC",
+          "validation_parameters": {},
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-LONG-TEXT",
+          "evidence_rule": null,
+          "field_key": "comment",
+          "help_text": "",
+          "label": "Comment",
+          "required_rule": {
+            "rule_id": "RQ-NEVER"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 500,
+            "min_length": 0
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-EVIDENCE-REFERENCE",
+          "evidence_rule": {
+            "evidence_type": "Datasheet, brochure or certificate",
+            "linkage_target": "this_response",
+            "mandatory": false,
+            "maximum": 5,
+            "minimum": 1
+          },
+          "field_key": "evidence",
+          "help_text": "",
+          "label": "Evidence reference",
+          "required_rule": {
+            "flag": "evidence_required",
+            "rule_id": "RQ-WHEN-SOURCE-FLAG"
+          },
+          "validation_id": "VAL-EVIDENCE-COUNT",
+          "validation_parameters": {
+            "maximum": 5,
+            "minimum": 1
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "TCR",
+      "order": 20,
+      "rule_id": "RR-TECHNICAL",
+      "source_family": "technical_requirement",
+      "source_selector": {
+        "selector": "SEL-TECHNICAL-REQUIREMENTS"
+      },
+      "task_id": "TASK-REQUIREMENTS"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-ALWAYS"
+      },
+      "composition_id": "COMP-WARRANTY-SUPPORT",
+      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
+      "document_anchor": "complete_tender.html#schedule-warranty-support",
+      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
+      "field_definitions": [
+        {
+          "control_id": "CTL-YES-NO",
+          "evidence_rule": null,
+          "field_key": "confirmation",
+          "help_text": "",
+          "label": "We confirm the published minimum warranty and support obligations will be met.",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Yes",
+              "No"
+            ]
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-INTEGER",
+          "evidence_rule": null,
+          "field_key": "offered_warranty_months",
+          "help_text": "",
+          "label": "Offered warranty period (months)",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-INTEGER-RANGE",
+          "validation_parameters": {
+            "maximum": 120,
+            "minimum": {
+              "source_fact": "minimum_warranty_months"
+            }
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-LONG-TEXT",
+          "evidence_rule": null,
+          "field_key": "support_contact_details",
+          "help_text": "",
+          "label": "Warranty contact, escalation and service-centre details",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 500,
+            "min_length": 10
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-EVIDENCE-REFERENCE",
+          "evidence_rule": {
+            "evidence_type": "Warranty or support document",
+            "linkage_target": "this_response",
+            "mandatory": false,
+            "maximum": 5,
+            "minimum": 0
+          },
+          "field_key": "evidence",
+          "help_text": "",
+          "label": "Warranty or support evidence",
+          "required_rule": {
+            "rule_id": "RQ-NEVER"
+          },
+          "validation_id": "VAL-EVIDENCE-COUNT",
+          "validation_parameters": {
+            "maximum": 5,
+            "minimum": 0
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "WS",
+      "order": 30,
+      "rule_id": "RR-WARRANTY-SUPPORT",
+      "source_family": "warranty_support",
+      "source_selector": {
+        "selector": "SEL-WARRANTY-SUPPORT"
+      },
+      "task_id": "TASK-REQUIREMENTS"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-COMPARABLE-EXPERIENCE-REQUIRED"
+      },
+      "composition_id": "COMP-EXPERIENCE",
+      "contract_mapping_id": "DM-EXPERIENCE",
+      "document_anchor": "complete_tender.html#qualification-requirements",
+      "evaluation_mapping_id": "DM-EXPERIENCE",
+      "field_definitions": [
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "client_name",
+          "help_text": "",
+          "label": "Client",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 160,
+            "min_length": 3
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "contract_reference",
+          "help_text": "",
+          "label": "Contract name or reference",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 160,
+            "min_length": 3
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-MONEY",
+          "evidence_rule": null,
+          "field_key": "contract_value",
+          "help_text": "",
+          "label": "Contract value",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-MONEY",
+          "validation_parameters": {
+            "currency": "KES",
+            "minimum": "0.01",
+            "scale": 2
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-DATE",
+          "evidence_rule": null,
+          "field_key": "completion_date",
+          "help_text": "",
+          "label": "Completion date",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-DATE-RANGE",
+          "validation_parameters": {
+            "not_after": {
+              "source_fact": "window_end"
+            },
+            "not_before": {
+              "source_fact": "window_start"
+            }
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-LONG-TEXT",
+          "evidence_rule": null,
+          "field_key": "scope",
+          "help_text": "",
+          "label": "Brief scope of the supply",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 1000,
+            "min_length": 10
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-EVIDENCE-REFERENCE",
+          "evidence_rule": {
+            "evidence_type": "Completion certificate or client reference",
+            "linkage_target": "this_response",
+            "mandatory": true,
+            "maximum": 3,
+            "minimum": 1
+          },
+          "field_key": "evidence",
+          "help_text": "",
+          "label": "Completion evidence",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-EVIDENCE-COUNT",
+          "validation_parameters": {
+            "maximum": 3,
+            "minimum": 1
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "EXP",
+      "order": 40,
+      "rule_id": "RR-EXPERIENCE",
+      "source_family": "experience",
+      "source_selector": {
+        "selector": "SEL-EXPERIENCE-ENTRIES"
+      },
+      "task_id": "TASK-REQUIREMENTS"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-RELATED-SERVICES-PRESENT"
+      },
+      "composition_id": "COMP-RELATED-SERVICES",
+      "contract_mapping_id": "DM-RELATED-SERVICE",
+      "document_anchor": "complete_tender.html#form-related-services-confirmation",
+      "evaluation_mapping_id": "DM-RELATED-SERVICE",
+      "field_definitions": [
+        {
+          "control_id": "CTL-YES-NO",
+          "evidence_rule": null,
+          "field_key": "confirmation",
+          "help_text": "",
+          "label": "We confirm this related service will be performed as published.",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Yes",
+              "No"
+            ]
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-DATE",
+          "evidence_rule": null,
+          "field_key": "offered_completion_date",
+          "help_text": "",
+          "label": "Offered completion date",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-DATE-RANGE",
+          "validation_parameters": {
+            "not_after": {
+              "source_fact": "completion_date"
+            }
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-EVIDENCE-REFERENCE",
+          "evidence_rule": {
+            "evidence_type": "Service plan or certificate",
+            "linkage_target": "this_response",
+            "mandatory": false,
+            "maximum": 5,
+            "minimum": 0
+          },
+          "field_key": "evidence",
+          "help_text": "",
+          "label": "Service evidence",
+          "required_rule": {
+            "rule_id": "RQ-NEVER"
+          },
+          "validation_id": "VAL-EVIDENCE-COUNT",
+          "validation_parameters": {
+            "maximum": 5,
+            "minimum": 0
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "SVC",
+      "order": 50,
+      "rule_id": "RR-RELATED-SERVICE",
+      "source_family": "related_service",
+      "source_selector": {
+        "selector": "SEL-RELATED-SERVICES"
+      },
+      "task_id": "TASK-REQUIREMENTS"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-ALWAYS"
+      },
+      "composition_id": "COMP-ACCEPTANCE",
+      "contract_mapping_id": "DM-ACCEPTANCE",
+      "document_anchor": "complete_tender.html#form-acceptance-confirmation",
+      "evaluation_mapping_id": "DM-ACCEPTANCE",
+      "field_definitions": [
+        {
+          "control_id": "CTL-CONFIRMATION",
+          "evidence_rule": null,
+          "field_key": "confirmed",
+          "help_text": "",
+          "label": "We accept this acceptance requirement and will make the stated evidence available at inspection and acceptance.",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-CONFIRMED",
+          "validation_parameters": {},
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "ACC",
+      "order": 60,
+      "rule_id": "RR-ACCEPTANCE",
+      "source_family": "acceptance_requirement",
+      "source_selector": {
+        "selector": "SEL-ACCEPTANCE-REQUIREMENTS"
+      },
+      "task_id": "TASK-REQUIREMENTS"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-MANUFACTURER-AUTHORISATION-REQUIRED"
+      },
+      "composition_id": "COMP-EVIDENCE-LIST",
+      "contract_mapping_id": "DM-EVIDENCE-MANUFACTURER-AUTHORISATION",
+      "document_anchor": "complete_tender.html#form-manufacturer-authorisation",
+      "evaluation_mapping_id": "DM-EVIDENCE-MANUFACTURER-AUTHORISATION",
+      "field_definitions": [
+        {
+          "control_id": "CTL-EVIDENCE-REFERENCE",
+          "evidence_rule": {
+            "evidence_type": "Manufacturer's authorisation",
+            "linkage_target": "this_response",
+            "mandatory": true,
+            "maximum": 5,
+            "minimum": 1
+          },
+          "field_key": "evidence",
+          "help_text": "",
+          "label": "Manufacturer's Authorization Form",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-EVIDENCE-COUNT",
+          "validation_parameters": {
+            "maximum": 5,
+            "minimum": 1
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "MAF",
+      "order": 70,
+      "rule_id": "RR-EVIDENCE-MANUFACTURER-AUTHORISATION",
+      "source_family": "evidence_requirement",
+      "source_selector": {
+        "evidence_kind": "MANUFACTURER-AUTHORISATION",
+        "selector": "SEL-EVIDENCE"
+      },
+      "task_id": "TASK-REQUIREMENTS"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-DATASHEET-REQUIRED"
+      },
+      "composition_id": "COMP-EVIDENCE-LIST",
+      "contract_mapping_id": "DM-EVIDENCE-DATASHEET",
+      "document_anchor": "complete_tender.html#qualification-requirements",
+      "evaluation_mapping_id": "DM-EVIDENCE-DATASHEET",
+      "field_definitions": [
+        {
+          "control_id": "CTL-EVIDENCE-REFERENCE",
+          "evidence_rule": {
+            "evidence_type": "Datasheet or brochure",
+            "linkage_target": "this_response",
+            "mandatory": true,
+            "maximum": 10,
+            "minimum": 1
+          },
+          "field_key": "evidence",
+          "help_text": "",
+          "label": "Technical datasheets or brochures",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-EVIDENCE-COUNT",
+          "validation_parameters": {
+            "maximum": 10,
+            "minimum": 1
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "DS",
+      "order": 80,
+      "rule_id": "RR-EVIDENCE-DATASHEET",
+      "source_family": "evidence_requirement",
+      "source_selector": {
+        "evidence_kind": "DATASHEET",
+        "selector": "SEL-EVIDENCE"
+      },
+      "task_id": "TASK-REQUIREMENTS"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-AFTER-SALES-REQUIRED"
+      },
+      "composition_id": "COMP-EVIDENCE-LIST",
+      "contract_mapping_id": "DM-EVIDENCE-AFTER-SALES",
+      "document_anchor": "complete_tender.html#qualification-requirements",
+      "evaluation_mapping_id": "DM-EVIDENCE-AFTER-SALES",
+      "field_definitions": [
+        {
+          "control_id": "CTL-EVIDENCE-REFERENCE",
+          "evidence_rule": {
+            "evidence_type": "After-sales support evidence",
+            "linkage_target": "this_response",
+            "mandatory": true,
+            "maximum": 5,
+            "minimum": 1
+          },
+          "field_key": "evidence",
+          "help_text": "",
+          "label": "After-sales support evidence",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-EVIDENCE-COUNT",
+          "validation_parameters": {
+            "maximum": 5,
+            "minimum": 1
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "AS",
+      "order": 90,
+      "rule_id": "RR-EVIDENCE-AFTER-SALES",
+      "source_family": "evidence_requirement",
+      "source_selector": {
+        "evidence_kind": "AFTER-SALES",
+        "selector": "SEL-EVIDENCE"
+      },
+      "task_id": "TASK-REQUIREMENTS"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-ALWAYS"
+      },
+      "composition_id": "COMP-EVIDENCE-LIST",
+      "contract_mapping_id": "DM-EVIDENCE-ADDITIONAL",
+      "document_anchor": "complete_tender.html#qualification-requirements",
+      "evaluation_mapping_id": "DM-EVIDENCE-ADDITIONAL",
+      "field_definitions": [
+        {
+          "control_id": "CTL-EVIDENCE-REFERENCE",
+          "evidence_rule": {
+            "evidence_type": "Evidence named by the published requirement",
+            "linkage_target": "this_response",
+            "mandatory": false,
+            "maximum": 5,
+            "minimum": 1
+          },
+          "field_key": "evidence",
+          "help_text": "",
+          "label": "Additional evidence",
+          "required_rule": {
+            "flag": "mandatory",
+            "rule_id": "RQ-WHEN-SOURCE-FLAG"
+          },
+          "validation_id": "VAL-EVIDENCE-COUNT",
+          "validation_parameters": {
+            "maximum": 5,
+            "minimum": 1
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "EVX",
+      "order": 100,
+      "rule_id": "RR-EVIDENCE-ADDITIONAL",
+      "source_family": "evidence_requirement",
+      "source_selector": {
+        "selector": "SEL-EVIDENCE-ADDITIONAL"
+      },
+      "task_id": "TASK-REQUIREMENTS"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-ALWAYS"
+      },
+      "composition_id": "COMP-GOODS-PRICE",
+      "contract_mapping_id": "DM-PRICE-GOODS",
+      "document_anchor": "complete_tender.html#schedule-price-goods",
+      "evaluation_mapping_id": "DM-PRICE-GOODS",
+      "field_definitions": [
+        {
+          "control_id": "CTL-MONEY",
+          "evidence_rule": null,
+          "field_key": "unit_price",
+          "help_text": "",
+          "label": "Unit price",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-MONEY",
+          "validation_parameters": {
+            "currency": {
+              "source_fact": "currency"
+            },
+            "minimum": "0.01",
+            "scale": 2
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-MONEY",
+          "evidence_rule": null,
+          "field_key": "tax_amount",
+          "help_text": "",
+          "label": "Taxes payable on this line",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-MONEY",
+          "validation_parameters": {
+            "currency": {
+              "source_fact": "currency"
+            },
+            "minimum": "0.00",
+            "scale": 2
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "PRG",
+      "order": 10,
+      "rule_id": "RR-PRICE-GOODS",
+      "source_family": "price_row",
+      "source_selector": {
+        "selector": "SEL-GOODS-GROUPS"
+      },
+      "task_id": "TASK-PRICE"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-RELATED-SERVICES-PRESENT"
+      },
+      "composition_id": "COMP-GOODS-PRICE",
+      "contract_mapping_id": "DM-PRICE-SERVICE",
+      "document_anchor": "complete_tender.html#schedule-price-services",
+      "evaluation_mapping_id": "DM-PRICE-SERVICE",
+      "field_definitions": [
+        {
+          "control_id": "CTL-MONEY",
+          "evidence_rule": null,
+          "field_key": "unit_price",
+          "help_text": "",
+          "label": "Price for this service",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-MONEY",
+          "validation_parameters": {
+            "currency": {
+              "source_fact": "currency"
+            },
+            "minimum": "0.01",
+            "scale": 2
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-MONEY",
+          "evidence_rule": null,
+          "field_key": "tax_amount",
+          "help_text": "",
+          "label": "Taxes payable on this service",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-MONEY",
+          "validation_parameters": {
+            "currency": {
+              "source_fact": "currency"
+            },
+            "minimum": "0.00",
+            "scale": 2
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "PRS",
+      "order": 20,
+      "rule_id": "RR-PRICE-SERVICE",
+      "source_family": "price_row",
+      "source_selector": {
+        "selector": "SEL-RELATED-SERVICES"
+      },
+      "task_id": "TASK-PRICE"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-ALWAYS"
+      },
+      "composition_id": "COMP-REVIEW-SIGNATURE",
+      "contract_mapping_id": "DM-SUBMISSION",
+      "document_anchor": "complete_tender.html#form-of-tender",
+      "evaluation_mapping_id": "DM-SUBMISSION",
+      "field_definitions": [
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "signatory_name",
+          "help_text": "",
+          "label": "Name of the person duly authorised to sign the Tender",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 160,
+            "min_length": 3
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "signatory_title",
+          "help_text": "",
+          "label": "Title of the person signing the Tender",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 120,
+            "min_length": 2
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-CONFIRMATION",
+          "evidence_rule": null,
+          "field_key": "confirmed",
+          "help_text": "",
+          "label": "I confirm this is the complete Tender I am authorised to sign and submit.",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-CONFIRMED",
+          "validation_parameters": {},
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "SUB",
+      "order": 10,
+      "rule_id": "RR-SUBMISSION",
+      "source_family": "declaration",
+      "source_selector": {
+        "selector": "SEL-SUBMISSION"
+      },
+      "task_id": "TASK-REVIEW"
+    }
+  ],
+  "schema_version": 1,
+  "supported_renderer_version": "1.0.0",
+  "template_key": "IT-EQUIPMENT-OPEN-V1",
+  "template_release": "1.1"
+}

@@ -52,4 +52,14 @@ describe("WorkspaceScreen — TPR-DES-01", () => {
 		const nf = mount(CommonState, { props: { kind: "not-found" } });
 		expect(nf.find("button").text()).toBe("Back to Tenders");
 	});
+
+	it("Template unavailable offers View STD Template only when the server sent a route", async () => {
+		const plain = mount(CommonState, { props: { kind: "template-unavailable" } });
+		expect(plain.find('[data-testid="tnd-state-link"]').exists()).toBe(false);
+		const w = mount(CommonState, { props: { kind: "template-unavailable", link: { label: "View STD Template", route: ["std-templates", "stdr-1"] } } });
+		const link = w.find('[data-testid="tnd-state-link"]');
+		expect(link.text()).toBe("View STD Template");
+		await link.trigger("click");
+		expect(w.emitted("link")[0][0]).toEqual(["std-templates", "stdr-1"]);
+	});
 });

@@ -3,7 +3,9 @@
 
 """Stable Tenders service errors (TPR-CHG-001 v0.8 §8).
 
-§8 defines a closed set of twenty-eight codes. They are stable service
+§8 defines a closed set of twenty-eight codes; TPR-CHG-001 v0.11 §8 adds
+the two bound-release codes (`TND_TEMPLATE_RELEASE_WITHDRAWN`,
+`TND_TEMPLATE_RELEASE_INTEGRITY_FAILED`), thirty in all. They are stable service
 results; `fail()` refuses any code outside the contract — an invented code is
 a defect in the caller, not a new error type. Record-existence masking follows
 AUTH-ADR-001: a record outside the actor's authorised responsibility is
@@ -23,6 +25,8 @@ ERROR_CODES: frozenset[str] = frozenset(
 		"TND_HANDOFF_CONFLICT",
 		"TND_PRODUCT_UNSUPPORTED",
 		"TND_TEMPLATE_UNAVAILABLE",
+		"TND_TEMPLATE_RELEASE_WITHDRAWN",
+		"TND_TEMPLATE_RELEASE_INTEGRITY_FAILED",
 		"TND_CONTROL_INVALID",
 		"TND_INHERITED_EDIT",
 		"TND_MAPPING_INCOMPLETE",
@@ -55,6 +59,8 @@ MESSAGES: dict[str, str] = {
 	"TND_HANDOFF_CONFLICT": "A Tender has already been started for this requisition.",
 	"TND_PRODUCT_UNSUPPORTED": "This requisition is not supported by the current IT-equipment Tender format.",
 	"TND_TEMPLATE_UNAVAILABLE": "The standard IT-equipment Tender format is not available.",
+	"TND_TEMPLATE_RELEASE_WITHDRAWN": "This Tender cannot continue because its Tender format was withdrawn.",
+	"TND_TEMPLATE_RELEASE_INTEGRITY_FAILED": "The Tender format bound to this Tender could not be verified.",
 	"TND_CONTROL_INVALID": "Check the highlighted value.",
 	"TND_INHERITED_EDIT": "Authorised requisition information cannot be changed here.",
 	"TND_MAPPING_INCOMPLETE": "A published requirement is not fully connected to supplier response, evaluation and contract records.",

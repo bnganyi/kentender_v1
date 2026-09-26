@@ -23,7 +23,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_procurement.tenders.services import clock, compatibility, documents, draft_commands, envelope, events, render_service, review, serializer
+from kentender_procurement.tenders.services import clock, compatibility, documents, draft_commands, envelope, events, render_service, review, serializer, template_binding
 from kentender_procurement.tenders.services import snapshot as snap
 from kentender_procurement.tenders.services import tender_authorization as authz
 from kentender_procurement.tenders.services.errors import fail
@@ -93,8 +93,8 @@ def copy_draft(root, source, *, actor: str, predecessor_fields: dict[str, Any] |
 	draft = frappe.get_doc(
 		{
 			"doctype": "Tender Version", "tender": root.name, "version_number": number, "status": "Draft", "predecessor_version": source.name,
-			"requisition_handoff": source.requisition_handoff, "requisition_version": source.requisition_version, "template_release_id": source.template_release_id,
-			"official_source_digest": source.official_source_digest, "bundle_digest": source.bundle_digest, "requisition_snapshot_digest": source.requisition_snapshot_digest,
+			"requisition_handoff": source.requisition_handoff, "requisition_version": source.requisition_version,
+			**{field: source.get(field) for field in template_binding.VERSION_FIELDS}, "requisition_snapshot_digest": source.requisition_snapshot_digest,
 			"requisition_snapshot_json": source.requisition_snapshot_json, "officer_payload_json": source.officer_payload_json, "prepared_by": actor, "prepared_at": clock.now(),
 			"record_version": 0, "fixture_namespace": root.fixture_namespace, **(predecessor_fields or {}),
 		}
@@ -131,8 +131,9 @@ def submit_tender_for_approval(*, tender: str, expected_record_version, idempote
 	root, version = draft_commands.load(tender)
 	draft_commands.require_editable(root, version)
 	envelope.check_record_version(root, expected_record_version)
+	bound = template_binding.require_bound(version, "continue")
 	snapshot = snap.load(version)
-	compatibility.require_supported(snapshot)
+	compatibility.require_supported(snapshot, bound["supported_reservation_categories"])
 	result = review.run(root, version, with_renders=True)
 	if result["must_fix_count"]:
 		review.store(version, result)
@@ -153,7 +154,7 @@ def submit_tender_for_approval(*, tender: str, expected_record_version, idempote
 		events.emit(
 			tender=root.name, event_type="TenderSubmitted", command="SubmitTenderForApproval", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment),
 			previous_status="Draft", resulting_status="Awaiting procurement approval", record_version=root.record_version, subject_type="Tender Version", subject_id=version.name,
-			payload={"package_digest": version.package_digest, "invitation_digest": version.invitation_digest, "issued_tender_digest": version.issued_tender_digest, "documents": stored, "compatibility": [c.as_dict() for c in compatibility.evaluate(snapshot)], "decision": decision.name, "task": task.name},
+			payload={"package_digest": version.package_digest, "invitation_digest": version.invitation_digest, "issued_tender_digest": version.issued_tender_digest, "documents": stored, "compatibility": [c.as_dict() for c in compatibility.evaluate(snapshot, bound["supported_reservation_categories"])], "decision": decision.name, "task": task.name},
 			fixture_namespace=root.fixture_namespace,
 		)
 	out = {"ok": True, "idempotent": False, "action": "submitted", "tender": root.name, "record_version": root.record_version, "version": draft_commands.version_dict(version), "task": task.name, "package_digest": version.package_digest}
@@ -235,8 +236,9 @@ def approve_tender_package(*, tender: str, expected_record_version, idempotency_
 		fail("TND_STALE_VERSION", "This task has already changed. Reload to see the current decision.")
 	if task_token and open_approval:
 		envelope.assert_task_token(open_approval, task_token)
+	bound = template_binding.require_bound(version, "continue")
 	snapshot = snap.load(version)
-	compatibility.require_supported(snapshot)
+	compatibility.require_supported(snapshot, bound["supported_reservation_categories"])
 	submitted_package_digest = cstr(version.package_digest)
 	check = review.run(root, version, with_renders=True)
 	if check["must_fix_count"]:
@@ -294,6 +296,7 @@ def reopen_approved_tender(*, tender: str, reason: str, expected_record_version,
 		fail("TND_CANCELLED")
 	if version.status != "Approved" or root.overall_status != "Approved":
 		fail("TND_STALE_VERSION", "This Tender is not approved.")
+	template_binding.require_bound(version, "continue")
 	with envelope.atomic("reopen"):
 		decision = record_decision(root, version, decision="Reopen Tender", actor=actor, business_role=ROLE_HEAD_OF_PROCUREMENT_FUNCTION, assignment=assignment, idempotency_key=idempotency_key, reason=reason)
 		draft = copy_draft(root, version, actor=cstr(version.prepared_by) or actor, predecessor_fields={"reopen_reason": reason})

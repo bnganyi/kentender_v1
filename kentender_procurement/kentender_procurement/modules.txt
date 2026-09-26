@@ -1,7 +1,7 @@
 Kentender Procurement
 Procurement Planning
-STD Configuration
 Tender Configurations
 Departmental Needs
 Procurement Requisitions
 Tenders
+STD Templates

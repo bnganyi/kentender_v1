@@ -21,7 +21,6 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_procurement.tender_templates import loader
 from kentender_procurement.tenders.services import clock, compatibility, controls, envelope, events, evidence, handoff_gateway, references, review, serializer, template_binding
 from kentender_procurement.tenders.services import snapshot as snap
 from kentender_procurement.tenders.services import tender_authorization as authz
@@ -104,7 +103,7 @@ def start_tender(*, handoff: str, idempotency_key: str, user: str | None = None,
 		fail("TND_HANDOFF_CONFLICT", detail={"handoff": handoff_doc.name, "tender": cstr(handoff_doc.tender)})
 	binding = template_binding.require_available()
 	snapshot, snapshot_digest = snap.build(handoff_doc)
-	compatibility.require_supported(snapshot)
+	compatibility.require_supported(snapshot, binding["supported_reservation_categories"])
 
 	with envelope.atomic("start"):
 		reference = references.tender_reference(fiscal_year=cstr(snapshot.get("fiscal_year")), plan_item_id_value=cstr(snapshot.get("plan_item_id")))
@@ -117,16 +116,14 @@ def start_tender(*, handoff: str, idempotency_key: str, user: str | None = None,
 					"requisition": handoff_doc.requisition, "requisition_reference": snapshot.get("requisition_reference"), "requisition_version": handoff_doc.requisition_version,
 					"plan_item_id": snapshot.get("plan_item_id"), "plan_item_version_id": snapshot.get("plan_version_id"), "fiscal_year": snapshot.get("fiscal_year") if frappe.db.exists("Fiscal Year", cstr(snapshot.get("fiscal_year"))) else None,
 					"lead_org_unit": lead if lead and frappe.db.exists("Organisation Unit", lead) else None, "contributing_org_unit_ids": json.dumps(units),
-					"product_key": PRODUCT_KEY, "template_release_id": binding["template_release_id"], "official_source_digest": binding["official_source_digest"],
-					"bundle_digest": binding["bundle_digest"], "overall_status": "Draft", "record_version": 0, "fixture_namespace": fixture_namespace,
+					"product_key": PRODUCT_KEY, **template_binding.bound_fields(binding), "overall_status": "Draft", "record_version": 0, "fixture_namespace": fixture_namespace,
 				}
 			)
 		)
 		version = frappe.get_doc(
 			{
 				"doctype": "Tender Version", "tender": root.name, "version_number": 1, "status": "Draft", "requisition_handoff": handoff_doc.name,
-				"requisition_version": handoff_doc.requisition_version, "template_release_id": binding["template_release_id"], "official_source_digest": binding["official_source_digest"],
-				"bundle_digest": binding["bundle_digest"], "requisition_snapshot_digest": snapshot_digest, "requisition_snapshot_json": json.dumps(snapshot, sort_keys=True, default=str),
+				"requisition_version": handoff_doc.requisition_version, **template_binding.bound_fields(binding), "requisition_snapshot_digest": snapshot_digest, "requisition_snapshot_json": json.dumps(snapshot, sort_keys=True, default=str),
 				"officer_payload_json": json.dumps(controls.normalise(controls.defaults(snapshot)), sort_keys=True, default=str),
 				"prepared_by": actor, "prepared_at": clock.now(), "record_version": 0, "fixture_namespace": fixture_namespace,
 			}
@@ -135,7 +132,7 @@ def start_tender(*, handoff: str, idempotency_key: str, user: str | None = None,
 		_regenerate(root, version)
 		envelope.bump(version)
 		envelope.bump(root, current_version=version.name, submission_deadline=None)
-		handoff_gateway.consume(handoff=handoff_doc.name, tender=root.name, tender_version=version.name, template_key=loader.TEMPLATE_KEY, template_version=loader.TEMPLATE_VERSION, idempotency_key=f"{idempotency_key}:consume")
+		handoff_gateway.consume(handoff=handoff_doc.name, tender=root.name, tender_version=version.name, template_key=binding["template_key"], template_version=binding["template_release"], idempotency_key=f"{idempotency_key}:consume")
 		events.emit(
 			tender=root.name, event_type="TenderStarted", command="StartTender", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment),
 			previous_status="", resulting_status="Draft", record_version=root.record_version, subject_type="Tender Version", subject_id=version.name,
