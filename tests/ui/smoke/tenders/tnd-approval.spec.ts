@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 
 import { login } from "../../helpers/auth";
-import { BOTH, HOPF, OFFICER, PASSWORD, collectConsoleErrors, expectReady, gotoTenders, resetFixture, restoreSite } from "./helpers";
+import { BOTH, HOPF, OFFICER, PASSWORD, collectConsoleErrors, expectGuidance, expectReady, gotoTenders, resetFixture, restoreSite } from "./helpers";
 
-/** TPR-CHG-001 v0.8 slice 7f — TPR-DES-06 HOPF approval. */
+/** TPR-CHG-001 v0.12 slice B — TPR-DES-06 HOPF approval (§10.7, §10.17). */
 
 test.describe.configure({ mode: "serial", timeout: 240_000 });
 
@@ -16,8 +16,12 @@ test.describe("TPR-DES-06 HOPF approval", () => {
 		await login(page, HOPF, PASSWORD);
 		await gotoTenders(page, `/${state.tender_reference}`);
 		await expectReady(page, "approval");
-		await expect(page.locator('[data-testid="tnd-ready-to-approve"]')).toContainText("It does not publish the Tender.");
+		await expectGuidance(page, "DES-06");
+		// the guidance replaces the Ready-to-approve narrative and the awaiting badge
+		await expect(page.locator('[data-testid="tnd-ready-to-approve"]')).toHaveCount(0);
+		await expect(page.locator('[data-testid="tnd-record-badge"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="tnd-submitted-row"]')).toContainText("Version 1");
+		await expect(page.locator('[data-testid="tnd-key-facts"] .kt-label').first()).toHaveText("Requisition");
 		await expect(page.locator('[data-testid="tnd-field-tender_title"]')).toHaveCount(0);
 
 		await page.locator('[data-testid="tnd-return-for-correction"]').click();
@@ -55,6 +59,7 @@ test.describe("TPR-DES-06 HOPF approval", () => {
 		await login(page, OFFICER, PASSWORD);
 		await gotoTenders(page, `/${state.tender_reference}`);
 		await expectReady(page, "record");
+		await expect(page.locator('[data-kt="next-step"]')).toHaveAttribute("data-kind", "waiting");
 		await expect(page.locator('[data-testid="tnd-approve-package"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="tnd-authorise-publication"]')).toHaveCount(0);
 	});
@@ -64,7 +69,11 @@ test.describe("TPR-DES-06 HOPF approval", () => {
 		await login(page, BOTH, PASSWORD);
 		await gotoTenders(page, `/${state.tender_reference}`);
 		await expectReady(page, "approval");
-		await expect(page.locator('[data-testid="tnd-segregation"]')).toContainText("Another Head of Procurement Function must decide it.");
+		// §10.17: the barred HOPF waits on an eligible one and is told why, in the one guidance line
+		const step = page.locator('[data-kt="next-step"]');
+		await expect(step).toHaveAttribute("data-kind", "waiting");
+		await expect(step).toContainText("You cannot approve a Tender Version you prepared or submitted.");
+		await expect(page.locator('[data-testid="tnd-segregation"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="tnd-approve-package"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="tnd-return-for-correction"]')).toHaveCount(0);
 	});

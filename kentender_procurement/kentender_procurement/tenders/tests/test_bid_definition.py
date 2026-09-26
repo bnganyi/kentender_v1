@@ -15,7 +15,9 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 from kentender_procurement.std_templates.compiler.definition import DEFINITION_FIELDS
-from kentender_procurement.tenders.services import bid_definition, draft_commands as cmd, lifecycle
+from unittest.mock import patch
+
+from kentender_procurement.tenders.services import bid_definition, draft_commands as cmd, lifecycle, publication
 from kentender_procurement.tenders.services.errors import TendersError
 from kentender_procurement.tenders.tests import fixtures as fx, sample
 
@@ -80,3 +82,31 @@ class TestBidDefinition(IntegrationTestCase):
 		built = bid_definition.build(frappe.get_doc("Tender", root.name), version, publication_id="TDP-TEST-001")
 		self.assertEqual(built["components"], {k: version.get(k) for k in ("response_schema_digest", "evaluation_contract_digest", "contract_projection_digest")})
 		self.assertEqual((built["definition"]["publication_id"], built["definition"]["package_digest"]), ("TDP-TEST-001", version.package_digest))
+
+	def test_a_compiler_fault_part_way_through_authorisation_rolls_everything_back(self):
+		"""TPR-CHG-001 v0.12 plan Phase 4 (§7.2): the Published Bid Definition
+		is built and frozen inside the authorisation transaction — a fault
+		after the Publication row was inserted leaves no Publication, no
+		definition, no channel rows and the approved Version untouched."""
+		root = self._submitted()
+		submitted = lifecycle.submit_tender_for_approval(tender=root.name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
+		root.reload()
+		approved = lifecycle.approve_tender_package(tender=root.name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF, task=submitted["task"])
+		root.reload()
+		version = frappe.get_doc("Tender Version", root.approved_version)
+		before = (version.modified, version.package_digest, version.record_version)
+		counts = lambda: (frappe.db.count("Tender Publication", {"tender": root.name}), frappe.db.count("Tender Bid Definition", {"tender": root.name}), frappe.db.count("Tender Channel Confirmation", {"tender": root.name}))
+		self.assertEqual(counts(), (0, 0, 0))
+		with patch.object(bid_definition, "build", side_effect=frappe.ValidationError("injected compiler fault")):
+			with self.assertRaises(frappe.ValidationError):
+				publication.authorise_tender_publication(tender=root.name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AO, task=approved["task"])
+		root.reload()
+		version.reload()
+		self.assertEqual(counts(), (0, 0, 0))
+		self.assertEqual((root.overall_status, root.publication or ""), ("Approved", ""))
+		self.assertEqual((version.modified, version.package_digest, version.record_version), before)
+		# the same decision succeeds once the compiler is healthy, freezing one definition
+		authorised = publication.authorise_tender_publication(tender=root.name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AO, task=approved["task"])
+		self.assertTrue(authorised["ok"])
+		self.assertEqual(counts()[:2], (1, 1))
+		self.assertEqual(frappe.db.get_value("Tender Bid Definition", {"tender": root.name}, "status"), "Frozen")

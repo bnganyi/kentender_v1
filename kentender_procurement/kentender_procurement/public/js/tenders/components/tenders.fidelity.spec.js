@@ -14,7 +14,9 @@ import { COVERED, DEPARTURES } from "../../../../../../tests/ui/fidelity/departu
 
 import EditorScreen from "./EditorScreen.vue";
 import ReviewScreen from "./ReviewScreen.vue";
-import { editorRecord, reviewData, reviewRecord } from "./fixtures.js";
+import ApprovalScreen from "./ApprovalScreen.vue";
+import AuthorisationScreen from "./AuthorisationScreen.vue";
+import { approvalData, authorisationData, editorRecord, reviewData, reviewRecord } from "./fixtures.js";
 
 const DESIGN = "docs/mvp-1-r1/11_tenders/design";
 
@@ -26,6 +28,10 @@ const SCREENS = [
 	{ name: "EditorScreen", variant: "TPR-DES-04-RETURNED", board: "Draft - Supplier and Contract Requirements.dc.html", label: "TPR-DES-04 Draft supplier and contract requirements", options: { guidance: "turn", show: ["isReturned"] }, component: EditorScreen, props: { record: editorRecord("RETURNED"), task: "requirements" } },
 	{ name: "ReviewScreen", variant: "TPR-DES-05", board: "Review and Submit.dc.html", label: "TPR-DES-05 Review and submit", component: ReviewScreen, props: { record: reviewRecord(), review: reviewData() } },
 	{ name: "ReviewScreen", variant: "TPR-DES-05-NEEDS-ATTENTION", board: "Review and Submit.dc.html", label: "TPR-DES-05 Review and submit", options: { show: ["isBlocked", "o4"], hide: ["isReady"] }, component: ReviewScreen, props: { record: reviewRecord(), review: reviewData("BLOCKED") } },
+	{ name: "ApprovalScreen", variant: "TPR-DES-06", board: "HOPF Approval.dc.html", label: "TPR-DES-06 HOPF approval", component: ApprovalScreen, props: approvalData() },
+	{ name: "ApprovalScreen", variant: "TPR-DES-06-SEGREGATION", board: "HOPF Approval.dc.html", label: "TPR-DES-06 HOPF approval", options: { show: ["isSegregation"], hide: ["isNormal"] }, component: ApprovalScreen, props: approvalData("SEGREGATION") },
+	{ name: "AuthorisationScreen", variant: "TPR-DES-07", board: "AO Publication Authorisation.dc.html", label: "TPR-DES-07 AO publication authorisation", component: AuthorisationScreen, props: { pub: authorisationData(), requisitionReference: "REQ-MOH-2027-033-001" } },
+	{ name: "AuthorisationScreen", variant: "TPR-DES-07-SEGREGATION", board: "AO Publication Authorisation.dc.html", label: "TPR-DES-07 AO publication authorisation", options: { show: ["isSegregation"], hide: ["isNormal"] }, component: AuthorisationScreen, props: { pub: authorisationData("SEGREGATION"), requisitionReference: "REQ-MOH-2027-033-001" } },
 ];
 
 describe.each(SCREENS)("$name — the structure $variant carries", ({ name, variant, board, label, options, component, props }) => {

@@ -282,6 +282,10 @@
 .kt-tnd .tnd-block-title { font-size: 14px; font-weight: 700; margin: 0 0 8px; }
 .kt-tnd .tnd-block-title--later { margin-top: 18px; }
 .kt-tnd .tnd-section--plain { border-bottom: 0; }
+.kt-tnd .tnd-fact-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.kt-tnd .tnd-span-4 { grid-column: 1 / -1; }
+.kt-tnd .tnd-mono { font-family: var(--kt-font-mono, ui-monospace, monospace); font-size: 12px; }
+.kt-tnd .tnd-block-title--section { font-size: 15px; margin-bottom: 12px; }
 
 @media (max-width: 900px) {
 	.kt-tnd .tnd-grid-3, .kt-tnd .tnd-grid-4, .kt-tnd .tnd-context-facts, .kt-tnd .tnd-task-cards, .kt-tnd .tnd-fact-grid { grid-template-columns: 1fr 1fr; }

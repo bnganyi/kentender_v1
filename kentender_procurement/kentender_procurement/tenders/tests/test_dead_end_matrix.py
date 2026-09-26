@@ -267,6 +267,9 @@ class TestTendersDeadEndMatrix(IntegrationTestCase):
 		submitted = lifecycle.submit_tender_for_approval(tender=root.name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.BOTH)
 		root.reload()
 		failures += self.check("Awaiting procurement approval — preparer holds HOPF", self.review(root.name))
+		# §10.7: the conflicted HOPF waits on the eligible one and is told why, in the one line
+		step = read.get_tender_review(tender=root.name, user=fx.BOTH)["guidance"]["next_step"]
+		self.assertEqual((step["kind"], step["sentence"]), (ns.KIND_WAITING, "You cannot approve a Tender Version you prepared or submitted."))
 		approved = lifecycle.approve_tender_package(tender=root.name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF, task=submitted["task"])
 		root.reload()
 		failures += self.check("Approved — preparer holds AO", self.publication_screen(root.name))

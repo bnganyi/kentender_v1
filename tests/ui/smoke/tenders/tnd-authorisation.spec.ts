@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 
 import { login } from "../../helpers/auth";
-import { AO, BOTH, PASSWORD, collectConsoleErrors, expectReady, gotoTenders, resetFixture, restoreSite } from "./helpers";
+import { AO, BOTH, PASSWORD, collectConsoleErrors, expectGuidance, expectReady, gotoTenders, resetFixture, restoreSite } from "./helpers";
 
-/** TPR-CHG-001 v0.8 slice 7g — TPR-DES-07 AO publication authorisation. */
+/** TPR-CHG-001 v0.12 slice B — TPR-DES-07 AO publication authorisation (§10.8, §10.17). */
 
 test.describe.configure({ mode: "serial", timeout: 240_000 });
 
@@ -16,8 +16,15 @@ test.describe("TPR-DES-07 AO publication authorisation", () => {
 		await login(page, AO, PASSWORD);
 		await gotoTenders(page, `/${state.tender_reference}`);
 		await expectReady(page, "authorisation");
-		await expect(page.locator('[data-testid="tnd-ready-to-authorise"]')).toContainText("The Tender is shown as Published only after every required channel is confirmed.");
+		await expectGuidance(page, "DES-07");
+		await expect(page.locator('[data-testid="tnd-ready-to-authorise"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="tnd-approval-trail"]')).toContainText("Approved by");
+		await expect(page.locator('[data-testid="tnd-package-digest"]')).toContainText(/[0-9a-f]{64}/);
+		await expect(page.locator('[data-testid="tnd-key-facts"] .kt-label')).toHaveText(["Purchase", "Requisition", "Quantity", "Approved value", "Method", "Submission deadline", "Tendering period", "Reservation"]);
+		// the six sections sit closed inside Complete Tender details
+		await expect(page.locator('[data-testid="tnd-content-sections"]')).toHaveCount(0);
+		await page.locator('[data-testid="tnd-complete-details"]').click();
+		await expect(page.locator('[data-testid="tnd-content-sections"] .kt-disclosure-title')).toHaveCount(6);
 		await expect(page.locator('[data-testid="tnd-channel-table"] tbody tr')).toHaveCount(4);
 		await expect(page.locator('[data-testid="tnd-channel-table"] .kt-status')).toHaveText(["Not started", "Not started", "Not started", "Not started"]);
 		// absence: no channel selector, no edit control, no "Mark as published"
@@ -47,7 +54,10 @@ test.describe("TPR-DES-07 AO publication authorisation", () => {
 		await login(page, BOTH, PASSWORD);
 		await gotoTenders(page, `/${state.tender_reference}`);
 		await expectReady(page, "authorisation");
-		await expect(page.locator('[data-testid="tnd-segregation"]')).toContainText("Another Accounting Officer must decide it.");
+		const step = page.locator('[data-kt="next-step"]');
+		await expect(step).toHaveAttribute("data-kind", "waiting");
+		await expect(step).toContainText("You cannot authorise publication of a Tender Version you prepared, submitted or approved as Head of Procurement Function.");
+		await expect(page.locator('[data-testid="tnd-segregation"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="tnd-authorise-publication"]')).toHaveCount(0);
 	});
 });

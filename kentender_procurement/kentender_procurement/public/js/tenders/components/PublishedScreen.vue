@@ -10,6 +10,7 @@
 					<button type="button" class="kt-btn kt-btn-secondary" style="flex-shrink: 0" data-testid="tnd-view-public" @click="$emit('view-document', 'Complete Tender', 'Public')">View public Tender</button>
 				</template>
 			</RecordHead>
+			<TenderGuidance :guidance="record.guidance || null" :pending="pending" @fix="$emit('fix', $event)" />
 			<div v-if="published" class="tnd-section tnd-grid-4" data-testid="tnd-published-facts">
 				<div class="tnd-fact"><div class="kt-label">Published at</div><div class="tnd-fact-value">{{ tender.published_at_label }}</div></div>
 				<div class="tnd-fact"><div class="kt-label">Current submission deadline</div><div class="tnd-fact-value">{{ tender.submission_deadline_label }}{{ ended ? " (ended)" : "" }}</div></div>
@@ -82,6 +83,7 @@
 import { computed, ref } from "vue";
 import BlueprintCard from "./BlueprintCard.vue";
 import RecordHead from "./RecordHead.vue";
+import TenderGuidance from "./TenderGuidance.vue";
 import ContentSections from "./ContentSections.vue";
 
 const props = defineProps({
@@ -89,7 +91,7 @@ const props = defineProps({
 	review: { type: Object, default: () => ({}) },
 	pending: Boolean,
 });
-defineEmits(["view-document", "view-confirmation", "open-addendum", "open-inquiry", "prepare-addendum", "cancel-screen", "history", "reopen", "request-correction", "publication"]);
+defineEmits(["view-document", "view-confirmation", "open-addendum", "open-inquiry", "prepare-addendum", "cancel-screen", "history", "reopen", "request-correction", "publication", "fix"]);
 
 const historyOpen = ref(false);
 const tender = computed(() => props.record.tender || {});

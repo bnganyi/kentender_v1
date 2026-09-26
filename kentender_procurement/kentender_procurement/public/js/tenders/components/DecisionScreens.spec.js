@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import { nextTick } from "vue";
-import { reviewData, reviewRecord } from "./fixtures.js";
+import { approvalData, authorisationData, reviewData, reviewRecord } from "./fixtures.js";
 import ReviewScreen from "./ReviewScreen.vue";
 import ApprovalScreen from "./ApprovalScreen.vue";
 import AuthorisationScreen from "./AuthorisationScreen.vue";
@@ -51,35 +51,50 @@ describe("ReviewScreen — TPR-DES-05", () => {
 });
 
 describe("ApprovalScreen — TPR-DES-06", () => {
-	const record = { tender: { ...TENDER, badge: "Awaiting your approval" }, version: { submitted_by_name: "Brian Wafula", submitted_at_label: "15 Apr 2027, 09:15 EAT", version_number: 2 }, allowed_actions: ["return_for_correction", "approve_tender_package"], segregation_message: "" };
-	it("normal: Ready to approve, the submitted row, both decisions", () => {
-		const w = mount(ApprovalScreen, { props: { record, review: { review: { must_fix: [], review_notes: [NOTE] }, key_facts: FACTS, sections: SECTIONS }, pending: false } });
-		expect(w.find('[data-testid="tnd-ready-to-approve"]').text()).toContain("It does not publish the Tender.");
+	it("normal: Your turn to decide, the submitted row, both decisions", async () => {
+		const w = mount(ApprovalScreen, { props: { ...approvalData(), pending: false }, attachTo: document.body });
+		await nextTick();
+		expect(w.find('[data-kt="next-step"]').text()).toContain("Decide whether to approve this Tender package.");
+		expect(w.find('[data-testid="tnd-ready-to-approve"]').exists()).toBe(false);
 		expect(w.find('[data-testid="tnd-submitted-row"]').text()).toContain("Brian Wafula");
 		expect(w.find('[data-testid="tnd-return-for-correction"]').exists()).toBe(true);
 		expect(w.find('[data-testid="tnd-approve-package"]').text()).toBe("Approve Tender package");
+		// the HOPF reviews, never edits: the note's link opens its section in place
+		await w.find('[data-testid="tnd-review-note-link"]').trigger("click");
+		expect(w.find('[data-testid="tnd-section-supplier"] .kt-disclosure-body').exists()).toBe(true);
+		w.unmount();
 	});
-	it("segregation: the critical notice and no decision control at all", () => {
-		const w = mount(ApprovalScreen, { props: { record: { ...record, allowed_actions: [], segregation_message: "You cannot approve a Tender Version you prepared or submitted. Another Head of Procurement Function must decide it." }, review: { review: {}, key_facts: [], sections: [] }, pending: false } });
-		expect(w.find('[data-testid="tnd-segregation"]').text()).toContain("Another Head of Procurement Function must decide it.");
+	it("segregation: the waiting line carries the reason; no decision control at all", async () => {
+		const w = mount(ApprovalScreen, { props: { ...approvalData("SEGREGATION"), pending: false }, attachTo: document.body });
+		await nextTick();
+		const step = w.find('[data-kt="next-step"]');
+		expect(step.attributes("data-kind")).toBe("waiting");
+		expect(step.text()).toContain("You cannot approve a Tender Version you prepared or submitted.");
+		expect(w.find('[data-testid="tnd-segregation"]').exists()).toBe(false);
 		expect(w.find('[data-testid="tnd-approve-package"]').exists()).toBe(false);
 		expect(w.find('[data-testid="tnd-return-for-correction"]').exists()).toBe(false);
+		w.unmount();
 	});
 });
 
 describe("AuthorisationScreen — TPR-DES-07", () => {
-	const pub = { tender: { ...TENDER, badge: "Awaiting publication authorisation" }, approval_trail: { prepared_by_name: "Brian Wafula", approved_by_name: "Charles Mutiso", approved_at_label: "20 Apr 2027, 10:00 EAT", version_number: 2 }, review: { review_notes: [NOTE], must_fix: [] }, key_facts: [...FACTS, { label: "Tendering period", value: "77 days" }], proposed_channels: [{ channel: "STATE_PORTAL", label: "State Portal", how: "HOPF confirmation with evidence", result: "Not started" }], rule: { minimum_preparation_days: 21 }, sections: SECTIONS, allowed_actions: ["authorise_publication"], segregation_message: "" };
-	it("shows the read-only channel table with no selector and the one decision", () => {
-		const w = mount(AuthorisationScreen, { props: { pub, pending: false } });
+	it("shows the read-only channel table with no selector and the one decision", async () => {
+		const w = mount(AuthorisationScreen, { props: { pub: authorisationData(), pending: false }, attachTo: document.body });
+		await nextTick();
 		expect(w.find('[data-testid="tnd-channel-table"] tbody').text()).toContain("State Portal");
 		expect(w.find('[data-testid="tnd-channel-table"] select, [data-testid="tnd-channel-table"] input').exists()).toBe(false);
+		expect(w.find(".kt-bar").exists()).toBe(false);
+		expect(w.find('[data-testid="tnd-package-digest"]').text()).toContain("aaaa");
 		expect(w.find('[data-testid="tnd-authorise-publication"]').text()).toBe("Authorise publication");
 		expect(w.text()).not.toContain("Mark as published");
+		w.unmount();
 	});
-	it("segregation hides the decision", () => {
-		const w = mount(AuthorisationScreen, { props: { pub: { ...pub, allowed_actions: [], segregation_message: "You cannot authorise publication of a Tender Version you prepared, submitted or approved as Head of Procurement Function. Another Accounting Officer must decide it." }, pending: false } });
-		expect(w.find('[data-testid="tnd-segregation"]').exists()).toBe(true);
+	it("segregation hides the decision and explains it in the waiting line", async () => {
+		const w = mount(AuthorisationScreen, { props: { pub: authorisationData("SEGREGATION"), pending: false }, attachTo: document.body });
+		await nextTick();
+		expect(w.find('[data-kt="next-step"]').text()).toContain("A System Manager must assign an eligible Accounting Officer");
 		expect(w.find('[data-testid="tnd-authorise-publication"]').exists()).toBe(false);
+		w.unmount();
 	});
 });
 

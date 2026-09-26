@@ -147,3 +147,43 @@ export function reviewData(variant = "") {
 export function reviewRecord() {
 	return { ...editorRecord(), tender: { ...TENDER } };
 }
+
+/** TPR-DES-06 — `GetTender` + `GetTenderReview` for the HOPF ("" normal, "SEGREGATION"). */
+export function approvalData(variant = "") {
+	const blocked = variant === "SEGREGATION";
+	const review = reviewData();
+	return {
+		record: {
+			...editorRecord(), screen: "approval",
+			tender: { ...TENDER, overall_status: "Awaiting procurement approval" },
+			version: { version_number: 2, submitted_by_name: "Brian Wafula", submitted_at_label: "15 Apr 2027, 09:15 EAT" },
+			allowed_actions: blocked ? ["view_history"] : ["return_for_correction", "approve_tender_package", "view_history"],
+		},
+		review: {
+			...review,
+			allowed_actions: blocked ? ["view_history"] : ["return_for_correction", "approve_tender_package", "view_history"],
+			guidance: blocked
+				? guidance("D/B/N/N/N", "System Manager", step("waiting", "A System Manager must assign an eligible Head of Procurement Function to decide this Version.", { sentence: "You cannot approve a Tender Version you prepared or submitted." }))
+				: guidance("D/C/N/N/N", "Charles Mutiso", step("your_turn", "Decide whether to approve this Tender package.")),
+		},
+	};
+}
+
+/** TPR-DES-07 — `GetTenderPublication` for the AO ("" normal, "SEGREGATION"). */
+export function authorisationData(variant = "") {
+	const blocked = variant === "SEGREGATION";
+	const review = reviewData();
+	return {
+		outcome: "OK", mode: "site",
+		tender: { ...TENDER, overall_status: "Approved" },
+		approval_trail: { prepared_by_name: "Brian Wafula", approved_by_name: "Charles Mutiso", approved_at_label: "20 Apr 2027, 10:00 EAT", version_number: 2, package_digest: "a".repeat(64) },
+		review: review.review,
+		key_facts: [{ label: "Purchase", value: TENDER.title }, ...KEY_FACTS.slice(0, 5), { label: "Tendering period", value: "21 days" }, { label: "Reservation", value: "Youth" }],
+		proposed_channels: ["State Portal", "Ministry website", "Notice board", "Two national newspapers"].map((label, i) => ({ channel: `C${i}`, label, how: "HOPF confirmation with evidence", result: "Not started" })),
+		sections: review.sections,
+		allowed_actions: blocked ? ["view_history"] : ["authorise_publication", "view_history"],
+		guidance: blocked
+			? guidance("D/D/B/N/N", "System Manager", step("waiting", "A System Manager must assign an eligible Accounting Officer to decide this Version.", { sentence: "You cannot authorise publication of a Tender Version you prepared, submitted or approved as Head of Procurement Function." }))
+			: guidance("D/D/C/N/N", "Amina Hassan", step("your_turn", "Authorise publication of the approved Tender package.")),
+	};
+}

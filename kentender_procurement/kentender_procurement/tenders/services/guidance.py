@@ -226,21 +226,31 @@ def _correction(root, version, *, actor: str, roles: dict[str, bool]) -> tuple[d
 # --------------------------------------------------------------------------
 
 
+SEGREGATION_SENTENCES = {
+	ROLE_HEAD_OF_PROCUREMENT_FUNCTION: "You cannot approve a Tender Version you prepared or submitted.",
+	ROLE_ACCOUNTING_OFFICER: "You cannot authorise publication of a Tender Version you prepared, submitted or approved as Head of Procurement Function.",
+}
+
+
 def _decision(root, version, *, actor: str, roles: dict[str, bool], stage: str, role: str, role_key: str, columns: tuple[str, ...], headline_turn: str, primary: str, since, doing: str) -> tuple[dict[str, Any], dict[str, Any]]:
 	eligible = _eligible(role, version, columns)
 	conflicted = roles.get(role_key) and actor not in eligible
 	if roles.get(role_key) and not conflicted:
 		answer = _turn(stage, headline_turn, holder_users=[actor], role=role, primary=primary)
 		return answer, _journey(stage, holder_display=_name(actor))
+	# §10.7 / §10.8 segregation text travels in the one guidance line (§10.17
+	# replaces the separate segregation warning), as its sentence
+	sentence = SEGREGATION_SENTENCES[role] if conflicted else ""
 	if not eligible:
 		# §5.10 TND_SOD_BLOCKED / §10.17: a System Manager must assign an eligible holder.
 		title = "Head of Procurement Function" if role == ROLE_HEAD_OF_PROCUREMENT_FUNCTION else "Accounting Officer"
 		answer = ns.answer(
-			ns.KIND_WAITING, headline=f"A System Manager must assign an eligible {title} to decide this Version.", stage=stage,
+			ns.KIND_WAITING, headline=f"A System Manager must assign an eligible {title} to decide this Version.", sentence=sentence, stage=stage,
 			holder=ns.holder(SYSTEM_MANAGER, []),
 		)
 		return answer, _journey(stage, blocked=True, holder_display=SYSTEM_MANAGER)
 	answer = _waiting(stage, f"{_subject(eligible, role)} is {doing}{_since_text(since)}.", holder_users=eligible, role=role, since=since)
+	answer["sentence"] = sentence
 	return answer, _journey(stage, holder_display=_display(eligible, role))
 
 

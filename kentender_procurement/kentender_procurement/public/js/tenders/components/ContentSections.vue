@@ -43,19 +43,28 @@
 <script setup>
 import { reactive } from "vue";
 
-defineProps({
+const props = defineProps({
 	sections: { type: Array, default: () => [] },
 	nested: Boolean,
+	// TPR-DES-05's board alone draws the pricing body open unconditionally;
+	// DES-06/07/09 draw it closed like every other section without a finding.
+	openPricing: Boolean,
 });
 const state = reactive({});
 
 function isOpen(section) {
-	// TPR-DES-05/06/07/09's own boards never wrap the pricing table's body in
-	// a collapse guard — it is drawn open, unconditionally, in every one of
-	// them. Ported literally: that section is always expanded.
-	if (section.key === "pricing") return true;
+	if (section.key === "pricing" && props.openPricing && !(section.key in state)) return true;
 	return section.key in state ? state[section.key] : !!section.open;
 }
+/** Open one section and bring it into view (a review note's own link). */
+function openSection(key) {
+	state[key] = true;
+	setTimeout(() => {
+		const el = document.querySelector(`[data-testid="tnd-section-${key}"]`);
+		if (el && el.scrollIntoView) el.scrollIntoView({ block: "start", behavior: "smooth" });
+	}, 0);
+}
+defineExpose({ openSection });
 function toggle(section) {
 	state[section.key] = !isOpen(section);
 }
