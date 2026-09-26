@@ -15,7 +15,7 @@ submission controls. Routes end in a `#…` part: System setup keeps record
 state in the URL fragment (§9), and the search page opens the path and then
 the fragment. Native Fiscal Year / Company / UOM and AUTH-owned units and
 assignments stay registered by their owners (§7.4). Single doctypes (site
-entity, reminder settings), rule versions and source-check events have no
+entity, reminder settings, Supplier portal settings), rule versions and source-check events have no
 searchable reference of their own (versions are hash-named; the gate admits
 only real fields), so they are reached from their rule's link and covered
 by the read probes.
@@ -30,6 +30,7 @@ from __future__ import annotations
 import frappe
 
 from kentender_core.api import procurement_settings_api as settings_api
+from kentender_core.api import public_portal_api as portal_api
 from kentender_core.api import site_configuration_api as site_api
 
 PAGE = "system-setup"
@@ -153,6 +154,7 @@ def read_probes() -> list[dict]:
 		{"label": "system_setup.get_schedule_profile", "call": settings_api.get_schedule_profile, "kwargs": _named("Procedure Schedule Profile"), "setup_maintenance_exception": EX},
 		{"label": "system_setup.get_regulatory_reference_version", "call": settings_api.get_regulatory_reference_version, "kwargs": _named("Regulatory Reference"), "setup_maintenance_exception": EX},
 		{"label": "system_setup.get_procurement_settings", "call": settings_api.get_procurement_settings, "kwargs": lambda: {}, "setup_maintenance_exception": EX},
+		{"label": "system_setup.get_public_portal_settings", "call": portal_api.get_public_portal_settings, "kwargs": lambda: {}, "setup_maintenance_exception": EX},
 		{"label": "system_setup.get_system_setup_workspace", "call": site_api.get_system_setup_workspace, "kwargs": lambda: {}, "setup_maintenance_exception": EX},
 		{"label": "system_setup.list_regulatory_reference_versions", "call": settings_api.list_regulatory_reference_versions, "kwargs": _reference_set_kwargs, "setup_maintenance_exception": EX},
 		{"label": "system_setup.list_verification_history", "call": settings_api.list_verification_history, "kwargs": _history_kwargs},

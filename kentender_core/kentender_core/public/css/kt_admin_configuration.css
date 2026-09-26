@@ -814,5 +814,16 @@
 /* Reminders (tracker CFG14-5G) — a small whole number; the field keeps the
    board's card width rather than stretching across the page. */
 .kt-industry.kt-setup-root .kt-reminders .kt-field { max-width: 320px; }
+/* CFG-CHG-002 v0.16 §10.10A — Supplier portal settings (C05). */
+.kt-industry.kt-setup-root .kt-supplier-portal .kt-portal-group { margin-top: 16px; }
+.kt-industry.kt-setup-root .kt-supplier-portal .kt-portal-group h4 { font-size: 14px; font-weight: 600; margin: 0 0 8px; }
+.kt-industry.kt-setup-root .kt-supplier-portal .kt-field { max-width: 560px; }
+.kt-industry.kt-setup-root .kt-supplier-portal .kt-portal-link { max-width: none; }
+.kt-industry.kt-setup-root .kt-supplier-portal .kt-portal-link-row { display: flex; gap: 8px; align-items: center; }
+.kt-industry.kt-setup-root .kt-supplier-portal .kt-portal-link-row .kt-input { flex: 1 1 auto; min-width: 0; }
+.kt-industry.kt-setup-root .kt-supplier-portal .kt-portal-actions { display: flex; justify-content: flex-end; margin-top: 16px; }
+@media (max-width: 600px) {
+	.kt-industry.kt-setup-root .kt-supplier-portal .kt-portal-link-row { flex-direction: column; align-items: stretch; }
+}
 /* Common-States (tracker CFG14-5H) — the page-wide loading line, centred. */
 .kt-industry.kt-setup-root .kt-setup-state-loading { text-align: center; padding: 48px 12px; }

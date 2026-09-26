@@ -36,6 +36,11 @@ ERROR_CODES: frozenset[str] = frozenset(
 		"CFG_SCHEMA_UNSUPPORTED",
 		"CFG_SUPERSESSION_INVALID",
 		"CFG_VERIFICATION_EVIDENCE_REQUIRED",
+		# CFG-CHG-002 v0.16 §8 — Supplier portal settings (built ahead of v0.16
+		# approval under BDS-CHG-001 v0.8 owner decision OD-A).
+		"CFG_PORTAL_SUPPORT_EMAIL_REQUIRED",
+		"CFG_PORTAL_URL_INVALID",
+		"CFG_PUBLIC_PORTAL_INCOMPLETE",
 	}
 )
 
@@ -68,6 +73,11 @@ DEFAULT_MESSAGES: dict[str, str] = {
 	"CFG_SCHEMA_UNSUPPORTED": "This rule uses a condition or format that is not available in this release.",
 	"CFG_SUPERSESSION_INVALID": "Select valid earlier versions and check the dates this replacement will cover.",
 	"CFG_VERIFICATION_EVIDENCE_REQUIRED": "Complete the source, applicability and interpretation evidence before recording a verified source check.",
+	# CFG-CHG-002 v0.16 §8, verbatim. CFG_PORTAL_URL_INVALID interpolates the
+	# notice label ("Enter a complete HTTPS address for {notice label}.").
+	"CFG_PORTAL_SUPPORT_EMAIL_REQUIRED": "Enter the email suppliers should use for support.",
+	"CFG_PORTAL_URL_INVALID": "Enter a complete HTTPS address for the public notice.",
+	"CFG_PUBLIC_PORTAL_INCOMPLETE": "Complete the supplier support and public-notice links before suppliers start or submit bids.",
 }
 
 

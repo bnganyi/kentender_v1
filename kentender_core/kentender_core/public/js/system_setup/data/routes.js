@@ -7,7 +7,7 @@
 //   #procurement-settings/{section}/{id}[/versions/{version_id}][/{action}]
 //
 // Sections are the spec's stable keys (funding-sources, procurement-rules,
-// schedule-profiles, reminders) plus `calendars`, which the spec opens inside
+// schedule-profiles, reminders, supplier-portal) plus `calendars`, which the spec opens inside
 // this tab from a working-days schedule. Each segment is encoded on its own,
 // so an id with a space or a slash stays one id.
 //
@@ -16,7 +16,7 @@
 // translate those to and from these links until each screen is re-ported
 // (plan Phase 5), so the URL is already the spec's while the screens change.
 export const TABS = ["procuring-entity", "fiscal-years", "organisation-structure", "users-and-responsibilities", "procurement-settings"];
-export const SECTIONS = ["funding-sources", "procurement-rules", "schedule-profiles", "reminders", "calendars"];
+export const SECTIONS = ["funding-sources", "procurement-rules", "schedule-profiles", "reminders", "supplier-portal", "calendars"];
 const ACTIONS = ["new-version", "edit", "check-sources", "history"];
 const ID_TABS = ["fiscal-years", "organisation-structure", "users-and-responsibilities"];
 

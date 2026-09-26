@@ -52,6 +52,7 @@ This register holds items surfaced while planning and building BDS-CHG-001 v0.8:
 | FU-V08-17 | Standard and spec corrections found: KT-STD-001 v1.9 §4 says to register routes in `cl_surface_registry` (AGENTS.md section 6.5 forbids it for Industry pages; AGENTS wins); BDS BDS-CHG-001 §7.4 and BDS06-AC-012/IMP-012 say `/app/std-templates/{release_id}`, which is `/desk/std-templates/…` on Frappe 16.12 (`/app` redirects). | Low — wording | KT-STD-001 / BDS-CHG-001 next revisions | Open |
 | FU-V08-18 | TPR FU-25: retire the Tenders candidate stand-in once BDS registers `kt_tender_candidate_registry` (plan Phase 5, tracker BDS8-503). Owned by the Tenders tracker; executed here. | Medium — cross-module | TPR-CHG-001 (Tenders) | Open |
 | FU-V08-19 | Register disagreements for the documentation owner: KT-DOC-CTRL-001 lists G1-REG-001 at v1.1 while a v1.2 file exists in `98_work_progress/`; G1-REG-001 v1.2 still cites TPR v0.11 and BDS v0.7. | Low — register | Documentation owner | Open |
+| FU-V08-20 | Observed while running the technical-read conformance gate for Phase 2A (26 Sep 2026), not caused by this module: `tenders/services/publication.py:281` sets `can_configure` from the System Manager role, so a technical reader (Administrator) gets a truthy non-view capability on `tenders.get_tender_publication`, and `kentender_core.tests.test_technical_read_conformance` fails on that probe. | Medium — technical read (KT-STD-001 §3A.6) | Tenders (TPR-CHG-001) | Open |
 
 ## Verifying a fix
 

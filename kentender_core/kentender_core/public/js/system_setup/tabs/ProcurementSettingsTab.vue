@@ -23,6 +23,7 @@ import CalendarDetail from "../components/CalendarDetail.vue";
 import CalendarHistory from "../components/CalendarHistory.vue";
 import ScheduleProfileDetail from "../components/ScheduleProfileDetail.vue";
 import ReminderSettingCard from "../components/ReminderSettingCard.vue";
+import SupplierPortalSection from "../components/SupplierPortalSection.vue";
 import { procurementSettingsApi } from "../data/procurementSettingsApi.js";
 import { fmtDate, sourceCheckClass, sourceCheckLabel } from "../data/format.js";
 
@@ -197,6 +198,8 @@ const SECTION_LINKS = [
 	["procurement-rules", "Procurement rules"],
 	["schedule-profiles", "Procurement schedules"],
 	["reminders", "Reminders"],
+	// CFG-CHG-002 v0.16 §10.10A — after Reminders, not a sixth tab (CFG16-AC-001).
+	["supplier-portal", "Supplier portal"],
 ];
 const activeSection = computed(() => {
 	const section = props.route?.section || "";
@@ -647,6 +650,11 @@ async function confirmRemoveSource() {
 			<!-- C04-eligibility-reminder — the reminder threshold -->
 			<div v-if="activeSection === 'reminders'" id="kt-procset-reminders">
 				<ReminderSettingCard :days="data.reminder_threshold_days" @saved="afterChange" />
+			</div>
+
+			<!-- C05 — Supplier portal settings (CFG v0.16 §10.10A; OD-A) -->
+			<div v-if="activeSection === 'supplier-portal'" id="kt-procset-supplier-portal">
+				<SupplierPortalSection :settings="data.public_portal" @saved="afterChange" />
 			</div>
 		</template>
 

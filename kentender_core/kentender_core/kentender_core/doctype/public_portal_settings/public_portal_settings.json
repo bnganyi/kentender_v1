@@ -1,0 +1,42 @@
+{
+ "actions": [],
+ "creation": "2026-09-26 00:00:00.000000",
+ "description": "CFG-CHG-002 v0.16 §4.9A: the one Supplier portal settings record. Written only through UpdatePublicPortalSettings.",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "supplier_support_email",
+  "supplier_support_phone",
+  "supplier_support_hours",
+  "privacy_notice_url",
+  "portal_terms_url",
+  "accessibility_statement_url",
+  "record_version",
+  "updated_by",
+  "updated_at"
+ ],
+ "fields": [
+  {"fieldname": "supplier_support_email", "fieldtype": "Data", "label": "Support email", "read_only": 1},
+  {"fieldname": "supplier_support_phone", "fieldtype": "Data", "label": "Support phone", "read_only": 1},
+  {"fieldname": "supplier_support_hours", "fieldtype": "Data", "label": "Support hours", "length": 160, "read_only": 1},
+  {"fieldname": "privacy_notice_url", "fieldtype": "Small Text", "label": "Privacy and data use", "read_only": 1},
+  {"fieldname": "portal_terms_url", "fieldtype": "Small Text", "label": "Terms of portal use", "read_only": 1},
+  {"fieldname": "accessibility_statement_url", "fieldtype": "Small Text", "label": "Accessibility", "read_only": 1},
+  {"fieldname": "record_version", "fieldtype": "Int", "label": "Record version", "default": "0", "read_only": 1},
+  {"fieldname": "updated_by", "fieldtype": "Link", "label": "Updated by", "options": "User", "read_only": 1},
+  {"fieldname": "updated_at", "fieldtype": "Datetime", "label": "Updated at", "read_only": 1}
+ ],
+ "issingle": 1,
+ "modified": "2026-09-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Kentender Core",
+ "name": "Public Portal Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {"read": 1, "role": "System Manager"}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

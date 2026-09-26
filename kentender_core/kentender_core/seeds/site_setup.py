@@ -348,6 +348,18 @@ SCHEDULE_MILESTONES = (
 )
 REMINDER_THRESHOLD_DAYS = 7
 
+# CFG-CHG-002 v0.16 §13 / BDS-CHG-001 v0.8 §10.1 — the Supplier portal
+# fixture values, seeded through UpdatePublicPortalSettings. Controlled test
+# values, not production defaults, legal approval or proof the pages are live.
+PUBLIC_PORTAL_SETTINGS = {
+	"supplier_support_email": "tendersupport@health.go.ke",
+	"supplier_support_phone": "+254 20 271 7077",
+	"supplier_support_hours": "Monday–Friday, 08:00–17:00 EAT",
+	"privacy_notice_url": "https://health.example.test/kentender/privacy",
+	"portal_terms_url": "https://health.example.test/kentender/terms",
+	"accessibility_statement_url": "https://health.example.test/kentender/accessibility",
+}
+
 # Kenya's fixed-date public holidays (Public Holidays Act Cap. 110, First
 # Schedule). Good Friday, Easter Monday and the two Eids are deliberately
 # absent: they move each year and are gazetted annually, so they are an
@@ -443,6 +455,7 @@ def run(*, commit: bool = True) -> dict:
 		"market_price_index": _seed_market_price_index(),
 		"approval_applicability": _seed_approval_applicability(),
 		"procurement_settings": _seed_procurement_settings(),
+		"public_portal_settings": _seed_public_portal_settings(),
 		"uoms": _seed_uoms(),
 		"users": _seed_users(),
 		"retired_assignments": _reconcile_superseded_fixture_assignments(),
@@ -1399,6 +1412,22 @@ def _seed_procurement_settings() -> dict[str, int]:
 		return {"approaching_milestone_threshold_days": REMINDER_THRESHOLD_DAYS, "changed": 0}
 	settings.set_reminder_threshold_days(days=REMINDER_THRESHOLD_DAYS)
 	return {"approaching_milestone_threshold_days": REMINDER_THRESHOLD_DAYS, "changed": 1}
+
+
+def _seed_public_portal_settings() -> dict:
+	from kentender_core.services import public_portal
+
+	current = public_portal.get_public_portal_settings()
+	if current["values"] == PUBLIC_PORTAL_SETTINGS:
+		return {"record_version": current["record_version"], "changed": 0}
+	result = public_portal.update_public_portal_settings(
+		**PUBLIC_PORTAL_SETTINGS,
+		expected_version=current["record_version"],
+		idempotency_key=f"site-setup:public-portal:{current['record_version']}",
+	)
+	if not result.get("ok"):
+		frappe.throw(f"Supplier portal fixture values were refused: {result.get('errors')}")
+	return {"record_version": result["record_version"], "changed": 1}
 
 
 def _reconcile_superseded_fixture_assignments() -> list[str]:

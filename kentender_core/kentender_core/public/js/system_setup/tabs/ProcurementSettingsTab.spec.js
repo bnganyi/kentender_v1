@@ -81,11 +81,12 @@ describe("ProcurementSettingsTab", () => {
 		const wrapper = await mountTab();
 		const links = wrapper.findAll('[data-testid="kt-procset-subnav"] a');
 		// Tender formats is deferred this cycle, so it has no link (D11).
-		expect(links.map((a) => a.text())).toEqual(["Funding sources", "Procurement rules", "Procurement schedules", "Reminders"]);
+		// CFG-CHG-002 v0.16 §10.10A: Supplier portal follows Reminders (CFG16-AC-001).
+		expect(links.map((a) => a.text())).toEqual(["Funding sources", "Procurement rules", "Procurement schedules", "Reminders", "Supplier portal"]);
 		expect(links[0].attributes("aria-current")).toBe("page");
 		expect(links[0].classes()).toContain("is-active");
 		expect(wrapper.find('[data-testid="kt-procset-sources"]').exists()).toBe(true);
-		for (const other of ["kt-procset-rules", "kt-procset-profiles", "kt-procset-calendars", "kt-procset-reminder"]) {
+		for (const other of ["kt-procset-rules", "kt-procset-profiles", "kt-procset-calendars", "kt-procset-reminder", "kt-procset-supplier-portal"]) {
 			expect(wrapper.find(`[data-testid="${other}"]`).exists(), other).toBe(false);
 		}
 		await links[1].trigger("click");

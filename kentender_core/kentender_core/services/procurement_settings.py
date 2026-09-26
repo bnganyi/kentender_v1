@@ -1165,6 +1165,12 @@ def set_reminder_threshold_days(*, days: int, idempotency_key: str = "") -> dict
 # --------------------------------------------------------------------------
 
 
+def _public_portal_settings() -> dict[str, Any]:
+	from kentender_core.services import public_portal
+
+	return public_portal.get_public_portal_settings()
+
+
 def get_procurement_settings() -> dict[str, Any]:
 	"""One read for the fifth System setup tab: funding sources, every rule
 	Version (method profiles, regulator references), every schedule profile,
@@ -1184,6 +1190,8 @@ def get_procurement_settings() -> dict[str, Any]:
 		"schedule_profiles": list_schedule_profiles(),
 		"calendars": list_business_day_calendars(),
 		"reminder_threshold_days": get_reminder_threshold_days(),
+		# CFG-CHG-002 v0.16 §10.10A — the Supplier portal section (OD-A).
+		"public_portal": _public_portal_settings(),
 		"verification_statuses": list(VERIFICATION_STATUSES),
 		"milestones": [{"milestone": m, "label": MILESTONE_LABELS[m]} for m in MILESTONES],
 		"procurement_methods": frappe.get_all("Procurement Method", filters={"status": "Active"}, pluck="name", order_by="name asc"),
