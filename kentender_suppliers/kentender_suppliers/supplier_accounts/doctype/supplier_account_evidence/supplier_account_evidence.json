@@ -1,0 +1,151 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-26 22:30:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "organisation",
+  "evidence_type",
+  "title",
+  "reference",
+  "valid_until",
+  "file",
+  "file_name",
+  "file_size",
+  "file_digest",
+  "check_result",
+  "status",
+  "uploaded_by",
+  "uploaded_at",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "organisation",
+   "fieldtype": "Link",
+   "label": "Supplier organisation",
+   "read_only": 1,
+   "options": "Supplier Organisation",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "evidence_type",
+   "fieldtype": "Select",
+   "label": "Evidence",
+   "read_only": 1,
+   "options": "Certificate of incorporation\nTax compliance certificate\nReservation evidence\nSignatory authority\nJoint-venture agreement\nOther",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "read_only": 1,
+   "length": 140
+  },
+  {
+   "fieldname": "reference",
+   "fieldtype": "Data",
+   "label": "Reference",
+   "read_only": 1,
+   "length": 140
+  },
+  {
+   "fieldname": "valid_until",
+   "fieldtype": "Date",
+   "label": "Valid until",
+   "read_only": 1
+  },
+  {
+   "fieldname": "file",
+   "fieldtype": "Link",
+   "label": "File",
+   "read_only": 1,
+   "options": "File"
+  },
+  {
+   "fieldname": "file_name",
+   "fieldtype": "Data",
+   "label": "File name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "file_size",
+   "fieldtype": "Int",
+   "label": "File size",
+   "read_only": 1
+  },
+  {
+   "fieldname": "file_digest",
+   "fieldtype": "Data",
+   "label": "File digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "check_result",
+   "fieldtype": "Data",
+   "label": "Check result",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Available\nNot scanned\nRejected",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "uploaded_by",
+   "fieldtype": "Link",
+   "label": "Uploaded by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "uploaded_at",
+   "fieldtype": "Datetime",
+   "label": "Uploaded at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-26 22:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Supplier Accounts",
+ "name": "Supplier Account Evidence",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "hash"
+}

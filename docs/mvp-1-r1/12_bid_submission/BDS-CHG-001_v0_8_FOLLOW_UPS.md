@@ -58,6 +58,11 @@ This register holds items surfaced while planning and building BDS-CHG-001 v0.8:
 | FU-V08-23 | Until slice 11.2 builds BDS-DES-02, **View Tender** on the list opens the Tender-not-found state (the resolver answers only `/tenders`). Expected for the Phase 2C walking skeleton; closes with slice 11.2. | Medium — incomplete journey | This module, plan Phase 11.2 | Open |
 | FU-V08-24 | Board note: BDS-DES-01-EMPTY draws two **Clear filters** controls (the filter bar's and the empty state's) while BDS-CHG-001 §10.2 says "Show Clear filters only". Ported as drawn. | Low — design | Design authority | Open |
 | FU-V08-25 | Running any kentender_core `IntegrationTestCase` module creates Frappe's standard test users (`test@example.com`, `test1…test4@example.com`, `testperm@`, `testdelete@`, `testpassword@`, `test'5@`), which `canonical.validate()` reports as fixture-domain users outside the register. `canonical.clear_non_canonical()` removes them (done 26 Sep after the Phase 2C runs). A core-wide test cleanup would stop the churn. | Low — test hygiene | kentender_core owner | Open |
+| FU-V08-26 | New copy for review (Phase 4 Supplier Accounts; not in BDS-CHG-001 §10.4–10.5 or §8): the Account wording of `BDS_STALE_VERSION` (**Another person changed this account. Reload before continuing.** — §8's text names a bid); field messages in `supplier_accounts/services/facts.py`, `registration.py`, `assignments.py`, `files.py`, `access.py`; verification texts (link invalid / expired / superseded / recently sent) and the verification email in `verification.py`; the Not found text for an Account. | Low — copy | BDS-CHG-001 next revision | Open |
+| FU-V08-27 | BDS-CHG-001 §4.1 asks for a "structured postal/physical address"; DES-03 draws one **Registered address** field. Built as one field, as drawn. | Low — model | BDS-CHG-001 next revision / design authority | Open |
+| FU-V08-28 | BDS-CHG-001 §4.1 calls the official email and phone "verified communication channels", while §4.1/§5.2 activate the Account through "the configured communication channel". Email is the configured channel; the phone is recorded but not verified (no SMS channel is configured). | Medium — scope | Project Owner | Open |
+| FU-V08-29 | Implementation choices for review: the KRA PIN is required at registration when the country is Kenya (§4.1 "required when applicable"); the registered identity is locked after activation and changes through Supplier support; restoring a Suspended Account returns it to Active only when its official email is verified, otherwise to Pending verification. | Low — rule | Project Owner | Open |
+| FU-V08-30 | Account evidence is Available only with a clean scanner verdict. No scanner is registered on this bench, so a real upload stays **Not scanned** and cannot support a signatory until the simulation Test Scanner (plan D16, Phases 6/8) or an approved scanner is registered. | Medium — environment | This module (Phases 6/8); operations for production | Open |
 
 ## Verifying a fix
 
@@ -69,6 +74,9 @@ This register holds items surfaced while planning and building BDS-CHG-001 v0.8:
 - **FU-V08-14:** closes when CFG-CHG-002 v0.16 (or its successor) is approved with a Supplier portal artboard.
 - **FU-V08-15:** closes when the TM2 clean-up lands with its own inventory and tests.
 - **FU-V08-16:** closes only with recorded Project Owner evidence under BDS-CHG-001 §15.3–15.6.
+- **FU-V08-26/27/29:** closes when BDS-CHG-001 states the copy or rule, or the owner accepts it.
+- **FU-V08-28:** closes with an owner decision on phone verification.
+- **FU-V08-30:** closes when a scanner (simulation or approved) is registered and a browser upload shows Available.
 - **FU-V08-21/22/24:** closes when BDS-CHG-001 (or the boards) state the copy, or the owner accepts it.
 - **FU-V08-23:** closes when the slice 11.2 gate passes.
 - **FU-V08-18:** closes when `grep -rn "Tender Candidate Registration"` outside `retired/` returns only the removal patch (TPR FU-25 test).

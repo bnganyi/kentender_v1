@@ -202,6 +202,17 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 	),
 	_entry("Strategy Author", SCOPE_SITE, "STR-CHG-001 v1.7 §6", sod_tags=("strategy_authoring",)),
 	_entry("Strategy Approver", SCOPE_SITE, "STR-CHG-001 v1.7 §6", sod_tags=("strategy_approval",)),
+	# --- Supplier Accounts (BDS-CHG-001 v0.8, plan owner decision OD-D) ----
+	# Site-wide; reviews suspended supplier access and records Suspend /
+	# Restore with a reason on the Supplier Organisation form. No bid,
+	# evidence or receipt content (BDS-CHG-001 §5.14 "Account access
+	# suspended"). Not in the spec's §6 table yet (FU-V08-02).
+	_entry(
+		"Supplier Account Support Officer",
+		SCOPE_SITE,
+		"BDS-CHG-001 v0.8 plan OD-D",
+		sod_tags=("supplier_account_support",),
+	),
 )
 
 REGISTRY: dict[str, BusinessRole] = {entry.business_role: entry for entry in _ENTRIES}

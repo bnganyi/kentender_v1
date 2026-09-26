@@ -62,7 +62,18 @@ app_include_js = [
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-doctype_js = {"KTSM Supplier Profile": "public/js/ktsm_supplier_profile.js"}
+doctype_js = {
+	"KTSM Supplier Profile": "public/js/ktsm_supplier_profile.js",
+	# BDS-CHG-001 v0.8 plan OD-D — Suspend / Restore access with a reason.
+	"Supplier Organisation": "public/js/supplier_organisation.js",
+}
+
+# BDS-CHG-001 v0.8 plan D1 — Supplier Accounts publishes the account
+# provider Bid Submission reads (kentender_core supplier_account_contract).
+kt_supplier_account_provider = ["kentender_suppliers.supplier_accounts.services.provider"]
+
+# BDS-CHG-001 v0.8 §5.14 — suspended-access reviews in the shared My Work.
+kt_my_work_providers = ["kentender_suppliers.supplier_accounts.services.my_work_provider.my_work_rows"]
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
