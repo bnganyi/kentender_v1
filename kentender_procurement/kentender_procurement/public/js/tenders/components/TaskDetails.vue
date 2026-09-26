@@ -32,13 +32,16 @@
 
 		<div class="tnd-section tnd-section--form tnd-section--last">
 			<h3 class="kt-card-title tnd-section-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Pre-tender meeting</h3>
-			<div class="tnd-seg" role="radiogroup" aria-label="Pre-tender meeting" style="margin-bottom: 16px">
-				<label class="tnd-seg-opt"><input type="radio" name="tnd-meeting" :checked="!form.pre_tender_meeting" data-testid="tnd-meeting-no" @change="form.pre_tender_meeting = false" />No</label>
-				<label class="tnd-seg-opt"><input type="radio" name="tnd-meeting" :checked="form.pre_tender_meeting" data-testid="tnd-meeting-yes" @change="form.pre_tender_meeting = true" />Yes</label>
+			<div class="kt-field" style="margin: 0"><label id="tnd-meeting-label">Hold a pre-tender meeting?</label>
+				<div class="tnd-seg" role="radiogroup" aria-labelledby="tnd-meeting-label">
+					<label class="tnd-seg-opt"><input type="radio" name="tnd-meeting" :checked="!form.pre_tender_meeting" data-testid="tnd-meeting-no" @change="form.pre_tender_meeting = false" />No</label>
+					<label class="tnd-seg-opt"><input type="radio" name="tnd-meeting" :checked="form.pre_tender_meeting" data-testid="tnd-meeting-yes" @change="form.pre_tender_meeting = true" />Yes</label>
+				</div>
+				<p v-if="errors.pre_tender_meeting" class="tnd-field-error">{{ errors.pre_tender_meeting }}</p>
 			</div>
-			<p v-if="errors.pre_tender_meeting" class="tnd-field-error">{{ errors.pre_tender_meeting }}</p>
-			<template v-if="form.pre_tender_meeting">
-				<div class="tnd-grid-2" style="margin-bottom: 16px">
+			<!-- the dependent group sits directly beneath its parent control (§10.4 item 5) -->
+			<div v-if="form.pre_tender_meeting" class="kt-dependent tnd-dependent-group" data-testid="tnd-meeting-group">
+				<div class="tnd-grid-2 tnd-grid-start">
 					<div class="kt-field" style="margin: 0"><label for="tnd-meeting_datetime">Meeting date/time</label><input id="tnd-meeting_datetime" type="datetime-local" class="kt-input" v-model="form.meeting_datetime" data-testid="tnd-field-meeting_datetime" /><p v-if="errors.meeting_datetime" class="tnd-field-error">{{ errors.meeting_datetime }}</p></div>
 					<div class="kt-field" style="margin: 0"><label>Meeting mode</label>
 						<div class="tnd-seg" role="radiogroup" aria-label="Meeting mode">
@@ -53,7 +56,7 @@
 					<p v-if="errors.meeting_venue" class="tnd-field-error">{{ errors.meeting_venue }}</p>
 				</div>
 				<div v-if="form.meeting_mode === 'Online'" class="kt-field" style="margin: 0"><label for="tnd-online_joining_information">Online joining information</label><input id="tnd-online_joining_information" class="kt-input" maxlength="240" v-model="form.online_joining_information" data-testid="tnd-field-online_joining_information" /><p v-if="errors.online_joining_information" class="tnd-field-error">{{ errors.online_joining_information }}</p></div>
-			</template>
+			</div>
 		</div>
 	</div>
 </template>

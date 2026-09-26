@@ -120,6 +120,14 @@ def ensure_world(*, commit: bool = True) -> dict[str, Any]:
 	_grant(BOTH, "Procurement Officer")
 	_grant(BOTH, "Head of Procurement Function")
 	_grant(BOTH, "Accounting Officer")
+	# A repeated grant returns the existing assignment without re-projecting
+	# its Frappe Roles, so a role lost between runs (a site reseed that
+	# recreated the user) stayed lost and the workspace list refused the
+	# actor. Re-project every fixture actor's roles from their assignments.
+	from kentender_core.services import responsibility_administration as administration
+
+	for actor in (OFFICER, AO, BOTH, HOPF, AUDITOR):
+		administration._sync_projection(actor)
 	for doctype, field, name in (("Delivery Location", "location_name", LOCATION), ("Contact Office", "office_name", CONTACT_OFFICE)):
 		if not frappe.db.exists(doctype, name):
 			values = {"doctype": doctype, field: name, "address": "Playwright fixture address, Nairobi", "status": "Active", "fixture_namespace": NS_PW}
@@ -181,7 +189,9 @@ def _reset() -> dict[str, Any]:
 
 def _authorised() -> dict[str, Any]:
 	world = _reset()
-	state = req_pw.reset_authorised_fixture(commit=False)
+	# REQ-CHG-001 v1.11 renamed the Requisitions fixture (reset_authorised);
+	# it builds the eligible plan item and the authorised handoff itself
+	state = req_pw.reset_authorised(commit=False)
 	return {**world, **state}
 
 

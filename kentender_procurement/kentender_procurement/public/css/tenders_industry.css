@@ -70,6 +70,14 @@
 .kt-tnd .tnd-section--last { border-bottom: 0; }
 .kt-tnd .tnd-section--content { padding: 8px 24px 22px; border-bottom: 0; }
 .kt-tnd .tnd-section-title { margin: 0 0 16px; display: flex; align-items: center; gap: 6px; }
+/* The v0.12 boards title every section in the heading face at 19px, sentence
+   case, with no rule beneath (inline on each board's h3). */
+.kt-tnd h3.kt-card-title { font-family: var(--kt-font-heading, var(--font-heading)); font-size: 19px; font-weight: 600; letter-spacing: 0; text-transform: none; border: 0; padding-bottom: 0; color: var(--kt-color-text, var(--color-text)); }
+/* …and every board resets the design system's uppercase disclosure titles
+   and table headers (`.kt-disclosure-title{text-transform:none;…}` in each
+   board's own style block). */
+.kt-tnd .kt-disclosure-title { text-transform: none; letter-spacing: 0; font-size: 15px; }
+.kt-tnd .kt-table th, .kt-tnd .kt-table thead th { text-transform: none; letter-spacing: 0; }
 .kt-tnd .tnd-section-title--tight { margin: 0 0 12px; }
 .kt-tnd .tnd-section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 12px; flex-wrap: wrap; }
 .kt-tnd .tnd-actions { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -240,11 +248,47 @@
 /* ---------- history route (D22) ---------- */
 .kt-tnd .tnd-history-table td { vertical-align: top; }
 
+/* ---------- TPR-CHG-001 v0.12 (DES-03/04 re-port) ----------
+   The §10.17 guidance region is kentender_core's `.kt-guidance` (padding and
+   bottom divider come with it); the host element only places it. Choice rows
+   are core's `.kt-choice-row` / `.kt-dependent`; these rules set the board's
+   type and the few layout details the rows need inside a Tender section. */
+.kt-tnd .tnd-guidance:empty { display: none; }
+.kt-tnd .tnd-body-text { font-size: 14px; margin: 0; }
+.kt-tnd .tnd-choice-list { display: grid; border-bottom: 1px solid var(--color-divider); }
+.kt-tnd .tnd-choice-label { font-size: 14px; }
+.kt-tnd .tnd-choice-summary { font-size: 13px; color: var(--color-neutral-700); margin-top: 3px; }
+.kt-tnd .tnd-choice-fixed { font-size: 14px; color: var(--color-neutral-700); }
+.kt-tnd .kt-choice-row.tnd-choice-row--start { align-items: start; }
+.kt-tnd .kt-dependent .tnd-hint { margin-top: 8px; }
+.kt-tnd .tnd-grid-narrow { grid-template-columns: repeat(2, minmax(0, 220px)); }
+.kt-tnd .tnd-grid-start { align-items: start; }
+.kt-tnd .tnd-stack { display: grid; gap: 12px; }
+.kt-tnd .tnd-dependent-field { border-left: 2px solid var(--color-divider); padding-left: 16px; }
+.kt-tnd .tnd-dependent-group { margin-top: 14px; display: grid; gap: 14px; }
+.kt-tnd .tnd-carried { display: grid; gap: 6px; font-size: 14px; margin-bottom: 10px; }
+.kt-tnd .tnd-carried-full { margin-top: 14px; }
+.kt-tnd .tnd-table-gap { margin-top: 12px; }
+.kt-tnd .tnd-nowrap { white-space: nowrap; }
+
+/* key facts and review-section content (DES-05/06/07/09): label grids */
+.kt-tnd .tnd-fact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 24px; }
+.kt-tnd .tnd-fact-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.kt-tnd .tnd-fact-grid .kt-label { margin-bottom: 3px; }
+.kt-tnd .tnd-fact-grid .tnd-fact-value { font-size: 14px; }
+.kt-tnd .tnd-break { overflow-wrap: anywhere; }
+.kt-tnd .tnd-disclosure-summary { display: block; font-size: 12px; color: var(--color-neutral-700); margin-top: 2px; font-weight: 400; }
+.kt-tnd .kt-disclosure-title-row { flex-direction: column; align-items: flex-start; gap: 0; }
+.kt-tnd .tnd-block-title { font-size: 14px; font-weight: 700; margin: 0 0 8px; }
+.kt-tnd .tnd-block-title--later { margin-top: 18px; }
+.kt-tnd .tnd-section--plain { border-bottom: 0; }
+
 @media (max-width: 900px) {
-	.kt-tnd .tnd-grid-3, .kt-tnd .tnd-grid-4, .kt-tnd .tnd-context-facts, .kt-tnd .tnd-task-cards { grid-template-columns: 1fr 1fr; }
+	.kt-tnd .tnd-grid-3, .kt-tnd .tnd-grid-4, .kt-tnd .tnd-context-facts, .kt-tnd .tnd-task-cards, .kt-tnd .tnd-fact-grid { grid-template-columns: 1fr 1fr; }
 	.kt-tnd .tnd-footer { padding: 12px 16px; flex-wrap: wrap; }
 }
 @media (max-width: 640px) {
+	.kt-tnd .tnd-grid-narrow, .kt-tnd .tnd-fact-grid,
 	.kt-tnd .tnd-grid-2, .kt-tnd .tnd-grid-3, .kt-tnd .tnd-grid-4, .kt-tnd .tnd-context-facts, .kt-tnd .tnd-task-cards, .kt-tnd .tnd-step-labels { grid-template-columns: 1fr; }
 	.kt-tnd .tnd-span-2 { grid-column: auto; }
 	.kt-tnd .tnd-step-label, .kt-tnd .tnd-step-label:nth-child(2), .kt-tnd .tnd-step-label:nth-child(3) { text-align: left; }

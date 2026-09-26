@@ -47,7 +47,7 @@
 			</div>
 			<div class="tnd-section tnd-section--content">
 				<div class="kt-card-title tnd-content-title">Tender content</div>
-				<ContentSections :sections="review.sections || []" :findings="[]" />
+				<ContentSections :sections="review.sections || []" />
 				<div class="kt-card-title tnd-content-title tnd-content-title--later">History and evidence</div>
 				<div class="kt-disclosure" style="margin-top: 10px">
 					<div class="kt-disclosure-head" role="button" tabindex="0" @click="historyOpen = !historyOpen" @keydown.enter.prevent="historyOpen = !historyOpen"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Decisions and attempts</span></div><svg class="kt-disclosure-chevron" :class="{ 'is-open': historyOpen }" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div>

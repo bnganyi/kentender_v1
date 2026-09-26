@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 
 import { login } from "../../helpers/auth";
-import { AUDITOR, OFFICER, PASSWORD, collectConsoleErrors, expectReady, pick, expectSettled, gotoTenders, resetFixture, restoreSite } from "./helpers";
+import { AUDITOR, OFFICER, PASSWORD, collectConsoleErrors, expectGuidance, expectReady, pick, expectSettled, gotoTenders, resetFixture, restoreSite } from "./helpers";
 
-/** TPR-CHG-001 v0.8 slice 7c — TPR-DES-03 Draft: Tender details. */
+/** TPR-CHG-001 v0.12 slice A — TPR-DES-03 Draft: Tender details (§10.4, §10.17 guidance; no preparation stepper). */
 
 test.describe.configure({ mode: "serial", timeout: 240_000 });
 
@@ -16,7 +16,9 @@ test.describe("TPR-DES-03 Tender details", () => {
 		await login(page, OFFICER, PASSWORD);
 		await gotoTenders(page, `/${state.tender_reference}/details`);
 		await expectReady(page, "details");
-		await expect(page.locator('[data-testid="tnd-step-status-details"]')).toHaveText("Needs attention");
+		await expectGuidance(page, "DES-03");
+		// §10.17: the guidance replaces the three-part progress row
+		await expect(page.locator('[data-testid="tnd-progress"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="tnd-context"]')).toContainText("Open Tender");
 		// inherited facts are never inputs
 		await expect(page.locator('[data-testid="tnd-context"] input')).toHaveCount(0);
@@ -32,8 +34,10 @@ test.describe("TPR-DES-03 Tender details", () => {
 		await page.locator('[data-testid="tnd-field-clarification_deadline"]').fill("2027-05-27T17:00");
 		await page.locator('[data-testid="tnd-field-submission_deadline"]').fill("2027-06-05T11:00");
 		await page.locator('[data-testid="tnd-field-tender_security_amount"]').fill("500000");
+		await expect(page.locator('[data-testid="tnd-meeting-group"]')).toHaveCount(0);
 		await pick(page, "tnd-meeting-yes");
-		await expect(page.locator('[data-testid="tnd-field-meeting_datetime"]')).toBeVisible();
+		// the dependent group sits directly beneath its parent control (§10.4 item 5)
+		await expect(page.locator('[data-testid="tnd-meeting-group"] [data-testid="tnd-field-meeting_datetime"]')).toBeVisible();
 		await page.locator('[data-testid="tnd-field-meeting_datetime"]').fill("2027-05-22T10:00");
 		await pick(page, "tnd-mode-online");
 		await expect(page.locator('[data-testid="tnd-field-online_joining_information"]')).toBeVisible();
@@ -41,14 +45,15 @@ test.describe("TPR-DES-03 Tender details", () => {
 		await page.locator('[data-testid="tnd-field-online_joining_information"]').fill("Microsoft Teams — https://meet.example.test/tnd");
 		await page.locator('[data-testid="tnd-save-draft"]').click();
 		await expectSettled(page);
-		await expect(page.locator('[data-testid="tnd-step-status-details"]')).toHaveText("Complete");
+		await expect(page.locator('[data-testid="tnd-editor-error"]')).toHaveCount(0);
 
 		await pick(page, "tnd-mode-physical");
 		await expect(page.locator('[data-testid="tnd-field-meeting_venue"]')).toBeVisible();
 		await page.locator('[data-testid="tnd-field-meeting_venue"]').selectOption({ index: 1 });
 		await page.locator('[data-testid="tnd-save-draft"]').click();
 		await expectSettled(page);
-		await expect(page.locator('[data-testid="tnd-step-status-details"]')).toHaveText("Complete");
+		await expect(page.locator('[data-testid="tnd-editor-error"]')).toHaveCount(0);
+		await expectGuidance(page, "DES-03");
 
 		await page.reload();
 		await expectReady(page, "details");
@@ -59,12 +64,15 @@ test.describe("TPR-DES-03 Tender details", () => {
 		const drawer = page.locator('[data-testid="tnd-drawer"]');
 		await expect(drawer).toContainText("Authorised requisition");
 		await expect(drawer.locator('[data-testid="tnd-drawer-context"]')).toContainText("Authorised value");
-		await expect(drawer.locator('[data-testid="tnd-drawer-items"] tbody tr')).toHaveCount(1);
+		// every authorised requirement, as the board's four tables
+		await expect(drawer.locator("table thead th").first()).toHaveText("Item");
+		await expect(drawer.locator("table")).toHaveCount(4);
 		await page.locator('[data-testid="tnd-drawer-close"]').click();
 		await expect(drawer).toHaveCount(0);
 
 		await page.locator('[data-testid="tnd-continue"]').click();
 		await expectReady(page, "requirements");
+		await expectGuidance(page, "DES-04");
 		await page.goBack();
 		await expectReady(page, "details");
 		await page.goForward();

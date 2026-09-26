@@ -3,6 +3,8 @@ import path from "node:path";
 
 import { expect, Page } from "@playwright/test";
 
+import { GUIDANCE, markerClasses } from "./guidance-10-17";
+
 /**
  * Shared plumbing for the TPR-CHG-001 v0.8 Tenders browser specs.
  *
@@ -114,4 +116,28 @@ export async function failNextCall(page: Page, methodSuffix: string): Promise<vo
 /** The boards' segmented and radio controls hide their <input>; click the owning label. */
 export async function pick(page: Page, testid: string): Promise<void> {
 	await page.locator(`label:has([data-testid="${testid}"])`).click();
+}
+
+/**
+ * TPR-CHG-001 v0.12 §10.17 — the guidance region below the record header:
+ * the five-stage journey's markers in order and the next step's kind,
+ * headline and fixes, as the spec table states them for this variant.
+ */
+export async function expectGuidance(page: Page, variant: string): Promise<void> {
+	const row = GUIDANCE[variant];
+	if (!row) throw new Error(`no §10.17 row for ${variant}`);
+	const region = page.locator('[data-testid="kt-guidance"]');
+	await expect(region).toBeVisible();
+	const stages = region.locator("li.kt-journey-stage");
+	await expect(stages).toHaveCount(5);
+	const classes = markerClasses(row.markers);
+	for (let index = 0; index < 5; index += 1) await expect(stages.nth(index)).toHaveClass(new RegExp(`\\b${classes[index]}\\b`));
+	const step = region.locator('[data-kt="next-step"]');
+	if (row.kind === "not_involved") {
+		await expect(step).toHaveCount(0);
+		return;
+	}
+	await expect(step).toHaveAttribute("data-kind", row.kind);
+	if (row.headline) await expect(step.locator('[data-testid="kt-next-step-headline"]')).toHaveText(row.headline);
+	if (row.fixes) await expect(step.locator("button")).toHaveText(row.fixes);
 }

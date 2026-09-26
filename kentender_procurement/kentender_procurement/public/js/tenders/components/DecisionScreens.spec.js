@@ -2,6 +2,8 @@
 // segregation and allowed actions; absent actions are absent, never disabled.
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
+import { nextTick } from "vue";
+import { reviewData, reviewRecord } from "./fixtures.js";
 import ReviewScreen from "./ReviewScreen.vue";
 import ApprovalScreen from "./ApprovalScreen.vue";
 import AuthorisationScreen from "./AuthorisationScreen.vue";
@@ -15,21 +17,36 @@ const NOTE = { finding_code: "PROPORTIONALITY", severity: "Review note", message
 const MUST = { finding_code: "REQUIRED", severity: "Must fix", message: "Enter the inspection and acceptance location.", task: "requirements", field: "inspection_location", link_label: "Review contract terms" };
 
 describe("ReviewScreen — TPR-DES-05", () => {
-	it("Ready to submit: result notice, review note with its link, facts, sections, enabled Submit", async () => {
-		const w = mount(ReviewScreen, { props: { record: { tender: TENDER, tasks: { details: "Complete", requirements: "Complete", review: "Complete" }, allowed_actions: ["submit_for_approval"] }, review: { review: { result: "Ready to submit", must_fix: [], review_notes: [NOTE], must_fix_count: 0, findings: [NOTE] }, key_facts: FACTS, sections: SECTIONS, allowed_actions: ["submit_for_approval"] }, pending: false } });
-		expect(w.find('[data-testid="tnd-review-result-ready"]').text()).toContain("Ready to submit.");
+	// §10.17 DES-05: the guidance region replaces the result notice and the
+	// must-fix notices; the review note stays separate; Submit is present only
+	// while the server permits it.
+	it("Ready to submit: Your turn to submit, the review note with its link, facts, sections, Submit", async () => {
+		const review = reviewData();
+		const w = mount(ReviewScreen, { props: { record: reviewRecord(), review, pending: false }, attachTo: document.body });
+		await nextTick();
+		expect(w.find('[data-kt="next-step"]').text()).toContain("Submit this Tender for approval.");
+		expect(w.find('[data-kt="journey"]').exists()).toBe(true);
+		expect(w.find('[data-testid="tnd-review-result-ready"]').exists()).toBe(false);
 		expect(w.find('[data-testid="tnd-review-notes"]').text()).toContain("1 review note.");
-		await w.find('[data-testid="tnd-review-notes"] button').trigger("click");
+		await w.find('[data-testid="tnd-review-note-link"]').trigger("click");
 		expect(w.emitted("go-finding")[0][0].task).toBe("requirements");
 		expect(w.find('[data-testid="tnd-submit-for-approval"]').attributes("disabled")).toBeUndefined();
-		expect(w.find('[data-testid="tnd-section-supplier"] .tnd-tag').text()).toBe("1 review note");
+		expect(w.find('[data-testid="tnd-section-tag-supplier"]').text()).toBe("1 review note");
+		expect(w.findAll('[data-testid="tnd-key-facts"] .kt-label').map((l) => l.text())).toEqual(["Requisition", "Quantity", "Approved value", "Method", "Submission deadline", "Tender security", "Reservation", "Latest delivery"]);
+		w.unmount();
 	});
-	it("Needs attention: the Must fix notice, the disabled Submit and its reason", () => {
-		const w = mount(ReviewScreen, { props: { record: { tender: TENDER, tasks: { details: "Complete", requirements: "Needs attention", review: "Not started" }, allowed_actions: [] }, review: { review: { result: "Needs attention", must_fix: [MUST], review_notes: [], must_fix_count: 1, findings: [MUST] }, key_facts: FACTS, sections: SECTIONS, submit_blocked_text: "Fix the item above before submitting." }, pending: false } });
-		expect(w.find('[data-testid="tnd-review-result-blocked"]').text()).toContain("Needs attention.");
-		expect(w.find('[data-testid="tnd-must-fix"]').text()).toContain("Enter the inspection and acceptance location.");
-		expect(w.find('[data-testid="tnd-submit-for-approval"]').attributes("disabled")).toBeDefined();
-		expect(w.find('[data-testid="tnd-submit-blocked-text"]').text()).toBe("Fix the item above before submitting.");
+	it("Needs attention: Your turn, blocked names the item and its fix; no Submit, no duplicate notice", async () => {
+		const w = mount(ReviewScreen, { props: { record: reviewRecord(), review: reviewData("BLOCKED"), pending: false }, attachTo: document.body });
+		await nextTick();
+		const block = w.find('[data-kt="next-step"]');
+		expect(block.classes()).toContain("is-warning");
+		expect(block.text()).toContain("Enter the inspection and acceptance location.");
+		await block.find("button").trigger("click");
+		expect(w.emitted("fix")[0][0].label).toBe("Review contract terms");
+		expect(w.find('[data-testid="tnd-must-fix"]').exists()).toBe(false);
+		expect(w.find('[data-testid="tnd-submit-for-approval"]').exists()).toBe(false);
+		expect(w.find('[data-testid="tnd-section-contract"] .kt-disclosure-body').exists()).toBe(true);
+		w.unmount();
 	});
 });
 

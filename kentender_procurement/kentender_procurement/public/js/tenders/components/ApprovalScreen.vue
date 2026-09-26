@@ -22,13 +22,13 @@
 				<div class="tnd-fact"><div class="kt-label">Submitted at</div><div class="tnd-fact-value">{{ version.submitted_at_label }}</div></div>
 				<div class="tnd-fact"><div class="kt-label">Version</div><div class="tnd-fact-value">Version {{ version.version_number }}</div></div>
 			</div>
-			<KpiFacts :facts="review.key_facts || []" />
+			<KeyFacts :facts="review.key_facts || []" />
 			<div class="tnd-section tnd-section--tight tnd-actions">
 				<button type="button" class="kt-btn kt-btn-secondary tnd-inline-btn" :disabled="pending" data-testid="tnd-preview-invitation" @click="$emit('preview', 'invitation')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>Preview Invitation</button>
 				<button type="button" class="kt-btn kt-btn-secondary tnd-inline-btn" :disabled="pending" data-testid="tnd-preview-complete" @click="$emit('preview', 'complete')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>Preview complete Tender</button>
 			</div>
 			<div class="tnd-section tnd-section--content">
-				<ContentSections :sections="review.sections || []" :findings="(review.review || {}).findings || []" />
+				<ContentSections :sections="review.sections || []" />
 			</div>
 		</BlueprintCard>
 		<div class="tnd-footer">
@@ -49,7 +49,7 @@ import { computed } from "vue";
 import BlueprintCard from "./BlueprintCard.vue";
 import RecordHead from "./RecordHead.vue";
 import FindingsNotices from "./FindingsNotices.vue";
-import KpiFacts from "./KpiFacts.vue";
+import KeyFacts from "./KeyFacts.vue";
 import ContentSections from "./ContentSections.vue";
 
 const props = defineProps({

@@ -367,7 +367,7 @@ def inherited_projection(snapshot: dict[str, Any], *, internal: bool) -> dict[st
 			"reservation_category": cstr(snapshot.get("reservation_category_value") or "None"), "lotting": cstr(snapshot.get("lotting_indicator")), "fiscal_year": cstr(snapshot.get("fiscal_year")),
 		},
 		"items": [
-			{"requisition_item_id": i.get("requisition_item_id"), "item_name": i.get("item_name"), "equipment_category": i.get("equipment_category"), "quantity": serializer.fmt_quantity(i.get("quantity")), "unit": i.get("unit") or "Each", "intended_use": i.get("intended_use"), "delivery_location": cstr(snapshot.get("delivery_location")), "latest_delivery_date": serializer.fmt_date_short(snapshot.get("latest_delivery_date")), "source_line_id": next((d.get("source_line_id") for d in snapshot.get("drawdown_lines") or [] if d.get("drawdown_line_id") == i.get("plan_item_line_id")), "")}
+			{"requisition_item_id": i.get("requisition_item_id"), "item_name": i.get("item_name"), "equipment_category": i.get("equipment_category"), "quantity": serializer.fmt_quantity(i.get("quantity")), "unit": i.get("unit") or "Each", "intended_use": i.get("intended_use"), "delivery_location": cstr(snapshot.get("delivery_location")), "latest_delivery_date": serializer.fmt_date_short(snapshot.get("latest_delivery_date")), "source_line_id": next((d.get("source_line_id") for d in snapshot.get("drawdown_lines") or [] if d.get("plan_item_line_id") == i.get("plan_item_line_id")), "")}
 			for i in items
 		],
 		"goods_lines": lines,
@@ -377,6 +377,9 @@ def inherited_projection(snapshot: dict[str, Any], *, internal: bool) -> dict[st
 		"related_services": serializer.related_services(snapshot),
 		"supporting_materials": serializer.supporting_materials(snapshot),
 		"counts": snap.counts(snapshot),
+		"requirement_tables": requirement_tables(snapshot),
+		"carried_summary": carried_summary(snapshot),
+		"reservation_evidence": reservation_evidence(snapshot),
 	}
 	if internal:
 		out["internal"] = {
@@ -386,6 +389,85 @@ def inherited_projection(snapshot: dict[str, Any], *, internal: bool) -> dict[st
 			"note": "For internal review only — not included in supplier documents.",
 		}
 	return out
+
+
+def _drawdown_rows(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
+	"""One row per authorised item line with the contributing unit it was
+	approved for (the boards' "Approved requirement" column)."""
+	lines = {d.get("plan_item_line_id"): d for d in snapshot.get("drawdown_lines") or []}
+	out = []
+	for item in snapshot.get("items") or []:
+		line = lines.get(item.get("plan_item_line_id")) or {}
+		out.append({"item": cstr(item.get("item_name")), "unit_label": _ou_label(cstr(line.get("contributing_org_unit"))), "quantity": serializer.fmt_quantity(item.get("quantity")), "unit": cstr(item.get("unit") or "Each")})
+	return out
+
+
+def requirement_tables(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
+	"""§10.4 drawer / §10.5 item 6 — every authorised requirement, as the
+	boards' four tables (equipment, technical, warranty and support,
+	acceptance). Read-only; nothing here is editable (§4.3)."""
+	delivery = " · ".join(v for v in (cstr(snapshot.get("delivery_location")), serializer.fmt_date_short(snapshot.get("latest_delivery_date"))) if v)
+	warranty = serializer.warranty_support(snapshot)
+	yes_no = lambda value: "Yes" if value else "No"
+	return [
+		{"key": "items", "columns": [{"label": "Item"}, {"label": "Approved requirement"}, {"label": "Quantity", "num": True}, {"label": "Delivery"}], "rows": [[r["item"], r["unit_label"], f"{r['quantity']} {r['unit']}", delivery] for r in _drawdown_rows(snapshot)]},
+		{"key": "technical", "columns": [{"label": "Technical requirement"}, {"label": "Value"}], "rows": [[t["label"], _requirement_value(t)] for t in serializer.technical_rows(snapshot)]},
+		{"key": "warranty", "columns": [{"label": "Warranty and support"}, {"label": "Value"}], "rows": [
+			["Minimum warranty", f"{warranty['minimum_warranty_months']} months"], ["On-site support required", yes_no(warranty["onsite_support_required"])],
+			["Maximum support response", f"{warranty['maximum_support_response_hours']} hours"], ["Manufacturer support required", yes_no(warranty["manufacturer_support_required"])],
+			["Service location constraint", warranty["service_location_constraint"]], ["Support description", warranty["support_description"]],
+		]},
+		{"key": "acceptance", "columns": [{"label": "Acceptance check"}, {"label": "Pass condition"}, {"label": "Evidence"}], "rows": [[a["check_type"], a["pass_condition"], cstr(a["evidence_type"])] for a in serializer.acceptance_rows(snapshot)]},
+	]
+
+
+def _requirement_value(row: dict[str, Any]) -> str:
+	""""Minimum 16 GB" — the comparison the requisition authorised, then the value."""
+	value = f"{row['required_value']} {row['unit']}".strip()
+	comparison = cstr(row.get("comparison"))
+	return f"{comparison} {value}" if comparison in ("Minimum", "Maximum") else value
+
+
+def carried_summary(snapshot: dict[str, Any]) -> list[dict[str, str]]:
+	"""§10.5 item 6 — the four summary lines of "Requirements carried into the
+	contract" (the full tables are revealed in place)."""
+	rows = _drawdown_rows(snapshot)
+	items = snapshot.get("items") or []
+	unit = cstr((items[0].get("unit") if items else "") or "Each")
+	names = ", ".join(dict.fromkeys(r["item"] for r in rows))
+	split = f" ({' + '.join(r['quantity'] for r in rows)})" if len(rows) > 1 else ""
+	place = ", ".join(v for v in (cstr(snapshot.get("delivery_location")),) if v)
+	latest = serializer.fmt_date_short(snapshot.get("latest_delivery_date"))
+	warranty = serializer.warranty_support(snapshot)
+	support = [f"{warranty['minimum_warranty_months']} months"]
+	if warranty["onsite_support_required"]:
+		support.append("on-site")
+	if warranty["maximum_support_response_hours"]:
+		support.append(f"{warranty['maximum_support_response_hours']}-hour response")
+	if warranty["service_location_constraint"]:
+		constraint = warranty["service_location_constraint"]
+		support.append(constraint[:1].lower() + constraint[1:])
+	checks = [cstr(a["check_type"]).lower() for a in serializer.acceptance_rows(snapshot)]
+	technical = len(snapshot.get("technical_requirements") or [])
+	return [
+		{"label": "Equipment", "text": f"{names} · {serializer.fmt_quantity(snap.total_quantity(snapshot))} {unit}{split}" + (f", {place}" if place else "") + (f", by {latest}" if latest else "")},
+		{"label": "Technical", "text": f"{technical} mandatory requirement{'s' if technical != 1 else ''}"},
+		{"label": "Warranty and support", "text": ", ".join(support)},
+		{"label": "Acceptance", "text": f"{len(checks)} check{'s' if len(checks) != 1 else ''} — {', '.join(checks)}" if checks else "No acceptance checks"},
+	]
+
+
+def reservation_evidence(snapshot: dict[str, Any]) -> list[dict[str, str]]:
+	"""§10.5 item 2 — the read-only evidence rows the verified reservation
+	rules generate; the officer cannot edit the inherited treatment, and no
+	rule identifier is shown in this routine view."""
+	rows = []
+	category = cstr(snapshot.get("reservation_category_value"))
+	if category and category != "None":
+		rows.append({"label": f"{category} reservation declaration and evidence", "summary": f"Suppliers must declare {category} eligibility and provide the published certificate reference, validity and evidence", "source": "Required by reservation rule"})
+	if snapshot.get("county_resident_reservation"):
+		rows.append({"label": "County-resident declaration and evidence", "summary": "Suppliers must declare county residence and provide the published evidence of it", "source": "Required by reservation rule"})
+	return rows
 
 
 def version_summary(version) -> dict[str, Any]:
@@ -426,8 +508,9 @@ def key_facts(root, version, snapshot: dict[str, Any], *, internal: bool) -> lis
 	state = serializer.officer_state(version)
 	items = snapshot.get("items") or []
 	unit = cstr((items[0].get("unit") if items else "") or "Each")
+	# §10.6 item 3 / TPR-DES-05 and DES-06 boards: the purchase is the header's
+	# title, not a key fact (DES-07 composes its own row, publication.py)
 	facts = [
-		{"label": "Purchase", "value": cstr(snapshot.get("requirement_title"))},
 		{"label": "Requisition", "value": cstr(snapshot.get("requisition_reference"))},
 		{"label": "Quantity", "value": f"{serializer.fmt_quantity(snap.total_quantity(snapshot))} {unit}"},
 	]
@@ -514,30 +597,123 @@ def decisions_for(root) -> list[dict[str, Any]]:
 # --------------------------------------------------------------------------
 
 
+def _facts_block(facts: list[tuple[str, str] | tuple[str, str, bool]]) -> dict[str, Any]:
+	return {"kind": "facts", "facts": [{"label": f[0], "value": cstr(f[1]), "wide": bool(f[2]) if len(f) > 2 else False} for f in facts]}
+
+
+def _table_block(columns: list[str], rows: list[list[str]], *, title: str = "", num: tuple[int, ...] = (), muted: tuple[int, ...] = ()) -> dict[str, Any]:
+	return {"kind": "table", "title": title, "columns": [{"label": c, "num": i in num} for i, c in enumerate(columns)], "rows": [[cstr(v) for v in r] for r in rows], "muted": list(muted)}
+
+
+def _yes_no(value) -> str:
+	return "Yes" if value else "No"
+
+
+def _template_label(version) -> str:
+	from kentender_procurement.std_templates.services import runtime as std_runtime
+
+	try:
+		release = std_runtime.release_doc(cstr(version.template_release_id))
+		return f"{cstr(release.display_name)} · Version {cstr(release.template_release)}"
+	except Exception:
+		return cstr(version.template_release_id)
+
+
+def _section_bodies(root, version, snapshot: dict[str, Any], state: dict[str, Any], evidence_rows: list[dict[str, Any]], *, internal: bool) -> dict[str, list[dict[str, Any]]]:
+	"""§10.6 items 5–7 — each review section's content as the boards draw it
+	(fact grids, titled tables, the evaluation list). Shared by DES-05/06/07/09."""
+	meeting = serializer._meeting_details(state)
+	delivery = " · ".join(v for v in (cstr(snapshot.get("delivery_location")), serializer.fmt_date_short(snapshot.get("latest_delivery_date"))) if v)
+	intended = {cstr(i.get("plan_item_line_id")): cstr(i.get("intended_use")) for i in snapshot.get("items") or []}
+	items = snapshot.get("items") or []
+	equipment = [[r["item"], r["unit_label"], f"{r['quantity']} {r['unit']}", intended.get(cstr(items[i].get("plan_item_line_id")), "") if i < len(items) else "", delivery] for i, r in enumerate(_drawdown_rows(snapshot))]
+	technical = [[t["label"], cstr(t.get("comparison") or "Required"), t["required_value"], t["unit"] or "—"] for t in serializer.technical_rows(snapshot)]
+	warranty = next(t for t in requirement_tables(snapshot) if t["key"] == "warranty")["rows"]
+	acceptance = [[a["check_type"], a["applies_to"], a["pass_condition"], cstr(a["evidence_type"])] for a in serializer.acceptance_rows(snapshot)]
+	pricing = [[r["description"], f"{r['quantity']} {r['unit']}", r["unit_price"], r["tax"], r["line_total"]] for r in serializer.price_schedule(snapshot)["rows"]]
+	supplier = [[r["label"], r["summary"]] for r in reservation_evidence(snapshot)] + [
+		["Manufacturer authorisation", _yes_no(state.get("manufacturer_authorisation_required"))],
+		["Product datasheets or brochures", _yes_no(state.get("datasheets_required"))],
+		["Warranty confirmation", "Yes — required by authorised requisition"],
+		["Past supply experience", f"Yes; {serializer.fmt_number(state.get('minimum_comparable_contracts'))} comparable contracts in {serializer.fmt_number(state.get('experience_period_years'))} years" if state.get("past_experience_required") else "No"],
+		["After-sales support evidence", serializer._after_sales_text(state) if state.get("after_sales_evidence_required") else "No"],
+	] + [[e["label"], f"{'Required' if e.get('mandatory') else 'Optional'} · proves {e['proves']}"] for e in evidence_rows]
+	lineage = "; ".join(f"{cstr(d.get('source_line_id'))} · {serializer.fmt_quantity(d.get('requested_quantity'))} {cstr(d.get('unit') or 'Each')}" for d in snapshot.get("drawdown_lines") or [])
+	requisition_version = frappe.db.get_value("Requisition Version", root.requisition_version, "version_number") if root.get("requisition_version") else None
+	category = cstr(snapshot.get("reservation_category_value"))
+	rule_ids = snapshot.get("reservation_rule_snapshot_ids") or []
+	technical_facts = [
+		("Template", _template_label(version)),
+		("Reservation rule", f"Applicable verified {category} reservation rule · Version {len(rule_ids) or 1}" if category and category != "None" else "No reservation"),
+		("Requisition", f"{cstr(snapshot.get('requisition_reference'))} · Authorised" + (f" · Version {requisition_version}" if requisition_version else "")),
+		("Plan Item", cstr(snapshot.get("plan_item_id"))),
+		("Item/source lineage", lineage, True),
+	]
+	mappings = _mapping_counts(root, version, snapshot)
+	# W1: the board regeneration dropped §10.6 item 7's mappings and digests;
+	# restored here (registered in the fidelity departures).
+	technical_facts.append(("Requirement mappings", f"{mappings['technical_requirements']} technical requirements → {mappings['responses']} supplier responses, {mappings['evaluation']} evaluation checks, {mappings['contract']} contract obligations", True))
+	if internal:
+		for label, field in (("Package digest", "package_digest"), ("Response schema digest", "response_schema_digest"), ("Evaluation contract digest", "evaluation_contract_digest"), ("Contract projection digest", "contract_projection_digest"), ("Requisition snapshot digest", "requisition_snapshot_digest")):
+			if version.get(field):
+				technical_facts.append((label, cstr(version.get(field)), True))
+	return {
+		"details": [_facts_block([
+			("Tender title", cstr(state.get("tender_title") or snapshot.get("requirement_title")), True), ("Issue date", serializer.fmt_date_short(state.get("issue_date"))),
+			("Clarification deadline", serializer.fmt_datetime_short(state.get("clarification_deadline"))), ("Submission deadline", serializer.fmt_datetime_short(state.get("submission_deadline"))),
+			("Tender validity", f"{serializer.fmt_number(state.get('tender_validity_days'))} days" if state.get("tender_validity_days") else ""),
+			("Tender security", f"KES {serializer.fmt_money(state.get('tender_security_amount'))}" if state.get("tender_security_amount") is not None else ""),
+			("Pre-tender meeting", f"Yes — {meeting}" if meeting else "No"),
+		])],
+		"requirements": [
+			_table_block(["Item", "Approved requirement", "Quantity", "Intended use", "Delivery"], equipment, title="Equipment", num=(2,)),
+			_table_block(["Requirement", "Comparison", "Value", "Unit"], technical, title="Technical requirements"),
+			_table_block(["Label", "Value"], warranty, title="Warranty and support"),
+			_table_block(["Check", "Applies to", "Pass condition", "Evidence"], acceptance, title="Acceptance checks"),
+		],
+		"pricing": [_table_block(["Line", "Quantity", "Unit price", "Tax", "Total"], pricing, num=(1,), muted=(2, 3, 4))],
+		"supplier": [_table_block(["Requirement", "Detail"], supplier), {"kind": "list", "title": "How suppliers will be evaluated", "items": list(serializer.EVALUATION_STAGES)}],
+		"contract": [_facts_block([
+			("Inspection and acceptance location", cstr(state.get("inspection_location")), True), ("Payment timing", f"{serializer.fmt_number(state.get('payment_timing_days'))} days" if state.get("payment_timing_days") else ""),
+			("Performance security", f"Yes; {serializer.fmt_number(state.get('performance_security_percent'))}%" if state.get("performance_security_required") else "No"),
+			("Delay damages", f"{serializer.fmt_number(state.get('delay_damages_per_week_percent'))}% per week; maximum {serializer.fmt_number(state.get('maximum_delay_damages_percent'))}%" if state.get("delay_damages_per_week_percent") is not None else ""),
+			("Contract contact office", cstr(state.get("contract_contact_office"))),
+		])],
+		"technical": [_facts_block(technical_facts)],
+	}
+
+
 def review_sections(root, version, snapshot: dict[str, Any], summary: dict[str, Any], *, internal: bool) -> list[dict[str, Any]]:
-	"""§10.6 items 5–7 — six sections, each a plain summary plus details;
-	only a section holding a Must fix or a Review note starts open."""
+	"""§10.6 items 5–7 — six sections, each a plain summary plus its content
+	blocks; only a section holding a Must fix or a Review note starts open,
+	and it carries the count tag (§10.6 item 5)."""
 	state = serializer.officer_state(version)
 	evidence_rows = [{**r, "proves": evidence.proves_label(r, snapshot)} for r in evidence.rows_as_dicts(version)]
 	lines = serializer.goods_lines(snapshot)
-	flagged = {f["task"] for f in summary["findings"]} | {"contract" for f in summary["findings"] if controls.CATALOGUE.get(f.get("field") or "", {}).get("group") == "contract"}
-	sections = [
-		{"key": "details", "title": "Tender details", "summary": f"Issue {serializer.fmt_date_short(state.get('issue_date'))} · clarification {serializer.fmt_datetime_short(state.get('clarification_deadline'))} · submission {serializer.fmt_datetime_short(state.get('submission_deadline'))} · validity {serializer.fmt_number(state.get('tender_validity_days'))} days · security KES {serializer.fmt_money(state.get('tender_security_amount'))}", "open": "details" in flagged, "details": {"facts": [
-			{"label": "Purchase", "value": cstr(state.get("tender_title") or snapshot.get("requirement_title"))}, {"label": "Method", "value": "Open Tender"},
-			{"label": "Reservation category", "value": cstr(snapshot.get("reservation_category_value") or "None")},
-			{"label": "Delivery terms", "value": f"{cstr(snapshot.get('delivery_location'))} · {serializer.fmt_date_short(snapshot.get('latest_delivery_date'))} latest delivery"},
-		], "fields": [{"label": controls.CATALOGUE[f]["label"], "value": _display_value(f, state)} for f in controls.FIELDS_BY_TASK[controls.TASK_DETAILS] if controls.applies(f, state)]}},
-		{"key": "requirements", "title": "Requirements from the authorised requisition", "summary": f"{len(snapshot.get('items') or [])} items · {len(snapshot.get('technical_requirements') or [])} technical requirements · {len(snapshot.get('acceptance_requirements') or [])} acceptance checks", "open": False, "details": {k: v for k, v in inherited_projection(snapshot, internal=internal).items() if k in ("items", "technical_requirements", "warranty_support", "acceptance_requirements", "related_services", "supporting_materials")}},
-		{"key": "pricing", "title": "Supplier pricing schedule", "summary": f"{len(lines)} line{'s' if len(lines) != 1 else ''} · unit price and tax completed by supplier · totals calculated from supplier response", "open": False, "details": serializer.price_schedule(snapshot)},
-		{"key": "supplier", "title": "Supplier and evaluation requirements", "summary": _supplier_summary(state, evidence_rows), "open": "requirements" in flagged, "details": {"qualification": serializer.qualification_criteria(state), "evidence_requirements": evidence_rows, "stages": list(serializer.EVALUATION_STAGES)}},
-		{"key": "contract", "title": "Contract terms", "summary": f"Payment {serializer.fmt_number(state.get('payment_timing_days'))} days · performance security {serializer.fmt_number(state.get('performance_security_percent')) + '%' if state.get('performance_security_required') else 'not required'} · delay damages {serializer.fmt_number(state.get('delay_damages_per_week_percent'))}% per week, maximum {serializer.fmt_number(state.get('maximum_delay_damages_percent'))}%", "open": "contract" in flagged, "details": {"facts": [
-			{"label": "Inspection and acceptance location", "value": cstr(state.get("inspection_location"))}, {"label": "Payment timing", "value": f"{serializer.fmt_number(state.get('payment_timing_days'))} days from acceptance"},
-			{"label": "Performance security", "value": f"{serializer.fmt_number(state.get('performance_security_percent'))}% of contract value" if state.get("performance_security_required") else "Not required"},
-			{"label": "Delay damages", "value": f"{serializer.fmt_number(state.get('delay_damages_per_week_percent'))}% of contract value per week, capped at {serializer.fmt_number(state.get('maximum_delay_damages_percent'))}%"},
-		], "fields": [{"label": controls.CATALOGUE[f]["label"], "value": _display_value(f, state)} for f in controls.FIELDS_BY_TASK[controls.TASK_REQUIREMENTS] if controls.CATALOGUE[f]["group"] == "contract" and controls.applies(f, state)]}},
-		{"key": "technical", "title": "Technical evidence", "summary": f"Template {cstr(version.template_release_id)} · {len(lines)} rendered line{'s' if len(lines) != 1 else ''} from {len(snapshot.get('items') or [])} items", "open": False, "details": {"template_release_id": cstr(version.template_release_id), "official_source_digest": cstr(version.official_source_digest), "bundle_digest": cstr(version.bundle_digest), "requisition_snapshot_digest": cstr(version.requisition_snapshot_digest), "package_digest": cstr(version.package_digest), "invitation_digest": cstr(version.invitation_digest), "issued_tender_digest": cstr(version.issued_tender_digest), "response_schema_digest": cstr(version.response_schema_digest), "evaluation_contract_digest": cstr(version.evaluation_contract_digest), "contract_projection_digest": cstr(version.contract_projection_digest), "lineage": [{"line": l["line_number"], "description": l["description"], "quantity": l["quantity"], "source_items": l["source_items"] if internal else [{"requisition_item_id": s["requisition_item_id"], "quantity": s["quantity"]} for s in l["source_items"]]} for l in lines], "mappings": _mapping_counts(root, version, snapshot)}},
+	findings = summary.get("findings") or []
+
+	def owner(f) -> str:
+		if controls.CATALOGUE.get(f.get("field") or "", {}).get("group") == "contract":
+			return "contract"
+		return {"details": "details", "requirements": "supplier"}.get(f.get("task"), "")
+
+	def tag(key: str) -> str:
+		mine = [f for f in findings if owner(f) == key]
+		must = sum(1 for f in mine if f["severity"] == review.MUST_FIX)
+		notes = len(mine) - must
+		parts = ([f"{must} must fix"] if must else []) + ([f"{notes} review note{'s' if notes != 1 else ''}"] if notes else [])
+		return " · ".join(parts)
+
+	bodies = _section_bodies(root, version, snapshot, state, evidence_rows, internal=internal)
+	heads = [
+		("details", "Tender details", f"Issue {serializer.fmt_date_short(state.get('issue_date'))} · clarification {serializer.fmt_datetime_short(state.get('clarification_deadline'))} · submission {serializer.fmt_datetime_short(state.get('submission_deadline'))} · validity {serializer.fmt_number(state.get('tender_validity_days'))} days · security KES {serializer.fmt_money(state.get('tender_security_amount'))}"),
+		("requirements", "Requirements from the authorised requisition", f"{len(snapshot.get('items') or [])} items · {len(snapshot.get('technical_requirements') or [])} technical requirements · {len(snapshot.get('acceptance_requirements') or [])} acceptance checks"),
+		("pricing", "Supplier pricing schedule", f"{len(lines)} line{'s' if len(lines) != 1 else ''} · unit price and tax completed by supplier · totals calculated from supplier response"),
+		("supplier", "Supplier and evaluation requirements", _supplier_summary(state, evidence_rows)),
+		("contract", "Contract terms", f"Payment {serializer.fmt_number(state.get('payment_timing_days'))} days · performance security {serializer.fmt_number(state.get('performance_security_percent')) + '%' if state.get('performance_security_required') else 'not required'} · delay damages {serializer.fmt_number(state.get('delay_damages_per_week_percent'))}% per week, maximum {serializer.fmt_number(state.get('maximum_delay_damages_percent'))}%"),
+		("technical", "Technical evidence", f"Template {cstr(version.template_release_id)} · {len(lines)} rendered line{'s' if len(lines) != 1 else ''} from {len(snapshot.get('items') or [])} items"),
 	]
-	return sections
+	return [{"key": key, "title": title, "summary": text, "tag": tag(key), "open": bool(tag(key)), "blocks": bodies[key]} for key, title, text in heads]
 
 
 def _mapping_counts(root, version, snapshot: dict[str, Any]) -> dict[str, Any]:
@@ -607,8 +783,11 @@ def get_tender_review(*, tender: str, user: str | None = None) -> dict[str, Any]
 		"key_facts": key_facts(root, version, snapshot, internal=internal),
 		"sections": review_sections(root, version, snapshot, summary, internal=internal),
 		"documents": documents_for(root, version) if internal else [],
-		"allowed_actions": allowed_actions(root, version, actor, roles) if mode != "department" else ["view_history"],
+		# the fresh review decides: a must-fix item withdraws Submit (§10.6 Needs attention)
+		"allowed_actions": [a for a in allowed_actions(root, version, actor, roles) if not (a == "submit_for_approval" and summary["must_fix_count"])] if mode != "department" else ["view_history"],
 		"segregation_message": segregation_message(root, version, actor, roles),
 		"submit_blocked_text": "Fix the item above before submitting." if summary["must_fix_count"] else "",
+		# §10.6 confirmation: the eligible HOPF is named when one person holds it
+		"submit_note": f"The submitted Version will be locked. {guide._display(guide._holders(ROLE_HEAD_OF_PROCUREMENT_FUNCTION), 'The Head of Procurement Function')} can return it or approve the package for publication review.",
 		"guidance": guide.guidance(root, actor=actor, roles=roles, mode=mode, context="review", review_summary=summary),
 	}

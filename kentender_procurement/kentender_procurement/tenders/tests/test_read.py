@@ -108,6 +108,14 @@ class TestRecordReview(TenderReadCase):
 		self.assertEqual(officer["inherited"]["context"]["quantity"], "1 Each")
 		self.assertEqual(len(officer["inherited"]["goods_lines"]), 1)
 		self.assertIn("internal", officer["inherited"])
+		# §10.4 drawer / §10.5: the four authorised tables and the carried summary, shaped by the server
+		self.assertEqual([t["key"] for t in officer["inherited"]["requirement_tables"]], ["items", "technical", "warranty", "acceptance"])
+		self.assertEqual([c["label"] for c in officer["inherited"]["requirement_tables"][0]["columns"]], ["Item", "Approved requirement", "Quantity", "Delivery"])
+		self.assertEqual([line["label"] for line in officer["inherited"]["carried_summary"]], ["Equipment", "Technical", "Warranty and support", "Acceptance"])
+		# §10.17 DES-03: the editor's own task answer and the Tender journey
+		self.assertEqual(officer["task_steps"]["details"]["headline"], "Set the Tender dates, security and meeting details.")
+		self.assertEqual(officer["task_steps"]["requirements"]["headline"], "Set supplier evidence and contract terms.")
+		self.assertEqual([s["marker"] for s in officer["guidance"]["journey"]["stages"]], ["current", "not_started", "not_started", "not_started", "not_started"])
 		department = read.get_tender(tender=root.name, user=fx.DEPARTMENTAL)
 		self.assertEqual((department["mode"], department["screen"], department["allowed_actions"]), ("department", "record", ["view_history"]))
 		self.assertNotIn("internal", department["inherited"])
@@ -125,7 +133,9 @@ class TestRecordReview(TenderReadCase):
 		self.assertEqual((rev["review"]["result"], rev["review"]["must_fix_count"], rev["review"]["review_note_count"]), ("Ready to submit", 0, 1))
 		self.assertEqual([s["key"] for s in rev["sections"]], ["details", "requirements", "pricing", "supplier", "contract", "technical"])
 		self.assertEqual([s["open"] for s in rev["sections"]], [False, False, False, True, False, False])
-		self.assertEqual(rev["sections"][2]["details"]["rows"][0]["unit_price"], "Completed by supplier")
+		pricing = rev["sections"][2]["blocks"][0]
+		self.assertEqual(([c["label"] for c in pricing["columns"]], pricing["rows"][0][2:]), (["Line", "Quantity", "Unit price", "Tax", "Total"], ["Completed by supplier", "Completed by supplier", "Calculated from supplier response"]))
+		self.assertEqual(rev["sections"][3]["tag"], "1 review note")
 		self.assertEqual(rev["submit_blocked_text"], "")
 
 		submitted = lifecycle.submit_tender_for_approval(tender=root.name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)

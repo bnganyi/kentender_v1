@@ -1,61 +1,39 @@
 <!-- The six content disclosures every review/decision/published board carries
      (§10.6 items 5–7): Tender details, Requirements from the authorised
      requisition, Supplier pricing schedule, Supplier and evaluation
-     requirements, Contract terms, Technical evidence — each a plain summary
-     head plus details; a section holding a Must fix or Review note starts
-     open and carries the count tag. Rendered from the server's `sections`. -->
+     requirements, Contract terms, Technical evidence. Each head gives the
+     title, a plain summary and — for a section holding a Must fix or Review
+     note — its count tag; such a section starts open. The body is the
+     server's content blocks (fact grids, titled tables, the evaluation list),
+     drawn as the boards draw them. -->
 <template>
 	<div class="tnd-disclosure-stack" :class="{ 'tnd-disclosure-nested': nested }" data-testid="tnd-content-sections">
 		<div v-for="section in sections" :key="section.key" class="kt-disclosure" :data-testid="`tnd-section-${section.key}`">
-			<div class="kt-disclosure-head" role="button" tabindex="0" @click="toggle(section.key)" @keydown.enter.prevent="toggle(section.key)">
-				<div class="kt-disclosure-title-row"><span class="kt-disclosure-title">{{ section.title }}</span></div>
+			<div class="kt-disclosure-head" role="button" tabindex="0" :aria-expanded="isOpen(section) ? 'true' : 'false'" @click="toggle(section)" @keydown.enter.prevent="toggle(section)">
+				<div class="kt-disclosure-title-row"><span class="kt-disclosure-title">{{ section.title }}</span><span v-if="section.summary" class="tnd-disclosure-summary">{{ section.summary }}</span></div>
 				<div class="tnd-disclosure-head-right">
-					<span v-if="tagFor(section.key)" class="tnd-tag tnd-tag-accent">{{ tagFor(section.key) }}</span>
+					<span v-if="section.tag" class="tnd-tag tnd-tag-accent" :data-testid="`tnd-section-tag-${section.key}`">{{ section.tag }}</span>
 					<svg class="kt-disclosure-chevron" :class="{ 'is-open': isOpen(section) }" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg>
 				</div>
 			</div>
-			<div v-if="isOpen(section) || section.key === 'pricing'" class="kt-disclosure-body">
-				<p class="tnd-card-body" style="margin: 0 0 12px">{{ section.summary }}</p>
-
-				<template v-if="section.key === 'details' || section.key === 'contract'">
-					<div class="tnd-grid-2">
-						<div v-for="f in (section.details || {}).facts || []" :key="f.label" class="tnd-fact"><div class="kt-label">{{ f.label }}</div><div class="tnd-fact-value">{{ f.value || "—" }}</div></div>
+			<div v-if="isOpen(section)" class="kt-disclosure-body">
+				<template v-for="(block, index) in section.blocks || []" :key="index">
+					<div v-if="block.kind === 'facts'" class="tnd-fact-grid tnd-fact-grid--2">
+						<div v-for="fact in block.facts" :key="fact.label" class="tnd-fact" :class="{ 'tnd-span-2': fact.wide }"><div class="kt-label">{{ fact.label }}</div><div class="tnd-fact-value tnd-break">{{ fact.value || "—" }}</div></div>
 					</div>
-					<div v-if="((section.details || {}).fields || []).length" class="tnd-grid-2" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--color-divider)">
-						<div v-for="f in section.details.fields" :key="f.label" class="tnd-fact"><div class="kt-label">{{ f.label }}</div><div class="tnd-fact-value">{{ f.value || "—" }}</div></div>
-					</div>
-				</template>
-
-				<template v-else-if="section.key === 'requirements'">
-					<table class="kt-table"><thead><tr><th>Item</th><th>Specification</th><th class="is-num">Quantity</th></tr></thead>
-						<tbody><tr v-for="line in (section.details || {}).goods_lines || (section.details || {}).items || []" :key="line.line_number || line.requisition_item_id"><td>{{ line.description || line.item_name }}</td><td>{{ specOf(section.details, line) }}</td><td class="is-num">{{ line.quantity }} {{ line.unit }}</td></tr></tbody>
-					</table>
-					<table v-if="((section.details || {}).technical_requirements || []).length" class="kt-table" style="margin-top: 12px"><thead><tr><th>Technical requirement</th><th>Required value</th></tr></thead>
-						<tbody><tr v-for="t in section.details.technical_requirements" :key="t.technical_requirement_id"><td>{{ t.label }}</td><td>{{ t.required_value }} {{ t.unit }}</td></tr></tbody>
-					</table>
-				</template>
-
-				<table v-else-if="section.key === 'pricing'" class="kt-table"><thead><tr><th>Line</th><th style="text-align: right">Quantity</th><th style="text-align: right">Unit price</th><th style="text-align: right">Total</th></tr></thead>
-					<tbody><tr v-for="line in (section.details || {}).rows || (Array.isArray(section.details) ? section.details : [])" :key="line.line"><td>{{ line.description }}</td><td class="is-num">{{ line.quantity }} {{ line.unit }}</td><td class="is-num tnd-muted">{{ line.unit_price }}</td><td class="is-num tnd-muted">{{ line.line_total }}</td></tr></tbody>
-				</table>
-
-				<template v-else-if="section.key === 'supplier'">
-					<table class="kt-table"><thead><tr><th>Requirement</th><th>Detail</th></tr></thead>
-						<tbody>
-							<tr v-for="q in (section.details || {}).qualification || []" :key="q.criterion"><td>{{ q.criterion }}</td><td>{{ qualificationDetail(q) }}</td></tr>
-							<tr v-for="e in (section.details || {}).evidence_requirements || []" :key="e.evidence_requirement_id"><td>{{ e.label }}</td><td>{{ e.mandatory ? "Required" : "Optional" }} · {{ e.proves }}</td></tr>
-						</tbody>
-					</table>
-				</template>
-
-				<template v-else-if="section.key === 'technical'">
-					<table class="kt-table"><thead><tr><th>Evidence</th><th>Proves</th><th>Status</th></tr></thead>
-						<tbody>
-							<tr><td>Template release</td><td>{{ (section.details || {}).template_release_id }}</td><td><span class="kt-status is-live">Bound</span></td></tr>
-							<tr v-for="l in (section.details || {}).lineage || []" :key="l.line"><td>Line {{ l.line }} — {{ l.description }}</td><td>{{ l.quantity }} from {{ (l.source_items || []).length }} authorised item{{ (l.source_items || []).length === 1 ? "" : "s" }}</td><td><span class="kt-status is-live">Traced</span></td></tr>
-							<tr><td>Requirement mappings</td><td>{{ mappingsLine(section.details) }}</td><td><span class="kt-status is-live">Complete</span></td></tr>
-						</tbody>
-					</table>
+					<template v-else-if="block.kind === 'table'">
+						<h4 v-if="block.title" class="tnd-block-title" :class="{ 'tnd-block-title--later': index > 0 }">{{ block.title }}</h4>
+						<table class="kt-table">
+							<thead><tr><th v-for="column in block.columns" :key="column.label" :class="{ 'is-num': column.num }">{{ column.label }}</th></tr></thead>
+							<tbody>
+								<tr v-for="(row, r) in block.rows" :key="r"><td v-for="(cell, c) in row" :key="c" :class="{ 'is-num': block.columns[c] && block.columns[c].num, 'tnd-muted-700': (block.muted || []).includes(c) }">{{ cell }}</td></tr>
+							</tbody>
+						</table>
+					</template>
+					<template v-else-if="block.kind === 'list'">
+						<h4 class="tnd-block-title" :class="{ 'tnd-block-title--later': index > 0 }">{{ block.title }}</h4>
+						<ol class="tnd-ol"><li v-for="item in block.items" :key="item">{{ item }}</li></ol>
+					</template>
 				</template>
 			</div>
 		</div>
@@ -65,9 +43,8 @@
 <script setup>
 import { reactive } from "vue";
 
-const props = defineProps({
+defineProps({
 	sections: { type: Array, default: () => [] },
-	findings: { type: Array, default: () => [] },
 	nested: Boolean,
 });
 const state = reactive({});
@@ -75,38 +52,11 @@ const state = reactive({});
 function isOpen(section) {
 	// TPR-DES-05/06/07/09's own boards never wrap the pricing table's body in
 	// a collapse guard — it is drawn open, unconditionally, in every one of
-	// them (verbatim: their disclosure-head onclick only spins the chevron,
-	// with no sc-if on the body). Ported literally: the section is always
-	// expanded and its chevron toggle is decorative for this one section.
+	// them. Ported literally: that section is always expanded.
 	if (section.key === "pricing") return true;
 	return section.key in state ? state[section.key] : !!section.open;
 }
-function toggle(key) {
-	const section = props.sections.find((s) => s.key === key);
-	state[key] = !isOpen(section);
-}
-function tagFor(key) {
-	const mine = props.findings.filter((f) => (key === "contract" ? f.link_label === "Review contract terms" : key === "supplier" ? f.task === "requirements" && f.link_label !== "Review contract terms" : key === "details" ? f.task === "details" : false));
-	if (!mine.length) return "";
-	const must = mine.filter((f) => f.severity === "Must fix").length;
-	const notes = mine.length - must;
-	const parts = [];
-	if (must) parts.push(`${must} must fix`);
-	if (notes) parts.push(`${notes} review note${notes === 1 ? "" : "s"}`);
-	return parts.join(" · ");
-}
-function specOf(details, line) {
-	const techs = (details || {}).technical_requirements || [];
-	return techs.length ? techs.slice(0, 4).map((t) => `${t.label} ${t.required_value}${t.unit ? " " + t.unit : ""}`).join(", ") : line.intended_use || line.equipment_category || "";
-}
-function qualificationDetail(q) {
-	if (!q.required) return "Not required";
-	if (q.minimum_contracts) return `${q.minimum_contracts} contracts / ${q.period_years} years`;
-	if (q.evidence) return q.evidence;
-	return "Required";
-}
-function mappingsLine(details) {
-	const m = (details || {}).mappings || {};
-	return `${m.technical_requirements || 0} technical requirements → ${m.responses || 0} supplier responses, ${m.evaluation || 0} evaluation checks, ${m.contract || 0} contract obligations`;
+function toggle(section) {
+	state[section.key] = !isOpen(section);
 }
 </script>

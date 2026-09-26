@@ -103,6 +103,76 @@ export function requisitionsScope(doc, id) {
 }
 
 /**
+ * Tenders (TPR-CHG-001 v0.12 design set): one board per file, the screen is
+ * the element carrying `data-screen-label` ("TPR-DES-03 Draft Tender
+ * details"). Two design-tool constructs are resolved statically so the
+ * markup reads as the screen the variant shows:
+ *
+ *   - `<sc-if value="{{name}}">` is the board's own conditional. A variant
+ *     names the conditions it sets (`show`/`hide`); any other block keeps the
+ *     board's default, its `hint-placeholder-val`. Shown blocks are unwrapped,
+ *     hidden ones removed.
+ *   - `<dc-import name="TenderGuidance">` draws the §10.17 guidance region.
+ *     It is expanded to the landmarks kentender_core's shared components
+ *     render (`data-kt="journey"`, and `data-kt="next-step"` — inside a
+ *     warning notice for "Your turn, blocked"), so a screen that drops its
+ *     tracker or misplaces its next step fails like any other container.
+ *     A variant whose kind is a template expression states it (`guidance`).
+ *
+ * `.cap`/`.sub` captions are design-tool annotation and are stripped.
+ */
+export function tendersScope(doc, id, { show = [], hide = [], guidance = "" } = {}) {
+	const root = doc.querySelector(`[data-screen-label="${id}"]`);
+	if (!root) throw new Error(`artboard ${id} not found`);
+	const clone = root.cloneNode(true);
+	const nameOf = (el) => String(el.getAttribute("value") || "").replace(/^\{\{\s*|\s*\}\}$/g, "");
+	for (let block = clone.querySelector("sc-if"); block; block = clone.querySelector("sc-if")) {
+		const name = nameOf(block);
+		const visible = show.includes(name) || (!hide.includes(name) && block.getAttribute("hint-placeholder-val") === "{{true}}");
+		if (visible) block.replaceWith(...Array.from(block.childNodes));
+		else block.remove();
+	}
+	for (let loop = clone.querySelector("sc-for"); loop; loop = clone.querySelector("sc-for")) loop.replaceWith(...Array.from(loop.childNodes));
+	// A disclosure chevron's open state is a computed class on some boards
+	// (`class="{{evalChevron}}"` → "kt-disclosure-chevron is-open"); read it
+	// as the chevron it always is.
+	for (const el of Array.from(clone.querySelectorAll("[class]"))) {
+		if (/^\{\{\s*\w*chevron\w*\s*\}\}$/i.test(el.getAttribute("class").trim())) el.setAttribute("class", "kt-disclosure-chevron");
+	}
+	const ownerDoc = clone.ownerDocument;
+	for (const node of Array.from(clone.querySelectorAll('dc-import[name="TenderGuidance"]'))) {
+		const raw = node.getAttribute("kind") || "none";
+		const kind = /^\{\{/.test(raw) ? guidance : raw;
+		if (!kind) throw new Error(`${id}: the TenderGuidance kind is a template expression; the variant must state it`);
+		const parts = [];
+		const journey = ownerDoc.createElement("div");
+		journey.setAttribute("data-kt", "journey");
+		parts.push(journey);
+		if (["turn", "waiting", "done"].includes(kind)) {
+			const step = ownerDoc.createElement("div");
+			step.setAttribute("data-kt", "next-step");
+			parts.push(step);
+		} else if (kind === "blocked") {
+			const step = ownerDoc.createElement("div");
+			step.setAttribute("class", "kt-notice is-warning");
+			step.setAttribute("data-kt", "next-step");
+			const icon = ownerDoc.createElement("span");
+			icon.setAttribute("class", "kt-notice-icon");
+			step.appendChild(icon);
+			parts.push(step);
+		}
+		node.replaceWith(...parts);
+	}
+	for (const note of clone.querySelectorAll(".sub, .cap")) note.remove();
+	return clone;
+}
+
+/** One Tenders variant's landmark skeleton (see `tendersScope`). */
+export function tendersSkeleton(relPath, id, options = {}) {
+	return skeletonOf(tendersScope(documentFor(relPath), id, options));
+}
+
+/**
  * The board's landmark skeleton for one variant.
  *
  * `scope` defaults to Planning's, which is the shape every later board export

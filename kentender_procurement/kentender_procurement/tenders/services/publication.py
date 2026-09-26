@@ -233,6 +233,17 @@ def withdraw_publication_authorisation(*, tender: str, reason: str, evidence: st
 # --------------------------------------------------------------------------
 
 
+def _authorisation_facts(root, version, snapshot: dict[str, Any], tendering_days) -> list[dict[str, str]]:
+	from kentender_procurement.tenders.services import read
+
+	by_label = {f["label"]: f for f in read.key_facts(root, version, snapshot, internal=True)}
+	facts = [{"label": "Purchase", "value": cstr(snapshot.get("requirement_title"))}]
+	facts += [by_label[label] for label in ("Requisition", "Quantity", "Approved value", "Method", "Submission deadline") if label in by_label]
+	facts.append({"label": "Tendering period", "value": f"{tendering_days} days" if tendering_days is not None else ""})
+	facts.append(by_label["Reservation"])
+	return facts
+
+
 def get_tender_publication(*, tender: str, user: str | None = None) -> dict[str, Any]:
 	from kentender_procurement.tenders.services import guidance, publication_read, read
 
@@ -259,7 +270,8 @@ def get_tender_publication(*, tender: str, user: str | None = None) -> dict[str,
 		"version": read.version_summary(version),
 		"approval_trail": {"prepared_by_name": read.version_summary(version)["prepared_by_name"], "approved_by_name": read.version_summary(version)["approved_by_name"], "approved_at_label": read.version_summary(version)["approved_at_label"], "version_number": int(version.version_number), "package_digest": cstr(version.package_digest)},
 		"review": review.summary(version),
-		"key_facts": read.key_facts(root, version, snapshot, internal=True) + [{"label": "Tendering period", "value": f"{tendering_days} days" if tendering_days is not None else ""}],
+		# TPR-DES-07 key facts: Purchase … Submission deadline, Tendering period, Reservation
+		"key_facts": _authorisation_facts(root, version, snapshot, tendering_days),
 		"documents": read.documents_for(root, version),
 		"sections": read.review_sections(root, version, snapshot, review.summary(version), internal=True),
 		"proposed_channels": [{"channel": c["channel"], "label": c["label"], "how": "HOPF confirmation with evidence", "result": "Not started"} for c in (rule or {}).get("channels", [])],

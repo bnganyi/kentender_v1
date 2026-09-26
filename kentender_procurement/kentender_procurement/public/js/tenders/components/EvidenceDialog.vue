@@ -24,7 +24,7 @@
 			</div>
 			<div class="kt-dialog-actions">
 				<button type="button" class="kt-btn kt-btn-secondary" @click="$emit('cancel')">Cancel</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="tnd-ev-confirm" @click="confirm">{{ row ? "Save evidence" : "Add evidence" }}</button>
+				<button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="tnd-ev-confirm" @click="confirm">{{ row ? "Save changes" : "Add evidence" }}</button>
 			</div>
 		</div>
 	</div>

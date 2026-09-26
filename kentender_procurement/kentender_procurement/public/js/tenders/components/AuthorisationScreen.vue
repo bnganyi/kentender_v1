@@ -24,7 +24,7 @@
 				<div class="tnd-fact"><div class="kt-label">Version</div><div class="tnd-fact-value">Version {{ trail.version_number }}</div></div>
 			</div>
 			<div style="padding-top: 20px"><FindingsNotices :review="pub.review || {}" :linkable="false" /></div>
-			<KpiFacts :facts="pub.key_facts || []" />
+			<KeyFacts :facts="pub.key_facts || []" />
 			<div class="tnd-section tnd-section--tight tnd-actions">
 				<button type="button" class="kt-btn kt-btn-secondary tnd-inline-btn" :disabled="pending" data-testid="tnd-view-invitation" @click="$emit('view-document', 'Invitation')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>View Invitation</button>
 				<button type="button" class="kt-btn kt-btn-secondary tnd-inline-btn" :disabled="pending" data-testid="tnd-view-complete" @click="$emit('view-document', 'Complete Tender')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>View complete Tender</button>
@@ -44,7 +44,7 @@
 				<div class="kt-disclosure" style="margin-top: 14px">
 					<div class="kt-disclosure-head" role="button" tabindex="0" @click="detailsOpen = !detailsOpen" @keydown.enter.prevent="detailsOpen = !detailsOpen"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Complete Tender details</span></div><svg class="kt-disclosure-chevron" :class="{ 'is-open': detailsOpen }" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div>
 					<div v-if="detailsOpen" class="kt-disclosure-body">
-						<ContentSections :sections="pub.sections || []" :findings="(pub.review || {}).findings || []" nested />
+						<ContentSections :sections="pub.sections || []" nested />
 					</div>
 				</div>
 			</div>
@@ -60,7 +60,7 @@ import { computed, ref } from "vue";
 import BlueprintCard from "./BlueprintCard.vue";
 import RecordHead from "./RecordHead.vue";
 import FindingsNotices from "./FindingsNotices.vue";
-import KpiFacts from "./KpiFacts.vue";
+import KeyFacts from "./KeyFacts.vue";
 import ContentSections from "./ContentSections.vue";
 
 const props = defineProps({

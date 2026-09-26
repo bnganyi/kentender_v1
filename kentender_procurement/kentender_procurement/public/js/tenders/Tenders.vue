@@ -31,8 +31,8 @@
 			<template v-else-if="kind === 'record'">
 				<ReleaseNotice v-if="!loading && (record.tender || {}).template_notice" :notice="record.tender.template_notice" @navigate="onNavigate" />
 				<div v-if="loading" class="tnd-page"><div class="kt-card kt-blueprint" style="padding: 0; overflow: hidden" data-testid="tnd-record-loading"><div v-for="row in 3" :key="row" class="tnd-skel-row"><div class="kt-skel" style="width: 72%"></div><div class="kt-skel" style="width: 52%"></div><div class="kt-skel" style="width: 44%"></div></div></div></div>
-				<EditorScreen v-else-if="screen === 'details' || screen === 'requirements'" ref="editorRef" :record="record" :task="screen" :field-errors="fieldErrors" :error="error" :pending="pending" @go-task="goTask" @open-drawer="drawer = $event === true ? 'full' : 'context'" @add-evidence="evidenceDialog = { row: null }" @edit-evidence="evidenceDialog = { row: $event }" @remove-evidence="onRemoveEvidence" @save="onSaveDraft(false)" @continue="onSaveDraft(true)" @back="onEditorBack" @request-correction="correctionDialog = true" />
-				<ReviewScreen v-else-if="screen === 'review'" :record="record" :review="review" :pending="pending" @back="goTask('requirements')" @submit="submitDialog = true" @preview="onPreview" @go-finding="onGoFinding" />
+				<EditorScreen v-else-if="screen === 'details' || screen === 'requirements'" ref="editorRef" :record="record" :task="screen" :field-errors="fieldErrors" :error="error" :pending="pending" @open-drawer="drawer = 'context'" @add-evidence="evidenceDialog = { row: null }" @edit-evidence="evidenceDialog = { row: $event }" @remove-evidence="removeEvidenceDialog = $event" @save="onSaveDraft(false)" @continue="onSaveDraft(true)" @back="onEditorBack" @request-correction="correctionDialog = true" @fix="onFix" />
+				<ReviewScreen v-else-if="screen === 'review'" :record="record" :review="review" :pending="pending" @back="goTask('requirements')" @submit="submitDialog = true" @preview="onPreview" @go-finding="onGoFinding" @fix="onFix" />
 				<ApprovalScreen v-else-if="screen === 'approval'" :record="record" :review="review" :pending="pending" @back="go()" @return="returnDialog = true" @approve="approveDialog = true" @preview="onPreview" @request-correction="correctionDialog = true" />
 				<AuthorisationScreen v-else-if="screen === 'authorisation'" :pub="pub" :requisition-reference="record.tender.requisition_reference" :pending="pending" @authorise="authoriseDialog = true" @view-document="onViewDocument" />
 				<PublicationScreen v-else-if="screen === 'publication'" :pub="pub" :invalid-evidence="invalidEvidence" :conflict="conflictRow" :withdrawn="withdrawnText" :pending="pending" @confirm-channel="channelDialog = { row: $event, subject: 'publication' }" @view-confirmation="confirmationView = $event" @view-document="onViewDocument" @withdraw="withdrawDialog = true" />
@@ -63,9 +63,10 @@
 			</template>
 
 			<!-- dialogs (in-Vue only, §6.3) -->
-			<RequisitionDrawer v-if="drawer" :inherited="record.inherited || {}" :template-label="templateLabel" :opening-label="openingLabel" :full="drawer === 'full'" @close="drawer = ''" />
+			<RequisitionDrawer v-if="drawer" :inherited="record.inherited || {}" :template-label="templateLabel" :opening-label="openingLabel" @close="drawer = ''" />
 			<EvidenceDialog v-if="evidenceDialog" :row="evidenceDialog.row" :inherited="record.inherited || {}" :pending="pending" :error="dialogError" :server-errors="fieldErrors" @confirm="onEvidenceConfirm" @cancel="closeDialogs" />
-			<ConfirmDialog v-if="submitDialog" testid="tnd-submit-dialog" title="Submit this Tender for approval?" note="The submitted Version will be locked. The Head of Procurement Function can return it or approve the package for publication review." confirm-label="Submit for approval" :pending="pending" :error="dialogError" @confirm="onSubmitForApproval" @cancel="closeDialogs" />
+			<ConfirmDialog v-if="submitDialog" testid="tnd-submit-dialog" title="Submit this Tender for approval?" :note="review.submit_note || 'The submitted Version will be locked. The Head of Procurement Function can return it or approve the package for publication review.'" confirm-label="Submit for approval" :pending="pending" :error="dialogError" @confirm="onSubmitForApproval" @cancel="closeDialogs" />
+			<ConfirmDialog v-if="removeEvidenceDialog" testid="tnd-remove-evidence-dialog" title="Remove this evidence?" :facts="[{ label: 'Evidence', value: removeEvidenceDialog.label }, { label: 'Linked requirement', value: removeEvidenceDialog.proves }]" confirm-label="Remove evidence" danger :pending="pending" :error="dialogError" @confirm="onRemoveEvidence(removeEvidenceDialog)" @cancel="closeDialogs" />
 			<ReasonDialog v-if="returnDialog" testid="tnd-return-dialog" title="Return this Tender for correction?" reason-label="Correction required" placeholder="20–2,000 characters" after-label="Affected task" :options="affectedTaskOptions" :initial-choice="affectedTaskOptions[1]" note="The submitted Version will remain in history and a copied Draft will be created." confirm-label="Return for correction" :pending="pending" :error="dialogError" @confirm="onReturnForCorrection" @cancel="closeDialogs" />
 			<ConfirmDialog v-if="approveDialog" testid="tnd-approve-dialog" title="Approve this Tender package?" :facts="approveFacts" note="The Accounting Officer must separately authorise publication. Suppliers cannot see this Tender yet." confirm-label="Approve Tender package" :pending="pending" :error="dialogError" @confirm="onApprove" @cancel="closeDialogs" />
 			<ReasonDialog v-if="reopenDialog" testid="tnd-reopen-dialog" title="Reopen this approved Tender for correction?" reason-label="Reason" note="The approved Version stays in history and a copied Draft is created. Publication has not started." confirm-label="Reopen for correction" :pending="pending" :error="dialogError" @confirm="onReopen" @cancel="closeDialogs" />
@@ -144,6 +145,7 @@ const historyData = ref({ tender: {} });
 const editorRef = ref(null);
 const drawer = ref("");
 const evidenceDialog = ref(null);
+const removeEvidenceDialog = ref(null);
 const submitDialog = ref(false);
 const returnDialog = ref(false);
 const approveDialog = ref(false);
@@ -218,7 +220,7 @@ const state = computed(() => {
 	if (kind.value === "record" && pub.value && pub.value.rule_error === "TND_PUBLICATION_RULE_UNAVAILABLE" && record.value.screen === "authorisation") return { kind: "rule-unavailable" };
 	return null;
 });
-const dialogOpen = computed(() => !!(evidenceDialog.value || submitDialog.value || returnDialog.value || approveDialog.value || reopenDialog.value || correctionDialog.value || authoriseDialog.value || channelDialog.value || withdrawDialog.value || issueDialog.value || addendumReturnDialog.value || recommendDialog.value || cancelDialog.value || obligationDialog.value));
+const dialogOpen = computed(() => !!(evidenceDialog.value || removeEvidenceDialog.value || submitDialog.value || returnDialog.value || approveDialog.value || reopenDialog.value || correctionDialog.value || authoriseDialog.value || channelDialog.value || withdrawDialog.value || issueDialog.value || addendumReturnDialog.value || recommendDialog.value || cancelDialog.value || obligationDialog.value));
 
 function go(...parts) {
 	frappe.set_route(PAGE, ...parts.filter(Boolean));
@@ -374,6 +376,7 @@ async function run(fn, opts) {
 }
 function closeDialogs() {
 	evidenceDialog.value = null;
+	removeEvidenceDialog.value = null;
 	submitDialog.value = returnDialog.value = approveDialog.value = reopenDialog.value = correctionDialog.value = authoriseDialog.value = withdrawDialog.value = issueDialog.value = addendumReturnDialog.value = false;
 	channelDialog.value = recommendDialog.value = cancelDialog.value = obligationDialog.value = null;
 	dialogError.value = "";
@@ -420,11 +423,12 @@ async function onEvidenceConfirm(values) {
 	if (result) evidenceDialog.value = null;
 }
 async function onRemoveEvidence(row) {
-	await run(async () => {
+	const result = await run(async () => {
 		const r = await api.removeTenderEvidenceRequirement({ tender: tenderRef.value, evidence_requirement_id: row.evidence_requirement_id, expected_record_version: rv(), idempotency_key: api.newIdempotencyKey("remove-evidence") });
 		await load({ quiet: true });
 		return r;
-	});
+	}, { dialog: true });
+	if (result) closeDialogs();
 }
 async function onSubmitForApproval() {
 	const result = await run(() => api.submitTenderForApproval({ tender: tenderRef.value, expected_record_version: rv(), idempotency_key: api.newIdempotencyKey("submit") }), { dialog: true });
@@ -583,8 +587,34 @@ async function onViewDigest(doc, audience) {
 }
 function onGoFinding(f) {
 	const task = f.task === "details" ? "details" : f.task === "requirements" ? "requirements" : "review";
+	focusAfterLoad.value = f.field || "";
 	goTask(task);
 }
+
+// ---------------------------------------------------------------- guidance fixes
+// Each fix the server's next step offers (TPR-CHG-001 v0.12 §5.10 / §10.17)
+// maps to the one control that performs it; the wording and the choice of fix
+// are the server's.
+const focusAfterLoad = ref("");
+function onFix(fix) {
+	const id = (fix && fix.fix_id) || "";
+	const target = (fix && fix.target) || {};
+	if (id.startsWith("finding:") || (target && target.task)) {
+		onGoFinding({ task: target.task, field: target.field });
+		return;
+	}
+	if (id === "submit_for_approval") submitDialog.value = true;
+}
+watch([loading, refreshing], ([isLoading, isRefreshing]) => {
+	if (isLoading || isRefreshing || !focusAfterLoad.value) return;
+	const field = focusAfterLoad.value;
+	focusAfterLoad.value = "";
+	setTimeout(() => {
+		// a text control carries the field's id; a Yes/No choice row names its field
+		const el = document.getElementById(`tnd-${field}`) || document.querySelector(`[data-field="${field}"] input`);
+		if (el) el.focus();
+	}, 0);
+});
 async function onPrepareAddendum() {
 	const result = await run(() => api.createAddendumDraft({ tender: tenderRef.value, expected_record_version: rv(), idempotency_key: api.newIdempotencyKey("addendum") }));
 	if (!result) return;
