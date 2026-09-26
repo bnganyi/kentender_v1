@@ -100,6 +100,9 @@ FIXTURE_EMAIL_DOMAINS: tuple[str, ...] = (
 	"@example.net",
 )
 
+# The canonical budget is found by content (`kentender_mvp_v1_portfolio.
+# canonical_budget`): its references are the generated ones (Project Owner
+# decision, 26 Sep 2026), which a rebuilt world numbers MOH-BUD-2027-001 again.
 CANONICAL_BUDGET_CODES = ("MOH-BUD-2027-001",)
 
 _LEGACY_DEMO_DOCTYPES = ("Procurement Handoff Card", "Procurement Journey")
@@ -251,11 +254,11 @@ def collect_non_canonical() -> dict[str, list[str]]:
 	# version that is not Active, and any reservation — §15.4A's reservation
 	# exists only once a Procurement Requisition module creates it.
 	if frappe.db.exists("DocType", "Procurement Budget"):
-		add(
-			"Procurement Budget",
-			frappe.get_all("Procurement Budget", filters={"generated_reference": ["not in", CANONICAL_BUDGET_CODES]}, pluck="name"),
-		)
-		canonical = frappe.get_all("Procurement Budget", filters={"generated_reference": ["in", CANONICAL_BUDGET_CODES]}, pluck="name")
+		from kentender_budget.seeds.kentender_mvp_v1_portfolio import canonical_budget
+
+		kept = canonical_budget()
+		add("Procurement Budget", [name for name in frappe.get_all("Procurement Budget", pluck="name") if name != kept])
+		canonical = [kept] if kept else []
 		if canonical:
 			add(
 				"Procurement Budget Version",
@@ -724,11 +727,23 @@ def validate(*, through: str = STAGES[-1]) -> dict[str, Any]:
 	]
 	check(not strays, f"no fixture-domain users outside the register, found {strays}")
 	check(site_setup.unit_tree_intact(), "every Organisation Unit sits inside its parent's tree range")
-	for local, role, _unit, _kwargs in site_setup.ASSIGNMENTS:
-		check(
-			bool(frappe.db.exists("User Responsibility Assignment", {"user": f"{local}@moh.example.test", "business_role": role})),
-			f"assignment {local}: {role}",
+	for local, role, unit_name, kwargs in site_setup.ASSIGNMENTS:
+		rows = frappe.get_all(
+			"User Responsibility Assignment",
+			filters={"user": f"{local}@moh.example.test", "business_role": role, "fixture_namespace": site_setup.FIXTURE_TAG},
+			fields=["organisation_unit", "effective_from", "effective_to"],
 		)
+		unit = frappe.db.get_value("Organisation Unit", {"unit_name": unit_name}, "name") if unit_name else None
+		terms = [
+			(str(row.effective_from or "")[:19], str(row.effective_to or "")[:19])
+			for row in rows
+			if (row.organisation_unit or None) == unit
+		]
+		# The dates the seed asks for, not merely a row (since v1.11): an
+		# existing assignment is returned as it is, so a changed term only
+		# lands on a wiped site.
+		expected = (str(kwargs.get("effective_from") or "")[:19], str(kwargs.get("effective_to") or "")[:19])
+		check(expected in terms, f"assignment {local}: {role}{' in ' + unit_name if unit_name else ''} from {expected[0] or 'no start'} to {expected[1] or 'no end'} (found {terms}); a changed term needs WIPE=True")
 	# Every unit-scoped role a seeded assignment names must have someone
 	# holding it *now*, not merely a row somewhere. The check above only
 	# asks whether the seed wrote what it said it would; it passed happily
@@ -764,24 +779,13 @@ def validate(*, through: str = STAGES[-1]) -> dict[str, Any]:
 			check(row["ok"], f"strategy: {row['check']}")
 
 	if last >= STAGES.index("budget"):
-		budgets = frappe.get_all("Procurement Budget", fields=["name", "generated_reference", "fiscal_year"])
-		check([b.generated_reference for b in budgets] == list(CANONICAL_BUDGET_CODES), f"only {CANONICAL_BUDGET_CODES}, found {[b.generated_reference for b in budgets]}")
+		from kentender_budget.seeds.kentender_mvp_v1_portfolio import canonical_budget
+
+		budgets = frappe.get_all("Procurement Budget", fields=["name", "generated_reference"])
+		check([b.name for b in budgets] == [canonical_budget()], f"the canonical budget is the only one, found {[b.generated_reference for b in budgets]}")
 		if budgets:
-			budget = budgets[0]
-			check(budget.fiscal_year == "2027-2028", f"budget fiscal year {budget.fiscal_year}")
-			versions = frappe.get_all("Procurement Budget Version", filters={"budget": budget.name}, fields=["generated_reference", "status"])
-			check([(v.generated_reference, v.status) for v in versions] == [("MOH-BUD-2027-001-V1", "Active")], f"one Active V1, found {[(v.generated_reference, v.status) for v in versions]}")
-			lines = {
-				frappe.db.get_value("Procurement Budget Line", lv.budget_line, "generated_reference"): (lv.title, lv.approved_amount, lv.owner_org_unit)
-				for lv in frappe.get_all(
-					"Procurement Budget Line Version",
-					filters={"budget_version": ["in", [v.name for v in frappe.get_all("Procurement Budget Version", filters={"budget": budget.name}, fields=["name"])]]},
-					fields=["budget_line", "title", "approved_amount", "owner_org_unit"],
-				)
-			}
-			check(lines.get("MOH-BL-DHI-2027", ("", 0, ""))[1] == 100_000_000, "MOH-BL-DHI-2027 approved 100,000,000")
-			check(lines.get("MOH-BL-HWD-2027", ("", 0, ""))[1] == 60_000_000, "MOH-BL-HWD-2027 approved 60,000,000")
-			check(not lines.get("MOH-BL-HWD-2027", ("", 0, "x"))[2], "MOH-BL-HWD-2027 is Entity-wide (SEED-001 §3.5)")
+			# The version, lines, references and history are the module's
+			# own checks (`validate_budget_seed`, below).
 			# §15.4: reservation begins at Requisition. REQ-CHG-001 v1.6 is the
 			# first live caller and is not yet a canonical stage, so a reservation
 			# stamped REQUISITIONS_NS is expected canonical evidence, not a stray;
@@ -924,6 +928,9 @@ def run(
 	# `make seed-canonical` drain the queue afterwards.
 	max_jobs_before = frappe.conf.get("max_queued_jobs")
 	frappe.conf.max_queued_jobs = 1_000_000
+	# The run is allowed (`_assert_allowed` above), so the register's actors
+	# get the fixture password even without developer_mode (site_setup).
+	frappe.flags.kt_fixture_passwords = True
 	try:
 		# A loaded Requisitions demo profile (REQ-CHG-001 v1.11 §16.4A) holds
 		# Budget reservations and Planning requests on the canonical item; undo
@@ -993,3 +1000,4 @@ def run(
 	finally:
 		frappe.flags.in_test = in_test_before
 		frappe.conf.max_queued_jobs = max_jobs_before
+		frappe.flags.kt_fixture_passwords = False

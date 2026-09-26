@@ -203,8 +203,11 @@ ASSIGNMENTS = (
 	("mercy.kilonzo", "Procurement Planner", None, {}),
 	# STR-CHG-001 v1.7 §14.1 / KT-STD-001 §8.3 (2026-09-05) — Strategy's own
 	# named actors now exist; supersedes CU-307's Mercy stand-in.
-	("esther.muthoni", "Strategy Author", None, {}),
-	("alfred.ochieng", "Strategy Approver", None, {}),
+	# STR-CHG-001 v1.8 §14.1: the 1 Jul 2023 baseline needs explicit dated
+	# authority. Project Owner decision, 26 Sep 2026: backdate it — both
+	# assignments start on 1 Jul 2023 (they had no start before).
+	("esther.muthoni", "Strategy Author", None, {"effective_from": "2023-07-01 00:00:00"}),
+	("alfred.ochieng", "Strategy Approver", None, {"effective_from": "2023-07-01 00:00:00"}),
 	# NDS-CHG-001 v1.6 §14.2 (2026-09-04) — Site-wide Auditor, read-only.
 	("naomi.chebet", "Auditor", None, {}),
 	# BUD-CHG-001 v1.6 §15.1 — Josphat holds Budget Officer and, separately,
@@ -1462,10 +1465,13 @@ def _seed_users() -> list[str]:
 			)
 			doc.insert(ignore_permissions=True)
 			doc.add_roles("Desk User")
-		if frappe.conf.get("developer_mode"):
-			# Development sites only: the register's actors log in with the
-			# shared fixture password so browser journeys can be driven; a
-			# production site never receives a known password from a seed.
+		if frappe.conf.get("developer_mode") or frappe.flags.get("kt_fixture_passwords"):
+			# The register's actors log in with the shared fixture password so
+			# they can be used at all: on a development site, or whenever the
+			# canonical seed was allowed to run (developer_mode,
+			# allow_canonical_seed or force — `canonical.run` sets the flag).
+			# Until 26 Sep 2026 only developer_mode counted, so a new site
+			# seeded with force had actors nobody could log in as.
 			from frappe.utils.password import update_password
 
 			from kentender_core.seeds.constants import TEST_PASSWORD

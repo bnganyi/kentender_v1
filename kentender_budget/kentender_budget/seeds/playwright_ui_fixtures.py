@@ -141,7 +141,11 @@ def ensure_fixture_documents() -> list[str]:
 
 
 def _canonical_budget_name() -> str | None:
-	return frappe.db.get_value("Procurement Budget", {"generated_reference": CANONICAL_BUDGET}, "name")
+	# By content, not reference: the canonical references are generated
+	# (Project Owner decision, 26 Sep 2026).
+	from kentender_budget.seeds.kentender_mvp_v1_portfolio import canonical_budget
+
+	return canonical_budget() or None
 
 
 def _as(user: str):
@@ -198,17 +202,17 @@ def purge(*, commit: bool = True) -> dict[str, Any]:
 
 def _canonical_ids() -> dict[str, Any]:
 	budget = _canonical_budget_name()
-	v1 = frappe.db.get_value("Procurement Budget Version", {"generated_reference": CANONICAL_V1}, "name")
+	v1 = frappe.db.get_value("Procurement Budget Version", {"budget": budget, "version_number": 1}, "name") if budget else None
 	lines = {
 		r.title: {"id": r.budget_line, "code": frappe.db.get_value("Procurement Budget Line", r.budget_line, "generated_reference")}
 		for r in frappe.get_all("Procurement Budget Line Version", filters={"budget_version": v1}, fields=["budget_line", "title"])
 	}
 	return {
 		"budget": budget,
-		"budget_code": CANONICAL_BUDGET,
+		"budget_code": frappe.db.get_value("Procurement Budget", budget, "generated_reference") if budget else CANONICAL_BUDGET,
 		"fiscal_year": C.FY if hasattr(C, "FY") else "2027-2028",
 		"version": v1,
-		"version_code": CANONICAL_V1,
+		"version_code": frappe.db.get_value("Procurement Budget Version", v1, "generated_reference") if v1 else CANONICAL_V1,
 		"dhi_line": lines.get(DHI_TITLE, {}).get("id"),
 		"dhi_code": lines.get(DHI_TITLE, {}).get("code"),
 		"hwd_line": lines.get(HWD_TITLE, {}).get("id"),

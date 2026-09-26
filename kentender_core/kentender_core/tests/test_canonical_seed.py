@@ -185,6 +185,27 @@ class TestCanonicalSelection(IntegrationTestCase):
 		self.assertFalse(frappe.db.exists("File", orphan_file.name))
 
 
+class TestFixturePasswords(IntegrationTestCase):
+	def test_the_register_actors_can_log_in_after_a_seed_run_without_developer_mode(self):
+		"""Found 26 Sep 2026: on a new site without developer_mode the
+		canonical seed (run with force) created the actors with no password,
+		so nobody could log in until an administrator set one."""
+		from frappe.utils.password import check_password, update_password
+
+		from kentender_core.seeds.constants import TEST_PASSWORD
+
+		frappe.set_user("Administrator")
+		email = "esther.muthoni@moh.example.test"
+		developer_mode = frappe.conf.get("developer_mode")
+		self.addCleanup(update_password, email, TEST_PASSWORD)
+		self.addCleanup(setattr, frappe.conf, "developer_mode", developer_mode)
+		update_password(email, f"Not-the-fixture-{uuid4().hex[:8]}!")
+		frappe.conf.developer_mode = 0
+
+		canonical.run(through="site", reset=False, validate=False, force=True, commit=False)
+		self.assertEqual(check_password(email, TEST_PASSWORD), email)
+
+
 class TestCanonicalSeedRun(IntegrationTestCase):
 	"""Runs the real seed on the test site (the seed is idempotent and only
 	adds canonical rows; `reset=False` keeps this to the seed itself)."""
@@ -285,9 +306,9 @@ class TestCanonicalReservationNamespace(IntegrationTestCase):
 	def setUp(self):
 		frappe.set_user("Administrator")
 		canonical.run(through="budget", reset=False, validate=True, force=True, commit=False)
-		self.budget = frappe.db.get_value(
-			"Procurement Budget", {"generated_reference": ["in", canonical.CANONICAL_BUDGET_CODES]}, "name"
-		)
+		from kentender_budget.seeds.kentender_mvp_v1_portfolio import canonical_budget
+
+		self.budget = canonical_budget()
 		self.budget_version = frappe.db.get_value(
 			"Procurement Budget Version", {"budget": self.budget, "status": "Active"}, "name"
 		)

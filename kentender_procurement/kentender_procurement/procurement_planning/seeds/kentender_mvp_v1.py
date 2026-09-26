@@ -84,8 +84,6 @@ NEED = "NDS-MOH-2027-0001"
 # `departmental_needs.seeds.kentender_mvp_r1` before this seed runs.
 NEED_HRMD_LAPTOPS = "NDS-MOH-2027-0003"
 NEED_DHI_LAPTOPS = "NDS-MOH-2027-0004"
-BL_DHI = "MOH-BL-DHI-2027"
-BL_HWD = "MOH-BL-HWD-2027"
 OBJECTIVE_TITLE = "Strengthen interoperable national digital health services"
 DESTINATION_ID = "MOH-APP-SANDBOX-v1"
 
@@ -290,16 +288,6 @@ def _key(step: str) -> str:
 # --- §14.1/§14.3 prerequisite verification (fail loudly, invent nothing) ----
 
 
-def _budget_line(reference: str) -> str:
-	name = frappe.db.get_value("Procurement Budget Line", {"generated_reference": reference}, "name")
-	if not name:
-		return ""
-	for row in frappe.get_all("Procurement Budget Line Version", filters={"budget_line": name}, fields=["budget_version"]):
-		if frappe.db.get_value("Procurement Budget Version", row.budget_version, "status") == "Active":
-			return name
-	return ""
-
-
 def _objective() -> str:
 	return cstr(frappe.db.get_value("Strategy Node", {"title": OBJECTIVE_TITLE, "node_type": "Strategic Objective"}, "name"))
 
@@ -410,10 +398,14 @@ def verify_prerequisites() -> dict[str, str]:
 	from kentender_core.services.regulatory_reference import get_regulatory_reference
 
 	need(f"Regulatory Reference for {FY} (threshold matrix)", get_regulatory_reference(FY).get("available"))
-	bl_dhi = _budget_line(BL_DHI)
-	bl_hwd = _budget_line(BL_HWD)
-	need(f"Procurement Budget Line {BL_DHI} with an Active Budget Version", bl_dhi)
-	need(f"Procurement Budget Line {BL_HWD} with an Active Budget Version", bl_hwd)
+	# The canonical Budget's lines by role — their references are generated
+	# (Project Owner decision, 26 Sep 2026), so they are found by title.
+	from kentender_budget.seeds.kentender_mvp_v1_portfolio import LINES, canonical_budget_line
+
+	bl_dhi = canonical_budget_line("dhi")
+	bl_hwd = canonical_budget_line("hwd")
+	need(f"Budget line '{LINES['dhi']['title']}' with an Active Budget Version", bl_dhi)
+	need(f"Budget line '{LINES['hwd']['title']}' with an Active Budget Version", bl_hwd)
 	objective = _objective()
 	need(f"Active Strategic Objective '{OBJECTIVE_TITLE}'", objective)
 	from kentender_procurement.procurement_planning.services import needs_intake

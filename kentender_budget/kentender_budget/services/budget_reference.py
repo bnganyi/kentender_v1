@@ -58,6 +58,26 @@ def _sync_series(prefix: str, current_max: int) -> None:
 		)
 
 
+def reset_unused_series(fiscal_year: str) -> list[str]:
+	"""Canonical seed only: drop the never-reuse counter for the Budget and
+	Budget Line prefixes when no record uses them any more, so a rebuilt
+	canonical world numbers from 001/0001 again. A prefix still in use keeps
+	its counter — no number is ever reissued while its record exists (the
+	allocators above also sync the counter past any surviving row)."""
+	slug = site_slug()
+	start_year = frappe.db.get_value("Fiscal Year", fiscal_year, "year_start_date")
+	prefixes = (
+		("Procurement Budget", f"{slug}-BUD-{start_year.year if start_year else 0}-"),
+		("Procurement Budget Line", f"{slug}-BL-"),
+	)
+	reset = []
+	for doctype, prefix in prefixes:
+		if not _max_seq(doctype, "generated_reference", prefix) and _series_current(prefix) is not None:
+			frappe.db.sql("DELETE FROM `tabSeries` WHERE `name`=%s", (prefix,))
+			reset.append(prefix)
+	return reset
+
+
 def allocate_budget_reference(fiscal_year: str) -> str:
 	"""Allocate next never-reuse `{SITE}-BUD-{start_year}-###` for the FY
 	(matches the BUD-CHG-001 v1.3 §15.3 seed ID pattern, e.g. `MOH-BUD-2027-001`).

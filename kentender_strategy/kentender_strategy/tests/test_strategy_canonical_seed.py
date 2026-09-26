@@ -47,6 +47,16 @@ class TestCanonicalStrategySeed(IntegrationTestCase):
 		self.assertEqual(str(by_action["Approve"].timestamp)[:16], "2023-07-01 09:15")
 		self.assertEqual(by_action["Approve"].performed_by, seed.APPROVER)
 
+	def test_the_2023_actors_hold_dated_authority_from_1_july_2023(self):
+		"""STR-CHG-001 v1.8 §14.1: the 2023 baseline needs explicit dated
+		authority. Project Owner decision, 26 Sep 2026: backdate it — Esther's
+		and Alfred's assignments start on 1 Jul 2023 (they had no start)."""
+		for user, role in ((seed.AUTHOR, "Strategy Author"), (seed.APPROVER, "Strategy Approver")):
+			starts = frappe.get_all(
+				"User Responsibility Assignment", filters={"user": user, "business_role": role, "status": "Enabled"}, pluck="effective_from"
+			)
+			self.assertEqual([str(start)[:10] for start in starts], ["2023-07-01"], f"{user} {role}")
+
 	def test_the_validator_fails_closed_on_a_changed_plan(self):
 		plan, _version = _canonical()
 		title = frappe.db.get_value("Strategic Plan", plan, "title")

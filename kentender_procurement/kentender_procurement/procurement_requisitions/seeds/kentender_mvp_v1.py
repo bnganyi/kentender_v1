@@ -80,7 +80,6 @@ HRMD_NAME = "Human Resources Management and Development"
 
 SINGLE_ITEM_TITLE = "National digital health infrastructure upgrade"
 COMBINED_ITEM_TITLE = "Clinical training and deployment laptops for digital health rollout"
-BL_HWD = "MOH-BL-HWD-2027"
 DELIVERY_LOCATION = "Ministry of Health Headquarters, Afya House, Nairobi"
 
 # §16.4's exact fixture-4 timeline. Site datetimes are naive Africa/Nairobi
@@ -161,7 +160,9 @@ def verify_prerequisites() -> dict[str, str]:
 	need("Charles Mutiso holds Head of Procurement Function", frappe.db.exists("User Responsibility Assignment", {"user": HOPF, "business_role": "Head of Procurement Function", "status": "Enabled"}))
 	need("Naomi Chebet holds Auditor", frappe.db.exists("User Responsibility Assignment", {"user": AUDITOR, "business_role": "Auditor", "status": "Enabled"}))
 	need(f"Delivery Location '{DELIVERY_LOCATION}'", frappe.db.get_value("Delivery Location", DELIVERY_LOCATION, "status") == "Active")
-	need(f"Procurement Budget Line {BL_HWD}", frappe.db.exists("Procurement Budget Line", {"generated_reference": BL_HWD}))
+	from kentender_budget.seeds.kentender_mvp_v1_portfolio import LINES, canonical_budget_line
+
+	need(f"Budget line '{LINES['hwd']['title']}'", canonical_budget_line("hwd"))
 	single_item = _plan_item_id(SINGLE_ITEM_TITLE)
 	combined_item = _plan_item_id(COMBINED_ITEM_TITLE)
 	need(f"Active Plan Item '{SINGLE_ITEM_TITLE}' (run make seed-kentender-mvp-v1 through Planning first)", single_item)
