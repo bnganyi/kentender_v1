@@ -20,7 +20,8 @@ import PublicationScreen from "./PublicationScreen.vue";
 import PublishedScreen from "./PublishedScreen.vue";
 import ClarificationScreen from "./ClarificationScreen.vue";
 import AddendumScreen from "./AddendumScreen.vue";
-import { addendumData, approvalData, authorisationData, clarificationData, editorRecord, publicationData, publishedData, reviewData, reviewRecord } from "./fixtures.js";
+import CancelScreen from "./CancelScreen.vue";
+import { addendumData, cancelData, approvalData, authorisationData, clarificationData, editorRecord, publicationData, publishedData, reviewData, reviewRecord } from "./fixtures.js";
 
 const DESIGN = "docs/mvp-1-r1/11_tenders/design";
 
@@ -62,6 +63,16 @@ const SCREENS = [
 	].map(([v, kind, options]) => ({
 		name: "AddendumScreen", variant: `TPR-DES-10-${v}`, board: "Prepare and Issue Addendum.dc.html", label: "TPR-DES-10 Prepare and issue addendum",
 		options: { guidance: kind, ...options }, component: AddendumScreen, props: { data: addendumData(v), identity: `TDA-0001:${v}` },
+	})),
+	...[
+		["BASE", "turn", {}],
+		["RECOMMEND", "turn", { show: ["isRecommend"] }],
+		["REQUEST", "turn", { show: ["isRequest"], hide: ["isDecision", "isCancelFixture"] }],
+		["CANCELLED-HOLDER", "turn", { show: ["isCancelled"], hide: ["isDecision", "isOpenAny"] }],
+		["CANCELLED-READER", "done", { show: ["isCancelled"], hide: ["isDecision", "isOpenAny", "isHolder"] }],
+	].map(([v, kind, options]) => ({
+		name: "CancelScreen", variant: `TPR-DES-12-${v}`, board: "Cancel Tender.dc.html", label: "TPR-DES-12 Cancel Tender",
+		options: { guidance: kind, ...options }, component: CancelScreen, props: { data: cancelData(v) },
 	})),
 ];
 

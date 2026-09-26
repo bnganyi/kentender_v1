@@ -49,6 +49,11 @@ export const DEPARTURES = {
 	"AddendumScreen#TPR-DES-10-MATERIAL": [CORNERS],
 	"AddendumScreen#TPR-DES-10-MATERIAL-WAIT": [CORNERS],
 	"AddendumScreen#TPR-DES-10-MATERIAL-CLOSED": [CORNERS],
+	"CancelScreen#TPR-DES-12-BASE": [CORNERS],
+	"CancelScreen#TPR-DES-12-RECOMMEND": [CORNERS],
+	"CancelScreen#TPR-DES-12-REQUEST": [CORNERS],
+	"CancelScreen#TPR-DES-12-CANCELLED-HOLDER": [CORNERS],
+	"CancelScreen#TPR-DES-12-CANCELLED-READER": [CORNERS],
 };
 
 export const COVERED = Object.keys(DEPARTURES);

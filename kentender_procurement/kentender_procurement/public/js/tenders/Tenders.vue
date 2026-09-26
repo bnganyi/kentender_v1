@@ -37,7 +37,7 @@
 				<AuthorisationScreen v-else-if="screen === 'authorisation'" :pub="pub" :requisition-reference="record.tender.requisition_reference" :pending="pending" @authorise="authoriseDialog = true" @view-document="onViewDocument" @back="go()" />
 				<PublicationScreen v-else-if="screen === 'publication'" :pub="pub" :refusal="refusalAnswer" :conflict="conflictRow" :withdrawn="withdrawnText" :pending="pending" @confirm-channel="channelDialog = { row: $event, subject: 'publication' }" @view-confirmation="confirmationView = $event" @view-document="onViewDocument" @withdraw="withdrawDialog = true" @fix="onFix" />
 				<CorrectionRequestedScreen v-else-if="screen === 'correction'" :record="record" :pending="pending" @start-corrected="onStartCorrected" @view-requisition="onViewRequisition" @history="go(tenderRef, 'history')" />
-				<CancelScreen v-else-if="screen === 'cancelled'" :data="cancelData" :pending="pending" :error="dialogError" @back="go()" @record-evidence="obligationDialog = { row: $event }" />
+				<CancelScreen v-else-if="screen === 'cancelled'" :data="cancelData" :pending="pending" :error="dialogError" @back="go()" @record-evidence="obligationDialog = { row: $event }" @fix="onFix" />
 				<PublishedScreen v-else :record="record" :review="review" :pending="pending" @view-document="onViewDocument" @view-confirmation="confirmationView = $event" @open-addendum="go(tenderRef, 'addenda', $event)" @open-clarification="go(tenderRef, 'clarifications', $event)" @prepare-addendum="onPrepareAddendum" @cancel-screen="go(tenderRef, 'cancel')" @history="go(tenderRef, 'history')" @reopen="reopenDialog = true" @request-correction="correctionDialog = true" @publication="go(tenderRef, 'publication')" @fix="onFix" />
 			</template>
 
@@ -54,7 +54,7 @@
 
 			<template v-else-if="kind === 'cancel'">
 				<div v-if="loading" class="tnd-page"><div class="kt-card kt-blueprint" style="padding: 0; overflow: hidden" data-testid="tnd-record-loading"><div v-for="row in 3" :key="row" class="tnd-skel-row"><div class="kt-skel" style="width: 72%"></div></div></div></div>
-				<CancelScreen v-else :data="cancelData" :pending="pending" :error="error" @back="go(tenderRef)" @recommend="recommendDialog = $event" @cancel="cancelDialog = $event" @record-evidence="obligationDialog = { row: $event }" />
+				<CancelScreen v-else :data="cancelData" :pending="pending" :error="error" :focus-decision="cancelFocus" @back="go(tenderRef)" @recommend="recommendDialog = $event" @cancel="cancelDialog = $event" @record-evidence="obligationDialog = { row: $event }" @close-review="reviewCloseDialog = { addendum: $event }" @fix="onFix" />
 			</template>
 
 			<template v-else-if="kind === 'history'">
@@ -636,6 +636,13 @@ function onFix(fix) {
 	}
 	if (id === "close_cancellation_review") {
 		reviewCloseDialog.value = { addendum: (target && target.addendum) || subId.value };
+		return;
+	}
+	if (id === "record_cancellation_notice_evidence" || id === "record_ppra_report_evidence") {
+		const row = (cancelData.value.compliance || []).find((r) => r.action === id);
+		const obligation = row && (((cancelData.value.cancellation || {}).obligations) || []).find((o) => o.obligation_id === row.obligation_id);
+		if (obligation) obligationDialog.value = { row: obligation };
+		else go(tenderRef.value, "cancel");
 		return;
 	}
 	if (id === "cancel_tender") {

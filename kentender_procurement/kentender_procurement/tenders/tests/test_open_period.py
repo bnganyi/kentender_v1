@@ -134,6 +134,9 @@ class TestAddenda(OpenPeriodCase):
 		again = addenda.request_tender_cancellation_review(tender=self.name, addendum=name, reason=reason, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		self.assertEqual((again["action"], again["task"]), ("already_requested", requested["task"]))
 		self.assertEqual(frappe.db.count("Tender Task", {"tender": self.name, "task_type": "AO cancellation review"}), 1)
+		# §10.13 TPR-DES-12-REQUEST: the AO reads who asked and the proposed change, and may close the review
+		ao_screen = open_period_read.get_tender_cancellation(tender=self.name, user=fx.AO)
+		self.assertEqual((ao_screen["review"]["requested_by_role"], ao_screen["review"]["proposed"], ao_screen["allowed_actions"]), ("Procurement Officer", "300 Each", ["cancel_tender", "close_cancellation_review"]))
 		with self.assertRaises(TendersError):  # no edit or discard while the AO considers it
 			addenda.discard_addendum_draft(tender=self.name, addendum=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
 		from kentender_procurement.tenders.services import my_work_provider
@@ -401,6 +404,9 @@ class TestCancellationAndClose(OpenPeriodCase):
 		statuses = {o["obligation_id"]: o["status"] for o in screen["cancellation"]["obligations"]}
 		self.assertEqual((statuses["PPRA_REPORT"], statuses["NOTICE-NOTICE_BOARD"], statuses["CANDIDATE_NOTICE"], statuses["NOTICE-STATE_PORTAL"]), ("Recorded", "Recorded", "Recorded", "Overdue"))
 		self.assertEqual(screen["cancellation"]["ppra_report_status"], "Recorded")
+		# §10.13 Cancelled detail: the notice channels grouped as one obligation
+		self.assertEqual([(r["label"], r["status"]) for r in screen["compliance"]], [("Cancellation notices", "Overdue"), ("Candidate notices", "Recorded"), ("PPRA report", "Recorded")])
+		self.assertEqual(screen["compliance"][0]["detail"], "2 of 4 recorded")
 		self.assertEqual(frappe.db.get_value("Tender", self.name, "overall_status"), "Cancelled")
 
 	def test_the_submission_period_closes_by_the_system_with_one_immutable_handoff(self):

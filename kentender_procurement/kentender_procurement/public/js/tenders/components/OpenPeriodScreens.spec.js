@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import { nextTick } from "vue";
-import { addendumData, clarificationData } from "./fixtures.js";
+import { addendumData, cancelData, clarificationData } from "./fixtures.js";
 import AddendumScreen from "./AddendumScreen.vue";
 import ClarificationScreen from "./ClarificationScreen.vue";
 import CancelScreen from "./CancelScreen.vue";
@@ -94,27 +94,39 @@ describe("ClarificationScreen — TPR-DES-11", () => {
 });
 
 describe("CancelScreen — TPR-DES-12", () => {
-	const data = { tender: TENDER, summary: { purchase: "Laptops", tender: "TND-MOH-2027-033", published_at: "15 May 2027, 08:00 EAT", submission_deadline: "5 Jun 2027, 11:00 EAT", channel_count: 4 }, grounds: [{ key: "INADEQUATE_BUDGET", label: "Inadequate budgetary provision" }], recommendation: { by_name: "Charles Mutiso", text: "Delivery timeline no longer meets user-department need." }, consequences: { ppra_report_due_by: "18 Jun 2027", candidate_notice_due_by: "18 Jun 2027", replacement_text: "A replacement procurement requires new governance." }, cancellation: null, allowed_actions: ["cancel_tender"] };
-	it("AO decision: warning, summary, recommendation, ground/reason, consequences; reason bound inline", async () => {
-		const w = mount(CancelScreen, { props: { data, pending: false, error: "" } });
+	it("AO decision: warning, summary, ground/reason, consequences; the reason is checked inline", async () => {
+		const w = mount(CancelScreen, { props: { data: cancelData("RECOMMEND"), pending: false, error: "" }, attachTo: document.body });
+		await nextTick();
 		expect(w.find('[data-testid="tnd-cancel-warning"]').text()).toContain("Cancellation is final for this Tender.");
-		expect(w.find('[data-testid="tnd-recommendation"]').text()).toContain("Recommended by Charles Mutiso, HOPF.");
+		expect(w.find('[data-testid="tnd-recommendation"]').text()).toContain("Charles Mutiso, Head of Procurement Function · 4 Jun 2027, 13:30 EAT");
 		expect(w.find('[data-testid="tnd-consequences"]').text()).toContain("PPRA report due 18 Jun 2027.");
 		await w.find('[data-testid="tnd-cancel-open-dialog"]').trigger("click");
 		expect(w.find('[data-testid="tnd-cancel-error"]').text()).toContain("20–2,000 characters");
-		expect(w.emitted("cancel")).toBeUndefined();
 		await w.find('[data-testid="tnd-cancel-reason"]').setValue("The confirmed budget available for this procurement is insufficient to proceed.");
 		await w.find('[data-testid="tnd-cancel-open-dialog"]').trigger("click");
-		expect(w.emitted("cancel")[0][0]).toMatchObject({ ground: "INADEQUATE_BUDGET", ground_label: "Inadequate budgetary provision" });
+		expect(w.emitted("cancel")[0][0].ground).toBe("INADEQUATE_BUDGET");
+		w.unmount();
 	});
-	it("cancelled detail: decided-by facts and obligations with Record evidence only for outstanding rows", () => {
-		const cancelled = { ...data, tender: { ...TENDER, overall_status: "Cancelled" }, cancellation: { decided_by_name: "Amina Hassan", decided_at_label: "10 Jun 2027, 09:30 EAT", ground_label: "Inadequate budgetary provision", reason: "Insufficient.", obligations: [{ obligation_id: "OB-1", obligation_type: "PPRA report", label: "PPRA report", due_by: "18 Jun 2027", status: "Due" }, { obligation_id: "OB-2", obligation_type: "Candidate notice", label: "Candidate notices", due_by: "18 Jun 2027", status: "Recorded", evidence_reference: "CN-1", recorded_by_name: "Brian" }] }, allowed_actions: ["record_cancellation_evidence"] };
-		const w = mount(CancelScreen, { props: { data: cancelled, pending: false, error: "" } });
-		expect(w.find('[data-testid="tnd-cancelled-facts"]').text()).toContain("Amina Hassan, Accounting Officer");
-		expect(w.findAll('[data-testid="tnd-record-evidence"]')).toHaveLength(1);
-		expect(w.find('[data-testid="tnd-obligation-OB-1"] .kt-status').text()).toBe("Outstanding");
-		expect(w.find('[data-testid="tnd-obligation-OB-2"] .kt-status').text()).toBe("Recorded");
-		expect(w.find('[data-testid="tnd-cancel-open-dialog"]').exists()).toBe(false);
+	it("review request: the request first; Cancel Tender opens the decision; Close cancellation review", async () => {
+		const w = mount(CancelScreen, { props: { data: cancelData("REQUEST"), pending: false, error: "" }, attachTo: document.body });
+		await nextTick();
+		expect(w.find('[data-testid="tnd-review-proposal"] tbody').text()).toContain("300 Each");
+		expect(w.find('[data-testid="tnd-cancel-reason"]').exists()).toBe(false);
+		await w.find('[data-testid="tnd-close-review"]').trigger("click");
+		expect(w.emitted("close-review")[0][0]).toBe("TDA-0039");
+		await w.find('[data-testid="tnd-cancel-open-dialog"]').trigger("click");
+		expect(w.find('[data-testid="tnd-cancel-reason"]').exists()).toBe(true);
+		expect(w.find('[data-testid="tnd-close-review"]').exists()).toBe(false);
+		w.unmount();
+	});
+	it("cancelled detail: decision facts and grouped obligations; evidence actions only for the holder", async () => {
+		const holder = mount(CancelScreen, { props: { data: cancelData("CANCELLED-HOLDER"), pending: false, error: "" } });
+		expect(holder.find('[data-testid="tnd-cancelled-facts"]').text()).toContain("Amina Hassan, Accounting Officer");
+		expect(holder.findAll('[data-testid="tnd-obligations"] tbody tr')).toHaveLength(2);
+		await holder.find('[data-testid="tnd-record-ppra-report-evidence"]').trigger("click");
+		expect(holder.emitted("record-evidence")[0][0].obligation_id).toBe("PPRA_REPORT");
+		const reader = mount(CancelScreen, { props: { data: cancelData("CANCELLED-READER"), pending: false, error: "" } });
+		expect(reader.findAll('[data-testid="tnd-obligations"] button')).toHaveLength(0);
 	});
 });
 

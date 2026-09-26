@@ -160,6 +160,59 @@ def get_tender_clarification(*, tender: str, clarification: str, user: str | Non
 	}
 
 
+def _open_review(root) -> dict[str, Any] | None:
+	"""§10.13 TPR-DES-12-REQUEST — the open cancellation-review request: who
+	asked and the proposed change no addendum may make (no request time or
+	ground is invented)."""
+	from kentender_procurement.tenders.services import handoffs
+
+	task = frappe.db.get_value("Tender Task", {"tender": root.name, "task_type": handoffs.CANCELLATION_REVIEW, "status": "Open"}, ["subject_id", "sender"], as_dict=True)
+	if not task:
+		return None
+	doc = frappe.db.get_value("Tender Addendum", task.subject_id, ["name", "addendum_reference", "affected_reference_key", "revised_value", "reason", "cancellation_review_reason"], as_dict=True)
+	if not doc:
+		return None
+	reference = {r["key"]: r for r in addenda.affected_references(root)}.get(cstr(doc.affected_reference_key)) or {}
+	# the responsibility the requester acted under, as recorded with the request
+	role = cstr(frappe.db.get_value("Tender Decision", {"tender": root.name, "decision": "Request cancellation review", "subject_id": doc.name}, "business_role", order_by="decided_at desc")) or "Procurement Officer"
+	return {
+		"addendum": doc.name, "addendum_reference": cstr(doc.addendum_reference), "requested_by_name": read._full_name(task.sender), "requested_by_role": role,
+		"field": cstr(reference.get("label") or doc.affected_reference_key), "current": cstr(reference.get("value")), "proposed": cstr(doc.revised_value), "reason": cstr(doc.reason),
+		"request_reason": cstr(doc.cancellation_review_reason),
+	}
+
+
+def _compliance_rows(cancellation_summary: dict[str, Any]) -> list[dict[str, Any]]:
+	"""§10.13 Cancelled detail — the notice channels as one "Cancellation
+	notices" obligation (with its count), the candidate notices and the PPRA
+	report; each row names its next outstanding obligation for its action."""
+	obligations = cancellation_summary.get("obligations") or []
+
+	def status_of(rows) -> str:
+		if rows and all(o["status"] == "Recorded" for o in rows):
+			return "Recorded"
+		return "Overdue" if any(o["status"] == "Overdue" for o in rows) else "Outstanding"
+
+	out = []
+	groups = (
+		("Cancellation notices", [o for o in obligations if o["obligation_type"] == "Notice channel"], "record_cancellation_notice_evidence", "Record cancellation notice evidence"),
+		("Candidate notices", [o for o in obligations if o["obligation_type"] == "Candidate notice"], "", ""),
+		("PPRA report", [o for o in obligations if o["obligation_type"] == "PPRA report"], "record_ppra_report_evidence", "Record PPRA report evidence"),
+	)
+	for label, rows, action, action_label in groups:
+		if not rows:
+			continue
+		status = status_of(rows)
+		outstanding = next((o for o in rows if o["status"] != "Recorded"), None)
+		recorded = sum(1 for o in rows if o["status"] == "Recorded")
+		out.append({
+			"key": action or "candidate_notices", "label": label, "due_by": rows[0]["due_by"], "status": status,
+			"detail": f"{recorded} of {len(rows)} recorded" if len(rows) > 1 else (rows[0]["evidence_reference"] or ""),
+			"action": action if outstanding and action else "", "action_label": action_label, "obligation_id": outstanding["obligation_id"] if outstanding else "",
+		})
+	return out
+
+
 def get_tender_cancellation(*, tender: str, user: str | None = None) -> dict[str, Any]:
 	actor, root, roles = _load(tender, user)
 	version = frappe.get_doc("Tender Version", root.approved_version or root.current_version)
@@ -180,16 +233,22 @@ def get_tender_cancellation(*, tender: str, user: str | None = None) -> dict[str
 
 	channels = json.loads(frappe.db.get_value("Tender Publication", root.publication, "required_channels_json") or "[]") if root.publication else []
 	preview = cancellation.preview_obligations(root) if root.overall_status == "Published — open" else []
+	review = _open_review(root)
+	actions = [a for a in read.allowed_actions(root, version, actor, roles) if a in ("cancel_tender", "recommend_cancellation", "record_cancellation_evidence")]
+	if review and roles["ao"] and not roles["technical"]:
+		actions.append("close_cancellation_review")
 	return {
 		"outcome": "OK", "roles": roles,
 		"tender": {"name": root.name, "tender_reference": root.tender_reference, "title": cstr(state.get("tender_title") or root.requirement_title), "overall_status": cstr(root.overall_status), "badge": read.badge_for(root, version, roles), "record_version": int(root.record_version or 0), "published_at_label": serializer.fmt_datetime_short(root.published_at) if root.published_at else "", "submission_deadline_label": serializer.fmt_datetime_short(root.submission_deadline) if root.submission_deadline else ""},
-		"summary": {"purchase": cstr(root.requirement_title), "tender": root.tender_reference, "published_at": serializer.fmt_datetime_short(root.published_at) if root.published_at else "", "submission_deadline": serializer.fmt_datetime_short(root.submission_deadline) if root.submission_deadline else "", "required_channels": ", ".join(c["label"] for c in channels), "channel_count": len(channels)},
+		"summary": {"purchase": cstr(state.get("tender_title") or root.requirement_title), "tender": root.tender_reference, "published_at": serializer.fmt_datetime_short(root.published_at) if root.published_at else "", "submission_deadline": serializer.fmt_datetime_short(root.submission_deadline) if root.submission_deadline else "", "required_channels": ", ".join(c["label"] for c in channels), "channel_count": len(channels)},
 		"grounds": cancellation.grounds_for_client(), "grounds_source": cancellation.GROUNDS_SOURCE,
 		"recommendation": recommendation,
 		"consequences": {"closes_immediately": True, "notice_channels": [c["label"] for c in channels], "ppra_report_due_by": next((serializer.fmt_date_short(o["due_by"]) for o in preview if o["obligation_type"] == "PPRA report"), ""), "candidate_notice_due_by": next((serializer.fmt_date_short(o["due_by"]) for o in preview if o["obligation_type"] == "Candidate notice"), ""), "replacement_text": "A replacement procurement requires new governance."},
 		"cancellation": existing,
 		"notice_channels": publication_read.confirmation_rows(subject_type="Cancellation notice", subject_id=root.cancellation) if root.cancellation else [],
-		"allowed_actions": [a for a in read.allowed_actions(root, version, actor, roles) if a in ("cancel_tender", "recommend_cancellation", "record_cancellation_evidence")],
+		"allowed_actions": actions,
+		"review": review,
+		"compliance": _compliance_rows(existing) if existing else [],
 		"warning_text": "Cancellation is final for this Tender. It does not restore the Requisition or create a replacement Tender.",
 		"guidance": _guidance(root, actor, roles, "cancellation"),
 	}

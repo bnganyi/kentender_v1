@@ -314,3 +314,38 @@ export function addendumData(variant = "DRAFT") {
 		guidance: guidance(g[0], g[1], g[2]),
 	};
 }
+
+/** TPR-DES-12 — `GetTenderCancellation`: "BASE" AO decision, "RECOMMEND", "REQUEST" review request, "CANCELLED-HOLDER", "CANCELLED-READER". */
+export function cancelData(variant = "BASE") {
+	const cancelled = variant.startsWith("CANCELLED");
+	const holder = variant === "CANCELLED-HOLDER";
+	const obligations = [
+		...["State Portal", "Ministry website", "Notice board", "Two national newspapers"].map((label, i) => ({ obligation_id: `NOTICE-C${i}`, obligation_type: "Notice channel", label: `Cancellation notice — ${label}`, due_by: "18 Jun 2027", status: "Due", evidence_reference: "" })),
+		{ obligation_id: "PPRA_REPORT", obligation_type: "PPRA report", label: "PPRA report", due_by: "18 Jun 2027", status: "Due", evidence_reference: "" },
+		{ obligation_id: "CANDIDATE_NOTICE", obligation_type: "Candidate notice", label: "Candidate notices", due_by: "18 Jun 2027", status: "Recorded", evidence_reference: "No Tender-bound candidates were registered when the Tender was cancelled." },
+	];
+	const g = {
+		BASE: ["D/D/D/D/C", "Amina Hassan", step("your_turn", "Decide whether to cancel this Tender for inadequate budgetary provision.")],
+		RECOMMEND: ["D/D/D/D/C", "Amina Hassan", step("your_turn", "Decide whether to cancel this Tender for inadequate budgetary provision.")],
+		REQUEST: ["D/D/D/D/C", "Amina Hassan", step("your_turn", "Consider the request to cancel TND-MOH-2027-039 because the proposed quantity increase cannot be issued by addendum.")],
+		"CANCELLED-HOLDER": ["D/D/D/D/C", "Brian Wafula", step("your_turn", "Record the outstanding cancellation notices and PPRA report by 18 Jun 2027.")],
+		"CANCELLED-READER": ["D/D/D/D/D", "", step("done", "Amina Hassan cancelled this Tender on 4 Jun 2027, 14:00 EAT.")],
+	}[variant];
+	return {
+		outcome: "OK",
+		tender: { name: "TDR-0034", tender_reference: variant === "REQUEST" ? "TND-MOH-2027-039" : "TND-MOH-2027-034", title: "Supply and delivery of district clinic printers", overall_status: cancelled ? "Cancelled" : "Published — open", badge: cancelled ? "Cancelled" : "Published — open", record_version: 9 },
+		summary: { purchase: "Supply and delivery of district clinic printers", tender: "TND-MOH-2027-034", published_at: "20 May 2027, 08:00 EAT", submission_deadline: "10 Jun 2027, 11:00 EAT", required_channels: "State Portal, Ministry website, Notice board, Two national newspapers", channel_count: 4 },
+		grounds: [{ key: "INADEQUATE_BUDGET", label: "Inadequate budgetary provision" }],
+		recommendation: variant === "RECOMMEND" ? { by_name: "Charles Mutiso", at_label: "4 Jun 2027, 13:30 EAT", text: "I recommend cancellation because the confirmed budget is insufficient to complete this procurement.", ground: "INADEQUATE_BUDGET" } : null,
+		consequences: { ppra_report_due_by: "18 Jun 2027", candidate_notice_due_by: "18 Jun 2027", replacement_text: "Replacement procurement requires new governance." },
+		cancellation: cancelled ? { name: "TCX-0001", ground_label: "Inadequate budgetary provision", reason: "The confirmed budget available for this procurement is insufficient to proceed.", decided_by_name: "Amina Hassan", decided_at_label: "4 Jun 2027, 14:00 EAT", obligations } : null,
+		compliance: cancelled ? [
+			{ key: "record_cancellation_notice_evidence", label: "Cancellation notices", due_by: "18 Jun 2027", status: "Outstanding", detail: "0 of 4 recorded", action: "record_cancellation_notice_evidence", action_label: "Record cancellation notice evidence", obligation_id: "NOTICE-C0" },
+			{ key: "record_ppra_report_evidence", label: "PPRA report", due_by: "18 Jun 2027", status: "Outstanding", detail: "", action: "record_ppra_report_evidence", action_label: "Record PPRA report evidence", obligation_id: "PPRA_REPORT" },
+		] : [],
+		review: variant === "REQUEST" ? { addendum: "TDA-0039", addendum_reference: "ADD-MOH-2027-039-001", requested_by_name: "Brian Wafula", requested_by_role: "Procurement Officer", field: "Business laptops — Quantity", current: "250 Each", proposed: "300 Each", reason: "Additional deployment sites require 50 more laptops" } : null,
+		allowed_actions: cancelled ? (holder ? ["record_cancellation_evidence"] : []) : variant === "REQUEST" ? ["cancel_tender", "close_cancellation_review"] : ["cancel_tender"],
+		warning_text: "Cancellation is final for this Tender. It does not restore the Requisition or create a replacement Tender.",
+		guidance: guidance(g[0], g[1], g[2]),
+	};
+}
