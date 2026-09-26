@@ -56,6 +56,14 @@ def _diff_keyed(before: dict[str, Any], after: dict[str, Any], category: str, no
 	return out
 
 
+def _value(row: dict[str, Any], key: str) -> Any:
+	"""One preceding-snapshot row in the candidate's form: the row without its
+	key, or its `digest` when that is all the snapshot keeps (a response rule
+	is compared by the SHA-256 of its canonical JSON)."""
+	rest = {k: v for k, v in row.items() if k != key}
+	return rest["digest"] if set(rest) == {"digest"} else rest
+
+
 def build(candidate: dict[str, Any], preceding: dict[str, Any] | None) -> dict[str, Any]:
 	"""`candidate` carries: release identity, `assets` {path: sha256},
 	`coverage_treatments`, `document_anchors`, `response_rules` {id: rule},
@@ -76,10 +84,10 @@ def build(candidate: dict[str, Any], preceding: dict[str, Any] | None) -> dict[s
 	changes += _diff_keyed(before_assets, candidate["assets"], "Assets", "Asset")
 	changes += _diff_keyed(preceding["coverage_treatments"], candidate["coverage_treatments"], "Source treatments", "Source row")
 	changes += _diff_keyed({a: True for a in preceding["document_anchors"]}, {a: True for a in candidate["document_anchors"]}, "Document anchors", "Document anchor")
-	changes += _diff_keyed({r["rule_id"]: r for r in preceding["response_rules"]}, candidate["response_rules"], "Response rules", "Response rule")
-	changes += _diff_keyed({d["text_id"]: d for d in preceding["declarations"]}, candidate["declarations"], "Locked declarations", "Locked declaration")
-	changes += _diff_keyed({m["mapping_id"]: m for m in preceding["evaluation_mappings"]}, candidate["evaluation_mappings"], "Evaluation mappings", "Evaluation mapping")
-	changes += _diff_keyed({m["mapping_id"]: m for m in preceding["contract_mappings"]}, candidate["contract_mappings"], "Contract mappings", "Contract mapping")
+	changes += _diff_keyed({r["rule_id"]: _value(r, "rule_id") for r in preceding["response_rules"]}, candidate["response_rules"], "Response rules", "Response rule")
+	changes += _diff_keyed({d["text_id"]: _value(d, "text_id") for d in preceding["declarations"]}, candidate["declarations"], "Locked declarations", "Locked declaration")
+	changes += _diff_keyed({m["mapping_id"]: _value(m, "mapping_id") for m in preceding["evaluation_mappings"]}, candidate["evaluation_mappings"], "Evaluation mappings", "Evaluation mapping")
+	changes += _diff_keyed({m["mapping_id"]: _value(m, "mapping_id") for m in preceding["contract_mappings"]}, candidate["contract_mappings"], "Contract mappings", "Contract mapping")
 	changes += _diff_keyed(preceding["supported_use"], candidate["supported_use"], "Supported use", "Supported-use boundary")
 	if preceding["renderer"] != candidate["renderer"]:
 		changes.append(

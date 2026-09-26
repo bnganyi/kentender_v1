@@ -1,6 +1,6 @@
 {
   "product_profile_id": "GOODS-IT-SIMPLE-V1",
-  "release_id": "stdr-09bbfebd-0297-48c0-8ec2-7aa0c2e64495",
+  "release_id": "stdr-0e81b40c-d548-498c-855a-d4f80764af40",
   "renderer_profile_id": "BDS-GOODS-IT-V1",
   "rules": [
     {
@@ -17,10 +17,7 @@
           "evidence_rule": null,
           "field_key": "acknowledged",
           "help_text": "",
-          "label": "I have reviewed {addendum_reference} and understand how it changes this Tender.",
-          "label_parameters": [
-            "addendum_reference"
-          ],
+          "label": "I have read the current published Tender documents and every effective addendum.",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
@@ -36,7 +33,7 @@
       "rule_id": "RR-DOC-ACK",
       "source_family": "document",
       "source_selector": {
-        "selector": "SEL-EFFECTIVE-ADDENDA"
+        "selector": "SEL-DOCUMENT-PACKAGE"
       },
       "task_id": "TASK-DOCUMENTS"
     },
@@ -58,10 +55,6 @@
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
-          "supplied_value": {
-            "fact": "tenderer_name",
-            "source_id": "SV-ARRANGEMENT"
-          },
           "validation_id": "VAL-TEXT-LENGTH",
           "validation_parameters": {
             "max_length": 160,
@@ -80,10 +73,6 @@
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
-          "supplied_value": {
-            "fact": "arrangement_type",
-            "source_id": "SV-ARRANGEMENT"
-          },
           "validation_id": "VAL-OPTION-IN-LIST",
           "validation_parameters": {
             "options": [
@@ -96,6 +85,28 @@
           }
         },
         {
+          "control_id": "CTL-LONG-TEXT",
+          "evidence_rule": null,
+          "field_key": "joint_venture_members",
+          "help_text": "",
+          "label": "Joint venture members (legal name, country and year of registration, address and authorised representative of each member)",
+          "required_rule": {
+            "field_key": "bidder_arrangement",
+            "rule_id": "RQ-WHEN-FIELD-EQUALS",
+            "value": "Joint venture"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 4000,
+            "min_length": 20
+          },
+          "visibility_rule": {
+            "field_key": "bidder_arrangement",
+            "rule_id": "VS-WHEN-FIELD-EQUALS",
+            "value": "Joint venture"
+          }
+        },
+        {
           "control_id": "CTL-SHORT-TEXT",
           "evidence_rule": null,
           "field_key": "country_of_registration",
@@ -103,10 +114,6 @@
           "label": "Actual or intended country of registration",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
-          },
-          "supplied_value": {
-            "fact": "country",
-            "source_id": "SV-ORGANISATION"
           },
           "validation_id": "VAL-TEXT-LENGTH",
           "validation_parameters": {
@@ -144,10 +151,6 @@
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
-          "supplied_value": {
-            "fact": "registered_address",
-            "source_id": "SV-ORGANISATION"
-          },
           "validation_id": "VAL-TEXT-LENGTH",
           "validation_parameters": {
             "max_length": 500,
@@ -166,32 +169,10 @@
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
-          "supplied_value": {
-            "fact": "tender_contact_name",
-            "source_id": "SV-ARRANGEMENT"
-          },
           "validation_id": "VAL-TEXT-LENGTH",
           "validation_parameters": {
             "max_length": 160,
             "min_length": 3
-          },
-          "visibility_rule": {
-            "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
-          "control_id": "CTL-LONG-TEXT",
-          "evidence_rule": null,
-          "field_key": "representative_address",
-          "help_text": "",
-          "label": "Authorised representative's address",
-          "required_rule": {
-            "rule_id": "RQ-ALWAYS"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 500,
-            "min_length": 10
           },
           "visibility_rule": {
             "rule_id": "VS-ALWAYS"
@@ -205,10 +186,6 @@
           "label": "Authorised representative's email",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
-          },
-          "supplied_value": {
-            "fact": "tender_contact_email",
-            "source_id": "SV-ARRANGEMENT"
           },
           "validation_id": "VAL-TEXT-LENGTH",
           "validation_parameters": {
@@ -228,10 +205,6 @@
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
-          "supplied_value": {
-            "fact": "tender_contact_phone",
-            "source_id": "SV-ARRANGEMENT"
-          },
           "validation_id": "VAL-TEXT-LENGTH",
           "validation_parameters": {
             "max_length": 40,
@@ -248,181 +221,6 @@
       "source_family": "supplier",
       "source_selector": {
         "selector": "SEL-SUPPLIER"
-      },
-      "task_id": "TASK-COMPANY"
-    },
-    {
-      "applicability": {
-        "rule_id": "AP-ALWAYS"
-      },
-      "composition_id": "COMP-JV-MEMBER",
-      "contract_mapping_id": "DM-JV-MEMBER",
-      "document_anchor": "complete_tender.html#form-jv-members",
-      "evaluation_mapping_id": "DM-JV-MEMBER",
-      "field_definitions": [
-        {
-          "control_id": "CTL-SHORT-TEXT",
-          "evidence_rule": null,
-          "field_key": "member_legal_name",
-          "help_text": "",
-          "label": "JV member's name",
-          "required_rule": {
-            "rule_id": "RQ-ALWAYS"
-          },
-          "supplied_value": {
-            "fact": "legal_name",
-            "source_id": "SV-ARRANGEMENT-MEMBER"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 160,
-            "min_length": 3
-          },
-          "visibility_rule": {
-            "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
-          "control_id": "CTL-SHORT-TEXT",
-          "evidence_rule": null,
-          "field_key": "member_country_of_registration",
-          "help_text": "",
-          "label": "JV member's country of registration",
-          "required_rule": {
-            "rule_id": "RQ-ALWAYS"
-          },
-          "supplied_value": {
-            "fact": "country",
-            "source_id": "SV-ARRANGEMENT-MEMBER"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 80,
-            "min_length": 2
-          },
-          "visibility_rule": {
-            "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
-          "control_id": "CTL-INTEGER",
-          "evidence_rule": null,
-          "field_key": "member_year_of_registration",
-          "help_text": "",
-          "label": "JV member's year of registration",
-          "required_rule": {
-            "rule_id": "RQ-ALWAYS"
-          },
-          "validation_id": "VAL-INTEGER-RANGE",
-          "validation_parameters": {
-            "maximum": 2100,
-            "minimum": 1800
-          },
-          "visibility_rule": {
-            "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
-          "control_id": "CTL-LONG-TEXT",
-          "evidence_rule": null,
-          "field_key": "member_registered_address",
-          "help_text": "",
-          "label": "JV member's legal address in country of registration",
-          "required_rule": {
-            "rule_id": "RQ-ALWAYS"
-          },
-          "supplied_value": {
-            "fact": "registered_address",
-            "source_id": "SV-ARRANGEMENT-MEMBER"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 500,
-            "min_length": 10
-          },
-          "visibility_rule": {
-            "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
-          "control_id": "CTL-SHORT-TEXT",
-          "evidence_rule": null,
-          "field_key": "member_representative_name",
-          "help_text": "",
-          "label": "JV member's authorised representative's name",
-          "required_rule": {
-            "rule_id": "RQ-ALWAYS"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 160,
-            "min_length": 3
-          },
-          "visibility_rule": {
-            "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
-          "control_id": "CTL-LONG-TEXT",
-          "evidence_rule": null,
-          "field_key": "member_representative_address",
-          "help_text": "",
-          "label": "JV member's authorised representative's address",
-          "required_rule": {
-            "rule_id": "RQ-ALWAYS"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 500,
-            "min_length": 10
-          },
-          "visibility_rule": {
-            "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
-          "control_id": "CTL-SHORT-TEXT",
-          "evidence_rule": null,
-          "field_key": "member_representative_email",
-          "help_text": "",
-          "label": "JV member's authorised representative's email",
-          "required_rule": {
-            "rule_id": "RQ-ALWAYS"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 200,
-            "min_length": 5
-          },
-          "visibility_rule": {
-            "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
-          "control_id": "CTL-SHORT-TEXT",
-          "evidence_rule": null,
-          "field_key": "member_representative_telephone",
-          "help_text": "",
-          "label": "JV member's authorised representative's telephone",
-          "required_rule": {
-            "rule_id": "RQ-ALWAYS"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 40,
-            "min_length": 5
-          },
-          "visibility_rule": {
-            "rule_id": "VS-ALWAYS"
-          }
-        }
-      ],
-      "identity_suffix": "JVM",
-      "order": 15,
-      "rule_id": "RR-JV-MEMBER",
-      "source_family": "supplier",
-      "source_selector": {
-        "selector": "SEL-ARRANGEMENT-MEMBERS"
       },
       "task_id": "TASK-COMPANY"
     },
@@ -1281,78 +1079,6 @@
           }
         },
         {
-          "control_id": "CTL-MONEY",
-          "evidence_rule": null,
-          "field_key": "instrument_amount",
-          "help_text": "",
-          "label": "Amount of the instrument",
-          "required_rule": {
-            "rule_id": "RQ-ALWAYS"
-          },
-          "validation_id": "VAL-MONEY",
-          "validation_parameters": {
-            "currency": {
-              "source_fact": "currency"
-            },
-            "maximum": {
-              "source_fact": "amount"
-            },
-            "minimum": {
-              "source_fact": "amount"
-            },
-            "scale": 2
-          },
-          "visibility_rule": {
-            "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
-          "control_id": "CTL-DATE",
-          "evidence_rule": null,
-          "field_key": "bank_guarantee_valid_until",
-          "help_text": "",
-          "label": "Guarantee valid until",
-          "required_rule": {
-            "field_key": "security_form",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Demand Bank Guarantee"
-          },
-          "validation_id": "VAL-DATE-RANGE",
-          "validation_parameters": {
-            "not_before": {
-              "source_fact": "bank_guarantee_expiry_date"
-            }
-          },
-          "visibility_rule": {
-            "field_key": "security_form",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Demand Bank Guarantee"
-          }
-        },
-        {
-          "control_id": "CTL-DATE",
-          "evidence_rule": null,
-          "field_key": "insurance_guarantee_valid_until",
-          "help_text": "",
-          "label": "Guarantee valid until",
-          "required_rule": {
-            "field_key": "security_form",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Insurance Guarantee"
-          },
-          "validation_id": "VAL-DATE-RANGE",
-          "validation_parameters": {
-            "not_before": {
-              "source_fact": "insurance_guarantee_expiry_date"
-            }
-          },
-          "visibility_rule": {
-            "field_key": "security_form",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Insurance Guarantee"
-          }
-        },
-        {
           "control_id": "CTL-EVIDENCE-REFERENCE",
           "evidence_rule": {
             "evidence_type": "Tender Security instrument",
@@ -1617,19 +1343,19 @@
       "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
       "field_definitions": [
         {
-          "control_id": "CTL-SINGLE-CHOICE",
+          "control_id": "CTL-YES-NO",
           "evidence_rule": null,
-          "field_key": "compliance",
+          "field_key": "confirmation",
           "help_text": "",
-          "label": "Compliance",
+          "label": "We confirm the published minimum warranty and support obligations will be met.",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
           "validation_id": "VAL-OPTION-IN-LIST",
           "validation_parameters": {
             "options": [
-              "Comply",
-              "Do not comply"
+              "Yes",
+              "No"
             ]
           },
           "visibility_rule": {
@@ -1637,16 +1363,21 @@
           }
         },
         {
-          "control_id": "CHARACTERISTIC",
+          "control_id": "CTL-INTEGER",
           "evidence_rule": null,
-          "field_key": "offered_value",
+          "field_key": "offered_warranty_months",
           "help_text": "",
-          "label": "Offered value",
+          "label": "Offered warranty period (months)",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
-          "validation_id": "CHARACTERISTIC",
-          "validation_parameters": {},
+          "validation_id": "VAL-INTEGER-RANGE",
+          "validation_parameters": {
+            "maximum": 120,
+            "minimum": {
+              "source_fact": "minimum_warranty_months"
+            }
+          },
           "visibility_rule": {
             "rule_id": "VS-ALWAYS"
           }
@@ -1654,16 +1385,16 @@
         {
           "control_id": "CTL-LONG-TEXT",
           "evidence_rule": null,
-          "field_key": "comment",
+          "field_key": "support_contact_details",
           "help_text": "",
-          "label": "Comment",
+          "label": "Warranty contact, escalation and service-centre details",
           "required_rule": {
-            "rule_id": "RQ-NEVER"
+            "rule_id": "RQ-ALWAYS"
           },
           "validation_id": "VAL-TEXT-LENGTH",
           "validation_parameters": {
             "max_length": 500,
-            "min_length": 0
+            "min_length": 10
           },
           "visibility_rule": {
             "rule_id": "VS-ALWAYS"
@@ -1699,7 +1430,7 @@
       "rule_id": "RR-WARRANTY-SUPPORT",
       "source_family": "warranty_support",
       "source_selector": {
-        "selector": "SEL-WARRANTY-OBLIGATIONS"
+        "selector": "SEL-WARRANTY-SUPPORT"
       },
       "task_id": "TASK-REQUIREMENTS"
     },
@@ -2273,10 +2004,6 @@
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
-          "supplied_value": {
-            "fact": "full_name",
-            "source_id": "SV-SIGNATORY"
-          },
           "validation_id": "VAL-TEXT-LENGTH",
           "validation_parameters": {
             "max_length": 160,
@@ -2295,10 +2022,6 @@
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
-          "supplied_value": {
-            "fact": "job_title",
-            "source_id": "SV-SIGNATORY"
-          },
           "validation_id": "VAL-TEXT-LENGTH",
           "validation_parameters": {
             "max_length": 120,
@@ -2313,10 +2036,7 @@
           "evidence_rule": null,
           "field_key": "confirmed",
           "help_text": "",
-          "label": "I confirm that the information, declarations and evidence in this bid are correct and that I am authorised to submit it for {bidder_name}.",
-          "label_parameters": [
-            "bidder_name"
-          ],
+          "label": "I confirm this is the complete Tender I am authorised to sign and submit.",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
@@ -2338,7 +2058,7 @@
     }
   ],
   "schema_version": 1,
-  "supported_renderer_version": "1.1.0",
+  "supported_renderer_version": "1.0.0",
   "template_key": "IT-EQUIPMENT-OPEN-V1",
-  "template_release": "1.2"
+  "template_release": "1.1"
 }

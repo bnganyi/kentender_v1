@@ -45,7 +45,7 @@ import build_definition_fixture as cli  # noqa: E402
 
 EXPECTED_IDENTITY = {
 	"template_key": "IT-EQUIPMENT-OPEN-V1",
-	"template_release": "1.1",
+	"template_release": "1.2",
 	"product_profile_id": "GOODS-IT-SIMPLE-V1",
 	"renderer_profile_id": "BDS-GOODS-IT-V1",
 }
@@ -457,7 +457,15 @@ def c12():
 	body["tender"]["package_digest"] = ""
 	if sha256_hex(body) != data["tender"]["package_digest"]:
 		problems.append("fixture package_digest does not follow the fixture rule")
-	return problems, f"{len(groups)} goods line from {len(items)} Requisition items; {len(tech)} technical, {len(acc)} acceptance and {len(definition['price_rows'])} price rows reconcile."
+	# Release 1.2: one warranty/support row per applicable published obligation.
+	w = data["warranty_support"]
+	applicable = sum(1 for key in ("onsite_support_required", "manufacturer_support_required") if w.get(key) is True)
+	applicable += sum(1 for key in ("minimum_warranty_months", "maximum_support_response_hours") if isinstance(w.get(key), int) and w[key] > 0)
+	applicable += sum(1 for key in ("service_location_constraint", "support_description") if str(w.get(key) or "").strip())
+	ws = {r["identity"]["immutable_source_id"] for r in definition["response_rows"] if r["identity"]["source_family"] == "warranty_support"}
+	if len(ws) != applicable:
+		problems.append(f"warranty/support rows ({len(ws)}) do not match the applicable published obligations ({applicable})")
+	return problems, f"{len(groups)} goods line from {len(items)} Requisition items; {len(tech)} technical, {len(ws)} warranty/support, {len(acc)} acceptance and {len(definition['price_rows'])} price rows reconcile."
 
 
 def c13():
@@ -541,9 +549,17 @@ def c14():
 	new_required = {r["response_id"] for r in successor["response_rows"] if r["identity"]["immutable_source_id"] == "TECH-012" and r["required"]["rule_id"] == "RQ-ALWAYS"}
 	if not new_required or not new_required <= incomplete:
 		problems.append("a new mandatory requirement must begin incomplete")
-	if any(c["classification"] == "unchanged" and c["stable_key"].startswith("document:") for c in result):
-		problems.append("the package acknowledgement must be refreshed after an addendum")
-	return problems, "Label-only change keeps TECH-003; material change needs a fresh response; removal keeps history only; a new mandatory requirement begins incomplete."
+	# Release 1.2 (STD-TPL-001 v0.12 §8.1): each effective addendum gets its own
+	# acknowledgement; it is new and begins incomplete, and nothing is asked
+	# when no addendum is effective.
+	if any(r["identity"]["source_family"] == "document" for r in prior["response_rows"]):
+		problems.append("no acknowledgement may be asked when no addendum is effective")
+	acks = [c for c in result if c["stable_key"].startswith("document:")]
+	if [(c["stable_key"].split(":")[1], c["classification"]) for c in acks] != [("ADD-FIXTURE-001", "new")]:
+		problems.append(f"the effective addendum must add exactly one new acknowledgement, got {[(c['stable_key'], c['classification']) for c in acks]}")
+	elif not {c["successor_response_id"] for c in acks} <= incomplete:
+		problems.append("a new addendum acknowledgement must begin incomplete")
+	return problems, "Label-only change keeps TECH-003; material change needs a fresh response; removal keeps history only; a new mandatory requirement begins incomplete; an effective addendum adds its own acknowledgement."
 
 
 def c15():

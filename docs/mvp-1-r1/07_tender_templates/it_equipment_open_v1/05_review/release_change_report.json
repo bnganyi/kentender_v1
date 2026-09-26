@@ -2,31 +2,10 @@
   "changes": [
     {
       "category": "Assets",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "01_source/ppra_goods_std_official.txt",
-      "summary": "Asset 01_source/ppra_goods_std_official.txt added."
-    },
-    {
-      "category": "Assets",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "01_source/source_record.md",
-      "summary": "Asset 01_source/source_record.md added."
-    },
-    {
-      "category": "Assets",
       "change_kind": "changed",
       "compatibility_effect": "Compatible",
       "identity": "02_master/complete_tender.html",
       "summary": "Asset 02_master/complete_tender.html changed."
-    },
-    {
-      "category": "Assets",
-      "change_kind": "changed",
-      "compatibility_effect": "Compatible",
-      "identity": "02_master/invitation_to_tender.html",
-      "summary": "Asset 02_master/invitation_to_tender.html changed."
     },
     {
       "category": "Assets",
@@ -46,1075 +25,151 @@
       "category": "Assets",
       "change_kind": "changed",
       "compatibility_effect": "Compatible",
-      "identity": "03_registers/insertion_points.csv",
-      "summary": "Asset 03_registers/insertion_points.csv changed."
-    },
-    {
-      "category": "Assets",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "04_fixture/build_definition_fixture.py",
-      "summary": "Asset 04_fixture/build_definition_fixture.py added."
-    },
-    {
-      "category": "Assets",
-      "change_kind": "removed",
-      "compatibility_effect": "Compatible",
-      "identity": "04_fixture/kebs_expected.html",
-      "summary": "Asset 04_fixture/kebs_expected.html removed."
-    },
-    {
-      "category": "Assets",
-      "change_kind": "removed",
-      "compatibility_effect": "Compatible",
-      "identity": "04_fixture/kebs_expected.pdf",
-      "summary": "Asset 04_fixture/kebs_expected.pdf removed."
-    },
-    {
-      "category": "Assets",
-      "change_kind": "removed",
-      "compatibility_effect": "Compatible",
-      "identity": "04_fixture/kebs_input.json",
-      "summary": "Asset 04_fixture/kebs_input.json removed."
-    },
-    {
-      "category": "Assets",
-      "change_kind": "removed",
-      "compatibility_effect": "Compatible",
-      "identity": "04_fixture/kebs_invitation_expected.html",
-      "summary": "Asset 04_fixture/kebs_invitation_expected.html removed."
-    },
-    {
-      "category": "Assets",
-      "change_kind": "removed",
-      "compatibility_effect": "Compatible",
-      "identity": "04_fixture/kebs_invitation_expected.pdf",
-      "summary": "Asset 04_fixture/kebs_invitation_expected.pdf removed."
-    },
-    {
-      "category": "Assets",
-      "change_kind": "removed",
-      "compatibility_effect": "Compatible",
-      "identity": "04_fixture/kebs_technical_specification.pdf",
-      "summary": "Asset 04_fixture/kebs_technical_specification.pdf removed."
-    },
-    {
-      "category": "Assets",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "04_fixture/moh_input.json",
-      "summary": "Asset 04_fixture/moh_input.json added."
-    },
-    {
-      "category": "Assets",
-      "change_kind": "changed",
-      "compatibility_effect": "Compatible",
-      "identity": "04_fixture/package_index.md",
-      "summary": "Asset 04_fixture/package_index.md changed."
-    },
-    {
-      "category": "Assets",
-      "change_kind": "changed",
-      "compatibility_effect": "Compatible",
-      "identity": "04_fixture/render_fixture.py",
-      "summary": "Asset 04_fixture/render_fixture.py changed."
-    },
-    {
-      "category": "Assets",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "04_fixture/reservation_variants/county_residents_input.json",
-      "summary": "Asset 04_fixture/reservation_variants/county_residents_input.json added."
-    },
-    {
-      "category": "Assets",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "04_fixture/reservation_variants/none_input.json",
-      "summary": "Asset 04_fixture/reservation_variants/none_input.json added."
-    },
-    {
-      "category": "Assets",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "04_fixture/reservation_variants/persons_with_disabilities_input.json",
-      "summary": "Asset 04_fixture/reservation_variants/persons_with_disabilities_input.json added."
-    },
-    {
-      "category": "Assets",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "04_fixture/reservation_variants/unsupported_overlap_input.json",
-      "summary": "Asset 04_fixture/reservation_variants/unsupported_overlap_input.json added."
-    },
-    {
-      "category": "Assets",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "04_fixture/reservation_variants/women_input.json",
-      "summary": "Asset 04_fixture/reservation_variants/women_input.json added."
-    },
-    {
-      "category": "Assets",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "05_review/gate_reviews.json",
-      "summary": "Asset 05_review/gate_reviews.json added."
-    },
-    {
-      "category": "Assets",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
       "identity": "05_review/open_issues.md",
-      "summary": "Asset 05_review/open_issues.md added."
+      "summary": "Asset 05_review/open_issues.md changed."
     },
     {
       "category": "Assets",
-      "change_kind": "added",
+      "change_kind": "changed",
       "compatibility_effect": "Compatible",
       "identity": "05_review/preceding_release.json",
-      "summary": "Asset 05_review/preceding_release.json added."
+      "summary": "Asset 05_review/preceding_release.json changed."
     },
     {
       "category": "Assets",
-      "change_kind": "added",
+      "change_kind": "changed",
       "compatibility_effect": "Compatible",
       "identity": "06_runtime/addendum_identity_rules.json",
-      "summary": "Asset 06_runtime/addendum_identity_rules.json added."
+      "summary": "Asset 06_runtime/addendum_identity_rules.json changed."
     },
     {
       "category": "Assets",
-      "change_kind": "added",
+      "change_kind": "changed",
       "compatibility_effect": "Compatible",
       "identity": "06_runtime/downstream_rules.json",
-      "summary": "Asset 06_runtime/downstream_rules.json added."
+      "summary": "Asset 06_runtime/downstream_rules.json changed."
     },
     {
       "category": "Assets",
-      "change_kind": "added",
+      "change_kind": "changed",
       "compatibility_effect": "Compatible",
       "identity": "06_runtime/product_profile.json",
-      "summary": "Asset 06_runtime/product_profile.json added."
+      "summary": "Asset 06_runtime/product_profile.json changed."
     },
     {
       "category": "Assets",
-      "change_kind": "added",
+      "change_kind": "changed",
       "compatibility_effect": "Compatible",
       "identity": "06_runtime/response_rules.json",
-      "summary": "Asset 06_runtime/response_rules.json added."
+      "summary": "Asset 06_runtime/response_rules.json changed."
     },
     {
       "category": "Assets",
-      "change_kind": "added",
+      "change_kind": "changed",
       "compatibility_effect": "Compatible",
       "identity": "06_runtime/validate_release.py",
-      "summary": "Asset 06_runtime/validate_release.py added."
+      "summary": "Asset 06_runtime/validate_release.py changed."
     },
     {
-      "category": "Source treatments",
+      "category": "Document anchors",
+      "change_kind": "added",
+      "compatibility_effect": "Compatible",
+      "identity": "complete_tender.html#form-jv-members",
+      "summary": "Document anchor complete_tender.html#form-jv-members added."
+    },
+    {
+      "category": "Response rules",
       "change_kind": "changed",
-      "compatibility_effect": "Breaking",
-      "identity": "COV-239",
-      "summary": "Source row COV-239 changed."
-    },
-    {
-      "category": "Source treatments",
-      "change_kind": "changed",
-      "compatibility_effect": "Breaking",
-      "identity": "COV-240",
-      "summary": "Source row COV-240 changed."
-    },
-    {
-      "category": "Source treatments",
-      "change_kind": "changed",
-      "compatibility_effect": "Breaking",
-      "identity": "COV-241",
-      "summary": "Source row COV-241 changed."
-    },
-    {
-      "category": "Source treatments",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "COV-291",
-      "summary": "Source row COV-291 added."
-    },
-    {
-      "category": "Source treatments",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "COV-292",
-      "summary": "Source row COV-292 added."
-    },
-    {
-      "category": "Source treatments",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "COV-293",
-      "summary": "Source row COV-293 added."
-    },
-    {
-      "category": "Source treatments",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "COV-294",
-      "summary": "Source row COV-294 added."
-    },
-    {
-      "category": "Source treatments",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "COV-295",
-      "summary": "Source row COV-295 added."
-    },
-    {
-      "category": "Source treatments",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "COV-296",
-      "summary": "Source row COV-296 added."
-    },
-    {
-      "category": "Document anchors",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "complete_tender.html#decl-cbq",
-      "summary": "Document anchor complete_tender.html#decl-cbq added."
-    },
-    {
-      "category": "Document anchors",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "complete_tender.html#decl-citd",
-      "summary": "Document anchor complete_tender.html#decl-citd added."
-    },
-    {
-      "category": "Document anchors",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "complete_tender.html#decl-code-of-ethics",
-      "summary": "Document anchor complete_tender.html#decl-code-of-ethics added."
-    },
-    {
-      "category": "Document anchors",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "complete_tender.html#decl-form-of-tender",
-      "summary": "Document anchor complete_tender.html#decl-form-of-tender added."
-    },
-    {
-      "category": "Document anchors",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "complete_tender.html#decl-reservation",
-      "summary": "Document anchor complete_tender.html#decl-reservation added."
-    },
-    {
-      "category": "Document anchors",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "complete_tender.html#decl-sd1",
-      "summary": "Document anchor complete_tender.html#decl-sd1 added."
-    },
-    {
-      "category": "Document anchors",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "complete_tender.html#decl-sd2",
-      "summary": "Document anchor complete_tender.html#decl-sd2 added."
-    },
-    {
-      "category": "Document anchors",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "complete_tender.html#form-acceptance-confirmation",
-      "summary": "Document anchor complete_tender.html#form-acceptance-confirmation added."
-    },
-    {
-      "category": "Document anchors",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "complete_tender.html#form-manufacturer-authorisation",
-      "summary": "Document anchor complete_tender.html#form-manufacturer-authorisation added."
-    },
-    {
-      "category": "Document anchors",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "complete_tender.html#form-of-tender",
-      "summary": "Document anchor complete_tender.html#form-of-tender added."
-    },
-    {
-      "category": "Document anchors",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "complete_tender.html#form-related-services-confirmation",
-      "summary": "Document anchor complete_tender.html#form-related-services-confirmation added."
-    },
-    {
-      "category": "Document anchors",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "complete_tender.html#form-technical-compliance",
-      "summary": "Document anchor complete_tender.html#form-technical-compliance added."
-    },
-    {
-      "category": "Document anchors",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "complete_tender.html#form-tender-security",
-      "summary": "Document anchor complete_tender.html#form-tender-security added."
-    },
-    {
-      "category": "Document anchors",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "complete_tender.html#form-tenderer-information",
-      "summary": "Document anchor complete_tender.html#form-tenderer-information added."
-    },
-    {
-      "category": "Document anchors",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "complete_tender.html#qualification-requirements",
-      "summary": "Document anchor complete_tender.html#qualification-requirements added."
-    },
-    {
-      "category": "Document anchors",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "complete_tender.html#schedule-goods",
-      "summary": "Document anchor complete_tender.html#schedule-goods added."
-    },
-    {
-      "category": "Document anchors",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "complete_tender.html#schedule-price-goods",
-      "summary": "Document anchor complete_tender.html#schedule-price-goods added."
-    },
-    {
-      "category": "Document anchors",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "complete_tender.html#schedule-price-services",
-      "summary": "Document anchor complete_tender.html#schedule-price-services added."
-    },
-    {
-      "category": "Document anchors",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "complete_tender.html#schedule-warranty-support",
-      "summary": "Document anchor complete_tender.html#schedule-warranty-support added."
-    },
-    {
-      "category": "Document anchors",
-      "change_kind": "added",
-      "compatibility_effect": "Compatible",
-      "identity": "complete_tender.html#tender-document",
-      "summary": "Document anchor complete_tender.html#tender-document added."
-    },
-    {
-      "category": "Response rules",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "RR-ACCEPTANCE",
-      "summary": "Response rule RR-ACCEPTANCE added."
-    },
-    {
-      "category": "Response rules",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "RR-DECL-CBQ",
-      "summary": "Response rule RR-DECL-CBQ added."
-    },
-    {
-      "category": "Response rules",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "RR-DECL-CITD",
-      "summary": "Response rule RR-DECL-CITD added."
-    },
-    {
-      "category": "Response rules",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "RR-DECL-CODE-OF-ETHICS",
-      "summary": "Response rule RR-DECL-CODE-OF-ETHICS added."
-    },
-    {
-      "category": "Response rules",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "RR-DECL-FORM-OF-TENDER",
-      "summary": "Response rule RR-DECL-FORM-OF-TENDER added."
-    },
-    {
-      "category": "Response rules",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "RR-DECL-SD1",
-      "summary": "Response rule RR-DECL-SD1 added."
-    },
-    {
-      "category": "Response rules",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "RR-DECL-SD2",
-      "summary": "Response rule RR-DECL-SD2 added."
-    },
-    {
-      "category": "Response rules",
-      "change_kind": "added",
       "compatibility_effect": "Breaking",
       "identity": "RR-DOC-ACK",
-      "summary": "Response rule RR-DOC-ACK added."
+      "summary": "Response rule RR-DOC-ACK changed."
     },
     {
       "category": "Response rules",
       "change_kind": "added",
       "compatibility_effect": "Breaking",
-      "identity": "RR-EVIDENCE-ADDITIONAL",
-      "summary": "Response rule RR-EVIDENCE-ADDITIONAL added."
+      "identity": "RR-JV-MEMBER",
+      "summary": "Response rule RR-JV-MEMBER added."
     },
     {
       "category": "Response rules",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "RR-EVIDENCE-AFTER-SALES",
-      "summary": "Response rule RR-EVIDENCE-AFTER-SALES added."
-    },
-    {
-      "category": "Response rules",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "RR-EVIDENCE-DATASHEET",
-      "summary": "Response rule RR-EVIDENCE-DATASHEET added."
-    },
-    {
-      "category": "Response rules",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "RR-EVIDENCE-ELIGIBILITY-DOCUMENTS",
-      "summary": "Response rule RR-EVIDENCE-ELIGIBILITY-DOCUMENTS added."
-    },
-    {
-      "category": "Response rules",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "RR-EVIDENCE-MANUFACTURER-AUTHORISATION",
-      "summary": "Response rule RR-EVIDENCE-MANUFACTURER-AUTHORISATION added."
-    },
-    {
-      "category": "Response rules",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "RR-EXPERIENCE",
-      "summary": "Response rule RR-EXPERIENCE added."
-    },
-    {
-      "category": "Response rules",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "RR-GOODS-OFFER",
-      "summary": "Response rule RR-GOODS-OFFER added."
-    },
-    {
-      "category": "Response rules",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "RR-PRICE-GOODS",
-      "summary": "Response rule RR-PRICE-GOODS added."
-    },
-    {
-      "category": "Response rules",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "RR-PRICE-SERVICE",
-      "summary": "Response rule RR-PRICE-SERVICE added."
-    },
-    {
-      "category": "Response rules",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "RR-RELATED-SERVICE",
-      "summary": "Response rule RR-RELATED-SERVICE added."
-    },
-    {
-      "category": "Response rules",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "RR-RESERVATION",
-      "summary": "Response rule RR-RESERVATION added."
-    },
-    {
-      "category": "Response rules",
-      "change_kind": "added",
+      "change_kind": "changed",
       "compatibility_effect": "Breaking",
       "identity": "RR-SUBMISSION",
-      "summary": "Response rule RR-SUBMISSION added."
+      "summary": "Response rule RR-SUBMISSION changed."
     },
     {
       "category": "Response rules",
-      "change_kind": "added",
+      "change_kind": "changed",
       "compatibility_effect": "Breaking",
       "identity": "RR-SUPPLIER-DETAILS",
-      "summary": "Response rule RR-SUPPLIER-DETAILS added."
+      "summary": "Response rule RR-SUPPLIER-DETAILS changed."
     },
     {
       "category": "Response rules",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "RR-TECHNICAL",
-      "summary": "Response rule RR-TECHNICAL added."
-    },
-    {
-      "category": "Response rules",
-      "change_kind": "added",
+      "change_kind": "changed",
       "compatibility_effect": "Breaking",
       "identity": "RR-TENDER-SECURITY",
-      "summary": "Response rule RR-TENDER-SECURITY added."
+      "summary": "Response rule RR-TENDER-SECURITY changed."
     },
     {
       "category": "Response rules",
-      "change_kind": "added",
+      "change_kind": "changed",
       "compatibility_effect": "Breaking",
       "identity": "RR-WARRANTY-SUPPORT",
-      "summary": "Response rule RR-WARRANTY-SUPPORT added."
-    },
-    {
-      "category": "Locked declarations",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "TXT-RR-DECL-CBQ",
-      "summary": "Locked declaration TXT-RR-DECL-CBQ added."
-    },
-    {
-      "category": "Locked declarations",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "TXT-RR-DECL-CITD",
-      "summary": "Locked declaration TXT-RR-DECL-CITD added."
-    },
-    {
-      "category": "Locked declarations",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "TXT-RR-DECL-CODE-OF-ETHICS",
-      "summary": "Locked declaration TXT-RR-DECL-CODE-OF-ETHICS added."
-    },
-    {
-      "category": "Locked declarations",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "TXT-RR-DECL-FORM-OF-TENDER",
-      "summary": "Locked declaration TXT-RR-DECL-FORM-OF-TENDER added."
-    },
-    {
-      "category": "Locked declarations",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "TXT-RR-DECL-SD1",
-      "summary": "Locked declaration TXT-RR-DECL-SD1 added."
-    },
-    {
-      "category": "Locked declarations",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "TXT-RR-DECL-SD2",
-      "summary": "Locked declaration TXT-RR-DECL-SD2 added."
-    },
-    {
-      "category": "Locked declarations",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "TXT-RR-RESERVATION",
-      "summary": "Locked declaration TXT-RR-RESERVATION added."
+      "summary": "Response rule RR-WARRANTY-SUPPORT changed."
     },
     {
       "category": "Evaluation mappings",
       "change_kind": "added",
       "compatibility_effect": "Breaking",
-      "identity": "DM-ACCEPTANCE",
-      "summary": "Evaluation mapping DM-ACCEPTANCE added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-DECL-CBQ",
-      "summary": "Evaluation mapping DM-DECL-CBQ added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-DECL-CITD",
-      "summary": "Evaluation mapping DM-DECL-CITD added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-DECL-CODE-OF-ETHICS",
-      "summary": "Evaluation mapping DM-DECL-CODE-OF-ETHICS added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-DECL-FORM-OF-TENDER",
-      "summary": "Evaluation mapping DM-DECL-FORM-OF-TENDER added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-DECL-SD1",
-      "summary": "Evaluation mapping DM-DECL-SD1 added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-DECL-SD2",
-      "summary": "Evaluation mapping DM-DECL-SD2 added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-DOC-ACK",
-      "summary": "Evaluation mapping DM-DOC-ACK added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-EVIDENCE-ADDITIONAL",
-      "summary": "Evaluation mapping DM-EVIDENCE-ADDITIONAL added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-EVIDENCE-AFTER-SALES",
-      "summary": "Evaluation mapping DM-EVIDENCE-AFTER-SALES added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-EVIDENCE-DATASHEET",
-      "summary": "Evaluation mapping DM-EVIDENCE-DATASHEET added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-EVIDENCE-ELIGIBILITY-DOCUMENTS",
-      "summary": "Evaluation mapping DM-EVIDENCE-ELIGIBILITY-DOCUMENTS added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-EVIDENCE-MANUFACTURER-AUTHORISATION",
-      "summary": "Evaluation mapping DM-EVIDENCE-MANUFACTURER-AUTHORISATION added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-EXPERIENCE",
-      "summary": "Evaluation mapping DM-EXPERIENCE added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-GOODS-OFFER",
-      "summary": "Evaluation mapping DM-GOODS-OFFER added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-PRICE-GOODS",
-      "summary": "Evaluation mapping DM-PRICE-GOODS added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-PRICE-SERVICE",
-      "summary": "Evaluation mapping DM-PRICE-SERVICE added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-RELATED-SERVICE",
-      "summary": "Evaluation mapping DM-RELATED-SERVICE added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-RESERVATION",
-      "summary": "Evaluation mapping DM-RESERVATION added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-SUBMISSION",
-      "summary": "Evaluation mapping DM-SUBMISSION added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-SUPPLIER-DETAILS",
-      "summary": "Evaluation mapping DM-SUPPLIER-DETAILS added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-TECHNICAL",
-      "summary": "Evaluation mapping DM-TECHNICAL added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-TENDER-SECURITY",
-      "summary": "Evaluation mapping DM-TENDER-SECURITY added."
-    },
-    {
-      "category": "Evaluation mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-WARRANTY-SUPPORT",
-      "summary": "Evaluation mapping DM-WARRANTY-SUPPORT added."
+      "identity": "DM-JV-MEMBER",
+      "summary": "Evaluation mapping DM-JV-MEMBER added."
     },
     {
       "category": "Contract mappings",
       "change_kind": "added",
       "compatibility_effect": "Breaking",
-      "identity": "DM-ACCEPTANCE",
-      "summary": "Contract mapping DM-ACCEPTANCE added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-DECL-CBQ",
-      "summary": "Contract mapping DM-DECL-CBQ added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-DECL-CITD",
-      "summary": "Contract mapping DM-DECL-CITD added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-DECL-CODE-OF-ETHICS",
-      "summary": "Contract mapping DM-DECL-CODE-OF-ETHICS added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-DECL-FORM-OF-TENDER",
-      "summary": "Contract mapping DM-DECL-FORM-OF-TENDER added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-DECL-SD1",
-      "summary": "Contract mapping DM-DECL-SD1 added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-DECL-SD2",
-      "summary": "Contract mapping DM-DECL-SD2 added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-DOC-ACK",
-      "summary": "Contract mapping DM-DOC-ACK added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-EVIDENCE-ADDITIONAL",
-      "summary": "Contract mapping DM-EVIDENCE-ADDITIONAL added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-EVIDENCE-AFTER-SALES",
-      "summary": "Contract mapping DM-EVIDENCE-AFTER-SALES added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-EVIDENCE-DATASHEET",
-      "summary": "Contract mapping DM-EVIDENCE-DATASHEET added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-EVIDENCE-ELIGIBILITY-DOCUMENTS",
-      "summary": "Contract mapping DM-EVIDENCE-ELIGIBILITY-DOCUMENTS added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-EVIDENCE-MANUFACTURER-AUTHORISATION",
-      "summary": "Contract mapping DM-EVIDENCE-MANUFACTURER-AUTHORISATION added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-EXPERIENCE",
-      "summary": "Contract mapping DM-EXPERIENCE added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-GOODS-OFFER",
-      "summary": "Contract mapping DM-GOODS-OFFER added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-PRICE-GOODS",
-      "summary": "Contract mapping DM-PRICE-GOODS added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-PRICE-SERVICE",
-      "summary": "Contract mapping DM-PRICE-SERVICE added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-RELATED-SERVICE",
-      "summary": "Contract mapping DM-RELATED-SERVICE added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-RESERVATION",
-      "summary": "Contract mapping DM-RESERVATION added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-SUBMISSION",
-      "summary": "Contract mapping DM-SUBMISSION added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-SUPPLIER-DETAILS",
-      "summary": "Contract mapping DM-SUPPLIER-DETAILS added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-TECHNICAL",
-      "summary": "Contract mapping DM-TECHNICAL added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-TENDER-SECURITY",
-      "summary": "Contract mapping DM-TENDER-SECURITY added."
-    },
-    {
-      "category": "Contract mappings",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "DM-WARRANTY-SUPPORT",
-      "summary": "Contract mapping DM-WARRANTY-SUPPORT added."
-    },
-    {
-      "category": "Supported use",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "county_residents",
-      "summary": "Supported-use boundary county_residents added."
-    },
-    {
-      "category": "Supported use",
-      "change_kind": "changed",
-      "compatibility_effect": "Breaking",
-      "identity": "currency",
-      "summary": "Supported-use boundary currency changed."
-    },
-    {
-      "category": "Supported use",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "equipment_categories",
-      "summary": "Supported-use boundary equipment_categories added."
-    },
-    {
-      "category": "Supported use",
-      "change_kind": "changed",
-      "compatibility_effect": "Breaking",
-      "identity": "financial_evaluation",
-      "summary": "Supported-use boundary financial_evaluation changed."
-    },
-    {
-      "category": "Supported use",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "lotting_indicator",
-      "summary": "Supported-use boundary lotting_indicator added."
-    },
-    {
-      "category": "Supported use",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "plan_horizon",
-      "summary": "Supported-use boundary plan_horizon added."
-    },
-    {
-      "category": "Supported use",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "price_treatment",
-      "summary": "Supported-use boundary price_treatment added."
-    },
-    {
-      "category": "Supported use",
-      "change_kind": "changed",
-      "compatibility_effect": "Breaking",
-      "identity": "product",
-      "summary": "Supported-use boundary product changed."
-    },
-    {
-      "category": "Supported use",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "product_pattern",
-      "summary": "Supported-use boundary product_pattern added."
-    },
-    {
-      "category": "Supported use",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "related_service_boundary",
-      "summary": "Supported-use boundary related_service_boundary added."
-    },
-    {
-      "category": "Supported use",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "related_service_types",
-      "summary": "Supported-use boundary related_service_types added."
-    },
-    {
-      "category": "Supported use",
-      "change_kind": "changed",
-      "compatibility_effect": "Breaking",
-      "identity": "reservation_categories",
-      "summary": "Supported-use boundary reservation_categories changed."
-    },
-    {
-      "category": "Supported use",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "summary",
-      "summary": "Supported-use boundary summary added."
-    },
-    {
-      "category": "Supported use",
-      "change_kind": "added",
-      "compatibility_effect": "Breaking",
-      "identity": "supplier_submission",
-      "summary": "Supported-use boundary supplier_submission added."
-    },
-    {
-      "category": "Supported use",
-      "change_kind": "changed",
-      "compatibility_effect": "Breaking",
-      "identity": "technical_evaluation",
-      "summary": "Supported-use boundary technical_evaluation changed."
-    },
-    {
-      "category": "Supported use",
-      "change_kind": "removed",
-      "compatibility_effect": "Breaking",
-      "identity": "technical_specification",
-      "summary": "Supported-use boundary technical_specification removed."
+      "identity": "DM-JV-MEMBER",
+      "summary": "Contract mapping DM-JV-MEMBER added."
     },
     {
       "category": "Renderer compatibility",
       "change_kind": "changed",
       "compatibility_effect": "Breaking",
       "identity": "renderer",
-      "summary": "Renderer changed from wkhtmltopdf (no registered adapter) to BDS-GOODS-IT-V1 1.0.0 (wkhtmltopdf 0.12.6.1 (with patched qt))."
+      "summary": "Renderer changed from wkhtmltopdf 0.12.6.1 (with patched qt) to BDS-GOODS-IT-V1 1.1.0 (wkhtmltopdf 0.12.6.1 (with patched qt))."
     }
   ],
   "overall_result": "Breaking — not interchangeable with the preceding release",
-  "preceding_release": "1.0",
-  "release_id": "stdr-0e81b40c-d548-498c-855a-d4f80764af40",
+  "preceding_release": "1.1",
+  "release_id": "stdr-09bbfebd-0297-48c0-8ec2-7aa0c2e64495",
   "schema_version": 1,
   "template_key": "IT-EQUIPMENT-OPEN-V1",
-  "template_release": "1.1",
+  "template_release": "1.2",
   "totals": {
     "Assets": {
-      "added": 17,
-      "changed": 7,
-      "removed": 6
+      "added": 0,
+      "changed": 10,
+      "removed": 0
     },
     "Contract mappings": {
-      "added": 24,
+      "added": 1,
       "changed": 0,
       "removed": 0
     },
     "Document anchors": {
-      "added": 20,
+      "added": 1,
       "changed": 0,
       "removed": 0
     },
     "Evaluation mappings": {
-      "added": 24,
+      "added": 1,
       "changed": 0,
       "removed": 0
     },
     "Locked declarations": {
-      "added": 7,
+      "added": 0,
       "changed": 0,
       "removed": 0
     },
@@ -1124,19 +179,19 @@
       "removed": 0
     },
     "Response rules": {
-      "added": 24,
-      "changed": 0,
+      "added": 1,
+      "changed": 5,
       "removed": 0
     },
     "Source treatments": {
-      "added": 6,
-      "changed": 3,
+      "added": 0,
+      "changed": 0,
       "removed": 0
     },
     "Supported use": {
-      "added": 10,
-      "changed": 5,
-      "removed": 1
+      "added": 0,
+      "changed": 0,
+      "removed": 0
     }
   }
 }

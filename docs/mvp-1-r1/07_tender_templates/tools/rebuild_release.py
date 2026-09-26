@@ -1,5 +1,5 @@
-"""Rebuild the IT-EQUIPMENT-OPEN-V1 release 1.1 candidate end to end
-(STD-TPL-001 v0.10 §§13.4–13.9). Curation tooling, outside the pack.
+"""Rebuild the IT-EQUIPMENT-OPEN-V1 release candidate end to end (release 1.2
+from 26 Sep 2026; STD-TPL-001 v0.10 §§13.4–13.9). Curation tooling, outside the pack.
 
 Order matters because every golden vector binds the input bundle digest:
 

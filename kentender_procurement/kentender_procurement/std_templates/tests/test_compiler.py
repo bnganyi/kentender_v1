@@ -21,7 +21,9 @@ from kentender_procurement.std_templates.compiler.errors import STDTemplateError
 from kentender_procurement.std_templates.renderers import registry
 from kentender_procurement.std_templates.tests import support
 
-CAPS = registry.bid_workspace_capabilities("BDS-GOODS-IT-V1", "1.0.0")
+# The pack's own renderer version (release 1.2 binds 1.1.0); release 1.1's
+# 1.0.0 vector is proven separately in test_release_vocabulary.
+CAPS = registry.bid_workspace_capabilities("BDS-GOODS-IT-V1", support.pack_assets().envelope["supported_renderer_version"])
 
 
 def compile_moh(projection=None, assets=None, caps=None):

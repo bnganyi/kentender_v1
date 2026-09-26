@@ -417,12 +417,20 @@
       "sha256": "95726a88642730e85a212389b4257f26970ecf3f23de872578d11172063ae1ee"
     },
     {
+      "path": "01_source/ppra_goods_std_official.txt",
+      "sha256": "5c4c2396ba34bda7b9b1d7c4f01ed4831a24abfdbc66b69c872a10e2ca71742c"
+    },
+    {
+      "path": "01_source/source_record.md",
+      "sha256": "d08f27013dff990c13a31907950441d14297173578e5dd0b2a0e81306eef3ac4"
+    },
+    {
       "path": "02_master/complete_tender.html",
-      "sha256": "56584474813c5532c4dac82d958e7de2582cbeebd2853b1666517817a68dbb6a"
+      "sha256": "0af8b856cd6eea165fd0e9bdf134a2a3b7deb4148ce05a62e5136503b6f032f9"
     },
     {
       "path": "02_master/invitation_to_tender.html",
-      "sha256": "4d058a3c2ad4af8bc8bb9e0c32fdbba11333620219a353d1109d59f01e74eb53"
+      "sha256": "a53609f746ffdf7f0808fba2577ebcdb4241ac760168a463c8c68d3bfe9f32fb"
     },
     {
       "path": "02_master/print.css",
@@ -430,50 +438,207 @@
     },
     {
       "path": "03_registers/coverage_register.csv",
-      "sha256": "b827a18bdaa6e6468d5e80506f9ba99a6f91ae634ef4f931f8bdbc4c84ff65ae"
+      "sha256": "bd8362e328bdfbf2840998624cb181a6b3c4db04eb0c4fea34b1c2f81813c43a"
     },
     {
       "path": "03_registers/forms_register.csv",
-      "sha256": "2f2716e0c6f6677c5f78babbf8b3853089297ae7667809cde437120837f2071d"
+      "sha256": "be24cd8c7f4b8a09847a031da7c8666882269af3d5f4f1a59c4b14619726e999"
     },
     {
       "path": "03_registers/insertion_points.csv",
-      "sha256": "886ce58b3630f5ef3d1a92a44b055ac5d0a5ea7526b0f3d100a2eabcc2caee09"
+      "sha256": "5c0743304054076e2906e9450e4e6827c700f72e0394d81950ef9c875a7f59e3"
     },
     {
-      "path": "04_fixture/kebs_expected.html",
-      "sha256": "cbba367c9dc6793a0520a7f3f7e4119fa3b2e8ce7871b907f3a225f024a0ceaa"
+      "path": "04_fixture/build_definition_fixture.py",
+      "sha256": "8fcdf4bdb10ce2bfa3b14e75b3d685ee13c3f1baf251f39e532fcc4bf092e7e7"
     },
     {
-      "path": "04_fixture/kebs_expected.pdf",
-      "sha256": "4f978b534d950e093173b13071706eb06f223fc317154865dc1fa9749a5b78f8"
-    },
-    {
-      "path": "04_fixture/kebs_input.json",
-      "sha256": "e2269202cbc0429dd76022c473faaf7909b7aecba0154d8c45ec95f76557a9ca"
-    },
-    {
-      "path": "04_fixture/kebs_invitation_expected.html",
-      "sha256": "7debf3804e33da3056175907fa8cb9d14fa5261381e357e37bc2bd4f26e2af7b"
-    },
-    {
-      "path": "04_fixture/kebs_invitation_expected.pdf",
-      "sha256": "e2a3cdbc1c278c442adfc332b401d5bdfcfe5b094e04155200692fad240422f5"
-    },
-    {
-      "path": "04_fixture/kebs_technical_specification.pdf",
-      "sha256": "f3556acf6d3809a981bc625082fd12eb63b13a06d541f6a231db66918b8d5326"
+      "path": "04_fixture/moh_input.json",
+      "sha256": "8e5a36e9b4b852ceff501e620f888e4c56fa1771765d6cd89dc8b71a0d9bf662"
     },
     {
       "path": "04_fixture/package_index.md",
-      "sha256": "57219b24d478837117c93f77553ecb4ba7158419efa60a0d70763818b3b1dda4"
+      "sha256": "1d4adcae7047fff4e9937f4ecdb5d5f3e76e7e7268f4614de1624a35994f40b4"
     },
     {
       "path": "04_fixture/render_fixture.py",
-      "sha256": "9272954f50c5f0208c019e5878fca0f338e23ed6912d48ce3ab804e4a02647a5"
+      "sha256": "ad9e0f14107c89e821eacfcab159c9b9a7fc8bf107d1dcc805244602370d69e8"
+    },
+    {
+      "path": "04_fixture/reservation_variants/county_residents_input.json",
+      "sha256": "b1b2ea8c274b88baa8407387e56884a571dcd4d419ab44db9a79053ab1aa982f"
+    },
+    {
+      "path": "04_fixture/reservation_variants/none_input.json",
+      "sha256": "945dc24e7062fa3d097cfde11fc3478db3d4e794cde9f4031b4b0fb09ca37104"
+    },
+    {
+      "path": "04_fixture/reservation_variants/persons_with_disabilities_input.json",
+      "sha256": "e7df029e53f18d6da00a0323fb6e0fe932e0b1f51af2e72975f14952a9df98c4"
+    },
+    {
+      "path": "04_fixture/reservation_variants/unsupported_overlap_input.json",
+      "sha256": "f83447d43f2573667656d322f262785ac02421f9ce32eb7742a9efdc50cff9d6"
+    },
+    {
+      "path": "04_fixture/reservation_variants/women_input.json",
+      "sha256": "6e187403c5e4dd8d28795708dd3ee4a560bf981040f5d90126b6a2d656204077"
+    },
+    {
+      "path": "05_review/gate_reviews.json",
+      "sha256": "5802e676e8fd7b1de878dd47fa969d6284060695eb3a04245d04d8b20aff9d32"
+    },
+    {
+      "path": "05_review/open_issues.md",
+      "sha256": "db1119a80ccc8677c45fe08fbadb05b771a9f7313f93dfc1b2c1a1bad925ae72"
+    },
+    {
+      "path": "05_review/preceding_release.json",
+      "sha256": "a196c49dd38460af7ee8435d11b48572a3dafd9d9b4ef7d6a82d1bcb64277cac"
+    },
+    {
+      "path": "06_runtime/addendum_identity_rules.json",
+      "sha256": "3101e1f0802f195f7eb091376fb82090c12a7f9c61a88c7911995a55640ae8c2"
+    },
+    {
+      "path": "06_runtime/downstream_rules.json",
+      "sha256": "857156d8564b1c83172f7542989c48d7836c9c05c0191c93030cb0e33c3a2a71"
+    },
+    {
+      "path": "06_runtime/product_profile.json",
+      "sha256": "ba54b83bf154d39c09eb61087935a6ced552302edb539350ffb1ebdc0d90fd1f"
+    },
+    {
+      "path": "06_runtime/response_rules.json",
+      "sha256": "ca98cc5406446b952edfb7652ab618cafbc4b573805f4669368d295d65745b07"
+    },
+    {
+      "path": "06_runtime/validate_release.py",
+      "sha256": "2db813d9904f0dae3cb560e7662e41ebc6570b520508907c304b76476155cfc8"
     }
   ],
-  "contract_mappings": [],
+  "contract_mappings": [
+    {
+      "contract_destination": "CD-INSPECTION-ACCEPTANCE-SCHEDULE",
+      "contract_treatment": "Carried forward",
+      "mapping_id": "DM-ACCEPTANCE"
+    },
+    {
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-DECL-CBQ"
+    },
+    {
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-DECL-CITD"
+    },
+    {
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-DECL-CODE-OF-ETHICS"
+    },
+    {
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-DECL-FORM-OF-TENDER"
+    },
+    {
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-DECL-SD1"
+    },
+    {
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-DECL-SD2"
+    },
+    {
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-DOC-ACK"
+    },
+    {
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-EVIDENCE-ADDITIONAL"
+    },
+    {
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-EVIDENCE-AFTER-SALES"
+    },
+    {
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-EVIDENCE-DATASHEET"
+    },
+    {
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-EVIDENCE-ELIGIBILITY-DOCUMENTS"
+    },
+    {
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-EVIDENCE-MANUFACTURER-AUTHORISATION"
+    },
+    {
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-EXPERIENCE"
+    },
+    {
+      "contract_destination": "CD-GOODS-DELIVERY-SCHEDULE",
+      "contract_treatment": "Carried forward",
+      "mapping_id": "DM-GOODS-OFFER"
+    },
+    {
+      "contract_destination": "CD-CONTRACT-PRICE-SCHEDULES",
+      "contract_treatment": "Carried forward",
+      "mapping_id": "DM-PRICE-GOODS"
+    },
+    {
+      "contract_destination": "CD-CONTRACT-PRICE-SCHEDULES",
+      "contract_treatment": "Carried forward",
+      "mapping_id": "DM-PRICE-SERVICE"
+    },
+    {
+      "contract_destination": "CD-RELATED-SERVICES-SCHEDULE",
+      "contract_treatment": "Carried forward",
+      "mapping_id": "DM-RELATED-SERVICE"
+    },
+    {
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-RESERVATION"
+    },
+    {
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-SUBMISSION"
+    },
+    {
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-SUPPLIER-DETAILS"
+    },
+    {
+      "contract_destination": "CD-TECHNICAL-OBLIGATION-SCHEDULE",
+      "contract_treatment": "Carried forward",
+      "mapping_id": "DM-TECHNICAL"
+    },
+    {
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-TENDER-SECURITY"
+    },
+    {
+      "contract_destination": "CD-SCC-WARRANTY-SUPPORT",
+      "contract_treatment": "Carried forward",
+      "mapping_id": "DM-WARRANTY-SUPPORT"
+    }
+  ],
   "coverage_treatments": {
     "COV-001": "Not used by this released pattern",
     "COV-002": "Not used by this released pattern",
@@ -713,9 +878,9 @@
     "COV-236": "Generated",
     "COV-237": "Generated",
     "COV-238": "Not used by this released pattern",
-    "COV-239": "Governed document",
-    "COV-240": "Not used by this released pattern",
-    "COV-241": "Officer value",
+    "COV-239": "Generated",
+    "COV-240": "Generated",
+    "COV-241": "Generated",
     "COV-242": "Generated",
     "COV-243": "Locked",
     "COV-244": "Inherited",
@@ -764,41 +929,354 @@
     "COV-287": "Award-derived",
     "COV-288": "Award-derived",
     "COV-289": "Not used by this released pattern",
-    "COV-290": "Not used by this released pattern"
+    "COV-290": "Not used by this released pattern",
+    "COV-291": "Generated",
+    "COV-292": "Locked",
+    "COV-293": "Generated",
+    "COV-294": "Generated",
+    "COV-295": "Generated",
+    "COV-296": "Generated"
   },
-  "decided_at": "2026-08-28",
-  "decided_by": "bnganyi (product owner)",
-  "decision": "APPROVE FOR IMPLEMENTATION PACK",
-  "declarations": [],
-  "document_anchors": [],
-  "evaluation_groups": [],
-  "evaluation_mappings": [],
-  "evidence": [
-    "05_review/review_record.md, section 'Released bundle digest — Version 1.0' (15-file locked digest list)",
-    "Repository commit 74793a0d (curate and lock IT-EQUIPMENT-OPEN-V1 v1.0 per STD-TPL-001)",
-    "STD-TPL-001 v0.3 §2 binding decisions (repository commit 74793a0d)",
-    "01_source/pages/page-001..103.png committed with release 1.0 in commit 74793a0d (not listed in the 15-file digest block; digests taken from the committed blobs)"
+  "decided_at": "2026-09-26",
+  "decided_by": "Not applicable (OD5)",
+  "decision": "INSTALLED — site On/Off switch (owner decision OD5, 26 September 2026); no release approval step",
+  "declarations": [
+    {
+      "source_text_digest": "55e241f4a8c621a4124f78e9b5cca43d61f1736bf7d91630e9597c42bdb6c0f8",
+      "text_id": "TXT-RR-DECL-CBQ",
+      "text_version": "1"
+    },
+    {
+      "source_text_digest": "ee0750fc1d41ef19de6a3b9bcc51251e6553add20f353dac0d974a07fe60c61e",
+      "text_id": "TXT-RR-DECL-CITD",
+      "text_version": "1"
+    },
+    {
+      "source_text_digest": "9cfa44e1faaba957e9fad359b682b909b3dfdd8d1efd91f1b5409b0b61eb994a",
+      "text_id": "TXT-RR-DECL-CODE-OF-ETHICS",
+      "text_version": "1"
+    },
+    {
+      "source_text_digest": "d302495f8639d1e240b6313235d197a8c92cf2c1d5065d3127fce6bb769196af",
+      "text_id": "TXT-RR-DECL-FORM-OF-TENDER",
+      "text_version": "1"
+    },
+    {
+      "source_text_digest": "41332ba5d6d6e826b76c4215db8618e804ce86fd8bb2079b92d1b9a1060c0b91",
+      "text_id": "TXT-RR-DECL-SD1",
+      "text_version": "1"
+    },
+    {
+      "source_text_digest": "9a3609b70722725c0ff487cef7d12468e23a4094c3183dfe24e87c584150b1d6",
+      "text_id": "TXT-RR-DECL-SD2",
+      "text_version": "1"
+    },
+    {
+      "source_text_digest": "871fe28a6895e4467911de21aabf135bd26b6c8958e19195fdf4e2f5c85bc597",
+      "text_id": "TXT-RR-RESERVATION",
+      "text_version": "1"
+    }
   ],
+  "document_anchors": [
+    "complete_tender.html#decl-cbq",
+    "complete_tender.html#decl-citd",
+    "complete_tender.html#decl-code-of-ethics",
+    "complete_tender.html#decl-form-of-tender",
+    "complete_tender.html#decl-reservation",
+    "complete_tender.html#decl-sd1",
+    "complete_tender.html#decl-sd2",
+    "complete_tender.html#form-acceptance-confirmation",
+    "complete_tender.html#form-manufacturer-authorisation",
+    "complete_tender.html#form-of-tender",
+    "complete_tender.html#form-related-services-confirmation",
+    "complete_tender.html#form-technical-compliance",
+    "complete_tender.html#form-tender-security",
+    "complete_tender.html#form-tenderer-information",
+    "complete_tender.html#qualification-requirements",
+    "complete_tender.html#schedule-goods",
+    "complete_tender.html#schedule-price-goods",
+    "complete_tender.html#schedule-price-services",
+    "complete_tender.html#schedule-warranty-support",
+    "complete_tender.html#tender-document"
+  ],
+  "evaluation_groups": [],
+  "evaluation_mappings": [
+    {
+      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-ACCEPTANCE"
+    },
+    {
+      "evaluation_group_id": "EVG-ELIGIBILITY",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-DECL-CBQ"
+    },
+    {
+      "evaluation_group_id": "EVG-ELIGIBILITY",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-DECL-CITD"
+    },
+    {
+      "evaluation_group_id": "EVG-ELIGIBILITY",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-DECL-CODE-OF-ETHICS"
+    },
+    {
+      "evaluation_group_id": "EVG-ELIGIBILITY",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-DECL-FORM-OF-TENDER"
+    },
+    {
+      "evaluation_group_id": "EVG-ELIGIBILITY",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-DECL-SD1"
+    },
+    {
+      "evaluation_group_id": "EVG-ELIGIBILITY",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-DECL-SD2"
+    },
+    {
+      "evaluation_group_id": null,
+      "evaluation_treatment": "Not evaluated",
+      "mapping_id": "DM-DOC-ACK"
+    },
+    {
+      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-EVIDENCE-ADDITIONAL"
+    },
+    {
+      "evaluation_group_id": "EVG-ELIGIBILITY",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-EVIDENCE-AFTER-SALES"
+    },
+    {
+      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-EVIDENCE-DATASHEET"
+    },
+    {
+      "evaluation_group_id": "EVG-ELIGIBILITY",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-EVIDENCE-ELIGIBILITY-DOCUMENTS"
+    },
+    {
+      "evaluation_group_id": "EVG-ELIGIBILITY",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-EVIDENCE-MANUFACTURER-AUTHORISATION"
+    },
+    {
+      "evaluation_group_id": "EVG-ELIGIBILITY",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-EXPERIENCE"
+    },
+    {
+      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-GOODS-OFFER"
+    },
+    {
+      "evaluation_group_id": "EVG-FINANCIAL",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-PRICE-GOODS"
+    },
+    {
+      "evaluation_group_id": "EVG-FINANCIAL",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-PRICE-SERVICE"
+    },
+    {
+      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-RELATED-SERVICE"
+    },
+    {
+      "evaluation_group_id": "EVG-ELIGIBILITY",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-RESERVATION"
+    },
+    {
+      "evaluation_group_id": "EVG-ELIGIBILITY",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-SUBMISSION"
+    },
+    {
+      "evaluation_group_id": null,
+      "evaluation_treatment": "Not evaluated",
+      "mapping_id": "DM-SUPPLIER-DETAILS"
+    },
+    {
+      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-TECHNICAL"
+    },
+    {
+      "evaluation_group_id": "EVG-ELIGIBILITY",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-TENDER-SECURITY"
+    },
+    {
+      "evaluation_group_id": "EVG-TECHNICAL-COMPLIANCE",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-WARRANTY-SUPPORT"
+    }
+  ],
+  "evidence": [
+    "Release 1.1 pack at repository commit 5f7f521d (06_runtime assets, validator 21/21)",
+    "STD-TPL-001 v0.12 (approved 26 September 2026)"
+  ],
+  "release_id": "stdr-0e81b40c-d548-498c-855a-d4f80764af40",
   "renderer": {
-    "document_engine": "wkhtmltopdf (no registered adapter)",
-    "renderer_profile_id": null,
-    "supported_renderer_version": null
+    "document_engine": "wkhtmltopdf 0.12.6.1 (with patched qt)",
+    "renderer_profile_id": "BDS-GOODS-IT-V1",
+    "supported_renderer_version": "1.0.0"
   },
-  "response_rules": [],
+  "response_rules": [
+    {
+      "digest": "236845aa958bd64ab8c0be584ac7ec96bef0db027dca83f784afec620dc3d8b6",
+      "rule_id": "RR-ACCEPTANCE"
+    },
+    {
+      "digest": "b60025e3adb2e763b886ac249d7f05b5b18a538c52f50aeb49bc2486aa1899f7",
+      "rule_id": "RR-DECL-CBQ"
+    },
+    {
+      "digest": "ca6cc85f52a99b2304df95d1969ee31f54a35b1f8a0b1051bcf73a18b4336f4c",
+      "rule_id": "RR-DECL-CITD"
+    },
+    {
+      "digest": "c10030e45670085e62e7b255a297103cff80b96b33d2d9498ebeaf9d3b94ff89",
+      "rule_id": "RR-DECL-CODE-OF-ETHICS"
+    },
+    {
+      "digest": "8b29c8710f95a4a88ac47a41560640ec424c3a5b497c0fd72ff098ef878e3967",
+      "rule_id": "RR-DECL-FORM-OF-TENDER"
+    },
+    {
+      "digest": "c2c4a5faecbfe351782e6a705e2620a0b2e73fddd43f971588d87f8d09bd6d66",
+      "rule_id": "RR-DECL-SD1"
+    },
+    {
+      "digest": "d5cbc9d6fd1282173f7924990495cffb6a84ecf0c7c4a1ae0968b05d5fbc1978",
+      "rule_id": "RR-DECL-SD2"
+    },
+    {
+      "digest": "137957a294c3c072c8fbf849c51ec36f2cd4e6aa92d1be15b6ed3b033b88d221",
+      "rule_id": "RR-DOC-ACK"
+    },
+    {
+      "digest": "301efece45f4bc816a9bf34cfdb5eee5e19433ba596915d826834064a13a5f29",
+      "rule_id": "RR-EVIDENCE-ADDITIONAL"
+    },
+    {
+      "digest": "5fb4e2cd47f6f28c37c7b40d4ecfc3d40fcd8e9562da7df5704ae291db733fcf",
+      "rule_id": "RR-EVIDENCE-AFTER-SALES"
+    },
+    {
+      "digest": "b6f4b23575c2fb4911904c6cc449a793bad77d90ff54bd8939188660f983651c",
+      "rule_id": "RR-EVIDENCE-DATASHEET"
+    },
+    {
+      "digest": "19ef893160b52ede6a7bbb53a87909c176f4cd1807cf6c23c658f992da3cc010",
+      "rule_id": "RR-EVIDENCE-ELIGIBILITY-DOCUMENTS"
+    },
+    {
+      "digest": "ab914d89a0ce108e618961d1cfcbaa734f0b19735936c6160412be6ff3982e42",
+      "rule_id": "RR-EVIDENCE-MANUFACTURER-AUTHORISATION"
+    },
+    {
+      "digest": "9634e2d6f474454b6e38a4c4aed583d76683220510bcd17899d0c4ced69f4f30",
+      "rule_id": "RR-EXPERIENCE"
+    },
+    {
+      "digest": "507515758ef3e7ff27bb685c9313ec8aaae84826aabe968e5021a08d99c48ace",
+      "rule_id": "RR-GOODS-OFFER"
+    },
+    {
+      "digest": "cffff98e0876fd80ceb89c8964380de9628857b993bc93af9852d5efe5ed0383",
+      "rule_id": "RR-PRICE-GOODS"
+    },
+    {
+      "digest": "16211432d60499384cec73014b8283a442c1934118c1a223b36534d53a6fc203",
+      "rule_id": "RR-PRICE-SERVICE"
+    },
+    {
+      "digest": "303297a8aca8fefcf648a17df71810e41dd662e2c91a301a4f2edb3ef5a99a22",
+      "rule_id": "RR-RELATED-SERVICE"
+    },
+    {
+      "digest": "c81900d3030b1935a422d41ba6e19e8789f8b706de9876b29fb5ef66938cd594",
+      "rule_id": "RR-RESERVATION"
+    },
+    {
+      "digest": "4c96652ee6329251efc40c0fb2d0c04ff5f54dc3f0325e92c5a15fb9685445e6",
+      "rule_id": "RR-SUBMISSION"
+    },
+    {
+      "digest": "1c0eb14111924900b193dc53864f9709ccea86c5487c8fa9832a579f6765ccb9",
+      "rule_id": "RR-SUPPLIER-DETAILS"
+    },
+    {
+      "digest": "8aba2255a1b3e932f278bb53b32c36f47fa53ae2f00dd35388d443ae33b32af8",
+      "rule_id": "RR-TECHNICAL"
+    },
+    {
+      "digest": "7c53796fde360c6d576299cab0b804158eaf5b52db5585a431c4827731111377",
+      "rule_id": "RR-TENDER-SECURITY"
+    },
+    {
+      "digest": "65b0d197f348cdf961ca732de0cb46de79b9d838a0b53c2f98dc9fe0231524ee",
+      "rule_id": "RR-WARRANTY-SUPPORT"
+    }
+  ],
   "schema_version": 1,
   "supported_use": {
     "award_packages": 1,
-    "currency": "One Tender currency",
-    "financial_evaluation": "Lowest evaluated responsive Tender, subject to the approved official rules",
+    "county_residents": {
+      "reason": "This candidate carries no released County-residents document wording or evidence rule; LAW-REG-001 v1.2 LAW12-AC-005 keeps the county basis blocked until verified.",
+      "released": false,
+      "supported_overlap_treatments": [],
+      "treatment": "Separate County-residents restriction, only for a county Procuring Entity with an applicable verified rule, approved overlap treatment and released document wording"
+    },
+    "currency": "KES",
+    "equipment_categories": [
+      "Laptop",
+      "Desktop computer",
+      "Tablet",
+      "Monitor",
+      "Printer",
+      "Scanner",
+      "Network equipment",
+      "Power-protection equipment"
+    ],
+    "financial_evaluation": "Arithmetic and financial evaluation under the lowest-evaluated-responsive treatment",
+    "lotting_indicator": "Single lot",
+    "plan_horizon": "Single year",
+    "price_treatment": "Fixed price",
     "procurement_category": "Goods",
     "procurement_method": "Open Tender",
-    "product": "Laptops, desktops, tablets, peripherals and closely related delivery services",
-    "reservation_categories": [
-      "None"
+    "product": "Straightforward off-the-shelf IT equipment",
+    "product_pattern": "IT Equipment",
+    "related_service_boundary": "Delivery, installation, configuration, testing, training or orientation only when ancillary to the Goods",
+    "related_service_types": [
+      "Delivery",
+      "Installation",
+      "Configuration",
+      "Testing",
+      "Training",
+      "User orientation"
     ],
-    "technical_evaluation": "Pass/fail compliance",
-    "technical_specification": "Approved Requisition document plus a small goods and delivery schedule"
+    "reservation_categories": [
+      "None",
+      "Youth",
+      "Women",
+      "Persons with disabilities"
+    ],
+    "summary": "Goods · Open Tender · single lot · KES · fixed price · straightforward IT equipment",
+    "supplier_submission": "Structured electronic responses, evidence and price schedule",
+    "technical_evaluation": "Mandatory pass/fail checks feeding one Technical compliance gate"
   },
   "template_key": "IT-EQUIPMENT-OPEN-V1",
-  "template_release": "1.0"
+  "template_release": "1.1"
 }

@@ -62,6 +62,9 @@ CAPABILITY_KEYS: tuple[str, ...] = (
 	"validations",
 	"required_rules",
 	"visibility_rules",
+	"supplied_value_sources",
+	"label_parameters",
+	"repetitions",
 )
 
 
@@ -83,11 +86,15 @@ def _check_renderer(assets: ReleaseAssets, capabilities: dict[str, Any]) -> None
 		"validations": {v["validation_id"] for v in profile["validations"]},
 		"required_rules": {r["rule_id"] for r in profile["required_rules"]},
 		"visibility_rules": {r["rule_id"] for r in profile["visibility_rules"]},
+		# release 1.2 vocabulary; a release without it needs none of these
+		"supplied_value_sources": {s["source_id"] for s in profile.get("supplied_value_sources", [])},
+		"label_parameters": {p["parameter"] for p in profile.get("label_parameters", [])},
+		"repetitions": {c["repetition"] for c in profile["compositions"] if c["repetition"] not in ("one", "per_source")},
 	}
 	for kind, ids in needed.items():
 		unsupported = sorted(ids - set(capabilities[kind]))
 		if unsupported:
-			fail("STD_RENDERER_UNSUPPORTED", f"The renderer does not support {kind[:-1]} {unsupported[0]}.", identity=unsupported[0])
+			fail("STD_RENDERER_UNSUPPORTED", f"The renderer does not support {kind.replace('_', ' ')[:-1]} {unsupported[0]}.", identity=unsupported[0])
 
 
 def _resolve_parameters(params: dict[str, Any], facts: dict[str, Any], identity: str) -> dict[str, Any]:
@@ -121,6 +128,17 @@ def _field_contract(fdef: dict[str, Any], facts: dict[str, Any], profile: dict[s
 	return fdef["control_id"], fdef["validation_id"], _resolve_parameters(fdef["validation_parameters"], facts, identity)
 
 
+def _field_view(fdef: dict[str, Any], control_id: str) -> dict[str, Any]:
+	"""The row's field block. The release 1.2 keys appear only when a field
+	declares them, so a release without them compiles byte for byte as before."""
+	view: dict[str, Any] = {"field_key": fdef["field_key"], "label": fdef["label"], "control_id": control_id, "help_text": fdef["help_text"]}
+	if "supplied_value" in fdef:
+		view["supplied_value"] = copy.deepcopy(fdef["supplied_value"])
+	if "label_parameters" in fdef:
+		view["label_parameters"] = list(fdef["label_parameters"])
+	return view
+
+
 def _stable_key(family: str, source_id: str, rule_id: str, field_key: str) -> str:
 	return f"{family}:{source_id}:{rule_id}:{field_key}"
 
@@ -152,6 +170,7 @@ def compile_published_bid_definition(
 	tvid = tender["tender_version_id"]
 	publication = projection["publication"]
 	tasks = {t["task_id"]: t for t in profile["tasks"]}
+	repetitions = {c["composition_id"]: c["repetition"] for c in profile["compositions"]}
 	mappings = assets.mappings
 	identity_rules = {r["source_family"]: r for r in assets.addendum_rules["identity_rules"]}
 	rules = sorted(assets.rules, key=lambda r: (tasks[r["task_id"]]["order"], r["order"], r["rule_id"]))
@@ -240,12 +259,7 @@ def compile_published_bid_definition(
 						"task_id": rule["task_id"],
 						"composition_id": rule["composition_id"],
 						"group_key": group_key,
-						"field": {
-							"field_key": fdef["field_key"],
-							"label": fdef["label"],
-							"control_id": control_id,
-							"help_text": fdef["help_text"],
-						},
+						"field": _field_view(fdef, control_id),
 						"required": required,
 						"visibility": copy.deepcopy(fdef["visibility_rule"]),
 						"validation": {"validation_id": validation_id, "parameters": vparams},
@@ -260,18 +274,22 @@ def compile_published_bid_definition(
 				)
 				group_ids[fdef["field_key"]] = response_id
 				rule_responses.setdefault(rule["rule_id"], []).append(response_id)
-			groups_by_task[rule["task_id"]].append(
-				{
-					"group_key": group_key,
-					"rule_id": rule["rule_id"],
-					"composition_id": rule["composition_id"],
-					"source_family": rule["source_family"],
-					"immutable_source_id": source_id,
-					"published_facts": facts,
-					"source_lineage": copy.deepcopy(instance["lineage"]),
-					"response_ids": list(group_ids.values()),
-				}
-			)
+			group = {
+				"group_key": group_key,
+				"rule_id": rule["rule_id"],
+				"composition_id": rule["composition_id"],
+				"source_family": rule["source_family"],
+				"immutable_source_id": source_id,
+				"published_facts": facts,
+				"source_lineage": copy.deepcopy(instance["lineage"]),
+				"response_ids": list(group_ids.values()),
+			}
+			if repetitions.get(rule["composition_id"]) == "per_arrangement_member":
+				# Bid Submission repeats this group once per member of the bidder's
+				# joint-venture arrangement; each copy keeps these response ids plus
+				# the member's organisation identity (STD-TPL-001 v0.13 §13.6).
+				group["repetition"] = "per_arrangement_member"
+			groups_by_task[rule["task_id"]].append(group)
 			if rule["source_family"] == "price_row":
 				price_rows.append(
 					{

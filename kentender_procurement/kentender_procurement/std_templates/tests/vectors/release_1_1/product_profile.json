@@ -138,17 +138,6 @@
       "task_id": "TASK-COMPANY"
     },
     {
-      "composition_id": "COMP-JV-MEMBER",
-      "label": "Joint-venture member",
-      "permitted_controls": [
-        "CTL-SHORT-TEXT",
-        "CTL-LONG-TEXT",
-        "CTL-INTEGER"
-      ],
-      "repetition": "per_arrangement_member",
-      "task_id": "TASK-COMPANY"
-    },
-    {
       "composition_id": "COMP-LOCKED-DECLARATION",
       "label": "Locked declaration",
       "permitted_controls": [
@@ -181,8 +170,6 @@
       "permitted_controls": [
         "CTL-SINGLE-CHOICE",
         "CTL-SHORT-TEXT",
-        "CTL-MONEY",
-        "CTL-DATE",
         "CTL-EVIDENCE-REFERENCE"
       ],
       "repetition": "one",
@@ -220,11 +207,9 @@
       "composition_id": "COMP-WARRANTY-SUPPORT",
       "label": "Warranty and support",
       "permitted_controls": [
-        "CTL-SINGLE-CHOICE",
         "CTL-YES-NO",
-        "CTL-SHORT-TEXT",
-        "CTL-LONG-TEXT",
         "CTL-INTEGER",
+        "CTL-LONG-TEXT",
         "CTL-EVIDENCE-REFERENCE"
       ],
       "repetition": "one",
@@ -424,16 +409,6 @@
       "purpose": "Award under the published rule. Consumes the prior governed group results; no response maps to it directly."
     }
   ],
-  "label_parameters": [
-    {
-      "meaning": "The tenderer's name from the bidder arrangement: the joint-venture name or the organisation's legal name.",
-      "parameter": "bidder_name"
-    },
-    {
-      "meaning": "The public reference of the effective addendum the row acknowledges.",
-      "parameter": "addendum_reference"
-    }
-  ],
   "product_profile_id": "GOODS-IT-SIMPLE-V1",
   "rejected_use": [
     {
@@ -481,7 +456,7 @@
       "statement": "Any response, validation, composition or mapping the released Bid Workspace renderer does not support"
     }
   ],
-  "release_id": "stdr-09bbfebd-0297-48c0-8ec2-7aa0c2e64495",
+  "release_id": "stdr-0e81b40c-d548-498c-855a-d4f80764af40",
   "renderer_profile_id": "BDS-GOODS-IT-V1",
   "required_rules": [
     {
@@ -550,15 +525,14 @@
     "price_row"
   ],
   "source_selectors": [
-    "SEL-EFFECTIVE-ADDENDA",
+    "SEL-DOCUMENT-PACKAGE",
     "SEL-SUPPLIER",
-    "SEL-ARRANGEMENT-MEMBERS",
     "SEL-DECLARATION",
     "SEL-TENDER-SECURITY",
     "SEL-RESERVATION",
     "SEL-GOODS-GROUPS",
     "SEL-TECHNICAL-REQUIREMENTS",
-    "SEL-WARRANTY-OBLIGATIONS",
+    "SEL-WARRANTY-SUPPORT",
     "SEL-EXPERIENCE-ENTRIES",
     "SEL-RELATED-SERVICES",
     "SEL-ACCEPTANCE-REQUIREMENTS",
@@ -566,53 +540,7 @@
     "SEL-EVIDENCE-ADDITIONAL",
     "SEL-SUBMISSION"
   ],
-  "supplied_value_sources": [
-    {
-      "facts": [
-        "legal_name",
-        "country",
-        "registration_number",
-        "tax_identifier",
-        "registered_address"
-      ],
-      "meaning": "The lead organisation's facts as frozen in the bid's organisation snapshot from its supplier account.",
-      "repetition": "one",
-      "source_id": "SV-ORGANISATION"
-    },
-    {
-      "facts": [
-        "tenderer_name",
-        "arrangement_type",
-        "tender_contact_name",
-        "tender_contact_email",
-        "tender_contact_phone"
-      ],
-      "meaning": "The bidder arrangement created by Start bid: the tenderer's name (the joint-venture name or the organisation's legal name), the arrangement type and the bid's Tender contact.",
-      "repetition": "one",
-      "source_id": "SV-ARRANGEMENT"
-    },
-    {
-      "facts": [
-        "legal_name",
-        "country",
-        "registration_number",
-        "registered_address"
-      ],
-      "meaning": "One joint-venture member's facts from its own supplier account, frozen for this bid.",
-      "repetition": "per_arrangement_member",
-      "source_id": "SV-ARRANGEMENT-MEMBER"
-    },
-    {
-      "facts": [
-        "full_name",
-        "job_title"
-      ],
-      "meaning": "The active Authorised Signatory assignment that signs the bid.",
-      "repetition": "one",
-      "source_id": "SV-SIGNATORY"
-    }
-  ],
-  "supported_renderer_version": "1.1.0",
+  "supported_renderer_version": "1.0.0",
   "supported_use": {
     "award_packages": 1,
     "county_residents": {
@@ -661,9 +589,9 @@
   },
   "tasks": [
     {
-      "label": "Tender documents, clarifications and addenda",
+      "label": "Tender documents and addenda",
       "order": 1,
-      "purpose": "View the current published package. When an addendum is effective, acknowledge that addendum by name; when there is nothing specific to acknowledge, no acknowledgement is asked.",
+      "purpose": "View and acknowledge the current published package.",
       "task_id": "TASK-DOCUMENTS"
     },
     {
@@ -692,7 +620,7 @@
     }
   ],
   "template_key": "IT-EQUIPMENT-OPEN-V1",
-  "template_release": "1.2",
+  "template_release": "1.1",
   "validations": [
     {
       "parameters": {},
@@ -727,7 +655,6 @@
     {
       "parameters": {
         "currency": "text",
-        "maximum": "decimal",
         "minimum": "decimal",
         "scale": "integer"
       },

@@ -1,5 +1,5 @@
 {
-  "definition_digest": "47091332db7023a3886e94c7e1401ee5610a875485917f73bf7eda7c94cff7e7",
+  "definition_digest": "50e6ac979c64f21660da7b4d71ad7a6ecadbda83e203dd9646b6a74449a5980e",
   "eligibility_mappings": [
     {
       "evaluation_group_id": "EVG-ELIGIBILITY",
@@ -49,13 +49,13 @@
     "RR-DECL-FORM-OF-TENDER",
     "RR-DECL-SD1",
     "RR-DECL-SD2",
-    "RR-DOC-ACK",
     "RR-EVIDENCE-AFTER-SALES",
     "RR-EVIDENCE-DATASHEET",
     "RR-EVIDENCE-ELIGIBILITY-DOCUMENTS",
     "RR-EVIDENCE-MANUFACTURER-AUTHORISATION",
     "RR-EXPERIENCE",
     "RR-GOODS-OFFER",
+    "RR-JV-MEMBER",
     "RR-PRICE-GOODS",
     "RR-RESERVATION",
     "RR-SUBMISSION",

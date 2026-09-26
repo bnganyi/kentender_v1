@@ -124,3 +124,24 @@ d3ad2bdabf1f5ca2d57a94010cb3d99f1c16a378e844f56da553f6d815808f84  04_fixture/moh
 **Decision:** PENDING — Gate D (supplier-experience and procurement/legal review of the structured projection) and Gate E (`APPROVE EXACT MANIFEST` / `CORRECT AND RE-REVIEW` / `REJECT PRODUCT RELEASE`). Until then release 1.1 is **Candidate** and **Unavailable**.
 
 **Owner decision OD5 (26 Sep 2026) — supersedes the Decision paragraph above for site use.** The Project Owner: "I don't want this complicated admin overhead regarding approvals and commissioning of templates. It is unnecessary, adds no value and is vexing. Allow development work to contine without this friction. Template release is purely an on and off switch on an affected site." Effect on this record: the gates and the Gate D/E reviews stay recorded as evidence, but none of them decides whether a site may use release 1.1. An intact release installs as **Available** with its site switch **On**; `make std-release-switch STATE=Off|On` turns it off or on for a site. The manifest no longer carries an "Owner approval" verification row or an "approve this exact manifest" item, and the change-report result wording is now *Breaking — not interchangeable with the preceding release* (the manifest's constructed `status` field still reads `Candidate`, as STD-TPL-001 v0.10 §13.9 defines it; FU-01 in `docs/mvp-1-r1/07_std_configuration/STD-TPL-IMP-001_v1_0_FOLLOW_UPS.md` carries the document updates).
+
+## Release 1.2 — construction record under STD-TPL-001 v0.12 and proposed v0.13 (prepared 2026-09-26)
+
+**Authority:** STD-TPL-001 v0.12 (approved by the Project Owner, 26 September 2026) for the first supplier task; STD-TPL-001 v0.13 (proposed 26 September 2026, Project Owner review) for the new release vocabulary; Project Owner decision OD-E (26 September 2026), quoted in `12_bid_submission/reconciliation/definition_to_board_matrix.md`; the owner's template decisions of 26 September 2026 (BDS-CHG-001 v0.8 tracker OD-I) and, on joint-venture members, "Account + bid entries (Recommended)". This record is outside the bundle digest.
+
+| Fact | Value |
+|---|---|
+| Release | `IT-EQUIPMENT-OPEN-V1` 1.2, `release_id` `stdr-09bbfebd-0297-48c0-8ec2-7aa0c2e64495`, renderer `BDS-GOODS-IT-V1` 1.1.0 |
+| Preceding release | 1.1 (`stdr-0e81b40c-d548-498c-855a-d4f80764af40`), snapshot in `05_review/preceding_release.json`; change report result **Breaking — not interchangeable with the preceding release** |
+| Changes | `open_issues.md` items 81–95 |
+| Official source | Unchanged since Gate A (SHA-256 `95726a88642730e85a212389b4257f26970ecf3f23de872578d11172063ae1ee`) |
+| Construction evidence | `make std-release-rebuild` (documents unchanged, so the fixture PDFs were not regenerated): `validate_release.py` 21 of 21 checks Passed; MoH Published Bid Definition 153 response rows |
+| Bundle digest | `7c8328245be0d59783b9b4aa54b8b620960f2903cc478df8ee65da71e240f686` (the manifest-file digest changes with each rebuild's `built_at` and is recorded by the installer) |
+| Release 1.1 | Unchanged; its exact assets are test vectors and still compile byte for byte |
+| Builder | Claude Code, for the Project Owner |
+
+**Gate position:** as for release 1.1 — Source, Applicability, Addenda, Renderer, Fixture and Integrity Passed; the other rows Pending (`05_review/release_gates.json`). Under owner decision OD5 these are evidence only.
+
+**Installation (OD5):** installed Available and switched On on `kentender.midas.com` on 26 September 2026 by `bnganyi` (`make std-release-install`); release 1.1 switched Off by `bnganyi` the same day (`make std-release-switch`). An earlier install of the same `release_id` from bytes superseded before commit (the security amount's maximum, the representative address and the open-issues entries were added afterwards) was removed from the development site and reinstalled from the final bytes; no Tender was bound to it.
+
+**Decision:** none recorded. Under OD5 none is required; the vocabulary awaits Project Owner approval of STD-TPL-001 v0.13.

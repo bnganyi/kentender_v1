@@ -10,7 +10,7 @@
     {
       "affected_asset": "01_source; 06_runtime",
       "check_id": "C02",
-      "message": "Source 95726a886427…; release stdr-0e81b40c-d548-498c-855a-d4f80764af40 IT-EQUIPMENT-OPEN-V1 1.1.",
+      "message": "Source 95726a886427…; release stdr-09bbfebd-0297-48c0-8ec2-7aa0c2e64495 IT-EQUIPMENT-OPEN-V1 1.2.",
       "result": "Passed",
       "title": "Source, schema and release identities"
     },
@@ -45,28 +45,28 @@
     {
       "affected_asset": "06_runtime/product_profile.json",
       "check_id": "C07",
-      "message": "BDS-GOODS-IT-V1 1.0.0 supports every released control and composition; document engine wkhtmltopdf 0.12.6.1 (with patched qt).",
+      "message": "BDS-GOODS-IT-V1 1.1.0 supports every released control and composition; document engine wkhtmltopdf 0.12.6.1 (with patched qt).",
       "result": "Passed",
       "title": "Supported controls, compositions, validations and renderer profile"
     },
     {
       "affected_asset": "06_runtime/downstream_rules.json",
       "check_id": "C08",
-      "message": "24 response rules, 24 mapping rows, no orphan.",
+      "message": "25 response rules, 25 mapping rows, no orphan.",
       "result": "Passed",
       "title": "One mapping for every response rule and no orphan mapping"
     },
     {
       "affected_asset": "06_runtime/downstream_rules.json",
       "check_id": "C09",
-      "message": "Evaluation treatments: {'EVG-ELIGIBILITY': 13, 'EVG-FINANCIAL': 2, 'EVG-TECHNICAL-COMPLIANCE': 7, 'Not evaluated': 2}.",
+      "message": "Evaluation treatments: {'EVG-ELIGIBILITY': 13, 'EVG-FINANCIAL': 2, 'EVG-TECHNICAL-COMPLIANCE': 7, 'Not evaluated': 3}.",
       "result": "Passed",
       "title": "Valid evaluation group and explicit evaluated/not-evaluated treatment"
     },
     {
       "affected_asset": "06_runtime/downstream_rules.json",
       "check_id": "C10",
-      "message": "Contract treatments: {'CD-CONTRACT-PRICE-SCHEDULES': 2, 'CD-GOODS-DELIVERY-SCHEDULE': 1, 'CD-INSPECTION-ACCEPTANCE-SCHEDULE': 1, 'CD-RELATED-SERVICES-SCHEDULE': 1, 'CD-SCC-WARRANTY-SUPPORT': 1, 'CD-TECHNICAL-OBLIGATION-SCHEDULE': 1, 'Not carried forward': 17}.",
+      "message": "Contract treatments: {'CD-CONTRACT-PRICE-SCHEDULES': 2, 'CD-GOODS-DELIVERY-SCHEDULE': 1, 'CD-INSPECTION-ACCEPTANCE-SCHEDULE': 1, 'CD-RELATED-SERVICES-SCHEDULE': 1, 'CD-SCC-WARRANTY-SUPPORT': 1, 'CD-TECHNICAL-OBLIGATION-SCHEDULE': 1, 'Not carried forward': 18}.",
       "result": "Passed",
       "title": "Valid contract destination and explicit carried/not-carried treatment"
     },
@@ -80,7 +80,7 @@
     {
       "affected_asset": "04_fixture/moh_input.json",
       "check_id": "C12",
-      "message": "1 goods line from 2 Requisition items; 11 technical, 5 acceptance and 2 price rows reconcile.",
+      "message": "1 goods line from 2 Requisition items; 11 technical, 6 warranty/support, 5 acceptance and 2 price rows reconcile.",
       "result": "Passed",
       "title": "Goods, service, evidence and price-schedule lineage and reconciliation"
     },
@@ -94,14 +94,14 @@
     {
       "affected_asset": "06_runtime/addendum_identity_rules.json",
       "check_id": "C14",
-      "message": "Label-only change keeps TECH-003; material change needs a fresh response; removal keeps history only; a new mandatory requirement begins incomplete.",
+      "message": "Label-only change keeps TECH-003; material change needs a fresh response; removal keeps history only; a new mandatory requirement begins incomplete; an effective addendum adds its own acknowledgement.",
       "result": "Passed",
       "title": "Addendum identity and migration fixtures"
     },
     {
       "affected_asset": "04_fixture; 06_runtime",
       "check_id": "C15",
-      "message": "MoH Invitation, issued Tender and Published Bid Definition (digest 89a44e6b347b…) reproduce byte for byte.",
+      "message": "MoH Invitation, issued Tender and Published Bid Definition (digest 4418c936fb9d…) reproduce byte for byte.",
       "result": "Passed",
       "title": "Exact reproduction of all MoH expected HTML and JSON outputs"
     },
@@ -122,7 +122,7 @@
     {
       "affected_asset": "pack",
       "check_id": "C18",
-      "message": "input bundle digest 96bc41b29fa8539d1ec8d55c1a896db5d9aa820184b490d07164b22f9a39ef39; constituents product_profile ba54b83bf154…, response_rules ca98cc540644…, downstream_rules 857156d8564b…, addendum_identity_rules 3101e1f0802f…; 142 files.",
+      "message": "input bundle digest 3f561111bc61a99d81ef53755d37f64b566ee47dc1edeeab55bfc935156011f7; constituents product_profile d63bfc379693…, response_rules 005d3c56271f…, downstream_rules 57f01f42035a…, addendum_identity_rules 2401011de31b…; 142 files.",
       "result": "Passed",
       "title": "Constituent SHA-256 values and the candidate bundle digest"
     },
@@ -143,13 +143,13 @@
     {
       "affected_asset": "05_review/release_change_report.json",
       "check_id": "C21",
-      "message": "Compared with release 1.0: 155 changes; Breaking — not interchangeable with the preceding release.",
+      "message": "Compared with release 1.1: 20 changes; Breaking — not interchangeable with the preceding release.",
       "result": "Passed",
       "title": "Generation and internal consistency of the preceding-release change report"
     }
   ],
-  "input_bundle_digest": "96bc41b29fa8539d1ec8d55c1a896db5d9aa820184b490d07164b22f9a39ef39",
-  "release_id": "stdr-0e81b40c-d548-498c-855a-d4f80764af40",
+  "input_bundle_digest": "3f561111bc61a99d81ef53755d37f64b566ee47dc1edeeab55bfc935156011f7",
+  "release_id": "stdr-09bbfebd-0297-48c0-8ec2-7aa0c2e64495",
   "schema_version": 1,
   "summary": {
     "blocking": false,
@@ -157,7 +157,7 @@
     "passed": 21
   },
   "template_key": "IT-EQUIPMENT-OPEN-V1",
-  "template_release": "1.1",
+  "template_release": "1.2",
   "tool_versions": {
     "jinja2": "3.1.6",
     "pdftotext": "pdftotext version 22.02.0",

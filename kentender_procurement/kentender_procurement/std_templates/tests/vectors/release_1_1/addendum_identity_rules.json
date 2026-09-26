@@ -48,9 +48,10 @@
           "copy_prior_answer": true
         }
       ],
-      "fresh_response_notice": "Each addendum must be acknowledged once it becomes effective.",
+      "fresh_response_notice": "A changed package must be acknowledged again.",
       "material_facts": [
-        "addendum_id"
+        "tender_version_id",
+        "effective_addendum_ids"
       ],
       "source_family": "document"
     },
@@ -204,9 +205,12 @@
       ],
       "fresh_response_notice": "A changed warranty or support obligation needs a fresh confirmation.",
       "material_facts": [
-        "comparison",
-        "control",
-        "required_value"
+        "minimum_warranty_months",
+        "onsite_support_required",
+        "maximum_support_response_hours",
+        "manufacturer_support_required",
+        "service_location_constraint",
+        "support_description"
       ],
       "source_family": "warranty_support"
     },
@@ -374,10 +378,10 @@
     "display_label",
     "client_identity"
   ],
-  "release_id": "stdr-09bbfebd-0297-48c0-8ec2-7aa0c2e64495",
+  "release_id": "stdr-0e81b40c-d548-498c-855a-d4f80764af40",
   "renderer_profile_id": "BDS-GOODS-IT-V1",
   "schema_version": 1,
-  "supported_renderer_version": "1.1.0",
+  "supported_renderer_version": "1.0.0",
   "template_key": "IT-EQUIPMENT-OPEN-V1",
-  "template_release": "1.2"
+  "template_release": "1.1"
 }

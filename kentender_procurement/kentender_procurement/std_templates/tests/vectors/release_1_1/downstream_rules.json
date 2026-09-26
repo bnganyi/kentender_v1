@@ -26,17 +26,6 @@
       "award_reporting_treatment": "Not applicable",
       "contract_destination": null,
       "contract_treatment": "Not carried forward",
-      "evaluation_group_id": null,
-      "evaluation_result_rule": "",
-      "evaluation_treatment": "Not evaluated",
-      "mapping_id": "DM-JV-MEMBER",
-      "reason": "Joint-venture member identity and contact facts are administrative; eligibility is assessed through the declarations and eligibility documents, and the Contract names the awarded Tenderer from its verified identity.",
-      "response_rule_id": "RR-JV-MEMBER"
-    },
-    {
-      "award_reporting_treatment": "Not applicable",
-      "contract_destination": null,
-      "contract_treatment": "Not carried forward",
       "evaluation_group_id": "EVG-ELIGIBILITY",
       "evaluation_result_rule": "Pass when the Form of Tender is confirmed and item (k) meets ITT 3.8; otherwise fail with the item named.",
       "evaluation_treatment": "Evaluated",
@@ -277,10 +266,10 @@
     }
   ],
   "product_profile_id": "GOODS-IT-SIMPLE-V1",
-  "release_id": "stdr-09bbfebd-0297-48c0-8ec2-7aa0c2e64495",
+  "release_id": "stdr-0e81b40c-d548-498c-855a-d4f80764af40",
   "renderer_profile_id": "BDS-GOODS-IT-V1",
   "schema_version": 1,
-  "supported_renderer_version": "1.1.0",
+  "supported_renderer_version": "1.0.0",
   "template_key": "IT-EQUIPMENT-OPEN-V1",
-  "template_release": "1.2"
+  "template_release": "1.1"
 }

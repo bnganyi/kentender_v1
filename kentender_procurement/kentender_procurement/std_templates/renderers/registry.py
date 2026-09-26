@@ -40,19 +40,36 @@ _BDS_GOODS_IT_V1_1_0_0_CAPABILITIES: dict[str, Any] = {
 	],
 	"required_rules": ["RQ-ALWAYS", "RQ-NEVER", "RQ-WHEN-FIELD-EQUALS", "RQ-WHEN-ANY-FIELD-EQUALS", "RQ-WHEN-SOURCE-FLAG"],
 	"visibility_rules": ["VS-ALWAYS", "VS-WHEN-FIELD-EQUALS", "VS-WHEN-ANY-FIELD-EQUALS"],
+	"supplied_value_sources": [],
+	"label_parameters": [],
+	"repetitions": [],
 }
 
+#: 1.1.0 (template release 1.2; BDS-CHG-001 v0.8 OD-E/OD-I): 1.0.0 plus the
+#: joint-venture member composition repeated per arrangement member, values
+#: Bid Submission supplies read-only, and label parameters it fills at bid time.
+_BDS_GOODS_IT_V1_1_1_0_CAPABILITIES: dict[str, Any] = {
+	**_BDS_GOODS_IT_V1_1_0_0_CAPABILITIES,
+	"supported_renderer_version": "1.1.0",
+	"compositions": _BDS_GOODS_IT_V1_1_0_0_CAPABILITIES["compositions"] + ["COMP-JV-MEMBER"],
+	"supplied_value_sources": ["SV-ORGANISATION", "SV-ARRANGEMENT", "SV-ARRANGEMENT-MEMBER", "SV-SIGNATORY"],
+	"label_parameters": ["bidder_name", "addendum_reference"],
+	"repetitions": ["per_arrangement_member"],
+}
+
+
+def _document(version: str) -> DocumentAdapter:
+	return DocumentAdapter(
+		renderer_profile_id=BDS_GOODS_IT_V1,
+		supported_renderer_version=version,
+		engine="wkhtmltopdf",
+		engine_version="wkhtmltopdf 0.12.6.1 (with patched qt)",
+		page_options=(("page-size", "A4"), ("margin-top", "25mm"), ("margin-bottom", "25mm"), ("margin-left", "20mm"), ("margin-right", "20mm")),
+	)
+
 REGISTRY: dict[tuple[str, str], dict[str, Any]] = {
-	(BDS_GOODS_IT_V1, "1.0.0"): {
-		"document": DocumentAdapter(
-			renderer_profile_id=BDS_GOODS_IT_V1,
-			supported_renderer_version="1.0.0",
-			engine="wkhtmltopdf",
-			engine_version="wkhtmltopdf 0.12.6.1 (with patched qt)",
-			page_options=(("page-size", "A4"), ("margin-top", "25mm"), ("margin-bottom", "25mm"), ("margin-left", "20mm"), ("margin-right", "20mm")),
-		),
-		"bid_workspace": _BDS_GOODS_IT_V1_1_0_0_CAPABILITIES,
-	},
+	(BDS_GOODS_IT_V1, "1.0.0"): {"document": _document("1.0.0"), "bid_workspace": _BDS_GOODS_IT_V1_1_0_0_CAPABILITIES},
+	(BDS_GOODS_IT_V1, "1.1.0"): {"document": _document("1.1.0"), "bid_workspace": _BDS_GOODS_IT_V1_1_1_0_CAPABILITIES},
 }
 
 

@@ -1,8 +1,19 @@
 {
-  "addendum_identity_rules_digest": "2401011de31b471eeeeff8c85e251de5ee95d92d084b60cef297ab2dfc4ea9d1",
+  "addendum_identity_rules_digest": "3101e1f0802f195f7eb091376fb82090c12a7f9c61a88c7911995a55640ae8c2",
   "bid_definition_id": "PBD-745b48b7f211a7e4d5162fb4",
-  "bundle_digest": "3f561111bc61a99d81ef53755d37f64b566ee47dc1edeeab55bfc935156011f7",
+  "bundle_digest": "96bc41b29fa8539d1ec8d55c1a896db5d9aa820184b490d07164b22f9a39ef39",
   "contract_mappings": [
+    {
+      "award_reporting_treatment": "Not applicable",
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-DOC-ACK",
+      "reason": "Document acknowledgement is administrative; the Tender documents are incorporated by the Contract Agreement, not by this response.",
+      "response_ids": [
+        "RSP-bbea3bd22543a573dcf20f6b"
+      ],
+      "response_rule_id": "RR-DOC-ACK"
+    },
     {
       "award_reporting_treatment": "Not applicable",
       "contract_destination": null,
@@ -12,33 +23,15 @@
       "response_ids": [
         "RSP-f2bed3ccb5b885b64b3a09b6",
         "RSP-5b633c65d5d628d2c24f2c50",
+        "RSP-84cf2548118b21a146a3bb30",
         "RSP-efab11c3789d00baecbb78e5",
         "RSP-c107a1400d8b6b02a9ac937a",
         "RSP-d023d4d3efe0e266d791cfe4",
         "RSP-cd73b77fb3de00a7a872aa5b",
-        "RSP-86d8485254ebb9a5cda69f58",
         "RSP-dd04895f310d632e881b0cd1",
         "RSP-0c45d3c1f07e9010fff67539"
       ],
       "response_rule_id": "RR-SUPPLIER-DETAILS"
-    },
-    {
-      "award_reporting_treatment": "Not applicable",
-      "contract_destination": null,
-      "contract_treatment": "Not carried forward",
-      "mapping_id": "DM-JV-MEMBER",
-      "reason": "Joint-venture member identity and contact facts are administrative; eligibility is assessed through the declarations and eligibility documents, and the Contract names the awarded Tenderer from its verified identity.",
-      "response_ids": [
-        "RSP-debd20e2ed233eab1d3b9e99",
-        "RSP-d7738188454a694762fd85c5",
-        "RSP-726e839367ce0302c515e1fa",
-        "RSP-506c8103d6631398cce7f056",
-        "RSP-4dca2a9c207377701846f21e",
-        "RSP-6290c146a9ed383ec62bcb54",
-        "RSP-1556f8e074ecf2c2ee22f2e5",
-        "RSP-2e41f27fc39993df1935aceb"
-      ],
-      "response_rule_id": "RR-JV-MEMBER"
     },
     {
       "award_reporting_treatment": "Not applicable",
@@ -152,9 +145,6 @@
         "RSP-215ad7e9ae5bf28fe50aba35",
         "RSP-1cb9f081f4cc4d862feeaa58",
         "RSP-fd1c5edddd00848c59c7bdb3",
-        "RSP-6f9f2ef2c50c124f8c74746e",
-        "RSP-620809e2b8f082b43c161701",
-        "RSP-39a630e5fcbbe479410c701b",
         "RSP-1f9bfdeb0c55ee4954a2175a"
       ],
       "response_rule_id": "RR-TENDER-SECURITY"
@@ -233,30 +223,10 @@
       "mapping_id": "DM-WARRANTY-SUPPORT",
       "reason": "The accepted warranty and support commitment becomes the SCC warranty/support schedule.",
       "response_ids": [
-        "RSP-1b5e0d9b1c106f37476d13dd",
-        "RSP-a010bbb4f61f2dc8dea63061",
-        "RSP-a52dd0cd15222a8d72e21c80",
-        "RSP-078e771c33dd3efdf5a0f799",
-        "RSP-4008fb2b3b7b7fb29464b4b3",
-        "RSP-5792a9aa268aa57e4177e4c3",
-        "RSP-ef8df62efb4dac4ff032bf65",
-        "RSP-7fb65b5ed71c5a0f480866dd",
-        "RSP-be01219db3b768769796fdbc",
-        "RSP-fe29f2cdf5f12c68ce1bbc2a",
-        "RSP-3366284df99ad58261f28d71",
-        "RSP-0002abeb89b72a707ef0fa91",
-        "RSP-1be56601f50d6db6a86ae04b",
-        "RSP-c68a29165791cbafcd3808b6",
-        "RSP-d8b4b5d37b4cf83d17c25879",
-        "RSP-d14f7b2c2675c3235771d5dc",
-        "RSP-c4d2c930ca2d288d835b993c",
-        "RSP-ee3324d4429b2ca2dd63d24c",
-        "RSP-90ab0ee7214d340c544530f2",
-        "RSP-647c14d3b7dbc5e91184bb9d",
-        "RSP-c69c92bc5372d97b76cc28ac",
-        "RSP-b445c3a94f2897616ec0c9eb",
-        "RSP-5bc56983118a8e08c98f2a0b",
-        "RSP-ab9cff029eda9526f9333837"
+        "RSP-35e3b67cc72912267866893a",
+        "RSP-c3e81a598a7455ceb49036be",
+        "RSP-1494ef64f310ae83823513fa",
+        "RSP-6af47c9093346377487478f3"
       ],
       "response_rule_id": "RR-WARRANTY-SUPPORT"
     },
@@ -446,11 +416,22 @@
       "text_version": "1"
     }
   ],
-  "definition_digest": "4418c936fb9db2c9c71338bc13c86b8a27acd7d27f5e137c613eda07a917b8e4",
+  "definition_digest": "89a44e6b347b422b6d22d0abf59ffc26e28fb85cab910e35c18db06d67611781",
   "definition_version": 1,
-  "downstream_rules_digest": "57f01f42035a3027580feb8cbce8c07d40715f7423bc3789294a4b9ec22db954",
+  "downstream_rules_digest": "857156d8564b1c83172f7542989c48d7836c9c05c0191c93030cb0e33c3a2a71",
   "effective_addendum_ids": [],
   "evaluation_mappings": [
+    {
+      "evaluation_group_id": null,
+      "evaluation_result_rule": "",
+      "evaluation_treatment": "Not evaluated",
+      "mapping_id": "DM-DOC-ACK",
+      "reason": "Document acknowledgement is administrative; the Tender documents are incorporated by the Contract Agreement, not by this response.",
+      "response_ids": [
+        "RSP-bbea3bd22543a573dcf20f6b"
+      ],
+      "response_rule_id": "RR-DOC-ACK"
+    },
     {
       "evaluation_group_id": null,
       "evaluation_result_rule": "",
@@ -460,33 +441,15 @@
       "response_ids": [
         "RSP-f2bed3ccb5b885b64b3a09b6",
         "RSP-5b633c65d5d628d2c24f2c50",
+        "RSP-84cf2548118b21a146a3bb30",
         "RSP-efab11c3789d00baecbb78e5",
         "RSP-c107a1400d8b6b02a9ac937a",
         "RSP-d023d4d3efe0e266d791cfe4",
         "RSP-cd73b77fb3de00a7a872aa5b",
-        "RSP-86d8485254ebb9a5cda69f58",
         "RSP-dd04895f310d632e881b0cd1",
         "RSP-0c45d3c1f07e9010fff67539"
       ],
       "response_rule_id": "RR-SUPPLIER-DETAILS"
-    },
-    {
-      "evaluation_group_id": null,
-      "evaluation_result_rule": "",
-      "evaluation_treatment": "Not evaluated",
-      "mapping_id": "DM-JV-MEMBER",
-      "reason": "Joint-venture member identity and contact facts are administrative; eligibility is assessed through the declarations and eligibility documents, and the Contract names the awarded Tenderer from its verified identity.",
-      "response_ids": [
-        "RSP-debd20e2ed233eab1d3b9e99",
-        "RSP-d7738188454a694762fd85c5",
-        "RSP-726e839367ce0302c515e1fa",
-        "RSP-506c8103d6631398cce7f056",
-        "RSP-4dca2a9c207377701846f21e",
-        "RSP-6290c146a9ed383ec62bcb54",
-        "RSP-1556f8e074ecf2c2ee22f2e5",
-        "RSP-2e41f27fc39993df1935aceb"
-      ],
-      "response_rule_id": "RR-JV-MEMBER"
     },
     {
       "evaluation_group_id": "EVG-ELIGIBILITY",
@@ -600,9 +563,6 @@
         "RSP-215ad7e9ae5bf28fe50aba35",
         "RSP-1cb9f081f4cc4d862feeaa58",
         "RSP-fd1c5edddd00848c59c7bdb3",
-        "RSP-6f9f2ef2c50c124f8c74746e",
-        "RSP-620809e2b8f082b43c161701",
-        "RSP-39a630e5fcbbe479410c701b",
         "RSP-1f9bfdeb0c55ee4954a2175a"
       ],
       "response_rule_id": "RR-TENDER-SECURITY"
@@ -681,30 +641,10 @@
       "mapping_id": "DM-WARRANTY-SUPPORT",
       "reason": "The accepted warranty and support commitment becomes the SCC warranty/support schedule.",
       "response_ids": [
-        "RSP-1b5e0d9b1c106f37476d13dd",
-        "RSP-a010bbb4f61f2dc8dea63061",
-        "RSP-a52dd0cd15222a8d72e21c80",
-        "RSP-078e771c33dd3efdf5a0f799",
-        "RSP-4008fb2b3b7b7fb29464b4b3",
-        "RSP-5792a9aa268aa57e4177e4c3",
-        "RSP-ef8df62efb4dac4ff032bf65",
-        "RSP-7fb65b5ed71c5a0f480866dd",
-        "RSP-be01219db3b768769796fdbc",
-        "RSP-fe29f2cdf5f12c68ce1bbc2a",
-        "RSP-3366284df99ad58261f28d71",
-        "RSP-0002abeb89b72a707ef0fa91",
-        "RSP-1be56601f50d6db6a86ae04b",
-        "RSP-c68a29165791cbafcd3808b6",
-        "RSP-d8b4b5d37b4cf83d17c25879",
-        "RSP-d14f7b2c2675c3235771d5dc",
-        "RSP-c4d2c930ca2d288d835b993c",
-        "RSP-ee3324d4429b2ca2dd63d24c",
-        "RSP-90ab0ee7214d340c544530f2",
-        "RSP-647c14d3b7dbc5e91184bb9d",
-        "RSP-c69c92bc5372d97b76cc28ac",
-        "RSP-b445c3a94f2897616ec0c9eb",
-        "RSP-5bc56983118a8e08c98f2a0b",
-        "RSP-ab9cff029eda9526f9333837"
+        "RSP-35e3b67cc72912267866893a",
+        "RSP-c3e81a598a7455ceb49036be",
+        "RSP-1494ef64f310ae83823513fa",
+        "RSP-6af47c9093346377487478f3"
       ],
       "response_rule_id": "RR-WARRANTY-SUPPORT"
     },
@@ -906,6 +846,47 @@
   "response_rows": [
     {
       "applicability": "AP-ALWAYS",
+      "composition_id": "COMP-DOC-ACK",
+      "contract_mapping_id": "DM-DOC-ACK",
+      "document_anchor": "complete_tender.html#tender-document",
+      "evaluation_mapping_id": "DM-DOC-ACK",
+      "evidence": null,
+      "field": {
+        "control_id": "CTL-CONFIRMATION",
+        "field_key": "acknowledged",
+        "help_text": "",
+        "label": "I have read the current published Tender documents and every effective addendum."
+      },
+      "group_key": "RR-DOC-ACK/DOCUMENT-PACKAGE",
+      "identity": {
+        "field_key": "acknowledged",
+        "immutable_source_id": "DOCUMENT-PACKAGE",
+        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
+        "rule_id": "RR-DOC-ACK",
+        "source_family": "document"
+      },
+      "material_digest": "382b1fac0eed7ed5f20adab44f1205cecec8fe5ee4a9364f1e4bbc6306c3f033",
+      "required": {
+        "rule_id": "RQ-ALWAYS"
+      },
+      "response_id": "RSP-bbea3bd22543a573dcf20f6b",
+      "sequence": 1,
+      "source_lineage": {
+        "tender_id": "TND-MOH-2027-033",
+        "tender_version_id": "TNDV-MOH-2027-033-V2"
+      },
+      "stable_key": "document:DOCUMENT-PACKAGE:RR-DOC-ACK:acknowledged",
+      "task_id": "TASK-DOCUMENTS",
+      "validation": {
+        "parameters": {},
+        "validation_id": "VAL-CONFIRMED"
+      },
+      "visibility": {
+        "rule_id": "VS-ALWAYS"
+      }
+    },
+    {
+      "applicability": "AP-ALWAYS",
       "composition_id": "COMP-SUPPLIER-DETAILS",
       "contract_mapping_id": "DM-SUPPLIER-DETAILS",
       "document_anchor": "complete_tender.html#form-tenderer-information",
@@ -915,11 +896,7 @@
         "control_id": "CTL-SHORT-TEXT",
         "field_key": "legal_name",
         "help_text": "",
-        "label": "Tenderer's legal name",
-        "supplied_value": {
-          "fact": "tenderer_name",
-          "source_id": "SV-ARRANGEMENT"
-        }
+        "label": "Tenderer's legal name"
       },
       "group_key": "RR-SUPPLIER-DETAILS/SUPPLIER",
       "identity": {
@@ -934,7 +911,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-f2bed3ccb5b885b64b3a09b6",
-      "sequence": 1,
+      "sequence": 2,
       "source_lineage": {
         "tender_id": "TND-MOH-2027-033"
       },
@@ -962,11 +939,7 @@
         "control_id": "CTL-SINGLE-CHOICE",
         "field_key": "bidder_arrangement",
         "help_text": "",
-        "label": "Tendering as",
-        "supplied_value": {
-          "fact": "arrangement_type",
-          "source_id": "SV-ARRANGEMENT"
-        }
+        "label": "Tendering as"
       },
       "group_key": "RR-SUPPLIER-DETAILS/SUPPLIER",
       "identity": {
@@ -981,7 +954,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-5b633c65d5d628d2c24f2c50",
-      "sequence": 2,
+      "sequence": 3,
       "source_lineage": {
         "tender_id": "TND-MOH-2027-033"
       },
@@ -1008,14 +981,57 @@
       "evaluation_mapping_id": "DM-SUPPLIER-DETAILS",
       "evidence": null,
       "field": {
+        "control_id": "CTL-LONG-TEXT",
+        "field_key": "joint_venture_members",
+        "help_text": "",
+        "label": "Joint venture members (legal name, country and year of registration, address and authorised representative of each member)"
+      },
+      "group_key": "RR-SUPPLIER-DETAILS/SUPPLIER",
+      "identity": {
+        "field_key": "joint_venture_members",
+        "immutable_source_id": "SUPPLIER",
+        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
+        "rule_id": "RR-SUPPLIER-DETAILS",
+        "source_family": "supplier"
+      },
+      "material_digest": "d7a75d290d38857730560a7019019486d783ea8d55652d5e2521df52987bcd6f",
+      "required": {
+        "field_key": "bidder_arrangement",
+        "rule_id": "RQ-WHEN-FIELD-EQUALS",
+        "value": "Joint venture"
+      },
+      "response_id": "RSP-84cf2548118b21a146a3bb30",
+      "sequence": 4,
+      "source_lineage": {
+        "tender_id": "TND-MOH-2027-033"
+      },
+      "stable_key": "supplier:SUPPLIER:RR-SUPPLIER-DETAILS:joint_venture_members",
+      "task_id": "TASK-COMPANY",
+      "validation": {
+        "parameters": {
+          "max_length": 4000,
+          "min_length": 20
+        },
+        "validation_id": "VAL-TEXT-LENGTH"
+      },
+      "visibility": {
+        "field_key": "bidder_arrangement",
+        "rule_id": "VS-WHEN-FIELD-EQUALS",
+        "value": "Joint venture"
+      }
+    },
+    {
+      "applicability": "AP-ALWAYS",
+      "composition_id": "COMP-SUPPLIER-DETAILS",
+      "contract_mapping_id": "DM-SUPPLIER-DETAILS",
+      "document_anchor": "complete_tender.html#form-tenderer-information",
+      "evaluation_mapping_id": "DM-SUPPLIER-DETAILS",
+      "evidence": null,
+      "field": {
         "control_id": "CTL-SHORT-TEXT",
         "field_key": "country_of_registration",
         "help_text": "",
-        "label": "Actual or intended country of registration",
-        "supplied_value": {
-          "fact": "country",
-          "source_id": "SV-ORGANISATION"
-        }
+        "label": "Actual or intended country of registration"
       },
       "group_key": "RR-SUPPLIER-DETAILS/SUPPLIER",
       "identity": {
@@ -1030,7 +1046,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-efab11c3789d00baecbb78e5",
-      "sequence": 3,
+      "sequence": 5,
       "source_lineage": {
         "tender_id": "TND-MOH-2027-033"
       },
@@ -1073,7 +1089,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-c107a1400d8b6b02a9ac937a",
-      "sequence": 4,
+      "sequence": 6,
       "source_lineage": {
         "tender_id": "TND-MOH-2027-033"
       },
@@ -1101,11 +1117,7 @@
         "control_id": "CTL-LONG-TEXT",
         "field_key": "registered_address",
         "help_text": "",
-        "label": "Address in the country of registration",
-        "supplied_value": {
-          "fact": "registered_address",
-          "source_id": "SV-ORGANISATION"
-        }
+        "label": "Address in the country of registration"
       },
       "group_key": "RR-SUPPLIER-DETAILS/SUPPLIER",
       "identity": {
@@ -1120,7 +1132,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-d023d4d3efe0e266d791cfe4",
-      "sequence": 5,
+      "sequence": 7,
       "source_lineage": {
         "tender_id": "TND-MOH-2027-033"
       },
@@ -1148,11 +1160,7 @@
         "control_id": "CTL-SHORT-TEXT",
         "field_key": "representative_name",
         "help_text": "",
-        "label": "Authorised representative's name",
-        "supplied_value": {
-          "fact": "tender_contact_name",
-          "source_id": "SV-ARRANGEMENT"
-        }
+        "label": "Authorised representative's name"
       },
       "group_key": "RR-SUPPLIER-DETAILS/SUPPLIER",
       "identity": {
@@ -1167,7 +1175,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-cd73b77fb3de00a7a872aa5b",
-      "sequence": 6,
+      "sequence": 8,
       "source_lineage": {
         "tender_id": "TND-MOH-2027-033"
       },
@@ -1192,57 +1200,10 @@
       "evaluation_mapping_id": "DM-SUPPLIER-DETAILS",
       "evidence": null,
       "field": {
-        "control_id": "CTL-LONG-TEXT",
-        "field_key": "representative_address",
-        "help_text": "",
-        "label": "Authorised representative's address"
-      },
-      "group_key": "RR-SUPPLIER-DETAILS/SUPPLIER",
-      "identity": {
-        "field_key": "representative_address",
-        "immutable_source_id": "SUPPLIER",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-SUPPLIER-DETAILS",
-        "source_family": "supplier"
-      },
-      "material_digest": "e39c03cf1a2b6052162878a781154cde272f2a0eb14c13033b2dd0c5df2ad9d8",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-86d8485254ebb9a5cda69f58",
-      "sequence": 7,
-      "source_lineage": {
-        "tender_id": "TND-MOH-2027-033"
-      },
-      "stable_key": "supplier:SUPPLIER:RR-SUPPLIER-DETAILS:representative_address",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "max_length": 500,
-          "min_length": 10
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-SUPPLIER-DETAILS",
-      "contract_mapping_id": "DM-SUPPLIER-DETAILS",
-      "document_anchor": "complete_tender.html#form-tenderer-information",
-      "evaluation_mapping_id": "DM-SUPPLIER-DETAILS",
-      "evidence": null,
-      "field": {
         "control_id": "CTL-SHORT-TEXT",
         "field_key": "representative_email",
         "help_text": "",
-        "label": "Authorised representative's email",
-        "supplied_value": {
-          "fact": "tender_contact_email",
-          "source_id": "SV-ARRANGEMENT"
-        }
+        "label": "Authorised representative's email"
       },
       "group_key": "RR-SUPPLIER-DETAILS/SUPPLIER",
       "identity": {
@@ -1257,7 +1218,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-dd04895f310d632e881b0cd1",
-      "sequence": 8,
+      "sequence": 9,
       "source_lineage": {
         "tender_id": "TND-MOH-2027-033"
       },
@@ -1285,11 +1246,7 @@
         "control_id": "CTL-SHORT-TEXT",
         "field_key": "representative_telephone",
         "help_text": "",
-        "label": "Authorised representative's telephone",
-        "supplied_value": {
-          "fact": "tender_contact_phone",
-          "source_id": "SV-ARRANGEMENT"
-        }
+        "label": "Authorised representative's telephone"
       },
       "group_key": "RR-SUPPLIER-DETAILS/SUPPLIER",
       "identity": {
@@ -1304,367 +1261,11 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-0c45d3c1f07e9010fff67539",
-      "sequence": 9,
-      "source_lineage": {
-        "tender_id": "TND-MOH-2027-033"
-      },
-      "stable_key": "supplier:SUPPLIER:RR-SUPPLIER-DETAILS:representative_telephone",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "max_length": 40,
-          "min_length": 5
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-JV-MEMBER",
-      "contract_mapping_id": "DM-JV-MEMBER",
-      "document_anchor": "complete_tender.html#form-jv-members",
-      "evaluation_mapping_id": "DM-JV-MEMBER",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-SHORT-TEXT",
-        "field_key": "member_legal_name",
-        "help_text": "",
-        "label": "JV member's name",
-        "supplied_value": {
-          "fact": "legal_name",
-          "source_id": "SV-ARRANGEMENT-MEMBER"
-        }
-      },
-      "group_key": "RR-JV-MEMBER/JV-MEMBER",
-      "identity": {
-        "field_key": "member_legal_name",
-        "immutable_source_id": "JV-MEMBER",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-JV-MEMBER",
-        "source_family": "supplier"
-      },
-      "material_digest": "4c678b10964cd129eff1006ffd1cd86e5d9d70b595ada9b0208dda058eab5e6d",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-debd20e2ed233eab1d3b9e99",
       "sequence": 10,
       "source_lineage": {
         "tender_id": "TND-MOH-2027-033"
       },
-      "stable_key": "supplier:JV-MEMBER:RR-JV-MEMBER:member_legal_name",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "max_length": 160,
-          "min_length": 3
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-JV-MEMBER",
-      "contract_mapping_id": "DM-JV-MEMBER",
-      "document_anchor": "complete_tender.html#form-jv-members",
-      "evaluation_mapping_id": "DM-JV-MEMBER",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-SHORT-TEXT",
-        "field_key": "member_country_of_registration",
-        "help_text": "",
-        "label": "JV member's country of registration",
-        "supplied_value": {
-          "fact": "country",
-          "source_id": "SV-ARRANGEMENT-MEMBER"
-        }
-      },
-      "group_key": "RR-JV-MEMBER/JV-MEMBER",
-      "identity": {
-        "field_key": "member_country_of_registration",
-        "immutable_source_id": "JV-MEMBER",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-JV-MEMBER",
-        "source_family": "supplier"
-      },
-      "material_digest": "c65708cd4b02c4f4a1ffcca32280fa3f8d52acb2ca767dc38f5122e2bf247365",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-d7738188454a694762fd85c5",
-      "sequence": 11,
-      "source_lineage": {
-        "tender_id": "TND-MOH-2027-033"
-      },
-      "stable_key": "supplier:JV-MEMBER:RR-JV-MEMBER:member_country_of_registration",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "max_length": 80,
-          "min_length": 2
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-JV-MEMBER",
-      "contract_mapping_id": "DM-JV-MEMBER",
-      "document_anchor": "complete_tender.html#form-jv-members",
-      "evaluation_mapping_id": "DM-JV-MEMBER",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-INTEGER",
-        "field_key": "member_year_of_registration",
-        "help_text": "",
-        "label": "JV member's year of registration"
-      },
-      "group_key": "RR-JV-MEMBER/JV-MEMBER",
-      "identity": {
-        "field_key": "member_year_of_registration",
-        "immutable_source_id": "JV-MEMBER",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-JV-MEMBER",
-        "source_family": "supplier"
-      },
-      "material_digest": "785b9ab38cd60fc5bdd7dd2b780e07bbdcc7b3f3cc7bdec25d45e72787ca28c6",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-726e839367ce0302c515e1fa",
-      "sequence": 12,
-      "source_lineage": {
-        "tender_id": "TND-MOH-2027-033"
-      },
-      "stable_key": "supplier:JV-MEMBER:RR-JV-MEMBER:member_year_of_registration",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "maximum": 2100,
-          "minimum": 1800
-        },
-        "validation_id": "VAL-INTEGER-RANGE"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-JV-MEMBER",
-      "contract_mapping_id": "DM-JV-MEMBER",
-      "document_anchor": "complete_tender.html#form-jv-members",
-      "evaluation_mapping_id": "DM-JV-MEMBER",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-LONG-TEXT",
-        "field_key": "member_registered_address",
-        "help_text": "",
-        "label": "JV member's legal address in country of registration",
-        "supplied_value": {
-          "fact": "registered_address",
-          "source_id": "SV-ARRANGEMENT-MEMBER"
-        }
-      },
-      "group_key": "RR-JV-MEMBER/JV-MEMBER",
-      "identity": {
-        "field_key": "member_registered_address",
-        "immutable_source_id": "JV-MEMBER",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-JV-MEMBER",
-        "source_family": "supplier"
-      },
-      "material_digest": "e39c03cf1a2b6052162878a781154cde272f2a0eb14c13033b2dd0c5df2ad9d8",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-506c8103d6631398cce7f056",
-      "sequence": 13,
-      "source_lineage": {
-        "tender_id": "TND-MOH-2027-033"
-      },
-      "stable_key": "supplier:JV-MEMBER:RR-JV-MEMBER:member_registered_address",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "max_length": 500,
-          "min_length": 10
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-JV-MEMBER",
-      "contract_mapping_id": "DM-JV-MEMBER",
-      "document_anchor": "complete_tender.html#form-jv-members",
-      "evaluation_mapping_id": "DM-JV-MEMBER",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-SHORT-TEXT",
-        "field_key": "member_representative_name",
-        "help_text": "",
-        "label": "JV member's authorised representative's name"
-      },
-      "group_key": "RR-JV-MEMBER/JV-MEMBER",
-      "identity": {
-        "field_key": "member_representative_name",
-        "immutable_source_id": "JV-MEMBER",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-JV-MEMBER",
-        "source_family": "supplier"
-      },
-      "material_digest": "4c678b10964cd129eff1006ffd1cd86e5d9d70b595ada9b0208dda058eab5e6d",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-4dca2a9c207377701846f21e",
-      "sequence": 14,
-      "source_lineage": {
-        "tender_id": "TND-MOH-2027-033"
-      },
-      "stable_key": "supplier:JV-MEMBER:RR-JV-MEMBER:member_representative_name",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "max_length": 160,
-          "min_length": 3
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-JV-MEMBER",
-      "contract_mapping_id": "DM-JV-MEMBER",
-      "document_anchor": "complete_tender.html#form-jv-members",
-      "evaluation_mapping_id": "DM-JV-MEMBER",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-LONG-TEXT",
-        "field_key": "member_representative_address",
-        "help_text": "",
-        "label": "JV member's authorised representative's address"
-      },
-      "group_key": "RR-JV-MEMBER/JV-MEMBER",
-      "identity": {
-        "field_key": "member_representative_address",
-        "immutable_source_id": "JV-MEMBER",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-JV-MEMBER",
-        "source_family": "supplier"
-      },
-      "material_digest": "e39c03cf1a2b6052162878a781154cde272f2a0eb14c13033b2dd0c5df2ad9d8",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-6290c146a9ed383ec62bcb54",
-      "sequence": 15,
-      "source_lineage": {
-        "tender_id": "TND-MOH-2027-033"
-      },
-      "stable_key": "supplier:JV-MEMBER:RR-JV-MEMBER:member_representative_address",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "max_length": 500,
-          "min_length": 10
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-JV-MEMBER",
-      "contract_mapping_id": "DM-JV-MEMBER",
-      "document_anchor": "complete_tender.html#form-jv-members",
-      "evaluation_mapping_id": "DM-JV-MEMBER",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-SHORT-TEXT",
-        "field_key": "member_representative_email",
-        "help_text": "",
-        "label": "JV member's authorised representative's email"
-      },
-      "group_key": "RR-JV-MEMBER/JV-MEMBER",
-      "identity": {
-        "field_key": "member_representative_email",
-        "immutable_source_id": "JV-MEMBER",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-JV-MEMBER",
-        "source_family": "supplier"
-      },
-      "material_digest": "4b07cdee7badd1fb55f37500f469a0287ae44afc05120b45dc1d53acacf9a96f",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-1556f8e074ecf2c2ee22f2e5",
-      "sequence": 16,
-      "source_lineage": {
-        "tender_id": "TND-MOH-2027-033"
-      },
-      "stable_key": "supplier:JV-MEMBER:RR-JV-MEMBER:member_representative_email",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "max_length": 200,
-          "min_length": 5
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-JV-MEMBER",
-      "contract_mapping_id": "DM-JV-MEMBER",
-      "document_anchor": "complete_tender.html#form-jv-members",
-      "evaluation_mapping_id": "DM-JV-MEMBER",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-SHORT-TEXT",
-        "field_key": "member_representative_telephone",
-        "help_text": "",
-        "label": "JV member's authorised representative's telephone"
-      },
-      "group_key": "RR-JV-MEMBER/JV-MEMBER",
-      "identity": {
-        "field_key": "member_representative_telephone",
-        "immutable_source_id": "JV-MEMBER",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-JV-MEMBER",
-        "source_family": "supplier"
-      },
-      "material_digest": "ea7c76c07220b64b913452b2c66139d55c15cfea766158ab3eec72a1250f6635",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-2e41f27fc39993df1935aceb",
-      "sequence": 17,
-      "source_lineage": {
-        "tender_id": "TND-MOH-2027-033"
-      },
-      "stable_key": "supplier:JV-MEMBER:RR-JV-MEMBER:member_representative_telephone",
+      "stable_key": "supplier:SUPPLIER:RR-SUPPLIER-DETAILS:representative_telephone",
       "task_id": "TASK-COMPANY",
       "validation": {
         "parameters": {
@@ -1703,7 +1304,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-7afb97268dc3d4df7c9f5455",
-      "sequence": 18,
+      "sequence": 11,
       "source_lineage": {
         "form_id": "FORM-TENDER"
       },
@@ -1746,7 +1347,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-a4d774a6fe067a06250b9cd0",
-      "sequence": 19,
+      "sequence": 12,
       "source_lineage": {
         "form_id": "FORM-TENDER"
       },
@@ -1791,7 +1392,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-f6a134e8bdc7704730c3785a",
-      "sequence": 20,
+      "sequence": 13,
       "source_lineage": {
         "form_id": "FORM-TENDER"
       },
@@ -1834,7 +1435,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-91e190b0afb7b579b6c0f84f",
-      "sequence": 21,
+      "sequence": 14,
       "source_lineage": {
         "form_id": "FORM-TENDER"
       },
@@ -1874,7 +1475,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-f88e0a8260d036277f1cf31d",
-      "sequence": 22,
+      "sequence": 15,
       "source_lineage": {
         "form_id": "FORM-CITD"
       },
@@ -1921,7 +1522,7 @@
         "value": "Consulted with one or more competitors"
       },
       "response_id": "RSP-ff3d4280c67ddd5eb6a7a251",
-      "sequence": 23,
+      "sequence": 16,
       "source_lineage": {
         "form_id": "FORM-CITD"
       },
@@ -1966,7 +1567,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-fbe19d74b1d2c657e0138756",
-      "sequence": 24,
+      "sequence": 17,
       "source_lineage": {
         "form_id": "FORM-CITD"
       },
@@ -2006,7 +1607,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-69ccbe831e0a2d2c64d05963",
-      "sequence": 25,
+      "sequence": 18,
       "source_lineage": {
         "form_id": "FORM-SD1"
       },
@@ -2046,7 +1647,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-ea063de3ee0c703f945657fb",
-      "sequence": 26,
+      "sequence": 19,
       "source_lineage": {
         "form_id": "FORM-SD2"
       },
@@ -2086,7 +1687,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-c27be5cf735fb918cb1e4b20",
-      "sequence": 27,
+      "sequence": 20,
       "source_lineage": {
         "form_id": "FORM-COE"
       },
@@ -2126,7 +1727,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-093ee407bfafa9ba9c698b2c",
-      "sequence": 28,
+      "sequence": 21,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -2172,7 +1773,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-50ac4bee47c7ed2d94a218b3",
-      "sequence": 29,
+      "sequence": 22,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -2215,7 +1816,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-bd8c53548c3fcdadf3f1ecc8",
-      "sequence": 30,
+      "sequence": 23,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -2258,7 +1859,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-64c7f8bc930d4cbff051b683",
-      "sequence": 31,
+      "sequence": 24,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -2302,7 +1903,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-c5d1dd34ecdf7273d8ac8f21",
-      "sequence": 32,
+      "sequence": 25,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -2349,7 +1950,7 @@
         "value": "Yes"
       },
       "response_id": "RSP-dcfc23710145c2288458b56d",
-      "sequence": 33,
+      "sequence": 26,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -2394,7 +1995,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-bc95bd521129302f9927456e",
-      "sequence": 34,
+      "sequence": 27,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -2439,7 +2040,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-dc4e9ce473c3a8aa10114ab3",
-      "sequence": 35,
+      "sequence": 28,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -2484,7 +2085,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-372991f2248ff3298633a2cb",
-      "sequence": 36,
+      "sequence": 29,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -2529,7 +2130,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-acafa055a797c5322d8dc8c7",
-      "sequence": 37,
+      "sequence": 30,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -2574,7 +2175,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-b4dab5e3a566cfb82a7008d9",
-      "sequence": 38,
+      "sequence": 31,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -2619,7 +2220,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-512413386bb5db433e4ffcd4",
-      "sequence": 39,
+      "sequence": 32,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -2664,7 +2265,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-fe804dbcd4ed71667f330c9e",
-      "sequence": 40,
+      "sequence": 33,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -2709,7 +2310,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-f71198787c3e0b4d0dd4629d",
-      "sequence": 41,
+      "sequence": 34,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -2754,7 +2355,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-b0e12c0444fd35d390172129",
-      "sequence": 42,
+      "sequence": 35,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -2811,7 +2412,7 @@
         "value": "Yes"
       },
       "response_id": "RSP-35a75cd2e74adb6907241007",
-      "sequence": 43,
+      "sequence": 36,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -2866,7 +2467,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-c7cc7e0b6106f0e7ae8836f4",
-      "sequence": 44,
+      "sequence": 37,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -2906,7 +2507,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-8d0b0d393ee48bccf21a75f8",
-      "sequence": 45,
+      "sequence": 38,
       "source_lineage": {
         "requisition_id": "REQ-MOH-2027-033-001",
         "rule_snapshot_ids": [
@@ -2953,7 +2554,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-de77a32296542afb88b7408e",
-      "sequence": 46,
+      "sequence": 39,
       "source_lineage": {
         "requisition_id": "REQ-MOH-2027-033-001",
         "rule_snapshot_ids": [
@@ -2999,7 +2600,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-e6187d0fd1b990982a013a52",
-      "sequence": 47,
+      "sequence": 40,
       "source_lineage": {
         "requisition_id": "REQ-MOH-2027-033-001",
         "rule_snapshot_ids": [
@@ -3050,7 +2651,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-b0704b409ae8b48e8a1761ac",
-      "sequence": 48,
+      "sequence": 41,
       "source_lineage": {
         "requisition_id": "REQ-MOH-2027-033-001",
         "rule_snapshot_ids": [
@@ -3096,7 +2697,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-f6ae32199a02b0802922bbbc",
-      "sequence": 49,
+      "sequence": 42,
       "source_lineage": {
         "requisition_id": "REQ-MOH-2027-033-001",
         "rule_snapshot_ids": [
@@ -3139,7 +2740,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-215ad7e9ae5bf28fe50aba35",
-      "sequence": 50,
+      "sequence": 43,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -3184,7 +2785,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-1cb9f081f4cc4d862feeaa58",
-      "sequence": 51,
+      "sequence": 44,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -3227,7 +2828,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-fd1c5edddd00848c59c7bdb3",
-      "sequence": 52,
+      "sequence": 45,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -3242,143 +2843,6 @@
       },
       "visibility": {
         "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-TENDER-SECURITY-REQUIRED",
-      "composition_id": "COMP-TENDER-SECURITY",
-      "contract_mapping_id": "DM-TENDER-SECURITY",
-      "document_anchor": "complete_tender.html#form-tender-security",
-      "evaluation_mapping_id": "DM-TENDER-SECURITY",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-MONEY",
-        "field_key": "instrument_amount",
-        "help_text": "",
-        "label": "Amount of the instrument"
-      },
-      "group_key": "RR-TENDER-SECURITY/TENDER-SECURITY",
-      "identity": {
-        "field_key": "instrument_amount",
-        "immutable_source_id": "TENDER-SECURITY",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-TENDER-SECURITY",
-        "source_family": "tender_security"
-      },
-      "material_digest": "d7b0effb69614f51b37054f873cc40bfbb0259ac2c3d1ec2898da95298d904f1",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-6f9f2ef2c50c124f8c74746e",
-      "sequence": 53,
-      "source_lineage": {
-        "tender_version_id": "TNDV-MOH-2027-033-V2"
-      },
-      "stable_key": "tender_security:TENDER-SECURITY:RR-TENDER-SECURITY:instrument_amount",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "currency": "KES",
-          "maximum": "500000.00",
-          "minimum": "500000.00",
-          "scale": 2
-        },
-        "validation_id": "VAL-MONEY"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-TENDER-SECURITY-REQUIRED",
-      "composition_id": "COMP-TENDER-SECURITY",
-      "contract_mapping_id": "DM-TENDER-SECURITY",
-      "document_anchor": "complete_tender.html#form-tender-security",
-      "evaluation_mapping_id": "DM-TENDER-SECURITY",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-DATE",
-        "field_key": "bank_guarantee_valid_until",
-        "help_text": "",
-        "label": "Guarantee valid until"
-      },
-      "group_key": "RR-TENDER-SECURITY/TENDER-SECURITY",
-      "identity": {
-        "field_key": "bank_guarantee_valid_until",
-        "immutable_source_id": "TENDER-SECURITY",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-TENDER-SECURITY",
-        "source_family": "tender_security"
-      },
-      "material_digest": "e6ce2164ddda35f074af5267c22f3ba8f228316c0ab9f2703f3f2ce544aac0cf",
-      "required": {
-        "field_key": "security_form",
-        "rule_id": "RQ-WHEN-FIELD-EQUALS",
-        "value": "Demand Bank Guarantee"
-      },
-      "response_id": "RSP-620809e2b8f082b43c161701",
-      "sequence": 54,
-      "source_lineage": {
-        "tender_version_id": "TNDV-MOH-2027-033-V2"
-      },
-      "stable_key": "tender_security:TENDER-SECURITY:RR-TENDER-SECURITY:bank_guarantee_valid_until",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "not_before": "2027-11-02"
-        },
-        "validation_id": "VAL-DATE-RANGE"
-      },
-      "visibility": {
-        "field_key": "security_form",
-        "rule_id": "VS-WHEN-FIELD-EQUALS",
-        "value": "Demand Bank Guarantee"
-      }
-    },
-    {
-      "applicability": "AP-TENDER-SECURITY-REQUIRED",
-      "composition_id": "COMP-TENDER-SECURITY",
-      "contract_mapping_id": "DM-TENDER-SECURITY",
-      "document_anchor": "complete_tender.html#form-tender-security",
-      "evaluation_mapping_id": "DM-TENDER-SECURITY",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-DATE",
-        "field_key": "insurance_guarantee_valid_until",
-        "help_text": "",
-        "label": "Guarantee valid until"
-      },
-      "group_key": "RR-TENDER-SECURITY/TENDER-SECURITY",
-      "identity": {
-        "field_key": "insurance_guarantee_valid_until",
-        "immutable_source_id": "TENDER-SECURITY",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-TENDER-SECURITY",
-        "source_family": "tender_security"
-      },
-      "material_digest": "be181d3cf256dc29f2f85f4e8dbf37653479344ae9de837aeeeb9e0e386c0bee",
-      "required": {
-        "field_key": "security_form",
-        "rule_id": "RQ-WHEN-FIELD-EQUALS",
-        "value": "Insurance Guarantee"
-      },
-      "response_id": "RSP-39a630e5fcbbe479410c701b",
-      "sequence": 55,
-      "source_lineage": {
-        "tender_version_id": "TNDV-MOH-2027-033-V2"
-      },
-      "stable_key": "tender_security:TENDER-SECURITY:RR-TENDER-SECURITY:insurance_guarantee_valid_until",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "not_before": "2027-10-31"
-        },
-        "validation_id": "VAL-DATE-RANGE"
-      },
-      "visibility": {
-        "field_key": "security_form",
-        "rule_id": "VS-WHEN-FIELD-EQUALS",
-        "value": "Insurance Guarantee"
       }
     },
     {
@@ -3413,7 +2877,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-1f9bfdeb0c55ee4954a2175a",
-      "sequence": 56,
+      "sequence": 46,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -3456,7 +2920,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-356a889bec3dd067d0b1906b",
-      "sequence": 57,
+      "sequence": 47,
       "source_lineage": {
         "source_lineage": [
           {
@@ -3514,7 +2978,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-a62b4ad3b2a8902b76359341",
-      "sequence": 58,
+      "sequence": 48,
       "source_lineage": {
         "source_lineage": [
           {
@@ -3577,7 +3041,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-c34c8172723602c0491c1e2d",
-      "sequence": 59,
+      "sequence": 49,
       "source_lineage": {
         "source_lineage": [
           {
@@ -3635,7 +3099,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-2320ec1a1ede80ad40d93f9a",
-      "sequence": 60,
+      "sequence": 50,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -3682,7 +3146,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-29b9ae450e7aeebd94fc732a",
-      "sequence": 61,
+      "sequence": 51,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -3729,7 +3193,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-0fb7f95179a3e74f0937de54",
-      "sequence": 62,
+      "sequence": 52,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -3780,7 +3244,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-4877e59f1f8121cd04442e1b",
-      "sequence": 63,
+      "sequence": 53,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -3825,7 +3289,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-b9983bad34d1ba7d301254c2",
-      "sequence": 64,
+      "sequence": 54,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -3872,7 +3336,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-cfedac2b9bf2c73da91886d2",
-      "sequence": 65,
+      "sequence": 55,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -3919,7 +3383,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-d27f20a9f3eff078ab56e4f1",
-      "sequence": 66,
+      "sequence": 56,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -3970,7 +3434,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-569369898dd19448b5737e30",
-      "sequence": 67,
+      "sequence": 57,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4015,7 +3479,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-96f0a3cc78502ae406c574b4",
-      "sequence": 68,
+      "sequence": 58,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4062,7 +3526,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-2c2c3616610a3518ede190eb",
-      "sequence": 69,
+      "sequence": 59,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4107,7 +3571,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-00b292b378caa9453e28b2cd",
-      "sequence": 70,
+      "sequence": 60,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4158,7 +3622,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-f347feb908174f3edaee3ccd",
-      "sequence": 71,
+      "sequence": 61,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4203,7 +3667,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-b777b85216bfc7a8f9106b7e",
-      "sequence": 72,
+      "sequence": 62,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4250,7 +3714,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-a47615c88eba9bb39180915e",
-      "sequence": 73,
+      "sequence": 63,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4295,7 +3759,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-2186056fe1fb5ac5779a785a",
-      "sequence": 74,
+      "sequence": 64,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4346,7 +3810,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-edfdf55bb2c053c9ff56418c",
-      "sequence": 75,
+      "sequence": 65,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4391,7 +3855,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-bf4807f4818e03f87f6fe03c",
-      "sequence": 76,
+      "sequence": 66,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4438,7 +3902,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-cdc6e3077ef9c5327985e2a1",
-      "sequence": 77,
+      "sequence": 67,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4486,7 +3950,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-9ea834ee92b34e9ca1ec3794",
-      "sequence": 78,
+      "sequence": 68,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4537,7 +4001,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-445d3ece384c5cb0f5c48fa9",
-      "sequence": 79,
+      "sequence": 69,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4582,7 +4046,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-3edeeb952c047cb0bf02c613",
-      "sequence": 80,
+      "sequence": 70,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4629,7 +4093,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-640a8b26108f4d5581d4a8b2",
-      "sequence": 81,
+      "sequence": 71,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4675,7 +4139,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-c80b662cdb7661ca44f589a7",
-      "sequence": 82,
+      "sequence": 72,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4726,7 +4190,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-e045cb8784cdf3a183bad6b2",
-      "sequence": 83,
+      "sequence": 73,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4771,7 +4235,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-bc512de811b2efc0e4cd839f",
-      "sequence": 84,
+      "sequence": 74,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4818,7 +4282,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-f5830de7ebdc1936567ad9b1",
-      "sequence": 85,
+      "sequence": 75,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4864,7 +4328,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-3d94661b6bbd121404242071",
-      "sequence": 86,
+      "sequence": 76,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4915,7 +4379,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-5115764a3fbf85b8e71b360f",
-      "sequence": 87,
+      "sequence": 77,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4960,7 +4424,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-746ca211f6ef3981a5e35f42",
-      "sequence": 88,
+      "sequence": 78,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5007,7 +4471,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-a07ba66fbe3b111ab38db253",
-      "sequence": 89,
+      "sequence": 79,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5052,7 +4516,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-565794e4af806c414ecd6022",
-      "sequence": 90,
+      "sequence": 80,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5103,7 +4567,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-a19d08f9b8579c6b9598b962",
-      "sequence": 91,
+      "sequence": 81,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5148,7 +4612,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-25935d9facb11f32ff67ba5f",
-      "sequence": 92,
+      "sequence": 82,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5195,7 +4659,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-2372fd31a73b9ed3483079f8",
-      "sequence": 93,
+      "sequence": 83,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5240,7 +4704,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-633062d60144c46b6a96d89c",
-      "sequence": 94,
+      "sequence": 84,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5291,7 +4755,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-b9480512e0c4aec19e140ad3",
-      "sequence": 95,
+      "sequence": 85,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5336,7 +4800,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-1fa7cbd9a7f18e766f69697e",
-      "sequence": 96,
+      "sequence": 86,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5383,7 +4847,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-16aad8ee8965e5eb718a60f5",
-      "sequence": 97,
+      "sequence": 87,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5435,7 +4899,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-11db5338e391b1fe7b418633",
-      "sequence": 98,
+      "sequence": 88,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5486,7 +4950,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-3fbc841c0dd57f6f0a1d9054",
-      "sequence": 99,
+      "sequence": 89,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5531,7 +4995,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-ee204afb3f9c18ff44cae968",
-      "sequence": 100,
+      "sequence": 90,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5578,7 +5042,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-8b7603c51738c4594a21b1af",
-      "sequence": 101,
+      "sequence": 91,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5630,7 +5094,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-aa84dc68d5299b848a0d02f3",
-      "sequence": 102,
+      "sequence": 92,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5681,7 +5145,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-ec106b1f8ec45ea21b520b94",
-      "sequence": 103,
+      "sequence": 93,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5708,260 +5172,29 @@
       "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
       "evidence": null,
       "field": {
-        "control_id": "CTL-SINGLE-CHOICE",
-        "field_key": "compliance",
-        "help_text": "",
-        "label": "Compliance"
-      },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-MINIMUM-WARRANTY",
-      "identity": {
-        "field_key": "compliance",
-        "immutable_source_id": "WS-MINIMUM-WARRANTY",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-WARRANTY-SUPPORT",
-        "source_family": "warranty_support"
-      },
-      "material_digest": "e06514510e2ca9693f1105782913998b924f1d8968d619d28827cd1823b84f7b",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-1b5e0d9b1c106f37476d13dd",
-      "sequence": 104,
-      "source_lineage": {
-        "obligation_key": "minimum_warranty_months",
-        "requisition_id": "REQ-MOH-2027-033-001"
-      },
-      "stable_key": "warranty_support:WS-MINIMUM-WARRANTY:RR-WARRANTY-SUPPORT:compliance",
-      "task_id": "TASK-REQUIREMENTS",
-      "validation": {
-        "parameters": {
-          "options": [
-            "Comply",
-            "Do not comply"
-          ]
-        },
-        "validation_id": "VAL-OPTION-IN-LIST"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-WARRANTY-SUPPORT",
-      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
-      "document_anchor": "complete_tender.html#schedule-warranty-support",
-      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-INTEGER",
-        "field_key": "offered_value",
-        "help_text": "",
-        "label": "Offered value"
-      },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-MINIMUM-WARRANTY",
-      "identity": {
-        "field_key": "offered_value",
-        "immutable_source_id": "WS-MINIMUM-WARRANTY",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-WARRANTY-SUPPORT",
-        "source_family": "warranty_support"
-      },
-      "material_digest": "e39fe207f6fdc1e869c2222949dffb5858e2e28f8a118449ee5ed599f2ad9e05",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-a010bbb4f61f2dc8dea63061",
-      "sequence": 105,
-      "source_lineage": {
-        "obligation_key": "minimum_warranty_months",
-        "requisition_id": "REQ-MOH-2027-033-001"
-      },
-      "stable_key": "warranty_support:WS-MINIMUM-WARRANTY:RR-WARRANTY-SUPPORT:offered_value",
-      "task_id": "TASK-REQUIREMENTS",
-      "validation": {
-        "parameters": {
-          "maximum": 1000000,
-          "minimum": 0
-        },
-        "validation_id": "VAL-INTEGER-RANGE"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-WARRANTY-SUPPORT",
-      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
-      "document_anchor": "complete_tender.html#schedule-warranty-support",
-      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-LONG-TEXT",
-        "field_key": "comment",
-        "help_text": "",
-        "label": "Comment"
-      },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-MINIMUM-WARRANTY",
-      "identity": {
-        "field_key": "comment",
-        "immutable_source_id": "WS-MINIMUM-WARRANTY",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-WARRANTY-SUPPORT",
-        "source_family": "warranty_support"
-      },
-      "material_digest": "4f8f361282b4bdfd031441506a45ed4b9c51df834ad3e3b65665b2d969cbe7bc",
-      "required": {
-        "rule_id": "RQ-NEVER"
-      },
-      "response_id": "RSP-a52dd0cd15222a8d72e21c80",
-      "sequence": 106,
-      "source_lineage": {
-        "obligation_key": "minimum_warranty_months",
-        "requisition_id": "REQ-MOH-2027-033-001"
-      },
-      "stable_key": "warranty_support:WS-MINIMUM-WARRANTY:RR-WARRANTY-SUPPORT:comment",
-      "task_id": "TASK-REQUIREMENTS",
-      "validation": {
-        "parameters": {
-          "max_length": 500,
-          "min_length": 0
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-WARRANTY-SUPPORT",
-      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
-      "document_anchor": "complete_tender.html#schedule-warranty-support",
-      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
-      "evidence": {
-        "evidence_type": "Warranty or support document",
-        "linkage_target": "this_response",
-        "mandatory": false,
-        "maximum": 5,
-        "minimum": 0
-      },
-      "field": {
-        "control_id": "CTL-EVIDENCE-REFERENCE",
-        "field_key": "evidence",
-        "help_text": "",
-        "label": "Warranty or support evidence"
-      },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-MINIMUM-WARRANTY",
-      "identity": {
-        "field_key": "evidence",
-        "immutable_source_id": "WS-MINIMUM-WARRANTY",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-WARRANTY-SUPPORT",
-        "source_family": "warranty_support"
-      },
-      "material_digest": "87e51a457c188139af2949e3479bf7497460aa43f4919381262bab8da58d343b",
-      "required": {
-        "rule_id": "RQ-NEVER"
-      },
-      "response_id": "RSP-078e771c33dd3efdf5a0f799",
-      "sequence": 107,
-      "source_lineage": {
-        "obligation_key": "minimum_warranty_months",
-        "requisition_id": "REQ-MOH-2027-033-001"
-      },
-      "stable_key": "warranty_support:WS-MINIMUM-WARRANTY:RR-WARRANTY-SUPPORT:evidence",
-      "task_id": "TASK-REQUIREMENTS",
-      "validation": {
-        "parameters": {
-          "maximum": 5,
-          "minimum": 0
-        },
-        "validation_id": "VAL-EVIDENCE-COUNT"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-WARRANTY-SUPPORT",
-      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
-      "document_anchor": "complete_tender.html#schedule-warranty-support",
-      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-SINGLE-CHOICE",
-        "field_key": "compliance",
-        "help_text": "",
-        "label": "Compliance"
-      },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-ONSITE-SUPPORT",
-      "identity": {
-        "field_key": "compliance",
-        "immutable_source_id": "WS-ONSITE-SUPPORT",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-WARRANTY-SUPPORT",
-        "source_family": "warranty_support"
-      },
-      "material_digest": "87e258c1c1813e805955148ec59f162ecd3057a6d44be0c0c816ac2c73177738",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-4008fb2b3b7b7fb29464b4b3",
-      "sequence": 108,
-      "source_lineage": {
-        "obligation_key": "onsite_support_required",
-        "requisition_id": "REQ-MOH-2027-033-001"
-      },
-      "stable_key": "warranty_support:WS-ONSITE-SUPPORT:RR-WARRANTY-SUPPORT:compliance",
-      "task_id": "TASK-REQUIREMENTS",
-      "validation": {
-        "parameters": {
-          "options": [
-            "Comply",
-            "Do not comply"
-          ]
-        },
-        "validation_id": "VAL-OPTION-IN-LIST"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-WARRANTY-SUPPORT",
-      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
-      "document_anchor": "complete_tender.html#schedule-warranty-support",
-      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
-      "evidence": null,
-      "field": {
         "control_id": "CTL-YES-NO",
-        "field_key": "offered_value",
+        "field_key": "confirmation",
         "help_text": "",
-        "label": "Offered value"
+        "label": "We confirm the published minimum warranty and support obligations will be met."
       },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-ONSITE-SUPPORT",
+      "group_key": "RR-WARRANTY-SUPPORT/WARRANTY-SUPPORT",
       "identity": {
-        "field_key": "offered_value",
-        "immutable_source_id": "WS-ONSITE-SUPPORT",
+        "field_key": "confirmation",
+        "immutable_source_id": "WARRANTY-SUPPORT",
         "published_tender_version_id": "TNDV-MOH-2027-033-V2",
         "rule_id": "RR-WARRANTY-SUPPORT",
         "source_family": "warranty_support"
       },
-      "material_digest": "cb2959eeb9d71070345e6682e59146b8a1273e5551c648d673c7429b80aeeac8",
+      "material_digest": "82dc5c7be94a4c99e047110d269e3e5d2a9744b8c24dd72d28ab568ed69203fb",
       "required": {
         "rule_id": "RQ-ALWAYS"
       },
-      "response_id": "RSP-5792a9aa268aa57e4177e4c3",
-      "sequence": 109,
+      "response_id": "RSP-35e3b67cc72912267866893a",
+      "sequence": 94,
       "source_lineage": {
-        "obligation_key": "onsite_support_required",
         "requisition_id": "REQ-MOH-2027-033-001"
       },
-      "stable_key": "warranty_support:WS-ONSITE-SUPPORT:RR-WARRANTY-SUPPORT:offered_value",
+      "stable_key": "warranty_support:WARRANTY-SUPPORT:RR-WARRANTY-SUPPORT:confirmation",
       "task_id": "TASK-REQUIREMENTS",
       "validation": {
         "parameters": {
@@ -5984,175 +5217,34 @@
       "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
       "evidence": null,
       "field": {
-        "control_id": "CTL-LONG-TEXT",
-        "field_key": "comment",
-        "help_text": "",
-        "label": "Comment"
-      },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-ONSITE-SUPPORT",
-      "identity": {
-        "field_key": "comment",
-        "immutable_source_id": "WS-ONSITE-SUPPORT",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-WARRANTY-SUPPORT",
-        "source_family": "warranty_support"
-      },
-      "material_digest": "6697c918faed0b3887729b253d91ed881c59471e51f0d69f0f6c20035b57de12",
-      "required": {
-        "rule_id": "RQ-NEVER"
-      },
-      "response_id": "RSP-ef8df62efb4dac4ff032bf65",
-      "sequence": 110,
-      "source_lineage": {
-        "obligation_key": "onsite_support_required",
-        "requisition_id": "REQ-MOH-2027-033-001"
-      },
-      "stable_key": "warranty_support:WS-ONSITE-SUPPORT:RR-WARRANTY-SUPPORT:comment",
-      "task_id": "TASK-REQUIREMENTS",
-      "validation": {
-        "parameters": {
-          "max_length": 500,
-          "min_length": 0
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-WARRANTY-SUPPORT",
-      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
-      "document_anchor": "complete_tender.html#schedule-warranty-support",
-      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
-      "evidence": {
-        "evidence_type": "Warranty or support document",
-        "linkage_target": "this_response",
-        "mandatory": false,
-        "maximum": 5,
-        "minimum": 0
-      },
-      "field": {
-        "control_id": "CTL-EVIDENCE-REFERENCE",
-        "field_key": "evidence",
-        "help_text": "",
-        "label": "Warranty or support evidence"
-      },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-ONSITE-SUPPORT",
-      "identity": {
-        "field_key": "evidence",
-        "immutable_source_id": "WS-ONSITE-SUPPORT",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-WARRANTY-SUPPORT",
-        "source_family": "warranty_support"
-      },
-      "material_digest": "a35e934f836cdb048b8123b2b266c866b81996ace522dad8b08075758fba9665",
-      "required": {
-        "rule_id": "RQ-NEVER"
-      },
-      "response_id": "RSP-7fb65b5ed71c5a0f480866dd",
-      "sequence": 111,
-      "source_lineage": {
-        "obligation_key": "onsite_support_required",
-        "requisition_id": "REQ-MOH-2027-033-001"
-      },
-      "stable_key": "warranty_support:WS-ONSITE-SUPPORT:RR-WARRANTY-SUPPORT:evidence",
-      "task_id": "TASK-REQUIREMENTS",
-      "validation": {
-        "parameters": {
-          "maximum": 5,
-          "minimum": 0
-        },
-        "validation_id": "VAL-EVIDENCE-COUNT"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-WARRANTY-SUPPORT",
-      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
-      "document_anchor": "complete_tender.html#schedule-warranty-support",
-      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-SINGLE-CHOICE",
-        "field_key": "compliance",
-        "help_text": "",
-        "label": "Compliance"
-      },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-RESPONSE-TIME",
-      "identity": {
-        "field_key": "compliance",
-        "immutable_source_id": "WS-RESPONSE-TIME",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-WARRANTY-SUPPORT",
-        "source_family": "warranty_support"
-      },
-      "material_digest": "08850df6cae4136eccc46b05d4ad3cde0a5c6d13f4187570bbeb60f46fdf6f6f",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-be01219db3b768769796fdbc",
-      "sequence": 112,
-      "source_lineage": {
-        "obligation_key": "maximum_support_response_hours",
-        "requisition_id": "REQ-MOH-2027-033-001"
-      },
-      "stable_key": "warranty_support:WS-RESPONSE-TIME:RR-WARRANTY-SUPPORT:compliance",
-      "task_id": "TASK-REQUIREMENTS",
-      "validation": {
-        "parameters": {
-          "options": [
-            "Comply",
-            "Do not comply"
-          ]
-        },
-        "validation_id": "VAL-OPTION-IN-LIST"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-WARRANTY-SUPPORT",
-      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
-      "document_anchor": "complete_tender.html#schedule-warranty-support",
-      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
-      "evidence": null,
-      "field": {
         "control_id": "CTL-INTEGER",
-        "field_key": "offered_value",
+        "field_key": "offered_warranty_months",
         "help_text": "",
-        "label": "Offered value"
+        "label": "Offered warranty period (months)"
       },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-RESPONSE-TIME",
+      "group_key": "RR-WARRANTY-SUPPORT/WARRANTY-SUPPORT",
       "identity": {
-        "field_key": "offered_value",
-        "immutable_source_id": "WS-RESPONSE-TIME",
+        "field_key": "offered_warranty_months",
+        "immutable_source_id": "WARRANTY-SUPPORT",
         "published_tender_version_id": "TNDV-MOH-2027-033-V2",
         "rule_id": "RR-WARRANTY-SUPPORT",
         "source_family": "warranty_support"
       },
-      "material_digest": "05fea4e5c2f15106e1695553e5cdab70684da9b5b38d550dbf03f2d1b38aa2f5",
+      "material_digest": "66ca423b22427b0d8b391c9c834ab37562927fa74f5b0866b219a83a09f5d965",
       "required": {
         "rule_id": "RQ-ALWAYS"
       },
-      "response_id": "RSP-fe29f2cdf5f12c68ce1bbc2a",
-      "sequence": 113,
+      "response_id": "RSP-c3e81a598a7455ceb49036be",
+      "sequence": 95,
       "source_lineage": {
-        "obligation_key": "maximum_support_response_hours",
         "requisition_id": "REQ-MOH-2027-033-001"
       },
-      "stable_key": "warranty_support:WS-RESPONSE-TIME:RR-WARRANTY-SUPPORT:offered_value",
+      "stable_key": "warranty_support:WARRANTY-SUPPORT:RR-WARRANTY-SUPPORT:offered_warranty_months",
       "task_id": "TASK-REQUIREMENTS",
       "validation": {
         "parameters": {
-          "maximum": 1000000,
-          "minimum": 0
+          "maximum": 120,
+          "minimum": 36
         },
         "validation_id": "VAL-INTEGER-RANGE"
       },
@@ -6169,34 +5261,33 @@
       "evidence": null,
       "field": {
         "control_id": "CTL-LONG-TEXT",
-        "field_key": "comment",
+        "field_key": "support_contact_details",
         "help_text": "",
-        "label": "Comment"
+        "label": "Warranty contact, escalation and service-centre details"
       },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-RESPONSE-TIME",
+      "group_key": "RR-WARRANTY-SUPPORT/WARRANTY-SUPPORT",
       "identity": {
-        "field_key": "comment",
-        "immutable_source_id": "WS-RESPONSE-TIME",
+        "field_key": "support_contact_details",
+        "immutable_source_id": "WARRANTY-SUPPORT",
         "published_tender_version_id": "TNDV-MOH-2027-033-V2",
         "rule_id": "RR-WARRANTY-SUPPORT",
         "source_family": "warranty_support"
       },
-      "material_digest": "24348da341bb3895de6a7390c54599e455ce09ddf85b31ca1d24f2ef972c18e8",
+      "material_digest": "6e4b23d4e416895b57c3a568ac8c74b9a5ee5b710c192922b08c5b3dedcb5b60",
       "required": {
-        "rule_id": "RQ-NEVER"
+        "rule_id": "RQ-ALWAYS"
       },
-      "response_id": "RSP-3366284df99ad58261f28d71",
-      "sequence": 114,
+      "response_id": "RSP-1494ef64f310ae83823513fa",
+      "sequence": 96,
       "source_lineage": {
-        "obligation_key": "maximum_support_response_hours",
         "requisition_id": "REQ-MOH-2027-033-001"
       },
-      "stable_key": "warranty_support:WS-RESPONSE-TIME:RR-WARRANTY-SUPPORT:comment",
+      "stable_key": "warranty_support:WARRANTY-SUPPORT:RR-WARRANTY-SUPPORT:support_contact_details",
       "task_id": "TASK-REQUIREMENTS",
       "validation": {
         "parameters": {
           "max_length": 500,
-          "min_length": 0
+          "min_length": 10
         },
         "validation_id": "VAL-TEXT-LENGTH"
       },
@@ -6223,579 +5314,24 @@
         "help_text": "",
         "label": "Warranty or support evidence"
       },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-RESPONSE-TIME",
+      "group_key": "RR-WARRANTY-SUPPORT/WARRANTY-SUPPORT",
       "identity": {
         "field_key": "evidence",
-        "immutable_source_id": "WS-RESPONSE-TIME",
+        "immutable_source_id": "WARRANTY-SUPPORT",
         "published_tender_version_id": "TNDV-MOH-2027-033-V2",
         "rule_id": "RR-WARRANTY-SUPPORT",
         "source_family": "warranty_support"
       },
-      "material_digest": "aea1641de89537d085bfa12822dea2a20d82f5f61a516c248e81e67a2ebdad9d",
+      "material_digest": "ac68b5dad188b904c82f0979b24b0c781c12e66443939ec5370fa4d4b00a6981",
       "required": {
         "rule_id": "RQ-NEVER"
       },
-      "response_id": "RSP-0002abeb89b72a707ef0fa91",
-      "sequence": 115,
+      "response_id": "RSP-6af47c9093346377487478f3",
+      "sequence": 97,
       "source_lineage": {
-        "obligation_key": "maximum_support_response_hours",
         "requisition_id": "REQ-MOH-2027-033-001"
       },
-      "stable_key": "warranty_support:WS-RESPONSE-TIME:RR-WARRANTY-SUPPORT:evidence",
-      "task_id": "TASK-REQUIREMENTS",
-      "validation": {
-        "parameters": {
-          "maximum": 5,
-          "minimum": 0
-        },
-        "validation_id": "VAL-EVIDENCE-COUNT"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-WARRANTY-SUPPORT",
-      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
-      "document_anchor": "complete_tender.html#schedule-warranty-support",
-      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-SINGLE-CHOICE",
-        "field_key": "compliance",
-        "help_text": "",
-        "label": "Compliance"
-      },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-MANUFACTURER-SUPPORT",
-      "identity": {
-        "field_key": "compliance",
-        "immutable_source_id": "WS-MANUFACTURER-SUPPORT",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-WARRANTY-SUPPORT",
-        "source_family": "warranty_support"
-      },
-      "material_digest": "87e258c1c1813e805955148ec59f162ecd3057a6d44be0c0c816ac2c73177738",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-1be56601f50d6db6a86ae04b",
-      "sequence": 116,
-      "source_lineage": {
-        "obligation_key": "manufacturer_support_required",
-        "requisition_id": "REQ-MOH-2027-033-001"
-      },
-      "stable_key": "warranty_support:WS-MANUFACTURER-SUPPORT:RR-WARRANTY-SUPPORT:compliance",
-      "task_id": "TASK-REQUIREMENTS",
-      "validation": {
-        "parameters": {
-          "options": [
-            "Comply",
-            "Do not comply"
-          ]
-        },
-        "validation_id": "VAL-OPTION-IN-LIST"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-WARRANTY-SUPPORT",
-      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
-      "document_anchor": "complete_tender.html#schedule-warranty-support",
-      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-YES-NO",
-        "field_key": "offered_value",
-        "help_text": "",
-        "label": "Offered value"
-      },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-MANUFACTURER-SUPPORT",
-      "identity": {
-        "field_key": "offered_value",
-        "immutable_source_id": "WS-MANUFACTURER-SUPPORT",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-WARRANTY-SUPPORT",
-        "source_family": "warranty_support"
-      },
-      "material_digest": "cb2959eeb9d71070345e6682e59146b8a1273e5551c648d673c7429b80aeeac8",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-c68a29165791cbafcd3808b6",
-      "sequence": 117,
-      "source_lineage": {
-        "obligation_key": "manufacturer_support_required",
-        "requisition_id": "REQ-MOH-2027-033-001"
-      },
-      "stable_key": "warranty_support:WS-MANUFACTURER-SUPPORT:RR-WARRANTY-SUPPORT:offered_value",
-      "task_id": "TASK-REQUIREMENTS",
-      "validation": {
-        "parameters": {
-          "options": [
-            "Yes",
-            "No"
-          ]
-        },
-        "validation_id": "VAL-OPTION-IN-LIST"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-WARRANTY-SUPPORT",
-      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
-      "document_anchor": "complete_tender.html#schedule-warranty-support",
-      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-LONG-TEXT",
-        "field_key": "comment",
-        "help_text": "",
-        "label": "Comment"
-      },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-MANUFACTURER-SUPPORT",
-      "identity": {
-        "field_key": "comment",
-        "immutable_source_id": "WS-MANUFACTURER-SUPPORT",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-WARRANTY-SUPPORT",
-        "source_family": "warranty_support"
-      },
-      "material_digest": "6697c918faed0b3887729b253d91ed881c59471e51f0d69f0f6c20035b57de12",
-      "required": {
-        "rule_id": "RQ-NEVER"
-      },
-      "response_id": "RSP-d8b4b5d37b4cf83d17c25879",
-      "sequence": 118,
-      "source_lineage": {
-        "obligation_key": "manufacturer_support_required",
-        "requisition_id": "REQ-MOH-2027-033-001"
-      },
-      "stable_key": "warranty_support:WS-MANUFACTURER-SUPPORT:RR-WARRANTY-SUPPORT:comment",
-      "task_id": "TASK-REQUIREMENTS",
-      "validation": {
-        "parameters": {
-          "max_length": 500,
-          "min_length": 0
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-WARRANTY-SUPPORT",
-      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
-      "document_anchor": "complete_tender.html#schedule-warranty-support",
-      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
-      "evidence": {
-        "evidence_type": "Warranty or support document",
-        "linkage_target": "this_response",
-        "mandatory": false,
-        "maximum": 5,
-        "minimum": 0
-      },
-      "field": {
-        "control_id": "CTL-EVIDENCE-REFERENCE",
-        "field_key": "evidence",
-        "help_text": "",
-        "label": "Warranty or support evidence"
-      },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-MANUFACTURER-SUPPORT",
-      "identity": {
-        "field_key": "evidence",
-        "immutable_source_id": "WS-MANUFACTURER-SUPPORT",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-WARRANTY-SUPPORT",
-        "source_family": "warranty_support"
-      },
-      "material_digest": "a35e934f836cdb048b8123b2b266c866b81996ace522dad8b08075758fba9665",
-      "required": {
-        "rule_id": "RQ-NEVER"
-      },
-      "response_id": "RSP-d14f7b2c2675c3235771d5dc",
-      "sequence": 119,
-      "source_lineage": {
-        "obligation_key": "manufacturer_support_required",
-        "requisition_id": "REQ-MOH-2027-033-001"
-      },
-      "stable_key": "warranty_support:WS-MANUFACTURER-SUPPORT:RR-WARRANTY-SUPPORT:evidence",
-      "task_id": "TASK-REQUIREMENTS",
-      "validation": {
-        "parameters": {
-          "maximum": 5,
-          "minimum": 0
-        },
-        "validation_id": "VAL-EVIDENCE-COUNT"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-WARRANTY-SUPPORT",
-      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
-      "document_anchor": "complete_tender.html#schedule-warranty-support",
-      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-SINGLE-CHOICE",
-        "field_key": "compliance",
-        "help_text": "",
-        "label": "Compliance"
-      },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-SERVICE-LOCATION",
-      "identity": {
-        "field_key": "compliance",
-        "immutable_source_id": "WS-SERVICE-LOCATION",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-WARRANTY-SUPPORT",
-        "source_family": "warranty_support"
-      },
-      "material_digest": "eaacc01c4360bea0f383f884616f07b6a80a4734f47f5b8b937fd65ebb2b1033",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-c4d2c930ca2d288d835b993c",
-      "sequence": 120,
-      "source_lineage": {
-        "obligation_key": "service_location_constraint",
-        "requisition_id": "REQ-MOH-2027-033-001"
-      },
-      "stable_key": "warranty_support:WS-SERVICE-LOCATION:RR-WARRANTY-SUPPORT:compliance",
-      "task_id": "TASK-REQUIREMENTS",
-      "validation": {
-        "parameters": {
-          "options": [
-            "Comply",
-            "Do not comply"
-          ]
-        },
-        "validation_id": "VAL-OPTION-IN-LIST"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-WARRANTY-SUPPORT",
-      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
-      "document_anchor": "complete_tender.html#schedule-warranty-support",
-      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-SHORT-TEXT",
-        "field_key": "offered_value",
-        "help_text": "",
-        "label": "Offered value"
-      },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-SERVICE-LOCATION",
-      "identity": {
-        "field_key": "offered_value",
-        "immutable_source_id": "WS-SERVICE-LOCATION",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-WARRANTY-SUPPORT",
-        "source_family": "warranty_support"
-      },
-      "material_digest": "0db847abda7d0ebb2955e4bd3c7352da214649caa5f64c19cca46cba558057ae",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-ee3324d4429b2ca2dd63d24c",
-      "sequence": 121,
-      "source_lineage": {
-        "obligation_key": "service_location_constraint",
-        "requisition_id": "REQ-MOH-2027-033-001"
-      },
-      "stable_key": "warranty_support:WS-SERVICE-LOCATION:RR-WARRANTY-SUPPORT:offered_value",
-      "task_id": "TASK-REQUIREMENTS",
-      "validation": {
-        "parameters": {
-          "max_length": 300,
-          "min_length": 1
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-WARRANTY-SUPPORT",
-      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
-      "document_anchor": "complete_tender.html#schedule-warranty-support",
-      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-LONG-TEXT",
-        "field_key": "comment",
-        "help_text": "",
-        "label": "Comment"
-      },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-SERVICE-LOCATION",
-      "identity": {
-        "field_key": "comment",
-        "immutable_source_id": "WS-SERVICE-LOCATION",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-WARRANTY-SUPPORT",
-        "source_family": "warranty_support"
-      },
-      "material_digest": "bef40f1c5d7f95a2e0db9767d893fcc0fb9ca7ed5cfc74a3e57b20befa904282",
-      "required": {
-        "rule_id": "RQ-NEVER"
-      },
-      "response_id": "RSP-90ab0ee7214d340c544530f2",
-      "sequence": 122,
-      "source_lineage": {
-        "obligation_key": "service_location_constraint",
-        "requisition_id": "REQ-MOH-2027-033-001"
-      },
-      "stable_key": "warranty_support:WS-SERVICE-LOCATION:RR-WARRANTY-SUPPORT:comment",
-      "task_id": "TASK-REQUIREMENTS",
-      "validation": {
-        "parameters": {
-          "max_length": 500,
-          "min_length": 0
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-WARRANTY-SUPPORT",
-      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
-      "document_anchor": "complete_tender.html#schedule-warranty-support",
-      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
-      "evidence": {
-        "evidence_type": "Warranty or support document",
-        "linkage_target": "this_response",
-        "mandatory": false,
-        "maximum": 5,
-        "minimum": 0
-      },
-      "field": {
-        "control_id": "CTL-EVIDENCE-REFERENCE",
-        "field_key": "evidence",
-        "help_text": "",
-        "label": "Warranty or support evidence"
-      },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-SERVICE-LOCATION",
-      "identity": {
-        "field_key": "evidence",
-        "immutable_source_id": "WS-SERVICE-LOCATION",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-WARRANTY-SUPPORT",
-        "source_family": "warranty_support"
-      },
-      "material_digest": "ba1425a93e942fa5b4ef049741c803783f32c23ab0cdc3c5796bdaab20fcb56b",
-      "required": {
-        "rule_id": "RQ-NEVER"
-      },
-      "response_id": "RSP-647c14d3b7dbc5e91184bb9d",
-      "sequence": 123,
-      "source_lineage": {
-        "obligation_key": "service_location_constraint",
-        "requisition_id": "REQ-MOH-2027-033-001"
-      },
-      "stable_key": "warranty_support:WS-SERVICE-LOCATION:RR-WARRANTY-SUPPORT:evidence",
-      "task_id": "TASK-REQUIREMENTS",
-      "validation": {
-        "parameters": {
-          "maximum": 5,
-          "minimum": 0
-        },
-        "validation_id": "VAL-EVIDENCE-COUNT"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-WARRANTY-SUPPORT",
-      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
-      "document_anchor": "complete_tender.html#schedule-warranty-support",
-      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-SINGLE-CHOICE",
-        "field_key": "compliance",
-        "help_text": "",
-        "label": "Compliance"
-      },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-SUPPORT-CONTACTS",
-      "identity": {
-        "field_key": "compliance",
-        "immutable_source_id": "WS-SUPPORT-CONTACTS",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-WARRANTY-SUPPORT",
-        "source_family": "warranty_support"
-      },
-      "material_digest": "0cf5d11258d702749b705c701eab65ed0b4b6120f86cff58bb69163e6cabda93",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-c69c92bc5372d97b76cc28ac",
-      "sequence": 124,
-      "source_lineage": {
-        "obligation_key": "support_description",
-        "requisition_id": "REQ-MOH-2027-033-001"
-      },
-      "stable_key": "warranty_support:WS-SUPPORT-CONTACTS:RR-WARRANTY-SUPPORT:compliance",
-      "task_id": "TASK-REQUIREMENTS",
-      "validation": {
-        "parameters": {
-          "options": [
-            "Comply",
-            "Do not comply"
-          ]
-        },
-        "validation_id": "VAL-OPTION-IN-LIST"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-WARRANTY-SUPPORT",
-      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
-      "document_anchor": "complete_tender.html#schedule-warranty-support",
-      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-SHORT-TEXT",
-        "field_key": "offered_value",
-        "help_text": "",
-        "label": "Offered value"
-      },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-SUPPORT-CONTACTS",
-      "identity": {
-        "field_key": "offered_value",
-        "immutable_source_id": "WS-SUPPORT-CONTACTS",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-WARRANTY-SUPPORT",
-        "source_family": "warranty_support"
-      },
-      "material_digest": "c9ee952887d7a3480951a47ae5f7337c16d4ec131173516f52aa49e633127a7f",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-b445c3a94f2897616ec0c9eb",
-      "sequence": 125,
-      "source_lineage": {
-        "obligation_key": "support_description",
-        "requisition_id": "REQ-MOH-2027-033-001"
-      },
-      "stable_key": "warranty_support:WS-SUPPORT-CONTACTS:RR-WARRANTY-SUPPORT:offered_value",
-      "task_id": "TASK-REQUIREMENTS",
-      "validation": {
-        "parameters": {
-          "max_length": 300,
-          "min_length": 1
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-WARRANTY-SUPPORT",
-      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
-      "document_anchor": "complete_tender.html#schedule-warranty-support",
-      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-LONG-TEXT",
-        "field_key": "comment",
-        "help_text": "",
-        "label": "Comment"
-      },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-SUPPORT-CONTACTS",
-      "identity": {
-        "field_key": "comment",
-        "immutable_source_id": "WS-SUPPORT-CONTACTS",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-WARRANTY-SUPPORT",
-        "source_family": "warranty_support"
-      },
-      "material_digest": "aa21edbb5c2c3aae1b5586920064da280cb5020c09fd9e9642c8d1caa69ee5c8",
-      "required": {
-        "rule_id": "RQ-NEVER"
-      },
-      "response_id": "RSP-5bc56983118a8e08c98f2a0b",
-      "sequence": 126,
-      "source_lineage": {
-        "obligation_key": "support_description",
-        "requisition_id": "REQ-MOH-2027-033-001"
-      },
-      "stable_key": "warranty_support:WS-SUPPORT-CONTACTS:RR-WARRANTY-SUPPORT:comment",
-      "task_id": "TASK-REQUIREMENTS",
-      "validation": {
-        "parameters": {
-          "max_length": 500,
-          "min_length": 0
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-WARRANTY-SUPPORT",
-      "contract_mapping_id": "DM-WARRANTY-SUPPORT",
-      "document_anchor": "complete_tender.html#schedule-warranty-support",
-      "evaluation_mapping_id": "DM-WARRANTY-SUPPORT",
-      "evidence": {
-        "evidence_type": "Warranty or support document",
-        "linkage_target": "this_response",
-        "mandatory": false,
-        "maximum": 5,
-        "minimum": 0
-      },
-      "field": {
-        "control_id": "CTL-EVIDENCE-REFERENCE",
-        "field_key": "evidence",
-        "help_text": "",
-        "label": "Warranty or support evidence"
-      },
-      "group_key": "RR-WARRANTY-SUPPORT/WS-SUPPORT-CONTACTS",
-      "identity": {
-        "field_key": "evidence",
-        "immutable_source_id": "WS-SUPPORT-CONTACTS",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-WARRANTY-SUPPORT",
-        "source_family": "warranty_support"
-      },
-      "material_digest": "61cfaf219a4f7f1fb0f7297946e611f19fa60ad3a804687798dc0a6c2a806358",
-      "required": {
-        "rule_id": "RQ-NEVER"
-      },
-      "response_id": "RSP-ab9cff029eda9526f9333837",
-      "sequence": 127,
-      "source_lineage": {
-        "obligation_key": "support_description",
-        "requisition_id": "REQ-MOH-2027-033-001"
-      },
-      "stable_key": "warranty_support:WS-SUPPORT-CONTACTS:RR-WARRANTY-SUPPORT:evidence",
+      "stable_key": "warranty_support:WARRANTY-SUPPORT:RR-WARRANTY-SUPPORT:evidence",
       "task_id": "TASK-REQUIREMENTS",
       "validation": {
         "parameters": {
@@ -6834,7 +5370,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-56f6b57d816a2a8f48f465ce",
-      "sequence": 128,
+      "sequence": 98,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -6877,7 +5413,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-28c958cbd782f4c640a962d5",
-      "sequence": 129,
+      "sequence": 99,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -6920,7 +5456,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-102630941862f8bb5e008ab0",
-      "sequence": 130,
+      "sequence": 100,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -6964,7 +5500,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-c325ef91d709109dab3cd57b",
-      "sequence": 131,
+      "sequence": 101,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -7007,7 +5543,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-e9b8fe430438b4fe7bdf16bb",
-      "sequence": 132,
+      "sequence": 102,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -7056,7 +5592,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-9e337fe5e9811562ff6e8b50",
-      "sequence": 133,
+      "sequence": 103,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -7099,7 +5635,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-9c5d807b7d356252fe3f5b14",
-      "sequence": 134,
+      "sequence": 104,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -7142,7 +5678,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-686030cc783f9728a74315db",
-      "sequence": 135,
+      "sequence": 105,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -7185,7 +5721,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-86b97ea74121ae6f8c64e4a8",
-      "sequence": 136,
+      "sequence": 106,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -7229,7 +5765,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-23937fbd5954197fb9176eb4",
-      "sequence": 137,
+      "sequence": 107,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -7272,7 +5808,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-702c16d7d8b9492ef2b316e5",
-      "sequence": 138,
+      "sequence": 108,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -7321,7 +5857,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-37b0dad7bf228ca7dd0aa48a",
-      "sequence": 139,
+      "sequence": 109,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -7364,7 +5900,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-4ea7e76ea385364d987e0c41",
-      "sequence": 140,
+      "sequence": 110,
       "source_lineage": {
         "acceptance_requirement_id": "ACC-001"
       },
@@ -7404,7 +5940,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-4d087f24a7d6e578e8f76129",
-      "sequence": 141,
+      "sequence": 111,
       "source_lineage": {
         "acceptance_requirement_id": "ACC-002"
       },
@@ -7444,7 +5980,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-585cf30d3f67d69b1949a36e",
-      "sequence": 142,
+      "sequence": 112,
       "source_lineage": {
         "acceptance_requirement_id": "ACC-003"
       },
@@ -7484,7 +6020,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-5c6d2434ad62270089ea8d29",
-      "sequence": 143,
+      "sequence": 113,
       "source_lineage": {
         "acceptance_requirement_id": "ACC-004"
       },
@@ -7524,7 +6060,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-7681192bbf6bc122c310a98e",
-      "sequence": 144,
+      "sequence": 114,
       "source_lineage": {
         "acceptance_requirement_id": "ACC-005"
       },
@@ -7570,7 +6106,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-b8ec548b2582fba7c96a0e31",
-      "sequence": 145,
+      "sequence": 115,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -7619,7 +6155,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-89ffc9d16164c98143ad6af6",
-      "sequence": 146,
+      "sequence": 116,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -7668,7 +6204,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-cbd024673b6314c2f2150b42",
-      "sequence": 147,
+      "sequence": 117,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -7717,7 +6253,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-c39b8f74e2071e957a6971f9",
-      "sequence": 148,
+      "sequence": 118,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -7760,7 +6296,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-7ed2444e775f8e016f201a8e",
-      "sequence": 149,
+      "sequence": 119,
       "source_lineage": {
         "source_lineage": [
           {
@@ -7819,7 +6355,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-93f250aeaf38b209073f47dd",
-      "sequence": 150,
+      "sequence": 120,
       "source_lineage": {
         "source_lineage": [
           {
@@ -7863,11 +6399,7 @@
         "control_id": "CTL-SHORT-TEXT",
         "field_key": "signatory_name",
         "help_text": "",
-        "label": "Name of the person duly authorised to sign the Tender",
-        "supplied_value": {
-          "fact": "full_name",
-          "source_id": "SV-SIGNATORY"
-        }
+        "label": "Name of the person duly authorised to sign the Tender"
       },
       "group_key": "RR-SUBMISSION/SUBMISSION",
       "identity": {
@@ -7882,7 +6414,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-949a7bbfc1799489659c514e",
-      "sequence": 151,
+      "sequence": 121,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -7910,11 +6442,7 @@
         "control_id": "CTL-SHORT-TEXT",
         "field_key": "signatory_title",
         "help_text": "",
-        "label": "Title of the person signing the Tender",
-        "supplied_value": {
-          "fact": "job_title",
-          "source_id": "SV-SIGNATORY"
-        }
+        "label": "Title of the person signing the Tender"
       },
       "group_key": "RR-SUBMISSION/SUBMISSION",
       "identity": {
@@ -7929,7 +6457,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-a06bff2dd44815625d2c229b",
-      "sequence": 152,
+      "sequence": 122,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -7957,10 +6485,7 @@
         "control_id": "CTL-CONFIRMATION",
         "field_key": "confirmed",
         "help_text": "",
-        "label": "I confirm that the information, declarations and evidence in this bid are correct and that I am authorised to submit it for {bidder_name}.",
-        "label_parameters": [
-          "bidder_name"
-        ]
+        "label": "I confirm this is the complete Tender I am authorised to sign and submit."
       },
       "group_key": "RR-SUBMISSION/SUBMISSION",
       "identity": {
@@ -7975,7 +6500,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-7db39dc8fa8416ad9c0b9e82",
-      "sequence": 153,
+      "sequence": 123,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -7990,13 +6515,35 @@
       }
     }
   ],
-  "response_rules_digest": "005d3c56271fb1f49f91a178654881d69faa6331f87e1b5402e1d4c691c3c575",
+  "response_rules_digest": "ca98cc5406446b952edfb7652ab618cafbc4b573805f4669368d295d65745b07",
   "sections": [
     {
-      "groups": [],
-      "label": "Tender documents, clarifications and addenda",
+      "groups": [
+        {
+          "composition_id": "COMP-DOC-ACK",
+          "group_key": "RR-DOC-ACK/DOCUMENT-PACKAGE",
+          "immutable_source_id": "DOCUMENT-PACKAGE",
+          "published_facts": {
+            "effective_addendum_ids": [],
+            "publication_id": "TPUB-MOH-2027-033-001",
+            "tender_reference": "TND-MOH-2027-033",
+            "tender_title": "Supply and delivery of business laptops",
+            "tender_version_id": "TNDV-MOH-2027-033-V2"
+          },
+          "response_ids": [
+            "RSP-bbea3bd22543a573dcf20f6b"
+          ],
+          "rule_id": "RR-DOC-ACK",
+          "source_family": "document",
+          "source_lineage": {
+            "tender_id": "TND-MOH-2027-033",
+            "tender_version_id": "TNDV-MOH-2027-033-V2"
+          }
+        }
+      ],
+      "label": "Tender documents and addenda",
       "order": 1,
-      "purpose": "View the current published package. When an addendum is effective, acknowledge that addendum by name; when there is nothing specific to acknowledge, no acknowledgement is asked.",
+      "purpose": "View and acknowledge the current published package.",
       "section_id": "TASK-DOCUMENTS"
     },
     {
@@ -8011,39 +6558,15 @@
           "response_ids": [
             "RSP-f2bed3ccb5b885b64b3a09b6",
             "RSP-5b633c65d5d628d2c24f2c50",
+            "RSP-84cf2548118b21a146a3bb30",
             "RSP-efab11c3789d00baecbb78e5",
             "RSP-c107a1400d8b6b02a9ac937a",
             "RSP-d023d4d3efe0e266d791cfe4",
             "RSP-cd73b77fb3de00a7a872aa5b",
-            "RSP-86d8485254ebb9a5cda69f58",
             "RSP-dd04895f310d632e881b0cd1",
             "RSP-0c45d3c1f07e9010fff67539"
           ],
           "rule_id": "RR-SUPPLIER-DETAILS",
-          "source_family": "supplier",
-          "source_lineage": {
-            "tender_id": "TND-MOH-2027-033"
-          }
-        },
-        {
-          "composition_id": "COMP-JV-MEMBER",
-          "group_key": "RR-JV-MEMBER/JV-MEMBER",
-          "immutable_source_id": "JV-MEMBER",
-          "published_facts": {
-            "tender_reference": "TND-MOH-2027-033"
-          },
-          "repetition": "per_arrangement_member",
-          "response_ids": [
-            "RSP-debd20e2ed233eab1d3b9e99",
-            "RSP-d7738188454a694762fd85c5",
-            "RSP-726e839367ce0302c515e1fa",
-            "RSP-506c8103d6631398cce7f056",
-            "RSP-4dca2a9c207377701846f21e",
-            "RSP-6290c146a9ed383ec62bcb54",
-            "RSP-1556f8e074ecf2c2ee22f2e5",
-            "RSP-2e41f27fc39993df1935aceb"
-          ],
-          "rule_id": "RR-JV-MEMBER",
           "source_family": "supplier",
           "source_lineage": {
             "tender_id": "TND-MOH-2027-033"
@@ -8249,9 +6772,6 @@
             "RSP-215ad7e9ae5bf28fe50aba35",
             "RSP-1cb9f081f4cc4d862feeaa58",
             "RSP-fd1c5edddd00848c59c7bdb3",
-            "RSP-6f9f2ef2c50c124f8c74746e",
-            "RSP-620809e2b8f082b43c161701",
-            "RSP-39a630e5fcbbe479410c701b",
             "RSP-1f9bfdeb0c55ee4954a2175a"
           ],
           "rule_id": "RR-TENDER-SECURITY",
@@ -8716,169 +7236,25 @@
         },
         {
           "composition_id": "COMP-WARRANTY-SUPPORT",
-          "group_key": "RR-WARRANTY-SUPPORT/WS-MINIMUM-WARRANTY",
-          "immutable_source_id": "WS-MINIMUM-WARRANTY",
+          "group_key": "RR-WARRANTY-SUPPORT/WARRANTY-SUPPORT",
+          "immutable_source_id": "WARRANTY-SUPPORT",
           "published_facts": {
-            "comparison": "Minimum",
-            "control": "INTEGER",
-            "label": "Minimum warranty period",
-            "obligation_key": "minimum_warranty_months",
-            "required_value": {
-              "value": 36
-            },
-            "required_value_display": "36 months",
-            "unit": "months"
+            "manufacturer_support_required": true,
+            "maximum_support_response_hours": 8,
+            "minimum_warranty_months": 36,
+            "onsite_support_required": true,
+            "service_location_constraint": "Within Kenya",
+            "support_description": "Supplier to provide escalation and warranty-contact details."
           },
           "response_ids": [
-            "RSP-1b5e0d9b1c106f37476d13dd",
-            "RSP-a010bbb4f61f2dc8dea63061",
-            "RSP-a52dd0cd15222a8d72e21c80",
-            "RSP-078e771c33dd3efdf5a0f799"
+            "RSP-35e3b67cc72912267866893a",
+            "RSP-c3e81a598a7455ceb49036be",
+            "RSP-1494ef64f310ae83823513fa",
+            "RSP-6af47c9093346377487478f3"
           ],
           "rule_id": "RR-WARRANTY-SUPPORT",
           "source_family": "warranty_support",
           "source_lineage": {
-            "obligation_key": "minimum_warranty_months",
-            "requisition_id": "REQ-MOH-2027-033-001"
-          }
-        },
-        {
-          "composition_id": "COMP-WARRANTY-SUPPORT",
-          "group_key": "RR-WARRANTY-SUPPORT/WS-ONSITE-SUPPORT",
-          "immutable_source_id": "WS-ONSITE-SUPPORT",
-          "published_facts": {
-            "comparison": "Required",
-            "control": "YES_NO",
-            "label": "On-site support",
-            "obligation_key": "onsite_support_required",
-            "required_value": {
-              "value": "Yes"
-            },
-            "required_value_display": "Yes",
-            "unit": ""
-          },
-          "response_ids": [
-            "RSP-4008fb2b3b7b7fb29464b4b3",
-            "RSP-5792a9aa268aa57e4177e4c3",
-            "RSP-ef8df62efb4dac4ff032bf65",
-            "RSP-7fb65b5ed71c5a0f480866dd"
-          ],
-          "rule_id": "RR-WARRANTY-SUPPORT",
-          "source_family": "warranty_support",
-          "source_lineage": {
-            "obligation_key": "onsite_support_required",
-            "requisition_id": "REQ-MOH-2027-033-001"
-          }
-        },
-        {
-          "composition_id": "COMP-WARRANTY-SUPPORT",
-          "group_key": "RR-WARRANTY-SUPPORT/WS-RESPONSE-TIME",
-          "immutable_source_id": "WS-RESPONSE-TIME",
-          "published_facts": {
-            "comparison": "Maximum",
-            "control": "INTEGER",
-            "label": "Maximum support response time",
-            "obligation_key": "maximum_support_response_hours",
-            "required_value": {
-              "value": 8
-            },
-            "required_value_display": "8 hours",
-            "unit": "hours"
-          },
-          "response_ids": [
-            "RSP-be01219db3b768769796fdbc",
-            "RSP-fe29f2cdf5f12c68ce1bbc2a",
-            "RSP-3366284df99ad58261f28d71",
-            "RSP-0002abeb89b72a707ef0fa91"
-          ],
-          "rule_id": "RR-WARRANTY-SUPPORT",
-          "source_family": "warranty_support",
-          "source_lineage": {
-            "obligation_key": "maximum_support_response_hours",
-            "requisition_id": "REQ-MOH-2027-033-001"
-          }
-        },
-        {
-          "composition_id": "COMP-WARRANTY-SUPPORT",
-          "group_key": "RR-WARRANTY-SUPPORT/WS-MANUFACTURER-SUPPORT",
-          "immutable_source_id": "WS-MANUFACTURER-SUPPORT",
-          "published_facts": {
-            "comparison": "Required",
-            "control": "YES_NO",
-            "label": "Manufacturer support",
-            "obligation_key": "manufacturer_support_required",
-            "required_value": {
-              "value": "Yes"
-            },
-            "required_value_display": "Yes",
-            "unit": ""
-          },
-          "response_ids": [
-            "RSP-1be56601f50d6db6a86ae04b",
-            "RSP-c68a29165791cbafcd3808b6",
-            "RSP-d8b4b5d37b4cf83d17c25879",
-            "RSP-d14f7b2c2675c3235771d5dc"
-          ],
-          "rule_id": "RR-WARRANTY-SUPPORT",
-          "source_family": "warranty_support",
-          "source_lineage": {
-            "obligation_key": "manufacturer_support_required",
-            "requisition_id": "REQ-MOH-2027-033-001"
-          }
-        },
-        {
-          "composition_id": "COMP-WARRANTY-SUPPORT",
-          "group_key": "RR-WARRANTY-SUPPORT/WS-SERVICE-LOCATION",
-          "immutable_source_id": "WS-SERVICE-LOCATION",
-          "published_facts": {
-            "comparison": "Required",
-            "control": "TEXT",
-            "label": "Service location",
-            "obligation_key": "service_location_constraint",
-            "required_value": {
-              "value": "Within Kenya"
-            },
-            "required_value_display": "Within Kenya",
-            "unit": ""
-          },
-          "response_ids": [
-            "RSP-c4d2c930ca2d288d835b993c",
-            "RSP-ee3324d4429b2ca2dd63d24c",
-            "RSP-90ab0ee7214d340c544530f2",
-            "RSP-647c14d3b7dbc5e91184bb9d"
-          ],
-          "rule_id": "RR-WARRANTY-SUPPORT",
-          "source_family": "warranty_support",
-          "source_lineage": {
-            "obligation_key": "service_location_constraint",
-            "requisition_id": "REQ-MOH-2027-033-001"
-          }
-        },
-        {
-          "composition_id": "COMP-WARRANTY-SUPPORT",
-          "group_key": "RR-WARRANTY-SUPPORT/WS-SUPPORT-CONTACTS",
-          "immutable_source_id": "WS-SUPPORT-CONTACTS",
-          "published_facts": {
-            "comparison": "Required",
-            "control": "TEXT",
-            "label": "Warranty contact, escalation and service-centre details",
-            "obligation_key": "support_description",
-            "required_value": {
-              "value": "Supplier to provide escalation and warranty-contact details."
-            },
-            "required_value_display": "Supplier to provide escalation and warranty-contact details.",
-            "unit": ""
-          },
-          "response_ids": [
-            "RSP-c69c92bc5372d97b76cc28ac",
-            "RSP-b445c3a94f2897616ec0c9eb",
-            "RSP-5bc56983118a8e08c98f2a0b",
-            "RSP-ab9cff029eda9526f9333837"
-          ],
-          "rule_id": "RR-WARRANTY-SUPPORT",
-          "source_family": "warranty_support",
-          "source_lineage": {
-            "obligation_key": "support_description",
             "requisition_id": "REQ-MOH-2027-033-001"
           }
         },
@@ -9200,9 +7576,9 @@
     }
   ],
   "submission_deadline": "2027-06-05T11:00:00+03:00",
-  "supported_renderer_version": "1.1.0",
+  "supported_renderer_version": "1.0.0",
   "template_family": "IT-EQUIPMENT-OPEN-V1",
-  "template_release_id": "stdr-09bbfebd-0297-48c0-8ec2-7aa0c2e64495",
+  "template_release_id": "stdr-0e81b40c-d548-498c-855a-d4f80764af40",
   "tender_id": "TND-MOH-2027-033",
   "tender_version_id": "TNDV-MOH-2027-033-V2"
 }

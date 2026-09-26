@@ -16,6 +16,7 @@ Pure Python: no Frappe import.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -53,6 +54,14 @@ ASSET_KEYS: dict[str, tuple[str, ...]] = {
 	"downstream_rules": ENVELOPE + ("mappings",),
 	"addendum_identity_rules": ENVELOPE + ("classifications", "identity_rules", "prohibited_comparison_bases"),
 }
+#: Optional top-level keys, added by release 1.2 (STD-TPL-001 v0.13 §13.5.1).
+#: A release without them (1.1) loads unchanged.
+OPTIONAL_ASSET_KEYS: dict[str, tuple[str, ...]] = {
+	"product_profile": ("supplied_value_sources", "label_parameters"),
+	"response_rules": (),
+	"downstream_rules": (),
+	"addendum_identity_rules": (),
+}
 
 SOURCE_FAMILIES: tuple[str, ...] = (
 	"document", "supplier", "declaration", "tender_security", "goods", "technical_requirement", "warranty_support",
@@ -72,6 +81,13 @@ FIELD_KEYS: tuple[str, ...] = (
 	"field_key", "label", "control_id", "required_rule", "visibility_rule", "validation_id", "validation_parameters",
 	"evidence_rule", "help_text",
 )
+#: Optional field keys (release 1.2, STD-TPL-001 v0.13 §13.5.2): a value Bid
+#: Submission supplies read-only, and named values it puts into the label.
+OPTIONAL_FIELD_KEYS: tuple[str, ...] = ("supplied_value", "label_parameters")
+SUPPLIED_VALUE_KEYS: tuple[str, ...] = ("source_id", "fact")
+REPETITIONS: tuple[str, ...] = ("one", "per_source", "per_arrangement_member")
+PER_MEMBER = "per_arrangement_member"
+_PLACEHOLDER = re.compile(r"\{([a-z_]+)\}")
 MAPPING_KEYS: tuple[str, ...] = (
 	"mapping_id", "response_rule_id", "evaluation_treatment", "evaluation_group_id", "evaluation_result_rule",
 	"contract_treatment", "contract_destination", "award_reporting_treatment", "reason",
@@ -136,8 +152,8 @@ def load(files: dict[str, bytes], *, official_source_digest: str, bundle_digest:
 		parsed[name] = _parse(name, files[name])
 		keys = set(parsed[name])
 		allowed = set(ASSET_KEYS[name])
-		if keys - allowed:
-			fail("STD_DEFINITION_INVALID", f"{name} has unknown top-level key(s): {', '.join(sorted(keys - allowed))}.", identity=name)
+		if keys - allowed - set(OPTIONAL_ASSET_KEYS[name]):
+			fail("STD_DEFINITION_INVALID", f"{name} has unknown top-level key(s): {', '.join(sorted(keys - allowed - set(OPTIONAL_ASSET_KEYS[name])))}.", identity=name)
 		if allowed - keys:
 			fail("STD_DEFINITION_INVALID", f"{name} is missing key(s): {', '.join(sorted(allowed - keys))}.", identity=name)
 	envelope = {k: parsed["product_profile"][k] for k in ENVELOPE}
@@ -223,6 +239,36 @@ def _check_named_rule(rule: Any, catalogue: dict[str, dict[str, Any]], identity:
 		fail("STD_DEFINITION_INVALID", f"Source flag {params['flag']!r} is not published by this selector.", identity=identity)
 
 
+def _check_supplied_value(fdef: dict[str, Any], sources: dict[str, dict[str, Any]], comp: dict[str, Any], is_evidence: bool, identity: str) -> None:
+	if "supplied_value" not in fdef:
+		return
+	value = fdef["supplied_value"]
+	if not isinstance(value, dict) or set(value) != set(SUPPLIED_VALUE_KEYS) or value["source_id"] not in sources:
+		fail("STD_DEFINITION_INVALID", "A supplied value must name a released source and one of its facts.", identity=identity)
+	source = sources[value["source_id"]]
+	if value["fact"] not in source["facts"]:
+		fail("STD_DEFINITION_INVALID", f"Supplied-value source {value['source_id']} does not publish {value['fact']!r}.", identity=identity)
+	if source["repetition"] == PER_MEMBER and comp.get("repetition") != PER_MEMBER:
+		fail("STD_DEFINITION_INVALID", "A per-member source is only released inside a per-member composition.", identity=identity)
+	if is_evidence:
+		fail("STD_DEFINITION_INVALID", "An evidence reference is never a supplied value.", identity=identity)
+
+
+def _check_label_parameters(fdef: dict[str, Any], catalogue: dict[str, dict[str, Any]], identity: str) -> None:
+	used = set(_PLACEHOLDER.findall(fdef["label"]))
+	declared = fdef.get("label_parameters")
+	if declared is None:
+		if used:
+			fail("STD_DEFINITION_INVALID", "A label placeholder must be declared in label_parameters.", identity=identity)
+		return
+	if not isinstance(declared, list) or not declared or len(set(declared)) != len(declared):
+		fail("STD_DEFINITION_INVALID", "label_parameters must list distinct released parameters.", identity=identity)
+	if not set(declared) <= set(catalogue):
+		fail("STD_DEFINITION_INVALID", "A label parameter is not released.", identity=identity)
+	if set(declared) != used:
+		fail("STD_DEFINITION_INVALID", "label_parameters must match the placeholders in the label exactly.", identity=identity)
+
+
 def validate(assets: ReleaseAssets) -> None:
 	from kentender_procurement.std_templates.compiler import selectors
 
@@ -245,6 +291,8 @@ def validate(assets: ReleaseAssets) -> None:
 	for comp_id, comp in compositions.items():
 		if comp["task_id"] not in tasks:
 			fail("STD_DEFINITION_INVALID", "Composition placed in an unknown task.", identity=comp_id)
+		if comp.get("repetition") not in REPETITIONS:
+			fail("STD_DEFINITION_INVALID", "Composition repetition is not a released value.", identity=comp_id)
 		if not set(comp["permitted_controls"]) <= set(controls):
 			fail("STD_DEFINITION_INVALID", "Composition permits an unknown control.", identity=comp_id)
 	validations = _ids(profile["validations"], "validation_id", "validation")
@@ -261,6 +309,14 @@ def validate(assets: ReleaseAssets) -> None:
 	for kind, spec in profile["characteristic_controls"].items():
 		if spec["control_id"] not in controls or spec["validation_id"] not in validations:
 			fail("STD_DEFINITION_INVALID", "Characteristic control maps to unknown vocabulary.", identity=kind)
+	supplied_sources = _ids(profile.get("supplied_value_sources", []), "source_id", "supplied-value source")
+	for source_id, source in supplied_sources.items():
+		if set(source) != {"source_id", "meaning", "facts", "repetition"} or not source["facts"] or source["repetition"] not in ("one", PER_MEMBER):
+			fail("STD_DEFINITION_INVALID", "Supplied-value source keys differ from the released contract.", identity=source_id)
+	label_parameters = _ids(profile.get("label_parameters", []), "parameter", "label parameter")
+	for name, row in label_parameters.items():
+		if set(row) != {"parameter", "meaning"} or not _PLACEHOLDER.fullmatch("{" + name + "}"):
+			fail("STD_DEFINITION_INVALID", "Label parameter keys differ from the released contract.", identity=name)
 	calculations = _ids(profile["calculations"], "calculation_id", "calculation")
 	if set(calculations) != {"CALC-LINE-TOTAL", "CALC-TENDER-TOTAL"}:
 		fail("STD_DEFINITION_INVALID", "Only the released price calculations are permitted.", identity="calculations")
@@ -307,7 +363,7 @@ def validate(assets: ReleaseAssets) -> None:
 			fail("STD_DEFINITION_INVALID", "Rule defines no fields.", identity=rule_id)
 		field_keys: set[str] = set()
 		for fdef in fields:
-			if set(fdef) != set(FIELD_KEYS):
+			if not set(FIELD_KEYS) <= set(fdef) <= set(FIELD_KEYS) | set(OPTIONAL_FIELD_KEYS):
 				fail("STD_DEFINITION_INVALID", "Field definition keys differ from the released contract.", identity=f"{rule_id}.{fdef.get('field_key')}")
 			if fdef["field_key"] in field_keys:
 				fail("STD_DEFINITION_INVALID", "Duplicate field key within one rule.", identity=f"{rule_id}.{fdef['field_key']}")
@@ -316,9 +372,12 @@ def validate(assets: ReleaseAssets) -> None:
 			fid = f"{rule_id}.{fdef['field_key']}"
 			control = fdef["control_id"]
 			if control == CHARACTERISTIC:
-				if selector["selector"] != "SEL-TECHNICAL-REQUIREMENTS" or fdef["validation_id"] != CHARACTERISTIC:
-					fail("STD_DEFINITION_INVALID", "The characteristic control is only released for technical requirements.", identity=fid)
-				resolved = {s["control_id"] for s in profile["characteristic_controls"].values()}
+				if spec.characteristic_kinds is None or fdef["validation_id"] != CHARACTERISTIC:
+					fail("STD_DEFINITION_INVALID", "The characteristic control is only released for selectors that publish a characteristic.", identity=fid)
+				kinds = list(profile["characteristic_controls"]) if spec.characteristic_kinds == selectors.ALL_KINDS else list(spec.characteristic_kinds)
+				if not set(kinds) <= set(profile["characteristic_controls"]):
+					fail("STD_DEFINITION_INVALID", "A characteristic kind of this selector is not released.", identity=fid)
+				resolved = {profile["characteristic_controls"][k]["control_id"] for k in kinds}
 				if not resolved <= set(comp["permitted_controls"]):
 					fail("STD_DEFINITION_INVALID", "Composition does not permit every characteristic control.", identity=fid)
 			else:
@@ -336,6 +395,8 @@ def validate(assets: ReleaseAssets) -> None:
 				fail("STD_DEFINITION_INVALID", "Evidence references need an evidence rule, and only they may have one.", identity=fid)
 			if is_evidence and set(fdef["evidence_rule"]) != set(EVIDENCE_RULE_KEYS):
 				fail("STD_DEFINITION_INVALID", "Evidence rule keys differ from the released contract.", identity=fid)
+			_check_supplied_value(fdef, supplied_sources, comp, is_evidence, fid)
+			_check_label_parameters(fdef, label_parameters, fid)
 		if rule["composition_id"] in LOCKED_COMPOSITIONS:
 			text = rule["locked_text"]
 			locked_text.check_template(text, rule_id)

@@ -1154,5 +1154,5 @@ std-release-switch:
 		--kwargs "{'release_id': '$(RELEASE_ID)', 'state': '$(STATE)', 'actor': '$(RELEASE_OWNER)'}"
 
 std-templates-gate:
-	cd $(BENCH_ROOT) && for m in test_compiler test_installer test_services test_binding test_bid_work_status; do \
+	cd $(BENCH_ROOT) && for m in test_compiler test_release_vocabulary test_installer test_services test_binding test_bid_work_status; do \
 		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.std_templates.tests.$$m || exit 1; done

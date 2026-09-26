@@ -29,6 +29,13 @@ class SelectorSpec:
 	facts: tuple[str, ...]
 	flags: tuple[str, ...]
 	select: Callable[[dict[str, Any], dict[str, Any], dict[str, Any]], list[Instance]]
+	#: The characteristic kinds a CHARACTERISTIC field of this selector may
+	#: resolve to: None = none (the placeholder is not allowed), ALL_KINDS =
+	#: every released characteristic control (technical requirements).
+	characteristic_kinds: tuple[str, ...] | None = None
+
+
+ALL_KINDS: tuple[str, ...] = ("*",)
 
 
 def _instance(source_id: str, facts: dict[str, Any], lineage: dict[str, Any], flags: dict[str, bool] | None = None) -> Instance:
@@ -119,6 +126,62 @@ def _technical(p: dict[str, Any], _params: dict[str, Any], constants: dict[str, 
 		lineage = {"technical_requirement_id": row["technical_requirement_id"], "applies_to_scope": row["applies_to_scope"], "applies_to_id": row["applies_to_id"]}
 		out.append(_instance(row["technical_requirement_id"], facts, lineage, flags))
 	return out
+
+
+#: Release 1.2 (BDS-CHG-001 v0.8 OD-E; STD-TPL-001 §8.3 "Confirmation and the
+#: applicable offered value" per warranty/support fact): each published
+#: obligation that applies becomes its own row, in this fixed order.
+_WARRANTY_OBLIGATIONS: tuple[tuple[str, str, str, str, str, str], ...] = (
+	("WS-MINIMUM-WARRANTY", "minimum_warranty_months", "Minimum warranty period", "Minimum", "INTEGER", "months"),
+	("WS-ONSITE-SUPPORT", "onsite_support_required", "On-site support", "Required", "YES_NO", ""),
+	("WS-RESPONSE-TIME", "maximum_support_response_hours", "Maximum support response time", "Maximum", "INTEGER", "hours"),
+	("WS-MANUFACTURER-SUPPORT", "manufacturer_support_required", "Manufacturer support", "Required", "YES_NO", ""),
+	("WS-SERVICE-LOCATION", "service_location_constraint", "Service location", "Required", "TEXT", ""),
+	("WS-SUPPORT-CONTACTS", "support_description", "Warranty contact, escalation and service-centre details", "Required", "TEXT", ""),
+)
+
+
+def _warranty_obligations(p: dict[str, Any], _params: dict[str, Any], constants: dict[str, Any]) -> list[Instance]:
+	w = p["warranty_support"]
+	out = []
+	for source_id, key, label, comparison, control, unit in _WARRANTY_OBLIGATIONS:
+		value = w.get(key)
+		if control == "YES_NO":
+			if value is not True:
+				continue
+			required, display = "Yes", "Yes"
+		elif control == "INTEGER":
+			if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+				continue
+			required, display = value, f"{value} {unit}".strip()
+		else:
+			if not isinstance(value, str) or not value.strip():
+				continue
+			required, display = value.strip(), value.strip()
+		facts = {
+			"obligation_key": key, "label": label, "comparison": comparison, "control": control, "unit": unit,
+			"required_value": {"value": required}, "required_value_display": display,
+		}
+		out.append(_instance(source_id, facts, {"requisition_id": p["requisition"]["requisition_id"], "obligation_key": key}))
+	return out
+
+
+def _effective_addenda(p: dict[str, Any], _params: dict[str, Any], constants: dict[str, Any]) -> list[Instance]:
+	"""Release 1.2 (STD-TPL-001 v0.12 §8.1): one acknowledgement per
+	effective addendum, in effect order; none when no addendum is effective.
+	Bid Submission names the addendum through the `addendum_reference`
+	label parameter."""
+	t = p["tender"]
+	return [
+		_instance(addendum_id, {"addendum_id": addendum_id}, {"tender_version_id": t["tender_version_id"], "addendum_id": addendum_id})
+		for addendum_id in p["publication"]["effective_addendum_ids"]
+	]
+
+
+def _arrangement_members(p: dict[str, Any], _params: dict[str, Any], constants: dict[str, Any]) -> list[Instance]:
+	"""Release 1.2: the one template group Bid Submission repeats for each
+	member of the bidder's joint-venture arrangement (per_arrangement_member)."""
+	return [_instance("JV-MEMBER", {"tender_reference": p["tender"]["reference"]}, {"tender_id": p["tender"]["tender_id"]})]
 
 
 def _warranty(p: dict[str, Any], _params: dict[str, Any], constants: dict[str, Any]) -> list[Instance]:
@@ -232,8 +295,15 @@ SELECTORS: dict[str, SelectorSpec] = {
 	"SEL-TECHNICAL-REQUIREMENTS": SelectorSpec(
 		("technical_requirement",), (),
 		("label", "characteristic_key", "comparison", "control", "required_value", "required_value_display", "unit", "options", "port_options", "applies_to"),
-		("evidence_required",), _technical,
+		("evidence_required",), _technical, ALL_KINDS,
 	),
+	"SEL-WARRANTY-OBLIGATIONS": SelectorSpec(
+		("warranty_support",), (),
+		("obligation_key", "label", "comparison", "control", "unit", "required_value", "required_value_display"),
+		(), _warranty_obligations, ("INTEGER", "YES_NO", "TEXT"),
+	),
+	"SEL-EFFECTIVE-ADDENDA": SelectorSpec(("document",), (), ("addendum_id",), (), _effective_addenda),
+	"SEL-ARRANGEMENT-MEMBERS": SelectorSpec(("supplier",), (), ("tender_reference",), (), _arrangement_members),
 	"SEL-WARRANTY-SUPPORT": SelectorSpec(
 		("warranty_support",), (),
 		("minimum_warranty_months", "onsite_support_required", "maximum_support_response_hours", "manufacturer_support_required", "service_location_constraint", "support_description"),
