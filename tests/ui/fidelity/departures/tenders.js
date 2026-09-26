@@ -42,6 +42,13 @@ export const DEPARTURES = {
 	"PublishedScreen#TPR-DES-09-HOPF-ENDED": [CORNERS],
 	"ClarificationScreen#TPR-DES-11": [CORNERS],
 	"ClarificationScreen#TPR-DES-11-FAILURE": [CORNERS],
+	"AddendumScreen#TPR-DES-10-DRAFT": [CORNERS],
+	"AddendumScreen#TPR-DES-10-HOPF": [CORNERS],
+	"AddendumScreen#TPR-DES-10-AWAITING": [CORNERS],
+	"AddendumScreen#TPR-DES-10-ISSUED": [CORNERS],
+	"AddendumScreen#TPR-DES-10-MATERIAL": [CORNERS],
+	"AddendumScreen#TPR-DES-10-MATERIAL-WAIT": [CORNERS],
+	"AddendumScreen#TPR-DES-10-MATERIAL-CLOSED": [CORNERS],
 };
 
 export const COVERED = Object.keys(DEPARTURES);

@@ -73,6 +73,9 @@ def get_tender_addendum(*, tender: str, addendum: str = "", user: str | None = N
 	import json
 
 	original_channels = json.loads(frappe.db.get_value("Tender Publication", root.publication, "required_channels_json") or "[]") if root.publication else []
+	# §10.11: "Confirm addendum publication — {channel}"
+	for row in channels:
+		row["dialog_title"] = f"Confirm addendum publication — {row['channel_label']}"
 	return {
 		"outcome": "OK", "mode": "technical" if roles["technical"] else "site", "roles": roles,
 		"tender": {"name": root.name, "tender_reference": root.tender_reference, "title": cstr(state.get("tender_title") or root.requirement_title), "overall_status": cstr(root.overall_status), "record_version": int(root.record_version or 0), "current_deadline_label": serializer.fmt_datetime_short(root.submission_deadline) if root.submission_deadline else ""},

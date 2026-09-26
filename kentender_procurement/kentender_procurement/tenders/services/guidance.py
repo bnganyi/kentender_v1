@@ -419,6 +419,8 @@ def _addendum_answer(root, addendum: dict[str, Any], *, actor: str, roles: dict[
 				label = f"Ask {ao} (Accounting Officer) to consider cancellation" if ao else "Ask the Accounting Officer to consider cancellation"
 				ask = ns.fix(label, responsibility=ROLE_ACCOUNTING_OFFICER, person=ao, kind=ns.FIX_COMMAND, fix_id="request_cancellation_review", primary=True)
 				blockers = [ns.blocker(_refusal("TND_ADDENDUM_MATERIAL", headline, figures=figures, fixes=[ask, discard]))]
+				# §10.11 material-change variant
+				return _blocked(OPEN_MANAGEMENT, headline, holder_users=[actor], role=ROLE_PROCUREMENT_OFFICER, blockers=blockers, sentence="Cancel the Tender and start a newly governed Tender if procurement must continue.")
 			return _blocked(OPEN_MANAGEMENT, headline, holder_users=[actor], role=ROLE_PROCUREMENT_OFFICER, blockers=blockers)
 		if drafter:
 			return _turn(OPEN_MANAGEMENT, "Submit the non-material addendum for issue.", holder_users=[actor], role=ROLE_PROCUREMENT_OFFICER, primary="submit_addendum_for_issue")

@@ -263,3 +263,54 @@ export function publishedData(role = "HOPF", variant = "") {
 		review: { sections: reviewData().sections.map((s) => ({ ...s, open: false, tag: "" })) },
 	};
 }
+
+/** TPR-DES-10 — `GetTenderAddendum`, the board's seven variants. */
+export function addendumData(variant = "DRAFT") {
+	const material = ["MATERIAL", "MATERIAL-WAIT", "MATERIAL-CLOSED"].includes(variant);
+	const status = { HOPF: "Awaiting issue", AWAITING: "Awaiting publication confirmation", ISSUED: "Issued" }[variant] || "Draft";
+	const issued = variant === "ISSUED";
+	const labels = ["State Portal", "Ministry website", "Notice board", "Two national newspapers"];
+	const channels = ["AWAITING", "ISSUED"].includes(variant)
+		? labels.map((label, i) => ({ name: `TCC-A${i}`, channel: `C${i}`, channel_label: label, status: issued ? "Confirmed" : "Awaiting confirmation", result_label: issued ? "Confirmed" : "Awaiting confirmation", available_at_label: issued ? "31 May 2027, 09:00 EAT" : "", dialog_title: `Confirm addendum publication — ${label}` }))
+		: [];
+	const change = material
+		? { affected_reference: "Business laptops — Quantity", affected_reference_key: "goods:1:quantity", previous_value: "250 Each", revised_value: "300 Each", reason: "Additional deployment sites require 50 more laptops", change_class: "Non-material correction" }
+		: { affected_reference: "Goods and delivery — delivery location", affected_reference_key: "delivery_location", previous_value: "Ministry of Health Headquarters, Afya House, Nairobi", revised_value: "Ministry of Health Headquarters, Afya House, 3rd Floor Procurement Stores, Nairobi", reason: "The published address omitted the internal delivery point", change_class: "Administrative clarification" };
+	const actions = {
+		DRAFT: ["save_addendum_draft", "submit_addendum_for_issue", "discard_addendum_draft"],
+		HOPF: ["return_addendum_for_correction", "issue_addendum"],
+		AWAITING: ["confirm_addendum_channel"],
+		ISSUED: [],
+		MATERIAL: ["save_addendum_draft", "request_cancellation_review", "discard_addendum_draft", "view_cancellation_requirements"],
+		"MATERIAL-WAIT": ["view_cancellation_requirements"],
+		"MATERIAL-CLOSED": ["discard_addendum_draft", "view_cancellation_requirements"],
+	}[variant];
+	const g = {
+		DRAFT: ["D/D/D/D/C", "Brian Wafula", step("your_turn", "Submit the non-material addendum for issue.")],
+		HOPF: ["D/D/D/D/C", "Charles Mutiso", step("your_turn", "Decide whether to issue this addendum.")],
+		AWAITING: ["D/D/D/D/C", "Charles Mutiso", step("your_turn", "Confirm publication of ADD-MOH-2027-033-001 through the remaining original channels.")],
+		ISSUED: ["D/D/D/D/C", "", step("done", "Charles Mutiso completed addendum publication on 31 May 2027, 09:07 EAT.")],
+		MATERIAL: ["D/D/D/D/B", "Brian Wafula", { ...blockedStep("Increasing the business laptops quantity from 250 to 300 cannot be issued as an addendum.", ["Ask Amina Hassan (Accounting Officer) to consider cancellation", "Discard addendum draft"], "TND_ADDENDUM_MATERIAL"), sentence: "Cancel the Tender and start a newly governed Tender if procurement must continue." }],
+		"MATERIAL-WAIT": ["D/D/D/D/B", "Amina Hassan", step("waiting", "Accounting Officer Amina Hassan is considering cancellation of TND-MOH-2027-039.")],
+		"MATERIAL-CLOSED": ["D/D/D/D/B", "Brian Wafula", blockedStep("The 250-to-300 Each addendum remains unissuable; Amina Hassan closed the cancellation review with a recorded reason.", ["Discard addendum draft"], "TND_ADDENDUM_MATERIAL")],
+	}[variant];
+	return {
+		outcome: "OK", mode: "site",
+		tender: { name: "TDR-0001", tender_reference: material ? "TND-MOH-2027-039" : "TND-MOH-2027-033", title: "Supply and delivery of business laptops", overall_status: "Published — open", record_version: 14, current_deadline_label: "5 Jun 2027, 11:00 EAT" },
+		addendum: {
+			name: "TDA-0001", addendum_number: 1, addendum_reference: material ? "ADD-MOH-2027-039-001" : "ADD-MOH-2027-033-001", status, affected_area: "Goods/delivery schedule", ...change,
+			materiality_statement: material ? "" : "Same site; no change to scope, quantity, value or evaluation basis.", deadline_extension_required: !material, revised_submission_deadline: material ? "" : "2027-06-12 11:00:00",
+			revised_submission_deadline_label: material ? "" : "12 Jun 2027, 11:00 EAT", issue_decided_by_name: ["AWAITING", "ISSUED"].includes(variant) ? "Charles Mutiso" : "", issue_decided_at_label: ["AWAITING", "ISSUED"].includes(variant) ? "31 May 2027, 08:30 EAT" : "",
+			issued_at_label: issued ? "31 May 2027, 09:00 EAT" : "", confirmation_completed_at_label: issued ? "31 May 2027, 09:07 EAT" : "",
+			cancellation_review_status: variant === "MATERIAL-WAIT" ? "Requested" : variant === "MATERIAL-CLOSED" ? "Closed" : "", cancellation_review_closed_reason: variant === "MATERIAL-CLOSED" ? "The additional sites will be served by a separate procurement." : "", record_version: 2,
+		},
+		references: [{ key: "delivery_location", label: "Goods and delivery — delivery location", area: "Goods/delivery schedule", value: "Ministry of Health Headquarters, Afya House, Nairobi", material: false }, { key: "goods:1:quantity", label: "Business laptops — Quantity", area: "Goods/delivery schedule", value: "250 Each", material: true }],
+		change_classes: ["Administrative clarification", "Non-material correction", "Submission deadline extension"],
+		affected_areas: ["Goods/delivery schedule", "Invitation detail", "Technical requirement", "Submission or opening detail", "Evaluation or contract term", "Other stated location"],
+		material, material_text: material ? "This change cannot be made by addendum." : "",
+		deadline_rule: { required: true, explanation: "This addendum is being issued within the governed late-amendment period.", current_deadline_label: "5 Jun 2027, 11:00 EAT" },
+		channels, original_channels: labels.map((label, i) => ({ channel: `C${i}`, label })),
+		editable: variant === "DRAFT" || variant === "MATERIAL", allowed_actions: actions,
+		guidance: guidance(g[0], g[1], g[2]),
+	};
+}

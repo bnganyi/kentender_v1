@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import { nextTick } from "vue";
-import { clarificationData } from "./fixtures.js";
+import { addendumData, clarificationData } from "./fixtures.js";
 import AddendumScreen from "./AddendumScreen.vue";
 import ClarificationScreen from "./ClarificationScreen.vue";
 import CancelScreen from "./CancelScreen.vue";
@@ -17,28 +17,43 @@ const ADD = { name: "TDA-1", status: "Draft", change_class: "Administrative clar
 const DATA = { tender: TENDER, addendum: ADD, references: REFS, change_classes: ["Administrative clarification", "Submission deadline extension"], affected_areas: ["Goods/delivery schedule"], deadline_rule: RULE, channels: [], original_channels: [{ channel: "STATE_PORTAL", label: "State Portal" }], editable: true, allowed_actions: ["save_addendum_draft", "submit_addendum_for_issue"], material: false };
 
 describe("AddendumScreen — TPR-DES-10", () => {
-	it("draft: editable fields, the current published value, the deadline rule and Save/Submit", async () => {
-		const w = mount(AddendumScreen, { props: { data: DATA, identity: "TDA-1:1:9", errors: {}, pending: false } });
-		expect(w.find('[data-testid="tnd-record-badge"]').text()).toBe("Draft addendum");
-		expect(w.find('[data-testid="tnd-ad-previous"]').text()).toBe("Central Warehouse, Nairobi");
-		expect(w.find('[data-testid="tnd-deadline-rule"]').text()).toContain("Submission deadline must be extended.");
-		expect(w.find('[data-testid="tnd-addendum-channels"] tbody').text()).toContain("State Portal");
+	it("draft: the scope warning, the editable form, the current value, the deadline consequence, Save/Submit", async () => {
+		const w = mount(AddendumScreen, { props: { data: addendumData("DRAFT"), identity: "a:1", pending: false }, attachTo: document.body });
+		await nextTick();
+		expect(w.find('[data-testid="tnd-addendum-scope"]').text()).toContain("A material change requires cancellation");
+		expect(w.find('[data-testid="tnd-ad-previous"]').text()).toBe("Ministry of Health Headquarters, Afya House, Nairobi");
+		expect(w.find('[data-testid="tnd-deadline-rule"] h2').text()).toBe("Submission deadline must be extended");
+		expect(w.findAll('[data-testid="tnd-addendum-channels"] tbody tr')).toHaveLength(4);
 		await w.find('[data-testid="tnd-ad-submit"]').trigger("click");
-		expect(w.emitted("submit")[0][0]).toMatchObject({ affected_reference_key: "delivery_location", revised_value: "Loading Bay 3", revised_submission_deadline: "2027-06-12 11:00:00" });
+		expect(w.emitted("submit")[0][0].affected_reference_key).toBe("delivery_location");
+		expect(w.find('[data-kt="next-step"]').text()).toContain("Submit the non-material addendum for issue.");
+		w.unmount();
 	});
-	it("material change: the critical notice, no form and Submit disabled", async () => {
-		const w = mount(AddendumScreen, { props: { data: DATA, identity: "TDA-1:1:9", errors: {}, pending: false } });
-		await w.find('[data-testid="tnd-ad-reference"]').setValue("authorised_value");
-		expect(w.find('[data-testid="tnd-addendum-material"]').text()).toContain("This change cannot be made by addendum.");
-		expect(w.find('[data-testid="tnd-deadline-rule"]').exists()).toBe(false);
-		expect(w.find('[data-testid="tnd-ad-reference"]').exists()).toBe(true);
-		expect(w.find('[data-testid="tnd-ad-submit"]').attributes("disabled")).toBeDefined();
+	it("material change: the comparison only, the blocked guidance with its fixes, no Submit", async () => {
+		const w = mount(AddendumScreen, { props: { data: addendumData("MATERIAL"), identity: "a:2", pending: false }, attachTo: document.body });
+		await nextTick();
+		expect(w.find('[data-testid="tnd-addendum-form"]').exists()).toBe(false);
+		expect(w.find('[data-testid="tnd-addendum-comparison"] tbody').text()).toContain("300 Each");
+		expect(w.findAll('[data-kt="next-step"] button').map((b) => b.text())).toEqual(["Ask Amina Hassan (Accounting Officer) to consider cancellation", "Discard addendum draft"]);
+		expect(w.find('[data-testid="tnd-ad-submit"]').exists()).toBe(false);
+		expect(w.find('[data-testid="tnd-view-cancellation-requirements"]').exists()).toBe(true);
+		w.unmount();
 	});
-	it("HOPF issue: read-only facts, Ready to issue, Return / Issue", () => {
-		const w = mount(AddendumScreen, { props: { data: { ...DATA, addendum: { ...ADD, status: "Awaiting issue" }, editable: false, allowed_actions: ["return_addendum_for_correction", "issue_addendum"] }, identity: "x", errors: {}, pending: false } });
-		expect(w.find('[data-testid="tnd-addendum-ready"]').text()).toContain("Ready to issue.");
-		expect(w.find("textarea").exists()).toBe(false);
-		expect(w.findAll(".tnd-footer button").map((b) => b.text())).toEqual(["Return for correction", "Issue addendum"]);
+	it("HOPF issue: the comparison, the deadline read-only, Return / Issue", async () => {
+		const w = mount(AddendumScreen, { props: { data: addendumData("HOPF"), identity: "a:3", pending: false }, attachTo: document.body });
+		await nextTick();
+		expect(w.find('[data-testid="tnd-addendum-comparison"]').exists()).toBe(true);
+		expect(w.find('[data-testid="tnd-ad-deadline"]').exists()).toBe(false);
+		expect(w.find('[data-testid="tnd-ad-return"]').exists()).toBe(true);
+		expect(w.find('[data-testid="tnd-ad-issue"]').text()).toBe("Issue addendum");
+		w.unmount();
+	});
+	it("closed review: the recorded reason and only Discard", async () => {
+		const w = mount(AddendumScreen, { props: { data: addendumData("MATERIAL-CLOSED"), identity: "a:4", pending: false }, attachTo: document.body });
+		await nextTick();
+		expect(w.find('[data-testid="tnd-review-closed-reason"]').text()).toContain("separate procurement");
+		expect(w.findAll('[data-kt="next-step"] button').map((b) => b.text())).toEqual(["Discard addendum draft"]);
+		w.unmount();
 	});
 });
 

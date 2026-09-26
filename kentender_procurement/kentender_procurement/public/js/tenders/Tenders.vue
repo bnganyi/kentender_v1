@@ -43,7 +43,7 @@
 
 			<template v-else-if="kind === 'addendum'">
 				<div v-if="loading" class="tnd-page"><div class="kt-card kt-blueprint" style="padding: 0; overflow: hidden" data-testid="tnd-record-loading"><div v-for="row in 3" :key="row" class="tnd-skel-row"><div class="kt-skel" style="width: 72%"></div><div class="kt-skel" style="width: 52%"></div></div></div></div>
-				<AddendumScreen v-else :data="addendumData" :identity="addendumIdentity" :errors="fieldErrors" :pending="pending" @back="go(tenderRef)" @save="onSaveAddendum($event, false)" @submit="onSaveAddendum($event, true)" @return="addendumReturnDialog = true" @issue="issueDialog = true" @confirm-channel="channelDialog = { row: $event, subject: 'addendum' }" @view-confirmation="confirmationView = $event" @cancel-screen="go(tenderRef, 'cancel')" />
+				<AddendumScreen v-else :data="addendumData" :identity="addendumIdentity" :errors="fieldErrors" :pending="pending" @back="go(tenderRef)" @save="onSaveAddendum($event, false)" @submit="onSaveAddendum($event, true)" @return="addendumReturnDialog = true" @issue="issueDialog = true" @confirm-channel="channelDialog = { row: $event, subject: 'addendum' }" @view-confirmation="confirmationView = $event" @cancel-screen="go(tenderRef, 'cancel')" @fix="onFix" />
 				<div v-if="error && !loading" class="tnd-page" style="padding-top: 12px"><div class="kt-notice is-critical" role="alert" data-testid="tnd-command-error"><div class="kt-notice-body">{{ error }}</div></div></div>
 			</template>
 
@@ -72,11 +72,14 @@
 			<ReasonDialog v-if="reopenDialog" testid="tnd-reopen-dialog" title="Reopen this approved Tender for correction?" reason-label="Reason" note="The approved Version stays in history and a copied Draft is created. Publication has not started." confirm-label="Reopen for correction" :pending="pending" :error="dialogError" @confirm="onReopen" @cancel="closeDialogs" />
 			<ReasonDialog v-if="correctionDialog" testid="tnd-correction-dialog" title="Request a requisition correction?" reason-label="Reason" note="This Tender Version will stop and remain in history. Work can continue only from a newly authorised corrected Requisition." confirm-label="Request requisition correction" danger :pending="pending" :error="dialogError" @confirm="onRequestCorrection" @cancel="closeDialogs" />
 			<ConfirmDialog v-if="authoriseDialog" testid="tnd-authorise-dialog" title="Authorise publication of this Tender?" intro="This allows the Head of Procurement Function to publish the exact approved Invitation and Tender through every required channel and confirm the evidence. It does not itself publish the Tender or edit the package." :facts="authoriseFacts" confirm-label="Authorise publication" :pending="pending" :error="dialogError" @confirm="onAuthorise" @cancel="closeDialogs" />
-			<ChannelConfirmationDialog v-if="channelDialog" :channel="channelDialog.row" :attestation="attestationFor(channelDialog)" :subject-word="channelDialog.subject === 'addendum' ? 'addendum' : 'Invitation and complete Tender'" :draft="channelDraft && channelDraft.channel === channelDialog.row.channel ? channelDraft : null" :pending="pending" :error="dialogError" :server-errors="fieldErrors" @confirm="onConfirmChannel" @cancel="closeDialogs" />
+			<ChannelConfirmationDialog v-if="channelDialog" :channel="channelDialog.row" :attestation="attestationFor(channelDialog)" :subject-word="channelDialog.subject === 'addendum' ? 'addendum' : 'Invitation and complete Tender'" :intro="channelDialog.subject === 'addendum' ? `Confirm only after ${(addendumData.addendum || {}).addendum_reference} was publicly available through this channel.` : ''" :draft="channelDraft && channelDraft.channel === channelDialog.row.channel ? channelDraft : null" :pending="pending" :error="dialogError" :server-errors="fieldErrors" @confirm="onConfirmChannel" @cancel="closeDialogs" />
 			<ConfirmationViewDialog v-if="confirmationView" :row="confirmationView" @close="confirmationView = null" />
 			<ReasonDialog v-if="withdrawDialog" testid="tnd-withdraw-dialog" title="Withdraw publication authorisation?" reason-label="Reason and evidence that nothing was published" note="Possible only while no channel is confirmed. The Tender returns to Approved." confirm-label="Withdraw authorisation" danger :pending="pending" :error="dialogError" @confirm="onWithdraw" @cancel="closeDialogs" />
 			<DocumentDialog v-if="documentDialog" v-bind="documentDialog" @close="documentDialog = null" />
-			<ConfirmDialog v-if="issueDialog" testid="tnd-issue-dialog" title="Issue this addendum?" note="Issue is immutable. Channel confirmation follows separately from this decision." confirm-label="Issue addendum" :pending="pending" :error="dialogError" @confirm="onIssueAddendum" @cancel="closeDialogs" />
+			<ConfirmDialog v-if="issueDialog" testid="tnd-issue-dialog" title="Issue this addendum?" note="The issue decision is immutable. Accountable publication confirmation for every original channel follows separately; the addendum takes effect only when all four are confirmed." confirm-label="Issue addendum" :pending="pending" :error="dialogError" @confirm="onIssueAddendum" @cancel="closeDialogs" />
+			<ReasonDialog v-if="reviewRequestDialog" testid="tnd-review-request-dialog" title="Ask the Accounting Officer to consider cancellation?" reason-label="Why the Tender should be considered for cancellation" :min="20" :max="1000" note="The request goes to the Accounting Officer with the proposed change. It does not cancel the Tender or issue the addendum." confirm-label="Send request" :pending="pending" :error="dialogError" @confirm="onRequestReview" @cancel="closeDialogs" />
+			<ReasonDialog v-if="reviewCloseDialog" testid="tnd-review-close-dialog" title="Close this cancellation review?" reason-label="Why cancellation will not be pursued" :min="10" :max="1000" note="The Tender stays open and the proposed change stays unissuable. The Procurement Officer is told the recorded reason." confirm-label="Close cancellation review" :pending="pending" :error="dialogError" @confirm="onCloseReview" @cancel="closeDialogs" />
+			<ConfirmDialog v-if="discardDialog" testid="tnd-discard-dialog" title="Discard this addendum draft?" note="The unissued draft is archived. The published Tender does not change." confirm-label="Discard addendum draft" danger :pending="pending" :error="dialogError" @confirm="onDiscardAddendum" @cancel="closeDialogs" />
 			<ReasonDialog v-if="addendumReturnDialog" testid="tnd-addendum-return-dialog" title="Return this addendum for correction?" reason-label="Correction required" :min="5" confirm-label="Return for correction" :pending="pending" :error="dialogError" @confirm="onReturnAddendum" @cancel="closeDialogs" />
 			<ConfirmDialog v-if="recommendDialog" testid="tnd-recommend-dialog" title="Recommend cancellation of this Tender?" :facts="[{ label: 'Ground', value: recommendDialog.ground_label }, { label: 'Tender', value: tenderRef }]" note="A recommendation is recorded for the Accounting Officer. It does not change the Tender's status." confirm-label="Recommend cancellation" :pending="pending" :error="dialogError" @confirm="onRecommend" @cancel="closeDialogs" />
 			<ConfirmDialog v-if="cancelDialog" testid="tnd-cancel-dialog" title="Cancel this Tender?" :facts="cancelFacts" note="The decision is final and the cancellation notices and reports will remain due until evidence is recorded." confirm-label="Cancel Tender" cancel-label="Keep Tender" danger :pending="pending" :error="dialogError" @confirm="onCancelTender" @cancel="closeDialogs" />
@@ -158,6 +161,9 @@ const confirmationView = ref(null);
 const withdrawDialog = ref(false);
 const documentDialog = ref(null);
 const issueDialog = ref(false);
+const reviewRequestDialog = ref(false);
+const reviewCloseDialog = ref(null); // { addendum }
+const discardDialog = ref(false);
 const addendumReturnDialog = ref(false);
 const recommendDialog = ref(null);
 const cancelDialog = ref(null);
@@ -225,7 +231,7 @@ const state = computed(() => {
 	if (kind.value === "record" && pub.value && pub.value.rule_error === "TND_PUBLICATION_RULE_UNAVAILABLE" && record.value.screen === "authorisation") return { kind: "rule-unavailable" };
 	return null;
 });
-const dialogOpen = computed(() => !!(evidenceDialog.value || removeEvidenceDialog.value || submitDialog.value || returnDialog.value || approveDialog.value || reopenDialog.value || correctionDialog.value || authoriseDialog.value || channelDialog.value || withdrawDialog.value || issueDialog.value || addendumReturnDialog.value || recommendDialog.value || cancelDialog.value || obligationDialog.value));
+const dialogOpen = computed(() => !!(reviewRequestDialog.value || reviewCloseDialog.value || discardDialog.value || evidenceDialog.value || removeEvidenceDialog.value || submitDialog.value || returnDialog.value || approveDialog.value || reopenDialog.value || correctionDialog.value || authoriseDialog.value || channelDialog.value || withdrawDialog.value || issueDialog.value || addendumReturnDialog.value || recommendDialog.value || cancelDialog.value || obligationDialog.value));
 
 function go(...parts) {
 	frappe.set_route(PAGE, ...parts.filter(Boolean));
@@ -380,6 +386,8 @@ async function run(fn, opts) {
 	}
 }
 function closeDialogs() {
+	reviewRequestDialog.value = discardDialog.value = false;
+	reviewCloseDialog.value = null;
 	evidenceDialog.value = null;
 	removeEvidenceDialog.value = null;
 	submitDialog.value = returnDialog.value = approveDialog.value = reopenDialog.value = correctionDialog.value = authoriseDialog.value = withdrawDialog.value = issueDialog.value = addendumReturnDialog.value = false;
@@ -618,6 +626,23 @@ function onFix(fix) {
 		return;
 	}
 	if (id === "submit_for_approval") submitDialog.value = true;
+	if (id === "request_cancellation_review") {
+		reviewRequestDialog.value = true;
+		return;
+	}
+	if (id === "discard_addendum_draft") {
+		discardDialog.value = true;
+		return;
+	}
+	if (id === "close_cancellation_review") {
+		reviewCloseDialog.value = { addendum: (target && target.addendum) || subId.value };
+		return;
+	}
+	if (id === "cancel_tender") {
+		if (kind.value === "cancel") cancelFocus.value = Date.now();
+		else go(tenderRef.value, "cancel");
+		return;
+	}
 	if (id === "prepare_addendum") {
 		if (kind.value === "clarification") onPrepareAddendumForClarification();
 		else onPrepareAddendum();
@@ -680,12 +705,42 @@ async function onSaveAddendum(values, submitAfter) {
 	});
 }
 async function onReturnAddendum({ reason }) {
+	const result = await run(() => api.returnAddendumForCorrection({ tender: tenderRef.value, addendum: subId.value, reason, expected_record_version: (addendumData.value.tender || {}).record_version, idempotency_key: api.newIdempotencyKey("return-addendum") }), { dialog: true });
+	if (!result) return;
+	// the submitted addendum stays in history; a copied Draft goes back to its
+	// drafter (plan W5), so the HOPF returns to the Tender
+	closeDialogs();
+	cache.set(`record:${tenderRef.value}`, null);
+	go(tenderRef.value);
+}
+const cancelFocus = ref(0);
+const addendumVersion = () => (addendumData.value.tender || {}).record_version;
+async function onRequestReview({ reason }) {
 	const result = await run(async () => {
-		const r = await api.returnAddendumForCorrection({ tender: tenderRef.value, addendum: subId.value, reason, expected_record_version: (addendumData.value.tender || {}).record_version, idempotency_key: api.newIdempotencyKey("return-addendum") });
+		const r = await api.requestTenderCancellationReview({ tender: tenderRef.value, addendum: subId.value, reason, expected_record_version: addendumVersion(), idempotency_key: api.newIdempotencyKey("request-review") });
+		cache.set(`record:${tenderRef.value}`, null);
 		await load({ quiet: true });
 		return r;
 	}, { dialog: true });
 	if (result) closeDialogs();
+}
+async function onCloseReview({ reason }) {
+	const target = reviewCloseDialog.value || {};
+	const version = kind.value === "addendum" ? addendumVersion() : kind.value === "cancel" ? (cancelData.value.tender || {}).record_version : rv();
+	const result = await run(async () => {
+		const r = await api.closeTenderCancellationReview({ tender: tenderRef.value, addendum: target.addendum, reason, expected_record_version: version, idempotency_key: api.newIdempotencyKey("close-review") });
+		cache.set(`record:${tenderRef.value}`, null);
+		await load({ quiet: true });
+		return r;
+	}, { dialog: true });
+	if (result) closeDialogs();
+}
+async function onDiscardAddendum() {
+	const result = await run(() => api.discardAddendumDraft({ tender: tenderRef.value, addendum: subId.value, expected_record_version: addendumVersion(), idempotency_key: api.newIdempotencyKey("discard-addendum") }), { dialog: true });
+	if (!result) return;
+	closeDialogs();
+	cache.set(`record:${tenderRef.value}`, null);
+	go(tenderRef.value);
 }
 async function onIssueAddendum() {
 	const task = addendumData.value.task || {};

@@ -9,7 +9,7 @@
 		<div ref="dialogEl" class="kt-dialog tnd-dialog" role="dialog" aria-modal="true" aria-labelledby="tnd-channel-title" tabindex="-1">
 			<div id="tnd-channel-title" class="kt-dialog-title">{{ channel.dialog_title || `Confirm ${channelWord} publication` }}</div>
 			<div class="tnd-dialog-body">
-				<p class="tnd-small tnd-muted-700" style="margin: 0 0 14px">Confirm only after the exact approved {{ subjectWord }} {{ subjectWord === "Invitation and complete Tender" ? "were" : "was" }} publicly available through this channel.</p>
+				<p class="tnd-small tnd-muted-700" style="margin: 0 0 14px">{{ intro || `Confirm only after the exact approved ${subjectWord} ${subjectWord === "Invitation and complete Tender" ? "were" : "was"} publicly available through this channel.` }}</p>
 				<div class="kt-field"><label for="tnd-ch-available">Available date/time</label><input id="tnd-ch-available" type="datetime-local" class="kt-input" v-model="form.available_at" data-testid="tnd-ch-available" /><p v-if="fieldErrors.available_at" class="tnd-field-error" data-testid="tnd-ch-error-available_at">{{ fieldErrors.available_at }}</p></div>
 				<div class="kt-field"><label for="tnd-ch-reference">Publication reference</label><input id="tnd-ch-reference" class="kt-input" maxlength="160" v-model="form.evidence_reference" data-testid="tnd-ch-reference" /><p v-if="fieldErrors.evidence_reference" class="tnd-field-error" data-testid="tnd-ch-error-evidence_reference">{{ fieldErrors.evidence_reference }}</p></div>
 				<template v-if="online">
@@ -44,6 +44,7 @@ const props = defineProps({
 	channel: { type: Object, required: true }, // a confirmation row: channel, channel_label
 	attestation: { type: String, default: "" },
 	subjectWord: { type: String, default: "Invitation and complete Tender" },
+	intro: { type: String, default: "" },
 	pending: Boolean,
 	error: { type: String, default: "" },
 	serverErrors: { type: Object, default: () => ({}) },

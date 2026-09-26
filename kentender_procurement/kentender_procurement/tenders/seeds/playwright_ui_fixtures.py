@@ -504,6 +504,27 @@ def reset_addendum_confirming_fixture(*, commit: bool = True) -> dict[str, Any]:
 	return _done(state, commit)
 
 
+def reset_material_addendum_fixture(*, commit: bool = True, review: str = "") -> dict[str, Any]:
+	"""TPR-DES-10 material change (§13.3 TND-039 facts on the Playwright
+	world): a saved draft raising the laptop quantity, which no addendum may
+	issue. `review` "requested" sends it to the Accounting Officer; "closed"
+	has the Accounting Officer close that review with a recorded reason."""
+	from kentender_procurement.tenders.services import addenda
+
+	state = reset_published_fixture(commit=False)
+	line = next(r for r in addenda.affected_references(_root(state["tender"])) if r["key"].startswith("goods:"))
+	quantity = int(float(line["value"].split(" ", 1)[0].replace(",", "")))
+	state.update(_addendum_draft(state["tender"], values={**ADDENDUM_VALUES, "affected_reference_key": line["key"], "revised_value": f"{quantity + 50} Each", "reason": "Additional deployment sites require 50 more laptops", "materiality_statement": "", "revised_submission_deadline": None}))
+	state["current_quantity"] = line["value"]
+	if review in ("requested", "closed"):
+		with _as(OFFICER):
+			addenda.request_tender_cancellation_review(tender=state["tender"], addendum=state["addendum"], reason="Additional deployment sites require 50 more laptops; please consider cancellation.", expected_record_version=_root(state["tender"]).record_version, idempotency_key=_key())
+	if review == "closed":
+		with _as(AO):
+			addenda.close_tender_cancellation_review(tender=state["tender"], addendum=state["addendum"], reason="The additional sites will be served by a separate procurement.", expected_record_version=_root(state["tender"]).record_version, idempotency_key=_key())
+	return _done(state, commit)
+
+
 def reset_clarification_fixture(*, commit: bool = True, failed: bool = False) -> dict[str, Any]:
 	"""TPR-DES-11 opening state: one general clarification awaiting response;
 	`failed` answers it to every registered candidate with the second

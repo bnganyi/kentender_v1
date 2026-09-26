@@ -19,7 +19,8 @@ import AuthorisationScreen from "./AuthorisationScreen.vue";
 import PublicationScreen from "./PublicationScreen.vue";
 import PublishedScreen from "./PublishedScreen.vue";
 import ClarificationScreen from "./ClarificationScreen.vue";
-import { approvalData, authorisationData, clarificationData, editorRecord, publicationData, publishedData, reviewData, reviewRecord } from "./fixtures.js";
+import AddendumScreen from "./AddendumScreen.vue";
+import { addendumData, approvalData, authorisationData, clarificationData, editorRecord, publicationData, publishedData, reviewData, reviewRecord } from "./fixtures.js";
 
 const DESIGN = "docs/mvp-1-r1/11_tenders/design";
 
@@ -50,6 +51,18 @@ const SCREENS = [
 	})),
 	{ name: "ClarificationScreen", variant: "TPR-DES-11", board: "Respond to Supplier Clarification.dc.html", label: "TPR-DES-11 Respond to supplier clarification", options: { guidance: "turn" }, component: ClarificationScreen, props: { data: clarificationData() } },
 	{ name: "ClarificationScreen", variant: "TPR-DES-11-FAILURE", board: "Respond to Supplier Clarification.dc.html", label: "TPR-DES-11 Respond to supplier clarification", options: { guidance: "blocked", show: ["isFailure"], hide: ["isEditable", "isOrdinary"] }, component: ClarificationScreen, props: { data: clarificationData("FAILURE") } },
+	...[
+		["DRAFT", "turn", {}],
+		["HOPF", "turn", { show: ["isHopf", "showComparison"], hide: ["isDraft"] }],
+		["AWAITING", "turn", { show: ["showComparison", "showFacts", "showChannelTable"], hide: ["isDraft", "showDeadlineEdit", "showChannelsPlain"] }],
+		["ISSUED", "done", { show: ["showComparison", "showFacts", "showChannelTable"], hide: ["isDraft", "showDeadlineEdit", "showChannelsPlain"] }],
+		["MATERIAL", "blocked", { show: ["showComparison", "isMaterialAny"], hide: ["isDraft", "showDeadlineEdit", "showChannelsPlain"] }],
+		["MATERIAL-WAIT", "waiting", { show: ["showComparison", "isMaterialAny"], hide: ["isDraft", "showDeadlineEdit", "showChannelsPlain"] }],
+		["MATERIAL-CLOSED", "blocked", { show: ["showComparison", "isMaterialAny"], hide: ["isDraft", "showDeadlineEdit", "showChannelsPlain"] }],
+	].map(([v, kind, options]) => ({
+		name: "AddendumScreen", variant: `TPR-DES-10-${v}`, board: "Prepare and Issue Addendum.dc.html", label: "TPR-DES-10 Prepare and issue addendum",
+		options: { guidance: kind, ...options }, component: AddendumScreen, props: { data: addendumData(v), identity: `TDA-0001:${v}` },
+	})),
 ];
 
 describe.each(SCREENS)("$name — the structure $variant carries", ({ name, variant, board, label, options, component, props }) => {
