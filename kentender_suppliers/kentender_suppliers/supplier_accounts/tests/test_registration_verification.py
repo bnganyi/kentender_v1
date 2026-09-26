@@ -21,7 +21,7 @@ class TestRegistration(AccountsCase):
 		result = self.register()
 		self.assertEqual((result["ok"], result["account_status"], result["verification_sent_to"]), (True, "Pending verification", "tenders@afyadigital.example"))
 		org = frappe.get_doc("Supplier Organisation", result["organisation"])
-		self.assertEqual((org.legal_name, org.registration_number, org.tax_identifier, org.registered_by, str(org.status_since)), (AFYA["legal_name"], "PVT-9X7K2M", "P051234567X", MARY, "2027-05-18 09:00:00"))
+		self.assertEqual((org.legal_name, org.registration_number, org.tax_identifier, org.registered_by, str(org.status_since)), (AFYA["legal_name"], AFYA["registration_number"], "P051234567X", MARY, "2027-05-18 09:00:00"))
 		self.assertEqual([(c.channel, c.value, c.verification_status) for c in org.contacts], [("Email", "tenders@afyadigital.example", "Unverified"), ("Phone", "+254 709 555 014", "Unverified")])
 		assignment = frappe.get_all("Supplier User Assignment", filters={"organisation": org.name}, fields=["user", "responsibility", "job_title", "authority_evidence", "assigned_by"])
 		self.assertEqual([(a.user, a.responsibility, a.job_title, a.assigned_by) for a in assignment], [(MARY, "Authorised Signatory", "Managing Director", MARY)])
@@ -40,7 +40,7 @@ class TestRegistration(AccountsCase):
 		self.assertEqual((again["organisation"], again["idempotent"]), (first["organisation"], True))
 		other = self.register(user=PETER)
 		self.assertEqual((other["ok"], other["errors"]), (False, {"registration_number": "This organisation already has a supplier account. Ask its Authorised Signatory to add you."}))
-		self.assertEqual(frappe.db.count("Supplier Organisation", {"registration_number": "PVT-9X7K2M"}), 1)
+		self.assertEqual(frappe.db.count("Supplier Organisation", {"registration_number": AFYA["registration_number"]}), 1)
 
 	def test_each_invalid_fact_is_named_and_nothing_is_saved(self):
 		result = self.register(legal_name="Af", tax_identifier="0512", official_email="not-an-email", official_phone="call us", job_title="", authority_content=b"")

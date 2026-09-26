@@ -33,10 +33,11 @@ import frappe
 from frappe.tests import IntegrationTestCase
 
 from kentender_core.services import next_step as ns
-from kentender_procurement.tenders.services import addenda, cancellation, candidate_gateway, clarifications, configuration_gateway, correction, lifecycle, open_period_read, publication, read
+from kentender_procurement.tenders.services import addenda, cancellation, clarifications, configuration_gateway, correction, lifecycle, open_period_read, publication, read
 from kentender_procurement.tenders.services import draft_commands as cmd
 from kentender_procurement.tenders.services.errors import TendersError
-from kentender_procurement.tenders.tests import fixtures as fx, sample
+from kentender_procurement.tenders.tests import fake_candidates, sample
+from kentender_procurement.tenders.tests import fixtures as fx
 
 READERS = (
 	("Procurement Officer", fx.OFFICER),
@@ -228,7 +229,7 @@ class TestTendersDeadEndMatrix(IntegrationTestCase):
 		frappe.flags.kt_tenders_notice_transport = lambda notice: {"result": "Delivered", "provider_reference": f"test:{notice.name}", "failure_reason": ""}
 		self.addCleanup(setattr, frappe.flags, "kt_tenders_notice_sync", False)
 		self.addCleanup(setattr, frappe.flags, "kt_tenders_notice_transport", None)
-		candidate_gateway.register_stand_in_candidate(tender=root.name, user=fx.PRODUCER, bidder_arrangement_id="ARR-TNDT-001", candidate_name="Afya Digital Supplies Limited", notice_address="tenders@afyadigital.example")
+		fake_candidates.install(self).register(tender=root.name, bidder_arrangement_id="ARR-TNDT-001", candidate_name="Afya Digital Supplies Limited", notice_address="tenders@afyadigital.example")
 		frappe.flags.kt_tenders_clock = "2027-05-26 09:00:00"
 		received = clarifications.receive_tender_clarification(tender=root.name, candidate_registration_id="ARR-TNDT-001", question="May the two comparable contracts be from different customers?", received_at="2027-05-26 09:00:00", inbound_event_id="EVT-MATRIX-1", user=fx.PRODUCER)
 		failures += self.check("Clarification — Awaiting response", self.clarification(root.name, received["clarification"]))

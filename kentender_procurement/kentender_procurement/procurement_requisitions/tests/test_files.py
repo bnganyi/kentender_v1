@@ -10,6 +10,8 @@ import base64
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from kentender_core.tests.test_file_integrity import _hooks_with as no_file_scanners
+
 from kentender_procurement.procurement_requisitions.services import files
 from kentender_procurement.procurement_requisitions.services.errors import ProcurementRequisitionsError
 
@@ -46,6 +48,7 @@ class TestFileChecks(IntegrationTestCase):
 		return doc.name
 
 	def test_a_valid_pdf_passes_with_a_digest(self):
+		self.enterContext(no_file_scanners([]))  # the no-scanner verdict, whatever the site registers
 		name = self._make_file("spec.pdf", _MINIMAL_PDF)
 		result = files.check_file(name)
 		self.assertEqual(len(result["digest"]), 64)
@@ -76,6 +79,7 @@ class TestFileChecks(IntegrationTestCase):
 		self.assertEqual(ctx.exception.code, "REQ_FILE_INVALID")
 
 	def test_scanner_hook_absence_is_reported_visibly_not_silently_clean(self):
+		self.enterContext(no_file_scanners([]))  # absence is the case under test, whatever the site registers
 		name = self._make_file("spec.pdf", _MINIMAL_PDF)
 		result = files.check_file(name)
 		self.assertIn("no scanner configured", result["check_result"])

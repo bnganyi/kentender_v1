@@ -15,7 +15,7 @@ import frappe
 
 from kentender_core.services import supplier_account_contract as contract
 from kentender_suppliers.supplier_accounts.services import access, evidence, organisation, provider, read
-from kentender_suppliers.supplier_accounts.tests.support import AMINA, DAVID, MARY, PDF, PETER, AccountsCase, key
+from kentender_suppliers.supplier_accounts.tests.support import AFYA, AMINA, DAVID, MARY, PDF, PETER, AccountsCase, key
 
 ACCOUNT_KEYS = {"state", "organisations", "organisation", "viewer", "people", "evidence", "notice_contacts", "missing", "allowed_actions", "next_step", "journey"}
 FORBIDDEN_WORDS = ("approved", "qualified", "prequalified", "verified supplier", "eligible")
@@ -136,7 +136,7 @@ class TestProviderContract(AccountsCase):
 		self.assertEqual(provider.active_assignments(user="Administrator"), [])
 		self.assertEqual(provider.organisation(organisation_id=org)["account_status"], "Active")
 		self.assertEqual([c["value"] for c in provider.verified_contacts(organisation_id=org)], ["tenders@afyadigital.example"])
-		self.assertEqual(provider.find_active_account(country="Kenya", registration_number="PVT-9X7K2M"), {"organisation_id": org, "legal_name": "Afya Digital Supplies Limited"})
+		self.assertEqual(provider.find_active_account(country="Kenya", registration_number=AFYA["registration_number"]), {"organisation_id": org, "legal_name": "Afya Digital Supplies Limited"})
 		self.assertIsNone(provider.find_active_account(country="Kenya", registration_number="PVT-NOPE"))
 		proof = provider.account_evidence(organisation_id=org)[0]
 		self.assertEqual(provider.evidence_file(organisation_id=org, evidence_id=proof["evidence_id"])["digest"], proof["file_digest"])

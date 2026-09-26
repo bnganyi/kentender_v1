@@ -71,6 +71,12 @@ doctype_js = {
 # BDS-CHG-001 v0.8 plan D1 — Supplier Accounts publishes the account
 # provider Bid Submission reads (kentender_core supplier_account_contract).
 kt_supplier_account_provider = ["kentender_suppliers.supplier_accounts.services.provider"]
+# The canonical supplier account (BDS-CHG-001 v0.8 §10.1), seeded before the
+# canonical Start bid (Bid Submission calls every hook entry).
+kt_canonical_supplier_accounts = ["kentender_suppliers.supplier_accounts.seeds.canonical.ensure_canonical_supplier_accounts"]
+# Any other seeded supplier account (browser-test worlds), same commands.
+kt_seed_supplier_account = ["kentender_suppliers.supplier_accounts.seeds.canonical.ensure_supplier_account"]
+kt_seed_supplier_account_removal = ["kentender_suppliers.supplier_accounts.seeds.canonical.remove_supplier_accounts"]
 
 # BDS-CHG-001 v0.8 §5.14 — suspended-access reviews in the shared My Work.
 kt_my_work_providers = ["kentender_suppliers.supplier_accounts.services.my_work_provider.my_work_rows"]

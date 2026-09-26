@@ -41,7 +41,7 @@ CONTACT_OFFICE = "Test Contact Office — Tenders"
 
 TENDER_DOCTYPES = (
 	"Tender Event", "Tender Command Journal", "Tender Document", "Tender Submission Handoff", "Tender Channel Confirmation",
-	"Tender Candidate Notice", "Tender Clarification", "Tender Candidate Registration", "Tender Bid Definition", "Tender Addendum",
+	"Tender Candidate Notice", "Tender Clarification", "Tender Bid Definition", "Tender Addendum",
 	"Tender Cancellation", "Tender Publication", "Tender Decision", "Tender Task", "Tender Version", "Tender",
 )
 
@@ -126,6 +126,9 @@ def wipe_tender_rows() -> None:
 			doc.flags.kt_fixture_wipe = True
 			doc.delete(ignore_permissions=True, force=True)
 
+	from kentender_procurement.tenders.seeds.clear import notify_removal
+
+	notify_removal(tenders)
 	for doctype in TENDER_DOCTYPES:
 		if doctype in ("Tender", "Tender Command Journal") or not frappe.db.exists("DocType", doctype):
 			continue

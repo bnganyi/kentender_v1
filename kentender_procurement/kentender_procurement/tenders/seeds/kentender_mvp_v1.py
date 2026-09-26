@@ -73,7 +73,9 @@ ADDENDUM_EVIDENCE = {
 	"NOTICE_BOARD": ("NB-MOH-2027-033-A1", "", "NB-MOH-2027-033-A1.jpg", "2027-05-31 08:55:00", "addendum_confirm_3"),
 	"NATIONAL_NEWSPAPERS": ("NP-MOH-2027-033-A1", "", "NP-MOH-2027-033-A1.pdf", "2027-05-31 09:00:00", "addendum_confirm_4"),
 }
-CANDIDATE = {"bidder_arrangement_id": "ARR-MOH-2027-033-001", "candidate_name": "Afya Digital Supplies Limited", "notice_address": "tenders@afyadigital.example"}
+# The candidate registers through Bid Submission's Start bid (TPR FU-25): the
+# arrangement identity is minted there, so only the facts are fixed here.
+CANDIDATE = {"candidate_name": "Afya Digital Supplies Limited", "notice_address": "tenders@afyadigital.example"}
 QUESTION = "May the two comparable contracts be from different customers?"
 ANSWER = "Yes. The Tender requires two comparable contracts and does not require both contracts to be from the same customer."
 RETURN_COMMENT = "Confirm whether manufacturer authorisation is necessary and update the supplier evidence requirement."
@@ -253,13 +255,23 @@ def ensure_producer_role() -> str:
 	return PRODUCER
 
 
+def register_candidate(*, tender_reference: str, at, supplier: dict[str, Any] | None = None) -> str:
+	"""A candidate registered by Bid Submission's Start bid through the
+	`kt_tender_seed_candidate` hook (the canonical Afya bid unless `supplier`
+	names another); returns its registration identity."""
+	hooks = frappe.get_hooks("kt_tender_seed_candidate") or []
+	if not hooks:
+		frappe.throw("No candidate seed is installed (hook kt_tender_seed_candidate): the Tenders stand-in is retired (FU-25).")
+	return frappe.get_attr(hooks[-1])(tender_reference=tender_reference, at=at, supplier=supplier)
+
+
 def upsert_tenders_base(*, commit: bool = False) -> dict[str, Any]:
 	"""§13.3 fixture — the primary Tender lifecycle through to a closed
 	submission period, built through the real commands. Idempotent: a
 	rerun that finds the canonical Tender already ended returns it
 	untouched."""
 	from kentender_procurement.std_templates.services import installer as std_installer
-	from kentender_procurement.tenders.services import addenda, candidate_gateway, clarifications, configuration_gateway, draft_commands as cmd, lifecycle, publication, submission_close
+	from kentender_procurement.tenders.services import addenda, clarifications, configuration_gateway, draft_commands as cmd, lifecycle, publication, submission_close
 
 	_guard()
 	std_installer.ensure_site_release()
@@ -342,16 +354,16 @@ def upsert_tenders_base(*, commit: bool = False) -> dict[str, Any]:
 			)
 		root.reload()
 
-	# §13.3: a supplier registers through Start bid (the Tenders stand-in, plan W2).
+	# §13.3: David Ouma starts Afya's bid through Bid Submission's Start bid,
+	# which registers the candidate (TPR FU-25 retired the Tenders stand-in).
 	_clock("candidate")
-	with _as(PRODUCER):
-		candidate_gateway.register_stand_in_candidate(tender=name, registered_at=CLOCK["candidate"], **CANDIDATE)
+	candidate = register_candidate(tender_reference=root.tender_reference, at=CLOCK["candidate"])
 
 	frappe.flags.kt_tenders_notice_sync = True
 	_clock("clarification_received")
 	with _as(PRODUCER):
 		received = clarifications.receive_tender_clarification(
-			tender=name, candidate_registration_id=CANDIDATE["bidder_arrangement_id"], question=QUESTION, received_at=CLOCK["clarification_received"], inbound_event_id=_key("clarification-1"),
+			tender=name, candidate_registration_id=candidate, question=QUESTION, received_at=CLOCK["clarification_received"], inbound_event_id=_key("clarification-1"),
 		)
 	clarification = received["clarification"]
 	root.reload()
@@ -478,8 +490,13 @@ def validate_tenders_seed() -> list[dict[str, Any]]:
 	check(bool(addendum) and cstr(frappe.db.get_value("Tender Addendum", addendum.name, "issued_at")) == "2027-05-31 09:00:00", "the addendum is effective at 31 May 2027, 09:00 EAT (latest availability)")
 	definitions = frappe.get_all("Tender Bid Definition", filters={"tender": tender.name}, fields=["status", "definition_version"], order_by="definition_version asc")
 	check([d["status"] for d in definitions] == ["Superseded", "Effective"], f"the original definition is Superseded and the addendum's successor is Effective (got {[d['status'] for d in definitions]})")
-	candidates = frappe.get_all("Tender Candidate Registration", filters={"tender": tender.name}, pluck="bidder_arrangement_id")
-	check(candidates == [CANDIDATE["bidder_arrangement_id"]], "Afya Digital Supplies Limited is the one registered candidate")
+	from kentender_procurement.tenders.services import candidate_gateway
+
+	candidates = [c["candidate_registration_id"] for c in candidate_gateway.candidate_audience(tender=tender.name, at=CLOCK["clarification_received"])]
+	check(
+		len(candidates) == 1 and candidate_gateway.candidate_name(tender=tender.name, candidate_registration_id=candidates[0]) == CANDIDATE["candidate_name"],
+		f"Afya Digital Supplies Limited is the one registered candidate (got {candidates})",
+	)
 	clarification_rows = frappe.get_all("Tender Clarification", filters={"tender": tender.name}, fields=["status", "response_audience"])
 	check(len(clarification_rows) == 1, f"exactly one supplier clarification exists (got {len(clarification_rows)})")
 	check(bool(clarification_rows) and clarification_rows[0]["status"] == "Answered" and clarification_rows[0]["response_audience"] == "All registered candidates", "the clarification is Answered to all registered candidates")

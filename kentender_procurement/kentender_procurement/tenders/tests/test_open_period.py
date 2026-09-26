@@ -20,9 +20,10 @@ import json
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from kentender_procurement.tenders.services import addenda, bid_definition, cancellation, candidate_gateway, candidate_notices, clarifications, configuration_gateway, draft_commands as cmd, events, lifecycle, open_period_read, publication, read, submission_close
+from kentender_procurement.tenders.services import addenda, bid_definition, cancellation, candidate_notices, clarifications, configuration_gateway, draft_commands as cmd, events, lifecycle, open_period_read, publication, read, submission_close
 from kentender_procurement.tenders.services.errors import TendersError
-from kentender_procurement.tenders.tests import fixtures as fx, sample
+from kentender_procurement.tenders.tests import fake_candidates, sample
+from kentender_procurement.tenders.tests import fixtures as fx
 
 CHANNELS = ("STATE_PORTAL", "MINISTRY_WEBSITE", "NOTICE_BOARD", "NATIONAL_NEWSPAPERS")
 
@@ -223,8 +224,9 @@ class TestClarifications(OpenPeriodCase):
 	def setUp(self):
 		super().setUp()
 		frappe.flags.kt_tenders_clock = "2027-05-19 09:20:00"
+		self.candidates = fake_candidates.install(self)
 		for candidate in (self.CANDIDATE, self.SECOND):
-			candidate_gateway.register_stand_in_candidate(tender=self.name, user=fx.PRODUCER, **candidate)
+			self.candidates.register(tender=self.name, **candidate)
 		self.sent: list[str] = []
 		frappe.flags.kt_tenders_notice_sync = True
 		frappe.flags.kt_tenders_notice_transport = self._transport

@@ -137,6 +137,14 @@ def resolve_published(reference: str) -> str | None:
 	return row.name if row else None
 
 
+def availability(reference: str, *, at=None) -> str | None:
+	"""`open`, `closed` or `cancelled` for a published Tender at `at`, or None
+	when no published Tender has that reference (BDS-CHG-001 v0.8 §7.2
+	`StartBid` rechecks the open state)."""
+	row = _published_root(reference)
+	return _availability(row, at) if row else None
+
+
 def available_tenders(*, at=None) -> list[dict[str, Any]]:
 	rows = frappe.get_all(
 		"Tender", filters={"published_at": ("is", "set"), "overall_status": ("in", PUBLIC_STATUSES), "publication": ("is", "set")},

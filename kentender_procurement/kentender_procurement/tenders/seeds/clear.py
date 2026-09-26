@@ -30,7 +30,7 @@ from kentender_core.utils.raw_delete import delete_rows
 #: Every doctype that carries a `tender` link, dependants first; `Tender` last.
 TENDER_DOCTYPES = (
 	"Tender Event", "Tender Document", "Tender Submission Handoff", "Tender Channel Confirmation", "Tender Candidate Notice", "Tender Clarification",
-	"Tender Candidate Registration", "Tender Bid Definition", "Tender Addendum", "Tender Cancellation", "Tender Publication", "Tender Decision", "Tender Task",
+	"Tender Bid Definition", "Tender Addendum", "Tender Cancellation", "Tender Publication", "Tender Decision", "Tender Task",
 	"Tender Version", "Tender",
 )
 
@@ -48,12 +48,26 @@ def _count(deleted: dict[str, int], doctype: str, count: int) -> None:
 		deleted[doctype] = deleted.get(doctype, 0) + count
 
 
+def notify_removal(tenders: list[str], deleted: dict[str, int] | None = None) -> None:
+	"""Tell the modules holding rows about these Tenders (hook
+	`kt_tender_removal_consumers`; Bid Submission's arrangements and bids)
+	before the Tenders go: the family rows are removed raw, so no link check
+	would stop an orphan."""
+	if not tenders:
+		return
+	for path in frappe.get_hooks("kt_tender_removal_consumers") or []:
+		for doctype, count in (frappe.get_attr(path)(tenders=list(tenders)) or {}).items():
+			if deleted is not None:
+				_count(deleted, doctype, count)
+
+
 def _delete_family(removed: dict[str, list[str]]) -> dict[str, int]:
 	"""`removed` is `{doctype: [names]}` within the Tender family. Their
 	command-journal entries and attached files go with them; a File goes
 	through its own document, which keeps the stored file while another
 	File row still shares it."""
 	deleted: dict[str, int] = {}
+	notify_removal(removed.get("Tender", []), deleted)
 	for doctype in TENDER_DOCTYPES:
 		for chunk in _chunks(removed.get(doctype, [])):
 			delete_rows(doctype, {"name": ("in", chunk)}, deleted=deleted)

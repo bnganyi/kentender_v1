@@ -12,6 +12,8 @@ import json
 from unittest.mock import patch
 
 import frappe
+
+from kentender_core.tests.test_file_integrity import _hooks_with as no_file_scanners
 from frappe.tests import IntegrationTestCase
 
 from kentender_procurement.tenders.services import channel_confirmation, configuration_gateway, draft_commands as cmd, events, lifecycle, planning_gateway, publication, read
@@ -166,6 +168,7 @@ class TestConfirmChannels(PublicationCase):
 		self.assertEqual(frappe.db.count("Tender Channel Confirmation", {"publication": root.publication, "status": "Confirmed"}), 0)
 
 	def test_confirmations_are_attested_idempotent_and_conflicts_are_preserved(self):
+		self.enterContext(no_file_scanners([]))  # the no-scanner verdict, whatever the site registers
 		name, _ = self._authorised()
 		key = fx.key()
 		first = self._confirm(name, "STATE_PORTAL", key=key)

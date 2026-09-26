@@ -27,6 +27,7 @@ from kentender_procurement.std_templates.compiler import addenda as std_addenda
 from kentender_procurement.std_templates.services import runtime as std_runtime
 from kentender_procurement.tenders.services import addenda, bid_definition, bidder_projection, cancellation, candidate_gateway, clarifications, digest, events, submission_close
 from kentender_procurement.tenders.services.errors import TendersError
+from kentender_procurement.tenders.tests import fake_candidates
 from kentender_procurement.tenders.tests import fixtures as fx
 from kentender_procurement.tenders.tests.test_open_period import CHANNELS, OpenPeriodCase
 
@@ -48,6 +49,7 @@ class BidSeamsCase(OpenPeriodCase):
 
 	def setUp(self):
 		super().setUp()
+		self.candidates = fake_candidates.install(self)
 		self.reference = self._root().tender_reference
 		frappe.flags.kt_tenders_notice_sync = True
 		frappe.flags.kt_tenders_notice_transport = lambda notice: {"result": "Delivered", "provider_reference": f"test:{notice.name}", "failure_reason": ""}
@@ -57,7 +59,7 @@ class BidSeamsCase(OpenPeriodCase):
 	def _register(self):
 		frappe.flags.kt_tenders_clock = "2027-05-19 09:20:00"
 		for candidate in (self.CANDIDATE, self.SECOND):
-			candidate_gateway.register_stand_in_candidate(tender=self.name, user=fx.PRODUCER, **candidate)
+			self.candidates.register(tender=self.name, **candidate)
 
 	def _issue(self, *, confirm: bool = True) -> str:
 		frappe.flags.kt_tenders_clock = "2027-05-31 08:30:00"
@@ -227,7 +229,7 @@ class TestConsumerSeams(BidSeamsCase):
 		opened = events.pending_for_consumer(event_type="TenderOpenForSubmission", consumer="bidder-service")
 		self.assertIn(self.name, [e.tender for e in opened])
 
-	def test_a_test_provider_replaces_the_stand_in_through_the_flag(self):
+	def test_a_provider_set_through_the_flag_answers_the_gateway(self):
 		class Provider:
 			@staticmethod
 			def candidate_audience(*, tender, at):
@@ -238,9 +240,9 @@ class TestConsumerSeams(BidSeamsCase):
 				return {"candidate_registration_id": candidate_registration_id, "candidate_name": "Fake Supplier", "destination": "fake@example.test", "destination_version": "3", "registered_at": None} if candidate_registration_id == "ARR-FAKE-001" else None
 
 		frappe.flags.kt_tender_candidate_registry = Provider
-		self.addCleanup(setattr, frappe.flags, "kt_tender_candidate_registry", None)
-		self.assertFalse(candidate_gateway.is_stand_in())
 		self.assertEqual([r["candidate_registration_id"] for r in candidate_gateway.candidate_audience(tender=self.name)], ["ARR-FAKE-001"])
 		self.assertEqual(candidate_gateway.candidate_name(tender=self.name, candidate_registration_id="ARR-FAKE-001"), "Fake Supplier")
-		with self.assertRaises(TendersError):  # the stand-in never registers alongside a real provider
-			candidate_gateway.register_stand_in_candidate(tender=self.name, user=fx.PRODUCER, **self.CANDIDATE)
+		# without the test flag the gateway asks Bid Submission's provider (TPR FU-25: the stand-in is retired)
+		frappe.flags.kt_tender_candidate_registry = None
+		self.assertEqual(candidate_gateway._provider().__name__, "kentender_procurement.bid_submission.services.candidate_registry")
+		self.assertFalse(frappe.db.exists("DocType", "Tender Candidate Registration"))

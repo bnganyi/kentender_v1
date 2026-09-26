@@ -119,6 +119,19 @@ kt_portal_surfaces = [
 	},
 ]
 
+# BDS-CHG-001 v0.8 plan Phase 5 (TPR FU-25) — the Tender candidate registry is
+# Bid Submission's: a bidder arrangement, created only by Start bid, is the
+# candidate registration Tenders' notices and clarification intake consume.
+kt_tender_candidate_registry = ["kentender_procurement.bid_submission.services.candidate_registry"]
+# The canonical Tenders seed registers its candidate through Start bid here.
+kt_tender_seed_candidate = ["kentender_procurement.bid_submission.seeds.canonical.seed_candidate"]
+# Bid Submission removes its rows for Tenders the Tenders clean-up removes.
+kt_tender_removal_consumers = ["kentender_procurement.bid_submission.seeds.clear.on_tenders_removed"]
+kt_tender_seed_candidate_cleanup = ["kentender_procurement.bid_submission.seeds.canonical.remove_seeded_suppliers"]
+# BDS-CHG-001 v0.8 OD-C: the Test Scanner answers only on a site whose
+# site_config sets kt_bds_simulation_environment; elsewhere it is silent.
+kt_file_scanners = ["kentender_procurement.bid_submission.test_services.scanner.scan"]
+
 # include js, css files in header of web form
 # webform_include_js = {"doctype": "public/js/doctype.js"}
 # webform_include_css = {"doctype": "public/css/doctype.css"}
@@ -327,7 +340,7 @@ has_permission.update({
 _TND_AUTHZ = "kentender_procurement.tenders.services.tender_authorization"
 _TND_FAMILY = (
 	"Tender", "Tender Version", "Tender Task", "Tender Decision", "Tender Publication", "Tender Channel Confirmation",
-	"Tender Addendum", "Tender Clarification", "Tender Candidate Notice", "Tender Bid Definition", "Tender Candidate Registration",
+	"Tender Addendum", "Tender Clarification", "Tender Candidate Notice", "Tender Bid Definition",
 	"Tender Cancellation", "Tender Document", "Tender Event", "Tender Submission Handoff",
 )
 permission_query_conditions.update({doctype: f"{_TND_AUTHZ}.permission_query_conditions" for doctype in _TND_FAMILY})

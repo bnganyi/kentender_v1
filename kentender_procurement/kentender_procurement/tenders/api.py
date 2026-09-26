@@ -18,7 +18,7 @@ from typing import Any
 
 import frappe
 
-from kentender_procurement.tenders.services import addenda, cancellation, candidate_gateway, candidate_notices, clarifications, correction, documents, draft_commands as cmd, history, lifecycle, open_period_read, publication, read, submission_close
+from kentender_procurement.tenders.services import addenda, cancellation, candidate_notices, clarifications, correction, documents, draft_commands as cmd, history, lifecycle, open_period_read, publication, read, submission_close
 
 
 def _parse_json(value, default):
@@ -269,12 +269,6 @@ def respond_to_tender_clarification(tender: str, clarification: str, response: s
 @frappe.whitelist()
 def retry_failed_candidate_notice(tender: str, notice: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
 	return candidate_notices.retry_failed_candidate_notice(tender=tender, notice=notice, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
-
-
-@frappe.whitelist()
-def register_tender_candidate(tender: str, bidder_arrangement_id: str, candidate_name: str, notice_address: str, registered_at: str = "") -> dict[str, Any]:
-	"""Plan W2 stand-in for Bid Submission's Start bid (service identity only)."""
-	return candidate_gateway.register_stand_in_candidate(tender=tender, bidder_arrangement_id=bidder_arrangement_id, candidate_name=candidate_name, notice_address=notice_address, registered_at=registered_at or None)
 
 
 @frappe.whitelist()

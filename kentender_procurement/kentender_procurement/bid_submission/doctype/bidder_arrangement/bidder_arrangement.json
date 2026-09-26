@@ -1,0 +1,226 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:bidder_arrangement_id",
+ "creation": "2026-09-27 09:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "bidder_arrangement_id",
+  "tender",
+  "tender_reference",
+  "candidate_key",
+  "arrangement_type",
+  "lead_organisation",
+  "lead_legal_name",
+  "joint_venture_name",
+  "agreement_evidence",
+  "members",
+  "authorised_signatory_assignment",
+  "tender_contact_user",
+  "tender_contact_name",
+  "tender_contact_email",
+  "tender_contact_phone",
+  "candidate_registered_at",
+  "mandatory_notice_email",
+  "notice_contact_version",
+  "notice_contacts",
+  "status",
+  "status_since",
+  "created_by",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "bidder_arrangement_id",
+   "fieldtype": "Data",
+   "label": "Bidder arrangement",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "tender",
+   "fieldtype": "Link",
+   "label": "Tender",
+   "read_only": 1,
+   "options": "Tender",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_reference",
+   "fieldtype": "Data",
+   "label": "Tender reference",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "candidate_key",
+   "fieldtype": "Data",
+   "label": "Candidate key",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "arrangement_type",
+   "fieldtype": "Select",
+   "label": "Arrangement",
+   "read_only": 1,
+   "options": "Single organisation\nJoint venture",
+   "reqd": 1
+  },
+  {
+   "fieldname": "lead_organisation",
+   "fieldtype": "Data",
+   "label": "Lead organisation",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "lead_legal_name",
+   "fieldtype": "Data",
+   "label": "Lead legal name",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "joint_venture_name",
+   "fieldtype": "Data",
+   "label": "Joint-venture name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "agreement_evidence",
+   "fieldtype": "Data",
+   "label": "Agreement evidence",
+   "read_only": 1
+  },
+  {
+   "fieldname": "members",
+   "fieldtype": "Table",
+   "label": "Joint-venture members",
+   "read_only": 1,
+   "options": "Bidder Arrangement Member"
+  },
+  {
+   "fieldname": "authorised_signatory_assignment",
+   "fieldtype": "Data",
+   "label": "Authorised Signatory assignment",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tender_contact_user",
+   "fieldtype": "Link",
+   "label": "Tender contact",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "tender_contact_name",
+   "fieldtype": "Data",
+   "label": "Tender contact name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tender_contact_email",
+   "fieldtype": "Data",
+   "label": "Tender contact email",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tender_contact_phone",
+   "fieldtype": "Data",
+   "label": "Tender contact phone",
+   "read_only": 1
+  },
+  {
+   "fieldname": "candidate_registered_at",
+   "fieldtype": "Datetime",
+   "label": "Candidate registered at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "mandatory_notice_email",
+   "fieldtype": "Data",
+   "label": "Mandatory-notice email",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notice_contact_version",
+   "fieldtype": "Int",
+   "label": "Notice contact version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notice_contacts",
+   "fieldtype": "Table",
+   "label": "Notice contact versions",
+   "read_only": 1,
+   "options": "Bidder Arrangement Notice Contact"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Active\nClosed",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status_since",
+   "fieldtype": "Datetime",
+   "label": "Status since",
+   "read_only": 1
+  },
+  {
+   "fieldname": "created_by",
+   "fieldtype": "Link",
+   "label": "Created by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-27 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Submission",
+ "name": "Bidder Arrangement",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "title_field": "lead_legal_name"
+}

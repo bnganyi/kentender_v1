@@ -38,7 +38,7 @@ def _blank_pdf() -> bytes:
 PDF = _blank_pdf()
 CLEAN = "Clean — test scanner"
 AFYA = {
-	"legal_name": "Afya Digital Supplies Limited", "country": "Kenya", "registration_number": "PVT-9X7K2M", "tax_identifier": "P051234567X",
+	"legal_name": "Afya Digital Supplies Limited", "country": "Kenya", "registration_number": "PVT-ACCT-9X7K2M", "tax_identifier": "P051234567X",  # test-only: the canonical seed holds PVT-9X7K2M
 	"registered_address": "Westlands Business Park, Waiyaki Way, Nairobi", "official_email": "tenders@afyadigital.example", "official_phone": "+254 709 555 014",
 	"job_title": "Managing Director",
 }

@@ -216,7 +216,6 @@ _CHILD_LINK: dict[str, tuple[str, str]] = {
 	"Tender Clarification": ("tender", ROOT),
 	"Tender Candidate Notice": ("tender", ROOT),
 	"Tender Bid Definition": ("tender", ROOT),
-	"Tender Candidate Registration": ("tender", ROOT),
 	"Tender Cancellation": ("tender", ROOT),
 	"Tender Document": ("tender", ROOT),
 	"Tender Event": ("tender", ROOT),

@@ -55,8 +55,20 @@ CLOCK = {
 }
 AVAILABLE = {"STATE_PORTAL": "2027-05-15 08:00:00", "MINISTRY_WEBSITE": "2027-05-15 08:00:00", "NOTICE_BOARD": "2027-05-15 08:15:00", "NATIONAL_NEWSPAPERS": "2027-05-15 08:20:00"}
 
-CANDIDATE = {"bidder_arrangement_id": "ARR-PW-TND-001", "candidate_name": "Afya Digital Supplies Limited", "notice_address": "tenders@afyadigital.example"}
-FAILED_CANDIDATE = {"bidder_arrangement_id": "ARR-PW-TND-009", "candidate_name": "Failed Delivery Supplies", "notice_address": "procurement@failed-delivery.example"}
+# Candidates register through Bid Submission's Start bid (TPR FU-25): the
+# first is the canonical Afya account; the second, whose notices fail, gets a
+# supplier account of its own in this world's namespace, removed at restore.
+SUPPLIER_NAMESPACE = "PW_TENDERS_SUPPLIERS"
+FAILED_SUPPLIER = {
+	"facts": {
+		"legal_name": "Failed Delivery Supplies", "country": "Kenya", "registration_number": "PVT-PW-FAIL9", "tax_identifier": "P009000009X",
+		"registered_address": "Enterprise Road, Industrial Area, Nairobi", "official_email": "procurement@failed-delivery.example", "official_phone": "+254 700 000 009",
+		"job_title": "Director",
+	},
+	"registrant": "director@failed-delivery.example", "registrant_name": "Failed Delivery Director",
+	"representative": "bids@failed-delivery.example", "representative_name": "Failed Delivery Coordinator", "namespace": SUPPLIER_NAMESPACE,
+}
+SUPPLIER_USERS = (FAILED_SUPPLIER["registrant"], FAILED_SUPPLIER["representative"])
 
 
 def _key() -> str:
@@ -150,6 +162,8 @@ def restore_site(*, commit: bool = True) -> dict[str, Any]:
 	req_pw._guard()
 	frappe.set_user("Administrator")
 	_wipe_tenders()
+	for path in frappe.get_hooks("kt_tender_seed_candidate_cleanup") or []:
+		frappe.get_attr(path)(namespace=SUPPLIER_NAMESPACE, users=SUPPLIER_USERS)
 	frappe.flags.kt_tenders_clock = None
 	out = req_pw.restore_site(commit=False)
 	if commit:
@@ -428,15 +442,14 @@ def _issued_addendum(name: str) -> dict[str, Any]:
 	return state
 
 
-def _candidate(name: str, candidate: dict[str, str] | None = None) -> dict[str, Any]:
-	"""A Tender-bound candidate through the Start-bid stand-in (plan W2)."""
-	from kentender_procurement.tenders.services import candidate_gateway
+def _candidate(name: str, supplier: dict[str, Any] | None = None) -> dict[str, Any]:
+	"""A Tender-bound candidate through Bid Submission's Start bid (the
+	canonical Afya account unless `supplier` names another)."""
+	from kentender_procurement.tenders.seeds.kentender_mvp_v1 import register_candidate
 
-	candidate = candidate or CANDIDATE
 	_clock("candidate")
-	with _as(PRODUCER):
-		candidate_gateway.register_stand_in_candidate(tender=name, registered_at=CLOCK["candidate"], **candidate)
-	return {"candidate": candidate["bidder_arrangement_id"]}
+	reference = frappe.db.get_value("Tender", name, "tender_reference")
+	return {"candidate": register_candidate(tender_reference=reference, at=CLOCK["candidate"], supplier=supplier)}
 
 
 def _delivered(notice) -> dict[str, Any]:
@@ -448,11 +461,12 @@ def _failed(notice) -> dict[str, Any]:
 
 
 def _clarification(name: str, *, answered: bool = False, question: str = "May the two comparable contracts be from different customers?") -> dict[str, Any]:
-	from kentender_procurement.tenders.services import clarifications
+	from kentender_procurement.tenders.services import candidate_gateway, clarifications
 
 	_clock("clarification")
 	with _as(PRODUCER):
-		received = clarifications.receive_tender_clarification(tender=name, candidate_registration_id=CANDIDATE["bidder_arrangement_id"], question=question, received_at=CLOCK["clarification"], inbound_event_id=_key())
+		first = candidate_gateway.candidate_audience(tender=name, at=CLOCK["clarification"])[0]["candidate_registration_id"]
+		received = clarifications.receive_tender_clarification(tender=name, candidate_registration_id=first, question=question, received_at=CLOCK["clarification"], inbound_event_id=_key())
 	state = {"clarification": received["clarification"]}
 	if answered:
 		_clock("respond")
@@ -524,9 +538,9 @@ def reset_clarification_fixture(*, commit: bool = True, failed: bool = False) ->
 	if failed:
 		from kentender_procurement.tenders.services import candidate_notices, clarifications
 
-		state.update(_candidate(state["tender"], FAILED_CANDIDATE))
+		state.update(_candidate(state["tender"], FAILED_SUPPLIER))
 		_clock("respond")
-		transport = lambda notice: _failed(notice) if notice.destination_snapshot == FAILED_CANDIDATE["notice_address"] else _delivered(notice)
+		transport = lambda notice: _failed(notice) if notice.destination_snapshot == FAILED_SUPPLIER["facts"]["official_email"] else _delivered(notice)
 		frappe.flags.kt_tenders_notice_sync, frappe.flags.kt_tenders_notice_transport = True, transport
 		try:
 			root = frappe.get_doc("Tender", state["tender"])
