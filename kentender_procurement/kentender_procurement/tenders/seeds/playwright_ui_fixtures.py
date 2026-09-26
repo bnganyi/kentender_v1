@@ -576,13 +576,18 @@ def reset_cancelled_fixture(*, commit: bool = True) -> dict[str, Any]:
 	return _done(state, commit)
 
 
-def reset_correction_requested_fixture(*, commit: bool = True) -> dict[str, Any]:
-	"""TPR-DES-13 "Correction requested" (+ "Corrected successor ready": the
-	released handoff is itself the authorised successor in this world)."""
+def reset_correction_requested_fixture(*, commit: bool = True, successor: bool = False) -> dict[str, Any]:
+	"""TPR-DES-13 "Correction requested"; with `successor`, the "Corrected
+	successor available" state. REQ-CHG-001 v1.11 retired the handoff release
+	and the governed correction route is REQ FOLLOW_UPS FU-30, so the
+	successor is stood in exactly as the Python suite does (§15.1 step 2):
+	the same Plan Item's handoff is authorised again, unconsumed."""
 	from kentender_procurement.tenders.services import correction
 
 	state = reset_awaiting_hopf_fixture(commit=False)
 	_clock("return")
 	with _as(HOPF):
 		correction.request_requisition_correction(tender=state["tender"], reason="The authorised battery-runtime requirement must be corrected before this Tender can continue.", expected_record_version=_root(state["tender"]).record_version, idempotency_key=_key())
+	if successor:
+		frappe.db.set_value("Authorised Requisition Handoff", state["handoff"], {"consumed_at": None, "tender": None, "tender_version": None}, update_modified=False)
 	return _done(state, commit)

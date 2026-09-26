@@ -294,6 +294,9 @@ class TestRequisitionCorrection(TenderLifecycleCase):
 		state = correction.correction_state(root, user=fx.OFFICER)
 		self.assertEqual(state["requested_by"], fx.HOPF)
 		self.assertIsNone(state["successor"])
+		# §10.14: the current owner is named as the correction's holder, with the basis version
+		self.assertEqual(state["owner_label"], f"{frappe.db.get_value('User', author, 'full_name')}, Departmental Author")
+		self.assertEqual(state["basis_requisition_version_number"], frappe.db.get_value("Requisition Version", root.requisition_version, "version_number"))
 		# Owner-contract stand-in (§15.1 step 2): Requisitions' governed correction
 		# re-authorises the same Plan Item's handoff (REQ FOLLOW_UPS FU-30 owns the real route).
 		frappe.db.set_value("Authorised Requisition Handoff", authorised["handoff"], {"consumed_at": None, "tender": None, "tender_version": None}, update_modified=False)

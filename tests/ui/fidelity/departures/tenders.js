@@ -54,6 +54,8 @@ export const DEPARTURES = {
 	"CancelScreen#TPR-DES-12-REQUEST": [CORNERS],
 	"CancelScreen#TPR-DES-12-CANCELLED-HOLDER": [CORNERS],
 	"CancelScreen#TPR-DES-12-CANCELLED-READER": [CORNERS],
+	"CorrectionRequestedScreen#TPR-DES-13-REQUESTED": [CORNERS],
+	"CorrectionRequestedScreen#TPR-DES-13-SUCCESSOR": [CORNERS],
 };
 
 export const COVERED = Object.keys(DEPARTURES);

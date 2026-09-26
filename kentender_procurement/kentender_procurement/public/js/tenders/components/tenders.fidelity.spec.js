@@ -21,7 +21,8 @@ import PublishedScreen from "./PublishedScreen.vue";
 import ClarificationScreen from "./ClarificationScreen.vue";
 import AddendumScreen from "./AddendumScreen.vue";
 import CancelScreen from "./CancelScreen.vue";
-import { addendumData, cancelData, approvalData, authorisationData, clarificationData, editorRecord, publicationData, publishedData, reviewData, reviewRecord } from "./fixtures.js";
+import CorrectionRequestedScreen from "./CorrectionRequestedScreen.vue";
+import { addendumData, cancelData, correctionRecord, approvalData, authorisationData, clarificationData, editorRecord, publicationData, publishedData, reviewData, reviewRecord } from "./fixtures.js";
 
 const DESIGN = "docs/mvp-1-r1/11_tenders/design";
 
@@ -74,6 +75,8 @@ const SCREENS = [
 		name: "CancelScreen", variant: `TPR-DES-12-${v}`, board: "Cancel Tender.dc.html", label: "TPR-DES-12 Cancel Tender",
 		options: { guidance: kind, ...options }, component: CancelScreen, props: { data: cancelData(v) },
 	})),
+	{ name: "CorrectionRequestedScreen", variant: "TPR-DES-13-REQUESTED", board: "Requisition Correction.dc.html", label: "TPR-DES-13 Requisition correction", component: CorrectionRequestedScreen, props: { record: correctionRecord("REQUESTED") } },
+	{ name: "CorrectionRequestedScreen", variant: "TPR-DES-13-SUCCESSOR", board: "Requisition Correction.dc.html", label: "TPR-DES-13 Requisition correction", options: { show: ["isSuccessor"], hide: ["isRequested"] }, component: CorrectionRequestedScreen, props: { record: correctionRecord("SUCCESSOR") } },
 ];
 
 describe.each(SCREENS)("$name — the structure $variant carries", ({ name, variant, board, label, options, component, props }) => {

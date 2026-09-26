@@ -1,16 +1,16 @@
 import { expect, test } from "@playwright/test";
 
 import { login } from "../../helpers/auth";
-import { HOPF, OFFICER, PASSWORD, collectConsoleErrors, expectReady, gotoTenders, resetFixture, restoreSite } from "./helpers";
+import { HOPF, OFFICER, PASSWORD, collectConsoleErrors, expectGuidance, expectReady, gotoTenders, resetFixture, restoreSite } from "./helpers";
 
-/** TPR-CHG-001 v0.8 slice 7f — TPR-DES-13 Requisition correction. */
+/** TPR-CHG-001 v0.12 slice H — TPR-DES-13 Requisition correction (§10.14, §10.17). */
 
 test.describe.configure({ mode: "serial", timeout: 240_000 });
 
 test.describe("TPR-DES-13 Requisition correction", () => {
 	test.afterAll(() => restoreSite());
 
-	test("the HoPF requests a correction from the approval screen; the record stops", async ({ page }) => {
+	test("the HoPF requests a correction from the approval screen; the record stops and waits on the author", async ({ page }) => {
 		const state = resetFixture("reset_awaiting_hopf_fixture");
 		const errors = collectConsoleErrors(page);
 		await login(page, HOPF, PASSWORD);
@@ -22,28 +22,41 @@ test.describe("TPR-DES-13 Requisition correction", () => {
 		await dialog.locator('[data-testid="tnd-correction-dialog-reason"]').fill("The authorised battery-runtime requirement must be corrected before this Tender can continue.");
 		await dialog.locator('[data-testid="tnd-correction-dialog-confirm"]').click();
 		await expectReady(page, "correction");
-		// in this world the released handoff is itself the authorised successor, so
-		// the record shows either the stopped facts or the successor-ready panel
-		await expect(page.locator('[data-testid="tnd-successor-ready"], [data-testid="tnd-cannot-continue"]').first()).toBeVisible();
+		await expectGuidance(page, "DES-13-CORRECTION");
 		await expect(page.locator('[data-testid="tnd-approve-package"]')).toHaveCount(0);
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
-	test("the officer sees Correction requested or the corrected successor and starts the new Version", async ({ page }) => {
+	test("correction requested: the facts, the current owner, page links only; no business action", async ({ page }) => {
 		const state = resetFixture("reset_correction_requested_fixture");
 		await login(page, OFFICER, PASSWORD);
 		await gotoTenders(page, `/${state.tender_reference}`);
 		await expectReady(page, "correction");
-		const successor = page.locator('[data-testid="tnd-successor-ready"]');
-		if ((await successor.count()) === 0) {
-			await expect(page.locator('[data-testid="tnd-cannot-continue"]')).toContainText("This Tender cannot continue.");
-			await expect(page.locator('[data-testid="tnd-correction-facts"]')).toContainText("Requested by");
-			await expect(page.locator('[data-testid="tnd-start-corrected"]')).toHaveCount(0);
-			return;
-		}
-		await expect(successor).toContainText("A corrected requisition is ready.");
+		await expectGuidance(page, "DES-13-CORRECTION");
+		await expect(page.locator('[data-testid="tnd-record-badge"]')).toHaveText("Requisition correction requested");
+		const facts = page.locator('[data-testid="tnd-correction-facts"]');
+		await expect(facts).toContainText("Requested by");
+		await expect(facts).toContainText("Stopped Version");
+		await expect(facts).toContainText("Departmental Author");
+		await expect(page.locator('[data-testid="tnd-view-requisition"]')).toBeVisible();
+		await expect(page.locator('[data-testid="tnd-start-corrected"]')).toHaveCount(0);
+		await page.locator('[data-testid="tnd-view-history"]').click();
+		await expectReady(page, "history");
+		await page.goBack();
+		await expectReady(page, "correction");
+	});
+
+	test("corrected successor available: Your turn to start the corrected Version, which opens its Draft", async ({ page }) => {
+		const state = resetFixture("reset_correction_requested_fixture", { successor: true });
+		await login(page, OFFICER, PASSWORD);
+		await gotoTenders(page, `/${state.tender_reference}`);
+		await expectReady(page, "correction");
+		await expectGuidance(page, "DES-13-SUCCESSOR");
+		await expect(page.locator('[data-testid="tnd-successor-facts"]')).toContainText("Basis of stopped Tender Version 1");
+		await expect(page.locator('[data-testid="tnd-successor-consequence"]')).toHaveText("Starting creates a new Draft Version 2. Version 1 stays stopped and unchanged in history.");
 		await page.locator('[data-testid="tnd-start-corrected"]').click();
 		await expectReady(page, "details");
 		await expect(page.locator('[data-testid="tnd-record-badge"]')).toHaveText("Draft Version 2");
+		await expectGuidance(page, "DES-03");
 	});
 });

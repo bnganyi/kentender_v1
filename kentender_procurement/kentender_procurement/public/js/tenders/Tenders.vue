@@ -36,7 +36,7 @@
 				<ApprovalScreen v-else-if="screen === 'approval'" :record="record" :review="review" :pending="pending" @back="go()" @return="returnDialog = true" @approve="approveDialog = true" @preview="onPreview" @request-correction="correctionDialog = true" />
 				<AuthorisationScreen v-else-if="screen === 'authorisation'" :pub="pub" :requisition-reference="record.tender.requisition_reference" :pending="pending" @authorise="authoriseDialog = true" @view-document="onViewDocument" @back="go()" />
 				<PublicationScreen v-else-if="screen === 'publication'" :pub="pub" :refusal="refusalAnswer" :conflict="conflictRow" :withdrawn="withdrawnText" :pending="pending" @confirm-channel="channelDialog = { row: $event, subject: 'publication' }" @view-confirmation="confirmationView = $event" @view-document="onViewDocument" @withdraw="withdrawDialog = true" @fix="onFix" />
-				<CorrectionRequestedScreen v-else-if="screen === 'correction'" :record="record" :pending="pending" @start-corrected="onStartCorrected" @view-requisition="onViewRequisition" @history="go(tenderRef, 'history')" />
+				<CorrectionRequestedScreen v-else-if="screen === 'correction'" :record="record" :pending="pending" @start-corrected="onStartCorrected" @view-requisition="onViewRequisition" @history="go(tenderRef, 'history')" @back="go()" @fix="onFix" />
 				<CancelScreen v-else-if="screen === 'cancelled'" :data="cancelData" :pending="pending" :error="dialogError" @back="go()" @record-evidence="obligationDialog = { row: $event }" @fix="onFix" />
 				<PublishedScreen v-else :record="record" :review="review" :pending="pending" @view-document="onViewDocument" @view-confirmation="confirmationView = $event" @open-addendum="go(tenderRef, 'addenda', $event)" @open-clarification="go(tenderRef, 'clarifications', $event)" @prepare-addendum="onPrepareAddendum" @cancel-screen="go(tenderRef, 'cancel')" @history="go(tenderRef, 'history')" @reopen="reopenDialog = true" @request-correction="correctionDialog = true" @publication="go(tenderRef, 'publication')" @fix="onFix" />
 			</template>
@@ -626,6 +626,11 @@ function onFix(fix) {
 		return;
 	}
 	if (id === "submit_for_approval") submitDialog.value = true;
+	if (id === "start_corrected_tender_version") {
+		const successor = ((record.value.correction || {}).successor) || null;
+		if (successor) onStartCorrected(successor.handoff);
+		return;
+	}
 	if (id === "request_cancellation_review") {
 		reviewRequestDialog.value = true;
 		return;

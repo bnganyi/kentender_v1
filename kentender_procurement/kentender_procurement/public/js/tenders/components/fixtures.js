@@ -349,3 +349,21 @@ export function cancelData(variant = "BASE") {
 		guidance: guidance(g[0], g[1], g[2]),
 	};
 }
+
+/** TPR-DES-13 — `GetTender` on a Tender stopped for a Requisition correction ("REQUESTED" / "SUCCESSOR"). */
+export function correctionRecord(variant = "REQUESTED") {
+	const successor = variant === "SUCCESSOR";
+	return {
+		outcome: "OK", mode: "site", screen: "correction",
+		tender: { ...TENDER, tender_reference: "TND-MOH-2027-037", requisition_reference: "REQ-MOH-2027-037-001", title: "Clinical training laptops for county facilities", overall_status: "Requisition correction requested" },
+		correction: {
+			version_number: 2, basis_requisition_version_number: 1, requested_by_name: "Charles Mutiso", requested_at_label: "21 Apr 2027, 09:00 EAT", owner_label: "Grace Wanjiku, Departmental Author",
+			reason: "The authorised battery-runtime requirement must be corrected before this Tender can continue.", requisition: { name: "PRQ-0037", reference: "REQ-MOH-2027-037-001" },
+			successor: successor ? { handoff: "RQH-0037-2", requisition_reference: "REQ-MOH-2027-037-001", requisition_version_number: 2, authorised_at_label: "23 Apr 2027, 10:00 EAT" } : null,
+		},
+		allowed_actions: successor ? ["start_corrected_tender_version", "view_history"] : ["view_history"],
+		guidance: successor
+			? guidance("C/N/N/N/N", "Brian Wafula", step("your_turn", "Start a corrected Tender Version from authorised Requisition Version 2."))
+			: guidance("B/N/N/N/N", "Grace Wanjiku", step("waiting", "Grace Wanjiku, Departmental Author, is correcting the requisition since 21 Apr 2027, 09:00 EAT.")),
+	};
+}

@@ -285,6 +285,8 @@
 .kt-tnd .tnd-h2 { font-family: var(--kt-font-heading, var(--font-heading)); font-size: 19px; font-weight: 600; letter-spacing: 0; text-transform: none; margin: 0 0 12px; color: var(--kt-color-text, var(--color-text)); }
 .kt-tnd .tnd-h2-lede { margin: -4px 0 12px; }
 .kt-tnd .tnd-gap-top { margin-top: 14px; }
+.kt-tnd .tnd-page-link { font-size: 13px; color: var(--kt-color-accent-700, var(--color-accent-700)); text-decoration: none; }
+.kt-tnd .tnd-page-link:hover { text-decoration: underline; }
 .kt-tnd .tnd-caveat { margin: 10px 0 14px; }
 .kt-tnd .tnd-radio-list { display: grid; gap: 8px; margin: 4px 0 6px; }
 .kt-tnd .tnd-fact-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
