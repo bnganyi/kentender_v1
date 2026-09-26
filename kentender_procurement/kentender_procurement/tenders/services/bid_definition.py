@@ -397,7 +397,11 @@ def build_successor(tender, version, *, publication_id: str, prior: dict[str, An
 # --------------------------------------------------------------------------
 
 
-def store(tender, version, *, definition: dict[str, Any], publication: str, addendum: str = "", status: str = "Frozen", at=None) -> Any:
+def store(tender, version, *, definition: dict[str, Any], publication: str, addendum: str = "", status: str = "Frozen", at=None, predecessor: str = "", identity_map: dict[str, Any] | None = None) -> Any:
+	"""Write one immutable definition row. A successor (addendum) row also
+	stores its predecessor and the exact identity map the release's
+	addendum-identity rules produced, with its digest (BDS-CHG-001 v0.8
+	§4.4.6 `MapBidDefinitionAddendum`; plan D3)."""
 	from kentender_procurement.tenders.services import clock, envelope
 
 	components = component_digests_of(definition)
@@ -408,9 +412,17 @@ def store(tender, version, *, definition: dict[str, Any], publication: str, adde
 				"bid_definition_id": definition["bid_definition_id"], "definition_version": int(definition["definition_version"]), "definition_digest": definition["definition_digest"],
 				"status": status, "definition_json": digest.canonical_json(definition), **components, "frozen_at": at or clock.now(),
 				"effective_at": (at or clock.now()) if status == "Effective" else None, "record_version": 0, "fixture_namespace": tender.fixture_namespace,
+				"predecessor_bid_definition": predecessor or None,
+				"identity_map_json": digest.canonical_json(identity_map) if identity_map is not None else None,
+				"identity_map_digest": digest.sha256_hex(identity_map) if identity_map is not None else None,
 			}
 		)
 	)
+
+
+def identity_map_of(successor: dict[str, Any]) -> dict[str, Any]:
+	"""The stored form of a `build_successor` result's identity map."""
+	return {"classifications": successor["classifications"], "fresh_required": successor["fresh_required"]}
 
 
 def current(tender_name: str) -> dict[str, Any] | None:
@@ -433,3 +445,63 @@ def activate(tender, row_name: str, *, at) -> None:
 	row = frappe.get_doc("Tender Bid Definition", row_name)
 	if row.status != "Effective":
 		envelope.bump(row, status="Effective", effective_at=at)
+
+
+def definition_for(tender_name: str, definition_version) -> dict[str, Any] | None:
+	"""One stored definition of `tender_name` by version, whatever its status
+	(a Draft keeps the definition it was bound to; BDS verifies the digest)."""
+	try:
+		number = int(definition_version)
+	except (TypeError, ValueError):
+		return None
+	name = frappe.db.get_value("Tender Bid Definition", {"tender": tender_name, "definition_version": number}, "name")
+	if not name:
+		return None
+	row = frappe.get_doc("Tender Bid Definition", name)
+	return {"name": row.name, "bid_definition_id": row.bid_definition_id, "definition_version": int(row.definition_version), "definition_digest": row.definition_digest, "status": row.status, "definition": json.loads(row.definition_json or "{}")}
+
+
+def map_bid_definition_addendum(*, tender: str, from_version, to_version) -> dict[str, Any]:
+	"""`MapBidDefinitionAddendum` (BDS-CHG-001 v0.8 §4.4.6 / §7.4): the exact
+	stored identity map from `from_version` to `to_version` as one step per
+	successor, oldest first. Only a definition that has become effective can
+	be a target; the chain must be complete and every stored map must still
+	match its digest. Nothing is inferred from labels, order or text."""
+	try:
+		start, end = int(from_version), int(to_version)
+	except (TypeError, ValueError):
+		fail("TND_MAPPING_INCOMPLETE", detail={"reason": "Both supplier definition versions are required."})
+	rows = frappe.get_all(
+		"Tender Bid Definition", filters={"tender": tender},
+		fields=["name", "definition_version", "definition_digest", "status", "addendum", "predecessor_bid_definition", "identity_map_json", "identity_map_digest"], limit_page_length=0,
+	)
+	by_version = {int(r.definition_version): r for r in rows}
+	by_name = {r.name: r for r in rows}
+	if start not in by_version or end not in by_version or end < start:
+		fail("TND_MAPPING_INCOMPLETE", detail={"reason": "No supplier definition chain exists between these versions.", "from_version": start, "to_version": end})
+	if by_version[end].status not in ("Effective", "Superseded"):
+		fail("TND_STALE_VERSION", "This supplier definition is not effective yet.")
+	steps: list[dict[str, Any]] = []
+	current = by_version[end]
+	while int(current.definition_version) > start:
+		prior = by_name.get(cstr(current.predecessor_bid_definition))
+		if not prior or not current.identity_map_json:
+			fail("TND_MAPPING_INCOMPLETE", detail={"reason": "A successor supplier definition has no stored identity map.", "definition_version": int(current.definition_version)})
+		stored = json.loads(current.identity_map_json)
+		if digest.sha256_hex(stored) != cstr(current.identity_map_digest):
+			fail("TND_MAPPING_INCOMPLETE", detail={"reason": "A stored identity map no longer matches its digest.", "definition_version": int(current.definition_version)})
+		steps.append(
+			{
+				"from_version": int(prior.definition_version), "to_version": int(current.definition_version),
+				"addendum_reference": cstr(frappe.db.get_value("Tender Addendum", current.addendum, "addendum_reference")) if current.addendum else "",
+				"classifications": stored["classifications"], "fresh_required": stored["fresh_required"],
+			}
+		)
+		current = prior
+	if int(current.definition_version) != start:
+		fail("TND_MAPPING_INCOMPLETE", detail={"reason": "The supplier definition chain does not reach the starting version.", "from_version": start, "to_version": end})
+	steps.reverse()
+	return {
+		"tender": tender, "from_version": start, "to_version": end,
+		"from_definition_digest": cstr(by_version[start].definition_digest), "to_definition_digest": cstr(by_version[end].definition_digest), "steps": steps,
+	}

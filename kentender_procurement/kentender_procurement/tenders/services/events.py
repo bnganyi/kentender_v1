@@ -91,6 +91,15 @@ def pending(*, tender: str, event_type: str, consumer: str = "") -> list[Any]:
 	return [frappe.get_doc("Tender Event", n) for n in frappe.get_all("Tender Event", filters=filters, pluck="name", order_by="sequence asc")]
 
 
+def pending_for_consumer(*, event_type: str, consumer: str) -> list[Any]:
+	"""Every Pending outbox event of `event_type` addressed to `consumer`,
+	across Tenders, oldest first (the consumer's scheduler input)."""
+	names = frappe.get_all(
+		"Tender Event", filters={"event_type": event_type, "consumer": consumer, "status": "Pending"}, pluck="name", order_by="occurred_at asc, sequence asc", limit_page_length=0,
+	)
+	return [frappe.get_doc("Tender Event", n) for n in names]
+
+
 def exists(*, tender: str, event_type: str, subject_id: str = "") -> bool:
 	filters = {"tender": tender, "event_type": event_type}
 	if subject_id:

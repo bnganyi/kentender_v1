@@ -102,6 +102,7 @@ The work is planned and evidenced in the Bid Submission tracker (rows BDS8-301�
 | STI-C01 | Read the source coverage registers (`03_registers/`) and close every row of the definition-to-board matrix with a final class (A template gap / B owned elsewhere / C board). Any correction needing STD-TPL-001 text goes to its document owner. | Planned | — |
 | STI-C02 | Correct the Class A assets in `06_runtime/` (per-obligation warranty/support responses; security `valid_until`; structured JV members from the arrangement) and the coverage registers. `make std-release-rebuild`: validator, fixtures, expected definition, manifest and change report. Bump `supported_renderer_version` if a new control or composition is needed. | Planned | — |
 | STI-C03 | Install release 1.2 (Available, switched On). Switch release 1.1 **Off**, not Superseded, so no already-published Tender enters the proposed TPR v0.13 branch. Parity vectors on both adapters. The Tenders definition tests pass on 1.2; Tenders bound to 1.1 keep their frozen definitions. | Planned | — |
+| STI-C04 | `services/runtime.bid_work_status(release_id, verify=False)` for Bid Submission (BDS-CHG-001 v0.8 plan D3/D4): a read that reports lifecycle, site switch and integrity/renderer health without raising; `verify=True` re-hashes the runtime assets (commands), the default reads the recorded result (page reads write nothing). An unknown release reports `Unknown`. | Done | 2026-09-26. `tests/test_bid_work_status.py` 5/5; added to `make std-templates-gate` (5 modules, 76 tests, all passed). |
 
 ## Acceptance map
 

@@ -53,6 +53,11 @@ This register holds items surfaced while planning and building BDS-CHG-001 v0.8:
 | FU-V08-18 | TPR FU-25: retire the Tenders candidate stand-in once BDS registers `kt_tender_candidate_registry` (plan Phase 5, tracker BDS8-503). Owned by the Tenders tracker; executed here. | Medium — cross-module | TPR-CHG-001 (Tenders) | Open |
 | FU-V08-19 | Register disagreements for the documentation owner: KT-DOC-CTRL-001 lists G1-REG-001 at v1.1 while a v1.2 file exists in `98_work_progress/`; G1-REG-001 v1.2 still cites TPR v0.11 and BDS v0.7. | Low — register | Documentation owner | Open |
 | FU-V08-20 | Observed while running the technical-read conformance gate for Phase 2A (26 Sep 2026), not caused by this module: `tenders/services/publication.py:281` sets `can_configure` from the System Manager role, so a technical reader (Administrator) gets a truthy non-view capability on `tenders.get_tender_publication`, and `kentender_core.tests.test_technical_read_conformance` fails on that probe. | Medium — technical read (KT-STD-001 §3A.6) | Tenders (TPR-CHG-001) | Open |
+| FU-V08-21 | New copy for review (Phase 2C, not in BDS-CHG-001 §10.2): Closing options beyond **Open Tenders** — **Closed or cancelled** and **All Tenders** — and the count wording **N Tenders** for those two (the board's **1 available Tender** stays for Open). | Low — copy | BDS-CHG-001 next revision | Open |
+| FU-V08-22 | New copy for review: the portal's own page for a path no surface owns — **Page not found** / **This page is unavailable. Check the address or go to the list of available Tenders.** / **View available Tenders** — and the page title **Tender not found** on the BDS-DES-16 Tender-not-found state. | Low — copy | BDS-CHG-001 next revision | Open |
+| FU-V08-23 | Until slice 11.2 builds BDS-DES-02, **View Tender** on the list opens the Tender-not-found state (the resolver answers only `/tenders`). Expected for the Phase 2C walking skeleton; closes with slice 11.2. | Medium — incomplete journey | This module, plan Phase 11.2 | Open |
+| FU-V08-24 | Board note: BDS-DES-01-EMPTY draws two **Clear filters** controls (the filter bar's and the empty state's) while BDS-CHG-001 §10.2 says "Show Clear filters only". Ported as drawn. | Low — design | Design authority | Open |
+| FU-V08-25 | Running any kentender_core `IntegrationTestCase` module creates Frappe's standard test users (`test@example.com`, `test1…test4@example.com`, `testperm@`, `testdelete@`, `testpassword@`, `test'5@`), which `canonical.validate()` reports as fixture-domain users outside the register. `canonical.clear_non_canonical()` removes them (done 26 Sep after the Phase 2C runs). A core-wide test cleanup would stop the churn. | Low — test hygiene | kentender_core owner | Open |
 
 ## Verifying a fix
 
@@ -64,4 +69,6 @@ This register holds items surfaced while planning and building BDS-CHG-001 v0.8:
 - **FU-V08-14:** closes when CFG-CHG-002 v0.16 (or its successor) is approved with a Supplier portal artboard.
 - **FU-V08-15:** closes when the TM2 clean-up lands with its own inventory and tests.
 - **FU-V08-16:** closes only with recorded Project Owner evidence under BDS-CHG-001 §15.3–15.6.
+- **FU-V08-21/22/24:** closes when BDS-CHG-001 (or the boards) state the copy, or the owner accepts it.
+- **FU-V08-23:** closes when the slice 11.2 gate passes.
 - **FU-V08-18:** closes when `grep -rn "Tender Candidate Registration"` outside `retired/` returns only the removal patch (TPR FU-25 test).

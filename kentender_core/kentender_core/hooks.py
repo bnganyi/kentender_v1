@@ -87,6 +87,20 @@ app_include_js = [
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "kentender_core/public/scss/website"
 
+# BDS-CHG-001 v0.8 §10.1 / plan OD-B — the public supplier portal. The three
+# header sections (Tenders, My bids, Account) all render the one Website page
+# `www/kt_portal`; which app answers a path is decided by the
+# `kt_portal_surfaces` hook (longest owned prefix), never by another route
+# rule, and a path no surface owns is the portal's own Not found page.
+website_route_rules = [
+	{"from_route": "/tenders", "to_route": "kt_portal"},
+	{"from_route": "/tenders/<path:portal_path>", "to_route": "kt_portal"},
+	{"from_route": "/my-bids", "to_route": "kt_portal"},
+	{"from_route": "/my-bids/<path:portal_path>", "to_route": "kt_portal"},
+	{"from_route": "/account", "to_route": "kt_portal"},
+	{"from_route": "/account/<path:portal_path>", "to_route": "kt_portal"},
+]
+
 # include js, css files in header of web form
 # webform_include_js = {"doctype": "public/js/doctype.js"}
 # webform_include_css = {"doctype": "public/css/doctype.css"}

@@ -81,7 +81,8 @@ EXPECTED_FIELDS: dict[str, set[str]] = {
 	"Tender Candidate Notice Attempt": {"attempt_number", "attempted_at", "transport", "result", "provider_reference", "failure_reason", "actor"},
 	"Tender Bid Definition": {
 		"tender", "tender_version", "publication", "addendum", "bid_definition_id", "definition_version", "definition_digest", "status",
-		"definition_json", "response_schema_digest", "evaluation_contract_digest", "contract_projection_digest", "frozen_at", "effective_at", *AUDIT,
+		"definition_json", "response_schema_digest", "evaluation_contract_digest", "contract_projection_digest",
+		"predecessor_bid_definition", "identity_map_json", "identity_map_digest", "frozen_at", "effective_at", *AUDIT,
 	},
 	"Tender Candidate Registration": {
 		"tender", "bidder_arrangement_id", "candidate_name", "notice_address", "notice_address_version", "status", "registered_at", "registered_by", *AUDIT,

@@ -66,6 +66,17 @@ export default defineConfig({
 				},
 			},
 			{
+				// BDS-CHG-001 v0.8 plan OD-B — the Bid Submission public portal
+				// screens, alongside (never instead of) the browser layer.
+				plugins: [vue()],
+				test: {
+					name: "bid-portal",
+					environment: "jsdom",
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/bid_portal/vitest.setup.js"],
+					include: ["kentender_procurement/kentender_procurement/public/js/bid_portal/**/*.spec.js"],
+				},
+			},
+			{
 				// STD-TPL-IMP-001 v1.0 §11 — SFC component and structural-fidelity
 				// tests for STD Templates, alongside (never instead of) the browser layer.
 				plugins: [vue()],
@@ -109,6 +120,9 @@ export default defineConfig({
 					include: [
 						"kentender_core/kentender_core/public/js/kt_desk_page.spec.js",
 						"kentender_core/kentender_core/public/js/kt_industry/**/*.spec.js",
+						// BDS-CHG-001 v0.8 plan OD-B — the public portal runtime,
+						// kept in step with kt_desk_page.js by a shared spec.
+						"kentender_core/kentender_core/public/js/kt_portal/**/*.spec.js",
 					],
 				},
 			},

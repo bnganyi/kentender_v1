@@ -1,0 +1,44 @@
+/*
+ * BDS-CHG-001 v0.8 §10 — Bid Submission portal screens, ported from the
+ * "Bid Board v3" artboards (docs/mvp-1-r1/12_bid_submission/design). The
+ * shell (header, body column, footer) is kentender_core's
+ * kt_portal_shell.css; this file holds only what the boards draw inline
+ * inside .kt-page. Static because the esbuild pipeline discards
+ * <style scoped> CSS; every rule is scoped under .kt-industry.kt-portal.
+ */
+
+/* Page head: title row (board: flex, gap space-3, wrap). */
+.kt-industry.kt-portal .bds-head-main { min-width: 0; }
+.kt-industry.kt-portal .bds-title-row { display: flex; gap: var(--kt-space-3); align-items: center; flex-wrap: wrap; }
+
+/* DES-01 list. */
+.kt-industry.kt-portal .bds-tender-cell { font-weight: 600; }
+.kt-industry.kt-portal .bds-tender-ref { font-weight: 600; margin-top: 2px; }
+.kt-industry.kt-portal .bds-count { margin: 0; font-size: 13px; color: var(--kt-color-neutral-700); text-wrap: pretty; }
+.kt-industry.kt-portal .kt-table + .bds-count,
+.kt-industry.kt-portal [data-testid="bds-tenders-cards"] + .bds-count { margin-top: var(--kt-space-3); }
+.kt-industry.kt-portal .bds-empty-text { margin: 0 0 var(--kt-space-4); font-size: 14px; }
+.kt-industry.kt-portal .bds-load-failure { align-items: center; justify-content: space-between; margin-bottom: var(--kt-space-4); }
+.kt-industry.kt-portal .bds-skeleton { min-height: 160px; border-top: 1px solid var(--kt-color-divider); }
+
+/* 390 frame: labelled cards instead of table rows. */
+.kt-industry.kt-portal .bds-card { border-top: 1px solid var(--kt-color-divider); padding: var(--kt-space-3) 0; display: grid; gap: 6px; }
+.kt-industry.kt-portal .bds-card-title { font-size: 14px; font-weight: 600; }
+.kt-industry.kt-portal .bds-card-fact { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+.kt-industry.kt-portal .bds-card-fact > span:last-child { text-align: right; min-width: 0; }
+.kt-industry.kt-portal .bds-card-actions { font-size: 14px; display: flex; gap: 4px 20px; flex-wrap: wrap; min-height: 44px; align-items: center; }
+
+.kt-industry.kt-portal .kt-filter-bar.bds-filter-stack { grid-auto-flow: row; }
+.kt-industry.kt-portal .bds-btn-block { width: 100%; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.kt-industry.kt-portal .bds-btn-touch { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+
+/* BDS-DES-16 common state replacing the content surface. */
+.kt-industry.kt-portal .bds-state { gap: 6px; }
+.kt-industry.kt-portal .kt-page h1.bds-state-heading { font-family: var(--kt-font-body); font-size: 15px; font-weight: 700; line-height: 1.35; letter-spacing: 0; }
+.kt-industry.kt-portal .bds-state-message { margin: 0; font-size: 13px; line-height: 1.5; color: var(--kt-color-neutral-800); }
+.kt-industry.kt-portal .bds-state-action { margin-top: 4px; }
+
+@media (max-width: 600px) {
+	/* Inputs at 16 px so a phone does not zoom on focus (board 390 frame). */
+	.kt-industry.kt-portal .kt-filter-bar .kt-input { font-size: 16px; }
+}

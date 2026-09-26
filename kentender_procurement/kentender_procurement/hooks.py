@@ -101,7 +101,22 @@ website_route_rules = [
 	{"from_route": "/procurement/home", "to_route": "procurement/home"},
 	# The legacy bidder-workspace routes (`/tenders/<publication_ref>/…`,
 	# `/supplier/tenders/<tender_code>`) were retired by BDS-CHG-001 v0.8
-	# Phase 1; the supplier portal routes return with its portal surfaces.
+	# Phase 1. The supplier portal routes are kentender_core's (`kt_portal`);
+	# Bid Submission answers its paths through `kt_portal_surfaces` below.
+]
+
+# BDS-CHG-001 v0.8 plan OD-B — Bid Submission's public portal surface. The
+# resolver returns the verdict and first payload; the bundle mounts one Vue
+# app that stays mounted across its owned paths. The page CSS is a static
+# file because the esbuild pipeline discards <style scoped> CSS.
+kt_portal_surfaces = [
+	{
+		"key": "tenders",
+		"prefix": "/tenders",
+		"resolver": "kentender_procurement.bid_submission.portal.resolve",
+		"bundle": "bid_portal.bundle.js",
+		"css": [f"/assets/kentender_procurement/css/bid_portal.css?v={_asset_version('public/css/bid_portal.css')}"],
+	},
 ]
 
 # include js, css files in header of web form

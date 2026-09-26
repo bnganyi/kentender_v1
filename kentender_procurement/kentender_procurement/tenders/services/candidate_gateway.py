@@ -39,7 +39,12 @@ STAND_IN = "Tender Candidate Registration"
 
 def _provider():
 	"""The registered provider module (the last `kt_tender_candidate_registry`
-	hook value), or None for the stand-in."""
+	hook value), or None for the stand-in. Tests may set
+	`frappe.flags.kt_tender_candidate_registry` to a provider object or a
+	dotted module path; nothing else sets that flag."""
+	override = frappe.flags.get("kt_tender_candidate_registry")
+	if override:
+		return frappe.get_module(override) if isinstance(override, str) else override
 	paths = frappe.get_hooks(HOOK) or []
 	return frappe.get_module(paths[-1]) if paths else None
 

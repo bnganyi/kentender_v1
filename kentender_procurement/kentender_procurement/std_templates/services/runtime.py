@@ -171,3 +171,23 @@ def render_context(release_id: str, context: dict[str, Any], *, with_pdf: bool =
 
 def renderer_health(release) -> dict[str, Any]:
 	return registry.health(release.renderer_profile_id, release.supported_renderer_version)
+
+
+def bid_work_status(release_id: str, *, verify: bool = False) -> dict[str, Any]:
+	"""The bound release's state for Bid Submission (BDS-CHG-001 v0.8 §4.4.4,
+	plan D3/D4). A read, never a gate: it reports lifecycle, site switch and
+	integrity/renderer health and leaves the decision to the consumer. The
+	recorded integrity result is used unless `verify` re-hashes the runtime
+	assets (commands verify; page reads do not write)."""
+	if not release_id or not frappe.db.exists(DOCTYPE, release_id):
+		return {"release_id": str(release_id or ""), "lifecycle": "Unknown", "site_switch": "", "integrity_ok": False, "renderer_ok": False, "problem": "The bound Tender format is not installed on this site."}
+	release = release_doc(release_id)
+	if verify:
+		result = verify_integrity(release.name, scope="runtime")
+		integrity_ok, problem = result["ok"], "; ".join(result["problems"])
+	else:
+		integrity_ok, problem = release.integrity_status != "Failed", (release.integrity_problem or "") if release.integrity_status == "Failed" else ""
+	renderer_ok = bool(renderer_health(release)["ok"])
+	if integrity_ok and not renderer_ok:
+		problem = f"The renderer {release.renderer_profile_id}@{release.supported_renderer_version} is not available."
+	return {"release_id": release.name, "lifecycle": release.lifecycle_status, "site_switch": release.site_switch, "integrity_ok": bool(integrity_ok), "renderer_ok": renderer_ok, "problem": problem}
