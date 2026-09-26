@@ -38,7 +38,13 @@ def load(handoff: str):
 
 
 def payload_of(handoff_doc) -> dict[str, Any]:
-	return json.loads(handoff_doc.payload_json or "{}")
+	"""The handoff payload with the v1.4 field names translated exactly as the
+	stored snapshot translates them (`snapshot.build`), so the Start preview
+	checks the same reservation category the Draft will carry."""
+	from kentender_procurement.tenders.services import snapshot as snap
+
+	payload = json.loads(handoff_doc.payload_json or "{}")
+	return {**payload, **snap._handoff_v14_names(payload)}
 
 
 def requisition_state(handoff_doc) -> str:

@@ -65,8 +65,8 @@ class TestSchedules(SerializerCase):
 		by_id = {r["technical_requirement_id"]: r for r in rows}
 		self.assertEqual((by_id["TECH-003"]["required_value"], by_id["TECH-003"]["unit"]), ("16", "GB"))
 		self.assertEqual(by_id["TECH-005"]["required_value"], "NVMe SSD")
-		self.assertEqual(by_id["TECH-010"]["required_value"], "Wi-Fi 6, Bluetooth 5 or later")
-		self.assertEqual(by_id["TECH-011"]["required_value"], "USB-C ×2, USB-A ×2, HDMI ×1")
+		self.assertEqual(by_id["TECH-010"]["required_value"], "Wi-Fi 6 and Bluetooth 5 or later")
+		self.assertEqual(by_id["TECH-011"]["required_value"], "USB-C ×2; USB-A ×2; HDMI ×1")
 		warranty = serializer.warranty_support(self.snapshot)
 		self.assertEqual(warranty, {"minimum_warranty_months": "36", "onsite_support_required": True, "maximum_support_response_hours": "8", "manufacturer_support_required": True, "service_location_constraint": "Within Kenya", "support_description": "Supplier to provide escalation and warranty-contact details."})
 		self.assertEqual([a["acceptance_requirement_id"] for a in serializer.acceptance_rows(self.snapshot)], [f"ACC-{i:03d}" for i in range(1, 6)])

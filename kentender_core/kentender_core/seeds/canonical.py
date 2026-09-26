@@ -484,7 +484,9 @@ def clear_canonical_modules() -> dict[str, Any]:
 	from kentender_procurement.tenders.seeds.kentender_mvp_v1 import reset_tenders_seed
 
 	out["tenders"] = reset_tenders_seed(commit=False)
-	out["requisitions"] = reset_requisitions_seed(commit=False)
+	# Tenders is already cleared, so a handoff it consumed has no Tender left;
+	# Planning and Budget are cleared below in this same transaction.
+	out["requisitions"] = reset_requisitions_seed(commit=False, cross_module_rebuild=True)
 	for doctype, count in clear_requisition_fixture_rows(include_canonical=False, include_playwright=playwright_ok).get("deleted", {}).items():
 		if isinstance(count, int):
 			out["requisitions"][doctype] = out["requisitions"].get(doctype, 0) + count

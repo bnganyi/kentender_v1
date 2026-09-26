@@ -350,4 +350,32 @@ function openProfile() {
 	color: color-mix(in srgb, var(--kt-color-text) 50%, transparent);
 	flex: none;
 }
+/* Narrow screens (≤600 px, e.g. a 390 px phone): the rail keeps the
+   current page, the actions and the avatar; ancestor crumbs, the user's
+   name/role text and the divider give way so nothing is clipped off-screen
+   (STD-TPL-IMP-001 follow-up FU-05). */
+@media (max-width: 600px) {
+	.kt-rail {
+		gap: 8px;
+		padding: 0 12px;
+	}
+	.kt-rail-crumb-link,
+	.kt-rail-sep,
+	.kt-rail-user-text,
+	.kt-rail-div,
+	.kt-rail-chevron,
+	.kt-rail-pe-label {
+		display: none;
+	}
+	.kt-rail-crumb-current {
+		font-size: 15px;
+	}
+	.kt-rail-pe-select,
+	.kt-rail-pe-current {
+		max-width: 120px;
+	}
+	.kt-rail-user {
+		padding: 4px;
+	}
+}
 </style>

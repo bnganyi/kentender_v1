@@ -3,8 +3,9 @@
 
 """TPR-CHG-001 v0.8 §3 — pins on every sibling contract Tenders consumes
 (tracker TND-204): the Requisitions handoff seam (`list_eligible_handoffs`,
-`record_handoff_consumption`, `release_handoff_consumption`, the v1.3 payload
-keys the snapshot reads, the correction outcome keys), Planning's milestone
+`record_handoff_consumption` and the handoff v1.4 payload keys the snapshot
+reads — REQ-CHG-001 v1.11 removed `release_handoff_consumption` and the
+correction-outcome keys Tenders never read), Planning's milestone
 event envelope and per-proceeding read, Configuration's Publication-
 obligations payload shape and the schedule-profile resolver, and the
 site-setup rows the rule snapshot depends on. A change on the owner's side
@@ -20,16 +21,19 @@ from frappe.tests import IntegrationTestCase
 from kentender_core.seeds import site_setup
 from kentender_core.services import procurement_settings, regulatory_reference
 from kentender_procurement.procurement_planning.services import schedule
-from kentender_procurement.procurement_requisitions.services import handoff, lifecycle as req_lifecycle, read as req_read
+from kentender_procurement.procurement_requisitions.services import handoff, read as req_read
+from kentender_procurement.tenders.services import snapshot as snap
 
+# Handoff v1.4. `reservation_category`, `strategic_objective_id`,
+# `warranty_support` and the two decision blocks reach Tenders' own names
+# through `snapshot._handoff_v14_names`.
 HANDOFF_KEYS = {
 	"requisition_reference", "requisition_version", "content_digest", "plan_id", "plan_version_id", "plan_item_id", "fiscal_year",
-	"contributing_org_unit_ids", "strategic_objective", "strategic_objective_path", "procurement_category", "plan_horizon",
+	"contributing_org_unit_ids", "strategic_objective_id", "strategic_objective_path", "procurement_category", "plan_horizon",
 	"drawdown_lines", "business_need", "expected_operational_result", "planned_method", "planned_dates", "requirement_title",
-	"delivery_location", "latest_delivery_date", "items", "minimum_warranty_months", "onsite_support_required",
-	"maximum_support_response_hours", "manufacturer_support_required", "service_location_constraint", "support_description",
-	"technical_requirements", "related_services", "acceptance_requirements", "supporting_materials", "product_pattern",
-	"reservation_category_value", "lotting_indicator", "handoff_version", "generated_at", "decisions", "handoff_digest",
+	"delivery_location", "latest_delivery_date", "items", "warranty_support", "technical_requirements", "related_services",
+	"acceptance_requirements", "supporting_materials", "product_pattern", "reservation_category", "lotting_indicator",
+	"handoff_version", "generated_at", "departmental_certification", "procurement_authorisation", "handoff_digest",
 }
 
 
@@ -40,8 +44,7 @@ class TestRequisitionSeam(IntegrationTestCase):
 			set(inspect.signature(handoff.record_handoff_consumption).parameters),
 			{"handoff", "tender", "tender_version", "template_key", "template_version", "idempotency_key"},
 		)
-		self.assertEqual(set(inspect.signature(handoff.release_handoff_consumption).parameters), {"handoff", "tender", "reason", "idempotency_key", "user"})
-		self.assertEqual(handoff.HANDOFF_VERSION, "1.3")
+		self.assertEqual(handoff.HANDOFF_VERSION, "1.4")
 
 	def test_payload_keys_the_snapshot_consumes(self):
 		source = inspect.getsource(handoff.build_payload) + inspect.getsource(handoff.build_and_insert)
@@ -53,11 +56,8 @@ class TestRequisitionSeam(IntegrationTestCase):
 			self.assertIn(f'"{key}"', source, key)
 		for key in ("acceptance_requirement_id", "check_type", "pass_condition", "evidence_type", "service_requirement_id", "supporting_material_id", "file_digest", "reservation_id"):
 			self.assertIn(f'"{key}"', source, key)
-
-	def test_correction_outcome_keys(self):
-		source = inspect.getsource(req_lifecycle)
-		self.assertIn('"may_start_successor"', source)
-		self.assertIn('"correcting_plan_version"', source)
+		for key in snap.WARRANTY_FIELDS:
+			self.assertIn(f'"{key}"', source, key)
 
 
 class TestPlanningSeam(IntegrationTestCase):

@@ -31,7 +31,7 @@ MESSAGES: dict[str, str] = {
 	"STD_RELEASE_NOT_AVAILABLE": "This Tender format is not available for new Tenders. Choose a currently available compatible format.",
 	"STD_RELEASE_WITHDRAWN": "This Tender format has been withdrawn. Publication cannot continue.",
 	"STD_RELEASE_INTEGRITY_FAILED": "The installed Tender format no longer matches its approved release. Contact the controlled template-release owner.",
-	"STD_RELEASE_GATE_INCOMPLETE": "The release has a mandatory gate that has not passed.",
+	"STD_RELEASE_GATE_INCOMPLETE": "The release gate record does not list every mandatory gate.",
 	"STD_RENDERER_UNSUPPORTED": "The renderer this Tender format needs is missing or incompatible.",
 	"STD_INPUT_UNSUPPORTED": "This Tender uses a fact the Tender format does not support.",
 	"STD_DEFINITION_INVALID": "The Bid definition could not be built from the released rules.",

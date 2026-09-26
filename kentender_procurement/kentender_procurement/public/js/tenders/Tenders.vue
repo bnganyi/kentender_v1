@@ -29,6 +29,7 @@
 			</template>
 
 			<template v-else-if="kind === 'record'">
+				<ReleaseNotice v-if="!loading && (record.tender || {}).template_notice" :notice="record.tender.template_notice" @navigate="onNavigate" />
 				<div v-if="loading" class="tnd-page"><div class="kt-card kt-blueprint" style="padding: 0; overflow: hidden" data-testid="tnd-record-loading"><div v-for="row in 3" :key="row" class="tnd-skel-row"><div class="kt-skel" style="width: 72%"></div><div class="kt-skel" style="width: 52%"></div><div class="kt-skel" style="width: 44%"></div></div></div></div>
 				<EditorScreen v-else-if="screen === 'details' || screen === 'requirements'" ref="editorRef" :record="record" :task="screen" :field-errors="fieldErrors" :error="error" :pending="pending" @go-task="goTask" @open-drawer="drawer = $event === true ? 'full' : 'context'" @add-evidence="evidenceDialog = { row: null }" @edit-evidence="evidenceDialog = { row: $event }" @remove-evidence="onRemoveEvidence" @save="onSaveDraft(false)" @continue="onSaveDraft(true)" @back="onEditorBack" @request-correction="correctionDialog = true" />
 				<ReviewScreen v-else-if="screen === 'review'" :record="record" :review="review" :pending="pending" @back="goTask('requirements')" @submit="submitDialog = true" @preview="onPreview" @go-finding="onGoFinding" />
@@ -90,6 +91,7 @@ import { usePageRail } from "../tnd_shared/composables/usePageRail.js";
 import * as api from "./data/tendersApi.js";
 import { fileSize } from "./data/format.js";
 import CommonState from "./components/CommonState.vue";
+import ReleaseNotice from "./components/ReleaseNotice.vue";
 import WorkspaceScreen from "./components/WorkspaceScreen.vue";
 import StartTenderDialog from "./components/StartTenderDialog.vue";
 import EditorScreen from "./components/EditorScreen.vue";
@@ -361,6 +363,9 @@ async function run(fn, opts) {
 		}
 		if (e.detail && e.detail.fields) fieldErrors.value = e.detail.fields;
 		(opts && opts.dialog ? dialogError : error).value = e.message;
+		// A bound-release refusal (TPR-CHG-001 v0.11 §8): reload so the record's
+		// release notice, with View STD Template for readers, shows at once.
+		if (String(e.code || "").startsWith("TND_TEMPLATE_") && kind.value === "record") load({ quiet: true });
 		if (opts && opts.onError) opts.onError(e);
 		return null;
 	} finally {

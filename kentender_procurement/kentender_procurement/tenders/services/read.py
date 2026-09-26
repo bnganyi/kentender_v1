@@ -466,6 +466,7 @@ def get_tender(*, tender: str, user: str | None = None) -> dict[str, Any]:
 			"submission_deadline": cstr(root.submission_deadline), "submission_deadline_label": serializer.fmt_datetime_short(root.submission_deadline) if root.submission_deadline else "",
 			"publication": cstr(root.publication), "cancellation": cstr(root.cancellation), "record_version": int(root.record_version or 0), "template_release_id": cstr(root.template_release_id),
 			"template_release": cstr(root.template_release), "std_template_route": template_binding.inspection_route(actor, cstr(root.template_release_id)) if root.template_key else [],
+			"template_notice": template_binding.release_notice(root, actor),
 		},
 		"version": version_summary(version),
 		"tasks": draft_commands.task_statuses(version),

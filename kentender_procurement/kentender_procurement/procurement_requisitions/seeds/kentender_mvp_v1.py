@@ -352,7 +352,7 @@ def seed_consumed_handoff(*, commit: bool = False) -> dict[str, Any]:
 # Planning's own §14.10 isolated profiles share one Fiscal Year.
 
 
-def _wipe_combined_item_profile() -> dict[str, int]:
+def _wipe_combined_item_profile(*, cross_module_rebuild: bool = False) -> dict[str, int]:
 	"""Tear down whatever Requisition currently sits on the combined item,
 	revoking first (through the real command) if it reached Authorised and
 	is still unconsumed — the "wipe after authorise" hazard this build
@@ -386,7 +386,7 @@ def _wipe_combined_item_profile() -> dict[str, int]:
 	# — reuse it rather than a second, drifting copy.
 	from kentender_procurement.procurement_requisitions.seeds.clear import _delete_for_plan_items
 
-	deleted = _delete_for_plan_items([plan_item_id])
+	deleted = _delete_for_plan_items([plan_item_id], cross_module_rebuild=cross_module_rebuild)
 	journal = frappe.get_all("Requisition Command Journal", filters={"idempotency_key": ("like", "req-seed:%")}, pluck="name")
 	frappe.db.delete("Requisition Command Journal", {"name": ("in", journal or ("",))})
 	deleted["Requisition Command Journal"] = len(journal)
@@ -431,10 +431,12 @@ def recover_orphaned_drawdowns(*, commit: bool = False) -> dict[str, Any]:
 	return {"ok": True, "reversed": reversed_rows}
 
 
-def reset_requisitions_seed(*, commit: bool = False) -> dict[str, int]:
+def reset_requisitions_seed(*, commit: bool = False, cross_module_rebuild: bool = False) -> dict[str, int]:
+	"""`cross_module_rebuild` is for `canonical.clear_canonical_modules` only
+	(see `seeds.clear._delete_for_plan_items`)."""
 	_guard()
 	frappe.set_user("Administrator")
-	deleted = _wipe_combined_item_profile()
+	deleted = _wipe_combined_item_profile(cross_module_rebuild=cross_module_rebuild)
 	if commit:
 		frappe.db.commit()
 	return deleted

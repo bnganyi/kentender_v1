@@ -33,7 +33,19 @@ _DOCTYPES = (
 )
 
 
-def _delete_for_plan_items(plan_item_ids: list[str]) -> dict[str, int]:
+def _consumed_by_a_removed_tender(root_name: str) -> bool:
+	handoff = frappe.db.get_value("Authorised Requisition Handoff", {"requisition": root_name, "consumed_at": ("is", "set")}, ["tender"], as_dict=True)
+	return bool(handoff) and not (handoff.tender and frappe.db.exists("Tender", handoff.tender))
+
+
+def _delete_for_plan_items(plan_item_ids: list[str], *, cross_module_rebuild: bool = False) -> dict[str, int]:
+	"""`cross_module_rebuild`: only `canonical.clear_canonical_modules` passes
+	it — the one caller that clears Planning and Budget in the same
+	transaction straight after. There, a root whose handoff was consumed by a
+	Tender the Tenders stage has already removed may go even though its
+	reservation is still Active: REQ-CHG-001 v1.11 has no command to release
+	a consumed handoff, and the Budget and Planning clears remove the
+	reservation and drawdown rows next. Everywhere else the guard holds."""
 	deleted: dict[str, int] = {}
 	plan_item_ids = [p for p in plan_item_ids if p]
 	roots = frappe.get_all("Procurement Requisition", filters={"plan_item_id": ("in", plan_item_ids or ("",))}, pluck="name")
@@ -46,6 +58,8 @@ def _delete_for_plan_items(plan_item_ids: list[str]) -> dict[str, int]:
 		# cross-app position. A reservation still Active means real Budget/
 		# Planning state would be orphaned by deleting the local rows now.
 		if frappe.db.exists("Funding Reservation", {"calling_module": "Procurement Requisitions", "caller_reference": root.requisition_reference, "status": "Active"}):
+			if cross_module_rebuild and _consumed_by_a_removed_tender(root_name):
+				continue
 			frappe.throw(
 				f"{root_name} is Authorised with an Active Budget reservation — clearing it directly would "
 				"orphan Planning's drawdown and Budget's reservation. Revoke it first through "
@@ -61,9 +75,14 @@ def _delete_for_plan_items(plan_item_ids: list[str]) -> dict[str, int]:
 			frappe.db.delete(doctype, {"name": ("in", names)})
 		deleted[doctype] = deleted.get(doctype, 0) + len(names)
 
+	handoffs = frappe.get_all("Authorised Requisition Handoff", filters={"requisition": ("in", roots or ("",))}, pluck="name")
+	# Journal entries for documents deleted here (e.g. a Tender's
+	# RecordHandoffConsumption on the handoff) would otherwise replay a stale
+	# result into the next run that reuses the same idempotency key.
+	delete("Requisition Command Journal", frappe.get_all("Requisition Command Journal", filters={"document_name": ("in", (roots + handoffs + versions) or ("",))}, pluck="name"))
 	delete("Requisition Decision", frappe.get_all("Requisition Decision", filters={"task": ("in", tasks or ("",))}, pluck="name"))
 	delete("Requisition Task", tasks)
-	delete("Authorised Requisition Handoff", frappe.get_all("Authorised Requisition Handoff", filters={"requisition": ("in", roots or ("",))}, pluck="name"))
+	delete("Authorised Requisition Handoff", handoffs)
 	delete("Requisition Version", versions)
 	delete("IT Equipment Requirement Package Version", package_versions)
 	delete("IT Equipment Requirement Package", packages)

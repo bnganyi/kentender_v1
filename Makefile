@@ -1111,15 +1111,15 @@ bw-manifest-phase2-reseed:
 		kentender_procurement.tender_configurations.seed.bwmf_canonical_fixture.seed_bwmf_canonical_fixture
 
 ui-std-config-gate:
-	@echo "STD Module POC archived (2026-07). Use: make verify-std-archived && npm run test:ui:smoke:std-module-retired"
+	@echo "STD Module POC archived (2026-07); STD Configuration archived (2026-09). Use: make verify-std-archived && npx playwright test tests/ui/smoke/std_templates"
 	@exit 1
 
 verify-std-archived:
 	chmod +x $(BENCH_ROOT)/apps/kentender_v1/scripts/verify-std-archived.sh
 	$(BENCH_ROOT)/apps/kentender_v1/scripts/verify-std-archived.sh
 
-ui-std-module-retired-gate:
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npm run test:ui:smoke:std-module-retired
+# (ui-std-module-retired-gate retired 26 Sep 2026: the std-module-retired page
+# no longer exists; its spec is archived under archive/std-configuration-retired-2026-09/.)
 
 tm2-v1-contamination-audit:
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement \

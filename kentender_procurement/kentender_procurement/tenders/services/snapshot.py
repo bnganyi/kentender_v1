@@ -29,12 +29,44 @@ VISIBLE_TYPES: dict[str, tuple[str, str]] = {
 INTERNAL_ONLY_KEYS = ("strategic_objective", "strategic_objective_path", "plan_horizon", "multi_year_justification")
 
 
+WARRANTY_FIELDS: tuple[str, ...] = (
+	"minimum_warranty_months", "onsite_support_required", "maximum_support_response_hours",
+	"manufacturer_support_required", "service_location_constraint", "support_description",
+)
+
+
+def _handoff_v14_names(payload: dict[str, Any]) -> dict[str, Any]:
+	"""Requisitions handoff v1.4 (REQ-CHG-001 v1.11/v1.12) renamed or grouped
+	fields Tenders reads: `reservation_category` (was `reservation_category_value`),
+	`strategic_objective_id` (was `strategic_objective`), the six warranty facts
+	under `warranty_support`, and `departmental_certification` /
+	`procurement_authorisation` (was `decisions`). Translate once here, at the
+	seam, keeping the owner's own fields exactly as sent."""
+	out: dict[str, Any] = {}
+	if "reservation_category_value" not in payload:
+		out["reservation_category_value"] = payload.get("reservation_category") or "None"
+	if "strategic_objective" not in payload and "strategic_objective_id" in payload:
+		out["strategic_objective"] = payload.get("strategic_objective_id")
+	warranty = payload.get("warranty_support") or {}
+	for field in WARRANTY_FIELDS:
+		if field not in payload and field in warranty:
+			out[field] = warranty[field]
+	if "decisions" not in payload:
+		out["decisions"] = [
+			{"actor": d.get("actor"), "capacity": d.get("capacity"), "decided_at": d.get("decided_at"), "decision": d.get("decision")}
+			for d in (payload.get("departmental_certification") or {}, payload.get("procurement_authorisation") or {})
+			if d.get("decision")
+		]
+	return out
+
+
 def build(handoff_doc) -> tuple[dict[str, Any], str]:
 	payload = json.loads(handoff_doc.payload_json)
 	snapshot = {k: v for k, v in payload.items() if k != "decisions"}
+	snapshot.update(_handoff_v14_names(payload))
 	snapshot["handoff"] = handoff_doc.name
 	snapshot["handoff_digest"] = handoff_doc.handoff_digest
-	snapshot["decisions"] = payload.get("decisions") or []
+	snapshot["decisions"] = payload.get("decisions") or snapshot.get("decisions") or []
 	return snapshot, digest.sha256_hex(snapshot)
 
 

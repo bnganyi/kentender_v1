@@ -60,8 +60,15 @@ def _facts(facts: dict[str, Any]) -> dict[str, Any]:
 	}
 
 
+def _session_route(release_id: str = "") -> list[str]:
+	import frappe
+
+	return inspection_route(cstr(frappe.session.user), release_id)
+
+
 def _raise(exc: STDTemplateError, release_id: str = "") -> None:
-	detail = {"reason": exc.message, "std_code": exc.code, "template_release_id": release_id or cstr(exc.identity)}
+	release_id = release_id or cstr(exc.identity)
+	detail = {"reason": exc.message, "std_code": exc.code, "template_release_id": release_id, "std_template_route": _session_route(release_id)}
 	fail(_CODE.get(exc.code, "TND_TEMPLATE_UNAVAILABLE"), detail=detail)
 
 
@@ -78,7 +85,7 @@ def require_available() -> dict[str, Any]:
 	try:
 		return bind()
 	except STDTemplateError as exc:
-		fail("TND_TEMPLATE_UNAVAILABLE", detail={"reason": exc.message, "std_code": exc.code, "template_key": TEMPLATE_KEY})
+		fail("TND_TEMPLATE_UNAVAILABLE", detail={"reason": exc.message, "std_code": exc.code, "template_key": TEMPLATE_KEY, "std_template_route": _session_route()})
 		return {}  # unreachable
 
 
@@ -92,7 +99,7 @@ def require_bound(record, purpose: str = "continue") -> dict[str, Any]:
 		_raise(exc, release_id)
 		return {}  # unreachable
 	if facts["bundle_digest"] != cstr(record.bundle_digest) or facts["official_source_digest"] != cstr(record.official_source_digest):
-		fail("TND_TEMPLATE_RELEASE_INTEGRITY_FAILED", detail={"reason": "The installed release no longer matches the digests this Tender bound.", "template_release_id": release_id})
+		fail("TND_TEMPLATE_RELEASE_INTEGRITY_FAILED", detail={"reason": "The installed release no longer matches the digests this Tender bound.", "template_release_id": release_id, "std_template_route": _session_route(release_id)})
 	return _facts(facts)
 
 
@@ -124,6 +131,44 @@ def bound_categories(record) -> tuple[str, ...]:
 def bound_fields(facts: dict[str, Any]) -> dict[str, Any]:
 	"""The exact facts a Tender and its Version persist at binding."""
 	return {field: facts[field] for field in VERSION_FIELDS}
+
+
+#: TPR-CHG-001 v0.11 §10.15 bound-release states: (tone, heading, text). The
+#: published-Tender wording is the STD binding read notice (not in §10.15).
+_NOTICE_UNPUBLISHED = {
+	"Superseded": ("is-warning", "Tender format has a newer release", "This Tender remains on release {release}. You may continue only while its integrity checks pass; KenTender will not change the format automatically."),
+	"Withdrawn": ("is-critical", "Tender format withdrawn", "This Tender cannot continue to publication because release {release} was withdrawn. Your work is preserved."),
+	"Failed": ("is-critical", "Tender format could not be verified", "This Tender is preserved, but no further approval or publication action is permitted until the release owner resolves the verification failure."),
+}
+_NOTICE_PUBLISHED = {
+	"Superseded": ("is-info", "Tender format has a newer release", "A newer release of this Tender format exists; this Tender keeps the release it was published with."),
+	"Withdrawn": ("is-info", "Tender format withdrawn", "This Tender format was withdrawn after publication. The published documents and Bid definition are unchanged and remain the record."),
+}
+
+
+def release_notice(record, user: str) -> dict[str, Any] | None:
+	"""The bound release's state as the Tender record shows it, or None when
+	the release is simply usable. Reads the recorded lifecycle and last
+	integrity result (no re-verification on read); never rebinds."""
+	import frappe
+
+	if not cstr(record.get("template_key")):
+		return None
+	row = frappe.db.get_value("Installed STD Release", cstr(record.get("template_release_id")), ["lifecycle_status", "integrity_status", "template_release"], as_dict=True)
+	if not row:
+		return None
+	published = bool(record.get("published_at"))
+	if row.lifecycle_status in ("Superseded", "Withdrawn"):
+		state = row.lifecycle_status
+	elif row.integrity_status == "Failed" and not published:
+		state = "Failed"
+	else:
+		return None
+	tone, heading, text = (_NOTICE_PUBLISHED if published else _NOTICE_UNPUBLISHED)[state]
+	return {
+		"state": state, "tone": tone, "heading": heading, "text": text.format(release=row.template_release),
+		"std_template_route": inspection_route(user, cstr(record.get("template_release_id"))),
+	}
 
 
 def inspection_route(user: str, release_id: str = "") -> list[str]:

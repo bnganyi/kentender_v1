@@ -312,10 +312,10 @@ TENDER_DOCTYPES = (
 
 
 def reset_tenders_seed(*, commit: bool = False) -> dict[str, int]:
-	"""Removes the canonical Tender (every child row, then the root) and
-	releases its Requisition handoff so `upsert_tenders_base()` can rebuild
-	from a clean, unconsumed state. Never touches the Requisitions stage's
-	own rows — this stage owns only what it created."""
+	"""Removes the canonical Tender (every child row, then the root). Never
+	touches the Requisitions stage's own rows — this stage owns only what it
+	created — so a fresh `upsert_tenders_base()` needs an unconsumed handoff,
+	i.e. the Requisitions stage rebuilt as well (see the note below)."""
 	from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import COMBINED_ITEM_TITLE, _plan_item_id
 
 	_guard()
@@ -334,14 +334,10 @@ def reset_tenders_seed(*, commit: bool = False) -> dict[str, int]:
 		frappe.db.delete("Tender", {"name": tender})
 		deleted["Tender"] = 1
 	frappe.db.delete("Tender Command Journal", {"idempotency_key": ("like", "tnd-seed:%")})
-	if requisition:
-		handoff = frappe.db.get_value("Authorised Requisition Handoff", {"requisition": requisition}, "name")
-		if handoff and frappe.db.get_value("Authorised Requisition Handoff", handoff, "consumed_at"):
-			from kentender_procurement.procurement_requisitions.services import handoff as handoff_service
-			from kentender_procurement.procurement_requisitions.services.requisition_roles import ROLE_HEAD_OF_PROCUREMENT_FUNCTION
-
-			with _as(HOPF):
-				handoff_service.release_handoff_consumption(handoff=handoff, tender=tender or "", reason="Tenders canonical seed reset.", idempotency_key=_key("release"), user=HOPF)
+	# REQ-CHG-001 v1.11 (handoff v1.4) has no command that releases a consumed
+	# handoff: consumption is final. This stage therefore never touches the
+	# Requisition's handoff; rebuilding the Tender needs the Requisitions stage
+	# rebuilt too, which `canonical.run(rebuild=True)` does straight after this.
 	if commit:
 		frappe.db.commit()
 	return {"ok": True, "namespace": NS, "deleted": deleted}

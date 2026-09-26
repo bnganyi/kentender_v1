@@ -4,14 +4,14 @@
 """TPR-CHG-001 v0.8 test world (plan D18) — extends Procurement
 Requisitions' own fixture world (which itself extends Planning's
 `KENTENDER_TEST` world): an authorised, unconsumed `AuthorisedRequisitionHandoff
-v1.3` can only come from Requisitions' own commands, and the Planning/
+v1.4` can only come from Requisitions' own commands, and the Planning/
 Requisitions actors already hold Head of Procurement Function, Accounting
 Officer and Auditor. Tenders adds a Procurement Officer, a "both" actor who
 holds every Tenders responsibility (segregation tests) and a nobody.
 
-`authorised_handoff()` is Requisitions' own `RequisitionHandoffCase._authorised`
-sequence, copied verbatim (not re-derived) so the Tenders tests never build a
-subtly different Requisition than the one Requisitions itself proves.
+`authorised_handoff()` runs Requisitions' own REQ-CHG-001 v1.11 test helpers
+(not a re-derived copy), so the Tenders tests never build a subtly different
+Requisition than the one Requisitions itself proves.
 """
 
 from __future__ import annotations
@@ -20,7 +20,6 @@ from uuid import uuid4
 
 import frappe
 
-from kentender_procurement.procurement_requisitions.services import authorise, draft_commands as req_cmd, lifecycle as req_lifecycle
 from kentender_procurement.procurement_requisitions.tests import fixtures as req_fx
 
 NS = req_fx.NS
@@ -32,8 +31,10 @@ AUDITOR = req_fx.AUDITOR
 OUTSIDER = req_fx.OUTSIDER  # Departmental Author in OU_BETA — never a contributing unit
 NOBODY = "tndt.nobody@example.test"
 PRODUCER = "tndt.producer@example.test"  # the bidder-facing service identity (plan D8)
-DEPARTMENTAL = req_fx.AUTHOR  # Departmental Author in OU_ALPHA — the neutral reader
-TENDER_ACTORS = (OFFICER, BOTH, NOBODY, PRODUCER)
+# Departmental Author in OU_ALPHA only — the neutral reader. Tenders' own
+# actor: REQ-CHG-001 v1.11's fixtures give their Author OU_BETA too.
+DEPARTMENTAL = "tndt.departmental@example.test"
+TENDER_ACTORS = (OFFICER, BOTH, NOBODY, PRODUCER, DEPARTMENTAL)
 
 LOCATION = "Test Delivery Location — Tenders"
 CONTACT_OFFICE = "Test Contact Office — Tenders"
@@ -70,7 +71,7 @@ def ensure_world() -> None:
 	from kentender_core.services.business_role_registry import ensure_roles
 
 	ensure_roles()
-	for email, name in ((OFFICER, "TNDT Procurement Officer"), (BOTH, "TNDT Officer and Approver"), (NOBODY, "TNDT Nobody"), (PRODUCER, "TNDT Bidder Service")):
+	for email, name in ((OFFICER, "TNDT Procurement Officer"), (BOTH, "TNDT Officer and Approver"), (NOBODY, "TNDT Nobody"), (PRODUCER, "TNDT Bidder Service"), (DEPARTMENTAL, "TNDT Departmental Reader")):
 		_user(email, name)
 	from kentender_procurement.tenders.services import inquiries
 	from kentender_procurement.tenders.services.tender_roles import INQUIRY_PRODUCER_ROLE
@@ -81,6 +82,7 @@ def ensure_world() -> None:
 	_grant(BOTH, "Procurement Officer")
 	_grant(BOTH, "Head of Procurement Function")
 	_grant(BOTH, "Accounting Officer")
+	_grant(DEPARTMENTAL, "Departmental Author", req_fx.ou_alpha())
 	for doctype, field, name in (("Delivery Location", "location_name", LOCATION), ("Contact Office", "office_name", CONTACT_OFFICE)):
 		if not frappe.db.exists(doctype, name):
 			values = {"doctype": doctype, field: name, "address": "1 Test Street", "status": "Active", "fixture_namespace": NS}
@@ -141,31 +143,6 @@ def restore_site() -> None:
 # --------------------------------------------------------------------------
 
 
-def _complete_draft(prepared: dict, *, items: tuple[tuple[str, int, str], ...]) -> None:
-	frappe.set_user(req_fx.AUTHOR)
-	package_version = frappe.get_doc("IT Equipment Requirement Package Version", prepared["package_version"])
-	version = frappe.get_doc("Requisition Version", prepared["requisition_version"])
-	req_cmd.save_requisition_summary(
-		requisition=prepared["requisition"], values={"delivery_location": LOCATION, "latest_delivery_date": "2102-04-30"},
-		expected_record_version=version.record_version, idempotency_key=key(),
-	)
-	for name, quantity, use in items:
-		package_version.reload()
-		req_cmd.add_requisition_item(
-			requisition=prepared["requisition"],
-			values={"plan_item_line_id": "DL-001", "equipment_category": "Laptop", "item_name": name, "quantity": quantity, "intended_use": use},
-			expected_record_version=package_version.record_version, idempotency_key=key(),
-		)
-	package_version.reload()
-	req_fx.confirm_all_proposed_requirements(prepared["requisition"], package_version)
-	package_version.reload()
-	req_cmd.add_acceptance_requirement(
-		requisition=prepared["requisition"],
-		values={"applies_to_scope": "All items", "check_type": "Quantity", "pass_condition": "Delivered quantities equal the authorised schedule", "evidence_type": "Inspection record"},
-		expected_record_version=package_version.record_version, idempotency_key=key(),
-	)
-
-
 def evidence_file(file_name: str = "NB-MOH-2027-033.png") -> str:
 	"""A real one-pixel image as a private File (Frappe runs images through
 	Pillow on insert), for channel-confirmation evidence."""
@@ -181,16 +158,18 @@ def evidence_file(file_name: str = "NB-MOH-2027-033.png") -> str:
 
 def authorised_handoff(*, items: tuple[tuple[str, int, str], ...] = (("Business laptops", 1, "Clinical training"),)) -> dict:
 	"""Returns Requisitions' own `authorise_requisition` result (`handoff`,
-	`requisition`, `requisition_version`, ...) for a fresh Active Plan Item."""
+	`requisition`, `requisition_version`, ...) for a fresh Active Plan Item,
+	built with Requisitions' own REQ-CHG-001 v1.11 test sequence (prepare,
+	request details, same-specification items, the standard requirement
+	package, send, Head of User Department submit, HOPF authorise). The item
+	name comes from `items`; quantities are the Plan Item's own lines."""
 	_, item_id = req_fx.active_item()
-	frappe.set_user(req_fx.AUTHOR)
-	prepared = req_cmd.prepare_it_equipment_requisition(plan_item_id=item_id, idempotency_key=key())
-	_complete_draft(prepared, items=items)
-	frappe.set_user(req_fx.HOD)
-	root = frappe.get_doc("Procurement Requisition", prepared["requisition"])
-	submitted = req_lifecycle.submit_requisition_to_procurement(requisition=prepared["requisition"], expected_record_version=root.record_version, idempotency_key=key())
-	frappe.set_user(req_fx.HOPF)
-	root.reload()
-	authorised = authorise.authorise_requisition(requisition=prepared["requisition"], task=submitted["task"], expected_record_version=root.record_version, idempotency_key=key())
+	requisition = req_fx.prepare(item_id)["requisition"]
+	req_fx.fill_request_information(requisition)
+	req_fx.add_laptops(requisition, item_name=items[0][0])
+	req_fx.apply_standard_package(requisition)
+	req_fx.send(requisition)
+	req_fx.submit_as_hod(requisition)
+	authorised = req_fx.authorise(requisition)
 	frappe.set_user("Administrator")
 	return authorised
