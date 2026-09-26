@@ -285,6 +285,14 @@ def evidence_rejected(channel_label: str, *, stage: str = PUBLICATION) -> dict[s
 	)
 
 
+def refusal_guidance(answer: dict[str, Any], *, actor: str) -> dict[str, Any]:
+	"""The whole §10.17 guidance a refused channel confirmation carries: its
+	next step and the journey that agrees with it (a blocked answer marks the
+	stage Blocked, e.g. DES-08 invalid evidence D/D/D/B/N)."""
+	stage = answer.get("stage") or PUBLICATION
+	return {"next_step": answer, "journey": _journey(stage, blocked=answer.get("kind") == ns.KIND_BLOCKED, holder_display=_name(actor))}
+
+
 def confirmation_conflict(channel_label: str = "", *, stage: str = PUBLICATION) -> dict[str, Any]:
 	"""§10.17 DES-08 conflicting confirmation: View confirmation for the
 	confirmed channel, then Confirm publication on the outstanding ones."""

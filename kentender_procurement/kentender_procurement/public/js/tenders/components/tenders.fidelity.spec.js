@@ -16,7 +16,8 @@ import EditorScreen from "./EditorScreen.vue";
 import ReviewScreen from "./ReviewScreen.vue";
 import ApprovalScreen from "./ApprovalScreen.vue";
 import AuthorisationScreen from "./AuthorisationScreen.vue";
-import { approvalData, authorisationData, editorRecord, reviewData, reviewRecord } from "./fixtures.js";
+import PublicationScreen from "./PublicationScreen.vue";
+import { approvalData, authorisationData, editorRecord, publicationData, reviewData, reviewRecord } from "./fixtures.js";
 
 const DESIGN = "docs/mvp-1-r1/11_tenders/design";
 
@@ -32,6 +33,14 @@ const SCREENS = [
 	{ name: "ApprovalScreen", variant: "TPR-DES-06-SEGREGATION", board: "HOPF Approval.dc.html", label: "TPR-DES-06 HOPF approval", options: { show: ["isSegregation"], hide: ["isNormal"] }, component: ApprovalScreen, props: approvalData("SEGREGATION") },
 	{ name: "AuthorisationScreen", variant: "TPR-DES-07", board: "AO Publication Authorisation.dc.html", label: "TPR-DES-07 AO publication authorisation", component: AuthorisationScreen, props: { pub: authorisationData(), requisitionReference: "REQ-MOH-2027-033-001" } },
 	{ name: "AuthorisationScreen", variant: "TPR-DES-07-SEGREGATION", board: "AO Publication Authorisation.dc.html", label: "TPR-DES-07 AO publication authorisation", options: { show: ["isSegregation"], hide: ["isNormal"] }, component: AuthorisationScreen, props: { pub: authorisationData("SEGREGATION"), requisitionReference: "REQ-MOH-2027-033-001" } },
+	...["", "INVALID", "CONFLICT"].map((v) => {
+		const data = publicationData(v);
+		return {
+			name: "PublicationScreen", variant: `TPR-DES-08${v ? `-${v}` : ""}`, board: "Publication Progress and Evidence.dc.html", label: "TPR-DES-08 Publication confirmation",
+			options: v === "INVALID" ? { show: ["isInvalid"], hide: ["isBase", "isNotInvalid", "isConflict"] } : v === "CONFLICT" ? { show: ["isConflict", "isNotInvalid"], hide: ["isBase", "isInvalid"] } : {},
+			component: PublicationScreen, props: { pub: data, refusal: data._refusal, conflict: data._conflict },
+		};
+	}),
 ];
 
 describe.each(SCREENS)("$name — the structure $variant carries", ({ name, variant, board, label, options, component, props }) => {

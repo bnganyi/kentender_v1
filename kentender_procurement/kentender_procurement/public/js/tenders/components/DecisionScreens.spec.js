@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import { nextTick } from "vue";
-import { approvalData, authorisationData, reviewData, reviewRecord } from "./fixtures.js";
+import { approvalData, authorisationData, publicationData, reviewData, reviewRecord } from "./fixtures.js";
 import ReviewScreen from "./ReviewScreen.vue";
 import ApprovalScreen from "./ApprovalScreen.vue";
 import AuthorisationScreen from "./AuthorisationScreen.vue";
@@ -99,19 +99,27 @@ describe("AuthorisationScreen — TPR-DES-07", () => {
 });
 
 describe("PublicationScreen — TPR-DES-08", () => {
-	const rows = [
-		{ channel: "STATE_PORTAL", channel_label: "State Portal", status: "Confirmed", result_label: "Confirmed", available_at_label: "15 May 2027, 08:00 EAT" },
-		{ channel: "NOTICE_BOARD", channel_label: "Notice board", status: "Awaiting confirmation", result_label: "Awaiting confirmation", available_at_label: "" },
-	];
-	const pub = { tender: { ...TENDER, badge: "Publication confirmation required" }, publication: { channels: rows, authorised_by_name: "Amina Hassan", authorised_at_label: "15 May 2027, 07:55 EAT", rule_snapshot_id: "PUB-RULE", minimum_preparation_days: 21 }, allowed_actions: ["confirm_publication_channel"] };
-	it("counts confirmations, offers Confirm publication to the HoPF only, and the two notices", () => {
-		const w = mount(PublicationScreen, { props: { pub, invalidEvidence: true, conflict: rows[0], pending: false } });
-		expect(w.find('[data-testid="tnd-publication-progress"]').text()).toContain("1 of 2 required channels confirmed.");
-		expect(w.findAll('[data-testid="tnd-confirm-channel"]')).toHaveLength(1);
-		expect(w.find('[data-testid="tnd-invalid-evidence"]').text()).toContain("cannot be used as publication evidence");
-		expect(w.find('[data-testid="tnd-already-confirmed"]').text()).toContain("already confirmed");
-		const reader = mount(PublicationScreen, { props: { pub: { ...pub, allowed_actions: [] }, pending: false } });
-		expect(reader.find('[data-testid="tnd-confirm-channel"]').exists()).toBe(false);
+	it("the guidance states the count once; Confirm publication on outstanding rows for the HoPF only", async () => {
+		const w = mount(PublicationScreen, { props: { pub: publicationData(), pending: false }, attachTo: document.body });
+		await nextTick();
+		expect(w.find('[data-kt="next-step"]').text()).toContain("2 of 4 channels are confirmed.");
+		expect(w.find('[data-testid="tnd-publication-progress"]').exists()).toBe(false);
+		expect(w.find(".kt-bar").exists()).toBe(false);
+		expect(w.findAll('[data-testid="tnd-confirm-channel"]')).toHaveLength(2);
+		w.unmount();
+		const reader = mount(PublicationScreen, { props: { pub: { ...publicationData(), allowed_actions: [] }, pending: false } });
+		expect(reader.findAll('[data-testid="tnd-confirm-channel"]')).toHaveLength(0);
+	});
+	it("a refusal replaces the guidance with its blocked answer; a conflict draws its inline row", async () => {
+		const invalid = publicationData("INVALID");
+		const w = mount(PublicationScreen, { props: { pub: invalid, refusal: invalid._refusal, pending: false }, attachTo: document.body });
+		await nextTick();
+		expect(w.find('[data-kt="next-step"]').classes()).toContain("is-warning");
+		expect(w.findAll('[data-kt="next-step"] button').map((b) => b.text())).toEqual(["Choose evidence file", "Confirm publication"]);
+		w.unmount();
+		const conflict = publicationData("CONFLICT");
+		const c = mount(PublicationScreen, { props: { pub: conflict, refusal: conflict._refusal, conflict: conflict._conflict, pending: false } });
+		expect(c.find('[data-testid="tnd-already-confirmed"]').text()).toContain("The later confirmation request changed nothing.");
 	});
 });
 

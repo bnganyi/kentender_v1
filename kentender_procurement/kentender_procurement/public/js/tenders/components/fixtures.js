@@ -187,3 +187,22 @@ export function authorisationData(variant = "") {
 			: guidance("D/D/C/N/N", "Amina Hassan", step("your_turn", "Authorise publication of the approved Tender package.")),
 	};
 }
+
+/** TPR-DES-08 — `GetTenderPublication` for the HOPF, 2 of 4 confirmed ("", "INVALID", "CONFLICT"). */
+export function publicationData(variant = "") {
+	const row = (channel, channel_label, confirmed, online) => ({
+		name: `TCC-${channel}`, channel, channel_label, status: confirmed ? "Confirmed" : "Awaiting confirmation", result_label: confirmed ? "Confirmed" : "Awaiting confirmation",
+		available_at_label: confirmed ? "15 May 2027, 08:00 EAT" : "", online, dialog_title: channel === "NOTICE_BOARD" ? "Confirm notice-board publication" : channel === "NATIONAL_NEWSPAPERS" ? `Confirm newspaper publication — ${channel_label}` : `Confirm ${channel_label} publication`,
+	});
+	const invalid = variant === "INVALID";
+	const channels = [row("STATE_PORTAL", "State Portal", !invalid, true), row("MINISTRY_WEBSITE", "Ministry website", true, true), row("NOTICE_BOARD", "Notice board", false, false), row("NATIONAL_NEWSPAPERS", "Two national newspapers", false, false)];
+	return {
+		outcome: "OK", mode: "site",
+		tender: { ...TENDER, overall_status: "Publication authorised" },
+		publication: { channels, rule_line: "Authorised by Amina Hassan, 15 May 2027, 07:55 EAT · Publication rule PUB-RULE-MOH-OT-2027-01 · 4 required channels, all evidence based." },
+		allowed_actions: ["confirm_publication_channel", "view_history"],
+		guidance: guidance("D/D/D/C/N", "Charles Mutiso", step("your_turn", "Confirm publication through Notice board and Two national newspapers; 2 of 4 channels are confirmed.")),
+		_refusal: invalid ? guidance("D/D/D/B/N", "Charles Mutiso", blockedStep("State Portal evidence could not be accepted.", ["Choose evidence file", "Confirm publication"], "TND_PUBLICATION_EVIDENCE_INVALID")) : variant === "CONFLICT" ? guidance("D/D/D/C/N", "Charles Mutiso", step("your_turn", "Continue with the channels still awaiting confirmation.")) : null,
+		_conflict: variant === "CONFLICT" ? channels[0] : null,
+	};
+}

@@ -13,7 +13,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_procurement.tenders.services import serializer
+from kentender_procurement.tenders.services import configuration_gateway, serializer
 
 
 def _full_name(user: str) -> str:
@@ -34,8 +34,21 @@ def confirmation_rows(*, subject_type: str, subject_id: str) -> list[dict[str, A
 		row["evidence_file_name"] = file_row.file_name if file_row else ""
 		row["evidence_file_url"] = file_row.file_url if file_row else ""
 		row["how"] = "HOPF confirmation with evidence"
+		# §10.9: the dialog is titled per channel and asks for a public URL only online
+		row["dialog_title"] = dialog_title(row["channel"], row["channel_label"])
+		row["online"] = row["channel"] in configuration_gateway.ONLINE_CHANNELS
 		row["result_label"] = row["status"] if row["status"] == "Confirmed" else ("Awaiting confirmation" if row["status"] == "Awaiting confirmation" else row["status"])
 	return rows
+
+
+def dialog_title(channel: str, label: str) -> str:
+	""""Confirm notice-board publication", "Confirm newspaper publication —
+	Two national newspapers", "Confirm State Portal publication" (§10.9)."""
+	if channel == "NOTICE_BOARD":
+		return "Confirm notice-board publication"
+	if channel == "NATIONAL_NEWSPAPERS":
+		return f"Confirm newspaper publication — {label}"
+	return f"Confirm {label} publication"
 
 
 def publication_summary(root, *, actor: str, roles: dict[str, bool]) -> dict[str, Any] | None:
@@ -55,6 +68,14 @@ def publication_summary(root, *, actor: str, roles: dict[str, bool]) -> dict[str
 		"publication_digest": cstr(pub.publication_digest), "withdrawn_by_name": _full_name(pub.withdrawn_by), "withdrawn_at_label": serializer.fmt_datetime_short(pub.withdrawn_at) if pub.withdrawn_at else "", "withdrawal_reason": cstr(pub.withdrawal_reason),
 		"channels": channels, "confirmed_count": len(confirmed), "required_count": len(channels),
 		"progress_text": f"{len(confirmed)} of {len(channels)} required channels confirmed", "record_version": int(pub.record_version or 0),
+		# §10.9 item 4 — the closed "Publication decision and rule" line
+		"rule_line": " · ".join(part for part in (
+			f"Authorised by {_full_name(pub.authorised_by)}, {serializer.fmt_datetime_short(pub.authorised_at)}" if pub.authorised_at else "",
+			f"Publication rule {cstr(pub.rule_snapshot_id)}" if pub.rule_snapshot_id else "",
+			f"{len(channels)} required channel{'s' if len(channels) != 1 else ''}, all evidence based",
+			f"minimum period {int(pub.minimum_preparation_days or 0)} days" if pub.minimum_preparation_days else "",
+			f"package digest {cstr(pub.package_digest)}" if pub.package_digest else "",
+		) if part) + ".",
 	}
 
 

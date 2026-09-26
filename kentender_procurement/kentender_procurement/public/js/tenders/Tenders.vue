@@ -35,7 +35,7 @@
 				<ReviewScreen v-else-if="screen === 'review'" :record="record" :review="review" :pending="pending" @back="goTask('requirements')" @submit="submitDialog = true" @preview="onPreview" @go-finding="onGoFinding" @fix="onFix" />
 				<ApprovalScreen v-else-if="screen === 'approval'" :record="record" :review="review" :pending="pending" @back="go()" @return="returnDialog = true" @approve="approveDialog = true" @preview="onPreview" @request-correction="correctionDialog = true" />
 				<AuthorisationScreen v-else-if="screen === 'authorisation'" :pub="pub" :requisition-reference="record.tender.requisition_reference" :pending="pending" @authorise="authoriseDialog = true" @view-document="onViewDocument" @back="go()" />
-				<PublicationScreen v-else-if="screen === 'publication'" :pub="pub" :invalid-evidence="invalidEvidence" :conflict="conflictRow" :withdrawn="withdrawnText" :pending="pending" @confirm-channel="channelDialog = { row: $event, subject: 'publication' }" @view-confirmation="confirmationView = $event" @view-document="onViewDocument" @withdraw="withdrawDialog = true" />
+				<PublicationScreen v-else-if="screen === 'publication'" :pub="pub" :refusal="refusalAnswer" :conflict="conflictRow" :withdrawn="withdrawnText" :pending="pending" @confirm-channel="channelDialog = { row: $event, subject: 'publication' }" @view-confirmation="confirmationView = $event" @view-document="onViewDocument" @withdraw="withdrawDialog = true" @fix="onFix" />
 				<CorrectionRequestedScreen v-else-if="screen === 'correction'" :record="record" :pending="pending" @start-corrected="onStartCorrected" @view-requisition="onViewRequisition" @history="go(tenderRef, 'history')" />
 				<CancelScreen v-else-if="screen === 'cancelled'" :data="cancelData" :pending="pending" :error="dialogError" @back="go()" @record-evidence="obligationDialog = { row: $event }" />
 				<PublishedScreen v-else :record="record" :review="review" :pending="pending" @view-document="onViewDocument" @view-confirmation="confirmationView = $event" @open-addendum="go(tenderRef, 'addenda', $event)" @open-inquiry="go(tenderRef, 'inquiries', $event)" @prepare-addendum="onPrepareAddendum" @cancel-screen="go(tenderRef, 'cancel')" @history="go(tenderRef, 'history')" @reopen="reopenDialog = true" @request-correction="correctionDialog = true" @publication="go(tenderRef, 'publication')" @fix="onFix" />
@@ -72,7 +72,7 @@
 			<ReasonDialog v-if="reopenDialog" testid="tnd-reopen-dialog" title="Reopen this approved Tender for correction?" reason-label="Reason" note="The approved Version stays in history and a copied Draft is created. Publication has not started." confirm-label="Reopen for correction" :pending="pending" :error="dialogError" @confirm="onReopen" @cancel="closeDialogs" />
 			<ReasonDialog v-if="correctionDialog" testid="tnd-correction-dialog" title="Request a requisition correction?" reason-label="Reason" note="This Tender Version will stop and remain in history. Work can continue only from a newly authorised corrected Requisition." confirm-label="Request requisition correction" danger :pending="pending" :error="dialogError" @confirm="onRequestCorrection" @cancel="closeDialogs" />
 			<ConfirmDialog v-if="authoriseDialog" testid="tnd-authorise-dialog" title="Authorise publication of this Tender?" intro="This allows the Head of Procurement Function to publish the exact approved Invitation and Tender through every required channel and confirm the evidence. It does not itself publish the Tender or edit the package." :facts="authoriseFacts" confirm-label="Authorise publication" :pending="pending" :error="dialogError" @confirm="onAuthorise" @cancel="closeDialogs" />
-			<ChannelConfirmationDialog v-if="channelDialog" :channel="channelDialog.row" :attestation="attestationFor(channelDialog)" :subject-word="channelDialog.subject === 'addendum' ? 'addendum' : 'Invitation and complete Tender'" :pending="pending" :error="dialogError" :server-errors="fieldErrors" @confirm="onConfirmChannel" @cancel="closeDialogs" />
+			<ChannelConfirmationDialog v-if="channelDialog" :channel="channelDialog.row" :attestation="attestationFor(channelDialog)" :subject-word="channelDialog.subject === 'addendum' ? 'addendum' : 'Invitation and complete Tender'" :draft="channelDraft && channelDraft.channel === channelDialog.row.channel ? channelDraft : null" :pending="pending" :error="dialogError" :server-errors="fieldErrors" @confirm="onConfirmChannel" @cancel="closeDialogs" />
 			<ConfirmationViewDialog v-if="confirmationView" :row="confirmationView" @close="confirmationView = null" />
 			<ReasonDialog v-if="withdrawDialog" testid="tnd-withdraw-dialog" title="Withdraw publication authorisation?" reason-label="Reason and evidence that nothing was published" note="Possible only while no channel is confirmed. The Tender returns to Approved." confirm-label="Withdraw authorisation" danger :pending="pending" :error="dialogError" @confirm="onWithdraw" @cancel="closeDialogs" />
 			<DocumentDialog v-if="documentDialog" v-bind="documentDialog" @close="documentDialog = null" />
@@ -161,8 +161,12 @@ const addendumReturnDialog = ref(false);
 const recommendDialog = ref(null);
 const cancelDialog = ref(null);
 const obligationDialog = ref(null);
-const invalidEvidence = ref(false);
 const conflictRow = ref(null);
+// §10.17 DES-08: a refused confirmation's own next step replaces the read's
+// until the next navigation or a successful confirmation; the dialog's
+// entered values are kept for the same channel.
+const refusalAnswer = ref(null);
+const channelDraft = ref(null);
 const withdrawnText = ref("");
 
 // ---------------------------------------------------------------- routing
@@ -509,14 +513,15 @@ function attestationFor(dialog) {
 }
 async function onConfirmChannel(values) {
 	const d = channelDialog.value;
-	invalidEvidence.value = false;
+	const { _form, ...payload } = values;
+	channelDraft.value = { channel: d.row.channel, values: _form || {} };
 	conflictRow.value = null;
 	const result = await run(async () => {
 		let r;
 		if (d.subject === "addendum") {
-			r = await api.confirmAddendumPublicationChannel({ tender: tenderRef.value, addendum: subId.value, channel: d.row.channel, addendum_digest: (addendumData.value.addendum || {}).addendum_digest, expected_record_version: (addendumData.value.tender || {}).record_version, idempotency_key: api.newIdempotencyKey("confirm-addendum-channel"), ...values });
+			r = await api.confirmAddendumPublicationChannel({ tender: tenderRef.value, addendum: subId.value, channel: d.row.channel, addendum_digest: (addendumData.value.addendum || {}).addendum_digest, expected_record_version: (addendumData.value.tender || {}).record_version, idempotency_key: api.newIdempotencyKey("confirm-addendum-channel"), ...payload });
 		} else {
-			r = await api.confirmPublicationChannel({ tender: tenderRef.value, channel: d.row.channel, package_digest: (pub.value.publication || {}).package_digest, expected_record_version: rv(), idempotency_key: api.newIdempotencyKey("confirm-channel"), ...values });
+			r = await api.confirmPublicationChannel({ tender: tenderRef.value, channel: d.row.channel, package_digest: (pub.value.publication || {}).package_digest, expected_record_version: rv(), idempotency_key: api.newIdempotencyKey("confirm-channel"), ...payload });
 		}
 		cache.set(screenKey.value, null);
 		await load({ quiet: true });
@@ -524,12 +529,18 @@ async function onConfirmChannel(values) {
 	}, {
 		dialog: true,
 		onError: (e) => {
+			const answer = (e.detail && e.detail.guidance) || null;
 			if (e.code === "TND_PUBLICATION_EVIDENCE_INVALID") {
-				invalidEvidence.value = true;
-				closeDialogs();
+				// the dialog stays open with its values; the file field carries
+				// the §10.9 inline error and the guidance behind it is blocked
+				refusalAnswer.value = answer;
+				channelDraft.value = { ...channelDraft.value, invalidFile: true };
+				dialogError.value = "";
 			}
 			if (e.code === "TND_PUBLICATION_ALREADY_CONFIRMED") {
-				conflictRow.value = d.row;
+				refusalAnswer.value = answer;
+				const confirmed = (((pub.value.publication || {}).channels) || []).find((c) => c.channel === (e.detail || {}).channel);
+				conflictRow.value = confirmed || d.row;
 				closeDialogs();
 				load({ quiet: true });
 			}
@@ -537,6 +548,8 @@ async function onConfirmChannel(values) {
 	});
 	if (result) {
 		closeDialogs();
+		refusalAnswer.value = null;
+		channelDraft.value = null;
 		if (result.published_at || (result.publication_status === "Published")) {
 			cache.set("workspace", null);
 		}
@@ -604,6 +617,25 @@ function onFix(fix) {
 		return;
 	}
 	if (id === "submit_for_approval") submitDialog.value = true;
+	const channels = ((pub.value.publication || {}).channels) || [];
+	if (id === "choose_evidence_file" && channelDraft.value) {
+		const row = channels.find((c) => c.channel === channelDraft.value.channel);
+		if (row) {
+			channelDraft.value = { ...channelDraft.value, focus: "evidence_file" };
+			channelDialog.value = { row, subject: "publication" };
+		}
+		return;
+	}
+	if (id === "confirm_publication_channel") {
+		const wanted = channelDraft.value && channels.find((c) => c.channel === channelDraft.value.channel && c.status !== "Confirmed");
+		const row = wanted || channels.find((c) => c.status !== "Confirmed");
+		if (row) channelDialog.value = { row, subject: "publication" };
+		return;
+	}
+	if (id === "view_confirmation") {
+		const row = channels.find((c) => c.channel_label === target.channel_label) || conflictRow.value;
+		if (row) confirmationView.value = row;
+	}
 }
 watch([loading, refreshing], ([isLoading, isRefreshing]) => {
 	if (isLoading || isRefreshing || !focusAfterLoad.value) return;
@@ -718,8 +750,9 @@ watch(segments, () => {
 	drawer.value = "";
 	documentDialog.value = null;
 	confirmationView.value = null;
-	invalidEvidence.value = false;
 	conflictRow.value = null;
+	refusalAnswer.value = null;
+	channelDraft.value = null;
 	fieldErrors.value = {};
 	load({ entering: true });
 }, { immediate: true, deep: true });

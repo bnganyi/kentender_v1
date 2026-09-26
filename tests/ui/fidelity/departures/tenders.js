@@ -31,6 +31,9 @@ export const DEPARTURES = {
 	"ApprovalScreen#TPR-DES-06-SEGREGATION": [CORNERS],
 	"AuthorisationScreen#TPR-DES-07": [CORNERS],
 	"AuthorisationScreen#TPR-DES-07-SEGREGATION": [CORNERS],
+	"PublicationScreen#TPR-DES-08": [CORNERS],
+	"PublicationScreen#TPR-DES-08-INVALID": [CORNERS],
+	"PublicationScreen#TPR-DES-08-CONFLICT": [CORNERS],
 };
 
 export const COVERED = Object.keys(DEPARTURES);

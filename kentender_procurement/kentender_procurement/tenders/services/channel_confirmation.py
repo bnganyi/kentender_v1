@@ -166,7 +166,11 @@ def confirm_channel(
 	stage = guidance.PUBLICATION if subject_type == SUBJECT_PUBLICATION else guidance.OPEN_MANAGEMENT
 	# §10.17 DES-08: a refused confirmation carries its blocked next step; the
 	# entered values stay in the browser
-	checked = file_integrity.check_file(cstr(evidence_file).strip(), fail=lambda message: fail("TND_PUBLICATION_EVIDENCE_INVALID", message, {"channel": channel, "fields": {"evidence_file": message}, "next_step": guidance.evidence_rejected(row.channel_label, stage=stage)}))
+	# §10.9 invalid-evidence wording on the field; the integrity check's own
+	# reason stays in the detail for History and support
+	invalid = "The selected file cannot be used as publication evidence. Choose an allowed document or image file."
+	rejected = guidance.evidence_rejected(row.channel_label, stage=stage)
+	checked = file_integrity.check_file(cstr(evidence_file).strip(), fail=lambda message: fail("TND_PUBLICATION_EVIDENCE_INVALID", invalid, {"channel": channel, "reason": message, "fields": {"evidence_file": invalid}, "next_step": rejected, "guidance": guidance.refusal_guidance(rejected, actor=actor)}))
 	if row.status == "Confirmed":
 		same = (
 			get_datetime(row.available_at) == clean["available_at"] and cstr(row.evidence_reference) == clean["evidence_reference"] and cstr(row.public_url) == clean["public_url"]
@@ -182,7 +186,8 @@ def confirm_channel(
 			payload={"channel": channel, "presented": {**clean, "available_at": cstr(clean["available_at"]), "evidence_digest": checked["digest"]}, "recorded": {"available_at": cstr(row.available_at), "evidence_reference": row.evidence_reference, "public_url": row.public_url, "evidence_digest": row.evidence_digest}},
 			fixture_namespace=root.fixture_namespace,
 		)
-		fail("TND_PUBLICATION_ALREADY_CONFIRMED", detail={"channel": channel, "confirmation": row.name, "next_step": guidance.confirmation_conflict(row.channel_label, stage=stage)})
+		conflict = guidance.confirmation_conflict(row.channel_label, stage=stage)
+		fail("TND_PUBLICATION_ALREADY_CONFIRMED", detail={"channel": channel, "confirmation": row.name, "next_step": conflict, "guidance": guidance.refusal_guidance(conflict, actor=actor)})
 	reference = cstr(frappe.db.get_value("Tender Addendum", subject_id, "addendum_reference")) if subject_type == SUBJECT_ADDENDUM else ""
 	attestation = attestation_text(subject_type=subject_type, channel_label=row.channel_label, subject_reference=reference)
 	with envelope.atomic("confirm-channel"):

@@ -162,6 +162,7 @@ class TestConfirmChannels(PublicationCase):
 		step = ctx.exception.detail["next_step"]
 		self.assertEqual((step["kind"], step["headline"], step["stage"]), ("your_turn_blocked", "State Portal evidence could not be accepted.", "PUBLICATION"))
 		self.assertEqual([f["label"] for f in step["blockers"][0]["fixes"]], ["Choose evidence file", "Confirm publication"])
+		self.assertEqual([s["marker"] for s in ctx.exception.detail["guidance"]["journey"]["stages"]], ["done", "done", "done", "blocked", "not_started"])
 		self.assertEqual(frappe.db.count("Tender Channel Confirmation", {"publication": root.publication, "status": "Confirmed"}), 0)
 
 	def test_confirmations_are_attested_idempotent_and_conflicts_are_preserved(self):
