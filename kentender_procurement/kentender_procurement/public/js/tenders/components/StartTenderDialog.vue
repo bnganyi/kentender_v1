@@ -1,4 +1,4 @@
-<!-- TPR-DES-02 Start Tender dialog (520px), ported class-for-class over the
+<!-- TPR-DES-02 Start Tender dialog (§10.3, 520px), ported class-for-class over the
      blurred workspace: the six facts, the Supported/Unsupported verdict, the
      two disclosures, and Start Tender — disabled, with the reason shown,
      when the requisition is unsupported or the actor cannot start. -->
@@ -11,7 +11,7 @@
 			</div>
 			<div class="tnd-dialog-body">
 				<p style="margin: 0 0 16px">A Draft Tender will be created from the authorised requisition below.</p>
-				<div class="tnd-grid-2 tnd-grid-2--dialog">
+				<div class="tnd-start-facts">
 					<div class="tnd-fact"><div class="kt-label">Purchase</div><div class="tnd-fact-value" data-testid="tnd-start-purchase">{{ summary.purchase }}</div></div>
 					<div class="tnd-fact"><div class="kt-label">Requisition</div><div class="tnd-fact-value">{{ summary.requisition_reference }}</div></div>
 					<div class="tnd-fact"><div class="kt-label">Quantity</div><div class="tnd-fact-value">{{ summary.quantity }}</div></div>
@@ -32,7 +32,7 @@
 						</div>
 						<div v-if="whyOpen" class="kt-disclosure-body">
 							<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; font-size: 13px" data-testid="tnd-start-checks">
-								<div v-for="c in detail.compatibility" :key="c.check">{{ c.check }}: {{ c.actual }}</div>
+								<div v-for="row in detail.why || []" :key="row.label">{{ row.label }}: {{ row.value }}</div>
 							</div>
 						</div>
 					</div>
@@ -42,7 +42,7 @@
 							<svg class="kt-disclosure-chevron" :class="{ 'is-open': templateOpen }" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg>
 						</div>
 						<div v-if="templateOpen" class="kt-disclosure-body">
-							<div style="font-size: 13px">Template: {{ template.display_name }} · Version {{ template.template_version }}<br />Official source: {{ summary.requisition_reference }}</div>
+							<div style="font-size: 13px" data-testid="tnd-start-template">Template: {{ template.display_name }} · Version {{ template.template_version }}<br />Official source: {{ template.official_source_title }}<br />Reservation rule: {{ detail.reservation_rule }}</div>
 						</div>
 					</div>
 				</template>

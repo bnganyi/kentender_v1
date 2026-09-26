@@ -23,7 +23,9 @@ import AddendumScreen from "./AddendumScreen.vue";
 import CancelScreen from "./CancelScreen.vue";
 import CorrectionRequestedScreen from "./CorrectionRequestedScreen.vue";
 import CommonState from "./CommonState.vue";
-import { addendumData, cancelData, correctionRecord, approvalData, authorisationData, clarificationData, editorRecord, publicationData, publishedData, reviewData, reviewRecord } from "./fixtures.js";
+import WorkspaceScreen from "./WorkspaceScreen.vue";
+import StartTenderDialog from "./StartTenderDialog.vue";
+import { addendumData, cancelData, correctionRecord, startDetail, workspaceData, approvalData, authorisationData, clarificationData, editorRecord, publicationData, publishedData, reviewData, reviewRecord } from "./fixtures.js";
 
 const DESIGN = "docs/mvp-1-r1/11_tenders/design";
 
@@ -81,6 +83,16 @@ const SCREENS = [
 	...["forbidden", "not-found", "requisition-unavailable", "release-superseded", "rule-unavailable", "stale", "failure"].map((kind) => ({
 		name: "CommonState", variant: `TPR-DES-14-${kind}`, board: "Common States.dc.html", label: "TPR-DES-14 Common states", component: CommonState,
 		props: kind === "release-superseded" ? { kind, text: "This Tender remains on release 1.1.", actions: [{ key: "std-template", label: "View STD Template" }, { key: "continue", label: "Continue", primary: true }] } : { kind },
+	})),
+	...["READY", "DRAFT", "RETURNED", "HOPF", "AO", "PUBLISHING", "PUBLISHED", "READER", "EMPTY"].map((v) => ({
+		name: "WorkspaceScreen", variant: `TPR-DES-01-${v}`, board: "Tenders Workspace.dc.html", label: "TPR-DES-01 Tenders workspace",
+		options: ["READY", "DRAFT", "RETURNED", "HOPF", "AO"].includes(v) ? (v === "EMPTY" ? {} : {}) : { hide: ["showCounts"], ...(v === "EMPTY" ? { show: ["isEmpty"], hide: ["showCounts", "isNotEmpty"] } : {}) },
+		component: WorkspaceScreen, props: { workspace: workspaceData(v), filters: { search: "", status: "", fiscal_year: "" } },
+	})),
+	...["SUPPORTED", "UNSUPPORTED"].map((v) => ({
+		name: "StartTenderDialog", variant: `TPR-DES-02-${v}`, board: "Start Tender Dialog.dc.html", label: "TPR-DES-02 Start Tender dialog",
+		options: { selector: ".dialog", self: true, ...(v === "UNSUPPORTED" ? { show: ["isUnsupported"], hide: ["isSupported"] } : {}) },
+		component: StartTenderDialog, props: { detail: startDetail(v) },
 	})),
 ];
 

@@ -1,4 +1,4 @@
-<!-- TPR-DES-01 Tenders workspace, ported class-for-class: the masthead, the
+<!-- TPR-DES-01 Tenders workspace (§10.2), ported class-for-class: the masthead, the
      role-specific count cards (absent for readers, technical users and an
      empty result), the filter row, and the one connected queue table. Every
      row's status and action come from the server's own projection
@@ -29,7 +29,6 @@
 							<svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path v-for="(d, i) in icon(c.key)" :key="i" :d="d"></path></svg>
 							<div class="kt-kpi-value">{{ c.value }}</div>
 							<div class="tnd-kpi-label">{{ c.label }}</div>
-							<div class="kt-kpi-sub">{{ c.sub }}</div>
 						</div>
 					</div>
 				</div>
@@ -55,7 +54,7 @@
 
 				<div v-else class="tnd-table-wrap">
 					<table class="kt-table" data-testid="tnd-queue">
-						<thead><tr><th style="width: 32%">Purchase</th><th style="width: 22%">Tender</th><th style="width: 22%">Status</th><th style="width: 14%">Required by</th><th style="width: 10%"></th></tr></thead>
+						<thead><tr><th style="width: 32%">Purchase</th><th style="width: 22%">Tender</th><th style="width: 22%">Status</th><th style="width: 14%">Required by</th><th style="width: 10%" class="tnd-cell-right">Action</th></tr></thead>
 						<tbody>
 							<tr v-for="row in rows" :key="row.kind + ':' + (row.tender || row.handoff)" :data-testid="`tnd-row-${row.status_key}`" :data-tender="row.tender_reference">
 								<td><div class="tnd-row-purchase"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-neutral-600)" stroke-width="1.5"><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.29 7 12 12l8.71-5"/><path d="M12 22V12"/></svg><div>{{ row.purchase }}<div class="tnd-sub">{{ row.plan_item_id }}</div></div></div></td>

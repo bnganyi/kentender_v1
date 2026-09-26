@@ -121,8 +121,10 @@ export function requisitionsScope(doc, id) {
  *
  * `.cap`/`.sub` captions are design-tool annotation and are stripped.
  */
-export function tendersScope(doc, id, { show = [], hide = [], guidance = "" } = {}) {
-	const root = doc.querySelector(`[data-screen-label="${id}"]`);
+export function tendersScope(doc, id, { show = [], hide = [], guidance = "", selector = "" } = {}) {
+	// A board without a screen label (TPR-DES-02's dialog-over-workspace) is
+	// addressed by selector instead.
+	const root = doc.querySelector(selector || `[data-screen-label="${id}"]`);
 	if (!root) throw new Error(`artboard ${id} not found`);
 	const clone = root.cloneNode(true);
 	const nameOf = (el) => String(el.getAttribute("value") || "").replace(/^\{\{\s*|\s*\}\}$/g, "");
@@ -138,6 +140,9 @@ export function tendersScope(doc, id, { show = [], hide = [], guidance = "" } = 
 	// as the chevron it always is.
 	for (const el of Array.from(clone.querySelectorAll("[class]"))) {
 		if (/^\{\{\s*\w*chevron\w*\s*\}\}$/i.test(el.getAttribute("class").trim())) el.setAttribute("class", "kt-disclosure-chevron");
+		// …and a count card's class carries its accent state the same way
+		// (`class="{{c.cls}}"` → "kt-kpi-card is-live")
+		else if (/^\{\{.*\}\}$/.test(el.getAttribute("class").trim()) && el.parentElement && el.parentElement.classList.contains("kt-kpi-row")) el.setAttribute("class", "kt-kpi-card");
 	}
 	const ownerDoc = clone.ownerDocument;
 	for (const node of Array.from(clone.querySelectorAll('dc-import[name="TenderGuidance"]'))) {
@@ -169,7 +174,9 @@ export function tendersScope(doc, id, { show = [], hide = [], guidance = "" } = 
 
 /** One Tenders variant's landmark skeleton (see `tendersScope`). */
 export function tendersSkeleton(relPath, id, options = {}) {
-	return skeletonOf(tendersScope(documentFor(relPath), id, options));
+	const scope = tendersScope(documentFor(relPath), id, options);
+	// a dialog artboard keeps the dialog itself as a landmark (see setupSkeleton)
+	return skeletonOf(options.self ? { children: [scope] } : scope);
 }
 
 /**

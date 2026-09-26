@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { login } from "../../helpers/auth";
 import { HOPF, OFFICER, PASSWORD, collectConsoleErrors, expectReady, gotoTenders, resetFixture, restoreSite } from "./helpers";
 
-/** TPR-CHG-001 v0.8 slice 7b — TPR-DES-02 Start Tender dialog. */
+/** TPR-CHG-001 v0.12 (was v0.8) slice 7b — TPR-DES-02 Start Tender dialog. */
 
 test.describe.configure({ mode: "serial", timeout: 240_000 });
 
@@ -22,6 +22,11 @@ test.describe("TPR-DES-02 Start Tender dialog", () => {
 		await expect(dialog.locator('[data-testid="tnd-start-supported"]')).toContainText("Supported");
 		await dialog.locator(".kt-disclosure-head").first().click();
 		await expect(dialog.locator('[data-testid="tnd-start-checks"]')).toContainText("Method: Open Tender");
+		// §10.3: the county-residents restriction is stated; the template details name the official source
+		await expect(dialog.locator('[data-testid="tnd-start-checks"]')).toContainText("County-residents restriction:");
+		await dialog.locator(".kt-disclosure-head").nth(1).click();
+		await expect(dialog.locator('[data-testid="tnd-start-template"]')).toContainText("Official source:");
+		await expect(dialog.locator('[data-testid="tnd-start-template"]')).not.toContainText("REQ-");
 		await expect(dialog.locator("select, input[type=file]")).toHaveCount(0);
 
 		await dialog.locator('[data-testid="tnd-start-cancel"]').click();

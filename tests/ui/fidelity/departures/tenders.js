@@ -64,6 +64,9 @@ export const DEPARTURES = {
 	"CancelScreen#TPR-DES-12-CANCELLED-READER": [CORNERS],
 	"CorrectionRequestedScreen#TPR-DES-13-REQUESTED": [CORNERS],
 	"CorrectionRequestedScreen#TPR-DES-13-SUCCESSOR": [CORNERS],
+	...Object.fromEntries(["READY", "DRAFT", "RETURNED", "HOPF", "AO", "PUBLISHING", "PUBLISHED", "READER", "EMPTY"].map((v) => [`WorkspaceScreen#TPR-DES-01-${v}`, [CORNERS]])),
+	"StartTenderDialog#TPR-DES-02-SUPPORTED": [],
+	"StartTenderDialog#TPR-DES-02-UNSUPPORTED": [],
 	...Object.fromEntries(["forbidden", "not-found", "requisition-unavailable", "release-superseded", "rule-unavailable", "stale", "failure"].map((kind) => [`CommonState#TPR-DES-14-${kind}`, [STATE_SHEET, { ...CORNERS, path: "card+blueprint > corner" }]])),
 };
 

@@ -367,3 +367,48 @@ export function correctionRecord(variant = "REQUESTED") {
 			: guidance("B/N/N/N/N", "Grace Wanjiku", step("waiting", "Grace Wanjiku, Departmental Author, is correcting the requisition since 21 Apr 2027, 09:00 EAT.")),
 	};
 }
+
+const QUEUE_ROW = { kind: "tender", tender: "TDR-0001", tender_reference: "TND-MOH-2027-033", purchase: "Clinical training and deployment laptops for digital health rollout", plan_item_id: "PPI-MOH-2027-033", requisition_reference: "REQ-MOH-2027-033-001", required_by: "30 Sep 2027", secondary: "", route: ["tenders", "TND-MOH-2027-033"] };
+
+/** TPR-DES-01 — `GetTendersWorkspace` per board variant. */
+export function workspaceData(variant = "READY") {
+	const row = {
+		READY: { ...QUEUE_ROW, kind: "start", tender: "", tender_reference: "Not started", status_key: "ready", status_label: "Ready to start", action_key: "start", action_label: "Start Tender" },
+		DRAFT: { ...QUEUE_ROW, status_key: "draft", status_label: "Draft — Tender details need attention", action_key: "continue", action_label: "Continue" },
+		RETURNED: { ...QUEUE_ROW, status_key: "returned", status_label: "Returned to you — Supplier requirements need attention", action_key: "correct", action_label: "Correct" },
+		HOPF: { ...QUEUE_ROW, status_key: "awaiting_approval", status_label: "Awaiting your approval", action_key: "review", action_label: "Review" },
+		AO: { ...QUEUE_ROW, status_key: "approved", status_label: "Awaiting your publication decision", action_key: "review_publication", action_label: "Review publication" },
+		PUBLISHING: { ...QUEUE_ROW, status_key: "publishing", status_label: "Publication confirmation required", secondary: "Notice board and newspaper confirmations", action_key: "complete_confirmations", action_label: "Complete confirmations" },
+		PUBLISHED: { ...QUEUE_ROW, status_key: "published", status_label: "Published — open until 12 Jun 2027, 11:00 EAT", action_key: "view", action_label: "View" },
+		READER: { ...QUEUE_ROW, status_key: "published", status_label: "Published — open", action_key: "view", action_label: "View" },
+	}[variant];
+	const officer = [["ready", "Ready to start"], ["draft", "Drafts"], ["returned", "Returned to me"]];
+	const counts = {
+		READY: officer.map(([key, label], i) => ({ key, label, value: i === 0 ? 1 : 0 })),
+		DRAFT: officer.map(([key, label], i) => ({ key, label, value: i === 1 ? 1 : 0 })),
+		RETURNED: officer.map(([key, label], i) => ({ key, label, value: i === 2 ? 1 : 0 })),
+		HOPF: [{ key: "awaiting_approval", label: "Awaiting procurement approval", value: 1 }],
+		AO: [{ key: "approved", label: "Awaiting publication authorisation", value: 1 }],
+	}[variant] || [];
+	return {
+		outcome: "OK", mode: variant === "READER" ? "reader" : "actor", counts, rows: variant === "EMPTY" ? [] : [row],
+		filters: { statuses: [], fiscal_years: ["2027-2028"], search: "", status: "", fiscal_year: "" }, count_label: "1 Tender", empty_text: variant === "EMPTY" ? "No Tenders match these filters." : "",
+	};
+}
+
+/** TPR-DES-02 — `GetTenderStart` ("SUPPORTED" / "UNSUPPORTED"). */
+export function startDetail(variant = "SUPPORTED") {
+	const supported = variant === "SUPPORTED";
+	return {
+		outcome: "OK", handoff: "RQH-0033",
+		summary: supported
+			? { purchase: "Clinical training and deployment laptops for digital health rollout", requisition_reference: "REQ-MOH-2027-033-001", quantity: "250 Each", approved_value: "KES 50,000,000.00", method: "Open Tender", latest_delivery: "30 Sep 2027" }
+			: { purchase: "Implementation of a national health-data exchange platform", requisition_reference: "REQ-MOH-2027-038-001", quantity: "1 Project", approved_value: "KES 120,000,000.00", method: "Open Tender", latest_delivery: "31 Dec 2027" },
+		compatibility: [],
+		why: [["Category", "Goods"], ["Product", "Straightforward off-the-shelf IT equipment"], ["Method", "Open Tender"], ["Reservation", "Youth"], ["County-residents restriction", "Not applicable"], ["Lotting", "Single lot"], ["Currency", "KES"], ["Award package", "One"], ["Plan horizon", "Single year"]].map(([label, value]) => ({ label, value })),
+		reservation_rule: "Applicable verified Youth reservation rule · Version 1",
+		supported, result_text: supported ? "Supported — IT equipment using the standard Open Tender format." : "This requisition is not supported by the current IT-equipment Tender format.",
+		template: { available: true, display_name: "IT Equipment — Open Tender", template_version: "1.1", official_source_title: "PPRA Goods Standard Tender Document" },
+		can_start: supported,
+	};
+}

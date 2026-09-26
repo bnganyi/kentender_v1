@@ -140,9 +140,9 @@ def tender_row(root, actor: str, roles: dict[str, bool]) -> dict[str, Any]:
 	elif status == "Requisition correction requested":
 		key = "correction"
 	if not (roles["officer"] or roles["hopf"] or roles["ao"]):
-		action_key, action_label, route = "view", "View", [PAGE, root.tender_reference]
-		if key in ("draft", "returned"):
-			label = "Draft"
+		# §10.2 READER / TECHNICAL: permitted records with neutral statuses
+		action_key, action_label, route, secondary = "view", "View", [PAGE, root.tender_reference], ""
+		label = "Draft" if key in ("draft", "returned") else status
 	return {
 		"kind": "tender", "tender": root.name, "tender_reference": root.tender_reference, "purchase": cstr(root.requirement_title), "plan_item_id": cstr(root.plan_item_id),
 		"requisition_reference": cstr(root.requisition_reference), "fiscal_year": cstr(root.fiscal_year), "status_key": key, "status_label": label, "secondary": secondary,
@@ -179,8 +179,6 @@ def _counts(rows: list[dict[str, Any]], roles: dict[str, bool]) -> list[dict[str
 		]
 	if roles["hopf"]:
 		out.append({"key": "awaiting_approval", "label": "Awaiting procurement approval", "value": by_key.get("awaiting_approval", 0), "sub": "Tenders submitted for procurement approval"})
-		if by_key.get("publishing"):
-			out.append({"key": "publishing", "label": "Evidence outstanding", "value": by_key.get("publishing", 0), "sub": "Published channels awaiting confirmation"})
 	if roles["ao"]:
 		out.append({"key": "approved", "label": "Awaiting publication authorisation", "value": by_key.get("approved", 0), "sub": "Approved tenders awaiting a publication decision"})
 	return out
@@ -227,6 +225,16 @@ def get_tenders_workspace(*, search: str = "", status: str = "", fiscal_year: st
 # --------------------------------------------------------------------------
 
 
+WHY_LABELS = {"Procurement category": "Category"}
+
+
+def _reservation_rule_label(payload: dict[str, Any]) -> str:
+	category = cstr(payload.get("reservation_category_value") or payload.get("reservation_category"))
+	if not category or category == "None":
+		return "No reservation"
+	return f"Applicable verified {category} reservation rule · Version {len(payload.get('reservation_rule_snapshot_ids') or []) or 1}"
+
+
 def get_tender_start(*, handoff: str, user: str | None = None) -> dict[str, Any]:
 	actor = authz.actor(user)
 	roles = actor_roles(actor)
@@ -264,6 +272,9 @@ def get_tender_start(*, handoff: str, user: str | None = None) -> dict[str, Any]
 			"method": cstr(payload.get("planned_method")), "latest_delivery": serializer.fmt_date_short(payload.get("latest_delivery_date")), "product": compatibility.PRODUCT_LABEL if supported else cstr(payload.get("product_pattern")),
 		},
 		"compatibility": [c.as_dict() for c in checks],
+		# §10.3 "Why this requisition is supported", in the board's words
+		"why": [{"label": WHY_LABELS.get(c.check, c.check), "value": c.required if (c.ok and c.check == "Product") else c.actual} for c in checks],
+		"reservation_rule": _reservation_rule_label(payload),
 		"supported": supported,
 		"result_text": "Supported — IT equipment using the standard Open Tender format." if supported else "This requisition is not supported by the current IT-equipment Tender format.",
 		"template": template,

@@ -36,6 +36,7 @@ test.describe("TPR-DES-01 Tenders workspace", () => {
 		await expect(page.locator('[data-testid="tnd-empty"]')).toContainText("No Tenders match these filters.");
 		await page.locator('[data-testid="tnd-empty"] button').click();
 		await expect(page.locator('[data-testid="tnd-row-ready"]')).toHaveCount(1);
+		await expect(page.locator('[data-testid="tnd-queue"] thead th')).toHaveText(["Purchase", "Tender", "Status", "Required by", "Action"]);
 
 		await page.reload();
 		await expectReady(page, "workspace");
@@ -107,7 +108,7 @@ test.describe("TPR-DES-01 Tenders workspace", () => {
 		await gotoTenders(page);
 		await expectReady(page, "failure");
 		await expect(page.locator('[data-testid="tnd-state-failure"]')).toContainText("Tenders could not be loaded");
-		await page.locator('[data-testid="tnd-state-action"]').click();
+		await page.locator('[data-testid="tnd-state-action-retry"]').click();
 		await expectReady(page, "workspace");
 		await expect(page.locator('[data-testid="tnd-row-ready"]')).toHaveCount(1);
 	});

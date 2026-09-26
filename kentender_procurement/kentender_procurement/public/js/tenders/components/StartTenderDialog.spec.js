@@ -3,13 +3,9 @@
 import { describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import StartTenderDialog from "./StartTenderDialog.vue";
+import { startDetail } from "./fixtures.js";
 
-const DETAIL = {
-	outcome: "OK", handoff: "RQH-1", supported: true, can_start: true, result_text: "Supported — IT equipment using the standard Open Tender format.",
-	summary: { purchase: "Clinical training and deployment laptops", requisition_reference: "REQ-MOH-2027-033-001", quantity: "250 Each", approved_value: "KES 50,000,000.00", method: "Open Tender", latest_delivery: "30 Sep 2027" },
-	compatibility: [{ check: "Product", expected: "Straightforward off-the-shelf IT equipment", actual: "IT Equipment: Laptop", ok: true }],
-	template: { available: true, display_name: "IT Equipment — Open Tender", template_version: "1.1" },
-};
+const DETAIL = startDetail("SUPPORTED");
 
 describe("StartTenderDialog — TPR-DES-02", () => {
 	it("renders the six facts, the Supported notice and both disclosures", async () => {
@@ -19,7 +15,9 @@ describe("StartTenderDialog — TPR-DES-02", () => {
 		expect(w.find('[data-testid="tnd-start-supported"]').text()).toContain("Supported");
 		expect(w.findAll(".kt-disclosure-title").map((t) => t.text())).toEqual(["Why this requisition is supported", "Template and source details"]);
 		await w.find(".kt-disclosure-head").trigger("click");
-		expect(w.find('[data-testid="tnd-start-checks"]').text()).toContain("Product: IT Equipment: Laptop");
+		expect(w.find('[data-testid="tnd-start-checks"]').text()).toContain("County-residents restriction: Not applicable");
+		await w.findAll(".kt-disclosure-head")[1].trigger("click");
+		expect(w.find('[data-testid="tnd-start-template"]').text()).toContain("Official source: PPRA Goods Standard Tender Document");
 		await w.find('[data-testid="tnd-start-confirm"]').trigger("click");
 		expect(w.emitted("confirm")).toHaveLength(1);
 	});
