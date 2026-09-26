@@ -212,6 +212,18 @@ def _orphaned_child_rows() -> dict[str, list[str]]:
 	return out
 
 
+def _dispositions_without_a_need() -> list[str]:
+	"""Planning's disposition rows for Needs that no longer exist (found
+	26 Sep 2026: 11 on the dev site; Planning writes them unstamped, so no
+	namespace purge reaches them)."""
+	if not frappe.db.table_exists("Need Planning Disposition Projection"):
+		return []
+	return frappe.db.sql_list(
+		"select p.name from `tabNeed Planning Disposition Projection` p "
+		"left join `tabDepartmental Need` n on n.name = p.departmental_need where n.name is null"
+	)
+
+
 def _orphaned_attachments() -> list[str]:
 	"""Files attached to a named KenTender record that no longer exists
 	(found 26 Sep 2026: 1,734 from deleted Tender documents)."""
@@ -282,11 +294,24 @@ def collect_non_canonical() -> dict[str, list[str]]:
 		if frappe.db.exists("DocType", doctype):
 			add(doctype, frappe.get_all(doctype, pluck="name"))
 
+	# Strategy: every plan outside the canonical namespace and every version
+	# of the canonical plan other than Version 1 (the module's own rule).
+	from kentender_strategy.seeds.kentender_mvp_v1_strategy import strategy_rows_to_clear
+
+	for doctype, names in strategy_rows_to_clear().items():
+		add(doctype, names)
+
 	# Tenders: everything not on the canonical Requisition (the module's own
 	# rule, `tenders.seeds.clear`).
 	from kentender_procurement.tenders.seeds.clear import tender_rows_to_clear
 
 	for doctype, names in tender_rows_to_clear().items():
+		add(doctype, names)
+
+	# Requisitions: every root not on a canonical Plan Item (the module's own rule).
+	from kentender_procurement.procurement_requisitions.seeds.clear import requisition_rows_to_clear
+
+	for doctype, names in requisition_rows_to_clear().items():
 		add(doctype, names)
 
 	# Assignments outside the canonical namespaces, or on a non-register fixture user.
@@ -339,6 +364,7 @@ def collect_non_canonical() -> dict[str, list[str]]:
 	for child, names in _orphaned_child_rows().items():
 		add(child, names)
 	add("File", _orphaned_attachments())
+	add("Need Planning Disposition Projection", _dispositions_without_a_need())
 	return plan
 
 
@@ -365,6 +391,7 @@ def _delete_need(need: str, deleted: dict[str, int]) -> None:
 	for doctype in (
 		"Departmental Need Event",
 		"Need Planning Usage Projection",
+		"Need Planning Disposition Projection",
 		"Departmental Need Decision",
 		"Departmental Need Review Task",
 		"Need Withdrawal Request",
@@ -426,6 +453,9 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 	from kentender_procurement.procurement_requisitions.seeds.clear import clear_requisition_fixture_rows
 
 	_fold(clear_requisition_fixture_rows(include_canonical=False, include_playwright=playwright_ok))
+	from kentender_procurement.procurement_requisitions.seeds.clear import clear_stray_requisitions
+
+	_fold(clear_stray_requisitions())
 
 	if plan.get("Annual Plan") or plan.get("Departmental Plan"):
 		from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import clear_planning_fixture_rows
@@ -480,6 +510,12 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 			frappe.flags.allow_budget_audit_purge = False
 		_delete_docs("Procurement Budget Version", [version], deleted)
 
+	# Strategy last among the modules: Budget lines and Needs point at its
+	# objectives, and their strays are gone by now.
+	from kentender_strategy.seeds.kentender_mvp_v1_strategy import clear_non_canonical_strategy
+
+	_fold(clear_non_canonical_strategy())
+
 	# The document's own fixture-purge switch (regulatory_reference.on_trash).
 	_delete_docs("Regulatory Reference", plan.get("Regulatory Reference", []), deleted, kt_fixture_purge=True)
 
@@ -523,6 +559,10 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 			frappe.db.delete(child, {"name": ("in", names[start : start + 500])})
 		deleted[child] = deleted.get(child, 0) + len(names)
 	_delete_docs("File", _orphaned_attachments(), deleted)
+	dispositions = _dispositions_without_a_need()
+	if dispositions:
+		frappe.db.delete("Need Planning Disposition Projection", {"name": ("in", dispositions)})
+		deleted["Need Planning Disposition Projection"] = deleted.get("Need Planning Disposition Projection", 0) + len(dispositions)
 	return deleted
 
 
@@ -683,6 +723,7 @@ def validate(*, through: str = STAGES[-1]) -> dict[str, Any]:
 		if _fixture_email(u) and u not in REGISTER_USERS
 	]
 	check(not strays, f"no fixture-domain users outside the register, found {strays}")
+	check(site_setup.unit_tree_intact(), "every Organisation Unit sits inside its parent's tree range")
 	for local, role, _unit, _kwargs in site_setup.ASSIGNMENTS:
 		check(
 			bool(frappe.db.exists("User Responsibility Assignment", {"user": f"{local}@moh.example.test", "business_role": role})),
@@ -717,11 +758,10 @@ def validate(*, through: str = STAGES[-1]) -> dict[str, Any]:
 		check(bool(holders), f"{role} in force today for {unit_name}")
 
 	if last >= STAGES.index("strategy"):
-		plans = frappe.get_all("Strategic Plan", filters={"fixture_namespace": STRATEGY_NS}, pluck="name")
-		check(len(plans) == 1, f"one canonical Strategic Plan, found {len(plans)}")
-		if plans:
-			active = frappe.db.count("Strategic Plan Version", {"plan_id": plans[0], "status": "Active"})
-			check(active == 1, f"one Active Strategic Plan Version, found {active}")
+		from kentender_strategy.seeds.kentender_mvp_v1_strategy import validate_strategy_seed
+
+		for row in validate_strategy_seed():
+			check(row["ok"], f"strategy: {row['check']}")
 
 	if last >= STAGES.index("budget"):
 		budgets = frappe.get_all("Procurement Budget", fields=["name", "generated_reference", "fiscal_year"])
@@ -758,25 +798,24 @@ def validate(*, through: str = STAGES[-1]) -> dict[str, Any]:
 				if (r.fixture_namespace or "") != REQUISITIONS_NS
 			]
 			check(not stray_commitments, f"no Procurement Commitment outside {REQUISITIONS_NS!r}, found {stray_commitments}")
+		from kentender_budget.seeds.kentender_mvp_v1_portfolio import validate_budget_seed
+
+		for row in validate_budget_seed():
+			check(row["ok"], f"budget: {row['check']}")
 
 	if last >= STAGES.index("needs"):
-		from kentender_procurement.departmental_needs.constants import STATE_ACCEPTED, STATE_SUBMITTED  # noqa: F401
-		from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import NEEDS as NDS_NEEDS
+		from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import validate_needs_seed
 
-		by_reference = {
-			n.name: n.current_state
-			for n in frappe.get_all("Departmental Need", filters={"fixture_namespace": NEEDS_NS}, fields=["name", "current_state"])
-		}
-		check(len(by_reference) == len(NDS_NEEDS), f"{len(NDS_NEEDS)} canonical Departmental Needs, found {len(by_reference)}")
-		for spec in NDS_NEEDS:
-			check(
-				by_reference.get(spec["reference"]) == spec["state"],
-				f"{spec['reference']} state {by_reference.get(spec['reference'])!r}, expected {spec['state']!r}",
-			)
+		for row in validate_needs_seed():
+			check(row["ok"], f"needs: {row['check']}")
 
 	if last >= STAGES.index("planning"):
 		plan_row = frappe.db.get_value("Annual Plan", {"fiscal_year": "2027-2028"}, ["name", "active_version"], as_dict=True)
 		check(bool(plan_row and plan_row.active_version), f"canonical FY 2027-2028 Annual Plan Active, found {plan_row}")
+		from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import validate_planning_history
+
+		for row in validate_planning_history():
+			check(row["ok"], f"{row['check']}: {row['detail']}")
 		if through == "planning":
 			# Only when Planning is the last stage seeded. Once Requisitions'
 			# combined item is later consumed through a real Tenders
@@ -877,6 +916,14 @@ def run(
 	in_test_before = frappe.flags.in_test
 	if force:
 		frappe.flags.in_test = True
+	# Frappe refuses any new background job once 500+ are queued, and a
+	# full wipe deletes enough documents to pass that inside this one run
+	# (found 26 Sep 2026: 650 queued before the site stage recreated its
+	# users). The ceiling protects interactive traffic, not this batch run:
+	# lift it in this process only — site_config is untouched — and let
+	# `make seed-canonical` drain the queue afterwards.
+	max_jobs_before = frappe.conf.get("max_queued_jobs")
+	frappe.conf.max_queued_jobs = 1_000_000
 	try:
 		# A loaded Requisitions demo profile (REQ-CHG-001 v1.11 §16.4A) holds
 		# Budget reservations and Planning requests on the canonical item; undo
@@ -885,13 +932,26 @@ def run(
 		from kentender_procurement.procurement_requisitions.seeds.profiles import release_loaded_profile
 
 		result["released_profile"] = release_loaded_profile()
+		# The Departmental Needs demo profiles change the canonical Need
+		# NDS-MOH-2027-0001 in place (a successor revision, a withdrawal, a
+		# usage projection); each reset is a no-op when its profile is not
+		# applied. Found 26 Sep 2026: a test left the successor applied.
+		from kentender_procurement.departmental_needs.seeds import profiles as needs_profiles
+
+		result["released_needs_profiles"] = {
+			name: reset() for name, (_apply, reset) in needs_profiles.PROFILES.items() if name != "default"
+		}
 		if rebuild or wipe:
+			from kentender_strategy.services.strategy_reference import reset_reference_series
+
 			result["rebuild"] = clear_canonical_modules()
+			# The canonical plan is gone, and allocation starts above any
+			# number still in use, so a rebuilt world numbers from 0001 again.
+			result["reference_series_reset"] = reset_reference_series()
 		if wipe:
 			from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import wipe_all_planning
 			from kentender_procurement.procurement_requisitions.seeds.clear import wipe_all_requisitions
 			from kentender_procurement.tenders.seeds.kentender_mvp_v1 import wipe_all_tenders
-			from kentender_strategy.services.strategy_reference import reset_reference_series
 
 			# clear_canonical_modules()'s tenders/requisitions/planning steps
 			# all select by a live parent (a title, a Requisition, a fiscal
@@ -904,7 +964,6 @@ def run(
 			result["tenders_wiped"] = wipe_all_tenders()
 			result["planning_wiped"] = wipe_all_planning()
 			result["requisitions_wiped"] = wipe_all_requisitions()
-			result["reference_series_reset"] = reset_reference_series()
 			result["wiped"] = site_setup.reset_site_setup(commit=False)
 			# Not KenTender seed data, but wipe's own job is "empty database"
 			# and this recurs constantly: `bench run-tests` on kentender_core
@@ -933,3 +992,4 @@ def run(
 		raise
 	finally:
 		frappe.flags.in_test = in_test_before
+		frappe.conf.max_queued_jobs = max_jobs_before

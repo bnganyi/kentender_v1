@@ -1,11 +1,18 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""REQ-CHG-001 v1.11 §16 — the deterministic Ministry of Health Requisitions
-seed, chained after Procurement Planning's own §14 pack (implementation
-plan Decision D7: Requisitions is not a canonical seed stage this cycle;
-this module reuses Planning's live MOH Annual Plan rather than building a
-second world).
+"""REQ-CHG-001 v1.11 §16 (unchanged in v1.12) — the deterministic Ministry of
+Health Requisitions seed, chained after Procurement Planning's own §14 pack.
+It is the canonical `requisitions` stage of `kentender_core.seeds.canonical`
+(implementation plan Decision D7 had kept it out of the canonical chain; it
+joined on 9 Sep 2026) and reuses Planning's live MOH Annual Plan rather than
+building a second world.
+
+Every fixture-4 command runs at its §16.4 instant under the frozen seed
+clock (`kentender_core.seeds.clock`, KT-STD-001 v1.8 §8.6); nothing is
+back-stamped. Until 26 Sep 2026 the commands ran on the real clock and four
+columns were back-stamped afterwards, so the digest-protected handoff and
+most rows carried the seeding day.
 
 **Decision D10 (this module).** §16.4 names six lifecycle fixtures plus a
 stopped Version and a Planning correction request, "each its own fixture a
@@ -29,11 +36,10 @@ with its integrated baseline:
 
 - `upsert_requisitions_base()` is the one fixture `run_kentender_mvp_v1`
   builds by default, matching §16.4's exact Authorised timeline (fixture
-  4); the consumed handoff (fixture 6) is produced downstream by Tender
-  Preparation's own §16 seed through a real `PrepareTender` (TPR-CHG-001
-  plan D19 — the synthetic `seed_consumed_handoff()` is retired), which
-  also stamps this module's consumption instant via
-  `stamp_handoff_consumption_clock()`;
+  4); the consumed handoff (fixture 6) is produced downstream by the
+  Tenders seed through a real `StartTender` run at the §16.4 consumption
+  instant (TPR-CHG-001 plan D19 — the synthetic `seed_consumed_handoff()`
+  is retired);
 - `seed_draft_profile()` / `seed_department_task_profile()` /
   `seed_procurement_task_profile()` / `seed_returned_profile()` /
   `seed_upstream_correction_profile()` each tear the fixture down (revoking
@@ -58,6 +64,8 @@ from decimal import Decimal
 
 import frappe
 from frappe.utils import cstr
+
+from kentender_core.seeds import clock
 
 NS = "KENTENDER_MVP_1_R1_REQ"
 FY = "2027-2028"
@@ -259,66 +267,35 @@ def upsert_requisitions_base(*, commit: bool = False) -> dict[str, Any]:
 		_restore_planning_namespace()
 		plan_item_id = verify_prerequisites()["combined_item"]
 	with _as(AUTHOR):
-		prepared = cmd.prepare_it_equipment_requisition(plan_item_id=plan_item_id, idempotency_key=_key(f"{plan_item_id}:prepare"))
+		with clock.at(CLOCK["draft_opened"]):
+			prepared = cmd.prepare_it_equipment_requisition(plan_item_id=plan_item_id, idempotency_key=_key(f"{plan_item_id}:prepare"))
 		requisition = prepared["requisition"]
-		_build_item_package(requisition)
+		with clock.at(CLOCK["steps_completed"]):
+			_build_item_package(requisition)
 		root = frappe.get_doc("Procurement Requisition", requisition)
-		sent = lifecycle.send_for_department_approval(
-			requisition=requisition, expected_record_version=root.record_version, idempotency_key=_key(f"{requisition}:send"),
-		)
+		with clock.at(CLOCK["sent_for_department_approval"]):
+			sent = lifecycle.send_for_department_approval(
+				requisition=requisition, expected_record_version=root.record_version, idempotency_key=_key(f"{requisition}:send"),
+			)
 
-	with _as(HOD):
+	with _as(HOD), clock.at(CLOCK["submitted_to_procurement"]):
 		root.reload()
 		submitted = lifecycle.submit_requisition_to_procurement(
 			requisition=requisition, task=sent["task"], expected_record_version=root.record_version, idempotency_key=_key(f"{requisition}:submit"),
 		)
 
-	with _as(HOPF):
+	with _as(HOPF), clock.at(CLOCK["authorised"]):
 		root.reload()
 		authorised = authorise.authorise_requisition(
 			requisition=requisition, task=submitted["task"], expected_record_version=root.record_version, idempotency_key=_key(f"{requisition}:authorise"),
 		)
 
-	_stamp_design_clock(requisition)
 	if commit:
 		frappe.db.commit()
 	return {
 		"ok": True, "idempotent": False, "requisition": requisition,
 		"handoff": authorised.get("handoff"), "reservations": authorised.get("reservations"),
 	}
-
-
-def _stamp_design_clock(requisition: str) -> None:
-	root = frappe.get_doc("Procurement Requisition", requisition)
-	version = root.current_version
-	frappe.db.set_value("Requisition Version", version, "creation", CLOCK["draft_opened"], update_modified=False)
-	decisions = frappe.get_all(
-		"Requisition Decision", filters={"requisition_version": version}, fields=["name", "decision"],
-	)
-	stamp_by_decision = {
-		"Submit to Procurement": CLOCK["submitted_to_procurement"],
-		"Authorise requisition": CLOCK["authorised"],
-	}
-	for decision in decisions:
-		when = stamp_by_decision.get(decision.decision)
-		if when:
-			frappe.db.set_value("Requisition Decision", decision.name, "decided_at", when, update_modified=False)
-	handoff = frappe.db.get_value("Authorised Requisition Handoff", {"requisition": root.name}, "name")
-	if handoff:
-		frappe.db.set_value("Authorised Requisition Handoff", handoff, "creation", CLOCK["authorised"], update_modified=False)
-		if frappe.get_meta("Authorised Requisition Handoff").has_field("generated_at"):
-			frappe.db.set_value("Authorised Requisition Handoff", handoff, "generated_at", CLOCK["authorised"], update_modified=False)
-
-
-def stamp_handoff_consumption_clock(requisition: str, *, when: str | None = None) -> None:
-	"""§16.4 fixture-6 instant on Requisitions' own consumption columns. The
-	consumer (Tender Preparation's §16 seed) calls this after its real
-	`PrepareTender`; it never writes these rows itself."""
-	when = when or CLOCK["consumed"]
-	handoff = frappe.db.get_value("Authorised Requisition Handoff", {"requisition": requisition}, "name")
-	if handoff and frappe.db.get_value("Authorised Requisition Handoff", handoff, "consumed_at"):
-		frappe.db.set_value("Authorised Requisition Handoff", handoff, "consumed_at", when, update_modified=False)
-		frappe.db.set_value("Procurement Requisition", requisition, "handoff_consumed_at", when, update_modified=False)
 
 
 def seed_consumed_handoff(*, commit: bool = False) -> dict[str, Any]:
@@ -599,7 +576,14 @@ def validate_requisitions_seed() -> list[dict[str, Any]]:
 		return checks
 
 	root = frappe.get_doc("Procurement Requisition", root_name)
+	requisitions = frappe.db.count("Procurement Requisition")
+	check("requisition.only_one", requisitions == 1, str(requisitions))
 	version = frappe.get_doc("Requisition Version", root.authorised_version or root.current_version)
+	# §16.4 fixture 4 — each command ran at its instant (frozen seed clock).
+	check("clock.draft_opened", str(version.creation)[:19] == CLOCK["draft_opened"], str(version.creation))
+	for decision_name, actor, at in (("Submit to Procurement", HOD, CLOCK["submitted_to_procurement"]), ("Authorise requisition", HOPF, CLOCK["authorised"])):
+		row = records.decision_of(version.name, decision_name)
+		check(f"clock.{decision_name}", bool(row) and row.actor == actor and str(row.decided_at)[:19] == at, cstr(row and (row.actor, row.decided_at)))
 	package_version = frappe.get_doc("IT Equipment Requirement Package Version", version.package_version)
 	check("items.count_2", len(package_version.items) == 2, str(len(package_version.items)))
 	confirmed = [r for r in package_version.technical_requirements if r.row_state == "Confirmed"]
@@ -624,6 +608,18 @@ def validate_requisitions_seed() -> list[dict[str, Any]]:
 		payload = view.get("payload") or {}
 		check("handoff.two_lines", len(payload.get("drawdown_lines") or []) == 2, "")
 		check("handoff.nine_checks", len(payload.get("compatibility") or []) == 9, "")
+		# The digest-protected payload carries the same instants as the rows.
+		certification = (payload.get("departmental_certification") or {}).get("decided_at", "")
+		authorisation = (payload.get("procurement_authorisation") or {}).get("decided_at", "")
+		check("handoff.instants", (certification[:19], authorisation[:19], cstr(payload.get("generated_at"))[:19]) == (CLOCK["submitted_to_procurement"], CLOCK["authorised"], CLOCK["authorised"]), f"{certification} {authorisation} {payload.get('generated_at')}")
+		# REQ §13.1 / SEED-001 v1.3 §3.6 — laptops complete 24 Sep 2027 (60 days).
+		check("handoff.estimated_completion_24_sep_2027", cstr(payload.get("estimated_completion_date"))[:10] == "2027-09-24", cstr(payload.get("estimated_completion_date")))
+		# NDS-CHG-001 v1.14 §14.3 — the HRMD laptops come from Need 3 Revision 2.
+		revisions = sorted(cstr(line.get("need_revision")) for line in payload.get("drawdown_lines") or [])
+		check("handoff.need_3_revision_2", "NDS-MOH-2027-0003-V002" in revisions, str(revisions))
+		consumed_at = frappe.db.get_value("Authorised Requisition Handoff", handoff, "consumed_at")
+		if consumed_at:
+			check("handoff.consumed_20_mar_2027", str(consumed_at)[:19] == CLOCK["consumed"], str(consumed_at))
 	decision = records.decision_of(version.name, "Authorise requisition")
 	check("authorised_by_hopf", bool(decision) and decision.actor == HOPF, cstr(decision.actor if decision else ""))
 	return checks

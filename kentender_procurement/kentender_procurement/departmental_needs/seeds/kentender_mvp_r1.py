@@ -88,19 +88,21 @@ NEEDS = (
 		"state": STATE_SUBMITTED,
 	},
 	{
-		# SEED-001 §3.2 (2026-09-05): corrected from 200/Returned — this and
-		# NDS-MOH-2027-0004 below are the two source Needs the harmonized
-		# combined Plan Item PPI-MOH-2027-033 draws from (PLN-CHG-001 v1.13
-		# §14.5), so both must reach Accepted, not sit in Returned/Draft.
+		# NDS-CHG-001 v1.14 §14.3 / SEED-001 v1.3 §3.2: Revision 1 asks for
+		# 200 and is returned by Peter; Revision 2, the server-created copy,
+		# corrects it to 100 and is the accepted source of the combined laptop
+		# Plan Item. (From 5 Sep to 26 Sep 2026 the seed accepted Revision 1
+		# at 100 directly, which SEED-001 v1.3 and NDS v1.11 had superseded.)
 		"reference": "NDS-MOH-2027-0003",
 		"unit_name": "Human Resources Management and Development",
 		"title": "Clinical training laptops for digital health rollout",
 		"description": "Laptop computers for clinical training during the national digital health rollout.",
 		"expected_operational_result": "Provide the equipment required for staff training on the deployed digital health services.",
-		"indicative_quantity": 100,
+		"indicative_quantity": 200,
 		"unit": "Each",
 		"required_by_date": "2027-12-31",
 		"state": STATE_ACCEPTED,
+		"corrected_quantity": 100,
 	},
 	{
 		# SEED-001 §3.2 (2026-09-05): corrected from 300/Draft. Accepted by
@@ -134,7 +136,13 @@ RETURN_REASON = (
 TIMELINE = {
 	"NDS-MOH-2027-0001": {"create": "2026-11-24 09:00:00", "submit": "2026-11-24 09:40:00", "decide": "2026-11-24 14:00:00"},
 	"NDS-MOH-2027-0002": {"create": "2026-11-24 11:30:00", "submit": "2026-11-24 12:20:00"},
-	"NDS-MOH-2027-0003": {"create": "2026-11-24 10:00:00", "submit": "2026-11-24 10:30:00", "decide": "2026-11-25 10:00:00"},
+	"NDS-MOH-2027-0003": {
+		"create": "2026-11-24 10:00:00",
+		"submit": "2026-11-24 10:30:00",
+		"return": "2026-11-24 13:35:00",
+		"resubmit": "2026-11-25 09:00:00",
+		"decide": "2026-11-25 10:00:00",
+	},
 	"NDS-MOH-2027-0004": {"create": "2026-11-24 10:15:00", "submit": "2026-11-24 10:45:00", "decide": "2026-11-25 09:30:00"},
 }
 # Kept for readers of the earlier design-clock contract: the decision instants
@@ -248,13 +256,11 @@ def _build_need(spec: dict, author_units: dict[str, str]) -> str:
 		_stamp_children(need)
 		return need
 
+	if spec.get("corrected_quantity"):
+		submitted = _return_and_correct(spec, submitted, when)
+
 	decision = "accept" if spec["state"] == STATE_ACCEPTED else "return"
-	task = frappe.db.get_value(
-		"Departmental Need Review Task",
-		{"departmental_need": need, "status": "Open"},
-		["name", "decision_token"],
-		as_dict=True,
-	)
+	task = _open_task(need)
 	with _as(spec.get("reviewer", REVIEWER)), clock.at(when.get("decide", "2026-11-24 14:00:00")):
 		result = lifecycle.review_need(
 			need=need,
@@ -270,6 +276,52 @@ def _build_need(spec: dict, author_units: dict[str, str]) -> str:
 		_namespace(need, result["successor_revision"])
 	_stamp_children(need)
 	return need
+
+
+def _open_task(need: str):
+	return frappe.db.get_value(
+		"Departmental Need Review Task",
+		{"departmental_need": need, "status": "Open"},
+		["name", "decision_token"],
+		as_dict=True,
+	)
+
+
+def _return_and_correct(spec: dict, submitted: dict, when: dict) -> dict:
+	"""§14.3 — the reviewer returns Revision 1 with the NDS-DES-04 reason; the
+	author corrects the quantity on the server-created Revision 2 and
+	resubmits it. Returns the resubmission, ready for the final decision."""
+	need = spec["reference"]
+	task = _open_task(need)
+	with _as(spec.get("reviewer", REVIEWER)), clock.at(when["return"]):
+		returned = lifecycle.review_need(
+			need=need,
+			decision="return",
+			task=task.name,
+			expected_version=submitted["record_version"],
+			decision_token=task.decision_token,
+			idempotency_key=f"nds-seed:{need}:return",
+			reason=RETURN_REASON,
+		)
+	if returned.get("successor_revision"):
+		_namespace(need, returned["successor_revision"])
+	with _as(AUTHOR), clock.at(when["resubmit"]):
+		lifecycle.update_need(
+			need=need,
+			title=spec["title"],
+			description=spec["description"],
+			expected_operational_result=spec["expected_operational_result"],
+			indicative_quantity=spec["corrected_quantity"],
+			unit=spec["unit"],
+			required_by_date=spec["required_by_date"],
+			expected_version=frappe.db.get_value("Departmental Need", need, "record_version"),
+			idempotency_key=f"nds-seed:{need}:correct",
+		)
+		return lifecycle.submit_need(
+			need=need,
+			expected_version=frappe.db.get_value("Departmental Need", need, "record_version"),
+			idempotency_key=f"nds-seed:{need}:resubmit",
+		)
 
 
 def _namespace(need: str, version: str = "") -> None:
@@ -292,6 +344,58 @@ def _stamp_children(need: str) -> None:
 	)
 
 	_stamp_children_impl(need, namespace=NS)
+
+
+def validate_needs_seed() -> list[dict]:
+	"""One row per NDS-CHG-001 v1.14 §14.3 fact the default profile carries.
+	Never mutates."""
+	rows: list[dict] = []
+
+	def check(ok: bool, label: str) -> None:
+		rows.append({"ok": bool(ok), "check": label, "detail": "" if ok else "failed"})
+
+	needs = {n.name: n for n in frappe.get_all("Departmental Need", filters={"fixture_namespace": NS}, fields=["name", "current_state", "organisation_unit", "current_accepted_revision", "owner"])}
+	check(set(needs) == {spec["reference"] for spec in NEEDS}, f"exactly the {len(NEEDS)} canonical Needs exist (got {sorted(needs)})")
+	for spec in NEEDS:
+		reference = spec["reference"]
+		need = needs.get(reference)
+		if not need:
+			continue
+		check(need.current_state == spec["state"], f"{reference} is {spec['state']} (got {need.current_state!r})")
+		check(frappe.db.get_value("Organisation Unit", need.organisation_unit, "unit_name") == spec["unit_name"], f"{reference} belongs to {spec['unit_name']}")
+		check(need.owner == AUTHOR, f"{reference} was created by {AUTHOR}")
+		revisions = frappe.get_all(
+			"Departmental Need Revision",
+			filters={"departmental_need": reference},
+			fields=["name", "revision_number", "indicative_quantity", "unit", "required_by_date"],
+			order_by="revision_number asc",
+		)
+		final = revisions[-1] if revisions else None
+		expected_revisions = 2 if spec.get("corrected_quantity") else 1
+		check(len(revisions) == expected_revisions, f"{reference} has {expected_revisions} revision(s) (got {len(revisions)})")
+		quantity = spec.get("corrected_quantity") or spec["indicative_quantity"]
+		check(
+			bool(final) and (float(final.indicative_quantity or 0), final.unit, str(final.required_by_date)) == (float(quantity), spec["unit"], spec["required_by_date"]),
+			f"{reference}'s current revision asks for {quantity} {spec['unit']} by {spec['required_by_date']}",
+		)
+		if spec["state"] == STATE_ACCEPTED:
+			check(bool(final) and need.current_accepted_revision == final.name, f"{reference} accepts revision {expected_revisions}")
+		decisions = {
+			d.action: d
+			for d in frappe.get_all("Departmental Need Decision", filters={"departmental_need": reference}, fields=["action", "actor", "occurred_at", "reason"])
+		}
+		when = TIMELINE[reference]
+		expected = [("Submit", AUTHOR, when["submit"])]
+		if spec.get("corrected_quantity"):
+			expected += [("Return for correction", REVIEWER, when["return"]), ("Resubmit", AUTHOR, when["resubmit"])]
+		if spec["state"] == STATE_ACCEPTED:
+			expected.append(("Accept for planning", spec.get("reviewer", REVIEWER), when["decide"]))
+		for action, actor, at in expected:
+			decision = decisions.get(action)
+			check(bool(decision) and decision.actor == actor and str(decision.occurred_at)[:19] == at, f"{reference}: {action} by {actor} at {at}")
+		if spec.get("corrected_quantity"):
+			check(decisions.get("Return for correction") and decisions["Return for correction"].reason == RETURN_REASON, f"{reference} is returned with the NDS-DES-04 reason")
+	return rows
 
 
 def upsert_departmental_needs(*, commit: bool = False) -> dict[str, list[str]]:

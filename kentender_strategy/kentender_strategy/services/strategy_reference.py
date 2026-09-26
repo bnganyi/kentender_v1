@@ -106,12 +106,13 @@ def allocate_reference(type_token: str) -> str:
 
 
 def reset_reference_series() -> dict[str, int]:
-	"""Wipe-only: drop the never-reuse Series counter for every reference
-	type this module allocates, so a freshly wiped canonical world's first
-	Strategic Plan (etc.) starts again at ``####0001`` instead of wherever
-	the site's history left off. Safe only because a full wipe has already
-	deleted every row `allocate_reference` checks for a collision — outside
-	a wipe this would defeat the whole point of never reusing a number."""
+	"""Canonical rebuild and wipe only: drop the never-reuse Series counter
+	for every reference type this module allocates, so a rebuilt canonical
+	world's first Strategic Plan (etc.) starts again at ``####0001`` instead
+	of wherever the site's history left off. `allocate_reference` re-seeds
+	the counter above the highest number still in use, so a surviving row is
+	never collided with; outside a canonical rebuild this would still defeat
+	the point of never reusing a number."""
 	removed: dict[str, int] = {}
 	for token in REF_TYPE_META:
 		rows = frappe.db.sql("SELECT `name` FROM `tabSeries` WHERE `name` LIKE %s", (f"%-{token}-",))

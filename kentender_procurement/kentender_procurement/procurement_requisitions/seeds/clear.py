@@ -20,6 +20,7 @@ from typing import Any
 
 import frappe
 
+from kentender_core.utils.raw_delete import delete_rows
 from kentender_procurement.procurement_requisitions.seeds.kentender_mvp_v1 import (
 	COMBINED_ITEM_TITLE,
 	SINGLE_ITEM_TITLE,
@@ -46,7 +47,6 @@ def _delete_for_plan_items(plan_item_ids: list[str], *, cross_module_rebuild: bo
 	reservation is still Active: REQ-CHG-001 v1.11 has no command to release
 	a consumed handoff, and the Budget and Planning clears remove the
 	reservation and drawdown rows next. Everywhere else the guard holds."""
-	deleted: dict[str, int] = {}
 	plan_item_ids = [p for p in plan_item_ids if p]
 	roots = frappe.get_all("Procurement Requisition", filters={"plan_item_id": ("in", plan_item_ids or ("",))}, pluck="name")
 	for root_name in roots:
@@ -65,6 +65,13 @@ def _delete_for_plan_items(plan_item_ids: list[str], *, cross_module_rebuild: bo
 				"orphan Planning's drawdown and Budget's reservation. Revoke it first through "
 				"authorise.revoke_unconsumed_authorisation()."
 			)
+	return _delete_roots(roots)
+
+
+def _delete_roots(roots: list[str]) -> dict[str, int]:
+	"""These Requisitions and every row of this module that hangs off them.
+	No guard: callers decide which roots may go."""
+	deleted: dict[str, int] = {}
 	packages = frappe.get_all("IT Equipment Requirement Package", filters={"requisition": ("in", roots or ("",))}, pluck="name")
 	package_versions = frappe.get_all("IT Equipment Requirement Package Version", filters={"package": ("in", packages or ("",))}, pluck="name")
 	versions = frappe.get_all("Requisition Version", filters={"requisition": ("in", roots or ("",))}, pluck="name")
@@ -72,7 +79,7 @@ def _delete_for_plan_items(plan_item_ids: list[str], *, cross_module_rebuild: bo
 
 	def delete(doctype: str, names: list[str]) -> None:
 		if names:
-			frappe.db.delete(doctype, {"name": ("in", names)})
+			delete_rows(doctype, {"name": ("in", names)})
 		deleted[doctype] = deleted.get(doctype, 0) + len(names)
 
 	handoffs = frappe.get_all("Authorised Requisition Handoff", filters={"requisition": ("in", roots or ("",))}, pluck="name")
@@ -89,6 +96,23 @@ def _delete_for_plan_items(plan_item_ids: list[str], *, cross_module_rebuild: bo
 	delete("Requisition Event", frappe.get_all("Requisition Event", filters={"requisition": ("in", roots or ("",))}, pluck="name"))
 	delete("Procurement Requisition", roots)
 	return deleted
+
+
+def requisition_rows_to_clear() -> dict[str, list[str]]:
+	"""Every Requisition that is not on one of the canonical MOH Plan Items
+	(the same "tied to the canonical item" rule the rest of this module
+	uses). Found 26 Sep 2026: a test world's Authorised Requisition whose
+	plan had gone survived every reseed. Read-only."""
+	keep = {item for item in (_plan_item_id(SINGLE_ITEM_TITLE), _plan_item_id(COMBINED_ITEM_TITLE)) if item}
+	roots = [row.name for row in frappe.get_all("Procurement Requisition", fields=["name", "plan_item_id"]) if row.plan_item_id not in keep]
+	return {"Procurement Requisition": roots} if roots else {}
+
+
+def clear_stray_requisitions() -> dict[str, Any]:
+	"""The canonical seed's `reset`: remove `requisition_rows_to_clear()`.
+	Their Budget reservations are Budget's strays (the canonical clear
+	removes any reservation not stamped for the canonical Requisition)."""
+	return {"ok": True, "deleted": _delete_roots(requisition_rows_to_clear().get("Procurement Requisition", []))}
 
 
 def clear_requisition_fixture_rows(
@@ -125,8 +149,7 @@ def wipe_all_requisitions() -> dict[str, int]:
 	forever)."""
 	deleted: dict[str, int] = {}
 	for doctype in _DOCTYPES:
-		deleted[doctype] = frappe.db.count(doctype)
-		frappe.db.delete(doctype)
+		deleted[doctype] = delete_rows(doctype)
 	reservations = frappe.get_all("Funding Reservation", filters={"calling_module": "Procurement Requisitions"}, pluck="name")
 	if reservations:
 		frappe.db.delete("Funding Reservation", {"name": ("in", reservations)})

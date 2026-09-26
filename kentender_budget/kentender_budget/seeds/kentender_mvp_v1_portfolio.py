@@ -1,19 +1,23 @@
 # Copyright (c) 2026, KenTender and contributors
 # For license information, please see license.txt
 
-"""KENTENDER_MVP_V1 Budget seed — BUD-CHG-001 v1.3 §15 deterministic contract.
+"""KENTENDER_MVP_V1 Budget seed — BUD-CHG-001 v1.11 §15.1–§15.3 deterministic
+contract (v1.3 §15 until 26 Sep 2026).
 
 Drives the real Budget Version lifecycle commands (save_budget_version_draft,
 save_budget_lines_draft, submit_budget_version, approve_budget_version) as
 the named role actors, not Administrator (§15.7) — this is a genuine
 end-to-end exercise of the same domain rules the real UI uses, not a
-raw-insert shortcut. The only post-hoc correction is the lifecycle
-timestamps: the real commands stamp `now_datetime()` and accept no caller
-override, but §15.3/§15.6's own narrative dates read naturally as a short
-history ending before "today" — so every timestamp here is expressed as an
-offset from `nowdate()` at seed-run time (never a fixed calendar date),
-which keeps the seed valid indefinitely and satisfies `Procurement Budget
-Version.validate()`'s own "approval date cannot be in the future" guard.
+raw-insert shortcut. The canonical baseline's commands run at the §15.1
+instants under the frozen seed clock (`kentender_core.seeds.clock`,
+KT-STD-001 v1.8 §8.6): created 1 Oct 2026 09:20, Draft saved 15:55,
+submitted 16:20, approved and activated 3 Oct 2026 11:15, against an
+external approval dated 30 Sep 2026. Nothing is back-stamped afterwards.
+Until 26 Sep 2026 every date here was an offset from the day the seed ran,
+back-stamped after the fact; that drifted on every reseed and, from late
+January 2027, would have activated the Budget after Planning's fixed
+4 Dec 2026 Finance confirmation. The isolated successor Version 2 below
+still uses the offsets.
 
 One site is one Procuring Entity (BUD-CHG-001 v1.3 Phase 4/6): there is no
 second-PE (Kisumu) Budget baseline any more, no PE Fiscal Year Context
@@ -28,6 +32,7 @@ import frappe
 from frappe.utils import add_days, now_datetime, nowdate
 
 from kentender_budget.services.budget_authorization import ensure_budget_governance_roles
+from kentender_core.seeds import clock
 from kentender_core.seeds._common import ensure_currency_kes
 from kentender_core.seeds.kentender_mvp_v1 import constants as C
 
@@ -39,6 +44,20 @@ FUNDING_SOURCE = "Government of Kenya"
 # never a name lookup, since this site carries more than one Organisation
 # Unit historically named "Digital Health" (FU-11).
 GRACE = "grace.wanjiku@moh.example.test"
+
+# BUD-CHG-001 v1.11 §15.1 / §15.3.
+BASELINE_CLOCK = {
+	"create": "2026-10-01 09:20:00",
+	"draft": "2026-10-01 15:55:00",
+	"submit": "2026-10-01 16:20:00",
+	"approve": "2026-10-03 11:15:00",
+}
+APPROVAL_DATE = "2026-09-30"
+APPROVAL_REFERENCE = "MOH-FIN-BUD-2027-01 (Demo)"
+APPROVAL_DOCUMENT = "MOH Approved Procurement Budget 2027-28 (Demo).pdf"
+AUTHORISED_TOTAL = 160_000_000
+LINE_TITLES = {C.BL_DHI_2027: "Digital health infrastructure programme", C.BL_HWD_2027: "Digital health workforce development"}
+LINE_AMOUNTS = {C.BL_DHI_2027: 100_000_000, C.BL_HWD_2027: 60_000_000}
 
 
 def _unit_for(user: str, role: str, unit_name: str) -> str:
@@ -140,6 +159,7 @@ def _upsert_active_baseline(
 	approval_reference: str,
 	authorised_total: float,
 	approval_document: str,
+	approval_date: str,
 	lines: tuple[dict[str, Any], ...],
 ) -> dict[str, Any]:
 	"""§15.3 — one Active Budget Version with its Budget Lines, driven
@@ -159,15 +179,16 @@ def _upsert_active_baseline(
 	prior_user = frappe.session.user
 	try:
 		_as_user(officer)
-		result = contracts.save_budget_version_draft(
-			{
-				"fiscal_year": fy,
-				"approval_reference": approval_reference,
-				"approval_date": _offset_date(60),
-				"authorised_total": authorised_total,
-				"approval_document": approval_document,
-			}
-		)
+		with clock.at(BASELINE_CLOCK["create"]):
+			result = contracts.save_budget_version_draft(
+				{
+					"fiscal_year": fy,
+					"approval_reference": approval_reference,
+					"approval_date": approval_date,
+					"authorised_total": authorised_total,
+					"approval_document": approval_document,
+				}
+			)
 		if not result.get("ok"):
 			frappe.throw(f"Budget seed: could not create {budget_ref} draft: {result.get('errors')}")
 		budget_name = result["budget"]["id"]
@@ -185,20 +206,21 @@ def _upsert_active_baseline(
 		frappe.db.set_value("Procurement Budget", budget_name, "generated_reference", budget_ref, update_modified=False)
 		frappe.db.set_value("Procurement Budget Version", version_name, "generated_reference", version_ref, update_modified=False)
 
-		lines_result = lines_svc.save_budget_lines_draft(
-			{
-				"budget_version": version_name,
-				"lines": [
-					{
-						"title": ln["title"],
-						"owner_org_unit": ln.get("owner_org_unit") or "",
-						"funding_source": FUNDING_SOURCE,
-						"approved_amount": ln["approved_amount"],
-					}
-					for ln in lines
-				],
-			}
-		)
+		with clock.at(BASELINE_CLOCK["draft"]):
+			lines_result = lines_svc.save_budget_lines_draft(
+				{
+					"budget_version": version_name,
+					"lines": [
+						{
+							"title": ln["title"],
+							"owner_org_unit": ln.get("owner_org_unit") or "",
+							"funding_source": FUNDING_SOURCE,
+							"approved_amount": ln["approved_amount"],
+						}
+						for ln in lines
+					],
+				}
+			)
 		if not lines_result.get("ok"):
 			frappe.throw(f"Budget seed: could not save {budget_ref} lines: {lines_result.get('errors')}")
 
@@ -216,27 +238,123 @@ def _upsert_active_baseline(
 					frappe.throw(f"Budget seed: could not find newly created line {ln['title']!r} to rename")
 				frappe.db.set_value("Procurement Budget Line", line_name, "generated_reference", ln["code"], update_modified=False)
 
-		submit_result = readiness.submit_budget_version({"budget_version": version_name})
+		with clock.at(BASELINE_CLOCK["submit"]):
+			submit_result = readiness.submit_budget_version({"budget_version": version_name})
 		if not submit_result.get("ok"):
 			frappe.throw(f"Budget seed: could not submit {version_ref}: {submit_result.get('blockers')}")
-		_set_event_timestamps(version_name, "Budget version created", _offset_datetime(55, "09:20:00"))
-		_set_event_timestamps(version_name, "Draft approval details saved", _offset_datetime(52, "15:55:00"))
-		_set_event_timestamps(version_name, "Draft lines saved", _offset_datetime(52, "15:55:00"))
-		_set_event_timestamps(version_name, "Budget version submitted", _offset_datetime(50, "16:20:00"))
-		_set_version_timestamps(version_name, submitted_at=_offset_datetime(50, "16:20:00"))
 
 		_as_user(approver)
-		approve_result = readiness.approve_budget_version({"budget_version": version_name})
+		with clock.at(BASELINE_CLOCK["approve"]):
+			approve_result = readiness.approve_budget_version({"budget_version": version_name})
 		if not approve_result.get("ok"):
 			frappe.throw(f"Budget seed: could not approve {version_ref}: {approve_result.get('blockers')}")
-		_set_event_timestamps(
-			version_name, "Budget version approved and activated", _offset_datetime(48, "11:15:00")
-		)
-		_set_version_timestamps(version_name, decided_at=_offset_datetime(48, "11:15:00"))
 
 		return {"budget": budget_name, "version": version_name, "created": True}
 	finally:
 		frappe.set_user(prior_user)
+
+
+def _require_configuration() -> None:
+	"""BUD-CHG-001 v1.11 §15.2 / BUD18-AC-030 — the canonical baseline
+	resolves its prerequisites and never creates a fallback: KES, the
+	Government of Kenya funding source and the four actor assignments come
+	from the `site` stage or the seed fails."""
+	missing = []
+	if not frappe.db.get_value("Currency", "KES", "enabled"):
+		missing.append("an enabled KES currency")
+	if frappe.db.get_value("Funding Source", FUNDING_SOURCE, "record_status") != "Available":
+		missing.append(f"an Available {FUNDING_SOURCE} funding source")
+	for user, role in (
+		(C.USER_BUD_OFFICER, "Budget Officer"),
+		(C.USER_BUD_OFFICER, "Finance Confirmation Officer"),
+		(C.USER_BUD_APPROVER, "Budget Approver"),
+		(C.USER_BUD_AUDITOR, "Auditor"),
+	):
+		if not frappe.db.exists("User Responsibility Assignment", {"user": user, "business_role": role, "status": "Enabled"}):
+			missing.append(f"{user}'s {role} assignment")
+	if missing:
+		frappe.throw(f"Budget seed: missing {', '.join(missing)} — run the site stage first (§15.2) — BUDGET_CONFIG_MISSING")
+
+
+def ensure_approval_document() -> str:
+	"""§15.3 / SEED-001 v1.3 SEED-AC-028 — the approval document exists as
+	real bytes under its exact filename (the screen shows the file name from
+	the address), labelled inside as a fixture, not a real instrument."""
+	import os
+
+	from kentender_budget.seeds.playwright_ui_fixtures import _MINIMAL_PDF
+
+	public = os.path.join(frappe.utils.get_bench_path(), "sites", frappe.local.site, "public", "files")
+	os.makedirs(public, exist_ok=True)
+	path = os.path.join(public, APPROVAL_DOCUMENT)
+	if not os.path.exists(path):
+		with open(path, "wb") as fh:
+			fh.write(_MINIMAL_PDF)
+	return f"/files/{APPROVAL_DOCUMENT}"
+
+
+def validate_budget_seed() -> list[dict[str, Any]]:
+	"""One row per BUD-CHG-001 v1.11 §15.1/§15.3 fact. Never mutates."""
+	import os
+
+	rows: list[dict[str, Any]] = []
+
+	def check(ok: bool, label: str) -> None:
+		rows.append({"ok": bool(ok), "check": label, "detail": "" if ok else "failed"})
+
+	budget = frappe.db.get_value("Procurement Budget", {"generated_reference": C.BUD_ACTIVE}, ["name", "fiscal_year", "currency"], as_dict=True)
+	check(bool(budget), f"{C.BUD_ACTIVE} exists")
+	if not budget:
+		return rows
+	check((budget.fiscal_year, budget.currency) == (FY, "KES"), f"{C.BUD_ACTIVE} is FY {FY} in KES")
+	version = frappe.db.get_value(
+		"Procurement Budget Version",
+		{"budget": budget.name, "generated_reference": C.BUD_ACTIVE_V1},
+		["name", "status", "approval_reference", "approval_date", "authorised_total", "approval_document", "submitted_by", "decided_by"],
+		as_dict=True,
+	)
+	check(bool(version) and version.status == "Active", f"{C.BUD_ACTIVE_V1} is Active")
+	if not version:
+		return rows
+	check(
+		(version.approval_reference, str(version.approval_date), float(version.authorised_total or 0)) == (APPROVAL_REFERENCE, APPROVAL_DATE, float(AUTHORISED_TOTAL)),
+		f"approved externally as {APPROVAL_REFERENCE} on {APPROVAL_DATE} for KES {AUTHORISED_TOTAL:,}",
+	)
+	document = os.path.join(frappe.utils.get_bench_path(), "sites", frappe.local.site, "public", "files", APPROVAL_DOCUMENT)
+	check(version.approval_document == f"/files/{APPROVAL_DOCUMENT}" and os.path.exists(document), f"the approval document {APPROVAL_DOCUMENT} exists")
+	lines = {
+		frappe.db.get_value("Procurement Budget Line", row.budget_line, "generated_reference"): row
+		for row in frappe.get_all(
+			"Procurement Budget Line Version",
+			filters={"budget_version": version.name},
+			fields=["budget_line", "title", "owner_org_unit", "funding_source", "approved_amount"],
+		)
+	}
+	check(set(lines) == set(LINE_TITLES), f"the lines are exactly {sorted(LINE_TITLES)} (got {sorted(lines)})")
+	for code, title in LINE_TITLES.items():
+		line = lines.get(code)
+		owner = "Digital Health" if code == C.BL_DHI_2027 else None
+		check(
+			bool(line)
+			and (line.title, line.funding_source, float(line.approved_amount or 0)) == (title, FUNDING_SOURCE, float(LINE_AMOUNTS[code]))
+			and (frappe.db.get_value("Organisation Unit", line.owner_org_unit, "unit_name") if line.owner_org_unit else None) == owner,
+			f"{code}: {title}, {owner or 'Entity-wide'}, {FUNDING_SOURCE}, KES {LINE_AMOUNTS[code]:,}",
+		)
+	events = {
+		row.event_type: row
+		for row in frappe.get_all("Budget Audit Event", filters={"budget_version": version.name}, fields=["event_type", "event_at", "actor"])
+	}
+	for event_type, actor, at in (
+		("Budget version created", C.USER_BUD_OFFICER, BASELINE_CLOCK["create"]),
+		("Draft lines saved", C.USER_BUD_OFFICER, BASELINE_CLOCK["draft"]),
+		("Budget version submitted", C.USER_BUD_OFFICER, BASELINE_CLOCK["submit"]),
+		("Budget version approved and activated", C.USER_BUD_APPROVER, BASELINE_CLOCK["approve"]),
+	):
+		event = events.get(event_type)
+		check(bool(event) and event.actor == actor and str(event.event_at)[:19] == at, f"{event_type} by {actor} at {at}")
+	if frappe.db.exists("DocType", "Budget Revision Request"):
+		check(not frappe.db.count("Budget Revision Request"), "no Budget Revision Request exists (§15.8 keeps it isolated)")
+	return rows
 
 
 def _resolve_line_ids(budget_version: str) -> dict[str, str]:
@@ -273,11 +391,23 @@ def upsert_kentender_mvp_v1_portfolio(*, include_test_edges: bool = True, commit
 	"""
 	frappe.only_for(("System Manager", "Administrator"))
 	ensure_budget_governance_roles()
-	ensure_budget_actor_assignments()
-	ensure_currency_kes()
+	if include_test_edges:
+		# The legacy pack and the test worlds build their own prerequisites.
+		ensure_budget_actor_assignments()
+		ensure_currency_kes()
+	else:
+		_require_configuration()
 
 	if not frappe.db.exists("Fiscal Year", FY):
 		frappe.throw(f"Budget seed: ERPNext Fiscal Year {FY} must already be configured (§15.2) — BUDGET_CONFIG_MISSING")
+	# FU-11 (SEED-001, 2026-09-05): resolved to Grace's real granted "Digital
+	# Health" unit, not the legacy C.OU_DIR_DHP code — the code named a unit
+	# `list_eligible_budget_lines` never matched against the actor's actual
+	# assignment scope. BUD-CHG-001 v1.11 §15.2: no fallback — an unresolved
+	# unit fails the seed instead of silently making the line Entity-wide.
+	dhi_unit = _unit_for(GRACE, "Departmental Author", "Digital Health")
+	if not dhi_unit:
+		frappe.throw("Budget seed: the Digital Health unit is not resolvable from the site's assignments (§15.2) — BUDGET_CONFIG_MISSING")
 
 	moh = _upsert_active_baseline(
 		fy=FY,
@@ -285,22 +415,19 @@ def upsert_kentender_mvp_v1_portfolio(*, include_test_edges: bool = True, commit
 		approver=C.USER_BUD_APPROVER,
 		budget_ref=C.BUD_ACTIVE,
 		version_ref=C.BUD_ACTIVE_V1,
-		approval_reference="MOH-FIN-BUD-2027-01 (Demo)",
-		authorised_total=160_000_000,
-		approval_document="/files/moh-approved-procurement-budget-2027-28-demo.pdf",
+		approval_reference=APPROVAL_REFERENCE,
+		authorised_total=AUTHORISED_TOTAL,
+		approval_document=ensure_approval_document(),
+		approval_date=APPROVAL_DATE,
 		lines=(
 			{
-				"title": "Digital health infrastructure programme",
-				# FU-11 (SEED-001, 2026-09-05): resolved to Grace's real granted
-				# "Digital Health" unit, not the legacy C.OU_DIR_DHP code — the
-				# code named a unit `list_eligible_budget_lines` never matched
-				# against the actor's actual assignment scope.
-				"owner_org_unit": _unit_for(GRACE, "Departmental Author", "Digital Health"),
-				"approved_amount": 100_000_000,
+				"title": LINE_TITLES[C.BL_DHI_2027],
+				"owner_org_unit": dhi_unit,
+				"approved_amount": LINE_AMOUNTS[C.BL_DHI_2027],
 				"code": C.BL_DHI_2027,
 			},
 			{
-				"title": "Digital health workforce development",
+				"title": LINE_TITLES[C.BL_HWD_2027],
 				# SEED-001 §3.5/§3.6: this line is the shared combining line for
 				# PPI-MOH-2027-033's two source allocations — HRMD's Need-3 entry
 				# and Digital Health's Need-4 entry. Giving it a single
@@ -308,7 +435,7 @@ def upsert_kentender_mvp_v1_portfolio(*, include_test_edges: bool = True, commit
 				# other department's funding call (BUD-BR-007's own scoping
 				# rule); leaving it unset makes it Entity-wide, eligible for both.
 				"owner_org_unit": "",
-				"approved_amount": 60_000_000,
+				"approved_amount": LINE_AMOUNTS[C.BL_HWD_2027],
 				"code": C.BL_HWD_2027,
 			},
 		),

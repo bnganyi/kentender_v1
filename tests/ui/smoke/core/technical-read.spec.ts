@@ -80,7 +80,11 @@ test.describe.serial("Technical record search + technical-user access sweep", ()
 		// "Accepted for planning"). Route: departmental-needs/<need_reference>
 		// (kentender_procurement.departmental_needs.services.technical_read._need_route).
 		await runSearch(page, "NDS-MOH-2027-0001");
-		const ndsRow = page.locator('[data-testid="kt-ts-row"]', { hasText: "NDS-MOH-2027-0001" });
+		// The search also finds the Need's revision (NDS-MOH-2027-0001-V001);
+		// take the Departmental Need's own row.
+		const ndsRow = page
+			.locator('[data-testid="kt-ts-row"]', { hasText: "Departmental Need" })
+			.filter({ hasNotText: "NDS-MOH-2027-0001-V" });
 		await expect(ndsRow).toBeVisible({ timeout: 20_000 });
 		await ndsRow.locator('[data-testid="kt-ts-open"]').click();
 		await expect(page).toHaveURL(/\/departmental-needs\/NDS-MOH-2027-0001$/, { timeout: 20_000 });
@@ -92,14 +96,20 @@ test.describe.serial("Technical record search + technical-user access sweep", ()
 			)
 		).toHaveCount(0);
 
-		// Departmental Plan (DPP) — DPP-MOH-00188-2027-001. Route:
+		// Departmental Plan (DPP) — DPP-MOH-<unit code>-2027-001. The unit code
+		// is server-generated and changes whenever the site is rebuilt (it read
+		// 00188 when this was written), so take the first Departmental Plan the
+		// search finds rather than one fixed reference. Route:
 		// departmental-procurement-plan/<dpp_reference> (._dpp_route).
 		await gotoTechnicalSearch(page);
-		await runSearch(page, "DPP-MOH-00188-2027-001");
-		const dppRow = page.locator('[data-testid="kt-ts-row"]', { hasText: "DPP-MOH-00188-2027-001" });
+		await runSearch(page, "DPP-MOH-");
+		const dppRow = page
+			.locator('[data-testid="kt-ts-row"]', { hasText: "Departmental Plan" })
+			.filter({ hasNotText: "Departmental Plan Version" })
+			.first();
 		await expect(dppRow).toBeVisible({ timeout: 20_000 });
 		await dppRow.locator('[data-testid="kt-ts-open"]').click();
-		await expect(page).toHaveURL(/\/departmental-procurement-plan\/DPP-MOH-00188-2027-001$/, {
+		await expect(page).toHaveURL(/\/departmental-procurement-plan\/DPP-MOH-\d+-2027-001$/, {
 			timeout: 20_000,
 		});
 
@@ -107,7 +117,10 @@ test.describe.serial("Technical record search + technical-user access sweep", ()
 		// Plan 2027/28"). Route: annual-procurement-plan/<plan_reference> (._plan_route).
 		await gotoTechnicalSearch(page);
 		await runSearch(page, "PLN-MOH-2027-001");
-		const planRow = page.locator('[data-testid="kt-ts-row"]', { hasText: "PLN-MOH-2027-001" });
+		// The search also finds the plan's versions (PLN-MOH-2027-001-V1).
+		const planRow = page
+			.locator('[data-testid="kt-ts-row"]', { hasText: "PLN-MOH-2027-001" })
+			.filter({ hasNotText: "PLN-MOH-2027-001-V" });
 		await expect(planRow).toBeVisible({ timeout: 20_000 });
 		await planRow.locator('[data-testid="kt-ts-open"]').click();
 		await expect(page).toHaveURL(/\/annual-procurement-plan\/PLN-MOH-2027-001$/, { timeout: 20_000 });

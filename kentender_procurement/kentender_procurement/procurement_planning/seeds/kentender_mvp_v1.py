@@ -121,9 +121,11 @@ ITEM_VALUES = {
 	"reservation_category": "None",
 	"procurement_method": "Open Tender",
 	"baseline_invitation_date": "2027-05-01",
-	# PLN-CHG-001 v1.18 §4.6 — estimate basis and the estimated delivery period
-	"estimate_basis": "Market survey of the current supplier panel including delivery, installation and incidental costs.",
-	"estimate_basis_reference": "MS-2027-001",
+	# PLN-CHG-001 v1.18 §4.6 — estimate basis and the estimated delivery
+	# period; v1.27 §10.2 gives the basis text and reference word for word
+	# (until 26 Sep 2026 the seed carried an invented survey and reference).
+	"estimate_basis": "Market survey estimate includes delivery, installation where applicable and other identified incidental costs.",
+	"estimate_basis_reference": "Market survey working paper",
 	"estimated_delivery_period_days": 30,
 	"tendering_period_days": 21,
 	"evaluation_period_days": 30,
@@ -179,19 +181,31 @@ COMBINED_ITEM_VALUES = {
 	# world. This is a fixture designation, not verified category eligibility.
 	"reservation_category": "Youth",
 	# §14.5 — "using the same governed periods as PPI-MOH-2027-021," a
-	# fortnight-later invitation date; every *_period_days field is
+	# fortnight-later invitation date; every other *_period_days field is
 	# inherited from ITEM_VALUES above unchanged.
 	"baseline_invitation_date": "2027-05-15",
+	# v1.27 §10.2 / SEED-001 v1.3 §3.6: laptops 60 calendar days, estimated
+	# completion 24 Sep 2027 (the seed inherited the infrastructure item's 30
+	# until 26 Sep 2026).
+	"estimated_delivery_period_days": 60,
 }
+
+TREASURY_EVIDENCE_FILE = "Treasury-dispatch-evidence-example.pdf"
 
 # §14.4–14.6 design-clock instants, stored in the site timezone like every
 # other instant (owner decision 26 Sep 2026, FU-V127-01; they were UTC
 # equivalents while Planning's reads converted from UTC).
+#: v1.27 §10.2 / SEED-001 v1.3 §3.3 give each department its own instants;
+#: until 26 Sep 2026 both departmental plans shared one submission (10:00)
+#: and one acceptance (14:00), and the Head of Procurement Function's
+#: signature carried 5 Dec instead of 7 Dec.
 CLOCK = {
-	"dpp_submitted": "2026-11-25 10:00:00",
-	"dpp_accepted": "2026-11-27 14:00:00",
+	"dpp_submitted_dhi": "2026-11-25 10:30:00",
+	"dpp_submitted_hrmd": "2026-11-25 11:00:00",
+	"dpp_accepted_dhi": "2026-11-27 14:00:00",
+	"dpp_accepted_hrmd": "2026-11-27 14:05:00",
 	"finance_confirmed": "2026-12-04 10:00:00",
-	"plan_submitted": "2026-12-05 10:00:00",
+	"plan_submitted": "2026-12-07 10:00:00",
 	"ao_adopted": "2026-12-08 10:00:00",
 	"statutory_approved": "2026-12-09 11:00:00",
 	"publication_attempted": "2026-12-10 14:55:00",
@@ -419,7 +433,12 @@ def verify_prerequisites() -> dict[str, str]:
 def _destination() -> None:
 	from kentender_procurement.procurement_planning.services.publication_pipeline import DESTINATION_ADAPTER
 
-	if frappe.db.exists("Annual Plan Publication Destination", {"destination_id": DESTINATION_ID}):
+	existing = frappe.db.get_value("Annual Plan Publication Destination", {"destination_id": DESTINATION_ID}, ["name", "fixture_namespace"], as_dict=True)
+	if existing:
+		# Found 26 Sep 2026: the canonical plan published to a destination a
+		# Planning test world had created; the canonical seed owns it.
+		if existing.fixture_namespace != NS:
+			frappe.db.set_value("Annual Plan Publication Destination", existing.name, "fixture_namespace", NS, update_modified=False)
 		return
 	frappe.get_doc(
 		{
@@ -525,24 +544,24 @@ def _build_accepted_dpp(
 			)
 			record_version = need_funded["record_version"]
 			classifications[need_entry_id] = spec["classification"]
-	# Submitted 25 Nov 2026, 10:00 EAT (CLOCK["dpp_submitted"]'s wall-clock
-	# instant) — inside Julia's Digital Health acting window (1 Oct-30 Nov)
+	# Submitted 25 Nov 2026, 10:30 EAT (CLOCK["dpp_submitted_dhi"]) — inside Julia's Digital Health acting window (1 Oct-30 Nov)
 	# and before Peter's own Digital Health assignment starts (1 Dec), the
 	# same reasoning the Departmental Needs seed already applies to this
 	# unit's November decisions. The command's own authority check reads
 	# the real clock (AUTH-ADR-001 §4.6), so it must actually run at that
 	# instant (plan D19) — Julia alone is never enough while this runs at
 	# today's real date, which falls in neither window.
-	with _as(ACTING_HOD), clock.at("2026-11-25 10:00:00"):
+	with _as(ACTING_HOD), clock.at(CLOCK["dpp_submitted_dhi"]):
 		submitted = dpp_lifecycle.submit_departmental_plan(
 			dpp_version=opened["current_version"], certification_confirmed=True,
 			expected_record_version=record_version, idempotency_key=_key("submit-dpp"),
 		)
 	task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
-	with _as(PLANNER):
+	with _as(PLANNER), clock.at(CLOCK["dpp_accepted_dhi"]):
 		accepted = dpp_validation.accept_departmental_plan(
 			task=task.name, classifications=classifications, task_token=task.task_token, idempotency_key=_key("accept-dpp"),
 		)
+	with _as(PLANNER):
 		plan = plan_read.get_annual_plan(plan_reference=accepted["annual_plan"])
 	return {"accepted": accepted, "plan": plan, "entry_id": entry_id, "opened": opened}
 
@@ -573,13 +592,13 @@ def _build_hrmd_laptops_dpp(prereqs: dict[str, str]) -> str:
 			indicative_amount=NEED_HRMD_LAPTOPS_AMOUNT, expected_record_version=opened["record_version"],
 			idempotency_key=_key("fund-hrmd-laptops"),
 		)
-	with _as(HOD):
+	with _as(HOD), clock.at(CLOCK["dpp_submitted_hrmd"]):
 		submitted = dpp_lifecycle.submit_departmental_plan(
 			dpp_version=opened["current_version"], certification_confirmed=True,
 			expected_record_version=funded["record_version"], idempotency_key=_key("submit-hrmd-dpp"),
 		)
 	task = frappe.get_doc("Departmental Plan Validation Task", {"task_reference": submitted["task"]})
-	with _as(PLANNER):
+	with _as(PLANNER), clock.at(CLOCK["dpp_accepted_hrmd"]):
 		dpp_validation.accept_departmental_plan(
 			task=task.name, classifications={entry_id: "Goods"}, task_token=task.task_token,
 			idempotency_key=_key("accept-hrmd-dpp"),
@@ -680,7 +699,7 @@ def _form_and_confirm(plan: dict[str, Any], prereqs: dict[str, str]) -> str:
 def _submit_plan(plan_reference: str) -> Any:
 	from kentender_procurement.procurement_planning.services import plan_governance, plan_read
 
-	with _as(HOPF):
+	with _as(HOPF), clock.at(CLOCK["plan_submitted"]):
 		plan = plan_read.get_annual_plan(plan_reference=plan_reference)
 		submitted = plan_governance.submit_consolidated_plan(
 			plan_version=plan["version_reference"], expected_record_version=plan["record_version"], idempotency_key=_key("submit-plan"),
@@ -712,7 +731,15 @@ def _govern_and_publish(plan_reference: str) -> dict[str, Any]:
 
 	plan_version = approved["plan_version"]
 	# §5.5.2.2 — the AO records that the exact approved document was sent.
-	# This is external dispatch evidence, not another approval.
+	# This is external dispatch evidence, not another approval. SEED-001 v1.3
+	# §3.7 / SEED-AC-020: the reference alone is not evidence, so a labelled
+	# synthetic attachment goes with it (the file name is the artboard's
+	# placeholder; until 26 Sep 2026 the seed attached nothing).
+	from kentender_core.seeds.fixture_files import attached_pdf
+
+	evidence = attached_pdf(
+		TREASURY_EVIDENCE_FILE, label="Treasury dispatch evidence MOH/APP/2027/001", doctype="Annual Plan Version", name=plan_version,
+	)
 	with _as(ACCOUNTING_OFFICER):
 		treasury.record_treasury_submission(
 			plan_version=plan_version,
@@ -721,6 +748,7 @@ def _govern_and_publish(plan_reference: str) -> dict[str, Any]:
 			destination="National Treasury",
 			dispatch_reference="MOH/APP/2027/001",
 			exact_document_confirmed=True,
+			supporting_attachment=evidence,
 			idempotency_key=_key("treasury-submission"),
 		)
 	frappe.set_user("Administrator")
@@ -732,13 +760,9 @@ def _stamp_design_clock(plan_reference: str) -> None:
 	"""§14.4–14.6 exact instants onto the evidence rows the commands wrote."""
 	plan_name = frappe.db.get_value("Annual Plan", {"plan_reference": plan_reference})
 	version = frappe.db.get_value("Annual Plan", plan_name, "active_version") or frappe.db.get_value("Annual Plan", plan_name, "open_successor_version")
-	roots = frappe.get_all("Departmental Plan", filters={"fiscal_year": FY}, pluck="name")
-	dpp_versions = frappe.get_all("Departmental Plan Version", filters={"departmental_plan": ("in", roots or ("",))}, pluck="name")
-	for submission in frappe.get_all("Departmental Plan Submission", filters={"dpp_version": ("in", dpp_versions or ("",))}, pluck="name"):
-		frappe.db.set_value("Departmental Plan Submission", submission, "submitted_at", CLOCK["dpp_submitted"], update_modified=False)
-	tasks = frappe.get_all("Departmental Plan Validation Task", filters={"fiscal_year": FY}, pluck="name")
-	for decision in frappe.get_all("Departmental Plan Validation Decision", filters={"task": ("in", tasks or ("",)), "decision": "Accept departmental plan"}, pluck="name"):
-		frappe.db.set_value("Departmental Plan Validation Decision", decision, "decided_at", CLOCK["dpp_accepted"], update_modified=False)
+	# The departmental submissions and acceptances, and the Head of
+	# Procurement Function's signature and submission, run at their own
+	# instants under the frozen clock and are not stamped here.
 	if not version:
 		return
 	for decision in frappe.get_all(
@@ -747,10 +771,7 @@ def _stamp_design_clock(plan_reference: str) -> None:
 		pluck="name",
 	):
 		frappe.db.set_value("Plan Finance Decision", decision, "decided_at", CLOCK["finance_confirmed"], update_modified=False)
-	frappe.db.set_value(
-		"Annual Plan Version", version,
-		{"submitted_at": CLOCK["plan_submitted"], "activated_at": CLOCK["publication_acknowledged"]}, update_modified=False,
-	)
+	frappe.db.set_value("Annual Plan Version", version, "activated_at", CLOCK["publication_acknowledged"], update_modified=False)
 	for stage, when in (("Accounting Officer adoption", CLOCK["ao_adopted"]), ("Statutory approval", CLOCK["statutory_approved"])):
 		task = frappe.db.get_value("Plan Governance Task", {"plan_version": version, "stage": stage}, "decision")
 		if task:
@@ -1206,6 +1227,60 @@ def clear_planning_fixture_rows(
 			frappe.delete_doc(doctype, name, force=True, ignore_permissions=True, delete_permanently=True)
 		deleted[doctype] = len(rows)
 	return deleted
+
+
+def validate_planning_history() -> list[dict[str, Any]]:
+	"""PLN-CHG-001 v1.27 §10.2 / SEED-001 v1.3 §3.3 and §3.6–§3.7 facts that
+	no later stage changes, so the core validator asserts them whatever
+	stage it seeds through (unlike `validate_planning_seed`). Never mutates."""
+	checks: list[dict[str, Any]] = []
+
+	def check(name: str, ok: bool, detail: str = "") -> None:
+		checks.append({"check": f"planning.history.{name}", "ok": bool(ok), "detail": detail})
+
+	plan_row = frappe.db.get_value("Annual Plan", {"fiscal_year": FY}, ["name", "active_version"], as_dict=True)
+	check("plan.active", bool(plan_row and plan_row.active_version))
+	if not (plan_row and plan_row.active_version):
+		return checks
+	version = plan_row.active_version
+	for department, actor, submitted, accepted in (
+		("Digital Health", ACTING_HOD, CLOCK["dpp_submitted_dhi"], CLOCK["dpp_accepted_dhi"]),
+		("Human Resources Management and Development", HOD, CLOCK["dpp_submitted_hrmd"], CLOCK["dpp_accepted_hrmd"]),
+	):
+		unit = frappe.db.get_value("Organisation Unit", {"unit_name": department}, "name")
+		dpp = frappe.db.get_value("Departmental Plan", {"organisation_unit": unit, "fiscal_year": FY}, "name")
+		submission = frappe.db.get_value(
+			"Departmental Plan Submission",
+			{"dpp_version": ("in", frappe.get_all("Departmental Plan Version", filters={"departmental_plan": dpp}, pluck="name") or ("",))},
+			["name", "submitted_by_user", "submitted_at"], as_dict=True,
+		)
+		check(f"{department}.certified", bool(submission) and submission.submitted_by_user == actor and str(submission.submitted_at)[:19] == submitted, str(submission))
+		decision = frappe.db.get_value(
+			"Departmental Plan Validation Decision", {"submission": submission.name if submission else "", "decision": "Accept departmental plan"}, ["actor", "decided_at"], as_dict=True,
+		)
+		check(f"{department}.accepted", bool(decision) and decision.actor == PLANNER and str(decision.decided_at)[:19] == accepted, str(decision))
+	signature = frappe.db.get_value("Plan Preparation Signature", {"plan_version": version}, ["actor", "signed_at"], as_dict=True)
+	check("signature", bool(signature) and signature.actor == HOPF and str(signature.signed_at)[:19] == CLOCK["plan_submitted"], str(signature))
+	items = {row.title: row for row in frappe.get_all(
+		"Annual Plan Item", filters={"plan_version": version}, fields=["title", "estimate_basis", "estimate_basis_reference", "estimated_delivery_period_days", "estimated_completion_date"],
+	)}
+	for title, days, completion in ((ITEM_VALUES["title"], 30, "2027-08-11"), (COMBINED_ITEM_VALUES["title"], 60, "2027-09-24")):
+		item = items.get(title)
+		check(
+			f"{title}.delivery",
+			bool(item) and (item.estimated_delivery_period_days, str(item.estimated_completion_date)) == (days, completion),
+			str(item and (item.estimated_delivery_period_days, item.estimated_completion_date)),
+		)
+		check(f"{title}.estimate_basis", bool(item) and (item.estimate_basis, item.estimate_basis_reference) == (ITEM_VALUES["estimate_basis"], ITEM_VALUES["estimate_basis_reference"]))
+	evidence = frappe.db.get_value("Treasury Submission Evidence", {"plan_version": version, "evidence_state": "Current"}, "supporting_attachment")
+	check("treasury.attachment", bool(evidence) and bool(frappe.db.exists("File", {"file_url": evidence})), str(evidence))
+	# Each funded Need reports its accepted revision as Fully included (found
+	# 26 Sep 2026: a Departmental Needs profile reset had deleted Need 1's).
+	from kentender_procurement.departmental_needs.services.usage import planning_usage
+
+	for need in ("NDS-MOH-2027-0001", "NDS-MOH-2027-0003", "NDS-MOH-2027-0004"):
+		check(f"{need}.fully_included", planning_usage(need) == "Fully included", planning_usage(need))
+	return checks
 
 
 def validate_planning_seed() -> list[dict[str, Any]]:

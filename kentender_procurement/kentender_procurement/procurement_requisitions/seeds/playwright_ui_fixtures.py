@@ -43,6 +43,7 @@ from kentender_core.seeds.constants import TEST_PASSWORD
 from kentender_core.services import organisation_structure as structure
 from kentender_core.services import responsibility_administration as administration
 from kentender_core.services import site_configuration
+from kentender_core.utils.raw_delete import delete_rows
 
 NS_PW = "KENTENDER_REQ_PLAYWRIGHT"
 FY_START = 2099
@@ -412,7 +413,7 @@ def _wipe_requisitions_side() -> None:
 		"Requisition Version", "IT Equipment Requirement Package Version", "IT Equipment Requirement Package",
 		"Procurement Requisition", "Requisition Correction Outcome",
 	):
-		frappe.db.delete(doctype, {"owner": ("in", ACTORS)})
+		delete_rows(doctype, {"owner": ("in", ACTORS)})
 	frappe.db.delete("Requisition Command Journal", {"idempotency_key": ("like", "req-pw-%")})
 	frappe.db.delete("Plan Item Correction Request", {"reason": ("like", "%Playwright%")})
 	frappe.db.delete("Notification Log", {"for_user": ("in", ACTORS)})

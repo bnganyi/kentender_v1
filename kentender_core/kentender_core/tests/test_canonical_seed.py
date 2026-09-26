@@ -117,6 +117,37 @@ class TestCanonicalSelection(IntegrationTestCase):
 		self.assertFalse(frappe.db.exists("Tender", tender))
 		self.assertEqual(sorted(tender_clear.canonical_tenders()), kept)
 
+	def test_reset_removes_a_stray_strategic_plan_and_keeps_the_canonical_one(self):
+		"""Found 26 Sep 2026: nothing in the clear looked at Strategy, so a
+		plan left by a test run survived every reseed (STR-CHG-001 v1.8
+		§14.3: "There is no second seeded plan")."""
+		tag = uuid4().hex[:8]
+		plan = f"SP-CS-{tag}"
+		frappe.get_doc({"doctype": "Strategic Plan", "name": plan, "plan_id": f"CS-SP-{tag}", "title": f"Stray plan {tag}"}).db_insert()
+		self.addCleanup(frappe.db.delete, "Strategic Plan", {"name": plan})
+		kept = frappe.get_all("Strategic Plan", filters={"fixture_namespace": canonical.STRATEGY_NS}, pluck="name")
+
+		plan_rows = canonical.collect_non_canonical().get("Strategic Plan", [])
+		self.assertIn(plan, plan_rows)
+		self.assertFalse(set(kept) & set(plan_rows), "a canonical plan was selected")
+		canonical.clear_non_canonical()
+		self.assertFalse(frappe.db.exists("Strategic Plan", plan))
+		self.assertEqual(frappe.get_all("Strategic Plan", filters={"fixture_namespace": canonical.STRATEGY_NS}, pluck="name"), kept)
+
+	def test_reset_removes_planning_dispositions_whose_need_is_gone(self):
+		"""Found 26 Sep 2026: 11 Need Planning Disposition Projection rows
+		pointed at Needs that no longer existed — the reseed's Need delete
+		never covered that table."""
+		tag = uuid4().hex[:8]
+		row = f"NPDP-CS-{tag}"
+		frappe.get_doc(
+			{"doctype": "Need Planning Disposition Projection", "name": row, "departmental_need": f"NDS-GONE-{tag}", "disposition_key": row}
+		).db_insert()
+		self.addCleanup(frappe.db.delete, "Need Planning Disposition Projection", {"name": row})
+		self.assertIn(row, canonical.collect_non_canonical().get("Need Planning Disposition Projection", []))
+		canonical.clear_non_canonical()
+		self.assertFalse(frappe.db.exists("Need Planning Disposition Projection", row))
+
 	def test_reset_removes_child_rows_and_files_whose_record_is_gone(self):
 		"""Found 26 Sep 2026: about 50,000 child-table rows and 1,734 files
 		on the dev site belonged to records that no longer existed — module

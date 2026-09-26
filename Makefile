@@ -153,7 +153,7 @@ help:
 	@echo "  make seed-req-profiles SITE=$(SITE) — list the REQ-CHG-001 §16.4A Requisitions demo profiles"
 	@echo "  make seed-req-profile SITE=$(SITE) PROFILE=REQ-SC-HOLD — load one profile on the canonical MOH item (replaces any loaded one) and print its report"
 	@echo "  make seed-req-profile-restore SITE=$(SITE) — undo the loaded profile and restore the base authorised requisition"
-	@echo "  make seed-canonical SITE=$(SITE) [THROUGH=tenders] [REBUILD=True] [WIPE=True] [FORCE=True] — clear every non-canonical row, then reseed KT-STD-001 §8 configuration + SEED-001 modules progressively (site → strategy → budget → needs → planning → requisitions → tenders) and validate; WIPE=True also drops and rebuilds the site stage itself (needs FORCE=True outside developer_mode)"
+	@echo "  make seed-canonical SITE=$(SITE) [THROUGH=tenders] [REBUILD=True] [WIPE=True] [FORCE=True] — clear every non-canonical row, then reseed KT-STD-001 §8 configuration + SEED-001 modules progressively (site → strategy → budget → needs → planning → requisitions → tenders) and validate, draining the background-job queue before and after; WIPE=True also drops and rebuilds the site stage itself (needs FORCE=True outside developer_mode)"
 	@echo "  make seed-canonical-dry-run SITE=$(SITE) — report what seed-canonical would remove, delete nothing"
 	@echo "  make seed-canonical-validate SITE=$(SITE) [THROUGH=requisitions] — validate the canonical world only"
 	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — fixture-scoped reset + full KENTENDER_MVP_V1 seed + Playwright purge + validate"
@@ -1220,10 +1220,16 @@ endif
 ifdef reseed
 RESEED := $(reseed)
 endif
+# The clear deletes many documents and each deletion enqueues background
+# jobs; past Frappe's ceiling the next enqueue fails and `bench execute`
+# reports it as a misleading NameError (SEED-OPS-001 §7). Drain before and
+# after, so neither this run nor the next one trips it.
 seed-canonical:
+	node tests/ui/helpers/queueCheck.cjs --fix
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \
 		kentender_core.seeds.canonical.run \
 		--kwargs '{"through": "$(THROUGH)", "reset": True, "rebuild": $(REBUILD), "wipe": $(WIPE), "reseed": $(RESEED), "force": $(FORCE), "validate": True}'
+	node tests/ui/helpers/queueCheck.cjs --fix
 
 seed-canonical-dry-run:
 	cd $(BENCH_ROOT) && bench --site $(SITE) execute \

@@ -22,6 +22,8 @@ from uuid import uuid4
 
 import frappe
 
+from kentender_core.utils.raw_delete import delete_rows
+
 from kentender_procurement.procurement_planning.services import (
 	dpp_lifecycle,
 	dpp_validation,
@@ -165,10 +167,10 @@ def wipe_requisition_rows() -> None:
 		names |= set(frappe.get_all(doctype, filters={field: ("in", values)}, pluck="name"))
 		frappe.db.delete(doctype, {field: ("in", values)})
 	frappe.db.delete("Requisition Command Journal", {"document_name": ("in", list(names - {""}) or [""])})
-	frappe.db.delete("Requisition Version", {"name": ("in", versions)})
-	frappe.db.delete("IT Equipment Requirement Package Version", {"name": ("in", package_versions)})
-	frappe.db.delete("IT Equipment Requirement Package", {"name": ("in", packages)})
-	frappe.db.delete("Procurement Requisition", {"name": ("in", requisitions)})
+	delete_rows("Requisition Version", {"name": ("in", versions)})
+	delete_rows("IT Equipment Requirement Package Version", {"name": ("in", package_versions)})
+	delete_rows("IT Equipment Requirement Package", {"name": ("in", packages)})
+	delete_rows("Procurement Requisition", {"name": ("in", requisitions)})
 	# authorise_requisition() reserves funding in Budget (D1) under
 	# `calling_module="Procurement Requisitions"`; those rows live outside
 	# this app and are never touched by `wipe_planning_rows()`, so a prior

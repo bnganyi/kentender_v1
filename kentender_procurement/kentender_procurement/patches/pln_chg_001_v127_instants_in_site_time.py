@@ -21,7 +21,22 @@ import frappe
 from frappe.utils import get_datetime
 
 from kentender_core.utils.instants import from_utc_iso
-from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import CLOCK, CLOCK_BEFORE_SITE_TIME
+from kentender_procurement.procurement_planning.seeds.kentender_mvp_v1 import CLOCK_BEFORE_SITE_TIME
+
+# The seed's CLOCK as it stood when this patch was written (26 Sep 2026); the
+# seed has since split and corrected some instants, which must not change
+# what this one-off patch writes.
+CLOCK = {
+	"dpp_submitted": "2026-11-25 10:00:00",
+	"dpp_accepted": "2026-11-27 14:00:00",
+	"finance_confirmed": "2026-12-04 10:00:00",
+	"plan_submitted": "2026-12-05 10:00:00",
+	"ao_adopted": "2026-12-08 10:00:00",
+	"statutory_approved": "2026-12-09 11:00:00",
+	"publication_attempted": "2026-12-10 14:55:00",
+	"publication_acknowledged": "2026-12-10 15:00:00",
+	"treasury_submitted": "2026-12-10 14:00:00",
+}
 
 # (doctype, field, CLOCK key) — every row `_stamp_design_clock` writes.
 STAMPED = (

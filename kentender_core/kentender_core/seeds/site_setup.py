@@ -420,6 +420,7 @@ def run(*, commit: bool = True) -> dict:
 	result = {
 		"site": _seed_site(),
 		"units": _seed_units(),
+		"unit_tree": repair_unit_tree(),
 		"company": _seed_company(),
 		"fiscal_years": _seed_fiscal_years(),
 		"intake": _seed_intake(),
@@ -510,17 +511,20 @@ def _seed_site() -> str:
 				f"This site is configured as {stored}, not {SITE['pe_code']}. "
 				"The canonical seed refuses to overwrite a different site identity."
 			)
-		# Descriptive fields converge idempotently through the same command.
-		configuration.update_procuring_entity(
-			payload={
-				"pe_name": SITE["pe_name"],
-				"pe_type": SITE["pe_type"],
-				"ppra_registration": SITE["ppra_registration"],
-				"timezone": SITE["timezone"],
-				"statutory_approval_route": SITE["statutory_approval_route"],
-				"entity_is_county": SITE["entity_is_county"],
-			}
-		)
+		# Descriptive fields converge through the same command — only when one
+		# differs: the command writes an audit entry on every call, and until
+		# 26 Sep 2026 each reseed added one (KT-STD-001 v1.8 §8.6: a second
+		# run creates no duplicate audit entry; 745 had piled up).
+		payload = {
+			field: SITE[field]
+			for field in ("pe_name", "pe_type", "ppra_registration", "timezone", "statutory_approval_route", "entity_is_county")
+		}
+		def _differs(field: str, value) -> bool:
+			stored = frappe.db.get_single_value(configuration.SITE_PE_DOCTYPE, field)
+			return int(stored or 0) != int(value) if isinstance(value, bool) else (stored or "") != value
+
+		if any(_differs(field, value) for field, value in payload.items()):
+			configuration.update_procuring_entity(payload=payload)
 		# The PE and its root are meant to exist together (configure_procuring_
 		# entity creates both in one transaction) but nothing enforces that
 		# invariant once they can drift apart independently - e.g. a
@@ -533,6 +537,29 @@ def _seed_site() -> str:
 		return "updated"
 	configuration.configure_procuring_entity(**SITE)
 	return "configured"
+
+
+def unit_tree_intact() -> bool:
+	"""Every unit sits inside its parent's nested-set range."""
+	rows = {row.name: row for row in frappe.get_all("Organisation Unit", fields=["name", "parent_organisation_unit", "lft", "rgt"])}
+	return all(
+		rows[row.parent_organisation_unit].lft < row.lft and row.rgt < rows[row.parent_organisation_unit].rgt
+		for row in rows.values()
+		if row.parent_organisation_unit in rows
+	)
+
+
+def repair_unit_tree() -> str:
+	"""Found 26 Sep 2026: the root's range (1–2) no longer enclosed its
+	children (14–19), so `authorization.descendants_of(root)` returned
+	nothing (AUTH-ADR-001 v1.9 §4.3: a grant covers the unit and all its
+	descendants). Rebuilds the tree only when it is broken."""
+	if unit_tree_intact():
+		return "intact"
+	from frappe.utils.nestedset import rebuild_tree
+
+	rebuild_tree("Organisation Unit")
+	return "rebuilt"
 
 
 def _seed_units() -> dict[str, str]:
@@ -676,15 +703,18 @@ def _seed_catalogues() -> dict[str, int]:
 
 
 def _seed_funding_sources() -> dict[str, int]:
+	"""Through the Procurement settings commands, which audit each change
+	(KT-STD-001 v1.8 §8.6; until 26 Sep 2026 the seed inserted and enabled
+	the rows directly)."""
+	from kentender_core.services import procurement_settings
+
 	created = 0
 	for label in FUNDING_SOURCES:
 		if frappe.db.exists("Funding Source", label):
 			if frappe.db.get_value("Funding Source", label, "record_status") != "Available":
-				frappe.db.set_value("Funding Source", label, "record_status", "Available", update_modified=False)
+				procurement_settings.update_funding_source(name=label, enabled=True)
 			continue
-		frappe.get_doc({"doctype": "Funding Source", "label": label, "record_status": "Available"}).insert(
-			ignore_permissions=True
-		)
+		procurement_settings.add_funding_source(label=label, idempotency_key=f"site-setup:funding-source:{label}")
 		created += 1
 	return {"created": created, "total": len(FUNDING_SOURCES)}
 

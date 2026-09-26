@@ -27,6 +27,8 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import Any, Callable
 
+import json
+
 import frappe
 
 from kentender_procurement.departmental_needs.constants import (
@@ -141,6 +143,31 @@ def _record_version(need: str) -> int:
 # --- §14.4 Planning usage ---------------------------------------------------
 
 
+_SAVED_USAGE_KEY = "kt_nds_profile_saved_usage"
+
+
+def _preserve_canonical_usage(revision: str) -> None:
+	"""The planning-usage and withdrawal profiles rewrite NDS-MOH-2027-0001's
+	usage projection in place. On a site seeded through Planning that row is
+	Planning's own canonical projection — found 26 Sep 2026: each profile
+	reset deleted it for good. Keep one copy, so the reset can put it back."""
+	if frappe.db.get_global(_SAVED_USAGE_KEY):
+		return
+	row = frappe.db.get_value("Need Planning Usage Projection", revision, "*", as_dict=True)
+	if row and row.get("fixture_namespace") != NS_USAGE:
+		frappe.db.set_global(_SAVED_USAGE_KEY, frappe.as_json(row))
+
+
+def _restore_canonical_usage() -> None:
+	saved = frappe.db.get_global(_SAVED_USAGE_KEY)
+	if not saved:
+		return
+	row = json.loads(saved)
+	frappe.db.delete("Need Planning Usage Projection", {"name": row["name"]})
+	frappe.get_doc({**row, "doctype": "Need Planning Usage Projection"}).db_insert()
+	frappe.db.set_global(_SAVED_USAGE_KEY, "")
+
+
 def apply_planning_usage() -> dict[str, Any]:
 	"""Project NDS-MOH-2027-0001 Revision 1 as Fully included in an Active Plan.
 
@@ -151,6 +178,7 @@ def apply_planning_usage() -> dict[str, Any]:
 	need = frappe.get_doc("Departmental Need", SUCCESSOR_NEED)
 	if not need.current_accepted_revision:
 		frappe.throw(f"{SUCCESSOR_NEED} has no accepted revision; apply the default profile first.")
+	_preserve_canonical_usage(need.current_accepted_revision)
 	with _as(base.PLANNER):
 		result = project_planning_usage(
 			departmental_need=need.name,
@@ -169,6 +197,7 @@ def reset_planning_usage() -> dict[str, Any]:
 		"Need Planning Usage Projection", filters={"fixture_namespace": NS_USAGE}, pluck="name"
 	)
 	frappe.db.delete("Need Planning Usage Projection", {"fixture_namespace": NS_USAGE})
+	_restore_canonical_usage()
 	return {"profile": "planning_usage", "removed": removed}
 
 
@@ -279,6 +308,7 @@ def apply_withdrawal(*, cleared: bool = False) -> dict[str, Any]:
 		frappe.throw(f"{need.name} is not Accepted for planning; apply the default profile first.")
 	if cleared:
 		reset_planning_usage()
+		_preserve_canonical_usage(need.current_accepted_revision)
 		with _as(base.PLANNER):
 			project_planning_usage(
 				departmental_need=need.name,

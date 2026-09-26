@@ -269,10 +269,14 @@ def upsert_tenders_base(*, commit: bool = False) -> dict[str, Any]:
 	ensure_producer_role()
 	prereqs = verify_prerequisites()
 
-	existing = frappe.db.get_value("Tender", {"requisition": prereqs["requisition"]}, ["name", "overall_status"], as_dict=True)
+	existing = frappe.db.get_value("Tender", {"requisition": prereqs["requisition"]}, ["name", "overall_status", "fixture_namespace"], as_dict=True)
 	if existing:
 		if existing.overall_status != "Submission period ended":
 			frappe.throw(f"{existing.name} exists mid-lifecycle on the canonical Requisition ({existing.overall_status}) — run reset_tenders_seed() before reseeding the base fixture.")
+		# Seeded before 26 Sep 2026 without the stamp; its other rows keep
+		# theirs until the next rebuild.
+		if existing.fixture_namespace != NS:
+			frappe.db.set_value("Tender", existing.name, "fixture_namespace", NS, update_modified=False)
 		if commit:
 			frappe.db.commit()
 		return {"ok": True, "idempotent": True, "tender": existing.name}
@@ -282,8 +286,14 @@ def upsert_tenders_base(*, commit: bool = False) -> dict[str, Any]:
 	handoff = prereqs["handoff"]
 
 	_clock("start")
-	with _as(OFFICER):
-		started = cmd.start_tender(handoff=handoff, idempotency_key=_key("start"))
+	# The start consumes Requisitions' handoff, which stamps the process
+	# clock rather than the Tenders clock flag: freeze it too, so fixture 6's
+	# consumption instant (REQ-CHG-001 §16.4, 20 Mar 2027 09:00) is recorded
+	# by the command itself (until 26 Sep 2026 it carried the seeding time).
+	from kentender_core.seeds import clock as core_clock
+
+	with _as(OFFICER), core_clock.at(CLOCK["start"]):
+		started = cmd.start_tender(handoff=handoff, idempotency_key=_key("start"), fixture_namespace=NS)
 	name = started["tender"]
 	root = frappe.get_doc("Tender", name)
 
@@ -449,6 +459,7 @@ def validate_tenders_seed() -> list[dict[str, Any]]:
 	check(bool(tender), "a Tender exists on the canonical Requisition")
 	if not tender:
 		return rows
+	check(frappe.db.get_value("Tender", tender.name, "fixture_namespace") == NS, f"the Tender carries the {NS} stamp")
 	check(tender.overall_status == "Submission period ended", f"overall_status is 'Submission period ended' (got {tender.overall_status!r})")
 	versions = frappe.get_all("Tender Version", filters={"tender": tender.name}, fields=["version_number", "status"], order_by="version_number asc")
 	check(len(versions) == 2, f"exactly two Tender Versions exist (got {len(versions)})")

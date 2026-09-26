@@ -25,6 +25,8 @@ from typing import Any
 
 import frappe
 
+from kentender_core.utils.raw_delete import delete_rows
+
 #: Every doctype that carries a `tender` link, dependants first; `Tender` last.
 TENDER_DOCTYPES = (
 	"Tender Event", "Tender Document", "Tender Submission Handoff", "Tender Channel Confirmation", "Tender Candidate Notice", "Tender Clarification",
@@ -46,18 +48,6 @@ def _count(deleted: dict[str, int], doctype: str, count: int) -> None:
 		deleted[doctype] = deleted.get(doctype, 0) + count
 
 
-def _delete_rows(doctype: str, names: list[str], deleted: dict[str, int]) -> None:
-	"""Raw delete of `names` with their child-table rows."""
-	tables = [df.options for df in frappe.get_meta(doctype).get_table_fields()]
-	for chunk in _chunks(names):
-		for child in tables:
-			filters = {"parenttype": doctype, "parent": ("in", chunk)}
-			_count(deleted, child, frappe.db.count(child, filters))
-			frappe.db.delete(child, filters)
-		frappe.db.delete(doctype, {"name": ("in", chunk)})
-	_count(deleted, doctype, len(names))
-
-
 def _delete_family(removed: dict[str, list[str]]) -> dict[str, int]:
 	"""`removed` is `{doctype: [names]}` within the Tender family. Their
 	command-journal entries and attached files go with them; a File goes
@@ -65,8 +55,8 @@ def _delete_family(removed: dict[str, list[str]]) -> dict[str, int]:
 	File row still shares it."""
 	deleted: dict[str, int] = {}
 	for doctype in TENDER_DOCTYPES:
-		if removed.get(doctype):
-			_delete_rows(doctype, removed[doctype], deleted)
+		for chunk in _chunks(removed.get(doctype, [])):
+			delete_rows(doctype, {"name": ("in", chunk)}, deleted=deleted)
 	for chunk in _chunks(name for names in removed.values() for name in names):
 		filters = {"document_name": ("in", chunk)}
 		_count(deleted, "Tender Command Journal", frappe.db.count("Tender Command Journal", filters))
