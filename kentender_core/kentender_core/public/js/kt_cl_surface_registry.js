@@ -203,14 +203,6 @@ frappe.provide("kentender_core.cl_surface_registry");
 			crumb(__("Publication Setup")),
 		];
 	}
-	/** BW-A1 leaf: Published Tender Overview (bidder) — entered from public /tenders. */
-	function trailBwA1Overview() {
-		return [
-			crumbDashboard(),
-			crumb(__("Available Tenders")),
-			crumb(__("Published Tender Overview")),
-		];
-	}
 
 
 	/**
@@ -489,20 +481,6 @@ frappe.provide("kentender_core.cl_surface_registry");
 				[]
 			),
 		},
-		"BW-A1": {
-			id: "BW-A1",
-			label: "Published Tender Overview",
-			routePrefixes: ["published-tender-overview"],
-			sidebarWorkspaceKey: SIDEBAR_KEY,
-			chrome: chrome(
-				__("Published Tender Overview"),
-				__(
-					"Review the published tender, documents, and deadlines before starting or continuing a bid."
-				),
-				trailBwA1Overview(),
-				[]
-			),
-		},
 		/* Budget & Funding (kentender_budget) is rebuilt per BUD-CHG-001 v1.2 as
 		   Industry-design Vue-in-Desk pages with their own PageRail.vue chrome —
 		   deliberately NOT registered here, matching kentender_strategy's three
@@ -589,7 +567,6 @@ frappe.provide("kentender_core.cl_surface_registry");
 				"PUB-A1",
 				"PUB-A2",
 				"PUB-A3",
-				"BW-A1",
 			];
 		},
 

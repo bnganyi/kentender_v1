@@ -40,12 +40,6 @@ PE_CODE = f"{SEED_PREFIX}-PE"
 
 
 def _clear() -> None:
-	for bid in frappe.get_all(
-		"Electronic Bid Submission",
-		filters={"configuration_ref": ("like", f"{SEED_PREFIX}%")},
-		pluck="name",
-	):
-		frappe.delete_doc("Electronic Bid Submission", bid, force=True, ignore_permissions=True)
 	for pub in frappe.get_all(
 		"IT Tender Publication Record",
 		filters={"configuration_ref": ("like", f"{SEED_PREFIX}%")},

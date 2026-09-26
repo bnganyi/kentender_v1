@@ -564,12 +564,6 @@ def publish_lean_requirements_compliance_for_tests(
 			"it_requirements": json.dumps(it_reqs),
 		},
 	)
-	for name in frappe.get_all(
-		"Electronic Bid Submission",
-		filters={"configuration": cfg_id},
-		pluck="name",
-	):
-		frappe.delete_doc("Electronic Bid Submission", name, force=1, ignore_permissions=True)
 	frappe.db.commit()
 
 	gen = generate_document_preview(cfg_id)

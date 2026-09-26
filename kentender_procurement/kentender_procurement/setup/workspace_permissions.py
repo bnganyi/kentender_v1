@@ -159,7 +159,6 @@ _KT_ROUTE_TO_SIDEBAR.update(
 		"audit event": "Procurement",
 		"coming-soon": "Procurement",
 		"publications": "Procurement",
-		"bid-submissions": "Procurement",
 		# Hub pages linked from the Procurement rail (Civic Ledger IA).
 		"budget-hub": "Procurement",
 		"budget-workbench": "Procurement",

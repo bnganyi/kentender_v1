@@ -113,49 +113,8 @@ def validate_demo_platform_seed() -> dict[str, Any]:
 		)
 	ok("published_pe_moh", bool(pub_receiving), f"count={len(pub_receiving)}")
 
-	# Bidder portal: Open ≠ officer Published. Past-deadline pubs are Closed on /tenders.
-	try:
-		from kentender_procurement.tender_configurations.services.available_tenders import (
-			STATUS_CLOSED,
-			STATUS_OPEN,
-			list_available_tenders,
-		)
-
-		open_list = list_available_tenders({"status": STATUS_OPEN}, user="Guest", page_size=50)
-		closed_list = list_available_tenders({"status": STATUS_CLOSED}, user="Guest", page_size=50)
-		open_total = int((open_list.get("pagination") or {}).get("total") or 0)
-		closed_total = int((closed_list.get("pagination") or {}).get("total") or 0)
-		open_titles = [
-			cstr((t or {}).get("title") or (t or {}).get("tender_title") or "")
-			for t in (open_list.get("tenders") or [])
-		]
-		# At least two open receiving tenders; sealed/opened land under Closed.
-		ok(
-			"portal_open_count",
-			open_total >= 2,
-			f"open={open_total} titles={open_titles[:5]}",
-		)
-		ok(
-			"portal_closed_has_past_deadline",
-			closed_total >= 2,
-			f"closed={closed_total}",
-		)
-		joined = " | ".join(open_titles).lower()
-		ok(
-			"portal_titles_no_demo_prefix",
-			"demo published" not in joined
-			and "demo sealed" not in joined
-			and "demo opened" not in joined
-			and not any(t.lower().startswith("demo ") for t in open_titles if t),
-			joined[:200],
-		)
-	except Exception as exc:  # noqa: BLE001
-		ok("portal_open_count", False, str(exc))
-		ok("portal_closed_has_past_deadline", False, str(exc))
-		ok("portal_titles_no_demo_prefix", False, str(exc))
-
-	opened = frappe.get_all("IT Bid Opening Record", filters={"status": "Completed"}, limit=1)
-	ok("bid_opening_completed", bool(opened))
+	# Bidder-portal and bid-opening checks retired with the legacy bid-submission
+	# slice (BDS-CHG-001 v0.8 Phase 1).
 
 	# Home preferred entities should resolve to clean set
 	from kentender_procurement.procurement_home.services.home_context import list_available_entities

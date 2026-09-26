@@ -403,9 +403,6 @@ def _direct_publish(
 	seal_bids: bool,
 	tender_notice: str | None = None,
 ) -> dict[str, Any]:
-	from kentender_procurement.tender_configurations.seed.bid_submissions_officer_fixtures import (
-		seal_three_bidders,
-	)
 	from kentender_procurement.tender_configurations.services.f1_publication_handoff import (
 		PACKAGE_DOCTYPE,
 	)
@@ -469,9 +466,9 @@ def _direct_publish(
 	pub.insert(ignore_permissions=True)
 	frappe.db.set_value("Tender Configuration", cfg_id, "status", STATUS_PUBLISHED)
 	frappe.db.commit()
+	# seal_bids is retained for call compatibility; the legacy sealed-bid
+	# fixtures were retired by BDS-CHG-001 v0.8 Phase 1, so no bids are sealed.
 	bids: list[str] = []
-	if seal_bids:
-		bids = seal_three_bidders(cfg_id, pub.name)
 	return {
 		"configuration_ref": cfg_id,
 		"publication_id": pub.name,
@@ -482,54 +479,9 @@ def _direct_publish(
 
 
 def _seed_bid_scenarios() -> dict[str, Any]:
-	"""Closed+sealed (openable) and Opened register — PE-MOH linked demo pubs."""
-	from kentender_procurement.tender_configurations.services.bid_submissions import (
-		open_submitted_bids,
-	)
-
-	# Sealed / openable — past submission deadline (Closed on bidder portal; openable on Desk)
-	pkg_s = f"{PKG_PUBLISHED}-SEALED"
-	cfg_s = f"{CFG_PUBLISHED}-SEALED"
-	_insert_package(pkg_s, "District Firewall Refresh")
-	cfg = _insert_config(
-		ref=cfg_s,
-		package_code=pkg_s,
-		title="District Firewall Refresh",
-		status=STATUS_APPROVED_FOR_PREVIEW,
-		steps_state=steps_state_all_complete(),
-		full_payload=True,
-	)
-	sealed = _direct_publish(cfg, past_deadline=True, past_opening=True, seal_bids=True)
-
-	# Opened — past deadline + opened register (Closed on bidder portal)
-	pkg_o = f"{PKG_PUBLISHED}-OPENED"
-	cfg_o = f"{CFG_PUBLISHED}-OPENED"
-	_insert_package(pkg_o, "Endpoint Security Suite")
-	cfg2 = _insert_config(
-		ref=cfg_o,
-		package_code=pkg_o,
-		title="Endpoint Security Suite",
-		status=STATUS_APPROVED_FOR_PREVIEW,
-		steps_state=steps_state_all_complete(),
-		full_payload=True,
-	)
-	opened_pub = _direct_publish(cfg2, past_deadline=True, past_opening=True, seal_bids=True)
-	frappe.set_user("Administrator")
-	open_result = open_submitted_bids(opened_pub["publication_id"])
-
-	return {
-		"closed_sealed": {
-			**sealed,
-			"role": "gate_ready",
-			"next_action": "Open submitted bids on Bid Submissions sealed screen",
-		},
-		"opened": {
-			**opened_pub,
-			"opening": open_result,
-			"role": "portfolio",
-			"next_action": "Open register → View bid",
-		},
-	}
+	"""Retired: the legacy sealed/opened bid scenarios belonged to the bid-submission
+	slice retired by BDS-CHG-001 v0.8 Phase 1."""
+	return {"ok": False, "skipped": True, "reason": "BID_SUBMISSION_MODULE_RETIRED"}
 
 
 def seed_actionable_stages() -> dict[str, Any]:

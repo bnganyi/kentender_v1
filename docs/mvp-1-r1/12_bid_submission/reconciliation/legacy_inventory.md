@@ -57,3 +57,28 @@ The bid slice is the whole **bidder workspace** of `tender_configurations`, not 
 | All of `kentender_procurement/tender_management/` and the 23 `tm2_*` doctypes (module "Kentender Procurement") | 25 files in `procurement_lifecycle/` (e.g. `journey_object_lookup.py`, `tender_publication_handoff.py`, `opening_readiness_handoff.py`, `tender_closing_handoff.py`, `journey_aggregate.py`, `api/journey_api.py:66`, `seeds/works_master_*`, tests `test_g9_007_*`, `test_r8_012_*`, `test_r1_009_*`) and `procurement_home/` (`services/home_deadlines.py`, `seed/seed_home_demo.py`, links to `/desk/tender-management-v2` and `/desk/publications`). |
 | `app_include_js` `tm2_tender_handoff_panel.js`, `tm2_workbench_lifecycle.js`, `it_tender_configuration_create_modal.js`; `app_include_css` `tm2_tender_handoff_panel.css`, `tender_management_v2_workbench.css`; `page_js` `tender-management-v2` | TM2 officer workbench. |
 | `kentender_core/seeds/stable_platform_seed/purge.py` (imports `tender_management.seeds.purge_smoke_test_tenders`; lists a non-existent "TM2 Tender STD Binding") | Stable-platform seed. |
+
+## 5. Phase 1 as built (26 Sep 2026)
+
+This section adds to the inventory above, which is left as written.
+
+The Phase 1 build found more to retire than §1 listed. Each item has the same basis: it served only the retired bidder surfaces.
+
+| Addition | Why |
+|---|---|
+| Desk page `published-tender-overview` (`kentender_procurement/page/published_tender_overview`, `public/js/published_tender_overview_page.js`) and its shared surface-registry entry "BW-A1" (`kentender_core/public/js/kt_cl_surface_registry.js` and its contract test) | §3 listed it as a kept officer surface. It is bidder-facing: it calls `get_published_tender_overview`, `start_or_get_bid_workspace` and `download_published_tender_document_pdf`. |
+| Bidder web scripts `public/js/{qualification_and_capability_web, requirement_matrix_web, technical_proposal_web, tender_documents_addenda_web, requirements_compliance_review}.js` and the bidder `*_web.css` styles | Used only by the retired `www/tenders` pages. |
+| `tender_configurations/services/{section_response_envelope, section_status}.py` | Imported only by retired services. |
+| 34 more `tender_configurations/__init__.py` wrappers that import removed `api` functions inside their bodies | Found by an inner-import scan after the first pass. |
+| TM2 supplier portal: `tender_management/api/supplier_portal.py`, `services/supplier_portal_*.py` (7), `tests/test_p10_01_supplier_portal_routes.py` | Used only by the retired `/supplier/tenders` page. |
+| UI specs `tests/ui/smoke/it-std-wizard/e1-bidder-workspace.spec.ts`, `tests/ui/smoke/supplier/supplier-portal.spec.ts`, `tests/ui/tm2_supplier_{submission,boq}.spec.ts`, `tests/ui/smoke/procurement/tender-management-v2-supplier-{detail-p10-03,routes-p10-01,boq-p10-06}.spec.ts` | They open retired routes. |
+| Six bidder layout/web tests (`test_submission_checklist_web` and five `*_stitch_layout_guard`) plus the bidder method of `test_cfg_drawer_dismiss_guard` | They read retired files by path. |
+| `e1-nssf-poc-gate` recipe: removed its `test_electronic_bid_submission` and `e1-bidder-workspace.spec.ts` lines; the rest of the gate is kept | Those two steps tested the retired slice. |
+| Cleanup blocks naming `Electronic Bid Submission` in the kept seeds `ui00_seed`, `lean_synthetic_it_seed`, `lean_price_schedule`, `lean_requirements_compliance`, `e1_nssf_seed` | A dropped table turns such calls into crash sites. |
+| `setup/workspace_permissions.py` "bid-submissions" mapping; the sidebar contract test's "Bid Submissions" expectations | Pointed at the retired page. |
+
+Findings recorded for the OD-F TM2 clean-up (not caused by Phase 1):
+- 262 imports in `tender_management` (and a few elsewhere) already point at modules removed by earlier cycles (`std_instance`, `derived_models`, `works_completion`, …). None was caused by this retirement: a scan of imports against the modules deleted today finds zero.
+- `tender_management/tests/tm2_works_boq_supplier_fixture.py` is now referenced only by a docstring.
+
+Observation: `/supplier/<name>` and any `/<doctype>/<name>` path returns 500 through Frappe's built-in print-view resolver. `/customer/X` and `/item/X` do the same. This is framework behaviour, previously hidden for `/supplier/tenders/…` by the retired route rule. The v0.8 portal does not use `/supplier`.

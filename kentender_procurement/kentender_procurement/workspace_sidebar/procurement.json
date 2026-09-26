@@ -122,17 +122,6 @@
    "collapsible": 0,
    "indent": 0,
    "keep_closed": 0,
-   "label": "Bid Submissions",
-   "link_to": "bid-submissions",
-   "link_type": "Page",
-   "show_arrow": 0,
-   "type": "Link"
-  },
-  {
-   "child": 1,
-   "collapsible": 0,
-   "indent": 0,
-   "keep_closed": 0,
    "label": "Evaluation",
    "link_to": "coming-soon",
    "link_type": "Page",
@@ -205,7 +194,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-09-26 00:17:59.057805",
+ "modified": "2026-09-26 19:45:38.987258",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

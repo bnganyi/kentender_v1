@@ -46,7 +46,6 @@ _EXPECTED_ITEM_LABELS: tuple[str, ...] = (
 	"Tender Management",
 	"Tender Configurations",
 	"Tenders",
-	"Bid Submissions",
 	"Evaluation",
 	"Awards",
 	"Contract Management",
@@ -112,7 +111,6 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 			[
 				"Tender Configurations",
 				"Tenders",
-				"Bid Submissions",
 				"Evaluation",
 				"Awards",
 			],
@@ -143,10 +141,6 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 		}
 		for row in data.get("items") or []:
 			label = row.get("label") or ""
-			if label == "Bid Submissions":
-				self.assertEqual(row.get("link_type"), "Page")
-				self.assertEqual(row.get("link_to"), "bid-submissions")
-				continue
 			if label not in planned:
 				continue
 			self.assertEqual(row.get("link_type"), "Page")

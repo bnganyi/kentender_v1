@@ -4,7 +4,7 @@
 |---|---|
 | Version | 0.8-tracker.1 |
 | Date | 26 September 2026 |
-| Status | Phase 0 in progress |
+| Status | Phase 2 in progress |
 
 **Authority:** `KenTender_BDS-CHG-001_Supplier_and_Electronic_Bid_Submission_v0_8.md`, Approved 26 Sep 2026.
 
@@ -17,7 +17,7 @@
 
 **Supersedes in tracking:** `BDS-CHG-001_IMPLEMENTATION_TRACKER.md` (v0.4, 21 Sep 2026). That file is retained unchanged as history and received no work beyond its own Phase 0.
 
-**Status:** Phase 0 in progress. No product code written. Site untouched.
+**Status:** Phases 0–1 done (BDS-G00, BDS-G01, 26 Sep 2026). Phase 2 in progress.
 
 **Started:** 26 September 2026.
 
@@ -59,14 +59,15 @@
 | 2026-09-26 | OD-G: DES-15 becomes a blind physical-original intake with an opaque receipt; no candidate list, bid status or match indication | Owner instruction |
 | 2026-09-26 | OD-H: private server-side match; only the matched supplier's own bid shows "recorded" | Owner answer |
 | 2026-09-26 | Carried from 21 Sep: legacy bid records deleted outright; BWMF/STD-wizard untouched (FU-05); the KT-STD-001 §8.3 persona register wins where it has the role | v0.4 tracker decision log (retained) |
+| 2026-09-26 | Phase 1 as built: the retired set grew (the published-tender-overview page, bidder web scripts, TM2 supplier-portal API, path-reading tests); see `reconciliation/legacy_inventory.md` §5. | Build findings; same basis (bidder-only surfaces) |
 | 2026-09-26 | Phase 0 refinement: TM2 bid doctypes stay until the OD-F clean-up (TM2 officer workbench reads them); `e1-nssf-*` / `bw-manifest-*` gates stay (they test BWMF) | `reconciliation/legacy_inventory.md` BDS-CHG-001 §2–3 |
 
 ## Gate register
 
 | Gate | Condition | Status | Evidence |
 |---|---|---|---|
-| BDS-G00 | Phase 0: v0.8 plan, tracker and follow-ups; reconciliation matrices; Tenders/STD tracker addendum rows; boards committed; `make artboard-provenance-gate` green | In progress | — |
-| BDS-G01 | Phase 1: legacy bid slice retired; `bds-retirement-gate`; migrate clean twice | Planned | — |
+| BDS-G00 | Phase 0: v0.8 plan, tracker and follow-ups; reconciliation matrices; Tenders/STD tracker addendum rows; boards committed; `make artboard-provenance-gate` green | Done | 2026-09-26. Commit d794de2d; `bench run-tests --module kentender_core.tests.test_artboard_provenance_gate`: 3 tests OK. Matrices open for owner review (four template decisions, FU-V08-11). |
+| BDS-G01 | Phase 1: legacy bid slice retired; `bds-retirement-gate`; migrate clean twice | Done | 2026-09-26. BDS8-101…106. `/tenders` returns 404 until the Phase 2C portal skeleton lands (the Desktop Icon "Tenders" points there). |
 | BDS-G02 | Phase 2: CFG Supplier portal (2A), Tenders/STD seams (2B), portal walking skeleton (2C) | Planned | — |
 | BDS-G03 | Phase 3: successor template release 1.2 reconciled, validated, installed On; 1.1 Off and unchanged | Planned | Gates slices 11.8, 11.9, 11.11, 11.12 |
 | BDS-G04 | Phase 4: Supplier Accounts identity and Account | Planned | — |
@@ -92,18 +93,18 @@
 | BDS8-006 | `reconciliation/legacy_inventory.md` | Done | 2026-09-26. Read-only repository scan; refinement recorded (TM2 bid doctypes deferred; e1-nssf/bw-manifest kept). |
 | BDS8-007 | `reconciliation/definition_to_board_matrix.md` | Done | 2026-09-26. Release 1.1 MOH definition: 123 response rows, 2 price rows, 7 texts. Preliminary classes: A ×3, B ×5, C1 ×5, C2 ×1, decisions ×4. Source coverage registers not yet read (Phase 3). |
 | BDS8-008 | Addendum rows in the Tenders tracker (D3 seams, FU-25) and the STD-TPL-IMP-001 tracker (release 1.2) | Done | 2026-09-26. `11_tenders/TPR-CHG-001_IMPLEMENTATION_TRACKER.md`: decision-log row plus TND12-B01…B05. `07_std_configuration/STD-TPL-IMP-001_v1_0_IMPLEMENTATION_TRACKER.md`: decision-log row plus Phase C STI-C01…C03. |
-| BDS8-009 | Commit the v3 boards, the `retired/` move and the approved v0.8 working copy (owner/user action), then `make artboard-provenance-gate` | Planned | Needs the user's go-ahead to commit. |
+| BDS8-009 | Commit the v3 boards, the `retired/` move and the approved v0.8 working copy (owner/user action), then `make artboard-provenance-gate` | Done | 2026-09-26. User: "commit and proceed". Commit d794de2d (54 files); provenance gate 3/3 OK. |
 
 ## Work register: Phases 1–13
 
 | ID | Phase | Item | Status | Evidence |
 |---|---|---|---|---|
-| BDS8-101 | 1 | Hooks: remove 22 `/tenders/<publication_ref>…` rules, `/supplier/tenders/<code>`, `bidder_workspace_renderer.js`, `bid-submissions` / `it-electronic-bidder-workspace` page_js | Planned | — |
-| BDS8-102 | 1 | Delete `www/tenders/**`, `www/supplier/**`, the two pages, bidder JS/CSS/templates | Planned | — |
-| BDS8-103 | 1 | Delete the bid and bidder-section services and their tests; strip bid endpoints from `tender_configurations/__init__.py` / `api.py` | Planned | — |
-| BDS8-104 | 1 | Patch `bds_chg_001_v08_retire_bid_slice` (3 doctypes; rows children first) | Planned | — |
-| BDS8-105 | 1 | Core demo-seed bid calls stubbed; sidebar "Bid Submissions" removed; legacy make targets and smoke dirs removed; empty `bid_submission_opening/` removed | Planned | — |
-| BDS8-106 | 1 | `test_legacy_retirement.py`; `make bds-retirement-gate`; migrate clean twice | Planned | — |
+| BDS8-101 | 1 | Hooks: remove 22 `/tenders/<publication_ref>…` rules, `/supplier/tenders/<code>`, `bidder_workspace_renderer.js`, `bid-submissions` / `it-electronic-bidder-workspace` page_js | Done | 2026-09-26. Also removed `page_js` `published-tender-overview` (bidder-facing; `reconciliation/legacy_inventory.md` §5). `test_hooks_carry_no_legacy_bid_route_page_or_global_script` passes. |
+| BDS8-102 | 1 | Delete `www/tenders/**`, `www/supplier/**`, the two pages, bidder JS/CSS/templates | Done | 2026-09-26. Three pages, 12 scripts, 14 styles and 4 template includes (list in the retirement test `RETIRED_PATHS`); plus the §5 additions. `test_no_retired_file_or_folder_survives` passes. |
+| BDS8-103 | 1 | Delete the bid and bidder-section services and their tests; strip bid endpoints from `tender_configurations/__init__.py` / `api.py` | Done | 2026-09-26. 22 services, 2 seeds, 29 test modules; 72 `api.py` functions and 57 `__init__.py` wrappers removed by syntax-tree ranges. The AST undefined-name check is clean; 250/250 remaining `tender_configurations` and demo-seed modules import. `test_no_module_imports_a_retired_module` and `test_legacy_module_surface_exposes_no_bid_endpoint` pass. |
+| BDS8-104 | 1 | Patch `bds_chg_001_v08_retire_bid_slice` (3 doctypes; rows children first) | Done | 2026-09-26. Backup `20260926_194217` first. `bench migrate` ×2 clean. DocTypes, tables and 3 Pages gone: `test_retired_doctypes_pages_and_tables_are_gone_from_the_site` passes. |
+| BDS8-105 | 1 | Core demo-seed bid calls stubbed; sidebar "Bid Submissions" removed; legacy make targets and smoke dirs removed; empty `bid_submission_opening/` removed | Done | 2026-09-26. Demo seed: `_seed_bid_scenarios` returns `BID_SUBMISSION_MODULE_RETIRED`; the transitions probe records a skip; validate and clear drop their bid checks. 35 make targets and 30 help lines removed; `e1-nssf-poc-gate` trimmed. Surface registry BW-A1 removed. Kept-seed cleanup blocks removed. Tests: `test_kt_cl_surface_registry_contract` 7/7; `test_demo_platform_transitions` skipped (demo not loaded); `test_cfg_drawer_dismiss_guard` 4/4; `test_procurement_sidebar_g0_012_contract` 4/6, whose 2 failures are the known drift ("Tender Configurations" / "Procurement Requisitions"), with no Bid Submissions row in either diff. |
+| BDS8-106 | 1 | `test_legacy_retirement.py`; `make bds-retirement-gate`; migrate clean twice | Done | 2026-09-26. Red 7/7 first; green 8/8 after (an asset-path guard was added when six path-reading tests surfaced). `make bds-retirement-gate SITE=kentender.midas.com`: Ran 8, OK. Live: `/tenders`, `/tenders/TND-MOH-2027-033` 404 (until Phase 2C); `/desk` 301 (login). |
 | BDS8-201 | 2A | `Public Portal Settings` (+ change log), `public_portal.py`, API, CFG codes, technical read, seed | Planned | — |
 | BDS8-202 | 2A | Supplier portal section in System setup Procurement settings (4 states) | Planned | — |
 | BDS8-203 | 2B | `tenders/services/bidder_projection.py` (list, detail, public document stream, public answers, candidate view) | Planned | — |

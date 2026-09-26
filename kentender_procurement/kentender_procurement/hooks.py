@@ -66,8 +66,7 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/business_readiness_summary.css?v={_desk_asset_v('public/css/business_readiness_summary.css')}",
 	f"/assets/kentender_procurement/css/tender_management_v2_workbench.css?v={_desk_asset_v('public/css/tender_management_v2_workbench.css')}",
 	# coming_soon_page.css: now lazy-loaded by coming_soon_page.js's own
-	# on_page_load. bid_submissions_page.css: bid_submissions_page.js already
-	# had its own ensureCss() fallback link-injection for exactly this case.
+	# on_page_load.
 	f"/assets/kentender_procurement/css/departmental_needs_industry.css?v={_desk_asset_v('public/css/departmental_needs_industry.css')}",
 	f"/assets/kentender_procurement/css/procurement_planning_industry.css?v={_desk_asset_v('public/css/procurement_planning_industry.css')}",
 	f"/assets/kentender_procurement/css/procurement_requisitions_industry.css?v={_desk_asset_v('public/css/procurement_requisitions_industry.css')}",
@@ -88,7 +87,6 @@ app_include_js = [
 	f"/assets/kentender_procurement/js/procurement_home_workspace.js?v={_desk_asset_v('public/js/procurement_home_workspace.js')}",
 	f"/assets/kentender_procurement/js/tm2_workbench_lifecycle.js?v={_desk_asset_v('public/js/tm2_workbench_lifecycle.js')}",
 	f"/assets/kentender_procurement/js/it_tender_configuration_create_modal.js?v={_desk_asset_v('public/js/it_tender_configuration_create_modal.js')}",
-	f"/assets/kentender_procurement/js/electronic_bid/bidder_workspace_renderer.js?v={_desk_asset_v('public/js/electronic_bid/bidder_workspace_renderer.js')}",
 ]
 
 # include js, css files in header of web template
@@ -98,94 +96,12 @@ app_include_js = [
 # include custom scss in every website theme (without file extension ".scss")
 # website_theme_scss = "kentender_procurement/public/scss/website"
 
-# Doc 9 §18.1 — supplier portal URLs (`/supplier/tenders`, `/supplier/tenders/<tender_code>`).
-# Resolves dynamic detail paths to ``www/supplier/tenders`` (same shell as list).
 website_route_rules = [
 	# Prompt canonical alias → thin Website page that redirects into Desk.
 	{"from_route": "/procurement/home", "to_route": "procurement/home"},
-	{"from_route": "/supplier/tenders/<tender_code>", "to_route": "supplier/tenders"},
-	{
-		"from_route": "/tenders/<publication_ref>/review-and-validate",
-		"to_route": "tenders/review_and_validate",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/final-bid-review",
-		"to_route": "tenders/final_bid_review",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/submit-bid",
-		"to_route": "tenders/submit_bid",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/submission-receipt",
-		"to_route": "tenders/submission_receipt",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/form_of_tender",
-		"to_route": "tenders/form_of_tender",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/confidential_business_questionnaire",
-		"to_route": "tenders/confidential_business_questionnaire",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/statutory_declarations",
-		"to_route": "tenders/statutory_declarations",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/tender_security",
-		"to_route": "tenders/tender_security",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/preliminary_requirements_and_evidence",
-		"to_route": "tenders/preliminary_requirements",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/qualification_and_capability/<category_key>",
-		"to_route": "tenders/qualification_category",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/qualification_and_capability",
-		"to_route": "tenders/qualification_and_capability",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/technical_proposal_and_implementation_plan/review",
-		"to_route": "tenders/technical_proposal_review",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/technical_proposal_and_implementation_plan/<subsection_key>",
-		"to_route": "tenders/technical_proposal_subsection",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/technical_proposal_and_implementation_plan",
-		"to_route": "tenders/technical_proposal_and_implementation_plan",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/requirements_compliance/review",
-		"to_route": "tenders/requirements_compliance_review",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/requirements_compliance",
-		"to_route": "tenders/requirements_compliance",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/price_schedule/review",
-		"to_route": "tenders/price_schedule_review",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/price_schedule/schedules/<schedule_key>",
-		"to_route": "tenders/price_schedule_schedule",
-	},
-	{
-		"from_route": "/tenders/<publication_ref>/sections/price_schedule",
-		"to_route": "tenders/price_schedule",
-	},
-	{"from_route": "/tenders/<publication_ref>/sections/<section_key>", "to_route": "tenders/section"},
-	{"from_route": "/tenders/<publication_ref>/documents", "to_route": "tenders/documents"},
-	{"from_route": "/tenders/<publication_ref>/evidence", "to_route": "tenders/evidence"},
-	{"from_route": "/tenders/<publication_ref>/issues", "to_route": "tenders/issues"},
-	{"from_route": "/tenders/<publication_ref>/workspace", "to_route": "tenders/workspace"},
-	{"from_route": "/tenders/<publication_ref>", "to_route": "tenders/overview"},
+	# The legacy bidder-workspace routes (`/tenders/<publication_ref>/…`,
+	# `/supplier/tenders/<tender_code>`) were retired by BDS-CHG-001 v0.8
+	# Phase 1; the supplier portal routes return with its portal surfaces.
 ]
 
 # include js, css files in header of web form
@@ -236,9 +152,6 @@ page_js = {
 	"annual-procurement-plan": "public/js/annual_procurement_plan_page.js",
 	"procurement-plan-item": "public/js/procurement_plan_item_page.js",
 	"publication-setup": "public/js/publication_setup_page.js",
-	"published-tender-overview": "public/js/published_tender_overview_page.js",
-	"bid-submissions": "public/js/bid_submissions_page.js",
-	"it-electronic-bidder-workspace": "public/js/it_electronic_bidder_workspace_page.js",
 	# The STD-CHG-001 v1.3 "std-cfg-*" STD Configuration pages were retired
 	# with that module (STD-TPL-IMP-001 v1.0, OD4; archive/std-configuration-retired-2026-09/).
 }
