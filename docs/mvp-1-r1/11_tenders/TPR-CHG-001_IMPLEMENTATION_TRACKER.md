@@ -3,7 +3,7 @@
 **Authority:** `KenTender_TPR-CHG-001_Tenders_v0_12.md` (control table: Approved 26 September 2026).
 **Companions:** `TPR-CHG-001_Implementation_Plan.md` (decisions D2′–D26, W1–W8; conflicts C17–C24), `TPR-CHG-001_FOLLOW_UPS.md`, `design/` (26 Sep 2026 board set), `evidence/v0_12/`.
 **Predecessor tracking:** `retired/TPR-CHG-001_v0_8_IMPLEMENTATION_TRACKER.md` (v0.8, Phases 0–9 Done 19 Sep 2026). v0.8 evidence proves the kept mechanics only; every v0.12 row needs its own evidence.
-**Status:** Phase 0 Done; Phase 1 in progress.
+**Status:** Phases 0–13 closed 26 September 2026 (commits `2c741140` … close-out). Open: representative-user sessions (owner, TND12-1304); acceptance rows marked Partial or Planned below, each with its reason; follow-ups FU-28–FU-36.
 **Started:** 26 September 2026.
 
 ## Tracker rules
@@ -21,25 +21,28 @@
 |---|---|---|
 | 2026-09-26 | OD-1 update the shared guidance component; OD-2 build everything with a candidate stand-in; OD-3 implement to the end. | Owner answers this session (plan §2). |
 | 2026-09-26 | Planning keeps its approved reduced wording and header placement as per-module settings. | PLN-CHG-001 v1.27 lines 1271, 1917 (plan §2 note). |
+| 2026-09-26 | Cancellation-notice channels may be attested by the cancellation-compliance holder (Procurement Officer) or the HOPF; the Tender package and addenda stay HOPF-only. | §10.17 DES-12 gives the notices to the compliance holder; TPR09-AC-046 names the HOPF only. Built to both; FU-30 asks for one rule. |
+| 2026-09-26 | Seed departures: the addendum notice is Delivered at 09:08 (not 09:02) and §13.3's 1 Jun no-effect response is not seeded. | The addendum's audience is frozen only when it becomes effective (09:07); DES-09 draws one clarification. FU-28, FU-29. |
+| 2026-09-26 | The stored role `Tender Inquiry Producer` and its producer user keep their names. | Renaming stored identifiers needs a migration; copy and comments say clarification (8bd85d59). FU-32. |
 
 ## Gate register
 
 | Gate | Condition | Status | Evidence |
 |---|---|---|---|
 | TND12-G00 | Docs; design set committed; scoped fixture wipes proven | Done | 2026-09-26. TND12-001..004. |
-| TND12-G01 | Schema, errors, compatibility, STD digests, Published Bid Definition; schema + services gates | Planned | |
-| TND12-G02 (CP1) | Shared guidance; Tenders guidance/guards/hand-offs; dead-end matrix; Planning re-verified; fidelity harness | Planned | |
-| TND12-G03 | Slice A DES-03/04/05 | Planned | |
-| TND12-G04 | Slice B DES-06/07 | Planned | |
-| TND12-G05 (CP2) | Slice C DES-08 | Planned | |
-| TND12-G06 | Slice D DES-09 + clarification intake + notice engine | Planned | |
-| TND12-G07 | Slice E DES-10 | Planned | |
-| TND12-G08 | Slice F DES-11 | Planned | |
-| TND12-G09 (CP3) | Slice G DES-12 | Planned | |
-| TND12-G10 | Slice H DES-13 | Planned | |
-| TND12-G11 | Slice I DES-14 | Planned | |
-| TND12-G12 | Slice J DES-01/02 | Planned | |
-| TND12-G13 (CP4) | Seeds, persona pass, evidence, AC map | Planned | |
+| TND12-G01 | Schema, errors, compatibility, STD digests, Published Bid Definition; schema + services gates | Done | 2026-09-26, commit `5c0250d8`. Final run: test_tender_schema 6/6, test_envelope 10/10, test_tender_authorization 6/6, test_gateway_contracts 6/6, kentender_core test_file_integrity 6/6; test_bid_definition 3/3. |
+| TND12-G02 (CP1) | Shared guidance; Tenders guidance/guards/hand-offs; dead-end matrix; Planning re-verified; fidelity harness | Done | 2026-09-26, `5c0250d8` + `1d6728d4`. test_dead_end_matrix 3/3 (writes `evidence/v0_12/dead_end_matrix.md`, 176 rows, all `pass`); `make planning-dead-end-gate` green (regenerated `04_planning/evidence/v1_27/dead_end_matrix.md`, 260 rows, all `pass`); vitest all projects 81 files / 1,050 tests (incl. core `desk-runtime` guidance and `procurement-planning`); provenance 3/3. Planning browser look: see TND12-203. |
+| TND12-G03 | Slice A DES-03/04/05 | Done | `1d6728d4`. `tnd-editor-details` 2, `tnd-editor-requirements` 2, `tnd-review` 2; fidelity DES-03/04/05. Final browser run: G13. |
+| TND12-G04 | Slice B DES-06/07 | Done | `27a59a9e`. `tnd-approval` 3, `tnd-authorisation` 2; test_bid_definition::test_a_compiler_fault_part_way_through_authorisation_rolls_everything_back. |
+| TND12-G05 (CP2) | Slice C DES-08 | Done | `688e8535`. `tnd-publication` 4; test_publication 11/11 (incl. TestIntegrity 3). |
+| TND12-G06 | Slice D DES-09 + clarification intake + notice engine | Done | `0edc3fbe`. `tnd-published` 3; test_open_period::TestClarifications 4. |
+| TND12-G07 | Slice E DES-10 | Done | `28296d52`. `tnd-addendum` 4; test_open_period::TestAddenda 3. |
+| TND12-G08 | Slice F DES-11 | Done | `0edc3fbe`. `tnd-clarification` 3 (replaces `tnd-inquiry`). |
+| TND12-G09 (CP3) | Slice G DES-12 | Done | `a20ce72a`. `tnd-cancel` 4; test_open_period::TestCancellationAndClose 2. |
+| TND12-G10 | Slice H DES-13 | Done | `6116a2dd`. `tnd-correction` 3; test_lifecycle::TestRequisitionCorrection. |
+| TND12-G11 | Slice I DES-14 | Done | `974b8be1`. `tnd-common-states` 3; test_template_binding 7/7; CommonState vitest. Release states in a browser: FU-33. |
+| TND12-G12 | Slice J DES-01/02 | Done | `3dab19c4`. `tnd-workspace` 5, `tnd-start` 3; test_read 6/6. |
+| TND12-G13 (CP4) | Seeds, persona pass, evidence, AC map | Done | `aa561873` + close-out. Seed ×2 (`removed={}`) + validate `failures: []`; full Python suite 15 modules / 106 tests; browser: `make ui-tenders-release-evidence-gate` ran 60 tests — 57 passed, 2 failed, 1 not run (same serial group). Both failures were specs written before a later slice changed the screen: DES-07 asserted the progress notice the DES-08 re-port removed, and DES-05 clicked the pricing heading the board now draws open. Both specs corrected; `tnd-authorisation` + `tnd-review` rerun 4/4; site restored; AC map filled (owner row TND12-1304 open). |
 
 ## Work register — Phase 0: docs, safety, housekeeping
 
@@ -54,77 +57,78 @@
 
 | ID | Item | Status | Evidence |
 |---|---|---|---|
-| TND12-101 | STD `binding_facts` returns the three rule digests; Tender/Version bind and verify them | Planned | |
-| TND12-102 | New doctypes: Clarification, Candidate Notice (+attempt), Bid Definition, Candidate Registration (stand-in) | Planned | |
-| TND12-103 | Changed doctypes: Publication, Addendum, Channel Confirmation, Cancellation, Task; drop Addendum Inquiry; patches; `_TND_FAMILY` hooks | Planned | |
-| TND12-104 | `errors.py` → 35 codes; schema test re-pinned | Planned | |
-| TND12-105 | Nine-check compatibility incl. County-residents and reservation-rule availability | Planned | |
-| TND12-106 | `bid_definition.py`: TenderVersionProjection v1 + shared compiler; retire Tender-local builders | Planned | |
-| TND12-107 | `candidate_gateway.py`, `notice_transport.py`, stand-in; contract pins | Planned | |
-| TND12-108 | Canonical clear lists; migrate ×2; reseed; gates | Planned | |
+| TND12-101 | STD `binding_facts` returns the three rule digests; Tender/Version bind and verify them | Done | `5c0250d8`. `std_templates/services/binding.py` returns the response, downstream and addendum-identity rule digests (std_templates test_binding); bound on Tender/Version and reconciled at publication: test_documents::test_bind_returns_the_installed_release_and_its_digests, test_bid_definition::test_component_digests_reconcile_from_submission_to_publication. |
+| TND12-102 | New doctypes: Clarification, Candidate Notice (+attempt), Bid Definition, Candidate Registration (stand-in) | Done | `5c0250d8`. `Tender Clarification`, `Tender Candidate Notice` (+ `Tender Candidate Notice Attempt`), `Tender Bid Definition`, `Tender Candidate Registration` (stand-in); test_tender_schema::test_every_doctype_has_exactly_its_allow_listed_fields. |
+| TND12-103 | Changed doctypes: Publication, Addendum, Channel Confirmation, Cancellation, Task; drop Addendum Inquiry; patches; `_TND_FAMILY` hooks | Done | `5c0250d8`. Addendum renames + successor / predecessor / review / `Discarded`; channel subject `Tender package` + unique (subject, channel); inquiry dropped by the post-sync patch `tpr_chg_001_v012_schema`; `_TND_FAMILY` hooks; test_tender_schema 6/6. |
+| TND12-104 | `errors.py` → 35 codes; schema test re-pinned | Done | `5c0250d8`. test_tender_schema::test_the_error_contract_is_exactly_the_section_8_set (35 codes; `TND_INQUIRY_LATE` gone). |
+| TND12-105 | Nine-check compatibility incl. County-residents and reservation-rule availability | Done | `5c0250d8`. test_lifecycle::test_the_nine_compatibility_checks_on_the_fixture. Per-stage re-evaluation not asserted (TPR09-AC-029 Partial). |
+| TND12-106 | `bid_definition.py`: TenderVersionProjection v1 + shared compiler; retire Tender-local builders | Done | `5c0250d8`. test_bid_definition 3/3 (every `DEFINITION_FIELDS` field, digest reconciliation, compiler fault rolls back); Tender-local response/evaluation/contract builders retired; test_serializer parity 11/11. |
+| TND12-107 | `candidate_gateway.py`, `notice_transport.py`, stand-in; contract pins | Partial | `5c0250d8`. `candidate_gateway.py` (hook `kt_tender_candidate_registry`, stand-in fallback) and the `kt_candidate_notice_transports` hook in `candidate_notices.py`, exercised by test_open_period::TestClarifications. No contract-pin test for either hook in test_gateway_contracts yet. |
+| TND12-108 | Canonical clear lists; migrate ×2; reseed; gates | Done | `5c0250d8`. Canonical clear lists + test_canonical_seed; final `seed-canonical THROUGH=tenders REBUILD=True` ×2 (`removed={}`) + validate `failures: []` (26 Sep 2026). |
 
 ## Work register — Phase 2: guidance, guards, hand-offs, harness (CP1)
 
 | ID | Item | Status | Evidence |
 |---|---|---|---|
-| TND12-201 | Core `next_step.py`: per-module reduced wording; "Waiting on someone" label | Planned | |
-| TND12-202 | Core JourneyTracker/NextStep/`.kt-guidance` restyle to the handoff; `.kt-choice-row`/`.kt-dependent`; guidance.spec | Planned | |
-| TND12-203 | Planning re-verification (vitest, dead-end gate, one browser look) | Planned | |
-| TND12-204 | `tenders/services/guidance.py` + reads return `next_step`/`journey` | Planned | |
-| TND12-205 | `tenders/services/guards.py`; `allowed_actions` derived from guards | Planned | |
-| TND12-206 | `tenders/services/handoffs.py` + My Work assigned/waiting rows + notifications | Planned | |
-| TND12-207 | `test_dead_end_matrix.py` + `make tenders-dead-end-gate` | Planned | |
-| TND12-208 | UI plumbing: guidance bundle, `useGuidance`, vitest setup | Planned | |
-| TND12-209 | Fidelity harness: label-keyed boards, departures registry, §10.17 guidance table, provenance fix | Planned | |
+| TND12-201 | Core `next_step.py`: per-module reduced wording; "Waiting on someone" label | Done | `5c0250d8`. `kentender_core/services/next_step.py`: module-supplied reduced wording (`REDUCED_POSITION`); `Waiting on someone`; kentender_core test_next_step 21/21. |
+| TND12-202 | Core JourneyTracker/NextStep/`.kt-guidance` restyle to the handoff; `.kt-choice-row`/`.kt-dependent`; guidance.spec | Done | `5c0250d8`. Core JourneyTracker / NextStep / `.kt-guidance` restyled to the handoff note; `.kt-choice-row` / `.kt-dependent`; vitest `desk-runtime` green (in 1,050/1,050). |
+| TND12-203 | Planning re-verification (vitest, dead-end gate, one browser look) | Done | Planning vitest (`procurement-planning`, in 1,050/1,050); `make planning-dead-end-gate` 260/260 `pass`; browser: `planning-guidance.spec.ts` › request, wait, decline, and the Planner's way forward — 1/1 (26 Sep 2026). |
+| TND12-204 | `tenders/services/guidance.py` + reads return `next_step`/`journey` | Done | `5c0250d8`. `tenders/services/guidance.py`, five stages, every record read returns `guidance`; test_read::test_the_journey_over_the_request_path; dead-end matrix. |
+| TND12-205 | `tenders/services/guards.py`; `allowed_actions` derived from guards | Done | `5c0250d8`. Guards via `ns.guard` / `ns.blocker` with fixes; `allowed_actions` from the same rules; a blocked Submit is explained (`tnd-review` › Needs attention). Implemented inside `guidance.py` and `read.py` rather than a separate `guards.py`. |
+| TND12-206 | `tenders/services/handoffs.py` + My Work assigned/waiting rows + notifications | Partial | `5c0250d8`. `handoffs.py` + `my_work_provider.py` (assigned + waiting rows), notifications, withdraw → HOPF item; test_open_period asserts the cancellation-review items. Not every §5.11 row has its own test (TPR12-AC-010). |
+| TND12-207 | `test_dead_end_matrix.py` + `make tenders-dead-end-gate` | Done | `5c0250d8`. test_dead_end_matrix 3/3; `make tenders-dead-end-gate`. |
+| TND12-208 | UI plumbing: guidance bundle, `useGuidance`, vitest setup | Done | `5c0250d8` / `1d6728d4`. Guidance bundle loaded by the Tenders page; `TenderGuidance.vue` wraps core `mountGuidance`; vitest setup. |
+| TND12-209 | Fidelity harness: label-keyed boards, departures registry, §10.17 guidance table, provenance fix | Done | `1d6728d4` / `aa561873`. `tests/ui/fidelity/board.js` `tendersScope`; `departures/tenders.js`; `guidance-10-17.ts` (33 rows); provenance check C ignores `retired/` and `archive/` (kentender_core test_artboard_provenance_gate 3/3). |
 
 ## Work register — Phases 3–12: vertical slices
 
 | ID | Slice | Boards | Status | Evidence |
 |---|---|---|---|---|
-| TND12-300 | A — Preparation | DES-03, DES-04 (+Returned), DES-05 | Planned | |
-| TND12-400 | B — Decisions + definition freeze | DES-06, DES-07 | Planned | |
-| TND12-500 | C — Publication confirmation | DES-08 | Planned | |
-| TND12-600 | D — Published, clarification intake, notices | DES-09 | Planned | |
-| TND12-700 | E — Addendum (seven variants), cancellation review | DES-10 | Planned | |
-| TND12-800 | F — Supplier clarification | DES-11 | Planned | |
-| TND12-900 | G — Cancel (five variants) | DES-12 | Planned | |
-| TND12-1000 | H — Correction states | DES-13 | Planned | |
-| TND12-1100 | I — Common states | DES-14 | Planned | |
-| TND12-1200 | J — Workspace, Start | DES-01, DES-02 | Planned | |
+| TND12-300 | A — Preparation | DES-03, DES-04 (+Returned), DES-05 | Done | `1d6728d4`. G03. |
+| TND12-400 | B — Decisions + definition freeze | DES-06, DES-07 | Done | `27a59a9e`. G04. |
+| TND12-500 | C — Publication confirmation | DES-08 | Done | `688e8535`. G05. |
+| TND12-600 | D — Published, clarification intake, notices | DES-09 | Done | `0edc3fbe`. G06. |
+| TND12-700 | E — Addendum (seven variants), cancellation review | DES-10 | Done | `28296d52`. G07. |
+| TND12-800 | F — Supplier clarification | DES-11 | Done | `0edc3fbe`. G08. |
+| TND12-900 | G — Cancel (five variants) | DES-12 | Done | `a20ce72a`. G09. |
+| TND12-1000 | H — Correction states | DES-13 | Done | `6116a2dd`. G10. |
+| TND12-1100 | I — Common states | DES-14 | Done | `974b8be1`. G11 (release states in a browser: FU-33). |
+| TND12-1200 | J — Workspace, Start | DES-01, DES-02 | Done | `3dab19c4`. G12. |
 
 ## Work register — Phase 13: seeds and release evidence (CP4)
 
 | ID | Item | Status | Evidence |
 |---|---|---|---|
-| TND12-1301 | Canonical §13.3 seed idempotent ×2; every §13.4 profile | Planned | |
-| TND12-1302 | Persona pass (Brian, Charles, Amina, Naomi, Grace) at 1440 / 390 / 200% | Planned | |
-| TND12-1303 | Evidence pack, bundle hash, gates, prohibited-token scan, runbooks, AC map | Planned | |
-| TND12-1304 | Representative-user sessions (TPR-IMP-052, TPR09-AC-080) | Planned — owner | |
+| TND12-1301 | Canonical §13.3 seed idempotent ×2; every §13.4 profile | Done | 26 Sep 2026: backup `20260926_131958`; `make seed-canonical SITE=kentender.midas.com THROUGH=tenders REBUILD=True` (first run removed test-run residue; one retry after draining 523 queued jobs, RUNBOOKS §2) then `removed={}`; `make seed-canonical-validate THROUGH=tenders` → `{"ok": true, "failures": []}`. Repeated after the final Python and browser runs: residue removed, then `removed={}` and `failures: []`. Departures FU-28, FU-29. |
+| TND12-1302 | Persona pass (Brian, Charles, Amina, Naomi, Grace) at 1440 / 390 / 200% | Done | `tnd-release-evidence` › Brian starts, drafts and submits; Charles returns then approves; Amina authorises and confirms; the Tender publishes and closes — guidance asserted at each hand-off; 390 px one-line journey and no sideways scroll at 390 px and 200% zoom. Naomi (Auditor) reads in `tnd-workspace` / `tnd-history`; Grace (Departmental Author) waiting line in `tnd-correction` and the dead-end matrix. |
+| TND12-1303 | Evidence pack, bundle hash, gates, prohibited-token scan, runbooks, AC map | Done | Bundles under test: `tenders.bundle.FTN25OHR.js`, `kt_industry_guidance.bundle.XPDRXKAW.js` (no source newer than either). Evidence pack: 15 screens in `evidence/v0_12/screens/` (`tnd-evidence-pack`); landmark fidelity 14/14; `ui-structure-gate` runs the Tenders project; prohibited-token test + comment/copy scan (`8bd85d59`); RUNBOOKS §§1, 2, 5, 8 updated and §§9–10 added; AC map above. |
+| TND12-1304 | Representative-user sessions (TPR-IMP-052, TPR09-AC-080) | Planned — owner | Not run by the build; needs real Procurement Officer, HOPF and AO users. |
 
 ## Board map
 
 | Board (label) | File | Vue | Spec | Status |
 |---|---|---|---|---|
-| TPR-DES-01 Tenders workspace | Tenders Workspace.dc.html | WorkspaceScreen | tnd-workspace | Planned |
-| TPR-DES-02 Start Tender dialog | Start Tender Dialog.dc.html | StartTenderDialog | tnd-start | Planned |
-| TPR-DES-03 Draft: Tender details | Draft - Tender Details.dc.html | EditorScreen, TaskDetails, RequisitionDrawer | tnd-editor-details | Planned |
-| TPR-DES-04 Draft: Supplier and contract requirements | Draft - Supplier and Contract Requirements.dc.html | TaskRequirements, EvidenceDialog | tnd-editor-requirements | Planned |
-| TPR-DES-05 Review and submit | Review and Submit.dc.html | ReviewScreen, ContentSections | tnd-review | Planned |
-| TPR-DES-06 HOPF approval | HOPF Approval.dc.html | ApprovalScreen | tnd-approval | Planned |
-| TPR-DES-07 AO publication authorisation | AO Publication Authorisation.dc.html | AuthorisationScreen | tnd-authorisation | Planned |
-| TPR-DES-08 Publication confirmation | Publication Progress and Evidence.dc.html | PublicationScreen, ChannelConfirmationDialog | tnd-publication | Planned |
-| TPR-DES-09 Published Tender | Published Tender.dc.html | PublishedScreen | tnd-published | Planned |
-| TPR-DES-10 Prepare and issue addendum | Prepare and Issue Addendum.dc.html | AddendumScreen | tnd-addendum | Planned |
-| TPR-DES-11 Respond to supplier clarification | Respond to Supplier Clarification.dc.html | ClarificationScreen | tnd-clarification | Planned |
-| TPR-DES-12 Cancel Tender | Cancel Tender.dc.html | CancelScreen | tnd-cancel | Planned |
-| TPR-DES-13 Returned and requisition-correction states | Requisition Correction.dc.html | CorrectionRequestedScreen | tnd-correction | Planned |
-| TPR-DES-14 Common states | Common States.dc.html | CommonState | tnd-common-states | Planned |
-| (guidance component) | TenderGuidance.dc.html | core JourneyTracker/NextStep | guidance-10-17 table | Planned |
+| TPR-DES-01 Tenders workspace | Tenders Workspace.dc.html | WorkspaceScreen | tnd-workspace | Done |
+| TPR-DES-02 Start Tender dialog | Start Tender Dialog.dc.html | StartTenderDialog | tnd-start | Done |
+| TPR-DES-03 Draft: Tender details | Draft - Tender Details.dc.html | EditorScreen, TaskDetails, RequisitionDrawer | tnd-editor-details | Done |
+| TPR-DES-04 Draft: Supplier and contract requirements | Draft - Supplier and Contract Requirements.dc.html | TaskRequirements, EvidenceDialog | tnd-editor-requirements | Done |
+| TPR-DES-05 Review and submit | Review and Submit.dc.html | ReviewScreen, ContentSections | tnd-review | Done |
+| TPR-DES-06 HOPF approval | HOPF Approval.dc.html | ApprovalScreen | tnd-approval | Done |
+| TPR-DES-07 AO publication authorisation | AO Publication Authorisation.dc.html | AuthorisationScreen | tnd-authorisation | Done |
+| TPR-DES-08 Publication confirmation | Publication Progress and Evidence.dc.html | PublicationScreen, ChannelConfirmationDialog | tnd-publication | Done |
+| TPR-DES-09 Published Tender | Published Tender.dc.html | PublishedScreen | tnd-published | Done |
+| TPR-DES-10 Prepare and issue addendum | Prepare and Issue Addendum.dc.html | AddendumScreen | tnd-addendum | Done |
+| TPR-DES-11 Respond to supplier clarification | Respond to Supplier Clarification.dc.html | ClarificationScreen | tnd-clarification | Done |
+| TPR-DES-12 Cancel Tender | Cancel Tender.dc.html | CancelScreen | tnd-cancel | Done |
+| TPR-DES-13 Returned and requisition-correction states | Requisition Correction.dc.html | CorrectionRequestedScreen | tnd-correction | Done |
+| TPR-DES-14 Common states | Common States.dc.html | CommonState | tnd-common-states | Done |
+| (guidance component) | TenderGuidance.dc.html | core JourneyTracker/NextStep | guidance-10-17 table | Done |
 
 ## Quarantine register (Playwright specs disabled until their slice lands)
 
 | Spec | Reason | Re-enabled by |
 |---|---|---|
+| (none) | Each slice's spec was rewritten in the same commit as its screen, so no spec was quarantined. `tnd-inquiry` was replaced by `tnd-clarification` (`0edc3fbe`). | — |
 
 ## Acceptance map
 
@@ -132,238 +136,238 @@ Criterion text is abbreviated; the spec §14 row controls. `Planned` until the n
 
 | ID | Criterion (short) | Phase | Status | Evidence |
 |---|---|---|---|---|
-| TPR09-AC-001 | The authenticated application exposes one user-facing menu item named **Tenders**, not separate Preparation and… | | Planned | |
-| TPR09-AC-002 | The Tenders workspace combines authorised Requisition starts, Draft work, decisions, publication work and open Tenders… | | Planned | |
-| TPR09-AC-003 | A user without a permitted responsibility receives the §10.15 Forbidden state and no Tender data. | | Planned | |
-| TPR09-AC-004 | A user with permitted cross-entity scope sees only records in that scope; changing a filter cannot expand it. | | Planned | |
-| TPR09-AC-005 | Opening a route, drawer, preview or dialog creates no Tender, Version, publication, task or audit business event. | | Planned | |
-| TPR09-AC-006 | A Tender can start only from an available authorised Requisition handoff whose compatibility result permits start. | | Planned | |
-| TPR09-AC-007 | Concurrent or repeated `StartTender` requests for one handoff produce one Tender and return its identity. | | Planned | |
-| TPR09-AC-008 | Start snapshots the exact authorised Requisition, requirements, Planning references, method, reservation, lotting,… | | Planned | |
-| TPR09-AC-009 | Inherited content is visibly read-only and has a route to its source; the Tender service cannot update owner data… | | Planned | |
-| TPR09-AC-010 | Requisition-owned correction stops the current Tender Version and can continue only from a newly authorised successor… | | Planned | |
-| TPR09-AC-011 | Preparation is presented as three understandable tasks: Tender details; Supplier and contract requirements; Review and… | | Planned | |
-| TPR09-AC-012 | Tender details show the purchase, quantities, funding and source facts before officer-authored fields. | | Planned | |
-| TPR09-AC-013 | Closing date/time, clarification deadline and meeting choices validate as dates and as an ordered business sequence. | | Planned | |
-| TPR09-AC-014 | A physical meeting requires date/time, venue and access instructions; an online meeting requires date/time and join… | | Planned | |
-| TPR09-AC-015 | Supplier and contract requirements separate inherited requirements, officer evidence requirements, contract values and… | | Planned | |
-| TPR09-AC-016 | An officer can add, edit and remove only Draft evidence requirements; each change is versioned and audited. | | Planned | |
-| TPR09-AC-017 | Qualification or evidence wording cannot silently alter an inherited mandatory technical, warranty or acceptance… | | Planned | |
-| TPR09-AC-018 | The generated price schedule contains the exact authorised line items, quantities, units, lots and funding split. | | Planned | |
-| TPR09-AC-019 | The generated technical schedule contains all eleven §10.1 technical requirements without truncation or substitution. | | Planned | |
-| TPR09-AC-020 | The generated warranty/support schedule contains all six §10.1 values and the acceptance schedule all five checks. | | Planned | |
-| TPR09-AC-021 | Optional service/material schedules are absent when their inherited source sets are empty and present only when… | | Planned | |
-| TPR09-AC-022 | Generated evaluation mappings trace every mandatory check to its governed source and shared evaluation group and… | | Planned | |
-| TPR09-AC-023 | Invitation and complete-Tender previews use saved Version data and do not submit, approve, authorise or publish. | | Planned | |
-| TPR09-AC-024 | Document generation is deterministic: identical recorded inputs produce the recorded document digest. | | Planned | |
-| TPR09-AC-025 | Save returns the authoritative record version; a stale save never overwrites another user's change. | | Planned | |
-| TPR09-AC-026 | Review displays one readiness result, issue counts and direct issue links; it does not require users to interpret… | | Planned | |
-| TPR09-AC-027 | A Must fix issue prevents submission and identifies the exact task, field or owner route. | | Planned | |
-| TPR09-AC-028 | A Review note is visible but does not prevent submission unless another governed rule fails. | | Planned | |
-| TPR09-AC-029 | Compatibility is evaluated from authoritative owner projections at start, submit, approve and publication authorisation. | | Planned | |
-| TPR09-AC-030 | Submission freezes one exact Version, package digest and generated-document set. | | Planned | |
-| TPR09-AC-031 | After submission, the submitted Version is read-only to every business actor. | | Planned | |
-| TPR09-AC-032 | HOPF return requires a comment, preserves the submitted Version and creates one copied Draft. | | Planned | |
-| TPR09-AC-033 | HOPF approval records the exact submitted Version and package digest and creates an AO publication task. | | Planned | |
-| TPR09-AC-034 | HOPF approval does not create channel confirmations, set `published_at` or expose documents to suppliers. | | Planned | |
-| TPR09-AC-035 | A person who prepared or submitted a Version cannot approve that Version as HOPF, regardless of concurrent role labels. | | Planned | |
-| TPR09-AC-036 | Reopening an approved Tender is possible only before publication authorisation, requires a reason and creates a copied… | | Planned | |
-| TPR09-AC-037 | HOPF, AO and reader artboards use the exact fixture actors, values and statuses in §10.1. | | Planned | |
-| TPR09-AC-038 | The AO sees the approved package, decision facts and generated required channels, with no package-edit control. | | Planned | |
-| TPR09-AC-039 | A person who prepared, submitted or HOPF-approved a Version cannot authorise its publication as AO. | | Planned | |
-| TPR09-AC-040 | Every decision command rechecks state, assignment, segregation and package integrity on the server. | | Planned | |
-| TPR09-AC-041 | Publication authorisation records AO, time, approved Version, package digest, complete Published Bid Definition… | | Planned | |
-| TPR09-AC-042 | The AO cannot choose, remove, replace or edit a required publication channel. | | Planned | |
-| TPR09-AC-043 | Committing publication authorisation creates one Evidence-based confirmation record for every required channel and… | | Planned | |
-| TPR09-AC-044 | The MVP contains no active State Portal, Ministry website or other publication adapter; Configuration rejects… | | Planned | |
-| TPR09-AC-045 | Each required channel confirmation has one stable identity bound to the original publication's channel set and the… | | Planned | |
-| TPR09-AC-046 | Only a currently assigned HOPF can confirm channel publication; the AO, technical operator and Procurement Officer… | | Planned | |
-| TPR09-AC-047 | Confirmation records the exact required attestation, server-derived HOPF identity/time and actual channel availability… | | Planned | |
-| TPR09-AC-048 | System checks are limited to record completeness, format, authority, identity, file integrity/scan and conflicts; no… | | Planned | |
-| TPR09-AC-049 | Confirmation requires availability time, evidence reference, applicable public URL, required evidence file/digest and… | | Planned | |
-| TPR09-AC-050 | Uploaded evidence is scanned, digested and retained; failed or rejected uploads cannot confirm a channel. | | Planned | |
-| TPR09-AC-051 | A Tender is not Published while any mandatory channel is Awaiting confirmation or has missing, invalid or rejected… | | Planned | |
-| TPR09-AC-052 | `published_at` is written once as the latest actual availability time among all mandatory channel confirmations. | | Planned | |
-| TPR09-AC-053 | On publication confirmation, the minimum preparation period is revalidated from actual `published_at`; an invalid… | | Planned | |
-| TPR09-AC-054 | The exact actual invitation date is written once to Planning through its owner contract and replay is idempotent. | | Planned | |
-| TPR09-AC-055 | Publication authorisation can be withdrawn only while confirmed unpublished and before any channel confirmation;… | | Planned | |
-| TPR09-AC-056 | A Published Tender shows actual publication time, submission deadline, documents, channel evidence, addenda and… | | Planned | |
-| TPR09-AC-057 | `CreateAddendumDraft` is unavailable before publication, after submission close or after cancellation. | | Planned | |
-| TPR09-AC-058 | An addendum records an explicit before/after comparison, affected reference, reason and materiality explanation. | | Planned | |
-| TPR09-AC-059 | An addendum that expands quantity, value, scope, method, reservation, lotting, package structure, technical… | | Planned | |
-| TPR09-AC-060 | A late non-material addendum calculates and requires the lawful revised submission deadline before submission for issue. | | Planned | |
-| TPR09-AC-061 | HOPF issue freezes the addendum and creates Evidence-based confirmation records for every original required channel. | | Planned | |
-| TPR09-AC-062 | The addendum becomes Issued only after HOPF confirms all required channels with the same evidence and attestation… | | Planned | |
-| TPR09-AC-063 | A clarification can originate only from an authenticated Bid Submission event tied to an Active Tender-bound candidate… | | Planned | |
-| TPR09-AC-064 | A response that would change published Tender content cannot be sent until an authorised linked addendum is Issued and… | | Planned | |
-| TPR09-AC-065 | A response that changes no published content may be sent to the asker or all registered candidates as deliberately… | | Planned | |
-| TPR09-AC-066 | Only the AO can cancel; cancellation requires an applicable ground and reason and becomes final immediately on commit. | | Planned | |
-| TPR09-AC-067 | Cancellation never restores the Requisition, reopens the Tender or creates a replacement procurement automatically. | | Planned | |
-| TPR09-AC-068 | Cancellation creates independently tracked notice-publication, candidate-notice and PPRA-report obligations with… | | Planned | |
-| TPR09-AC-069 | Every artboard in §10 can be implemented using §10.1 plus KT-STD-001 v1.8 §2 without invented fixture data. | | Planned | |
-| TPR09-AC-070 | Every visible action in §10 has exactly one behaviour in §11 and is absent when the server does not permit it. | | Planned | |
-| TPR09-AC-071 | The default interface exposes no event keys, hashes, enum values, payloads, transport retries or infrastructure… | | Planned | |
-| TPR09-AC-072 | A Procurement Officer can start, complete and submit the primary fixture by following the three task labels without… | | Planned | |
-| TPR09-AC-073 | HOPF and AO each see one plain-language decision, its consequence and the exact content being decided. | | Planned | |
-| TPR09-AC-074 | Status, stage and next action remain distinct; the interface never labels approval, evidence upload or technical… | | Planned | |
-| TPR09-AC-075 | All tables and dialogs meet the keyboard, focus, heading, error-linking, text-status and responsive rules in §11.9. | | Planned | |
-| TPR09-AC-076 | Every successful decision, publication, addendum, clarification, candidate-notice and cancellation command writes the… | | Planned | |
-| TPR09-AC-077 | Generated and external evidence remains retrievable by immutable digest under authorised audit access. | | Planned | |
-| TPR09-AC-078 | The §13 seed can be rerun without duplication and proves the primary and isolated state fixtures independently. | | Planned | |
-| TPR09-AC-079 | Owner-contract failure leaves source data unchanged, records a truthful pending/failure state where applicable and… | | Planned | |
-| TPR09-AC-080 | Representative Procurement Officer, HOPF and AO usability tests complete their assigned routine tasks without… | | Planned | |
-| TPR09-AC-081 | `StartTender` creates nothing unless the exact bound template release is Available and all release/profile/mapping… | | Planned | |
-| TPR09-AC-082 | `None`, `Youth`, `Women` and `Persons with disabilities` may pass compatibility only when the exact Available template… | | Planned | |
-| TPR09-AC-083 | The published supplier definition is generated from the released response rules and never reconstructed from the PDF. | | Planned | |
-| TPR09-AC-084 | Every mandatory technical response retains its individual result and reason while feeding one shared Technical… | | Planned | |
-| TPR09-AC-085 | Every response has an evaluation and contract destination or an explicit N/A disposition. | | Planned | |
-| TPR09-AC-086 | Publication freezes the response, downstream and addendum-identity rule digests with the documents and package digest. | | Planned | |
-| TPR09-AC-087 | A mapping or renderer incompatibility blocks publication and cannot be repaired from the Tenders UI. | | Planned | |
-| TPR09-AC-088 | An authorised Administrator, System Manager, Procurement Officer or HOPF can follow a failure link to the read-only… | | Planned | |
-| TPR09-AC-089 | A County-residents restriction is evaluated independently from the base reservation category and passes only for an… | | Planned | |
-| TPR09-AC-090 | A reserved Tender publishes its exact declaration and evidence requirements, evaluates them under `EVG-ELIGIBILITY`,… | | Planned | |
-| TPR09-AC-091 | Publication freezes exactly one `PublishedBidDefinition v1` using every field in §4.5.4; its `template_family`, opaque… | | Planned | |
-| TPR09-AC-092 | `BuildPublishedBidDefinition` and publication are atomic: any unsupported control, missing mapping, hidden obligation,… | | Planned | |
-| TPR09-AC-093 | Controlled multi-select and structured ports requirements from `AuthorisedRequisitionHandoff v1.3` appear in both… | | Planned | |
-| TPR09-AC-094 | The four exact evaluation groups are Eligibility, Technical compliance, Financial and Award; no fifth group, hidden… | | Planned | |
-| TPR09-AC-095 | One closed fixture round-trip preserves every source and response identity from Requisition through Tender documents,… | | Planned | |
-| TPR09-AC-096 | Publication-definition identity and digests are recorded on `TenderPublication`; publication never writes a late field… | | Planned | |
-| TPR09-AC-097 | `IssueAddendum` creates no awaiting-confirmation addendum unless the complete successor Published Bid Definition has… | | Planned | |
-| TPR09-AC-098 | While any required addendum channel is unconfirmed, BDS continues to receive the prior effective definition and… | | Planned | |
-| TPR09-AC-099 | The final addendum channel confirmation atomically marks the addendum Issued and activates its exact successor… | | Planned | |
-| TPR09-AC-100 | Original Tender, addendum and cancellation-notice confirmations have distinct subject identities/digests and… | | Planned | |
-| TPR10-AC-001 | A registered candidate can submit a general pre-bid question before the clarification deadline without an addendum… | | Planned | |
-| TPR10-AC-002 | No Account-only, public or free-text identity can submit a clarification; the exact Active Tender-bound candidate… | | Planned | |
-| TPR10-AC-003 | Receipt at or after the clarification deadline creates no clarification and returns the canonical late message. | | Planned | |
-| TPR10-AC-004 | A clarification answer that changes no published content may be direct or general; the selected audience and exact… | | Planned | |
-| TPR10-AC-005 | A clarification answer that would change wording, criteria, schedules, dates or supplier obligations remains Awaiting… | | Planned | |
-| TPR10-AC-006 | The linked addendum must be Issued and its successor definition effective before the published-change response is sent… | | Planned | |
-| TPR10-AC-007 | Every general clarification broadcast, issued addendum, effective deadline change and cancellation freezes the… | | Planned | |
-| TPR10-AC-008 | Candidate destinations come only from the Bid Submission owner projection; Tenders cannot create or edit supplier… | | Planned | |
-| TPR10-AC-009 | Mandatory notices cannot be opted out of; later contact changes affect only future audience snapshots and never… | | Planned | |
-| TPR10-AC-010 | Queued, Sent, Delivered and Failed remain distinct; a provider acceptance is not displayed as recipient delivery… | | Planned | |
-| TPR10-AC-011 | A failed notice has a safe same-subject retry/follow-up route and never retracts an issued addendum, changes a… | | Planned | |
-| TPR10-AC-012 | Public Tender readers see authoritative clarification answers and notices without the source candidate identity or… | | Planned | |
-| TPR10-AC-013 | TPR-DES-09 and TPR-DES-11 render the general-question, published-change and failed-delivery fixtures at desktop and… | | Planned | |
-| TPR10-AC-014 | The current MVP ends at the Bid Submission boundary. Bid Opening, Evaluation/Award, Supplier… | | Planned | |
-| TPR11-AC-001 | `StartTender` binds only an Available release after compatibility, digest and adapter checks pass. v0.12 (OD5): the… | | Planned | |
-| TPR11-AC-002 | An already-bound unpublished Tender may continue on a Superseded release only while every exact asset, digest and… | | Planned | |
-| TPR11-AC-003 | Supersession never changes `template_release_id`, regenerates content from a successor or silently offers a selector. | | Planned | |
-| TPR11-AC-004 | A Withdrawn bound release blocks submit, approve, reopen, publication authorisation, publication confirmation,… | | Planned | |
-| TPR11-AC-005 | The Withdrawn state preserves all work, explains that the current unpublished Tender cannot continue, and offers only… | | Planned | |
-| TPR11-AC-006 | A published Tender retains its exact release, documents, Published Bid Definition and public readability after… | | Planned | |
-| TPR11-AC-007 | `BuildPublishedBidDefinition` invokes the STD-TPL-IMP-001 v1.1 shared compiler and cannot use a separate… | | Planned | |
-| TPR11-AC-008 | Procurement Officer and HOPF can inspect the exact bound release and report a concern without gaining template-edit or… | | Planned | |
-| TPR12-AC-001 | `StartTender` binds a release only when it is `Available` and switched On on the site and its compatibility, digest… | | Planned | |
-| TPR12-AC-002 | After the bound release is switched Off on the site, every later action on an already-bound Tender (submit, approve,… | | Planned | |
-| TPR12-AC-003 | Switching the bound release Off, or back On, never changes the Tender's `template_release_id`, digests, documents or… | | Planned | |
-| TPR12-AC-004 | An already-bound `Superseded` release continues and a `Withdrawn` release blocks exactly as TPR11-AC-002 and… | | Planned | |
-| TPR12-AC-005 | No Tenders test, fixture, seed or message relies on a `Candidate` release state; start tests cover a release that is… | | Planned | |
-| TPR12-AC-006 | Every Tender record read supplies one server-derived `next_step` with kind, headline, stage, holder, recorded since… | | Planned | |
-| TPR12-AC-007 | Every §5.1 state and visible responsibility passes KT-STD-001 §3B.7 dead-end conformance; a blocked action yields a… | | Planned | |
-| TPR12-AC-008 | The five formal Tender stages and their markers match §10.17, while Tender details, Supplier/contract requirements and… | | Planned | |
-| TPR12-AC-009 | Every record-screen variant renders the exact §10.17 next step and permitted tracker, replacing the identified… | | Planned | |
-| TPR12-AC-010 | §5.11 hand-off items appear and clear on underlying state changes, preserve return comments and distinguish… | | Planned | |
-| TPR12-AC-011 | At 1440 × 1024 the first working region remains in the first view, using the stated one-line reduced tracker if… | | Planned | |
-| TPR12-AC-012 | A material addendum cannot be issued. Its exact hand-off creates one AO cancellation-review item and a waiting item;… | | Planned | |
+| TPR09-AC-001 | The authenticated application exposes one user-facing menu item named **Tenders**, not separate Preparation and… | 12 | Done | Kept v0.8 mechanic (retired tracker TND-208); no v0.12 change. `tnd-workspace` opens `/app/tenders` in every test. |
+| TPR09-AC-002 | The Tenders workspace combines authorised Requisition starts, Draft work, decisions, publication work and open Tenders… | 12 | Done | `tnd-workspace` officer / HOPF / AO / auditor tests; test_read::test_forbidden_verdict_and_role_queues. |
+| TPR09-AC-003 | A user without a permitted responsibility receives the §10.15 Forbidden state and no Tender data. | 11 | Done | test_read::test_forbidden_verdict_and_role_queues (`FORBIDDEN`); `tnd-workspace` › auditor… outsider… nobody is Forbidden (NOBODY sees "You do not have access to Tenders", no queue). |
+| TPR09-AC-004 | A user with permitted cross-entity scope sees only records in that scope; changing a filter cannot expand it. | 2 | Done | test_tender_authorization::test_list_and_record_permissions_follow_the_section_6_scope; filters narrow only (test_read::test_forbidden_verdict_and_role_queues `status=published` → no rows). |
+| TPR09-AC-005 | Opening a route, drawer, preview or dialog creates no Tender, Version, publication, task or audit business event. | 12 | Partial | Start read proven: test_read::test_the_start_read_creates_nothing_and_reports_the_three_outcomes. Record, drawer, preview and dialog reads not separately asserted to write nothing. |
+| TPR09-AC-006 | A Tender can start only from an available authorised Requisition handoff whose compatibility result permits start. | 1 | Done | test_lifecycle::test_start_creates_one_draft_binds_the_release_and_consumes_the_handoff_atomically; ::test_only_a_procurement_officer_starts_and_an_unsupported_product_creates_nothing; `tnd-start` › unsupported requisition… nothing created. |
+| TPR09-AC-007 | Concurrent or repeated `StartTender` requests for one handoff produce one Tender and return its identity. | 1 | Done | test_lifecycle::test_a_repeated_or_concurrent_start_returns_the_one_tender. |
+| TPR09-AC-008 | Start snapshots the exact authorised Requisition, requirements, Planning references, method, reservation, lotting,… | 1 | Done | test_lifecycle::test_start_creates_one_draft…; test_snapshot_contract (5 tests, handoff v1.4 translation incl. reservation and warranty). |
+| TPR09-AC-009 | Inherited content is visibly read-only and has a route to its source; the Tender service cannot update owner data… | 3 | Done | test_serializer::test_validate_rejects_inherited_unknown_hidden_and_out_of_range; `tnd-editor-details` › the drawer (read-only inherited facts, source route). |
+| TPR09-AC-010 | Requisition-owned correction stops the current Tender Version and can continue only from a newly authorised successor… | 10 | Done | test_lifecycle::test_correction_stops_the_version_hands_off_to_the_author_and_a_successor_continues; `tnd-correction` (3 tests). Successor stands in for REQ's governed route (REQ FOLLOW_UPS FU-30). |
+| TPR09-AC-011 | Preparation is presented as three understandable tasks: Tender details; Supplier and contract requirements; Review and… | 3 | Done | Three task labels + Review via the guidance region (ProgressRow deleted, commit 1d6728d4); `tnd-editor-details`, `tnd-editor-requirements`, `tnd-review`; persona pass. |
+| TPR09-AC-012 | Tender details show the purchase, quantities, funding and source facts before officer-authored fields. | 3 | Done | `tnd-editor-details` › inline field errors… the drawer; fidelity TPR-DES-03. |
+| TPR09-AC-013 | Closing date/time, clarification deadline and meeting choices validate as dates and as an ordered business sequence. | 3 | Done | test_lifecycle::test_save_validates_merges_regenerates_and_bumps; `tnd-editor-details` › inline field errors. |
+| TPR09-AC-014 | A physical meeting requires date/time, venue and access instructions; an online meeting requires date/time and join… | 3 | Done | `tnd-editor-details` › …the meeting variants; test_lifecycle::test_save_validates… (switching the meeting off clears hidden values). |
+| TPR09-AC-015 | Supplier and contract requirements separate inherited requirements, officer evidence requirements, contract values and… | 3 | Done | `tnd-editor-requirements` › toggles, contract terms, evidence add/edit/remove; fidelity TPR-DES-04. |
+| TPR09-AC-016 | An officer can add, edit and remove only Draft evidence requirements; each change is versioned and audited. | 3 | Done | test_lifecycle::test_evidence_rows_are_added_updated_removed_and_must_prove_a_published_requirement; `tnd-editor-requirements` (remove confirmation). |
+| TPR09-AC-017 | Qualification or evidence wording cannot silently alter an inherited mandatory technical, warranty or acceptance… | 3 | Done | test_lifecycle::test_evidence_rows_…must_prove_a_published_requirement; test_serializer::test_validate_rejects_inherited… |
+| TPR09-AC-018 | The generated price schedule contains the exact authorised line items, quantities, units, lots and funding split. | 1 | Done | test_serializer::test_two_items_sharing_one_specification…; ::test_the_price_schedule_never_carries_the_authorised_value. |
+| TPR09-AC-019 | The generated technical schedule contains all eleven §10.1 technical requirements without truncation or substitution. | 1 | Done | test_serializer::test_all_eleven_technical_rows_six_warranty_values_and_five_checks. |
+| TPR09-AC-020 | The generated warranty/support schedule contains all six §10.1 values and the acceptance schedule all five checks. | 1 | Done | test_serializer::test_all_eleven_technical_rows_six_warranty_values_and_five_checks. |
+| TPR09-AC-021 | Optional service/material schedules are absent when their inherited source sets are empty and present only when… | 1 | Done | test_serializer::test_optional_schedules_are_absent_when_their_sources_are_empty. |
+| TPR09-AC-022 | Generated evaluation mappings trace every mandatory check to its governed source and shared evaluation group and… | 1 | Done | test_serializer::test_every_published_requirement_maps_once_into_response_evaluation_and_contract; DES-05 mapping counts restored (W1, `read.review_sections`). |
+| TPR09-AC-023 | Invitation and complete-Tender previews use saved Version data and do not submit, approve, authorise or publish. | 3 | Done | test_documents::test_both_documents_render_cleanly_from_the_saved_version; `tnd-review` › Ready to submit: …previews. |
+| TPR09-AC-024 | Document generation is deterministic: identical recorded inputs produce the recorded document digest. | 1 | Done | test_documents::test_the_render_is_deterministic_and_the_pdf_is_a_convenience; test_serializer::test_digests_are_deterministic_across_reloads. |
+| TPR09-AC-025 | Save returns the authoritative record version; a stale save never overwrites another user's change. | 3 | Done | test_envelope::test_check_record_version_passes_on_a_match_and_fails_on_a_mismatch; `tnd-common-states` › …a stale write shows Tender changed with Reload. |
+| TPR09-AC-026 | Review displays one readiness result, issue counts and direct issue links; it does not require users to interpret… | 3 | Done | `tnd-review` (2 tests); fidelity TPR-DES-05. |
+| TPR09-AC-027 | A Must fix issue prevents submission and identifies the exact task, field or owner route. | 3 | Done | test_lifecycle::test_a_must_fix_finding_blocks_submission_with_the_exact_route; `tnd-review` › Needs attention: Your turn, blocked names the item and its fix; Submit is unavailable. |
+| TPR09-AC-028 | A Review note is visible but does not prevent submission unless another governed rule fails. | 3 | Done | test_lifecycle::test_submission_freezes_the_version_and_the_review_note_survives; ReviewNote on DES-05/06/07. |
+| TPR09-AC-029 | Compatibility is evaluated from authoritative owner projections at start, submit, approve and publication authorisation. | 1 | Partial | test_lifecycle::test_the_nine_compatibility_checks_on_the_fixture (at start). Re-evaluation at submit, approve and authorise is in the services but not asserted per stage. |
+| TPR09-AC-030 | Submission freezes one exact Version, package digest and generated-document set. | 3 | Done | test_lifecycle::test_submission_freezes_the_version_and_the_review_note_survives. |
+| TPR09-AC-031 | After submission, the submitted Version is read-only to every business actor. | 3 | Done | test_envelope::test_an_immutable_row_refuses_a_plain_save_and_a_plain_delete; `tnd-approval` › …the officer's record shows no decision control. |
+| TPR09-AC-032 | HOPF return requires a comment, preserves the submitted Version and creates one copied Draft. | 4 | Done | test_lifecycle::test_return_preserves_the_submitted_version_and_creates_one_copied_draft; `tnd-approval` › return dialog validates inline, then returns. |
+| TPR09-AC-033 | HOPF approval records the exact submitted Version and package digest and creates an AO publication task. | 4 | Done | test_lifecycle::test_the_preparer_or_submitter_cannot_approve_and_approval_creates_the_ao_task_only; `tnd-approval` › approve dialog, then the AO decision row appears. |
+| TPR09-AC-034 | HOPF approval does not create channel confirmations, set `published_at` or expose documents to suppliers. | 4 | Done | test_lifecycle::test_the_preparer_or_submitter_cannot_approve_and_approval_creates_the_ao_task_only. |
+| TPR09-AC-035 | A person who prepared or submitted a Version cannot approve that Version as HOPF, regardless of concurrent role labels. | 4 | Done | test_lifecycle::test_the_preparer_or_submitter_cannot_approve…; `tnd-approval` › segregation; dead-end matrix segregation rows. |
+| TPR09-AC-036 | Reopening an approved Tender is possible only before publication authorisation, requires a reason and creates a copied… | 4 | Done | test_lifecycle::test_reopen_before_authorisation_creates_a_copied_draft_and_cancels_the_ao_task. |
+| TPR09-AC-037 | HOPF, AO and reader artboards use the exact fixture actors, values and statuses in §10.1. | 13 | Partial | Canonical seed carries the §10.1 actors and values (seed-canonical ×2, validate `failures: []`); evidence pack screens. Departures FU-28, FU-29, FU-31. |
+| TPR09-AC-038 | The AO sees the approved package, decision facts and generated required channels, with no package-edit control. | 4 | Done | `tnd-authorisation` › the package facts, the read-only channels, View Invitation…; fidelity TPR-DES-07. |
+| TPR09-AC-039 | A person who prepared, submitted or HOPF-approved a Version cannot authorise its publication as AO. | 4 | Done | test_publication::test_only_a_segregated_accounting_officer_authorises; `tnd-authorisation` › segregation. |
+| TPR09-AC-040 | Every decision command rechecks state, assignment, segregation and package integrity on the server. | 4 | Done | Segregation and stale-state refusals: test_lifecycle, test_publication, test_open_period; integrity: test_documents::test_verify_names_a_drifted_binding; test_bid_definition::test_component_digests_reconcile_from_submission_to_publication. |
+| TPR09-AC-041 | Publication authorisation records AO, time, approved Version, package digest, complete Published Bid Definition… | 4 | Done | test_publication::test_authorisation_records_the_decision_rule_snapshot_and_four_evidence_based_channels_and_nothing_else; test_bid_definition (3 tests). |
+| TPR09-AC-042 | The AO cannot choose, remove, replace or edit a required publication channel. | 4 | Done | `tnd-authorisation` (read-only channel table, no selector); prohibited-token test. |
+| TPR09-AC-043 | Committing publication authorisation creates one Evidence-based confirmation record for every required channel and… | 4 | Done | test_publication::test_authorisation_records_…four_evidence_based_channels… |
+| TPR09-AC-044 | The MVP contains no active State Portal, Ministry website or other publication adapter; Configuration rejects… | 5 | Partial | Tenders side: test_publication::test_an_integrated_channel_is_refused; no adapter exists. Configuration-side rejection is FU-05. |
+| TPR09-AC-045 | Each required channel confirmation has one stable identity bound to the original publication's channel set and the… | 5 | Done | test_publication::test_confirmations_are_attested_idempotent_and_conflicts_are_preserved; unique (subject, channel) index (schema patch). |
+| TPR09-AC-046 | Only a currently assigned HOPF can confirm channel publication; the AO, technical operator and Procurement Officer… | 5 | Partial | HOPF-only for the Tender package and addenda (test_publication, `tnd-addendum` › …the officer cannot issue). Cancellation-notice channels also accept the Procurement Officer — FU-30. |
+| TPR09-AC-047 | Confirmation records the exact required attestation, server-derived HOPF identity/time and actual channel availability… | 5 | Done | test_publication::test_each_channel_needs_evidence_reference_url_rule_file_and_attestation. |
+| TPR09-AC-048 | System checks are limited to record completeness, format, authority, identity, file integrity/scan and conflicts; no… | 5 | Done | test_publication::test_each_channel_needs_…; ::test_an_infected_scan_cannot_confirm_a_channel. |
+| TPR09-AC-049 | Confirmation requires availability time, evidence reference, applicable public URL, required evidence file/digest and… | 5 | Done | test_publication::test_each_channel_needs_evidence_reference_url_rule_file_and_attestation; `tnd-publication` › …dialog checks are inline. |
+| TPR09-AC-050 | Uploaded evidence is scanned, digested and retained; failed or rejected uploads cannot confirm a channel. | 5 | Done | test_publication::test_an_infected_scan_cannot_confirm_a_channel (test-double scanner); `tnd-publication` › invalid evidence…. Production scanner FU-14. |
+| TPR09-AC-051 | A Tender is not Published while any mandatory channel is Awaiting confirmation or has missing, invalid or rejected… | 5 | Done | test_publication::test_the_final_channel_publishes_once_at_the_latest_availability_and_writes_planning_once. |
+| TPR09-AC-052 | `published_at` is written once as the latest actual availability time among all mandatory channel confirmations. | 5 | Done | test_publication::test_the_final_channel_publishes_once_at_the_latest_availability… |
+| TPR09-AC-053 | On publication confirmation, the minimum preparation period is revalidated from actual `published_at`; an invalid… | 5 | Done | test_publication::test_a_late_deadline_cannot_become_published_and_the_final_confirmation_is_serialised. |
+| TPR09-AC-054 | The exact actual invitation date is written once to Planning through its owner contract and replay is idempotent. | 5 | Done | test_publication::test_the_final_channel_publishes_once…_and_writes_planning_once (replay idempotent). |
+| TPR09-AC-055 | Publication authorisation can be withdrawn only while confirmed unpublished and before any channel confirmation;… | 5 | Done | test_publication::test_withdrawal_before_any_confirmation_returns_the_tender_to_approved; `tnd-publication` › the AO may withdraw only before any confirmation. |
+| TPR09-AC-056 | A Published Tender shows actual publication time, submission deadline, documents, channel evidence, addenda and… | 6 | Done | `tnd-published` › HoPF: the option stated as an option, facts, channels, addenda and clarifications, documents; fidelity TPR-DES-09. |
+| TPR09-AC-057 | `CreateAddendumDraft` is unavailable before publication, after submission close or after cancellation. | 7 | Done | Guarded by `addenda._require_open`; test_open_period::test_recommendation_is_optional_and_cancellation_is_final… (`TND_CANCELLED`) and ::test_the_submission_period_closes… (refused after close). |
+| TPR09-AC-058 | An addendum records an explicit before/after comparison, affected reference, reason and materiality explanation. | 7 | Done | test_open_period::test_a_draft_records_before_after_and_is_stale_when_the_published_value_changed. |
+| TPR09-AC-059 | An addendum that expands quantity, value, scope, method, reservation, lotting, package structure, technical… | 7 | Done | test_open_period::test_a_material_change_cannot_be_issued_and_goes_to_a_cancellation_review; `tnd-addendum` › a material change is blocked… |
+| TPR09-AC-060 | A late non-material addendum calculates and requires the lawful revised submission deadline before submission for issue. | 7 | Partial | Revised deadline applied on issue: test_open_period::test_issue_creates_channel_records_and_the_addendum_becomes_issued_with_the_revised_deadline. The late-addendum deadline calculation is not asserted on its own. |
+| TPR09-AC-061 | HOPF issue freezes the addendum and creates Evidence-based confirmation records for every original required channel. | 7 | Done | test_open_period::test_issue_creates_channel_records…; `tnd-addendum` › HoPF issues after the comparison; channel confirmation follows. |
+| TPR09-AC-062 | The addendum becomes Issued only after HOPF confirms all required channels with the same evidence and attestation… | 7 | Done | test_open_period::test_issue_creates_channel_records_and_the_addendum_becomes_issued_with_the_revised_deadline. |
+| TPR09-AC-063 | A clarification can originate only from an authenticated Bid Submission event tied to an Active Tender-bound candidate… | 6 | Done | test_open_period::test_only_a_registered_candidate_through_the_producer_asks_before_the_deadline (against the stand-in registry, FU-25). |
+| TPR09-AC-064 | A response that would change published Tender content cannot be sent until an authorised linked addendum is Issued and… | 8 | Done | test_open_period::test_an_answer_that_changes_the_tender_waits_for_an_issued_addendum; `tnd-clarification` › an answer that would change the published Tender waits for an addendum. |
+| TPR09-AC-065 | A response that changes no published content may be sent to the asker or all registered candidates as deliberately… | 8 | Done | test_open_period::test_a_general_answer_reaches_every_candidate_without_naming_the_asker_and_a_direct_one_only_the_asker; `tnd-clarification` › an ordinary answer… |
+| TPR09-AC-066 | Only the AO can cancel; cancellation requires an applicable ground and reason and becomes final immediately on commit. | 9 | Done | test_open_period::test_recommendation_is_optional_and_cancellation_is_final_with_obligations; `tnd-cancel` › the AO decides with a ground and reason. |
+| TPR09-AC-067 | Cancellation never restores the Requisition, reopens the Tender or creates a replacement procurement automatically. | 9 | Done | test_open_period::test_recommendation_is_optional_and_cancellation_is_final… (Requisition stays Authorised, handoff stays consumed, one Tender). |
+| TPR09-AC-068 | Cancellation creates independently tracked notice-publication, candidate-notice and PPRA-report obligations with… | 9 | Done | test_open_period::test_recommendation_is_optional_and_cancellation_is_final_with_obligations; `tnd-cancel` › …the cancelled detail groups the obligations; › the officer holds the compliance work and records the PPRA report. |
+| TPR09-AC-069 | Every artboard in §10 can be implemented using §10.1 plus KT-STD-001 v1.8 §2 without invented fixture data. | 13 | Partial | All fourteen boards ported (structural fidelity in vitest; landmark fidelity 14/14). The board set dropped spec content (FU-24) and some fixture facts differ (FU-28, FU-29, FU-31). |
+| TPR09-AC-070 | Every visible action in §10 has exactly one behaviour in §11 and is absent when the server does not permit it. | 2 | Done | `allowed_actions` derived from the server; dead-end matrix (3 tests); every slice spec asserts absent actions for non-holders. |
+| TPR09-AC-071 | The default interface exposes no event keys, hashes, enum values, payloads, transport retries or infrastructure… | 13 | Partial | No event keys, enum values or payloads in business views (history event detail only for auditors, `tnd-history`). The package digest is shown where the spec's own board text requires it (§10.8 item 2, §10.9 item 4) — conflict with this criterion, FU-36. |
+| TPR09-AC-072 | A Procurement Officer can start, complete and submit the primary fixture by following the three task labels without… | 13 | Done | Persona pass `tnd-release-evidence` › Brian starts, drafts and submits… (automated, real browser). |
+| TPR09-AC-073 | HOPF and AO each see one plain-language decision, its consequence and the exact content being decided. | 4 | Done | `tnd-approval`, `tnd-authorisation`; guidance DES-06 / DES-07 rows asserted. |
+| TPR09-AC-074 | Status, stage and next action remain distinct; the interface never labels approval, evidence upload or technical… | 2 | Done | Guidance region separates status badge, journey stage and next step; dead-end matrix; `expectGuidance` in every record spec. |
+| TPR09-AC-075 | All tables and dialogs meet the keyboard, focus, heading, error-linking, text-status and responsive rules in §11.9. | 13 | Partial | Persona pass: 390 px one-line journey and no sideways scroll at 390 px and 200% zoom. No keyboard, focus or screen-reader audit was run. |
+| TPR09-AC-076 | Every successful decision, publication, addendum, clarification, candidate-notice and cancellation command writes the… | 2 | Partial | Decisions: test_lifecycle::test_every_decision_writes_the_audit_minimum; addendum and clarification events asserted in test_open_period. Candidate-notice and cancellation events are written but not asserted field-by-field. |
+| TPR09-AC-077 | Generated and external evidence remains retrievable by immutable digest under authorised audit access. | 5 | Done | test_documents::test_store_is_idempotent_on_digest_and_get_masks_by_audience; `tnd-history` › …auditors see event detail. |
+| TPR09-AC-078 | The §13 seed can be rerun without duplication and proves the primary and isolated state fixtures independently. | 13 | Done | 26 Sep 2026: `make seed-canonical THROUGH=tenders REBUILD=True` → `removed={}` on the rerun; `make seed-canonical-validate THROUGH=tenders` → `failures: []`. Isolated profiles: `playwright_ui_fixtures` resets (one per spec). |
+| TPR09-AC-079 | Owner-contract failure leaves source data unchanged, records a truthful pending/failure state where applicable and… | 4 | Partial | Compiler fault: test_bid_definition::test_a_compiler_fault_part_way_through_authorisation_rolls_everything_back. Planning write failure path not separately exercised. |
+| TPR09-AC-080 | Representative Procurement Officer, HOPF and AO usability tests complete their assigned routine tasks without… | 13 | Planned | Owner row — representative-user sessions (TND12-1304). |
+| TPR09-AC-081 | `StartTender` creates nothing unless the exact bound template release is Available and all release/profile/mapping… | 1 | Done | test_lifecycle::test_start_creates_one_draft_binds_the_release…; ::test_only_a_procurement_officer_starts_and_an_unsupported_product_creates_nothing. |
+| TPR09-AC-082 | `None`, `Youth`, `Women` and `Persons with disabilities` may pass compatibility only when the exact Available template… | 1 | Partial | test_lifecycle::test_the_nine_compatibility_checks_on_the_fixture covers the fixture category; the four categories are not each exercised. |
+| TPR09-AC-083 | The published supplier definition is generated from the released response rules and never reconstructed from the PDF. | 4 | Done | test_bid_definition::test_the_version_compiles_through_the_shared_compiler_with_every_field. |
+| TPR09-AC-084 | Every mandatory technical response retains its individual result and reason while feeding one shared Technical… | 4 | Done | test_bid_definition::test_the_version_compiles… (`EVG-TECHNICAL-COMPLIANCE` present). |
+| TPR09-AC-085 | Every response has an evaluation and contract destination or an explicit N/A disposition. | 1 | Done | test_serializer::test_every_published_requirement_maps_once_into_response_evaluation_and_contract. |
+| TPR09-AC-086 | Publication freezes the response, downstream and addendum-identity rule digests with the documents and package digest. | 4 | Done | test_bid_definition::test_component_digests_reconcile_from_submission_to_publication. |
+| TPR09-AC-087 | A mapping or renderer incompatibility blocks publication and cannot be repaired from the Tenders UI. | 4 | Done | test_bid_definition::test_a_compiler_fault_part_way_through_authorisation_rolls_everything_back; no Tenders UI edits a mapping. |
+| TPR09-AC-088 | An authorised Administrator, System Manager, Procurement Officer or HOPF can follow a failure link to the read-only… | 11 | Done | test_template_binding::test_a_withdrawn_release_error_carries_the_route_for_a_reader; ::test_the_route_is_withheld_from_a_non_reader. |
+| TPR09-AC-089 | A County-residents restriction is evaluated independently from the base reservation category and passes only for an… | 1 | Partial | test_lifecycle::test_the_nine_compatibility_checks_on_the_fixture (County-residents row on the fixture); `tnd-start` shows the row. Not exercised with a county Procuring Entity. |
+| TPR09-AC-090 | A reserved Tender publishes its exact declaration and evidence requirements, evaluates them under `EVG-ELIGIBILITY`,… | 3 | Partial | DES-04 read-only reservation evidence row (`read.reservation_evidence`). No reserved Tender is published end to end in a test. |
+| TPR09-AC-091 | Publication freezes exactly one `PublishedBidDefinition v1` using every field in §4.5.4; its `template_family`, opaque… | 4 | Done | test_bid_definition::test_the_version_compiles_through_the_shared_compiler_with_every_field (asserts `DEFINITION_FIELDS`). |
+| TPR09-AC-092 | `BuildPublishedBidDefinition` and publication are atomic: any unsupported control, missing mapping, hidden obligation,… | 4 | Done | test_bid_definition::test_a_compiler_fault_part_way_through_authorisation_rolls_everything_back. |
+| TPR09-AC-093 | Controlled multi-select and structured ports requirements from `AuthorisedRequisitionHandoff v1.3` appear in both… | 1 | Planned | Not verified: no Tenders test or fixture carries controlled multi-select or structured ports values. |
+| TPR09-AC-094 | The four exact evaluation groups are Eligibility, Technical compliance, Financial and Award; no fifth group, hidden… | 4 | Done | test_bid_definition::test_the_version_compiles… (groups ⊆ the four `EVG-*`). |
+| TPR09-AC-095 | One closed fixture round-trip preserves every source and response identity from Requisition through Tender documents,… | 13 | Partial | Requisition → Tender → STD round trip proven (test_bid_definition, test_snapshot_contract). The Bid Submission leg does not exist yet (FU-13, FU-25). |
+| TPR09-AC-096 | Publication-definition identity and digests are recorded on `TenderPublication`; publication never writes a late field… | 4 | Done | test_bid_definition::test_component_digests_reconcile_from_submission_to_publication; schema test pins the Publication fields. |
+| TPR09-AC-097 | `IssueAddendum` creates no awaiting-confirmation addendum unless the complete successor Published Bid Definition has… | 7 | Done | test_open_period::test_issue_creates_channel_records… (successor `Frozen`, version 2, before channel work). |
+| TPR09-AC-098 | While any required addendum channel is unconfirmed, BDS continues to receive the prior effective definition and… | 7 | Done | test_open_period::test_issue_creates_channel_records… ("the prior definition stays bidder-current"). |
+| TPR09-AC-099 | The final addendum channel confirmation atomically marks the addendum Issued and activates its exact successor… | 7 | Done | test_open_period::test_issue_creates_channel_records… (original `Superseded`, addendum Issued, deadline effective). |
+| TPR09-AC-100 | Original Tender, addendum and cancellation-notice confirmations have distinct subject identities/digests and… | 5 | Done | Subjects `Tender package` / `Addendum` / `Cancellation notice`: test_publication, test_open_period (4 cancellation-notice confirmations); unique index. |
+| TPR10-AC-001 | A registered candidate can submit a general pre-bid question before the clarification deadline without an addendum… | 6 | Done | test_open_period::test_only_a_registered_candidate_through_the_producer_asks_before_the_deadline (stand-in, FU-25). |
+| TPR10-AC-002 | No Account-only, public or free-text identity can submit a clarification; the exact Active Tender-bound candidate… | 6 | Done | test_open_period::test_only_a_registered_candidate_through_the_producer_asks_before_the_deadline. |
+| TPR10-AC-003 | Receipt at or after the clarification deadline creates no clarification and returns the canonical late message. | 6 | Done | test_open_period::test_only_a_registered_candidate_… (late question creates nothing). |
+| TPR10-AC-004 | A clarification answer that changes no published content may be direct or general; the selected audience and exact… | 8 | Done | test_open_period::test_a_general_answer_reaches_every_candidate_without_naming_the_asker_and_a_direct_one_only_the_asker. |
+| TPR10-AC-005 | A clarification answer that would change wording, criteria, schedules, dates or supplier obligations remains Awaiting… | 8 | Done | test_open_period::test_an_answer_that_changes_the_tender_waits_for_an_issued_addendum; `tnd-clarification`. |
+| TPR10-AC-006 | The linked addendum must be Issued and its successor definition effective before the published-change response is sent… | 8 | Done | test_open_period::test_an_answer_that_changes_the_tender_waits_for_an_issued_addendum. |
+| TPR10-AC-007 | Every general clarification broadcast, issued addendum, effective deadline change and cancellation freezes the… | 6 | Partial | Audience frozen in the decision transaction (`candidate_notices.freeze`) for clarification answers and addenda (test_open_period). Cancellation with no registered candidates only. |
+| TPR10-AC-008 | Candidate destinations come only from the Bid Submission owner projection; Tenders cannot create or edit supplier… | 6 | Partial | Destinations come only through `candidate_gateway`, today the Tenders stand-in (FU-25). |
+| TPR10-AC-009 | Mandatory notices cannot be opted out of; later contact changes affect only future audience snapshots and never… | 6 | Partial | Each notice keeps a destination snapshot. Opt-out refusal and later contact changes are not separately tested. |
+| TPR10-AC-010 | Queued, Sent, Delivered and Failed remain distinct; a provider acceptance is not displayed as recipient delivery… | 6 | Done | test_open_period::test_a_failed_notice_is_retried_without_changing_the_tender; default transport records Sent only (plan W3). |
+| TPR10-AC-011 | A failed notice has a safe same-subject retry/follow-up route and never retracts an issued addendum, changes a… | 8 | Done | test_open_period::test_a_failed_notice_is_retried_without_changing_the_tender; `tnd-clarification` › a failed candidate notice: the protected recipient, Retry notice, the Tender stays open. |
+| TPR10-AC-012 | Public Tender readers see authoritative clarification answers and notices without the source candidate identity or… | 6 | Partial | Asker not named to other candidates (test_open_period); protected recipient hidden from non-authorised readers. No public Tender page exists in this build. |
+| TPR10-AC-013 | TPR-DES-09 and TPR-DES-11 render the general-question, published-change and failed-delivery fixtures at desktop and… | 8 | Partial | `tnd-published`, `tnd-clarification`, fidelity TPR-DES-09 / 11 at 1440 px. Narrow widths checked only on the persona record screens. |
+| TPR10-AC-014 | The current MVP ends at the Bid Submission boundary. Bid Opening, Evaluation/Award, Supplier… | 13 | Done | Nothing past the submission-close handoff is built (test_open_period::test_the_submission_period_closes_by_the_system_with_one_immutable_handoff). |
+| TPR11-AC-001 | `StartTender` binds only an Available release after compatibility, digest and adapter checks pass. v0.12 (OD5): the… | 1 | Done | test_lifecycle::test_start_creates_one_draft_binds_the_release_and_consumes_the_handoff_atomically. |
+| TPR11-AC-002 | An already-bound unpublished Tender may continue on a Superseded release only while every exact asset, digest and… | 11 | Done | test_template_binding::test_superseded_unpublished_names_the_release…; browser proof FU-33. |
+| TPR11-AC-003 | Supersession never changes `template_release_id`, regenerates content from a successor or silently offers a selector. | 11 | Partial | `release_notice` reads the bound release only; no test asserts the record's release identity after supersession. |
+| TPR11-AC-004 | A Withdrawn bound release blocks submit, approve, reopen, publication authorisation, publication confirmation,… | 11 | Partial | test_template_binding::test_withdrawn_before_and_after_publication; ::test_a_withdrawn_release_error_carries_the_route_for_a_reader. Not every blocked action is enumerated. |
+| TPR11-AC-005 | The Withdrawn state preserves all work, explains that the current unpublished Tender cannot continue, and offers only… | 11 | Done | test_template_binding::test_withdrawn_before_and_after_publication ("Your work is preserved"); CommonState `release-withdrawn` (vitest). Browser FU-33. |
+| TPR11-AC-006 | A published Tender retains its exact release, documents, Published Bid Definition and public readability after… | 11 | Done | test_template_binding::test_withdrawn_before_and_after_publication (after publication: information notice, records remain). |
+| TPR11-AC-007 | `BuildPublishedBidDefinition` invokes the STD-TPL-IMP-001 v1.1 shared compiler and cannot use a separate… | 4 | Done | test_bid_definition::test_the_version_compiles_through_the_shared_compiler_with_every_field; Tender-local builders retired (5c0250d8). |
+| TPR11-AC-008 | Procurement Officer and HOPF can inspect the exact bound release and report a concern without gaining template-edit or… | 11 | Partial | Route to `/app/std-templates/{release}` for authorised readers (test_template_binding::TestErrorRoute). No "report a concern" path is built. |
+| TPR12-AC-001 | `StartTender` binds a release only when it is `Available` and switched On on the site and its compatibility, digest… | 1 | Done | test_lifecycle::test_start_creates_one_draft_binds_the_release…; STD site switch On for the canonical release (seed). |
+| TPR12-AC-002 | After the bound release is switched Off on the site, every later action on an already-bound Tender (submit, approve,… | 11 | Partial | test_template_binding runs on a switched-Off release and shows no notice for it (::test_a_usable_release_shows_no_notice). Later commands on a switched-Off bound release are not exercised. |
+| TPR12-AC-003 | Switching the bound release Off, or back On, never changes the Tender's `template_release_id`, digests, documents or… | 11 | Partial | The switch is not an input to `release_notice` or the later-action rechecks; not asserted by a test. |
+| TPR12-AC-004 | An already-bound `Superseded` release continues and a `Withdrawn` release blocks exactly as TPR11-AC-002 and… | 11 | Done | As TPR11-AC-002 / 004 (test_template_binding). |
+| TPR12-AC-005 | No Tenders test, fixture, seed or message relies on a `Candidate` release state; start tests cover a release that is… | 1 | Done | No `Candidate` release state in Tenders code, fixtures or seeds (grep 26 Sep 2026: only the unrelated `Tender Candidate Registration` field label). |
+| TPR12-AC-006 | Every Tender record read supplies one server-derived `next_step` with kind, headline, stage, holder, recorded since… | 2 | Done | test_read::test_the_journey_over_the_request_path; dead-end matrix; `expectGuidance` in every record spec. |
+| TPR12-AC-007 | Every §5.1 state and visible responsibility passes KT-STD-001 §3B.7 dead-end conformance; a blocked action yields a… | 2 | Done | test_dead_end_matrix (3 tests) → `evidence/v0_12/dead_end_matrix.md`. |
+| TPR12-AC-008 | The five formal Tender stages and their markers match §10.17, while Tender details, Supplier/contract requirements and… | 2 | Done | Dead-end matrix stage check; `guidance-10-17.ts` markers asserted in every record spec. |
+| TPR12-AC-009 | Every record-screen variant renders the exact §10.17 next step and permitted tracker, replacing the identified… | 13 | Partial | `expectGuidance` asserts 30 of the 33 `guidance-10-17.ts` rows in the browser (fact-bearing rows by pattern, FU-31). The two segregation rows are asserted by kind and reason sentence only (the Playwright world has another eligible holder); DES-10 Issued is asserted in the dead-end matrix only. |
+| TPR12-AC-010 | §5.11 hand-off items appear and clear on underlying state changes, preserve return comments and distinguish… | 2 | Partial | Cancellation review items and My Work assigned/waiting rows: test_open_period::test_a_material_change_cannot_be_issued_and_goes_to_a_cancellation_review; return comment: test_read::test_a_returned_draft_reads_as_returned_to_you_at_the_affected_task. Not every §5.11 row has its own test. |
+| TPR12-AC-011 | At 1440 × 1024 the first working region remains in the first view, using the stated one-line reduced tracker if… | 13 | Partial | Every spec runs at 1440 × 1024 and the evidence screens show the working region in the first view; the 390 px one-line tracker is asserted (persona pass). First-view position is not asserted. |
+| TPR12-AC-012 | A material addendum cannot be issued. Its exact hand-off creates one AO cancellation-review item and a waiting item;… | 7 | Done | test_open_period::test_a_material_change_cannot_be_issued_and_goes_to_a_cancellation_review; `tnd-addendum` › a material change is blocked; the AO considers cancellation and closes the review; the officer discards. |
 
 ## Re-implementation register map (§19)
 
 | ID | Required implementation (short) | Phase | Status | Evidence |
 |---|---|---|---|---|
-| TPR-IMP-001 | Create one **Tenders** menu entry and the three routes in §9. | | Planned | |
-| TPR-IMP-002 | Build one role-safe workspace covering starts, preparation, decisions, publication and open Tenders. | | Planned | |
-| TPR-IMP-003 | Implement server-derived work-summary counts, filters and next actions. | | Planned | |
-| TPR-IMP-004 | Implement the exact `Tender` and `TenderVersion` schemas, identities, statuses and concurrency versions. | | Planned | |
-| TPR-IMP-005 | Implement immutable inherited requirement snapshots and owner-source links. | | Planned | |
-| TPR-IMP-006 | Implement officer-authored evidence requirements separately from inherited requirements. | | Planned | |
-| TPR-IMP-007 | Generate price, technical, warranty, acceptance, delivery and evaluation content deterministically. | | Planned | |
-| TPR-IMP-008 | Integrate the authorised Requisition handoff and idempotent start command. | | Planned | |
-| TPR-IMP-009 | Implement the three-task preparation journey and unsaved-change protection. | | Planned | |
-| TPR-IMP-010 | Implement meeting-type conditional fields, ordered date validation and positive-whole-number supplier-experience… | | Planned | |
-| TPR-IMP-011 | Implement money/quantity/unit precision and funding/line-item reconciliation. | | Planned | |
-| TPR-IMP-012 | Implement compatibility checks at start, submit, approve and publication authorisation, including the supported… | | Planned | |
-| TPR-IMP-013 | Implement deterministic Must fix and Review note results with exact issue routes. | | Planned | |
-| TPR-IMP-014 | Implement Draft save commands with optimistic concurrency and idempotency. | | Planned | |
-| TPR-IMP-015 | Implement deterministic Invitation and complete-Tender generation and preview. | | Planned | |
-| TPR-IMP-016 | Implement submission as an immutable Version/package freeze. | | Planned | |
-| TPR-IMP-017 | Implement HOPF return with required comment and one copied Draft. | | Planned | |
-| TPR-IMP-018 | Implement HOPF approval without publication-confirmation side effects. | | Planned | |
-| TPR-IMP-019 | Implement approved-Tender reopening before authorisation only. | | Planned | |
-| TPR-IMP-020 | Implement Requisition-correction stop and authorised-successor route. | | Planned | |
-| TPR-IMP-021 | Enforce immutable-actor maker-checker rules for HOPF and AO decisions. | | Planned | |
-| TPR-IMP-022 | Implement `TenderPublication` with approved package, rule snapshot and AO decision. | | Planned | |
-| TPR-IMP-023 | Resolve and snapshot required publication channels from governed configuration; enforce Evidence based mode for every… | | Planned | |
-| TPR-IMP-024 | Implement AO publication authorisation as one decision that atomically creates the required evidence-based… | | Planned | |
-| TPR-IMP-025 | Implement stable `PublicationChannelConfirmation` identities bound to the exact original-publication channel set and… | | Planned | |
-| TPR-IMP-026 | Implement HOPF confirmation for State Portal and Ministry website using channel-specific reference, public URL,… | | Planned | |
-| TPR-IMP-027 | Implement HOPF confirmation for notice-board and newspaper channels using channel-specific reference, evidence,… | | Planned | |
-| TPR-IMP-028 | Implement truthful Awaiting confirmation and Confirmed states, with rejected input remaining unconfirmed. | | Planned | |
-| TPR-IMP-029 | Implement technical validation for confirmation completeness, authority, identity, evidence integrity/scan and package… | | Planned | |
-| TPR-IMP-030 | Implement idempotent identical replay and reject any conflicting second confirmation. | | Planned | |
-| TPR-IMP-031 | Compute one immutable actual publication time from all mandatory channel evidence. | | Planned | |
-| TPR-IMP-032 | Revalidate the minimum preparation period against actual publication time. | | Planned | |
-| TPR-IMP-033 | Write actual invitation date once through the Planning owner contract. | | Planned | |
-| TPR-IMP-034 | Implement withdrawal of publication authorisation with reason only before any channel is confirmed. | | Planned | |
-| TPR-IMP-035 | Implement the published-Tender view with documents, evidence, addenda and clarifications. | | Planned | |
-| TPR-IMP-036 | Implement Addendum schema, Draft save, materiality and deadline rules. | | Planned | |
-| TPR-IMP-037 | Implement HOPF addendum issue and evidence-based confirmation through every original required channel. | | Planned | |
-| TPR-IMP-038 | Implement authenticated general Tender clarification ingestion from an exact Active candidate registration, with… | | Planned | |
-| TPR-IMP-039 | Implement direct/general response classification and enforce the issued-addendum prerequisite whenever an answer would… | | Planned | |
-| TPR-IMP-040 | Implement AO cancellation with applicable ground, reason and immediate final state. | | Planned | |
-| TPR-IMP-041 | Implement optional HOPF cancellation recommendation without decision effect. | | Planned | |
-| TPR-IMP-042 | Create and track cancellation channel, candidate-notice and PPRA-report obligations. | | Planned | |
-| TPR-IMP-043 | Preserve cancellation finality while required cancellation evidence remains due, is rejected or becomes overdue. | | Planned | |
-| TPR-IMP-044 | Implement role-safe reads for Department, Auditor, technical operator and Administrator/System Manager. | | Planned | |
-| TPR-IMP-045 | Implement every plain-language error and recovery route in §8. | | Planned | |
-| TPR-IMP-046 | Implement all fourteen artboards and stated variants from the self-contained fixture pack. | | Planned | |
-| TPR-IMP-047 | Implement every visible control exactly as defined in §11, including pending and error behaviour. | | Planned | |
-| TPR-IMP-048 | Implement keyboard, focus, status-text, responsive-table and document-accessibility rules. | | Planned | |
-| TPR-IMP-049 | Implement append-only audit and evidence preservation for every fact in §12. | | Planned | |
-| TPR-IMP-050 | Implement the idempotent primary and isolated fixture seeds without outcome conflation; the primary… | | Planned | |
-| TPR-IMP-051 | Complete every acceptance criterion and automated test minimum. | | Planned | |
-| TPR-IMP-052 | Complete representative-user tests for Procurement Officer, HOPF and AO routine journeys. | | Planned | |
-| TPR-IMP-053 | Complete publication-confirmation integrity/concurrency exercises and operational runbooks. | | Planned | |
-| TPR-IMP-054 | Verify that every prohibited shortcut is absent from code, configuration and UI. | | Planned | |
-| TPR-IMP-055 | Produce the immutable Bid Submission handoff at submission close. | | Planned | |
-| TPR-IMP-056 | Install and verify the exact Available template release and all document/response/mapping/profile digests. v0.12… | | Planned | |
-| TPR-IMP-057 | Generate the exact `PublishedBidDefinition v1` from the released response rules rather than the rendered PDF and… | | Planned | |
-| TPR-IMP-058 | Aggregate individual mandatory checks into one shared Technical compliance group while retaining row results and… | | Planned | |
-| TPR-IMP-059 | Require an explicit evaluation/contract destination or N/A for every response family. | | Planned | |
-| TPR-IMP-060 | Freeze response, downstream and addendum-identity rule digests at publication. | | Planned | |
-| TPR-IMP-061 | Link template failures to the read-only **STD Templates** owner route for Administrator, System Manager, Procurement… | | Planned | |
-| TPR-IMP-062 | Generate category-specific reservation declarations/evidence and map each to `EVG-ELIGIBILITY` from the exact released… | | Planned | |
-| TPR10-IMP-001 | Consume the exact Tender-bound candidate projection created by BDS **Start bid**; do not create a local… | | Planned | |
-| TPR10-IMP-002 | Replace addendum-only inquiry endpoints and storage with `TenderClarification`, retaining an optional issued-addendum… | | Planned | |
-| TPR10-IMP-003 | Block receipt at the clarification deadline and block any published-changing response until its linked addendum is… | | Planned | |
-| TPR10-IMP-004 | Freeze one candidate audience and create outbox dispatches for general clarification broadcasts, issued… | | Planned | |
-| TPR10-IMP-005 | Record Queued/Sent/Delivered/Failed and append retry evidence without changing the authoritative Tender action or… | | Planned | |
-| TPR10-IMP-006 | Revise TPR-DES-09 and TPR-DES-11 for general questions, mandatory addendum escalation and failed-delivery recovery at… | | Planned | |
-| TPR10-IMP-007 | Consume CFG v0.16 public portal support/legal-link projection for bidder-safe Tenders surfaces; expose no editable… | | Planned | |
-| TPR10-IMP-008 | Run the closed Requisition→Tender→STD→BDS journey through general clarification, addendum notice, bid preparation and… | | Planned | |
-| TPR-IMP-063 | Preserve the reservation category, County-residents treatment and evaluated result in the governed… | | Planned | |
-| TPR-IMP-064 | Adopt the exact release/renderer identity names and `PublishedBidDefinition v1` field contract shared with STD-TPL… | | Planned | |
-| TPR-IMP-065 | Materialise the definition atomically with publication authorisation and reject partial output on any reconciliation… | | Planned | |
-| TPR-IMP-066 | Preserve controlled multi-select and structured ports requirement values in documents, bidder rows and downstream… | | Planned | |
-| TPR-IMP-067 | Use exactly four evaluation groups including `EVG-AWARD`; do not create a weighted criterion or duplicate award stage. | | Planned | |
-| TPR-IMP-068 | Use `/app/std-templates/{release_id}` for authorised release inspection and remove the System setup Tender-format… | | Planned | |
-| TPR-IMP-069 | Complete the cross-module round-trip from `AuthorisedRequisitionHandoff v1.3` through BDS response/mapping consumption… | | Planned | |
-| TPR-IMP-070 | Move publication-definition identity and component digests to `TenderPublication`; prohibit any publication-time… | | Planned | |
-| TPR-IMP-071 | Build and freeze the complete successor Published Bid Definition in the `IssueAddendum` transaction before creating… | | Planned | |
-| TPR-IMP-072 | Keep an awaiting-confirmation addendum's successor definition and revised deadline non-effective for BDS. | | Planned | |
-| TPR-IMP-073 | Activate the issued addendum, revised deadline and exact successor definition atomically on final required-channel… | | Planned | |
-| TPR-IMP-074 | Scope every channel confirmation by subject type, identity, digest and channel so original package, addenda and… | | Planned | |
-| TPR11-IMP-001 | Require Available only at new Tender binding and persist the exact release/adapter/digest set. v0.12 (OD5): the… | | Planned | |
-| TPR11-IMP-002 | Recheck bound lifecycle, integrity and renderer adapter at submit, approve, reopen, publication authorisation,… | | Planned | |
-| TPR11-IMP-003 | Permit Superseded continuation only for an already-bound Tender and never rewrite its release identity or content. | | Planned | |
-| TPR11-IMP-004 | Block every unpublished continuation on Withdrawn while preserving Versions and governed next steps. | | Planned | |
-| TPR11-IMP-005 | Preserve published documents and Published Bid Definition after lifecycle change and display the truthful release… | | Planned | |
-| TPR11-IMP-006 | Replace any Tender-local builder logic with the shared STD-TPL-IMP v1.0 compiler adapter and canonical parity tests. | | Planned | |
-| TPR11-IMP-007 | Grant Procurement Officer/HOPF the bounded release-inspection and concern path without template mutation or general… | | Planned | |
-| TPR12-IMP-001 | Bind a new Tender only to the `Available` release of `IT-EQUIPMENT-OPEN-V1` that is switched On on the site, through… | | Planned | |
-| TPR12-IMP-002 | Leave the site switch out of every later-action recheck on an already-bound Tender; recheck only lifecycle, integrity… | | Planned | |
-| TPR12-IMP-003 | Retire every `Candidate` release case from Tenders tests, fixtures, seeds and messages. | | Planned | |
-| TPR12-IMP-004 | Return server-derived next steps, guard reasons and all fixes on record reads; no browser recomputation. | | Planned | |
-| TPR12-IMP-005 | Emit §5.11 hand-off My Work and waiting items and clear them only on the underlying state change. | | Planned | |
-| TPR12-IMP-006 | Replace the three-part Draft progress row and duplicate status narratives with shared §10.17 components on permitted… | | Planned | |
-| TPR12-IMP-007 | Implement the bounded material-addendum cancellation-review hand-off, AO close-with-reason outcome and unissued-draft… | | Planned | |
+| TPR-IMP-001 | Create one **Tenders** menu entry and the three routes in §9. | 12 | Done | Kept v0.8 menu (TND-208); routes `/app/tenders`, `/{ref}`, `/new/{handoff}`, `/{ref}/history`, `/{ref}/clarifications/{id}`. |
+| TPR-IMP-002 | Build one role-safe workspace covering starts, preparation, decisions, publication and open Tenders. | 12 | Done | See TPR09-AC-002. |
+| TPR-IMP-003 | Implement server-derived work-summary counts, filters and next actions. | 12 | Done | test_read::test_forbidden_verdict_and_role_queues (counts, filters, actions); `tnd-workspace`. |
+| TPR-IMP-004 | Implement the exact `Tender` and `TenderVersion` schemas, identities, statuses and concurrency versions. | 1 | Done | test_tender_schema (6 tests). |
+| TPR-IMP-005 | Implement immutable inherited requirement snapshots and owner-source links. | 1 | Done | See TPR09-AC-008 / 009. |
+| TPR-IMP-006 | Implement officer-authored evidence requirements separately from inherited requirements. | 3 | Done | See TPR09-AC-016. |
+| TPR-IMP-007 | Generate price, technical, warranty, acceptance, delivery and evaluation content deterministically. | 1 | Done | test_serializer (11 tests); test_documents (8 tests). |
+| TPR-IMP-008 | Integrate the authorised Requisition handoff and idempotent start command. | 1 | Done | See TPR09-AC-006 / 007. |
+| TPR-IMP-009 | Implement the three-task preparation journey and unsaved-change protection. | 3 | Done | Slice A specs; unsaved-change protection kept from v0.8. |
+| TPR-IMP-010 | Implement meeting-type conditional fields, ordered date validation and positive-whole-number supplier-experience… | 3 | Done | See TPR09-AC-013 / 014. |
+| TPR-IMP-011 | Implement money/quantity/unit precision and funding/line-item reconciliation. | 1 | Done | test_serializer::test_the_price_schedule_never_carries_the_authorised_value; kept v0.8 precision rules. |
+| TPR-IMP-012 | Implement compatibility checks at start, submit, approve and publication authorisation, including the supported… | 1 | Partial | See TPR09-AC-029. |
+| TPR-IMP-013 | Implement deterministic Must fix and Review note results with exact issue routes. | 3 | Done | See TPR09-AC-027 / 028. |
+| TPR-IMP-014 | Implement Draft save commands with optimistic concurrency and idempotency. | 3 | Done | test_envelope (10 tests). |
+| TPR-IMP-015 | Implement deterministic Invitation and complete-Tender generation and preview. | 3 | Done | See TPR09-AC-023 / 024. |
+| TPR-IMP-016 | Implement submission as an immutable Version/package freeze. | 3 | Done | See TPR09-AC-030. |
+| TPR-IMP-017 | Implement HOPF return with required comment and one copied Draft. | 4 | Done | See TPR09-AC-032. |
+| TPR-IMP-018 | Implement HOPF approval without publication-confirmation side effects. | 4 | Done | See TPR09-AC-034. |
+| TPR-IMP-019 | Implement approved-Tender reopening before authorisation only. | 4 | Done | See TPR09-AC-036. |
+| TPR-IMP-020 | Implement Requisition-correction stop and authorised-successor route. | 10 | Done | See TPR09-AC-010. |
+| TPR-IMP-021 | Enforce immutable-actor maker-checker rules for HOPF and AO decisions. | 4 | Done | See TPR09-AC-035 / 039. |
+| TPR-IMP-022 | Implement `TenderPublication` with approved package, rule snapshot and AO decision. | 4 | Done | See TPR09-AC-041. |
+| TPR-IMP-023 | Resolve and snapshot required publication channels from governed configuration; enforce Evidence based mode for every… | 5 | Done | test_publication::test_authorisation_records_…four_evidence_based_channels…; ::test_an_integrated_channel_is_refused. |
+| TPR-IMP-024 | Implement AO publication authorisation as one decision that atomically creates the required evidence-based… | 4 | Done | See TPR09-AC-041 / 043. |
+| TPR-IMP-025 | Implement stable `PublicationChannelConfirmation` identities bound to the exact original-publication channel set and… | 5 | Done | See TPR09-AC-045. |
+| TPR-IMP-026 | Implement HOPF confirmation for State Portal and Ministry website using channel-specific reference, public URL,… | 5 | Done | test_publication::test_each_channel_needs_…; `tnd-publication` (online URL rule from the server). |
+| TPR-IMP-027 | Implement HOPF confirmation for notice-board and newspaper channels using channel-specific reference, evidence,… | 5 | Done | test_publication::test_each_channel_needs_…; `tnd-publication`. |
+| TPR-IMP-028 | Implement truthful Awaiting confirmation and Confirmed states, with rejected input remaining unconfirmed. | 5 | Done | `tnd-publication` › invalid evidence keeps the dialog…; channel stays Awaiting confirmation. |
+| TPR-IMP-029 | Implement technical validation for confirmation completeness, authority, identity, evidence integrity/scan and package… | 5 | Done | See TPR09-AC-048 / 050. |
+| TPR-IMP-030 | Implement idempotent identical replay and reject any conflicting second confirmation. | 5 | Done | test_publication::test_confirmations_are_attested_idempotent_and_conflicts_are_preserved; `tnd-publication` › a conflicting confirmation… |
+| TPR-IMP-031 | Compute one immutable actual publication time from all mandatory channel evidence. | 5 | Done | See TPR09-AC-052. |
+| TPR-IMP-032 | Revalidate the minimum preparation period against actual publication time. | 5 | Done | See TPR09-AC-053. |
+| TPR-IMP-033 | Write actual invitation date once through the Planning owner contract. | 5 | Done | See TPR09-AC-054. |
+| TPR-IMP-034 | Implement withdrawal of publication authorisation with reason only before any channel is confirmed. | 5 | Done | See TPR09-AC-055. |
+| TPR-IMP-035 | Implement the published-Tender view with documents, evidence, addenda and clarifications. | 6 | Done | See TPR09-AC-056. |
+| TPR-IMP-036 | Implement Addendum schema, Draft save, materiality and deadline rules. | 7 | Done | test_open_period::TestAddenda (3 tests); schema test. |
+| TPR-IMP-037 | Implement HOPF addendum issue and evidence-based confirmation through every original required channel. | 7 | Done | See TPR09-AC-061 / 062. |
+| TPR-IMP-038 | Implement authenticated general Tender clarification ingestion from an exact Active candidate registration, with… | 6 | Done | See TPR10-AC-001..003 (stand-in, FU-25). |
+| TPR-IMP-039 | Implement direct/general response classification and enforce the issued-addendum prerequisite whenever an answer would… | 8 | Done | See TPR10-AC-004..006. |
+| TPR-IMP-040 | Implement AO cancellation with applicable ground, reason and immediate final state. | 9 | Done | See TPR09-AC-066. |
+| TPR-IMP-041 | Implement optional HOPF cancellation recommendation without decision effect. | 9 | Done | `tnd-cancel` › the HoPF records a recommendation; it changes no status. |
+| TPR-IMP-042 | Create and track cancellation channel, candidate-notice and PPRA-report obligations. | 9 | Done | See TPR09-AC-068. |
+| TPR-IMP-043 | Preserve cancellation finality while required cancellation evidence remains due, is rejected or becomes overdue. | 9 | Done | test_open_period::test_recommendation_is_optional_and_cancellation_is_final…; obligation status derived on read incl. Overdue (`cancellation.obligation_status`). |
+| TPR-IMP-044 | Implement role-safe reads for Department, Auditor, technical operator and Administrator/System Manager. | 2 | Done | test_tender_authorization (6 tests); dead-end matrix readers. |
+| TPR-IMP-045 | Implement every plain-language error and recovery route in §8. | 1 | Done | test_tender_schema::test_the_error_contract_is_exactly_the_section_8_set (35 codes). |
+| TPR-IMP-046 | Implement all fourteen artboards and stated variants from the self-contained fixture pack. | 13 | Done | 14 boards: structural fidelity (vitest) + landmark fidelity (14 Playwright tests); variants per the departures registry. |
+| TPR-IMP-047 | Implement every visible control exactly as defined in §11, including pending and error behaviour. | 13 | Done | Slice specs assert every visible control, pending and error behaviour per screen. |
+| TPR-IMP-048 | Implement keyboard, focus, status-text, responsive-table and document-accessibility rules. | 13 | Partial | See TPR09-AC-075. |
+| TPR-IMP-049 | Implement append-only audit and evidence preservation for every fact in §12. | 2 | Partial | See TPR09-AC-076 / 077. |
+| TPR-IMP-050 | Implement the idempotent primary and isolated fixture seeds without outcome conflation; the primary… | 13 | Done | See TPR09-AC-078. |
+| TPR-IMP-051 | Complete every acceptance criterion and automated test minimum. | 13 | Partial | This map: open rows are Partial or Planned with the reason stated. |
+| TPR-IMP-052 | Complete representative-user tests for Procurement Officer, HOPF and AO routine journeys. | 13 | Planned | Owner row (TND12-1304). |
+| TPR-IMP-053 | Complete publication-confirmation integrity/concurrency exercises and operational runbooks. | 13 | Done | test_publication::TestIntegrity (3 tests); RUNBOOKS §§5–10. |
+| TPR-IMP-054 | Verify that every prohibited shortcut is absent from code, configuration and UI. | 13 | Done | test_tender_schema::test_no_prohibited_concept_token_in_module_sources (incl. the four retired inquiry tokens); comment/copy scan 26 Sep 2026 (8bd85d59). Stored role name kept, FU-32. |
+| TPR-IMP-055 | Produce the immutable Bid Submission handoff at submission close. | 6 | Done | test_open_period::test_the_submission_period_closes_by_the_system_with_one_immutable_handoff. |
+| TPR-IMP-056 | Install and verify the exact Available template release and all document/response/mapping/profile digests. v0.12… | 1 | Done | test_documents::test_bind_returns_the_installed_release_and_its_digests; ::test_verify_names_a_drifted_binding. |
+| TPR-IMP-057 | Generate the exact `PublishedBidDefinition v1` from the released response rules rather than the rendered PDF and… | 4 | Done | See TPR09-AC-083 / 091. |
+| TPR-IMP-058 | Aggregate individual mandatory checks into one shared Technical compliance group while retaining row results and… | 4 | Done | See TPR09-AC-084. |
+| TPR-IMP-059 | Require an explicit evaluation/contract destination or N/A for every response family. | 1 | Done | See TPR09-AC-085. |
+| TPR-IMP-060 | Freeze response, downstream and addendum-identity rule digests at publication. | 4 | Done | See TPR09-AC-086. |
+| TPR-IMP-061 | Link template failures to the read-only **STD Templates** owner route for Administrator, System Manager, Procurement… | 11 | Done | See TPR09-AC-088. |
+| TPR-IMP-062 | Generate category-specific reservation declarations/evidence and map each to `EVG-ELIGIBILITY` from the exact released… | 3 | Partial | See TPR09-AC-090. |
+| TPR10-IMP-001 | Consume the exact Tender-bound candidate projection created by BDS **Start bid**; do not create a local… | 6 | Partial | Consumed through `candidate_gateway`; today the Tenders stand-in (FU-25). |
+| TPR10-IMP-002 | Replace addendum-only inquiry endpoints and storage with `TenderClarification`, retaining an optional issued-addendum… | 6 | Done | `Tender Clarification` replaces the inquiry (5c0250d8); prohibited-token test; `tnd-clarification`. |
+| TPR10-IMP-003 | Block receipt at the clarification deadline and block any published-changing response until its linked addendum is… | 6 | Done | See TPR10-AC-003 / 006. |
+| TPR10-IMP-004 | Freeze one candidate audience and create outbox dispatches for general clarification broadcasts, issued… | 6 | Partial | See TPR10-AC-007. |
+| TPR10-IMP-005 | Record Queued/Sent/Delivered/Failed and append retry evidence without changing the authoritative Tender action or… | 6 | Done | See TPR10-AC-010 / 011. |
+| TPR10-IMP-006 | Revise TPR-DES-09 and TPR-DES-11 for general questions, mandatory addendum escalation and failed-delivery recovery at… | 8 | Done | `tnd-published`, `tnd-clarification` (3 tests); fidelity TPR-DES-09 / 11. |
+| TPR10-IMP-007 | Consume CFG v0.16 public portal support/legal-link projection for bidder-safe Tenders surfaces; expose no editable… | 13 | Planned | Not built: no bidder-facing Tenders surface exists in this build. |
+| TPR10-IMP-008 | Run the closed Requisition→Tender→STD→BDS journey through general clarification, addendum notice, bid preparation and… | 13 | Partial | See TPR09-AC-095. |
+| TPR-IMP-063 | Preserve the reservation category, County-residents treatment and evaluated result in the governed… | 1 | Partial | Reservation category and County-residents result carried in the snapshot and compatibility (test_snapshot_contract, test_lifecycle); evaluated result not yet consumed downstream. |
+| TPR-IMP-064 | Adopt the exact release/renderer identity names and `PublishedBidDefinition v1` field contract shared with STD-TPL… | 4 | Done | test_bid_definition (`DEFINITION_FIELDS` from the STD compiler). |
+| TPR-IMP-065 | Materialise the definition atomically with publication authorisation and reject partial output on any reconciliation… | 4 | Done | See TPR09-AC-092. |
+| TPR-IMP-066 | Preserve controlled multi-select and structured ports requirement values in documents, bidder rows and downstream… | 1 | Planned | See TPR09-AC-093. |
+| TPR-IMP-067 | Use exactly four evaluation groups including `EVG-AWARD`; do not create a weighted criterion or duplicate award stage. | 4 | Done | See TPR09-AC-094. |
+| TPR-IMP-068 | Use `/app/std-templates/{release_id}` for authorised release inspection and remove the System setup Tender-format… | 11 | Done | See TPR09-AC-088. |
+| TPR-IMP-069 | Complete the cross-module round-trip from `AuthorisedRequisitionHandoff v1.3` through BDS response/mapping consumption… | 13 | Partial | See TPR09-AC-095. |
+| TPR-IMP-070 | Move publication-definition identity and component digests to `TenderPublication`; prohibit any publication-time… | 4 | Done | See TPR09-AC-096. |
+| TPR-IMP-071 | Build and freeze the complete successor Published Bid Definition in the `IssueAddendum` transaction before creating… | 7 | Done | See TPR09-AC-097. |
+| TPR-IMP-072 | Keep an awaiting-confirmation addendum's successor definition and revised deadline non-effective for BDS. | 7 | Done | See TPR09-AC-098. |
+| TPR-IMP-073 | Activate the issued addendum, revised deadline and exact successor definition atomically on final required-channel… | 7 | Done | See TPR09-AC-099. |
+| TPR-IMP-074 | Scope every channel confirmation by subject type, identity, digest and channel so original package, addenda and… | 5 | Done | See TPR09-AC-100. |
+| TPR11-IMP-001 | Require Available only at new Tender binding and persist the exact release/adapter/digest set. v0.12 (OD5): the… | 1 | Done | See TPR11-AC-001. |
+| TPR11-IMP-002 | Recheck bound lifecycle, integrity and renderer adapter at submit, approve, reopen, publication authorisation,… | 11 | Partial | See TPR11-AC-004. |
+| TPR11-IMP-003 | Permit Superseded continuation only for an already-bound Tender and never rewrite its release identity or content. | 11 | Partial | See TPR11-AC-002 / 003. |
+| TPR11-IMP-004 | Block every unpublished continuation on Withdrawn while preserving Versions and governed next steps. | 11 | Done | See TPR11-AC-005. |
+| TPR11-IMP-005 | Preserve published documents and Published Bid Definition after lifecycle change and display the truthful release… | 11 | Done | See TPR11-AC-006. |
+| TPR11-IMP-006 | Replace any Tender-local builder logic with the shared STD-TPL-IMP v1.0 compiler adapter and canonical parity tests. | 4 | Done | See TPR11-AC-007. |
+| TPR11-IMP-007 | Grant Procurement Officer/HOPF the bounded release-inspection and concern path without template mutation or general… | 11 | Partial | See TPR11-AC-008. |
+| TPR12-IMP-001 | Bind a new Tender only to the `Available` release of `IT-EQUIPMENT-OPEN-V1` that is switched On on the site, through… | 1 | Done | See TPR12-AC-001. |
+| TPR12-IMP-002 | Leave the site switch out of every later-action recheck on an already-bound Tender; recheck only lifecycle, integrity… | 11 | Partial | See TPR12-AC-002 / 003. |
+| TPR12-IMP-003 | Retire every `Candidate` release case from Tenders tests, fixtures, seeds and messages. | 1 | Done | See TPR12-AC-005. |
+| TPR12-IMP-004 | Return server-derived next steps, guard reasons and all fixes on record reads; no browser recomputation. | 2 | Done | See TPR12-AC-006. |
+| TPR12-IMP-005 | Emit §5.11 hand-off My Work and waiting items and clear them only on the underlying state change. | 2 | Partial | See TPR12-AC-010. |
+| TPR12-IMP-006 | Replace the three-part Draft progress row and duplicate status narratives with shared §10.17 components on permitted… | 3 | Done | ProgressRow, FindingsNotices, InquiryScreen, ReleaseNotice deleted; guidance region on every record screen (slices A–J). |
+| TPR12-IMP-007 | Implement the bounded material-addendum cancellation-review hand-off, AO close-with-reason outcome and unissued-draft… | 7 | Done | See TPR12-AC-012; RUNBOOKS §10. |

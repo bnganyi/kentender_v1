@@ -1,7 +1,10 @@
-# Tenders (TPR-CHG-001 v0.8) — operational runbooks
+# Tenders (TPR-CHG-001 v0.12) — operational runbooks
 
-Four procedures for running, verifying and recovering the Tenders module
-on `kentender.midas.com`. Plain English; command blocks are exact.
+Procedures for running, verifying and recovering the Tenders module on
+`kentender.midas.com`, and for supporting it in production. Plain English;
+command blocks are exact. Written for v0.8 on 19 Sep 2026 and updated for
+v0.12 on 26 Sep 2026 (sections 9 and 10 are new; sections 1, 2, 5 and 8
+changed).
 
 ## 1. Running the module's gates
 
@@ -14,9 +17,17 @@ bench --site kentender.midas.com run-tests --app kentender_procurement --module 
 Every service test module in one run (from `apps/kentender_v1`):
 
 ```bash
-make tenders-schema-gate SITE=kentender.midas.com      # Phase 2: schema, envelope, authorization, gateway contracts
-make tenders-services-gate SITE=kentender.midas.com    # Phases 4-6: every Tenders service test module
+make tenders-schema-gate SITE=kentender.midas.com      # schema, envelope, authorization, gateway contracts
+make tenders-services-gate SITE=kentender.midas.com    # every Tenders service test module (includes the two below)
+make tenders-dead-end-gate SITE=kentender.midas.com    # every Tender state x reader has a next step; writes evidence/v0_12/dead_end_matrix.md
 ```
+
+Each of these refuses to start while a Playwright run is active
+(`make tenders-preflight`). Since 26 Sep 2026 the Tenders and
+Requisitions test wipes remove only test-world rows (fiscal years starting
+in 2100 or later), so a Python run no longer deletes the canonical Tender
+or Requisition; a Python run still writes for real (there is no rollback),
+so reseed the canonical site afterwards (§2).
 
 Component tests (from `apps/kentender_v1`):
 
@@ -28,16 +39,16 @@ One UI slice (vitest + that slice's Playwright spec, on the Tenders
 Playwright world, then `restore_site`):
 
 ```bash
-make ui-tenders-workspace-gate SITE=kentender.midas.com
+make ui-tenders-workspace-gate SITE=kentender.midas.com      # workspace + common states
 make ui-tenders-start-gate SITE=kentender.midas.com
 make ui-tenders-details-gate SITE=kentender.midas.com
 make ui-tenders-requirements-gate SITE=kentender.midas.com
 make ui-tenders-review-gate SITE=kentender.midas.com
-make ui-tenders-approval-gate SITE=kentender.midas.com
+make ui-tenders-approval-gate SITE=kentender.midas.com       # HOPF approval + Requisition correction states
 make ui-tenders-authorisation-gate SITE=kentender.midas.com
 make ui-tenders-publication-gate SITE=kentender.midas.com
 make ui-tenders-published-gate SITE=kentender.midas.com
-make ui-tenders-addendum-gate SITE=kentender.midas.com
+make ui-tenders-addendum-gate SITE=kentender.midas.com       # addendum + supplier clarification
 make ui-tenders-cancel-gate SITE=kentender.midas.com
 make ui-tenders-history-gate SITE=kentender.midas.com
 ```
@@ -48,7 +59,8 @@ Every board's design fidelity in one run:
 make ui-tenders-fidelity-gate SITE=kentender.midas.com
 ```
 
-Everything (vitest + all twelve Playwright specs + fidelity):
+Everything (vitest + every Tenders Playwright spec, including the
+evidence pack and the persona pass, + fidelity):
 
 ```bash
 make ui-tenders-release-evidence-gate SITE=kentender.midas.com
@@ -71,7 +83,9 @@ restriction.
 
 The canonical world is the one the live dev site shows by default —
 Ministry of Health, Fiscal Year 2027-2028, one Tender at "Submission
-period ended" with an issued, confirmed addendum and one answered inquiry.
+period ended" with an issued, confirmed addendum and one supplier
+clarification answered to all registered candidates (v0.8 read: "one
+answered inquiry").
 
 ```bash
 cd /home/midasuser/frappe-bench && bench --site kentender.midas.com execute kentender_core.seeds.canonical.dry_run   # see what would be removed; deletes nothing
@@ -96,11 +110,27 @@ cd /home/midasuser/frappe-bench && bench --site kentender.midas.com execute kent
 
 **To rebuild the canonical Tender from scratch** (its own rows are wrong,
 not merely missing): `rebuild=True` resets Tenders before Requisitions
-(it holds the handoff), then reseeds. From `bench execute` (the make
-target does not expose `rebuild` for `THROUGH=tenders` yet):
+(it holds the handoff), then reseeds. The make target exposes it:
+
+```bash
+make seed-canonical SITE=kentender.midas.com THROUGH=tenders REBUILD=True
+```
+
+or, from `bench execute`:
 
 ```bash
 cd /home/midasuser/frappe-bench && bench --site kentender.midas.com execute kentender_core.seeds.canonical.run --kwargs '{"through": "tenders", "rebuild": True}'
+```
+
+**If a reseed fails with a `NameError` naming an app** after the first
+run of the day removed many leftover test rows: deleting users and audit
+rows queues background jobs, and a large clean-up can fill the queue past
+Frappe's limit of 500 so the next run is refused part-way (26 Sep 2026:
+523 jobs after removing 44 users and 688 budget audit rows). Drain the
+queue and run the reseed again:
+
+```bash
+make ui-queue-check FIX=1
 ```
 
 A rerun of any of the above is idempotent: `removed={}` and every
@@ -166,9 +196,12 @@ world in its own Playwright-year state.
 
 ## 5. Production support: a channel confirmation was rejected for evidence
 
-**Symptom:** a Head of Procurement Function reports "the evidence file
-cannot be used as publication evidence" (`TND_PUBLICATION_EVIDENCE_INVALID`)
-when confirming a publication or addendum channel.
+**Symptom:** a Head of Procurement Function reports "The selected file
+cannot be used as publication evidence. Choose an allowed document or
+image file." (`TND_PUBLICATION_EVIDENCE_INVALID`) when confirming a
+publication or addendum channel. Since v0.12 the page also marks
+**Confirm publication** as blocked on the Tender's journey and offers
+**Choose evidence file** and **Confirm publication** as the next step.
 
 **Why:** `kentender_core.services.file_integrity.check_file` rejects the
 upload before the confirmation is recorded — either the file extension is
@@ -263,11 +296,18 @@ storing a stale status. "Overdue" means the due date has passed with no
 compliance evidence recorded against that obligation yet.
 
 **What to check:**
-1. The obligation's own row shows exactly what is owed and by when — the
-   accountable role (Head of Procurement Function for the notice
-   channels, Accounting Officer for the PPRA report and candidate
-   notice) is named in the CFG "Publication obligations" configuration
-   this Tender's rule snapshot references.
+1. The obligation's own row shows exactly what is owed and by when. Since
+   v0.12 the cancellation hands the evidence work to the Procurement
+   Officer who prepared the approved Version (a "Record cancellation
+   compliance evidence" item in their My Work), with the Accounting
+   Officer shown as waiting on it. The notice channels may be evidenced by
+   that Procurement Officer or by the Head of Procurement Function, each
+   with their own attestation (FOLLOW_UPS FU-30); the PPRA report is
+   recorded by the same holder; the candidate-notice obligation is
+   recorded automatically once every candidate notice for the
+   cancellation shows Delivered (v0.8 read: "Head of Procurement Function
+   for the notice channels, Accounting Officer for the PPRA report and
+   candidate notice").
 2. This module never escalates or notifies on an overdue obligation
    itself (no consumer exists for that outbox event in this release —
    see FOLLOW_UPS FU-13); a support engineer's role here is confirming
@@ -276,7 +316,96 @@ compliance evidence recorded against that obligation yet.
    system.
 3. The only way an obligation leaves "Overdue" is the accountable actor
    recording real compliance evidence through `record_cancellation_compliance_evidence`
-   (the Cancel Tender screen's own "Record evidence" action) — there is
+   (the Cancel Tender screen's **Record cancellation notice evidence** or
+   **Record PPRA report evidence** action; v0.8 read: "Record evidence") — there is
    no administrative override to mark it Recorded without evidence, and
    Cancellation itself is final and can never be reversed to "undo" the
    obligation instead.
+
+## 9. Production support: a candidate notice failed delivery
+
+**Symptom:** a Procurement Officer or Head of Procurement Function sees
+"1 candidate notice failed delivery; the Tender remains open." on a
+supplier clarification (or on an addendum or cancellation), with a
+**Retry notice** fix, and the delivery table shows the notice as Failed.
+
+**Why:** every notice-bearing decision (a clarification answer sent to
+candidates, an addendum becoming effective, a deadline change, a
+cancellation) freezes its audience and content in the same transaction
+as the decision, then sends one notice per registered candidate outside
+it. A failed attempt is recorded as evidence and changes nothing else:
+the answer stays sent, the addendum stays effective, the deadline and the
+cancellation stand. Queued, Sent, Delivered and Failed stay distinct —
+Sent means a provider accepted the message, not that the candidate
+received it.
+
+**What to check:**
+1. Open the notice from the Tender's clarification, addendum or
+   cancellation screen. The attempts table lists every attempt with its
+   time, result and failure reason. Procurement, audit and technical
+   readers also see the protected recipient; other readers do not.
+2. Fix the cause outside Tenders. The destination is a snapshot taken
+   from the Bid Submission candidate registration when the decision was
+   made; Tenders cannot edit it. A wrong address is corrected in the
+   registration and only affects later notices.
+3. Use **Retry notice**. It resends the same notice to the same recipient
+   with the same content and adds one attempt; it never creates a new
+   notice, changes the audience or touches the Tender. Only a Failed
+   notice can be retried.
+4. Queued notices are sent by the every-few-minutes scheduler sweep
+   (`candidate_notices.dispatch_pending`, Frappe's `all` schedule). To
+   send them now:
+
+```bash
+cd /home/midasuser/frappe-bench && bench --site kentender.midas.com execute kentender_procurement.tenders.services.candidate_notices.dispatch_pending
+```
+
+**On the dev site** no outgoing email account is configured, so every
+notice sent through the default email transport fails and a retry fails
+again with the next attempt number. That is correct behaviour, not a
+defect; the canonical seed and the tests use their own transports, which
+supply the provider evidence for Delivered and Failed. The default email
+transport can only ever record Sent: production needs a delivery provider
+registered on the `kt_candidate_notice_transports` hook before any notice
+can show Delivered (FOLLOW_UPS FU-35).
+
+## 10. Production support: a material addendum and its cancellation review
+
+**Symptom:** a Head of Procurement Function or Procurement Officer saved
+an addendum that changes something an addendum may not change (for
+example it increases a quantity, the value or the scope). The page says
+"… cannot be issued as an addendum." and offers **Ask the Accounting
+Officer to consider cancellation** and **Discard addendum draft**; there
+is no Issue action.
+
+**Why:** a material change cannot reach suppliers through an addendum;
+the only lawful routes are to drop the proposal or to cancel the Tender
+and start a newly governed one. The system never issues it, and the
+published Tender is unchanged throughout.
+
+**The procedure:**
+1. The sender asks for the review with a reason of 20–1,000 characters.
+   The Accounting Officer gets one "Consider cancellation of {Tender}"
+   item in My Work; the sender sees a waiting line naming the Accounting
+   Officer.
+   A second request for the same proposal returns the first one.
+2. While the review is open the proposal cannot be discarded; the page
+   says to wait for the decision.
+3. The Accounting Officer opens the item (it lands on Cancel Tender, with
+   who asked and the proposed change) and either:
+   - chooses **Cancel Tender**, which opens the normal cancellation
+     decision (ground and reason) and, on commit, closes the review item;
+     or
+   - chooses **Close cancellation review** with a reason of 10–1,000
+     characters. The Tender stays open, the proposal stays blocked, and
+     the sender's page now shows the Accounting Officer's recorded reason
+     with **Discard addendum draft** as the only step.
+4. A closed review cannot be asked for again for the same proposal; the
+   sender discards it. Discarding never affects an issued addendum or one
+   awaiting channel confirmation.
+
+**What to check if it looks stuck:** the Tender's History lists each
+request, close and discard as a decision with its actor, time and reason;
+an open "Consider cancellation of …" item in the Accounting Officer's My Work
+means the review is still theirs. There is no administrative override
+that issues a material addendum.
