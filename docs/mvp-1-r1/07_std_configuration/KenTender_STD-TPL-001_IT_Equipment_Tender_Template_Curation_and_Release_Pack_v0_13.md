@@ -5,10 +5,10 @@
 | Document ID | STD-TPL-001 |
 | Version | 0.13 |
 | Date | 26 September 2026 |
-| Status | **Proposed — v0.12 was Approved; re-approval required** |
-| Approved on | Not yet approved (v0.12 read: 26 September 2026) |
-| Approval record | Pending Project Owner approval of v0.13. v0.12 approval record, retained: Project Owner, 26 September 2026: "v0.12 approved,  v0.10 was approved earlier". The approval of v0.12 also approves the v0.11 content it carries forward (owner decision OD5); v0.11 was not approved separately. The same instruction confirms that v0.10 was approved, as KT-DOC-CTRL-001 records (26 September 2026); v0.11's statement that v0.10 was never approved is therefore incorrect and is retained only as read. (Proposed-state read: None for v0.12 or v0.11. KT-DOC-CTRL-001 records v0.10 as approved on 26 September 2026 and does not list v0.11, while v0.11 states that v0.10 was never approved; that disagreement is reported for the documentation owner.) Status before approval read: **Proposed — v0.11 was also proposed and is not approved; approval of v0.12 is required** (v0.11 read: **Proposed — v0.10 was Project Owner review; re-approval required** (v0.10 was never approved; v0.10 read: **Proposed for approval**)). |
-| Supersedes | v0.12 (approved), on approval of v0.13 (v0.12 read: v0.11 (proposed, carried forward) and v0.10 (approved)) |
+| Status | **Approved** |
+| Approved on | 27 September 2026 (v0.12 read: 26 September 2026) |
+| Approval record | Project Owner, 27 September 2026, answering the three decisions in the v0.13 change report: "1. Approved 2. Exact published amount 3. Tender contact Proceed". Item 1 approves v0.13. Item 2 confirms the tender security instrument amount equal to the published amount (§8.3, TPL13-AC-004) as written. Item 3 confirms reading the tenderer's authorised representative as the bid's Tender contact; that reading is in the release assets and BDS-CHG-001, and v0.13 text is unchanged by it. Status before approval read: **Proposed — v0.12 was Approved; re-approval required**. Record before approval read: Pending Project Owner approval of v0.13. v0.12 approval record, retained: Project Owner, 26 September 2026: "v0.12 approved,  v0.10 was approved earlier". The approval of v0.12 also approves the v0.11 content it carries forward (owner decision OD5); v0.11 was not approved separately. The same instruction confirms that v0.10 was approved, as KT-DOC-CTRL-001 records (26 September 2026); v0.11's statement that v0.10 was never approved is therefore incorrect and is retained only as read. (Proposed-state read: None for v0.12 or v0.11. KT-DOC-CTRL-001 records v0.10 as approved on 26 September 2026 and does not list v0.11, while v0.11 states that v0.10 was never approved; that disagreement is reported for the documentation owner.) Status before approval read: **Proposed — v0.11 was also proposed and is not approved; approval of v0.12 is required** (v0.11 read: **Proposed — v0.10 was Project Owner review; re-approval required** (v0.10 was never approved; v0.10 read: **Proposed for approval**)). |
+| Supersedes | v0.12 (approved) from 27 September 2026 (before approval read: v0.12 (approved), on approval of v0.13) (v0.12 read: v0.11 (proposed, carried forward) and v0.10 (approved)) |
 | Template key | `IT-EQUIPMENT-OPEN-V1` |
 | Template release | 1.1 (v0.10 read: 1.1 candidate; owner decision OD5 retired the Candidate lifecycle state, §14.1). The v0.12 change to §8.1 applies from successor release 1.2 (Project Owner decision OD-E, 26 September 2026, recorded in the BDS-CHG-001 v0.8 implementation tracker); release 1.1 keeps its earlier wording. The v0.13 changes (§18.5) also apply from successor release 1.2; release 1.1 is unchanged. |
 | Product profile | `GOODS-IT-SIMPLE-V1` |
@@ -1201,9 +1201,9 @@ Decision basis, quoted:
 
 ## 19. Approval effect
 
-### v0.13 (proposed)
+### v0.13 (approved)
 
-v0.13 is proposed for Project Owner approval. On approval it supersedes v0.12 and carries forward everything v0.12 approved, adding the release vocabulary and response rows that release 1.2 uses (§18.5). It does not change release 1.1 or any Tender bound to it, and approval does not itself install, switch, supersede or withdraw a release.
+v0.13 is approved by the Project Owner on 27 September 2026. It supersedes v0.12 and carries forward everything v0.12 approved, adding the release vocabulary and response rows that release 1.2 uses (§18.5). It does not change release 1.1 or any Tender bound to it, and approval does not itself install, switch, supersede or withdraw a release.
 
 ### 19.0 v0.12 (approved; retained, carried forward by v0.13)
 

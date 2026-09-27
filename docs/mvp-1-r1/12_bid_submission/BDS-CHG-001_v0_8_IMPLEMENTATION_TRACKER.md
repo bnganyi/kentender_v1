@@ -69,6 +69,7 @@
 | 2026-09-26 | Joint-venture members (Phase 3): "Account + bid entries (Recommended)" — each member's name, country and address come read-only from its own Account through the arrangement; the bidder types each member's year of registration and authorised representative. | Owner answer, 26 Sep 2026 |
 | 2026-09-26 | Virus scanner: no decision today; kept as a follow-up (FU-V08-30). Real uploads stay Not scanned on this bench until the simulation scanner (plan D16) or an approved scanner is registered. | Owner answer, verbatim: "1. Nothing today. Mark as a follow up" |
 | 2026-09-27 | Phase 5 as built: the Test Scanner (owner decision OD-C, planned for Phase 6) is built now, because a seeded Authorised Signatory's authority evidence must be accepted before she can assign the representative who starts the canonical bid. It answers only on a site whose site_config sets `kt_bds_simulation_environment: 1`, and its verdicts say "test scanner (simulation)". The dev site `kentender.midas.com` now sets it (and `kt_bds_clarification_producer`). The account seed refuses to start where no scanner accepts files. | Implementation authority under OD-C |
+| 2026-09-27 | Template decisions: STD-TPL-001 v0.13 approved; the tender security instrument amount is exactly the published amount; the tenderer's authorised representative is the bid's Tender contact (the bidder types only the address). | Owner answer, 27 Sep 2026: "1. Approved 2. Exact published amount 3. Tender contact Proceed" |
 
 ## Gate register
 

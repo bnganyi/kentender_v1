@@ -130,3 +130,33 @@ Extended in place (original text kept, text added):
 - Whether the PPRA forms' "Authorized Representative" means the Tender contact or the signatory: not verified against the primary source's guidance notes.
 - The effect on the **STD Templates** artboards. No release 1.2 artboard exists; the release 1.1 fixture is unchanged.
 - Usability of the new bidder entries: they have no artboard yet (FU-V08-31).
+
+## 10. Approval (added 27 September 2026)
+
+The Project Owner answered the three decisions in §7 on 27 September 2026: "1. Approved 2. Exact published amount 3. Tender contact Proceed".
+
+- **Decision 1.** v0.13 is approved.
+- **Decision 2.** The tender security instrument amount stays exactly the published amount, in the published currency.
+- **Decision 3.** The tenderer's authorised representative is read as the bid's Tender contact. Name, email and telephone are supplied from it; the bidder types the address.
+
+**Document.** Changed only as the approval step allows:
+
+- Status **Approved**; Approved on 27 September 2026.
+- The Approval record quotes the instruction and keeps the earlier status and record wording as read.
+- Supersedes: v0.12 (approved) from 27 September 2026.
+- The v0.13 approval-effect heading and first sentence now say approved.
+
+`preservation_check.py` (against the committed proposed v0.13): PASS, with `--allow-control-table` and two `--allow` patterns for that heading and sentence. `consistency_check.py`: 0 errors, and the same 3 warnings and 3 information notes as before.
+
+**Register (KT-DOC-CTRL-001), working copy.**
+
+- The STD-TPL-001 entry is now `requirement_status` "Approved requirement", `approval_date` 2026-09-27, `normative` "Yes", and supersedes v0.12.
+- AUD-019 records the approval, Resolved.
+- `register_check.py` shows no STD-TPL-001 error.
+- Implementation, verification and release statuses are unchanged.
+- The register file is still not committed, because it carries other uncommitted edits; the workbook still needs regenerating.
+
+**Follow-ups.**
+
+- The BDS-CHG-001 fixture and board redraw for the representative's address and the per-member entries remains open (FU-V08-31).
+- Decisions 2 and 3 need no text change here: the v0.13 text already states the exact amount, and decision 3 concerns the release assets and BDS-CHG-001.
