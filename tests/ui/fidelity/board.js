@@ -227,3 +227,29 @@ export function setupArtboardIds(relPath) {
 		.map((el) => el.id)
 		.filter((id) => !labelTargets.has(id));
 }
+
+/**
+ * Bid Submission (BDS-CHG-001 v0.8, `docs/mvp-1-r1/12_bid_submission/design/`,
+ * "Bid Board v3 - A…E"). Every variant is a `[data-screen-label]` holding two
+ * frames side by side — the 1440 × 1024 desktop frame first, the 390 × 844
+ * narrow frame second — each with the portal shell (header, body, footer)
+ * around one `main.kt-page`. The shell is kentender_core's portal page, so the
+ * screen compared is the `main` alone; the fold marker and captions are
+ * design-tool annotation.
+ */
+export function bidSubmissionScope(doc, id, { frame = "desktop" } = {}) {
+	const root = doc.querySelector(`[data-screen-label="${id}"]`);
+	if (!root) throw new Error(`artboard ${id} not found`);
+	const frames = Array.from(root.querySelectorAll("div")).filter((el) => /width:\s*(1440|390)px/.test(el.getAttribute("style") || ""));
+	const wanted = frames.find((el) => (el.getAttribute("style") || "").includes(frame === "narrow" ? "width:390px" : "width:1440px"));
+	if (!wanted) throw new Error(`artboard ${id} draws no ${frame} frame`);
+	const main = wanted.querySelector("main.kt-page, main") || wanted;
+	const clone = main.cloneNode(true);
+	for (const note of clone.querySelectorAll(".sub, .cap")) note.remove();
+	return clone;
+}
+
+/** One Bid Submission variant's landmark skeleton at one frame. */
+export function bidSubmissionSkeleton(relPath, id, options = {}) {
+	return skeletonOf(bidSubmissionScope(documentFor(relPath), id, options));
+}

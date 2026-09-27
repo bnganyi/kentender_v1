@@ -32,19 +32,23 @@ def enabled() -> bool:
 CONTROLS = "BDS Test Environment Controls"
 DEFAULTS: dict = {
 	"gate_closed": 0, "trust_service_down": 0, "time_service_down": 0, "custody_service_down": 0,
-	"deposit_outcome": "Accept", "rejection_reference": "", "uncertain_resolution": "Pending", "accept_after_seconds": 0,
+	"deposit_outcome": "Accept", "rejection_reference": "", "uncertain_resolution": "Pending", "accept_after_seconds": 0, "current_instant": "",
 }
 
 
 def controls() -> dict:
 	if not enabled():
 		return dict(DEFAULTS)
+	cached = getattr(frappe.local, "kt_bds_controls", None)
+	if cached is not None:
+		return dict(cached)
 	saved = frappe.db.get_singles_dict(CONTROLS) or {}
 	out = dict(DEFAULTS)
 	for key, default in DEFAULTS.items():
 		value = saved.get(key)
 		if value not in (None, ""):
 			out[key] = cint(value) if isinstance(default, int) else value
+	frappe.local.kt_bds_controls = dict(out)
 	return out
 
 
@@ -59,6 +63,7 @@ def set_controls(**values) -> dict:
 		doc.set(key, value)
 	doc.flags.kt_bds_test_service = True
 	doc.save(ignore_permissions=True)
+	frappe.local.kt_bds_controls = None
 	return controls()
 
 

@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import frappe
+
 from kentender_procurement.bid_submission.services import reads
 
 FILTER_KEYS = ("search", "method", "reservation", "closing")
@@ -21,4 +23,13 @@ def resolve(*, path: str, query: dict[str, Any], user: str) -> dict[str, Any]:
 	if segments == ["tenders"]:
 		filters = {k: str(query.get(k) or "") for k in FILTER_KEYS if query.get(k)}
 		return {"verdict": "OK", "title": "Available Tenders", "payload": {"screen": "available-tenders", "data": reads.get_available_tenders(**filters)}}
+	if len(segments) == 2 and segments[0] == "tenders":
+		from kentender_procurement.bid_submission.services import overview
+
+		try:
+			data = overview.get_tender_overview(tender_reference=segments[1], user=user)
+		except frappe.DoesNotExistError:
+			return {"verdict": "NOT_FOUND", "title": "Tender not found", "payload": {"screen": "tender-not-found"}}
+		title = data["tender"]["reference"] if data["tender"]["availability"] == "cancelled" else data["tender"]["title"]
+		return {"verdict": "OK", "title": title, "payload": {"screen": "tender-overview", "data": data}}
 	return {"verdict": "NOT_FOUND", "title": "Page not found", "payload": {"screen": "not-found"}}

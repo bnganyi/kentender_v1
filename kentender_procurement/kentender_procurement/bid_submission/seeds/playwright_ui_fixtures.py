@@ -128,10 +128,89 @@ def physical_receipt_status(*, tender_reference: str) -> dict[str, Any]:
 	return {k: security.get(k) or "" for k in ("physical_receipt_status", "physical_receipt_reference", "physical_received_at")}
 
 
+# -- portal worlds (plan Phase 11): this world's own suppliers, namespaced, with
+#    the test password, so the canonical personas are never touched ----------------
+
+PASSWORD = "Test@123"
+SUPPLIERS = {
+	"afya": {
+		"facts": {
+			"legal_name": "Afya Digital Supplies (Test) Limited", "country": "Kenya", "registration_number": "PVT-PW-AFYA01", "tax_identifier": "P009000101X",
+			"registered_address": "Westlands Business Park, Nairobi", "official_email": "tenders@afya-pw.example", "official_phone": "+254 709 555 101", "job_title": "Managing Director",
+		},
+		"registrant": "pw.bds.mary@afya-pw.example", "registrant_name": "Mary Wanjiku", "representative": "pw.bds.david@afya-pw.example", "representative_name": "David Ouma",
+	},
+	"kisiwa": {
+		"facts": {
+			"legal_name": "Kisiwa Digital (Test) Limited", "country": "Kenya", "registration_number": "PVT-PW-KSW001", "tax_identifier": "P009000102X",
+			"registered_address": "Mombasa Road, Nairobi", "official_email": "tenders@kisiwa-pw.example", "official_phone": "+254 709 555 102", "job_title": "Director",
+		},
+		"registrant": "pw.bds.grace@kisiwa-pw.example", "registrant_name": "Grace Njeri", "representative": "pw.bds.peter@kisiwa-pw.example", "representative_name": "Peter Mwangi",
+	},
+}
+SUPPLIER_USERS = tuple(u for s in SUPPLIERS.values() for u in (s["registrant"], s["representative"]))
+
+
+def _hook(name: str):
+	return frappe.get_attr((frappe.get_hooks(name) or [])[-1])
+
+
+def _ensure_suppliers() -> None:
+	from frappe.utils.password import update_password
+
+	for supplier in SUPPLIERS.values():
+		_hook("kt_seed_supplier_account")(
+			facts=supplier["facts"], registrant=supplier["registrant"], registrant_name=supplier["registrant_name"], representative=supplier["representative"],
+			representative_name=supplier["representative_name"], namespace=NAMESPACE, key_prefix=NAMESPACE.lower(),
+		)
+	for user in SUPPLIER_USERS:
+		update_password(user, PASSWORD)
+
+
+def _start(tender: str, supplier: str) -> str:
+	from kentender_procurement.bid_submission.seeds.canonical import seed_candidate
+
+	facts = SUPPLIERS[supplier]
+	reference = frappe.db.get_value("Tender", tender, "tender_reference")
+	arrangement = seed_candidate(tender_reference=reference, at="2027-05-19 09:20:00", supplier={**facts, "namespace": NAMESPACE})
+	return frappe.db.get_value("Bid Workspace", {"bidder_arrangement": arrangement}, "name")
+
+
+OVERVIEW_AT = "2027-05-20 10:05:00"  # §10.1: before the clarification deadline and the addendum
+
+
+def set_instant(instant: str) -> None:
+	"""The live pages' trusted clock for this world (plan D18)."""
+	from kentender_procurement.bid_submission.services import simulation
+
+	simulation.set_controls(current_instant=instant)
+
+
+def reset_overview_fixture(*, commit: bool = True, started: bool = True) -> dict[str, Any]:
+	"""BDS-DES-02 world: the Tenders test Tender, open, with this world's
+	two suppliers; Afya (Test) has started its bid when `started`."""
+	state = tender_pw.reset_published_fixture(commit=False)
+	_wipe_journal()
+	_ensure_suppliers()
+	bid = _start(state["tender"], "afya") if started else ""
+	set_instant(OVERVIEW_AT)
+	frappe.set_user("Administrator")
+	if commit:
+		frappe.db.commit()
+	return {"tender": state["tender"], "tender_reference": state["tender_reference"], "bid_reference": bid, "password": PASSWORD, **{f"{k}_user": v["representative"] for k, v in SUPPLIERS.items()}, "afya_signatory": SUPPLIERS["afya"]["registrant"]}
+
+
 def restore_site(*, commit: bool = True) -> dict[str, Any]:
 	frappe.set_user("Administrator")
 	_wipe_journal()
 	out = tender_pw.restore_site(commit=False)
+	bds_clear.wipe(tenders=[], namespace=NAMESPACE)
+	from kentender_procurement.bid_submission.services import simulation
+
+	simulation.reset_controls()  # the test clock and every forced world back to normal
+	removal = frappe.get_hooks("kt_seed_supplier_account_removal") or []
+	if removal:
+		frappe.get_attr(removal[-1])(namespace=NAMESPACE, users=SUPPLIER_USERS)
 	if commit:
 		frappe.db.commit()
 	return {**out, "bid_submission_wiped": True}

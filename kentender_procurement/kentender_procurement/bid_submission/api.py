@@ -42,6 +42,32 @@ def get_available_tenders(search: str = "", method: str = "", reservation: str =
 	return reads.get_available_tenders(search=search, method=method, reservation=reservation, closing=closing)
 
 
+@frappe.whitelist(allow_guest=True, methods=["GET"])
+def get_tender_overview(tender_reference: str, organisation: str = "") -> dict[str, Any]:
+	"""BDS-DES-02 — the published Tender and, for a signed-in supplier, their own bid only."""
+	from kentender_procurement.bid_submission.services import overview
+
+	try:
+		return overview.get_tender_overview(tender_reference=tender_reference, organisation=organisation)
+	except frappe.DoesNotExistError:
+		return {"outcome": "NOT_FOUND", "heading": "Tender not found.", "text": "Return to Tenders."}
+
+
+@frappe.whitelist(allow_guest=True, methods=["GET"])
+def download_tender_document(tender_reference: str, key: str, inline: int = 0) -> None:
+	"""BDS §11.2 View / Download document: the exact published document from
+	Tenders by its bidder-safe key; no digest or storage path."""
+	from kentender_procurement.bid_submission.services import tenders_gateway
+
+	document = tenders_gateway.stream_public_document(tender_reference, key)
+	if not document:
+		raise frappe.DoesNotExistError("This document is unavailable.")
+	frappe.local.response.filename = document["file_name"]
+	frappe.local.response.filecontent = document["content"]
+	frappe.local.response.type = "download"
+	frappe.local.response.display_content_as = "inline" if str(inline) in ("1", "true") else "attachment"
+
+
 def _masked(fn, **arguments) -> dict[str, Any]:
 	"""A bid the person may not see reads as Not found, as data (§8)."""
 	try:

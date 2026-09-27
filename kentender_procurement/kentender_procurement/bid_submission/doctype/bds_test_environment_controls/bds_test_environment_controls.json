@@ -14,7 +14,8 @@
   "deposit_outcome",
   "rejection_reference",
   "uncertain_resolution",
-  "accept_after_seconds"
+  "accept_after_seconds",
+  "current_instant"
  ],
  "fields": [
   {
@@ -73,12 +74,19 @@
    "label": "Seconds between receipt and acceptance",
    "read_only": 1,
    "default": "0"
+  },
+  {
+   "fieldname": "current_instant",
+   "fieldtype": "Datetime",
+   "label": "Trusted test clock (current instant)",
+   "read_only": 1,
+   "description": "Browser worlds only (plan D18): Bid Submission's trusted clock reads this instant on a test environment. Cleared on restore."
   }
  ],
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-27 12:30:00.000000",
+ "modified": "2026-09-27 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Bid Submission",
  "name": "BDS Test Environment Controls",
