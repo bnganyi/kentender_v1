@@ -7,8 +7,9 @@ import { bdsFixture, restoreBdsWorld } from "./bdsWorld";
  * BDS-CHG-001 v0.8 §10.3 / §11.2 (plan Phase 11, slice 11.2) — BDS-DES-02
  * Published Tender overview, as a signed-out visitor, a supplier with a
  * Draft (and its question), and another supplier who starts a bid. Nobody
- * sees another organisation's bid. The dev site's production switch is off,
- * so the page says electronic submission is not available yet.
+ * sees another organisation's bid. The world closes the production gate
+ * through the test controls (the GATE world), so the page says electronic
+ * submission is not available yet.
  */
 type World = { tender_reference: string; bid_reference: string; password: string; afya_user: string; kisiwa_user: string };
 
@@ -17,7 +18,7 @@ test.describe.configure({ mode: "serial", timeout: 240_000 });
 test.describe("BDS-DES-02 Published Tender overview", () => {
 	let world: World;
 	test.beforeAll(() => {
-		world = bdsFixture<World>("reset_overview_fixture");
+		world = bdsFixture<World>("reset_overview_fixture", { gate_closed: true });
 	});
 	test.afterAll(() => restoreBdsWorld());
 

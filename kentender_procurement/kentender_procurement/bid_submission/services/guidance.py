@@ -166,6 +166,12 @@ def _current_version(ws):
 	return frappe.db.get_value("Bid Submission Version", ws.current_submission_version, ["version_number", "accepted_at", "receipt", "status_since"], as_dict=True)
 
 
+def _acknowledgement_href(ws) -> str:
+	"""The withdrawal acknowledgement page, where Start replacement runs."""
+	reference = frappe.db.get_value("Bid Submission Change", {"bid_workspace": ws.name, "change_type": "Withdrawal"}, "acknowledgement_ref", order_by="acknowledged_at desc")
+	return f"/tenders/{ws.tender_reference}/bid/receipt/{reference}" if reference else f"/tenders/{ws.tender_reference}/bid"
+
+
 def change_label(tender: str) -> str:
 	"""What the latest issued addendum changed, in words (§5.12: "the changed
 	delivery location")."""
@@ -211,13 +217,17 @@ def for_bid(ctx, *, actor: str, at, tasks=None) -> dict[str, Any]:
 	# -- a submitted or withdrawn bid, before the deadline --------------------------
 	if ws.status == "Submitted" and current:
 		if signatory:
-			fixes = [ns.fix("Prepare replacement", responsibility=authz.SIGNATORY, kind=ns.FIX_COMMAND, fix_id="prepare_replacement"), ns.fix("Withdraw bid", responsibility=authz.SIGNATORY, kind=ns.FIX_COMMAND, fix_id="withdraw_bid")]
+			base = f"/tenders/{ws.tender_reference}/bid"
+			fixes = [
+				ns.fix("Prepare replacement", responsibility=authz.SIGNATORY, kind=ns.FIX_ROUTE, fix_id="prepare_replacement", target=f"{base}/replace"),
+				ns.fix("Withdraw bid", responsibility=authz.SIGNATORY, kind=ns.FIX_ROUTE, fix_id="withdraw_bid", target=f"{base}/receipt/{current.receipt}?action=withdraw"),
+			]
 			return result(ns.answer(ns.KIND_YOUR_TURN, headline=f"You may prepare a replacement or withdraw before {deadline_label}. Version {int(current.version_number)} remains submitted.", sentence="These are options, not assigned overdue work.", stage="RECEIPT", fixes=fixes), "DDD")
 		return result(ns.answer(ns.KIND_DONE, headline=f"Bid Version {int(current.version_number)} was accepted on {labels.datetime_seconds_label(current.accepted_at)}.", stage="RECEIPT", primary_action="view_receipt"), "DDD")
 	if ws.status == "Withdrawn":
 		if signatory:
 			return result(ns.answer(ns.KIND_YOUR_TURN, headline="You may start a new bid before the deadline. This bid was withdrawn; no bid is currently submitted.", sentence="This is an available option, not overdue work.", stage="RECEIPT",
-				fixes=[ns.fix("Start replacement", responsibility=authz.SIGNATORY, kind=ns.FIX_COMMAND, fix_id="start_replacement", primary=True)], primary_action="start_replacement"), "DDD")
+				fixes=[ns.fix("Start replacement", responsibility=authz.SIGNATORY, kind=ns.FIX_ROUTE, fix_id="start_replacement", target=_acknowledgement_href(ws), primary=True)], primary_action="start_replacement"), "DDD")
 		return result(ns.answer(ns.KIND_DONE, headline="This bid was withdrawn; no bid is currently submitted.", stage="RECEIPT"), "DDD")
 
 	# -- an open Draft (a replacement Draft when a Version is current) -------------------
@@ -266,12 +276,12 @@ def for_bid(ctx, *, actor: str, at, tasks=None) -> dict[str, Any]:
 		return result(ns.answer(ns.KIND_WAITING, headline=f"{_holder_line('CFG System Manager', people)} is restoring supplier portal information.", sentence="Your ready Draft remains saved.", stage="SIGN_AND_SUBMIT", holder=ns.holder("CFG System Manager", people)), "DBN", ns.holder("CFG System Manager", people)["display"])
 	if "BDS_SIGNATORY_CERTIFICATE_REQUIRED" in codes:
 		blockers = [b for b in ns.blockers_of(guard) if b["reason_code"] == "BDS_SIGNATORY_CERTIFICATE_REQUIRED"]
-		return result(ns.answer(ns.KIND_BLOCKED, headline="Obtain a valid digital signature certificate from an approved licensed certifying agency before submitting.", sentence="Your bid remains saved.", stage="SIGN_AND_SUBMIT", blockers=blockers, primary_action="check_certificate"), "DBN", viewer)
+		return result(ns.answer(ns.KIND_BLOCKED, headline="Obtain a valid digital signature certificate from an approved licensed certifying agency before submitting.", sentence="Your bid remains saved and has not been submitted. Supplier support can explain the process but cannot waive it.", stage="SIGN_AND_SUBMIT", blockers=blockers, primary_action="check_certificate"), "DBN", viewer)
 	attempt = _latest_attempt(ws.name)
 	if attempt and attempt.status == "Rejected" and (not current or attempt.creation > frappe.db.get_value("Bid Submission Version", ws.current_submission_version, "creation")):
 		fixes = [ns.fix("Try confirmation again", responsibility=authz.SIGNATORY, kind=ns.FIX_COMMAND, fix_id="submit_bid", primary=True), ns.fix("Contact support", responsibility="Supplier support", kind=ns.FIX_ROUTE, fix_id="contact_support")]
 		blocker = ns.blocker(ns.guard(False, reason_code="BDS_CUSTODY_REJECTED", message=MESSAGES["BDS_CUSTODY_REJECTED"], figures={"rejection_reference": cstr(attempt.rejection_reference)}, fixes=fixes))
-		return result(ns.answer(ns.KIND_BLOCKED, headline="The tender box rejected this attempt; no bid was submitted.", stage="SIGN_AND_SUBMIT", blockers=[blocker], primary_action="submit_bid"), "DBN", viewer)
+		return result(ns.answer(ns.KIND_BLOCKED, headline="The tender box rejected this attempt; no bid was submitted.", sentence=f"Reference {cstr(attempt.rejection_reference)}. Your bid remains saved and was not submitted.", stage="SIGN_AND_SUBMIT", blockers=[blocker], primary_action="submit_bid"), "DBN", viewer)
 	if replacement:
 		return result(ns.answer(ns.KIND_YOUR_TURN, headline=f"Finish and submit the replacement before the deadline. Version {int(current.version_number)} remains submitted.", stage="BID_PREPARATION", primary_action="review_bid",
 			fixes=[ns.fix("Review bid", responsibility=authz.SIGNATORY, kind=ns.FIX_ROUTE, fix_id="review_bid", primary=True)]), "CNN", viewer)

@@ -16,8 +16,34 @@
 // Likewise BDS-DES-07-QUESTION-OPEN-DIALOG and its success state draw the
 // unchanged documents task beneath the Ask-a-question dialog; the page is
 // compared (the dialog is QuestionDialog.vue, shared with the overview).
+//
+// BDS-DES-16 is one catalogue sheet of cells, not a page per state; each live
+// state is compared with its cell by text in
+// kentender_procurement/public/js/bid_portal/common-states.fidelity.spec.js.
+//
+// BDS-DES-12 confirmation dialog draws the Submit page beneath the "Submit
+// this bid?" dialog; the page is compared (the dialog is ConfirmSubmitDialog.vue).
 
-export const DEPARTURES = {};
+// Board D draws BDS-DES-14-REPLACED and the page beneath the withdrawal
+// dialog as abbreviated receipts. BDS-CHG-001 §10.15 says the replacement
+// receipt reuses the receipt composition (§10.14), and §10.19 puts the next
+// step on every bid page, so the build carries them.
+const RECEIPT_GUIDANCE = [
+	{ path: "journey", because: "The bid journey on every bid page; the abbreviated receipt artboard leaves it out.", authority: "BDS-CHG-001 v0.8 §10.15 (reuse receipt composition) and §10.19" },
+	{ path: "next-step", because: "The §10.19 next step on every bid page; the abbreviated receipt artboard leaves it out.", authority: "BDS-CHG-001 v0.8 §10.15 (reuse receipt composition) and §10.19" },
+];
+const RECEIPT_NOTICE = {
+	path: "notice",
+	because: "The receipt's \"confirms submission only\" notice; the page beneath the withdrawal dialog is drawn without it.",
+	authority: "BDS-CHG-001 v0.8 §10.14 item 3",
+};
+
+export const DEPARTURES = Object.fromEntries(
+	["desktop", "narrow"].flatMap((frame) => [
+		[`ReceiptScreen#BDS-DES-14-REPLACED@${frame}`, RECEIPT_GUIDANCE],
+		[`ReceiptScreen#BDS-DES-14 withdrawal dialog@${frame}`, [...RECEIPT_GUIDANCE, RECEIPT_NOTICE]],
+	]),
+);
 
 // Every `Component#variant@frame` the structural spec compares.
 export const COVERED = new Set([
@@ -42,6 +68,12 @@ export const COVERED = new Set([
 		...[
 			"BDS-DES-11", "BDS-DES-11-EVIDENCE-ATTENTION", "BDS-DES-11-ADDENDUM-ATTENTION", "BDS-DES-11-REPRESENTATIVE", "BDS-DES-11-CFG · in preparation", "BDS-DES-11-CFG · ready",
 		].map((v) => `ReviewTaskScreen#${v}@${frame}`),
+		...[
+			"BDS-DES-12", "BDS-DES-12 confirmation dialog", "BDS-DES-12-PENDING", "BDS-DES-12-CERTIFICATE", "BDS-DES-12-SIGNATURE", "BDS-DES-12-SERVICE", "BDS-DES-12-REJECTED", "BDS-DES-12-CFG",
+			"BDS-DES-12-GATE",
+		].map((v) => `SubmitScreen#${v}@${frame}`),
+		...["BDS-DES-13", "BDS-DES-13-REPRESENTATIVE", "BDS-DES-13-CLOSED", "BDS-DES-14-REPLACED", "BDS-DES-14 withdrawal dialog", "BDS-DES-14-WITHDRAWN"].map((v) => `ReceiptScreen#${v}@${frame}`),
+		`ReplacementScreen#BDS-DES-14@${frame}`,
 	]),
 	...["desktop", "narrow"].flatMap((frame) => [
 		...["BDS-DES-03", "BDS-DES-03-VERIFY"].map((v) => `RegisterScreen#${v}@${frame}`),

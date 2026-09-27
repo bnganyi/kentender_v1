@@ -6,9 +6,9 @@ import { bdsFixture, restoreBdsWorld } from "./bdsWorld";
 /**
  * BDS-CHG-001 v0.8 §10.7 (plan Phase 11, slice 11.6) — Your bid, as the
  * representative (David) and the signatory (Mary) of Afya (Test), on the
- * Tenders test Tender. This dev site keeps the production switch off, so the
- * page names that above the tasks and offers no Submit — the real gate state
- * (BDS-DES-06-GATE), not a forced one.
+ * Tenders test Tender. The ready-bid world closes the production gate through
+ * the test controls (BDS-DES-06-GATE), so the page names that above the tasks
+ * and offers no Submit.
  */
 type World = { tender_reference: string; bid_reference: string; password: string; representative: string; signatory: string; other_user: string };
 
@@ -46,7 +46,7 @@ test.describe("BDS-DES-06 Your bid", () => {
 	});
 
 	test("a ready bid: David waits for Mary, Mary is told to submit; the closed switch is named with the deadline and support", async ({ page }) => {
-		const world = bdsFixture<World>("reset_my_bids_fixture", { state: "ready" });
+		const world = bdsFixture<World>("reset_my_bids_fixture", { state: "ready", gate_closed: true });
 		const errors = collectPortalConsoleErrors(page);
 		await page.setViewportSize({ width: 1440, height: 1024 });
 		await loginToPortal(page, world.representative, world.password, `/tenders/${world.tender_reference}/bid`);

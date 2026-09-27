@@ -148,3 +148,16 @@
 
 /* BDS-DES-11 Review bid: an exact issue link under its task (Board D). */
 .kt-industry.kt-portal .bds-issue-link { margin-top: 4px; font-weight: 400; }
+
+/* BDS-DES-12 Submit bid (Board D): the final confirmation and its pending state. */
+.kt-industry.kt-portal .bds-dialog-text { margin: 0; font-size: 14px; line-height: 1.5; }
+.kt-industry.kt-portal .bds-decision { display: grid; gap: var(--kt-space-4); }
+.kt-industry.kt-portal .bds-decision .kt-checkbox { font-size: 14px; line-height: 1.5; }
+.kt-industry.kt-portal .bds-decision-actions { display: flex; gap: var(--kt-space-3); justify-content: flex-end; flex-wrap: wrap; align-items: center; }
+.kt-industry.kt-portal .bds-meta-tight { gap: var(--kt-space-4) var(--kt-space-8); }
+@media (max-width: 600px) {
+	.kt-industry.kt-portal .bds-decision-actions { flex-direction: column-reverse; align-items: stretch; }
+}
+
+/* BDS-DES-13 / BDS-DES-14-REPLACED receipt (Board D): the replacement's lineage line. */
+.kt-industry.kt-portal .bds-lineage { display: flex; gap: var(--kt-space-4); align-items: center; flex-wrap: wrap; font-size: 14px; }

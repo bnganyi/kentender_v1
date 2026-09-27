@@ -89,7 +89,7 @@ def _start_options(assignment: dict[str, Any], published: dict[str, Any], at) ->
 		"arrangements": options, "joint_venture_permitted": "Joint venture" in options,
 		"notice_contacts": [{"contact_id": c["contact_id"], "value": c["value"]} for c in supplier_gateway.verified_contacts(organisation_id=organisation) if c.get("channel", "Email") == "Email"],
 		"notice_contact_help": NOTICE_CONTACT_HELP,
-		"signatories": [{"assignment_id": a["assignment_id"], "name": cstr(frappe.utils.get_fullname(a["user"]))} for a in supplier_gateway.organisation_signatories(organisation_id=organisation, at=at)],
+		"signatories": [{"assignment_id": a["assignment_id"], "name": labels.person_name(a["user"])} for a in supplier_gateway.organisation_signatories(organisation_id=organisation, at=at)],
 		"agreements": [{"evidence_id": e["evidence_id"], "title": cstr(e.get("file_name") or e.get("title"))} for e in supplier_gateway.account_evidence(organisation_id=organisation) if e.get("status") == "Available"],
 	}
 

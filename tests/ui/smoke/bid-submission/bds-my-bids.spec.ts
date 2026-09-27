@@ -98,7 +98,7 @@ test.describe("BDS-DES-05 My bids / BDS-DES-17 Receipts", () => {
 		await expect(page.locator("body")).not.toContainText(world.bid_reference);
 		await page.goto(`/account/receipts?organisation=${world.organisation}`, { waitUntil: "domcontentloaded" });
 		await waitForPortal(page);
-		await expect(page.getByTestId("bds-state-not-found")).toBeVisible();
+		await expect(page.getByTestId("bds-state-page-not-found")).toBeVisible();
 		await expect(page.locator("body")).not.toContainText(world.receipt_reference);
 		expect(errors.filter((e) => !/404 \(Not Found\)/.test(e)), errors.join(" | ")).toEqual([]);
 	});

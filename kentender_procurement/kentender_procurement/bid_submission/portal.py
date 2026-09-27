@@ -50,6 +50,54 @@ def resolve(*, path: str, query: dict[str, Any], user: str) -> dict[str, Any]:
 		except frappe.DoesNotExistError:
 			return {"verdict": "NOT_FOUND", "title": "Bid not found", "payload": {"screen": "not-found"}}
 		return {"verdict": "OK", "title": "Your bid", "payload": {"screen": "workspace", "data": {"outcome": "OK", **data}}}
+	if len(segments) == 5 and segments[0] == "tenders" and segments[2] == "bid" and segments[3] == "receipt":
+		# BDS-DES-13: a receipt of the organisation's own bid on this Tender
+		if not user or user == "Guest":
+			return {"verdict": "SIGN_IN", "title": "Sign in"}
+		from kentender_procurement.bid_submission.services import changes_view, receipt_view
+
+		organisation = str(query.get("organisation") or "")
+		try:
+			if segments[4].startswith("WD-"):  # BDS-DES-14-WITHDRAWN: the withdrawal acknowledgement
+				data = changes_view.get_acknowledgement_page(tender_reference=segments[1], acknowledgement_reference=segments[4], organisation=organisation, user=user)
+				return {"verdict": "OK", "title": data["page"]["title"], "payload": {"screen": "receipt", "data": {"outcome": "OK", **data}}}
+			data = receipt_view.get_receipt_page(tender_reference=segments[1], receipt_reference=segments[4], organisation=organisation, user=user)
+		except frappe.DoesNotExistError:
+			return {"verdict": "NOT_FOUND", "title": "Receipt not found", "payload": {"screen": "receipt-not-found"}}
+		return {"verdict": "OK", "title": data["page"]["title"], "payload": {"screen": "receipt", "data": {"outcome": "OK", **data}}}
+	if len(segments) == 4 and segments[0] == "tenders" and segments[2] == "bid" and segments[3] == "status":
+		# §11.5 View status: one §10.17 common state, or straight to the receipt
+		if not user or user == "Guest":
+			return {"verdict": "SIGN_IN", "title": "Sign in"}
+		from kentender_procurement.bid_submission.services import status_view
+
+		try:
+			data = status_view.get_status_page(tender_reference=segments[1], organisation=str(query.get("organisation") or ""), user=user)
+		except frappe.DoesNotExistError:
+			return {"verdict": "NOT_FOUND", "title": "Bid not found", "payload": {"screen": "not-found"}}
+		if data["redirect"]:
+			return {"verdict": "OK", "title": "Submission status", "redirect": data["redirect"]}
+		return {"verdict": "OK", "title": "Submission status", "payload": {"screen": "status", "data": {"outcome": "OK", **data}}}
+	if len(segments) == 4 and segments[0] == "tenders" and segments[2] == "bid" and segments[3] == "replace":
+		# BDS-DES-14: Prepare replacement for the organisation's own submitted bid
+		if not user or user == "Guest":
+			return {"verdict": "SIGN_IN", "title": "Sign in"}
+		from kentender_procurement.bid_submission.services import changes_view
+
+		try:
+			data = changes_view.get_replacement_page(tender_reference=segments[1], organisation=str(query.get("organisation") or ""), user=user)
+		except frappe.DoesNotExistError:
+			return {"verdict": "NOT_FOUND", "title": "Bid not found", "payload": {"screen": "not-found"}}
+		return {"verdict": "OK", "title": "Prepare replacement bid", "payload": {"screen": "replace", "data": {"outcome": "OK", **data}}}
+	if len(segments) == 4 and segments[0] == "tenders" and segments[2] == "bid" and segments[3] == "submit":
+		# BDS-DES-12: the final act for the organisation's own bid
+		if not user or user == "Guest":
+			return {"verdict": "SIGN_IN", "title": "Sign in"}
+		try:
+			data = reads.get_submit_page(tender_reference=segments[1], organisation=str(query.get("organisation") or ""), user=user)
+		except frappe.DoesNotExistError:
+			return {"verdict": "NOT_FOUND", "title": "Bid not found", "payload": {"screen": "not-found"}}
+		return {"verdict": "OK", "title": "Submit bid", "payload": {"screen": "submit", "data": {"outcome": "OK", **data}}}
 	if len(segments) == 4 and segments[0] == "tenders" and segments[2] == "bid" and segments[3] in TASK_SCREENS:
 		# BDS-DES-07/08: a task of the organisation's own bid
 		if not user or user == "Guest":

@@ -211,6 +211,13 @@ def get_bid_task(*, bid_reference: str = "", task: str, tender_reference: str = 
 	return view
 
 
+def get_submit_page(*, tender_reference: str, organisation: str = "", user: str | None = None) -> dict[str, Any]:
+	"""BDS-DES-12 for the acting organisation's own bid on this Tender."""
+	from kentender_procurement.bid_submission.services import submit_view
+
+	return submit_view.get_submit_page(tender_reference=tender_reference, organisation=organisation, user=user)
+
+
 def _public_security(security: dict[str, Any]) -> dict[str, Any]:
 	"""The supplier's own security facts for the page (the handle is internal to the review link)."""
 	return {k: v for k, v in security.items() if k != "security_form_handle"}

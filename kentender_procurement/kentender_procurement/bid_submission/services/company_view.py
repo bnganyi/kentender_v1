@@ -174,7 +174,7 @@ def signatory(ctx, *, at) -> dict[str, Any] | None:
 	joint = arrangement.arrangement_type == "Joint venture"
 	lead = cstr((supplier_gateway.organisation(organisation_id=ctx.workspace.lead_organisation) or {}).get("legal_name"))
 	return {
-		"name": _name(row["user"]), "job_title": cstr(row.get("job_title")), "organisation": f"{lead} (lead)" if joint else "",
+		"name": _name(row["user"]), "job_title": cstr(row.get("job_title")), "organisation": f"{lead} (lead)" if joint else "", "authority_available": bool(evidence),
 		"authority_href": f"/api/method/kentender_suppliers.supplier_accounts.api.download_account_evidence?organisation={ctx.workspace.lead_organisation}&evidence={evidence}&inline=1" if evidence and not joint else "",
 		"certificate": None if joint else certificate,
 	}

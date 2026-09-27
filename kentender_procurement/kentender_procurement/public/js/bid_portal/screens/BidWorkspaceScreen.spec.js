@@ -87,8 +87,14 @@ describe("Your bid", () => {
 		await flushPromises();
 		expect(call.mock.calls[0]).toEqual(["kentender_procurement.bid_submission.api.get_bid_workspace", { tender_reference: REF, bid_reference: "", organisation: "" }]);
 		expect(masked.emitted("not-found")).toHaveLength(1);
-		const failing = mountWith({ initial: null }, portalFor({ call: vi.fn(async () => { throw new Error("The server could not be reached."); }) }));
+		const read = vi.fn(async () => { throw new Error("The server could not be reached."); });
+		const failing = mountWith({ initial: null }, portalFor({ call: read }));
 		await flushPromises();
-		expect(failing.text()).toContain("The server could not be reached.");
+		// the §10.17 Load failure state, and Try again reads once more
+		const state = failing.get('[data-testid="bds-state-load-failure"]');
+		expect([state.get("h1").text(), state.get("p").text()]).toEqual(["Bid could not be loaded", "Your saved bid has not changed."]);
+		await state.get("button").trigger("click");
+		await flushPromises();
+		expect(read).toHaveBeenCalledTimes(2);
 	});
 });

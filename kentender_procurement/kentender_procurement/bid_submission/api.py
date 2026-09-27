@@ -244,6 +244,12 @@ def get_submit_bid(bid_reference: str, organisation: str = "") -> dict[str, Any]
 
 
 @frappe.whitelist(methods=["GET"])
+def get_submit_page(tender_reference: str, organisation: str = "") -> dict[str, Any]:
+	"""BDS-DES-12 page read for the acting organisation's own bid on this Tender."""
+	return _masked(reads.get_submit_page, tender_reference=tender_reference, organisation=organisation)
+
+
+@frappe.whitelist(methods=["GET"])
 def check_certificate(bid_reference: str, organisation: str = "") -> dict[str, Any]:
 	"""BDS §11.5 Check certificate — a fresh trust-service read; changes nothing."""
 	return _masked(signature_service.check_certificate, bid_reference=bid_reference, organisation=organisation)
@@ -308,8 +314,47 @@ def get_bid_receipt(receipt_reference: str, organisation: str = "") -> dict[str,
 
 
 @frappe.whitelist(methods=["GET"])
-def download_bid_receipt(receipt_reference: str, organisation: str = "") -> None:
-	"""BDS §11.6 Download receipt — the immutable receipt as a PDF."""
+def get_status_page(tender_reference: str, organisation: str = "") -> dict[str, Any]:
+	"""§11.5 View status for the organisation's own bid on this Tender: one common state, or where to go."""
+	from kentender_procurement.bid_submission.services import status_view
+
+	return _masked(status_view.get_status_page, tender_reference=tender_reference, organisation=organisation)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_replacement_page(tender_reference: str, organisation: str = "") -> dict[str, Any]:
+	"""BDS-DES-14 Prepare replacement page read for the organisation's own bid on this Tender."""
+	from kentender_procurement.bid_submission.services import changes_view
+
+	return _masked(changes_view.get_replacement_page, tender_reference=tender_reference, organisation=organisation)
+
+
+@frappe.whitelist(methods=["GET"])
+def download_withdrawal_acknowledgement(acknowledgement_reference: str, organisation: str = "") -> None:
+	"""BDS-DES-14-WITHDRAWN Download acknowledgement — the acknowledgement as a PDF."""
+	from frappe.utils.pdf import get_pdf
+
+	from kentender_procurement.bid_submission.services import changes_view
+
+	facts = withdrawal_service.get_withdrawal_acknowledgement(acknowledgement_reference=acknowledgement_reference, organisation=organisation)
+	frappe.local.response.filename = f"{facts['acknowledgement_reference']}.pdf"
+	frappe.local.response.filecontent = get_pdf(changes_view.acknowledgement_html(facts))
+	frappe.local.response.type = "download"
+
+
+@frappe.whitelist(methods=["GET"])
+def get_receipt_page(tender_reference: str, receipt_reference: str, organisation: str = "") -> dict[str, Any]:
+	"""BDS-DES-13 page read for a receipt of the organisation's own bid on this Tender."""
+	from kentender_procurement.bid_submission.services import changes_view, receipt_view
+
+	if receipt_reference.startswith("WD-"):  # a withdrawal acknowledgement (BDS-DES-14-WITHDRAWN)
+		return _receipt_masked(changes_view.get_acknowledgement_page, tender_reference=tender_reference, acknowledgement_reference=receipt_reference, organisation=organisation)
+	return _receipt_masked(receipt_view.get_receipt_page, tender_reference=tender_reference, receipt_reference=receipt_reference, organisation=organisation)
+
+
+@frappe.whitelist(methods=["GET"])
+def download_bid_receipt(receipt_reference: str, organisation: str = "", inline: int = 0) -> None:
+	"""BDS §11.6 Download receipt — the immutable receipt as a PDF (inline for Print receipt)."""
 	try:
 		name, content = receipts_service.receipt_pdf(receipt_reference=receipt_reference, organisation=organisation)
 	except frappe.DoesNotExistError:
@@ -317,6 +362,7 @@ def download_bid_receipt(receipt_reference: str, organisation: str = "") -> None
 	frappe.local.response.filename = name
 	frappe.local.response.filecontent = content
 	frappe.local.response.type = "download"
+	frappe.local.response.display_content_as = "inline" if frappe.utils.cint(inline) else "attachment"
 
 
 # --------------------------------------------------------------------------

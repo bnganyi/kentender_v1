@@ -21,7 +21,7 @@ import frappe
 from frappe.utils import cstr
 
 from kentender_procurement.bid_submission.services import bid_authorization as authz
-from kentender_procurement.bid_submission.services import supplier_gateway, tenders_gateway
+from kentender_procurement.bid_submission.services import labels, supplier_gateway, tenders_gateway
 from kentender_procurement.bid_submission.services.definition_model import DefinitionModel, Field
 from kentender_procurement.bid_submission.services.errors import fail
 
@@ -84,7 +84,7 @@ def _signatory(arrangement) -> dict[str, Any] | None:
 	assignment = supplier_gateway.assignment(assignment_id=cstr(arrangement.authorised_signatory_assignment)) if arrangement.authorised_signatory_assignment else None
 	if not assignment:
 		return None
-	return {"full_name": cstr(frappe.utils.get_fullname(assignment.get("user"))), "job_title": cstr(assignment.get("job_title"))}
+	return {"full_name": labels.person_name(cstr(assignment.get("user"))), "job_title": cstr(assignment.get("job_title"))}
 
 
 def evidence_of(workspace: str) -> dict[str, list[dict[str, Any]]]:

@@ -66,9 +66,12 @@ test.describe('BDS-DES-01 Available Tenders — portal skeleton (guest)', () => 
 		await expect(page).toHaveURL(/\/tenders$/);
 		await expect(page.getByRole('heading', { level: 1, name: 'Available Tenders' })).toBeVisible();
 
-		const bids = await page.goto('/my-bids', { waitUntil: 'domcontentloaded' });
+		// /my-bids is a page since slice 11.5 (a guest is asked to sign in); a
+		// path under it that no screen answers is the portal's Page not found
+		const bids = await page.goto('/my-bids/not-a-page', { waitUntil: 'domcontentloaded' });
 		expect(bids?.status()).toBe(404);
-		await expect(page.getByTestId('kt-portal-not-found')).toBeVisible();
+		await waitForPortal(page);
+		await expect(page.getByTestId('bds-state-page-not-found')).toContainText('Page not found.');
 		await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'My bids' })).toHaveAttribute('aria-current', 'page');
 		expect(errors, `page console errors: ${errors.join(' | ')}`).toEqual([]);
 	});

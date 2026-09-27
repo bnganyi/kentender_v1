@@ -216,7 +216,7 @@ def _change(workspace, change_type: str, *, affected: str, actor: str, at, ackno
 	return records.insert(frappe.get_doc({
 		"doctype": "Bid Submission Change", "submission_change_id": f"SCH-{workspace.name.removeprefix('BID-')}-{number:02d}", "bid_workspace": workspace.name, "tender": workspace.tender,
 		"affected_submission_version": affected, "new_submission_version": new_version or None, "change_type": change_type, "reason": reason, "requested_by": actor,
-		"requested_by_name": cstr(frappe.utils.get_fullname(actor)), "requested_at": at, "acknowledgement_ref": acknowledgement, "acknowledged_at": at,
+		"requested_by_name": labels.person_name(actor), "requested_at": at, "acknowledgement_ref": acknowledgement, "acknowledged_at": at,
 	}))
 
 
@@ -310,16 +310,11 @@ def get_submission_status(*, bid_reference: str, organisation: str = "", user: s
 
 
 def _acknowledgement(ctx) -> str:
-	"""Who acknowledged the effective addendum and when, or that none is due."""
-	keys = [f.key for f in ctx.model.fields_of("documents") if f.kind == "confirmation"]
-	if not keys:
-		return "No addendum to acknowledge"
-	row = frappe.db.get_value(
-		"Bid Draft Change", {"bid_workspace": ctx.workspace.name, "response_key": ("in", keys), "new_value": "true"}, ["actor", "changed_at"], as_dict=True, order_by="changed_at desc",
-	)
-	if not row or not all(ctx.values.get(k) for k in keys):
-		return "Not yet acknowledged"
-	return f"{frappe.utils.get_fullname(row.actor)} · {labels.datetime_label(row.changed_at)}"
+	"""Each effective addendum this Draft acknowledged and when, or what is due."""
+	from kentender_procurement.bid_submission.services import submit_view
+
+	return submit_view.acknowledgements(ctx)
+
 
 
 def get_submit_bid(*, bid_reference: str, organisation: str = "", user: str | None = None) -> dict[str, Any]:
@@ -359,7 +354,7 @@ def get_submit_bid(*, bid_reference: str, organisation: str = "", user: str | No
 			"addendum_acknowledged": _acknowledgement(ctx), "security_receipt": security.get("physical_receipt_status", "") if security.get("required") else "Not required",
 		},
 		"signatory": {
-			"name": cstr(frappe.utils.get_fullname(actor)), "job_title": cstr(ctx.assignment.get("job_title")), "responsibility": cstr(ctx.assignment.get("responsibility")),
+			"name": labels.person_name(actor), "job_title": cstr(ctx.assignment.get("job_title")), "responsibility": cstr(ctx.assignment.get("responsibility")),
 			"authority_evidence": "Available" if ctx.assignment.get("signatory_ready") else "Not available", "certificate": certificate_status,
 		},
 		"confirmation_label": projection.label(ctx, confirm) if confirm else "",

@@ -9,6 +9,10 @@ import BidWorkspaceScreen from "./screens/BidWorkspaceScreen.vue";
 import CompanyTaskScreen from "./screens/CompanyTaskScreen.vue";
 import PriceTaskScreen from "./screens/PriceTaskScreen.vue";
 import ReviewTaskScreen from "./screens/ReviewTaskScreen.vue";
+import SubmitScreen from "./screens/SubmitScreen.vue";
+import ReceiptScreen from "./screens/ReceiptScreen.vue";
+import ReplacementScreen from "./screens/ReplacementScreen.vue";
+import StatusScreen from "./screens/StatusScreen.vue";
 import RequirementsTaskScreen from "./screens/RequirementsTaskScreen.vue";
 import DocumentsTaskScreen from "./screens/DocumentsTaskScreen.vue";
 import MyBidsScreen from "./screens/MyBidsScreen.vue";
@@ -22,7 +26,7 @@ const props = defineProps({
 });
 const { route } = props.portal.useRoute({ ref, onMounted, onUnmounted });
 // The server said this path has nothing to show (first paint) or a later read did.
-const notFound = ref(!!(props.initial && props.initial.path === route.value.path && ["tender-not-found", "not-found"].includes((props.initial.payload || {}).screen)));
+const notFound = ref(!!(props.initial && props.initial.path === route.value.path && ["tender-not-found", "not-found", "receipt-not-found"].includes((props.initial.payload || {}).screen)));
 watch(() => route.value.path, () => (notFound.value = false));
 
 const screen = computed(() => {
@@ -36,6 +40,10 @@ const screen = computed(() => {
 	if (segments.length === 4 && segments[0] === "tenders" && segments[2] === "bid" && segments[3] === "requirements") return "requirements-task";
 	if (segments.length === 4 && segments[0] === "tenders" && segments[2] === "bid" && segments[3] === "price") return "price-task";
 	if (segments.length === 4 && segments[0] === "tenders" && segments[2] === "bid" && segments[3] === "review") return "review-task";
+	if (segments.length === 4 && segments[0] === "tenders" && segments[2] === "bid" && segments[3] === "submit") return "submit";
+	if (segments.length === 5 && segments[0] === "tenders" && segments[2] === "bid" && segments[3] === "receipt") return "receipt";
+	if (segments.length === 4 && segments[0] === "tenders" && segments[2] === "bid" && segments[3] === "replace") return "replace";
+	if (segments.length === 4 && segments[0] === "tenders" && segments[2] === "bid" && segments[3] === "status") return "status";
 	if (segments.length === 1 && segments[0] === "my-bids") return "my-bids";
 	if (segments.length === 2 && segments[0] === "account" && segments[1] === "receipts") return "receipts";
 	return "not-found";
@@ -44,6 +52,7 @@ const screen = computed(() => {
 // A screen sets its own title when it mounts; a common state names itself.
 function notFoundTitle() {
 	const s = route.value.segments;
+	if (s[0] === "tenders" && s[2] === "bid" && s[3] === "receipt") return __("Receipt not found");
 	if (s[0] === "tenders" && s[2] === "bid") return __("Bid not found");
 	return s[0] === "tenders" ? __("Tender not found") : __("Page not found");
 }
@@ -65,30 +74,14 @@ function firstPayload(name) {
 	<RequirementsTaskScreen v-else-if="screen === 'requirements-task'" :key="route.path" :reference="route.segments[1]" :initial="firstPayload('requirements-task')" @not-found="notFound = true" />
 	<PriceTaskScreen v-else-if="screen === 'price-task'" :key="route.path" :reference="route.segments[1]" :initial="firstPayload('price-task')" @not-found="notFound = true" />
 	<ReviewTaskScreen v-else-if="screen === 'review-task'" :key="route.path" :reference="route.segments[1]" :initial="firstPayload('review-task')" @not-found="notFound = true" />
+	<SubmitScreen v-else-if="screen === 'submit'" :key="route.path" :reference="route.segments[1]" :initial="firstPayload('submit')" @not-found="notFound = true" />
+	<StatusScreen v-else-if="screen === 'status'" :key="route.path" :reference="route.segments[1]" :initial="firstPayload('status')" @not-found="notFound = true" />
+	<ReplacementScreen v-else-if="screen === 'replace'" :key="route.path" :reference="route.segments[1]" :initial="firstPayload('replace')" @not-found="notFound = true" />
+	<ReceiptScreen v-else-if="screen === 'receipt'" :key="route.path" :reference="route.segments[1]" :receipt="route.segments[4]" :initial="firstPayload('receipt')" @not-found="notFound = true" />
 	<MyBidsScreen v-else-if="screen === 'my-bids'" :initial="firstPayload('my-bids')" />
 	<ReceiptHistoryScreen v-else-if="screen === 'receipts'" :initial="firstPayload('receipts')" @not-found="notFound = true" />
-	<CommonState
-		v-else-if="route.segments[0] === 'tenders' && route.segments[2] === 'bid'"
-		state="bid-not-found"
-		heading="Bid not found."
-		message="This bid is unavailable or you do not have permission to view it."
-		action-label="Back to My bids"
-		action-href="/my-bids"
-	/>
-	<CommonState
-		v-else-if="route.segments[0] !== 'tenders'"
-		state="not-found"
-		heading="Page not found."
-		message="This page is unavailable or you do not have permission to view it."
-		action-label="Back to My bids"
-		action-href="/my-bids"
-	/>
-	<CommonState
-		v-else
-		state="tender-not-found"
-		heading="Tender not found."
-		message="Return to Tenders."
-		action-label="Back to Tenders"
-		action-href="/tenders"
-	/>
+	<CommonState v-else-if="route.segments[0] === 'tenders' && route.segments[2] === 'bid' && route.segments[3] === 'receipt'" state="receipt-not-found" action-href="/my-bids" />
+	<CommonState v-else-if="route.segments[0] === 'tenders' && route.segments[2] === 'bid'" state="bid-not-found" action-href="/my-bids" />
+	<CommonState v-else-if="route.segments[0] !== 'tenders'" state="page-not-found" action-href="/my-bids" />
+	<CommonState v-else state="tender-not-found" action-href="/tenders" />
 </template>

@@ -8,6 +8,7 @@
 // next task; a refusal is named in place and the tick is kept.
 import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
 import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
+import CommonState from "../components/CommonState.vue";
 import NoticeContactDialog from "../components/NoticeContactDialog.vue";
 import QuestionDialog from "../components/QuestionDialog.vue";
 import { fixRoute } from "../composables/fixRoute.js";
@@ -231,11 +232,6 @@ onMounted(() => {
 		<QuestionDialog v-if="asking" :tender="{ reference, title: (data.tender && data.tender.title) || '' }" :organisation="data.organisation" @close="asking = false" @sent="load" />
 		<NoticeContactDialog v-if="updatingContact" :contact="data.notice_contact" @close="updatingContact = false" @saved="contactUpdated" />
 	</div>
-	<div v-else-if="failure" class="kt-page">
-		<div class="kt-notice is-critical bds-load-failure" role="alert">
-			<div class="kt-notice-body">{{ failure }}</div>
-			<button type="button" class="kt-btn kt-btn-secondary" @click="load">{{ __("Try again") }}</button>
-		</div>
-	</div>
+	<CommonState v-else-if="failure" state="load-failure" @action="load" />
 	<div v-else class="kt-page" aria-hidden="true"><div class="bds-skeleton" data-testid="bds-documents-loading"></div></div>
 </template>

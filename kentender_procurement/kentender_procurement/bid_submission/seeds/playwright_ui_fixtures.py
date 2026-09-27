@@ -186,7 +186,16 @@ def set_instant(instant: str) -> None:
 	simulation.set_controls(current_instant=instant)
 
 
-def reset_overview_fixture(*, commit: bool = True, started: bool = True) -> dict[str, Any]:
+def set_gate(*, closed: bool) -> None:
+	"""This world's production gate (plan D5): the test site keeps the switch
+	on so a bid can be submitted in a browser; a GATE world closes it through
+	the test controls, never through the site's own setting."""
+	from kentender_procurement.bid_submission.services import simulation
+
+	simulation.set_controls(gate_closed=1 if closed else 0)
+
+
+def reset_overview_fixture(*, commit: bool = True, started: bool = True, gate_closed: bool = False) -> dict[str, Any]:
 	"""BDS-DES-02 world: the Tenders test Tender, open, with this world's
 	two suppliers; Afya (Test) has started its bid when `started`."""
 	state = tender_pw.reset_published_fixture(commit=False)
@@ -194,13 +203,14 @@ def reset_overview_fixture(*, commit: bool = True, started: bool = True) -> dict
 	_ensure_suppliers()
 	bid = _start(state["tender"], "afya") if started else ""
 	set_instant(OVERVIEW_AT)
+	set_gate(closed=gate_closed)
 	frappe.set_user("Administrator")
 	if commit:
 		frappe.db.commit()
 	return {"tender": state["tender"], "tender_reference": state["tender_reference"], "bid_reference": bid, "password": PASSWORD, **{f"{k}_user": v["representative"] for k, v in SUPPLIERS.items()}, "afya_signatory": SUPPLIERS["afya"]["registrant"]}
 
 
-MY_BIDS_STATES = ("empty", "started", "addendum", "ready", "submitted", "withdrawn", "review", "review-evidence", "review-addendum")
+MY_BIDS_STATES = ("empty", "started", "addendum", "ready", "submitted", "withdrawn", "review", "review-evidence", "review-addendum", "pending")
 # BDS-DES-11 worlds: a Ready bid whose physical original Charles has recorded;
 # then either its datasheet's only file is rejected, or the addendum changes
 # the Tender and David's next change moves the Draft to it.
@@ -286,7 +296,79 @@ def _refresh_for_addendum(bid: str, user: str) -> None:
 		frappe.throw(f"The Draft did not move to the addendum: {result}")
 
 
-def reset_my_bids_fixture(*, state: str = "ready", commit: bool = True) -> dict[str, Any]:
+def _certificate(bid: str) -> str:
+	"""Mary's approved certificate from the Test Trust Service (the review and
+	submit worlds: she can sign)."""
+	from kentender_procurement.bid_submission.test_services import trust
+
+	signatory = SUPPLIERS["afya"]["registrant"]
+	return trust.issue_certificate(
+		user=signatory, organisation=frappe.db.get_value("Bid Workspace", bid, "lead_organisation"), subject_name=frappe.db.get_value("User", signatory, "full_name"),
+		valid_from="2027-01-01 00:00:00", valid_to="2027-12-31 23:59:59",
+	)
+
+
+# BDS-DES-12 worlds on a Ready bid, through the test controls only (plan D5).
+SUBMISSION_WORLDS = {
+	"normal": {}, "signature": {"trust_service_down": 1}, "service": {"custody_service_down": 1},
+	"reject": {"deposit_outcome": "Reject", "rejection_reference": "TBX-REJECT-033-01"}, "uncertain": {"deposit_outcome": "Uncertain"},
+}
+
+
+def set_submission_world(*, world: str) -> dict[str, Any]:
+	"""The signing and custody outcome for the next submission in this world."""
+	from kentender_procurement.bid_submission.services import simulation
+
+	keys = ("trust_service_down", "time_service_down", "custody_service_down", "deposit_outcome", "rejection_reference", "uncertain_resolution")
+	simulation.set_controls(**{**{k: simulation.DEFAULTS[k] for k in keys}, **SUBMISSION_WORLDS[world]})
+	return {"world": world}
+
+
+def _submit_uncertain(bid: str, signatory: str) -> str:
+	"""Mary signs and submits; the Test Tender Box does not answer, so the
+	attempt stays Confirmation pending (BDS-DES-12-PENDING, §10.17)."""
+	from kentender_procurement.bid_submission.services import signature, simulation, submission
+
+	version = lambda: frappe.db.get_value("Bid Workspace", bid, "record_version")  # noqa: E731
+	simulation.set_controls(deposit_outcome="Uncertain")
+	request = signature.prepare_bid_signature(bid_reference=bid, confirmed=True, expected_record_version=version(), idempotency_key=_key(), user=signatory)
+	signed = signature.sign_with_test_trust_service(signing_request=request["signing_request"], user=signatory)
+	result = submission.submit_bid(bid_reference=bid, signature_ref=signed["signature"], confirmed=True, expected_record_version=version(), idempotency_key=_key(), user=signatory)
+	if result.get("code") != "BDS_SUBMISSION_UNCERTAIN":
+		frappe.throw(f"The test attempt did not stay pending: {result}")
+	return result["correlation_id"]
+
+
+def change_bid_as_representative(*, bid_reference: str) -> dict[str, Any]:
+	"""David changes the offered model while another person has the bid open
+	(the §10.17 Stale Draft world); the bid stays Ready to submit."""
+	from kentender_procurement.bid_submission.services import reads, save
+
+	david = SUPPLIERS["afya"]["representative"]
+	saved_clock = frappe.flags.get("kt_bds_clock")
+	frappe.flags.kt_bds_clock = MY_BIDS_AT
+	try:
+		field = next(f for g in reads.get_bid_task(bid_reference=bid_reference, task="requirements", user=david)["groups"] for f in g["fields"] if f.get("key") == "offered_make_model" or f["label"] == "Offered make and model")
+		result = save.save_bid_task(bid_reference=bid_reference, task="requirements", values={field["handle"]: "ApexBook Pro 14 (updated)"}, expected_record_version=frappe.db.get_value("Bid Workspace", bid_reference, "record_version"), idempotency_key=_key(), user=david)
+	finally:
+		frappe.flags.kt_bds_clock = saved_clock
+	if not result.get("ok"):
+		frappe.throw(f"The representative's change was refused: {result}")
+	frappe.db.commit()
+	return {"record_version": frappe.db.get_value("Bid Workspace", bid_reference, "record_version")}
+
+
+def revoke_signatory_certificate() -> dict[str, Any]:
+	"""BDS-DES-12-CERTIFICATE: Mary's certificates in this world are revoked."""
+	from kentender_procurement.bid_submission.test_services import trust
+
+	refs = frappe.get_all(trust.CERTIFICATE, filters={"user": SUPPLIERS["afya"]["registrant"], "status": ("!=", "Revoked")}, pluck="certificate_ref")
+	for ref in refs:
+		trust.revoke_certificate(ref)
+	return {"revoked": len(refs)}
+
+
+def reset_my_bids_fixture(*, state: str = "ready", commit: bool = True, gate_closed: bool = False) -> dict[str, Any]:
 	"""BDS-DES-05 / BDS-DES-17 worlds on the Tenders test Tender for Afya
 	(Test): "empty" (no bid), "started" (a new Draft), "addendum" (a new Draft,
 	then the Tenders world issues its addendum; its notice stays queued),
@@ -303,6 +385,8 @@ def reset_my_bids_fixture(*, state: str = "ready", commit: bool = True) -> dict[
 	_ensure_suppliers()
 	afya = SUPPLIERS["afya"]
 	bid = receipt = acknowledgement = ""
+	namespace = frappe.flags.get("kt_bds_fixture_namespace")
+	frappe.flags.kt_bds_fixture_namespace = NAMESPACE  # this world's records are removed exactly by restore_site
 	try:
 		if state != "empty":
 			_pinned(MY_BIDS_STEPS["fill"])
@@ -311,12 +395,16 @@ def reset_my_bids_fixture(*, state: str = "ready", commit: bool = True) -> dict[
 			filling.fill_everything(bid, user=afya["representative"])
 		if state == "addendum":
 			tender_pw._issued_addendum(tender["tender"])
-		if state.startswith("review"):
+		if state.startswith("review") or state == "pending":
 			_pinned(REVIEW_STEPS["intake"])
 			_record_original(bid)
+			_certificate(bid)
 		if state == "review-evidence":
 			_pinned(REVIEW_STEPS["reject"])
 			_reject_datasheet(bid, afya["representative"])
+		if state == "pending":
+			_pinned(REVIEW_STEPS["reject"])
+			_submit_uncertain(bid, afya["registrant"])
 		if state == "review-addendum":
 			tender_pw._issued_addendum(tender["tender"])
 			_pinned(REVIEW_STEPS["refresh"])
@@ -333,7 +421,10 @@ def reset_my_bids_fixture(*, state: str = "ready", commit: bool = True) -> dict[
 			acknowledgement = done["acknowledgement_reference"]
 	finally:
 		_pinned(None)
+		frappe.flags.kt_bds_fixture_namespace = namespace
 	set_instant(ADDENDUM_AT if state == "addendum" else REVIEW_ADDENDUM_AT if state == "review-addendum" else MY_BIDS_AT)
+	set_gate(closed=gate_closed)
+	set_submission_world(world="normal")
 	frappe.set_user("Administrator")
 	if commit:
 		frappe.db.commit()
@@ -349,6 +440,10 @@ def restore_site(*, commit: bool = True) -> dict[str, Any]:
 	_wipe_journal()
 	out = tender_pw.restore_site(commit=False)
 	bds_clear.wipe(tenders=[], namespace=NAMESPACE)
+	# test certificates and signatures held by this world's own people (older
+	# worlds issued them without the namespace stamp)
+	for doctype in ("Test Trust Signature", "Test Trust Certificate"):
+		frappe.db.delete(doctype, {"user": ("in", list(SUPPLIER_USERS))})
 	from kentender_procurement.bid_submission.services import simulation
 
 	simulation.reset_controls()  # the test clock and every forced world back to normal

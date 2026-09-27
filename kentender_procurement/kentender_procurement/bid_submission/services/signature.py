@@ -35,6 +35,7 @@ from kentender_procurement.bid_submission.services import (
 	bid_context,
 	clock,
 	gateways,
+	labels,
 	package,
 	readiness,
 	records,
@@ -58,7 +59,7 @@ def signatory_of(ctx, actor: str) -> dict[str, Any]:
 		fail("BDS_SIGNATORY_REQUIRED")
 	if named and assignment.get("assignment_id") != named:
 		fail("BDS_SIGNATORY_REQUIRED")
-	return {"assignment_id": assignment["assignment_id"], "full_name": cstr(frappe.utils.get_fullname(actor)), "job_title": cstr(assignment.get("job_title"))}
+	return {"assignment_id": assignment["assignment_id"], "full_name": labels.person_name(actor), "job_title": cstr(assignment.get("job_title"))}
 
 
 def require_before_deadline(ctx, at) -> Any:

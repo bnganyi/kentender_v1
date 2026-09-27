@@ -269,3 +269,23 @@ export function bidSubmissionScope(doc, id, { frame = "desktop" } = {}) {
 export function bidSubmissionSkeleton(relPath, id, options = {}) {
 	return skeletonOf(bidSubmissionScope(documentFor(relPath), id, options));
 }
+
+/**
+ * The BDS-DES-16 common-state catalogue's cells (BDS-CHG-001 §10.17), read
+ * from the board: each cell's label, heading, message and one action. The
+ * live states are compared with these by text (the catalogue is one sheet,
+ * so there is no per-state container to compare structurally).
+ */
+export function bidSubmissionStateCells(relPath, id, options = {}) {
+	const scope = bidSubmissionScope(documentFor(relPath), id, options);
+	return [...scope.querySelectorAll("span.kt-label")].map((label) => {
+		const cell = label.parentElement;
+		const message = [...cell.children].find((child) => child.tagName === "SPAN" && !child.classList.contains("kt-label"));
+		return {
+			label: label.textContent.trim(),
+			heading: (cell.querySelector("strong")?.textContent || "").trim(),
+			message: (message?.textContent || "").trim(),
+			action: (cell.querySelector(".btn")?.textContent || "").trim(),
+		};
+	});
+}

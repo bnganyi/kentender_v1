@@ -6,13 +6,12 @@ import { bdsFixture, restoreBdsWorld } from "./bdsWorld";
 /**
  * BDS-CHG-001 v0.8 §10.12 (plan Phase 11, slice 11.11) — Review bid on the
  * Tenders test Tender for Afya (Test): Mary, the Authorised Signatory, reads a
- * Ready bid whose physical original Charles recorded; this dev site's
- * production switch is off (as the bid workspace spec relies on), so Submit
- * bid is absent and the next step names the release operator — Submit on a
- * ready bid is proven by the server and component tests until the Submit
- * slice's worlds turn the switch on. David reads the same review; a rejected
- * datasheet and an addendum change are each linked at their task. Another
- * organisation sees nothing.
+ * Ready bid whose physical original Charles recorded and is offered Submit
+ * bid; with the production gate closed (the GATE world, through the test
+ * controls) Submit is absent and the next step names the release operator.
+ * David reads the same review without Submit; a rejected datasheet and an
+ * addendum change are each linked at their task. Another organisation sees
+ * nothing.
  */
 type World = { tender_reference: string; bid_reference: string; password: string; representative: string; signatory: string; other_user: string };
 
@@ -21,7 +20,7 @@ test.describe.configure({ mode: "serial", timeout: 300_000 });
 test.describe("BDS-DES-11 Review bid", () => {
 	test.afterAll(() => restoreBdsWorld());
 
-	test("Mary reviews a ready bid; with the switch off nobody is offered Submit", async ({ page }) => {
+	test("Mary reviews a ready bid and may submit it; a closed gate or David's role takes Submit away", async ({ page }) => {
 		const world = bdsFixture<World>("reset_my_bids_fixture", { state: "review" });
 		const errors = collectPortalConsoleErrors(page);
 		const review = `/tenders/${world.tender_reference}/bid/review`;
@@ -30,8 +29,9 @@ test.describe("BDS-DES-11 Review bid", () => {
 		await expect(page.getByRole("heading", { level: 1, name: "Review bid" })).toBeVisible();
 		await expect(page.getByTestId("bds-review-result")).toHaveText("All required bid information is complete.");
 		await expect(page.getByTestId("bds-review-security")).toContainText("Physical tender-security original recorded as received on 20 May 2027");
-		await expect(page.locator(".kt-next-step-headline")).toContainText("holds the verified production-submission release.");
-		await expect(page.getByText("Submit bid", { exact: true })).toHaveCount(0);
+		await expect(page.getByTestId("bds-review-action")).toHaveText("Submit bid");
+		await expect(page.getByTestId("bds-review-action")).toHaveAttribute("href", `/tenders/${world.tender_reference}/bid/submit`);
+		await expect(page.getByTestId("bds-review-submit")).toBeVisible();
 		await expect(page.getByTestId("bds-review-summary")).toContainText(`${world.bid_reference} · Draft Version`);
 		await expect(page.getByTestId("bds-review-tasks").locator("tbody tr")).toHaveCount(5);
 		await expect(page.getByTestId("bds-review-offering")).toContainText("Warranty");
@@ -45,7 +45,16 @@ test.describe("BDS-DES-11 Review bid", () => {
 		await expect(page.getByTestId("bds-review-result")).toBeVisible();
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await waitForPortal(page);
+		await expect(page.getByTestId("bds-review-action")).toHaveText("Submit bid");
+
+		// the GATE world: the production gate closed through the test controls
+		bdsFixture("set_gate", { closed: true });
+		await page.reload({ waitUntil: "domcontentloaded" });
+		await waitForPortal(page);
 		await expect(page.getByTestId("bds-review-result")).toHaveText("All required bid information is complete.");
+		await expect(page.locator(".kt-next-step-headline")).toContainText("holds the verified production-submission release.");
+		await expect(page.getByText("Submit bid", { exact: true })).toHaveCount(0);
+		bdsFixture("set_gate", { closed: false });
 
 		await page.setViewportSize({ width: 390, height: 844 });
 		await expect(page.getByTestId("bds-review-task-cards")).toBeVisible();

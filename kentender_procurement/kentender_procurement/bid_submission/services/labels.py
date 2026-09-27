@@ -46,3 +46,11 @@ def money_label(amount, currency: str = "KES") -> str:
 	except InvalidOperation:
 		return ""
 	return f"{currency} {value.quantize(Decimal('0.01')):,.2f}"
+
+
+def person_name(user: str) -> str:
+	"""A person's recorded full name (the User record, not a per-process cache),
+	or the login when none is recorded."""
+	import frappe
+
+	return str(frappe.db.get_value("User", user, "full_name") or user) if user else ""

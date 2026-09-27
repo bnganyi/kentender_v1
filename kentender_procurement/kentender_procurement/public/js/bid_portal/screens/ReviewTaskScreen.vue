@@ -8,6 +8,7 @@
 // declarations and evidence, and the price summary. Nothing is saved here.
 import { inject, onMounted, onUnmounted, ref, watch } from "vue";
 import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
+import CommonState from "../components/CommonState.vue";
 import { fixRoute } from "../composables/fixRoute.js";
 import { useNarrow } from "../composables/useNarrow.js";
 
@@ -155,11 +156,6 @@ onMounted(() => {
 			<div v-if="data.footer.submit" class="bds-footer-end"><a :href="data.footer.submit.href" class="kt-btn kt-btn-primary" data-testid="bds-review-submit">{{ __(data.footer.submit.label) }}</a></div>
 		</div>
 	</div>
-	<div v-else-if="failure" class="kt-page">
-		<div class="kt-notice is-critical bds-load-failure" role="alert">
-			<div class="kt-notice-body">{{ failure }}</div>
-			<button type="button" class="kt-btn kt-btn-secondary" @click="load">{{ __("Try again") }}</button>
-		</div>
-	</div>
+	<CommonState v-else-if="failure" state="load-failure" @action="load" />
 	<div v-else class="kt-page" aria-hidden="true"><div class="bds-skeleton" data-testid="bds-review-loading"></div></div>
 </template>
