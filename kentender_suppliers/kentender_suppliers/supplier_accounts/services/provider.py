@@ -73,10 +73,9 @@ def evidence_file(*, organisation_id: str, evidence_id: str) -> dict[str, Any] |
 	row = frappe.db.get_value(EVIDENCE, evidence_id, ["organisation", "file", "file_name", "file_digest", "status"], as_dict=True)
 	if not row or row.organisation != organisation_id or not row.file or row.status != "Available":
 		return None
-	from frappe.utils.file_manager import get_file
+	from kentender_core.services.file_integrity import read_bytes
 
-	_, content = get_file(row.file)
-	return {"file_name": cstr(row.file_name), "content": content if isinstance(content, bytes) else cstr(content).encode("utf-8"), "digest": cstr(row.file_digest)}
+	return {"file_name": cstr(row.file_name), "content": read_bytes(row.file), "digest": cstr(row.file_digest)}
 
 
 def find_active_account(*, country: str, registration_number: str) -> dict[str, Any] | None:

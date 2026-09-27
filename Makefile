@@ -702,7 +702,7 @@ bds-portal-gate: bds-preflight
 # notice contact, clarifications, the organisation snapshot and the seeded
 # candidate over a real supplier account.
 bds-services-gate: bds-preflight
-	cd $(BENCH_ROOT) && for m in test_bds_schema test_simulation test_runtime_rules test_start_bid test_candidate_registry_contract test_clarification test_org_snapshot test_seeds test_save_bid_task; do \
+	cd $(BENCH_ROOT) && for m in test_bds_schema test_simulation test_runtime_rules test_start_bid test_candidate_registry_contract test_clarification test_org_snapshot test_seeds test_save_bid_task test_evidence test_addendum_refresh test_review; do \
 		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_submission.tests.$$m || exit 1; done
 
 # BDS-CHG-001 v0.8 Phase 4 — Supplier Accounts (kentender_suppliers): record

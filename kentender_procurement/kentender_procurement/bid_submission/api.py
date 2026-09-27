@@ -62,6 +62,11 @@ def get_bid_task(bid_reference: str, task: str, organisation: str = "") -> dict[
 	return _masked(reads.get_bid_task, bid_reference=bid_reference, task=task, organisation=organisation)
 
 
+@frappe.whitelist(methods=["GET"])
+def get_bid_review(bid_reference: str, organisation: str = "") -> dict[str, Any]:
+	"""BDS §7.1 `GetBidReview`."""
+	return _masked(reads.get_bid_review, bid_reference=bid_reference, organisation=organisation)
+
 # --------------------------------------------------------------------------
 # §7.2 Preparation commands — signed-in suppliers; the services check who
 # may act, for which organisation, on which Tender.

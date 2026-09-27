@@ -21,7 +21,6 @@ from typing import Callable
 
 import frappe
 from frappe.utils import cstr
-from frappe.utils.file_manager import get_file
 
 MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024  # 20 MB
 DEFAULT_ALLOWED_EXTENSIONS: tuple[str, ...] = ("pdf", "png", "jpg", "jpeg")
@@ -39,6 +38,16 @@ def sniff_type(content: bytes) -> str | None:
 		if content.startswith(magic):
 			return kind
 	return None
+
+
+def read_bytes(file_doc_name: str) -> bytes:
+	"""A stored File's exact bytes. `frappe.utils.file_manager.get_file`
+	decodes content that happens to decode in some text encoding (a small PDF
+	does), so encoding its result again changes a binary file's bytes, digest
+	and size. Read binary content only through here."""
+	file_doc = frappe.get_doc("File", file_doc_name)
+	with open(file_doc.get_full_path(), "rb") as handle:
+		return handle.read()
 
 
 def scanner_result(content: bytes, filename: str) -> str:
@@ -77,9 +86,7 @@ def check_file(
 	if extension not in allowed_extensions:
 		fail(f"File type .{extension or '?'} is not permitted. Use {', '.join(e.upper() for e in allowed_extensions)}.")
 
-	_, content = get_file(file_doc_name)
-	if isinstance(content, str):
-		content = content.encode("utf-8")
+	content = read_bytes(file_doc_name)
 	if len(content) > MAX_FILE_SIZE_BYTES:
 		fail("File exceeds the 20 MB maximum size.")
 	if not content:

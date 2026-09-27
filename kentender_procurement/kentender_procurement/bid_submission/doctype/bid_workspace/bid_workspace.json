@@ -22,6 +22,7 @@
   "status_since",
   "current_draft_version",
   "current_submission_version",
+  "attention_json",
   "created_by",
   "created_at",
   "last_saved_by",
@@ -135,6 +136,12 @@
    "read_only": 1
   },
   {
+   "fieldname": "attention_json",
+   "fieldtype": "Long Text",
+   "label": "Tasks to review after an addendum",
+   "read_only": 1
+  },
+  {
    "fieldname": "created_by",
    "fieldtype": "Link",
    "label": "Created by",
@@ -176,7 +183,7 @@
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-27 09:00:00.000000",
+ "modified": "2026-09-27 10:20:00.000000",
  "modified_by": "Administrator",
  "module": "Bid Submission",
  "name": "Bid Workspace",

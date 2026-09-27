@@ -92,7 +92,8 @@ def field_state(ctx: BidContext, field: Field) -> FieldState:
 	return state
 
 
-def evaluate(ctx: BidContext) -> dict[str, TaskState]:
+def evaluate(ctx: BidContext, *, attention: list[str] | None = None) -> dict[str, TaskState]:
+	"""`attention`: tasks an addendum changed that the bidder has not saved since."""
 	tasks: dict[str, TaskState] = {}
 	for task in ctx.model.tasks:
 		states = [field_state(ctx, f) for f in ctx.model.fields_of(task.key)]
@@ -104,6 +105,8 @@ def evaluate(ctx: BidContext) -> dict[str, TaskState]:
 	for key, state in tasks.items():
 		if key == REVIEW_TASK:
 			state.status = "Complete" if blocking == 0 else "Not started"
+		elif key in (attention or []):
+			state.status = "Needs attention"
 		elif state.must_fix == 0:
 			state.status = "Complete"
 		elif key in ctx.sections and ctx.sections[key].values_json not in (None, "", "{}"):
@@ -116,6 +119,8 @@ def evaluate(ctx: BidContext) -> dict[str, TaskState]:
 
 
 def bid_status(tasks: dict[str, TaskState]) -> str:
+	if any(t.status == "Needs attention" for t in tasks.values()):
+		return "Needs attention"
 	return "Ready to submit" if all(t.status == "Complete" for t in tasks.values()) else "Draft"
 
 

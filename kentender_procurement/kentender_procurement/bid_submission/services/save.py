@@ -25,7 +25,7 @@ import frappe
 from frappe.utils import cstr
 
 from kentender_procurement.bid_submission.services import bid_authorization as authz
-from kentender_procurement.bid_submission.services import bid_context, clock, controls, readiness, records, tenders_gateway, validation
+from kentender_procurement.bid_submission.services import addendum, bid_context, clock, controls, readiness, records, tenders_gateway, validation
 from kentender_procurement.bid_submission.services.errors import fail, field_errors
 
 SECTION = "Bid Section Response"
@@ -55,6 +55,9 @@ def _save(*, actor: str, bid_reference: str, task: str, values: dict, expected_r
 	ctx = bid_context.load(bid_reference, actor=actor, organisation=organisation, at=at)
 	require_open(ctx)
 	records.check_version(ctx.workspace, expected_record_version)
+	refreshed = addendum.refresh(ctx, actor=actor, at=at)
+	if refreshed:
+		return refreshed  # the bid moved to the current definition; review first
 	if not ctx.model.task(task) or task == readiness.REVIEW_TASK:
 		fail("BDS_UNKNOWN_RESPONSE")
 	submitted = {}
@@ -86,7 +89,8 @@ def _save(*, actor: str, bid_reference: str, task: str, values: dict, expected_r
 		return field_errors(problems)
 	changed = {key: value for key, value in canonical.items() if before.get(key) != value}
 	ws = ctx.workspace
-	if not changed:
+	reviewed = [t for t in addendum.attention(ctx) if t != task]
+	if not changed and reviewed == addendum.attention(ctx):
 		return {"ok": True, "changed": False, "draft_version": int(ws.current_draft_version), "record_version": int(ws.record_version), "status": ws.status}
 	version = int(ws.current_draft_version or 0) + 1
 	with records.atomic("save-bid-task"):
@@ -99,8 +103,9 @@ def _save(*, actor: str, bid_reference: str, task: str, values: dict, expected_r
 				"change_kind": "Cleared" if value is None else "Saved", "prior_value": _dump(before.get(key)), "new_value": _dump(value), "actor": actor, "changed_at": at,
 			}))
 		ctx.sections = _sections(ws.name)
+		ws.attention_json = json.dumps(reviewed)
 		status = refresh_derived(ctx)
-		records.bump(ws, current_draft_version=version, last_saved_by=actor, last_saved_at=at, **_status_values(ws, status, at))
+		records.bump(ws, current_draft_version=version, last_saved_by=actor, last_saved_at=at, attention_json=json.dumps(reviewed), **_status_values(ws, status, at))
 		records.emit("BidTaskSaved", tender=ws.tender, arrangement=ws.bidder_arrangement, workspace=ws.name, organisation=ws.lead_organisation, actor=actor, at=at, payload={"task": task, "draft_version": version, "changed": len(changed)})
 	return {"ok": True, "changed": True, "draft_version": version, "record_version": int(ws.record_version), "status": status}
 
@@ -127,7 +132,7 @@ def _status_values(ws, status: str, at) -> dict[str, Any]:
 
 def refresh_derived(ctx) -> str:
 	"""Store each saved task's derived status and counts; return the bid's."""
-	tasks = readiness.evaluate(ctx)
+	tasks = readiness.evaluate(ctx, attention=addendum.attention(ctx))
 	for key, row in ctx.sections.items():
 		state = tasks.get(key)
 		if state and (row.status, int(row.blocker_count or 0), int(row.warning_count or 0)) != (state.status, state.must_fix, state.review_notes):

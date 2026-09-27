@@ -40,10 +40,9 @@ def release_doc(release_id: str):
 
 
 def _file_bytes(file_name: str) -> bytes:
-	from frappe.utils.file_manager import get_file
+	from kentender_core.services.file_integrity import read_bytes
 
-	_, content = get_file(file_name)
-	return content if isinstance(content, bytes) else str(content).encode("utf-8")
+	return read_bytes(file_name)  # exact bytes (get_file decodes some binary files)
 
 
 def asset_bytes(release, relative_path: str) -> bytes:

@@ -237,13 +237,13 @@ def stream_public_document(reference: str, key: str) -> dict[str, Any] | None:
 		doc, name = _document({"addendum": addendum, "kind": "Addendum notice"}), key
 	if not doc or not (doc.file or doc.html_file):
 		return None
-	from frappe.utils.file_manager import get_file
+	from kentender_core.services.file_integrity import read_bytes
 
-	_, content = get_file(doc.file or doc.html_file)
+	content = read_bytes(doc.file or doc.html_file)  # exact bytes: a decoded-and-re-encoded PDF is corrupt
 	return {
 		"file_name": f"{name}.{'pdf' if doc.file else 'html'}",
 		"content_type": "application/pdf" if doc.file else "text/html; charset=utf-8",
-		"content": content if isinstance(content, bytes) else cstr(content).encode("utf-8"),
+		"content": content,
 	}
 
 

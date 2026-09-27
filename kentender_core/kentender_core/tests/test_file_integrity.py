@@ -116,3 +116,49 @@ class TestFileIntegrity(IntegrationTestCase):
 	def test_a_missing_file_is_refused(self):
 		with self.assertRaises(_Refused):
 			file_integrity.check_file("no-such-file", fail=_fail)
+
+
+class TestExactBytes(IntegrationTestCase):
+	"""A binary file must be read back exactly. `get_file` decodes content that
+	happens to decode in some text encoding (a small PDF does), so re-encoding
+	it changed the bytes, the digest and the size (found 27 Sep 2026)."""
+
+	def setUp(self):
+		super().setUp()
+		frappe.set_user("Administrator")
+		self._files: list[str] = []
+		self.addCleanup(self._remove_files)
+
+	def _remove_files(self):
+		for name in self._files:
+			if frappe.db.exists("File", name):
+				frappe.delete_doc("File", name, force=True, ignore_permissions=True)
+
+	def _file(self, file_name: str, content: bytes) -> str:
+		doc = frappe.get_doc({"doctype": "File", "file_name": file_name, "is_private": 1, "content": content}).insert(ignore_permissions=True)
+		self._files.append(doc.name)
+		return doc.name
+
+	@staticmethod
+	def _small_pdf() -> bytes:
+		from io import BytesIO
+
+		from pypdf import PdfWriter
+
+		writer = PdfWriter()
+		writer.add_blank_page(width=595, height=842)
+		writer.add_metadata({"/Title": "AGPO-Y-2026-04172"})
+		buffer = BytesIO()
+		writer.write(buffer)
+		return buffer.getvalue()
+
+	def test_a_binary_file_is_read_and_digested_byte_for_byte(self):
+		import hashlib
+
+		content = self._small_pdf()
+		self.assertTrue(any(b > 127 for b in content))  # the binary marker line
+		name = self._file("agpo-certificate.pdf", content)
+		self.assertEqual(file_integrity.read_bytes(name), content)
+		with _hooks_with([]):
+			result = file_integrity.check_file(name, fail=_fail)
+		self.assertEqual((result["digest"], result["size"]), (hashlib.sha256(content).hexdigest(), str(len(content))))

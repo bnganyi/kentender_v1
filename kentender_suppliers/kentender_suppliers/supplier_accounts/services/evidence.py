@@ -81,9 +81,9 @@ def get_account_evidence_file(*, organisation: str, evidence: str, user: str | N
 	row = frappe.db.get_value(DOCTYPE, evidence, ["organisation", "file", "file_name"], as_dict=True)
 	if not row or row.organisation != organisation or not row.file:
 		not_found()
-	from frappe.utils.file_manager import get_file
+	from kentender_core.services.file_integrity import read_bytes
 
-	_, content = get_file(row.file)
+	content = read_bytes(row.file)
 	name = cstr(row.file_name)
 	kind = name.rsplit(".", 1)[-1].lower() if "." in name else ""
-	return {"file_name": name, "content_type": "application/pdf" if kind == "pdf" else ("image/png" if kind == "png" else "image/jpeg"), "content": content if isinstance(content, bytes) else cstr(content).encode("utf-8")}
+	return {"file_name": name, "content_type": "application/pdf" if kind == "pdf" else ("image/png" if kind == "png" else "image/jpeg"), "content": content}

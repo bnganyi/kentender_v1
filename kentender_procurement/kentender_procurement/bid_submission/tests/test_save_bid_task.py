@@ -132,7 +132,7 @@ class TestReads(SaveCase):
 		import re
 
 		leak = re.compile(r"\bRSP-|\bCOMP-|\bCTL-|\bRR-|\bEVG-|\bVAL-|\bRQ-|\bVS-|\bSV-|\bAP-|\bTASK-|\bPBD-|\bTDA-|\bTND[RV]-|[0-9a-f]{64}")
-		payloads = [reads.get_bid_workspace(bid_reference=self.bid, user=DAVID), reads.get_my_bids(user=DAVID)] + [self.task(name) for name in ("documents", "company", "requirements", "price", "review")]
+		payloads = [reads.get_bid_workspace(bid_reference=self.bid, user=DAVID), reads.get_my_bids(user=DAVID), reads.get_bid_review(bid_reference=self.bid, user=DAVID)] + [self.task(name) for name in ("documents", "company", "requirements", "price", "review")]
 		for payload in payloads:
 			self.assertIsNone(leak.search(json.dumps(payload, default=str)), leak.search(json.dumps(payload, default=str)))
 

@@ -39,6 +39,11 @@ def _update(*, actor: str, bid_reference: str, email: str, phone: str, expected_
 	save.require_open(ctx)
 	arrangement = ctx.arrangement
 	records.check_version(arrangement, expected_record_version)
+	from kentender_procurement.bid_submission.services import addendum
+
+	refreshed = addendum.refresh(ctx, actor=actor, at=at)
+	if refreshed:
+		return refreshed
 	problems = {}
 	if not email or not validate_email_address(email, throw=False):
 		problems["email"] = "Enter the Tender contact's email address."

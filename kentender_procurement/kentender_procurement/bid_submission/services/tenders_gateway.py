@@ -74,3 +74,9 @@ def addendum_reference(tender_name: str, addendum_id: str) -> str:
 	"""The public reference of one of the Tender's addenda (the acknowledgement
 	label names it)."""
 	return frappe.db.get_value("Tender Addendum", {"name": addendum_id, "tender": tender_name}, "addendum_reference") or ""
+
+
+def map_addendum(tender_name: str, *, from_version: int, to_version: int) -> dict[str, Any]:
+	"""`MapBidDefinitionAddendum`: the stored identity maps from one supplier
+	definition version to a later effective one, one step per addendum."""
+	return bid_definition.map_bid_definition_addendum(tender=tender_name, from_version=from_version, to_version=to_version)

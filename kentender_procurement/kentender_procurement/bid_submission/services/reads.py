@@ -86,7 +86,23 @@ def _bid_header(ctx, tasks) -> dict[str, Any]:
 	}
 
 
+ADDENDUM_NOTICE = "An addendum changed this Tender. Your next change moves the bid to the current Tender documents; then review the tasks it affects."
+
+
+def _evaluate(ctx):
+	"""Task states with addendum attention; a pending refresh is shown, never
+	performed, by a read (plan D10)."""
+	from kentender_procurement.bid_submission.services import addendum, readiness
+
+	pending = addendum.pending(ctx) is not None
+	tasks = readiness.evaluate(ctx, attention=addendum.attention(ctx) + (["documents"] if pending else []))
+	return tasks, (ADDENDUM_NOTICE if pending else "")
+
+
 def _next(tasks) -> dict[str, str] | None:
+	for key, state in tasks.items():
+		if state.status == "Needs attention":
+			return {"task": key, "text": "Review this task: an addendum changed it."}
 	for key, state in tasks.items():
 		if state.status != "Complete":
 			return {"task": key, "text": "Continue with this task."}
@@ -99,12 +115,12 @@ def get_bid_workspace(*, bid_reference: str, organisation: str = "", user: str |
 	from kentender_procurement.bid_submission.services import bid_context, projection, readiness
 
 	ctx = bid_context.load(bid_reference, actor=cstr(user or frappe.session.user), organisation=organisation, at=clock.now())
-	tasks = readiness.evaluate(ctx)
+	tasks, notice = _evaluate(ctx)
 	tender = tenders_gateway.published_tender(ctx.workspace.tender_reference, at=clock.now()) or {}
 	return {
 		"bid": _bid_header(ctx, tasks),
 		"tender": {"reference": ctx.workspace.tender_reference, "title": tender.get("title", ""), "deadline_label": labels.datetime_label(tender.get("submission_deadline")), "availability": tender.get("availability", "")},
-		"tasks": projection.task_nav(ctx, tasks), "must_fix": readiness.must_fix_total(tasks), "next": _next(tasks),
+		"tasks": projection.task_nav(ctx, tasks), "must_fix": readiness.must_fix_total(tasks), "next": _next(tasks), "addendum_notice": notice,
 	}
 
 
@@ -116,8 +132,8 @@ def get_bid_task(*, bid_reference: str, task: str, organisation: str = "", user:
 	ctx = bid_context.load(bid_reference, actor=cstr(user or frappe.session.user), organisation=organisation, at=clock.now())
 	if not ctx.model.task(cstr(task)):
 		raise frappe.DoesNotExistError("This part of the bid does not exist.")
-	tasks = readiness.evaluate(ctx)
-	return {"bid": _bid_header(ctx, tasks), "tasks": projection.task_nav(ctx, tasks), **projection.task_view(ctx, tasks, cstr(task))}
+	tasks, notice = _evaluate(ctx)
+	return {"bid": _bid_header(ctx, tasks), "tasks": projection.task_nav(ctx, tasks), "addendum_notice": notice, **projection.task_view(ctx, tasks, cstr(task))}
 
 
 def get_my_bids(*, organisation: str = "", user: str | None = None) -> dict[str, Any]:
@@ -141,3 +157,28 @@ def get_my_bids(*, organisation: str = "", user: str | None = None) -> dict[str,
 			"next_action": {"label": NEXT_ACTION.get(ws.status, "View bid"), "href": f"/tenders/{ws.tender_reference}/bid"},
 		})
 	return {"rows": rows, "empty_text": "Your organisation has no bids yet."}
+
+
+def get_bid_review(*, bid_reference: str, organisation: str = "", user: str | None = None) -> dict[str, Any]:
+	"""`GetBidReview` (§7.1, §5.3, §5.7 items 1–2): the result first (ready or
+	not), then every Must fix and Review note linked to its task and field.
+	Viewing it changes nothing (§5.3)."""
+	import frappe
+
+	from kentender_procurement.bid_submission.services import bid_context, projection, readiness
+
+	ctx = bid_context.load(bid_reference, actor=cstr(user or frappe.session.user), organisation=organisation, at=clock.now())
+	tasks, notice = _evaluate(ctx)
+	must_fix, notes = [], []
+	for task in ctx.model.tasks:
+		for state in tasks[task.key].fields:
+			if not state.issue:
+				continue
+			item = {"task": task.key, "task_label": task.label, "handle": state.field.handle, "label": projection.label(ctx, state.field), "text": state.issue["text"]}
+			(must_fix if state.issue["severity"] == readiness.MUST_FIX else notes).append(item)
+	attention = [{"task": key, "task_label": ctx.model.task(key).label} for key, state in tasks.items() if state.status == "Needs attention"]
+	header = _bid_header(ctx, tasks)
+	return {
+		"bid": header, "ready": header["status"] == "Ready to submit", "must_fix": must_fix, "review_notes": notes, "needs_attention": attention,
+		"tasks": projection.task_nav(ctx, tasks), "addendum_notice": notice,
+	}

@@ -45,3 +45,8 @@ def account_evidence(*, organisation_id: str) -> list[dict[str, Any]]:
 
 def find_active_account(*, country: str, registration_number: str) -> dict[str, Any] | None:
 	return _provider().find_active_account(country=country, registration_number=registration_number)
+
+
+def evidence_file(*, organisation_id: str, evidence_id: str) -> dict[str, Any] | None:
+	"""The exact bytes and digest of an Account evidence file (reused in a bid)."""
+	return _provider().evidence_file(organisation_id=organisation_id, evidence_id=evidence_id)
