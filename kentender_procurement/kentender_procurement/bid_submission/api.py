@@ -92,9 +92,9 @@ def get_receipt_history(organisation: str = "") -> dict[str, Any]:
 
 
 @frappe.whitelist(methods=["GET"])
-def get_bid_workspace(bid_reference: str, organisation: str = "") -> dict[str, Any]:
+def get_bid_workspace(bid_reference: str = "", tender_reference: str = "", organisation: str = "") -> dict[str, Any]:
 	"""BDS §7.1 `GetBidWorkspace`."""
-	return _masked(reads.get_bid_workspace, bid_reference=bid_reference, organisation=organisation)
+	return _masked(reads.get_bid_workspace, bid_reference=bid_reference, tender_reference=tender_reference, organisation=organisation)
 
 
 @frappe.whitelist(methods=["GET"])

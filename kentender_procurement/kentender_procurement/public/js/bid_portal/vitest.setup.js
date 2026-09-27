@@ -10,3 +10,18 @@ globalThis.window.matchMedia = (query) => ({
 	addEventListener() {},
 	removeEventListener() {},
 });
+// The shared guidance region (journey and next step) mounts through
+// kentender_core's real bundle, as the portal page loads it.
+globalThis.frappe = globalThis.frappe || {};
+globalThis.frappe.provide =
+	globalThis.frappe.provide ||
+	((path) => {
+		let node = globalThis;
+		for (const part of path.split(".")) {
+			node[part] = node[part] || {};
+			node = node[part];
+		}
+		return node;
+	});
+globalThis.window.kentender_core = globalThis.kentender_core = globalThis.kentender_core || {};
+await import("../../../../../kentender_core/kentender_core/public/js/kt_industry/kt_industry_guidance.bundle.js");

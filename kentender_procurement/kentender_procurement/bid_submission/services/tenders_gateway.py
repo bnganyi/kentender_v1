@@ -95,6 +95,11 @@ def mark_event_consumed(event_doc, *, consumer: str) -> None:
 	events.mark_delivered(event_doc, consumer=consumer)
 
 
+def candidate_view(tender_name: str, candidate_registration_id: str) -> dict[str, Any] | None:
+	"""This candidate's own questions and the Tenders notices addressed to it."""
+	return bidder_projection.candidate_view(tender_name, candidate_registration_id)
+
+
 def stream_public_document(reference: str, key: str) -> dict[str, Any] | None:
 	"""A published document's bytes by its bidder-safe key (no digest or file URL)."""
 	return bidder_projection.stream_public_document(reference, key)

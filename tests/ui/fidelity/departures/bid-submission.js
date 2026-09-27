@@ -24,6 +24,10 @@ export const COVERED = new Set([
 	...["desktop", "narrow"].flatMap((frame) => [
 		...["", "-SUBMITTED", "-WITHDRAWN", "-EMPTY"].map((v) => `MyBidsScreen#BDS-DES-05${v}@${frame}`),
 		...["", "-EMPTY", "-SUSPENDED"].map((v) => `ReceiptHistoryScreen#BDS-DES-17${v}@${frame}`),
+		...[
+			"BDS-DES-06 / BDS-DES-06-REPRESENTATIVE", "BDS-DES-06-SIGNATORY", "BDS-DES-06-IN-PROGRESS", "BDS-DES-06-ADDENDUM", "BDS-DES-06-GATE", "BDS-DES-06-OUTAGE",
+			"BDS-DES-06-CFG-INCOMPLETE · in preparation", "BDS-DES-06-CFG-INCOMPLETE · ready", "BDS-DES-06-CLOSED-UNSUBMITTED",
+		].map((v) => `BidWorkspaceScreen#${v}@${frame}`),
 	]),
 	...["desktop", "narrow"].flatMap((frame) => [
 		...["BDS-DES-03", "BDS-DES-03-VERIFY"].map((v) => `RegisterScreen#${v}@${frame}`),

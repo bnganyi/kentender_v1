@@ -119,14 +119,34 @@ def _next(tasks) -> dict[str, str] | None:
 	return None
 
 
-def get_bid_workspace(*, bid_reference: str, organisation: str = "", user: str | None = None) -> dict[str, Any]:
+def bid_for_tender(*, tender_reference: str, actor: str, organisation: str = "", at=None) -> str:
+	"""The acting organisation's bid for a Tender (its newest workspace);
+	Not found when it has none — never another organisation's."""
 	import frappe
 
-	from kentender_procurement.bid_submission.services import bid_context, projection, readiness
+	from kentender_procurement.bid_submission.services import bid_authorization as authz
+
+	try:
+		lead = authz.acting_assignment(actor, organisation, at=at or clock.now())["organisation_id"]
+	except frappe.ValidationError:
+		raise frappe.DoesNotExistError("This bid is unavailable or you do not have permission to view it.")
+	rows = frappe.get_all("Bid Workspace", filters={"tender_reference": cstr(tender_reference), "lead_organisation": lead}, pluck="name", order_by="created_at desc", limit_page_length=1)
+	if not rows:
+		raise frappe.DoesNotExistError("This bid is unavailable or you do not have permission to view it.")
+	return rows[0]
+
+
+def get_bid_workspace(*, bid_reference: str = "", tender_reference: str = "", organisation: str = "", user: str | None = None) -> dict[str, Any]:
+	"""`GetBidWorkspace` (§7.1, §10.7 BDS-DES-06), by bid or by Tender."""
+	import frappe
+
+	from kentender_procurement.bid_submission.services import bid_context, projection, readiness, workspace_view
 
 	from kentender_procurement.bid_submission.services import guidance
 
 	actor, at = cstr(user or frappe.session.user), clock.now()
+	if not cstr(bid_reference).strip():
+		bid_reference = bid_for_tender(tender_reference=tender_reference, actor=actor, organisation=organisation, at=at)
 	ctx = bid_context.load(bid_reference, actor=actor, organisation=organisation, at=at)
 	tasks, notice = _evaluate(ctx)
 	tender = tenders_gateway.published_tender(ctx.workspace.tender_reference, at=clock.now()) or {}
@@ -136,6 +156,7 @@ def get_bid_workspace(*, bid_reference: str, organisation: str = "", user: str |
 		"tender": {"reference": ctx.workspace.tender_reference, "title": tender.get("title", ""), "deadline_label": labels.datetime_label(tender.get("submission_deadline")), "availability": tender.get("availability", "")},
 		"tasks": projection.task_nav(ctx, tasks), "must_fix": readiness.must_fix_total(tasks), "next": _next(tasks), "addendum_notice": notice,
 		"next_step": guided["next_step"], "journey": guided["journey"],
+		**workspace_view.view(ctx, tasks, projection.task_nav(ctx, tasks), tender, at=at),
 	}
 
 

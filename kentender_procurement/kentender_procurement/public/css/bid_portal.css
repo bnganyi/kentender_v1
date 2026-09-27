@@ -77,3 +77,4 @@
 /* DES-05 My bids: a row's actions (primary first, then e.g. Start replacement). */
 .kt-industry.kt-portal .bds-row-actions { display: flex; gap: var(--kt-space-2); flex-wrap: wrap; }
 .kt-industry.kt-portal .bds-nowrap { white-space: nowrap; }
+.kt-industry.kt-portal .bds-notice-text { margin-top: 3px; }

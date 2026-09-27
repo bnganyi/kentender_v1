@@ -33,6 +33,15 @@ def resolve(*, path: str, query: dict[str, Any], user: str) -> dict[str, Any]:
 			return {"verdict": "NOT_FOUND", "title": "Tender not found", "payload": {"screen": "tender-not-found"}}
 		title = data["tender"]["reference"] if data["tender"]["availability"] == "cancelled" else data["tender"]["title"]
 		return {"verdict": "OK", "title": title, "payload": {"screen": "tender-overview", "data": data}}
+	if len(segments) == 3 and segments[0] == "tenders" and segments[2] == "bid":
+		# BDS-DES-06: the signed-in organisation's own bid for this Tender
+		if not user or user == "Guest":
+			return {"verdict": "SIGN_IN", "title": "Sign in"}
+		try:
+			data = reads.get_bid_workspace(tender_reference=segments[1], organisation=str(query.get("organisation") or ""), user=user)
+		except frappe.DoesNotExistError:
+			return {"verdict": "NOT_FOUND", "title": "Bid not found", "payload": {"screen": "not-found"}}
+		return {"verdict": "OK", "title": "Your bid", "payload": {"screen": "workspace", "data": {"outcome": "OK", **data}}}
 	if segments in (["my-bids"], ["account", "receipts"]):
 		# BDS-DES-05 / BDS-DES-17: the signed-in organisation's own records
 		if not user or user == "Guest":

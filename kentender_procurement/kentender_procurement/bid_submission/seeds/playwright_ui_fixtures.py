@@ -200,7 +200,7 @@ def reset_overview_fixture(*, commit: bool = True, started: bool = True) -> dict
 	return {"tender": state["tender"], "tender_reference": state["tender_reference"], "bid_reference": bid, "password": PASSWORD, **{f"{k}_user": v["representative"] for k, v in SUPPLIERS.items()}, "afya_signatory": SUPPLIERS["afya"]["registrant"]}
 
 
-MY_BIDS_STATES = ("empty", "ready", "submitted", "withdrawn")
+MY_BIDS_STATES = ("empty", "started", "ready", "submitted", "withdrawn")
 MY_BIDS_STEPS = {"fill": "2027-05-20 10:10:00", "submit": "2027-05-20 10:30:00", "withdraw": "2027-05-20 10:45:00"}
 MY_BIDS_AT = "2027-05-20 11:00:00"
 WITHDRAWAL_REASON = "Our pricing changed; we will submit a corrected bid."
@@ -235,7 +235,8 @@ def _submit(bid: str, signatory: str) -> str:
 
 def reset_my_bids_fixture(*, state: str = "ready", commit: bool = True) -> dict[str, Any]:
 	"""BDS-DES-05 / BDS-DES-17 worlds on the Tenders test Tender for Afya
-	(Test): "empty" (no bid), "ready" (every task answered: Ready to submit),
+	(Test): "empty" (no bid), "started" (a new Draft), "ready" (every task
+	answered: Ready to submit),
 	"submitted" (Mary signed; the Test Tender Box accepted it) or "withdrawn"
 	(then withdrawn by Mary). Each step runs the real command as its actor."""
 	from kentender_procurement.bid_submission.seeds import filling
@@ -252,6 +253,7 @@ def reset_my_bids_fixture(*, state: str = "ready", commit: bool = True) -> dict[
 		if state != "empty":
 			_pinned(MY_BIDS_STEPS["fill"])
 			bid = _start(tender["tender"], "afya")
+		if state not in ("empty", "started"):
 			filling.fill_everything(bid, user=afya["representative"])
 		if state in ("submitted", "withdrawn"):
 			_pinned(MY_BIDS_STEPS["submit"])
