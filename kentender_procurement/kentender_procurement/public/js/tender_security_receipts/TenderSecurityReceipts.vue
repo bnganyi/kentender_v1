@@ -64,23 +64,32 @@
 								<th>Amount</th>
 								<th>Received</th>
 								<th>Recorded</th>
+								<th><span class="tsr-sr-only">Actions</span></th>
 							</tr>
 						</thead>
 						<tbody>
 							<tr v-for="row in rows" :key="row.intake_reference" data-testid="tsr-row">
-								<td data-label="Intake reference"><strong>{{ row.intake_reference }}</strong></td>
+								<td data-label="Intake reference">
+									<strong>{{ row.intake_reference }}</strong>
+									<br v-if="row.status === 'Corrected' || row.corrects" />
+									<span v-if="row.status === 'Corrected'" class="tsr-muted" data-testid="tsr-corrected-by">Corrected by {{ row.corrected_by }}</span>
+									<span v-else-if="row.corrects" class="tsr-muted" data-testid="tsr-corrects">Corrects {{ row.corrects }}</span>
+								</td>
 								<td data-label="Tender">{{ row.tender_reference }}</td>
 								<td data-label="Instrument">{{ row.instrument_type }} · {{ row.issuer }}<br /><span class="tsr-muted">{{ row.instrument_reference }}</span></td>
 								<td data-label="Amount">{{ row.amount }}</td>
 								<td data-label="Received">{{ row.received_at }}<br /><span class="tsr-muted">{{ row.deadline_class }}</span></td>
 								<td data-label="Recorded">{{ row.recorded_at }}</td>
+								<td data-label="Actions">
+									<button v-if="row.status === 'Current'" type="button" class="kt-btn kt-btn-ghost" data-testid="tsr-correct" @click="openCorrection(row)">Correct</button>
+								</td>
 							</tr>
 						</tbody>
 					</table>
 				</template>
 			</div>
 
-			<IntakeDialog v-if="dialogOpen" :pending="pending" :errors="fieldErrors" :error="dialogError" :initial-tender="tenderFilter" v-bind="data.confirmation ? { confirmation: data.confirmation } : {}" @submit="onRecord" @cancel="closeDialog" />
+			<IntakeDialog v-if="dialogOpen" :pending="pending" :errors="fieldErrors" :error="dialogError" :initial-tender="tenderFilter" :correcting="correcting" v-bind="data.confirmation ? { confirmation: data.confirmation } : {}" @submit="onRecord" @cancel="closeDialog" />
 			<div v-if="notice" class="kt-notice is-success tsr-toast" role="status" data-testid="tsr-recorded">
 				<svg class="kt-notice-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
 				<div class="kt-notice-body">{{ notice }}</div>
@@ -111,6 +120,7 @@ const dialogOpen = ref(false);
 const fieldErrors = ref({});
 const dialogError = ref("");
 const notice = ref("");
+const correcting = ref(null);
 
 // The caller's own selection, never the server echo (AGENTS.md §6.4).
 const tenderFilter = computed(() => new URLSearchParams(hash.value || "").get("tender") || "");
@@ -159,6 +169,13 @@ function retry() {
 }
 
 function openDialog() {
+	correcting.value = null;
+	fieldErrors.value = {};
+	dialogError.value = "";
+	dialogOpen.value = true;
+}
+function openCorrection(row) {
+	correcting.value = row;
 	fieldErrors.value = {};
 	dialogError.value = "";
 	dialogOpen.value = true;
@@ -175,7 +192,7 @@ async function onRecord({ values, key }) {
 		const result = await api.recordIntake(values, key);
 		if (result && result.ok) {
 			dialogOpen.value = false;
-			notice.value = `Receipt recorded. Intake reference ${result.intake_reference}.`;
+			notice.value = result.corrects ? `Correction recorded. Intake reference ${result.intake_reference} replaces ${result.corrects}.` : `Receipt recorded. Intake reference ${result.intake_reference}.`;
 			setTimeout(() => (notice.value = ""), 8000);
 			await load({ quiet: true });
 			return;

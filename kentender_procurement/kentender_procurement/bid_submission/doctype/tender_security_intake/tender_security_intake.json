@@ -19,6 +19,7 @@
   "deadline_class",
   "notes",
   "corrects",
+  "correction_reason",
   "recorded_by",
   "recorded_at",
   "fixture_namespace"
@@ -114,6 +115,12 @@
    "options": "Tender Security Intake"
   },
   {
+   "fieldname": "correction_reason",
+   "fieldtype": "Small Text",
+   "label": "Reason for correction",
+   "read_only": 1
+  },
+  {
    "fieldname": "recorded_by",
    "fieldtype": "Link",
    "label": "Recorded by",
@@ -138,7 +145,7 @@
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-27 09:00:00.000000",
+ "modified": "2026-09-27 16:30:00.000000",
  "modified_by": "Administrator",
  "module": "Bid Submission",
  "name": "Tender Security Intake",

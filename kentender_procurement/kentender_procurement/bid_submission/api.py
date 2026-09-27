@@ -123,11 +123,12 @@ def update_tender_contact(bid_reference: str, email: str = "", phone: str = "", 
 
 
 @frappe.whitelist(methods=["POST"])
-def record_physical_tender_security_receipt(tender_reference: str, instrument_type: str = "", issuer: str = "", instrument_reference: str = "", amount: str = "", currency: str = "", received_at: str = "", notes: str = "", confirmed=False, idempotency_key: str = "") -> dict[str, Any]:
-	"""BDS §7.3 `RecordPhysicalTenderSecurityReceipt`, as a blind intake."""
+def record_physical_tender_security_receipt(tender_reference: str, instrument_type: str = "", issuer: str = "", instrument_reference: str = "", amount: str = "", currency: str = "", received_at: str = "", notes: str = "", confirmed=False, idempotency_key: str = "", corrects: str = "", correction_reason: str = "") -> dict[str, Any]:
+	"""BDS §7.3 `RecordPhysicalTenderSecurityReceipt`, as a blind intake; with
+	`corrects`, a correction of an earlier receipt (owner decision 27 Sep 2026)."""
 	return security_intake_service.record_physical_tender_security_receipt(
 		tender_reference=tender_reference, instrument_type=instrument_type, issuer=issuer, instrument_reference=instrument_reference, amount=amount, currency=currency,
-		received_at=received_at, notes=notes, confirmed=confirmed, idempotency_key=idempotency_key,
+		received_at=received_at, notes=notes, confirmed=confirmed, idempotency_key=idempotency_key, corrects=corrects, correction_reason=correction_reason,
 	)
 
 
@@ -236,3 +237,28 @@ def download_bid_receipt(receipt_reference: str, organisation: str = "") -> None
 	frappe.local.response.filename = name
 	frappe.local.response.filecontent = content
 	frappe.local.response.type = "download"
+
+
+# --------------------------------------------------------------------------
+# The technical read (KT-STD-001 §3A.6): metadata only, no business action.
+# --------------------------------------------------------------------------
+
+
+@frappe.whitelist(methods=["GET"])
+def get_bid_technical_summary(bid_reference: str) -> dict[str, Any]:
+	from kentender_procurement.bid_submission.services import technical_read
+
+	try:
+		return technical_read.get_bid_technical_summary(bid_reference=bid_reference)
+	except frappe.DoesNotExistError:
+		return {"outcome": "NOT_FOUND", "heading": "Record not found", "text": "This record is unavailable or you do not have permission to view it."}
+
+
+@frappe.whitelist(methods=["GET"])
+def get_submission_service_status() -> dict[str, Any]:
+	from kentender_procurement.bid_submission.services import technical_read
+
+	try:
+		return technical_read.get_submission_service_status()
+	except frappe.DoesNotExistError:
+		return {"outcome": "NOT_FOUND", "heading": "Record not found", "text": "This record is unavailable or you do not have permission to view it."}

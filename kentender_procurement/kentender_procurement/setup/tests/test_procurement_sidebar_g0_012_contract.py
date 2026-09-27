@@ -43,13 +43,18 @@ _EXPECTED_ITEM_LABELS: tuple[str, ...] = (
 	"Budget & Funding",
 	"Departmental Needs",
 	"Procurement Planning",
+	"Procurement Requisitions",
 	"Tender Management",
-	"Tender Configurations",
 	"Tenders",
 	"Evaluation",
 	"Awards",
+	# BDS-CHG-001 v0.8 (owner decision 27 Sep 2026): the Head of Procurement
+	# Function's blind tender-security intake; a top-level link because
+	# Frappe applies `display_depends_on` (this role only) to top-level items.
+	"Tender-security receipts",
 	"Contract Management",
 	"Supplier Management",
+	"STD Templates",
 	"System setup",
 )
 
@@ -109,7 +114,6 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 		self.assertEqual(
 			children_of("Tender Management"),
 			[
-				"Tender Configurations",
 				"Tenders",
 				"Evaluation",
 				"Awards",

@@ -540,6 +540,7 @@ kt_technical_reference_resolvers = [
 	"kentender_procurement.procurement_requisitions.services.technical_read.reference_resolvers",
 	"kentender_procurement.tenders.services.technical_read.reference_resolvers",
 	"kentender_procurement.std_templates.services.technical_read.reference_resolvers",
+	"kentender_procurement.bid_submission.services.technical_read.reference_resolvers",
 ]
 
 kt_technical_read_probes = [
@@ -548,6 +549,7 @@ kt_technical_read_probes = [
 	"kentender_procurement.procurement_requisitions.services.technical_read.read_probes",
 	"kentender_procurement.tenders.services.technical_read.read_probes",
 	"kentender_procurement.std_templates.services.technical_read.read_probes",
+	"kentender_procurement.bid_submission.services.technical_read.read_probes",
 ]
 
 # Optional hooks for downstream tendering implementations (v2+). Each path: dotted ``callable(payload: dict)``.

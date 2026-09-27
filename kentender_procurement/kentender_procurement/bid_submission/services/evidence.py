@@ -8,7 +8,9 @@ Every file proves one published evidence requirement of this bid. It is
 stored as a private File attached to its Bid Evidence row and checked by
 kentender_core file_integrity: type, size and readability first, then the
 registered scanner. A wrong, oversize, unreadable or infected file is
-reported at once and nothing is kept. A file is usable (Accepted) only with a
+reported at once; its bytes are never kept, but a Rejected record with the
+reason stays on the requirement until an acceptable file replaces it, so the
+bid can name it (owner decision 27 Sep 2026). A file is usable (Accepted) only with a
 clean scanner verdict; where no scanner answers it stays Pending and never
 counts. Reusing Account evidence copies the exact bytes into the bid (the
 digest must match the Account's) and records the source; later Account
@@ -142,8 +144,31 @@ def _add(*, actor: str, bid_reference: str, handle: str, expected_record_version
 			row, _checked = _store(ctx, field, filename=filename, content=content, actor=actor, at=at, source=account_evidence_id, expected_digest=expected)
 			change = _commit_change(ctx, field, before=before, actor=actor, at=at, event="BidEvidenceAdded", payload={"evidence": row.name, "scan_status": row.scan_status, "from_account": bool(account_evidence_id)})
 	except _Rejected as rejected:
-		return {"ok": False, "code": "BDS_EVIDENCE_REJECTED", "message": MESSAGES["BDS_EVIDENCE_REJECTED"], "errors": {field.handle: str(rejected)}}
+		kept = _keep_rejection(ctx, field, filename=filename, reason=str(rejected), source=account_evidence_id, actor=actor, at=at)
+		return {"ok": False, "code": "BDS_EVIDENCE_REJECTED", "message": MESSAGES["BDS_EVIDENCE_REJECTED"], "errors": {field.handle: str(rejected)}, "evidence": kept}
+	if row.scan_status == "Accepted":
+		_replace_rejections(ctx.workspace.name, field.key, except_row=row.name)
 	return {"ok": True, "evidence": row.name, "scan_status": row.scan_status, **change}
+
+
+def _replace_rejections(workspace: str, requirement: str, *, except_row: str = "") -> None:
+	for name in frappe.get_all(EVIDENCE, filters={"bid_workspace": workspace, "evidence_requirement": requirement, "scan_status": "Rejected", "status": "Current"}, pluck="name"):
+		if name != except_row:
+			records.save(frappe.get_doc(EVIDENCE, name).update({"status": "Replaced"}))
+
+
+def _keep_rejection(ctx, field, *, filename: str, reason: str, source: str, actor: str, at) -> str:
+	"""The Rejected record: the file's name and the reason, never its bytes.
+	The latest rejection of a requirement is the current one."""
+	with records.atomic("keep-rejected-evidence"):
+		_replace_rejections(ctx.workspace.name, field.key)
+		row = records.insert(frappe.get_doc({
+			"doctype": EVIDENCE, "bid_workspace": ctx.workspace.name, "draft_version": int(ctx.workspace.current_draft_version or 0), "evidence_requirement": field.key,
+			"original_filename": cstr(filename).strip().split("/")[-1].split("\\")[-1][:140], "scan_status": "Rejected", "scan_result": reason[:140], "source_evidence": source,
+			"status": "Current", "uploaded_by": actor, "uploaded_at": at,
+		}))
+		records.emit("BidEvidenceRejected", tender=ctx.workspace.tender, arrangement=ctx.workspace.bidder_arrangement, workspace=ctx.workspace.name, organisation=ctx.workspace.lead_organisation, actor=actor, at=at, payload={"evidence": row.name, "requirement": field.key})
+	return row.name
 
 
 def remove_bid_evidence(*, bid_reference: str, evidence_id: str, expected_record_version, organisation: str = "", idempotency_key: str = "", user: str | None = None) -> dict[str, Any]:

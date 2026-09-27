@@ -134,7 +134,7 @@
    "fieldtype": "Select",
    "label": "Status",
    "read_only": 1,
-   "options": "Current\nRemoved",
+   "options": "Current\nRemoved\nReplaced",
    "reqd": 1
   },
   {
@@ -173,7 +173,7 @@
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-27 09:00:00.000000",
+ "modified": "2026-09-27 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Bid Submission",
  "name": "Bid Evidence",

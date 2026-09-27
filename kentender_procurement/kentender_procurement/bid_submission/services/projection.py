@@ -132,7 +132,10 @@ def field_view(ctx: BidContext, state: FieldState) -> dict[str, Any]:
 		rule = field.evidence_rule or {}
 		view["evidence"] = {
 			"type": cstr(rule.get("evidence_type")), "minimum": int(rule.get("minimum") or 0), "maximum": int(rule.get("maximum") or 0), "mandatory": bool(rule.get("mandatory")),
-			"files": [{"id": e["id"], "name": e["name"], "status": e["scan_status"], "size_bytes": e["size_bytes"]} for e in ctx.evidence.get(field.key, [])],
+			"files": [
+				{"id": e["id"], "name": e["name"], "status": e["scan_status"], "size_bytes": e["size_bytes"], **({"reason": e["scan_result"]} if e["scan_status"] == "Rejected" else {})}
+				for e in ctx.evidence.get(field.key, [])
+			],
 		}
 	return view
 

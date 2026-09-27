@@ -9,8 +9,8 @@
 	<div class="kt-dialog-backdrop" data-testid="tsr-dialog" @keydown.esc.stop="$emit('cancel')">
 		<div class="kt-dialog tsr-dialog" role="dialog" aria-modal="true" aria-labelledby="tsr-d-title" tabindex="-1">
 			<div>
-				<div id="tsr-d-title" class="kt-dialog-title">Record receipt</div>
-				<div class="tsr-dialog-sub">Record a physical tender-security original received by the procuring entity.</div>
+				<div id="tsr-d-title" class="kt-dialog-title">{{ correcting ? `Correct receipt ${correcting.intake_reference}` : "Record receipt" }}</div>
+				<div class="tsr-dialog-sub">{{ correcting ? "Record the corrected details. The first receipt stays in the record, marked Corrected." : "Record a physical tender-security original received by the procuring entity." }}</div>
 			</div>
 
 			<div class="kt-field">
@@ -67,6 +67,14 @@
 				<p v-if="errors.notes" class="kt-field-error">{{ errors.notes }}</p>
 			</div>
 
+			<div v-if="correcting" class="kt-field">
+				<label for="tsr-d-reason">Reason for correction</label>
+				<textarea id="tsr-d-reason" v-model="form.correction_reason" class="kt-input" rows="2" maxlength="500" style="resize: vertical; height: auto" :aria-invalid="!!errors.correction_reason" aria-describedby="tsr-d-reason-help" data-testid="tsr-d-reason"></textarea>
+				<p v-if="errors.correction_reason" class="kt-field-error">{{ errors.correction_reason }}</p>
+				<p v-else id="tsr-d-reason-help" class="tsr-help">Enter 10–500 characters.</p>
+				<p v-if="errors.corrects" class="kt-field-error">{{ errors.corrects }}</p>
+			</div>
+
 			<div class="kt-field">
 				<label class="tsr-check">
 					<input v-model="form.confirmed" type="checkbox" :aria-invalid="!!errors.confirmed" data-testid="tsr-d-confirm" />
@@ -78,7 +86,7 @@
 			<div v-if="error" class="kt-notice is-critical" role="alert" data-testid="tsr-d-error"><div class="kt-notice-body">{{ error }}</div></div>
 			<div class="kt-dialog-actions">
 				<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="tsr-d-cancel" @click="$emit('cancel')">Cancel</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="tsr-d-submit" @click="submit">{{ pending ? "Recording…" : "Record receipt" }}</button>
+				<button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="tsr-d-submit" @click="submit">{{ pending ? "Recording…" : correcting ? "Record correction" : "Record receipt" }}</button>
 			</div>
 		</div>
 	</div>
@@ -93,12 +101,16 @@ const props = defineProps({
 	errors: { type: Object, default: () => ({}) },
 	error: { type: String, default: "" },
 	initialTender: { type: String, default: "" },
+	correcting: { type: Object, default: null },
 	confirmation: { type: String, default: "I confirm that the physical original identified above was received at the date and time recorded." },
 });
 const emit = defineEmits(["submit", "cancel"]);
 
+const from = props.correcting;
 const form = reactive({
-	tender_reference: props.initialTender, instrument_type: "", issuer: "", instrument_reference: "", amount: "", currency: "", received_at: "", notes: "", confirmed: false,
+	tender_reference: from ? from.tender_reference : props.initialTender, instrument_type: from ? from.instrument_type : "", issuer: from ? from.issuer : "",
+	instrument_reference: from ? from.instrument_reference : "", amount: from ? from.amount_value : "", currency: from ? from.currency : "",
+	received_at: from ? from.received_at_value : "", notes: "", confirmed: false, correction_reason: "",
 });
 const lookup = ref({});
 const firstEl = ref(null);
@@ -128,7 +140,9 @@ async function lookUp() {
 }
 
 function submit() {
-	const values = { ...form, received_at: form.received_at ? form.received_at.replace("T", " ") + (form.received_at.length === 16 ? ":00" : "") : "" };
+	const { correction_reason, ...entered } = form;
+	const values = { ...entered, received_at: form.received_at ? form.received_at.replace("T", " ") + (form.received_at.length === 16 ? ":00" : "") : "" };
+	if (props.correcting) Object.assign(values, { corrects: props.correcting.intake_reference, correction_reason });
 	emit("submit", { values, key: requestKey });
 }
 onMounted(() => {

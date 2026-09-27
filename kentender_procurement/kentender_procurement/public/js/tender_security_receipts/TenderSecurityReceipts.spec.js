@@ -25,6 +25,7 @@ import TenderSecurityReceipts from "./TenderSecurityReceipts.vue";
 const g = { global: { mocks: { __: (s) => s } } };
 const BID_WORDS = /\b(BID-|ARR-|bid status|Matched|Candidate|supplier|Draft)\b/i;
 const ROW = {
+	status: "Current", corrected_by: "", corrects: "", amount_value: "500000.00", currency: "KES", received_at_value: "2027-05-19T09:00",
 	intake_reference: "TSI-4F2A9C01B7", tender_reference: "TND-MOH-2027-002", instrument_type: "Demand Bank Guarantee", issuer: "KCB Bank Kenya",
 	instrument_reference: "KCB/TG/2027/8841", amount: "KES 500,000.00", received_at: "19 May 2027, 09:00 EAT", deadline_class: "Before deadline", recorded_at: "19 May 2027, 09:05 EAT", notes: "",
 };
@@ -45,7 +46,7 @@ describe("TenderSecurityReceipts", () => {
 		await flushPromises();
 		expect(w.find("h1").text()).toBe("Tender-security receipts");
 		expect(w.findAll('[data-testid="tsr-row"]')).toHaveLength(1);
-		expect(w.find("thead").text()).toBe("Intake referenceTenderInstrumentAmountReceivedRecorded");
+		expect(w.find("thead").text()).toBe("Intake referenceTenderInstrumentAmountReceivedRecordedActions");
 		expect(w.text()).toContain("Before deadline");
 		expect(w.text()).not.toMatch(BID_WORDS);
 	});
@@ -162,5 +163,35 @@ describe("IntakeDialog", () => {
 		expect(w.findAll(".kt-field-error").map((e) => e.text())).toEqual(["Enter the issuing bank or insurer.", "Enter the amount on the instrument, for example 500000.00."]);
 		expect(w.find('[data-testid="tsr-d-issuer"]').attributes("aria-invalid")).toBe("true");
 		expect(w.find('[data-testid="tsr-d-reference"]').element.value).toBe("REF-1");
+	});
+});
+
+
+describe("Correcting a receipt", () => {
+	it("offers Correct only on a current receipt and shows the link both ways", async () => {
+		const corrected = { ...ROW, intake_reference: "TSI-AAAAAAAAAA", status: "Corrected", corrected_by: "TSI-BBBBBBBBBB" };
+		const correction = { ...ROW, intake_reference: "TSI-BBBBBBBBBB", corrects: "TSI-AAAAAAAAAA" };
+		api.listIntakes.mockResolvedValue({ outcome: "OK", rows: [correction, corrected] });
+		const w = mount(TenderSecurityReceipts, g);
+		await flushPromises();
+		expect(w.findAll('[data-testid="tsr-correct"]')).toHaveLength(1);
+		expect(w.find('[data-testid="tsr-corrects"]').text()).toBe("Corrects TSI-AAAAAAAAAA");
+		expect(w.find('[data-testid="tsr-corrected-by"]').text()).toBe("Corrected by TSI-BBBBBBBBBB");
+	});
+
+	it("opens the dialog filled from the receipt and sends the correction with its reason", async () => {
+		const w = mount(IntakeDialog, { props: { correcting: ROW }, ...g });
+		await flushPromises();
+		expect(w.find("#tsr-d-title").text()).toBe(`Correct receipt ${ROW.intake_reference}`);
+		expect(w.find('[data-testid="tsr-d-reference"]').element.value).toBe(ROW.instrument_reference);
+		expect(w.find('[data-testid="tsr-d-amount"]').element.value).toBe("500000.00");
+		await w.find('[data-testid="tsr-d-reason"]').setValue("The guarantee number was typed wrongly.");
+		await w.find('[data-testid="tsr-d-confirm"]').setValue(true);
+		await w.find('[data-testid="tsr-d-submit"]').trigger("click");
+		const sent = w.emitted("submit")[0][0].values;
+		expect((({ corrects, correction_reason, received_at, instrument_reference }) => ({ corrects, correction_reason, received_at, instrument_reference }))(sent)).toEqual({
+			corrects: ROW.intake_reference, correction_reason: "The guarantee number was typed wrongly.", received_at: "2027-05-19 09:00:00", instrument_reference: ROW.instrument_reference,
+		});
+		expect(w.find('[data-testid="tsr-d-submit"]').text()).toBe("Record correction");
 	});
 });

@@ -12,7 +12,12 @@ in the future). The system issues an opaque intake reference (random, not a
 per-bid sequence) and classes the receipt as before or after the deadline by
 trusted time. The response is the same whatever any bid contains; the
 recorder sees no candidate, bid, status or match. Intakes are append-only;
-the private match runs inside the same command (`security_matching`)."""
+the private match runs inside the same command (`security_matching`).
+
+A mistake is corrected by a new intake that names the one it corrects and
+gives a reason (owner decision 27 Sep 2026); the first stays in the record,
+marked Corrected, and no longer counts for the match. A receipt is corrected
+once; a later mistake corrects the correction."""
 
 from __future__ import annotations
 
@@ -54,7 +59,7 @@ def _published_security(reference: str) -> tuple[Any, dict[str, Any] | None]:
 
 def record_physical_tender_security_receipt(
 	*, tender_reference: str, instrument_type: str, issuer: str, instrument_reference: str, amount, currency: str, received_at, notes: str = "",
-	confirmed=False, idempotency_key: str = "", user: str | None = None,
+	confirmed=False, idempotency_key: str = "", corrects: str = "", correction_reason: str = "", user: str | None = None,
 ) -> dict[str, Any]:
 	actor = cstr(user or frappe.session.user)
 	require_recorder(actor)
@@ -62,13 +67,24 @@ def record_physical_tender_security_receipt(
 		"tender_reference": cstr(tender_reference).strip(), "instrument_type": cstr(instrument_type).strip(), "issuer": cstr(issuer).strip(),
 		"instrument_reference": cstr(instrument_reference).strip(), "amount": cstr(amount).strip(), "currency": cstr(currency).strip().upper(),
 		"received_at": cstr(received_at).strip(), "notes": cstr(notes).strip(), "confirmed": bool(confirmed) and cstr(confirmed).lower() not in ("0", "false"),
+		"corrects": cstr(corrects).strip(), "correction_reason": cstr(correction_reason).strip(),
 	}
 	return records.idempotent(idempotency_key, "RecordPhysicalTenderSecurityReceipt", payload, lambda: _record(actor=actor, **payload), actor=actor)
 
 
-def _record(*, actor: str, tender_reference: str, instrument_type: str, issuer: str, instrument_reference: str, amount: str, currency: str, received_at: str, notes: str, confirmed: bool) -> dict[str, Any]:
+def _record(*, actor: str, tender_reference: str, instrument_type: str, issuer: str, instrument_reference: str, amount: str, currency: str, received_at: str, notes: str, confirmed: bool, corrects: str = "", correction_reason: str = "") -> dict[str, Any]:
 	at = clock.now()
 	problems: dict[str, str] = {}
+	corrected = None
+	if corrects:
+		corrected = frappe.db.get_value(INTAKE, {"intake_reference": corrects}, ["name", "tender"], as_dict=True)
+		later = frappe.db.get_value(INTAKE, {"corrects": corrected.name}, "intake_reference") if corrected else None
+		if not corrected:
+			problems["corrects"] = "No tender-security receipt has this reference."
+		elif later:
+			problems["corrects"] = f"This receipt was already corrected by {later}. Correct that one instead."
+		if not (10 <= len(correction_reason) <= 500):
+			problems["correction_reason"] = "Enter the reason for the correction (10–500 characters)."
 	root, facts = _published_security(tender_reference)
 	if not root:
 		problems["tender_reference"] = "No published Tender has this reference."
@@ -108,15 +124,22 @@ def _record(*, actor: str, tender_reference: str, instrument_type: str, issuer: 
 			"doctype": INTAKE, "intake_reference": "TSI-" + secrets.token_hex(5).upper(), "tender": root.name, "tender_reference": root.tender_reference,
 			"instrument_type": instrument_type, "issuer": issuer, "instrument_reference": instrument_reference, "amount": str(value.quantize(Decimal("0.01"))),
 			"currency": currency, "received_at": received, "deadline_class": "Before deadline" if received < deadline else "After deadline", "notes": notes,
-			"recorded_by": actor, "recorded_at": at,
+			"recorded_by": actor, "recorded_at": at, "corrects": corrected.name if corrected else None, "correction_reason": correction_reason if corrected else "",
 		}))
 		security_matching.match_tender(root.name)
+		if corrected and corrected.tender != root.name:
+			security_matching.match_tender(corrected.tender)
 		records.emit("TenderSecurityIntakeRecorded", tender=root.name, actor=actor, at=at, payload={"intake": doc.name})
 	return {"ok": True, **_row(doc)}
 
 
 def _row(doc) -> dict[str, Any]:
+	later = frappe.db.get_value(INTAKE, {"corrects": doc.name}, "intake_reference")
+	earlier = frappe.db.get_value(INTAKE, doc.corrects, "intake_reference") if doc.corrects else ""
+	received = get_datetime(doc.received_at)
 	return {
+		"status": "Corrected" if later else "Current", "corrected_by": cstr(later), "corrects": cstr(earlier), "correction_reason": cstr(doc.correction_reason),
+		"amount_value": str(doc.amount), "currency": doc.currency, "received_at_value": received.strftime("%Y-%m-%dT%H:%M"),
 		"intake_reference": doc.intake_reference, "tender_reference": doc.tender_reference, "instrument_type": doc.instrument_type, "issuer": doc.issuer,
 		"instrument_reference": doc.instrument_reference, "amount": labels.money_label(doc.amount, doc.currency), "received_at": labels.datetime_label(doc.received_at),
 		"deadline_class": doc.deadline_class, "recorded_at": labels.datetime_label(doc.recorded_at), "notes": cstr(doc.notes),

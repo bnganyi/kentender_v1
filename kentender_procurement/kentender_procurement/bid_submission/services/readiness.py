@@ -82,7 +82,8 @@ def field_state(ctx: BidContext, field: Field) -> FieldState:
 		return state
 	if _blank(value):
 		if required:
-			state.issue = {"severity": MUST_FIX, "text": _MISSING.get(field.kind, "Answer this question.")}
+			rejected = field.kind == "evidence" and any(e["scan_status"] == "Rejected" for e in ctx.evidence.get(field.key, []))
+			state.issue = {"severity": MUST_FIX, "text": "Replace the rejected file." if rejected else _MISSING.get(field.kind, "Answer this question.")}
 		return state
 	problem = validation.check(field.validation_id, field.validation_parameters, value)
 	if problem:

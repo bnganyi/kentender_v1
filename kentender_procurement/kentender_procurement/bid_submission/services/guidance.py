@@ -174,6 +174,16 @@ def _change_label(tender: str) -> str:
 	return text[:1].lower() + text[1:] if text else "Tender details"
 
 
+def _rejected_evidence(ctx, tasks):
+	"""(task, field) of the first visible requirement whose current file was
+	rejected and that still has no usable file (§5.12 "Draft evidence rejected")."""
+	for key, state in tasks.items():
+		for fs in state.fields:
+			if fs.visible and fs.field.kind == "evidence" and fs.issue and fs.issue["text"] == "Replace the rejected file.":
+				return key, fs.field
+	return None
+
+
 def for_bid(ctx, *, actor: str, at, tasks=None) -> dict[str, Any]:
 	"""{"next_step", "journey", "submit_guard"} for this viewer."""
 	ws = ctx.workspace
@@ -221,6 +231,13 @@ def for_bid(ctx, *, actor: str, at, tasks=None) -> dict[str, Any]:
 	if "BDS_ADDENDUM_REVIEW_REQUIRED" in codes:
 		blockers = [b for b in ns.blockers_of(guard) if b["reason_code"] == "BDS_ADDENDUM_REVIEW_REQUIRED"]
 		return result(ns.answer(ns.KIND_BLOCKED, headline=f"Review the changed {_change_label(ws.tender)} and acknowledge the current addendum before submitting.", stage="BID_PREPARATION", blockers=blockers, primary_action="review_addendum"), "BNN", viewer)
+	rejected = _rejected_evidence(ctx, tasks)
+	if rejected:
+		task, field = rejected
+		label = field.label[:1].lower() + field.label[1:]
+		fix = ns.fix("Fix item", responsibility=SUPPLIER, kind=ns.FIX_ROUTE, fix_id=f"fix_item:{task}", target={"task": task, "handle": field.handle}, primary=True)
+		blocker = ns.blocker(ns.guard(False, reason_code="BDS_EVIDENCE_REJECTED", message=MESSAGES["BDS_EVIDENCE_REJECTED"], figures={"requirement": field.label}, fixes=[fix]))
+		return result(ns.answer(ns.KIND_BLOCKED, headline=f"Replace the rejected {label} before submitting.", stage="BID_PREPARATION", blockers=[blocker], primary_action="fix_item"), "BNN", viewer)
 	if still_preparing:
 		if "BDS_PORTAL_INFORMATION_UNAVAILABLE" in codes:
 			return result(ns.answer(ns.KIND_YOUR_TURN, headline="Continue your saved bid. Submission is blocked until supplier portal information is restored.", stage="BID_PREPARATION", primary_action="continue_bid",

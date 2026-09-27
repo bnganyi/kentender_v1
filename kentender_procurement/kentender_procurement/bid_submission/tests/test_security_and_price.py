@@ -181,3 +181,38 @@ class TestReceiptsDeskPage(SecurityCase):
 	def test_the_page_is_installed_and_wired(self):
 		self.assertEqual(frappe.db.get_value("Page", "tender-security-receipts", ["module", "title"]), ("Bid Submission", "Tender-security receipts"))
 		self.assertEqual(frappe.get_hooks("page_js", app_name="kentender_procurement")["tender-security-receipts"], ["public/js/tender_security_receipts_page.js"])
+
+
+class TestIntakeCorrection(SecurityCase):
+	"""Owner decision 27 Sep 2026: a recorded original is corrected by a new,
+	linked intake with a reason; the first stays in the record (append-only)
+	and stops counting for the private match."""
+
+	def test_a_correction_is_a_new_linked_intake_and_the_first_stops_counting(self):
+		self.answer_security()
+		wrong = self.intake(instrument_reference="KCB/TG/2027/8814")  # digits swapped
+		self.assertEqual(self.task("company")["security"]["physical_receipt_status"], "Not recorded")
+		missing = self.intake(corrects=wrong["intake_reference"], correction_reason="")
+		self.assertEqual(missing["errors"], {"correction_reason": "Enter the reason for the correction (10–500 characters)."})
+		fixed = self.intake(corrects=wrong["intake_reference"], correction_reason="The guarantee number was typed with two digits swapped.")
+		self.assertEqual((fixed["ok"], fixed["corrects"]), (True, wrong["intake_reference"]))
+		self.assertEqual(self.task("company")["security"]["physical_receipt_reference"], fixed["intake_reference"])
+		rows = {r["intake_reference"]: r for r in security_intake.list_my_intakes(user=tender_fx.HOPF)["rows"]}
+		self.assertEqual((rows[wrong["intake_reference"]]["status"], rows[wrong["intake_reference"]]["corrected_by"]), ("Corrected", fixed["intake_reference"]))
+		self.assertEqual((rows[fixed["intake_reference"]]["status"], rows[fixed["intake_reference"]]["corrects"]), ("Current", wrong["intake_reference"]))
+		again = self.intake(corrects=wrong["intake_reference"], correction_reason="Trying to correct the same receipt twice.")
+		self.assertEqual(again["errors"], {"corrects": f"This receipt was already corrected by {fixed['intake_reference']}. Correct that one instead."})
+		unknown = self.intake(corrects="TSI-0000000000", correction_reason="A receipt that does not exist at all.")
+		self.assertEqual(unknown["errors"], {"corrects": "No tender-security receipt has this reference."})
+		self.assertTrue(frappe.db.exists("Tender Security Intake", {"intake_reference": wrong["intake_reference"]}))  # nothing deleted
+
+	def test_a_correction_to_an_unknown_tender_changes_nothing(self):
+		from kentender_procurement.bid_submission.services import security_matching
+
+		self.answer_security()
+		first = self.intake()
+		self.assertEqual(self.task("company")["security"]["physical_receipt_status"], "Recorded before deadline")
+		self.assertIn(first["intake_reference"], [frappe.db.get_value("Tender Security Intake", r.name, "intake_reference") for r in security_matching.active_intakes(self.name)])
+		# corrected to a Tender reference that exists but needs no security → refused; the first stays current
+		self.assertEqual(self.intake(corrects=first["intake_reference"], correction_reason="Recorded against the wrong Tender reference.", tender_reference="TND-NOPE-0000-000")["errors"]["tender_reference"], "No published Tender has this reference.")
+		self.assertEqual(self.task("company")["security"]["physical_receipt_status"], "Recorded before deadline")

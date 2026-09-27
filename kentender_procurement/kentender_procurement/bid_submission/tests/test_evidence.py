@@ -58,16 +58,28 @@ class TestUploadBidEvidence(EvidenceCase):
 		change = frappe.get_all("Bid Draft Change", filters={"bid_workspace": self.bid}, fields=["prior_value", "new_value"])
 		self.assertEqual([(c.prior_value, json.loads(c.new_value)) for c in change], [("[]", [added["evidence"]])])
 
-	def test_a_rejected_file_is_reported_and_nothing_is_kept(self):
+	def test_a_rejected_file_is_kept_as_a_record_without_its_bytes_until_replaced(self):
+		# Owner decision 27 Sep 2026: keep a Rejected record (no bytes) so the bid can name it (FU-V08-42).
 		target = self.requirement()
 		files_before = frappe.db.count("File", {"attached_to_doctype": "Bid Evidence"})
 		for content, name, reason in ((b"PK\x03\x04 word document", "notes.docx", "File type .docx is not permitted. Use PDF, PNG, JPG, JPEG."), (EICAR_PDF, "infected.pdf", "File failed malware scanning.")):
 			with self.subTest(name=name):
 				refused = self.upload(target["handle"], content=content, name=name)
 				self.assertEqual((refused["ok"], refused["code"], refused["errors"]), (False, "BDS_EVIDENCE_REJECTED", {target["handle"]: reason}))
-		self.assertEqual(frappe.db.count("Bid Evidence", {"bid_workspace": self.bid}), 0)
-		self.assertEqual(frappe.db.count("File", {"attached_to_doctype": "Bid Evidence"}), files_before)
+		rows = frappe.get_all("Bid Evidence", filters={"bid_workspace": self.bid}, fields=["original_filename", "scan_status", "status", "file", "scan_result"], order_by="creation asc")
+		self.assertEqual([(r.original_filename, r.scan_status, r.status, r.file) for r in rows], [("notes.docx", "Rejected", "Replaced", None), ("infected.pdf", "Rejected", "Current", None)])
+		self.assertEqual(rows[-1].scan_result, "File failed malware scanning.")
+		self.assertEqual(frappe.db.count("File", {"attached_to_doctype": "Bid Evidence"}), files_before)  # no bytes kept
 		self.assertEqual(frappe.db.get_value("Bid Workspace", self.bid, "current_draft_version"), 1)
+		shown = self.field(target["handle"])
+		self.assertEqual((shown["value"], shown["issue"]["text"]), (None, "Replace the rejected file."))
+		self.assertEqual([(f["name"], f["status"], f.get("reason")) for f in shown["evidence"]["files"]], [("infected.pdf", "Rejected", "File failed malware scanning.")])
+		label = target["label"][:1].lower() + target["label"][1:]
+		step = reads.get_bid_workspace(bid_reference=self.bid, user=DAVID)["next_step"]
+		self.assertEqual((step["kind"], step["headline"]), ("your_turn_blocked", f"Replace the rejected {label} before submitting."))
+		self.assertTrue(self.upload(target["handle"])["ok"])
+		self.assertEqual(frappe.db.get_value("Bid Evidence", {"bid_workspace": self.bid, "original_filename": "infected.pdf"}, "status"), "Replaced")
+		self.assertNotIn("rejected", reads.get_bid_workspace(bid_reference=self.bid, user=DAVID)["next_step"]["headline"])
 
 	def test_without_a_scanner_a_file_stays_pending_and_does_not_count(self):
 		frappe.conf["kt_bds_simulation_environment"] = 0

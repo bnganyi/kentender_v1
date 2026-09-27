@@ -76,7 +76,8 @@ def bid_keys(tender: str) -> dict[str, tuple]:
 
 def active_intakes(tender: str) -> list[Any]:
 	rows = frappe.get_all(INTAKE, filters={"tender": tender}, fields=["name", "instrument_reference", "issuer", "amount", "corrects"], order_by="recorded_at asc, creation asc", limit_page_length=0)
-	corrected = {r.corrects for r in rows if r.corrects}
+	# a correction may sit on another Tender (the reference was typed wrong)
+	corrected = set(frappe.get_all(INTAKE, filters={"corrects": ("in", [r.name for r in rows] or [""])}, pluck="corrects"))
 	return [r for r in rows if r.name not in corrected]
 
 
