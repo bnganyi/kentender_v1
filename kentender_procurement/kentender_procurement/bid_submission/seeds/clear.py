@@ -12,7 +12,15 @@ import frappe
 
 from kentender_core.utils.raw_delete import delete_rows
 
-DOCTYPES = ("Bid Submission Event", "Bid Workspace", "Bid Organisation Snapshot", "Bidder Arrangement", "Bid Command Journal")
+DOCTYPES = ("Bid Submission Event", "Bid Draft Change", "Bid Section Response", "Bid Evidence", "Bid Workspace", "Bid Organisation Snapshot", "Bidder Arrangement", "Bid Command Journal")
+
+
+def _delete_evidence_files(evidence: list[str], deleted: dict[str, int]) -> None:
+	"""A bid file is a private File attached to its Bid Evidence row."""
+	for name in evidence:
+		for file_name in frappe.get_all("File", filters={"attached_to_doctype": "Bid Evidence", "attached_to_name": name}, pluck="name"):
+			frappe.delete_doc("File", file_name, force=True, ignore_permissions=True)
+			deleted["File"] = deleted.get("File", 0) + 1
 
 
 def on_tenders_removed(*, tenders: list[str]) -> dict[str, int]:
@@ -25,13 +33,20 @@ def wipe(*, tenders: list[str] | None = None, namespace: str = "") -> dict[str, 
 	entries stamped `namespace`; with `tenders=None`, every row."""
 	deleted: dict[str, int] = {}
 	if tenders is None:
+		_delete_evidence_files(frappe.get_all("Bid Evidence", pluck="name"), deleted)
 		for doctype in DOCTYPES:
 			delete_rows(doctype, None, deleted=deleted)
 		return deleted
 	if tenders:
 		within = {"tender": ("in", list(tenders))}
 		arrangements = frappe.get_all("Bidder Arrangement", filters=within, pluck="name")
+		workspaces = frappe.get_all("Bid Workspace", filters=within, pluck="name")
 		delete_rows("Bid Submission Event", within, deleted=deleted)
+		if workspaces:
+			of_bids = {"bid_workspace": ("in", workspaces)}
+			_delete_evidence_files(frappe.get_all("Bid Evidence", filters=of_bids, pluck="name"), deleted)
+			for doctype in ("Bid Draft Change", "Bid Section Response", "Bid Evidence"):
+				delete_rows(doctype, of_bids, deleted=deleted)
 		delete_rows("Bid Workspace", within, deleted=deleted)
 		if arrangements:
 			delete_rows("Bid Organisation Snapshot", {"bidder_arrangement": ("in", arrangements)}, deleted=deleted)

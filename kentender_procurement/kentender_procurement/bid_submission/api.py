@@ -14,6 +14,8 @@ import frappe
 from kentender_procurement.bid_submission.services import clarification as clarification_service
 from kentender_procurement.bid_submission.services import notice_contact as notice_contact_service
 from kentender_procurement.bid_submission.services import reads
+from kentender_procurement.bid_submission.services import save as save_service
+from kentender_procurement.bid_submission.services import tender_contact as tender_contact_service
 from kentender_procurement.bid_submission.services import snapshot as snapshot_service
 from kentender_procurement.bid_submission.services import start_bid as start_bid_service
 
@@ -32,6 +34,32 @@ def _parse_json(value, default):
 def get_available_tenders(search: str = "", method: str = "", reservation: str = "", closing: str = "open") -> dict[str, Any]:
 	"""BDS §7.1 `GetAvailableTenders` — public; no identity is needed."""
 	return reads.get_available_tenders(search=search, method=method, reservation=reservation, closing=closing)
+
+
+def _masked(fn, **arguments) -> dict[str, Any]:
+	"""A bid the person may not see reads as Not found, as data (§8)."""
+	try:
+		return fn(**arguments)
+	except frappe.DoesNotExistError:
+		return {"outcome": "NOT_FOUND", "heading": "Bid not found", "text": "This bid is unavailable or you do not have permission to view it."}
+
+
+@frappe.whitelist(methods=["GET"])
+def get_my_bids(organisation: str = "") -> dict[str, Any]:
+	"""BDS §7.1 `GetMyBids`."""
+	return reads.get_my_bids(organisation=organisation)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_bid_workspace(bid_reference: str, organisation: str = "") -> dict[str, Any]:
+	"""BDS §7.1 `GetBidWorkspace`."""
+	return _masked(reads.get_bid_workspace, bid_reference=bid_reference, organisation=organisation)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_bid_task(bid_reference: str, task: str, organisation: str = "") -> dict[str, Any]:
+	"""BDS §7.1 `GetBidTask`."""
+	return _masked(reads.get_bid_task, bid_reference=bid_reference, task=task, organisation=organisation)
 
 
 # --------------------------------------------------------------------------
@@ -63,3 +91,15 @@ def refresh_bid_organisation_snapshot(bid_reference: str, confirm=False, expecte
 	"""BDS §7.2 `RefreshBidOrganisationSnapshot`."""
 	confirmed = str(confirm).strip().lower() in ("1", "true", "yes") if not isinstance(confirm, bool) else confirm
 	return snapshot_service.refresh_bid_organisation_snapshot(bid_reference=bid_reference, confirm=confirmed, expected_record_version=expected_record_version, organisation=organisation, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist(methods=["POST"])
+def save_bid_task(bid_reference: str, task: str, values=None, expected_record_version=None, organisation: str = "", idempotency_key: str = "") -> dict[str, Any]:
+	"""BDS §7.2 `SaveBidTask`."""
+	return _masked(save_service.save_bid_task, bid_reference=bid_reference, task=task, values=_parse_json(values, {}), expected_record_version=expected_record_version, organisation=organisation, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist(methods=["POST"])
+def update_tender_contact(bid_reference: str, email: str = "", phone: str = "", expected_record_version=None, organisation: str = "", idempotency_key: str = "") -> dict[str, Any]:
+	"""The bid's Tender contact (BDS §4.3; not named in BDS §7.2, FU-V08-34)."""
+	return _masked(tender_contact_service.update_tender_contact, bid_reference=bid_reference, email=email, phone=phone, expected_record_version=expected_record_version, organisation=organisation, idempotency_key=idempotency_key)

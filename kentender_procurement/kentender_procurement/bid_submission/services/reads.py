@@ -64,3 +64,80 @@ def get_available_tenders(*, search: str = "", method: str = "", reservation: st
 			"closing": [{"value": value, "label": label} for value, label in CLOSING],
 		},
 	}
+
+
+# --------------------------------------------------------------------------
+# §7.1 supplier reads of a bid — `GetMyBids`, `GetBidWorkspace`, `GetBidTask`.
+# A person outside the bid's lead organisation gets Not found. Nothing here
+# writes: statuses are derived from the bound definition and saved values.
+# --------------------------------------------------------------------------
+
+NEXT_ACTION = {"Draft": "Continue bid", "Needs attention": "Continue bid", "Ready to submit": "Review and submit"}
+
+
+def _bid_header(ctx, tasks) -> dict[str, Any]:
+	from kentender_procurement.bid_submission.services import readiness
+
+	ws = ctx.workspace
+	saved = ws.last_saved_at or ws.created_at
+	return {
+		"reference": ws.name, "tender_reference": ws.tender_reference, "tenderer_name": ctx.tenderer_name, "status": readiness.bid_status(tasks),
+		"draft_version": int(ws.current_draft_version or 0), "record_version": int(ws.record_version or 0), "last_saved_label": labels.datetime_label(saved),
+	}
+
+
+def _next(tasks) -> dict[str, str] | None:
+	for key, state in tasks.items():
+		if state.status != "Complete":
+			return {"task": key, "text": "Continue with this task."}
+	return None
+
+
+def get_bid_workspace(*, bid_reference: str, organisation: str = "", user: str | None = None) -> dict[str, Any]:
+	import frappe
+
+	from kentender_procurement.bid_submission.services import bid_context, projection, readiness
+
+	ctx = bid_context.load(bid_reference, actor=cstr(user or frappe.session.user), organisation=organisation, at=clock.now())
+	tasks = readiness.evaluate(ctx)
+	tender = tenders_gateway.published_tender(ctx.workspace.tender_reference, at=clock.now()) or {}
+	return {
+		"bid": _bid_header(ctx, tasks),
+		"tender": {"reference": ctx.workspace.tender_reference, "title": tender.get("title", ""), "deadline_label": labels.datetime_label(tender.get("submission_deadline")), "availability": tender.get("availability", "")},
+		"tasks": projection.task_nav(ctx, tasks), "must_fix": readiness.must_fix_total(tasks), "next": _next(tasks),
+	}
+
+
+def get_bid_task(*, bid_reference: str, task: str, organisation: str = "", user: str | None = None) -> dict[str, Any]:
+	import frappe
+
+	from kentender_procurement.bid_submission.services import bid_context, projection, readiness
+
+	ctx = bid_context.load(bid_reference, actor=cstr(user or frappe.session.user), organisation=organisation, at=clock.now())
+	if not ctx.model.task(cstr(task)):
+		raise frappe.DoesNotExistError("This part of the bid does not exist.")
+	tasks = readiness.evaluate(ctx)
+	return {"bid": _bid_header(ctx, tasks), "tasks": projection.task_nav(ctx, tasks), **projection.task_view(ctx, tasks, cstr(task))}
+
+
+def get_my_bids(*, organisation: str = "", user: str | None = None) -> dict[str, Any]:
+	"""The acting organisation's bids, newest first, each with one next action.
+	Status here is the recorded one; the bid itself derives the current one."""
+	import frappe
+
+	from kentender_procurement.bid_submission.services import bid_authorization as authz
+
+	actor = authz.require_person(cstr(user or frappe.session.user))
+	try:
+		lead = authz.acting_assignment(actor, organisation, at=clock.now())["organisation_id"]
+	except frappe.ValidationError:
+		return {"rows": [], "empty_text": "Your organisation has no bids yet."}
+	rows = []
+	for ws in frappe.get_all("Bid Workspace", filters={"lead_organisation": lead}, fields=["name", "tender_reference", "status", "current_draft_version", "created_at"], order_by="created_at desc", limit_page_length=0):
+		tender = tenders_gateway.published_tender(ws.tender_reference, at=clock.now()) or {}
+		rows.append({
+			"bid_reference": ws.name, "tender_reference": ws.tender_reference, "tender_title": tender.get("title", ""), "status": ws.status,
+			"deadline_label": labels.datetime_label(tender.get("submission_deadline")), "draft_version": int(ws.current_draft_version or 0),
+			"next_action": {"label": NEXT_ACTION.get(ws.status, "View bid"), "href": f"/tenders/{ws.tender_reference}/bid"},
+		})
+	return {"rows": rows, "empty_text": "Your organisation has no bids yet."}

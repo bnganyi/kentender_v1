@@ -25,3 +25,24 @@ def resolve(definition: dict[str, Any]) -> dict[str, Any]:
 	if tasks is None or len(definition.get("sections") or []) != tasks:
 		fail("BDS_DEFINITION_UNSUPPORTED")
 	return {"template_family": key[0], "renderer_profile_id": key[1], "supported_renderer_version": key[2], "tasks": tasks}
+
+
+#: The renderer's headings for the released compositions of BDS-GOODS-IT-V1
+#: (STD-TPL-001 §8.2): code-owned presentation, never shown as identities.
+COMPOSITION_HEADINGS: dict[str, str] = {
+	"COMP-DOC-ACK": "Addendum acknowledgement",
+	"COMP-SUPPLIER-DETAILS": "Tenderer information",
+	"COMP-JV-MEMBER": "Joint-venture member",
+	"COMP-LOCKED-DECLARATION": "Declaration",
+	"COMP-RESERVATION-ELIGIBILITY": "Reservation eligibility",
+	"COMP-TENDER-SECURITY": "Tender security",
+	"COMP-GOODS-OFFER": "Offered goods",
+	"COMP-TECHNICAL-COMPLIANCE": "Technical requirement",
+	"COMP-WARRANTY-SUPPORT": "Warranty and support",
+	"COMP-EXPERIENCE": "Comparable experience",
+	"COMP-RELATED-SERVICES": "Related services",
+	"COMP-ACCEPTANCE": "Acceptance",
+	"COMP-EVIDENCE-LIST": "Supporting evidence",
+	"COMP-GOODS-PRICE": "Goods price",
+	"COMP-REVIEW-SIGNATURE": "Signature and confirmation",
+}

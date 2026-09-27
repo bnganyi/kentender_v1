@@ -68,3 +68,9 @@ def submit_clarification(*, tender: str, candidate_registration_id: str, questio
 	return clarifications.receive_tender_clarification(
 		tender=tender, candidate_registration_id=candidate_registration_id, question=question, inbound_event_id=inbound_event_id, received_at=received_at, user=producer,
 	)
+
+
+def addendum_reference(tender_name: str, addendum_id: str) -> str:
+	"""The public reference of one of the Tender's addenda (the acknowledgement
+	label names it)."""
+	return frappe.db.get_value("Tender Addendum", {"name": addendum_id, "tender": tender_name}, "addendum_reference") or ""
