@@ -160,12 +160,17 @@ def get_bid_workspace(*, bid_reference: str = "", tender_reference: str = "", or
 	}
 
 
-def get_bid_task(*, bid_reference: str, task: str, organisation: str = "", user: str | None = None) -> dict[str, Any]:
+def get_bid_task(*, bid_reference: str = "", task: str, tender_reference: str = "", organisation: str = "", user: str | None = None) -> dict[str, Any]:
+	"""`GetBidTask` (§7.1), by bid or by Tender; the documents task also
+	carries BDS-DES-07's documents, addenda, answers and acknowledgements."""
 	import frappe
 
 	from kentender_procurement.bid_submission.services import bid_context, projection, readiness
 
-	ctx = bid_context.load(bid_reference, actor=cstr(user or frappe.session.user), organisation=organisation, at=clock.now())
+	actor, at = cstr(user or frappe.session.user), clock.now()
+	if not cstr(bid_reference).strip():
+		bid_reference = bid_for_tender(tender_reference=tender_reference, actor=actor, organisation=organisation, at=at)
+	ctx = bid_context.load(bid_reference, actor=actor, organisation=organisation, at=at)
 	if not ctx.model.task(cstr(task)):
 		raise frappe.DoesNotExistError("This part of the bid does not exist.")
 	tasks, notice = _evaluate(ctx)
@@ -178,6 +183,13 @@ def get_bid_task(*, bid_reference: str, task: str, organisation: str = "", user:
 		from kentender_procurement.bid_submission.services import tender_security
 
 		view["security"] = _public_security(tender_security.response(ctx))
+	if task == "documents":
+		from kentender_procurement.bid_submission.services import documents_view, guidance
+
+		published = tenders_gateway.published_tender(ctx.workspace.tender_reference, at=at) or {}
+		guided = guidance.for_bid(ctx, actor=actor, at=at, tasks=tasks)
+		view.update({"tender": {"reference": ctx.workspace.tender_reference, "title": published.get("title", "")}, "next_step": guided["next_step"], "journey": guided["journey"]})
+		view.update(documents_view.view(ctx, tasks, published, at=at))
 	return view
 
 

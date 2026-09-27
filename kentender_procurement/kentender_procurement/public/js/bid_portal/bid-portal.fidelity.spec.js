@@ -16,6 +16,7 @@ import AvailableTendersScreen from "./screens/AvailableTendersScreen.vue";
 import { SCREENS as OVERVIEW } from "./screens/TenderOverviewScreen.fixtures.js";
 import { SCREENS as MY_BIDS } from "./screens/myBids.fixtures.js";
 import { SCREENS as WORKSPACE } from "./screens/workspace.fixtures.js";
+import { SCREENS as DOCUMENTS } from "./screens/documents.fixtures.js";
 
 const DESIGN = "docs/mvp-1-r1/12_bid_submission/design";
 const A = `${DESIGN}/Bid Board v3 - A Public and Account.dc.html`;
@@ -43,6 +44,7 @@ const SCREENS = [
 	...OVERVIEW.map((s) => ({ ...s, board: A })),
 	...MY_BIDS.map((s) => ({ ...s, board: A })),
 	...WORKSPACE.map((s) => ({ ...s, board: B })),
+	...DOCUMENTS.map((s) => ({ ...s, board: B })),
 ];
 
 afterEach(() => {
@@ -65,7 +67,7 @@ describe.each(SCREENS)("$name — $variant at the $frame frame", ({ name, varian
 
 describe("the COVERED claim", () => {
 	// the screens this spec compares, named here so the registry's COVERED claim points at them
-	const COMPARED = ["AvailableTendersScreen", "TenderOverviewScreen", "MyBidsScreen", "ReceiptHistoryScreen", "BidWorkspaceScreen"];
+	const COMPARED = ["AvailableTendersScreen", "TenderOverviewScreen", "MyBidsScreen", "ReceiptHistoryScreen", "BidWorkspaceScreen", "DocumentsTaskScreen"];
 	it("compares exactly the named screens", () => {
 		expect([...new Set(SCREENS.map((s) => s.name))].sort()).toEqual([...COMPARED].sort());
 	});

@@ -12,6 +12,10 @@
 // page. The step is built from BDS-CHG-001 §10.3 as a dialog over the
 // overview (StartBidDialog.vue); the artboard compared is the page beneath it
 // (FU-V08-46).
+//
+// Likewise BDS-DES-07-QUESTION-OPEN-DIALOG and its success state draw the
+// unchanged documents task beneath the Ask-a-question dialog; the page is
+// compared (the dialog is QuestionDialog.vue, shared with the overview).
 
 export const DEPARTURES = {};
 
@@ -28,6 +32,10 @@ export const COVERED = new Set([
 			"BDS-DES-06 / BDS-DES-06-REPRESENTATIVE", "BDS-DES-06-SIGNATORY", "BDS-DES-06-IN-PROGRESS", "BDS-DES-06-ADDENDUM", "BDS-DES-06-GATE", "BDS-DES-06-OUTAGE",
 			"BDS-DES-06-CFG-INCOMPLETE · in preparation", "BDS-DES-06-CFG-INCOMPLETE · ready", "BDS-DES-06-CLOSED-UNSUBMITTED",
 		].map((v) => `BidWorkspaceScreen#${v}@${frame}`),
+		...[
+			"BDS-DES-07", "BDS-DES-07-COMPLETE", "BDS-DES-07-QUESTION-OPEN / BDS-DES-07-NONE", "BDS-DES-07-QUESTION-OPEN-DIALOG", "BDS-DES-07-QUESTION-OPEN-DIALOG · success",
+			"BDS-DES-07-CLOSED", "BDS-DES-07 notice pending · Queued", "BDS-DES-07 notice pending · Sent", "BDS-DES-07-NOTICE",
+		].map((v) => `DocumentsTaskScreen#${v}@${frame}`),
 	]),
 	...["desktop", "narrow"].flatMap((frame) => [
 		...["BDS-DES-03", "BDS-DES-03-VERIFY"].map((v) => `RegisterScreen#${v}@${frame}`),

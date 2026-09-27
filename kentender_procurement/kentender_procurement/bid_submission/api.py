@@ -98,9 +98,9 @@ def get_bid_workspace(bid_reference: str = "", tender_reference: str = "", organ
 
 
 @frappe.whitelist(methods=["GET"])
-def get_bid_task(bid_reference: str, task: str, organisation: str = "") -> dict[str, Any]:
+def get_bid_task(task: str, bid_reference: str = "", tender_reference: str = "", organisation: str = "") -> dict[str, Any]:
 	"""BDS §7.1 `GetBidTask`."""
-	return _masked(reads.get_bid_task, bid_reference=bid_reference, task=task, organisation=organisation)
+	return _masked(reads.get_bid_task, bid_reference=bid_reference, task=task, tender_reference=tender_reference, organisation=organisation)
 
 
 @frappe.whitelist(methods=["GET"])

@@ -6,6 +6,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import AvailableTendersScreen from "./screens/AvailableTendersScreen.vue";
 import BidWorkspaceScreen from "./screens/BidWorkspaceScreen.vue";
+import DocumentsTaskScreen from "./screens/DocumentsTaskScreen.vue";
 import MyBidsScreen from "./screens/MyBidsScreen.vue";
 import ReceiptHistoryScreen from "./screens/ReceiptHistoryScreen.vue";
 import TenderOverviewScreen from "./screens/TenderOverviewScreen.vue";
@@ -26,6 +27,7 @@ const screen = computed(() => {
 	if (segments.length === 1 && segments[0] === "tenders") return "available-tenders";
 	if (segments.length === 2 && segments[0] === "tenders") return "tender-overview";
 	if (segments.length === 3 && segments[0] === "tenders" && segments[2] === "bid") return "workspace";
+	if (segments.length === 4 && segments[0] === "tenders" && segments[2] === "bid" && segments[3] === "documents") return "documents-task";
 	if (segments.length === 1 && segments[0] === "my-bids") return "my-bids";
 	if (segments.length === 2 && segments[0] === "account" && segments[1] === "receipts") return "receipts";
 	return "not-found";
@@ -50,6 +52,7 @@ function firstPayload(name) {
 	<AvailableTendersScreen v-if="screen === 'available-tenders'" :initial="firstPayload('available-tenders')" />
 	<TenderOverviewScreen v-else-if="screen === 'tender-overview'" :key="route.path" :reference="route.segments[1]" :initial="firstPayload('tender-overview')" @not-found="notFound = true" />
 	<BidWorkspaceScreen v-else-if="screen === 'workspace'" :key="route.path" :reference="route.segments[1]" :initial="firstPayload('workspace')" @not-found="notFound = true" />
+	<DocumentsTaskScreen v-else-if="screen === 'documents-task'" :key="route.path" :reference="route.segments[1]" :initial="firstPayload('documents-task')" @not-found="notFound = true" />
 	<MyBidsScreen v-else-if="screen === 'my-bids'" :initial="firstPayload('my-bids')" />
 	<ReceiptHistoryScreen v-else-if="screen === 'receipts'" :initial="firstPayload('receipts')" @not-found="notFound = true" />
 	<CommonState
