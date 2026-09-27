@@ -15,6 +15,7 @@ from kentender_procurement.bid_submission.services import clarification as clari
 from kentender_procurement.bid_submission.services import notice_contact as notice_contact_service
 from kentender_procurement.bid_submission.services import reads
 from kentender_procurement.bid_submission.services import save as save_service
+from kentender_procurement.bid_submission.services import security_intake as security_intake_service
 from kentender_procurement.bid_submission.services import tender_contact as tender_contact_service
 from kentender_procurement.bid_submission.services import snapshot as snapshot_service
 from kentender_procurement.bid_submission.services import start_bid as start_bid_service
@@ -108,3 +109,23 @@ def save_bid_task(bid_reference: str, task: str, values=None, expected_record_ve
 def update_tender_contact(bid_reference: str, email: str = "", phone: str = "", expected_record_version=None, organisation: str = "", idempotency_key: str = "") -> dict[str, Any]:
 	"""The bid's Tender contact (BDS §4.3; not named in BDS §7.2, FU-V08-34)."""
 	return _masked(tender_contact_service.update_tender_contact, bid_reference=bid_reference, email=email, phone=phone, expected_record_version=expected_record_version, organisation=organisation, idempotency_key=idempotency_key)
+
+
+# --------------------------------------------------------------------------
+# Blind physical tender-security intake (owner decisions OD-G/OD-H) — the
+# Head of Procurement Function's Desk page; nothing about bids is returned.
+# --------------------------------------------------------------------------
+
+
+@frappe.whitelist(methods=["POST"])
+def record_physical_tender_security_receipt(tender_reference: str, instrument_type: str = "", issuer: str = "", instrument_reference: str = "", amount: str = "", currency: str = "", received_at: str = "", notes: str = "", confirmed=False, idempotency_key: str = "") -> dict[str, Any]:
+	"""BDS §7.3 `RecordPhysicalTenderSecurityReceipt`, as a blind intake."""
+	return security_intake_service.record_physical_tender_security_receipt(
+		tender_reference=tender_reference, instrument_type=instrument_type, issuer=issuer, instrument_reference=instrument_reference, amount=amount, currency=currency,
+		received_at=received_at, notes=notes, confirmed=confirmed, idempotency_key=idempotency_key,
+	)
+
+
+@frappe.whitelist(methods=["GET"])
+def list_my_tender_security_intakes(tender_reference: str = "") -> dict[str, Any]:
+	return security_intake_service.list_my_intakes(tender_reference=tender_reference)

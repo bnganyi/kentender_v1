@@ -133,7 +133,21 @@ def get_bid_task(*, bid_reference: str, task: str, organisation: str = "", user:
 	if not ctx.model.task(cstr(task)):
 		raise frappe.DoesNotExistError("This part of the bid does not exist.")
 	tasks, notice = _evaluate(ctx)
-	return {"bid": _bid_header(ctx, tasks), "tasks": projection.task_nav(ctx, tasks), "addendum_notice": notice, **projection.task_view(ctx, tasks, cstr(task))}
+	view = {"bid": _bid_header(ctx, tasks), "tasks": projection.task_nav(ctx, tasks), "addendum_notice": notice, **projection.task_view(ctx, tasks, cstr(task))}
+	if task == "price":
+		from kentender_procurement.bid_submission.services import price
+
+		view["price"] = price.summary(ctx)
+	if task == "company":
+		from kentender_procurement.bid_submission.services import tender_security
+
+		view["security"] = _public_security(tender_security.response(ctx))
+	return view
+
+
+def _public_security(security: dict[str, Any]) -> dict[str, Any]:
+	"""The supplier's own security facts for the page (the handle is internal to the review link)."""
+	return {k: v for k, v in security.items() if k != "security_form_handle"}
 
 
 def get_my_bids(*, organisation: str = "", user: str | None = None) -> dict[str, Any]:
@@ -177,8 +191,14 @@ def get_bid_review(*, bid_reference: str, organisation: str = "", user: str | No
 			item = {"task": task.key, "task_label": task.label, "handle": state.field.handle, "label": projection.label(ctx, state.field), "text": state.issue["text"]}
 			(must_fix if state.issue["severity"] == readiness.MUST_FIX else notes).append(item)
 	attention = [{"task": key, "task_label": ctx.model.task(key).label} for key, state in tasks.items() if state.status == "Needs attention"]
+	from kentender_procurement.bid_submission.services import price, tender_security
+
+	security_note = tender_security.review_note(ctx)
+	if security_note:
+		notes.append({**security_note, "task_label": ctx.model.task("company").label})
 	header = _bid_header(ctx, tasks)
 	return {
 		"bid": header, "ready": header["status"] == "Ready to submit", "must_fix": must_fix, "review_notes": notes, "needs_attention": attention,
-		"tasks": projection.task_nav(ctx, tasks), "addendum_notice": notice,
+		"tasks": projection.task_nav(ctx, tasks), "addendum_notice": notice, "price": price.summary(ctx),
+		"security": _public_security(tender_security.response(ctx)),
 	}

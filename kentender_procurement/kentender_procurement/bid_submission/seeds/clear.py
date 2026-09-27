@@ -12,7 +12,7 @@ import frappe
 
 from kentender_core.utils.raw_delete import delete_rows
 
-DOCTYPES = ("Bid Submission Event", "Bid Draft Change", "Bid Section Response", "Bid Evidence", "Bid Workspace", "Bid Organisation Snapshot", "Bidder Arrangement", "Bid Command Journal")
+DOCTYPES = ("Tender Security Intake Match", "Tender Security Intake", "Bid Submission Event", "Bid Draft Change", "Bid Section Response", "Bid Evidence", "Bid Workspace", "Bid Organisation Snapshot", "Bidder Arrangement", "Bid Command Journal")
 
 
 def _delete_evidence_files(evidence: list[str], deleted: dict[str, int]) -> None:
@@ -41,6 +41,8 @@ def wipe(*, tenders: list[str] | None = None, namespace: str = "") -> dict[str, 
 		within = {"tender": ("in", list(tenders))}
 		arrangements = frappe.get_all("Bidder Arrangement", filters=within, pluck="name")
 		workspaces = frappe.get_all("Bid Workspace", filters=within, pluck="name")
+		delete_rows("Tender Security Intake Match", within, deleted=deleted)
+		delete_rows("Tender Security Intake", within, deleted=deleted)
 		delete_rows("Bid Submission Event", within, deleted=deleted)
 		if workspaces:
 			of_bids = {"bid_workspace": ("in", workspaces)}

@@ -186,7 +186,9 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 		# TPR-CHG-001 v0.8 §6 (2026-09-19): the same office confirms channel
 		# publication with evidence and attestation, and issues addenda —
 		# two more sod tags on the same entry, no new registry row.
-		sod_tags=("requisition_authorisation", "tender_approval", "plan_preparation_signature", "channel_confirmation", "addendum_issue"),
+		# BDS-CHG-001 v0.8 owner decisions OD-G/OD-H (2026-09-26): the same
+		# office records physical tender-security originals, blind to bids.
+		sod_tags=("requisition_authorisation", "tender_approval", "plan_preparation_signature", "channel_confirmation", "addendum_issue", "tender_security_receipt"),
 	),
 	# --- Tenders (TPR-CHG-001 v0.8 §6) ------------------------------------
 	# Site-wide; starts, prepares and submits Tender Versions, drafts addenda

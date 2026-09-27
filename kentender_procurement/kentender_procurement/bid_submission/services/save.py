@@ -102,6 +102,10 @@ def _save(*, actor: str, bid_reference: str, task: str, values: dict, expected_r
 				"doctype": CHANGE, "bid_workspace": ws.name, "draft_version": version, "section_key": task, "response_key": key,
 				"change_kind": "Cleared" if value is None else "Saved", "prior_value": _dump(before.get(key)), "new_value": _dump(value), "actor": actor, "changed_at": at,
 			}))
+		if task == "company":
+			from kentender_procurement.bid_submission.services import security_matching
+
+			security_matching.match_tender(ws.tender)  # the private physical-original match (OD-H)
 		ctx.sections = _sections(ws.name)
 		ws.attention_json = json.dumps(reviewed)
 		status = refresh_derived(ctx)
