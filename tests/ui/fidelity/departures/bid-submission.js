@@ -22,6 +22,10 @@ export const COVERED = new Set([
 		["", "-SIGNED-OUT", "-JV-START", "-DRAFT", "-SUBMITTED", "-CANDIDATE-QUESTION", "-CANCELLED"].map((v) => `TenderOverviewScreen#BDS-DES-02${v}@${frame}`),
 	),
 	...["desktop", "narrow"].flatMap((frame) => [
+		...["", "-SUBMITTED", "-WITHDRAWN", "-EMPTY"].map((v) => `MyBidsScreen#BDS-DES-05${v}@${frame}`),
+		...["", "-EMPTY", "-SUSPENDED"].map((v) => `ReceiptHistoryScreen#BDS-DES-17${v}@${frame}`),
+	]),
+	...["desktop", "narrow"].flatMap((frame) => [
 		...["BDS-DES-03", "BDS-DES-03-VERIFY"].map((v) => `RegisterScreen#${v}@${frame}`),
 		...["", "-ATTENTION", "-VERIFY", "-SUSPENDED"].map((v) => `AccountScreen#BDS-DES-04${v}@${frame}`),
 	]),

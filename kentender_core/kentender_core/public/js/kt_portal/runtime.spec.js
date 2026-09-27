@@ -143,6 +143,27 @@ describe("portal_page.register and useRoute", () => {
 		}
 	});
 
+	it("leaves a longer prefix another surface owns to that surface (the server's longest-prefix rule)", () => {
+		// the Account page: /account is Supplier Accounts', /account/receipts Bid Submission's
+		window.history.replaceState(null, "", "/account");
+		page("account", { verdict: "OK", owners: [{ prefix: "/tenders", key: "tenders" }, { prefix: "/account", key: "account" }, { prefix: "/account/receipts", key: "tenders" }] });
+		portal.dispose();
+		portal = createPortalRuntime(window);
+		portal.register("account", { prefixes: ["/account"], mount: () => null });
+		const { api } = probe(portal);
+		const assign = vi.fn();
+		const original = window.location;
+		Object.defineProperty(window, "location", { configurable: true, value: { ...original, href: original.href, origin: original.origin, assign } });
+		try {
+			api().go("/account/receipts");
+			expect(assign).toHaveBeenCalledWith("/account/receipts");
+		} finally {
+			Object.defineProperty(window, "location", { configurable: true, value: original });
+		}
+		api().go("/account/register"); // still this surface's own path
+		expect(api().route.value.path).toBe("/account/register");
+	});
+
 	it("revalidates in place when restored from the back/forward cache", () => {
 		portal.register("tenders", { prefixes: ["/tenders"], mount: () => null });
 		const { api } = probe(portal);

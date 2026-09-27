@@ -5,6 +5,8 @@
 // other path shows the Tender-not-found state rather than a guess.
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import AvailableTendersScreen from "./screens/AvailableTendersScreen.vue";
+import MyBidsScreen from "./screens/MyBidsScreen.vue";
+import ReceiptHistoryScreen from "./screens/ReceiptHistoryScreen.vue";
 import TenderOverviewScreen from "./screens/TenderOverviewScreen.vue";
 import CommonState from "./components/CommonState.vue";
 
@@ -13,19 +15,22 @@ const props = defineProps({
 	portal: { type: Object, required: true },
 });
 const { route } = props.portal.useRoute({ ref, onMounted, onUnmounted });
-// The server said this path has no Tender (first paint) or a later read did.
-const notFound = ref(!!(props.initial && props.initial.path === route.value.path && (props.initial.payload || {}).screen === "tender-not-found"));
+// The server said this path has nothing to show (first paint) or a later read did.
+const notFound = ref(!!(props.initial && props.initial.path === route.value.path && ["tender-not-found", "not-found"].includes((props.initial.payload || {}).screen)));
 watch(() => route.value.path, () => (notFound.value = false));
 
 const screen = computed(() => {
 	const segments = route.value.segments;
+	if (notFound.value) return "not-found";
 	if (segments.length === 1 && segments[0] === "tenders") return "available-tenders";
-	if (segments.length === 2 && segments[0] === "tenders" && !notFound.value) return "tender-overview";
+	if (segments.length === 2 && segments[0] === "tenders") return "tender-overview";
+	if (segments.length === 1 && segments[0] === "my-bids") return "my-bids";
+	if (segments.length === 2 && segments[0] === "account" && segments[1] === "receipts") return "receipts";
 	return "not-found";
 });
 
 // A screen sets its own title when it mounts; a common state names itself.
-watch(screen, (name) => name === "not-found" && props.portal.setTitle(__("Tender not found")), { immediate: true });
+watch(screen, (name) => name === "not-found" && props.portal.setTitle(route.value.segments[0] === "tenders" ? __("Tender not found") : __("Page not found")), { immediate: true });
 
 function firstPayload(name) {
 	const initial = props.initial || {};
@@ -37,6 +42,16 @@ function firstPayload(name) {
 <template>
 	<AvailableTendersScreen v-if="screen === 'available-tenders'" :initial="firstPayload('available-tenders')" />
 	<TenderOverviewScreen v-else-if="screen === 'tender-overview'" :key="route.path" :reference="route.segments[1]" :initial="firstPayload('tender-overview')" @not-found="notFound = true" />
+	<MyBidsScreen v-else-if="screen === 'my-bids'" :initial="firstPayload('my-bids')" />
+	<ReceiptHistoryScreen v-else-if="screen === 'receipts'" :initial="firstPayload('receipts')" @not-found="notFound = true" />
+	<CommonState
+		v-else-if="route.segments[0] !== 'tenders'"
+		state="not-found"
+		heading="Page not found."
+		message="This page is unavailable or you do not have permission to view it."
+		action-label="Back to My bids"
+		action-href="/my-bids"
+	/>
 	<CommonState
 		v-else
 		state="tender-not-found"

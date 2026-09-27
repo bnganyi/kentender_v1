@@ -165,32 +165,156 @@ def _public_security(security: dict[str, Any]) -> dict[str, Any]:
 	return {k: v for k, v in security.items() if k != "security_form_handle"}
 
 
-def get_my_bids(*, organisation: str = "", user: str | None = None) -> dict[str, Any]:
-	"""The acting organisation's bids, newest first, each with one next action.
-	Status here is the recorded one; the bid itself derives the current one."""
+MY_BIDS_EMPTY = "No bids yet. Find a Tender to start your first bid."
+MY_BIDS_STATUSES = ("Draft", "Needs attention", "Ready to submit", "Submitted", "Withdrawn", "Closed without submission")
+STATUS_TONES = {"Draft": "draft", "Needs attention": "attention", "Ready to submit": "live", "Submitted": "live", "Withdrawn": "critical", "Closed without submission": "critical"}
+RECEIPTS_EMPTY = "No submission or withdrawal receipts for this organisation."
+SUSPENDED_TEXT = "This supplier account is suspended. You can read and download existing receipts; no bid can be prepared, submitted, replaced or withdrawn."
+
+
+def _counted(count: int, one: str, many: str) -> str:
+	return f"{count} {one if count == 1 else many}"
+
+
+def _withdrawal(workspace: str) -> dict[str, Any] | None:
+	import frappe
+
+	rows = frappe.get_all("Bid Submission Change", filters={"bid_workspace": workspace, "change_type": "Withdrawal"}, fields=["acknowledgement_ref", "acknowledged_at"], order_by="acknowledged_at desc", limit_page_length=1)
+	return rows[0] if rows else None
+
+
+def _may_start_replacement(actor: str, lead: str, tender_reference: str, at) -> bool:
+	"""Start replacement is the Authorised Signatory's, on an Active Account,
+	while the Tender is open before its deadline (`PrepareReplacementBid`'s
+	own rules, read from the same Tender facts)."""
+	import frappe
+	from frappe.utils import get_datetime
+
+	from kentender_procurement.bid_submission.services import bid_authorization as authz
+	from kentender_procurement.bid_submission.services import supplier_gateway
+
+	root = tenders_gateway.tender_root(tender_reference)
+	if not root or not root.submission_deadline or get_datetime(at) >= get_datetime(root.submission_deadline):
+		return False
+	if tenders_gateway.availability(tender_reference, at=at) != "open":
+		return False
+	if (supplier_gateway.organisation(organisation_id=lead) or {}).get("account_status") != "Active":
+		return False
+	try:
+		return authz.acting_assignment(actor, lead, at=at)["responsibility"] == authz.SIGNATORY
+	except frappe.ValidationError:
+		return False
+
+
+def _my_bid_row(ws, tender: dict[str, Any], *, actor: str, lead: str, at, work: list[dict[str, Any]]) -> dict[str, Any]:
+	import frappe
+
+	base = f"/tenders/{ws.tender_reference}/bid"
+	status, version_label, updated = ws.status, f"Draft Version {int(ws.current_draft_version or 0)}", ws.last_saved_at or ws.created_at
+	if status in ("Draft", "Needs attention"):
+		actions = [{"label": "Continue bid", "href": base}]
+	elif status == "Ready to submit":
+		actions = [{"label": "Review bid", "href": f"{base}/review"}]
+	elif status == "Submitted":
+		version = frappe.db.get_value("Bid Submission Version", ws.current_submission_version, ["version_number", "receipt", "accepted_at"], as_dict=True) or {}
+		version_label, updated = f"Submitted bid Version {int(version.get('version_number') or 1)}", version.get("accepted_at") or ws.status_since
+		actions = [{"label": "View receipt", "href": f"{base}/receipt/{version.get('receipt')}"}] if version.get("receipt") else []
+	elif status == "Withdrawn":
+		change = _withdrawal(ws.name) or {}
+		version_label, updated = "", change.get("acknowledged_at") or ws.status_since
+		actions = [{"label": "View acknowledgement", "href": f"{base}/receipt/{change.get('acknowledgement_ref')}"}] if change.get("acknowledgement_ref") else []
+		if _may_start_replacement(actor, lead, ws.tender_reference, at):
+			actions.append({"label": "Start replacement", "href": base, "command": "prepare_replacement", "record_version": int(ws.record_version or 0)})
+	else:  # Closed without submission
+		updated = ws.status_since or updated
+		actions = [{"label": "View bid", "href": base}]
+	return {
+		"bid_reference": ws.name, "tender_reference": ws.tender_reference, "tender_title": tender.get("title", ""), "status": status, "status_label": status,
+		"status_tone": STATUS_TONES.get(status, "draft"), "version_label": version_label, "deadline_label": labels.datetime_label(tender.get("submission_deadline")),
+		"updated_label": labels.datetime_label(updated), "draft_version": int(ws.current_draft_version or 0), "actions": actions,
+		"next_action": actions[0] if actions else {"label": "View bid", "href": base},
+		"work": [{"kind": i["kind"], "title": i["title"]} for i in work if i["bid_reference"] == ws.name],
+	}
+
+
+def get_my_bids(*, organisation: str = "", search: str = "", status: str = "", user: str | None = None) -> dict[str, Any]:
+	"""`GetMyBids` (§7.1, §10.6 BDS-DES-05): the acting organisation's bids,
+	newest first, each with its recorded status, version, deadline, last
+	update and the actions this person may take. A list, not a tracker."""
 	import frappe
 
 	from kentender_procurement.bid_submission.services import bid_authorization as authz
-
-	actor = authz.require_person(cstr(user or frappe.session.user))
-	try:
-		lead = authz.acting_assignment(actor, organisation, at=clock.now())["organisation_id"]
-	except frappe.ValidationError:
-		return {"rows": [], "empty_text": "Your organisation has no bids yet."}
 	from kentender_procurement.bid_submission.services import handoffs
 
+	actor, at = authz.require_person(cstr(user or frappe.session.user)), clock.now()
+	status = cstr(status) if cstr(status) in MY_BIDS_STATUSES else ""
+	options = {"status": [{"value": "", "label": "All statuses"}] + [{"value": s, "label": s} for s in MY_BIDS_STATUSES]}
+	base = {"empty_text": MY_BIDS_EMPTY, "options": options, "applied": {"search": cstr(search), "status": status}}
+	try:
+		lead = authz.acting_assignment(actor, organisation, at=at)["organisation_id"]
+	except frappe.ValidationError:
+		return {**base, "rows": [], "count_text": "", "work": []}
+	workspaces = frappe.get_all(
+		"Bid Workspace", filters={"lead_organisation": lead}, order_by="created_at desc", limit_page_length=0,
+		fields=["name", "tender_reference", "status", "status_since", "current_draft_version", "current_submission_version", "last_saved_at", "created_at", "record_version"],
+	)
+	work = handoffs.items_for(actor, [w.name for w in workspaces])
+	needle = cstr(search).strip().lower()
 	rows = []
-	workspaces = frappe.get_all("Bid Workspace", filters={"lead_organisation": lead}, fields=["name", "tender_reference", "status", "current_draft_version", "created_at"], order_by="created_at desc", limit_page_length=0)
-	items = handoffs.items_for(actor, [w.name for w in workspaces])
 	for ws in workspaces:
-		tender = tenders_gateway.published_tender(ws.tender_reference, at=clock.now()) or {}
-		rows.append({
-			"bid_reference": ws.name, "tender_reference": ws.tender_reference, "tender_title": tender.get("title", ""), "status": ws.status,
-			"deadline_label": labels.datetime_label(tender.get("submission_deadline")), "draft_version": int(ws.current_draft_version or 0),
-			"next_action": {"label": NEXT_ACTION.get(ws.status, "View bid"), "href": f"/tenders/{ws.tender_reference}/bid"},
-			"work": [{"kind": i["kind"], "title": i["title"]} for i in items if i["bid_reference"] == ws.name],
-		})
-	return {"rows": rows, "empty_text": "Your organisation has no bids yet.", "work": items}
+		if status and ws.status != status:
+			continue
+		tender = tenders_gateway.published_tender(ws.tender_reference, at=at) or {}
+		if needle and not any(needle in cstr(v).lower() for v in (ws.name, ws.tender_reference, tender.get("title"))):
+			continue
+		rows.append(_my_bid_row(ws, tender, actor=actor, lead=lead, at=at, work=work))
+	return {**base, "rows": rows, "count_text": _counted(len(rows), "bid", "bids") if rows else "", "work": work}
+
+
+def get_receipt_history(*, organisation: str = "", user: str | None = None) -> dict[str, Any]:
+	"""`/account/receipts` (§10.20 BDS-DES-17): the acting organisation's
+	submission receipts and withdrawal acknowledgements, oldest first — a
+	read-only recovery register, also for a suspended Account. Another
+	organisation named here is Not found. No price, content or digest."""
+	import frappe
+
+	from kentender_procurement.bid_submission.services import bid_authorization as authz
+	from kentender_procurement.bid_submission.services import supplier_gateway
+
+	actor, at = authz.require_person(cstr(user or frappe.session.user)), clock.now()
+	empty = {"outcome": "OK", "rows": [], "count_text": "", "empty_text": RECEIPTS_EMPTY, "suspended": False, "suspended_text": ""}
+	try:
+		lead = authz.acting_assignment(actor, organisation, at=at)["organisation_id"]
+	except frappe.ValidationError:
+		if cstr(organisation).strip():
+			raise frappe.DoesNotExistError("This record is unavailable or you do not have permission to view it.")
+		return empty
+	suspended = (supplier_gateway.organisation(organisation_id=lead) or {}).get("account_status") == "Suspended"
+	workspaces = {w.name: w.tender_reference for w in frappe.get_all("Bid Workspace", filters={"lead_organisation": lead}, fields=["name", "tender_reference"], limit_page_length=0)}
+	titles: dict[str, str] = {}
+
+	def title(reference: str) -> str:
+		if reference not in titles:
+			titles[reference] = cstr((tenders_gateway.published_tender(reference, at=at) or {}).get("title"))
+		return titles[reference]
+
+	entries = []
+	names = list(workspaces)
+	if names:
+		for r in frappe.get_all("Bid Receipt", filters={"bid_workspace": ("in", names)}, fields=["receipt_reference", "tender_reference", "tender_title", "accepted_at"], limit_page_length=0):
+			entries.append((r.accepted_at, r.tender_reference, r.tender_title or title(r.tender_reference), r.receipt_reference, "Submitted", "live"))
+		for c in frappe.get_all("Bid Submission Change", filters={"bid_workspace": ("in", names), "change_type": "Withdrawal"}, fields=["bid_workspace", "acknowledgement_ref", "acknowledged_at"], limit_page_length=0):
+			reference = workspaces[c.bid_workspace]
+			entries.append((c.acknowledged_at, reference, title(reference), c.acknowledgement_ref, "Withdrawn", "critical"))
+	entries.sort(key=lambda e: (str(e[0]), e[3]))
+	rows = [
+		{
+			"tender_reference": ref, "tender_title": name, "document": document, "event": event, "event_tone": tone,
+			"at_label": labels.datetime_seconds_label(when).replace(f" {labels.TIME_ZONE_LABEL}", ""), "href": f"/tenders/{ref}/bid/receipt/{document}",
+		}
+		for when, ref, name, document, event, tone in entries
+	]
+	return {**empty, "rows": rows, "count_text": _counted(len(rows), "record", "records") if rows else "", "suspended": suspended, "suspended_text": SUSPENDED_TEXT if suspended else ""}
 
 
 def get_bid_review(*, bid_reference: str, organisation: str = "", user: str | None = None) -> dict[str, Any]:

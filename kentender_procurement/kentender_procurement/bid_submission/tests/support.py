@@ -22,7 +22,8 @@ from typing import Any
 
 import frappe
 
-from kentender_procurement.bid_submission.seeds import clear
+from kentender_procurement.bid_submission.seeds import clear, filling
+from kentender_procurement.bid_submission.seeds.filling import pdf, sample_value  # noqa: F401 — the tests' names
 from kentender_procurement.bid_submission.services import candidate_registry
 from kentender_procurement.tenders.tests import fixtures as tender_fx
 from kentender_procurement.tenders.tests.test_open_period import OpenPeriodCase
@@ -184,21 +185,6 @@ class BidCase(OpenPeriodCase):
 		}
 
 
-def pdf(text: str = "") -> bytes:
-	"""A readable one-page PDF (Frappe parses uploads, so the bytes must be real)."""
-	from io import BytesIO
-
-	from pypdf import PdfWriter
-
-	writer = PdfWriter()
-	writer.add_blank_page(width=595, height=842)
-	if text:
-		writer.add_metadata({"/Title": text})
-	buffer = BytesIO()
-	writer.write(buffer)
-	return buffer.getvalue()
-
-
 def simulation_on(case) -> None:
 	"""The Test Scanner answers (owner decision OD-C) for this test only."""
 	previous = frappe.conf.get("kt_bds_simulation_environment")
@@ -206,57 +192,8 @@ def simulation_on(case) -> None:
 	case.addCleanup(frappe.conf.__setitem__, "kt_bds_simulation_environment", previous)
 
 
-def sample_value(field: dict[str, Any]):
-	"""A value the field's own published limits accept (answers only; the bid
-	does not evaluate them)."""
-	kind, limits, options = field["kind"], field.get("limits") or {}, field.get("options") or []
-	if kind == "confirmation":
-		return True
-	if kind in ("yes_no", "single_choice"):
-		return options[0]
-	if kind == "multi_select":
-		return [options[0]]
-	if kind == "ports":
-		return [{"port_type": options[0], "count": 1}]
-	if kind in ("short_text", "long_text"):
-		text = "Seeded answer for the canonical bid."
-		low, high = int(limits.get("min_length", 0)), int(limits.get("max_length", 500))
-		return (text * (low // len(text) + 1))[: max(low, min(len(text), high))]
-	if kind == "integer":
-		return int(limits.get("minimum", 1))
-	if kind in ("decimal", "money"):
-		return str(limits.get("minimum", "1.00"))
-	if kind == "date":
-		return str(limits.get("not_before") or limits.get("not_after") or "2027-06-01")
-	raise ValueError(kind)
-
-
 def fill_everything(bid: str, *, user: str = DAVID) -> None:
-	"""Answer every visible editable field, add every required file and give the
-	Tender contact's telephone, through the real commands."""
-	from kentender_procurement.bid_submission.services import evidence, reads, save, tender_contact
-
-	def version():
-		return frappe.db.get_value("Bid Workspace", bid, "record_version")
-
-	arrangement = frappe.db.get_value("Bid Workspace", bid, "bidder_arrangement")
-	tender_contact.update_tender_contact(bid_reference=bid, email=user, phone="+254 709 555 015", expected_record_version=frappe.db.get_value("Bidder Arrangement", arrangement, "record_version"), idempotency_key=key(), user=user)
-	for _round in range(3):  # a controlling answer can reveal a field
-		for task in ("company", "requirements", "price"):
-			view = reads.get_bid_task(bid_reference=bid, task=task, user=user)
-			values = {
-				f["handle"]: sample_value(f) for g in view["groups"] for f in g["fields"]
-				if f["editable"] and f["visible"] and f["kind"] != "evidence" and (f["value"] in (None, "", []) or f.get("issue"))
-			}
-			if values:
-				saved = save.save_bid_task(bid_reference=bid, task=task, values=values, expected_record_version=version(), idempotency_key=key(), user=user)
-				assert saved.get("ok"), saved
-			for g in reads.get_bid_task(bid_reference=bid, task=task, user=user)["groups"]:
-				for f in g["fields"]:
-					if f["kind"] == "evidence" and f["visible"] and f.get("issue"):
-						for n in range(max(1, f["evidence"]["minimum"]) - len([x for x in f["evidence"]["files"] if x["status"] == "Accepted"])):
-							added = evidence.upload_bid_evidence(bid_reference=bid, handle=f["handle"], filename=f"evidence-{n + 1}.pdf", content=pdf(f"{task}-{n}"), expected_record_version=version(), idempotency_key=key(), user=user)
-							assert added.get("ok"), added
+	filling.fill_everything(bid, user=user)
 
 
 def submission_on(case) -> None:

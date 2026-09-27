@@ -94,6 +94,8 @@ class TestPortalRuntime(IntegrationTestCase):
 		self.assertIn("kt_portal_runtime", html)
 		self.assertIn('"search": "laptops"', html)
 		self.assertNotIn("</script><b>", html)  # the payload cannot close its script element
+		# every surface's prefix, so in-page navigation keeps the longest-prefix rule
+		self.assertIn('{"prefix": "/account/receipts", "key": "receipts"}', html)
 		self.assertTrue("frappe.csrf_token" in html or "<!-- csrf_token -->" in html)  # Frappe fills it when the session has one
 		# no Frappe website stylesheet, theme, navbar or footer reaches the portal
 		stylesheets = re.findall(r'<link[^>]+rel="stylesheet"[^>]*>', html)

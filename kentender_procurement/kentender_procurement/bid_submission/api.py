@@ -77,9 +77,18 @@ def _masked(fn, **arguments) -> dict[str, Any]:
 
 
 @frappe.whitelist(methods=["GET"])
-def get_my_bids(organisation: str = "") -> dict[str, Any]:
-	"""BDS §7.1 `GetMyBids`."""
-	return reads.get_my_bids(organisation=organisation)
+def get_my_bids(organisation: str = "", search: str = "", status: str = "") -> dict[str, Any]:
+	"""BDS §7.1 `GetMyBids` (BDS-DES-05)."""
+	return reads.get_my_bids(organisation=organisation, search=search, status=status)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_receipt_history(organisation: str = "") -> dict[str, Any]:
+	"""BDS §10.20 receipt history (BDS-DES-17); another organisation is Not found, as data."""
+	try:
+		return reads.get_receipt_history(organisation=organisation)
+	except frappe.DoesNotExistError:
+		return {"outcome": "NOT_FOUND", "heading": "Page not found", "text": "This page is unavailable or you do not have permission to view it."}
 
 
 @frappe.whitelist(methods=["GET"])

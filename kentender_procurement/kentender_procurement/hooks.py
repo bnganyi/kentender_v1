@@ -117,6 +117,13 @@ kt_portal_surfaces = [
 		"bundle": "bid_portal.bundle.js",
 		"css": [f"/assets/kentender_procurement/css/bid_portal.css?v={_asset_version('public/css/bid_portal.css')}"],
 	},
+	# BDS-DES-05 My bids and BDS-DES-17 receipt history — the same app and
+	# bundle; `/account/receipts` outranks Supplier Accounts' `/account`.
+	*(
+		{"key": "tenders", "prefix": prefix, "resolver": "kentender_procurement.bid_submission.portal.resolve", "bundle": "bid_portal.bundle.js",
+		 "css": [f"/assets/kentender_procurement/css/bid_portal.css?v={_asset_version('public/css/bid_portal.css')}"]}
+		for prefix in ("/my-bids", "/account/receipts")
+	),
 ]
 
 # BDS-CHG-001 v0.8 plan Phase 5 (TPR FU-25) — the Tender candidate registry is

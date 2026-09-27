@@ -42,7 +42,10 @@ def get_context(context):
 	context.kt_portal = answer
 	context.kt_portal_asset_version = _asset_version
 	context.kt_portal_initial = json.dumps(
-		{"verdict": answer["verdict"], "path": answer["path"], "surface": answer["surface"]["key"], "payload": answer["payload"], "signed_in": answer["shell"]["signed_in"]},
+		{
+			"verdict": answer["verdict"], "path": answer["path"], "surface": answer["surface"]["key"], "payload": answer["payload"], "signed_in": answer["shell"]["signed_in"],
+			"owners": portal_runtime.owners(),
+		},
 		default=str, ensure_ascii=False,
 	).replace("</", "<\\/")
 	lang = frappe.local.lang or "en"

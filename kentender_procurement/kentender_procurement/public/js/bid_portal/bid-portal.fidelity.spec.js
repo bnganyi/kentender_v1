@@ -14,6 +14,7 @@ import { ACCOUNT_SCREENS, COVERED, DEPARTURES } from "../../../../../tests/ui/fi
 
 import AvailableTendersScreen from "./screens/AvailableTendersScreen.vue";
 import { SCREENS as OVERVIEW } from "./screens/TenderOverviewScreen.fixtures.js";
+import { SCREENS as MY_BIDS } from "./screens/myBids.fixtures.js";
 
 const DESIGN = "docs/mvp-1-r1/12_bid_submission/design";
 const A = `${DESIGN}/Bid Board v3 - A Public and Account.dc.html`;
@@ -38,6 +39,7 @@ const SCREENS = [
 		{ name: "AvailableTendersScreen", variant: "BDS-DES-01-EMPTY", board: A, frame, component: AvailableTendersScreen, props: { initial: EMPTY }, path: "/tenders" },
 	]),
 	...OVERVIEW.map((s) => ({ ...s, board: A })),
+	...MY_BIDS.map((s) => ({ ...s, board: A })),
 ];
 
 afterEach(() => {
@@ -60,7 +62,7 @@ describe.each(SCREENS)("$name — $variant at the $frame frame", ({ name, varian
 
 describe("the COVERED claim", () => {
 	// the screens this spec compares, named here so the registry's COVERED claim points at them
-	const COMPARED = ["AvailableTendersScreen", "TenderOverviewScreen"];
+	const COMPARED = ["AvailableTendersScreen", "TenderOverviewScreen", "MyBidsScreen", "ReceiptHistoryScreen"];
 	it("compares exactly the named screens", () => {
 		expect([...new Set(SCREENS.map((s) => s.name))].sort()).toEqual([...COMPARED].sort());
 	});

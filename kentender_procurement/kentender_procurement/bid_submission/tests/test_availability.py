@@ -53,6 +53,16 @@ class TestSubmissionAvailability(IntegrationTestCase):
 		with self.assertRaises(frappe.ValidationError):
 			simulation.set_controls(gate_closed=1)
 
+	def test_a_test_world_turns_the_switch_on_for_its_own_process_only(self):
+		frappe.conf["production_bid_submission_enabled"] = 0
+		with availability.enabled_for_test_world():
+			self.assertTrue(availability.production_enabled())
+		self.assertFalse(availability.production_enabled())
+		frappe.conf["kt_bds_simulation_environment"] = 0
+		with self.assertRaises(frappe.ValidationError):
+			with availability.enabled_for_test_world():
+				pass
+
 	def test_nothing_but_the_availability_service_reads_the_switch(self):
 		readers = []
 		for app in ("kentender_core", "kentender_procurement", "kentender_suppliers"):

@@ -5,7 +5,8 @@
 plan OD-B). `resolve` answers every path the surface owns with the verdict
 and the first payload the screen paints from (KT-STD-001 §3A.1). Screens are
 added slice by slice (plan Phase 11); a path with no screen yet is
-NOT_FOUND, never a guess."""
+NOT_FOUND, never a guess. The surface also answers `/my-bids` and
+`/account/receipts` (a longer prefix than Supplier Accounts' `/account`)."""
 
 from __future__ import annotations
 
@@ -32,4 +33,17 @@ def resolve(*, path: str, query: dict[str, Any], user: str) -> dict[str, Any]:
 			return {"verdict": "NOT_FOUND", "title": "Tender not found", "payload": {"screen": "tender-not-found"}}
 		title = data["tender"]["reference"] if data["tender"]["availability"] == "cancelled" else data["tender"]["title"]
 		return {"verdict": "OK", "title": title, "payload": {"screen": "tender-overview", "data": data}}
+	if segments in (["my-bids"], ["account", "receipts"]):
+		# BDS-DES-05 / BDS-DES-17: the signed-in organisation's own records
+		if not user or user == "Guest":
+			return {"verdict": "SIGN_IN", "title": "Sign in"}
+		organisation = str(query.get("organisation") or "")
+		if segments == ["my-bids"]:
+			data = reads.get_my_bids(organisation=organisation, search=str(query.get("search") or ""), status=str(query.get("status") or ""), user=user)
+			return {"verdict": "OK", "title": "My bids", "payload": {"screen": "my-bids", "data": data}}
+		try:
+			data = reads.get_receipt_history(organisation=organisation, user=user)
+		except frappe.DoesNotExistError:
+			return {"verdict": "NOT_FOUND", "title": "Page not found", "payload": {"screen": "not-found"}}
+		return {"verdict": "OK", "title": "Receipts", "payload": {"screen": "receipts", "data": data}}
 	return {"verdict": "NOT_FOUND", "title": "Page not found", "payload": {"screen": "not-found"}}

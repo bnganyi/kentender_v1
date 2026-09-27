@@ -6,7 +6,7 @@ import { createApp } from "vue";
 import BidPortal from "./BidPortal.vue";
 
 window.kentender_core.portal_page.register("tenders", {
-	prefixes: ["/tenders"],
+	prefixes: ["/tenders", "/my-bids", "/account/receipts"],
 	mount(el, { initial, portal }) {
 		const app = createApp(BidPortal, { initial, portal });
 		app.config.globalProperties.__ = window.__;

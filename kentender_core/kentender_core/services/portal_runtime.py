@@ -64,6 +64,12 @@ def surfaces() -> list[dict[str, Any]]:
 	return [entry for entry in (frappe.get_hooks(SURFACES_HOOK) or []) if isinstance(entry, dict)]
 
 
+def owners() -> list[dict[str, str]]:
+	"""Every surface's prefix and key, for the page's in-app navigation to
+	apply the same longest-prefix rule as `resolve_surface`."""
+	return [{"prefix": normalise(entry["prefix"]), "key": cstr(entry.get("key") or entry["prefix"])} for entry in surfaces() if entry.get("prefix")]
+
+
 def resolve_surface(path: str) -> dict[str, Any] | None:
 	"""The registered surface with the longest prefix that owns `path`."""
 	path = normalise(path)

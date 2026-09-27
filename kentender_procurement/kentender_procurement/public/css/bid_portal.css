@@ -73,3 +73,7 @@
 	/* Inputs at 16 px so a phone does not zoom on focus (board 390 frame). */
 	.kt-industry.kt-portal .kt-filter-bar .kt-input { font-size: 16px; }
 }
+
+/* DES-05 My bids: a row's actions (primary first, then e.g. Start replacement). */
+.kt-industry.kt-portal .bds-row-actions { display: flex; gap: var(--kt-space-2); flex-wrap: wrap; }
+.kt-industry.kt-portal .bds-nowrap { white-space: nowrap; }

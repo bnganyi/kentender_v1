@@ -16,6 +16,7 @@ creates nothing: no signature request, attempt, envelope or receipt."""
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from typing import Any
 
 import frappe
@@ -25,6 +26,21 @@ from kentender_procurement.bid_submission.services import gateways, simulation
 from kentender_procurement.bid_submission.services.errors import MESSAGES, fail
 
 FLAG = "production_bid_submission_enabled"
+
+
+@contextmanager
+def enabled_for_test_world():
+	"""A browser world or seed on a test environment submits through the real
+	commands with the switch on in this process only; the site's own setting
+	is untouched and nothing here works outside a test environment."""
+	if not simulation.enabled():
+		frappe.throw("The production switch can be turned on for a test world only on a test environment.")
+	previous = frappe.conf.get(FLAG)
+	frappe.conf[FLAG] = 1
+	try:
+		yield
+	finally:
+		frappe.conf[FLAG] = previous
 
 
 def production_enabled() -> bool:

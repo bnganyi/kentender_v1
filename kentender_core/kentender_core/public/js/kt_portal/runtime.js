@@ -139,7 +139,16 @@ export function createPortalRuntime(win) {
 		return (doc.body && doc.body.dataset.ktPortalSurface) || "";
 	}
 
+	// A path belongs to the surface with the longest prefix that owns it —
+	// the server's own rule (portal_runtime.resolve_surface). The page sends
+	// every surface's prefix, because another app's surface is not loaded here
+	// (/account/receipts is Bid Submission's inside Supplier Accounts' /account).
 	function ownedHere(path) {
+		const owners = initial().owners;
+		if (Array.isArray(owners) && owners.length) {
+			const best = owners.filter((o) => owns(o.prefix, path)).sort((a, b) => normalise(b.prefix).length - normalise(a.prefix).length)[0];
+			return !!best && best.key === currentSurface();
+		}
 		const entry = surfaces[currentSurface()];
 		return !!(entry && entry.prefixes.some((prefix) => owns(prefix, path)));
 	}

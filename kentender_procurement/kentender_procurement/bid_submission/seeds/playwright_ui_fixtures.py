@@ -200,6 +200,82 @@ def reset_overview_fixture(*, commit: bool = True, started: bool = True) -> dict
 	return {"tender": state["tender"], "tender_reference": state["tender_reference"], "bid_reference": bid, "password": PASSWORD, **{f"{k}_user": v["representative"] for k, v in SUPPLIERS.items()}, "afya_signatory": SUPPLIERS["afya"]["registrant"]}
 
 
+MY_BIDS_STATES = ("empty", "ready", "submitted", "withdrawn")
+MY_BIDS_STEPS = {"fill": "2027-05-20 10:10:00", "submit": "2027-05-20 10:30:00", "withdraw": "2027-05-20 10:45:00"}
+MY_BIDS_AT = "2027-05-20 11:00:00"
+WITHDRAWAL_REASON = "Our pricing changed; we will submit a corrected bid."
+
+
+def _pinned(instant: str | None) -> None:
+	frappe.flags.kt_bds_clock = instant
+	frappe.flags.kt_tenders_clock = instant
+
+
+def _submit(bid: str, signatory: str) -> str:
+	"""Mary signs with the Test Trust Service and the Test Tender Box accepts
+	the bid, with the production switch on for this fixture process only
+	(`availability.enabled_for_test_world`); the site's own setting stays off."""
+	from kentender_procurement.bid_submission.services import availability, signature, simulation, submission
+	from kentender_procurement.bid_submission.test_services import trust
+
+	organisation = frappe.db.get_value("Bid Workspace", bid, "lead_organisation")
+	trust.issue_certificate(user=signatory, organisation=organisation, subject_name=frappe.db.get_value("User", signatory, "full_name"), valid_from="2027-01-01 00:00:00", valid_to="2027-12-31 23:59:59")
+	with availability.enabled_for_test_world():
+		simulation.reset_controls()
+		version = lambda: frappe.db.get_value("Bid Workspace", bid, "record_version")  # noqa: E731
+		request = signature.prepare_bid_signature(bid_reference=bid, confirmed=True, expected_record_version=version(), idempotency_key=_key(), user=signatory)
+		if not request.get("ok"):
+			frappe.throw(f"The test bid could not be signed: {request}")
+		signed = signature.sign_with_test_trust_service(signing_request=request["signing_request"], user=signatory)
+		result = submission.submit_bid(bid_reference=bid, signature_ref=signed["signature"], confirmed=True, expected_record_version=version(), idempotency_key=_key(), user=signatory)
+	if not result.get("ok"):
+		frappe.throw(f"The test bid could not be submitted: {result}")
+	return result["receipt_reference"]
+
+
+def reset_my_bids_fixture(*, state: str = "ready", commit: bool = True) -> dict[str, Any]:
+	"""BDS-DES-05 / BDS-DES-17 worlds on the Tenders test Tender for Afya
+	(Test): "empty" (no bid), "ready" (every task answered: Ready to submit),
+	"submitted" (Mary signed; the Test Tender Box accepted it) or "withdrawn"
+	(then withdrawn by Mary). Each step runs the real command as its actor."""
+	from kentender_procurement.bid_submission.seeds import filling
+	from kentender_procurement.bid_submission.services import withdrawal
+
+	if state not in MY_BIDS_STATES:
+		raise ValueError(f"unknown My bids world {state!r}; one of {MY_BIDS_STATES}")
+	tender = tender_pw.reset_published_fixture(commit=False)
+	_wipe_journal()
+	_ensure_suppliers()
+	afya = SUPPLIERS["afya"]
+	bid = receipt = acknowledgement = ""
+	try:
+		if state != "empty":
+			_pinned(MY_BIDS_STEPS["fill"])
+			bid = _start(tender["tender"], "afya")
+			filling.fill_everything(bid, user=afya["representative"])
+		if state in ("submitted", "withdrawn"):
+			_pinned(MY_BIDS_STEPS["submit"])
+			receipt = _submit(bid, afya["registrant"])
+		if state == "withdrawn":
+			_pinned(MY_BIDS_STEPS["withdraw"])
+			done = withdrawal.withdraw_bid(
+				bid_reference=bid, receipt_reference=receipt, reason=WITHDRAWAL_REASON, confirmed=True, expected_record_version=frappe.db.get_value("Bid Workspace", bid, "record_version"),
+				idempotency_key=_key(), user=afya["registrant"],
+			)
+			acknowledgement = done["acknowledgement_reference"]
+	finally:
+		_pinned(None)
+	set_instant(MY_BIDS_AT)
+	frappe.set_user("Administrator")
+	if commit:
+		frappe.db.commit()
+	return {
+		"state": state, "tender_reference": tender["tender_reference"], "bid_reference": bid, "receipt_reference": receipt, "acknowledgement_reference": acknowledgement,
+		"organisation": frappe.db.get_value("Bid Workspace", bid, "lead_organisation") if bid else "",
+		"password": PASSWORD, "representative": afya["representative"], "signatory": afya["registrant"], "other_user": SUPPLIERS["kisiwa"]["representative"],
+	}
+
+
 def restore_site(*, commit: bool = True) -> dict[str, Any]:
 	frappe.set_user("Administrator")
 	_wipe_journal()
