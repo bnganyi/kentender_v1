@@ -10,6 +10,7 @@ import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
 import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
 import NoticeContactDialog from "../components/NoticeContactDialog.vue";
 import QuestionDialog from "../components/QuestionDialog.vue";
+import { fixRoute } from "../composables/fixRoute.js";
 import { useNarrow } from "../composables/useNarrow.js";
 
 const READ = "kentender_procurement.bid_submission.api.get_bid_task";
@@ -97,8 +98,8 @@ function saveAndContinue() {
 	}, "Save and continue");
 }
 function onFix(fix) {
-	const target = fix && fix.target;
-	if (typeof target === "string" && target.startsWith("/")) go(target);
+	const href = fixRoute(fix, props.reference);
+	if (href && href !== route.value.path) go(href);
 }
 async function contactUpdated() {
 	updatingContact.value = false;

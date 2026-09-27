@@ -123,3 +123,25 @@
 @media (max-width: 600px) {
 	.kt-industry.kt-portal .bds-grid-2 { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* DES-09 requirements task (board C): the region links and acceptance rows. */
+.kt-industry.kt-portal .bds-section-nav { display: flex; flex-wrap: wrap; gap: var(--kt-space-2) var(--kt-space-6); font-size: 14px; padding: var(--kt-space-3) 0; border-top: 1px solid var(--kt-color-divider); border-bottom: 1px solid var(--kt-color-divider); margin-bottom: var(--kt-space-4); }
+.kt-industry.kt-portal .bds-section-link { text-decoration: none; display: inline-flex; gap: 6px; align-items: baseline; }
+.kt-industry.kt-portal .bds-section-name { text-decoration: underline; text-underline-offset: 3px; }
+.kt-industry.kt-portal .bds-section-state { font-size: 12px; font-weight: 600; color: var(--kt-color-neutral-700); }
+.kt-industry.kt-portal .bds-section-state.is-live { color: var(--kt-status-live, var(--kt-color-success-700, #1a7f37)); }
+.kt-industry.kt-portal .bds-section-state.is-attention { color: var(--kt-status-attention, var(--kt-color-warning-700, #9a6700)); }
+.kt-industry.kt-portal .bds-acceptance-row { display: flex; gap: var(--kt-space-4); align-items: center; justify-content: space-between; flex-wrap: wrap; padding: var(--kt-space-2) 0; border-top: 1px solid var(--kt-color-divider); font-size: 14px; }
+
+/* DES-10 price (board C): right-aligned money inputs and the totals block. */
+.kt-industry.kt-portal .bds-money { text-align: right; max-width: 160px; margin-left: auto; }
+.kt-industry.kt-portal .bds-price-terms { margin-bottom: var(--kt-space-4); }
+.kt-industry.kt-portal .bds-totals { display: grid; gap: var(--kt-space-2); width: 440px; max-width: 100%; margin-left: auto; padding: var(--kt-space-4) 0; border-top: 1px solid var(--kt-color-divider); }
+.kt-industry.kt-portal .bds-total-line { display: flex; justify-content: space-between; font-size: 14px; gap: var(--kt-space-4); }
+.kt-industry.kt-portal .bds-grand-total { align-items: baseline; padding-top: var(--kt-space-2); border-top: 1px solid var(--kt-color-divider); }
+.kt-industry.kt-portal .bds-grand-total > span:first-child { font-family: var(--kt-font-heading); font-size: 18px; }
+.kt-industry.kt-portal .bds-grand-total > span:last-child { font-size: 22px; font-weight: 700; }
+@media (max-width: 600px) {
+	.kt-industry.kt-portal .bds-money { max-width: 100%; font-size: 16px; }
+	.kt-industry.kt-portal .bds-totals { width: 100%; }
+}

@@ -94,4 +94,4 @@ class TestDocumentsAddress(BidCase):
 		self.assertEqual((mine["payload"]["screen"], mine["payload"]["data"]["bid"]["reference"]), ("documents-task", bid))
 		masked = portal.resolve(path=path, query={}, user=PETER)
 		self.assertEqual((masked["verdict"], masked["payload"]["screen"]), ("NOT_FOUND", "not-found"))
-		self.assertEqual(portal.resolve(path=f"/tenders/{self.reference}/bid/price", query={}, user=DAVID)["verdict"], "NOT_FOUND")  # a later slice
+		self.assertEqual(portal.resolve(path=f"/tenders/{self.reference}/bid/no-such-task", query={}, user=DAVID)["verdict"], "NOT_FOUND")  # not a bid task

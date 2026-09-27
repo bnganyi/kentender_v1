@@ -7,6 +7,7 @@
 // notices, the deadline and one next action — no dashboard, no Submit here.
 import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
 import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
+import { fixRoute } from "../composables/fixRoute.js";
 import { useNarrow } from "../composables/useNarrow.js";
 
 const METHOD = "kentender_procurement.bid_submission.api.get_bid_workspace";
@@ -45,9 +46,8 @@ async function load() {
 }
 // A fix on the next step names where it is done; the server gives the route.
 function onFix(fix) {
-	const target = fix && (fix.target || "");
-	if (typeof target === "string" && target.startsWith("/")) go(target);
-	else if (header.value.action && header.value.action.href) go(header.value.action.href);
+	const href = fixRoute(fix, props.reference) || (header.value.action && header.value.action.href);
+	if (href) go(href);
 }
 watch(epoch, () => load());
 onMounted(() => {

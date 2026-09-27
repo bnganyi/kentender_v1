@@ -21,6 +21,8 @@ FILTER_KEYS = ("search", "method", "reservation", "closing")
 TASK_SCREENS = {
 	"documents": ("documents-task", "Tender documents, clarifications and addenda"),
 	"company": ("company-task", "Company, declarations and tender security"),
+	"requirements": ("requirements-task", "Requirements and supporting evidence"),
+	"price": ("price-task", "Price"),
 }
 
 

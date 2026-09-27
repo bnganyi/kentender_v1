@@ -56,6 +56,17 @@ describe("Your bid", () => {
 		expect(wrapper.text()).toContain("Not acknowledged");
 	});
 
+	it("follows a fix the server names by task", async () => {
+		const portal = portalFor();
+		const answer = workspace("ADDENDUM");
+		answer.next_step.blockers[0].fixes[0].target = { task: "documents" };
+		answer.next_step.fixes[0].target = { task: "documents" };
+		const wrapper = mountWith({ initial: answer }, portal);
+		await nextTick();
+		await wrapper.get('[data-fix="review_addendum"]').trigger("click");
+		expect(portal.go).toHaveBeenCalledWith(`/tenders/${REF}/bid/documents`);
+	});
+
 	it("after the deadline shows the trusted time and Back to My bids", () => {
 		const wrapper = mountWith({ initial: workspace("CLOSED") }, portalFor());
 		expect(wrapper.get('[data-testid="bds-workspace-deadline"]').text()).toContain("Trusted server time");

@@ -10,6 +10,7 @@ import { computed, inject, onMounted, onUnmounted, reactive, ref, watch } from "
 import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
 import FieldControl from "../components/FieldControl.vue";
 import ResponseDrawer from "../components/ResponseDrawer.vue";
+import { fixRoute } from "../composables/fixRoute.js";
 import { useNarrow } from "../composables/useNarrow.js";
 
 const READ = "kentender_procurement.bid_submission.api.get_bid_task";
@@ -139,8 +140,8 @@ async function drawerChanged() {
 	if (drawer.value) drawer.value = data.value.declarations.find((row) => row.key === drawer.value.key) || null;
 }
 function onFix(fix) {
-	const target = fix && fix.target;
-	if (typeof target === "string" && target.startsWith("/")) go(target);
+	const href = fixRoute(fix, props.reference);
+	if (href && href !== route.value.path) go(href);
 }
 watch(epoch, () => load());
 onMounted(() => {

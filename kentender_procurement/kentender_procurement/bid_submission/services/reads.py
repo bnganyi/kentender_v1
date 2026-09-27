@@ -176,9 +176,18 @@ def get_bid_task(*, bid_reference: str = "", task: str, tender_reference: str = 
 	tasks, notice = _evaluate(ctx)
 	view = {"bid": _bid_header(ctx, tasks), "tasks": projection.task_nav(ctx, tasks), "addendum_notice": notice, **projection.task_view(ctx, tasks, cstr(task))}
 	if task == "price":
-		from kentender_procurement.bid_submission.services import price
+		from kentender_procurement.bid_submission.services import guidance, price, price_view
 
 		view["price"] = price.summary(ctx)
+		guided = guidance.for_bid(ctx, actor=actor, at=at, tasks=tasks)
+		view.update({"next_step": guided["next_step"], "journey": guided["journey"]})
+		view.update(price_view.view(ctx, tasks, view, at=at))
+	if task == "requirements":
+		from kentender_procurement.bid_submission.services import guidance, requirements_view
+
+		guided = guidance.for_bid(ctx, actor=actor, at=at, tasks=tasks)
+		view.update({"next_step": guided["next_step"], "journey": guided["journey"]})
+		view.update(requirements_view.view(ctx, tasks, view, at=at))
 	if task == "company":
 		from kentender_procurement.bid_submission.services import company_view, guidance, tender_security
 
