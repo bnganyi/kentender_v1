@@ -1,0 +1,91 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-27 12:30:00.000000",
+ "description": "OD-C / plan D5: forces the gate, outage and custody-outcome worlds on a test environment only; ignored elsewhere.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "gate_closed",
+  "trust_service_down",
+  "time_service_down",
+  "custody_service_down",
+  "deposit_outcome",
+  "rejection_reference",
+  "uncertain_resolution",
+  "accept_after_seconds"
+ ],
+ "fields": [
+  {
+   "fieldname": "gate_closed",
+   "fieldtype": "Check",
+   "label": "Production gate closed (GATE world)",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "trust_service_down",
+   "fieldtype": "Check",
+   "label": "Test Trust Service unhealthy",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "time_service_down",
+   "fieldtype": "Check",
+   "label": "Trusted time unhealthy",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "custody_service_down",
+   "fieldtype": "Check",
+   "label": "Test Tender Box unhealthy",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "deposit_outcome",
+   "fieldtype": "Select",
+   "label": "Next deposit outcome",
+   "read_only": 1,
+   "options": "Accept\nReject\nUncertain",
+   "default": "Accept"
+  },
+  {
+   "fieldname": "rejection_reference",
+   "fieldtype": "Data",
+   "label": "Rejection reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "uncertain_resolution",
+   "fieldtype": "Select",
+   "label": "Uncertain attempts resolve to",
+   "read_only": 1,
+   "options": "Pending\nAccept\nReject",
+   "default": "Pending"
+  },
+  {
+   "fieldname": "accept_after_seconds",
+   "fieldtype": "Int",
+   "label": "Seconds between receipt and acceptance",
+   "read_only": 1,
+   "default": "0"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-27 12:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Submission",
+ "name": "BDS Test Environment Controls",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "states": [],
+ "track_changes": 1,
+ "issingle": 1
+}

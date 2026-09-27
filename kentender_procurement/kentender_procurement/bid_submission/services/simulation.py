@@ -20,3 +20,49 @@ CONFIG_KEY = "kt_bds_simulation_environment"
 
 def enabled() -> bool:
 	return bool(cint(frappe.conf.get(CONFIG_KEY)))
+
+
+# --------------------------------------------------------------------------
+# The test-environment controls (plan D5): a Single no role can read or
+# write, set only by fixtures and tests through `set_controls`, consulted
+# only on a test environment. It forces the gate, outage and custody-outcome
+# worlds; it has no effect anywhere else.
+# --------------------------------------------------------------------------
+
+CONTROLS = "BDS Test Environment Controls"
+DEFAULTS: dict = {
+	"gate_closed": 0, "trust_service_down": 0, "time_service_down": 0, "custody_service_down": 0,
+	"deposit_outcome": "Accept", "rejection_reference": "", "uncertain_resolution": "Pending", "accept_after_seconds": 0,
+}
+
+
+def controls() -> dict:
+	if not enabled():
+		return dict(DEFAULTS)
+	saved = frappe.db.get_singles_dict(CONTROLS) or {}
+	out = dict(DEFAULTS)
+	for key, default in DEFAULTS.items():
+		value = saved.get(key)
+		if value not in (None, ""):
+			out[key] = cint(value) if isinstance(default, int) else value
+	return out
+
+
+def set_controls(**values) -> dict:
+	if not enabled():
+		frappe.throw("The Bid Submission test controls exist only on a test environment.")
+	unknown = set(values) - set(DEFAULTS)
+	if unknown:
+		raise ValueError(f"Unknown test controls: {sorted(unknown)}")
+	doc = frappe.get_doc(CONTROLS)
+	for key, value in values.items():
+		doc.set(key, value)
+	doc.flags.kt_bds_test_service = True
+	doc.save(ignore_permissions=True)
+	return controls()
+
+
+def reset_controls() -> dict:
+	if not enabled():
+		return dict(DEFAULTS)
+	return set_controls(**DEFAULTS)

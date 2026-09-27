@@ -250,3 +250,17 @@ def fill_everything(bid: str, *, user: str = DAVID) -> None:
 						for n in range(max(1, f["evidence"]["minimum"]) - len([x for x in f["evidence"]["files"] if x["status"] == "Accepted"])):
 							added = evidence.upload_bid_evidence(bid_reference=bid, handle=f["handle"], filename=f"evidence-{n + 1}.pdf", content=pdf(f"{task}-{n}"), expected_record_version=version(), idempotency_key=key(), user=user)
 							assert added.get("ok"), added
+
+
+def submission_on(case) -> None:
+	"""A test environment with the production switch on (owner decision OD-C;
+	plan D5): the Test Trust Service, trusted test clock and Test Tender Box
+	answer, and the test controls are put back afterwards."""
+	from kentender_procurement.bid_submission.services import simulation
+
+	simulation_on(case)
+	previous = frappe.conf.get("production_bid_submission_enabled")
+	frappe.conf["production_bid_submission_enabled"] = 1
+	case.addCleanup(frappe.conf.__setitem__, "production_bid_submission_enabled", previous)
+	simulation.reset_controls()
+	case.addCleanup(simulation.reset_controls)

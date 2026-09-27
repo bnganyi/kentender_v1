@@ -28,6 +28,14 @@ def datetime_label(value) -> str:
 	return f"{formatdate(dt.date(), 'd MMM yyyy')}, {dt.strftime('%H:%M')} {TIME_ZONE_LABEL}"
 
 
+def datetime_seconds_label(value) -> str:
+	"""The receipt's instants to the second (BDS-CHG-001 v0.8 §10.1: "10 Jun 2027, 14:31:58 EAT")."""
+	if not value:
+		return ""
+	label = datetime_label(value)
+	return label.replace(f" {TIME_ZONE_LABEL}", f":{get_datetime(value).strftime('%S')} {TIME_ZONE_LABEL}") if label else ""
+
+
 def date_label(value) -> str:
 	return formatdate(getdate(value), "d MMM yyyy") if value else ""
 

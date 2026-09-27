@@ -1,0 +1,111 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-27 12:30:00.000000",
+ "description": "OD-C simulation: one signing request of the Test Trust Service and, once signed, its signature.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "signing_request_id",
+  "package_digest",
+  "user",
+  "organisation",
+  "certificate_ref",
+  "requested_at",
+  "signature_ref",
+  "signed_at",
+  "status",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "signing_request_id",
+   "fieldtype": "Data",
+   "label": "Signing request",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "package_digest",
+   "fieldtype": "Data",
+   "label": "Package digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "organisation",
+   "fieldtype": "Data",
+   "label": "Organisation",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "certificate_ref",
+   "fieldtype": "Data",
+   "label": "Certificate",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "requested_at",
+   "fieldtype": "Datetime",
+   "label": "Requested at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "signature_ref",
+   "fieldtype": "Data",
+   "label": "Signature",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "signed_at",
+   "fieldtype": "Datetime",
+   "label": "Signed at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Requested\nSigned",
+   "reqd": 1,
+   "default": "Requested"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-27 12:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Submission",
+ "name": "Test Trust Signature",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:signing_request_id"
+}

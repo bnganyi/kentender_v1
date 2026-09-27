@@ -1,0 +1,97 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-27 12:30:00.000000",
+ "description": "OD-C simulation: a synthetic signing certificate of the Test Trust Service; never production accreditation.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "certificate_ref",
+  "user",
+  "organisation",
+  "subject_name",
+  "valid_from",
+  "valid_to",
+  "status",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "certificate_ref",
+   "fieldtype": "Data",
+   "label": "Certificate",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "organisation",
+   "fieldtype": "Data",
+   "label": "Organisation",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "subject_name",
+   "fieldtype": "Data",
+   "label": "Subject name",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "valid_from",
+   "fieldtype": "Datetime",
+   "label": "Valid from",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "valid_to",
+   "fieldtype": "Datetime",
+   "label": "Valid to",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Valid\nRevoked",
+   "reqd": 1,
+   "default": "Valid"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-27 12:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Submission",
+ "name": "Test Trust Certificate",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:certificate_ref"
+}

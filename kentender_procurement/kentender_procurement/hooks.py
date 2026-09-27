@@ -131,6 +131,13 @@ kt_tender_seed_candidate_cleanup = ["kentender_procurement.bid_submission.seeds.
 # BDS-CHG-001 v0.8 OD-C: the Test Scanner answers only on a site whose
 # site_config sets kt_bds_simulation_environment; elsewhere it is silent.
 kt_file_scanners = ["kentender_procurement.bid_submission.test_services.scanner.scan"]
+# BDS-CHG-001 v0.8 plan D6: the approved signing/trust service, trusted-time
+# source and electronic tender box. No production provider is configured on
+# this bench; the simulation doubles below answer only on a test environment
+# (owner decision OD-C), so elsewhere submission stays unavailable.
+kt_bds_trust_services = ["kentender_procurement.bid_submission.test_services.trust.service"]
+kt_bds_time_services = ["kentender_procurement.bid_submission.test_services.trusted_time.service"]
+kt_bds_custody_services = ["kentender_procurement.bid_submission.test_services.tender_box.service"]
 
 # include js, css files in header of web form
 # webform_include_js = {"doctype": "public/js/doctype.js"}
@@ -382,7 +389,12 @@ scheduler_events: dict[str, list[str]] = {
 	"hourly": ["kentender_procurement.tenders.services.submission_close.close_due_submission_periods"],
 	# TPR-CHG-001 v0.12 §4.9A — dispatch Queued candidate notices (the outbox
 	# sweep; every scheduler tick).
-	"all": ["kentender_procurement.tenders.services.candidate_notices.dispatch_pending"],
+	"all": [
+		"kentender_procurement.tenders.services.candidate_notices.dispatch_pending",
+		# BDS-CHG-001 v0.8 plan D8 — resolve uncertain submission attempts from
+		# the tender box's answer for the same correlation (never a re-send).
+		"kentender_procurement.bid_submission.services.submission.reconcile_uncertain_attempts",
+	],
 }
 
 # scheduler_events = {

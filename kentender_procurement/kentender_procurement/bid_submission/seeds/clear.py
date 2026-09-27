@@ -12,7 +12,9 @@ import frappe
 
 from kentender_core.utils.raw_delete import delete_rows
 
-DOCTYPES = ("Tender Security Intake Match", "Tender Security Intake", "Bid Submission Event", "Bid Draft Change", "Bid Section Response", "Bid Evidence", "Bid Workspace", "Bid Organisation Snapshot", "Bidder Arrangement", "Bid Command Journal")
+SUBMISSION = ("Bid Submission Version", "Bid Receipt", "Tender Box Envelope", "Bid Submission Attempt")
+SIMULATION = ("Test Trust Signature", "Test Trust Certificate")
+DOCTYPES = SUBMISSION + ("Tender Security Intake Match", "Tender Security Intake", "Bid Submission Event", "Bid Draft Change", "Bid Section Response", "Bid Evidence", "Bid Workspace", "Bid Organisation Snapshot", "Bidder Arrangement", "Bid Command Journal")
 
 
 def _delete_evidence_files(evidence: list[str], deleted: dict[str, int]) -> None:
@@ -21,6 +23,16 @@ def _delete_evidence_files(evidence: list[str], deleted: dict[str, int]) -> None
 		for file_name in frappe.get_all("File", filters={"attached_to_doctype": "Bid Evidence", "attached_to_name": name}, pluck="name"):
 			frappe.delete_doc("File", file_name, force=True, ignore_permissions=True)
 			deleted["File"] = deleted.get("File", 0) + 1
+
+
+def _delete_box_files(tenders: list[str] | None, deleted: dict[str, int]) -> None:
+	"""The Test Tender Box keeps package files outside the database, by correlation."""
+	from kentender_procurement.bid_submission.test_services import tender_box
+
+	filters = {"tender": ("in", list(tenders))} if tenders is not None else {}
+	correlations = frappe.get_all("Bid Submission Attempt", filters=filters, pluck="correlation_id")
+	if correlations:
+		deleted["Test Tender Box file"] = deleted.get("Test Tender Box file", 0) + tender_box.remove(correlations)
 
 
 def on_tenders_removed(*, tenders: list[str]) -> dict[str, int]:
@@ -33,12 +45,16 @@ def wipe(*, tenders: list[str] | None = None, namespace: str = "") -> dict[str, 
 	entries stamped `namespace`; with `tenders=None`, every row."""
 	deleted: dict[str, int] = {}
 	if tenders is None:
+		_delete_box_files(None, deleted)
 		_delete_evidence_files(frappe.get_all("Bid Evidence", pluck="name"), deleted)
-		for doctype in DOCTYPES:
+		for doctype in DOCTYPES + SIMULATION:
 			delete_rows(doctype, None, deleted=deleted)
 		return deleted
 	if tenders:
 		within = {"tender": ("in", list(tenders))}
+		_delete_box_files(tenders, deleted)
+		for doctype in SUBMISSION:
+			delete_rows(doctype, within, deleted=deleted)
 		arrangements = frappe.get_all("Bidder Arrangement", filters=within, pluck="name")
 		workspaces = frappe.get_all("Bid Workspace", filters=within, pluck="name")
 		delete_rows("Tender Security Intake Match", within, deleted=deleted)
@@ -58,4 +74,6 @@ def wipe(*, tenders: list[str] | None = None, namespace: str = "") -> dict[str, 
 		delete_rows("Bid Command Journal", {"idempotency_key": ("like", f"seed-start-bid-{tender}-%")}, deleted=deleted)
 	if namespace:
 		delete_rows("Bid Command Journal", {"fixture_namespace": namespace}, deleted=deleted)
+		for doctype in SIMULATION:
+			delete_rows(doctype, {"fixture_namespace": namespace}, deleted=deleted)
 	return deleted

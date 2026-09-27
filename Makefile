@@ -90,7 +90,7 @@ help:
 	@echo "  make tenders-dead-end-gate SITE=$(SITE) — TPR-CHG-001 v0.12 / KT-STD-001 v1.8 §3B.7: every Tender state × reader, writes evidence/v0_12/dead_end_matrix.md"
 	@echo "  make bds-retirement-gate SITE=$(SITE) — BDS-CHG-001 v0.8 Phase 1: the legacy bid-submission slice is retired"
 	@echo "  make bds-portal-gate SITE=$(SITE) — BDS-CHG-001 v0.8 Phase 2C: portal page, surface resolution and GetAvailableTenders"
-	@echo "  make bds-services-gate SITE=$(SITE) — BDS-CHG-001 v0.8 Phase 5: bid records, Start bid, candidate provider (TPR FU-25), notice contact, clarifications, snapshot, seeded candidate"
+	@echo "  make bds-services-gate SITE=$(SITE) — BDS-CHG-001 v0.8 Phases 5-8: bid records, Start bid, candidate provider, preparation, evidence, addenda, security/price/intake, availability, signing, submission and receipts"
 	@echo "  make supplier-accounts-services-gate SITE=$(SITE) — BDS-CHG-001 v0.8 Phase 4: Supplier Accounts services"
 	@echo "  make ui-bds-portal-skeleton-gate — BDS-CHG-001 v0.8 Phase 2C: /tenders in a browser as a guest at 1440 and 390"
 	@echo "  make ui-bds-security-intake-gate — BDS-CHG-001 v0.8 Phase 7: the blind tender-security intake Desk page (component tests + browser, HoPF/officer/auditor, 1440 and 390)"
@@ -703,7 +703,7 @@ bds-portal-gate: bds-preflight
 # notice contact, clarifications, the organisation snapshot and the seeded
 # candidate over a real supplier account.
 bds-services-gate: bds-preflight
-	cd $(BENCH_ROOT) && for m in test_bds_schema test_simulation test_runtime_rules test_start_bid test_candidate_registry_contract test_clarification test_org_snapshot test_seeds test_save_bid_task test_evidence test_addendum_refresh test_review test_security_and_price; do \
+	cd $(BENCH_ROOT) && for m in test_bds_schema test_simulation test_runtime_rules test_start_bid test_candidate_registry_contract test_clarification test_org_snapshot test_seeds test_save_bid_task test_evidence test_addendum_refresh test_review test_security_and_price test_availability test_submission; do \
 		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_submission.tests.$$m || exit 1; done
 
 # BDS-CHG-001 v0.8 Phase 4 — Supplier Accounts (kentender_suppliers): record

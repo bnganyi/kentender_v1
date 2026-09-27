@@ -13,7 +13,9 @@ from frappe.tests import IntegrationTestCase
 
 from kentender_procurement.bid_submission.services import errors
 
-RECORDS = ("Bidder Arrangement", "Bid Workspace", "Bid Organisation Snapshot", "Bid Command Journal", "Bid Submission Event")
+RECORDS = ("Bidder Arrangement", "Bid Workspace", "Bid Organisation Snapshot", "Bid Command Journal", "Bid Submission Event", "Bid Submission Attempt", "Bid Submission Version", "Tender Box Envelope", "Bid Receipt")
+#: OD-C simulation state: no role reads or writes it at all.
+SIMULATION = ("Test Trust Certificate", "Test Trust Signature", "BDS Test Environment Controls")
 FIELDS = {
 	# §4.3 BidderArrangement
 	"Bidder Arrangement": {
@@ -26,6 +28,18 @@ FIELDS = {
 		"bid_reference", "tender", "bidder_arrangement", "bid_definition_id", "definition_version", "definition_digest", "organisation_snapshot",
 		"organisation_snapshot_version", "status", "current_draft_version", "current_submission_version", "created_by", "created_at", "last_saved_by",
 		"last_saved_at", "record_version",
+	},
+	# §4.9 BidSubmissionVersion
+	"Bid Submission Version": {
+		"bid_submission_version_id", "version_number", "bid_workspace", "bid_definition_id", "definition_digest", "organisation_snapshot", "organisation_snapshot_version",
+		"response_snapshot_digest", "evidence_set_digest", "package_digest", "signed_by", "signed_at", "signature_certificate_ref", "signature_verification_evidence",
+		"received_at", "accepted_at", "status", "predecessor_submission_version", "tender_box_envelope", "receipt",
+	},
+	# §4.10 TenderBoxEnvelope and BidReceipt
+	"Tender Box Envelope": {"envelope_id", "tender", "submission_version", "package_digest", "accepted_at", "custody_receipt", "box_state"},
+	"Bid Receipt": {
+		"receipt_reference", "tender_reference", "tender_title", "bidder_name", "submission_version", "version_number", "received_at", "accepted_at", "submitted_by",
+		"predecessor_receipt",
 	},
 }
 
@@ -45,6 +59,12 @@ class TestBidSubmissionRecords(IntegrationTestCase):
 				perms = frappe.get_meta(doctype).permissions
 				self.assertTrue({p.role for p in perms} <= {"System Manager"}, doctype)
 				self.assertFalse([p for p in perms if p.write or p.create or p.delete or p.submit], doctype)
+
+	def test_no_role_can_touch_the_simulation_state(self):
+		for doctype in SIMULATION:
+			with self.subTest(doctype=doctype):
+				self.assertEqual(frappe.get_meta(doctype).permissions, [])
+		self.assertEqual(frappe.get_meta("Bid Submission Version").get_field("status").options.split("\n"), ["Submitted", "Superseded", "Withdrawn"])
 
 	def test_a_bid_record_changes_only_through_a_command(self):
 		doc = frappe.get_doc({"doctype": "Bid Submission Event", "event_type": "Probe"})

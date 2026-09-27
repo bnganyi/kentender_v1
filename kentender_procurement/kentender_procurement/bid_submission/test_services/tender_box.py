@@ -1,0 +1,152 @@
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
+"""The Test Tender Box (owner decision OD-C; plan D7), on the
+`kt_bds_custody_services` hook.
+
+A stand-in for the approved electronic tender box, answering only on a test
+environment. A deposit names one correlation, carries the exact signed
+package and its digest, and ends in one outcome the test controls choose:
+Accepted (a sealed envelope and a custody acknowledgement), Rejected (a
+rejection reference; nothing kept), or no answer (the caller records the
+attempt as uncertain and later asks `status` for the same correlation; a
+repeated deposit under that correlation never makes a second envelope).
+Package bytes are kept under `private/kt_test_tender_box/` on the site,
+outside every DocType and File, with no read path from the application.
+There is no encryption here and none is claimed; the production custody
+design is an owner-gate item (FU-V08-16)."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import secrets
+from datetime import timedelta
+from typing import Any
+
+import frappe
+from frappe.utils import cint, cstr, get_datetime
+
+from kentender_procurement.bid_submission.services import simulation
+
+NAME = "Test Tender Box (simulation)"
+FOLDER = "kt_test_tender_box"
+
+
+def folder() -> str:
+	return frappe.get_site_path("private", FOLDER)
+
+
+def _paths(correlation_id: str) -> tuple[str, str]:
+	safe = "".join(c for c in cstr(correlation_id) if c.isalnum() or c in "-_")
+	return os.path.join(folder(), f"{safe}.package"), os.path.join(folder(), f"{safe}.state.json")
+
+
+def _read_state(correlation_id: str) -> dict[str, Any] | None:
+	_package, state = _paths(correlation_id)
+	if not os.path.exists(state):
+		return None
+	with open(state, encoding="utf-8") as fh:
+		return json.load(fh)
+
+
+def _write_state(correlation_id: str, state: dict[str, Any]) -> None:
+	_package, path = _paths(correlation_id)
+	tmp = path + ".tmp"
+	with open(tmp, "w", encoding="utf-8") as fh:
+		json.dump(state, fh, sort_keys=True)
+	os.replace(tmp, path)
+
+
+def _accepted(state: dict[str, Any], at) -> dict[str, Any]:
+	state.update({"result": "Accepted", "envelope_ref": "TBX-ENV-" + secrets.token_hex(6).upper(), "custody_receipt": "TBX-ACK-" + secrets.token_hex(6).upper(), "accepted_at": str(at)})
+	return state
+
+
+def _rejected(state: dict[str, Any], reference: str, reason: str) -> dict[str, Any]:
+	package, _state = _paths(state["correlation_id"])
+	if os.path.exists(package):
+		os.remove(package)  # rejected content is not kept in custody
+	state.update({"result": "Rejected", "rejection_reference": reference or "TBX-REJECT-" + secrets.token_hex(4).upper(), "rejection_reason": reason})
+	return state
+
+
+def _public(state: dict[str, Any]) -> dict[str, Any]:
+	out = {k: state.get(k) for k in ("result", "envelope_ref", "custody_receipt", "accepted_at", "rejection_reference", "rejection_reason") if state.get(k)}
+	if out.get("result") == "Pending":
+		out["result"] = "Uncertain"
+	return {**out, "service": NAME, "simulation": True}
+
+
+class TestTenderBox:
+	name = NAME
+
+	def healthy(self) -> bool:
+		return not simulation.controls()["custody_service_down"]
+
+	def deposit(self, *, correlation_id: str, tender: str, package: bytes, package_digest: str, deadline, at) -> dict[str, Any]:
+		existing = _read_state(correlation_id)
+		if existing:
+			return _public(existing)  # one correlation, one outcome
+		os.makedirs(folder(), exist_ok=True)
+		state: dict[str, Any] = {"correlation_id": correlation_id, "tender": tender, "package_digest": package_digest, "received_at": str(get_datetime(at)), "deadline": str(get_datetime(deadline))}
+		if hashlib.sha256(package).hexdigest() != package_digest:
+			_write_state(correlation_id, _rejected(state, "", "The package does not match its signed binding."))
+			return _public(_read_state(correlation_id))
+		package_path, _state = _paths(correlation_id)
+		with open(package_path, "wb") as fh:
+			fh.write(package)
+		controls = simulation.controls()
+		accepted_at = get_datetime(at) + timedelta(seconds=cint(controls["accept_after_seconds"]))
+		outcome = controls["deposit_outcome"]
+		if outcome == "Reject":
+			state = _rejected(state, cstr(controls["rejection_reference"]), "The tender box rejected this deposit.")
+		elif accepted_at >= get_datetime(deadline):
+			state = _rejected(state, "", "The tender box closed at the deadline.")
+		elif outcome == "Uncertain":
+			state.update({"result": "Pending", "accept_at": str(accepted_at)})
+		else:
+			state = _accepted(state, accepted_at)
+		_write_state(correlation_id, state)
+		return _public(state)
+
+	def status(self, *, correlation_id: str) -> dict[str, Any]:
+		"""The outcome of an earlier deposit, for the reconciler: Accepted,
+		Rejected, Uncertain (still pending) or NotReceived."""
+		state = _read_state(correlation_id)
+		if not state:
+			return {"result": "NotReceived", "service": NAME, "simulation": True}
+		if state["result"] == "Pending":
+			resolution = simulation.controls()["uncertain_resolution"]
+			if resolution == "Accept":
+				state = _accepted(state, get_datetime(state["accept_at"]))
+				_write_state(correlation_id, state)
+			elif resolution == "Reject":
+				state = _rejected(state, "", "The tender box did not accept this deposit.")
+				_write_state(correlation_id, state)
+		return _public(state)
+
+
+def service() -> TestTenderBox | None:
+	return TestTenderBox() if simulation.enabled() else None
+
+
+def remove(correlation_ids: list[str]) -> int:
+	"""Fixture and test clean-up: the box's files for these correlations."""
+	removed = 0
+	for correlation_id in correlation_ids:
+		for path in _paths(correlation_id):
+			if os.path.exists(path):
+				os.remove(path)
+				removed += 1
+	return removed
+
+
+def stored_package(correlation_id: str) -> bytes | None:
+	"""Test-only inspection of what the box holds (the application has no read path)."""
+	package, _state = _paths(correlation_id)
+	if not os.path.exists(package):
+		return None
+	with open(package, "rb") as fh:
+		return fh.read()

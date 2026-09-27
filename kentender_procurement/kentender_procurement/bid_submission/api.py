@@ -16,6 +16,9 @@ from kentender_procurement.bid_submission.services import notice_contact as noti
 from kentender_procurement.bid_submission.services import reads
 from kentender_procurement.bid_submission.services import save as save_service
 from kentender_procurement.bid_submission.services import security_intake as security_intake_service
+from kentender_procurement.bid_submission.services import receipts as receipts_service
+from kentender_procurement.bid_submission.services import signature as signature_service
+from kentender_procurement.bid_submission.services import submission as submission_service
 from kentender_procurement.bid_submission.services import tender_contact as tender_contact_service
 from kentender_procurement.bid_submission.services import snapshot as snapshot_service
 from kentender_procurement.bid_submission.services import start_bid as start_bid_service
@@ -143,3 +146,70 @@ def get_tender_security_requirement(tender_reference: str) -> dict[str, Any]:
 		return {"outcome": "OK", **security_intake_service.tender_security_requirement(tender_reference=tender_reference)}
 	except frappe.PermissionError:
 		return dict(FORBIDDEN_INTAKE)
+
+
+# --------------------------------------------------------------------------
+# §7.3 Signature and submission — the Authorised Signatory only (checked in
+# the services); every outcome the supplier must see is returned as data.
+# --------------------------------------------------------------------------
+
+
+@frappe.whitelist(methods=["GET"])
+def get_submit_bid(bid_reference: str, organisation: str = "") -> dict[str, Any]:
+	"""BDS-DES-12: server time, summary, signatory and whether Submit is possible now."""
+	return _masked(submission_service.get_submit_bid, bid_reference=bid_reference, organisation=organisation)
+
+
+@frappe.whitelist(methods=["GET"])
+def check_certificate(bid_reference: str, organisation: str = "") -> dict[str, Any]:
+	"""BDS §11.5 Check certificate — a fresh trust-service read; changes nothing."""
+	return _masked(signature_service.check_certificate, bid_reference=bid_reference, organisation=organisation)
+
+
+@frappe.whitelist(methods=["POST"])
+def prepare_bid_signature(bid_reference: str, confirmed=False, expected_record_version=None, idempotency_key: str = "", organisation: str = "") -> dict[str, Any]:
+	"""BDS §7.3 `PrepareBidSignature`."""
+	return _masked(signature_service.prepare_bid_signature, bid_reference=bid_reference, confirmed=confirmed, expected_record_version=expected_record_version, idempotency_key=idempotency_key, organisation=organisation)
+
+
+@frappe.whitelist(methods=["POST"])
+def sign_with_test_trust_service(signing_request: str) -> dict[str, Any]:
+	"""The Test Trust Service's own signing step — a test environment only (OD-C)."""
+	return signature_service.sign_with_test_trust_service(signing_request=signing_request)
+
+
+@frappe.whitelist(methods=["POST"])
+def submit_bid(bid_reference: str, signature: str = "", confirmed=False, expected_record_version=None, idempotency_key: str = "", organisation: str = "") -> dict[str, Any]:
+	"""BDS §7.3 `SubmitBid`."""
+	return _masked(submission_service.submit_bid, bid_reference=bid_reference, signature_ref=signature, confirmed=confirmed, expected_record_version=expected_record_version, idempotency_key=idempotency_key, organisation=organisation)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_submission_status(bid_reference: str, organisation: str = "") -> dict[str, Any]:
+	"""BDS §11.5 View status — reads the latest attempt; never dispatches."""
+	return _masked(submission_service.get_submission_status, bid_reference=bid_reference, organisation=organisation)
+
+
+def _receipt_masked(fn, **arguments):
+	try:
+		return fn(**arguments)
+	except frappe.DoesNotExistError:
+		return {"outcome": "NOT_FOUND", "heading": "Receipt not found", "text": "This receipt is unavailable or you do not have permission to view it."}
+
+
+@frappe.whitelist(methods=["GET"])
+def get_bid_receipt(receipt_reference: str, organisation: str = "") -> dict[str, Any]:
+	"""BDS-DES-13 receipt facts."""
+	return _receipt_masked(receipts_service.get_bid_receipt, receipt_reference=receipt_reference, organisation=organisation)
+
+
+@frappe.whitelist(methods=["GET"])
+def download_bid_receipt(receipt_reference: str, organisation: str = "") -> None:
+	"""BDS §11.6 Download receipt — the immutable receipt as a PDF."""
+	try:
+		name, content = receipts_service.receipt_pdf(receipt_reference=receipt_reference, organisation=organisation)
+	except frappe.DoesNotExistError:
+		raise frappe.DoesNotExistError("This receipt is unavailable or you do not have permission to view it.")
+	frappe.local.response.filename = name
+	frappe.local.response.filecontent = content
+	frappe.local.response.type = "download"
