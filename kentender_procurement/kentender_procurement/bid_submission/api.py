@@ -10,6 +10,7 @@ import json
 from typing import Any
 
 import frappe
+from frappe.utils import cstr
 
 from kentender_procurement.bid_submission.services import clarification as clarification_service
 from kentender_procurement.bid_submission.services import notice_contact as notice_contact_service
@@ -137,6 +138,50 @@ def refresh_bid_organisation_snapshot(bid_reference: str, confirm=False, expecte
 	"""BDS §7.2 `RefreshBidOrganisationSnapshot`."""
 	confirmed = str(confirm).strip().lower() in ("1", "true", "yes") if not isinstance(confirm, bool) else confirm
 	return snapshot_service.refresh_bid_organisation_snapshot(bid_reference=bid_reference, confirm=confirmed, expected_record_version=expected_record_version, organisation=organisation, idempotency_key=idempotency_key)
+
+
+def _upload(field: str) -> tuple[str, bytes]:
+	files = getattr(getattr(frappe, "request", None), "files", None)
+	upload = files.get(field) if files else None
+	if not upload:
+		return "", b""
+	return cstr(upload.filename), upload.stream.read()
+
+
+@frappe.whitelist(methods=["POST"])
+def upload_bid_evidence(bid_reference: str, handle: str, expected_record_version=None, organisation: str = "", idempotency_key: str = "") -> dict[str, Any]:
+	"""BDS §7.2 `UploadBidEvidence` — multipart, the file field named `file`."""
+	from kentender_procurement.bid_submission.services import evidence
+
+	filename, content = _upload("file")
+	return evidence.upload_bid_evidence(bid_reference=bid_reference, handle=handle, filename=filename, content=content, expected_record_version=expected_record_version, organisation=organisation, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist(methods=["POST"])
+def link_account_evidence_to_bid(bid_reference: str, handle: str, account_evidence_id: str, expected_record_version=None, organisation: str = "", idempotency_key: str = "") -> dict[str, Any]:
+	"""BDS §7.2 `LinkAccountEvidenceToBid` — an exact copy of the Account file."""
+	from kentender_procurement.bid_submission.services import evidence
+
+	return evidence.link_account_evidence_to_bid(bid_reference=bid_reference, handle=handle, account_evidence_id=account_evidence_id, expected_record_version=expected_record_version, organisation=organisation, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist(methods=["POST"])
+def remove_bid_evidence(bid_reference: str, evidence_id: str, expected_record_version=None, organisation: str = "", idempotency_key: str = "") -> dict[str, Any]:
+	from kentender_procurement.bid_submission.services import evidence
+
+	return evidence.remove_bid_evidence(bid_reference=bid_reference, evidence_id=evidence_id, expected_record_version=expected_record_version, organisation=organisation, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist(methods=["GET"])
+def download_bid_evidence(bid_reference: str, evidence_id: str, organisation: str = "", inline: int = 0) -> None:
+	"""The exact stored bytes of one of this bid's files; another organisation's is Not found."""
+	from kentender_procurement.bid_submission.services import evidence
+
+	result = evidence.get_bid_evidence_file(bid_reference=bid_reference, evidence_id=evidence_id, organisation=organisation)
+	frappe.local.response.filename = result["file_name"]
+	frappe.local.response.filecontent = result["content"]
+	frappe.local.response.type = "download"
+	frappe.local.response.display_content_as = "inline" if frappe.utils.cint(inline) else "attachment"
 
 
 @frappe.whitelist(methods=["POST"])

@@ -1,0 +1,125 @@
+// BDS-CHG-001 v0.8 §10.9 behaviour of the company task: a declaration opens
+// in the response drawer and saves only its own changed answers; Save and
+// continue saves the bid's contact and the security answers, then opens the
+// next task; a refusal is named in place; Keep bid details changes nothing;
+// Use updated details calls the snapshot refresh.
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { flushPromises, mount } from "@vue/test-utils";
+import { nextTick, ref } from "vue";
+
+import { createCommandRunner, createScreenCache, createSequenceGuard } from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/runtime.js";
+import CompanyTaskScreen from "./CompanyTaskScreen.vue";
+import { companyTask } from "./company.fixtures.js";
+
+const REF = "TND-MOH-2027-033";
+function portalFor({ call, upload } = {}) {
+	const route = ref({ path: `/tenders/${REF}/bid/company`, segments: ["tenders", REF, "bid", "company"], query: {} });
+	const go = vi.fn();
+	return { call: call || vi.fn(async (m) => (m.endsWith("get_bid_task") ? companyTask() : { ok: true })), upload: upload || vi.fn(async () => ({ ok: true })), go, setTitle: vi.fn(), createSequenceGuard, createCommandRunner, createScreenCache, useRoute: () => ({ route, go, epoch: ref(0) }) };
+}
+function mountWith(initial, portal) {
+	return mount(CompanyTaskScreen, { props: { reference: REF, initial }, attachTo: document.body, global: { provide: { portal }, config: { globalProperties: { __: globalThis.__ } } } });
+}
+const method = (call, i) => call.mock.calls[i][0].split(".").pop();
+
+afterEach(() => {
+	globalThis.__narrow = false;
+	document.body.innerHTML = "";
+});
+
+describe("Company, declarations and tender security", () => {
+	it("opens a declaration in the drawer and saves only its changed answer", async () => {
+		const portal = portalFor();
+		const wrapper = mountWith(companyTask("JV"), portal);
+		await wrapper.get('[data-testid="bds-declaration-g-decl-1"]').get("button").trigger("click");
+		await nextTick();
+		const drawer = document.querySelector('[data-testid="bds-response-drawer"]');
+		expect(drawer.querySelector('[role="dialog"]').getAttribute("aria-label")).toBe("Form of Tender");
+		const box = drawer.querySelector('input[type="checkbox"]');
+		box.checked = true;
+		box.dispatchEvent(new Event("change"));
+		await nextTick();
+		drawer.querySelector('[data-testid="bds-drawer-save"]').click();
+		await flushPromises();
+		expect(method(portal.call, 0)).toBe("save_bid_task");
+		expect([portal.call.mock.calls[0][1].task, JSON.parse(portal.call.mock.calls[0][1].values)]).toEqual(["company", { "h-decl-1": true }]);
+		expect(method(portal.call, 1)).toBe("get_bid_task"); // the page reloads in place
+		expect(document.querySelector('[data-testid="bds-response-drawer"]')).toBeNull();
+	});
+
+	it("saves the bid's contact and the security answers, then opens the next task", async () => {
+		const portal = portalFor();
+		const wrapper = mountWith(companyTask("JV"), portal);
+		await wrapper.get('[data-testid="bds-contact-phone"]').setValue("+254 700 000 222");
+		await wrapper.get("#bds-security-h-sec-issuer").setValue("Equity Bank");
+		await wrapper.get('[data-testid="bds-company-save"]').trigger("click");
+		await flushPromises();
+		const calls = portal.call.mock.calls.map((c) => c[0].split(".").pop());
+		expect(calls).toEqual(["update_tender_contact", "get_bid_task", "save_bid_task"]);
+		expect(portal.call.mock.calls[0][1]).toMatchObject({ phone: "+254 700 000 222", expected_record_version: 4 });
+		expect(JSON.parse(portal.call.mock.calls[2][1].values)).toEqual({ "h-sec-issuer": "Equity Bank" });
+		expect(portal.go).toHaveBeenCalledWith(`/tenders/${REF}/bid/requirements`);
+	});
+
+	it("changes the Tender notice email to another verified Account email", async () => {
+		const portal = portalFor();
+		const wrapper = mountWith(companyTask(), portal);
+		expect(wrapper.findAll('[data-testid="bds-contact-notice"] option').map((o) => o.text())).toEqual(["tenders@afyadigital.example", "bids@afyadigital.example"]);
+		await wrapper.get('[data-testid="bds-contact-notice"]').setValue("C2");
+		await wrapper.get('[data-testid="bds-company-save"]').trigger("click");
+		await flushPromises();
+		expect(method(portal.call, 0)).toBe("update_tender_notice_contact");
+		expect(portal.call.mock.calls[0][1]).toMatchObject({ bidder_arrangement_id: "ARR-MOH-2027-033-001", notice_contact_id: "C2", expected_record_version: 4 });
+		expect(portal.go).toHaveBeenCalledWith(`/tenders/${REF}/bid/requirements`);
+	});
+
+	it("names a refused contact phone in place and stays", async () => {
+		const call = vi.fn(async () => ({ ok: false, errors: { phone: "Enter the Tender contact's telephone number, for example +254 709 555 015." } }));
+		const portal = portalFor({ call });
+		const wrapper = mountWith(companyTask(), portal);
+		await wrapper.get('[data-testid="bds-contact-phone"]').setValue("abc");
+		await wrapper.get('[data-testid="bds-company-save"]').trigger("click");
+		await flushPromises();
+		expect(wrapper.text()).toContain("Enter the Tender contact's telephone number");
+		expect(wrapper.get('[data-testid="bds-contact-phone"]').element.value).toBe("abc");
+		expect(portal.go).not.toHaveBeenCalled();
+	});
+
+	it("Keep bid details closes the comparison without a command; Use updated details refreshes the snapshot", async () => {
+		const portal = portalFor();
+		const wrapper = mountWith(companyTask("ACCOUNT-UPDATE"), portal);
+		await wrapper.get('[data-testid="bds-keep-bid"]').trigger("click");
+		expect(wrapper.find('[data-testid="bds-account-update"]').exists()).toBe(false);
+		expect(portal.call).not.toHaveBeenCalled();
+		const again = mountWith(companyTask("ACCOUNT-UPDATE"), portal);
+		await again.get('[data-testid="bds-use-updated"]').trigger("click");
+		await flushPromises();
+		expect(method(portal.call, 0)).toBe("refresh_bid_organisation_snapshot");
+		expect(portal.call.mock.calls[0][1]).toMatchObject({ confirm: 1, expected_record_version: 20 });
+	});
+
+	it("keeps unsaved security entries when a file command re-reads the page", async () => {
+		const portal = portalFor({ call: vi.fn(async (m) => (m.endsWith("get_bid_task") ? companyTask("JV") : { ok: true })) });
+		const wrapper = mountWith(companyTask("JV"), portal);
+		await wrapper.get("#bds-security-h-sec-issuer").setValue("Equity Bank");
+		const input = wrapper.get("#bds-security-h-sec-proof");
+		Object.defineProperty(input.element, "files", { value: [new File(["%PDF-1.4"], "g.pdf", { type: "application/pdf" })] });
+		await input.trigger("change");
+		await flushPromises();
+		expect(portal.call.mock.calls.map((c) => c[0].split(".").pop())).toContain("get_bid_task");
+		expect(wrapper.get("#bds-security-h-sec-issuer").element.value).toBe("Equity Bank");
+	});
+
+	it("shows the physical original as the bid knows it, and uploads proof as its own command", async () => {
+		const portal = portalFor();
+		const wrapper = mountWith(companyTask("SECURITY"), portal);
+		expect(wrapper.get('[data-testid="bds-security-physical"]').text()).toContain("Physical original not yet recorded");
+		const input = wrapper.get("#bds-security-h-sec-proof");
+		const file = new File(["%PDF-1.4"], "guarantee.pdf", { type: "application/pdf" });
+		Object.defineProperty(input.element, "files", { value: [file] });
+		await input.trigger("change");
+		await flushPromises();
+		const [m, fields, files] = portal.upload.mock.calls[0];
+		expect([m.split(".").pop(), fields.handle, fields.expected_record_version, files.file]).toEqual(["upload_bid_evidence", "h-sec-proof", 20, file]);
+	});
+});

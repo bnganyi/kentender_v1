@@ -138,11 +138,11 @@ def view(ctx, tasks, published: dict[str, Any], *, at) -> dict[str, Any]:
 			"save_label": "Save and continue", "next_href": f"/tenders/{reference}/bid/{next_task}",
 			"blocked_text": BLOCKED_TEXT if any(not a["value"] for a in acknowledgements) else "",
 		},
-		"notice_contact": _notice_contact(ws),
+		"notice_contact": notice_contact(ws),
 	}
 
 
-def _notice_contact(ws) -> dict[str, Any]:
+def notice_contact(ws) -> dict[str, Any]:
 	"""The candidate's Tender notice email and the verified Account emails it
 	may change to (`UpdateTenderNoticeContact`)."""
 	arrangement = frappe.db.get_value("Bidder Arrangement", ws.bidder_arrangement, ["name", "mandatory_notice_email", "record_version"], as_dict=True) or {}

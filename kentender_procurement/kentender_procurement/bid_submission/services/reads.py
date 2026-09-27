@@ -180,9 +180,12 @@ def get_bid_task(*, bid_reference: str = "", task: str, tender_reference: str = 
 
 		view["price"] = price.summary(ctx)
 	if task == "company":
-		from kentender_procurement.bid_submission.services import tender_security
+		from kentender_procurement.bid_submission.services import company_view, guidance, tender_security
 
 		view["security"] = _public_security(tender_security.response(ctx))
+		guided = guidance.for_bid(ctx, actor=actor, at=at, tasks=tasks)
+		view.update({"next_step": guided["next_step"], "journey": guided["journey"]})
+		view.update(company_view.view(ctx, tasks, view, at=at))
 	if task == "documents":
 		from kentender_procurement.bid_submission.services import documents_view, guidance
 

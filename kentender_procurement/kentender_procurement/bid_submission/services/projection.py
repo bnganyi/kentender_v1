@@ -17,7 +17,7 @@ from frappe.utils import cstr
 from kentender_procurement.bid_submission.services import labels, tenders_gateway
 from kentender_procurement.bid_submission.services.bid_context import BidContext
 from kentender_procurement.bid_submission.services.definition_model import Field, Group
-from kentender_procurement.bid_submission.services.product_profile import COMPOSITION_HEADINGS
+from kentender_procurement.bid_submission.services.product_profile import COMPOSITION_HEADINGS, FORM_HEADINGS
 from kentender_procurement.bid_submission.services.readiness import FieldState, TaskState
 
 #: Published facts a bidder may see, in display order, with their labels.
@@ -62,8 +62,13 @@ def statement(ctx: BidContext, group: Group) -> str:
 
 
 def heading(ctx: BidContext, group: Group) -> str:
-	if group.published_facts.get("label"):
-		return cstr(group.published_facts["label"])
+	published = group.published_facts
+	if published.get("label"):
+		return cstr(published["label"])
+	if published.get("form_id") in FORM_HEADINGS:
+		return FORM_HEADINGS[published["form_id"]]
+	if group.composition_id == "COMP-RESERVATION-ELIGIBILITY" and published.get("category"):
+		return f"{cstr(published['category'])} reservation declaration"
 	return COMPOSITION_HEADINGS.get(group.composition_id, "")
 
 

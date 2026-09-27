@@ -1,0 +1,97 @@
+import { expect, test } from "@playwright/test";
+
+import { collectPortalConsoleErrors, expectNoFrappeDialog, expectNoHorizontalOverflow, loginToPortal, waitForPortal } from "../../helpers/portal";
+import { bdsFixture, restoreBdsWorld } from "./bdsWorld";
+
+/**
+ * BDS-CHG-001 v0.8 §10.9 (plan Phase 11, slice 11.8) — Company, declarations
+ * and tender security, as David of Afya (Test) on a new bid on the Tenders
+ * test Tender: confirm a declaration in the response drawer, enter the tender
+ * security with its proof, keep the contact bid-specific, and see the
+ * physical original as not yet recorded. Another organisation sees nothing.
+ */
+type World = { tender_reference: string; bid_reference: string; password: string; representative: string; other_user: string };
+
+function onePagePdf(): Buffer {
+	const objects = ["<< /Type /Catalog /Pages 2 0 R >>", "<< /Type /Pages /Kids [3 0 R] /Count 1 >>", "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] >>"];
+	let out = "%PDF-1.4\n";
+	const offsets: number[] = [];
+	objects.forEach((body, i) => {
+		offsets.push(Buffer.byteLength(out));
+		out += `${i + 1} 0 obj\n${body}\nendobj\n`;
+	});
+	const xref = Buffer.byteLength(out);
+	out += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n${offsets.map((o) => `${String(o).padStart(10, "0")} 00000 n \n`).join("")}`;
+	out += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+	return Buffer.from(out);
+}
+
+test.describe.configure({ mode: "serial", timeout: 300_000 });
+
+test.describe("BDS-DES-08 Company, declarations and tender security", () => {
+	test.afterAll(() => restoreBdsWorld());
+
+	test("David confirms a declaration, enters the tender security with its proof and continues", async ({ page }) => {
+		const world = bdsFixture<World>("reset_my_bids_fixture", { state: "started" });
+		const errors = collectPortalConsoleErrors(page);
+		await page.setViewportSize({ width: 1440, height: 1024 });
+		await loginToPortal(page, world.representative, world.password, `/tenders/${world.tender_reference}/bid`);
+		await page.getByTestId("bds-task-company").getByRole("link").click();
+		await expect(page).toHaveURL(new RegExp(`/tenders/${world.tender_reference}/bid/company$`));
+		const table = page.getByTestId("bds-declarations-table");
+		await expect(table).toContainText("Form of Tender");
+		await expect(table).toContainText("Youth reservation declaration");
+		await expect(page.getByTestId("bds-company-facts")).toContainText("Afya Digital Supplies (Test) Limited");
+
+		// a declaration in the response drawer
+		const row = table.locator("tr", { hasText: "Self-declaration — not debarred" });
+		await row.getByRole("button", { name: "View declaration" }).click();
+		const drawer = page.getByTestId("bds-response-drawer");
+		await expect(drawer.getByRole("dialog")).toHaveAccessibleName("Self-declaration — not debarred");
+		await expect(drawer.getByTestId("bds-drawer-statement")).toBeVisible();
+		await drawer.locator(".kt-checkbox").first().click();
+		await drawer.getByTestId("bds-drawer-save").click();
+		await expect(drawer).toHaveCount(0);
+		await expect(row).toContainText("Confirmed");
+		await expect(row).toContainText("Confirmed by David Ouma");
+
+		// a refused contact phone is named in place
+		await page.getByTestId("bds-contact-phone").fill("call me");
+		await page.getByTestId("bds-company-save").click();
+		await expect(page.locator(".kt-field-error", { hasText: "telephone" })).toBeVisible();
+		await expect(page.getByTestId("bds-contact-phone")).toHaveValue("call me");
+		await expectNoFrappeDialog(page);
+		await page.getByTestId("bds-contact-phone").fill("+254 709 555 015");
+
+		// tender security and its proof
+		await expect(page.getByTestId("bds-security-empty")).toBeVisible();
+		const region = page.locator(".kt-region", { has: page.getByRole("heading", { name: "Tender security" }) });
+		await region.locator("select").first().selectOption("Demand Bank Guarantee");
+		const inputs = region.locator("input.kt-input:not([type=date])");
+		await inputs.nth(0).fill("KCB Bank Kenya");
+		await inputs.nth(1).fill("KCB/TG/2099/7788");
+		await inputs.nth(2).fill("500000");
+		await region.locator("input[type=date]").first().fill("2027-11-15");
+		await region.locator("input[type=file]").setInputFiles({ name: "tender-security.pdf", mimeType: "application/pdf", buffer: onePagePdf() });
+		await expect(region.locator(".bds-file-row", { hasText: "tender-security.pdf" })).toBeVisible();
+		await page.getByTestId("bds-company-save").click();
+		await expect(page).toHaveURL(new RegExp(`/tenders/${world.tender_reference}/bid/requirements$`));
+
+		await page.goto(`/tenders/${world.tender_reference}/bid/company`, { waitUntil: "domcontentloaded" });
+		await waitForPortal(page);
+		await expect(page.getByTestId("bds-security-empty")).toHaveCount(0);
+		await expect(page.getByTestId("bds-security-physical")).toContainText("Physical original not yet recorded");
+		await page.setViewportSize({ width: 390, height: 844 });
+		await expect(page.getByTestId("bds-declarations-cards")).toBeVisible();
+		await expectNoHorizontalOverflow(page);
+		expect(errors.filter((e) => !/404 \(Not Found\)/.test(e)), errors.join(" | ")).toEqual([]);
+	});
+
+	test("another organisation's person is told the bid is not found", async ({ page }) => {
+		const world = bdsFixture<World>("reset_my_bids_fixture", { state: "started" });
+		await page.setViewportSize({ width: 1440, height: 1024 });
+		await loginToPortal(page, world.other_user, world.password, `/tenders/${world.tender_reference}/bid/company`);
+		await expect(page.getByTestId("bds-state-bid-not-found")).toBeVisible();
+		await expect(page.locator("body")).not.toContainText(world.bid_reference);
+	});
+});

@@ -29,6 +29,18 @@ def resolve(definition: dict[str, Any]) -> dict[str, Any]:
 
 #: The renderer's headings for the released compositions of BDS-GOODS-IT-V1
 #: (STD-TPL-001 §8.2): code-owned presentation, never shown as identities.
+#: The official forms a locked declaration composition carries, by the
+#: definition's own form id (the PPRA Goods STD Section IV forms this family
+#: renders; BDS-CHG-001 v0.8 §10.9 names them for the bidder).
+FORM_HEADINGS: dict[str, str] = {
+	"FORM-TENDER": "Form of Tender",
+	"FORM-CITD": "Independent tender determination",
+	"FORM-SD1": "Self-declaration — not debarred",
+	"FORM-SD2": "Self-declaration — no corrupt or fraudulent practice",
+	"FORM-COE": "Code of ethics commitment",
+	"FORM-CBQ": "Confidential business questionnaire",
+}
+
 COMPOSITION_HEADINGS: dict[str, str] = {
 	"COMP-DOC-ACK": "Addendum acknowledgement",
 	"COMP-SUPPLIER-DETAILS": "Tenderer information",

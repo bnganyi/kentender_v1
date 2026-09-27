@@ -17,6 +17,11 @@ import frappe
 from kentender_procurement.bid_submission.services import reads
 
 FILTER_KEYS = ("search", "method", "reservation", "closing")
+# The task pages built so far (plan Phase 11 slices); any other task key is Not found.
+TASK_SCREENS = {
+	"documents": ("documents-task", "Tender documents, clarifications and addenda"),
+	"company": ("company-task", "Company, declarations and tender security"),
+}
 
 
 def resolve(*, path: str, query: dict[str, Any], user: str) -> dict[str, Any]:
@@ -42,15 +47,16 @@ def resolve(*, path: str, query: dict[str, Any], user: str) -> dict[str, Any]:
 		except frappe.DoesNotExistError:
 			return {"verdict": "NOT_FOUND", "title": "Bid not found", "payload": {"screen": "not-found"}}
 		return {"verdict": "OK", "title": "Your bid", "payload": {"screen": "workspace", "data": {"outcome": "OK", **data}}}
-	if len(segments) == 4 and segments[0] == "tenders" and segments[2] == "bid" and segments[3] == "documents":
-		# BDS-DES-07: the documents task of the organisation's own bid
+	if len(segments) == 4 and segments[0] == "tenders" and segments[2] == "bid" and segments[3] in TASK_SCREENS:
+		# BDS-DES-07/08: a task of the organisation's own bid
 		if not user or user == "Guest":
 			return {"verdict": "SIGN_IN", "title": "Sign in"}
+		screen, title = TASK_SCREENS[segments[3]]
 		try:
-			data = reads.get_bid_task(tender_reference=segments[1], task="documents", organisation=str(query.get("organisation") or ""), user=user)
+			data = reads.get_bid_task(tender_reference=segments[1], task=segments[3], organisation=str(query.get("organisation") or ""), user=user)
 		except frappe.DoesNotExistError:
 			return {"verdict": "NOT_FOUND", "title": "Bid not found", "payload": {"screen": "not-found"}}
-		return {"verdict": "OK", "title": "Tender documents, clarifications and addenda", "payload": {"screen": "documents-task", "data": {"outcome": "OK", **data}}}
+		return {"verdict": "OK", "title": title, "payload": {"screen": screen, "data": {"outcome": "OK", **data}}}
 	if segments in (["my-bids"], ["account", "receipts"]):
 		# BDS-DES-05 / BDS-DES-17: the signed-in organisation's own records
 		if not user or user == "Guest":

@@ -36,6 +36,7 @@ export const COVERED = new Set([
 			"BDS-DES-07", "BDS-DES-07-COMPLETE", "BDS-DES-07-QUESTION-OPEN / BDS-DES-07-NONE", "BDS-DES-07-QUESTION-OPEN-DIALOG", "BDS-DES-07-QUESTION-OPEN-DIALOG · success",
 			"BDS-DES-07-CLOSED", "BDS-DES-07 notice pending · Queued", "BDS-DES-07 notice pending · Sent", "BDS-DES-07-NOTICE",
 		].map((v) => `DocumentsTaskScreen#${v}@${frame}`),
+		...["BDS-DES-08", "BDS-DES-08-SECURITY", "BDS-DES-08-JV", "BDS-DES-08-ACCOUNT-UPDATE"].map((v) => `CompanyTaskScreen#${v}@${frame}`),
 	]),
 	...["desktop", "narrow"].flatMap((frame) => [
 		...["BDS-DES-03", "BDS-DES-03-VERIFY"].map((v) => `RegisterScreen#${v}@${frame}`),

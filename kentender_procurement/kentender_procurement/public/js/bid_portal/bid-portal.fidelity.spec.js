@@ -17,10 +17,12 @@ import { SCREENS as OVERVIEW } from "./screens/TenderOverviewScreen.fixtures.js"
 import { SCREENS as MY_BIDS } from "./screens/myBids.fixtures.js";
 import { SCREENS as WORKSPACE } from "./screens/workspace.fixtures.js";
 import { SCREENS as DOCUMENTS } from "./screens/documents.fixtures.js";
+import { SCREENS as COMPANY } from "./screens/company.fixtures.js";
 
 const DESIGN = "docs/mvp-1-r1/12_bid_submission/design";
 const A = `${DESIGN}/Bid Board v3 - A Public and Account.dc.html`;
 const B = `${DESIGN}/Bid Board v3 - B Workspace and documents.dc.html`;
+const C = `${DESIGN}/Bid Board v3 - C Company requirements and price.dc.html`;
 
 function portalFor(path) {
 	const route = ref({ path, segments: path.split("/").filter(Boolean), query: {} });
@@ -45,6 +47,7 @@ const SCREENS = [
 	...MY_BIDS.map((s) => ({ ...s, board: A })),
 	...WORKSPACE.map((s) => ({ ...s, board: B })),
 	...DOCUMENTS.map((s) => ({ ...s, board: B })),
+	...COMPANY.map((s) => ({ ...s, board: C })),
 ];
 
 afterEach(() => {
@@ -67,7 +70,7 @@ describe.each(SCREENS)("$name — $variant at the $frame frame", ({ name, varian
 
 describe("the COVERED claim", () => {
 	// the screens this spec compares, named here so the registry's COVERED claim points at them
-	const COMPARED = ["AvailableTendersScreen", "TenderOverviewScreen", "MyBidsScreen", "ReceiptHistoryScreen", "BidWorkspaceScreen", "DocumentsTaskScreen"];
+	const COMPARED = ["AvailableTendersScreen", "TenderOverviewScreen", "MyBidsScreen", "ReceiptHistoryScreen", "BidWorkspaceScreen", "DocumentsTaskScreen", "CompanyTaskScreen"];
 	it("compares exactly the named screens", () => {
 		expect([...new Set(SCREENS.map((s) => s.name))].sort()).toEqual([...COMPARED].sort());
 	});
