@@ -21,10 +21,7 @@ def now() -> datetime:
 		return get_datetime(injected)
 	# Browser worlds (plan D18): a test environment's persisted instant, so a
 	# live page runs on the fixture's 2027 timeline. Never on another site.
-	from kentender_procurement.bid_submission.services import simulation
+	from kentender_core.services.test_clock import current_instant
 
-	if simulation.enabled():
-		instant = simulation.controls().get("current_instant")
-		if instant:
-			return get_datetime(instant)
-	return now_datetime()
+	instant = current_instant()
+	return get_datetime(instant) if instant else now_datetime()

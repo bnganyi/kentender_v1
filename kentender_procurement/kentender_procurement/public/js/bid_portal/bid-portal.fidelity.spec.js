@@ -10,7 +10,7 @@ import { nextTick, ref } from "vue";
 import { createCommandRunner, createScreenCache, createSequenceGuard } from "../../../../../kentender_core/kentender_core/public/js/kt_portal/runtime.js";
 import { bidSubmissionSkeleton } from "../../../../../tests/ui/fidelity/board.js";
 import { compareSkeletons, formatMismatch, skeletonOf } from "../../../../../tests/ui/fidelity/skeleton.js";
-import { COVERED, DEPARTURES } from "../../../../../tests/ui/fidelity/departures/bid-submission.js";
+import { ACCOUNT_SCREENS, COVERED, DEPARTURES } from "../../../../../tests/ui/fidelity/departures/bid-submission.js";
 
 import AvailableTendersScreen from "./screens/AvailableTendersScreen.vue";
 import { SCREENS as OVERVIEW } from "./screens/TenderOverviewScreen.fixtures.js";
@@ -59,7 +59,14 @@ describe.each(SCREENS)("$name — $variant at the $frame frame", ({ name, varian
 });
 
 describe("the COVERED claim", () => {
+	// the screens this spec compares, named here so the registry's COVERED claim points at them
+	const COMPARED = ["AvailableTendersScreen", "TenderOverviewScreen"];
+	it("compares exactly the named screens", () => {
+		expect([...new Set(SCREENS.map((s) => s.name))].sort()).toEqual([...COMPARED].sort());
+	});
 	it("lists exactly the variants this spec compares", () => {
-		expect([...COVERED].sort()).toEqual([...new Set(SCREENS.map((s) => `${s.name}#${s.variant}@${s.frame}`))].sort());
+		// the Account screens are compared by supplier-account-portal.fidelity.spec.js
+		const mine = [...COVERED].filter((key) => !ACCOUNT_SCREENS.test(key));
+		expect(mine.sort()).toEqual([...new Set(SCREENS.map((s) => `${s.name}#${s.variant}@${s.frame}`))].sort());
 	});
 });

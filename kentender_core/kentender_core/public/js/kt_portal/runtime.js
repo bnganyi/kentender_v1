@@ -286,10 +286,38 @@ export function createPortalRuntime(win) {
 		return body.message;
 	}
 
+	// A command with files (BDS-CHG-001 v0.8 plan OD-B `upload()`): multipart
+	// POST; `fields` as form values, `files` as {field: File}. Same error
+	// contract as call().
+	async function upload(method, fields, files) {
+		const csrf = (win.frappe && win.frappe.csrf_token) || "";
+		const form = new win.FormData();
+		Object.entries(fields || {}).forEach(([k, v]) => {
+			if (v !== undefined && v !== null) form.append(k, typeof v === "object" ? JSON.stringify(v) : String(v));
+		});
+		Object.entries(files || {}).forEach(([k, file]) => {
+			if (file) form.append(k, file, file.name);
+		});
+		let res;
+		try {
+			res = await win.fetch(`/api/method/${method}`, { method: "POST", credentials: "same-origin", headers: { Accept: "application/json", "X-Frappe-CSRF-Token": csrf }, body: form });
+		} catch (e) {
+			throw toError(0, {});
+		}
+		let body = {};
+		try {
+			body = await res.json();
+		} catch (e) {
+			body = {};
+		}
+		if (!res.ok) throw toError(res.status, body);
+		return body.message;
+	}
+
 	function setTitle(text) {
 		doc.title = text ? `${text} · KenTender` : "KenTender";
 	}
 
-	const api = { register, useRoute, go, call, setTitle, initial, dispose, createCommandRunner, createSequenceGuard, createScreenCache };
+	const api = { register, useRoute, go, call, upload, setTitle, initial, dispose, createCommandRunner, createSequenceGuard, createScreenCache };
 	return api;
 }

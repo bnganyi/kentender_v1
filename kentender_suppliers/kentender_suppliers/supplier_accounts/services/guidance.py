@@ -37,10 +37,11 @@ def support_officers() -> list[str]:
 	return out
 
 
-def for_new_account() -> dict[str, Any]:
+def for_new_account(viewer: str = "") -> dict[str, Any]:
+	"""`viewer` is the person registering; the current stage names them (BDS-DES-03)."""
 	return {
 		"next_step": ns.answer(ns.KIND_YOUR_TURN, headline="Enter the supplier organisation details.", stage="ACCOUNT_SETUP", primary_action="create_account"),
-		"journey": ns.journey(STAGES, current="ACCOUNT_SETUP"),
+		"journey": ns.journey(STAGES, current="ACCOUNT_SETUP", holder_display=full_name(viewer) if viewer and viewer != "Guest" else ""),
 	}
 
 
@@ -61,14 +62,17 @@ def for_account(org, *, viewer: str) -> dict[str, Any]:
 		fixes = [ns.fix("Edit organisation", responsibility="Supplier user", kind=ns.FIX_FOCUS, fix_id=f"edit_organisation:{m['field']}", target=m["field"], primary=i == 0) for i, m in enumerate(missing)]
 		blockers = [ns.blocker(ns.guard(False, reason_code="BDS_ACCOUNT_REQUIRED", message=m["text"], headline=m["text"], fixes=[fixes[i]])) for i, m in enumerate(missing)]
 		headline = "Add the missing official phone before continuing." if [m["field"] for m in missing] == ["official_phone"] else f"Complete {len(missing)} item{'s' if len(missing) != 1 else ''} before starting a bid."
+		# One missing item is named as the sentence (§10.5 BDS-DES-04-ATTENTION); several are listed per blocker.
+		sentence = f"{missing[0]['text']}." if len(missing) == 1 else ""
 		return {
-			"next_step": ns.answer(ns.KIND_BLOCKED, headline=headline, stage="ACCOUNT_SETUP", blockers=blockers, fixes=fixes, primary_action="edit_organisation"),
+			"next_step": ns.answer(ns.KIND_BLOCKED, headline=headline, sentence=sentence, stage="ACCOUNT_SETUP", blockers=blockers, fixes=fixes, primary_action="edit_organisation"),
 			"journey": ns.journey(STAGES, current="ACCOUNT_SETUP", blocked=True, holder_display=full_name(viewer)),
 		}
 	if org.account_status == "Pending verification":
 		fix = ns.fix("Resend verification link", responsibility="Supplier user", kind=ns.FIX_COMMAND, fix_id="send_account_verification", primary=True)
+		sentence = f"Verify {org.official_email} before starting a bid." if org.official_email else ""  # §10.5 BDS-DES-04-VERIFY
 		return {
-			"next_step": ns.answer(ns.KIND_YOUR_TURN, headline="Verify your email to finish setting up the supplier account.", stage="CONTACT_VERIFICATION", fixes=[fix], primary_action="send_account_verification"),
+			"next_step": ns.answer(ns.KIND_YOUR_TURN, headline="Verify your email to finish setting up the supplier account.", sentence=sentence, stage="CONTACT_VERIFICATION", fixes=[fix], primary_action="send_account_verification"),
 			"journey": ns.journey(STAGES, current="CONTACT_VERIFICATION", holder_display=full_name(viewer)),
 		}
 	return {

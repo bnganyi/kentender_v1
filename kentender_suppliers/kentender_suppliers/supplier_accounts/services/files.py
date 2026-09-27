@@ -25,6 +25,7 @@ REASONS = {
 	"size": "Upload a file of 20 MB or less.",
 	"type": "Upload a PDF, PNG or JPEG file.",
 	"scan": "The file did not pass the malware check.",
+	"unreadable": "The file could not be read. Upload a complete PDF, PNG or JPEG file.",
 }
 
 
@@ -40,6 +41,8 @@ def check(content: bytes | None, filename: str) -> dict[str, Any]:
 	sniffed = file_integrity.sniff_type(data)
 	if extension not in ALLOWED or sniffed is None or (sniffed != extension and not (sniffed == "jpg" and extension == "jpeg")):
 		return {"ok": False, "reason": REASONS["type"]}
+	if file_integrity.unreadable(data):
+		return {"ok": False, "reason": REASONS["unreadable"]}
 	verdict = file_integrity.scanner_result(data, name)
 	if file_integrity.is_infected(verdict):
 		return {"ok": False, "reason": REASONS["scan"]}

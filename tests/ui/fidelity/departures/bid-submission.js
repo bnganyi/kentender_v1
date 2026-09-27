@@ -21,4 +21,11 @@ export const COVERED = new Set([
 	...["desktop", "narrow"].flatMap((frame) =>
 		["", "-SIGNED-OUT", "-JV-START", "-DRAFT", "-SUBMITTED", "-CANDIDATE-QUESTION", "-CANCELLED"].map((v) => `TenderOverviewScreen#BDS-DES-02${v}@${frame}`),
 	),
+	...["desktop", "narrow"].flatMap((frame) => [
+		...["BDS-DES-03", "BDS-DES-03-VERIFY"].map((v) => `RegisterScreen#${v}@${frame}`),
+		...["", "-ATTENTION", "-VERIFY", "-SUSPENDED"].map((v) => `AccountScreen#BDS-DES-04${v}@${frame}`),
+	]),
 ]);
+
+// The supplier Account screens (kentender_suppliers), compared by their own spec.
+export const ACCOUNT_SCREENS = /^(RegisterScreen|AccountScreen)#/;

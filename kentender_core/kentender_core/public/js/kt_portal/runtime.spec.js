@@ -199,6 +199,19 @@ describe("portal_page.call", () => {
 		expect(window.frappe.msgprint).not.toHaveBeenCalled();
 	});
 
+	it("uploads fields and files as multipart with the CSRF header and the same error contract", async () => {
+		window.frappe = { csrf_token: "tok-2", msgprint: vi.fn() };
+		const fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({ message: { ok: true } }) }));
+		window.fetch = fetchMock;
+		const portal = createPortalRuntime(window);
+		const file = new File(["%PDF-1.4"], "authority.pdf", { type: "application/pdf" });
+		expect(await portal.upload("kt.register", { legal_name: "Afya", skip: undefined }, { authority_evidence: file })).toEqual({ ok: true });
+		const [url, init] = fetchMock.mock.calls[0];
+		expect([url, init.method, init.headers["X-Frappe-CSRF-Token"], init.body.get("legal_name"), init.body.get("authority_evidence").name, init.body.has("skip")]).toEqual(["/api/method/kt.register", "POST", "tok-2", "Afya", "authority.pdf", false]);
+		window.fetch = vi.fn(async () => ({ ok: false, status: 417, json: async () => ({ kt_error_code: "BDS_EVIDENCE_REJECTED", kt_error_message: "This file could not be accepted." }) }));
+		await expect(portal.upload("kt.register", {}, {})).rejects.toMatchObject({ code: "BDS_EVIDENCE_REJECTED", status: 417 });
+	});
+
 	it("reads Frappe server messages as plain text and falls back by status", () => {
 		const messages = JSON.stringify([JSON.stringify({ message: "<b>Not permitted</b>" })]);
 		expect(toError(403, { exc_type: "PermissionError", _server_messages: messages })).toMatchObject({ message: "Not permitted", code: "PermissionError", status: 403 });

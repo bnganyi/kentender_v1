@@ -2,9 +2,11 @@
 # For license information, please see license.txt
 
 """Account messages (verification links). A transport is a callable
-`(message) -> dict` registered on `kt_supplier_account_message_transports`
-(the last one wins); without one, Frappe's outgoing email queue is used and
-the result is only ever "Queued" — never a delivery claim. Tests set
+`(message) -> dict | None` registered on `kt_supplier_account_message_transports`;
+the last one that takes the message wins (a transport returns None to
+decline, as a test-environment double does on a real site). With none taking
+it, Frappe's outgoing email queue is used and the result is only ever
+"Queued" — never a delivery claim. Tests set
 `frappe.flags.kt_account_message_transport` to capture messages."""
 
 from __future__ import annotations
@@ -25,7 +27,8 @@ def send(message: dict[str, Any]) -> dict[str, Any]:
 	override = frappe.flags.get("kt_account_message_transport")
 	if override:
 		return override(message)
-	paths = frappe.get_hooks(HOOK) or []
-	if paths:
-		return frappe.get_attr(paths[-1])(message)
+	for path in reversed(frappe.get_hooks(HOOK) or []):
+		answer = frappe.get_attr(path)(message)
+		if answer:
+			return answer
 	return email_transport(message)

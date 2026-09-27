@@ -128,12 +128,15 @@ def desired(ws, *, at) -> dict[str, dict[str, Any]]:
 
 def _message(users: list[str], subject: str, body: str) -> str:
 	override = frappe.flags.get("kt_bds_message_transport")
-	transports = [override] if override else [frappe.get_attr(p) for p in frappe.get_hooks(TRANSPORT_HOOK) or []]
-	if not transports:
-		return NO_TRANSPORT
+	transports = [override] if override else [frappe.get_attr(p) for p in reversed(frappe.get_hooks(TRANSPORT_HOOK) or [])]
 	results = []
 	for user in users:
-		answer = transports[-1]({"to": user, "subject": subject, "body": body}) or {}
+		message = {"to": user, "subject": subject, "body": body}
+		# the last transport that takes the message wins; one returning None
+		# declines (the Test Mailbox off a test environment)
+		answer = next((taken for taken in (transport(message) for transport in transports) if taken is not None), None)
+		if answer is None:
+			return NO_TRANSPORT
 		results.append(cstr(answer.get("result") or "Sent"))
 	return ", ".join(sorted(set(results)))[:140]
 

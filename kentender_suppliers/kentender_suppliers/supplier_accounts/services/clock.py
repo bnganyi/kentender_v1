@@ -3,7 +3,9 @@
 
 """One trusted clock for Supplier Accounts (BDS-CHG-001 v0.8 plan D18).
 Tests inject `frappe.flags.kt_accounts_clock`; seeds freeze the process
-clock with `kentender_core.seeds.clock.at`; production reads the site clock."""
+clock with `kentender_core.seeds.clock.at`; a browser world on a test
+environment sets the shared test instant (`kentender_core.services.test_clock`);
+production reads the site clock."""
 
 from __future__ import annotations
 
@@ -17,4 +19,8 @@ def now() -> datetime:
 	injected = getattr(frappe.flags, "kt_accounts_clock", None)
 	if injected:
 		return get_datetime(injected)
-	return now_datetime()
+	# A test environment's browser-world instant (kentender_core test_clock).
+	from kentender_core.services.test_clock import current_instant
+
+	instant = current_instant()
+	return get_datetime(instant) if instant else now_datetime()

@@ -71,3 +71,20 @@ def reset_controls() -> dict:
 	if not enabled():
 		return dict(DEFAULTS)
 	return set_controls(**DEFAULTS)
+
+
+def current_instant():
+	"""`kt_test_clock` (kentender_core test_clock): the browser world's instant,
+	on a test environment only."""
+	if not enabled():
+		return None
+	return controls().get("current_instant") or None
+
+
+def set_test_instant(instant) -> bool:
+	"""`kt_test_clock_setters`: persist (or with ``None`` clear) the browser
+	world's instant; refused silently outside a test environment."""
+	if not enabled():
+		return False
+	set_controls(current_instant=instant or None)
+	return True

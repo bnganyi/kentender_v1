@@ -138,7 +138,11 @@ def remove_people() -> None:
 
 
 def wipe_bids() -> None:
+	from kentender_procurement.bid_submission.test_services import mailbox
+
 	clear.wipe(tenders=tender_fx.test_tenders(), namespace=NS)
+	for person in (DAVID, MARY, PETER, GRACE, NOBODY):
+		mailbox.clear(person)  # hand-off messages the test mailbox kept for this world
 	frappe.db.commit()
 
 

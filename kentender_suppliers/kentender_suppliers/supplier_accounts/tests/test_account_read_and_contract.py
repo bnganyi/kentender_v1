@@ -17,7 +17,7 @@ from kentender_core.services import supplier_account_contract as contract
 from kentender_suppliers.supplier_accounts.services import access, evidence, organisation, provider, read
 from kentender_suppliers.supplier_accounts.tests.support import AFYA, AMINA, DAVID, MARY, PDF, PETER, AccountsCase, key
 
-ACCOUNT_KEYS = {"state", "organisations", "organisation", "viewer", "people", "evidence", "notice_contacts", "missing", "allowed_actions", "next_step", "journey"}
+ACCOUNT_KEYS = {"state", "organisations", "organisation", "viewer", "people", "evidence", "notice_contacts", "missing", "allowed_actions", "links", "status", "next_step", "journey"}
 FORBIDDEN_WORDS = ("approved", "qualified", "prequalified", "verified supplier", "eligible")
 
 
@@ -47,20 +47,26 @@ class TestAccountRead(AccountsCase):
 		account = read.get_supplier_account(user=PETER)
 		self.assertEqual((account["state"], account["next_step"]["kind"], account["next_step"]["headline"]), ("no_account", "your_turn", "Enter the supplier organisation details."))
 		self.assertEqual(markers(account), ["current", "not_started", "not_started"])
+		# BDS-DES-03: the current stage names the person registering
+		self.assertEqual(account["journey"]["stages"][0]["holder"], "Peter Mwangi")
 
 	def test_pending_verification_then_active(self):
 		org = self.register()["organisation"]
 		pending = read.get_supplier_account(user=MARY)
 		self.assertEqual(set(pending), ACCOUNT_KEYS)
 		self.assertEqual((pending["next_step"]["headline"], markers(pending), pending["next_step"]["primary_action"]), ("Verify your email to finish setting up the supplier account.", ["done", "current", "not_started"], "send_account_verification"))
+		self.assertEqual(pending["next_step"]["sentence"], "Verify tenders@afyadigital.example before starting a bid.")
 		self.assertIn("send_account_verification", pending["allowed_actions"])
-		self.assertEqual(pending["notice_contacts"], [])
+		# BDS-DES-04-VERIFY: the official email is listed as pending, never as usable for notices
+		self.assertEqual(pending["notice_contacts"], [{"email": "tenders@afyadigital.example", "status": "Pending verification"}])
+		self.assertEqual(pending["status"], {"label": "Pending verification", "tone": "attention"})
 		from kentender_suppliers.supplier_accounts.services import verification
 
 		verification.verify_account_communication(token=self.token(), user=MARY)
 		active = read.get_supplier_account(organisation=org, user=MARY)
 		self.assertEqual((active["next_step"]["kind"], active["next_step"]["headline"], markers(active)), ("done", "The supplier account is ready.", ["done", "done", "done"]))
 		self.assertEqual(active["notice_contacts"], [{"email": "tenders@afyadigital.example", "status": "Verified"}])
+		self.assertEqual(active["status"], {"label": "Active", "tone": "live"})
 		self.assertEqual([(p["person"], p["responsibility"], p["effective_period"]) for p in active["people"]], [("Mary Wanjiku", "Authorised Signatory", "From 18 May 2027")])
 		self.assertEqual(active["allowed_actions"], ["edit_organisation", "add_evidence", "add_person"])
 		text = json.dumps(active).lower()
@@ -74,6 +80,8 @@ class TestAccountRead(AccountsCase):
 		self.assertEqual((account["next_step"]["kind"], account["next_step"]["headline"], markers(account)), ("your_turn_blocked", "Add the missing official phone before continuing.", ["blocked", "not_started", "not_started"]))
 		self.assertEqual(account["missing"], [{"field": "official_phone", "text": "Enter the official phone number"}])
 		self.assertEqual(account["next_step"]["fixes"][0]["label"], "Edit organisation")
+		self.assertEqual(account["next_step"]["sentence"], "Enter the official phone number.")
+		self.assertIsNone(account["status"])  # BDS-DES-04-ATTENTION: no badge; never called unverified
 
 	def test_suspended_waits_on_the_named_support_officer_with_no_self_activation(self):
 		org = self.active_account()
@@ -83,6 +91,12 @@ class TestAccountRead(AccountsCase):
 		step = account["next_step"]
 		self.assertEqual((step["kind"], step["headline"], step["holder"]["people"], step["since"]["display"]), ("waiting", "Supplier Account support officer Amina Yusuf is reviewing suspended access.", ["Amina Yusuf"], "19 May 2027, 08:00 EAT"))
 		self.assertEqual((markers(account), step["fixes"], step["primary_action"]), (["done", "done", "blocked"], [], ""))
+		# BDS-DES-04-SUSPENDED: receipts stay readable and support is one link away; nothing reactivates
+		self.assertEqual([link["label"] for link in account["links"]], ["View receipts", "Supplier support"])
+		self.assertEqual(account["links"][0]["href"], "/account/receipts")
+		self.assertTrue(account["links"][1]["href"].startswith("mailto:"))
+		self.assertEqual(account["allowed_actions"], ["view_receipts"])
+		self.assertEqual(account["status"], {"label": "Account suspended", "tone": "critical"})
 
 
 class TestEvidenceAndEditor(AccountsCase):

@@ -18,6 +18,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr, getdate
 
+from kentender_core.services import public_portal
 from kentender_suppliers.supplier_accounts.services import authorization as authz
 from kentender_suppliers.supplier_accounts.services import clock, facts, guidance
 from kentender_suppliers.supplier_accounts.services.errors import not_found
@@ -54,7 +55,25 @@ def _evidence(organisation: str) -> list[dict[str, Any]]:
 
 
 def _notice_contacts(org) -> list[dict[str, str]]:
-	return [{"email": cstr(r.value), "status": "Verified"} for r in org.contacts if r.channel == "Email" and r.verification_status == "Verified"]
+	"""Verified emails a bid may choose for notices, and the official email
+	while it waits for verification (listed as pending, never usable)."""
+	return [
+		{"email": cstr(r.value), "status": "Verified" if r.verification_status == "Verified" else "Pending verification"}
+		for r in org.contacts
+		if r.channel == "Email" and (r.verification_status == "Verified" or r.is_official)
+	]
+
+
+def _status(org, missing: list) -> dict[str, str] | None:
+	"""The head badge (§10.5): an incomplete Account shows none — it is
+	never called unverified — and suspension is always stated."""
+	if org.account_status == "Suspended":
+		return {"label": "Account suspended", "tone": "critical"}
+	if missing:
+		return None
+	if org.account_status == "Pending verification":
+		return {"label": "Pending verification", "tone": "attention"}
+	return {"label": "Active", "tone": "live"} if org.account_status == "Active" else None
 
 
 def _allowed_actions(org, responsibility: str) -> list[str]:
@@ -68,6 +87,18 @@ def _allowed_actions(org, responsibility: str) -> list[str]:
 	return actions
 
 
+def _links(org) -> list[dict[str, str]]:
+	"""A suspended Account keeps its receipts and one way to reach support
+	(§10.5 BDS-DES-04-SUSPENDED); it never offers a way to reactivate itself."""
+	if org.account_status != "Suspended":
+		return []
+	links = [{"key": "view_receipts", "label": "View receipts", "href": "/account/receipts"}]
+	email = cstr((public_portal.get_public_portal_information().get("support") or {}).get("email"))
+	if email:
+		links.append({"key": "supplier_support", "label": "Supplier support", "href": f"mailto:{email}"})
+	return links
+
+
 def get_supplier_account(*, organisation: str = "", user: str | None = None) -> dict[str, Any]:
 	principal = authz.require_signed_in(user)
 	mine = [] if authz.is_internal_user(principal) else authz.organisations_of(principal)
@@ -78,11 +109,12 @@ def get_supplier_account(*, organisation: str = "", user: str | None = None) -> 
 	elif len(mine) == 1:
 		chosen = mine[0]
 	elif not mine:
-		return {"state": "no_account", "organisations": [], **guidance.for_new_account()}
+		return {"state": "no_account", "organisations": [], **guidance.for_new_account(principal)}
 	else:
 		return {"state": "choose_organisation", "organisations": [{"organisation": o, "legal_name": cstr(frappe.db.get_value(ORGANISATION, o, "legal_name"))} for o in mine]}
 	org = frappe.get_doc(ORGANISATION, chosen)
 	responsibility = authz.responsibility_of(chosen, principal)
+	missing = facts.missing_items(org)
 	return {
 		"state": "account",
 		"organisations": [{"organisation": o, "legal_name": cstr(frappe.db.get_value(ORGANISATION, o, "legal_name"))} for o in mine],
@@ -95,7 +127,9 @@ def get_supplier_account(*, organisation: str = "", user: str | None = None) -> 
 		"people": _people(org.name),
 		"evidence": _evidence(org.name),
 		"notice_contacts": _notice_contacts(org),
-		"missing": facts.missing_items(org),
+		"missing": missing,
+		"status": _status(org, missing),
 		"allowed_actions": _allowed_actions(org, responsibility),
+		"links": _links(org),
 		**guidance.for_account(org, viewer=principal),
 	}

@@ -81,6 +81,8 @@ def _store(ctx, field, *, filename: str, content: bytes, actor: str, at, source:
 		"original_filename": cstr(filename).strip().split("/")[-1].split("\\")[-1][:140], "scan_status": "Pending", "source_evidence": source, "status": "Current",
 		"uploaded_by": actor, "uploaded_at": at,
 	}))
+	if file_integrity.unreadable(content):
+		_reject("File is empty or unreadable.")  # Frappe's File save would fail on it
 	# A File created with its content keeps the exact bytes; file_manager.save_file
 	# re-reads what it wrote as text and rewrites it (a small PDF grows).
 	stored = frappe.get_doc({"doctype": "File", "file_name": row.original_filename, "attached_to_doctype": EVIDENCE, "attached_to_name": row.name, "is_private": 1, "content": content}).insert(ignore_permissions=True)

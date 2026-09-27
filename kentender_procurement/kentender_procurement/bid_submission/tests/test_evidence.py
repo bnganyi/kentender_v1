@@ -62,12 +62,12 @@ class TestUploadBidEvidence(EvidenceCase):
 		# Owner decision 27 Sep 2026: keep a Rejected record (no bytes) so the bid can name it (FU-V08-42).
 		target = self.requirement()
 		files_before = frappe.db.count("File", {"attached_to_doctype": "Bid Evidence"})
-		for content, name, reason in ((b"PK\x03\x04 word document", "notes.docx", "File type .docx is not permitted. Use PDF, PNG, JPG, JPEG."), (EICAR_PDF, "infected.pdf", "File failed malware scanning.")):
+		for content, name, reason in ((b"PK\x03\x04 word document", "notes.docx", "File type .docx is not permitted. Use PDF, PNG, JPG, JPEG."), (b"%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\n%%EOF\n", "truncated.pdf", "File is empty or unreadable."), (EICAR_PDF, "infected.pdf", "File failed malware scanning.")):
 			with self.subTest(name=name):
 				refused = self.upload(target["handle"], content=content, name=name)
 				self.assertEqual((refused["ok"], refused["code"], refused["errors"]), (False, "BDS_EVIDENCE_REJECTED", {target["handle"]: reason}))
 		rows = frappe.get_all("Bid Evidence", filters={"bid_workspace": self.bid}, fields=["original_filename", "scan_status", "status", "file", "scan_result"], order_by="creation asc")
-		self.assertEqual([(r.original_filename, r.scan_status, r.status, r.file) for r in rows], [("notes.docx", "Rejected", "Replaced", None), ("infected.pdf", "Rejected", "Current", None)])
+		self.assertEqual([(r.original_filename, r.scan_status, r.status, r.file) for r in rows], [("notes.docx", "Rejected", "Replaced", None), ("truncated.pdf", "Rejected", "Replaced", None), ("infected.pdf", "Rejected", "Current", None)])
 		self.assertEqual(rows[-1].scan_result, "File failed malware scanning.")
 		self.assertEqual(frappe.db.count("File", {"attached_to_doctype": "Bid Evidence"}), files_before)  # no bytes kept
 		self.assertEqual(frappe.db.get_value("Bid Workspace", self.bid, "current_draft_version"), 1)

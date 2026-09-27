@@ -1,0 +1,71 @@
+/*
+ * BDS-CHG-001 v0.8 §10.4–10.5 — the supplier Account portal screens, ported
+ * from "Bid Board v3 - A" (docs/mvp-1-r1/12_bid_submission/design). The shell
+ * (header, body column, footer) is kentender_core's kt_portal_shell.css; this
+ * file holds only what the boards draw inline inside .kt-page. Static because
+ * the esbuild pipeline discards <style scoped> CSS; every rule is scoped
+ * under .kt-industry.kt-portal.
+ */
+
+/* Page head: title row, the legal-name line (board: 13 px, neutral-700). */
+.kt-industry.kt-portal .acc-head-main { min-width: 0; }
+.kt-industry.kt-portal .acc-title-row { display: flex; gap: var(--kt-space-3); align-items: center; flex-wrap: wrap; }
+.kt-industry.kt-portal .acc-legal-name { margin-top: 6px; font-size: 13px; color: var(--kt-color-neutral-700); }
+.kt-industry.kt-portal .kt-page-head.acc-head-stack { flex-direction: column; gap: var(--kt-space-4); }
+.kt-industry.kt-portal .kt-page-actions.acc-actions-stack { flex-direction: column; width: 100%; }
+
+/* Regions: body grid, 2-column field grid (1 column at 390). */
+.kt-industry.kt-portal .acc-region-body { display: grid; gap: var(--kt-space-3); }
+.kt-industry.kt-portal .acc-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--kt-space-4) var(--kt-space-8); }
+.kt-industry.kt-portal .acc-help { margin: 3px 0 0; font-size: 13px; color: var(--kt-color-neutral-700); text-wrap: pretty; }
+.kt-industry.kt-portal .acc-text { margin: 0; font-size: 14px; line-height: 1.55; color: var(--kt-color-neutral-800); }
+.kt-industry.kt-portal .acc-muted { margin: 0; font-size: 13px; color: var(--kt-color-neutral-700); text-wrap: pretty; }
+.kt-industry.kt-portal .acc-strong { font-weight: 600; }
+.kt-industry.kt-portal .acc-actions { display: flex; gap: var(--kt-space-3); flex-wrap: wrap; }
+.kt-industry.kt-portal .acc-links { display: flex; gap: var(--kt-space-4); font-size: 14px; margin: calc(-1 * var(--kt-space-3)) 0 var(--kt-space-4); }
+
+/* Authority evidence: the board's Upload evidence button and file name; the
+   file input itself stays in the form, labelled, but is not drawn. */
+.kt-industry.kt-portal .acc-file-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; opacity: 0; }
+.kt-industry.kt-portal .acc-upload { display: flex; gap: var(--kt-space-3); align-items: center; flex-wrap: wrap; }
+.kt-industry.kt-portal .acc-file-name { font-size: 13px; overflow-wrap: anywhere; }
+.kt-industry.kt-portal .acc-btn-icon { display: inline-flex; gap: 6px; align-items: center; }
+
+/* Registration footer (board: space-between, divider above). */
+.kt-industry.kt-portal .acc-footer { display: flex; justify-content: space-between; align-items: center; gap: var(--kt-space-4); padding-top: var(--kt-space-4); border-top: 1px solid var(--kt-color-divider); }
+.kt-industry.kt-portal .acc-footer-stack { display: grid; gap: var(--kt-space-2); padding-top: var(--kt-space-4); border-top: 1px solid var(--kt-color-divider); }
+.kt-industry.kt-portal .acc-btn-block { width: 100%; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+.kt-industry.kt-portal .acc-btn-touch { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+
+/* DES-04 Organisation facts (board: auto-fit 200 px columns, label over value). */
+.kt-industry.kt-portal .acc-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--kt-space-4) var(--kt-space-6); }
+.kt-industry.kt-portal .acc-fact { display: grid; gap: 4px; min-width: 0; align-content: start; }
+.kt-industry.kt-portal .acc-fact-value { font-size: 14px; overflow-wrap: anywhere; }
+
+/* 390 frame: labelled cards instead of table rows. */
+.kt-industry.kt-portal .acc-card { border-top: 1px solid var(--kt-color-divider); padding: var(--kt-space-3) 0; display: grid; gap: 6px; }
+.kt-industry.kt-portal .acc-card-title { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.kt-industry.kt-portal .acc-card-fact { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; }
+.kt-industry.kt-portal .acc-card-fact > span:last-child { text-align: right; min-width: 0; }
+.kt-industry.kt-portal .acc-card-actions { font-size: 14px; display: flex; gap: 4px 20px; flex-wrap: wrap; min-height: 44px; align-items: center; }
+
+.kt-industry.kt-portal .acc-load-failure { align-items: center; justify-content: space-between; margin-bottom: var(--kt-space-4); }
+.kt-industry.kt-portal .acc-skeleton { min-height: 160px; border-top: 1px solid var(--kt-color-divider); }
+.kt-industry.kt-portal .acc-choose-list { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.9; }
+
+/* Account dialogs. */
+.kt-industry.kt-portal .acc-dialog { width: 520px; max-width: calc(100vw - 32px); max-height: calc(100vh - 48px); overflow-y: auto; }
+.kt-industry.kt-portal .acc-dialog-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--kt-space-3) var(--kt-space-4); }
+.kt-industry.kt-portal .acc-dialog-facts .acc-fact { font-size: 14px; }
+.kt-industry.kt-portal .acc-choice { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; }
+.kt-industry.kt-portal .acc-choice legend { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.kt-industry.kt-portal .acc-radio { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; font-size: 14px; font-weight: 400; min-height: 44px; }
+.kt-industry.kt-portal .acc-radio .acc-help { flex-basis: 100%; margin: 0 0 0 22px; }
+
+@media (max-width: 600px) {
+	.kt-industry.kt-portal .acc-grid-2,
+	.kt-industry.kt-portal .acc-dialog-facts { grid-template-columns: minmax(0, 1fr); }
+	/* Inputs at 16 px so a phone does not zoom on focus (board 390 frame). */
+	.kt-industry.kt-portal .kt-page .kt-input,
+	.kt-industry.kt-portal .acc-dialog .kt-input { font-size: 16px; }
+}

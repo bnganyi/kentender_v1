@@ -56,6 +56,9 @@ class TestRegistration(AccountsCase):
 		with mock.patch("kentender_core.services.file_integrity.scanner_result", return_value="Infected — test signature"):
 			infected = self.register()
 		self.assertEqual(infected["errors"], {"authority_evidence": "The file did not pass the malware check."})
+		# a truncated PDF is refused by name, never a server error (found in the browser, 27 Sep 2026)
+		broken = self.register(authority_filename="authority.pdf", authority_content=b"%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\n%%EOF\n")
+		self.assertEqual(broken["errors"], {"authority_evidence": "The file could not be read. Upload a complete PDF, PNG or JPEG file."})
 		self.assertEqual(frappe.db.count("Supplier Organisation", {"fixture_namespace": "BDS_ACC_TEST"}), 0)
 		self.assertEqual(frappe.db.count("Supplier Account Evidence", {"fixture_namespace": "BDS_ACC_TEST"}), 0)
 

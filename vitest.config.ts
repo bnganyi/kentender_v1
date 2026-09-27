@@ -77,6 +77,18 @@ export default defineConfig({
 				},
 			},
 			{
+				// BDS-CHG-001 v0.8 §10.4–10.5 (slices 11.3–11.4) — the supplier
+				// Account portal screens, with the shared guidance region mounted
+				// through kentender_core's real bundle.
+				plugins: [vue()],
+				test: {
+					name: "supplier-account-portal",
+					environment: "jsdom",
+					setupFiles: ["kentender_suppliers/kentender_suppliers/public/js/supplier_account_portal/vitest.setup.js"],
+					include: ["kentender_suppliers/kentender_suppliers/public/js/supplier_account_portal/**/*.spec.js"],
+				},
+			},
+			{
 				// BDS-CHG-001 v0.8 owner decisions OD-G/OD-H — the Desk page for
 				// the blind physical tender-security intake.
 				plugins: [vue()],

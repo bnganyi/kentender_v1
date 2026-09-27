@@ -45,7 +45,7 @@ const REGISTRIES = fs.readdirSync(REGISTRY_DIR).filter((name) => name.endsWith("
 describe.each(REGISTRIES)("departures/%s", (registry) => {
 	it("names in COVERED only screens a spec importing this registry actually compares", async () => {
 		const mod = await import(path.join(REGISTRY_DIR, registry));
-		const covered = mod.COVERED || [];
+		const covered = [...(mod.COVERED || [])]; // an array or a Set
 		const importers = SPECS.filter((spec) => spec.text.includes(`departures/${registry}`));
 		if (covered.length) expect(importers.map((s) => path.relative(ROOT, s.file)), "no spec imports this registry").not.toEqual([]);
 		const comparing = importers.filter((spec) => /expectStructure\(|compareSkeletons\(/.test(spec.text));

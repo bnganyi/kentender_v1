@@ -246,6 +246,22 @@ export function bidSubmissionScope(doc, id, { frame = "desktop" } = {}) {
 	const main = wanted.querySelector("main.kt-page, main") || wanted;
 	const clone = main.cloneNode(true);
 	for (const note of clone.querySelectorAll(".sub, .cap")) note.remove();
+	// The boards draw the guidance region (§10.19) as `.kt-guidance` holding
+	// the full journey row, its reduced fallback and the next step, all by
+	// class. kentender_core's shared components render the same answer as
+	// the `data-kt="journey"` / `data-kt="next-step"` landmarks (the blocked
+	// kind inside a warning notice), so the board is read that way: one
+	// journey, then the next step as drawn.
+	for (const region of clone.querySelectorAll(".kt-guidance")) {
+		const journeys = Array.from(region.querySelectorAll(".kt-journey")).filter((el) => !el.parentElement.closest(".kt-journey"));
+		if (journeys.length) {
+			const marker = clone.ownerDocument.createElement("div");
+			marker.setAttribute("data-kt", "journey");
+			journeys[0].replaceWith(marker);
+			for (const extra of journeys.slice(1)) extra.remove();
+		}
+		for (const step of region.querySelectorAll(".kt-next-step")) step.setAttribute("data-kt", "next-step");
+	}
 	return clone;
 }
 

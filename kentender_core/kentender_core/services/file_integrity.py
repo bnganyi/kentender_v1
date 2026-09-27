@@ -40,6 +40,24 @@ def sniff_type(content: bytes) -> str | None:
 	return None
 
 
+def unreadable(content: bytes) -> bool:
+	"""True when a PDF cannot be opened. Frappe's File save parses every PDF
+	(its JavaScript check) and raises on a truncated one, so a caller checks
+	this before storing and refuses the file by name instead of failing."""
+	if sniff_type(content or b"") != "pdf":
+		return False
+	from io import BytesIO
+
+	from pypdf import PdfReader
+
+	try:
+		reader = PdfReader(BytesIO(content))
+		len(reader.pages)
+	except Exception:
+		return True
+	return False
+
+
 def read_bytes(file_doc_name: str) -> bytes:
 	"""A stored File's exact bytes. `frappe.utils.file_manager.get_file`
 	decodes content that happens to decode in some text encoding (a small PDF

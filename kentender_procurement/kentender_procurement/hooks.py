@@ -138,6 +138,14 @@ kt_file_scanners = ["kentender_procurement.bid_submission.test_services.scanner.
 kt_bds_trust_services = ["kentender_procurement.bid_submission.test_services.trust.service"]
 kt_bds_time_services = ["kentender_procurement.bid_submission.test_services.trusted_time.service"]
 kt_bds_custody_services = ["kentender_procurement.bid_submission.test_services.tender_box.service"]
+# BDS-CHG-001 v0.8 plan D18: a browser world's persisted instant, read by
+# every app's trusted clock through kentender_core's test_clock (test
+# environment only).
+kt_test_clock = ["kentender_procurement.bid_submission.services.simulation.current_instant"]
+kt_test_clock_setters = ["kentender_procurement.bid_submission.services.simulation.set_test_instant"]
+# The Test Mailbox (test environments only; declines elsewhere so the real transport is used).
+kt_supplier_account_message_transports = ["kentender_procurement.bid_submission.test_services.mailbox.deliver"]
+kt_bds_supplier_message_transports = ["kentender_procurement.bid_submission.test_services.mailbox.deliver"]
 
 # include js, css files in header of web form
 # webform_include_js = {"doctype": "public/js/doctype.js"}

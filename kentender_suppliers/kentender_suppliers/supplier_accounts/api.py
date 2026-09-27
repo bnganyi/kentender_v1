@@ -77,11 +77,13 @@ def upload_account_evidence(organisation: str, evidence_type: str = "", referenc
 
 
 @frappe.whitelist(methods=["GET"])
-def download_account_evidence(organisation: str, evidence: str) -> None:
+def download_account_evidence(organisation: str, evidence: str, inline: int = 0) -> None:
+	"""The exact stored bytes; `inline` shows the file in the browser (View)."""
 	result = evidence_service.get_account_evidence_file(organisation=organisation, evidence=evidence)
 	frappe.local.response.filename = result["file_name"]
 	frappe.local.response.filecontent = result["content"]
 	frappe.local.response.type = "download"
+	frappe.local.response.display_content_as = "inline" if frappe.utils.cint(inline) else "attachment"
 
 
 @frappe.whitelist(methods=["POST"])
