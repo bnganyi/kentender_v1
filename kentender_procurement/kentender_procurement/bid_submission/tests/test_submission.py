@@ -246,9 +246,9 @@ class TestEndpoints(SubmissionCase):
 		from kentender_procurement.bid_submission import api
 
 		methods = frappe.allowed_http_methods_for_whitelisted_func
-		for fn in (api.prepare_bid_signature, api.sign_with_test_trust_service, api.submit_bid):
+		for fn in (api.prepare_bid_signature, api.sign_with_test_trust_service, api.submit_bid, api.prepare_replacement_bid, api.withdraw_bid):
 			self.assertEqual(methods[fn], ["POST"], fn.__name__)
-		for fn in (api.get_submit_bid, api.check_certificate, api.get_submission_status, api.get_bid_receipt, api.download_bid_receipt):
+		for fn in (api.get_submit_bid, api.check_certificate, api.get_submission_status, api.get_bid_receipt, api.download_bid_receipt, api.get_withdrawal_acknowledgement):
 			self.assertEqual(methods[fn], ["GET"], fn.__name__)
 		receipt = self.submit(self.signed())["receipt_reference"]
 		self.assertEqual(self.as_user(PETER, api.get_submit_bid, bid_reference=self.bid)["outcome"], "NOT_FOUND")

@@ -91,6 +91,9 @@ class TestTenderBox:
 			return _public(existing)  # one correlation, one outcome
 		os.makedirs(folder(), exist_ok=True)
 		state: dict[str, Any] = {"correlation_id": correlation_id, "tender": tender, "package_digest": package_digest, "received_at": str(get_datetime(at)), "deadline": str(get_datetime(deadline))}
+		if _box_closed(tender):
+			_write_state(correlation_id, _rejected(state, "", "The tender box for this Tender is closed."))
+			return _public(_read_state(correlation_id))
 		if hashlib.sha256(package).hexdigest() != package_digest:
 			_write_state(correlation_id, _rejected(state, "", "The package does not match its signed binding."))
 			return _public(_read_state(correlation_id))
@@ -111,6 +114,9 @@ class TestTenderBox:
 		_write_state(correlation_id, state)
 		return _public(state)
 
+	def close_box(self, *, tender: str, at) -> dict[str, Any]:
+		return close_box(tender=tender, at=at)
+
 	def status(self, *, correlation_id: str) -> dict[str, Any]:
 		"""The outcome of an earlier deposit, for the reconciler: Accepted,
 		Rejected, Uncertain (still pending) or NotReceived."""
@@ -128,13 +134,53 @@ class TestTenderBox:
 		return _public(state)
 
 
+def _close_path(tender: str) -> str:
+	safe = "".join(c for c in cstr(tender) if c.isalnum() or c in "-_")
+	return os.path.join(folder(), f"BOX-{safe}.close.json")
+
+
+def _box_closed(tender: str) -> dict[str, Any] | None:
+	path = _close_path(tender)
+	if not os.path.exists(path):
+		return None
+	with open(path, encoding="utf-8") as fh:
+		return json.load(fh)
+
+
+def close_box(*, tender: str, at) -> dict[str, Any]:
+	"""Close one Tender's box at its deadline: no deposit is accepted after
+	this. Returns the box's own inventory of accepted envelopes. Idempotent."""
+	closed = _box_closed(tender)
+	if closed:
+		return {**closed, "service": NAME, "simulation": True}
+	os.makedirs(folder(), exist_ok=True)
+	envelopes = []
+	for name in sorted(os.listdir(folder())):
+		if name.endswith(".state.json"):
+			with open(os.path.join(folder(), name), encoding="utf-8") as fh:
+				state = json.load(fh)
+			if state.get("tender") == tender and state.get("result") == "Accepted":
+				envelopes.append(state["envelope_ref"])
+	closed = {"result": "Closed", "close_receipt": "TBX-CLOSE-" + secrets.token_hex(5).upper(), "closed_at": str(get_datetime(at)), "envelopes": envelopes}
+	path = _close_path(tender)
+	with open(path + ".tmp", "w", encoding="utf-8") as fh:
+		json.dump(closed, fh, sort_keys=True)
+	os.replace(path + ".tmp", path)
+	return {**closed, "service": NAME, "simulation": True}
+
+
 def service() -> TestTenderBox | None:
 	return TestTenderBox() if simulation.enabled() else None
 
 
-def remove(correlation_ids: list[str]) -> int:
-	"""Fixture and test clean-up: the box's files for these correlations."""
+def remove(correlation_ids: list[str], tenders: list[str] | None = None) -> int:
+	"""Fixture and test clean-up: the box's files for these correlations (and
+	the close records of these Tenders)."""
 	removed = 0
+	for tender in tenders or []:
+		if os.path.exists(_close_path(tender)):
+			os.remove(_close_path(tender))
+			removed += 1
 	for correlation_id in correlation_ids:
 		for path in _paths(correlation_id):
 			if os.path.exists(path):

@@ -76,13 +76,23 @@ NEXT_ACTION = {"Draft": "Continue bid", "Needs attention": "Continue bid", "Read
 
 
 def _bid_header(ctx, tasks) -> dict[str, Any]:
+	import frappe
+
 	from kentender_procurement.bid_submission.services import readiness
 
 	ws = ctx.workspace
 	saved = ws.last_saved_at or ws.created_at
+	# Submitted, Withdrawn and Closed are recorded facts; only an open Draft
+	# (including a replacement Draft) takes its status from readiness.
+	status = ws.status if ws.status in ("Submitted", "Withdrawn", "Closed without submission") else readiness.bid_status(tasks)
+	current = None
+	if ws.current_submission_version:
+		number, receipt = frappe.db.get_value("Bid Submission Version", ws.current_submission_version, ["version_number", "receipt"])
+		current = {"version_label": f"Submitted bid Version {int(number)}", "receipt_reference": receipt}
 	return {
-		"reference": ws.name, "tender_reference": ws.tender_reference, "tenderer_name": ctx.tenderer_name, "status": readiness.bid_status(tasks),
+		"reference": ws.name, "tender_reference": ws.tender_reference, "tenderer_name": ctx.tenderer_name, "status": status,
 		"draft_version": int(ws.current_draft_version or 0), "record_version": int(ws.record_version or 0), "last_saved_label": labels.datetime_label(saved),
+		"current_submission": current,
 	}
 
 

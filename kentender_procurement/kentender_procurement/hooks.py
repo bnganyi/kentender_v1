@@ -394,6 +394,9 @@ scheduler_events: dict[str, list[str]] = {
 		# BDS-CHG-001 v0.8 plan D8 — resolve uncertain submission attempts from
 		# the tender box's answer for the same correlation (never a re-send).
 		"kentender_procurement.bid_submission.services.submission.reconcile_uncertain_attempts",
+		# BDS-CHG-001 v0.8 plan D9 — close each Tender's box after Tenders ends its
+		# submission period, and issue the sealed Bid Opening hand-off.
+		"kentender_procurement.bid_submission.services.close.consume_tender_events",
 	],
 }
 

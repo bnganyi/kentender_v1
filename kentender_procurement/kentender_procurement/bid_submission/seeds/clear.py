@@ -12,7 +12,7 @@ import frappe
 
 from kentender_core.utils.raw_delete import delete_rows
 
-SUBMISSION = ("Bid Submission Version", "Bid Receipt", "Tender Box Envelope", "Bid Submission Attempt")
+SUBMISSION = ("Bid Opening Handoff", "Bid Submission Close", "Bid Submission Change", "Bid Submission Version", "Bid Receipt", "Tender Box Envelope", "Bid Submission Attempt")
 SIMULATION = ("Test Trust Signature", "Test Trust Certificate")
 DOCTYPES = SUBMISSION + ("Tender Security Intake Match", "Tender Security Intake", "Bid Submission Event", "Bid Draft Change", "Bid Section Response", "Bid Evidence", "Bid Workspace", "Bid Organisation Snapshot", "Bidder Arrangement", "Bid Command Journal")
 
@@ -31,8 +31,10 @@ def _delete_box_files(tenders: list[str] | None, deleted: dict[str, int]) -> Non
 
 	filters = {"tender": ("in", list(tenders))} if tenders is not None else {}
 	correlations = frappe.get_all("Bid Submission Attempt", filters=filters, pluck="correlation_id")
-	if correlations:
-		deleted["Test Tender Box file"] = deleted.get("Test Tender Box file", 0) + tender_box.remove(correlations)
+	closed = list(tenders) if tenders is not None else frappe.get_all("Bid Submission Close", pluck="tender")
+	removed = tender_box.remove(correlations, tenders=closed)
+	if removed:
+		deleted["Test Tender Box file"] = deleted.get("Test Tender Box file", 0) + removed
 
 
 def on_tenders_removed(*, tenders: list[str]) -> dict[str, int]:

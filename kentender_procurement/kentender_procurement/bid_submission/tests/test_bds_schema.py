@@ -13,7 +13,7 @@ from frappe.tests import IntegrationTestCase
 
 from kentender_procurement.bid_submission.services import errors
 
-RECORDS = ("Bidder Arrangement", "Bid Workspace", "Bid Organisation Snapshot", "Bid Command Journal", "Bid Submission Event", "Bid Submission Attempt", "Bid Submission Version", "Tender Box Envelope", "Bid Receipt")
+RECORDS = ("Bidder Arrangement", "Bid Workspace", "Bid Organisation Snapshot", "Bid Command Journal", "Bid Submission Event", "Bid Submission Attempt", "Bid Submission Version", "Tender Box Envelope", "Bid Receipt", "Bid Submission Change", "Bid Submission Close", "Bid Opening Handoff")
 #: OD-C simulation state: no role reads or writes it at all.
 SIMULATION = ("Test Trust Certificate", "Test Trust Signature", "BDS Test Environment Controls")
 FIELDS = {
@@ -40,6 +40,10 @@ FIELDS = {
 	"Bid Receipt": {
 		"receipt_reference", "tender_reference", "tender_title", "bidder_name", "submission_version", "version_number", "received_at", "accepted_at", "submitted_by",
 		"predecessor_receipt",
+	},
+	# §4.11 SubmissionChange
+	"Bid Submission Change": {
+		"submission_change_id", "bid_workspace", "affected_submission_version", "change_type", "reason", "requested_by", "requested_at", "acknowledgement_ref", "acknowledged_at",
 	},
 }
 

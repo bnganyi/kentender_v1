@@ -17,6 +17,8 @@ from kentender_procurement.bid_submission.services import reads
 from kentender_procurement.bid_submission.services import save as save_service
 from kentender_procurement.bid_submission.services import security_intake as security_intake_service
 from kentender_procurement.bid_submission.services import receipts as receipts_service
+from kentender_procurement.bid_submission.services import replacement as replacement_service
+from kentender_procurement.bid_submission.services import withdrawal as withdrawal_service
 from kentender_procurement.bid_submission.services import signature as signature_service
 from kentender_procurement.bid_submission.services import submission as submission_service
 from kentender_procurement.bid_submission.services import tender_contact as tender_contact_service
@@ -179,9 +181,30 @@ def sign_with_test_trust_service(signing_request: str) -> dict[str, Any]:
 
 
 @frappe.whitelist(methods=["POST"])
-def submit_bid(bid_reference: str, signature: str = "", confirmed=False, expected_record_version=None, idempotency_key: str = "", organisation: str = "") -> dict[str, Any]:
-	"""BDS §7.3 `SubmitBid`."""
-	return _masked(submission_service.submit_bid, bid_reference=bid_reference, signature_ref=signature, confirmed=confirmed, expected_record_version=expected_record_version, idempotency_key=idempotency_key, organisation=organisation)
+def submit_bid(bid_reference: str, signature: str = "", confirmed=False, expected_record_version=None, idempotency_key: str = "", organisation: str = "", replaces: str = "") -> dict[str, Any]:
+	"""BDS §7.3 `SubmitBid` and `SubmitReplacementBid` (`replaces`: the receipt the signatory saw as current)."""
+	return _masked(submission_service.submit_bid, bid_reference=bid_reference, signature_ref=signature, confirmed=confirmed, expected_record_version=expected_record_version, idempotency_key=idempotency_key, organisation=organisation, replaces=replaces)
+
+
+@frappe.whitelist(methods=["POST"])
+def prepare_replacement_bid(bid_reference: str, expected_record_version=None, idempotency_key: str = "", organisation: str = "") -> dict[str, Any]:
+	"""BDS §7.3 `PrepareReplacementBid` (also Start replacement after a withdrawal)."""
+	return _masked(replacement_service.prepare_replacement_bid, bid_reference=bid_reference, expected_record_version=expected_record_version, idempotency_key=idempotency_key, organisation=organisation)
+
+
+@frappe.whitelist(methods=["POST"])
+def withdraw_bid(bid_reference: str, receipt_reference: str = "", reason: str = "", confirmed=False, expected_record_version=None, idempotency_key: str = "", organisation: str = "") -> dict[str, Any]:
+	"""BDS §7.3 `WithdrawBid`."""
+	return _masked(withdrawal_service.withdraw_bid, bid_reference=bid_reference, receipt_reference=receipt_reference, reason=reason, confirmed=confirmed, expected_record_version=expected_record_version, idempotency_key=idempotency_key, organisation=organisation)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_withdrawal_acknowledgement(acknowledgement_reference: str, organisation: str = "") -> dict[str, Any]:
+	"""BDS-DES-14-WITHDRAWN acknowledgement facts."""
+	try:
+		return withdrawal_service.get_withdrawal_acknowledgement(acknowledgement_reference=acknowledgement_reference, organisation=organisation)
+	except frappe.DoesNotExistError:
+		return {"outcome": "NOT_FOUND", "heading": "Acknowledgement not found", "text": "This acknowledgement is unavailable or you do not have permission to view it."}
 
 
 @frappe.whitelist(methods=["GET"])

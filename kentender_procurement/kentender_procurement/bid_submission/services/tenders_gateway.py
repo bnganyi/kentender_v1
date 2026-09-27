@@ -80,3 +80,16 @@ def map_addendum(tender_name: str, *, from_version: int, to_version: int) -> dic
 	"""`MapBidDefinitionAddendum`: the stored identity maps from one supplier
 	definition version to a later effective one, one step per addendum."""
 	return bid_definition.map_bid_definition_addendum(tender=tender_name, from_version=from_version, to_version=to_version)
+
+
+def pending_events(*, event_type: str, consumer: str) -> list[Any]:
+	"""Tenders' outbox events addressed to a Bid Submission consumer, oldest first."""
+	from kentender_procurement.tenders.services import events
+
+	return events.pending_for_consumer(event_type=event_type, consumer=consumer)
+
+
+def mark_event_consumed(event_doc, *, consumer: str) -> None:
+	from kentender_procurement.tenders.services import events
+
+	events.mark_delivered(event_doc, consumer=consumer)

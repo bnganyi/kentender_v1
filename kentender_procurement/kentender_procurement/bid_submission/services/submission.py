@@ -71,7 +71,24 @@ def _attempt_by_key(key_hash: str):
 	return frappe.get_doc(ATTEMPT, name) if name else None
 
 
-def submit_bid(*, bid_reference: str, signature_ref: str = "", confirmed=False, expected_record_version=None, idempotency_key: str = "", organisation: str = "", user: str | None = None) -> dict[str, Any]:
+def _current_receipt(workspace) -> str:
+	return cstr(frappe.db.get_value(VERSION, workspace.current_submission_version, "receipt")) if workspace.current_submission_version else ""
+
+
+def _predecessor(workspace) -> str:
+	"""The Version a new submission follows: the current one, or after a
+	withdrawal the last one (its lineage continues; it stays Withdrawn)."""
+	if workspace.current_submission_version:
+		return workspace.current_submission_version
+	return cstr(frappe.db.get_value(VERSION, {"bid_workspace": workspace.name}, "name", order_by="version_number desc"))
+
+
+def submit_bid(*, bid_reference: str, signature_ref: str = "", confirmed=False, expected_record_version=None, idempotency_key: str = "", organisation: str = "", replaces: str = "", user: str | None = None) -> dict[str, Any]:
+	"""`SubmitBid`, and `SubmitReplacementBid` when the bid already has a
+	submitted Version (§7.3): the same checks, signature and custody rules.
+	`replaces` is the receipt the signatory saw as current; if another
+	submission has become current since, nothing changes
+	(`BDS_REPLACEMENT_CONFLICT`)."""
 	actor = cstr(user or frappe.session.user)
 	key = cstr(idempotency_key).strip()
 	if not key:
@@ -87,6 +104,10 @@ def submit_bid(*, bid_reference: str, signature_ref: str = "", confirmed=False, 
 			fail("BDS_IDEMPOTENCY_CONFLICT")
 		return outcome(replay)
 	ctx = bid_context.load(bid_reference, actor=actor, organisation=organisation, at=at)  # re-read under the lock
+	current_receipt = _current_receipt(ctx.workspace)
+	if cstr(replaces).strip() and cstr(replaces).strip() != current_receipt:
+		fail("BDS_REPLACEMENT_CONFLICT", detail={"current_receipt": current_receipt})
+	predecessor = _predecessor(ctx.workspace)
 	try:
 		signatory, root = signature.submittable(ctx, actor=actor, at=at, expected_record_version=expected_record_version, confirmed=confirmed)
 	except signature._Unconfirmed:
@@ -97,7 +118,8 @@ def submit_bid(*, bid_reference: str, signature_ref: str = "", confirmed=False, 
 		fail("BDS_SIGNATURE_INVALID", detail={"reason": cstr(verified.get("reason"))})
 	attempt = records.insert(frappe.get_doc({
 		"doctype": ATTEMPT, "correlation_id": references.correlation_id(ctx.workspace.tender, ctx.workspace.tender_reference), "bid_workspace": ctx.workspace.name,
-		"tender": ctx.workspace.tender, "attempt_kind": "Initial submission", "idempotency_key_hash": key_hash, "payload_hash": payload_hash,
+		"tender": ctx.workspace.tender, "attempt_kind": "Replacement submission" if predecessor else "Initial submission", "predecessor_submission_version": predecessor or None,
+		"idempotency_key_hash": key_hash, "payload_hash": payload_hash,
 		"draft_version": int(ctx.workspace.current_draft_version or 0), "package_digest": built.package_digest, "response_snapshot_digest": built.response_snapshot_digest,
 		"evidence_set_digest": built.evidence_set_digest, "signed_by": actor, "signatory_assignment": signatory["assignment_id"], "signature_ref": cstr(signature_ref),
 		"signature_evidence_json": json.dumps({**verified["evidence"], "signed_at": str(verified["signed_at"])}, sort_keys=True, default=str),
@@ -158,13 +180,14 @@ def _accept(attempt, answer: dict[str, Any], at) -> None:
 		"accepted_at": accepted_at, "custody_receipt": answer["custody_receipt"], "custody_service": cstr(answer.get("service")), "box_state": "Sealed", "simulation": attempt.simulation,
 	}))
 	arrangement = frappe.get_doc("Bidder Arrangement", workspace.bidder_arrangement)
+	predecessor = frappe.get_doc(VERSION, attempt.predecessor_submission_version) if attempt.predecessor_submission_version else None
 	receipt = records.insert(frappe.get_doc({
 		"doctype": RECEIPT, "receipt_reference": references.receipt_reference(workspace.tender, workspace.tender_reference), "tender": workspace.tender,
 		"tender_reference": workspace.tender_reference, "tender_title": summary.get("tender_title") or workspace.tender_reference, "bid_workspace": workspace.name,
 		"bidder_name": cstr(arrangement.joint_venture_name) or cstr(arrangement.lead_legal_name), "submission_version": version_id, "version_number": number,
 		"submitted_by": attempt.signed_by, "submitted_by_name": summary.get("signatory_name") or attempt.signed_by, "received_at": attempt.received_at, "accepted_at": accepted_at,
 		"deadline_at": frappe.db.get_value("Tender", workspace.tender, "submission_deadline"), "summary_json": json.dumps({k: summary.get(k, "") for k in ("bid_total", "offered_item", "quantity", "delivery_date")}, sort_keys=True),
-		"simulation": attempt.simulation,
+		"predecessor_receipt": predecessor.receipt if predecessor else None, "simulation": attempt.simulation,
 	}))
 	records.insert(frappe.get_doc({
 		"doctype": VERSION, "bid_submission_version_id": version_id, "version_number": number, "bid_workspace": workspace.name, "tender": workspace.tender,
@@ -174,14 +197,27 @@ def _accept(attempt, answer: dict[str, Any], at) -> None:
 		"signed_by": attempt.signed_by, "signatory_assignment": attempt.signatory_assignment, "signed_at": get_datetime(evidence.get("signed_at")),
 		"signature_certificate_ref": cstr(evidence.get("certificate_ref")), "signature_verification_evidence": attempt.signature_evidence_json, "received_at": attempt.received_at,
 		"accepted_at": accepted_at, "status": "Submitted", "status_since": accepted_at, "tender_box_envelope": envelope.name, "receipt": receipt.name, "attempt": attempt.name,
-		"simulation": attempt.simulation,
+		"predecessor_submission_version": predecessor.name if predecessor else None, "simulation": attempt.simulation,
 	}))
+	if predecessor:
+		if predecessor.status == "Submitted":
+			records.save(_set(predecessor, status="Superseded", status_since=accepted_at))  # §5.8 item 4: only now, in this same outcome
+		_change(workspace, "Replacement submitted", affected=predecessor.name, new_version=version_id, actor=attempt.signed_by, at=accepted_at, acknowledgement=receipt.name)
 	records.save(_set(attempt, status="Accepted", resolved_at=at, submission_version=version_id))
 	records.bump(workspace, status="Submitted", status_since=accepted_at, current_submission_version=version_id)
 	records.emit(
 		"BidSubmitted", tender=workspace.tender, arrangement=workspace.bidder_arrangement, workspace=workspace.name, organisation=workspace.lead_organisation, actor=attempt.signed_by, at=accepted_at,
 		payload={"correlation_id": attempt.correlation_id, "submission_version": version_id, "version_number": number, "receipt": receipt.name, "envelope": envelope.name, "package_digest": attempt.package_digest, "received_at": str(attempt.received_at)},
 	)
+
+
+def _change(workspace, change_type: str, *, affected: str, actor: str, at, acknowledgement: str, new_version: str = "", reason: str = "") -> Any:
+	number = frappe.db.count("Bid Submission Change", {"bid_workspace": workspace.name}) + 1
+	return records.insert(frappe.get_doc({
+		"doctype": "Bid Submission Change", "submission_change_id": f"SCH-{workspace.name.removeprefix('BID-')}-{number:02d}", "bid_workspace": workspace.name, "tender": workspace.tender,
+		"affected_submission_version": affected, "new_submission_version": new_version or None, "change_type": change_type, "reason": reason, "requested_by": actor,
+		"requested_by_name": cstr(frappe.utils.get_fullname(actor)), "requested_at": at, "acknowledgement_ref": acknowledgement, "acknowledged_at": at,
+	}))
 
 
 def _reject(attempt, reference: str, reason: str, at) -> None:
