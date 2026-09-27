@@ -7,20 +7,12 @@ import frappe
 from frappe.model.document import Document
 
 
-class BidWorkspace(Document):
+class BidSubmissionIncident(Document):
 	def validate(self) -> None:
 		# BDS-CHG-001 v0.8 plan D12 — written only by the Bid Submission commands
 		# (`flags.kt_bid_command`), never by a Desk save or script.
 		if not self.flags.get("kt_bid_command"):
 			frappe.throw("%s records change only through Bid Submission commands." % self.doctype)
-
-	def on_update(self) -> None:
-		# BDS-CHG-001 v0.8 §5.14 — a command that changes the bid keeps its
-		# hand-offs in step (never a read; `flags.kt_bid_command` only).
-		if self.flags.get("kt_bid_command"):
-			from kentender_procurement.bid_submission.services import handoffs
-
-			handoffs.sync(self.name)
 
 	def on_trash(self) -> None:
 		if not self.flags.get("kt_fixture_wipe"):

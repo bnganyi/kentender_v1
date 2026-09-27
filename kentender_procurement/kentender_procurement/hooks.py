@@ -397,6 +397,9 @@ scheduler_events: dict[str, list[str]] = {
 		# BDS-CHG-001 v0.8 plan D9 — close each Tender's box after Tenders ends its
 		# submission period, and issue the sealed Bid Opening hand-off.
 		"kentender_procurement.bid_submission.services.close.consume_tender_events",
+		# BDS-CHG-001 v0.8 §5.14 — hand-offs and operational incidents follow
+		# service health, newly effective addenda and the deadline.
+		"kentender_procurement.bid_submission.services.handoffs.sweep",
 	],
 }
 

@@ -215,6 +215,16 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 		"BDS-CHG-001 v0.8 plan OD-D",
 		sod_tags=("supplier_account_support",),
 	),
+	# --- Bid Submission operations (BDS-CHG-001 v0.8 §5.12–5.14; Project
+	# Owner decision 27 Sep 2026) ---------------------------------------------
+	# Site-wide operational holders the supplier guidance names; neither is a
+	# procurement authority and neither sees bid content. The Technical
+	# Operator restores the signing, trusted-time and tender-box services and
+	# reconciles an uncertain submission attempt; the Release Operator holds
+	# the verified production-submission release. Not in the spec's §6 table
+	# or the KT-STD-001 persona register yet (FU-V08-41).
+	_entry("Technical Operator", SCOPE_SITE, "BDS-CHG-001 v0.8 owner decision 27 Sep 2026", sod_tags=("bid_submission_operations",)),
+	_entry("Release Operator", SCOPE_SITE, "BDS-CHG-001 v0.8 owner decision 27 Sep 2026", sod_tags=("submission_release",)),
 )
 
 REGISTRY: dict[str, BusinessRole] = {entry.business_role: entry for entry in _ENTRIES}

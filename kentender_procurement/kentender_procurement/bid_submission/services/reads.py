@@ -124,13 +124,18 @@ def get_bid_workspace(*, bid_reference: str, organisation: str = "", user: str |
 
 	from kentender_procurement.bid_submission.services import bid_context, projection, readiness
 
-	ctx = bid_context.load(bid_reference, actor=cstr(user or frappe.session.user), organisation=organisation, at=clock.now())
+	from kentender_procurement.bid_submission.services import guidance
+
+	actor, at = cstr(user or frappe.session.user), clock.now()
+	ctx = bid_context.load(bid_reference, actor=actor, organisation=organisation, at=at)
 	tasks, notice = _evaluate(ctx)
 	tender = tenders_gateway.published_tender(ctx.workspace.tender_reference, at=clock.now()) or {}
+	guided = guidance.for_bid(ctx, actor=actor, at=at, tasks=tasks)
 	return {
 		"bid": _bid_header(ctx, tasks),
 		"tender": {"reference": ctx.workspace.tender_reference, "title": tender.get("title", ""), "deadline_label": labels.datetime_label(tender.get("submission_deadline")), "availability": tender.get("availability", "")},
 		"tasks": projection.task_nav(ctx, tasks), "must_fix": readiness.must_fix_total(tasks), "next": _next(tasks), "addendum_notice": notice,
+		"next_step": guided["next_step"], "journey": guided["journey"],
 	}
 
 
@@ -172,15 +177,20 @@ def get_my_bids(*, organisation: str = "", user: str | None = None) -> dict[str,
 		lead = authz.acting_assignment(actor, organisation, at=clock.now())["organisation_id"]
 	except frappe.ValidationError:
 		return {"rows": [], "empty_text": "Your organisation has no bids yet."}
+	from kentender_procurement.bid_submission.services import handoffs
+
 	rows = []
-	for ws in frappe.get_all("Bid Workspace", filters={"lead_organisation": lead}, fields=["name", "tender_reference", "status", "current_draft_version", "created_at"], order_by="created_at desc", limit_page_length=0):
+	workspaces = frappe.get_all("Bid Workspace", filters={"lead_organisation": lead}, fields=["name", "tender_reference", "status", "current_draft_version", "created_at"], order_by="created_at desc", limit_page_length=0)
+	items = handoffs.items_for(actor, [w.name for w in workspaces])
+	for ws in workspaces:
 		tender = tenders_gateway.published_tender(ws.tender_reference, at=clock.now()) or {}
 		rows.append({
 			"bid_reference": ws.name, "tender_reference": ws.tender_reference, "tender_title": tender.get("title", ""), "status": ws.status,
 			"deadline_label": labels.datetime_label(tender.get("submission_deadline")), "draft_version": int(ws.current_draft_version or 0),
 			"next_action": {"label": NEXT_ACTION.get(ws.status, "View bid"), "href": f"/tenders/{ws.tender_reference}/bid"},
+			"work": [{"kind": i["kind"], "title": i["title"]} for i in items if i["bid_reference"] == ws.name],
 		})
-	return {"rows": rows, "empty_text": "Your organisation has no bids yet."}
+	return {"rows": rows, "empty_text": "Your organisation has no bids yet.", "work": items}
 
 
 def get_bid_review(*, bid_reference: str, organisation: str = "", user: str | None = None) -> dict[str, Any]:
@@ -191,7 +201,10 @@ def get_bid_review(*, bid_reference: str, organisation: str = "", user: str | No
 
 	from kentender_procurement.bid_submission.services import bid_context, projection, readiness
 
-	ctx = bid_context.load(bid_reference, actor=cstr(user or frappe.session.user), organisation=organisation, at=clock.now())
+	from kentender_procurement.bid_submission.services import guidance
+
+	actor, at = cstr(user or frappe.session.user), clock.now()
+	ctx = bid_context.load(bid_reference, actor=actor, organisation=organisation, at=at)
 	tasks, notice = _evaluate(ctx)
 	must_fix, notes = [], []
 	for task in ctx.model.tasks:
@@ -211,4 +224,5 @@ def get_bid_review(*, bid_reference: str, organisation: str = "", user: str | No
 		"bid": header, "ready": header["status"] == "Ready to submit", "must_fix": must_fix, "review_notes": notes, "needs_attention": attention,
 		"tasks": projection.task_nav(ctx, tasks), "addendum_notice": notice, "price": price.summary(ctx),
 		"security": _public_security(tender_security.response(ctx)),
+		**guidance.for_bid(ctx, actor=actor, at=at, tasks=tasks),
 	}

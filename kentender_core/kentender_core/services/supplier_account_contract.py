@@ -27,6 +27,7 @@ FUNCTIONS: tuple[str, ...] = (
 	"account_evidence",  # (*, organisation_id) -> [evidence metadata]
 	"evidence_file",  # (*, organisation_id, evidence_id) -> {file_name, content, digest} | None
 	"find_active_account",  # (*, country, registration_number) -> {organisation_id, legal_name} | None
+	"organisation_signatories",  # (*, organisation_id, at=None) -> [assignment of an Authorised Signatory who can sign now]
 )
 
 

@@ -1,0 +1,131 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-27 12:30:00.000000",
+ "description": "BDS-CHG-001 v0.8 §5.14 / plan D15: an operational item for the Technical or Release Operator; a safe reference only, never bid content.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "incident_key",
+  "kind",
+  "title",
+  "holder_role",
+  "holder_users",
+  "reference",
+  "affected_bids",
+  "status",
+  "opened_at",
+  "resolved_at",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "incident_key",
+   "fieldtype": "Data",
+   "label": "Incident",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "kind",
+   "fieldtype": "Select",
+   "label": "Kind",
+   "read_only": 1,
+   "options": "Supplier portal information\nProduction submission gate\nSubmission service\nSubmission attempt",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "holder_role",
+   "fieldtype": "Data",
+   "label": "Holder responsibility",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "holder_users",
+   "fieldtype": "Small Text",
+   "label": "Holders",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reference",
+   "fieldtype": "Data",
+   "label": "Safe reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "affected_bids",
+   "fieldtype": "Int",
+   "label": "Affected bids",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Open\nResolved",
+   "reqd": 1,
+   "in_list_view": 1,
+   "default": "Open"
+  },
+  {
+   "fieldname": "opened_at",
+   "fieldtype": "Datetime",
+   "label": "Opened at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "resolved_at",
+   "fieldtype": "Datetime",
+   "label": "Resolved at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-27 12:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Submission",
+ "name": "Bid Submission Incident",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:incident_key"
+}

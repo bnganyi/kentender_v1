@@ -59,7 +59,15 @@ def facts(receipt) -> dict[str, Any]:
 
 
 def get_bid_receipt(*, receipt_reference: str, organisation: str = "", user: str | None = None) -> dict[str, Any]:
-	return facts(_load(receipt_reference, actor=cstr(user or frappe.session.user), organisation=organisation))
+	"""The receipt facts and, for its bid, the viewer's next step (§5.12)."""
+	from kentender_procurement.bid_submission.services import guidance
+
+	actor = cstr(user or frappe.session.user)
+	receipt = _load(receipt_reference, actor=actor, organisation=organisation)
+	at = clock.now()
+	ctx = bid_context.load(receipt.bid_workspace, actor=actor, organisation=organisation, at=at)
+	guided = guidance.for_bid(ctx, actor=actor, at=at)
+	return {**facts(receipt), "next_step": guided["next_step"], "journey": guided["journey"]}
 
 
 ROWS = (

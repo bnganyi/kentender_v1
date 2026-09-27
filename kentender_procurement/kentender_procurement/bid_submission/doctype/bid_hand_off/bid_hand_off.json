@@ -1,0 +1,162 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-27 12:30:00.000000",
+ "description": "BDS-CHG-001 v0.8 §5.14 / plan D15: one supplier hand-off of a bid (the holder's item and the sender's waiting line), opened and cleared by events.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "handoff_key",
+  "bid_workspace",
+  "tender",
+  "kind",
+  "holder_role",
+  "holder_users",
+  "item_title",
+  "sender_users",
+  "waiting_title",
+  "status",
+  "opened_at",
+  "cleared_at",
+  "clear_reason",
+  "notification_result",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "handoff_key",
+   "fieldtype": "Data",
+   "label": "Hand-off",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "bid_workspace",
+   "fieldtype": "Link",
+   "label": "Bid workspace",
+   "read_only": 1,
+   "options": "Bid Workspace",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "tender",
+   "fieldtype": "Link",
+   "label": "Tender",
+   "read_only": 1,
+   "options": "Tender",
+   "reqd": 1
+  },
+  {
+   "fieldname": "kind",
+   "fieldtype": "Select",
+   "label": "Kind",
+   "read_only": 1,
+   "options": "Review and submit\nReview addendum\nWaiting for supplier portal information\nWaiting for production submission availability\nWaiting for electronic submission recovery\nWaiting for the result of this submission attempt",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "holder_role",
+   "fieldtype": "Data",
+   "label": "Holder responsibility",
+   "read_only": 1
+  },
+  {
+   "fieldname": "holder_users",
+   "fieldtype": "Small Text",
+   "label": "Holders",
+   "read_only": 1
+  },
+  {
+   "fieldname": "item_title",
+   "fieldtype": "Data",
+   "label": "Holder item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sender_users",
+   "fieldtype": "Small Text",
+   "label": "Waiting people",
+   "read_only": 1
+  },
+  {
+   "fieldname": "waiting_title",
+   "fieldtype": "Data",
+   "label": "Waiting line",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Open\nCleared",
+   "reqd": 1,
+   "in_list_view": 1,
+   "default": "Open"
+  },
+  {
+   "fieldname": "opened_at",
+   "fieldtype": "Datetime",
+   "label": "Opened at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "cleared_at",
+   "fieldtype": "Datetime",
+   "label": "Cleared at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "clear_reason",
+   "fieldtype": "Data",
+   "label": "Cleared because",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notification_result",
+   "fieldtype": "Data",
+   "label": "Notification",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-27 12:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Submission",
+ "name": "Bid Hand-off",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:handoff_key"
+}

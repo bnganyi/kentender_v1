@@ -12,8 +12,8 @@ import frappe
 
 from kentender_core.utils.raw_delete import delete_rows
 
-SUBMISSION = ("Bid Opening Handoff", "Bid Submission Close", "Bid Submission Change", "Bid Submission Version", "Bid Receipt", "Tender Box Envelope", "Bid Submission Attempt")
-SIMULATION = ("Test Trust Signature", "Test Trust Certificate")
+SUBMISSION = ("Bid Hand-off", "Bid Opening Handoff", "Bid Submission Close", "Bid Submission Change", "Bid Submission Version", "Bid Receipt", "Tender Box Envelope", "Bid Submission Attempt")
+SIMULATION = ("Test Trust Signature", "Test Trust Certificate", "Bid Submission Incident")
 DOCTYPES = SUBMISSION + ("Tender Security Intake Match", "Tender Security Intake", "Bid Submission Event", "Bid Draft Change", "Bid Section Response", "Bid Evidence", "Bid Workspace", "Bid Organisation Snapshot", "Bidder Arrangement", "Bid Command Journal")
 
 

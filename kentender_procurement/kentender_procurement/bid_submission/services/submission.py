@@ -223,6 +223,9 @@ def _change(workspace, change_type: str, *, affected: str, actor: str, at, ackno
 def _reject(attempt, reference: str, reason: str, at) -> None:
 	records.save(_set(attempt, status="Rejected", rejection_reference=reference, rejection_reason=reason[:140], resolved_at=at))
 	records.emit("BidSubmissionRejected", tender=attempt.tender, workspace=attempt.bid_workspace, actor=attempt.signed_by, at=at, payload={"correlation_id": attempt.correlation_id, "rejection_reference": reference})
+	from kentender_procurement.bid_submission.services import handoffs
+
+	handoffs.sync(attempt.bid_workspace, at=at, reason="The tender box rejected the attempt")
 
 
 def _uncertain(attempt, at) -> None:
@@ -230,6 +233,9 @@ def _uncertain(attempt, at) -> None:
 		reference = references.support_reference(attempt.tender, frappe.db.get_value("Tender", attempt.tender, "tender_reference"))
 		records.save(_set(attempt, status="Uncertain", support_reference=reference))
 		records.emit("BidSubmissionUncertain", tender=attempt.tender, workspace=attempt.bid_workspace, actor=attempt.signed_by, at=at, payload={"correlation_id": attempt.correlation_id, "support_reference": reference})
+		from kentender_procurement.bid_submission.services import handoffs
+
+		handoffs.sync(attempt.bid_workspace, at=at)
 
 
 def _set(doc, **values):
@@ -331,11 +337,14 @@ def get_submit_bid(*, bid_reference: str, organisation: str = "", user: str | No
 	ws = ctx.workspace
 	root = tenders_gateway.tender_root(ws.tender_reference)
 	deadline = labels.datetime_label(root.submission_deadline) if root else ""
+	from kentender_procurement.bid_submission.services import guidance
+
 	blocked = None
 	try:
 		signature.submittable(ctx, actor=actor, at=at, expected_record_version=ws.record_version, confirmed=True)
 	except BidSubmissionError as error:
 		blocked = {"code": error.code, "message": str(error), "detail": error.detail}
+	guided = guidance.for_bid(ctx, actor=actor, at=at)
 	confirm = next((f for f in ctx.model.fields_of(readiness.REVIEW_TASK) if f.field_key == package.CONFIRMED_FIELD), None)
 	calc = price.summary(ctx)
 	security = tender_security.response(ctx)
@@ -355,6 +364,6 @@ def get_submit_bid(*, bid_reference: str, organisation: str = "", user: str | No
 		},
 		"confirmation_label": projection.label(ctx, confirm) if confirm else "",
 		"dialog_text": "KenTender will apply your digital signature and submit this exact Version to the electronic tender box. Wait for the submission receipt to confirm acceptance. If confirmation takes longer, you can return through View status; do not submit again while the same attempt is being checked.",
-		"can_submit": blocked is None, "blocked": blocked,
+		"can_submit": blocked is None, "blocked": blocked, **guided,
 		"record_version": int(ws.record_version or 0), "draft_version": int(ws.current_draft_version or 0),
 	}

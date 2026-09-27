@@ -134,6 +134,8 @@ class TestProviderContract(AccountsCase):
 		self.assertEqual([(a["organisation_id"], a["responsibility"], a["signatory_ready"]) for a in mine], [(org, "Authorised Signatory", True)])
 		self.assertEqual([(a["responsibility"], a["signatory_ready"]) for a in provider.active_assignments(user=DAVID)], [("Supplier Representative", False)])
 		self.assertEqual(provider.active_assignments(user="Administrator"), [])
+		self.assertEqual([a["user"] for a in provider.organisation_signatories(organisation_id=org)], [MARY])  # David is not a signatory
+		self.assertEqual(provider.organisation_signatories(organisation_id="another"), [])
 		self.assertEqual(provider.organisation(organisation_id=org)["account_status"], "Active")
 		self.assertEqual([c["value"] for c in provider.verified_contacts(organisation_id=org)], ["tenders@afyadigital.example"])
 		self.assertEqual(provider.find_active_account(country="Kenya", registration_number=AFYA["registration_number"]), {"organisation_id": org, "legal_name": "Afya Digital Supplies Limited"})

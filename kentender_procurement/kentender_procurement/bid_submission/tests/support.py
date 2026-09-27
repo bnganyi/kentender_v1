@@ -100,6 +100,9 @@ class FakeAccounts:
 			return None
 		return {"file_name": row[1], "content": row[2], "digest": row[3]}
 
+	def organisation_signatories(self, *, organisation_id: str, at=None) -> list[dict[str, Any]]:
+		return [dict(a) for a in self.assignments.values() if a["organisation_id"] == organisation_id and a["active"] and a["signatory_ready"]]
+
 	def find_active_account(self, *, country: str, registration_number: str) -> dict[str, Any] | None:
 		for org in self.orgs.values():
 			if org["country"] == country and org["registration_number"] == registration_number and org["account_status"] == "Active":

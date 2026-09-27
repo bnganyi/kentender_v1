@@ -13,7 +13,7 @@ from frappe.tests import IntegrationTestCase
 
 from kentender_procurement.bid_submission.services import errors
 
-RECORDS = ("Bidder Arrangement", "Bid Workspace", "Bid Organisation Snapshot", "Bid Command Journal", "Bid Submission Event", "Bid Submission Attempt", "Bid Submission Version", "Tender Box Envelope", "Bid Receipt", "Bid Submission Change", "Bid Submission Close", "Bid Opening Handoff")
+RECORDS = ("Bidder Arrangement", "Bid Workspace", "Bid Organisation Snapshot", "Bid Command Journal", "Bid Submission Event", "Bid Submission Attempt", "Bid Submission Version", "Tender Box Envelope", "Bid Receipt", "Bid Submission Change", "Bid Submission Close", "Bid Opening Handoff", "Bid Hand-off", "Bid Submission Incident")
 #: OD-C simulation state: no role reads or writes it at all.
 SIMULATION = ("Test Trust Certificate", "Test Trust Signature", "BDS Test Environment Controls")
 FIELDS = {
