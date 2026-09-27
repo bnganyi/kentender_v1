@@ -8,6 +8,7 @@ import AvailableTendersScreen from "./screens/AvailableTendersScreen.vue";
 import BidWorkspaceScreen from "./screens/BidWorkspaceScreen.vue";
 import CompanyTaskScreen from "./screens/CompanyTaskScreen.vue";
 import PriceTaskScreen from "./screens/PriceTaskScreen.vue";
+import ReviewTaskScreen from "./screens/ReviewTaskScreen.vue";
 import RequirementsTaskScreen from "./screens/RequirementsTaskScreen.vue";
 import DocumentsTaskScreen from "./screens/DocumentsTaskScreen.vue";
 import MyBidsScreen from "./screens/MyBidsScreen.vue";
@@ -34,6 +35,7 @@ const screen = computed(() => {
 	if (segments.length === 4 && segments[0] === "tenders" && segments[2] === "bid" && segments[3] === "company") return "company-task";
 	if (segments.length === 4 && segments[0] === "tenders" && segments[2] === "bid" && segments[3] === "requirements") return "requirements-task";
 	if (segments.length === 4 && segments[0] === "tenders" && segments[2] === "bid" && segments[3] === "price") return "price-task";
+	if (segments.length === 4 && segments[0] === "tenders" && segments[2] === "bid" && segments[3] === "review") return "review-task";
 	if (segments.length === 1 && segments[0] === "my-bids") return "my-bids";
 	if (segments.length === 2 && segments[0] === "account" && segments[1] === "receipts") return "receipts";
 	return "not-found";
@@ -62,6 +64,7 @@ function firstPayload(name) {
 	<CompanyTaskScreen v-else-if="screen === 'company-task'" :key="route.path" :reference="route.segments[1]" :initial="firstPayload('company-task')" @not-found="notFound = true" />
 	<RequirementsTaskScreen v-else-if="screen === 'requirements-task'" :key="route.path" :reference="route.segments[1]" :initial="firstPayload('requirements-task')" @not-found="notFound = true" />
 	<PriceTaskScreen v-else-if="screen === 'price-task'" :key="route.path" :reference="route.segments[1]" :initial="firstPayload('price-task')" @not-found="notFound = true" />
+	<ReviewTaskScreen v-else-if="screen === 'review-task'" :key="route.path" :reference="route.segments[1]" :initial="firstPayload('review-task')" @not-found="notFound = true" />
 	<MyBidsScreen v-else-if="screen === 'my-bids'" :initial="firstPayload('my-bids')" />
 	<ReceiptHistoryScreen v-else-if="screen === 'receipts'" :initial="firstPayload('receipts')" @not-found="notFound = true" />
 	<CommonState

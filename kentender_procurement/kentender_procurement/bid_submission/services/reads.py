@@ -175,6 +175,12 @@ def get_bid_task(*, bid_reference: str = "", task: str, tender_reference: str = 
 		raise frappe.DoesNotExistError("This part of the bid does not exist.")
 	tasks, notice = _evaluate(ctx)
 	view = {"bid": _bid_header(ctx, tasks), "tasks": projection.task_nav(ctx, tasks), "addendum_notice": notice, **projection.task_view(ctx, tasks, cstr(task))}
+	if task == "review":
+		from kentender_procurement.bid_submission.services import guidance, review_view
+
+		guided = guidance.for_bid(ctx, actor=actor, at=at, tasks=tasks)
+		view["journey"] = guided["journey"]
+		view.update(review_view.view(ctx, tasks, guided, at=at))
 	if task == "price":
 		from kentender_procurement.bid_submission.services import guidance, price, price_view
 

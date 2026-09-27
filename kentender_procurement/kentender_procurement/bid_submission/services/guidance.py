@@ -166,7 +166,7 @@ def _current_version(ws):
 	return frappe.db.get_value("Bid Submission Version", ws.current_submission_version, ["version_number", "accepted_at", "receipt", "status_since"], as_dict=True)
 
 
-def _change_label(tender: str) -> str:
+def change_label(tender: str) -> str:
 	"""What the latest issued addendum changed, in words (§5.12: "the changed
 	delivery location")."""
 	ref = frappe.db.get_value("Tender Addendum", {"tender": tender, "status": "Issued"}, "affected_reference", order_by="issued_at desc")
@@ -179,7 +179,7 @@ def _rejected_evidence(ctx, tasks):
 	rejected and that still has no usable file (§5.12 "Draft evidence rejected")."""
 	for key, state in tasks.items():
 		for fs in state.fields:
-			if fs.visible and fs.field.kind == "evidence" and fs.issue and fs.issue["text"] == "Replace the rejected file.":
+			if fs.visible and fs.field.kind == "evidence" and fs.issue and fs.issue["text"] == readiness.REJECTED_FILE:
 				return key, fs.field
 	return None
 
@@ -230,7 +230,7 @@ def for_bid(ctx, *, actor: str, at, tasks=None) -> dict[str, Any]:
 			holder=ns.holder(TECHNICAL, people), since=ns.since(attempt.received_at, labels.datetime_label(attempt.received_at)) if attempt else None, primary_action="view_status"), "DBN", ns.holder(TECHNICAL, people)["display"])
 	if "BDS_ADDENDUM_REVIEW_REQUIRED" in codes:
 		blockers = [b for b in ns.blockers_of(guard) if b["reason_code"] == "BDS_ADDENDUM_REVIEW_REQUIRED"]
-		return result(ns.answer(ns.KIND_BLOCKED, headline=f"Review the changed {_change_label(ws.tender)} and acknowledge the current addendum before submitting.", stage="BID_PREPARATION", blockers=blockers, primary_action="review_addendum"), "BNN", viewer)
+		return result(ns.answer(ns.KIND_BLOCKED, headline=f"Review the changed {change_label(ws.tender)} and acknowledge the current addendum before submitting.", stage="BID_PREPARATION", blockers=blockers, primary_action="review_addendum"), "BNN", viewer)
 	rejected = _rejected_evidence(ctx, tasks)
 	if rejected:
 		task, field = rejected

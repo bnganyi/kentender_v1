@@ -39,6 +39,9 @@ export const COVERED = new Set([
 		...["BDS-DES-08", "BDS-DES-08-SECURITY", "BDS-DES-08-JV", "BDS-DES-08-ACCOUNT-UPDATE"].map((v) => `CompanyTaskScreen#${v}@${frame}`),
 		...["BDS-DES-09", "BDS-DES-09 response drawer", "BDS-DES-09-ATTENTION", "BDS-DES-09-ADDENDUM"].map((v) => `RequirementsTaskScreen#${v}@${frame}`),
 		...["BDS-DES-10", "BDS-DES-10-INCOMPLETE"].map((v) => `PriceTaskScreen#${v}@${frame}`),
+		...[
+			"BDS-DES-11", "BDS-DES-11-EVIDENCE-ATTENTION", "BDS-DES-11-ADDENDUM-ATTENTION", "BDS-DES-11-REPRESENTATIVE", "BDS-DES-11-CFG · in preparation", "BDS-DES-11-CFG · ready",
+		].map((v) => `ReviewTaskScreen#${v}@${frame}`),
 	]),
 	...["desktop", "narrow"].flatMap((frame) => [
 		...["BDS-DES-03", "BDS-DES-03-VERIFY"].map((v) => `RegisterScreen#${v}@${frame}`),

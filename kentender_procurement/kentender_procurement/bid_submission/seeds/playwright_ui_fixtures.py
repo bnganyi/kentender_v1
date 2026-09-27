@@ -200,7 +200,13 @@ def reset_overview_fixture(*, commit: bool = True, started: bool = True) -> dict
 	return {"tender": state["tender"], "tender_reference": state["tender_reference"], "bid_reference": bid, "password": PASSWORD, **{f"{k}_user": v["representative"] for k, v in SUPPLIERS.items()}, "afya_signatory": SUPPLIERS["afya"]["registrant"]}
 
 
-MY_BIDS_STATES = ("empty", "started", "addendum", "ready", "submitted", "withdrawn")
+MY_BIDS_STATES = ("empty", "started", "addendum", "ready", "submitted", "withdrawn", "review", "review-evidence", "review-addendum")
+# BDS-DES-11 worlds: a Ready bid whose physical original Charles has recorded;
+# then either its datasheet's only file is rejected, or the addendum changes
+# the Tender and David's next change moves the Draft to it.
+REVIEW_STEPS = {"intake": "2027-05-20 10:20:00", "reject": "2027-05-20 10:25:00", "refresh": "2027-06-01 12:10:00"}
+REVIEW_ADDENDUM_AT = "2027-06-01 12:15:00"
+EICAR = b"\n% X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*\n"
 ADDENDUM_AT = "2027-06-01 12:05:00"  # BDS-DES-07: after the addendum is effective, before acknowledgement
 MY_BIDS_STEPS = {"fill": "2027-05-20 10:10:00", "submit": "2027-05-20 10:30:00", "withdraw": "2027-05-20 10:45:00"}
 MY_BIDS_AT = "2027-05-20 11:00:00"
@@ -234,6 +240,52 @@ def _submit(bid: str, signatory: str) -> str:
 	return result["receipt_reference"]
 
 
+def _record_original(bid: str) -> str:
+	"""Charles records the physical original of this bid's own instrument
+	(blind intake; the private match links it to the bid)."""
+	from kentender_procurement.bid_submission.services import bid_context, security_intake, tender_security
+
+	from frappe.utils import get_datetime
+
+	representative = SUPPLIERS["afya"]["representative"]
+	security = tender_security.response(bid_context.load(bid, actor=representative, organisation="", at=get_datetime(REVIEW_STEPS["intake"])))
+	reference = frappe.db.get_value("Bid Workspace", bid, "tender_reference")
+	recorded = security_intake.record_physical_tender_security_receipt(
+		tender_reference=reference, instrument_type=security["security_type"], issuer=security["issuer"], instrument_reference=security["reference"],
+		amount=security["amount"], currency=security["currency"], received_at="2027-05-20 10:00:00", notes="", confirmed=True, idempotency_key=_key(), user=RECORDER,
+	)
+	if not recorded.get("ok"):
+		frappe.throw(f"The physical original could not be recorded: {recorded}")
+	return recorded["intake_reference"]
+
+
+def _reject_datasheet(bid: str, user: str) -> str:
+	"""The Evidence rejected fixture: the datasheet's only file is removed and
+	its replacement fails the Test Scanner."""
+	from kentender_procurement.bid_submission.seeds import filling
+	from kentender_procurement.bid_submission.services import evidence, reads
+
+	version = lambda: frappe.db.get_value("Bid Workspace", bid, "record_version")  # noqa: E731
+	fields = [f for g in reads.get_bid_task(bid_reference=bid, task="requirements", user=user)["groups"] for f in g["fields"] if f["kind"] == "evidence" and f["required"] and len(f["evidence"]["files"]) == 1]
+	field = next((f for f in fields if "datasheet" in f["label"].lower()), fields[0])
+	evidence.remove_bid_evidence(bid_reference=bid, evidence_id=field["evidence"]["files"][0]["id"], expected_record_version=version(), idempotency_key=_key(), user=user)
+	refused = evidence.upload_bid_evidence(bid_reference=bid, handle=field["handle"], filename="apexbook-datasheet.pdf", content=filling.pdf("datasheet") + EICAR, expected_record_version=version(), idempotency_key=_key(), user=user)
+	if refused.get("ok"):
+		frappe.throw("The test scanner accepted the EICAR test file.")
+	return field["label"]
+
+
+def _refresh_for_addendum(bid: str, user: str) -> None:
+	"""David's first change after the addendum moves the Draft to it."""
+	from kentender_procurement.bid_submission.services import reads, save
+
+	price = reads.get_bid_task(bid_reference=bid, task="price", user=user)
+	unit = next(f for g in price["groups"] for f in g["fields"] if f["kind"] == "money")
+	result = save.save_bid_task(bid_reference=bid, task="price", values={unit["handle"]: unit["value"]}, expected_record_version=frappe.db.get_value("Bid Workspace", bid, "record_version"), idempotency_key=_key(), user=user)
+	if not result.get("refreshed"):
+		frappe.throw(f"The Draft did not move to the addendum: {result}")
+
+
 def reset_my_bids_fixture(*, state: str = "ready", commit: bool = True) -> dict[str, Any]:
 	"""BDS-DES-05 / BDS-DES-17 worlds on the Tenders test Tender for Afya
 	(Test): "empty" (no bid), "started" (a new Draft), "addendum" (a new Draft,
@@ -259,6 +311,16 @@ def reset_my_bids_fixture(*, state: str = "ready", commit: bool = True) -> dict[
 			filling.fill_everything(bid, user=afya["representative"])
 		if state == "addendum":
 			tender_pw._issued_addendum(tender["tender"])
+		if state.startswith("review"):
+			_pinned(REVIEW_STEPS["intake"])
+			_record_original(bid)
+		if state == "review-evidence":
+			_pinned(REVIEW_STEPS["reject"])
+			_reject_datasheet(bid, afya["representative"])
+		if state == "review-addendum":
+			tender_pw._issued_addendum(tender["tender"])
+			_pinned(REVIEW_STEPS["refresh"])
+			_refresh_for_addendum(bid, afya["representative"])
 		if state in ("submitted", "withdrawn"):
 			_pinned(MY_BIDS_STEPS["submit"])
 			receipt = _submit(bid, afya["registrant"])
@@ -271,7 +333,7 @@ def reset_my_bids_fixture(*, state: str = "ready", commit: bool = True) -> dict[
 			acknowledgement = done["acknowledgement_reference"]
 	finally:
 		_pinned(None)
-	set_instant(ADDENDUM_AT if state == "addendum" else MY_BIDS_AT)
+	set_instant(ADDENDUM_AT if state == "addendum" else REVIEW_ADDENDUM_AT if state == "review-addendum" else MY_BIDS_AT)
 	frappe.set_user("Administrator")
 	if commit:
 		frappe.db.commit()

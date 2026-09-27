@@ -61,12 +61,21 @@ async function load() {
 		}
 		adopt(result);
 		failure.value = "";
+		openLinked();
 	} catch (e) {
 		if (guard.isCurrent(token)) failure.value = e.message;
 	}
 }
 function open(key) {
 	drawer.value = rows.value.find((row) => row.key === key) || null;
+}
+// An exact issue link (`?item=` from Review bid) opens that row's drawer once.
+let linked = "";
+function openLinked() {
+	const item = route.value.query.item || "";
+	if (!item || item === linked || !rows.value.some((row) => row.key === item)) return;
+	linked = item;
+	open(item);
 }
 async function afterDrawer() {
 	drawer.value = null;
@@ -97,6 +106,7 @@ watch(epoch, () => load());
 onMounted(() => {
 	portal.setTitle(__("Requirements and supporting evidence"));
 	if (!data.value) load();
+	else openLinked();
 });
 </script>
 

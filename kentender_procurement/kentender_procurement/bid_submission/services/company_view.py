@@ -131,23 +131,28 @@ def security(ctx, tasks, view_groups: list[dict[str, Any]], *, published: dict[s
 		return None
 	group, shown = pairs[0]
 	facts = tender_security.response(ctx)
-	receipt = facts["physical_receipt_status"] != tender_security.NOT_RECORDED
-	deadline = labels.datetime_label(published.get("submission_deadline"))
-	entity = cstr(published.get("procuring_entity"))
-	form = facts.get("security_type") or "tender security"
-	if not facts.get("security_type"):
-		physical = None  # nothing entered yet: the region says so
-	elif receipt:
-		physical = {"tone": "live", "title": "Physical original recorded as received", "text": "", "facts": [{"label": "Receipt", "value": facts["physical_receipt_reference"]}, {"label": "Received at", "value": facts["physical_received_at"]}]}
-	else:
-		physical = {
-			"tone": "warning", "title": "Physical original not yet recorded",
-			"text": f"Deliver the original {form.lower()} to the {entity} procurement office before {deadline}. You may submit electronically, but failure to deliver the original before closing may disqualify the bid.",
-			"facts": [],
-		}
 	return {
 		"key": shown["key"], "fields": shown["fields"], "published_facts": [{"label": "Amount · published", "value": facts["required_amount"]}, {"label": "Currency · published", "value": facts["currency"]}],
-		"entered": bool(facts.get("security_type")), "physical": physical,
+		"entered": bool(facts.get("security_type")), "physical": physical(facts, published),
+	}
+
+
+def physical(facts: dict[str, Any], published: dict[str, Any]) -> dict[str, Any] | None:
+	"""The physical original as this supplier's own bid knows it: recorded (with
+	the intake reference and time) or the amber delivery reminder; None until a
+	security form is entered."""
+	from kentender_procurement.bid_submission.services import tender_security
+
+	if not facts.get("required") or not facts.get("security_type"):
+		return None  # nothing entered yet: the region says so
+	if facts["physical_receipt_status"] != tender_security.NOT_RECORDED:
+		return {"tone": "live", "title": "Physical original recorded as received", "text": "", "facts": [{"label": "Receipt", "value": facts["physical_receipt_reference"]}, {"label": "Received at", "value": facts["physical_received_at"]}]}
+	deadline = labels.datetime_label(published.get("submission_deadline"))
+	entity = cstr(published.get("procuring_entity"))
+	return {
+		"tone": "warning", "title": "Physical original not yet recorded",
+		"text": f"Deliver the original {facts['security_type'].lower()} to the {entity} procurement office before {deadline}. You may submit electronically, but failure to deliver the original before closing may disqualify the bid.",
+		"facts": [],
 	}
 
 

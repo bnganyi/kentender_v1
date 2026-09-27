@@ -11,8 +11,8 @@ import RequirementsTaskScreen from "./RequirementsTaskScreen.vue";
 import { requirementsTask } from "./requirements.fixtures.js";
 
 const REF = "TND-MOH-2027-033";
-function portalFor({ call } = {}) {
-	const route = ref({ path: `/tenders/${REF}/bid/requirements`, segments: ["tenders", REF, "bid", "requirements"], query: {} });
+function portalFor({ call, query = {} } = {}) {
+	const route = ref({ path: `/tenders/${REF}/bid/requirements`, segments: ["tenders", REF, "bid", "requirements"], query });
 	const go = vi.fn();
 	return { call: call || vi.fn(async (m) => (m.endsWith("get_bid_task") ? requirementsTask() : { ok: true })), upload: vi.fn(async () => ({ ok: true })), go, setTitle: vi.fn(), createSequenceGuard, createCommandRunner, createScreenCache, useRoute: () => ({ route, go, epoch: ref(0) }) };
 }
@@ -26,6 +26,12 @@ afterEach(() => {
 });
 
 describe("Requirements and supporting evidence", () => {
+	it("opens the row an exact issue link names", async () => {
+		const wrapper = mountWith(requirementsTask(), portalFor({ query: { item: "t6" } }));
+		await nextTick();
+		expect(wrapper.get('[data-testid="bds-response-drawer"]').text()).toContain(requirementsTask().technical.find((r) => r.key === "t6").label);
+	});
+
 	it("links every region with its state and lists the rows as the read words them", () => {
 		const wrapper = mountWith(requirementsTask(), portalFor());
 		expect(wrapper.findAll('[data-testid="bds-requirements-nav"] a').map((a) => a.attributes("href"))).toEqual(["#bds-region-goods", "#bds-region-technical", "#bds-region-warranty", "#bds-region-experience", "#bds-region-evidence"]);

@@ -23,6 +23,7 @@ TASK_SCREENS = {
 	"company": ("company-task", "Company, declarations and tender security"),
 	"requirements": ("requirements-task", "Requirements and supporting evidence"),
 	"price": ("price-task", "Price"),
+	"review": ("review-task", "Review bid"),
 }
 
 

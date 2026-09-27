@@ -68,6 +68,9 @@ def _blank(value) -> bool:
 	return value is None or value == "" or value == []
 
 
+REJECTED_FILE = "Replace the rejected file."
+
+
 def field_state(ctx: BidContext, field: Field) -> FieldState:
 	group = ctx.group_values(field)
 	visible = validation.rule_holds(field.visibility_rule, group)
@@ -83,7 +86,7 @@ def field_state(ctx: BidContext, field: Field) -> FieldState:
 	if _blank(value):
 		if required:
 			rejected = field.kind == "evidence" and any(e["scan_status"] == "Rejected" for e in ctx.evidence.get(field.key, []))
-			state.issue = {"severity": MUST_FIX, "text": "Replace the rejected file." if rejected else _MISSING.get(field.kind, "Answer this question.")}
+			state.issue = {"severity": MUST_FIX, "text": REJECTED_FILE if rejected else _MISSING.get(field.kind, "Answer this question.")}
 		return state
 	problem = validation.check(field.validation_id, field.validation_parameters, value)
 	if problem:
@@ -106,7 +109,8 @@ def evaluate(ctx: BidContext, *, attention: list[str] | None = None) -> dict[str
 	for key, state in tasks.items():
 		if key == REVIEW_TASK:
 			state.status = "Complete" if blocking == 0 else "Not started"
-		elif key in (attention or []):
+		elif key in (attention or []) or any(s.issue and s.issue["text"] == REJECTED_FILE for s in state.fields):
+			# an addendum change, or a file the malware check rejected (§10.8 "Needs attention")
 			state.status = "Needs attention"
 		elif state.must_fix == 0:
 			state.status = "Complete"
