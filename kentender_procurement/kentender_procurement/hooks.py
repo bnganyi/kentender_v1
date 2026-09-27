@@ -176,6 +176,8 @@ page_js = {
 	"tenders": "public/js/tenders_page.js",
 	# STD-TPL-IMP-001 v1.0 §11 — STD Templates (list + release detail).
 	"std-templates": "public/js/std_templates_page.js",
+	# BDS-CHG-001 v0.8 OD-G/OD-H — the blind physical tender-security intake.
+	"tender-security-receipts": "public/js/tender_security_receipts_page.js",
 	"departmental-procurement-plan": "public/js/departmental_procurement_plan_page.js",
 	"annual-procurement-plan": "public/js/annual_procurement_plan_page.js",
 	"procurement-plan-item": "public/js/procurement_plan_item_page.js",

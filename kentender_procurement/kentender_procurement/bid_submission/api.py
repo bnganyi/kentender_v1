@@ -126,6 +126,20 @@ def record_physical_tender_security_receipt(tender_reference: str, instrument_ty
 	)
 
 
+FORBIDDEN_INTAKE = {"outcome": "FORBIDDEN", "heading": "You do not have access to tender-security receipts", "text": security_intake_service.DENIED}
+
+
 @frappe.whitelist(methods=["GET"])
 def list_my_tender_security_intakes(tender_reference: str = "") -> dict[str, Any]:
-	return security_intake_service.list_my_intakes(tender_reference=tender_reference)
+	try:
+		return {"outcome": "OK", **security_intake_service.list_my_intakes(tender_reference=tender_reference)}
+	except frappe.PermissionError:
+		return dict(FORBIDDEN_INTAKE)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_tender_security_requirement(tender_reference: str) -> dict[str, Any]:
+	try:
+		return {"outcome": "OK", **security_intake_service.tender_security_requirement(tender_reference=tender_reference)}
+	except frappe.PermissionError:
+		return dict(FORBIDDEN_INTAKE)

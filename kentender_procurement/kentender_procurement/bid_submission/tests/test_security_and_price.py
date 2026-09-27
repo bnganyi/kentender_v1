@@ -14,7 +14,7 @@ from decimal import Decimal
 
 import frappe
 
-from kentender_procurement.bid_submission.services import reads, save, security_intake, start_bid
+from kentender_procurement.bid_submission.services import price, reads, save, security_intake, start_bid
 from kentender_procurement.bid_submission.tests.support import AFYA, DAVID, KISIWA, PETER, BidCase, key, simulation_on
 from kentender_procurement.tenders.services import bid_definition
 from kentender_procurement.tenders.tests import fixtures as tender_fx
@@ -76,8 +76,19 @@ class TestPrice(SecurityCase):
 		expected = quantity * Decimal("160000") + Decimal("6400000")
 		self.assertEqual((priced["complete"], priced["total"]), (True, f"KES {expected:,.2f}"))
 		self.assertEqual(priced["lines"][0]["amount_before_tax"], f"KES {quantity * Decimal('160000'):,.2f}")
-		if quantity == 250:
-			self.assertEqual(priced["total"], "KES 46,400,000.00")  # the BDS-CHG-001 §10.1 fixture
+		self.assertEqual((priced["subtotal"], priced["tax"]), (f"KES {quantity * Decimal('160000'):,.2f}", "KES 6,400,000.00"))
+
+	def test_the_worked_fixture_and_half_up_rounding(self):
+		# The test world's line has quantity 1; the BDS-CHG-001 §10.1 fixture is
+		# 250 laptops at 160,000 with 6,400,000 tax, a bid total of 46,400,000.
+		def ctx(quantity, unit_price, tax):
+			row = {"calculation": {"calculation_id": "CALC-LINE-TOTAL"}, "input_response_ids": {"unit_price": "u", "tax_amount": "t"}, "quantity": quantity, "currency": "KES", "line": "1"}
+			return type("Ctx", (), {"model": type("Model", (), {"price_rows": [row]})(), "values": {"u": unit_price, "t": tax}})()
+
+		fixture = price.summary(ctx("250", "160000", "6400000"))
+		self.assertEqual((fixture["subtotal"], fixture["tax"], fixture["total"]), ("KES 40,000,000.00", "KES 6,400,000.00", "KES 46,400,000.00"))
+		rounded = price.calculate(ctx("3", "100.125", "0.005"))
+		self.assertEqual((rounded["subtotal"], rounded["tax"], rounded["total"]), (Decimal("300.39"), Decimal("0.01"), Decimal("300.40")))
 
 
 class TestBlindIntake(SecurityCase):
@@ -102,6 +113,17 @@ class TestBlindIntake(SecurityCase):
 			for word in ("BID-", "ARR-", "Afya", "bid_workspace", "Matched", "Draft"):
 				self.assertNotIn(word, text)
 		self.assertEqual([r["intake_reference"] for r in security_intake.list_my_intakes(user=tender_fx.HOPF)["rows"]], [matched["intake_reference"], unmatched["intake_reference"]])
+
+	def test_an_intake_is_append_only_with_the_server_actor_and_time(self):
+		self.at("2027-05-20 10:30:00")
+		recorded = self.intake(received_at="2027-05-20 10:00:00")
+		doc = frappe.get_doc("Tender Security Intake", {"intake_reference": recorded["intake_reference"]})
+		self.assertEqual((doc.recorded_by, str(doc.recorded_at), doc.deadline_class), (tender_fx.HOPF, "2027-05-20 10:30:00", "Before deadline"))
+		doc.issuer = "Another bank"
+		with self.assertRaises(frappe.ValidationError):
+			doc.save(ignore_permissions=True)
+		with self.assertRaises(frappe.ValidationError):
+			frappe.delete_doc("Tender Security Intake", doc.name, ignore_permissions=True)
 
 
 class TestPrivateMatch(SecurityCase):
@@ -129,3 +151,33 @@ class TestPrivateMatch(SecurityCase):
 
 	def test_no_role_can_read_a_match(self):
 		self.assertEqual(frappe.get_meta("Tender Security Intake Match").permissions, [])
+
+
+class TestReceiptsDeskPage(SecurityCase):
+	"""The Desk page's endpoints: a refusal is returned as data (the page shows
+	it as a state, never a Frappe dialog); the lookup gives only the published
+	Tender's own security facts; recording is POST only."""
+
+	def call_as(self, user, fn, **kwargs):
+		frappe.set_user(user)
+		try:
+			return fn(**kwargs)
+		finally:
+			frappe.set_user("Administrator")
+
+	def test_endpoints_refuse_as_data_and_the_lookup_is_public_facts_only(self):
+		from kentender_procurement.bid_submission import api
+
+		for fn, kwargs in ((api.list_my_tender_security_intakes, {}), (api.get_tender_security_requirement, {"tender_reference": self.reference})):
+			self.assertEqual(self.call_as(tender_fx.OFFICER, fn, **kwargs), api.FORBIDDEN_INTAKE)
+		lookup = self.call_as(tender_fx.HOPF, api.get_tender_security_requirement, tender_reference=self.reference)
+		self.assertEqual(set(lookup), {"outcome", "found", "required", "tender_reference", "permitted_forms", "currency", "required_amount", "deadline"})
+		self.assertEqual((lookup["outcome"], lookup["permitted_forms"]), ("OK", self.facts["permitted_forms"]))
+		self.assertEqual(self.call_as(tender_fx.HOPF, api.list_my_tender_security_intakes, tender_reference=self.reference)["rows"], [])
+		self.assertEqual(frappe.allowed_http_methods_for_whitelisted_func[api.record_physical_tender_security_receipt], ["POST"])
+		for fn in (api.list_my_tender_security_intakes, api.get_tender_security_requirement):
+			self.assertEqual(frappe.allowed_http_methods_for_whitelisted_func[fn], ["GET"])
+
+	def test_the_page_is_installed_and_wired(self):
+		self.assertEqual(frappe.db.get_value("Page", "tender-security-receipts", ["module", "title"]), ("Bid Submission", "Tender-security receipts"))
+		self.assertEqual(frappe.get_hooks("page_js", app_name="kentender_procurement")["tender-security-receipts"], ["public/js/tender_security_receipts_page.js"])

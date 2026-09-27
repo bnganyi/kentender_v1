@@ -77,6 +77,17 @@ export default defineConfig({
 				},
 			},
 			{
+				// BDS-CHG-001 v0.8 owner decisions OD-G/OD-H — the Desk page for
+				// the blind physical tender-security intake.
+				plugins: [vue()],
+				test: {
+					name: "tender-security-receipts",
+					environment: "jsdom",
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/tender_security_receipts/vitest.setup.js"],
+					include: ["kentender_procurement/kentender_procurement/public/js/tender_security_receipts/**/*.spec.js"],
+				},
+			},
+			{
 				// STD-TPL-IMP-001 v1.0 §11 — SFC component and structural-fidelity
 				// tests for STD Templates, alongside (never instead of) the browser layer.
 				plugins: [vue()],

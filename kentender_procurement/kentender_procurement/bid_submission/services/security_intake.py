@@ -132,3 +132,19 @@ def list_my_intakes(*, tender_reference: str = "", user: str | None = None) -> d
 		filters["tender_reference"] = cstr(tender_reference).strip()
 	rows = [_row(frappe.get_doc(INTAKE, name)) for name in frappe.get_all(INTAKE, filters=filters, pluck="name", order_by="recorded_at desc, creation desc", limit_page_length=0)]
 	return {"rows": rows, "empty_text": "You have not recorded any tender-security originals yet.", "confirmation": CONFIRMATION}
+
+
+def tender_security_requirement(*, tender_reference: str, user: str | None = None) -> dict[str, Any]:
+	"""The published Tender's security requirement (public Tender facts) to
+	help the recorder fill the intake; nothing about bids."""
+	require_recorder(cstr(user or frappe.session.user), purpose=PURPOSE_READ)
+	root, facts = _published_security(cstr(tender_reference).strip())
+	if not root:
+		return {"found": False, "text": "No published Tender has this reference."}
+	if facts is None:
+		return {"found": True, "required": False, "text": "This Tender does not require a tender security."}
+	return {
+		"found": True, "required": True, "tender_reference": root.tender_reference, "permitted_forms": list(facts.get("permitted_forms") or []),
+		"currency": cstr(facts.get("currency")), "required_amount": labels.money_label(facts.get("amount"), cstr(facts.get("currency"))),
+		"deadline": labels.datetime_label(root.submission_deadline),
+	}
