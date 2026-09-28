@@ -27,8 +27,25 @@ export async function expectNoFrappeDialog(page: Page): Promise<void> {
 
 /** BDS §10.1: nothing is reached by horizontal scrolling. */
 export async function expectNoHorizontalOverflow(page: Page): Promise<void> {
-	const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-	expect(overflow, 'horizontal overflow in px').toBeLessThanOrEqual(0);
+	// Polled: right after a resize that crosses the narrow breakpoint the page
+	// is still swapping cards for tables (a re-render on the next tick); a
+	// settled page that overflows still fails.
+	try {
+		await expect
+			.poll(() => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth), { message: 'horizontal overflow in px', timeout: 5_000 })
+			.toBeLessThanOrEqual(0);
+	} catch (error) {
+		// name what sticks out, so the failure is actionable
+		const offenders = await page.evaluate(() => {
+			const width = window.innerWidth;
+			return [...document.querySelectorAll('body *')]
+				.map((el) => ({ el, r: el.getBoundingClientRect() }))
+				.filter(({ r }) => r.width > 0 && r.right > width + 1)
+				.slice(0, 8)
+				.map(({ el, r }) => `${el.tagName.toLowerCase()}${el.getAttribute('data-testid') ? `[${el.getAttribute('data-testid')}]` : ''}.${String((el as HTMLElement).className || '').split(' ').slice(0, 2).join('.')} right=${Math.round(r.right)}`);
+		});
+		throw new Error(`${(error as Error).message}\noverflowing: ${offenders.join(' | ')}`);
+	}
 }
 
 /** WCAG 1.4.4 — render at 200% zoom (CSS zoom on the root) for a reflow check. */

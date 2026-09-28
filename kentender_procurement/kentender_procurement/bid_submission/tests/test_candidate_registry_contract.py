@@ -36,6 +36,17 @@ class TestCandidateRegistry(BidCase):
 		self.assertEqual(candidate_gateway.candidate_name(tender=self.name, candidate_registration_id=jv), "Kisiwa–Jua Technology JV")
 		self.assertIsNone(candidate_gateway.candidate_registration(tender=self.name, candidate_registration_id="ARR-NOPE-001"))
 
+	def test_a_closed_candidate_is_still_the_registration_it_was(self):
+		# Found by the Phase 12 canonical seed: once Bid Submission closes the
+		# period, the arrangement is Closed, and Tenders' protected reads (who
+		# asked a question, the audit trail) must still name the candidate.
+		arrangement = self.start()["bidder_arrangement_id"]
+		frappe.db.set_value("Bidder Arrangement", arrangement, {"status": "Closed", "status_since": "2027-06-12 11:00:00"})
+		self.assertEqual(candidate_gateway.candidate_name(tender=self.name, candidate_registration_id=arrangement), "Afya Digital Supplies Limited")
+		self.assertEqual(candidate_gateway.candidate_registration(tender=self.name, candidate_registration_id=arrangement)["status"], "Closed")
+		# …while it is no longer in the audience for notices after it closed
+		self.assertEqual(candidate_gateway.candidate_audience(tender=self.name, at="2027-06-12 11:00:01"), [])
+
 	def test_a_notice_email_change_applies_from_its_instant_only(self):
 		arrangement = self.start()["bidder_arrangement_id"]
 		self.accounts.contacts[AFYA].append({"contact_id": f"{AFYA}-C2", "channel": "Email", "value": "bids@afyadigital.example", "contact_version": 1, "is_official": False})

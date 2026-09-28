@@ -46,7 +46,7 @@ import frappe
 
 from kentender_core.seeds import site_setup
 
-STAGES: tuple[str, ...] = ("site", "strategy", "budget", "needs", "planning", "requisitions", "tenders")
+STAGES: tuple[str, ...] = ("site", "strategy", "budget", "needs", "planning", "requisitions", "tenders", "bid_submission")
 
 # Namespaces whose rows are canonical and survive `reset`.
 STRATEGY_NS = "str-chg-001-mvp1"
@@ -681,10 +681,20 @@ def seed(*, through: str = STAGES[-1]) -> dict[str, Any]:
 				pluck="name",
 			):
 				frappe.db.set_value("Funding Reservation", reservation, "fixture_namespace", REQUISITIONS_NS, update_modified=False)
-	if last >= STAGES.index("tenders"):
+	if last >= STAGES.index("tenders") and last < STAGES.index("bid_submission"):
 		from kentender_procurement.tenders.seeds.kentender_mvp_v1 import upsert_tenders_base
 
 		report["tenders"] = upsert_tenders_base(commit=False)
+	if last >= STAGES.index("bid_submission"):
+		# BDS-CHG-001 v0.8 plan D19: the canonical Tender's chronology with the
+		# bid's own lifecycle interleaved (Start bid 19 May … Mary's accepted
+		# submission 10 Jun … the close and Bid Opening hand-off 12 Jun). It
+		# builds the Tenders stage itself, so the Tender is never first closed
+		# with the bid still a Draft.
+		from kentender_procurement.bid_submission.seeds.kentender_mvp_v1 import upsert_bid_submission_base
+
+		report["bid_submission"] = upsert_bid_submission_base(commit=False)
+		report["tenders"] = {"ok": True, "via": "bid_submission", "tender": report["bid_submission"].get("tender")}
 	return report
 
 
@@ -844,6 +854,11 @@ def validate(*, through: str = STAGES[-1]) -> dict[str, Any]:
 
 		for row in validate_tenders_seed():
 			check(row["ok"], f"{row['check']}: {row['detail']}")
+	if last >= STAGES.index("bid_submission"):
+		from kentender_procurement.bid_submission.seeds.kentender_mvp_v1 import validate_bid_submission_seed
+
+		for row in validate_bid_submission_seed():
+			check(row["ok"], row["check"])
 
 	report = {"ok": not failures, "through": through, "failures": failures}
 	if failures:

@@ -67,7 +67,7 @@ def receive_tender_clarification(*, tender: str, candidate_registration_id: str,
 	if root.overall_status != "Published — open":
 		fail("TND_STALE_VERSION", "Clarifications are received only while the Tender is Published — open.")
 	registration = candidate_gateway.candidate_registration(tender=root.name, candidate_registration_id=candidate_registration_id)
-	if not registration:
+	if not registration or registration.get("status", "Active") != "Active":  # only an active candidate may ask
 		fail("TND_CLARIFICATION_CANDIDATE_REQUIRED")
 	received = get_datetime(received_at) if received_at else clock.now()
 	if root.clarification_deadline and received >= get_datetime(root.clarification_deadline):

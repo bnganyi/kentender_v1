@@ -143,7 +143,7 @@ onMounted(() => {
 				</div>
 				<p class="kt-page-desc">{{ __(data.page.description) }}</p>
 			</div>
-			<div class="kt-page-actions" data-testid="bds-receipt-actions">
+			<div class="kt-page-actions" :class="{ 'bds-actions-stack': narrow }" data-testid="bds-receipt-actions">
 				<template v-for="action in data.actions" :key="action.key">
 					<button
 						v-if="action.key === 'withdraw_bid'"

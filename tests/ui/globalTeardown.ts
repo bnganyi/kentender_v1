@@ -19,6 +19,12 @@ export default async function globalTeardown(): Promise<void> {
 	const site = process.env.UI_SITE || "kentender.midas.com";
 	const failures: string[] = [];
 	const restores = [
+		// BDS-CHG-001 v0.8 plan Phase 12 — the Bid Submission and supplier
+		// Account worlds first: their bids, test certificates, tender-box files
+		// and test suppliers sit on the Tenders world below (the Bid Submission
+		// restore also puts the test controls — clock, gate, outcomes — back).
+		"kentender_procurement.bid_submission.seeds.playwright_ui_fixtures.restore_site",
+		"kentender_suppliers.supplier_accounts.seeds.playwright_ui_fixtures.restore_site",
 		"kentender_procurement.procurement_planning.seeds.playwright_ui_fixtures.restore_site",
 		"kentender_procurement.procurement_requisitions.seeds.playwright_ui_fixtures.restore_site",
 		// TPR-CHG-001 v0.8 — the Tenders Playwright world extends the

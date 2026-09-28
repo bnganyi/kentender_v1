@@ -58,13 +58,17 @@ def candidate_audience(*, tender: str, at=None) -> list[dict[str, Any]]:
 
 
 def candidate_registration(*, tender: str, candidate_registration_id: str) -> dict[str, Any] | None:
+	"""The candidate's registration on this Tender, Active or Closed: closing
+	the submission period does not unregister anyone, so Tenders' protected
+	reads keep naming who asked and who was notified. Who is notified at an
+	instant is `candidate_audience`'s question."""
 	row = frappe.db.get_value(
-		ARRANGEMENT, {"tender": tender, "name": cstr(candidate_registration_id).strip(), "status": "Active"},
-		["name", "joint_venture_name", "lead_legal_name", "mandatory_notice_email", "notice_contact_version", "candidate_registered_at"], as_dict=True,
+		ARRANGEMENT, {"tender": tender, "name": cstr(candidate_registration_id).strip()},
+		["name", "status", "joint_venture_name", "lead_legal_name", "mandatory_notice_email", "notice_contact_version", "candidate_registered_at"], as_dict=True,
 	)
 	if not row:
 		return None
 	return {
 		"candidate_registration_id": row.name, "candidate_name": _name(row), "destination": cstr(row.mandatory_notice_email),
-		"destination_version": cstr(row.notice_contact_version or 1), "registered_at": row.candidate_registered_at,
+		"destination_version": cstr(row.notice_contact_version or 1), "registered_at": row.candidate_registered_at, "status": cstr(row.status),
 	}

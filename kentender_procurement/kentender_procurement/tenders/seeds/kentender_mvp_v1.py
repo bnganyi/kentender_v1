@@ -265,11 +265,24 @@ def register_candidate(*, tender_reference: str, at, supplier: dict[str, Any] | 
 	return frappe.get_attr(hooks[-1])(tender_reference=tender_reference, at=at, supplier=supplier)
 
 
-def upsert_tenders_base(*, commit: bool = False) -> dict[str, Any]:
+def upsert_tenders_base(*, commit: bool = False, interleave=None) -> dict[str, Any]:
 	"""§13.3 fixture — the primary Tender lifecycle through to a closed
 	submission period, built through the real commands. Idempotent: a
 	rerun that finds the canonical Tender already ended returns it
-	untouched."""
+	untouched.
+
+	`interleave(step, tender=…, tender_reference=…)` lets a downstream seed
+	act at named moments of this chronology without this module knowing
+	what it does (BDS-CHG-001 v0.8 plan D19: the canonical bid's lifecycle):
+	"candidate_registered", "addendum_effective", "before_close" and
+	"closed". Each callback's result is returned under `interleaved`."""
+	interleaved: dict[str, Any] = {}
+
+	def _step(step: str) -> None:
+		if interleave is not None:
+			root_now = frappe.db.get_value("Tender", name, "tender_reference")
+			interleaved[step] = interleave(step, tender=name, tender_reference=root_now)
+
 	from kentender_procurement.std_templates.services import installer as std_installer
 	from kentender_procurement.tenders.services import addenda, clarifications, configuration_gateway, draft_commands as cmd, lifecycle, publication, submission_close
 
@@ -358,6 +371,7 @@ def upsert_tenders_base(*, commit: bool = False) -> dict[str, Any]:
 	# which registers the candidate (TPR FU-25 retired the Tenders stand-in).
 	_clock("candidate")
 	candidate = register_candidate(tender_reference=root.tender_reference, at=CLOCK["candidate"])
+	_step("candidate_registered")
 
 	frappe.flags.kt_tenders_notice_sync = True
 	_clock("clarification_received")
@@ -406,14 +420,18 @@ def upsert_tenders_base(*, commit: bool = False) -> dict[str, Any]:
 		root.reload()
 	frappe.flags.kt_tenders_notice_transport = None
 	frappe.flags.kt_tenders_notice_sync = False
+	_step("addendum_effective")
+	_step("before_close")
+	root.reload()
 
 	_clock("close")
 	closed = submission_close.close_tender_submission_period(tender=name, idempotency_key=_key("close"), user="Administrator", force=True)
+	_step("closed")
 
 	frappe.flags.kt_tenders_clock = None
 	if commit:
 		frappe.db.commit()
-	return {"ok": True, "idempotent": False, "tender": name, "addendum": addendum, "clarification": clarification, "handoff": closed.get("handoff")}
+	return {"ok": True, "idempotent": False, "tender": name, "addendum": addendum, "clarification": clarification, "handoff": closed.get("handoff"), "interleaved": interleaved}
 
 
 def reset_tenders_seed(*, commit: bool = False) -> dict[str, int]:

@@ -15,7 +15,9 @@ Phase 5). A provider module exposes:
 - `candidate_audience(*, tender: str, at) -> list[dict]` — rows with
   `candidate_registration_id`, `destination`, `destination_version`;
 - `candidate_registration(*, tender: str, candidate_registration_id: str) -> dict | None`
-  — the Active registration of that candidate on that Tender.
+  — the registration of that candidate on that Tender, with its `status`
+  (Active, or Closed once the submission period closed: a closed period
+  does not unregister the candidate, so protected reads keep its name).
 
 Without a provider a Tender has no candidates: no notice audience and no
 clarification intake.

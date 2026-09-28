@@ -59,7 +59,7 @@ onMounted(() => {
 				<div class="bds-title-row"><h1 class="kt-page-title">{{ __(data.page.title) }}</h1></div>
 				<p class="kt-page-desc">{{ __(data.page.description) }}</p>
 			</div>
-			<div v-if="data.page.action" class="kt-page-actions">
+			<div v-if="data.page.action" class="kt-page-actions" :class="{ 'bds-actions-stack': narrow }">
 				<a :href="data.page.action.href" class="kt-btn" :class="[data.page.action.tone === 'primary' ? 'kt-btn-primary' : 'kt-btn-secondary', narrow ? 'bds-btn-block' : '']" data-testid="bds-review-action">{{ __(data.page.action.label) }}</a>
 			</div>
 		</div>

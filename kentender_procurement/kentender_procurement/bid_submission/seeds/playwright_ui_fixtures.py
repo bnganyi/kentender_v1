@@ -358,6 +358,81 @@ def change_bid_as_representative(*, bid_reference: str) -> dict[str, Any]:
 	return {"record_version": frappe.db.get_value("Bid Workspace", bid_reference, "record_version")}
 
 
+# -- the release pass (plan Phase 12): the §13.3 lifecycle on this world ------------------
+
+
+def fill_world_bid(*, bid_reference: str, tasks: list[str] | tuple[str, ...] = ("company", "requirements", "price"), at: str = MY_BIDS_STEPS["fill"]) -> dict[str, Any]:
+	"""David completes the named tasks with the §10.1 facts (the canonical
+	seed's own answers), through the real commands at `at`."""
+	from kentender_procurement.bid_submission.seeds import filling
+	from kentender_procurement.bid_submission.seeds import kentender_mvp_v1 as lifecycle
+
+	david = SUPPLIERS["afya"]["representative"]
+	saved = {flag: frappe.flags.get(flag) for flag in ("kt_bds_clock", "kt_bds_fixture_namespace")}
+	frappe.flags.kt_bds_clock = at
+	frappe.flags.kt_bds_fixture_namespace = NAMESPACE
+	try:
+		filling.fill_everything(bid_reference, user=david, tasks=tuple(tasks), answers=lifecycle.fixture_answers(bid_reference, at=at, actor=david))
+	finally:
+		for flag, value in saved.items():
+			frappe.flags[flag] = value
+	frappe.db.commit()
+	return {"status": frappe.db.get_value("Bid Workspace", bid_reference, "status")}
+
+
+def issue_world_addendum(*, tender_reference: str, instant: str = ADDENDUM_AT) -> dict[str, Any]:
+	"""The Tenders world issues its addendum (31 May); the pages then read at `instant`."""
+	tender = frappe.db.get_value("Tender", {"tender_reference": tender_reference}, "name")
+	state = tender_pw._issued_addendum(tender)
+	set_instant(instant)
+	frappe.db.commit()
+	return {"addendum": state.get("addendum")}
+
+
+def world_security(*, bid_reference: str) -> dict[str, Any]:
+	"""The instrument details the bid gave (what Charles reads off the original)."""
+	from frappe.utils import get_datetime
+
+	from kentender_procurement.bid_submission.services import bid_context, tender_security
+
+	security = tender_security.response(bid_context.load(bid_reference, actor=SUPPLIERS["afya"]["representative"], organisation="", at=get_datetime(MY_BIDS_AT)))
+	return {k: security.get(k) for k in ("security_type", "issuer", "reference", "amount", "currency")}
+
+
+def close_world(*, tender_reference: str, at: str = "2027-06-12 11:00:00") -> dict[str, Any]:
+	"""Tenders ends the submission period at the deadline and Bid Submission
+	closes the box and hands it to Bid Opening; the pages then read just after."""
+	from kentender_procurement.bid_submission.seeds import kentender_mvp_v1 as lifecycle
+	from kentender_procurement.tenders.services import submission_close
+
+	tender = frappe.db.get_value("Tender", {"tender_reference": tender_reference}, "name")
+	saved = frappe.flags.get("kt_tenders_clock")
+	frappe.flags.kt_tenders_clock = at
+	try:
+		submission_close.close_tender_submission_period(tender=tender, idempotency_key=_key(), user="Administrator", force=True)
+	finally:
+		frappe.flags.kt_tenders_clock = saved
+	closed = lifecycle._close(tender, at=at, namespace=NAMESPACE)
+	set_instant(frappe.utils.add_to_date(at, seconds=1, as_string=True))
+	frappe.db.commit()
+	import json
+
+	payload = json.loads(frappe.db.get_value("Bid Opening Handoff", closed["handoff"], "payload_json") or "{}")
+	return {"handoff": closed["handoff"], "payload_keys": sorted(payload), "envelopes": frappe.db.get_value("Bid Submission Close", closed["close"], "envelopes_sealed"), "payload_text": json.dumps(payload)}
+
+
+def issue_signatory_certificate(*, bid_reference: str) -> dict[str, Any]:
+	"""Mary obtains her certificate (from the Test Trust Service)."""
+	saved = frappe.flags.get("kt_bds_fixture_namespace")
+	frappe.flags.kt_bds_fixture_namespace = NAMESPACE
+	try:
+		certificate = _certificate(bid_reference)
+	finally:
+		frappe.flags.kt_bds_fixture_namespace = saved
+	frappe.db.commit()
+	return {"certificate": certificate}
+
+
 def revoke_signatory_certificate() -> dict[str, Any]:
 	"""BDS-DES-12-CERTIFICATE: Mary's certificates in this world are revoked."""
 	from kentender_procurement.bid_submission.test_services import trust

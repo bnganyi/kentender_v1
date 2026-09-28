@@ -57,6 +57,13 @@ describe("Receipt", () => {
 		expect(portal.go).toHaveBeenCalledWith("/tenders/TND-MOH-2027-033/bid/receipt/WD-MOH-2027-033-001");
 	});
 
+	it("stacks the three header actions on a narrow screen (board D at 390)", () => {
+		globalThis.__narrow = true;
+		const wrapper = mountWith(receiptPage());
+		expect(wrapper.get('[data-testid="bds-receipt-actions"]').classes()).toContain("bds-actions-stack");
+		expect(wrapper.findAll('[data-testid="bds-receipt-actions"] .kt-btn').every((b) => b.classes().includes("bds-btn-block"))).toBe(true);
+	});
+
 	it("lets the representative only read, print and download", () => {
 		const wrapper = mountWith(receiptPage("REPRESENTATIVE"));
 		expect(wrapper.findAll('[data-testid="bds-receipt-actions"] .kt-btn').map((b) => b.text())).toEqual(["Print receipt"]);

@@ -58,9 +58,11 @@ def sample_value(field: dict[str, Any]):
 	raise ValueError(kind)
 
 
-def fill_everything(bid: str, *, user: str) -> None:
+def fill_everything(bid: str, *, user: str, tasks: tuple[str, ...] = ("company", "requirements", "price"), answers: dict[str, dict[str, object]] | None = None) -> None:
 	"""Answer every visible editable field, add every required file and give the
-	Tender contact's telephone, through the real commands."""
+	Tender contact's telephone, through the real commands. `tasks` limits the
+	tasks answered; `answers` gives a task's values by field handle (the
+	canonical seed's §10.1 facts), used in place of the sample value."""
 	from kentender_procurement.bid_submission.services import evidence, reads, save, tender_contact
 
 	def version():
@@ -69,11 +71,12 @@ def fill_everything(bid: str, *, user: str) -> None:
 	arrangement = frappe.db.get_value("Bid Workspace", bid, "bidder_arrangement")
 	tender_contact.update_tender_contact(bid_reference=bid, email=user, phone="+254 709 555 015", expected_record_version=frappe.db.get_value("Bidder Arrangement", arrangement, "record_version"), idempotency_key=key(), user=user)
 	for _round in range(3):  # a controlling answer can reveal a field
-		for task in ("company", "requirements", "price"):
+		for task in tasks:
 			view = reads.get_bid_task(bid_reference=bid, task=task, user=user)
+			given = (answers or {}).get(task) or {}
 			values = {
-				f["handle"]: sample_value(f) for g in view["groups"] for f in g["fields"]
-				if f["editable"] and f["visible"] and f["kind"] != "evidence" and (f["value"] in (None, "", []) or f.get("issue"))
+				f["handle"]: given.get(f["handle"], sample_value(f)) for g in view["groups"] for f in g["fields"]
+				if f["editable"] and f["visible"] and f["kind"] != "evidence" and (f["value"] in (None, "", []) or f.get("issue") or (f["handle"] in given and f["value"] != given[f["handle"]]))
 			}
 			if values:
 				saved = save.save_bid_task(bid_reference=bid, task=task, values=values, expected_record_version=version(), idempotency_key=key(), user=user)
