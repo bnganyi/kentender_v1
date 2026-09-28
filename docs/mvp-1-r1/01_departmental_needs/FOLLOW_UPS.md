@@ -1596,5 +1596,5 @@ Done line names only the outcome. The specification is
 `KenTender_NDS-CHG-001_Clean_Departmental_Needs_v1_15.md` (Proposed), which
 records three decisions for the owner: keeping the two Planning result facts
 under "Where this requirement stands", the new wording, and the Planner's
-turns — all three decided by the owner on 28 Sep 2026 (keep the facts; wording approved; keep the Planner's turns); the document itself is still Proposed. **Still owed:** regenerated artboards for the guidance region and the
+turns — all three decided by the owner on 28 Sep 2026 (keep the facts; wording approved; keep the Planner's turns); the owner then approved NDS-CHG-001 v1.15 the same day. **Still owed:** regenerated artboards for the guidance region and the
 three Departmental plan facts (NDS15-XD-002).

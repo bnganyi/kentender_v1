@@ -4,10 +4,10 @@
 |---|---|
 | Version | **1.28** |
 | Date | 28 September 2026 |
-| Status | **Proposed — v1.27 was Approved; re-approval required** |
-| Approved on | Not yet approved (v1.27 approved on 25 September 2026) |
-| Approval record | None for v1.28. The v1.27 approval record (Project Owner instruction on 25 September 2026: **Also mark it as approved.**) applies to v1.27 only. The v1.26 approval record (Project Owner instruction on 25 September 2026: **Mark the document as approved.**) applies to v1.26 only. The v1.25 approval record (Project Owner approval on 23 September 2026: **Approved**.) applies to v1.25 only. |
-| Supersession | On approval, supersedes v1.27, approved 25 September 2026, which is then retained as historical evidence. v1.27 superseded v1.26, approved 25 September 2026, which is retained as historical evidence. v1.26 superseded v1.25, approved 23 September 2026. v1.25 superseded v1.24 and all earlier Planning implementation specifications in full. |
+| Status | **Approved** |
+| Approved on | 28 September 2026 (v1.27 approved on 25 September 2026) |
+| Approval record | Project Owner instruction on 28 September 2026: **Mark them as approved.** This record applies to v1.28. The v1.27 approval record (Project Owner instruction on 25 September 2026: **Also mark it as approved.**) applies to v1.27 only. The v1.26 approval record (Project Owner instruction on 25 September 2026: **Mark the document as approved.**) applies to v1.26 only. The v1.25 approval record (Project Owner approval on 23 September 2026: **Approved**.) applies to v1.25 only. |
+| Supersession | Supersedes v1.27, approved 25 September 2026, which is retained as historical evidence. v1.27 superseded v1.26, approved 25 September 2026, which is retained as historical evidence. v1.26 superseded v1.25, approved 23 September 2026. v1.25 superseded v1.24 and all earlier Planning implementation specifications in full. |
 | Decision authority | Project Owner approval of the corrected 30% denominator, calculation fixtures and dependent contracts; attached `thirty_percent_reservation_rule.pdf`; official Act and Regulations provisions recorded in approved LAW-REG-001 v1.2 |
 | UX basis | Planning Usability Blueprint v0.2, approved 13 September 2026; supersedes conflicting v1.18/PLN-UX-001 presentation. Prior proof of concept is historical evidence of a limited walkthrough only |
 | Change scope | Workflow-guidance correction, on the Project Owner decision of 26 September 2026 ("Visible") about a Need accepted after its department's departmental plan was accepted, and the Project Owner instruction of 28 September 2026 to harmonize the accepted departmental plan page. Adds the §5.1.2 position rule, a §5.7 departmental-plan row and tracker rule, the outbound position contract to Departmental Needs (§7.3), a hand-off row (§7.7), U01 and U02–U05 variants and the heading rule for a plan nobody can edit (§§10.1A.2, 10.3, 10.4), action-map rows (§11.9), a negative fixture (§13.4), acceptance (§14.13), an owner dependency (§15.2), ledger and change rows (§§17.1, 17.4) and the v1.28 approval effect (§18.0). All v1.27 content is retained. |
@@ -65,7 +65,7 @@ Statutory propositions retain their supplied provenance, reconciled by approved 
 
 **Owner-version reconciliation — v1.27.** Earlier versions of this document cited owner documents inconsistently: this table listed BUD v1.9 as approved, NDS v1.13, and LAW v1.2 and CFG v0.13 as proposed, while the control table, §17.2, §17.4 and the v1.25 approval effect (§18.3) state that LAW-REG-001 v1.2, CFG-CHG-002 v0.13 and BUD-CHG-001 v1.10 are approved, and §§4.1, 7.6 and 13.3 cite NDS v1.14 as approved. The current references are therefore **LAW-REG-001 v1.2, CFG-CHG-002 v0.13, BUD-CHG-001 v1.10, NDS-CHG-001 v1.14 and STR-CHG-001 v1.8, all approved**. Where a current rule in §§1–16 cites an earlier owner version, it is read as the current one; each such citation carries the reconciliation note. Citations in §17.3 and §17.4 remain historical provenance. This reconciliation follows the document's own approval record; it is not a fresh inspection of the owner documents, and any section number cited from an earlier owner version (for example CFG v0.11 §10) is confirmed against the current owner version when that document is next supplied.
 
-**v1.28 note.** NDS-CHG-001 v1.15 is proposed alongside this version. It carries the receiving side of the §7.3 position contract and the Need page's own next step. Until it is approved, NDS-CHG-001 v1.14 remains the approved Departmental Needs reference.
+**v1.28 note.** NDS-CHG-001 v1.15 is proposed alongside this version. It carries the receiving side of the §7.3 position contract and the Need page's own next step. Until it is approved, NDS-CHG-001 v1.14 remains the approved Departmental Needs reference. NDS-CHG-001 v1.15 was approved on 28 September 2026, the same day as this version, and is the current Departmental Needs reference.
 
 ### 1.3 Baseline section disposition
 
@@ -3133,11 +3133,11 @@ The 123 rows below comprise 72 refinements, 20 usability changes, 6 v1.20 compos
 
 ## 18. Approval effect
 
-### 18.0 v1.28 approval effect (proposed)
+### 18.0 v1.28 approval effect
 
-v1.28 is proposed, not approved. On approval it would supersede v1.27 and make binding: the §5.1.2 position rule; the §5.7 departmental-plan row and tracker rule; the §7.3 position contract to Departmental Needs; the §7.7 hand-off row; the U01-LATE-NEED and U02-ACCEPTED-LATE-NEED variants and the §10.4 heading rule; the §11.9 row; the §13.4 profile; PLN28-AC-001–005; and PLN28-CHG-001–004. NDS-CHG-001 v1.15 carries the matching receiving side (§15.2).
+**PLN-CHG-001 v1.28 is approved by the Project Owner** (Project Owner instruction on 28 September 2026: **Mark them as approved.**). It supersedes v1.27 and makes binding: the §5.1.2 position rule; the §5.7 departmental-plan row and tracker rule; the §7.3 position contract to Departmental Needs; the §7.7 hand-off row; the U01-LATE-NEED and U02-ACCEPTED-LATE-NEED variants and the §10.4 heading rule; the §11.9 row; the §13.4 profile; PLN28-AC-001–005; and PLN28-CHG-001–004. NDS-CHG-001 v1.15 carries the matching receiving side (§15.2).
 
-Recorded for the Project Owner: every headline and sentence in bold that v1.28 adds is new wording for review. **Project Owner decision, 28 September 2026: "Approved"** — the new wording in bold that v1.28 adds (§§5.7, 7.7, 10.3, 10.4). This settles the wording; it does not approve the document, which remains Proposed. FU-V127-03, FU-V127-04, FU-V127-05 and FU-V127-06 items 1–3 remain owed and are not made by this version. This approval effect is not artboard approval, implementation or release evidence.
+Recorded for the Project Owner: every headline and sentence in bold that v1.28 adds is new wording for review. **Project Owner decision, 28 September 2026: "Approved"** — the new wording in bold that v1.28 adds (§§5.7, 7.7, 10.3, 10.4). This settles the wording; it does not approve the document, which remains Proposed. The Project Owner then approved v1.28 on 28 September 2026 (control table). FU-V127-03, FU-V127-04, FU-V127-05 and FU-V127-06 items 1–3 remain owed and are not made by this version. This approval effect is not artboard approval, implementation or release evidence.
 
 ### 18.1 v1.27 approval effect (retained)
 

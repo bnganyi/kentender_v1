@@ -9,11 +9,11 @@
 | Date | 28 September 2026 |
 | v1.14 date (retained) | 15 September 2026 |
 | Editorial correction | 15 September 2026: separate the accepted-exclusion fixture from the canonical Proceeding acceptance event; see NDS12-CHG-011. No business rule or approval lifecycle change. |
-| Status | **Proposed — v1.14 was Approved; re-approval required** |
-| Approved on | Not yet approved (v1.14 approved on 21 September 2026) |
-| Approval record | None for v1.15. The approval basis below applies to v1.14 only. |
+| Status | **Approved** |
+| Approved on | 28 September 2026 (v1.14 approved on 21 September 2026) |
+| Approval record | Project Owner instruction on 28 September 2026: **Mark them as approved.** This record applies to v1.15. The approval basis below applies to v1.14 only. |
 | Approval basis | Project Owner instruction on 21 September 2026: **This is substantially better. Mark as approved and move to Planning.** Functional/domain baseline remains approved NDS v1.13; presentation basis is approved KT-STD-001 v1.7. |
-| Supersedes | On approval, v1.14 (approved 21 September 2026), retained as historical evidence; v1.13 and earlier Departmental Needs implementation specifications; predecessors retained as historical evidence. |
+| Supersedes | v1.14 (approved 21 September 2026), retained as historical evidence; v1.13 and earlier Departmental Needs implementation specifications; predecessors retained as historical evidence. |
 | Module | Departmental Needs |
 | Standards | Governed by approved KT-STD-001 v1.7, including task-led composition, page archetypes, information priority, comprehension gates and §3A.6 technical read; AUTH v1.7 remains the inspected owner baseline subject to the named shared-owner follow-up. From v1.15, next-step, journey, hand-off and dead-end content follows approved KT-STD-001 v1.9 §2.9 and KT-STD-001 §3B (approved 26 September 2026). |
 | Implementation posture | Clean correction in place; no compatibility layer |
@@ -1968,9 +1968,9 @@ Future fulfilment derivation, tender amendment for scope expansion, accounting i
 
 ## 20. Approval effect
 
-### 20.1 v1.15 approval effect (proposed)
+### 20.1 v1.15 approval effect
 
-v1.15 is proposed, not approved. On approval it would supersede v1.14 and make binding: the intake projection and command (§4.11, §8.2); the next step, journey and wording (§5.5); the hand-off register (§7.6); the Departmental plan variants and the guidance-region replacements (§11.8B, §11.18); the action-map rows (§12.10); NDS15-AC-001–007; and six change rows. The full contract would then contain **132 acceptance criteria** (125 retained plus seven), **56 change-register rows** (50 retained plus six) and **17 named owner or verification dependencies** (15 retained plus two).
+**NDS-CHG-001 v1.15 is approved by the Project Owner** (Project Owner instruction on 28 September 2026: **Mark them as approved.**). It supersedes v1.14 and makes binding: the intake projection and command (§4.11, §8.2); the next step, journey and wording (§5.5); the hand-off register (§7.6); the Departmental plan variants and the guidance-region replacements (§11.8B, §11.18); the action-map rows (§12.10); NDS15-AC-001–007; and six change rows. The full contract contains **132 acceptance criteria** (125 retained plus seven), **56 change-register rows** (50 retained plus six) and **17 named owner or verification dependencies** (15 retained plus two).
 
 Decisions recorded for the Project Owner with this version:
 
@@ -1978,7 +1978,7 @@ Decisions recorded for the Project Owner with this version:
 - **New wording.** Every headline, sentence and fix label in bold in §5.5, §7.6 and §11.8B is new wording for review.
 - **The Procurement Planner's turns** in §5.5 go beyond the owner decision of 26 September 2026. They were added because the dead-end matrix found the Planner told to wait for themselves. Recommendation: keep them.
 
-**Project Owner decisions, 28 September 2026**, answering the three points above in order: **"1. Keep"** — the two Planning result facts stay under "Where this requirement stands"; **"2. Approved"** — the new wording in bold in §5.5, §7.6 and §11.8B; **"3. Keep them"** — the Procurement Planner's turns in §5.5. These decisions settle the content of v1.15. They do not approve the document; v1.15 remains Proposed until the Project Owner approves it.
+**Project Owner decisions, 28 September 2026**, answering the three points above in order: **"1. Keep"** — the two Planning result facts stay under "Where this requirement stands"; **"2. Approved"** — the new wording in bold in §5.5, §7.6 and §11.8B; **"3. Keep them"** — the Procurement Planner's turns in §5.5. These decisions settle the content of v1.15. They do not approve the document; v1.15 remains Proposed until the Project Owner approves it. The Project Owner then approved v1.15 on 28 September 2026 (control table).
 
 This approval effect is not artboard approval, implementation or release evidence.
 
