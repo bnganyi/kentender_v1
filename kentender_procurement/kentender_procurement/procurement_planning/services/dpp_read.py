@@ -295,25 +295,13 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 		badge, badge_kind = display_state, "live"
 	# §5.1 "Accepted; change required → Create update": the department's own
 	# actors, on an accepted plan with no open successor. An accepted plan never
-	# re-projects Needs itself (§5.3 inv. 1), so name the ones it is missing.
+	# re-projects Needs itself (§5.3 inv. 1); the next step names the ones it
+	# is missing.
 	can_create_update = (
 		access in ("author", "hod")
 		and root.current_state == "Accepted"
 		and cstr(root.current_version) == cstr(root.current_accepted_version)
 	)
-	update_notice = None
-	if can_create_update:
-		gaps = needs_intake.coverage_gaps(version)
-		if gaps:
-			plural = "need is" if len(gaps) == 1 else "needs are"
-			pronoun = "it" if len(gaps) == 1 else "them"
-			update_notice = {
-				"title": f"{len(gaps)} accepted {plural} not in this plan",
-				"text": (
-					f"{', '.join(gaps)} accepted after this plan was accepted. "
-					f"Create an update to carry {pronoun} into a new draft version, fund {pronoun} and resubmit."
-				),
-			}
 	attestation = ATTESTATION.format(department=labels["department_name"], financial_year=labels["financial_year"])
 	# §5.1 — the window gates only a first submission; a plan that has been
 	# submitted before may still send corrections and updates after close.
@@ -353,6 +341,10 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 		is_correction=is_correction, update_in_progress=update_in_progress,
 		reduced=access == "author" and bool(version) and version.version_status == "Draft",
 		update_requested_at=requests[0].requested_at if requests else None,
+		# Owner decision 26 Sep 2026 — Needs accepted after this plan was
+		# accepted: the department's turn to Create update (the next step
+		# replaces the separate notice this used to raise).
+		late_needs=needs_intake.late_needs(root),
 	)
 	return {
 		"outcome": "OK",
@@ -408,7 +400,6 @@ def get_departmental_plan(*, dpp_reference: str, user: str | None = None) -> dic
 		"mutable": mutable,
 		"can_submit": mutable and ready and access == "hod",
 		"can_create_update": can_create_update,
-		"update_notice": update_notice,
 		"update_request_notice": request_notice,
 		"has_returned_issues": bool(issues_by_entry) or bool(plan_issues),
 		# §4.4 — an issue against the whole submission rather than one entry.

@@ -69,6 +69,7 @@ NEEDS_DOCTYPES = frozenset(
 		"Need Withdrawal Request",
 		"Needs Intake Window",
 		"Need Planning Usage Projection",
+		"Need Planning Intake Projection",
 	}
 )
 

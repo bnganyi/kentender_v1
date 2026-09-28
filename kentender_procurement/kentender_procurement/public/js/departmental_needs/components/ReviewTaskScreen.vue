@@ -14,28 +14,13 @@
 			</div>
 		</div>
 
+		<!-- NDS-CHG-001 v1.15 §5.5 — the guidance region replaces the
+		     "Decision required" statement: the reviewer's next step leads,
+		     before any content (KT-STD-001 v1.9 §2.9.3 rule 1). -->
+		<div ref="guidanceEl" class="kt-guidance-mount" data-testid="nds-guidance"></div>
+
 		<div v-if="errorSummary" data-testid="nds-error-summary" class="kt-notice is-critical" style="max-width: 900px">
 			<div class="kt-notice-body">{{ errorSummary }}</div>
-		</div>
-
-		<!-- NDS-DES-06/09 — the decision statement leads, before any content. -->
-		<div class="kt-notice" style="max-width: 900px">
-			<svg class="kt-notice-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="m9 14 2 2 4-4" /></svg>
-			<div class="kt-notice-body">
-				<template v-if="isSuccessor">
-					<strong>Decision required</strong> — decide whether the proposed version should replace
-					the accepted requirement.
-				</template>
-				<template v-else>
-					<div style="font-family: var(--kt-font-heading); font-weight: 600; font-size: 16px; text-transform: uppercase; letter-spacing: 0.02em">
-						Decision required
-					</div>
-					<p style="margin: 6px 0 0">
-						Decide whether this requirement should be available to departmental procurement
-						planning.
-					</p>
-				</template>
-			</div>
 		</div>
 
 		<div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--kt-color-neutral-700)">
@@ -120,15 +105,15 @@
 				</button>
 			</div>
 		</div>
-		<p v-if="makerCheckerBlocked" class="text-muted" style="font-size: 14.5px; max-width: 900px">
-			You submitted this revision, so it must be decided by another Head of User Department.
-		</p>
+		<!-- v1.15 — "You submitted this revision…" is the maker's next-step
+		     sentence now, stated once in the guidance region. -->
 	</div>
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import RequirementCard from "./RequirementCard.vue";
+import { followFix, useGuidance } from "../../nds_shared/composables/useGuidance.js";
 import { formatDate, formatInstant } from "../data/format.js";
 
 const props = defineProps({
@@ -143,8 +128,13 @@ const props = defineProps({
 	makerCheckerBlocked: Boolean,
 	errorSummary: { type: String, default: "" },
 	pending: Boolean,
+	nextStep: { type: Object, default: null },
+	journey: { type: Object, default: null },
 });
 defineEmits(["return", "accept", "decline", "refresh"]);
+
+const guidanceEl = ref(null);
+useGuidance(guidanceEl, { answer: () => props.nextStep, journey: () => props.journey }, { onFix: followFix });
 
 const isSuccessor = computed(() => props.taskType === "Successor acceptance");
 

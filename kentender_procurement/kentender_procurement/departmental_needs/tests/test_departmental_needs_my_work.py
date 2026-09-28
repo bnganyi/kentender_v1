@@ -102,9 +102,11 @@ class TestMyWorkProvider(DepartmentalNeedsCommandCase):
 		self.assertEqual(self.rows_for(user, reference), [])
 		self.assertEqual(len(self.rows_for(second, reference)), 1)
 
-	def test_a_non_reviewer_gets_no_rows_at_all(self):
-		self.submit(self.create())
-		self.assertEqual(self.assigned_for(AUTHOR), [])
+	def test_a_non_reviewer_gets_no_review_row(self):
+		# v1.15 §7.6: the author now has their own waiting-on item for this
+		# Need, but never a decision row.
+		reference = self.reference(self.submit(self.create()))
+		self.assertEqual(self.rows_for(AUTHOR, reference), [])
 
 	def test_a_technical_reader_gets_no_rows_even_though_frappe_projects_every_role(self):
 		# KT-STD-001 v1.5 §3A.6 / AUTH-ADR-001 §8 — Administrator decides
@@ -125,6 +127,58 @@ class TestMyWorkProvider(DepartmentalNeedsCommandCase):
 		rows = [row for row in result["buckets"]["assigned"] if row["reference"] == reference]
 		self.assertEqual(len(rows), 1)
 		self.assertEqual(rows[0]["route"], ["departmental-needs", "review", submitted["task"]])
+
+
+class TestAuthorHandoffs(DepartmentalNeedsCommandCase):
+	"""NDS-CHG-001 v1.15 §7.6 — the author's side of each hand-off."""
+
+	def rows(self, user: str, bucket: str, reference: str) -> list[dict]:
+		return [row for row in my_work_rows(user=user)[bucket] if row["reference"] == reference]
+
+	def reference(self, result) -> str:
+		return frappe.db.get_value("Departmental Need", result["need"], "need_reference")
+
+	def test_a_submitted_need_is_the_authors_waiting_item_until_the_decision(self):
+		submitted = self.submit(self.create())
+		reference = self.reference(submitted)
+		[row] = self.rows(AUTHOR, "waiting", reference)
+		self.assertEqual(row["title"], "Waiting for Head of Department review")
+		self.assertEqual(row["status"], "Waiting")
+		self.assertEqual(row["route"], ["departmental-needs", reference])
+		self.assertEqual(row["holder"]["role"], "Head of User Department")
+		self.assertTrue(row["since"]["display"])
+		self.assertFalse(row["can_open"])
+		self.assertEqual(self.rows(AUTHOR, "assigned", reference), [])
+		self.decide(submitted, "accept")
+		self.assertEqual(self.rows(AUTHOR, "waiting", reference), [])
+
+	def test_a_returned_need_is_the_authors_correction_with_the_reason(self):
+		returned = self.decide(self.submit(self.create()), "return", reason=REASON)
+		reference = self.reference(returned)
+		[row] = self.rows(AUTHOR, "assigned", reference)
+		self.assertEqual(row["title"], f"Correct and resubmit {self.content()['title']}")
+		self.assertEqual(row["stage"], REASON)
+		self.assertEqual(row["route"], ["departmental-needs", reference, "edit"])
+		self.assertEqual(row["action_label"], "Correct need")
+		self.assertRegex(row["received_at"], r"^\d{1,2} [A-Z][a-z]{2} \d{4}, \d{2}:\d{2} EAT$", "never a raw timestamp")
+		self.assertTrue(row["can_open"])
+		self.assertEqual(self.rows(AUTHOR, "waiting", reference), [])
+		# The reviewer who returned it has nothing left for this Need.
+		self.assertEqual(self.rows(REVIEWER, "assigned", reference), [])
+
+	def test_a_requested_withdrawal_waits_on_the_decision(self):
+		accepted = self.accepted()
+		reference = self.reference(accepted)
+		self.assertEqual(self.rows(AUTHOR, "waiting", reference), [])
+		frappe.set_user(AUTHOR)
+		lifecycle.request_withdrawal(
+			need=accepted["need"],
+			expected_version=accepted["record_version"],
+			idempotency_key=self.key(),
+			reason=REASON,
+		)
+		[row] = self.rows(AUTHOR, "waiting", reference)
+		self.assertIn(row["title"], ("Waiting for the withdrawal decision", "Waiting for a Planning change"))
 
 
 class TestReviewerNotificationRoute(DepartmentalNeedsCommandCase):

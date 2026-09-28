@@ -115,15 +115,10 @@
 				</div>
 			</div>
 
-			<div v-if="plan.update_notice" class="kt-notice is-warning" data-testid="pln-dpp-update-notice">
-				<svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-					<path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path>
-				</svg>
-				<div class="kt-notice-body">
-					<strong>{{ plan.update_notice.title }}</strong>
-					<p>{{ plan.update_notice.text }}</p>
-				</div>
-			</div>
+			<!-- Needs accepted after this plan was accepted are named by the next
+			     step above ("Your turn — Add … to this plan"), with Create update
+			     as the principal action; it replaced a separate notice here that
+			     stated the same thing (owner decision 26 Sep 2026). -->
 
 			<!-- Summary strip. The Author's cost label says "entered so far" because
 			     that is what it is: no complete departmental total exists yet. -->
@@ -366,6 +361,22 @@ const isHod = computed(() => props.plan.access === "hod");
 
 const heading = computed(() => {
 	const department = context.value.department_name || context.value.department || "your department";
+	// Owner instruction 28 Sep 2026 — a plan nobody can edit is not asked to be
+	// reviewed and submitted: an accepted plan beside "Your turn: Add … to this
+	// plan" read as a contradiction. The heading names the plan and its state;
+	// what to do next is the next step's to say.
+	if (!props.plan.mutable && props.plan.version?.status === "Submitted") {
+		return {
+			title: `${department}'s departmental plan`,
+			description: "Submitted to Procurement for review. It cannot be changed while Procurement reviews it.",
+		};
+	}
+	if (!props.plan.mutable && props.plan.current_state === "Accepted") {
+		return {
+			title: `${department}'s departmental plan`,
+			description: "Accepted by Procurement for this financial year.",
+		};
+	}
 	if (isHod.value) {
 		return {
 			title: `Review ${department}'s departmental plan`,

@@ -178,6 +178,11 @@ def _dpp_rows(fiscal_year: str, permitted_units: set[str] | None, window_open: b
 			status, kind = "Accepted · update in progress", "attention"
 		elif root.current_state in ("Draft", "Withdrawn") and not window_open and not root.current_accepted_version:
 			status, kind = "Not submitted — window closed", "critical"
+		# Owner decision 26 Sep 2026 — an accepted plan missing Needs accepted
+		# after it is not finished: only the department's update adds them.
+		late = needs_intake.late_needs(root)
+		if late:
+			status, kind = f"Accepted · {len(late)} accepted need{'s' if len(late) != 1 else ''} not in plan", "attention"
 		accepted_number = (
 			frappe.db.get_value("Departmental Plan Version", root.current_accepted_version, "version_number")
 			if root.current_accepted_version else None
@@ -199,6 +204,7 @@ def _dpp_rows(fiscal_year: str, permitted_units: set[str] | None, window_open: b
 				"accepted_submission": accepted_number,
 				"open_submission": open_number,
 				"route": ["departmental-procurement-plan", root.dpp_reference] if can_open_dpp else None,
+				"late_needs": needs_intake.need_list(late) if late else "",
 			}
 		)
 	return rows
@@ -629,7 +635,11 @@ def _own_departmental_section(dpp_rows, departmental_units, *, window_open: bool
 			("Financial year", financial_year_label),
 			("Status", row["status"]),
 		],
-		"action": "Continue departmental plan" if row["state"] == "Draft" else "View departmental plan",
+		"action": (
+			"Continue departmental plan" if row["state"] == "Draft"
+			else "Create update" if row["late_needs"]
+			else "View departmental plan"
+		),
 		"route": row["route"],
 	}
 
@@ -711,6 +721,18 @@ def get_planning_workspace(*, financial_year: str | None = None, user: str | Non
 		elif row["state"] == "Returned":
 			returned = _returned_on(row["version_name"])
 			actionable.append(_action("Correct and resubmit departmental plan", f"{detail} · returned {returned}" if returned else detail, "Correct", row["route"], "critical"))
+		elif row["late_needs"]:
+			# Owner decision 26 Sep 2026 — a Need accepted after this plan was
+			# accepted: the department's own task, named for the need, leading
+			# to the plan where Create update is the principal action.
+			actionable.append(
+				_action(
+					f"Add {row['late_needs']} to the departmental plan",
+					# One sentence, not facts joined by "·" (PLN-CHG-001 v1.28 §10.3).
+					f"Accepted after {row['department']}'s departmental plan was accepted.",
+					"Create update", row["route"], "attention",
+				)
+			)
 		# A Submitted plan adds nothing here: §10.3's own rule is "waiting
 		# work is status on its document, not a duplicate disabled task",
 		# and the artboard's own U01 register ends at the plan count with no

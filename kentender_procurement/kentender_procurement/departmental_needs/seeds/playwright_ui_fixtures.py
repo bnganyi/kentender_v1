@@ -229,6 +229,7 @@ def purge_untagged_needs_since(since: str, *, commit: bool = True) -> dict[str, 
 		if projections:
 			frappe.db.delete("Need Planning Disposition Projection", {"name": ("in", projections)})
 		removed["Need Planning Disposition Projection"] = len(projections)
+		removed["Need Planning Intake Projection"] = _delete_leaked_planning_positions(needs)
 		frappe.db.delete("Notification Log", {"document_type": "Departmental Need", "document_name": ("in", needs)})
 	if commit:
 		frappe.db.commit()
@@ -258,6 +259,19 @@ def _delete_leaked_disposition_projections(needs: list[str]) -> int:
 	return len(rows)
 
 
+def _delete_leaked_planning_positions(needs: list[str]) -> int:
+	"""`Need Planning Intake Projection` — Planning's position for an accepted
+	Need, named after the Need itself — has the same reused-reference hazard
+	as the disposition projection above: left behind, it would tell the next
+	Need to take that reference that it is missing from its plan."""
+	if not needs:
+		return 0
+	rows = frappe.db.get_all("Need Planning Intake Projection", filters={"departmental_need": ("in", needs)}, pluck="name")
+	if rows:
+		frappe.db.delete("Need Planning Intake Projection", {"name": ("in", rows)})
+	return len(rows)
+
+
 def reset_all(*, commit: bool = False) -> dict[str, Any]:
 	"""Remove every Playwright-owned row, leaving the §14 seed untouched."""
 	_guard()
@@ -269,6 +283,7 @@ def reset_all(*, commit: bool = False) -> dict[str, Any]:
 			frappe.db.delete(doctype, {"name": ("in", names)})
 		removed[doctype] = len(names)
 	removed["Need Planning Disposition Projection"] = _delete_leaked_disposition_projections(needs)
+	removed["Need Planning Intake Projection"] = _delete_leaked_planning_positions(needs)
 	# A deleted Need's reference is free for the next command to reuse (§14.7's
 	# reference counter only sees what currently exists), so a stray
 	# Notification Log row addressed to the old `document_name` would
@@ -319,6 +334,7 @@ def purge_fixture_needs(*, namespace: str, commit: bool = True) -> dict[str, Any
 			frappe.db.delete(doctype, {"name": ("in", names)})
 		removed[doctype] = len(names)
 	removed["Need Planning Disposition Projection"] = _delete_leaked_disposition_projections(needs)
+	removed["Need Planning Intake Projection"] = _delete_leaked_planning_positions(needs)
 	if needs:
 		frappe.db.delete("Notification Log", {"document_type": "Departmental Need", "document_name": ("in", needs)})
 	if commit:

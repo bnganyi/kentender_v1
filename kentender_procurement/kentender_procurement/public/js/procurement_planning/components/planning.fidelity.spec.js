@@ -136,7 +136,7 @@ function dpp(over = {}) {
 			],
 			included_cost_display: "KES 30,000,000",
 			certification: { show: false }, submit_hint: "Your Head of Department must review and submit this plan.",
-			open_task: null, update_notice: null,
+			open_task: null,
 			next_step: AUTHOR_DRAFT_TURN,
 			journey: dppJourney("preparation", { holder: "Grace Wanjiku", reduced: true }),
 			...over,

@@ -46,6 +46,7 @@ from kentender_procurement.departmental_needs.services.permissions import (
 )
 from kentender_procurement.departmental_needs.services.usage import (
 	planning_disposition_detail,
+	planning_intake_detail,
 	planning_usage,
 	planning_usage_detail,
 )
@@ -442,6 +443,18 @@ def get_review_task(*, task: str, decision_token: str = "", user: str | None = N
 		# them even when the task is open (NDS-BR-006).
 		"maker_checker_blocked": is_owner(doc, principal),
 		"access_profile": profile,
+		# NDS-CHG-001 v1.15 §5.5 — the review screen states the same next step
+		# as the Need's own page, for this viewer and this task.
+		**_guidance(
+			doc,
+			principal,
+			(
+				[{"code": "withdrawal" if row.task_type == TASK_WITHDRAWAL else "review"}]
+				if row.status == TASK_OPEN and profile == "decider" and not is_owner(doc, principal)
+				else []
+			),
+			planning_intake_detail(doc.name, doc.current_accepted_revision, user=principal),
+		),
 	}
 
 
@@ -708,6 +721,8 @@ def get_need(*, need: str, user: str | None = None) -> dict[str, Any]:
 				# assignment the decision was taken under (§15 snapshot).
 				"capacity": _acceptance_capacity(row.effective_assignment),
 			}
+	actions = _actions(doc, principal, profile)
+	planning_intake = planning_intake_detail(doc.name, doc.current_accepted_revision, user=principal)
 	return {
 		"ok": True,
 		"need": doc.as_dict(no_nulls=True),
@@ -727,7 +742,26 @@ def get_need(*, need: str, user: str | None = None) -> dict[str, Any]:
 		# PLN-CHG-001 v1.18 §5.1.4 — the accepted Planning disposition, shown
 		# as Planning information; it changes neither lifecycle nor usage.
 		"planning_disposition": planning_disposition_detail(doc.name),
+		# Owner decision 26 Sep 2026 — accepted but not in the department's
+		# plan yet (the plan was accepted, or was with Procurement, first).
+		"planning_intake": planning_intake,
 		"open_task": _open_review_task(doc.name),
-		"actions": _actions(doc, principal, profile),
+		"actions": actions,
 		"access_profile": profile,
+		# NDS-CHG-001 v1.15 §5.5 — where the Need stands and whose turn it is
+		# (KT-STD-001 v1.9 §3B.2), from the same actions this read returns.
+		**_guidance(doc, principal, actions, planning_intake),
 	}
+
+
+def _guidance(doc, principal: str, actions: list[dict[str, Any]], planning_intake) -> dict[str, Any]:
+	from kentender_procurement.departmental_needs.services.context import INTAKE_OPEN, needs_submission_state
+	from kentender_procurement.departmental_needs.services.guidance import need_guidance
+
+	return need_guidance(
+		doc,
+		principal=principal,
+		actions=actions,
+		intake_open=needs_submission_state(doc.financial_year)["state"] == INTAKE_OPEN,
+		planning_intake=planning_intake,
+	)

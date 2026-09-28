@@ -759,10 +759,9 @@ class TestRemoveItemInSuccessorAndReActivation(PublicationCase):
 		self.assertEqual(read["active_view"]["items"][0]["plan_item_id"], item_b_id)
 
 
-class TestNeedOriginUsagePublishing(PublicationCase):
-	"""§7.1's outbound event proved against a genuine accepted Need created
-	through NDS's own real command chain, so the Need-origin DPP intake, the
-	not-proceeding outcome and the activation publisher round-trip for real."""
+class RealNeedsCase(PublicationCase):
+	"""A Planning case whose accepted Needs are genuine, created through
+	NDS's own real command chain. No tests of its own."""
 
 	MOCK_NEEDS = False
 
@@ -775,6 +774,11 @@ class TestNeedOriginUsagePublishing(PublicationCase):
 			site_configuration.open_needs_submission(fiscal_year=fx.FY_OPEN, reason="Planning test: Need-origin fixtures")
 		self.addCleanup(self._restore_needs_flag)
 		self._wipe_need_fixture()
+		# This bench commits test writes: take the genuine Needs, and the plans
+		# built on them, away again afterwards too (cleanups run last-first),
+		# or the next module's department starts with a stranger's Need in it.
+		self.addCleanup(self._wipe_need_fixture)
+		self.addCleanup(fx.wipe_planning_rows)
 
 	def _restore_needs_flag(self):
 		from kentender_core.services import site_configuration
@@ -788,6 +792,8 @@ class TestNeedOriginUsagePublishing(PublicationCase):
 		needs = frappe.get_all("Departmental Need", filters={"organisation_unit": fx.OU_ALPHA, "name": ("!=", fx.NEED)}, pluck="name")
 		versions = frappe.get_all("Departmental Need Revision", filters={"departmental_need": ("in", needs or ("",))}, pluck="name")
 		frappe.db.delete("Need Planning Usage Projection", {"name": ("in", versions or ("",))})
+		frappe.db.delete("Need Planning Disposition Projection", {"departmental_need": ("in", needs or ("",))})
+		frappe.db.delete("Need Planning Intake Projection", {"departmental_need": ("in", needs or ("",))})
 		frappe.db.delete("Departmental Need Decision", {"departmental_need": ("in", needs or ("",))})
 		frappe.db.delete("Departmental Need Review Task", {"departmental_need": ("in", needs or ("",))})
 		frappe.db.delete("Departmental Need Event", {"departmental_need": ("in", needs or ("",))})
@@ -824,6 +830,12 @@ class TestNeedOriginUsagePublishing(PublicationCase):
 			self.assertTrue(dpp_entry, "the accepted Need was not projected into the Draft DPP Version")
 			entries[need] = dpp_entry
 		return opened, entries
+
+
+class TestNeedOriginUsagePublishing(RealNeedsCase):
+	"""§7.1's outbound event proved against a genuine accepted Need created
+	through NDS's own real command chain, so the Need-origin DPP intake, the
+	not-proceeding outcome and the activation publisher round-trip for real."""
 
 	def test_activation_publishes_fully_included_then_removal_publishes_not_included(self):
 		need = self._accepted_need("Need-origin fixture requirement")

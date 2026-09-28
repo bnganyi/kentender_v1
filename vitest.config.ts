@@ -189,6 +189,9 @@ export default defineConfig({
 					// exceeds the 5 s default (measured 24 Sep 2026: 5.3–9.2 s).
 					testTimeout: 30_000,
 					environment: "jsdom",
+					// NDS-CHG-001 v1.15 §5.5 — the shared guidance region mounts
+					// through kentender_core's real bundle.
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/departmental_needs/vitest.setup.js"],
 					include: [
 						"kentender_procurement/kentender_procurement/public/js/departmental_needs/components/*.spec.js",
 					],

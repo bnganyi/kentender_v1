@@ -99,6 +99,33 @@ describe("desk_page.useRoute", () => {
 		expect(history.length).toBe(before + 1);
 	});
 
+	it("ignores a route that belongs to another page", async () => {
+		// 26 Sep 2026 — a link from one module's page to another's (a need's
+		// "Update departmental plan", "View annual plan item"): the router
+		// announces the new route while the outgoing page is still shown, and
+		// the outgoing app read it as its own record id ("need=DPP-…").
+		const { api } = probe(desk);
+		frappe.set_route("departmental-procurement-plan", "DPP-MOH-02314-2027-001");
+		routeHandlers.forEach((fn) => fn());
+		await nextTick();
+		expect(api().route.value).toEqual(["system-setup"]);
+		frappe.set_route("system-setup", "fiscal-years");
+		routeHandlers.forEach((fn) => fn());
+		await nextTick();
+		expect(api().route.value).toEqual(["system-setup", "fiscal-years"]);
+	});
+
+	it("follows a route to another page of its own group", async () => {
+		frappe.pages["system-setup"] = {};
+		desk.register("system-setup", { mount: () => ({}), pages: ["system-setup-sibling"] });
+		frappe.pages["system-setup"].on_page_show(document.createElement("div"));
+		const { api } = probe(desk);
+		frappe.set_route("system-setup-sibling", "x");
+		routeHandlers.forEach((fn) => fn());
+		await nextTick();
+		expect(api().route.value).toEqual(["system-setup-sibling", "x"]);
+	});
+
 	it("stops following once unmounted", async () => {
 		const { wrapper, api } = probe(desk, { hash: true });
 		const held = api();

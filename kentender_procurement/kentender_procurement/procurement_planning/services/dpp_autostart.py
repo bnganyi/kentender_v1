@@ -19,6 +19,11 @@ The work runs in its own savepoint and a failure is logged and dropped: an
 accepted Need must not be lost because Planning could not open a Draft, and
 `Start departmental plan` on the Planning workspace is still there to open one
 by hand.
+
+A department whose plan is already accepted (or with Procurement) keeps it as
+it is, so the new Need joins no plan here. The same reaction then projects
+each accepted Need's position back to Departmental Needs, and the Need's page
+tells the department to create an update (owner decision 26 Sep 2026).
 """
 
 from __future__ import annotations
@@ -68,6 +73,12 @@ def on_need_event(doc, method: str | None = None) -> None:
 			trigger_event=cstr(doc.get("event_id")),
 			fixture_namespace=cstr(doc.get("fixture_namespace")),
 		)
+		# An accepted or submitted plan is left as it is, so the Need may now
+		# be in no plan at all: tell Departmental Needs where it stands
+		# (owner decision 26 Sep 2026).
+		from kentender_procurement.procurement_planning.services import needs_intake
+
+		needs_intake.publish_need_positions(organisation_unit, fiscal_year, source=cstr(doc.get("event_id")))
 	except Exception:
 		frappe.db.rollback(save_point=SAVEPOINT)
 		frappe.log_error(

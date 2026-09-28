@@ -206,7 +206,7 @@ def _update_required_rows(user: str) -> list[dict[str, Any]]:
 	for root in frappe.get_all(
 		"Departmental Plan",
 		filters={"organisation_unit": ("in", sorted(units)), "current_state": "Accepted"},
-		fields=["name", "dpp_reference", "organisation_unit", "fiscal_year", "current_version", "current_accepted_version", "record_version", "modified"],
+		fields=["name", "dpp_reference", "organisation_unit", "fiscal_year", "current_state", "current_version", "current_accepted_version", "record_version", "modified"],
 		order_by="modified asc",
 		limit_page_length=0,
 	):
@@ -214,11 +214,12 @@ def _update_required_rows(user: str) -> list[dict[str, Any]]:
 			continue
 		if authz.dpp_read_profile(root.organisation_unit, user) not in ("author", "hod"):
 			continue
-		gaps = needs_intake.coverage_gaps(frappe.get_doc("Departmental Plan Version", root.current_version))
-		if not gaps:
+		late = needs_intake.late_needs(root)
+		if not late:
 			continue
 		department = cstr(frappe.db.get_value("Organisation Unit", root.organisation_unit, "unit_name") or root.organisation_unit)
-		count = _("1 accepted need not in plan") if len(gaps) == 1 else _("{0} accepted needs not in plan").format(len(gaps))
+		# Owner decision 26 Sep 2026 — name the need, not just a count.
+		count = _("{0} not in plan").format(needs_intake.need_list(late))
 		rows.append(
 			{
 				"task_id": f"{root.name}:update-required",

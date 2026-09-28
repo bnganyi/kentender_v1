@@ -9,12 +9,14 @@
 			<div style="font-family: var(--kt-font-heading); font-weight: 600; font-size: 22px; margin-top: 10px">{{ revision.title }}</div>
 			<div style="display: flex; align-items: center; gap: 12px; margin-top: 6px">
 				<span class="text-muted" style="font-size: 13px">{{ need.need_reference }} · Accepted revision {{ revision.revision_number }}</span>
-				<span class="kt-status" :class="dependency.included ? 'is-attention' : 'is-pending'">
-					{{ dependency.included ? "Waiting for a Planning change" : "Awaiting review" }}
-				</span>
 			</div>
 			<div class="text-muted" style="font-size: 12px; margin-top: 8px">Withdrawal request {{ request.name }}</div>
 		</div>
+
+		<!-- NDS-CHG-001 v1.15 §5.5 — the guidance region replaces the status
+		     badge ("Waiting for a Planning change" / "Awaiting review"): the
+		     next step names the state and whose turn it is. -->
+		<div ref="guidanceEl" class="kt-guidance-mount" data-testid="nds-guidance"></div>
 
 		<div v-if="errorSummary" data-testid="nds-error-summary" class="kt-notice is-critical" style="max-width: 900px">
 			<div class="kt-notice-body">{{ errorSummary }}</div>
@@ -152,8 +154,9 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import RequirementCard from "./RequirementCard.vue";
+import { followFix, useGuidance } from "../../nds_shared/composables/useGuidance.js";
 import { formatInstant } from "../data/format.js";
 
 const props = defineProps({
@@ -172,8 +175,13 @@ const props = defineProps({
 	errorSummary: { type: String, default: "" },
 	pending: Boolean,
 	dependencyChecking: Boolean,
+	nextStep: { type: Object, default: null },
+	journey: { type: Object, default: null },
 });
 defineEmits(["approve", "decline", "close", "view-plan-item", "retry-dependency"]);
+
+const guidanceEl = ref(null);
+useGuidance(guidanceEl, { answer: () => props.nextStep, journey: () => props.journey }, { onFix: followFix });
 
 const canDecline = computed(() => !props.makerCheckerBlocked && props.permitted.includes("decline"));
 const canApprove = computed(() => !props.makerCheckerBlocked && props.permitted.includes("approve"));

@@ -61,6 +61,12 @@
 			</div>
 		</div>
 
+		<!-- NDS-CHG-001 v1.15 §5.5 / KT-STD-001 v1.9 §2.9 — the guidance region:
+		     the journey tracker and the next step, below the page header and
+		     above the first working region. It is the page's one status
+		     narrative; the notices it replaced are gone (v1.15 §11.18). -->
+		<div ref="guidanceEl" class="kt-guidance-mount" data-testid="nds-guidance"></div>
+
 		<!-- NDS-DES-TERMINAL (decline/withdrawal) — "Decision reason" +
 		     Decided by/at for a declined Need, or Withdrawn by/at (no reason:
 		     §5.1's self-service withdrawal collects none) for a self-withdrawn
@@ -73,6 +79,7 @@
 					<span class="kt-label">Decision reason</span>
 					<p class="kt-factstack-value" style="margin: 8px 0 16px">{{ terminalDecision.reason }}</p>
 				</template>
+				<!-- The board's rows; v1.15's Done line names only the outcome. -->
 				<div class="kt-meta-row">
 					<div><span class="kt-label">{{ decidedByLabel }}</span><span class="kt-meta-value" style="font-size: 15px">{{ terminalDecision.actor_label }}</span></div>
 					<div><span class="kt-label">{{ decidedAtLabel }}</span><span class="kt-meta-value" style="font-size: 15px">{{ terminalDecision.occurred_label }}</span></div>
@@ -90,29 +97,23 @@
 			</div>
 		</div>
 
-		<div v-if="editAction" class="kt-notice is-warning" data-testid="nds-detail-editable">
-			<div class="kt-notice-body">
-				<template v-if="isReturned && latestReturn">
+		<!-- v1.15 — "This need has not been submitted…" and the Submitted notice
+		     were status narrative; the next step states both now. The return
+		     reason stays: it is the correction the Author has to make. -->
+		<div v-if="editAction" data-testid="nds-detail-editable">
+			<div v-if="isReturned && latestReturn" class="kt-notice is-warning">
+				<div class="kt-notice-body">
 					<strong>What needs to change</strong><br />
 					{{ latestReturn.reason }}
 					<div style="display: flex; gap: var(--kt-space-6); margin-top: var(--kt-space-3); font-size: 12px">
 						<div><strong style="color: var(--kt-color-text)">Returned by</strong> {{ latestReturn.actor_label }}</div>
 						<div><strong style="color: var(--kt-color-text)">Returned at</strong> {{ latestReturn.occurred_label }}</div>
 					</div>
-				</template>
-				<template v-else>This need has not been submitted for departmental review yet.</template>
+				</div>
 			</div>
 			<button class="kt-btn kt-btn-primary" style="margin-top: var(--kt-space-3)" data-testid="nds-detail-edit" @click="$emit('edit')">
 				{{ editAction.label }}
 			</button>
-		</div>
-
-		<div v-if="need.current_state === 'Submitted'" class="kt-notice is-info">
-			<div class="kt-notice-body">
-				Submitted for review. Your Head of Department must decide whether this requirement
-				should be available to Procurement Planning. The details cannot be edited while
-				review is pending.
-			</div>
 		</div>
 		<div v-if="reviewAction">
 			<button class="kt-btn kt-btn-primary" data-testid="nds-detail-review" @click="$emit('review', reviewAction)">
@@ -120,73 +121,15 @@
 			</button>
 		</div>
 
-		<!-- NDS-DES-08-DRAFT/SUBMITTED/OTHER-AUTHOR — an open successor's own
-		     revision status decides the notice, never the Need's root
-		     `current_state` (§5.2 holds that at "Accepted for planning" for
-		     the whole successor lifecycle). The action link is the maker's
-		     alone (`canOpenSuccessor` — accessProfile === owner); any other
-		     reader (OTHER-AUTHOR) sees the same fact with no link.
-		     NDS-DES-08-RETURNED (a successor sent back for correction) is not
-		     distinguishable from a fresh Draft with today's read contract — a
-		     returned successor's `current_revision` is immediately repointed
-		     to a brand-new correction copy (services/lifecycle.py
-		     `review_need`, same "preserve the snapshot, copy for editing"
-		     mechanism the primary-Need return path uses), so no field says
-		     "this Draft exists because of a return" the way the primary
-		     Need's own `current_state === 'Returned'` does. FOLLOW_UPS FU-38. -->
-		<div v-if="openSuccessor" class="kt-notice">
-			<div class="kt-notice-body">
-				<template v-if="successorSubmitted">
-					<div style="font-weight: 600; color: var(--kt-color-text)">Your changes are awaiting review</div>
-					<p v-if="canOpenSuccessor && submittedAt" class="text-muted" style="margin: 6px 0 0; font-size: 12px">
-						Submitted at {{ formatInstant(submittedAt) }}
-					</p>
-					<button
-						v-if="canOpenSuccessor"
-						type="button"
-						class="kt-action-link"
-						style="margin-top: 8px"
-						data-testid="nds-open-successor"
-						@click="$emit('open-successor')"
-					>
-						View proposed changes
-					</button>
-				</template>
-				<template v-else>
-					<div style="font-weight: 600; color: var(--kt-color-text)">Update in progress</div>
-					<button
-						v-if="canOpenSuccessor"
-						type="button"
-						class="kt-action-link"
-						style="margin-top: 8px"
-						data-testid="nds-open-successor"
-						@click="$emit('open-successor')"
-					>
-						Continue update
-					</button>
-					<!-- NDS-DES-11-OPEN-UPDATE — names the reason Request withdrawal is
-					     absent from the header while an update is open (ownerActions
-					     already omits it, §5.3); relevant to the maker alone. -->
-					<p v-if="canOpenSuccessor" style="margin: 12px 0 0">
-						An update is already in progress. Complete or cancel it before requesting withdrawal.
-					</p>
-				</template>
-			</div>
-		</div>
-
-		<!-- NDS-DES-11-REQUESTED — a withdrawal already open against a
-		     STILL-ACTIVE requirement leads with this headline instead of the
-		     inline "Where this requirement stands" warning below (which stays
-		     for the no-open-withdrawal STILL-ACTIVE case, NDS-DES-07A), so the
-		     same fact is never shown twice on one page. -->
-		<div v-if="withdrawalOpen && stillActive" class="kt-notice is-warning" data-testid="nds-withdrawal-waiting">
-			<div class="kt-notice-body">
-				<div style="font-weight: 600; color: var(--kt-color-text)">Waiting for a Planning change</div>
-				<p style="margin: 6px 0 0">
-					The annual plan has not yet been updated. Withdrawal cannot be approved while
-					this requirement remains included.
-				</p>
-			</div>
+		<!-- NDS-DES-08 / NDS-DES-11-REQUESTED — v1.15: the open update's status
+		     ("Update in progress", "Your changes are awaiting review"), its
+		     Continue update link and "Waiting for a Planning change" are the
+		     next step's headline, sentence and fix now, stated once. The maker
+		     keeps one way to read a submitted proposal. -->
+		<div v-if="successorSubmitted && canOpenSuccessor">
+			<button type="button" class="kt-action-link" data-testid="nds-open-successor" @click="$emit('open-successor')">
+				View proposed changes
+			</button>
 		</div>
 
 		<!-- §11.8 "Where this requirement stands" — Departmental plan and
@@ -218,7 +161,7 @@
 				</div>
 			</div>
 			<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 900px">
-				<div v-if="departmentalPlanStatus" class="kt-group">
+				<div v-if="departmentalPlanStatus" class="kt-group" data-testid="nds-departmental-plan-status">
 					<span class="kt-label">Departmental plan</span>
 					<div style="display: flex; align-items: center; gap: 10px; margin-top: 8px">
 						<span class="kt-status" :class="departmentalPlanStatus.cls">{{ departmentalPlanStatus.label }}</span>
@@ -229,7 +172,7 @@
 					     sentence (NDS-DES-07/07-PLANNER/07-AUDITOR/07A-PROCEEDING/
 					     RESTORED's "Included" explanation). -->
 					<div
-						v-if="departmentalPlanStatus.cls === 'is-attention'"
+						v-if="departmentalPlanStatus.reason"
 						style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--kt-color-divider)"
 					>
 						<span class="kt-label">Reason</span>
@@ -402,6 +345,7 @@
 <script setup>
 import { computed, ref } from "vue";
 import RequirementCard from "./RequirementCard.vue";
+import { useGuidance } from "../../nds_shared/composables/useGuidance.js";
 import { formatDate, formatInstant } from "../data/format.js";
 
 const props = defineProps({
@@ -412,6 +356,14 @@ const props = defineProps({
 	usage: { type: Object, default: () => ({}) },
 	// get_departmental_need().planning_disposition — Planning information only.
 	disposition: { type: Object, default: null },
+	// get_departmental_need().planning_intake — Planning's position for an
+	// accepted Need that is not in its department's plan yet (owner decision
+	// 26 Sep 2026); null when there is nothing to report.
+	planPosition: { type: Object, default: null },
+	// NDS-CHG-001 v1.15 §5.5 — the server's next step and journey for this
+	// viewer, drawn unchanged by the shared guidance region.
+	nextStep: { type: Object, default: null },
+	journey: { type: Object, default: null },
 	// §11.8A — the dedicated Planning-status re-check's own state (NDS-CHG-001
 	// v1.14 Phase 2), separate from this screen's own load.
 	olderUsage: { type: Object, default: null },
@@ -434,10 +386,11 @@ const props = defineProps({
 	pinnedRevision: { type: Object, default: null },
 	history: { type: Array, default: () => [] },
 });
-defineEmits([
+const emit = defineEmits([
 	"create-update",
 	"request-withdrawal",
 	"view-plan-item",
+	"guidance-fix",
 	"open-successor",
 	"edit",
 	"review",
@@ -445,6 +398,12 @@ defineEmits([
 ]);
 
 const olderRequirementOpen = ref(false);
+
+const guidanceEl = ref(null);
+useGuidance(guidanceEl, { answer: () => props.nextStep, journey: () => props.journey }, { onFix: (fix) => emit("guidance-fix", fix) });
+// A Done line names who completed the step and when (KT-STD-001 v1.9
+// §2.9.1), so the page does not state it a second time.
+const guidanceDone = computed(() => props.nextStep?.kind === "done");
 
 const planningHistoryOpen = ref(false);
 
@@ -526,7 +485,9 @@ function label(field) {
 // "… · Accepted by {actor}[ as {capacity}] on {date}".
 const orientationLine = computed(() => {
 	const parts = [label("organisation_unit"), label("financial_year")];
-	if (isAccepted.value) {
+	if (isAccepted.value && guidanceDone.value) {
+		// The Done line already says who accepted it and when (v1.15).
+	} else if (isAccepted.value) {
 		const actor = props.acceptedByLabel || props.authorLabel;
 		const capacity = props.acceptedCapacity ? ` as ${props.acceptedCapacity}` : "";
 		const when = props.acceptedAt ? ` on ${formatInstant(props.acceptedAt)}` : "";
@@ -546,7 +507,11 @@ const showPlanning = computed(() => isAccepted.value);
 // on while a check is in flight or has failed. Absent this, a failure is
 // UNAVAILABLE-NO-SNAPSHOT rather than UNAVAILABLE.
 const hasPlanningSnapshot = computed(
-	() => Boolean(props.disposition?.recorded) || Boolean(props.usage?.recorded) || Boolean(props.olderUsage)
+	() =>
+		Boolean(props.disposition?.recorded) ||
+		Boolean(props.usage?.recorded) ||
+		Boolean(props.olderUsage) ||
+		Boolean(props.planPosition)
 );
 const planningRefreshing = computed(() => props.planningChecking && hasPlanningSnapshot.value);
 const planningUnavailableWithSnapshot = computed(() => props.planningUnavailable && hasPlanningSnapshot.value);
@@ -570,12 +535,19 @@ const departmentalPlanStatus = computed(() => {
 	// decision recorded" sat beside a plan that demonstrably existed and read
 	// as if nothing had happened. The fact returns the moment Procurement
 	// accepts the departmental plan, as Included or Not included this year.
+	//
+	// Owner decision 26 Sep 2026 — the one exception: a Need accepted after
+	// its department's plan was accepted (or submitted) is in no plan yet, and
+	// saying nothing left it looking finished. Planning's position leads over
+	// any earlier disposition, which was about an earlier revision.
+	if (props.planPosition) return planPositionStatus(props.planPosition);
 	if (!props.disposition?.recorded) return null;
 	return props.disposition.disposition === "Not proceeding"
 		? {
 				cls: "is-attention",
 				label: `Not included this year${statusSuffix.value}`,
 				explanation: props.disposition.reason || "",
+				reason: true,
 			}
 		: {
 				cls: "is-live",
@@ -583,6 +555,30 @@ const departmentalPlanStatus = computed(() => {
 				explanation: "The accepted departmental plan includes this requirement.",
 			};
 });
+
+function planPositionStatus(position) {
+	const plan = `${position.department}'s departmental plan`;
+	if (position.position === "After current submission") {
+		return {
+			cls: "is-pending",
+			label: `Not in the plan yet${statusSuffix.value}`,
+			explanation: `${plan} was submitted before this need was accepted.`,
+		};
+	}
+	// v1.15 — what to do about it, and who, is the next step's to say.
+	if (position.carried_revision_number) {
+		return {
+			cls: "is-attention",
+			label: `Earlier revision in plan${statusSuffix.value}`,
+			explanation: `${plan} has revision ${position.carried_revision_number} of this need.`,
+		};
+	}
+	return {
+		cls: "is-attention",
+		label: `Not in the plan yet${statusSuffix.value}`,
+		explanation: `${plan} was accepted before this need.`,
+	};
+}
 const annualPlanStatus = computed(() => {
 	if (planningUnavailableNoSnapshot.value)
 		return { cls: "is-critical", label: "Unavailable", explanation: "" };

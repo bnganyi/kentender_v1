@@ -148,6 +148,19 @@ class TestCanonicalSelection(IntegrationTestCase):
 		canonical.clear_non_canonical()
 		self.assertFalse(frappe.db.exists("Need Planning Disposition Projection", row))
 
+	def test_a_planning_position_whose_need_is_gone_is_a_stray(self):
+		"""Owner decision 26 Sep 2026 — Planning's position for an accepted
+		Need is written unstamped, like the disposition above, and is named
+		after the Need: left behind, a reused Need reference would inherit
+		it. Selection only — the clear itself is the loop proved above."""
+		tag = uuid4().hex[:8]
+		need = f"NDS-GONE-{tag}"
+		frappe.get_doc(
+			{"doctype": "Need Planning Intake Projection", "name": need, "departmental_need": need, "position": "Update required"}
+		).db_insert()
+		self.addCleanup(frappe.db.delete, "Need Planning Intake Projection", {"name": need})
+		self.assertIn(need, canonical.collect_non_canonical().get("Need Planning Intake Projection", []))
+
 	def test_reset_removes_child_rows_and_files_whose_record_is_gone(self):
 		"""Found 26 Sep 2026: about 50,000 child-table rows and 1,734 files
 		on the dev site belonged to records that no longer existed — module

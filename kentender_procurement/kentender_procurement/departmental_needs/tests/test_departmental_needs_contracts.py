@@ -79,6 +79,9 @@ COMMAND_CONTRACTS = (
 	"project_need_planning_usage",
 	# PLN-CHG-001 v1.18 §5.1.4 — the accepted DPP disposition, separate from usage.
 	"project_need_planning_disposition",
+	# Owner decision 26 Sep 2026 — where an accepted Need stands against its
+	# department's plan (not in it yet: Create update).
+	"project_need_planning_intake",
 )
 from kentender_procurement.departmental_needs.tests import support
 
@@ -136,6 +139,9 @@ class TestContractSurface(ContractCase):
 			"project_need_planning_usage",
 			# PLN-CHG-001 v1.18 §7.3 — likewise keyed on the producer's event ID.
 			"project_need_planning_disposition",
+			# Owner decision 26 Sep 2026 — Planning's reconciled position: an
+			# unchanged position is a no-op, ordered on the source time.
+			"project_need_planning_intake",
 		}
 		for name in COMMAND_CONTRACTS:
 			if name in exempt:
@@ -795,3 +801,118 @@ class TestPlanningDispositionProjection(ContractCase):
 		with self.assertRaises(DepartmentalNeedError) as caught:
 			self.project(disposition="Deferred")
 		self.assertEqual(caught.exception.code, "NDS_FIELD_REQUIRED")
+
+
+class TestPlanningIntakeProjection(ContractCase):
+	"""Owner decision 26 Sep 2026 — where an accepted Need stands against its
+	department's plan, projected by Planning so the need's own page can say
+	it is not in the plan yet and link the department to Create update. The
+	same Planner-only, ordered, read-only projection shape as usage and
+	disposition; never a lifecycle change."""
+
+	DOCTYPE = "Need Planning Intake Projection"
+
+	def setUp(self):
+		super().setUp()
+		need = self.accepted_need().name
+		# The canonical Need may already carry Planning's real position; keep
+		# it and put it back exactly (this bench commits test writes).
+		saved = frappe.db.get_value(self.DOCTYPE, need, "*", as_dict=True)
+		frappe.db.delete(self.DOCTYPE, {"departmental_need": need})
+
+		def restore():
+			frappe.db.delete(self.DOCTYPE, {"departmental_need": need})
+			if saved:
+				frappe.get_doc({"doctype": self.DOCTYPE, **saved}).db_insert()
+
+		self.addCleanup(restore)
+
+	def project(self, **kwargs):
+		from kentender_procurement.departmental_needs.services.usage import project_planning_intake
+
+		frappe.set_user(PLANNER)
+		need = self.accepted_need()
+		values = {
+			"departmental_need": need.name,
+			"need_revision": need.current_accepted_revision,
+			"position": "Update required",
+			"departmental_plan": "DPP-MOH-02314-2027-001",
+			"source_event_id": self.key(),
+			"source_event_time": "2026-11-28 09:00:00",
+		}
+		values.update(kwargs)
+		return project_planning_intake(**values)
+
+	def intake(self, user):
+		from kentender_procurement.departmental_needs.services.usage import planning_intake_detail
+
+		need = self.accepted_need()
+		return planning_intake_detail(need.name, need.current_accepted_revision, user=user)
+
+	def test_only_planning_projects_and_it_changes_no_lifecycle_or_usage(self):
+		from kentender_procurement.departmental_needs.services.usage import planning_usage
+
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			self.project(user=AUTHOR)
+		self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
+		usage_before = planning_usage(self.accepted_need().name)
+		state_before = self.accepted_need().current_state
+		result = self.project()
+		self.assertTrue(result["ok"])
+		self.assertFalse(result["idempotent"])
+		self.assertEqual(planning_usage(self.accepted_need().name), usage_before)
+		self.assertEqual(self.accepted_need().current_state, state_before)
+
+	def test_the_department_is_told_to_create_an_update_and_others_only_see_the_fact(self):
+		self.project()
+		author = self.intake(AUTHOR)
+		self.assertEqual(author["position"], "Update required")
+		self.assertEqual(author["department"], "Digital Health")
+		self.assertEqual(author["departmental_plan"], "DPP-MOH-02314-2027-001")
+		self.assertEqual(author["carried_revision_number"], 0)
+		self.assertTrue(author["can_update"], "the department's own author may create the update")
+		planner = self.intake(PLANNER)
+		self.assertEqual(planner["position"], "Update required")
+		self.assertFalse(planner["can_update"], "a Planner cannot create a departmental update")
+		# KT-STD-001 §3B.6 — a technical reader is never offered the action.
+		self.assertFalse(self.intake("Administrator")["can_update"])
+
+	def test_nothing_to_report_once_the_need_is_in_the_plan(self):
+		self.project()
+		self.project(position="No update needed", source_event_time="2026-11-28 10:00:00")
+		self.assertIsNone(self.intake(AUTHOR))
+
+	def test_a_position_about_an_earlier_revision_is_not_reported(self):
+		need = self.accepted_need()
+		earlier = frappe.db.get_value(
+			"Departmental Need Revision",
+			{"departmental_need": need.name, "name": ("!=", need.current_accepted_revision)},
+			"name",
+		)
+		if not earlier:
+			self.skipTest("the canonical Need has only one revision")
+		self.project(need_revision=earlier)
+		self.assertIsNone(self.intake(AUTHOR))
+
+	def test_idempotent_and_ordered_on_the_source_time(self):
+		first = self.project()
+		self.assertFalse(first["idempotent"])
+		repeat = self.project()
+		self.assertTrue(repeat["idempotent"], "the same position again is not a change")
+		late = self.project(position="No update needed", source_event_time="2026-11-27 09:00:00")
+		self.assertTrue(late.get("superseded"))
+		self.assertEqual(self.intake(AUTHOR)["position"], "Update required")
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			self.project(position="Deferred")
+		self.assertEqual(caught.exception.code, "NDS_FIELD_REQUIRED")
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			self.project(departmental_need="NDS-DOES-NOT-EXIST")
+		self.assertEqual(caught.exception.code, "NDS_SCOPE_DENIED")
+
+	def test_the_need_reads_carry_the_position(self):
+		self.project()
+		need = self.accepted_need()
+		bundled = workspace.get_need(need=need.name, user=AUTHOR)
+		dedicated = planning_status_for_need(need.name, user=AUTHOR)
+		self.assertEqual(bundled["planning_intake"]["position"], "Update required")
+		self.assertEqual(dedicated["planning_intake"], bundled["planning_intake"])

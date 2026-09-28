@@ -137,13 +137,20 @@ def planning_status_for_need(need: str, user: str | None = None) -> dict[str, An
 	if not frappe.db.exists("Departmental Need", need):
 		fail("NDS_SCOPE_DENIED", "Departmental Need not found.")
 	doc = frappe.get_doc("Departmental Need", need)
-	require_view(doc, principal)
+	profile = require_view(doc, principal)
 	current_accepted_revision = cstr(doc.current_accepted_revision or "")
+	planning_intake = planning_intake_detail(need, current_accepted_revision, user=principal)
+	# The next step depends on Planning's position (NDS-CHG-001 v1.15 §5.5),
+	# so the dedicated re-check refreshes it with the facts it re-reads.
+	from kentender_procurement.departmental_needs.services import workspace
+
 	return {
 		"need": cstr(need),
 		"planning_usage": planning_usage_detail(need, current_accepted_revision),
 		"planning_disposition": planning_disposition_detail(need),
 		"older_usage": older_revision_usage(need, current_accepted_revision),
+		"planning_intake": planning_intake,
+		**workspace._guidance(doc, principal, workspace._actions(doc, principal, profile), planning_intake),
 		"checked_at": cstr(now_datetime()),
 	}
 
@@ -363,3 +370,120 @@ def project_planning_disposition(
 	else:
 		frappe.get_doc({"doctype": DISPOSITION_DOCTYPE, **values}).insert(ignore_permissions=True)
 	return {"ok": True, "idempotent": False, **planning_disposition_detail(need)}
+
+
+# --------------------------------------------------------------------------
+# Owner decision 26 Sep 2026 — where an accepted Need stands against its
+# department's plan. A Need accepted after the department's plan was accepted
+# is in no plan until the department creates an update; one accepted while the
+# plan is with Procurement goes into a later update. Planning reconciles the
+# department's plan and projects the result here, so the need's own page can
+# say so and send the department to Create update. Like usage and
+# disposition, it is Planning information only: no lifecycle or usage change.
+# --------------------------------------------------------------------------
+
+INTAKE_DOCTYPE = "Need Planning Intake Projection"
+INTAKE_NO_UPDATE = "No update needed"
+INTAKE_UPDATE_REQUIRED = "Update required"
+INTAKE_AFTER_SUBMISSION = "After current submission"
+INTAKE_POSITIONS = frozenset({INTAKE_NO_UPDATE, INTAKE_UPDATE_REQUIRED, INTAKE_AFTER_SUBMISSION})
+
+
+def _revision_number(revision: str) -> int:
+	return int(frappe.db.get_value("Departmental Need Revision", revision, "revision_number") or 0) if revision else 0
+
+
+def planning_intake_detail(need: str, current_accepted_revision: str, user: str | None = None) -> dict[str, Any] | None:
+	"""The Need's position against its department's plan, for this viewer —
+	or None when there is nothing to report: no position recorded, no update
+	is owed for it, or the position is about a revision that is no longer the
+	current accepted one (Planning reports again when it next reconciles)."""
+	from kentender_core.services.authorization import is_technical
+
+	from kentender_procurement.departmental_needs.constants import (
+		ROLE_DEPARTMENTAL_AUTHOR,
+		ROLE_HEAD_OF_USER_DEPARTMENT,
+	)
+
+	row = frappe.db.get_value(
+		INTAKE_DOCTYPE, cstr(need),
+		["need_revision", "position", "departmental_plan", "carried_revision"], as_dict=True,
+	)
+	if not row or row.position == INTAKE_NO_UPDATE or cstr(row.need_revision) != cstr(current_accepted_revision):
+		return None
+	principal = actor(user)
+	unit = cstr(frappe.db.get_value("Departmental Need", need, "organisation_unit"))
+	# The same two responsibilities Planning offers Create update to; a
+	# technical reader is never offered an action (KT-STD-001 §3B.6).
+	can_update = (
+		row.position == INTAKE_UPDATE_REQUIRED
+		and not is_technical(principal)
+		and any(
+			in_scope(principal, business_role=role, organisation_unit=unit)
+			for role in (ROLE_DEPARTMENTAL_AUTHOR, ROLE_HEAD_OF_USER_DEPARTMENT)
+		)
+	)
+	return {
+		"position": cstr(row.position),
+		"department": cstr(frappe.db.get_value("Organisation Unit", unit, "unit_name") or unit),
+		"departmental_plan": cstr(row.departmental_plan),
+		"revision_number": _revision_number(current_accepted_revision),
+		"carried_revision_number": _revision_number(cstr(row.carried_revision)),
+		"can_update": bool(can_update),
+	}
+
+
+def project_planning_intake(
+	*,
+	departmental_need: str,
+	need_revision: str,
+	position: str,
+	source_event_id: str,
+	departmental_plan: str = "",
+	carried_revision: str = "",
+	source_event_time: str | None = None,
+	user: str | None = None,
+) -> dict[str, Any]:
+	"""Accept Planning's position for one accepted Need. Unchanged values are
+	a no-op whatever the event id (Planning reconciles the whole department
+	after every plan change); ordered on `source_event_time`, so an older
+	position arriving late cannot overwrite a newer one. Only Procurement
+	Planning (or an administrative principal) may project it."""
+	principal = actor(user)
+	if not (in_scope(principal, business_role=ROLE_PROCUREMENT_PLANNER, organisation_unit="") or is_administrative(principal)):
+		fail("NDS_SCOPE_DENIED", "Only Procurement Planning may project a Need's planning position.")
+	value = cstr(position).strip()
+	if value not in INTAKE_POSITIONS:
+		fail("NDS_FIELD_REQUIRED", f"Position must be one of: {', '.join(sorted(INTAKE_POSITIONS))}.")
+	event_id = cstr(source_event_id).strip()
+	if not event_id:
+		fail("NDS_FIELD_REQUIRED", "A source event identifier is required.")
+	need = cstr(departmental_need).strip()
+	revision = cstr(need_revision).strip()
+	if not frappe.db.exists("Departmental Need", need):
+		fail("NDS_SCOPE_DENIED", "Departmental Need not found.")
+	if not revision:
+		fail("NDS_FIELD_REQUIRED", "The exact accepted Need revision is required.")
+	occurred = source_event_time or now_datetime()
+	values = {
+		"need_revision": revision,
+		"position": value,
+		"departmental_plan": cstr(departmental_plan).strip(),
+		"carried_revision": cstr(carried_revision).strip() if value == INTAKE_UPDATE_REQUIRED else "",
+	}
+
+	frappe.db.sql("select name from `tabDepartmental Need` where name=%s for update", need)
+	existing = frappe.db.get_value(INTAKE_DOCTYPE, need, ["name", "source_event_time", *values], as_dict=True)
+	if existing:
+		if all(cstr(existing.get(field)) == cstr(values[field]) for field in values):
+			return {"ok": True, "idempotent": True, "position": value}
+		if existing.source_event_time and str(occurred) < str(existing.source_event_time):
+			return {"ok": True, "idempotent": True, "superseded": True, "position": cstr(existing.position)}
+		doc = frappe.get_doc(INTAKE_DOCTYPE, existing.name)
+		doc.update({**values, "source_event_id": event_id, "source_event_time": occurred})
+		doc.save(ignore_permissions=True)
+	else:
+		frappe.get_doc(
+			{"doctype": INTAKE_DOCTYPE, "departmental_need": need, **values, "source_event_id": event_id, "source_event_time": occurred}
+		).insert(ignore_permissions=True)
+	return {"ok": True, "idempotent": False, "position": value}

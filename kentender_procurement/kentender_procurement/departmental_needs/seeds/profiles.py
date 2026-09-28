@@ -275,6 +275,9 @@ def reset_successor() -> dict[str, Any]:
 	frappe.db.delete("Departmental Need Decision", {"need_revision": ("in", versions)})
 	frappe.db.delete("Departmental Need Review Task", {"need_revision": ("in", versions)})
 	frappe.db.delete("Need Planning Usage Projection", {"accepted_revision": ("in", versions)})
+	# Planning's position names the revision it is about; a successor removed
+	# here must not leave one pointing at it.
+	frappe.db.delete("Need Planning Intake Projection", {"need_revision": ("in", versions)})
 	frappe.db.delete("Departmental Need Revision", {"name": ("in", versions)})
 	frappe.db.set_value(
 		"Departmental Need Revision", original, "revision_status", "Accepted", update_modified=False

@@ -30,6 +30,7 @@ from kentender_procurement.departmental_needs.services.usage import (
 	planning_status_for_need as _planning_status_for_need,
 	project_planning_usage,
 	project_planning_disposition,
+	project_planning_intake,
 )
 from kentender_procurement.departmental_needs.services.workspace import (
 	get_current_accepted_need as _get_current_accepted_need,
@@ -95,6 +96,9 @@ decide_accepted_need_withdrawal = frappe.whitelist()(lifecycle.decide_withdrawal
 project_need_planning_usage = frappe.whitelist()(project_planning_usage)
 # PLN-CHG-001 v1.18 §5.1.4 — the accepted DPP disposition, separate from usage.
 project_need_planning_disposition = frappe.whitelist()(project_planning_disposition)
+# Owner decision 26 Sep 2026 — where an accepted Need stands against its
+# department's plan (not in it yet: Create update).
+project_need_planning_intake = frappe.whitelist()(project_planning_intake)
 
 
 # §8.2 names one command per acceptance outcome. They share one implementation

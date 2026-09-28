@@ -90,6 +90,7 @@ class DppAutostartCase(IntegrationTestCase):
 		)
 		self.addCleanup(frappe.db.delete, "Departmental Need Revision", {"name": NEED_TWO_V1})
 		self.addCleanup(frappe.db.delete, "Departmental Need", {"name": NEED_TWO})
+		self.addCleanup(frappe.db.delete, "Need Planning Intake Projection", {"departmental_need": NEED_TWO})
 
 	def root(self):
 		name = frappe.db.get_value(

@@ -64,7 +64,6 @@ function plan(overrides = {}) {
 		certification: { show: false },
 		submit_hint: "",
 		open_task: null,
-		update_notice: null,
 		next_step: AUTHOR_DRAFT_TURN,
 		journey: dppJourney("preparation", { holder: "Grace Wanjiku", reduced: true }),
 		...overrides,
@@ -200,6 +199,18 @@ describe("DppPlanScreen — U05-HOD", () => {
 		expect(w.find(".kt-journey").classes()).not.toContain("is-reduced");
 		expect(w.find(".kt-journey-stage.is-current").text()).toContain("Certification");
 		expect(w.find('[data-testid="pln-dpp-context"]').text()).toContain("Status");
+	});
+
+	it("names an accepted plan instead of asking for a review and submission (owner instruction 28 Sep 2026)", () => {
+		const w = make({ plan: plan({ access: "hod", mutable: false, current_state: "Accepted", version: { status: "Accepted" } }) });
+		expect(w.find('[data-testid="pln-dpp-title"]').text()).toBe("Digital Health's departmental plan");
+		expect(w.find(".kt-page-desc").text()).toBe("Accepted by Procurement for this financial year.");
+	});
+
+	it("names a submitted plan as with Procurement", () => {
+		const w = make({ plan: plan({ access: "author", mutable: false, current_state: "Submitted", version: { status: "Submitted" } }) });
+		expect(w.find('[data-testid="pln-dpp-title"]').text()).toBe("Digital Health's departmental plan");
+		expect(w.find(".kt-page-desc").text()).toBe("Submitted to Procurement for review. It cannot be changed while Procurement reviews it.");
 	});
 
 	it("reads as a complete review of the department's plan", () => {

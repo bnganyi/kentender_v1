@@ -21,7 +21,7 @@ from frappe.utils import cstr, flt
 
 from kentender_core.services import next_step as ns
 from kentender_core.services.authorization import is_technical
-from kentender_procurement.procurement_planning.services import guards
+from kentender_procurement.procurement_planning.services import guards, needs_intake
 from kentender_procurement.procurement_planning.services import planning_authorization as authz
 from kentender_procurement.procurement_planning.services.planning_roles import (
 	ROLE_ACCOUNTING_OFFICER,
@@ -566,11 +566,14 @@ def dpp_guidance(
 	update_in_progress: bool,
 	reduced: bool = False,
 	update_requested_at=None,
+	late_needs: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
 	"""`{"next_step", "journey"}` for a departmental plan (U02–U05).
 
 	`access` is `dpp_read_profile`'s answer for the viewer: hod, author,
-	planner or oversight (a technical reader or Auditor)."""
+	planner or oversight (a technical reader or Auditor). `late_needs` are
+	`needs_intake.late_needs(root)`: accepted Needs an accepted plan with no
+	open candidate does not carry."""
 	from kentender_procurement.procurement_planning.services.planning_roles import (
 		ROLE_DEPARTMENTAL_AUTHOR,
 		ROLE_HEAD_OF_USER_DEPARTMENT,
@@ -631,15 +634,46 @@ def dpp_guidance(
 		return _dpp_result(mine, others, stage=DPP_REVIEW, holder=_names(planner), technical=technical, department=department or access == "planner", reduced=reduced)
 
 	if root.current_state == "Accepted" and root.current_accepted_version:
-		journey = ns.journey(DPP_STAGES, complete=True, reduced=reduced)
+		holders = ns.holder("Departmental Author or Head of User Department", list(dict.fromkeys(authors["people"] + hod["people"])))
+		late = late_needs or []
+		# Owner instruction 28 Sep 2026 — an update the department still has to
+		# make starts the next round at Preparation, so the tracker and the
+		# next step agree instead of "every stage Done" beside "Your turn".
+		pending = bool(update_requested_at or late)
+		journey = (
+			ns.journey(DPP_STAGES, current=DPP_PREPARATION, holder_display=_names(holders), reduced=reduced) if pending
+			else ns.journey(DPP_STAGES, complete=True, reduced=reduced)
+		)
 		if update_requested_at:
 			# Procurement asked the department to update its accepted plan
 			# (owner decision 26 Sep 2026): the department's turn, everyone
 			# else waits on the department.
-			holders = ns.holder("Departmental Author or Head of User Department", list(dict.fromkeys(authors["people"] + hod["people"])))
-			others = _waiting("Waiting for the department to update its plan", stage=DPP_ACCEPTED, holder=holders, since=update_requested_at)
-			mine = ns.answer(ns.KIND_YOUR_TURN, headline="Update this plan as Procurement asked", stage=DPP_ACCEPTED, primary_action="create_update") if department else None
+			others = _waiting("Waiting for the department to update its plan", stage=DPP_PREPARATION, holder=holders, since=update_requested_at)
+			also = f"The update also adds {needs_intake.need_list(late)}, accepted after this plan." if late else ""
+			mine = ns.answer(ns.KIND_YOUR_TURN, headline="Update this plan as Procurement asked", sentence=also, stage=DPP_PREPARATION, primary_action="create_update") if department else None
 			answer = others if technical or not mine else mine
+			return {"next_step": answer, "journey": journey}
+		if late:
+			# Owner decision 26 Sep 2026 — a Need accepted after this plan was
+			# accepted is in no plan until the department creates an update;
+			# "Done" here left it stranded with no one told to act.
+			names = needs_intake.need_list(late)
+			one = len(late) == 1
+			sentence = (
+				f"{'It was' if one else 'They were'} accepted after this plan was accepted. "
+				f"Create an update to add {'it' if one else 'them'}, then fund {'it' if one else 'them'} and resubmit."
+			)
+			mine = ns.answer(ns.KIND_YOUR_TURN, headline=f"Add {names} to this plan", sentence=sentence, stage=DPP_PREPARATION, primary_action="create_update") if department else None
+			others = _waiting(f"Waiting for the department to add {names} to its plan", stage=DPP_PREPARATION, holder=holders, since=needs_intake.late_needs_since(late))
+			if technical:
+				answer = ns.for_viewer(others, technical=True, reader=others)
+			elif mine:
+				answer = mine
+			elif access == "planner":
+				answer = others
+			else:
+				# §10.1A.6 — an Auditor or other reader is Not involved.
+				answer = ns.not_involved(DPP_PREPARATION)
 			return {"next_step": answer, "journey": journey}
 		done = ns.answer(ns.KIND_DONE, headline=accepted_line(root.current_accepted_version), stage=DPP_ACCEPTED)
 		return {"next_step": done, "journey": journey}

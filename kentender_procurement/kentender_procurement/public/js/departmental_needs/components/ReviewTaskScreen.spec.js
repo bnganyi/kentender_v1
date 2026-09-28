@@ -49,8 +49,27 @@ describe("ReviewTaskScreen — NDS-DES-14-REVIEW-CHANGED", () => {
 	});
 
 	it("does not show the stale notice for the maker-checker block either (a different, already-covered reason)", () => {
-		const w = make({ permitted: [], makerCheckerBlocked: true });
+		// NDS-CHG-001 v1.15 §5.5 — the maker's reason is the next step's
+		// sentence, drawn once in the guidance region.
+		const w = make({
+			permitted: [],
+			makerCheckerBlocked: true,
+			nextStep: {
+				kind: "waiting",
+				label: "Waiting on someone",
+				headline: "Waiting for another Head of User Department to review this requirement",
+				sentence: "You submitted this revision, so it must be decided by another Head of User Department.",
+				stage: "review",
+				holder: null,
+				since: null,
+				blockers: [],
+				fixes: [],
+				primary_action: "",
+			},
+		});
 		expect(w.find('[data-testid="nds-review-changed"]').exists()).toBe(false);
-		expect(w.text()).toContain("You submitted this revision, so it must be decided by another Head of User Department.");
+		const region = w.get('[data-testid="nds-guidance"]');
+		expect(region.text()).toContain("Waiting for another Head of User Department to review this requirement");
+		expect(w.text().split("You submitted this revision, so it must be decided by another Head of User Department.").length - 1).toBe(1);
 	});
 });

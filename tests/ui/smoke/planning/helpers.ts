@@ -142,8 +142,33 @@ export function resetFixture<T = Record<string, unknown>>(fn: string, kwargs: Re
 	return parseResult<T>(fn, output);
 }
 
+/** Its own namespace, so accepting it never purges the Need a fixture's plan was built on. */
+const LATE_NAMESPACE = `${NAMESPACE}_LATE`;
+
+/**
+ * A Need accepted after the fixture's departmental plan was accepted (owner
+ * decision 26 Sep 2026): NDS accepts it through the real commands, Planning's
+ * reaction leaves the accepted plan as it is and projects the Need's position.
+ * Call after a fixture that accepts the plan.
+ */
+export function acceptLateNeed(title = "Late departmental requirement"): string {
+	const out = bench(
+		`execute ${NDS_FIXTURES}.reset_accepted_needs_for${pyKwargs({
+			organisation_unit_name: OU_NAME, financial_year: FY, author: AUTHOR, reviewer: HOD,
+			needs: [{ ...NEED_CONTENT, title }], namespace: LATE_NAMESPACE,
+		})}`
+	);
+	return parseResult<{ needs: string[] }>("reset_accepted_needs_for", out).needs[0];
+}
+
+/** Drop the late Needs: left accepted in the unit, the next fixture's Draft would take them in unfunded. */
+export function purgeLateNeeds(): void {
+	bench(`execute ${NDS_FIXTURES}.purge_fixture_needs${pyKwargs({ namespace: LATE_NAMESPACE })}`);
+}
+
 /** Put the intake flags back on the seed year and drop NDS's fixture Needs (idempotent). */
 export function restoreSite(): void {
+	purgeLateNeeds();
 	bench(`execute ${NDS_FIXTURES}.purge_fixture_needs${pyKwargs({ namespace: NAMESPACE })}`);
 	bench(`execute ${FIXTURES}.restore_site`);
 	worldEnsured = false;

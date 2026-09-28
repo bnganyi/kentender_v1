@@ -235,8 +235,20 @@ frappe.provide("kentender_core.desk_page");
 			}
 			return changed;
 		}
+		function belongs(r) {
+			var first = String((r && r[0]) || "");
+			if (!first || first === pageSlug) return true;
+			var mine = pageToGroup[pageSlug];
+			return !!mine && pageToGroup[first] === mine;
+		}
 		function applyRouteChange() {
 			if (!active || paused || !shown()) return;
+			// A route to another page is that page's, never this app's: the
+			// router announces it while this page is still shown, and the app
+			// read the other page's record id as its own (found 26 Sep 2026 —
+			// a need's "Update departmental plan" link fetched need=DPP-…).
+			// Resuming later re-syncs to this page's own route.
+			if (!belongs(frappe.get_route())) return;
 			sync();
 		}
 		function onRouteChange() {

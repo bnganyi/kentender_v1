@@ -182,11 +182,117 @@ describe("NeedDetailScreen — NDS-DES-07A Planning-status variants", () => {
 		expect(group(w, "Current annual plan").text()).not.toContain("Still included");
 		expect(w.find('[data-testid="nds-view-plan-item-inline"]').exists()).toBe(true);
 	});
+
+	// Owner decision 26 Sep 2026 — a Need accepted after its department's plan
+	// was accepted is in no plan until the department creates an update.
+	const LATE = {
+		position: "Update required",
+		department: "Digital Health",
+		departmental_plan: "DPP-MOH-02314-2027-001",
+		revision_number: 1,
+		carried_revision_number: 0,
+		can_update: true,
+	};
+
+	// NDS-CHG-001 v1.15 §5.5 — who acts, and the one way to the plan, belong
+	// to the next step in the guidance region; the fact says only where the
+	// need stands.
+	const YOUR_TURN_UPDATE_PLAN = {
+		kind: "your_turn",
+		label: "Your turn",
+		headline: "Add this need to Digital Health's departmental plan",
+		sentence: "The plan was accepted before this need. Create an update of the plan, fund the need and resubmit.",
+		stage: "accepted",
+		holder: null,
+		since: null,
+		blockers: [],
+		fixes: [
+			{
+				fix_id: "update_departmental_plan",
+				label: "Update departmental plan",
+				kind: "route",
+				target: ["departmental-procurement-plan", "DPP-MOH-02314-2027-001"],
+				primary: true,
+				responsibility: "Departmental Author or Head of User Department",
+			},
+		],
+		primary_action: "",
+	};
+	const WAITING_DEPARTMENT = {
+		...YOUR_TURN_UPDATE_PLAN,
+		kind: "waiting",
+		label: "Waiting on someone",
+		headline: "Waiting for Digital Health to add this need to its departmental plan",
+		sentence: "",
+		fixes: [],
+	};
+
+	it("LATE — not in the plan yet; the next step sends the department to update it", async () => {
+		const w = mountAccepted({
+			usage: { usage: "Not included" },
+			disposition: { recorded: false },
+			planPosition: LATE,
+			nextStep: YOUR_TURN_UPDATE_PLAN,
+		});
+		const fact = group(w, "Departmental plan");
+		expect(fact.get(".kt-status").text()).toBe("Not in the plan yet");
+		expect(fact.text()).toContain("Digital Health's departmental plan was accepted before this need.");
+		expect(fact.findAll(".kt-label").map((el) => el.text())).toEqual(["Departmental plan"]);
+		expect(fact.find("button").exists()).toBe(false);
+		const region = w.get('[data-testid="nds-guidance"]');
+		expect(region.text()).toContain("Your turn");
+		expect(region.text()).toContain("Add this need to Digital Health's departmental plan");
+		const link = region.get('[data-fix="update_departmental_plan"]');
+		expect(link.text()).toBe("Update departmental plan");
+		await link.trigger("click");
+		const [fix] = w.emitted("guidance-fix")[0];
+		expect(fix.target).toEqual(["departmental-procurement-plan", "DPP-MOH-02314-2027-001"]);
+		// "Create update" on this page updates the need itself; the plan
+		// link never borrows that label.
+		expect(w.findAll("button").filter((b) => b.text() === "Create update")).toHaveLength(1);
+	});
+
+	it("LATE, for a reader who cannot update the plan — waiting on the department, no link", () => {
+		const w = mountAccepted({
+			usage: {},
+			disposition: { recorded: false },
+			planPosition: { ...LATE, can_update: false },
+			nextStep: WAITING_DEPARTMENT,
+		});
+		expect(group(w, "Departmental plan").get(".kt-status").text()).toBe("Not in the plan yet");
+		const region = w.get('[data-testid="nds-guidance"]');
+		expect(region.text()).toContain("Waiting for Digital Health to add this need to its departmental plan");
+		expect(region.find('[data-fix="update_departmental_plan"]').exists()).toBe(false);
+	});
+
+	it("LATE REVISION — the plan still carries an earlier revision", () => {
+		const w = mountAccepted({
+			usage: {},
+			disposition: { recorded: true, disposition: "Proceeding" },
+			planPosition: { ...LATE, revision_number: 2, carried_revision_number: 1 },
+		});
+		const fact = group(w, "Departmental plan");
+		expect(fact.get(".kt-status").text()).toBe("Earlier revision in plan");
+		expect(fact.text()).toContain("Digital Health's departmental plan has revision 1 of this need.");
+	});
+
+	it("AFTER SUBMISSION — the plan is with Procurement; nothing to do yet", () => {
+		const w = mountAccepted({
+			usage: {},
+			disposition: { recorded: false },
+			planPosition: { ...LATE, position: "After current submission", can_update: false },
+		});
+		const fact = group(w, "Departmental plan");
+		expect(fact.get(".kt-status").text()).toBe("Not in the plan yet");
+		expect(fact.text()).toContain("Digital Health's departmental plan was submitted before this need was accepted.");
+		expect(fact.find("button").exists()).toBe(false);
+	});
 });
 
-// NDS-DES-08-DRAFT/SUBMITTED/OTHER-AUTHOR and NDS-DES-11-OPEN-UPDATE — the
-// open-successor notice's literal copy and its owner-only action link.
-describe("NeedDetailScreen — open successor notice", () => {
+// NDS-DES-08-DRAFT/SUBMITTED/OTHER-AUTHOR and NDS-DES-11-OPEN-UPDATE — v1.15
+// §5.5: the open update's turn is the next step; the page keeps only the
+// owner's View proposed changes link.
+describe("NeedDetailScreen — open successor", () => {
 	const ACCEPTED_NEED = {
 		need_reference: "NDS-MOH-2027-0001",
 		current_state: "Accepted for planning",
@@ -194,25 +300,53 @@ describe("NeedDetailScreen — open successor notice", () => {
 		current_accepted_revision: "NDS-MOH-2027-0001-V1",
 	};
 	const ACCEPTED_REVISION = { ...REVISION, name: "NDS-MOH-2027-0001-V1" };
+	const CONTINUE = {
+		kind: "your_turn",
+		label: "Your turn",
+		headline: "Continue the update and submit it for review",
+		sentence: "An update is already in progress. Complete or cancel it before requesting withdrawal.",
+		stage: "preparation",
+		holder: null,
+		since: null,
+		blockers: [],
+		fixes: [{ fix_id: "continue_update", label: "Continue update", kind: "route", target: ["departmental-needs", "NDS-MOH-2027-0001", "edit"], primary: true, responsibility: "Departmental Author" }],
+		primary_action: "",
+	};
+	const AWAITING = {
+		kind: "waiting",
+		label: "Waiting on someone",
+		headline: "Waiting for Grace Achieng to decide the proposed changes",
+		sentence: "",
+		stage: "review",
+		holder: { name: "Grace Achieng" },
+		since: { value: "2026-12-15T06:45:00Z", display: "15 Dec 2026, 09:45 EAT" },
+		blockers: [],
+		fixes: [],
+		primary_action: "",
+	};
 
-	it("DRAFT, owner — Update in progress, with a Continue update link and the withdrawal-blocked note", () => {
+	it("DRAFT, owner — the next step is Continue update, with the withdrawal-blocked sentence", async () => {
 		const w = mount(NeedDetailScreen, {
 			props: {
 				need: ACCEPTED_NEED,
 				acceptedRevision: ACCEPTED_REVISION,
 				revision: { ...REVISION, revision_status: "Draft" },
 				accessProfile: "owner",
+				nextStep: CONTINUE,
 			},
 		});
-		expect(w.text()).toContain("Update in progress");
-		const button = w.get('[data-testid="nds-open-successor"]');
-		expect(button.text()).toBe("Continue update");
+		const region = w.get('[data-testid="nds-guidance"]');
+		expect(region.text()).toContain("Continue the update and submit it for review");
 		// NDS-DES-11-OPEN-UPDATE's own explanatory sentence for why Request
 		// withdrawal is absent from the header while this update is open.
-		expect(w.text()).toContain("An update is already in progress. Complete or cancel it before requesting withdrawal.");
+		expect(region.text()).toContain("An update is already in progress. Complete or cancel it before requesting withdrawal.");
+		expect(w.text().split("An update is already in progress").length - 1).toBe(1);
+		await region.get('[data-fix="continue_update"]').trigger("click");
+		expect(w.emitted("guidance-fix")[0][0].fix_id).toBe("continue_update");
+		expect(w.find('[data-testid="nds-open-successor"]').exists()).toBe(false);
 	});
 
-	it("SUBMITTED, owner — Your changes are awaiting review, with Submitted at and a View proposed changes link", () => {
+	it("SUBMITTED, owner — waiting on the reviewer, with a View proposed changes link", () => {
 		const w = mount(NeedDetailScreen, {
 			props: {
 				need: ACCEPTED_NEED,
@@ -220,15 +354,16 @@ describe("NeedDetailScreen — open successor notice", () => {
 				revision: { ...REVISION, revision_status: "Submitted" },
 				accessProfile: "owner",
 				submittedAt: "2026-12-15 09:45:00",
+				nextStep: AWAITING,
 			},
 		});
-		expect(w.text()).toContain("Your changes are awaiting review");
-		expect(w.text()).toContain("Submitted at");
-		const button = w.get('[data-testid="nds-open-successor"]');
-		expect(button.text()).toBe("View proposed changes");
+		const region = w.get('[data-testid="nds-guidance"]');
+		expect(region.text()).toContain("Waiting for Grace Achieng to decide the proposed changes");
+		expect(region.text()).toContain("since 15 Dec 2026, 09:45 EAT");
+		expect(w.get('[data-testid="nds-open-successor"]').text()).toBe("View proposed changes");
 	});
 
-	it("SUBMITTED, other reader (NDS-DES-08-OTHER-AUTHOR) — the same fact, with no Submitted-at and no link", () => {
+	it("SUBMITTED, other reader (NDS-DES-08-OTHER-AUTHOR) — the same wait, with no link", () => {
 		const w = mount(NeedDetailScreen, {
 			props: {
 				need: ACCEPTED_NEED,
@@ -236,15 +371,16 @@ describe("NeedDetailScreen — open successor notice", () => {
 				revision: { ...REVISION, revision_status: "Submitted" },
 				accessProfile: "planning",
 				submittedAt: "2026-12-15 09:45:00",
+				nextStep: AWAITING,
 			},
 		});
-		expect(w.text()).toContain("Your changes are awaiting review");
-		expect(w.text()).not.toContain("Submitted at");
+		expect(w.get('[data-testid="nds-guidance"]').text()).toContain("Waiting for Grace Achieng to decide the proposed changes");
 		expect(w.find('[data-testid="nds-open-successor"]').exists()).toBe(false);
 	});
 });
 
-// NDS-DES-11-REQUESTED — the withdrawal-already-open headline replaces (not
+// NDS-DES-11-REQUESTED — v1.15 §5.5: an open withdrawal waiting for a
+// Planning change is the next step's sentence, and it replaces (not
 // duplicates) the inline STILL-ACTIVE warning inside the Planning-status grid.
 describe("NeedDetailScreen — withdrawal waiting for a Planning change", () => {
 	const ACCEPTED_NEED = {
@@ -261,18 +397,29 @@ describe("NeedDetailScreen — withdrawal waiting for a Planning change", () => 
 		usage: { usage: "Fully included", active_plan: "PLN-MOH-2027-001", active_plan_item: "PPI-MOH-2027-021" },
 		disposition: { recorded: true, disposition: "Not proceeding", reason: "A later cycle." },
 	};
+	const WAITING_PLANNING = {
+		kind: "waiting",
+		label: "Waiting on someone",
+		headline: "Waiting for a Planning change",
+		sentence: "The annual plan has not yet been updated. Withdrawal cannot be approved while this requirement remains included.",
+		stage: "accepted",
+		holder: { name: "Procurement Planner" },
+		since: null,
+		blockers: [],
+		fixes: [],
+		primary_action: "",
+	};
 
-	it("no open withdrawal (NDS-DES-07A-STILL-ACTIVE) — the inline grid warning shows, no top-level notice", () => {
+	it("no open withdrawal (NDS-DES-07A-STILL-ACTIVE) — the inline grid warning shows", () => {
 		const w = mount(NeedDetailScreen, { props: { ...STILL_ACTIVE_PROPS, withdrawalOpen: false } });
-		expect(w.find('[data-testid="nds-withdrawal-waiting"]').exists()).toBe(false);
 		expect(w.text()).toContain("The annual plan has not yet been updated. Withdrawal cannot be approved while");
 	});
 
-	it("an open withdrawal (NDS-DES-11-REQUESTED) — the top-level notice shows once, not the inline grid warning too", () => {
-		const w = mount(NeedDetailScreen, { props: { ...STILL_ACTIVE_PROPS, withdrawalOpen: true } });
-		const notice = w.get('[data-testid="nds-withdrawal-waiting"]');
-		expect(notice.text()).toContain("Waiting for a Planning change");
-		expect(notice.text()).toContain("The annual plan has not yet been updated. Withdrawal cannot be approved while");
+	it("an open withdrawal (NDS-DES-11-REQUESTED) — the next step says it once, not the inline grid warning too", () => {
+		const w = mount(NeedDetailScreen, { props: { ...STILL_ACTIVE_PROPS, withdrawalOpen: true, nextStep: WAITING_PLANNING } });
+		const region = w.get('[data-testid="nds-guidance"]');
+		expect(region.text()).toContain("Waiting for a Planning change");
+		expect(region.text()).toContain("The annual plan has not yet been updated. Withdrawal cannot be approved while");
 		// Only the one occurrence of the shared sentence — not doubled up.
 		const occurrences = w.text().split("The annual plan has not yet been updated").length - 1;
 		expect(occurrences).toBe(1);

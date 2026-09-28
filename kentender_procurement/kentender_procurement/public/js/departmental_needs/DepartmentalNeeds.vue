@@ -99,6 +99,9 @@
 				:pinned-revision="pinnedRevision"
 				:usage="usage"
 				:disposition="disposition"
+				:plan-position="planPosition"
+				:next-step="guidance.next_step"
+				:journey="guidance.journey"
 				:older-usage="olderUsage"
 				:planning-checking="planningChecking"
 				:planning-unavailable="planningUnavailable"
@@ -120,6 +123,7 @@
 				@edit="go(needReference, 'edit')"
 				@review="(action) => onRowAction({ reference: needReference }, action)"
 				@view-plan-item="onViewPlanItem"
+				@guidance-fix="followFix"
 				@retry-planning="refreshPlanningStatus"
 			/>
 
@@ -134,6 +138,8 @@
 				:task-type="task.task_type || ''"
 				:permitted="task.permitted_decisions || []"
 				:maker-checker-blocked="!!task.maker_checker_blocked"
+				:next-step="task.next_step || null"
+				:journey="task.journey || null"
 				:error-summary="errorSummary"
 				:pending="pending"
 				@return="dialog = 'return'"
@@ -154,6 +160,8 @@
 				:requested-at="task.opened_at || ''"
 				:permitted="task.permitted_decisions || []"
 				:maker-checker-blocked="!!task.maker_checker_blocked"
+				:next-step="task.next_step || null"
+				:journey="task.journey || null"
 				:error-summary="errorSummary"
 				:pending="pending"
 				@approve="dialog = 'approve-withdrawal'"
@@ -202,6 +210,7 @@
 import { computed, ref, watch } from "vue";
 import { useRouteState } from "../nds_shared/composables/useRouteState.js";
 import { usePageRail } from "../nds_shared/composables/usePageRail.js";
+import { followFix } from "../nds_shared/composables/useGuidance.js";
 import * as api from "./data/needsApi.js";
 import { quantityWithUnit } from "./data/format.js";
 import ConfirmDialog from "./components/ConfirmDialog.vue";
@@ -254,6 +263,13 @@ const submitUnknown = ref(false);
 const usage = ref({});
 const disposition = ref(null);
 const olderUsage = ref(null);
+// Owner decision 26 Sep 2026 — accepted, but not in the department's plan
+// yet (Planning's projected position; null when there is nothing to say).
+const planPosition = ref(null);
+// NDS-CHG-001 v1.15 §5.5 — the server's next step and journey for the
+// detail screen; the dedicated Planning re-check refreshes them too, since
+// Planning's position is part of the answer.
+const guidance = ref({ next_step: null, journey: null });
 const planningChecking = ref(false);
 const planningUnavailable = ref(false);
 const planningCheckedAt = ref("");
@@ -497,6 +513,8 @@ function applyLoaded(loaded) {
 		// reads `row.planning_usage` (a plain string) unaffected by this.
 		usage.value = detail.value.planning_usage || {};
 		disposition.value = detail.value.planning_disposition || null;
+		planPosition.value = detail.value.planning_intake || null;
+		guidance.value = { next_step: detail.value.next_step || null, journey: detail.value.journey || null };
 		olderUsage.value = null;
 		planningUnavailable.value = false;
 		planningCheckedAt.value = "";
@@ -976,6 +994,8 @@ async function refreshPlanningStatus() {
 		if (needReference.value !== needName) return; // superseded by navigation
 		usage.value = result.planning_usage || {};
 		disposition.value = result.planning_disposition || null;
+		planPosition.value = result.planning_intake || null;
+		if (result.next_step) guidance.value = { next_step: result.next_step, journey: result.journey || null };
 		olderUsage.value = result.older_usage || null;
 		planningCheckedAt.value = result.checked_at || "";
 		planningUnavailable.value = false;

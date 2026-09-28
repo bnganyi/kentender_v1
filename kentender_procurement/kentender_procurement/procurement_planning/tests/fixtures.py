@@ -352,6 +352,9 @@ def wipe_planning_rows() -> None:
 	frappe.db.delete("Planning Command Journal", {"actor": ("in", ACTORS)})
 	frappe.db.delete("Planning Command Journal", {"fixture_namespace": NS})
 	frappe.db.delete("Need Planning Usage Projection", {"departmental_need": NEED})
+	# Planning's projected position of each test-world Need against these
+	# plans (owner decision 26 Sep 2026); dpp_roots are named by reference.
+	frappe.db.delete("Need Planning Intake Projection", {"departmental_plan": ("in", dpp_roots or ("",))})
 	frappe.db.delete("Notification Log", {"for_user": ("in", ACTORS)})
 
 

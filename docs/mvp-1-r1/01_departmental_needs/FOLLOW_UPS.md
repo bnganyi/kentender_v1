@@ -1526,3 +1526,75 @@ exemption, `withoutUndecidedDepartmentalPlan`, applied to the eight states
 whose fixture has no accepted disposition; it asserts the landmark is still in
 the artboard, so it fails loudly — and retires itself — the moment the pack is
 regenerated without it.
+
+## A Need accepted after its department's plan (26 Sep 2026)
+
+Found live by the owner: NDS-MOH-2027-0005 was accepted for Digital Health
+after Digital Health's departmental plan had already been accepted. Accepting
+a Need only ever adds it to the department's *Draft* plan, so this one joined
+no plan until the department created an update — and nothing said so: the
+Need's page showed no Departmental plan fact at all (the 23 Sep owner rule
+"say nothing until there is a departmental decision"), so the requirement
+looked finished.
+
+**Owner decision 26 Sep 2026 — built.** Planning now projects, for every
+accepted Need, where it stands against its department's plan, through a new
+published command `project_need_planning_intake` into a new read-only
+projection, `Need Planning Intake Projection` (one row per Need; Planner or
+administrative principal only; ordered on the source time; an unchanged
+position is a no-op). It is Planning information only, like usage and
+disposition: no lifecycle or usage change, and Needs still never queries
+Planning (D1). `get_departmental_need` and `get_need_planning_status` return
+it as `planning_intake`, with `can_update` for the Need's own Departmental
+Author / Head of User Department (never a technical reader).
+
+"Where this requirement stands" shows it as the **Departmental plan** fact —
+the one exception to the 23 Sep rule:
+
+- *Update required* — **Not in the plan yet**: "{Department}'s departmental
+  plan was accepted before this need. Create an update to add it." (others:
+  "The department must create an update to add it."), with an **Update
+  departmental plan** link for the department, leading to the plan, where
+  Create update is the principal action. The link is deliberately not called
+  "Create update": on this page that label already means updating the Need.
+- *Update required* with an earlier revision in the plan — **Earlier revision
+  in plan**: "… has revision N of this need. Create an update to bring in
+  revision M."
+- *After current submission* — **Not in the plan yet**: "… was submitted
+  before this need was accepted. It can be added in an update once
+  Procurement accepts the plan." No link.
+
+Accepting a Need lands the Head of Department on this page, so the acceptance
+itself now says so. The Playwright fixtures and the canonical seed purge the
+new rows with their Needs (a reused Need reference would otherwise inherit
+one, the same hazard as the disposition projection).
+
+**Owed:** the NDS specification (§4 model, §7 contract, §8.1/§8.2, §11.8/§11.8A
+variants and copy) at its next version; artboard variants for the three facts.
+The Need page still has no KT-STD-001 v1.8 next-step line of its own — NDS has
+not had its workflow-guidance cycle.
+
+**Update, 28 Sep 2026 — Needs guidance round built; NDS-CHG-001 v1.15 proposed.**
+The Need page, the review page and the withdrawal review now carry the shared
+guidance region (tracker and next step) from `services/guidance.py`, and the
+notices it replaces are gone. The wording above changed with it: the
+Departmental plan fact now states only where the Need stands ("{Department}'s
+departmental plan was accepted before this need.", "… has revision N of this
+need.", "… was submitted before this need was accepted."), and the **Update
+departmental plan** link moved from the fact to the department's next step
+(*Your turn — Add this need to {Department}'s departmental plan*). Also built:
+the author's My Work items (a returned Need is *Correct and resubmit {title}*;
+a submitted Need, update or withdrawal request is a waiting item naming the
+holder), and a dead-end matrix
+(`tests/test_departmental_needs_dead_end_matrix.py`, evidence
+`evidence/v1_15/dead_end_matrix.md`, 11 states × 6 readers, clean). The matrix
+found the Procurement Planner told to wait for Procurement in two states (plan
+with Procurement; withdrawal waiting on the annual plan); the Planner now gets
+the turn, with a link to the plan or the annual plan item. The declined and
+withdrawn pages keep the board's Decided by/at and Withdrawn by/at rows; their
+Done line names only the outcome. The specification is
+`KenTender_NDS-CHG-001_Clean_Departmental_Needs_v1_15.md` (Proposed), which
+records three decisions for the owner: keeping the two Planning result facts
+under "Where this requirement stands", the new wording, and the Planner's
+turns. **Still owed:** regenerated artboards for the guidance region and the
+three Departmental plan facts (NDS15-XD-002).

@@ -422,7 +422,11 @@ class TestNeedPlanningDisposition(PlanningCommandCase):
 		with self.assertRaises(ProcurementPlanningError) as caught:
 			self.disposition(opened, entry_id, "Shelve", record_version=restored["record_version"])
 		self.assertEqual(caught.exception.code, "PLN_ENTRY_INCOMPLETE")
-		self.assertEqual(frappe.db.count("Planning Command Journal", {"command": "SetNeedPlanningDisposition"}), 2)
+		# Scoped to this entry: the journal is site-wide, and the canonical seed
+		# (or anyone's live work) records its own SetNeedPlanningDisposition.
+		self.assertEqual(
+			frappe.db.count("Planning Command Journal", {"command": "SetNeedPlanningDisposition", "document_name": entry.name}), 2,
+		)
 
 	def test_a_direct_entry_takes_no_disposition_and_no_event_is_published_before_acceptance(self):
 		opened, entry_id = self.need_entry()

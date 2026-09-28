@@ -23,6 +23,7 @@ exception (O4, publication recovery). The matrix is written to
 from __future__ import annotations
 
 import os
+from unittest.mock import patch
 
 import frappe
 
@@ -32,6 +33,7 @@ from kentender_procurement.procurement_planning.services import (
 	budget_revision,
 	departmental_update,
 	dpp_read,
+	needs_intake,
 	plan_finance,
 	plan_governance,
 	plan_read,
@@ -130,7 +132,17 @@ class TestPlanningDeadEndMatrix(PublicationCase):
 		failures = []
 		accepted, entries, dpp = self._accept_direct([{"indicative_amount": 1_000_000}])
 		reference = accepted["annual_plan"]
-		failures += self.check("Departmental plan accepted", lambda user: dpp_read.get_departmental_plan(dpp_reference=frappe.db.get_value("Departmental Plan", dpp, "dpp_reference"), user=user))
+		dpp_view = lambda user: dpp_read.get_departmental_plan(dpp_reference=frappe.db.get_value("Departmental Plan", dpp, "dpp_reference"), user=user)  # noqa: E731
+		failures += self.check("Departmental plan accepted", dpp_view)
+		# Owner decision 26 Sep 2026 — a Need accepted after the plan was: the
+		# plan is not finished, and the §3B.7 rules alone cannot see that (a
+		# "Done" answer passes them), so the department's turn is asserted too.
+		with patch.object(needs_intake, "current_accepted_sources", return_value=[fx.accepted_source()]):
+			failures += self.check("Departmental plan accepted — a need accepted after it", dpp_view)
+			for reader, user in (("Departmental Author", fx.AUTHOR), ("Head of Department", fx.HOD)):
+				step = dpp_view(user)["next_step"]
+				if step["kind"] != ns.KIND_YOUR_TURN or step["primary_action"] != "create_update":
+					failures.append(f"Departmental plan accepted — a need accepted after it / {reader}: {step['kind']} ({step['headline']}), not Create update")
 		failures += self.check("Draft — requirement not yet in a purchase", self.plan(reference))
 
 		frappe.set_user(fx.PLANNER)

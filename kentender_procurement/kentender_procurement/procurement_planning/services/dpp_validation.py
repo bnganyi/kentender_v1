@@ -135,6 +135,9 @@ def return_departmental_plan(
 		"correction_version": correction.version_reference,
 		"dpp_reference": root.dpp_reference,
 	}
+	from kentender_procurement.procurement_planning.services import needs_intake
+
+	needs_intake.publish_need_positions(root.organisation_unit, root.fiscal_year, source=idempotency_key)
 	envelope.record_command(
 		idempotency_key=idempotency_key, command="ReturnDepartmentalPlan", payload=payload, result=result,
 		document_type="Departmental Plan Validation Decision", document_name=decision.name, actor=actor,
@@ -221,6 +224,7 @@ def accept_departmental_plan(
 		"annual_plan": plan["plan_reference"],
 		"annual_plan_version": plan["version_reference"],
 	}
+	needs_intake.publish_need_positions(root.organisation_unit, root.fiscal_year, source=idempotency_key)
 	envelope.record_command(
 		idempotency_key=idempotency_key, command="AcceptDepartmentalPlan", payload=payload, result=result,
 		document_type="Departmental Plan Validation Decision", document_name=decision.name, actor=actor,

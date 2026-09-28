@@ -48,6 +48,9 @@ PERMITTED_DOCTYPES = frozenset(
 		"Need Withdrawal Request",
 		"Need Planning Usage Projection",
 		"Need Planning Disposition Projection",
+		# Owner decision 26 Sep 2026 — Planning's position for an accepted
+		# Need that is not in its department's plan yet.
+		"Need Planning Intake Projection",
 	}
 )
 

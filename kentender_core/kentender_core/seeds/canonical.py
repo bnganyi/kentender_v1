@@ -215,14 +215,15 @@ def _orphaned_child_rows() -> dict[str, list[str]]:
 	return out
 
 
-def _dispositions_without_a_need() -> list[str]:
-	"""Planning's disposition rows for Needs that no longer exist (found
-	26 Sep 2026: 11 on the dev site; Planning writes them unstamped, so no
-	namespace purge reaches them)."""
-	if not frappe.db.table_exists("Need Planning Disposition Projection"):
+def _projections_without_a_need(doctype: str = "Need Planning Disposition Projection") -> list[str]:
+	"""Planning's projection rows for Needs that no longer exist (found
+	26 Sep 2026: 11 disposition rows on the dev site; Planning writes them
+	unstamped, so no namespace purge reaches them). The intake position
+	(owner decision 26 Sep 2026) is written the same way."""
+	if not frappe.db.table_exists(doctype):
 		return []
 	return frappe.db.sql_list(
-		"select p.name from `tabNeed Planning Disposition Projection` p "
+		f"select p.name from `tab{doctype}` p "
 		"left join `tabDepartmental Need` n on n.name = p.departmental_need where n.name is null"
 	)
 
@@ -367,7 +368,8 @@ def collect_non_canonical() -> dict[str, list[str]]:
 	for child, names in _orphaned_child_rows().items():
 		add(child, names)
 	add("File", _orphaned_attachments())
-	add("Need Planning Disposition Projection", _dispositions_without_a_need())
+	add("Need Planning Disposition Projection", _projections_without_a_need())
+	add("Need Planning Intake Projection", _projections_without_a_need("Need Planning Intake Projection"))
 	return plan
 
 
@@ -395,6 +397,7 @@ def _delete_need(need: str, deleted: dict[str, int]) -> None:
 		"Departmental Need Event",
 		"Need Planning Usage Projection",
 		"Need Planning Disposition Projection",
+		"Need Planning Intake Projection",
 		"Departmental Need Decision",
 		"Departmental Need Review Task",
 		"Need Withdrawal Request",
@@ -562,10 +565,11 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 			frappe.db.delete(child, {"name": ("in", names[start : start + 500])})
 		deleted[child] = deleted.get(child, 0) + len(names)
 	_delete_docs("File", _orphaned_attachments(), deleted)
-	dispositions = _dispositions_without_a_need()
-	if dispositions:
-		frappe.db.delete("Need Planning Disposition Projection", {"name": ("in", dispositions)})
-		deleted["Need Planning Disposition Projection"] = deleted.get("Need Planning Disposition Projection", 0) + len(dispositions)
+	for projection in ("Need Planning Disposition Projection", "Need Planning Intake Projection"):
+		orphans = _projections_without_a_need(projection)
+		if orphans:
+			frappe.db.delete(projection, {"name": ("in", orphans)})
+			deleted[projection] = deleted.get(projection, 0) + len(orphans)
 	return deleted
 
 

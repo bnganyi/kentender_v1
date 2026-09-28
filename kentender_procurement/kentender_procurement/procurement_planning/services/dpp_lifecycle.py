@@ -232,6 +232,7 @@ def open_departmental_plan(
 			needs_intake.refresh_draft_entries(version)
 		result = _result(root, version, action="reused", idempotent=True)
 
+	needs_intake.publish_need_positions(root.organisation_unit, root.fiscal_year, source=idempotency_key)
 	envelope.record_command(
 		idempotency_key=idempotency_key, command="OpenDepartmentalPlan", payload=payload, result=result,
 		document_type="Departmental Plan", document_name=root.name, actor=actor,
@@ -662,6 +663,7 @@ def submit_departmental_plan(
 	version.reload()
 	result = _result(root, version, action="submitted", task=task.task_reference)
 	result["submission_reference"] = submission.submission_reference
+	needs_intake.publish_need_positions(root.organisation_unit, root.fiscal_year, source=idempotency_key)
 	envelope.record_command(
 		idempotency_key=idempotency_key, command="SubmitDepartmentalPlan", payload=payload, result=result,
 		document_type="Departmental Plan Submission", document_name=submission.name, actor=actor,
@@ -699,6 +701,7 @@ def withdraw_departmental_submission(
 	version.reload()
 	result = _result(root, version, action="withdrawn")
 	result["reason"] = reason_text
+	needs_intake.publish_need_positions(root.organisation_unit, root.fiscal_year, source=idempotency_key)
 	envelope.record_command(
 		idempotency_key=idempotency_key, command="WithdrawDepartmentalSubmission", payload=payload, result=result,
 		document_type="Departmental Plan Version", document_name=version.name, actor=actor,
@@ -728,6 +731,7 @@ def create_departmental_plan_update(
 	envelope.bump(root, current_version=version.name, current_state="Draft")
 	root.reload()
 	result = _result(root, version, action="update_created")
+	needs_intake.publish_need_positions(root.organisation_unit, root.fiscal_year, source=idempotency_key)
 	envelope.record_command(
 		idempotency_key=idempotency_key, command="CreateDepartmentalPlanUpdate", payload=payload, result=result,
 		document_type="Departmental Plan Version", document_name=version.name, actor=actor,

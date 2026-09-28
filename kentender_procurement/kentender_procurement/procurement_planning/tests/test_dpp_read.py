@@ -453,7 +453,8 @@ class TestAcceptedPlanUpdate(DppReadCase):
 		self.assertEqual(view["header"]["badge"], "Accepted")
 		self.assertFalse(view["mutable"])
 		self.assertTrue(view["can_create_update"])
-		self.assertIsNone(view["update_notice"])
+		# nothing missing from it, so the plan is simply done
+		self.assertEqual(view["next_step"]["kind"], "done")
 		frappe.set_user(fx.HOD)
 		self.assertTrue(dpp_read.get_departmental_plan(dpp_reference=reference)["can_create_update"])
 		frappe.set_user(fx.PLANNER)
@@ -466,9 +467,12 @@ class TestAcceptedPlanUpdate(DppReadCase):
 		patched.start()
 		self.addCleanup(patched.stop)
 		frappe.set_user(fx.AUTHOR)
-		notice = dpp_read.get_departmental_plan(dpp_reference=reference)["update_notice"]
-		self.assertEqual(notice["title"], "2 accepted needs are not in this plan")
-		self.assertIn("to carry them into", notice["text"])
+		# Owner decision 26 Sep 2026 — the next step names them (it replaced
+		# the separate "accepted needs are not in this plan" notice).
+		step = dpp_read.get_departmental_plan(dpp_reference=reference)["next_step"]
+		self.assertEqual(step["headline"], "Add NEED-PLNT-0001 and NEED-PLNT-0002 to this plan")
+		self.assertIn("They were accepted after this plan was accepted.", step["sentence"])
+		self.assertIn("to add them", step["sentence"])
 
 	def test_a_need_accepted_later_is_named_and_the_update_carries_it(self):
 		reference = self.accepted()
@@ -477,9 +481,11 @@ class TestAcceptedPlanUpdate(DppReadCase):
 		self.addCleanup(patched.stop)
 		frappe.set_user(fx.AUTHOR)
 		view = dpp_read.get_departmental_plan(dpp_reference=reference)
-		self.assertEqual(view["update_notice"]["title"], "1 accepted need is not in this plan")
-		self.assertIn("NEED-PLNT-0001", view["update_notice"]["text"])
-		self.assertIn("to carry it into", view["update_notice"]["text"])
+		self.assertEqual(view["next_step"]["kind"], "your_turn")
+		self.assertEqual(view["next_step"]["primary_action"], "create_update")
+		self.assertEqual(view["next_step"]["headline"], "Add NEED-PLNT-0001 to this plan")
+		self.assertIn("It was accepted after this plan was accepted.", view["next_step"]["sentence"])
+		self.assertNotIn("update_notice", view)
 
 		# The department is told in My Work, not only on a page it has to think
 		# to open (found live 25 Sep 2026: a Need accepted after its plan was
@@ -492,7 +498,7 @@ class TestAcceptedPlanUpdate(DppReadCase):
 			self.assertEqual(len(rows), 1, user)
 			self.assertEqual(rows[0]["route"], ["departmental-procurement-plan", reference])
 			self.assertEqual(rows[0]["action_label"], "Create update")
-			self.assertIn("1 accepted need not in plan", rows[0]["stage"])
+			self.assertEqual(rows[0]["stage"], "NEED-PLNT-0001 not in plan")
 		self.assertEqual([r for r in update_rows(fx.PLANNER) if r["reference"] == reference], [])
 
 		update = dpp_lifecycle.create_departmental_plan_update(
@@ -501,7 +507,7 @@ class TestAcceptedPlanUpdate(DppReadCase):
 		self.assertEqual(update["action"], "update_created")
 		after = dpp_read.get_departmental_plan(dpp_reference=reference)
 		self.assertFalse(after["can_create_update"])
-		self.assertIsNone(after["update_notice"])
+		self.assertNotEqual(after["next_step"]["primary_action"], "create_update")
 		self.assertEqual([r for r in update_rows(fx.AUTHOR) if r["reference"] == reference], [])
 		self.assertTrue(after["mutable"])
 		# the window gates only a first submission (§5.1) — say so on the update
