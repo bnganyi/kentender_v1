@@ -195,6 +195,37 @@ def set_gate(*, closed: bool) -> None:
 	simulation.set_controls(gate_closed=1 if closed else 0)
 
 
+PORTAL_STASH = "kt_pw_bds_supplier_support_email"
+
+
+def set_portal_information(*, complete: bool) -> dict[str, Any]:
+	"""BDS-DES-16 supplier-information variants: this world blanks the
+	supplier support email so the portal information is Incomplete, keeping
+	the site's value aside; `complete` (and `restore_site`) puts it back."""
+	from kentender_core.services import public_portal
+
+	if complete:
+		_restore_portal_information()
+	else:
+		current = frappe.db.get_single_value(public_portal.SETTINGS, "supplier_support_email")
+		if current and not frappe.db.get_default(PORTAL_STASH):
+			frappe.db.set_default(PORTAL_STASH, current)
+		frappe.db.set_single_value(public_portal.SETTINGS, "supplier_support_email", "", update_modified=False)
+	frappe.db.commit()
+	return {"status": public_portal.get_public_portal_information().get("status")}
+
+
+def _restore_portal_information() -> None:
+	from kentender_core.services import public_portal
+
+	stashed = frappe.db.get_default(PORTAL_STASH)
+	if stashed:
+		frappe.db.set_single_value(public_portal.SETTINGS, "supplier_support_email", stashed, update_modified=False)
+		from frappe.defaults import clear_default
+
+		clear_default(PORTAL_STASH)
+
+
 def reset_overview_fixture(*, commit: bool = True, started: bool = True, gate_closed: bool = False) -> dict[str, Any]:
 	"""BDS-DES-02 world: the Tenders test Tender, open, with this world's
 	two suppliers; Afya (Test) has started its bid when `started`."""
@@ -522,6 +553,7 @@ def restore_site(*, commit: bool = True) -> dict[str, Any]:
 	from kentender_procurement.bid_submission.services import simulation
 
 	simulation.reset_controls()  # the test clock and every forced world back to normal
+	_restore_portal_information()
 	removal = frappe.get_hooks("kt_seed_supplier_account_removal") or []
 	if removal:
 		frappe.get_attr(removal[-1])(namespace=NAMESPACE, users=SUPPLIER_USERS)

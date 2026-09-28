@@ -5,6 +5,7 @@
 // caller's own entry until saved; the server checks and canonicalises it.
 // Evidence files are their own commands (upload, remove), run at once.
 import { computed, inject, ref } from "vue";
+import CommonState from "./CommonState.vue";
 
 const UPLOAD = "kentender_procurement.bid_submission.api.upload_bid_evidence";
 const REMOVE = "kentender_procurement.bid_submission.api.remove_bid_evidence";
@@ -20,6 +21,7 @@ const emit = defineEmits(["update:modelValue", "changed"]);
 const portal = inject("portal");
 const picker = ref(null);
 const fileError = ref("");
+const rejection = ref(null); // §10.17 Evidence rejected: the safe reason the file checks gave
 const runner = portal.createCommandRunner({ ref }, { onError: (e) => (fileError.value = e.message) });
 const pending = computed(() => runner.pending.value);
 
@@ -55,10 +57,14 @@ function upload(event) {
 	event.target.value = "";
 	if (!file) return;
 	fileError.value = "";
+	rejection.value = null;
 	return runner.run(async () => {
 		const result = await portal.upload(UPLOAD, { bid_reference: props.bid.reference, handle: props.field.handle, expected_record_version: props.bid.record_version, idempotency_key: `bds-evidence-${Date.now().toString(36)}` }, { file });
 		if (result && result.ok) emit("changed", result);
-		else if (result && result.errors) fileError.value = result.errors[props.field.handle] || result.message;
+		else if (result && result.code === "BDS_EVIDENCE_REJECTED") {
+			rejection.value = (result.errors && result.errors[props.field.handle]) || "";
+			emit("changed", result); // the refused file is kept as a Rejected record
+		} else if (result && result.errors) fileError.value = result.errors[props.field.handle] || result.message;
 		else if (result) fileError.value = result.message || "";
 	}, "Upload file");
 }
@@ -99,7 +105,8 @@ function remove(file) {
 		<div v-if="!disabled">
 			<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" :data-testid="'bds-upload-' + field.handle" @click="picker && picker.click()">{{ files.length ? __("Replace") : __("Upload file") }}</button>
 		</div>
-		<p v-if="fileError || issue" class="kt-field-error">{{ fileError || issue }}</p>
+		<CommonState v-if="rejection !== null" inline state="evidence-rejected" :figures="{ reason: rejection }" @action="picker && picker.click()" />
+		<p v-else-if="fileError || issue" class="kt-field-error">{{ fileError || issue }}</p>
 		<p v-else-if="field.help" class="bds-help">{{ field.help }}</p>
 	</div>
 

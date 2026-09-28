@@ -36,6 +36,7 @@ def update_tender_contact(*, bid_reference: str, email: str, phone: str, expecte
 def _update(*, actor: str, bid_reference: str, email: str, phone: str, expected_record_version, organisation: str) -> dict[str, Any]:
 	at = clock.now()
 	ctx = bid_context.load(bid_reference, actor=actor, organisation=organisation, at=at)
+	authz.active_account(ctx.workspace.lead_organisation)  # a suspended Account cannot edit its Draft (BDS01-AC-010)
 	save.require_open(ctx)
 	arrangement = ctx.arrangement
 	records.check_version(arrangement, expected_record_version)

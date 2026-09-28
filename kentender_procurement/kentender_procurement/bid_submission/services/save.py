@@ -53,6 +53,7 @@ def require_open(ctx) -> None:
 def _save(*, actor: str, bid_reference: str, task: str, values: dict, expected_record_version, organisation: str) -> dict[str, Any]:
 	at = clock.now()
 	ctx = bid_context.load(bid_reference, actor=actor, organisation=organisation, at=at)
+	authz.active_account(ctx.workspace.lead_organisation)  # a suspended Account cannot edit its Draft (BDS01-AC-010)
 	require_open(ctx)
 	records.check_version(ctx.workspace, expected_record_version)
 	refreshed = addendum.refresh(ctx, actor=actor, at=at)

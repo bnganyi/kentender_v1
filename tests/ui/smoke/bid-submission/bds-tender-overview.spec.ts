@@ -87,4 +87,31 @@ test.describe("BDS-DES-02 Published Tender overview", () => {
 		await expectNoHorizontalOverflow(page);
 		expect(errors, errors.join(" | ")).toEqual([]);
 	});
+
+	test("while supplier support information is missing the Tender stays readable and each viewer is told what still works", async ({ page }) => {
+		const errors = collectPortalConsoleErrors(page);
+		try {
+			expect(bdsFixture<{ status: string }>("set_portal_information", { complete: false }).status).toBe("Incomplete");
+			await page.setViewportSize({ width: 1440, height: 1024 });
+			await page.goto(`/tenders/${world.tender_reference}`, { waitUntil: "domcontentloaded" });
+			await waitForPortal(page);
+			const visitor = page.getByTestId("bds-state-portal-information-new-visitor");
+			await expect(visitor.locator("strong")).toHaveText("Supplier support information is temporarily unavailable.");
+			await expect(visitor).toContainText("You can read this Tender. Starting a new bid is unavailable until support and legal information is restored.");
+			await expect(visitor.getByRole("button", { name: "Try again" })).toBeVisible();
+			await expect(page.getByTestId("bds-tender-overview").locator(".kt-region h2").first()).toHaveText("Key dates");
+
+			await loginToPortal(page, world.afya_user, world.password, `/tenders/${world.tender_reference}`);
+			const draft = page.getByTestId("bds-state-portal-information-draft");
+			await expect(draft).toContainText("Your saved bid is still here.");
+			await expect(draft.getByRole("link", { name: "Continue saved bid" })).toHaveAttribute("href", `/tenders/${world.tender_reference}/bid`);
+			await expect(page.getByTestId("bds-overview-action")).toHaveText("Continue bid");
+			await page.setViewportSize({ width: 390, height: 844 });
+			await expectNoHorizontalOverflow(page);
+			await expectNoFrappeDialog(page);
+			expect(errors, errors.join(" | ")).toEqual([]);
+		} finally {
+			bdsFixture("set_portal_information", { complete: true });
+		}
+	});
 });

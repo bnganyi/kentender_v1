@@ -56,3 +56,24 @@ def active_signatory(assignment_id: str, organisation: str, *, at=None) -> dict[
 	if not row or row.get("organisation_id") != organisation or row.get("responsibility") != SIGNATORY or not row.get("active"):
 		return None
 	return row
+
+
+# --------------------------------------------------------------------------
+# Desk: a bid's content is never a Desk read (BDS-CHG-001 v0.8 §12;
+# BDS01-AC-080). These records hold its answers, files, prior/new values,
+# command results, receipt summary and withdrawal reasons; no role is
+# granted them, and these hooks refuse any user a record or a list. The
+# supplier reads them only through this module's own services; technical
+# users see metadata through the technical read. (Administrator bypasses
+# Frappe's permission checks — a recorded production-gate residual, plan D7.)
+# --------------------------------------------------------------------------
+
+CONTENT_DOCTYPES = ("Bid Section Response", "Bid Evidence", "Bid Draft Change", "Bid Command Journal", "Bid Receipt", "Bid Submission Change")
+
+
+def deny_desk_access(doc=None, ptype=None, user=None, debug=False) -> bool:
+	return False
+
+
+def deny_desk_query(user=None, doctype=None) -> str:
+	return "1=0"

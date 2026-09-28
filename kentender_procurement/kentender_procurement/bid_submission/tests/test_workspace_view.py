@@ -11,9 +11,11 @@ derives none of it. Reads create nothing."""
 
 from __future__ import annotations
 
+from unittest import mock
+
 import frappe
 
-from kentender_procurement.bid_submission.services import reads, simulation
+from kentender_procurement.bid_submission.services import reads, simulation, tenders_gateway
 from kentender_procurement.bid_submission.tests.support import DAVID, MARY, BidCase, fill_everything
 from kentender_procurement.bid_submission.tests.test_addendum_refresh import AddendumCase
 from kentender_procurement.bid_submission.tests.test_submission import SubmissionCase
@@ -93,6 +95,22 @@ class TestNoticesAndAddendum(AddendumCase):
 		self.assertTrue(row["label"].startswith(f"{reference} · "))
 		self.assertEqual(view["header"]["action"]["label"], "Review addendum")
 		self.assertEqual(view["notices_note"], "Delivery describes the notice sent to your Tender notice email. The published answer and addendum are available here whether or not a notice was delivered.")
+
+	def test_each_answer_notice_names_its_delivery(self):
+		# §5.4 item 11: Queued, Sent and Delivered stay distinct, and a failed
+		# notice is a Delivery problem (never "Not delivered")
+		real = tenders_gateway.published_tender
+		statuses = ("Failed", "Sent", "Queued", "Delivered")
+		answers = [{"key": f"ANS-{s}", "answered_at": "2027-05-28 10:00:00", "question": "Question text", "answer": "Answer text"} for s in statuses]
+
+		def published(reference, *, at):
+			return {**(real(reference, at=at) or {}), "answers": answers}
+
+		delivery = {"notices": [{"kind": "answer", "subject_key": f"ANS-{s}", "status": s} for s in statuses]}
+		with mock.patch.object(tenders_gateway, "published_tender", published), mock.patch.object(tenders_gateway, "candidate_view", return_value=delivery):
+			rows = reads.get_bid_workspace(bid_reference=self.bid, user=DAVID)["notices"]
+		got = {r["key"]: (r["status"], r["tone"]) for r in rows if r["key"].startswith("ANS-")}
+		self.assertEqual(got, {"ANS-Failed": ("Delivery problem", "attention"), "ANS-Sent": ("Sent", "pending"), "ANS-Queued": ("Queued", "pending"), "ANS-Delivered": ("Delivered", "live")})
 
 
 class TestWorkspaceAddress(SubmissionCase):

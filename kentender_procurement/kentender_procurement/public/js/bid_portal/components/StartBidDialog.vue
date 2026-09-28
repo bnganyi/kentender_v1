@@ -6,8 +6,11 @@
 // country and registration number, agreement from the Account's evidence,
 // signatory); both choose the verified Tender notice email. One `StartBid`
 // command creates or returns the arrangement and the Draft together; a
-// refusal names each field and keeps what was entered.
+// refusal names each field and keeps what was entered. A bid format this
+// portal cannot render is the §10.17 Format unsupported state: nothing was
+// created, and Contact support is the one way on.
 import { computed, inject, nextTick, onMounted, reactive, ref } from "vue";
+import CommonState from "./CommonState.vue";
 
 const METHOD = "kentender_procurement.bid_submission.api.start_bid";
 const props = defineProps({
@@ -22,9 +25,11 @@ const form = reactive({
 });
 const errors = ref({});
 const failure = ref("");
+const unsupported = ref(false);
 const first = ref(null);
 const key = `bds-start-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-const runner = portal.createCommandRunner({ ref }, { onError: (e) => (failure.value = e.message) });
+const UNSUPPORTED = "BDS_DEFINITION_UNSUPPORTED";
+const runner = portal.createCommandRunner({ ref }, { onError: (e) => (e.code === UNSUPPORTED ? (unsupported.value = true) : (failure.value = e.message)) });
 const pending = computed(() => runner.pending.value);
 const jv = computed(() => form.arrangement_type === "Joint venture");
 
@@ -43,6 +48,7 @@ function submit() {
 	return runner.run(async () => {
 		const result = await portal.call(METHOD, { tender_reference: props.tender.reference, organisation: props.start.organisation.id, arrangement, notice_contact_id: form.notice_contact_id, idempotency_key: key }, { type: "POST" });
 		if (result && result.ok) emit("started", result);
+		else if (result && result.code === UNSUPPORTED) unsupported.value = true;
 		else if (result && result.errors) errors.value = result.errors;
 		else if (result) failure.value = result.message || "";
 	}, "Start bid");
@@ -106,10 +112,11 @@ onMounted(() => nextTick(() => first.value && first.value.focus()));
 				<p v-if="errors.notice_contact_id" class="kt-field-error">{{ errors.notice_contact_id }}</p>
 				<p v-else id="bds-notice-help" class="bds-help">{{ start.notice_contact_help }}</p>
 			</div>
-			<div v-if="failure" class="kt-notice is-critical" role="alert"><div class="kt-notice-body">{{ failure }}</div></div>
+			<CommonState v-if="unsupported" inline state="format-unsupported" :action-href="start.support_href || ''" />
+			<div v-else-if="failure" class="kt-notice is-critical" role="alert"><div class="kt-notice-body">{{ failure }}</div></div>
 			<div class="kt-dialog-actions">
 				<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="bds-start-cancel" @click="emit('close')">{{ __("Cancel") }}</button>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="bds-start-submit" @click="submit">{{ pending ? __("Starting…") : __("Start bid") }}</button>
+				<button v-if="!unsupported" type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="bds-start-submit" @click="submit">{{ pending ? __("Starting…") : __("Start bid") }}</button>
 			</div>
 		</div>
 	</div>

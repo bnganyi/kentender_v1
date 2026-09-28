@@ -28,7 +28,9 @@ from kentender_procurement.bid_submission.services import availability, labels, 
 
 DESCRIPTION = "Complete the five tasks below before an Authorised Signatory submits the bid."
 NOTICES_NOTE = "Delivery describes the notice sent to your Tender notice email. The published answer and addendum are available here whether or not a notice was delivered."
-DELIVERY = {"Delivered": ("Delivered", "live"), "Sent": ("Sent", "live"), "Queued": ("Queued", "attention"), "Pending": ("Queued", "attention"), "Failed": ("Not delivered", "critical")}
+# The same words and tones as the documents task (§5.2 item 11): Sent is
+# provider acceptance without delivery proof, never shown like Delivered.
+DELIVERY = {"Delivered": ("Delivered", "live"), "Sent": ("Sent", "pending"), "Queued": ("Queued", "pending"), "Pending": ("Queued", "pending"), "Failed": ("Delivery problem", "attention")}
 CLOSED_STATES = ("Submitted", "Withdrawn", "Closed without submission")
 
 

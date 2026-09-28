@@ -10,10 +10,11 @@ gate's notice promises nothing; a read creates nothing."""
 from __future__ import annotations
 
 import json
+from unittest import mock
 
 import frappe
 
-from kentender_procurement.bid_submission.services import overview, start_bid
+from kentender_procurement.bid_submission.services import overview, reads, receipt_view, start_bid
 from kentender_procurement.bid_submission.tests.support import AFYA, DAVID, MARY, PETER, key
 from kentender_procurement.bid_submission.tests.test_changes_and_close import ChangeCase
 
@@ -54,3 +55,29 @@ class TestTenderOverview(ChangeCase):
 		self.assertEqual({d: frappe.db.count(d) for d in counts}, counts)
 		with self.assertRaises(frappe.DoesNotExistError):
 			overview.get_tender_overview(tender_reference="TND-NOPE-0000-000", user=PETER)
+
+	def test_missing_portal_information_names_each_viewer_s_variant(self):
+		# §10.17 / BDS08-AC-006: the Tender stays readable; a new visitor cannot
+		# start, a Draft holder keeps the saved bid, a submitted bidder keeps the
+		# receipt — each with its catalogue variant and action
+		with mock.patch("kentender_core.services.public_portal.get_public_portal_information", return_value={"status": "Incomplete"}):
+			guest, peter, david = self.view("Guest"), self.view(PETER), self.view(DAVID)
+		self.assertEqual((guest["state"]["key"], guest["action"]["kind"]), ("portal-information-new-visitor", "sign_in"))
+		self.assertTrue(guest["documents"])
+		self.assertEqual((peter["state"]["key"], peter["action"], peter["start"]), ("portal-information-new-visitor", None, None))
+		self.assertEqual((david["state"]["key"], david["state"]["href"], david["action"]["kind"]), ("portal-information-draft", david["bid"]["href"], "continue_bid"))
+		receipt = self.submitted()
+		with mock.patch("kentender_core.services.public_portal.get_public_portal_information", return_value={"status": "Incomplete"}):
+			mary = self.view(MARY)
+			# the receipt and the receipts register stay readable
+			page = receipt_view.get_receipt_page(tender_reference=self.reference, receipt_reference=receipt, user=MARY)
+			history = reads.get_receipt_history(user=MARY)
+		self.assertEqual({r["label"]: r["value"] for r in page["receipt"]}["Receipt reference"], receipt)
+		self.assertIn(receipt, frappe.as_json(history))
+		self.assertEqual((mary["state"]["key"], mary["state"]["href"], mary["action"]["kind"], mary["bid"]["receipt_reference"]), ("portal-information-submitted", "/account/receipts", "view_receipt", receipt))
+		self.assertIsNone(self.view(PETER)["state"])
+
+	def test_start_offers_the_support_contact_for_an_unsupported_format(self):
+		# §10.17 Format unsupported: Contact support needs somewhere to go
+		start = self.view(PETER)["start"]
+		self.assertTrue(start["support_href"].startswith("mailto:"))

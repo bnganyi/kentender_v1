@@ -10,8 +10,10 @@ evaluation or definition identity, digest or path is ever included."""
 from __future__ import annotations
 
 import hashlib
+import re
 from typing import Any
 
+import frappe
 from frappe.utils import cstr
 
 from kentender_procurement.bid_submission.services import labels, tenders_gateway
@@ -53,12 +55,32 @@ def facts(group: Group) -> list[dict[str, str]]:
 	return [{"label": label, "value": _fact_value(key, published[key])} for key, label in DISPLAY_FACTS if published.get(key) not in (None, "", [])]
 
 
+# BDS01-AC-040: the Form of Tender's price line is the Price task's calculated
+# total, in figures and words — never a second entry. Until every line is
+# priced the published blank stays.
+FORM_OF_TENDER = "FORM-TENDER"
+PRICE_BLANK = re.compile(r"_{5,} \(in words and figures, indicating the currency\)")
+
+
+def _form_of_tender_price(ctx: BidContext, text: str) -> str:
+	from kentender_procurement.bid_submission.services import labels, price
+
+	calc = price.calculate(ctx)
+	if calc["total"] is None or not PRICE_BLANK.search(text):
+		return text
+	words = cstr(frappe.utils.money_in_words(calc["total"], calc["currency"]))
+	return PRICE_BLANK.sub(lambda _m: f"{labels.money_label(calc['total'], calc['currency'])} ({words})", text, count=1)
+
+
 def statement(ctx: BidContext, group: Group) -> str:
 	text_id = group.published_facts.get("text_id")
 	if not text_id:
 		return ""
 	row = next((t for t in ctx.model.definition.get("declaration_texts") or [] if t.get("text_id") == text_id), {})
-	return cstr(row.get("resolved_text") or row.get("locked_text"))
+	text = cstr(row.get("resolved_text") or row.get("locked_text"))
+	if group.published_facts.get("form_id") == FORM_OF_TENDER:
+		text = _form_of_tender_price(ctx, text)
+	return text
 
 
 def heading(ctx: BidContext, group: Group) -> str:

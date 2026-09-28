@@ -613,3 +613,8 @@ kt_plan_item_correction_outcome_consumers = [
 kt_budget_revision_outcome_consumers = [
 	"kentender_procurement.procurement_planning.services.budget_revision.receive_budget_revision_outcome",
 ]
+
+# BDS-CHG-001 v0.8 §12 (BDS01-AC-080): a bid's content is never a Desk read.
+for _bds_content in ("Bid Section Response", "Bid Evidence", "Bid Draft Change", "Bid Command Journal", "Bid Receipt", "Bid Submission Change"):
+	has_permission[_bds_content] = "kentender_procurement.bid_submission.services.bid_authorization.deny_desk_access"
+	permission_query_conditions[_bds_content] = "kentender_procurement.bid_submission.services.bid_authorization.deny_desk_query"

@@ -81,7 +81,7 @@ def _store(ctx, field, *, filename: str, content: bytes, actor: str, at, source:
 		"original_filename": cstr(filename).strip().split("/")[-1].split("\\")[-1][:140], "scan_status": "Pending", "source_evidence": source, "status": "Current",
 		"uploaded_by": actor, "uploaded_at": at,
 	}))
-	if file_integrity.unreadable(content):
+	if not content or file_integrity.unreadable(content):
 		_reject("File is empty or unreadable.")  # Frappe's File save would fail on it
 	# A File created with its content keeps the exact bytes; file_manager.save_file
 	# re-reads what it wrote as text and rewrites it (a small PDF grows).
@@ -120,6 +120,7 @@ def link_account_evidence_to_bid(*, bid_reference: str, handle: str, account_evi
 def _add(*, actor: str, bid_reference: str, handle: str, expected_record_version, organisation: str, filename: str = "", content: bytes = b"", account_evidence_id: str = "") -> dict[str, Any]:
 	at = clock.now()
 	ctx = bid_context.load(bid_reference, actor=actor, organisation=organisation, at=at)
+	authz.active_account(ctx.workspace.lead_organisation)  # a suspended Account cannot edit its Draft (BDS01-AC-010)
 	save.require_open(ctx)
 	records.check_version(ctx.workspace, expected_record_version)
 	from kentender_procurement.bid_submission.services import addendum
@@ -180,6 +181,7 @@ def remove_bid_evidence(*, bid_reference: str, evidence_id: str, expected_record
 	def run() -> dict[str, Any]:
 		at = clock.now()
 		ctx = bid_context.load(payload["bid_reference"], actor=actor, organisation=payload["organisation"], at=at)
+		authz.active_account(ctx.workspace.lead_organisation)
 		save.require_open(ctx)
 		records.check_version(ctx.workspace, expected_record_version)
 		from kentender_procurement.bid_submission.services import addendum

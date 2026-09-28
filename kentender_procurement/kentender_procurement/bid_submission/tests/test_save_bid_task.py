@@ -149,3 +149,59 @@ class TestTenderContact(SaveCase):
 		self.assertTrue(done["ok"])
 		shown = self.field(self.task(), "Authorised representative's telephone")
 		self.assertEqual((shown["value"], shown.get("issue")), ("+254 709 555 015", None))
+
+
+class TestContentConfidentiality(SaveCase):
+	"""BDS01-AC-080/081 (found by the 28 Sep 2026 acceptance audit): no Desk
+	role reads a bid's content, and its values never reach Frappe's change
+	log; BDS01-AC-010: a suspended Account cannot edit its Draft."""
+
+	CONTENT = ("Bid Section Response", "Bid Evidence", "Bid Draft Change", "Bid Command Journal", "Bid Receipt", "Bid Submission Change")
+
+	def system_manager(self) -> str:
+		email = "bdst.sysman@example.test"
+		if not frappe.db.exists("User", email):
+			user = frappe.get_doc({"doctype": "User", "email": email, "first_name": "Test", "last_name": "Sysman", "send_welcome_email": 0})
+			user.append("roles", {"role": "System Manager"})
+			user.insert(ignore_permissions=True)
+		return email
+
+	def test_no_desk_role_reads_bid_content(self):
+		year = self.field(self.task(), "Year of registration")
+		self.save({year["handle"]: "2011"})
+		manager = self.system_manager()
+		for doctype in self.CONTENT:
+			with self.subTest(doctype=doctype):
+				self.assertEqual(frappe.get_meta(doctype).permissions, [])
+				self.assertFalse(frappe.has_permission(doctype, "read", user=manager))
+				try:  # refused outright, or an empty list
+					rows = frappe.get_list(doctype, user=manager, limit_page_length=1)
+				except frappe.PermissionError:
+					rows = []
+				self.assertEqual(rows, [])
+		response = frappe.db.get_value("Bid Section Response", {"bid_workspace": self.bid}, "name")
+		self.assertFalse(frappe.has_permission("Bid Section Response", "read", doc=response, user=manager))
+
+	def test_bid_values_never_reach_the_change_log(self):
+		year = self.field(self.task(), "Year of registration")
+		self.save({year["handle"]: "2011"})
+		self.save({year["handle"]: "2012"})
+		for doctype in self.CONTENT:
+			with self.subTest(doctype=doctype):
+				self.assertFalse(frappe.get_meta(doctype).track_changes)
+		responses = frappe.get_all("Bid Section Response", filters={"bid_workspace": self.bid}, pluck="name")
+		self.assertEqual(frappe.db.count("Version", {"ref_doctype": "Bid Section Response", "docname": ("in", responses)}), 0)
+
+	def test_a_suspended_account_cannot_edit_its_draft(self):
+		from kentender_procurement.bid_submission.services import evidence, tender_contact
+
+		year = self.field(self.task(), "Year of registration")
+		self.accounts.orgs[AFYA]["account_status"] = "Suspended"
+		for command in (
+			lambda: self.save({year["handle"]: "2011"}),
+			lambda: evidence.upload_bid_evidence(bid_reference=self.bid, handle=year["handle"], filename="x.pdf", content=b"%PDF-1.4", expected_record_version=self.version(), idempotency_key=key(), user=DAVID),
+			lambda: tender_contact.update_tender_contact(bid_reference=self.bid, email=DAVID, phone="+254 709 555 015", expected_record_version=frappe.db.get_value("Bidder Arrangement", frappe.db.get_value("Bid Workspace", self.bid, "bidder_arrangement"), "record_version"), idempotency_key=key(), user=DAVID),
+		):
+			with self.assertRaises(errors.BidSubmissionError) as refused:
+				command()
+			self.assertEqual(refused.exception.code, "BDS_ACCOUNT_SUSPENDED")

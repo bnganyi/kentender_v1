@@ -3,9 +3,12 @@
 // "Bid Board v3 - A" (1440 tables; 390 labelled cards). The server
 // (`GetPublishedTenderForBidder` + the viewer's own bid) decides every fact,
 // the one action and the notices; nothing here derives a status. A cancelled
-// Tender is its reference, the Cancelled status and View notice alone.
+// Tender is its reference, the Cancelled status and View notice alone. While
+// the supplier portal information is incomplete the server names the §10.17
+// variant for this viewer (new visitor, Draft holder, submitted bidder).
 import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
 import { useNarrow } from "../composables/useNarrow.js";
+import CommonState from "../components/CommonState.vue";
 import QuestionDialog from "../components/QuestionDialog.vue";
 import StartBidDialog from "../components/StartBidDialog.vue";
 
@@ -101,6 +104,7 @@ onMounted(() => {
 		<div v-if="data.notice" class="kt-notice" :class="data.notice.kind === 'outage' ? 'is-critical' : 'is-warning'" role="status" data-testid="bds-overview-notice">
 			<div class="kt-notice-body"><strong>{{ data.notice.title }}</strong> {{ data.notice.text }}</div>
 		</div>
+		<CommonState v-if="data.state" inline :state="data.state.key" :figures="data.state.figures" :action-href="data.state.href" @action="load" />
 
 		<div class="kt-region">
 			<h2>{{ __("Key dates") }}</h2>

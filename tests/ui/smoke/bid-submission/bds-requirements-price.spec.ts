@@ -7,7 +7,7 @@ import { bdsFixture, restoreBdsWorld } from "./bdsWorld";
  * BDS-CHG-001 v0.8 §10.10–10.11 (plan Phase 11, slices 11.9–11.10) —
  * Requirements and supporting evidence, then Price, as David of Afya (Test)
  * on a new bid on the Tenders test Tender: answer one requirement with its
- * file in the response drawer, enter the offered goods, then the price, and
+ * file in the response drawer (a refused file first shows Evidence rejected), enter the offered goods, then the price, and
  * see the server's bid total. Another organisation sees nothing.
  */
 type World = { tender_reference: string; bid_reference: string; password: string; representative: string; other_user: string };
@@ -47,8 +47,16 @@ test.describe("BDS-DES-09 Requirements / BDS-DES-10 Price", () => {
 		await expect(drawer.getByRole("dialog")).toHaveAccessibleName("Battery runtime");
 		await drawer.locator("select").first().selectOption({ index: 1 });
 		await drawer.locator("input.kt-input[inputmode=decimal]").first().fill("10");
-		await drawer.locator("input[type=file]").setInputFiles({ name: "apexbook-datasheet.pdf", mimeType: "application/pdf", buffer: onePagePdf() });
+		// a refused file is the Evidence rejected state; Choose another file reopens the picker
+		await drawer.locator("input[type=file]").setInputFiles({ name: "empty-datasheet.pdf", mimeType: "application/pdf", buffer: Buffer.alloc(0) });
+		const rejected = drawer.getByTestId("bds-state-evidence-rejected");
+		await expect(rejected.locator("strong")).toHaveText("This file could not be accepted.");
+		await expect(rejected).toContainText("File is empty or unreadable.");
+		const chooser = page.waitForEvent("filechooser");
+		await rejected.getByRole("button", { name: "Choose another file" }).click();
+		await (await chooser).setFiles({ name: "apexbook-datasheet.pdf", mimeType: "application/pdf", buffer: onePagePdf() });
 		await expect(drawer.locator(".bds-file-row", { hasText: "apexbook-datasheet.pdf" })).toBeVisible();
+		await expect(rejected).toHaveCount(0);
 		await drawer.getByTestId("bds-drawer-save").click();
 		await expect(drawer).toHaveCount(0);
 		await expect(battery).toContainText("10");

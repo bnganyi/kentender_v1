@@ -178,23 +178,10 @@
  "module": "Bid Submission",
  "name": "Bid Evidence",
  "owner": "Administrator",
- "permissions": [
-  {
-   "create": 0,
-   "delete": 0,
-   "email": 0,
-   "export": 0,
-   "print": 0,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 0,
-   "write": 0
-  }
- ],
+ "permissions": [],
  "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
- "track_changes": 1
+ "track_changes": 0
 }

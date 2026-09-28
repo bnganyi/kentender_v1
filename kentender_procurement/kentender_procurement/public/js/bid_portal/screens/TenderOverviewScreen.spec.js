@@ -53,6 +53,46 @@ describe("Start bid", () => {
 	});
 });
 
+describe("Common states on the Tender page", () => {
+	it("shows Format unsupported with Contact support when the bid format cannot be rendered", async () => {
+		const data = overview("JV-START");
+		data.start.support_href = "mailto:supplier.support@moh.example";
+		const { wrapper, portal } = render(data);
+		portal.call.mockRejectedValueOnce(Object.assign(new Error("This bid format is not available."), { code: "BDS_DEFINITION_UNSUPPORTED" }));
+		await wrapper.find('[data-testid="bds-overview-action"]').trigger("click");
+		await wrapper.find('[data-testid="bds-start-submit"]').trigger("click");
+		await flushPromises();
+		const state = wrapper.get('[data-testid="bds-state-format-unsupported"]');
+		expect(state.get("strong").text()).toBe("This bid format is not available.");
+		expect(state.text()).toContain("No bid was created for this Tender. Contact supplier support.");
+		expect(state.get("a").attributes("href")).toBe("mailto:supplier.support@moh.example");
+		expect(state.get("a").text()).toBe("Contact support");
+		expect(wrapper.find('[data-testid="bds-start-submit"]').exists()).toBe(false);
+	});
+
+	it.each([
+		["portal-information-new-visitor", "", "Starting a new bid is unavailable until support and legal information is restored.", "Try again"],
+		["portal-information-draft", "/tenders/TND-MOH-2027-033/bid", "Your saved bid is still here.", "Continue saved bid"],
+		["portal-information-submitted", "/account/receipts", "Your submitted bid and receipt remain available.", "View receipts"],
+	])("names the %s variant while supplier information is unavailable", async (key, href, message, action) => {
+		const data = overview("");
+		data.state = { key, figures: {}, href, retry: false };
+		const { wrapper, portal } = render(data, { get_tender_overview: data });
+		const state = wrapper.get(`[data-testid="bds-state-${key}"]`);
+		expect(state.get("strong").text()).toBe("Supplier support information is temporarily unavailable.");
+		expect(state.text()).toContain(message);
+		const control = state.get(href ? "a" : "button");
+		expect(control.text()).toBe(action);
+		if (href) expect(control.attributes("href")).toBe(href);
+		else {
+			await control.trigger("click");
+			await flushPromises();
+			expect(portal.call.mock.calls.map(([method]) => method.split(".").pop())).toEqual(["get_tender_overview"]);
+		}
+		expect(wrapper.find('[data-testid="bds-overview-documents"], .kt-region').exists()).toBe(true);
+	});
+});
+
 describe("Ask a question", () => {
 	it("names a too-short question in place and confirms a sent one", async () => {
 		const { wrapper, portal } = render(overview("CANDIDATE-QUESTION"), { submit_tender_clarification: { ok: false, errors: { question: "Enter a question of 10 to 2,000 characters." } } });

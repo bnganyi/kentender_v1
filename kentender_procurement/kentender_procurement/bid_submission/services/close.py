@@ -123,7 +123,10 @@ def handoff_payload(root, close, custody: dict[str, Any], unresolved: list[str])
 	tender = root.name
 	versions = frappe.get_all(
 		"Bid Submission Version", filters={"tender": tender},
-		fields=["name", "version_number", "bid_workspace", "tender_box_envelope", "receipt", "received_at", "accepted_at", "package_digest", "status", "predecessor_submission_version"],
+		fields=[
+			"name", "version_number", "bid_workspace", "tender_box_envelope", "receipt", "received_at", "accepted_at", "package_digest", "status", "predecessor_submission_version",
+			"bid_definition_id", "definition_version", "definition_digest",
+		],
 		order_by="bid_workspace asc, version_number asc", limit_page_length=0,
 	)
 	envelopes = {e.name: e for e in frappe.get_all("Tender Box Envelope", filters={"tender": tender}, fields=["name", "custody_receipt", "accepted_at"], limit_page_length=0)}
@@ -147,6 +150,8 @@ def handoff_payload(root, close, custody: dict[str, Any], unresolved: list[str])
 				"bidder_arrangement": cstr(arrangements.get(v.bid_workspace)), "receipt_reference": v.receipt, "received_at": str(v.received_at), "accepted_at": str(v.accepted_at),
 				"package_digest": v.package_digest, "custody_receipt": envelopes[v.tender_box_envelope].custody_receipt if v.tender_box_envelope in envelopes else "",
 				"status": v.status, "predecessor_submission_version": cstr(v.predecessor_submission_version),
+				# BDS06-AC-014: the exact published definition the envelope answers
+				"bid_definition_id": v.bid_definition_id, "definition_version": int(v.definition_version or 0), "definition_digest": v.definition_digest,
 			}
 			for v in versions
 		],

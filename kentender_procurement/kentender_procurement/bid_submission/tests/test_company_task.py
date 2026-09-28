@@ -60,7 +60,26 @@ class TestCompleteCompanyTask(SubmissionCase):
 		self.assertEqual(frappe.db.count("Bid Submission Event"), events)
 
 
+class TestFormOfTenderPrice(SubmissionCase):
+	def test_the_form_of_tender_states_the_calculated_bid_total(self):
+		# BDS01-AC-040 (found by the 28 Sep 2026 acceptance audit): the Form of
+		# Tender's price line is the Price task's total, never entered again.
+		from kentender_procurement.bid_submission.services import price
+		from kentender_procurement.bid_submission.services.bid_context import load
+
+		view = company(self.bid)
+		form = next(r for r in view["declarations"] if r["label"] == "Form of Tender")
+		calc = price.calculate(load(self.bid, actor=DAVID, organisation="", at=frappe.utils.now_datetime()))
+		self.assertIn(f"is: KES {calc['total']:,.2f} (", form["statement"])
+		self.assertNotIn("_____ (in words and figures, indicating the currency)", form["statement"])
+
+
 class TestNewCompanyTask(BidCase):
+	def test_an_unpriced_bid_leaves_the_form_of_tender_price_line_blank(self):
+		bid = start_bid.start_bid(tender_reference=self.reference, organisation=AFYA, arrangement=self.single(), notice_contact_id=f"{AFYA}-C1", idempotency_key=key(), user=DAVID)["bid_reference"]
+		form = next(r for r in company(bid)["declarations"] if r["label"] == "Form of Tender")
+		self.assertIn("(in words and figures, indicating the currency)", form["statement"])
+
 	def test_a_new_bid_lists_every_form_not_started_and_no_security_yet(self):
 		bid = start_bid.start_bid(tender_reference=self.reference, organisation=AFYA, arrangement=self.single(), notice_contact_id=f"{AFYA}-C1", idempotency_key=key(), user=DAVID)["bid_reference"]
 		view = company(bid)

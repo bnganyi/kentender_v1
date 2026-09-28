@@ -12,7 +12,10 @@ Active Account), Start bid with the "Who is bidding?" choices, Continue bid,
 View receipt, or none (closed without a bid, or cancelled with its notice).
 A person from another organisation sees exactly what a new supplier sees; no
 other supplier's bid fact is ever read here. The production-gate and outage
-notices say what §5.10 says and promise nothing. A read creates nothing."""
+notices say what §5.10 says and promise nothing. While the supplier portal
+information is incomplete the Tender stays readable and the §10.17 variant
+for the viewer is named: a new visitor cannot start, a Draft holder keeps the
+saved bid, a submitted bidder keeps the receipt. A read creates nothing."""
 
 from __future__ import annotations
 
@@ -21,7 +24,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_procurement.bid_submission.services import availability, clock, labels, supplier_gateway, tenders_gateway
+from kentender_procurement.bid_submission.services import availability, clock, common_states, labels, supplier_gateway, tenders_gateway, workspace_view
 from kentender_procurement.bid_submission.services import bid_authorization as authz
 
 BEFORE_YOU_START = (
@@ -91,6 +94,8 @@ def _start_options(assignment: dict[str, Any], published: dict[str, Any], at) ->
 		"notice_contact_help": NOTICE_CONTACT_HELP,
 		"signatories": [{"assignment_id": a["assignment_id"], "name": labels.person_name(a["user"])} for a in supplier_gateway.organisation_signatories(organisation_id=organisation, at=at)],
 		"agreements": [{"evidence_id": e["evidence_id"], "title": cstr(e.get("file_name") or e.get("title"))} for e in supplier_gateway.account_evidence(organisation_id=organisation) if e.get("status") == "Available"],
+		# §10.17 Format unsupported: Contact support
+		"support_href": next((link["href"] for link in workspace_view._support_links()), ""),
 	}
 
 
@@ -140,6 +145,16 @@ def get_tender_overview(*, tender_reference: str, organisation: str = "", user: 
 			notice = {"kind": "not_enabled", "title": "Electronic bid submission is not available yet", "text": "Preparation can be saved but cannot be submitted in this state. Check the deadline and use Supplier support for help."}
 		elif gate["code"] in ("BDS_SIGNATURE_UNAVAILABLE", "BDS_SUBMISSION_SERVICE_UNAVAILABLE"):
 			notice = {"kind": "outage", "title": "Electronic submission is temporarily unavailable", "text": "Your saved work is kept. Check the deadline and use Supplier support for help."}
+	information = None
+	if state == "open" and workspace_view.portal_incomplete():
+		if bid and bid["status"] == "Submitted":
+			information = common_states.state("portal-information-submitted", href="/account/receipts")
+		elif bid:
+			information = common_states.state("portal-information-draft", href=bid["href"])
+		else:
+			information = common_states.state("portal-information-new-visitor")
+			if action and action["kind"] == "start_bid":
+				action, start = None, None
 	candidate = bool(bid) and frappe.db.get_value("Bidder Arrangement", frappe.db.get_value("Bid Workspace", bid["bid_reference"], "bidder_arrangement"), "status") == "Active"
 	clarification_deadline = labels.datetime_label(published.get("clarification_deadline"))
 	return {
@@ -170,7 +185,7 @@ def get_tender_overview(*, tender_reference: str, organisation: str = "", user: 
 			"helper": QUESTION_HELPER if (state == "open" and published.get("clarifications_open") and not bid) else "",
 			"closed_text": "" if published.get("clarifications_open") else (f"Clarifications closed {clarification_deadline}." if clarification_deadline else ""),
 		},
-		"notice": notice, "bid": bid, "action": action, "start": start, "before_you_start": list(BEFORE_YOU_START),
+		"notice": notice, "state": information, "bid": bid, "action": action, "start": start, "before_you_start": list(BEFORE_YOU_START),
 		"cancellation": {"cancelled": labels.datetime_label((published.get("cancellation") or {}).get("cancelled_at"))} if state == "cancelled" else None,
 		"signed_in": signed_in,
 	}

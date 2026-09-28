@@ -147,6 +147,10 @@ class TestClose(ChangeCase):
 		self.assertEqual((row.consumer, row.delivery_status, row.handoff_digest), ("bid-opening", "Pending", hashlib.sha256(row.payload_json.encode()).hexdigest()))
 		self.assertEqual([(e["bid_reference"], e["receipt_reference"], e["status"]) for e in body["envelopes"]], [(self.bid, first, "Submitted")])  # no Draft in the inventory
 		self.assertEqual(body["closed_box"]["custody_inventory"], [body["envelopes"][0]["envelope_id"]])
+		# BDS06-AC-014: the definition each envelope was prepared against travels with it
+		bound = frappe.db.get_value("Bid Workspace", self.bid, ["bid_definition_id", "definition_version", "definition_digest"], as_dict=True)
+		self.assertEqual({k: body["envelopes"][0][k] for k in ("bid_definition_id", "definition_version", "definition_digest")}, {"bid_definition_id": bound.bid_definition_id, "definition_version": int(bound.definition_version), "definition_digest": bound.definition_digest})
+		self.assertRegex(body["envelopes"][0]["definition_digest"], r"^[0-9a-f]{64}$")
 		self.assertEqual([i["intake_reference"] for i in body["physical_tender_security"]["intakes"]], [intake])
 		self.assertEqual(body["unresolved_attempts"], [])
 		text = row.payload_json
