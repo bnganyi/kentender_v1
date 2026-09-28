@@ -1978,6 +1978,8 @@ Decisions recorded for the Project Owner with this version:
 - **New wording.** Every headline, sentence and fix label in bold in §5.5, §7.6 and §11.8B is new wording for review.
 - **The Procurement Planner's turns** in §5.5 go beyond the owner decision of 26 September 2026. They were added because the dead-end matrix found the Planner told to wait for themselves. Recommendation: keep them.
 
+**Project Owner decisions, 28 September 2026**, answering the three points above in order: **"1. Keep"** — the two Planning result facts stay under "Where this requirement stands"; **"2. Approved"** — the new wording in bold in §5.5, §7.6 and §11.8B; **"3. Keep them"** — the Procurement Planner's turns in §5.5. These decisions settle the content of v1.15. They do not approve the document; v1.15 remains Proposed until the Project Owner approves it.
+
 This approval effect is not artboard approval, implementation or release evidence.
 
 ### 20.2 v1.14 approval effect (retained)

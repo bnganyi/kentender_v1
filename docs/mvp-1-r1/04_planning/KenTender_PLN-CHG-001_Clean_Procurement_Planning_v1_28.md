@@ -3137,7 +3137,7 @@ The 123 rows below comprise 72 refinements, 20 usability changes, 6 v1.20 compos
 
 v1.28 is proposed, not approved. On approval it would supersede v1.27 and make binding: the §5.1.2 position rule; the §5.7 departmental-plan row and tracker rule; the §7.3 position contract to Departmental Needs; the §7.7 hand-off row; the U01-LATE-NEED and U02-ACCEPTED-LATE-NEED variants and the §10.4 heading rule; the §11.9 row; the §13.4 profile; PLN28-AC-001–005; and PLN28-CHG-001–004. NDS-CHG-001 v1.15 carries the matching receiving side (§15.2).
 
-Recorded for the Project Owner: every headline and sentence in bold that v1.28 adds is new wording for review. FU-V127-03, FU-V127-04, FU-V127-05 and FU-V127-06 items 1–3 remain owed and are not made by this version. This approval effect is not artboard approval, implementation or release evidence.
+Recorded for the Project Owner: every headline and sentence in bold that v1.28 adds is new wording for review. **Project Owner decision, 28 September 2026: "Approved"** — the new wording in bold that v1.28 adds (§§5.7, 7.7, 10.3, 10.4). This settles the wording; it does not approve the document, which remains Proposed. FU-V127-03, FU-V127-04, FU-V127-05 and FU-V127-06 items 1–3 remain owed and are not made by this version. This approval effect is not artboard approval, implementation or release evidence.
 
 ### 18.1 v1.27 approval effect (retained)
 
