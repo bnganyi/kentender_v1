@@ -368,7 +368,8 @@ def get_receipt_history(*, organisation: str = "", user: str | None = None) -> d
 	rows = [
 		{
 			"tender_reference": ref, "tender_title": name, "document": document, "event": event, "event_tone": tone,
-			"at_label": labels.datetime_seconds_label(when).replace(f" {labels.TIME_ZONE_LABEL}", ""), "href": f"/tenders/{ref}/bid/receipt/{document}",
+			# a list: the minute, seconds omitted without rounding (§10.1 item 11)
+			"at_label": labels.datetime_label(when).replace(f" {labels.TIME_ZONE_LABEL}", ""), "href": f"/tenders/{ref}/bid/receipt/{document}",
 		}
 		for when, ref, name, document, event, tone in entries
 	]

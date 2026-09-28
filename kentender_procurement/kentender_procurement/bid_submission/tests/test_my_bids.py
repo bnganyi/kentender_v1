@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import frappe
 
-from kentender_procurement.bid_submission.services import reads
+from kentender_procurement.bid_submission.services import changes_view, overview, reads, receipt_view, simulation
 from kentender_procurement.bid_submission.tests.support import AFYA, DAVID, KISIWA, MARY, PETER
 from kentender_procurement.bid_submission.tests.test_changes_and_close import ChangeCase
 
@@ -74,8 +74,8 @@ class TestReceiptHistory(ChangeCase):
 		self.assertEqual(
 			[(r["document"], r["event"], r["event_tone"], r["at_label"], r["href"]) for r in read["rows"]],
 			[
-				(receipt, "Submitted", "live", "30 May 2027, 14:30:00", f"/tenders/{self.reference}/bid/receipt/{receipt}"),
-				(ack, "Withdrawn", "critical", "30 May 2027, 15:00:00", f"/tenders/{self.reference}/bid/receipt/{ack}"),
+				(receipt, "Submitted", "live", "30 May 2027, 14:30", f"/tenders/{self.reference}/bid/receipt/{receipt}"),
+				(ack, "Withdrawn", "critical", "30 May 2027, 15:00", f"/tenders/{self.reference}/bid/receipt/{ack}"),
 			],
 		)
 		self.assertEqual(read["count_text"], "2 records")
@@ -116,3 +116,25 @@ class TestPortalAddresses(ChangeCase):
 		masked = portal.resolve(path="/account/receipts", query={"organisation": AFYA}, user=PETER)
 		self.assertEqual((masked["verdict"], masked["payload"]["screen"]), ("NOT_FOUND", "not-found"))
 		self.assertEqual(portal.resolve(path="/my-bids/anything", query={}, user=DAVID)["verdict"], "NOT_FOUND")
+
+	def test_lists_and_summaries_show_the_accepted_minute_and_the_receipt_both_seconds(self):
+		# §10.1 item 11 / BDS04-AC-003 (owner, 28 Sep 2026: "No seconds, follow
+		# the spec"): received 14:31:58, accepted 14:32:01 — every list and
+		# summary says Submitted 14:32 (truncated, never rounded); the receipt
+		# alone names both instants to the second
+		self.at("2027-05-30 14:31:58")
+		simulation.set_controls(accept_after_seconds=3)
+		receipt = self.submitted()
+		self.at("2027-05-30 14:40:00")
+		minute = "30 May 2027, 14:32"
+		register = next(r for r in reads.get_receipt_history(user=DAVID)["rows"] if r["document"] == receipt)
+		mine = next(r for r in reads.get_my_bids(user=DAVID)["rows"] if r["bid_reference"] == self.bid)
+		tender = overview.get_tender_overview(tender_reference=self.reference, user=DAVID)
+		summary = {r["label"]: r["value"] for r in changes_view.get_replacement_page(tender_reference=self.reference, user=MARY)["facts"]}
+		self.assertEqual(
+			(register["at_label"], mine["updated_label"], tender["bid"]["status_text"], summary["Submitted"]),
+			(minute, f"{minute} EAT", f"Submitted {minute} EAT", f"{minute} EAT"),
+		)
+		facts = {r["label"]: r["value"] for r in receipt_view.get_receipt_page(tender_reference=self.reference, receipt_reference=receipt, user=DAVID)["receipt"]}
+		self.assertEqual((facts["Received by tender-box service"], facts["Accepted into tender box"]), ("30 May 2027, 14:31:58 EAT", "30 May 2027, 14:32:01 EAT"))
+

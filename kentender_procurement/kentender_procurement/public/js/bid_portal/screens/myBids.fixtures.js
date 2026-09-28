@@ -24,8 +24,8 @@ export function myBids(variant = "") {
 }
 
 const RECEIPTS = [
-	{ ...LAPTOPS, document: "RCPT-MOH-2027-033-001", event: "Submitted", event_tone: "live", at_label: "10 Jun 2027, 14:32:01", href: "/tenders/TND-MOH-2027-033/bid/receipt/RCPT-MOH-2027-033-001" },
-	{ ...SWITCHES, document: "WD-MOH-2027-041-001", event: "Withdrawn", event_tone: "critical", at_label: "10 Jun 2027, 15:00:00", href: "/tenders/TND-MOH-2027-041/bid/receipt/WD-MOH-2027-041-001" },
+	{ ...LAPTOPS, document: "RCPT-MOH-2027-033-001", event: "Submitted", event_tone: "live", at_label: "10 Jun 2027, 14:32", href: "/tenders/TND-MOH-2027-033/bid/receipt/RCPT-MOH-2027-033-001" },
+	{ ...SWITCHES, document: "WD-MOH-2027-041-001", event: "Withdrawn", event_tone: "critical", at_label: "10 Jun 2027, 15:00", href: "/tenders/TND-MOH-2027-041/bid/receipt/WD-MOH-2027-041-001" },
 ];
 
 /** One `get_receipt_history` read for a board variant ("", EMPTY, SUSPENDED). */
