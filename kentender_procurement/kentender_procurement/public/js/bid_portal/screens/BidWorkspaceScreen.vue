@@ -71,6 +71,10 @@ onMounted(() => {
 		</div>
 
 		<PortalGuidance :journey="data.journey" :answer="data.next_step" :label="__('Bid journey')" @fix="onFix" />
+		<!-- BDS-DES-06-WITHDRAWN-RELEASE: the two ways on while the Draft waits on the Tender's resolution -->
+		<div v-if="data.guidance_links && data.guidance_links.length" class="bds-guidance-links" data-testid="bds-guidance-links">
+			<a v-for="link in data.guidance_links" :key="link.label" :href="link.href">{{ __(link.label) }}</a>
+		</div>
 
 		<div v-if="failure" class="kt-notice is-critical bds-load-failure" role="alert" data-testid="bds-load-failure">
 			<div class="kt-notice-body">{{ failure }}</div>

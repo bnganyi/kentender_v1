@@ -31,4 +31,27 @@ describe("An evidence field", () => {
 		expect(state.get("button").text()).toBe("Choose another file");
 		expect(click).toHaveBeenCalled();
 	});
+
+	it("keeps a multi-select answer a list and the ports answer structured rows, never flattened (BDS06-AC-009)", async () => {
+		const portal = { upload: vi.fn(), call: vi.fn(), createCommandRunner };
+		const mountField = (field, modelValue) => mount(FieldControl, { props: { field, modelValue, bid: { reference: "BID-1", record_version: 3 } }, global: { provide: { portal }, config: { globalProperties: { __: globalThis.__ } } } });
+		const multi = mountField({ ...FIELD, handle: "h-os", kind: "multi_select", label: "Operating systems", options: ["Windows 11 Pro", "Ubuntu 24.04 LTS"] }, ["Windows 11 Pro"]);
+		const boxes = multi.findAll('input[type="checkbox"]');
+		expect(boxes.map((b) => b.element.checked)).toEqual([true, false]);
+		await boxes[1].setValue(true);
+		expect(multi.emitted("update:modelValue").at(-1)).toEqual([["Windows 11 Pro", "Ubuntu 24.04 LTS"]]);
+		await boxes[0].setValue(false);
+		expect(multi.emitted("update:modelValue").at(-1)).toEqual([[]]);
+
+		const ports = mountField({ ...FIELD, handle: "h-ports", kind: "ports", label: "Ports", options: ["USB-C", "USB-A", "HDMI"] }, [{ port_type: "USB-C", count: 2 }]);
+		await ports.get('input[type="number"]').setValue("3");
+		expect(ports.emitted("update:modelValue").at(-1)).toEqual([[{ port_type: "USB-C", count: 3 }]]);
+		await ports.setProps({ modelValue: [{ port_type: "USB-C", count: 3 }] });
+		await ports.get("button").trigger("click");
+		expect(ports.emitted("update:modelValue").at(-1)).toEqual([[{ port_type: "USB-C", count: 3 }, { port_type: "USB-C", count: 1 }]]);
+		await ports.setProps({ modelValue: [{ port_type: "USB-C", count: 3 }, { port_type: "USB-C", count: 1 }] });
+		await ports.findAll("select")[1].setValue("HDMI");
+		expect(ports.emitted("update:modelValue").at(-1)).toEqual([[{ port_type: "USB-C", count: 3 }, { port_type: "HDMI", count: 1 }]]);
+	});
 });
+

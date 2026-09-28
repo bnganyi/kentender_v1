@@ -44,10 +44,16 @@ def save_bid_task(*, bid_reference: str, task: str, values: dict | None, expecte
 
 
 def require_open(ctx) -> None:
+	"""Every Draft change: the bid is an open Draft, the Tender is open, and
+	its bound release can still take bid work (§4.4.4: a Draft on a Withdrawn
+	or failed release stays readable, not editable)."""
 	if ctx.workspace.status in CLOSED:
 		fail("BDS_ALREADY_SUBMITTED" if ctx.workspace.status == "Submitted" else "BDS_TENDER_NOT_OPEN")
 	if tenders_gateway.availability(ctx.workspace.tender_reference, at=clock.now()) != "open":
 		fail("BDS_TENDER_NOT_OPEN")
+	from kentender_procurement.bid_submission.services import definition_runtime
+
+	definition_runtime.require_release(ctx)
 
 
 def _save(*, actor: str, bid_reference: str, task: str, values: dict, expected_record_version, organisation: str) -> dict[str, Any]:

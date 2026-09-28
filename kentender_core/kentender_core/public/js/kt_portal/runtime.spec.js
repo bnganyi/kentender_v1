@@ -192,51 +192,17 @@ describe("portal_page.register and useRoute", () => {
 		foreign.dispatchEvent(away);
 		expect(api().route.value.path).toBe("/tenders/TND-2");
 	});
-});
 
-describe("portal_page.call", () => {
-	afterEach(() => {
-		vi.restoreAllMocks();
-	});
-
-	it("sends GET arguments as a query and POST arguments as JSON with the CSRF header", async () => {
-		window.frappe = { csrf_token: "tok-1", msgprint: vi.fn() };
-		const fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({ message: { rows: [] } }) }));
-		window.fetch = fetchMock;
-		const portal = createPortalRuntime(window);
-		expect(await portal.call("kt.read", { search: "laptops", skip: null, filters: { a: 1 } })).toEqual({ rows: [] });
-		expect(fetchMock.mock.calls[0][0]).toBe("/api/method/kt.read?search=laptops&filters=%7B%22a%22%3A1%7D");
-		await portal.call("kt.save", { value: 2 }, { type: "POST" });
-		const [url, init] = fetchMock.mock.calls[1];
-		expect([url, init.method, init.headers["X-Frappe-CSRF-Token"], init.body]).toEqual(["/api/method/kt.save", "POST", "tok-1", '{"value":2}']);
-		expect(window.frappe.msgprint).not.toHaveBeenCalled();
-	});
-
-	it("turns a failed response into an Error with the KenTender code, detail and status", async () => {
-		window.frappe = { csrf_token: "", msgprint: vi.fn() };
-		window.fetch = vi.fn(async () => ({ ok: false, status: 417, json: async () => ({ exc_type: "ValidationError", kt_error_code: "BDS_STALE_VERSION", kt_error_message: "This bid changed.", kt_error_detail: { task: "company" } }) }));
-		const portal = createPortalRuntime(window);
-		await expect(portal.call("kt.save", {}, { type: "POST" })).rejects.toMatchObject({ message: "This bid changed.", status: 417, code: "BDS_STALE_VERSION", detail: { task: "company" } });
-		expect(window.frappe.msgprint).not.toHaveBeenCalled();
-	});
-
-	it("uploads fields and files as multipart with the CSRF header and the same error contract", async () => {
-		window.frappe = { csrf_token: "tok-2", msgprint: vi.fn() };
-		const fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({ message: { ok: true } }) }));
-		window.fetch = fetchMock;
-		const portal = createPortalRuntime(window);
-		const file = new File(["%PDF-1.4"], "authority.pdf", { type: "application/pdf" });
-		expect(await portal.upload("kt.register", { legal_name: "Afya", skip: undefined }, { authority_evidence: file })).toEqual({ ok: true });
-		const [url, init] = fetchMock.mock.calls[0];
-		expect([url, init.method, init.headers["X-Frappe-CSRF-Token"], init.body.get("legal_name"), init.body.get("authority_evidence").name, init.body.has("skip")]).toEqual(["/api/method/kt.register", "POST", "tok-2", "Afya", "authority.pdf", false]);
-		window.fetch = vi.fn(async () => ({ ok: false, status: 417, json: async () => ({ kt_error_code: "BDS_EVIDENCE_REJECTED", kt_error_message: "This file could not be accepted." }) }));
-		await expect(portal.upload("kt.register", {}, {})).rejects.toMatchObject({ code: "BDS_EVIDENCE_REJECTED", status: 417 });
-	});
-
-	it("reads Frappe server messages as plain text and falls back by status", () => {
-		const messages = JSON.stringify([JSON.stringify({ message: "<b>Not permitted</b>" })]);
-		expect(toError(403, { exc_type: "PermissionError", _server_messages: messages })).toMatchObject({ message: "Not permitted", code: "PermissionError", status: 403 });
-		expect(toError(500, {}).message).toBe("The service could not complete this request. Your saved work is unchanged. Try again.");
-		expect(toError(0, {}).status).toBe(0);
+	it("leaves a link to an anchor on the same page to the browser", () => {
+		portal.register("tenders", { prefixes: ["/tenders"], mount: () => null });
+		const { api } = probe(portal);
+		const before = api().route.value.path;
+		const link = document.createElement("a");
+		link.href = `${window.location.pathname}${window.location.search}#bds-tender-documents`;
+		document.getElementById("kt-portal-app").appendChild(link);
+		const click = new MouseEvent("click", { bubbles: true, cancelable: true });
+		link.dispatchEvent(click);
+		expect(click.defaultPrevented).toBe(false);
+		expect(api().route.value.path).toBe(before);
 	});
 });

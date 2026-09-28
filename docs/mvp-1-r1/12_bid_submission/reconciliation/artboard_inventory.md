@@ -7,14 +7,14 @@
 | Purpose | Phase 0 reconciliation input (plan Phase 0; spec BDS-CHG-001 v0.8 §10.18 and BDS04-AC-004). Maps every design-board artboard to its implementing screen, slice and status. |
 | Source | `design/Bid Board v3 - A…E *.dc.html`, extracted by script on 26 Sep 2026 from every `data-screen-label` attribute and its caption span. Captions are quoted from the boards; they are fixture context outside the artboard frame. |
 | Frames | Every label below holds a 1440 × 1024 desktop frame and a 390 × 844 narrow frame (BDS-CHG-001 §10.1; BDS-CHG-001 §10.18 "Required render sizes"). An inventory row is complete only when both frames are proven (BDS04-AC-004). |
-| Totals | 79 labels: 73 Covered, 3 Conditional, 3 Replaced. |
+| Totals | 79 labels: 76 Covered, 0 Conditional, 3 Replaced (28 Sep 2026; was 73 Covered, 3 Conditional, 3 Replaced until TPR-CHG-001 v0.13 was approved). |
 | New content | The "Screen component", "Owner" and "Slice" columns are plan proposals (implementation plan Phase 11), not spec content. |
 
 Board files: A = `Bid Board v3 - A Public and Account.dc.html`; B = `Bid Board v3 - B Workspace and documents.dc.html`; C = `Bid Board v3 - C Company requirements and price.dc.html`; D = `Bid Board v3 - D Review and submission.dc.html`; E = `Bid Board v3 - E Desk and common states.dc.html`.
 
 Status meanings:
 - **Covered**: built and compared structurally at both sizes.
-- **Conditional**: the spec makes the variant conditional on approval of proposed TPR-CHG-001 v0.13 (BDS-CHG-001 v0.8 §18.1, BDS08-AC-008). It is not built until then.
+- **Conditional**: the spec makes the variant conditional on approval of proposed TPR-CHG-001 v0.13 (BDS-CHG-001 v0.8 §18.1, BDS08-AC-008). It is not built until then. (All three are built since TPR-CHG-001 v0.13 was approved on 28 Sep 2026, plan Phase 13.)
 - **Replaced**: owner decision OD-G of 26 Sep 2026 replaces the drawn DES-15 composition with a blind physical-original intake. There is no board for the replacement; a redraw is a design follow-up.
 
 Label forms the fidelity tooling must map to canonical IDs:
@@ -34,8 +34,8 @@ Label forms the fidelity tooling must map to canonical IDs:
 | A:38 | `BDS-DES-02-SUBMITTED` | Mary Wanjiku · 10 Jun 2027, 14:33 EAT · Afya receipt RCPT-MOH-2027-033-001 | TenderOverviewScreen | BDS | 11.2 | Covered | — |
 | A:39 | `BDS-DES-02-CANDIDATE-QUESTION` | David Ouma · 26 May 2027, 08:50 EAT · before the clarification deadline | TenderOverviewScreen | BDS | 11.2 | Covered | — |
 | A:40 | `BDS-DES-02-CANCELLED` | Cancelled Tender TND-MOH-2027-034 | TenderOverviewScreen | BDS | 11.2 | Covered | — |
-| A:41 | `BDS-DES-02-SUPERSEDED` | Conditional on TPR-CHG-001 v0.13 approval · Peter Mwangi · 1 Jun 2027 | TenderOverviewScreen | BDS | 11.2 | Conditional — TPR-CHG-001 v0.13 approval (Phase 13) | — |
-| A:42 | `BDS-DES-02-WITHDRAWN-RELEASE` | Conditional on TPR-CHG-001 v0.13 approval · Mary Wanjiku with a current Submitted bid | TenderOverviewScreen | BDS | 11.2 | Conditional — TPR-CHG-001 v0.13 approval (Phase 13) | — |
+| A:41 | `BDS-DES-02-SUPERSEDED` | Conditional on TPR-CHG-001 v0.13 approval · Peter Mwangi · 1 Jun 2027 | TenderOverviewScreen | BDS | 11.2 | Covered — Phase 13 (TPR-CHG-001 v0.13 approved 28 Sep 2026; was Conditional) | — |
+| A:42 | `BDS-DES-02-WITHDRAWN-RELEASE` | Conditional on TPR-CHG-001 v0.13 approval · Mary Wanjiku with a current Submitted bid | TenderOverviewScreen | BDS | 11.2 | Covered — Phase 13 (TPR-CHG-001 v0.13 approved 28 Sep 2026; was Conditional) | — |
 | A:46 | `BDS-DES-03` | Mary Wanjiku · New Account · 18 May 2027, 09:00 EAT | RegisterScreen / VerifyScreen | ACC | 11.3 | Covered | — |
 | A:47 | `BDS-DES-03-VERIFY` | After Create account · challenge sent to tenders@afyadigital.example | RegisterScreen / VerifyScreen | ACC | 11.3 | Covered | — |
 | A:51 | `BDS-DES-04` | Mary Wanjiku, Authorised Signatory · Active · 18 May 2027, 10:00 EAT | AccountScreen | ACC | 11.4 | Covered | — |
@@ -58,7 +58,7 @@ Label forms the fidelity tooling must map to canonical IDs:
 | B:35 | `BDS-DES-06-CFG-INCOMPLETE · in preparation` | David Ouma · in-progress Draft · 10 Jun 2027, 14:20 EAT | BidWorkspaceScreen | BDS | 11.6 | Covered | — |
 | B:36 | `BDS-DES-06-CFG-INCOMPLETE · ready` | Mary Wanjiku · otherwise Ready · 10 Jun 2027, 14:20 EAT | BidWorkspaceScreen | BDS | 11.6 | Covered | — |
 | B:37 | `BDS-DES-06-CLOSED-UNSUBMITTED` | Unsubmitted Draft · trusted time 12 Jun 2027, 11:00:01 EAT | BidWorkspaceScreen | BDS | 11.6 | Covered | — |
-| B:38 | `BDS-DES-06-WITHDRAWN-RELEASE` | Conditional on TPR-CHG-001 v0.13 approval · existing Draft, bound release Withdrawn | BidWorkspaceScreen | BDS | 11.6 | Conditional — TPR-CHG-001 v0.13 approval (Phase 13) | — |
+| B:38 | `BDS-DES-06-WITHDRAWN-RELEASE` | Conditional on TPR-CHG-001 v0.13 approval · existing Draft, bound release Withdrawn | BidWorkspaceScreen | BDS | 11.6 | Covered — Phase 13 (TPR-CHG-001 v0.13 approved 28 Sep 2026; was Conditional) | — |
 | B:42 | `BDS-DES-07` | David Ouma · 1 Jun 2027, 12:05 EAT · Draft Version 4 · addendum effective, not acknowledged · clarification closed | DocumentsTaskScreen | BDS | 11.7 | Covered | — |
 | B:43 | `BDS-DES-07-COMPLETE` | 1 Jun 2027, 12:10 EAT · Draft Version 5 · acknowledged | DocumentsTaskScreen | BDS | 11.7 | Covered | — |
 | B:44 | `BDS-DES-07-QUESTION-OPEN / BDS-DES-07-NONE` | David Ouma · 26 May 2027, 08:50 EAT · original deadline · no addendum | DocumentsTaskScreen | BDS | 11.7 | Covered | — |

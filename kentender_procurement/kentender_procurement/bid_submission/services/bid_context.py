@@ -44,6 +44,9 @@ class BidContext:
 	signatory: dict[str, Any] | None
 	actor: str
 	assignment: dict[str, Any]
+	# a read sets this when the Draft cannot change now (closed, or its bound
+	# release is Withdrawn or fails its checks): every field reads as fixed
+	read_only: bool = False
 
 	# -- values -------------------------------------------------------------
 	def supplied_value(self, field: Field):

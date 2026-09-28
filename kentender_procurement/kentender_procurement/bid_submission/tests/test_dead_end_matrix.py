@@ -35,12 +35,18 @@ READERS = (
 	("Release Operator (Nadia Kamau)", NADIA),
 	("Technical reader (Administrator)", "Administrator"),
 )
+# Every bid page is read by the bid's own people and by the two outsiders a
+# supplier page can meet (BDS08-AC-002); internal readers are masked from all
+# of them already by the workspace read above.
+PAGE_READERS = (READERS[0], READERS[1], READERS[2], READERS[3])
+TASKS = ("documents", "company", "requirements", "price", "review")
 MATRIX = os.path.join(os.path.dirname(frappe.get_app_path("kentender_procurement")), "..", "docs", "mvp-1-r1", "12_bid_submission", "evidence", "v0_8", "dead_end_matrix.md")
 OWNERS = {DAVID, MARY}
 
 
 class TestBidDeadEndMatrix(GuidanceCase):
 	rows: list[tuple[str, str, str, str, str]] = []
+	page_rows: list[tuple[str, str, str, str]] = []
 
 	@classmethod
 	def tearDownClass(cls):
@@ -53,6 +59,17 @@ class TestBidDeadEndMatrix(GuidanceCase):
 				out.write("| State | Reader | Kind | Next step | Result |\n|---|---|---|---|---|\n")
 				for state, reader, kind, headline, result in cls.rows:
 					out.write(f"| {state} | {reader} | {kind} | {headline.replace('|', '/')} | {result} |\n")
+				if cls.page_rows:
+					out.write("\n## Every bid page (BDS08-AC-002)\n\n")
+					out.write("Each state's pages — the five tasks, Submit, View status, and the receipt or withdrawal acknowledgement when one exists — read by the bid's own people and by two outsiders. ")
+					out.write("A page with a next step must be sound and its journey stage must be the next step's stage (BDS08-AC-001).\n\n")
+					out.write("| State | Reader | Pages | Result |\n|---|---|---|---|\n")
+					grouped: dict[tuple[str, str], list[tuple[str, str]]] = {}
+					for state, reader, page, result in cls.page_rows:
+						grouped.setdefault((state, reader), []).append((page, result))
+					for (state, reader), pages in grouped.items():
+						results = sorted({r for _p, r in pages})
+						out.write(f"| {state} | {reader} | {', '.join(p for p, _r in pages)} | {' / '.join(results)} |\n")
 		super().tearDownClass()
 
 	def read_all(self, state, bid=None, readers=READERS, owners=OWNERS):
@@ -72,7 +89,57 @@ class TestBidDeadEndMatrix(GuidanceCase):
 				continue
 			step = view["next_step"]
 			self.assertEqual(ns.problems(step), [], (state, label, step))
+			self.assertStageAgrees(view, (state, label))
 			self.rows.append((state, label, step["label"] or step["kind"], step["headline"], "Sound"))
+		self.read_pages(state, bid or self.bid, readers=[r for r in PAGE_READERS if r in readers] or readers[:3], owners=owners)
+
+	def assertStageAgrees(self, view, where):
+		"""BDS08-AC-001: the tracker's current stage is the next step's stage."""
+		journey, step = view.get("journey") or {}, view.get("next_step") or {}
+		if journey.get("current") and step.get("stage"):
+			self.assertEqual(journey["current"], step["stage"], where)
+
+	def page_calls(self, bid):
+		ws = frappe.db.get_value("Bid Workspace", bid, ["tender_reference", "current_submission_version"], as_dict=True)
+		calls = [(f"task {t}", lambda t=t: api.get_bid_task(task=t, bid_reference=bid)) for t in TASKS]
+		calls += [("submit", lambda: api.get_submit_page(tender_reference=ws.tender_reference)), ("status", lambda: api.get_status_page(tender_reference=ws.tender_reference))]
+		receipt = frappe.db.get_value("Bid Submission Version", ws.current_submission_version, "receipt") if ws.current_submission_version else None
+		if receipt:
+			calls.append(("receipt", lambda: api.get_receipt_page(tender_reference=ws.tender_reference, receipt_reference=receipt)))
+		acknowledgement = frappe.db.get_value("Bid Submission Change", {"bid_workspace": bid, "change_type": "Withdrawal"}, "acknowledgement_ref", order_by="acknowledged_at desc")
+		if acknowledgement:
+			calls.append(("acknowledgement", lambda: api.get_withdrawal_acknowledgement(acknowledgement_reference=acknowledgement)))
+		return calls
+
+	def read_pages(self, state, bid, *, readers, owners):
+		calls = self.page_calls(bid)
+		for label, user in readers:
+			for page, call in calls:
+				frappe.set_user(user)
+				try:
+					view = call()
+				except errors.BidSubmissionError as error:
+					self.assertEqual(error.code, "BDS_SIGN_IN_REQUIRED", (state, label, page))
+					self.assertNotIn(user, owners, (state, label, page))
+					self.page_rows.append((state, label, page, "No access (sign in)"))
+					continue
+				except frappe.DoesNotExistError:
+					view = {"outcome": "NOT_FOUND"}
+				finally:
+					frappe.set_user("Administrator")
+				if (view or {}).get("outcome") == "NOT_FOUND":
+					self.assertNotIn(user, owners, (state, label, page))
+					self.page_rows.append((state, label, page, "No access (Not found)"))
+					continue
+				if user not in owners:
+					# a page looked up by Tender answers with the reader's own bid on it, never this one
+					self.assertNotIn(bid, frappe.as_json(view), (state, label, page, "an outsider read this bid's page"))
+					self.page_rows.append((state, label, page, "Own bid only"))
+					continue
+				if view.get("next_step"):
+					self.assertEqual(ns.problems(view["next_step"]), [], (state, label, page, view["next_step"]))
+					self.assertStageAgrees(view, (state, label, page))
+				self.page_rows.append((state, label, page, "Sound"))
 
 	def blank_answer(self, value=None):
 		field = next(f for g in reads.get_bid_task(bid_reference=self.bid, task="requirements", user=DAVID)["groups"] for f in g["fields"] if f["label"] == "Offered make and model")
@@ -83,6 +150,10 @@ class TestBidDeadEndMatrix(GuidanceCase):
 		self.read_all("Draft in progress")
 		self.blank_answer("ApexBook Pro 14")
 		self.read_all("Ready to submit")
+		# §4.4.4 (TPR-CHG-001 v0.13): the bound release withdrawn under a Draft
+		simulation.set_controls(bound_release_state="Withdrawn")
+		self.read_all("Bound release withdrawn, existing Draft")
+		simulation.set_controls(bound_release_state="")
 		trust.revoke_certificate(self.certificate)
 		self.read_all("Signatory certificate required")
 		self.certificate = trust.issue_certificate(user=MARY, organisation=AFYA, subject_name="Mary Wanjiku", valid_from="2027-01-01 00:00:00", valid_to="2027-12-31 23:59:59")
@@ -102,6 +173,9 @@ class TestBidDeadEndMatrix(GuidanceCase):
 		submission.reconcile_uncertain_attempts()
 		simulation.reset_controls()
 		self.read_all("Submitted, before the deadline")
+		simulation.set_controls(bound_release_state="Withdrawn")
+		self.read_all("Bound release withdrawn, submitted bid")
+		simulation.set_controls(bound_release_state="")
 		self.at("2027-05-31 08:30:00")
 		self.replace()
 		self.read_all("Replacement Draft")

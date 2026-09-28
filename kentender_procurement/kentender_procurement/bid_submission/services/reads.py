@@ -92,8 +92,19 @@ def _bid_header(ctx, tasks) -> dict[str, Any]:
 	return {
 		"reference": ws.name, "tender_reference": ws.tender_reference, "tenderer_name": ctx.tenderer_name, "status": status,
 		"draft_version": int(ws.current_draft_version or 0), "record_version": int(ws.record_version or 0), "last_saved_label": labels.datetime_label(saved),
-		"current_submission": current,
+		"current_submission": current, "editable": not ctx.read_only,
 	}
+
+
+def draft_changeable(ctx, *, at) -> bool:
+	"""Whether a Draft change would be accepted now — `save.require_open`'s
+	own rules, read without writing: an open Draft on an open Tender whose
+	bound release can still take bid work (§4.4.4)."""
+	from kentender_procurement.bid_submission.services import definition_runtime, save
+
+	if ctx.workspace.status in save.CLOSED or tenders_gateway.availability(ctx.workspace.tender_reference, at=at) != "open":
+		return False
+	return definition_runtime.bid_condition(ctx)["ok"]
 
 
 ADDENDUM_NOTICE = "An addendum changed this Tender. Your next change moves the bid to the current Tender documents; then review the tasks it affects."
@@ -173,6 +184,7 @@ def get_bid_task(*, bid_reference: str = "", task: str, tender_reference: str = 
 	ctx = bid_context.load(bid_reference, actor=actor, organisation=organisation, at=at)
 	if not ctx.model.task(cstr(task)):
 		raise frappe.DoesNotExistError("This part of the bid does not exist.")
+	ctx.read_only = not draft_changeable(ctx, at=at)
 	tasks, notice = _evaluate(ctx)
 	view = {"bid": _bid_header(ctx, tasks), "tasks": projection.task_nav(ctx, tasks), "addendum_notice": notice, **projection.task_view(ctx, tasks, cstr(task))}
 	if task == "review":
@@ -269,7 +281,11 @@ def _my_bid_row(ws, tender: dict[str, Any], *, actor: str, lead: str, at, work: 
 
 	base = f"/tenders/{ws.tender_reference}/bid"
 	status, version_label, updated = ws.status, f"Draft Version {int(ws.current_draft_version or 0)}", ws.last_saved_at or ws.created_at
-	if status in ("Draft", "Needs attention"):
+	from kentender_procurement.bid_submission.services import definition_runtime
+
+	if status in ("Draft", "Needs attention", "Ready to submit") and not definition_runtime.workspace_condition(ws)["ok"]:
+		actions = [{"label": "View bid", "href": base}]  # §4.4.4: saved, readable, not changeable
+	elif status in ("Draft", "Needs attention"):
 		actions = [{"label": "Continue bid", "href": base}]
 	elif status == "Ready to submit":
 		actions = [{"label": "Review bid", "href": f"{base}/review"}]
@@ -281,7 +297,9 @@ def _my_bid_row(ws, tender: dict[str, Any], *, actor: str, lead: str, at, work: 
 		change = _withdrawal(ws.name) or {}
 		version_label, updated = "", change.get("acknowledged_at") or ws.status_since
 		actions = [{"label": "View acknowledgement", "href": f"{base}/receipt/{change.get('acknowledgement_ref')}"}] if change.get("acknowledgement_ref") else []
-		if _may_start_replacement(actor, lead, ws.tender_reference, at):
+		from kentender_procurement.bid_submission.services import definition_runtime
+
+		if _may_start_replacement(actor, lead, ws.tender_reference, at) and definition_runtime.workspace_condition(ws)["ok"]:
 			actions.append({"label": "Start replacement", "href": base, "command": "prepare_replacement", "record_version": int(ws.record_version or 0)})
 	else:  # Closed without submission
 		updated = ws.status_since or updated
@@ -314,7 +332,7 @@ def get_my_bids(*, organisation: str = "", search: str = "", status: str = "", u
 		return {**base, "rows": [], "count_text": "", "work": []}
 	workspaces = frappe.get_all(
 		"Bid Workspace", filters={"lead_organisation": lead}, order_by="created_at desc", limit_page_length=0,
-		fields=["name", "tender_reference", "status", "status_since", "current_draft_version", "current_submission_version", "last_saved_at", "created_at", "record_version"],
+		fields=["name", "tender", "tender_reference", "definition_version", "status", "status_since", "current_draft_version", "current_submission_version", "last_saved_at", "created_at", "record_version"],
 	)
 	work = handoffs.items_for(actor, [w.name for w in workspaces])
 	needle = cstr(search).strip().lower()

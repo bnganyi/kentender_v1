@@ -53,12 +53,19 @@ def view(receipt, ctx, guided: dict[str, Any], *, actor: str, at) -> dict[str, A
 	closed = bool(root and root.submission_deadline and get_datetime(at) >= get_datetime(root.submission_deadline))
 	current = ws.status == "Submitted" and cstr(frappe.db.get_value("Bid Submission Version", ws.current_submission_version, "receipt")) == receipt.receipt_reference
 	may_change = current and not closed and reads._may_start_replacement(actor, ws.lead_organisation, ws.tender_reference, at)
+	from kentender_procurement.bid_submission.services import definition_runtime
+
+	# §4.4.4: on a Withdrawn or failed release the bid may still be withdrawn,
+	# but no replacement is prepared against it
+	may_replace = may_change and definition_runtime.bid_condition(ctx)["ok"]
 	reference = quote(receipt.receipt_reference)
 	status = facts["status"]
 
 	actions = []
+	if may_replace:
+		actions.append({"key": "prepare_replacement", "label": "Prepare replacement", "href": f"{base}/replace", "tone": "secondary"})
 	if may_change:
-		actions += [{"key": "prepare_replacement", "label": "Prepare replacement", "href": f"{base}/replace", "tone": "secondary"}, {"key": "withdraw_bid", "label": "Withdraw bid", "href": "", "tone": "danger"}]
+		actions.append({"key": "withdraw_bid", "label": "Withdraw bid", "href": "", "tone": "danger"})
 	actions.append({"key": "print", "label": "Print receipt", "href": f"{API}download_bid_receipt?receipt_reference={reference}&inline=1", "tone": "primary"})
 
 	predecessor = cstr(receipt.predecessor_receipt)
@@ -76,7 +83,10 @@ def view(receipt, ctx, guided: dict[str, Any], *, actor: str, at) -> dict[str, A
 		sentence = ""
 
 	next_step = dict(guided["next_step"])
+	moved = [f for f in next_step.get("fixes") or [] if f.get("fix_id") in PAGE_FIXES]
 	next_step["fixes"] = [f for f in next_step.get("fixes") or [] if f.get("fix_id") not in PAGE_FIXES]
+	if moved and not next_step.get("primary_action"):
+		next_step["primary_action"] = moved[0]["fix_id"]  # the page's own button performs it (KT-STD-001 §3B: never a your-turn without a way to act)
 	summary = facts["summary"]
 	return {
 		"kind": "receipt",

@@ -76,4 +76,15 @@ describe("Price", () => {
 		expect(call).not.toHaveBeenCalled();
 		expect(portal.go).toHaveBeenCalledWith(`/tenders/${REF}/bid/review`);
 	});
+
+	it("labels each row's amount as before tax, and tax and the Bid total once in the totals panel (BDS03-AC-015)", () => {
+		const wrapper = mountWith(priceTask(), portalFor(vi.fn()));
+		const headers = wrapper.findAll("thead th").map((th) => th.text());
+		expect(headers).toContain("Line amount before tax");
+		expect(headers.filter((h) => /total/i.test(h))).toEqual([]);
+		const totals = wrapper.findAll(".bds-total-line").map((line) => line.find("span").text());
+		expect(totals).toEqual(["Subtotal excluding tax", "Tax", "Bid total"]);
+		expect(wrapper.findAll('[data-testid="bds-bid-total"]')).toHaveLength(1);
+	});
 });
+

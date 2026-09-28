@@ -195,6 +195,19 @@ def set_gate(*, closed: bool) -> None:
 	simulation.set_controls(gate_closed=1 if closed else 0)
 
 
+def set_bound_release(*, state: str = "") -> dict[str, Any]:
+	"""BDS-DES-02-SUPERSEDED / -WITHDRAWN-RELEASE / BDS-DES-06-WITHDRAWN-RELEASE
+	worlds (BDS-CHG-001 §4.4.4): every bound release reads as `state`
+	("Superseded", "Withdrawn", "Integrity failed"; "" = as installed)
+	through the test controls; the installed release is never changed, and
+	`restore_site` resets it."""
+	from kentender_procurement.bid_submission.services import simulation
+
+	simulation.set_controls(bound_release_state=state)
+	frappe.db.commit()
+	return {"bound_release_state": state}
+
+
 PORTAL_STASH = "kt_pw_bds_supplier_support_email"
 
 
@@ -229,6 +242,7 @@ def _restore_portal_information() -> None:
 def reset_overview_fixture(*, commit: bool = True, started: bool = True, gate_closed: bool = False) -> dict[str, Any]:
 	"""BDS-DES-02 world: the Tenders test Tender, open, with this world's
 	two suppliers; Afya (Test) has started its bid when `started`."""
+	set_bound_release(state="")  # a world starts on its installed release (before Tenders registers a candidate)
 	state = tender_pw.reset_published_fixture(commit=False)
 	_wipe_journal()
 	_ensure_suppliers()
@@ -486,6 +500,7 @@ def reset_my_bids_fixture(*, state: str = "ready", commit: bool = True, gate_clo
 
 	if state not in MY_BIDS_STATES:
 		raise ValueError(f"unknown My bids world {state!r}; one of {MY_BIDS_STATES}")
+	set_bound_release(state="")  # a world starts on its installed release (before Tenders registers a candidate)
 	tender = tender_pw.reset_published_fixture(commit=False)
 	_wipe_journal()
 	_ensure_suppliers()

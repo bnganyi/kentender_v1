@@ -25,14 +25,15 @@ def enabled() -> bool:
 # --------------------------------------------------------------------------
 # The test-environment controls (plan D5): a Single no role can read or
 # write, set only by fixtures and tests through `set_controls`, consulted
-# only on a test environment. It forces the gate, outage and custody-outcome
-# worlds; it has no effect anywhere else.
+# only on a test environment. It forces the gate, outage, custody-outcome
+# and bound-release worlds; it has no effect anywhere else.
 # --------------------------------------------------------------------------
 
 CONTROLS = "BDS Test Environment Controls"
 DEFAULTS: dict = {
 	"gate_closed": 0, "trust_service_down": 0, "time_service_down": 0, "custody_service_down": 0,
 	"deposit_outcome": "Accept", "rejection_reference": "", "uncertain_resolution": "Pending", "accept_after_seconds": 0, "current_instant": "",
+	"bound_release_state": "",
 }
 
 

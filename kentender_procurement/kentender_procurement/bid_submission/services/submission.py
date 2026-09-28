@@ -88,7 +88,14 @@ def submit_bid(*, bid_reference: str, signature_ref: str = "", confirmed=False, 
 	submitted Version (§7.3): the same checks, signature and custody rules.
 	`replaces` is the receipt the signatory saw as current; if another
 	submission has become current since, nothing changes
-	(`BDS_REPLACEMENT_CONFLICT`)."""
+	(`BDS_REPLACEMENT_CONFLICT`). Its events carry the command's name and
+	request-key hash (§12.1); the attempt record is its idempotency store."""
+	replacing = bool(frappe.db.get_value("Bid Workspace", cstr(bid_reference).strip(), "current_submission_version"))
+	with records.running("SubmitReplacementBid" if replacing else "SubmitBid", cstr(idempotency_key).strip()):
+		return _submit_bid(bid_reference=bid_reference, signature_ref=signature_ref, confirmed=confirmed, expected_record_version=expected_record_version, idempotency_key=idempotency_key, organisation=organisation, replaces=replaces, user=user)
+
+
+def _submit_bid(*, bid_reference: str, signature_ref: str, confirmed, expected_record_version, idempotency_key: str, organisation: str, replaces: str, user: str | None) -> dict[str, Any]:
 	actor = cstr(user or frappe.session.user)
 	key = cstr(idempotency_key).strip()
 	if not key:
@@ -285,7 +292,8 @@ def reconcile_uncertain_attempts(limit: int = 50) -> dict[str, int]:
 			if row.status == "Dispatching":
 				finalize(row.name, {"result": "Uncertain"})
 			continue
-		finalize(row.name, answer)
+		with records.running("ReconcileSubmissionAttempt", row.correlation_id):
+			finalize(row.name, answer)
 		done["accepted" if answer["result"] == "Accepted" else "rejected"] += 1
 		frappe.db.commit()
 	return done
@@ -336,7 +344,7 @@ def get_submit_bid(*, bid_reference: str, organisation: str = "", user: str | No
 
 	blocked = None
 	try:
-		signature.submittable(ctx, actor=actor, at=at, expected_record_version=ws.record_version, confirmed=True)
+		signature.submittable(ctx, actor=actor, at=at, expected_record_version=ws.record_version, confirmed=True, verify_release=False)
 	except BidSubmissionError as error:
 		blocked = {"code": error.code, "message": str(error), "detail": error.detail}
 	guided = guidance.for_bid(ctx, actor=actor, at=at)

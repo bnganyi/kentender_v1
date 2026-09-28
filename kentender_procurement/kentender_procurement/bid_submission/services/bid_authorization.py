@@ -37,7 +37,11 @@ def acting_assignment(user: str, organisation: str, *, at=None) -> dict[str, Any
 	mine = [a for a in rows if a["organisation_id"] == organisation]
 	if not mine:
 		fail("BDS_ACCOUNT_REQUIRED")
-	return sorted(mine, key=lambda a: a["responsibility"] != SIGNATORY)[0]
+	chosen = sorted(mine, key=lambda a: a["responsibility"] != SIGNATORY)[0]
+	from kentender_procurement.bid_submission.services import records
+
+	records.remember_assignment(user, chosen.get("assignment_id", ""))  # §12.1: the acting assignment on this request's events
+	return chosen
 
 
 def active_account(organisation: str) -> dict[str, Any]:

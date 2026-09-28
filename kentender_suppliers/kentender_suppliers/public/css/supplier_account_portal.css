@@ -62,7 +62,7 @@
 .kt-industry.kt-portal .acc-radio { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; font-size: 14px; font-weight: 400; min-height: 44px; }
 .kt-industry.kt-portal .acc-radio .acc-help { flex-basis: 100%; margin: 0 0 0 22px; }
 
-@media (max-width: 600px) {
+@media (max-width: 800px) {
 	.kt-industry.kt-portal .acc-grid-2,
 	.kt-industry.kt-portal .acc-dialog-facts { grid-template-columns: minmax(0, 1fr); }
 	/* Inputs at 16 px so a phone does not zoom on focus (board 390 frame). */

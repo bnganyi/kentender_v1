@@ -3,6 +3,7 @@
 // Board v3 - D": the four facts the signatory is submitting and what
 // happens next. The screen runs the command; this dialog only confirms.
 import { nextTick, onMounted, ref } from "vue";
+import { useDialogFocus } from "../composables/useDialogFocus.js";
 
 defineProps({
 	dialog: { type: Object, required: true },
@@ -10,11 +11,12 @@ defineProps({
 });
 const emit = defineEmits(["close", "confirm"]);
 const first = ref(null);
-onMounted(() => nextTick(() => first.value && first.value.focus()));
+const dialogBox = ref(null);
+useDialogFocus(first, dialogBox);
 </script>
 
 <template>
-	<div class="kt-dialog-backdrop" data-testid="bds-submit-dialog" @keydown.esc.stop="!pending && emit('close')">
+	<div ref="dialogBox" class="kt-dialog-backdrop" data-testid="bds-submit-dialog" @keydown.esc.stop="!pending && emit('close')">
 		<div class="kt-dialog bds-dialog" role="dialog" aria-modal="true" aria-labelledby="bds-submit-dialog-title">
 			<div id="bds-submit-dialog-title" class="kt-dialog-title">{{ __(dialog.title) }}</div>
 			<div class="bds-dialog-facts">

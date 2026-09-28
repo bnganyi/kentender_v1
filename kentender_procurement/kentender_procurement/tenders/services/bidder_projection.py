@@ -59,6 +59,16 @@ NOTICE_KINDS = {"Clarification response": "answer", "Addendum issued": "addendum
 _ROOT_FIELDS = ["name", "tender_reference", "overall_status", "published_at", "publication", "submission_deadline", "clarification_deadline", "cancellation"]
 
 
+def resolution_holder(tender_name: str) -> str:
+	"""The user who prepared this Tender's published Version: the Procurement
+	Officer who holds the governed Tender resolution when its bound template
+	release can no longer take bids (BDS-CHG-001 v0.8 §5.12–5.13; Tenders
+	guidance names the same person). Empty when the Tender is not published."""
+	publication = frappe.db.get_value("Tender", tender_name, "publication")
+	version = cstr(frappe.db.get_value("Tender Publication", publication, "tender_version")) if publication else ""
+	return cstr(frappe.db.get_value("Tender Version", version, "prepared_by")) if version else ""
+
+
 # --------------------------------------------------------------------------
 # helpers
 # --------------------------------------------------------------------------

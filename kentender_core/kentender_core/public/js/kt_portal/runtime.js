@@ -210,6 +210,8 @@ export function createPortalRuntime(win) {
 			return;
 		}
 		if (url.origin !== win.location.origin || !ownedHere(normalise(url.pathname))) return;
+		// an anchor on this same page (e.g. View Tender documents) is the browser's to scroll to
+		if (url.hash && url.pathname === win.location.pathname && url.search === win.location.search) return;
 		event.preventDefault();
 		go(url.pathname, { query: Object.fromEntries(url.searchParams.entries()) });
 	}

@@ -5,7 +5,9 @@
 // the one action and the notices; nothing here derives a status. A cancelled
 // Tender is its reference, the Cancelled status and View notice alone. While
 // the supplier portal information is incomplete the server names the §10.17
-// variant for this viewer (new visitor, Draft holder, submitted bidder).
+// variant for this viewer (new visitor, Draft holder, submitted bidder). The
+// bound release's state (§4.4.4) is its own notice: information when it was
+// superseded, a warning with View Tender documents when it was withdrawn.
 import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
 import { useNarrow } from "../composables/useNarrow.js";
 import CommonState from "../components/CommonState.vue";
@@ -30,8 +32,14 @@ const asking = ref(false);
 const tender = computed(() => (data.value && data.value.tender) || {});
 const cancelled = computed(() => tender.value.availability === "cancelled");
 const action = computed(() => (data.value && data.value.action) || null);
+// Every action the server offers, in order; one unless the bound release is
+// withdrawn (View Tender documents, View receipt, Withdraw bid).
+const actions = computed(() => (data.value && data.value.actions) || (action.value ? [{ ...action.value, tone: "primary" }] : []));
+const BUTTON = { primary: "kt-btn-primary", secondary: "kt-btn-secondary", danger: "kt-btn-primary kt-danger" };
 const bid = computed(() => (data.value && data.value.bid) || null);
 const statusClass = computed(() => (bid.value && bid.value.status === "Submitted" ? "is-live" : "is-draft"));
+// BDS-DES-02-WITHDRAWN-RELEASE draws no status badge: the notice and View receipt say it
+const releaseBlocked = computed(() => !!(data.value && data.value.release_notice && data.value.release_notice.tone === "warning"));
 
 async function load() {
 	const token = guard.next();
@@ -85,15 +93,17 @@ onMounted(() => {
 			<div class="bds-head-main">
 				<div class="bds-title-row">
 					<h1 class="kt-page-title">{{ tender.title }}</h1>
-					<span v-if="bid && bid.status_text" class="kt-status" :class="statusClass" data-testid="bds-overview-status">{{ bid.status_text }}</span>
+					<span v-if="bid && bid.status_text && !releaseBlocked" class="kt-status" :class="statusClass" data-testid="bds-overview-status">{{ bid.status_text }}</span>
 					<span v-else-if="tender.status_label" class="kt-status is-draft">{{ tender.status_label }}</span>
 				</div>
 				<div class="bds-reference">{{ tender.reference }}</div>
 				<p class="kt-page-desc">{{ tender.description }}</p>
 			</div>
-			<div v-if="action" class="kt-page-actions" :class="{ 'bds-actions-stack': narrow }">
-				<button v-if="action.kind === 'start_bid'" type="button" class="kt-btn kt-btn-primary" :class="{ 'bds-btn-block': narrow }" data-testid="bds-overview-action" @click="starting = true">{{ __(action.label) }}</button>
-				<a v-else :href="action.href" class="kt-btn kt-btn-primary" :class="{ 'bds-btn-block': narrow }" data-testid="bds-overview-action">{{ __(action.label) }}</a>
+			<div v-if="actions.length" class="kt-page-actions" :class="{ 'bds-actions-stack': narrow }">
+				<template v-for="(a, i) in actions" :key="a.kind">
+					<button v-if="a.kind === 'start_bid'" type="button" class="kt-btn" :class="[BUTTON[a.tone] || BUTTON.primary, { 'bds-btn-block': narrow }]" :data-testid="i === 0 ? 'bds-overview-action' : 'bds-overview-action-' + a.kind" @click="starting = true">{{ __(a.label) }}</button>
+					<a v-else :href="a.href" class="kt-btn" :class="[BUTTON[a.tone] || BUTTON.primary, { 'bds-btn-block': narrow }]" :data-testid="i === 0 ? 'bds-overview-action' : 'bds-overview-action-' + a.kind">{{ __(a.label) }}</a>
+				</template>
 			</div>
 		</div>
 
@@ -103,6 +113,11 @@ onMounted(() => {
 		</div>
 		<div v-if="data.notice" class="kt-notice" :class="data.notice.kind === 'outage' ? 'is-critical' : 'is-warning'" role="status" data-testid="bds-overview-notice">
 			<div class="kt-notice-body"><strong>{{ data.notice.title }}</strong> {{ data.notice.text }}</div>
+		</div>
+		<div v-if="data.release_notice" class="kt-notice" :class="{ 'is-warning': releaseBlocked }" role="status" data-testid="bds-overview-release">
+			<svg v-if="releaseBlocked" class="kt-notice-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+			<svg v-else class="kt-notice-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8h.01M11 12h1v5h1" /></svg>
+			<div class="kt-notice-body"><div>{{ data.release_notice.text }}</div></div>
 		</div>
 		<CommonState v-if="data.state" inline :state="data.state.key" :figures="data.state.figures" :action-href="data.state.href" @action="load" />
 
@@ -131,7 +146,7 @@ onMounted(() => {
 			</div>
 		</div>
 
-		<div class="kt-region">
+		<div id="bds-tender-documents" class="kt-region">
 			<h2>{{ __("Tender documents") }}</h2>
 			<div class="bds-region-body">
 				<table v-if="!narrow" class="kt-table" data-testid="bds-documents-table">

@@ -15,7 +15,8 @@
   "rejection_reference",
   "uncertain_resolution",
   "accept_after_seconds",
-  "current_instant"
+  "current_instant",
+  "bound_release_state"
  ],
  "fields": [
   {
@@ -81,12 +82,20 @@
    "label": "Trusted test clock (current instant)",
    "read_only": 1,
    "description": "Browser worlds only (plan D18): Bid Submission's trusted clock reads this instant on a test environment. Cleared on restore."
+  },
+  {
+   "fieldname": "bound_release_state",
+   "fieldtype": "Select",
+   "label": "Bound release state",
+   "read_only": 1,
+   "options": "\nSuperseded\nWithdrawn\nIntegrity failed",
+   "description": "Forces every bound template release to this state for Bid Submission (BDS-CHG-001 v0.8 §4.4.4 worlds); empty = the installed state."
   }
  ],
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-27 17:00:00.000000",
+ "modified": "2026-09-28 12:01:46.014604",
  "modified_by": "Administrator",
  "module": "Bid Submission",
  "name": "BDS Test Environment Controls",

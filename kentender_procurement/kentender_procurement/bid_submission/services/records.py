@@ -23,6 +23,7 @@ from kentender_procurement.bid_submission.services.errors import fail
 
 JOURNAL = "Bid Command Journal"
 EVENT = "Bid Submission Event"
+EVENT_SCHEMA_VERSION = 1  # §12.1: event identity and schema version
 
 
 def namespace() -> str:
@@ -45,7 +46,11 @@ def save(doc) -> Any:
 
 
 def bump(doc, **values) -> Any:
-	"""Apply `values` and advance `record_version`."""
+	"""Apply `values` and advance `record_version`. A bid's status change is
+	remembered for the command's events (§12.1 previous and resulting states)."""
+	context = getattr(frappe.local, "kt_bds_command", None)
+	if context and doc.doctype == "Bid Workspace" and "status" in values:
+		context["transitions"].setdefault(doc.name, cstr(doc.status))
 	for field, value in values.items():
 		doc.set(field, value)
 	if doc.meta.has_field("record_version"):
@@ -96,7 +101,8 @@ def idempotent(key: str, command: str, payload: dict[str, Any], fn: Callable[[],
 		if row.command != command or row.payload_hash != digest:
 			fail("BDS_IDEMPOTENCY_CONFLICT")
 		return json.loads(row.result_json or "{}")
-	result = fn()
+	with running(command, key):
+		result = fn()
 	if result.get("ok") is not False:
 		insert(frappe.get_doc({
 			"doctype": JOURNAL, "idempotency_key": key, "command": command, "payload_hash": digest, "result_json": json.dumps(result, default=str),
@@ -105,10 +111,49 @@ def idempotent(key: str, command: str, payload: dict[str, Any], fn: Callable[[],
 	return result
 
 
+@contextmanager
+def running(command: str, key: str):
+	"""The command a mutation runs under, for its events (§12.1: command name
+	and idempotency-key hash). Nested commands keep their own."""
+	previous = getattr(frappe.local, "kt_bds_command", None)
+	frappe.local.kt_bds_command = {"command": command, "key_hash": hashlib.sha256(cstr(key).encode()).hexdigest(), "transitions": {}}
+	try:
+		yield
+	finally:
+		frappe.local.kt_bds_command = previous
+
+
+def remember_assignment(actor: str, assignment_id: str) -> None:
+	"""The acting assignment resolved for `actor` in this request (§12.1)."""
+	if getattr(frappe.local, "kt_bds_assignments", None) is None:
+		frappe.local.kt_bds_assignments = {}
+	frappe.local.kt_bds_assignments[cstr(actor)] = cstr(assignment_id)
+
+
 def emit(event_type: str, *, tender: str, actor: str, arrangement: str = "", workspace: str = "", organisation: str = "", payload: dict[str, Any] | None = None, at=None) -> Any:
-	"""One audit event (§12.1). Its payload carries identities and facts,
-	never response values."""
+	"""One audit event with the §12.1 minimum: schema version; the Tender,
+	arrangement, workspace, organisation and resulting record version; the
+	command and its request-key hash; the actor and acting assignment; the
+	instant in UTC and as displayed in EAT; the bid's previous and resulting
+	states. Its payload carries identities and facts, never response values."""
+	from kentender_core.utils.instants import to_utc_iso
+
+	from kentender_procurement.bid_submission.services import labels
+
+	at = at or clock.now()
+	context = getattr(frappe.local, "kt_bds_command", None) or {}
+	previous = resulting = ""
+	record_version = 0
+	if workspace:
+		row = frappe.db.get_value("Bid Workspace", workspace, ["status", "record_version"], as_dict=True)
+		if row:
+			resulting, record_version = cstr(row.status), int(row.record_version or 0)
+			previous = (context.get("transitions") or {}).get(workspace, resulting)
 	return insert(frappe.get_doc({
 		"doctype": EVENT, "event_type": event_type, "tender": tender, "bidder_arrangement": arrangement, "bid_workspace": workspace, "organisation": organisation,
-		"actor": actor, "occurred_at": at or clock.now(), "payload_json": json.dumps(payload or {}, sort_keys=True, default=str),
+		"actor": actor, "occurred_at": at, "payload_json": json.dumps(payload or {}, sort_keys=True, default=str),
+		"schema_version": EVENT_SCHEMA_VERSION, "command": cstr(context.get("command")), "idempotency_key_hash": cstr(context.get("key_hash")),
+		"assignment": cstr((getattr(frappe.local, "kt_bds_assignments", None) or {}).get(cstr(actor))),
+		"occurred_at_utc": to_utc_iso(at), "occurred_at_eat": labels.datetime_seconds_label(at),
+		"previous_status": previous, "resulting_status": resulting, "record_version": record_version,
 	}))

@@ -33,6 +33,10 @@ BEFORE_YOU_START = (
 	"An Authorised Signatory and a valid digital certificate are needed only when submitting.",
 )
 QUESTION_HELPER = "Start a bid to ask a question about this Tender. Starting does not submit a bid."
+# §10.3 BDS-DES-02-SUPERSEDED / -WITHDRAWN-RELEASE (§4.4.4)
+SUPERSEDED_TEXT = "This published Tender remains on its existing format. You can read the current documents and, while the Tender is open and the format verifies, start or continue a bid. Check the deadline and addenda."
+WITHDRAWN_RELEASE_TEXT = "The current Tender documents and any existing bid receipt remain available. You cannot start or submit a bid against this format. An existing submitted bid has not been automatically withdrawn."
+DOCUMENTS_ANCHOR = "#bds-tender-documents"
 NOTICE_CONTACT_HELP = "Mandatory Tender notices will be sent here. You can change this later to another verified Account email."
 
 
@@ -138,6 +142,27 @@ def get_tender_overview(*, tender_reference: str, organisation: str = "", user: 
 			start = _start_options(assignment, published, at)
 		else:
 			action = {"kind": "set_up_account", "label": "Finish setting up your supplier account", "href": "/account"}
+	# §4.4.4: the Tender's bound release. Superseded keeps every action and
+	# says so; Withdrawn (or a failed check) keeps reading, receipts and a
+	# signatory's withdrawal, and takes Start and Continue away.
+	release_notice, release_actions = None, None
+	if state == "open":
+		from kentender_procurement.bid_submission.services import definition_runtime, reads
+
+		current_definition = tenders_gateway.current_definition(tenders_gateway.tender_root(reference).name) or {}
+		release = definition_runtime.release_condition(current_definition["definition"], verify=False) if current_definition else {"ok": True, "lifecycle": "Available"}
+		if not release["ok"]:
+			release_notice = {"tone": "warning", "text": WITHDRAWN_RELEASE_TEXT}
+			release_actions = [{"kind": "view_documents", "label": "View Tender documents", "href": DOCUMENTS_ANCHOR, "tone": "secondary"}]
+			if bid and bid.get("receipt_reference") and bid["status"] == "Submitted":
+				release_actions.append({"kind": "view_receipt", "label": "View receipt", "href": bid["receipt_href"], "tone": "secondary"})
+				if reads._may_start_replacement(actor, assignment["organisation_id"], reference, at):
+					release_actions.append({"kind": "withdraw_bid", "label": "Withdraw bid", "href": f"{bid['receipt_href']}?action=withdraw", "tone": "danger"})
+			elif bid:
+				release_actions.append({"kind": "view_bid", "label": "View bid", "href": bid["href"], "tone": "secondary"})
+			action, start = release_actions[0], None
+		elif release["lifecycle"] == "Superseded":
+			release_notice = {"tone": "info", "text": SUPERSEDED_TEXT}
 	notice = None
 	if state == "open":
 		gate = availability.get_submission_availability()
@@ -155,6 +180,7 @@ def get_tender_overview(*, tender_reference: str, organisation: str = "", user: 
 			information = common_states.state("portal-information-new-visitor")
 			if action and action["kind"] == "start_bid":
 				action, start = None, None
+	actions = release_actions or ([{**action, "tone": "secondary" if action["kind"] == "view_notice" else "primary"}] if action else [])
 	candidate = bool(bid) and frappe.db.get_value("Bidder Arrangement", frappe.db.get_value("Bid Workspace", bid["bid_reference"], "bidder_arrangement"), "status") == "Active"
 	clarification_deadline = labels.datetime_label(published.get("clarification_deadline"))
 	return {
@@ -185,7 +211,7 @@ def get_tender_overview(*, tender_reference: str, organisation: str = "", user: 
 			"helper": QUESTION_HELPER if (state == "open" and published.get("clarifications_open") and not bid) else "",
 			"closed_text": "" if published.get("clarifications_open") else (f"Clarifications closed {clarification_deadline}." if clarification_deadline else ""),
 		},
-		"notice": notice, "state": information, "bid": bid, "action": action, "start": start, "before_you_start": list(BEFORE_YOU_START),
+		"notice": notice, "release_notice": release_notice, "state": information, "bid": bid, "action": action, "actions": actions, "start": start, "before_you_start": list(BEFORE_YOU_START),
 		"cancellation": {"cancelled": labels.datetime_label((published.get("cancellation") or {}).get("cancelled_at"))} if state == "cancelled" else None,
 		"signed_in": signed_in,
 	}

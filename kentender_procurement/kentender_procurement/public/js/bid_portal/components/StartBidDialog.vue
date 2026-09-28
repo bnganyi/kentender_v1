@@ -10,6 +10,7 @@
 // portal cannot render is the §10.17 Format unsupported state: nothing was
 // created, and Contact support is the one way on.
 import { computed, inject, nextTick, onMounted, reactive, ref } from "vue";
+import { useDialogFocus } from "../composables/useDialogFocus.js";
 import CommonState from "./CommonState.vue";
 
 const METHOD = "kentender_procurement.bid_submission.api.start_bid";
@@ -53,11 +54,12 @@ function submit() {
 		else if (result) failure.value = result.message || "";
 	}, "Start bid");
 }
-onMounted(() => nextTick(() => first.value && first.value.focus()));
+const dialogBox = ref(null);
+useDialogFocus(first, dialogBox);
 </script>
 
 <template>
-	<div class="kt-dialog-backdrop" data-testid="bds-start-dialog" @keydown.esc.stop="emit('close')">
+	<div ref="dialogBox" class="kt-dialog-backdrop" data-testid="bds-start-dialog" @keydown.esc.stop="emit('close')">
 		<div class="kt-dialog bds-dialog" role="dialog" aria-modal="true" aria-labelledby="bds-start-title">
 			<div id="bds-start-title" class="kt-dialog-title">{{ __("Who is bidding?") }}</div>
 			<fieldset class="kt-field bds-choice">

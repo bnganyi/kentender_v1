@@ -115,4 +115,46 @@ describe("Not found", () => {
 		await flushPromises();
 		expect(wrapper.emitted("not-found")).toHaveLength(1);
 	});
+
+	describe("a bound Tender format", () => {
+		it("superseded: says the Tender stays on its format and still offers Start bid", () => {
+			const { wrapper } = render(overview("SUPERSEDED"));
+			const notice = wrapper.get('[data-testid="bds-overview-release"]');
+			expect([notice.classes().includes("is-warning"), notice.text()]).toEqual([false, expect.stringContaining("remains on its existing format")]);
+			expect(wrapper.get('[data-testid="bds-overview-action"]').text()).toBe("Start bid");
+		});
+
+		it("withdrawn: keeps documents and the receipt, offers the signatory Withdraw bid and drops the status badge", () => {
+			const { wrapper } = render(overview("WITHDRAWN-RELEASE"));
+			expect(wrapper.get('[data-testid="bds-overview-release"]').classes()).toContain("is-warning");
+			const buttons = wrapper.findAll(".kt-page-actions .kt-btn");
+			expect(buttons.map((b) => b.text())).toEqual(["View Tender documents", "View receipt", "Withdraw bid"]);
+			expect(buttons[0].attributes("href")).toBe("#bds-tender-documents");
+			expect(buttons[2].classes()).toEqual(expect.arrayContaining(["kt-btn-primary", "kt-danger"]));
+			expect(buttons[2].attributes("href")).toMatch(/\?action=withdraw$/);
+			expect(wrapper.find('[data-testid="bds-overview-status"]').exists()).toBe(false);
+			expect(wrapper.find("#bds-tender-documents").exists()).toBe(true);
+			expect(wrapper.text()).not.toContain("Start bid");
+		});
+	});
+});
+
+describe("Dialog focus (BDS01-AC-088)", () => {
+	it("moves focus into Who is bidding?, keeps Tab inside and returns it to Start bid on Escape", async () => {
+		const { wrapper } = render(overview("JV-START"));
+		const trigger = wrapper.get('[data-testid="bds-overview-action"]');
+		trigger.element.focus();
+		await trigger.trigger("click");
+		await flushPromises();
+		const dialog = wrapper.get('[data-testid="bds-start-dialog"]');
+		expect(dialog.element.contains(document.activeElement)).toBe(true);
+		const buttons = dialog.findAll("button");
+		buttons.at(-1).element.focus();
+		await dialog.trigger("keydown", { key: "Tab" });
+		expect(dialog.element.contains(document.activeElement)).toBe(true);
+		await dialog.trigger("keydown", { key: "Escape" });
+		await flushPromises();
+		expect(wrapper.find('[data-testid="bds-start-dialog"]').exists()).toBe(false);
+		expect(document.activeElement).toBe(wrapper.get('[data-testid="bds-overview-action"]').element);
+	});
 });

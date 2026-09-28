@@ -38,7 +38,10 @@ API = "/api/method/kentender_procurement.bid_submission.api."
 
 def _next_step(guided: dict[str, Any]) -> dict[str, Any]:
 	answer = dict(guided["next_step"])
+	moved = [f for f in answer.get("fixes") or [] if f.get("fix_id") in PAGE_FIXES]
 	answer["fixes"] = [f for f in answer.get("fixes") or [] if f.get("fix_id") not in PAGE_FIXES]
+	if moved and not answer.get("primary_action"):
+		answer["primary_action"] = moved[0]["fix_id"]  # the page's own button performs it (KT-STD-001 §3B)
 	return answer
 
 
@@ -60,7 +63,9 @@ def replacement_page(ctx, guided: dict[str, Any], *, actor: str, at) -> dict[str
 	number = int(version.version_number)
 	receipt_href = f"{base}/receipt/{quote(version.receipt)}"
 	open_draft = ws.status != "Submitted"
-	may_create = not open_draft and reads._may_start_replacement(actor, ws.lead_organisation, ws.tender_reference, at)
+	from kentender_procurement.bid_submission.services import definition_runtime
+
+	may_create = not open_draft and reads._may_start_replacement(actor, ws.lead_organisation, ws.tender_reference, at) and definition_runtime.bid_condition(ctx)["ok"]
 	return {
 		"bid": {"reference": ws.name, "tender_reference": ws.tender_reference, "record_version": int(ws.record_version or 0)},
 		"page": {"title": REPLACE_TITLE, "description": REPLACE_DESCRIPTION, "badge": {"label": f"Version {number} submitted", "tone": "live"}},
@@ -84,7 +89,9 @@ def acknowledgement_page(change_facts: dict[str, Any], ctx, guided: dict[str, An
 	ws = ctx.workspace
 	base = f"/tenders/{ws.tender_reference}/bid"
 	title = cstr((tenders_gateway.published_tender(ws.tender_reference, at=at) or {}).get("title"))
-	may_restart = ws.status == "Withdrawn" and reads._may_start_replacement(actor, ws.lead_organisation, ws.tender_reference, at)
+	from kentender_procurement.bid_submission.services import definition_runtime
+
+	may_restart = ws.status == "Withdrawn" and reads._may_start_replacement(actor, ws.lead_organisation, ws.tender_reference, at) and definition_runtime.bid_condition(ctx)["ok"]
 	reference = change_facts["acknowledgement_reference"]
 	return {
 		"kind": "acknowledgement",

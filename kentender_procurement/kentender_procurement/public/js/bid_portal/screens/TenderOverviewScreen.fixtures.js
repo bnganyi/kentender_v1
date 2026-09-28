@@ -11,7 +11,7 @@ const BEFORE = [
 ];
 
 export function overview(variant = "") {
-	const afterAddendum = ["", "SIGNED-OUT", "SUBMITTED"].includes(variant);
+	const afterAddendum = ["", "SIGNED-OUT", "SUBMITTED", "SUPERSEDED", "WITHDRAWN-RELEASE"].includes(variant);
 	const base = {
 		tender: {
 			reference: REF, title: "Supply and delivery of business laptops", description: "Ministry of Health · Open Tender · Youth reservation.", availability: "open", status_label: "",
@@ -38,6 +38,22 @@ export function overview(variant = "") {
 		base.bid = { bid_reference: "BID-MOH-2027-033-001", status: "Submitted", status_text: "Submitted 10 Jun 2027, 14:32 EAT", receipt_reference: "RCPT-MOH-2027-033-001" };
 		base.action = { kind: "view_receipt", label: "View receipt", href: `/tenders/${REF}/bid/receipt/RCPT-MOH-2027-033-001` };
 	}
+	// §4.4.4 (TPR-CHG-001 v0.13): the bound release superseded (Peter may still start) or withdrawn (Mary's submitted bid)
+	if (variant === "SUPERSEDED") {
+		base.organisation = { id: "ORG-KISIWA", legal_name: "Kisiwa Digital Limited" };
+		base.release_notice = { tone: "info", text: "This published Tender remains on its existing format. You can read the current documents and, while the Tender is open and the format verifies, start or continue a bid. Check the deadline and addenda." };
+	}
+	if (variant === "WITHDRAWN-RELEASE") {
+		const receipt = `/tenders/${REF}/bid/receipt/RCPT-MOH-2027-033-001`;
+		base.bid = { bid_reference: "BID-MOH-2027-033-001", status: "Submitted", status_text: "Submitted 10 Jun 2027, 14:32 EAT", receipt_reference: "RCPT-MOH-2027-033-001", receipt_href: receipt };
+		base.release_notice = { tone: "warning", text: "The current Tender documents and any existing bid receipt remain available. You cannot start or submit a bid against this format. An existing submitted bid has not been automatically withdrawn." };
+		base.actions = [
+			{ kind: "view_documents", label: "View Tender documents", href: "#bds-tender-documents", tone: "secondary" },
+			{ kind: "view_receipt", label: "View receipt", href: receipt, tone: "secondary" },
+			{ kind: "withdraw_bid", label: "Withdraw bid", href: `${receipt}?action=withdraw`, tone: "danger" },
+		];
+		base.action = base.actions[0];
+	}
 	if (variant === "CANCELLED") {
 		base.tender = { ...base.tender, reference: "TND-MOH-2027-034", availability: "cancelled", status_label: "Cancelled" };
 		base.action = { kind: "view_notice", label: "View notice", href: "/api/method/x?key=cancellation" };
@@ -46,7 +62,7 @@ export function overview(variant = "") {
 	return base;
 }
 
-const VARIANTS = ["", "SIGNED-OUT", "JV-START", "DRAFT", "SUBMITTED", "CANDIDATE-QUESTION", "CANCELLED"];
+const VARIANTS = ["", "SIGNED-OUT", "JV-START", "DRAFT", "SUBMITTED", "CANDIDATE-QUESTION", "CANCELLED", "SUPERSEDED", "WITHDRAWN-RELEASE"];
 
 export const SCREENS = ["desktop", "narrow"].flatMap((frame) =>
 	VARIANTS.map((v) => ({

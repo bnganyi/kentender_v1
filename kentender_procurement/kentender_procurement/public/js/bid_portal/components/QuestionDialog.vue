@@ -5,6 +5,7 @@
 // sends it to Tenders, which owns the record (§11.2). Nothing is created
 // until Send question. Invalid text is named in place and kept.
 import { computed, inject, nextTick, onMounted, ref } from "vue";
+import { useDialogFocus } from "../composables/useDialogFocus.js";
 
 const METHOD = "kentender_procurement.bid_submission.api.submit_tender_clarification";
 const props = defineProps({
@@ -35,11 +36,12 @@ function send() {
 		}
 	}, "Send question");
 }
-onMounted(() => nextTick(() => field.value && field.value.focus()));
+const dialogBox = ref(null);
+useDialogFocus(field, dialogBox);
 </script>
 
 <template>
-	<div class="kt-dialog-backdrop" data-testid="bds-question-dialog" @keydown.esc.stop="emit('close')">
+	<div ref="dialogBox" class="kt-dialog-backdrop" data-testid="bds-question-dialog" @keydown.esc.stop="emit('close')">
 		<div class="kt-dialog bds-dialog" role="dialog" aria-modal="true" :aria-label="__('Ask a question about this Tender')">
 			<div class="kt-dialog-title">{{ __("Ask a question about this Tender") }}</div>
 			<template v-if="sent">

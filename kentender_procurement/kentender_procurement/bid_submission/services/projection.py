@@ -144,7 +144,7 @@ def _shown_when(ctx: BidContext, field: Field) -> dict[str, Any] | None:
 def field_view(ctx: BidContext, state: FieldState) -> dict[str, Any]:
 	field = state.field
 	view: dict[str, Any] = {
-		"handle": field.handle, "kind": field.kind, "label": label(ctx, field), "help": field.help_text, "editable": field.editable,
+		"handle": field.handle, "kind": field.kind, "label": label(ctx, field), "help": field.help_text, "editable": field.editable and not ctx.read_only,
 		"visible": state.visible, "required": state.required, "value": state.value, "shown_when": _shown_when(ctx, field), "issue": state.issue,
 	}
 	if field.supplied:

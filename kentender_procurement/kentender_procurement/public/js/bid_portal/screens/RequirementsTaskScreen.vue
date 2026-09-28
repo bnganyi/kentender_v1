@@ -26,6 +26,9 @@ const portal = inject("portal");
 const { route, go, epoch } = portal.useRoute({ ref, onMounted, onUnmounted });
 const narrow = useNarrow();
 const data = ref(null);
+// the server says whether this Draft can change now (closed, or its bound
+// release withdrawn): read-only fields and no Save and continue otherwise
+const canEdit = computed(() => !data.value || !data.value.bid || data.value.bid.editable !== false);
 const failure = ref("");
 const errors = ref({});
 const drawer = ref(null);
@@ -176,7 +179,7 @@ onMounted(() => {
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Your response") }}</span><span>{{ row.response }}</span></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Evidence") }}</span><span>{{ row.evidence }}</span></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Status") }}</span><span><span class="kt-status" :class="'is-' + row.tone">{{ row.status }}</span></span></div>
-						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="open(row.key)">{{ __("Edit") }}</button></div>
+						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="open(row.key)">{{ canEdit ? __("Edit") : __("View") }}</button></div>
 					</div>
 				</div>
 			</div>
@@ -195,7 +198,7 @@ onMounted(() => {
 							<td>{{ row.supply }}</td>
 							<td>{{ row.completed }}</td>
 							<td>{{ row.evidence }}</td>
-							<td><button type="button" class="bds-link-button" @click="open(row.key)">{{ __("Edit") }}</button></td>
+							<td><button type="button" class="bds-link-button" @click="open(row.key)">{{ canEdit ? __("Edit") : __("View") }}</button></td>
 						</tr>
 					</tbody>
 				</table>
@@ -205,7 +208,7 @@ onMounted(() => {
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Supply") }}</span><span>{{ row.supply }}</span></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Completion date") }}</span><span>{{ row.completed }}</span></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Evidence") }}</span><span>{{ row.evidence }}</span></div>
-						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="open(row.key)">{{ __("Edit") }}</button></div>
+						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="open(row.key)">{{ canEdit ? __("Edit") : __("View") }}</button></div>
 					</div>
 				</div>
 			</div>
@@ -217,7 +220,7 @@ onMounted(() => {
 				<div v-for="row in data.acceptance" :key="row.key" class="bds-acceptance-row">
 					<span>{{ row.label }}</span>
 					<span class="kt-status" :class="'is-' + row.tone">{{ row.status }}</span>
-					<button type="button" class="bds-link-button" @click="open(row.key)">{{ __("Edit") }}</button>
+					<button type="button" class="bds-link-button" @click="open(row.key)">{{ canEdit ? __("Edit") : __("View") }}</button>
 				</div>
 			</div>
 		</div>
@@ -232,7 +235,7 @@ onMounted(() => {
 							<td class="bds-strong">{{ row.label }}</td>
 							<td>{{ row.file || "—" }}</td>
 							<td><span class="kt-status" :class="'is-' + row.file_tone">{{ row.file_status }}</span></td>
-							<td><button type="button" class="bds-link-button" @click="open(row.key)">{{ row.file ? __("Replace") : __("Upload") }}</button></td>
+							<td><button type="button" class="bds-link-button" @click="open(row.key)">{{ !canEdit ? __("View") : row.file ? __("Replace") : __("Upload") }}</button></td>
 						</tr>
 					</tbody>
 				</table>
@@ -241,7 +244,7 @@ onMounted(() => {
 						<div class="bds-card-title">{{ row.label }}</div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("File") }}</span><span>{{ row.file || "—" }}</span></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Status") }}</span><span><span class="kt-status" :class="'is-' + row.file_tone">{{ row.file_status }}</span></span></div>
-						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="open(row.key)">{{ row.file ? __("Replace") : __("Upload") }}</button></div>
+						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="open(row.key)">{{ !canEdit ? __("View") : row.file ? __("Replace") : __("Upload") }}</button></div>
 					</div>
 				</div>
 			</div>
@@ -250,12 +253,12 @@ onMounted(() => {
 		<div v-if="failure" class="kt-notice is-critical bds-load-failure" role="alert" data-testid="bds-load-failure"><div class="kt-notice-body">{{ failure }}</div></div>
 
 		<div v-if="narrow" class="bds-footer-stack">
-			<button type="button" class="kt-btn kt-btn-primary bds-btn-block" :disabled="pending" data-testid="bds-requirements-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button>
+			<button v-if="canEdit" type="button" class="kt-btn kt-btn-primary bds-btn-block" :disabled="pending" data-testid="bds-requirements-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button>
 			<a :href="data.page.back_href" class="kt-btn kt-btn-secondary bds-btn-block">{{ __("Back to bid") }}</a>
 		</div>
 		<div v-else class="bds-footer">
 			<a :href="data.page.back_href" class="kt-btn kt-btn-secondary">{{ __("Back to bid") }}</a>
-			<div class="bds-footer-end"><button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="bds-requirements-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button></div>
+			<div class="bds-footer-end"><button v-if="canEdit" type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="bds-requirements-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button></div>
 		</div>
 
 		<ResponseDrawer v-if="drawer" :key="drawer.key" :group="drawer" task="requirements" :bid="bid" @close="drawer = null" @saved="afterDrawer" @changed="drawerChanged" />

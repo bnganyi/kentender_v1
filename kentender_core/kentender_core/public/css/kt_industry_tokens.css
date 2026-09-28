@@ -374,6 +374,8 @@
 }
 .kt-industry .kt-table td:first-child { min-width: 100px; }
 .kt-industry .kt-table tbody tr:hover { background: var(--kt-color-accent-100); }
+/* WCAG 1.4.3: on a hovered row's tint the link colour falls to 4.3:1; the next shade keeps it above 4.5:1 */
+.kt-industry .kt-table tbody tr:hover a:not(.kt-btn):not(.kt-tab):not(.kt-add-child) { color: var(--kt-color-accent-2-800); }
 .kt-industry .kt-table .is-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .kt-industry .kt-table td.is-num { font-weight: 600; }
 .kt-industry .kt-table .is-num.is-zero, .kt-industry .kt-figure.is-zero { color: var(--kt-color-neutral-500); font-weight: 400; }

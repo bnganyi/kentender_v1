@@ -91,8 +91,10 @@ def certificate(actor: str, organisation: str, at) -> dict[str, Any]:
 	return service.certificate(user=actor, organisation=organisation, at=at)
 
 
-def submittable(ctx, *, actor: str, at, expected_record_version, confirmed) -> tuple[dict[str, Any], Any]:
-	"""(signatory, Tender root) once every pre-signing and pre-deposit check passes."""
+def submittable(ctx, *, actor: str, at, expected_record_version, confirmed, verify_release: bool = True) -> tuple[dict[str, Any], Any]:
+	"""(signatory, Tender root) once every pre-signing and pre-deposit check
+	passes. A command re-hashes the bound release; the Submit page's read
+	passes `verify_release=False`."""
 	signatory = signatory_of(ctx, actor)
 	authz.active_account(ctx.workspace.lead_organisation)
 	if ctx.workspace.status == "Submitted":
@@ -100,6 +102,9 @@ def submittable(ctx, *, actor: str, at, expected_record_version, confirmed) -> t
 	if ctx.workspace.status in ("Withdrawn", "Closed without submission"):
 		fail("BDS_TENDER_NOT_OPEN")
 	root = require_before_deadline(ctx, at)
+	from kentender_procurement.bid_submission.services import definition_runtime
+
+	definition_runtime.require_release(ctx, verify=verify_release)  # §4.4.4: no submission on a Withdrawn or failed release
 	availability.require_available()
 	require_portal_information()
 	records.check_version(ctx.workspace, expected_record_version)

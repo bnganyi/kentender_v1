@@ -187,7 +187,8 @@ def consume_tender_events(tender: str | None = None) -> dict[str, int]:
 
 	for event in mine(tenders_gateway.pending_events(event_type=PERIOD_ENDED, consumer=CONSUMER)):
 		try:
-			close_bid_submission(tender=event.tender, source_event=event.name, tenders_handoff=cstr(event.subject_id))
+			with records.running("CloseBidSubmission", event.name):
+				close_bid_submission(tender=event.tender, source_event=event.name, tenders_handoff=cstr(event.subject_id))
 			tenders_gateway.mark_event_consumed(event, consumer=CONSUMER)
 			frappe.db.commit()
 			done["closed"] += 1

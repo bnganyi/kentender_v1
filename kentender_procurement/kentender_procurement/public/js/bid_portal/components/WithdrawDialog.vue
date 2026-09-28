@@ -5,6 +5,7 @@
 // dialog is the confirmation. A refused reason is named in place; success
 // opens the acknowledgement.
 import { computed, inject, nextTick, onMounted, ref } from "vue";
+import { useDialogFocus } from "../composables/useDialogFocus.js";
 import CommonState from "./CommonState.vue";
 import { conflictState } from "../composables/commonStates.js";
 
@@ -45,11 +46,12 @@ function withdraw() {
 		else if (result) failure.value = result.message || "";
 	}, "Withdraw bid");
 }
-onMounted(() => nextTick(() => first.value && first.value.focus()));
+const dialogBox = ref(null);
+useDialogFocus(first, dialogBox);
 </script>
 
 <template>
-	<div class="kt-dialog-backdrop" data-testid="bds-withdraw-dialog" @keydown.esc.stop="!pending && emit('close')">
+	<div ref="dialogBox" class="kt-dialog-backdrop" data-testid="bds-withdraw-dialog" @keydown.esc.stop="!pending && emit('close')">
 		<div class="kt-dialog bds-dialog" role="dialog" aria-modal="true" aria-labelledby="bds-withdraw-title">
 			<div id="bds-withdraw-title" class="kt-dialog-title">{{ __("Withdraw this bid?") }}</div>
 			<div class="bds-dialog-facts">

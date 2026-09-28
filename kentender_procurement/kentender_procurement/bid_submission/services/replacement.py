@@ -50,6 +50,9 @@ def _prepare(actor: str, bid_reference: str, expected_record_version, organisati
 	if ws.status not in ("Submitted", "Withdrawn"):
 		fail("BDS_STALE_VERSION", detail={"record_version": int(ws.record_version or 0)})  # nothing submitted to replace, or a replacement is already open
 	signature.require_before_deadline(ctx, at)
+	from kentender_procurement.bid_submission.services import definition_runtime
+
+	definition_runtime.require_release(ctx, verify=True)  # §4.4.4: no replacement on a Withdrawn or failed release
 	records.check_version(ws, expected_record_version)
 	started_from = ws.status
 	status = derived_status(ctx)

@@ -44,4 +44,31 @@ describe("Prepare replacement bid", () => {
 		expect(wrapper.find('[data-testid="bds-replacement-create"]').exists()).toBe(false);
 		expect(wrapper.get('[data-testid="bds-replacement-continue"]').attributes("href")).toBe(`/tenders/${REF}/bid`);
 	});
+
+	it.each([
+		["BDS_REPLACEMENT_CONFLICT", "replacement-conflict", { current_receipt: "RCPT-MOH-2027-033-002" }, "a", "View current receipt"],
+		["BDS_IDEMPOTENCY_CONFLICT", "idempotency-conflict", {}, "button", "Refresh"],
+		["BDS_STALE_VERSION", "stale-draft", {}, "button", "Reload"],
+	])("shows %s as its catalogue state with its one way on (BDS03-AC-011, BDS04-AC-002)", async (code, key, detail, control, label) => {
+		const refused = Object.assign(new Error("refused"), { code, detail });
+		const call = vi.fn(async (method) => {
+			if (method.endsWith("prepare_replacement_bid")) throw refused;
+			return replacementPage();
+		});
+		const wrapper = mountWith(replacementPage(), portalFor(call));
+		await wrapper.get('[data-testid="bds-replacement-create"]').trigger("click");
+		await flushPromises();
+		const state = wrapper.get(`[data-testid="bds-state-${key}"]`);
+		const action = state.get(control);
+		expect(action.text()).toBe(label);
+		if (control === "a") expect(action.attributes("href")).toBe(`/tenders/${REF}/bid/receipt/RCPT-MOH-2027-033-002`);
+		else {
+			const before = call.mock.calls.length;
+			await action.trigger("click");
+			await flushPromises();
+			expect(call.mock.calls.slice(before).map(([m]) => m.split(".").pop())).toContain("get_replacement_page");
+			expect(wrapper.find(`[data-testid="bds-state-${key}"]`).exists()).toBe(false);
+		}
+	});
 });
+

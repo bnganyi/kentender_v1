@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 import frappe
+from frappe.utils import cstr
 
 from kentender_procurement.tenders.services import bid_definition, bidder_projection
 
@@ -51,12 +52,26 @@ def verify_definition_digest(definition: dict[str, Any]) -> bool:
 	return bool(definition) and verify(definition)
 
 
-def release_status(release_id: str) -> dict[str, Any]:
+def release_status(release_id: str, *, verify: bool = True) -> dict[str, Any]:
 	"""The bound template release's lifecycle, site switch and live health;
-	a command re-hashes the release assets (STD-TPL-IMP-001 `bid_work_status`)."""
+	a command re-hashes the release assets, a read uses the recorded result
+	(STD-TPL-IMP-001 `bid_work_status`). On a test environment the
+	`bound_release_state` control forces the BDS-CHG-001 §4.4.4 worlds."""
+	from kentender_procurement.bid_submission.services import simulation
 	from kentender_procurement.std_templates.services import runtime
 
-	return runtime.bid_work_status(release_id, verify=True)
+	status = runtime.bid_work_status(release_id, verify=verify)
+	forced = cstr(simulation.controls().get("bound_release_state"))
+	if forced in ("Superseded", "Withdrawn"):
+		status = {**status, "lifecycle": forced}
+	elif forced == "Integrity failed":
+		status = {**status, "integrity_ok": False, "problem": "The bound Tender format failed its integrity check (test environment)."}
+	return status
+
+
+def resolution_holder(tender_name: str) -> str:
+	"""The Procurement Officer who holds the Tender's resolution (a user id)."""
+	return bidder_projection.resolution_holder(tender_name)
 
 
 def submit_clarification(*, tender: str, candidate_registration_id: str, question: str, inbound_event_id: str, received_at, producer: str) -> dict[str, Any]:

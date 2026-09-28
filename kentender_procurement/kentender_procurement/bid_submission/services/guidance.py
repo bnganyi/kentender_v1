@@ -33,6 +33,9 @@ STAGES = (("BID_PREPARATION", "Prepare bid"), ("SIGN_AND_SUBMIT", "Sign and subm
 MARKERS = {"D": ns.MARKER_DONE, "C": ns.MARKER_CURRENT, "B": ns.MARKER_BLOCKED, "N": ns.MARKER_NOT_STARTED}
 TECHNICAL, RELEASE = "Technical Operator", "Release Operator"
 SUPPLIER = "Supplier Representative / Authorised Signatory"
+PROCUREMENT_OFFICER = "Procurement Officer"
+# §4.4.4 / §5.13: why the bound release takes no new bid work, in words
+RELEASE_CONDITION = {"withdrawn": "Withdrawn", "failed": "Failed verification"}
 
 
 # -- holders -------------------------------------------------------------------
@@ -60,6 +63,16 @@ def signatory_names(ctx, at=None) -> list[str]:
 		row = supplier_gateway.assignment(assignment_id=named, at=at)
 		return [_name(row["user"])] if row else []
 	return [_name(a["user"]) for a in supplier_gateway.organisation_signatories(organisation_id=ctx.workspace.lead_organisation, at=at)]
+
+
+def resolution_holders(ws) -> list[str]:
+	"""The Procurement Officer who holds the governed Tender resolution when
+	the bound release takes no new bid work (§5.12–5.13): the officer who
+	prepared the published Tender, from Tenders."""
+	from kentender_procurement.bid_submission.services import tenders_gateway
+
+	user = tenders_gateway.resolution_holder(ws.tender)
+	return [_name(user)] if user else []
 
 
 def _holder_line(role_label: str, people: list[str]) -> str:
@@ -103,6 +116,13 @@ def submit_guard(ctx, *, actor: str, at, tasks=None) -> dict[str, Any]:
 	deadline_label = labels.datetime_label(deadline)
 	if deadline and get_datetime(at) >= get_datetime(deadline):
 		return ns.guard(False, reason_code="BDS_DEADLINE_PASSED", message=MESSAGES["BDS_DEADLINE_PASSED"], figures={"deadline": deadline_label, "server_time": labels.datetime_label(at)})
+	from kentender_procurement.bid_submission.services import definition_runtime
+
+	release = definition_runtime.bid_condition(ctx)
+	if not release["ok"]:
+		people = resolution_holders(ws)
+		guards.append(ns.guard(False, reason_code="BDS_DEFINITION_UNSUPPORTED", message=MESSAGES["BDS_DEFINITION_UNSUPPORTED"], figures={"release": RELEASE_CONDITION[release["reason"]]},
+			fixes=[_text_fix("The Procurement Officer holds the Tender resolution.", PROCUREMENT_OFFICER, people)]))
 	assignment = ctx.assignment
 	if assignment.get("responsibility") != authz.SIGNATORY or not assignment.get("signatory_ready") or (ctx.arrangement.authorised_signatory_assignment and assignment.get("assignment_id") != ctx.arrangement.authorised_signatory_assignment):
 		people = signatory_names(ctx, at)
@@ -202,6 +222,9 @@ def for_bid(ctx, *, actor: str, at, tasks=None) -> dict[str, Any]:
 	current = _current_version(ws)
 	guard = submit_guard(ctx, actor=actor, at=at, tasks=tasks)
 	codes = [b["reason_code"] for b in ns.blockers_of(guard)]
+	from kentender_procurement.bid_submission.services import definition_runtime
+
+	release = definition_runtime.bid_condition(ctx)
 
 	def result(answer, markers, holder_display=""):
 		return {"next_step": answer, "journey": journey(markers, holder_display), "submit_guard": guard}
@@ -218,14 +241,16 @@ def for_bid(ctx, *, actor: str, at, tasks=None) -> dict[str, Any]:
 	if ws.status == "Submitted" and current:
 		if signatory:
 			base = f"/tenders/{ws.tender_reference}/bid"
-			fixes = [
-				ns.fix("Prepare replacement", responsibility=authz.SIGNATORY, kind=ns.FIX_ROUTE, fix_id="prepare_replacement", target=f"{base}/replace"),
-				ns.fix("Withdraw bid", responsibility=authz.SIGNATORY, kind=ns.FIX_ROUTE, fix_id="withdraw_bid", target=f"{base}/receipt/{current.receipt}?action=withdraw"),
-			]
+			withdraw = ns.fix("Withdraw bid", responsibility=authz.SIGNATORY, kind=ns.FIX_ROUTE, fix_id="withdraw_bid", target=f"{base}/receipt/{current.receipt}?action=withdraw")
+			if not release["ok"]:
+				# §4.4.4: withdrawal stays available; no replacement on this format
+				return result(ns.answer(ns.KIND_YOUR_TURN, headline=f"You may withdraw before {deadline_label}. Version {int(current.version_number)} remains submitted.",
+					sentence="A replacement cannot be prepared against this Tender format. This is an option, not assigned overdue work.", stage="RECEIPT", fixes=[withdraw]), "DDD")
+			fixes = [ns.fix("Prepare replacement", responsibility=authz.SIGNATORY, kind=ns.FIX_ROUTE, fix_id="prepare_replacement", target=f"{base}/replace"), withdraw]
 			return result(ns.answer(ns.KIND_YOUR_TURN, headline=f"You may prepare a replacement or withdraw before {deadline_label}. Version {int(current.version_number)} remains submitted.", sentence="These are options, not assigned overdue work.", stage="RECEIPT", fixes=fixes), "DDD")
 		return result(ns.answer(ns.KIND_DONE, headline=f"Bid Version {int(current.version_number)} was accepted on {labels.datetime_seconds_label(current.accepted_at)}.", stage="RECEIPT", primary_action="view_receipt"), "DDD")
 	if ws.status == "Withdrawn":
-		if signatory:
+		if signatory and release["ok"]:
 			return result(ns.answer(ns.KIND_YOUR_TURN, headline="You may start a new bid before the deadline. This bid was withdrawn; no bid is currently submitted.", sentence="This is an available option, not overdue work.", stage="RECEIPT",
 				fixes=[ns.fix("Start replacement", responsibility=authz.SIGNATORY, kind=ns.FIX_ROUTE, fix_id="start_replacement", target=_acknowledgement_href(ws), primary=True)], primary_action="start_replacement"), "DDD")
 		return result(ns.answer(ns.KIND_DONE, headline="This bid was withdrawn; no bid is currently submitted.", stage="RECEIPT"), "DDD")
@@ -238,6 +263,13 @@ def for_bid(ctx, *, actor: str, at, tasks=None) -> dict[str, Any]:
 		people = responsibility_holders(TECHNICAL)
 		return result(ns.answer(ns.KIND_WAITING, headline=f"{_holder_line('Technical operator', people)} is checking the same submission attempt.", sentence="No new Submit or retry action.", stage="SIGN_AND_SUBMIT",
 			holder=ns.holder(TECHNICAL, people), since=ns.since(attempt.received_at, labels.datetime_label(attempt.received_at)) if attempt else None, primary_action="view_status"), "DBN", ns.holder(TECHNICAL, people)["display"])
+	if "BDS_DEFINITION_UNSUPPORTED" in codes:
+		# §5.12 "Bound release Withdrawn; existing Draft" (B/N/N)
+		people = resolution_holders(ws)
+		holder = ns.holder(PROCUREMENT_OFFICER, people)
+		against = "against the withdrawn format" if release["reason"] == "withdrawn" else "while the Tender format fails its checks"
+		return result(ns.answer(ns.KIND_WAITING, headline=f"{_holder_line('Procurement Officer', people)} holds the governed Tender resolution; this Draft is saved but cannot be submitted {against}.",
+			stage="BID_PREPARATION", holder=holder), "BNN", holder["display"])
 	if "BDS_ADDENDUM_REVIEW_REQUIRED" in codes:
 		blockers = [b for b in ns.blockers_of(guard) if b["reason_code"] == "BDS_ADDENDUM_REVIEW_REQUIRED"]
 		return result(ns.answer(ns.KIND_BLOCKED, headline=f"Review the changed {change_label(ws.tender)} and acknowledge the current addendum before submitting.", stage="BID_PREPARATION", blockers=blockers, primary_action="review_addendum"), "BNN", viewer)

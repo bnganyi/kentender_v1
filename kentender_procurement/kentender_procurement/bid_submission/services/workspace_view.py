@@ -159,11 +159,13 @@ def task_rows(ctx, tasks, nav: list[dict[str, Any]], *, closed: bool) -> list[di
 	return out
 
 
-def header(ctx, nav: list[dict[str, Any]], tender: dict[str, Any], *, closed: bool) -> dict[str, Any]:
+def header(ctx, nav: list[dict[str, Any]], tender: dict[str, Any], *, closed: bool, release_blocked: bool = False) -> dict[str, Any]:
 	ws = ctx.workspace
 	base = f"/tenders/{ws.tender_reference}/bid"
 	first_open = next((row["key"] for row in nav if row["status"] != "Complete"), "")
-	if closed:
+	if release_blocked and not closed:
+		action = None  # BDS-DES-06-WITHDRAWN-RELEASE: the guidance links are the only ways on
+	elif closed:
 		action = {"label": "Back to My bids", "href": "/my-bids", "tone": "secondary"}
 	elif _addendum_pending(ctx) or any(row["key"] == "documents" and row["status"] == "Needs attention" for row in nav):
 		action = {"label": "Review addendum", "href": f"{base}/documents", "tone": "primary"}
@@ -189,12 +191,19 @@ def view(ctx, tasks, nav: list[dict[str, Any]], tender: dict[str, Any], *, at) -
 	ws = ctx.workspace
 	root = tenders_gateway.tender_root(ws.tender_reference)
 	closed = ws.status in CLOSED_STATES or _closed(root, at)
+	from kentender_procurement.bid_submission.services import definition_runtime
+
+	# §4.4.4 / BDS-DES-06-WITHDRAWN-RELEASE: a Draft whose bound release is
+	# Withdrawn or fails its checks is kept for reading, with the waiting line
+	# and two ways on (View current Tender, Supplier support)
+	release_blocked = not closed and not definition_runtime.bid_condition(ctx)["ok"]
 	return {
-		"header": header(ctx, nav, tender, closed=closed),
+		"header": header(ctx, nav, tender, closed=closed, release_blocked=release_blocked),
 		"deadline": deadline(root, at),
-		"availability_notice": availability_notice(ws, root, at),
+		"availability_notice": None if release_blocked else availability_notice(ws, root, at),
+		"guidance_links": [{"label": "View current Tender", "href": f"/tenders/{ws.tender_reference}"}, *_support_links()] if release_blocked else [],
 		"notices": notices(ctx, tasks, tender),
 		"notices_note": NOTICES_NOTE,
-		"tasks": task_rows(ctx, tasks, nav, closed=closed),
+		"tasks": task_rows(ctx, tasks, nav, closed=closed or release_blocked),
 		"saved_text": saved_text(ws),
 	}

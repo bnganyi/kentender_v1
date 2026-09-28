@@ -97,4 +97,14 @@ describe("Your bid", () => {
 		await flushPromises();
 		expect(read).toHaveBeenCalledTimes(2);
 	});
+
+	it("on a withdrawn Tender format keeps the tasks for reading, waits on the Procurement Officer and offers the two ways on", () => {
+		const wrapper = mountWith({ initial: workspace("WITHDRAWN-RELEASE") }, portalFor());
+		expect(wrapper.find('[data-testid="bds-workspace-action"]').exists()).toBe(false);
+		expect(wrapper.get('[data-kt="next-step"]').text()).toContain("Procurement Officer Brian Wafula holds the governed Tender resolution");
+		const links = wrapper.get('[data-testid="bds-guidance-links"]').findAll("a");
+		expect(links.map((a) => [a.text(), a.attributes("href")])).toEqual([["View current Tender", `/tenders/${REF}`], ["Supplier support", "mailto:supplier.support@kentender.example"]]);
+		expect(wrapper.findAll('[data-testid="bds-tasks-table"] tbody td a').map((a) => a.text())).toEqual(["View", "View", "View", "View", "View"]);
+		expect(wrapper.text()).not.toMatch(/Continue bid|Review bid|Submit/);
+	});
 });

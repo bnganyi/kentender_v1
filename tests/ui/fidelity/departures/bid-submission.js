@@ -49,14 +49,14 @@ export const DEPARTURES = Object.fromEntries(
 export const COVERED = new Set([
 	...["desktop", "narrow"].flatMap((frame) => ["BDS-DES-01", "BDS-DES-01-EMPTY"].map((v) => `AvailableTendersScreen#${v}@${frame}`)),
 	...["desktop", "narrow"].flatMap((frame) =>
-		["", "-SIGNED-OUT", "-JV-START", "-DRAFT", "-SUBMITTED", "-CANDIDATE-QUESTION", "-CANCELLED"].map((v) => `TenderOverviewScreen#BDS-DES-02${v}@${frame}`),
+		["", "-SIGNED-OUT", "-JV-START", "-DRAFT", "-SUBMITTED", "-CANDIDATE-QUESTION", "-CANCELLED", "-SUPERSEDED", "-WITHDRAWN-RELEASE"].map((v) => `TenderOverviewScreen#BDS-DES-02${v}@${frame}`),
 	),
 	...["desktop", "narrow"].flatMap((frame) => [
 		...["", "-SUBMITTED", "-WITHDRAWN", "-EMPTY"].map((v) => `MyBidsScreen#BDS-DES-05${v}@${frame}`),
 		...["", "-EMPTY", "-SUSPENDED"].map((v) => `ReceiptHistoryScreen#BDS-DES-17${v}@${frame}`),
 		...[
 			"BDS-DES-06 / BDS-DES-06-REPRESENTATIVE", "BDS-DES-06-SIGNATORY", "BDS-DES-06-IN-PROGRESS", "BDS-DES-06-ADDENDUM", "BDS-DES-06-GATE", "BDS-DES-06-OUTAGE",
-			"BDS-DES-06-CFG-INCOMPLETE · in preparation", "BDS-DES-06-CFG-INCOMPLETE · ready", "BDS-DES-06-CLOSED-UNSUBMITTED",
+			"BDS-DES-06-CFG-INCOMPLETE · in preparation", "BDS-DES-06-CFG-INCOMPLETE · ready", "BDS-DES-06-CLOSED-UNSUBMITTED", "BDS-DES-06-WITHDRAWN-RELEASE",
 		].map((v) => `BidWorkspaceScreen#${v}@${frame}`),
 		...[
 			"BDS-DES-07", "BDS-DES-07-COMPLETE", "BDS-DES-07-QUESTION-OPEN / BDS-DES-07-NONE", "BDS-DES-07-QUESTION-OPEN-DIALOG", "BDS-DES-07-QUESTION-OPEN-DIALOG · success",

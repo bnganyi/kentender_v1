@@ -75,4 +75,15 @@ describe("Requirements and supporting evidence", () => {
 		expect(JSON.parse(portal.call.mock.calls[0][1].values)).toEqual({ "g-model": "ApexBook Pro 16" });
 		expect(portal.go).toHaveBeenCalledWith(`/tenders/${REF}/bid/price`);
 	});
+
+	it("reads as fixed when the server says the bid cannot change: no Save and continue, rows open to View", async () => {
+		const task = requirementsTask();
+		task.bid = { ...task.bid, editable: false };
+		const wrapper = mountWith(task, portalFor({ call: vi.fn(async () => task) }));
+		await flushPromises();
+		expect(wrapper.find('[data-testid="bds-requirements-save"]').exists()).toBe(false);
+		const labels = wrapper.findAll(".bds-link-button").map((b) => b.text());
+		expect(labels.length).toBeGreaterThan(0);
+		expect(labels.filter((l) => ["Edit", "Upload", "Replace"].includes(l))).toEqual([]);
+	});
 });

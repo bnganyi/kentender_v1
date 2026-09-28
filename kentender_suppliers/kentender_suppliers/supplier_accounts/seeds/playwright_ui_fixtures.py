@@ -172,6 +172,21 @@ def reset_account_fixture(*, state: str = "active", commit: bool = True) -> dict
 	}
 
 
+def suspend_organisation(*, registration_number: str, commit: bool = True) -> dict[str, Any]:
+	"""Suspend another browser world's organisation (the Bid Submission worlds'
+	Afya (Test), PVT-PW-AFYA01) through the real suspension command, by this
+	world's support officer; `restore_site` removes the officer's records."""
+	frappe.set_user("Administrator")
+	_users()
+	organisation = frappe.db.get_value("Supplier Organisation", {"registration_number": registration_number}, "name")
+	if not organisation:
+		frappe.throw(f"No supplier organisation with registration number {registration_number}.")
+	_suspend(organisation)
+	if commit:
+		frappe.db.commit()
+	return {"organisation": organisation, "account_status": frappe.db.get_value("Supplier Organisation", organisation, "account_status")}
+
+
 def restore_site(*, commit: bool = True) -> dict[str, Any]:
 	frappe.set_user("Administrator")
 	_wipe_accounts()

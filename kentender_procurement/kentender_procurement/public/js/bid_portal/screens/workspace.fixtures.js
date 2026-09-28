@@ -98,6 +98,15 @@ export function workspace(variant = "") {
 				tasks: tasks(["Complete", "Complete", "Complete", "Complete", "Complete"], DONE_TIMES, { closed: true }),
 				next_step: answer("done", "Submission closed at 12 Jun 2027, 11:00 EAT; this Draft was not submitted."), journey: journey(["done", "not_started", "not_started"]),
 			});
+		case "WITHDRAWN-RELEASE":
+			// §4.4.4 (TPR-CHG-001 v0.13): the Draft is kept for reading while the Tender's Procurement Officer holds the resolution
+			return base({
+				header: { ...HEADER(null), action: null },
+				tasks: tasks(["Complete", "Complete", "Complete", "Complete", "Complete"], DONE_TIMES, { closed: true }),
+				guidance_links: [{ label: "View current Tender", href: `/tenders/${REF}` }, SUPPORT],
+				next_step: answer("waiting", "Procurement Officer Brian Wafula holds the governed Tender resolution; this Draft is saved but cannot be submitted against the withdrawn format."),
+				journey: journey(["blocked", "not_started", "not_started"], "Brian Wafula"),
+			});
 		default:
 			return base({});
 	}
@@ -106,7 +115,7 @@ export function workspace(variant = "") {
 const VARIANTS = [
 	["BDS-DES-06 / BDS-DES-06-REPRESENTATIVE", ""], ["BDS-DES-06-SIGNATORY", "SIGNATORY"], ["BDS-DES-06-IN-PROGRESS", "IN-PROGRESS"], ["BDS-DES-06-ADDENDUM", "ADDENDUM"],
 	["BDS-DES-06-GATE", "GATE"], ["BDS-DES-06-OUTAGE", "OUTAGE"], ["BDS-DES-06-CFG-INCOMPLETE · in preparation", "CFG-PREP"], ["BDS-DES-06-CFG-INCOMPLETE · ready", "CFG-READY"],
-	["BDS-DES-06-CLOSED-UNSUBMITTED", "CLOSED"],
+	["BDS-DES-06-CLOSED-UNSUBMITTED", "CLOSED"], ["BDS-DES-06-WITHDRAWN-RELEASE", "WITHDRAWN-RELEASE"],
 ];
 export const WORKSPACE_VARIANTS = VARIANTS.map(([label]) => label);
 

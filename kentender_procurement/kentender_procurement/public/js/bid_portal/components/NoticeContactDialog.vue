@@ -4,6 +4,7 @@
 // changed to another verified Account email. Only verified emails are
 // offered; an earlier notice is never re-sent or rewritten here.
 import { computed, inject, nextTick, onMounted, ref } from "vue";
+import { useDialogFocus } from "../composables/useDialogFocus.js";
 
 const METHOD = "kentender_procurement.bid_submission.api.update_tender_notice_contact";
 const props = defineProps({ contact: { type: Object, required: true } });
@@ -27,11 +28,12 @@ function save() {
 		else if (result) failure.value = result.message || "";
 	}, "Update notice email");
 }
-onMounted(() => nextTick(() => first.value && first.value.focus()));
+const dialogBox = ref(null);
+useDialogFocus(first, dialogBox);
 </script>
 
 <template>
-	<div class="kt-dialog-backdrop" data-testid="bds-notice-contact-dialog" @keydown.esc.stop="emit('close')">
+	<div ref="dialogBox" class="kt-dialog-backdrop" data-testid="bds-notice-contact-dialog" @keydown.esc.stop="emit('close')">
 		<div class="kt-dialog bds-dialog" role="dialog" aria-modal="true" aria-labelledby="bds-notice-contact-title">
 			<div id="bds-notice-contact-title" class="kt-dialog-title">{{ __("Update notice email") }}</div>
 			<div class="kt-field">

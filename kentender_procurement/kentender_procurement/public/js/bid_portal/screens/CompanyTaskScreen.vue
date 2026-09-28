@@ -28,6 +28,9 @@ const portal = inject("portal");
 const { route, go, epoch } = portal.useRoute({ ref, onMounted, onUnmounted });
 const narrow = useNarrow();
 const data = ref(props.initial);
+// the server says whether this Draft can change now (closed, or its bound
+// release withdrawn): read-only fields and no Save and continue otherwise
+const canEdit = computed(() => !data.value || !data.value.bid || data.value.bid.editable !== false);
 const failure = ref("");
 const errors = ref({});
 const drawer = ref(null); // the declaration row open in the drawer
@@ -304,12 +307,12 @@ onMounted(() => {
 		<div v-if="failure" class="kt-notice is-critical bds-load-failure" role="alert" data-testid="bds-load-failure"><div class="kt-notice-body">{{ failure }}</div></div>
 
 		<div v-if="narrow" class="bds-footer-stack">
-			<button type="button" class="kt-btn kt-btn-primary bds-btn-block" :disabled="pending" data-testid="bds-company-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button>
+			<button v-if="canEdit" type="button" class="kt-btn kt-btn-primary bds-btn-block" :disabled="pending" data-testid="bds-company-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button>
 			<a :href="data.page.back_href" class="kt-btn kt-btn-secondary bds-btn-block">{{ __("Back to bid") }}</a>
 		</div>
 		<div v-else class="bds-footer">
 			<a :href="data.page.back_href" class="kt-btn kt-btn-secondary">{{ __("Back to bid") }}</a>
-			<div class="bds-footer-end"><button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="bds-company-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button></div>
+			<div class="bds-footer-end"><button v-if="canEdit" type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="bds-company-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button></div>
 		</div>
 
 		<ResponseDrawer v-if="drawer" :group="drawer" task="company" :bid="bid" @close="drawer = null" @saved="afterDrawer" @changed="drawerChanged" />

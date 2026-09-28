@@ -22,6 +22,9 @@ const portal = inject("portal");
 const { route, go, epoch } = portal.useRoute({ ref, onMounted, onUnmounted });
 const narrow = useNarrow();
 const data = ref(null);
+// the server says whether this Draft can change now (closed, or its bound
+// release withdrawn): read-only fields and no Save and continue otherwise
+const canEdit = computed(() => !data.value || !data.value.bid || data.value.bid.editable !== false);
 const failure = ref("");
 const errors = ref({});
 const prices = reactive({});
@@ -173,14 +176,14 @@ onMounted(() => {
 
 		<div v-if="narrow" class="bds-footer-stack">
 			<p v-if="unpriced" class="bds-muted">{{ __("Enter the unit price before continuing.") }}</p>
-			<button type="button" class="kt-btn kt-btn-primary bds-btn-block" :disabled="pending" data-testid="bds-price-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button>
+			<button v-if="canEdit" type="button" class="kt-btn kt-btn-primary bds-btn-block" :disabled="pending" data-testid="bds-price-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button>
 			<a :href="data.page.back_href" class="kt-btn kt-btn-secondary bds-btn-block">{{ __("Back to bid") }}</a>
 		</div>
 		<div v-else class="bds-footer">
 			<a :href="data.page.back_href" class="kt-btn kt-btn-secondary">{{ __("Back to bid") }}</a>
 			<div class="bds-footer-end">
 				<p v-if="unpriced" class="bds-muted" data-testid="bds-price-missing">{{ __("Enter the unit price before continuing.") }}</p>
-				<button type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="bds-price-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button>
+				<button v-if="canEdit" type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="bds-price-save" @click="saveAndContinue">{{ pending ? __("Saving…") : __(data.footer.save_label) }}</button>
 			</div>
 		</div>
 	</div>
