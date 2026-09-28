@@ -191,9 +191,10 @@ def save_bid_task(bid_reference: str, task: str, values=None, expected_record_ve
 
 
 @frappe.whitelist(methods=["POST"])
-def update_tender_contact(bid_reference: str, email: str = "", phone: str = "", expected_record_version=None, organisation: str = "", idempotency_key: str = "") -> dict[str, Any]:
-	"""The bid's Tender contact (BDS §4.3; not named in BDS §7.2, FU-V08-34)."""
-	return _masked(tender_contact_service.update_tender_contact, bid_reference=bid_reference, email=email, phone=phone, expected_record_version=expected_record_version, organisation=organisation, idempotency_key=idempotency_key)
+def update_tender_contact(bid_reference: str, email: str = "", phone: str = "", expected_record_version=None, assignment_id: str = "", organisation: str = "", idempotency_key: str = "") -> dict[str, Any]:
+	"""The bid's Tender contact (BDS §4.3; not named in BDS §7.2, FU-V08-34):
+	its email and phone, and optionally another person of the organisation."""
+	return _masked(tender_contact_service.update_tender_contact, bid_reference=bid_reference, email=email, phone=phone, expected_record_version=expected_record_version, assignment_id=assignment_id, organisation=organisation, idempotency_key=idempotency_key)
 
 
 # --------------------------------------------------------------------------
@@ -378,6 +379,14 @@ def get_bid_technical_summary(bid_reference: str) -> dict[str, Any]:
 		return technical_read.get_bid_technical_summary(bid_reference=bid_reference)
 	except frappe.DoesNotExistError:
 		return {"outcome": "NOT_FOUND", "heading": "Record not found", "text": "This record is unavailable or you do not have permission to view it."}
+
+
+@frappe.whitelist(methods=["POST"])
+def recover_overdue_close(tender_reference: str) -> dict[str, Any]:
+	"""The Technical Operator's recovery for a close the scheduler missed (FU-V08-44)."""
+	from kentender_procurement.bid_submission.services import close
+
+	return close.recover_overdue_close(tender_reference=tender_reference)
 
 
 @frappe.whitelist(methods=["GET"])

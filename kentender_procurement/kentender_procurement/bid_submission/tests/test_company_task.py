@@ -87,3 +87,35 @@ class TestNewCompanyTask(BidCase):
 		self.assertTrue(all(r["status"] in ("Not started", "In progress") for r in view["declarations"]), [(r["label"], r["status"]) for r in view["declarations"]])
 		self.assertFalse(view["tender_security"]["entered"])
 		self.assertEqual(view["contact"]["notice_email"] != "", True)
+
+
+class TestTenderContactPerson(BidCase):
+	"""BDS-CHG-001 v0.8 §4.3 and §10.9: the bid's Tender contact may be any
+	active person of the bidding organisation (FU-V08-54); another
+	organisation's person never."""
+
+	def test_the_contact_can_become_another_person_of_the_organisation(self):
+		from kentender_procurement.bid_submission.services import tender_contact
+		from kentender_procurement.bid_submission.tests.support import KISIWA, MARY, PETER
+
+		bid = start_bid.start_bid(tender_reference=self.reference, organisation=AFYA, arrangement=self.single(), notice_contact_id=f"{AFYA}-C1", idempotency_key=key(), user=DAVID)["bid_reference"]
+		contact = company(bid)["contact"]
+		people = {p["name"]: p["assignment_id"] for p in contact["people"]}
+		self.assertEqual(set(people), {"David Ouma", "Mary Wanjiku"})
+		self.assertEqual(contact["person"], people["David Ouma"])
+		arrangement = frappe.db.get_value("Bid Workspace", bid, "bidder_arrangement")
+
+		def update(assignment_id, email=MARY):
+			return tender_contact.update_tender_contact(
+				bid_reference=bid, assignment_id=assignment_id, email=email, phone="+254 709 555 016",
+				expected_record_version=frappe.db.get_value("Bidder Arrangement", arrangement, "record_version"), idempotency_key=key(), user=DAVID,
+			)
+
+		outsider = self.accounts.assign(PETER, KISIWA, "Supplier Representative")
+		refused = update(outsider)
+		self.assertEqual((refused["ok"], refused["errors"]), (False, {"assignment_id": "Choose a person of this organisation."}))
+		self.assertTrue(update(people["Mary Wanjiku"])["ok"])
+		row = frappe.db.get_value("Bidder Arrangement", arrangement, ["tender_contact_user", "tender_contact_name", "tender_contact_email", "tender_contact_phone"], as_dict=True)
+		self.assertEqual((row.tender_contact_user, row.tender_contact_name, row.tender_contact_email, row.tender_contact_phone), (MARY, "Mary Wanjiku", MARY, "+254 709 555 016"))
+		after = company(bid)["contact"]
+		self.assertEqual((after["assigned"], after["person"]), ("Mary Wanjiku", people["Mary Wanjiku"]))

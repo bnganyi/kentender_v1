@@ -77,12 +77,18 @@ def organisation(ctx) -> dict[str, Any]:
 
 
 def contact(ctx) -> dict[str, Any]:
+	from kentender_procurement.bid_submission.services import tender_contact
+
 	arrangement = ctx.arrangement
+	people = tender_contact.people(ctx)
 	return {
 		"assigned": _name(cstr(arrangement.tender_contact_user)) if arrangement.tender_contact_user else cstr(arrangement.tender_contact_name), "notice_email": cstr(arrangement.mandatory_notice_email), "notice_verified": bool(arrangement.mandatory_notice_email),
 		"notice_help": "Mandatory clarification, addendum, deadline and cancellation notices are sent here.",
 		"email": cstr(arrangement.tender_contact_email), "phone": cstr(arrangement.tender_contact_phone),
 		"note": "These values apply only to this bid.", "record_version": int(arrangement.record_version or 0),
+		# §10.9 Assigned person: any active person of the organisation (FU-V08-54)
+		"people": [{"assignment_id": p["assignment_id"], "name": p["name"]} for p in people],
+		"person": next((p["assignment_id"] for p in people if p["user"] == cstr(arrangement.tender_contact_user)), ""),
 		"notice": documents_view.notice_contact(ctx.workspace),
 	}
 

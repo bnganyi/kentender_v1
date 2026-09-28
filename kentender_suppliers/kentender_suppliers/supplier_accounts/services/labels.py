@@ -12,6 +12,12 @@ def date_label(value) -> str:
 	return formatdate(getdate(value), "d MMM yyyy") if value else ""
 
 
+def datetime_seconds_label(value) -> str:
+	"""An audit instant to the second ("19 May 2027, 08:00:00 EAT")."""
+	label = datetime_label(value)
+	return label.replace(" EAT", f":{get_datetime(value).strftime('%S')} EAT") if label else ""
+
+
 def datetime_label(value) -> str:
 	if not value:
 		return ""

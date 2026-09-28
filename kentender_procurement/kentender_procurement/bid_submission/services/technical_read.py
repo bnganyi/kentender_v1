@@ -86,12 +86,16 @@ def get_submission_service_status(*, user: str | None = None) -> dict[str, Any]:
 
 	if not is_technical(actor) and actor not in _holders(guidance.TECHNICAL):
 		raise frappe.DoesNotExistError("This record is unavailable or you do not have permission to view it.")
+	from kentender_procurement.bid_submission.services import close
+
 	gate = availability.get_submission_availability()
 	incidents = frappe.get_all("Bid Submission Incident", filters={"status": "Open"}, fields=["incident_key", "kind", "title", "reference", "opened_at", "affected_bids"], order_by="opened_at asc")
 	return {
 		"outcome": "OK",
 		"availability": {"available": gate["available"], "reason_code": gate["code"], "message": gate["message"]},
 		"open_incidents": [{**dict(i), "opened_at": labels.datetime_label(i.opened_at)} for i in incidents],
+		# FU-V08-44: read on demand, so an overdue close shows even with the scheduler off
+		"overdue_closes": close.overdue_closes(),
 	}
 
 

@@ -190,6 +190,13 @@ def wanted_incidents() -> dict[str, dict[str, Any]]:
 		out["submission-service"] = {"kind": "Submission service", "title": "Electronic signing or submission is unavailable", "holder_role": guidance.TECHNICAL, "users": _holders(guidance.TECHNICAL), "reference": availability.get_submission_availability()["code"], "affected": ready}
 	elif condition == "portal":
 		out["portal-information"] = {"kind": "Supplier portal information", "title": "Supplier portal information is incomplete", "holder_role": "CFG System Manager", "users": [u for u in _holders(guidance.TECHNICAL) if "System Manager" in frappe.get_roles(u)], "reference": "public-portal-information", "affected": ready}
+	from kentender_procurement.bid_submission.services import close
+
+	for row in close.overdue_closes():  # FU-V08-44: the deadline passed and nothing closed
+		out[f"close-overdue:{row['tender']}"] = {
+			"kind": "Submission close", "title": f"Close {row['tender_reference']}: submissions ended {row['deadline']} but Bid Submission has not closed", "holder_role": guidance.TECHNICAL,
+			"users": _holders(guidance.TECHNICAL), "reference": row["tender_reference"], "affected": frappe.db.count("Bid Workspace", {"tender": row["tender"]}),
+		}
 	for correlation in frappe.get_all("Bid Submission Attempt", filters={"status": ("in", ("Uncertain", "Dispatching"))}, pluck="correlation_id"):
 		out[f"attempt:{correlation}"] = {"kind": "Submission attempt", "title": f"Reconcile submission attempt {correlation}", "holder_role": guidance.TECHNICAL, "users": _holders(guidance.TECHNICAL), "reference": correlation, "affected": 1}
 	return out

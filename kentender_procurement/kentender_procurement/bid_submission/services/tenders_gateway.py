@@ -69,6 +69,26 @@ def release_status(release_id: str, *, verify: bool = True) -> dict[str, Any]:
 	return status
 
 
+def tenders_past_deadline(before) -> list[dict[str, Any]]:
+	"""Published Tenders whose submission deadline is at or before `before`
+	(open, or with the submission period ended); name, reference, deadline
+	and whether Tenders has ended the period."""
+	rows = frappe.get_all(
+		"Tender", filters={"overall_status": ("in", ("Published — open", "Submission period ended")), "submission_deadline": ("<=", before)},
+		fields=["name", "tender_reference", "submission_deadline", "overall_status"], order_by="submission_deadline asc", limit_page_length=0,
+	)
+	return [{"tender": r.name, "tender_reference": r.tender_reference, "submission_deadline": r.submission_deadline, "period_ended": r.overall_status == "Submission period ended"} for r in rows]
+
+
+def end_submission_period(tender_name: str) -> dict[str, Any]:
+	"""Tenders' own close of the submission period (what its hourly job runs),
+	for a Tender past its deadline; idempotent by the deadline."""
+	from kentender_procurement.tenders.services import submission_close
+
+	deadline = cstr(frappe.db.get_value("Tender", tender_name, "submission_deadline"))
+	return submission_close.close_tender_submission_period(tender=tender_name, idempotency_key=f"close:{tender_name}:{deadline}", user="Administrator")
+
+
 def resolution_holder(tender_name: str) -> str:
 	"""The Procurement Officer who holds the Tender's resolution (a user id)."""
 	return bidder_projection.resolution_holder(tender_name)

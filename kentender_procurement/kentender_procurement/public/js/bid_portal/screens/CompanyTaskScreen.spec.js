@@ -47,6 +47,20 @@ describe("Company, declarations and tender security", () => {
 		expect(document.querySelector('[data-testid="bds-response-drawer"]')).toBeNull();
 	});
 
+	it("makes another person of the organisation the Tender contact (FU-V08-54)", async () => {
+		const task = companyTask("JV");
+		task.contact = { ...task.contact, people: [{ assignment_id: "ASG-D", name: "David Ouma" }, { assignment_id: "ASG-M", name: "Mary Wanjiku" }], person: "ASG-D" };
+		const portal = portalFor({ call: vi.fn(async (m) => (m.endsWith("get_bid_task") ? task : { ok: true })) });
+		const wrapper = mountWith(task, portal);
+		const person = wrapper.get('[data-testid="bds-contact-person"]');
+		expect(person.findAll("option").map((o) => o.text())).toEqual(["David Ouma", "Mary Wanjiku"]);
+		await person.setValue("ASG-M");
+		await wrapper.get('[data-testid="bds-company-save"]').trigger("click");
+		await flushPromises();
+		const contact = portal.call.mock.calls.find((c) => c[0].endsWith("update_tender_contact"));
+		expect(contact[1]).toMatchObject({ assignment_id: "ASG-M", expected_record_version: 4 });
+	});
+
 	it("saves the bid's contact and the security answers, then opens the next task", async () => {
 		const portal = portalFor();
 		const wrapper = mountWith(companyTask("JV"), portal);

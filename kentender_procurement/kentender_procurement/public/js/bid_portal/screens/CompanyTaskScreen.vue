@@ -36,7 +36,7 @@ const errors = ref({});
 const drawer = ref(null); // the declaration row open in the drawer
 const keepBid = ref(false); // Keep bid details: closes the comparison, changes nothing
 const security = reactive({});
-const contact = reactive({ email: "", phone: "", notice: "" });
+const contact = reactive({ email: "", phone: "", notice: "", person: "" });
 const guard = portal.createSequenceGuard();
 const runner = portal.createCommandRunner({ ref }, { onError: (e) => (failure.value = e.message) });
 const pending = computed(() => runner.pending.value);
@@ -47,13 +47,14 @@ const org = computed(() => (data.value && data.value.organisation) || {});
 // file command or another save re-reads the page mid-edit.
 function adopt(result) {
 	const unsaved = data.value ? securityChanges() : {};
-	const typed = data.value ? { email: contact.email !== data.value.contact.email ? contact.email : null, phone: contact.phone !== data.value.contact.phone ? contact.phone : null } : {};
+	const typed = data.value ? { email: contact.email !== data.value.contact.email ? contact.email : null, phone: contact.phone !== data.value.contact.phone ? contact.phone : null, person: contact.person !== (data.value.contact.person || "") ? contact.person : null } : {};
 	data.value = result;
 	const fields = (result.tender_security && result.tender_security.fields) || [];
 	for (const key of Object.keys(security)) delete security[key];
 	for (const f of fields) security[f.handle] = f.handle in unsaved ? unsaved[f.handle] : f.value;
 	contact.email = typed.email ?? result.contact.email;
 	contact.phone = typed.phone ?? result.contact.phone;
+	contact.person = typed.person ?? (result.contact.person || "");
 	contact.notice = result.contact.notice ? result.contact.notice.current : "";
 }
 if (props.initial) adopt(props.initial);
@@ -104,14 +105,17 @@ function saveAndContinue() {
 			}
 			adopt(await read()); // typed contact and security entries stay as typed
 		}
-		if (contact.email !== data.value.contact.email || contact.phone !== data.value.contact.phone) {
-			const result = await portal.call(CONTACT, { bid_reference: data.value.bid.reference, email: contact.email, phone: contact.phone, expected_record_version: data.value.contact.record_version, idempotency_key: key("contact") }, { type: "POST" });
+		const personChanged = !!contact.person && contact.person !== (data.value.contact.person || "");
+		if (personChanged || contact.email !== data.value.contact.email || contact.phone !== data.value.contact.phone) {
+			const change = { bid_reference: data.value.bid.reference, email: contact.email, phone: contact.phone, expected_record_version: data.value.contact.record_version, idempotency_key: key("contact") };
+			if (personChanged) change.assignment_id = contact.person; // §10.9: another person of the organisation
+			const result = await portal.call(CONTACT, change, { type: "POST" });
 			if (!(result && result.ok)) {
 				errors.value = (result && result.errors) || {};
 				failure.value = result && !result.errors ? result.message || "" : "";
 				return;
 			}
-			data.value = { ...data.value, contact: { ...data.value.contact, email: contact.email, phone: contact.phone } }; // saved
+			data.value = { ...data.value, contact: { ...data.value.contact, email: contact.email, phone: contact.phone, person: contact.person } }; // saved
 			adopt(await read());
 			Object.assign(security, answers); // keep what was entered, now against the new version
 		}
@@ -211,7 +215,11 @@ onMounted(() => {
 				<div class="bds-grid-2">
 					<div class="kt-field">
 						<label for="bds-contact-person">{{ __("Assigned person") }}</label>
-						<select id="bds-contact-person" class="kt-input" disabled><option>{{ data.contact.assigned }}</option></select>
+						<select v-if="data.contact.people && data.contact.people.length > 1 && canEdit" id="bds-contact-person" v-model="contact.person" class="kt-input" :aria-invalid="!!errors.assignment_id" data-testid="bds-contact-person">
+							<option v-for="p in data.contact.people" :key="p.assignment_id" :value="p.assignment_id">{{ p.name }}</option>
+						</select>
+						<select v-else id="bds-contact-person" class="kt-input" disabled><option>{{ data.contact.assigned }}</option></select>
+						<p v-if="errors.assignment_id" class="kt-field-error">{{ errors.assignment_id }}</p>
 					</div>
 					<div class="kt-field">
 						<label for="bds-contact-notice">{{ __("Tender notice email") }}</label>

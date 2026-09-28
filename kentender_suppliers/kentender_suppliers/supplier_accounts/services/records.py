@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from contextlib import contextmanager
 from typing import Any, Callable
 
 import frappe
@@ -41,7 +42,12 @@ def save(doc) -> Any:
 
 
 def bump(doc, **values) -> Any:
-	"""Apply `values` and advance `record_version` (when the record has one)."""
+	"""Apply `values` and advance `record_version` (when the record has one).
+	An Account's status change is remembered for the command's audit event
+	(§12.1 previous and resulting states)."""
+	context = getattr(frappe.local, "kt_acc_command", None)
+	if context and doc.doctype == "Supplier Organisation" and "account_status" in values:
+		context["transitions"].setdefault(doc.name, cstr(doc.account_status))
 	for field, value in values.items():
 		doc.set(field, value)
 	if doc.meta.has_field("record_version"):
@@ -62,6 +68,18 @@ def _hash(payload: dict[str, Any]) -> str:
 	return hashlib.sha256(json.dumps(payload, sort_keys=True, default=str).encode("utf-8")).hexdigest()
 
 
+@contextmanager
+def running(command: str, key: str):
+	"""The command a mutation runs under, for its audit event (§12.1: command
+	name and idempotency-key hash)."""
+	previous = getattr(frappe.local, "kt_acc_command", None)
+	frappe.local.kt_acc_command = {"command": command, "key_hash": hashlib.sha256(cstr(key).encode()).hexdigest(), "transitions": {}}
+	try:
+		yield
+	finally:
+		frappe.local.kt_acc_command = previous
+
+
 def idempotent(key: str, command: str, payload: dict[str, Any], fn: Callable[[], dict[str, Any]], *, actor: str, organisation: str = "") -> dict[str, Any]:
 	"""Run `fn` once per key. The same key with the same payload returns the
 	recorded result; with a different payload it is refused. Field-error
@@ -75,7 +93,8 @@ def idempotent(key: str, command: str, payload: dict[str, Any], fn: Callable[[],
 		if row.command != command or row.payload_hash != digest:
 			fail("BDS_IDEMPOTENCY_CONFLICT")
 		return json.loads(row.result_json or "{}")
-	result = fn()
+	with running(command, key):
+		result = fn()
 	if result.get("ok") is not False:
 		insert(frappe.get_doc({
 			"doctype": JOURNAL, "idempotency_key": key, "command": command, "payload_hash": digest,

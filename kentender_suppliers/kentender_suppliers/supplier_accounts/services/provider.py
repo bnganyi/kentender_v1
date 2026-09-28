@@ -50,6 +50,16 @@ def organisation_signatories(*, organisation_id: str, at=None) -> list[dict[str,
 	return [a for a in (_assignment(r, at) for r in rows) if a["signatory_ready"]]
 
 
+def organisation_people(*, organisation_id: str, at=None) -> list[dict[str, Any]]:
+	"""The organisation's people in effect now, with their names (who may be a
+	bid's Tender contact; BDS-CHG-001 v0.8 §4.3, §10.9)."""
+	rows = frappe.get_all(
+		authz.ASSIGNMENT, filters={"organisation": organisation_id, "responsibility": ("in", ("Supplier Representative", "Authorised Signatory"))},
+		fields=["name", "organisation", "user", "responsibility", "job_title", "effective_from", "effective_to", "authority_evidence"], order_by="effective_from asc, creation asc",
+	)
+	return [a for a in (_assignment(r, at) for r in rows) if a["active"]]
+
+
 def organisation(*, organisation_id: str) -> dict[str, Any] | None:
 	if not organisation_id or not frappe.db.exists(ORGANISATION, organisation_id):
 		return None

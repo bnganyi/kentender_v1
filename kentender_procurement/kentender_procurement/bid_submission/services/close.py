@@ -32,12 +32,13 @@ live from Tenders, so nothing is stored for it."""
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Any
 
 import frappe
 from frappe.utils import cstr, get_datetime
 
-from kentender_procurement.bid_submission.services import clock, gateways, package, records, submission, tenders_gateway
+from kentender_procurement.bid_submission.services import clock, gateways, labels, package, records, submission, tenders_gateway
 
 CLOSE = "Bid Submission Close"
 HANDOFF = "Bid Opening Handoff"
@@ -174,6 +175,51 @@ def handoff_payload(root, close, custody: dict[str, Any], unresolved: list[str])
 def _match(row) -> dict[str, Any]:
 	fields = {k: cstr(v) for k, v in dict(row).items() if k in ("intake", "tender_security_intake", "bid_workspace", "status", "matched_at")}
 	return dict(sorted(fields.items()))
+
+
+OVERDUE_AFTER = timedelta(minutes=15)  # the hourly Tenders job and the next sweep have had their chance
+
+
+def overdue_closes(at=None) -> list[dict[str, Any]]:
+	"""Tenders past their deadline by more than 15 minutes with no Bid
+	Submission close (FU-V08-44): the scheduler has not run, or a close
+	failed. Read on demand, so it shows even with the scheduler off."""
+	at = get_datetime(at or clock.now())
+	rows = tenders_gateway.tenders_past_deadline(at - OVERDUE_AFTER)
+	closed = set(frappe.get_all(CLOSE, filters={"tender": ("in", [r["tender"] for r in rows])}, pluck="tender")) if rows else set()
+	return [
+		{"tender": r["tender"], "tender_reference": r["tender_reference"], "deadline": labels.datetime_label(r["submission_deadline"]), "tenders_period_ended": r["period_ended"]}
+		for r in rows if r["tender"] not in closed
+	]
+
+
+def recover_overdue_close(*, tender_reference: str, user: str | None = None) -> dict[str, Any]:
+	"""The Technical Operator's recovery for an overdue close: end the Tenders
+	submission period if it is still open, then close Bid Submission and
+	issue the Bid Opening hand-off. Idempotent; never before the deadline."""
+	from kentender_core.services.authorization import is_technical
+
+	from kentender_procurement.bid_submission.services import guidance
+
+	actor = cstr(user or frappe.session.user)
+	holders = frappe.get_all("User Responsibility Assignment", filters={"business_role": guidance.TECHNICAL, "status": "Enabled"}, pluck="user")
+	if not is_technical(actor) and actor not in holders:
+		raise frappe.PermissionError("Only a technical operator recovers an overdue close.")
+	root = tenders_gateway.tender_root(cstr(tender_reference).strip())
+	if not root:
+		raise frappe.DoesNotExistError("Tender not found.")
+	existing = frappe.db.get_value(CLOSE, {"tender": root.name}, ["name", "bid_opening_handoff"], as_dict=True)
+	if existing:
+		return {"ok": True, "action": "already_closed", "close": existing.name, "handoff": existing.bid_opening_handoff}
+	if clock.now() < get_datetime(root.submission_deadline):
+		return {"ok": False, "action": "not_due", "message": "The submission deadline has not been reached."}
+	if frappe.db.get_value("Tender", root.name, "overall_status") == "Published — open":
+		tenders_gateway.end_submission_period(root.name)
+	done = consume_tender_events(tender=root.name)
+	closed = frappe.db.get_value(CLOSE, {"tender": root.name}, ["name", "bid_opening_handoff"], as_dict=True)
+	if not closed:
+		return {"ok": False, "action": "failed", "message": "The close could not run; the tender box may be unavailable. Check the service status and try again.", "detail": done}
+	return {"ok": True, "action": "closed", "close": closed.name, "handoff": closed.bid_opening_handoff}
 
 
 def consume_tender_events(tender: str | None = None) -> dict[str, int]:

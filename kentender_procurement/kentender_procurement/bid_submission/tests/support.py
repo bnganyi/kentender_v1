@@ -44,7 +44,7 @@ def key() -> str:
 
 
 class FakeAccounts:
-	"""The seven `kt_supplier_account_provider` functions over plain dicts."""
+	"""The `kt_supplier_account_provider` contract functions over plain dicts."""
 
 	def __init__(self) -> None:
 		self.orgs: dict[str, dict[str, Any]] = {}
@@ -103,6 +103,9 @@ class FakeAccounts:
 
 	def organisation_signatories(self, *, organisation_id: str, at=None) -> list[dict[str, Any]]:
 		return [dict(a) for a in self.assignments.values() if a["organisation_id"] == organisation_id and a["active"] and a["signatory_ready"]]
+
+	def organisation_people(self, *, organisation_id: str, at=None) -> list[dict[str, Any]]:
+		return [dict(a) for a in self.assignments.values() if a["organisation_id"] == organisation_id and a["active"]]
 
 	def find_active_account(self, *, country: str, registration_number: str) -> dict[str, Any] | None:
 		for org in self.orgs.values():

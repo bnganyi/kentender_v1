@@ -52,5 +52,9 @@ def evidence_file(*, organisation_id: str, evidence_id: str) -> dict[str, Any] |
 	return _provider().evidence_file(organisation_id=organisation_id, evidence_id=evidence_id)
 
 
+def organisation_people(*, organisation_id: str, at=None) -> list[dict[str, Any]]:
+	return list(_provider().organisation_people(organisation_id=organisation_id, at=at))
+
+
 def organisation_signatories(*, organisation_id: str, at=None) -> list[dict[str, Any]]:
 	return _provider().organisation_signatories(organisation_id=organisation_id, at=at)

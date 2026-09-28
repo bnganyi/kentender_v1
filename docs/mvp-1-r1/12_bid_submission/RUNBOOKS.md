@@ -139,6 +139,28 @@ bench --site kentender.midas.com execute kentender_procurement.bid_submission.se
 bench --site kentender.midas.com execute kentender_procurement.bid_submission.services.submission.reconcile_uncertain_attempts
 ```
 
+### 5.1 An overdue close
+
+A Tender whose deadline passed more than 15 minutes ago with no Bid
+Submission close is **overdue** — the scheduler is off, or a close failed
+(for example the tender box was unavailable). Every supplier command already
+refuses after the deadline on its own trusted clock, so nothing late can be
+submitted; what is missing is the close and the Bid Opening hand-off.
+
+- It shows without the scheduler in the Technical Operator's service status
+  (`kentender_procurement.bid_submission.api.get_submission_service_status`,
+  `overdue_closes`), and — whenever the sweep runs — as a **Submission close**
+  incident for the Technical Operator.
+- Recovery (Technical Operator, System Manager or Administrator): ends the
+  Tenders submission period if it is still open, then closes Bid Submission
+  and issues the hand-off. Safe to run twice.
+
+```bash
+bench --site kentender.midas.com execute kentender_procurement.bid_submission.services.close.recover_overdue_close --kwargs '{"tender_reference": "TND-…", "user": "Administrator"}'
+```
+
+or `POST /api/method/kentender_procurement.bid_submission.api.recover_overdue_close` with `tender_reference`.
+
 ## 6. An uncertain submission attempt
 
 A supplier sees "Submission confirmation is still pending. Do not submit
