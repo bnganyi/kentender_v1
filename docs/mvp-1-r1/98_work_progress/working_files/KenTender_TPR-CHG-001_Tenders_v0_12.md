@@ -5,16 +5,17 @@
 | Document ID | TPR-CHG-001 |
 | Version | **0.12** |
 | Date | 26 September 2026 |
-| Status | **Proposed for approval** — v0.11 was under Project Owner review and was not approved; v0.12 supersedes it for that review and requires Project Owner approval |
+| Revision record | Same-day v0.12 correction, 26 September 2026: replaces the obsolete Draft progress row and supplies KT-STD-001 v1.8 journey, next-step, guard and hand-off detail. The Project Owner approved the reviewed v0.12 on 26 September 2026 without a version increment. |
+| Status | **Approved** — Project Owner, 26 September 2026; supersedes unapproved v0.11 |
 | User-facing module | **Tenders** |
 | Product | `IT-EQUIPMENT-OPEN-V1` — straightforward off-the-shelf IT equipment using the PPRA Goods Standard Tender Document |
 | Starts from | One authorised, unconsumed `AuthorisedRequisitionHandoff v1.3` |
 | Ends at | One immutable Tender package that is unpublished, published and open, cancelled, or closed for submission |
 | Governing standard | KT-STD-001 v1.8 |
-| Owner contracts | REQ v1.12, PLN v1.27, BUD v1.11, NDS v1.14, CFG v0.16, STR v1.8, AUTH v1.10, SEED v1.3, STD-STD-001 v1.1, STD-TPL-001 v0.10, STD-TPL-IMP-001 v1.0 and BDS v0.7 |
-| Implementation authority | None until this version and the exact required template release are approved; production release remains subject to §§14–15. v0.12 (owner decision OD5): the template release needs no approval or commissioning step, so only this version's approval remains; a new Tender can still start only on an intact release that is installed and switched On on the site (§5.3) |
+| Owner contracts | REQ v1.12, PLN v1.27, BUD v1.11, NDS v1.14, CFG v0.16, STR v1.8, AUTH v1.10, SEED v1.3, STD-STD-001 v1.1, STD-TPL-001 v0.10, STD-TPL-IMP-001 v1.1 and BDS v0.7 |
+| Implementation authority | This approved v0.12 is the Tender implementation baseline. Production release remains subject to §§14–15. Under OD5, the template release needs no separate approval or commissioning step; a new Tender can start only on an intact release that is installed, Available and switched On on the site (§5.3). |
 | v0.11 closure scope (retained) | Retains the v0.10 public/vendor closure and adds exact behaviour for Tenders bound to Superseded or Withdrawn STD releases. New binding remains Available-only; no lifecycle event silently rebinds a Tender. v0.12 adds that a new binding also requires the release to be switched On on the site. |
-| v0.12 closure scope | One concern: owner decision OD5. A template release is an On/Off switch on the site. A new Tender binds only a release that is Available and switched On on the site. A Tender already bound to a release continues as in v0.11: Available (switched On or Off) or Superseded while integrity and renderer checks pass; Withdrawn blocks. Switching a release Off never strands a started Tender and never rebinds one. No other rule changes. |
+| v0.12 closure scope | Owner decision OD5 and KT-STD-001 v1.8 workflow guidance. A template release is an On/Off switch on the site. A new Tender binds only a release that is Available and switched On on the site. A Tender already bound to a release continues as in v0.11: Available (switched On or Off) or Superseded while integrity and renderer checks pass; Withdrawn blocks. Switching a release Off never strands a started Tender and never rebinds one. No other Tender business rule changes; §§5.9–5.11 and 10.17 specify the existing lifecycle guidance and hand-offs. |
 | v0.12 owner decision | OD5, Project Owner, 26 September 2026: “I don't want this complicated admin overhead regarding approvals and commissioning of templates. It is unnecessary, adds no value and is vexing. Allow development work to contine without this friction. Template release is purely an on and off switch on an affected site. Update this decision as a follow up to reflect in affected documents if necessary” |
 | v0.12 update instruction | Project Owner, 26 September 2026: “Close the open issues” |
 
@@ -278,7 +279,7 @@ reservation_treatment,evaluation_mappings,contract_mappings,definition_digest
 
 `template_family` equals the installed release `template_key`; `template_release_id` is its opaque `release_id`. `sections` contains the finite ordered supplier tasks/groups. `response_rows`, `price_rows` and `declaration_texts` contain only obligations present in the issued Tender. `reservation_treatment` contains only the Tender-specific category, independent County-residents treatment, exact rule/overlap snapshots and bidder declaration/evidence rules; it contains no APP target, denominator, shortfall, Budget ceiling or claim of bidder entitlement.
 
-`BuildPublishedBidDefinition` calls the shared `CompilePublishedBidDefinition` implementation in STD-TPL-IMP-001 v1.0. At Draft creation the bound release must be Available. v0.12 (OD5): it must also be switched On on the site. At later submission, approval, reopening and publication actions it may be Available or Superseded, but its exact manifest, assets and renderer adapter must still verify. v0.12 (OD5): at those later actions an Available release may be switched On or Off; the switch is not rechecked. Withdrawn always blocks an unpublished Tender. The service validates every control, composition, identity, obligation, price/calculation, evaluation mapping and contract disposition; proves human/structured reconciliation; and returns the canonical definition plus `definition_digest`. Failure rolls back the invoking publication-authorisation or addendum-issue transaction. It never calls a separate curation algorithm and never parses the rendered PDF.
+`BuildPublishedBidDefinition` calls the shared `CompilePublishedBidDefinition` implementation in STD-TPL-IMP-001 v1.1. At Draft creation the bound release must be Available. v0.12 (OD5): it must also be switched On on the site. At later submission, approval, reopening and publication actions it may be Available or Superseded, but its exact manifest, assets and renderer adapter must still verify. v0.12 (OD5): at those later actions an Available release may be switched On or Off; the switch is not rechecked. Withdrawn always blocks an unpublished Tender. The service validates every control, composition, identity, obligation, price/calculation, evaluation mapping and contract disposition; proves human/structured reconciliation; and returns the canonical definition plus `definition_digest`. Failure rolls back the invoking publication-authorisation or addendum-issue transaction. It never calls a separate curation algorithm and never parses the rendered PDF.
 
 The publication-authorisation transaction freezes the definition, Invitation, issued Tender, package digest, required channel records and `publication_id` together. The definition identity and digest belong to `TenderPublication`, not the already-approved immutable `TenderVersion`. BDS receives the exact frozen definition only after every required publication channel is confirmed and cannot add, remove or repair content.
 
@@ -576,6 +577,74 @@ Until then, Configuration must reject `Integrated acknowledgement`, no adapter o
 15. Withdrawn blocks every unpublished continuation and Bid start; published evidence remains immutable and readable.
 16. Switching a release Off on the site stops only new Tenders binding it. An already-bound Tender continues on its release, whether Available (switched On or Off) or Superseded, while integrity and renderer-adapter checks pass, and is never stranded or rebound because of the switch (v0.12, OD5).
 
+### 5.9 Next-step ownership and Tender stages (KT-STD-001 v1.8 §3B)
+
+`GetTender`, `GetTenderReview` and `GetTenderPublication` return the server-derived `next_step` contract in KT-STD-001 §3B.2 for the signed-in actor. Guards in §5.10 supply its blockers and fixes; the browser never infers it from a badge or disabled control. The five formal Tender stages are `PREPARE` (Procurement Officer prepares and submits), `HOPF_APPROVAL` (HOPF returns or approves), `AO_AUTHORISATION` (Accounting Officer authorises publication), `PUBLICATION` (HOPF confirms required channels), and `OPEN_MANAGEMENT` (authorised people handle open-period clarification, addenda and cancellation). The three preparation tasks are sections of `PREPARE`, not stages. Channel confirmations are work inside `PUBLICATION`, not four tracker stages. Addenda and clarifications are work in `OPEN_MANAGEMENT`, not new whole-Tender stages. The system deadline closes the final stage without inventing a human closure decision.
+
+| Tender state / signed-in responsibility | Current stage | Server next step and holder | Completion or hand-off |
+|---|---|---|---|
+| Draft/Returned; Procurement Officer | `PREPARE` | Your turn to complete the form; Submit is blocked only if must-fix findings remain. Holder: assigned Procurement Officer (Brian Wafula in fixture). | Submit gives HOPF Charles Mutiso the exact locked Version. |
+| Draft/Returned; HOPF or AO | `PREPARE` | Waiting on Procurement Officer Brian Wafula since Draft/return event. | No approval/publication control until submission. |
+| Submitted; eligible HOPF | `HOPF_APPROVAL` | Your turn to Return or Approve. Holder: Charles Mutiso. | Return gives Procurement Officer correction work; approval gives AO authorisation work. |
+| Submitted; Procurement Officer/AO | `HOPF_APPROVAL` | Waiting on HOPF Charles Mutiso since submission. | Submitted Version is immutable. |
+| Approved, not authorised; eligible AO | `AO_AUTHORISATION` | Your turn to Authorise publication. Holder: Amina Hassan. | Authorisation gives HOPF the publication confirmations. |
+| Approved, not authorised; Procurement Officer/HOPF | `AO_AUTHORISATION` | Waiting on AO Amina Hassan since approval, except HOPF's explicit Reopen action when still lawful. | Reopen creates a copied Draft and returns to `PREPARE`. |
+| Publication authorised; eligible HOPF | `PUBLICATION` | Your turn to confirm outstanding channels; block only a specific confirmation whose evidence fails. Holder Charles Mutiso. | Final channel confirmation makes the Tender Published — open. |
+| Publication authorised; other business readers | `PUBLICATION` | Waiting on HOPF Charles Mutiso since authorisation. | No reader attestation action. |
+| Published — open; Procurement Officer/HOPF with pending clarification or addendum | `OPEN_MANAGEMENT` | Your turn on that exact item, or blocked with its reason. Holder is the assigned Procurement Officer or HOPF. | Answer, addendum issue/publication, and notices remain on the same Tender. |
+| Published — open; no required action for viewer | `OPEN_MANAGEMENT` | Not involved for neutral readers; HOPF, Procurement Officer and AO see the exact optional actions available in their role views without a My Work item, due marker or assigned cancellation review. An available option can produce Your turn under KT-STD-001 §3B.2, but its headline must state the option without implying obligation. | Submission deadline closes the period. |
+| Material addendum cancellation review requested; Procurement Officer | `OPEN_MANAGEMENT` blocked | Waiting on AO Amina Hassan to consider cancellation; the material addendum remains unissuable. | AO cancels the Tender or closes the review with a reason. |
+| Material addendum cancellation review requested; AO | `OPEN_MANAGEMENT` | Your turn to decide whether to cancel or close the review. Holder: Amina Hassan. | Cancellation closes the Tender; closure returns the Procurement Officer to the blocked draft with a discard route. |
+| Material addendum review closed without cancellation; Procurement Officer | `OPEN_MANAGEMENT` blocked | Your turn, blocked: the 250-to-300 Each change cannot be issued. Holder: Brian Wafula. | **Discard addendum draft** archives the unissued draft and returns to the Published Tender; a new material proposal follows a new governed decision, not the closed request. |
+| Cancellation pending; AO | `OPEN_MANAGEMENT` | Your turn to decide cancellation on an applicable ground. Holder: Amina Hassan. | Cancellation creates separate notice/report compliance work. |
+| Cancelled or submission ended; reader | Final stage done | Done with named decision actor/time for cancellation, or actual deadline for submission end. | Outstanding cancellation compliance stays current in `OPEN_MANAGEMENT` only for its assigned holder. |
+| Requisition correction requested; Procurement Officer | `PREPARE` blocked | Waiting on Departmental Author Grace Wanjiku since correction request; current Version is stopped. | An authorised successor makes Start corrected Tender Version available. |
+
+For any state, a person with no Tender business responsibility receives `Not involved` or a truthful waiting/done answer. Administrator/System Manager technical readers never receive Your turn, blocked Your turn, fixes or business actions under KT-STD-001 §3B.6. `since` uses the recorded state-entry event; omit it from a design fixture that supplies no instant. A returned Version's current stage resets to `PREPARE`; old decisions remain in History. Guard precedence and full blocker aggregation follow KT-STD-001 §3B.2.
+
+### 5.10 Guard reasons and fixes
+
+Every guarded action returns `allowed`, stable `reason_code`, concrete `figures`, and every permitted fix with responsible holder and route. These codes extend the §8 error contract; the server also returns them to record reads before the actor attempts the action. No action is silently disabled. Values such as remaining channels or missing fields are current computed results, not formal tracker stages.
+
+| Guard/action | Reason code and figures | Fix label and responsible holder |
+|---|---|---|
+| Submit for approval with missing fields | `TND_MUST_FIX`; list every field, including Inspection and acceptance location | **Review contract terms** or the exact task/field; Procurement Officer. |
+| Approve/authorise with same-person conflict | `TND_SOD_BLOCKED`; conflicting earlier act and Version | No self-fix; System Manager assigns another eligible HOPF/AO through existing System setup. The conflicted viewer sees the System Manager as holder and **Back to Tenders** outside the waiting line; no approval override. |
+| Authorise publication with no effective rule | `TND_PUBLICATION_RULE_UNAVAILABLE`; missing rule/channel facts | **Open System setup** for an authorised System Manager to correct the governed rule; routine actors see the named responsible role and **Back to Tenders**, with no local rule editor. |
+| Authorise with unlawful period | `TND_PUBLICATION_PERIOD_INVALID`; deadline and required period | **Reopen Tender** while permitted, then **Review Tender dates**; HOPF and Procurement Officer respectively. |
+| Confirm publication, incomplete channel | `TND_PUBLICATION_CONFIRMATION_INCOMPLETE`; remaining channel names/count and missing fields | **Confirm publication** on each outstanding channel; HOPF. |
+| Confirm publication, bad evidence/conflict | `TND_PUBLICATION_EVIDENCE_INVALID`, `TND_PUBLICATION_DIGEST_MISMATCH` or `TND_PUBLICATION_ALREADY_CONFIRMED`; channel and file/package fact | **Choose evidence file** in the current confirmation before saving, or **View confirmation** for an immutable existing record; HOPF. No mutation of confirmed evidence. |
+| Issue addendum that changes the procurement materially | `TND_ADDENDUM_MATERIAL`; affected reference, current 250 Each and proposed 300 Each | **Ask Amina Hassan (Accounting Officer) to consider cancellation** calls `RequestTenderCancellationReview`; AO Amina Hassan owns the decision. **Discard addendum draft** clears the unissuable proposal; after AO closes that exact review, discard is the remaining fix. **View cancellation requirements** is navigation, not a fix. |
+| Send answer that changes published content | `TND_CLARIFICATION_ADDENDUM_REQUIRED`; clarification and changed published anchor | **Prepare addendum**; Procurement Officer/HOPF. Send response after linked issue. |
+| Notice delivery fails | `TND_NOTICE_DELIVERY_FAILED`; protected recipient and attempts | **Retry notice** or authorised follow-up; HOPF/Procurement function. Tender effectiveness does not change. |
+| Correct Requisition while current Tender is stopped | `TND_HANDOFF_INVALID`; current/successor Requisition identities | **View requisition status**; Departmental Author owns correction, Procurement Officer starts the authorised successor. |
+| Bound release withdrawn or integrity fails | `TND_TEMPLATE_RELEASE_WITHDRAWN` or `TND_TEMPLATE_RELEASE_INTEGRITY_FAILED`; release and reason | **View STD Template** for authorised inspection; AO uses governed cancellation/new-Tender route if withdrawn. A site switch Off alone is never this guard for an already-bound Tender. |
+
+For a conflicted HOPF/AO viewer, `TND_SOD_BLOCKED` means Waiting on an eligible alternate holder, not Not involved. The System Manager resolves an eligible decision holder without giving the conflicted viewer an override; if the isolated fixture lacks a System Manager name/time, the design omits those facts.
+
+The existing §8 messages remain the user-facing error text. Where a named holder's corrective route is outside Tenders, the record offers the existing authorised route and creates no new approval or arbitrary repair action. The dead-end test in KT-STD-001 §3B.7 covers every §5.1 state, visible responsibility, guard, fix route and tracker agreement; browser checks verify only faithful rendering of the returned answer.
+
+### 5.11 Tender hand-off register
+
+These rows feed My Work and waiting-on summaries. Each item clears on the stated business transition, never on reading a notification. Internal notifications are in-product work alerts; they do not claim publication or supplier notice delivery. The exact person is resolved from responsibility assignments at the event; the cancellation fixture assigns Procurement Officer Brian Wafula to compliance evidence.
+
+| Event | Next holder | Their My Work item | Sender's waiting-on item | Notification | Clears when |
+|---|---|---|---|---|---|
+| Submit Tender Version | HOPF, Charles Mutiso | **Review Tender TND-MOH-2027-033** | Procurement Officer: **Waiting for Charles Mutiso to review Tender TND-MOH-2027-033** | Yes, HOPF | Return or Approve package. |
+| Return for correction | Procurement Officer, Brian Wafula | **Correct Tender TND-MOH-2027-033 — Supplier and contract requirements** with return comment | HOPF: None | Yes, Procurement Officer | Corrected Version submitted or stopped for Requisition correction. |
+| Approve Tender package | AO, Amina Hassan | **Authorise publication of Tender TND-MOH-2027-033** | HOPF: **Waiting for Amina Hassan to decide publication of Tender TND-MOH-2027-033** | Yes, AO | Publication authorised or approved Version reopened. |
+| Reopen approved Tender before authorisation | Procurement Officer, Brian Wafula | **Correct reopened Tender TND-MOH-2027-033** with HOPF reason | HOPF: None | Yes, Procurement Officer | Copied Draft submitted or stopped for Requisition correction. |
+| Authorise publication | HOPF, Charles Mutiso | **Confirm publication of Tender TND-MOH-2027-033** | AO: **Waiting for Charles Mutiso to confirm publication of Tender TND-MOH-2027-033** | Yes, HOPF | All channels confirmed or lawful authorisation withdrawal. |
+| Withdraw publication authorisation before any confirmation | HOPF, Charles Mutiso | **Review withdrawn publication authorisation for TND-MOH-2027-033** with AO reason | AO: None | Yes, HOPF | Tender reopened for correction or a new authorisation decision. |
+| Submit addendum for issue | HOPF, Charles Mutiso | **Decide addendum ADD-MOH-2027-033-001** | Procurement Officer: **Waiting for Charles Mutiso to decide addendum ADD-MOH-2027-033-001** | Yes, HOPF | Addendum returned or issue decided. |
+| Return addendum for correction | Procurement Officer, Brian Wafula | **Correct addendum ADD-MOH-2027-033-001** with HOPF comment | HOPF: None | Yes, Procurement Officer | Corrected addendum submitted. |
+| Issue addendum | HOPF, Charles Mutiso | **Confirm publication of addendum ADD-MOH-2027-033-001** | Procurement Officer: **Waiting for addendum ADD-MOH-2027-033-001 to be published** | Yes, HOPF | All original channels confirmed. |
+| Supplier clarification received | Procurement Officer, Brian Wafula | **Respond to clarification for TND-MOH-2027-033** | HOPF: None | Yes, Procurement Officer | Answer recorded or linked addendum issue required. |
+| Request Requisition correction | Departmental Author, Grace Wanjiku | **Correct Requisition REQ-MOH-2027-037-001** with reason | Procurement Officer: **Waiting for Grace Wanjiku to correct the requisition** | Yes, Departmental Author | Corrected successor authorised or request closed under Requisition governance. |
+| Corrected Requisition successor authorised | Procurement Officer, Brian Wafula | **Start corrected Tender Version for TND-MOH-2027-037** | Departmental Author: None | Yes, Procurement Officer | Start corrected Tender Version. |
+| Request cancellation review for material addendum | AO, Amina Hassan | **Consider cancellation of TND-MOH-2027-039** with 250-to-300 Each comparison and reason | Procurement Officer: **Waiting for Amina Hassan to consider cancellation of TND-MOH-2027-039** | Yes, AO | AO cancels Tender or closes the request with a reason. |
+| Cancel Tender | Procurement Officer, Brian Wafula | **Record cancellation notices and PPRA report for TND-MOH-2027-034** | AO: **Waiting for cancellation compliance evidence for TND-MOH-2027-034** | Yes, Procurement function | Every required notice/report evidence recorded. |
+
 ## 6. Roles and permissions
 
 All access uses AUTH-ADR-001 v1.10 role-bound `User Responsibility Assignment` through registered permission hooks. No native Frappe User Permission participates in authorisation.
@@ -601,9 +670,9 @@ The person who prepared or submitted a Version cannot approve it as HOPF. The pe
 |---|---|
 | `GetTendersWorkspace` | One role-aware queue with exact status, next action and permitted filters. |
 | `GetTenderStart` | Authorised Requisition summary, nine compatibility results and fixed template/rule evidence; no mutation. |
-| `GetTender` | One projection containing current Version, inherited snapshot, officer values, generated content, review result, decisions, publication status and permitted actions. |
-| `GetTenderReview` | Complete result-first review with exact rows, renders and mappings. |
-| `GetTenderPublication` | Approved package, frozen Published Bid Definition identity/digest, AO task, rule snapshot, required channels, subject-scoped confirmation/evidence status and permitted actions. |
+| `GetTender` | One projection containing current Version, inherited snapshot, officer values, generated content, review result, decisions, publication status, permitted actions and the signed-in actor's server-derived §5.9 `next_step`. |
+| `GetTenderReview` | Complete result-first review with exact rows, renders, mappings and the same signed-in-actor `next_step`. |
+| `GetTenderPublication` | Approved package, frozen Published Bid Definition identity/digest, AO task, rule snapshot, required channels, subject-scoped confirmation/evidence status, permitted actions and the same signed-in-actor `next_step`. |
 | `GetTenderHistory` | Versions, decisions, correction lineage, subject-scoped channel confirmations, addenda and successor-definition activation, inquiries, cancellation and downstream events. |
 | `GetTenderDocument` | Exact immutable Invitation, issued Tender, addendum or cancellation notice by digest and authorised audience. |
 
@@ -648,6 +717,9 @@ The future integrated-acknowledgement commands are not part of MVP. They shall b
 | `RespondToTenderClarification` | Record professional classification and response. If published content is affected, require an already Issued linked addendum; otherwise create direct or anonymous general notice as selected. |
 | `DispatchCandidateNotice` | Internal outbox worker; dispatch one frozen subject to one frozen candidate/destination, append attempt evidence and never convert Sent to Delivered without provider evidence. |
 | `RetryFailedCandidateNotice` | Authorised support/procurement recovery against the same notice/recipient; no new business notice, audience or content. |
+| `RequestTenderCancellationReview` | For a blocked material-addendum proposal, the Procurement Officer or HOPF sends the reason and affected comparison to the assigned AO. Creates one idempotent AO work item and a sender waiting item; changes neither the published Tender nor the addendum. AO may use the existing `CancelTender` decision or close the request with a recorded reason and no cancellation. |
+| `CloseTenderCancellationReview` | AO records that the requested cancellation will not be pursued and a reason; clears the request/work item, leaves the Tender open and the material addendum blocked. The same proposal cannot create another cancellation review; Procurement Officer can discard it. It is not an approval, publication or cancellation event. |
+| `DiscardAddendumDraft` | Assigned Procurement Officer archives an unissued addendum draft, including a material proposal; it cannot affect an issued or publishing addendum. Clears its draft work and returns to the unchanged Published Tender. |
 | `RecommendTenderCancellation` | Append optional HOPF recommendation; no status change. |
 | `CancelTender` | AO decision; require lawful ground/reason; close Tender and create immutable notice/report obligations. |
 | `RecordCancellationComplianceEvidence` | Append verified PPRA-report or candidate/channel notice evidence; never change cancellation decision. |
@@ -662,13 +734,13 @@ Every command accepts expected record version and idempotency key. The server de
 | `TND_NOT_FOUND` | **Tender not found.** Return to Tenders. |
 | `TND_RESPONSIBILITY_REQUIRED` | **This action requires {named responsibility}.** |
 | `TND_HANDOFF_INVALID` | **The authorised requisition is no longer available to start this Tender.** |
-| `TND_HANDOFF_CONFLICT` | **A Tender has already been started for this requisition.** Open it when permitted. |
+| `TND_HANDOFF_CONFLICT` | For Brian Wafula, who may read the linked Tender: **A Tender has already been started for this requisition.** Show the Tender reference and **Open Tender**. For a viewer without linked-Tender read access: **This requisition cannot be used to start a Tender.** Show no Tender reference or identity and only **Back to Tenders**. |
 | `TND_PRODUCT_UNSUPPORTED` | **This requisition is not supported by the current IT-equipment Tender format.** No bypass. |
 | `TND_RESERVATION_UNSUPPORTED` | **This reservation treatment is not supported by the installed Tender format.** Create nothing; return to the governed Requisition/Planning route. No free-text bypass. |
 | `TND_RESERVATION_RULE_UNAVAILABLE` | **The applicable reservation rule is not ready for this Tender.** Create nothing. An authorised System Manager may inspect the rule in System setup; routine users receive **Return to Tenders**. |
 | `TND_TEMPLATE_UNAVAILABLE` | **The IT-equipment Tender format is not available.** Create nothing. An authorised Administrator, System Manager, Procurement Officer or HOPF receives **View STD Template** linking to `/app/std-templates/{template_release_id}`; other users receive **Return to Tenders**. v0.12 (OD5): this includes a site where no `Available` release of the format is switched On. |
-| `TND_TEMPLATE_RELEASE_WITHDRAWN` | **This Tender cannot continue because its Tender format was withdrawn.** Preserve all work; show reason and **View STD Template** to an authorised inspection user, plus the governed cancellation/new-Tender or expressly authorised correction route. |
-| `TND_TEMPLATE_RELEASE_INTEGRITY_FAILED` | **The Tender format bound to this Tender could not be verified.** Block the action, preserve the Tender and direct authorised users to **View STD Template**. |
+| `TND_TEMPLATE_RELEASE_WITHDRAWN` | **This Tender cannot continue because its Tender format was withdrawn.** Preserve all work and show the reason. Offer **View STD Template** to a reader with STD inspection access or **Back to Tenders** otherwise. Do not offer a continuation control or an unnamed route on this state. |
+| `TND_TEMPLATE_RELEASE_INTEGRITY_FAILED` | **The Tender format bound to this Tender could not be verified.** Block the action and preserve the Tender. Show **View STD Template** to a reader with STD inspection access or **Back to Tenders** otherwise. |
 | `TND_CONTROL_INVALID` | **Check the highlighted value.** Bind exact field error. |
 | `TND_INHERITED_EDIT` | **Authorised requisition information cannot be changed here.** |
 | `TND_MAPPING_INCOMPLETE` | **A published requirement is not fully connected to its supplier response and downstream treatment.** Link the exact row. An authorised System Manager may inspect the bound Tender format; no user may repair mappings inside Tenders. |
@@ -677,7 +749,7 @@ Every command accepts expected record version and idempotency key. The server de
 | `TND_STALE_VERSION` | **Another user changed this Tender. Reload before continuing.** |
 | `TND_SOD_BLOCKED` | **Another authorised officer must complete this decision.** Explain the conflicting prior action. |
 | `TND_PUBLICATION_STARTED` | **Publication has started. This Tender can no longer be reopened.** |
-| `TND_PUBLICATION_RULE_UNAVAILABLE` | **The publication rule is not configured for this Tender.** Contact administrator. |
+| `TND_PUBLICATION_RULE_UNAVAILABLE` | **The publication rule is not configured for this Tender.** A System Manager must configure it. An authorised System Manager sees **Open System setup**; a routine Tender reader sees **Back to Tenders**. |
 | `TND_PUBLICATION_PERIOD_INVALID` | **The submission deadline does not allow the required preparation period after publication.** Link Tender details. |
 | `TND_PUBLICATION_CONFIRMATION_INCOMPLETE` | **Complete the publication confirmation for this channel.** Link every missing or invalid field. |
 | `TND_PUBLICATION_EVIDENCE_INVALID` | **The publication evidence could not be accepted.** Show the technical reason without claiming that publication did or did not occur. |
@@ -712,7 +784,7 @@ Tasks link to the Tender record with the exact record/task identity; they do not
 
 `/app/std-templates/{template_release_id}` is the read-only STD-template owner route used only for authorised inspection and error recovery. It is not a Tenders configuration screen and exposes no edit, activation, upload, repair or override action.
 
-The Tender record uses one header and one state-specific primary content area. It does not expose every future stage as a stepper. Preparation alone uses the three-part progress row in §10.
+The Tender record uses one header and one state-specific primary content area. The §10.17 journey tracker shows formal Tender lifecycle stages without dividing preparation into steps. The §10.17 next-step block replaces repeated status/ready/awaiting narratives. The Tenders workspace, focused dialogs and full-page load/denial states have no tracker.
 
 ## 10. Static design contract
 
@@ -932,7 +1004,7 @@ Footer left **Cancel**; right primary **Start Tender**. Both enabled. No package
 
 **Composition, top to bottom.**
 
-1. Three-part progress row: Tender details selected and **Needs attention**; Supplier and contract requirements **Not started**; Review and submit **Not started**.
+1. The §10.17 next-step and Tender journey guidance sits below the header; there is no preparation stepper.
 2. Context strip with Purchase; Method; Quantity; Latest delivery. Link **View authorised requisition** opens an in-page drawer.
 3. **Tender dates**: Tender title full width; Issue date and Clarification deadline; Submission deadline and Tender validity. Helper beneath validity: **How long suppliers' offers must remain valid.**
 4. **Tender security**: Treatment and Currency as plain read-only values; editable Amount.
@@ -954,7 +1026,7 @@ Footer left **Cancel**; right primary **Start Tender**. Both enabled. No package
 
 **Fixture outside the artboard.** Brian Wafula; Draft Version 1; 20 Mar 2027, 10:30 EAT; Tender details complete.
 
-**Header.** Reuse TPR-DES-03. Progress: Tender details Complete; this task selected and Needs attention; Review and submit Not started.
+**Header.** Reuse TPR-DES-03. The §10.17 Tender journey remains at Preparation; it does not split the two editor tasks into lifecycle stages.
 
 **Composition, top to bottom.**
 
@@ -976,11 +1048,11 @@ Footer left **Cancel**; right primary **Start Tender**. Both enabled. No package
 
 **Fixture outside the artboard.** Brian Wafula; Draft Version 1; 20 Mar 2027, 11:35 EAT.
 
-**Header.** Title **Review Tender**. Description **Check the complete Tender and submit it to the Head of Procurement Function.** Badge Draft; references beneath. Progress shows all tasks Complete; Review and submit selected.
+**Header.** Title **Review Tender**. Description **Check the complete Tender and submit it to the Head of Procurement Function.** Badge Draft; references beneath. The §10.17 Tender journey remains at Preparation until submission.
 
 **Composition, top to bottom.**
 
-1. Green result **Ready to submit** and text **All required information is complete. Review the note below before submitting.**
+1. The §10.17 **Your turn** guidance and existing Submit action replace the green Ready to submit narrative; the review note remains distinct.
 2. Amber panel **1 review note** with the manufacturer-authorisation note and link **Review supplier requirements**.
 3. Key facts: Requisition; Quantity; Approved value; Method; Submission deadline; Tender security; Reservation Youth; Latest delivery.
 4. Actions **Preview Invitation** and **Preview complete Tender**, secondary and enabled.
@@ -989,7 +1061,7 @@ Footer left **Cancel**; right primary **Start Tender**. Both enabled. No package
 7. Requirements detail contains all §10.1 rows. Technical evidence contains exact template/source/package identities, both item/source lineages, mappings and digests.
 8. Footer: secondary **Back**, primary **Submit for approval**.
 
-**Needs-attention variant.** Use the isolated Needs-attention review facts. Red result **Needs attention**; the must-fix item links to the exact task/field. Submit disabled with **Fix the item above before submitting.** The review note remains separate and does not disable submission.
+**Needs-attention variant.** Use the isolated Needs-attention review facts. The §10.17 **Your turn, blocked** guidance names the inspection-location blocker and links **Review contract terms** to the exact task/field. Submit is unavailable until fixed; the review note remains separate and does not block submission.
 
 **Confirmation.** Heading **Submit this Tender for approval?** Text **The submitted Version will be locked. Charles Mutiso can return it or approve the package for publication review.** Footer Cancel / **Submit for approval**.
 
@@ -1001,11 +1073,11 @@ Footer left **Cancel**; right primary **Start Tender**. Both enabled. No package
 
 **Fixture outside the artboard.** Charles Mutiso; HOPF; submitted Version 2; 20 Apr 2027, 10:00 EAT; Charles did not prepare/submit it.
 
-**Header.** Title **Review Tender package**. Description **Decide whether this Tender may proceed to Accounting Officer publication review.** Badge **Awaiting your approval**; references beneath.
+**Header.** Title **Review Tender package**. Description **Decide whether this Tender may proceed to Accounting Officer publication review.** Version and references beneath; no awaiting-action badge.
 
 **Composition, top to bottom.**
 
-1. Green **Ready to approve** and text **Approval locks this package for the Accounting Officer's publication decision. It does not publish the Tender.**
+1. The §10.17 **Your turn** guidance joins the existing decision actions. State once, in the confirmation, that approval locks the package for the Accounting Officer and does not publish it.
 2. Visible one review note.
 3. Submitted by Brian Wafula; Submitted at 15 Apr 2027, 09:15 EAT; Version 2, separately labelled.
 4. Same key facts, document actions and six review sections as TPR-DES-05; all read-only.
@@ -1025,11 +1097,11 @@ Footer left **Cancel**; right primary **Start Tender**. Both enabled. No package
 
 **Fixture outside the artboard.** Amina Hassan; Accounting Officer; 15 May 2027, 07:55 EAT; approved Version 2; no publication confirmation exists.
 
-**Header.** Title **Authorise Tender publication**. Description **Review the approved package and the channels through which it must be published.** Badge **Awaiting publication authorisation**; references beneath.
+**Header.** Title **Authorise Tender publication**. Description **Review the approved package and the channels through which it must be published.** Approved Version and references beneath; no awaiting-action badge.
 
 **Composition, top to bottom.**
 
-1. Green **Ready to authorise publication**. Text **Authorisation allows publication work to begin. The Tender is shown as Published only after every required channel is confirmed.**
+1. The §10.17 **Your turn** guidance joins the existing Authorise publication action. The confirmation explains that authorisation starts publication work and does not itself publish the Tender.
 2. Approval trail: Prepared by Brian Wafula; Approved by Charles Mutiso; Approved at 20 Apr 2027, 10:00 EAT; Version 2; package digest, each labelled separately.
 3. Visible one review note.
 4. Key facts: Purchase; Requisition; Quantity; Approved value; Method; Submission deadline; Tendering period; Reservation Youth.
@@ -1050,11 +1122,11 @@ Footer left **Cancel**; right primary **Start Tender**. Both enabled. No package
 
 **Fixture outside the artboard.** Charles Mutiso; HOPF; 15 May 2027, 08:05 EAT; digital channels confirmed; physical evidence not yet recorded.
 
-**Header.** Tender title. Description **Confirm where and when the approved Tender was published.** Badge **Publication confirmation required**; references beneath.
+**Header.** Tender title. Description **Confirm where and when the approved Tender was published.** Publication identity and references beneath; no duplicate confirmation-required badge.
 
 **Composition, top to bottom.**
 
-1. Amber result **2 of 4 required channels confirmed** and text **The Tender is not yet shown as Published. Confirm the remaining channels below.**
+1. The §10.17 blocked next step states **2 of 4 required channels confirmed** once. The channel table below identifies the two outstanding channels and their evidence controls; the Tender is not yet Published.
 2. Channel table columns Channel; Result; Available at; Confirmation/action. State Portal Confirmed / 15 May 08:00 / View confirmation. Ministry website Confirmed / 15 May 08:00 / View confirmation. Notice board Awaiting confirmation / — / **Confirm publication**. Two national newspapers Awaiting confirmation / — / **Confirm publication**.
 3. Section **Approved documents** with View Invitation and View complete Tender.
 4. Closed **Publication decision and rule** with AO/time, rule snapshot and package digest.
@@ -1080,7 +1152,7 @@ Footer left **Cancel**; right primary **Start Tender**. Both enabled. No package
 
 **Composition, top to bottom.**
 
-1. Status panel: Published at **15 May 2027, 08:00 EAT**; Current submission deadline **12 Jun 2027, 11:00 EAT**; Publication authorised by **Amina Hassan**; Effective addenda **1**.
+1. Current facts (without a second status narrative): Published at **15 May 2027, 08:00 EAT**; Current submission deadline **12 Jun 2027, 11:00 EAT**; Publication authorised by **Amina Hassan**; Effective addenda **1**.
 2. Documents row: View Invitation; View complete Tender; View current addendum.
 3. Channel table with all four Confirmed results, available times and evidence links.
 4. Section **Changes and notices**. Addenda table columns Addendum; Change; Issued; Deadline; Action. Row ADD-MOH-2027-033-001; Delivery point clarified; 31 May 2027, 09:00 EAT; 12 Jun 2027, 11:00 EAT; View.
@@ -1113,13 +1185,13 @@ Footer left **Cancel**; right primary **Start Tender**. Both enabled. No package
 
 **HOPF issue variant.** Charles Mutiso sees all content read-only, result **Ready to issue**, exact changed-fields comparison, revised deadline and four channels. Footer Return for correction / **Issue addendum**. Confirmation states that issue is immutable and accountable publication confirmation for every channel follows separately.
 
-**Awaiting-publication variant.** After the 08:30 issue decision, header badge **Publication confirmation required** and consequence **The addendum is not yet effective. Confirm all 4 original publication channels.** Show the frozen changed-fields comparison and successor deadline read-only. Channel table columns Channel; Result; Available at; Confirmation/action. Use the four addendum channel facts in §10.1; before confirmation each row is **Awaiting confirmation** with **Confirm publication**. Confirmed rows show their actual Available at value and **View confirmation**. Do not expose definition identity or digest.
+**Awaiting-publication variant.** After the 08:30 issue decision, show the immutable issue decision as a fact; the §10.17 next step states that channel confirmation remains before effectiveness. Show the frozen changed-fields comparison and successor deadline read-only. Channel table columns Channel; Result; Available at; Confirmation/action. Use the four addendum channel facts in §10.1; before confirmation each row is **Awaiting confirmation** with **Confirm publication**. Confirmed rows show their actual Available at value and **View confirmation**. Do not expose definition identity or digest.
 
 **Addendum confirmation dialog.** Heading **Confirm addendum publication — {channel}**. Intro **Confirm only after ADD-MOH-2027-033-001 was publicly available through this channel.** Fields use the channel-specific Available date/time, reference, applicable public URL, evidence file and optional Notes maximum 500 from §10.1. Required attestation **I confirm that ADD-MOH-2027-033-001 was publicly available through {channel} at the date and time stated above.** Footer Cancel / **Confirm publication**.
 
 **Issued variant.** After the fourth confirmation, show green result **Addendum issued**; effective **31 May 2027, 09:00 EAT**; confirmation completed **09:07 EAT**; revised deadline **12 Jun 2027, 11:00 EAT**. All rows offer **View confirmation** and no mutation action. The bidder-facing successor definition and deadline are now effective together.
 
-**Material-change variant.** Use the isolated Material addendum facts. Result **This change cannot be made by addendum.** Primary absent; show **Cancel the Tender and start a newly governed Tender if procurement must continue.** Link View cancellation requirements.
+**Material-change variant.** Use the isolated Material addendum facts. Result **This change cannot be made by addendum.** Omit **Submit for issue**; show **Cancel the Tender and start a newly governed Tender if procurement must continue.** Show primary **Ask Amina Hassan (Accounting Officer) to consider cancellation** as the hand-off action, secondary **Discard addendum draft**, and **View cancellation requirements** as a page link. The request does not cancel the Tender or issue the addendum. While the request is open, show the waiting variant in §10.17 and suppress the duplicate request action. If AO closes the review, show the recorded reason and only **Discard addendum draft** as the fix for this proposal.
 
 **Visual check.** The affected content, before/after difference, materiality and deadline consequence are immediately understandable.
 
@@ -1165,13 +1237,15 @@ Footer left **Cancel**; right primary **Start Tender**. Both enabled. No package
 
 **Confirmation.** Heading **Cancel this Tender?** Values Ground; Tender; Decision date; Channels. Text **The decision is final and the cancellation notices and reports will remain due until evidence is recorded.** Footer Keep Tender / destructive **Cancel Tender**.
 
+**Cancellation-review request variant (TPR-DES-12-REQUEST).** Amina Hassan sees the exact `TND-MOH-2027-039` request from Brian Wafula: proposed quantity 250 Each → 300 Each, reason **Additional deployment sites require 50 more laptops**, and the finding that an addendum cannot expand the purchase. This is a request to consider cancellation, not a cancellation decision. The fixture supplies no request time or lawful cancellation ground, so show neither. Next-step and tracker are in §10.17. Available actions: primary **Cancel Tender** opens the existing ground/reason decision flow; secondary **Close cancellation review** requires Amina to give a reason and leaves the Tender open, the addendum blocked and all published content unchanged. No new approval stage or automatic cancellation.
+
 **Cancelled-detail variant.** Badge Cancelled; show decision actor/time, ground, reason, notice status, PPRA report status and deadlines. No Tender/addendum/clarification action. Evidence actions appear only to the authorised procurement function for the exact outstanding obligation.
 
 **Visual check.** Authority, ground, finality and unfinished compliance obligations remain distinct.
 
 ### 10.14 TPR-DES-13 — Returned and requisition-correction states
 
-**Returned fixture.** Brian Wafula; copied Draft Version 2; 25 Mar 2027, 14:05 EAT. Reuse TPR-DES-04 with amber **Returned for correction** panel containing returned by/time/comment. Select Supplier and contract requirements and show Needs attention. Save/Review available.
+**Returned fixture.** Brian Wafula; copied Draft Version 2; 25 Mar 2027, 14:05 EAT. Reuse TPR-DES-04 with amber **Returned for correction** panel containing returned by/time/comment. Open Supplier and contract requirements with the return comment and §10.17 Your turn next step. Save/Review available; no task stepper.
 
 **Request-requisition-correction dialog.** Heading **Request a requisition correction?** Reason **The authorised battery-runtime requirement must be corrected before this Tender can continue.** Text **This Tender Version will stop and remain in history. Work can continue only from a newly authorised corrected Requisition.** Footer Cancel / destructive **Request requisition correction**.
 
@@ -1188,12 +1262,19 @@ Footer left **Cancel**; right primary **Start Tender**. Both enabled. No package
 | Forbidden | You do not have access to Tenders | This area needs one of these responsibilities: Procurement Officer, Head of Procurement Function, Accounting Officer, Departmental Author, Head of User Department, Auditor or Authorised technical operator. Ask your KenTender administrator to assign one in System setup. | None |
 | Not found | Tender not found | This Tender is unavailable or you do not have permission to view it. | Back to Tenders |
 | Source unavailable | Authorised requisition unavailable | The requisition is no longer available to start this Tender. | Back to Tenders |
-| Already started | Tender already started | This requisition is linked to TND-MOH-2027-033. | For Brian, Open Tender |
-| Template unavailable | Tender format unavailable | The standard IT-equipment Tender format is not available. | Back to Tenders |
-| Bound release Superseded | Tender format has a newer release | This Tender remains on release 1.1. You may continue only while its integrity checks pass; KenTender will not change the format automatically. | View STD Template / Continue when permitted |
-| Bound release Withdrawn | Tender format withdrawn | This Tender cannot continue to publication because release 1.1 was withdrawn. Your work is preserved. | View STD Template / Follow governed next step |
-| Bound release integrity failed | Tender format could not be verified | This Tender is preserved, but no further approval or publication action is permitted until the release owner resolves the verification failure. | View STD Template / Back to Tenders |
-| Publication not configured | Publication rule unavailable | The publication rule is not configured for this Tender. | Contact administrator |
+| Already started — Brian with linked-Tender read access | Tender already started | This requisition is linked to TND-MOH-2027-033. | **Open Tender** |
+| Already started — viewer without linked-Tender read access | Requisition unavailable | This requisition cannot be used to start a Tender. Do not show the Tender reference, title, owner or other identifying facts. | **Back to Tenders** |
+| Template unavailable — STD inspection reader | Tender format unavailable | The standard IT-equipment Tender format is not available. | **View STD Template** |
+| Template unavailable — reader without STD inspection access | Tender format unavailable | The standard IT-equipment Tender format is not available. | **Back to Tenders** |
+| Bound release Superseded — Brian, integrity passed | Tender format has a newer release | This Tender remains on release 1.1. Its integrity and renderer checks passed; KenTender will not change the format automatically. | **View STD Template**; **Continue** |
+| Bound release Superseded — reader with STD inspection access | Tender format has a newer release | This Tender remains on release 1.1. Existing work retains the bound format. | **View STD Template** |
+| Bound release Superseded — reader without STD inspection access | Tender format has a newer release | This Tender remains on release 1.1. Existing work retains the bound format. | **Back to Tenders** |
+| Bound release Withdrawn — STD inspection reader | Tender format withdrawn | This Tender cannot continue to publication because release 1.1 was withdrawn. Your work is preserved. | **View STD Template** |
+| Bound release Withdrawn — reader without STD inspection access | Tender format withdrawn | This Tender cannot continue to publication because release 1.1 was withdrawn. Your work is preserved. | **Back to Tenders** |
+| Bound release integrity failed — STD inspection reader | Tender format could not be verified | This Tender is preserved, but no further approval or publication action is permitted until the release owner resolves the verification failure. | **View STD Template** |
+| Bound release integrity failed — reader without STD inspection access | Tender format could not be verified | This Tender is preserved, but no further approval or publication action is permitted until the release owner resolves the verification failure. | **Back to Tenders** |
+| Publication not configured — System Manager | Publication rule unavailable | The publication rule is not configured for this Tender. Configure the governed rule in System setup. | **Open System setup** |
+| Publication not configured — routine Tender reader | Publication rule unavailable | The publication rule is not configured for this Tender. A System Manager must configure it. | **Back to Tenders** |
 | Stale write | Tender changed | Another user changed this Tender. | Reload |
 | Load failure | Tenders could not be loaded | Try again. | Try again |
 
@@ -1211,14 +1292,58 @@ Each is a full inline state under KT-STD-001 v1.8 §3A. Successful content never
 | TPR-DES-06 | HOPF | Return or approve package | Return dialog; approval dialog; segregation blocked. |
 | TPR-DES-07 | Accounting Officer | Authorise publication | Confirmation; segregation blocked. |
 | TPR-DES-08 | HOPF | Confirm channel publication | Online channel; Invalid evidence; Conflicting confirmation; confirmation dialogs. |
-| TPR-DES-09 | HOPF / readers | Read effective Published Tender | No addendum; Submission period ended. |
-| TPR-DES-10 | Procurement Officer / HOPF | Prepare, publish and issue addendum | HOPF issue; Awaiting publication; channel confirmation dialog; Issued; Material change blocked. |
-| TPR-DES-11 | Procurement Officer / HOPF | Respond to supplier clarification | General/broadcast, published-change and delivery-failure variants. |
-| TPR-DES-12 | Accounting Officer | Cancel Tender | HOPF recommendation; confirmation; Cancelled detail. |
-| TPR-DES-13 | Procurement Officer / HOPF | Correct returned work or stop for Requisition correction | Correction dialog; stopped; authorised successor. |
-| TPR-DES-14 | All permitted roles | Recover from common read/state errors | Forbidden; Not found; unavailable; already started; configuration missing; stale; load failure. |
+| TPR-DES-09 | HOPF / readers | Read effective Published Tender | HOPF open; Procurement Officer open; AO open; reader/Auditor; No addendum; Submission period ended. |
+| TPR-DES-10 | Procurement Officer / HOPF | Prepare, publish and issue addendum | Draft addendum; HOPF issue; Awaiting publication; channel confirmation dialog; Issued; Material change blocked; After cancellation-review request; After AO closes cancellation review. |
+| TPR-DES-11 | Procurement Officer / HOPF | Respond to supplier clarification | Ordinary/general broadcast; published-change blocked; delivery failure. |
+| TPR-DES-12 | Accounting Officer | Cancel Tender | AO cancellation; HOPF recommendation; cancellation-review request; confirmation; Cancelled detail for procurement holder; Cancelled detail for AO/reader. |
+| TPR-DES-13 | Procurement Officer / HOPF | Correct returned work or stop for Requisition correction | Returned Draft; correction dialog; correction requested/stopped; corrected successor available. |
+| TPR-DES-14 | All permitted roles | Recover from common read/state errors | Forbidden; Not found; source unavailable; already started for Brian with linked-Tender read access; already started for viewer without linked-Tender read access; template unavailable for STD inspection reader; template unavailable for reader without STD inspection access; Superseded for Brian; Superseded for reader with STD inspection access; Superseded for reader without STD inspection access; Withdrawn for STD inspection reader; Withdrawn for reader without STD inspection access; integrity failed for STD inspection reader; integrity failed for reader without STD inspection access; publication not configured for System Manager; publication not configured for routine Tender reader; stale write; load failure. |
 
 The design set is complete only when every base artboard and named variant has been rendered and checked against its visual check.
+
+### 10.17 Next-step and journey content for record variants
+
+Use KT-STD-001 v1.8 §§2.9.1–2.9.3. This section is the complete design input for the shared components. One row describes the viewer stated in the artboard fixture; alternate role views use §5.9's holder rule and do not gain an action by reading the record. Focused dialogs, TPR-DES-01 workspace, TPR-DES-02 start dialog, and TPR-DES-14 full-page denial/load/error states carry neither component. They keep their existing plain message and recovery action. The content below sits beneath the record header, within the existing action area, before the first working section. At 1440 × 1024, if the full tracker would displace that section, use its single-line reduced form **{current stage} · {position} of 5**; at 390 px use that reduced form without horizontal scrolling; the next-step text remains with its action. No separate card, timeline or task-navigation stepper is drawn.
+
+Tracker stage labels, in this exact order: **Prepare Tender** (`P`), **HOPF approval** (`H`), **AO publication authorisation** (`A`), **Confirm publication** (`C`), **Manage open Tender** (`O`). Each tuple below gives the five exact markers in P/H/A/C/O order: `D` done, `C` current, `B` blocked, `N` not started. Only the current/blocked stage shows the holder. Runtime resolves the named person; isolated segregation fixtures with no eligible alternate person show the responsibility without inventing a name. A returned Draft resets P to current/blocked and H to not started. An addendum is work within O; it does not restart C for the whole Tender. The tracker is orientation only and does not navigate between editor sections. No upstream/downstream link is supplied for these artboards; draw none. History holds actor/time for completed stages. For a stopped Tender, keep P blocked until a successor Draft starts; a corrected authorised handoff makes P current for the officer who can start it. For cancellation or submission end, all applicable completed stages show D; cancellation is named once by the next-step line.
+
+| Record artboard / variant | P/H/A/C/O markers | Next-step kind; exact headline and optional sentence | Holder and fix/action labels | Existing element replaced |
+|---|---|---|---|---|
+| DES-03 Draft details; PHYSICAL; ONLINE | C/N/N/N/N | **Your turn:** Set the Tender dates, security and meeting details. | Procurement Officer Brian Wafula; **Save draft**, **Continue**. | Three-part progress row and generic Needs attention chip. |
+| DES-04 Supplier/contract; add/edit/remove evidence; full disclosure parent | C/N/N/N/N | **Your turn:** Set supplier evidence and contract terms. | Brian Wafula; **Save draft**, **Review Tender**. | Three-part task progress and duplicate task status. Focused evidence dialogs have neither component. |
+| DES-05 Review ready | C/N/N/N/N | **Your turn:** Submit this Tender for approval. | Brian Wafula; **Submit for approval**. | Three-part progress and Ready to submit result. The separate review note stays. |
+| DES-05 Needs attention | B/N/N/N/N | **Your turn, blocked:** Enter the inspection and acceptance location. | Brian Wafula; **Review contract terms**. | Needs attention panel and duplicate disabled-submit explanation. Review note stays separate. |
+| DES-06 HOPF review; return/approve dialog parent | D/C/N/N/N | **Your turn:** Decide whether to approve this Tender package. | HOPF Charles Mutiso; **Return for correction**, **Approve Tender package**. | Awaiting your approval badge narrative and Ready to approve result. Dialogs have neither component. |
+| DES-06 segregation blocked | D/B/N/N/N | **Waiting on someone:** A System Manager must assign an eligible Head of Procurement Function to decide this Version. This negative fixture supplies no System Manager name or assignment time, so neither is invented. | Holder: System Manager until an eligible HOPF is assigned; then that HOPF holds the decision. The existing **Back to Tenders** page link sits outside the block; no approval action or fix is shown to the conflicted viewer. | Segregation warning as a second status narrative. |
+| DES-07 AO authorisation; confirmation dialog parent | D/D/C/N/N | **Your turn:** Authorise publication of the approved Tender package. | AO Amina Hassan; **Authorise publication**. | Awaiting publication authorisation narrative and Ready to authorise result. Dialog has neither component. |
+| DES-07 segregation blocked | D/D/B/N/N | **Waiting on someone:** A System Manager must assign an eligible Accounting Officer to decide this Version. This negative fixture supplies no System Manager name or assignment time, so neither is invented. | Holder: System Manager until an eligible AO is assigned; then that AO holds the decision. The existing **Back to Tenders** page link sits outside the block; no authorisation action or fix is shown to the conflicted viewer. | Segregation warning as a second status narrative. |
+| DES-08 Publication confirmation; online-channel parent | D/D/D/C/N | **Your turn:** Confirm publication through Notice board and Two national newspapers; 2 of 4 channels are confirmed. | HOPF Charles Mutiso; **Confirm publication** on each outstanding row. | Amber result and separate Publication confirmation required narrative. Channel table retains its factual results. |
+| DES-08 invalid evidence | D/D/D/B/N | **Your turn, blocked:** State Portal evidence could not be accepted. | Charles Mutiso; **Choose evidence file**, **Confirm publication**. | Generic incomplete-channel warning; preserve entered non-file values. |
+| DES-08 conflicting confirmation | D/D/D/C/N | **Your turn:** Continue with the channels still awaiting confirmation. | Charles Mutiso; **View confirmation** for State Portal, then **Confirm publication** on outstanding channels. | Duplicate conflicting-confirmation status panel; the conflict remains a specific immutable-row error. |
+| DES-09 Published; no-addendum; HOPF | D/D/D/D/C | **Your turn:** Prepare an addendum or recommend cancellation if the open Tender needs it. These are available options, not overdue work. | Charles Mutiso; **Prepare addendum**, **Recommend cancellation**. Both are visible and enabled in this HOPF fixture. | Published-and-open explanatory status panel narrative; factual publication/deadline values remain. |
+| DES-09 Procurement Officer view | D/D/D/D/C | **Your turn:** Prepare an addendum if the published Tender needs a non-material correction. This is an available option, not assigned work. | Brian Wafula; **Prepare addendum**. | Duplicate open status explanation. |
+| DES-09 AO view | D/D/D/D/C | **Your turn:** You can cancel this open Tender on an applicable ground. This is an available option, not an assigned cancellation review. | Amina Hassan; **Cancel Tender**. It is visible and enabled in this AO open-Tender fixture. | Duplicate open status explanation. |
+| DES-09 reader/Auditor | D/D/D/D/C | **Not involved:** no next-step line. | No business action. | No new block; existing factual status stays. |
+| DES-09 submission ended | D/D/D/D/D | **Done:** The system closed supplier submission at 12 Jun 2027, 11:00 EAT. | No Tender action; exact deadline is the completion fact. | Submission period ended status sentence; badge may remain as compact identity, not a second narrative. |
+| DES-10 Draft addendum | D/D/D/D/C | **Your turn:** Submit the non-material addendum for issue. | Brian Wafula; **Save draft**, **Submit for issue**. | Draft addendum status sentence; materiality/deadline facts stay in the working region. |
+| DES-10 HOPF issue | D/D/D/D/C | **Your turn:** Decide whether to issue this addendum. | Charles Mutiso; **Return for correction**, **Issue addendum**. | Ready to issue result. |
+| DES-10 awaiting channel confirmation | D/D/D/D/C | **Your turn:** Confirm publication of ADD-MOH-2027-033-001 through the remaining original channels. | Charles Mutiso; **Confirm publication** on each outstanding channel. | Publication confirmation required and duplicate not-yet-effective banner. |
+| DES-10 Issued | D/D/D/D/C | **Done:** Charles Mutiso completed addendum publication on 31 May 2027, 09:07 EAT. | No addendum mutation; **View confirmation** remains read-only. | Addendum issued result narrative; effective time/deadline stay factual. |
+| DES-10 material change | D/D/D/D/B | **Your turn, blocked:** Increasing the laptop quantity from 250 to 300 cannot be issued as an addendum. | Procurement Officer Brian Wafula; fixes **Ask Amina Hassan (Accounting Officer) to consider cancellation**, **Discard addendum draft**. **View cancellation requirements** remains an ordinary page link outside the block. | Material-change warning narrative; retain changed-value comparison. |
+| DES-10 after cancellation-review request | D/D/D/D/B | **Waiting on someone:** Accounting Officer Amina Hassan is considering cancellation of TND-MOH-2027-039. The isolated fixture supplies no request time; omit it. | Amina Hassan; no action in the waiting line. **View cancellation requirements** remains a page link outside it. | Material-change blocker action after it creates the hand-off; keep the proposed comparison as evidence. |
+| DES-10 after AO closes cancellation review | D/D/D/D/B | **Your turn, blocked:** The 250-to-300 Each addendum remains unissuable; Amina Hassan closed the cancellation review with a recorded reason. | Brian Wafula; **Discard addendum draft** is the sole fix for this proposal. Keep **View cancellation requirements** outside the block. | Retain the changed-value comparison and AO's exact recorded reason; no repeat request for this proposal. |
+| DES-11 ordinary/general clarification | D/D/D/D/C | **Your turn:** Send the answer to all registered candidates. | Brian Wafula; **Send response**. | Duplicate answer-status narrative. Question and audience facts stay. |
+| DES-11 published-change | D/D/D/D/B | **Your turn, blocked:** Issue an addendum before sending this answer. | Brian Wafula or Charles Mutiso; **Prepare addendum**. | Separate blocking result paragraph. |
+| DES-11 delivery failure | D/D/D/D/B | **Your turn, blocked:** 1 candidate notice failed delivery; the Tender remains open. | HOPF Charles Mutiso in this fixture; **Retry notice**. | Failed-notice status panel; protected recipient and attempts stay in detail. |
+| DES-12 AO cancellation; recommendation variant | D/D/D/D/C | **Your turn:** Decide whether to cancel this Tender for inadequate budgetary provision. | Amina Hassan; **Cancel Tender**. | Separate cancellation decision narrative. Warning about finality remains. |
+| DES-12 cancellation-review request | D/D/D/D/C | **Your turn:** Consider the request to cancel TND-MOH-2027-039 because the proposed quantity increase cannot be issued by addendum. | Amina Hassan; **Cancel Tender**, **Close cancellation review**. | Request work item becomes the single next-step line. The 250-to-300 Each comparison stays in the working region. |
+| DES-12 Cancelled detail, procurement holder | D/D/D/D/C | **Your turn:** Record the outstanding cancellation notices and PPRA report by 18 Jun 2027. | Procurement Officer Brian Wafula in this fixture; **Record cancellation notice evidence**, **Record PPRA report evidence**. | Generic cancelled status narrative; decision actor/time and deadlines remain factual. |
+| DES-12 Cancelled detail, AO/reader | D/D/D/D/D | **Done:** Amina Hassan cancelled this Tender on 4 Jun 2027, 14:00 EAT. | No Tender mutation; procurement compliance remains a separate holder's work. | Generic cancelled status narrative. |
+| DES-13 Returned Draft | C/N/N/N/N | **Your turn:** Address Charles Mutiso's return comment about manufacturer authorisation. | Brian Wafula; **Save draft**, **Review Tender**. Both are visible and enabled; a later Submit attempt uses the current server validation result. | Returned for correction panel's duplicated next-action sentence and task progress. Keep exact return comment. |
+| DES-13 Correction requested | B/N/N/N/N | **Waiting on someone:** Grace Wanjiku, Departmental Author, is correcting the requisition since 21 Apr 2027, 09:00 EAT. | Grace Wanjiku; **View requisition status** and **View history** remain existing page links outside the waiting line; they are not next-step actions or fixes. | This Tender cannot continue status panel. |
+| DES-13 Corrected successor available | C/N/N/N/N | **Your turn:** Start a corrected Tender Version from authorised Requisition Version 2. | Brian Wafula; **Start corrected Tender Version**. | A corrected requisition is ready result panel. |
+
+The marker tuple and next-step stage must always agree. Done for a completed addendum refers to that addendum item while the Tender remains at O. Outstanding cancellation compliance keeps O current only for its assigned holder; other viewers see the completed Tender journey. For waiting variants on a record that another person holds, use the same tuple and replace the next-step line with **Waiting on {responsibility} {name} since {recorded instant}** from §5.9; do not offer the viewer the holder's controls. For technical readers use §5.9's Not involved/waiting/done rule. A full-page error in DES-14, a focused confirmation/dialog or the DES-01 workspace never inherits the parent tracker inside itself. Keep the parent record guidance visible behind a modal only as background, not as a second component.
 
 ## 11. Functional interaction contract
 
@@ -1319,7 +1444,9 @@ The system derives overall publication after every required channel is confirmed
 | Send response | Calls `RespondToTenderClarification`; sends directly or anonymously to the frozen candidate audience only when no published change is introduced. |
 | Prepare addendum | From a published-change clarification, opens TPR-DES-10 with the Tender/clarification context; it does not mark the clarification Answered. |
 | Retry notice | Calls `RetryFailedCandidateNotice` for the same immutable subject, recipient and content; it cannot change the candidate audience or Tender state. |
-| View cancellation requirements | Opens TPR-DES-12 without changing status. |
+| Ask Amina Hassan (Accounting Officer) to consider cancellation | Calls `RequestTenderCancellationReview` for the exact blocked material-addendum proposal; creates one AO work item and one sender waiting item, without changing the Tender or publishing the addendum. |
+| Discard addendum draft | Calls `DiscardAddendumDraft` after confirmation; archives only the unissued draft and returns to the unchanged Published Tender. |
+| View cancellation requirements | Opens the read-only cancellation requirements summary on the Tender record for the Procurement Officer or HOPF; it does not open the AO-only cancellation decision or change status. |
 | View or download Invitation / complete Tender / Addendum | Opens or streams the immutable generated document represented by its recorded digest. |
 | View public Tender | Opens the supplier-visible published package without internal values, decisions or evidence. |
 | View addendum / clarification | Opens the exact immutable issued addendum or recorded question/response with source identity protected from public/general audiences. |
@@ -1333,6 +1460,7 @@ An issued addendum appears in the Tender record only after every required channe
 |---|---|
 | Recommend cancellation | Requires a ground/reason recommendation and calls `RecommendTenderCancellation`; it does not cancel. |
 | Cancel Tender | Opens the §10.13 confirmation and then calls `CancelTender`. |
+| Close cancellation review | AO records a reason and calls `CloseTenderCancellationReview`; removes the AO work item, leaves the Tender open and the material addendum blocked. |
 | Record cancellation notice evidence | Records evidence against one required original channel. |
 | Record PPRA report evidence | Records the report acknowledgement/reference and date. |
 | Record candidate notice evidence | Records dispatch evidence against the governed candidate set. |
@@ -1345,6 +1473,8 @@ After `CancelTender` commits, preparation, publication, addendum and clarificati
 |---|---|
 | Back / Back to Tenders | Returns to the named safe route without mutation. |
 | Open Tender | Opens the already-created authorised Tender returned by the conflict result. |
+| View STD Template | Opens the exact bound release for a reader with STD inspection access; on an unavailable new binding, opens the permitted STD Templates view without creating a Tender. |
+| Open System setup | Opens the governed publication-rule configuration for an authorised System Manager; it does not change the rule by navigation alone. |
 | Reload | Discards stale displayed state only after warning about unsaved local changes, then loads the authoritative record. |
 | Try again | Repeats the failed read, not a mutation. |
 | Clear filters | Clears the active read filters and reloads the first page. |
@@ -1639,9 +1769,9 @@ Each criterion is independently testable. Passing a visual example without passi
 | TPR11-AC-002 | An already-bound unpublished Tender may continue on a Superseded release only while every exact asset, digest and renderer-adapter check passes. |
 | TPR11-AC-003 | Supersession never changes `template_release_id`, regenerates content from a successor or silently offers a selector. |
 | TPR11-AC-004 | A Withdrawn bound release blocks submit, approve, reopen, publication authorisation, publication confirmation, addendum issue and Bid start for an unpublished Tender. |
-| TPR11-AC-005 | The Withdrawn state preserves all work and exposes the governed cancellation/new-Tender or expressly authorised correction route; it never deletes or automatically rebinds. |
+| TPR11-AC-005 | The Withdrawn state preserves all work, explains that the current unpublished Tender cannot continue, and offers only the exact role-permitted §10.15 read/navigation control. Any separately governed cancellation, corrected source or new Tender is handled through its own authorised workflow; this state never deletes or automatically rebinds. |
 | TPR11-AC-006 | A published Tender retains its exact release, documents, Published Bid Definition and public readability after supersession or withdrawal, with a truthful lifecycle notice. |
-| TPR11-AC-007 | `BuildPublishedBidDefinition` invokes the STD-TPL-IMP-001 v1.0 shared compiler and cannot use a separate Tender-specific implementation. |
+| TPR11-AC-007 | `BuildPublishedBidDefinition` invokes the STD-TPL-IMP-001 v1.1 shared compiler and cannot use a separate Tender-specific implementation. |
 | TPR11-AC-008 | Procurement Officer and HOPF can inspect the exact bound release and report a concern without gaining template-edit or general technical-read authority. |
 
 ### 14.9 v0.12 site-switch acceptance (owner decision OD5)
@@ -1653,6 +1783,18 @@ Each criterion is independently testable. Passing a visual example without passi
 | TPR12-AC-003 | Switching the bound release Off, or back On, never changes the Tender's `template_release_id`, digests, documents or Published Bid Definition and never rebinds the Tender to another release. |
 | TPR12-AC-004 | An already-bound `Superseded` release continues and a `Withdrawn` release blocks exactly as TPR11-AC-002 and TPR11-AC-004 state; the site switch neither relaxes nor adds to those rules. |
 | TPR12-AC-005 | No Tenders test, fixture, seed or message relies on a `Candidate` release state; start tests cover a release that is `Available` and switched On, `Available` and switched Off, `Superseded` and `Withdrawn`. |
+
+### 14.10 v0.12 workflow-guidance acceptance (KT-STD-001 v1.8)
+
+| ID | Acceptance criterion |
+|---|---|
+| TPR12-AC-006 | Every Tender record read supplies one server-derived `next_step` with kind, headline, stage, holder, recorded since fact where known, all blockers, fixes and permitted primary action. A technical reader never receives a business action. |
+| TPR12-AC-007 | Every §5.1 state and visible responsibility passes KT-STD-001 §3B.7 dead-end conformance; a blocked action yields a stable §5.10 reason, concrete figures and a fix route the named holder can use. |
+| TPR12-AC-008 | The five formal Tender stages and their markers match §10.17, while Tender details, Supplier/contract requirements and Review/submit remain one Preparation stage with no three-part stepper. |
+| TPR12-AC-009 | Every record-screen variant renders the exact §10.17 next step and permitted tracker, replacing the identified duplicate narrative; workspace, focused dialogs and full-page error states render neither tracker nor an invented block. Every §10.15 full-page variant is checked for its exact role-permitted action; `TND_HANDOFF_CONFLICT` never exposes the linked Tender's identity to a viewer without read access. |
+| TPR12-AC-010 | §5.11 hand-off items appear and clear on underlying state changes, preserve return comments and distinguish cancellation compliance from a cancelled Tender. |
+| TPR12-AC-011 | At 1440 × 1024 the first working region remains in the first view, using the stated one-line reduced tracker if needed; keyboard, 200% zoom and 390 px checks preserve the same facts without a horizontal stepper. |
+| TPR12-AC-012 | A material addendum cannot be issued. Its exact hand-off creates one AO cancellation-review item and a waiting item; AO cancellation uses `CancelTender`, while closing the review records a reason and changes no Tender content or status. The same proposal cannot request another review after closure; `DiscardAddendumDraft` archives only the unissued proposal and returns to the unchanged Published Tender. |
 
 ## 15. Implementation and verification constraints
 
@@ -1762,10 +1904,10 @@ The implementation shall not:
 | BUD-CHG-001 v1.11 | Approved funding-control and authorised-value boundary. |
 | REQ-CHG-001 v1.12 | Approved `AuthorisedRequisitionHandoff v1.3`, inherited structured requirements and correction route. |
 | STD-TPL-001 v0.10 | Exact IT-equipment template boundary, bundle construction, documents, response rules, mappings, profiles, inspection and release lifecycle. |
-| STD-TPL-IMP-001 v1.0 | Installed-release registry, shared compiler, renderer adapters, concern capture and lifecycle enforcement. |
+| STD-TPL-IMP-001 v1.1 | Installed-release registry, shared compiler, renderer adapters, concern capture and lifecycle enforcement. |
 | BDS-CHG-001 v0.7 | Supplier runtime, Tender-bound candidate registration, question submission, mandatory-notice contact, supported renderer, response persistence and submission boundary. |
 | CFG-CHG-002 v0.16 | Effective rules, schedules and public portal support/legal-link configuration; it does not own installed-template inspection. |
-| Project Owner decision OD5, 26 September 2026 (v0.12) | A template release is an On/Off switch on the site, with no release approval or commissioning step. Where STD-TPL-001 v0.10 or STD-TPL-IMP-001 v1.0 still describe a `Candidate` state or an owner decision required before a release is `Available`, OD5 governs Tenders' binding until those documents are corrected. |
+| Project Owner decision OD5, 26 September 2026 (v0.12) | A template release is an On/Off switch on the site, with no release approval or commissioning step. STD-TPL-IMP-001 v1.1 implements the simplified installed-release runtime; OD5 governs Tender binding as specified in §5.3. |
 | Platform identity, task, document, records and security contracts | Authentication, assignment, tasks, evidence storage, retention and access control. |
 
 If a lower-level implementation note conflicts with this contract, this contract controls the Tenders behaviour. If this contract conflicts with applicable law, the law controls and the affected rule must be escalated before implementation; the system must not silently improvise a legal interpretation.
@@ -1774,11 +1916,11 @@ If a lower-level implementation note conflicts with this contract, this contract
 
 ### 18.1 v0.12 approval effect
 
-This document is **proposed for approval** as the v0.12 successor. v0.12 changes one concern: owner decision OD5, which makes a template release an On/Off switch on the site. Approval will confirm that a new Tender binds only a release that is Available and switched On on the site; that an already-bound release continues as in v0.11 (Available, switched On or Off, or Superseded, while integrity and renderer checks pass; Withdrawn blocks); and that switching a release Off never strands or rebinds a started Tender. It will not approve an STD bundle, and under OD5 there is no release approval or commissioning step for Tenders to wait on. It does not prove that software has been implemented, deployed or accepted in production; the §19.4 observations are evidence, not acceptance. The programme-boundary and implementation-completion statements in §18.2 continue to apply.
+The Project Owner **approved v0.12 on 26 September 2026**, including the same-day correction recorded in the control table. This version is the Tender implementation baseline. It applies owner decision OD5 and supplies KT-STD-001 v1.8 next-step, journey, guard-reason and hand-off detail for the same Tender lifecycle. A new Tender binds only a release that is Available and switched On on the site; an already-bound release continues as in v0.11 (Available, switched On or Off, or Superseded, while integrity and renderer checks pass; Withdrawn blocks). Switching a release Off never strands or rebinds a started Tender. This approval does not approve an STD bundle; under OD5 there is no release approval or commissioning step for Tenders to wait on. It does not prove that software has been implemented, deployed or accepted in production; the §19.5 observations are evidence, not acceptance. The programme-boundary and implementation-completion statements in §18.2 continue to apply.
 
 ### 18.2 v0.11 approval effect (retained)
 
-This document is **proposed for approval** as the v0.11 successor and complete implementation contract for the user-facing Tenders module through its Bid Submission boundary. Approval will confirm the product and control design, including general clarifications, candidate notices and the exact bound-release lifecycle. It will not approve an STD bundle or prove that software has been implemented, deployed, legally re-verified or accepted in production.
+The v0.11 text was proposed and was not approved; it is superseded by the approved v0.12. The retained scope covers the user-facing Tenders module through its Bid Submission boundary, including general clarifications, candidate notices and the exact bound-release lifecycle. The v0.12 approval does not approve an STD bundle or prove that software has been implemented, deployed, legally re-verified or accepted in production.
 
 Bid Opening, Evaluation and Award, Supplier Management/prequalification, RFQ, Restricted Tendering, Direct Procurement, RFP, Works and other Services are recorded programme work after this MVP slice. Their absence does not leave a hidden action inside Tenders and their future documents must consume the immutable published/closed handoffs defined here rather than revise this Tender retrospectively.
 
@@ -1898,13 +2040,22 @@ This register is the build checklist. Each row states a required target capabili
 | TPR12-IMP-002 | Leave the site switch out of every later-action recheck on an already-bound Tender; recheck only lifecycle, integrity and renderer adapter as TPR11-IMP-002 requires. | §§4.5.4, 5.1, 5.3–5.4, 5.8 | Switch-Off-after-start boundary matrix across the TPR11-IMP-002 actions. |
 | TPR12-IMP-003 | Retire every `Candidate` release case from Tenders tests, fixtures, seeds and messages. | §14.9 | Test and fixture inventory showing no `Candidate` case. |
 
-### 19.4 v0.12 as-built observations (evidence, not requirements)
+### 19.4 v0.12 workflow-guidance implementation
+
+| ID | Required implementation | Contract | Completion evidence |
+|---|---|---|---|
+| TPR12-IMP-004 | Return server-derived next steps, guard reasons and all fixes on record reads; no browser recomputation. | §§5.9–5.10; KT-STD-001 §3B | State/actor/guard matrix and dead-end test. |
+| TPR12-IMP-005 | Emit §5.11 hand-off My Work and waiting items and clear them only on the underlying state change. | §§5.1, 5.11 | Submission, return, approval, publication, addendum, correction and cancellation transition tests. |
+| TPR12-IMP-006 | Replace the three-part Draft progress row and duplicate status narratives with shared §10.17 components on permitted record archetypes. | §§9–10.17; KT-STD-001 §2.9 | Variant screenshots and keyboard, 200% zoom, 390 px and first-view checks. |
+| TPR12-IMP-007 | Implement the bounded material-addendum cancellation-review hand-off, AO close-with-reason outcome and unissued-draft discard route. | §§5.9–5.11, 7.4, 10.11–10.17, 11.6–11.7 | Idempotent request, waiting/clearing, no repeat after closure, AO decision, draft discard and unchanged-Tender negative tests. |
+
+### 19.5 v0.12 as-built observations (evidence, not requirements)
 
 These rows record what the Tenders and STD Templates code on branch `mvp1/dev` does, read from source on 26 September 2026 (commit 8e5ca5c9 plus uncommitted working-tree changes). They are observations, not rules. Where the build differs from or goes beyond this document, this document controls until the Project Owner decides otherwise.
 
 | Observation | Section that already describes it | Observed build behaviour | Treatment |
 |---|---|---|---|
-| **View STD Template** on the Start screen | §8 `TND_TEMPLATE_UNAVAILABLE`; §10.15 Template unavailable | When no release can be bound, the Start screen shows **Tender format unavailable** and offers **View STD Template** only to a user whom STD Templates lets read (Administrator, System Manager, Procurement Officer or HOPF); other users get no link. | Matches §8. §10.15 lists only **Back to Tenders** for this state; that existing difference between §8 and §10.15 is not resolved here. |
+| **View STD Template** on the Start screen | §8 `TND_TEMPLATE_UNAVAILABLE`; §10.15 Template unavailable variants | When no release can be bound, the Start screen shows **Tender format unavailable** and offers **View STD Template** only to a user whom STD Templates lets read (Administrator, System Manager, Procurement Officer or HOPF); other users get no link. | The inspection-link eligibility matches §§8 and 10.15. The §10.15 **Back to Tenders** navigation for a non-inspection reader is a design requirement, not an assertion that the observed build already shows it. |
 | Release notice on an unpublished Tender record | §5.1 bound-release rows; §10.15 bound-release rows | A Tender whose bound release is `Superseded`, `Withdrawn` or failed verification shows the §10.15 heading and message, with **View STD Template** for STD Templates readers. | Matches §10.15. |
 | Release notice on a published Tender record | §5.1 row for a release that becomes Superseded or Withdrawn after publication | A published Tender whose release is `Superseded` or `Withdrawn` shows an information notice whose wording this document does not state. | Build wording, not adopted here. |
 | Release notice for a switched-Off bound release | §5.1 switched-Off row (v0.12) | A Tender whose bound release is switched Off shows no notice. | Build choice, not adopted here. |
