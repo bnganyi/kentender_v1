@@ -145,6 +145,10 @@ kt_file_scanners = ["kentender_procurement.bid_submission.test_services.scanner.
 kt_bds_trust_services = ["kentender_procurement.bid_submission.test_services.trust.service"]
 kt_bds_time_services = ["kentender_procurement.bid_submission.test_services.trusted_time.service"]
 kt_bds_custody_services = ["kentender_procurement.bid_submission.test_services.tender_box.service"]
+# BOP-CHG-001 v0.10 plan D6/D15 and TRUST-ADR-001 v0.1 §2: the shared signing
+# service seam used by Proceedings attestations. Only the test attestation
+# double is configured, and it answers on a test environment only.
+kt_trust_signing_services = ["kentender_procurement.proceedings.test_services.attestation.service"]
 # BDS-CHG-001 v0.8 plan D18: a browser world's persisted instant, read by
 # every app's trusted clock through kentender_core's test_clock (test
 # environment only).

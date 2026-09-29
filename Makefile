@@ -716,7 +716,7 @@ bop-preflight:
 
 # PRC-CHG-001 v0.9 shared Proceedings service (plan Phase 2 gate PRC-G02; Phase 1 schema).
 prc-services-gate: bop-preflight
-	cd $(BENCH_ROOT) && for m in test_prc_schema; do \
+	cd $(BENCH_ROOT) && for m in test_prc_schema test_prc_lifecycle test_prc_events test_prc_minutes test_prc_access; do \
 		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.proceedings.tests.$$m || exit 1; done
 
 # BOP-CHG-001 v0.10 Bid Opening owner services (plan Phases 1 and 3-6).
