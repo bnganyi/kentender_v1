@@ -1,0 +1,292 @@
+# BOP-CHG-001 v0.10: Electronic Bid Opening (with PRC-CHG-001 v0.9 Proceedings), tracker
+
+| Control | Value |
+|---|---|
+| Version | 0.10-tracker.2 |
+| Date | 29 September 2026 |
+| Status | Phase 0 done (BOP-G00, 29 Sep 2026); Phase 1 in progress. (0.10-tracker.1 read: Planned. Phase 0 documents written (BOP10-001, BOP10-002, BOP10-003); no code) |
+
+**Authority:** `KenTender_BOP-CHG-001_Electronic_Bid_Opening_v0_10.md`, Approved 29 Sep 2026 by the Project Owner. (0.10-tracker.1 read: Proposed, 29 Sep 2026. It is built to under owner decision OD-A.) TRUST-ADR-001 v0.1 (approved 27 Sep 2026) is `../00_common/KenTender_TRUST-ADR-001_Shared_Signing_and_Sealed_Custody_v0_1.md`. The approved predecessor `KenTender_BOP-CHG-001_Electronic_Bid_Opening_v0_9.md` (approved 29 Sep 2026) is retained. The shared service is `../13_proceedings/KenTender_PRC-CHG-001_Minimal_Procurement_Proceedings_v0_9.md`, approved 29 Sep 2026.
+
+**Plan:** `BOP-CHG-001_v0_10_Implementation_Plan.md`. It holds owner decisions OD-A…OD-C, technical decisions D1–D17 (D15–D17 added in its Phase 0 findings) and conflicts C1–C10.
+
+**Companions:**
+- `BOP-CHG-001_v0_10_FOLLOW_UPS.md`;
+- `reconciliation/artboard_inventory.md`;
+- `reconciliation/v0_9_to_v0_10_diff.md`;
+- later: `evidence/v0_10/` and `RUNBOOKS.md`.
+
+**Design:** `design/Bid Opening Artboards v0.9.2.dc.html`, with 50 drawn boards and 2 reviewer notes.
+
+**Started:** 29 September 2026.
+
+## Tracker rules
+
+1. **Rows are permanent.** Status vocabulary: `Planned` / `In progress` / `Blocked` / `Blocked — owner` / `Partial` / `Done`. Reversed decisions are struck through in place, never deleted.
+2. **`Done` needs the row's own evidence.** Acceptable evidence is a command with result counts, a named test, a commit, or a described browser observation with literal rendered strings. Never record a result that was not observed. An honestly incomplete row is `Partial`. A result proven only through a simulation stand-in says so in its evidence ("simulation"). It never closes a production part (BOP v0.10 §14 closing paragraph).
+3. **Prohibited in new code:**
+   - a bid count, bidder identity, price or content reachable by any PE, public or technical reader before BeginOpening, whether through a DTO, an error, step presence, next-step wording or timing (BOP-A13);
+   - a chair, administrator or service credential acting for an absent member, or signing for another member;
+   - a generic Approve or Lock action, a checkbox standing in for a statutory signature, or an administrative release or activation step after close (BOP v0.10 §16; PRC v0.9 §16);
+   - editing a submitted amount, a register row, a frozen opening-record version or a finalized record, instead of adding a new version or supplement;
+   - ~~the verification labels "Test opening — synthetic bids only", "Test attestation — not an electronic signature" or "Record test attestation" in product copy (PRC v0.9 §13);~~ Refined 29 Sep 2026 by plan D15: TRUST-ADR-001 v0.1 §2 labels ("Test environment — bids are not submitted/opened under the production procedure"; "Test attestation — not an electronic signature") render only when `kt_bds_simulation_environment` is set, and never with it unset. They are never drawn into ported board markup;
+   - `production_bid_opening_enabled` read anywhere except `bid_opening/services/availability.py`;
+   - simulation stand-ins loading without `kt_bds_simulation_environment` (OD-C);
+   - any read of a BDS or Tenders doctype from `bid_opening` or `proceedings` code instead of the published seams (plan D4, D8);
+   - an import of `bid_opening` from `proceedings` (plan D1);
+   - `kentender_core.cl_surface_registry.js`, Civic Ledger or Stitch Desk classes (Industry only);
+   - a separate opening-ID route outside `/app/tenders/{tender}` (BOP v0.10 §9).
+4. **Governing sections:**
+   - BOP v0.10 §10 and the v0.9.2 boards govern visual and content fidelity. Board markup is ported class-for-class.
+   - BOP v0.10 §11 governs behaviour; BOP v0.10 §8 governs error copy, verbatim; PRC v0.9 §8 errors are mapped to BOP copy per BOP v0.10 §7.1.
+   - BOP v0.10 §12 and PRC v0.9 §12 govern audit.
+   - Browser literals come from BOP v0.10 §10 and the BDS source facts, never from board placeholder data. The runtime replaces every fixture time, page location, attendance, incident, proof and completion value with actual events (BOP v0.10 §10.6 "Design readiness").
+5. **Mapping:** every visible action maps to exactly one BOP v0.10 §7 command or read, and every cross-module effect to one BOP v0.10 §7.1 binding row (BOP-A15).
+6. **Site safety:**
+   - Never run a `bid_opening` or `proceedings` Python module while a Playwright process is active.
+   - Reseed to canonical after Python runs, because `bench run-tests` has no rollback.
+   - Test fixtures use years ≥ 2100.
+   - Every test module registers purge cleanup.
+7. **Production gate:** `production_bid_opening_enabled` stays false on every site. Phase 12 rows remain `Blocked — owner` until the owner supplies the named evidence.
+8. **Acceptance closure:** an AC row is `Done` only when every part it names is proven. Production-only parts are split into a Phase 12 row, never silently dropped.
+
+## Decision log
+
+| Date | Decision | Rationale |
+|---|---|---|
+| 29 Sep 2026 | OD-A: build to BOP v0.10. Owner answer, verbatim: "Build to v0.10 (Recommended)". | The boards embody v0.10's four changes. The rebase and approval of v0.10 are logged as FU-BOP-01 and block no backend work. |
+| 29 Sep 2026 | OD-B: Proceedings is a new `proceedings` module in `kentender_procurement`. Owner answer, verbatim: "New module in procurement (Recommended)". | Bid Opening is the first user, and later users (contract, inspection) are procurement-side. |
+| 29 Sep 2026 | OD-C: the stand-ins run on the dev site under `kt_bds_simulation_environment`. Owner answer, verbatim: "Dev site, like Bid Submission (Recommended)". | This follows the BDS v0.8 OD-C precedent. It departs from the isolation rule in BOP v0.10 §13 and BOP-A16 (C8). |
+| 29 Sep 2026 | D1–D14 adopted as implementation authority (plan). | They fill the implementation bindings that BOP v0.10 §9 and PRC v0.9 §15 leave open. |
+| 29 Sep 2026 | Owner answers, verbatim: "v0.10 is now approved"; "Register Daniel Otieno"; "Add Jane Wanjiku"; "Register updated"; "Commit and proceed to Phase 1". | C1, C2 and C3 close. The two actors are drafted as KT-STD-001 v1.11 (Proposed; approval is a separate owner step under the document protocol). |
+| 29 Sep 2026 | D15–D17 adopted from TRUST-ADR-001 v0.1: runtime test-environment labels under simulation, four trust-interface outcomes with one correlation identity, and the proxy negative-path list in the gates. | TRUST-ADR-001 v0.1 §2 and §4. |
+
+## Gate register
+
+| Gate | Condition | Status | Evidence |
+|---|---|---|---|
+| BOP-G00 | Phase 0: inventory (50 boards, each in exactly one slice), v0.9→v0.10 diff, conflicts logged, design folder committed, `make artboard-provenance-gate` covers `14_bid_opening/design` | Passed | 29 Sep 2026: inventory, diff, plan, tracker and follow-ups written; design folder committed with them (BOP10-004). The provenance gate is repo-wide (`test_artboard_provenance_gate.py` scans every `.dc.html` under `docs/mvp-1-r1/`), so it needed no extension; result recorded on BOP10-004. |
+| BOP-G01 | Phase 1: modules, doctypes, flags guard, placeholder retired, migrate clean twice | Planned | |
+| PRC-G02 | Phase 2: `make prc-services-gate` (PRC-S01, S02, N01–N12 against the simulated owner) | Planned | |
+| BOP-G03 | Phase 3: BDS seam, renderer determinism, signing double, settings, incident transport, availability order | Planned | |
+| BOP-G04 | Phase 4: pre-session services, count-neutral pre-Start test, My Work provider | Planned | |
+| BOP-G05 | Phase 5: ceremony services, all ceremony negative fixtures, v0.10 branch (6) | Planned | |
+| BOP-G06 | Phase 6: opening record, attestation, completion, correction kinds, register copy | Planned | |
+| BOP-G07 | Phase 7: `make bop-dead-end-gate` and `make bop-leakage-gate` | Planned | |
+| BOP-G08.1…8.7 | Phase 8 slices: `ui-bop-<slice>-gate` each, plus one `ui-tenders-*` regression run after the D9 seam | Planned | |
+| BOP-G09 | Phase 9: `ui-bop-public-gate` | Planned | |
+| BOP-G10 | Phase 10: `seed-canonical THROUGH=bid_opening` and `seed-canonical-validate` | Planned | |
+| BOP-G11 | Phase 11: `ui-bop-fidelity-gate` (50), state/actor matrix, persona pass, PRC-INT-01 | Planned | |
+
+## Work register: Phase 0 (documents and reconciliation)
+
+| ID | Item | Status | Evidence |
+|---|---|---|---|
+| BOP10-001 | v0.10 plan, tracker and follow-ups (new versioned files) | Done | 29 Sep 2026. `BOP-CHG-001_v0_10_{Implementation_Plan, IMPLEMENTATION_TRACKER, FOLLOW_UPS}.md`. |
+| BOP10-002 | `reconciliation/artboard_inventory.md` | Done | 29 Sep 2026. Script extraction of the 52-entry board registry (design file line 1225): 50 drawn boards (47 Covered, 3 Conditional) and 2 notes (`n00`, `f00`). |
+| BOP10-003 | `reconciliation/v0_9_to_v0_10_diff.md` | Done | 29 Sep 2026. `diff` of the two files: four substantive changes and the approval-state reversions (C1). |
+| BOP10-004 | Commit `design/` (board, `support.js`, `_ds/`) and extend `make artboard-provenance-gate` to `14_bid_opening/design` | Planned | |
+| BOP10-005 | Owner: rebase BOP v0.10 onto approved v0.9 and approve it (FU-BOP-01) | Done | 29 Sep 2026: v0.10 control table reads "**Approved design and development contract**", "Approved on: 29 September 2026 — Project Owner", governing standard KT-STD-001 v1.10. |
+| BOP10-006 | Owner: supply TRUST-ADR-001 v0.1 (FU-BOP-02) | Done | 29 Sep 2026: `00_common/KenTender_TRUST-ADR-001_Shared_Signing_and_Sealed_Custody_v0_1.md`, read in full; plan D15–D17. |
+| BOP10-007 | Documentation owner: register entries for BOP, PRC, TRUST, KT-STD-001 v1.10 and TPR-CHG-001 v0.13; KT-STD-001 v1.10 filename (FU-BOP-03) | Done | 29 Sep 2026: register `as_of` 2026-09-28 has TRUST-ADR-001 v0.1, BOP-CHG-001 v0.10 and PRC-CHG-001 v0.9 (all "Approved requirement") and KT-STD-001 v1.10 (approved 2026-09-29, filename `…_v1_10_proposed.md`). |
+| BOP10-008 | `reconciliation/error_contract.md`: BOP v0.10 §8 and PRC v0.9 §8 verbatim, with the PRC → BOP copy map | Planned | |
+| BOP10-009 | `reconciliation/handoff_register.md`: the BOP v0.10 §5 handoff table, each row mapped to a My Work title, notification and clearing event | Planned | |
+| BOP10-010 | `reconciliation/fixture_chronology.md`: BOP v0.10 §10 main path and branches (1)–(6), each with its own reset state | Planned | |
+| BOP10-011 | KT-STD-001 v1.11 (Proposed): §8.3 actors Daniel Otieno and Jane Wanjiku, by the document protocol's anchored edits | Done | 29 Sep 2026: `00_common/KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_11.md`; `preservation_check.py` PASS (0 deleted; 2 allowed control-table lines changed); `consistency_check.py` 0 errors (6 warnings, all the Daniel Otieno/Daniel Rotich first-name note the owner decided). Owner approval owed (FU-BOP-08). |
+
+## Work register: Phases 1–12
+
+| ID | Phase | Item | Status | Evidence |
+|---|---|---|---|---|
+| BOP10-101 | 1 | `bid_opening` and `proceedings` modules in `modules.txt`; Module Def app check after first migrate (D1) | Planned | |
+| BOP10-102 | 1 | PRC doctypes (D2) with flags guard and deny permissions | Planned | |
+| BOP10-103 | 1 | BOP doctypes and `Bid Opening Settings` (D2) | Planned | |
+| BOP10-104 | 1 | `test_schema_contract.py` in both modules | Planned | |
+| BOP10-105 | 1 | Retire the placeholder `bid_opening` workspace; sidebar link check; `make validate-links`; migrate clean twice (D12) | Planned | |
+| BOP10-201 | 2 | `proceedings/services/lifecycle.py`: Create, Start (arrivals snapshot), End, MarkNotHeld, CloseAbortedProceeding | Planned | |
+| BOP10-202 | 2 | `attendance.py` and `events.py`: pre-session and in-session rules, unique owner event ID, trusted and reported time | Planned | |
+| BOP10-203 | 2 | `minutes.py`, `attestation.py` and `finalize.py`: freeze, supersede, attest, finalize, supplement | Planned | |
+| BOP10-204 | 2 | `reads.py` (Read, Export) and `errors.py` (PRC v0.9 §8) | Planned | |
+| BOP10-205 | 2 | `proceedings/test_services/owner.py` simulated owner (`kt_prc_owner_adapters`) | Planned | |
+| BOP10-206 | 2 | Tests PRC-S01, S02, N01–N12; `make prc-services-gate` | Planned | |
+| BOP10-301 | 3 | `bid_submission/services/opening_gateway.py` (D4) and a BDS tracker addendum row | Planned | |
+| BOP10-302 | 3 | Renderer gateway and default wkhtmltopdf renderer, with a determinism test (D5) | Planned | |
+| BOP10-303 | 3 | Signing gateway and simulation double (D6) | Planned | |
+| BOP10-304 | 3 | Presence settings and heartbeat sweep (D7) | Planned | |
+| BOP10-305 | 3 | Incident transport with retry and failure switch (D11) | Planned | |
+| BOP10-306 | 3 | `availability.py::get_opening_availability()`; stand-ins gated by `kt_bds_simulation_environment` | Planned | |
+| BOP10-401 | 4 | `case.py`: PrepareOpeningCase as `TenderOpenForSubmission` consumer; Tenders tracker addendum row (D8) | Planned | |
+| BOP10-402 | 4 | `appointment.py`: AppointOpeningCommittee, successor history, `is_excluded_from_evaluation` | Planned | |
+| BOP10-403 | 4 | `arrangements.py`: PublishOpeningArrangements | Planned | |
+| BOP10-404 | 4 | `presence.py`: Join, Leave, heartbeat, with PRC pre-session attendance | Planned | |
+| BOP10-405 | 4 | `close_intake.py`: ReceiveClosedBox and manifest reconciliation; `custody.py`: ConfirmOpeningCustody | Planned | |
+| BOP10-406 | 4 | `not_held.py`: RecordOpeningNotHeld and pre-Start ConsumeTenderCancellation; Tenders cancellation outbox seam (D8) | Planned | |
+| BOP10-407 | 4 | `reads.py::get_opening`: next steps, guards, timed **Scheduled** | Planned | |
+| BOP10-408 | 4 | `my_work_provider.py` registered in `kt_my_work_providers` (D11) | Planned | |
+| BOP10-409 | 4 | Count-neutral pre-Start test (empty and nonempty manifests identical) | Planned | |
+| BOP10-501 | 5 | BeginOpening and OpenNextTender (reveal, render, number, page count) | Planned | |
+| BOP10-502 | 5 | RecordReadout + SelectOpeningTargets, committed atomically | Planned | |
+| BOP10-503 | 5 | RecordAttendance, RecordIntervention, RecordMemberAccount | Planned | |
+| BOP10-504 | 5 | DisposeOpeningException (**Record comment for Evaluation**) | Planned | |
+| BOP10-505 | 5 | RecordInterruption, ResumeOpening, paused-opening AO item | Planned | |
+| BOP10-506 | 5 | Incidents: unreadable, mismatch, credential, profile unavailable; **Notify support**; **Retry opening** (v0.10 branch 6) | Planned | |
+| BOP10-507 | 5 | RecordZeroBidOutcome + FinishCeremony (atomic); FinishCeremony rechecks | Planned | |
+| BOP10-508 | 5 | CloseCancelledOpening through the simulation-only TPR event (D8) | Planned | |
+| BOP10-601 | 6 | Opening-record draft generation (D5) and FreezeOpeningMinutes | Planned | |
+| BOP10-602 | 6 | SupersedeFrozenMinutes and per-member, per-segment target enumeration | Planned | |
+| BOP10-603 | 6 | AttestOpeningTarget and internal CompleteOpening; once-only `Evaluation Handoff` for a nonempty opening only | Planned | |
+| BOP10-604 | 6 | Completed-record correction limited to the four v0.10 kinds, with the denial message | Planned | |
+| BOP10-605 | 6 | RequestOpeningRegister and GetOpeningRegisterCopy (digest, delivery audit, AO task path) | Planned | |
+| BOP10-606 | 6 | Audit export joining BOP and PRC evidence | Planned | |
+| BOP10-701 | 7 | `bid_opening/api.py` and `proceedings/api.py` (explicit arguments; no `**kwargs` forwarding) | Planned | |
+| BOP10-702 | 7 | Per-actor DTO filters and protected Not found | Planned | |
+| BOP10-703 | 7 | `make bop-leakage-gate` | Planned | |
+| BOP10-704 | 7 | `make bop-dead-end-gate` (state × actor through `next_step.problems`) | Planned | |
+| BOP10-705 | 7 | Technical-read resolvers | Planned | |
+| BOP10-800 | 8 | Tenders seam (D9): `bid_opening.bundle.js` in the tenders page bundles; `Tenders.vue` delegates `opening`; sub-paths locked here; one `ui-tenders-*` regression run | Planned | |
+| BOP10-801…807 | 8 | Slices 8.1–8.7 per `reconciliation/artboard_inventory.md`, each with one Playwright spec and `ui-bop-<slice>-gate` | Planned | |
+| BOP10-808 | 8 | `tests/ui/fidelity/departures/bid-opening.js` and inventory-count test (50); `ui-structure-gate` project | Planned | |
+| BOP10-901 | 9 | BDS portal section seam (D10) | Planned | |
+| BOP10-902 | 9 | Public boards p0–p6 and `ui-bop-public-gate` | Planned | |
+| BOP10-1001 | 10 | Canonical `bid_opening` stage (D14) and validate coverage | Planned | |
+| BOP10-1002 | 10 | Jane Wanjiku Website User (D13) | Planned | |
+| BOP10-1101 | 11 | `ui-bop-fidelity-gate` over all 50 boards | Planned | |
+| BOP10-1102 | 11 | BOP v0.10 §15 state/actor matrix (nonempty, empty, not held, interrupted, missing member, unreadable) | Planned | |
+| BOP10-1103 | 11 | Persona browser pass (8 actors) and PRC-INT-01 | Planned | |
+| BOP10-1104 | 11 | AC map closure and `RUNBOOKS.md` | Planned | |
+| BOP10-1201 | 12 | LAW-V-001 legal trace: Act section 78(1)–(11), section 67, section 82 | Blocked — owner | |
+| BOP10-1202 | 12 | Operating profile: presence timeout, custody threshold and key holders, page and initial equivalence, attendee authentication, recovery | Blocked — owner | |
+| BOP10-1203 | 12 | TRUST-ADR-001 support-module integration (real signing and custody) | Blocked — owner | |
+| BOP10-1204 | 12 | Security review (BOP v0.10 §15 list) | Blocked — owner | |
+| BOP10-1205 | 12 | Evaluation intake of `Evaluation Handoff` (future Evaluation change unit) | Blocked — owner | |
+| BOP10-1206 | 12 | TPR-CHG-001 v0.14 post-close decision route (BOP v0.10 §10.7) | Blocked — owner | |
+| BOP10-1207 | 12 | Production enablement decision | Blocked — owner | |
+
+## Board map
+
+The full map is in `reconciliation/artboard_inventory.md`: 50 drawn boards, each with its `Component#variant`, Phase 8 or 9 slice, and status.
+
+## Acceptance criteria map
+
+All 34 criteria are copied verbatim by script from BOP v0.10 §14 (21 rows) and PRC v0.9 §14 (13 rows). BOP v0.10 §14 is unchanged from v0.9. BOP v0.10 §14's closing paragraph applies to every row: "A05/A07 depend on the lawful electronic page/signature mapping and renderer. A03/A08/A09 depend on custody, attendance and recovery operating profile. A10's emitted handoff can be tested here; its uptake remains future Evaluation scope."
+
+### BOP-CHG-001 v0.10 §14
+
+| ID | Criterion (verbatim) | Source line | Target phase | Status | Evidence |
+|---|---|---|---|---|---|
+| BOP-A01 | Latest effective deadline/opening time agree; sealed close exact; no pre-opening sealed-box-derived bidder identity/count/content; separately collected physical-security/voluntary-attendance identity cannot reveal submission status. | BOP v0.10 line 374 | 4 | Planned | |
+| BOP-A02 | AO appoints at least three actual members, including one independent of processing/evaluation; every active appointed member is present and authenticated at start and each material ceremony action. Chair alone cannot decrypt, reveal, read out, resume or end, including through direct API, administrator or service credentials. | BOP v0.10 line 375 | 4, 5 | Planned | |
+| BOP-A03 | An isolated verification run exercises close, distinct custody participation and actual Start in order for empty and nonempty boxes without a separate administrative activation. Production claims require real event times and an approved method. The product prompts at close and records delay/outage truthfully; a universal production timeout is an operating-profile input, not inferred from “promptly.” | BOP v0.10 line 376 | 5; production part 12 | Planned | |
+| BOP-A04 | Reconciliation accounts for every timely current submission and preserves withdrawal/supersession; Drafts/late attempts excluded. | BOP v0.10 line 377 | 4, 5 | Planned | |
+| BOP-A05 | Each opened tender receives ID/page count; exact name, submitted total, timely applicable changes and security given are read and fixed in ordered register. | BOP v0.10 line 378 | 5; production part 12 | Planned | |
+| BOP-A06 | No disqualification, scoring, price correction or substitution at opening, including exceptions. | BOP v0.10 line 379 | 5 | Planned | |
+| BOP-A07 | Attendance/procedure, separate register and PRC minutes, target-bound member proofs and correction history are complete. | BOP v0.10 line 380 | 6; production part 12 | Planned | |
+| BOP-A08 | Submitting bidder may request final register; attendee sees only lawful readout; internal packages/minutes restricted. | BOP v0.10 line 381 | 6, 9; production part 12 | Planned | |
+| BOP-A09 | Crash, replay, stale write and recovery create no duplicate, backdate, lost package or fabricated success. | BOP v0.10 line 382 | 5; production part 12 | Planned | |
+| BOP-A10 | For a nonempty opening, once-only handoff carries unchanged packages, published mapping, register, minutes and exceptions; a separate Evaluation appointment/intake explicitly takes it up. A completed empty opening has no such handoff. No automatic assessment, eligibility decision, Evaluation permission or bidder rejection is created. | BOP v0.10 line 383 | 6 | Planned | |
+| BOP-A11 | Every visible state/actor has server next step, all blockers, named holder and working fix; handoff items create/clear correctly. | BOP v0.10 line 384 | 4–7 | Planned | |
+| BOP-A12 | Every BOP artboard has labelled scenario values, hierarchy, interaction map, responsive and comprehension evidence; runtime data fields map to their authoritative producer. | BOP v0.10 line 385 | 8, 9, 11 | Planned | |
+| BOP-A13 | Every isolated proxy manifest, including zero, exercises two distinct confirmations including independent member before Begin; production uses the approved custody method and cannot inherit proxy authority; all appointed users present at Begin/any reveal/Finish. Zero triggers no decrypt. A PE or public user cannot infer box count from title/ID, step presence, status, errors or timing. No admin approval; test labels never pass production gates. | BOP v0.10 line 386 | 4, 7 | Planned | |
+| BOP-A14 | Actual attendance/interventions/repeat/response/dissent are attributed and ordered; held zero differs from Not held; custody failure is not an Evaluation referral; latest target alone satisfies proof. | BOP v0.10 line 387 | 5 | Planned | |
+| BOP-A15 | Every applicable BOP–PRC/custody binding has producer, actual consumer or explicit no-PRC boundary, validation/failure and current test; missing binding disables affected action. | BOP v0.10 line 388 | 7 | Planned | |
+| BOP-A16 | Verification and production never share a Tender, receipt or signing result. OPEN/MEMBER/COMPLETE design variants use labelled §10 fixtures; implementation obtains actual renderer/target/proof outputs and the integrated method before enabling corresponding real commands. | BOP v0.10 line 389 | 8, 11 | Planned | |
+| BOP-A17 | The designated independent opening member is excluded from later same-Tender Evaluation appointment in this conservative product profile; the separate Evaluation owner checks all other legal/conflict conditions. | BOP v0.10 line 390 | 4 | Planned | |
+| BOP-A18 | Not held and Aborted after start are terminal, distinguish never-started from actual partial session, preserve custody without count disclosure and never create successful opening or Evaluation access. | BOP v0.10 line 391 | 4, 5 | Planned | |
+| BOP-A19 | Zero-current-bid held session completes register/minutes/proofs with no Evaluation handoff; nonempty completion emits one immutable handoff. | BOP v0.10 line 392 | 6 | Planned | |
+| BOP-A20 | One recorder action after actual speech records the named speaker, trusted confirmation time and unchanged source facts; any reported speech time is attributed separately. Member review of the frozen opening record provides later personal proof; there is no redundant speaker confirmation click. | BOP v0.10 line 393 | 5 | Planned | |
+| BOP-A21 | Before design handoff, the §20 actor/state/event matrix and the mechanical conformance check cover every ordinary and negative branch, reconcile visible actions with commands and PRC consumers, distinguish BDS facts from illustrative events, and list any unresolved design input without turning development or deployment tasks into artboard blockers. | BOP v0.10 line 394 | 11 | Planned | |
+
+### PRC-CHG-001 v0.9 §14
+
+| ID | Criterion (verbatim) | Source line | Target phase | Status | Evidence |
+|---|---|---|---|---|---|
+| PRC-A01 | One owner produces exactly one proceeding; replay and stale write are safe. | PRC v0.9 line 198 | 2 | Planned | |
+| PRC-A02 | Owner events and attendance are ordered, attributed and immutable; a supplier attendee gains no general read. | PRC v0.9 line 199 | 2, 5 | Planned | |
+| PRC-A03 | Minutes freeze to a digest; only appointed members can attest assigned fixed targets by the approved method. | PRC v0.9 line 200 | 6 | Planned | |
+| PRC-A04 | Missing owner events, unverified proof or changed target blocks completion with named reasons and fixes; no false minutes. | PRC v0.9 line 201 | 6, 7 | Planned | |
+| PRC-A05 | Correction preserves and exposes original finalized record and all proofs. | PRC v0.9 line 202 | 2 | Planned | |
+| PRC-A06 | PE and technical users cannot see sealed identities/count/content via PRC before opening; post-opening access obeys owner disclosure. | PRC v0.9 line 203 | 7 | Planned | |
+| PRC-A07 | For a nonempty completed opening, Bid Opening handoff to Evaluation cites exact opened packages, register and PRC record without PRC evaluating a bid. A zero-bid completion has no Evaluation handoff. | PRC v0.9 line 204 | 6 | Planned | |
+| PRC-A08 | Every owner artboard/control has a source-grounded scenario, permission and interaction mapping; all BOP variants use labelled design scenarios; runtime fields map to actual owner/support events, and verification proxy data stays outside product UI. | PRC v0.9 line 205 | 8, 11 | Planned | |
+| PRC-A09 | Superseding a frozen pre-final version requires reason and latest targets; prior proofs remain visible but cannot complete; finalized correction uses supplement. | PRC v0.9 line 206 | 2, 6 | Planned | |
+| PRC-A10 | A convened zero-current-bid session has real attendance/empty register/minutes/targets, while never-started is Not held; the same approved count-neutral pre-Begin custody guard are required, but no package is decrypted. | PRC v0.9 line 207 | 2, 5 | Planned | |
+| PRC-A11 | Pending accepts only attributed pre-session presence/custody/opaque close-reference events, has no actual start time or sealed-box-derived bidder facts; attendee representation never proves submission. At Start, active arrivals appear in the session view without duplicated arrivals. | PRC v0.9 line 208 | 2, 4 | Planned | |
+| PRC-A12 | Terminal Not held and Aborted after start cannot Start, resume, freeze, attest, finalize or hand off; the latter retains actual partial chronology and cessation time. | PRC v0.9 line 209 | 2, 5 | Planned | |
+| PRC-A13 | Readout time does not backdate trusted events; empty outcome/end is atomic and idempotent. | PRC v0.9 line 210 | 2, 5 | Planned | |
+
+## Fixture and negative-case map
+
+Each assertion is copied verbatim by script from BOP v0.10 §13 (21 rows) and PRC v0.9 §13 (15 rows). BOP v0.10 §13 says the isolated proxy output "supplies only verification evidence"; under OD-C these run on the dev site behind the simulation flag (C8).
+
+### BOP-CHG-001 v0.10 §13
+
+| ID | Assertion (verbatim) | Source line | Target phase | Status | Evidence |
+|---|---|---|---|---|---|
+| BOP-S01 | Production design crosswalk: BDS Afya Version 1, receipt and physical-security evidence remain exact. Actual page count, attendance, custody and proof are unavailable and cannot be asserted as results. | BOP v0.10 line 346 | 10 | Planned | |
+| BOP-S01T | In the isolated proxy run, two distinct appointed users including the independent member confirm custody for both empty and nonempty manifests; all three appointed users are present. No second PE or production access. | BOP v0.10 line 347 | 3, 5 | Planned | |
+| BOP-N01 | Before the deadline no sealed-box-derived bidder identity/count/content, including by joining public attendance. | BOP v0.10 line 348 | 4, 7 | Planned | |
+| BOP-N02 | Two members, no independent member, or any appointed member absent denies Begin and material action; chair alone cannot reveal. | BOP v0.10 line 349 | 4, 5 | Planned | |
+| BOP-N02A | A member disconnects after the final lawful readout; FinishCeremony fails until re-authentication or lawful successor route, preserving actual sequence. | BOP v0.10 line 350 | 5 | Planned | |
+| BOP-N03 | Only BDS current Version 2 of a replaced submission opens; old receipt remains lineage. | BOP v0.10 line 351 | 5 | Planned | |
+| BOP-N04 | A withdrawn envelope never opens; withdrawal acknowledgement remains. | BOP v0.10 line 352 | 5 | Planned | |
+| BOP-N05 | Mismatched/unreadable package retains exact incident and blocks normal completion. | BOP v0.10 line 353 | 5 | Planned | |
+| BOP-N06 | Credential outage and replay create no duplicate event, bypass or false success. | BOP v0.10 line 354 | 3, 5 | Planned | |
+| BOP-N07 | A changed minutes digest leaves old proof in history but requires latest proof. | BOP v0.10 line 355 | 6 | Planned | |
+| BOP-N08 | Empty held session has factual register/minutes and no Evaluation handoff. | BOP v0.10 line 356 | 6 | Planned | |
+| BOP-N09 | Attendee, submitting bidder, unrelated supplier, auditor and admin have distinct disclosure rights. | BOP v0.10 line 357 | 6, 9 | Planned | |
+| BOP-N10 | Missing independent custody participation or stale manifest/roster blocks Begin. Proxy success does not enable production. | BOP v0.10 line 358 | 4 | Planned | |
+| BOP-N11 | Pre-final minutes supersession requires reason and new personal proofs; finalized correction is a supplement. | BOP v0.10 line 359 | 6 | Planned | |
+| BOP-N12 | Empty held, never-started Not held and cancelled after Start are distinct; none creates an Evaluation package. | BOP v0.10 line 360 | 5 | Planned | |
+| BOP-N13 | A physical-security presenter identity cannot be joined to a sealed bid identity or count. | BOP v0.10 line 361 | 3, 7 | Planned | |
+| BOP-N14 | Pre-session presence/custody events create no actual PRC Start time. | BOP v0.10 line 362 | 4 | Planned | |
+| BOP-N15 | Post-readout observation may be referred; identity/integrity failure cannot be cleared by referral. | BOP v0.10 line 363 | 5 | Planned | |
+| BOP-N16 | Readout confirmation against an unopened/wrong package, stale facts, absent named speaking member or a trusted time before reveal fails. Software does not claim to detect whether words were spoken; attributed human confirmation and differing accounts are retained without changing the source-derived row. | BOP v0.10 line 364 | 5 | Planned | |
+| BOP-N17 | After Not held, late recovery cannot Begin/release/resume on the same case; AO sees no count. | BOP v0.10 line 365 | 4 | Planned | |
+| BOP-N18 | TPR cancellation after Start preserves partial PRC chronology/custody and denies reveal, proof and handoff. | BOP v0.10 line 366 | 5 | Planned | |
+
+### PRC-CHG-001 v0.9 §13
+
+| ID | Assertion (verbatim) | Source line | Target phase | Status | Evidence |
+|---|---|---|---|---|---|
+| PRC-S01 | Owner simulator creates a pending record and replays same key; one ID and one create event — use: Independent shared-service contract only. | PRC v0.9 line 176 | 2 | Planned | |
+| PRC-S02 | Simulator starts, appends two ordered events, records attendance, ends, freezes minutes, records verified target proofs and finalizes — use: Independent state/immutability test with **test-only** actors and targets; not legal compliance evidence. | PRC v0.9 line 177 | 2 | Planned | |
+| PRC-N01 | Different payload reuses same event ID; rejected, original unchanged — use: Replay/conflict. | PRC v0.9 line 178 | 2 | Planned | |
+| PRC-N02 | Member proof binds obsolete minutes digest; rejected, prior proof retained — use: Attestation integrity. | PRC v0.9 line 179 | 2 | Planned | |
+| PRC-N03 | Administrator attempts start, sign and content read; denied — use: Separation of authority. | PRC v0.9 line 180 | 2 | Planned | |
+| PRC-N04 | Unfinished session, missing owner event or unverified proof; finalization blocked with all missing items — use: Owner binding and dead-end. | PRC v0.9 line 181 | 2 | Planned | |
+| PRC-N05 | Finalized minutes correction adds supplement; original export unchanged — use: History. | PRC v0.9 line 182 | 2 | Planned | |
+| PRC-N06 | One member attests Version 1; authorized recorder supersedes with reason; old proof retained, each current target on Version 2 requires fresh proof and finalization blocks until complete — use: Pre-finalization correction. | PRC v0.9 line 183 | 2 | Planned | |
+| PRC-N07 | Convened session with zero bids reaches factual empty-register minutes/proofs, after the same count-neutral custody guard but without decrypt; never-started session is Not held with no successful handoff — use: State distinction. | PRC v0.9 line 184 | 2 | Planned | |
+| PRC-N08 | Member and visitor join/leave while Pending: attributed pre-session events, no bidder facts or false start; Start snapshots active members and carries still-active visitors into session attendance without a second arrival event — use: Pre-session chronology. | PRC v0.9 line 185 | 2 | Planned | |
+| PRC-N09 | Authoritative TPR cancellation after actual Start calls CloseAbortedProceeding once; actual start/cessation and partial events remain, while Start/End/Freeze/Attest/Finalize and BOP handoff are denied. — use: Terminal partial ceremony. | PRC v0.9 line 186 | 2 | Planned | |
+| PRC-N10 | MarkNotHeld from Pending is terminal; late Start/release/finalization on same identity fails. — use: Terminal never-started case. | PRC v0.9 line 187 | 2 | Planned | |
+| PRC-N11 | Recorder confirms readout after reveal; trusted confirmation time is retained while a reported earlier speech time stays attributed, never replaces the event time. A pre-reveal confirmation fails. — use: Time and human evidence. | PRC v0.9 line 188 | 2 | Planned | |
+| PRC-N12 | Owner's one empty-outcome command commits factual zero and End exactly once; replay adds no second event, and pre-Start use is denied. — use: One-action empty ceremony. | PRC v0.9 line 189 | 2 | Planned | |
+| PRC-INT-01 | BDS closes the canonical Tender; Bid Opening opens with appointed members, supplier attendance, custody exception and final minutes — use: Design scenario supplied in BOP v0.9. Integrated implementation test remains pending; a synthetic owner test does not establish a real ceremony. | PRC v0.9 line 190 | 11 | Planned | |
+
+## BOP–PRC and custody binding map (BOP v0.10 §7.1)
+
+Each row is copied verbatim by script from the BOP v0.10 §7.1 binding register (20 rows). BOP v0.10 §7.1: "An incomplete applicable row disables the affected production action." A row is `Done` when its producer, consumer, failure and named tests all pass.
+
+| Row | BOP producer/action (verbatim) | Consumer and binding (verbatim) | Validation / failure (verbatim) | Spec test IDs | Status | Evidence |
+|---|---|---|---|---|---|---|
+| BIND-01 | `PrepareOpeningCase` | PRC `CreateProceeding(owner=BOP case)` before deadline | One content-free Pending session per Published Tender; no manifest/count or start time | BOP-N14, PRC-N08 | Planned | |
+| BIND-02 | `ReceiveClosedBox` | BOP attaches BDS manifest; PRC reference-only owner event while Pending | Once-only exact manifest; missing manifest blocks Begin without early disclosure | BOP-S01T, PRC-S01 | Planned | |
+| BIND-03 | `GetOpening` | BOP role-filtered read; **no PRC mutation** | Pending session exists but cannot reveal pre-opening box facts | BOP-N01, BOP-A01 | Planned | |
+| BIND-04 | `AppointOpeningCommittee`, `PublishOpeningArrangements` | BOP appointment and BOP-owned public Opening projection on the Tender page; **no PRC consumer or change to TPR’s approved publication data** | AO/site/time/access checked; missing public method blocks Begin, no bidder metadata | BOP-DES-01-ARRANGEMENTS, BOP-A11 | Planned | |
+| BIND-05 | `JoinOpening`, `LeaveOpening` | BOP presence and PRC `RecordAttendance` flagged pre-session while Pending or in-session after Start | Exact member/capacity/time; no implied Start; absence blocks next material act | BOP-N02A, PRC-N08 | Planned | |
+| BIND-06 | `ConfirmOpeningCustody` | Approved custody adapter and PRC pre-session `AppendProceedingEvent`; interim adapter is §13 verification only | Every manifest, empty or nonempty; distinct required members including independent, all appointed present; stale roster/manifest invalidates participation; empty box never decrypts; production method remains blocked | BOP-N10, BOP-N12, PRC-N08 | Planned | |
+| BIND-07 | `BeginOpening` | PRC `StartProceeding`, actual-roster snapshot and active pre-session arrivals carried into the session attendance view | Deadline, public arrangements, all-member presence and uniform custody-confirmation guard; failure stays Pending and discloses no box count; no second arrival event or user click | BOP-A02, PRC-A02 | Planned | |
+| BIND-08 | `RecordAttendance` | PRC `RecordAttendance` with represented tenderer and actual arrival/departure | Authorized recorder; missing representation does not grant submitter rights | BOP-A07, PRC-A02 | Planned | |
+| BIND-09 | `OpenNextTender`, `RecordReadout` | PRC `AppendProceedingEvent` by unique owner ID, register ref, named speaker and trusted confirmation time; optional reported speech time is attributed separately | Recorder confirms after speech against the currently opened package; stale/wrong package or pre-reveal entry is denied. Software cannot independently prove speech occurred; the recorder's attributed confirmation and attendee/member accounts provide procedural evidence. Failed append blocks next reveal | BOP-A05, BOP-N16, PRC-N01 | Planned | |
+| BIND-10 | `RecordIntervention`, `RecordMemberAccount`, `RecordInterruption`, `ResumeOpening` | PRC `AppendProceedingEvent` with speaker, bid/step, fact, response, type and time | Authorized actor; no content edits or lost event; interruptions leave PRC In session | BOP-A14, PRC-A02 | Planned | |
+| BIND-11 | `DisposeOpeningException` | BOP exception outcome and PRC `AppendProceedingEvent` | Observation referral permitted; package identity/integrity/unreadability unresolved blocks completion | BOP-N05, BOP-A14 | Planned | |
+| BIND-12 | `RecordZeroBidOutcome`, `FinishCeremony` | PRC `AppendProceedingEvent`, `EndProceeding` and empty register when applicable | Actual held session and roster recheck; same approved count-neutral pre-Begin custody guard required for empty box, with no decrypt; no `MarkNotHeld` | BOP-N12, PRC-N07 | Planned | |
+| BIND-13 | `RecordOpeningNotHeld` / TPR cancellation before Start | PRC terminal `MarkNotHeld`, existing opaque BDS/Trust custody reference and AO decision item only when no prior cancellation | Pending/no Start and BOP not terminal; Begin permanently denied thereafter; no count, false minutes or handoff | BOP-N12, BOP-N17, PRC-N07 | Planned | |
+| BIND-14 | TPR cancellation after Start | PRC `CloseAbortedProceeding` with actual start, cessation time, last event and custody reference | No resume/reveal/normal finalization; preserves partial events, no fabricated minutes/handoff | BOP-N18, PRC-N09 | Planned | |
+| BIND-15 | `SelectOpeningTargets`, `FreezeOpeningMinutes` | PRC `FreezeMinutes` with register/version/digest, event IDs, rendered target IDs | Missing event/target blocks freeze | BOP-A07, PRC-A03 | Planned | |
+| BIND-16 | `SupersedeFrozenMinutes` | PRC `SupersedeFrozenMinutes` with reason and revalidated references | Before finalization; old proof retained but no longer current | BOP-N11, PRC-N06 | Planned | |
+| BIND-17 | `AttestOpeningTarget` | PRC `AttestTarget` on latest digest | Personal verified method and actual target scope; failed proof blocks | BOP-N07, PRC-N02 | Planned | |
+| BIND-18 | Internal `CompleteOpening` | PRC `FinalizeProceeding`, then BOP completion and conditional nonempty handoff | All current proofs and register pass; empty set creates no Evaluation package; failed finalization leaves BOP awaiting | BOP-A10, PRC-N04 | Planned | |
+| BIND-19 | Finalized correction | PRC `AppendSupplement` with owner reason/proof | Original immutable, no retrospective handoff rewrite | PRC-N05 | Planned | |
+| BIND-20 | `RequestOpeningRegister`, `GetOpeningRegisterCopy` | BOP/AO delivery route; **no PRC consumer** | Verified submitting tenderer and final digest; pending/denial recorded | BOP-N09, BOP-A08 | Planned | |

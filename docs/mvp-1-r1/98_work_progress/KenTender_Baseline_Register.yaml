@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "register_id": "KT-DOC-CTRL-001",
   "title": "KenTender Requirements and Delivery Baseline Register",
-  "as_of": "2026-09-26",
+  "as_of": "2026-09-28",
   "purpose": "Canonical machine-readable record of the current requirements baseline, cross-module contracts, decisions, implementation handoffs, future work and unresolved control findings.",
   "governance": {
     "source_of_truth": "This file is the canonical source for the companion Documentation Control Register workbook.",
@@ -97,40 +97,40 @@
     {
       "document_id": "NDS-CHG-001",
       "title": "Clean Departmental Needs",
-      "version": "1.15",
+      "version": "1.14",
       "category": "Module requirements",
       "module": "Departmental Needs",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-09-28",
-      "supersedes": "v1.14 approved 21 September 2026; v1.13 and earlier",
+      "approval_date": "2026-09-21",
+      "supersedes": "v1.13 and earlier",
       "implementation_status": "Not evidenced",
       "verification_status": "Not evidenced",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "libfile_43204a8a82548191a05d0c20cabf0283",
-      "filename": "KenTender_NDS-CHG-001_Clean_Departmental_Needs_v1_15.md",
+      "filename": "KenTender_NDS-CHG-001_Clean_Departmental_Needs_v1_14.md",
       "scope": "Simple need capture, review and acceptance; consultation is optional and is not a gate.",
-      "dependencies": "PLN-CHG-001 v1.28; KT-STD-001 v1.9",
-      "action": "Regenerate the affected artboards for the guidance region and the Departmental plan facts; the v1.15 runtime is built (commit d2642897)."
+      "dependencies": "PLN-CHG-001; KT-STD-001",
+      "action": "Retain as current controlled baseline."
     },
     {
       "document_id": "PLN-CHG-001",
       "title": "Clean Procurement Planning",
-      "version": "1.28",
+      "version": "1.27",
       "category": "Module requirements",
       "module": "Procurement Planning",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-09-28",
-      "supersedes": "v1.27 approved 25 September 2026; v1.26 approved 25 September 2026; v1.25 approved 23 September 2026; all earlier Planning specifications",
+      "approval_date": "2026-09-25",
+      "supersedes": "v1.26 approved 25 September 2026; v1.25 approved 23 September 2026; all earlier Planning specifications",
       "implementation_status": "Not implemented",
       "verification_status": "Not evidenced",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "libfile_efd27d9b04ac8191bb06e17aef384d2e",
-      "filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_28.md",
+      "filename": "KenTender_PLN-CHG-001_Clean_Procurement_Planning_v1_27.md",
       "scope": "Complete Planning authority including the current-complete-APP reservation denominator, next-step and journey contract, corrected funding-request blockers, Planning-side budget revision request, hand-off register and Purchase-ready-for-requisition item.",
-      "dependencies": "STR-CHG-001 v1.8; BUD-CHG-001 v1.11; NDS-CHG-001 v1.15; CFG-CHG-002 v0.13+; REQ-CHG-001 v1.12; KT-STD-001 v1.9",
-      "action": "Implement the approved v1.27 and v1.28 runtime and design contracts; the v1.28 late-need and accepted-plan changes are built (commit d2642897)."
+      "dependencies": "STR-CHG-001 v1.8; BUD-CHG-001 v1.11; NDS-CHG-001 v1.14; CFG-CHG-002 v0.13+; REQ-CHG-001 v1.12; KT-STD-001 v1.8",
+      "action": "Implement the approved v1.27 runtime and design contracts, including blocker explanations, budget revision hand-off and no-dead-end acceptance."
     },
     {
       "document_id": "REQ-CHG-001",
@@ -173,21 +173,21 @@
     {
       "document_id": "TPR-CHG-001",
       "title": "Tenders",
-      "version": "0.12",
+      "version": "0.13",
       "category": "Module requirements",
       "module": "Tender Preparation and Publication",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-09-26",
-      "supersedes": "v0.11 proposed, never approved",
+      "approval_date": "2026-09-28",
+      "supersedes": "v0.12 approved 26 September 2026; v0.11 proposed, never approved",
       "implementation_status": "Planned",
       "verification_status": "Not evidenced",
       "release_status": "Not applicable",
       "normative": "Yes",
-      "library_file_id": "libfile_357a5c0bfd8881918423b65cb452bd41",
-      "filename": "KenTender_TPR-CHG-001_Tenders_v0_12.md",
-      "scope": "Approved Tender preparation, approval, publication, clarifications, addenda, cancellation, bound STD-release lifecycle and KT-STD-001 v1.8 journey guidance.",
-      "dependencies": "REQ-CHG-001 v1.12; CFG-CHG-002 v0.16; STD-TPL-001 v0.10; STD-TPL-IMP-001 v1.1; BDS-CHG-001 v0.7",
-      "action": "Implement approved v0.12 and verify §§14–15; new binding requires an intact Available release switched On. Document approval is not production acceptance."
+      "library_file_id": "libfile_6aaf080652a08191a8796a086f31b59c",
+      "filename": "KenTender_TPR-CHG-001_Tenders_v0_13.md",
+      "scope": "Approved Tender preparation, approval, publication, clarifications, addenda, cancellation, exact bound STD-release lifecycle including published Superseded/Withdrawn behavior, and KT-STD-001 v1.8 journey guidance.",
+      "dependencies": "REQ-CHG-001 v1.12; CFG-CHG-002 v0.16; STD-TPL-001 v0.10; STD-TPL-IMP-001 v1.1; BDS-CHG-001 v0.8; BOP-CHG-001 v0.10 and PRC-CHG-001 v0.9 proposed for post-close cancellation; Award-status owner pending",
+      "action": "Implement approved v0.13. Proposed v0.14 (KenTender_TPR-CHG-001_Tenders_v0_14_proposed.md; libfile_000ff3f0efe881918a374f6f15819fbb) supplies a guarded post-close cancellation seam but is not approved or enabled. Obtain legal ground mapping and authoritative Award-status integration before approval/release."
     },
     {
       "document_id": "BDS-CHG-001",
@@ -205,27 +205,28 @@
       "library_file_id": "libfile_7252e90793e4819199bca1d68fab4457",
       "filename": "KenTender_BDS-CHG-001_Supplier_and_Electronic_Bid_Submission_v0_8.md",
       "scope": "Public discovery, supplier Account, structured Goods/IT bid preparation, signature, receipt, replacement and sealed Bid Opening handoff, with actor-specific guidance and bound STD-release controls.",
-      "dependencies": "TPR-CHG-001 v0.12; STD-TPL-001 v0.10; STD-TPL-IMP-001 v1.1; CFG-CHG-002 v0.16; AUTH-ADR-001 v1.10; KT-STD-001 v1.8; G1-REG-001 v1.1",
-      "action": "Implement approved v0.8; keep production submission disabled until §§5.10 and 15 gates pass. Published-Tender Superseded/Withdrawn behavior remains conditional on approval of TPR-CHG-001 v0.13. Reconcile its §10 presentation with the newly approved KT-STD-001 v1.9 before design execution."
+      "dependencies": "TPR-CHG-001 v0.13; STD-TPL-001 v0.10; STD-TPL-IMP-001 v1.1; CFG-CHG-002 v0.16; AUTH-ADR-001 v1.10; KT-STD-001 v1.8; G1-REG-001 v1.1",
+      "action": "Implement approved v0.8 with production disabled until §§5.10 and 15 gates pass; TPR v0.13 is approved. Proposed BDS v0.9 (libfile_f8038abb4ed08191983a122d03a31c1f) corrects the pre-opening physical-security receipt owner visibility conflict and stale TPR conditions; v0.8 remains normative pending v0.9 approval.",
+      "proposed_revision": "v0.9 — KenTender_BDS-CHG-001_Supplier_and_Electronic_Bid_Submission_v0_9.md — libfile_f8038abb4ed08191983a122d03a31c1f; not approved"
     },
     {
       "document_id": "STD-TPL-001",
       "title": "IT Equipment Tender Template Curation and Release Pack",
-      "version": "0.13",
+      "version": "0.10",
       "category": "Template standard",
       "module": "STD Templates",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-09-27",
-      "supersedes": "v0.12 (approved 2026-09-26), superseded on approval of v0.13 on 2026-09-27. v0.12 superseded v0.11 (proposed, never approved separately; its OD5 content is carried forward and approved with v0.12) and v0.10 (approved 26 September 2026); v0.9 and earlier",
+      "approval_date": "2026-09-26",
+      "supersedes": "v0.9 and earlier",
       "implementation_status": "Planned",
       "verification_status": "Pending",
       "release_status": "Candidate",
       "normative": "Yes",
       "library_file_id": "libfile_9a03e6ea43d88191938445a1a04d99b1",
-      "filename": "KenTender_STD-TPL-001_IT_Equipment_Tender_Template_Curation_and_Release_Pack_v0_13.md",
+      "filename": "KenTender_STD-TPL-001_IT_Equipment_Tender_Template_Curation_and_Release_Pack_v0_10.md",
       "scope": "Controlled template content and construction, installed integrity, administrative inspection and Administrator On/Off switch for new Tender binding.",
       "dependencies": "KT-STD-001 v1.8; REQ-CHG-001 v1.12; TPR-CHG-001 v0.12; STD-TPL-IMP-001 v1.1 approved; BDS-CHG-001 v0.7; CFG-CHG-002 v0.16",
-      "action": "Finish and verify release 1.1 assets; install the compatible digest-matched bundle On by default or Off by deployment request. No separate manifest approval. [26 Sep 2026, v0.12] Build successor release 1.2 with the v0.12 §8.1 first-task changes and the BDS-CHG-001 v0.8 content reconciliation; install it switched On and switch release 1.1 Off. [26 Sep 2026, v0.13 proposed; approved 27 Sep 2026] v0.13 authorises the release 1.2 vocabulary (supplied values, label parameters, the per-member joint-venture composition) and its security and warranty/support rows."
+      "action": "Finish and verify release 1.1 assets; install the compatible digest-matched bundle On by default or Off by deployment request. No separate manifest approval."
     },
     {
       "document_id": "STD-TPL-IMP-001",
@@ -249,21 +250,21 @@
     {
       "document_id": "KT-STD-001",
       "title": "Document, Design and Verification Standards",
-      "version": "1.9",
+      "version": "1.10",
       "category": "Cross-cutting standard",
       "module": "All",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-09-26",
-      "supersedes": "v1.8 approved 25 September 2026; v1.7 and earlier remain historical evidence",
+      "approval_date": "2026-09-29",
+      "supersedes": "v1.9 approved 26 September 2026, retained as historical evidence",
       "implementation_status": "Not applicable",
       "verification_status": "Passed",
       "release_status": "Not applicable",
       "normative": "Yes",
-      "library_file_id": "libfile_c189a864c48c81918002bab99a3dc04c",
-      "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_9.md",
-      "scope": "Current cross-cutting design and verification authority. Refines the white page sheet, guidance-region placement and restrained accent rules; retains the v1.8 next-step, journey, guard-reason, hand-off, My Work, Home and dead-end conformance contracts.",
+      "library_file_id": "libfile_17ffb496b8708191bfba06c99365e11c",
+      "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_10_proposed.md",
+      "scope": "Current cross-cutting standard, including plain language, minimum steps, Scheduled next step and actor/state/event conformance; retains earlier design and verification rules.",
       "dependencies": "Workflow Guidance Standard; all controlled change documents",
-      "action": "Apply v1.9 to every new or revised change unit and artboard prompt; retain the v1.8 runtime and verification contracts carried forward into v1.9."
+      "action": "Apply approved v1.10 to future and revised design contracts: plain language, minimum steps, Scheduled next step and actor/state/event conformance."
     },
     {
       "document_id": "AUTH-ADR-001",
@@ -511,6 +512,63 @@
       "scope": "Referenced by current documents but the exact controlled v0.5 file was not resolved in the admitted set.",
       "dependencies": "Gate 1 verification",
       "action": "Locate or admit the exact v0.5 controlled file before final integrated verification."
+    },
+    {
+      "document_id": "TRUST-ADR-001",
+      "title": "Shared Signing and Sealed Custody",
+      "version": "0.1",
+      "category": "Architecture decision",
+      "module": "Shared Trust Infrastructure",
+      "requirement_status": "Approved requirement",
+      "approval_date": "2026-09-27",
+      "supersedes": "",
+      "implementation_status": "Not started",
+      "verification_status": "Not started",
+      "release_status": "Blocked",
+      "normative": "Yes",
+      "library_file_id": "libfile_d1eb23c985808191b4a6e33a29af86b5",
+      "filename": "KenTender_TRUST-ADR-001_Shared_Signing_and_Sealed_Custody_v0_1.md",
+      "scope": "Locks two distinct signing/decision semantics and separate multi-person sealed-bid custody, defers actual production mechanisms to a shared support module, and permits synthetic test proxies only.",
+      "dependencies": "BDS-CHG-001 v0.8 (v0.9 proposed); BOP-CHG-001 v0.10 proposed; PRC-CHG-001 v0.9 proposed; LAW-V-001",
+      "action": "Approved v0.1 remains architecture authority. Its static Consumers row cites historical BOP v0.1/PRC v0.2; update by a later controlled revision. Test infrastructure administrator is outside proxy confidentiality guarantee. Production support module and operating profile remain separate."
+    },
+    {
+      "document_id": "BOP-CHG-001",
+      "title": "Electronic Bid Opening",
+      "version": "0.10",
+      "category": "Module requirements",
+      "module": "Bid Opening",
+      "requirement_status": "Approved requirement",
+      "approval_date": "2026-09-29",
+      "supersedes": "v0.9 approved 29 September 2026, retained as historical evidence",
+      "implementation_status": "Not started",
+      "verification_status": "Not started",
+      "release_status": "Not approved",
+      "normative": "Yes",
+      "library_file_id": "libfile_a398ef6e43f08191981ed3372ee79e29",
+      "filename": "KenTender_BOP-CHG-001_Electronic_Bid_Opening_v0_10.md",
+      "scope": "Approved design and development contract. v0.10 adds the opening-access-unavailable scenario, four completed-record correction kinds, the AO Your turn state and a unified Tender route.",
+      "dependencies": "KT-STD-001 v1.10 approved; TPR-CHG-001 v0.13 approved (v0.14 post-close seam proposed); BDS-CHG-001 v0.8 approved (v0.9 correction proposed); PRC-CHG-001 v0.9 approved; TRUST-ADR-001 v0.1 approved; LAW-V-001; future Evaluation intake",
+      "action": "Implement approved v0.10 under KT-STD-001 v1.10 with PRC v0.9. Preserve deferred signing/custody support and the separate TPR v0.14 dependency."
+    },
+    {
+      "document_id": "PRC-CHG-001",
+      "title": "Minimal Procurement Proceedings",
+      "version": "0.9",
+      "category": "Module requirements",
+      "module": "Procurement Proceedings",
+      "requirement_status": "Approved requirement",
+      "approval_date": "2026-09-29",
+      "supersedes": "v0.8 proposed, retained; earlier proposals historical; v0.1 accepted scope",
+      "implementation_status": "Not started",
+      "verification_status": "Not started",
+      "release_status": "Not approved",
+      "normative": "Yes",
+      "library_file_id": "libfile_e3c0b33a03448191b9463fc13f4a9c0f",
+      "filename": "KenTender_PRC-CHG-001_Minimal_Procurement_Proceedings_v0_9.md",
+      "scope": "Approved minimal shared service bound to BOP v0.10: attributed pre-session arrivals carried into actual session view, owner events, versioned opening record, personal target proof, one-action empty outcome and terminal partial/never-held records. No standalone UI.",
+      "dependencies": "BOP-CHG-001 v0.10 approved; KT-STD-001 v1.10 approved; TPR-CHG-001 v0.13 approved (v0.14 proposed); TRUST-ADR-001 v0.1 approved; LAW-V-001",
+      "action": "Implement approved v0.9 with BOP v0.10 under KT-STD-001 v1.10. Preserve the deferred shared signing/custody integration."
     }
   ],
   "interfaces": [
@@ -566,7 +624,7 @@
       "status": "Closed in requirements",
       "implementation_status": "Planned",
       "test_status": "Not evidenced",
-      "owner_doc": "REQ-CHG-001 v1.12 / TPR-CHG-001 v0.12",
+      "owner_doc": "REQ-CHG-001 v1.12 / TPR-CHG-001 v0.13",
       "failure_rule": "Tender creation must reject missing, stale or unauthorised handoff data."
     },
     {
@@ -599,7 +657,7 @@
       "status": "Closed in requirements",
       "implementation_status": "Planned",
       "test_status": "Not evidenced",
-      "owner_doc": "TPR-CHG-001 v0.12 / BDS-CHG-001 v0.8 / STD-TPL-IMP-001 v1.1",
+      "owner_doc": "TPR-CHG-001 v0.13 / BDS-CHG-001 v0.8 / STD-TPL-IMP-001 v1.1",
       "failure_rule": "Bid UI must be generated only by the shared compiler from the exact effective published definition and release identity."
     },
     {
@@ -610,7 +668,7 @@
       "status": "Closed in requirements",
       "implementation_status": "Planned",
       "test_status": "Not evidenced",
-      "owner_doc": "BDS-CHG-001 v0.8 / TPR-CHG-001 v0.12",
+      "owner_doc": "BDS-CHG-001 v0.8 / TPR-CHG-001 v0.13",
       "failure_rule": "Start bid must not create a half-registered candidate or orphan question."
     },
     {
@@ -654,7 +712,7 @@
       "status": "Closed in requirements",
       "implementation_status": "Planned",
       "test_status": "Not evidenced",
-      "owner_doc": "TPR-CHG-001 v0.12 / BDS-CHG-001 v0.8",
+      "owner_doc": "TPR-CHG-001 v0.13 / BDS-CHG-001 v0.8",
       "failure_rule": "Changed requirements require an issued addendum; clarifications alone cannot mutate the bid definition."
     },
     {
@@ -665,7 +723,7 @@
       "status": "Closed in requirements",
       "implementation_status": "Planned",
       "test_status": "Not evidenced",
-      "owner_doc": "STD-TPL-001 v0.10 / STD-TPL-IMP-001 v1.1 / TPR-CHG-001 v0.12",
+      "owner_doc": "STD-TPL-001 v0.10 / STD-TPL-IMP-001 v1.1 / TPR-CHG-001 v0.13",
       "failure_rule": "New binding requires site On and valid integrity/renderer; Off preserves existing bindings, safety/legal withdrawal blocks affected unpublished publication; never automatically rebind."
     },
     {
@@ -678,6 +736,17 @@
       "test_status": "Not started",
       "owner_doc": "BDS-CHG-001 v0.8",
       "failure_rule": "Gate 1 ends at sealed handoff; no opening or evaluation behaviour is implied."
+    },
+    {
+      "interface_id": "IF-016",
+      "upstream": "Trust, Signing and Custody",
+      "downstream": "BDS / BOP / PRC",
+      "contract": "Exact-target signature verification and sealed bid deposit/opening custody with authoritative receipts and independent member authorization",
+      "status": "Deferred production contract; test proxy approved",
+      "implementation_status": "Not started",
+      "test_status": "Not started",
+      "owner_doc": "TRUST-ADR-001 v0.1; BDS-CHG-001 v0.8 (v0.9 proposed); BOP-CHG-001 v0.10 proposed; PRC-CHG-001 v0.9 proposed",
+      "failure_rule": "No production submission/opening/signature on absent or uncertain trust/custody result. A synthetic proxy cannot turn the default-false BDS gate on."
     }
   ],
   "decisions": [
@@ -872,6 +941,22 @@
       "owner_doc": "STD-TPL-001 v0.10 / FU-01 OD5, 2026-09-26",
       "implementation_effect": "New binding requires exactly one On Available release per template key; multiple On releases refuse binding. Existing bindings stay pinned.",
       "design_effect": "Read-only On/Off state in STD Templates, with actor and time."
+    },
+    {
+      "decision_id": "DEC-025",
+      "decision": "Keep ordinary authenticated workflow decisions distinct from statutory advanced electronic signatures; defer actual signing to the shared Trust, Signing and Custody support module.",
+      "status": "Approved",
+      "owner_doc": "TRUST-ADR-001 v0.1, 2026-09-27",
+      "implementation_effect": "Exact-target, per-member test attestations allowed only with synthetic data and explicit test labels; real signing requires personal provider evidence and legal page/initial mapping.",
+      "design_effect": "Show Test attestation in test profile; no generic approval as a signature."
+    },
+    {
+      "decision_id": "DEC-026",
+      "decision": "Keep sealed-bid custody and multi-person opening release independent of chair/admin authority; defer real keys, provider and threshold to shared infrastructure.",
+      "status": "Approved",
+      "owner_doc": "TRUST-ADR-001 v0.1, 2026-09-27",
+      "implementation_effect": "Synthetic tender-box and two-person test release may exercise ceremony; BDS production submission flag stays false and BOP production disabled until verified real services.",
+      "design_effect": "Visible test-environment status and honest unavailable production guidance; no proxy receipt as a live Submitted bid."
     }
   ],
   "delivery_items": [
@@ -941,7 +1026,7 @@
       "change": "Consume only an authorised requisition handoff.",
       "functional": "Reject absent, stale or unauthorised source data.",
       "design": "Name the source problem and owner without technical codes.",
-      "owner_doc": "REQ-CHG-001 v1.12 / TPR-CHG-001 v0.12",
+      "owner_doc": "REQ-CHG-001 v1.12 / TPR-CHG-001 v0.13",
       "requirement_status": "Approved requirement",
       "implementation_status": "Not started",
       "verification_status": "Not started",
@@ -953,7 +1038,7 @@
       "change": "Prepare Tender from an exact installed template that is On for new binding.",
       "functional": "Bind template, renderer and response schema identities only when exactly one release is On and checks pass.",
       "design": "Progressive preparation journey with concise supporting detail.",
-      "owner_doc": "TPR-CHG-001 v0.12 / STD-TPL-001 v0.10",
+      "owner_doc": "TPR-CHG-001 v0.13 / STD-TPL-001 v0.10",
       "requirement_status": "Approved requirement",
       "implementation_status": "Not started",
       "verification_status": "Not started",
@@ -965,7 +1050,7 @@
       "change": "Support publication confirmation without presuming integrations.",
       "functional": "HOPF may record evidence for configured channels.",
       "design": "Clear confirmed/evidence-required states and direct actions.",
-      "owner_doc": "TPR-CHG-001 v0.12",
+      "owner_doc": "TPR-CHG-001 v0.13",
       "requirement_status": "Approved requirement",
       "implementation_status": "Not started",
       "verification_status": "Not started",
@@ -977,7 +1062,7 @@
       "change": "Implement candidate clarifications and published answers.",
       "functional": "Protect candidate identity and publish general answers lawfully.",
       "design": "One understandable clarification feed.",
-      "owner_doc": "TPR-CHG-001 v0.12 / BDS-CHG-001 v0.8",
+      "owner_doc": "TPR-CHG-001 v0.13 / BDS-CHG-001 v0.8",
       "requirement_status": "Approved requirement",
       "implementation_status": "Not started",
       "verification_status": "Not started",
@@ -989,7 +1074,7 @@
       "change": "Implement addenda as the only requirement-change mechanism.",
       "functional": "Issue immutable addendum and update affected bid definition.",
       "design": "Prominent change notice and acknowledgement state.",
-      "owner_doc": "TPR-CHG-001 v0.12 / BDS-CHG-001 v0.8",
+      "owner_doc": "TPR-CHG-001 v0.13 / BDS-CHG-001 v0.8",
       "requirement_status": "Approved requirement",
       "implementation_status": "Not started",
       "verification_status": "Not started",
@@ -1001,7 +1086,7 @@
       "change": "Publish tender list and tender detail pages.",
       "functional": "Public read access to issued tenders and current documents.",
       "design": "Simple search/list/detail; reusable framework pages where suitable.",
-      "owner_doc": "TPR-CHG-001 v0.12 / BDS-CHG-001 v0.8",
+      "owner_doc": "TPR-CHG-001 v0.13 / BDS-CHG-001 v0.8",
       "requirement_status": "Approved requirement",
       "implementation_status": "Not started",
       "verification_status": "Not started",
@@ -1217,7 +1302,7 @@
       "change": "Enforce Superseded release continuation without rebinding.",
       "functional": "Only already-bound unpublished Tenders with passing integrity/adapters continue.",
       "design": "Show successor notice and preserved exact release.",
-      "owner_doc": "TPR-CHG-001 v0.12 / STD-TPL-001 v0.10",
+      "owner_doc": "TPR-CHG-001 v0.13 / STD-TPL-001 v0.10",
       "requirement_status": "Approved requirement",
       "implementation_status": "Not started",
       "verification_status": "Not started",
@@ -1229,7 +1314,7 @@
       "change": "Block unpublished continuation on Withdrawn release.",
       "functional": "Block submit/approve/publish/addendum/Bid start; preserve published history.",
       "design": "Direct reason, release link and governed next step.",
-      "owner_doc": "TPR-CHG-001 v0.12 / STD-TPL-001 v0.10",
+      "owner_doc": "TPR-CHG-001 v0.13 / STD-TPL-001 v0.10",
       "requirement_status": "Approved requirement",
       "implementation_status": "Not started",
       "verification_status": "Not started",
@@ -1277,7 +1362,7 @@
       "change": "Carry exact reservation treatment downstream without recomputation.",
       "functional": "Preserve designation, basis, lots and applicable evidence.",
       "design": "Show concise confirmed treatment with correction route.",
-      "owner_doc": "REQ-CHG-001 v1.12 / TPR-CHG-001 v0.12 / BDS-CHG-001 v0.8",
+      "owner_doc": "REQ-CHG-001 v1.12 / TPR-CHG-001 v0.13 / BDS-CHG-001 v0.8",
       "requirement_status": "Approved requirement",
       "implementation_status": "Not started",
       "verification_status": "Not started",
@@ -1402,6 +1487,30 @@
       "implementation_status": "Not started",
       "verification_status": "Not started",
       "release_gate": "Yes"
+    },
+    {
+      "item_id": "TRUST-001",
+      "area": "Shared Trust Infrastructure",
+      "change": "Build synthetic signing/custody test adapters and later a separately approved production support module.",
+      "functional": "Preserve exact-target member evidence, sealed receipts and BOP ordered reveal API; then integrate licensed provider, external keys, independent multi-person release and recovery.",
+      "design": "Keep ordinary approvals and statutory signatures distinct; label test attestations/receipts and hide production submission/opening actions.",
+      "owner_doc": "TRUST-ADR-001 v0.1 / BDS-CHG-001 v0.8 / BOP-CHG-001 v0.10 proposed / PRC-CHG-001 v0.9 proposed",
+      "requirement_status": "Approved requirement",
+      "implementation_status": "Not started",
+      "verification_status": "Not started",
+      "release_gate": "Yes"
+    },
+    {
+      "item_id": "G1-031",
+      "area": "Tenders / Bid Submission",
+      "change": "Apply approved published-Tender bound-release behavior after Supersession or Withdrawal.",
+      "functional": "Allow already-bound published Tenders on a Superseded release to issue lawful addenda and accept Bid start/submission while exact checks pass; on Withdrawn block new start/addendum/submission/replacement but preserve reads, existing receipts and lawful pre-deadline withdrawal.",
+      "design": "Show truthful lifecycle notices and allowed next actions to internal and supplier users.",
+      "owner_doc": "TPR-CHG-001 v0.13 / BDS-CHG-001 v0.8",
+      "requirement_status": "Approved requirement",
+      "implementation_status": "Not started",
+      "verification_status": "Not started",
+      "release_gate": "Yes"
     }
   ],
   "future_work": [
@@ -1494,6 +1603,24 @@
       "status": "Planned",
       "boundary": "MVP supports manual HOPF confirmation",
       "trigger": "Approve per-channel adapter and acknowledgement contract."
+    },
+    {
+      "future_id": "FW-011",
+      "capability": "Default internal read access to current Strategy",
+      "planned_wave": "Next access-policy revision",
+      "dependency": "STR-CHG-001 v1.8; AUTH-ADR-001 effective baseline",
+      "status": "To do",
+      "boundary": "Review access for enabled internal users to Active Strategy data only. Current assignment-based restrictions remain in force; no Draft, submitted review, approval-task, supplier or public access is approved by this entry.",
+      "trigger": "Decide baseline read policy versus per-module Reader responsibility; revise STR and AUTH through controlled versions; verify list, detail, export, API and write boundaries."
+    },
+    {
+      "future_id": "FW-012",
+      "capability": "Production Trust, Signing and Sealed Custody support module",
+      "planned_wave": "Later support-module version",
+      "dependency": "TRUST-ADR-001 v0.1; licensed/accredited provider; legal L1/L2; approved government operating profile; production-equivalent tests",
+      "status": "Planned",
+      "boundary": "Only synthetic, explicitly labelled test proxies now. BDS v0.8 production bid submission remains disabled and electronic Bid Opening cannot be used for real bids.",
+      "trigger": "Approve provider/signing method, per-target legal equivalence, custody/key threshold, credentials, recovery, external channel and test/release evidence."
     }
   ],
   "audit_findings": [
@@ -1676,35 +1803,24 @@
     {
       "finding_id": "AUD-017",
       "severity": "High",
-      "type": "Approval",
-      "finding": "STD-TPL-001 v0.12 was approved by the Project Owner on 26 September 2026. It carries the proposed v0.11 content (owner decision OD5) forward and changes only the first supplier task (label and acknowledgement) from release 1.2.",
-      "status": "Resolved",
-      "owner": "Project Owner",
-      "action": "No further document-approval action; build release 1.2.",
-      "blocks": "None",
-      "evidence": "STD-TPL-001 v0.12 approval record, 26 September 2026: \"v0.12 approved,  v0.10 was approved earlier\""
+      "type": "Cross-document reconciliation",
+      "finding": "BDS v0.8 physical-security receipt view discloses supplier identity before opening despite a blanket no-PE-bidder-identity statement; BOP v0.1 and PRC v0.2 lacked closed ceremony/PRC bindings. Controlled BOP v0.2, PRC v0.3 and BDS v0.9 are proposed corrections.",
+      "status": "Open",
+      "owner": "Project Owner / requirements owner",
+      "action": "Review the three coordinated proposals; approve BDS receipt-owner exception and BOP/PRC lifecycle, then close actual renderer/proof and lawful operating-profile gates separately.",
+      "blocks": "Reconciled Bid Opening design and production authority",
+      "evidence": "BDS v0.8 §§5.9, 10.16; BOP v0.2 §7.1; PRC v0.3 §7.1; BDS v0.9 §12.2A"
     },
     {
       "finding_id": "AUD-018",
-      "severity": "Low",
-      "type": "Consistency",
-      "finding": "The repository copy of STD-TPL-001 v0.10 still reads Proposed for approval and has no approval block, although AUD-004 cites one; the committed v0.11 stated that v0.10 was never approved. The Project Owner confirmed on 26 September 2026 that v0.10 was approved.",
-      "status": "Open",
-      "owner": "Documentation owner",
-      "action": "Replace the repository copy of v0.10 with the approved library file, or record why they differ.",
-      "blocks": "None",
-      "evidence": "07_std_configuration v0.10 file control table; STD-TPL-001 v0.12 approval record"
-    },
-    {
-      "finding_id": "AUD-019",
       "severity": "High",
-      "type": "Approval",
-      "finding": "STD-TPL-001 v0.13 was approved by the Project Owner on 27 September 2026. It authorises the template release 1.2 vocabulary (supplied values, label parameters, the per-member joint-venture composition) and its tender security and warranty/support rows; the same instruction confirmed the exact-amount tender security rule and the Tender contact as the authorised representative.",
-      "status": "Resolved",
-      "owner": "Project Owner",
-      "action": "No further document-approval action; release 1.2 is installed on the development site.",
-      "blocks": "None",
-      "evidence": "STD-TPL-001 v0.13 approval record, 27 September 2026: \"1. Approved 2. Exact published amount 3. Tender contact Proceed\""
+      "type": "Design closure",
+      "finding": "Earlier BOP/PRC versions conflated design fixtures with live evidence, contained contradictory actor/branch events, and left visible actions without a clear owner command. Approved BOP v0.10 and PRC v0.9 provide the end-to-end matrix, corrected branches, owner bindings and repeatable mechanical check. The cross-project standard gate is approved in KT-STD-001 v1.10.",
+      "status": "Controlled",
+      "owner": "Requirements owner / Project Owner",
+      "action": "Apply approved BOP v0.10 / PRC v0.9 and KT-STD-001 v1.10, approved 29 September 2026. Use direct copy comparisons and actor/state/event review on affected branches. TPR v0.14 post-close cancellation remains a separately owned dependency.",
+      "blocks": "No BOP artboard; real opening activation and integrated proof remain separate later decisions",
+      "evidence": "Approved BOP v0.10, admitted 29 September 2026; approved PRC v0.9 and KT-STD-001 v1.10. BOP v0.9 retained as the prior approved baseline."
     }
   ]
 }
