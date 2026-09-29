@@ -48,10 +48,14 @@ def my_work_rows(user: str) -> dict[str, list[dict[str, Any]]]:
 	ao = people.holds(user, people.ACCOUNTING_OFFICER)
 	hopf = people.holds(user, people.HEAD_OF_PROCUREMENT)
 	now = clock.now()
-	for row in frappe.get_all(records.CASE, filters={"state": ("in", ("Awaiting deadline", "Ready to open", "Not held"))}, fields=["name"], limit_page_length=0):
+	for row in frappe.get_all(records.CASE, filters={"state": ("in", ("Awaiting deadline", "Ready to open", "Not held", "Interrupted", "Readout complete"))},
+			fields=["name"], limit_page_length=0):
 		doc = frappe.get_doc(records.CASE, row.name)
 		ref = doc.tender_reference
 		current_appointment = appointment.current(doc.name)
+		if doc.state in ("Interrupted", "Readout complete"):
+			out["assigned"] += _ceremony_rows(doc, user, ao)
+			continue
 		if doc.state == "Not held":
 			item = frappe.db.get_value(not_held.DECISION, {"opening_case": doc.name, "status": "Open", "holder_user": user}, ["name", "created_at"], as_dict=True)
 			if item and ao:
@@ -79,3 +83,29 @@ def my_work_rows(user: str) -> dict[str, list[dict[str, Any]]]:
 			out["assigned"].append(_row(doc, key="start", title=f"Start opening for {ref} at {labels.when(doc.effective_deadline)}",
 				status="Upcoming" if upcoming else "Assigned", action_label="Start opening", role=member["committee_role"], since=current_appointment.appointed_at))
 	return out
+
+
+def _ceremony_rows(doc, user: str, ao: bool) -> list[dict[str, Any]]:
+	"""§5: the paused-opening decision, a replacement, and the recorder's opening record."""
+	from kentender_procurement.bid_opening.services import ceremony
+
+	ref = doc.tender_reference
+	rows = []
+	if doc.state == "Interrupted" and ao:
+		# Any current Accounting Officer may take the paused-opening decision (§5: "AO Amina Hassan").
+		item = frappe.db.get_value(not_held.DECISION, {"opening_case": doc.name, "kind": "Paused opening", "status": "Open"}, ["created_at"], as_dict=True)
+		if item:
+			rows.append(_row(doc, key="paused", title=f"Decide how to proceed with the paused opening for {ref}", status="Assigned",
+				action_label="Decide how to proceed", role=people.ACCOUNTING_OFFICER, since=item.created_at))
+		pause = ceremony.open_pause(doc.name)
+		if pause and pause.exception_class == "Member absent":
+			rows.append(_row(doc, key="replacement", title=f"Appoint replacement for {ref}", status="Assigned", action_label="Appoint replacement",
+				role=people.ACCOUNTING_OFFICER, since=pause.recorded_at))
+	member = appointment.member(doc.name, user)
+	if doc.state == "Interrupted" and member and user not in presence.present_members(doc.name):
+		rows.append(_row(doc, key="join", title=f"Join opening for {ref}", status="Assigned", action_label="Join opening", role=member["committee_role"],
+			since=doc.started_at))
+	if doc.state == "Readout complete" and member and member["is_recorder"]:
+		rows.append(_row(doc, key="prepare-record", title=f"Prepare opening record for {ref}", status="Assigned", action_label="Prepare opening record",
+			role=member["committee_role"], since=doc.ended_at))
+	return rows

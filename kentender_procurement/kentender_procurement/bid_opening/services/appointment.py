@@ -98,8 +98,10 @@ def appoint_opening_committee(*, tender: str, members: list[dict[str, Any]], exp
 	def body() -> dict[str, Any]:
 		doc = records.lock(tender)
 		records.check_version(doc, expected_version)
-		if doc.state not in ("Awaiting deadline", "Ready to open"):
+		if doc.state not in ("Awaiting deadline", "Ready to open", "Interrupted"):
 			errors.fail("BOP_VERSION_CONFLICT", {"reason": "state", "state": doc.state})
+		if doc.state == "Interrupted" and not cstr(reason).strip():
+			return {"ok": False, "code": "BOP_COMMITTEE_INCOMPLETE", "errors": {"reason": "Give the reason for appointing a replacement."}}
 		invalid = validate(tender, members)
 		if invalid:
 			return invalid
@@ -125,6 +127,15 @@ def appoint_opening_committee(*, tender: str, members: list[dict[str, Any]], exp
 		from kentender_procurement.bid_opening.services import custody_participation
 
 		custody_participation.mark_stale(doc.name)
+		if doc.state == "Interrupted":
+			# A lawful successor joins from the point of resumption; earlier events keep
+			# their actual roster (BOP-CHG-001 v0.10 §5, §7.1 "Roster and target scope").
+			from kentender_procurement.bid_opening.services import prc
+			from kentender_procurement.proceedings.services import lifecycle
+
+			lifecycle.add_roster_segment(**prc.ref(doc.name), roster=[{"member_user": m.member_user, "full_name": m.full_name, "designation": m.designation,
+				"committee_capacity": m.committee_role, "appointment_reference": appointment.name} for m in appointment.members], reason=cstr(reason).strip(),
+				idempotency_key=prc.key(idempotency_key, "roster"), actor=user)
 		records.bump(doc, current_appointment=appointment.name)
 		return records.summary(doc, appointment=appointment.name, appointed_at=str(at))
 

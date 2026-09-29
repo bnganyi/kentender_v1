@@ -104,6 +104,84 @@ def _ao_before_start(doc, now) -> dict[str, Any] | None:
 	return ns.answer(ns.KIND_DONE, headline=f"You published how to attend on {labels.when(published.published_at)}.", stage="prepare")
 
 
+def _ceremony(doc, user: str, member, ao: bool) -> list[dict[str, Any] | None]:
+	"""Boards c4–c13b, c10–c11e, z1 (BOP-CHG-001 v0.10 §10.3)."""
+	import frappe
+
+	from kentender_procurement.bid_opening.services import ceremony
+
+	out: list[dict[str, Any] | None] = []
+	chair = appointment.chair(doc.name)
+	recorder = appointment.recorder(doc.name)
+	ao_names = _ao_names()
+	ao_display = ", ".join(ao_names) or "the Accounting Officer"
+	if doc.state == "Opening":
+		entries = ceremony.entries(doc.name)
+		awaiting = next((e for e in entries if e.status == "Opened"), None)
+		remaining = len(ceremony.envelopes(doc)) - len(entries)
+		if member and member["is_chair"]:
+			if doc.outcome == "No bids":
+				out.append(ns.answer(ns.KIND_YOUR_TURN, headline="No bids to open", sentence=f"Submissions closed at {labels.time(doc.effective_deadline)} EAT "
+					"with no current bids.", stage="open", primary_action="end_no_bids"))
+			elif awaiting and not member["is_recorder"]:
+				out.append(ns.answer(ns.KIND_WAITING, headline=f"Waiting for {recorder['full_name']} to record what was read aloud", stage="open",
+					holder=ns.holder("Recorder", [recorder["full_name"]])))
+			elif not awaiting and remaining > 0:
+				out.append(ns.answer(ns.KIND_YOUR_TURN, headline="Open the first bid" if not entries else "Open the next bid", stage="open", primary_action="open_next"))
+			elif not awaiting:
+				out.append(ns.answer(ns.KIND_YOUR_TURN, headline="End the opening", sentence="Every bid has been read aloud and recorded, and the pages for signing "
+					"are chosen.", stage="open", primary_action="end"))
+		if member and member["is_recorder"] and awaiting:
+			out.append(ns.answer(ns.KIND_YOUR_TURN, headline="Record what was read aloud", stage="open", primary_action="record_readout"))
+		if member and not member["is_chair"] and not member["is_recorder"]:
+			if awaiting:
+				out.append(ns.answer(ns.KIND_YOUR_TURN, headline="Read these details aloud", sentence=f"{recorder['full_name']} will record what you read. "
+					"You do not need to confirm it.", stage="open", primary_action="read_aloud"))
+			else:
+				out.append(ns.answer(ns.KIND_WAITING, headline=f"Waiting for {chair['full_name']} to continue the opening", stage="open",
+					holder=ns.holder("Chair", [chair["full_name"]])))
+	elif doc.state == "Interrupted":
+		pause = ceremony.open_pause(doc.name)
+		if pause and pause.exception_class == "Member absent":
+			absent = [m for m in ceremony.absent_members(doc)]
+			name = absent[0]["full_name"] if absent else pause.speaker_name
+			if member and absent and member["member_user"] == absent[0]["member_user"]:
+				out.append(ns.answer(ns.KIND_YOUR_TURN, headline=f"Join opening for {doc.tender_reference}", sentence="The opening is paused until you rejoin.",
+					stage="open", primary_action="join"))
+			elif member:
+				out.append(ns.answer(ns.KIND_WAITING, headline=f"Waiting for {name} to rejoin or for {ao_display} to appoint a replacement",
+					sentence=f"Opening is paused because {name} is not present. {name} left at {labels.time(pause.recorded_at)}.", stage="open",
+					holder=ns.holder("", [name, *ao_names])))
+			if ao:
+				out.append(ns.answer(ns.KIND_YOUR_TURN, headline=f"Appoint replacement for {doc.tender_reference}", sentence=f"Opening is paused because {name} is not "
+					"present. Appoint a replacement only if they cannot return.", stage="open", primary_action="appoint_replacement"))
+		elif pause:
+			incident = frappe.db.get_value(incidents.INCIDENT, {"opening_case": doc.name, "incident_id": pause.incident}, ["status", "resolved_at"], as_dict=True) \
+				if pause.incident else None
+			status = (incident or {}).get("status")
+			problem = ns.fix("View problem details", responsibility=SUPPORT, kind=ns.FIX_FOCUS, fix_id="view_problem_details", target=pause.incident)
+			if member and member["is_chair"]:
+				if status == "Resolved":
+					out.append(ns.answer(ns.KIND_YOUR_TURN, headline="Retry opening", sentence=f"Opening access support resolved the problem at "
+						f"{labels.time(incident.resolved_at)}. The same bid will be opened again.", stage="open", primary_action="retry"))
+				elif status == "Unresolved":
+					out.append(ns.answer(ns.KIND_WAITING, headline=f"Waiting for {ao_display} to resolve the paused opening",
+						sentence=f"Opening access support could not fix the problem. {ao_display} will decide how to proceed.", stage="open",
+						holder=ns.holder(people.ACCOUNTING_OFFICER, ao_names)))
+				else:
+					blocker = ns.guard(False, reason_code={"Package unreadable": "BOP_PACKAGE_UNREADABLE", "Package mismatch": "BOP_PACKAGE_MISMATCH"}.get(
+						pause.exception_class, "BOP_CREDENTIAL_UNAVAILABLE"), message=pause.observed_fact, fixes=[problem])
+					out.append(ns.answer(ns.KIND_BLOCKED, headline=pause.observed_fact, stage="open", blockers=[ns.blocker(blocker)]))
+			elif member:
+				out.append(ns.answer(ns.KIND_WAITING, headline=pause.observed_fact, stage="open", holder=ns.holder(SUPPORT)))
+			if ao and status == "Unresolved":
+				out.append(ns.answer(ns.KIND_YOUR_TURN, headline="Decide how to proceed with the paused opening", sentence="Opening access support could not fix the "
+					"problem. This stays in your work until the opening resumes or a Tender decision is recorded.", stage="open", primary_action="tender_decision"))
+	elif doc.state == "Readout complete" and member and member["is_recorder"]:
+		out.append(ns.answer(ns.KIND_YOUR_TURN, headline="Prepare opening record", stage="record", primary_action="prepare_record"))
+	return out
+
+
 def answer_for(doc, user: str) -> dict[str, Any]:
 	now = clock.now()
 	technical = people.technical(user)
@@ -131,6 +209,8 @@ def answer_for(doc, user: str) -> dict[str, Any]:
 			names = _ao_names()
 			candidates.append(ns.answer(ns.KIND_WAITING, headline=f"Waiting for {', '.join(names) or 'the Accounting Officer'} to appoint the opening committee",
 				stage="prepare", holder=ns.holder(people.ACCOUNTING_OFFICER, names)))
+	elif doc.state in ("Opening", "Interrupted", "Readout complete"):
+		candidates += _ceremony(doc, user, member, ao)
 	result = ns.choose(*candidates)
 	reader = ns.not_involved(result.get("stage", ""))
 	return ns.for_viewer(result, technical=technical, reader=reader)
@@ -142,6 +222,18 @@ def journey_for(doc) -> dict[str, Any]:
 		return ns.journey(STAGES, current="open", blocked=True, holder_display=", ".join(_ao_names()))
 	if not prepared:
 		return ns.journey(STAGES, current="prepare", holder_display=", ".join(_ao_names()))
+	if doc.state == "Cancelled after start":
+		return ns.journey(STAGES, current="open", holder_display="Ended")
+	if doc.state == "Interrupted":
+		from kentender_procurement.bid_opening.services import ceremony
+
+		pause = ceremony.open_pause(doc.name)
+		absent = ceremony.absent_members(doc)
+		holder = absent[0]["full_name"] if absent else (SUPPORT if pause and pause.outcome == "Open" else ", ".join(_ao_names()))
+		return ns.journey(STAGES, current="open", blocked=True, holder_display=holder)
+	if doc.state in ("Readout complete", "Awaiting attestations"):
+		recorder = appointment.recorder(doc.name)
+		return ns.journey(STAGES, current="record", holder_display=recorder["full_name"] if recorder else "")
 	now = clock.now()
 	if now < get_datetime(doc.effective_deadline):
 		return ns.journey(STAGES, current="open", holder_display=f"Opens {labels.when(doc.effective_deadline)}")

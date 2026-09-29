@@ -101,3 +101,39 @@ def record_resolution(*, tender: str, incident: str, resolution_note: str, idemp
 
 	return records.command("RecordIncidentResolution", tender=tender, idempotency_key=idempotency_key, actor=user, payload={"incident": incident, "note": resolution_note},
 		body=body)
+
+
+def record_unresolved(*, tender: str, incident: str, resolution_note: str, idempotency_key: str, user: str) -> dict[str, Any]:
+	"""Support cannot fix it (board c11c): the paused opening goes to the
+	Accounting Officer as "Decide how to proceed with the paused opening"."""
+	from kentender_procurement.bid_opening.services import ceremony, not_held
+
+	if user not in notify.holders():
+		raise frappe.DoesNotExistError("Not found")
+
+	def body() -> dict[str, Any]:
+		doc = records.lock(tender)
+		row = frappe.get_doc(INCIDENT, {"opening_case": doc.name, "incident_id": incident})
+		if row.status != "Open":
+			return records.summary(doc, escalated=False)
+		row.update({"status": "Unresolved", "resolution_note": cstr(resolution_note).strip(), "resolved_by": user})
+		records.save(row)
+		holders = people.accounting_officers()
+		pause = ceremony.open_pause(doc.name)
+		if pause:
+			pause.outcome = "Escalated"
+			pause.holder = holders[0] if holders else None
+			records.save(pause)
+		if doc.state == "Interrupted" and holders:
+			number = frappe.db.count(not_held.DECISION, {"opening_case": doc.name}) + 1
+			last = ceremony.last_committed(doc.name)
+			records.insert(frappe.get_doc({
+				"doctype": not_held.DECISION, "decision_item_id": f"{doc.opening_id}-DEC-{number:02d}", "opening_case": doc.name, "kind": "Paused opening",
+				"holder_user": holders[0], "reason": SUBJECTS[row.incident_type], "last_committed_event": (last or {}).get("event_id", ""), "incident": row.incident_id,
+				"status": "Open", "created_at": clock.now(),
+			}))
+		records.bump(doc)
+		return records.summary(doc, escalated=True)
+
+	return records.command("RecordIncidentUnresolved", tender=tender, idempotency_key=idempotency_key, actor=user, payload={"incident": incident, "note": resolution_note},
+		body=body)

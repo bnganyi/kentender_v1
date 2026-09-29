@@ -54,6 +54,11 @@ def sweep_tender(tender: str) -> dict[str, int]:
 		out["prepared"] += int(case.prepare_opening_case(tender=tender)["prepared"])
 	if facts["cancelled"]:
 		out["not_held"] += int(not_held.consume_tender_cancellation(tender=tender)["consumed"])
+		reference = (facts["cancellation"] or {}).get("reference")
+		if reference:
+			from kentender_procurement.bid_opening.services import cancellation
+
+			cancellation.close_cancelled_opening(tender=tender, cancellation_reference=reference)
 		return out
 	case.refresh_deadline(tender)
 	out["received"] += int(close_intake.receive_closed_box(tender=tender).get("received", False))

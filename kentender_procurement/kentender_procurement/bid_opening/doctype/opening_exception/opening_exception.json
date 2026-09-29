@@ -91,7 +91,7 @@
    "label": "Recorded by",
    "read_only": 1,
    "options": "User",
-   "reqd": 1
+   "description": "Empty when the system detected it (a member's absence, an access or package problem)."
   },
   {
    "fieldname": "recorded_at",
@@ -131,7 +131,7 @@
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-29 18:00:00.000000",
+ "modified": "2026-09-29 22:00:00.000000",
  "modified_by": "Administrator",
  "module": "Bid Opening",
  "name": "Opening Exception",

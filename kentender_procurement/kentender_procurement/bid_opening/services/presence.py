@@ -67,10 +67,14 @@ def join_opening(*, tender: str, idempotency_key: str, user: str) -> dict[str, A
 			"joined_at": now, "last_seen_at": now, "state": "Present",
 		}))
 		_record(doc, user, "Arrival", idempotency_key)
-		if doc.state == "Ready to open":
+		resumed = False
+		if doc.manifest_digest and doc.state in ("Ready to open", "Opening", "Interrupted"):
 			custody_participation.confirm(doc, user, idempotency_key)
+			from kentender_procurement.bid_opening.services import ceremony
+
+			resumed = ceremony.try_resume_after_rejoin(doc, idempotency_key)
 		records.bump(doc)
-		return records.summary(doc, presence=row.name, joined=True)
+		return records.summary(doc, presence=row.name, joined=True, resumed=resumed)
 
 	return records.command("JoinOpening", tender=tender, idempotency_key=idempotency_key, actor=user, payload={}, body=body)
 
@@ -94,6 +98,12 @@ def _close(doc, row, state: str, key: str) -> None:
 	records.save(row)
 	_record(doc, row.member_user, "Departure", key, by_system=state == "Lapsed")
 	custody_participation.mark_stale(doc.name, row.member_user)
+	if doc.state == "Opening":
+		# BOP-CHG-001 v0.10 §5: a member's absence pauses the opening before the next material act.
+		from kentender_procurement.bid_opening.services import ceremony, errors
+
+		name = (appointment.member(doc.name, row.member_user) or {}).get("full_name") or row.member_user
+		ceremony.pause(doc, "Member absent", fact=errors.message("BOP_MEMBER_ABSENT", started=True, name=name), key=f"{key}:{row.name}", member=row.member_user)
 
 
 def heartbeat(*, tender: str, user: str) -> dict[str, Any]:

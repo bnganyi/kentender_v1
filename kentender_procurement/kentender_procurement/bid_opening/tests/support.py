@@ -61,6 +61,9 @@ def wipe_openings() -> None:
 	cases = [r.name for r in frappe.get_all("Bid Opening Case", fields=["name", "tender", "fixture_namespace", "proceeding"]) if r.fixture_namespace == NS or r.tender in tenders]
 	proceedings = [p for p in frappe.get_all("Bid Opening Case", filters={"name": ("in", cases)}, pluck="proceeding") if p] if cases else []
 	if cases:
+		from kentender_procurement.bid_opening.services import renders
+
+		renders.remove(frappe.get_all("Opening Entry", filters={"opening_case": ("in", cases)}, pluck="entry_id"))
 		for doctype in OPENING_DOCTYPES:
 			frappe.db.delete(doctype, {"opening_case": ("in", cases)})
 		delete_rows("Opening Committee Appointment", {"opening_case": ("in", cases)})
@@ -163,3 +166,42 @@ class OpeningCase(BidCase):
 
 	def sweep(self) -> dict[str, int]:
 		return sweep.sweep_tender(self.name)
+
+	# -- the ceremony ------------------------------------------------------------
+	def ready_to_open(self) -> None:
+		self.prepared()
+		self.at(self.minutes_before(0.5))
+		for user in (CHAIR, MEMBER, INDEPENDENT):
+			self.join(user)
+		self.close_box()
+		self.heartbeat_all()
+		self.assertTrue(self.receive()["received"])
+
+	def begin(self, user: str = CHAIR) -> dict[str, Any]:
+		from kentender_procurement.bid_opening.services import ceremony
+
+		return ceremony.begin_opening(tender=self.name, expected_version=self.case_version(), idempotency_key=key(), user=user)
+
+	def open_next(self, user: str = CHAIR) -> dict[str, Any]:
+		from kentender_procurement.bid_opening.services import ceremony
+
+		return ceremony.open_next_tender(tender=self.name, expected_version=self.case_version(), idempotency_key=key(), user=user)
+
+	def readout(self, entry: str, *, speaker: str = MEMBER, pages=(1,), reported=None, user: str = CHAIR) -> dict[str, Any]:
+		from kentender_procurement.bid_opening.services import readout
+
+		return readout.record_readout(tender=self.name, entry=entry, speaker=speaker, designated_pages=list(pages), expected_version=self.case_version(),
+			idempotency_key=key(), user=user, reported_speech_at=reported)
+
+	def finish(self, user: str = CHAIR) -> dict[str, Any]:
+		from kentender_procurement.bid_opening.services import finish
+
+		return finish.finish_ceremony(tender=self.name, expected_version=self.case_version(), idempotency_key=key(), user=user)
+
+	def case_doc(self):
+		return frappe.get_doc("Bid Opening Case", {"tender": self.name})
+
+	def next_step(self, user: str) -> dict[str, Any]:
+		from kentender_procurement.bid_opening.services import reads
+
+		return reads.get_opening(tender=self.name, user=user)["next_step"]

@@ -7,7 +7,9 @@ the same words."""
 
 from __future__ import annotations
 
-from frappe.utils import get_datetime
+from decimal import Decimal, InvalidOperation
+
+from frappe.utils import cstr, get_datetime
 
 from kentender_core.utils.display import display_datetime
 
@@ -22,3 +24,28 @@ def time(value) -> str:
 
 def time_seconds(value) -> str:
 	return get_datetime(value).strftime("%H:%M:%S") if value else ""
+
+
+def money(amount, currency: str = "KES") -> str:
+	"""BOP-CHG-001 v0.10 §10: "KES 46,400,000.00"."""
+	try:
+		value = Decimal(cstr(amount if amount not in (None, "") else "0"))
+	except InvalidOperation:
+		return cstr(amount)
+	return f"{cstr(currency) or 'KES'} {value:,.2f}"
+
+
+def security(given: dict | None) -> str:
+	"""§10: "KES 500,000.00, KCB/TG/2027/8841"; empty when none was given."""
+	if not given:
+		return ""
+	parts = [money(given.get("amount"), given.get("currency") or "KES")] if given.get("amount") else []
+	if given.get("reference"):
+		parts.append(cstr(given["reference"]))
+	return ", ".join(parts)
+
+
+def read_aloud(entry) -> str:
+	"""§10: "Afya Digital Supplies Limited; KES 46,400,000.00; tender security given: KES 500,000.00, KCB/TG/2027/8841"."""
+	text = f"{entry.bidder_name}; {money(entry.submitted_total, entry.currency)}"
+	return f"{text}; tender security given: {entry.security_given}" if entry.security_given else text

@@ -20,7 +20,7 @@ import frappe
 from frappe.utils import cint, get_datetime
 
 from kentender_procurement.bid_opening.services import (
-	appointment, arrangements, clock, guards, incidents, labels, next_steps, not_held, people, prc_owner, presence, records,
+	appointment, arrangements, clock, guards, incidents, labels, next_steps, not_held, people, prc_owner, presence, records, session,
 )
 
 READER_ROLES = (people.ACCOUNTING_OFFICER, people.HEAD_OF_PROCUREMENT, people.PROCUREMENT_OFFICER, people.AUDITOR)
@@ -76,6 +76,9 @@ def get_opening(*, tender: str, user: str) -> dict[str, Any]:
 			"notified_label": labels.time_seconds(r.last_notified_at)} for r in incidents.open_incidents(case)],
 		"decision": {"kind": item.kind, "reason": item.reason, "holder": people.full_name(item.holder_user), "unavailable_text": next_steps.UNAVAILABLE_DECISION}
 			if item and (ao or technical) else None,
+		"ceremony": session.view(doc, user),
+		"cancellation": {"message": "Opening ended by Tender cancellation", "note": "What happened up to the cancellation is kept as a partial record. There is no opening "
+			"record to sign and nothing is passed to Evaluation."} if doc.state == "Cancelled after start" else None,
 		"viewer": {"is_member": bool(member), "is_chair": bool(member and member["is_chair"]), "is_recorder": bool(member and member["is_recorder"]),
 			"is_accounting_officer": ao, "technical": technical},
 	}
