@@ -16,7 +16,8 @@
   "uncertain_resolution",
   "accept_after_seconds",
   "current_instant",
-  "bound_release_state"
+  "bound_release_state",
+  "reveal_outcome"
  ],
  "fields": [
   {
@@ -90,12 +91,20 @@
    "read_only": 1,
    "options": "\nSuperseded\nWithdrawn\nIntegrity failed",
    "description": "Forces every bound template release to this state for Bid Submission (BDS-CHG-001 v0.8 §4.4.4 worlds); empty = the installed state."
+  },
+  {
+   "fieldname": "reveal_outcome",
+   "fieldtype": "Select",
+   "label": "Reveal outcome",
+   "options": "Deliver\nMismatch\nUnavailable\nIndeterminate",
+   "default": "Deliver",
+   "description": "BOP-CHG-001 v0.10 plan D4/D17: forces the Test Tender Box's opening reveal outcome on a test environment."
   }
  ],
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-28 12:01:46.014604",
+ "modified": "2026-09-29 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Bid Submission",
  "name": "BDS Test Environment Controls",

@@ -117,6 +117,12 @@ class TestTenderBox:
 	def close_box(self, *, tender: str, at) -> dict[str, Any]:
 		return close_box(tender=tender, at=at)
 
+	def confirm_release(self, **kwargs) -> dict[str, Any]:
+		return confirm_release(**kwargs)
+
+	def reveal(self, **kwargs) -> dict[str, Any]:
+		return reveal(**kwargs)
+
 	def status(self, *, correlation_id: str) -> dict[str, Any]:
 		"""The outcome of an earlier deposit, for the reconciler: Accepted,
 		Rejected, Uncertain (still pending) or NotReceived."""
@@ -169,6 +175,62 @@ def close_box(*, tender: str, at) -> dict[str, Any]:
 	return {**closed, "service": NAME, "simulation": True}
 
 
+# -- opening release and reveal (BOP-CHG-001 v0.10 plan D4; TRUST-ADR-001 v0.1 §2) ----
+
+
+def _release_path(tender: str) -> str:
+	safe = "".join(c for c in cstr(tender) if c.isalnum() or c in "-_")
+	return os.path.join(folder(), f"BOX-{safe}.release.json")
+
+
+def _release_state(tender: str) -> dict[str, Any]:
+	path = _release_path(tender)
+	if not os.path.exists(path):
+		return {"confirmations": []}
+	with open(path, encoding="utf-8") as fh:
+		return json.load(fh)
+
+
+def confirm_release(*, tender: str, member: str, independent: bool, manifest_digest: str, roster_digest: str, at) -> dict[str, Any]:
+	"""TRUST-ADR-001 v0.1 §2 "Joint opening release": one appointed member's
+	confirmation against one closed manifest and roster. A member confirming
+	again replaces their own earlier confirmation. A test control, not the
+	production key threshold."""
+	if not _box_closed(tender):
+		return {"outcome": "Rejected", "reason": "box_open", "service": NAME, "simulation": True}
+	state = _release_state(tender)
+	state["confirmations"] = [c for c in state["confirmations"] if c["member"] != member] + [{
+		"member": member, "independent": bool(independent), "manifest_digest": manifest_digest, "roster_digest": roster_digest, "at": str(get_datetime(at)),
+	}]
+	path = _release_path(tender)
+	with open(path + ".tmp", "w", encoding="utf-8") as fh:
+		json.dump(state, fh, sort_keys=True)
+	os.replace(path + ".tmp", path)
+	return {"outcome": "Accepted/Verified", "participation_reference": "TBX-REL-" + secrets.token_hex(5).upper(), "service": NAME, "simulation": True}
+
+
+def reveal(*, tender: str, correlation_id: str, manifest_digest: str, roster_digest: str) -> dict[str, Any]:
+	"""Release one sealed package, only after close and only while at least two
+	distinct members, one of them independent, have confirmed this exact
+	manifest and roster (TRUST-ADR-001 v0.1 §1(5), §2). The custody boundary
+	checks this itself; the application check alone is not enough (BOP-CHG-001
+	v0.10 §5)."""
+	forced = simulation.controls()["reveal_outcome"]
+	if forced in ("Unavailable", "Indeterminate"):
+		return {"outcome": forced, "service": NAME, "simulation": True}
+	if not _box_closed(tender):
+		return {"outcome": "Rejected", "reason": "box_open", "service": NAME, "simulation": True}
+	valid = [c for c in _release_state(tender)["confirmations"] if c["manifest_digest"] == manifest_digest and c["roster_digest"] == roster_digest]
+	if len({c["member"] for c in valid}) < 2 or not any(c["independent"] for c in valid):
+		return {"outcome": "Rejected", "reason": "release_not_confirmed", "service": NAME, "simulation": True}
+	package = stored_package(correlation_id)
+	if package is None:
+		return {"outcome": "Rejected", "reason": "not_in_custody", "service": NAME, "simulation": True}
+	if forced == "Mismatch":
+		package = package + b" "  # a package that no longer matches its sealed digest
+	return {"outcome": "Accepted/Verified", "package": package, "service": NAME, "simulation": True}
+
+
 def service() -> TestTenderBox | None:
 	return TestTenderBox() if simulation.enabled() else None
 
@@ -178,9 +240,10 @@ def remove(correlation_ids: list[str], tenders: list[str] | None = None) -> int:
 	the close records of these Tenders)."""
 	removed = 0
 	for tender in tenders or []:
-		if os.path.exists(_close_path(tender)):
-			os.remove(_close_path(tender))
-			removed += 1
+		for path in (_close_path(tender), _release_path(tender)):
+			if os.path.exists(path):
+				os.remove(path)
+				removed += 1
 	for correlation_id in correlation_ids:
 		for path in _paths(correlation_id):
 			if os.path.exists(path):

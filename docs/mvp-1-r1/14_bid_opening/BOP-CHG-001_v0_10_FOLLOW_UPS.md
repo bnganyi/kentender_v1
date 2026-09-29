@@ -28,6 +28,7 @@ This register holds items found while planning BOP-CHG-001 v0.10 and its shared 
 | FU-BOP-12 | `Evaluation Handoff` is emitted `Pending` with consumer `evaluation`, and nothing consumes it (BOP-A10: "its uptake remains future Evaluation scope"). A new register interface row is needed alongside IF-011. | Low — register | Documentation owner | Open |
 | FU-BOP-13 | The committed drafts `13_proceedings/KenTender_PRC-CHG-001_Minimal_Procurement_Proceedings_v0_1.md` and `…_v0_2.md` are deleted in the working tree, but PRC-CHG-001 v0.9 line 10 says "v0.1 accepted scope remains historical evidence". The Bid Opening Phase 0 commit leaves those deletions unstaged. | Low — document control | Project Owner | Open |
 | FU-BOP-14 | TRUST-ADR-001 v0.1 line 9 lists consumers "BOP-CHG-001 v0.1; PRC-CHG-001 v0.2"; the current consumers are BOP-CHG-001 v0.10 and PRC-CHG-001 v0.9. The register entry already notes "update by a later controlled revision". | Low — spec | TRUST owner | Open |
+| FU-BOP-15 | The default package renderer (plan D5) labels each response by its field key made readable (for example "Offered make model"), not by the published bid definition's own label. Members reviewing pages would read clearer labels from the definition that the package names (`bid_definition_id`, `definition_version`). | Low — design | Bid Opening build | Open |
 
 ## Verifying a fix
 
@@ -44,3 +45,4 @@ This register holds items found while planning BOP-CHG-001 v0.10 and its shared 
 - **FU-BOP-11** and **FU-BOP-12** close when the Evaluation change unit consumes both.
 - **FU-BOP-13** closes when the owner either restores the two PRC drafts or records their removal.
 - **FU-BOP-14** closes when a TRUST-ADR-001 revision names the current consumers.
+- **FU-BOP-15** closes when the renderer reads labels from the package's published definition, with the determinism test still green.

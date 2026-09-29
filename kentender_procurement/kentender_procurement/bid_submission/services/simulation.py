@@ -34,6 +34,8 @@ DEFAULTS: dict = {
 	"gate_closed": 0, "trust_service_down": 0, "time_service_down": 0, "custody_service_down": 0,
 	"deposit_outcome": "Accept", "rejection_reference": "", "uncertain_resolution": "Pending", "accept_after_seconds": 0, "current_instant": "",
 	"bound_release_state": "",
+	# BOP-CHG-001 v0.10 plan D4/D17: the Test Tender Box reveal outcome for Bid Opening.
+	"reveal_outcome": "Deliver",
 }
 
 

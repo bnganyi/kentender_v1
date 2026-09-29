@@ -149,6 +149,19 @@ kt_bds_custody_services = ["kentender_procurement.bid_submission.test_services.t
 # service seam used by Proceedings attestations. Only the test attestation
 # double is configured, and it answers on a test environment only.
 kt_trust_signing_services = ["kentender_procurement.proceedings.test_services.attestation.service"]
+# BOP-CHG-001 v0.10 plan D5/D11: the Bid Opening renderer and the Opening
+# access support transports. The last renderer that answers wins, so the
+# test-only fault renderer (silent unless forced) overrides the default.
+# Transports are tried in order; the test-only failing transport is silent
+# unless forced, then the in-app Notification Log answers.
+kt_bop_renderer_services = [
+	"kentender_procurement.bid_opening.services.package_renderer.service",
+	"kentender_procurement.bid_opening.test_services.renderer_faults.service",
+]
+kt_bop_support_transports = [
+	"kentender_procurement.bid_opening.test_services.support_faults.transport",
+	"kentender_procurement.bid_opening.services.notify.notification_log",
+]
 # BDS-CHG-001 v0.8 plan D18: a browser world's persisted instant, read by
 # every app's trusted clock through kentender_core's test_clock (test
 # environment only).

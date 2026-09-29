@@ -18,7 +18,7 @@ RECORDS = (
 	"Bid Opening Case", "Opening Committee Appointment", "Opening Arrangement", "Opening Presence", "Opening Custody Participation", "Opening Entry",
 	"Opening Register", "Opening Exception", "Opening Access Incident", "Opening Decision Item", "Opening Register Request", "Evaluation Handoff",
 )
-NO_ROLE = ("Opening Command Journal", "Bid Opening Settings")
+NO_ROLE = ("Opening Command Journal", "Bid Opening Settings", "BOP Test Environment Controls")
 FIELDS = {
 	"Bid Opening Case": {
 		"opening_id", "tender", "tender_reference", "tender_title", "effective_deadline", "state", "outcome", "proceeding", "manifest_handoff", "manifest_digest",
