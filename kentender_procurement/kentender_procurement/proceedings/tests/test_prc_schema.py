@@ -80,6 +80,12 @@ class TestProceedingsRecords(IntegrationTestCase):
 		for doctype in NO_ROLE:
 			self.assertEqual(frappe.get_meta(doctype).permissions, [])
 
+	def test_administrators_cannot_read_proceedings_content(self):
+		"""PRC-CHG-001 v0.9 §6 and PRC-N03: no content read for technical users."""
+		for doctype in ("Proceeding Attendance", "Proceeding Event", "Proceeding Minutes Version", "Proceeding Attestation", "Proceeding Supplement"):
+			with self.subTest(doctype=doctype):
+				self.assertEqual(frappe.get_meta(doctype).permissions, [])
+
 	def test_a_record_changes_only_through_a_command(self):
 		doc = frappe.get_doc({"doctype": "Proceeding Event", "event_id": "PRC-PROBE", "proceeding": "PRC-PROBE", "sequence": 1, "event_type": "Probe"})
 		with self.assertRaises(frappe.ValidationError):

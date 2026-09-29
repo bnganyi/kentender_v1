@@ -581,6 +581,7 @@ kt_technical_reference_resolvers = [
 	"kentender_procurement.tenders.services.technical_read.reference_resolvers",
 	"kentender_procurement.std_templates.services.technical_read.reference_resolvers",
 	"kentender_procurement.bid_submission.services.technical_read.reference_resolvers",
+	"kentender_procurement.bid_opening.services.technical_read.reference_resolvers",
 ]
 
 kt_technical_read_probes = [

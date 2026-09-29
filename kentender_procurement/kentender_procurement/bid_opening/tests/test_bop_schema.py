@@ -101,6 +101,13 @@ class TestBidOpeningRecords(IntegrationTestCase):
 		self.assertTrue(frappe.get_meta("Opening Committee Member").istable)
 		self.assertTrue(frappe.get_meta("Bid Opening Settings").issingle)
 
+	def test_administrators_cannot_read_bid_content(self):
+		"""Board h3 / BOP-CHG-001 v0.10 §6: bids, the register and the opening
+		record are never shown to administrators, not even as a read-only form."""
+		for doctype in ("Opening Entry", "Opening Register", "Opening Exception", "Opening Register Request", "Evaluation Handoff"):
+			with self.subTest(doctype=doctype):
+				self.assertEqual(frappe.get_meta(doctype).permissions, [])
+
 	def test_a_record_changes_only_through_a_command(self):
 		doc = frappe.get_doc({"doctype": "Opening Exception", "exception_id": "BOP-PROBE", "exception_class": "Procedural comment", "outcome": "Open"})
 		with self.assertRaises(frappe.ValidationError):

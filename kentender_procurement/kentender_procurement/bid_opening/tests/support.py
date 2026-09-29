@@ -64,6 +64,9 @@ def wipe_openings() -> None:
 	if cases:
 		from kentender_procurement.bid_opening.services import renders
 
+		references = frappe.get_all("Bid Opening Case", filters={"name": ("in", cases)}, pluck="tender_reference")
+		frappe.db.delete("Audit Event", {"entity": "Bid Opening", "document_type": "Tender", "document_name": ("in", references)})
+
 		renders.remove(frappe.get_all("Opening Entry", filters={"opening_case": ("in", cases)}, pluck="entry_id"))
 		renders.remove(frappe.get_all("Proceeding Minutes Version", filters={"proceeding": ("in", proceedings)}, pluck="minutes_version_id") if proceedings else [])
 		requests = frappe.get_all("Opening Register Request", filters={"opening_case": ("in", cases)}, pluck="name")
@@ -79,6 +82,7 @@ def wipe_openings() -> None:
 			frappe.db.delete(doctype, {"proceeding": ("in", proceedings)})
 		delete_rows("Proceeding Minutes Version", {"proceeding": ("in", proceedings)})
 		delete_rows("Proceeding", {"name": ("in", proceedings)})
+	frappe.db.delete("Audit Event", {"entity": "Bid Opening", "document_name": "TND-DOES-NOT-EXIST"})  # test_bop_api's guessed route
 	frappe.db.delete("Opening Command Journal", {"fixture_namespace": NS})
 	frappe.db.delete("Proceeding Command Journal", {"fixture_namespace": NS})
 	frappe.db.delete("Notification Log", {"email_header": ("like", "bop-%"), "for_user": ("in", (INDEPENDENT, SUPPORT, CHAIR, MEMBER, AO))})

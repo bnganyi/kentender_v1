@@ -77,7 +77,7 @@ def _chair_before_start(doc, member, now) -> dict[str, Any]:
 		names = [g["message"] for g in absent]
 		member_names = [m["full_name"] for m in appointment.roster(doc.name) if m["member_user"] not in present]
 		return ns.answer(ns.KIND_WAITING, headline=names[0], sentence=f"{closed} You can start once every appointed member has joined.", stage="open",
-			holder=ns.holder("", member_names), blockers=[ns.blocker(g) for g in refused])
+			holder=ns.holder("Committee member", member_names), blockers=[ns.blocker(g) for g in refused])
 	return ns.answer(ns.KIND_WAITING, headline=refused[0]["message"], stage="open", holder=ns.holder(people.ACCOUNTING_OFFICER, _ao_names()),
 		blockers=[ns.blocker(g) for g in refused])
 
@@ -151,7 +151,7 @@ def _ceremony(doc, user: str, member, ao: bool) -> list[dict[str, Any] | None]:
 			elif member:
 				out.append(ns.answer(ns.KIND_WAITING, headline=f"Waiting for {name} to rejoin or for {ao_display} to appoint a replacement",
 					sentence=f"Opening is paused because {name} is not present. {name} left at {labels.time(pause.recorded_at)}.", stage="open",
-					holder=ns.holder("", [name, *ao_names])))
+					holder=ns.holder("Committee member", [name, *ao_names])))
 			if ao:
 				out.append(ns.answer(ns.KIND_YOUR_TURN, headline=f"Appoint replacement for {doc.tender_reference}", sentence=f"Opening is paused because {name} is not "
 					"present. Appoint a replacement only if they cannot return.", stage="open", primary_action="appoint_replacement"))
@@ -216,7 +216,7 @@ def _signing_answer(doc, user: str) -> dict[str, Any] | None:
 	names = " and ".join([", ".join(waiting[:-1]), waiting[-1]] if len(waiting) > 1 else waiting)
 	signed_at = max(t["signed_at"] for t in mine)
 	return ns.answer(ns.KIND_WAITING, headline=f"Waiting for {names} to sign the opening record", sentence=f"You signed version {number} at {labels.time(signed_at)}.",
-		stage="record", holder=ns.holder("", waiting))
+		stage="record", holder=ns.holder("Committee member", waiting))
 
 
 def _completed_answer(doc, user: str, member, ao: bool) -> dict[str, Any] | None:
