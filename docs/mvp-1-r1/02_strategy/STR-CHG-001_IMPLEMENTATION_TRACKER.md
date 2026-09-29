@@ -26,6 +26,8 @@
 | 2026-09-14 | D6 idempotency via the existing `Strategy Command Journal` on all write commands. | §8.2; helper exists. |
 | 2026-09-14 | D7 one pending change set; Submit saves then submits with separate keys. | §8.2/§12.3. |
 | 2026-09-14 | D8 server refuses future-effective approval; predecessor `effective_to` closes to the day before the successor start when later than its own start. | §5.1/§11.6/STR18-XD-002. |
+| 2026-09-29 | Owner (GitHub #13) — **Submit for approval** takes one confirmation: "Submit this version for approval?", noting that unsaved changes are saved first and the version cannot be edited unless returned. Approval itself stays a single deliberate click (§11.8/STR-AC-030 unchanged). | Submitting locks the Draft until an authorised Return. New §12 copy to be carried into the next STR-CHG-001 version. |
+| 2026-09-29 | Owner (GitHub #14) — switching items in the structure is not a leave and never prompts; a discreet **Unsaved changes** tag shows pending work on Structure and on the Draft plan details. Leaving with unsaved work offers Save / Discard unsaved changes / Stay here on every route out — the screen's tabs and links, the rail breadcrumb, the sidebar and browser Back/Forward — through the shared `kentender_core.desk_page.addLeaveGuard`. The plan details form now has the same guard as Structure. | §12.3 applied to every exit, not only in-page links. GitHub #15 (Update plan starts empty) confirmed not a defect: Update plan copies the full Active version; Create plan is the blank path. |
 
 ## Risks
 

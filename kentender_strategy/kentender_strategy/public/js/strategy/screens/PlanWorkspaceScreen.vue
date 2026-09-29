@@ -9,7 +9,7 @@
 // An explicitly requested version is never silently replaced by the latest
 // content (§12.2); the Current version's facts lead and a pending update is
 // shown separately (§11.3).
-import { ref, reactive, computed, watch, onActivated } from "vue";
+import { ref, reactive, computed, watch, onActivated, onDeactivated, onMounted, onBeforeUnmount } from "vue";
 import { useRouteState } from "../../strategy_shared/composables/useRouteState.js";
 import { usePageRail } from "../../strategy_shared/composables/usePageRail.js";
 import { runAttempt } from "../../strategy_shared/data/attempts.js";
@@ -149,14 +149,43 @@ watch(tab, (t) => {
 	if (t === "structure" && workspace.value && !editable.value) loadReadTree();
 });
 
-// §12.3 — leaving a dirty editor offers Save / Discard / Stay.
-function navigate(routeArray) {
-	const run = () => frappe.set_route(...routeArray);
-	if (tab.value === "structure" && editorRef.value && editorDirty.value) {
-		editorRef.value.guardedNavigate(run);
-		return;
+// §12.3 — leaving a dirty editor or dirty plan details offers Save / Discard / Stay.
+// One guard in front of Frappe's router covers this screen's tabs and links,
+// the rail breadcrumb, the sidebar and browser back/forward alike.
+const pendingNavigation = ref(null);
+let leavingOnPurpose = false;
+function leaveGuard(proceed) {
+	if (leavingOnPurpose) return false;
+	if (tab.value === "structure" && editorRef.value?.isDirty) {
+		editorRef.value.guardedNavigate(proceed);
+		return true;
 	}
-	run();
+	if (tab.value === "overview" && detailsDirty.value) {
+		pendingNavigation.value = proceed;
+		confirmDialog.value = "details-unsaved";
+		return true;
+	}
+	return false;
+}
+let removeLeaveGuard = null;
+function holdLeaveGuard() {
+	if (!removeLeaveGuard) removeLeaveGuard = kentender_core.desk_page.addLeaveGuard(leaveGuard);
+}
+function releaseLeaveGuard() {
+	if (removeLeaveGuard) removeLeaveGuard();
+	removeLeaveGuard = null;
+}
+onMounted(holdLeaveGuard);
+onActivated(holdLeaveGuard);
+onDeactivated(releaseLeaveGuard);
+onBeforeUnmount(releaseLeaveGuard);
+// A command that ends editing (submit, discard draft) leaves without asking about edits.
+function leaveOnPurpose(...routeArray) {
+	leavingOnPurpose = true;
+	Promise.resolve(frappe.set_route(...routeArray)).finally(() => (leavingOnPurpose = false));
+}
+function navigate(routeArray) {
+	frappe.set_route(...routeArray);
 }
 function switchTab(t) {
 	const target = workspace.value?.routes?.[t];
@@ -238,6 +267,38 @@ async function savePlanDetails() {
 		acting.value = false;
 	}
 }
+async function detailsGuardSave() {
+	confirmDialog.value = null;
+	const run = pendingNavigation.value;
+	pendingNavigation.value = null;
+	if ((await savePlanDetails()) && run) run();
+}
+function detailsGuardDiscard() {
+	confirmDialog.value = null;
+	const run = pendingNavigation.value;
+	pendingNavigation.value = null;
+	syncDetailForm();
+	if (run) run();
+}
+function detailsGuardStay() {
+	confirmDialog.value = null;
+	pendingNavigation.value = null;
+}
+function onBeforeUnload(e) {
+	if (tab.value !== "overview" || !detailsDirty.value) return;
+	e.preventDefault();
+	e.returnValue = "";
+}
+onMounted(() => window.addEventListener("beforeunload", onBeforeUnload));
+onBeforeUnmount(() => window.removeEventListener("beforeunload", onBeforeUnload));
+
+// The discreet pending-work signal: shown only while this surface holds unsaved edits.
+const hasUnsavedChanges = computed(() => {
+	if (tab.value === "structure") return editable.value && editorDirty.value;
+	if (tab.value === "overview") return isDraft.value && detailsDirty.value;
+	return false;
+});
+
 async function editStructure() {
 	if (detailsDirty.value) {
 		const ok = await savePlanDetails();
@@ -272,8 +333,8 @@ async function doDiscardDraft() {
 			discardPlanDraft(version.value.id, version.value.expected_version, key)
 		);
 		frappe.show_alert({ message: __("Draft discarded"), indicator: "green" });
-		if (result.plan_discarded) frappe.set_route("strategy");
-		else frappe.set_route("strategy", "plan", workspace.value.plan.reference);
+		if (result.plan_discarded) leaveOnPurpose("strategy");
+		else leaveOnPurpose("strategy", "plan", workspace.value.plan.reference);
 	} catch (e) {
 		actionError.value = e.unknownOutcome ? __("We could not confirm the result. Checking the existing request…") : e.message || String(e);
 	} finally {
@@ -281,9 +342,15 @@ async function doDiscardDraft() {
 	}
 }
 
+// Owner decision 29 Sep 2026 (GitHub #13): submitting locks the draft until an
+// approver returns it, so it takes one confirmation.
+function confirmSubmit() {
+	confirmDialog.value = null;
+	editorRef.value?.submit();
+}
 function onSubmitted() {
 	historyLoaded.value = false;
-	frappe.set_route("strategy", "plan", workspace.value.plan.reference, "version", String(version.value.version_number));
+	leaveOnPurpose("strategy", "plan", workspace.value.plan.reference, "version", String(version.value.version_number));
 	loadWorkspace({ quiet: true });
 }
 function onSaved() {
@@ -361,6 +428,7 @@ function nodePath(node) {
 							<div style="display: flex; align-items: center; gap: 10.2px; flex-wrap: wrap">
 								<span v-if="tab === 'structure' && editable" style="font-size: 15px; font-weight: 600">{{ workspace.plan.title }}</span>
 								<span v-if="version" class="kt-status" :class="version.status_tone" data-testid="str-plan-status">{{ version.status_label }}</span>
+								<span v-if="hasUnsavedChanges" class="kt-tag kt-tag-neutral" data-testid="str-unsaved-indicator">{{ __("Unsaved changes") }}</span>
 								<a v-if="isPrevious && workspace.routes.current" href="#" data-testid="str-view-current" @click.prevent="navigate(workspace.routes.current)">{{ __("View current plan") }}</a>
 							</div>
 						</div>
@@ -368,7 +436,7 @@ function nodePath(node) {
 							<button v-if="canDiscardDraft" type="button" class="kt-btn kt-btn-secondary kt-danger" :disabled="acting" data-testid="str-discard-draft" @click="confirmDialog = 'discard-draft'">{{ __("Discard draft") }}</button>
 							<template v-if="tab === 'structure' && editable">
 								<button type="button" class="kt-btn kt-btn-secondary" :disabled="acting" data-testid="str-save-changes" @click="editorRef?.save()">{{ __("Save changes") }}</button>
-								<button type="button" class="kt-btn kt-btn-primary" :disabled="acting" data-testid="str-submit" @click="editorRef?.submit()">{{ __("Submit for approval") }}</button>
+								<button type="button" class="kt-btn kt-btn-primary" :disabled="acting" data-testid="str-submit" @click="confirmDialog = 'submit'">{{ __("Submit for approval") }}</button>
 							</template>
 							<div v-else-if="workspace.capabilities.update_plan" style="text-align: right; max-width: 360px">
 								<button type="button" class="kt-btn kt-btn-secondary" :disabled="acting" data-testid="str-update-plan" @click="confirmDialog = 'update-plan'">{{ __("Update plan") }}</button>
@@ -587,6 +655,27 @@ function nodePath(node) {
 			testid="str-confirm-discard"
 			@confirm="doDiscardDraft"
 			@cancel="confirmDialog = null"
+		/>
+		<ConfirmDialog
+			:open="confirmDialog === 'submit'"
+			:title="__('Submit this version for approval?')"
+			:message="editorDirty ? __('Your unsaved changes will be saved first. The Strategy Approver will then review this version, and it cannot be edited unless it is returned for correction.') : __('The Strategy Approver will review this version. It cannot be edited unless it is returned for correction.')"
+			:confirm-label="__('Submit for approval')"
+			testid="str-confirm-submit"
+			@confirm="confirmSubmit"
+			@cancel="confirmDialog = null"
+		/>
+		<ConfirmDialog
+			:open="confirmDialog === 'details-unsaved'"
+			:title="__('You have unsaved changes')"
+			:message="__('Save your plan details before leaving, or discard them. Discarding affects only unsaved work.')"
+			:confirm-label="__('Save plan details')"
+			:secondary-label="__('Discard unsaved changes')"
+			:cancel-label="__('Stay here')"
+			testid="str-details-unsaved-dialog"
+			@confirm="detailsGuardSave"
+			@secondary="detailsGuardDiscard"
+			@cancel="detailsGuardStay"
 		/>
 	</div>
 </template>

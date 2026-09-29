@@ -135,6 +135,7 @@ test.describe("STR-UI-04 — Strategy Approver", () => {
 		await page.locator('[data-testid="str-tree-node"][data-node-type="Performance Indicator"]').click();
 		await expect(page.locator('[data-testid="str-target-delete"]')).toHaveCount(0);
 		await page.locator('[data-testid="str-submit"]').click();
+		await page.locator('[data-testid="str-confirm-submit"] [data-testid="str-confirm-ok"]').click();
 		await expect(page.locator('[data-testid="str-plan-status"]')).toHaveText("Awaiting approval", { timeout: 30_000 });
 
 		// One deliberate click approves the corrected submission.

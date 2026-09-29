@@ -49,6 +49,9 @@
 //                                awaited *inside* the function passed to
 //                                `run()`, before its `finally` clears pending
 //                                — see AGENTS.md §6.4.
+//   addLeaveGuard(guard)       — asks `guard(proceed)` before any route change
+//                                leaves the current URL (links, rail, sidebar,
+//                                back/forward); returns a remover. See below.
 //   createSequenceGuard()      — the "every loader carries a sequence token"
 //                                obligation from AGENTS.md §6.4, as a
 //                                two-line utility instead of a hand-rolled
@@ -408,6 +411,91 @@ frappe.provide("kentender_core.desk_page");
 		};
 	}
 
+	// --- Leave guard -----------------------------------------------------------
+	// A screen holding unsaved work registers `guard(proceed)`. Every route
+	// change that would leave the current URL — the screen's own links, the
+	// rail breadcrumb, the sidebar, any frappe.set_route, and browser
+	// back/forward — asks the guards first. A guard returns true when it has
+	// taken over (typically by opening Save / Discard / Stay) and later calls
+	// `proceed()` only if the user chooses to leave; false lets the change
+	// through. Before this existed each screen guarded only its own links.
+	//
+	// Frappe routes through two doors: `router.push_state` (history push, then
+	// `route()`) for links and set_route, and its popstate listener calling
+	// `route()` directly after the browser has already moved. push_state is
+	// held before the history entry is written; a held traversal re-pushes the
+	// page's URL and `proceed()` steps back over it.
+	var leaveGuards = [];
+	var leaveGuardInstalled = false;
+	var lastRoutedUrl = null;
+	var pushing = false;
+	var skipNextRoute = false;
+
+	function currentUrl() {
+		return window.location.pathname + window.location.search;
+	}
+
+	function askLeaveGuards(proceed) {
+		for (var i = 0; i < leaveGuards.length; i++) {
+			if (leaveGuards[i](proceed)) return true;
+		}
+		return false;
+	}
+
+	function installLeaveGuard() {
+		if (leaveGuardInstalled || !frappe.router) return;
+		leaveGuardInstalled = true;
+		lastRoutedUrl = currentUrl();
+		var router = frappe.router;
+		var pushState = router.push_state;
+		var route = router.route;
+
+		router.push_state = function (path, query) {
+			var self = this;
+			var args = arguments;
+			var go = function () {
+				pushing = true;
+				try {
+					return pushState.apply(self, args);
+				} finally {
+					pushing = false;
+				}
+			};
+			if (String(path) + String(query || "") === currentUrl()) return go();
+			if (askLeaveGuards(go)) return;
+			return go();
+		};
+
+		router.route = function () {
+			var url = currentUrl();
+			if (pushing || skipNextRoute || url === lastRoutedUrl) {
+				skipNextRoute = false;
+				lastRoutedUrl = url;
+				return route.apply(this, arguments);
+			}
+			var from = lastRoutedUrl;
+			var proceed = function () {
+				skipNextRoute = true;
+				history.back();
+			};
+			if (askLeaveGuards(proceed)) {
+				history.pushState(null, "", from);
+				return Promise.resolve();
+			}
+			lastRoutedUrl = url;
+			return route.apply(this, arguments);
+		};
+	}
+
+	function addLeaveGuard(guard) {
+		installLeaveGuard();
+		leaveGuards.push(guard);
+		return function () {
+			var i = leaveGuards.indexOf(guard);
+			if (i >= 0) leaveGuards.splice(i, 1);
+		};
+	}
+
 	// Frappe fires "page-change" from Container.change_to for every page —
 	// Desk-native views included — after the destination's own script has run,
 	// so a registered page is already known here and only foreign pages get
@@ -428,6 +516,7 @@ frappe.provide("kentender_core.desk_page");
 		createCommandRunner: createCommandRunner,
 		createSequenceGuard: createSequenceGuard,
 		createScreenCache: createScreenCache,
+		addLeaveGuard: addLeaveGuard,
 		isActive: function (pageSlug) {
 			var group = groupFor(pageSlug);
 			return group ? group.active : false;

@@ -123,6 +123,7 @@ test.describe("STR-UI-01..03 — Strategy Author", () => {
 
 		// §8.2 — Submit saves the pending set first, then submits the confirmed Draft.
 		await page.locator('[data-testid="str-submit"]').click();
+		await page.locator('[data-testid="str-confirm-submit"] [data-testid="str-confirm-ok"]').click();
 		await expect(page).toHaveURL(/\/version\/2$/, { timeout: 30_000 });
 		await expectScreen(page, "plan");
 		await expect(page.locator('[data-testid="str-plan-status"]')).toHaveText("Awaiting approval");
@@ -189,6 +190,7 @@ test.describe("STR-UI-01..03 — Strategy Author", () => {
 
 		// STR-BR-012 — readiness blocks submission with the actual missing item, inline.
 		await page.locator('[data-testid="str-submit"]').click();
+		await page.locator('[data-testid="str-confirm-submit"] [data-testid="str-confirm-ok"]').click();
 		await expect(page.locator('[data-testid="str-action-error"]')).toContainText("Add a pillar");
 		await expect(page.locator('[data-testid="str-plan-status"]')).toHaveText("Draft");
 		await expectNoFrappeModal(page);

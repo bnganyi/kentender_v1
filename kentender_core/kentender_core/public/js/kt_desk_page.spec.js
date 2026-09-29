@@ -6,7 +6,7 @@
 // hand-written `hashchange` listener per page (AGENTS.md §6.4).
 import fs from "node:fs";
 import path from "node:path";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { defineComponent, h, nextTick, onActivated, onDeactivated, onMounted, onUnmounted, ref } from "vue";
 import { mount } from "@vue/test-utils";
 
@@ -133,5 +133,98 @@ describe("desk_page.useRoute", () => {
 		setHash("organisation-structure");
 		await nextTick();
 		expect(held.hash.value).not.toBe("organisation-structure");
+	});
+});
+
+// GitHub #14 (29 Sep 2026) — a screen with unsaved work warned only when the
+// user left through the screen's own tabs and links; the rail breadcrumb, the
+// sidebar and browser back/forward left silently. `addLeaveGuard` puts one
+// guard in front of Frappe's router so every route change asks first.
+describe("desk_page.addLeaveGuard", () => {
+	let desk;
+	let pushed;
+	let routed;
+
+	beforeEach(() => {
+		history.replaceState(null, "", "/app/strategy/plan/P-1");
+		desk = loadRuntime();
+		pushed = [];
+		routed = [];
+		frappe.router.push_state = function (path, query = "") {
+			pushed.push(path + query);
+			history.pushState(null, "", path + query);
+			this.route();
+		};
+		frappe.router.route = function () {
+			routed.push(window.location.pathname + window.location.search);
+			return Promise.resolve();
+		};
+	});
+
+	it("lets every route change through while no guard is registered", () => {
+		frappe.router.push_state("/app/todo");
+		expect(pushed).toEqual(["/app/todo"]);
+		expect(routed).toEqual(["/app/todo"]);
+	});
+
+	it("lets a route change through when the guard has nothing to protect", () => {
+		desk.addLeaveGuard(() => false);
+		frappe.router.push_state("/app/todo");
+		expect(pushed).toEqual(["/app/todo"]);
+		expect(window.location.pathname).toBe("/app/todo");
+	});
+
+	it("holds a link, rail or sidebar route change until the guard proceeds, then makes it once", () => {
+		let proceed;
+		desk.addLeaveGuard((p) => {
+			proceed = p;
+			return true;
+		});
+		frappe.router.push_state("/app/todo");
+		expect(pushed).toEqual([]);
+		expect(window.location.pathname).toBe("/app/strategy/plan/P-1");
+		proceed();
+		expect(pushed).toEqual(["/app/todo"]);
+		expect(routed).toEqual(["/app/todo"]);
+		expect(window.location.pathname).toBe("/app/todo");
+	});
+
+	it("puts the page's URL back when browser back is held, and goes back once when the guard proceeds", () => {
+		history.pushState(null, "", "/app/strategy/plan/P-1/version/2");
+		frappe.router.route(); // the page as Frappe last routed it
+		routed = [];
+		let proceed;
+		desk.addLeaveGuard((p) => {
+			proceed = p;
+			return true;
+		});
+		// The browser has already moved when popstate reaches Frappe's router.
+		history.replaceState(null, "", "/app/strategy/plan/P-1");
+		frappe.router.route();
+		expect(routed).toEqual([]);
+		expect(window.location.pathname).toBe("/app/strategy/plan/P-1/version/2");
+		const back = vi.spyOn(history, "back").mockImplementation(() => {});
+		proceed();
+		expect(back).toHaveBeenCalledTimes(1);
+		// The traversal that follows is not asked again.
+		history.replaceState(null, "", "/app/strategy/plan/P-1");
+		frappe.router.route();
+		expect(routed).toEqual(["/app/strategy/plan/P-1"]);
+		back.mockRestore();
+	});
+
+	it("does not treat a same-URL re-route as leaving", () => {
+		const guard = vi.fn(() => true);
+		desk.addLeaveGuard(guard);
+		frappe.router.route();
+		expect(guard).not.toHaveBeenCalled();
+		expect(routed).toEqual(["/app/strategy/plan/P-1"]);
+	});
+
+	it("stops asking once the guard is removed", () => {
+		const remove = desk.addLeaveGuard(() => true);
+		remove();
+		frappe.router.push_state("/app/todo");
+		expect(pushed).toEqual(["/app/todo"]);
 	});
 });
