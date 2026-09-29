@@ -1,0 +1,195 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-29 18:00:00.000000",
+ "description": "PRC-CHG-001 v0.9 §4 Proceeding: one owner session identity; start/end are trusted recorded instants.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "proceeding_id",
+  "owner_type",
+  "owner_id",
+  "owner_key",
+  "proceeding_type",
+  "title",
+  "state",
+  "created_at",
+  "created_by",
+  "actual_start",
+  "actual_end",
+  "ceased_at",
+  "not_held_reason",
+  "cancellation_reference",
+  "custody_reference",
+  "current_minutes_version",
+  "finalized_at",
+  "members",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "proceeding_id",
+   "fieldtype": "Data",
+   "label": "Proceeding ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "owner_type",
+   "fieldtype": "Data",
+   "label": "Owner type",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "owner_id",
+   "fieldtype": "Data",
+   "label": "Owner ID",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "owner_key",
+   "fieldtype": "Data",
+   "label": "Owner key",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "proceeding_type",
+   "fieldtype": "Select",
+   "label": "Proceeding type",
+   "read_only": 1,
+   "options": "Bid Opening",
+   "reqd": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "label": "State",
+   "read_only": 1,
+   "options": "Pending\nIn session\nSession ended\nAwaiting attestations\nFinalized\nNot held\nAborted after start",
+   "reqd": 1
+  },
+  {
+   "fieldname": "created_at",
+   "fieldtype": "Datetime",
+   "label": "Created at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "created_by",
+   "fieldtype": "Link",
+   "label": "Created by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "actual_start",
+   "fieldtype": "Datetime",
+   "label": "Actual start",
+   "read_only": 1
+  },
+  {
+   "fieldname": "actual_end",
+   "fieldtype": "Datetime",
+   "label": "Actual end",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ceased_at",
+   "fieldtype": "Datetime",
+   "label": "Ceased at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "not_held_reason",
+   "fieldtype": "Small Text",
+   "label": "Not held reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancellation_reference",
+   "fieldtype": "Data",
+   "label": "Cancellation reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "custody_reference",
+   "fieldtype": "Data",
+   "label": "Custody reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_minutes_version",
+   "fieldtype": "Int",
+   "label": "Current minutes version",
+   "read_only": 1
+  },
+  {
+   "fieldname": "finalized_at",
+   "fieldtype": "Datetime",
+   "label": "Finalized at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "members",
+   "fieldtype": "Table",
+   "label": "Members",
+   "options": "Proceeding Member"
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record version",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-29 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Proceedings",
+ "name": "Proceeding",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:proceeding_id"
+}

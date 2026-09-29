@@ -1,0 +1,84 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-29 18:00:00.000000",
+ "description": "PRC-CHG-001 v0.9 §7.1 and TRUST-ADR-001 v0.1 §1(4): one exact target a named member must attest.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "target_id",
+  "target_type",
+  "target_reference",
+  "page_number",
+  "target_digest",
+  "required_member",
+  "roster_segment"
+ ],
+ "fields": [
+  {
+   "fieldname": "target_id",
+   "fieldtype": "Data",
+   "label": "Target ID",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_type",
+   "fieldtype": "Select",
+   "label": "Target type",
+   "read_only": 1,
+   "options": "Tender page\nPrice location\nChange location\nMinutes page\nFinal minutes page",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_reference",
+   "fieldtype": "Data",
+   "label": "Target reference",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "page_number",
+   "fieldtype": "Int",
+   "label": "Page number",
+   "read_only": 1
+  },
+  {
+   "fieldname": "target_digest",
+   "fieldtype": "Data",
+   "label": "Target digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "required_member",
+   "fieldtype": "Link",
+   "label": "Required member",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "roster_segment",
+   "fieldtype": "Int",
+   "label": "Roster segment",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-29 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Proceedings",
+ "name": "Proceeding Minutes Target",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "autoname": "hash"
+}

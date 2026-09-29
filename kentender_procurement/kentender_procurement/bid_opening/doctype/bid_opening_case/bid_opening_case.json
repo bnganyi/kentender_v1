@@ -1,0 +1,200 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-29 18:00:00.000000",
+ "description": "BOP-CHG-001 v0.10 §4 Opening case: one per Published Tender; the manifest attaches only after the deadline.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "opening_id",
+  "tender",
+  "tender_reference",
+  "tender_title",
+  "effective_deadline",
+  "state",
+  "outcome",
+  "proceeding",
+  "manifest_handoff",
+  "manifest_digest",
+  "manifest_received_at",
+  "current_appointment",
+  "current_arrangement",
+  "register",
+  "last_committed_event",
+  "started_at",
+  "ended_at",
+  "completed_at",
+  "evaluation_handoff",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "opening_id",
+   "fieldtype": "Data",
+   "label": "Opening ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "tender",
+   "fieldtype": "Link",
+   "label": "Tender",
+   "read_only": 1,
+   "options": "Tender",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "tender_reference",
+   "fieldtype": "Data",
+   "label": "Tender reference",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "tender_title",
+   "fieldtype": "Data",
+   "label": "Tender title",
+   "read_only": 1
+  },
+  {
+   "fieldname": "effective_deadline",
+   "fieldtype": "Datetime",
+   "label": "Effective deadline",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "label": "State",
+   "read_only": 1,
+   "options": "Awaiting deadline\nReady to open\nOpening\nInterrupted\nReadout complete\nAwaiting attestations\nOpening complete\nNot held\nCancelled after start",
+   "reqd": 1
+  },
+  {
+   "fieldname": "outcome",
+   "fieldtype": "Select",
+   "label": "Outcome",
+   "read_only": 1,
+   "options": "\nBids opened\nNo bids"
+  },
+  {
+   "fieldname": "proceeding",
+   "fieldtype": "Link",
+   "label": "Proceeding",
+   "read_only": 1,
+   "options": "Proceeding"
+  },
+  {
+   "fieldname": "manifest_handoff",
+   "fieldtype": "Data",
+   "label": "Manifest handoff",
+   "read_only": 1
+  },
+  {
+   "fieldname": "manifest_digest",
+   "fieldtype": "Data",
+   "label": "Manifest digest",
+   "read_only": 1
+  },
+  {
+   "fieldname": "manifest_received_at",
+   "fieldtype": "Datetime",
+   "label": "Manifest received at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_appointment",
+   "fieldtype": "Data",
+   "label": "Current appointment",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_arrangement",
+   "fieldtype": "Data",
+   "label": "Current arrangement",
+   "read_only": 1
+  },
+  {
+   "fieldname": "register",
+   "fieldtype": "Data",
+   "label": "Register",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_committed_event",
+   "fieldtype": "Data",
+   "label": "Last committed event",
+   "read_only": 1
+  },
+  {
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "label": "Started at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ended_at",
+   "fieldtype": "Datetime",
+   "label": "Ended at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "completed_at",
+   "fieldtype": "Datetime",
+   "label": "Completed at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "evaluation_handoff",
+   "fieldtype": "Data",
+   "label": "Evaluation handoff",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record version",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-29 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Opening",
+ "name": "Bid Opening Case",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:opening_id"
+}

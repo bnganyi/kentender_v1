@@ -1,0 +1,47 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-29 18:00:00.000000",
+ "description": "Plan D7: operating-profile inputs (presence lapse, register self-service, public join lead). Unset means not available.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "presence_lapse_seconds",
+  "public_join_lead_minutes",
+  "register_self_service"
+ ],
+ "fields": [
+  {
+   "fieldname": "presence_lapse_seconds",
+   "fieldtype": "Int",
+   "label": "Presence lapse seconds",
+   "read_only": 1
+  },
+  {
+   "fieldname": "public_join_lead_minutes",
+   "fieldtype": "Int",
+   "label": "Public join lead minutes",
+   "read_only": 1
+  },
+  {
+   "fieldname": "register_self_service",
+   "fieldtype": "Check",
+   "label": "Register self service",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-29 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Opening",
+ "name": "Bid Opening Settings",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "states": [],
+ "track_changes": 1,
+ "issingle": 1
+}

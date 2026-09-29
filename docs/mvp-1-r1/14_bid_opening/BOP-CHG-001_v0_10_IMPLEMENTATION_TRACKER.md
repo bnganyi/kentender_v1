@@ -4,7 +4,7 @@
 |---|---|
 | Version | 0.10-tracker.2 |
 | Date | 29 September 2026 |
-| Status | Phase 0 done (BOP-G00, 29 Sep 2026); Phase 1 in progress. (0.10-tracker.1 read: Planned. Phase 0 documents written (BOP10-001, BOP10-002, BOP10-003); no code) |
+| Status | Phases 0–1 done (BOP-G00, BOP-G01, 29 Sep 2026); Phase 2 next. (0.10-tracker.1 read: Planned. Phase 0 documents written (BOP10-001, BOP10-002, BOP10-003); no code) |
 
 **Authority:** `KenTender_BOP-CHG-001_Electronic_Bid_Opening_v0_10.md`, Approved 29 Sep 2026 by the Project Owner. (0.10-tracker.1 read: Proposed, 29 Sep 2026. It is built to under owner decision OD-A.) TRUST-ADR-001 v0.1 (approved 27 Sep 2026) is `../00_common/KenTender_TRUST-ADR-001_Shared_Signing_and_Sealed_Custody_v0_1.md`. The approved predecessor `KenTender_BOP-CHG-001_Electronic_Bid_Opening_v0_9.md` (approved 29 Sep 2026) is retained. The shared service is `../13_proceedings/KenTender_PRC-CHG-001_Minimal_Procurement_Proceedings_v0_9.md`, approved 29 Sep 2026.
 
@@ -66,7 +66,7 @@
 | Gate | Condition | Status | Evidence |
 |---|---|---|---|
 | BOP-G00 | Phase 0: inventory (50 boards, each in exactly one slice), v0.9→v0.10 diff, conflicts logged, design folder committed, `make artboard-provenance-gate` covers `14_bid_opening/design` | Passed | 29 Sep 2026: inventory, diff, plan, tracker and follow-ups written; design folder committed with them (BOP10-004). The provenance gate is repo-wide (`test_artboard_provenance_gate.py` scans every `.dc.html` under `docs/mvp-1-r1/`), so it needed no extension; result recorded on BOP10-004. |
-| BOP-G01 | Phase 1: modules, doctypes, flags guard, placeholder retired, migrate clean twice | Planned | |
+| BOP-G01 | Phase 1: modules, doctypes, flags guard, placeholder retired, migrate clean twice | Passed | 29 Sep 2026: `make prc-services-gate` 7/7 OK; `make bop-services-gate` 6/6 OK; two clean migrates; `make validate-links` clean. |
 | PRC-G02 | Phase 2: `make prc-services-gate` (PRC-S01, S02, N01–N12 against the simulated owner) | Planned | |
 | BOP-G03 | Phase 3: BDS seam, renderer determinism, signing double, settings, incident transport, availability order | Planned | |
 | BOP-G04 | Phase 4: pre-session services, count-neutral pre-Start test, My Work provider | Planned | |
@@ -85,7 +85,7 @@
 | BOP10-001 | v0.10 plan, tracker and follow-ups (new versioned files) | Done | 29 Sep 2026. `BOP-CHG-001_v0_10_{Implementation_Plan, IMPLEMENTATION_TRACKER, FOLLOW_UPS}.md`. |
 | BOP10-002 | `reconciliation/artboard_inventory.md` | Done | 29 Sep 2026. Script extraction of the 52-entry board registry (design file line 1225): 50 drawn boards (47 Covered, 3 Conditional) and 2 notes (`n00`, `f00`). |
 | BOP10-003 | `reconciliation/v0_9_to_v0_10_diff.md` | Done | 29 Sep 2026. `diff` of the two files: four substantive changes and the approval-state reversions (C1). |
-| BOP10-004 | Commit `design/` (board, `support.js`, `_ds/`) and extend `make artboard-provenance-gate` to `14_bid_opening/design` | Planned | |
+| BOP10-004 | Commit `design/` (board, `support.js`, `_ds/`) and extend `make artboard-provenance-gate` to `14_bid_opening/design` | Done | 29 Sep 2026: committed in `3c7da89c`. No extension needed: the gate is repo-wide. `make artboard-provenance-gate` equivalent (`kentender_core.tests.test_artboard_provenance_gate`) 3/3 OK after the commit. |
 | BOP10-005 | Owner: rebase BOP v0.10 onto approved v0.9 and approve it (FU-BOP-01) | Done | 29 Sep 2026: v0.10 control table reads "**Approved design and development contract**", "Approved on: 29 September 2026 — Project Owner", governing standard KT-STD-001 v1.10. |
 | BOP10-006 | Owner: supply TRUST-ADR-001 v0.1 (FU-BOP-02) | Done | 29 Sep 2026: `00_common/KenTender_TRUST-ADR-001_Shared_Signing_and_Sealed_Custody_v0_1.md`, read in full; plan D15–D17. |
 | BOP10-007 | Documentation owner: register entries for BOP, PRC, TRUST, KT-STD-001 v1.10 and TPR-CHG-001 v0.13; KT-STD-001 v1.10 filename (FU-BOP-03) | Done | 29 Sep 2026: register `as_of` 2026-09-28 has TRUST-ADR-001 v0.1, BOP-CHG-001 v0.10 and PRC-CHG-001 v0.9 (all "Approved requirement") and KT-STD-001 v1.10 (approved 2026-09-29, filename `…_v1_10_proposed.md`). |
@@ -98,11 +98,11 @@
 
 | ID | Phase | Item | Status | Evidence |
 |---|---|---|---|---|
-| BOP10-101 | 1 | `bid_opening` and `proceedings` modules in `modules.txt`; Module Def app check after first migrate (D1) | Planned | |
-| BOP10-102 | 1 | PRC doctypes (D2) with flags guard and deny permissions | Planned | |
-| BOP10-103 | 1 | BOP doctypes and `Bid Opening Settings` (D2) | Planned | |
-| BOP10-104 | 1 | `test_schema_contract.py` in both modules | Planned | |
-| BOP10-105 | 1 | Retire the placeholder `bid_opening` workspace; sidebar link check; `make validate-links`; migrate clean twice (D12) | Planned | |
+| BOP10-101 | 1 | `bid_opening` and `proceedings` modules in `modules.txt`; Module Def app check after first migrate (D1) | Done | 29 Sep 2026: after the first migrate both Module Defs read `app_name = kentender_procurement` and all 24 doctypes were created, so the new-module cache trap did not occur. |
+| BOP10-102 | 1 | PRC doctypes (D2) with flags guard and deny permissions | Done | 29 Sep 2026: 9 doctypes (7 records, 2 child tables). Writes require `flags.kt_prc_command`; deletes require `flags.kt_fixture_wipe`. Refinement of D2, following BDS: records give System Manager read only (technical read, KT-STD-001 §3A.6), and the command journal has no role at all. No record stores bid package bytes or rendered pages (D5). |
+| BOP10-103 | 1 | BOP doctypes and `Bid Opening Settings` (D2) | Done | 29 Sep 2026: 15 doctypes (13 records, 1 child table, 1 Single). Writes require `flags.kt_bop_command`. The same System Manager read-only refinement applies; the journal and Settings have no role. |
+| BOP10-104 | 1 | `test_schema_contract.py` in both modules | Done | 29 Sep 2026: named `proceedings/tests/test_prc_schema.py` (7) and `bid_opening/tests/test_bop_schema.py` (6), following `test_bds_schema.py`. Red first (21 errors: DocType not found), then green. New Makefile targets `bop-preflight`, `prc-services-gate`, `bop-services-gate`. |
+| BOP10-105 | 1 | Retire the placeholder `bid_opening` workspace; sidebar link check; `make validate-links`; migrate clean twice (D12) | Done | 29 Sep 2026: workspace file removed; patch `bop_chg_001_v010_retire_placeholder_workspace` deletes the record; no sidebar, test or UI reference found; `TestPlaceholderRetired` green. Migrate rewrote only the `workspace_sidebar/procurement.json` modified stamp (known behaviour). |
 | BOP10-201 | 2 | `proceedings/services/lifecycle.py`: Create, Start (arrivals snapshot), End, MarkNotHeld, CloseAbortedProceeding | Planned | |
 | BOP10-202 | 2 | `attendance.py` and `events.py`: pre-session and in-session rules, unique owner event ID, trusted and reported time | Planned | |
 | BOP10-203 | 2 | `minutes.py`, `attestation.py` and `finalize.py`: freeze, supersede, attest, finalize, supplement | Planned | |

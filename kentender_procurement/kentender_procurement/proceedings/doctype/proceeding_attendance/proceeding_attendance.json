@@ -1,0 +1,137 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-29 18:00:00.000000",
+ "description": "PRC-CHG-001 v0.9 §4 Attendance: actual arrival or departure; attendance grants no role.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "attendance_id",
+  "proceeding",
+  "person_name",
+  "user",
+  "capacity",
+  "represented_tenderer",
+  "movement",
+  "pre_session",
+  "occurred_at",
+  "reported_at",
+  "recorded_by",
+  "event"
+ ],
+ "fields": [
+  {
+   "fieldname": "attendance_id",
+   "fieldtype": "Data",
+   "label": "Attendance ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "proceeding",
+   "fieldtype": "Link",
+   "label": "Proceeding",
+   "read_only": 1,
+   "options": "Proceeding",
+   "reqd": 1
+  },
+  {
+   "fieldname": "person_name",
+   "fieldtype": "Data",
+   "label": "Person name",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "capacity",
+   "fieldtype": "Select",
+   "label": "Capacity",
+   "read_only": 1,
+   "options": "Committee member\nRecorder\nTenderer representative\nPublic observer",
+   "reqd": 1
+  },
+  {
+   "fieldname": "represented_tenderer",
+   "fieldtype": "Data",
+   "label": "Represented tenderer",
+   "read_only": 1
+  },
+  {
+   "fieldname": "movement",
+   "fieldtype": "Select",
+   "label": "Movement",
+   "read_only": 1,
+   "options": "Arrival\nDeparture",
+   "reqd": 1
+  },
+  {
+   "fieldname": "pre_session",
+   "fieldtype": "Check",
+   "label": "Pre session",
+   "read_only": 1
+  },
+  {
+   "fieldname": "occurred_at",
+   "fieldtype": "Datetime",
+   "label": "Occurred at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "reported_at",
+   "fieldtype": "Datetime",
+   "label": "Reported at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recorded_by",
+   "fieldtype": "Link",
+   "label": "Recorded by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "event",
+   "fieldtype": "Data",
+   "label": "Event",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-29 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Proceedings",
+ "name": "Proceeding Attendance",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:attendance_id"
+}

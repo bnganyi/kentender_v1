@@ -6,3 +6,5 @@ Procurement Requisitions
 Tenders
 STD Templates
 Bid Submission
+Bid Opening
+Proceedings

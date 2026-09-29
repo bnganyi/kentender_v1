@@ -1,0 +1,96 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-29 18:00:00.000000",
+ "description": "BOP-CHG-001 v0.10 §4 appointed member row.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "member_user",
+  "full_name",
+  "designation",
+  "committee_role",
+  "is_chair",
+  "is_recorder",
+  "is_independent",
+  "independence_basis",
+  "excluded_from_evaluation"
+ ],
+ "fields": [
+  {
+   "fieldname": "member_user",
+   "fieldtype": "Link",
+   "label": "Member user",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "label": "Full name",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Data",
+   "label": "Designation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "committee_role",
+   "fieldtype": "Select",
+   "label": "Committee role",
+   "read_only": 1,
+   "options": "Chair and recorder\nChair\nRecorder\nMember\nIndependent member",
+   "reqd": 1
+  },
+  {
+   "fieldname": "is_chair",
+   "fieldtype": "Check",
+   "label": "Is chair",
+   "read_only": 1
+  },
+  {
+   "fieldname": "is_recorder",
+   "fieldtype": "Check",
+   "label": "Is recorder",
+   "read_only": 1
+  },
+  {
+   "fieldname": "is_independent",
+   "fieldtype": "Check",
+   "label": "Is independent",
+   "read_only": 1
+  },
+  {
+   "fieldname": "independence_basis",
+   "fieldtype": "Small Text",
+   "label": "Independence basis",
+   "read_only": 1
+  },
+  {
+   "fieldname": "excluded_from_evaluation",
+   "fieldtype": "Check",
+   "label": "Excluded from evaluation",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-29 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Opening",
+ "name": "Opening Committee Member",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "autoname": "hash"
+}
