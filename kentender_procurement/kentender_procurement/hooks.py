@@ -127,6 +127,10 @@ kt_portal_surfaces = [
 	),
 ]
 
+# BOP-CHG-001 v0.10 plan D10 — Bid Opening answers /tenders/{ref}/opening
+# inside Bid Submission's portal surface above.
+kt_tender_opening_portal = ["kentender_procurement.bid_opening.portal.resolve"]
+
 # BDS-CHG-001 v0.8 plan Phase 5 (TPR FU-25) — the Tender candidate registry is
 # Bid Submission's: a bidder arrangement, created only by Start bid, is the
 # candidate registration Tenders' notices and clarification intake consume.

@@ -1,0 +1,71 @@
+{
+ "Guest": {
+  "arrangements": {
+   "message": "Details on how to attend the opening are coming soon",
+   "published": false
+  },
+  "can_join": false,
+  "joined_label": "",
+  "phase": "details-coming",
+  "readout": [],
+  "register": {
+   "message": "After the opening record is complete, a supplier who submitted a bid can request the opening register.",
+   "state": "after-completion"
+  },
+  "repeats": [],
+  "signed_in": false,
+  "status": "",
+  "tender": {
+   "entity": "Ministry of Health",
+   "opening_label": "5 Jun 2027, 11:00 EAT",
+   "reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  }
+ },
+ "pw.bds.david@afya-pw.example": {
+  "arrangements": {
+   "message": "Details on how to attend the opening are coming soon",
+   "published": false
+  },
+  "can_join": false,
+  "joined_label": "",
+  "phase": "details-coming",
+  "readout": [],
+  "register": {
+   "message": "After the opening record is complete, a supplier who submitted a bid can request the opening register.",
+   "state": "after-completion"
+  },
+  "repeats": [],
+  "signed_in": true,
+  "status": "",
+  "tender": {
+   "entity": "Ministry of Health",
+   "opening_label": "5 Jun 2027, 11:00 EAT",
+   "reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  }
+ },
+ "pw.bop.observer@example.test": {
+  "arrangements": {
+   "message": "Details on how to attend the opening are coming soon",
+   "published": false
+  },
+  "can_join": false,
+  "joined_label": "",
+  "phase": "details-coming",
+  "readout": [],
+  "register": {
+   "message": "After the opening record is complete, a supplier who submitted a bid can request the opening register.",
+   "state": "after-completion"
+  },
+  "repeats": [],
+  "signed_in": true,
+  "status": "",
+  "tender": {
+   "entity": "Ministry of Health",
+   "opening_label": "5 Jun 2027, 11:00 EAT",
+   "reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  }
+ }
+}

@@ -303,3 +303,35 @@ def provide_register_copy(tender_reference: str, request: str, idempotency_key: 
 
 	return _call("ProvideOpeningRegister", tender_reference, register_copy.provide_register_copy, request=request, decline_reason=decline_reason,
 		idempotency_key=idempotency_key)
+
+
+# -- the public opening page (BOP-CHG-001 v0.10 §10.5; boards p0–p6; plan D10) ---------
+
+
+@frappe.whitelist(allow_guest=True, methods=["GET"])
+def get_public_opening(tender_reference: str) -> dict[str, Any]:
+	"""Anyone's view of a published Tender's opening; the only guest endpoint."""
+	from kentender_procurement.bid_opening.services import public
+
+	return public.get_public_opening(tender_reference=tender_reference, user=frappe.session.user)
+
+
+@frappe.whitelist(methods=["POST"])
+def join_public_opening(tender_reference: str, idempotency_key: str) -> dict[str, Any]:
+	from kentender_procurement.bid_opening.services import public
+
+	return _call("JoinPublicOpening", tender_reference, public.join_public_opening, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist(methods=["POST"])
+def request_opening_register(tender_reference: str, idempotency_key: str) -> dict[str, Any]:
+	from kentender_procurement.bid_opening.services import register_copy
+
+	return _call("RequestOpeningRegister", tender_reference, register_copy.request_opening_register, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist(methods=["GET"])
+def download_opening_register(tender_reference: str) -> None:
+	from kentender_procurement.bid_opening.services import register_copy
+
+	_download(_call("GetOpeningRegisterCopy", tender_reference, register_copy.get_register_copy))

@@ -19,6 +19,9 @@ import MyBidsScreen from "./screens/MyBidsScreen.vue";
 import ReceiptHistoryScreen from "./screens/ReceiptHistoryScreen.vue";
 import TenderOverviewScreen from "./screens/TenderOverviewScreen.vue";
 import CommonState from "./components/CommonState.vue";
+// BOP-CHG-001 v0.10 plan D10: Bid Opening's public page, rendered here for
+// /tenders/{ref}/opening (the file is Bid Opening's; this portal hosts it).
+import PublicOpeningScreen from "../bid_opening/portal/PublicOpeningScreen.vue";
 
 const props = defineProps({
 	initial: { type: Object, default: () => ({}) },
@@ -35,6 +38,7 @@ const screen = computed(() => {
 	if (segments.length === 1 && segments[0] === "tenders") return "available-tenders";
 	if (segments.length === 2 && segments[0] === "tenders") return "tender-overview";
 	if (segments.length === 3 && segments[0] === "tenders" && segments[2] === "bid") return "workspace";
+	if (segments.length === 3 && segments[0] === "tenders" && segments[2] === "opening") return "public-opening";
 	if (segments.length === 4 && segments[0] === "tenders" && segments[2] === "bid" && segments[3] === "documents") return "documents-task";
 	if (segments.length === 4 && segments[0] === "tenders" && segments[2] === "bid" && segments[3] === "company") return "company-task";
 	if (segments.length === 4 && segments[0] === "tenders" && segments[2] === "bid" && segments[3] === "requirements") return "requirements-task";
@@ -68,6 +72,7 @@ function firstPayload(name) {
 <template>
 	<AvailableTendersScreen v-if="screen === 'available-tenders'" :initial="firstPayload('available-tenders')" />
 	<TenderOverviewScreen v-else-if="screen === 'tender-overview'" :key="route.path" :reference="route.segments[1]" :initial="firstPayload('tender-overview')" @not-found="notFound = true" />
+	<PublicOpeningScreen v-else-if="screen === 'public-opening'" :key="route.path" :reference="route.segments[1]" :initial="firstPayload('public-opening')" @not-found="notFound = true" />
 	<BidWorkspaceScreen v-else-if="screen === 'workspace'" :key="route.path" :reference="route.segments[1]" :initial="firstPayload('workspace')" @not-found="notFound = true" />
 	<DocumentsTaskScreen v-else-if="screen === 'documents-task'" :key="route.path" :reference="route.segments[1]" :initial="firstPayload('documents-task')" @not-found="notFound = true" />
 	<CompanyTaskScreen v-else-if="screen === 'company-task'" :key="route.path" :reference="route.segments[1]" :initial="firstPayload('company-task')" @not-found="notFound = true" />

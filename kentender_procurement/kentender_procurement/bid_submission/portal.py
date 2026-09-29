@@ -41,6 +41,12 @@ def resolve(*, path: str, query: dict[str, Any], user: str) -> dict[str, Any]:
 			return {"verdict": "NOT_FOUND", "title": "Tender not found", "payload": {"screen": "tender-not-found"}}
 		title = data["tender"]["reference"] if data["tender"]["availability"] == "cancelled" else data["tender"]["title"]
 		return {"verdict": "OK", "title": title, "payload": {"screen": "tender-overview", "data": data}}
+	if len(segments) == 3 and segments[0] == "tenders" and segments[2] == "opening":
+		# BOP-CHG-001 v0.10 plan D10 (tracker BDS8-B04): Bid Opening's public page,
+		# answered by its own resolver; Bid Submission never reads the opening.
+		for path in frappe.get_hooks("kt_tender_opening_portal") or []:
+			return frappe.get_attr(path)(tender_reference=segments[1], user=user)
+		return {"verdict": "NOT_FOUND", "title": "Tender not found", "payload": {"screen": "tender-not-found"}}
 	if len(segments) == 3 and segments[0] == "tenders" and segments[2] == "bid":
 		# BDS-DES-06: the signed-in organisation's own bid for this Tender
 		if not user or user == "Guest":
