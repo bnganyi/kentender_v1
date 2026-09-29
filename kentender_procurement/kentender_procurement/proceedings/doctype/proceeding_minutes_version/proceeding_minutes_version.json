@@ -53,7 +53,9 @@
    "fieldtype": "Long Text",
    "label": "Content",
    "read_only": 1,
-   "reqd": 1
+   "reqd": 1,
+   "ignore_xss_filter": 1,
+   "description": "Frozen exactly as given: the digest is over these bytes, so the HTML sanitiser must not rewrite it. The owner builds it from escaped values."
   },
   {
    "fieldname": "content_digest",
@@ -137,7 +139,7 @@
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-29 18:00:00.000000",
+ "modified": "2026-09-29 23:00:00.000000",
  "modified_by": "Administrator",
  "module": "Proceedings",
  "name": "Proceeding Minutes Version",

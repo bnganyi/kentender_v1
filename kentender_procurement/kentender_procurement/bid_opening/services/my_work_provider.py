@@ -48,6 +48,7 @@ def my_work_rows(user: str) -> dict[str, list[dict[str, Any]]]:
 	ao = people.holds(user, people.ACCOUNTING_OFFICER)
 	hopf = people.holds(user, people.HEAD_OF_PROCUREMENT)
 	now = clock.now()
+	out["assigned"] += _record_rows(user, ao)
 	for row in frappe.get_all(records.CASE, filters={"state": ("in", ("Awaiting deadline", "Ready to open", "Not held", "Interrupted", "Readout complete"))},
 			fields=["name"], limit_page_length=0):
 		doc = frappe.get_doc(records.CASE, row.name)
@@ -108,4 +109,25 @@ def _ceremony_rows(doc, user: str, ao: bool) -> list[dict[str, Any]]:
 	if doc.state == "Readout complete" and member and member["is_recorder"]:
 		rows.append(_row(doc, key="prepare-record", title=f"Prepare opening record for {ref}", status="Assigned", action_label="Prepare opening record",
 			role=member["committee_role"], since=doc.ended_at))
+	return rows
+
+
+def _record_rows(user: str, ao: bool) -> list[dict[str, Any]]:
+	"""§5: "Review and sign opening record for …" per member until their current
+	targets are all signed; "Provide opening register for …" for the AO."""
+	from kentender_procurement.bid_opening.services import register_copy, signing
+
+	rows = []
+	for name in frappe.get_all(records.CASE, filters={"state": "Awaiting attestations"}, pluck="name"):
+		doc = frappe.get_doc(records.CASE, name)
+		_version, mine = signing.my_targets(doc, user)
+		if any(not t["signed"] for t in mine):
+			rows.append(_row(doc, key="sign", title=f"Review and sign opening record for {doc.tender_reference}", status="Assigned",
+				action_label="Review and sign opening record", role="Committee member", since=doc.ended_at))
+	if ao:
+		for request in frappe.get_all(register_copy.REQUEST, filters={"status": "Pending", "delivery_mode": "Accounting Officer"}, fields=["opening_case", "requested_at"]):
+			doc = frappe.get_doc(records.CASE, request.opening_case)
+			if doc.state == "Opening complete":
+				rows.append(_row(doc, key="register", title=f"Provide opening register for {doc.tender_reference}", status="Assigned",
+					action_label="Provide opening register", role=people.ACCOUNTING_OFFICER, since=request.requested_at))
 	return rows

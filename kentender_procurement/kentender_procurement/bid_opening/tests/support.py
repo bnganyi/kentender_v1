@@ -60,16 +60,20 @@ def wipe_openings() -> None:
 	tenders = set(tender_fx.test_tenders())
 	cases = [r.name for r in frappe.get_all("Bid Opening Case", fields=["name", "tender", "fixture_namespace", "proceeding"]) if r.fixture_namespace == NS or r.tender in tenders]
 	proceedings = [p for p in frappe.get_all("Bid Opening Case", filters={"name": ("in", cases)}, pluck="proceeding") if p] if cases else []
+	proceedings += [p for p in frappe.get_all("Proceeding", filters={"fixture_namespace": NS}, pluck="name") if p not in proceedings]
 	if cases:
 		from kentender_procurement.bid_opening.services import renders
 
 		renders.remove(frappe.get_all("Opening Entry", filters={"opening_case": ("in", cases)}, pluck="entry_id"))
+		renders.remove(frappe.get_all("Proceeding Minutes Version", filters={"proceeding": ("in", proceedings)}, pluck="minutes_version_id") if proceedings else [])
+		requests = frappe.get_all("Opening Register Request", filters={"opening_case": ("in", cases)}, pluck="name")
+		if requests:
+			frappe.db.delete("Audit Event", {"document_type": "Opening Register Request", "document_name": ("in", requests)})
 		for doctype in OPENING_DOCTYPES:
 			frappe.db.delete(doctype, {"opening_case": ("in", cases)})
 		delete_rows("Opening Committee Appointment", {"opening_case": ("in", cases)})
 		frappe.db.delete("Notification Log", {"document_name": ("in", cases)})
 		delete_rows("Bid Opening Case", {"name": ("in", cases)})
-	proceedings += frappe.get_all("Proceeding", filters={"fixture_namespace": NS}, pluck="name")
 	if proceedings:
 		for doctype in ("Proceeding Attendance", "Proceeding Event", "Proceeding Attestation", "Proceeding Supplement"):
 			frappe.db.delete(doctype, {"proceeding": ("in", proceedings)})

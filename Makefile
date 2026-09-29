@@ -721,7 +721,7 @@ prc-services-gate: bop-preflight
 
 # BOP-CHG-001 v0.10 Bid Opening owner services (plan Phases 1 and 3-6).
 bop-services-gate: bop-preflight
-	cd $(BENCH_ROOT) && for m in test_bop_schema test_bop_gateways test_bop_custody_seam test_bop_pre_session test_bop_ceremony; do \
+	cd $(BENCH_ROOT) && for m in test_bop_schema test_bop_gateways test_bop_custody_seam test_bop_pre_session test_bop_ceremony test_bop_record; do \
 		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_opening.tests.$$m || exit 1; done
 
 # BDS-CHG-001 v0.8 Phase 4 — Supplier Accounts (kentender_suppliers): record

@@ -177,9 +177,64 @@ def _ceremony(doc, user: str, member, ao: bool) -> list[dict[str, Any] | None]:
 			if ao and status == "Unresolved":
 				out.append(ns.answer(ns.KIND_YOUR_TURN, headline="Decide how to proceed with the paused opening", sentence="Opening access support could not fix the "
 					"problem. This stays in your work until the opening resumes or a Tender decision is recorded.", stage="open", primary_action="tender_decision"))
-	elif doc.state == "Readout complete" and member and member["is_recorder"]:
-		out.append(ns.answer(ns.KIND_YOUR_TURN, headline="Prepare opening record", stage="record", primary_action="prepare_record"))
+	elif doc.state == "Readout complete":
+		if member and member["is_recorder"]:
+			out.append(ns.answer(ns.KIND_YOUR_TURN, headline="Prepare opening record", sentence=f"The opening ended at {labels.time(doc.ended_at)}. The draft is "
+				"built from the register, attendance and what happened in the session.", stage="record", primary_action="prepare_record"))
+		elif member:
+			out.append(ns.answer(ns.KIND_WAITING, headline=f"Waiting for {recorder['full_name']} to prepare the opening record", stage="record",
+				holder=ns.holder("Recorder", [recorder["full_name"]])))
+	elif doc.state == "Awaiting attestations":
+		out.append(_signing_answer(doc, user))
+	elif doc.state == "Opening complete":
+		out.append(_completed_answer(doc, user, member, ao))
 	return out
+
+
+def _signing_answer(doc, user: str) -> dict[str, Any] | None:
+	"""Boards r3, r4, r5."""
+	import frappe
+
+	from kentender_procurement.bid_opening.services import signing
+
+	version, mine = signing.my_targets(doc, user)
+	if not mine:
+		return None
+	number = frappe.db.get_value("Proceeding Minutes Version", version, "version_number")
+	unsigned = [t for t in mine if not t["signed"]]
+	if unsigned:
+		older = frappe.db.exists("Proceeding Attestation", {"proceeding": doc.proceeding, "member_user": user, "minutes_version": ("!=", version)})
+		if older:
+			return ns.answer(ns.KIND_YOUR_TURN, headline="The opening record changed. Review the latest version before signing", stage="record", primary_action="sign")
+		last = frappe.get_all("Proceeding Attestation", filters={"minutes_version": version, "satisfies_current": 1, "member_user": ("!=", user)},
+			fields=["member_user", "recorded_at"], order_by="recorded_at desc", limit=1)
+		sentence = f"{people.full_name(last[0].member_user)} signed at {labels.time(last[0].recorded_at)}." if last else ""
+		return ns.answer(ns.KIND_YOUR_TURN, headline="Review and sign opening record", sentence=sentence, stage="record", primary_action="sign")
+	from kentender_procurement.proceedings.services import finalize
+
+	waiting = sorted({people.full_name(m["required_member"]) for m in finalize.missing_proofs(frappe.get_doc("Proceeding", doc.proceeding))})
+	names = " and ".join([", ".join(waiting[:-1]), waiting[-1]] if len(waiting) > 1 else waiting)
+	signed_at = max(t["signed_at"] for t in mine)
+	return ns.answer(ns.KIND_WAITING, headline=f"Waiting for {names} to sign the opening record", sentence=f"You signed version {number} at {labels.time(signed_at)}.",
+		stage="record", holder=ns.holder("", waiting))
+
+
+def _completed_answer(doc, user: str, member, ao: bool) -> dict[str, Any] | None:
+	"""Boards r6, h2, h5."""
+	import frappe
+
+	if not (member or ao):
+		return None
+	if doc.outcome == "No bids":
+		return ns.answer(ns.KIND_DONE, headline="Opening complete — no bids to evaluate", sentence=f"Completed {labels.when(doc.completed_at)}. Nothing was passed "
+			"to Evaluation.", stage="record")
+	latest = frappe.get_all("Proceeding Supplement", filters={"proceeding": doc.proceeding}, fields=["recorded_at"], order_by="recorded_at desc", limit=1)
+	if latest and member and member["is_recorder"]:
+		return ns.answer(ns.KIND_DONE, headline=f"Correction added at {labels.when(latest[0].recorded_at)}. The original opening record is unchanged.",
+			sentence="People who can read this record see the correction with it.", stage="record")
+	count = frappe.db.count("Opening Entry", {"opening_case": doc.name})
+	return ns.answer(ns.KIND_DONE, headline=f"The opening was completed at {labels.when(doc.completed_at)}, after the last signature.",
+		sentence=f"The opened {'bid is' if count == 1 else 'bids are'} now available to the Evaluation Committee.", stage="record")
 
 
 def answer_for(doc, user: str) -> dict[str, Any]:
@@ -209,7 +264,7 @@ def answer_for(doc, user: str) -> dict[str, Any]:
 			names = _ao_names()
 			candidates.append(ns.answer(ns.KIND_WAITING, headline=f"Waiting for {', '.join(names) or 'the Accounting Officer'} to appoint the opening committee",
 				stage="prepare", holder=ns.holder(people.ACCOUNTING_OFFICER, names)))
-	elif doc.state in ("Opening", "Interrupted", "Readout complete"):
+	elif doc.state in ("Opening", "Interrupted", "Readout complete", "Awaiting attestations", "Opening complete"):
 		candidates += _ceremony(doc, user, member, ao)
 	result = ns.choose(*candidates)
 	reader = ns.not_involved(result.get("stage", ""))
@@ -231,7 +286,16 @@ def journey_for(doc) -> dict[str, Any]:
 		absent = ceremony.absent_members(doc)
 		holder = absent[0]["full_name"] if absent else (SUPPORT if pause and pause.outcome == "Open" else ", ".join(_ao_names()))
 		return ns.journey(STAGES, current="open", blocked=True, holder_display=holder)
-	if doc.state in ("Readout complete", "Awaiting attestations"):
+	if doc.state == "Opening complete":
+		return ns.journey(STAGES, complete=True)
+	if doc.state == "Awaiting attestations":
+		import frappe
+
+		from kentender_procurement.proceedings.services import finalize
+
+		waiting = sorted({people.full_name(m["required_member"]) for m in finalize.missing_proofs(frappe.get_doc("Proceeding", doc.proceeding))})
+		return ns.journey(STAGES, current="record", holder_display=", ".join(waiting))
+	if doc.state == "Readout complete":
 		recorder = appointment.recorder(doc.name)
 		return ns.journey(STAGES, current="record", holder_display=recorder["full_name"] if recorder else "")
 	now = clock.now()

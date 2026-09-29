@@ -37,6 +37,21 @@ class TestHappyPath(ProceedingsCase):
 		self.assertCode("PRC_ALREADY_FINALIZED", minutes.supersede_minutes, **self.ref(created), reason="x", content="y", page_count=1, register_reference="R",
 			register_digest="d", event_ids=[], targets=self.targets(), idempotency_key=self.key(), actor=CHAIR)
 
+	def test_frozen_html_content_is_stored_exactly_and_its_digest_still_verifies(self):
+		"""The opening record is HTML; saving must not rewrite it (Frappe's HTML
+		sanitiser would), or the frozen digest no longer matches (found in Bid
+		Opening Phase 6)."""
+		created = self.create()
+		self.start(created)
+		self.end(created)
+		html = "<html><head><style>td{border:1px solid #999}</style></head><body><h1>Opening record</h1><table><tr><td>Test</td></tr></table></body></html>"
+		frozen = self.freeze(created, content=html)
+		self.assertEqual(frappe.db.get_value("Proceeding Minutes Version", frozen["minutes_version"], "content"), html)
+		self.attest_all(created, self.current_minutes(created))
+		finalize.finalize_proceeding(**self.ref(created), idempotency_key=self.key(), actor=finalize.SYSTEM_ACTOR)
+		owner_id = frappe.db.get_value("Proceeding", created["proceeding"], "owner_id")
+		self.assertTrue(reads.export_proceeding(owner_type=OWNER_TYPE, owner_id=owner_id, user=CHAIR)["original_digest_verified"])
+
 	def test_the_frozen_digest_is_the_content_digest(self):
 		created = self.create()
 		self.start(created)

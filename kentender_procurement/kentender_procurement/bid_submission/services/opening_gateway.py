@@ -100,3 +100,28 @@ def reveal_envelope(*, tender: str, envelope_id: str, manifest_digest: str, rost
 		"receipt_reference": envelope["receipt_reference"], "submission_version": envelope["submission_version"], "correlation_id": correlation_id,
 		"simulation": bool(result.get("simulation"))}
 
+
+
+def submitting_receipts(*, tender: str, user: str) -> list[str]:
+	"""The current receipts of bids that an organisation `user` actively
+	represents submitted to this Tender (BOP-CHG-001 v0.10 §7
+	RequestOpeningRegister: "A verified submitting tenderer"). Attending or
+	saying whom one represents proves nothing; only an active supplier-account
+	assignment in the submitting organisation does."""
+	from kentender_procurement.bid_submission.services import bid_authorization, supplier_gateway
+
+	if not user or user == "Guest":
+		return []
+	organisations = {a["organisation_id"] for a in supplier_gateway.active_assignments(user=user) if a.get("active")
+		and a.get("responsibility") in bid_authorization.PREPARERS}
+	if not organisations:
+		return []
+	out = []
+	for arrangement in frappe.get_all("Bidder Arrangement", filters={"tender": tender, "lead_organisation": ("in", list(organisations))}, pluck="name"):
+		for workspace in frappe.get_all("Bid Workspace", filters={"bidder_arrangement": arrangement}, fields=["current_submission_version"]):
+			if not workspace.current_submission_version:
+				continue
+			row = frappe.db.get_value("Bid Submission Version", workspace.current_submission_version, ["status", "receipt"], as_dict=True)
+			if row and row.status == "Submitted" and row.receipt:
+				out.append(row.receipt)
+	return sorted(out)

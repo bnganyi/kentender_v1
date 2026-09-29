@@ -334,7 +334,7 @@ def pre_start_views(case: OpeningCase) -> dict:
 
 def expected_views() -> dict:
 	chair_name = frappe.db.get_value("User", CHAIR, "full_name")
-	keys = ["arrangements", "attendees", "cancellation", "ceremony", "committee", "decision", "incidents", "journey", "next_step", "opening", "start_guard", "viewer"]
+	keys = ["arrangements", "attendees", "cancellation", "ceremony", "committee", "decision", "incidents", "journey", "next_step", "opening", "record", "start_guard", "technical_status", "viewer"]
 	opening_keys = ["box_received", "closed", "deadline", "deadline_label", "opening_id", "record_version", "state", "tender", "tender_reference", "title"]
 	answer = lambda kind, label, headline, sentence="", holder=None, action="": {"kind": kind, "label": label, "headline": headline, "sentence": sentence,  # noqa: E731
 		"stage": "open", "holder": holder, "since": None, "blockers": [], "fixes": [], "primary_action": action}
