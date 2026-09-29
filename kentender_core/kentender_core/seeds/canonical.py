@@ -46,7 +46,7 @@ import frappe
 
 from kentender_core.seeds import site_setup
 
-STAGES: tuple[str, ...] = ("site", "strategy", "budget", "needs", "planning", "requisitions", "tenders", "bid_submission")
+STAGES: tuple[str, ...] = ("site", "strategy", "budget", "needs", "planning", "requisitions", "tenders", "bid_submission", "bid_opening")
 
 # Namespaces whose rows are canonical and survive `reset`.
 STRATEGY_NS = "str-chg-001-mvp1"
@@ -55,8 +55,9 @@ NEEDS_NS = "KENTENDER_MVP_1_R1_NDS"
 PLANNING_NS = "KENTENDER_MVP_1_R1_PLN"
 REQUISITIONS_NS = "KENTENDER_MVP_1_R1_REQ"  # not stamped on Requisitions' own rows (D5 predates the column) — see clear_non_canonical
 TENDERS_NS = "KENTENDER_MVP_1_R1_TND"
+BID_OPENING_NS = "KENTENDER_MVP_1_R1_BOP"  # BOP-CHG-001 v0.10 plan D14
 CANONICAL_NAMESPACES = frozenset(
-	{site_setup.FIXTURE_TAG, BUDGET_ACTOR_NS, STRATEGY_NS, NEEDS_NS, PLANNING_NS, REQUISITIONS_NS, TENDERS_NS}
+	{site_setup.FIXTURE_TAG, BUDGET_ACTOR_NS, STRATEGY_NS, NEEDS_NS, PLANNING_NS, REQUISITIONS_NS, TENDERS_NS, BID_OPENING_NS}
 )
 
 # KT-STD-001 §8.3 — the whole shared register, whatever stage is seeded.
@@ -699,6 +700,12 @@ def seed(*, through: str = STAGES[-1]) -> dict[str, Any]:
 
 		report["bid_submission"] = upsert_bid_submission_base(commit=False)
 		report["tenders"] = {"ok": True, "via": "bid_submission", "tender": report["bid_submission"].get("tender")}
+	if last >= STAGES.index("bid_opening"):
+		# BOP-CHG-001 v0.10 plan D14: the canonical Tender's opening, after the
+		# bid_submission stage closed its box at 11:00.
+		from kentender_procurement.bid_opening.seeds.kentender_mvp_v1 import upsert_bid_opening_base
+
+		report["bid_opening"] = upsert_bid_opening_base(commit=False)
 	return report
 
 
@@ -862,6 +869,11 @@ def validate(*, through: str = STAGES[-1]) -> dict[str, Any]:
 		from kentender_procurement.bid_submission.seeds.kentender_mvp_v1 import validate_bid_submission_seed
 
 		for row in validate_bid_submission_seed():
+			check(row["ok"], row["check"])
+	if last >= STAGES.index("bid_opening"):
+		from kentender_procurement.bid_opening.seeds.kentender_mvp_v1 import validate_bid_opening_seed
+
+		for row in validate_bid_opening_seed():
 			check(row["ok"], row["check"])
 
 	report = {"ok": not failures, "through": through, "failures": failures}
