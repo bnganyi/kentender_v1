@@ -71,6 +71,7 @@ app_include_css = [
 	f"/assets/kentender_procurement/css/procurement_planning_industry.css?v={_desk_asset_v('public/css/procurement_planning_industry.css')}",
 	f"/assets/kentender_procurement/css/procurement_requisitions_industry.css?v={_desk_asset_v('public/css/procurement_requisitions_industry.css')}",
 	f"/assets/kentender_procurement/css/tenders_industry.css?v={_desk_asset_v('public/css/tenders_industry.css')}",
+	f"/assets/kentender_procurement/css/bid_opening_industry.css?v={_desk_asset_v('public/css/bid_opening_industry.css')}",
 ]
 app_include_js = [
 	f"/assets/kentender_procurement/js/procurement_sidebar_header.js?v={_desk_asset_v('public/js/procurement_sidebar_header.js')}",
@@ -133,7 +134,10 @@ kt_tender_candidate_registry = ["kentender_procurement.bid_submission.services.c
 # The canonical Tenders seed registers its candidate through Start bid here.
 kt_tender_seed_candidate = ["kentender_procurement.bid_submission.seeds.canonical.seed_candidate"]
 # Bid Submission removes its rows for Tenders the Tenders clean-up removes.
-kt_tender_removal_consumers = ["kentender_procurement.bid_submission.seeds.clear.on_tenders_removed"]
+kt_tender_removal_consumers = [
+	"kentender_procurement.bid_opening.seeds.clear.on_tenders_removed",
+	"kentender_procurement.bid_submission.seeds.clear.on_tenders_removed",
+]
 kt_tender_seed_candidate_cleanup = ["kentender_procurement.bid_submission.seeds.canonical.remove_seeded_suppliers"]
 # BDS-CHG-001 v0.8 OD-C: the Test Scanner answers only on a site whose
 # site_config sets kt_bds_simulation_environment; elsewhere it is silent.

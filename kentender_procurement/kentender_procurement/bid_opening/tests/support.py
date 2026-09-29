@@ -29,8 +29,6 @@ SUPPORT = "bopt.support@example.test"
 AUDITOR = tender_fx.AUDITOR
 OUTSIDER = tender_fx.OUTSIDER
 PEOPLE = {INDEPENDENT: ("Test Independent Member", "Budget Approver"), SUPPORT: ("Test Opening Support", "Technical Operator")}
-OPENING_DOCTYPES = ("Opening Arrangement", "Opening Presence", "Opening Custody Participation", "Opening Entry", "Opening Register", "Opening Exception",
-	"Opening Access Incident", "Opening Decision Item", "Opening Register Request", "Evaluation Handoff")
 
 
 def ensure_people() -> None:
@@ -55,36 +53,10 @@ def remove_people() -> None:
 
 
 def wipe_openings() -> None:
-	from kentender_core.utils.raw_delete import delete_rows
+	from kentender_procurement.bid_opening.seeds import clear
 
-	tenders = set(tender_fx.test_tenders())
-	cases = [r.name for r in frappe.get_all("Bid Opening Case", fields=["name", "tender", "fixture_namespace", "proceeding"]) if r.fixture_namespace == NS or r.tender in tenders]
-	proceedings = [p for p in frappe.get_all("Bid Opening Case", filters={"name": ("in", cases)}, pluck="proceeding") if p] if cases else []
-	proceedings += [p for p in frappe.get_all("Proceeding", filters={"fixture_namespace": NS}, pluck="name") if p not in proceedings]
-	if cases:
-		from kentender_procurement.bid_opening.services import renders
-
-		references = frappe.get_all("Bid Opening Case", filters={"name": ("in", cases)}, pluck="tender_reference")
-		frappe.db.delete("Audit Event", {"entity": "Bid Opening", "document_type": "Tender", "document_name": ("in", references)})
-
-		renders.remove(frappe.get_all("Opening Entry", filters={"opening_case": ("in", cases)}, pluck="entry_id"))
-		renders.remove(frappe.get_all("Proceeding Minutes Version", filters={"proceeding": ("in", proceedings)}, pluck="minutes_version_id") if proceedings else [])
-		requests = frappe.get_all("Opening Register Request", filters={"opening_case": ("in", cases)}, pluck="name")
-		if requests:
-			frappe.db.delete("Audit Event", {"document_type": "Opening Register Request", "document_name": ("in", requests)})
-		for doctype in OPENING_DOCTYPES:
-			frappe.db.delete(doctype, {"opening_case": ("in", cases)})
-		delete_rows("Opening Committee Appointment", {"opening_case": ("in", cases)})
-		frappe.db.delete("Notification Log", {"document_name": ("in", cases)})
-		delete_rows("Bid Opening Case", {"name": ("in", cases)})
-	if proceedings:
-		for doctype in ("Proceeding Attendance", "Proceeding Event", "Proceeding Attestation", "Proceeding Supplement"):
-			frappe.db.delete(doctype, {"proceeding": ("in", proceedings)})
-		delete_rows("Proceeding Minutes Version", {"proceeding": ("in", proceedings)})
-		delete_rows("Proceeding", {"name": ("in", proceedings)})
+	clear.wipe(tenders=set(tender_fx.test_tenders()), namespace=NS)
 	frappe.db.delete("Audit Event", {"entity": "Bid Opening", "document_name": "TND-DOES-NOT-EXIST"})  # test_bop_api's guessed route
-	frappe.db.delete("Opening Command Journal", {"fixture_namespace": NS})
-	frappe.db.delete("Proceeding Command Journal", {"fixture_namespace": NS})
 	frappe.db.delete("Notification Log", {"email_header": ("like", "bop-%"), "for_user": ("in", (INDEPENDENT, SUPPORT, CHAIR, MEMBER, AO))})
 	frappe.db.commit()
 

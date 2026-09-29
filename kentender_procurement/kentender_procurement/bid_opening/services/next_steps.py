@@ -116,9 +116,15 @@ def _ceremony(doc, user: str, member, ao: bool) -> list[dict[str, Any] | None]:
 	ao_names = _ao_names()
 	ao_display = ", ".join(ao_names) or "the Accounting Officer"
 	if doc.state == "Opening":
+		from kentender_procurement.bid_opening.services import session
+
 		entries = ceremony.entries(doc.name)
 		awaiting = next((e for e in entries if e.status == "Opened"), None)
 		remaining = len(ceremony.envelopes(doc)) - len(entries)
+		unanswered = next((a for a in session.accounts(doc.name) if not a["responded"]), None)
+		if member and member["is_recorder"] and unanswered and not awaiting:
+			out.append(ns.answer(ns.KIND_YOUR_TURN, headline=f"Record the response to {unanswered['member']}’s account", stage="open",
+				primary_action="respond_account"))
 		if member and member["is_chair"]:
 			if doc.outcome == "No bids":
 				out.append(ns.answer(ns.KIND_YOUR_TURN, headline="No bids to open", sentence=f"Submissions closed at {labels.time(doc.effective_deadline)} EAT "

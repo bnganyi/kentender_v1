@@ -61,6 +61,12 @@
 				<HistoryScreen v-else :data="historyData" @back="go(tenderRef)" @view-digest="onViewDigest" />
 			</template>
 
+			<!-- BOP-CHG-001 v0.10 §9 / plan D9: Bid Opening owns /app/tenders/{ref}/opening…
+			     and mounts its own app here (AGENTS.md §6.6: never a component across bundles). -->
+			<template v-else-if="kind === 'opening'">
+				<div ref="openingEl" class="kt-bop-host" data-testid="bop-host"></div>
+			</template>
+
 			<!-- dialogs (in-Vue only, §6.3) -->
 			<RequisitionDrawer v-if="drawer" :inherited="record.inherited || {}" :template-label="templateLabel" :opening-label="openingLabel" @close="drawer = ''" />
 			<EvidenceDialog v-if="evidenceDialog" :row="evidenceDialog.row" :inherited="record.inherited || {}" :pending="pending" :error="dialogError" :server-errors="fieldErrors" @confirm="onEvidenceConfirm" @cancel="closeDialogs" />
@@ -88,7 +94,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, onUnmounted, ref, watch } from "vue";
 import { useRouteState } from "../tnd_shared/composables/useRouteState.js";
 import { usePageRail } from "../tnd_shared/composables/usePageRail.js";
 import * as api from "./data/tendersApi.js";
@@ -189,6 +195,8 @@ const kind = computed(() => {
 	if (sub.value === "clarifications" && subId.value) return "clarification";
 	if (sub.value === "cancel") return "cancel";
 	if (sub.value === "history") return "history";
+	// BOP-CHG-001 v0.10 §9: every Bid opening view lives under the Tender record.
+	if (sub.value === "opening") return "opening";
 	return "record";
 });
 const screenKey = computed(() => {
@@ -224,6 +232,7 @@ const state = computed(() => {
 		}
 		return null;
 	}
+	if (kind.value === "opening") return null; // Bid Opening draws its own states
 	const data = { record: record.value, addendum: addendumData.value, clarification: clarificationData.value, cancel: cancelData.value, history: historyData.value }[kind.value] || record.value;
 	if (data && data.outcome === "NOT_FOUND") return { kind: "not-found", heading: data.heading, text: data.text };
 	if (kind.value === "record" && pub.value && pub.value.rule_error === "TND_PUBLICATION_RULE_UNAVAILABLE" && record.value.screen === "authorisation") {
@@ -910,7 +919,28 @@ const railTrail = computed(() => {
 	if (tenderRef.value) trail.push({ label: tenderRef.value, route: [PAGE, tenderRef.value] });
 	const subLabels = { publication: "Publication", addenda: "Addendum", clarifications: "Clarification", cancel: "Cancellation", history: "History", review: "Review", requirements: "Requirements", details: "Details" };
 	if (sub.value && subLabels[sub.value]) trail.push({ label: subLabels[sub.value] });
+	if (kind.value === "opening") trail.push({ label: "Bid opening", route: [PAGE, tenderRef.value, "opening"] });
 	return trail;
 });
 usePageRail(railEl, railTrail, { showPeSwitcher: false });
+
+// Bid Opening's app, mounted into its host while an opening route is shown and
+// kept mounted across its own sub-routes (BOP-CHG-001 v0.10 plan D9).
+const openingEl = ref(null);
+let openingApp = null;
+watch(
+	[kind, openingEl],
+	([k, el]) => {
+		if (k === "opening" && el && !openingApp && typeof frappe.kt_mount_bid_opening === "function") openingApp = frappe.kt_mount_bid_opening(el);
+		if (k !== "opening" && openingApp) {
+			openingApp.unmount();
+			openingApp = null;
+		}
+	},
+	{ flush: "post" },
+);
+onUnmounted(() => {
+	if (openingApp) openingApp.unmount();
+	openingApp = null;
+});
 </script>

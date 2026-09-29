@@ -136,9 +136,16 @@ class TestMainPath(CeremonyCase):
 		account = interventions.record_member_account(tender=self.name, account="I could not hear the security reference clearly.", entry=entry,
 			idempotency_key=key(), user=INDEPENDENT)
 		self.assertEqual(frappe.db.get_value("Proceeding Event", account["event"], ["actor", "source"]), (INDEPENDENT, "Member"))
+		# board c8b: the recorder's turn is the response, and the account waits for one
+		respond = self.next_step(CHAIR)
+		self.assertEqual((respond["headline"], respond["primary_action"]), ("Record the response to Test Independent Member’s account", "respond_account"))
+		[pending] = reads.get_opening(tender=self.name, user=CHAIR)["ceremony"]["accounts"]
+		self.assertEqual((pending["event_id"], pending["member"], pending["account"], pending["responded"]),
+			(account["event"], "Test Independent Member", "I could not hear the security reference clearly.", False))
 		interventions.record_intervention(tender=self.name, exception_class="Procedural comment", speaker_name="Test Independent Member",
 			what="Asked for the security reference to be repeated", response="The member repeated the reference.", linked_account=account["event"],
 			idempotency_key=key(), user=CHAIR)
+		self.assertTrue(reads.get_opening(tender=self.name, user=CHAIR)["ceremony"]["accounts"][0]["responded"])
 		comment = interventions.record_comment_for_evaluation(tender=self.name, entry=entry, made_by="Test Independent Member",
 			comment="The security reference on the price page differs from the reference read aloud.",
 			response="The observation is recorded for the Evaluation Committee to check. No decision is made at opening.", idempotency_key=key(), user=CHAIR)

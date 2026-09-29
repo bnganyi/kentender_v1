@@ -96,7 +96,9 @@ const props = defineProps({
 });
 defineEmits(["fix"]);
 
-const LINE_KINDS = { your_turn: "turn", waiting: "waiting", done: "done" };
+// KT-STD-001 v1.10 §2.9.1 — Scheduled ("timed") is compact text with a neutral
+// rule, drawn as the waiting line (BOP-CHG-001 v0.10 board c1).
+const LINE_KINDS = { your_turn: "turn", waiting: "waiting", timed: "waiting", done: "done" };
 
 const lineKind = computed(() => (props.answer ? LINE_KINDS[props.answer.kind] : ""));
 const showLine = computed(

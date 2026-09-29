@@ -66,6 +66,18 @@ export default defineConfig({
 				},
 			},
 			{
+				plugins: [vue()],
+				test: {
+					// BOP-CHG-001 v0.10 plan Phase 8 — the Bid Opening Desk screens and their
+					// structural fidelity against the v0.9.2 boards; the shared guidance
+					// region mounts through kentender_core's real bundle.
+					name: "bid-opening",
+					environment: "jsdom",
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/tenders/vitest.setup.js"],
+					include: ["kentender_procurement/kentender_procurement/public/js/bid_opening/**/*.spec.js"],
+				},
+			},
+			{
 				// BDS-CHG-001 v0.8 plan OD-B — the Bid Submission public portal
 				// screens, alongside (never instead of) the browser layer.
 				plugins: [vue()],

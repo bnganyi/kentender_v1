@@ -49,7 +49,7 @@
 | c13b | 02 · RECORDED FOR EVALUATION | Comment recorded | Charles Mutiso | 12 Jun 2027, 11:02:40 EAT (separate branch) | BOP v0.10 §10.3 FACTUAL EXCEPTION | OpenBids#RECORDED FOR EVALUATION | 8.3 | Covered |  |
 | c9 | 02 · END OPENING | Readout complete, end | Charles Mutiso | 12 Jun 2027, 11:03:30 EAT | BOP v0.10 §10.3, §11 End opening | OpenBids#END OPENING | 8.3 | Covered |  |
 | c10 | 02 · MEMBER LEFT | Paused, member left | Charles Mutiso | 11:02:10 EAT, branch 1 | BOP v0.10 §10 branch 1 | OpenBids#MEMBER LEFT | 8.4 | Covered |  |
-| c10b | 02 · MEMBER REJOINED | Resumed after rejoin | Charles Mutiso | 11:05:10 EAT, branch 1 | BOP v0.10 §10 branch 1 | OpenBids#MEMBER REJOINED | 8.4 | Covered |  |
+| c10b | 02 · MEMBER REJOINED | Resumed after rejoin | Charles Mutiso | 11:05:10 EAT, branch 1 | BOP v0.10 §10 branch 1 | OpenBids#MEMBER REJOINED | 8.4 | Replaced | 30 Sep 2026 (Phase 8): resumption returns to the ordinary in-session view; no pending attendee request exists server-side (FU-BOP-21). |
 | c11 | 02 · CANNOT OPEN | Bid pages cannot be shown | Charles Mutiso | 11:01:10 EAT, branch 2 | BOP v0.10 §10.3 UNREADABLE | OpenBids#CANNOT OPEN | 8.4 | Covered | Retry is disabled with its condition beside it. |
 | c11b | 02 · RESOLVED | Retry opening | Charles Mutiso | 11:05:05 EAT, branch 2 | BOP v0.10 §10 branch 2 | OpenBids#RESOLVED | 8.4 | Covered |  |
 | c11c | 02 · NOT RESOLVED | Waiting for Amina Hassan | Charles Mutiso | Branch 2, support cannot fix | BOP v0.10 §10.3 UNREADABLE, §5 row 6 | OpenBids#NOT RESOLVED | 8.4 | Covered |  |

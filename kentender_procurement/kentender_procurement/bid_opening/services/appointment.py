@@ -77,12 +77,15 @@ def validate(tender: str, members: list[dict[str, Any]]) -> dict[str, Any] | Non
 		elif not people.eligibility(user)[0]:
 			field_errors[user] = "This person cannot be appointed to the opening committee."
 	roles = [cstr(r.get("committee_role")) for r in members]
-	if len(members) < 3 or field_errors or sum(r in CHAIR_ROLES for r in roles) != 1 or sum(r in RECORDER_ROLES for r in roles) != 1:
+	incomplete = field_errors or sum(r in CHAIR_ROLES for r in roles) != 1 or sum(r in RECORDER_ROLES for r in roles) != 1
+	processing = opening_seam.processing_actors(tender)
+	independent = [cstr(r["user"]) for r in members if r.get("committee_role") == "Independent member"]
+	# Board a2: a draft with no independent member is told that first; "at
+	# least three" applies once the independent member is there.
+	if incomplete or (len(members) < 3 and independent):
 		guard = ns.guard(False, reason_code="BOP_COMMITTEE_INCOMPLETE", message=errors.message("BOP_COMMITTEE_INCOMPLETE"),
 			fixes=[ns.fix("Add member", responsibility=people.ACCOUNTING_OFFICER, kind=ns.FIX_FOCUS, fix_id="add_member", target="committee", primary=True)])
 		return {"ok": False, "code": "BOP_COMMITTEE_INCOMPLETE", "message": guard["message"], "errors": field_errors, "guard": guard}
-	processing = opening_seam.processing_actors(tender)
-	independent = [cstr(r["user"]) for r in members if r.get("committee_role") == "Independent member"]
 	if not independent or any(u in processing for u in independent):
 		guard = ns.guard(False, reason_code="BOP_INDEPENDENT_MEMBER_REQUIRED", headline="The opening committee needs an independent third member",
 			message=errors.message("BOP_INDEPENDENT_MEMBER_REQUIRED"),
@@ -141,3 +144,18 @@ def appoint_opening_committee(*, tender: str, members: list[dict[str, Any]], exp
 
 	return records.command("AppointOpeningCommittee", tender=tender, idempotency_key=idempotency_key, actor=user,
 		payload={"members": members, "expected_version": expected_version, "reason": reason}, body=body)
+
+
+def candidates(tender: str) -> list[dict[str, Any]]:
+	"""Who the Accounting Officer can appoint (board a1 "Eligibility"): enabled
+	internal people holding an active KenTender responsibility, with their
+	designation and whether they processed this Tender (so cannot be the
+	independent member). Holding a responsibility is not an appointment."""
+	processing = opening_seam.processing_actors(tender)
+	users = frappe.get_all("User Responsibility Assignment", filters={"status": "Enabled"}, pluck="user", distinct=True)
+	out = []
+	for user in sorted(set(users)):
+		eligible, designation = people.eligibility(user)
+		if eligible:
+			out.append({"user": user, "full_name": people.full_name(user), "designation": designation, "involved": user in processing})
+	return sorted(out, key=lambda r: r["full_name"])

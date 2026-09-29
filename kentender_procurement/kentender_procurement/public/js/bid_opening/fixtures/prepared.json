@@ -1,0 +1,718 @@
+{
+ "admin": {
+  "arrangements": {
+   "message": "Details on how to attend the opening are coming soon",
+   "published": false
+  },
+  "attendees": [],
+  "cancellation": null,
+  "candidates": [],
+  "ceremony": null,
+  "committee": {
+   "appointed": false,
+   "appointed_by": "",
+   "appointed_label": "",
+   "history": [],
+   "members": []
+  },
+  "decision": null,
+  "incidents": [],
+  "journey": {
+   "current": "prepare",
+   "downstream": null,
+   "reduced": false,
+   "reduced_parts": {
+    "label": "Prepare opening",
+    "prefix": "Stage 1 of 3: ",
+    "suffix": " \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan"
+   },
+   "reduced_style": "stage_of",
+   "reduced_text": "Stage 1 of 3: Prepare opening \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+   "stages": [
+    {
+     "code": "prepare",
+     "holder": "Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+     "label": "Prepare opening",
+     "marker": "current",
+     "marker_label": "Current"
+    },
+    {
+     "code": "open",
+     "holder": "",
+     "label": "Open bids",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    },
+    {
+     "code": "record",
+     "holder": "",
+     "label": "Record opening",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    }
+   ],
+   "upstream": null
+  },
+  "next_step": {
+   "blockers": [],
+   "fixes": [],
+   "headline": "Waiting for Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan to appoint the opening committee",
+   "holder": {
+    "display": "Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan (Accounting Officer)",
+    "people": [
+     "Playwright Tenders Both",
+     "Playwright Tenders AO",
+     "Playwright Requisitions AO",
+     "PLNT Hybrid Head of Function and AO",
+     "PLNT Hybrid AO",
+     "PLNT Accounting Officer",
+     "Amina Hassan"
+    ],
+    "role": "Accounting Officer"
+   },
+   "kind": "waiting",
+   "label": "Waiting on someone",
+   "primary_action": "",
+   "sentence": "",
+   "since": null,
+   "stage": "prepare"
+  },
+  "opening": {
+   "box_received": false,
+   "closed": false,
+   "deadline": "2027-06-05 11:00:00",
+   "deadline_label": "5 Jun 2027, 11:00 EAT",
+   "opening_id": "BOC-MOH-2099-001",
+   "record_version": 1,
+   "state": "Awaiting deadline",
+   "status": {
+    "label": "",
+    "since": "",
+    "text": "Submissions close 5 Jun 2027, 11:00 EAT",
+    "tone": ""
+   },
+   "tender": "TDR-268242",
+   "tender_reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  },
+  "record": null,
+  "start_guard": null,
+  "technical_status": {
+   "completed_label": "",
+   "incidents": 0,
+   "message": "You can see technical status for this opening. Bids, the register and the opening record are not shown to administrators.",
+   "state": "Awaiting deadline"
+  },
+  "viewer": {
+   "is_accounting_officer": false,
+   "is_chair": false,
+   "is_member": false,
+   "is_recorder": false,
+   "technical": true
+  }
+ },
+ "ao": {
+  "arrangements": {
+   "message": "Details on how to attend the opening are coming soon",
+   "published": false
+  },
+  "attendees": [],
+  "cancellation": null,
+  "candidates": [
+   {
+    "designation": "Accounting Officer",
+    "full_name": "Amina Hassan",
+    "involved": false,
+    "user": "amina.hassan@moh.example.test"
+   },
+   {
+    "designation": "Budget Approver",
+    "full_name": "Beatrice Kamau",
+    "involved": false,
+    "user": "beatrice.kamau@moh.example.test"
+   },
+   {
+    "designation": "Procurement Officer",
+    "full_name": "Brian Wafula",
+    "involved": false,
+    "user": "brian.wafula@moh.example.test"
+   },
+   {
+    "designation": "Head of Procurement Function",
+    "full_name": "Charles Mutiso",
+    "involved": false,
+    "user": "charles.mutiso@moh.example.test"
+   },
+   {
+    "designation": "Head of Procurement Function",
+    "full_name": "Charles Mutiso",
+    "involved": true,
+    "user": "pw.req.hopf@example.test"
+   },
+   {
+    "designation": "Plan Statutory Approver",
+    "full_name": "Daniel Rotich",
+    "involved": false,
+    "user": "daniel.rotich@moh.example.test"
+   },
+   {
+    "designation": "Strategy Approver",
+    "full_name": "Dr Alfred Ochieng",
+    "involved": false,
+    "user": "alfred.ochieng@moh.example.test"
+   },
+   {
+    "designation": "Strategy Author",
+    "full_name": "Esther Muthoni",
+    "involved": false,
+    "user": "esther.muthoni@moh.example.test"
+   },
+   {
+    "designation": "Budget Officer",
+    "full_name": "Josphat Mwangi",
+    "involved": false,
+    "user": "josphat.mwangi@moh.example.test"
+   },
+   {
+    "designation": "Procurement Planner",
+    "full_name": "Mercy Kilonzo",
+    "involved": false,
+    "user": "mercy.kilonzo@moh.example.test"
+   },
+   {
+    "designation": "Auditor",
+    "full_name": "Naomi Chebet",
+    "involved": false,
+    "user": "naomi.chebet@moh.example.test"
+   },
+   {
+    "designation": "Accounting Officer",
+    "full_name": "PLNT Accounting Officer",
+    "involved": false,
+    "user": "plnt.ao@example.test"
+   },
+   {
+    "designation": "Auditor",
+    "full_name": "PLNT Auditor",
+    "involved": false,
+    "user": "plnt.auditor@example.test"
+   },
+   {
+    "designation": "Budget Officer",
+    "full_name": "PLNT Budget Officer",
+    "involved": false,
+    "user": "plnt.budget@example.test"
+   },
+   {
+    "designation": "Finance Confirmation Officer",
+    "full_name": "PLNT Finance Officer",
+    "involved": false,
+    "user": "plnt.finance@example.test"
+   },
+   {
+    "designation": "Finance Confirmation Officer",
+    "full_name": "PLNT Finance and Budget Officer",
+    "involved": false,
+    "user": "plnt.financebudget@example.test"
+   },
+   {
+    "designation": "Head of Procurement Function",
+    "full_name": "PLNT Head of Procurement Function",
+    "involved": false,
+    "user": "plnt.hopf@example.test"
+   },
+   {
+    "designation": "Procurement Planner",
+    "full_name": "PLNT Hybrid",
+    "involved": false,
+    "user": "plnt.hybrid@example.test"
+   },
+   {
+    "designation": "Procurement Planner",
+    "full_name": "PLNT Hybrid AO",
+    "involved": false,
+    "user": "plnt.hybridao@example.test"
+   },
+   {
+    "designation": "Procurement Planner",
+    "full_name": "PLNT Hybrid Finance",
+    "involved": false,
+    "user": "plnt.hybridfinance@example.test"
+   },
+   {
+    "designation": "Head of Procurement Function",
+    "full_name": "PLNT Hybrid Head of Function and AO",
+    "involved": false,
+    "user": "plnt.hybridhopfao@example.test"
+   },
+   {
+    "designation": "Procurement Planner",
+    "full_name": "PLNT Planner",
+    "involved": false,
+    "user": "plnt.planner@example.test"
+   },
+   {
+    "designation": "Plan Statutory Approver",
+    "full_name": "PLNT Statutory Approver",
+    "involved": false,
+    "user": "plnt.statutory@example.test"
+   },
+   {
+    "designation": "Budget Approver",
+    "full_name": "Playwright Independent",
+    "involved": false,
+    "user": "pw.bop.independent@example.test"
+   },
+   {
+    "designation": "Technical Operator",
+    "full_name": "Playwright Opening Support",
+    "involved": false,
+    "user": "pw.bop.support@example.test"
+   },
+   {
+    "designation": "Procurement Officer",
+    "full_name": "Playwright Procurement Officer",
+    "involved": false,
+    "user": "pw.req.officer@example.test"
+   },
+   {
+    "designation": "Accounting Officer",
+    "full_name": "Playwright Requisitions AO",
+    "involved": false,
+    "user": "pw.req.pln.ao@example.test"
+   },
+   {
+    "designation": "Auditor",
+    "full_name": "Playwright Requisitions Auditor",
+    "involved": false,
+    "user": "pw.req.auditor@example.test"
+   },
+   {
+    "designation": "Finance Confirmation Officer",
+    "full_name": "Playwright Requisitions Finance",
+    "involved": false,
+    "user": "pw.req.pln.finance@example.test"
+   },
+   {
+    "designation": "Procurement Planner",
+    "full_name": "Playwright Requisitions Planner",
+    "involved": false,
+    "user": "pw.req.pln.planner@example.test"
+   },
+   {
+    "designation": "Head of Procurement Function",
+    "full_name": "Playwright Requisitions Planning HoPF",
+    "involved": false,
+    "user": "pw.req.pln.hopf@example.test"
+   },
+   {
+    "designation": "Plan Statutory Approver",
+    "full_name": "Playwright Requisitions Statutory",
+    "involved": false,
+    "user": "pw.req.pln.statutory@example.test"
+   },
+   {
+    "designation": "Accounting Officer",
+    "full_name": "Playwright Tenders AO",
+    "involved": true,
+    "user": "pw.tnd.ao@example.test"
+   },
+   {
+    "designation": "Procurement Officer",
+    "full_name": "Playwright Tenders Both",
+    "involved": false,
+    "user": "pw.tnd.both@example.test"
+   },
+   {
+    "designation": "Procurement Officer",
+    "full_name": "Playwright Tenders Officer",
+    "involved": true,
+    "user": "pw.tnd.officer@example.test"
+   }
+  ],
+  "ceremony": null,
+  "committee": {
+   "appointed": false,
+   "appointed_by": "",
+   "appointed_label": "",
+   "history": [],
+   "members": []
+  },
+  "decision": null,
+  "incidents": [],
+  "journey": {
+   "current": "prepare",
+   "downstream": null,
+   "reduced": false,
+   "reduced_parts": {
+    "label": "Prepare opening",
+    "prefix": "Stage 1 of 3: ",
+    "suffix": " \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan"
+   },
+   "reduced_style": "stage_of",
+   "reduced_text": "Stage 1 of 3: Prepare opening \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+   "stages": [
+    {
+     "code": "prepare",
+     "holder": "Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+     "label": "Prepare opening",
+     "marker": "current",
+     "marker_label": "Current"
+    },
+    {
+     "code": "open",
+     "holder": "",
+     "label": "Open bids",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    },
+    {
+     "code": "record",
+     "holder": "",
+     "label": "Record opening",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    }
+   ],
+   "upstream": null
+  },
+  "next_step": {
+   "blockers": [],
+   "fixes": [],
+   "headline": "Appoint opening committee",
+   "holder": null,
+   "kind": "your_turn",
+   "label": "Your turn",
+   "primary_action": "appoint",
+   "sentence": "",
+   "since": null,
+   "stage": "prepare"
+  },
+  "opening": {
+   "box_received": false,
+   "closed": false,
+   "deadline": "2027-06-05 11:00:00",
+   "deadline_label": "5 Jun 2027, 11:00 EAT",
+   "opening_id": "BOC-MOH-2099-001",
+   "record_version": 1,
+   "state": "Awaiting deadline",
+   "status": {
+    "label": "",
+    "since": "",
+    "text": "Submissions close 5 Jun 2027, 11:00 EAT",
+    "tone": ""
+   },
+   "tender": "TDR-268242",
+   "tender_reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  },
+  "record": null,
+  "start_guard": null,
+  "technical_status": null,
+  "viewer": {
+   "is_accounting_officer": true,
+   "is_chair": false,
+   "is_member": false,
+   "is_recorder": false,
+   "technical": false
+  }
+ },
+ "auditor": {
+  "arrangements": {
+   "message": "Details on how to attend the opening are coming soon",
+   "published": false
+  },
+  "attendees": [],
+  "cancellation": null,
+  "candidates": [],
+  "ceremony": null,
+  "committee": {
+   "appointed": false,
+   "appointed_by": "",
+   "appointed_label": "",
+   "history": [],
+   "members": []
+  },
+  "decision": null,
+  "incidents": [],
+  "journey": {
+   "current": "prepare",
+   "downstream": null,
+   "reduced": false,
+   "reduced_parts": {
+    "label": "Prepare opening",
+    "prefix": "Stage 1 of 3: ",
+    "suffix": " \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan"
+   },
+   "reduced_style": "stage_of",
+   "reduced_text": "Stage 1 of 3: Prepare opening \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+   "stages": [
+    {
+     "code": "prepare",
+     "holder": "Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+     "label": "Prepare opening",
+     "marker": "current",
+     "marker_label": "Current"
+    },
+    {
+     "code": "open",
+     "holder": "",
+     "label": "Open bids",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    },
+    {
+     "code": "record",
+     "holder": "",
+     "label": "Record opening",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    }
+   ],
+   "upstream": null
+  },
+  "next_step": {
+   "blockers": [],
+   "fixes": [],
+   "headline": "",
+   "holder": null,
+   "kind": "not_involved",
+   "label": "",
+   "primary_action": "",
+   "sentence": "",
+   "since": null,
+   "stage": ""
+  },
+  "opening": {
+   "box_received": false,
+   "closed": false,
+   "deadline": "2027-06-05 11:00:00",
+   "deadline_label": "5 Jun 2027, 11:00 EAT",
+   "opening_id": "BOC-MOH-2099-001",
+   "record_version": 1,
+   "state": "Awaiting deadline",
+   "status": {
+    "label": "",
+    "since": "",
+    "text": "Submissions close 5 Jun 2027, 11:00 EAT",
+    "tone": ""
+   },
+   "tender": "TDR-268242",
+   "tender_reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  },
+  "record": null,
+  "start_guard": null,
+  "technical_status": null,
+  "viewer": {
+   "is_accounting_officer": false,
+   "is_chair": false,
+   "is_member": false,
+   "is_recorder": false,
+   "technical": false
+  }
+ },
+ "chair": {
+  "arrangements": {
+   "message": "Details on how to attend the opening are coming soon",
+   "published": false
+  },
+  "attendees": [],
+  "cancellation": null,
+  "candidates": [],
+  "ceremony": null,
+  "committee": {
+   "appointed": false,
+   "appointed_by": "",
+   "appointed_label": "",
+   "history": [],
+   "members": []
+  },
+  "decision": null,
+  "incidents": [],
+  "journey": {
+   "current": "prepare",
+   "downstream": null,
+   "reduced": false,
+   "reduced_parts": {
+    "label": "Prepare opening",
+    "prefix": "Stage 1 of 3: ",
+    "suffix": " \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan"
+   },
+   "reduced_style": "stage_of",
+   "reduced_text": "Stage 1 of 3: Prepare opening \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+   "stages": [
+    {
+     "code": "prepare",
+     "holder": "Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+     "label": "Prepare opening",
+     "marker": "current",
+     "marker_label": "Current"
+    },
+    {
+     "code": "open",
+     "holder": "",
+     "label": "Open bids",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    },
+    {
+     "code": "record",
+     "holder": "",
+     "label": "Record opening",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    }
+   ],
+   "upstream": null
+  },
+  "next_step": {
+   "blockers": [],
+   "fixes": [],
+   "headline": "Waiting for Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan to appoint the opening committee",
+   "holder": {
+    "display": "Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan (Accounting Officer)",
+    "people": [
+     "Playwright Tenders Both",
+     "Playwright Tenders AO",
+     "Playwright Requisitions AO",
+     "PLNT Hybrid Head of Function and AO",
+     "PLNT Hybrid AO",
+     "PLNT Accounting Officer",
+     "Amina Hassan"
+    ],
+    "role": "Accounting Officer"
+   },
+   "kind": "waiting",
+   "label": "Waiting on someone",
+   "primary_action": "",
+   "sentence": "",
+   "since": null,
+   "stage": "prepare"
+  },
+  "opening": {
+   "box_received": false,
+   "closed": false,
+   "deadline": "2027-06-05 11:00:00",
+   "deadline_label": "5 Jun 2027, 11:00 EAT",
+   "opening_id": "BOC-MOH-2099-001",
+   "record_version": 1,
+   "state": "Awaiting deadline",
+   "status": {
+    "label": "",
+    "since": "",
+    "text": "Submissions close 5 Jun 2027, 11:00 EAT",
+    "tone": ""
+   },
+   "tender": "TDR-268242",
+   "tender_reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  },
+  "record": null,
+  "start_guard": null,
+  "technical_status": null,
+  "viewer": {
+   "is_accounting_officer": false,
+   "is_chair": false,
+   "is_member": false,
+   "is_recorder": false,
+   "technical": false
+  }
+ },
+ "independent": null,
+ "member": {
+  "arrangements": {
+   "message": "Details on how to attend the opening are coming soon",
+   "published": false
+  },
+  "attendees": [],
+  "cancellation": null,
+  "candidates": [],
+  "ceremony": null,
+  "committee": {
+   "appointed": false,
+   "appointed_by": "",
+   "appointed_label": "",
+   "history": [],
+   "members": []
+  },
+  "decision": null,
+  "incidents": [],
+  "journey": {
+   "current": "prepare",
+   "downstream": null,
+   "reduced": false,
+   "reduced_parts": {
+    "label": "Prepare opening",
+    "prefix": "Stage 1 of 3: ",
+    "suffix": " \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan"
+   },
+   "reduced_style": "stage_of",
+   "reduced_text": "Stage 1 of 3: Prepare opening \u2014 Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+   "stages": [
+    {
+     "code": "prepare",
+     "holder": "Playwright Tenders Both, Playwright Tenders AO, Playwright Requisitions AO, PLNT Hybrid Head of Function and AO, PLNT Hybrid AO, PLNT Accounting Officer, Amina Hassan",
+     "label": "Prepare opening",
+     "marker": "current",
+     "marker_label": "Current"
+    },
+    {
+     "code": "open",
+     "holder": "",
+     "label": "Open bids",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    },
+    {
+     "code": "record",
+     "holder": "",
+     "label": "Record opening",
+     "marker": "not_started",
+     "marker_label": "Not started"
+    }
+   ],
+   "upstream": null
+  },
+  "next_step": {
+   "blockers": [],
+   "fixes": [],
+   "headline": "",
+   "holder": null,
+   "kind": "not_involved",
+   "label": "",
+   "primary_action": "",
+   "sentence": "",
+   "since": null,
+   "stage": ""
+  },
+  "opening": {
+   "box_received": false,
+   "closed": false,
+   "deadline": "2027-06-05 11:00:00",
+   "deadline_label": "5 Jun 2027, 11:00 EAT",
+   "opening_id": "BOC-MOH-2099-001",
+   "record_version": 1,
+   "state": "Awaiting deadline",
+   "status": {
+    "label": "",
+    "since": "",
+    "text": "Submissions close 5 Jun 2027, 11:00 EAT",
+    "tone": ""
+   },
+   "tender": "TDR-268242",
+   "tender_reference": "TND-MOH-2099-001",
+   "title": "Supply and delivery of business laptops"
+  },
+  "record": null,
+  "start_guard": null,
+  "technical_status": null,
+  "viewer": {
+   "is_accounting_officer": false,
+   "is_chair": false,
+   "is_member": false,
+   "is_recorder": false,
+   "technical": false
+  }
+ }
+}

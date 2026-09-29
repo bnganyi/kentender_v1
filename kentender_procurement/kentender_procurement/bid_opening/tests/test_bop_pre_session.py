@@ -43,8 +43,11 @@ class TestCaseAndCommittee(OpeningCase):
 
 	def test_bop_a02_the_committee_needs_three_members_and_an_independent_one(self):
 		self.prepare_case()
+		# Board a2: a chair and a member with no independent member are told what is missing.
 		two = self.appoint(self.roster()[:2])
-		self.assertEqual((two["ok"], two["code"]), (False, "BOP_COMMITTEE_INCOMPLETE"))
+		self.assertEqual((two["ok"], two["code"]), (False, "BOP_INDEPENDENT_MEMBER_REQUIRED"))
+		with_independent = self.appoint([self.roster()[0], self.roster()[2]])
+		self.assertEqual((with_independent["ok"], with_independent["code"]), (False, "BOP_COMMITTEE_INCOMPLETE"))
 		no_independent = self.appoint([*self.roster()[:2], {"user": INDEPENDENT, "committee_role": "Member"}])
 		self.assertEqual(no_independent["code"], "BOP_INDEPENDENT_MEMBER_REQUIRED")
 		self.assertEqual(no_independent["guard"]["headline"], "The opening committee needs an independent third member")
@@ -68,6 +71,14 @@ class TestCaseAndCommittee(OpeningCase):
 		self.appoint()
 		self.assertTrue(appointment.is_excluded_from_evaluation(self.name, INDEPENDENT))
 		self.assertFalse(appointment.is_excluded_from_evaluation(self.name, MEMBER))
+
+	def test_the_accounting_officer_sees_who_can_be_appointed(self):
+		self.prepare_case()
+		candidates = {c["user"]: c for c in reads.get_opening(tender=self.name, user=AO)["candidates"]}
+		self.assertEqual((candidates[INDEPENDENT]["designation"], candidates[INDEPENDENT]["involved"]), ("Budget Approver", False))
+		self.assertTrue(candidates[MEMBER]["involved"])  # prepared this Tender
+		self.assertNotIn("Administrator", candidates)
+		self.assertEqual(reads.get_opening(tender=self.name, user=CHAIR)["candidates"], [])
 
 	def test_only_the_accounting_officer_appoints_or_publishes(self):
 		self.prepare_case()
@@ -334,8 +345,8 @@ def pre_start_views(case: OpeningCase) -> dict:
 
 def expected_views() -> dict:
 	chair_name = frappe.db.get_value("User", CHAIR, "full_name")
-	keys = ["arrangements", "attendees", "cancellation", "ceremony", "committee", "decision", "incidents", "journey", "next_step", "opening", "record", "start_guard", "technical_status", "viewer"]
-	opening_keys = ["box_received", "closed", "deadline", "deadline_label", "opening_id", "record_version", "state", "tender", "tender_reference", "title"]
+	keys = ["arrangements", "attendees", "cancellation", "candidates", "ceremony", "committee", "decision", "incidents", "journey", "next_step", "opening", "record", "start_guard", "technical_status", "viewer"]
+	opening_keys = ["box_received", "closed", "deadline", "deadline_label", "opening_id", "record_version", "state", "status", "tender", "tender_reference", "title"]
 	answer = lambda kind, label, headline, sentence="", holder=None, action="": {"kind": kind, "label": label, "headline": headline, "sentence": sentence,  # noqa: E731
 		"stage": "open", "holder": holder, "since": None, "blockers": [], "fixes": [], "primary_action": action}
 	allowed = {"allowed": True, "reason_code": "", "message": "", "headline": "", "figures": {}, "fixes": [], "facts": []}

@@ -289,3 +289,32 @@ export function bidSubmissionStateCells(relPath, id, options = {}) {
 		};
 	});
 }
+
+/**
+ * Bid Opening (BOP-CHG-001 v0.10 design set): one file,
+ * `14_bid_opening/design/Bid Opening Artboards v0.9.2.dc.html`, whose boards
+ * are `<sc-if value="{{ is.<id> }}">` blocks (a1, c3, r6 …) in a
+ * reviewer shell. The screen is the block's `.kt-page`; the top bar above it
+ * is the shared page rail, which the build never redraws. The boards draw the
+ * shared guidance region literally, so the journey (`ol.kt-journey`) and the
+ * next step (`.kt-next-step`) are marked with the `data-kt` landmarks the
+ * shared components render. `.cap`/`.sub` captions are stripped.
+ */
+export function bidOpeningScope(doc, id) {
+	const block = Array.from(doc.querySelectorAll("sc-if")).find((el) => String(el.getAttribute("value") || "").replace(/\s+/g, "") === `{{is.${id}}}`);
+	if (!block) throw new Error(`Bid Opening board ${id} not found`);
+	const page = block.querySelector(".kt-page");
+	if (!page) throw new Error(`Bid Opening board ${id} draws no .kt-page`);
+	const clone = page.cloneNode(true);
+	for (const el of clone.querySelectorAll("ol.kt-journey")) el.setAttribute("data-kt", "journey");
+	for (const el of clone.querySelectorAll(".kt-next-step")) el.setAttribute("data-kt", "next-step");
+	for (const note of clone.querySelectorAll(".sub, .cap")) note.remove();
+	return clone;
+}
+
+export const BID_OPENING_BOARDS = "docs/mvp-1-r1/14_bid_opening/design/Bid Opening Artboards v0.9.2.dc.html";
+
+/** One Bid Opening board's landmark skeleton (see `bidOpeningScope`). */
+export function bidOpeningSkeleton(id, relPath = BID_OPENING_BOARDS) {
+	return skeletonOf(bidOpeningScope(documentFor(relPath), id));
+}

@@ -72,6 +72,8 @@ class TestPrepareAndFreeze(RecordCase):
 		self.assertGreaterEqual(pages, 1)
 		mine = [t for t in draft["targets"] if t["required_member"] == MEMBER]
 		self.assertEqual(sorted(t["target_type"] for t in mine), sorted(["Tender page", "Price location", *["Minutes page"] * pages, "Final minutes page"]))
+		self.assertEqual({t["target_type"]: t["what_you_do"] for t in mine}, {"Tender page": "Sign the page", "Price location": "Initial the price",
+			"Minutes page": "Initial each page", "Final minutes page": "Sign with full name and designation"})  # board r2
 		self.assertEqual(frappe.db.count("Proceeding Minutes Version", {"proceeding": self.case_doc().proceeding}), 0)
 		self.assertIsNone(reads.get_opening(tender=self.name, user=MEMBER)["record"]["draft"])  # only the recorder sees the draft
 		self.assertTrue(self.next_step(MEMBER)["headline"].endswith("to prepare the opening record"))

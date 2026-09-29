@@ -41,6 +41,34 @@ def _attendees(case: str) -> list[dict[str, Any]]:
 		for r in attendance.present(proceeding) if r["user"] not in members]
 
 
+def status_line(doc, answer: dict[str, Any]) -> dict[str, str]:
+	"""The page head's second line (boards a1–h5): the words before the status,
+	the status itself and its tone. Before Start it never implies a count."""
+	from kentender_procurement.bid_opening.services import ceremony
+
+	closed = clock.now() >= get_datetime(doc.effective_deadline)
+	if doc.state in ("Awaiting deadline", "Ready to open"):
+		if answer.get("primary_action") == "record_not_held":
+			return {"text": f"Scheduled {labels.when(doc.effective_deadline)}", "label": "Not started", "tone": "is-attention", "since": ""}
+		return {"text": f"Submissions {'closed' if closed else 'close'} {labels.when(doc.effective_deadline)}", "label": "", "tone": "", "since": ""}
+	if doc.state == "Opening":
+		return {"text": "", "label": "In session", "tone": "is-live", "since": f"since {labels.time_seconds(doc.started_at)} EAT"}
+	if doc.state == "Interrupted":
+		pause = ceremony.open_pause(doc.name)
+		return {"text": "", "label": "Paused", "tone": "is-attention", "since": f"since {labels.time(pause.recorded_at)} EAT" if pause else ""}
+	if doc.state == "Cancelled after start":
+		return {"text": "", "label": "Ended — Tender cancelled", "tone": "is-critical", "since": ""}
+	if doc.state == "Not held":
+		return {"text": "", "label": "Did not take place", "tone": "is-critical", "since": ""}
+	if doc.state == "Readout complete":
+		return {"text": "", "label": f"Opening ended {labels.time(doc.ended_at)} EAT", "tone": "is-live", "since": ""}
+	if doc.state == "Awaiting attestations":
+		number = cint(frappe.db.get_value("Proceeding Minutes Version", {"proceeding": doc.proceeding, "state": ("in", ("Frozen", "Finalized"))}, "version_number",
+			order_by="version_number desc"))
+		return {"text": "" if number > 1 else f"Version {number}", "label": f"Version {number}" if number > 1 else "", "tone": "is-attention", "since": ""}
+	return {"text": "", "label": "Complete", "tone": "is-live", "since": ""}
+
+
 def get_opening(*, tender: str, user: str) -> dict[str, Any]:
 	case = records.case_for(tender)
 	if not case or not can_read(case, user):
@@ -54,11 +82,12 @@ def get_opening(*, tender: str, user: str) -> dict[str, Any]:
 	published = arrangements.public_projection(case)
 	guard = guards.start_guard(doc) if doc.state == "Ready to open" or (doc.state == "Awaiting deadline" and clock.now() >= get_datetime(doc.effective_deadline)) else None
 	item = next_steps._decision_item(doc)
+	answer = next_steps.answer_for(doc, user)
 	out: dict[str, Any] = {
 		"opening": {"opening_id": doc.opening_id, "state": doc.state, "record_version": cint(doc.record_version), "tender": doc.tender,
 			"tender_reference": doc.tender_reference, "title": doc.tender_title, "deadline": str(doc.effective_deadline), "deadline_label": labels.when(doc.effective_deadline),
-			"closed": clock.now() >= get_datetime(doc.effective_deadline), "box_received": bool(doc.manifest_digest)},
-		"next_step": next_steps.answer_for(doc, user),
+			"closed": clock.now() >= get_datetime(doc.effective_deadline), "box_received": bool(doc.manifest_digest), "status": status_line(doc, answer)},
+		"next_step": answer,
 		"journey": next_steps.journey_for(doc),
 		"committee": {
 			"appointed": bool(current_appointment),
@@ -70,11 +99,13 @@ def get_opening(*, tender: str, user: str) -> dict[str, Any]:
 					order_by="version_number asc")],
 		},
 		"arrangements": published,
+		"candidates": appointment.candidates(doc.tender) if ao and doc.state in ("Awaiting deadline", "Ready to open", "Interrupted") else [],
 		"attendees": [] if technical else _attendees(case),
 		"start_guard": guard,
 		"incidents": [{"incident_id": r.incident_id, "type": r.incident_type, "holder": guards.SUPPORT, "notification_state": r.notification_state,
 			"notified_label": labels.time_seconds(r.last_notified_at)} for r in incidents.open_incidents(case)],
-		"decision": {"kind": item.kind, "reason": item.reason, "holder": people.full_name(item.holder_user), "unavailable_text": next_steps.UNAVAILABLE_DECISION}
+		"decision": {"kind": item.kind, "reason": item.reason, "holder": people.full_name(item.holder_user), "unavailable_text": next_steps.UNAVAILABLE_DECISION,
+			"recorded_label": labels.when(item.created_at)}
 			if item and (ao or technical) else None,
 		"ceremony": session.view(doc, user),
 		"record": record_view(doc, user),

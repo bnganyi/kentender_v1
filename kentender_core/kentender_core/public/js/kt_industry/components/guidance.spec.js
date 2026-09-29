@@ -103,6 +103,17 @@ describe("NextStep", () => {
 		expect(done.find(".kt-next-step-since").exists()).toBe(false);
 	});
 
+	it("draws Scheduled as a compact line with the neutral rule and no action (KT-STD-001 v1.10 §2.9.1)", () => {
+		const answer = { kind: "timed", label: "Scheduled", headline: "Submissions close automatically at 12 Jun 2027, 11:00 EAT.", sentence: "", stage: "open",
+			holder: { role: "System", people: [], display: "System" }, since: null, blockers: [], fixes: [], primary_action: "" };
+		const w = mount(NextStep, { props: { answer, placement: "region" } });
+		const line = w.find('[data-kt="next-step"]');
+		expect(line.classes()).toContain("is-waiting");
+		expect(line.find(".kt-next-step-label").text()).toBe("Scheduled");
+		expect(line.find(".kt-next-step-headline").text()).toBe("Submissions close automatically at 12 Jun 2027, 11:00 EAT.");
+		expect(w.findAll("button")).toHaveLength(0);
+	});
+
 	it("draws Your turn with its accent rule and one optional sentence", () => {
 		const turn = { kind: "your_turn", label: "Your turn", headline: "Prepare an addendum or recommend cancellation if the open Tender needs it.", sentence: "These are available options, not overdue work.", blockers: [], fixes: [] };
 		const w = mount(NextStep, { props: { answer: turn, placement: "region" } });

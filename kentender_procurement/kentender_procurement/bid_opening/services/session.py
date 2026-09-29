@@ -51,6 +51,20 @@ def chronology(case: str) -> list[dict[str, str]]:
 	return out
 
 
+def accounts(case: str) -> list[dict[str, Any]]:
+	"""Members' own differing accounts (board c8), each with whether the
+	recorder has responded to it (board c8b)."""
+	proceeding = frappe.db.get_value(records.CASE, case, "proceeding")
+	if not proceeding:
+		return []
+	rows = frappe.get_all("Proceeding Event", filters={"proceeding": proceeding, "event_type": "MemberAccount"}, fields=["event_id", "actor", "note", "recorded_at"],
+		order_by="sequence asc")
+	answered = set(frappe.get_all("Proceeding Event", filters={"proceeding": proceeding, "event_type": "Intervention", "linked_event": ("in", [r.event_id for r in rows])},
+		pluck="linked_event")) if rows else set()
+	return [{"event_id": r.event_id, "member_user": r.actor, "member": people.full_name(r.actor), "account": r.note, "time_label": labels.time_seconds(r.recorded_at),
+		"responded": r.event_id in answered} for r in rows]
+
+
 def view(doc, user: str) -> dict[str, Any] | None:
 	if doc.state in ("Awaiting deadline", "Ready to open", "Not held") or people.technical(user):
 		return None
@@ -67,6 +81,7 @@ def view(doc, user: str) -> dict[str, Any] | None:
 	requests = frappe.get_all(ceremony.EXCEPTION, filters={"opening_case": doc.name, "exception_class": ("in", ("Repeat request", "Procedural comment", "Comment for Evaluation"))},
 		fields=["exception_id", "exception_class", "entry", "speaker_name", "observed_fact", "response", "outcome", "recorded_at", "recorded_by"], order_by="recorded_at asc")
 	return {
+		"accounts": accounts(doc.name),
 		"current_bids": len(ceremony.envelopes(doc)),
 		"opened": [_entry_facts(e) for e in opened],
 		"awaiting_readout": next((_entry_facts(e) for e in opened if e.status == "Opened"), None),

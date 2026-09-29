@@ -148,7 +148,8 @@ def draft(doc) -> dict[str, Any]:
 	html = content(doc)
 	_pdf, pages = render(html)
 	digest = hashlib.sha256(html.encode("utf-8")).hexdigest()
-	return {"pages": pages, "prepared_label": labels.when(clock.now()), "targets": targets(doc, content_digest=digest, pages=pages, prefix="DRAFT")}
+	return {"pages": pages, "prepared_label": labels.when(clock.now()),
+		"targets": [{**t, "what_you_do": what_you_do(t["target_type"])[0]} for t in targets(doc, content_digest=digest, pages=pages, prefix="DRAFT")]}
 
 
 def _owner_events(case: str) -> list[str]:
