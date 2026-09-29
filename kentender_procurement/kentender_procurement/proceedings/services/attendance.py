@@ -43,9 +43,12 @@ def present(proceeding: str) -> list[dict[str, Any]]:
 
 
 def record_attendance(*, owner_type: str, owner_id: str, expected_version: int, person_name: str, capacity: str, movement: str, idempotency_key: str, actor: str,
-		user: str = "", represented_tenderer: str = "", reported_at=None) -> dict[str, Any]:
+		user: str = "", represented_tenderer: str = "", reported_at=None, by_owner: bool = False) -> dict[str, Any]:
+	"""`by_owner`: the owner records a fact it established itself (a member's
+	authenticated join, or a presence lapse the system detected), so the
+	owner capacity applies and the system actor may record it."""
 	payload = {"expected_version": expected_version, "person_name": person_name, "capacity": capacity, "movement": movement, "user": user,
-		"represented_tenderer": represented_tenderer, "reported_at": cstr(reported_at or "")}
+		"represented_tenderer": represented_tenderer, "reported_at": cstr(reported_at or ""), "by_owner": bool(by_owner)}
 
 	def body() -> dict[str, Any]:
 		doc = records.lock(owner_type, owner_id)
@@ -82,5 +85,5 @@ def record_attendance(*, owner_type: str, owner_id: str, expected_version: int, 
 		records.bump(doc)
 		return records.summary(doc, event_id, attendance_id=f"{doc.name}-A{number:04d}", pre_session=cint(pre_session))
 
-	return records.command("RecordAttendance", owner_type=owner_type, owner_id=owner_id, idempotency_key=idempotency_key, actor=actor, capacity="recorder",
+	return records.command("RecordAttendance", owner_type=owner_type, owner_id=owner_id, idempotency_key=idempotency_key, actor=actor, capacity="owner" if by_owner else "recorder",
 		payload=payload, body=body)

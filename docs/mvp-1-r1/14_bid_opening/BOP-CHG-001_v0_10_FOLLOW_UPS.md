@@ -29,6 +29,9 @@ This register holds items found while planning BOP-CHG-001 v0.10 and its shared 
 | FU-BOP-13 | The committed drafts `13_proceedings/KenTender_PRC-CHG-001_Minimal_Procurement_Proceedings_v0_1.md` and `…_v0_2.md` are deleted in the working tree, but PRC-CHG-001 v0.9 line 10 says "v0.1 accepted scope remains historical evidence". The Bid Opening Phase 0 commit leaves those deletions unstaged. | Low — document control | Project Owner | Open |
 | FU-BOP-14 | TRUST-ADR-001 v0.1 line 9 lists consumers "BOP-CHG-001 v0.1; PRC-CHG-001 v0.2"; the current consumers are BOP-CHG-001 v0.10 and PRC-CHG-001 v0.9. The register entry already notes "update by a later controlled revision". | Low — spec | TRUST owner | Open |
 | FU-BOP-15 | The default package renderer (plan D5) labels each response by its field key made readable (for example "Offered make model"), not by the published bid definition's own label. Members reviewing pages would read clearer labels from the definition that the package names (`bid_definition_id`, `definition_version`). | Low — design | Bid Opening build | Open |
+| FU-BOP-16 | Plan D18: after the box closes, each appointed member's authenticated join counts as their participation in the joint release (TRUST-ADR-001 v0.1 §2 "confirm release once"), with no separate button, because BOP-CHG-001 v0.10 §10 draws "Ready to start" and "Start opening" "without a fabricated security approval control" and §11 shows a member custody action "only if the final method requires one". Please confirm this reading of the test proxy, or say the member must press a separate confirmation. | Medium — owner decision | Project Owner | Open |
+| FU-BOP-17 | New wording built without an exact source, for review: "You can join from [time]." for members (board p1a has it for the public); "Waiting for [chair] to start the opening"; "The opening did not take place." with "The Tender was cancelled before the opening." for a cancellation before Start; guard messages "The opening cannot start until attendance details are published." (board a3) and "The public attendance service is unavailable."; the join reminder "[chair] is waiting for you to join the opening."; the support notice subjects in `incidents.SUBJECTS`. | Low — wording | Project Owner | Open |
+| FU-BOP-18 | The shared `NextStep.vue` has no rendering for the KT-STD-001 v1.10 Scheduled kind (`timed`), so the server's answer is not drawn. To be added in Phase 8 (BOP10-799), for every module. | Medium — UI | Bid Opening build | Open |
 
 ## Verifying a fix
 
@@ -45,4 +48,7 @@ This register holds items found while planning BOP-CHG-001 v0.10 and its shared 
 - **FU-BOP-11** and **FU-BOP-12** close when the Evaluation change unit consumes both.
 - **FU-BOP-13** closes when the owner either restores the two PRC drafts or records their removal.
 - **FU-BOP-14** closes when a TRUST-ADR-001 revision names the current consumers.
+- **FU-BOP-16** closes when the owner confirms or changes plan D18.
+- **FU-BOP-17** closes when each listed sentence is approved or replaced in the next BOP revision.
+- **FU-BOP-18** closes when `NextStep.vue` draws the Scheduled kind and a component test covers it.
 - **FU-BOP-15** closes when the renderer reads labels from the package's published definition, with the determinism test still green.

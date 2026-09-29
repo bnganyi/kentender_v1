@@ -154,6 +154,9 @@ kt_trust_signing_services = ["kentender_procurement.proceedings.test_services.at
 # test-only fault renderer (silent unless forced) overrides the default.
 # Transports are tried in order; the test-only failing transport is silent
 # unless forced, then the in-app Notification Log answers.
+# BOP-CHG-001 v0.10 plan D1: Bid Opening owns its Proceeding; Proceedings is
+# reachable only from inside a Bid Opening command or read.
+kt_prc_owner_adapters = ["kentender_procurement.bid_opening.services.prc_owner.adapters"]
 kt_bop_renderer_services = [
 	"kentender_procurement.bid_opening.services.package_renderer.service",
 	"kentender_procurement.bid_opening.test_services.renderer_faults.service",
@@ -432,6 +435,9 @@ scheduler_events: dict[str, list[str]] = {
 		# BDS-CHG-001 v0.8 §5.14 — hand-offs and operational incidents follow
 		# service health, newly effective addenda and the deadline.
 		"kentender_procurement.bid_submission.services.handoffs.sweep",
+		# BOP-CHG-001 v0.10 plan D7/D8/D11 — prepare opening cases, receive the sealed
+		# close, record presence lapses and open Opening access support incidents.
+		"kentender_procurement.bid_opening.services.sweep.run",
 	],
 }
 
@@ -560,6 +566,8 @@ kt_my_work_providers = [
 	"kentender_procurement.procurement_planning.services.my_work_provider.my_work_rows",
 	"kentender_procurement.procurement_requisitions.services.my_work_provider.my_work_rows",
 	"kentender_procurement.tenders.services.my_work_provider.my_work_rows",
+	# BOP-CHG-001 v0.10 §5 hand-off table (plan D11).
+	"kentender_procurement.bid_opening.services.my_work_provider.my_work_rows",
 ]
 
 # AUTH-ADR-001 v1.8 §8/§9 / KT-STD-001 v1.5 §3A.6 — the shared Technical

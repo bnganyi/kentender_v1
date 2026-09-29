@@ -23,12 +23,15 @@ from frappe.utils import cstr
 KIND_YOUR_TURN = "your_turn"
 KIND_BLOCKED = "your_turn_blocked"
 KIND_WAITING = "waiting"
+# KT-STD-001 v1.10 §2.9.1 — a fixed future event held by the system (for
+# example a deadline); never a person to wait on (BOP-CHG-001 v0.10 §5).
+KIND_SCHEDULED = "timed"
 KIND_DONE = "done"
 KIND_NOT_INVOLVED = "not_involved"
 
 # §3B.2 — fixed precedence: an available action, then a blocked action,
 # then waiting, then done, then not involved.
-PRECEDENCE = (KIND_YOUR_TURN, KIND_BLOCKED, KIND_WAITING, KIND_DONE, KIND_NOT_INVOLVED)
+PRECEDENCE = (KIND_YOUR_TURN, KIND_BLOCKED, KIND_WAITING, KIND_SCHEDULED, KIND_DONE, KIND_NOT_INVOLVED)
 TURN_KINDS = frozenset({KIND_YOUR_TURN, KIND_BLOCKED})
 
 # §2.9.1 — the words the boards draw before each headline ("Waiting on
@@ -38,6 +41,7 @@ KIND_LABELS = {
 	KIND_YOUR_TURN: "Your turn",
 	KIND_BLOCKED: "Your turn, blocked",
 	KIND_WAITING: "Waiting on someone",
+	KIND_SCHEDULED: "Scheduled",
 	KIND_DONE: "Done",
 	KIND_NOT_INVOLVED: "",
 }
@@ -313,6 +317,11 @@ def problems(result: dict[str, Any] | None, *, has_enabled_action: bool = False)
 			out.append("waiting without a headline")
 		if not (result.get("holder") or {}).get("role"):
 			out.append("waiting without a named holder")
+	elif kind == KIND_SCHEDULED:
+		if not result.get("headline"):
+			out.append("scheduled without a headline")
+		if result.get("fixes") or result.get("primary_action"):
+			out.append("scheduled with an action")
 	elif kind == KIND_DONE:
 		if not result.get("headline"):
 			out.append("done without a headline")

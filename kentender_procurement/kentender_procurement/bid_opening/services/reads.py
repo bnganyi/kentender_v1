@@ -1,0 +1,82 @@
+# Copyright (c) 2026, KenTender and contributors
+# For license information, please see license.txt
+
+"""GetOpening (BOP-CHG-001 v0.10 §6, §7 GetOpening; binding row: role-filtered
+read, no Proceedings mutation; BOP-N01, BOP-A01, BOP-A13).
+
+Readers: the Accounting Officer, the Head of Procurement Function, the
+Procurement Officer, the Auditor, the appointed members and technical
+readers (health only, KT-STD-001 §3A.6). Anyone else gets Not found, and a
+guessed route confers nothing. Before Start nothing here states or implies
+the bid count or a bidder identity: the closed box appears only as
+"received", identically for an empty and a nonempty box. Reading creates no
+event."""
+
+from __future__ import annotations
+
+from typing import Any
+
+import frappe
+from frappe.utils import cint, get_datetime
+
+from kentender_procurement.bid_opening.services import (
+	appointment, arrangements, clock, guards, incidents, labels, next_steps, not_held, people, prc_owner, presence, records,
+)
+
+READER_ROLES = (people.ACCOUNTING_OFFICER, people.HEAD_OF_PROCUREMENT, people.PROCUREMENT_OFFICER, people.AUDITOR)
+
+
+def can_read(case: str, user: str) -> bool:
+	return people.technical(user) or bool(appointment.member(case, user)) or any(people.holds(user, r) for r in READER_ROLES)
+
+
+def _attendees(case: str) -> list[dict[str, Any]]:
+	from kentender_procurement.proceedings.services import attendance
+
+	proceeding = frappe.db.get_value(records.CASE, case, "proceeding")
+	if not proceeding:
+		return []
+	members = {m["member_user"] for m in appointment.roster(case)}
+	return [{"person_name": r["person_name"], "represents": r["represented_tenderer"] or "", "capacity": r["capacity"], "joined_label": labels.time(r["occurred_at"])}
+		for r in attendance.present(proceeding) if r["user"] not in members]
+
+
+def get_opening(*, tender: str, user: str) -> dict[str, Any]:
+	case = records.case_for(tender)
+	if not case or not can_read(case, user):
+		raise frappe.DoesNotExistError("Not found")
+	doc = frappe.get_doc(records.CASE, case)
+	technical = people.technical(user)
+	member = appointment.member(case, user)
+	ao = people.holds(user, people.ACCOUNTING_OFFICER)
+	current_appointment = appointment.current(case)
+	present = presence.present_members(case)
+	published = arrangements.public_projection(case)
+	guard = guards.start_guard(doc) if doc.state == "Ready to open" or (doc.state == "Awaiting deadline" and clock.now() >= get_datetime(doc.effective_deadline)) else None
+	item = next_steps._decision_item(doc)
+	out: dict[str, Any] = {
+		"opening": {"opening_id": doc.opening_id, "state": doc.state, "record_version": cint(doc.record_version), "tender": doc.tender,
+			"tender_reference": doc.tender_reference, "title": doc.tender_title, "deadline": str(doc.effective_deadline), "deadline_label": labels.when(doc.effective_deadline),
+			"closed": clock.now() >= get_datetime(doc.effective_deadline), "box_received": bool(doc.manifest_digest)},
+		"next_step": next_steps.answer_for(doc, user),
+		"journey": next_steps.journey_for(doc),
+		"committee": {
+			"appointed": bool(current_appointment),
+			"appointed_label": labels.when(current_appointment.appointed_at) if current_appointment else "",
+			"appointed_by": people.full_name(current_appointment.appointed_by) if current_appointment else "",
+			"members": [{**m, "present": m["member_user"] in present, "joined_label": labels.time(present.get(m["member_user"]))} for m in appointment.roster(case)],
+			"history": [{"version": a.version_number, "appointed_label": labels.when(a.appointed_at), "appointed_by": people.full_name(a.appointed_by), "status": a.status}
+				for a in frappe.get_all(appointment.APPOINTMENT, filters={"opening_case": case}, fields=["version_number", "appointed_at", "appointed_by", "status"],
+					order_by="version_number asc")],
+		},
+		"arrangements": published,
+		"attendees": [] if technical else _attendees(case),
+		"start_guard": guard,
+		"incidents": [{"incident_id": r.incident_id, "type": r.incident_type, "holder": guards.SUPPORT, "notification_state": r.notification_state,
+			"notified_label": labels.time_seconds(r.last_notified_at)} for r in incidents.open_incidents(case)],
+		"decision": {"kind": item.kind, "reason": item.reason, "holder": people.full_name(item.holder_user), "unavailable_text": next_steps.UNAVAILABLE_DECISION}
+			if item and (ao or technical) else None,
+		"viewer": {"is_member": bool(member), "is_chair": bool(member and member["is_chair"]), "is_recorder": bool(member and member["is_recorder"]),
+			"is_accounting_officer": ao, "technical": technical},
+	}
+	return out

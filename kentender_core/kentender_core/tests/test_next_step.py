@@ -76,6 +76,23 @@ class TestAnswer(IntegrationTestCase):
 		self.assertEqual(ns.since("2026-12-15 10:00:00", "15 Dec 2026, 10:00 EAT")["display"], "15 Dec 2026, 10:00 EAT")
 
 
+class TestScheduled(IntegrationTestCase):
+	"""KT-STD-001 v1.10 §2.9.1 — the Scheduled kind (BOP-CHG-001 v0.10 §5)."""
+
+	def test_scheduled_sits_after_waiting_and_before_done(self):
+		self.assertEqual(ns.KIND_LABELS[ns.KIND_SCHEDULED], "Scheduled")
+		waiting = ns.answer(ns.KIND_WAITING, headline="w", holder=ns.holder("Chair"))
+		scheduled = ns.answer(ns.KIND_SCHEDULED, headline="Submissions close automatically at 12 Jun 2027, 11:00 EAT.", holder=ns.holder("System"))
+		done = ns.answer(ns.KIND_DONE, headline="d")
+		self.assertEqual(ns.choose(done, scheduled)["kind"], "timed")
+		self.assertEqual(ns.choose(scheduled, waiting)["kind"], "waiting")
+
+	def test_scheduled_needs_a_headline_and_offers_no_action(self):
+		self.assertEqual(ns.problems(ns.answer(ns.KIND_SCHEDULED, headline="Submissions close automatically.")), [])
+		self.assertIn("scheduled without a headline", ns.problems(ns.answer(ns.KIND_SCHEDULED)))
+		self.assertIn("scheduled with an action", ns.problems(ns.answer(ns.KIND_SCHEDULED, headline="x", primary_action="start")))
+
+
 class TestTechnicalReader(IntegrationTestCase):
 	"""§3B.6 — Administrator and System Manager read everything, decide nothing."""
 

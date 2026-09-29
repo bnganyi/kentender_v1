@@ -299,3 +299,10 @@ These are recorded here; the phase text above is not rewritten.
 | D16 | **Trust-interface outcomes.** Every call through the custody, signing or renderer gateway returns exactly one of `Unavailable`, `Rejected`, `Indeterminate` or `Accepted/Verified`, carries one correlation identity, and is safe to retry (TRUST-ADR-001 v0.1 §4). Bid Opening never records a successful reveal, proof or render on timeout; `Indeterminate` pauses the ceremony with an incident. This refines D4 to D6. |
 | D17 | **Proxy negative paths.** The Phase 3 and Phase 5 gates include every negative path TRUST-ADR-001 v0.1 §2 lists for the proxy: early attempt, one-member or absent-member attempt, stale member, invalid package, duplicate receipt, interrupted session, stale target, administrator attempt, and recovery without rewriting history. The release confirmation follows TRUST-ADR-001 v0.1 §2: at least two distinct committee members, including the independent member, confirm once, and all appointed members stay present before each reveal. |
 
+
+## Phase 4 findings (29 September 2026)
+
+| # | Decision |
+|---|---|
+| D18 | **Custody participation on join.** After the box closes, each appointed member's authenticated join is their participation in the joint release, confirmed with the custody service against the exact closed manifest and roster. It is the same step for an empty and a nonempty box. A leave, a lapse or a roster change makes it stale. No separate member button is drawn (BOP-CHG-001 v0.10 §10 and §11). Owner confirmation is requested in FU-BOP-16. |
+| D8 (refined) | Bid Opening reads Tender facts and cancellations through a read seam, `tenders/services/opening_seam.py` (Tenders tracker TND12-C01). The second outbox consumer is not needed. |
