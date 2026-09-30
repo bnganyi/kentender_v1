@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/styles.css">
+<script src="_ds/kentender-industry-82d82607-fd52-491b-bef1-023d4ec3bd0c/_ds_bundle.js"></script>
+<script src="evl/evl-kit.js"></script>
+<script src="evl/boards-1.js"></script>
+<script src="evl/boards-2.js"></script>
+<script src="evl/boards-3.js"></script>
+<script src="evl/boards-4.js"></script>
+<script src="evl/boards-5.js"></script>
+<style>
+html, body { margin: 0; height: 100%; background: var(--color-bg); }
+a { color: var(--color-accent-2-700); }
+a:hover { color: var(--color-accent-2-800); }
+</style>
+</helmet>
+<div style="display:flex;height:100vh;background:var(--color-bg);font-family:var(--font-body);color:var(--color-text)">
+
+  <aside style="width:300px;flex:none;display:flex;flex-direction:column;min-height:0;background:var(--color-surface);border-right:1px solid var(--color-divider)">
+    <div style="padding:16px 16px 12px;border-bottom:1px solid var(--color-divider);display:grid;gap:4px">
+      <div style="font-family:var(--font-heading);font-size:21px;font-weight:600;line-height:1.1">Bid evaluation artboards</div>
+      <div style="font-size:13px;color:var(--color-neutral-700)">EVL-CHG-001 v0.4 · {{ countLabel }}</div>
+      <input class="input" style="margin-top:8px" placeholder="Filter by ID, actor or name" value="{{ q }}" onChange="{{ onSearch }}">
+    </div>
+    <div style="flex:1;overflow:auto;padding:4px 0 24px">
+      <sc-for list="{{ groups }}" as="g" hint-placeholder-count="6">
+        <div style="padding:14px 16px 4px;font-size:13px;font-weight:600;color:var(--color-neutral-800)">{{ g.name }}</div>
+        <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="4">
+          <button type="button" onClick="{{ it.go }}" style="display:grid;grid-template-columns:minmax(0,1fr);gap:1px;width:100%;text-align:left;border:0;border-left:3px solid {{ it.bar }};background:{{ it.bg }};padding:6px 16px 6px 13px;cursor:pointer;font:inherit;color:inherit" style-hover="background:var(--color-neutral-100)">
+            <span style="font-family:var(--font-heading);font-size:13px;font-weight:600;color:var(--color-accent-700)">{{ it.id }}</span>
+            <span style="font-size:13px;line-height:1.3">{{ it.name }}</span>
+            <span style="font-size:12px;color:var(--color-neutral-700)">{{ it.who }}</span>
+          </button>
+        </sc-for>
+      </sc-for>
+    </div>
+    <div style="padding:10px 16px;border-top:1px solid var(--color-divider);font-size:12px;color:var(--color-neutral-700)">Arrow keys move between artboards.</div>
+  </aside>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;gap:16px;padding:12px 20px;background:var(--color-surface);border-bottom:1px solid var(--color-divider)">
+      <span class="tag tag-accent">{{ cur.id }}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-family:var(--font-heading);font-size:20px;font-weight:600;line-height:1.15">{{ cur.name }}</div>
+        <div style="font-size:13px;color:var(--color-neutral-700)">{{ cur.meta }}</div>
+      </div>
+      <div class="seg" role="radiogroup">
+        <label class="seg-opt"><input type="radio" name="zoom" checked="{{ fit }}" onChange="{{ setFit }}">Fit width</label>
+        <label class="seg-opt"><input type="radio" name="zoom" checked="{{ actual }}" onChange="{{ setActual }}">100%</label>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button type="button" class="btn btn-secondary" onClick="{{ prev }}">Previous</button>
+        <button type="button" class="btn btn-secondary" onClick="{{ next }}">Next</button>
+      </div>
+    </div>
+    <sc-if value="{{ cur.hasNote }}">
+      <div style="padding:8px 20px;background:var(--color-accent-100);border-bottom:1px solid var(--color-divider);font-size:13px;color:var(--color-accent-900)"><strong>Spec note · </strong>{{ cur.note }}</div>
+    </sc-if>
+
+    <div ref="{{ stageRef }}" style="flex:1;overflow:auto;padding:28px">
+      <div style="width:max-content;margin:0 auto">
+        <div style="position:relative;width:{{ cur.W }}px;min-height:{{ cur.H }}px;zoom:{{ zoom }};background:var(--color-bg);border:1px solid var(--color-divider);box-shadow:var(--shadow-md);overflow:hidden">
+          <div style="display:flex;min-height:{{ cur.H }}px">
+
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;padding:{{ shellPad }}">
+              <div class="kt-page" style="max-width:none;width:auto;margin:{{ cur.pm }};padding:{{ cur.pp }}">
+                <sc-if value="{{ cur.hasBack }}"><a href="#" onClick="{{ noop }}" style="font-size:14px">← {{ cur.back }}</a></sc-if>
+                <sc-if value="{{ cur.hasHead }}">
+                  <div class="kt-page-head" style="justify-content:flex-start;align-items:center;gap:16px"><div style="width:48px;height:48px;flex:none;display:grid;place-items:center;background:var(--color-accent-100);color:var(--color-accent-700)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ cur.icon }}"></path></svg></div><div style="display:grid;gap:6px;min-width:0"><h1 class="kt-page-title" style="font-size:{{ h1 }}px">{{ cur.title }}</h1><sc-if value="{{ cur.hasDesc }}"><p class="kt-page-desc" style="margin:0">{{ cur.desc }}</p></sc-if></div></div>
+                </sc-if>
+                <sc-if value="{{ cur.hasTabs }}">
+                  <div class="kt-tabs" role="tablist">
+                    <sc-for list="{{ cur.tabs }}" as="t" hint-placeholder-count="2"><label class="kt-tab"><input type="radio" name="evltab" checked="{{ t.on }}" readOnly="{{ true }}">{{ t.t }}</label></sc-for>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ cur.hasGuide }}">
+                  <div class="kt-guidance" style="padding:var(--space-4) 0 var(--space-5)">
+                    <sc-if value="{{ cur.hasTr }}">
+                      <ol class="kt-journey" aria-label="Evaluation journey" style="--kt-journey-n:3">
+                        <sc-for list="{{ cur.tr }}" as="s" hint-placeholder-count="3">
+                          <li class="kt-journey-stage {{ s.cls }}"><span class="kt-journey-bar" aria-hidden="true"></span><span class="kt-journey-title"><span class="kt-journey-num">{{ s.num }}</span>{{ s.name }}</span><span class="kt-journey-state">{{ s.st }}</span></li>
+                        </sc-for>
+                      </ol>
+                    </sc-if>
+                    <sc-if value="{{ cur.nxTurn }}"><div class="kt-next-step is-turn"><div class="kt-next-step-label">{{ cur.nxLabel }}</div><p class="kt-next-step-headline">{{ cur.nx.h }}</p><sc-if value="{{ cur.hasNxS }}"><p class="kt-next-step-sentence">{{ cur.nx.s }}</p></sc-if></div></sc-if>
+                    <sc-if value="{{ cur.nxWait }}"><div class="kt-next-step is-waiting"><div class="kt-next-step-label">{{ cur.nxLabel }}</div><p class="kt-next-step-headline">{{ cur.nx.h }}</p><sc-if value="{{ cur.hasNxS }}"><p class="kt-next-step-sentence">{{ cur.nx.s }}</p></sc-if></div></sc-if>
+                    <sc-if value="{{ cur.nxDone }}"><div class="kt-next-step is-done"><div class="kt-next-step-label">{{ cur.nxLabel }}</div><p class="kt-next-step-headline">{{ cur.nx.h }}</p><sc-if value="{{ cur.hasNxS }}"><p class="kt-next-step-sentence">{{ cur.nx.s }}</p></sc-if></div></sc-if>
+                    <sc-if value="{{ cur.hasNotInvolved }}"><p style="margin:0;font-size:14px;color:var(--color-neutral-800)">{{ cur.notInvolved }}</p></sc-if>
+                  </div>
+                </sc-if>
+
+                <sc-for list="{{ blocks }}" as="b" hint-placeholder-count="3">
+                  <div style="display:grid;gap:10px;min-width:0">
+                    <sc-if value="{{ b.titleMain }}"><h2 style="display:flex;align-items:center;gap:8px;margin:0;font-family:var(--font-heading);font-weight:600;font-size:21px;line-height:1.2"><sc-if value="{{ b.hasIcon }}"><span style="color:var(--color-accent-700);display:flex"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ b.icon }}"></path></svg></span></sc-if>{{ b.title }}</h2></sc-if>
+                    <sc-if value="{{ b.titleSec }}"><h2 style="display:flex;align-items:center;gap:8px;margin:0;font-family:var(--font-heading);font-weight:600;font-size:17px;line-height:1.2;color:var(--color-neutral-800)"><sc-if value="{{ b.hasIcon }}"><span style="color:var(--color-accent-700);display:flex"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ b.icon }}"></path></svg></span></sc-if>{{ b.title }}</h2></sc-if>
+
+                    <sc-if value="{{ b.is_p }}">
+                      <sc-if value="{{ b.plain }}"><p style="margin:0;font-size:15px;max-width:78ch;text-wrap:pretty">{{ b.t }}</p></sc-if>
+                      <sc-if value="{{ b.isMuted }}"><p style="margin:0;font-size:15px;color:var(--color-neutral-700)">{{ b.t }}</p></sc-if>
+                      <sc-if value="{{ b.isStrong }}"><p style="margin:0;font-size:17px;font-weight:600;max-width:78ch;text-wrap:pretty">{{ b.t }}</p></sc-if>
+                    </sc-if>
+
+                    <sc-if value="{{ b.is_facts }}">
+                      <div class="kt-group"><div class="kt-meta-row">
+                        <sc-for list="{{ b.items }}" as="it" hint-placeholder-count="2"><div><span class="kt-label">{{ it.l }}</span><sc-if value="{{ it.plain }}"><span style="font-size:15px;font-weight:600">{{ it.v }}</span></sc-if><sc-if value="{{ it.chip }}"><span><span class="kt-status {{ it.cls }}">{{ it.v }}</span></span></sc-if><sc-if value="{{ it.person }}"><span style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600"><span class="kt-sidebar-avatar">{{ it.ini }}</span>{{ it.v }}</span></sc-if></div></sc-for>
+                      </div></div>
+                    </sc-if>
+
+                    <sc-if value="{{ b.is_kv }}">
+                      <div style="display:grid;gap:10px">
+                        <sc-for list="{{ b.rows }}" as="r" hint-placeholder-count="3">
+                          <div style="display:grid;grid-template-columns:{{ b.cols }};gap:2px 24px;font-size:15px;padding-bottom:10px;border-bottom:1px solid var(--color-divider)">
+                            <div style="font-size:14px;font-weight:600;color:var(--color-neutral-700)">{{ r.l }}</div>
+                            <div style="text-wrap:pretty"><sc-if value="{{ r.plain }}">{{ r.v }}</sc-if><sc-if value="{{ r.chip }}"><span class="kt-status {{ r.cls }}">{{ r.v }}</span></sc-if><sc-if value="{{ r.person }}"><span style="display:inline-flex;align-items:center;gap:8px"><span class="kt-sidebar-avatar">{{ r.ini }}</span>{{ r.v }}</span></sc-if></div>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+
+                    <sc-if value="{{ b.is_table }}">
+                      <table class="table">
+                        <thead><tr><sc-for list="{{ b.ths }}" as="h" hint-placeholder-count="4"><th class="{{ h.td }}">{{ h.t }}</th></sc-for></tr></thead>
+                        <tbody>
+                          <sc-for list="{{ b.trs }}" as="r" hint-placeholder-count="2">
+                            <tr>
+                              <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="4">
+                                <td class="{{ c.td }}">
+                                  <sc-if value="{{ c.txt }}">{{ c.t }}</sc-if>
+                                  <sc-if value="{{ c.strong }}"><strong>{{ c.t }}</strong></sc-if><sc-if value="{{ c.person }}"><span style="display:inline-flex;align-items:center;gap:8px;white-space:nowrap"><span class="kt-sidebar-avatar">{{ c.ini }}</span>{{ c.t }}</span></sc-if>
+                                  <sc-if value="{{ c.chip }}"><span class="kt-status {{ c.cls }}">{{ c.t }}</span></sc-if>
+                                  <sc-if value="{{ c.btn }}"><button type="button" class="btn btn-secondary" style="padding:4px 10px;font-size:13px">{{ c.t }}</button></sc-if>
+                                  <sc-if value="{{ c.inp }}"><div class="input" style="padding:6px 10px">{{ c.t }}</div></sc-if>
+                                </td>
+                              </sc-for>
+                            </tr>
+                          </sc-for>
+                        </tbody>
+                      </table>
+                      <sc-if value="{{ b.hasCaption }}"><p style="margin:0;font-size:14px;color:var(--color-neutral-700)">{{ b.caption }}</p></sc-if>
+                    </sc-if>
+
+                    <sc-if value="{{ b.is_notice }}">
+                      <div class="kt-notice {{ b.cls }}">
+                        <sc-if value="{{ b.iWarn }}"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3l9 16H3z"></path><path d="M12 10v4M12 17h.01"></path></svg></sc-if>
+                        <sc-if value="{{ b.iCrit }}"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"></path></svg></sc-if>
+                        <sc-if value="{{ b.iInfo }}"><svg class="kt-notice-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"></circle><path d="M12 8h.01M11 12h1v5h1"></path></svg></sc-if>
+                        <div class="kt-notice-body"><strong>{{ b.t }}</strong><sc-if value="{{ b.hasD }}"><div style="margin-top:2px">{{ b.d }}</div></sc-if></div>
+                      </div>
+                    </sc-if>
+
+                    <sc-if value="{{ b.is_field }}">
+                      <div class="field" style="max-width:720px">
+                        <label style="display:flex;gap:4px">{{ b.label }}<sc-if value="{{ b.req }}"><span style="color:var(--status-critical)">*</span></sc-if></label>
+                        <sc-if value="{{ b.isInput }}"><input class="input" value="{{ b.value }}" placeholder="{{ b.ph }}" readOnly="{{ true }}"></sc-if>
+                        <sc-if value="{{ b.isArea }}"><textarea class="input" rows="{{ b.rows }}" value="{{ b.value }}" readOnly="{{ true }}"></textarea></sc-if>
+                        <sc-if value="{{ b.isSelect }}"><div class="input" style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span>{{ b.value }}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></sc-if>
+                        <sc-if value="{{ b.isFile }}"><div class="input" style="display:flex;align-items:center;gap:12px"><button type="button" class="btn btn-secondary" style="padding:4px 10px;font-size:13px">Choose file</button><span style="color:var(--color-neutral-700)">No file chosen</span></div></sc-if>
+                        <sc-if value="{{ b.hasHelp }}"><p style="margin:0;font-size:13px;color:var(--color-neutral-700)">{{ b.help }}</p></sc-if>
+                        <sc-if value="{{ b.hasErr }}"><p style="margin:0;font-size:14px;font-weight:600;color:var(--status-critical)">{{ b.err }}</p></sc-if>
+                        <sc-if value="{{ b.hasErrd }}"><p style="margin:0;font-size:13px;color:var(--color-neutral-800)">{{ b.errd }}</p></sc-if>
+                      </div>
+                    </sc-if>
+
+                    <sc-if value="{{ b.is_radios }}">
+                      <div class="field"><label>{{ b.label }}</label>
+                        <div style="display:grid;gap:6px">
+                          <sc-for list="{{ b.options }}" as="o" hint-placeholder-count="2"><label class="radio"><input type="radio" name="{{ b.name }}" checked="{{ o.on }}" readOnly="{{ true }}"><span class="dot"></span>{{ o.t }}</label></sc-for>
+                        </div>
+                      </div>
+                    </sc-if>
+
+                    <sc-if value="{{ b.is_seg }}">
+                      <div class="field"><label>{{ b.label }}</label>
+                        <div class="seg" role="radiogroup" style="width:max-content">
+                          <sc-for list="{{ b.options }}" as="o" hint-placeholder-count="3"><label class="seg-opt"><input type="radio" name="{{ b.name }}" checked="{{ o.on }}" readOnly="{{ true }}">{{ o.t }}</label></sc-for>
+                        </div>
+                      </div>
+                    </sc-if>
+
+                    <sc-if value="{{ b.is_check }}"><label class="kt-checkbox"><input type="checkbox" checked="{{ b.on }}" readOnly="{{ true }}"><span class="box"></span>{{ b.t }}</label></sc-if>
+
+                    <sc-if value="{{ b.is_attn }}">
+                      <div class="kt-group" style="display:flex;gap:12px;align-items:flex-start;border-left-color:var(--color-accent-300)">
+                        <sc-if value="{{ b.hasWho }}"><span class="kt-sidebar-avatar" style="margin-top:2px">{{ b.ini }}</span></sc-if>
+                        <div style="display:grid;gap:2px;min-width:0">
+                          <div style="font-size:16px;font-weight:600;text-wrap:pretty">{{ b.t }}</div>
+                          <sc-if value="{{ b.hasMeta }}"><div style="font-size:14px;color:var(--color-neutral-700)">{{ b.meta }}</div></sc-if>
+                        </div>
+                      </div>
+                    </sc-if>
+
+                    <sc-if value="{{ b.is_disc }}">
+                      <div class="kt-disclosure">
+                        <div class="kt-disclosure-head" onClick="{{ b.toggle }}" style="cursor:pointer">
+                          <div class="kt-disclosure-title-row"><span class="kt-disclosure-title">{{ b.t }}</span></div>
+                          <svg class="kt-disclosure-chevron {{ b.chev }}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg>
+                        </div>
+                        <sc-if value="{{ b.isOpen }}">
+                          <div class="kt-disclosure-body" style="display:grid;gap:6px">
+                            <sc-for list="{{ b.lineList }}" as="ln" hint-placeholder-count="1"><p style="margin:0;font-size:14px">{{ ln.t }}</p></sc-for>
+                            <sc-if value="{{ b.hasLinks }}"><div style="display:flex;gap:16px;flex-wrap:wrap;font-size:14px"><sc-for list="{{ b.linkList }}" as="l" hint-placeholder-count="1"><a href="#" onClick="{{ noop }}">{{ l }}</a></sc-for></div></sc-if>
+                          </div>
+                        </sc-if>
+                      </div>
+                    </sc-if>
+
+                    <sc-if value="{{ b.is_links }}">
+                      <div style="display:flex;gap:8px 20px;flex-wrap:wrap;font-size:14px"><sc-for list="{{ b.linkList }}" as="l" hint-placeholder-count="3"><a href="#" onClick="{{ noop }}">{{ l }}</a></sc-for></div>
+                    </sc-if>
+
+                    <sc-if value="{{ b.is_evid }}">
+                      <div style="display:flex;gap:12px 28px;flex-wrap:wrap">
+                        <sc-for list="{{ b.itemList }}" as="it" hint-placeholder-count="1"><div style="display:flex;align-items:center;gap:10px"><span style="width:32px;height:32px;display:grid;place-items:center;border:1px solid var(--color-divider);color:var(--color-accent-700)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8"></path></svg></span><span style="font-size:14px;font-weight:600">{{ it.t }}</span><button type="button" class="btn btn-secondary" style="padding:4px 10px;font-size:13px">{{ it.b }}</button></div></sc-for>
+                      </div>
+                    </sc-if>
+
+                    <sc-if value="{{ b.is_task }}">
+                      <div class="kt-task-row">
+                        <div style="width:40px;height:40px;flex:none;display:grid;place-items:center;background:var(--color-accent-100);color:var(--color-accent-700)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6v4H9z M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2 M9 14l2 2 4-4"></path></svg></div>
+                        <div style="flex:1;min-width:0;display:grid;gap:2px">
+                          <div style="font-family:var(--font-heading);font-size:20px;font-weight:600;line-height:1.15">{{ b.tt }}</div>
+                          <div style="font-size:13px;color:var(--color-neutral-700)">{{ b.ref }}</div>
+                          <div style="font-size:14px;color:var(--color-neutral-800)">{{ b.state }}</div>
+                        </div>
+                        <button type="button" class="btn btn-primary">{{ b.btn }}</button>
+                      </div>
+                    </sc-if>
+
+                    <sc-if value="{{ b.is_filter }}">
+                      <div class="kt-filter-bar">
+                        <sc-for list="{{ b.cellList }}" as="c" hint-placeholder-count="2">
+                          <div class="field {{ c.cls }}"><label>{{ c.l }}</label>
+                            <sc-if value="{{ c.inp }}"><input class="input" value="{{ c.v }}" placeholder="{{ c.ph }}" readOnly="{{ true }}"></sc-if>
+                            <sc-if value="{{ c.sel }}"><div class="input" style="display:flex;justify-content:space-between;align-items:center"><span>{{ c.v }}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div></sc-if>
+                          </div>
+                        </sc-for>
+                      </div>
+                    </sc-if>
+
+                    <sc-if value="{{ b.is_empty }}">
+                      <div class="kt-empty">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="{{ b.eicon }}"></path></svg>
+                        <p style="margin:0 0 12px;font-size:17px;font-weight:600">{{ b.t }}</p><sc-if value="{{ b.hasSub }}"><p style="margin:0 auto 12px;max-width:62ch;font-size:15px;text-wrap:pretty">{{ b.sub }}</p></sc-if>
+                        <sc-if value="{{ b.hasBtn }}"><button type="button" class="btn btn-secondary">{{ b.btn }}</button></sc-if>
+                      </div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+
+                <sc-if value="{{ cur.hasPri }}">
+                  <div class="kt-decision">
+                    <div style="display:flex;align-items:center;gap:var(--space-4);flex-wrap:wrap">
+                      <sc-if value="{{ cur.hasCons }}"><p style="margin:0;flex:1;min-width:240px;font-size:14px;color:var(--color-neutral-800);text-wrap:pretty">{{ cur.cons }}</p></sc-if>
+                      <div style="display:flex;gap:var(--space-3);margin-left:auto;flex-wrap:wrap;justify-content:flex-end">
+                        <sc-for list="{{ cur.sec }}" as="s" hint-placeholder-count="1"><button type="button" class="btn btn-secondary" disabled="{{ s.dis }}" style="display:inline-flex;align-items:center;gap:8px"><sc-if value="{{ s.hasIcon }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ s.icon }}"></path></svg></sc-if>{{ s.t }}</button></sc-for>
+                        <button type="button" class="btn btn-primary" disabled="{{ cur.pri.dis }}" style="display:inline-flex;align-items:center;gap:8px"><sc-if value="{{ cur.pri.hasIcon }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ cur.pri.icon }}"></path></svg></sc-if>{{ cur.pri.t }}</button>
+                      </div>
+                    </div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ cur.onlySec }}">
+                  <div style="display:flex;gap:var(--space-3);justify-content:flex-end;flex-wrap:wrap;padding-top:var(--space-4);border-top:1px solid var(--color-divider)">
+                    <sc-for list="{{ cur.sec }}" as="s" hint-placeholder-count="1"><button type="button" class="btn btn-secondary" disabled="{{ s.dis }}" style="display:inline-flex;align-items:center;gap:8px"><sc-if value="{{ s.hasIcon }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ s.icon }}"></path></svg></sc-if>{{ s.t }}</button></sc-for>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+
+          <sc-if value="{{ cur.hasDlg }}">
+            <div class="dialog-backdrop" style="position:absolute;inset:0;align-items:start;padding-top:180px">
+              <div class="dialog" role="dialog" aria-modal="true" style="width:520px;max-width:calc(100% - 32px)">
+                <div class="dialog-title">{{ cur.dlg.t }}</div>
+                <div class="dialog-body" style="display:grid;gap:14px">
+                  <sc-for list="{{ cur.dlg.blocks }}" as="b" hint-placeholder-count="1">
+                    <sc-if value="{{ b.is_kv }}"><div style="display:grid;gap:6px"><sc-for list="{{ b.rows }}" as="r" hint-placeholder-count="1"><div style="font-size:14px"><span style="font-weight:600;color:var(--color-neutral-700)">{{ r.l }}: </span>{{ r.v }}</div></sc-for></div></sc-if>
+                    <sc-if value="{{ b.is_field }}">
+                      <div class="field"><label style="display:flex;gap:4px">{{ b.label }}<sc-if value="{{ b.req }}"><span style="color:var(--status-critical)">*</span></sc-if></label>
+                        <sc-if value="{{ b.isArea }}"><textarea class="input" rows="{{ b.rows }}" value="{{ b.value }}" readOnly="{{ true }}"></textarea></sc-if>
+                        <sc-if value="{{ b.isInput }}"><input class="input" value="{{ b.value }}" readOnly="{{ true }}"></sc-if>
+                      </div>
+                    </sc-if>
+                  </sc-for>
+                  <sc-if value="{{ cur.dlg.hasCons }}"><p style="margin:0;font-size:14px;color:var(--color-neutral-800)">{{ cur.dlg.cons }}</p></sc-if>
+                </div>
+                <div class="dialog-actions">
+                  <sc-for list="{{ cur.dlg.sec }}" as="s" hint-placeholder-count="1"><button type="button" class="btn btn-secondary">{{ s.t }}</button></sc-for>
+                  <button type="button" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:8px"><sc-if value="{{ cur.dlg.pri.hasIcon }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="{{ cur.dlg.pri.icon }}"></path></svg></sc-if>{{ cur.dlg.pri.t }}</button>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { cur: null, q: '', fit: true, stageW: 1200, open: {}, n: 0 };
+  stageRef = React.createRef();
+
+  componentDidMount() {
+    try { const s = localStorage.getItem('evl-artboard'); if (s) this.setState({ cur: s }); } catch (e) {}
+    let last = -1, t = 0;
+    this.poll = setInterval(() => {
+      const n = (window.EVL && window.EVL.boards.length) || 0;
+      if (n !== last) { last = n; this.setState({ n }); }
+      if (++t > 60) clearInterval(this.poll);
+    }, 150);
+    this.onResize = () => this.setState({ stageW: window.innerWidth - 300 });
+    this.onResize();
+    window.addEventListener('resize', this.onResize);
+    this.onKey = (e) => {
+      const tg = (e.target && e.target.tagName) || '';
+      if (tg === 'INPUT' || tg === 'TEXTAREA') return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); this.step(1); }
+      if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); this.step(-1); }
+    };
+    window.addEventListener('keydown', this.onKey);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.poll);
+    window.removeEventListener('resize', this.onResize);
+    window.removeEventListener('keydown', this.onKey);
+  }
+
+  list() {
+    const E = window.EVL;
+    if (!E) return [];
+    const q = this.state.q.trim().toLowerCase();
+    const all = E.sorted();
+    if (!q) return all;
+    return all.filter(b => {
+      const who = (E.P[b.actor] || [''])[0];
+      return (b.id + ' ' + b.name + ' ' + who + ' ' + b.g).toLowerCase().indexOf(q) >= 0;
+    });
+  }
+
+  go(id) {
+    this.setState({ cur: id });
+    try { localStorage.setItem('evl-artboard', id); } catch (e) {}
+    const el = this.stageRef.current;
+    if (el) el.scrollTop = 0;
+  }
+
+  step(d) {
+    const l = this.list();
+    if (!l.length) return;
+    let i = l.findIndex(b => b.id === this.state.cur);
+    i = Math.max(0, Math.min(l.length - 1, (i < 0 ? 0 : i) + d));
+    this.go(l[i].id);
+  }
+
+  renderVals() {
+    const E = window.EVL;
+    const l = this.list();
+    const all = E ? E.boards : [];
+    let raw = all.find(b => b.id === this.state.cur) || l[0] || null;
+    const empty = { id: '—', name: 'Loading artboards…', meta: '', W: 1440, H: 1024, isDesk: true, crumb: [], tabs: [], tr: [], sec: [], pri: {}, nx: {}, dlg: { blocks: [], sec: [], pri: {} }, blocks: [] };
+    const cur = raw && E ? E.norm(raw) : empty;
+
+    const groups = [];
+    l.forEach(b => {
+      let g = groups.find(x => x.name === b.g);
+      if (!g) { g = { name: b.g, items: [] }; groups.push(g); }
+      const active = raw && b.id === raw.id;
+      const who = E ? (E.P[b.actor] || E.P.none)[0] : '';
+      g.items.push({
+        id: b.id, name: b.name, who: who + (b.at ? ' · ' + b.at : ''),
+        bg: active ? 'var(--color-accent-100)' : 'transparent',
+        bar: active ? 'var(--color-accent)' : 'transparent',
+        go: () => this.go(b.id)
+      });
+    });
+
+    const blocks = (cur.blocks || []).map((b, i) => {
+      if (!b.is_disc) return b;
+      const key = cur.id + ':' + i;
+      const isOpen = this.state.open[key] !== undefined ? this.state.open[key] : !!b.open;
+      return Object.assign({}, b, {
+        isOpen, chev: isOpen ? 'is-open' : '',
+        toggle: () => this.setState(s => ({ open: Object.assign({}, s.open, { [key]: !isOpen }) }))
+      });
+    });
+
+    const avail = Math.max(320, this.state.stageW - 56);
+    const zoom = this.state.fit ? Math.min(1, avail / cur.W) : 1;
+
+    return {
+      groups, cur, blocks, zoom,
+      q: this.state.q,
+      countLabel: all.length ? (l.length === all.length ? all.length + ' artboards' : l.length + ' of ' + all.length + ' artboards') : 'loading…',
+      h1: cur.isMobile ? 26 : 32,
+      shellPad: cur.isMobile ? '12px' : '28px',
+      fit: this.state.fit, actual: !this.state.fit,
+      setFit: () => this.setState({ fit: true }),
+      setActual: () => this.setState({ fit: false }),
+      onSearch: (e) => this.setState({ q: e.target.value }),
+      prev: () => this.step(-1),
+      next: () => this.step(1),
+      noop: (e) => { if (e && e.preventDefault) e.preventDefault(); },
+      stageRef: this.stageRef
+    };
+  }
+}
+</script>
+</body>
+</html>
