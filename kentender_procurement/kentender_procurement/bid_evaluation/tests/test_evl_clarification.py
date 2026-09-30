@@ -97,6 +97,34 @@ class TestOrdinaryClarification(ClarificationCase):
 			"EVL_REPLY_CLOSED")
 
 
+class TestSupplierPortal(ClarificationCase):
+	def test_the_portal_page_link_and_attachments(self):
+		import base64
+
+		from kentender_procurement.bid_evaluation import portal
+		from kentender_procurement.bid_submission import portal as bds_portal
+
+		request = self.evl_authorise()
+		self.assertEqual(portal.tender_links(tender_reference=self.reference, user=DAVID), [])  # nothing before it is sent
+		self.evl_send(request)
+		[link] = portal.tender_links(tender_reference=self.reference, user=DAVID)
+		self.assertEqual(link["href"], f"/tenders/{self.reference}/bid/evaluation-clarifications/{request}")
+		self.assertEqual(portal.tender_links(tender_reference=self.reference, user=PETER), [])  # another supplier sees nothing
+		page = bds_portal.resolve(path=link["href"], query={}, user=DAVID)
+		self.assertEqual((page["verdict"], page["payload"]["screen"]), ("OK", "evaluation-clarification"))
+		self.assertEqual(bds_portal.resolve(path=link["href"], query={}, user=PETER)["verdict"], "NOT_FOUND")
+		self.assertEqual(bds_portal.resolve(path=link["href"], query={}, user="Guest")["verdict"], "SIGN_IN")
+		pdf = {"filename": "address.pdf", "media_type": "application/pdf", "content_base64": base64.b64encode(b"%PDF-1.4 address").decode()}
+		with self.assertRaises(InputError) as ctx:
+			clarification.save_draft(tender=self.name, clarification=request, body="Draft", idempotency_key=key(), user=DAVID,
+				attachments=[{**pdf, "media_type": "application/zip"}])
+		self.assertIn("attachments", ctx.exception.fields)
+		clarification.save_draft(tender=self.name, clarification=request, body="Draft", attachments=[pdf], idempotency_key=key(), user=DAVID)
+		own = reads.own_clarification(tender_reference=self.reference, clarification=request, user=DAVID)
+		self.assertEqual(own["reply"]["attachments"], [{"filename": "address.pdf", "size": 16}])  # names and sizes only
+		self.assertEqual(own["organisation_name"], "Afya Digital Supplies Limited")
+
+
 class TestLateAndMissingReplies(ClarificationCase):
 	def test_a_late_reply_is_labelled_and_no_reply_is_disposed(self):
 		request = self.evl_authorise()

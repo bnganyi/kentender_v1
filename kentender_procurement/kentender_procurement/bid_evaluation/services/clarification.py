@@ -298,6 +298,32 @@ def _closed(request) -> None:
 		fail("EVL_REPLY_CLOSED", {"closure": request.closure_reason or request.status, "closed_at": cstr(request.closed_at)})
 
 
+ATTACHMENT_TYPES = ("application/pdf", "image/png", "image/jpeg")
+MAX_ATTACHMENTS = 3
+MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024
+
+
+def _attachments(attachments: list | None) -> list[dict[str, Any]]:
+	"""The supporting explanation files: request-bound, PDF or image, at most
+	three of 5 MB each (EVL-CHG-001 v0.4 §10 "Supporting explanation"). The
+	submitted bid itself never changes."""
+	import base64
+	import hashlib
+
+	out = []
+	for item in attachments or []:
+		content = base64.b64decode(cstr((item or {}).get("content_base64")) or "", validate=False)
+		media = cstr((item or {}).get("media_type"))
+		name = cstr((item or {}).get("filename")).strip()
+		if not name or media not in ATTACHMENT_TYPES or not content or len(content) > MAX_ATTACHMENT_BYTES:
+			invalid({"attachments": "Attach a PDF or image of 5 MB or less."})
+		out.append({"filename": name, "media_type": media, "size": len(content), "file_digest": hashlib.sha256(content).hexdigest(),
+			"content_base64": base64.b64encode(content).decode()})
+	if len(out) > MAX_ATTACHMENTS:
+		invalid({"attachments": f"Attach at most {MAX_ATTACHMENTS} files."})
+	return out
+
+
 def save_draft(*, tender: str, clarification: str, body: str, attachments: list | None = None, organisation: str = "", idempotency_key: str,
 		user: str) -> dict[str, Any]:
 	payload = {"clarification": clarification, "body": body, "attachments": attachments or []}
@@ -310,7 +336,7 @@ def save_draft(*, tender: str, clarification: str, body: str, attachments: list 
 		reply = _reply(request, org, user)
 		if reply.state == "Sent":
 			fail("EVL_REPLY_CLOSED", {"reason": "already_sent"})
-		reply.update({"body": cstr(body), "attachments_json": json.dumps(attachments or []), "saved_at": clock.now(), "author_user": user})
+		reply.update({"body": cstr(body), "attachments_json": json.dumps(_attachments(attachments)), "saved_at": clock.now(), "author_user": user})
 		reply.record_version = (reply.record_version or 0) + 1
 		records.save(reply) if not reply.is_new() else records.insert(reply)
 		return {"ok": True, "clarification": request.name, "state": "Draft", "saved_at": cstr(reply.saved_at)}
@@ -333,7 +359,7 @@ def submit_reply(*, tender: str, clarification: str, body: str, attachments: lis
 		invalid({"body": "Write your reply."} if not cstr(body).strip() else {})
 		received = clock.now()
 		late = received > get_datetime(request.reply_deadline)
-		reply.update({"body": cstr(body).strip(), "attachments_json": json.dumps(attachments or []), "saved_at": received, "received_at": received,
+		reply.update({"body": cstr(body).strip(), "attachments_json": json.dumps(_attachments(attachments)), "saved_at": received, "received_at": received,
 			"state": "Sent", "timeliness": "Received late" if late else "On time", "author_user": user})
 		reply.record_version = (reply.record_version or 0) + 1
 		records.save(reply) if not reply.is_new() else records.insert(reply)

@@ -108,7 +108,9 @@ STAGES = {
 	"member-left": ("joined", "D05-ABSENT, D05-ABSENT-CHAIR, D05-ABSENT-MEMBER"),
 	"notice-failed": ("noted", "D06-DELIVERY (the clarification notice failed)"),
 	"replacement": ("sent", "D06-WITHDRAW, D06-WITHDRAW-DLG (a replacement question authorised)"),
-	"no-reply": ("sent", "D06-NO-REPLY (the deadline passed with no reply)"),
+	"withdrawn": ("replacement", "D06-CLOSED (the supplier's draft on the withdrawn question stays private)"),
+	"no-reply": ("sent", "D06-NO-REPLY, D06-LATE (the deadline passed with no reply)"),
+	"no-reply-closed": ("no-reply", "D06-FINAL-CLOSED-NR (closed with no reply; the unsent draft stays private)"),
 	"late-reply": ("sent", "D06-LATE-REVIEW (a late reply)"),
 	"planned": ("resolved", "D08-DD (verification planned)"),
 	"observed": ("planned", "D08-DD-FREEZE"),
@@ -503,6 +505,8 @@ class _Branches:
 	def stage_replacement(self) -> None:
 		from kentender_procurement.bid_evaluation.services import clarification
 
+		self.at("2027-06-15 09:30:00")
+		_ok(clarification.save_draft(tender=self.tender, clarification=self._request(), body=REPLY, idempotency_key=_key(), user=SUPPLIER), "save a draft")
 		self._session("2027-06-15 09:40:00")
 		self.at("2027-06-15 09:45:00")
 		original = self._request()
@@ -512,7 +516,32 @@ class _Branches:
 			idempotency_key=_key(), user=CHAIR), "authorise a replacement")
 
 	def stage_no_reply(self) -> None:
+		from kentender_procurement.bid_evaluation.services import clarification
+
+		self.at("2027-06-15 12:00:00")
+		_ok(clarification.save_draft(tender=self.tender, clarification=self._request(), body=REPLY, idempotency_key=_key(), user=SUPPLIER), "save a draft")
 		self._session(AT["restart"])
+
+	def stage_no_reply_closed(self) -> None:
+		from kentender_procurement.bid_evaluation.services import clarification, discussion
+
+		self.at(AT["dispose"])
+		_ok(clarification.record_disposition(tender=self.tender, clarification=self._request(), disposition="No reply", result="Needs review",
+			reason="No reply was received; assess the original evidence.", idempotency_key=_key(), user=CHAIR), "dispose with no reply")
+		self.at(AT["end2"])
+		_ok(discussion.end_discussion(tender=self.tender, idempotency_key=_key(), user=CHAIR), "end")
+
+	def stage_withdrawn(self) -> None:
+		from kentender_procurement.bid_evaluation.services import clarification, discussion
+
+		first = frappe.db.get_value("Evaluation Clarification", {"evaluation_case": self.case(), "replaced_by": ("is", "set")}, "name")
+		_ok(discussion.end_discussion(tender=self.tender, idempotency_key=_key(), user=CHAIR), "end")
+		self.at("2027-06-15 09:46:00")
+		_ok(clarification.withdraw(tender=self.tender, clarification=first, reason="Clarify the document reference.", idempotency_key=_key(), user=SECRETARY),
+			"withdraw")
+		self.at("2027-06-15 09:50:00")
+		_ok(clarification.send(tender=self.tender, clarification=self._request(), idempotency_key=_key(), user=SECRETARY), "send the new question")
+		self.at("2027-06-15 09:55:00")
 
 	def stage_late_reply(self) -> None:
 		from kentender_procurement.bid_evaluation.services import clarification
@@ -782,7 +811,7 @@ CAPTURE_PATHS = (
 	("prepared", "appointed", "assigned", "declared", "reviewing", "concern", "discussion", "joined", "noted", "authorised", "sent", "replied", "outcome",
 		"resolved", "signing", "chair-signed", "report-sent", "awarded", "corrected"),
 	("conflict",), ("intake-first", "declare-first"), ("no-bids",), ("paused",), ("cancelled",), ("failed", "failed-report"), ("source-failed",),
-	("member-left",), ("notice-failed",), ("replacement",), ("no-reply",), ("late-reply",), ("planned", "observed", "dd-frozen", "dd-signed"),
+	("member-left",), ("notice-failed",), ("replacement", "withdrawn"), ("no-reply", "no-reply-closed"), ("late-reply",), ("planned", "observed", "dd-frozen", "dd-signed"),
 	("supplement",), ("no-agreement",), ("overdue", "expired"), ("delivery-failed",), ("resigning",), ("paused-sign",), ("cancelled-sign",), ("returned",),
 	("supplement-sent",), ("paused-prep",), ("cancelled-prep",), ("decision-unknown",),
 )
@@ -864,6 +893,12 @@ def capture(*, users: list[str] | None = None) -> dict[str, Any]:
 			"report_previous": attempt(reads.report_view, user=user, version=earlier[-1]["name"]) if earlier else None,
 			"record": attempt(reads.committee_record, user=user), "candidates": attempt(reads.candidates, user=user, purpose="secretary" if user == HOP else "committee"),
 			"work": reads.list_work(user=user)}
+	# the supplier's own requests, as the portal reads them
+	supplier = []
+	for request in frappe.get_all("Evaluation Clarification", filters={"evaluation_case": case, "status": ("!=", "Authorised")}, pluck="name",
+			order_by="creation asc") if case else []:
+		supplier.append(attempt(reads.own_clarification, clarification=request, user=SUPPLIER))
+	out["supplier"] = {"data": None, "own": supplier}
 	out = frappe.parse_json(frappe.as_json(out))
 	# a read identical to an earlier reader's is kept once: {"$same_as": that reader}
 	seen: dict[tuple[str, str], str] = {}

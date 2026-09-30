@@ -133,7 +133,10 @@ kt_tender_opening_portal = ["kentender_procurement.bid_opening.portal.resolve"]
 # BOP-CHG-001 v0.10 §9 — the Tender record links to its bid opening.
 kt_tender_record_links = ["kentender_procurement.bid_opening.desk_links.tender_record_links",
 	"kentender_procurement.bid_evaluation.desk_links.tender_record_links"]
-kt_tender_portal_links = ["kentender_procurement.bid_opening.portal.tender_links"]
+kt_tender_portal_links = ["kentender_procurement.bid_opening.portal.tender_links", "kentender_procurement.bid_evaluation.portal.tender_links"]
+# EVL-CHG-001 v0.4 plan D14 — Bid Evaluation answers
+# /tenders/{ref}/bid/evaluation-clarifications/{request} inside Bid Submission's portal.
+kt_tender_evaluation_portal = ["kentender_procurement.bid_evaluation.portal.resolve"]
 
 # BDS-CHG-001 v0.8 plan Phase 5 (TPR FU-25) — the Tender candidate registry is
 # Bid Submission's: a bidder arrangement, created only by Start bid, is the

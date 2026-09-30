@@ -47,6 +47,14 @@ def resolve(*, path: str, query: dict[str, Any], user: str) -> dict[str, Any]:
 		for path in frappe.get_hooks("kt_tender_opening_portal") or []:
 			return frappe.get_attr(path)(tender_reference=segments[1], user=user)
 		return {"verdict": "NOT_FOUND", "title": "Tender not found", "payload": {"screen": "tender-not-found"}}
+	if len(segments) == 5 and segments[0] == "tenders" and segments[2] == "bid" and segments[3] == "evaluation-clarifications":
+		# EVL-CHG-001 v0.4 plan D14 (tracker BDS8-B07): the evaluation committee's
+		# question to this organisation, answered by Bid Evaluation's own resolver.
+		if not user or user == "Guest":
+			return {"verdict": "SIGN_IN", "title": "Sign in"}
+		for path in frappe.get_hooks("kt_tender_evaluation_portal") or []:
+			return frappe.get_attr(path)(tender_reference=segments[1], clarification=segments[4], organisation=str(query.get("organisation") or ""), user=user)
+		return {"verdict": "NOT_FOUND", "title": "Not found", "payload": {"screen": "not-found"}}
 	if len(segments) == 3 and segments[0] == "tenders" and segments[2] == "bid":
 		# BDS-DES-06: the signed-in organisation's own bid for this Tender
 		if not user or user == "Guest":

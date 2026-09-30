@@ -18,11 +18,13 @@ import EvlBoard from "./board/EvlBoard.vue";
 import { build, dialogFor, record } from "./screens/index.js";
 import { peopleOf, staleBoard } from "./screens/common.js";
 import { workspaceBoard } from "./screens/workspace.js";
+import { supplierBoard } from "./portal/supplier.js";
 
 const FIXTURES = import.meta.glob("./fixtures/*.json", { eager: true, import: "default" });
 export const USERS = {
 	ao: "pw.tnd.ao@example.test", hop: "pw.req.hopf@example.test", secretary: "pw.tnd.officer@example.test", chair: "pw.evl.chair@example.test",
 	member: "pw.evl.member@example.test", member_2: "pw.evl.member2@example.test", auditor: "pw.req.auditor@example.test", admin: "Administrator",
+	supplier: "supplier",
 };
 
 export function world(stage, viewer) {
@@ -198,8 +200,32 @@ describe.each(WORKSPACE)("$board — $viewer's workspace on the $stage world", (
 	}, 30_000);
 });
 
+// The supplier's own request in the portal (390 px), from the supplier's captured reads.
+export const SUPPLIER = [
+	["D06-SUPPLIER", "sent"],
+	["D06-RECEIVED", "replied"],
+	["D06-LATE", "no-reply"],
+	["D06-LATE-RECEIVED", "late-reply"],
+	["D06-CLOSED", "withdrawn"],
+	["D06-FINAL-CLOSED", "resolved"],
+	["D06-FINAL-CLOSED-NR", "no-reply-closed"],
+].map(([board, stage]) => ({ board, stage }));
+
+describe.each(SUPPLIER)("$board — the supplier on the $stage world", (screen) => {
+	it("is built out of the board's own elements", async () => {
+		const own = world(screen.stage, "supplier").own[0];
+		const form = { body: own.reply && own.reply.state === "Draft" ? own.reply.body : "", attachments: [] };
+		const wrapper = mount(EvlBoard, { props: { board: supplierBoard(own, form), form }, attachTo: document.body });
+		await settle();
+		const result = compareSkeletons(bidEvaluationSkeleton(screen.board), skeletonOf(wrapper.element), { departures: DEPARTURES[screen.board] || [] });
+		const message = formatMismatch(`${screen.board} (${screen.stage}, supplier)`, result);
+		wrapper.unmount();
+		expect(message, message).toBe("");
+	}, 30_000);
+});
+
 describe("the COVERED claim", () => {
 	it("lists exactly the boards this spec compares", () => {
-		expect([...COVERED].sort()).toEqual([...SCREENS, ...WORKSPACE].map((s) => s.board).sort());
+		expect([...COVERED].sort()).toEqual([...SCREENS, ...WORKSPACE, ...SUPPLIER].map((s) => s.board).sort());
 	});
 });

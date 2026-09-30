@@ -158,7 +158,7 @@ export function preview(ctx) {
 	const rows = [];
 	(rec.clarifications || []).forEach((q) => {
 		rows.push(["Question", q.question], ["Sent", q.sent], ["Deadline", q.deadline]);
-		if (q.reply) rows.push(["Reply", `Received ${q.reply.received}${q.reply.timeliness === "Late" ? " (late)" : ""}`]);
+		if (q.reply) rows.push(["Reply", `Received ${q.reply.received}${q.reply.timeliness === "Received late" ? " (late)" : ""}`]);
 		if (q.status === "Closed") rows.push(["Committee outcome", `${q.closed} — ${q.disposition_reason}`]);
 	});
 	(rec.sessions || []).forEach((s) => rows.push(["Session", `${s.start}–${(s.end || "").split(", ")[1] || ""}, ${s.subject}. ${s.attendance.map((a) => `${a.name} ${(a.joined || "").split(", ")[1] || ""}`).join(", ")}`]));

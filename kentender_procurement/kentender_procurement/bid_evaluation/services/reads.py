@@ -391,11 +391,12 @@ def own_clarification(*, tender_reference: str, clarification: str, user: str, o
 	replacement = frappe.db.get_value(clar.REQUEST, {"replaces": request.name}, ["name", "question", "reply_deadline", "sent_at", "status"], as_dict=True)
 	doc = frappe.get_doc(records.CASE, request.evaluation_case)
 	return {
-		"tender": doc.tender_reference, "title": doc.tender_title, "organisation": org, "clarification": request.name, "question": request.question,
+		"tender": doc.tender_reference, "title": doc.tender_title, "organisation": org,
+		"organisation_name": frappe.db.get_value("Evaluation Bid", request.evaluation_bid, "tenderer_name"), "clarification": request.name, "question": request.question,
 		"reply_scope": request.reply_scope, "reply_deadline": next_steps.when(request.reply_deadline), "sent": next_steps.when(request.sent_at),
 		"status": request.status, "closed": next_steps.when(request.closed_at), "closure_reason": cstr(request.closure_reason),
 		"withdrawal_reason": cstr(request.withdrawal_reason) if request.status == "Withdrawn" else "", "overdue": clar.overdue(request),
-		"reply": {"state": reply.state, "body": reply.body, "attachments": json.loads(reply.attachments_json or "[]"), "received": next_steps.when(reply.received_at),
+		"reply": {"state": reply.state, "body": reply.body, "attachments": [{"filename": f.get("filename"), "size": f.get("size")} for f in json.loads(reply.attachments_json or "[]")], "received": next_steps.when(reply.received_at),
 			"timeliness": reply.timeliness} if reply else None,
 		"replacement": {"clarification": replacement.name, "question": replacement.question, "reply_deadline": next_steps.when(replacement.reply_deadline),
 			"sent": next_steps.when(replacement.sent_at)} if replacement and replacement.status != "Authorised" else None,

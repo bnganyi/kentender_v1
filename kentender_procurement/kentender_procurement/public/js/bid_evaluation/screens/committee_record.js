@@ -20,7 +20,7 @@ export function committeeRecord(ctx) {
 	}
 	(rec.clarifications || []).forEach((c) => {
 		const rows = [["Question", c.question], ["Sent", c.sent], ["Reply deadline", c.deadline]];
-		if (c.reply) rows.push(["Reply", `Received ${c.reply.received}${c.reply.timeliness === "Late" ? " (late)" : ""}`]);
+		if (c.reply) rows.push(["Reply", `Received ${c.reply.received}${c.reply.timeliness === "Received late" ? " (late)" : ""}`]);
 		if (c.status === "Closed") rows.push(["Committee outcome", `${c.closed} — ${c.disposition_reason}`]);
 		if (c.status === "Withdrawn") rows.push(["Withdrawn", c.withdrawal_reason]);
 		blocks.push(kv(rows, { title: "Clarification", sec: true }));

@@ -40,9 +40,8 @@ export const DEPARTURES = {
 //     budget reservation in the browser world (tender 036 and funding worlds).
 //   D07-EXPIRED-SIGN, D07-EXPIRED-SENT — need the expired world signed.
 //   D08-RULE — needs a rules file without the storage rule.
-//   D06-SUPPLIER, D06-RECEIVED, D06-LATE, D06-LATE-RECEIVED, D06-CLOSED,
-//     D06-FINAL-CLOSED, D06-FINAL-CLOSED-NR — the supplier portal (Phase 12).
 export const COVERED = [
+	"D06-SUPPLIER", "D06-RECEIVED", "D06-LATE", "D06-LATE-RECEIVED", "D06-CLOSED", "D06-FINAL-CLOSED", "D06-FINAL-CLOSED-NR",
 	"D02-A",
 	"D02-S",
 	"D02-D",

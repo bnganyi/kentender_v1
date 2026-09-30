@@ -10,7 +10,7 @@
 	<div class="kt-page evl-board" :class="{ 'is-mobile': m.isMobile }" data-testid="evl-board" :style="m.isMobile ? 'padding:16px' : ''">
 		<a v-if="m.hasBack" href="#" style="font-size:14px" data-testid="evl-back" @click.prevent="emit('action', { action: m.backAction || 'back' })">← {{ m.back }}</a>
 		<div v-if="m.hasHead" class="kt-page-head" style="justify-content:flex-start;align-items:center;gap:16px">
-			<div style="width:48px;height:48px;flex:none;display:grid;place-items:center;background:var(--color-accent-100);color:var(--color-accent-700)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path :d="m.icon"></path></svg></div>
+			<div style="width:48px;height:48px;flex:none;display:grid;place-items:center;background:var(--kt-color-accent-100);color:var(--kt-color-accent-700)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path :d="m.icon"></path></svg></div>
 			<div style="display:grid;gap:6px;min-width:0"><h1 class="kt-page-title" data-testid="evl-title">{{ m.title }}</h1><p v-if="m.hasDesc" class="kt-page-desc" style="margin:0" data-testid="evl-desc">{{ m.desc }}</p></div>
 		</div>
 		<div v-if="m.hasTabs" class="kt-tabs" role="tablist">
@@ -18,15 +18,19 @@
 		</div>
 
 		<EvlGuidance v-if="board.guidance" :answer="board.guidance.answer" :journey="board.guidance.journey" :pending="pending" @fix="emit('action', { action: 'fix', args: $event })" />
-		<p v-if="m.hasNotInvolved" style="margin:0;font-size:14px;color:var(--color-neutral-800)">{{ m.notInvolved }}</p>
+		<!-- a board's own next step where no shared guidance region is loaded (the supplier portal) -->
+		<div v-else-if="m.nxTurn || m.nxWait || m.nxDone" class="kt-next-step" :class="m.nxTurn ? 'is-turn' : m.nxWait ? 'is-waiting' : 'is-done'" data-kt="next-step" data-testid="evl-next-step">
+			<div class="kt-next-step-label">{{ m.nxLabel }}</div><p class="kt-next-step-headline" data-testid="evl-next-step-headline">{{ m.nx.h }}</p><p v-if="m.hasNxS" class="kt-next-step-sentence">{{ m.nx.s }}</p>
+		</div>
+		<p v-if="m.hasNotInvolved" style="margin:0;font-size:14px;color:var(--kt-color-neutral-800)">{{ m.notInvolved }}</p>
 
 		<div v-for="(b, bi) in m.blocks" :key="bi" :id="b.anchor ? `evl-${slug(b.anchor)}` : undefined" style="display:grid;gap:10px;min-width:0" :data-testid="b.testid || `evl-block-${bi}`">
-			<h2 v-if="b.titleMain" style="display:flex;align-items:center;gap:8px;margin:0;font-family:var(--font-heading);font-weight:600;font-size:21px;line-height:1.2"><span v-if="b.hasIcon" style="color:var(--color-accent-700);display:flex"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path :d="b.icon"></path></svg></span>{{ b.title }}</h2>
-			<h2 v-if="b.titleSec" style="display:flex;align-items:center;gap:8px;margin:0;font-family:var(--font-heading);font-weight:600;font-size:17px;line-height:1.2;color:var(--color-neutral-800)"><span v-if="b.hasIcon" style="color:var(--color-accent-700);display:flex"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path :d="b.icon"></path></svg></span>{{ b.title }}</h2>
+			<h2 v-if="b.titleMain" style="display:flex;align-items:center;gap:8px;margin:0;font-family:var(--kt-font-heading);font-weight:600;font-size:21px;line-height:1.2"><span v-if="b.hasIcon" style="color:var(--kt-color-accent-700);display:flex"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path :d="b.icon"></path></svg></span>{{ b.title }}</h2>
+			<h2 v-if="b.titleSec" style="display:flex;align-items:center;gap:8px;margin:0;font-family:var(--kt-font-heading);font-weight:600;font-size:17px;line-height:1.2;color:var(--kt-color-neutral-800)"><span v-if="b.hasIcon" style="color:var(--kt-color-accent-700);display:flex"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path :d="b.icon"></path></svg></span>{{ b.title }}</h2>
 
 			<template v-if="b.is_p">
 				<p v-if="b.plain" style="margin:0;font-size:15px;max-width:78ch;text-wrap:pretty">{{ b.t }}</p>
-				<p v-if="b.isMuted" style="margin:0;font-size:15px;color:var(--color-neutral-700)">{{ b.t }}</p>
+				<p v-if="b.isMuted" style="margin:0;font-size:15px;color:var(--kt-color-neutral-700)">{{ b.t }}</p>
 				<p v-if="b.isStrong" style="margin:0;font-size:17px;font-weight:600;max-width:78ch;text-wrap:pretty">{{ b.t }}</p>
 			</template>
 
@@ -35,8 +39,8 @@
 			</div></div>
 
 			<div v-if="b.is_kv" style="display:grid;gap:10px">
-				<div v-for="r in b.rowList" :key="r.l" :style="`display:grid;grid-template-columns:${b.cols};gap:2px 24px;font-size:15px;padding-bottom:10px;border-bottom:1px solid var(--color-divider)`">
-					<div style="font-size:14px;font-weight:600;color:var(--color-neutral-700)">{{ r.l }}</div>
+				<div v-for="r in b.rowList" :key="r.l" :style="`display:grid;grid-template-columns:${b.cols};gap:2px 24px;font-size:15px;padding-bottom:10px;border-bottom:1px solid var(--kt-color-divider)`">
+					<div style="font-size:14px;font-weight:600;color:var(--kt-color-neutral-700)">{{ r.l }}</div>
 					<div style="text-wrap:pretty"><template v-if="r.plain">{{ r.v }}</template><span v-if="r.chip" class="kt-status" :class="r.cls">{{ r.v }}</span><span v-if="r.person" style="display:inline-flex;align-items:center;gap:8px"><span class="kt-sidebar-avatar">{{ r.ini }}</span>{{ r.v }}</span></div>
 				</div>
 			</div>
@@ -54,12 +58,12 @@
 								<div v-if="c.inp" class="kt-input" style="padding:6px 10px">{{ c.t }}</div>
 								<select v-if="c.sel" class="kt-input" style="padding:6px 10px" :value="form[c.name] ?? ''" :data-testid="c.testid || undefined" @change="set(c.name, $event.target.value)"><option v-for="o in c.options" :key="o.value" :value="o.value">{{ o.label }}</option></select>
 								<input v-if="c.field" class="kt-input" style="padding:6px 10px" :value="form[c.name] ?? ''" :data-testid="c.testid || undefined" @input="set(c.name, $event.target.value)">
-								<p v-if="c.err" style="margin:4px 0 0;font-size:13px;font-weight:600;color:var(--status-critical)">{{ c.err }}</p>
+								<p v-if="c.err" style="margin:4px 0 0;font-size:13px;font-weight:600;color:var(--kt-status-critical)">{{ c.err }}</p>
 							</td>
 						</tr>
 					</tbody>
 				</table>
-				<p v-if="b.hasCaption" style="margin:0;font-size:14px;color:var(--color-neutral-700)">{{ b.caption }}</p>
+				<p v-if="b.hasCaption" style="margin:0;font-size:14px;color:var(--kt-color-neutral-700)">{{ b.caption }}</p>
 			</template>
 
 			<div v-if="b.is_notice" class="kt-notice" :class="b.cls">
@@ -70,15 +74,15 @@
 			</div>
 
 			<div v-if="b.is_field" class="kt-field" style="max-width:720px">
-				<label style="display:flex;gap:4px" :for="`evl-${b.name}`">{{ b.label }}<span v-if="b.req" style="color:var(--status-critical)">*</span></label>
+				<label style="display:flex;gap:4px" :for="`evl-${b.name}`">{{ b.label }}<span v-if="b.req" style="color:var(--kt-status-critical)">*</span></label>
 				<input v-if="b.isInput" :id="`evl-${b.name}`" class="kt-input" :type="b.type || 'text'" :placeholder="b.ph || ''" :readonly="!b.name" :value="valueOf(b)" :data-testid="`evl-field-${b.name || bi}`" @input="set(b.name, $event.target.value)">
 				<textarea v-if="b.isArea" :id="`evl-${b.name}`" class="kt-input" :rows="b.rowsN" :readonly="!b.name" :value="valueOf(b)" :data-testid="`evl-field-${b.name || bi}`" @input="set(b.name, $event.target.value)"></textarea>
 				<div v-if="b.isSelect && !b.options" class="kt-input" style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span>{{ b.value }}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"></path></svg></div>
 				<select v-if="b.isSelect && b.options" :id="`evl-${b.name}`" class="kt-input" :value="valueOf(b)" :data-testid="`evl-field-${b.name}`" @change="set(b.name, $event.target.value)"><option v-for="o in b.options" :key="o.value" :value="o.value">{{ o.label }}</option></select>
-				<div v-if="b.isFile" class="kt-input" style="display:flex;align-items:center;gap:12px"><button type="button" class="kt-btn kt-btn-secondary" style="padding:4px 10px;font-size:13px" @click="emit('action', { action: b.action || 'choose-file', args: { name: b.name } })">Choose file</button><span style="color:var(--color-neutral-700)">{{ b.fileName || "No file chosen" }}</span></div>
-				<p v-if="b.hasHelp" style="margin:0;font-size:13px;color:var(--color-neutral-700)">{{ b.help }}</p>
-				<p v-if="b.hasErr || fieldError(b)" style="margin:0;font-size:14px;font-weight:600;color:var(--status-critical)" :data-testid="`evl-error-${b.name}`">{{ fieldError(b) || b.err }}</p>
-				<p v-if="b.hasErrd" style="margin:0;font-size:13px;color:var(--color-neutral-800)">{{ b.errd }}</p>
+				<div v-if="b.isFile" class="kt-input" style="display:flex;align-items:center;gap:12px"><button type="button" class="kt-btn kt-btn-secondary" style="padding:4px 10px;font-size:13px" @click="emit('action', { action: b.action || 'choose-file', args: { name: b.name } })">Choose file</button><span style="color:var(--kt-color-neutral-700)" :data-testid="`evl-file-${b.name}`">{{ b.fileName || "No file chosen" }}</span></div>
+				<p v-if="b.hasHelp" style="margin:0;font-size:13px;color:var(--kt-color-neutral-700)">{{ b.help }}</p>
+				<p v-if="b.hasErr || fieldError(b)" style="margin:0;font-size:14px;font-weight:600;color:var(--kt-status-critical)" :data-testid="`evl-error-${b.name}`">{{ fieldError(b) || b.err }}</p>
+				<p v-if="b.hasErrd" style="margin:0;font-size:13px;color:var(--kt-color-neutral-800)">{{ b.errd }}</p>
 			</div>
 
 			<div v-if="b.is_radios" class="kt-field"><label>{{ b.label }}</label>
@@ -95,11 +99,11 @@
 
 			<label v-if="b.is_check" class="kt-checkbox"><input type="checkbox" :checked="b.name ? !!form[b.name] : b.on" :data-testid="`evl-check-${b.name || bi}`" @change="set(b.name, $event.target.checked)"><span class="box"></span>{{ b.t }}</label>
 
-			<div v-if="b.is_attn" class="kt-group" style="display:flex;gap:12px;align-items:flex-start;border-left-color:var(--color-accent-300)">
+			<div v-if="b.is_attn" class="kt-group" style="display:flex;gap:12px;align-items:flex-start;border-left-color:var(--kt-color-accent-300)">
 				<span v-if="b.hasWho" class="kt-sidebar-avatar" style="margin-top:2px">{{ b.ini }}</span>
 				<div style="display:grid;gap:2px;min-width:0">
 					<div style="font-size:16px;font-weight:600;text-wrap:pretty">{{ b.t }}</div>
-					<div v-if="b.hasMeta" style="font-size:14px;color:var(--color-neutral-700)">{{ b.meta }}</div>
+					<div v-if="b.hasMeta" style="font-size:14px;color:var(--kt-color-neutral-700)">{{ b.meta }}</div>
 				</div>
 			</div>
 
@@ -117,15 +121,15 @@
 			<div v-if="b.is_links" style="display:flex;gap:8px 20px;flex-wrap:wrap;font-size:14px"><a v-for="l in b.linkList" :key="l.t" href="#" :data-testid="`evl-link-${slug(l.t)}`" @click.prevent="emit('action', { action: l.action, args: l.args })">{{ l.t }}</a></div>
 
 			<div v-if="b.is_evid" style="display:flex;gap:12px 28px;flex-wrap:wrap">
-				<div v-for="(it, ii) in b.itemList" :key="ii" style="display:flex;align-items:center;gap:10px"><span style="width:32px;height:32px;display:grid;place-items:center;border:1px solid var(--color-divider);color:var(--color-accent-700)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8"></path></svg></span><span style="font-size:14px;font-weight:600">{{ it.t }}</span><button type="button" class="kt-btn kt-btn-secondary" style="padding:4px 10px;font-size:13px" @click="emit('action', { action: it.action, args: it.args })">{{ it.b }}</button></div>
+				<div v-for="(it, ii) in b.itemList" :key="ii" style="display:flex;align-items:center;gap:10px"><span style="width:32px;height:32px;display:grid;place-items:center;border:1px solid var(--kt-color-divider);color:var(--kt-color-accent-700)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8"></path></svg></span><span style="font-size:14px;font-weight:600">{{ it.t }}</span><button type="button" class="kt-btn kt-btn-secondary" style="padding:4px 10px;font-size:13px" @click="emit('action', { action: it.action, args: it.args })">{{ it.b }}</button></div>
 			</div>
 
 			<div v-if="b.is_task" class="kt-task-row" :data-testid="`evl-task-${bi}`">
-				<div style="width:40px;height:40px;flex:none;display:grid;place-items:center;background:var(--color-accent-100);color:var(--color-accent-700)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6v4H9z M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2 M9 14l2 2 4-4"></path></svg></div>
+				<div style="width:40px;height:40px;flex:none;display:grid;place-items:center;background:var(--kt-color-accent-100);color:var(--kt-color-accent-700)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2h6v4H9z M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2 M9 14l2 2 4-4"></path></svg></div>
 				<div style="flex:1;min-width:0;display:grid;gap:2px">
-					<div style="font-family:var(--font-heading);font-size:20px;font-weight:600;line-height:1.15">{{ b.tt }}</div>
-					<div style="font-size:13px;color:var(--color-neutral-700)">{{ b.ref }}</div>
-					<div style="font-size:14px;color:var(--color-neutral-800)">{{ b.state }}</div>
+					<div style="font-family:var(--kt-font-heading);font-size:20px;font-weight:600;line-height:1.15">{{ b.tt }}</div>
+					<div style="font-size:13px;color:var(--kt-color-neutral-700)">{{ b.ref }}</div>
+					<div style="font-size:14px;color:var(--kt-color-neutral-800)">{{ b.state }}</div>
 				</div>
 				<button type="button" class="kt-btn kt-btn-primary" @click="emit('action', { action: b.button.action, args: b.button.args })">{{ b.button.t }}</button>
 			</div>
@@ -147,15 +151,15 @@
 		<div v-if="error" class="kt-notice is-critical" data-testid="evl-error" role="alert"><div class="kt-notice-body"><strong>{{ error }}</strong><div v-for="(r, ri) in reasons" :key="ri" style="margin-top:2px">{{ r }}</div></div></div>
 
 		<div v-if="m.hasPri" class="kt-decision" data-testid="evl-actions">
-			<div style="display:flex;align-items:center;gap:var(--space-4);flex-wrap:wrap">
-				<p v-if="m.hasCons" style="margin:0;flex:1;min-width:240px;font-size:14px;color:var(--color-neutral-800);text-wrap:pretty">{{ m.cons }}</p>
-				<div style="display:flex;gap:var(--space-3);margin-left:auto;flex-wrap:wrap;justify-content:flex-end">
+			<div style="display:flex;align-items:center;gap:var(--kt-space-4);flex-wrap:wrap">
+				<p v-if="m.hasCons" style="margin:0;flex:1;min-width:240px;font-size:14px;color:var(--kt-color-neutral-800);text-wrap:pretty">{{ m.cons }}</p>
+				<div style="display:flex;gap:var(--kt-space-3);margin-left:auto;flex-wrap:wrap;justify-content:flex-end">
 					<button v-for="s in m.sec" :key="s.t" type="button" class="kt-btn kt-btn-secondary" :disabled="s.dis || pending" style="display:inline-flex;align-items:center;gap:8px" :data-testid="`evl-action-${slug(s.t)}`" @click="emit('action', { action: s.action, args: s.args })"><svg v-if="s.hasIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path :d="s.icon"></path></svg>{{ s.t }}</button>
 					<button type="button" class="kt-btn kt-btn-primary" :disabled="m.pri.dis || pending" style="display:inline-flex;align-items:center;gap:8px" :data-testid="`evl-action-${slug(m.pri.t)}`" @click="emit('action', { action: m.pri.action, args: m.pri.args })"><svg v-if="m.pri.hasIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path :d="m.pri.icon"></path></svg>{{ m.pri.t }}</button>
 				</div>
 			</div>
 		</div>
-		<div v-if="m.onlySec" style="display:flex;gap:var(--space-3);justify-content:flex-end;flex-wrap:wrap;padding-top:var(--space-4);border-top:1px solid var(--color-divider)" data-testid="evl-actions">
+		<div v-if="m.onlySec" style="display:flex;gap:var(--kt-space-3);justify-content:flex-end;flex-wrap:wrap;padding-top:var(--kt-space-4);border-top:1px solid var(--kt-color-divider)" data-testid="evl-actions">
 			<button v-for="s in m.sec" :key="s.t" type="button" class="kt-btn kt-btn-secondary" :disabled="s.dis || pending" style="display:inline-flex;align-items:center;gap:8px" :data-testid="`evl-action-${slug(s.t)}`" @click="emit('action', { action: s.action, args: s.args })"><svg v-if="s.hasIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path :d="s.icon"></path></svg>{{ s.t }}</button>
 		</div>
 
@@ -164,14 +168,14 @@
 				<div class="kt-dialog-title">{{ m.dlg.t }}</div>
 				<div class="dialog-body" style="display:grid;gap:14px">
 					<template v-for="(b, di) in m.dlg.blocks" :key="di">
-						<div v-if="b.is_kv" style="display:grid;gap:6px"><div v-for="r in b.rowList" :key="r.l" style="font-size:14px"><span style="font-weight:600;color:var(--color-neutral-700)">{{ r.l }}: </span>{{ r.v }}</div></div>
-						<div v-if="b.is_field" class="kt-field"><label style="display:flex;gap:4px" :for="`evl-dlg-${b.name}`">{{ b.label }}<span v-if="b.req" style="color:var(--status-critical)">*</span></label>
+						<div v-if="b.is_kv" style="display:grid;gap:6px"><div v-for="r in b.rowList" :key="r.l" style="font-size:14px"><span style="font-weight:600;color:var(--kt-color-neutral-700)">{{ r.l }}: </span>{{ r.v }}</div></div>
+						<div v-if="b.is_field" class="kt-field"><label style="display:flex;gap:4px" :for="`evl-dlg-${b.name}`">{{ b.label }}<span v-if="b.req" style="color:var(--kt-status-critical)">*</span></label>
 							<textarea v-if="b.isArea" :id="`evl-dlg-${b.name}`" class="kt-input" :rows="b.rowsN" :value="valueOf(b)" :data-testid="`evl-dialog-field-${b.name}`" @input="set(b.name, $event.target.value)"></textarea>
 							<input v-if="b.isInput" :id="`evl-dlg-${b.name}`" class="kt-input" :value="valueOf(b)" :data-testid="`evl-dialog-field-${b.name}`" @input="set(b.name, $event.target.value)">
-							<p v-if="fieldError(b)" style="margin:0;font-size:14px;font-weight:600;color:var(--status-critical)">{{ fieldError(b) }}</p>
+							<p v-if="fieldError(b)" style="margin:0;font-size:14px;font-weight:600;color:var(--kt-status-critical)">{{ fieldError(b) }}</p>
 						</div>
 					</template>
-					<p v-if="m.dlg.hasCons" style="margin:0;font-size:14px;color:var(--color-neutral-800)">{{ m.dlg.cons }}</p>
+					<p v-if="m.dlg.hasCons" style="margin:0;font-size:14px;color:var(--kt-color-neutral-800)">{{ m.dlg.cons }}</p>
 				</div>
 				<div class="kt-dialog-actions">
 					<button v-for="s in m.dlg.sec" :key="s.t" type="button" class="kt-btn kt-btn-secondary" :data-testid="`evl-dialog-${slug(s.t)}`" @click="emit('action', { action: s.action || 'close-dialog', args: s.args })">{{ s.t }}</button>

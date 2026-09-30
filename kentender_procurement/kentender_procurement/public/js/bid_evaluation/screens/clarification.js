@@ -35,7 +35,7 @@ export function clarification(ctx) {
 	}
 	const blocks = [requestKv(c)];
 	if (c.sent) blocks.push(f(["Sent", c.sent], ["Notice", c.notice_state || "Pending"]));
-	if (c.reply) blocks.push(kv([["Reply", c.reply.body], ["Received", c.reply.timeliness === "Late" ? `Received late, ${c.reply.received}` : c.reply.received]], { title: "Supplier reply", sec: true }));
+	if (c.reply) blocks.push(kv([["Reply", c.reply.body], ["Received", c.reply.timeliness === "Received late" ? `Received late, ${c.reply.received}` : c.reply.received]], { title: "Supplier reply", sec: true }));
 	if (c.status === "Closed") blocks.push(f(["Outcome", `${c.disposition}${c.disposition_result ? ` · ${c.disposition_result}` : ""}`], ["Closed", c.closed]));
 	if (c.status === "Withdrawn") blocks.push(f(["Withdrawn", c.withdrawal_reason || ""]));
 	return { ...base, guidance: guidance(data), blocks, sec: [nav("Back to evaluation", [])] };

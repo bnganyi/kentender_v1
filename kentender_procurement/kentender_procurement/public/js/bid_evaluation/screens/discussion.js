@@ -127,7 +127,7 @@ function chairDecision(ctx, { base, att, subject, evd, decision }) {
 		// and its result is recorded; D06-LATE-REVIEW / D06-CHANGED-OFFER: a late
 		// reply, or a reply that changes the offer, gets its disposition instead.
 		const c = replyToDispose(data);
-		const late = !!(c.reply && c.reply.timeliness === "Late");
+		const late = !!(c.reply && c.reply.timeliness === "Received late");
 		const excluded = form.disposition === "Excluded change";
 		const title = `${subject.requirement ? subject.requirement.label : "Requirement"} clarification`;
 		const reason = fi("Reason", "", { area: true, req: true, rows: 2, name: "reason" });
