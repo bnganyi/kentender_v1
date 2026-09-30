@@ -172,6 +172,14 @@ ACTORS = (
 	# operator who holds Bid Submission's production-submission release; no
 	# bid content, no supplier business action. Not Beatrice Kamau.
 	("nadia.kamau", "Nadia Kamau"),
+	# EVL-CHG-001 v0.4 §3, §11.1 (plan D17; KT-STD-001 v1.13 registration owed,
+	# FU-EVL-07) — the evaluation committee (Grace Wambui chairs; Peter Mugo and
+	# Ruth Achieng are members) and the evaluation's technical support holder.
+	# Grace Wambui is not Grace Wanjiku (the Departmental Author).
+	("grace.wambui", "Grace Wambui"),
+	("peter.mugo", "Peter Mugo"),
+	("ruth.achieng", "Ruth Achieng"),
+	("esther.njeri", "Esther Njeri"),
 )
 
 # KT-STD-001 §3A.6 — register actors who read as technical readers
@@ -253,6 +261,16 @@ ASSIGNMENTS = (
 	# KT-STD-001 v1.12 §8.3 — Site-wide Release Operator (Bid Submission's
 	# production-submission gate).
 	("nadia.kamau", "Release Operator", None, {}),
+	# EVL-CHG-001 v0.4 plan D17 — committee membership is an appointment, never a
+	# responsibility, but a member must hold an active KenTender responsibility
+	# (§3). The least-powerful one each: Departmental Author in their own units
+	# (no ICT or Finance unit exists; the appointment records the department).
+	# Owner confirmation owed (FU-EVL-07). Esther Njeri holds Technical Operator:
+	# the evaluation support issues' holder, beside Daniel Otieno.
+	("grace.wambui", "Departmental Author", "Human Resources Management and Development", {}),
+	("peter.mugo", "Departmental Author", "Digital Health", {}),
+	("ruth.achieng", "Departmental Author", "Directorate of Digital Health and Policy", {}),
+	("esther.njeri", "Technical Operator", None, {}),
 	(
 		"samuel.otieno",
 		"Head of User Department",

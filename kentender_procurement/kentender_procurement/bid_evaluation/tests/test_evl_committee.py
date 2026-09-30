@@ -96,6 +96,25 @@ class TestAppointment(CommitteeCase):
 		self.assertEqual(by_person, {INDEPENDENT: "opening_independent", NOBODY: "not_internal"})
 		self.assertFalse(roster.current_appointment(self.evaluation))  # no partial roster
 
+	def test_a_department_scoped_person_can_serve(self):
+		"""Most staff hold a responsibility only inside their department; that is
+		an active KenTender responsibility for committee eligibility (§3)."""
+		from kentender_core.services import responsibility_administration as administration
+
+		from kentender_procurement.bid_evaluation.services import people
+
+		unit = frappe.db.get_value("Organisation Unit", {}, "name")
+		email = "evlt.departmental@example.test"
+		if not frappe.db.exists("User", email):
+			frappe.get_doc({"doctype": "User", "email": email, "first_name": "Test Departmental Member", "send_welcome_email": 0, "enabled": 1,
+				"user_type": "System User"}).insert(ignore_permissions=True)
+			frappe.get_doc("User", email).add_roles("Desk User")
+		self.addCleanup(lambda: (frappe.db.delete("User Responsibility Assignment", {"user": email}), frappe.delete_doc("User", email, force=True,
+			ignore_permissions=True), frappe.db.commit()))
+		administration.grant(user=email, business_role="Departmental Author", organisation_unit=unit, fixture_namespace="EVL_TEST", actor="Administrator")
+		self.assertEqual(people.internal(email), (True, "Departmental Author"))
+		self.assertEqual(people.internal(OUTSIDER)[0], people.internal(OUTSIDER)[0])  # unchanged for everyone else
+
 	def test_size_and_one_chair(self):
 		error = self.refused(self.evl_appoint, members=ROSTER[:2])
 		self.assertEqual([r["detail"]["reason"] for r in error.reasons], ["committee_size"])

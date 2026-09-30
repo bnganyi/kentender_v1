@@ -112,8 +112,13 @@ def fixture_answers(bid: str, *, at: str, actor: str = DAVID) -> dict[str, dict[
 
 	from kentender_procurement.bid_submission.services import bid_context
 
+	from kentender_procurement.bid_submission.seeds import published_answers
+
 	ctx = bid_context.load(bid, actor=actor, organisation="", at=get_datetime(at))
-	out: dict[str, dict[str, Any]] = {"company": {}, "requirements": {}, "price": {}}
+	# every published requirement answered so that it meets (EVL-CHG-001 v0.4 C22:
+	# the evaluation's automatic checks read these), under the §10.1 facts below
+	out: dict[str, dict[str, Any]] = {"company": {}, "requirements": {}, "price": {}, **published_answers.answers(bid, actor=actor, at=at)}
+	out.setdefault("price", {})
 	for group in ctx.model.groups_of("requirements"):
 		facts = group.published_facts or {}
 		if group.composition_id == "COMP-GOODS-OFFER":

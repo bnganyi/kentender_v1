@@ -238,6 +238,7 @@ def validate_bid_opening_seed() -> list[dict[str, Any]]:
 	check(cstr(doc.ended_at) == CLOCK["end"], "the opening ended at 11:04 EAT")
 	check(frappe.db.get_value("Proceeding Minutes Version", {"proceeding": doc.proceeding, "version_number": 1}, "state") == "Finalized", "opening record version 1 is final")
 	check(cstr(doc.completed_at) == CLOCK["sign_chair"], "the last signature completed the opening at 11:10:30 EAT")
-	check(bool(doc.evaluation_handoff) and frappe.db.get_value("Evaluation Handoff", doc.evaluation_handoff, "delivery_status") == "Pending",
-		"the opened bid was handed to Evaluation, waiting for its uptake")
+	# Pending until Bid Evaluation takes it up (EVL-CHG-001 v0.4: the bid_evaluation stage), Delivered after
+	check(bool(doc.evaluation_handoff) and frappe.db.get_value("Evaluation Handoff", doc.evaluation_handoff, "delivery_status") in ("Pending", "Delivered"),
+		"the opened bid was handed to Evaluation")
 	return rows

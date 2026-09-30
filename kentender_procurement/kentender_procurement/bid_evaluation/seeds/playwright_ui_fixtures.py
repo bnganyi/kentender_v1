@@ -857,6 +857,17 @@ def supplier_reply(*, body: str = REPLY) -> dict[str, Any]:
 	return out
 
 
+def set_instant(*, instant: str = "") -> dict[str, Any]:
+	"""The site's shared test instant (every module's trusted clock on a test
+	site), returning the one it replaces so a walk can put it back."""
+	from kentender_procurement.bid_submission.services import simulation as bds_simulation
+
+	previous = bds_simulation.controls().get("current_instant") or ""
+	bds_simulation.set_controls(current_instant=instant)
+	frappe.db.commit()
+	return {"previous": previous, "instant": instant}
+
+
 def set_controls(**values) -> dict[str, Any]:
 	from kentender_procurement.bid_evaluation.services import simulation
 

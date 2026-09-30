@@ -277,7 +277,8 @@ def _supplier_request(tender: str, clarification: str, user: str, organisation: 
 		raise frappe.DoesNotExistError("Not found")
 	org = frappe.db.get_value("Evaluation Bid", request.evaluation_bid, "organisation_id")
 	try:
-		bid_authorization.acting_assignment(user, organisation or org)
+		# on the trusted instant, as Bid Submission's own commands ask it
+		bid_authorization.acting_assignment(user, organisation or org, at=clock.now())
 	except BidSubmissionError as exc:
 		raise frappe.DoesNotExistError("Not found") from exc
 	if organisation and organisation != org:

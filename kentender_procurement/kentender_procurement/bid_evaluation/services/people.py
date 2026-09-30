@@ -13,7 +13,7 @@ eligible and acts in no business capacity (KT-STD-001 §3A.6)."""
 from __future__ import annotations
 
 import frappe
-from frappe.utils import cstr
+from frappe.utils import cstr, get_datetime
 
 ACCOUNTING_OFFICER = "Accounting Officer"
 HEAD_OF_PROCUREMENT = "Head of Procurement Function"
@@ -50,11 +50,31 @@ def holders(business_role: str) -> list[str]:
 	return sorted(u for u in users if holds(u, business_role))
 
 
+def active_responsibilities(user: str) -> list[str]:
+	"""The business roles the user holds now, at any scope: enabled
+	assignments inside their effective period. A department-scoped role is
+	as much an active responsibility as a site-wide one (§3); `holds` asks a
+	different question (may the user act site-wide in that role)."""
+	from kentender_procurement.bid_evaluation.services import clock
+
+	now = clock.now()
+	out = []
+	for row in frappe.get_all("User Responsibility Assignment", filters={"user": user, "status": "Enabled"},
+			fields=["business_role", "effective_from", "effective_to"], order_by="creation asc"):
+		if row.effective_from and get_datetime(row.effective_from) > now:
+			continue
+		if row.effective_to and get_datetime(row.effective_to) < now:
+			continue
+		if row.business_role not in out:
+			out.append(row.business_role)
+	return out
+
+
 def internal(user: str) -> tuple[bool, str]:
 	"""(eligible as an internal person, designation): an enabled System User,
-	not technical, holding at least one active responsibility."""
+	not technical, holding at least one active responsibility at any scope."""
 	row = frappe.db.get_value("User", user, ["enabled", "user_type"], as_dict=True)
 	if not row or not row.enabled or row.user_type != "System User" or technical(user):
 		return False, ""
-	held = [r for r in responsibilities(user) if holds(user, r)]
+	held = active_responsibilities(user)
 	return (True, held[0]) if held else (False, "")

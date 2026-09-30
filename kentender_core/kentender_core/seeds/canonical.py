@@ -46,7 +46,7 @@ import frappe
 
 from kentender_core.seeds import site_setup
 
-STAGES: tuple[str, ...] = ("site", "strategy", "budget", "needs", "planning", "requisitions", "tenders", "bid_submission", "bid_opening")
+STAGES: tuple[str, ...] = ("site", "strategy", "budget", "needs", "planning", "requisitions", "tenders", "bid_submission", "bid_opening", "bid_evaluation")
 
 # Namespaces whose rows are canonical and survive `reset`.
 STRATEGY_NS = "str-chg-001-mvp1"
@@ -56,8 +56,9 @@ PLANNING_NS = "KENTENDER_MVP_1_R1_PLN"
 REQUISITIONS_NS = "KENTENDER_MVP_1_R1_REQ"  # not stamped on Requisitions' own rows (D5 predates the column) — see clear_non_canonical
 TENDERS_NS = "KENTENDER_MVP_1_R1_TND"
 BID_OPENING_NS = "KENTENDER_MVP_1_R1_BOP"  # BOP-CHG-001 v0.10 plan D14
+BID_EVALUATION_NS = "KENTENDER_MVP_1_R1_EVL"  # EVL-CHG-001 v0.4 plan D18
 CANONICAL_NAMESPACES = frozenset(
-	{site_setup.FIXTURE_TAG, BUDGET_ACTOR_NS, STRATEGY_NS, NEEDS_NS, PLANNING_NS, REQUISITIONS_NS, TENDERS_NS, BID_OPENING_NS}
+	{site_setup.FIXTURE_TAG, BUDGET_ACTOR_NS, STRATEGY_NS, NEEDS_NS, PLANNING_NS, REQUISITIONS_NS, TENDERS_NS, BID_OPENING_NS, BID_EVALUATION_NS}
 )
 
 # KT-STD-001 §8.3 — the whole shared register, whatever stage is seeded.
@@ -78,6 +79,10 @@ REGISTER_LOCAL_PARTS: tuple[str, ...] = (
 	"nadia.kamau",  # KT-STD-001 v1.12 §8.3 — release operator
 	"charles.mutiso",
 	"brian.wafula",
+	"grace.wambui",  # EVL-CHG-001 v0.4 plan D17 — the evaluation committee and its support holder
+	"peter.mugo",
+	"ruth.achieng",
+	"esther.njeri",
 	# TPR-CHG-001 v0.8 §13.1 (plan D8, D8′ in v0.12) — the bidder-facing
 	# service identity that receives supplier clarifications (the account
 	# name predates v0.12's clarifications and is kept: Tenders FU-32); a
@@ -708,6 +713,12 @@ def seed(*, through: str = STAGES[-1]) -> dict[str, Any]:
 		from kentender_procurement.bid_opening.seeds.kentender_mvp_v1 import upsert_bid_opening_base
 
 		report["bid_opening"] = upsert_bid_opening_base(commit=False)
+	if last >= STAGES.index("bid_evaluation"):
+		# EVL-CHG-001 v0.4 plan D18: the canonical Tender's evaluation (§11.1),
+		# from appointment on 11 Jun to the report sent on 16 Jun.
+		from kentender_procurement.bid_evaluation.seeds.kentender_mvp_v1 import upsert_bid_evaluation_base
+
+		report["bid_evaluation"] = upsert_bid_evaluation_base(commit=False)
 	return report
 
 
@@ -880,6 +891,11 @@ def validate(*, through: str = STAGES[-1]) -> dict[str, Any]:
 		from kentender_procurement.bid_opening.seeds.kentender_mvp_v1 import validate_bid_opening_seed
 
 		for row in validate_bid_opening_seed():
+			check(row["ok"], row["check"])
+	if last >= STAGES.index("bid_evaluation"):
+		from kentender_procurement.bid_evaluation.seeds.kentender_mvp_v1 import validate_bid_evaluation_seed
+
+		for row in validate_bid_evaluation_seed():
 			check(row["ok"], row["check"])
 
 	report = {"ok": not failures, "through": through, "failures": failures}
