@@ -746,8 +746,10 @@ evl-preflight:
 	@if pgrep -f "[p]laywright test" >/dev/null; then echo "A Playwright run is active on this site; run the Bid Evaluation Python gates after it finishes."; exit 1; fi
 
 # EVL-CHG-001 v0.4 owner services (plan Phases 1 and 3-10); grows per phase.
-EVL_SERVICE_MODULES ?= test_evl_schema
+EVL_SERVICE_MODULES ?= test_evl_schema test_evl_errors test_evl_rules test_evl_seams test_evl_preparation test_evl_committee test_evl_intake \
+	test_evl_comparison test_evl_discussion test_evl_clarification test_evl_diligence test_evl_report test_evl_reads
 evl-services-gate: evl-preflight
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_core --module kentender_core.tests.test_support_issues
 	cd $(BENCH_ROOT) && for m in $(EVL_SERVICE_MODULES); do \
 		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_evaluation.tests.$$m || exit 1; done
 

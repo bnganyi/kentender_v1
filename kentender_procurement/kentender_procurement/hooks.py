@@ -142,6 +142,7 @@ kt_tender_candidate_registry = ["kentender_procurement.bid_submission.services.c
 kt_tender_seed_candidate = ["kentender_procurement.bid_submission.seeds.canonical.seed_candidate"]
 # Bid Submission removes its rows for Tenders the Tenders clean-up removes.
 kt_tender_removal_consumers = [
+	"kentender_procurement.bid_evaluation.seeds.clear.on_tenders_removed",
 	"kentender_procurement.bid_opening.seeds.clear.on_tenders_removed",
 	"kentender_procurement.bid_submission.seeds.clear.on_tenders_removed",
 ]
@@ -167,7 +168,11 @@ kt_trust_signing_services = ["kentender_procurement.proceedings.test_services.at
 # unless forced, then the in-app Notification Log answers.
 # BOP-CHG-001 v0.10 plan D1: Bid Opening owns its Proceeding; Proceedings is
 # reachable only from inside a Bid Opening command or read.
-kt_prc_owner_adapters = ["kentender_procurement.bid_opening.services.prc_owner.adapters"]
+# EVL-CHG-001 v0.4 plan D4: Bid Evaluation owns its (multi-session) Proceeding.
+kt_prc_owner_adapters = [
+	"kentender_procurement.bid_opening.services.prc_owner.adapters",
+	"kentender_procurement.bid_evaluation.services.prc_owner.adapters",
+]
 kt_bop_renderer_services = [
 	"kentender_procurement.bid_opening.services.package_renderer.service",
 	"kentender_procurement.bid_opening.test_services.renderer_faults.service",
@@ -449,6 +454,9 @@ scheduler_events: dict[str, list[str]] = {
 		# BOP-CHG-001 v0.10 plan D7/D8/D11 — prepare opening cases, receive the sealed
 		# close, record presence lapses and open Opening access support incidents.
 		"kentender_procurement.bid_opening.services.sweep.run",
+		# EVL-CHG-001 v0.4 plan D25 — prepare evaluations on publication, take up a
+		# completed opening, close on a final no-bids opening, apply owner events.
+		"kentender_procurement.bid_evaluation.services.sweep.run",
 	],
 }
 
@@ -579,6 +587,8 @@ kt_my_work_providers = [
 	"kentender_procurement.tenders.services.my_work_provider.my_work_rows",
 	# BOP-CHG-001 v0.10 §5 hand-off table (plan D11).
 	"kentender_procurement.bid_opening.services.my_work_provider.my_work_rows",
+	# EVL-CHG-001 v0.4 §7.3 hand-off register (plan D11).
+	"kentender_procurement.bid_evaluation.services.my_work_provider.my_work_rows",
 ]
 
 # AUTH-ADR-001 v1.8 §8/§9 / KT-STD-001 v1.5 §3A.6 — the shared Technical

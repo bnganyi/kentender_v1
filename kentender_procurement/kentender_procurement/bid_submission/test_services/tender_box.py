@@ -123,6 +123,9 @@ class TestTenderBox:
 	def reveal(self, **kwargs) -> dict[str, Any]:
 		return reveal(**kwargs)
 
+	def release_for_evaluation(self, **kwargs) -> dict[str, Any]:
+		return release_for_evaluation(**kwargs)
+
 	def status(self, *, correlation_id: str) -> dict[str, Any]:
 		"""The outcome of an earlier deposit, for the reconciler: Accepted,
 		Rejected, Uncertain (still pending) or NotReceived."""
@@ -228,6 +231,23 @@ def reveal(*, tender: str, correlation_id: str, manifest_digest: str, roster_dig
 		return {"outcome": "Rejected", "reason": "not_in_custody", "service": NAME, "simulation": True}
 	if forced == "Mismatch":
 		package = package + b" "  # a package that no longer matches its sealed digest
+	return {"outcome": "Accepted/Verified", "package": package, "service": NAME, "simulation": True}
+
+
+def release_for_evaluation(*, tender: str, correlation_id: str, completion_reference: str) -> dict[str, Any]:
+	"""Release one package opened at a completed opening to Bid Evaluation
+	(EVL-CHG-001 v0.4 §5.1, §6 "BOP → Evaluation"; EVL plan D6). The box
+	releases only after close and only against the named completion; which
+	envelopes that completion opened is checked by the gateway against the
+	sealed manifest. A production custody design decides how the opened
+	package is kept for evaluation (FU-EVL-11)."""
+	if not _box_closed(tender):
+		return {"outcome": "Rejected", "reason": "box_open", "service": NAME, "simulation": True}
+	if not cstr(completion_reference).strip():
+		return {"outcome": "Rejected", "reason": "no_completion", "service": NAME, "simulation": True}
+	package = stored_package(correlation_id)
+	if package is None:
+		return {"outcome": "Rejected", "reason": "not_in_custody", "service": NAME, "simulation": True}
 	return {"outcome": "Accepted/Verified", "package": package, "service": NAME, "simulation": True}
 
 

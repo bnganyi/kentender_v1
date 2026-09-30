@@ -384,3 +384,7 @@ kentender_scope_map: dict[str, str] = {}
 # conformance gate (AUTH-ADR-001 v1.9 §9).
 kt_technical_reference_resolvers = ["kentender_core.services.technical_read.reference_resolvers"]
 kt_technical_read_probes = ["kentender_core.services.technical_read.read_probes"]
+
+# EVL-CHG-001 v0.4 plan D12 (OD-B): the platform support issue's holder item
+# ("Resolve evaluation issue for {tender}"), merged with every app's providers.
+kt_my_work_providers = ["kentender_core.services.support_issues.my_work_rows"]
