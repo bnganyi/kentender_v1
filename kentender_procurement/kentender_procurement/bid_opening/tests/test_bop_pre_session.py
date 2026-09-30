@@ -72,6 +72,24 @@ class TestCaseAndCommittee(OpeningCase):
 		self.assertTrue(appointment.is_excluded_from_evaluation(self.name, INDEPENDENT))
 		self.assertFalse(appointment.is_excluded_from_evaluation(self.name, MEMBER))
 
+	def test_the_tender_record_links_to_its_opening(self):
+		"""BOP-CHG-001 v0.10 §9: "The internal Desk Tender record links to a Bid
+		opening work item and one focused opening record." The Tender read
+		carries the link once the opening exists, for readers of the opening."""
+		from kentender_procurement.tenders.services import read
+
+		def links(user):
+			frappe.set_user(user)
+			try:
+				return [(l["key"], l["label"], l["route"]) for l in read.get_tender(tender=self.name, user=user).get("record_links", [])]
+			finally:
+				frappe.set_user("Administrator")
+
+		self.assertEqual(links(AO), [])  # no opening yet
+		self.prepare_case()
+		self.assertEqual(links(AO), [("bid-opening", "Bid opening", ["tenders", self.reference, "opening"])])
+		self.assertEqual(links(AUDITOR), [("bid-opening", "Bid opening", ["tenders", self.reference, "opening"])])
+
 	def test_the_accounting_officer_sees_who_can_be_appointed(self):
 		self.prepare_case()
 		candidates = {c["user"]: c for c in reads.get_opening(tender=self.name, user=AO)["candidates"]}

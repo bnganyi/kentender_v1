@@ -232,14 +232,14 @@ def _completed_answer(doc, user: str, member, ao: bool) -> dict[str, Any] | None
 	if not (member or ao):
 		return None
 	if doc.outcome == "No bids":
-		return ns.answer(ns.KIND_DONE, headline="Opening complete — no bids to evaluate", sentence=f"Completed {labels.when(doc.completed_at)}. Nothing was passed "
+		return ns.answer(ns.KIND_DONE, headline="Opening complete — no bids to evaluate", sentence=f"Completed {labels.when_seconds(doc.completed_at)}. Nothing was passed "
 			"to Evaluation.", stage="record")
 	latest = frappe.get_all("Proceeding Supplement", filters={"proceeding": doc.proceeding}, fields=["recorded_at"], order_by="recorded_at desc", limit=1)
 	if latest and member and member["is_recorder"]:
 		return ns.answer(ns.KIND_DONE, headline=f"Correction added at {labels.when(latest[0].recorded_at)}. The original opening record is unchanged.",
 			sentence="People who can read this record see the correction with it.", stage="record")
 	count = frappe.db.count("Opening Entry", {"opening_case": doc.name})
-	return ns.answer(ns.KIND_DONE, headline=f"The opening was completed at {labels.when(doc.completed_at)}, after the last signature.",
+	return ns.answer(ns.KIND_DONE, headline=f"The opening was completed at {labels.when_seconds(doc.completed_at)}, after the last signature.",
 		sentence=f"The opened {'bid is' if count == 1 else 'bids are'} now available to the Evaluation Committee.", stage="record")
 
 

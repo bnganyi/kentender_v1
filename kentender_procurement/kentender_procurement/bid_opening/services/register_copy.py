@@ -108,7 +108,7 @@ def register_html(doc) -> str:
 	body = "".join(f"<tr><td>{r['number']}</td><td>{e(r['tenderer'])}</td><td>{e(r['submitted_total'])}</td><td>{e(r['security_given'])}</td>"
 		f"<td>{e(labels.time_seconds(r['recorded_at']))}</td></tr>" for r in rows) or "<tr><td colspan='5'>Empty register. There were no current bids.</td></tr>"
 	return (f"<html><head><meta charset='utf-8'></head><body><h1>Opening register</h1><p>{e(doc.tender_reference)} · {e(doc.tender_title or '')}</p>"
-		f"<p>Opening completed {e(labels.when(doc.completed_at))}.</p><table border='1' cellpadding='4' style='border-collapse:collapse;width:100%'>"
+		f"<p>Opening completed {e(labels.when_seconds(doc.completed_at))}.</p><table border='1' cellpadding='4' style='border-collapse:collapse;width:100%'>"
 		f"<tr><th>No.</th><th>Tenderer</th><th>Submitted total</th><th>Security given</th><th>Recorded at</th></tr>{body}</table>"
 		f"<p>Register version {register.version_number}. Digest {e(register.register_digest)}.</p></body></html>")
 

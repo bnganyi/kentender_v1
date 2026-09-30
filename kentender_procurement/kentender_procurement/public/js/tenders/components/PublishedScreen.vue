@@ -9,8 +9,13 @@
 	<div class="tnd-page" data-screen-label="TPR-DES-09 Published Tender">
 		<BlueprintCard>
 			<RecordHead :title="tender.title" :badge="tender.badge" :badge-tone="badgeTone" :refs="tender.tender_reference" :lede="lede">
-				<template v-if="published" #aside>
-					<button type="button" class="kt-btn kt-btn-secondary" style="flex-shrink: 0" data-testid="tnd-view-public" @click="$emit('view-document', 'Complete Tender', 'Public')">View public Tender</button>
+				<template v-if="published || recordLinks.length" #aside>
+					<!-- records other modules keep under this Tender (server
+					     `record_links`), e.g. its bid opening (BOP-CHG-001 v0.10 §9) -->
+					<div style="display: flex; gap: 12px; flex-shrink: 0">
+						<button v-for="l in recordLinks" :key="l.key" type="button" class="kt-btn kt-btn-secondary" :data-testid="`tnd-link-${l.key}`" @click="$emit('open-link', l.route)">{{ l.label }}</button>
+						<button v-if="published" type="button" class="kt-btn kt-btn-secondary" data-testid="tnd-view-public" @click="$emit('view-document', 'Complete Tender', 'Public')">View public Tender</button>
+					</div>
 				</template>
 			</RecordHead>
 			<TenderGuidance :guidance="record.guidance || null" :pending="pending" @fix="$emit('fix', $event)" />
@@ -109,10 +114,11 @@ const props = defineProps({
 	review: { type: Object, default: () => ({}) },
 	pending: Boolean,
 });
-defineEmits(["view-document", "view-confirmation", "open-addendum", "open-clarification", "prepare-addendum", "cancel-screen", "history", "reopen", "request-correction", "publication", "fix"]);
+defineEmits(["view-document", "view-confirmation", "open-addendum", "open-clarification", "prepare-addendum", "cancel-screen", "history", "reopen", "request-correction", "publication", "fix", "open-link"]);
 
 const historyOpen = ref(false);
 const tender = computed(() => props.record.tender || {});
+const recordLinks = computed(() => props.record.record_links || []);
 const publication = computed(() => props.record.publication || null);
 const openPeriod = computed(() => props.record.open_period || {});
 const releaseInfo = computed(() => {

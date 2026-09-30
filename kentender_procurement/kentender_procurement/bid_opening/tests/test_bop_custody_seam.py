@@ -58,6 +58,20 @@ class TestClosedManifest(SeamCase):
 		self.assertEqual(frappe.db.get_value("Bid Opening Handoff", manifest["handoff_id"], "delivery_status"), "Delivered")
 
 
+class TestDefinitionLabels(SeamCase):
+	def test_tenders_publishes_the_definitions_labels_for_the_renderer(self):
+		"""TND12-C01 addendum: the published bid definition's task and response
+		labels, for rendering a revealed package (FU-BOP-15)."""
+		from kentender_procurement.tenders.services import opening_seam
+
+		version = frappe.db.get_value("Tender Bid Definition", {"tender": self.name, "status": "Effective"}, "definition_version")
+		labels = opening_seam.definition_labels(self.name, version)
+		self.assertEqual(labels["tasks"].get("TASK-COMPANY"), "Company, declarations and tender security")
+		self.assertTrue(labels["responses"])
+		self.assertFalse([t for t in labels["responses"].values() if "{addendum_reference}" in t])
+		self.assertEqual(opening_seam.definition_labels("TDR-DOES-NOT-EXIST", 1), {"tasks": {}, "responses": {}})
+
+
 class TestReveal(SeamCase):
 	def setUp(self):
 		super().setUp()

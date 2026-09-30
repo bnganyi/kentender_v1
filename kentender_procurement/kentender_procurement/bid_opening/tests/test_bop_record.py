@@ -117,6 +117,13 @@ class TestPrepareAndFreeze(RecordCase):
 		done = self.next_step(CHAIR)
 		self.assertEqual(done["kind"], ns.KIND_DONE)
 		self.assertTrue(done["headline"].startswith("The opening was completed at "))
+		# boards r6/h1: the completion instant with its seconds (FU-BOP-25)
+		completed = frappe.db.get_value("Bid Opening Case", doc.name, "completed_at")
+		seconds = frappe.utils.get_datetime(completed).strftime("%H:%M:%S")
+		self.assertIn(seconds, done["headline"])
+		opening = reads.get_opening(tender=self.name, user=AUDITOR)
+		self.assertIn(seconds, opening["record"]["completion"]["completed_label"])
+		self.assertRegex(opening["record"]["versions"][0]["frozen_label"], r"\d{2}:\d{2}:\d{2}")
 		self.assertEqual(done["sentence"], "The opened bid is now available to the Evaluation Committee.")
 		self.assertTrue(reads.get_opening(tender=self.name, user=CHAIR)["journey"]["stages"][2]["marker"] == "done")
 

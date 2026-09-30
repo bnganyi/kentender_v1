@@ -13,9 +13,10 @@ or discount (BOP-CHG-001 v0.10 §5), so there are no change locations.
 The render digest covers the renderer version, the exact HTML and the page
 facts, so the same package always gives the same digest; each page's target
 digest is bound to it. Whether this is the operating profile's "approved
-rendering" is an owner decision (FU-BOP-04). Response labels are the
-package's field keys made readable; the published definition's labels are a
-later refinement."""
+rendering" is an owner decision (FU-BOP-04). Each task and answer carries
+the published bid definition's own label (Tenders' opening seam,
+`definition_labels`), with the bidder's name filled in from the package; an
+answer the definition does not name keeps its field key made readable."""
 
 from __future__ import annotations
 
@@ -62,9 +63,18 @@ def facts_of(body: dict[str, Any]) -> dict[str, Any]:
 		"security_given": security}
 
 
-def html_of(body: dict[str, Any], *, envelope_id: str, receipt_reference: str) -> str:
+def html_of(body: dict[str, Any], *, envelope_id: str, receipt_reference: str, labels: dict[str, Any] | None = None) -> str:
 	e = escape_html
 	facts = facts_of(body)
+	labels = labels or {}
+	task_labels, response_labels = labels.get("tasks") or {}, labels.get("responses") or {}
+
+	def task_label(task: str) -> str:
+		return task_labels.get(f"TASK-{cstr(task).upper()}") or _label(task)
+
+	def response_label(row: dict[str, Any]) -> str:
+		text = response_labels.get(cstr(row.get("response_id")))
+		return text.replace("{bidder_name}", facts["tenderer_name"]) if text else _label(row.get("field_key"))
 	parts = [
 		"<html><head><meta charset='utf-8'><style>body{font-family:sans-serif;font-size:11pt}table{border-collapse:collapse;width:100%}"
 		"td,th{border:1px solid #999;padding:3px 5px;text-align:left;vertical-align:top}.page{page-break-before:always}</style></head><body>",
@@ -76,8 +86,8 @@ def html_of(body: dict[str, Any], *, envelope_id: str, receipt_reference: str) -
 	for row in body.get("responses") or []:
 		by_task.setdefault(cstr(row.get("task")), []).append(row)
 	for task in sorted(by_task):
-		parts.append(f"<div class='page'><h2>{e(_label(task))}</h2><table>")
-		parts += [f"<tr><th>{e(_label(r.get('field_key')))}</th><td>{e(_value(r.get('value')))}</td></tr>" for r in by_task[task]]
+		parts.append(f"<div class='page'><h2>{e(task_label(task))}</h2><table>")
+		parts += [f"<tr><th>{e(response_label(r))}</th><td>{e(_value(r.get('value')))}</td></tr>" for r in by_task[task]]
 		parts.append("</table></div>")
 	price = body.get("price") or {}
 	parts.append(f"<div class='page'><h2>{PRICE_HEADING}</h2><table><tr><th>Line</th><th>Description</th><th>Quantity</th><th>Unit price</th><th>Line total</th></tr>")
@@ -90,6 +100,15 @@ def html_of(body: dict[str, Any], *, envelope_id: str, receipt_reference: str) -
 	signatory = body.get("signatory") or {}
 	parts.append(f"</table><h2>Signed by</h2><p>{e(cstr(signatory.get('full_name')))}, {e(cstr(signatory.get('job_title')))}</p></div></body></html>")
 	return "".join(parts)
+
+
+def _definition_labels(body: dict[str, Any]) -> dict[str, Any]:
+	tender = body.get("tender") or {}
+	if not tender.get("tender"):
+		return {}
+	from kentender_procurement.tenders.services import opening_seam
+
+	return opening_seam.definition_labels(cstr(tender["tender"]), tender.get("definition_version"))
 
 
 class PackageRenderer:
@@ -108,7 +127,7 @@ class PackageRenderer:
 		facts = facts_of(body)
 		if not facts["tenderer_name"] or not facts["submitted_total"] or not facts["currency"]:
 			return _rejected("unreadable")
-		html = html_of(body, envelope_id=envelope_id, receipt_reference=receipt_reference)
+		html = html_of(body, envelope_id=envelope_id, receipt_reference=receipt_reference, labels=_definition_labels(body))
 		pdf = get_pdf(html, options=dict(PDF_OPTIONS))
 		pages = PdfReader(io.BytesIO(pdf)).pages
 		price_page = next((n for n, page in enumerate(pages, 1) if PRICE_HEADING in (page.extract_text() or "")), None)

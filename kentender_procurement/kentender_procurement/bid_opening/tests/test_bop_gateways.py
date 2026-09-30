@@ -70,6 +70,24 @@ class TestRenderer(GatewayCase):
 		})
 		self.assertTrue(first["pdf"].startswith(b"%PDF"))
 
+	def test_responses_carry_the_published_definitions_own_labels(self):
+		"""FU-BOP-15: each answer is labelled as the published bid definition
+		labels it, with the bidder's name filled in from the package; a response
+		the definition does not name keeps its readable key."""
+		from kentender_procurement.bid_opening.services import package_renderer
+
+		body = json.loads(package().decode())
+		body["responses"][0]["response_id"] = "RSP-LEGAL"
+		body["responses"].append({"task": "review", "response_id": "RSP-CONFIRM", "field_key": "confirmed", "value": True})
+		labels = {"tasks": {"TASK-COMPANY": "Company, declarations and tender security", "TASK-REVIEW": "Review and submit"},
+			"responses": {"RSP-LEGAL": "Legal name of the tenderer", "RSP-CONFIRM": "I confirm the bid of {bidder_name} is complete."}}
+		html = package_renderer.html_of(body, envelope_id="E", receipt_reference="R", labels=labels)
+		for text in ("Company, declarations and tender security", "Legal name of the tenderer", "I confirm the bid of Example Test Supplier Ltd is complete.",
+				"Offered make model"):
+			self.assertIn(text, html)
+		self.assertNotIn(">Legal name<", html)
+		self.assertNotIn("{bidder_name}", html)
+
 	def test_an_unreadable_package_is_rejected_not_guessed(self):
 		for bad in (b"not json", json.dumps({"schema": "something-else"}).encode(), package(price={})):
 			with self.subTest(bad=bad[:20]):

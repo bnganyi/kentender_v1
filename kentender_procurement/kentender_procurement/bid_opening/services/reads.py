@@ -110,7 +110,7 @@ def get_opening(*, tender: str, user: str) -> dict[str, Any]:
 		"ceremony": session.view(doc, user),
 		"record": record_view(doc, user),
 		"technical_status": {"message": "You can see technical status for this opening. Bids, the register and the opening record are not shown to administrators.",
-			"state": doc.state, "completed_label": labels.when(doc.completed_at), "incidents": frappe.db.count(incidents.INCIDENT, {"opening_case": case})} if technical else None,
+			"state": doc.state, "completed_label": labels.when_seconds(doc.completed_at), "incidents": frappe.db.count(incidents.INCIDENT, {"opening_case": case})} if technical else None,
 		"cancellation": {"message": "Opening ended by Tender cancellation", "note": "What happened up to the cancellation is kept as a partial record. There is no opening "
 			"record to sign and nothing is passed to Evaluation."} if doc.state == "Cancelled after start" else None,
 		"viewer": {"is_member": bool(member), "is_chair": bool(member and member["is_chair"]), "is_recorder": bool(member and member["is_recorder"]),
@@ -135,7 +135,7 @@ def record_view(doc, user: str) -> dict[str, Any] | None:
 		return out
 	versions = frappe.get_all("Proceeding Minutes Version", filters={"proceeding": doc.proceeding}, fields=["minutes_version_id", "version_number", "state",
 		"page_count", "frozen_at", "frozen_by", "supersede_reason"], order_by="version_number asc")
-	out["versions"] = [{**v, "frozen_label": labels.when(v.frozen_at), "frozen_by": people.full_name(v.frozen_by) if v.frozen_by else ""} for v in versions]
+	out["versions"] = [{**v, "frozen_label": labels.when_seconds(v.frozen_at), "frozen_by": people.full_name(v.frozen_by) if v.frozen_by else ""} for v in versions]
 	version, mine = signing.my_targets(doc, user)
 	out["mine"] = mine
 	for m in record.participants(doc.name):
@@ -145,7 +145,7 @@ def record_view(doc, user: str) -> dict[str, Any] | None:
 		out["signatures"].append({"member": m["full_name"], "role": m["committee_capacity"], "signed": bool(required) and len(proofs) >= required,
 			"signed_label": labels.time(proofs[0].recorded_at) if proofs and len(proofs) >= required else ""})
 	if doc.state == "Opening complete":
-		out["completion"] = {"completed_label": labels.when(doc.completed_at), "bids_opened": frappe.db.count("Opening Entry", {"opening_case": doc.name}),
+		out["completion"] = {"completed_label": labels.when_seconds(doc.completed_at), "bids_opened": frappe.db.count("Opening Entry", {"opening_case": doc.name}),
 			"evaluation_reference": doc.evaluation_handoff or "", "no_bids": doc.outcome == "No bids"}
 		out["corrections"] = [{**s, "added_label": labels.time(s.recorded_at), "author": people.full_name(s.author)} for s in frappe.get_all("Proceeding Supplement",
 			filters={"proceeding": doc.proceeding}, fields=["supplement_id", "kind", "correct_information", "reason", "author", "recorded_at"], order_by="recorded_at asc")]

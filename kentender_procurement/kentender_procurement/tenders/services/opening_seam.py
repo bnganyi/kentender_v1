@@ -52,6 +52,31 @@ def tender_facts(tender: str) -> dict[str, Any] | None:
 	}
 
 
+def definition_labels(tender: str, definition_version=None) -> dict[str, Any]:
+	"""The published bid definition's own words, for rendering a revealed bid
+	package (Bid Opening FU-BOP-15): each task's label by section id, and each
+	response's label by response id with the addendum reference filled in.
+	`{bidder_name}` is left for the renderer, which reads it from the package.
+	Empty for an unknown Tender or version."""
+	from kentender_procurement.tenders.services import bid_definition
+
+	stored = bid_definition.definition_for(tender, definition_version) if definition_version else bid_definition.current(tender)
+	if not stored:
+		return {"tasks": {}, "responses": {}}
+	definition = stored.get("definition") or {}
+	responses: dict[str, str] = {}
+	for row in definition.get("response_rows") or []:
+		field = row.get("field") or {}
+		text = cstr(field.get("label"))
+		if "addendum_reference" in (field.get("label_parameters") or []):
+			addendum = cstr((row.get("identity") or {}).get("immutable_source_id"))
+			reference = frappe.db.get_value("Tender Addendum", {"name": addendum, "tender": tender}, "addendum_reference") if addendum else ""
+			text = text.replace("{addendum_reference}", reference or "the addendum")
+		if row.get("response_id") and text:
+			responses[cstr(row["response_id"])] = text
+	return {"tasks": {cstr(s.get("section_id")): cstr(s.get("label")) for s in definition.get("sections") or [] if s.get("section_id")}, "responses": responses}
+
+
 def processing_actors(tender: str) -> set[str]:
 	people: set[str] = set()
 	for row in frappe.get_all("Tender Version", filters={"tender": tender}, fields=["prepared_by", "submitted_by", "approved_by"], limit_page_length=0):

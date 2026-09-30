@@ -190,6 +190,12 @@
 .body-sidebar .sidebar-item-container[data-id="Demands"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
 	content: "assignment_ind";
 }
+.body-sidebar .sidebar-item-container[data-id="Tender-security receipts"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
+	/* BDS-CHG-001 v0.8 BDS-DES-15: the Head of Procurement Function's intake of
+	   physical tender-security originals. Without a rule here the native icon is
+	   hidden (above) and the item showed no icon at all. */
+	content: "shield";
+}
 .body-sidebar .sidebar-item-container[data-id="Contract Management"] > .standard-sidebar-item > .item-anchor > .sidebar-item-icon::before {
 	content: "description";
 }

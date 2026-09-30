@@ -18,6 +18,23 @@ def when(value) -> str:
 	return display_datetime(value) if value else ""
 
 
+def when_seconds(value) -> str:
+	"""``12 Jun 2027, 11:10:30 EAT`` — the boards show seconds for the instants
+	a member acted at (completion, a finished record; FU-BOP-25)."""
+	if not value:
+		return ""
+	from zoneinfo import ZoneInfo
+
+	from frappe.utils import format_datetime, get_system_timezone
+
+	moment = get_datetime(value)
+	try:
+		zone = moment.replace(tzinfo=ZoneInfo(get_system_timezone())).tzname() or ""
+	except Exception:
+		zone = ""
+	return f"{format_datetime(moment, 'd MMM y, HH:mm:ss')} {zone}".strip()
+
+
 def time(value) -> str:
 	return get_datetime(value).strftime("%H:%M") if value else ""
 

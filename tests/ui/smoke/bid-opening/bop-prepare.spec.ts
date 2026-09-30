@@ -80,6 +80,18 @@ test.describe("BOP-DES-01 Prepare opening", () => {
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
 
+	test("the Tender record links to its bid opening (BOP-CHG-001 v0.10 §9)", async ({ page }) => {
+		const world = openingWorld("prepared");
+		await login(page, AO, PASSWORD);
+		await page.setViewportSize({ width: 1440, height: 1024 });
+		await page.goto(`/app/tenders/${world.tender_reference}`, { waitUntil: "domcontentloaded" });
+		await expect(page.locator('[data-testid="tnd-shell"]')).toHaveAttribute("data-loading", "false", { timeout: 30_000 });
+		await page.locator('[data-testid="tnd-link-bid-opening"]').click();
+		await expect(page).toHaveURL(new RegExp(`/(app|desk)/tenders/${world.tender_reference}/opening$`));
+		await expectScreen(page, "prepare");
+		await expectNextStep(page, "your_turn", "Appoint opening committee");
+	});
+
 	test("members and the Auditor see no appointment controls; an outsider gets Not found", async ({ page }) => {
 		const world = openingWorld("published");
 		await login(page, AUDITOR, PASSWORD);
