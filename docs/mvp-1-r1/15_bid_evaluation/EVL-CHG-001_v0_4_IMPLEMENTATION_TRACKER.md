@@ -2,9 +2,9 @@
 
 | Control | Value |
 |---|---|
-| Version | 0.4-tracker.8 |
+| Version | 0.4-tracker.9 |
 | Date | 30 September 2026 |
-| Status | Phases 0–10 services built and gated (EVL-G03…G09 Passed, EVL-G10 Partial; `make evl-services-gate` 80/80, 30 Sep 2026); Phase 11 in progress (the ordinary path and committee setup pass in the browser; 95 of 107 boards match); Phase 12 supplier portal done; Phase 13 canonical stage done (demo profiles owed). (0.4-tracker.7 read: Phases 0–12.) (0.4-tracker.6 read: 88 of 107.) (0.4-tracker.5 read: 41 of 107.) (0.4-tracker.4 read: Phase 11 screens written, not yet run in a browser.) (0.4-tracker.3 read: Phases 0–2 done; Phase 3 in progress.) (0.4-tracker.2 read: Phase 0 done (EVL-G00, 30 Sep 2026); Phase 1 next.) (0.4-tracker.1 read: Planned. No phase started; no code written.) |
+| Status | Phases 0–10 services built and gated (EVL-G03…G09 Passed, EVL-G10 Partial; `make evl-services-gate` 80/80, 30 Sep 2026); Phase 11 in progress (the ordinary path and committee setup pass in the browser; 95 of 107 boards match); Phase 12 supplier portal done; Phase 13 canonical stage done (demo profiles owed); release check green (83 Python, 96 fidelity, 9 browser), evidence items owed. (0.4-tracker.8 read: Phases 0–13.) (0.4-tracker.7 read: Phases 0–12.) (0.4-tracker.6 read: 88 of 107.) (0.4-tracker.5 read: 41 of 107.) (0.4-tracker.4 read: Phase 11 screens written, not yet run in a browser.) (0.4-tracker.3 read: Phases 0–2 done; Phase 3 in progress.) (0.4-tracker.2 read: Phase 0 done (EVL-G00, 30 Sep 2026); Phase 1 next.) (0.4-tracker.1 read: Planned. No phase started; no code written.) |
 
 **Authority:** `KenTender_EVL-CHG-001_Bid_Evaluation_v0_4.md`, Approved 30 Sep 2026 by the Project Owner, including R1–R3. Governing standard: KT-STD-001 v1.12 (approved 30 Sep 2026). Shared services: PRC-CHG-001 v0.9 and TRUST-ADR-001 v0.1. EVL v0.4 §6 extends both, and those extensions are owed as coordinated amendments (OD-A).
 
@@ -82,7 +82,7 @@
 | EVL-G11.1…11.8 | Phase 11 slices: `ui-evl-<slice>-gate` each; `ui-evl-fidelity-gate`; one `ui-tenders-*` and `ui-bop-*` regression run after the Tenders seam | In progress | 30 Sep 2026: browser: `evl-committee.spec.ts` 4/4, `evl-ordinary-path.spec.ts` 1/1; fidelity 88 of 107 boards; Tenders regression green. Owed: browser runs of the branch screens, the funding/tie worlds, slice gate targets. |
 | EVL-G12 | Phase 12: `ui-evl-supplier-gate`; Bid Submission portal regression | Passed | 30 Sep 2026: supplier boards 7/7 structurally identical; `evl-supplier.spec.ts` 1/1; clarification 6/6; Bid Submission portal components 305/305. `make ui-evl-supplier-gate` not yet a target. |
 | EVL-G13 | Phase 13: `seed-canonical THROUGH=bid_evaluation` and `seed-canonical-validate`; second run idempotent; `evl-demo-walk.spec.ts` | Passed | 30 Sep 2026: canonical seed through `bid_evaluation` 58 s and validate green (idempotent rerun); walk 3/3. Found and fixed on the way: (1) a department-scoped responsibility did not count for committee eligibility, so almost no ordinary staff member could be appointed (new test `test_a_department_scoped_person_can_serve`, red then green); (2) the supplier check ignored the trusted clock, so David could not reply in the canonical story (2027) on a 2026 site. Demo profiles owed (EVL4-1304). |
-| EVL-G14 | Phase 14: `ui-evl-fidelity-gate` (107), state/actor and branch matrix, persona pass, `ui-evl-release-evidence-gate` | Planned | |
+| EVL-G14 | Phase 14: `ui-evl-fidelity-gate` (107), state/actor and branch matrix, persona pass, `ui-evl-release-evidence-gate` | Partial | 30 Sep 2026: release check, in order: `make evl-services-gate` 83 tests green (8½ min); fidelity 96/96; browser 9/9 (committee 4, ordinary path 1, supplier 1, walk 3); canonical reseed through `bid_evaluation` validates; site left canonical. Owed: persona pass for the remaining people, the matrix document, RUNBOOKS.md, `make ui-evl-*` targets. |
 
 ## Work register: Phase 0 (documents and reconciliation)
 
@@ -211,9 +211,9 @@
 | EVL4-1304 | 13 | Demo profiles and `make seed-evl-profile(s)`, `seed-evl-profile-restore` | Planned |  |
 | EVL4-1305 | 13 | `evl-demo-walk.spec.ts`: from the menu and the bell, one session per person | Partial | 30 Sep 2026: `evl-demo-walk.spec.ts` 3/3 on the canonical data, read-only: Charles from Procurement → Tender Management → Evaluation to his report task; Grace from the same menu to Done and the committee record; David from his Tender page to the closed question (390 px). The walk sets the site's test instant to 16 Jun 2027 14:08 and puts it back. Owed with the demo profiles: the bell, and one walk per moment. |
 | EVL4-1306 | 13 | Bid Submission canonical seed submits the EVL v0.4 §9.1/§9.12 bid facts and named evidence documents (C22); reseed through `bid_opening`; BDS tracker addendum row | Done | 30 Sep 2026: the "answer from the published requirements" helper moved to `bid_submission/seeds/published_answers.py` (Evaluation's `test_services/bid_answers.py` re-exports it); Bid Submission's canonical seed lays its §10.1 facts over it, so the canonical bid meets every automatic check (C22). BDS `test_seeds` 1/1. Named evidence documents still stand-ins (FU). |
-| EVL4-1401 | 14 | `ui-evl-fidelity-gate` over all 107 boards | Planned | |
-| EVL4-1402 | 14 | §11.1 and §11.2 state/actor/branch matrix: control ↔ command ↔ PRC event ↔ My Work ↔ disclosure ↔ clearing | Planned | |
-| EVL4-1403 | 14 | Persona browser pass: Amina, Charles, Brian, Grace, Peter, Ruth, Samuel, David, Naomi, Esther, Administrator | Planned | |
+| EVL4-1401 | 14 | `ui-evl-fidelity-gate` over all 107 boards | Partial | 30 Sep 2026: fidelity 96/96: 95 of 107 boards (12 not compared, each with its reason in the departures file). `make ui-evl-fidelity-gate` not yet a target (`npx vitest run --project bid-evaluation`). |
+| EVL4-1402 | 14 | §11.1 and §11.2 state/actor/branch matrix: control ↔ command ↔ PRC event ↔ My Work ↔ disclosure ↔ clearing | Partial | 30 Sep 2026: covered by the service modules (every command and refusal), the 55-stage browser world and the fidelity capture; not yet one matrix document. |
+| EVL4-1403 | 14 | Persona browser pass: Amina, Charles, Brian, Grace, Peter, Ruth, Samuel, David, Naomi, Esther, Administrator | Partial | 30 Sep 2026: in the browser as Amina, Charles, Brian, Grace/chair, both members, the Head and David (supplier), across `evl-committee`, `evl-ordinary-path`, `evl-supplier` and `evl-demo-walk`. Not yet: Samuel, Naomi, Esther, Administrator. |
 | EVL4-1404 | 14 | AC map closure | Planned | |
 | EVL4-1405 | 14 | `RUNBOOKS.md` | Planned | |
 | EVL4-1501 | 15 | PRC-CHG-001 v0.10 (Evaluation profile) written and approved (FU-EVL-01) | Blocked — owner | |
