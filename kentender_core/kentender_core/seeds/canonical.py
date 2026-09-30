@@ -74,6 +74,7 @@ REGISTER_LOCAL_PARTS: tuple[str, ...] = (
 	"beatrice.kamau",
 	"amina.hassan",
 	"daniel.rotich",
+	"daniel.otieno",  # KT-STD-001 v1.11 §8.3 — technical operator
 	"charles.mutiso",
 	"brian.wafula",
 	# TPR-CHG-001 v0.8 §13.1 (plan D8, D8′ in v0.12) — the bidder-facing
@@ -741,6 +742,10 @@ def validate(*, through: str = STAGES[-1]) -> dict[str, Any]:
 	seeded_users = {f"{local}@moh.example.test" for local, _ in site_setup.ACTORS}
 	for email in seeded_users:
 		check(bool(frappe.db.exists("User", email)), f"user {email}")
+	for local in site_setup.TECHNICAL_ACTORS:
+		check("System Manager" in frappe.get_roles(f"{local}@moh.example.test"), f"{local} is a technical reader (System Manager)")
+	for email, _name in site_setup.PUBLIC_ACTORS:
+		check(frappe.db.get_value("User", email, "user_type") == "Website User", f"{email} is a Website User (public observer)")
 	strays = [
 		u
 		for u in frappe.get_all("User", filters={"name": ["not in", ["Administrator", "Guest"]]}, pluck="name")

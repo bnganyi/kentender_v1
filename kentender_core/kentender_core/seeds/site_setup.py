@@ -161,7 +161,22 @@ ACTORS = (
 	# register here instead of being created by the Planning seed.
 	("amina.hassan", "Amina Hassan"),
 	("daniel.rotich", "Daniel Rotich"),
+	# KT-STD-001 v1.11 §8.3 (Project Owner, 29 Sep 2026: "Register Daniel
+	# Otieno"; seeded at the owner's instruction of 30 Sep 2026) — the
+	# technical operator: service health and incidents only, including
+	# Opening access support; a technical reader (§3A.6), so he also holds
+	# System Manager (TECHNICAL_ACTORS). Not Daniel Rotich.
+	("daniel.otieno", "Daniel Otieno"),
 )
+
+# KT-STD-001 §3A.6 — register actors who read as technical readers
+# (System Manager): never a business turn, fix or action.
+TECHNICAL_ACTORS: tuple[str, ...] = ("daniel.otieno",)
+
+# KT-STD-001 v1.11 §8.3 (Project Owner, 29 Sep 2026: "Add Jane Wanjiku") —
+# members of the public: a signed-in Website User with no supplier link and
+# no bidder rights, on the public portal only.
+PUBLIC_ACTORS: tuple[tuple[str, str], ...] = (("jane.wanjiku@observer.example", "Jane Wanjiku"),)
 
 ASSIGNMENTS = (
 	# (user local part, business role, unit name or None, kwargs)
@@ -227,6 +242,9 @@ ASSIGNMENTS = (
 	# route at decision time).
 	("amina.hassan", "Accounting Officer", None, {}),
 	("daniel.rotich", "Plan Statutory Approver", None, {}),
+	# KT-STD-001 v1.11 §8.3 — Site-wide Technical Operator: Bid Submission's
+	# signing/tender-box incidents and Bid Opening's Opening access support.
+	("daniel.otieno", "Technical Operator", None, {}),
 	(
 		"samuel.otieno",
 		"Head of User Department",
@@ -1501,6 +1519,20 @@ def _seed_users() -> list[str]:
 			# allow_canonical_seed or force — `canonical.run` sets the flag).
 			# Until 26 Sep 2026 only developer_mode counted, so a new site
 			# seeded with force had actors nobody could log in as.
+			from frappe.utils.password import update_password
+
+			from kentender_core.seeds.constants import TEST_PASSWORD
+
+			update_password(email, TEST_PASSWORD)
+		if local in TECHNICAL_ACTORS and "System Manager" not in frappe.get_roles(email):
+			frappe.get_doc("User", email).add_roles("System Manager")
+		out.append(email)
+	for email, full_name in PUBLIC_ACTORS:
+		if not frappe.db.exists("User", email):
+			first, _, last = full_name.partition(" ")
+			frappe.get_doc({"doctype": "User", "email": email, "first_name": first, "last_name": last, "send_welcome_email": 0,
+				"user_type": "Website User", "enabled": 1}).insert(ignore_permissions=True)
+		if frappe.conf.get("developer_mode") or frappe.flags.get("kt_fixture_passwords"):
 			from frappe.utils.password import update_password
 
 			from kentender_core.seeds.constants import TEST_PASSWORD

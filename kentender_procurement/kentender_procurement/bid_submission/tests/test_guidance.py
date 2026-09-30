@@ -21,7 +21,12 @@ from kentender_procurement.bid_submission.test_services import trust
 from kentender_procurement.bid_submission.tests.support import DAVID, MARY, NS, key
 from kentender_procurement.bid_submission.tests.test_changes_and_close import ChangeCase
 
-DANIEL, NADIA = "bdst.daniel@example.test", "bdst.nadia@example.test"
+# Daniel Otieno is the KT-STD-001 v1.11 §8.3 technical operator, seeded by the
+# site stage since 30 Sep 2026: the tests use that one person (a second test
+# user of the same name made the guidance name "Daniel Otieno, Daniel Otieno").
+# Nadia Kamau is not in the register yet, so she stays a test user.
+DANIEL, NADIA = "daniel.otieno@moh.example.test", "bdst.nadia@example.test"
+_CREATED: set[str] = set()
 
 
 def _operators() -> None:
@@ -34,18 +39,22 @@ def _operators() -> None:
 			first, _, last = name.partition(" ")
 			user = frappe.get_doc({"doctype": "User", "email": email, "first_name": first, "last_name": last, "user_type": "System User", "send_welcome_email": 0}).insert(ignore_permissions=True)
 			user.add_roles(role)
+			_CREATED.add(email)
 		if not frappe.db.exists("User Responsibility Assignment", {"user": email, "business_role": responsibility, "status": "Enabled"}):
 			administration.grant(user=email, business_role=responsibility, fixture_namespace=NS, actor="Administrator")
 	frappe.db.commit()
 
 
 def _remove_operators() -> None:
+	"""Only what these tests made: their own grants (stamped NS) and users
+	they created. The register's Daniel Otieno and his canonical role stay."""
 	frappe.db.delete("Notification Log", {"for_user": ("in", (DANIEL, NADIA))})
-	for name in frappe.get_all("User Responsibility Assignment", filters={"user": ("in", (DANIEL, NADIA))}, pluck="name"):
+	for name in frappe.get_all("User Responsibility Assignment", filters={"user": ("in", (DANIEL, NADIA)), "fixture_namespace": NS}, pluck="name"):
 		frappe.delete_doc("User Responsibility Assignment", name, force=True, ignore_permissions=True)
 	for email in (DANIEL, NADIA):
-		if frappe.db.exists("User", email):
+		if (email in _CREATED or email == NADIA) and frappe.db.exists("User", email):
 			frappe.delete_doc("User", email, force=True, ignore_permissions=True)
+	_CREATED.clear()
 	frappe.db.commit()
 
 

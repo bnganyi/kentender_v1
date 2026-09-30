@@ -9,7 +9,8 @@ Phase 10): the canonical Tender's opening, told the way the boards tell it
                      Brian Wafula and Beatrice Kamau (independent member)
               10:20  and publishes how to attend
   12 Jun 2027 10:55–10:57  the three members join; 10:58 David Ouma joins
-                     for Afya Digital Supplies Limited
+                     for Afya Digital Supplies Limited; 10:59 Jane Wanjiku
+                     joins as a public observer
               11:00:12  Charles starts the opening; 11:01 the bid is opened
               11:01:45  what Brian read aloud at 11:01:30 is recorded
               11:02:20  David's 11:02:00 request to repeat the total, answered
@@ -22,8 +23,8 @@ Every step is the real command as its actor, with Bid Opening's and
 Proceedings' clocks at the step's instant. It runs after the `bid_submission`
 stage, whose close at 11:00 left the sealed box for Bid Opening. The
 signatures are the test attestation service's, so the stage runs only on a
-test site. Jane Wanjiku (public observer) and Daniel Otieno (support) wait for
-KT-STD-001 v1.11 (FU-BOP-24)."""
+test site. Daniel Otieno (KT-STD-001 v1.11 §8.3, seeded by the site stage) is
+the Opening access support holder; the canonical opening needs no support."""
 
 from __future__ import annotations
 
@@ -40,11 +41,13 @@ AO = f"amina.hassan@{DOMAIN}"
 CHAIR = f"charles.mutiso@{DOMAIN}"
 MEMBER = f"brian.wafula@{DOMAIN}"
 INDEPENDENT = f"beatrice.kamau@{DOMAIN}"
+OBSERVER = "jane.wanjiku@observer.example"  # KT-STD-001 v1.11 §8.3 public observer
+SUPPORT = f"daniel.otieno@{DOMAIN}"  # KT-STD-001 v1.11 §8.3 technical operator
 ROSTER = ({"user": CHAIR, "committee_role": "Chair and recorder"}, {"user": MEMBER, "committee_role": "Member"},
 	{"user": INDEPENDENT, "committee_role": "Independent member"})
 CLOCK = {
 	"prepare": "2027-06-10 10:10:00", "appoint": "2027-06-10 10:15:00", "publish": "2027-06-10 10:20:00",
-	"join_chair": "2027-06-12 10:55:10", "join_member": "2027-06-12 10:56:00", "join_independent": "2027-06-12 10:57:00", "join_david": "2027-06-12 10:58:00",
+	"join_chair": "2027-06-12 10:55:10", "join_member": "2027-06-12 10:56:00", "join_independent": "2027-06-12 10:57:00", "join_david": "2027-06-12 10:58:00", "join_jane": "2027-06-12 10:59:00",
 	"receive": "2027-06-12 11:00:05", "begin": "2027-06-12 11:00:12", "open": "2027-06-12 11:01:00", "spoken": "2027-06-12 11:01:30",
 	"readout": "2027-06-12 11:01:45", "asked": "2027-06-12 11:02:00", "answered": "2027-06-12 11:02:20", "end": "2027-06-12 11:04:00",
 	"freeze": "2027-06-12 11:07:00", "sign_member": "2027-06-12 11:08:00", "sign_independent": "2027-06-12 11:09:00", "sign_chair": "2027-06-12 11:10:30",
@@ -132,6 +135,8 @@ def _build(tender: str) -> dict[str, Any]:
 		clock.present.append(user)
 	clock.at(CLOCK["join_david"])
 	_ok(public.join_public_opening(tender=tender, idempotency_key=_key("join-david"), user=bds_canonical.DAVID), "join as David Ouma")
+	clock.at(CLOCK["join_jane"])
+	_ok(public.join_public_opening(tender=tender, idempotency_key=_key("join-jane"), user=OBSERVER), "join as Jane Wanjiku")
 	clock.at(CLOCK["receive"])
 	close_intake.receive_closed_box(tender=tender)
 	clock.at(CLOCK["begin"])
@@ -159,7 +164,10 @@ def _build(tender: str) -> dict[str, Any]:
 
 
 def lifecycle_complete(tender: str) -> bool:
-	return frappe.db.get_value("Bid Opening Case", {"tender": tender}, "state") == "Opening complete"
+	"""Complete and carrying every canonical fact (an opening told before a
+	fact was added, such as Jane Wanjiku's attendance, is told again)."""
+	case = frappe.db.get_value("Bid Opening Case", {"tender": tender}, "state")
+	return case == "Opening complete" and all(row["ok"] for row in validate_bid_opening_seed())
 
 
 def upsert_bid_opening_base(*, commit: bool = False) -> dict[str, Any]:
@@ -175,7 +183,7 @@ def upsert_bid_opening_base(*, commit: bool = False) -> dict[str, Any]:
 	if lifecycle_complete(tender):
 		result = {"ok": True, "idempotent": True, "tender": tender, "opening": frappe.db.get_value("Bid Opening Case", {"tender": tender}, "name")}
 	else:
-		clear.wipe(tenders=[tender])
+		clear.wipe(tenders=[tender], namespace=NAMESPACE)  # its command journal too, or a retold Prepare replays the old answer
 		saved = {flag: frappe.flags.get(flag) for flag in ("kt_bop_clock", "kt_prc_clock", "kt_bop_fixture_namespace", "kt_prc_fixture_namespace")}
 		frappe.flags.kt_bop_fixture_namespace = frappe.flags.kt_prc_fixture_namespace = NAMESPACE
 		try:
@@ -219,8 +227,14 @@ def validate_bid_opening_seed() -> list[dict[str, Any]]:
 	check(len(register) == 1 and register[0]["submitted_total"] == "KES 46,400,000.00", "the register shows KES 46,400,000.00")
 	check(frappe.db.count("Opening Exception", {"opening_case": doc.name, "exception_class": "Repeat request", "outcome": "Answered during opening"}) == 1,
 		"David Ouma's request to repeat the total was answered during the opening")
-	check(bool(frappe.db.exists("Proceeding Attendance", {"proceeding": doc.proceeding, "user": bds_canonical.DAVID, "movement": "Arrival"})),
-		"David Ouma's attendance is recorded")
+	david = frappe.db.get_value("Proceeding Attendance", {"proceeding": doc.proceeding, "user": bds_canonical.DAVID, "movement": "Arrival"},
+		["capacity", "represented_tenderer"], as_dict=True)
+	check(bool(david) and david.capacity == "Tenderer representative" and david.represented_tenderer == "Afya Digital Supplies Limited",
+		"David Ouma joined for Afya Digital Supplies Limited")
+	jane = frappe.db.get_value("Proceeding Attendance", {"proceeding": doc.proceeding, "user": OBSERVER, "movement": "Arrival"}, ["capacity", "occurred_at"], as_dict=True)
+	check(bool(jane) and jane.capacity == "Public observer" and cstr(jane.occurred_at) == CLOCK["join_jane"], "Jane Wanjiku joined as a public observer at 10:59 EAT")
+	check(SUPPORT in frappe.get_all("User Responsibility Assignment", filters={"business_role": "Technical Operator", "status": "Enabled"}, pluck="user"),
+		"Daniel Otieno holds Opening access support (Technical Operator)")
 	check(cstr(doc.ended_at) == CLOCK["end"], "the opening ended at 11:04 EAT")
 	check(frappe.db.get_value("Proceeding Minutes Version", {"proceeding": doc.proceeding, "version_number": 1}, "state") == "Finalized", "opening record version 1 is final")
 	check(cstr(doc.completed_at) == CLOCK["sign_chair"], "the last signature completed the opening at 11:10:30 EAT")

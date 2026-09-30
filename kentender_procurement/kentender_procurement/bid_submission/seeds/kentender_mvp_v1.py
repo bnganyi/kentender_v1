@@ -266,6 +266,10 @@ def upsert_bid_submission_base(*, commit: bool = False) -> dict[str, Any]:
 	from kentender_procurement.tenders.seeds import kentender_mvp_v1 as tenders_seed
 
 	_guard()
+	# The canonical supplier account on every run, not only when the bid is
+	# first built: it is idempotent, and it converges its people's sign-in
+	# (the shared fixture password) on a world seeded before that existed.
+	bds_canonical._hook("kt_canonical_supplier_accounts")()
 	prerequisites = tenders_seed.verify_prerequisites()
 	tender = cstr(frappe.db.get_value("Tender", {"requisition": prerequisites["requisition"]}, "name"))
 	if tender and lifecycle_complete(tender):

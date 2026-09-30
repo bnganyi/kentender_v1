@@ -29,7 +29,7 @@ class TestCanonicalSelection(IntegrationTestCase):
 	def test_stage_ladder_is_ordered_and_closed(self):
 		self.assertEqual(
 			canonical.STAGES,
-			("site", "strategy", "budget", "needs", "planning", "requisitions", "tenders"),
+			("site", "strategy", "budget", "needs", "planning", "requisitions", "tenders", "bid_submission", "bid_opening"),
 		)
 		with self.assertRaises(frappe.ValidationError):
 			canonical._stage_index("tender")
@@ -217,6 +217,28 @@ class TestFixturePasswords(IntegrationTestCase):
 
 		canonical.run(through="site", reset=False, validate=False, force=True, commit=False)
 		self.assertEqual(check_password(email, TEST_PASSWORD), email)
+
+
+	def test_the_technical_operator_and_the_public_observer_are_seeded(self):
+		"""KT-STD-001 v1.11 §8.3 (seeded at the Project Owner's instruction of
+		30 Sep 2026): Daniel Otieno is a technical reader holding Technical
+		Operator; Jane Wanjiku is a Website User with no supplier link. Both sign
+		in with the shared fixture password."""
+		from frappe.utils.password import check_password
+
+		from kentender_core.seeds.constants import TEST_PASSWORD
+
+		frappe.set_user("Administrator")
+		canonical.run(through="site", reset=False, validate=False, force=True, commit=False)
+		daniel = "daniel.otieno@moh.example.test"
+		self.assertIn("System Manager", frappe.get_roles(daniel))
+		self.assertTrue(frappe.db.exists("User Responsibility Assignment", {"user": daniel, "business_role": "Technical Operator", "status": "Enabled"}))
+		jane = "jane.wanjiku@observer.example"
+		self.assertEqual(frappe.db.get_value("User", jane, "user_type"), "Website User")
+		self.assertFalse(frappe.db.exists("User Responsibility Assignment", {"user": jane}))
+		for email in (daniel, jane):
+			self.assertEqual(check_password(email, TEST_PASSWORD), email)
+		self.assertIn(daniel, canonical.REGISTER_USERS)
 
 
 class TestCanonicalSeedRun(IntegrationTestCase):

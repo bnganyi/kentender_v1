@@ -59,8 +59,9 @@ make seed-canonical-validate SITE=kentender.midas.com THROUGH=bid_opening
 - It runs only on a test site, because the signatures come from the test attestation service (section 4).
 - It needs the `bid_submission` stage, whose close at 11:00 leaves the sealed box.
 - A partial opening, from an interrupted seed or a browser pass on the canonical Tender, is removed and told again from the start.
-- Jane Wanjiku (public observer) and Daniel Otieno (Opening access support) are not seeded until KT-STD-001 v1.11 is approved (FU-BOP-24).
-- The canonical supplier accounts have no sign-in password. The seed does not set one.
+- Jane Wanjiku joins as a public observer at 10:59. Daniel Otieno holds Opening access support (Technical Operator); the canonical opening needs none. Both are seeded by the site stage (KT-STD-001 v1.11 §8.3).
+- Everyone signs in with the shared fixture password (`.env.ui`), the canonical supplier people (David Ouma, Mary Wanjiku) and Jane Wanjiku included.
+- The canonical world is dated 2027. A browser walk of it pins the site's test clock just after the opening (`make ui-bop-release-evidence-gate` sets 12 Jun 2027 11:15 and clears it afterwards); without that, roles that start in 2027 are not yet in force.
 
 ## 3. The browser worlds
 

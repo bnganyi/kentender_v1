@@ -49,7 +49,9 @@ def _organisation(user: str) -> str:
 	provider = contract.provider()
 	if provider is None:
 		return ""
-	for row in provider.active_assignments(user=user):
+	# at the opening's own trusted time, not the machine's (a world whose
+	# clock is ahead of the calendar would otherwise find no role in force)
+	for row in provider.active_assignments(user=user, at=clock.now()):
 		org = provider.organisation(organisation_id=row["organisation_id"]) if row.get("active") else None
 		if org:
 			return cstr(org["legal_name"])

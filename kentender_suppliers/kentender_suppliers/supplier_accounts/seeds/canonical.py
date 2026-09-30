@@ -121,6 +121,17 @@ def ensure_canonical_supplier_accounts(*, commit: bool = False) -> dict[str, Any
 	result = ensure_supplier_account(
 		facts=AFYA, registrant=MARY, registrant_name="Mary Wanjiku", representative=DAVID, representative_name="David Ouma", representative_title="Bid Coordinator",
 	)
+	if frappe.conf.get("developer_mode") or frappe.flags.get("kt_fixture_passwords"):
+		# The same rule as the KT-STD-001 §8.3 register's actors (site stage):
+		# the canonical supplier people log in with the shared fixture password
+		# on a development site or wherever the canonical seed may run
+		# (Project Owner, 30 Sep 2026: "Maintain the same universal password").
+		from frappe.utils.password import update_password
+
+		from kentender_core.seeds.constants import TEST_PASSWORD
+
+		for email in (MARY, DAVID):
+			update_password(email, TEST_PASSWORD)
 	if commit:
 		frappe.db.commit()
 	return result
