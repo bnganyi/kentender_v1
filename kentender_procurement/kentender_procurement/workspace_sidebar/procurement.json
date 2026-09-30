@@ -123,9 +123,8 @@
    "indent": 0,
    "keep_closed": 0,
    "label": "Evaluation",
-   "link_to": "coming-soon",
+   "link_to": "bid-evaluation",
    "link_type": "Page",
-   "route_options": "{\"feature\": \"Evaluation\"}",
    "show_arrow": 0,
    "type": "Link"
   },
@@ -207,7 +206,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-09-29 21:38:23.941056",
+ "modified": "2026-09-30 21:02:38.758417",
  "modified_by": "Administrator",
  "module": "Kentender Procurement",
  "name": "Procurement",

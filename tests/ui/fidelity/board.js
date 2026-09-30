@@ -318,3 +318,115 @@ export const BID_OPENING_BOARDS = "docs/mvp-1-r1/14_bid_opening/design/Bid Openi
 export function bidOpeningSkeleton(id, relPath = BID_OPENING_BOARDS) {
 	return skeletonOf(bidOpeningScope(documentFor(relPath), id));
 }
+
+/**
+ * Bid Evaluation (EVL-CHG-001 v0.4 design set): one file,
+ * `15_bid_evaluation/design/Bid Evaluation Artboards.dc.html`, whose 107
+ * boards are data (`evl/boards-*.js`, built with `evl/evl-kit.js`) drawn by one
+ * `<x-dc>` page template. The oracle for a board is that template rendered
+ * with the board's own values, exactly as the design tool renders it:
+ * `{{ expr }}` bindings, `<sc-if value>` and `<sc-for list as>`, evaluated
+ * against the kit's `E.norm(board)` (plus the renderVals disclosure state,
+ * all closed unless the board opens one). The screen is the frame's
+ * `.kt-page`; the board's dialog, drawn as a sibling overlay of the frame, is
+ * moved inside it where the live page renders its dialogs. The journey and
+ * next step carry the shared components' `data-kt` landmarks, as for Bid
+ * Opening.
+ */
+export const BID_EVALUATION_BOARDS = "docs/mvp-1-r1/15_bid_evaluation/design/Bid Evaluation Artboards.dc.html";
+
+const evlKits = new Map();
+
+/** The kit's board list: the design folder's own scripts, run in a sandbox. */
+export function bidEvaluationKit(relPath = BID_EVALUATION_BOARDS) {
+	if (!evlKits.has(relPath)) {
+		const dir = path.dirname(path.resolve(REPO_ROOT, relPath));
+		const window = {};
+		const run = (file) => new Function("window", fs.readFileSync(path.join(dir, file), "utf8"))(window);
+		run("evl/evl-kit.js");
+		for (const file of fs.readdirSync(path.join(dir, "evl")).filter((f) => /^boards-\d+\.js$/.test(f)).sort()) run(`evl/${file}`);
+		evlKits.set(relPath, window.EVL);
+	}
+	return evlKits.get(relPath);
+}
+
+function evalBinding(expr, scope) {
+	const keys = Object.keys(scope);
+	try {
+		return new Function(...keys, `return (${expr});`)(...keys.map((k) => scope[k]));
+	} catch (e) {
+		return undefined;
+	}
+}
+
+const BINDING = /\{\{\s*([^}]+?)\s*\}\}/g;
+
+function renderTemplate(node, scope, doc) {
+	const out = [];
+	for (const child of Array.from(node.childNodes)) {
+		if (child.nodeType === 3) {
+			out.push(doc.createTextNode(child.textContent.replace(BINDING, (_m, expr) => {
+				const v = evalBinding(expr, scope);
+				return v === undefined || v === null ? "" : String(v);
+			})));
+			continue;
+		}
+		if (child.nodeType !== 1) continue;
+		const tag = child.tagName.toLowerCase();
+		if (tag === "sc-if") {
+			const expr = /\{\{\s*([^}]+?)\s*\}\}/.exec(child.getAttribute("value") || "");
+			if (expr && evalBinding(expr[1], scope)) out.push(...renderTemplate(child, scope, doc));
+			continue;
+		}
+		if (tag === "sc-for") {
+			const expr = /\{\{\s*([^}]+?)\s*\}\}/.exec(child.getAttribute("list") || "");
+			const as = child.getAttribute("as");
+			for (const item of (expr && evalBinding(expr[1], scope)) || []) out.push(...renderTemplate(child, { ...scope, [as]: item }, doc));
+			continue;
+		}
+		const el = doc.createElement(tag);
+		for (const attr of Array.from(child.attributes)) {
+			const name = attr.name;
+			if (/^on[a-z]/i.test(name) || name === "ref") continue;
+			const whole = /^\{\{\s*([^}]+?)\s*\}\}$/.exec(attr.value);
+			if (whole) {
+				const v = evalBinding(whole[1], scope);
+				if (v === false || v === undefined || v === null) continue;
+				el.setAttribute(name, v === true ? "" : String(v));
+			} else {
+				el.setAttribute(name, attr.value.replace(BINDING, (_m, expr) => {
+					const v = evalBinding(expr, scope);
+					return v === undefined || v === null ? "" : String(v);
+				}).trim());
+			}
+		}
+		for (const n of renderTemplate(child, scope, doc)) el.appendChild(n);
+		out.push(el);
+	}
+	return out;
+}
+
+export function bidEvaluationScope(doc, id, relPath = BID_EVALUATION_BOARDS) {
+	const E = bidEvaluationKit(relPath);
+	const raw = E.boards.find((b) => b.id === id);
+	if (!raw) throw new Error(`Bid Evaluation board ${id} not found`);
+	const cur = E.norm(raw);
+	const blocks = (cur.blocks || []).map((b) => (b.is_disc ? { ...b, isOpen: !!b.open, chev: b.open ? "is-open" : "" } : b));
+	const scope = { cur, blocks, zoom: 1, h1: cur.isMobile ? 26 : 32, shellPad: cur.isMobile ? "12px" : "28px", noop: null, stageRef: null, groups: [], q: "" };
+	const template = Array.from(doc.querySelectorAll(".kt-page")).find((el) => el.closest("main"));
+	if (!template) throw new Error("the Bid Evaluation template draws no .kt-page");
+	const holder = doc.createElement("div");
+	const frame = template.parentNode.parentNode.parentNode; // the artboard frame (page column, its flex row, the frame)
+	for (const n of renderTemplate(frame, scope, doc)) holder.appendChild(n);
+	const page = holder.querySelector(".kt-page");
+	const dialog = holder.querySelector(".dialog-backdrop");
+	if (dialog) page.appendChild(dialog);
+	for (const el of page.querySelectorAll("ol.kt-journey")) el.setAttribute("data-kt", "journey");
+	for (const el of page.querySelectorAll(".kt-next-step")) el.setAttribute("data-kt", "next-step");
+	return page;
+}
+
+/** One Bid Evaluation board's landmark skeleton (see `bidEvaluationScope`). */
+export function bidEvaluationSkeleton(id, relPath = BID_EVALUATION_BOARDS) {
+	return skeletonOf(bidEvaluationScope(documentFor(relPath), id, relPath));
+}

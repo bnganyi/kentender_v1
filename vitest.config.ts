@@ -78,6 +78,19 @@ export default defineConfig({
 				},
 			},
 			{
+				plugins: [vue()],
+				test: {
+					// EVL-CHG-001 v0.4 plan Phase 11 — the Bid Evaluation Desk screens and
+					// their structural fidelity against the boards the design tool's own
+					// template draws; the shared guidance region mounts through
+					// kentender_core's real bundle.
+					name: "bid-evaluation",
+					environment: "jsdom",
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/tenders/vitest.setup.js"],
+					include: ["kentender_procurement/kentender_procurement/public/js/bid_evaluation/**/*.spec.js"],
+				},
+			},
+			{
 				// BDS-CHG-001 v0.8 plan OD-B — the Bid Submission public portal
 				// screens, alongside (never instead of) the browser layer.
 				plugins: [vue()],

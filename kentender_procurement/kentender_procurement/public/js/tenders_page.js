@@ -5,7 +5,7 @@
 // The shared guidance bundle draws the §10.17 journey and next step.
 kentender_core.desk_page.register("tenders", {
 	title: __("Tenders"),
-	bundles: ["kt_industry_page_rail.bundle.js", "kt_industry_guidance.bundle.js", "bid_opening.bundle.js", "tenders.bundle.js"],
+	bundles: ["kt_industry_page_rail.bundle.js", "kt_industry_guidance.bundle.js", "bid_opening.bundle.js", "bid_evaluation.bundle.js", "bid_evaluation_page.bundle.css", "tenders.bundle.js"],
 	mount: (el) => frappe.kt_mount_tenders(el),
 	sidebarWorkspaceKey: "procurement",
 });

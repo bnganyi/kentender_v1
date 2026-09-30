@@ -131,7 +131,8 @@ kt_portal_surfaces = [
 # inside Bid Submission's portal surface above.
 kt_tender_opening_portal = ["kentender_procurement.bid_opening.portal.resolve"]
 # BOP-CHG-001 v0.10 §9 — the Tender record links to its bid opening.
-kt_tender_record_links = ["kentender_procurement.bid_opening.desk_links.tender_record_links"]
+kt_tender_record_links = ["kentender_procurement.bid_opening.desk_links.tender_record_links",
+	"kentender_procurement.bid_evaluation.desk_links.tender_record_links"]
 kt_tender_portal_links = ["kentender_procurement.bid_opening.portal.tender_links"]
 
 # BDS-CHG-001 v0.8 plan Phase 5 (TPR FU-25) — the Tender candidate registry is
@@ -236,6 +237,8 @@ page_js = {
 	"std-templates": "public/js/std_templates_page.js",
 	# BDS-CHG-001 v0.8 OD-G/OD-H — the blind physical tender-security intake.
 	"tender-security-receipts": "public/js/tender_security_receipts_page.js",
+	# EVL-CHG-001 v0.4 plan D13 — the Bid evaluation workspace.
+	"bid-evaluation": "public/js/bid_evaluation_page.js",
 	"departmental-procurement-plan": "public/js/departmental_procurement_plan_page.js",
 	"annual-procurement-plan": "public/js/annual_procurement_plan_page.js",
 	"procurement-plan-item": "public/js/procurement_plan_item_page.js",

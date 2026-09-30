@@ -67,6 +67,12 @@
 				<div ref="openingEl" class="kt-bop-host" data-testid="bop-host"></div>
 			</template>
 
+			<!-- EVL-CHG-001 v0.4 §10 / plan D13: Bid Evaluation owns /app/tenders/{ref}/evaluation…
+			     and mounts its own app here, like Bid Opening. -->
+			<template v-else-if="kind === 'evaluation'">
+				<div ref="evaluationEl" class="kt-evl-host" data-testid="evl-host"></div>
+			</template>
+
 			<!-- dialogs (in-Vue only, §6.3) -->
 			<RequisitionDrawer v-if="drawer" :inherited="record.inherited || {}" :template-label="templateLabel" :opening-label="openingLabel" @close="drawer = ''" />
 			<EvidenceDialog v-if="evidenceDialog" :row="evidenceDialog.row" :inherited="record.inherited || {}" :pending="pending" :error="dialogError" :server-errors="fieldErrors" @confirm="onEvidenceConfirm" @cancel="closeDialogs" />
@@ -197,6 +203,8 @@ const kind = computed(() => {
 	if (sub.value === "history") return "history";
 	// BOP-CHG-001 v0.10 §9: every Bid opening view lives under the Tender record.
 	if (sub.value === "opening") return "opening";
+	// EVL-CHG-001 v0.4 §10: every Bid evaluation view lives under the Tender record.
+	if (sub.value === "evaluation") return "evaluation";
 	return "record";
 });
 const screenKey = computed(() => {
@@ -232,7 +240,7 @@ const state = computed(() => {
 		}
 		return null;
 	}
-	if (kind.value === "opening") return null; // Bid Opening draws its own states
+	if (kind.value === "opening" || kind.value === "evaluation") return null; // Bid Opening and Bid Evaluation draw their own states
 	const data = { record: record.value, addendum: addendumData.value, clarification: clarificationData.value, cancel: cancelData.value, history: historyData.value }[kind.value] || record.value;
 	if (data && data.outcome === "NOT_FOUND") return { kind: "not-found", heading: data.heading, text: data.text };
 	if (kind.value === "record" && pub.value && pub.value.rule_error === "TND_PUBLICATION_RULE_UNAVAILABLE" && record.value.screen === "authorisation") {
@@ -920,6 +928,7 @@ const railTrail = computed(() => {
 	const subLabels = { publication: "Publication", addenda: "Addendum", clarifications: "Clarification", cancel: "Cancellation", history: "History", review: "Review", requirements: "Requirements", details: "Details" };
 	if (sub.value && subLabels[sub.value]) trail.push({ label: subLabels[sub.value] });
 	if (kind.value === "opening") trail.push({ label: "Bid opening", route: [PAGE, tenderRef.value, "opening"] });
+	if (kind.value === "evaluation") trail.push({ label: "Bid evaluation", route: [PAGE, tenderRef.value, "evaluation"] });
 	return trail;
 });
 usePageRail(railEl, railTrail, { showPeSwitcher: false });
@@ -947,5 +956,24 @@ watch(
 onUnmounted(() => {
 	if (openingApp) openingApp.unmount();
 	openingApp = null;
+});
+
+// Bid Evaluation's app, mounted the same way (EVL-CHG-001 v0.4 plan D13).
+const evaluationEl = ref(null);
+let evaluationApp = null;
+watch(
+	[kind, evaluationEl],
+	([k, el]) => {
+		if (k === "evaluation" && el && !evaluationApp && typeof frappe.kt_mount_bid_evaluation === "function") evaluationApp = frappe.kt_mount_bid_evaluation(el);
+		if (k !== "evaluation" && evaluationApp) {
+			evaluationApp.unmount();
+			evaluationApp = null;
+		}
+	},
+	{ flush: "post" },
+);
+onUnmounted(() => {
+	if (evaluationApp) evaluationApp.unmount();
+	evaluationApp = null;
 });
 </script>

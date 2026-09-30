@@ -332,7 +332,8 @@ def report_view(*, tender_reference: str, user: str, version: str = "") -> dict[
 			downstream_label=f"{status.get('status')} {next_steps.when(status.get('decided_at'))}".strip() if status.get("decided_at") else status.get("status"))
 	return {"evaluation": doc.name, "tender": doc.tender_reference, "state": doc.state, "report": row.name if row else "",
 		"version_number": row.version_number if row else len(versions) + 1, "report_state": row.state if row else "Draft",
-		"report_record_version": row.record_version if row else 0, "live": live, "content": content, **extra,
+		# before its first save the draft does not exist yet; it is created at version 1
+		"report_record_version": row.record_version if row else 1, "live": live, "content": content, **extra,
 		"signatures": [{**s, "signed": next_steps.when(s["signed_at"])} for s in signing.signatures(row)] if row is not None and not live else [],
 		"history": [{**v, "frozen": next_steps.when(v.frozen_at)} for v in frozen]}
 

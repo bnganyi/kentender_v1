@@ -32,6 +32,13 @@ def when(value) -> str:
 	return get_datetime(value).strftime("%-d %b %Y, %H:%M") + " EAT" if value else ""
 
 
+def in_sentence(label: str) -> str:
+	"""A requirement name inside a sentence: "Service location" reads
+	"service location", while a code keeps its capitals ("not debarred (SD1)")."""
+	first = label.split(" ", 1)[0]
+	return label if first.isupper() and len(first) > 1 else label[:1].lower() + label[1:]
+
+
 def names(users: list[str]) -> str:
 	shown = [people.full_name(u) for u in users]
 	return shown[0] if len(shown) == 1 else ", ".join(shown[:-1]) + " and " + shown[-1] if shown else ""
@@ -156,7 +163,7 @@ def answer(doc, user: str, *, extra: dict[str, Any] | None = None) -> dict[str, 
 				candidates.append(ns.answer(ns.KIND_YOUR_TURN, headline="Review the report correction.", primary_action="open_new_evidence"))
 			if delivery.review_state == "Open":
 				candidates.append(ns.answer(ns.KIND_YOUR_TURN, headline="Review the committee's report.", primary_action="open_report"))
-		if delivery and (v["member"] or v["secretary"]):
+		if delivery and (v["member"] or v["secretary"] or v["auditor"]):
 			candidates.append(ns.answer(ns.KIND_DONE, headline=f"The committee report was sent to {people.full_name(delivery.recipient_user)} on {when(delivery.delivered_at)}."))
 	chosen = ns.choose(*candidates) if candidates else reader
 	return ns.for_viewer(chosen, technical=v["technical"], reader=ns.not_involved())
@@ -190,7 +197,7 @@ def _reviewing(doc, v, ref, chair, secretary, clarification, diligence, discussi
 		if v["member"] and user in present and not v["chair"]:
 			out.append(ns.answer(ns.KIND_YOUR_TURN, headline="Review the recorded conclusion and add any disagreement.", primary_action="record_disagreement"))
 	if v["chair"] and items and not session:
-		label = cstr(items[0].subject).split(" — ")[0].lower()
+		label = in_sentence(cstr(items[0].subject).split(" — ")[0])
 		out.append(ns.answer(ns.KIND_YOUR_TURN, headline=f"Discuss the {label} finding with the committee.", primary_action="start_discussion"))
 	for request in frappe.get_all("Evaluation Clarification", filters={"evaluation_case": doc.name, "status": ("in", ("Authorised", "Sent"))},
 			fields=["name", "status", "evaluation_bid", "notice_state", "requirement_key", "sent_at", "reply_deadline"]):
@@ -235,10 +242,12 @@ def _reviewing(doc, v, ref, chair, secretary, clarification, diligence, discussi
 			out.append(ns.answer(ns.KIND_YOUR_TURN, headline="Record the expired tender validity in the report.", primary_action="send_for_signing"))
 		else:
 			out.append(ns.answer(ns.KIND_YOUR_TURN, headline="Check the report and send it to members for signing.", primary_action="send_for_signing"))
-	if v["eligible"] and not v["secretary"]:
+	# the member's own review work, except while they sit in a live discussion
+	# (the discussion's own step is theirs then: boards D05-START, D05-MEMBER)
+	if v["eligible"] and not v["secretary"] and not (session and user in present):
 		pending = _evidence_for(doc, user)
 		if pending:
-			out.append(ns.answer(ns.KIND_YOUR_TURN, headline=f"Review the evidence for the {pending.lower()}.", primary_action="review_bid"))
+			out.append(ns.answer(ns.KIND_YOUR_TURN, headline=f"Review the evidence for the {in_sentence(pending)}.", primary_action="review_bid"))
 		elif dated["overdue"] and v["chair"]:
 			out.append(ns.answer(ns.KIND_YOUR_TURN, headline="Review the overdue evaluation and complete its report.", primary_action="view_report"))
 		else:
