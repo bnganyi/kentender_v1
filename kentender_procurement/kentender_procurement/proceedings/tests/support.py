@@ -53,7 +53,7 @@ def wipe() -> None:
 
 	names = frappe.get_all("Proceeding", filters={"fixture_namespace": NS}, pluck="name")
 	if names:
-		for doctype in ("Proceeding Attendance", "Proceeding Event", "Proceeding Attestation", "Proceeding Supplement"):
+		for doctype in ("Proceeding Attendance", "Proceeding Event", "Proceeding Attestation", "Proceeding Supplement", "Proceeding Session"):
 			frappe.db.delete(doctype, {"proceeding": ("in", names)})
 		delete_rows("Proceeding Minutes Version", {"proceeding": ("in", names)})
 		delete_rows("Proceeding", {"name": ("in", names)})

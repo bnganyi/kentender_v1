@@ -151,8 +151,9 @@ def event_body(event_type: str, *, source: str, payload: dict | None = None, not
 
 
 def event(doc, event_type: str, *, source: str, actor: str, owner_event_id: str = "", payload: dict | None = None, note: str = "", owner_reference: str = "",
-		reported_at=None, reported_by: str = "", linked_event: str = "", pre_session: bool = False) -> str:
-	"""Append one ordered event with a trusted server instant (PRC-CHG-001 v0.9 §4 Event)."""
+		reported_at=None, reported_by: str = "", linked_event: str = "", pre_session: bool = False, session: str = "") -> str:
+	"""Append one ordered event with a trusted server instant (PRC-CHG-001 v0.9 §4 Event).
+	`session` names the discussion session of a multi-session profile (EVL-CHG-001 v0.4 plan D4)."""
 	sequence = next_sequence(doc.name)
 	event_id = f"{doc.name}-E{sequence:04d}"
 	body = event_body(event_type, source=source, payload=payload, note=note, owner_reference=owner_reference, reported_at=reported_at,
@@ -162,7 +163,7 @@ def event(doc, event_type: str, *, source: str, actor: str, owner_event_id: str 
 		"actor": owners.user_or_none(actor), "source": source, "owner_event_id": owner_event_id,
 		"event_key": f"{doc.name}:{owner_event_id}" if owner_event_id else f"{doc.name}:{event_id}", "payload_digest": digest(body),
 		"owner_reference": owner_reference, "note": note, "reported_at": reported_at or None, "reported_by": reported_by or None,
-		"pre_session": 1 if pre_session else 0, "linked_event": linked_event,
+		"pre_session": 1 if pre_session else 0, "linked_event": linked_event, "session": session or None,
 	}))
 	return event_id
 

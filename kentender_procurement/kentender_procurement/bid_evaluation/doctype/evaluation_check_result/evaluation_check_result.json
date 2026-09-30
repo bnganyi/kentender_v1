@@ -1,0 +1,190 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-30 18:00:00.000000",
+ "description": "§4.1–§4.2: one result per run, bid and response; result with reason and calculation detail.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "result_id",
+  "check_run",
+  "evaluation_case",
+  "evaluation_bid",
+  "group_id",
+  "mapping_id",
+  "requirement_key",
+  "requirement_label",
+  "response_id",
+  "field_key",
+  "check_kind",
+  "applicable",
+  "result",
+  "reason",
+  "basis",
+  "evidence_assessment_required",
+  "required_display",
+  "offered_display",
+  "inputs_json",
+  "calculation_json",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "result_id",
+   "fieldtype": "Data",
+   "label": "Result ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "check_run",
+   "fieldtype": "Data",
+   "label": "Check run",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "evaluation_case",
+   "fieldtype": "Link",
+   "label": "Evaluation case",
+   "read_only": 1,
+   "options": "Evaluation Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "evaluation_bid",
+   "fieldtype": "Data",
+   "label": "Evaluation bid",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "group_id",
+   "fieldtype": "Data",
+   "label": "Group id",
+   "read_only": 1
+  },
+  {
+   "fieldname": "mapping_id",
+   "fieldtype": "Data",
+   "label": "Mapping id",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "requirement_key",
+   "fieldtype": "Data",
+   "label": "Requirement key",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "requirement_label",
+   "fieldtype": "Data",
+   "label": "Requirement label",
+   "read_only": 1
+  },
+  {
+   "fieldname": "response_id",
+   "fieldtype": "Data",
+   "label": "Response id",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "field_key",
+   "fieldtype": "Data",
+   "label": "Field key",
+   "read_only": 1
+  },
+  {
+   "fieldname": "check_kind",
+   "fieldtype": "Data",
+   "label": "Check kind",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "applicable",
+   "fieldtype": "Check",
+   "label": "Applicable",
+   "read_only": 1,
+   "default": "1"
+  },
+  {
+   "fieldname": "result",
+   "fieldtype": "Select",
+   "label": "Result",
+   "read_only": 1,
+   "options": "Meets\nDoes not meet\nNeeds review\nNot applicable",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "basis",
+   "fieldtype": "Select",
+   "label": "Basis",
+   "read_only": 1,
+   "options": "Comparison\nPresence\nCalculation\nRule unavailable\nRecorded"
+  },
+  {
+   "fieldname": "evidence_assessment_required",
+   "fieldtype": "Check",
+   "label": "Evidence assessment required",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "required_display",
+   "fieldtype": "Small Text",
+   "label": "Required display",
+   "read_only": 1
+  },
+  {
+   "fieldname": "offered_display",
+   "fieldtype": "Small Text",
+   "label": "Offered display",
+   "read_only": 1
+  },
+  {
+   "fieldname": "inputs_json",
+   "fieldtype": "Long Text",
+   "label": "Inputs json",
+   "read_only": 1
+  },
+  {
+   "fieldname": "calculation_json",
+   "fieldtype": "Long Text",
+   "label": "Calculation json",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Evaluation",
+ "name": "Evaluation Check Result",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:result_id"
+}

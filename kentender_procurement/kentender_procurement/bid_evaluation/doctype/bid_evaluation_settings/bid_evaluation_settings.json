@@ -1,0 +1,36 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-30 18:00:00.000000",
+ "description": "Technical settings (plan D15): the participation lapse is an implementation value, not a business timeout (EVL v0.4 §5.2).",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "presence_lapse_seconds"
+ ],
+ "fields": [
+  {
+   "fieldname": "presence_lapse_seconds",
+   "fieldtype": "Int",
+   "label": "Presence lapse seconds",
+   "read_only": 0,
+   "default": "90"
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Evaluation",
+ "name": "Bid Evaluation Settings",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "issingle": 1
+}

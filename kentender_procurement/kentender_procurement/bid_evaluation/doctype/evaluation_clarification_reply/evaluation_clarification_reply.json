@@ -1,0 +1,133 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-30 18:00:00.000000",
+ "description": "§5.3: the supplier's one reply; editable as a draft until sent; the immutable original bid is untouched.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "reply_id",
+  "clarification",
+  "evaluation_case",
+  "organisation",
+  "author_user",
+  "state",
+  "body",
+  "attachments_json",
+  "saved_at",
+  "received_at",
+  "timeliness",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "reply_id",
+   "fieldtype": "Data",
+   "label": "Reply ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "clarification",
+   "fieldtype": "Data",
+   "label": "Clarification",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "evaluation_case",
+   "fieldtype": "Link",
+   "label": "Evaluation case",
+   "read_only": 1,
+   "options": "Evaluation Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "organisation",
+   "fieldtype": "Data",
+   "label": "Organisation",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "author_user",
+   "fieldtype": "Link",
+   "label": "Author user",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "label": "State",
+   "read_only": 1,
+   "options": "Draft\nSent",
+   "reqd": 1
+  },
+  {
+   "fieldname": "body",
+   "fieldtype": "Small Text",
+   "label": "Body",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attachments_json",
+   "fieldtype": "Long Text",
+   "label": "Attachments json",
+   "read_only": 1
+  },
+  {
+   "fieldname": "saved_at",
+   "fieldtype": "Datetime",
+   "label": "Saved at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "received_at",
+   "fieldtype": "Datetime",
+   "label": "Received at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "timeliness",
+   "fieldtype": "Select",
+   "label": "Timeliness",
+   "read_only": 1,
+   "options": "\nOn time\nReceived late"
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record version",
+   "read_only": 1,
+   "reqd": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Evaluation",
+ "name": "Evaluation Clarification Reply",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:reply_id"
+}

@@ -17,7 +17,7 @@ from typing import Any
 import frappe
 from frappe.utils import cint, cstr
 
-from kentender_procurement.proceedings.services import attendance, clock, owners, records
+from kentender_procurement.proceedings.services import attendance, clock, owners, profiles, records
 from kentender_procurement.proceedings.services.errors import fail
 
 MEMBER_FIELDS = ("member_user", "full_name", "committee_capacity", "appointment_reference")
@@ -36,7 +36,9 @@ def _roster_rows(roster: list[dict[str, Any]], segment: int) -> list[dict[str, A
 
 
 def create_proceeding(*, owner_type: str, owner_id: str, title: str, idempotency_key: str, actor: str) -> dict[str, Any]:
-	"""CreateProceeding: exactly one Pending session per owner (PRC-A01)."""
+	"""CreateProceeding: exactly one proceeding per owner (PRC-A01), in the
+	owner's profile (EVL-CHG-001 v0.4 plan D4): a Bid Opening starts Pending,
+	a Bid Evaluation case starts Open for its later sessions."""
 
 	def body() -> dict[str, Any]:
 		existing = records.find(owner_type, owner_id)
@@ -46,9 +48,11 @@ def create_proceeding(*, owner_type: str, owner_id: str, title: str, idempotency
 			return records.summary(doc, cstr(first))
 		if not cstr(title).strip():
 			fail("PRC_EVIDENCE_INCOMPLETE", {"fields": {"title": "A title is required."}})
+		proceeding_type = profiles.type_for(owners.adapters().get(owner_type))
 		doc = records.insert(frappe.get_doc({
 			"doctype": records.PROCEEDING, "proceeding_id": f"PRC-{owner_id}", "owner_type": owner_type, "owner_id": owner_id,
-			"owner_key": records.owner_key(owner_type, owner_id), "proceeding_type": "Bid Opening", "title": cstr(title).strip(), "state": "Pending",
+			"owner_key": records.owner_key(owner_type, owner_id), "proceeding_type": proceeding_type, "title": cstr(title).strip(),
+			"state": profiles.profile(proceeding_type)["initial_state"],
 			"created_at": clock.now(), "created_by": owners.user_or_none(actor), "record_version": 1,
 		}))
 		event_id = records.event(doc, "ProceedingCreated", source="System", actor=actor, pre_session=True)

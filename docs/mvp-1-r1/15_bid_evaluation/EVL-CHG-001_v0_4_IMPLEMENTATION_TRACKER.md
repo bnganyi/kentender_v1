@@ -2,9 +2,9 @@
 
 | Control | Value |
 |---|---|
-| Version | 0.4-tracker.2 |
+| Version | 0.4-tracker.3 |
 | Date | 30 September 2026 |
-| Status | Phase 0 done (EVL-G00, 30 Sep 2026); Phase 1 next. (0.4-tracker.1 read: Planned. No phase started; no code written.) |
+| Status | Phases 0–2 done (EVL-G00, EVL-G01, PRC-G02E, 30 Sep 2026); Phase 3 in progress. (0.4-tracker.2 read: Phase 0 done (EVL-G00, 30 Sep 2026); Phase 1 next.) (0.4-tracker.1 read: Planned. No phase started; no code written.) |
 
 **Authority:** `KenTender_EVL-CHG-001_Bid_Evaluation_v0_4.md`, Approved 30 Sep 2026 by the Project Owner, including R1–R3. Governing standard: KT-STD-001 v1.12 (approved 30 Sep 2026). Shared services: PRC-CHG-001 v0.9 and TRUST-ADR-001 v0.1. EVL v0.4 §6 extends both, and those extensions are owed as coordinated amendments (OD-A).
 
@@ -67,8 +67,8 @@
 | Gate | Condition | Status | Evidence |
 |---|---|---|---|
 | EVL-G00 | Phase 0: inventory = 107 boards, each in exactly one slice; §8 error contract, §7.3 hand-off register, fixture chronology, rule reconciliation (every response identity classified) and scope binding written; conflicts logged; design folder and spec committed; `make artboard-provenance-gate` green | Passed | 30 Sep 2026: inventory 107 rows (92 Covered, 15 Conditional; slices 11.1 = 16, 11.2 = 11, 11.3 = 8, 11.4 = 14, 11.5 = 8, 11.6 = 24, 11.7 = 15, 11.8 = 4, 12 = 7); error contract 15 + 2; hand-off register 20 rows; chronology 15 ordinary rows + 22 branches, each with a fixture entity; rule reconciliation 136 evaluated response rows, every one classified; scope binding six predicates bound (D21). Design and spec committed in `f35fffce`. `make artboard-provenance-gate` 3/3 OK. Findings C21–C24, D21–D23. |
-| EVL-G01 | Phase 1: module, doctypes, core Support Issue, PRC schema additions, flags guard, sidebar replacement, `make validate-links`, migrate clean twice | Planned | |
-| PRC-G02E | Phase 2: `make prc-services-gate` including the Evaluation-profile tests; `make bop-services-gate` unchanged and green | Planned | |
+| EVL-G01 | Phase 1: module, doctypes, core Support Issue, PRC schema additions, flags guard, sidebar replacement, `make validate-links`, migrate clean twice | Passed | 30 Sep 2026: `test_evl_schema` 7/7 (red first: 65 errors, DocType not found) and `test_prc_schema` 10/10; Module Def `Bid Evaluation` has `app_name = kentender_procurement` after the first migrate; two clean migrates (the second rewrote only the Procurement sidebar stamp, reverted). The sidebar replacement moved to Phase 11 (EVL4-108). `make validate-links` not run: no link changed. |
+| PRC-G02E | Phase 2: `make prc-services-gate` including the Evaluation-profile tests; `make bop-services-gate` unchanged and green | Passed | 30 Sep 2026: `make prc-services-gate` 62/62 (schema 10, lifecycle 13, events 8, minutes 11, access 4, evaluation profile 16); `make bop-services-gate` 85/85 unchanged (schema 7, gateways 13, custody seam 7, pre-session 22, ceremony 13, record 9, API 5, public 9). The profile tests were written first but passed on their first run; mutation checks (presence rule off, stale-target rule off) each failed the suite (3 failures), then the code was restored. |
 | EVL-G03 | Phase 3: Bid Opening seam (digest verified), Bid Submission package seam (four trust outcomes), Tenders seam, rules file and validator, Support Issue service, simulation controls; `bop-services-gate`, Bid Submission and Tenders regression green | Planned | |
 | EVL-G04 | Phase 4: preparation, scope gate, appointment, replacement, secretary, declaration, unavailability, roster rules, preparation work items | Planned | |
 | EVL-G05 | Phase 5: intake, empty outcome, source issue, checks, rules vectors, aggregation, comparison, funding, timers | Planned | |
@@ -101,21 +101,21 @@
 
 | ID | Phase | Item | Status | Evidence |
 |---|---|---|---|---|
-| EVL4-101 | 1 | `bid_evaluation` module in `modules.txt`; Module Def app check after the first migrate (D1) | Planned | |
-| EVL4-102 | 1 | Case and committee doctypes: Evaluation Case, Appointment (+ Committee Member), Secretary Appointment, Declaration, Member Unavailability (D2) | Planned | |
-| EVL4-103 | 1 | Assessment doctypes: Source Intake, Evaluation Bid, Check Run, Check Result, Finding, Discussion Item, Conclusion, Disagreement (D2) | Planned | |
-| EVL4-104 | 1 | Correspondence, diligence, report and event doctypes: Clarification (+ Reply), Verification Plan, Verification Observation, Report Version, Report Delivery, Source Event, Correction Notice, Command Journal, Bid Evaluation Settings (D2) | Planned | |
-| EVL4-105 | 1 | Core `Support Issue` doctype (D12) | Planned | |
-| EVL4-106 | 1 | Proceedings schema: `Proceeding Session`, `proceeding_type` option "Bid Evaluation", new target types (D4); BOP schema tests unchanged | Planned | |
-| EVL4-107 | 1 | Schema contract tests (`test_evl_schema.py`, core Support Issue schema, PRC schema additions), red first; Makefile `evl-preflight`, `evl-services-gate` | Planned | |
-| EVL4-108 | 1 | Sidebar "Evaluation" coming-soon replaced by the `bid-evaluation` Page link; `workspace_sidebar/*.json` dangling-link check; `make validate-links`; migrate clean twice (D13) | Planned | |
-| EVL4-201 | 2 | `proceedings/services/profiles.py`: per-type pre-session events, register requirement, target types, event completeness, capacities, wording (D4) | Planned | |
-| EVL4-202 | 2 | Sessions: StartEvaluationDiscussion (chair attendance in the same action), Join, Leave, End; one active session per evaluation; no group attendance | Planned | |
-| EVL4-203 | 2 | RecordEvaluationConclusion: ordered owner event with the actual participating roster; member-authored disagreement keeps its author | Planned | |
-| EVL4-204 | 2 | FreezeEvaluationReport / SupersedeEvaluationReport: exact report and annex targets, and verification report page and signature targets | Planned | |
-| EVL4-205 | 2 | RecordEvaluationProof through `kt_trust_signing_services`; a stale or uncertain proof never satisfies the current target | Planned | |
-| EVL4-206 | 2 | CompleteEvaluationRecord, AppendEvaluationCorrection, scoped read and export | Planned | |
-| EVL4-207 | 2 | Regression: `make bop-services-gate` and the existing PRC tests unchanged and green | Planned | |
+| EVL4-101 | 1 | `bid_evaluation` module in `modules.txt`; Module Def app check after the first migrate (D1) | Done | 30 Sep 2026: `Bid Evaluation` in `modules.txt`; Module Def app correct after the first migrate (no new-module cache trap). |
+| EVL4-102 | 1 | Case and committee doctypes: Evaluation Case, Appointment (+ Committee Member), Secretary Appointment, Declaration, Member Unavailability (D2) | Done | 30 Sep 2026: generated with the flags guard (`kt_evl_command`, `kt_fixture_wipe`); `test_evl_schema`. |
+| EVL4-103 | 1 | Assessment doctypes: Source Intake, Evaluation Bid, Check Run, Check Result, Finding, Discussion Item, Conclusion, Disagreement (D2) | Done | 30 Sep 2026: as EVL4-102; bid-content records have no role at all (`test_administrators_cannot_read_bid_content_or_findings`). |
+| EVL4-104 | 1 | Correspondence, diligence, report and event doctypes: Clarification (+ Reply), Verification Plan, Verification Observation, Report Version, Report Delivery, Source Event, Correction Notice, Command Journal, Bid Evaluation Settings (D2) | Done | 30 Sep 2026: as EVL4-102, plus the Single `EVL Test Environment Controls` (plan D16) with no role. |
+| EVL4-105 | 1 | Core `Support Issue` doctype (D12) | Done | 30 Sep 2026: `kentender_core` doctype `Support Issue` (guard `kt_support_issue_command`); `TestSupportIssueRecord`. |
+| EVL4-106 | 1 | Proceedings schema: `Proceeding Session`, `proceeding_type` option "Bid Evaluation", new target types (D4); BOP schema tests unchanged | Done | 30 Sep 2026: `Proceeding Session` (no role); `proceeding_type` + "Bid Evaluation"; state + "Open"; attendance/event `session`; attendance capacity + "Secretary"; minutes version `record_kind` (default "Opening minutes") and `owner_reference`; three new target types. Bid Opening always sets its state explicitly, so the inserted option changes nothing there. `TestEvaluationProfileSchema` 2/2. |
+| EVL4-107 | 1 | Schema contract tests (`test_evl_schema.py`, core Support Issue schema, PRC schema additions), red first; Makefile `evl-preflight`, `evl-services-gate` | Done | 30 Sep 2026: `test_evl_schema.py` (red first), PRC schema additions; Makefile `evl-preflight`, `evl-services-gate` (grows per phase). |
+| EVL4-108 | 1 → 11 | Sidebar "Evaluation" coming-soon replaced by the `bid-evaluation` Page link; `workspace_sidebar/*.json` dangling-link check; `make validate-links`; migrate clean twice (D13) | Planned | 30 Sep 2026: moved to Phase 11 with EVL4-1102. A sidebar link to a Page that does not exist yet fails the whole site migrate (the reverse-sync gotcha), so the link lands with the Page. |
+| EVL4-201 | 2 | `proceedings/services/profiles.py`: per-type pre-session events, register requirement, target types, event completeness, capacities, wording (D4) | Done | 30 Sep 2026: `proceedings/services/profiles.py`; `lifecycle.create_proceeding` takes the type from the owner adapter (`proceeding_type` attribute; default Bid Opening). |
+| EVL4-202 | 2 | Sessions: StartEvaluationDiscussion (chair attendance in the same action), Join, Leave, End; one active session per evaluation; no group attendance | Done | 30 Sep 2026: `proceedings/services/sessions.py` start (starter's arrival in the same action), join, leave, lapse (owner/system), end (everyone present leaves at the end instant); one active session. |
+| EVL4-203 | 2 | RecordEvaluationConclusion: ordered owner event with the actual participating roster; member-authored disagreement keeps its author | Done | 30 Sep 2026: `sessions.record_conclusion` (absent members listed; participants recorded on the event; owner-event replay checks the stored participants), `append_owner_event`, `record_member_statement` (member only, own words). |
+| EVL4-204 | 2 | FreezeEvaluationReport / SupersedeEvaluationReport: exact report and annex targets, and verification report page and signature targets | Done | 30 Sep 2026: `proceedings/services/record_versions.py` freeze/supersede per record kind (report `-Rnn`, verification report `-Vnn`); one frozen version per kind. |
+| EVL4-205 | 2 | RecordEvaluationProof through `kt_trust_signing_services`; a stale or uncertain proof never satisfies the current target | Done | 30 Sep 2026: `record_versions.record_proof` through `kt_trust_signing_services`; no proxy; stale digest or superseded version → PRC_TARGET_CHANGED; Indeterminate kept, satisfies nothing. |
+| EVL4-206 | 2 | CompleteEvaluationRecord, AppendEvaluationCorrection, scoped read and export | Done | 30 Sep 2026: `complete_record` (every proof, case stays Open), `append_correction` (finalized content unchanged), `abort` (session ended, frozen versions superseded), `read`/`export`. |
+| EVL4-207 | 2 | Regression: `make bop-services-gate` and the existing PRC tests unchanged and green | Done | 30 Sep 2026: `make bop-services-gate` 85/85 and the pre-existing PRC modules 46/46 after the change. |
 | EVL4-301 | 3 | `bid_opening/services/evaluation_seam.py`: completion (digest recomputed, C5), acknowledge, final_outcome, register_rows, supplements, is_excluded_from_evaluation (D5) | Planned | |
 | EVL4-302 | 3 | `kt_opening_completion_consumers` hook called after commit for the nonempty handoff and the final no-bids outcome; BOP tracker addendum row | Planned | |
 | EVL4-303 | 3 | `bid_submission/services/evaluation_gateway.py::released_package`: completion-bound release, digest check, four trust outcomes, one correlation ID; BDS tracker addendum row (D6) | Planned | |

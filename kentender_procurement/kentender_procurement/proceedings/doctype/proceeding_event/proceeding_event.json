@@ -9,6 +9,7 @@
  "field_order": [
   "event_id",
   "proceeding",
+  "session",
   "sequence",
   "event_type",
   "recorded_at",
@@ -40,6 +41,12 @@
    "read_only": 1,
    "options": "Proceeding",
    "reqd": 1
+  },
+  {
+   "fieldname": "session",
+   "fieldtype": "Data",
+   "label": "Session",
+   "read_only": 1
   },
   {
    "fieldname": "sequence",
@@ -139,7 +146,7 @@
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-30 09:00:00.000000",
+ "modified": "2026-09-30 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Proceedings",
  "name": "Proceeding Event",

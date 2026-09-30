@@ -1,0 +1,283 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-30 18:00:00.000000",
+ "description": "§5.3 written clarification: authorised question, scope and deadline; delivery evidence; one reply; final disposition closes it atomically.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "clarification_id",
+  "evaluation_case",
+  "evaluation_bid",
+  "requirement_key",
+  "response_id",
+  "question",
+  "reply_scope",
+  "reply_deadline",
+  "authorised_by",
+  "authorised_at",
+  "session",
+  "conclusion",
+  "status",
+  "sent_by",
+  "sent_at",
+  "recipient_organisation",
+  "recipient_users_json",
+  "notice_state",
+  "notice_attempts",
+  "notice_correlation",
+  "replaces",
+  "replaced_by",
+  "withdrawal_reason",
+  "withdrawn_by",
+  "withdrawn_at",
+  "disposition",
+  "disposition_result",
+  "disposition_reason",
+  "disposition_conclusion",
+  "closed_at",
+  "closure_reason",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "clarification_id",
+   "fieldtype": "Data",
+   "label": "Clarification ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "evaluation_case",
+   "fieldtype": "Link",
+   "label": "Evaluation case",
+   "read_only": 1,
+   "options": "Evaluation Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "evaluation_bid",
+   "fieldtype": "Data",
+   "label": "Evaluation bid",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "requirement_key",
+   "fieldtype": "Data",
+   "label": "Requirement key",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "response_id",
+   "fieldtype": "Data",
+   "label": "Response id",
+   "read_only": 1
+  },
+  {
+   "fieldname": "question",
+   "fieldtype": "Small Text",
+   "label": "Question",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "reply_scope",
+   "fieldtype": "Small Text",
+   "label": "Reply scope",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "reply_deadline",
+   "fieldtype": "Datetime",
+   "label": "Reply deadline",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "authorised_by",
+   "fieldtype": "Link",
+   "label": "Authorised by",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "authorised_at",
+   "fieldtype": "Datetime",
+   "label": "Authorised at",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "session",
+   "fieldtype": "Data",
+   "label": "Session",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "conclusion",
+   "fieldtype": "Data",
+   "label": "Conclusion",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "read_only": 1,
+   "options": "Authorised\nSent\nWithdrawn\nClosed",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sent_by",
+   "fieldtype": "Link",
+   "label": "Sent by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "sent_at",
+   "fieldtype": "Datetime",
+   "label": "Sent at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recipient_organisation",
+   "fieldtype": "Data",
+   "label": "Recipient organisation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "recipient_users_json",
+   "fieldtype": "Long Text",
+   "label": "Recipient users json",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notice_state",
+   "fieldtype": "Select",
+   "label": "Notice state",
+   "read_only": 1,
+   "options": "\nPending\nDelivered\nDelivery problem"
+  },
+  {
+   "fieldname": "notice_attempts",
+   "fieldtype": "Int",
+   "label": "Notice attempts",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "notice_correlation",
+   "fieldtype": "Data",
+   "label": "Notice correlation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "replaces",
+   "fieldtype": "Data",
+   "label": "Replaces",
+   "read_only": 1
+  },
+  {
+   "fieldname": "replaced_by",
+   "fieldtype": "Data",
+   "label": "Replaced by",
+   "read_only": 1
+  },
+  {
+   "fieldname": "withdrawal_reason",
+   "fieldtype": "Small Text",
+   "label": "Withdrawal reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "withdrawn_by",
+   "fieldtype": "Link",
+   "label": "Withdrawn by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "withdrawn_at",
+   "fieldtype": "Datetime",
+   "label": "Withdrawn at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "disposition",
+   "fieldtype": "Select",
+   "label": "Disposition",
+   "read_only": 1,
+   "options": "\nConsidered\nNot considered\nExcluded change\nNo reply"
+  },
+  {
+   "fieldname": "disposition_result",
+   "fieldtype": "Select",
+   "label": "Disposition result",
+   "read_only": 1,
+   "options": "\nMeets\nDoes not meet\nNeeds review"
+  },
+  {
+   "fieldname": "disposition_reason",
+   "fieldtype": "Small Text",
+   "label": "Disposition reason",
+   "read_only": 1
+  },
+  {
+   "fieldname": "disposition_conclusion",
+   "fieldtype": "Data",
+   "label": "Disposition conclusion",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closed_at",
+   "fieldtype": "Datetime",
+   "label": "Closed at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closure_reason",
+   "fieldtype": "Select",
+   "label": "Closure reason",
+   "read_only": 1,
+   "options": "\nFinal disposition\nWithdrawn\nCancelled"
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record version",
+   "read_only": 1,
+   "reqd": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Evaluation",
+ "name": "Evaluation Clarification",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:clarification_id"
+}

@@ -57,7 +57,8 @@ class TestProceedingsRecords(IntegrationTestCase):
 
 	def test_the_lifecycle_states_are_the_spec_states(self):
 		# PRC-CHG-001 v0.9 §5, including the two terminal failure states.
-		self.assertEqual(options("Proceeding", "state"), ["Pending", "In session", "Session ended", "Awaiting attestations", "Finalized", "Not held", "Aborted after start"])
+		# EVL-CHG-001 v0.4 plan D4 adds "Open" for the multi-session Bid Evaluation profile.
+		self.assertEqual(options("Proceeding", "state"), ["Pending", "Open", "In session", "Session ended", "Awaiting attestations", "Finalized", "Not held", "Aborted after start"])
 		# TRUST-ADR-001 v0.1 §4: four distinct trust outcomes.
 		self.assertEqual(options("Proceeding Attestation", "verification_result"), ["Accepted/Verified", "Rejected", "Unavailable", "Indeterminate"])
 
@@ -95,5 +96,33 @@ class TestProceedingsRecords(IntegrationTestCase):
 	def test_proceedings_never_imports_its_owner(self):
 		# Plan D1: the shared service knows its owner only through a hook.
 		root = Path(frappe.get_app_path("kentender_procurement", "proceedings"))
-		offenders = [str(p) for p in root.rglob("*.py") if p.name != "test_prc_schema.py" and "bid_opening" in p.read_text(encoding="utf-8")]
+		offenders = [
+			str(p) for p in root.rglob("*.py")
+			if p.name != "test_prc_schema.py" and ("bid_opening" in p.read_text(encoding="utf-8") or "bid_evaluation" in p.read_text(encoding="utf-8"))
+		]
 		self.assertEqual(offenders, [])
+
+
+class TestEvaluationProfileSchema(IntegrationTestCase):
+	"""EVL-CHG-001 v0.4 plan D4 (EVL4-106): additive Bid Evaluation profile —
+	several actual sessions, per-session attendance and events, report and
+	verification-report targets. Bid Opening values are unchanged."""
+
+	def test_the_type_and_session_record(self):
+		self.assertEqual(options("Proceeding", "proceeding_type"), ["Bid Opening", "Bid Evaluation"])
+		meta = frappe.get_meta("Proceeding Session")
+		self.assertEqual(meta.module, MODULE)
+		self.assertEqual({"session_id", "proceeding", "session_number", "state", "started_by", "actual_start", "ended_by", "actual_end"} - {f.fieldname for f in meta.fields}, set())
+		self.assertEqual(options("Proceeding Session", "state"), ["Active", "Ended"])
+		self.assertEqual(meta.permissions, [])
+		for doctype in ("Proceeding Attendance", "Proceeding Event"):
+			self.assertIsNotNone(frappe.get_meta(doctype).get_field("session"), doctype)
+		self.assertIn("Secretary", options("Proceeding Attendance", "capacity"))
+
+	def test_record_kinds_and_targets(self):
+		self.assertEqual(options("Proceeding Minutes Version", "record_kind"), ["Opening minutes", "Evaluation report", "Verification report"])
+		self.assertEqual(frappe.get_meta("Proceeding Minutes Version").get_field("record_kind").default, "Opening minutes")
+		self.assertEqual(options("Proceeding Minutes Target", "target_type"), [
+			"Tender page", "Price location", "Change location", "Minutes page", "Final minutes page",
+			"Report signature", "Verification report page", "Verification report signature",
+		])

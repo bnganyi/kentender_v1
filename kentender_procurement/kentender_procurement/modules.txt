@@ -8,3 +8,4 @@ STD Templates
 Bid Submission
 Bid Opening
 Proceedings
+Bid Evaluation

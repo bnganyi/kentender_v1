@@ -18,6 +18,7 @@
   "created_by",
   "actual_start",
   "actual_end",
+  "current_session",
   "ceased_at",
   "not_held_reason",
   "cancellation_reference",
@@ -64,7 +65,7 @@
    "fieldtype": "Select",
    "label": "Proceeding type",
    "read_only": 1,
-   "options": "Bid Opening",
+   "options": "Bid Opening\nBid Evaluation",
    "reqd": 1
   },
   {
@@ -79,7 +80,7 @@
    "fieldtype": "Select",
    "label": "State",
    "read_only": 1,
-   "options": "Pending\nIn session\nSession ended\nAwaiting attestations\nFinalized\nNot held\nAborted after start",
+   "options": "Pending\nOpen\nIn session\nSession ended\nAwaiting attestations\nFinalized\nNot held\nAborted after start",
    "reqd": 1
   },
   {
@@ -107,6 +108,13 @@
    "fieldtype": "Datetime",
    "label": "Actual end",
    "read_only": 1
+  },
+  {
+   "fieldname": "current_session",
+   "fieldtype": "Data",
+   "label": "Current session",
+   "read_only": 1,
+   "description": "Bid Evaluation profile: the one active discussion session, if any (EVL-CHG-001 v0.4 plan D4)."
   },
   {
    "fieldname": "ceased_at",
@@ -167,7 +175,7 @@
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-29 18:00:00.000000",
+ "modified": "2026-09-30 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Proceedings",
  "name": "Proceeding",

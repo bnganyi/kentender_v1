@@ -1,0 +1,109 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-30 18:00:00.000000",
+ "description": "EVL-CHG-001 v0.4 plan D4: one actual discussion session of a multi-session proceeding (Bid Evaluation profile); at most one active per proceeding.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "session_id",
+  "proceeding",
+  "session_number",
+  "state",
+  "subject",
+  "started_by",
+  "actual_start",
+  "ended_by",
+  "actual_end",
+  "end_note"
+ ],
+ "fields": [
+  {
+   "fieldname": "session_id",
+   "fieldtype": "Data",
+   "label": "Session ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "proceeding",
+   "fieldtype": "Link",
+   "label": "Proceeding",
+   "read_only": 1,
+   "options": "Proceeding",
+   "reqd": 1
+  },
+  {
+   "fieldname": "session_number",
+   "fieldtype": "Int",
+   "label": "Session number",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "label": "State",
+   "read_only": 1,
+   "options": "Active\nEnded",
+   "reqd": 1
+  },
+  {
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "label": "Subject",
+   "read_only": 1
+  },
+  {
+   "fieldname": "started_by",
+   "fieldtype": "Link",
+   "label": "Started by",
+   "read_only": 1,
+   "options": "User",
+   "reqd": 1
+  },
+  {
+   "fieldname": "actual_start",
+   "fieldtype": "Datetime",
+   "label": "Actual start",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "ended_by",
+   "fieldtype": "Link",
+   "label": "Ended by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "actual_end",
+   "fieldtype": "Datetime",
+   "label": "Actual end",
+   "read_only": 1
+  },
+  {
+   "fieldname": "end_note",
+   "fieldtype": "Small Text",
+   "label": "End note",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Proceedings",
+ "name": "Proceeding Session",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:session_id"
+}

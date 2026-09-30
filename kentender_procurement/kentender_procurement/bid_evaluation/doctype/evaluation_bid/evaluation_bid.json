@@ -1,0 +1,147 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-30 18:00:00.000000",
+ "description": "§6.1: one row per opened bid; references and digests of the immutable source, with the source facts read at intake (never edited).",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "evaluation_bid_id",
+  "evaluation_case",
+  "intake",
+  "entry_reference",
+  "entry_number",
+  "envelope_id",
+  "receipt_reference",
+  "submission_version",
+  "package_digest",
+  "bid_reference",
+  "tenderer_name",
+  "organisation_id",
+  "submitted_total",
+  "currency",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "evaluation_bid_id",
+   "fieldtype": "Data",
+   "label": "Evaluation bid ID",
+   "read_only": 1,
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "evaluation_case",
+   "fieldtype": "Link",
+   "label": "Evaluation case",
+   "read_only": 1,
+   "options": "Evaluation Case",
+   "reqd": 1
+  },
+  {
+   "fieldname": "intake",
+   "fieldtype": "Data",
+   "label": "Intake",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "entry_reference",
+   "fieldtype": "Data",
+   "label": "Entry reference",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "entry_number",
+   "fieldtype": "Int",
+   "label": "Entry number",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "envelope_id",
+   "fieldtype": "Data",
+   "label": "Envelope id",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "receipt_reference",
+   "fieldtype": "Data",
+   "label": "Receipt reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submission_version",
+   "fieldtype": "Data",
+   "label": "Submission version",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "package_digest",
+   "fieldtype": "Data",
+   "label": "Package digest",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "bid_reference",
+   "fieldtype": "Data",
+   "label": "Bid reference",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tenderer_name",
+   "fieldtype": "Data",
+   "label": "Tenderer name",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "organisation_id",
+   "fieldtype": "Data",
+   "label": "Organisation id",
+   "read_only": 1
+  },
+  {
+   "fieldname": "submitted_total",
+   "fieldtype": "Data",
+   "label": "Submitted total",
+   "read_only": 1,
+   "reqd": 1,
+   "description": "Exact decimal text from the package price; a source fact, never an evaluated amount."
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Data",
+   "label": "Currency",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-09-30 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bid Evaluation",
+ "name": "Evaluation Bid",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "field:evaluation_bid_id"
+}

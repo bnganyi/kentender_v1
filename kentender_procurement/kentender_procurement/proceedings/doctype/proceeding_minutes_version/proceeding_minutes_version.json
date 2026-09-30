@@ -10,6 +10,8 @@
   "minutes_version_id",
   "proceeding",
   "version_number",
+  "record_kind",
+  "owner_reference",
   "content",
   "content_digest",
   "page_count",
@@ -47,6 +49,22 @@
    "label": "Version number",
    "read_only": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "record_kind",
+   "fieldtype": "Select",
+   "label": "Record kind",
+   "read_only": 1,
+   "reqd": 1,
+   "default": "Opening minutes",
+   "options": "Opening minutes\nEvaluation report\nVerification report"
+  },
+  {
+   "fieldname": "owner_reference",
+   "fieldtype": "Data",
+   "label": "Owner reference",
+   "read_only": 1,
+   "description": "The owner's own version identity (for example an Evaluation report version)."
   },
   {
    "fieldname": "content",
@@ -139,7 +157,7 @@
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-30 09:00:00.000000",
+ "modified": "2026-09-30 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Proceedings",
  "name": "Proceeding Minutes Version",

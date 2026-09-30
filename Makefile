@@ -722,7 +722,7 @@ bop-preflight:
 
 # PRC-CHG-001 v0.9 shared Proceedings service (plan Phase 2 gate PRC-G02; Phase 1 schema).
 prc-services-gate: bop-preflight
-	cd $(BENCH_ROOT) && for m in test_prc_schema test_prc_lifecycle test_prc_events test_prc_minutes test_prc_access; do \
+	cd $(BENCH_ROOT) && for m in test_prc_schema test_prc_lifecycle test_prc_events test_prc_minutes test_prc_access test_prc_evaluation_profile; do \
 		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.proceedings.tests.$$m || exit 1; done
 
 # BOP-CHG-001 v0.10 plan Phase 7 gates: every state x actor has a sound next
@@ -738,6 +738,18 @@ bop-leakage-gate: bop-preflight
 bop-services-gate: bop-preflight
 	cd $(BENCH_ROOT) && for m in test_bop_schema test_bop_gateways test_bop_custody_seam test_bop_pre_session test_bop_ceremony test_bop_record test_bop_api test_bop_public; do \
 		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_opening.tests.$$m || exit 1; done
+
+# EVL-CHG-001 v0.4 Bid Evaluation (with the Proceedings Evaluation profile).
+# Never run while a Playwright run mutates the site: `bench run-tests` has no
+# rollback on this bench. Test worlds use years >= 2100 and purge themselves.
+evl-preflight:
+	@if pgrep -f "[p]laywright test" >/dev/null; then echo "A Playwright run is active on this site; run the Bid Evaluation Python gates after it finishes."; exit 1; fi
+
+# EVL-CHG-001 v0.4 owner services (plan Phases 1 and 3-10); grows per phase.
+EVL_SERVICE_MODULES ?= test_evl_schema
+evl-services-gate: evl-preflight
+	cd $(BENCH_ROOT) && for m in $(EVL_SERVICE_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_evaluation.tests.$$m || exit 1; done
 
 # BOP-CHG-001 v0.10 plan Phase 8 — the Bid Opening Desk screens. The fidelity
 # gate mounts each screen with the server answer captured for its board
