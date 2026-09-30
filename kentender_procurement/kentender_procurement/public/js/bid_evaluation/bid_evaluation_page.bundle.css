@@ -9,3 +9,7 @@
 	display: inline-flex; align-items: center; justify-content: center;
 	font-size: 12px; font-weight: 600;
 }
+
+/* The design system's empty-state icon (`.kt-empty svg`, 30 px); the Desk
+   Industry stylesheet has no rule for it. */
+.kt-industry .evl-board .kt-empty svg { width: 30px; height: 30px; color: var(--kt-color-neutral-600); margin-bottom: var(--kt-space-3); }

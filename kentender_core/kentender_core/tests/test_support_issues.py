@@ -35,9 +35,18 @@ class TestSupportIssues(IntegrationTestCase):
 			administration.grant(user=HOLDER, business_role="Technical Operator", organisation_unit="", fixture_namespace=NS, actor="Administrator")
 		frappe.db.commit()
 
+	@staticmethod
+	def _remove_issues():
+		"""This test's issues and every notice they sent (the site's real
+		Technical Operators are holders too)."""
+		issues = frappe.get_all("Support Issue", filters={"fixture_namespace": NS}, pluck="issue_id")
+		if issues:
+			frappe.db.delete("Notification Log", {"document_type": "Support Issue", "document_name": ("in", issues)})
+		frappe.db.delete("Support Issue", {"fixture_namespace": NS})
+
 	@classmethod
 	def _remove(cls):
-		frappe.db.delete("Support Issue", {"fixture_namespace": NS})
+		cls._remove_issues()
 		frappe.db.delete("Notification Log", {"for_user": ("in", (HOLDER, OTHER))})
 		for email in (HOLDER, OTHER):
 			frappe.db.delete("User Responsibility Assignment", {"user": email})
@@ -46,7 +55,7 @@ class TestSupportIssues(IntegrationTestCase):
 		frappe.db.commit()
 
 	def setUp(self):
-		self.addCleanup(lambda: frappe.db.delete("Support Issue", {"fixture_namespace": NS}))
+		self.addCleanup(self._remove_issues)
 
 	def open(self, correlation="EVL-INTAKE-TEST-1"):
 		return support_issues.open_issue(module="Bid Evaluation", operation="ReceiveOpeningPackage", operation_correlation=correlation,

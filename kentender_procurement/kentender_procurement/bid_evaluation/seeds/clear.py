@@ -51,10 +51,16 @@ def wipe(*, tenders=None, namespace: str = "") -> int:
 			frappe.db.delete("Proceeding Command Journal", {"proceeding": ("in", proceedings)})
 			delete_rows("Proceeding", {"name": ("in", proceedings)})
 		frappe.db.delete("Evaluation Command Journal", {"evaluation_case": ("in", names)})
+		issues = frappe.get_all("Support Issue", filters={"module": "Bid Evaluation", "reference_name": ("in", names)}, pluck="issue_id")
+		if issues:  # the holders' notices go with their issues
+			frappe.db.delete("Notification Log", {"document_type": "Support Issue", "document_name": ("in", issues)})
 		frappe.db.delete("Support Issue", {"module": "Bid Evaluation", "reference_name": ("in", names)})
 		frappe.db.delete("Notification Log", {"document_type": CASE, "document_name": ("in", names)})
 		delete_rows(CASE, {"name": ("in", names)})
 	if namespace:
+		issues = frappe.get_all("Support Issue", filters={"fixture_namespace": namespace}, pluck="issue_id")
+		if issues:
+			frappe.db.delete("Notification Log", {"document_type": "Support Issue", "document_name": ("in", issues)})
 		for doctype in (*BY_CASE, "Evaluation Command Journal", "Support Issue"):
 			frappe.db.delete(doctype, {"fixture_namespace": namespace})
 	return len(cases)

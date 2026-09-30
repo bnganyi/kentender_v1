@@ -142,7 +142,7 @@
 			</div>
 
 			<div v-if="b.is_empty" class="kt-empty">
-				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path :d="b.eicon"></path></svg>
+				<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:var(--kt-color-neutral-600)"><path :d="b.eicon"></path></svg>
 				<p style="margin:0 0 12px;font-size:17px;font-weight:600">{{ b.t }}</p><p v-if="b.hasSub" style="margin:0 auto 12px;max-width:62ch;font-size:15px;text-wrap:pretty">{{ b.sub }}</p>
 				<button v-if="b.hasBtn" type="button" class="kt-btn kt-btn-secondary" @click="emit('action', { action: b.btnAction })">{{ b.btn }}</button>
 			</div>

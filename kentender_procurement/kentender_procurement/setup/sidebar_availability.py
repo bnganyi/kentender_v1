@@ -22,7 +22,6 @@ PLANNED_SIDEBAR_LABELS: frozenset[str] = frozenset(
 	{
 		"Home",
 		"Analytics",
-		"Evaluation",
 		"Awards",
 		"Contract Management",
 		"Supplier Management",
