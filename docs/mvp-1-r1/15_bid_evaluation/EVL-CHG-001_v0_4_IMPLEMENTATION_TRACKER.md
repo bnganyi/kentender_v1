@@ -2,9 +2,9 @@
 
 | Control | Value |
 |---|---|
-| Version | 0.4-tracker.1 |
+| Version | 0.4-tracker.2 |
 | Date | 30 September 2026 |
-| Status | Planned. No phase started; no code written. |
+| Status | Phase 0 done (EVL-G00, 30 Sep 2026); Phase 1 next. (0.4-tracker.1 read: Planned. No phase started; no code written.) |
 
 **Authority:** `KenTender_EVL-CHG-001_Bid_Evaluation_v0_4.md`, Approved 30 Sep 2026 by the Project Owner, including R1–R3. Governing standard: KT-STD-001 v1.12 (approved 30 Sep 2026). Shared services: PRC-CHG-001 v0.9 and TRUST-ADR-001 v0.1. EVL v0.4 §6 extends both, and those extensions are owed as coordinated amendments (OD-A).
 
@@ -17,7 +17,7 @@
 
 **Design:** `design/Bid Evaluation Artboards.dc.html` and `design/evl/*.js`. It has 107 drawn boards and no note-only entries.
 
-**Started:** not started.
+**Started:** 30 September 2026.
 
 ## Tracker rules
 
@@ -60,12 +60,13 @@
 | 30 Sep 2026 | OD-C: a versioned evaluation-rules file in the template pack. Owner answer, verbatim: "Versioned file in the template pack (Recommended)". | EVL v0.4 §4.1: "The curated template implementation must supply this executable meaning for each automatic rule." |
 | 30 Sep 2026 | OD-D: the stand-ins run on the dev site under `kt_bds_simulation_environment`. Owner answer, verbatim: "Yes, same as Bid Opening (Recommended)". | This follows the BDS v0.8 and BOP v0.10 precedent. |
 | 30 Sep 2026 | D1–D20 adopted as implementation authority (plan). | They fill the implementation bindings EVL v0.4 §6 and §12 leave to coordinated work. |
+| 30 Sep 2026 | Phase 0: (1) C21: the canonical Tender is TND-MOH-2027-002; board literals 033 are fixture data. (2) C22: the canonical Afya bid is placeholder data and fails the automatic checks; the Bid Submission seed is corrected in Phase 13 (EVL4-1306). (3) C23: the hand-off omits the definition identity; Evaluation reads it from the package. (4) D21 scope binding to the release `supported_use`; D22 dated rules (no authoritative evaluation deadline yet, C24); D23 the 19 check kinds. | `reconciliation/*.md`; plan "Phase 0 findings". |
 
 ## Gate register
 
 | Gate | Condition | Status | Evidence |
 |---|---|---|---|
-| EVL-G00 | Phase 0: inventory = 107 boards, each in exactly one slice; §8 error contract, §7.3 hand-off register, fixture chronology, rule reconciliation (every response identity classified) and scope binding written; conflicts logged; design folder and spec committed; `make artboard-provenance-gate` green | Planned | |
+| EVL-G00 | Phase 0: inventory = 107 boards, each in exactly one slice; §8 error contract, §7.3 hand-off register, fixture chronology, rule reconciliation (every response identity classified) and scope binding written; conflicts logged; design folder and spec committed; `make artboard-provenance-gate` green | Passed | 30 Sep 2026: inventory 107 rows (92 Covered, 15 Conditional; slices 11.1 = 16, 11.2 = 11, 11.3 = 8, 11.4 = 14, 11.5 = 8, 11.6 = 24, 11.7 = 15, 11.8 = 4, 12 = 7); error contract 15 + 2; hand-off register 20 rows; chronology 15 ordinary rows + 22 branches, each with a fixture entity; rule reconciliation 136 evaluated response rows, every one classified; scope binding six predicates bound (D21). Design and spec committed in `f35fffce`. `make artboard-provenance-gate` 3/3 OK. Findings C21–C24, D21–D23. |
 | EVL-G01 | Phase 1: module, doctypes, core Support Issue, PRC schema additions, flags guard, sidebar replacement, `make validate-links`, migrate clean twice | Planned | |
 | PRC-G02E | Phase 2: `make prc-services-gate` including the Evaluation-profile tests; `make bop-services-gate` unchanged and green | Planned | |
 | EVL-G03 | Phase 3: Bid Opening seam (digest verified), Bid Submission package seam (four trust outcomes), Tenders seam, rules file and validator, Support Issue service, simulation controls; `bop-services-gate`, Bid Submission and Tenders regression green | Planned | |
@@ -86,13 +87,13 @@
 | ID | Item | Status | Evidence |
 |---|---|---|---|
 | EVL4-001 | Plan, tracker and follow-ups (new versioned files) | Done | 30 Sep 2026. `EVL-CHG-001_v0_4_{Implementation_Plan, IMPLEMENTATION_TRACKER, FOLLOW_UPS}.md`. |
-| EVL4-002 | `reconciliation/artboard_inventory.md`: 107 boards by script from `window.EVL.boards`, with component#variant, slice and Covered/Conditional; the 18 boards without a spec ID mapped to spec prose (C15) | Planned | |
-| EVL4-003 | `reconciliation/error_contract.md`: EVL v0.4 §8, 15 codes and 2 nonblocking conditions, verbatim by script | Planned | |
-| EVL4-004 | `reconciliation/handoff_register.md`: §7.3 rows → holder, My Work title, waiting item, notification, clearing event, named test | Planned | |
-| EVL4-005 | `reconciliation/fixture_chronology.md`: §11.1 ordinary path and §11.2 branches, each with entry point and reset state | Planned | |
-| EVL4-006 | `reconciliation/rule_reconciliation.md`: every RR/DM/response identity of TND-MOH-2027-033's published definition, classified, with its published fact and expected §9.12 result | Planned | |
-| EVL4-007 | `reconciliation/scope_binding.md`: the six §5.1 predicates → published field and value, or gap (C7); the dated-rule anchors (C10) | Planned | |
-| EVL4-008 | Commit `design/` and the spec; `make artboard-provenance-gate` | Planned | |
+| EVL4-002 | `reconciliation/artboard_inventory.md`: 107 boards by script from `window.EVL.boards`, with component#variant, slice and Covered/Conditional; the 18 boards without a spec ID mapped to spec prose (C15) | Done | 30 Sep 2026: `tools/extract_boards.js` + `tools/build_inventory.py`; 107 boards, 92 Covered, 15 Conditional (signing double, funding read, simulation-only owner events); every board has a registry spec reference; the 18 without a variant ID each name the prose they depict. |
+| EVL4-003 | `reconciliation/error_contract.md`: EVL v0.4 §8, 15 codes and 2 nonblocking conditions, verbatim by script | Done | 30 Sep 2026: `tools/build_contracts.py`; 15 blocking + 2 nonblocking, with the PRC v0.9 §8 → Evaluation mapping checked against `proceedings/services/errors.py`. |
+| EVL4-004 | `reconciliation/handoff_register.md`: §7.3 rows → holder, My Work title, waiting item, notification, clearing event, named test | Done | 30 Sep 2026: `tools/build_contracts.py`; 20 rows verbatim, each with its planned named test. |
+| EVL4-005 | `reconciliation/fixture_chronology.md`: §11.1 ordinary path and §11.2 branches, each with entry point and reset state | Done | 30 Sep 2026: `tools/build_chronology.py`; 15 ordinary rows and 22 branches, each branch with its own test-year fixture entity (TND-MOH-2101-E01…E22). |
+| EVL4-006 | `reconciliation/rule_reconciliation.md`: every RR/DM/response identity of the canonical Tender's published definition, classified, with its published fact and expected §9.12 result | Done | 30 Sep 2026: `tools/dump_source.py` (bench console) + `tools/build_rules.py` on TND-MOH-2027-002 (C21): 22 mappings (19 evaluated, 3 not evaluated), 136 evaluated response rows in 19 check kinds (D23). Found C22 (placeholder canonical bid) and C23 (hand-off without definition identity). |
+| EVL4-007 | `reconciliation/scope_binding.md`: the six §5.1 predicates → published field and value, or gap (C7); the dated-rule anchors (C10) | Done | 30 Sep 2026: all six predicates bound to the release `supported_use` and `Tender.product_key` (D21, closes C7); validity published as 2027-10-10; no authoritative evaluation-deadline rule (C24, D22). |
+| EVL4-008 | Commit `design/` and the spec; `make artboard-provenance-gate` | Done | 30 Sep 2026: committed in `f35fffce`; `make artboard-provenance-gate` 3/3 OK. |
 | EVL4-009 | Conflicts C1–C20 logged; FU-EVL-01… opened | Done | 30 Sep 2026: plan "Conflicts" table; `EVL-CHG-001_v0_4_FOLLOW_UPS.md`. |
 | EVL4-010 | Report the register drift (C17) to the documentation owner; leave the owner's uncommitted register and `.xlsx` changes untouched | Planned | |
 
@@ -207,6 +208,7 @@
 | EVL4-1303 | 13 | `seed-canonical-validate` coverage for the stage | Planned | |
 | EVL4-1304 | 13 | Demo profiles and `make seed-evl-profile(s)`, `seed-evl-profile-restore` | Planned | |
 | EVL4-1305 | 13 | `evl-demo-walk.spec.ts`: from the menu and the bell, one session per person | Planned | |
+| EVL4-1306 | 13 | Bid Submission canonical seed submits the EVL v0.4 §9.1/§9.12 bid facts and named evidence documents (C22); reseed through `bid_opening`; BDS tracker addendum row | Planned | |
 | EVL4-1401 | 14 | `ui-evl-fidelity-gate` over all 107 boards | Planned | |
 | EVL4-1402 | 14 | §11.1 and §11.2 state/actor/branch matrix: control ↔ command ↔ PRC event ↔ My Work ↔ disclosure ↔ clearing | Planned | |
 | EVL4-1403 | 14 | Persona browser pass: Amina, Charles, Brian, Grace, Peter, Ruth, Samuel, David, Naomi, Esther, Administrator | Planned | |

@@ -437,3 +437,22 @@ make seed-canonical-validate SITE=kentender.midas.com
 8. Charles receives **Review evaluation report for TND-MOH-2027-033**. There is no award button.
 9. Naomi reads the record read-only, and Administrator sees technical status only.
 10. Repeat the §11.2 branches on their own fixtures: tie (tender 036), no responsive bids, funding, paused, cancelled, no bids, source issue (Esther), and return for correction.
+
+## Phase 0 findings (30 September 2026)
+
+These are recorded here; the phase text above is not rewritten.
+
+| # | Finding | Effect on this plan |
+|---|---|---|
+| C21 | The canonical Tender is **TND-MOH-2027-002** (`TDR-225970`, "Clinical training and deployment laptops for digital health rollout"). EVL v0.4 §9.1 and the boards use TND-MOH-2027-033. Bid Opening met the same difference and treated its 033 fixture as illustrative. | The canonical stage (D18) evaluates 002 with actual source facts; board literals are fixture data replaced at run time (tracker rule 4). |
+| C22 | **The canonical Afya bid is placeholder data.** The package holds "Seeded answer for the canonical bid." in text answers, 0 for memory, storage, display and battery, `["Ethernet"]` for connectivity, one USB-A port, experience contract values of 0.01, "Yes" for every conflict question, and 453-byte stand-in evidence files (`reconciliation/rule_reconciliation.md`). Automatic checks on it give **Not responsive**, which contradicts the EVL v0.4 §9.1/§9.12 ordinary story (16 GB, 512 GB NVMe SSD, 14.0 inches, 10 hours, 12 cores, Wi-Fi 6E and Bluetooth 5.3, USB-C ×2, USB-A ×2, HDMI ×1, KNH and KMTC contracts, AGPO-Y-2026-04172). | New item EVL4-1306: the Bid Submission canonical seed submits the §9.1/§9.12 facts and named evidence documents, followed by a reseed through `bid_opening`, before the Evaluation stage runs (BDS tracker addendum; dev-site teardown is authorised). Until then, service tests use their own fixture packages. FU-EVL-17. |
+| C23 | The `Evaluation Handoff` payload omits the definition identity: `packages[].bid_definition_id` and `definition_digest` are empty and `definition_version` is 0 in `EV-IN-MOH-2027-002-01`. | Evaluation takes `tender.bid_definition_id / definition_version / definition_digest` from the released package (the source) and cross-checks them with `bid_definition.definition_for`. A mismatch is `EVL_SOURCE_INCOMPLETE`. FU-EVL-05 extended. |
+| C24 | There is no authoritative dated rule for the statutory evaluation deadline. `evaluation_period_days` (30) is a Planning schedule assumption, and no Regulatory Reference kind carries it. Tender validity **is** published (`RR-TENDER-SECURITY` fact `validity_date` 2027-10-10, the submission deadline date + 120 days). | D22 below. |
+
+**New technical decisions from Phase 0:**
+
+| # | Decision |
+|---|---|
+| D21 | **Scope binding** (closes C7). The six §5.1 predicates bind to the installed release's `product_profile.json` `supported_use` for the definition's `template_release_id` (`procurement_method`, `procurement_category`, `lotting_indicator` and `award_packages`, `currency`, `price_treatment`, `financial_evaluation`), plus `Tender.product_key` and the release `template_key` for the product key, plus every `price_rows[].currency`. The Tender projection's literals are not read. Details: `reconciliation/scope_binding.md`. |
+| D22 | **Dated rules** (C24). Validity end = the published `validity_date` at the submission deadline's time of day, with its counting rule, source and timezone shown. The evaluation deadline is shown only from an authoritative dated rule. Until Tenders or LAW supplies one, it reads as not yet available and no overdue condition is raised. The D07-OVERDUE boards are proven with a simulation-only dated rule (D16). |
+| D23 | **Check kinds** (refines D7). The rules file uses exactly the kinds in `reconciliation/rule_reconciliation.md`: `confirmed`, `equals`, `choice-in`, `minimum`, `maximum`, `date-not-before`, `date-not-after`, `date-in-window`, `includes-all`, `ports-minimum`, `money-equals`, `presence`, `calculation`, `evidence`, `review-if-yes`, `review-unless`, `manual`, `recorded`, `evidence-optional`. Conditional applicability (for example the bank-guarantee date, which applies only when the form is a Demand Bank Guarantee) is a `when` clause on the entry. 136 evaluated response rows; 19 evidence assessments; 4 manual. |
