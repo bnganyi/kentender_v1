@@ -255,16 +255,16 @@
       "module": "All",
       "requirement_status": "Approved requirement",
       "approval_date": "2026-09-30",
-      "supersedes": "v1.11 approved 30 September 2026; v1.10 approved 29 September 2026; v1.9 approved 26 September 2026; all retained as historical evidence",
+      "supersedes": "v1.11 and earlier",
       "implementation_status": "Not applicable",
       "verification_status": "Passed",
       "release_status": "Not applicable",
       "normative": "Yes",
-      "library_file_id": "libfile_17ffb496b8708191bfba06c99365e11c",
+      "library_file_id": "libfile_4f7bf3bc8c0c8191b1e3ff2e2f3916da",
       "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_12.md",
       "scope": "Current cross-cutting standard, including plain language, minimum steps, Scheduled next step and actor/state/event conformance; v1.11 adds the §8.3 fixture actors Daniel Otieno (technical operator) and Jane Wanjiku (public observer), and v1.12 adds Nadia Kamau (release operator); retains earlier design and verification rules.",
       "dependencies": "Workflow Guidance Standard; all controlled change documents",
-      "action": "Apply approved v1.12: the v1.10 rules for future and revised design contracts, and the v1.11 and v1.12 §8.3 actors in every document, seed and artboard."
+      "action": "Apply approved v1.12 to future and revised contracts; use its registered actors and retained design and verification rules."
     },
     {
       "document_id": "AUTH-ADR-001",
@@ -569,6 +569,25 @@
       "scope": "Approved minimal shared service bound to BOP v0.10: attributed pre-session arrivals carried into actual session view, owner events, versioned opening record, personal target proof, one-action empty outcome and terminal partial/never-held records. No standalone UI.",
       "dependencies": "BOP-CHG-001 v0.10 approved; KT-STD-001 v1.10 approved; TPR-CHG-001 v0.13 approved (v0.14 proposed); TRUST-ADR-001 v0.1 approved; LAW-V-001",
       "action": "Implement approved v0.9 with BOP v0.10 under KT-STD-001 v1.10. Preserve the deferred shared signing/custody integration."
+    },
+    {
+      "document_id": "EVL-CHG-001",
+      "title": "Bid Evaluation",
+      "version": "0.4",
+      "category": "Module requirements",
+      "module": "Bid Evaluation",
+      "requirement_status": "Approved requirement",
+      "approval_date": "2026-09-30",
+      "supersedes": "v0.3 proposed detail; approved high-level automation approach retained",
+      "implementation_status": "Not started",
+      "verification_status": "Not started",
+      "release_status": "Not approved",
+      "normative": "Yes",
+      "library_file_id": "libfile_afeac7a8387c81918c95b97accf8734e",
+      "filename": "KenTender_EVL-CHG-001_Bid_Evaluation_v0_4.md",
+      "scope": "Automatic evaluation, focused committee review and signed report. Second-review corrections align commands, tasks, source issues, scope gates and dated fixtures.",
+      "dependencies": "KT-STD-001 v1.12; BOP v0.10; BDS v0.8; PRC v0.9; TRUST v0.1; TPR v0.13; STD-TPL v0.10. Coordinated owner-document amendments outstanding.",
+      "action": "Implement approved v0.4 including R1–R3. Coordinate TPR publication binding, PRC, supplier correspondence and executable rules. Implementation and verification not started; Gate 1 unchanged."
     }
   ],
   "interfaces": [
