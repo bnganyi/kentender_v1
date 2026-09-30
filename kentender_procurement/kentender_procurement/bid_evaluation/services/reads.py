@@ -150,6 +150,14 @@ def work(doc, a: dict[str, Any]) -> dict[str, Any]:
 		out["delivery"] = {**delivery, "recipient_name": people.full_name(delivery.recipient_user) if delivery.recipient_user else "",
 			"delivered": next_steps.when(delivery.delivered_at), "returned_by_name": people.full_name(delivery.returned_by) if delivery.returned_by else "",
 			"report_number": frappe.db.get_value("Evaluation Report Version", delivery.report_version, "version_number")}
+	if a["report"] or a["bids"]:
+		# opening updates and correction notices sit beside the delivered report (the Head's review)
+		out["updates"] = [{**e, "detail": json.loads(e.detail_json or "{}"), "received": next_steps.when(e.received_at), "author": people.full_name(e.authority)}
+			for e in frappe.get_all("Evaluation Source Event", filters={"evaluation_case": doc.name, "kind": "Opening supplement"}, fields=["name", "source_reference",
+				"authority", "detail_json", "received_at", "impact", "impact_reason", "delivered_context", "head_review_state"], order_by="received_at asc")]
+		out["notices"] = [{**n, "recorded_by_name": people.full_name(n.recorded_by)} for n in frappe.get_all("Evaluation Correction Notice",
+			filters={"evaluation_case": doc.name}, fields=["name", "reason", "correction", "recorded_at", "recorded_by", "head_review_state", "downstream_status"],
+			order_by="recorded_at asc")]
 	if not a["bids"]:
 		return out
 	session = discussion.active_session(doc)
@@ -162,13 +170,14 @@ def work(doc, a: dict[str, Any]) -> dict[str, Any]:
 			"missing": [u for u in members if u not in present], "missing_names": [people.full_name(u) for u in members if u not in present]}
 	out["clarifications"] = []
 	for c in frappe.get_all("Evaluation Clarification", filters={"evaluation_case": doc.name}, fields=["name", "status", "evaluation_bid", "requirement_key", "question",
-			"reply_scope", "reply_deadline", "authorised_by", "authorised_at", "sent_at", "notice_state", "replaces", "withdrawal_reason", "disposition",
-			"disposition_result", "disposition_reason", "closed_at"], order_by="creation asc"):
+			"reply_scope", "reply_deadline", "authorised_by", "authorised_at", "sent_at", "notice_state", "replaces", "replaced_by", "withdrawal_reason", "disposition",
+			"disposition_result", "disposition_reason", "closed_at", "conclusion"], order_by="creation asc"):
 		reply = frappe.db.get_value("Evaluation Clarification Reply", {"clarification": c.name, "state": "Sent"}, ["body", "received_at", "timeliness"], as_dict=True)
 		out["clarifications"].append({**c, "bidder": frappe.db.get_value("Evaluation Bid", c.evaluation_bid, "tenderer_name"),
 			"authorised_by_name": people.full_name(c.authorised_by), "authorised": next_steps.when(c.authorised_at), "sent": next_steps.when(c.sent_at),
 			"deadline": next_steps.when(c.reply_deadline), "closed": next_steps.when(c.closed_at),
 			"overdue": clarification.overdue(frappe.get_doc("Evaluation Clarification", c.name)),
+			"replace_reason": cstr(frappe.db.get_value("Evaluation Conclusion", c.conclusion, "reason")) if c.replaces else "",
 			"reply": {"body": reply.body, "received": next_steps.when(reply.received_at), "timeliness": reply.timeliness} if reply else None})
 	plan = diligence.current_plan(doc.name)
 	if plan:
@@ -182,11 +191,6 @@ def work(doc, a: dict[str, Any]) -> dict[str, Any]:
 		"question": frappe.db.get_value("Evaluation Clarification", {"conclusion": c.name}, "question") if c.kind == "Clarification" else ""}
 		for c in frappe.get_all("Evaluation Conclusion", filters={"evaluation_case": doc.name}, fields=["name", "session", "kind", "result", "reason", "recorded_by",
 			"recorded_at", "evaluation_bid", "requirement_key"], order_by="recorded_at asc")]
-	out["updates"] = [{**e, "detail": json.loads(e.detail_json or "{}"), "received": next_steps.when(e.received_at), "author": people.full_name(e.authority)}
-		for e in frappe.get_all("Evaluation Source Event", filters={"evaluation_case": doc.name, "kind": "Opening supplement"}, fields=["name", "source_reference",
-			"authority", "detail_json", "received_at", "impact", "impact_reason", "delivered_context", "head_review_state"], order_by="received_at asc")]
-	out["notices"] = frappe.get_all("Evaluation Correction Notice", filters={"evaluation_case": doc.name}, fields=["name", "reason", "correction", "recorded_at",
-		"head_review_state", "downstream_status"], order_by="recorded_at asc")
 	version = signing.signing_version(doc)
 	if version:
 		out["signing"] = {"report": version.name, "version_number": version.version_number, "signatures": [{**s, "signed": next_steps.when(s["signed_at"])}

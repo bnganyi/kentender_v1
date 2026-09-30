@@ -142,6 +142,22 @@ class TestAfterDelivery(ReportCase):
 		self.assertIn(f"Correct evaluation report for {self.reference}: Correct the service-address page reference from page 3 to page 2.", titles(SECRETARY))
 		self.assertEqual(frappe.db.get_value("Evaluation Report Version", {"evaluation_case": self.case, "version_number": 1}, "state"), "Returned")
 
+	def test_an_unknown_decision_status_is_reported_to_support(self):
+		from kentender_core.services import support_issues
+
+		simulation.set_controls(downstream_status="Unknown")
+		with self.assertRaises(frappe.DoesNotExistError):
+			correction.report_status_issue(tender=self.name, description="x", idempotency_key=key(), user=MEMBER)  # the Head or the chair only
+		out = correction.report_status_issue(tender=self.name, description="The later decision could not be checked.", idempotency_key=key(), user=HOP)
+		issue = support_issues.get(out["issue"])
+		self.assertEqual((issue["status"], issue["holder_role"]), ("Open", "Technical Operator"))
+		self.assertNotIn("Afya", issue["subject"] + issue["safe_detail"])
+		again = correction.report_status_issue(tender=self.name, description="Still unknown.", idempotency_key=key(), user=CHAIR)
+		self.assertEqual(again["issue"], out["issue"])  # one issue for the one operation
+		simulation.set_controls(downstream_status="")
+		correction.return_report(tender=self.name, comment="Correct the service-address page reference from page 3 to page 2.", idempotency_key=key(), user=HOP)
+		self.assertEqual(support_issues.get(out["issue"])["status"], "Resolved")  # the status could be read again
+
 	def test_after_an_award_decision_only_a_correction_notice(self):
 		tender_events.record_simulated_event(tender=self.name, kind="Award decision", instruction_reference="MOH/AWARD/TEST", authority=AO,
 			effective_at=str(frappe.flags.kt_evl_clock))

@@ -30,8 +30,8 @@ export function clarification(ctx) {
 	}
 	if (v.secretary && c.status === "Sent" && replacement) {
 		return { ...base, guidance: guidance(data, { headline: "Withdraw the question authorised for replacement." }),
-			blocks: [requestKv(c), f(["Chair's recorded reason", replacement.withdrawal_reason || replacement.replace_reason || ""])],
-			pri: dialog("Withdraw clarification", "withdraw", { args: { name: "withdraw", clarification: c.name } }) };
+			blocks: [requestKv(c), f(["Chair's recorded reason", replacement.replace_reason || ""])],
+			pri: dialog("Withdraw clarification", "withdraw", { args: { name: "withdraw", clarification: c.name, prefill: { withdraw_reason: replacement.replace_reason || "" } } }) };
 	}
 	const blocks = [requestKv(c)];
 	if (c.sent) blocks.push(f(["Sent", c.sent], ["Notice", c.notice_state || "Pending"]));

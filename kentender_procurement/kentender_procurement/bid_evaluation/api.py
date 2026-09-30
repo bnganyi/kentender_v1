@@ -274,11 +274,11 @@ def report_issue(tender_reference: str, bid: str, requirement_key: str, descript
 # -- clarification ----------------------------------------------------------------------
 @frappe.whitelist(methods=["POST"])
 def authorise_clarification(tender_reference: str, bid: str, requirement_key: str, question: str, reply_scope: str, reply_deadline: str, idempotency_key: str,
-		replaces: str = "") -> dict[str, Any]:
+		replaces: str = "", replacement_reason: str = "") -> dict[str, Any]:
 	from kentender_procurement.bid_evaluation.services import clarification
 
 	return _call("AuthoriseClarification", tender_reference, clarification.authorise, bid=bid, requirement_key=requirement_key, question=question,
-		reply_scope=reply_scope, reply_deadline=reply_deadline, replaces=replaces, idempotency_key=idempotency_key)
+		reply_scope=reply_scope, reply_deadline=reply_deadline, replaces=replaces, replacement_reason=replacement_reason, idempotency_key=idempotency_key)
 
 
 @frappe.whitelist(methods=["POST"])
@@ -414,6 +414,13 @@ def return_report(tender_reference: str, comment: str, idempotency_key: str) -> 
 	from kentender_procurement.bid_evaluation.services import correction
 
 	return _call("ReturnEvaluationReport", tender_reference, correction.return_report, comment=comment, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist(methods=["POST"])
+def report_status_issue(tender_reference: str, description: str, idempotency_key: str) -> dict[str, Any]:
+	from kentender_procurement.bid_evaluation.services import correction
+
+	return _call("ReportDecisionStatusIssue", tender_reference, correction.report_status_issue, description=description, idempotency_key=idempotency_key)
 
 
 @frappe.whitelist(methods=["POST"])

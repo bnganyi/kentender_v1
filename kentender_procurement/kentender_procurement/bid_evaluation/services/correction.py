@@ -57,6 +57,35 @@ def _delivered(doc):
 	return frappe.get_doc(DELIVERY, name) if name else None
 
 
+def _status_known(doc) -> None:
+	"""The decision status was read: any open issue about reading it is resolved."""
+	from kentender_core.services import support_issues
+
+	support_issues.resolve_on_success(module="Bid Evaluation", operation_correlation=f"decision-status:{doc.name}",
+		note="The later decision status could be read again.")
+
+
+def report_status_issue(*, tender: str, description: str, idempotency_key: str, user: str) -> dict[str, Any]:
+	"""Board D07-DECISION-UNKNOWN(-CHAIR) "Report issue": the delivered report's
+	recipient or the chair tells technical support the later decision status
+	cannot be read. One issue per evaluation; no bid content in it."""
+	from kentender_core.services import support_issues
+
+	def body() -> dict[str, Any]:
+		doc = records.lock(tender)
+		delivery = _delivered(doc)
+		if not delivery or user not in (delivery.recipient_user, roster.chair(doc.name)):
+			raise frappe.DoesNotExistError("Not found")
+		invalid({"description": "Describe the problem."} if not cstr(description).strip() else {})
+		issue = support_issues.open_issue(module="Bid Evaluation", operation="CheckDecisionStatus", operation_correlation=f"decision-status:{doc.name}",
+			subject=f"Resolve evaluation issue for {doc.tender_reference}", reference_doctype=records.CASE, reference_name=doc.name,
+			safe_detail=f"The later decision status could not be checked: {cstr(description).strip()}", reported_by=user, fixture_namespace=records.namespace())
+		records.bump(doc)
+		return records.summary(doc, issue=issue["issue_id"], created=issue["created"])
+
+	return records.command("ReportDecisionStatusIssue", tender=tender, idempotency_key=idempotency_key, actor=user, payload={"description": description}, body=body)
+
+
 def return_report(*, tender: str, comment: str, idempotency_key: str, user: str) -> dict[str, Any]:
 	"""ReturnEvaluationReport: the Head of Procurement, before any downstream decision."""
 
@@ -70,6 +99,7 @@ def return_report(*, tender: str, comment: str, idempotency_key: str, user: str)
 		status = decision_status(doc)
 		if status["status"] == "Unknown":
 			fail("EVL_DECISION_STATUS_UNKNOWN", {"checked_at": str(status["checked_at"]), "report": delivery.report_version})
+		_status_known(doc)
 		if status["status"] != "No award decision recorded":
 			fail("EVL_VERSION_CONFLICT", {"reason": "decision_recorded"})
 		delivery.update({"review_state": "Returned", "returned_by": user, "return_comment": cstr(comment).strip(), "returned_at": clock.now(),
@@ -99,6 +129,8 @@ def record_correction_notice(*, tender: str, reason: str, correction: str, idemp
 			fail("EVL_VERSION_CONFLICT", {"reason": "not_delivered"})
 		invalid({f: "Required." for f, v in (("reason", reason), ("correction", correction)) if not cstr(v).strip()})
 		status = decision_status(doc)
+		if status["status"] != "Unknown":
+			_status_known(doc)
 		number = frappe.db.count(NOTICE, {"evaluation_case": doc.name}) + 1
 		notice = records.insert(frappe.get_doc({
 			"doctype": NOTICE, "notice_id": f"{doc.name}-CN-{number:02d}", "evaluation_case": doc.name, "report_version": delivery.report_version,

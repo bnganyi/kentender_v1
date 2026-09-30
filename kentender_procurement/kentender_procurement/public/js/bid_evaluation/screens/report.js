@@ -11,6 +11,8 @@
 import { at, ds, f, fi, kv, lk, n, p, tb } from "../board/model.js";
 import { cmd, conditionNotices, dialog, guidance, money, nav, sectionLinks, signaturesTable, summaryBlock } from "./common.js";
 
+const unknownNotice = (n0) => n("warning", "The later decision could not be checked.", `Report ${n0} remains unchanged. A return cannot proceed until the later decision is known.`);
+
 const INTENT = "I have reviewed this report. It accurately records my findings and any disagreement I have recorded.";
 
 function outcomeBlocks(report) {
@@ -62,11 +64,17 @@ export function reportScreen(ctx) {
 		if (v.hop && delivery.recipient_user === user) {
 			if (report.downstream === "Unknown") {
 				return { ...base, guidance: guidance(data, { headline: "Report the unavailable decision status." }),
-					blocks: [n("warning", "The later decision could not be checked.", `Report ${n0} remains unchanged. A return cannot proceed until the later decision is known.`), ...sent.slice(0, -2)],
-					sec: [{ label: "Open report", action: "nav", args: { to: ["report", "preview"] } }, { label: "~Return for correction" }] };
+					blocks: [unknownNotice(n0), ...sent.slice(0, -2)],
+					pri: dialog("Report issue", "status-issue"), sec: [nav("Open report", ["report", "preview"]), { label: "~Return for correction" }] };
 			}
 			return { ...base, blocks: sent.slice(0, -1), pri: nav("Open report", ["report", "preview"]),
 				sec: report.downstream === "Award decision recorded" ? [] : [dialog("Return for correction", "return")] };
+		}
+		if (v.chair && report.downstream === "Unknown") {
+			// D07-DECISION-UNKNOWN-CHAIR: a correction notice needs no known status
+			return { ...base, guidance: guidance(data, { headline: `Record the report correction for ${(work.delivery || {}).recipient_name || "the Head of Procurement"}.` }),
+				blocks: [unknownNotice(n0), ...sent.slice(0, -2)], pri: nav("Send correction notice", "correction"),
+				sec: [dialog("Report issue", "status-issue"), nav("Open report", ["report", "preview"])] };
 		}
 		if (v.chair && report.downstream === "Award decision recorded") {
 			return { ...base, blocks: sent, pri: nav("Send correction notice", "correction"), sec: [nav("Open report", ["report", "preview"])] };
@@ -124,7 +132,8 @@ export function reportScreen(ctx) {
 			sec: [cmd("Save draft", "save_report_narrative", { fields: ["narrative"], reportVersion: true }), nav("Preview report", ["report", "preview"])],
 			cons: "Each member will review and sign this exact report. Changes will require a new version." };
 	}
-	return { ...crumbHead, guidance: guidance(data), blocks, pri: nav("Preview report", ["report", "preview"]), sec: [nav("Back to evaluation", [])] };
+	// a member's read of the draft (D07-OVERDUE): the whole report is one step away
+	return { ...crumbHead, guidance: guidance(data), blocks, pri: nav("View report", ["report", "preview"]), sec: [] };
 }
 
 export function preview(ctx) {
@@ -193,3 +202,12 @@ export function returnDialog(ctx) {
 }
 
 export { lk };
+
+export function statusIssueDialog() {
+	return {
+		t: "Report an issue",
+		blocks: [fi("What is wrong?", "The later decision status could not be checked.", { area: true, req: true, rows: 3, name: "status-issue_description" })],
+		cons: "Technical support will be assigned. No bid content is shared in the support notice.",
+		pri: cmd("Submit issue", "report_status_issue", { fields: [["description", "status-issue_description"]], close: true }),
+	};
+}

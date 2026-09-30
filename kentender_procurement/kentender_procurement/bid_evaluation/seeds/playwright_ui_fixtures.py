@@ -101,7 +101,34 @@ STAGES = {
 	"no-bids": (None, "D02-NO-BIDS"),
 	"paused": ("concern", "D08-PAUSED"),
 	"cancelled": ("concern", "D08-CANCELLED"),
-	"failed": (None, "D04-FAIL, D07-NO-RESPONSIVE (8 GB memory)"),
+	"failed": (None, "D04-FAIL (8 GB memory)"),
+	"failed-report": ("failed", "D07-NO-RESPONSIVE (every other check reviewed)"),
+	"declare-first": ("intake-first", "D02-DECLARE-FIRST (appointed after intake, member not yet declared)"),
+	"source-failed": ("declared", "D08-SOURCE, S-SOURCE-OPEN (the opening package could not be loaded)"),
+	"member-left": ("joined", "D05-ABSENT, D05-ABSENT-CHAIR, D05-ABSENT-MEMBER"),
+	"notice-failed": ("noted", "D06-DELIVERY (the clarification notice failed)"),
+	"replacement": ("sent", "D06-WITHDRAW, D06-WITHDRAW-DLG (a replacement question authorised)"),
+	"no-reply": ("sent", "D06-NO-REPLY (the deadline passed with no reply)"),
+	"late-reply": ("sent", "D06-LATE-REVIEW (a late reply)"),
+	"planned": ("resolved", "D08-DD (verification planned)"),
+	"observed": ("planned", "D08-DD-FREEZE"),
+	"dd-frozen": ("observed", "D08-DD-SIGN"),
+	"dd-signed": ("dd-frozen", "D08-VERIFY-OUTCOME, D08-VERIFY-NEG"),
+	"supplement": ("resolved", "D08-SUPPLEMENT (an opening correction before delivery)"),
+	"no-agreement": ("resolved", "D07-NO-AGREEMENT"),
+	"overdue": ("resolved", "D07-OVERDUE, D07-OVERDUE-SEC"),
+	"expired": ("resolved", "D07-EXPIRED"),
+	"delivery-failed": ("chair-signed", "D07-DELIVERY"),
+	"resigning": ("chair-signed", "S-STALE-REPORT (report revised, signing again)"),
+	"paused-sign": ("chair-signed", "P-SIGN"),
+	"cancelled-sign": ("chair-signed", "C-SIGN"),
+	"returned": ("report-sent", "D07-RETURNED"),
+	"awarded": ("report-sent", "D08-CORRECTION, D07-DECISION-UNKNOWN(-CHAIR)"),
+	"corrected": ("awarded", "D08-CORRECTION-HOP"),
+	"decision-unknown": ("report-sent", "D07-DECISION-UNKNOWN, D07-DECISION-UNKNOWN-CHAIR (the later decision cannot be checked)"),
+	"supplement-sent": ("report-sent", "D08-SUPPLEMENT-SENT, D08-SUPPLEMENT-HOP"),
+	"paused-prep": ("prepared", "P-PREP (appointments permitted)"),
+	"cancelled-prep": ("prepared", "C-PREP"),
 }
 
 
@@ -417,6 +444,252 @@ class EvaluationWorld:
 			getattr(self, "stage_" + name)()
 
 
+class _Branches:
+	"""Branch stages (EVL-CHG-001 v0.4 §11.2), each from where it leaves the
+	ordinary path; attached to EvaluationWorld below."""
+
+	def stage_failed_report(self) -> None:
+		self.at(AT["review"])
+		self._review_all(skip=())
+
+	def _review_all(self, *, skip=("Service location",)) -> None:
+		from kentender_procurement.bid_evaluation.services import aggregate, checks, findings
+
+		case = self.case()
+		for r in aggregate.bid_results(case, checks.current_run(case), self.bid())["requirements"]:
+			if r["result"] == "Needs review" and r["label"] not in skip:
+				_ok(findings.record_evidence_finding(tender=self.tender, bid=self.bid(), requirement_key=r["requirement_key"], result="Meets",
+					reason="Required evidence reviewed.", evidence_reference="Submitted evidence", idempotency_key=_key(), user=MEMBER), f"review {r['label']}")
+
+	def stage_declare_first(self) -> None:
+		from kentender_procurement.bid_evaluation.services import appointment
+
+		self.at("2027-06-12 11:20:00")
+		_ok(appointment.appoint_committee(tender=self.tender, members=ROSTER, appointment_reference="MOH/EVAL/PW/2027", expected_version=self.version(),
+			idempotency_key=_key(), user=AO), "appoint after intake")
+
+	def stage_source_failed(self) -> None:
+		from kentender_procurement.bid_evaluation.services import intake, simulation
+
+		self.complete_opening()
+		self.at(AT["intake"])
+		simulation.set_controls(intake_outcome="Unavailable")
+		intake.receive_opening_package(tender=self.tender)
+
+	def stage_member_left(self) -> None:
+		from kentender_procurement.bid_evaluation.services import discussion
+
+		self.at("2027-06-14 09:03:30")
+		_ok(discussion.leave_discussion(tender=self.tender, idempotency_key=_key(), user=MEMBER_2), "leave")
+
+	def stage_notice_failed(self) -> None:
+		from kentender_procurement.bid_evaluation.services import clarification, discussion, simulation
+
+		self.stage_authorised()
+		self.at(AT["end"])
+		_ok(discussion.end_discussion(tender=self.tender, idempotency_key=_key(), user=CHAIR), "end the discussion")
+		simulation.set_controls(notice_outcome="Failed")
+		self.at(AT["send"])
+		clarification.send(tender=self.tender, clarification=self._request(), idempotency_key=_key(), user=SECRETARY)
+
+	def _session(self, instant: str) -> None:
+		from kentender_procurement.bid_evaluation.services import discussion
+
+		self.at(instant)
+		_ok(discussion.start_discussion(tender=self.tender, subject="Resolve reply and complete findings", idempotency_key=_key(), user=CHAIR), "start")
+		for user in (SECRETARY, MEMBER, MEMBER_2):
+			_ok(discussion.join_discussion(tender=self.tender, idempotency_key=_key(), user=user), f"join as {user}")
+
+	def stage_replacement(self) -> None:
+		from kentender_procurement.bid_evaluation.services import clarification
+
+		self._session("2027-06-15 09:40:00")
+		self.at("2027-06-15 09:45:00")
+		original = self._request()
+		_ok(clarification.authorise(tender=self.tender, bid=self.bid(), requirement_key=self.requirement("Service location")["requirement_key"],
+			question="In the document titled Kenya service-centre details submitted with your bid, identify the page and section containing the Nairobi service address.",
+			reply_scope=SCOPE, reply_deadline=self.shifted("2027-06-16 17:00:00"), replaces=original, replacement_reason="Clarify the document reference.",
+			idempotency_key=_key(), user=CHAIR), "authorise a replacement")
+
+	def stage_no_reply(self) -> None:
+		self._session(AT["restart"])
+
+	def stage_late_reply(self) -> None:
+		from kentender_procurement.bid_evaluation.services import clarification
+
+		self.at("2027-06-15 17:05:00")
+		_ok(clarification.submit_reply(tender=self.tender, clarification=self._request(), body=REPLY, idempotency_key=_key(), user=SUPPLIER), "late reply")
+		self._session(AT["restart"])
+
+	def stage_planned(self) -> None:
+		from kentender_procurement.bid_evaluation.services import diligence, discussion
+
+		self._session("2027-06-16 09:10:00")
+		self.at("2027-06-16 09:14:00")
+		_ok(diligence.record_plan(tender=self.tender, scope="Verify the two submitted comparable contracts",
+			basis="Due diligence under PPADA section 83; verify the two submitted comparable contracts", participants_=[CHAIR, MEMBER_2], lead=CHAIR,
+			idempotency_key=_key(), user=CHAIR), "record the verification plan")
+		self.at("2027-06-16 09:15:00")
+		_ok(discussion.end_discussion(tender=self.tender, idempotency_key=_key(), user=CHAIR), "end")
+
+	def stage_observed(self) -> None:
+		from kentender_procurement.bid_evaluation.services import diligence
+
+		for user, instant in ((MEMBER_2, "2027-06-16 10:00:00"), (CHAIR, "2027-06-16 10:30:00")):
+			self.at(instant)
+			_ok(diligence.record_observation(tender=self.tender, findings_="Both customers confirmed the submitted contract details.", idempotency_key=_key(),
+				user=user), f"observe as {user}")
+
+	def stage_dd_frozen(self) -> None:
+		from kentender_procurement.bid_evaluation.services import diligence
+
+		self.at("2027-06-16 10:50:00")
+		_ok(diligence.send_for_signing(tender=self.tender, idempotency_key=_key(), user=CHAIR), "freeze the verification report")
+		self.at("2027-06-16 10:55:00")
+		_ok(diligence.sign(tender=self.tender, idempotency_key=_key(), user=CHAIR), "sign as the lead")
+
+	def stage_dd_signed(self) -> None:
+		from kentender_procurement.bid_evaluation.services import diligence
+
+		self.at("2027-06-16 11:00:00")
+		_ok(diligence.sign(tender=self.tender, idempotency_key=_key(), user=MEMBER_2), "sign as the participant")
+		self._session("2027-06-16 11:10:00")
+
+	def _opening_correction(self, instant: str) -> None:
+		from kentender_procurement.bid_evaluation.services import correction
+		from kentender_procurement.bid_opening.services import correction as opening_correction
+
+		self.at(instant)
+		with _opening_flags():
+			_ok(opening_correction.correct_opening_record(tender=self.tender, kind="Attendance note", correct_information="David Ouma left at 11:05 EAT",
+				reason="Add the departure noted during the opening", expected_version=self.opening.version(), idempotency_key=_key(), user=self.opening.chair),
+				"correct the opening record")
+		correction.consume_supplements(self.tender)
+
+	def stage_supplement(self) -> None:
+		self._opening_correction("2027-06-16 12:55:00")
+		self.at("2027-06-16 13:00:00")
+
+	def stage_supplement_sent(self) -> None:
+		self._opening_correction("2027-06-17 09:55:00")
+		self.at("2027-06-17 10:00:00")
+
+	def stage_no_agreement(self) -> None:
+		from kentender_procurement.bid_evaluation.services import conclusion, discussion
+
+		self._session("2027-06-16 13:00:00")
+		out = _ok(conclusion.record_case_conclusion(tender=self.tender, kind="No agreed recommendation",
+			reason="The committee could not agree whether the evidence supports the service location.", idempotency_key=_key(), user=CHAIR), "no agreement")
+		_ok(conclusion.record_disagreement(tender=self.tender, statement="I cannot establish that the submitted evidence supports the stated service location.",
+			conclusion=out.get("conclusion", ""), idempotency_key=_key(), user=MEMBER_2), "disagree")
+		_ok(discussion.end_discussion(tender=self.tender, idempotency_key=_key(), user=CHAIR), "end")
+
+	def stage_overdue(self) -> None:
+		from kentender_procurement.bid_evaluation.services import tender_events
+
+		# the dated rule Tenders does not yet publish (FU-EVL-18), as the owner event it will be
+		_ok(tender_events.record_simulated_event(tender=self.tender, kind="Dated rule", instruction_reference="MOH/EVAL-PERIOD/PW/2027", authority=AO,
+			effective_at=self.shifted("2027-07-12 11:00:00"), detail={"counting": "30 days from the completed opening", "timezone": "Site time (EAT)"}),
+			"record the evaluation period")
+		self.at("2027-07-13 09:00:00")
+
+	def stage_expired(self) -> None:
+		self.at("2027-10-12 09:00:00")
+
+	def stage_delivery_failed(self) -> None:
+		from kentender_procurement.bid_evaluation.services import simulation
+
+		simulation.set_controls(delivery_outcome="Failed")
+		self._sign(MEMBER, AT["sign"][1])
+		self._sign(MEMBER_2, AT["sign"][2])
+		self.at("2027-06-16 14:07:30")
+
+	def stage_resigning(self) -> None:
+		from kentender_procurement.bid_evaluation.services import report, signing
+
+		self.at("2027-06-16 14:05:30")
+		self.first_report = signing.signing_version(frappe.get_doc("Evaluation Case", self.case())).name
+		_ok(signing.revise(tender=self.tender, reason="Correct the service-address page reference.", idempotency_key=_key(), user=SECRETARY), "revise")
+		self.at("2027-06-16 14:20:00")
+		draft = report.draft(frappe.get_doc("Evaluation Case", self.case()))
+		_ok(signing.send_for_signing(tender=self.tender, expected_version=draft.record_version, idempotency_key=_key(), user=SECRETARY), "send report 2")
+
+	def stage_paused_sign(self) -> None:
+		from kentender_procurement.bid_evaluation.services import tender_events
+
+		self.at("2027-06-16 14:05:20")
+		_ok(tender_events.record_simulated_event(tender=self.tender, kind="Suspension", instruction_reference="MOH/REVIEW/PW/2027-SIGN", authority=AO), "suspend")
+		self.at("2027-06-16 14:05:30")
+
+	def stage_cancelled_sign(self) -> None:
+		from kentender_procurement.bid_evaluation.services import tender_events
+
+		self.at("2027-06-16 14:05:20")
+		_ok(tender_events.record_simulated_event(tender=self.tender, kind="Cancellation", instruction_reference="MOH/CANCEL/PW/2027-SIGN", authority=AO,
+			reason="Procurement proceedings terminated under the recorded decision."), "cancel")
+		self.at("2027-06-16 14:05:30")
+
+	def stage_returned(self) -> None:
+		from kentender_procurement.bid_evaluation.services import correction
+
+		self.at("2027-06-16 14:30:00")
+		_ok(correction.return_report(tender=self.tender, comment="Correct the service-address page reference from page 3 to page 2.", idempotency_key=_key(),
+			user=HOP), "return the report")
+		self.at("2027-06-16 15:00:00")
+
+	def stage_awarded(self) -> None:
+		from kentender_procurement.bid_evaluation.services import tender_events
+
+		self.at("2027-06-17 09:00:00")
+		_ok(tender_events.record_simulated_event(tender=self.tender, kind="Award decision", instruction_reference="MOH/AWARD/PW/2027", authority=AO,
+			effective_at=self.instant), "record the award decision")
+		self.at("2027-06-17 10:00:00")
+
+	def stage_decision_unknown(self) -> None:
+		from kentender_procurement.bid_evaluation.services import simulation
+
+		simulation.set_controls(downstream_status="Unknown")
+		self.at("2027-06-17 10:00:00")
+
+	def stage_corrected(self) -> None:
+		from kentender_procurement.bid_evaluation.services import correction
+
+		_ok(correction.record_correction_notice(tender=self.tender, reason="The report gives the wrong page reference for the service address.",
+			correction="Read page 2, section 3, instead of page 3.", idempotency_key=_key(), user=CHAIR), "record the correction notice")
+
+	def stage_paused_prep(self) -> None:
+		from kentender_procurement.bid_evaluation.services import tender_events
+
+		self.at("2027-06-11 08:55:00")
+		_ok(tender_events.record_simulated_event(tender=self.tender, kind="Suspension", instruction_reference="MOH/REVIEW/PW/2027-PREP", authority=AO,
+			permitted_actions=["appointments", "declarations"]), "suspend with appointments permitted")
+		self.at(AT["prepare"])
+
+	def stage_cancelled_prep(self) -> None:
+		from kentender_procurement.bid_evaluation.services import tender_events
+
+		self.at("2027-06-11 08:55:00")
+		_ok(tender_events.record_simulated_event(tender=self.tender, kind="Cancellation", instruction_reference="MOH/CANCEL/PW/2027-PREP", authority=AO,
+			reason="Procurement proceedings terminated under the recorded decision."), "cancel in preparation")
+		self.at(AT["prepare"])
+
+
+@contextmanager
+def _opening_flags():
+	saved = {k: frappe.flags.get(k) for k in ("kt_bop_fixture_namespace", "kt_prc_fixture_namespace")}
+	frappe.flags.kt_bop_fixture_namespace = frappe.flags.kt_prc_fixture_namespace = bop_pw.NAMESPACE
+	try:
+		yield
+	finally:
+		for k, v in saved.items():
+			frappe.flags[k] = v
+
+
+for _name, _fn in vars(_Branches).items():
+	if _name.startswith(("stage_", "_")) and callable(_fn) and not _name.startswith("__"):
+		setattr(EvaluationWorld, _name, _fn)
+
+
 def _chain(stages: dict[str, tuple], stage: str) -> list[str]:
 	out = []
 	while stage:
@@ -507,8 +780,11 @@ def reset_evaluation_fixture(*, stage: str = "prepared", commit: bool = True) ->
 # at every stage, and each branch built once from where it leaves the path.
 CAPTURE_PATHS = (
 	("prepared", "appointed", "assigned", "declared", "reviewing", "concern", "discussion", "joined", "noted", "authorised", "sent", "replied", "outcome",
-		"resolved", "signing", "chair-signed", "report-sent"),
-	("conflict",), ("intake-first",), ("no-bids",), ("paused",), ("cancelled",), ("failed",),
+		"resolved", "signing", "chair-signed", "report-sent", "awarded", "corrected"),
+	("conflict",), ("intake-first", "declare-first"), ("no-bids",), ("paused",), ("cancelled",), ("failed", "failed-report"), ("source-failed",),
+	("member-left",), ("notice-failed",), ("replacement",), ("no-reply",), ("late-reply",), ("planned", "observed", "dd-frozen", "dd-signed"),
+	("supplement",), ("no-agreement",), ("overdue", "expired"), ("delivery-failed",), ("resigning",), ("paused-sign",), ("cancelled-sign",), ("returned",),
+	("supplement-sent",), ("paused-prep",), ("cancelled-prep",), ("decision-unknown",),
 )
 
 
@@ -582,8 +858,12 @@ def capture(*, users: list[str] | None = None) -> dict[str, Any]:
 		if data is None:
 			out[user] = None
 			continue
-		out[user] = {"data": data, "bid": attempt(reads.bid, bid=bid, user=user) if bid else None, "report": attempt(reads.report_view, user=user),
-			"record": attempt(reads.committee_record, user=user), "candidates": attempt(reads.candidates, user=user, purpose="secretary" if user == HOP else "committee")}
+		report = attempt(reads.report_view, user=user)
+		earlier = [h for h in (report or {}).get("history") or [] if h.get("name") != (report or {}).get("report")]
+		out[user] = {"data": data, "bid": attempt(reads.bid, bid=bid, user=user) if bid else None, "report": report,
+			"report_previous": attempt(reads.report_view, user=user, version=earlier[-1]["name"]) if earlier else None,
+			"record": attempt(reads.committee_record, user=user), "candidates": attempt(reads.candidates, user=user, purpose="secretary" if user == HOP else "committee"),
+			"work": reads.list_work(user=user)}
 	out = frappe.parse_json(frappe.as_json(out))
 	# a read identical to an earlier reader's is kept once: {"$same_as": that reader}
 	seen: dict[tuple[str, str], str] = {}

@@ -61,10 +61,12 @@ def supplier_users(bid) -> list[str]:
 
 
 # -- the committee ----------------------------------------------------------------
-def authorise(*, tender: str, bid: str, requirement_key: str, question: str, reply_scope: str, reply_deadline, replaces: str = "", idempotency_key: str,
-		user: str) -> dict[str, Any]:
+def authorise(*, tender: str, bid: str, requirement_key: str, question: str, reply_scope: str, reply_deadline, replaces: str = "", replacement_reason: str = "",
+		idempotency_key: str, user: str) -> dict[str, Any]:
+	"""AuthoriseClarification. A question that replaces one already sent
+	carries the chair's reason, which the secretary's withdrawal records."""
 	payload = {"bid": bid, "requirement_key": requirement_key, "question": question, "reply_scope": reply_scope, "reply_deadline": cstr(reply_deadline),
-		"replaces": replaces}
+		"replaces": replaces, "replacement_reason": replacement_reason}
 	discussion.recheck_presence(tender)
 
 	def body() -> dict[str, Any]:
@@ -77,6 +79,8 @@ def authorise(*, tender: str, bid: str, requirement_key: str, question: str, rep
 		deadline = get_datetime(reply_deadline) if reply_deadline else None
 		if deadline is None or deadline <= clock.now():
 			fields["reply_deadline"] = "Set a reply deadline in the future."
+		if replaces and not cstr(replacement_reason).strip():
+			fields["replacement_reason"] = "Give the reason for replacing the question."
 		invalid(fields)
 		if replaces:
 			prior = _request(doc, replaces)
@@ -86,7 +90,8 @@ def authorise(*, tender: str, bid: str, requirement_key: str, question: str, rep
 			payload={"bid": bid, "requirement": requirement_key, "deadline": cstr(deadline), "replaces": replaces}, note=cstr(question).strip(),
 			idempotency_key=idempotency_key)
 		item = conclusion.open_item_for(doc, bid, requirement_key)
-		decided = conclusion.insert(doc, kind="Clarification authorised", session=out["session_id"], reason=cstr(question).strip(), recorded_by=user,
+		decided = conclusion.insert(doc, kind="Clarification authorised", session=out["session_id"],
+			reason=cstr(replacement_reason).strip() if replaces else cstr(question).strip(), recorded_by=user,
 			participants=out["participants"], event=out["event_id"], bid=bid, requirement_key=requirement_key, next_action="Clarification", item=item or "")
 		number = frappe.db.count(REQUEST, {"evaluation_case": doc.name}) + 1
 		request = records.insert(frappe.get_doc({

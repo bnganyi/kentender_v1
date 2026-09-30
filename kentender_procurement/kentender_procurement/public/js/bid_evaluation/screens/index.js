@@ -17,7 +17,7 @@ import * as record from "./record.js";
 import { bidScreen, concernDialog as bidConcern, issueDialog } from "./bid.js";
 import { discussion, disagreeDialog } from "./discussion.js";
 import { clarification, withdrawDialog } from "./clarification.js";
-import { concernDialog as reportConcern, preview, reportScreen, returnDialog, reviseDialog } from "./report.js";
+import { concernDialog as reportConcern, preview, reportScreen, returnDialog, reviseDialog, statusIssueDialog } from "./report.js";
 import { correction, issue, update, verification } from "./followups.js";
 import { committeeRecord } from "./committee_record.js";
 
@@ -92,6 +92,7 @@ export function dialogFor(name, ctx) {
 		case "withdraw": return withdrawDialog(ctx);
 		case "revise": return reviseDialog(ctx);
 		case "return": return returnDialog(ctx);
+		case "status-issue": return statusIssueDialog(ctx);
 		case "instruction": return record.instructionDialog(ctx.data);
 		default: return null;
 	}

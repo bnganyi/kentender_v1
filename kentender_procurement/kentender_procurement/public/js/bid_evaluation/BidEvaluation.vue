@@ -18,7 +18,7 @@ import * as api from "./data/api.js";
 import { useRouteState } from "./composables/useRouteState.js";
 import EvlBoard from "./board/EvlBoard.vue";
 import { build, dialogFor, needs, record } from "./screens/index.js";
-import { peopleOf } from "./screens/common.js";
+import { peopleOf, staleBoard } from "./screens/common.js";
 import { memberRows } from "./screens/committee.js";
 
 const PAGE = "tenders";
@@ -43,6 +43,7 @@ const fields = ref({});
 const form = reactive({});
 const dialog = ref(null);
 const unconfirmed = ref(false);
+const stale = ref(false);
 const signKeys = {};
 let seq = 0;
 
@@ -58,6 +59,7 @@ const board = computed(() => {
 	if (!data.value) return { ...record.states("loading"), screen: "loading" };
 	const b = build(ctx.value);
 	if (!b) return { ...record.states("not-found"), screen: "not-found" };
+	if (stale.value) return staleBoard(b);
 	if (dialog.value) {
 		const d = dialogFor(dialog.value.name, ctx.value);
 		if (d) return { ...b, dlg: { ...d, pri: d.pri, sec: d.sec || [{ label: "Cancel", action: "close-dialog" }] } };
@@ -123,6 +125,7 @@ function resetScreen() {
 	reasons.value = [];
 	fields.value = {};
 	unconfirmed.value = false;
+	stale.value = false;
 }
 
 // ------------------------------------------------------------------ commands
@@ -227,6 +230,12 @@ async function run(spec) {
 }
 
 function refuse(result) {
+	if (result.code === "EVL_VERSION_CONFLICT" && result.detail && result.detail.record_version !== undefined) {
+		// someone else changed the record: keep the page and the form, offer Refresh
+		stale.value = true;
+		dialog.value = null;
+		return result;
+	}
 	error.value = result.message || "The action could not be completed.";
 	fields.value = result.fields || {};
 	if (result.fields && dialog.value) {
@@ -259,11 +268,18 @@ async function onAction({ action, args }) {
 			if (a.anchor) setTimeout(() => document.getElementById(`evl-${a.anchor.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`)?.scrollIntoView({ block: "start" }), 400);
 			return;
 		case "cmd": return run(a);
-		case "dialog": error.value = ""; reasons.value = []; dialog.value = { name: a.name, args: a }; return;
+		case "dialog":
+			error.value = "";
+			reasons.value = [];
+			// a dialog may open with the recorded words it confirms (the chair's reason)
+			Object.entries(a.prefill || {}).forEach(([k, v]) => { if (form[k] === undefined) form[k] = v; });
+			dialog.value = { name: a.name, args: a };
+			return;
 		case "close-dialog": dialog.value = null; error.value = ""; reasons.value = []; return;
 		case "set": form[a.name] = a.value; return;
 		case "add-member": form.member_count = memberRows(form).length + 1; memberRows(form).forEach((i) => { if (form[`m${i}_capacity`] === undefined) form[`m${i}_capacity`] = "Member"; }); return;
 		case "reload": failure.value = ""; return load();
+		case "refresh-stale": stale.value = false; return load({ quiet: true });
 		case "back": case "back-to-record": return go([]);
 		case "nav-opening": return frappe.set_route(PAGE, ref_.value, "opening");
 		case "evidence": {

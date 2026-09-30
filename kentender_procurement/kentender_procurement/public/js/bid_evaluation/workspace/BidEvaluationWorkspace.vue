@@ -17,10 +17,9 @@
 import { computed, reactive, ref, watch } from "vue";
 import { frappeCall } from "../data/frappeCall.js";
 import EvlBoard from "../board/EvlBoard.vue";
-import { em, fb, task, tb } from "../board/model.js";
+import { workspaceBoard } from "../screens/workspace.js";
 import { usePageRail } from "../../tnd_shared/composables/usePageRail.js";
 
-const STATES = ["All states", "Preparing", "Reviewing", "Signing", "Report sent", "No evaluation required", "Cancelled"];
 const railEl = ref(null);
 const loading = ref(true);
 const error = ref("");
@@ -52,28 +51,7 @@ watch(() => [form.query, form.state], () => {
 	timer = setTimeout(load, 250);
 });
 
-const titleOf = (ref_) => (work.value.register.find((r) => r.tender === ref_) || {}).title || "";
-
-const board = computed(() => {
-	const head = { title: "Bid evaluation", desc: "Review automatic checks, resolve questions and prepare the committee report.", icon: undefined };
-	if (forbidden.value) {
-		return { ...head, blocks: [em("You do not have access to Bid evaluation.", null, "ban", "This area needs one of these responsibilities: Accounting Officer, Head of Procurement, appointed evaluation member, evaluation secretary or authorised auditor. Ask your KenTender administrator to assign the appropriate responsibility in System setup; committee membership also requires appointment.")] };
-	}
-	if (loading.value) return { ...head, blocks: [em("Loading evaluations…", null, "loader")] };
-	const blocks = (work.value.tasks || []).map((t) => task(t.title, titleOf(t.reference) || t.reference, t.status === "Assigned" ? stateOf(t.reference) : t.status,
-		{ label: t.action_label || "Open evaluation", action: "open", args: { route: t.route } }));
-	blocks.push(fb([["Find a tender", form.query, { wide: true, ph: "Find a tender", name: "query" }], ["State", form.state, { select: true, name: "state", options: STATES.map((s) => ({ value: s === "All states" ? "" : s, label: s })) }]],
-		{ title: "Evaluations", sec: true }));
-	const rows = work.value.register || [];
-	if (rows.length) blocks.push(tb(["Tender", "Title", "Work state", "Action"], rows.map((r) => [r.tender, r.title, r.state, { label: "View", action: "open", args: { route: ["tenders", r.tender, "evaluation"] }, testid: `evl-view-${r.tender}` }]), { testid: "evl-register" }));
-	else if (form.query || form.state) blocks.push({ ...em("No evaluations match your search.", "Clear search", "search"), btnAction: "clear" });
-	else blocks.push(em("No evaluations are assigned to you.", null, "clipboard"));
-	return { ...head, blocks };
-});
-
-function stateOf(reference) {
-	return (work.value.register.find((r) => r.tender === reference) || {}).state || "";
-}
+const board = computed(() => workspaceBoard({ work: forbidden.value ? { forbidden: true } : work.value, form, loading: loading.value }));
 
 function onUpdate({ name, value }) {
 	form[name] = value;

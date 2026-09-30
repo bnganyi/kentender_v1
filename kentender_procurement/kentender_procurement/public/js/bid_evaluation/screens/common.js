@@ -152,3 +152,10 @@ export function conditionNotices(data) {
 export function ownerEvent(data, kind) {
 	return ((data.work || {}).owner_events || []).filter((e) => e.kind === kind).slice(-1)[0] || null;
 }
+
+// S-STALE-RECORD: the record changed since this viewer loaded it. The page and
+// the unsent form are kept; the one action is Refresh (AGENTS.md §6.4).
+export const STALE = "This record changed while you were working. Refresh it and try again.";
+export function staleBoard(board) {
+	return { ...board, blocks: [n("warning", STALE), ...(board.blocks || [])], pri: { label: "Refresh", action: "refresh-stale" }, sec: [], cons: "" };
+}

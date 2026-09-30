@@ -43,10 +43,10 @@ class ClarificationCase(EvaluationCase):
 			reason="The submitted evidence does not clearly identify the service address.", idempotency_key=key(), user=MEMBER)
 		self.now = frappe.utils.get_datetime(frappe.flags.kt_evl_clock)
 
-	def evl_authorise(self, replaces=""):
+	def evl_authorise(self, replaces="", replacement_reason=""):
 		self.session()
 		out = clarification.authorise(tender=self.name, bid=self.bid, requirement_key=self.key_, question=QUESTION, reply_scope=SCOPE,
-			reply_deadline=str(self.now + timedelta(days=1)), replaces=replaces, idempotency_key=key(), user=CHAIR)
+			reply_deadline=str(self.now + timedelta(days=1)), replaces=replaces, replacement_reason=replacement_reason, idempotency_key=key(), user=CHAIR)
 		self.end_session()
 		return out["clarification"]
 
@@ -134,7 +134,13 @@ class TestNoticeAndReplacement(ClarificationCase):
 		first = self.evl_authorise()
 		self.evl_send(first)
 		clarification.save_draft(tender=self.name, clarification=first, body="Unsent words", idempotency_key=key(), user=DAVID)
-		second = self.evl_authorise(replaces=first)
+		with self.assertRaises(InputError) as ctx:  # a replacement carries the chair's reason
+			self.evl_authorise(replaces=first)
+		self.assertIn("replacement_reason", ctx.exception.fields)
+		self.end_session()
+		second = self.evl_authorise(replaces=first, replacement_reason="Clarify the document reference.")
+		replaced = next(c for c in reads.resolve(tender_reference=self.reference, user=SECRETARY)["work"]["clarifications"] if c["name"] == second)
+		self.assertEqual(replaced["replace_reason"], "Clarify the document reference.")
 		clarification.withdraw(tender=self.name, clarification=first, reason="Clarify the document reference.", idempotency_key=key(), user=SECRETARY)
 		self.evl_send(second)
 		own = reads.own_clarification(tender_reference=self.reference, clarification=first, user=DAVID)

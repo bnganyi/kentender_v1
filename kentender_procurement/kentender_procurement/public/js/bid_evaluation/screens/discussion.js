@@ -158,6 +158,18 @@ function chairDecision(ctx, { base, att, subject, evd, decision }) {
 	if (decision === "verification-outcome") {
 		const ver = work.verification;
 		const r = experienceRequirement(ctx);
+		if (form.result === "Does not meet") {
+			// D08-VERIFY-NEG: the affected requirement and the participants' own evidence
+			const req = (ctx.bid && ctx.bid.requirements || []).find((x) => x.requirement_key === r.requirement_key) || {};
+			return { ...base, guidance: guidance(data, { headline: "Record how verification affects the evaluation." }),
+				blocks: [attendanceTable(work.session, data, { membersOnly: true }),
+					at("The committee is recording that verification did not support the submitted evidence."),
+					f(["Affected requirement", req.label || ""], ["Required value", (req.checks || []).map((c) => c.required).filter(Boolean)[0] || ""]),
+					kv(ver.observations.map((o) => [`${o.name}`, `Recorded ${o.recorded} — “${o.findings}”`]), { title: "Evidence", sec: true }),
+					sg("Result", ["Meets", "Does not meet", "Needs review"], -1, { name: "result" }), fi("Reason", "", { area: true, req: true, rows: 2, name: "reason" })],
+				pri: cmd("Record conclusion", "record_verification_outcome", { values: { bid: r.bid, requirement_key: r.requirement_key }, fields: ["result", "reason"] }),
+				sec: [nav("View verification report", "verification"), end] };
+		}
 		return { ...base, guidance: guidance(data, { headline: "Record how verification affects the evaluation." }),
 			blocks: [attendanceTable(work.session, data, { membersOnly: true }),
 				tb(["Participant", "Signature"], ver.signatures.map((s) => [s.name, s.signed ? `Signed ${s.signed.split(", ")[1] || s.signed}` : "Awaiting signature"]), { title: "Verification report 1", sec: true }),
@@ -187,12 +199,18 @@ function chairDecision(ctx, { base, att, subject, evd, decision }) {
 	}
 	if (decision === "clarification") {
 		const note = ((work.notes || []).slice(-1)[0]) || null;
+		// a question already sent for this requirement and not yet answered is
+		// replaced, with the chair's reason (the secretary then withdraws it)
+		const out = (work.clarifications || []).find((c) => c.status === "Sent" && !c.reply && c.requirement_key === item.requirement_key && !c.replaced_by);
 		const blocks = [att, subject.block];
 		if (note) blocks.push(kv([["Discussion note", note.note], ["Reason", note.reason || ""]], { title: "Proposed conclusion", sec: true }));
+		if (out) blocks.push(kv([["Question", out.question], ["Sent", out.sent]], { title: "Question being replaced", sec: true }),
+			fi("Reason for replacing it", "", { area: true, req: true, rows: 2, name: "replacement_reason" }));
 		blocks.push(fi("Question", "", { area: true, req: true, rows: 2, name: "question" }), fi("Reply deadline", "", { req: true, name: "reply_deadline", type: "datetime-local" }),
-			fi("Scope", "Explain the submitted evidence. Do not change your offer or add a new service arrangement.", { area: true, req: true, rows: 2, name: "reply_scope" }), switcher("clarification"));
+			fi("Scope", "", { area: true, req: true, rows: 2, name: "reply_scope" }), switcher("clarification"));
 		return { ...base, guidance: guidance(data, { headline: "Authorise the agreed written clarification." }), blocks,
-			pri: cmd("Authorise clarification", "authorise_clarification", { values: { bid: item.evaluation_bid, requirement_key: item.requirement_key }, fields: ["question", "reply_deadline", "reply_scope"] }), sec: [end] };
+			pri: cmd("Authorise clarification", "authorise_clarification", { values: { bid: item.evaluation_bid, requirement_key: item.requirement_key, replaces: out ? out.name : "" },
+				fields: ["question", "reply_deadline", "reply_scope", ...(out ? ["replacement_reason"] : [])] }), sec: [end] };
 	}
 	// D05-CONCLUSION / D05-CONCLUSION-Q
 	const blocks = [att, subject.block, evd, sg("Result", ["Meets", "Does not meet", "Needs review"], -1, { name: "result" })].filter(Boolean);
