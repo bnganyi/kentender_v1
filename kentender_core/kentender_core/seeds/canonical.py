@@ -75,6 +75,7 @@ REGISTER_LOCAL_PARTS: tuple[str, ...] = (
 	"amina.hassan",
 	"daniel.rotich",
 	"daniel.otieno",  # KT-STD-001 v1.11 §8.3 — technical operator
+	"nadia.kamau",  # KT-STD-001 v1.12 §8.3 — release operator
 	"charles.mutiso",
 	"brian.wafula",
 	# TPR-CHG-001 v0.8 §13.1 (plan D8, D8′ in v0.12) — the bidder-facing

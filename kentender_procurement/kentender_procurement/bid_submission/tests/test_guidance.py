@@ -21,11 +21,11 @@ from kentender_procurement.bid_submission.test_services import trust
 from kentender_procurement.bid_submission.tests.support import DAVID, MARY, NS, key
 from kentender_procurement.bid_submission.tests.test_changes_and_close import ChangeCase
 
-# Daniel Otieno is the KT-STD-001 v1.11 §8.3 technical operator, seeded by the
-# site stage since 30 Sep 2026: the tests use that one person (a second test
-# user of the same name made the guidance name "Daniel Otieno, Daniel Otieno").
-# Nadia Kamau is not in the register yet, so she stays a test user.
-DANIEL, NADIA = "daniel.otieno@moh.example.test", "bdst.nadia@example.test"
+# Daniel Otieno (technical operator, KT-STD-001 v1.11 §8.3) and Nadia Kamau
+# (release operator, v1.12 §8.3) are seeded by the site stage since 30 Sep
+# 2026: the tests use those people (a second test user of the same name made
+# the guidance name "Daniel Otieno, Daniel Otieno").
+DANIEL, NADIA = "daniel.otieno@moh.example.test", "nadia.kamau@moh.example.test"
 _CREATED: set[str] = set()
 
 
@@ -47,12 +47,12 @@ def _operators() -> None:
 
 def _remove_operators() -> None:
 	"""Only what these tests made: their own grants (stamped NS) and users
-	they created. The register's Daniel Otieno and his canonical role stay."""
+	they created. The register's people and their canonical roles stay."""
 	frappe.db.delete("Notification Log", {"for_user": ("in", (DANIEL, NADIA))})
 	for name in frappe.get_all("User Responsibility Assignment", filters={"user": ("in", (DANIEL, NADIA)), "fixture_namespace": NS}, pluck="name"):
 		frappe.delete_doc("User Responsibility Assignment", name, force=True, ignore_permissions=True)
 	for email in (DANIEL, NADIA):
-		if (email in _CREATED or email == NADIA) and frappe.db.exists("User", email):
+		if email in _CREATED and frappe.db.exists("User", email):
 			frappe.delete_doc("User", email, force=True, ignore_permissions=True)
 	_CREATED.clear()
 	frappe.db.commit()

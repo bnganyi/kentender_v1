@@ -219,7 +219,7 @@ class TestFixturePasswords(IntegrationTestCase):
 		self.assertEqual(check_password(email, TEST_PASSWORD), email)
 
 
-	def test_the_technical_operator_and_the_public_observer_are_seeded(self):
+	def test_the_technical_operator_release_operator_and_public_observer_are_seeded(self):
 		"""KT-STD-001 v1.11 §8.3 (seeded at the Project Owner's instruction of
 		30 Sep 2026): Daniel Otieno is a technical reader holding Technical
 		Operator; Jane Wanjiku is a Website User with no supplier link. Both sign
@@ -239,6 +239,12 @@ class TestFixturePasswords(IntegrationTestCase):
 		for email in (daniel, jane):
 			self.assertEqual(check_password(email, TEST_PASSWORD), email)
 		self.assertIn(daniel, canonical.REGISTER_USERS)
+		# KT-STD-001 v1.12 §8.3 — the release operator: a Desk user, not a technical reader
+		nadia = "nadia.kamau@moh.example.test"
+		self.assertTrue(frappe.db.exists("User Responsibility Assignment", {"user": nadia, "business_role": "Release Operator", "status": "Enabled"}))
+		self.assertNotIn("System Manager", frappe.get_roles(nadia))
+		self.assertEqual(check_password(nadia, TEST_PASSWORD), nadia)
+		self.assertIn(nadia, canonical.REGISTER_USERS)
 
 
 class TestCanonicalSeedRun(IntegrationTestCase):

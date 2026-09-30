@@ -3,14 +3,15 @@
 | Control | Value |
 |---|---|
 | Document ID | KT-STD-001 |
-| Version | 1.11 |
-| Status | **Approved** — Project Owner, 30 September 2026 |
-| Approved on | 30 September 2026 — Project Owner (v1.10: 29 September 2026 — Project Owner) |
-| Prior approval record | Project Owner approved v1.9 on 26 September 2026 and v1.8 on 25 September 2026; v1.10 approved 29 September 2026. v1.11 approved 30 September 2026; Project Owner instruction, verbatim: "Register approval: approve". |
-| Date | 29 September 2026 |
-| Supersedes | v1.10 approved 29 September 2026; retained as historical evidence. (v1.10 read: v1.9 approved 26 September 2026; retained as historical evidence.) |
+| Version | 1.12 |
+| Status | **Proposed** — v1.11 was Approved; re-approval required |
+| Approved on | Not yet approved (v1.11: 30 September 2026 — Project Owner; v1.10: 29 September 2026 — Project Owner) |
+| Prior approval record | Project Owner approved v1.9 on 26 September 2026 and v1.8 on 25 September 2026; v1.10 approved 29 September 2026. v1.11 approved 30 September 2026; Project Owner instruction, verbatim: "Register approval: approve". None for v1.12. |
+| Date | 30 September 2026 |
+| Supersedes | v1.11 approved 30 September 2026; retained as historical evidence. (v1.11 read: v1.10 approved 29 September 2026; retained as historical evidence. v1.10 read: v1.9 approved 26 September 2026; retained as historical evidence.) |
 | Applies to | Every KenTender change unit, architecture decision record and module requirements document |
-| v1.11 change type | Fixture register addition only: two actors in §8.3, Daniel Otieno (technical operator) and Jane Wanjiku (public observer), added at the Project Owner's instruction of 29 September 2026 for BDS-CHG-001 v0.8 and BOP-CHG-001 v0.10 scenarios. No rule, component, contract or verification requirement changes. |
+| v1.12 change type | Fixture register addition only: one actor in §8.3, Nadia Kamau (release operator), added at the Project Owner's instruction of 30 September 2026 for the BDS-CHG-001 v0.8 production-submission gate scenario. No rule, component, contract or verification requirement changes. |
+| v1.11 change type (retained) | Fixture register addition only: two actors in §8.3, Daniel Otieno (technical operator) and Jane Wanjiku (public observer), added at the Project Owner's instruction of 29 September 2026 for BDS-CHG-001 v0.8 and BOP-CHG-001 v0.10 scenarios. No rule, component, contract or verification requirement changes. |
 | v1.10 change type (retained) | Project-wide plain-language and minimum-step rule in §2.1, a **Scheduled** next-step kind in §2.9.1/§3B, and an end-to-end requirements conformance gate in §2.8 and §6. No statutory safeguard, owner decision or proof obligation is removed. |
 | v1.9 change type (retained) | Presentation refinement: one white page sheet on the light technical ground in §2.4; bounded task and decision accent rules in §2.6.7; and a consistent guidance region, state treatment and line rules for the next-step block in §2.9.1 and §2.9.3. No change to the server contract, module states, actions or approval effects of v1.8. Source: Project Owner-supplied v1.9 review image, items 1, 2 and 4; DS-REV-001 is referenced for the technical ground but its source text has not been independently verified. |
 | v1.8 change type (retained) | Adds the shared workflow-guidance standard: the next-step block and journey tracker as authorised shared structural components (§2.9), with restraint rules that stop them overwhelming existing screens (§2.9.3); and the server-side next-step contract, guard reasons, hand-off register, My Work and Home, and the dead-end conformance test (§3B). Adds matching rules to §1, §2.2, §2.6.4–§2.6.6, §2.6.8, §2.8, §5, §6, §7, §8.7, §10, §11 and §12. Source input: the approved KenTender Workflow Guidance Standard (25 September 2026). All v1.7 content is retained. |
@@ -589,10 +590,13 @@ These fixtures are canonical across every KenTender document, seed and artboard.
 | Brian Wafula | `brian.wafula@moh.example.test` | Procurement Officer, site-wide — Tender Preparation only | Site-wide |
 | Daniel Otieno | `daniel.otieno@moh.example.test` | Technical operator: service health and incidents only, including Opening access support; technical reader under §3A.6, with no business action | Site-wide |
 | Jane Wanjiku | `jane.wanjiku@observer.example` | Public observer: a signed-in member of the public with no supplier link and no bidder rights | — (public portal only) |
+| Nadia Kamau | `nadia.kamau@moh.example.test` | Release operator: holds the verified production-submission release for Bid Submission's production-submission gate; no bid-content access and no supplier business action | Site-wide |
 
 Grace additionally holds Head of User Department in `OU-MOH-HRMD` in the Cartesian-product regression fixture, so the same-user-different-scope test has a concrete subject.
 
 **Added in v1.11 (Project Owner instruction, 29 September 2026: "Register Daniel Otieno"; "Add Jane Wanjiku").** Daniel Otieno is the technical operator already named in BDS-CHG-001 v0.8 (for example BDS-CHG-001 v0.8 §5.12 next-step rows: "Technical operator Daniel Otieno is restoring digital signing."); he is a different person from Daniel Rotich, the statutory approver. Jane Wanjiku is the public observer in BOP-CHG-001 v0.10 §10. She is not a Ministry user, so her login uses a non-`moh.example.test` domain, and holds no responsibility.
+
+**Added in v1.12 (Project Owner instruction, 30 September 2026: "New follow-up: Seed appropriately and update documentation").** Nadia Kamau is the release operator already named in BDS-CHG-001 v0.8: BDS-CHG-001 v0.8 §13.2 lists her as "Deployment release operator for the production-submission gate fixture; no bid-content access or supplier business action.", and BDS-CHG-001 v0.8 §5.12 gives the signatory's next step "Release operator Nadia Kamau holds the verified production-submission release." She holds the site-wide Release Operator responsibility that the Project Owner added on 27 September 2026 for Bid Submission. She is a different person from Beatrice Kamau, the Budget Approver.
 
 Josphat Mwangi holds two responsibilities deliberately: BUD-CHG-001 distinguishes Budget Officer, who authors budget versions, from Finance Confirmation Officer, who confirms a plan sits within budget. One person holding both exercises the no-self-approval rule.
 
@@ -680,6 +684,8 @@ These apply to every document and every layer, not only to artboards. Section 2.
 
 ## 12. Approval effect
 
+**Proposed v1.12 effect.** On approval, Nadia Kamau becomes a registered fixture actor under §8.3 and may be used by every document, seed and artboard. Approval changes no rule, contract or verification requirement.
+
 **Approved v1.11 effect — 30 September 2026.** v1.11 is approved by the Project Owner and supersedes v1.10 as the governing standard. Daniel Otieno and Jane Wanjiku are registered fixture actors under §8.3 and may be used by every document, seed and artboard. Approval changes no rule, contract or verification requirement. (Proposed text read: "On approval, Daniel Otieno and Jane Wanjiku become registered fixture actors under §8.3 and may be used by every document, seed and artboard. Approval changes no rule, contract or verification requirement.")
 
 **Approved v1.10 effect — 29 September 2026 (retained).** the §2.1 language and minimum-step rule and §6 check become shared requirements for future and revised module design contracts. v1.10 supersedes v1.9 as the governing standard. This approval does not itself approve a Bid Opening method, alter its required committee participation or certify a signature.
@@ -740,3 +746,5 @@ Version history: v1.9, approved 26 September 2026, refines the desktop sheet and
 Version history addition: v1.10 proposed 28 September 2026, adds project-wide ordinary-user language and minimum-step rules, a **Scheduled** next-step kind, and the actor/state/event conformance gate. The latter responds to the Bid Opening v0.8 end-to-end review: phrase checks did not detect mutually incompatible scenario events or missing owner/Proceedings actions. The Project Owner approved v1.10 on 29 September 2026; v1.9 is superseded.
 
 Version history addition: v1.11 proposed 29 September 2026 adds two §8.3 fixture actors, Daniel Otieno and Jane Wanjiku, at the Project Owner's instruction. Awaiting approval; v1.10 remains the governing standard until then. Approved 30 September 2026 by the Project Owner; v1.11 is now the governing standard.
+
+Version history addition: v1.12 proposed 30 September 2026 adds one §8.3 fixture actor, Nadia Kamau (release operator), at the Project Owner's instruction. Awaiting approval; v1.11 remains the governing standard until then.

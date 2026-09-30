@@ -167,6 +167,11 @@ ACTORS = (
 	# Opening access support; a technical reader (§3A.6), so he also holds
 	# System Manager (TECHNICAL_ACTORS). Not Daniel Rotich.
 	("daniel.otieno", "Daniel Otieno"),
+	# KT-STD-001 v1.12 §8.3 (proposed; seeded at the Project Owner's
+	# instruction of 30 Sep 2026, "Seed appropriately") — the release
+	# operator who holds Bid Submission's production-submission release; no
+	# bid content, no supplier business action. Not Beatrice Kamau.
+	("nadia.kamau", "Nadia Kamau"),
 )
 
 # KT-STD-001 §3A.6 — register actors who read as technical readers
@@ -245,6 +250,9 @@ ASSIGNMENTS = (
 	# KT-STD-001 v1.11 §8.3 — Site-wide Technical Operator: Bid Submission's
 	# signing/tender-box incidents and Bid Opening's Opening access support.
 	("daniel.otieno", "Technical Operator", None, {}),
+	# KT-STD-001 v1.12 §8.3 — Site-wide Release Operator (Bid Submission's
+	# production-submission gate).
+	("nadia.kamau", "Release Operator", None, {}),
 	(
 		"samuel.otieno",
 		"Head of User Department",
