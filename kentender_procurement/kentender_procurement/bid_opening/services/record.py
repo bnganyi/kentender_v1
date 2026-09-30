@@ -168,6 +168,14 @@ def _freeze_payload(doc, *, correction: dict[str, str] | None = None) -> dict[st
 		"targets": targets(doc, content_digest=digest, pages=pages, prefix=prefix)}
 
 
+def _ask_to_sign(doc, frozen: dict[str, Any]) -> None:
+	from kentender_procurement.bid_opening.services import notify
+
+	notify.tell_members(doc, [m["member_user"] for m in participants(doc.name)], subject=f"Review and sign opening record for {doc.tender_reference}",
+		message=f"Version {frozen['version_number']} of the opening record is ready for your signature.", event_type="Opening record signature",
+		key=f"sign:{frozen['minutes_version']}")
+
+
 def freeze_opening_minutes(*, tender: str, expected_version: int, idempotency_key: str, user: str) -> dict[str, Any]:
 	from kentender_procurement.proceedings.services import minutes
 
@@ -185,6 +193,7 @@ def freeze_opening_minutes(*, tender: str, expected_version: int, idempotency_ke
 			actor=user)
 		renders.save(frozen["minutes_version"], p["pdf"])
 		records.bump(doc, state="Awaiting attestations", last_committed_event=frozen["event_id"])
+		_ask_to_sign(doc, frozen)
 		return records.summary(doc, minutes_version=frozen["minutes_version"], version_number=frozen["version_number"], pages=p["pages"], targets=len(p["targets"]))
 
 	return records.command("FreezeOpeningMinutes", tender=tender, idempotency_key=idempotency_key, actor=user, payload={"expected_version": expected_version}, body=body)
@@ -207,6 +216,7 @@ def supersede_opening_minutes(*, tender: str, reason: str, correction_note: str,
 			idempotency_key=prc.key(idempotency_key, "supersede"), actor=user)
 		renders.save(frozen["minutes_version"], p["pdf"])
 		records.bump(doc, last_committed_event=frozen["event_id"])
+		_ask_to_sign(doc, frozen)
 		return records.summary(doc, minutes_version=frozen["minutes_version"], version_number=frozen["version_number"])
 
 	return records.command("SupersedeFrozenMinutes", tender=tender, idempotency_key=idempotency_key, actor=user,

@@ -212,6 +212,9 @@ def get_tender_overview(*, tender_reference: str, organisation: str = "", user: 
 			"closed_text": "" if published.get("clarifications_open") else (f"Clarifications closed {clarification_deadline}." if clarification_deadline else ""),
 		},
 		"notice": notice, "release_notice": release_notice, "state": information, "bid": bid, "action": action, "actions": actions, "start": start, "before_you_start": list(BEFORE_YOU_START),
+		# pages other modules keep for this Tender (`kt_tender_portal_links`), e.g.
+		# its bid opening (BOP-CHG-001 v0.10 §9; BDS tracker BDS8-B05)
+		"related_links": [link for path in frappe.get_hooks("kt_tender_portal_links") or [] for link in (frappe.get_attr(path)(tender_reference=reference, user=actor) or [])],
 		"cancellation": {"cancelled": labels.datetime_label((published.get("cancellation") or {}).get("cancelled_at"))} if state == "cancelled" else None,
 		"signed_in": signed_in,
 	}

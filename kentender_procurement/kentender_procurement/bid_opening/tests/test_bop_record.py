@@ -129,6 +129,14 @@ class TestPrepareAndFreeze(RecordCase):
 
 
 class TestVersionsAndProofs(RecordCase):
+	def test_each_member_is_asked_to_sign_when_the_record_is_finished(self):
+		self.read_out_and_ended()
+		self.freeze()
+		for user in MEMBERS:
+			with self.subTest(user=user):
+				self.assertTrue(frappe.db.exists("Notification Log", {"for_user": user, "document_type": "Bid Opening Case",
+					"subject": f"Review and sign opening record for {self.reference}"}))
+
 	def test_bop_n07_n11_a_new_version_keeps_old_proofs_but_needs_fresh_ones(self):
 		self.read_out_and_ended()
 		self.freeze()

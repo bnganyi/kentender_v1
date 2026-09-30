@@ -56,14 +56,63 @@ make seed-canonical SITE=kentender.midas.com THROUGH=bid_opening     # idempoten
 make seed-canonical-validate SITE=kentender.midas.com THROUGH=bid_opening
 ```
 
-- It runs only on a test site, because the signatures come from the test attestation service (section 4).
+- It runs only on a test site, because the signatures come from the test attestation service (section 5).
 - It needs the `bid_submission` stage, whose close at 11:00 leaves the sealed box.
 - A partial opening, from an interrupted seed or a browser pass on the canonical Tender, is removed and told again from the start.
 - Jane Wanjiku joins as a public observer at 10:59. Daniel Otieno holds Opening access support (Technical Operator); the canonical opening needs none. Both are seeded by the site stage (KT-STD-001 v1.11 §8.3).
 - Everyone signs in with the shared fixture password (`.env.ui`), the canonical supplier people (David Ouma, Mary Wanjiku) and Jane Wanjiku included.
 - The canonical world is dated 2027. A browser walk of it pins the site's test clock just after the opening (`make ui-bop-release-evidence-gate` sets 12 Jun 2027 11:15 and clears it afterwards); without that, roles that start in 2027 are not yet in force.
 
-## 3. The browser worlds
+## 3. Walking an opening yourself: the demo profiles
+
+The canonical site holds one finished opening. To see any other stage,
+load a demo profile. It retells the canonical Tender's opening, TND-MOH-2027-002,
+up to one moment with the real commands and the canonical people, and sets the
+site's test clock to that moment. Every screen is then live: sign in as the
+person named, act, and the opening moves on.
+
+```bash
+make seed-bop-profiles SITE=kentender.midas.com                              # list them
+make seed-bop-profile SITE=kentender.midas.com PROFILE=BOP-DEMO-READY        # load one (replaces any loaded one)
+make seed-bop-profile-restore SITE=kentender.midas.com                       # put the finished opening back and clear the clock
+```
+
+The report of `seed-bop-profile` says who to sign in as, what to do, and
+the server's observed next step for each named person. Everyone signs in with
+the shared fixture password in `.env.ui`.
+
+**How people get in.** There is no Bid Opening menu (BOP-CHG-001 v0.10 §9):
+- The Accounting Officer, chair and Procurement Officer use Procurement → Tender Management → Tenders → TND-MOH-2027-002 → **Bid opening**.
+- A member who does not use Tenders, such as Beatrice Kamau, uses the notification bell. Appointment and the record's readiness for signing each notify every member.
+- A visitor or supplier uses the public Tender page `/tenders/TND-MOH-2027-002`, where **Key dates → Bid opening** links to the opening page.
+
+| Profile | Moment (site clock) | Sign in as | What to do |
+|---|---|---|---|
+| `BOP-DEMO-APPOINT` | 10 Jun 2027, 10:10 | Amina Hassan | Add three members (try two first to see the refusal); Appoint committee |
+| `BOP-DEMO-PUBLISH` | 10 Jun, 10:15 | Amina Hassan; Beatrice Kamau (bell) | Publish how to attend |
+| `BOP-DEMO-BEFORE-JOIN` | 12 Jun, 10:40 | Charles Mutiso; Jane Wanjiku (public page) | See "You can join from 10:55" |
+| `BOP-DEMO-JOIN` | 12 Jun, 10:56 | Charles, Brian, Beatrice; Jane | Each joins; Jane joins the public opening |
+| `BOP-DEMO-MISSING-MEMBER` | 12 Jun, 11:00:05 | Charles, then Beatrice | Notify Beatrice; she joins from the bell; Start |
+| `BOP-DEMO-READY` | 12 Jun, 11:00:05 | Charles, Brian, Beatrice, Amina | The whole opening: Start, open, read aloud, record, end, prepare, finish, sign |
+| `BOP-DEMO-READ-ALOUD` | 12 Jun, 11:01:20 | Brian, then Charles | Read aloud; record what was read |
+| `BOP-DEMO-REQUESTS` | 12 Jun, 11:02:22 | Charles; Beatrice; Jane | Record a request or a comment for Evaluation; a member's own account; End opening |
+| `BOP-DEMO-MEMBER-LEFT` | 12 Jun, 11:02:15 | Charles, Beatrice (Amina) | Notify; Beatrice rejoins and the opening continues |
+| `BOP-DEMO-CANNOT-OPEN` | 12 Jun, 11:01:10 | Charles; Daniel Otieno | The pause; Retry waits for support |
+| `BOP-DEMO-RETRY` | 12 Jun, 11:05:05 | Charles | Retry opening |
+| `BOP-DEMO-AO-DECISION` | 12 Jun, 11:05:10 | Amina, Charles | The Accounting Officer's decision item |
+| `BOP-DEMO-SIGN` | 12 Jun, 11:08:30 | Beatrice, Charles | Sign; the last signature completes the opening |
+| `BOP-DEMO-NOT-HELD` | 12 Jun, 11:10 | Amina | Record that the opening did not take place |
+| `BOP-DEMO-NO-BIDS` | browser-test Tender, 5 Jun 2027, 11:00:30 | Charles Mutiso (`pw.req.hopf@example.test`) | End opening with no bids; the record is still signed |
+
+Things to know:
+- **The clock:** while a profile is loaded the whole site reads the test clock (for example 12 Jun 2027). Restore clears it.
+- **Validation:** while a profile is loaded, `seed-canonical-validate` reports the opening as not complete.
+- **The Tender's own status:** the Tender itself still says "Submission period ended" even in the pre-deadline profiles, because Bid Submission closed it when the canonical world was seeded.
+- **Support:** Opening access support (Daniel Otieno) has no screen for recording a resolution. The profiles record it (`BOP-DEMO-RETRY`, `BOP-DEMO-AO-DECISION`); see FU-BOP-28.
+- **No bids:** the no-bids profile needs a Tender with an empty box, so it uses the browser-test Tender and its people. Restore removes it.
+- **Browser check:** `bop-demo-walk.spec.ts` walks five profiles from the menu and the bell, one browser session per person.
+
+## 4. The browser worlds
 
 `bid_opening/seeds/playwright_ui_fixtures.py` builds one world per board
 state on the Bid Submission test Tender (TND-MOH-2099-001, deadline 5 Jun
@@ -88,7 +137,7 @@ GetOpening or the public read returns, re-capture them:
 2. For the public boards: save `capture_public()` for the prepared, published, joined, answered and complete stages, and for complete after a register request with self-service off and with it on.
 3. Finish with `restore_site()`, then run `make ui-bop-fidelity-gate`.
 
-## 4. The test stand-ins (plan OD-C)
+## 5. The test stand-ins (plan OD-C)
 
 On this site `site_config.kt_bds_simulation_environment = 1` enables the
 stand-ins:
@@ -114,7 +163,7 @@ Each is switched through test controls, never through site settings:
 not an electronic signature: the verification label appears only in tests
 (TRUST-ADR-001 v0.1 §2).
 
-## 5. Recovering an opening
+## 6. Recovering an opening
 
 - **A member's page stops, and they lapse.** The next heartbeat from another member, the next material action or the sweep pauses the opening ("Opening is paused because [name] is not present"). Nothing else is recorded until every member is present. Rejoining resumes it from the last committed step. If the member cannot return, the Accounting Officer appoints a replacement, with a reason.
 - **A bid cannot be opened or does not match.** An incident goes to Opening access support.
@@ -124,7 +173,7 @@ not an electronic signature: the verification label appears only in tests
 - **A command was sent twice, or from a stale page.** The idempotency journal returns the first result. A stale page is told "Someone updated this opening record. Refresh the page before continuing." and reloads. Nothing is duplicated or backdated.
 - **The completed record needs a correction.** The recorder adds one of the four kinds (Attendance note, Procedural note, Typographical error in a note, Observer name or organisation). The signed record is unchanged, and any other kind is refused.
 
-## 6. Before production (Phase 12, owner-gated)
+## 7. Before production (Phase 12, owner-gated)
 
 None of these is in place, and `production_bid_opening_enabled` stays off
 until every one is decided:

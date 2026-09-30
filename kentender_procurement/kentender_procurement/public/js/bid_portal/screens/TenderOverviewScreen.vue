@@ -128,6 +128,8 @@ onMounted(() => {
 					<div><span class="kt-label">{{ __("Submissions close") }}</span><span class="kt-meta-value">{{ tender.deadline }}</span></div>
 					<div v-if="tender.clarification_deadline"><span class="kt-label">{{ __(tender.clarification_label) }}</span><span class="kt-meta-value">{{ tender.clarification_deadline }}</span></div>
 					<div><span class="kt-label">{{ __("Published") }}</span><span class="kt-meta-value">{{ tender.published }}</span></div>
+					<!-- pages other modules keep for this Tender (server related_links), e.g. its bid opening -->
+					<div v-for="l in data.related_links || []" :key="l.href"><span class="kt-label">{{ l.label }}</span><span class="kt-meta-value"><a :href="l.href" :data-testid="`bds-overview-link-${l.label.toLowerCase().replace(/ /g, '-')}`">{{ l.value }} · {{ l.text }}</a></span></div>
 				</div>
 			</div>
 		</div>

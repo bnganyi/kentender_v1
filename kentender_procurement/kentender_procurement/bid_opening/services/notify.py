@@ -17,6 +17,8 @@ from typing import Any
 
 import frappe
 
+from kentender_procurement.bid_opening.services import records
+
 HOOK = "kt_bop_support_transports"
 INCIDENT = "Opening Access Incident"
 
@@ -44,3 +46,18 @@ def notification_log(*, incident_id: str, subject: str, message: str, users: lis
 		entity_scope="Bid Opening", route=f"/app/opening-access-incident/{incident_id}", correlation_key=f"bop-incident:{incident_id}",
 	)]
 	return {"delivered": bool(delivered), "delivered_to": delivered}
+
+
+def tell_members(doc, users: list[str], *, subject: str, message: str, event_type: str, key: str) -> int:
+	"""A member's task also reaches their notifications, with the opening's
+	route (board a1 "Each member gets their own task"; r3 "Review and sign"):
+	a member who does not use Tenders, such as the independent member, has no
+	other way in. Returns how many were sent."""
+	from kentender_core.services.notification_service import emit_notification_log
+
+	sent = 0
+	for user in users:
+		if emit_notification_log(for_user=user, subject=subject, message=message, document_type=records.CASE, document_name=doc.name, event_type=event_type,
+				entity_scope="Bid Opening", route=f"/app/tenders/{doc.tender_reference}/opening", correlation_key=f"bop-{key}:{doc.name}:{user}"):
+			sent += 1
+	return sent

@@ -72,6 +72,18 @@ class TestCaseAndCommittee(OpeningCase):
 		self.assertTrue(appointment.is_excluded_from_evaluation(self.name, INDEPENDENT))
 		self.assertFalse(appointment.is_excluded_from_evaluation(self.name, MEMBER))
 
+	def test_each_appointed_member_is_notified_with_the_way_in(self):
+		"""Board a1: "Each member gets their own task to join the opening". The
+		task is also a notification with the opening's route, so a member who
+		does not use Tenders (the independent member) can reach it."""
+		self.prepare_case()
+		self.assertTrue(self.appoint()["ok"])
+		for user in (CHAIR, MEMBER, INDEPENDENT):
+			with self.subTest(user=user):
+				row = frappe.db.get_value("Notification Log", {"for_user": user, "document_type": "Bid Opening Case", "subject": f"You are on the opening committee for {self.reference}"},
+					["link", "email_content"], as_dict=True)
+				self.assertTrue(row, user)
+
 	def test_the_tender_record_links_to_its_opening(self):
 		"""BOP-CHG-001 v0.10 §9: "The internal Desk Tender record links to a Bid
 		opening work item and one focused opening record." The Tender read

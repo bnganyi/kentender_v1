@@ -146,15 +146,28 @@ def tender_pw_tenders() -> list[str]:
 	return frappe.get_all("Tender", filters={"owner": ("in", tender_pw.ALL_ACTORS)}, pluck="name")
 
 
-class _World:
+class OpeningWorld:
 	"""Runs one stage's steps as their actors on the fixture clock."""
 
-	def __init__(self, tender: str, reference: str):
+	def __init__(self, tender: str, reference: str, *, cast: dict[str, str] | None = None, box_closed: bool = False,
+			public: tuple[tuple[str, int], ...] = ()):
+		"""`cast`: who plays ao, chair (and recorder), member, independent and
+		support (this world's own people by default); `box_closed`: Bid
+		Submission has already closed the box (the canonical Tender), so the
+		close step only receives it; `public`: signed-in visitors who join the
+		public opening, with the second (from the deadline) each joins."""
 		self.tender, self.reference = tender, reference
 		self.deadline = frappe.db.get_value("Tender", tender, "submission_deadline")
 		self.present: set[str] = set()
 		self.instant = ""
 		self.seconds: int | None = None
+		cast = {"ao": AO, "chair": CHAIR, "member": MEMBER, "independent": INDEPENDENT, "support": SUPPORT, **(cast or {})}
+		self.ao, self.chair, self.member, self.independent, self.support = (cast[k] for k in ("ao", "chair", "member", "independent", "support"))
+		self.box_closed, self.public = box_closed, public
+
+	def roster(self) -> list[dict[str, str]]:
+		return [{"user": self.chair, "committee_role": "Chair and recorder"}, {"user": self.member, "committee_role": "Member"},
+			{"user": self.independent, "committee_role": "Independent member"}]
 
 	def at(self, seconds: int) -> None:
 		"""Move the clock and keep every present member's page alive (plan D7)."""
@@ -186,7 +199,8 @@ class _World:
 	def close(self) -> None:
 		from kentender_procurement.bid_opening.services import close_intake
 
-		bds_pw.close_world(tender_reference=self.reference, at=str(self.deadline))
+		if not self.box_closed:
+			bds_pw.close_world(tender_reference=self.reference, at=str(self.deadline))
 		self.at(1)
 		close_intake.receive_closed_box(tender=self.tender)
 
@@ -207,23 +221,32 @@ class _World:
 		from kentender_procurement.bid_opening.services import appointment
 
 		self.at(AT["appoint"])
-		_ok(appointment.appoint_opening_committee(tender=self.tender, members=[dict(r) for r in ROSTER], expected_version=self.version(), idempotency_key=_key(), user=AO), "appoint")
+		_ok(appointment.appoint_opening_committee(tender=self.tender, members=self.roster(), expected_version=self.version(), idempotency_key=_key(), user=self.ao), "appoint")
 
 	def stage_published(self) -> None:
 		from kentender_procurement.bid_opening.services import arrangements
 
 		self.at(AT["publish"])
-		_ok(arrangements.publish_opening_arrangements(tender=self.tender, expected_version=self.version(), idempotency_key=_key(), user=AO, **ARRANGEMENTS), "publish")
+		_ok(arrangements.publish_opening_arrangements(tender=self.tender, expected_version=self.version(), idempotency_key=_key(), user=self.ao, **ARRANGEMENTS), "publish")
 
 	# -- before Start ---------------------------------------------------------
 	def stage_joined(self) -> None:
-		for i, user in enumerate((CHAIR, MEMBER, INDEPENDENT)):
+		for i, user in enumerate((self.chair, self.member, self.independent)):
 			self.join(user, -290 + 60 * i)
-		self.at(-90)
+		self.join_public()
+		self.at(-30 if self.public else -90)
+
+	def join_public(self) -> None:
+		from kentender_procurement.bid_opening.services import public
+
+		for user, seconds in self.public:
+			self.at(seconds)
+			_ok(public.join_public_opening(tender=self.tender, idempotency_key=_key(), user=user), f"join the public opening as {user}")
 
 	def stage_missing(self) -> None:
-		self.join(CHAIR, -290)
-		self.join(MEMBER, -230)
+		self.join(self.chair, -290)
+		self.join(self.member, -230)
+		self.join_public()
 		self.close()
 		self.at(5)
 
@@ -250,21 +273,21 @@ class _World:
 		simulation.set_controls(notify_outcome="Deliver")
 		self.at(41)
 		[incident] = incidents.open_incidents(self.case().name)
-		_ok(incidents.notify_support(tender=self.tender, incident=incident.incident_id, idempotency_key=_key(), user=CHAIR), "notify support")
+		_ok(incidents.notify_support(tender=self.tender, incident=incident.incident_id, idempotency_key=_key(), user=self.chair), "notify support")
 
 	# -- the ceremony ---------------------------------------------------------
 	def stage_started(self) -> None:
 		from kentender_procurement.bid_opening.services import ceremony
 
 		self.at(12)
-		_ok(ceremony.begin_opening(tender=self.tender, expected_version=self.version(), idempotency_key=_key(), user=CHAIR), "begin")
+		_ok(ceremony.begin_opening(tender=self.tender, expected_version=self.version(), idempotency_key=_key(), user=self.chair), "begin")
 		self.at(30)
 
 	def _open_next(self) -> dict[str, Any]:
 		from kentender_procurement.bid_opening.services import ceremony
 
 		self.at(60)
-		return ceremony.open_next_tender(tender=self.tender, expected_version=self.version(), idempotency_key=_key(), user=CHAIR)
+		return ceremony.open_next_tender(tender=self.tender, expected_version=self.version(), idempotency_key=_key(), user=self.chair)
 
 	def stage_opened(self) -> None:
 		self.entry = _ok(self._open_next(), "open the bid")["entry"]
@@ -274,8 +297,8 @@ class _World:
 		from kentender_procurement.bid_opening.services import readout
 
 		self.at(105)
-		_ok(readout.record_readout(tender=self.tender, entry=self.entry, speaker=MEMBER, designated_pages=[1], expected_version=self.version(),
-			idempotency_key=_key(), user=CHAIR, reported_speech_at=self._clock(90)), "record the readout")
+		_ok(readout.record_readout(tender=self.tender, entry=self.entry, speaker=self.member, designated_pages=[1], expected_version=self.version(),
+			idempotency_key=_key(), user=self.chair, reported_speech_at=self._clock(90)), "record the readout")
 		self.at(120)
 
 	def _clock(self, seconds: int) -> str:
@@ -289,7 +312,7 @@ class _World:
 		from kentender_procurement.bid_opening.services import interventions
 
 		self.at(140)
-		_ok(interventions.record_intervention(tender=self.tender, idempotency_key=_key(), user=CHAIR, entry=self.entry, reported_at=self._clock(120), **REQUEST),
+		_ok(interventions.record_intervention(tender=self.tender, idempotency_key=_key(), user=self.chair, entry=self.entry, reported_at=self._clock(120), **REQUEST),
 			"record the request")
 		self.at(142)
 
@@ -297,14 +320,14 @@ class _World:
 		from kentender_procurement.bid_opening.services import interventions
 
 		self.at(145)
-		_ok(interventions.record_member_account(tender=self.tender, account=ACCOUNT, idempotency_key=_key(), user=INDEPENDENT, entry=self.entry), "record the account")
+		_ok(interventions.record_member_account(tender=self.tender, account=ACCOUNT, idempotency_key=_key(), user=self.independent, entry=self.entry), "record the account")
 		self.at(150)
 
 	def stage_commented(self) -> None:
 		from kentender_procurement.bid_opening.services import interventions
 
 		self.at(160)
-		_ok(interventions.record_comment_for_evaluation(tender=self.tender, entry=self.entry, made_by=INDEPENDENT, idempotency_key=_key(), user=CHAIR,
+		_ok(interventions.record_comment_for_evaluation(tender=self.tender, entry=self.entry, made_by=self.independent, idempotency_key=_key(), user=self.chair,
 			reported_at=self._clock(145), **COMMENT), "record the comment")
 		self.at(165)
 
@@ -312,12 +335,12 @@ class _World:
 		from kentender_procurement.bid_opening.services import presence
 
 		self.at(130)
-		_ok(presence.leave_opening(tender=self.tender, idempotency_key=_key(), user=INDEPENDENT), "leave")
-		self.present.discard(INDEPENDENT)
+		_ok(presence.leave_opening(tender=self.tender, idempotency_key=_key(), user=self.independent), "leave")
+		self.present.discard(self.independent)
 		self.at(135)
 
 	def stage_rejoined(self) -> None:
-		self.join(INDEPENDENT, 300)
+		self.join(self.independent, 300)
 		self.at(310)
 
 	def stage_unreadable(self) -> None:
@@ -337,7 +360,7 @@ class _World:
 
 		simulation.set_controls(render_outcome="Render")
 		self.at(300)
-		_ok(incidents.record_resolution(tender=self.tender, incident=self._incident(), resolution_note="Renderer restored.", idempotency_key=_key(), user=SUPPORT),
+		_ok(incidents.record_resolution(tender=self.tender, incident=self._incident(), resolution_note="Renderer restored.", idempotency_key=_key(), user=self.support),
 			"resolve")
 		self.at(305)
 
@@ -346,7 +369,7 @@ class _World:
 
 		self.at(300)
 		_ok(incidents.record_unresolved(tender=self.tender, incident=self._incident(), resolution_note="The package cannot be rendered.", idempotency_key=_key(),
-			user=SUPPORT), "record not resolved")
+			user=self.support), "record not resolved")
 		self.at(310)
 
 	def stage_mismatch(self) -> None:
@@ -368,14 +391,14 @@ class _World:
 		from kentender_procurement.bid_opening.services import finish
 
 		self.at(240)
-		_ok(finish.finish_ceremony(tender=self.tender, expected_version=self.version(), idempotency_key=_key(), user=CHAIR), "end")
+		_ok(finish.finish_ceremony(tender=self.tender, expected_version=self.version(), idempotency_key=_key(), user=self.chair), "end")
 		self.at(270)
 
 	def stage_frozen(self) -> None:
 		from kentender_procurement.bid_opening.services import record
 
 		self.at(420)
-		_ok(record.freeze_opening_minutes(tender=self.tender, expected_version=self.version(), idempotency_key=_key(), user=CHAIR), "finish the record")
+		_ok(record.freeze_opening_minutes(tender=self.tender, expected_version=self.version(), idempotency_key=_key(), user=self.chair), "finish the record")
 		self.at(450)
 
 	def sign(self, user: str, seconds: int) -> None:
@@ -387,7 +410,7 @@ class _World:
 			for t in mine], idempotency_key=_key(), user=user), f"sign as {user}")
 
 	def stage_member_signed(self) -> None:
-		self.sign(MEMBER, 480)
+		self.sign(self.member, 480)
 		self.at(510)
 
 	def stage_changed(self) -> None:
@@ -395,12 +418,12 @@ class _World:
 
 		self.at(525)
 		_ok(record.supersede_opening_minutes(tender=self.tender, reason="Add the attendee’s repeat request and the chair’s response",
-			correction_note="The attendee’s repeat request and the chair’s response.", expected_version=self.version(), idempotency_key=_key(), user=CHAIR), "change the record")
+			correction_note="The attendee’s repeat request and the chair’s response.", expected_version=self.version(), idempotency_key=_key(), user=self.chair), "change the record")
 		self.at(530)
 
 	def stage_complete(self) -> None:
-		self.sign(INDEPENDENT, 540)
-		self.sign(CHAIR, 600)
+		self.sign(self.independent, 540)
+		self.sign(self.chair, 600)
 		self.at(660)
 
 	def stage_corrected(self) -> None:
@@ -408,7 +431,7 @@ class _World:
 
 		self.at(900)
 		_ok(correction.correct_opening_record(tender=self.tender, kind="Attendance note", correct_information="Jane Wanjiku left at 11:03 EAT",
-			reason="Add the departure noted during the opening", expected_version=self.version(), idempotency_key=_key(), user=CHAIR), "correct")
+			reason="Add the departure noted during the opening", expected_version=self.version(), idempotency_key=_key(), user=self.chair), "correct")
 		self.at(910)
 
 	# -- no bids, and not held ----------------------------------------------------
@@ -419,9 +442,9 @@ class _World:
 		from kentender_procurement.bid_opening.services import finish
 
 		self.at(60)
-		_ok(finish.end_with_no_bids(tender=self.tender, expected_version=self.version(), idempotency_key=_key(), user=CHAIR), "end with no bids")
+		_ok(finish.end_with_no_bids(tender=self.tender, expected_version=self.version(), idempotency_key=_key(), user=self.chair), "end with no bids")
 		self.stage_frozen()
-		self.sign(MEMBER, 480)
+		self.sign(self.member, 480)
 		self.stage_complete()
 
 	def stage_not_held_due(self) -> None:
@@ -435,7 +458,7 @@ class _World:
 	def stage_not_held(self) -> None:
 		from kentender_procurement.bid_opening.services import not_held
 
-		_ok(not_held.record_opening_not_held(tender=self.tender, reason=NOT_HELD_REASON, expected_version=self.version(), idempotency_key=_key(), user=AO),
+		_ok(not_held.record_opening_not_held(tender=self.tender, reason=NOT_HELD_REASON, expected_version=self.version(), idempotency_key=_key(), user=self.ao),
 			"record not held")
 		self.at(610)
 
@@ -467,7 +490,7 @@ def reset_opening_fixture(*, stage: str = "prepared", commit: bool = True) -> di
 		"kt_bds_clock", "kt_tenders_clock")}
 	frappe.flags.kt_bop_fixture_namespace = frappe.flags.kt_prc_fixture_namespace = NAMESPACE
 	frappe.flags.kt_bds_fixture_namespace = bds_pw.NAMESPACE
-	walker = _World(tender, world["tender_reference"])
+	walker = OpeningWorld(tender, world["tender_reference"])
 	try:
 		walker.run(stage)
 	finally:

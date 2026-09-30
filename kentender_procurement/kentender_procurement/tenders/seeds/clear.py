@@ -75,6 +75,15 @@ def _delete_family(removed: dict[str, list[str]]) -> dict[str, int]:
 		filters = {"document_name": ("in", chunk)}
 		_count(deleted, "Tender Command Journal", frappe.db.count("Tender Command Journal", filters))
 		frappe.db.delete("Tender Command Journal", filters)
+	# notifications about a removed Tender, whoever received them: the browser
+	# worlds use canonical people (Charles Mutiso as the Head of Procurement
+	# Function; every Accounting Officer holder), whose bells otherwise fill with
+	# tasks for Tenders that no longer exist
+	for doctype, names in removed.items():
+		for chunk in _chunks(names):
+			filters = {"document_type": doctype, "document_name": ("in", chunk)}
+			_count(deleted, "Notification Log", frappe.db.count("Notification Log", filters))
+			frappe.db.delete("Notification Log", filters)
 	for doctype, names in removed.items():
 		for chunk in _chunks(names):
 			for file in frappe.get_all("File", filters={"attached_to_doctype": doctype, "attached_to_name": ("in", chunk)}, pluck="name"):

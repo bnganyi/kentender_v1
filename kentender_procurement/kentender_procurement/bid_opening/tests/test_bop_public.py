@@ -78,6 +78,18 @@ class TestPublicOpening(RecordCase):
 		self.assertEqual((out["verdict"], out["payload"]["screen"], out["payload"]["data"]["phase"]), ("OK", "public-opening", "before-join"))
 		self.assertEqual(portal.resolve(path="/tenders/TND-DOES-NOT-EXIST/opening", query={}, user="Guest")["verdict"], "NOT_FOUND")
 
+	def test_the_public_tender_page_links_to_the_opening(self):
+		"""BOP-CHG-001 v0.10 §9: "The public Tender shows the published opening
+		arrangement". The Tender overview carries a Bid opening entry linking to
+		the opening page once the opening exists, for anyone."""
+		from kentender_procurement.bid_submission.services import overview
+
+		self.assertEqual(overview.get_tender_overview(tender_reference=self.reference, user="Guest").get("related_links"), [])
+		self.prepared()
+		[link] = overview.get_tender_overview(tender_reference=self.reference, user="Guest")["related_links"]
+		self.assertEqual((link["label"], link["href"]), ("Bid opening", f"/tenders/{self.reference}/opening"))
+		self.assertTrue(link["value"])
+
 	def test_the_attendance_service_being_down_refuses_the_join(self):
 		self.assertTrue(self.submit(self.signed())["ok"])
 		self.prepared()

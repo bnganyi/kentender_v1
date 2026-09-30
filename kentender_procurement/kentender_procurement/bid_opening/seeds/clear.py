@@ -46,11 +46,13 @@ def wipe(*, tenders: list[str] | set[str] | None = None, namespace: str = "") ->
 			frappe.db.delete(doctype, {"opening_case": ("in", cases)})
 		delete_rows("Opening Committee Appointment", {"opening_case": ("in", cases)})
 		frappe.db.delete("Notification Log", {"document_name": ("in", cases)})
+		frappe.db.delete("Opening Command Journal", {"opening_case": ("in", cases)})  # or a retold command replays its old answer
 		delete_rows("Bid Opening Case", {"name": ("in", cases)})
 	if proceedings:
 		for doctype in ("Proceeding Attendance", "Proceeding Event", "Proceeding Attestation", "Proceeding Supplement"):
 			frappe.db.delete(doctype, {"proceeding": ("in", proceedings)})
 		delete_rows("Proceeding Minutes Version", {"proceeding": ("in", proceedings)})
+		frappe.db.delete("Proceeding Command Journal", {"proceeding": ("in", proceedings)})
 		delete_rows("Proceeding", {"name": ("in", proceedings)})
 	if namespace:
 		frappe.db.delete("Opening Command Journal", {"fixture_namespace": namespace})

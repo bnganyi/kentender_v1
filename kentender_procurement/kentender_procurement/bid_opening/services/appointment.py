@@ -140,6 +140,11 @@ def appoint_opening_committee(*, tender: str, members: list[dict[str, Any]], exp
 				"committee_capacity": m.committee_role, "appointment_reference": appointment.name} for m in appointment.members], reason=cstr(reason).strip(),
 				idempotency_key=prc.key(idempotency_key, "roster"), actor=user)
 		records.bump(doc, current_appointment=appointment.name)
+		from kentender_procurement.bid_opening.services import labels, notify
+
+		notify.tell_members(doc, [m.member_user for m in appointment.members], subject=f"You are on the opening committee for {doc.tender_reference}",
+			message=f"Join the opening from {labels.when(arrangements_join_opens(doc))}. The opening is at {labels.when(doc.effective_deadline)}.",
+			event_type="Opening committee appointment", key=f"appointed:{appointment.name}")
 		return records.summary(doc, appointment=appointment.name, appointed_at=str(at))
 
 	return records.command("AppointOpeningCommittee", tender=tender, idempotency_key=idempotency_key, actor=user,
@@ -159,3 +164,9 @@ def candidates(tender: str) -> list[dict[str, Any]]:
 		if eligible:
 			out.append({"user": user, "full_name": people.full_name(user), "designation": designation, "involved": user in processing})
 	return sorted(out, key=lambda r: r["full_name"])
+
+
+def arrangements_join_opens(doc):
+	from kentender_procurement.bid_opening.services import arrangements
+
+	return arrangements.join_opens_at(doc.effective_deadline) or doc.effective_deadline
