@@ -3,7 +3,7 @@
 | Control | Value |
 |---|---|
 | Document ID | SEED-OPS-001 |
-| Version | 1.14 |
+| Version | 1.15 |
 | Date | 30 September 2026 |
 | Status | Maintained — update whenever a module stage is added to the seed or the canonical world changes |
 | Purpose | The one command that resets a KenTender site to the canonical seed world and how to keep it truthful as modules land |
@@ -230,28 +230,68 @@ Underneath: `kentender_procurement.procurement_requisitions.seeds.profiles.load_
 
 **Proof.** `kentender_procurement.procurement_requisitions.tests.test_requisitions_profiles` loads all thirteen in turn and requires every observed result green, then restores the base. Run it on its own, never beside a Playwright run.
 
-## 9A. Bid Opening demo profiles (added v1.14)
+## 9A. Bid Opening demo profiles (added v1.14, expanded v1.15)
 
-The `bid_opening` stage leaves one finished opening. Fifteen demo profiles
-show every other stage. Each retells the canonical Tender's opening up to one
-moment as the canonical people, and sets the site's test clock to that
-moment. Only the no-bids profile differs: it uses the browser-test Tender.
+The `bid_opening` stage leaves one finished opening. Fifteen named, **mutually
+exclusive** demo profiles show every other stage of it. Each retells the
+opening of the canonical Tender `TND-MOH-2027-002` up to one moment, through
+the same commands the screens call, as the canonical people, and sets the
+site's test clock to that moment. Every screen is then live: sign in as the
+person named, act, and the opening moves on. Only the no-bids profile differs:
+it uses the browser-test Tender, because the canonical box is not empty.
 
 ```bash
-make seed-bop-profiles SITE=kentender.midas.com
-make seed-bop-profile SITE=kentender.midas.com PROFILE=BOP-DEMO-READY
-make seed-bop-profile-restore SITE=kentender.midas.com
+cd /home/midasuser/frappe-bench/apps/kentender_v1
+make seed-bop-profiles SITE=kentender.midas.com                          # list them
+make seed-bop-profile SITE=kentender.midas.com PROFILE=BOP-DEMO-READY    # load one (replaces any loaded one)
+make seed-bop-profile-restore SITE=kentender.midas.com                   # put the finished opening back and clear the clock
 ```
 
-While a profile is loaded, `seed-canonical-validate` reports the opening as
-not complete, and a plain `make seed-canonical` puts the finished opening
-back. The profiles, who to sign in as and where to click are listed in
-`docs/mvp-1-r1/14_bid_opening/RUNBOOKS.md` §3.
+Underneath: `kentender_procurement.bid_opening.seeds.profiles.load_profile(profile=…)`, `.list_profiles()`, `.restore_base()`, `.loaded_profile()` (`bench execute`, same kwargs).
+
+**How a load works.** Every load first removes the canonical opening (its case, proceeding, command journals and the notifications it sent) and any earlier profile, then retells the opening from the start up to the profile's moment and sets the test clock there. The loaded profile's name is kept in the site defaults (`kt_bop_loaded_profile`). Restore removes the loaded profile, rebuilds the finished canonical opening and clears the clock.
+
+**The report.** Each load prints the profile, the moment, who to sign in as, what to do, and one check per named person: the next step the server actually shows them at that moment, with `ok` or `FAIL`. Everyone signs in with the shared fixture password in `.env.ui`.
+
+**How people get in.** Bid Opening has no menu of its own (BOP-CHG-001 v0.10 §9):
+- The Accounting Officer, the chair and the Procurement Officer go to Procurement → Tender Management → Tenders → `TND-MOH-2027-002` → **Bid opening**.
+- A member who does not use Tenders, such as Beatrice Kamau, uses the notification bell. Being appointed, and the opening record becoming ready to sign, each notify every member.
+- A visitor or a supplier uses the public Tender page `/tenders/TND-MOH-2027-002`, where **Key dates → Bid opening** links to the opening page.
+
+| Profile | Moment (site clock) | Sign in as | What to do |
+|---|---|---|---|
+| `BOP-DEMO-APPOINT` | 10 Jun 2027, 10:10 | Amina Hassan | Add three members (try two first to see the refusal); Appoint committee |
+| `BOP-DEMO-PUBLISH` | 10 Jun, 10:15 | Amina Hassan; Beatrice Kamau (bell) | Publish how to attend |
+| `BOP-DEMO-BEFORE-JOIN` | 12 Jun, 10:40 | Charles Mutiso; Jane Wanjiku (public page) | See "You can join from 10:55" |
+| `BOP-DEMO-JOIN` | 12 Jun, 10:56 | Charles, Brian, Beatrice; Jane | Each joins; Jane joins the public opening |
+| `BOP-DEMO-MISSING-MEMBER` | 12 Jun, 11:00:05 | Charles, then Beatrice | Notify Beatrice; she joins from the bell; Start |
+| `BOP-DEMO-READY` | 12 Jun, 11:00:05 | Charles, Brian, Beatrice, Amina | The whole opening: Start, open, read aloud, record, end, prepare, finish, sign |
+| `BOP-DEMO-READ-ALOUD` | 12 Jun, 11:01:20 | Brian, then Charles | Read aloud; record what was read |
+| `BOP-DEMO-REQUESTS` | 12 Jun, 11:02:22 | Charles; Beatrice; Jane | Record a request or a comment for Evaluation; a member's own account; End opening |
+| `BOP-DEMO-MEMBER-LEFT` | 12 Jun, 11:02:15 | Charles, Beatrice (Amina) | Notify; Beatrice rejoins and the opening continues |
+| `BOP-DEMO-CANNOT-OPEN` | 12 Jun, 11:01:10 | Charles; Daniel Otieno | The pause; Retry waits for support |
+| `BOP-DEMO-RETRY` | 12 Jun, 11:05:05 | Charles | Retry opening |
+| `BOP-DEMO-AO-DECISION` | 12 Jun, 11:05:10 | Amina, Charles | The Accounting Officer's decision item |
+| `BOP-DEMO-SIGN` | 12 Jun, 11:08:30 | Beatrice, Charles | Sign; the last signature completes the opening |
+| `BOP-DEMO-NOT-HELD` | 12 Jun, 11:10 | Amina | Record that the opening did not take place |
+| `BOP-DEMO-NO-BIDS` | browser-test Tender, 5 Jun 2027, 11:00:30 | Charles Mutiso (`pw.req.hopf@example.test`) | End opening with no bids; the record is still signed |
+
+The full walk-through of each profile is in `docs/mvp-1-r1/14_bid_opening/RUNBOOKS.md` §3.
+
+**Limits (BOP-CHG-001 v0.10 follow-up FU-BOP-30, open).**
+- **The clock is site-wide.** While a profile is loaded, every module's live pages read its moment (for example 12 Jun 2027). Restore clears it.
+- **Validation.** While a profile is loaded, `seed-canonical-validate` reports the opening as not complete. A plain `make seed-canonical` also puts the finished opening back.
+- **The Tender's own status.** Bid Submission closed the canonical Tender when the site was seeded, so in the pre-deadline profiles (`BOP-DEMO-APPOINT` … `BOP-DEMO-JOIN`) the Tender record still says "Submission period ended" while the opening says submissions close at 11:00.
+- **Support.** Opening access support (Daniel Otieno) has no screen for recording a resolution; `BOP-DEMO-RETRY` and `BOP-DEMO-AO-DECISION` record it for him (FU-BOP-28).
+- **No bids.** The no-bids profile uses the browser-test Tender and its people; restore removes it.
+
+**Proof.** `kentender_procurement.bid_opening.tests.test_bop_profiles` (`make bop-profiles-gate`) loads every profile in turn, requires every check green, then restores the base. `tests/ui/smoke/bid-opening/bop-demo-walk.spec.ts` walks five profiles in a browser from the menu, the bell and the public page, one browser session per person. Run either on its own, never beside another Playwright or Python run.
 
 ## 10. Change log
 
 | Version | Date | Change |
 |---|---|---|
+| 1.15 | 30 September 2026 | **Bid Opening scenarios written out in full.** §9A now carries the fifteen demo profiles themselves (moment, who signs in, what to do), how each person reaches the opening (menu, bell, public Tender page), how a load and its report work, the limits recorded as follow-up FU-BOP-30, and the browser and service proofs. v1.14 only pointed to the Bid Opening run book (Project Owner, 30 September 2026: "Also, update the seed data runbook with the above new scenarios"). |
 | 1.14 | 30 September 2026 | **Bid Opening demo profiles.** New §9A: fifteen loadable profiles of the opening's stages on the canonical Tender, each with the site test clock at its moment, so every stage can be walked in a browser (Project Owner, 30 September 2026: "All the modules we have created so far have realistic scenarios and seed data apart from bid opening which shows nothing"). Also: the Tenders clean-up now removes notifications about a removed Tender (1,219 left by browser worlds had filled canonical people's bells). |
 | 1.13 | 30 September 2026 | **Two new stages and two new people.** (1) §2 gains the `bid_submission` row (the stage existed since 28 September 2026 but this runbook did not describe it) and the new `bid_opening` row (BOP-CHG-001 v0.10); the full chain is now `THROUGH=bid_opening`. (2) Site stage: Daniel Otieno (Technical Operator, System Manager as a technical reader) and Jane Wanjiku (Website User, public observer) from KT-STD-001 v1.11 §8.3, seeded at the Project Owner's instruction of 30 September 2026 ("Two people not seeded: seed them and update the relevant documentation"); KT-STD-001 v1.11 was approved the same day ("Register approval: approve"). Then Nadia Kamau (Release Operator) from KT-STD-001 v1.12 §8.3 (approved the same day, "approve v1.12"), at the owner's instruction "New follow-up: Seed appropriately and update documentation"; the Bid Submission guidance tests now use the register's Daniel Otieno and Nadia Kamau instead of test users of the same names. Validation checks Daniel's technical access and Jane's user type; Daniel joins the register list, so he is never a stray. (3) The shared fixture password now also goes to Jane and to the canonical supplier people (owner: "Maintain the same universal password"); the `bid_submission` stage converges the supplier account on every run so an existing world gets it too. (4) **Defect found while seeding:** a signed-in supplier joining the public opening was recorded as a public observer, because their supplier role was looked up at the machine's date rather than the opening's; fixed, and `validate_bid_opening_seed()` checks David Ouma joined for Afya. Verified by `make seed-canonical THROUGH=bid_opening` (validates clean, 17 opening checks) and the canonical persona browser pass. |
 | 1.12 | 26 September 2026 | **Project Owner decisions applied, and fixture passwords on new sites.** (1) Six §11 differences decided (D1, D2, D3, D4, D7, D8), recorded in §11 with the owner's words and the document corrections each requires. (2) D2: Esther's and Alfred's Strategy assignments start on 1 July 2023. (3) D3: the Budget keeps its generated references; the seed no longer overwrites them, resets an unused counter so a rebuild numbers from `MOH-BUD-2027-001` / `MOH-BL-0001` again, finds the canonical budget by its approval reference (whatever its version's status, so a closed budget is not mistaken for a stray) and its lines by title, and stamps its rows `KENTENDER_MVP_V1` so `rebuild` finds them; Planning, Requisitions, the Budget browser fixtures and the core clear use the same lookups. (4) **Defect:** the register's actors got the fixture password only in `developer_mode`, so on a new site seeded with `FORCE=True` nobody could log in until an administrator set a password; any allowed run now sets it. (5) Validation checks each seeded assignment's start and end, not merely that a row exists. Verified by `WIPE=True FORCE=True RESEED=True THROUGH=tenders`, a second plain run removing nothing, the seed test suites and the Strategy and Budget browser gates. |
