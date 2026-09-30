@@ -4,9 +4,9 @@
 |---|---|
 | Document ID | KT-STD-001 |
 | Version | 1.12 |
-| Status | **Proposed** — v1.11 was Approved; re-approval required |
-| Approved on | Not yet approved (v1.11: 30 September 2026 — Project Owner; v1.10: 29 September 2026 — Project Owner) |
-| Prior approval record | Project Owner approved v1.9 on 26 September 2026 and v1.8 on 25 September 2026; v1.10 approved 29 September 2026. v1.11 approved 30 September 2026; Project Owner instruction, verbatim: "Register approval: approve". None for v1.12. |
+| Status | **Approved** — Project Owner, 30 September 2026 |
+| Approved on | 30 September 2026 — Project Owner (v1.11: 30 September 2026 — Project Owner; v1.10: 29 September 2026 — Project Owner) |
+| Prior approval record | Project Owner approved v1.9 on 26 September 2026 and v1.8 on 25 September 2026; v1.10 approved 29 September 2026. v1.11 approved 30 September 2026; Project Owner instruction, verbatim: "Register approval: approve". v1.12 approved 30 September 2026; Project Owner instruction, verbatim: "approve v1.12". |
 | Date | 30 September 2026 |
 | Supersedes | v1.11 approved 30 September 2026; retained as historical evidence. (v1.11 read: v1.10 approved 29 September 2026; retained as historical evidence. v1.10 read: v1.9 approved 26 September 2026; retained as historical evidence.) |
 | Applies to | Every KenTender change unit, architecture decision record and module requirements document |
@@ -684,7 +684,7 @@ These apply to every document and every layer, not only to artboards. Section 2.
 
 ## 12. Approval effect
 
-**Proposed v1.12 effect.** On approval, Nadia Kamau becomes a registered fixture actor under §8.3 and may be used by every document, seed and artboard. Approval changes no rule, contract or verification requirement.
+**Approved v1.12 effect — 30 September 2026.** v1.12 is approved by the Project Owner and supersedes v1.11 as the governing standard. Nadia Kamau is a registered fixture actor under §8.3 and may be used by every document, seed and artboard. Approval changes no rule, contract or verification requirement. (Proposed text read: "On approval, Nadia Kamau becomes a registered fixture actor under §8.3 and may be used by every document, seed and artboard. Approval changes no rule, contract or verification requirement.")
 
 **Approved v1.11 effect — 30 September 2026.** v1.11 is approved by the Project Owner and supersedes v1.10 as the governing standard. Daniel Otieno and Jane Wanjiku are registered fixture actors under §8.3 and may be used by every document, seed and artboard. Approval changes no rule, contract or verification requirement. (Proposed text read: "On approval, Daniel Otieno and Jane Wanjiku become registered fixture actors under §8.3 and may be used by every document, seed and artboard. Approval changes no rule, contract or verification requirement.")
 
@@ -747,4 +747,4 @@ Version history addition: v1.10 proposed 28 September 2026, adds project-wide or
 
 Version history addition: v1.11 proposed 29 September 2026 adds two §8.3 fixture actors, Daniel Otieno and Jane Wanjiku, at the Project Owner's instruction. Awaiting approval; v1.10 remains the governing standard until then. Approved 30 September 2026 by the Project Owner; v1.11 is now the governing standard.
 
-Version history addition: v1.12 proposed 30 September 2026 adds one §8.3 fixture actor, Nadia Kamau (release operator), at the Project Owner's instruction. Awaiting approval; v1.11 remains the governing standard until then.
+Version history addition: v1.12 proposed 30 September 2026 adds one §8.3 fixture actor, Nadia Kamau (release operator), at the Project Owner's instruction. Awaiting approval; v1.11 remains the governing standard until then. Approved 30 September 2026 by the Project Owner; v1.12 is now the governing standard.

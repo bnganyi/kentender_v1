@@ -250,21 +250,21 @@
     {
       "document_id": "KT-STD-001",
       "title": "Document, Design and Verification Standards",
-      "version": "1.11",
+      "version": "1.12",
       "category": "Cross-cutting standard",
       "module": "All",
       "requirement_status": "Approved requirement",
       "approval_date": "2026-09-30",
-      "supersedes": "v1.10 approved 29 September 2026; v1.9 approved 26 September 2026; both retained as historical evidence",
+      "supersedes": "v1.11 approved 30 September 2026; v1.10 approved 29 September 2026; v1.9 approved 26 September 2026; all retained as historical evidence",
       "implementation_status": "Not applicable",
       "verification_status": "Passed",
       "release_status": "Not applicable",
       "normative": "Yes",
       "library_file_id": "libfile_17ffb496b8708191bfba06c99365e11c",
-      "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_11.md",
-      "scope": "Current cross-cutting standard, including plain language, minimum steps, Scheduled next step and actor/state/event conformance; v1.11 adds the §8.3 fixture actors Daniel Otieno (technical operator) and Jane Wanjiku (public observer); retains earlier design and verification rules.",
+      "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_12.md",
+      "scope": "Current cross-cutting standard, including plain language, minimum steps, Scheduled next step and actor/state/event conformance; v1.11 adds the §8.3 fixture actors Daniel Otieno (technical operator) and Jane Wanjiku (public observer), and v1.12 adds Nadia Kamau (release operator); retains earlier design and verification rules.",
       "dependencies": "Workflow Guidance Standard; all controlled change documents",
-      "action": "Apply approved v1.11: the v1.10 rules for future and revised design contracts, and the two v1.11 §8.3 actors in every document, seed and artboard."
+      "action": "Apply approved v1.12: the v1.10 rules for future and revised design contracts, and the v1.11 and v1.12 §8.3 actors in every document, seed and artboard."
     },
     {
       "document_id": "AUTH-ADR-001",

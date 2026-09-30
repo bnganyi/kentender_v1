@@ -167,8 +167,8 @@ ACTORS = (
 	# Opening access support; a technical reader (§3A.6), so he also holds
 	# System Manager (TECHNICAL_ACTORS). Not Daniel Rotich.
 	("daniel.otieno", "Daniel Otieno"),
-	# KT-STD-001 v1.12 §8.3 (proposed; seeded at the Project Owner's
-	# instruction of 30 Sep 2026, "Seed appropriately") — the release
+	# KT-STD-001 v1.12 §8.3 (approved 30 Sep 2026; seeded at the Project
+	# Owner's instruction, "Seed appropriately") — the release
 	# operator who holds Bid Submission's production-submission release; no
 	# bid content, no supplier business action. Not Beatrice Kamau.
 	("nadia.kamau", "Nadia Kamau"),
