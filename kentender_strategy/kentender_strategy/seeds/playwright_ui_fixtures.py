@@ -45,7 +45,10 @@ from kentender_strategy.seeds.kentender_mvp_v1_strategy import (
 	seed_str_des_v2_returned_fixture,
 	upsert_kentender_mvp_v1_strategy,
 )
-from kentender_strategy.services.strategy_writes import create_strategy_successor_version
+from kentender_strategy.services.strategy_writes import (
+	create_strategy_successor_version,
+	save_strategy_structure_draft,
+)
 
 AUDITOR = "naomi.chebet@moh.example.test"
 NOBODY = "samuel.otieno@moh.example.test"
@@ -234,3 +237,42 @@ def reset_draft_fixture(*, commit: bool = True) -> dict[str, Any]:
 		"v2": v2,
 		"v2_reference": frappe.db.get_value("Strategic Plan Version", v2, "plan_version_id"),
 	}
+
+
+def reset_two_indicator_fixture(*, commit: bool = True) -> dict[str, Any]:
+	"""GitHub #27 — a Draft Version 2 whose one objective carries two
+	indicators, each with its own target (Percentage at least 80, then Count at
+	least 2), saved through the real structure command as Esther. Used to check
+	each target sits beside its own indicator on the Overview."""
+	base = reset_draft_fixture(commit=False)
+	v2 = base["v2"]
+	objective = frappe.db.get_value(
+		"Strategy Node", {"plan_version_id": v2, "node_type": "Strategic Objective"}, "name"
+	)
+	year = frappe.db.get_value(
+		"Performance Target",
+		{"indicator_id": ["in", frappe.get_all("Performance Indicator", filters={"plan_version_id": v2}, pluck="name")]},
+		"fiscal_year",
+	)
+	frappe.set_user(AUTHOR)
+	try:
+		save_strategy_structure_draft(
+			v2,
+			indicators=[
+				{
+					"client_id": "$ind2",
+					"measures_node_id": objective,
+					"indicator_name": "Number of safeguarding gender policies adopted",
+					"definition": "Count of safeguarding gender policies formally adopted by the Ministry.",
+					"unit": "Count",
+				}
+			],
+			targets=[
+				{"indicator_id": "$ind2", "fiscal_year": year, "comparison": "At least", "target_value": 2}
+			],
+		)
+	finally:
+		frappe.set_user("Administrator")
+	if commit:
+		frappe.db.commit()
+	return base
