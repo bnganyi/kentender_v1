@@ -79,6 +79,16 @@ bench --site kentender.midas.com run-tests \
 
 If the runner supports a narrower test selector in the current repository, use it during the red/green loop.
 
+### Run tests on the test site, not the dev site
+
+Tests write real rows with no rollback. Run them on `kentender-test.local` (its own server, port 8001), a copy of the dev site — `AGENTS.md` §8.2:
+
+```bash
+make test-site-rebuild                                   # refresh the copy from dev
+scripts/test-site.sh run npx playwright test <spec> --workers=1
+bench --site kentender-test.local run-tests --app <app> --module <module>
+```
+
 ### Focused frontend and UI tests
 
 ```bash

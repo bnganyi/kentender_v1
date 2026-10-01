@@ -341,6 +341,22 @@ cd $BENCH_ROOT/sites && ../env/bin/python -c "import frappe; \
 - Never read `rq:queue:default`. The key is bench-namespaced (`rq:queue:<bench>:default`) and the un-namespaced one does not exist, so it always reports `0` — a check that reads it is worse than no check. Enumerate with `redis-cli -p <redis_queue port> keys "rq:queue:*"`.
 - Draining once is not enough, because jobs accumulate during a run. Keep a worker up: `nohup bench worker --queue default &`. It does not survive a bench restart.
 
+### 8.2 Tests run on the test site, not the dev site
+
+Every test writes real rows and nothing rolls them back, so a run on `kentender.midas.com` leaves it needing a purge or reseed — and leftovers from one kind of run break the next (a Python run's `_Test Fiscal Year` rows stopped the next Budget browser run's fixture reset, which then wedged the canonical rebuild). Tests therefore run on a separate site, `kentender-test.local`, a copy of the dev site with its own database and its own web server on port 8001 (a second hostname does not resolve from Node here, so a second port is the isolation).
+
+```bash
+make test-site-rebuild                       # overwrite the test site with a fresh copy of dev (about 5 min)
+scripts/test-site.sh run npx playwright test <spec> --workers=1
+scripts/test-site.sh run make ui-budget-gate # any gate; it exports SITE, UI_SITE and UI_BASE_URL
+bench --site kentender-test.local run-tests --app <app> --module <module>   # Python needs no wrapper
+make test-site-status                        # server up, and is the canonical world intact
+```
+
+- After a run that leaves the test site dirty, rebuild it; do not hand-clean it. Hand-cleaning the dev site is what this replaces.
+- A browser run that targets the dev site prints a warning from `globalSetup.ts`. `UI_ALLOW_DEV_SITE=1` silences it for the rare run that must use dev data.
+- The dev site is for the owner's and QA's manual checks and for live verification of a change; rebuild the test site from it after a seed or schema change.
+
 ## 9. Completion standard
 
 Before claiming completion:

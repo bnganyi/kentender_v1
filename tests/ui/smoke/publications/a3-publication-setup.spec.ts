@@ -11,7 +11,7 @@ const PAGE_SLUG = "publication-setup";
 const ROOT = '[data-testid="kt-cl-pub-a3-root"]';
 const CONFIG = "TCFG-SEED-TCFG-RP";
 const BENCH = "/home/midasuser/frappe-bench";
-const SITE = "kentender.midas.com";
+const SITE = process.env.UI_SITE || "kentender.midas.com";
 
 async function seedUi00(page: import("@playwright/test").Page) {
 	await page.waitForFunction(() => typeof (window as unknown as { frappe?: unknown }).frappe !== "undefined");
