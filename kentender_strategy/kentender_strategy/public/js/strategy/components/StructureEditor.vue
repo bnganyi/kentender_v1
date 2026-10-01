@@ -617,7 +617,26 @@ const hasPendingSave = computed(() => hasPendingAttempt(saveScope.value) || hasP
 						</div>
 						<div class="kt-field" style="margin-top: 10px; max-width: 220px">
 							<label for="str-indicator-unit">{{ __("Unit") }}</label>
-							<input id="str-indicator-unit" v-model="selected.unit" class="kt-input" list="kt-indicator-units" data-testid="str-indicator-unit" :disabled="!editable" />
+							<input id="str-indicator-unit" v-model="selected.unit" class="kt-input" data-testid="str-indicator-unit" :disabled="!editable" />
+						</div>
+						<!-- GitHub #18 — the suggestions sit on show instead of in the browser's
+						     own datalist, which only lists entries matching the text already in
+						     the box: with "Percentage" in it, "Count" never appeared and the
+						     unit looked locked. A unit not listed can still be typed. -->
+						<div v-if="editable && indicatorUnits.length" class="kt-field-hint" style="margin-top: 6px" data-testid="str-unit-options">
+							<span>{{ __("Pick a unit or type your own:") }}</span>
+							<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px">
+								<button
+									v-for="u in indicatorUnits"
+									:key="u"
+									type="button"
+									class="kt-tag kt-tag-neutral"
+									data-testid="str-unit-option"
+									:aria-pressed="(selected.unit || '').trim().toLowerCase() === u.toLowerCase() ? 'true' : 'false'"
+									:style="(selected.unit || '').trim().toLowerCase() === u.toLowerCase() ? 'cursor: pointer; border: 0; font-weight: 600; outline: 2px solid var(--kt-color-accent)' : 'cursor: pointer; border: 0'"
+									@click="selected.unit = u"
+								>{{ u }}</button>
+							</div>
 						</div>
 
 						<div style="margin-top: 20.4px">
@@ -722,8 +741,6 @@ const hasPendingSave = computed(() => hasPendingAttempt(saveScope.value) || hasP
 			@secondary="guardDiscard"
 			@cancel="guardStay"
 		/>
-		<datalist id="kt-indicator-units">
-			<option v-for="u in indicatorUnits" :key="u" :value="u"></option>
-		</datalist>
+
 	</div>
 </template>

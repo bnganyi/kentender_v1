@@ -53,7 +53,10 @@ export const getIndicatorUnits = () =>
 	}).then((rows) => {
 		const used = (rows || []).map((row) => row.unit).filter(Boolean);
 		return [...new Set([...COMMON_UNITS, ...used])].sort((a, b) => a.localeCompare(b));
-	});
+	})
+	// The suggestions are a convenience: if the in-use list cannot be read, the
+	// common units still show rather than none at all.
+	.catch(() => [...COMMON_UNITS].sort((a, b) => a.localeCompare(b)));
 
 export const saveStructureDraft = (planVersionId, { nodes, indicators, targets, deletes, expectedVersion }, idempotencyKey) =>
 	call("kentender_strategy.api.strategy_consumer_api.save_strategy_structure_draft", {
