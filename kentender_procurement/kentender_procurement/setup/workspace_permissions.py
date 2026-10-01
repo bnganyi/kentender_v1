@@ -165,6 +165,10 @@ _KT_ROUTE_TO_SIDEBAR.update(
 		"procurement-planning": "Procurement",
 		"procurement-requisitions": "Procurement",
 		"tenders": "Procurement",
+		# AWD-CHG-001 v0.4 plan D13 — the Award workspace and records. The key is
+		# also the "Award" module's auto sidebar key, which this overwrites, so
+		# /app/award/{award_id} keeps the Procurement rail (module-sidebar collision).
+		"award": "Procurement",
 		"std-templates": "Procurement",
 		"strategy-builder": "Procurement",
 		"strategy-management": "Procurement",

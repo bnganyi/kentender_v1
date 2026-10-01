@@ -124,6 +124,12 @@ def cancel_tender(*, tender: str, ground: str, reason: str, expected_record_vers
 	root, version = draft_commands.load(tender)
 	envelope.check_record_version(root, expected_record_version)
 	_require_open(root)
+	# AWD-CHG-001 v0.4 §5.4 (AWD-IF-02): the serialised issue/cancellation boundary.
+	from kentender_procurement.tenders.services import award_seam
+
+	refusals = award_seam.cancellation_refusals(root.name)
+	if refusals:
+		fail("TND_MUST_FIX", refusals[0], {"reasons": refusals})
 	publication = frappe.get_doc("Tender Publication", root.publication)
 	decided_at = clock.now()
 	obligations = preview_obligations(root, decided_on=decided_at.date())

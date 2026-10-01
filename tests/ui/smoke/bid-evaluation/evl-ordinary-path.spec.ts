@@ -141,11 +141,12 @@ test.describe("EVL ordinary path", () => {
 		// D07-SENT: the members' done; D07-HOP: the Head's own review.
 		await expectNextStep(page, "done", /^The committee report was sent to /);
 		await shot(page, "D07-SENT");
+		// AWD-CHG-001 v0.4 §3 entry contract: Award receives the delivered report,
+		// and the Head's review task becomes Award's "Prepare professional
+		// opinion" — one work item, so the evaluation record shows it done.
 		await as(p.hop, "report");
 		await expectScreen(page, "report");
-		await expectNextStep(page, "your_turn", "Review the committee's report.");
-		await expect(action(page, "Open report")).toBeVisible();
-		await shot(page, "D07-HOP");
+		await expectNextStep(page, "done", /^The committee report was sent to /);
 		await expect(page.getByRole("button", { name: /award/i })).toHaveCount(0);
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});

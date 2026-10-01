@@ -137,8 +137,7 @@ class TestProcurementSidebarG012Contract(IntegrationTestCase):
 		planned = {
 			"Home",
 			"Analytics",
-			"Evaluation",
-			"Awards",
+			# "Evaluation" (EVL-CHG-001 v0.4) and "Awards" (AWD-CHG-001 v0.4) are built.
 			"Contract Management",
 			"Supplier Management",
 			"Tender Configurations",

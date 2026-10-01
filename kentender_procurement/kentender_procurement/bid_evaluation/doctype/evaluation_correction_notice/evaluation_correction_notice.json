@@ -83,7 +83,7 @@
    "fieldtype": "Select",
    "label": "Head review state",
    "read_only": 1,
-   "options": "Open\nReviewed\nReturned",
+   "options": "Open\nReviewed\nReturned\nWith Award",
    "reqd": 1,
    "default": "Open"
   },

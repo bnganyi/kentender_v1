@@ -102,18 +102,48 @@ def return_report(*, tender: str, comment: str, idempotency_key: str, user: str)
 		_status_known(doc)
 		if status["status"] != "No award decision recorded":
 			fail("EVL_VERSION_CONFLICT", {"reason": "decision_recorded"})
-		delivery.update({"review_state": "Returned", "returned_by": user, "return_comment": cstr(comment).strip(), "returned_at": clock.now(),
-			"downstream_status": status["status"], "downstream_checked_at": status["checked_at"]})
-		records.save(delivery)
-		version = frappe.get_doc("Evaluation Report Version", delivery.report_version)
-		records.save(version.update({"state": "Returned", "supersession_kind": "Return", "supersession_reason": cstr(comment).strip(), "superseded_at": clock.now()}))
-		event = prc.owner_event(doc, "ReportReturned", f"returned:{delivery.name}", {"report": version.name}, idempotency_key=idempotency_key, note=cstr(comment).strip())
-		records.bump(doc, state="Reviewing", last_committed_event=event)
-		notify.tell(doc, [u for u in (roster.chair(doc.name), roster.secretary(doc.name)) if u],
-			subject=f"Correct evaluation report for {doc.tender_reference}: {cstr(comment).strip()}", message=cstr(comment).strip(), key=f"correct-{version.name}")
-		return records.summary(doc, report=version.name)
+		return _apply_return(doc, delivery, comment, user, idempotency_key, status)
 
 	return records.command("ReturnEvaluationReport", tender=tender, idempotency_key=idempotency_key, actor=user, payload={"comment": comment}, body=body)
+
+
+def _apply_return(doc, delivery, comment: str, user: str, idempotency_key: str, status: dict[str, Any]) -> dict[str, Any]:
+	"""The report goes back to the committee: the delivered version is kept as
+	returned and the chair and secretary are told what needs correction."""
+	delivery.update({"review_state": "Returned", "returned_by": user, "return_comment": cstr(comment).strip(), "returned_at": clock.now(),
+		"downstream_status": status["status"], "downstream_checked_at": status["checked_at"]})
+	records.save(delivery)
+	version = frappe.get_doc("Evaluation Report Version", delivery.report_version)
+	records.save(version.update({"state": "Returned", "supersession_kind": "Return", "supersession_reason": cstr(comment).strip(), "superseded_at": clock.now()}))
+	event = prc.owner_event(doc, "ReportReturned", f"returned:{delivery.name}", {"report": version.name}, idempotency_key=idempotency_key, note=cstr(comment).strip())
+	records.bump(doc, state="Reviewing", last_committed_event=event)
+	notify.tell(doc, [u for u in (roster.chair(doc.name), roster.secretary(doc.name)) if u],
+		subject=f"Correct evaluation report for {doc.tender_reference}: {cstr(comment).strip()}", message=cstr(comment).strip(), key=f"correct-{version.name}")
+	return records.summary(doc, report=version.name)
+
+
+def return_for_authorised_correction(*, tender: str, comment: str, instruction: str, authorised_by: str, idempotency_key: str) -> dict[str, Any]:
+	"""The controlled post-decision correction route (EVL v0.4 §5.6; AWD-CHG-001
+	v0.4 §5.7, AWD-IF-01): after a committed award decision the ordinary return
+	is refused, but the Accounting Officer's recorded correction instruction
+	(checked against Award's authority status) sends the delivered report back
+	to the same committee for a corrected, freshly signed successor."""
+
+	def body() -> dict[str, Any]:
+		doc = records.lock(tender)
+		delivery = _delivered(doc)
+		if not delivery:
+			fail("EVL_VERSION_CONFLICT", {"reason": "not_delivered"})
+		status = decision_status(doc)
+		if status["status"] == "Unknown":
+			fail("EVL_DECISION_STATUS_UNKNOWN", {"checked_at": str(status["checked_at"]), "report": delivery.report_version})
+		if cstr(status.get("correction_instruction")) != cstr(instruction):
+			fail("EVL_VERSION_CONFLICT", {"reason": "no_authorised_correction"})
+		_status_known(doc)
+		return _apply_return(doc, delivery, comment, authorised_by, idempotency_key, status)
+
+	return records.command("ReturnEvaluationReport", tender=tender, idempotency_key=idempotency_key, actor=authorised_by,
+		payload={"comment": comment, "instruction": instruction}, body=body)
 
 
 def record_correction_notice(*, tender: str, reason: str, correction: str, idempotency_key: str, user: str) -> dict[str, Any]:
@@ -144,10 +174,20 @@ def record_correction_notice(*, tender: str, reason: str, correction: str, idemp
 		notify.tell(doc, [delivery.recipient_user], subject=f"Review report correction for {doc.tender_reference}", message=cstr(correction).strip(),
 			key=f"correction-{notice.name}")
 		records.bump(doc)
+		_tell_award(doc.tender)
 		return records.summary(doc, notice=notice.name, downstream_status=status["status"])
 
 	return records.command("RecordCorrectionNotice", tender=tender, idempotency_key=idempotency_key, actor=user, payload={"reason": reason, "correction": correction},
 		body=body)
+
+
+def _tell_award(tender: str) -> None:
+	"""A post-delivery correction or opening update reaches Award
+	(`kt_evaluation_correction_consumers`, AWD-IF-01). Award takes it up as its
+	own review item; a failure there never undoes Evaluation's record."""
+	from kentender_procurement.bid_evaluation.services.award_seam import notify_consumers
+
+	notify_consumers("kt_evaluation_correction_consumers", tender=tender)
 
 
 def consume_supplements(tender: str) -> int:
@@ -191,6 +231,8 @@ def _receive_supplement(tender: str, key: str, supplement) -> dict[str, Any]:
 			recipients += [frappe.db.get_value(DELIVERY, {"evaluation_case": doc.name, "status": "Delivered"}, "recipient_user")]
 		notify.tell(doc, [u for u in recipients if u], subject=f"Review opening update for {doc.tender_reference}", message=cstr(supplement.correct_information),
 			key=f"supplement-{row.name}")
+		if after:
+			_tell_award(doc.tender)
 		return records.summary(doc, source_event=row.name)
 
 	return records.command("ReceiveOpeningSupplement", tender=tender, idempotency_key=key, actor="system", payload={"key": key}, body=body)

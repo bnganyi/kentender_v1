@@ -163,7 +163,9 @@ def answer(doc, user: str, *, extra: dict[str, Any] | None = None) -> dict[str, 
 				candidates.append(ns.answer(ns.KIND_YOUR_TURN, headline="Review the report correction.", primary_action="open_new_evidence"))
 			if delivery.review_state == "Open":
 				candidates.append(ns.answer(ns.KIND_YOUR_TURN, headline="Review the committee's report.", primary_action="open_report"))
-		if delivery and (v["member"] or v["secretary"] or v["auditor"]):
+		# Once Award has received the report (AWD-CHG-001 v0.4 §3), the recipient's
+		# review is Award's "Prepare professional opinion"; here it is done.
+		if delivery and (v["member"] or v["secretary"] or v["auditor"] or (user == delivery.recipient_user and delivery.review_state == "With Award")):
 			candidates.append(ns.answer(ns.KIND_DONE, headline=f"The committee report was sent to {people.full_name(delivery.recipient_user)} on {when(delivery.delivered_at)}."))
 	chosen = ns.choose(*candidates) if candidates else reader
 	return ns.for_viewer(chosen, technical=v["technical"], reader=ns.not_involved())

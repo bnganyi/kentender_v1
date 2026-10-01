@@ -6,7 +6,7 @@ BENCH_ROOT ?= /home/midasuser/frappe-bench
 KENTENDER_APPS := kentender_core,kentender_strategy,kentender_budget,kentender_procurement,kentender_suppliers,kentender_governance,kentender_compliance,kentender_stores,kentender_assets,kentender_integrations,kentender_transparency,frontend,
 INSTALL_ORDER := kentender_core kentender_strategy kentender_budget kentender_procurement kentender_suppliers kentender_governance kentender_compliance kentender_stores kentender_assets kentender_integrations kentender_transparency frontend
 
-.PHONY: bop-preflight bop-profiles-gate seed-bop-profiles seed-bop-profile seed-bop-profile-restore ui-bop-prepare-gate ui-bop-before-start-gate ui-bop-ceremony-gate ui-bop-pauses-gate ui-bop-no-bids-gate ui-bop-record-gate ui-bop-completed-gate ui-bop-fidelity-gate ui-bop-public-gate ui-bop-release-evidence-gate ui-bop-gate prc-services-gate bop-services-gate bop-dead-end-gate bop-leakage-gate bds-preflight bds-retirement-gate bds-portal-gate bds-services-gate supplier-accounts-services-gate ui-bds-portal-skeleton-gate ui-bds-security-intake-gate ui-bds-overview-gate ui-bds-account-gate ui-bds-my-bids-gate ui-bds-workspace-gate ui-bds-documents-gate ui-bds-company-gate ui-bds-requirements-price-gate ui-bds-review-gate ui-bds-submit-gate ui-bds-receipt-changes-gate ui-bds-bound-release-gate ui-bds-acceptance-gaps-gate ui-bds-common-states-gate ui-bds-fidelity-gate ui-bds-release-evidence-gate bds-dead-end-gate ui-system-setup-responsibilities-gate seed-req-profiles seed-req-profile seed-req-profile-restore ui-structure-gate ui-visual-gate ui-fidelity-gate artboard-provenance-gate departmental-needs-domain-gate ui-departmental-needs-fidelity-gate tenders-preflight tenders-schema-gate tenders-services-gate tenders-dead-end-gate ui-tenders-workspace-gate ui-tenders-start-gate ui-tenders-details-gate ui-tenders-requirements-gate ui-tenders-review-gate ui-tenders-approval-gate ui-tenders-authorisation-gate ui-tenders-publication-gate ui-tenders-published-gate ui-tenders-addendum-gate ui-tenders-cancel-gate ui-tenders-history-gate ui-tenders-fidelity-gate ui-tenders-release-evidence-gate ui-system-setup-procurement-settings-gate ui-system-setup-fiscal-years-gate ui-system-setup-access-gate ui-system-setup-entity-gate ui-system-setup-funding-sources-gate ui-system-setup-rules-gate ui-system-setup-source-checks-gate ui-system-setup-schedules-gate help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke seed-canonical seed-canonical-dry-run seed-canonical-validate ui-smoke ui-workspace-pattern-gate ui-strategy-gate ui-strategy-fidelity-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-system-setup-fidelity-gate ui-budget-fidelity-gate ui-budget-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-departmental-gate ui-planning-fidelity-gate ui-planning-release-evidence-gate ui-planning-annual-plan-gate ui-planning-item-gate ui-planning-finance-gate ui-planning-governance-gate ui-planning-publication-gate planning-requisition-gate planning-seed-gate ui-req-workspace-gate ui-req-start-gate ui-req-editor-a-gate ui-req-editor-b-gate ui-req-department-gate ui-req-procurement-gate ui-req-authorised-gate ui-req-fidelity-gate ui-req-release-evidence-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate vue-desk-bundle-translation-binding-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate
+.PHONY: ui-awd-personas-gate awd-preflight awd-services-gate awd-seams-gate awd-leakage-gate awd-dead-end-gate ui-awd-fidelity-gate ui-awd-opinion-gate ui-awd-decision-gate ui-awd-notices-gate ui-awd-supplier-gate ui-awd-wait-gate ui-awd-debrief-gate ui-awd-correction-gate ui-awd-demo-walk-gate ui-awd-gate ui-awd-release-evidence-gate seed-awd-profiles seed-awd-profile seed-awd-profile-restore bop-preflight bop-profiles-gate seed-bop-profiles seed-bop-profile seed-bop-profile-restore ui-bop-prepare-gate ui-bop-before-start-gate ui-bop-ceremony-gate ui-bop-pauses-gate ui-bop-no-bids-gate ui-bop-record-gate ui-bop-completed-gate ui-bop-fidelity-gate ui-bop-public-gate ui-bop-release-evidence-gate ui-bop-gate prc-services-gate bop-services-gate bop-dead-end-gate bop-leakage-gate bds-preflight bds-retirement-gate bds-portal-gate bds-services-gate supplier-accounts-services-gate ui-bds-portal-skeleton-gate ui-bds-security-intake-gate ui-bds-overview-gate ui-bds-account-gate ui-bds-my-bids-gate ui-bds-workspace-gate ui-bds-documents-gate ui-bds-company-gate ui-bds-requirements-price-gate ui-bds-review-gate ui-bds-submit-gate ui-bds-receipt-changes-gate ui-bds-bound-release-gate ui-bds-acceptance-gaps-gate ui-bds-common-states-gate ui-bds-fidelity-gate ui-bds-release-evidence-gate bds-dead-end-gate ui-system-setup-responsibilities-gate seed-req-profiles seed-req-profile seed-req-profile-restore ui-structure-gate ui-visual-gate ui-fidelity-gate artboard-provenance-gate departmental-needs-domain-gate ui-departmental-needs-fidelity-gate tenders-preflight tenders-schema-gate tenders-services-gate tenders-dead-end-gate ui-tenders-workspace-gate ui-tenders-start-gate ui-tenders-details-gate ui-tenders-requirements-gate ui-tenders-review-gate ui-tenders-approval-gate ui-tenders-authorisation-gate ui-tenders-publication-gate ui-tenders-published-gate ui-tenders-addendum-gate ui-tenders-cancel-gate ui-tenders-history-gate ui-tenders-fidelity-gate ui-tenders-release-evidence-gate ui-system-setup-procurement-settings-gate ui-system-setup-fiscal-years-gate ui-system-setup-access-gate ui-system-setup-entity-gate ui-system-setup-funding-sources-gate ui-system-setup-rules-gate ui-system-setup-source-checks-gate ui-system-setup-schedules-gate help install install-one migrate build build-kentender clear restart doctor list symlinks validate-links smoke seed-canonical seed-canonical-dry-run seed-canonical-validate ui-smoke ui-workspace-pattern-gate ui-strategy-gate ui-strategy-fidelity-gate ui-stitch-desk-chrome-gate ui-industry-design-gate ui-system-setup-fidelity-gate ui-budget-fidelity-gate ui-budget-gate ui-create-demand-strategy-gate ui-civic-ledger-queue-gate ui-civic-ledger-ui01-gate ui-civic-ledger-cfg01-gate ui-civic-ledger-cfg02-gate ui-civic-ledger-cfg03-gate ui-civic-ledger-cfg04-gate ui-civic-ledger-cfg05-gate ui-civic-ledger-cfg06-gate ui-civic-ledger-cfg07-gate ui-civic-ledger-cfg08-gate ui-civic-ledger-cfg09-gate ui-civic-ledger-wg01-gate ui-civic-ledger-wg02-gate ui-civic-ledger-wg03-gate pub-domain-gate ui-publications-gate ui-demands-workspace-gate ui-planning-workspace-gate ui-planning-departmental-gate ui-planning-fidelity-gate ui-planning-release-evidence-gate ui-planning-annual-plan-gate ui-planning-item-gate ui-planning-finance-gate ui-planning-governance-gate ui-planning-publication-gate planning-requisition-gate planning-seed-gate ui-req-workspace-gate ui-req-start-gate ui-req-editor-a-gate ui-req-editor-b-gate ui-req-department-gate ui-req-procurement-gate ui-req-authorised-gate ui-req-fidelity-gate ui-req-release-evidence-gate ui-demands-form-gate ui-demands-review-gate ui-demands-detail-gate ui-demands-performance-gate demands-abs-gate bw-manifest-phase1-gate bw-manifest-phase2-gate bw-manifest-phase3-gate bw-manifest-phase4-gate bw-manifest-phase5-gate bw-manifest-phase2-reset bw-manifest-phase2-reseed tm2-v1-contamination-audit p11-04-tm2-surface-gate p11-05-tm2-surface-legacy-literal-gate p12-01-scenario-harness x-01-planning-std-poc-gate x-02-no-plain-bench-build-gate x-03-doc9-acceptance-sequence-gate vue-desk-bundle-translation-binding-gate e1-nssf-seed-gate e1-nssf-poc-gate seed-stable-platform seed-stable-platform-reset seed-stable-platform-validate
 
 help:
 	@echo "Targets:"
@@ -293,7 +293,7 @@ artboard-provenance-gate:
 # lives outside tests/ui/smoke/design-fidelity/ and was being missed.
 ui-structure-gate:
 	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project design-fidelity
-	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning --project departmental-needs-components --project system-setup --project desk-runtime --project procurement-requisitions --project std-templates --project tenders --project bid-opening --project bid-portal --project supplier-account-portal --project tender-security-receipts
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project procurement-planning --project departmental-needs-components --project system-setup --project desk-runtime --project procurement-requisitions --project std-templates --project tenders --project bid-opening --project bid-evaluation --project award --project bid-portal --project supplier-account-portal --project tender-security-receipts
 
 # Visual references. Nothing ran the Departmental Needs baselines before this
 # target existed, so a spacing or rule change could only be found by a person
@@ -752,6 +752,76 @@ evl-services-gate: evl-preflight
 	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_core --module kentender_core.tests.test_support_issues
 	cd $(BENCH_ROOT) && for m in $(EVL_SERVICE_MODULES); do \
 		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.bid_evaluation.tests.$$m || exit 1; done
+
+# AWD-CHG-001 v0.4 Award (plan OD-B: the service tests run on the synthetic
+# upstream sources and build no tender, bid, opening or evaluation; only the
+# seams gate reads the real Evaluation output). Never run while a Playwright
+# run mutates the site: `bench run-tests` has no rollback on this bench.
+awd-preflight:
+	@if pgrep -f "[p]laywright test" >/dev/null; then echo "A Playwright run is active on this site; run the Award Python gates after it finishes."; exit 1; fi
+
+# Award services on the synthetic sources (target: under 3 minutes); grows per phase.
+AWD_SERVICE_MODULES ?= test_awd_schema test_awd_errors test_awd_intake test_awd_opinion test_awd_decision test_awd_notices test_awd_authority \
+	test_awd_supplier test_awd_eligibility test_awd_delivery test_awd_explanation test_awd_restrictions test_awd_cancellation test_awd_corrections \
+	test_awd_cycles test_awd_reads
+awd-services-gate: awd-preflight
+	cd $(BENCH_ROOT) && for m in $(AWD_SERVICE_MODULES); do \
+		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.award.tests.$$m || exit 1; done
+
+# The real Evaluation -> Award seam (plan rule 11): read-only contract checks
+# against the canonical report, and one integration world (years >= 2100).
+# That world is Evaluation's shared test world, whose Planning/Tenders fixtures
+# persist: run `make seed-canonical THROUGH=award` afterwards.
+awd-seams-gate: awd-preflight
+	cd $(BENCH_ROOT) && for m in test_awd_seams test_awd_integration; do \
+		bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.award.tests.$$m || exit 1; done
+
+awd-leakage-gate: awd-preflight
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.award.tests.test_awd_leakage
+
+awd-dead-end-gate: awd-preflight
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.award.tests.test_awd_dead_end
+	cd $(BENCH_ROOT) && bench --site $(SITE) run-tests --app kentender_procurement --module kentender_procurement.award.tests.test_awd_idempotency
+
+# Award screens against their 47 boards (vitest project "award"; also in ui-structure-gate).
+ui-awd-fidelity-gate:
+	cd $(BENCH_ROOT)/apps/kentender_v1 && npx vitest run --project award
+
+# One Playwright spec per slice, each on its own synthetic Award world (seconds to build).
+UI_AWD = cd $(BENCH_ROOT)/apps/kentender_v1 && node tests/ui/helpers/queueCheck.cjs && npx playwright test --workers=1 tests/ui/smoke/award
+ui-awd-opinion-gate:
+	$(UI_AWD)/awd-opinion.spec.ts
+ui-awd-decision-gate:
+	$(UI_AWD)/awd-decision.spec.ts
+ui-awd-notices-gate:
+	$(UI_AWD)/awd-notices.spec.ts
+ui-awd-supplier-gate:
+	$(UI_AWD)/awd-supplier.spec.ts
+ui-awd-wait-gate:
+	$(UI_AWD)/awd-wait-deliver.spec.ts
+ui-awd-debrief-gate:
+	$(UI_AWD)/awd-debrief-hold.spec.ts
+ui-awd-correction-gate:
+	$(UI_AWD)/awd-correction.spec.ts
+# The canonical award walked from the menu and the bell (needs seed-canonical THROUGH=award).
+ui-awd-demo-walk-gate:
+	$(UI_AWD)/awd-demo-walk.spec.ts
+ui-awd-gate: ui-awd-fidelity-gate ui-awd-opinion-gate ui-awd-decision-gate ui-awd-notices-gate ui-awd-supplier-gate ui-awd-wait-gate ui-awd-debrief-gate ui-awd-correction-gate
+ui-awd-personas-gate:
+	$(UI_AWD)/awd-personas.spec.ts
+ui-awd-release-evidence-gate: ui-awd-gate ui-awd-demo-walk-gate ui-awd-personas-gate
+
+# Award demo profiles: one stage of the canonical award at a time, with the
+# site's test clock at that moment, for walking in a browser.
+seed-awd-profiles:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.award.seeds.profiles.list_profiles
+
+seed-awd-profile:
+	@test -n "$(PROFILE)" || (echo "PROFILE is required, e.g. make seed-awd-profile PROFILE=AWD-DEMO-OPINION (see make seed-awd-profiles)"; exit 2)
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.award.seeds.profiles.load_profile --kwargs '{"profile": "$(PROFILE)"}'
+
+seed-awd-profile-restore:
+	cd $(BENCH_ROOT) && bench --site $(SITE) execute kentender_procurement.award.seeds.profiles.restore_base
 
 # BOP-CHG-001 v0.10 plan Phase 8 — the Bid Opening Desk screens. The fidelity
 # gate mounts each screen with the server answer captured for its board

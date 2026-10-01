@@ -46,7 +46,7 @@ import frappe
 
 from kentender_core.seeds import site_setup
 
-STAGES: tuple[str, ...] = ("site", "strategy", "budget", "needs", "planning", "requisitions", "tenders", "bid_submission", "bid_opening", "bid_evaluation")
+STAGES: tuple[str, ...] = ("site", "strategy", "budget", "needs", "planning", "requisitions", "tenders", "bid_submission", "bid_opening", "bid_evaluation", "award")
 
 # Namespaces whose rows are canonical and survive `reset`.
 STRATEGY_NS = "str-chg-001-mvp1"
@@ -719,6 +719,12 @@ def seed(*, through: str = STAGES[-1]) -> dict[str, Any]:
 		from kentender_procurement.bid_evaluation.seeds.kentender_mvp_v1 import upsert_bid_evaluation_base
 
 		report["bid_evaluation"] = upsert_bid_evaluation_base(commit=False)
+	if last >= STAGES.index("award"):
+		# AWD-CHG-001 v0.4 §13: the canonical award, from the report received on
+		# 16 Jun to the package Contracting received on 2 Jul.
+		from kentender_procurement.award.seeds.kentender_mvp_v1 import upsert_award_base
+
+		report["award"] = upsert_award_base(commit=False)
 	return report
 
 
@@ -896,6 +902,11 @@ def validate(*, through: str = STAGES[-1]) -> dict[str, Any]:
 		from kentender_procurement.bid_evaluation.seeds.kentender_mvp_v1 import validate_bid_evaluation_seed
 
 		for row in validate_bid_evaluation_seed():
+			check(row["ok"], row["check"])
+	if last >= STAGES.index("award"):
+		from kentender_procurement.award.seeds.kentender_mvp_v1 import validate_award_seed
+
+		for row in validate_award_seed():
 			check(row["ok"], row["check"])
 
 	report = {"ok": not failures, "through": through, "failures": failures}

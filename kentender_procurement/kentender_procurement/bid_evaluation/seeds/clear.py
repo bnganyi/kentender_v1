@@ -31,6 +31,10 @@ def wipe(*, tenders=None, namespace: str = "") -> int:
 	cases: set[str] = set()
 	for f in filters:
 		cases |= set(frappe.get_all(CASE, filters=f, pluck="name"))
+	# AWD-CHG-001 v0.4 plan D5: an award built on these evaluations goes with them.
+	removed = set(frappe.get_all(CASE, filters={"name": ("in", list(cases))}, pluck="tender")) if cases else set()
+	for path in frappe.get_hooks("kt_evaluation_removal_consumers") or []:
+		frappe.get_attr(path)(tenders=sorted(removed | set(tenders or [])), namespace=namespace)
 	if cases:
 		names = list(cases)
 		for doctype in BY_CASE:

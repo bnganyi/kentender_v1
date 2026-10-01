@@ -35,6 +35,13 @@ def titles(user, kind="assigned"):
 	return [r["title"] for r in my_work_provider.my_work_rows(user)[kind] if r["module"] == "Bid Evaluation"]
 
 
+def award_titles(user):
+	"""AWD-CHG-001 v0.4 §3: the delivered report's review is Award's work item."""
+	from kentender_procurement.award.services import tasks
+
+	return [r["title"] for r in tasks.my_work_rows(user)["assigned"]]
+
+
 class ReportCase(EvaluationCase):
 	def setUp(self):
 		super().setUp()
@@ -88,7 +95,10 @@ class TestSendAndSign(ReportCase):
 		self.assertEqual(out["delivery"]["status"], "Delivered")
 		self.assertEqual(self.evl_doc().state, "Report sent")
 		self.assertEqual(frappe.db.count("Evaluation Report Delivery", {"evaluation_case": self.case}), 1)
-		self.assertIn(f"Review evaluation report for {self.reference}", titles(HOP))
+		# AWD-CHG-001 v0.4 §3 entry contract: Award received the report, and the
+		# recipient's review task is Award's opinion task — one work item, not two.
+		self.assertNotIn(f"Review evaluation report for {self.reference}", titles(HOP))
+		self.assertIn(f"Prepare professional opinion for {self.reference}", award_titles(HOP))
 		self.assertEqual(titles(MEMBER), [])
 		delivered = frappe.db.get_value("Evaluation Report Version", {"evaluation_case": self.case, "state": "Delivered"}, "name")
 		with self.assertRaises(frappe.DoesNotExistError):
@@ -165,7 +175,7 @@ class TestAfterDelivery(ReportCase):
 		out = correction.record_correction_notice(tender=self.name, reason="The report gives the wrong page reference for the service address.",
 			correction="Read page 2, section 3, instead of page 3.", idempotency_key=key(), user=CHAIR)
 		self.assertEqual(out["downstream_status"], "Award decision recorded")
-		self.assertIn(f"Review report correction for {self.reference}", titles(HOP))
+		self.assertIn(f"Review report correction for {self.reference}", titles(HOP) + award_titles(HOP))
 		self.assertEqual(self.evl_doc().state, "Report sent")  # never reopened
 
 

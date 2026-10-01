@@ -157,7 +157,7 @@
    "fieldtype": "Select",
    "label": "Head review state",
    "read_only": 1,
-   "options": "\nOpen\nReviewed\nReturned"
+   "options": "\nOpen\nReviewed\nReturned\nWith Award"
   },
   {
    "fieldname": "head_reviewed_at",

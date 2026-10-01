@@ -53,16 +53,17 @@ test.describe("Bid Evaluation, walked from the menu on the canonical Tender", ()
 		evlFixture("set_instant", { instant: previous });
 	});
 
-	test("the Head of Procurement finds the delivered report as a task", async ({ browser }) => {
+	test("the Head of Procurement finds the delivered report, now with Award", async ({ browser }) => {
+		// AWD-CHG-001 v0.4 §3: Award received the report and the Head's review is
+		// Award's opinion task (tests/ui/smoke/award/awd-demo-walk.spec.ts walks it).
 		const page = await as(browser, CHARLES);
 		const errors = collectConsoleErrors(page);
 		await openWorkspaceFromMenu(page);
 		const ws = page.locator('[data-testid="evl-workspace"]');
-		const task = ws.locator(".kt-task-row", { hasText: `Review evaluation report for ${REF}` });
-		await expect(task).toBeVisible();
-		await task.locator("button").click();
+		await expect(ws.locator(".kt-task-row", { hasText: `Review evaluation report for ${REF}` })).toHaveCount(0);
+		await page.goto(`/app/tenders/${REF}/evaluation/report`, { waitUntil: "domcontentloaded" });
 		await expectScreen(page, "report");
-		await expectNextStep(page, "your_turn", "Review the committee's report.");
+		await expectNextStep(page, "done", /^The committee report was sent to Charles Mutiso on 16 Jun 2027, 14:07 EAT\.$/);
 		await expect(page.locator('[data-testid="evl-root"] [data-testid="evl-summary"]')).toContainText("Afya Digital Supplies Limited");
 		await expect(page.locator('[data-testid="evl-root"] [data-testid="evl-summary"]')).toContainText("KES 46,400,000.00");
 		await expect(page.getByRole("button", { name: /award/i })).toHaveCount(0);

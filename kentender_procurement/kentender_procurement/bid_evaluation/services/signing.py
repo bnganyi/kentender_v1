@@ -208,6 +208,11 @@ def deliver(doc, version, key: str) -> dict[str, Any]:
 	records.bump(doc, state="Report sent", last_committed_event=event)
 	notify.tell(doc, [recipient], subject=f"Review evaluation report for {doc.tender_reference}", message=f"Evaluation report {version.version_number} was sent to you.",
 		key=f"review-{version.name}")
+	# AWD-CHG-001 v0.4 §3 entry contract (AWD-IF-01): the delivered report
+	# reaches Award, which takes this recipient's review task up as its own.
+	from kentender_procurement.bid_evaluation.services.award_seam import notify_consumers
+
+	notify_consumers("kt_evaluation_report_consumers", delivery=row.name)
 	return {"status": "Delivered", "delivery": row.name, "recipient": recipient}
 
 

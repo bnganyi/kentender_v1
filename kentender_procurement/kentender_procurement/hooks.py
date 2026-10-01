@@ -100,6 +100,10 @@ app_include_js = [
 website_route_rules = [
 	# Prompt canonical alias → thin Website page that redirects into Desk.
 	{"from_route": "/procurement/home", "to_route": "procurement/home"},
+	# AWD-CHG-001 v0.4 §9 — the supplier's award notice, rendered by the one
+	# portal page and answered by the Award surface below.
+	{"from_route": "/supplier/awards", "to_route": "kt_portal"},
+	{"from_route": "/supplier/awards/<path:portal_path>", "to_route": "kt_portal"},
 	# The legacy bidder-workspace routes (`/tenders/<publication_ref>/…`,
 	# `/supplier/tenders/<tender_code>`) were retired by BDS-CHG-001 v0.8
 	# Phase 1. The supplier portal routes are kentender_core's (`kt_portal`);
@@ -125,6 +129,14 @@ kt_portal_surfaces = [
 		 "css": [f"/assets/kentender_procurement/css/bid_portal.css?v={_asset_version('public/css/bid_portal.css')}"]}
 		for prefix in ("/my-bids", "/account/receipts")
 	),
+	# AWD-CHG-001 v0.4 plan D14 — the supplier's own award notice.
+	{
+		"key": "supplier-awards",
+		"prefix": "/supplier/awards",
+		"resolver": "kentender_procurement.award.portal.resolve",
+		"bundle": "award_portal.bundle.js",
+		"css": [f"/assets/kentender_procurement/css/bid_portal.css?v={_asset_version('public/css/bid_portal.css')}"],
+	},
 ]
 
 # BOP-CHG-001 v0.10 plan D10 — Bid Opening answers /tenders/{ref}/opening
@@ -132,11 +144,31 @@ kt_portal_surfaces = [
 kt_tender_opening_portal = ["kentender_procurement.bid_opening.portal.resolve"]
 # BOP-CHG-001 v0.10 §9 — the Tender record links to its bid opening.
 kt_tender_record_links = ["kentender_procurement.bid_opening.desk_links.tender_record_links",
-	"kentender_procurement.bid_evaluation.desk_links.tender_record_links"]
-kt_tender_portal_links = ["kentender_procurement.bid_opening.portal.tender_links", "kentender_procurement.bid_evaluation.portal.tender_links"]
+	"kentender_procurement.bid_evaluation.desk_links.tender_record_links", "kentender_procurement.award.desk_links.tender_record_links"]
+kt_tender_portal_links = ["kentender_procurement.bid_opening.portal.tender_links", "kentender_procurement.bid_evaluation.portal.tender_links",
+	"kentender_procurement.award.portal.tender_links"]
 # EVL-CHG-001 v0.4 plan D14 — Bid Evaluation answers
 # /tenders/{ref}/bid/evaluation-clarifications/{request} inside Bid Submission's portal.
 kt_tender_evaluation_portal = ["kentender_procurement.bid_evaluation.portal.resolve"]
+
+# AWD-CHG-001 v0.4 (Award). Plan D4: the upstream sources (the real seams; the
+# synthetic stand-in answers on a test environment only). Plan D5: Evaluation
+# hands its delivered reports and later corrections to Award; Tenders asks
+# Award before a cancellation and reads its authority status; the Award goes
+# with its evaluation or Tender. Plan D10: the Contracting receiver (only the
+# simulation stand-in exists). Plan D7: the notice email channel.
+kt_award_source_providers = [
+	"kentender_procurement.award.services.sources.evaluation_provider",
+	"kentender_procurement.award.test_services.sources.synthetic_provider",
+]
+kt_evaluation_report_consumers = ["kentender_procurement.award.services.intake.on_report_delivered"]
+kt_evaluation_report_consumers_failed = ["kentender_procurement.award.services.intake.on_report_delivery_failed"]
+kt_evaluation_correction_consumers = ["kentender_procurement.award.services.corrections.on_evaluation_correction"]
+kt_evaluation_removal_consumers = ["kentender_procurement.award.seeds.clear.on_evaluations_removed"]
+kt_award_authority_status = ["kentender_procurement.award.services.authority.tender_status"]
+kt_tender_cancellation_guards = ["kentender_procurement.award.services.authority.cancellation_guard"]
+kt_award_contracting_receivers = ["kentender_procurement.award.test_services.contracting_receiver.receiver"]
+kt_award_notice_transports = ["kentender_procurement.bid_submission.test_services.mailbox.deliver"]
 
 # BDS-CHG-001 v0.8 plan Phase 5 (TPR FU-25) — the Tender candidate registry is
 # Bid Submission's: a bidder arrangement, created only by Start bid, is the
@@ -146,6 +178,7 @@ kt_tender_candidate_registry = ["kentender_procurement.bid_submission.services.c
 kt_tender_seed_candidate = ["kentender_procurement.bid_submission.seeds.canonical.seed_candidate"]
 # Bid Submission removes its rows for Tenders the Tenders clean-up removes.
 kt_tender_removal_consumers = [
+	"kentender_procurement.award.seeds.clear.on_tenders_removed",
 	"kentender_procurement.bid_evaluation.seeds.clear.on_tenders_removed",
 	"kentender_procurement.bid_opening.seeds.clear.on_tenders_removed",
 	"kentender_procurement.bid_submission.seeds.clear.on_tenders_removed",
@@ -242,6 +275,7 @@ page_js = {
 	"tender-security-receipts": "public/js/tender_security_receipts_page.js",
 	# EVL-CHG-001 v0.4 plan D13 — the Bid evaluation workspace.
 	"bid-evaluation": "public/js/bid_evaluation_page.js",
+	"award": "public/js/award_page.js",
 	"departmental-procurement-plan": "public/js/departmental_procurement_plan_page.js",
 	"annual-procurement-plan": "public/js/annual_procurement_plan_page.js",
 	"procurement-plan-item": "public/js/procurement_plan_item_page.js",
@@ -463,6 +497,9 @@ scheduler_events: dict[str, list[str]] = {
 		# EVL-CHG-001 v0.4 plan D25 — prepare evaluations on publication, take up a
 		# completed opening, close on a final no-bids opening, apply owner events.
 		"kentender_procurement.bid_evaluation.services.sweep.run",
+		# AWD-CHG-001 v0.4 plan D9 — receipt retries, Tenders' events, corrections,
+		# deadlines and technical retries for awards.
+		"kentender_procurement.award.services.sweep.run",
 	],
 }
 
@@ -595,6 +632,8 @@ kt_my_work_providers = [
 	"kentender_procurement.bid_opening.services.my_work_provider.my_work_rows",
 	# EVL-CHG-001 v0.4 §7.3 hand-off register (plan D11).
 	"kentender_procurement.bid_evaluation.services.my_work_provider.my_work_rows",
+	# AWD-CHG-001 v0.4 §5.9 work items (plan D12).
+	"kentender_procurement.award.services.tasks.my_work_rows",
 ]
 
 # AUTH-ADR-001 v1.8 §8/§9 / KT-STD-001 v1.5 §3A.6 — the shared Technical
@@ -609,6 +648,7 @@ kt_technical_reference_resolvers = [
 	"kentender_procurement.std_templates.services.technical_read.reference_resolvers",
 	"kentender_procurement.bid_submission.services.technical_read.reference_resolvers",
 	"kentender_procurement.bid_opening.services.technical_read.reference_resolvers",
+	"kentender_procurement.award.services.technical_read.reference_resolvers",
 ]
 
 kt_technical_read_probes = [
@@ -618,6 +658,7 @@ kt_technical_read_probes = [
 	"kentender_procurement.tenders.services.technical_read.read_probes",
 	"kentender_procurement.std_templates.services.technical_read.read_probes",
 	"kentender_procurement.bid_submission.services.technical_read.read_probes",
+	"kentender_procurement.award.services.technical_read.read_probes",
 ]
 
 # Optional hooks for downstream tendering implementations (v2+). Each path: dotted ``callable(payload: dict)``.

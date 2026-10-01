@@ -91,6 +91,18 @@ export default defineConfig({
 				},
 			},
 			{
+				plugins: [vue()],
+				test: {
+					// AWD-CHG-001 v0.4 plan D15/D16 — the Award Desk and supplier screens
+					// and their structural fidelity against the 47 boards the design
+					// tool's own template draws.
+					name: "award",
+					environment: "jsdom",
+					setupFiles: ["kentender_procurement/kentender_procurement/public/js/tenders/vitest.setup.js"],
+					include: ["kentender_procurement/kentender_procurement/public/js/award/**/*.spec.js"],
+				},
+			},
+			{
 				// BDS-CHG-001 v0.8 plan OD-B — the Bid Submission public portal
 				// screens, alongside (never instead of) the browser layer.
 				plugins: [vue()],

@@ -430,3 +430,72 @@ export function bidEvaluationScope(doc, id, relPath = BID_EVALUATION_BOARDS) {
 export function bidEvaluationSkeleton(id, relPath = BID_EVALUATION_BOARDS) {
 	return skeletonOf(bidEvaluationScope(documentFor(relPath), id, relPath));
 }
+
+/**
+ * Award (AWD-CHG-001 v0.4, plan D16). One self-contained export: the 47 boards
+ * are an inline `BOARDS` array in the page's own `<script type="text/x-dc">`,
+ * normalised by the design tool's `Component.norm` and drawn by one `<x-dc>`
+ * template. The script is run with stubs for the design runtime (`DCLogic`,
+ * `React.createRef`, `localStorage`); the board is rendered through the same
+ * template evaluator as Bid Evaluation's, with annotations off. The screen is
+ * the template's `.kt-page`; a dialog board's `.dialog-backdrop`, drawn beside
+ * a bare page, is moved inside it where the live page renders its dialogs.
+ */
+export const AWARD_BOARDS = "docs/mvp-1-r1/16_award/design/Award Artboards.dc.html";
+
+const awardKits = new Map();
+
+export function awardKit(relPath = AWARD_BOARDS) {
+	if (!awardKits.has(relPath)) {
+		const html = fs.readFileSync(path.resolve(REPO_ROOT, relPath), "utf8");
+		const src = /<script type="text\/x-dc"[^>]*>([\s\S]*?)<\/script>/.exec(html)[1];
+		const run = new Function(
+			"DCLogic", "React", "localStorage", "window",
+			`${src}\nreturn { BOARDS, component: new Component() };`
+		);
+		class DCLogic {
+			constructor() { this.props = {}; this.state = {}; }
+			setState() {}
+		}
+		const kit = run(DCLogic, { createRef: () => ({ current: null }) }, { getItem: () => null, setItem: () => {} }, { addEventListener() {}, removeEventListener() {} });
+		kit.component.state = { sel: "D01", open: {} };
+		awardKits.set(relPath, kit);
+	}
+	return awardKits.get(relPath);
+}
+
+/** Every board id, in the design tool's order. */
+export function awardBoardIds(relPath = AWARD_BOARDS) {
+	return awardKit(relPath).BOARDS.map((b) => b.id);
+}
+
+export function awardScope(doc, id, relPath = AWARD_BOARDS) {
+	const kit = awardKit(relPath);
+	const raw = kit.BOARDS.find((b) => b.id === id);
+	if (!raw) throw new Error(`Award board ${id} not found`);
+	const b = kit.component.norm(raw);
+	const scope = { b, showAnn: false, sheetW: "1120px", groups: [], count: kit.BOARDS.length, noop: null, goPrev: null, goNext: null, mainRef: null };
+	const main = doc.querySelector("main");
+	if (!main) throw new Error("the Award template draws no <main>");
+	const holder = doc.createElement("div");
+	for (const n of renderTemplate(main, scope, doc)) holder.appendChild(n);
+	const page = holder.querySelector(".kt-page");
+	const dialog = holder.querySelector(".dialog-backdrop");
+	if (dialog) page.appendChild(dialog);
+	for (const el of page.querySelectorAll("ol.kt-journey")) el.setAttribute("data-kt", "journey");
+	for (const el of page.querySelectorAll(".kt-next-step")) el.setAttribute("data-kt", "next-step");
+	return page;
+}
+
+/** One Award board's landmark skeleton (see `awardScope`). */
+export function awardSkeleton(id, relPath = AWARD_BOARDS) {
+	return skeletonOf(awardScope(documentFor(relPath), id, relPath));
+}
+
+/** One Award dialog board's skeleton: the dialog alone (X01–X11). */
+export function awardDialogSkeleton(id, relPath = AWARD_BOARDS) {
+	const page = awardScope(documentFor(relPath), id, relPath);
+	const dialog = page.querySelector(".dialog");
+	if (!dialog) throw new Error(`Award board ${id} draws no dialog`);
+	return skeletonOf(dialog);
+}

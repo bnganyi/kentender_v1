@@ -95,7 +95,7 @@
    "fieldtype": "Select",
    "label": "Review state",
    "read_only": 1,
-   "options": "\nOpen\nReviewed\nReturned"
+   "options": "\nOpen\nReviewed\nReturned\nWith Award"
   },
   {
    "fieldname": "returned_by",

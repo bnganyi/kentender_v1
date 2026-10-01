@@ -1,0 +1,105 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-01 09:00:00.000000",
+ "description": "Plan D16: simulation-only fault switches; read only when kt_bds_simulation_environment is set.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "signing_outcome",
+  "email_failure_organisations",
+  "email_service_down",
+  "status_service_down",
+  "contracting_down",
+  "event_delivery_down",
+  "rule_unverified",
+  "revised_treatment_unverified",
+  "synthetic_json"
+ ],
+ "fields": [
+  {
+   "fieldname": "signing_outcome",
+   "label": "Signing outcome",
+   "read_only": 0,
+   "fieldtype": "Select",
+   "options": "\nUnavailable\nIndeterminate\nRejected"
+  },
+  {
+   "fieldname": "email_failure_organisations",
+   "label": "Email failure organisations",
+   "read_only": 0,
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "email_service_down",
+   "label": "Email service down",
+   "read_only": 0,
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "status_service_down",
+   "label": "Status service down",
+   "read_only": 0,
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "contracting_down",
+   "label": "Contracting down",
+   "read_only": 0,
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "event_delivery_down",
+   "label": "Event delivery down",
+   "read_only": 0,
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "rule_unverified",
+   "label": "Rule unverified",
+   "read_only": 0,
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "revised_treatment_unverified",
+   "label": "Revised treatment unverified",
+   "read_only": 0,
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "synthetic_json",
+   "fieldtype": "Long Text",
+   "label": "Synthetic sources state",
+   "read_only": 0
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-01 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Award",
+ "name": "Award Test Environment Controls",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 1,
+   "create": 1,
+   "delete": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "issingle": 1
+}
