@@ -128,8 +128,11 @@ PY
 	rsync -a --delete "sites/$DEV_SITE/private/files/" "sites/$TEST_SITE/private/files/"
 	rsync -a --delete "sites/$DEV_SITE/public/files/" "sites/$TEST_SITE/public/files/"
 
-	echo "== 5/6 migrate + clear cache"
-	bench --site "$TEST_SITE" migrate 2>&1 | tail -2
+	# No `migrate`: the copy is already at the dev site's schema, and migrate
+	# rewrites tracked files (workspace_sidebar/*.json timestamps), so every
+	# rebuild would dirty the repository. After a schema change, migrate the dev
+	# site first, then rebuild.
+	echo "== 5/6 clear cache + drain queue"
 	bench --site "$TEST_SITE" clear-cache
 	node "$BENCH_ROOT/apps/kentender_v1/tests/ui/helpers/queueCheck.cjs" --fix | tail -1
 

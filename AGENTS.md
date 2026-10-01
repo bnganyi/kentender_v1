@@ -346,7 +346,7 @@ cd $BENCH_ROOT/sites && ../env/bin/python -c "import frappe; \
 Every test writes real rows and nothing rolls them back, so a run on `kentender.midas.com` leaves it needing a purge or reseed — and leftovers from one kind of run break the next (a Python run's `_Test Fiscal Year` rows stopped the next Budget browser run's fixture reset, which then wedged the canonical rebuild). Tests therefore run on a separate site, `kentender-test.local`, a copy of the dev site with its own database and its own web server on port 8001 (a second hostname does not resolve from Node here, so a second port is the isolation).
 
 ```bash
-make test-site-rebuild                       # overwrite the test site with a fresh copy of dev (about 5 min)
+make test-site-rebuild                       # overwrite the test site with a fresh copy of dev (about 9 min)
 scripts/test-site.sh run npx playwright test <spec> --workers=1
 scripts/test-site.sh run make ui-budget-gate # any gate; it exports SITE, UI_SITE and UI_BASE_URL
 bench --site kentender-test.local run-tests --app <app> --module <module>   # Python needs no wrapper
