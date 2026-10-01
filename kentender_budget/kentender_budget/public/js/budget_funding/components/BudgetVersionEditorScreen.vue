@@ -1,6 +1,7 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onActivated, nextTick } from "vue";
 import KtErrorBanner from "./KtErrorBanner.vue";
+import ConfirmDialog from "../../budget_shared/components/ConfirmDialog.vue";
 import { useRouteState } from "../../budget_shared/composables/useRouteState.js";
 import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
 import { formatKes, formatSignedKes, mintKey } from "../../budget_shared/data/formatKes.js";
@@ -349,6 +350,14 @@ function saveChanges() {
 	}, "save");
 }
 
+// UAT issue #22 — Submit for review asks first; the footer button only opens
+// the question and the saves/submit run from the dialog's own Submit.
+const submitOpen = ref(false);
+function confirmSubmit() {
+	submitOpen.value = false;
+	return submitForReview();
+}
+
 // Submit for review — saves pending valid scopes first, then submits the
 // exact confirmed version with its own key; partial outcomes are named.
 function submitForReview() {
@@ -487,7 +496,7 @@ function restoreLine(o) {
 						     it. A prior pass rendered it verbatim as a visible label —
 						     removed; the active tab already tells the user this. -->
 						<button type="button" class="kt-btn kt-btn-secondary" :disabled="busy" data-testid="bud-editor-save-btn" @click="saveChanges">{{ __("Save changes") }}</button>
-						<button type="button" class="kt-btn kt-btn-primary" :disabled="busy" data-testid="bud-editor-submit-btn" @click="submitForReview">{{ __("Submit for review") }}</button>
+						<button type="button" class="kt-btn kt-btn-primary" :disabled="busy" data-testid="bud-editor-submit-btn" @click="submitOpen = true">{{ __("Submit for review") }}</button>
 					</div>
 					<div v-else-if="canReview" style="display: flex; align-items: center; gap: 10px; flex: none">
 						<span class="kt-muted" style="font-size: 12px" data-testid="bud-editor-readonly">{{ __("Read-only") }}</span>
@@ -704,6 +713,15 @@ function restoreLine(o) {
 				</div>
 			</div>
 		</template>
+
+		<ConfirmDialog
+			:open="submitOpen"
+			:title="__('Submit for review?')"
+			:message="__('This sends the allocation to the Budget Approver. You cannot edit it while it is under review unless it is returned to you.')"
+			:confirm-label="__('Submit for review')"
+			@confirm="confirmSubmit"
+			@cancel="submitOpen = false"
+		/>
 	</div>
 </template>
 

@@ -5,6 +5,7 @@ import {
 	SuccessorFixture,
 	attachDocument,
 	collectConsoleErrors,
+	confirmDecision,
 	expectScreen,
 	gotoBudget,
 	login,
@@ -60,8 +61,17 @@ test("record approved allocation, add lines and submit for review", async ({ pag
 	await rows.nth(1).getByLabel("Amount").fill("60000000");
 	await expect(page.getByTestId("bud-editor-reconcile")).toContainText("Budget lines match the approved allocation.");
 
+	// UAT #22 — Submit asks first; Cancel saves and submits nothing.
+	const submissions: string[] = [];
+	page.on("request", (r) => { if (/submit_budget_version|save_budget_version_draft/.test(r.url())) submissions.push(r.url()); });
+	await page.getByTestId("bud-editor-submit-btn").click();
+	await confirmDecision(page, "Submit for review?", false);
+	expect(submissions).toHaveLength(0);
+	await expect(page.getByTestId("bud-editor-status")).toHaveText("Draft");
+
 	// One Submit saves the pending lines and submits the exact version.
 	await page.getByTestId("bud-editor-submit-btn").click();
+	await confirmDecision(page, "Submit for review?");
 	await expect(page.getByTestId("bud-editor-status")).toHaveText("Submitted for approval", { timeout: 30_000 });
 	await expect(page.getByTestId("bud-editor-readonly")).toBeVisible();
 	await expect(page.locator(".modal.show")).toHaveCount(0);
@@ -78,6 +88,7 @@ test("a returned update opens with the reason and resubmits the same draft", asy
 	await expect(page.getByRole("heading", { level: 1 })).toHaveText("Update registered allocation");
 	await page.getByTestId("bud-editor-approval-ref").fill("MOH-FIN-BUD-2027-02 (Demo, corrected)");
 	await page.getByTestId("bud-editor-submit-btn").click();
+	await confirmDecision(page, "Submit for review?");
 	await expect(page.getByTestId("bud-editor-status")).toHaveText("Submitted for approval", { timeout: 30_000 });
 });
 
@@ -146,6 +157,7 @@ test("stale save and a rejected submit are typed results, never a dialog", async
 		route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ message: { ok: false, code: "BUDGET_NOT_READY", blockers: [{ code: "lines.total_mismatch", rule: "BUDGET_TOTAL_MISMATCH", message: "Amount still to assign: KES 10,000,000", detail: {} }] } }) })
 	);
 	await page.getByTestId("bud-editor-submit-btn").click();
+	await confirmDecision(page, "Submit for review?");
 	await expect(page.getByTestId("bud-editor-saved-not-submitted")).toContainText("Your changes were saved, but the allocation was not submitted.");
 	await expect(page.getByTestId("bud-editor-blockers")).toContainText("Amount still to assign: KES 10,000,000");
 	await expect(page.getByTestId("bud-editor-status")).toHaveText("Draft");

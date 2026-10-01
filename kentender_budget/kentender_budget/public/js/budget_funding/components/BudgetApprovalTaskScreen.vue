@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch, onActivated, onMounted, nextTick } from "vue";
 import KtErrorBanner from "./KtErrorBanner.vue";
+import ConfirmDialog from "../../budget_shared/components/ConfirmDialog.vue";
 import { useRouteState } from "../../budget_shared/composables/useRouteState.js";
 import { usePageRail } from "../../budget_shared/composables/usePageRail.js";
 import { formatKes, formatSignedKes, mintKey } from "../../budget_shared/data/formatKes.js";
@@ -9,7 +10,8 @@ import { getBudgetApprovalTask, getBudgetApprovalTaskLines, getBudgetApprovalTas
 // BUD-UI-04 — BUD-DES-08/09/10/11 (Review allocation changes) and BUD-DES-13
 // (Review registered allocation): the decision and its evidence together
 // (BUD-CHG-001 v1.9 §9.4, §11.8–§11.13, §12.5). One approval decides and
-// activates; no readiness checklist, no repeat confirmation.
+// activates; no readiness checklist. Approve asks once, naming the
+// consequence (UAT issue #17, reversing the earlier "no confirmation" rule).
 const { route, go, epoch } = useRouteState("budget-funding");
 const versionIdParam = computed(() => route.value[2]);
 const tab = computed(() => route.value[3] || "overview");
@@ -181,7 +183,15 @@ function submitReturn() {
 		await load({ quiet: true });
 	}, "return");
 }
-// One decision, no repeat confirmation (§11.8): the footer button runs the command.
+// UAT issue #17 — Approve asks first, naming what approval does, so a stray
+// click cannot activate an allocation. The footer button only opens the
+// question; the command runs from the dialog's own Approve.
+const approveOpen = ref(false);
+const approveTitle = computed(() => (isSuccessor.value ? __("Approve this allocation update?") : __("Approve this registered allocation?")));
+function confirmApprove() {
+	approveOpen.value = false;
+	return approve();
+}
 function approve() {
 	return runner.run(async (key) => {
 		let result;
@@ -485,8 +495,17 @@ function approve() {
 
 		<div v-if="showFooter" class="kt-sticky-footer" data-testid="bud-task-footer">
 			<button v-if="task.capabilities.can_return" type="button" class="kt-btn kt-btn-secondary kt-danger" :disabled="busy" data-testid="bud-task-return-btn" @click="openReturn">{{ __("Return for correction") }}</button>
-			<button type="button" class="kt-btn kt-btn-primary" :disabled="busy || !canApprove" :title="approveReason" data-testid="bud-task-approve-btn" @click="approve">{{ approveLabel }}</button>
+			<button type="button" class="kt-btn kt-btn-primary" :disabled="busy || !canApprove" :title="approveReason" data-testid="bud-task-approve-btn" @click="approveOpen = true">{{ approveLabel }}</button>
 		</div>
+
+		<ConfirmDialog
+			:open="approveOpen"
+			:title="approveTitle"
+			:message="consequence"
+			:confirm-label="approveLabel"
+			@confirm="confirmApprove"
+			@cancel="approveOpen = false"
+		/>
 
 		<div v-if="returnOpen" class="kt-dialog-backdrop" tabindex="-1" @keydown.esc="returnOpen = false">
 			<div class="kt-dialog" style="width: 520px" role="dialog" aria-modal="true" :aria-label="__('What needs to change?')" data-testid="bud-task-return-dialog">

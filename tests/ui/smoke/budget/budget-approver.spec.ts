@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { ADMIN, APPROVER, OFFICER, PendingFixture, SuccessorFixture, RETURN_REASON, collectConsoleErrors, expectScreen, gotoBudget, login, resetFixture } from "./helpers";
+import { ADMIN, APPROVER, OFFICER, PendingFixture, SuccessorFixture, RETURN_REASON, collectConsoleErrors, confirmDecision, expectScreen, gotoBudget, login, resetFixture } from "./helpers";
 
 /**
  * BUD-CHG-001 v1.9 — BUD-UI-04: the decision and its evidence together
@@ -28,7 +28,15 @@ test("returning to Overview from another tab never lands on a literal \"undefine
 	await page.getByTestId("bud-task-tab-overview").click();
 	await expect(page).not.toHaveURL(/undefined/);
 	await expect(page.getByTestId("bud-task-approve-btn")).toBeVisible();
+	// UAT #17 — Approve asks first; Cancel records nothing.
+	const approvals: string[] = [];
+	page.on("request", (r) => { if (r.url().includes("approve_budget_version")) approvals.push(r.url()); });
 	await page.getByTestId("bud-task-approve-btn").click();
+	await confirmDecision(page, "Approve this registered allocation?", false);
+	expect(approvals).toHaveLength(0);
+	await expect(page.getByTestId("bud-task-approve-btn")).toBeEnabled();
+	await page.getByTestId("bud-task-approve-btn").click();
+	await confirmDecision(page, "Approve this registered allocation?");
 	await expect(page.getByTestId("bud-task-status")).toHaveText("Approved and activated", { timeout: 30_000 });
 
 	// The same idiom on the same (now decided) task, after approval.
@@ -56,6 +64,7 @@ test("review registered allocation: complete set, evidence, one approval activat
 	await page.getByTestId("bud-task-tab-overview").click();
 	await expect(page.getByTestId("bud-task-approve-btn")).toHaveText("Approve registered allocation");
 	await page.getByTestId("bud-task-approve-btn").click();
+	await confirmDecision(page, "Approve this registered allocation?");
 	await expect(page.getByTestId("bud-task-status")).toHaveText("Approved and activated", { timeout: 30_000 });
 	await expect(page.getByTestId("bud-task-footer")).toHaveCount(0);
 	await expect(page.locator(".modal.show")).toHaveCount(0);
@@ -152,6 +161,7 @@ test("a technical reader inspects the exact review read-only; a stale approve is
 		route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ message: { ok: false, code: "BUDGET_STALE_WRITE", errors: { expected_modified: "This budget has changed since you opened it. Refresh to see the current details." } } }) })
 	);
 	await page.getByTestId("bud-task-approve-btn").click();
+	await confirmDecision(page, "Approve this allocation update?");
 	await expect(page.getByTestId("bud-task-stale")).toContainText("This budget has changed since you opened it.");
 	await expect(page.locator(".modal.show")).toHaveCount(0);
 });

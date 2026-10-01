@@ -167,3 +167,15 @@ export async function attachDocument(page: Page, triggerTestId: string, fileName
 	await upload.click();
 	await expect(dialog).toHaveCount(0, { timeout: 30_000 });
 }
+
+/**
+ * UAT issues #17/#22 — Approve and Submit for review each ask first. Checks the
+ * dialog names the action, then answers it.
+ */
+export async function confirmDecision(page: Page, title: string, accept = true): Promise<void> {
+	const dialog = page.getByTestId("kt-confirm-dialog");
+	await expect(dialog).toBeVisible();
+	await expect(dialog).toContainText(title);
+	await page.getByTestId(accept ? "kt-confirm-ok" : "kt-confirm-cancel").click();
+	await expect(dialog).toHaveCount(0);
+}
