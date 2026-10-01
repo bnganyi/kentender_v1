@@ -44,6 +44,15 @@ class TestCanonicalSelection(IntegrationTestCase):
 		# A non-fixture domain is never a seed's to delete, whatever its name.
 		self.assertTrue(all(canonical._fixture_email(u) for u in plan.get("User", [])))
 
+	def test_reserved_placeholder_domains_are_fixture_emails_and_real_domains_are_not(self):
+		"""Stray hand-made test accounts land on example.com/.org/.net (RFC 2606),
+		which the seed once missed (52180618); a real person's domain, or one that
+		merely contains a fixture domain's name, must never match."""
+		for email in ("test@example.com", "qa@example.org", "x@example.net", "a@moh.example.test"):
+			self.assertTrue(canonical._fixture_email(email), email)
+		for email in ("person@gmail.com", "x@notexample.com", "x@example.com.au", "x@sub.example.com", "x@moh.go.ke"):
+			self.assertFalse(canonical._fixture_email(email), email)
+
 	def test_reset_removes_a_fiscal_year_only_unreferenced_by_this_same_clear(self):
 		"""Regression: the fiscal-year removal list must be recomputed after
 		the other deletions in `clear_non_canonical()`, not read from the
