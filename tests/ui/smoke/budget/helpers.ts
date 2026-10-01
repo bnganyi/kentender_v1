@@ -90,6 +90,9 @@ export interface ConversionFixture extends DefaultFixture {
 export interface EmptyYearFixture extends DefaultFixture {
 	empty_fiscal_year: string;
 }
+export interface TwoEmptyYearsFixture extends EmptyYearFixture {
+	second_empty_fiscal_year: string;
+}
 
 /** Rebuild one fixture and return its ids — never hardcode a reference. */
 export function resetFixture<T = DefaultFixture>(fn: string): T {

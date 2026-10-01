@@ -472,3 +472,14 @@ def reset_no_budget_year(*, commit: bool = True) -> dict[str, Any]:
 	for name in frappe.get_all("Procurement Budget", filters={"fiscal_year": fy}, pluck="name"):
 		_delete_budget_graph(name, {})
 	return _finish(base, {"empty_fiscal_year": fy}, commit=commit)
+
+
+def reset_two_empty_years(*, commit: bool = True) -> dict[str, Any]:
+	"""GitHub #26 — two existing years with no allocation recorded, so a first
+	allocation can be recorded for one and then for the other in the same
+	session."""
+	base = reset_no_budget_year(commit=False)
+	second = _ensure_isolated_fy(EMPTY_FY_START + 1)
+	for name in frappe.get_all("Procurement Budget", filters={"fiscal_year": second}, pluck="name"):
+		_delete_budget_graph(name, {})
+	return _finish(base, {"second_empty_fiscal_year": second}, commit=commit)

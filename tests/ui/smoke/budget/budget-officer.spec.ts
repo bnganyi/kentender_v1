@@ -3,6 +3,7 @@ import {
 	OFFICER,
 	EmptyYearFixture,
 	SuccessorFixture,
+	TwoEmptyYearsFixture,
 	attachDocument,
 	collectConsoleErrors,
 	confirmDecision,
@@ -161,4 +162,53 @@ test("stale save and a rejected submit are typed results, never a dialog", async
 	await expect(page.getByTestId("bud-editor-saved-not-submitted")).toContainText("Your changes were saved, but the allocation was not submitted.");
 	await expect(page.getByTestId("bud-editor-blockers")).toContainText("Amount still to assign: KES 10,000,000");
 	await expect(page.getByTestId("bud-editor-status")).toHaveText("Draft");
+});
+
+test("recording an allocation for a second year starts from a blank form", async ({ page }) => {
+	/**
+	 * GitHub #26 — after the first year's allocation was recorded, going back
+	 * and choosing another year's Record approved allocation opened with the
+	 * first one's reference, date, amount and document already filled in. The
+	 * page stays open between screens, so the form must be cleared each time
+	 * the screen is entered, and again when the year changes.
+	 */
+	const fx = resetFixture<TwoEmptyYearsFixture>("reset_two_empty_years");
+	const errors = collectConsoleErrors(page);
+	await login(page, OFFICER);
+	await gotoBudget(page);
+	await selectYear(page, fx.empty_fiscal_year);
+	await gotoBudget(page);
+	await expectScreen(page, "workspace");
+	await page.getByTestId("budget-register-btn").click();
+	await expectScreen(page, "register");
+	await page.getByTestId("bud-reg-approval-ref").fill("MOH-FIN-BUD-FIRST-01 (Demo)");
+	await page.getByTestId("bud-reg-approval-date").fill("2026-06-30");
+	await page.getByTestId("bud-reg-approved-allocation").fill("160000000");
+	await attachDocument(page, "bud-reg-upload-btn");
+	await page.getByTestId("bud-reg-save-btn").click();
+	await expectScreen(page, "editor");
+
+	// Back to the workspace inside the open page (no reload), pick the other
+	// year, and record again.
+	await page.evaluate(() => (window as any).frappe.set_route("budget-funding"));
+	await expectScreen(page, "workspace");
+	await page.getByTestId("budget-fy-filter").selectOption(fx.second_empty_fiscal_year);
+	await page.getByTestId("budget-register-btn").click();
+	await expectScreen(page, "register");
+	await expect(page.getByTestId("bud-reg-approval-ref")).toHaveValue("");
+	await expect(page.getByTestId("bud-reg-approval-date")).toHaveValue("");
+	await expect(page.getByTestId("bud-reg-approved-allocation")).toHaveValue("");
+	await expect(page.getByTestId("bud-reg-document-name")).toHaveText("No file attached");
+
+	// The second year's own details are what the editor then shows.
+	await page.getByTestId("bud-reg-approval-ref").fill("MOH-FIN-BUD-SECOND-02 (Demo)");
+	await page.getByTestId("bud-reg-approval-date").fill("2025-06-30");
+	await page.getByTestId("bud-reg-approved-allocation").fill("90000000");
+	await attachDocument(page, "bud-reg-upload-btn");
+	await page.getByTestId("bud-reg-save-btn").click();
+	await expectScreen(page, "editor");
+	await page.getByTestId("bud-editor-tab-overview").click();
+	await expect(page.getByTestId("bud-editor-approval-ref")).toHaveValue("MOH-FIN-BUD-SECOND-02 (Demo)");
+	await expect(page.getByTestId("bud-editor-approved-allocation")).toHaveValue(/90[, ]?000[, ]?000/);
+	expect(errors).toEqual([]);
 });

@@ -69,10 +69,29 @@ async function loadContext() {
 	}
 }
 
+// GitHub #26 — the page stays open between screens, so this form outlives a
+// visit: recording the first year's allocation left its reference, date, amount
+// and document in the fields, and the next year's Record approved allocation
+// opened with them already filled in. Each entry to the screen starts blank.
+function resetForm() {
+	form.approval_reference = "";
+	form.approval_date = "";
+	form.authorised_total = "";
+	form.approval_document = "";
+	form.approval_document_name = "";
+	uploadState.value = "none";
+	fieldErrors.value = {};
+	actingError.value = null;
+	savedButLost.value = null;
+}
+
 onMounted(loadContext);
 let activations = 0;
 onActivated(() => {
 	if (activations++ === 0) return;
+	// Back on the screen from elsewhere (a revalidating return to the same
+	// route is `epoch`, below, and keeps what is typed).
+	resetForm();
 	loadContext();
 });
 watch(epoch, () => loadContext());
@@ -138,6 +157,8 @@ function saveAndAddLines() {
 			actingError.value = Object.values(result.errors || {}).join(" ") || __("Could not save.");
 			return;
 		}
+		// Saved: nothing of this entry may carry over to the next one.
+		resetForm();
 		try {
 			go(result.budget.code, "version", String(result.version.version_number), "edit", "lines");
 		} catch (e) {
