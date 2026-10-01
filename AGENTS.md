@@ -354,6 +354,7 @@ bench --site kentender-test.local run-tests --app <app> --module <module>   # Py
 make test-site-status                        # server up, and is the canonical world intact
 ```
 
+- The first browser run after a rebuild is slow (the Departmental Needs fidelity spec took 13 minutes, then 8 on the next run, the same as dev) because the restored site's caches are cold. Do not read that first run's time as a regression, and do not rebuild again to "fix" it.
 - After a run that leaves the test site dirty, rebuild it; do not hand-clean it. Hand-cleaning the dev site is what this replaces.
 - A browser run that does not go through `scripts/test-site.sh` is refused by `tests/ui/globalSetup.ts` before it touches anything. `UI_ALLOW_DEV_SITE=1` overrides it for the rare run that must use dev data (say why in the run's report).
 - The dev site is for the owner's and QA's manual checks and for live verification of a change; rebuild the test site from it after a seed or schema change.
