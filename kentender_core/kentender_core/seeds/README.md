@@ -19,13 +19,18 @@ see `canonical.py`'s `collect_non_canonical`), then reseeds progressively:
 reference, actors and assignments — `site_setup.run`) → `strategy`
 (`kentender_strategy.seeds.kentender_mvp_v1_strategy`) → `budget`
 (`kentender_budget.seeds.kentender_mvp_v1_portfolio`, Active baseline only)
-→ `needs` → `planning` → `requisitions` → `tenders`, each through its owning
-module's own seed. Pass `"rebuild": True` to also drop the canonical module
-rows first (downstream first: Tenders, Requisitions, Planning, Needs, Budget,
+→ `needs` → `planning` → `requisitions` → `tenders` → `bid_submission` →
+`bid_opening` → `bid_evaluation` → `award`, each through its owning module's
+own seed (the last four only on a test site, since they use the simulated
+signing, tender-box and delivery services). Before the clear, any loaded demo
+profile (Requisitions, Departmental Needs, Bid Opening, Award) is undone and
+the site test clock cleared. Pass `"rebuild": True` to also drop the canonical
+module rows first (downstream first: Tenders — which takes the bid, opening,
+evaluation and award with it — Requisitions, Planning, Needs, Budget,
 Strategy) and rebuild from scratch. Leaves ERPNext-owned records and the pre-cutover
 legacy reference doctypes alone (KT-STD-001 §10).
 
-`make seed-canonical SITE=<site> THROUGH=tenders` wraps `run` (the make default stops at `requisitions`; add `REBUILD=True` for a rebuild). The maintained runbook — options, what is removed and kept, validation, how to add the next module stage — is `docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_0.md`.
+`make seed-canonical SITE=<site> THROUGH=award` wraps `run` for the full chain (the make default stops at `requisitions`; add `REBUILD=True` for a rebuild). The maintained runbook — options, what is removed and kept, validation, demo profiles, how to add the next module stage — is `docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_16.md` (v1.0–v1.15 were kept in `…_v1_0.md`).
 
 ## Legacy entry points (`bench execute`)
 

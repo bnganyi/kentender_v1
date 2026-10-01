@@ -29,7 +29,10 @@ class TestCanonicalSelection(IntegrationTestCase):
 	def test_stage_ladder_is_ordered_and_closed(self):
 		self.assertEqual(
 			canonical.STAGES,
-			("site", "strategy", "budget", "needs", "planning", "requisitions", "tenders", "bid_submission", "bid_opening"),
+			(
+				"site", "strategy", "budget", "needs", "planning", "requisitions", "tenders", "bid_submission", "bid_opening",
+				"bid_evaluation", "award",
+			),
 		)
 		with self.assertRaises(frappe.ValidationError):
 			canonical._stage_index("tender")
@@ -307,7 +310,8 @@ class TestCanonicalSeedRun(IntegrationTestCase):
 
 class TestCanonicalSeedFullChain(IntegrationTestCase):
 	"""The full site → strategy → budget → needs → planning → requisitions →
-	tenders chain, on the real test site, `reset=False` so this stays scoped
+	tenders → bid_submission → bid_opening → bid_evaluation → award chain, on
+	the real test site, `reset=False` so this stays scoped
 	to the seed's own rows (as `TestCanonicalSeedRun` already does for
 	budget)."""
 
@@ -336,6 +340,60 @@ class TestCanonicalSeedFullChain(IntegrationTestCase):
 		self.assertTrue(second["seeded"]["tenders"]["idempotent"])
 		for dt, count in counts.items():
 			self.assertEqual(frappe.db.count(dt), count, dt)
+
+
+	def test_seed_through_award_is_idempotent(self):
+		"""The four stages after Tenders (bid, opening, evaluation, award): a
+		second `through="award"` run tells nothing again and duplicates
+		nothing. Runs only on a test site (their simulated services)."""
+		frappe.set_user("Administrator")
+		first = canonical.run(through="award", reset=False, validate=True, force=True, commit=False)
+		self.assertTrue(first["ok"])
+		counts = {dt: frappe.db.count(dt) for dt in ("Tender", "Bid Submission Version", "Bid Opening Case", "Evaluation Case", "Award Case")}
+
+		second = canonical.run(through="award", reset=False, validate=True, force=True, commit=False)
+		self.assertTrue(second["ok"])
+		for stage in ("bid_submission", "bid_opening", "bid_evaluation", "award"):
+			self.assertTrue(second["seeded"][stage]["idempotent"], stage)
+		for dt, count in counts.items():
+			self.assertEqual(frappe.db.count(dt), count, dt)
+
+
+class TestDemoProfilesReleased(IntegrationTestCase):
+	"""A reseed after a walkthrough: a loaded Bid Opening or Award demo
+	profile leaves the site-wide test clock on its moment (12 Jun 2027 …),
+	so every module's live pages read that day until something clears it.
+	The canonical world has no test clock."""
+
+	def test_a_reseed_releases_a_loaded_opening_profile_and_the_test_clock(self):
+		from kentender_core.services import test_clock
+		from kentender_procurement.bid_opening.seeds import profiles as bop_profiles
+
+		frappe.set_user("Administrator")
+		if not test_clock.set_instant("2027-06-12 11:00:05"):
+			self.skipTest("not a test environment: nothing keeps a test clock")
+		frappe.db.set_default(bop_profiles.LOADED_KEY, "BOP-DEMO-READY")
+		try:
+			released = canonical.release_demo_profiles()
+			self.assertFalse(test_clock.current_instant())
+			self.assertEqual(bop_profiles.loaded_profile(), "")
+			self.assertEqual(released["bid_opening"]["loaded"], "BOP-DEMO-READY")
+		finally:
+			test_clock.set_instant(None)
+			frappe.db.set_default(bop_profiles.LOADED_KEY, "")
+
+	def test_a_reseed_clears_an_award_profile_clock(self):
+		"""Award's profiles keep no loaded marker, only the clock."""
+		from kentender_core.services import test_clock
+
+		frappe.set_user("Administrator")
+		if not test_clock.set_instant("2027-06-17 10:00:00"):
+			self.skipTest("not a test environment: nothing keeps a test clock")
+		try:
+			canonical.release_demo_profiles()
+			self.assertFalse(test_clock.current_instant())
+		finally:
+			test_clock.set_instant(None)
 
 
 class TestCanonicalReservationNamespace(IntegrationTestCase):

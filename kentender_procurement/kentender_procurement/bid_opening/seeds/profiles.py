@@ -238,6 +238,17 @@ def load_profile(*, profile: str, commit: bool = True) -> dict[str, Any]:
 	return report
 
 
+def release_loaded_profile() -> dict[str, Any]:
+	"""Called by the canonical seed before its own reset: undo a loaded
+	profile's browser world, test controls and clock. The `bid_opening` stage
+	then tells the canonical opening again, since a profile leaves it partial."""
+	loaded = loaded_profile()
+	if not loaded:
+		return {"loaded": None}
+	_clear_loaded()
+	return {"loaded": loaded, "released": True}
+
+
 def restore_base(*, commit: bool = True) -> dict[str, Any]:
 	"""Remove the loaded profile, tell the canonical opening again to
 	completion, and clear the test clock."""

@@ -111,7 +111,7 @@ make validate-links
 make migrate SITE=<site>
 make clear SITE=<site>
 make doctor
-make seed-canonical SITE=<site> [THROUGH=tenders] [REBUILD=True]   # clear non-canonical rows, reseed KT-STD-001 §8 + SEED-001 up to a stage (site/strategy/budget/needs/planning/requisitions/tenders/bid_submission/bid_opening; default requisitions), validate; REBUILD=True also drops and rebuilds the canonical module rows — runbook: docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_*.md
+make seed-canonical SITE=<site> [THROUGH=award] [REBUILD=True]    # clear non-canonical rows, reseed KT-STD-001 §8 + SEED-001 up to a stage (site/strategy/budget/needs/planning/requisitions/tenders/bid_submission/bid_opening/bid_evaluation/award; default requisitions; THROUGH=award is the full chain), validate; REBUILD=True also drops and rebuilds the canonical module rows — runbook: docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_16.md
 make seed-canonical-dry-run SITE=<site>             # what seed-canonical would remove, deletes nothing
 make seed-canonical-validate SITE=<site>
 make seed-kentender-mvp-v1 SITE=<site>              # legacy KENTENDER_MVP_V1 pack (multi-PE era); prefer seed-canonical

@@ -18,9 +18,15 @@ UOMs, actors and their responsibility assignments), ``strategy`` the
 STR-CHG-001 §14 plan, ``budget`` the BUD-CHG-001 §15.3 Active baseline,
 ``needs`` the NDS-CHG-001 §14.3 default Needs, ``planning`` the
 PLN-CHG-001 §14 integrated baseline, ``requisitions`` the REQ-CHG-001 v1.11
-§16 Authorised Requisition on the one eligible combined Plan Item, and
+§16 Authorised Requisition on the one eligible combined Plan Item,
 ``tenders`` the TPR-CHG-001 v0.12 §13.3 primary Tender lifecycle on that
-Requisition's handoff. Each stage calls the owning
+Requisition's handoff, ``bid_submission`` the same Tender built with Afya
+Digital Supplies Limited's bid interleaved (BDS-CHG-001 v0.8), ``bid_opening``
+its opening (BOP-CHG-001 v0.10), ``bid_evaluation`` its evaluation, to the
+report sent to Charles Mutiso (EVL-CHG-001 v0.4), and ``award`` its award, to
+the package Contracting received (AWD-CHG-001 v0.4). The last four use the
+simulated trust, custody and delivery services, so they run only on a test
+site. Each stage calls the owning
 module's own canonical-shaped seed function directly — never the legacy
 multi-PE `kentender_core.seeds.kentender_mvp_v1.orchestrator` — so seeding
 through any stage never creates `PE-CGKIS` or any second Procuring Entity.
@@ -996,22 +1002,7 @@ def run(
 	# get the fixture password even without developer_mode (site_setup).
 	frappe.flags.kt_fixture_passwords = True
 	try:
-		# A loaded Requisitions demo profile (REQ-CHG-001 v1.11 §16.4A) holds
-		# Budget reservations and Planning requests on the canonical item; undo
-		# it through the real commands first, so the reset below never leaves a
-		# Requisition row pointing at a reservation it deleted.
-		from kentender_procurement.procurement_requisitions.seeds.profiles import release_loaded_profile
-
-		result["released_profile"] = release_loaded_profile()
-		# The Departmental Needs demo profiles change the canonical Need
-		# NDS-MOH-2027-0001 in place (a successor revision, a withdrawal, a
-		# usage projection); each reset is a no-op when its profile is not
-		# applied. Found 26 Sep 2026: a test left the successor applied.
-		from kentender_procurement.departmental_needs.seeds import profiles as needs_profiles
-
-		result["released_needs_profiles"] = {
-			name: reset() for name, (_apply, reset) in needs_profiles.PROFILES.items() if name != "default"
-		}
+		result["released_profiles"] = release_demo_profiles()
 		if rebuild or wipe:
 			from kentender_strategy.services.strategy_reference import reset_reference_series
 
@@ -1065,3 +1056,35 @@ def run(
 		frappe.flags.in_test = in_test_before
 		frappe.conf.max_queued_jobs = max_jobs_before
 		frappe.flags.kt_fixture_passwords = False
+
+
+def release_demo_profiles() -> dict[str, Any]:
+	"""Undo every loaded demo profile before the reset, through each module's
+	own release, and clear the site-wide test clock: the canonical world has
+	none. Each release is a no-op when its profile is not loaded."""
+	from kentender_core.services import test_clock
+
+	out: dict[str, Any] = {}
+	# A loaded Requisitions demo profile (REQ-CHG-001 v1.11 §16.4A) holds
+	# Budget reservations and Planning requests on the canonical item; undo
+	# it through the real commands first, so the reset below never leaves a
+	# Requisition row pointing at a reservation it deleted.
+	from kentender_procurement.procurement_requisitions.seeds.profiles import release_loaded_profile
+
+	out["requisitions"] = release_loaded_profile()
+	# The Departmental Needs demo profiles change the canonical Need
+	# NDS-MOH-2027-0001 in place (a successor revision, a withdrawal, a
+	# usage projection); each reset is a no-op when its profile is not
+	# applied. Found 26 Sep 2026: a test left the successor applied.
+	from kentender_procurement.departmental_needs.seeds import profiles as needs_profiles
+
+	out["needs"] = {name: reset() for name, (_apply, reset) in needs_profiles.PROFILES.items() if name != "default"}
+	# A Bid Opening profile leaves its loaded marker, test controls and the
+	# clock; an Award profile only the clock (found 1 Oct 2026: a plain
+	# reseed retold both stories but left every live page on the profile's
+	# 2027 moment). Their stages retell the partial opening and award.
+	from kentender_procurement.bid_opening.seeds.profiles import release_loaded_profile as release_opening_profile
+
+	out["bid_opening"] = release_opening_profile()
+	out["test_clock_cleared"] = test_clock.set_instant(None)
+	return out

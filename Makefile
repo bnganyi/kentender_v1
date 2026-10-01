@@ -135,10 +135,13 @@ help:
 	@echo "  make seed-bop-profiles SITE=$(SITE) — list the Bid Opening demo profiles (one opening stage each, on the canonical Tender)"
 	@echo "  make seed-bop-profile SITE=$(SITE) PROFILE=BOP-DEMO-READY — load one (replaces any loaded one; sets the test clock) and print who to sign in as and what to do"
 	@echo "  make seed-bop-profile-restore SITE=$(SITE) — remove the loaded profile, retell the completed canonical opening and clear the test clock"
+	@echo "  make seed-awd-profiles SITE=$(SITE) — list the Award demo profiles (one award step each, on the canonical Tender)"
+	@echo "  make seed-awd-profile SITE=$(SITE) PROFILE=AWD-DEMO-OPINION — tell the canonical award up to that step and set the test clock"
+	@echo "  make seed-awd-profile-restore SITE=$(SITE) — tell the whole canonical award again and clear the test clock"
 	@echo "  make seed-req-profiles SITE=$(SITE) — list the REQ-CHG-001 §16.4A Requisitions demo profiles"
 	@echo "  make seed-req-profile SITE=$(SITE) PROFILE=REQ-SC-HOLD — load one profile on the canonical MOH item (replaces any loaded one) and print its report"
 	@echo "  make seed-req-profile-restore SITE=$(SITE) — undo the loaded profile and restore the base authorised requisition"
-	@echo "  make seed-canonical SITE=$(SITE) [THROUGH=tenders] [REBUILD=True] [WIPE=True] [FORCE=True] — clear every non-canonical row, then reseed KT-STD-001 §8 configuration + SEED-001 modules progressively (site → strategy → budget → needs → planning → requisitions → tenders → bid_submission → bid_opening) and validate, draining the background-job queue before and after; WIPE=True also drops and rebuilds the site stage itself (needs FORCE=True outside developer_mode)"
+	@echo "  make seed-canonical SITE=$(SITE) [THROUGH=tenders] [REBUILD=True] [WIPE=True] [FORCE=True] — clear every non-canonical row, then reseed KT-STD-001 §8 configuration + SEED-001 modules progressively (site → strategy → budget → needs → planning → requisitions → tenders → bid_submission → bid_opening → bid_evaluation → award; THROUGH=award is the full chain) and validate, draining the background-job queue before and after; WIPE=True also drops and rebuilds the site stage itself (needs FORCE=True outside developer_mode)"
 	@echo "  make seed-canonical-dry-run SITE=$(SITE) — report what seed-canonical would remove, delete nothing"
 	@echo "  make seed-canonical-validate SITE=$(SITE) [THROUGH=requisitions] — validate the canonical world only"
 	@echo "  make seed-kentender-mvp-v1 SITE=$(SITE) — fixture-scoped reset + full KENTENDER_MVP_V1 seed + Playwright purge + validate"
@@ -1319,12 +1322,14 @@ e1-nssf-poc-gate:
 		--module kentender_procurement.tender_configurations.tests.test_e1_nssf_seed
 
 # Canonical world (KT-STD-001 §8 + SEED-001), progressive by module stage.
-# THROUGH: site | strategy | budget | needs | planning | requisitions | tenders | bid_submission (later stages are added as they land).
+# THROUGH: site | strategy | budget | needs | planning | requisitions | tenders | bid_submission | bid_opening | bid_evaluation | award
+# (THROUGH=award is the full chain; later stages are added as they land).
 # bid_submission builds the Tenders stage with the canonical bid's lifecycle interleaved (BDS-CHG-001 v0.8 D19);
-# over a world seeded only through tenders it needs REBUILD=True, and it runs only on a test site (the simulated services).
+# over a world seeded only through tenders it needs REBUILD=True, and it runs only on a test site (the simulated services);
+# so do bid_opening, bid_evaluation and award. A plain run first undoes any loaded demo profile and clears the test clock.
 # WIPE=True also drops the site stage itself (Procuring Entity, Organisation
 # Units, Fiscal Years, actors) before rebuilding from nothing — see
-# docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_*.md §4. FORCE=True bypasses
+# docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_16.md §4. FORCE=True bypasses
 # every module seed's own developer_mode/allow_tests guard, required for WIPE
 # outside developer_mode. RESEED defaults to None (Python-literal, not a
 # string) so canonical.run() picks its own default: reseed immediately for
