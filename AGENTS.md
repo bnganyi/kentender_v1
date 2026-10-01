@@ -318,6 +318,7 @@ Operational rules:
 - Batch related fixes, run their focused subsets, then run the broad level once to confirm the batch.
 - If a failure is environmental, prove that with a minimal diagnostic; do not repeatedly rerun the same suite hoping it clears.
 - Use a build, migration, seed, or browser run only when the changed layer requires it.
+- Design-match (fidelity) gates are due per module, once per slice, and only when that module's screens, styles or boards changed. `make fidelity-affected [SINCE=<ref>]` lists the gates a change makes due (`RUN=1` runs them on the test site). A server-only change, or a change in another module, makes none due. A copy-only edit to one screen needs only that board's test: `scripts/test-site.sh run npx playwright test tests/ui/smoke/design-fidelity/<module>-fidelity.spec.ts -g '<BOARD-ID>' --workers=1`. Measured 2 Oct 2026: the Departmental Needs fidelity spec is 56 tests at about 9 seconds each (no test under 5 s), so running it per fix costs more than the defect class it protects.
 - Perform the unscripted primary user journey once at the feature/phase completion checkpoint, not after every small code fix. Check actual network failures and use fresh, valid data.
 - A direct URL rendering successfully is not sufficient UI evidence; the real entry path and return path must also work.
 
@@ -354,7 +355,7 @@ make test-site-status                        # server up, and is the canonical w
 ```
 
 - After a run that leaves the test site dirty, rebuild it; do not hand-clean it. Hand-cleaning the dev site is what this replaces.
-- A browser run that targets the dev site prints a warning from `globalSetup.ts`. `UI_ALLOW_DEV_SITE=1` silences it for the rare run that must use dev data.
+- A browser run that does not go through `scripts/test-site.sh` is refused by `tests/ui/globalSetup.ts` before it touches anything. `UI_ALLOW_DEV_SITE=1` overrides it for the rare run that must use dev data (say why in the run's report).
 - The dev site is for the owner's and QA's manual checks and for live verification of a change; rebuild the test site from it after a seed or schema change.
 
 ## 9. Completion standard

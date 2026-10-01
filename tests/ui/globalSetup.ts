@@ -19,13 +19,15 @@ import { ensureQueueHealthy } from "./helpers/benchQueue";
 export default async function globalSetup(): Promise<void> {
 	// Fixture resets delete and recreate real rows, so a run against the dev
 	// site leaves it needing a purge or reseed — and leftovers from a Python
-	// run break the next browser run's reset. Say so before the run, not after.
+	// run break the next browser run's reset. Refuse before the run, not after.
+	// TEST_SITE_ACTIVE is set only by scripts/test-site.sh, which points the
+	// browser (UI_BASE_URL) and the fixtures (UI_SITE) at the same test site; a
+	// hand-set UI_SITE alone could reset one site while the browser drives another.
 	if (!process.env.TEST_SITE_ACTIVE && !process.env.UI_ALLOW_DEV_SITE) {
-		// eslint-disable-next-line no-console
-		console.warn(
-			`[test site] this run writes to the DEV site (${process.env.UI_SITE || "kentender.midas.com"}). ` +
-				"Use `scripts/test-site.sh run npx playwright test ...` to run on the separate test site, " +
-				"or set UI_ALLOW_DEV_SITE=1 to silence this.",
+		throw new Error(
+			"[test site] refusing to run: browser tests write to the site they run against and nothing rolls them back. " +
+				"Run on the separate test site: `scripts/test-site.sh run npx playwright test ...` (AGENTS.md §8.2). " +
+				"For the rare run that must use dev data, set UI_ALLOW_DEV_SITE=1.",
 		);
 	}
 
