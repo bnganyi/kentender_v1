@@ -99,6 +99,7 @@ def read_probes() -> list[dict]:
 		{"label": "needs.resolve_needs_scope", "call": api.resolve_needs_scope, "kwargs": lambda: {}},
 		{"label": "needs.list_needs_financial_years", "call": api.list_needs_financial_years, "kwargs": lambda: {}},
 		{"label": "needs.list_need_create_targets", "call": api.list_need_create_targets, "kwargs": lambda: {}},
+		{"label": "needs.list_need_units", "call": api.list_need_units, "kwargs": lambda: {}},
 		{"label": "needs.get_needs_workspace", "call": api.get_needs_workspace, "kwargs": lambda: {}},
 		{"label": "needs.get_departmental_need", "call": api.get_departmental_need, "kwargs": _need_kwargs},
 		{"label": "needs.get_departmental_review_task", "call": api.get_departmental_review_task, "kwargs": _task_kwargs},

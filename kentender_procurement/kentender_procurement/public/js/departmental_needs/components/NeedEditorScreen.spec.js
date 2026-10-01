@@ -200,3 +200,54 @@ describe("NeedEditorScreen — NDS-DES-15-SINGLE / PERSISTED", () => {
 		expect(w.text()).toContain("FY 2027/28");
 	});
 });
+
+// UAT issue #25 — Required by is limited to the target financial year.
+describe("NeedEditorScreen — Required by stays inside the financial year", () => {
+	const year = {
+		organisation_unit_label: "Digital Health",
+		financial_year_label: "FY 2027/28",
+		financial_year_start: "2027-07-01",
+		financial_year_end: "2028-06-30",
+	};
+
+	it("limits the date picker to the year's first and last day", () => {
+		const input = make({ context: year }).get('[data-testid="nds-required-by"]');
+		expect(input.attributes("min")).toBe("2027-07-01");
+		expect(input.attributes("max")).toBe("2028-06-30");
+	});
+
+	it("tells the user the allowed dates and sends nothing for a date outside the year", async () => {
+		for (const button of ["nds-save-draft", "nds-submit"]) {
+			const w = make({ context: year });
+			await w.get('[data-testid="nds-required-by"]').setValue("2030-01-31");
+			await w.get(`[data-testid="${button}"]`).trigger("click");
+			expect(w.get('[data-testid="nds-required-by-error"]').text()).toBe(
+				"Required by must be between 1 Jul 2027 and 30 Jun 2028, the dates of FY 2027/28.",
+			);
+			expect(w.emitted("save")).toBeUndefined();
+			expect(w.emitted("submit")).toBeUndefined();
+		}
+	});
+
+	it("accepts the first and last day of the year and clears the message once corrected", async () => {
+		const w = make({ context: year });
+		const input = w.get('[data-testid="nds-required-by"]');
+		await input.setValue("2030-01-31");
+		await w.get('[data-testid="nds-save-draft"]').trigger("click");
+		expect(w.find('[data-testid="nds-required-by-error"]').exists()).toBe(true);
+		for (const day of ["2027-07-01", "2028-06-30"]) {
+			await input.setValue(day);
+			await w.get('[data-testid="nds-save-draft"]').trigger("click");
+			expect(w.find('[data-testid="nds-required-by-error"]').exists()).toBe(false);
+		}
+		expect(w.emitted("save")).toHaveLength(2);
+	});
+
+	it("does not limit the date when the year's dates are not known", async () => {
+		const w = make();
+		expect(w.get('[data-testid="nds-required-by"]').attributes("min")).toBeUndefined();
+		await w.get('[data-testid="nds-required-by"]').setValue("2030-01-31");
+		await w.get('[data-testid="nds-save-draft"]').trigger("click");
+		expect(w.emitted("save")).toHaveLength(1);
+	});
+});

@@ -15,6 +15,10 @@ export const listNeedsFinancialYears = () => frappeCall(`${API}.list_needs_finan
 
 export const listNeedCreateTargets = () => frappeCall(`${API}.list_need_create_targets`, {});
 
+// The editor's Unit list is read on the server, never through the browser's own
+// permission-checked read of ERPNext's `UOM` (UAT issue #24).
+export const listNeedUnits = () => frappeCall(`${API}.list_need_units`, {});
+
 export const getNeedsWorkspace = (args) => frappeCall(`${API}.get_needs_workspace`, args);
 
 export const getDepartmentalNeed = (need) =>

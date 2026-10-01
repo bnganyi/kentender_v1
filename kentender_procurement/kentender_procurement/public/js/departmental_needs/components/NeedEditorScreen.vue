@@ -222,6 +222,8 @@
 					data-testid="nds-required-by"
 					class="kt-input"
 					type="date"
+					:min="context.financial_year_start || undefined"
+					:max="context.financial_year_end || undefined"
 					v-model="form.required_by_date"
 					@input="inputErrors.required_by_date = ''"
 				/>
@@ -379,12 +381,26 @@ const departmentRequired = computed(
 	() => props.departmentChoices.length > 1 && !props.selectedDepartment
 );
 
+// UAT issue #25 — Required by must fall inside the Need's financial year. The
+// server enforces the same window on every save; this only says so before the
+// round trip, and only when the year's dates are known. ISO dates compare as
+// plain strings.
+function outsideYearMessage(value) {
+	const start = props.context.financial_year_start;
+	const end = props.context.financial_year_end;
+	if (!value || !start || !end || (value >= start && value <= end)) return "";
+	const label = props.context.financial_year_label;
+	return `Required by must be between ${formatDate(start)} and ${formatDate(end)}${
+		label ? `, the dates of ${label}` : ""
+	}.`;
+}
+
 function guardedEmit(event) {
 	if (departmentRequired.value) return;
 	inputErrors.required_by_date =
 		requiredByEl.value && requiredByEl.value.validity.badInput
 			? "Required by must be a real calendar date."
-			: "";
+			: outsideYearMessage(form.required_by_date);
 	// NDS-DES-14-QUANTITY-ERROR — NDS-AC-005 forbids a quantity of 0; checked
 	// client-side (no modal, no round trip) exactly like the badInput checks
 	// above, and only once badInput itself is ruled out.

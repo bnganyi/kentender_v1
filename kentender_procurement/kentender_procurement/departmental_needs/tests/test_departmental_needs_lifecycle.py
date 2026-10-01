@@ -20,6 +20,7 @@ import time
 import frappe
 import frappe.defaults
 from frappe.tests import IntegrationTestCase
+from frappe.utils import add_days
 
 from kentender_core.services.responsibility_administration import grant
 from kentender_core.services.site_configuration import close_needs_submission, open_needs_submission
@@ -683,6 +684,36 @@ class TestDraftContentBounds(ContentValidationCase):
 			self.save_draft(**overrides)
 		self.assertEqual(caught.exception.code, code)
 
+	def year_bounds(self):
+		row = frappe.db.get_value("Fiscal Year", FY, ["year_start_date", "year_end_date"], as_dict=True)
+		return row.year_start_date, row.year_end_date
+
+	def test_a_required_by_date_outside_the_target_year_is_refused_at_save(self):
+		# NDS-AC-005 — the Need is raised against one financial year, so a date
+		# outside it would arrive in Planning as un-plannable in its own year.
+		# UAT issue #25: the form accepted 2030 for FY 2027/28 and only the
+		# submit refused it.
+		start, end = self.year_bounds()
+		self.refuses_at_save("NDS_REQUIRED_BY_OUTSIDE_FY", required_by_date="2030-01-31")
+		self.refuses_at_save("NDS_REQUIRED_BY_OUTSIDE_FY", required_by_date=str(add_days(end, 1)))
+		self.refuses_at_save("NDS_REQUIRED_BY_OUTSIDE_FY", required_by_date=str(add_days(start, -1)))
+
+	def test_a_required_by_date_outside_the_target_year_is_refused_at_creation(self):
+		frappe.set_user(AUTHOR)
+		with self.assertRaises(DepartmentalNeedError) as caught:
+			self.create(required_by_date="2030-01-31")
+		self.assertEqual(caught.exception.code, "NDS_REQUIRED_BY_OUTSIDE_FY")
+
+	def test_the_first_and_last_day_of_the_target_year_are_accepted(self):
+		start, end = self.year_bounds()
+		for day in (start, end):
+			saved = self.save_draft(required_by_date=str(day))
+			self.assertEqual(saved["current_state"], "Draft")
+
+	def test_a_draft_with_no_required_by_date_still_saves(self):
+		# Presence stays a submission rule (§12.3 / NDS-AC-004).
+		self.assertEqual(self.save_draft(required_by_date=None)["current_state"], "Draft")
+
 	def test_a_description_below_the_minimum_is_refused_at_save(self):
 		self.refuses_at_save("NDS_FIELD_REQUIRED", description="x" * (DESCRIPTION_MIN - 1))
 
@@ -770,10 +801,9 @@ class TestSubmissionValidation(ContentValidationCase):
 	def test_a_missing_required_by_date_is_refused(self):
 		self.refuses("NDS_FIELD_REQUIRED", required_by_date=None)
 
-	def test_a_required_by_date_outside_the_target_year_is_refused(self):
-		# NDS-AC-005 — the Need is raised against one financial year, so a date
-		# outside it would arrive in Planning as un-plannable in its own year.
-		self.refuses("NDS_REQUIRED_BY_OUTSIDE_FY", required_by_date="2030-01-31")
+	# NDS-AC-005 — a Required-by date outside the target year is now refused at
+	# save, not only at submission (UAT issue #25); see
+	# TestDraftContentBounds.test_a_required_by_date_outside_the_target_year_*.
 
 	def test_a_complete_draft_submits(self):
 		# The control: without this, every assertion above could pass because

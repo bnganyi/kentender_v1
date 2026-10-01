@@ -24,6 +24,7 @@ from kentender_procurement.departmental_needs.constants import (
 )
 from kentender_procurement.departmental_needs.errors import ERROR_CODES, DepartmentalNeedError, fail
 from kentender_procurement.departmental_needs.seeds.kentender_mvp_r1 import (
+	AUDITOR,
 	AUTHOR,
 	DEPARTMENTAL_AUTHOR,
 	FY,
@@ -61,6 +62,9 @@ READ_CONTRACTS = (
 	# Planning-status re-check, separate from get_departmental_need's atomic
 	# payload.
 	"get_need_planning_status",
+	# UAT issue #24 — the editor's Unit list, supplied by the server so it never
+	# depends on the caller's own read permission on ERPNext's `UOM`.
+	"list_need_units",
 )
 
 # §8.2 — every command contract, by its exact name. `save_needs_intake_window`
@@ -176,6 +180,24 @@ class TestCreateTargets(ContractCase):
 		self.assertTrue(result["open"])
 		self.assertTrue(result["financial_year"])
 
+	def test_the_open_year_s_dates_are_offered_so_the_editor_can_limit_required_by(self):
+		# UAT issue #25 — the editor limits its date picker to the year.
+		result = list_need_create_targets(user=AUTHOR)
+		year = frappe.db.get_value(
+			"Fiscal Year", result["financial_year"], ["year_start_date", "year_end_date"], as_dict=True
+		)
+		self.assertEqual(result["financial_year_start"], str(year.year_start_date))
+		self.assertEqual(result["financial_year_end"], str(year.year_end_date))
+
+	def test_an_existing_need_carries_its_year_dates(self):
+		frappe.set_user(AUTHOR)
+		need = self.accepted_need()
+		window = api.get_departmental_need(need=need.name)["financial_year_window"]
+		year = frappe.db.get_value(
+			"Fiscal Year", need.financial_year, ["year_start_date", "year_end_date"], as_dict=True
+		)
+		self.assertEqual(window, {"start": str(year.year_start_date), "end": str(year.year_end_date)})
+
 	def test_a_user_with_no_authoring_grant_is_offered_nothing(self):
 		# `financial_year` reflects the flag's own global state regardless of
 		# this user's authority — `open` is what actually combines the two
@@ -184,6 +206,46 @@ class TestCreateTargets(ContractCase):
 		result = list_need_create_targets(user=REVIEWER)
 		self.assertEqual(result["organisation_units"], [])
 		self.assertFalse(result["open"])
+
+
+class TestNeedUnits(ContractCase):
+	"""UAT issue #24 — the editor's Unit list comes from the server, not from the
+	browser's own permission-checked read of `UOM`."""
+
+	def test_lists_exactly_the_enabled_units_in_label_order(self):
+		frappe.set_user(AUTHOR)
+		units = api.list_need_units()
+		expected = frappe.get_all(
+			"UOM", filters={"enabled": 1}, fields=["name", "uom_name"], order_by="uom_name asc"
+		)
+		self.assertTrue(units)
+		self.assertEqual(
+			[(row["name"], row["unit_label"]) for row in units],
+			[(row.name, row.uom_name or row.name) for row in expected],
+		)
+
+	def test_a_caller_without_read_on_uom_still_gets_the_list(self):
+		# The Auditor's own business role carries no read on ERPNext's UOM; the
+		# browser's direct `frappe.db.get_list("UOM")` failed for exactly such a
+		# caller with "Insufficient Permission for UOM".
+		self.assertFalse(frappe.has_permission("UOM", "read", user=AUDITOR))
+		frappe.set_user(AUDITOR)
+		self.assertTrue(api.list_need_units())
+
+	def test_no_needs_role_needs_its_own_grant_on_uom(self):
+		# The editor reads units through the contract, so the read grant the
+		# earlier patch added to ERPNext's UOM is retired.
+		for role in ("Departmental Author", "Head of User Department", "Procurement Planner"):
+			self.assertFalse(
+				frappe.db.exists("Custom DocPerm", {"parent": "UOM", "role": role}),
+				f"{role} still holds a Custom DocPerm on UOM",
+			)
+
+	def test_a_signed_out_caller_is_refused(self):
+		frappe.set_user("Guest")
+		with self.assertRaises(DepartmentalNeedError) as raised:
+			api.list_need_units()
+		self.assertEqual(raised.exception.code, "NDS_SCOPE_DENIED")
 
 
 class TestErrorContract(ContractCase):

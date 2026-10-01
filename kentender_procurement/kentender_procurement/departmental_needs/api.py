@@ -23,6 +23,7 @@ from kentender_procurement.departmental_needs.services import lifecycle
 from kentender_procurement.departmental_needs.services.context import (
 	get_needs_submission_state as _get_needs_submission_state,
 	list_need_create_targets as _list_need_create_targets,
+	list_need_units as _list_need_units,
 	resolve_creation_context,
 	selectable_financial_years,
 )
@@ -44,6 +45,7 @@ from kentender_procurement.departmental_needs.services.workspace import (
 resolve_needs_scope = frappe.whitelist()(resolve_creation_context)
 list_needs_financial_years = frappe.whitelist()(selectable_financial_years)
 list_need_create_targets = frappe.whitelist()(_list_need_create_targets)
+list_need_units = frappe.whitelist()(_list_need_units)
 get_needs_workspace = frappe.whitelist()(get_workspace)
 get_departmental_need = frappe.whitelist()(get_need)
 get_departmental_review_task = frappe.whitelist()(get_review_task)

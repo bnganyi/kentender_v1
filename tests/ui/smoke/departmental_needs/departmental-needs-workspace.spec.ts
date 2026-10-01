@@ -221,6 +221,30 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		await expectLayoutSanity(page, "NDS create editor, refused submit");
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
+	test("a Required by date outside the financial year is refused with the allowed dates", async ({ page }) => {
+		/**
+		 * UAT issue #25: the form accepted 2030 for FY 2027/28 and only the
+		 * server's submit check refused it. The picker is now limited to the year
+		 * and Save draft / Submit name the allowed dates without a round trip.
+		 */
+		const errors = collectConsoleErrors(page);
+		await loginAsNdsFixtureAuthor(page);
+		await gotoNeeds(page, "/new");
+		await expectScreen(page, "editor");
+		const requiredBy = page.locator('[data-testid="nds-required-by"]');
+		await expect(requiredBy).toHaveAttribute("min", "2027-07-01");
+		await expect(requiredBy).toHaveAttribute("max", "2028-06-30");
+		await page.locator('[data-testid="nds-title"]').fill("Required by outside the year");
+		await requiredBy.fill("2030-01-31");
+		await page.locator('[data-testid="nds-save-draft"]').first().click();
+		await expect(page.locator('[data-testid="nds-required-by-error"]')).toHaveText(
+			"Required by must be between 1 Jul 2027 and 30 Jun 2028, the dates of FY 2027/28.",
+		);
+		// Nothing was sent: no server summary, and the route did not change.
+		await expect(page.locator('[data-testid="nds-error-summary"]')).toHaveCount(0);
+		await expect(page).toHaveURL(/\/departmental-needs\/new$/);
+		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
+	});
 	test("a refused first submit lands on the saved draft and the retry updates it", async ({ page }) => {
 		/**
 		 * Reported live 2026-09-25: the first Submit for review on /new saved a

@@ -401,6 +401,8 @@ const editorContext = computed(() => {
 			organisation_unit_label: chosen ? chosen.organisation_unit_label : "",
 			financial_year: targets.financial_year,
 			financial_year_label: targets.financial_year_label,
+			financial_year_start: targets.financial_year_start,
+			financial_year_end: targets.financial_year_end,
 		};
 	}
 	// The artboards show scope by name, never by ID.
@@ -409,6 +411,8 @@ const editorContext = computed(() => {
 	return {
 		organisation_unit_label: labels.organisation_unit || need.organisation_unit,
 		financial_year_label: labels.financial_year || need.financial_year,
+		financial_year_start: (detail.value.financial_year_window || {}).start,
+		financial_year_end: (detail.value.financial_year_window || {}).end,
 	};
 });
 
@@ -644,15 +648,10 @@ async function load(opts) {
 async function loadUnits() {
 	if (units.value.length) return;
 	// NDS-CHG-001 v1.6 §1.1/§16.4.11 — units come from ERPNext's native `UOM`,
-	// enabled only. `uom_name` is mapped to `unit_label` so NeedEditorScreen's
-	// dropdown needs no separate field-name awareness.
-	const rows = await frappe.db.get_list("UOM", {
-		filters: { enabled: 1 },
-		fields: ["name", "uom_name"],
-		order_by: "uom_name asc",
-		limit: 200,
-	});
-	units.value = rows.map((row) => ({ name: row.name, unit_label: row.uom_name || row.name }));
+	// enabled only, read on the server: a direct `frappe.db.get_list("UOM")`
+	// enforces the caller's own UOM permission and failed live with
+	// "Insufficient Permission for UOM" (UAT issue #24).
+	units.value = await api.listNeedUnits();
 }
 
 

@@ -555,6 +555,16 @@ def _scope_labels(doc) -> dict[str, str]:
 	}
 
 
+def _financial_year_window(doc) -> dict[str, str]:
+	row = frappe.db.get_value(
+		"Fiscal Year", doc.financial_year, ["year_start_date", "year_end_date"], as_dict=True
+	)
+	return {
+		"start": str(row.year_start_date) if row else "",
+		"end": str(row.year_end_date) if row else "",
+	}
+
+
 # §11.1 History disclosure — plain-language event names and dot colours for
 # each recorded decision, in the vocabulary the artboards use ("Submitted ·
 # Revision 1", "Returned for correction"), not the raw §5 action string.
@@ -727,6 +737,8 @@ def get_need(*, need: str, user: str | None = None) -> dict[str, Any]:
 		"ok": True,
 		"need": doc.as_dict(no_nulls=True),
 		"scope_labels": _scope_labels(doc),
+		# The editor limits Required by to the Need's own year (UAT issue #25).
+		"financial_year_window": _financial_year_window(doc),
 		"accepted": accepted,
 		"submitted": submitted,
 		"current_revision": _version_facts(doc.current_revision),
