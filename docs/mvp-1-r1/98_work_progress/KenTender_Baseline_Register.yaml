@@ -251,22 +251,21 @@
     {
       "document_id": "KT-STD-001",
       "title": "Document, Design and Verification Standards",
-      "version": "1.12",
+      "version": "1.13",
       "category": "Cross-cutting standard",
       "module": "All",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-09-30",
-      "supersedes": "v1.11 and earlier",
+      "approval_date": "2026-10-01",
+      "supersedes": "v1.12 and earlier",
       "implementation_status": "Not applicable",
       "verification_status": "Passed",
       "release_status": "Not applicable",
       "normative": "Yes",
-      "library_file_id": "libfile_4f7bf3bc8c0c8191b1e3ff2e2f3916da",
-      "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_12.md",
-      "scope": "Current cross-cutting standard, including plain language, minimum steps, Scheduled next step and actor/state/event conformance; v1.11 adds the §8.3 fixture actors Daniel Otieno (technical operator) and Jane Wanjiku (public observer), and v1.12 adds Nadia Kamau (release operator); retains earlier design and verification rules.",
+      "library_file_id": "libfile_67c97b311d088191b90d070526a4bfbc",
+      "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_13.md",
+      "scope": "Current cross-cutting standard, including plain language, minimum steps, Scheduled next step and actor/state/event conformance; v1.11 adds the §8.3 fixture actors Daniel Otieno (technical operator) and Jane Wanjiku (public observer), and v1.12 adds Nadia Kamau (release operator); retains earlier design and verification rules. v1.13 adds the Evaluation fixture actors Grace Wambui, Peter Mugo, Ruth Achieng and Esther Njeri, and Brian Wafula's separately appointed secretary capacity.",
       "dependencies": "Workflow Guidance Standard; all controlled change documents",
-      "action": "Review proposed v1.13: register Evaluation actors and Brian’s separate secretary capacity. No automatic appointment or expanded support access. Approved v1.12 retained.",
-      "proposed_revision": "v1.13 — KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_13.md — libfile_67c97b311d088191b90d070526a4bfbc; not approved"
+      "action": "Apply approved v1.13 (Project Owner, 2026-10-01: \"Approved\") to future and revised contracts; use its registered actors. The repository file is the approved text: it adds the 2026-10-01 rewording of \"For TND-MOH-2027-033\" as an example of the generated reference (DEC-027) and names Esther Njeri's Evaluation Technical Support responsibility, beyond the library draft."
     },
     {
       "document_id": "AUTH-ADR-001",
@@ -341,7 +340,7 @@
       "library_file_id": "",
       "filename": "KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_18.md",
       "scope": "Resetting a site to the canonical seed world (KT-STD-001 §8 and SEED-001), stage by stage from site to award: options, what the clear removes, validation, demo profiles and troubleshooting.",
-      "dependencies": "KT-STD-001 v1.12; SEED-001 v1.3; the module documents each stage cites in its §2",
+      "dependencies": "KT-STD-001 v1.13; SEED-001 v1.3; the module documents each stage cites in its §2",
       "action": "Keep in step with the seed code; update whenever a module adds a seed stage or demo profiles. Evidence 2026-10-01: make seed-canonical THROUGH=award validated on kentender.midas.com; kentender_core.tests.test_canonical_seed 23/23 passed. Repository file only (no library file)."
     },
     {
@@ -609,7 +608,7 @@
       "filename": "KenTender_EVL-CHG-001_Bid_Evaluation_v0_4.md",
       "scope": "Automatic evaluation, focused committee review and signed report. Second-review corrections align commands, tasks, source issues, scope gates and dated fixtures.",
       "dependencies": "KT-STD-001 v1.12; BOP v0.10; BDS v0.8; PRC v0.9; TRUST v0.1; TPR v0.13; STD-TPL v0.10. Coordinated owner amendments drafted: PRC v0.10, TPR v0.15, BDS v0.10, KT-STD v1.13; approval/integration outstanding.",
-      "action": "Approved EVL v0.4 retained. Four coordinated owner successors drafted and linked in their register entries. Review amendments and implement/test the bindings; executable template rules and legal/Trust work remain open. Gate 1 unchanged."
+      "action": "Approved EVL v0.4 retained. Four coordinated owner successors drafted and linked in their register entries. Review amendments and implement/test the bindings; executable template rules and legal/Trust work remain open. Gate 1 unchanged. KT-STD-001 v1.13 approved 2026-10-01."
     },
     {
       "document_id": "AWD-CHG-001",
