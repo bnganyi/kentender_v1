@@ -27,7 +27,7 @@ from kentender_procurement.bid_evaluation.services.errors import Guards, fail
 APPOINTMENT = roster.APPOINTMENT
 CAPACITIES = ("Chair", "Member")
 REASONS = {
-	"not_internal": "{name} does not hold an active KenTender responsibility.",
+	"not_internal": "{name} is not a staff member with an active KenTender account.",
 	"opening_independent": "{name} was the independent member of this tender's bid opening.",
 	"declared_conflict": "{name} has an unresolved declared conflict for this tender.",
 	"duplicate": "{name} is listed more than once.",

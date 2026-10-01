@@ -160,7 +160,9 @@ class TestAfterDelivery(ReportCase):
 			correction.report_status_issue(tender=self.name, description="x", idempotency_key=key(), user=MEMBER)  # the Head or the chair only
 		out = correction.report_status_issue(tender=self.name, description="The later decision could not be checked.", idempotency_key=key(), user=HOP)
 		issue = support_issues.get(out["issue"])
-		self.assertEqual((issue["status"], issue["holder_role"]), ("Open", "Technical Operator"))
+		self.assertEqual((issue["status"], issue["holder_role"]), ("Open", "Evaluation Technical Support"))
+		# KT-STD-001 v1.13 §8.3: Evaluation's own support holder, not the Technical Operator's work
+		self.assertFalse(set(issue["holder_users"]) & set(support_issues.holders("Technical Operator")))
 		self.assertNotIn("Afya", issue["subject"] + issue["safe_detail"])
 		again = correction.report_status_issue(tender=self.name, description="Still unknown.", idempotency_key=key(), user=CHAIR)
 		self.assertEqual(again["issue"], out["issue"])  # one issue for the one operation

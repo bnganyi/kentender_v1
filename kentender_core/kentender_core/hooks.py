@@ -290,6 +290,11 @@ scheduler_events = {
 # has_permission rows below) in that module's hooks.py.
 kentender_scope_map: dict[str, str] = {}
 
+# The platform support issue opens to its current holders as well as the
+# technical readers (kentender_core.services.support_issues).
+has_permission = {"Support Issue": "kentender_core.services.support_issues.has_permission"}
+permission_query_conditions = {"Support Issue": "kentender_core.services.support_issues.permission_query_conditions"}
+
 # Testing
 # -------
 

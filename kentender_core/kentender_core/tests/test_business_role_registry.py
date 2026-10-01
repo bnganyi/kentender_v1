@@ -70,6 +70,15 @@ class TestBusinessRoleRegistry(IntegrationTestCase):
 		self.assertEqual(entry.owning_document, "REQ-CHG-001 v1.6 §8")
 		self.assertIn("Head of Procurement Function", registry.roles_with_scope_type(registry.SCOPE_SITE))
 
+	def test_evaluation_technical_support_is_registered_site_wide(self):
+		"""KT-STD-001 v1.13 §8.3 and EVL-CHG-001 v0.4 §9.1 — the holder of Bid
+		Evaluation's technical issues, separate from the Technical Operator
+		(Project Owner, 1 Oct 2026: "Own responsibility")."""
+		entry = registry.REGISTRY["Evaluation Technical Support"]
+		self.assertEqual(entry.scope_type, registry.SCOPE_SITE)
+		self.assertIn("KT-STD-001 v1.13", entry.owning_document)
+		self.assertEqual(entry.frappe_roles, ("Evaluation Technical Support",))
+
 	def test_procurement_officer_is_registered_site_wide(self):
 		"""TPR-CHG-001 v0.8 §6 — Procurement Officer is Site-wide, owned by TPR,
 		and carries the tender_preparation segregation tag; the approving

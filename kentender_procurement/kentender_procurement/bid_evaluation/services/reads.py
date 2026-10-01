@@ -222,7 +222,8 @@ def candidates(*, tender_reference: str, user: str, purpose: str) -> list[dict[s
 	else:
 		if not people.holds(user, people.ACCOUNTING_OFFICER):
 			raise frappe.DoesNotExistError("Not found")
-		users = sorted(set(frappe.get_all("User Responsibility Assignment", filters={"status": "Enabled"}, pluck="user", distinct=True)))
+		# every staff account, not only responsibility holders (KT-STD-001 v1.13 §8.3)
+		users = sorted(frappe.get_all("User", filters={"enabled": 1, "user_type": "System User", "name": ("not in", ("Administrator", "Guest"))}, pluck="name"))
 	out = []
 	for u in users:
 		ok, designation = people.internal(u)

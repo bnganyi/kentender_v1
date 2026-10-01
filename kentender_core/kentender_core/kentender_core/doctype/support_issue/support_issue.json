@@ -169,7 +169,7 @@
  "grid_page_length": 50,
  "istable": 0,
  "links": [],
- "modified": "2026-09-30 18:00:00.000000",
+ "modified": "2026-10-01 19:40:24.006221",
  "modified_by": "Administrator",
  "module": "Kentender Core",
  "name": "Support Issue",
@@ -177,6 +177,18 @@
  "permissions": [
   {
    "role": "System Manager",
+   "read": 1,
+   "report": 0,
+   "export": 0,
+   "print": 0,
+   "email": 0,
+   "share": 0,
+   "write": 0,
+   "create": 0,
+   "delete": 0
+  },
+  {
+   "role": "Desk User",
    "read": 1,
    "report": 0,
    "export": 0,

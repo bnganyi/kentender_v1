@@ -76,6 +76,18 @@ class TestSupportIssues(IntegrationTestCase):
 		self.assertEqual([r["title"] for r in rows if r["reference"] == first["issue_id"]], ["Resolve evaluation issue for TND-TEST-001"])
 		self.assertFalse([r for r in support_issues.my_work_rows(OTHER)["assigned"] if r["reference"] == first["issue_id"]])
 
+	def test_a_holder_opens_the_issues_their_responsibility_is_sent_and_no_others(self):
+		"""Found 1 Oct 2026: only System Managers could read a Support Issue, so a
+		holder who is not one (Esther Njeri; the Head of Procurement Function for
+		a scope issue) got a permission error from their own work item."""
+		issue = self.open()
+		doc = frappe.get_doc("Support Issue", issue["issue_id"])
+		self.assertTrue(frappe.has_permission("Support Issue", "read", doc=doc, user=HOLDER))
+		self.assertFalse(frappe.has_permission("Support Issue", "read", doc=doc, user=OTHER))
+		listed = lambda user: frappe.get_list("Support Issue", filters={"fixture_namespace": NS}, pluck="name", user=user)  # noqa: E731
+		self.assertIn(doc.name, listed(HOLDER))
+		self.assertNotIn(doc.name, listed(OTHER))
+
 	def test_only_success_resolves_and_a_new_failure_reopens_the_same_issue(self):
 		issue = self.open()
 		self.assertEqual(support_issues.get(issue["issue_id"])["status"], "Open")

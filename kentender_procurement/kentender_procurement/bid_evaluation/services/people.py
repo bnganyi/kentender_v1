@@ -20,6 +20,8 @@ HEAD_OF_PROCUREMENT = "Head of Procurement Function"
 PROCUREMENT_OFFICER = "Procurement Officer"
 AUDITOR = "Auditor"
 TECHNICAL_OPERATOR = "Technical Operator"
+# KT-STD-001 v1.13 §8.3 — holds Bid Evaluation's technical support issues
+EVALUATION_SUPPORT = "Evaluation Technical Support"
 
 
 def full_name(user: str) -> str:
@@ -71,10 +73,14 @@ def active_responsibilities(user: str) -> list[str]:
 
 
 def internal(user: str) -> tuple[bool, str]:
-	"""(eligible as an internal person, designation): an enabled System User,
-	not technical, holding at least one active responsibility at any scope."""
+	"""(eligible as an internal person, designation): an enabled staff account
+	(a System User; suppliers and the public are Website Users), not technical.
+	No standing responsibility is needed: a committee member's authority is
+	the appointment alone (KT-STD-001 v1.13 §8.3, "Appointed tender only").
+	The designation is the first active responsibility, if any; the roster
+	shows the department where there is none."""
 	row = frappe.db.get_value("User", user, ["enabled", "user_type"], as_dict=True)
-	if not row or not row.enabled or row.user_type != "System User" or technical(user):
+	if not row or not row.enabled or row.user_type != "System User" or technical(user) or user in ("Administrator", "Guest"):
 		return False, ""
 	held = active_responsibilities(user)
-	return (True, held[0]) if held else (False, "")
+	return True, held[0] if held else ""

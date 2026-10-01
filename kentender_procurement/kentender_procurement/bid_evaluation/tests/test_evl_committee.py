@@ -29,8 +29,7 @@ from kentender_procurement.bid_evaluation.tests.support import (
 	AO, CHAIR, HOP, MEMBER, MEMBER_2, OUTSIDER, REPLACEMENT, SECRETARY, EvaluationCase,
 )
 from kentender_procurement.bid_opening.tests.support import INDEPENDENT
-from kentender_procurement.bid_submission.tests.support import key
-from kentender_procurement.tenders.tests.fixtures import NOBODY
+from kentender_procurement.bid_submission.tests.support import DAVID, key
 
 ROSTER = [
 	{"user": CHAIR, "department": "Human Resource Management and Development", "capacity": "Chair"},
@@ -85,15 +84,15 @@ class TestAppointment(CommitteeCase):
 			self.evl_appoint(user=HOP)
 
 	def test_every_ineligible_person_is_reported_together(self):
-		self.prepared()  # the opening committee, with its independent member
+		self.prepared()  # the opening committee, with its independent member; David Ouma's supplier account
 		error = self.refused(self.evl_appoint, members=[
 			{"user": CHAIR, "department": "HRM", "capacity": "Chair"},
 			{"user": INDEPENDENT, "department": "Budget", "capacity": "Member"},
-			{"user": NOBODY, "department": "ICT", "capacity": "Member"},
+			{"user": DAVID, "department": "ICT", "capacity": "Member"},
 		])
 		self.assertEqual(error.code, "EVL_MEMBER_INELIGIBLE", error.detail)
 		by_person = {r["detail"].get("person"): r["detail"].get("reason") for r in error.reasons}
-		self.assertEqual(by_person, {INDEPENDENT: "opening_independent", NOBODY: "not_internal"})
+		self.assertEqual(by_person, {INDEPENDENT: "opening_independent", DAVID: "not_internal"})
 		self.assertFalse(roster.current_appointment(self.evaluation))  # no partial roster
 
 	def test_a_department_scoped_person_can_serve(self):
@@ -114,6 +113,26 @@ class TestAppointment(CommitteeCase):
 		administration.grant(user=email, business_role="Departmental Author", organisation_unit=unit, fixture_namespace="EVL_TEST", actor="Administrator")
 		self.assertEqual(people.internal(email), (True, "Departmental Author"))
 		self.assertEqual(people.internal(OUTSIDER)[0], people.internal(OUTSIDER)[0])  # unchanged for everyone else
+
+	def test_a_staff_account_with_no_responsibility_can_serve(self):
+		"""KT-STD-001 v1.13 §8.3: a committee member's authority is the
+		appointment alone ("Appointed tender only"), so a Ministry staff
+		account needs no standing responsibility to be appointed, and the
+		Accounting Officer can pick it. A supplier or public account (a
+		Website User) and a technical reader still cannot serve."""
+		from kentender_procurement.bid_evaluation.services import people, reads
+
+		email = "evlt.staff@example.test"
+		if not frappe.db.exists("User", email):
+			frappe.get_doc({"doctype": "User", "email": email, "first_name": "Test Staff Member", "send_welcome_email": 0, "enabled": 1,
+				"user_type": "System User"}).insert(ignore_permissions=True)
+			frappe.get_doc("User", email).add_roles("Desk User")
+		self.addCleanup(lambda: (frappe.delete_doc("User", email, force=True, ignore_permissions=True), frappe.db.commit()))
+		self.assertFalse(frappe.db.exists("User Responsibility Assignment", {"user": email}))
+		self.assertEqual(people.internal(email), (True, ""))
+		self.assertIn(email, [r["user"] for r in reads.candidates(tender_reference=self.reference, user=AO, purpose="committee")])
+		self.assertFalse(people.internal(DAVID)[0])
+		self.assertFalse(people.internal("Administrator")[0])
 
 	def test_size_and_one_chair(self):
 		error = self.refused(self.evl_appoint, members=ROSTER[:2])

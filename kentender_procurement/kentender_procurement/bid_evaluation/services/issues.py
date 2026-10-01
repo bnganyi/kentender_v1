@@ -22,7 +22,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_procurement.bid_evaluation.services import checks, conclusion, findings, guards, prc, records, rules
+from kentender_procurement.bid_evaluation.services import checks, conclusion, findings, guards, people, prc, records, rules
 from kentender_procurement.bid_evaluation.services.errors import invalid
 
 MODULE = "Bid Evaluation"
@@ -45,7 +45,8 @@ def report_issue(*, tender: str, bid: str, requirement_key: str, description: st
 		requirement = findings._requirement(doc, bid, requirement_key)
 		issue = support_issues.open_issue(module=MODULE, operation="ReportEvaluationIssue", operation_correlation=correlation(doc, bid, requirement_key),
 			subject=f"Resolve evaluation issue for {doc.tender_reference}", reference_doctype=records.CASE, reference_name=doc.name,
-			safe_detail=f"{requirement['label']}: {cstr(description).strip()}", reported_by=user, fixture_namespace=records.namespace())
+			safe_detail=f"{requirement['label']}: {cstr(description).strip()}", reported_by=user, holder_role=people.EVALUATION_SUPPORT,
+			fixture_namespace=records.namespace())
 		item = conclusion.open_item_for(doc, bid, requirement_key) or findings.open_item(doc, bid, requirement_key,
 			subject=f"{requirement['label']} — evaluation rule issue", user=user, finding="")
 		findings.clear_item(doc, item, kind="Support issue", reference=issue["issue_id"])

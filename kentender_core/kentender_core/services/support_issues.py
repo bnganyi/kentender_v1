@@ -64,6 +64,38 @@ def holders(role: str = TECHNICAL_OPERATOR) -> list[str]:
 	return sorted(u for u in users if frappe.db.get_value("User", u, "enabled"))
 
 
+def _held_roles(user: str) -> list[str]:
+	from kentender_core.services.authorization import is_technical
+
+	if is_technical(user):
+		return []
+	return frappe.get_all("User Responsibility Assignment", filters={"user": user, "status": "Enabled"}, pluck="business_role", distinct=True)
+
+
+def has_permission(doc, ptype: str = "read", user: str | None = None) -> bool:
+	"""An issue is open to the technical readers and to the people who hold
+	its responsibility now (`holders`): the holder's work item opens it.
+	Found 1 Oct 2026: only System Managers could read one."""
+	from kentender_core.services.authorization import is_technical
+
+	user = user or frappe.session.user
+	if is_technical(user):
+		return True
+	return ptype == "read" and user in holders(doc.holder_role)
+
+
+def permission_query_conditions(user: str | None = None) -> str:
+	from kentender_core.services.authorization import is_technical
+
+	user = user or frappe.session.user
+	if is_technical(user):
+		return ""
+	roles = [r for r in _held_roles(user) if user in holders(r)]
+	if not roles:
+		return "1=0"
+	return "`tabSupport Issue`.`holder_role` in ({})".format(", ".join(frappe.db.escape(r) for r in roles))
+
+
 def issue_key(module: str, operation_correlation: str) -> str:
 	return f"{cstr(module).strip()}:{cstr(operation_correlation).strip()}"
 

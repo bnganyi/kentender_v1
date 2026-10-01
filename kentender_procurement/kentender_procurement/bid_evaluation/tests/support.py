@@ -39,7 +39,7 @@ PEOPLE = {
 	MEMBER: ("Test Evaluation Member", "Budget Approver"),
 	MEMBER_2: ("Test Evaluation Member Two", "Budget Approver"),
 	REPLACEMENT: ("Test Replacement Member", "Budget Approver"),
-	SUPPORT: ("Test Evaluation Support", "Technical Operator"),
+	SUPPORT: ("Test Evaluation Support", "Evaluation Technical Support"),
 }
 
 

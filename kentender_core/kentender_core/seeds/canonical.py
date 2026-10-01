@@ -257,6 +257,26 @@ def _orphaned_attachments() -> list[str]:
 	return names
 
 
+def _undeclared_site_assignments() -> list[str]:
+	"""Grants stamped with the site stage's namespace that `site_setup.ASSIGNMENTS`
+	no longer declares (found 1 Oct 2026: KT-STD-001 v1.13 dropped the
+	Evaluation committee's Departmental Author grants). The namespace marks
+	them canonical, so nothing else would ever remove them."""
+	declared: set[tuple[str, str, str | None]] = set()
+	for local, role, unit_name, _kwargs in site_setup.ASSIGNMENTS:
+		unit = frappe.db.get_value("Organisation Unit", {"unit_name": unit_name}, "name") if unit_name else None
+		declared.add((f"{local}@moh.example.test", role, unit))
+	return [
+		r.name
+		for r in frappe.get_all(
+			"User Responsibility Assignment",
+			filters={"fixture_namespace": site_setup.FIXTURE_TAG},
+			fields=["name", "user", "business_role", "organisation_unit"],
+		)
+		if (r.user, r.business_role, r.organisation_unit or None) not in declared
+	]
+
+
 def collect_non_canonical() -> dict[str, list[str]]:
 	"""Everything `reset` would remove, as `{doctype: [names]}` — read-only."""
 	plan: dict[str, list[str]] = {}
@@ -342,6 +362,7 @@ def collect_non_canonical() -> dict[str, list[str]]:
 			if (r.fixture_namespace or "") not in CANONICAL_NAMESPACES or (r.user not in REGISTER_USERS and _fixture_email(r.user))
 		],
 	)
+	add("User Responsibility Assignment", _undeclared_site_assignments())
 	add(
 		"User",
 		[
@@ -542,7 +563,15 @@ def clear_non_canonical(*, plan: dict[str, list[str]] | None = None) -> dict[str
 	for doctype in _LEGACY_DEMO_DOCTYPES:
 		_delete_docs(doctype, plan.get(doctype, []), deleted)
 
+	ura_users = set(frappe.get_all("User Responsibility Assignment", filters={"name": ("in", plan.get("User Responsibility Assignment") or [""])}, pluck="user"))
 	_delete_docs("User Responsibility Assignment", plan.get("User Responsibility Assignment", []), deleted)
+	# A direct delete keeps the Frappe roles the grants projected; re-sync the
+	# people who stay (the same projection the revoke command applies).
+	from kentender_core.services.responsibility_administration import _sync_projection
+
+	for user in sorted(ura_users):
+		if frappe.db.exists("User", user):
+			_sync_projection(user)
 	for user in plan.get("User", []):
 		if frappe.db.exists("User", user):
 			_delete_user(user, deleted)

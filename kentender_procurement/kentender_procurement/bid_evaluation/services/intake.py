@@ -45,7 +45,7 @@ def _issue(doc, intake_row, detail: str) -> dict[str, Any]:
 
 	return support_issues.open_issue(module="Bid Evaluation", operation="ReceiveOpeningPackage", operation_correlation=intake_row.operation_key,
 		subject=SUPPORT_SUBJECT.format(ref=doc.tender_reference), reference_doctype=records.CASE, reference_name=doc.name, safe_detail=detail,
-		fixture_namespace=records.namespace())
+		holder_role=people.EVALUATION_SUPPORT, fixture_namespace=records.namespace())
 
 
 def receive_opening_package(*, tender: str) -> dict[str, Any]:

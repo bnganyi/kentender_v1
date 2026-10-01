@@ -261,16 +261,15 @@ ASSIGNMENTS = (
 	# KT-STD-001 v1.12 §8.3 — Site-wide Release Operator (Bid Submission's
 	# production-submission gate).
 	("nadia.kamau", "Release Operator", None, {}),
-	# EVL-CHG-001 v0.4 plan D17 — committee membership is an appointment, never a
-	# responsibility, but a member must hold an active KenTender responsibility
-	# (§3). The least-powerful one each: Departmental Author in their own units
-	# (no ICT or Finance unit exists; the appointment records the department).
-	# Owner confirmation owed (FU-EVL-07). Esther Njeri holds Technical Operator:
-	# the evaluation support issues' holder, beside Daniel Otieno.
-	("grace.wambui", "Departmental Author", "Human Resources Management and Development", {}),
-	("peter.mugo", "Departmental Author", "Digital Health", {}),
-	("ruth.achieng", "Departmental Author", "Directorate of Digital Health and Policy", {}),
-	("esther.njeri", "Technical Operator", None, {}),
+	# KT-STD-001 v1.13 §8.3 — Grace Wambui, Peter Mugo and Ruth Achieng hold no
+	# standing responsibility: their authority is the Evaluation appointment
+	# alone ("Appointed tender only"; Project Owner, 1 Oct 2026: "Follow
+	# v1.13"). (Until then each held Departmental Author in an existing unit,
+	# because committee eligibility required a responsibility.)
+	# Esther Njeri holds Evaluation Technical Support: Bid Evaluation's
+	# technical issues only, not Daniel Otieno's Technical Operator work
+	# (KT-STD-001 v1.13 §8.3; Project Owner, 1 Oct 2026: "Own responsibility").
+	("esther.njeri", "Evaluation Technical Support", None, {}),
 	(
 		"samuel.otieno",
 		"Head of User Department",

@@ -225,6 +225,18 @@ _ENTRIES: tuple[BusinessRole, ...] = (
 	# or the KT-STD-001 persona register yet (FU-V08-41).
 	_entry("Technical Operator", SCOPE_SITE, "BDS-CHG-001 v0.8 owner decision 27 Sep 2026", sod_tags=("bid_submission_operations",)),
 	_entry("Release Operator", SCOPE_SITE, "BDS-CHG-001 v0.8 owner decision 27 Sep 2026", sod_tags=("submission_release",)),
+	# --- Bid Evaluation (EVL-CHG-001 v0.4 §9.1 "Technical issue holder …
+	# Technical support … no evaluation business authority"; KT-STD-001 v1.13
+	# §8.3 "Technical support owner for assigned Evaluation incidents") ------
+	# Holds Bid Evaluation's technical support issues, separately from the
+	# Technical Operator, whose assignments it does not duplicate (Project
+	# Owner, 1 Oct 2026: "Own responsibility"). No bid, finding or decision.
+	_entry(
+		"Evaluation Technical Support",
+		SCOPE_SITE,
+		"KT-STD-001 v1.13 §8.3; EVL-CHG-001 v0.4 §9.1",
+		sod_tags=("evaluation_support",),
+	),
 )
 
 REGISTRY: dict[str, BusinessRole] = {entry.business_role: entry for entry in _ENTRIES}

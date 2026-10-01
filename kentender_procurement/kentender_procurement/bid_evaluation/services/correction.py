@@ -79,7 +79,8 @@ def report_status_issue(*, tender: str, description: str, idempotency_key: str, 
 		invalid({"description": "Describe the problem."} if not cstr(description).strip() else {})
 		issue = support_issues.open_issue(module="Bid Evaluation", operation="CheckDecisionStatus", operation_correlation=f"decision-status:{doc.name}",
 			subject=f"Resolve evaluation issue for {doc.tender_reference}", reference_doctype=records.CASE, reference_name=doc.name,
-			safe_detail=f"The later decision status could not be checked: {cstr(description).strip()}", reported_by=user, fixture_namespace=records.namespace())
+			safe_detail=f"The later decision status could not be checked: {cstr(description).strip()}", reported_by=user,
+			holder_role=people.EVALUATION_SUPPORT, fixture_namespace=records.namespace())
 		records.bump(doc)
 		return records.summary(doc, issue=issue["issue_id"], created=issue["created"])
 

@@ -85,6 +85,32 @@ class TestCanonicalSelection(IntegrationTestCase):
 		self._cleanup.append(("User", email))
 		self.assertIn(email, canonical.collect_non_canonical().get("User", []))
 
+	def test_a_seeded_assignment_the_seed_no_longer_declares_is_removed_with_its_role(self):
+		"""A grant stamped with the site stage's namespace that `site_setup.ASSIGNMENTS`
+		no longer lists (KT-STD-001 v1.13 dropped the Evaluation committee's
+		Departmental Author grants) survives a plain reseed otherwise, since
+		the namespace marks it canonical. The clear removes it and takes the
+		Frappe role it projected with it."""
+		from kentender_core.seeds import site_setup
+		from kentender_core.services import responsibility_administration as administration
+
+		user = "grace.wanjiku@moh.example.test"
+		self.assertNotIn("Auditor", frappe.get_roles(user))
+		row = administration.grant(user=user, business_role="Auditor", fixture_namespace=site_setup.FIXTURE_TAG, actor="Administrator")
+		name = row.get("assignment") or row.get("name")
+		def cleanup():
+			if frappe.db.exists("User Responsibility Assignment", name):
+				frappe.delete_doc("User Responsibility Assignment", name, force=1, ignore_permissions=True)
+			administration._sync_projection(user)
+			frappe.db.commit()
+
+		self.addCleanup(cleanup)
+		self.assertIn("Auditor", frappe.get_roles(user))
+		self.assertIn(name, canonical.collect_non_canonical().get("User Responsibility Assignment", []))
+		canonical.clear_non_canonical()
+		self.assertFalse(frappe.db.exists("User Responsibility Assignment", name))
+		self.assertNotIn("Auditor", frappe.get_roles(user))
+
 	def test_a_stray_departmental_need_outside_the_namespace_is_a_stray(self):
 		need = frappe.get_doc({"doctype": "Departmental Need", "need_reference": f"STRAY-NDS-{uuid4().hex[:6]}", "current_state": "Draft"})
 		# Only the namespace stamp matters to selection; a minimal insert
@@ -199,6 +225,22 @@ class TestCanonicalSelection(IntegrationTestCase):
 		canonical.clear_non_canonical()
 		self.assertFalse(frappe.db.exists("Requisition Contributing Unit", row))
 		self.assertFalse(frappe.db.exists("File", orphan_file.name))
+
+
+class TestEvaluationPeople(IntegrationTestCase):
+	def test_the_evaluation_people_hold_what_kt_std_v1_13_registers(self):
+		"""KT-STD-001 v1.13 §8.3: the committee holds no standing responsibility
+		(its authority is the appointment), and Esther Njeri holds Evaluation
+		Technical Support, not Daniel Otieno's Technical Operator."""
+		frappe.set_user("Administrator")
+		canonical.run(through="site", reset=True, validate=False, force=True, commit=False)
+		held = lambda local: frappe.get_all("User Responsibility Assignment", filters={"user": f"{local}@moh.example.test", "status": "Enabled"},  # noqa: E731
+			pluck="business_role")
+		for local in ("grace.wambui", "peter.mugo", "ruth.achieng"):
+			self.assertEqual(held(local), [], local)
+			self.assertTrue(frappe.db.exists("User", f"{local}@moh.example.test"))
+		self.assertEqual(held("esther.njeri"), ["Evaluation Technical Support"])
+		self.assertNotIn("Technical Operator", frappe.get_roles("esther.njeri@moh.example.test"))
 
 
 class TestFixturePasswords(IntegrationTestCase):

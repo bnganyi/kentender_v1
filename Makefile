@@ -1329,7 +1329,7 @@ e1-nssf-poc-gate:
 # so do bid_opening, bid_evaluation and award. A plain run first undoes any loaded demo profile and clears the test clock.
 # WIPE=True also drops the site stage itself (Procuring Entity, Organisation
 # Units, Fiscal Years, actors) before rebuilding from nothing — see
-# docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_17.md §4. FORCE=True bypasses
+# docs/mvp-1-r1/00_common/KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_18.md §4. FORCE=True bypasses
 # every module seed's own developer_mode/allow_tests guard, required for WIPE
 # outside developer_mode. RESEED defaults to None (Python-literal, not a
 # string) so canonical.run() picks its own default: reseed immediately for
