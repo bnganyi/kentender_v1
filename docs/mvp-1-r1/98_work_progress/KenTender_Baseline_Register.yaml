@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "register_id": "KT-DOC-CTRL-001",
   "title": "KenTender Requirements and Delivery Baseline Register",
-  "as_of": "2026-09-30",
+  "as_of": "2026-10-01",
   "purpose": "Canonical machine-readable record of the current requirements baseline, cross-module contracts, decisions, implementation handoffs, future work and unresolved control findings.",
   "governance": {
     "source_of_truth": "This file is the canonical source for the companion Documentation Control Register workbook.",
@@ -187,7 +187,8 @@
       "filename": "KenTender_TPR-CHG-001_Tenders_v0_13.md",
       "scope": "Approved Tender preparation, approval, publication, clarifications, addenda, cancellation, exact bound STD-release lifecycle including published Superseded/Withdrawn behavior, and KT-STD-001 v1.8 journey guidance.",
       "dependencies": "REQ-CHG-001 v1.12; CFG-CHG-002 v0.16; STD-TPL-001 v0.10; STD-TPL-IMP-001 v1.1; BDS-CHG-001 v0.8; BOP-CHG-001 v0.10 and PRC-CHG-001 v0.9 proposed for post-close cancellation; Award-status owner pending",
-      "action": "Implement approved v0.13. Proposed v0.14 (KenTender_TPR-CHG-001_Tenders_v0_14_proposed.md; libfile_000ff3f0efe881918a374f6f15819fbb) supplies a guarded post-close cancellation seam but is not approved or enabled. Obtain legal ground mapping and authoritative Award-status integration before approval/release."
+      "action": "Review proposed v0.15: publication preparation event/read and scope/replay binding. Retains unapproved v0.14 cancellation seam; legal ground and award-status dependencies remain open. Approved v0.13 retained.",
+      "proposed_revision": "v0.15 — KenTender_TPR-CHG-001_Tenders_v0_15_proposed.md — libfile_000ff3f0efe881918a374f6f15819fbb; not approved"
     },
     {
       "document_id": "BDS-CHG-001",
@@ -206,8 +207,8 @@
       "filename": "KenTender_BDS-CHG-001_Supplier_and_Electronic_Bid_Submission_v0_8.md",
       "scope": "Public discovery, supplier Account, structured Goods/IT bid preparation, signature, receipt, replacement and sealed Bid Opening handoff, with actor-specific guidance and bound STD-release controls.",
       "dependencies": "TPR-CHG-001 v0.13; STD-TPL-001 v0.10; STD-TPL-IMP-001 v1.1; CFG-CHG-002 v0.16; AUTH-ADR-001 v1.10; KT-STD-001 v1.8; G1-REG-001 v1.1",
-      "action": "Implement approved v0.8 with production disabled until §§5.10 and 15 gates pass; TPR v0.13 is approved. Proposed BDS v0.9 (libfile_f8038abb4ed08191983a122d03a31c1f) corrects the pre-opening physical-security receipt owner visibility conflict and stale TPR conditions; v0.8 remains normative pending v0.9 approval.",
-      "proposed_revision": "v0.9 — KenTender_BDS-CHG-001_Supplier_and_Electronic_Bid_Submission_v0_9.md — libfile_f8038abb4ed08191983a122d03a31c1f; not approved"
+      "action": "Review proposed v0.10: exact opened-bid read and EVL-owned supplier clarification view. Retains unapproved v0.9 receipt correction. Approved v0.8 and production gates retained.",
+      "proposed_revision": "v0.10 — KenTender_BDS-CHG-001_Supplier_and_Electronic_Bid_Submission_v0_10.md — libfile_f8038abb4ed08191983a122d03a31c1f; not approved"
     },
     {
       "document_id": "STD-TPL-001",
@@ -264,7 +265,8 @@
       "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_12.md",
       "scope": "Current cross-cutting standard, including plain language, minimum steps, Scheduled next step and actor/state/event conformance; v1.11 adds the §8.3 fixture actors Daniel Otieno (technical operator) and Jane Wanjiku (public observer), and v1.12 adds Nadia Kamau (release operator); retains earlier design and verification rules.",
       "dependencies": "Workflow Guidance Standard; all controlled change documents",
-      "action": "Apply approved v1.12 to future and revised contracts; use its registered actors and retained design and verification rules."
+      "action": "Review proposed v1.13: register Evaluation actors and Brian’s separate secretary capacity. No automatic appointment or expanded support access. Approved v1.12 retained.",
+      "proposed_revision": "v1.13 — KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_13.md — libfile_67c97b311d088191b90d070526a4bfbc; not approved"
     },
     {
       "document_id": "AUTH-ADR-001",
@@ -324,6 +326,25 @@
       "action": "Reconcile to the reservation correction and Gate 1 public/vendor documents before integrated verification."
     },
     {
+      "document_id": "SEED-OPS-001",
+      "title": "Canonical Site Seed Runbook",
+      "version": "1.17",
+      "category": "Operational runbook",
+      "module": "Cross-module",
+      "requirement_status": "Project Owner review",
+      "approval_date": "",
+      "supersedes": "v1.16; v1.0–v1.15 retained in KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_0.md",
+      "implementation_status": "Implemented",
+      "verification_status": "Passed",
+      "release_status": "Not applicable",
+      "normative": "No",
+      "library_file_id": "",
+      "filename": "KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_17.md",
+      "scope": "Resetting a site to the canonical seed world (KT-STD-001 §8 and SEED-001), stage by stage from site to award: options, what the clear removes, validation, demo profiles and troubleshooting.",
+      "dependencies": "KT-STD-001 v1.12; SEED-001 v1.3; the module documents each stage cites in its §2",
+      "action": "Keep in step with the seed code; update whenever a module adds a seed stage or demo profiles. Evidence 2026-10-01: make seed-canonical THROUGH=award validated on kentender.midas.com; kentender_core.tests.test_canonical_seed 23/23 passed. Repository file only (no library file)."
+    },
+    {
       "document_id": "G1-REG-001",
       "title": "Public/Vendor MVP Closure and Implementation Handoff",
       "version": "1.1",
@@ -345,21 +366,21 @@
     {
       "document_id": "KT-RCA-001",
       "title": "Roadmap Coverage Assessment",
-      "version": "1.1",
+      "version": "1.2",
       "category": "Programme assessment",
       "module": "Programme",
       "requirement_status": "Directional",
       "approval_date": "",
-      "supersedes": "v1.0",
+      "supersedes": "v1.1",
       "implementation_status": "Not applicable",
       "verification_status": "Not applicable",
       "release_status": "Not applicable",
       "normative": "No",
-      "library_file_id": "libfile_a75d3106ab808191b8a4d4bfb9d8bd98",
-      "filename": "KenTender_Roadmap_Coverage_Assessment_v1_1.md",
-      "scope": "Gate 1 coverage assessment and retained future programme work.",
+      "library_file_id": "libfile_483ff064d904819188eaf4179672fb39",
+      "filename": "KenTender_Roadmap_Coverage_Assessment_v1_2.md",
+      "scope": "Coverage through approved Bid Opening v0.10 and Evaluation v0.4; Award next, followed by Supplier Management. Proposed coordinated amendments and production gates remain distinct.",
       "dependencies": "Source roadmap; current controlled baseline",
-      "action": "Use for programme coverage, not as a module implementation contract."
+      "action": "Use v1.2 for programme sequencing: Award next. Directional assessment only; preserves owner approvals, Gate 1 boundary and outstanding integration/release work."
     },
     {
       "document_id": "RES-IMP-001",
@@ -568,7 +589,8 @@
       "filename": "KenTender_PRC-CHG-001_Minimal_Procurement_Proceedings_v0_9.md",
       "scope": "Approved minimal shared service bound to BOP v0.10: attributed pre-session arrivals carried into actual session view, owner events, versioned opening record, personal target proof, one-action empty outcome and terminal partial/never-held records. No standalone UI.",
       "dependencies": "BOP-CHG-001 v0.10 approved; KT-STD-001 v1.10 approved; TPR-CHG-001 v0.13 approved (v0.14 proposed); TRUST-ADR-001 v0.1 approved; LAW-V-001",
-      "action": "Implement approved v0.9 with BOP v0.10 under KT-STD-001 v1.10. Preserve the deferred shared signing/custody integration."
+      "action": "Review proposed v0.10: separate Evaluation case/sessions, attributed conclusions, report targets/proofs and durable delivery. Approved v0.9 Opening profile retained.",
+      "proposed_revision": "v0.10 — KenTender_PRC-CHG-001_Minimal_Procurement_Proceedings_v0_10.md — libfile_f70200e4567c8191b2aceb304a458557; not approved"
     },
     {
       "document_id": "EVL-CHG-001",
@@ -586,8 +608,27 @@
       "library_file_id": "libfile_afeac7a8387c81918c95b97accf8734e",
       "filename": "KenTender_EVL-CHG-001_Bid_Evaluation_v0_4.md",
       "scope": "Automatic evaluation, focused committee review and signed report. Second-review corrections align commands, tasks, source issues, scope gates and dated fixtures.",
-      "dependencies": "KT-STD-001 v1.12; BOP v0.10; BDS v0.8; PRC v0.9; TRUST v0.1; TPR v0.13; STD-TPL v0.10. Coordinated owner-document amendments outstanding.",
-      "action": "Implement approved v0.4 including R1–R3. Coordinate TPR publication binding, PRC, supplier correspondence and executable rules. Implementation and verification not started; Gate 1 unchanged."
+      "dependencies": "KT-STD-001 v1.12; BOP v0.10; BDS v0.8; PRC v0.9; TRUST v0.1; TPR v0.13; STD-TPL v0.10. Coordinated owner amendments drafted: PRC v0.10, TPR v0.15, BDS v0.10, KT-STD v1.13; approval/integration outstanding.",
+      "action": "Approved EVL v0.4 retained. Four coordinated owner successors drafted and linked in their register entries. Review amendments and implement/test the bindings; executable template rules and legal/Trust work remain open. Gate 1 unchanged."
+    },
+    {
+      "document_id": "AWD-CHG-001",
+      "title": "Award",
+      "version": "0.4",
+      "category": "Module requirements",
+      "module": "Award",
+      "requirement_status": "Project Owner review",
+      "approval_date": null,
+      "supersedes": "v0.3; prior versions retained",
+      "implementation_status": "Not started",
+      "verification_status": "Not started",
+      "release_status": "Not approved",
+      "normative": "Proposed",
+      "library_file_id": "libfile_6c148e829bc08191aa40b7f399460732",
+      "filename": "KenTender_AWD-CHG-001_Award_v0_4.md",
+      "scope": "Professional opinion, AO decision, bidder notices, acceptance, waiting conditions and delivery to Contracting.",
+      "dependencies": "EVL v0.4; STD-TPL v0.10; KT-STD v1.12; TPR v0.13; BDS v0.8; PRC v0.9; TRUST v0.1; effective AUTH/Budget. Proposed owner interfaces: AWD-IF-01–07.",
+      "action": "Review v0.4: P1–P3 addressed in §18.3; 31 acceptance cases. Reconcile owner contracts and verify legal/notice rules before release. No counterpart approval implied."
     }
   ],
   "interfaces": [
@@ -766,6 +807,39 @@
       "test_status": "Not started",
       "owner_doc": "TRUST-ADR-001 v0.1; BDS-CHG-001 v0.8 (v0.9 proposed); BOP-CHG-001 v0.10 proposed; PRC-CHG-001 v0.9 proposed",
       "failure_rule": "No production submission/opening/signature on absent or uncertain trust/custody result. A synthetic proxy cannot turn the default-false BDS gate on."
+    },
+    {
+      "interface_id": "IF-017",
+      "upstream": "Evaluation / Tenders",
+      "downstream": "Award",
+      "contract": "Exact report/task receipt; separate decision and notice authority; serialised notice/cancellation boundary. AWD-IF-01–02.",
+      "status": "Proposed interface",
+      "implementation_status": "Not started",
+      "test_status": "Not started",
+      "owner_doc": "AWD-CHG-001 v0.4 §17.2; matching owner amendments pending",
+      "failure_rule": "No duplicate receipt task, stale source or false negative authority; preserve versioned corrections."
+    },
+    {
+      "interface_id": "IF-018",
+      "upstream": "BDS / Budget / AUTH / Legal / Trust",
+      "downstream": "Award / Procurement Proceedings",
+      "contract": "Audience, authority, funding and verified notice/signature/clock rules; retained records. AWD-IF-03, 04, 06, 07.",
+      "status": "Proposed interface",
+      "implementation_status": "Not started",
+      "test_status": "Not started",
+      "owner_doc": "AWD-CHG-001 v0.4 §17.2; matching owner amendments pending",
+      "failure_rule": "Unknown rules, authority, funding or giving evidence cannot authorise positive advancement."
+    },
+    {
+      "interface_id": "IF-019",
+      "upstream": "Award",
+      "downstream": "Contracting",
+      "contract": "Immutable package, durable receipt/task, later restriction updates, and independent decision-event delivery to the Contracting-owned publication obligation. AWD-IF-05.",
+      "status": "Proposed interface",
+      "implementation_status": "Not started",
+      "test_status": "Not started",
+      "owner_doc": "AWD-CHG-001 v0.4 §17.2; matching owner amendments pending",
+      "failure_rule": "No completion without consumer receipt; Contracting rechecks current restrictions. No contract created by notice or acceptance."
     }
   ],
   "decisions": [
@@ -976,6 +1050,22 @@
       "owner_doc": "TRUST-ADR-001 v0.1, 2026-09-27",
       "implementation_effect": "Synthetic tender-box and two-person test release may exercise ceremony; BDS production submission flag stays false and BOP production disabled until verified real services.",
       "design_effect": "Visible test-environment status and honest unavailable production guidance; no proxy receipt as a live Submitted bid."
+    },
+    {
+      "decision_id": "DEC-027",
+      "decision": "The Bid Evaluation and Award fixtures run on the canonical Tender's generated reference; the specifications' \"tender 033\" (TND-MOH-2027-033) is an example of the generated form.",
+      "status": "Approved",
+      "owner_doc": "SEED-OPS-001 v1.17 §11 D19; Project Owner, 2026-10-01: \"Keep generated codes\"",
+      "implementation_effect": "No seed change. EVL-CHG-001 §11.1 and AWD-CHG-001 §13 state the example form in their next versions.",
+      "design_effect": "None."
+    },
+    {
+      "decision_id": "DEC-028",
+      "decision": "The canonical seed exercises every module stage as it is built.",
+      "status": "Approved",
+      "owner_doc": "SEED-OPS-001 v1.17 §11 D20; Project Owner, 2026-10-01: \"The seed should exercise all stages as they are built.\"",
+      "implementation_effect": "Each module adds its canonical seed stage, validator and runbook entry when it is built, as Bid Submission, Bid Opening, Bid Evaluation and Award have. SEED-001's successor replaces v1.3 §5.2's \"No opening/evaluation/award actual generated by this seed\".",
+      "design_effect": "None."
     }
   ],
   "delivery_items": [
@@ -1530,6 +1620,19 @@
       "implementation_status": "Not started",
       "verification_status": "Not started",
       "release_gate": "Yes"
+    },
+    {
+      "item_id": "AWD-001",
+      "area": "Award",
+      "change": "Implement the proposed MVP 1 Award workflow after requirements approval.",
+      "functional": "Exact Evaluation receipt; signed HOP opinion; AO decision and notices; supplier response; legal waits/restrictions; durable Contracting receipt.",
+      "design": "Plain task-led record and supplier notice; no repeated evaluation or extra notice/delivery approval.",
+      "owner_doc": "AWD-CHG-001 v0.4",
+      "requirement_status": "Project Owner review",
+      "implementation_status": "Not started",
+      "verification_status": "Not started",
+      "release_gate": "Yes",
+      "evidence": "AWD-AC-001–031 are required tests, not executed evidence."
     }
   ],
   "future_work": [
@@ -1727,7 +1830,7 @@
       "finding": "SEED-001 v1.3 predates the final reservation, Gate 1 public/vendor and approved workflow-guidance changes in PLN v1.27, BUD v1.11, REQ v1.12 and KT-STD v1.8.",
       "status": "Open",
       "owner": "Requirements owner",
-      "action": "Issue a reconciled fixture version before integrated verification.",
+      "action": "Issue a reconciled fixture version before integrated verification. Also state that the canonical seed covers every module stage as it is built (DEC-028), replacing v1.3 §5.2's \"No opening/evaluation/award actual generated by this seed\".",
       "blocks": "Reliable end-to-end seed tests",
       "evidence": "SEED-001 v1.3 compared with current baseline"
     },
@@ -1840,6 +1943,17 @@
       "action": "Apply approved BOP v0.10 / PRC v0.9 and KT-STD-001 v1.10, approved 29 September 2026. Use direct copy comparisons and actor/state/event review on affected branches. TPR v0.14 post-close cancellation remains a separately owned dependency.",
       "blocks": "No BOP artboard; real opening activation and integrated proof remain separate later decisions",
       "evidence": "Approved BOP v0.10, admitted 29 September 2026; approved PRC v0.9 and KT-STD-001 v1.10. BOP v0.9 retained as the prior approved baseline."
+    },
+    {
+      "finding_id": "AUD-019",
+      "severity": "High",
+      "type": "Award release dependencies",
+      "finding": "AWD v0.4 is proposed. Current legal/notice operating rules and seven counterpart contracts are not closed by drafting this document.",
+      "status": "Open",
+      "owner": "Requirements owner / legal-rule owner / integration owners",
+      "action": "Approve or revise AWD; reconcile AWD-IF-01–07; verify notice audience, giving, clocks, debrief and review rules; retain LAW-V-001; implement and test real services.",
+      "blocks": "Production Award release",
+      "evidence": "AWD-CHG-001 v0.4 §§15, 17; AWD-AC-026–027"
     }
   ]
 }

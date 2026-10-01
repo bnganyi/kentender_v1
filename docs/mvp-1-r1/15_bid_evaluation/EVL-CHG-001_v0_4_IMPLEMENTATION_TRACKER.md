@@ -223,7 +223,7 @@
 | EVL4-1505 | 15 | BOP-CHG-001 cross-reference (automatic take-up, completion consumer, digest) (FU-EVL-05) | Blocked — owner | |
 | EVL4-1506 | 15 | BUD-CHG-001 evaluation funding read (FU-EVL-06) | Blocked — owner | |
 | EVL4-1507 | 15 | KT-STD-001 v1.13 personas and Brian's scope (FU-EVL-07) | Blocked — owner | |
-| EVL4-1508 | 15 | SEED-OPS-001 new version for the `bid_evaluation` stage (FU-EVL-08) | Blocked — owner | |
+| EVL4-1508 | 15 | SEED-OPS-001 new version for the `bid_evaluation` stage (FU-EVL-08) | Done (was: Blocked — owner) | 1 Oct 2026: SEED-OPS-001 v1.16 (stage, validation) and v1.17 (owner decisions); register entry SEED-OPS-001 added |
 | EVL4-1509 | 15 | Register rows: BOP → Evaluation interface; STD-TPL version cited (FU-EVL-09) | Blocked — owner | |
 | EVL4-1510 | 15 | LAW-V-001 current-law verification and PPRA report-format reconciliation (FU-EVL-10) | Blocked — owner | |
 | EVL4-1511 | 15 | Real signing and custody under TRUST-ADR-001; production release of opened packages (FU-EVL-11) | Blocked — owner | |
