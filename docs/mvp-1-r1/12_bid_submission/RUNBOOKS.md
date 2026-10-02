@@ -83,6 +83,8 @@ environment" strip:
 | Test Mailbox | captures supplier messages (verification links) | `sites/<site>/private/kt_test_mailbox/messages.jsonl` |
 | Test clock | the pages' trusted time for browser worlds | `BDS Test Environment Controls.current_instant` |
 
+The Test Mailbox does not carry Frappe's own login emails (sign-up welcome, password reset). Those go to Mailpit on dev; see `00_common/DEV_MAIL_RUNBOOK.md`. On dev, `kt_test_mailbox_also_email` also queues each Test Mailbox message as an email into Mailpit, so a person can open the link; the same page explains it.
+
 The Single `BDS Test Environment Controls` also forces the operating worlds
 (fixtures and tests only; no role can read or write it):
 `gate_closed` (production gate closed), `trust_service_down`,

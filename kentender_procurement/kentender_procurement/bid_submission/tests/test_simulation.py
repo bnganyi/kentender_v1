@@ -76,6 +76,28 @@ class TestMailbox(IntegrationTestCase):
 		self.mailbox.clear(self.TO)
 		self.assertIsNone(self.mailbox.latest(self.TO))
 
+	def test_a_site_may_also_email_each_kept_message_so_a_person_can_read_it(self):
+		# dev: people (not browser worlds) test the supplier flow and need the
+		# link in an inbox; off by default, so test sites send nothing
+		from unittest import mock
+
+		message = {"to": self.TO, "subject": "Verify", "body": "<p>Open it</p>", "link": "https://x/account/verify?token=abc"}
+		self.switch(1)
+		with mock.patch.object(frappe, "sendmail") as sendmail:
+			self.mailbox.deliver(message)
+			sendmail.assert_not_called()
+			frappe.conf[self.mailbox.ALSO_EMAIL_KEY] = 1
+			self.addCleanup(frappe.conf.pop, self.mailbox.ALSO_EMAIL_KEY, None)
+			answer = self.mailbox.deliver(message)
+			sendmail.assert_called_once_with(recipients=[self.TO], subject="Verify", message="<p>Open it</p>", delayed=True)
+		self.assertEqual(answer, {"result": "Delivered to the test mailbox (simulation)"})
+		self.assertEqual(self.mailbox.latest(self.TO)["link"], "https://x/account/verify?token=abc")
+		# a site that is not a test environment still declines, and sends nothing
+		self.switch(0)
+		with mock.patch.object(frappe, "sendmail") as sendmail:
+			self.assertIsNone(self.mailbox.deliver(message))
+			sendmail.assert_not_called()
+
 	def test_outside_a_test_environment_it_declines(self):
 		self.switch(0)
 		self.assertIsNone(self.mailbox.deliver({"to": self.TO, "subject": "Verify", "body": "…"}))

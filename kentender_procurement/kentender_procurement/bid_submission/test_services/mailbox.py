@@ -9,7 +9,9 @@ On a test environment it keeps each message — recipient, subject, body and
 any link — in a file under the site's private folder, outside every DocType,
 so a browser world can open a verification link the way a person would. On
 any other site it declines (returns nothing) and the caller's real transport
-is used. It is not a mail service and never claims delivery to an inbox."""
+is used. It is not a mail service and never claims delivery to an inbox. A
+dev site may set `kt_test_mailbox_also_email` to queue each message as an email
+too, for people testing by hand; the result still says test mailbox."""
 
 from __future__ import annotations
 
@@ -23,6 +25,9 @@ from frappe.utils import cstr, now_datetime
 from kentender_procurement.bid_submission.services import simulation
 
 DELIVERED = "Delivered to the test mailbox (simulation)"
+# Site config switch (dev only): also queue each kept message as a real email,
+# so a person testing in a browser can read the link in an inbox (Mailpit).
+ALSO_EMAIL_KEY = "kt_test_mailbox_also_email"
 
 
 def _path() -> str:
@@ -45,6 +50,8 @@ def deliver(message: dict[str, Any]) -> dict[str, str] | None:
 	row = {"to": cstr(message.get("to")).lower(), "subject": cstr(message.get("subject")), "body": cstr(message.get("body")), "link": cstr(message.get("link")), "at": cstr(now_datetime())}
 	with open(path, "a", encoding="utf-8") as handle:
 		handle.write(json.dumps(row, sort_keys=True) + "\n")
+	if frappe.conf.get(ALSO_EMAIL_KEY):
+		frappe.sendmail(recipients=[message["to"]], subject=row["subject"], message=row["body"], delayed=True)
 	return {"result": DELIVERED}
 
 
