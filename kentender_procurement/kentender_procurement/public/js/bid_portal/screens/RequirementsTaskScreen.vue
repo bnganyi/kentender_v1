@@ -10,11 +10,14 @@
 import { computed, inject, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
 import CommonState from "../components/CommonState.vue";
+import NotifySignatory from "../components/NotifySignatory.vue";
+import TaskStepper from "../components/TaskStepper.vue";
 import AttachmentCount from "../components/AttachmentCount.vue";
 import FieldControl from "../components/FieldControl.vue";
 import ResponseDrawer from "../components/ResponseDrawer.vue";
 import { fixRoute } from "../composables/fixRoute.js";
 import { useNarrow } from "../composables/useNarrow.js";
+import { arrive, destinationOf } from "../composables/saveDestination.js";
 
 const READ = "kentender_procurement.bid_submission.api.get_bid_task";
 const SAVE = "kentender_procurement.bid_submission.api.save_bid_task";
@@ -39,9 +42,15 @@ const runner = portal.createCommandRunner({ ref }, { onError: (e) => (failure.va
 const pending = computed(() => runner.pending.value);
 const bid = computed(() => (data.value ? { reference: data.value.bid.reference, record_version: data.value.bid.record_version } : null));
 // Column widths in percent, one set per table, so the Status and Action columns
-// share their edges down the page and no header wraps. Each set adds up to 100.
-const COLUMNS = { technical: [22, 26, 17, 15, 11, 9], warranty: [48, 17, 15, 11, 9], acceptance: [80, 11, 9], evidence: [48, 32, 11, 9], experience: [22, 26, 17, 26, 9] };
+// share their edges down the page and no header wraps. Each set adds up to 100. The acceptance terms sit in their own
+// inset panel with a longer status ("Not accepted yet"), so they take wider Status and Action columns.
+const COLUMNS = { technical: [22, 26, 17, 15, 11, 9], warranty: [48, 17, 15, 11, 9], acceptance: [42, 26, 20, 12], evidence: [48, 32, 11, 9], experience: [22, 26, 17, 26, 9] };
 // What the person does with a row: respond to it first, edit it after, view it when the bid cannot change
+// An acceptance term is confirmed, not answered: Confirm until accepted, Review after, View when the bid cannot change
+function termAction(row) {
+	if (!canEdit.value) return "View";
+	return row.accepted ? "Review" : "Confirm";
+}
 function actionLabel(row) {
 	if (!canEdit.value) return "View";
 	return row.status === "Not started" ? "Respond" : "Edit";
@@ -102,10 +111,11 @@ function saveAndContinue() {
 	failure.value = "";
 	errors.value = {};
 	const answers = goodsChanges();
-	if (!Object.keys(answers).length) return go(data.value.footer.next_href);
+	const destination = destinationOf(data.value.footer);
+	if (!Object.keys(answers).length) return arrive(destination, { go, load });
 	return runner.run(async () => {
 		const result = await portal.call(SAVE, { bid_reference: data.value.bid.reference, task: "requirements", values: JSON.stringify(answers), expected_record_version: data.value.bid.record_version, idempotency_key: `bds-requirements-${Date.now().toString(36)}` }, { type: "POST" });
-		if (result && result.ok) go(data.value.footer.next_href);
+		if (result && result.ok) await arrive(destination, { go, load });
 		else if (result && result.errors) errors.value = result.errors;
 		else if (result) failure.value = result.message || "";
 	}, "Save and continue");
@@ -125,6 +135,7 @@ onMounted(() => {
 
 <template>
 	<div v-if="data" class="kt-page" data-testid="bds-requirements-task">
+		<TaskStepper v-if="data.step" :step="data.step" />
 		<div class="kt-page-head">
 			<div class="bds-head-main">
 				<a :href="data.page.back_href" class="bds-back"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></svg>{{ __("Back to bid") }}</a>
@@ -138,6 +149,8 @@ onMounted(() => {
 
 		<PortalGuidance :journey="data.journey" :answer="data.next_step" :label="__('Bid journey')" @fix="onFix" />
 
+		<NotifySignatory v-if="data.handover && data.bid" :handover="data.handover" :bid="data.bid" :organisation="route.query.organisation || ''" @sent="load" />
+
 		<div v-if="data.attention" class="kt-notice" :class="data.attention.tone === 'critical' ? 'is-critical' : 'is-warning'" role="status" data-testid="bds-requirements-attention">
 			<svg class="kt-notice-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 8v4" /><path d="M12 16h.01" /></svg>
 			<div class="kt-notice-body">
@@ -148,6 +161,7 @@ onMounted(() => {
 
 		<nav class="bds-section-nav" :aria-label="__('Requirement groups')" data-testid="bds-requirements-nav">
 			<a v-for="section in data.sections" :key="section.key" :href="'#bds-region-' + section.key" class="bds-section-link"><span class="bds-section-name">{{ __(section.label) }}</span><span class="bds-section-state" :class="'is-' + section.tone">{{ section.status }}</span></a>
+			<a href="#kt-portal-main" class="bds-section-top" data-testid="bds-section-top">↑ {{ __("Top") }}</a>
 		</nav>
 
 		<div v-if="data.goods" id="bds-region-goods" class="kt-region">
@@ -226,25 +240,29 @@ onMounted(() => {
 			</div>
 		</div>
 
-		<div v-if="data.acceptance.length" id="bds-region-acceptance" class="kt-region" data-testid="bds-acceptance">
-			<h2>{{ __("Acceptance") }}</h2>
+		<div v-if="data.acceptance.length" id="bds-region-acceptance" class="kt-region bds-terms" data-testid="bds-acceptance">
+			<h2>{{ __("Acceptance terms — these become part of your contract") }}</h2>
 			<div class="bds-region-body">
+				<p class="bds-muted bds-terms-intro">{{ __("Each term is applied when the goods are delivered. Confirm that you accept it and will make the stated evidence available at inspection.") }}</p>
 				<table v-if="!narrow" class="kt-table bds-fixed-table" data-testid="bds-acceptance-table">
 					<colgroup><col v-for="(w, i) in COLUMNS.acceptance" :key="i" :style="'width:' + w + '%'" /></colgroup>
-					<thead><tr><th>{{ __("Requirement") }}</th><th>{{ __("Status") }}</th><th>{{ __("Action") }}</th></tr></thead>
+					<thead><tr><th>{{ __("Term") }}</th><th>{{ __("Evidence at inspection") }}</th><th>{{ __("Status") }}</th><th>{{ __("Action") }}</th></tr></thead>
 					<tbody>
 						<tr v-for="row in data.acceptance" :key="row.key" :data-testid="'bds-row-' + row.key">
-							<td class="bds-strong">{{ row.label }}</td>
-							<td><span class="kt-status" :class="'is-' + row.tone">{{ row.status }}</span></td>
-							<td><button type="button" class="bds-link-button" @click="open(row.key)">{{ __(actionLabel(row)) }}</button></td>
+							<td><span class="bds-strong">{{ row.term.check || row.label }}</span><div v-if="row.term.passes_when" class="bds-muted">{{ row.term.passes_when }}</div><div v-if="row.term.applies_to && row.term.applies_to !== 'All items'" class="bds-muted">{{ __("Applies to {0}", [row.term.applies_to]) }}</div></td>
+							<td>{{ row.term.evidence }}</td>
+							<td><span class="kt-status" :class="'is-' + row.accept_tone">{{ __(row.accept_status) }}</span></td>
+							<td><button type="button" class="bds-link-button" @click="open(row.key)">{{ __(termAction(row)) }}</button></td>
 						</tr>
 					</tbody>
 				</table>
-				<div v-else>
-					<div v-for="row in data.acceptance" :key="row.key" class="bds-acceptance-row">
-						<span>{{ row.label }}</span>
-						<span class="kt-status" :class="'is-' + row.tone">{{ row.status }}</span>
-						<button type="button" class="bds-link-button" @click="open(row.key)">{{ __(actionLabel(row)) }}</button>
+				<div v-else data-testid="bds-acceptance-cards">
+					<div v-for="row in data.acceptance" :key="row.key" class="bds-card" :data-testid="'bds-row-' + row.key">
+						<div class="bds-card-title">{{ row.term.check || row.label }}</div>
+						<div v-if="row.term.passes_when" class="bds-card-fact"><span class="kt-label">{{ __("Passes when") }}</span><span>{{ row.term.passes_when }}</span></div>
+						<div class="bds-card-fact"><span class="kt-label">{{ __("Evidence at inspection") }}</span><span>{{ row.term.evidence }}</span></div>
+						<div class="bds-card-fact"><span class="kt-label">{{ __("Status") }}</span><span><span class="kt-status" :class="'is-' + row.accept_tone">{{ __(row.accept_status) }}</span></span></div>
+						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="open(row.key)">{{ __(termAction(row)) }}</button></div>
 					</div>
 				</div>
 			</div>
@@ -259,7 +277,7 @@ onMounted(() => {
 					<tbody>
 						<tr v-for="row in data.evidence" :key="row.key" :data-testid="'bds-row-' + row.key">
 							<td class="bds-strong">{{ row.label }}</td>
-							<td>{{ row.file || "—" }}</td>
+							<td><AttachmentCount :count="row.evidence_count" :names="row.evidence_names" :rejected="row.evidence_rejected" /></td>
 							<td><span class="kt-status" :class="'is-' + row.file_tone">{{ row.file_status }}</span></td>
 							<td><button type="button" class="bds-link-button" @click="open(row.key)">{{ !canEdit ? __("View") : row.file ? __("Edit") : __("Upload") }}</button></td>
 						</tr>
@@ -268,7 +286,7 @@ onMounted(() => {
 				<div v-else data-testid="bds-evidence-cards">
 					<div v-for="row in data.evidence" :key="row.key" class="bds-card">
 						<div class="bds-card-title">{{ row.label }}</div>
-						<div class="bds-card-fact"><span class="kt-label">{{ __("File") }}</span><span>{{ row.file || "—" }}</span></div>
+						<div class="bds-card-fact"><span class="kt-label">{{ __("File") }}</span><span><AttachmentCount :count="row.evidence_count" :names="row.evidence_names" :rejected="row.evidence_rejected" /></span></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Status") }}</span><span><span class="kt-status" :class="'is-' + row.file_tone">{{ row.file_status }}</span></span></div>
 						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="open(row.key)">{{ !canEdit ? __("View") : row.file ? __("Edit") : __("Upload") }}</button></div>
 					</div>

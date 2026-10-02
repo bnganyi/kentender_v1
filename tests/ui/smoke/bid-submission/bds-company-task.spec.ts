@@ -87,6 +87,50 @@ test.describe("BDS-DES-08 Company, declarations and tender security", () => {
 		expect(errors.filter((e) => !/404 \(Not Found\)/.test(e)), errors.join(" | ")).toEqual([]);
 	});
 
+	test("the questionnaire asks each question in the official words and shows details only when they apply", async ({ page }) => {
+		const world = bdsFixture<World>("reset_my_bids_fixture", { state: "started" });
+		await page.setViewportSize({ width: 1440, height: 1024 });
+		await loginToPortal(page, world.representative, world.password, `/tenders/${world.tender_reference}/bid/company`);
+		const row = page.getByTestId("bds-declarations-table").locator("tr", { hasText: /Confidential business questionnaire/i });
+		await row.getByRole("button", { name: "View declaration" }).click();
+		const drawer = page.getByTestId("bds-response-drawer");
+		const question = (words: string) => drawer.locator("fieldset", { has: page.locator("legend", { hasText: words }) });
+
+		// every conflict is its own question in the official words, never "Conflict of interest item N"
+		await expect(drawer).not.toContainText(/Conflict of interest item \d/);
+		await expect(question("3. Tenderer has the same legal representative as another tenderer")).toBeVisible();
+		await expect(drawer).not.toContainText("Disclosure of Interest item");
+		await expect(question("receives or has received any direct or indirect subsidy")).toBeVisible();
+
+		// details are asked only for a Yes, and only for that question
+		const subsidy = question("receives or has received any direct or indirect subsidy");
+		await expect(drawer.getByText("If YES, provide details of the relationship with Tenderer")).toHaveCount(0);
+		await subsidy.getByRole("radio", { name: "Yes" }).check();
+		await expect(drawer.getByText("If YES, provide details of the relationship with Tenderer")).toHaveCount(1);
+		await subsidy.getByRole("radio", { name: "No" }).check();
+		await expect(drawer.getByText("If YES, provide details of the relationship with Tenderer")).toHaveCount(0);
+
+		// item 9 (has the conflict been resolved?) appears only after item 7 or 8 is Yes
+		const resolved = "Has the conflict stemming from such relationship";
+		const seven = question("directly or indirectly involved in the preparation of the Tender document");
+		await expect(question(resolved)).toHaveCount(0);
+		await seven.getByRole("radio", { name: "Yes" }).check();
+		await expect(question(resolved)).toBeVisible();
+		await seven.getByRole("radio", { name: "No" }).check();
+		await expect(question(resolved)).toHaveCount(0);
+
+		// the business structure decides which detail block is asked
+		await expect(drawer.getByText("Sole proprietor: name in full")).toHaveCount(0);
+		await drawer.locator("select").first().selectOption("Sole proprietor");
+		await expect(drawer.getByText("Sole proprietor: name in full")).toBeVisible();
+		await expect(drawer.getByText(/^Names of the directors/)).toHaveCount(0);
+		await drawer.locator("select").first().selectOption("Registered company");
+		await expect(drawer.getByText("Nominal capital (Kenya Shillings)")).toBeVisible();
+		await expect(drawer.getByText(/^Names of the directors/)).toBeVisible();
+		await expect(drawer.getByText("Sole proprietor: name in full")).toHaveCount(0);
+		await page.screenshot({ path: "test-results/bds-questionnaire-drawer.png", fullPage: false });
+	});
+
 	test("another organisation's person is told the bid is not found", async ({ page }) => {
 		const world = bdsFixture<World>("reset_my_bids_fixture", { state: "started" });
 		await page.setViewportSize({ width: 1440, height: 1024 });

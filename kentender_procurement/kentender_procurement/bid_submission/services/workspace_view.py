@@ -24,7 +24,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr, get_datetime
 
-from kentender_procurement.bid_submission.services import availability, clarification, labels, tenders_gateway
+from kentender_procurement.bid_submission.services import availability, clarification, labels, task_flow, tenders_gateway
 
 DESCRIPTION = "Complete the five tasks below before an Authorised Signatory submits the bid."
 NOTICES_NOTE = "Delivery describes the notice sent to your Tender notice email. The published answer and addendum are available here whether or not a notice was delivered."
@@ -150,24 +150,21 @@ def _updated(ws) -> dict[str, Any]:
 	return {cstr(key): at for key, at in rows}
 
 
-def task_rows(ctx, tasks, nav: list[dict[str, Any]], *, closed: bool) -> list[dict[str, Any]]:
+def task_rows(ctx, tasks, nav: list[dict[str, Any]], *, closed: bool, hand_over: list[str] | None = None) -> list[dict[str, Any]]:
 	ws = ctx.workspace
 	updated = _updated(ws)
 	out = []
-	for row in nav:
+	# numbered, one marked Next with the only primary action, each action worded by the task's state (task_flow)
+	for row in task_flow.rows(nav, f"/tenders/{ws.tender_reference}/bid", hand_over):
 		key, status = row["key"], row["status"]
 		when = (ws.last_saved_at if status == "Complete" else None) if key == "review" else updated.get(key)
 		if closed:
-			action = {"label": "View", "primary": False}
-		elif key == "review":
-			action = {"label": "Review bid", "primary": True} if status == "Complete" else {"label": "View", "primary": False}
-		else:
-			action = {"label": "View" if status == "Complete" else "Continue", "primary": False}
-		out.append({**row, "updated_label": labels.datetime_label(when).replace(f" {labels.TIME_ZONE_LABEL}", "") if when else "—", "action": {**action, "href": f"/tenders/{ws.tender_reference}/bid/{key}"}})
+			row = {**row, "next": False, "action": {**row["action"], "label": "View", "primary": False}}
+		out.append({**row, "updated_label": labels.datetime_label(when).replace(f" {labels.TIME_ZONE_LABEL}", "") if when else "—"})
 	return out
 
 
-def header(ctx, nav: list[dict[str, Any]], tender: dict[str, Any], *, closed: bool, release_blocked: bool = False) -> dict[str, Any]:
+def header(ctx, nav: list[dict[str, Any]], tender: dict[str, Any], *, closed: bool, release_blocked: bool = False, hand_over: list[str] | None = None) -> dict[str, Any]:
 	ws = ctx.workspace
 	base = f"/tenders/{ws.tender_reference}/bid"
 	first_open = next((row["key"] for row in nav if row["status"] != "Complete"), "")
@@ -179,10 +176,13 @@ def header(ctx, nav: list[dict[str, Any]], tender: dict[str, Any], *, closed: bo
 		action = {"label": "Review addendum", "href": f"{base}/documents", "tone": "primary"}
 	elif portal_incomplete():
 		action = {"label": "Continue saved bid", "href": f"{base}/{first_open or 'review'}", "tone": "secondary" if not first_open or first_open == "review" else "primary"}
+	elif task_flow.handed_over(nav, hand_over):
+		action = {"label": "View complete bid", "href": f"{base}/review", "tone": "secondary"}  # the preparer is done; only the signatory submits
 	elif not first_open or first_open == "review":
 		action = {"label": "Review bid", "href": f"{base}/review", "tone": "primary"}
 	else:
-		action = {"label": "Continue bid", "href": f"{base}/{first_open}", "tone": "primary"}
+		named = task_flow.short_name(next(row for row in nav if row["key"] == first_open))
+		action = {"label": f"Continue with {named}", "href": f"{base}/{first_open}", "tone": "primary"}
 	return {
 		"title_line": tender.get("title", ""), "refs_line": f"{ws.tender_reference} · {ws.name} · Draft Version {int(ws.current_draft_version or 0)}", "description": DESCRIPTION, "action": action,
 	}
@@ -205,13 +205,21 @@ def view(ctx, tasks, nav: list[dict[str, Any]], tender: dict[str, Any], *, at) -
 	# Withdrawn or fails its checks is kept for reading, with the waiting line
 	# and two ways on (View current Tender, Supplier support)
 	release_blocked = not closed and not definition_runtime.bid_condition(ctx)["ok"]
+	from kentender_procurement.bid_submission.services import guidance
+
+	hand_over = guidance.hand_over(ctx, at)  # who signs, when that is not the viewer
+	from kentender_procurement.bid_submission.services import signatory_notice
+
+	handover = signatory_notice.status(ctx, at=at)  # who can be told it is ready, and when they last were
 	return {
-		"header": header(ctx, nav, tender, closed=closed, release_blocked=release_blocked),
+		**({"handover": handover} if handover else {}),
+		"header": header(ctx, nav, tender, closed=closed, release_blocked=release_blocked, hand_over=hand_over),
 		"deadline": deadline(root, at),
 		"availability_notice": None if release_blocked else availability_notice(ws, root, at),
 		"guidance_links": [{"label": "View current Tender", "href": f"/tenders/{ws.tender_reference}"}, *_support_links()] if release_blocked else [],
 		"notices": notices(ctx, tasks, tender),
 		"notices_note": NOTICES_NOTE,
-		"tasks": task_rows(ctx, tasks, nav, closed=closed or release_blocked),
+		"tasks": task_rows(ctx, tasks, nav, closed=closed or release_blocked, hand_over=hand_over),
+		"progress": task_flow.progress(nav, hand_over),
 		"saved_text": saved_text(ws),
 	}

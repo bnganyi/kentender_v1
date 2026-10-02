@@ -62,7 +62,11 @@
 .kt-industry.kt-portal .bds-help { margin: 3px 0 0; font-size: 13px; color: var(--kt-color-neutral-700); }
 .kt-industry.kt-portal .bds-choice { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; }
 .kt-industry.kt-portal .bds-choice legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.kt-industry.kt-portal .bds-radio { display: flex; gap: 8px; align-items: baseline; font-size: 14px; font-weight: 400; min-height: 44px; }
+/* A Yes/No answer is one compact row of options under its question, not a tall line for each */
+.kt-industry.kt-portal .bds-radio-row { display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--kt-space-8); }
+.kt-industry.kt-portal .bds-radio { display: flex; gap: 8px; align-items: center; font-size: 14px; font-weight: 400; min-height: 36px; cursor: pointer; }
+.kt-industry.kt-portal .bds-radio input { margin: 0; flex: none; }
+@media (max-width: 600px) { .kt-industry.kt-portal .bds-radio { min-height: 44px; } }
 .kt-industry.kt-portal .bds-member-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: var(--kt-space-3); align-items: end; }
 
 /* BDS-DES-16 common state replacing the content surface. */
@@ -103,7 +107,8 @@
 .kt-industry.kt-portal .bds-statement { font-size: 14px; line-height: 1.6; white-space: pre-line; padding: var(--kt-space-3); background: var(--kt-color-surface-2, #f5f6f8); border-left: 3px solid var(--kt-color-divider); }
 .kt-industry.kt-portal .bds-field-bare { border: 0; padding: 0; margin: 0; }
 .kt-industry.kt-portal .bds-choice-field { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
-.kt-industry.kt-portal .bds-choice-field legend { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+/* the question of a choice field reads like every other field's label */
+.kt-industry.kt-portal .bds-choice-field legend { padding: 0; font-size: 12px; font-weight: 400; color: var(--kt-color-neutral-800); margin-bottom: 4px; }
 .kt-industry.kt-portal .bds-visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .kt-industry.kt-portal .bds-file-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); opacity: 0; }
 .kt-industry.kt-portal .bds-file-row { display: flex; justify-content: space-between; align-items: center; gap: var(--kt-space-4); padding: var(--kt-space-3) 0; border-top: 1px solid var(--kt-color-divider); border-bottom: 1px solid var(--kt-color-divider); font-size: 14px; flex-wrap: wrap; }
@@ -120,7 +125,8 @@
 }
 
 /* DES-08 company task (board C). */
-.kt-industry.kt-portal .bds-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--kt-space-4) var(--kt-space-6); }
+/* auto-fill, not auto-fit: every block on a page keeps the same columns, so its facts line up with the block above and below */
+.kt-industry.kt-portal .bds-facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--kt-space-4) var(--kt-space-6); }
 .kt-industry.kt-portal .bds-fact { display: grid; gap: 4px; min-width: 0; align-content: start; }
 .kt-industry.kt-portal .bds-fact-value { font-size: 14px; overflow-wrap: anywhere; }
 .kt-industry.kt-portal .bds-snapshot-line { display: flex; gap: var(--kt-space-4); align-items: center; flex-wrap: wrap; font-size: 13px; }
@@ -174,7 +180,43 @@
 /* A checkbox choice inside a field: the field's own `label` rule (block, 12px, margin) outranks the checkbox kit's, which
    left the box an inline span with no size. Restore the kit's layout for the labels that are checkboxes. */
 .kt-industry.kt-portal .kt-field > label.kt-checkbox { display: inline-flex; align-items: flex-start; gap: 8px; margin-bottom: 0; font-size: 14px; color: var(--kt-color-text); min-height: 32px; }
-/* The evidence column: a paperclip and a count, whatever the file names are */
-.kt-industry.kt-portal .bds-attachments { display: inline-flex; align-items: center; gap: 4px; color: var(--kt-color-neutral-800); white-space: nowrap; }
-.kt-industry.kt-portal .bds-attachment-count { font-weight: 600; }
-.kt-industry.kt-portal .bds-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* The evidence column: a paperclip and a count badge, whatever the file names are */
+.kt-industry.kt-portal .bds-attachments { display: inline-flex; align-items: center; gap: 6px; color: var(--kt-color-neutral-700); white-space: nowrap; }
+.kt-industry.kt-portal .bds-attachments svg { flex: none; }
+.kt-industry.kt-portal .bds-attachment-count { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 7px; border-radius: 11px; background: var(--kt-color-neutral-200); color: var(--kt-color-text); font-size: 12px; font-weight: 600; line-height: 1; }
+
+/* The region links stay in view while a long page scrolls, with a way back to the top; a jumped-to region clears them */
+.kt-industry.kt-portal .bds-section-nav { position: sticky; top: 0; z-index: 3; background: var(--kt-color-surface); align-items: center; }
+.kt-industry.kt-portal .bds-section-top { margin-left: auto; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.kt-industry.kt-portal [id^="bds-region-"] { scroll-margin-top: 72px; }
+@media (max-width: 600px) {
+	.kt-industry.kt-portal .bds-section-nav { flex-wrap: nowrap; overflow-x: auto; }
+	.kt-industry.kt-portal .bds-section-link { white-space: nowrap; }
+}
+
+/* Acceptance terms are contract terms to confirm, so they sit apart from the responses above them */
+.kt-industry.kt-portal .bds-terms { border-left: 3px solid var(--kt-color-accent); background: var(--kt-color-neutral-100); padding: var(--kt-space-4) var(--kt-space-4) var(--kt-space-4) var(--kt-space-6); margin-top: var(--kt-space-6); }
+.kt-industry.kt-portal .bds-terms-intro { margin: 0 0 var(--kt-space-3); }
+.kt-industry.kt-portal .bds-terms .kt-table th { background: transparent; }
+
+/* The bid's task order made visible: a numbered strip on every task page, Previous / Next beneath it, and the same
+   numbers and a Next tag on the bid page's task list */
+.kt-industry.kt-portal .bds-stepper { display: grid; gap: var(--kt-space-3); margin-bottom: var(--kt-space-5); }
+.kt-industry.kt-portal .bds-stepper-list { list-style: none; margin: 0; padding: 0; display: flex; gap: var(--kt-space-2); }
+.kt-industry.kt-portal .bds-stepper-list li { flex: 1 1 0; min-width: 0; }
+.kt-industry.kt-portal .bds-stepper .bds-stepper-list a.bds-stepper-item { display: flex; align-items: center; gap: 8px; padding: 8px 4px 8px 2px; border-bottom: 3px solid var(--kt-color-neutral-300); color: var(--kt-color-neutral-800); font-size: 13px; text-decoration: none; min-width: 0; }
+.kt-industry.kt-portal .bds-stepper .bds-stepper-list a.bds-stepper-item.is-current { border-bottom-color: var(--kt-color-accent); color: var(--kt-color-text); font-weight: 600; }
+.kt-industry.kt-portal .bds-stepper-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kt-industry.kt-portal .bds-stepper-number, .kt-industry.kt-portal .bds-task-number { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--kt-status-draft-bg); color: var(--kt-status-draft); font-size: 12px; font-weight: 700; }
+.kt-industry.kt-portal .bds-stepper-item.is-live .bds-stepper-number { background: var(--kt-status-live-bg); color: var(--kt-status-live); }
+.kt-industry.kt-portal .bds-stepper-item.is-pending .bds-stepper-number { background: var(--kt-status-pending-bg); color: var(--kt-status-pending); }
+.kt-industry.kt-portal .bds-stepper-item.is-attention .bds-stepper-number { background: var(--kt-status-attention-bg); color: var(--kt-status-attention); }
+.kt-industry.kt-portal .bds-stepper-line { display: flex; justify-content: space-between; align-items: center; gap: var(--kt-space-4); font-size: 13px; }
+.kt-industry.kt-portal .bds-stepper-where { color: var(--kt-color-neutral-700); font-weight: 600; }
+.kt-industry.kt-portal .bds-task-number { margin-right: 10px; }
+.kt-industry.kt-portal .bds-next-tag { margin-left: 10px; padding: 1px 8px; border: 1px solid var(--kt-color-accent); border-radius: 10px; color: var(--kt-color-accent); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; vertical-align: 1px; }
+.kt-industry.kt-portal .bds-progress { margin: 0 0 var(--kt-space-3); font-weight: 600; }
+@media (max-width: 600px) {
+	.kt-industry.kt-portal .bds-stepper-item:not(.is-current) .bds-stepper-name { display: none; }
+	.kt-industry.kt-portal .bds-stepper-list li:has(.is-current) { flex: 3 1 0; }
+}

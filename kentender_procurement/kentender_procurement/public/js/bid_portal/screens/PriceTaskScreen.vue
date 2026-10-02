@@ -8,8 +8,11 @@
 import { computed, inject, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
 import CommonState from "../components/CommonState.vue";
+import NotifySignatory from "../components/NotifySignatory.vue";
+import TaskStepper from "../components/TaskStepper.vue";
 import { fixRoute } from "../composables/fixRoute.js";
 import { useNarrow } from "../composables/useNarrow.js";
+import { arrive, destinationOf } from "../composables/saveDestination.js";
 
 const READ = "kentender_procurement.bid_submission.api.get_bid_task";
 const SAVE = "kentender_procurement.bid_submission.api.save_bid_task";
@@ -101,8 +104,9 @@ function savePrices() {
 function saveAndContinue() {
 	failure.value = "";
 	errors.value = {};
-	if (!Object.keys(changes()).length) return go(data.value.footer.next_href);
-	return savePrices().then((ok) => ok && go(data.value.footer.next_href));
+	const destination = destinationOf(data.value.footer);
+	if (!Object.keys(changes()).length) return arrive(destination, { go, load });
+	return savePrices().then((ok) => ok && arrive(destination, { go, load }));
 }
 function onFix(fix) {
 	const href = fixRoute(fix, props.reference);
@@ -117,6 +121,7 @@ onMounted(() => {
 
 <template>
 	<div v-if="data" class="kt-page" data-testid="bds-price-task">
+		<TaskStepper v-if="data.step" :step="data.step" />
 		<div class="kt-page-head">
 			<div class="bds-head-main">
 				<a :href="data.page.back_href" class="bds-back"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></svg>{{ __("Back to bid") }}</a>
@@ -129,6 +134,8 @@ onMounted(() => {
 		</div>
 
 		<PortalGuidance :journey="data.journey" :answer="data.next_step" :label="__('Bid journey')" @fix="onFix" />
+
+		<NotifySignatory v-if="data.handover && data.bid" :handover="data.handover" :bid="data.bid" :organisation="route.query.organisation || ''" @sent="load" />
 		<p v-if="data.terms" class="bds-muted bds-price-terms">{{ data.terms }}</p>
 
 		<div class="kt-region">

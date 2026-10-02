@@ -16,6 +16,7 @@ from kentender_procurement.bid_submission.services import clarification as clari
 from kentender_procurement.bid_submission.services import notice_contact as notice_contact_service
 from kentender_procurement.bid_submission.services import reads
 from kentender_procurement.bid_submission.services import save as save_service
+from kentender_procurement.bid_submission.services import signatory_notice
 from kentender_procurement.bid_submission.services import security_intake as security_intake_service
 from kentender_procurement.bid_submission.services import receipts as receipts_service
 from kentender_procurement.bid_submission.services import replacement as replacement_service
@@ -197,6 +198,12 @@ def download_bid_evidence(bid_reference: str, evidence_id: str, organisation: st
 def save_bid_task(bid_reference: str, task: str, values=None, expected_record_version=None, organisation: str = "", idempotency_key: str = "") -> dict[str, Any]:
 	"""BDS §7.2 `SaveBidTask`."""
 	return _masked(save_service.save_bid_task, bid_reference=bid_reference, task=task, values=_parse_json(values, {}), expected_record_version=expected_record_version, organisation=organisation, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist(methods=["POST"])
+def notify_signatory(bid_reference: str, note: str = "", organisation: str = "", idempotency_key: str = "") -> dict[str, Any]:
+	"""The preparer tells the Authorised Signatory the bid is ready (owner request, 2 Oct 2026)."""
+	return _masked(signatory_notice.notify_signatory, bid_reference=bid_reference, note=note, organisation=organisation, idempotency_key=idempotency_key)
 
 
 @frappe.whitelist(methods=["POST"])

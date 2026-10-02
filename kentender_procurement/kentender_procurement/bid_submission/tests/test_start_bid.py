@@ -136,7 +136,7 @@ class TestStartGuards(StartBidCase):
 		workspace = frappe.get_doc("Bid Workspace", self.start()["bid_reference"])
 		release_id = bid_definition.definition_for(self.name, workspace.definition_version)["definition"]["template_release_id"]
 		release = frappe.db.get_value("Installed STD Release", release_id, ["template_key", "template_release", "lifecycle_status", "site_switch"], as_dict=True)
-		self.assertEqual((release.template_key, release.template_release, release.lifecycle_status, release.site_switch), ("IT-EQUIPMENT-OPEN-V1", "1.2", "Available", "On"))
+		self.assertEqual((release.template_key, release.template_release, release.lifecycle_status, release.site_switch), ("IT-EQUIPMENT-OPEN-V1", "1.3", "Available", "On"))
 		self.assertEqual(frappe.get_all("Installed STD Release", filters={"template_key": "IT-EQUIPMENT-OPEN-V1", "template_release": "1.1", "site_switch": "On"}), [])
 
 	def test_a_release_switched_off_still_permits_a_bid_on_a_published_tender(self):

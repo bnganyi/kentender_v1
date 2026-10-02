@@ -25,7 +25,7 @@ TEXT = {
 COMPANY = {
 	"state_owned_enterprise": "No",
 	"procuring_entity_interest": "No",
-	**{f"conflict_{i:02d}": "No" for i in range(1, 10)},
+	**{f"conflict_{i:02d}": "No" for i in range(1, 9)},  # item 9 (resolution) stays hidden until item 7 or 8 is Yes
 	"disclosure": "Arrived at the Tender independently",
 	"business_structure": "Registered company",
 }
@@ -34,18 +34,10 @@ COMPANY = {
 def _offered(facts: dict[str, Any], key: str, overrides: dict[str, Any]):
 	if key in overrides:
 		return overrides[key]
-	control, required = cstr(facts.get("control")), facts.get("required_value") or {}
-	if control == "INTEGER":
-		return int(required.get("value"))
-	if control == "DECIMAL":
-		return cstr(required.get("value"))
-	if control in ("YES_NO", "SELECT"):
-		return required.get("value")
-	if control == "MULTI_SELECT":
-		return list(required.get("values") or [])
-	if control == "PORT_LIST":
-		return [{"port_type": p["port_type"], "count": int(p["minimum_count"])} for p in required.get("ports") or []]
-	return TEXT.get(key, "As published")
+	from kentender_procurement.bid_submission.services import consistency
+
+	value = consistency.meeting_value(facts)
+	return value if value is not None else TEXT.get(key, "As published")
 
 
 def answers(bid: str, *, actor: str, at: str, overrides: dict[str, Any] | None = None) -> dict[str, dict[str, Any]]:
@@ -54,7 +46,7 @@ def answers(bid: str, *, actor: str, at: str, overrides: dict[str, Any] | None =
 	company field key to the value to submit instead."""
 	from frappe.utils import get_datetime
 
-	from kentender_procurement.bid_submission.services import bid_context
+	from kentender_procurement.bid_submission.services import bid_context, consistency
 
 	overrides = overrides or {}
 	ctx = bid_context.load(bid, actor=actor, organisation="", at=get_datetime(at))
@@ -66,7 +58,11 @@ def answers(bid: str, *, actor: str, at: str, overrides: dict[str, Any] | None =
 			if not field.editable:
 				continue
 			if field.field_key == "compliance":
-				out["requirements"][field.handle] = "Comply"
+				# the bidder states the truth: "Comply" unless the value offered (an override can fall short) does not meet it;
+				# Bid Evaluation judges the value itself, so a branch like D04-FAIL still fails
+				offered = _offered(facts, key, overrides) if key else None
+				falls_short = key and consistency.meets(facts, offered) is False
+				out["requirements"][field.handle] = "Do not comply" if falls_short else "Comply"
 			elif field.field_key == "offered_value" and key:
 				out["requirements"][field.handle] = _offered(facts, key, overrides)
 			elif field.field_key == "offered_make_model":

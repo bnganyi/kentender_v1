@@ -28,6 +28,32 @@ afterEach(() => {
 });
 
 describe("Company, declarations and tender security", () => {
+	it("offers the preparer the hand-over wherever the page says the bid waits on the signatory", async () => {
+		const task = { ...companyTask(), handover: { signatories: ["Mary Wanjiku"], can_notify: true, last: null, wait_text: "", max_note: 500 } };
+		const wrapper = mountWith(task, portalFor());
+		await nextTick();
+		expect(wrapper.get('[data-testid="bds-handover"] [data-testid="bds-handover-send"]').text()).toBe("Notify Mary Wanjiku");
+		const signatory = mountWith(companyTask(), portalFor()); // the read carries none for the signatory
+		await nextTick();
+		expect(signatory.find('[data-testid="bds-handover"]').exists()).toBe(false);
+	});
+
+	it("tells the preparer who can change the signatory and what a missing certificate means", async () => {
+		const task = companyTask();
+		task.signatory = { ...task.signatory, certificate: { status: "Required", tone: "attention" },
+			certificate_note: "Mary Wanjiku needs a digital certificate from the signing service before this bid can be submitted.",
+			change_note: "Only an Authorised Signatory of Afya Digital Supplies Limited can change who signs, in the Account under People. Ask Mary Wanjiku.", change_href: "" };
+		const wrapper = mountWith(task, portalFor());
+		await nextTick();
+		expect(wrapper.get('[data-testid="bds-signatory-certificate-note"]').text()).toContain("needs a digital certificate");
+		expect(wrapper.get('[data-testid="bds-signatory-change-note"]').text()).toContain("Ask Mary Wanjiku.");
+		expect(wrapper.find('[data-testid="bds-signatory-change-note"] a').exists()).toBe(false); // he cannot do it, so no link
+		task.signatory = { ...task.signatory, change_note: "You can change who signs in your Account, under People.", change_href: "/account" };
+		const signatory = mountWith(task, portalFor());
+		await nextTick();
+		expect(signatory.get('[data-testid="bds-signatory-change-note"] a').attributes("href")).toBe("/account");
+	});
+
 	it("opens a declaration in the drawer and saves only its changed answer", async () => {
 		const portal = portalFor();
 		const wrapper = mountWith(companyTask("JV"), portal);

@@ -8,6 +8,7 @@
 import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
 import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
 import CommonState from "../components/CommonState.vue";
+import NotifySignatory from "../components/NotifySignatory.vue";
 import { fixRoute } from "../composables/fixRoute.js";
 import { useNarrow } from "../composables/useNarrow.js";
 
@@ -71,6 +72,8 @@ onMounted(() => {
 		</div>
 
 		<PortalGuidance :journey="data.journey" :answer="data.next_step" :label="__('Bid journey')" @fix="onFix" />
+
+		<NotifySignatory v-if="data.handover && data.bid" :handover="data.handover" :bid="data.bid" :organisation="route.query.organisation || ''" @sent="load" />
 		<!-- BDS-DES-06-WITHDRAWN-RELEASE: the two ways on while the Draft waits on the Tender's resolution -->
 		<div v-if="data.guidance_links && data.guidance_links.length" class="bds-guidance-links" data-testid="bds-guidance-links">
 			<a v-for="link in data.guidance_links" :key="link.label" :href="link.href">{{ __(link.label) }}</a>
@@ -128,11 +131,12 @@ onMounted(() => {
 		<div class="kt-region">
 			<h2>{{ __("Bid tasks") }}</h2>
 			<div class="bds-region-body">
+				<p v-if="data.progress" class="bds-muted bds-progress" data-testid="bds-workspace-progress">{{ data.progress.text }}<template v-if="data.progress.next"> · {{ __("Next: {0}", [data.progress.next]) }}</template><template v-else-if="data.progress.waiting"> · {{ data.progress.waiting }}</template></p>
 				<table v-if="!narrow" class="kt-table" data-testid="bds-tasks-table">
 					<thead><tr><th>{{ __("Task") }}</th><th>{{ __("Status") }}</th><th>{{ __("Updated") }}</th><th>{{ __("Action") }}</th></tr></thead>
 					<tbody>
 						<tr v-for="t in data.tasks" :key="t.key" :data-testid="'bds-task-' + t.key">
-							<td class="bds-strong">{{ t.label }}</td>
+							<td class="bds-strong"><span v-if="t.number" class="bds-task-number" aria-hidden="true">{{ t.number }}</span>{{ t.label }}<span v-if="t.next" class="bds-next-tag" data-testid="bds-task-next">{{ __("Next") }}</span><div v-if="t.note" class="bds-muted" data-testid="bds-task-note">{{ t.note }}</div></td>
 							<td><span class="kt-status" :class="TASK_TONES[t.status] || 'is-draft'">{{ t.status }}</span></td>
 							<td>{{ t.updated_label }}</td>
 							<td>
@@ -144,7 +148,8 @@ onMounted(() => {
 				</table>
 				<div v-else data-testid="bds-tasks-cards">
 					<div v-for="t in data.tasks" :key="t.key" class="bds-card" :data-testid="'bds-task-' + t.key">
-						<div class="bds-card-title">{{ t.label }}</div>
+						<div class="bds-card-title"><span v-if="t.number" class="bds-task-number" aria-hidden="true">{{ t.number }}</span>{{ t.label }}<span v-if="t.next" class="bds-next-tag" data-testid="bds-task-next">{{ __("Next") }}</span></div>
+						<div v-if="t.note" class="bds-muted" data-testid="bds-task-note">{{ t.note }}</div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Status") }}</span><span><span class="kt-status" :class="TASK_TONES[t.status] || 'is-draft'">{{ t.status }}</span></span></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Updated") }}</span><span>{{ t.updated_label }}</span></div>
 						<div class="bds-card-actions">

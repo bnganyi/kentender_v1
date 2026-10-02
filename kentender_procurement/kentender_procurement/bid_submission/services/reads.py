@@ -220,6 +220,21 @@ def get_bid_task(*, bid_reference: str = "", task: str, tender_reference: str = 
 		guided = guidance.for_bid(ctx, actor=actor, at=at, tasks=tasks)
 		view.update({"tender": {"reference": ctx.workspace.tender_reference, "title": published.get("title", "")}, "next_step": guided["next_step"], "journey": guided["journey"]})
 		view.update(documents_view.view(ctx, tasks, published, at=at))
+	# the bid's task order: which step this is, its neighbours, and where Save and continue leads (task_flow)
+	from kentender_procurement.bid_submission.services import task_flow
+
+	base = f"/tenders/{ctx.workspace.tender_reference}/bid"
+	from kentender_procurement.bid_submission.services import guidance
+
+	hand_over = guidance.hand_over(ctx, at)  # who signs, when that is not the viewer
+	from kentender_procurement.bid_submission.services import signatory_notice
+
+	handover = signatory_notice.status(ctx, at=at)  # the same panel on every page that says "waiting on the signatory"
+	if handover:
+		view["handover"] = handover
+	view["step"] = task_flow.step(view["tasks"], cstr(task), base, hand_over)
+	if isinstance(view.get("footer"), dict) and "save_label" in view["footer"]:
+		view["footer"].update(task_flow.footer(view["tasks"], cstr(task), base, hand_over))
 	return view
 
 
@@ -276,6 +291,18 @@ def _may_start_replacement(actor: str, lead: str, tender_reference: str, at) -> 
 		return False
 
 
+def _signs(actor: str, lead: str, at) -> bool:
+	"""The person is an Authorised Signatory of the bidding organisation."""
+	import frappe
+
+	from kentender_procurement.bid_submission.services import bid_authorization as authz
+
+	try:
+		return authz.acting_assignment(actor, lead, at=at)["responsibility"] == authz.SIGNATORY
+	except frappe.ValidationError:
+		return False
+
+
 def _my_bid_row(ws, tender: dict[str, Any], *, actor: str, lead: str, at, work: list[dict[str, Any]]) -> dict[str, Any]:
 	import frappe
 
@@ -290,7 +317,8 @@ def _my_bid_row(ws, tender: dict[str, Any], *, actor: str, lead: str, at, work: 
 	elif status in ("Draft", "Needs attention"):
 		actions = [{"label": "Continue bid", "href": base}]
 	elif status == "Ready to submit":
-		actions = [{"label": "Review bid", "href": f"{base}/review"}]
+		# the Authorised Signatory reviews and submits; whoever prepared the bid hands it over from the bid page
+		actions = [{"label": "Review bid", "href": f"{base}/review"}] if _signs(actor, lead, at) else [{"label": "Hand over bid", "href": base}]
 	elif status == "Submitted":
 		version = frappe.db.get_value("Bid Submission Version", ws.current_submission_version, ["version_number", "receipt", "accepted_at"], as_dict=True) or {}
 		version_label, updated = f"Submitted bid Version {int(version.get('version_number') or 1)}", version.get("accepted_at") or ws.status_since

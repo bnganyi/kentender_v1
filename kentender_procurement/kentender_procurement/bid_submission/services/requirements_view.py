@@ -34,7 +34,7 @@ REGIONS = (
 	("technical", "Technical requirements", ("COMP-TECHNICAL-COMPLIANCE",)),
 	("warranty", "Warranty and support", ("COMP-WARRANTY-SUPPORT",)),
 	("experience", "Experience", ("COMP-EXPERIENCE",)),
-	("acceptance", "Acceptance", ("COMP-ACCEPTANCE",)),
+	("acceptance", "Acceptance terms", ("COMP-ACCEPTANCE",)),
 	("evidence", "Evidence", ("COMP-EVIDENCE-LIST",)),
 )
 BADGE_TONES = {"Complete": "live", "Needs attention": "attention"}
@@ -57,6 +57,17 @@ def _display(field: dict[str, Any]) -> str:
 
 def _files(fields: list[dict[str, Any]]) -> list[dict[str, Any]]:
 	return [f for field in fields if field["kind"] == "evidence" for f in (field.get("evidence") or {}).get("files") or []]
+
+
+def _files_status(files: list[dict[str, Any]]) -> str:
+	"""One status for a requirement's files: none is Missing; a refused file
+	outranks the rest, then any not yet accepted (Pending); otherwise Accepted."""
+	if not files:
+		return "Missing"
+	for status in ("Rejected", "Pending"):
+		if any(f["status"] == status for f in files):
+			return status
+	return next((f["status"] for f in files if f["status"] != "Accepted"), "Accepted")
 
 
 def _summary(files: list[dict[str, Any]]) -> dict[str, Any]:
@@ -129,13 +140,63 @@ def _row(group: dict[str, Any], composition: str, published: dict[str, Any]) -> 
 	fields = group["fields"]
 	status = _row_status(fields)
 	files = _files(fields)
-	return {
+	row = {
 		"key": group["key"], "label": _label(group, published, composition), "requirement": _requirement(published), "response": _response(fields),
 		"evidence": ", ".join(f["name"] for f in files if f["status"] != "Rejected") or ("Rejected file" if files else "—"),
 		# the table shows how many files the row holds; the names are for a hover, never the layout
 		**_summary(files),
 		"status": status, "tone": _tone(status), "facts": group.get("facts") or [], "statement": group.get("statement", ""), "fields": fields,
 	}
+	if composition == "COMP-ACCEPTANCE":
+		row.update(_term(row))
+	return row
+
+
+def _term(row: dict[str, Any]) -> dict[str, Any]:
+	"""An acceptance requirement reads as a contract term the bidder accepts,
+	not as an answer: what is checked, when it passes, the record it needs, and
+	whether the bidder has accepted it yet."""
+	facts = {f["label"]: cstr(f["value"]) for f in row["facts"]}
+	accepted = row["status"] == "Complete"
+	return {
+		"term": {"check": facts.get("Check", ""), "passes_when": facts.get("Passes when", ""), "evidence": facts.get("Evidence", ""), "applies_to": facts.get("Applies to", "")},
+		"accepted": accepted, "accept_status": "Accepted" if accepted else "Not accepted yet", "accept_tone": "live" if accepted else "draft",
+	}
+
+
+# the page's own order: the regions as the bidder meets them
+FIX_ORDER = ("goods", "technical", "warranty", "experience", "acceptance", "evidence")
+
+
+def must_fix(by_region: dict[str, list[dict[str, Any]]]) -> list[dict[str, Any]]:
+	"""Every row that blocks submission, in page order, saying what is missing: the
+	row, the first field that is wrong and why, and how many more. A row with a
+	refused file keeps its plain wording. Untouched rows with nothing required, and
+	fields the bidder is not asked, do not block."""
+	items = []
+	for region in FIX_ORDER:
+		for r in by_region.get(region, []):
+			if r["status"] == "Complete":
+				continue
+			rejected = r["status"] == "Needs evidence" and (r.get("evidence_rejected") or "Rejected" in r.get("evidence", ""))  # a row may hold one good file and have another refused
+			problems = [f for f in r["fields"] if f.get("visible", True) and f.get("editable") and f.get("issue") and f["issue"].get("severity") == "Must fix"]
+			if rejected:
+				label = f"Replace the rejected file for {r['label'].lower()}"
+			elif problems:
+				first = problems[0]
+				label = f"{r['label']}: {first['label']} — {first['issue']['text']}" + (f" (and {len(problems) - 1} more)" if len(problems) > 1 else "")
+			elif r["status"] in ("Needs attention", "Needs evidence"):
+				label = f"Complete {r['label'].lower()}"
+			else:
+				continue
+			items.append({"key": r["key"], "label": label})
+	return items
+
+
+_must_fix = must_fix
+
+# the section bar says it in the same words as the terms
+TERMS_STATE = {"Complete": "Accepted", "Not started": "Not accepted yet", "In progress": "Partly accepted"}
 
 
 def view(ctx, tasks, task_view: dict[str, Any], *, at) -> dict[str, Any]:
@@ -164,7 +225,8 @@ def view(ctx, tasks, task_view: dict[str, Any], *, at) -> dict[str, Any]:
 	for row in by_region["evidence"]:
 		files = _files(row["fields"])
 		file = files[-1] if files else None
-		evidence_rows.append({**row, "file": file["name"] if file else "", "file_status": file["status"] if file else "Missing", "file_tone": {"Accepted": "live", "Rejected": "critical"}.get(file["status"], "attention") if file else "draft"})
+		status = _files_status(files)
+		evidence_rows.append({**row, "file": file["name"] if file else "", "file_status": status, "file_tone": {"Accepted": "live", "Rejected": "critical", "Missing": "draft"}.get(status, "attention")})
 
 	sections = []
 	for key, label, _comps in REGIONS:
@@ -173,10 +235,12 @@ def view(ctx, tasks, task_view: dict[str, Any], *, at) -> dict[str, Any]:
 			continue
 		worst = next((s for s in ("Needs attention", "Needs evidence", "In progress", "Not started") if any(r["status"] == s for r in rows)), "Complete")
 		state = "Needs attention" if worst in ("Needs attention", "Needs evidence") else ("Complete" if worst == "Complete" else "In progress" if any(r["status"] == "Complete" for r in rows) or worst == "In progress" else "Not started")
-		sections.append({"key": key, "label": label, "status": state, "tone": BADGE_TONES.get(state, "draft")})
+		tone = BADGE_TONES.get(state, "draft")
+		if key == "acceptance":
+			state = TERMS_STATE.get(state, state)
+		sections.append({"key": key, "label": label, "status": state, "tone": tone})
 
-	must_fix = [{"key": r["key"], "label": f"Replace the rejected file for {r['label'].lower()}" if r["status"] == "Needs evidence" and "Rejected" in r["evidence"] else f"Complete {r['label'].lower()}"}
-		for key in ("technical", "warranty", "evidence") for r in by_region[key] if r["status"] in ("Needs attention", "Needs evidence")]
+	must_fix = _must_fix(by_region)
 	attention = None
 	changed = "requirements" in json.loads(ctx.workspace.attention_json or "[]")
 	if must_fix:

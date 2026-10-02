@@ -48,7 +48,12 @@ class TestCompleteCompanyTask(SubmissionCase):
 		self.assertIn("You may submit electronically, but failure to deliver the original before closing may disqualify the bid.", security["physical"]["text"])
 		self.assertEqual(view["signatory"]["name"], "Mary Wanjiku")
 		self.assertEqual(view["signatory"]["certificate"]["status"], "Ready")
-		self.assertEqual(view["footer"]["next_href"], f"/tenders/{self.reference}/bid/requirements")
+		# every other task is done and David cannot submit, so his part is finished: the button says so
+		self.assertEqual(view["footer"], {"save_label": "Save and finish", "next_href": f"/tenders/{self.reference}/bid"})
+		# and the panel says who can change the signatory, and that David cannot
+		self.assertIn("Ask Mary Wanjiku.", view["signatory"]["change_note"])
+		self.assertEqual(view["signatory"]["change_href"], "")
+		self.assertEqual(view["signatory"]["certificate_note"], "")  # her certificate is ready
 
 	def test_a_changed_account_offers_its_two_choices_and_changes_nothing(self):
 		self.accounts.orgs[AFYA]["registered_address"] = "Riverside Drive, Nairobi"

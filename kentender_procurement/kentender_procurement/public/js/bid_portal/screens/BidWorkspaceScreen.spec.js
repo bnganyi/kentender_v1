@@ -26,15 +26,52 @@ afterEach(() => {
 });
 
 describe("Your bid", () => {
-	it("shows the representative the waiting line, the deadline, notices and five tasks with Review bid", async () => {
+	it("numbers the tasks, marks the one to do next and says how far the preparation has got", async () => {
+		const data = workspace();
+		const states = ["Complete", "In progress", "Complete", "Complete", "Not started"];
+		data.tasks = data.tasks.map((t, i) => ({
+			...t, number: i + 1, status: states[i], next: i === 1,
+			action: { href: t.action.href, label: ["Review", "Continue", "Review", "Review", "View"][i], primary: i === 1 },
+		}));
+		data.progress = { done: 3, of: 4, text: "3 of 4 tasks done", next: "Company and declarations" };
+		const wrapper = mountWith({ initial: data }, portalFor({ call: vi.fn(async () => data) }));
+		await flushPromises();
+		expect(wrapper.get('[data-testid="bds-workspace-progress"]').text()).toBe("3 of 4 tasks done · Next: Company and declarations");
+		const rows = wrapper.findAll('[data-testid="bds-tasks-table"] tbody tr');
+		expect(rows.map((r) => r.get(".bds-task-number").text())).toEqual(["1", "2", "3", "4", "5"]);
+		expect(rows.map((r) => r.find('[data-testid="bds-task-next"]').exists())).toEqual([false, true, false, false, false]);
+		expect(rows.map((r) => r.get("a").text())).toEqual(["Review", "Continue", "Review", "Review", "View"]);
+		expect(rows.map((r) => r.get("a").classes().includes("kt-btn-primary"))).toEqual([false, true, false, false, false]);
+		globalThis.__narrow = true;
+		const narrow = mountWith({ initial: data }, portalFor({ call: vi.fn(async () => data) }));
+		await flushPromises();
+		expect(narrow.findAll('[data-testid="bds-tasks-cards"] [data-testid="bds-task-next"]')).toHaveLength(1);
+	});
+
+	it("offers the preparer a way to notify the signatory, and nothing to the signatory", async () => {
+		const handover = { signatories: ["Mary Wanjiku"], can_notify: true, last: null, wait_text: "", max_note: 500 };
+		const wrapper = mountWith({ initial: { ...workspace(), handover } }, portalFor());
+		await nextTick();
+		expect(wrapper.get('[data-testid="bds-handover"] [data-testid="bds-handover-send"]').text()).toBe("Notify Mary Wanjiku");
+		const signatory = mountWith({ initial: workspace() }, portalFor()); // the read carries no hand-over for the signatory
+		await nextTick();
+		expect(signatory.find('[data-testid="bds-handover"]').exists()).toBe(false);
+	});
+
+	it("hands the finished bid over: the preparer sees who signs, no Next task, and Review only as a view", async () => {
 		const wrapper = mountWith({ initial: workspace() }, portalFor());
 		await nextTick();
 		expect(wrapper.get('[data-testid="bds-workspace-refs"]').text()).toContain("TND-MOH-2027-033 · BID-MOH-2027-033-001 · Draft Version 7");
-		expect(wrapper.get('[data-testid="bds-workspace-action"]').text()).toBe("Review bid");
+		expect(wrapper.get('[data-testid="bds-workspace-action"]').text()).toBe("View complete bid");
+		expect(wrapper.get('[data-testid="bds-workspace-action"]').classes()).not.toContain("kt-btn-primary"); // he cannot submit: nothing here is the way on
+		expect(wrapper.get('[data-testid="bds-workspace-progress"]').text()).toBe("4 of 4 tasks done · Mary Wanjiku signs and submits");
+		expect(wrapper.find('[data-testid="bds-task-next"]').exists()).toBe(false);
+		expect(wrapper.get('[data-testid="bds-task-note"]').text()).toBe("Mary Wanjiku signs and submits");
 		expect(wrapper.get('[data-kt="next-step"]').text()).toContain("Authorised Signatory Mary Wanjiku must submit this bid.");
 		expect(wrapper.get('[data-testid="bds-workspace-deadline"]').text()).toContain("Closes in 1 day 20 hours 40 minutes");
 		expect(wrapper.findAll('[data-testid="bds-tasks-table"] tbody tr')).toHaveLength(5);
-		expect(wrapper.get('[data-testid="bds-task-review"] a').classes()).toContain("kt-btn-primary");
+		expect(wrapper.get('[data-testid="bds-task-review"] a').text()).toBe("View");
+		expect(wrapper.get('[data-testid="bds-task-review"] a').classes()).not.toContain("kt-btn-primary");
 		expect(wrapper.text()).not.toMatch(/Submit bid|%|manifest/);
 		expect(wrapper.get('[data-testid="bds-workspace-saved"]').text()).toBe("Saved 10 Jun 2027, 13:50 EAT by David Ouma.");
 	});

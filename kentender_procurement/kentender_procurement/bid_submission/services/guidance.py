@@ -26,7 +26,7 @@ from frappe.utils import cstr, get_datetime
 
 from kentender_core.services import next_step as ns
 
-from kentender_procurement.bid_submission.services import addendum, availability, bid_authorization as authz, labels, readiness, supplier_gateway
+from kentender_procurement.bid_submission.services import addendum, availability, bid_authorization as authz, labels, readiness, supplier_gateway, task_flow
 from kentender_procurement.bid_submission.services.errors import MESSAGES
 
 STAGES = (("BID_PREPARATION", "Prepare bid"), ("SIGN_AND_SUBMIT", "Sign and submit"), ("RECEIPT", "Receipt"))
@@ -65,6 +65,22 @@ def signatory_names(ctx, at=None) -> list[str]:
 	return [_name(a["user"]) for a in supplier_gateway.organisation_signatories(organisation_id=ctx.workspace.lead_organisation, at=at)]
 
 
+def viewer_submits(ctx) -> bool:
+	"""The viewer is the bid's Authorised Signatory: the one person who can sign and
+	submit it. The one rule the submit guard and every page share."""
+	assignment = ctx.assignment
+	if assignment.get("responsibility") != authz.SIGNATORY or not assignment.get("signatory_ready"):
+		return False
+	named = ctx.arrangement.authorised_signatory_assignment
+	return not named or assignment.get("assignment_id") == named
+
+
+def hand_over(ctx, at=None) -> list[str]:
+	"""Who signs and submits, when that is someone other than the viewer; empty for
+	the signatory. A preparer who has finished is handing the bid over to them."""
+	return [] if viewer_submits(ctx) else signatory_names(ctx, at)
+
+
 def resolution_holders(ws) -> list[str]:
 	"""The Procurement Officer who holds the governed Tender resolution when
 	the bound release takes no new bid work (§5.12–5.13): the officer who
@@ -82,13 +98,17 @@ def _holder_line(role_label: str, people: list[str]) -> str:
 # -- journey ---------------------------------------------------------------------
 
 
-def journey(markers: str, holder_display: str = "") -> dict[str, Any]:
-	"""The bid tracker with §5.12's explicit markers (e.g. "DBN")."""
+def journey(markers: str, holder_display: str = "", progress: str = "") -> dict[str, Any]:
+	"""The bid tracker with §5.12's explicit markers (e.g. "DBN"). `progress`
+	is how far the preparation has got ("3 of 4 tasks done"), said on the Prepare
+	bid stage while it is the one in hand, so one step does not hide five tasks."""
 	rows, current = [], None
 	for (code, label), letter in zip(STAGES, markers):
 		marker = MARKERS[letter]
 		active = letter in ("C", "B")
-		rows.append({"code": code, "label": label, "marker": marker, "marker_label": ns.MARKER_LABELS[marker], "holder": holder_display if active else ""})
+		# progress is said only while it is the bidder's turn; a stage blocked on someone else names that person alone
+		holder = " · ".join(part for part in (holder_display, progress if code == "BID_PREPARATION" and letter == "C" else "") if part) if active else ""
+		rows.append({"code": code, "label": label, "marker": marker, "marker_label": ns.MARKER_LABELS[marker], "holder": holder})
 		if active and current is None:
 			current = rows[-1]
 	parts = {"prefix": "Stage ", "label": current["label"], "suffix": " of 3"} if current else None
@@ -124,7 +144,7 @@ def submit_guard(ctx, *, actor: str, at, tasks=None) -> dict[str, Any]:
 		guards.append(ns.guard(False, reason_code="BDS_DEFINITION_UNSUPPORTED", message=MESSAGES["BDS_DEFINITION_UNSUPPORTED"], figures={"release": RELEASE_CONDITION[release["reason"]]},
 			fixes=[_text_fix("The Procurement Officer holds the Tender resolution.", PROCUREMENT_OFFICER, people)]))
 	assignment = ctx.assignment
-	if assignment.get("responsibility") != authz.SIGNATORY or not assignment.get("signatory_ready") or (ctx.arrangement.authorised_signatory_assignment and assignment.get("assignment_id") != ctx.arrangement.authorised_signatory_assignment):
+	if not viewer_submits(ctx):
 		people = signatory_names(ctx, at)
 		guards.append(ns.guard(False, reason_code="BDS_SIGNATORY_REQUIRED", message=MESSAGES["BDS_SIGNATORY_REQUIRED"], figures={"signatory": ", ".join(people)}, fixes=[_text_fix("The Authorised Signatory submits this bid.", authz.SIGNATORY, people)]))
 	if addendum.pending(ctx) is not None or addendum.attention(ctx):
@@ -226,8 +246,11 @@ def for_bid(ctx, *, actor: str, at, tasks=None) -> dict[str, Any]:
 
 	release = definition_runtime.bid_condition(ctx)
 
+	nav = [{"key": t.key, "label": t.label, "status": tasks[t.key].status} for t in ctx.model.tasks]
+	progress = task_flow.progress(nav)["text"]
+
 	def result(answer, markers, holder_display=""):
-		return {"next_step": answer, "journey": journey(markers, holder_display), "submit_guard": guard}
+		return {"next_step": answer, "journey": journey(markers, holder_display, progress), "submit_guard": guard}
 
 	# -- after the deadline: facts only ------------------------------------------
 	if closed or ws.status == "Closed without submission":
@@ -291,7 +314,7 @@ def for_bid(ctx, *, actor: str, at, tasks=None) -> dict[str, Any]:
 		else:
 			headline = f"Continue the {label[:1].lower() + label[1:]} task."
 		return result(ns.answer(ns.KIND_YOUR_TURN, headline=headline, sentence=f"Deadline {deadline_label}.", stage="BID_PREPARATION", primary_action="continue_bid",
-			fixes=[ns.fix("Continue bid", responsibility=SUPPLIER, kind=ns.FIX_ROUTE, fix_id=f"continue_bid:{task}", target={"task": task}, primary=True)]), "CNN", viewer)
+			fixes=[ns.fix(f"Continue with {task_flow.SHORT.get(task, label)}", responsibility=SUPPLIER, kind=ns.FIX_ROUTE, fix_id=f"continue_bid:{task}", target={"task": task}, primary=True)]), "CNN", viewer)
 	# ready to submit
 	if "BDS_SIGNATORY_REQUIRED" in codes:
 		people = signatory_names(ctx, at)

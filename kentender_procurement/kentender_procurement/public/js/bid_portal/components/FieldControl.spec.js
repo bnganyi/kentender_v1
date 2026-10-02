@@ -32,6 +32,20 @@ describe("An evidence field", () => {
 		expect(click).toHaveBeenCalled();
 	});
 
+	it("draws a Yes/No answer as one compact row of options under its question, and answers with the chosen one", async () => {
+		const portal = { upload: vi.fn(), call: vi.fn(), createCommandRunner };
+		const field = { ...FIELD, handle: "h-soe", kind: "yes_no", label: "Is the Tenderer a state-owned enterprise or institution?", options: ["Yes", "No"], help: "Item (k) of the Form of Tender." };
+		const wrapper = mount(FieldControl, { props: { field, modelValue: "Yes", bid: { reference: "BID-1", record_version: 3 } }, global: { provide: { portal }, config: { globalProperties: { __: globalThis.__ } } } });
+		const group = wrapper.get('[data-testid="bds-field-h-soe"]');
+		expect(group.get("legend").text()).toBe("Is the Tenderer a state-owned enterprise or institution?");
+		const row = group.get(".bds-radio-row"); // the options share one row, not one tall line each
+		expect(row.findAll("label.bds-radio").map((l) => l.text())).toEqual(["Yes", "No"]);
+		expect(row.findAll("input").map((i) => i.element.checked)).toEqual([true, false]);
+		expect(group.get(".bds-help").text()).toBe("Item (k) of the Form of Tender.");
+		await row.findAll("input")[1].setValue(true);
+		expect(wrapper.emitted("update:modelValue").at(-1)).toEqual(["No"]);
+	});
+
 	it("starts a ports answer empty: no type chosen and no count, until the bidder gives them", async () => {
 		const portal = { upload: vi.fn(), call: vi.fn(), createCommandRunner };
 		const field = { ...FIELD, handle: "h-ports", kind: "ports", label: "Required ports", options: ["USB-C", "USB-A", "HDMI"] };

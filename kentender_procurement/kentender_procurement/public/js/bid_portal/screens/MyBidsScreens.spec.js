@@ -36,6 +36,14 @@ describe("My bids", () => {
 		expect(wrapper.find('[data-kt="journey"]').exists()).toBe(false); // a list, not a tracker
 	});
 
+	it("shows the preparer the action the server chose for a bid only the signatory can submit", () => {
+		const data = myBids();
+		data.rows[0] = { ...data.rows[0], actions: [{ label: "Hand over bid", href: "/tenders/TND-MOH-2027-033/bid" }], next_action: { label: "Hand over bid", href: "/tenders/TND-MOH-2027-033/bid" } };
+		const wrapper = mountWith(MyBidsScreen, { initial: data }, portalFor());
+		const action = wrapper.get('[data-testid="bds-bid-action-0"]');
+		expect([action.text(), action.attributes("href")]).toEqual(["Hand over bid", "/tenders/TND-MOH-2027-033/bid"]);
+	});
+
 	it("keeps the filters in the URL and asks the server with them", async () => {
 		const portal = portalFor();
 		const wrapper = mountWith(MyBidsScreen, { initial: myBids() }, portal);

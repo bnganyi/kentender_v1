@@ -162,6 +162,22 @@ def physical(facts: dict[str, Any], published: dict[str, Any]) -> dict[str, Any]
 	}
 
 
+def signatory_notes(*, name: str, organisation: str, viewer_is_signatory: bool, joint: bool, certificate_ready: bool) -> dict[str, str]:
+	"""What the signatory panel says about changing the signatory and about a missing
+	certificate, so the person preparing the bid is never left guessing. Only an
+	Authorised Signatory can assign people on the supplier Account."""
+	if joint:
+		change, href = "The Authorised Signatory was named when this joint-venture bid was started.", ""
+	elif viewer_is_signatory:
+		change, href = "You can change who signs in your Account, under People.", "/account"
+	else:
+		change, href = f"Only an Authorised Signatory of {organisation} can change who signs, in the Account under People. Ask {name}.", ""
+	return {
+		"change_note": change, "change_href": href,
+		"certificate_note": "" if certificate_ready else f"{name} needs a digital certificate from the signing service before this bid can be submitted.",
+	}
+
+
 def signatory(ctx, *, at) -> dict[str, Any] | None:
 	from kentender_procurement.bid_submission.services import signature
 
@@ -179,7 +195,12 @@ def signatory(ctx, *, at) -> dict[str, Any] | None:
 	evidence = cstr(row.get("authority_evidence_id"))
 	joint = arrangement.arrangement_type == "Joint venture"
 	lead = cstr((supplier_gateway.organisation(organisation_id=ctx.workspace.lead_organisation) or {}).get("legal_name"))
+	from kentender_procurement.bid_submission.services import bid_authorization as authz
+
+	notes = signatory_notes(name=_name(row["user"]), organisation=lead, viewer_is_signatory=ctx.assignment.get("responsibility") == authz.SIGNATORY, joint=joint,
+		certificate_ready=bool(certificate) and certificate["status"] == "Ready")
 	return {
+		**notes,
 		"name": _name(row["user"]), "job_title": cstr(row.get("job_title")), "organisation": f"{lead} (lead)" if joint else "", "authority_available": bool(evidence),
 		"authority_href": f"/api/method/kentender_suppliers.supplier_accounts.api.download_account_evidence?organisation={ctx.workspace.lead_organisation}&evidence={evidence}&inline=1" if evidence and not joint else "",
 		"certificate": None if joint else certificate,

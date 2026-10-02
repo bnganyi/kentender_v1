@@ -83,7 +83,7 @@ class TestWithdrawnRelease(ReleaseCase):
 		bound = self.binding()
 		arrangements = frappe.db.count("Bidder Arrangement", {"tender": self.name})
 		mine = lambda: next(r for r in reads.get_my_bids(user=DAVID)["rows"] if r["bid_reference"] == self.bid)  # noqa: E731
-		self.assertEqual([a["label"] for a in mine()["actions"]], ["Review bid"])  # the same list, before
+		self.assertEqual([a["label"] for a in mine()["actions"]], ["Hand over bid"])  # the same list, before (David prepared the bid; Mary submits it)
 		self.release("Withdrawn")
 		self.assertEqual(self.code(self.start_peter), "BDS_DEFINITION_UNSUPPORTED")
 		self.assertEqual(frappe.db.count("Bidder Arrangement", {"tender": self.name}), arrangements)

@@ -172,8 +172,16 @@ def view(ctx, tasks, guided: dict[str, Any], *, at) -> dict[str, Any]:
 	]
 	next_step = dict(guided["next_step"])
 	next_step["fixes"] = [f for f in next_step.get("fixes") or [] if f.get("fix_id") not in PAGE_FIXES]
+	from kentender_procurement.bid_submission.services import guidance
+
+	hand_over = guidance.hand_over(ctx, at)
+	description = f"This is the complete bid as it will be submitted. {', '.join(hand_over)} (Authorised Signatory) signs and submits it; only an Authorised Signatory can." if hand_over else DESCRIPTION
+	from kentender_procurement.bid_submission.services import signatory_notice
+
+	handover = signatory_notice.status(ctx, at=at)
 	return {
-		"page": {"title": TITLE, "description": DESCRIPTION, "back_href": base, "action": action},
+		**({"handover": handover} if handover else {}),
+		"page": {"title": TITLE, "description": description, "back_href": base, "action": action},
 		"next_step": next_step,
 		"result": {"tone": "live", "text": READY_TEXT} if ready else None,
 		"availability_notice": notice,

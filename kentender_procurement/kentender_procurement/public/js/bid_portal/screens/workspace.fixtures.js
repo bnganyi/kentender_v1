@@ -19,11 +19,12 @@ function answer(kind, headline, extra = {}) {
 	return { kind, label: LABELS[kind], headline, sentence: "", stage: "", holder: null, since: null, blockers: [], fixes: [], primary_action: "", ...extra };
 }
 const TASK_LABELS = [["documents", "Tender documents, clarifications and addenda"], ["company", "Company, declarations and tender security"], ["requirements", "Requirements and supporting evidence"], ["price", "Price"], ["review", "Review and submit"]];
-function tasks(states, updated, { closed = false } = {}) {
+function tasks(states, updated, { closed = false, signs = "" } = {}) {
 	return TASK_LABELS.map(([key, label], i) => {
 		const status = states[i];
-		const action = closed ? { label: "View", primary: false } : key === "review" ? (status === "Complete" ? { label: "Review bid", primary: true } : { label: "View", primary: false }) : { label: status === "Complete" ? "View" : "Continue", primary: false };
-		return { key, label, purpose: "", status, must_fix: 0, review_notes: 0, updated_label: updated[i] || "—", action: { ...action, href: `/tenders/${REF}/bid/${key}` } };
+		const action = closed || (signs && key === "review") ? { label: "View", primary: false } : key === "review" ? (status === "Complete" ? { label: "Review bid", primary: true } : { label: "View", primary: false }) : { label: status === "Complete" ? "View" : "Continue", primary: false };
+		const note = signs && key === "review" ? { note: `${signs} signs and submits` } : {};
+		return { key, label, purpose: "", status, must_fix: 0, review_notes: 0, updated_label: updated[i] || "—", ...note, action: { ...action, href: `/tenders/${REF}/bid/${key}` } };
 	});
 }
 const DONE_TIMES = ["1 Jun 2027, 12:10", "10 Jun 2027, 10:05", "10 Jun 2027, 11:30", "10 Jun 2027, 12:15", "10 Jun 2027, 13:50"];
@@ -34,14 +35,17 @@ const NOTICES = [
 const DEADLINE = { rows: [{ label: "Submissions close", value: "12 Jun 2027, 11:00 EAT" }, { label: "Time remaining", value: "Closes in 1 day 20 hours 40 minutes" }] };
 const HEADER = (action, version = 7) => ({ title_line: "Supply and delivery of business laptops", refs_line: `${REF} · ${BID} · Draft Version ${version}`, description: "Complete the five tasks below before an Authorised Signatory submits the bid.", action });
 const REVIEW = { label: "Review bid", href: `/tenders/${REF}/bid/review`, tone: "primary" };
+// the preparer (David) has finished: only the Authorised Signatory submits, so nothing offers him a next step
+const VIEW = { label: "View complete bid", href: `/tenders/${REF}/bid/review`, tone: "secondary" };
 const SUPPORT = { label: "Supplier support", href: "mailto:supplier.support@kentender.example" };
 
 function base(extra) {
 	return {
 		bid: { reference: BID, tender_reference: REF, status: "Ready to submit", draft_version: 7 }, tender: { reference: REF, title: "Supply and delivery of business laptops", deadline_label: "12 Jun 2027, 11:00 EAT" },
-		header: HEADER(REVIEW), deadline: DEADLINE, availability_notice: null, notices: NOTICES,
+		header: HEADER(VIEW), deadline: DEADLINE, availability_notice: null, notices: NOTICES,
+		progress: { done: 4, of: 4, text: "4 of 4 tasks done", next: "", waiting: "Mary Wanjiku signs and submits" },
 		notices_note: "Delivery describes the notice sent to your Tender notice email. The published answer and addendum are available here whether or not a notice was delivered.",
-		tasks: tasks(["Complete", "Complete", "Complete", "Complete", "Complete"], DONE_TIMES), saved_text: "Saved 10 Jun 2027, 13:50 EAT by David Ouma.",
+		tasks: tasks(["Complete", "Complete", "Complete", "Complete", "Complete"], DONE_TIMES, { signs: "Mary Wanjiku" }), saved_text: "Saved 10 Jun 2027, 13:50 EAT by David Ouma.",
 		next_step: answer("waiting", "Authorised Signatory Mary Wanjiku must submit this bid."), journey: journey(["done", "current", "not_started"], "Mary Wanjiku"),
 		...extra,
 	};

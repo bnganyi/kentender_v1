@@ -24,7 +24,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field as dataclass_field
 from typing import Any
 
-from kentender_procurement.bid_submission.services import validation
+from kentender_procurement.bid_submission.services import consistency, validation
 from kentender_procurement.bid_submission.services.bid_context import AT_SUBMISSION, BidContext
 from kentender_procurement.bid_submission.services.definition_model import Field
 
@@ -96,11 +96,31 @@ def field_state(ctx: BidContext, field: Field) -> FieldState:
 	return state
 
 
+def _agree(states: list[FieldState]) -> None:
+	"""A requirement row's Compliance answer and offered value must not
+	contradict each other: where the published requirement decides it, a mismatch
+	is a Must fix on both fields (consistency.py)."""
+	rows: dict[int, dict[str, FieldState]] = {}
+	for state in states:
+		rows.setdefault(id(state.field.group), {})[state.field.field_key] = state
+	for row in rows.values():
+		compliance, offered = row.get("compliance"), row.get("offered_value")
+		if not compliance or not offered or not (compliance.visible and offered.visible):
+			continue
+		if offered.issue and offered.issue["severity"] == MUST_FIX:
+			continue  # a value its own rule refuses is reported on its own first
+		words = consistency.contradiction(compliance.field.group.published_facts or {}, compliance.value, offered.value)
+		if words:
+			compliance.issue = {"severity": MUST_FIX, "text": words["compliance"]}
+			offered.issue = {"severity": MUST_FIX, "text": words["offered"]}
+
+
 def evaluate(ctx: BidContext, *, attention: list[str] | None = None) -> dict[str, TaskState]:
 	"""`attention`: tasks an addendum changed that the bidder has not saved since."""
 	tasks: dict[str, TaskState] = {}
 	for task in ctx.model.tasks:
 		states = [field_state(ctx, f) for f in ctx.model.fields_of(task.key)]
+		_agree(states)
 		state = TaskState(key=task.key, status="", fields=states)
 		state.must_fix = sum(1 for s in states if s.issue and s.issue["severity"] == MUST_FIX)
 		state.review_notes = sum(1 for s in states if s.issue and s.issue["severity"] == REVIEW_NOTE)

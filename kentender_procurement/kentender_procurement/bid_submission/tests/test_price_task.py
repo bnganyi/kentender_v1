@@ -28,7 +28,7 @@ class TestPricedBid(SubmissionCase):
 		self.assertTrue(view["totals"]["complete"])
 		self.assertTrue(all(view["totals"][k].startswith("KES ") for k in ("subtotal", "tax", "total")))
 		self.assertEqual(view["note"], "The Form of Tender uses this Bid total. You do not enter the total again.")
-		self.assertEqual(view["footer"]["next_href"], f"/tenders/{self.reference}/bid/review")
+		self.assertEqual(view["footer"]["next_href"], f"/tenders/{self.reference}/bid")  # the preparer is done: back to the bid page, which says who signs
 
 
 class TestUnpricedBid(BidCase):

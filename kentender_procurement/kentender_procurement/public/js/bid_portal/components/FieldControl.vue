@@ -135,7 +135,9 @@ function remove(file) {
 
 	<fieldset v-else-if="field.kind === 'yes_no'" class="kt-field bds-choice-field" :data-testid="'bds-field-' + field.handle">
 		<legend>{{ field.label }}</legend>
-		<label v-for="option in field.options" :key="option" class="bds-radio"><input type="radio" :name="id" :value="option" :checked="modelValue === option" :disabled="disabled" @change="set(option)" /> {{ __(option) }}</label>
+		<div class="bds-radio-row">
+			<label v-for="option in field.options" :key="option" class="bds-radio"><input type="radio" :name="id" :value="option" :checked="modelValue === option" :disabled="disabled" @change="set(option)" /> {{ __(option) }}</label>
+		</div>
 		<p v-if="issue" class="kt-field-error">{{ issue }}</p>
 		<p v-else-if="field.help" class="bds-help">{{ field.help }}</p>
 	</fieldset>

@@ -33,12 +33,19 @@ class TestReadyWorkspace(SubmissionCase):
 		header = view["header"]
 		draft = frappe.db.get_value("Bid Workspace", self.bid, "current_draft_version")
 		self.assertEqual((header["title_line"], header["refs_line"], header["description"]), (view["tender"]["title"], f"{self.reference} · {self.bid} · Draft Version {draft}", DESCRIPTION))
-		self.assertEqual(header["action"], {"label": "Review bid", "href": f"/tenders/{self.reference}/bid/review", "tone": "primary"})
+		# David prepared the bid and cannot submit it: nothing offers him a way on, only a read-only look
+		self.assertEqual(header["action"], {"label": "View complete bid", "href": f"/tenders/{self.reference}/bid/review", "tone": "secondary"})
 		self.assertEqual(view["deadline"]["rows"][0], {"label": "Submissions close", "value": view["tender"]["deadline_label"]})
 		self.assertEqual(view["deadline"]["rows"][1]["label"], "Time remaining")
 		self.assertRegex(view["deadline"]["rows"][1]["value"], REMAINING)
 		self.assertIsNone(view["availability_notice"])
-		self.assertEqual([t["action"]["label"] for t in view["tasks"]], ["View", "View", "View", "View", "Review bid"])
+		self.assertEqual([t["action"]["label"] for t in view["tasks"]], ["Review", "Review", "Review", "Review", "View"])  # finished tasks are reviewed; the signing step is only a view for him
+		self.assertEqual(view["tasks"][4]["note"], "Mary Wanjiku signs and submits")
+		self.assertEqual([t["number"] for t in view["tasks"]], [1, 2, 3, 4, 5])
+		self.assertEqual(view["progress"], {"done": 4, "of": 4, "text": "4 of 4 tasks done", "next": "", "waiting": "Mary Wanjiku signs and submits"})
+		self.assertEqual([t["next"] for t in view["tasks"]], [False, False, False, False, False])  # no Next: his part is done
+		signs = self.view(user=MARY)  # the Authorised Signatory still has Review and submit as her next step
+		self.assertEqual((signs["progress"]["next"], signs["tasks"][4]["next"], signs["tasks"][4]["action"]), (("Review and submit"), True, {"label": "Review bid", "primary": True, "href": f"/tenders/{self.reference}/bid/review"}))
 		self.assertEqual(view["tasks"][1]["action"]["href"], f"/tenders/{self.reference}/bid/company")
 		self.assertTrue(all(t["updated_label"] for t in view["tasks"][1:4]), view["tasks"])
 		self.assertRegex(view["saved_text"], r"^Saved \d{1,2} \w{3} 2027, \d{2}:\d{2} EAT by David Ouma\.$")
@@ -69,14 +76,44 @@ class TestReadyWorkspace(SubmissionCase):
 
 
 class TestDraftWorkspace(BidCase):
+	def test_working_out_of_order_every_button_leads_to_what_is_left(self):
+		from kentender_procurement.bid_submission.seeds import filling
+		from kentender_procurement.bid_submission.services import start_bid
+		from kentender_procurement.bid_submission.tests.support import AFYA, key
+
+		bid = start_bid.start_bid(tender_reference=self.reference, organisation=AFYA, arrangement=self.single(), notice_contact_id=f"{AFYA}-C1", idempotency_key=key(), user=DAVID)["bid_reference"]
+		filling.fill_everything(bid, user=DAVID, tasks=("requirements", "price"))  # later tasks done, Company left
+		base = f"/tenders/{self.reference}/bid"
+		view = reads.get_bid_workspace(bid_reference=bid, user=DAVID)
+		self.assertEqual((view["progress"]["text"], view["progress"]["next"]), ("3 of 4 tasks done", "Company and declarations"))
+		self.assertEqual([(t["key"], t["next"], t["action"]["label"], t["action"]["primary"]) for t in view["tasks"]], [
+			("documents", False, "Review", False), ("company", True, "Start", True), ("requirements", False, "Review", False), ("price", False, "Review", False), ("review", False, "View", False)])
+		self.assertEqual(view["header"]["action"], {"label": "Continue with Company and declarations", "href": f"{base}/company", "tone": "primary"})
+		# the journey's one Prepare bid step says how far the preparation has got, so it no longer hides five tasks
+		stage = view["journey"]["stages"][0]
+		self.assertEqual((stage["code"], stage["marker"]), ("BID_PREPARATION", "current"))
+		self.assertTrue(stage["holder"].endswith(" · 3 of 4 tasks done"), stage["holder"])
+		# from Price, and from Requirements, Save and continue goes to what is left, not through the finished tasks
+		for task, number, previous in (("price", 4, "Requirements"), ("requirements", 3, "Company and declarations")):
+			page = reads.get_bid_task(bid_reference=bid, task=task, user=DAVID)
+			self.assertEqual(page["footer"], {"save_label": "Save and continue to Company and declarations", "next_href": f"{base}/company"}, task)
+			self.assertEqual((page["step"]["number"], page["step"]["of"], page["step"]["previous"]["label"]), (number, 5, previous), task)
+			self.assertEqual([t["number"] for t in page["step"]["tasks"]], [1, 2, 3, 4, 5])
+		# once Company is done, the way on is Review
+		filling.fill_everything(bid, user=DAVID, tasks=("company",))
+		done = reads.get_bid_workspace(bid_reference=bid, user=DAVID)
+		self.assertEqual((done["progress"]["text"], done["header"]["action"]["label"]), ("4 of 4 tasks done", "View complete bid"))
+		# David's part is then finished: the button says so and returns to the bid page, which says who signs
+		self.assertEqual(reads.get_bid_task(bid_reference=bid, task="price", user=DAVID)["footer"], {"save_label": "Save and finish", "next_href": base})
+
 	def test_an_unfinished_bid_continues_at_its_first_open_task(self):
 		from kentender_procurement.bid_submission.services import start_bid
 		from kentender_procurement.bid_submission.tests.support import AFYA, key
 
 		bid = start_bid.start_bid(tender_reference=self.reference, organisation=AFYA, arrangement=self.single(), notice_contact_id=f"{AFYA}-C1", idempotency_key=key(), user=DAVID)["bid_reference"]
 		view = reads.get_bid_workspace(bid_reference=bid, user=DAVID)
-		self.assertEqual(view["header"]["action"], {"label": "Continue bid", "href": f"/tenders/{self.reference}/bid/company", "tone": "primary"})
-		self.assertEqual(view["tasks"][1]["action"]["label"], "Continue")
+		self.assertEqual(view["header"]["action"], {"label": "Continue with Company and declarations", "href": f"/tenders/{self.reference}/bid/company", "tone": "primary"})
+		self.assertEqual((view["tasks"][1]["action"]["label"], view["tasks"][1]["action"]["primary"], view["tasks"][1]["next"]), ("Start", True, True))
 		self.assertEqual(view["tasks"][4]["updated_label"], "—")
 		events = frappe.db.count("Bid Submission Event")
 		reads.get_bid_workspace(bid_reference=bid, user=DAVID)

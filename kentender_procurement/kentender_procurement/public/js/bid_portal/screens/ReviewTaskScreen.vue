@@ -9,6 +9,8 @@
 import { inject, onMounted, onUnmounted, ref, watch } from "vue";
 import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
 import CommonState from "../components/CommonState.vue";
+import NotifySignatory from "../components/NotifySignatory.vue";
+import TaskStepper from "../components/TaskStepper.vue";
 import { fixRoute } from "../composables/fixRoute.js";
 import { useNarrow } from "../composables/useNarrow.js";
 
@@ -53,6 +55,7 @@ onMounted(() => {
 
 <template>
 	<div v-if="data" class="kt-page" data-testid="bds-review-task">
+		<TaskStepper v-if="data.step" :step="data.step" />
 		<div class="kt-page-head">
 			<div class="bds-head-main">
 				<a :href="data.page.back_href" class="bds-back"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></svg>{{ __("Back to bid") }}</a>
@@ -65,6 +68,8 @@ onMounted(() => {
 		</div>
 
 		<PortalGuidance :journey="data.journey" :answer="data.next_step" :label="__('Bid journey')" @fix="onFix" />
+
+		<NotifySignatory v-if="data.handover && data.bid" :handover="data.handover" :bid="data.bid" :organisation="route.query.organisation || ''" @sent="load" />
 
 		<div v-if="data.result" class="kt-notice" :class="'is-' + data.result.tone" role="status" data-testid="bds-review-result">
 			<svg class="kt-notice-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" /></svg>

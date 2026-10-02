@@ -26,7 +26,9 @@ class TestMyBids(ChangeCase):
 	def test_each_state_carries_its_version_update_and_actions(self):
 		ready = self.row()
 		self.assertEqual((ready["status_label"], ready["status_tone"], ready["version_label"]), ("Ready to submit", "live", f"Draft Version {frappe.db.get_value('Bid Workspace', self.bid, 'current_draft_version')}"))
-		self.assertEqual(ready["actions"], [{"label": "Review bid", "href": f"/tenders/{self.reference}/bid/review"}])
+		# David prepared the bid and cannot submit it: the way on is the bid page, where he hands it over; Mary reviews and submits
+		self.assertEqual(ready["actions"], [{"label": "Hand over bid", "href": f"/tenders/{self.reference}/bid"}])
+		self.assertEqual(self.row(user=MARY)["actions"], [{"label": "Review bid", "href": f"/tenders/{self.reference}/bid/review"}])
 		self.assertRegex(ready["updated_label"], r"^\d{1,2} \w{3} 2027, \d{2}:\d{2} EAT$")
 		self.assertRegex(ready["deadline_label"], r"^\d{1,2} \w{3} 2027, \d{2}:\d{2} EAT$")
 		self.assertEqual(reads.get_my_bids(user=DAVID)["count_text"], "1 bid")

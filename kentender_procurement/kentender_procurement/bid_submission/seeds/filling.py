@@ -70,12 +70,24 @@ def fill_everything(bid: str, *, user: str, tasks: tuple[str, ...] = ("company",
 
 	arrangement = frappe.db.get_value("Bid Workspace", bid, "bidder_arrangement")
 	tender_contact.update_tender_contact(bid_reference=bid, email=user, phone="+254 709 555 015", expected_record_version=frappe.db.get_value("Bidder Arrangement", arrangement, "record_version"), idempotency_key=key(), user=user)
+	from kentender_procurement.bid_submission.services import bid_context, clock, consistency
+
+	model = bid_context.load(bid, actor=user, organisation="", at=clock.now()).model
+
+	def answer(field: dict[str, Any]):
+		# an offered value is truthful: one that meets the requirement it is offered against (Compliance says Comply)
+		if field["label"] == "Offered value":
+			meeting = consistency.meeting_value(model.by_handle(field["handle"]).group.published_facts or {})
+			if meeting is not None:
+				return meeting
+		return sample_value(field)
+
 	for _round in range(3):  # a controlling answer can reveal a field
 		for task in tasks:
 			view = reads.get_bid_task(bid_reference=bid, task=task, user=user)
 			given = (answers or {}).get(task) or {}
 			values = {
-				f["handle"]: given.get(f["handle"], sample_value(f)) for g in view["groups"] for f in g["fields"]
+				f["handle"]: given.get(f["handle"], answer(f)) for g in view["groups"] for f in g["fields"]
 				if f["editable"] and f["visible"] and f["kind"] != "evidence" and (f["value"] in (None, "", []) or f.get("issue") or (f["handle"] in given and f["value"] != given[f["handle"]]))
 			}
 			if values:

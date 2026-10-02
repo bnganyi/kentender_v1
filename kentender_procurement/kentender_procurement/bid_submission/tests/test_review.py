@@ -34,8 +34,13 @@ class TestBidReview(BidCase):
 		fill_everything(self.bid)
 		self.assertEqual((reads.get_bid_review(bid_reference=self.bid, user=DAVID)["ready"], reads.get_bid_review(bid_reference=self.bid, user=DAVID)["must_fix"]), (True, []))
 		view = reads.get_bid_task(bid_reference=self.bid, task="requirements", user=DAVID)
-		compliance = next(f for g in view["groups"] for f in g["fields"] if f["label"] == "Compliance")
+		# a truthful non-compliance: "Do not comply" beside a value that really falls short (beside one that meets the
+		# requirement it would contradict itself and be a Must fix: test_compliance_consistency)
+		group = next(g for g in view["groups"] if any(f["label"] == "Compliance" for f in g["fields"]))
+		compliance = next(f for f in group["fields"] if f["label"] == "Compliance")
+		offered = next(f for f in group["fields"] if f["label"] == "Offered value")
+		self.assertEqual(offered["kind"], "yes_no")  # the first row (electrical compatibility) requires Yes
 		version = frappe.db.get_value("Bid Workspace", self.bid, "record_version")
-		self.assertTrue(save.save_bid_task(bid_reference=self.bid, task="requirements", values={compliance["handle"]: "Do not comply"}, expected_record_version=version, idempotency_key=key(), user=DAVID)["ok"])
+		self.assertTrue(save.save_bid_task(bid_reference=self.bid, task="requirements", values={compliance["handle"]: "Do not comply", offered["handle"]: "No"}, expected_record_version=version, idempotency_key=key(), user=DAVID)["ok"])
 		review = reads.get_bid_review(bid_reference=self.bid, user=DAVID)
 		self.assertEqual((review["ready"], review["must_fix"], [n["text"] for n in review["review_notes"]]), (True, [], ["You state that the offer does not meet this requirement.", "The physical tender-security original has not been recorded as received."]))

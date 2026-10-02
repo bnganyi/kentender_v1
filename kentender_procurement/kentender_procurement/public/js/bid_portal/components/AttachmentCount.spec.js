@@ -6,7 +6,7 @@ import { mount } from "@vue/test-utils";
 
 import AttachmentCount from "./AttachmentCount.vue";
 
-const render = (props) => mount(AttachmentCount, { props, global: { config: { globalProperties: { __: (s) => s } } } });
+const render = (props) => mount(AttachmentCount, { props, global: { config: { globalProperties: { __: (s, args = []) => s.replace(/\{(\d+)\}/g, (_, i) => args[i]) } } } });
 
 describe("AttachmentCount", () => {
 	it("is a dash when the row holds no file", () => {
@@ -20,12 +20,13 @@ describe("AttachmentCount", () => {
 		const chip = wrapper.get('[data-testid="bds-attachments"]');
 		expect(chip.find("svg").exists()).toBe(true);
 		expect(chip.get(".bds-attachment-count").text()).toBe("2");
-		expect(chip.get(".bds-sr-only").text()).toBe("files attached");
+		expect(chip.attributes("aria-label")).toBe("2 files attached"); // the meaning is in the label; the cell holds only the icon and the number
+		expect(chip.text()).toBe("2");
 		expect(chip.attributes("title")).toBe(`datasheet.pdf, ${long}`);
 		expect(wrapper.text()).not.toContain("datasheet.pdf");
 	});
 	it("says a single file in the singular", () => {
-		expect(render({ count: 1, names: ["a.pdf"] }).get(".bds-sr-only").text()).toBe("file attached");
+		expect(render({ count: 1, names: ["a.pdf"] }).get('[data-testid="bds-attachments"]').attributes("aria-label")).toBe("1 file attached");
 	});
 	it("reads a refused file as Rejected, beside the count when the row holds others", () => {
 		const both = render({ count: 1, names: ["a.pdf"], rejected: true });
