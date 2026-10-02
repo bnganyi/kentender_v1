@@ -1,0 +1,133 @@
+{
+	"schema": "kt-tpl-quality/1",
+	"template_key": "IT-EQUIPMENT-OPEN-V1",
+	"authority": "STD-TPL-001 v0.14 §13.9 (proposed). One row per official-form table the Tenderer fills in. `treatment`: itemised (one field per column or cell), row-group (CTL-ROW-GROUP, release 1.4), interim (collapsed into text until `until_release`, when it becomes a failure), excluded or deferred (each needs a reason and the owner's decision date), open (a question awaiting the owner; reported, never silent). Source locators are lines of 01_source/ppra_goods_std_official.txt.",
+	"tables": [
+		{
+			"id": "TBL-CBQ-SOLE-PROPRIETOR",
+			"form": "FORM-CBQ",
+			"source": "SRC:2723 (b) Sole Proprietor: name in full, age, nationality, country of origin, citizenship",
+			"treatment": "itemised",
+			"fields": [
+				"RR-DECL-CBQ.sole_proprietor_name",
+				"RR-DECL-CBQ.sole_proprietor_age",
+				"RR-DECL-CBQ.sole_proprietor_nationality",
+				"RR-DECL-CBQ.sole_proprietor_country_of_origin",
+				"RR-DECL-CBQ.sole_proprietor_citizenship"
+			]
+		},
+		{
+			"id": "TBL-CBQ-PARTNERS",
+			"form": "FORM-CBQ",
+			"source": "SRC:2735 (c) Partnership: names of partners, nationality, citizenship, % shares owned",
+			"treatment": "interim",
+			"until_release": "1.4",
+			"fields": [
+				"RR-DECL-CBQ.partners_details"
+			]
+		},
+		{
+			"id": "TBL-CBQ-DIRECTORS",
+			"form": "FORM-CBQ",
+			"source": "SRC:2755 (d)(iii) Directors: names, nationality, citizenship, % shares owned",
+			"treatment": "interim",
+			"until_release": "1.4",
+			"fields": [
+				"RR-DECL-CBQ.directors_details"
+			]
+		},
+		{
+			"id": "TBL-CBQ-CAPITAL",
+			"form": "FORM-CBQ",
+			"source": "SRC:2750 (d)(i)-(ii) company type; nominal and issued capital in Kenya Shillings",
+			"treatment": "itemised",
+			"fields": [
+				"RR-DECL-CBQ.company_type",
+				"RR-DECL-CBQ.nominal_capital",
+				"RR-DECL-CBQ.issued_capital"
+			]
+		},
+		{
+			"id": "TBL-CBQ-PERSONS",
+			"form": "FORM-CBQ",
+			"source": "SRC:2768 (e)(i) persons with an interest: names, designation in the Procuring Entity, interest or relationship",
+			"treatment": "interim",
+			"until_release": "1.4",
+			"fields": [
+				"RR-DECL-CBQ.procuring_entity_interest_details"
+			]
+		},
+		{
+			"id": "TBL-CBQ-CONFLICTS",
+			"form": "FORM-CBQ",
+			"source": "SRC:2777-2811 (e)(ii) nine conflict types, Yes/No, details if Yes",
+			"treatment": "itemised",
+			"fields": [
+				"RR-DECL-CBQ.conflict_01",
+				"RR-DECL-CBQ.conflict_01_details",
+				"RR-DECL-CBQ.conflict_02",
+				"RR-DECL-CBQ.conflict_02_details",
+				"RR-DECL-CBQ.conflict_03",
+				"RR-DECL-CBQ.conflict_03_details",
+				"RR-DECL-CBQ.conflict_04",
+				"RR-DECL-CBQ.conflict_04_details",
+				"RR-DECL-CBQ.conflict_05",
+				"RR-DECL-CBQ.conflict_05_details",
+				"RR-DECL-CBQ.conflict_06",
+				"RR-DECL-CBQ.conflict_06_details",
+				"RR-DECL-CBQ.conflict_07",
+				"RR-DECL-CBQ.conflict_07_details",
+				"RR-DECL-CBQ.conflict_08",
+				"RR-DECL-CBQ.conflict_08_details",
+				"RR-DECL-CBQ.conflict_09",
+				"RR-DECL-CBQ.conflict_09_details"
+			]
+		},
+		{
+			"id": "TBL-FOT-COMMISSIONS",
+			"form": "FORM-TENDER",
+			"source": "SRC:2214-2218 (l) each recipient's name, address, reason, amount and currency",
+			"treatment": "interim",
+			"until_release": "1.4",
+			"fields": [
+				"RR-DECL-FORM-OF-TENDER.commissions_gratuities_fees"
+			]
+		},
+		{
+			"id": "TBL-TIF-DOCUMENTS",
+			"form": "FORM-TIF",
+			"source": "SRC:2670-2683 items 7 and 8: the constitution and registration documents, organisational chart, Board list",
+			"treatment": "excluded",
+			"fields": [
+				"RR-EVIDENCE-ELIGIBILITY-DOCUMENTS.evidence"
+			],
+			"reason": "The documents of items 7 and 8 stay one evidence requirement of 1 to 10 files, as in release 1.1 (open issue 89, owner decision \"2.3 Keep one\"). The upload names every required document. They are attachments, not a data table.",
+			"decided": "2026-09-26"
+		},
+		{
+			"id": "TBL-PRICE-GOODS",
+			"form": "FORM-PS-KENYA",
+			"source": "SRC:2970-3000 Price Schedule - Goods, 10 official columns (13 in the printed master)",
+			"treatment": "deferred",
+			"fields": [
+				"RR-PRICE-GOODS.unit_price",
+				"RR-PRICE-GOODS.tax_amount"
+			],
+			"reason": "Only unit price and taxes are electronic; country of origin, customs, local content and inland transport are not. Owner chose audit only; no build until a separate decision.",
+			"decided": "2026-10-02"
+		},
+		{
+			"id": "TBL-PRICE-SERVICES",
+			"form": "FORM-PS-SERVICES",
+			"source": "SRC:3006-3030 Price Schedule - Related Services, 7 official columns",
+			"treatment": "deferred",
+			"fields": [
+				"RR-PRICE-SERVICE.unit_price",
+				"RR-PRICE-SERVICE.tax_amount"
+			],
+			"reason": "Same decision as the goods schedule; the electronic tax field has no official column (open issue 72).",
+			"decided": "2026-10-02"
+		}
+	],
+	"deferred": []
+}

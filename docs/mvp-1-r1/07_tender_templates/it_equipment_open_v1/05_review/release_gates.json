@@ -206,6 +206,18 @@
       "checked_at": "2026-09-26",
       "checked_by": "06_runtime/validate_release.py",
       "evidence_refs": [
+        "05_review/validation_report.json#C22"
+      ],
+      "gate_id": "GATE-CONTENT",
+      "label": "Content quality",
+      "message": "Content quality: every mapped machine check passed.",
+      "required_proof": "Labels carry the official wording, every official table has a recorded treatment, every evaluated field has an evaluation rule and each Yes/No answer is read the right way round",
+      "result": "Passed"
+    },
+    {
+      "checked_at": "2026-09-26",
+      "checked_by": "06_runtime/validate_release.py",
+      "evidence_refs": [
         "05_review/validation_report.json#C01",
         "05_review/validation_report.json#C18"
       ],
@@ -216,8 +228,8 @@
       "result": "Passed"
     }
   ],
-  "release_id": "stdr-09bbfebd-0297-48c0-8ec2-7aa0c2e64495",
+  "release_id": "stdr-9b953bcf-fb1e-4e85-b9c1-6ac57218d0e2",
   "schema_version": 1,
   "template_key": "IT-EQUIPMENT-OPEN-V1",
-  "template_release": "1.2"
+  "template_release": "1.3"
 }

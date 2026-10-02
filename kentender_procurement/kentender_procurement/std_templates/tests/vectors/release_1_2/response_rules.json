@@ -1,6 +1,6 @@
 {
   "product_profile_id": "GOODS-IT-SIMPLE-V1",
-  "release_id": "stdr-9b953bcf-fb1e-4e85-b9c1-6ac57218d0e2",
+  "release_id": "stdr-09bbfebd-0297-48c0-8ec2-7aa0c2e64495",
   "renderer_profile_id": "BDS-GOODS-IT-V1",
   "rules": [
     {
@@ -438,27 +438,9 @@
         {
           "control_id": "CTL-LONG-TEXT",
           "evidence_rule": null,
-          "field_key": "discounts_offered",
-          "help_text": "Item (f)(i) of the Form of Tender.",
-          "label": "Discounts offered (specify each discount, or \"none\")",
-          "required_rule": {
-            "rule_id": "RQ-ALWAYS"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 1000,
-            "min_length": 4
-          },
-          "visibility_rule": {
-            "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
-          "control_id": "CTL-LONG-TEXT",
-          "evidence_rule": null,
-          "field_key": "discount_method",
-          "help_text": "Item (f)(ii) of the Form of Tender.",
-          "label": "Exact method of calculation of the net price after the discounts are applied (or \"not applicable\")",
+          "field_key": "discounts",
+          "help_text": "Item (f) of the Form of Tender.",
+          "label": "Discounts offered and the methodology for their application (or \"none\")",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
@@ -495,8 +477,8 @@
           "control_id": "CTL-LONG-TEXT",
           "evidence_rule": null,
           "field_key": "commissions_gratuities_fees",
-          "help_text": "Item (l) of the Form of Tender. Write one recipient per line: name; address; reason; amount and currency.",
-          "label": "Commissions, gratuities or fees paid or payable: each recipient's complete name, full address, the reason, and the amount and currency (or \"none\")",
+          "help_text": "Item (l) of the Form of Tender.",
+          "label": "Commissions, gratuities or fees paid or payable (or \"none\")",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
@@ -552,8 +534,8 @@
           "control_id": "CTL-SINGLE-CHOICE",
           "evidence_rule": null,
           "field_key": "disclosure",
-          "help_text": "Paragraph 5 of the Certificate. Either the Tenderer arrived at the Tender independently from, and without consultation, communication, agreement or arrangement with, any competitor; or the Tenderer has entered into consultations, communications, agreements or arrangements with one or more competitors and discloses complete details.",
-          "label": "The Tenderer discloses that (check one of the following, as applicable)",
+          "help_text": "",
+          "label": "Paragraph 5 disclosure",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
@@ -571,9 +553,9 @@
         {
           "control_id": "CTL-LONG-TEXT",
           "evidence_rule": null,
-          "field_key": "consulted_competitors",
-          "help_text": "Paragraph 5(b) of the Certificate.",
-          "label": "Names of the competitors consulted",
+          "field_key": "consultation_details",
+          "help_text": "",
+          "label": "Names of the competitors and the nature of, and reasons for, the consultations",
           "required_rule": {
             "field_key": "disclosure",
             "rule_id": "RQ-WHEN-FIELD-EQUALS",
@@ -581,52 +563,8 @@
           },
           "validation_id": "VAL-TEXT-LENGTH",
           "validation_parameters": {
-            "max_length": 2000,
-            "min_length": 5
-          },
-          "visibility_rule": {
-            "field_key": "disclosure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Consulted with one or more competitors"
-          }
-        },
-        {
-          "control_id": "CTL-LONG-TEXT",
-          "evidence_rule": null,
-          "field_key": "consultation_nature",
-          "help_text": "Paragraph 5(b) of the Certificate.",
-          "label": "Nature of the consultations, communications, agreements or arrangements",
-          "required_rule": {
-            "field_key": "disclosure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Consulted with one or more competitors"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 2000,
-            "min_length": 5
-          },
-          "visibility_rule": {
-            "field_key": "disclosure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Consulted with one or more competitors"
-          }
-        },
-        {
-          "control_id": "CTL-LONG-TEXT",
-          "evidence_rule": null,
-          "field_key": "consultation_reasons",
-          "help_text": "Paragraph 5(b) of the Certificate.",
-          "label": "Reasons for the consultations, communications, agreements or arrangements",
-          "required_rule": {
-            "field_key": "disclosure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Consulted with one or more competitors"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 2000,
-            "min_length": 5
+            "max_length": 4000,
+            "min_length": 20
           },
           "visibility_rule": {
             "field_key": "disclosure",
@@ -651,7 +589,7 @@
         }
       ],
       "identity_suffix": "CITD",
-      "locked_text": "I, the undersigned, in submitting the accompanying Letter of Tender to {{ procuring_entity.name }} for {{ tender.title }} ({{ tender.reference }}), in response to the request for tenders, do hereby make the following statements that I certify to be true and complete in every respect: I certify, on behalf of the Tenderer, that: 1. I have read and I understand the contents of this Certificate; 2. I understand that the Tender will be disqualified if this Certificate is found not to be true and complete in every respect; 3. I am the authorized representative of the Tenderer with authority to sign this Certificate, and to submit the Tender on behalf of the Tenderer; 4. For the purposes of this Certificate and the Tender, I understand that the word “competitor” shall include any individual or organization, other than the Tenderer, whether or not affiliated with the Tenderer, who: a) has been requested to submit a Tender in response to this request for tenders; b) could potentially submit a tender in response to this request for tenders, based on their qualifications, abilities or experience; 5. The Tenderer discloses that (check one of the following, as applicable): a) The Tenderer has arrived at the Tender independently from, and without consultation, communication, agreement or arrangement with, any competitor; b) the Tenderer has entered into consultations, communications, agreements or arrangements with one or more competitors regarding this request for tenders, and the Tenderer discloses, in the attached document(s), complete details thereof, including the names of the competitors and the nature of, and reasons for, such consultations, communications, agreements or arrangements; 6. In particular, without limiting the generality of paragraphs (5)(a) or (5)(b) above, there has been no consultation, communication, agreement or arrangement with any competitor regarding: a) prices; b) methods, factors or formulas used to calculate prices; c) the intention or decision to submit, or not to submit, a tender; or d) the submission of a tender which does not meet the specifications of the request for Tenders; except as specifically disclosed pursuant to paragraph (5)(b) above; 7. In addition, there has been no consultation, communication, agreement or arrangement with any competitor regarding the quality, quantity, specifications or delivery particulars of the works or services to which this request for tenders relates, except as specifically authorized by the procuring authority or as specifically disclosed pursuant to paragraph (5)(b) above; 8. the terms of the Tender have not been, and will not be, knowingly disclosed by the Tenderer, directly or indirectly, to any competitor, prior to the date and time of the official tender opening, or of the awarding of the Contract, whichever comes first, unless otherwise required by law or as specifically disclosed pursuant to paragraph (5)(b) above.",
+      "locked_text": "I, the undersigned, in submitting the accompanying Letter of Tender to {{ procuring_entity.name }} for {{ tender.title }} ({{ tender.reference }}), in response to the request for tenders, do hereby make the following statements that I certify to be true and complete in every respect: I certify, on behalf of the Tenderer, that: I have read and I understand the contents of this Certificate; I understand that the Tender will be disqualified if this Certificate is found not to be true and complete in every respect; I am the authorized representative of the Tenderer with authority to sign this Certificate, and to submit the Tender on behalf of the Tenderer; For the purposes of this Certificate and the Tender, I understand that the word “competitor” shall include any individual or organization, other than the Tenderer, whether or not affiliated with the Tenderer, who: a) has been requested to submit a Tender in response to this request for tenders; b) could potentially submit a tender in response to this request for tenders, based on their qualifications, abilities or experience; The Tenderer discloses that (check one of the following, as applicable): a) The Tenderer has arrived at the Tender independently from, and without consultation, communication, agreement or arrangement with, any competitor; b) the Tenderer has entered into consultations, communications, agreements or arrangements with one or more competitors regarding this request for tenders, and the Tenderer discloses, in the attached document(s), complete details thereof, including the names of the competitors and the nature of, and reasons for, such consultations, communications, agreements or arrangements; In particular, without limiting the generality of paragraphs (5)(a) or (5)(b) above, there has been no consultation, communication, agreement or arrangement with any competitor regarding: a) prices; b) methods, factors or formulas used to calculate prices; c) the intention or decision to submit, or not to submit, a tender; or d) the submission of a tender which does not meet the specifications of the request for Tenders; except as specifically disclosed pursuant to paragraph (5)(b) above; In addition, there has been no consultation, communication, agreement or arrangement with any competitor regarding the quality, quantity, specifications or delivery particulars of the works or services to which this request for tenders relates, except as specifically authorized by the procuring authority or as specifically disclosed pursuant to paragraph (5)(b) above; the terms of the Tender have not been, and will not be, knowingly disclosed by the Tenderer, directly or indirectly, to any competitor, prior to the date and time of the official tender opening, or of the awarding of the Contract, whichever comes first, unless otherwise required by law or as specifically disclosed pursuant to paragraph (5)(b) above.",
       "order": 30,
       "rule_id": "RR-DECL-CITD",
       "source_family": "declaration",
@@ -660,7 +598,7 @@
         "form_id": "FORM-CITD",
         "selector": "SEL-DECLARATION"
       },
-      "source_text_digest": "c248d2f2c804328e7244879f2b6d6d501dd0542fd7391436ce76ecf7771764a5",
+      "source_text_digest": "ee0750fc1d41ef19de6a3b9bcc51251e6553add20f353dac0d974a07fe60c61e",
       "task_id": "TASK-COMPANY",
       "text_version": "1"
     },
@@ -690,7 +628,7 @@
         }
       ],
       "identity_suffix": "SD1",
-      "locked_text": "1. THAT I am the Company Secretary/Chief Executive/Managing Director/Principal Officer/Director of _______________________ (name of the Company) who is a Bidder in respect of Tender No. {{ tender.reference }} for {{ tender.title }} for {{ procuring_entity.name }} and duly authorized and competent to make this statement. 2. THAT the aforesaid Bidder, its Directors and subcontractors have not been debarred from participating in procurement proceeding under Part IV of the Act. 3. THAT what is deponed to herein above is true to the best of my knowledge, information and belief.",
+      "locked_text": "THAT I am the Company Secretary/Chief Executive/Managing Director/Principal Officer/Director of _______________________ (name of the Company) who is a Bidder in respect of Tender No. {{ tender.reference }} for {{ tender.title }} for {{ procuring_entity.name }} and duly authorized and competent to make this statement. THAT the aforesaid Bidder, its Directors and subcontractors have not been debarred from participating in procurement proceeding under Part IV of the Act. THAT what is deponed to herein above is true to the best of my knowledge, information and belief.",
       "order": 40,
       "rule_id": "RR-DECL-SD1",
       "source_family": "declaration",
@@ -699,7 +637,7 @@
         "form_id": "FORM-SD1",
         "selector": "SEL-DECLARATION"
       },
-      "source_text_digest": "98c1ebed162b673f430457c8654567cac6fab0d465dcb140c0ff978cfbd1c4c9",
+      "source_text_digest": "41332ba5d6d6e826b76c4215db8618e804ce86fd8bb2079b92d1b9a1060c0b91",
       "task_id": "TASK-COMPANY",
       "text_version": "1"
     },
@@ -729,7 +667,7 @@
         }
       ],
       "identity_suffix": "SD2",
-      "locked_text": "1. THAT I am the Chief Executive/Managing Director/Principal Officer/Director of _______________________ (name of the Company) who is a Bidder in respect of Tender No. {{ tender.reference }} for {{ tender.title }} for {{ procuring_entity.name }} and duly authorized and competent to make this statement. 2. THAT the aforesaid Bidder, its servants and/or agents/subcontractors will not engage in any corrupt or fraudulent practice and has not been requested to pay any inducement to any member of the Board, Management, Staff and/or employees and/or agents of {{ procuring_entity.name }}, which is the procuring entity. 3. THAT the aforesaid Bidder, its servants and/or agents/subcontractors have not offered any inducement to any member of the Board, Management, Staff and/or employees and/or agents of {{ procuring_entity.name }}. 4. THAT the aforesaid Bidder will not engage/has not engaged in any corrosive practice with other bidders participating in the subject tender. 5. THAT what is deponed to herein above is true to the best of my knowledge information and belief.",
+      "locked_text": "THAT I am the Chief Executive/Managing Director/Principal Officer/Director of _______________________ (name of the Company) who is a Bidder in respect of Tender No. {{ tender.reference }} for {{ tender.title }} for {{ procuring_entity.name }} and duly authorized and competent to make this statement. THAT the aforesaid Bidder, its servants and/or agents/subcontractors will not engage in any corrupt or fraudulent practice and has not been requested to pay any inducement to any member of the Board, Management, Staff and/or employees and/or agents of {{ procuring_entity.name }}, which is the procuring entity. THAT the aforesaid Bidder, its servants and/or agents/subcontractors have not offered any inducement to any member of the Board, Management, Staff and/or employees and/or agents of {{ procuring_entity.name }}. THAT the aforesaid Bidder will not engage/has not engaged in any corrosive practice with other bidders participating in the subject tender. THAT what is deponed to herein above is true to the best of my knowledge information and belief.",
       "order": 50,
       "rule_id": "RR-DECL-SD2",
       "source_family": "declaration",
@@ -738,7 +676,7 @@
         "form_id": "FORM-SD2",
         "selector": "SEL-DECLARATION"
       },
-      "source_text_digest": "6bc26dff1d4f652fb7932d77ad4419470c1f0bfc25780cbd6511046ab60d3559",
+      "source_text_digest": "9a3609b70722725c0ff487cef7d12468e23a4094c3183dfe24e87c584150b1d6",
       "task_id": "TASK-COMPANY",
       "text_version": "1"
     },
@@ -812,258 +750,37 @@
           }
         },
         {
-          "control_id": "CTL-SHORT-TEXT",
-          "evidence_rule": null,
-          "field_key": "sole_proprietor_name",
-          "help_text": "Part (b) of the questionnaire.",
-          "label": "Sole proprietor: name in full",
-          "required_rule": {
-            "field_key": "business_structure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Sole proprietor"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 160,
-            "min_length": 2
-          },
-          "visibility_rule": {
-            "field_key": "business_structure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Sole proprietor"
-          }
-        },
-        {
-          "control_id": "CTL-INTEGER",
-          "evidence_rule": null,
-          "field_key": "sole_proprietor_age",
-          "help_text": "Part (b) of the questionnaire.",
-          "label": "Sole proprietor: age",
-          "required_rule": {
-            "field_key": "business_structure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Sole proprietor"
-          },
-          "validation_id": "VAL-INTEGER-RANGE",
-          "validation_parameters": {
-            "maximum": 120,
-            "minimum": 18
-          },
-          "visibility_rule": {
-            "field_key": "business_structure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Sole proprietor"
-          }
-        },
-        {
-          "control_id": "CTL-SHORT-TEXT",
-          "evidence_rule": null,
-          "field_key": "sole_proprietor_nationality",
-          "help_text": "Part (b) of the questionnaire.",
-          "label": "Sole proprietor: nationality",
-          "required_rule": {
-            "field_key": "business_structure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Sole proprietor"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 80,
-            "min_length": 2
-          },
-          "visibility_rule": {
-            "field_key": "business_structure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Sole proprietor"
-          }
-        },
-        {
-          "control_id": "CTL-SHORT-TEXT",
-          "evidence_rule": null,
-          "field_key": "sole_proprietor_country_of_origin",
-          "help_text": "Part (b) of the questionnaire.",
-          "label": "Sole proprietor: country of origin",
-          "required_rule": {
-            "field_key": "business_structure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Sole proprietor"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 80,
-            "min_length": 2
-          },
-          "visibility_rule": {
-            "field_key": "business_structure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Sole proprietor"
-          }
-        },
-        {
-          "control_id": "CTL-SHORT-TEXT",
-          "evidence_rule": null,
-          "field_key": "sole_proprietor_citizenship",
-          "help_text": "Part (b) of the questionnaire.",
-          "label": "Sole proprietor: citizenship",
-          "required_rule": {
-            "field_key": "business_structure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Sole proprietor"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 80,
-            "min_length": 2
-          },
-          "visibility_rule": {
-            "field_key": "business_structure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Sole proprietor"
-          }
-        },
-        {
           "control_id": "CTL-LONG-TEXT",
           "evidence_rule": null,
-          "field_key": "partners_details",
-          "help_text": "Part (c), Partnership. Write one partner per line: name; nationality; citizenship; % shares owned.",
-          "label": "Names of the partners, with the nationality, citizenship and percentage of shares owned by each",
-          "required_rule": {
-            "field_key": "business_structure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Partnership"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 2000,
-            "min_length": 10
-          },
-          "visibility_rule": {
-            "field_key": "business_structure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Partnership"
-          }
-        },
-        {
-          "control_id": "CTL-SINGLE-CHOICE",
-          "evidence_rule": null,
-          "field_key": "company_type",
-          "help_text": "Part (d)(i), registered company.",
-          "label": "Is the company a private or a public company?",
-          "required_rule": {
-            "field_key": "business_structure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Registered company"
-          },
-          "validation_id": "VAL-OPTION-IN-LIST",
-          "validation_parameters": {
-            "options": [
-              "Private company",
-              "Public company"
-            ]
-          },
-          "visibility_rule": {
-            "field_key": "business_structure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Registered company"
-          }
-        },
-        {
-          "control_id": "CTL-MONEY",
-          "evidence_rule": null,
-          "field_key": "nominal_capital",
-          "help_text": "Part (d)(ii), registered company.",
-          "label": "Nominal capital (Kenya Shillings)",
-          "required_rule": {
-            "field_key": "business_structure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Registered company"
-          },
-          "validation_id": "VAL-MONEY",
-          "validation_parameters": {
-            "currency": "KES",
-            "minimum": "0.00",
-            "scale": 2
-          },
-          "visibility_rule": {
-            "field_key": "business_structure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Registered company"
-          }
-        },
-        {
-          "control_id": "CTL-MONEY",
-          "evidence_rule": null,
-          "field_key": "issued_capital",
-          "help_text": "Part (d)(ii), registered company.",
-          "label": "Issued capital (Kenya Shillings)",
-          "required_rule": {
-            "field_key": "business_structure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Registered company"
-          },
-          "validation_id": "VAL-MONEY",
-          "validation_parameters": {
-            "currency": "KES",
-            "minimum": "0.00",
-            "scale": 2
-          },
-          "visibility_rule": {
-            "field_key": "business_structure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Registered company"
-          }
-        },
-        {
-          "control_id": "CTL-LONG-TEXT",
-          "evidence_rule": null,
-          "field_key": "directors_details",
-          "help_text": "Part (d)(iii), registered company. Write one director per line: name; nationality; citizenship; % shares owned.",
-          "label": "Names of the directors, with the nationality, citizenship and percentage of shares owned by each",
-          "required_rule": {
-            "field_key": "business_structure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Registered company"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 2000,
-            "min_length": 10
-          },
-          "visibility_rule": {
-            "field_key": "business_structure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Registered company"
-          }
-        },
-        {
-          "control_id": "CTL-SHORT-TEXT",
-          "evidence_rule": null,
-          "field_key": "trade_licence_number",
-          "help_text": "Table A, item 6.",
-          "label": "Current trade licence number",
+          "field_key": "ownership_details",
+          "help_text": "",
+          "label": "Owner, partner or director details (name, nationality, citizenship and percentage of shares owned)",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
           "validation_id": "VAL-TEXT-LENGTH",
           "validation_parameters": {
-            "max_length": 80,
-            "min_length": 3
+            "max_length": 4000,
+            "min_length": 10
           },
           "visibility_rule": {
             "rule_id": "VS-ALWAYS"
           }
         },
         {
-          "control_id": "CTL-DATE",
+          "control_id": "CTL-SHORT-TEXT",
           "evidence_rule": null,
-          "field_key": "trade_licence_expiry",
-          "help_text": "Table A, item 6.",
-          "label": "Trade licence expiry date",
+          "field_key": "trade_licence",
+          "help_text": "",
+          "label": "Current trade licence number and expiry date",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
-          "validation_id": "VAL-DATE-RANGE",
-          "validation_parameters": {},
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 120,
+            "min_length": 3
+          },
           "visibility_rule": {
             "rule_id": "VS-ALWAYS"
           }
@@ -1111,8 +828,8 @@
           "control_id": "CTL-LONG-TEXT",
           "evidence_rule": null,
           "field_key": "procuring_entity_interest_details",
-          "help_text": "Part (e)(i). Write one person per line: name; designation in the Procuring Entity; interest or relationship.",
-          "label": "Names of the persons in the Procuring Entity who have an interest or relationship in this firm, their designation in the Procuring Entity, and the interest or relationship with the Tenderer",
+          "help_text": "",
+          "label": "Names, designation in the Procuring Entity and the interest or relationship",
           "required_rule": {
             "field_key": "procuring_entity_interest",
             "rule_id": "RQ-WHEN-FIELD-EQUALS",
@@ -1133,8 +850,8 @@
           "control_id": "CTL-YES-NO",
           "evidence_rule": null,
           "field_key": "conflict_01",
-          "help_text": "",
-          "label": "1. Tenderer is directly or indirectly controlled by or is under common control with another tenderer.",
+          "help_text": "Disclosure of Interest item (ii) 1.",
+          "label": "Conflict of interest item 1",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
@@ -1147,36 +864,14 @@
           },
           "visibility_rule": {
             "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
-          "control_id": "CTL-LONG-TEXT",
-          "evidence_rule": null,
-          "field_key": "conflict_01_details",
-          "help_text": "",
-          "label": "If YES, provide details of the relationship with Tenderer",
-          "required_rule": {
-            "field_key": "conflict_01",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Yes"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 2000,
-            "min_length": 10
-          },
-          "visibility_rule": {
-            "field_key": "conflict_01",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Yes"
           }
         },
         {
           "control_id": "CTL-YES-NO",
           "evidence_rule": null,
           "field_key": "conflict_02",
-          "help_text": "",
-          "label": "2. Tenderer receives or has received any direct or indirect subsidy from another tenderer.",
+          "help_text": "Disclosure of Interest item (ii) 2.",
+          "label": "Conflict of interest item 2",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
@@ -1189,36 +884,14 @@
           },
           "visibility_rule": {
             "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
-          "control_id": "CTL-LONG-TEXT",
-          "evidence_rule": null,
-          "field_key": "conflict_02_details",
-          "help_text": "",
-          "label": "If YES, provide details of the relationship with Tenderer",
-          "required_rule": {
-            "field_key": "conflict_02",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Yes"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 2000,
-            "min_length": 10
-          },
-          "visibility_rule": {
-            "field_key": "conflict_02",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Yes"
           }
         },
         {
           "control_id": "CTL-YES-NO",
           "evidence_rule": null,
           "field_key": "conflict_03",
-          "help_text": "",
-          "label": "3. Tenderer has the same legal representative as another tenderer",
+          "help_text": "Disclosure of Interest item (ii) 3.",
+          "label": "Conflict of interest item 3",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
@@ -1231,36 +904,14 @@
           },
           "visibility_rule": {
             "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
-          "control_id": "CTL-LONG-TEXT",
-          "evidence_rule": null,
-          "field_key": "conflict_03_details",
-          "help_text": "",
-          "label": "If YES, provide details of the relationship with Tenderer",
-          "required_rule": {
-            "field_key": "conflict_03",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Yes"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 2000,
-            "min_length": 10
-          },
-          "visibility_rule": {
-            "field_key": "conflict_03",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Yes"
           }
         },
         {
           "control_id": "CTL-YES-NO",
           "evidence_rule": null,
           "field_key": "conflict_04",
-          "help_text": "",
-          "label": "4. Tender has a relationship with another tenderer, directly or through common third parties that puts it in a position to influence the tender of another tenderer, or influence the decisions of the Procuring Entity regarding this tendering process.",
+          "help_text": "Disclosure of Interest item (ii) 4.",
+          "label": "Conflict of interest item 4",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
@@ -1273,36 +924,14 @@
           },
           "visibility_rule": {
             "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
-          "control_id": "CTL-LONG-TEXT",
-          "evidence_rule": null,
-          "field_key": "conflict_04_details",
-          "help_text": "",
-          "label": "If YES, provide details of the relationship with Tenderer",
-          "required_rule": {
-            "field_key": "conflict_04",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Yes"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 2000,
-            "min_length": 10
-          },
-          "visibility_rule": {
-            "field_key": "conflict_04",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Yes"
           }
         },
         {
           "control_id": "CTL-YES-NO",
           "evidence_rule": null,
           "field_key": "conflict_05",
-          "help_text": "",
-          "label": "5. Any of the Tenderer's affiliates participated as a consultant in the preparation of the design or technical specifications of the works that are the subject of the tender.",
+          "help_text": "Disclosure of Interest item (ii) 5.",
+          "label": "Conflict of interest item 5",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
@@ -1315,36 +944,14 @@
           },
           "visibility_rule": {
             "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
-          "control_id": "CTL-LONG-TEXT",
-          "evidence_rule": null,
-          "field_key": "conflict_05_details",
-          "help_text": "",
-          "label": "If YES, provide details of the relationship with Tenderer",
-          "required_rule": {
-            "field_key": "conflict_05",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Yes"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 2000,
-            "min_length": 10
-          },
-          "visibility_rule": {
-            "field_key": "conflict_05",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Yes"
           }
         },
         {
           "control_id": "CTL-YES-NO",
           "evidence_rule": null,
           "field_key": "conflict_06",
-          "help_text": "",
-          "label": "6. Tenderer would be providing goods, works, non-consulting services or consulting services during implementation of the contract specified in this Tender Document.",
+          "help_text": "Disclosure of Interest item (ii) 6.",
+          "label": "Conflict of interest item 6",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
@@ -1357,36 +964,14 @@
           },
           "visibility_rule": {
             "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
-          "control_id": "CTL-LONG-TEXT",
-          "evidence_rule": null,
-          "field_key": "conflict_06_details",
-          "help_text": "",
-          "label": "If YES, provide details of the relationship with Tenderer",
-          "required_rule": {
-            "field_key": "conflict_06",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Yes"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 2000,
-            "min_length": 10
-          },
-          "visibility_rule": {
-            "field_key": "conflict_06",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Yes"
           }
         },
         {
           "control_id": "CTL-YES-NO",
           "evidence_rule": null,
           "field_key": "conflict_07",
-          "help_text": "",
-          "label": "7. Tenderer has a close business or family relationship with a professional staff of the Procuring Entity who are directly or indirectly involved in the preparation of the Tender document or specifications of the Contract, and/or the Tender evaluation process of such contract.",
+          "help_text": "Disclosure of Interest item (ii) 7.",
+          "label": "Conflict of interest item 7",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
@@ -1399,36 +984,34 @@
           },
           "visibility_rule": {
             "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
-          "control_id": "CTL-LONG-TEXT",
-          "evidence_rule": null,
-          "field_key": "conflict_07_details",
-          "help_text": "",
-          "label": "If YES, provide details of the relationship with Tenderer",
-          "required_rule": {
-            "field_key": "conflict_07",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Yes"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 2000,
-            "min_length": 10
-          },
-          "visibility_rule": {
-            "field_key": "conflict_07",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Yes"
           }
         },
         {
           "control_id": "CTL-YES-NO",
           "evidence_rule": null,
           "field_key": "conflict_08",
-          "help_text": "",
-          "label": "8. Tenderer has a close business or family relationship with a professional staff of the Procuring Entity who would be involved in the implementation or supervision of the Contract.",
+          "help_text": "Disclosure of Interest item (ii) 8.",
+          "label": "Conflict of interest item 8",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Yes",
+              "No"
+            ]
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-YES-NO",
+          "evidence_rule": null,
+          "field_key": "conflict_09",
+          "help_text": "Disclosure of Interest item (ii) 9.",
+          "label": "Conflict of interest item 9",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
@@ -1446,74 +1029,42 @@
         {
           "control_id": "CTL-LONG-TEXT",
           "evidence_rule": null,
-          "field_key": "conflict_08_details",
+          "field_key": "conflict_details",
           "help_text": "",
-          "label": "If YES, provide details of the relationship with Tenderer",
-          "required_rule": {
-            "field_key": "conflict_08",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Yes"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 2000,
-            "min_length": 10
-          },
-          "visibility_rule": {
-            "field_key": "conflict_08",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Yes"
-          }
-        },
-        {
-          "control_id": "CTL-YES-NO",
-          "evidence_rule": null,
-          "field_key": "conflict_09",
-          "help_text": "",
-          "label": "9. Has the conflict stemming from such relationship stated in item 7 and 8 above been resolved in a manner acceptable to the Procuring Entity throughout the tendering process and execution of the Contract?",
+          "label": "Details of each conflict of interest answered Yes",
           "required_rule": {
             "field_keys": [
+              "conflict_01",
+              "conflict_02",
+              "conflict_03",
+              "conflict_04",
+              "conflict_05",
+              "conflict_06",
               "conflict_07",
-              "conflict_08"
+              "conflict_08",
+              "conflict_09"
             ],
             "rule_id": "RQ-WHEN-ANY-FIELD-EQUALS",
             "value": "Yes"
           },
-          "validation_id": "VAL-OPTION-IN-LIST",
-          "validation_parameters": {
-            "options": [
-              "Yes",
-              "No"
-            ]
-          },
-          "visibility_rule": {
-            "field_keys": [
-              "conflict_07",
-              "conflict_08"
-            ],
-            "rule_id": "VS-WHEN-ANY-FIELD-EQUALS",
-            "value": "Yes"
-          }
-        },
-        {
-          "control_id": "CTL-LONG-TEXT",
-          "evidence_rule": null,
-          "field_key": "conflict_09_details",
-          "help_text": "",
-          "label": "If YES, provide details of the relationship with Tenderer",
-          "required_rule": {
-            "field_key": "conflict_09",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Yes"
-          },
           "validation_id": "VAL-TEXT-LENGTH",
           "validation_parameters": {
-            "max_length": 2000,
+            "max_length": 4000,
             "min_length": 10
           },
           "visibility_rule": {
-            "field_key": "conflict_09",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
+            "field_keys": [
+              "conflict_01",
+              "conflict_02",
+              "conflict_03",
+              "conflict_04",
+              "conflict_05",
+              "conflict_06",
+              "conflict_07",
+              "conflict_08",
+              "conflict_09"
+            ],
+            "rule_id": "VS-WHEN-ANY-FIELD-EQUALS",
             "value": "Yes"
           }
         },
@@ -1534,7 +1085,7 @@
         }
       ],
       "identity_suffix": "CBQ",
-      "locked_text": "(e) Disclosure of Interest (i) Are there any person/persons in {{ procuring_entity.name }} who has an interest or relationship in this firm? Yes/No _______________________. If yes, provide names, designation in the Procuring Entity and the interest or relationship with the Tenderer. (ii) Conflict of interest disclosure - for each of the following, the Tenderer discloses Yes/No and, if Yes, the details of the relationship: 1. Tenderer is directly or indirectly controlled by or is under common control with another tenderer. 2. Tenderer receives or has received any direct or indirect subsidy from another tenderer. 3. Tenderer has the same legal representative as another tenderer 4. Tender has a relationship with another tenderer, directly or through common third parties that puts it in a position to influence the tender of another tenderer, or influence the decisions of the Procuring Entity regarding this tendering process. 5. Any of the Tenderer's affiliates participated as a consultant in the preparation of the design or technical specifications of the works that are the subject of the tender. 6. Tenderer would be providing goods, works, non-consulting services or consulting services during implementation of the contract specified in this Tender Document. 7. Tenderer has a close business or family relationship with a professional staff of the Procuring Entity who are directly or indirectly involved in the preparation of the Tender document or specifications of the Contract, and/or the Tender evaluation process of such contract. 8. Tenderer has a close business or family relationship with a professional staff of the Procuring Entity who would be involved in the implementation or supervision of the Contract. 9. Has the conflict stemming from such relationship stated in item 7 and 8 above been resolved in a manner acceptable to the Procuring Entity throughout the tendering process and execution of the Contract? (f) Certification On behalf of the Tenderer, I certify that the information given above is correct.",
+      "locked_text": "(e) Disclosure of Interest (i) Are there any person/persons in {{ procuring_entity.name }} who has an interest or relationship in this firm? Yes/No _______________________. If yes, provide names, designation in the Procuring Entity and the interest or relationship with the Tenderer. (ii) Conflict of interest disclosure - for each of the following, the Tenderer discloses Yes/No and, if Yes, the details of the relationship: Tenderer is directly or indirectly controlled by or is under common control with another tenderer. Tenderer receives or has received any direct or indirect subsidy from another tenderer. Tenderer has the same legal representative as another tenderer. Tenderer has a relationship with another tenderer, directly or through common third parties, that puts it in a position to influence the tender of another tenderer, or influence the decisions of the Procuring Entity regarding this tendering process. Any of the Tenderer's affiliates participated as a consultant in the preparation of the design or technical specifications of the works that are the subject of the tender. Tenderer would be providing goods, works, non-consulting services or consulting services during implementation of the contract specified in this Tender Document. Tenderer has a close business or family relationship with a professional staff of the Procuring Entity who are directly or indirectly involved in the preparation of the Tender document or specifications of the Contract, and/or the Tender evaluation process of such contract. Tenderer has a close business or family relationship with a professional staff of the Procuring Entity who would be involved in the implementation or supervision of the Contract. Has the conflict stemming from such relationship stated in items 7 and 8 above been resolved in a manner acceptable to the Procuring Entity throughout the tendering process and execution of the Contract? (f) Certification On behalf of the Tenderer, I certify that the information given above is correct.",
       "order": 70,
       "rule_id": "RR-DECL-CBQ",
       "source_family": "declaration",
@@ -1543,7 +1094,7 @@
         "form_id": "FORM-CBQ",
         "selector": "SEL-DECLARATION"
       },
-      "source_text_digest": "f7ab0d169dc2c8f77364172255d5fa620b51e8509fcb544bd7a2c02714785396",
+      "source_text_digest": "55e241f4a8c621a4124f78e9b5cca43d61f1736bf7d91630e9597c42bdb6c0f8",
       "task_id": "TASK-COMPANY",
       "text_version": "1"
     },
@@ -1855,7 +1406,7 @@
           },
           "field_key": "evidence",
           "help_text": "",
-          "label": "Documents attached to the Tenderer Information Form: tax clearance or exemption certificate (Kenyan Tenderers); articles of incorporation or registration documents; JV letter of intent or agreement (if a joint venture); state-owned enterprise documents (if applicable); and the organisational chart and list of Board of Directors",
+          "label": "Tax compliance, registration and constitution documents",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
@@ -2789,5 +2340,5 @@
   "schema_version": 1,
   "supported_renderer_version": "1.1.0",
   "template_key": "IT-EQUIPMENT-OPEN-V1",
-  "template_release": "1.3"
+  "template_release": "1.2"
 }

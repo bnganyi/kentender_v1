@@ -1,7 +1,7 @@
 """IT-EQUIPMENT-OPEN-V1 release validator (STD-TPL-001 v0.10 §13.8).
 
 Curation tooling only: it is never imported by the KenTender runtime. It runs
-the 21 mandatory check families against the controlled pack, writes a
+the 22 check families against the controlled pack, writes a
 deterministic `05_review/validation_report.json`, the generated
 `05_review/release_change_report.json` and `05_review/release_gates.json`
 (one row per §14.2 gate; a missing review is Pending), and exits 0 only when
@@ -37,7 +37,7 @@ from kentender_procurement.std_templates.compiler import addenda, assets as rele
 from kentender_procurement.std_templates.compiler.canonical import pretty_json, sha256_hex  # noqa: E402
 from kentender_procurement.std_templates.compiler.definition import compile_published_bid_definition, verify_definition_digest  # noqa: E402
 from kentender_procurement.std_templates.compiler.errors import STDTemplateError  # noqa: E402
-from kentender_procurement.std_templates.release import bundle, change_report, coverage, gates  # noqa: E402
+from kentender_procurement.std_templates.release import bundle, change_report, coverage, gates, quality  # noqa: E402
 from kentender_procurement.std_templates.renderers import registry  # noqa: E402
 from kentender_procurement.std_templates.renderers.document import MASTER_PATHS  # noqa: E402
 
@@ -45,7 +45,7 @@ import build_definition_fixture as cli  # noqa: E402
 
 EXPECTED_IDENTITY = {
 	"template_key": "IT-EQUIPMENT-OPEN-V1",
-	"template_release": "1.2",
+	"template_release": "1.3",
 	"product_profile_id": "GOODS-IT-SIMPLE-V1",
 	"renderer_profile_id": "BDS-GOODS-IT-V1",
 }
@@ -719,6 +719,20 @@ def c21():
 	return problems, f"Compared with release {report['preceding_release']}: {len(report['changes'])} changes; {report['overall_result']}."
 
 
+def c22():
+	assets = load_assets()
+	key = assets.envelope["template_key"]
+	templates = PACK.parent
+	found = quality.run(
+		rules=assets.rules, mappings=assets.downstream_rules["mappings"], profile=assets.profile,
+		evaluation=json.loads((templates / "evaluation_rules" / f"{key}.json").read_text(encoding="utf-8")),
+		register=json.loads((templates / "quality_register" / f"{key}.json").read_text(encoding="utf-8")),
+		master_html=read("02_master/complete_tender.html"), template_release=assets.envelope["template_release"])
+	problems = [f"{f.check} {f.where}: {f.message}" for f in found["failures"]]
+	return problems, (f"No content defect; {len(found['advisories'])} advisories for review; {len(found['deferred'])} items deferred or open on the record "
+		f"({', '.join(sorted({f.where for f in found['deferred']}))}).")
+
+
 CHECKS = (
 	("C01", "Required path inventory and absence of unapproved assets", "pack", c01),
 	("C02", "Source, schema and release identities", "01_source; 06_runtime", c02),
@@ -741,6 +755,7 @@ CHECKS = (
 	("C19", "Complete structured gate rows, evidence references and source-check facts", "05_review/gate_reviews.json", c19),
 	("C20", "Exact compiler parity between fixture and production test vectors", "04_fixture/build_definition_fixture.py", c20),
 	("C21", "Generation and internal consistency of the preceding-release change report", "05_review/release_change_report.json", c21),
+	("C22", "Content quality: wording, tables, evaluation coverage and polarity", "06_runtime; evaluation_rules; quality_register", c22),
 )
 
 

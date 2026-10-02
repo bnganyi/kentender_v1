@@ -59,7 +59,10 @@ class TestMemoryBelowMinimum(ReceivedCase):
 	def test_the_bid_is_not_responsive_and_nothing_is_recommended(self):
 		doc = self.received()
 		res, memory = self.requirement(doc, "Memory")
-		self.assertEqual((memory["result"], memory["reason"]), ("Does not meet", "8 GB is below the required 16 GB."))
+		# the bidder truthfully says "Do not comply" beside 8 GB: both checks fail, and the value's own reason is named
+		self.assertEqual(memory["result"], "Does not meet")
+		self.assertIn("8 GB is below the required 16 GB.", memory["reason"])
+		self.assertIn("Do not comply does not meet the required Comply.", memory["reason"])
 		self.assertEqual(res["groups"]["EVG-TECHNICAL-COMPLIANCE"], "Does not meet")
 		self.assertEqual(res["responsiveness"], "Not responsive")
 		table = comparison.compare(doc.name, with_funding=False)

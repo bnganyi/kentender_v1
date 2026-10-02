@@ -157,9 +157,7 @@
         "CTL-SINGLE-CHOICE",
         "CTL-SHORT-TEXT",
         "CTL-LONG-TEXT",
-        "CTL-MONEY",
-        "CTL-INTEGER",
-        "CTL-DATE"
+        "CTL-MONEY"
       ],
       "repetition": "one",
       "task_id": "TASK-COMPANY"
@@ -483,7 +481,7 @@
       "statement": "Any response, validation, composition or mapping the released Bid Workspace renderer does not support"
     }
   ],
-  "release_id": "stdr-9b953bcf-fb1e-4e85-b9c1-6ac57218d0e2",
+  "release_id": "stdr-09bbfebd-0297-48c0-8ec2-7aa0c2e64495",
   "renderer_profile_id": "BDS-GOODS-IT-V1",
   "required_rules": [
     {
@@ -694,7 +692,7 @@
     }
   ],
   "template_key": "IT-EQUIPMENT-OPEN-V1",
-  "template_release": "1.3",
+  "template_release": "1.2",
   "validations": [
     {
       "parameters": {},

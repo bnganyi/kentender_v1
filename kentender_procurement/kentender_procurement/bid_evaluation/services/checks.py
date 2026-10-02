@@ -75,7 +75,7 @@ def results_for(loaded: dict[str, Any] | None, definition: dict[str, Any], body:
 		facts = group.get("published_facts") or {}
 		label = _label(group, row["identity"]["rule_id"])
 		res = rules.check(loaded or {"published_comparison": {}}, rule, facts=facts, value=values.get(row["response_id"]), group_values=group_values[row["group_key"]],
-			evidence_files=files.get(row["response_id"], 0), label=label)
+			evidence_files=files.get(row["response_id"], 0), label=label, field_label=row["field"]["label"])
 		out.append({"group_id": mapping["evaluation_group_id"], "mapping_id": mapping["mapping_id"], "requirement_key": row["group_key"], "requirement_label": label,
 			"response_id": row["response_id"], "field_key": field, "check_kind": res["kind"], "applicable": 0 if res["result"] == rules.NOT_APPLICABLE else 1,
 			"result": res["result"], "reason": res["reason"], "basis": res["basis"], "evidence_assessment_required": 1 if res.get("evidence_assessment") else 0,

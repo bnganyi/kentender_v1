@@ -122,19 +122,72 @@ class TestRuleFile(IntegrationTestCase):
 		self.assertEqual(differs["submitted_total"], "46000000.00")  # never corrected
 
 
+RELEASE_13 = {"template_release": "1.3", "release_id": "stdr-9b953bcf-fb1e-4e85-b9c1-6ac57218d0e2"}
+ITEM_3 = "Tenderer has the same legal representative as another tenderer"
+
+
+class TestReleaseReadings(IntegrationTestCase):
+	"""One field key may be read differently by two template releases: a Tender
+	keeps the rules of the release it was published on (STD-TPL-001 v0.14).
+	Conflict item 9 asks whether a conflict has been RESOLVED, so Yes is the
+	reassuring answer, and it applies only after item 7 or 8 is Yes."""
+
+	def check(self, release, field, value, group=None, label=""):
+		loaded = rules.load("IT-EQUIPMENT-OPEN-V1", **release)
+		return rules.check(loaded, rules.rule_for(loaded, "DM-DECL-CBQ", field), facts={}, value=value, group_values=group or {}, evidence_files=0, label="Conflict of interest questionnaire",
+			field_label=label)
+
+	def test_release_1_3_item_nine_needs_review_only_when_the_conflict_is_unresolved(self):
+		conflict = {"conflict_07": "Yes", "conflict_08": "No"}
+		self.assertEqual(self.check(RELEASE_13, "conflict_09", "Yes", conflict)["result"], "Meets")
+		unresolved = self.check(RELEASE_13, "conflict_09", "No", conflict)
+		self.assertEqual(unresolved["result"], "Needs review")
+		self.assertIn("not been resolved", unresolved["reason"])
+
+	def test_release_1_3_item_nine_does_not_apply_when_neither_item_7_nor_8_is_yes(self):
+		for group in ({"conflict_07": "No", "conflict_08": "No"}, {}):
+			out = self.check(RELEASE_13, "conflict_09", None, group)
+			self.assertEqual(out["result"], "Not applicable", group)
+		both = {"conflict_07": "No", "conflict_08": "Yes"}
+		self.assertEqual(self.check(RELEASE_13, "conflict_09", "No", both)["result"], "Needs review")
+
+	def test_release_1_2_keeps_its_own_reading_of_item_nine(self):
+		self.assertEqual(self.check(RELEASE, "conflict_09", "No")["result"], "Meets")
+		self.assertEqual(self.check(RELEASE, "conflict_09", "Yes")["result"], "Needs review")
+
+	def test_a_disclosed_conflict_names_the_item_in_the_committee_reason(self):
+		out = self.check(RELEASE_13, "conflict_03", "Yes", label=ITEM_3)
+		self.assertEqual(out["result"], "Needs review")
+		self.assertEqual(out["reason"], f"A conflict of interest was disclosed: {ITEM_3}")
+
+	def test_removed_release_1_2_fields_keep_their_rule_for_1_2_only(self):
+		self.assertIsNotNone(rules.rule_for(rules.load("IT-EQUIPMENT-OPEN-V1", **RELEASE), "DM-DECL-CBQ", "ownership_details"))
+		self.assertIsNone(rules.rule_for(rules.load("IT-EQUIPMENT-OPEN-V1", **RELEASE_13), "DM-DECL-CBQ", "ownership_details"))
+		self.assertIsNotNone(rules.rule_for(rules.load("IT-EQUIPMENT-OPEN-V1", **RELEASE_13), "DM-DECL-CBQ", "directors_details"))
+
+
 class TestRuleCoverage(IntegrationTestCase):
 	"""EVL-A03: every evaluated published response has a rule; not-evaluated
 	responses never become hidden criteria."""
 
 	def test_every_evaluated_response_of_the_published_definition_has_a_rule(self):
-		source = frappe.db.get_value("Tender Bid Definition", {"status": ("in", ("Frozen", "Effective"))}, "name", order_by="creation desc")
-		if not source:
+		"""Each template release on this site is checked against the newest definition published on it, with that release's own rules."""
+		names = frappe.get_all("Tender Bid Definition", filters={"status": ("in", ("Frozen", "Effective"))}, pluck="name", order_by="creation desc")
+		newest: dict[str, dict] = {}
+		for name in names:
+			definition = frappe.parse_json(frappe.db.get_value("Tender Bid Definition", name, "definition_json"))
+			newest.setdefault(definition["template_release_id"], definition)
+		if not newest:
 			self.skipTest("No published bid definition on this site.")
-		definition = frappe.parse_json(frappe.db.get_value("Tender Bid Definition", source, "definition_json"))
-		loaded = rules.load("IT-EQUIPMENT-OPEN-V1", template_release="1.2")
-		evaluated = {m["mapping_id"] for m in definition["evaluation_mappings"] if m["evaluation_treatment"] == "Evaluated"}
-		missing = sorted({(r["evaluation_mapping_id"], r["field"]["field_key"]) for r in definition["response_rows"]
-			if r["evaluation_mapping_id"] in evaluated and not rules.rule_for(loaded, r["evaluation_mapping_id"], r["field"]["field_key"])})
-		self.assertEqual(missing, [])
-		self.assertEqual(sorted(set(loaded["not_evaluated"])), sorted({m["mapping_id"] for m in definition["evaluation_mappings"]} - evaluated))
-		self.assertFalse([r for r in loaded["rules"] if r["mapping_id"] in loaded["not_evaluated"]])
+		for release_id, definition in newest.items():
+			with self.subTest(release=release_id):
+				release = frappe.db.get_value("Installed STD Release", release_id, "template_release")
+				loaded = rules.load("IT-EQUIPMENT-OPEN-V1", template_release=release, release_id=release_id)
+				evaluated = {m["mapping_id"] for m in definition["evaluation_mappings"] if m["evaluation_treatment"] == "Evaluated"}
+				missing = sorted({(r["evaluation_mapping_id"], r["field"]["field_key"]) for r in definition["response_rows"]
+					if r["evaluation_mapping_id"] in evaluated and not rules.rule_for(loaded, r["evaluation_mapping_id"], r["field"]["field_key"])})
+				self.assertEqual(missing, [])
+				# a definition has no addendum acknowledgement mapping until an addendum is effective, so the file may list more than the definition holds
+				self.assertEqual(sorted({m["mapping_id"] for m in definition["evaluation_mappings"]} - evaluated), sorted(set(loaded["not_evaluated"]) & {m["mapping_id"] for m in definition["evaluation_mappings"]}))
+				self.assertFalse(evaluated & set(loaded["not_evaluated"]))
+				self.assertFalse([r for r in loaded["rules"] if r["mapping_id"] in loaded["not_evaluated"]])

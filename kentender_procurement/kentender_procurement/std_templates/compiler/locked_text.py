@@ -36,6 +36,7 @@ class _AnchorText(HTMLParser):
 		self.table_depth = 0
 		self.found = 0
 		self.parts: list[str] = []
+		self.lists: list[list] = []  # one [marker kind, count] per open <ol>/<ul>; kind None = unordered
 
 	def handle_starttag(self, tag, attrs):
 		if self.depth:
@@ -43,6 +44,11 @@ class _AnchorText(HTMLParser):
 				self.depth += 1
 			if tag == "table":
 				self.table_depth += 1
+			if tag in ("ol", "ul"):
+				self.lists.append([(dict(attrs).get("type") or "1") if tag == "ol" else None, 0])
+			elif tag == "li" and self.lists and self.lists[-1][0] and not self.table_depth:
+				self.lists[-1][1] += 1
+				self.parts.append(" " + _marker(*self.lists[-1]) + " ")
 			if tag in ("p", "li", "div", "h1", "h2", "h3", "h4", "ol", "ul", "br", "tr"):
 				self.parts.append(" ")
 			return
@@ -53,6 +59,8 @@ class _AnchorText(HTMLParser):
 	def handle_endtag(self, tag):
 		if not self.depth:
 			return
+		if tag in ("ol", "ul") and self.lists:
+			self.lists.pop()
 		if tag == "table" and self.table_depth:
 			self.table_depth -= 1
 		if tag not in _VOID:
@@ -63,6 +71,19 @@ class _AnchorText(HTMLParser):
 	def handle_data(self, data):
 		if self.depth and not self.table_depth:
 			self.parts.append(data)
+
+
+def _marker(kind: str, count: int) -> str:
+	"""The marker a browser draws for the `count`th item of an ordered list: 1., a., A., i., I."""
+	if kind in ("a", "A"):
+		return f"{chr(ord(kind) + (count - 1) % 26)}."
+	if kind in ("i", "I"):
+		numerals, out = (("m", 1000), ("cm", 900), ("d", 500), ("cd", 400), ("c", 100), ("xc", 90), ("l", 50), ("xl", 40), ("x", 10), ("ix", 9), ("v", 5), ("iv", 4), ("i", 1)), ""
+		for symbol, value in numerals:
+			out += symbol * (count // value)
+			count %= value
+		return (out if kind == "i" else out.upper()) + "."
+	return f"{count}."
 
 
 def normalize(text: str) -> str:

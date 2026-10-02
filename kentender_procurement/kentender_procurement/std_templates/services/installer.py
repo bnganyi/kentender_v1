@@ -418,4 +418,15 @@ def ensure_site_release(*, installed_by: str = "Administrator") -> str:
 			f"({row.lifecycle_status}, switched {row.site_switch}, integrity {row.integrity_status}). "
 			"Switch it on with `make std-release-switch SITE=<site> STATE=On`, or reinstall it."
 		)
+	_switch_off_others(manifest["template_key"], manifest["release_id"], installed_by)
 	return manifest["release_id"]
+
+
+def _switch_off_others(template_key: str, keep: str, actor: str) -> None:
+	"""Two releases of one Tender format switched On stop every new Tender, so a
+	newer repository release switches the older ones Off. They stay installed
+	and keep serving the Tenders already started on them (owner decision OD5)."""
+	from kentender_procurement.std_templates.services import lifecycle
+
+	for name in frappe.get_all(DOCTYPE, filters={"template_key": template_key, "lifecycle_status": "Available", "site_switch": "On", "name": ("!=", keep)}, pluck="name"):
+		lifecycle.switch(name, "Off", actor)

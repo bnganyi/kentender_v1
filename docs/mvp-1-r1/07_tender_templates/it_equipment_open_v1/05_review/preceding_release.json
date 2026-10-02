@@ -426,7 +426,7 @@
     },
     {
       "path": "02_master/complete_tender.html",
-      "sha256": "0af8b856cd6eea165fd0e9bdf134a2a3b7deb4148ce05a62e5136503b6f032f9"
+      "sha256": "f8e3f137bd3aec8db2a3efb6bba07a420ba5fc4b621b720f222fe094c12bda79"
     },
     {
       "path": "02_master/invitation_to_tender.html",
@@ -438,11 +438,11 @@
     },
     {
       "path": "03_registers/coverage_register.csv",
-      "sha256": "bd8362e328bdfbf2840998624cb181a6b3c4db04eb0c4fea34b1c2f81813c43a"
+      "sha256": "1e860bf655ea1f960d852f96f7544b5445d337f36fcb0e6481ee99f8e9435bfd"
     },
     {
       "path": "03_registers/forms_register.csv",
-      "sha256": "be24cd8c7f4b8a09847a031da7c8666882269af3d5f4f1a59c4b14619726e999"
+      "sha256": "b606dc30ec80a649bd548f3e5bc5f125f153afc72ed51668566625cafce31405"
     },
     {
       "path": "03_registers/insertion_points.csv",
@@ -490,31 +490,31 @@
     },
     {
       "path": "05_review/open_issues.md",
-      "sha256": "db1119a80ccc8677c45fe08fbadb05b771a9f7313f93dfc1b2c1a1bad925ae72"
+      "sha256": "0b860b676b6e5e2ababd332c19432eb205d9b8642ec72501b325d6af9240353b"
     },
     {
       "path": "05_review/preceding_release.json",
-      "sha256": "a196c49dd38460af7ee8435d11b48572a3dafd9d9b4ef7d6a82d1bcb64277cac"
+      "sha256": "11483d2ca1b597a872359b7e598966a86d36afdebccd3c7ac586feeedb48dd99"
     },
     {
       "path": "06_runtime/addendum_identity_rules.json",
-      "sha256": "3101e1f0802f195f7eb091376fb82090c12a7f9c61a88c7911995a55640ae8c2"
+      "sha256": "2401011de31b471eeeeff8c85e251de5ee95d92d084b60cef297ab2dfc4ea9d1"
     },
     {
       "path": "06_runtime/downstream_rules.json",
-      "sha256": "857156d8564b1c83172f7542989c48d7836c9c05c0191c93030cb0e33c3a2a71"
+      "sha256": "57f01f42035a3027580feb8cbce8c07d40715f7423bc3789294a4b9ec22db954"
     },
     {
       "path": "06_runtime/product_profile.json",
-      "sha256": "ba54b83bf154d39c09eb61087935a6ced552302edb539350ffb1ebdc0d90fd1f"
+      "sha256": "d63bfc37969334357a0d2432787123c94c16237c4434de6a2346acef4b37faf2"
     },
     {
       "path": "06_runtime/response_rules.json",
-      "sha256": "ca98cc5406446b952edfb7652ab618cafbc4b573805f4669368d295d65745b07"
+      "sha256": "005d3c56271fb1f49f91a178654881d69faa6331f87e1b5402e1d4c691c3c575"
     },
     {
       "path": "06_runtime/validate_release.py",
-      "sha256": "2db813d9904f0dae3cb560e7662e41ebc6570b520508907c304b76476155cfc8"
+      "sha256": "6147c1800eee88dca695a65c66292080108f8efbc8d1966a82ae9fa269c93662"
     }
   ],
   "contract_mappings": [
@@ -592,6 +592,11 @@
       "contract_destination": "CD-GOODS-DELIVERY-SCHEDULE",
       "contract_treatment": "Carried forward",
       "mapping_id": "DM-GOODS-OFFER"
+    },
+    {
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-JV-MEMBER"
     },
     {
       "contract_destination": "CD-CONTRACT-PRICE-SCHEDULES",
@@ -986,6 +991,7 @@
     "complete_tender.html#decl-sd1",
     "complete_tender.html#decl-sd2",
     "complete_tender.html#form-acceptance-confirmation",
+    "complete_tender.html#form-jv-members",
     "complete_tender.html#form-manufacturer-authorisation",
     "complete_tender.html#form-of-tender",
     "complete_tender.html#form-related-services-confirmation",
@@ -1077,6 +1083,11 @@
       "mapping_id": "DM-GOODS-OFFER"
     },
     {
+      "evaluation_group_id": null,
+      "evaluation_treatment": "Not evaluated",
+      "mapping_id": "DM-JV-MEMBER"
+    },
+    {
       "evaluation_group_id": "EVG-FINANCIAL",
       "evaluation_treatment": "Evaluated",
       "mapping_id": "DM-PRICE-GOODS"
@@ -1123,14 +1134,14 @@
     }
   ],
   "evidence": [
-    "Release 1.1 pack at repository commit 5f7f521d (06_runtime assets, validator 21/21)",
-    "STD-TPL-001 v0.12 (approved 26 September 2026)"
+    "Release 1.2 pack at repository commit 5f331b55 (06_runtime assets)",
+    "STD-TPL-001 v0.13 (approved 27 September 2026)"
   ],
-  "release_id": "stdr-0e81b40c-d548-498c-855a-d4f80764af40",
+  "release_id": "stdr-09bbfebd-0297-48c0-8ec2-7aa0c2e64495",
   "renderer": {
     "document_engine": "wkhtmltopdf 0.12.6.1 (with patched qt)",
     "renderer_profile_id": "BDS-GOODS-IT-V1",
-    "supported_renderer_version": "1.0.0"
+    "supported_renderer_version": "1.1.0"
   },
   "response_rules": [
     {
@@ -1162,7 +1173,7 @@
       "rule_id": "RR-DECL-SD2"
     },
     {
-      "digest": "137957a294c3c072c8fbf849c51ec36f2cd4e6aa92d1be15b6ed3b033b88d221",
+      "digest": "83ab5cfb3a687d6d3cc0acfe2d9aaf34f93affed2b9c0d3dd93a1932df584839",
       "rule_id": "RR-DOC-ACK"
     },
     {
@@ -1194,6 +1205,10 @@
       "rule_id": "RR-GOODS-OFFER"
     },
     {
+      "digest": "355512e82addebd3247beb1a42755697303019a55788ffba41e41de0c0259711",
+      "rule_id": "RR-JV-MEMBER"
+    },
+    {
       "digest": "cffff98e0876fd80ceb89c8964380de9628857b993bc93af9852d5efe5ed0383",
       "rule_id": "RR-PRICE-GOODS"
     },
@@ -1210,11 +1225,11 @@
       "rule_id": "RR-RESERVATION"
     },
     {
-      "digest": "4c96652ee6329251efc40c0fb2d0c04ff5f54dc3f0325e92c5a15fb9685445e6",
+      "digest": "c69fc632e1d926ddbfefc594f98f58280c057fd933166919fc5ee5ce271e38d8",
       "rule_id": "RR-SUBMISSION"
     },
     {
-      "digest": "1c0eb14111924900b193dc53864f9709ccea86c5487c8fa9832a579f6765ccb9",
+      "digest": "199324d4e5b9526d553f5b4d7869e17c085b05b07c49a199c30b490f965a3e92",
       "rule_id": "RR-SUPPLIER-DETAILS"
     },
     {
@@ -1222,11 +1237,11 @@
       "rule_id": "RR-TECHNICAL"
     },
     {
-      "digest": "7c53796fde360c6d576299cab0b804158eaf5b52db5585a431c4827731111377",
+      "digest": "6c57632d85825d554fe8f4e268e0ef237beadb3b03d0f9293be7f0e486c99c51",
       "rule_id": "RR-TENDER-SECURITY"
     },
     {
-      "digest": "65b0d197f348cdf961ca732de0cb46de79b9d838a0b53c2f98dc9fe0231524ee",
+      "digest": "32ed50d627b000c9e8867e83bcc9a13519cf1c724165ff222d7692ef9cac0ed7",
       "rule_id": "RR-WARRANTY-SUPPORT"
     }
   ],
@@ -1278,5 +1293,5 @@
     "technical_evaluation": "Mandatory pass/fail checks feeding one Technical compliance gate"
   },
   "template_key": "IT-EQUIPMENT-OPEN-V1",
-  "template_release": "1.1"
+  "template_release": "1.2"
 }

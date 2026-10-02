@@ -39,6 +39,7 @@ GATES: dict[str, tuple[str, str, tuple[str, ...], bool]] = {
 	"GATE-INSPECTION": ("Inspection", "Administrator, System Manager, Procurement Officer and Head of Procurement Function can see installed content, coverage, changes, mappings, evidence and blockers through STD Templates", (), True),
 	"GATE-COMPILER-PARITY": ("Compiler parity", "Fixture and production paths invoke one deterministic compiler and reproduce the canonical vectors exactly", ("C20",), True),
 	"GATE-CHANGE-CONTROL": ("Change control", "Generated preceding-release comparison is complete and its compatibility result is reviewed", ("C21",), True),
+	"GATE-CONTENT": ("Content quality", "Labels carry the official wording, every official table has a recorded treatment, every evaluated field has an evaluation rule and each Yes/No answer is read the right way round", ("C22",), False),
 	"GATE-INTEGRITY": ("Integrity", "Source, assets, outputs and bundle have immutable digests", ("C01", "C18"), False),
 }
 

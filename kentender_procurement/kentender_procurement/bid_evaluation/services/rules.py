@@ -55,7 +55,8 @@ def load(template_key: str, *, template_release: str = "", release_id: str = "")
 				for a in doc.get("applies_to") or []):
 			raise RulesUnavailable("The evaluation rules do not cover this template release.")
 	doc["_digest"] = hashlib.sha256(raw).hexdigest()
-	doc["_index"] = {(r["mapping_id"], r["field_key"]): r for r in doc.get("rules") or []}
+	# an entry with a `releases` list belongs to those template releases only: one field key may be read differently by two releases
+	doc["_index"] = {(r["mapping_id"], r["field_key"]): r for r in doc.get("rules") or [] if not r.get("releases") or template_release in r["releases"]}
 	return doc
 
 
@@ -117,7 +118,7 @@ def published_kind(rules: dict[str, Any], facts: dict[str, Any]) -> str | None:
 
 
 def check(rules: dict[str, Any], rule: dict[str, Any] | None, *, facts: dict[str, Any], value: Any, group_values: dict[str, Any], evidence_files: int,
-		label: str = "") -> dict[str, Any]:
+		label: str = "", field_label: str = "") -> dict[str, Any]:
 	"""One response's automatic result: {kind, result, reason, basis,
 	required_display, offered_display, evidence_assessment, inputs}."""
 	if rule is None:
@@ -127,9 +128,12 @@ def check(rules: dict[str, Any], rule: dict[str, Any] | None, *, facts: dict[str
 	if kind == "published-comparison":
 		kind = published_kind(rules, facts) or "unavailable"
 	when = rule.get("when")
-	if when and group_values.get(when["field_key"]) != when["equals"]:
-		return {"kind": kind, "basis": "Comparison", "required_display": "", "offered_display": display(value),
-			**outcome(NOT_APPLICABLE, f"Applies only when {when['field_key'].replace('_', ' ')} is {when['equals']}.")}
+	if when:
+		keys = when.get("field_keys") or [when["field_key"]]  # one field, or any of several
+		if not any(group_values.get(k) == when["equals"] for k in keys):
+			named = " or ".join(k.replace("_", " ") for k in keys)
+			return {"kind": kind, "basis": "Comparison", "required_display": "", "offered_display": display(value),
+				**outcome(NOT_APPLICABLE, f"Applies only when {named} is {when['equals']}.")}
 	unit = cstr(facts.get("unit"))
 	base = {"kind": kind, "basis": "Comparison", "required_display": _required_display(facts), "offered_display": display(value, unit),
 		"inputs": {"value": value, "facts": {k: facts.get(k) for k in ("comparison", "control", "required_value", "unit") if k in facts}}}
@@ -161,7 +165,8 @@ def check(rules: dict[str, Any], rule: dict[str, Any] | None, *, facts: dict[str
 			return {**base, **outcome(REVIEW, "No answer was submitted.")}
 		if value == accepted:
 			return {**base, **outcome(MEETS, "No matter to assess was disclosed.")}
-		return {**base, **outcome(REVIEW, cstr(rule.get("review_reason")) or "A disclosed matter needs committee assessment.")}
+		reason = cstr(rule.get("review_reason")) or "A disclosed matter needs committee assessment."
+		return {**base, **outcome(REVIEW, reason.replace("{field_label}", cstr(field_label)))}
 	if kind == "equals":
 		want = rule.get("value") if "value" in rule else (facts.get("required_value") or {}).get("value")
 		base["required_display"] = base["required_display"] or cstr(want)
@@ -169,7 +174,9 @@ def check(rules: dict[str, Any], rule: dict[str, Any] | None, *, facts: dict[str
 			return {**base, **outcome(FAILS, "Not provided.")}
 		if cstr(value) == cstr(want):
 			return {**base, **outcome(MEETS, f"{name} meets the requirement.")}
-		return {**base, **outcome(FAILS, f"{display(value, unit)} does not meet the required {display(want, unit)}.")}
+		# the unit belongs to a published value (16 GB); a declared answer (Comply) has none
+		with_unit = "" if "value" in rule else unit
+		return {**base, **outcome(FAILS, f"{display(value, with_unit)} does not meet the required {display(want, with_unit)}.")}
 	if kind == "choice-in":
 		allowed = facts.get(rule["fact"]) or []
 		base["required_display"] = ", ".join(cstr(a) for a in allowed)

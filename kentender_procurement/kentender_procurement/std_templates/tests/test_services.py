@@ -113,7 +113,7 @@ class TestProjections(ServiceCase):
 		self.assertEqual(sum(t["n"] for t in detail["coverage"]["treatments"]), detail["coverage"]["total"])
 		self.assertEqual(detail["coverage"]["total"], 296)
 		# the pack is release 1.2; its preceding release is 1.1
-		self.assertEqual(detail["coverage"]["changes"]["heading"], "Changes from release 1.1")
+		self.assertEqual(detail["coverage"]["changes"]["heading"], "Changes from release 1.2")
 		self.assertEqual(len(detail["bid_response"]["tasks"]), 5)
 		self.assertEqual([g["name"] for g in detail["bid_response"]["evaluation_groups"]], ["Eligibility", "Technical compliance", "Financial", "Award"])
 		self.assertIn("Release ID", [t["label"] for t in detail["technical"]])

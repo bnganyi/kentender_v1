@@ -129,6 +129,21 @@ class TestInstall(InstallerCase):
 		self.assertRefused("STD_RELEASE_INTEGRITY_FAILED", other)
 
 
+class TestSiteRelease(InstallerCase):
+	"""Seeds and fixtures use `ensure_site_release`: the repository's release
+	must be the only one of its Tender format switched On, or no Tender can
+	start (binding.available_release). An older release switched Off keeps
+	serving the Tenders already started on it (owner decision OD5)."""
+
+	def test_an_older_release_is_switched_off_when_the_repository_release_is_ensured(self):
+		root, info = self.package(template_release="9.8-test")
+		self.install(root, site_switch="On")
+		release_id = installer.ensure_site_release(installed_by="test")
+		self.assertEqual(frappe.db.get_value(DOCTYPE, info["release_id"], "site_switch"), "Off")
+		self.assertEqual(frappe.db.get_value(DOCTYPE, release_id, "site_switch"), "On")
+		self.assertEqual(frappe.db.count(DOCTYPE, {"template_key": installer.DEFAULT_TEMPLATE_KEY, "site_switch": "On", "lifecycle_status": "Available"}), 1)
+
+
 class TestFailClosed(InstallerCase):
 	def test_undeclared_file_is_refused(self):
 		root, _ = self.package(mutate=lambda p: (p / "04_fixture/extra.txt").write_text("x"), reseal_after_mutate=False)
