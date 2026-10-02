@@ -17,7 +17,7 @@ from kentender_core.services import supplier_account_contract as contract
 from kentender_suppliers.supplier_accounts.services import access, evidence, organisation, provider, read
 from kentender_suppliers.supplier_accounts.tests.support import AFYA, AMINA, DAVID, MARY, PDF, PETER, AccountsCase, key
 
-ACCOUNT_KEYS = {"state", "organisations", "organisation", "viewer", "people", "evidence", "notice_contacts", "missing", "allowed_actions", "links", "status", "next_step", "journey"}
+ACCOUNT_KEYS = {"state", "organisations", "organisation", "viewer", "people", "evidence", "notice_contacts", "missing", "business_profile", "allowed_actions", "links", "status", "next_step", "journey"}
 FORBIDDEN_WORDS = ("approved", "qualified", "prequalified", "verified supplier", "eligible")
 
 
@@ -64,11 +64,19 @@ class TestAccountRead(AccountsCase):
 
 		verification.verify_account_communication(token=self.token(), user=MARY)
 		active = read.get_supplier_account(organisation=org, user=MARY)
+		# an Active Account without a business profile is asked for it (not blocked: a bid can still be started)
+		self.assertEqual((active["next_step"]["kind"], active["next_step"]["headline"], markers(active)), ("your_turn", "Complete the business profile.", ["done", "done", "current"]))
+		self.assertEqual(active["business_profile"]["missing"][0]["field"], "business_structure")
+		from kentender_suppliers.supplier_accounts.services import business_profile
+		from kentender_suppliers.supplier_accounts.tests.test_business_profile import COMPANY
+
+		business_profile.update_business_profile(organisation=org, values=COMPANY, expected_version=0, idempotency_key=key(), user=MARY)
+		active = read.get_supplier_account(organisation=org, user=MARY)
 		self.assertEqual((active["next_step"]["kind"], active["next_step"]["headline"], markers(active)), ("done", "The supplier account is ready.", ["done", "done", "done"]))
 		self.assertEqual(active["notice_contacts"], [{"email": "tenders@afyadigital.example", "status": "Verified"}])
 		self.assertEqual(active["status"], {"label": "Active", "tone": "live"})
 		self.assertEqual([(p["person"], p["responsibility"], p["effective_period"]) for p in active["people"]], [("Mary Wanjiku", "Authorised Signatory", "From 18 May 2027")])
-		self.assertEqual(active["allowed_actions"], ["edit_organisation", "add_evidence", "add_person"])
+		self.assertEqual(active["allowed_actions"], ["edit_organisation", "edit_business_profile", "add_evidence", "add_person"])
 		text = json.dumps(active).lower()
 		for word in FORBIDDEN_WORDS:
 			self.assertNotIn(word, text, word)

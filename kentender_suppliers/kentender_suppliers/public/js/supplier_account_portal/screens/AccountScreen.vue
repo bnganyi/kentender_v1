@@ -11,12 +11,20 @@ import PortalGuidance from "../../../../../../kentender_core/kentender_core/publ
 import { useNarrow } from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/useNarrow.js";
 import AddEvidenceDialog from "../components/AddEvidenceDialog.vue";
 import AddPersonDialog from "../components/AddPersonDialog.vue";
+import EditBusinessProfileDialog from "../components/EditBusinessProfileDialog.vue";
 import EditOrganisationDialog from "../components/EditOrganisationDialog.vue";
 import ViewPersonDialog from "../components/ViewPersonDialog.vue";
 
 const READ = "kentender_suppliers.supplier_accounts.api.get_supplier_account";
 const RESEND = "kentender_suppliers.supplier_accounts.api.send_account_verification";
 const DOWNLOAD = "/api/method/kentender_suppliers.supplier_accounts.api.download_account_evidence";
+// the profile facts each structure shows (the owners tables are shown separately)
+const PROFILE_FACTS = {
+	"Sole proprietor": [["sole_proprietor_name", "Name in full"], ["sole_proprietor_age", "Age"], ["sole_proprietor_nationality", "Nationality"], ["sole_proprietor_country_of_origin", "Country of origin"], ["sole_proprietor_citizenship", "Citizenship"]],
+	Partnership: [],
+	"Registered company": [["company_type", "Company type"], ["nominal_capital", "Nominal capital (KES)"], ["issued_capital", "Issued capital (KES)"]],
+};
+const PROFILE_COMMON = [["trade_licence_number", "Trade licence number"], ["trade_licence_expiry", "Trade licence expiry"], ["maximum_business_value", "Maximum value of business (KES)"], ["state_owned", "State-owned"], ["year_of_registration", "Year of registration"]];
 const FACTS = [
 	["legal_name", "Legal name"], ["country", "Country"], ["registration_number", "Registration number"], ["tax_identifier", "KRA PIN"],
 	["registered_address", "Registered address"], ["official_email", "Official email"], ["official_phone", "Official phone"],
@@ -38,6 +46,10 @@ const pending = computed(() => runner.pending.value);
 const org = computed(() => (data.value && data.value.organisation) || {});
 const allowed = computed(() => new Set((data.value && data.value.allowed_actions) || []));
 const status = computed(() => (data.value && data.value.status) || null);
+const profile = computed(() => (data.value && data.value.business_profile) || null);
+const profileValues = computed(() => (profile.value && profile.value.values) || {});
+const profileFacts = computed(() => [{ key: "business_structure", label: "Business structure" }, ...(PROFILE_FACTS[profileValues.value.business_structure] || []).map(([key, label]) => ({ key, label })), ...PROFILE_COMMON.map(([key, label]) => ({ key, label }))]);
+const owners = computed(() => (profileValues.value.business_structure === "Partnership" ? "partners" : profileValues.value.business_structure === "Registered company" ? "directors" : ""));
 const choosing = computed(() => data.value && data.value.state === "choose_organisation");
 
 function statusClass(value) {
@@ -77,6 +89,7 @@ function resend() {
 function onFix(fix) {
 	if (fix.fix_id === "send_account_verification") return resend();
 	if (String(fix.fix_id).startsWith("edit_organisation")) dialog.value = { kind: "edit", focus: fix.target || "" };
+	if (String(fix.fix_id).startsWith("edit_business_profile")) dialog.value = { kind: "profile", focus: fix.target || "" };
 }
 async function saved(result) {
 	dialog.value = null;
@@ -137,6 +150,25 @@ onMounted(() => {
 			<div class="acc-region-body">
 				<div class="acc-facts">
 					<div v-for="[key, label] in FACTS" :key="key" class="acc-fact"><span class="kt-label">{{ __(label) }}</span><span class="acc-fact-value">{{ org[key] || "—" }}</span></div>
+				</div>
+			</div>
+		</div>
+
+		<div v-if="profile" class="kt-region" data-testid="acc-profile">
+			<h2>{{ __("Business profile") }}</h2>
+			<div class="acc-region-body">
+				<div class="acc-facts">
+					<div v-for="f in profileFacts" :key="f.key" class="acc-fact"><span class="kt-label">{{ __(f.label) }}</span><span class="acc-fact-value" :data-testid="`acc-profile-fact-${f.key}`">{{ profileValues[f.key] || "—" }}</span></div>
+				</div>
+				<table v-if="owners && profileValues[owners].length" class="kt-table acc-owners" :data-testid="`acc-profile-${owners}-table`">
+					<caption class="kt-label">{{ owners === "partners" ? __("Partners") : __("Directors") }}</caption>
+					<thead><tr><th>{{ __("Name") }}</th><th>{{ __("Nationality") }}</th><th>{{ __("Citizenship") }}</th><th>{{ __("Shares owned (%)") }}</th></tr></thead>
+					<tbody><tr v-for="(r, i) in profileValues[owners]" :key="i"><td class="acc-strong">{{ r.name }}</td><td>{{ r.nationality }}</td><td>{{ r.citizenship }}</td><td>{{ r.shares }}</td></tr></tbody>
+				</table>
+				<p v-if="profile.missing.length" class="acc-muted" data-testid="acc-profile-missing">{{ __("Still needed: {0}.", [profile.missing.map((m) => m.text.toLowerCase()).join("; ")]) }}</p>
+				<p class="acc-muted">{{ __("A bid copies these facts when you start it. Changing them here does not change a bid already prepared until you choose to refresh it.") }}</p>
+				<div v-if="allowed.has('edit_business_profile')">
+					<button type="button" class="kt-btn kt-btn-secondary" :class="{ 'acc-btn-touch': narrow }" data-testid="acc-edit-profile" @click="dialog = { kind: 'profile' }">{{ __("Edit business profile") }}</button>
 				</div>
 			</div>
 		</div>
@@ -231,6 +263,7 @@ onMounted(() => {
 		</div>
 
 		<EditOrganisationDialog v-if="dialog && dialog.kind === 'edit'" :organisation="org" :focus="dialog.focus || ''" @close="dialog = null" @saved="saved" />
+		<EditBusinessProfileDialog v-if="dialog && dialog.kind === 'profile'" :profile="profile" :focus="dialog.focus || ''" @close="dialog = null" @saved="saved" />
 		<AddPersonDialog v-if="dialog && dialog.kind === 'add-person'" :organisation="org" @close="dialog = null" @saved="saved" />
 		<AddEvidenceDialog v-if="dialog && dialog.kind === 'add-evidence'" :organisation="org" @close="dialog = null" @saved="saved" />
 		<ViewPersonDialog v-if="dialog && dialog.kind === 'person'" :person="dialog.person" @close="dialog = null" />

@@ -16,7 +16,7 @@ from frappe.utils import cstr
 
 from kentender_core.services import next_step as ns
 from kentender_suppliers.supplier_accounts.services import authorization as authz
-from kentender_suppliers.supplier_accounts.services import facts
+from kentender_suppliers.supplier_accounts.services import business_profile, facts
 from kentender_suppliers.supplier_accounts.services.labels import datetime_label
 
 STAGES = (("ACCOUNT_SETUP", "Set up account"), ("CONTACT_VERIFICATION", "Verify email"), ("ACTIVE", "Account ready"))
@@ -74,6 +74,15 @@ def for_account(org, *, viewer: str) -> dict[str, Any]:
 		return {
 			"next_step": ns.answer(ns.KIND_YOUR_TURN, headline="Verify your email to finish setting up the supplier account.", sentence=sentence, stage="CONTACT_VERIFICATION", fixes=[fix], primary_action="send_account_verification"),
 			"journey": ns.journey(STAGES, current="CONTACT_VERIFICATION", holder_display=full_name(viewer)),
+		}
+	profile_missing = business_profile.missing_items(org.name)
+	if profile_missing:
+		# Not a blocker: a bid can be started, but it cannot be submitted until the business profile it copies is complete.
+		fix = ns.fix("Edit business profile", responsibility="Supplier user", kind=ns.FIX_FOCUS, fix_id=f"edit_business_profile:{profile_missing[0]['field']}", target=profile_missing[0]["field"], primary=True)
+		sentence = f"{profile_missing[0]['text']}." if len(profile_missing) == 1 else f"{len(profile_missing)} items are missing. Bids copy this profile and cannot be submitted without it."
+		return {
+			"next_step": ns.answer(ns.KIND_YOUR_TURN, headline="Complete the business profile.", sentence=sentence, stage="ACTIVE", fixes=[fix], primary_action="edit_business_profile"),
+			"journey": ns.journey(STAGES, current="ACTIVE", holder_display=full_name(viewer)),
 		}
 	return {
 		"next_step": ns.answer(ns.KIND_DONE, headline="The supplier account is ready.", stage="ACTIVE"),

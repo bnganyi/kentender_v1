@@ -16,7 +16,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_procurement.bid_submission.services import labels, tenders_gateway
+from kentender_procurement.bid_submission.services import account_evidence, clock, labels, tenders_gateway
 from kentender_procurement.bid_submission.services.bid_context import BidContext
 from kentender_procurement.bid_submission.services.definition_model import Field, Group
 from kentender_procurement.bid_submission.services.product_profile import COMPOSITION_HEADINGS, FORM_HEADINGS
@@ -160,10 +160,18 @@ def field_view(ctx: BidContext, state: FieldState) -> dict[str, Any]:
 		view["evidence"] = {
 			"type": cstr(rule.get("evidence_type")), "minimum": int(rule.get("minimum") or 0), "maximum": int(rule.get("maximum") or 0), "mandatory": bool(rule.get("mandatory")),
 			"files": [
-				{"id": e["id"], "name": e["name"], "status": e["scan_status"], "size_bytes": e["size_bytes"], **({"reason": e["scan_result"]} if e["scan_status"] == "Rejected" else {})}
+				{
+					"id": e["id"], "name": e["name"], "status": e["scan_status"], "size_bytes": e["size_bytes"], **({"reason": e["scan_result"]} if e["scan_status"] == "Rejected" else {}),
+					# where the file came from: a copy of a saved Account document says so and when it was copied
+					"source": "account" if e.get("source") else "upload", "copied_on": labels.datetime_label(e["uploaded_at"]) if e.get("source") else "",
+				}
 				for e in ctx.evidence.get(field.key, [])
 			],
 		}
+		maximum = view["evidence"]["maximum"]
+		held = [e for e in ctx.evidence.get(field.key, []) if e["scan_status"] != "Rejected"]
+		if view["editable"] and account_evidence.allowed_types(field) and not (maximum and len(held) >= maximum):
+			view["evidence"]["account_options"] = account_evidence.options(ctx, field, at=clock.now())
 	return view
 
 

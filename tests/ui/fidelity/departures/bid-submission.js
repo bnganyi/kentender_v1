@@ -38,8 +38,18 @@ const RECEIPT_NOTICE = {
 	authority: "BDS-CHG-001 v0.8 §10.14 item 3",
 };
 
+// The Account page's "Business profile" region (release 1.4, standing facts held once and copied
+// into each bid). The Account board (v3 - A) predates it; the board is to be refreshed.
+const PROFILE_REGION = {
+	path: "region",
+	testid: "acc-profile",
+	because: "The Account's business profile (business structure, owners, capital, trade licence, maximum business value, state-owned status, year of registration); the board predates it.",
+	authority: "Owner decision 2 Oct 2026 (release 1.4 plan, WP-2): standing facts are held once on the Account; board refresh owed",
+};
+
 export const DEPARTURES = Object.fromEntries(
 	["desktop", "narrow"].flatMap((frame) => [
+		...["", "-ATTENTION", "-VERIFY", "-SUSPENDED"].map((v) => [`AccountScreen#BDS-DES-04${v}@${frame}`, [PROFILE_REGION]]),
 		[`ReceiptScreen#BDS-DES-14-REPLACED@${frame}`, RECEIPT_GUIDANCE],
 		[`ReceiptScreen#BDS-DES-14 withdrawal dialog@${frame}`, [...RECEIPT_GUIDANCE, RECEIPT_NOTICE]],
 	]),

@@ -28,7 +28,7 @@ import frappe
 from frappe.utils import cstr
 
 from kentender_procurement.bid_submission.services import bid_authorization as authz
-from kentender_procurement.bid_submission.services import bid_context, clock, records, save, supplier_gateway
+from kentender_procurement.bid_submission.services import account_evidence, bid_context, clock, records, save, supplier_gateway
 from kentender_procurement.bid_submission.services.errors import MESSAGES, fail, field_errors
 
 EVIDENCE = "Bid Evidence"
@@ -140,6 +140,9 @@ def _add(*, actor: str, bid_reference: str, handle: str, expected_record_version
 		copy = supplier_gateway.evidence_file(organisation_id=ctx.workspace.lead_organisation, evidence_id=account_evidence_id) if row else None
 		if not copy:
 			return field_errors({field.handle: "Choose an available file from the supplier account."})
+		why = account_evidence.refusal(ctx, field, row, at=at)  # the right kind, in date and not already here
+		if why:
+			return field_errors({field.handle: why})
 		filename, content, expected = copy["file_name"], copy["content"], copy["digest"]
 	before = _accepted(ctx, field.key)
 	try:

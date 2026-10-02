@@ -92,8 +92,8 @@ def _signatory(arrangement) -> dict[str, Any] | None:
 
 def evidence_of(workspace: str) -> dict[str, list[dict[str, Any]]]:
 	out: dict[str, list[dict[str, Any]]] = {}
-	for row in frappe.get_all(EVIDENCE, filters={"bid_workspace": workspace, "status": "Current"}, fields=["name", "evidence_requirement", "original_filename", "scan_status", "scan_result", "size_bytes", "uploaded_at"], order_by="uploaded_at asc, creation asc", limit_page_length=0):
-		out.setdefault(row.evidence_requirement, []).append({"id": row.name, "name": row.original_filename, "scan_status": row.scan_status, "scan_result": cstr(row.scan_result), "size_bytes": int(row.size_bytes or 0), "uploaded_at": row.uploaded_at})
+	for row in frappe.get_all(EVIDENCE, filters={"bid_workspace": workspace, "status": "Current"}, fields=["name", "evidence_requirement", "original_filename", "scan_status", "scan_result", "size_bytes", "uploaded_at", "source_evidence"], order_by="uploaded_at asc, creation asc", limit_page_length=0):
+		out.setdefault(row.evidence_requirement, []).append({"id": row.name, "name": row.original_filename, "scan_status": row.scan_status, "scan_result": cstr(row.scan_result), "size_bytes": int(row.size_bytes or 0), "uploaded_at": row.uploaded_at, "source": cstr(row.source_evidence)})
 	return out
 
 

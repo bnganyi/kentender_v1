@@ -12,6 +12,7 @@ import CommonState from "./CommonState.vue";
 const UPLOAD = "kentender_procurement.bid_submission.api.upload_bid_evidence";
 const REPLACE = "kentender_procurement.bid_submission.api.replace_bid_evidence";
 const REMOVE = "kentender_procurement.bid_submission.api.remove_bid_evidence";
+const LINK = "kentender_procurement.bid_submission.api.link_account_evidence_to_bid";
 const DOWNLOAD = "/api/method/kentender_procurement.bid_submission.api.download_bid_evidence";
 const props = defineProps({
 	field: { type: Object, required: true },
@@ -40,6 +41,28 @@ const addLabel = computed(() => {
 	if (!held.value.length) return "Upload file";
 	return maximum.value && held.value.length >= maximum.value ? "" : "Add another file";
 });
+// Saved documents from the supplier Account: the read offers those of the right kind that are not already here;
+// using one copies the exact file into the bid (the Account copy can change later without touching the bid).
+const showSaved = ref(false);
+const saved = computed(() => (props.field.evidence && props.field.evidence.account_options) || []);
+const canAddSaved = computed(() => !disabled.value && !!addLabel.value && saved.value.length > 0);
+function useSaved(option) {
+	fileError.value = "";
+	rejection.value = null;
+	return runner.run(async () => {
+		const handle = props.field.handle;
+		const result = await portal.call(LINK, { bid_reference: props.bid.reference, handle, account_evidence_id: option.id, expected_record_version: props.bid.record_version, idempotency_key: `bds-evidence-link-${Date.now().toString(36)}` }, { type: "POST" });
+		if (result && result.ok) {
+			showSaved.value = false;
+			emit("changed", result);
+		} else if (result && result.code === "BDS_EVIDENCE_REJECTED") {
+			rejection.value = (result.errors && result.errors[handle]) || "";
+			showSaved.value = false;
+			emit("changed", result); // the refused copy is kept as a Rejected record
+		} else if (result && result.errors) fileError.value = result.errors[handle] || result.message;
+		else if (result) fileError.value = result.message || "";
+	}, "Use saved document");
+}
 const replacing = ref(null); // the file the next chosen file takes the place of; null adds one
 function choose(file = null) {
 	replacing.value = file;
@@ -124,10 +147,20 @@ function remove(file) {
 				<button v-if="!disabled" type="button" class="bds-link-button" :disabled="pending" @click="remove(file)">{{ __("Remove") }}</button>
 			</span>
 			<p v-if="file.reason" class="bds-muted">{{ file.reason }}</p>
+			<p v-if="file.source === 'account' && file.copied_on" class="bds-muted" :data-testid="'bds-file-source-' + file.id">{{ __("From your Account · copied on {0}", [file.copied_on]) }}</p>
 		</div>
 		<div v-if="!disabled && addLabel">
 			<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" :data-testid="'bds-upload-' + field.handle" @click="choose()">{{ __(addLabel) }}</button>
 		</div>
+		<div v-if="canAddSaved">
+			<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" :aria-expanded="showSaved" :data-testid="'bds-saved-' + field.handle" @click="showSaved = !showSaved">{{ __("Add from your Account") }}</button>
+		</div>
+		<ul v-if="canAddSaved && showSaved" class="bds-saved-list" :data-testid="'bds-saved-list-' + field.handle">
+			<li v-for="option in saved" :key="option.id" class="bds-saved-option">
+				<span class="bds-saved-what"><span class="bds-strong">{{ option.title }}</span><span class="bds-muted">{{ option.type }}<template v-if="option.reference"> · {{ option.reference }}</template><template v-if="option.valid_until"> · {{ option.expired ? __("expired {0}", [option.valid_until]) : __("valid until {0}", [option.valid_until]) }}</template></span></span>
+				<button type="button" class="bds-link-button" :disabled="pending || option.expired" :data-testid="'bds-use-saved-' + option.id" @click="useSaved(option)">{{ __("Use this file") }}</button>
+			</li>
+		</ul>
 		<CommonState v-if="rejection !== null" inline state="evidence-rejected" :figures="{ reason: rejection }" @action="picker && picker.click()" />
 		<p v-else-if="fileError || issue" class="kt-field-error">{{ fileError || issue }}</p>
 		<p v-else-if="field.help" class="bds-help">{{ field.help }}</p>

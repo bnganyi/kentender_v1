@@ -134,16 +134,88 @@ class TestUploadBidEvidence(EvidenceCase):
 		shown = self.field(target["handle"])
 		self.assertEqual((shown["value"], shown["issue"]["severity"]), (None, "Must fix"))
 
+	def by_label(self, label, task="requirements"):
+		return next(f for g in reads.get_bid_task(bid_reference=self.bid, task=task, user=DAVID)["groups"] for f in g["fields"] if f["kind"] == "evidence" and f["label"] == label)
+
+	def eligibility(self):
+		"""The Tenderer Information Form documents: the one requirement that takes saved incorporation and tax documents."""
+		return next(f for g in reads.get_bid_task(bid_reference=self.bid, task="requirements", user=DAVID)["groups"] for f in g["fields"]
+			if f["kind"] == "evidence" and f["label"].startswith("Documents attached to the Tenderer Information Form"))
+
+	def link(self, handle, evidence_id, user=DAVID):
+		return evidence.link_account_evidence_to_bid(bid_reference=self.bid, handle=handle, account_evidence_id=evidence_id, expected_record_version=self.version(), idempotency_key=key(), user=user)
+
 	def test_account_evidence_is_copied_exactly_into_the_bid(self):
-		content = pdf("AGPO-Y-2026-04172")
-		self.accounts.add_evidence(AFYA, "EVD-BDST-AGPO", "Reservation evidence", "agpo-youth.pdf", content=content)
-		target = self.requirement()
-		linked = evidence.link_account_evidence_to_bid(bid_reference=self.bid, handle=target["handle"], account_evidence_id="EVD-BDST-AGPO", expected_record_version=self.version(), idempotency_key=key(), user=DAVID)
+		content = pdf("P051234567X")
+		self.accounts.add_evidence(AFYA, "EVD-BDST-TCC", "Tax compliance certificate", "tcc.pdf", content=content)
+		target = self.eligibility()
+		linked = self.link(target["handle"], "EVD-BDST-TCC")
 		self.assertTrue(linked.get("ok"), linked)
 		row = frappe.get_doc("Bid Evidence", linked["evidence"])
-		self.assertEqual((row.source_evidence, row.file_digest, row.original_filename, row.scan_status), ("EVD-BDST-AGPO", hashlib.sha256(content).hexdigest(), "agpo-youth.pdf", "Accepted"))
-		missing = evidence.link_account_evidence_to_bid(bid_reference=self.bid, handle=target["handle"], account_evidence_id="EVD-NOT-OURS", expected_record_version=self.version(), idempotency_key=key(), user=DAVID)
+		self.assertEqual((row.source_evidence, row.file_digest, row.original_filename, row.scan_status), ("EVD-BDST-TCC", hashlib.sha256(content).hexdigest(), "tcc.pdf", "Accepted"))
+		missing = self.link(target["handle"], "EVD-NOT-OURS")
 		self.assertEqual((missing["ok"], missing["code"]), (False, "BDS_FIELD_INVALID"))
+
+	def test_the_bid_offers_only_saved_documents_of_the_right_kind_with_nothing_internal(self):
+		self.accounts.add_evidence(AFYA, "EVD-TCC", "Tax compliance certificate", "tcc.pdf", content=pdf("t"), title="Tax compliance certificate", reference="P051234567X", valid_until="2027-12-31")
+		self.accounts.add_evidence(AFYA, "EVD-INC", "Certificate of incorporation", "inc.pdf", content=pdf("i"), reference="PVT-9X7K2M")
+		self.accounts.add_evidence(AFYA, "EVD-AGPO", "Reservation evidence", "agpo.pdf", content=pdf("a"))
+		self.accounts.add_evidence(AFYA, "EVD-AUTH", "Signatory authority", "auth.pdf", content=pdf("s"))
+		self.accounts.add_evidence(AFYA, "EVD-PENDING", "Tax compliance certificate", "scan.pdf", status="Not scanned", content=pdf("p"))
+		eligibility = self.eligibility()
+		offered = {o["id"]: o for o in eligibility["evidence"]["account_options"]}
+		self.assertEqual(sorted(offered), ["EVD-INC", "EVD-TCC"])  # not the reservation, not the signatory's authority, not an unscanned file
+		self.assertEqual({k: offered["EVD-TCC"][k] for k in ("title", "type", "reference", "valid_until", "expired")}, {"title": "Tax compliance certificate", "type": "Tax compliance certificate", "reference": "P051234567X", "valid_until": "31 Dec 2027", "expired": False})
+		self.assertNotIn("digest", str(offered).lower())
+		self.assertNotIn("account_options", self.by_label("Tender Security instrument", "company")["evidence"])  # a tender security is never a saved document
+
+	def test_the_reservation_certificate_takes_a_saved_reservation_document_and_nothing_else_is_mapped(self):
+		from types import SimpleNamespace
+
+		from kentender_procurement.bid_submission.services import account_evidence
+
+		field = lambda rule, key: SimpleNamespace(group=SimpleNamespace(rule_id=rule), field_key=key)  # noqa: E731
+		self.assertEqual(account_evidence.allowed_types(field("RR-RESERVATION", "certificate_evidence")), ("Reservation evidence",))
+		for rule, key in (("RR-TENDER-SECURITY", "security_evidence"), ("RR-EVIDENCE-DATASHEET", "evidence"), ("RR-EXPERIENCE", "evidence"), ("RR-TECHNICAL", "evidence")):
+			self.assertEqual(account_evidence.allowed_types(field(rule, key)), (), rule)
+
+	def test_a_document_already_in_the_requirement_is_not_offered_again_nor_linked_twice(self):
+		self.accounts.add_evidence(AFYA, "EVD-TCC", "Tax compliance certificate", "tcc.pdf", content=pdf("t"))
+		target = self.eligibility()
+		self.assertTrue(self.link(target["handle"], "EVD-TCC")["ok"])
+		self.assertEqual(self.eligibility()["evidence"]["account_options"], [])
+		again = self.link(target["handle"], "EVD-TCC")
+		self.assertEqual((again["ok"], again["errors"][target["handle"]]), (False, "This saved document is already in this requirement."))
+
+	def test_an_expired_document_is_flagged_and_refused(self):
+		self.accounts.add_evidence(AFYA, "EVD-OLD", "Tax compliance certificate", "old.pdf", content=pdf("o"), valid_until="2027-01-31")
+		target = self.eligibility()
+		self.assertTrue(target["evidence"]["account_options"][0]["expired"])
+		refused = self.link(target["handle"], "EVD-OLD")
+		self.assertEqual((refused["ok"], refused["errors"][target["handle"]]), (False, "This saved document is out of date. Replace it in your Account or upload a current file."))
+
+	def test_a_saved_document_of_the_wrong_kind_or_for_a_requirement_that_takes_none_is_refused(self):
+		self.accounts.add_evidence(AFYA, "EVD-AGPO", "Reservation evidence", "agpo.pdf", content=pdf("a"))
+		self.accounts.add_evidence(AFYA, "EVD-TCC", "Tax compliance certificate", "tcc.pdf", content=pdf("t"))
+		wrong = self.link(self.eligibility()["handle"], "EVD-AGPO")
+		self.assertEqual(wrong["errors"][self.eligibility()["handle"]], "Choose a saved document of the right kind for this requirement.")
+		security = self.by_label("Tender Security instrument", "company")
+		none = self.link(security["handle"], "EVD-TCC")
+		self.assertEqual(none["errors"][security["handle"]], "Saved documents cannot be used for this requirement. Upload the file.")
+
+	def test_a_copied_file_says_where_it_came_from_and_the_account_copy_can_change_without_touching_it(self):
+		content = pdf("first")
+		self.accounts.add_evidence(AFYA, "EVD-TCC", "Tax compliance certificate", "tcc.pdf", content=content)
+		target = self.eligibility()
+		linked = self.link(target["handle"], "EVD-TCC")
+		shown = self.eligibility()["evidence"]["files"][0]
+		self.assertEqual((shown["source"], bool(shown["copied_on"])), ("account", True))
+		self.upload(self.requirement("company", maximum=1)["handle"])
+		plain = self.by_label("Tender Security instrument", "company")["evidence"]["files"][0]
+		self.assertEqual((plain["source"], plain["copied_on"]), ("upload", ""))
+		before = frappe.db.get_value("Bid Evidence", linked["evidence"], "file_digest")
+		self.accounts.files["EVD-TCC"] = (AFYA, "tcc.pdf", pdf("replaced in the Account"), "e" * 64)  # the Account copy is replaced
+		self.assertEqual(frappe.db.get_value("Bid Evidence", linked["evidence"], "file_digest"), before)
 
 	def test_a_removed_file_leaves_the_requirement_open_and_stays_in_history(self):
 		target = self.requirement()

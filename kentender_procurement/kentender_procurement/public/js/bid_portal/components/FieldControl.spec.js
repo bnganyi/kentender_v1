@@ -32,6 +32,66 @@ describe("An evidence field", () => {
 		expect(click).toHaveBeenCalled();
 	});
 
+	describe("saved documents from the Account", () => {
+		const OPTION = { id: "EVD-TCC", title: "Tax compliance certificate", type: "Tax compliance certificate", reference: "P051234567X", valid_until: "31 Dec 2027", expired: false };
+		const withOptions = (options, extra = {}) => ({ ...FIELD, evidence: { ...FIELD.evidence, maximum: 5, account_options: options, ...extra } });
+		const mountField = (field, call) => {
+			const portal = { upload: vi.fn(), call: call || vi.fn(async () => ({ ok: true })), createCommandRunner };
+			return { portal, wrapper: mount(FieldControl, { props: { field, bid: { reference: "BID-1", record_version: 3 } }, attachTo: document.body, global: { provide: { portal }, config: { globalProperties: { __: globalThis.__ } } } }) };
+		};
+
+		it("offers Add from your Account only when the read offers something and the field has room", () => {
+			expect(mountField(withOptions([OPTION])).wrapper.find('[data-testid="bds-saved-h-datasheet"]').exists()).toBe(true);
+			expect(mountField(withOptions([])).wrapper.find('[data-testid="bds-saved-h-datasheet"]').exists()).toBe(false);
+			expect(mountField({ ...withOptions([OPTION]), editable: false }).wrapper.find('[data-testid="bds-saved-h-datasheet"]').exists()).toBe(false);
+			const full = { ...withOptions([OPTION], { maximum: 1, files: [{ id: "EVD-1", name: "a.pdf", status: "Accepted", size_bytes: 3 }] }) };
+			expect(mountField(full).wrapper.find('[data-testid="bds-saved-h-datasheet"]').exists()).toBe(false);
+		});
+
+		it("lists each saved document with its kind, reference and validity, and links the one chosen", async () => {
+			const { wrapper, portal } = mountField(withOptions([OPTION]));
+			expect(wrapper.find('[data-testid="bds-saved-list-h-datasheet"]').exists()).toBe(false); // closed until asked
+			await wrapper.get('[data-testid="bds-saved-h-datasheet"]').trigger("click");
+			const row = wrapper.get('[data-testid="bds-saved-list-h-datasheet"] li');
+			expect(row.text()).toContain("Tax compliance certificate");
+			expect(row.text()).toContain("P051234567X");
+			expect(row.text()).toContain("valid until 31 Dec 2027");
+			await wrapper.get('[data-testid="bds-use-saved-EVD-TCC"]').trigger("click");
+			await flushPromises();
+			const [method, args, options] = portal.call.mock.calls[0];
+			expect(method.split(".").pop()).toBe("link_account_evidence_to_bid");
+			expect(args).toMatchObject({ bid_reference: "BID-1", handle: "h-datasheet", account_evidence_id: "EVD-TCC", expected_record_version: 3 });
+			expect(args.idempotency_key).toMatch(/^bds-evidence-link-/);
+			expect(options).toEqual({ type: "POST" });
+			expect(wrapper.emitted("changed")).toHaveLength(1);
+			expect(wrapper.find('[data-testid="bds-saved-list-h-datasheet"]').exists()).toBe(false); // closed once used
+		});
+
+		it("shows an expired document as expired and does not let it be used", async () => {
+			const { wrapper } = mountField(withOptions([{ ...OPTION, expired: true }]));
+			await wrapper.get('[data-testid="bds-saved-h-datasheet"]').trigger("click");
+			expect(wrapper.get('[data-testid="bds-saved-list-h-datasheet"]').text()).toContain("expired 31 Dec 2027");
+			expect(wrapper.get('[data-testid="bds-use-saved-EVD-TCC"]').attributes("disabled")).toBeDefined();
+		});
+
+		it("names a refusal in place and keeps the list open", async () => {
+			const call = vi.fn(async () => ({ ok: false, code: "BDS_FIELD_INVALID", message: "Check the highlighted value.", errors: { "h-datasheet": "This saved document is out of date. Replace it in your Account or upload a current file." } }));
+			const { wrapper } = mountField(withOptions([OPTION]), call);
+			await wrapper.get('[data-testid="bds-saved-h-datasheet"]').trigger("click");
+			await wrapper.get('[data-testid="bds-use-saved-EVD-TCC"]').trigger("click");
+			await flushPromises();
+			expect(wrapper.get(".kt-field-error").text()).toContain("out of date");
+			expect(wrapper.emitted("changed")).toBeUndefined();
+		});
+
+		it("says a copied file came from the Account and when, and an uploaded one says nothing", () => {
+			const files = [{ id: "EVD-1", name: "tcc.pdf", status: "Accepted", size_bytes: 3, source: "account", copied_on: "20 May 2027, 11:00 EAT" }, { id: "EVD-2", name: "mine.pdf", status: "Accepted", size_bytes: 3, source: "upload", copied_on: "" }];
+			const { wrapper } = mountField(withOptions([], { files }));
+			expect(wrapper.get('[data-testid="bds-file-source-EVD-1"]').text()).toBe("From your Account · copied on 20 May 2027, 11:00 EAT");
+			expect(wrapper.find('[data-testid="bds-file-source-EVD-2"]').exists()).toBe(false);
+		});
+	});
+
 	it("draws a Yes/No answer as one compact row of options under its question, and answers with the chosen one", async () => {
 		const portal = { upload: vi.fn(), call: vi.fn(), createCommandRunner };
 		const field = { ...FIELD, handle: "h-soe", kind: "yes_no", label: "Is the Tenderer a state-owned enterprise or institution?", options: ["Yes", "No"], help: "Item (k) of the Form of Tender." };

@@ -52,6 +52,7 @@ class FakeAccounts:
 		self.contacts: dict[str, list[dict[str, Any]]] = {}
 		self.evidence: dict[str, list[dict[str, Any]]] = {}
 		self.files: dict[str, tuple[str, str, bytes, str]] = {}
+		self.profiles: dict[str, dict[str, Any]] = {}
 
 	def add_org(self, org: str, legal_name: str, registration_number: str, *, status: str = "Active", email: str = "", country: str = "Kenya") -> None:
 		self.orgs[org] = {
@@ -69,11 +70,11 @@ class FakeAccounts:
 		}
 		return assignment_id
 
-	def add_evidence(self, org: str, evidence_id: str, evidence_type: str, file_name: str, *, status: str = "Available", content: bytes | None = None) -> None:
+	def add_evidence(self, org: str, evidence_id: str, evidence_type: str, file_name: str, *, status: str = "Available", content: bytes | None = None, title: str = "", reference: str = "", valid_until: str = "") -> None:
 		import hashlib
 
 		digest = hashlib.sha256(content).hexdigest() if content else "d" * 64
-		self.evidence[org].append({"evidence_id": evidence_id, "evidence_type": evidence_type, "title": file_name, "reference": "", "valid_until": "", "status": status, "file_name": file_name, "file_digest": digest})
+		self.evidence[org].append({"evidence_id": evidence_id, "evidence_type": evidence_type, "title": title or file_name, "reference": reference, "valid_until": valid_until, "status": status, "file_name": file_name, "file_digest": digest})
 		if content:
 			self.files[evidence_id] = (org, file_name, content, digest)
 
@@ -106,6 +107,14 @@ class FakeAccounts:
 
 	def organisation_people(self, *, organisation_id: str, at=None) -> list[dict[str, Any]]:
 		return [dict(a) for a in self.assignments.values() if a["organisation_id"] == organisation_id and a["active"]]
+
+	def set_profile(self, org: str, values: dict[str, Any], *, complete: bool = True) -> None:
+		self.profiles[org] = {**values, "record_version": 1, "complete": complete}
+
+	def business_profile(self, *, organisation_id: str) -> dict[str, Any] | None:
+		if organisation_id not in self.orgs:
+			return None
+		return dict(self.profiles.get(organisation_id) or {"record_version": 0, "complete": False})
 
 	def find_active_account(self, *, country: str, registration_number: str) -> dict[str, Any] | None:
 		for org in self.orgs.values():

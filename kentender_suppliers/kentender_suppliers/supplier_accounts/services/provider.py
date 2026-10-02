@@ -16,6 +16,7 @@ import frappe
 from frappe.utils import cstr
 
 from kentender_suppliers.supplier_accounts.services import authorization as authz
+from kentender_suppliers.supplier_accounts.services import business_profile as profile
 
 ORGANISATION = "Supplier Organisation"
 EVIDENCE = "Supplier Account Evidence"
@@ -101,3 +102,10 @@ def evidence_file(*, organisation_id: str, evidence_id: str) -> dict[str, Any] |
 def find_active_account(*, country: str, registration_number: str) -> dict[str, Any] | None:
 	name = frappe.db.get_value(ORGANISATION, {"country": cstr(country).strip(), "registration_number": cstr(registration_number).strip(), "account_status": "Active"}, "name")
 	return {"organisation_id": name, "legal_name": cstr(frappe.db.get_value(ORGANISATION, name, "legal_name"))} if name else None
+
+
+def business_profile(*, organisation_id: str) -> dict[str, Any] | None:
+	"""The Account's standing business facts (structure, owners, capital, trade licence,
+	maximum business value, state-owned status, year of registration) and whether they
+	are complete; a bid copies them as its own snapshot."""
+	return profile.facts(organisation_id)

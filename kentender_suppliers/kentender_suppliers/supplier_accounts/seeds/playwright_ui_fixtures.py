@@ -47,7 +47,7 @@ EVIDENCE = (
 	{"evidence_type": "Reservation evidence", "reference": "AGPO-Y-2026-04172", "valid_until": "2027-06-30", "title": "Youth reservation evidence"},
 )
 STATES = ("new", "verify", "active", "attention", "suspended")
-ACCOUNT_DOCTYPES = ("Supplier Account Access Decision", "Supplier User Assignment", "Supplier Account Verification", "Supplier Account Evidence", "Supplier Organisation")
+ACCOUNT_DOCTYPES = ("Supplier Account Access Decision", "Supplier User Assignment", "Supplier Account Verification", "Supplier Account Evidence", "Supplier Business Profile", "Supplier Organisation")
 
 
 def _users() -> None:
@@ -115,7 +115,7 @@ def _active() -> str:
 
 	organisation = canonical.ensure_supplier_account(
 		facts=FACTS, registrant=MARY, registrant_name=PORTAL_USERS[MARY], representative=DAVID, representative_name=PORTAL_USERS[DAVID], representative_title="Bid Coordinator",
-		clock=CLOCK, namespace=NAMESPACE, key_prefix=NAMESPACE.lower(),
+		clock=CLOCK, namespace=NAMESPACE, key_prefix=NAMESPACE.lower(), profile=canonical.AFYA_PROFILE,
 	)["organisation"]
 	saved = {flag: frappe.flags.get(flag) for flag in ("kt_accounts_clock", "kt_accounts_fixture_namespace")}
 	frappe.flags.kt_accounts_fixture_namespace = NAMESPACE

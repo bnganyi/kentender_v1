@@ -1,0 +1,215 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:organisation",
+ "creation": "2026-10-02 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "organisation",
+  "business_structure",
+  "sole_proprietor_name",
+  "sole_proprietor_age",
+  "sole_proprietor_nationality",
+  "sole_proprietor_country_of_origin",
+  "sole_proprietor_citizenship",
+  "partners",
+  "company_type",
+  "nominal_capital",
+  "issued_capital",
+  "directors",
+  "trade_licence_number",
+  "trade_licence_expiry",
+  "maximum_business_value",
+  "state_owned",
+  "year_of_registration",
+  "updated_by",
+  "updated_at",
+  "record_version",
+  "fixture_namespace"
+ ],
+ "fields": [
+  {
+   "fieldname": "organisation",
+   "fieldtype": "Link",
+   "label": "Organisation",
+   "read_only": 1,
+   "options": "Supplier Organisation",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "business_structure",
+   "fieldtype": "Select",
+   "label": "Business structure",
+   "read_only": 1,
+   "options": "\nSole proprietor\nPartnership\nRegistered company"
+  },
+  {
+   "fieldname": "sole_proprietor_name",
+   "fieldtype": "Data",
+   "label": "Sole proprietor: name in full",
+   "read_only": 1,
+   "length": 160
+  },
+  {
+   "fieldname": "sole_proprietor_age",
+   "fieldtype": "Int",
+   "label": "Sole proprietor: age",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sole_proprietor_nationality",
+   "fieldtype": "Data",
+   "label": "Sole proprietor: nationality",
+   "read_only": 1,
+   "length": 80
+  },
+  {
+   "fieldname": "sole_proprietor_country_of_origin",
+   "fieldtype": "Data",
+   "label": "Sole proprietor: country of origin",
+   "read_only": 1,
+   "length": 80
+  },
+  {
+   "fieldname": "sole_proprietor_citizenship",
+   "fieldtype": "Data",
+   "label": "Sole proprietor: citizenship",
+   "read_only": 1,
+   "length": 80
+  },
+  {
+   "fieldname": "partners",
+   "fieldtype": "Table",
+   "label": "Partners",
+   "read_only": 1,
+   "options": "Supplier Business Profile Person"
+  },
+  {
+   "fieldname": "company_type",
+   "fieldtype": "Select",
+   "label": "Company type",
+   "read_only": 1,
+   "options": "\nPrivate company\nPublic company"
+  },
+  {
+   "fieldname": "nominal_capital",
+   "fieldtype": "Currency",
+   "label": "Nominal capital (KES)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "issued_capital",
+   "fieldtype": "Currency",
+   "label": "Issued capital (KES)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "directors",
+   "fieldtype": "Table",
+   "label": "Directors",
+   "read_only": 1,
+   "options": "Supplier Business Profile Person"
+  },
+  {
+   "fieldname": "trade_licence_number",
+   "fieldtype": "Data",
+   "label": "Trade licence number",
+   "read_only": 1,
+   "length": 80
+  },
+  {
+   "fieldname": "trade_licence_expiry",
+   "fieldtype": "Date",
+   "label": "Trade licence expiry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "maximum_business_value",
+   "fieldtype": "Currency",
+   "label": "Maximum value of business handled (KES)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "state_owned",
+   "fieldtype": "Select",
+   "label": "State-owned",
+   "read_only": 1,
+   "options": "\nYes\nNo"
+  },
+  {
+   "fieldname": "year_of_registration",
+   "fieldtype": "Int",
+   "label": "Year of registration",
+   "read_only": 1
+  },
+  {
+   "fieldname": "updated_by",
+   "fieldtype": "Link",
+   "label": "Updated by",
+   "read_only": 1,
+   "options": "User"
+  },
+  {
+   "fieldname": "updated_at",
+   "fieldtype": "Datetime",
+   "label": "Updated at",
+   "read_only": 1
+  },
+  {
+   "fieldname": "record_version",
+   "fieldtype": "Int",
+   "label": "Record version",
+   "read_only": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "fixture_namespace",
+   "fieldtype": "Data",
+   "label": "Fixture namespace",
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "istable": 0,
+ "links": [],
+ "modified": "2026-10-02 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Supplier Accounts",
+ "name": "Supplier Business Profile",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 0,
+   "write": 0
+  },
+  {
+   "create": 0,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Supplier Account Support Officer",
+   "share": 0,
+   "write": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

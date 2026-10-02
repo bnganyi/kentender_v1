@@ -31,6 +31,15 @@ AFYA = {
 	"registered_address": "Westlands Business Park, Waiyaki Way, Nairobi", "official_email": "tenders@afyadigital.example", "official_phone": "+254 709 555 014",
 	"job_title": "Managing Director",
 }
+#: Afya's standing business facts (a private company with two directors); every canonical bid copies them.
+AFYA_PROFILE = {
+	"business_structure": "Registered company", "company_type": "Private company", "nominal_capital": "5000000.00", "issued_capital": "2500000.00",
+	"trade_licence_number": "TL-2027-0451", "trade_licence_expiry": "2027-12-31", "maximum_business_value": "80000000.00", "state_owned": "No", "year_of_registration": 2014,
+	"directors": [
+		{"name": "Mary Wanjiku", "nationality": "Kenyan", "citizenship": "Kenyan", "shares": "60"},
+		{"name": "John Kamau", "nationality": "Kenyan", "citizenship": "Kenyan", "shares": "40"},
+	],
+}
 AUTHORITY_FILE = "mary-wanjiku-signing-authority.pdf"
 CLOCK = {"register": "2027-05-18 09:00:00", "verify": "2027-05-18 09:10:00", "representative": "2027-05-18 09:20:00"}
 
@@ -63,9 +72,28 @@ def _has_representative(organisation: str, representative: str = DAVID) -> bool:
 	return bool(frappe.db.exists("Supplier User Assignment", {"organisation": organisation, "user": representative, "responsibility": "Supplier Representative"}))
 
 
+def ensure_business_profile(*, organisation: str, profile: dict[str, Any], user: str, namespace: str = NAMESPACE, key_prefix: str = "seed", clock: dict[str, str] | None = None) -> None:
+	"""The Account's business profile, through the real command; left alone once it has been saved."""
+	from kentender_suppliers.supplier_accounts.services import business_profile
+
+	if frappe.db.exists(business_profile.PROFILE, organisation):
+		return
+	# the people's assignments are in force from the seed's own dates, so the command runs at the seed's clock
+	saved = {flag: frappe.flags.get(flag) for flag in ("kt_accounts_fixture_namespace", "kt_accounts_clock")}
+	frappe.flags.kt_accounts_fixture_namespace = namespace
+	frappe.flags.kt_accounts_clock = (clock or CLOCK)["representative"]
+	try:
+		result = business_profile.update_business_profile(organisation=organisation, values=profile, expected_version=0, idempotency_key=f"{key_prefix}-profile-{organisation}", user=user)
+	finally:
+		for flag, value in saved.items():
+			frappe.flags[flag] = value
+	if not result.get("ok"):
+		frappe.throw(f"The business profile could not be saved: {result}")
+
+
 def ensure_supplier_account(
 	*, facts: dict[str, str], registrant: str, registrant_name: str, representative: str, representative_name: str, representative_title: str = "",
-	clock: dict[str, str] | None = None, namespace: str = NAMESPACE, key_prefix: str = "seed",
+	clock: dict[str, str] | None = None, namespace: str = NAMESPACE, key_prefix: str = "seed", profile: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
 	"""One Active supplier account with a Supplier Representative, built through
 	the real commands (register, verify the official email, assign the
@@ -84,6 +112,8 @@ def ensure_supplier_account(
 		)
 	existing = _organisation(facts["country"], facts["registration_number"])
 	if existing and frappe.db.get_value("Supplier Organisation", existing, "account_status") == "Active" and _has_representative(existing, representative):
+		if profile:
+			ensure_business_profile(organisation=existing, profile=profile, user=registrant, namespace=namespace, key_prefix=key_prefix, clock=clock)
 		return {"ok": True, "created": False, "organisation": existing}
 	sent: list[dict[str, Any]] = []
 	saved = {flag: frappe.flags.get(flag) for flag in ("kt_accounts_clock", "kt_account_message_transport", "kt_accounts_fixture_namespace")}
@@ -114,12 +144,14 @@ def ensure_supplier_account(
 	finally:
 		for flag, value in saved.items():
 			frappe.flags[flag] = value
+	if profile:
+		ensure_business_profile(organisation=organisation, profile=profile, user=registrant, namespace=namespace, key_prefix=key_prefix, clock=clock)
 	return {"ok": True, "created": True, "organisation": organisation}
 
 
 def ensure_canonical_supplier_accounts(*, commit: bool = False) -> dict[str, Any]:
 	result = ensure_supplier_account(
-		facts=AFYA, registrant=MARY, registrant_name="Mary Wanjiku", representative=DAVID, representative_name="David Ouma", representative_title="Bid Coordinator",
+		facts=AFYA, registrant=MARY, registrant_name="Mary Wanjiku", representative=DAVID, representative_name="David Ouma", representative_title="Bid Coordinator", profile=AFYA_PROFILE,
 	)
 	if frappe.conf.get("developer_mode") or frappe.flags.get("kt_fixture_passwords"):
 		# The same rule as the KT-STD-001 §8.3 register's actors (site stage):
@@ -137,7 +169,7 @@ def ensure_canonical_supplier_accounts(*, commit: bool = False) -> dict[str, Any
 	return result
 
 
-ACCOUNT_DOCTYPES = ("Supplier Account Access Decision", "Supplier User Assignment", "Supplier Account Verification", "Supplier Account Evidence", "Supplier Organisation")
+ACCOUNT_DOCTYPES = ("Supplier Account Access Decision", "Supplier User Assignment", "Supplier Account Verification", "Supplier Account Evidence", "Supplier Business Profile", "Supplier Organisation")
 
 
 def remove_supplier_accounts(*, namespace: str, users: tuple[str, ...] = ()) -> dict[str, int]:

@@ -20,7 +20,7 @@ from frappe.utils import cstr, getdate
 
 from kentender_core.services import public_portal
 from kentender_suppliers.supplier_accounts.services import authorization as authz
-from kentender_suppliers.supplier_accounts.services import clock, facts, guidance
+from kentender_suppliers.supplier_accounts.services import business_profile, clock, facts, guidance
 from kentender_suppliers.supplier_accounts.services.errors import not_found
 from kentender_suppliers.supplier_accounts.services.labels import date_label
 
@@ -79,7 +79,7 @@ def _status(org, missing: list) -> dict[str, str] | None:
 def _allowed_actions(org, responsibility: str) -> list[str]:
 	if org.account_status == "Suspended":
 		return ["view_receipts"]
-	actions = ["edit_organisation", "add_evidence"]
+	actions = ["edit_organisation", "edit_business_profile", "add_evidence"]
 	if org.account_status == "Pending verification":
 		actions.append("send_account_verification")
 	if responsibility == authz.SIGNATORY:
@@ -124,6 +124,7 @@ def get_supplier_account(*, organisation: str = "", user: str | None = None) -> 
 			"official_phone": cstr(org.official_phone), "account_status": org.account_status, "record_version": int(org.record_version or 0),
 		},
 		"viewer": {"responsibility": responsibility},
+		"business_profile": business_profile.get_business_profile(organisation=org.name, user=principal),
 		"people": _people(org.name),
 		"evidence": _evidence(org.name),
 		"notice_contacts": _notice_contacts(org),

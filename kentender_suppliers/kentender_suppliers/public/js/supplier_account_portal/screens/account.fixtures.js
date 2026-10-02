@@ -44,12 +44,25 @@ const EVIDENCE = [
 	{ evidence: "EV-3", label: "Youth reservation evidence", evidence_type: "Reservation evidence", reference: "AGPO-Y-2026-04172", valid_until: "30 Jun 2027", status: "Available", file_name: "agpo.pdf" },
 ];
 
+const PROFILE_VALUES = {
+	business_structure: "Registered company", sole_proprietor_name: "", sole_proprietor_age: "", sole_proprietor_nationality: "", sole_proprietor_country_of_origin: "", sole_proprietor_citizenship: "",
+	partners: [], company_type: "Private company", nominal_capital: "5000000.00", issued_capital: "2500000.00",
+	directors: [{ name: "Mary Wanjiku", nationality: "Kenyan", citizenship: "Kenyan", shares: "60.00" }, { name: "John Kamau", nationality: "Kenyan", citizenship: "Kenyan", shares: "40.00" }],
+	trade_licence_number: "TL-2027-0451", trade_licence_expiry: "2027-12-31", maximum_business_value: "80000000.00", state_owned: "No", year_of_registration: 2014,
+};
+/** The `business_profile` block of a read: complete by default, or empty with what is missing. */
+export function businessProfile(empty = false) {
+	if (!empty) return { organisation: ORG.organisation, record_version: 2, values: { ...PROFILE_VALUES, directors: PROFILE_VALUES.directors.map((r) => ({ ...r })) }, missing: [] };
+	const values = Object.fromEntries(Object.keys(PROFILE_VALUES).map((k) => [k, ["partners", "directors"].includes(k) ? [] : ""]));
+	return { organisation: ORG.organisation, record_version: 0, values, missing: [{ field: "business_structure", text: "Choose the business structure" }] };
+}
+
 /** One `GetSupplierAccount` read for a board variant ("", ATTENTION, VERIFY, SUSPENDED). */
 export function account(variant = "") {
 	const base = {
 		outcome: "OK", state: "account", organisations: [{ organisation: ORG.organisation, legal_name: ORG.legal_name }], organisation: { ...ORG }, viewer: { responsibility: "Authorised Signatory" },
 		people: PEOPLE.map((p) => ({ ...p })), evidence: EVIDENCE.map((e) => ({ ...e })), notice_contacts: [{ email: ORG.official_email, status: "Verified" }], missing: [],
-		allowed_actions: ["edit_organisation", "add_evidence", "add_person"], links: [], status: { label: "Active", tone: "live" },
+		allowed_actions: ["edit_organisation", "edit_business_profile", "add_evidence", "add_person"], links: [], status: { label: "Active", tone: "live" }, business_profile: businessProfile(),
 		next_step: answer("done", "The supplier account is ready.", { stage: "ACTIVE" }), journey: journey(["done", "done", "done"]),
 	};
 	if (variant === "ATTENTION") {

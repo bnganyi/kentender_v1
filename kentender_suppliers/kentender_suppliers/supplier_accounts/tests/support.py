@@ -42,7 +42,7 @@ AFYA = {
 	"registered_address": "Westlands Business Park, Waiyaki Way, Nairobi", "official_email": "tenders@afyadigital.example", "official_phone": "+254 709 555 014",
 	"job_title": "Managing Director",
 }
-ACCOUNT_DOCTYPES = ("Supplier Account Access Decision", "Supplier User Assignment", "Supplier Account Verification", "Supplier Account Evidence", "Supplier Organisation")
+ACCOUNT_DOCTYPES = ("Supplier Account Access Decision", "Supplier User Assignment", "Supplier Account Verification", "Supplier Account Evidence", "Supplier Business Profile", "Supplier Organisation")
 
 
 def key() -> str:

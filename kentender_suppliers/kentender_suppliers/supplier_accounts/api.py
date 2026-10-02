@@ -13,7 +13,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_suppliers.supplier_accounts.services import access, assignments, read, registration, verification
+from kentender_suppliers.supplier_accounts.services import access, assignments, business_profile, read, registration, verification
 from kentender_suppliers.supplier_accounts.services import evidence as evidence_service
 from kentender_suppliers.supplier_accounts.services import organisation as organisation_service
 from kentender_suppliers.supplier_accounts.services.errors import NOT_FOUND_TEXT
@@ -57,6 +57,16 @@ def verify_account_communication(token: str = "") -> dict[str, Any]:
 @frappe.whitelist(methods=["POST"])
 def update_supplier_organisation(organisation: str, values=None, expected_version=None, idempotency_key: str = "") -> dict[str, Any]:
 	return organisation_service.update_supplier_organisation(organisation=organisation, values=frappe.parse_json(values) or {}, expected_version=expected_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist(methods=["GET"])
+def get_business_profile(organisation: str) -> dict[str, Any]:
+	return business_profile.get_business_profile(organisation=organisation)
+
+
+@frappe.whitelist(methods=["POST"])
+def update_business_profile(organisation: str, values=None, expected_version=None, idempotency_key: str = "") -> dict[str, Any]:
+	return business_profile.update_business_profile(organisation=organisation, values=frappe.parse_json(values) or {}, expected_version=expected_version, idempotency_key=idempotency_key)
 
 
 @frappe.whitelist(methods=["POST"])

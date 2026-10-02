@@ -61,10 +61,20 @@
 .kt-industry.kt-portal .acc-choice legend { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
 .kt-industry.kt-portal .acc-radio { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; font-size: 14px; font-weight: 400; min-height: 44px; }
 .kt-industry.kt-portal .acc-radio .acc-help { flex-basis: 100%; margin: 0 0 0 22px; }
+/* Business profile: the wider dialog and its owners table (a row is a card on a narrow screen). */
+.kt-industry.kt-portal .acc-dialog-wide { width: 720px; }
+.kt-industry.kt-portal .acc-people-table { border: 0; padding: 0; margin: 0 0 var(--kt-space-4); display: grid; gap: var(--kt-space-3); }
+.kt-industry.kt-portal .acc-people-table legend { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.kt-industry.kt-portal .acc-people-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) auto; gap: var(--kt-space-3); align-items: start; padding-bottom: var(--kt-space-3); border-bottom: 1px solid var(--kt-color-neutral-200); }
+.kt-industry.kt-portal .acc-row-remove { margin-top: 22px; }
+.kt-industry.kt-portal .acc-owners { margin-top: var(--kt-space-4); }
+.kt-industry.kt-portal .acc-owners caption { text-align: left; padding-bottom: 6px; }
 
 @media (max-width: 800px) {
 	.kt-industry.kt-portal .acc-grid-2,
-	.kt-industry.kt-portal .acc-dialog-facts { grid-template-columns: minmax(0, 1fr); }
+	.kt-industry.kt-portal .acc-dialog-facts,
+	.kt-industry.kt-portal .acc-people-row { grid-template-columns: minmax(0, 1fr); }
+	.kt-industry.kt-portal .acc-row-remove { margin-top: 0; justify-self: start; }
 	/* Inputs at 16 px so a phone does not zoom on focus (board 390 frame). */
 	.kt-industry.kt-portal .kt-page .kt-input,
 	.kt-industry.kt-portal .acc-dialog .kt-input { font-size: 16px; }

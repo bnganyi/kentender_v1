@@ -8,7 +8,7 @@ import { nextTick, ref } from "vue";
 import { createCommandRunner, createScreenCache, createSequenceGuard } from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/runtime.js";
 import AccountScreen from "./AccountScreen.vue";
 import RegisterScreen from "./RegisterScreen.vue";
-import { NEW_ACCOUNT, REGISTERED, account } from "./account.fixtures.js";
+import { NEW_ACCOUNT, REGISTERED, account, businessProfile } from "./account.fixtures.js";
 
 function portalFor({ call, upload, query = {} } = {}) {
 	const route = ref({ path: "/account", segments: ["account"], query });
@@ -156,5 +156,69 @@ describe("Account", () => {
 		await flushPromises();
 		expect(wrapper.text()).toContain("The server could not be reached.");
 		expect(wrapper.text()).toContain("Try again");
+	});
+});
+
+describe("Business profile", () => {
+	const profileCall = (reply) => vi.fn(async (method) => (method.endsWith("update_business_profile") ? reply : account()));
+
+	it("shows the standing facts and the owners table, and offers the editor", async () => {
+		const wrapper = mountWith(AccountScreen, { initial: account() }, portalFor());
+		expect(wrapper.get('[data-testid="acc-profile-fact-business_structure"]').text()).toBe("Registered company");
+		expect(wrapper.get('[data-testid="acc-profile-fact-nominal_capital"]').text()).toBe("5000000.00");
+		expect(wrapper.get('[data-testid="acc-profile-directors-table"]').text()).toContain("John Kamau");
+		expect(wrapper.find('[data-testid="acc-profile-missing"]').exists()).toBe(false);
+	});
+
+	it("says what is missing on an empty profile", async () => {
+		const read = { ...account(), business_profile: businessProfile(true) };
+		const wrapper = mountWith(AccountScreen, { initial: read }, portalFor());
+		expect(wrapper.get('[data-testid="acc-profile-missing"]').text()).toContain("choose the business structure");
+	});
+
+	it("names a refused table and a refused cell in place and keeps what was entered", async () => {
+		const reply = { ok: false, code: "BDS_FIELD_INVALID", errors: { directors: "Shares owned must add up to 100; they add up to 60.00.", "directors.0.shares": "Enter a number." } };
+		const call = profileCall(reply);
+		const wrapper = mountWith(AccountScreen, { initial: account() }, portalFor({ call }));
+		await wrapper.get('[data-testid="acc-edit-profile"]').trigger("click");
+		await wrapper.get('[data-testid="acc-profile-directors-0-shares"]').setValue("sixty");
+		await wrapper.get('[data-testid="acc-profile-save"]').trigger("click");
+		await flushPromises();
+		expect(wrapper.get('[data-testid="acc-profile-directors-error"]').text()).toContain("add up to 100");
+		expect(wrapper.get('[data-testid="acc-profile-directors-0-shares"]').attributes("aria-invalid")).toBe("true");
+		expect(wrapper.get('[data-testid="acc-profile-directors-0-shares"]').element.value).toBe("sixty");
+		expect(wrapper.get('[data-testid="acc-profile-dialog"]').exists()).toBe(true);
+	});
+
+	it("sends the profile against the version the page read, and closes when saved", async () => {
+		const call = profileCall({ ok: true, organisation: "ORG-AFYA", record_version: 3, missing: [] });
+		const wrapper = mountWith(AccountScreen, { initial: account() }, portalFor({ call }));
+		await wrapper.get('[data-testid="acc-edit-profile"]').trigger("click");
+		await wrapper.get('[data-testid="acc-profile-save"]').trigger("click");
+		await flushPromises();
+		const sent = call.mock.calls.find(([m]) => m.endsWith("update_business_profile"))[1];
+		expect(sent.expected_version).toBe(2);
+		expect(sent.idempotency_key).toMatch(/^acc-profile-/);
+		expect(JSON.parse(sent.values).directors).toHaveLength(2);
+		expect(wrapper.find('[data-testid="acc-profile-dialog"]').exists()).toBe(false);
+	});
+
+	it("takes at most ten rows and shows the shares added up", async () => {
+		const wrapper = mountWith(AccountScreen, { initial: account() }, portalFor());
+		await wrapper.get('[data-testid="acc-edit-profile"]').trigger("click");
+		expect(wrapper.get('[data-testid="acc-profile-directors-total"]').text()).toContain("100");
+		for (let i = 0; i < 8; i += 1) await wrapper.get('[data-testid="acc-profile-directors-add"]').trigger("click");
+		expect(wrapper.findAll('[data-testid="acc-profile-directors-row"]')).toHaveLength(10);
+		expect(wrapper.get('[data-testid="acc-profile-directors-add"]').attributes("disabled")).toBeDefined();
+	});
+
+	it("shows only the details of the chosen structure", async () => {
+		const wrapper = mountWith(AccountScreen, { initial: account() }, portalFor());
+		await wrapper.get('[data-testid="acc-edit-profile"]').trigger("click");
+		expect(wrapper.find('[data-testid="acc-profile-nominal_capital"]').exists()).toBe(true);
+		await wrapper.get('[data-testid="acc-profile-business_structure"]').setValue("Sole proprietor");
+		expect(wrapper.find('[data-testid="acc-profile-nominal_capital"]').exists()).toBe(false);
+		expect(wrapper.find('[data-testid="acc-profile-sole_proprietor_age"]').exists()).toBe(true);
+		expect(wrapper.find('[data-testid="acc-profile-directors"]').exists()).toBe(false);
 	});
 });
