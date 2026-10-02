@@ -8,9 +8,11 @@ The publication rule is resolved from CFG-CHG-002 v0.11's own
 "Publication obligations" reference kind: every version in force on the
 applicability date whose `trigger_event` is `TenderInvitation` contributes
 one required channel; `TenderCancellation` rows contribute the cancellation
-obligations. The minimum preparation period is the Open Tender / Goods
-schedule profile's `bid_opening` minimum (its default when no statutory
-minimum is verified yet). Every MVP channel is Evidence based: a row that
+obligations. The profile's `bid_opening` row carries two separate numbers
+(TPR-CHG-001 v0.16 §5.5): the verified legal **minimum** preparation period,
+which blocks, and the **default** (the usual period), which pre-fills the
+form and, when the officer goes below it, requires a stated reason but never
+blocks. A profile with no verified minimum has nothing to block on. Every MVP channel is Evidence based: a row that
 names an integration evidence contract is refused, never activated
 (§5.5.1). The snapshot taken at authorisation controls afterwards
 (§5.5(8)); a new rule never reclassifies an authorised publication."""
@@ -18,13 +20,14 @@ names an integration evidence contract is refused, never activated
 from __future__ import annotations
 
 import json
+from datetime import timedelta
 from typing import Any
 
 import frappe
 from frappe.utils import cstr, getdate
 
 from kentender_core.services import procurement_settings, regulatory_reference
-from kentender_procurement.tenders.services.errors import fail
+from kentender_procurement.tenders.services.errors import TendersError, fail
 
 KIND = "Publication obligations"
 TRIGGER_INVITATION = "TenderInvitation"
@@ -100,12 +103,12 @@ def resolve_publication_rule(*, applicability_date, procurement_category: str = 
 	order = list(CHANNEL_LABELS)
 	channels.sort(key=lambda c: order.index(c["channel"]) if c["channel"] in order else len(order))
 	profile = _schedule_profile(applicability_date, procurement_category)
-	minimum = _minimum_preparation_days(profile)
+	minimum, default = _preparation_period(profile)
 	rule_id = sorted(rule_ids)[0] if len(rule_ids) == 1 else " / ".join(sorted(rule_ids))
 	return {
 		"rule_snapshot_id": rule_id, "applicability_date": str(getdate(applicability_date)), "channels": channels,
 		"contributing_versions": [{"reference": c["reference"], "reference_key": c["reference_key"], "version_number": c["version_number"], "verification_status": c["verification_status"]} for c in channels],
-		"minimum_preparation_days": minimum, "schedule_profile": {"profile": profile.get("profile", ""), "version_number": profile.get("version_number"), "verification_status": profile.get("verification_status", ""), "basis": profile.get("basis", "")},
+		"minimum_preparation_days": minimum, "default_preparation_days": default, "schedule_profile": {"profile": profile.get("profile", ""), "version_number": profile.get("version_number"), "verification_status": profile.get("verification_status", ""), "basis": profile.get("basis", "")},
 		"threshold_snapshot": _threshold_snapshot(applicability_date, procurement_category),
 	}
 
@@ -121,15 +124,48 @@ def _schedule_profile(applicability_date, procurement_category: str) -> dict[str
 	return profile
 
 
-def _minimum_preparation_days(profile: dict[str, Any]) -> int:
+def _preparation_period(profile: dict[str, Any]) -> tuple[int, int]:
+	"""(verified legal minimum, default) days for the `bid_opening` period; 0 means not set."""
 	for row in profile.get("milestones") or []:
 		if row.get("milestone") == "bid_opening" and row.get("applies"):
-			minimum = row.get("minimum_days") or row.get("default_days")
-			if minimum:
-				profile["basis"] = "statutory minimum" if row.get("minimum_days") else f"profile default ({row.get('basis') or 'unverified'})"
-				return int(minimum)
-	fail("TND_PUBLICATION_RULE_UNAVAILABLE", "The schedule profile carries no minimum preparation period.")
-	return 0
+			minimum, default = int(row.get("minimum_days") or 0), int(row.get("default_days") or 0)
+			if minimum or default:
+				profile["basis"] = "verified minimum" if minimum else f"profile default ({row.get('basis') or 'unverified'}); no verified minimum"
+				return minimum, default
+	fail("TND_PUBLICATION_RULE_UNAVAILABLE", "The schedule profile carries no minimum or default preparation period.")
+	return 0, 0
+
+
+def preparation_period(applicability_date, procurement_category: str) -> dict[str, int] | None:
+	"""{"minimum_days": verified legal minimum (0 when none), "default_days": the usual period (0 when none)}, or None when no schedule
+	profile resolves (authorisation reports that separately as TND_PUBLICATION_RULE_UNAVAILABLE)."""
+	try:
+		minimum, default = _preparation_period(_schedule_profile(applicability_date, procurement_category))
+	except TendersError:
+		return None
+	return {"minimum_days": minimum, "default_days": default}
+
+
+def minimum_preparation_days(applicability_date, procurement_category: str) -> int | None:
+	"""The verified legal minimum, or None when no profile resolves; 0 when the profile records none."""
+	period = preparation_period(applicability_date, procurement_category)
+	return None if period is None else period["minimum_days"]
+
+
+def period_shortfall(*, issue_date, submission_deadline, today, minimum_days: int) -> dict[str, Any] | None:
+	"""§5.5.6: the earliest publication is the later of the issue date and
+	today; the deadline must fall at least `minimum_days` after it. None when
+	it does; otherwise the figures behind TND_PUBLICATION_PERIOD_INVALID."""
+	if not submission_deadline or not minimum_days:
+		return None
+	published = max(getdate(issue_date), getdate(today)) if issue_date else getdate(today)
+	earliest = published + timedelta(days=int(minimum_days))
+	if getdate(submission_deadline) >= earliest:
+		return None
+	return {
+		"minimum_days": int(minimum_days), "days_allowed": (getdate(submission_deadline) - published).days, "earliest_publication": str(published),
+		"earliest_deadline": str(earliest), "submission_deadline": str(getdate(submission_deadline)),
+	}
 
 
 def _threshold_snapshot(applicability_date, procurement_category: str) -> dict[str, Any]:

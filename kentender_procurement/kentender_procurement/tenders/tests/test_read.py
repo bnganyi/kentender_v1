@@ -67,7 +67,7 @@ class TestWorkspaceAndStart(TenderReadCase):
 		self.assertEqual(ws["outcome"], "OK")
 		start = next(r for r in ws["rows"] if r["kind"] == "start" and r["handoff"] == authorised["handoff"])
 		self.assertEqual((start["tender_reference"], start["status_label"], start["action_label"], start["route"][:2]), ("Not started", "Ready to start", "Start Tender", ["tenders", "new"]))
-		self.assertEqual([c["label"] for c in ws["counts"]], ["Ready to start", "Drafts", "Returned to me"])
+		self.assertEqual([c["label"] for c in ws["counts"]], ["Ready to start", "Drafts", "Returned to me", "In progress"])
 		self.assertEqual(ws["counts"][0]["value"], 1)
 		reader = read.get_tenders_workspace(user=fx.AUDITOR)
 		self.assertEqual((reader["mode"], reader["counts"]), ("reader", []))
@@ -75,6 +75,7 @@ class TestWorkspaceAndStart(TenderReadCase):
 		technical = read.get_tenders_workspace(user="Administrator")
 		self.assertEqual((technical["mode"], technical["counts"]), ("technical", []))
 		self.assertEqual(read.get_tenders_workspace(user=fx.OFFICER, status="published")["rows"], [])
+		self.assertEqual(read.get_tenders_workspace(user=fx.OFFICER, status="published")["counts"], ws["counts"])
 		self.assertEqual(read.get_tenders_workspace(user=fx.OFFICER, status="published")["empty_text"], "No Tenders match these filters.")
 
 	def test_the_start_read_creates_nothing_and_reports_the_three_outcomes(self):
@@ -147,6 +148,17 @@ class TestRecordReview(TenderReadCase):
 		row = next(r for r in ws["rows"] if r.get("tender") == root.name)
 		self.assertEqual((row["status_label"], row["action_label"]), ("Awaiting your approval", "Review"))
 		self.assertEqual(ws["counts"][0], {"key": "awaiting_approval", "label": "Awaiting procurement approval", "value": 1, "sub": "Tenders submitted for procurement approval"})
+		# one rule for every persona: a card for each status where it is that persona's turn, then In progress for the rest in flight
+		self.assertEqual([(c["key"], c["value"]) for c in ws["counts"]], [("awaiting_approval", 1), ("publishing", 0), ("in_progress", 0)])
+		self.assertEqual([(c["key"], c["value"]) for c in read.get_tenders_workspace(user=fx.AO)["counts"]], [("approved", 0), ("in_progress", 1)])
+		# the officer's own submitted Tender must stay visible in a card, not drop out of the work summary
+		officer_counts = {c["key"]: c["value"] for c in read.get_tenders_workspace(user=fx.OFFICER)["counts"]}
+		self.assertEqual((officer_counts["in_progress"], officer_counts["draft"]), (1, 0))
+		# a card is a filter: it narrows the table, never the work summary itself
+		narrowed = read.get_tenders_workspace(user=fx.OFFICER, status="in_progress")
+		self.assertEqual([r["tender"] for r in narrowed["rows"]], [root.name])
+		self.assertEqual({c["key"]: c["value"] for c in narrowed["counts"]}, officer_counts)
+		self.assertEqual(read.get_tenders_workspace(user=fx.OFFICER, status="draft")["rows"], [])
 		rows = my_work_provider.my_work_rows(user=fx.HOPF)["assigned"]
 		# §5.11 / §11.2: "Review Tender {ref}", opened with the workspace's "Review"
 		self.assertEqual((rows[0]["task_id"], rows[0]["route"], rows[0]["action_label"], rows[0]["title"]), (submitted["task"], ["tenders", root.tender_reference], "Review", f"Review Tender {root.tender_reference}"))
@@ -161,6 +173,9 @@ class TestRecordReview(TenderReadCase):
 		ws = read.get_tenders_workspace(user=fx.AO)
 		row = next(r for r in ws["rows"] if r.get("tender") == root.name)
 		self.assertEqual((row["status_label"], row["action_label"]), ("Awaiting your publication decision", "Review publication"))
+		self.assertEqual([(c["key"], c["value"]) for c in ws["counts"]], [("approved", 1), ("in_progress", 0)])
+		self.assertEqual([(c["key"], c["value"]) for c in read.get_tenders_workspace(user=fx.HOPF)["counts"]], [("awaiting_approval", 0), ("publishing", 0), ("in_progress", 1)])
+		self.assertEqual([r["tender"] for r in read.get_tenders_workspace(user=fx.HOPF, status="in_progress")["rows"]], [root.name])
 		self.assertEqual(my_work_provider.my_work_rows(user=fx.AO)["assigned"][0]["action_label"], "Review publication")
 		hist = history.get_tender_history(tender=root.name, user=fx.AUDITOR)
 		self.assertEqual([v["version_number"] for v in hist["versions"]], [1])

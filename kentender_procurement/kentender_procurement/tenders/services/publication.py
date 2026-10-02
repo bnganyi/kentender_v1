@@ -69,8 +69,10 @@ def authorise_tender_publication(*, tender: str, expected_record_version, idempo
 	snapshot = snap.load(version)
 	compatibility.require_supported(snapshot, bound)
 	check = review.run(root, version, with_renders=False)
-	if check["must_fix_count"]:
-		fail("TND_MUST_FIX", detail={"findings": [f for f in check["findings"] if f["severity"] == review.MUST_FIX]})
+	# the period shortfall is decided below, on the day of authorisation, with its own TND_PUBLICATION_PERIOD_INVALID and figures
+	blocking = [f for f in check["findings"] if f["severity"] == review.MUST_FIX and f["finding_code"] not in ("PUBLICATION_PERIOD", "PERIOD_REASON")]
+	if blocking:
+		fail("TND_MUST_FIX", detail={"findings": blocking})
 	state = serializer.officer_state(version)
 	if serializer.package_digest(root, version, snapshot) != cstr(version.package_digest):
 		fail("TND_STALE_VERSION", "The approved package no longer matches its digest.")
@@ -282,6 +284,7 @@ def get_tender_publication(*, tender: str, user: str | None = None) -> dict[str,
 		"publication": summary,
 		"ao_task": {"name": ao_task.name, "task_token": ao_task.task_token} if ao_task else None,
 		"attestations": {c["channel"]: channel_confirmation.attestation_text(subject_type=channel_confirmation.SUBJECT_PUBLICATION, channel_label=c["label"]) for c in ((summary or {}).get("required_channels") or [])},
+		"period_problem": read.period_problem(root, version),
 		"allowed_actions": read.allowed_actions(root, version, actor, roles),
 		"segregation_message": read.segregation_message(root, version, actor, roles),
 		"guidance": guidance.guidance(root, actor=actor, roles=roles, mode=mode, context="publication"),

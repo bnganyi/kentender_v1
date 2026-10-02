@@ -21,3 +21,4 @@ kentender_core.patches.v1_0.relax_kt_page_role_gates
 kentender_core.patches.v1_18.regulatory_reference_verification_status
 kentender_core.patches.v1_23.requirement_type_procurement_category
 kentender_core.patches.v1_27.intake_closing_times_in_site_time
+kentender_core.patches.v1_28.open_tender_preparation_minimum

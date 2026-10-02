@@ -36,6 +36,8 @@ AFTER_SALES_OPTIONS = (
 	"Both",
 )
 DEFAULT_VALIDITY_DAYS = 120
+# v0.16 §5.2: the time of day the pre-filled submission deadline takes (new content, for owner review; the §10.1 fixtures close at 11:00)
+DEFAULT_CLOSING_TIME = "11:00"
 
 # field -> spec. `when`: (other_field, value) the field applies under. `group`
 # is the §5.2 sub-table the field belongs to (details / supplier / contract).
@@ -45,6 +47,8 @@ CATALOGUE: dict[str, dict[str, Any]] = {
 	"issue_date": {"task": TASK_DETAILS, "group": "details", "type": DATE, "required": True, "label": "Issue date"},
 	"clarification_deadline": {"task": TASK_DETAILS, "group": "details", "type": DATETIME, "required": True, "label": "Clarification deadline"},
 	"submission_deadline": {"task": TASK_DETAILS, "group": "details", "type": DATETIME, "required": True, "label": "Submission deadline"},
+	# v0.16 §5.2: optional here; the review requires it only when the deadline leaves less than the usual tendering period
+	"shortened_period_reason": {"task": TASK_DETAILS, "group": "details", "type": TEXT, "max_length": 500, "min_length": 3, "required": False, "label": "Reason for a shorter tendering period"},
 	"tender_validity_days": {"task": TASK_DETAILS, "group": "details", "type": INT, "min": 1, "max": 365, "default": DEFAULT_VALIDITY_DAYS, "required": True, "label": "Tender validity"},
 	"tender_security_amount": {"task": TASK_DETAILS, "group": "details", "type": MONEY, "min_exclusive": 0, "required": True, "label": "Tender security amount"},
 	"pre_tender_meeting": {"task": TASK_DETAILS, "group": "details", "type": BOOL, "default": False, "required": True, "label": "Pre-tender meeting"},

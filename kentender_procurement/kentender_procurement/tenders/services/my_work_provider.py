@@ -11,7 +11,12 @@ hand-off register (plan D26). Core collects providers through the
 - **waiting**: the sender's "Waiting for …" item while the hand-off is open;
 - the corrected-successor row (§5.11 "Corrected Requisition successor
   authorised") is derived at read time: it exists exactly while a stopped
-  Tender has an authorised, unconsumed successor handoff.
+  Tender has an authorised, unconsumed successor handoff;
+- the reopen row (TPR-CHG-001 v0.16 §5.11) is derived the same way: it
+  exists exactly while an Approved Tender's submission deadline no longer
+  leaves the minimum preparation period (§5.10 `TND_PUBLICATION_PERIOD_INVALID`).
+  The Head of Procurement Function holds it; the Accounting Officer whose
+  decision it blocks sees the matching waiting item. Reading creates nothing.
 
 Every item clears on its business transition (the task closes), never on
 reading. Technical readers get nothing (core skips providers for them).
@@ -29,7 +34,7 @@ from kentender_core.services import next_step as ns
 from kentender_procurement.tenders.services import handoffs, lifecycle
 from kentender_procurement.tenders.services import tender_authorization as authz
 from kentender_procurement.tenders.services.errors import TendersError
-from kentender_procurement.tenders.services.tender_roles import ROLE_PROCUREMENT_OFFICER
+from kentender_procurement.tenders.services.tender_roles import ROLE_ACCOUNTING_OFFICER, ROLE_HEAD_OF_PROCUREMENT_FUNCTION, ROLE_PROCUREMENT_OFFICER
 
 PAGE = "tenders"
 TASK_FIELDS = ["name", "tender", "tender_version", "task_type", "business_role", "holder", "sender", "comment", "subject_type", "subject_id", "task_token", "creation"]
@@ -80,6 +85,34 @@ def _successor_rows(user: str) -> list[dict[str, Any]]:
 	return rows
 
 
+def _period_rows(user: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+	"""(assigned, waiting): the Head of Procurement Function's Reopen item and the Accounting Officer's matching waiting item for
+	each Approved Tender whose deadline is too short (derived, never stored)."""
+	from kentender_procurement.tenders.services import read, serializer
+
+	hopf, ao = authz.has_site_role(ROLE_HEAD_OF_PROCUREMENT_FUNCTION, user), authz.has_site_role(ROLE_ACCOUNTING_OFFICER, user)
+	if not (hopf or ao):
+		return [], []
+	assigned: list[dict[str, Any]] = []
+	waiting: list[dict[str, Any]] = []
+	holders = [handoffs.full_name(u) for u in handoffs.users_with_site_role(ROLE_HEAD_OF_PROCUREMENT_FUNCTION)]
+	for root in frappe.get_all("Tender", filters={"overall_status": "Approved", "publication": ("is", "not set")}, fields=["name", "tender_reference", "fiscal_year", "lead_org_unit", "approved_version", "modified"], limit_page_length=0):
+		problem = read.period_problem(frappe._dict(root, overall_status="Approved", publication=""))
+		if not problem:
+			continue
+		since = (frappe.db.get_value("Tender Version", root.approved_version, "approved_at") if root.approved_version else None) or root.modified
+		facts = (
+			f"The submission deadline, {serializer.fmt_date_short(problem['submission_deadline'])}, allows {problem['days_allowed']} days after publication; "
+			f"{problem['minimum_days']} are required. The earliest allowed deadline is {serializer.fmt_date_short(problem['earliest_deadline'])}."
+		)
+		task = frappe._dict({"name": f"{root.name}:period", "task_type": "Reopen for submission deadline", "business_role": ROLE_HEAD_OF_PROCUREMENT_FUNCTION, "comment": facts, "task_token": "", "creation": since})
+		if hopf:
+			assigned.append(_row(task, root, title=f"Reopen Tender {root.tender_reference} — submission deadline too short", status="Assigned", route=[PAGE, root.tender_reference], action_label="Reopen Tender"))
+		elif ao:
+			waiting.append(_row(task, root, title=f"Waiting for {', '.join(holders) or ROLE_HEAD_OF_PROCUREMENT_FUNCTION} to reopen Tender {root.tender_reference}", status="Waiting", route=[PAGE, root.tender_reference], action_label="View", holder=ns.holder(ROLE_HEAD_OF_PROCUREMENT_FUNCTION, holders)))
+	return assigned, waiting
+
+
 def my_work_rows(*, user: str) -> dict[str, list[dict[str, Any]]]:
 	if not user or user == "Guest":
 		return {"assigned": [], "claimable": [], "waiting": []}
@@ -102,4 +135,5 @@ def my_work_rows(*, user: str) -> dict[str, list[dict[str, Any]]]:
 				holder = ns.holder(cstr(task.business_role), [handoffs.full_name(u) for u in holders])
 				waiting.append(_row(task, root, title=title, status="Waiting", route=[PAGE, root.tender_reference], action_label="View", holder=holder))
 	assigned += _successor_rows(user)
-	return {"assigned": assigned, "claimable": [], "waiting": waiting}
+	period_assigned, period_waiting = _period_rows(user)
+	return {"assigned": assigned + period_assigned, "claimable": [], "waiting": waiting + period_waiting}

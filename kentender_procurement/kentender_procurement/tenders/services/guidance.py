@@ -255,6 +255,41 @@ def _decision(root, version, *, actor: str, roles: dict[str, bool], stage: str, 
 
 
 # --------------------------------------------------------------------------
+# AO_AUTHORISATION blocked by the minimum preparation period (§5.10 TND_PUBLICATION_PERIOD_INVALID)
+# --------------------------------------------------------------------------
+
+
+def _period_problem(root, approved) -> dict[str, Any] | None:
+	from kentender_procurement.tenders.services import read
+
+	return read.period_problem(root, approved)
+
+
+def _period_blocked(problem: dict[str, Any], *, actor: str, roles: dict[str, bool]) -> tuple[dict[str, Any], dict[str, Any]]:
+	"""Who can clear it is the Head of Procurement Function (Reopen Tender), then the Procurement Officer (Review Tender dates): the
+	Accounting Officer cannot edit the package, so the AO is told exactly that instead of being offered a decision that must fail."""
+	hopfs = _holders(ROLE_HEAD_OF_PROCUREMENT_FUNCTION)
+	facts = (
+		f"The submission deadline, {serializer.fmt_date_short(problem['submission_deadline'])}, allows {problem['days_allowed']} days after publication; "
+		f"{problem['minimum_days']} are required. The earliest allowed deadline is {serializer.fmt_date_short(problem['earliest_deadline'])}."
+	)
+	if roles.get("hopf"):
+		answer = _turn(AO_AUTHORISATION, "Reopen this Tender so the submission deadline can be corrected.", holder_users=[actor], role=ROLE_HEAD_OF_PROCUREMENT_FUNCTION, primary="reopen_tender", sentence=facts)
+		return answer, _journey(AO_AUTHORISATION, holder_display=_name(actor))
+	if roles.get("ao"):
+		fixes = [
+			ns.fix("Reopen Tender", responsibility=ROLE_HEAD_OF_PROCUREMENT_FUNCTION, person=_name(hopfs[0]) if hopfs else "", kind=ns.FIX_TEXT, fix_id="reopen_tender", primary=True),
+			ns.fix("Review Tender dates", responsibility=ROLE_PROCUREMENT_OFFICER, kind=ns.FIX_TEXT, fix_id="review_tender_dates"),
+		]
+		blocker = ns.blocker(_refusal("TND_PUBLICATION_PERIOD_INVALID", facts, figures=problem, fixes=fixes))
+		answer = _blocked(AO_AUTHORISATION, facts, holder_users=[actor], role=ROLE_ACCOUNTING_OFFICER, blockers=[blocker], sentence="You cannot edit the package. The Head of Procurement Function can reopen this Tender so the Procurement Officer can correct the dates.")
+		return answer, _journey(AO_AUTHORISATION, blocked=True, holder_display=_name(actor))
+	answer = _waiting(AO_AUTHORISATION, f"{_subject(hopfs, ROLE_HEAD_OF_PROCUREMENT_FUNCTION)} must reopen this Tender so the submission deadline can be corrected.", holder_users=hopfs, role=ROLE_HEAD_OF_PROCUREMENT_FUNCTION)
+	answer["sentence"] = facts
+	return answer, _journey(AO_AUTHORISATION, blocked=True, holder_display=_display(hopfs, ROLE_HEAD_OF_PROCUREMENT_FUNCTION))
+
+
+# --------------------------------------------------------------------------
 # PUBLICATION
 # --------------------------------------------------------------------------
 
@@ -619,6 +654,8 @@ def guidance(root, *, actor: str, roles: dict[str, bool], mode: str, context: st
 		if withdrawn and business.get("hopf"):
 			answer = _turn(AO_AUTHORISATION, "Review the withdrawn publication authorisation and reopen the Tender if it needs correction.", holder_users=[actor], role=ROLE_HEAD_OF_PROCUREMENT_FUNCTION, primary="reopen_tender", since=withdrawn[0].creation)
 			journey = _journey(AO_AUTHORISATION, holder_display=_name(actor))
+		elif (problem := _period_problem(root, approved)):
+			answer, journey = _period_blocked(problem, actor=actor, roles=business)
 		else:
 			answer, journey = _decision(
 				root, approved, actor=actor, roles=business, stage=AO_AUTHORISATION, role=ROLE_ACCOUNTING_OFFICER, role_key="ao", columns=("prepared_by", "submitted_by", "approved_by"),

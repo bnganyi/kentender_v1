@@ -25,11 +25,11 @@
 			<template v-else>
 				<div v-if="showCounts" class="tnd-ws-counts" data-testid="tnd-counts">
 					<div class="kt-kpi-row">
-						<div v-for="c in counts" :key="c.key" class="kt-kpi-card" :class="kpiClass(c)" :data-testid="`tnd-count-${c.key}`">
+						<button v-for="c in counts" :key="c.key" type="button" class="kt-kpi-card tnd-kpi-btn" :class="[kpiClass(c), { 'is-selected': filters.status === c.key }]" :aria-pressed="filters.status === c.key ? 'true' : 'false'" :data-testid="`tnd-count-${c.key}`" @click="pickCount(c.key)">
 							<svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path v-for="(d, i) in icon(c.key)" :key="i" :d="d"></path></svg>
 							<div class="kt-kpi-value">{{ c.value }}</div>
 							<div class="tnd-kpi-label">{{ c.label }}</div>
-						</div>
+						</button>
 					</div>
 				</div>
 
@@ -89,6 +89,10 @@ const showCounts = computed(() => counts.value.length > 0);
 const statusOptions = computed(() => (props.workspace.filters || {}).statuses || []);
 const fiscalYears = computed(() => (props.workspace.filters || {}).fiscal_years || []);
 
+// a count card is a shortcut to the Status filter; selecting the active card clears it
+function pickCount(key) {
+	update("status", props.filters.status === key ? "" : key);
+}
 function update(name, value) {
 	emit("filter", { ...props.filters, [name]: value });
 }
@@ -107,6 +111,7 @@ const ICON = {
 	ready: ["M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20", "m10 8 6 4-6 4V8"],
 	draft: ["M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", "M14 2v5h5"],
 	returned: ["M9 14 4 9l5-5", "M4 9h10.5A5.5 5.5 0 0 1 20 14.5v0A5.5 5.5 0 0 1 14.5 20H11"],
+	in_progress: ["M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20", "M12 6v6l4 2"],
 	awaiting_approval: ["M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20", "M12 6v6l4 2"],
 	approved: ["M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20", "M12 6v6l4 2"],
 	publishing: ["M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", "M14 2v5h5", "m9 15 2 2 4-4"],

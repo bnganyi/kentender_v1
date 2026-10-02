@@ -18,7 +18,7 @@ from frappe.utils import cstr
 
 from kentender_core.services.authorization import is_technical
 from kentender_procurement.std_templates.compiler.errors import STDTemplateError
-from kentender_procurement.tenders.services import compatibility, controls, correction, documents, draft_commands, evidence, handoff_gateway, lifecycle, review, serializer, template_binding
+from kentender_procurement.tenders.services import clock, compatibility, configuration_gateway, controls, correction, documents, draft_commands, evidence, handoff_gateway, lifecycle, review, serializer, template_binding
 from kentender_procurement.tenders.services import guidance as guide
 from kentender_procurement.tenders.services import snapshot as snap
 from kentender_procurement.tenders.services import tender_authorization as authz
@@ -27,10 +27,22 @@ from kentender_procurement.tenders.services.tender_roles import FORBIDDEN_RESPON
 
 PAGE = "tenders"
 STATUS_FILTERS = (
-	("ready", "Ready to start"), ("draft", "Draft"), ("returned", "Returned"), ("awaiting_approval", "Awaiting procurement approval"),
+	("ready", "Ready to start"), ("draft", "Draft"), ("returned", "Returned"), ("in_progress", "In progress"), ("awaiting_approval", "Awaiting procurement approval"),
 	("approved", "Awaiting publication authorisation"), ("publishing", "Publication confirmation required"), ("published", "Published — open"),
 	("ended", "Submission period ended"), ("cancelled", "Cancelled"), ("correction", "Requisition correction requested"),
 )
+# Work-summary cards, one rule for every persona: a card for each status where it is that persona's turn (lifecycle order), then
+# In progress for the other Tenders in flight, which are waiting on someone else. A requisition not yet started is not a Tender.
+COUNT_CARDS = (
+	("ready", "Ready to start", "Approved requisitions awaiting a tender"),
+	("draft", "Drafts", "Started, not yet submitted"),
+	("returned", "Returned to me", "Sent back for correction"),
+	("awaiting_approval", "Awaiting procurement approval", "Tenders submitted for procurement approval"),
+	("approved", "Awaiting publication authorisation", "Approved tenders awaiting a publication decision"),
+	("publishing", "Publication confirmation required", "Authorised tenders awaiting channel confirmation"),
+)
+IN_FLIGHT_KEYS = ("draft", "returned", "awaiting_approval", "approved", "publishing")
+TURN_KEYS = {"officer": ("ready", "draft", "returned"), "hopf": ("awaiting_approval", "publishing"), "ao": ("approved",)}
 TENDER_FIELDS = [
 	"name", "tender_reference", "requirement_title", "requisition_reference", "requisition_handoff", "plan_item_id", "fiscal_year", "overall_status",
 	"current_version", "approved_version", "publication", "published_at", "submission_deadline", "lead_org_unit", "contributing_org_unit_ids", "record_version", "modified",
@@ -166,21 +178,23 @@ def start_row(handoff: dict[str, Any], *, can_start: bool) -> dict[str, Any]:
 	}
 
 
+def turn_keys(roles: dict[str, bool]) -> tuple[str, ...]:
+	held = {k for role, keys in TURN_KEYS.items() if roles[role] for k in keys}
+	return tuple(k for k, _label, _sub in COUNT_CARDS if k in held)
+
+
+def in_progress_keys(roles: dict[str, bool]) -> tuple[str, ...]:
+	return tuple(k for k in IN_FLIGHT_KEYS if k not in turn_keys(roles))
+
+
 def _counts(rows: list[dict[str, Any]], roles: dict[str, bool]) -> list[dict[str, Any]]:
 	by_key: dict[str, int] = {}
 	for row in rows:
 		by_key[row["status_key"]] = by_key.get(row["status_key"], 0) + 1
-	out = []
-	if roles["officer"]:
-		out += [
-			{"key": "ready", "label": "Ready to start", "value": by_key.get("ready", 0), "sub": "Approved requisitions awaiting a tender"},
-			{"key": "draft", "label": "Drafts", "value": by_key.get("draft", 0), "sub": "Started, not yet submitted"},
-			{"key": "returned", "label": "Returned to me", "value": by_key.get("returned", 0), "sub": "Sent back for correction"},
-		]
-	if roles["hopf"]:
-		out.append({"key": "awaiting_approval", "label": "Awaiting procurement approval", "value": by_key.get("awaiting_approval", 0), "sub": "Tenders submitted for procurement approval"})
-	if roles["ao"]:
-		out.append({"key": "approved", "label": "Awaiting publication authorisation", "value": by_key.get("approved", 0), "sub": "Approved tenders awaiting a publication decision"})
+	turn = turn_keys(roles)
+	out = [{"key": k, "label": label, "value": by_key.get(k, 0), "sub": sub} for k, label, sub in COUNT_CARDS if k in turn]
+	waiting = in_progress_keys(roles)
+	out.append({"key": "in_progress", "label": "In progress", "value": sum(by_key.get(k, 0) for k in waiting), "sub": "With someone else, not yet published"})
 	return out
 
 
@@ -200,11 +214,14 @@ def get_tenders_workspace(*, search: str = "", status: str = "", fiscal_year: st
 	for row in tenders:
 		rows.append(tender_row(frappe._dict(row), actor, roles))
 	fiscal_years = sorted({r["fiscal_year"] for r in rows if r["fiscal_year"]})
+	# the cards summarise the actor's whole queue; a card selects a filter, so filtering must not change them
+	counts = [] if roles["technical"] or not (roles["officer"] or roles["hopf"] or roles["ao"]) else _counts(rows, roles)
 	needle = cstr(search).strip().lower()
 	if needle:
 		rows = [r for r in rows if needle in f"{r['tender_reference']} {r['requisition_reference']} {r['purchase']}".lower()]
 	if cstr(status).strip():
-		rows = [r for r in rows if r["status_key"] == cstr(status).strip()]
+		wanted = cstr(status).strip()
+		rows = [r for r in rows if r["status_key"] in in_progress_keys(roles)] if wanted == "in_progress" else [r for r in rows if r["status_key"] == wanted]
 	if cstr(fiscal_year).strip():
 		rows = [r for r in rows if r["fiscal_year"] == cstr(fiscal_year).strip()]
 	return {
@@ -212,7 +229,7 @@ def get_tenders_workspace(*, search: str = "", status: str = "", fiscal_year: st
 		"mode": "technical" if roles["technical"] else ("actor" if (roles["officer"] or roles["hopf"] or roles["ao"]) else "reader"),
 		"roles": roles,
 		"can_start": roles["officer"],
-		"counts": [] if roles["technical"] or not (roles["officer"] or roles["hopf"] or roles["ao"]) else _counts(rows, roles),
+		"counts": counts,
 		"rows": rows,
 		"filters": {"statuses": [{"key": k, "label": v} for k, v in STATUS_FILTERS], "fiscal_years": fiscal_years, "search": search, "status": status, "fiscal_year": fiscal_year},
 		"count_label": f"{len(rows)} Tender" + ("" if len(rows) == 1 else "s"),
@@ -319,6 +336,39 @@ def badge_for(root, version, roles: dict[str, bool]) -> str:
 	return status
 
 
+def period_rule(version) -> dict[str, Any] | None:
+	"""v0.16 §5.2: the two preparation-period numbers the Tender details form shows and pre-fills from. The server decides at review."""
+	state = serializer.officer_state(version)
+	period = configuration_gateway.preparation_period(state.get("issue_date") or clock.today(), cstr(snap.load(version).get("procurement_category")) or "Goods")
+	return {**period, "closing_time": controls.DEFAULT_CLOSING_TIME} if period else None
+
+
+def shortened_period(version) -> dict[str, Any] | None:
+	"""The figures when the saved deadline leaves less than the usual (default) tendering period, whether or not a reason is given."""
+	state = serializer.officer_state(version)
+	period = period_rule(version)
+	if not period or not period["default_days"] or not state.get("issue_date") or not state.get("submission_deadline"):
+		return None
+	return configuration_gateway.period_shortfall(issue_date=state["issue_date"], submission_deadline=state["submission_deadline"], today=clock.today(), minimum_days=period["default_days"])
+
+
+def period_problem(root, version=None) -> dict[str, Any] | None:
+	"""§5.5.6 / §5.10: for an Approved Tender awaiting publication authorisation, the figures when its submission deadline no longer
+	leaves the minimum preparation period after the earliest publication (the same check `AuthoriseTenderPublication` makes)."""
+	if cstr(root.overall_status) != "Approved" or root.publication:
+		return None
+	version = frappe.get_doc("Tender Version", root.approved_version) if root.approved_version else version
+	if version is None:
+		return None
+	state = serializer.officer_state(version)
+	if not state.get("submission_deadline"):
+		return None
+	minimum = configuration_gateway.minimum_preparation_days(state.get("issue_date") or clock.today(), cstr(snap.load(version).get("procurement_category")) or "Goods")
+	if not minimum:
+		return None
+	return configuration_gateway.period_shortfall(issue_date=state.get("issue_date"), submission_deadline=state.get("submission_deadline"), today=clock.today(), minimum_days=minimum)
+
+
 def allowed_actions(root, version, actor: str, roles: dict[str, bool]) -> list[str]:
 	"""§11.1(1) — every control is offered only when the command layer would
 	accept it for this actor in this exact state."""
@@ -336,7 +386,8 @@ def allowed_actions(root, version, actor: str, roles: dict[str, bool]) -> list[s
 	if status == "Approved":
 		if roles["hopf"] and not root.publication:
 			actions.append("reopen_tender")
-		if roles["ao"] and _can(lifecycle.require_segregation, version, actor, blocked_columns=("prepared_by", "submitted_by", "approved_by")):
+		# §5.10: a refused guard is stated up front, not discovered by pressing the button
+		if roles["ao"] and _can(lifecycle.require_segregation, version, actor, blocked_columns=("prepared_by", "submitted_by", "approved_by")) and not period_problem(root, version):
 			actions.append("authorise_publication")
 	if status == "Requisition correction requested" and roles["officer"]:
 		if handoff_gateway.successors(plan_item_id=cstr(root.plan_item_id), user=actor):
@@ -596,6 +647,8 @@ def get_tender(*, tender: str, user: str | None = None) -> dict[str, Any]:
 		# §5.9 / §10.17: the server-derived next step and Tender journey; the
 		# editor's two tasks carry their own answers (DES-03 / DES-04)
 		"guidance": guide.guidance(root, actor=actor, roles=roles, mode=mode),
+		"period_problem": period_problem(root, version) if mode != "department" else None,
+		"period_rule": period_rule(version) if mode != "department" else None,
 		"task_steps": guide.task_steps(root, actor=actor, roles=roles, mode=mode) if root.overall_status == "Draft" and roles["officer"] and mode != "department" else {},
 		"key_facts": key_facts(root, version, snapshot, internal=internal),
 		"record_links": record_links(root, actor),
@@ -688,6 +741,7 @@ def _section_bodies(root, version, snapshot: dict[str, Any], state: dict[str, An
 		"details": [_facts_block([
 			("Tender title", cstr(state.get("tender_title") or snapshot.get("requirement_title")), True), ("Issue date", serializer.fmt_date_short(state.get("issue_date"))),
 			("Clarification deadline", serializer.fmt_datetime_short(state.get("clarification_deadline"))), ("Submission deadline", serializer.fmt_datetime_short(state.get("submission_deadline"))),
+			*((("Reason for a shorter tendering period", cstr(state.get("shortened_period_reason")), True),) if cstr(state.get("shortened_period_reason")).strip() and shortened_period(version) else ()),
 			("Tender validity", f"{serializer.fmt_number(state.get('tender_validity_days'))} days" if state.get("tender_validity_days") else ""),
 			("Tender security", f"KES {serializer.fmt_money(state.get('tender_security_amount'))}" if state.get("tender_security_amount") is not None else ""),
 			("Pre-tender meeting", f"Yes — {meeting}" if meeting else "No"),

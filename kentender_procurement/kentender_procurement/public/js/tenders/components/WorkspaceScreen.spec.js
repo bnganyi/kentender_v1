@@ -29,6 +29,20 @@ describe("WorkspaceScreen — TPR-DES-01", () => {
 		expect(w.emitted("navigate")[0][0]).toEqual(["tenders", "TND-MOH-2027-033", "details"]);
 	});
 
+	it("makes each count card a filter: select narrows the table, select again clears it", async () => {
+		const w = make();
+		const card = w.find('[data-testid="tnd-count-draft"]');
+		expect(card.element.tagName).toBe("BUTTON");
+		expect(card.attributes("aria-pressed")).toBe("false");
+		await card.trigger("click");
+		expect(w.emitted("filter")[0][0]).toEqual({ search: "", status: "draft", fiscal_year: "" });
+		const active = make({ filters: { search: "laptop", status: "draft", fiscal_year: "" } });
+		expect(active.find('[data-testid="tnd-count-draft"]').attributes("aria-pressed")).toBe("true");
+		expect(active.find('[data-testid="tnd-count-ready"]').attributes("aria-pressed")).toBe("false");
+		await active.find('[data-testid="tnd-count-draft"]').trigger("click");
+		expect(active.emitted("filter")[0][0]).toEqual({ search: "laptop", status: "", fiscal_year: "" });
+	});
+
 	it("shows no count cards for a reader and a secondary View action", () => {
 		const w = make({ workspace: { ...WS, counts: [], rows: [{ ...ROW, status_key: "published", status_label: "Published — open", action_key: "view", action_label: "View" }] } });
 		expect(w.find('[data-testid="tnd-counts"]').exists()).toBe(false);

@@ -18,7 +18,7 @@
 			<div v-if="error" class="tnd-section tnd-section--notice" style="padding-top: 16px">
 				<div class="kt-notice is-critical" role="alert" data-testid="tnd-editor-error"><div class="kt-notice-body">{{ error }}</div></div>
 			</div>
-			<TaskDetails v-if="task === 'details'" ref="formRef" :values="record.officer_values || {}" :options="record.options || {}" :identity="identity" :errors="fieldErrors" />
+			<TaskDetails v-if="task === 'details'" ref="formRef" :values="record.officer_values || {}" :options="record.options || {}" :identity="identity" :errors="fieldErrors" :period-rule="record.period_rule || null" />
 			<TaskRequirements v-else ref="formRef" :values="record.officer_values || {}" :options="record.options || {}" :catalogue="record.catalogue || {}" :inherited="record.inherited || {}" :evidence="record.evidence_requirements || []" :stages="record.evaluation_stages || []" :identity="identity" :errors="fieldErrors" :pending="pending" @add-evidence="$emit('add-evidence')" @edit-evidence="$emit('edit-evidence', $event)" @remove-evidence="$emit('remove-evidence', $event)" />
 		</BlueprintCard>
 		<div class="tnd-footer">

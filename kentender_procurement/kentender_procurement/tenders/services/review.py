@@ -19,7 +19,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr, get_datetime, getdate
 
-from kentender_procurement.tenders.services import compatibility, controls, digest, evidence, handoff_gateway, render_service, serializer, template_binding
+from kentender_procurement.tenders.services import clock, compatibility, configuration_gateway, controls, digest, evidence, handoff_gateway, render_service, serializer, template_binding
 from kentender_procurement.tenders.services import snapshot as snap
 from kentender_procurement.tenders.services.errors import TendersError
 
@@ -31,9 +31,9 @@ NEEDS_ATTENTION = "Needs attention"
 FINDING_CODES: frozenset[str] = frozenset(
 	{
 		"HANDOFF_INVALID", "HANDOFF_CONSUMED_ELSEWHERE", "HANDOFF_DIGEST_CHANGED", "TEMPLATE_UNAVAILABLE", "COMPATIBILITY_FAILED",
-		"CONTROL_MISSING", "DATE_ORDER", "SNAPSHOT_CHANGED", "SCHEDULE_MISMATCH", "MAPPING_INCOMPLETE", "EVIDENCE_UNLINKED",
+		"CONTROL_MISSING", "DATE_ORDER", "PUBLICATION_PERIOD", "PERIOD_REASON", "SNAPSHOT_CHANGED", "SCHEDULE_MISMATCH", "MAPPING_INCOMPLETE", "EVIDENCE_UNLINKED",
 		"FILE_INVALID", "VALUES_INCONSISTENT", "RENDER_FAILED", "RENDER_PROBLEM", "PACKAGE_DIGEST_FAILED",
-		"NOTE_MANUFACTURER_AUTHORISATION",
+		"NOTE_MANUFACTURER_AUTHORISATION", "NOTE_SHORT_PERIOD",
 	}
 )
 MANUFACTURER_NOTE = "Confirm that manufacturer authorisation is proportionate for this purchase."
@@ -121,6 +121,33 @@ def run(tender, version, *, approval: dict[str, str] | None = None, with_renders
 		findings.append(_finding("DATE_ORDER", "The submission deadline must be after the clarification deadline.", task=controls.TASK_DETAILS, field="submission_deadline"))
 	if issue and sub and get_datetime(sub).date() <= issue:
 		findings.append(_finding("DATE_ORDER", "The submission deadline must be after the issue date.", task=controls.TASK_DETAILS, field="submission_deadline"))
+	# §5.2 / §5.5.6 (v0.16): two different numbers. Below the verified legal minimum is a Must fix, so it cannot reach the Accounting
+	# Officer; below the usual period is allowed but needs a stated reason, which then stays visible to the approvers as a Review note.
+	# Authorisation rechecks the legal minimum on the day of the decision.
+	if issue and sub:
+		period = configuration_gateway.preparation_period(issue, cstr(snapshot.get("procurement_category")) or "Goods")
+		if period:
+			minimum, usual = period["minimum_days"], period["default_days"]
+			floor = configuration_gateway.period_shortfall(issue_date=issue, submission_deadline=sub, today=clock.today(), minimum_days=minimum) if minimum else None
+			if floor:
+				findings.append(_finding(
+					"PUBLICATION_PERIOD",
+					f"The submission deadline must be at least {floor['minimum_days']} days after publication (the legal minimum). Published from {serializer.fmt_date_short(floor['earliest_publication'])}, the earliest allowed deadline is {serializer.fmt_date_short(floor['earliest_deadline'])}.",
+					task=controls.TASK_DETAILS, field="submission_deadline",
+				))
+			shorter = configuration_gateway.period_shortfall(issue_date=issue, submission_deadline=sub, today=clock.today(), minimum_days=usual) if usual else None
+			if shorter:
+				reason = cstr(state.get("shortened_period_reason")).strip()
+				if not reason:
+					findings.append(_finding(
+						"PERIOD_REASON", f"State why the tendering period is {shorter['days_allowed']} days, shorter than the usual {usual}.",
+						task=controls.TASK_DETAILS, field="shortened_period_reason",
+					))
+				else:
+					findings.append(_finding(
+						"NOTE_SHORT_PERIOD", f"The tendering period is {shorter['days_allowed']} days, shorter than the usual {usual}. Reason given: {reason}",
+						severity=REVIEW_NOTE, task=controls.TASK_DETAILS, field="shortened_period_reason", link_label="Review Tender details",
+					))
 	if state.get("pre_tender_meeting") and meet and sub and get_datetime(meet) >= get_datetime(sub):
 		findings.append(_finding("DATE_ORDER", "The pre-tender meeting must be before the submission deadline.", task=controls.TASK_DETAILS, field="meeting_datetime"))
 
@@ -144,7 +171,7 @@ def run(tender, version, *, approval: dict[str, str] | None = None, with_renders
 	# contract mapping in the compiled definition (only once the Version is
 	# complete enough to compile; the missing values are findings already)
 	published = {r.get("technical_requirement_id") for r in snapshot.get("technical_requirements") or []}
-	if not [f for f in findings if f["finding_code"] in ("CONTROL_MISSING", "HANDOFF_INVALID", "TEMPLATE_UNAVAILABLE", "COMPATIBILITY_FAILED", "DATE_ORDER")]:
+	if not [f for f in findings if f["finding_code"] in ("CONTROL_MISSING", "HANDOFF_INVALID", "TEMPLATE_UNAVAILABLE", "COMPATIBILITY_FAILED", "DATE_ORDER", "PUBLICATION_PERIOD", "PERIOD_REASON")]:
 		try:
 			mapped = _mappings(tender, version)
 		except TendersError as exc:

@@ -13,11 +13,17 @@
 				<div class="kt-field" style="margin: 0"><label for="tnd-clarification_deadline">Clarification deadline</label><input id="tnd-clarification_deadline" type="datetime-local" class="kt-input" v-model="form.clarification_deadline" data-testid="tnd-field-clarification_deadline" /><p v-if="errors.clarification_deadline" class="tnd-field-error">{{ errors.clarification_deadline }}</p></div>
 			</div>
 			<div class="tnd-grid-2">
-				<div class="kt-field" style="margin: 0"><label for="tnd-submission_deadline">Submission deadline</label><input id="tnd-submission_deadline" type="datetime-local" class="kt-input" v-model="form.submission_deadline" data-testid="tnd-field-submission_deadline" /><p v-if="errors.submission_deadline" class="tnd-field-error">{{ errors.submission_deadline }}</p></div>
+				<div class="kt-field" style="margin: 0"><label for="tnd-submission_deadline">Submission deadline</label><input id="tnd-submission_deadline" type="datetime-local" class="kt-input" v-model="form.submission_deadline" data-testid="tnd-field-submission_deadline" /><div v-if="periodHint" class="kt-label tnd-hint-label" data-testid="tnd-period-hint">{{ periodHint }}</div><p v-if="errors.submission_deadline" class="tnd-field-error">{{ errors.submission_deadline }}</p></div>
 				<div class="kt-field" style="margin: 0"><label for="tnd-tender_validity_days">Tender validity (days)</label><input id="tnd-tender_validity_days" type="number" min="1" max="365" step="1" class="kt-input" v-model="form.tender_validity_days" data-testid="tnd-field-tender_validity_days" />
 					<div class="kt-label tnd-hint-label">How long suppliers' offers must remain valid.</div>
 					<p v-if="errors.tender_validity_days" class="tnd-field-error">{{ errors.tender_validity_days }}</p>
 				</div>
+			</div>
+			<div v-if="showReason" class="kt-field tnd-form-row" style="margin-top: 12px">
+				<label for="tnd-shortened_period_reason">Reason for a shorter tendering period</label>
+				<textarea id="tnd-shortened_period_reason" class="kt-input" rows="2" maxlength="500" v-model="form.shortened_period_reason" data-testid="tnd-field-shortened_period_reason"></textarea>
+				<div class="kt-label tnd-hint-label" data-testid="tnd-period-reason-help">This is shorter than the usual {{ periodRule.default_days }} days. Say why; the Head of Procurement Function and the Accounting Officer will see it.</div>
+				<p v-if="errors.shortened_period_reason" class="tnd-field-error" data-testid="tnd-error-shortened_period_reason">{{ errors.shortened_period_reason }}</p>
 			</div>
 		</div>
 
@@ -62,7 +68,7 @@
 </template>
 
 <script setup>
-import { reactive, watch } from "vue";
+import { computed, nextTick, reactive, watch } from "vue";
 import { fromInputDateTime, toInputDate, toInputDateTime } from "../data/format.js";
 
 const props = defineProps({
@@ -70,11 +76,15 @@ const props = defineProps({
 	options: { type: Object, default: () => ({}) },
 	identity: { type: String, default: "" }, // `${tender}:${record_version}` — the only hydration trigger
 	errors: { type: Object, default: () => ({}) },
+	// v0.16 §5.2 — {minimum_days, default_days, closing_time} from the server; the form hints and pre-fills, the server decides at review
+	periodRule: { type: Object, default: null },
 });
 
-const form = reactive({ tender_title: "", issue_date: "", clarification_deadline: "", submission_deadline: "", tender_validity_days: "", tender_security_amount: "", pre_tender_meeting: false, meeting_datetime: "", meeting_mode: "", meeting_venue: "", online_joining_information: "" });
+const form = reactive({ tender_title: "", issue_date: "", clarification_deadline: "", submission_deadline: "", tender_validity_days: "", tender_security_amount: "", pre_tender_meeting: false, meeting_datetime: "", meeting_mode: "", meeting_venue: "", shortened_period_reason: "", online_joining_information: "" });
 let hydrated = "";
 let dirty = false;
+let hydrating = false;
+let suggested = ""; // the last deadline this form pre-filled; an officer's own entry is never replaced
 
 function hydrate() {
 	const v = props.values || {};
@@ -89,6 +99,11 @@ function hydrate() {
 	form.meeting_mode = v.meeting_mode || "";
 	form.meeting_venue = v.meeting_venue || "";
 	form.online_joining_information = v.online_joining_information || "";
+	form.shortened_period_reason = v.shortened_period_reason || "";
+	hydrating = true;
+	nextTick(() => {
+		hydrating = false;
+	});
 	dirty = false;
 }
 watch(
@@ -104,6 +119,42 @@ watch(
 watch(form, () => {
 	dirty = true;
 });
+
+
+function addDays(date, days) {
+	const d = new Date(`${date}T00:00:00Z`);
+	d.setUTCDate(d.getUTCDate() + days);
+	return d.toISOString().slice(0, 10);
+}
+function daysBetween(from, to) {
+	return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000);
+}
+// the tendering period as the server counts it: from the later of the issue date and today
+const periodDays = computed(() => {
+	if (!form.issue_date || !form.submission_deadline) return null;
+	const today = new Date().toISOString().slice(0, 10);
+	return daysBetween(form.issue_date > today ? form.issue_date : today, form.submission_deadline.slice(0, 10));
+});
+const periodHint = computed(() => {
+	const rule = props.periodRule;
+	if (!rule || (!rule.minimum_days && !rule.default_days)) return "";
+	const parts = [];
+	if (rule.minimum_days) parts.push(`At least ${rule.minimum_days} days after the issue date (the legal minimum).`);
+	if (rule.default_days) parts.push(`The usual tendering period is ${rule.default_days} days.`);
+	return parts.join(" ");
+});
+const showReason = computed(() => !!(props.periodRule && props.periodRule.default_days && periodDays.value !== null && periodDays.value < props.periodRule.default_days));
+// pre-fill: the usual period from a newly entered issue date, only while the deadline is empty or still our own suggestion
+watch(
+	() => form.issue_date,
+	(issue) => {
+		const rule = props.periodRule;
+		if (hydrating || !issue || !rule || !rule.default_days) return;
+		if (form.submission_deadline && form.submission_deadline !== suggested) return;
+		suggested = `${addDays(issue, Number(rule.default_days))}T${rule.closing_time || "11:00"}`;
+		form.submission_deadline = suggested;
+	}
+);
 
 function normaliseMoney() {
 	const n = Number(String(form.tender_security_amount).replace(/,/g, ""));
@@ -126,6 +177,7 @@ function getPayload() {
 		if (form.meeting_mode === "Physical") payload.meeting_venue = form.meeting_venue;
 		if (form.meeting_mode === "Online") payload.online_joining_information = form.online_joining_information;
 	}
+	if (showReason.value && form.shortened_period_reason.trim()) payload.shortened_period_reason = form.shortened_period_reason.trim();
 	// Blank strings mean "not set yet"; the server's own required-field rule
 	// speaks for itself and never receives an empty text to reject as text.
 	for (const key of Object.keys(payload)) if (payload[key] === "" || payload[key] === null) delete payload[key];

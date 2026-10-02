@@ -16,7 +16,7 @@ import frappe
 from kentender_core.tests.test_file_integrity import _hooks_with as no_file_scanners
 from frappe.tests import IntegrationTestCase
 
-from kentender_procurement.tenders.services import channel_confirmation, configuration_gateway, draft_commands as cmd, events, lifecycle, planning_gateway, publication, read
+from kentender_procurement.tenders.services import channel_confirmation, configuration_gateway, draft_commands as cmd, events, lifecycle, my_work_provider, planning_gateway, publication, read, review
 from kentender_procurement.tenders.services.errors import TendersError
 from kentender_procurement.tenders.tests import fixtures as fx, sample
 
@@ -118,6 +118,108 @@ class TestAuthorise(PublicationCase):
 				publication.authorise_tender_publication(tender=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AO, task=approved["task"])
 		self.assertEqual(ctx.exception.code, "TND_PUBLICATION_RULE_UNAVAILABLE")
 		self.assertEqual(frappe.db.count("Tender Publication", {"tender": root.name}), 0)
+
+	def _draft_with(self, **changes):
+		authorised = fx.authorised_handoff()
+		started = cmd.start_tender(handoff=authorised["handoff"], idempotency_key=fx.key(), user=fx.OFFICER)
+		root = frappe.get_doc("Tender", started["tender"])
+		values = {**sample.officer_values(inspection_location=fx.LOCATION, contact_office=fx.CONTACT_OFFICE), **changes}
+		cmd.save_tender_draft(tender=root.name, values=values, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
+		return cmd.load(root.name)
+
+	def _findings(self, root, version, code):
+		return [f for f in review.run(root, version, with_renders=False)["findings"] if f["finding_code"] == code]
+
+	def test_a_deadline_below_the_legal_minimum_is_caught_when_the_officer_reviews_it(self):
+		# 5 days after the 15 May issue date; the verified legal minimum is 7
+		root, version = self._draft_with(clarification_deadline="2027-05-17 17:00:00", submission_deadline="2027-05-20 11:00:00")
+		found = [f for f in self._findings(root, version, "PUBLICATION_PERIOD") if f["severity"] == review.MUST_FIX]
+		self.assertEqual([(f["task"], f["field"]) for f in found], [("details", "submission_deadline")])
+		self.assertIn("at least 7 days after publication (the legal minimum)", found[0]["message"])
+		root.reload()
+		with self.assertRaises(TendersError) as ctx:
+			lifecycle.submit_tender_for_approval(tender=root.name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
+		self.assertEqual(ctx.exception.code, "TND_MUST_FIX")
+
+	def test_a_period_between_the_minimum_and_the_usual_needs_a_reason_but_never_blocks(self):
+		# 15 days: lawful (7 or more) but shorter than the usual 21
+		root, version = self._draft_with(submission_deadline="2027-05-30 11:00:00")
+		self.assertFalse(self._findings(root, version, "PUBLICATION_PERIOD"))
+		need = self._findings(root, version, "PERIOD_REASON")
+		self.assertEqual([(f["severity"], f["field"]) for f in need], [(review.MUST_FIX, "shortened_period_reason")])
+		self.assertIn("15 days, shorter than the usual 21", need[0]["message"])
+		# with the reason: no blocker, and the reason stays in front of the approvers as a Review note
+		root.reload()
+		cmd.save_tender_draft(tender=root.name, values={"shortened_period_reason": "The clinics need these laptops before the October training."}, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
+		root, version = cmd.load(root.name)
+		self.assertFalse(self._findings(root, version, "PERIOD_REASON"))
+		note = self._findings(root, version, "NOTE_SHORT_PERIOD")
+		self.assertEqual([f["severity"] for f in note], [review.REVIEW_NOTE])
+		self.assertIn("Reason given: The clinics need these laptops before the October training.", note[0]["message"])
+		root.reload()
+		submitted = lifecycle.submit_tender_for_approval(tender=root.name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.OFFICER)
+		root.reload()
+		lifecycle.approve_tender_package(tender=root.name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF, task=submitted["task"])
+		# both approvers read the note and the reason itself
+		for user in (fx.HOPF, fx.AO):
+			pub = publication.get_tender_publication(tender=root.name, user=user)
+			self.assertEqual([n["finding_code"] for n in pub["review"]["review_notes"] if n["finding_code"] == "NOTE_SHORT_PERIOD"], ["NOTE_SHORT_PERIOD"])
+			facts = {f["label"]: f["value"] for sec in pub["sections"] for blk in sec.get("blocks", []) if blk.get("kind") == "facts" for f in blk["facts"]}
+			self.assertEqual(facts.get("Reason for a shorter tendering period"), "The clinics need these laptops before the October training.")
+		# 15 days is lawful, so authorisation is open to the Accounting Officer
+		self.assertIn("authorise_publication", read.get_tender(tender=root.name, user=fx.AO)["allowed_actions"])
+		self.assertIsNone(read.get_tender(tender=root.name, user=fx.AO)["period_problem"])
+
+	def test_the_form_is_given_the_two_numbers_to_pre_fill_and_hint_from(self):
+		root, version = self._draft_with()
+		rule = read.get_tender(tender=root.name, user=fx.OFFICER)["period_rule"]
+		self.assertEqual(rule, {"minimum_days": 7, "default_days": 21, "closing_time": "11:00"})
+
+	def test_a_period_that_ran_short_after_approval_is_stated_up_front_with_the_way_out(self):
+		name, approved = self._approved()
+		frappe.flags.kt_tenders_clock = "2027-06-03 09:00:00"  # 5 Jun is now only 2 days away
+		ao = read.get_tender_publication(tender=name, user=fx.AO) if hasattr(read, "get_tender_publication") else publication.get_tender_publication(tender=name, user=fx.AO)
+		self.assertNotIn("authorise_publication", ao["allowed_actions"])
+		self.assertEqual({k: ao["period_problem"][k] for k in ("minimum_days", "earliest_deadline")}, {"minimum_days": 7, "earliest_deadline": "2027-06-10"})
+		step = ao["guidance"]["next_step"]
+		self.assertEqual((step["kind"], step["blockers"][0]["reason_code"]), ("your_turn_blocked", "TND_PUBLICATION_PERIOD_INVALID"))
+		fix = step["blockers"][0]["fixes"][0]
+		self.assertEqual((fix["label"], fix["responsibility"]), ("Reopen Tender", "Head of Procurement Function"))
+		hopf = publication.get_tender_publication(tender=name, user=fx.HOPF)
+		self.assertIn("reopen_tender", hopf["allowed_actions"])
+		self.assertEqual((hopf["guidance"]["next_step"]["kind"], hopf["guidance"]["next_step"]["primary_action"]), ("your_turn", "reopen_tender"))
+		officer = publication.get_tender_publication(tender=name, user=fx.OFFICER)
+		self.assertEqual(officer["guidance"]["next_step"]["kind"], "waiting")
+		self.assertEqual(officer["guidance"]["next_step"]["holder"]["role"], "Head of Procurement Function")
+		# the same Tender with time to spare shows no problem and the AO's decision
+		frappe.flags.kt_tenders_clock = "2027-05-15 07:55:00"
+		ok = publication.get_tender_publication(tender=name, user=fx.AO)
+		self.assertIsNone(ok["period_problem"])
+		self.assertIn("authorise_publication", ok["allowed_actions"])
+
+	def test_a_blocked_authorisation_puts_the_reopen_on_the_head_of_procurements_work_list(self):
+		name, approved = self._approved()
+		ref = frappe.db.get_value("Tender", name, "tender_reference")
+		title = f"Reopen Tender {ref} — submission deadline too short"
+		# enough time: nothing for anyone
+		for user in (fx.HOPF, fx.AO, fx.OFFICER):
+			rows = my_work_provider.my_work_rows(user=user)
+			self.assertFalse([r for r in rows["assigned"] + rows["waiting"] if "Reopen Tender" in r["title"] or "to reopen Tender" in r["title"]])
+		frappe.flags.kt_tenders_clock = "2027-06-03 09:00:00"  # 5 Jun is now only 2 days away
+		hopf = my_work_provider.my_work_rows(user=fx.HOPF)["assigned"]
+		row = next(r for r in hopf if r["title"] == title)
+		self.assertEqual((row["action_label"], row["route"], row["status"]), ("Reopen Tender", ["tenders", ref], "Assigned"))
+		self.assertIn("7 are required", row["comment"])
+		ao = my_work_provider.my_work_rows(user=fx.AO)
+		waiting = [r["title"] for r in ao["waiting"] if "reopen" in r["title"]]
+		self.assertEqual(len(waiting), 1)  # every current Head of Procurement Function is named, as for any hand-off with no named person
+		self.assertTrue(waiting[0].startswith("Waiting for ") and waiting[0].endswith(f" to reopen Tender {ref}") and frappe.db.get_value("User", fx.HOPF, "full_name") in waiting[0])
+		self.assertFalse([r for r in my_work_provider.my_work_rows(user=fx.OFFICER)["assigned"] if "Reopen" in r["title"]])
+		# the business transition clears it: once the Tender is reopened it is no longer Approved
+		root = frappe.get_doc("Tender", name)
+		lifecycle.reopen_approved_tender(tender=name, reason="The submission deadline must leave 21 days after publication.", expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF)
+		self.assertFalse([r for r in my_work_provider.my_work_rows(user=fx.HOPF)["assigned"] if r["title"] == title])
+		self.assertFalse([r for r in my_work_provider.my_work_rows(user=fx.AO)["waiting"] if "reopen" in r["title"]])
 
 	def test_an_integrated_channel_is_refused(self):
 		name, approved = self._approved()
