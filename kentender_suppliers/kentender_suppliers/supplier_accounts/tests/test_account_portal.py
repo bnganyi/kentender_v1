@@ -7,6 +7,8 @@ first payload the screen would read (KT-STD-001 §3A.1)."""
 
 from __future__ import annotations
 
+import frappe
+
 from kentender_core.services import portal_runtime
 from kentender_suppliers.supplier_accounts import portal
 from kentender_suppliers.supplier_accounts.tests.support import MARY, PETER, AccountsCase
@@ -44,3 +46,10 @@ class TestAccountPortal(AccountsCase):
 
 	def test_an_unknown_account_address_is_not_found(self):
 		self.assertEqual(portal.resolve(path="/account/settings", query={}, user=MARY)["verdict"], "NOT_FOUND")
+
+	def test_the_header_names_the_organisation_a_person_acts_for(self):
+		org = self.active_account()
+		self.assertEqual(portal.identity_detail(MARY), frappe.db.get_value("Supplier Organisation", org, "legal_name"))
+		self.assertEqual(portal.identity_detail(PETER), "")  # no account yet: only their name shows
+		self.assertEqual(portal.identity_detail("Administrator"), "")  # staff never read as a supplier
+		self.assertEqual(portal.identity_detail("Guest"), "")

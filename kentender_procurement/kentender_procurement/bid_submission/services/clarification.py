@@ -27,6 +27,9 @@ from kentender_procurement.bid_submission.services.errors import fail, field_err
 
 ARRANGEMENT = "Bidder Arrangement"
 MIN_LENGTH, MAX_LENGTH = 10, 2000
+# what the asker reads for each state of their own question (Tenders owns the state)
+OWN_STATUS = {"Received": ("Received · waiting for an answer", "pending"), "Answered": ("Answered", "live"), "Closed": ("Closed", "draft")}
+ANSWERED_ALERT = "Your question was answered"
 
 
 def _producer() -> str:
@@ -72,3 +75,30 @@ def _submit(*, actor: str, key: str, tender_reference: str, question: str, organ
 		fail(mapped.get(exc.code, "BDS_TENDER_NOT_OPEN"))
 	records.emit("ClarificationSubmitted", tender=root.name, arrangement=arrangement, organisation=lead, actor=actor, at=at, payload={"clarification": received["clarification"]})
 	return {"ok": True, "clarification_id": received["clarification"], "received_at": labels.datetime_label(at), "status": received.get("status", "")}
+
+
+def my_questions(bid_reference: str) -> list[dict[str, Any]]:
+	"""This bid's own questions, read from Tenders' projection of the
+	asking candidate (nothing is kept here): the text, when it was received,
+	where it stands and, once answered, the answer — including an answer sent
+	to the asker only, which no public list carries. Another bidder's
+	questions are never read: the projection is keyed by this bid's own
+	candidate registration."""
+	ws = frappe.db.get_value("Bid Workspace", bid_reference, ["tender", "bidder_arrangement"], as_dict=True)
+	view = tenders_gateway.candidate_view(ws.tender, ws.bidder_arrangement) if ws else None
+	rows = []
+	for q in (view or {}).get("questions") or []:
+		label, tone = OWN_STATUS.get(q["status"], OWN_STATUS["Received"])
+		answered = q["status"] == "Answered"
+		rows.append({
+			"key": q["key"], "question": q["question"], "received": f"Received {labels.datetime_label(q['received_at'])}", "status": q["status"], "status_label": label, "tone": tone,
+			"answer": q["answer"] if answered else "", "answered": f"Answered {labels.datetime_label(q['answered_at'])}" if answered else "", "private": answered and q["audience"] == "Asker only",
+		})
+	return rows
+
+
+def answered_alert(bid_reference: str, tender_reference: str) -> list[dict[str, str]]:
+	"""The My bids line when any of this bid's questions has been answered."""
+	if not any(q["status"] == "Answered" for q in my_questions(bid_reference)):
+		return []
+	return [{"title": ANSWERED_ALERT, "href": f"/tenders/{tender_reference}/bid/documents"}]

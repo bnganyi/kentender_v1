@@ -27,7 +27,8 @@ const emit = defineEmits(["not-found"]);
 const portal = inject("portal");
 const { route, go, epoch } = portal.useRoute({ ref, onMounted, onUnmounted });
 const narrow = useNarrow();
-const data = ref(props.initial);
+// empty until the first take, so the blank form is never read as the person's own entries
+const data = ref(null);
 // the server says whether this Draft can change now (closed, or its bound
 // release withdrawn): read-only fields and no Save and continue otherwise
 const canEdit = computed(() => !data.value || !data.value.bid || data.value.bid.editable !== false);

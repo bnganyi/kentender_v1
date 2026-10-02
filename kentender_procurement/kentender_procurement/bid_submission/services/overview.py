@@ -103,6 +103,12 @@ def _start_options(assignment: dict[str, Any], published: dict[str, Any], at) ->
 	}
 
 
+def _signup_enabled() -> bool:
+	from frappe.core.doctype.user.user import is_signup_disabled
+
+	return not is_signup_disabled()
+
+
 def get_tender_overview(*, tender_reference: str, organisation: str = "", user: str | None = None) -> dict[str, Any]:
 	at = clock.now()
 	reference = cstr(tender_reference).strip()
@@ -181,9 +187,15 @@ def get_tender_overview(*, tender_reference: str, organisation: str = "", user: 
 			if action and action["kind"] == "start_bid":
 				action, start = None, None
 	actions = release_actions or ([{**action, "tone": "secondary" if action["kind"] == "view_notice" else "primary"}] if action else [])
+	if action and action["kind"] == "sign_in" and not release_actions and _signup_enabled():
+		# a new supplier has no login yet: the sign-up form of the same login page, back to this Tender
+		actions.append({"kind": "create_login", "label": "New supplier? Create a login", "href": f"{action['href']}#signup", "tone": "secondary"})
 	candidate = bool(bid) and frappe.db.get_value("Bidder Arrangement", frappe.db.get_value("Bid Workspace", bid["bid_reference"], "bidder_arrangement"), "status") == "Active"
 	clarification_deadline = labels.datetime_label(published.get("clarification_deadline"))
+	from kentender_procurement.bid_submission.services import clarification as own_clarification
+
 	return {
+		"my_questions": own_clarification.my_questions(bid["bid_reference"]) if bid else [],
 		"tender": {
 			"reference": reference, "title": published["title"], "description": " · ".join(x for x in (published["procuring_entity"], published["method"], published["reservation"] and f"{published['reservation']} reservation") if x) + ".",
 			"availability": state, "status_label": {"open": "", "closed": "Closed", "cancelled": "Cancelled"}[state],

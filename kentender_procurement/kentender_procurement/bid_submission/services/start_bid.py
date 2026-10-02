@@ -29,6 +29,7 @@ from kentender_procurement.bid_submission.services import (
 	references,
 	snapshot,
 	supplier_gateway,
+	tender_contact,
 	tenders_gateway,
 )
 from kentender_procurement.bid_submission.services.errors import MESSAGES, fail, field_errors
@@ -141,6 +142,15 @@ def _check_arrangement(arrangement: dict, *, lead: str, options: list[str], at) 
 	return problems, members, signatory
 
 
+def _registered_phone(account: dict) -> str:
+	"""The Tender contact's phone starts as the phone the organisation
+	registered with, as the email starts as the person's own: a default for this
+	bid that the bidder may change. A registered phone the contact rules would
+	refuse is left blank rather than saved invalid."""
+	phone = cstr(account.get("official_phone")).strip()
+	return phone if tender_contact.PHONE.match(phone) else ""
+
+
 def _create_arrangement(root, *, number: int, account: dict, arrangement: dict, members: list[dict], signatory: dict | None, contact: dict, actor: str, at) -> Any:
 	doc = frappe.get_doc({
 		"doctype": ARRANGEMENT, "bidder_arrangement_id": references.arrangement_id(root.tender_reference, number), "tender": root.name, "tender_reference": root.tender_reference,
@@ -149,7 +159,7 @@ def _create_arrangement(root, *, number: int, account: dict, arrangement: dict, 
 		"joint_venture_name": cstr(arrangement.get("joint_venture_name")).strip() if members else "",
 		"agreement_evidence": cstr(arrangement.get("agreement_evidence_id")).strip() if members else "",
 		"authorised_signatory_assignment": (signatory or {}).get("assignment_id", ""),
-		"tender_contact_user": actor, "tender_contact_name": labels.person_name(actor), "tender_contact_email": actor, "tender_contact_phone": "",
+		"tender_contact_user": actor, "tender_contact_name": labels.person_name(actor), "tender_contact_email": actor, "tender_contact_phone": _registered_phone(account),
 		"candidate_registered_at": at, "mandatory_notice_email": contact["value"], "notice_contact_version": 1, "status": "Active", "status_since": at,
 		"created_by": actor, "record_version": 0,
 	})

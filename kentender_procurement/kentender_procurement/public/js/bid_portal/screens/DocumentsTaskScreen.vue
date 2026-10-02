@@ -10,6 +10,7 @@ import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
 import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
 import CommonState from "../components/CommonState.vue";
 import NoticeContactDialog from "../components/NoticeContactDialog.vue";
+import MyQuestions from "../components/MyQuestions.vue";
 import QuestionDialog from "../components/QuestionDialog.vue";
 import { fixRoute } from "../composables/fixRoute.js";
 import { useNarrow } from "../composables/useNarrow.js";
@@ -211,6 +212,7 @@ onMounted(() => {
 					<div class="bds-notice-line"><span class="kt-label">{{ q.answered }}</span><span v-if="q.notice" class="kt-status" :class="'is-' + q.notice.tone">{{ q.notice.status }}</span></div>
 				</div>
 				<p v-if="!data.answers.length" class="bds-muted" data-testid="bds-task-no-answers">{{ __("No answers published yet.") }}</p>
+				<MyQuestions :questions="data.my_questions" testid="bds-task-my-questions" />
 				<p v-if="data.clarification.closed_text" class="bds-muted" data-testid="bds-task-clarifications-closed">{{ data.clarification.closed_text }}</p>
 			</div>
 		</div>

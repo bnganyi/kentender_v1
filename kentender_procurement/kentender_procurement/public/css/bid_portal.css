@@ -45,6 +45,9 @@
 /* BDS-DES-06-WITHDRAWN-RELEASE: the guidance's navigation links (board B draws them inside the guidance) */
 .kt-industry.kt-portal .bds-guidance-links { display: flex; flex-wrap: wrap; gap: var(--kt-space-4); font-size: 14px; }
 .kt-industry.kt-portal .bds-answer { display: grid; gap: 4px; }
+.kt-industry.kt-portal .bds-my-questions { display: grid; gap: 8px; margin-top: 16px; }
+.kt-industry.kt-portal .bds-my-questions-title { margin: 0; font-size: 14px; font-weight: 600; }
+.kt-industry.kt-portal .bds-row-alert { margin-top: 4px; font-size: 13px; font-weight: 600; }
 .kt-industry.kt-portal .bds-answer > .bds-strong,
 .kt-industry.kt-portal .bds-answer-text { font-size: 14px; }
 .kt-industry.kt-portal .bds-answer-text { color: var(--kt-color-neutral-800); }

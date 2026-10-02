@@ -61,6 +61,23 @@ class TestStartSingleOrganisation(StartBidCase):
 		self.assertEqual((snapshot.snapshot_version, facts["organisation"]["legal_name"], facts["organisation"]["registration_number"], facts["members"]), (1, "Afya Digital Supplies Limited", "PVT-9X7K2M", []))
 		self.assertEqual(frappe.get_all("Bid Submission Event", filters={"bid_workspace": workspace.name}, pluck="event_type"), ["BidStarted"])
 
+	def test_the_tender_contact_phone_starts_as_the_phone_the_organisation_registered(self):
+		# like the email: a default the bidder may change for this bid
+		result = self.start()
+		registered = start_bid.supplier_gateway.organisation(organisation_id=AFYA)["official_phone"]
+		self.assertTrue(registered)
+		self.assertEqual(frappe.db.get_value("Bidder Arrangement", result["bidder_arrangement_id"], "tender_contact_phone"), registered)
+
+	def test_a_registered_phone_the_contact_rules_would_refuse_is_left_for_the_bidder_to_enter(self):
+		real = start_bid.supplier_gateway.organisation
+
+		def long_phone(**kwargs):
+			return {**real(**kwargs), "official_phone": "1" * 25}
+
+		with mock.patch.object(start_bid.supplier_gateway, "organisation", side_effect=long_phone):
+			result = self.start()
+		self.assertEqual(frappe.db.get_value("Bidder Arrangement", result["bidder_arrangement_id"], "tender_contact_phone"), "")
+
 	def test_starting_again_returns_the_same_bid_for_any_person_of_the_organisation(self):
 		first = self.start()
 		again = self.start(user=MARY)

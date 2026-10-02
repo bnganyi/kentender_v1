@@ -73,6 +73,23 @@ class TestPortalRuntime(IntegrationTestCase):
 		items = portal_runtime.nav("/account/receipts")
 		self.assertEqual([(i["label"], i["href"], i["current"]) for i in items], [("Tenders", "/tenders", False), ("My bids", "/my-bids", False), ("Account", "/account", True)])
 
+	def test_the_header_names_who_is_signed_in_and_a_surface_may_add_where_they_act_for(self):
+		self.assertIsNone(portal_runtime.identity("Guest"))
+		self.assertEqual(portal_runtime.identity("Administrator"), {"name": "Administrator", "initials": "A", "detail": ""})
+		frappe.flags.kt_portal_identity_providers = [lambda user: "Afya Digital Supplies Limited", lambda user: ""]
+		self.addCleanup(setattr, frappe.flags, "kt_portal_identity_providers", None)
+		self.assertEqual(portal_runtime.identity("Administrator")["detail"], "Afya Digital Supplies Limited")  # the last non-empty answer wins
+		signed_in = self._render("/tenders", user="Administrator").get_data(as_text=True)
+		self.assertIn('data-testid="kt-portal-identity"', signed_in)
+		self.assertIn("Afya Digital Supplies Limited", signed_in)
+		self.assertNotIn('data-testid="kt-portal-identity"', self._render("/tenders").get_data(as_text=True))
+		# a person whose name is the organisation's name is not shown it twice
+		frappe.flags.kt_portal_identity_providers = [lambda user: "administrator"]
+		self.assertEqual(portal_runtime.identity("Administrator")["detail"], "")
+		self.assertEqual(portal_runtime.initials("Mary Wanjiku"), "MW")
+		self.assertEqual(portal_runtime.initials("peter.mwangi@example.com"), "P")
+		self.assertEqual(portal_runtime.initials("Brian Kamau Wafula"), "BW")
+
 	def test_the_footer_carries_only_what_the_cfg_projection_supplies(self):
 		for field, value in {"supplier_support_email": "tendersupport@health.go.ke", "privacy_notice_url": "https://health.example.test/kentender/privacy", "portal_terms_url": "", "accessibility_statement_url": "https://health.example.test/kentender/accessibility"}.items():
 			frappe.db.set_single_value(portal.SETTINGS, field, value)

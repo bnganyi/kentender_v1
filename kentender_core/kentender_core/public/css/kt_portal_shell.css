@@ -70,6 +70,34 @@
 	padding: 17px 0 15px;
 	border-bottom: 2px solid transparent;
 }
+.kt-industry.kt-portal .kt-portal-nav { margin-left: auto; }
+/* Who is signed in: the same avatar, name and line beneath as Desk's user block */
+.kt-industry.kt-portal .kt-portal-identity {
+	display: flex;
+	align-items: center;
+	gap: var(--kt-space-3);
+	margin-left: var(--kt-space-8);
+	padding-left: var(--kt-space-8);
+	border-left: 1px solid var(--kt-color-neutral-300);
+	min-width: 0;
+}
+.kt-industry.kt-portal .kt-portal-avatar {
+	flex: none;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--kt-color-accent);
+	color: var(--kt-color-surface);
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+}
+.kt-industry.kt-portal .kt-portal-identity-text { display: grid; line-height: 1.25; min-width: 0; }
+.kt-industry.kt-portal .kt-portal-identity-name { font-size: 14px; font-weight: 600; color: var(--kt-color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+.kt-industry.kt-portal .kt-portal-identity-detail { font-size: 12px; color: var(--kt-color-neutral-700); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
 .kt-industry.kt-portal .kt-portal-header .kt-portal-nav a[aria-current="page"] {
 	color: var(--kt-color-text);
 	font-weight: 600;
@@ -109,6 +137,9 @@
 	}
 	.kt-industry.kt-portal .kt-portal-header a.kt-portal-brand { font-size: 17px; }
 	.kt-industry.kt-portal .kt-portal-nav { gap: 14px; font-size: 13px; }
+	.kt-industry.kt-portal .kt-portal-identity { margin-left: 12px; padding-left: 12px; }
+	.kt-industry.kt-portal .kt-portal-avatar { width: 28px; height: 28px; }
+	.kt-industry.kt-portal .kt-portal-identity-text { display: none; }
 	.kt-industry.kt-portal .kt-portal-header .kt-portal-nav a { padding: 14px 0 12px; }
 	.kt-industry.kt-portal .kt-portal-body {
 		width: auto;

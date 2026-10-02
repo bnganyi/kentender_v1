@@ -32,6 +32,7 @@ test.describe("BDS-DES-02 Published Tender overview", () => {
 		await expect(screen.locator("h1.kt-page-title")).toBeVisible();
 		await expect(page.getByTestId("bds-overview-action")).toHaveText("Sign in to start bid");
 		await expect(page.getByTestId("bds-overview-action")).toHaveAttribute("href", `/login?redirect-to=/tenders/${world.tender_reference}`);
+		await expect(page.getByTestId("bds-overview-action-create_login")).toHaveAttribute("href", `/login?redirect-to=/tenders/${world.tender_reference}#signup`);
 		await expect(screen.locator(".kt-region h2")).toHaveText(["Key dates", "What is being procured", "Tender documents", "Addenda and clarification answers", "Before you start"]);
 		await expect(page.getByTestId("bds-overview-notice")).toContainText("Electronic bid submission is not available yet");
 		const view = page.getByTestId("bds-documents-table").getByRole("link", { name: "View" }).first();

@@ -47,6 +47,21 @@ describe("Company, declarations and tender security", () => {
 		expect(document.querySelector('[data-testid="bds-response-drawer"]')).toBeNull();
 	});
 
+	it("shows the saved contact and security answers on first paint when the page loads with its data", async () => {
+		// a refresh or a direct link mounts the screen with the server's data in hand;
+		// the blank form is not what the person typed, so nothing saved is replaced by it
+		const task = companyTask("JV");
+		const wrapper = mountWith(task, portalFor());
+		await flushPromises();
+		expect(wrapper.get('[data-testid="bds-contact-email"]').element.value).toBe(task.contact.email);
+		expect(wrapper.get('[data-testid="bds-contact-phone"]').element.value).toBe(task.contact.phone);
+		const answered = task.tender_security.fields.filter((f) => f.editable && f.kind !== "evidence" && f.value !== null && f.value !== undefined && f.value !== "");
+		for (const f of answered) {
+			const control = wrapper.find(`[data-testid="bds-company-field-${f.handle}"]`);
+			if (control.exists()) expect(control.element.value ?? control.text()).toContain(String(f.value));
+		}
+	});
+
 	it("makes another person of the organisation the Tender contact (FU-V08-54)", async () => {
 		const task = companyTask("JV");
 		task.contact = { ...task.contact, people: [{ assignment_id: "ASG-D", name: "David Ouma" }, { assignment_id: "ASG-M", name: "Mary Wanjiku" }], person: "ASG-D" };

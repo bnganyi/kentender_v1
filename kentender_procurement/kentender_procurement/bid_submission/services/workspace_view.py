@@ -24,7 +24,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr, get_datetime
 
-from kentender_procurement.bid_submission.services import availability, labels, tenders_gateway
+from kentender_procurement.bid_submission.services import availability, clarification, labels, tenders_gateway
 
 DESCRIPTION = "Complete the five tasks below before an Authorised Signatory submits the bid."
 NOTICES_NOTE = "Delivery describes the notice sent to your Tender notice email. The published answer and addendum are available here whether or not a notice was delivered."
@@ -113,6 +113,14 @@ def notices(ctx, tasks, tender: dict[str, Any]) -> list[dict[str, Any]]:
 		rows.append({
 			"key": answer["key"], "label": f"Clarification answer · {labels.date_label(answer['answered_at'])}", "status": status, "tone": tone,
 			"action": {"label": "View answer", "href": f"/tenders/{ws.tender_reference}/bid/documents"},
+		})
+	public = {a["key"] for a in tender.get("answers") or []}
+	for q in clarification.my_questions(ws.name):
+		if q["status"] == "Answered" and q["key"] in public:
+			continue  # a general answer is already listed above
+		rows.append({
+			"key": f"question:{q['key']}", "label": f"Your question · {q['received']}", "status": "Waiting for an answer" if q["status"] == "Received" else q["status_label"], "tone": q["tone"],
+			"action": {"label": "View answer" if q["status"] == "Answered" else "View question", "href": f"/tenders/{ws.tender_reference}/bid/documents"},
 		})
 	acknowledged = _acknowledged(ctx, tasks)
 	pending = _addendum_pending(ctx)

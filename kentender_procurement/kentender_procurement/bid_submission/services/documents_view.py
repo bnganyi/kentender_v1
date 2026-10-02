@@ -25,7 +25,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_procurement.bid_submission.services import labels, projection, supplier_gateway, tenders_gateway
+from kentender_procurement.bid_submission.services import clarification, labels, projection, supplier_gateway, tenders_gateway
 
 TITLE = "Tender documents, clarifications and addenda"
 DESCRIPTION = "Review the current Tender, ask questions before the clarification deadline and acknowledge issued addenda."
@@ -129,6 +129,7 @@ def view(ctx, tasks, published: dict[str, Any], *, at) -> dict[str, Any]:
 		],
 		"addenda": addenda,
 		"answers": answers,
+		"my_questions": clarification.my_questions(ws.name),
 		"clarification": {
 			"can_ask": open_questions, "deadline": clarification_deadline,
 			"closed_text": "" if published.get("clarifications_open") else (f"Clarifications closed {clarification_deadline}." if clarification_deadline else ""),

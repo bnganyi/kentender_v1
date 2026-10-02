@@ -311,6 +311,60 @@ class TestAnswersOnThePortal(AddendumCase):
 		documents = reads.get_bid_task(bid_reference=self.bid, task="documents", user=DAVID)
 		self.assertIn(self.ANSWER, json.dumps(documents))
 
+	def ask_only(self) -> str:
+		arrangement = frappe.db.get_value("Bidder Arrangement", frappe.db.get_value("Bid Workspace", self.bid, "bidder_arrangement"), "bidder_arrangement_id")
+		frappe.flags.kt_tenders_clock = "2027-05-26 09:00:00"
+		received = clarifications.receive_tender_clarification(tender=self.name, candidate_registration_id=arrangement, question=self.QUESTION, received_at="2027-05-26 09:00:00", inbound_event_id=key(), user=tender_fx.PRODUCER)
+		return received["clarification"]
+
+	def answer(self, clarification: str, audience: str) -> None:
+		frappe.flags.kt_tenders_clock = "2027-05-26 11:00:00"
+		clarifications.respond_to_tender_clarification(
+			tender=self.name, clarification=clarification, response=self.ANSWER, affects_published_tender=False, response_audience=audience,
+			expected_record_version=self._root().record_version, idempotency_key=tender_fx.key(), user=tender_fx.OFFICER,
+		)
+
+	def test_the_asker_sees_their_own_question_while_it_waits_and_nobody_else_does(self):
+		self.ask_only()
+		self.at("2027-05-26 09:30:00")
+		for page in (
+			overview.get_tender_overview(tender_reference=self.reference, user=DAVID),
+			reads.get_bid_task(bid_reference=self.bid, task="documents", user=DAVID),
+		):
+			mine = page["my_questions"]
+			self.assertEqual([(q["question"], q["status"], q["answer"]) for q in mine], [(self.QUESTION, "Received", "")])
+			self.assertEqual(mine[0]["status_label"], "Received · waiting for an answer")
+			self.assertIn("26 May 2027, 09:00", mine[0]["received"])
+		for user in ("Guest", PETER):
+			self.assertEqual(overview.get_tender_overview(tender_reference=self.reference, user=user)["my_questions"], [])
+		notices = reads.get_bid_workspace(bid_reference=self.bid, user=DAVID)["notices"]
+		self.assertIn("Your question", " ".join(n["label"] for n in notices))
+		self.assertEqual([r["alerts"] for r in reads.get_my_bids(user=DAVID)["rows"] if r["bid_reference"] == self.bid], [[]])
+
+	def test_an_answer_meant_only_for_the_asker_reaches_the_asker_alone(self):
+		self.answer(self.ask_only(), "Asker only")
+		self.at("2027-05-26 12:00:00")
+		mine = overview.get_tender_overview(tender_reference=self.reference, user=DAVID)["my_questions"]
+		self.assertEqual([(q["status"], q["answer"], q["private"]) for q in mine], [("Answered", self.ANSWER, True)])
+		self.assertIn(self.ANSWER, json.dumps(reads.get_bid_task(bid_reference=self.bid, task="documents", user=DAVID)["my_questions"]))
+		for user in ("Guest", PETER):
+			page = overview.get_tender_overview(tender_reference=self.reference, user=user)
+			self.assertNotIn(self.ANSWER, json.dumps(page))
+		# the portal alert: the bid screen and the My bids row say it was answered
+		notices = reads.get_bid_workspace(bid_reference=self.bid, user=DAVID)["notices"]
+		self.assertTrue(any("answered" in (n["status"] + n["label"]).lower() for n in notices))
+		alerts = [r["alerts"] for r in reads.get_my_bids(user=DAVID)["rows"] if r["bid_reference"] == self.bid][0]
+		self.assertEqual([a["title"] for a in alerts], ["Your question was answered"])
+		self.assertEqual(alerts[0]["href"], f"/tenders/{self.reference}/bid/documents")
+
+	def test_a_general_answer_also_alerts_the_asker(self):
+		self.answer(self.ask_only(), "All registered candidates")
+		self.at("2027-05-26 12:00:00")
+		mine = overview.get_tender_overview(tender_reference=self.reference, user=DAVID)["my_questions"]
+		self.assertEqual([(q["status"], q["private"]) for q in mine], [("Answered", False)])
+		alerts = [r["alerts"] for r in reads.get_my_bids(user=DAVID)["rows"] if r["bid_reference"] == self.bid][0]
+		self.assertEqual(len(alerts), 1)
+
 	def test_an_answer_that_would_change_the_tender_waits_for_its_addendum(self):
 		self.ask_and_answer(affects=True)
 		self.at("2027-05-26 12:00:00")

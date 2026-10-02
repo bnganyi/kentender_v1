@@ -279,6 +279,8 @@ def _may_start_replacement(actor: str, lead: str, tender_reference: str, at) -> 
 def _my_bid_row(ws, tender: dict[str, Any], *, actor: str, lead: str, at, work: list[dict[str, Any]]) -> dict[str, Any]:
 	import frappe
 
+	from kentender_procurement.bid_submission.services import clarification
+
 	base = f"/tenders/{ws.tender_reference}/bid"
 	status, version_label, updated = ws.status, f"Draft Version {int(ws.current_draft_version or 0)}", ws.last_saved_at or ws.created_at
 	from kentender_procurement.bid_submission.services import definition_runtime
@@ -310,6 +312,7 @@ def _my_bid_row(ws, tender: dict[str, Any], *, actor: str, lead: str, at, work: 
 		"updated_label": labels.datetime_label(updated), "draft_version": int(ws.current_draft_version or 0), "actions": actions,
 		"next_action": actions[0] if actions else {"label": "View bid", "href": base},
 		"work": [{"kind": i["kind"], "title": i["title"]} for i in work if i["bid_reference"] == ws.name],
+		"alerts": clarification.answered_alert(ws.name, ws.tender_reference),
 	}
 
 

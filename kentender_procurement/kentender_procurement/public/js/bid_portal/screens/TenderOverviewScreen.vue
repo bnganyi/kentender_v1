@@ -11,6 +11,7 @@
 import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
 import { useNarrow } from "../composables/useNarrow.js";
 import CommonState from "../components/CommonState.vue";
+import MyQuestions from "../components/MyQuestions.vue";
 import QuestionDialog from "../components/QuestionDialog.vue";
 import StartBidDialog from "../components/StartBidDialog.vue";
 
@@ -208,6 +209,7 @@ onMounted(() => {
 					<span class="bds-answer-text">{{ q.answer }}</span>
 				</div>
 				<p v-if="!data.answers.length" class="bds-muted" data-testid="bds-no-answers">{{ __("No answers published yet.") }}</p>
+				<MyQuestions :questions="data.my_questions" testid="bds-overview-my-questions" />
 				<p v-if="data.clarification.helper" class="bds-muted">{{ data.clarification.helper }}</p>
 				<p v-if="data.clarification.closed_text" class="bds-muted" data-testid="bds-clarifications-closed">{{ data.clarification.closed_text }}</p>
 			</div>

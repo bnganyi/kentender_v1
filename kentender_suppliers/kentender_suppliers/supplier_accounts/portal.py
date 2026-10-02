@@ -40,3 +40,17 @@ def resolve(*, path: str, query: dict[str, Any], user: str) -> dict[str, Any]:
 		screen = "account" if data["state"] == "account" else "choose"
 		return {"verdict": "OK", "title": TITLES[screen], "payload": {"screen": screen, "data": {"outcome": "OK", **data}}}
 	return NOT_FOUND
+
+
+def identity_detail(user: str) -> str:
+	"""The line under a signed-in supplier's name in the portal header: the
+	organisation they act for (or how many, when they act for several). Staff
+	and people without an Account get nothing."""
+	from kentender_suppliers.supplier_accounts.services import authorization as authz
+
+	if not user or user == "Guest" or authz.is_internal_user(user):
+		return ""
+	organisations = authz.organisations_of(user)
+	if len(organisations) > 1:
+		return f"{len(organisations)} organisations"
+	return cstr(frappe.db.get_value("Supplier Organisation", organisations[0], "legal_name")) if organisations else ""

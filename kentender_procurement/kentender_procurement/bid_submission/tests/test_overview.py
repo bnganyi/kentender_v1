@@ -23,6 +23,20 @@ class TestTenderOverview(ChangeCase):
 	def view(self, user, **kw):
 		return overview.get_tender_overview(tender_reference=self.reference, user=user, **kw)
 
+	def test_a_signed_out_visitor_is_offered_a_way_to_create_a_login(self):
+		# a new supplier has no login yet: next to Sign in, the page offers the
+		# sign-up form of the same login page, returning to this Tender
+		with mock.patch.object(overview, "_signup_enabled", return_value=True):
+			guest = self.view("Guest")
+			signed_in = self.view(DAVID)
+		self.assertEqual([a["kind"] for a in guest["actions"]], ["sign_in", "create_login"])
+		self.assertEqual(guest["actions"][1]["href"], f"/login?redirect-to=/tenders/{self.reference}#signup")
+		self.assertEqual((guest["actions"][0]["tone"], guest["actions"][1]["tone"]), ("primary", "secondary"))
+		self.assertNotIn("create_login", [a["kind"] for a in signed_in["actions"]])
+		# sign-up switched off: no link that would lead nowhere
+		with mock.patch.object(overview, "_signup_enabled", return_value=False):
+			self.assertEqual([a["kind"] for a in self.view("Guest")["actions"]], ["sign_in"])
+
 	def test_each_viewer_gets_the_action_that_fits_and_no_other_bid(self):
 		# the submission case world: Afya (David, Mary) holds a ready Draft
 		guest = self.view("Guest")

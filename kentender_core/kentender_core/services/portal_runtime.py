@@ -38,6 +38,7 @@ from kentender_core.services import public_portal
 
 SURFACES_HOOK = "kt_portal_surfaces"
 NOTICES_HOOK = "kt_portal_environment_notices"
+IDENTITY_HOOK = "kt_portal_identity_providers"
 VERDICTS = ("OK", "NOT_FOUND", "SIGN_IN")
 #: (key, label, href, owned prefixes) — BDS §10.1 header order.
 NAV: tuple[tuple[str, str, str, tuple[str, ...]], ...] = (
@@ -111,6 +112,33 @@ def environment_notices() -> list[dict[str, str]]:
 	return out
 
 
+def initials(name: str) -> str:
+	"""Up to two capital letters for the header's avatar: the first letters of
+	the first and last words of a name, one letter for an address."""
+	words = [w for w in cstr(name).replace("@", " ").replace(".", " ").split() if w[:1].isalnum()]
+	if "@" in cstr(name) or len(words) < 2:
+		return (words[0][0] if words else "?").upper()
+	return (words[0][0] + words[-1][0]).upper()
+
+
+def identity(principal: str) -> dict[str, str] | None:
+	"""Who is signed in, for the header: their name and, when a surface knows
+	it, where they act for (`kt_portal_identity_providers`: `(user) -> str`;
+	the last non-empty answer wins). None for a visitor."""
+	if principal in ("", "Guest"):
+		return None
+	from frappe.utils import get_fullname
+
+	name = cstr(get_fullname(principal)) or principal
+	providers = frappe.flags.get("kt_portal_identity_providers") or [frappe.get_attr(p) for p in frappe.get_hooks(IDENTITY_HOOK) or []]
+	detail = ""
+	for provider in providers:
+		detail = cstr(provider(principal)) or detail
+	if detail.strip().lower() == name.strip().lower():
+		detail = ""  # a person named for their organisation is not shown it twice
+	return {"name": name, "initials": initials(name), "detail": detail}
+
+
 def sign_in_url(path: str, query: str = "") -> str:
 	target = normalise(path) + (f"?{query}" if query else "")
 	return f"/login?redirect-to={quote(target, safe='')}"
@@ -138,5 +166,5 @@ def resolve(path: str, *, query: dict[str, Any] | None = None, query_string: str
 		**result,
 		"path": path,
 		"surface": {"key": cstr((surface or {}).get("key") or (surface or {}).get("prefix", "")), "bundle": cstr((surface or {}).get("bundle")), "css": list((surface or {}).get("css") or [])},
-		"shell": {"nav": nav(path), "footer": footer(), "notices": environment_notices(), "signed_in": principal not in ("", "Guest")},
+		"shell": {"nav": nav(path), "footer": footer(), "notices": environment_notices(), "signed_in": principal not in ("", "Guest"), "identity": identity(principal)},
 	}

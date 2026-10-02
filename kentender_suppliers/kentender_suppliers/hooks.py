@@ -101,6 +101,9 @@ kt_portal_surfaces = [
 	},
 ]
 
+# The portal header names the organisation a signed-in supplier acts for.
+kt_portal_identity_providers = ["kentender_suppliers.supplier_accounts.portal.identity_detail"]
+
 # BDS-CHG-001 v0.8 §5.14 — suspended-access reviews in the shared My Work.
 kt_my_work_providers = ["kentender_suppliers.supplier_accounts.services.my_work_provider.my_work_rows"]
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}

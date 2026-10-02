@@ -139,9 +139,13 @@ class TestReads(SaveCase):
 
 class TestTenderContact(SaveCase):
 	def test_the_tender_contact_phone_completes_the_supplied_contact(self):
+		arrangement = frappe.db.get_value("Bid Workspace", self.bid, "bidder_arrangement")
+		# a bid starts with the phone the organisation registered with; clear it to meet the missing case
+		phone = self.field(self.task(), "Authorised representative's telephone")
+		self.assertEqual((phone["value"], phone.get("issue")), ("+254 700 000 111", None))
+		frappe.db.set_value("Bidder Arrangement", arrangement, "tender_contact_phone", "")
 		phone = self.field(self.task(), "Authorised representative's telephone")
 		self.assertEqual((phone["value"], phone["issue"]["severity"]), (None, "Must fix"))
-		arrangement = frappe.db.get_value("Bid Workspace", self.bid, "bidder_arrangement")
 		version = frappe.db.get_value("Bidder Arrangement", arrangement, "record_version")
 		bad = tender_contact.update_tender_contact(bid_reference=self.bid, email="david.ouma@afyadigital.example", phone="not a phone", expected_record_version=version, idempotency_key=key(), user=DAVID)
 		self.assertEqual((bad["ok"], list(bad["errors"])), (False, ["phone"]))

@@ -38,6 +38,17 @@
 				<a href="{{ item.href }}" data-kt-portal-nav="{{ item.key }}"{% if item.current %} aria-current="page"{% endif %}>{{ _(item.label) }}</a>
 				{%- endfor %}
 			</nav>
+			{%- if kt_portal.shell.identity %}
+			<div class="kt-portal-identity" data-testid="kt-portal-identity" title="{{ kt_portal.shell.identity.name }}{% if kt_portal.shell.identity.detail %} · {{ kt_portal.shell.identity.detail }}{% endif %}">
+				<span class="kt-portal-avatar" aria-hidden="true">{{ kt_portal.shell.identity.initials }}</span>
+				<span class="kt-portal-identity-text">
+					<span class="kt-portal-identity-name" data-testid="kt-portal-identity-name">{{ kt_portal.shell.identity.name }}</span>
+					{%- if kt_portal.shell.identity.detail %}
+					<span class="kt-portal-identity-detail" data-testid="kt-portal-identity-detail">{{ kt_portal.shell.identity.detail }}</span>
+					{%- endif %}
+				</span>
+			</div>
+			{%- endif %}
 		</div>
 	</header>
 	<div class="kt-portal-body">

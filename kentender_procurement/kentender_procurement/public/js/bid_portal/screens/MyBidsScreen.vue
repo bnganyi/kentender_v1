@@ -135,7 +135,7 @@ onMounted(() => {
 					</thead>
 					<tbody>
 						<tr v-for="row in rows" :key="row.bid_reference" :data-testid="'bds-bid-row-' + row.bid_reference">
-							<td class="bds-tender-cell">{{ row.tender_title }}<div class="kt-label bds-tender-ref">{{ row.tender_reference }}</div></td>
+							<td class="bds-tender-cell">{{ row.tender_title }}<div class="kt-label bds-tender-ref">{{ row.tender_reference }}</div><div v-for="a in row.alerts" :key="a.title" class="bds-row-alert"><a :href="a.href" data-testid="bds-bid-alert">{{ __(a.title) }}</a></div></td>
 							<td><span class="bds-nowrap">{{ row.bid_reference }}</span><div v-if="row.version_label" class="kt-label">{{ row.version_label }}</div></td>
 							<td><span class="kt-status" :class="tone(row)">{{ row.status_label }}</span></td>
 							<td>{{ row.deadline_label }}</td>
@@ -153,7 +153,7 @@ onMounted(() => {
 				</table>
 				<div v-else data-testid="bds-bids-cards">
 					<div v-for="row in rows" :key="row.bid_reference" class="bds-card" :data-testid="'bds-bid-row-' + row.bid_reference">
-						<div class="bds-card-title">{{ row.tender_title }}<div class="kt-label bds-tender-ref">{{ row.tender_reference }}</div></div>
+						<div class="bds-card-title">{{ row.tender_title }}<div class="kt-label bds-tender-ref">{{ row.tender_reference }}</div><div v-for="a in row.alerts" :key="a.title" class="bds-row-alert"><a :href="a.href" data-testid="bds-bid-alert">{{ __(a.title) }}</a></div></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Bid") }}</span><span>{{ row.bid_reference }}</span></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Status") }}</span><span><span class="kt-status" :class="tone(row)">{{ row.status_label }}</span></span></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Submission deadline") }}</span><span>{{ row.deadline_label }}</span></div>
