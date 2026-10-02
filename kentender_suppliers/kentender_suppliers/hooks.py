@@ -76,6 +76,8 @@ kt_supplier_account_provider = ["kentender_suppliers.supplier_accounts.services.
 kt_canonical_supplier_accounts = ["kentender_suppliers.supplier_accounts.seeds.canonical.ensure_canonical_supplier_accounts"]
 # Any other seeded supplier account (browser-test worlds), same commands.
 kt_seed_supplier_account = ["kentender_suppliers.supplier_accounts.seeds.canonical.ensure_supplier_account"]
+# The complete business profile a seeded supplier is given (release 1.4): bids copy it.
+kt_default_supplier_profile = ["kentender_suppliers.supplier_accounts.seeds.canonical.default_profile"]
 kt_seed_supplier_account_removal = ["kentender_suppliers.supplier_accounts.seeds.canonical.remove_supplier_accounts"]
 
 # BDS-CHG-001 v0.8 plan OD-B (slices 11.3–11.4): Supplier Accounts' portal

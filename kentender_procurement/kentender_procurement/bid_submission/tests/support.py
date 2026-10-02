@@ -133,6 +133,12 @@ def fixture_accounts() -> FakeAccounts:
 	accounts.assign(PETER, KISIWA, "Supplier Representative", job_title="Bids Manager")
 	accounts.assign(GRACE, KISIWA, "Authorised Signatory", job_title="Director")
 	accounts.add_evidence(KISIWA, "EVD-BDST-JV", "Joint-venture agreement", "kisiwa-jua-jv-agreement.pdf")
+	# every organisation keeps its standing business facts on its own Account (release 1.4); a bid copies them
+	for org, owner in ((AFYA, "Mary Wanjiku"), (KISIWA, "Grace Njeri"), (JUA, "John Kamau")):
+		accounts.set_profile(org, {
+			"business_structure": "Registered company", "company_type": "Private company", "nominal_capital": "5000000.00", "issued_capital": "2500000.00", "directors": [{"name": owner, "nationality": "Kenyan", "citizenship": "Kenyan", "shares": "100.00"}],
+			"partners": [], "trade_licence_number": f"TL-{org[-5:]}", "trade_licence_expiry": "2027-12-31", "maximum_business_value": "80000000.00", "state_owned": "No", "year_of_registration": 2014,
+		})
 	return accounts
 
 

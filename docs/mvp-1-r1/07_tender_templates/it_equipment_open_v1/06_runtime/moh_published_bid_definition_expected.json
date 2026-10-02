@@ -1,7 +1,7 @@
 {
-  "addendum_identity_rules_digest": "959f122969166ab60e3f994572efe7e377f3c6fc01846c2252fd9c4178b26844",
+  "addendum_identity_rules_digest": "c82d186626feee4766e5e36b82ca24b0a5d4618113b2b8ee32a67c674ca81e21",
   "bid_definition_id": "PBD-745b48b7f211a7e4d5162fb4",
-  "bundle_digest": "699a953fa71629493e3303cbc054b9f940130acb20301cdc96d18dd53c01f4c4",
+  "bundle_digest": "83d23536685e0788c674a924cfcdfed00373b0a89cd0845d8751727c44d4a99a",
   "contract_mappings": [
     {
       "award_reporting_treatment": "Not applicable",
@@ -21,6 +21,31 @@
         "RSP-0c45d3c1f07e9010fff67539"
       ],
       "response_rule_id": "RR-SUPPLIER-DETAILS"
+    },
+    {
+      "award_reporting_treatment": "Not applicable",
+      "contract_destination": null,
+      "contract_treatment": "Not carried forward",
+      "mapping_id": "DM-ENTITY-PROFILE",
+      "reason": "Eligibility-only facts.",
+      "response_ids": [
+        "RSP-a1f355d8ea0c2997ed89327f",
+        "RSP-2a6c410f6b481cd90ede9da2",
+        "RSP-f705996a90abb7666b4aa9c7",
+        "RSP-1d09cd1840d4e7002d2ce67e",
+        "RSP-9449069de627afbdb2dac4e0",
+        "RSP-83da2e3ddc1bf950e8c7af91",
+        "RSP-a6c00df0c2ece70da6353f3f",
+        "RSP-d1f1c4d8620536684a9057ba",
+        "RSP-1db9ce905edd5a0e9894fedc",
+        "RSP-da9f2b6dd291e368bf41f83c",
+        "RSP-3096e97e536ba37b24f3e116",
+        "RSP-785003f4838ba798dc5c14b1",
+        "RSP-514ae0fccb327578848bae19",
+        "RSP-bb1526f635e3a3be7ca07e6e",
+        "RSP-fed1281f1fe7c8d46f54629e"
+      ],
+      "response_rule_id": "RR-ENTITY-PROFILE"
     },
     {
       "award_reporting_treatment": "Not applicable",
@@ -49,8 +74,8 @@
       "response_ids": [
         "RSP-82b3c263edf94ee8e41e99d3",
         "RSP-9444a44587cc57ebd84fa409",
-        "RSP-a4d774a6fe067a06250b9cd0",
-        "RSP-f6a134e8bdc7704730c3785a",
+        "RSP-8150f532cefab1dd955f3157",
+        "RSP-70524762ad53f1299894ff17",
         "RSP-91e190b0afb7b579b6c0f84f"
       ],
       "response_rule_id": "RR-DECL-FORM-OF-TENDER"
@@ -110,22 +135,8 @@
       "mapping_id": "DM-DECL-CBQ",
       "reason": "Eligibility-only declaration.",
       "response_ids": [
-        "RSP-093ee407bfafa9ba9c698b2c",
-        "RSP-d685d9b2ba9ca0e6447643b1",
-        "RSP-287fefdb92a2723b5998e556",
-        "RSP-f439fbad93145ca28b63fb22",
-        "RSP-e2dfa7f31301867364be7230",
-        "RSP-d7e6f3a24b4a8ed8448d3aac",
-        "RSP-1fa18e436e577f545d3047a8",
-        "RSP-3e5c3b1b541a07e32def6514",
-        "RSP-e79e663d5bee6193ddce4ec6",
-        "RSP-12b1b8decc12fd3586feda52",
-        "RSP-765b0883d6389a73535d6b9b",
-        "RSP-b22c5b016ced8a966b65e515",
-        "RSP-c604e9dc4d2dd937933d7c0a",
-        "RSP-64c7f8bc930d4cbff051b683",
         "RSP-c5d1dd34ecdf7273d8ac8f21",
-        "RSP-dcfc23710145c2288458b56d",
+        "RSP-11dbb15a95c2232cdf8d52e5",
         "RSP-bc95bd521129302f9927456e",
         "RSP-ca8dbb1d505403b2652e42c1",
         "RSP-dc4e9ce473c3a8aa10114ab3",
@@ -391,12 +402,12 @@
   "declaration_texts": [
     {
       "document_anchor": "complete_tender.html#decl-form-of-tender",
-      "locked_text": "a) No reservations: We have examined and have no reservations to the Tendering document, including Addenda issued in accordance with Instructions to Tenderers (ITT 7); b) Eligibility: We meet the eligibility requirements and have no conflict of interest in accordance with ITT 3; c) Tender Security: We confirm that we have furnished the Tender Security required in accordance with ITT 18; d) Conformity: We offer to supply in conformity with the Tendering document and in accordance with the Delivery Schedules specified in the Schedule of Requirements the following Goods and Related Services: e) Tender Price: The total price of our Tender, excluding any discounts offered in item (f) below, is: _______________________ (in words and figures, indicating the currency); f) Discounts: The discounts offered and the methodology for their application are: _______________________ (or “none”); g) Tender Validity Period: Our Tender shall be valid for the period specified in TDS ITT 17.1 ({{ tender.validity_days }} days) from the date fixed for the Tender submission deadline specified in TDS ITT 21.1, and it shall remain binding upon us and may be accepted at any time before the expiration of that period; h) Performance Security: If our Tender is accepted, we commit to obtain a performance security in accordance with the Tendering document; i) One Tender per Tenderer: We are not submitting any other Tender(s) as an individual tenderer, and we are not participating in any other Tender(s) as a Joint Venture member, or as a subcontractor, and meet the requirements of ITT 3.9; j) Suspension and Debarment: We, along with any of our subcontractors, suppliers, consultants, manufacturers, or service providers for any part of the contract, are not subject to, and not controlled by any entity or individual that is subject to, a temporary suspension or a debarment imposed by the Procuring Entity. Further, we are not ineligible under the Kenya laws or official regulations or pursuant to a decision of the United Nations Security Council; k) State-owned enterprise or institution: _______________________ (Tenderer states whether or not it is a state-owned enterprise or institution and, if so, confirms that it meets the requirements of ITT 3.8); l) Commissions, gratuities, fees: We have paid, or will pay, the following commissions, gratuities, or fees with respect to the Tendering process or execution of the Contract: _______________________ (or “none”); m) Binding Contract: We understand that this Tender, together with your written acceptance thereof included in your Letter of Acceptance, shall constitute a binding contract between us, until a formal contract is prepared and executed; n) Procuring Entity Not Bound to Accept: We understand that you are not bound to accept the lowest evaluated cost Tender, the Best Evaluated Tender or any other Tender that you may receive; and o) Fraud and Corruption: We hereby certify that we have taken steps to ensure that no person acting for us or on our behalf engages in any type of Fraud and Corruption. p) Code of Ethical Conduct: We undertake to adhere by the Code of Ethics for Persons Participating in Public Procurement and Asset Disposal, copy available from {{ procuring_entity.contact_office }}, during the procurement process and the execution of any resulting contract. q) Collusive practices: We hereby certify and confirm that the tender is genuine, non-collusive and made with the intention of accepting the contract if awarded. To this effect we have signed the “Certificate of Independent Tender Determination” attached below. r) Beneficial Ownership Information: We commit to provide to the procuring entity the Beneficial Ownership Information in conformity with the Beneficial Ownership Disclosure Form upon receipt of notification of intention to enter into a contract in the event we are the successful tenderer in this subject procurement proceeding. s) We, the Tenderer, have duly completed, signed and stamped the following Forms as part of our Tender: i. Tenderer's Eligibility; Confidential Business Questionnaire - to establish we are not in any conflict of interest; ii. Certificate of Independent Tender Determination - to declare that we completed the tender without colluding with other tenderers; iii. Self-Declaration of the Tenderer - to declare that we will, if awarded a contract, not engage in any form of fraud and corruption; and iv. Declaration and Commitment to the Code of Ethics for Persons Participating in Public Procurement. Further, we confirm that we have read and understood the full content and scope of fraud and corruption as informed in “Appendix 1 - Fraud and Corruption” attached to the Form of Tender.",
-      "resolved_text": "a) No reservations: We have examined and have no reservations to the Tendering document, including Addenda issued in accordance with Instructions to Tenderers (ITT 7); b) Eligibility: We meet the eligibility requirements and have no conflict of interest in accordance with ITT 3; c) Tender Security: We confirm that we have furnished the Tender Security required in accordance with ITT 18; d) Conformity: We offer to supply in conformity with the Tendering document and in accordance with the Delivery Schedules specified in the Schedule of Requirements the following Goods and Related Services: e) Tender Price: The total price of our Tender, excluding any discounts offered in item (f) below, is: _______________________ (in words and figures, indicating the currency); f) Discounts: The discounts offered and the methodology for their application are: _______________________ (or “none”); g) Tender Validity Period: Our Tender shall be valid for the period specified in TDS ITT 17.1 (120 days) from the date fixed for the Tender submission deadline specified in TDS ITT 21.1, and it shall remain binding upon us and may be accepted at any time before the expiration of that period; h) Performance Security: If our Tender is accepted, we commit to obtain a performance security in accordance with the Tendering document; i) One Tender per Tenderer: We are not submitting any other Tender(s) as an individual tenderer, and we are not participating in any other Tender(s) as a Joint Venture member, or as a subcontractor, and meet the requirements of ITT 3.9; j) Suspension and Debarment: We, along with any of our subcontractors, suppliers, consultants, manufacturers, or service providers for any part of the contract, are not subject to, and not controlled by any entity or individual that is subject to, a temporary suspension or a debarment imposed by the Procuring Entity. Further, we are not ineligible under the Kenya laws or official regulations or pursuant to a decision of the United Nations Security Council; k) State-owned enterprise or institution: _______________________ (Tenderer states whether or not it is a state-owned enterprise or institution and, if so, confirms that it meets the requirements of ITT 3.8); l) Commissions, gratuities, fees: We have paid, or will pay, the following commissions, gratuities, or fees with respect to the Tendering process or execution of the Contract: _______________________ (or “none”); m) Binding Contract: We understand that this Tender, together with your written acceptance thereof included in your Letter of Acceptance, shall constitute a binding contract between us, until a formal contract is prepared and executed; n) Procuring Entity Not Bound to Accept: We understand that you are not bound to accept the lowest evaluated cost Tender, the Best Evaluated Tender or any other Tender that you may receive; and o) Fraud and Corruption: We hereby certify that we have taken steps to ensure that no person acting for us or on our behalf engages in any type of Fraud and Corruption. p) Code of Ethical Conduct: We undertake to adhere by the Code of Ethics for Persons Participating in Public Procurement and Asset Disposal, copy available from Ministry of Health Procurement Office, procurement@moh.example.test, during the procurement process and the execution of any resulting contract. q) Collusive practices: We hereby certify and confirm that the tender is genuine, non-collusive and made with the intention of accepting the contract if awarded. To this effect we have signed the “Certificate of Independent Tender Determination” attached below. r) Beneficial Ownership Information: We commit to provide to the procuring entity the Beneficial Ownership Information in conformity with the Beneficial Ownership Disclosure Form upon receipt of notification of intention to enter into a contract in the event we are the successful tenderer in this subject procurement proceeding. s) We, the Tenderer, have duly completed, signed and stamped the following Forms as part of our Tender: i. Tenderer's Eligibility; Confidential Business Questionnaire - to establish we are not in any conflict of interest; ii. Certificate of Independent Tender Determination - to declare that we completed the tender without colluding with other tenderers; iii. Self-Declaration of the Tenderer - to declare that we will, if awarded a contract, not engage in any form of fraud and corruption; and iv. Declaration and Commitment to the Code of Ethics for Persons Participating in Public Procurement. Further, we confirm that we have read and understood the full content and scope of fraud and corruption as informed in “Appendix 1 - Fraud and Corruption” attached to the Form of Tender.",
-      "resolved_text_digest": "e29ae321757f69a46029f0ad14d704f24ebcb394e881a7797519cf1452e82bd2",
+      "locked_text": "a) No reservations: We have examined and have no reservations to the Tendering document, including Addenda issued in accordance with Instructions to Tenderers (ITT 7); b) Eligibility: We meet the eligibility requirements and have no conflict of interest in accordance with ITT 3; c) Tender Security: We confirm that we have furnished the Tender Security required in accordance with ITT 18; d) Conformity: We offer to supply in conformity with the Tendering document and in accordance with the Delivery Schedules specified in the Schedule of Requirements the following Goods and Related Services: e) Tender Price: The total price of our Tender, excluding any discounts offered in item (f) below, is: _______________________ (in words and figures, indicating the currency); f) Discounts: The discounts offered and the methodology for their application are: _______________________ (or “none”); g) Tender Validity Period: Our Tender shall be valid for the period specified in TDS ITT 17.1 ({{ tender.validity_days }} days) from the date fixed for the Tender submission deadline specified in TDS ITT 21.1, and it shall remain binding upon us and may be accepted at any time before the expiration of that period; h) Performance Security: If our Tender is accepted, we commit to obtain a performance security in accordance with the Tendering document; i) One Tender per Tenderer: We are not submitting any other Tender(s) as an individual tenderer, and we are not participating in any other Tender(s) as a Joint Venture member, or as a subcontractor, and meet the requirements of ITT 3.9; j) Suspension and Debarment: We, along with any of our subcontractors, suppliers, consultants, manufacturers, or service providers for any part of the contract, are not subject to, and not controlled by any entity or individual that is subject to, a temporary suspension or a debarment imposed by the Procuring Entity. Further, we are not ineligible under the Kenya laws or official regulations or pursuant to a decision of the United Nations Security Council; k) State-owned enterprise or institution: _______________________ (Tenderer states whether or not it is a state-owned enterprise or institution and, if so, confirms that it meets the requirements of ITT 3.8); l) Commissions, gratuities, fees: We have paid, or will pay, the following commissions, gratuities, or fees with respect to the Tendering process or execution of the Contract: _______________________ (or “none”); m) Binding Contract: We understand that this Tender, together with your written acceptance thereof included in your Letter of Acceptance, shall constitute a binding contract between us, until a formal contract is prepared and executed; n) Procuring Entity Not Bound to Accept: We understand that you are not bound to accept the lowest evaluated cost Tender, the Best Evaluated Tender or any other Tender that you may receive; and o) Fraud and Corruption: We hereby certify that we have taken steps to ensure that no person acting for us or on our behalf engages in any type of Fraud and Corruption. p) Code of Ethical Conduct: We undertake to adhere by the Code of Ethics for Persons Participating in Public Procurement and Asset Disposal, copy available from {{ procuring_entity.contact_office }}, during the procurement process and the execution of any resulting contract. q) Collusive practices: We hereby certify and confirm that the tender is genuine, non-collusive and made with the intention of accepting the contract if awarded. To this effect we have signed the “Certificate of Independent Tender Determination” attached below. r) Beneficial Ownership Information: We commit to provide to the procuring entity the Beneficial Ownership Information in conformity with the Beneficial Ownership Disclosure Form upon receipt of notification of intention to enter into a contract in the event we are the successful tenderer in this subject procurement proceeding. s) We, the Tenderer, have duly completed, signed and stamped the following Forms as part of our Tender: i. Tenderer's Eligibility; Confidential Business Questionnaire - to establish we are not in any conflict of interest; ii. Certificate of Independent Tender Determination - to declare that we completed the tender without colluding with other tenderers; iii. Self-Declaration of the Tenderer - to declare that we will, if awarded a contract, not engage in any form of fraud and corruption; and iv. Declaration and Commitment to the Code of Ethics for Persons Participating in Public Procurement and Asset Disposal. Further, we confirm that we have read and understood the full content and scope of fraud and corruption as informed in “Appendix 1 - Fraud and Corruption” attached to the Form of Tender.",
+      "resolved_text": "a) No reservations: We have examined and have no reservations to the Tendering document, including Addenda issued in accordance with Instructions to Tenderers (ITT 7); b) Eligibility: We meet the eligibility requirements and have no conflict of interest in accordance with ITT 3; c) Tender Security: We confirm that we have furnished the Tender Security required in accordance with ITT 18; d) Conformity: We offer to supply in conformity with the Tendering document and in accordance with the Delivery Schedules specified in the Schedule of Requirements the following Goods and Related Services: e) Tender Price: The total price of our Tender, excluding any discounts offered in item (f) below, is: _______________________ (in words and figures, indicating the currency); f) Discounts: The discounts offered and the methodology for their application are: _______________________ (or “none”); g) Tender Validity Period: Our Tender shall be valid for the period specified in TDS ITT 17.1 (120 days) from the date fixed for the Tender submission deadline specified in TDS ITT 21.1, and it shall remain binding upon us and may be accepted at any time before the expiration of that period; h) Performance Security: If our Tender is accepted, we commit to obtain a performance security in accordance with the Tendering document; i) One Tender per Tenderer: We are not submitting any other Tender(s) as an individual tenderer, and we are not participating in any other Tender(s) as a Joint Venture member, or as a subcontractor, and meet the requirements of ITT 3.9; j) Suspension and Debarment: We, along with any of our subcontractors, suppliers, consultants, manufacturers, or service providers for any part of the contract, are not subject to, and not controlled by any entity or individual that is subject to, a temporary suspension or a debarment imposed by the Procuring Entity. Further, we are not ineligible under the Kenya laws or official regulations or pursuant to a decision of the United Nations Security Council; k) State-owned enterprise or institution: _______________________ (Tenderer states whether or not it is a state-owned enterprise or institution and, if so, confirms that it meets the requirements of ITT 3.8); l) Commissions, gratuities, fees: We have paid, or will pay, the following commissions, gratuities, or fees with respect to the Tendering process or execution of the Contract: _______________________ (or “none”); m) Binding Contract: We understand that this Tender, together with your written acceptance thereof included in your Letter of Acceptance, shall constitute a binding contract between us, until a formal contract is prepared and executed; n) Procuring Entity Not Bound to Accept: We understand that you are not bound to accept the lowest evaluated cost Tender, the Best Evaluated Tender or any other Tender that you may receive; and o) Fraud and Corruption: We hereby certify that we have taken steps to ensure that no person acting for us or on our behalf engages in any type of Fraud and Corruption. p) Code of Ethical Conduct: We undertake to adhere by the Code of Ethics for Persons Participating in Public Procurement and Asset Disposal, copy available from Ministry of Health Procurement Office, procurement@moh.example.test, during the procurement process and the execution of any resulting contract. q) Collusive practices: We hereby certify and confirm that the tender is genuine, non-collusive and made with the intention of accepting the contract if awarded. To this effect we have signed the “Certificate of Independent Tender Determination” attached below. r) Beneficial Ownership Information: We commit to provide to the procuring entity the Beneficial Ownership Information in conformity with the Beneficial Ownership Disclosure Form upon receipt of notification of intention to enter into a contract in the event we are the successful tenderer in this subject procurement proceeding. s) We, the Tenderer, have duly completed, signed and stamped the following Forms as part of our Tender: i. Tenderer's Eligibility; Confidential Business Questionnaire - to establish we are not in any conflict of interest; ii. Certificate of Independent Tender Determination - to declare that we completed the tender without colluding with other tenderers; iii. Self-Declaration of the Tenderer - to declare that we will, if awarded a contract, not engage in any form of fraud and corruption; and iv. Declaration and Commitment to the Code of Ethics for Persons Participating in Public Procurement and Asset Disposal. Further, we confirm that we have read and understood the full content and scope of fraud and corruption as informed in “Appendix 1 - Fraud and Corruption” attached to the Form of Tender.",
+      "resolved_text_digest": "e92e6550aee0f8c79f04867b0a47ec00429d982d221d3bfcb285dd11b164910f",
       "rule_id": "RR-DECL-FORM-OF-TENDER",
       "source_locator": "PPRA Goods STD Section IV, Form of Tender, items (a)–(s) (source pp. 40–42)",
-      "source_text_digest": "d302495f8639d1e240b6313235d197a8c92cf2c1d5065d3127fce6bb769196af",
+      "source_text_digest": "21e5d9c688f57551f5677f77eb7c2cf5ce103fb92cd6d517d1759044977b9657",
       "text_id": "TXT-RR-DECL-FORM-OF-TENDER",
       "text_version": "1"
     },
@@ -467,9 +478,9 @@
       "text_version": "1"
     }
   ],
-  "definition_digest": "e7e64347b5f2476fd343aa368c154dc4517c32ce319cf7c9111faeaf53790b3f",
+  "definition_digest": "a738d37a1413aa3cabadffde8a8f425dccd223e76c86f06cd1f8610dce3ddc53",
   "definition_version": 1,
-  "downstream_rules_digest": "b387f630088f4b167e8657e967a5e178758dc83de610c4086e79683d9de4db6d",
+  "downstream_rules_digest": "caed57cdf8df8a47a670b8c9f1bcd71e5f9ecf03c3fc5a589dcff5665bfb59b3",
   "effective_addendum_ids": [],
   "evaluation_mappings": [
     {
@@ -492,6 +503,31 @@
       "response_rule_id": "RR-SUPPLIER-DETAILS"
     },
     {
+      "evaluation_group_id": "EVG-ELIGIBILITY",
+      "evaluation_result_rule": "Recorded for the committee, entity by entity; a state-owned entity needs the committee's assessment against ITT 3.8.",
+      "evaluation_treatment": "Evaluated",
+      "mapping_id": "DM-ENTITY-PROFILE",
+      "reason": "Eligibility-only facts.",
+      "response_ids": [
+        "RSP-a1f355d8ea0c2997ed89327f",
+        "RSP-2a6c410f6b481cd90ede9da2",
+        "RSP-f705996a90abb7666b4aa9c7",
+        "RSP-1d09cd1840d4e7002d2ce67e",
+        "RSP-9449069de627afbdb2dac4e0",
+        "RSP-83da2e3ddc1bf950e8c7af91",
+        "RSP-a6c00df0c2ece70da6353f3f",
+        "RSP-d1f1c4d8620536684a9057ba",
+        "RSP-1db9ce905edd5a0e9894fedc",
+        "RSP-da9f2b6dd291e368bf41f83c",
+        "RSP-3096e97e536ba37b24f3e116",
+        "RSP-785003f4838ba798dc5c14b1",
+        "RSP-514ae0fccb327578848bae19",
+        "RSP-bb1526f635e3a3be7ca07e6e",
+        "RSP-fed1281f1fe7c8d46f54629e"
+      ],
+      "response_rule_id": "RR-ENTITY-PROFILE"
+    },
+    {
       "evaluation_group_id": null,
       "evaluation_result_rule": "",
       "evaluation_treatment": "Not evaluated",
@@ -511,15 +547,15 @@
     },
     {
       "evaluation_group_id": "EVG-ELIGIBILITY",
-      "evaluation_result_rule": "Pass when the Form of Tender is confirmed and the state-owned enterprise statement meets ITT 3.8; otherwise fail with the failed statement named.",
+      "evaluation_result_rule": "Pass when the Form of Tender is confirmed; otherwise fail with the failed statement named. The state-owned enterprise statement is read from each entity's business profile.",
       "evaluation_treatment": "Evaluated",
       "mapping_id": "DM-DECL-FORM-OF-TENDER",
       "reason": "Declaration evidence for eligibility only; the offer's commercial content reaches the Contract through the price and schedule mappings.",
       "response_ids": [
         "RSP-82b3c263edf94ee8e41e99d3",
         "RSP-9444a44587cc57ebd84fa409",
-        "RSP-a4d774a6fe067a06250b9cd0",
-        "RSP-f6a134e8bdc7704730c3785a",
+        "RSP-8150f532cefab1dd955f3157",
+        "RSP-70524762ad53f1299894ff17",
         "RSP-91e190b0afb7b579b6c0f84f"
       ],
       "response_rule_id": "RR-DECL-FORM-OF-TENDER"
@@ -579,22 +615,8 @@
       "mapping_id": "DM-DECL-CBQ",
       "reason": "Eligibility-only declaration.",
       "response_ids": [
-        "RSP-093ee407bfafa9ba9c698b2c",
-        "RSP-d685d9b2ba9ca0e6447643b1",
-        "RSP-287fefdb92a2723b5998e556",
-        "RSP-f439fbad93145ca28b63fb22",
-        "RSP-e2dfa7f31301867364be7230",
-        "RSP-d7e6f3a24b4a8ed8448d3aac",
-        "RSP-1fa18e436e577f545d3047a8",
-        "RSP-3e5c3b1b541a07e32def6514",
-        "RSP-e79e663d5bee6193ddce4ec6",
-        "RSP-12b1b8decc12fd3586feda52",
-        "RSP-765b0883d6389a73535d6b9b",
-        "RSP-b22c5b016ced8a966b65e515",
-        "RSP-c604e9dc4d2dd937933d7c0a",
-        "RSP-64c7f8bc930d4cbff051b683",
         "RSP-c5d1dd34ecdf7273d8ac8f21",
-        "RSP-dcfc23710145c2288458b56d",
+        "RSP-11dbb15a95c2232cdf8d52e5",
         "RSP-bc95bd521129302f9927456e",
         "RSP-ca8dbb1d505403b2652e42c1",
         "RSP-dc4e9ce473c3a8aa10114ab3",
@@ -1099,8 +1121,12 @@
       "field": {
         "control_id": "CTL-INTEGER",
         "field_key": "year_of_registration",
-        "help_text": "",
-        "label": "Year of registration"
+        "help_text": "Held on the supplier Account; change it there.",
+        "label": "Year of registration",
+        "supplied_value": {
+          "fact": "year_of_registration",
+          "source_id": "SV-ORGANISATION"
+        }
       },
       "group_key": "RR-SUPPLIER-DETAILS/SUPPLIER",
       "identity": {
@@ -1365,6 +1391,826 @@
     },
     {
       "applicability": "AP-ALWAYS",
+      "composition_id": "COMP-ENTITY-PROFILE",
+      "contract_mapping_id": "DM-ENTITY-PROFILE",
+      "document_anchor": "complete_tender.html#decl-cbq",
+      "evaluation_mapping_id": "DM-ENTITY-PROFILE",
+      "evidence": null,
+      "field": {
+        "control_id": "CTL-SINGLE-CHOICE",
+        "field_key": "business_structure",
+        "help_text": "Held on the supplier Account and copied into this bid; change it there.",
+        "label": "Business structure",
+        "supplied_value": {
+          "fact": "business_structure",
+          "source_id": "SV-ENTITY-PROFILE"
+        }
+      },
+      "group_key": "RR-ENTITY-PROFILE/ENTITY",
+      "identity": {
+        "field_key": "business_structure",
+        "immutable_source_id": "ENTITY",
+        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
+        "rule_id": "RR-ENTITY-PROFILE",
+        "source_family": "supplier"
+      },
+      "material_digest": "97384549e640235b91aafd4292608f398342a89f782a19dd82a7115aadf6972f",
+      "required": {
+        "rule_id": "RQ-ALWAYS"
+      },
+      "response_id": "RSP-a1f355d8ea0c2997ed89327f",
+      "sequence": 10,
+      "source_lineage": {
+        "tender_id": "TND-MOH-2027-033"
+      },
+      "stable_key": "supplier:ENTITY:RR-ENTITY-PROFILE:business_structure",
+      "task_id": "TASK-COMPANY",
+      "validation": {
+        "parameters": {
+          "options": [
+            "Sole proprietor",
+            "Partnership",
+            "Registered company"
+          ]
+        },
+        "validation_id": "VAL-OPTION-IN-LIST"
+      },
+      "visibility": {
+        "rule_id": "VS-ALWAYS"
+      }
+    },
+    {
+      "applicability": "AP-ALWAYS",
+      "composition_id": "COMP-ENTITY-PROFILE",
+      "contract_mapping_id": "DM-ENTITY-PROFILE",
+      "document_anchor": "complete_tender.html#decl-cbq",
+      "evaluation_mapping_id": "DM-ENTITY-PROFILE",
+      "evidence": null,
+      "field": {
+        "control_id": "CTL-SHORT-TEXT",
+        "field_key": "sole_proprietor_name",
+        "help_text": "Part (b) of the questionnaire.",
+        "label": "Sole proprietor: name in full",
+        "supplied_value": {
+          "fact": "sole_proprietor_name",
+          "source_id": "SV-ENTITY-PROFILE"
+        }
+      },
+      "group_key": "RR-ENTITY-PROFILE/ENTITY",
+      "identity": {
+        "field_key": "sole_proprietor_name",
+        "immutable_source_id": "ENTITY",
+        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
+        "rule_id": "RR-ENTITY-PROFILE",
+        "source_family": "supplier"
+      },
+      "material_digest": "a206d14d1b75758824e4df73fcbd2986ae4d05350f01eb6610481fbf852f4cf8",
+      "required": {
+        "field_key": "business_structure",
+        "rule_id": "RQ-WHEN-FIELD-EQUALS",
+        "value": "Sole proprietor"
+      },
+      "response_id": "RSP-2a6c410f6b481cd90ede9da2",
+      "sequence": 11,
+      "source_lineage": {
+        "tender_id": "TND-MOH-2027-033"
+      },
+      "stable_key": "supplier:ENTITY:RR-ENTITY-PROFILE:sole_proprietor_name",
+      "task_id": "TASK-COMPANY",
+      "validation": {
+        "parameters": {
+          "max_length": 160,
+          "min_length": 2
+        },
+        "validation_id": "VAL-TEXT-LENGTH"
+      },
+      "visibility": {
+        "field_key": "business_structure",
+        "rule_id": "VS-WHEN-FIELD-EQUALS",
+        "value": "Sole proprietor"
+      }
+    },
+    {
+      "applicability": "AP-ALWAYS",
+      "composition_id": "COMP-ENTITY-PROFILE",
+      "contract_mapping_id": "DM-ENTITY-PROFILE",
+      "document_anchor": "complete_tender.html#decl-cbq",
+      "evaluation_mapping_id": "DM-ENTITY-PROFILE",
+      "evidence": null,
+      "field": {
+        "control_id": "CTL-INTEGER",
+        "field_key": "sole_proprietor_age",
+        "help_text": "Part (b) of the questionnaire.",
+        "label": "Sole proprietor: age",
+        "supplied_value": {
+          "fact": "sole_proprietor_age",
+          "source_id": "SV-ENTITY-PROFILE"
+        }
+      },
+      "group_key": "RR-ENTITY-PROFILE/ENTITY",
+      "identity": {
+        "field_key": "sole_proprietor_age",
+        "immutable_source_id": "ENTITY",
+        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
+        "rule_id": "RR-ENTITY-PROFILE",
+        "source_family": "supplier"
+      },
+      "material_digest": "166957543a6093e827fb5e239752ff2a6b8e8d498c7189e205608f9ead8826c0",
+      "required": {
+        "field_key": "business_structure",
+        "rule_id": "RQ-WHEN-FIELD-EQUALS",
+        "value": "Sole proprietor"
+      },
+      "response_id": "RSP-f705996a90abb7666b4aa9c7",
+      "sequence": 12,
+      "source_lineage": {
+        "tender_id": "TND-MOH-2027-033"
+      },
+      "stable_key": "supplier:ENTITY:RR-ENTITY-PROFILE:sole_proprietor_age",
+      "task_id": "TASK-COMPANY",
+      "validation": {
+        "parameters": {
+          "maximum": 120,
+          "minimum": 18
+        },
+        "validation_id": "VAL-INTEGER-RANGE"
+      },
+      "visibility": {
+        "field_key": "business_structure",
+        "rule_id": "VS-WHEN-FIELD-EQUALS",
+        "value": "Sole proprietor"
+      }
+    },
+    {
+      "applicability": "AP-ALWAYS",
+      "composition_id": "COMP-ENTITY-PROFILE",
+      "contract_mapping_id": "DM-ENTITY-PROFILE",
+      "document_anchor": "complete_tender.html#decl-cbq",
+      "evaluation_mapping_id": "DM-ENTITY-PROFILE",
+      "evidence": null,
+      "field": {
+        "control_id": "CTL-SHORT-TEXT",
+        "field_key": "sole_proprietor_nationality",
+        "help_text": "Part (b) of the questionnaire.",
+        "label": "Sole proprietor: nationality",
+        "supplied_value": {
+          "fact": "sole_proprietor_nationality",
+          "source_id": "SV-ENTITY-PROFILE"
+        }
+      },
+      "group_key": "RR-ENTITY-PROFILE/ENTITY",
+      "identity": {
+        "field_key": "sole_proprietor_nationality",
+        "immutable_source_id": "ENTITY",
+        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
+        "rule_id": "RR-ENTITY-PROFILE",
+        "source_family": "supplier"
+      },
+      "material_digest": "ff2554703b23d911c441e501051bd5503818d9fdbd244767b16567146202f2e7",
+      "required": {
+        "field_key": "business_structure",
+        "rule_id": "RQ-WHEN-FIELD-EQUALS",
+        "value": "Sole proprietor"
+      },
+      "response_id": "RSP-1d09cd1840d4e7002d2ce67e",
+      "sequence": 13,
+      "source_lineage": {
+        "tender_id": "TND-MOH-2027-033"
+      },
+      "stable_key": "supplier:ENTITY:RR-ENTITY-PROFILE:sole_proprietor_nationality",
+      "task_id": "TASK-COMPANY",
+      "validation": {
+        "parameters": {
+          "max_length": 80,
+          "min_length": 2
+        },
+        "validation_id": "VAL-TEXT-LENGTH"
+      },
+      "visibility": {
+        "field_key": "business_structure",
+        "rule_id": "VS-WHEN-FIELD-EQUALS",
+        "value": "Sole proprietor"
+      }
+    },
+    {
+      "applicability": "AP-ALWAYS",
+      "composition_id": "COMP-ENTITY-PROFILE",
+      "contract_mapping_id": "DM-ENTITY-PROFILE",
+      "document_anchor": "complete_tender.html#decl-cbq",
+      "evaluation_mapping_id": "DM-ENTITY-PROFILE",
+      "evidence": null,
+      "field": {
+        "control_id": "CTL-SHORT-TEXT",
+        "field_key": "sole_proprietor_country_of_origin",
+        "help_text": "Part (b) of the questionnaire.",
+        "label": "Sole proprietor: country of origin",
+        "supplied_value": {
+          "fact": "sole_proprietor_country_of_origin",
+          "source_id": "SV-ENTITY-PROFILE"
+        }
+      },
+      "group_key": "RR-ENTITY-PROFILE/ENTITY",
+      "identity": {
+        "field_key": "sole_proprietor_country_of_origin",
+        "immutable_source_id": "ENTITY",
+        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
+        "rule_id": "RR-ENTITY-PROFILE",
+        "source_family": "supplier"
+      },
+      "material_digest": "ff2554703b23d911c441e501051bd5503818d9fdbd244767b16567146202f2e7",
+      "required": {
+        "field_key": "business_structure",
+        "rule_id": "RQ-WHEN-FIELD-EQUALS",
+        "value": "Sole proprietor"
+      },
+      "response_id": "RSP-9449069de627afbdb2dac4e0",
+      "sequence": 14,
+      "source_lineage": {
+        "tender_id": "TND-MOH-2027-033"
+      },
+      "stable_key": "supplier:ENTITY:RR-ENTITY-PROFILE:sole_proprietor_country_of_origin",
+      "task_id": "TASK-COMPANY",
+      "validation": {
+        "parameters": {
+          "max_length": 80,
+          "min_length": 2
+        },
+        "validation_id": "VAL-TEXT-LENGTH"
+      },
+      "visibility": {
+        "field_key": "business_structure",
+        "rule_id": "VS-WHEN-FIELD-EQUALS",
+        "value": "Sole proprietor"
+      }
+    },
+    {
+      "applicability": "AP-ALWAYS",
+      "composition_id": "COMP-ENTITY-PROFILE",
+      "contract_mapping_id": "DM-ENTITY-PROFILE",
+      "document_anchor": "complete_tender.html#decl-cbq",
+      "evaluation_mapping_id": "DM-ENTITY-PROFILE",
+      "evidence": null,
+      "field": {
+        "control_id": "CTL-SHORT-TEXT",
+        "field_key": "sole_proprietor_citizenship",
+        "help_text": "Part (b) of the questionnaire.",
+        "label": "Sole proprietor: citizenship",
+        "supplied_value": {
+          "fact": "sole_proprietor_citizenship",
+          "source_id": "SV-ENTITY-PROFILE"
+        }
+      },
+      "group_key": "RR-ENTITY-PROFILE/ENTITY",
+      "identity": {
+        "field_key": "sole_proprietor_citizenship",
+        "immutable_source_id": "ENTITY",
+        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
+        "rule_id": "RR-ENTITY-PROFILE",
+        "source_family": "supplier"
+      },
+      "material_digest": "ff2554703b23d911c441e501051bd5503818d9fdbd244767b16567146202f2e7",
+      "required": {
+        "field_key": "business_structure",
+        "rule_id": "RQ-WHEN-FIELD-EQUALS",
+        "value": "Sole proprietor"
+      },
+      "response_id": "RSP-83da2e3ddc1bf950e8c7af91",
+      "sequence": 15,
+      "source_lineage": {
+        "tender_id": "TND-MOH-2027-033"
+      },
+      "stable_key": "supplier:ENTITY:RR-ENTITY-PROFILE:sole_proprietor_citizenship",
+      "task_id": "TASK-COMPANY",
+      "validation": {
+        "parameters": {
+          "max_length": 80,
+          "min_length": 2
+        },
+        "validation_id": "VAL-TEXT-LENGTH"
+      },
+      "visibility": {
+        "field_key": "business_structure",
+        "rule_id": "VS-WHEN-FIELD-EQUALS",
+        "value": "Sole proprietor"
+      }
+    },
+    {
+      "applicability": "AP-ALWAYS",
+      "composition_id": "COMP-ENTITY-PROFILE",
+      "contract_mapping_id": "DM-ENTITY-PROFILE",
+      "document_anchor": "complete_tender.html#decl-cbq",
+      "evaluation_mapping_id": "DM-ENTITY-PROFILE",
+      "evidence": null,
+      "field": {
+        "control_id": "CTL-ROW-GROUP",
+        "field_key": "partners",
+        "help_text": "Part (c), Partnership.",
+        "label": "Partners, with the nationality, citizenship and percentage of shares owned by each",
+        "supplied_value": {
+          "fact": "partners",
+          "source_id": "SV-ENTITY-PROFILE"
+        }
+      },
+      "group_key": "RR-ENTITY-PROFILE/ENTITY",
+      "identity": {
+        "field_key": "partners",
+        "immutable_source_id": "ENTITY",
+        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
+        "rule_id": "RR-ENTITY-PROFILE",
+        "source_family": "supplier"
+      },
+      "material_digest": "06ead54b488b1ea1dedf09bf57e0f8f6031eb976004fdc8eb9b4f7ba07167a74",
+      "required": {
+        "field_key": "business_structure",
+        "rule_id": "RQ-WHEN-FIELD-EQUALS",
+        "value": "Partnership"
+      },
+      "response_id": "RSP-a6c00df0c2ece70da6353f3f",
+      "sequence": 16,
+      "source_lineage": {
+        "tender_id": "TND-MOH-2027-033"
+      },
+      "stable_key": "supplier:ENTITY:RR-ENTITY-PROFILE:partners",
+      "task_id": "TASK-COMPANY",
+      "validation": {
+        "parameters": {
+          "columns": [
+            {
+              "key": "name",
+              "label": "Name",
+              "max_length": 160,
+              "type": "text"
+            },
+            {
+              "key": "nationality",
+              "label": "Nationality",
+              "max_length": 80,
+              "type": "text"
+            },
+            {
+              "key": "citizenship",
+              "label": "Citizenship",
+              "max_length": 80,
+              "type": "text"
+            },
+            {
+              "key": "shares",
+              "label": "Shares owned (%)",
+              "maximum": "100",
+              "minimum": "0",
+              "scale": 2,
+              "type": "decimal"
+            }
+          ],
+          "maximum_rows": 10,
+          "minimum_rows": 1,
+          "totals": [
+            {
+              "column": "shares",
+              "equals": "100"
+            }
+          ]
+        },
+        "validation_id": "VAL-ROW-GROUP"
+      },
+      "visibility": {
+        "field_key": "business_structure",
+        "rule_id": "VS-WHEN-FIELD-EQUALS",
+        "value": "Partnership"
+      }
+    },
+    {
+      "applicability": "AP-ALWAYS",
+      "composition_id": "COMP-ENTITY-PROFILE",
+      "contract_mapping_id": "DM-ENTITY-PROFILE",
+      "document_anchor": "complete_tender.html#decl-cbq",
+      "evaluation_mapping_id": "DM-ENTITY-PROFILE",
+      "evidence": null,
+      "field": {
+        "control_id": "CTL-SINGLE-CHOICE",
+        "field_key": "company_type",
+        "help_text": "Part (d)(i), registered company.",
+        "label": "Is the company a private or a public company?",
+        "supplied_value": {
+          "fact": "company_type",
+          "source_id": "SV-ENTITY-PROFILE"
+        }
+      },
+      "group_key": "RR-ENTITY-PROFILE/ENTITY",
+      "identity": {
+        "field_key": "company_type",
+        "immutable_source_id": "ENTITY",
+        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
+        "rule_id": "RR-ENTITY-PROFILE",
+        "source_family": "supplier"
+      },
+      "material_digest": "998716ae5ff6859df3156faabbaff25b02ae624b60837e6e44bb9f9de1b3f60d",
+      "required": {
+        "field_key": "business_structure",
+        "rule_id": "RQ-WHEN-FIELD-EQUALS",
+        "value": "Registered company"
+      },
+      "response_id": "RSP-d1f1c4d8620536684a9057ba",
+      "sequence": 17,
+      "source_lineage": {
+        "tender_id": "TND-MOH-2027-033"
+      },
+      "stable_key": "supplier:ENTITY:RR-ENTITY-PROFILE:company_type",
+      "task_id": "TASK-COMPANY",
+      "validation": {
+        "parameters": {
+          "options": [
+            "Private company",
+            "Public company"
+          ]
+        },
+        "validation_id": "VAL-OPTION-IN-LIST"
+      },
+      "visibility": {
+        "field_key": "business_structure",
+        "rule_id": "VS-WHEN-FIELD-EQUALS",
+        "value": "Registered company"
+      }
+    },
+    {
+      "applicability": "AP-ALWAYS",
+      "composition_id": "COMP-ENTITY-PROFILE",
+      "contract_mapping_id": "DM-ENTITY-PROFILE",
+      "document_anchor": "complete_tender.html#decl-cbq",
+      "evaluation_mapping_id": "DM-ENTITY-PROFILE",
+      "evidence": null,
+      "field": {
+        "control_id": "CTL-MONEY",
+        "field_key": "nominal_capital",
+        "help_text": "Part (d)(ii), registered company.",
+        "label": "Nominal capital (Kenya Shillings)",
+        "supplied_value": {
+          "fact": "nominal_capital",
+          "source_id": "SV-ENTITY-PROFILE"
+        }
+      },
+      "group_key": "RR-ENTITY-PROFILE/ENTITY",
+      "identity": {
+        "field_key": "nominal_capital",
+        "immutable_source_id": "ENTITY",
+        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
+        "rule_id": "RR-ENTITY-PROFILE",
+        "source_family": "supplier"
+      },
+      "material_digest": "5f1430d0b862295b430aca182c873b0f717ada4d4d641c8d37f71e2872283e71",
+      "required": {
+        "field_key": "business_structure",
+        "rule_id": "RQ-WHEN-FIELD-EQUALS",
+        "value": "Registered company"
+      },
+      "response_id": "RSP-1db9ce905edd5a0e9894fedc",
+      "sequence": 18,
+      "source_lineage": {
+        "tender_id": "TND-MOH-2027-033"
+      },
+      "stable_key": "supplier:ENTITY:RR-ENTITY-PROFILE:nominal_capital",
+      "task_id": "TASK-COMPANY",
+      "validation": {
+        "parameters": {
+          "currency": "KES",
+          "minimum": "0.00",
+          "scale": 2
+        },
+        "validation_id": "VAL-MONEY"
+      },
+      "visibility": {
+        "field_key": "business_structure",
+        "rule_id": "VS-WHEN-FIELD-EQUALS",
+        "value": "Registered company"
+      }
+    },
+    {
+      "applicability": "AP-ALWAYS",
+      "composition_id": "COMP-ENTITY-PROFILE",
+      "contract_mapping_id": "DM-ENTITY-PROFILE",
+      "document_anchor": "complete_tender.html#decl-cbq",
+      "evaluation_mapping_id": "DM-ENTITY-PROFILE",
+      "evidence": null,
+      "field": {
+        "control_id": "CTL-MONEY",
+        "field_key": "issued_capital",
+        "help_text": "Part (d)(ii), registered company.",
+        "label": "Issued capital (Kenya Shillings)",
+        "supplied_value": {
+          "fact": "issued_capital",
+          "source_id": "SV-ENTITY-PROFILE"
+        }
+      },
+      "group_key": "RR-ENTITY-PROFILE/ENTITY",
+      "identity": {
+        "field_key": "issued_capital",
+        "immutable_source_id": "ENTITY",
+        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
+        "rule_id": "RR-ENTITY-PROFILE",
+        "source_family": "supplier"
+      },
+      "material_digest": "5f1430d0b862295b430aca182c873b0f717ada4d4d641c8d37f71e2872283e71",
+      "required": {
+        "field_key": "business_structure",
+        "rule_id": "RQ-WHEN-FIELD-EQUALS",
+        "value": "Registered company"
+      },
+      "response_id": "RSP-da9f2b6dd291e368bf41f83c",
+      "sequence": 19,
+      "source_lineage": {
+        "tender_id": "TND-MOH-2027-033"
+      },
+      "stable_key": "supplier:ENTITY:RR-ENTITY-PROFILE:issued_capital",
+      "task_id": "TASK-COMPANY",
+      "validation": {
+        "parameters": {
+          "currency": "KES",
+          "minimum": "0.00",
+          "scale": 2
+        },
+        "validation_id": "VAL-MONEY"
+      },
+      "visibility": {
+        "field_key": "business_structure",
+        "rule_id": "VS-WHEN-FIELD-EQUALS",
+        "value": "Registered company"
+      }
+    },
+    {
+      "applicability": "AP-ALWAYS",
+      "composition_id": "COMP-ENTITY-PROFILE",
+      "contract_mapping_id": "DM-ENTITY-PROFILE",
+      "document_anchor": "complete_tender.html#decl-cbq",
+      "evaluation_mapping_id": "DM-ENTITY-PROFILE",
+      "evidence": null,
+      "field": {
+        "control_id": "CTL-ROW-GROUP",
+        "field_key": "directors",
+        "help_text": "Part (d)(iii), registered company.",
+        "label": "Directors, with the nationality, citizenship and percentage of shares owned by each",
+        "supplied_value": {
+          "fact": "directors",
+          "source_id": "SV-ENTITY-PROFILE"
+        }
+      },
+      "group_key": "RR-ENTITY-PROFILE/ENTITY",
+      "identity": {
+        "field_key": "directors",
+        "immutable_source_id": "ENTITY",
+        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
+        "rule_id": "RR-ENTITY-PROFILE",
+        "source_family": "supplier"
+      },
+      "material_digest": "93878a40b4b25c0e7cb605f8db3a1473a32673f8e0d9b26ff05025e9077f8eeb",
+      "required": {
+        "field_key": "business_structure",
+        "rule_id": "RQ-WHEN-FIELD-EQUALS",
+        "value": "Registered company"
+      },
+      "response_id": "RSP-3096e97e536ba37b24f3e116",
+      "sequence": 20,
+      "source_lineage": {
+        "tender_id": "TND-MOH-2027-033"
+      },
+      "stable_key": "supplier:ENTITY:RR-ENTITY-PROFILE:directors",
+      "task_id": "TASK-COMPANY",
+      "validation": {
+        "parameters": {
+          "columns": [
+            {
+              "key": "name",
+              "label": "Name",
+              "max_length": 160,
+              "type": "text"
+            },
+            {
+              "key": "nationality",
+              "label": "Nationality",
+              "max_length": 80,
+              "type": "text"
+            },
+            {
+              "key": "citizenship",
+              "label": "Citizenship",
+              "max_length": 80,
+              "type": "text"
+            },
+            {
+              "key": "shares",
+              "label": "Shares owned (%)",
+              "maximum": "100",
+              "minimum": "0",
+              "scale": 2,
+              "type": "decimal"
+            }
+          ],
+          "maximum_rows": 10,
+          "minimum_rows": 1,
+          "totals": [
+            {
+              "column": "shares",
+              "equals": "100"
+            }
+          ]
+        },
+        "validation_id": "VAL-ROW-GROUP"
+      },
+      "visibility": {
+        "field_key": "business_structure",
+        "rule_id": "VS-WHEN-FIELD-EQUALS",
+        "value": "Registered company"
+      }
+    },
+    {
+      "applicability": "AP-ALWAYS",
+      "composition_id": "COMP-ENTITY-PROFILE",
+      "contract_mapping_id": "DM-ENTITY-PROFILE",
+      "document_anchor": "complete_tender.html#decl-cbq",
+      "evaluation_mapping_id": "DM-ENTITY-PROFILE",
+      "evidence": null,
+      "field": {
+        "control_id": "CTL-SHORT-TEXT",
+        "field_key": "trade_licence_number",
+        "help_text": "Table A, item 6.",
+        "label": "Current trade licence number",
+        "supplied_value": {
+          "fact": "trade_licence_number",
+          "source_id": "SV-ENTITY-PROFILE"
+        }
+      },
+      "group_key": "RR-ENTITY-PROFILE/ENTITY",
+      "identity": {
+        "field_key": "trade_licence_number",
+        "immutable_source_id": "ENTITY",
+        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
+        "rule_id": "RR-ENTITY-PROFILE",
+        "source_family": "supplier"
+      },
+      "material_digest": "4f511c2cf580a0da687ded249bef2c0de91f46fc7a7c820a6bf1c9fbed46ba44",
+      "required": {
+        "rule_id": "RQ-ALWAYS"
+      },
+      "response_id": "RSP-785003f4838ba798dc5c14b1",
+      "sequence": 21,
+      "source_lineage": {
+        "tender_id": "TND-MOH-2027-033"
+      },
+      "stable_key": "supplier:ENTITY:RR-ENTITY-PROFILE:trade_licence_number",
+      "task_id": "TASK-COMPANY",
+      "validation": {
+        "parameters": {
+          "max_length": 80,
+          "min_length": 3
+        },
+        "validation_id": "VAL-TEXT-LENGTH"
+      },
+      "visibility": {
+        "rule_id": "VS-ALWAYS"
+      }
+    },
+    {
+      "applicability": "AP-ALWAYS",
+      "composition_id": "COMP-ENTITY-PROFILE",
+      "contract_mapping_id": "DM-ENTITY-PROFILE",
+      "document_anchor": "complete_tender.html#decl-cbq",
+      "evaluation_mapping_id": "DM-ENTITY-PROFILE",
+      "evidence": null,
+      "field": {
+        "control_id": "CTL-DATE",
+        "field_key": "trade_licence_expiry",
+        "help_text": "Table A, item 6.",
+        "label": "Trade licence expiry date",
+        "supplied_value": {
+          "fact": "trade_licence_expiry",
+          "source_id": "SV-ENTITY-PROFILE"
+        }
+      },
+      "group_key": "RR-ENTITY-PROFILE/ENTITY",
+      "identity": {
+        "field_key": "trade_licence_expiry",
+        "immutable_source_id": "ENTITY",
+        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
+        "rule_id": "RR-ENTITY-PROFILE",
+        "source_family": "supplier"
+      },
+      "material_digest": "c7b31d7fa19801c0709cbad17284b9e03cb50543db2d0e88aaaae67f221059d9",
+      "required": {
+        "rule_id": "RQ-ALWAYS"
+      },
+      "response_id": "RSP-514ae0fccb327578848bae19",
+      "sequence": 22,
+      "source_lineage": {
+        "tender_id": "TND-MOH-2027-033"
+      },
+      "stable_key": "supplier:ENTITY:RR-ENTITY-PROFILE:trade_licence_expiry",
+      "task_id": "TASK-COMPANY",
+      "validation": {
+        "parameters": {},
+        "validation_id": "VAL-DATE-RANGE"
+      },
+      "visibility": {
+        "rule_id": "VS-ALWAYS"
+      }
+    },
+    {
+      "applicability": "AP-ALWAYS",
+      "composition_id": "COMP-ENTITY-PROFILE",
+      "contract_mapping_id": "DM-ENTITY-PROFILE",
+      "document_anchor": "complete_tender.html#decl-cbq",
+      "evaluation_mapping_id": "DM-ENTITY-PROFILE",
+      "evidence": null,
+      "field": {
+        "control_id": "CTL-MONEY",
+        "field_key": "maximum_business_value",
+        "help_text": "",
+        "label": "Maximum value of business the Tenderer handles",
+        "supplied_value": {
+          "fact": "maximum_business_value",
+          "source_id": "SV-ENTITY-PROFILE"
+        }
+      },
+      "group_key": "RR-ENTITY-PROFILE/ENTITY",
+      "identity": {
+        "field_key": "maximum_business_value",
+        "immutable_source_id": "ENTITY",
+        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
+        "rule_id": "RR-ENTITY-PROFILE",
+        "source_family": "supplier"
+      },
+      "material_digest": "f43d6ab820fd8de800aef652f7786d12779999ed1b880433f76cfd75c5acb8cd",
+      "required": {
+        "rule_id": "RQ-ALWAYS"
+      },
+      "response_id": "RSP-bb1526f635e3a3be7ca07e6e",
+      "sequence": 23,
+      "source_lineage": {
+        "tender_id": "TND-MOH-2027-033"
+      },
+      "stable_key": "supplier:ENTITY:RR-ENTITY-PROFILE:maximum_business_value",
+      "task_id": "TASK-COMPANY",
+      "validation": {
+        "parameters": {
+          "currency": "KES",
+          "minimum": "0.00",
+          "scale": 2
+        },
+        "validation_id": "VAL-MONEY"
+      },
+      "visibility": {
+        "rule_id": "VS-ALWAYS"
+      }
+    },
+    {
+      "applicability": "AP-ALWAYS",
+      "composition_id": "COMP-ENTITY-PROFILE",
+      "contract_mapping_id": "DM-ENTITY-PROFILE",
+      "document_anchor": "complete_tender.html#decl-cbq",
+      "evaluation_mapping_id": "DM-ENTITY-PROFILE",
+      "evidence": null,
+      "field": {
+        "control_id": "CTL-YES-NO",
+        "field_key": "state_owned",
+        "help_text": "Item (k) of the Form of Tender. If Yes, the Tenderer must meet the requirements of ITT 3.8.",
+        "label": "Is the Tenderer a state-owned enterprise or institution?",
+        "supplied_value": {
+          "fact": "state_owned",
+          "source_id": "SV-ENTITY-PROFILE"
+        }
+      },
+      "group_key": "RR-ENTITY-PROFILE/ENTITY",
+      "identity": {
+        "field_key": "state_owned",
+        "immutable_source_id": "ENTITY",
+        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
+        "rule_id": "RR-ENTITY-PROFILE",
+        "source_family": "supplier"
+      },
+      "material_digest": "44d10193a60eeda46d2b42fa35b58645340ce13ee9392e6b22c46a3eb2c7a2dc",
+      "required": {
+        "rule_id": "RQ-ALWAYS"
+      },
+      "response_id": "RSP-fed1281f1fe7c8d46f54629e",
+      "sequence": 24,
+      "source_lineage": {
+        "tender_id": "TND-MOH-2027-033"
+      },
+      "stable_key": "supplier:ENTITY:RR-ENTITY-PROFILE:state_owned",
+      "task_id": "TASK-COMPANY",
+      "validation": {
+        "parameters": {
+          "options": [
+            "Yes",
+            "No"
+          ]
+        },
+        "validation_id": "VAL-OPTION-IN-LIST"
+      },
+      "visibility": {
+        "rule_id": "VS-ALWAYS"
+      }
+    },
+    {
+      "applicability": "AP-ALWAYS",
       "composition_id": "COMP-JV-MEMBER",
       "contract_mapping_id": "DM-JV-MEMBER",
       "document_anchor": "complete_tender.html#form-jv-members",
@@ -1393,7 +2239,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-debd20e2ed233eab1d3b9e99",
-      "sequence": 10,
+      "sequence": 25,
       "source_lineage": {
         "tender_id": "TND-MOH-2027-033"
       },
@@ -1440,7 +2286,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-d7738188454a694762fd85c5",
-      "sequence": 11,
+      "sequence": 26,
       "source_lineage": {
         "tender_id": "TND-MOH-2027-033"
       },
@@ -1467,8 +2313,12 @@
       "field": {
         "control_id": "CTL-INTEGER",
         "field_key": "member_year_of_registration",
-        "help_text": "",
-        "label": "JV member's year of registration"
+        "help_text": "Held on the supplier Account; change it there.",
+        "label": "JV member's year of registration",
+        "supplied_value": {
+          "fact": "year_of_registration",
+          "source_id": "SV-ARRANGEMENT-MEMBER"
+        }
       },
       "group_key": "RR-JV-MEMBER/JV-MEMBER",
       "identity": {
@@ -1483,7 +2333,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-726e839367ce0302c515e1fa",
-      "sequence": 12,
+      "sequence": 27,
       "source_lineage": {
         "tender_id": "TND-MOH-2027-033"
       },
@@ -1530,7 +2380,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-506c8103d6631398cce7f056",
-      "sequence": 13,
+      "sequence": 28,
       "source_lineage": {
         "tender_id": "TND-MOH-2027-033"
       },
@@ -1573,7 +2423,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-4dca2a9c207377701846f21e",
-      "sequence": 14,
+      "sequence": 29,
       "source_lineage": {
         "tender_id": "TND-MOH-2027-033"
       },
@@ -1616,7 +2466,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-6290c146a9ed383ec62bcb54",
-      "sequence": 15,
+      "sequence": 30,
       "source_lineage": {
         "tender_id": "TND-MOH-2027-033"
       },
@@ -1659,7 +2509,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-1556f8e074ecf2c2ee22f2e5",
-      "sequence": 16,
+      "sequence": 31,
       "source_lineage": {
         "tender_id": "TND-MOH-2027-033"
       },
@@ -1702,7 +2552,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-2e41f27fc39993df1935aceb",
-      "sequence": 17,
+      "sequence": 32,
       "source_lineage": {
         "tender_id": "TND-MOH-2027-033"
       },
@@ -1740,12 +2590,12 @@
         "rule_id": "RR-DECL-FORM-OF-TENDER",
         "source_family": "declaration"
       },
-      "material_digest": "48b19e85ef9b7b87430d69be95f9af555f7263fc1107fa7d011cf0b56c994e7c",
+      "material_digest": "72a3019fcd2cf533ef2d5a96a9ee7b4fa908ff45a85d749035dcc3782d8267be",
       "required": {
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-82b3c263edf94ee8e41e99d3",
-      "sequence": 18,
+      "sequence": 33,
       "source_lineage": {
         "form_id": "FORM-TENDER"
       },
@@ -1783,12 +2633,12 @@
         "rule_id": "RR-DECL-FORM-OF-TENDER",
         "source_family": "declaration"
       },
-      "material_digest": "48b19e85ef9b7b87430d69be95f9af555f7263fc1107fa7d011cf0b56c994e7c",
+      "material_digest": "72a3019fcd2cf533ef2d5a96a9ee7b4fa908ff45a85d749035dcc3782d8267be",
       "required": {
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-9444a44587cc57ebd84fa409",
-      "sequence": 19,
+      "sequence": 34,
       "source_lineage": {
         "form_id": "FORM-TENDER"
       },
@@ -1814,28 +2664,28 @@
       "evidence": null,
       "field": {
         "control_id": "CTL-YES-NO",
-        "field_key": "state_owned_enterprise",
-        "help_text": "Item (k) of the Form of Tender.",
-        "label": "Is the Tenderer a state-owned enterprise or institution?"
+        "field_key": "commissions_paid",
+        "help_text": "Item (l) of the Form of Tender.",
+        "label": "Have you paid, or will you pay, any commissions, gratuities or fees with respect to the Tendering process or execution of the Contract?"
       },
       "group_key": "RR-DECL-FORM-OF-TENDER/FORM-TENDER",
       "identity": {
-        "field_key": "state_owned_enterprise",
+        "field_key": "commissions_paid",
         "immutable_source_id": "FORM-TENDER",
         "published_tender_version_id": "TNDV-MOH-2027-033-V2",
         "rule_id": "RR-DECL-FORM-OF-TENDER",
         "source_family": "declaration"
       },
-      "material_digest": "88486296b61d8382d555a5ba7f807a2b9afac11475d694d57247992d43615ae5",
+      "material_digest": "d35b97ffae2cefe906ab068180e490f1ab1a980c0a34be9aeb904dda0c250886",
       "required": {
         "rule_id": "RQ-ALWAYS"
       },
-      "response_id": "RSP-a4d774a6fe067a06250b9cd0",
-      "sequence": 20,
+      "response_id": "RSP-8150f532cefab1dd955f3157",
+      "sequence": 35,
       "source_lineage": {
         "form_id": "FORM-TENDER"
       },
-      "stable_key": "declaration:FORM-TENDER:RR-DECL-FORM-OF-TENDER:state_owned_enterprise",
+      "stable_key": "declaration:FORM-TENDER:RR-DECL-FORM-OF-TENDER:commissions_paid",
       "task_id": "TASK-COMPANY",
       "validation": {
         "parameters": {
@@ -1858,39 +2708,82 @@
       "evaluation_mapping_id": "DM-DECL-FORM-OF-TENDER",
       "evidence": null,
       "field": {
-        "control_id": "CTL-LONG-TEXT",
-        "field_key": "commissions_gratuities_fees",
-        "help_text": "Item (l) of the Form of Tender. Write one recipient per line: name; address; reason; amount and currency.",
-        "label": "Commissions, gratuities or fees paid or payable: each recipient's complete name, full address, the reason, and the amount and currency (or \"none\")"
+        "control_id": "CTL-ROW-GROUP",
+        "field_key": "commission_recipients",
+        "help_text": "Item (l): the recipient's complete name, full address, the reason, and the amount and currency.",
+        "label": "Each recipient of a commission, gratuity or fee"
       },
       "group_key": "RR-DECL-FORM-OF-TENDER/FORM-TENDER",
       "identity": {
-        "field_key": "commissions_gratuities_fees",
+        "field_key": "commission_recipients",
         "immutable_source_id": "FORM-TENDER",
         "published_tender_version_id": "TNDV-MOH-2027-033-V2",
         "rule_id": "RR-DECL-FORM-OF-TENDER",
         "source_family": "declaration"
       },
-      "material_digest": "48b19e85ef9b7b87430d69be95f9af555f7263fc1107fa7d011cf0b56c994e7c",
+      "material_digest": "25a7fca6f22267bb8e7965e9a0f87886b66d47b16c8fb14a74fc6393588cc11a",
       "required": {
-        "rule_id": "RQ-ALWAYS"
+        "field_key": "commissions_paid",
+        "rule_id": "RQ-WHEN-FIELD-EQUALS",
+        "value": "Yes"
       },
-      "response_id": "RSP-f6a134e8bdc7704730c3785a",
-      "sequence": 21,
+      "response_id": "RSP-70524762ad53f1299894ff17",
+      "sequence": 36,
       "source_lineage": {
         "form_id": "FORM-TENDER"
       },
-      "stable_key": "declaration:FORM-TENDER:RR-DECL-FORM-OF-TENDER:commissions_gratuities_fees",
+      "stable_key": "declaration:FORM-TENDER:RR-DECL-FORM-OF-TENDER:commission_recipients",
       "task_id": "TASK-COMPANY",
       "validation": {
         "parameters": {
-          "max_length": 1000,
-          "min_length": 4
+          "columns": [
+            {
+              "key": "recipient",
+              "label": "Name of recipient",
+              "max_length": 160,
+              "type": "text"
+            },
+            {
+              "key": "address",
+              "label": "Full address",
+              "max_length": 300,
+              "type": "text"
+            },
+            {
+              "key": "reason",
+              "label": "Reason for the commission, gratuity or fee",
+              "max_length": 300,
+              "type": "text"
+            },
+            {
+              "key": "amount",
+              "label": "Amount",
+              "minimum": "0",
+              "scale": 2,
+              "type": "decimal"
+            },
+            {
+              "key": "currency",
+              "label": "Currency",
+              "options": [
+                "KES",
+                "USD",
+                "EUR",
+                "GBP"
+              ],
+              "type": "choice"
+            }
+          ],
+          "maximum_rows": 10,
+          "minimum_rows": 1,
+          "totals": []
         },
-        "validation_id": "VAL-TEXT-LENGTH"
+        "validation_id": "VAL-ROW-GROUP"
       },
       "visibility": {
-        "rule_id": "VS-ALWAYS"
+        "field_key": "commissions_paid",
+        "rule_id": "VS-WHEN-FIELD-EQUALS",
+        "value": "Yes"
       }
     },
     {
@@ -1914,12 +2807,12 @@
         "rule_id": "RR-DECL-FORM-OF-TENDER",
         "source_family": "declaration"
       },
-      "material_digest": "ec810e7842708837b1d910789474d21e6eac2f58e56ca80cd016a1a3684f454f",
+      "material_digest": "368795a3ceafff9cec7ab297aadc89c9bd991572f74721816bc001812d06a27e",
       "required": {
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-91e190b0afb7b579b6c0f84f",
-      "sequence": 22,
+      "sequence": 37,
       "source_lineage": {
         "form_id": "FORM-TENDER"
       },
@@ -1959,7 +2852,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-f88e0a8260d036277f1cf31d",
-      "sequence": 23,
+      "sequence": 38,
       "source_lineage": {
         "form_id": "FORM-CITD"
       },
@@ -2006,7 +2899,7 @@
         "value": "Consulted with one or more competitors"
       },
       "response_id": "RSP-f28fb114b905d3ff8a079fda",
-      "sequence": 24,
+      "sequence": 39,
       "source_lineage": {
         "form_id": "FORM-CITD"
       },
@@ -2053,7 +2946,7 @@
         "value": "Consulted with one or more competitors"
       },
       "response_id": "RSP-4db7c157c5ad19095b6c4069",
-      "sequence": 25,
+      "sequence": 40,
       "source_lineage": {
         "form_id": "FORM-CITD"
       },
@@ -2100,7 +2993,7 @@
         "value": "Consulted with one or more competitors"
       },
       "response_id": "RSP-e1e2b4fe5059de4eebd92a88",
-      "sequence": 26,
+      "sequence": 41,
       "source_lineage": {
         "form_id": "FORM-CITD"
       },
@@ -2145,7 +3038,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-fbe19d74b1d2c657e0138756",
-      "sequence": 27,
+      "sequence": 42,
       "source_lineage": {
         "form_id": "FORM-CITD"
       },
@@ -2185,7 +3078,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-69ccbe831e0a2d2c64d05963",
-      "sequence": 28,
+      "sequence": 43,
       "source_lineage": {
         "form_id": "FORM-SD1"
       },
@@ -2225,7 +3118,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-ea063de3ee0c703f945657fb",
-      "sequence": 29,
+      "sequence": 44,
       "source_lineage": {
         "form_id": "FORM-SD2"
       },
@@ -2265,7 +3158,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-c27be5cf735fb918cb1e4b20",
-      "sequence": 30,
+      "sequence": 45,
       "source_lineage": {
         "form_id": "FORM-COE"
       },
@@ -2274,653 +3167,6 @@
       "validation": {
         "parameters": {},
         "validation_id": "VAL-CONFIRMED"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-LOCKED-DECLARATION",
-      "contract_mapping_id": "DM-DECL-CBQ",
-      "document_anchor": "complete_tender.html#decl-cbq",
-      "evaluation_mapping_id": "DM-DECL-CBQ",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-SINGLE-CHOICE",
-        "field_key": "business_structure",
-        "help_text": "",
-        "label": "Business structure"
-      },
-      "group_key": "RR-DECL-CBQ/FORM-CBQ",
-      "identity": {
-        "field_key": "business_structure",
-        "immutable_source_id": "FORM-CBQ",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-DECL-CBQ",
-        "source_family": "declaration"
-      },
-      "material_digest": "d4115f9b9ba6f3fc32ae7e0cf676a0b89ed3b51267def0e826fc6878a06d7076",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-093ee407bfafa9ba9c698b2c",
-      "sequence": 31,
-      "source_lineage": {
-        "form_id": "FORM-CBQ"
-      },
-      "stable_key": "declaration:FORM-CBQ:RR-DECL-CBQ:business_structure",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "options": [
-            "Sole proprietor",
-            "Partnership",
-            "Registered company"
-          ]
-        },
-        "validation_id": "VAL-OPTION-IN-LIST"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-LOCKED-DECLARATION",
-      "contract_mapping_id": "DM-DECL-CBQ",
-      "document_anchor": "complete_tender.html#decl-cbq",
-      "evaluation_mapping_id": "DM-DECL-CBQ",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-SHORT-TEXT",
-        "field_key": "sole_proprietor_name",
-        "help_text": "Part (b) of the questionnaire.",
-        "label": "Sole proprietor: name in full"
-      },
-      "group_key": "RR-DECL-CBQ/FORM-CBQ",
-      "identity": {
-        "field_key": "sole_proprietor_name",
-        "immutable_source_id": "FORM-CBQ",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-DECL-CBQ",
-        "source_family": "declaration"
-      },
-      "material_digest": "6b01c40536ab76e5b071e24671c88d7b3d03eb02252462aa859cde4fb1ed9288",
-      "required": {
-        "field_key": "business_structure",
-        "rule_id": "RQ-WHEN-FIELD-EQUALS",
-        "value": "Sole proprietor"
-      },
-      "response_id": "RSP-d685d9b2ba9ca0e6447643b1",
-      "sequence": 32,
-      "source_lineage": {
-        "form_id": "FORM-CBQ"
-      },
-      "stable_key": "declaration:FORM-CBQ:RR-DECL-CBQ:sole_proprietor_name",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "max_length": 160,
-          "min_length": 2
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "field_key": "business_structure",
-        "rule_id": "VS-WHEN-FIELD-EQUALS",
-        "value": "Sole proprietor"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-LOCKED-DECLARATION",
-      "contract_mapping_id": "DM-DECL-CBQ",
-      "document_anchor": "complete_tender.html#decl-cbq",
-      "evaluation_mapping_id": "DM-DECL-CBQ",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-INTEGER",
-        "field_key": "sole_proprietor_age",
-        "help_text": "Part (b) of the questionnaire.",
-        "label": "Sole proprietor: age"
-      },
-      "group_key": "RR-DECL-CBQ/FORM-CBQ",
-      "identity": {
-        "field_key": "sole_proprietor_age",
-        "immutable_source_id": "FORM-CBQ",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-DECL-CBQ",
-        "source_family": "declaration"
-      },
-      "material_digest": "ff5718128abf065d787e9a6b7b0e28814d9c73860e52993d720cb8ba1cc58c73",
-      "required": {
-        "field_key": "business_structure",
-        "rule_id": "RQ-WHEN-FIELD-EQUALS",
-        "value": "Sole proprietor"
-      },
-      "response_id": "RSP-287fefdb92a2723b5998e556",
-      "sequence": 33,
-      "source_lineage": {
-        "form_id": "FORM-CBQ"
-      },
-      "stable_key": "declaration:FORM-CBQ:RR-DECL-CBQ:sole_proprietor_age",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "maximum": 120,
-          "minimum": 18
-        },
-        "validation_id": "VAL-INTEGER-RANGE"
-      },
-      "visibility": {
-        "field_key": "business_structure",
-        "rule_id": "VS-WHEN-FIELD-EQUALS",
-        "value": "Sole proprietor"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-LOCKED-DECLARATION",
-      "contract_mapping_id": "DM-DECL-CBQ",
-      "document_anchor": "complete_tender.html#decl-cbq",
-      "evaluation_mapping_id": "DM-DECL-CBQ",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-SHORT-TEXT",
-        "field_key": "sole_proprietor_nationality",
-        "help_text": "Part (b) of the questionnaire.",
-        "label": "Sole proprietor: nationality"
-      },
-      "group_key": "RR-DECL-CBQ/FORM-CBQ",
-      "identity": {
-        "field_key": "sole_proprietor_nationality",
-        "immutable_source_id": "FORM-CBQ",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-DECL-CBQ",
-        "source_family": "declaration"
-      },
-      "material_digest": "8eb6570c4a3fb74b7cb56431b1635ef2aafe5571aa066061b7836b9522b7e30d",
-      "required": {
-        "field_key": "business_structure",
-        "rule_id": "RQ-WHEN-FIELD-EQUALS",
-        "value": "Sole proprietor"
-      },
-      "response_id": "RSP-f439fbad93145ca28b63fb22",
-      "sequence": 34,
-      "source_lineage": {
-        "form_id": "FORM-CBQ"
-      },
-      "stable_key": "declaration:FORM-CBQ:RR-DECL-CBQ:sole_proprietor_nationality",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "max_length": 80,
-          "min_length": 2
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "field_key": "business_structure",
-        "rule_id": "VS-WHEN-FIELD-EQUALS",
-        "value": "Sole proprietor"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-LOCKED-DECLARATION",
-      "contract_mapping_id": "DM-DECL-CBQ",
-      "document_anchor": "complete_tender.html#decl-cbq",
-      "evaluation_mapping_id": "DM-DECL-CBQ",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-SHORT-TEXT",
-        "field_key": "sole_proprietor_country_of_origin",
-        "help_text": "Part (b) of the questionnaire.",
-        "label": "Sole proprietor: country of origin"
-      },
-      "group_key": "RR-DECL-CBQ/FORM-CBQ",
-      "identity": {
-        "field_key": "sole_proprietor_country_of_origin",
-        "immutable_source_id": "FORM-CBQ",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-DECL-CBQ",
-        "source_family": "declaration"
-      },
-      "material_digest": "8eb6570c4a3fb74b7cb56431b1635ef2aafe5571aa066061b7836b9522b7e30d",
-      "required": {
-        "field_key": "business_structure",
-        "rule_id": "RQ-WHEN-FIELD-EQUALS",
-        "value": "Sole proprietor"
-      },
-      "response_id": "RSP-e2dfa7f31301867364be7230",
-      "sequence": 35,
-      "source_lineage": {
-        "form_id": "FORM-CBQ"
-      },
-      "stable_key": "declaration:FORM-CBQ:RR-DECL-CBQ:sole_proprietor_country_of_origin",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "max_length": 80,
-          "min_length": 2
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "field_key": "business_structure",
-        "rule_id": "VS-WHEN-FIELD-EQUALS",
-        "value": "Sole proprietor"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-LOCKED-DECLARATION",
-      "contract_mapping_id": "DM-DECL-CBQ",
-      "document_anchor": "complete_tender.html#decl-cbq",
-      "evaluation_mapping_id": "DM-DECL-CBQ",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-SHORT-TEXT",
-        "field_key": "sole_proprietor_citizenship",
-        "help_text": "Part (b) of the questionnaire.",
-        "label": "Sole proprietor: citizenship"
-      },
-      "group_key": "RR-DECL-CBQ/FORM-CBQ",
-      "identity": {
-        "field_key": "sole_proprietor_citizenship",
-        "immutable_source_id": "FORM-CBQ",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-DECL-CBQ",
-        "source_family": "declaration"
-      },
-      "material_digest": "8eb6570c4a3fb74b7cb56431b1635ef2aafe5571aa066061b7836b9522b7e30d",
-      "required": {
-        "field_key": "business_structure",
-        "rule_id": "RQ-WHEN-FIELD-EQUALS",
-        "value": "Sole proprietor"
-      },
-      "response_id": "RSP-d7e6f3a24b4a8ed8448d3aac",
-      "sequence": 36,
-      "source_lineage": {
-        "form_id": "FORM-CBQ"
-      },
-      "stable_key": "declaration:FORM-CBQ:RR-DECL-CBQ:sole_proprietor_citizenship",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "max_length": 80,
-          "min_length": 2
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "field_key": "business_structure",
-        "rule_id": "VS-WHEN-FIELD-EQUALS",
-        "value": "Sole proprietor"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-LOCKED-DECLARATION",
-      "contract_mapping_id": "DM-DECL-CBQ",
-      "document_anchor": "complete_tender.html#decl-cbq",
-      "evaluation_mapping_id": "DM-DECL-CBQ",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-LONG-TEXT",
-        "field_key": "partners_details",
-        "help_text": "Part (c), Partnership. Write one partner per line: name; nationality; citizenship; % shares owned.",
-        "label": "Names of the partners, with the nationality, citizenship and percentage of shares owned by each"
-      },
-      "group_key": "RR-DECL-CBQ/FORM-CBQ",
-      "identity": {
-        "field_key": "partners_details",
-        "immutable_source_id": "FORM-CBQ",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-DECL-CBQ",
-        "source_family": "declaration"
-      },
-      "material_digest": "2300d9a13f1b5f8807a9e3d765dc5d56d2b3c0d792b58e1be67c3b40d4c13b8a",
-      "required": {
-        "field_key": "business_structure",
-        "rule_id": "RQ-WHEN-FIELD-EQUALS",
-        "value": "Partnership"
-      },
-      "response_id": "RSP-1fa18e436e577f545d3047a8",
-      "sequence": 37,
-      "source_lineage": {
-        "form_id": "FORM-CBQ"
-      },
-      "stable_key": "declaration:FORM-CBQ:RR-DECL-CBQ:partners_details",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "max_length": 2000,
-          "min_length": 10
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "field_key": "business_structure",
-        "rule_id": "VS-WHEN-FIELD-EQUALS",
-        "value": "Partnership"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-LOCKED-DECLARATION",
-      "contract_mapping_id": "DM-DECL-CBQ",
-      "document_anchor": "complete_tender.html#decl-cbq",
-      "evaluation_mapping_id": "DM-DECL-CBQ",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-SINGLE-CHOICE",
-        "field_key": "company_type",
-        "help_text": "Part (d)(i), registered company.",
-        "label": "Is the company a private or a public company?"
-      },
-      "group_key": "RR-DECL-CBQ/FORM-CBQ",
-      "identity": {
-        "field_key": "company_type",
-        "immutable_source_id": "FORM-CBQ",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-DECL-CBQ",
-        "source_family": "declaration"
-      },
-      "material_digest": "9761e18e569fda6fe48f799757cc7ff6b34b28112b9dcc247959de7b3a7a60db",
-      "required": {
-        "field_key": "business_structure",
-        "rule_id": "RQ-WHEN-FIELD-EQUALS",
-        "value": "Registered company"
-      },
-      "response_id": "RSP-3e5c3b1b541a07e32def6514",
-      "sequence": 38,
-      "source_lineage": {
-        "form_id": "FORM-CBQ"
-      },
-      "stable_key": "declaration:FORM-CBQ:RR-DECL-CBQ:company_type",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "options": [
-            "Private company",
-            "Public company"
-          ]
-        },
-        "validation_id": "VAL-OPTION-IN-LIST"
-      },
-      "visibility": {
-        "field_key": "business_structure",
-        "rule_id": "VS-WHEN-FIELD-EQUALS",
-        "value": "Registered company"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-LOCKED-DECLARATION",
-      "contract_mapping_id": "DM-DECL-CBQ",
-      "document_anchor": "complete_tender.html#decl-cbq",
-      "evaluation_mapping_id": "DM-DECL-CBQ",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-MONEY",
-        "field_key": "nominal_capital",
-        "help_text": "Part (d)(ii), registered company.",
-        "label": "Nominal capital (Kenya Shillings)"
-      },
-      "group_key": "RR-DECL-CBQ/FORM-CBQ",
-      "identity": {
-        "field_key": "nominal_capital",
-        "immutable_source_id": "FORM-CBQ",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-DECL-CBQ",
-        "source_family": "declaration"
-      },
-      "material_digest": "b112270eb820155a427a06649a3dfc0c5e678fe1b61df1283a4ad7a03a69b486",
-      "required": {
-        "field_key": "business_structure",
-        "rule_id": "RQ-WHEN-FIELD-EQUALS",
-        "value": "Registered company"
-      },
-      "response_id": "RSP-e79e663d5bee6193ddce4ec6",
-      "sequence": 39,
-      "source_lineage": {
-        "form_id": "FORM-CBQ"
-      },
-      "stable_key": "declaration:FORM-CBQ:RR-DECL-CBQ:nominal_capital",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "currency": "KES",
-          "minimum": "0.00",
-          "scale": 2
-        },
-        "validation_id": "VAL-MONEY"
-      },
-      "visibility": {
-        "field_key": "business_structure",
-        "rule_id": "VS-WHEN-FIELD-EQUALS",
-        "value": "Registered company"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-LOCKED-DECLARATION",
-      "contract_mapping_id": "DM-DECL-CBQ",
-      "document_anchor": "complete_tender.html#decl-cbq",
-      "evaluation_mapping_id": "DM-DECL-CBQ",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-MONEY",
-        "field_key": "issued_capital",
-        "help_text": "Part (d)(ii), registered company.",
-        "label": "Issued capital (Kenya Shillings)"
-      },
-      "group_key": "RR-DECL-CBQ/FORM-CBQ",
-      "identity": {
-        "field_key": "issued_capital",
-        "immutable_source_id": "FORM-CBQ",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-DECL-CBQ",
-        "source_family": "declaration"
-      },
-      "material_digest": "b112270eb820155a427a06649a3dfc0c5e678fe1b61df1283a4ad7a03a69b486",
-      "required": {
-        "field_key": "business_structure",
-        "rule_id": "RQ-WHEN-FIELD-EQUALS",
-        "value": "Registered company"
-      },
-      "response_id": "RSP-12b1b8decc12fd3586feda52",
-      "sequence": 40,
-      "source_lineage": {
-        "form_id": "FORM-CBQ"
-      },
-      "stable_key": "declaration:FORM-CBQ:RR-DECL-CBQ:issued_capital",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "currency": "KES",
-          "minimum": "0.00",
-          "scale": 2
-        },
-        "validation_id": "VAL-MONEY"
-      },
-      "visibility": {
-        "field_key": "business_structure",
-        "rule_id": "VS-WHEN-FIELD-EQUALS",
-        "value": "Registered company"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-LOCKED-DECLARATION",
-      "contract_mapping_id": "DM-DECL-CBQ",
-      "document_anchor": "complete_tender.html#decl-cbq",
-      "evaluation_mapping_id": "DM-DECL-CBQ",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-LONG-TEXT",
-        "field_key": "directors_details",
-        "help_text": "Part (d)(iii), registered company. Write one director per line: name; nationality; citizenship; % shares owned.",
-        "label": "Names of the directors, with the nationality, citizenship and percentage of shares owned by each"
-      },
-      "group_key": "RR-DECL-CBQ/FORM-CBQ",
-      "identity": {
-        "field_key": "directors_details",
-        "immutable_source_id": "FORM-CBQ",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-DECL-CBQ",
-        "source_family": "declaration"
-      },
-      "material_digest": "674ef01ac446035286b816978eee1a58f27a21b17aea86b3019c5c6d01388387",
-      "required": {
-        "field_key": "business_structure",
-        "rule_id": "RQ-WHEN-FIELD-EQUALS",
-        "value": "Registered company"
-      },
-      "response_id": "RSP-765b0883d6389a73535d6b9b",
-      "sequence": 41,
-      "source_lineage": {
-        "form_id": "FORM-CBQ"
-      },
-      "stable_key": "declaration:FORM-CBQ:RR-DECL-CBQ:directors_details",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "max_length": 2000,
-          "min_length": 10
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "field_key": "business_structure",
-        "rule_id": "VS-WHEN-FIELD-EQUALS",
-        "value": "Registered company"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-LOCKED-DECLARATION",
-      "contract_mapping_id": "DM-DECL-CBQ",
-      "document_anchor": "complete_tender.html#decl-cbq",
-      "evaluation_mapping_id": "DM-DECL-CBQ",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-SHORT-TEXT",
-        "field_key": "trade_licence_number",
-        "help_text": "Table A, item 6.",
-        "label": "Current trade licence number"
-      },
-      "group_key": "RR-DECL-CBQ/FORM-CBQ",
-      "identity": {
-        "field_key": "trade_licence_number",
-        "immutable_source_id": "FORM-CBQ",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-DECL-CBQ",
-        "source_family": "declaration"
-      },
-      "material_digest": "1c81fc0e861d5821ec8516b227bd837ba5d31af6271ddff43d100c1d5d07c697",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-b22c5b016ced8a966b65e515",
-      "sequence": 42,
-      "source_lineage": {
-        "form_id": "FORM-CBQ"
-      },
-      "stable_key": "declaration:FORM-CBQ:RR-DECL-CBQ:trade_licence_number",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "max_length": 80,
-          "min_length": 3
-        },
-        "validation_id": "VAL-TEXT-LENGTH"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-LOCKED-DECLARATION",
-      "contract_mapping_id": "DM-DECL-CBQ",
-      "document_anchor": "complete_tender.html#decl-cbq",
-      "evaluation_mapping_id": "DM-DECL-CBQ",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-DATE",
-        "field_key": "trade_licence_expiry",
-        "help_text": "Table A, item 6.",
-        "label": "Trade licence expiry date"
-      },
-      "group_key": "RR-DECL-CBQ/FORM-CBQ",
-      "identity": {
-        "field_key": "trade_licence_expiry",
-        "immutable_source_id": "FORM-CBQ",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-DECL-CBQ",
-        "source_family": "declaration"
-      },
-      "material_digest": "9fe9d7ebc7a7dd583b94b91932bf5a8dd93c551b73e3fe2e510d071596b0733b",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-c604e9dc4d2dd937933d7c0a",
-      "sequence": 43,
-      "source_lineage": {
-        "form_id": "FORM-CBQ"
-      },
-      "stable_key": "declaration:FORM-CBQ:RR-DECL-CBQ:trade_licence_expiry",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {},
-        "validation_id": "VAL-DATE-RANGE"
-      },
-      "visibility": {
-        "rule_id": "VS-ALWAYS"
-      }
-    },
-    {
-      "applicability": "AP-ALWAYS",
-      "composition_id": "COMP-LOCKED-DECLARATION",
-      "contract_mapping_id": "DM-DECL-CBQ",
-      "document_anchor": "complete_tender.html#decl-cbq",
-      "evaluation_mapping_id": "DM-DECL-CBQ",
-      "evidence": null,
-      "field": {
-        "control_id": "CTL-MONEY",
-        "field_key": "maximum_business_value",
-        "help_text": "",
-        "label": "Maximum value of business the Tenderer handles"
-      },
-      "group_key": "RR-DECL-CBQ/FORM-CBQ",
-      "identity": {
-        "field_key": "maximum_business_value",
-        "immutable_source_id": "FORM-CBQ",
-        "published_tender_version_id": "TNDV-MOH-2027-033-V2",
-        "rule_id": "RR-DECL-CBQ",
-        "source_family": "declaration"
-      },
-      "material_digest": "8d4116629de11e8e53524d618cc1e3eaa828008dd3bd13235227448543144356",
-      "required": {
-        "rule_id": "RQ-ALWAYS"
-      },
-      "response_id": "RSP-64c7f8bc930d4cbff051b683",
-      "sequence": 44,
-      "source_lineage": {
-        "form_id": "FORM-CBQ"
-      },
-      "stable_key": "declaration:FORM-CBQ:RR-DECL-CBQ:maximum_business_value",
-      "task_id": "TASK-COMPANY",
-      "validation": {
-        "parameters": {
-          "currency": "KES",
-          "minimum": "0.00",
-          "scale": 2
-        },
-        "validation_id": "VAL-MONEY"
       },
       "visibility": {
         "rule_id": "VS-ALWAYS"
@@ -2952,7 +3198,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-c5d1dd34ecdf7273d8ac8f21",
-      "sequence": 45,
+      "sequence": 46,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -2979,38 +3225,59 @@
       "evaluation_mapping_id": "DM-DECL-CBQ",
       "evidence": null,
       "field": {
-        "control_id": "CTL-LONG-TEXT",
-        "field_key": "procuring_entity_interest_details",
-        "help_text": "Part (e)(i). Write one person per line: name; designation in the Procuring Entity; interest or relationship.",
-        "label": "Names of the persons in the Procuring Entity who have an interest or relationship in this firm, their designation in the Procuring Entity, and the interest or relationship with the Tenderer"
+        "control_id": "CTL-ROW-GROUP",
+        "field_key": "procuring_entity_interest_persons",
+        "help_text": "Part (e)(i): each person's name, designation in the Procuring Entity, and interest or relationship with the Tenderer.",
+        "label": "Persons in the Procuring Entity who have an interest or relationship in this firm"
       },
       "group_key": "RR-DECL-CBQ/FORM-CBQ",
       "identity": {
-        "field_key": "procuring_entity_interest_details",
+        "field_key": "procuring_entity_interest_persons",
         "immutable_source_id": "FORM-CBQ",
         "published_tender_version_id": "TNDV-MOH-2027-033-V2",
         "rule_id": "RR-DECL-CBQ",
         "source_family": "declaration"
       },
-      "material_digest": "c3c66e5b8022794f9fc886767179a6167aa65bf04026a628f2c73d73d37b33aa",
+      "material_digest": "cb772b5775e250e6b8b863fd367ca9be9844a60be8b4bcd06e3e46d9cc315e75",
       "required": {
         "field_key": "procuring_entity_interest",
         "rule_id": "RQ-WHEN-FIELD-EQUALS",
         "value": "Yes"
       },
-      "response_id": "RSP-dcfc23710145c2288458b56d",
-      "sequence": 46,
+      "response_id": "RSP-11dbb15a95c2232cdf8d52e5",
+      "sequence": 47,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
-      "stable_key": "declaration:FORM-CBQ:RR-DECL-CBQ:procuring_entity_interest_details",
+      "stable_key": "declaration:FORM-CBQ:RR-DECL-CBQ:procuring_entity_interest_persons",
       "task_id": "TASK-COMPANY",
       "validation": {
         "parameters": {
-          "max_length": 2000,
-          "min_length": 10
+          "columns": [
+            {
+              "key": "name",
+              "label": "Name of person",
+              "max_length": 160,
+              "type": "text"
+            },
+            {
+              "key": "designation",
+              "label": "Designation in the Procuring Entity",
+              "max_length": 160,
+              "type": "text"
+            },
+            {
+              "key": "relationship",
+              "label": "Interest or relationship with the Tenderer",
+              "max_length": 500,
+              "type": "text"
+            }
+          ],
+          "maximum_rows": 10,
+          "minimum_rows": 1,
+          "totals": []
         },
-        "validation_id": "VAL-TEXT-LENGTH"
+        "validation_id": "VAL-ROW-GROUP"
       },
       "visibility": {
         "field_key": "procuring_entity_interest",
@@ -3044,7 +3311,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-bc95bd521129302f9927456e",
-      "sequence": 47,
+      "sequence": 48,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -3091,7 +3358,7 @@
         "value": "Yes"
       },
       "response_id": "RSP-ca8dbb1d505403b2652e42c1",
-      "sequence": 48,
+      "sequence": 49,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -3136,7 +3403,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-dc4e9ce473c3a8aa10114ab3",
-      "sequence": 49,
+      "sequence": 50,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -3183,7 +3450,7 @@
         "value": "Yes"
       },
       "response_id": "RSP-883d72388238c3d2b8e1d96e",
-      "sequence": 50,
+      "sequence": 51,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -3228,7 +3495,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-372991f2248ff3298633a2cb",
-      "sequence": 51,
+      "sequence": 52,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -3275,7 +3542,7 @@
         "value": "Yes"
       },
       "response_id": "RSP-d123948d475b105d2086b120",
-      "sequence": 52,
+      "sequence": 53,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -3320,7 +3587,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-acafa055a797c5322d8dc8c7",
-      "sequence": 53,
+      "sequence": 54,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -3367,7 +3634,7 @@
         "value": "Yes"
       },
       "response_id": "RSP-8a0c8f978a651481b843eb51",
-      "sequence": 54,
+      "sequence": 55,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -3412,7 +3679,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-b4dab5e3a566cfb82a7008d9",
-      "sequence": 55,
+      "sequence": 56,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -3459,7 +3726,7 @@
         "value": "Yes"
       },
       "response_id": "RSP-3434a965c2142b72b3d2865b",
-      "sequence": 56,
+      "sequence": 57,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -3504,7 +3771,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-512413386bb5db433e4ffcd4",
-      "sequence": 57,
+      "sequence": 58,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -3551,7 +3818,7 @@
         "value": "Yes"
       },
       "response_id": "RSP-834211b390a9ec6898c13e6d",
-      "sequence": 58,
+      "sequence": 59,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -3596,7 +3863,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-fe804dbcd4ed71667f330c9e",
-      "sequence": 59,
+      "sequence": 60,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -3643,7 +3910,7 @@
         "value": "Yes"
       },
       "response_id": "RSP-8665e21b2e3ad4ff825df3df",
-      "sequence": 60,
+      "sequence": 61,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -3688,7 +3955,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-f71198787c3e0b4d0dd4629d",
-      "sequence": 61,
+      "sequence": 62,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -3735,7 +4002,7 @@
         "value": "Yes"
       },
       "response_id": "RSP-72d1bb98a736110dd9f70631",
-      "sequence": 62,
+      "sequence": 63,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -3785,7 +4052,7 @@
         "value": "Yes"
       },
       "response_id": "RSP-b0e12c0444fd35d390172129",
-      "sequence": 63,
+      "sequence": 64,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -3837,7 +4104,7 @@
         "value": "Yes"
       },
       "response_id": "RSP-409f2025e250e1b06534f431",
-      "sequence": 64,
+      "sequence": 65,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -3882,7 +4149,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-c7cc7e0b6106f0e7ae8836f4",
-      "sequence": 65,
+      "sequence": 66,
       "source_lineage": {
         "form_id": "FORM-CBQ"
       },
@@ -3922,7 +4189,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-8d0b0d393ee48bccf21a75f8",
-      "sequence": 66,
+      "sequence": 67,
       "source_lineage": {
         "requisition_id": "REQ-MOH-2027-033-001",
         "rule_snapshot_ids": [
@@ -3969,7 +4236,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-de77a32296542afb88b7408e",
-      "sequence": 67,
+      "sequence": 68,
       "source_lineage": {
         "requisition_id": "REQ-MOH-2027-033-001",
         "rule_snapshot_ids": [
@@ -4015,7 +4282,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-e6187d0fd1b990982a013a52",
-      "sequence": 68,
+      "sequence": 69,
       "source_lineage": {
         "requisition_id": "REQ-MOH-2027-033-001",
         "rule_snapshot_ids": [
@@ -4066,7 +4333,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-b0704b409ae8b48e8a1761ac",
-      "sequence": 69,
+      "sequence": 70,
       "source_lineage": {
         "requisition_id": "REQ-MOH-2027-033-001",
         "rule_snapshot_ids": [
@@ -4112,7 +4379,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-f6ae32199a02b0802922bbbc",
-      "sequence": 70,
+      "sequence": 71,
       "source_lineage": {
         "requisition_id": "REQ-MOH-2027-033-001",
         "rule_snapshot_ids": [
@@ -4155,7 +4422,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-215ad7e9ae5bf28fe50aba35",
-      "sequence": 71,
+      "sequence": 72,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -4200,7 +4467,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-1cb9f081f4cc4d862feeaa58",
-      "sequence": 72,
+      "sequence": 73,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -4243,7 +4510,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-fd1c5edddd00848c59c7bdb3",
-      "sequence": 73,
+      "sequence": 74,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -4286,7 +4553,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-6f9f2ef2c50c124f8c74746e",
-      "sequence": 74,
+      "sequence": 75,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -4333,7 +4600,7 @@
         "value": "Demand Bank Guarantee"
       },
       "response_id": "RSP-620809e2b8f082b43c161701",
-      "sequence": 75,
+      "sequence": 76,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -4379,7 +4646,7 @@
         "value": "Insurance Guarantee"
       },
       "response_id": "RSP-39a630e5fcbbe479410c701b",
-      "sequence": 76,
+      "sequence": 77,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -4429,7 +4696,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-1f9bfdeb0c55ee4954a2175a",
-      "sequence": 77,
+      "sequence": 78,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -4472,7 +4739,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-356a889bec3dd067d0b1906b",
-      "sequence": 78,
+      "sequence": 79,
       "source_lineage": {
         "source_lineage": [
           {
@@ -4530,7 +4797,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-a62b4ad3b2a8902b76359341",
-      "sequence": 79,
+      "sequence": 80,
       "source_lineage": {
         "source_lineage": [
           {
@@ -4593,7 +4860,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-c34c8172723602c0491c1e2d",
-      "sequence": 80,
+      "sequence": 81,
       "source_lineage": {
         "source_lineage": [
           {
@@ -4651,7 +4918,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-2320ec1a1ede80ad40d93f9a",
-      "sequence": 81,
+      "sequence": 82,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4698,7 +4965,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-29b9ae450e7aeebd94fc732a",
-      "sequence": 82,
+      "sequence": 83,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4745,7 +5012,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-0fb7f95179a3e74f0937de54",
-      "sequence": 83,
+      "sequence": 84,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4796,7 +5063,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-4877e59f1f8121cd04442e1b",
-      "sequence": 84,
+      "sequence": 85,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4841,7 +5108,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-b9983bad34d1ba7d301254c2",
-      "sequence": 85,
+      "sequence": 86,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4888,7 +5155,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-cfedac2b9bf2c73da91886d2",
-      "sequence": 86,
+      "sequence": 87,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4935,7 +5202,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-d27f20a9f3eff078ab56e4f1",
-      "sequence": 87,
+      "sequence": 88,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -4986,7 +5253,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-569369898dd19448b5737e30",
-      "sequence": 88,
+      "sequence": 89,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5031,7 +5298,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-96f0a3cc78502ae406c574b4",
-      "sequence": 89,
+      "sequence": 90,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5078,7 +5345,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-2c2c3616610a3518ede190eb",
-      "sequence": 90,
+      "sequence": 91,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5123,7 +5390,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-00b292b378caa9453e28b2cd",
-      "sequence": 91,
+      "sequence": 92,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5174,7 +5441,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-f347feb908174f3edaee3ccd",
-      "sequence": 92,
+      "sequence": 93,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5219,7 +5486,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-b777b85216bfc7a8f9106b7e",
-      "sequence": 93,
+      "sequence": 94,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5266,7 +5533,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-a47615c88eba9bb39180915e",
-      "sequence": 94,
+      "sequence": 95,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5311,7 +5578,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-2186056fe1fb5ac5779a785a",
-      "sequence": 95,
+      "sequence": 96,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5362,7 +5629,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-edfdf55bb2c053c9ff56418c",
-      "sequence": 96,
+      "sequence": 97,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5407,7 +5674,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-bf4807f4818e03f87f6fe03c",
-      "sequence": 97,
+      "sequence": 98,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5454,7 +5721,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-cdc6e3077ef9c5327985e2a1",
-      "sequence": 98,
+      "sequence": 99,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5502,7 +5769,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-9ea834ee92b34e9ca1ec3794",
-      "sequence": 99,
+      "sequence": 100,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5553,7 +5820,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-445d3ece384c5cb0f5c48fa9",
-      "sequence": 100,
+      "sequence": 101,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5598,7 +5865,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-3edeeb952c047cb0bf02c613",
-      "sequence": 101,
+      "sequence": 102,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5645,7 +5912,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-640a8b26108f4d5581d4a8b2",
-      "sequence": 102,
+      "sequence": 103,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5691,7 +5958,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-c80b662cdb7661ca44f589a7",
-      "sequence": 103,
+      "sequence": 104,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5742,7 +6009,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-e045cb8784cdf3a183bad6b2",
-      "sequence": 104,
+      "sequence": 105,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5787,7 +6054,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-bc512de811b2efc0e4cd839f",
-      "sequence": 105,
+      "sequence": 106,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5834,7 +6101,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-f5830de7ebdc1936567ad9b1",
-      "sequence": 106,
+      "sequence": 107,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5880,7 +6147,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-3d94661b6bbd121404242071",
-      "sequence": 107,
+      "sequence": 108,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5931,7 +6198,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-5115764a3fbf85b8e71b360f",
-      "sequence": 108,
+      "sequence": 109,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -5976,7 +6243,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-746ca211f6ef3981a5e35f42",
-      "sequence": 109,
+      "sequence": 110,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -6023,7 +6290,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-a07ba66fbe3b111ab38db253",
-      "sequence": 110,
+      "sequence": 111,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -6068,7 +6335,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-565794e4af806c414ecd6022",
-      "sequence": 111,
+      "sequence": 112,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -6119,7 +6386,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-a19d08f9b8579c6b9598b962",
-      "sequence": 112,
+      "sequence": 113,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -6164,7 +6431,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-25935d9facb11f32ff67ba5f",
-      "sequence": 113,
+      "sequence": 114,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -6211,7 +6478,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-2372fd31a73b9ed3483079f8",
-      "sequence": 114,
+      "sequence": 115,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -6256,7 +6523,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-633062d60144c46b6a96d89c",
-      "sequence": 115,
+      "sequence": 116,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -6307,7 +6574,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-b9480512e0c4aec19e140ad3",
-      "sequence": 116,
+      "sequence": 117,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -6352,7 +6619,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-1fa7cbd9a7f18e766f69697e",
-      "sequence": 117,
+      "sequence": 118,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -6399,7 +6666,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-16aad8ee8965e5eb718a60f5",
-      "sequence": 118,
+      "sequence": 119,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -6451,7 +6718,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-11db5338e391b1fe7b418633",
-      "sequence": 119,
+      "sequence": 120,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -6502,7 +6769,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-3fbc841c0dd57f6f0a1d9054",
-      "sequence": 120,
+      "sequence": 121,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -6547,7 +6814,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-ee204afb3f9c18ff44cae968",
-      "sequence": 121,
+      "sequence": 122,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -6594,7 +6861,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-8b7603c51738c4594a21b1af",
-      "sequence": 122,
+      "sequence": 123,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -6646,7 +6913,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-aa84dc68d5299b848a0d02f3",
-      "sequence": 123,
+      "sequence": 124,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -6697,7 +6964,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-ec106b1f8ec45ea21b520b94",
-      "sequence": 124,
+      "sequence": 125,
       "source_lineage": {
         "applies_to_id": "",
         "applies_to_scope": "All items",
@@ -6742,7 +7009,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-1b5e0d9b1c106f37476d13dd",
-      "sequence": 125,
+      "sequence": 126,
       "source_lineage": {
         "obligation_key": "minimum_warranty_months",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -6788,7 +7055,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-a010bbb4f61f2dc8dea63061",
-      "sequence": 126,
+      "sequence": 127,
       "source_lineage": {
         "obligation_key": "minimum_warranty_months",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -6832,7 +7099,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-a52dd0cd15222a8d72e21c80",
-      "sequence": 127,
+      "sequence": 128,
       "source_lineage": {
         "obligation_key": "minimum_warranty_months",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -6882,7 +7149,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-078e771c33dd3efdf5a0f799",
-      "sequence": 128,
+      "sequence": 129,
       "source_lineage": {
         "obligation_key": "minimum_warranty_months",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -6926,7 +7193,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-4008fb2b3b7b7fb29464b4b3",
-      "sequence": 129,
+      "sequence": 130,
       "source_lineage": {
         "obligation_key": "onsite_support_required",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -6972,7 +7239,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-5792a9aa268aa57e4177e4c3",
-      "sequence": 130,
+      "sequence": 131,
       "source_lineage": {
         "obligation_key": "onsite_support_required",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -7018,7 +7285,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-ef8df62efb4dac4ff032bf65",
-      "sequence": 131,
+      "sequence": 132,
       "source_lineage": {
         "obligation_key": "onsite_support_required",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -7068,7 +7335,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-7fb65b5ed71c5a0f480866dd",
-      "sequence": 132,
+      "sequence": 133,
       "source_lineage": {
         "obligation_key": "onsite_support_required",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -7112,7 +7379,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-be01219db3b768769796fdbc",
-      "sequence": 133,
+      "sequence": 134,
       "source_lineage": {
         "obligation_key": "maximum_support_response_hours",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -7158,7 +7425,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-fe29f2cdf5f12c68ce1bbc2a",
-      "sequence": 134,
+      "sequence": 135,
       "source_lineage": {
         "obligation_key": "maximum_support_response_hours",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -7202,7 +7469,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-3366284df99ad58261f28d71",
-      "sequence": 135,
+      "sequence": 136,
       "source_lineage": {
         "obligation_key": "maximum_support_response_hours",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -7252,7 +7519,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-0002abeb89b72a707ef0fa91",
-      "sequence": 136,
+      "sequence": 137,
       "source_lineage": {
         "obligation_key": "maximum_support_response_hours",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -7296,7 +7563,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-1be56601f50d6db6a86ae04b",
-      "sequence": 137,
+      "sequence": 138,
       "source_lineage": {
         "obligation_key": "manufacturer_support_required",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -7342,7 +7609,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-c68a29165791cbafcd3808b6",
-      "sequence": 138,
+      "sequence": 139,
       "source_lineage": {
         "obligation_key": "manufacturer_support_required",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -7388,7 +7655,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-d8b4b5d37b4cf83d17c25879",
-      "sequence": 139,
+      "sequence": 140,
       "source_lineage": {
         "obligation_key": "manufacturer_support_required",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -7438,7 +7705,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-d14f7b2c2675c3235771d5dc",
-      "sequence": 140,
+      "sequence": 141,
       "source_lineage": {
         "obligation_key": "manufacturer_support_required",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -7482,7 +7749,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-c4d2c930ca2d288d835b993c",
-      "sequence": 141,
+      "sequence": 142,
       "source_lineage": {
         "obligation_key": "service_location_constraint",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -7528,7 +7795,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-ee3324d4429b2ca2dd63d24c",
-      "sequence": 142,
+      "sequence": 143,
       "source_lineage": {
         "obligation_key": "service_location_constraint",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -7572,7 +7839,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-90ab0ee7214d340c544530f2",
-      "sequence": 143,
+      "sequence": 144,
       "source_lineage": {
         "obligation_key": "service_location_constraint",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -7622,7 +7889,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-647c14d3b7dbc5e91184bb9d",
-      "sequence": 144,
+      "sequence": 145,
       "source_lineage": {
         "obligation_key": "service_location_constraint",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -7666,7 +7933,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-c69c92bc5372d97b76cc28ac",
-      "sequence": 145,
+      "sequence": 146,
       "source_lineage": {
         "obligation_key": "support_description",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -7712,7 +7979,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-b445c3a94f2897616ec0c9eb",
-      "sequence": 146,
+      "sequence": 147,
       "source_lineage": {
         "obligation_key": "support_description",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -7756,7 +8023,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-5bc56983118a8e08c98f2a0b",
-      "sequence": 147,
+      "sequence": 148,
       "source_lineage": {
         "obligation_key": "support_description",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -7806,7 +8073,7 @@
         "rule_id": "RQ-NEVER"
       },
       "response_id": "RSP-ab9cff029eda9526f9333837",
-      "sequence": 148,
+      "sequence": 149,
       "source_lineage": {
         "obligation_key": "support_description",
         "requisition_id": "REQ-MOH-2027-033-001"
@@ -7850,7 +8117,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-56f6b57d816a2a8f48f465ce",
-      "sequence": 149,
+      "sequence": 150,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -7893,7 +8160,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-28c958cbd782f4c640a962d5",
-      "sequence": 150,
+      "sequence": 151,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -7936,7 +8203,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-102630941862f8bb5e008ab0",
-      "sequence": 151,
+      "sequence": 152,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -7980,7 +8247,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-c325ef91d709109dab3cd57b",
-      "sequence": 152,
+      "sequence": 153,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -8023,7 +8290,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-e9b8fe430438b4fe7bdf16bb",
-      "sequence": 153,
+      "sequence": 154,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -8072,7 +8339,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-9e337fe5e9811562ff6e8b50",
-      "sequence": 154,
+      "sequence": 155,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -8115,7 +8382,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-9c5d807b7d356252fe3f5b14",
-      "sequence": 155,
+      "sequence": 156,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -8158,7 +8425,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-686030cc783f9728a74315db",
-      "sequence": 156,
+      "sequence": 157,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -8201,7 +8468,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-86b97ea74121ae6f8c64e4a8",
-      "sequence": 157,
+      "sequence": 158,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -8245,7 +8512,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-23937fbd5954197fb9176eb4",
-      "sequence": 158,
+      "sequence": 159,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -8288,7 +8555,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-702c16d7d8b9492ef2b316e5",
-      "sequence": 159,
+      "sequence": 160,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -8337,7 +8604,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-37b0dad7bf228ca7dd0aa48a",
-      "sequence": 160,
+      "sequence": 161,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -8380,7 +8647,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-4ea7e76ea385364d987e0c41",
-      "sequence": 161,
+      "sequence": 162,
       "source_lineage": {
         "acceptance_requirement_id": "ACC-001"
       },
@@ -8420,7 +8687,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-4d087f24a7d6e578e8f76129",
-      "sequence": 162,
+      "sequence": 163,
       "source_lineage": {
         "acceptance_requirement_id": "ACC-002"
       },
@@ -8460,7 +8727,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-585cf30d3f67d69b1949a36e",
-      "sequence": 163,
+      "sequence": 164,
       "source_lineage": {
         "acceptance_requirement_id": "ACC-003"
       },
@@ -8500,7 +8767,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-5c6d2434ad62270089ea8d29",
-      "sequence": 164,
+      "sequence": 165,
       "source_lineage": {
         "acceptance_requirement_id": "ACC-004"
       },
@@ -8540,7 +8807,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-7681192bbf6bc122c310a98e",
-      "sequence": 165,
+      "sequence": 166,
       "source_lineage": {
         "acceptance_requirement_id": "ACC-005"
       },
@@ -8586,7 +8853,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-b8ec548b2582fba7c96a0e31",
-      "sequence": 166,
+      "sequence": 167,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -8635,7 +8902,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-89ffc9d16164c98143ad6af6",
-      "sequence": 167,
+      "sequence": 168,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -8684,7 +8951,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-cbd024673b6314c2f2150b42",
-      "sequence": 168,
+      "sequence": 169,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -8733,7 +9000,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-c39b8f74e2071e957a6971f9",
-      "sequence": 169,
+      "sequence": 170,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -8776,7 +9043,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-7ed2444e775f8e016f201a8e",
-      "sequence": 170,
+      "sequence": 171,
       "source_lineage": {
         "source_lineage": [
           {
@@ -8835,7 +9102,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-93f250aeaf38b209073f47dd",
-      "sequence": 171,
+      "sequence": 172,
       "source_lineage": {
         "source_lineage": [
           {
@@ -8898,7 +9165,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-949a7bbfc1799489659c514e",
-      "sequence": 172,
+      "sequence": 173,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -8945,7 +9212,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-a06bff2dd44815625d2c229b",
-      "sequence": 173,
+      "sequence": 174,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -8991,7 +9258,7 @@
         "rule_id": "RQ-ALWAYS"
       },
       "response_id": "RSP-7db39dc8fa8416ad9c0b9e82",
-      "sequence": 174,
+      "sequence": 175,
       "source_lineage": {
         "tender_version_id": "TNDV-MOH-2027-033-V2"
       },
@@ -9006,7 +9273,7 @@
       }
     }
   ],
-  "response_rules_digest": "95682ae3c0757520e3dd5a5d8b321f1d5270e1cb8d1cbb1f1392f21907a8dd14",
+  "response_rules_digest": "4b47e66f70463f30067a8b8cf263f1b80c59eb92784374d1f069ddefe42ff3b7",
   "sections": [
     {
       "groups": [],
@@ -9042,6 +9309,37 @@
           }
         },
         {
+          "composition_id": "COMP-ENTITY-PROFILE",
+          "group_key": "RR-ENTITY-PROFILE/ENTITY",
+          "immutable_source_id": "ENTITY",
+          "published_facts": {
+            "tender_reference": "TND-MOH-2027-033"
+          },
+          "repetition": "per_entity",
+          "response_ids": [
+            "RSP-a1f355d8ea0c2997ed89327f",
+            "RSP-2a6c410f6b481cd90ede9da2",
+            "RSP-f705996a90abb7666b4aa9c7",
+            "RSP-1d09cd1840d4e7002d2ce67e",
+            "RSP-9449069de627afbdb2dac4e0",
+            "RSP-83da2e3ddc1bf950e8c7af91",
+            "RSP-a6c00df0c2ece70da6353f3f",
+            "RSP-d1f1c4d8620536684a9057ba",
+            "RSP-1db9ce905edd5a0e9894fedc",
+            "RSP-da9f2b6dd291e368bf41f83c",
+            "RSP-3096e97e536ba37b24f3e116",
+            "RSP-785003f4838ba798dc5c14b1",
+            "RSP-514ae0fccb327578848bae19",
+            "RSP-bb1526f635e3a3be7ca07e6e",
+            "RSP-fed1281f1fe7c8d46f54629e"
+          ],
+          "rule_id": "RR-ENTITY-PROFILE",
+          "source_family": "supplier",
+          "source_lineage": {
+            "tender_id": "TND-MOH-2027-033"
+          }
+        },
+        {
           "composition_id": "COMP-JV-MEMBER",
           "group_key": "RR-JV-MEMBER/JV-MEMBER",
           "immutable_source_id": "JV-MEMBER",
@@ -9071,8 +9369,8 @@
           "immutable_source_id": "FORM-TENDER",
           "published_facts": {
             "form_id": "FORM-TENDER",
-            "resolved_text_digest": "e29ae321757f69a46029f0ad14d704f24ebcb394e881a7797519cf1452e82bd2",
-            "source_text_digest": "d302495f8639d1e240b6313235d197a8c92cf2c1d5065d3127fce6bb769196af",
+            "resolved_text_digest": "e92e6550aee0f8c79f04867b0a47ec00429d982d221d3bfcb285dd11b164910f",
+            "source_text_digest": "21e5d9c688f57551f5677f77eb7c2cf5ce103fb92cd6d517d1759044977b9657",
             "tender_reference": "TND-MOH-2027-033",
             "text_id": "TXT-RR-DECL-FORM-OF-TENDER",
             "text_version": "1"
@@ -9080,8 +9378,8 @@
           "response_ids": [
             "RSP-82b3c263edf94ee8e41e99d3",
             "RSP-9444a44587cc57ebd84fa409",
-            "RSP-a4d774a6fe067a06250b9cd0",
-            "RSP-f6a134e8bdc7704730c3785a",
+            "RSP-8150f532cefab1dd955f3157",
+            "RSP-70524762ad53f1299894ff17",
             "RSP-91e190b0afb7b579b6c0f84f"
           ],
           "rule_id": "RR-DECL-FORM-OF-TENDER",
@@ -9191,22 +9489,8 @@
             "text_version": "1"
           },
           "response_ids": [
-            "RSP-093ee407bfafa9ba9c698b2c",
-            "RSP-d685d9b2ba9ca0e6447643b1",
-            "RSP-287fefdb92a2723b5998e556",
-            "RSP-f439fbad93145ca28b63fb22",
-            "RSP-e2dfa7f31301867364be7230",
-            "RSP-d7e6f3a24b4a8ed8448d3aac",
-            "RSP-1fa18e436e577f545d3047a8",
-            "RSP-3e5c3b1b541a07e32def6514",
-            "RSP-e79e663d5bee6193ddce4ec6",
-            "RSP-12b1b8decc12fd3586feda52",
-            "RSP-765b0883d6389a73535d6b9b",
-            "RSP-b22c5b016ced8a966b65e515",
-            "RSP-c604e9dc4d2dd937933d7c0a",
-            "RSP-64c7f8bc930d4cbff051b683",
             "RSP-c5d1dd34ecdf7273d8ac8f21",
-            "RSP-dcfc23710145c2288458b56d",
+            "RSP-11dbb15a95c2232cdf8d52e5",
             "RSP-bc95bd521129302f9927456e",
             "RSP-ca8dbb1d505403b2652e42c1",
             "RSP-dc4e9ce473c3a8aa10114ab3",
@@ -10237,9 +10521,9 @@
     }
   ],
   "submission_deadline": "2027-06-05T11:00:00+03:00",
-  "supported_renderer_version": "1.1.0",
+  "supported_renderer_version": "1.2.0",
   "template_family": "IT-EQUIPMENT-OPEN-V1",
-  "template_release_id": "stdr-9b953bcf-fb1e-4e85-b9c1-6ac57218d0e2",
+  "template_release_id": "stdr-c25e6578-3700-4df8-bbaa-8c2041be2f01",
   "tender_id": "TND-MOH-2027-033",
   "tender_version_id": "TNDV-MOH-2027-033-V2"
 }

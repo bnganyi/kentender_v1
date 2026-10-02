@@ -119,16 +119,28 @@ test.describe("BDS-DES-08 Company, declarations and tender security", () => {
 		await seven.getByRole("radio", { name: "No" }).check();
 		await expect(question(resolved)).toHaveCount(0);
 
-		// the business structure decides which detail block is asked
+		// the standing business facts are not asked here: they are the business profile copied from the Account
 		await expect(drawer.getByText("Sole proprietor: name in full")).toHaveCount(0);
-		await drawer.locator("select").first().selectOption("Sole proprietor");
-		await expect(drawer.getByText("Sole proprietor: name in full")).toBeVisible();
-		await expect(drawer.getByText(/^Names of the directors/)).toHaveCount(0);
-		await drawer.locator("select").first().selectOption("Registered company");
-		await expect(drawer.getByText("Nominal capital (Kenya Shillings)")).toBeVisible();
-		await expect(drawer.getByText(/^Names of the directors/)).toBeVisible();
-		await expect(drawer.getByText("Sole proprietor: name in full")).toHaveCount(0);
+		await expect(drawer.getByText("Nominal capital (Kenya Shillings)")).toHaveCount(0);
+		await expect(drawer.getByText("Trade licence expiry date")).toHaveCount(0);
 		await page.screenshot({ path: "test-results/bds-questionnaire-drawer.png", fullPage: false });
+	});
+
+	test("the business profile is copied from the Account, read-only, and complete at once", async ({ page }) => {
+		const world = bdsFixture<World>("reset_my_bids_fixture", { state: "started" });
+		await page.setViewportSize({ width: 1440, height: 1024 });
+		await loginToPortal(page, world.representative, world.password, `/tenders/${world.tender_reference}/bid/company`);
+		const row = page.getByTestId("bds-declarations-table").locator("tr", { hasText: /Business profile/i });
+		await expect(row.locator(".kt-status")).toHaveText("Complete");
+		await row.getByRole("button", { name: "View business profile" }).click();
+		const drawer = page.getByTestId("bds-response-drawer");
+		await expect(drawer.locator("select").first()).toHaveValue("Registered company");
+		await expect(drawer.locator("select").first()).toBeDisabled();
+		await expect(drawer.getByText("Nominal capital (Kenya Shillings)")).toBeVisible();
+		await expect(drawer.locator('[data-testid^="bds-rowgroup-table-"]').first()).toContainText("Kenyan");
+		await expect(drawer.locator("input:not([disabled])")).toHaveCount(0); // nothing here is the bidder's to type
+		await expect(drawer.getByTestId("bds-drawer-save")).toHaveCount(0);
+		await page.screenshot({ path: "test-results/bds-business-profile-drawer.png", fullPage: false });
 	});
 
 	test("another organisation's person is told the bid is not found", async ({ page }) => {

@@ -40,6 +40,13 @@ AFYA_PROFILE = {
 		{"name": "John Kamau", "nationality": "Kenyan", "citizenship": "Kenyan", "shares": "40"},
 	],
 }
+
+
+def default_profile(owner: str) -> dict[str, Any]:
+	"""A complete business profile for a seeded supplier: a private company with one director (`owner`)."""
+	return {**AFYA_PROFILE, "trade_licence_number": "TL-2027-0900", "directors": [{"name": owner, "nationality": "Kenyan", "citizenship": "Kenyan", "shares": "100"}]}
+
+
 AUTHORITY_FILE = "mary-wanjiku-signing-authority.pdf"
 CLOCK = {"register": "2027-05-18 09:00:00", "verify": "2027-05-18 09:10:00", "representative": "2027-05-18 09:20:00"}
 

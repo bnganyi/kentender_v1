@@ -51,9 +51,9 @@ class AddendumCase(BidCase):
 
 class TestRefreshForAddendum(AddendumCase):
 	def test_a_draft_moves_to_the_current_definition_only_by_the_stored_map(self):
-		year = self.field("company", "Year of registration")
+		year = self.field("company", "Authorised representative's address")
 		model = self.field("requirements", "Offered make and model")
-		self.save("company", {year["handle"]: "2011"})
+		self.save("company", {year["handle"]: "11 Riverside Drive, Nairobi"})
 		self.save("requirements", {model["handle"]: "ApexBook Pro 14"})
 		name = self.issue_addendum()
 		reference = frappe.db.get_value("Tender Addendum", name, "addendum_reference")
@@ -67,7 +67,7 @@ class TestRefreshForAddendum(AddendumCase):
 
 		# the first change refreshes the Draft and asks for review first
 		self.at("2027-06-01 12:10:00")
-		refreshed = self.save("company", {year["handle"]: "2012"})
+		refreshed = self.save("company", {year["handle"]: "12 Riverside Drive, Nairobi"})
 		self.assertEqual((refreshed["ok"], refreshed["code"], refreshed["refreshed"]), (False, "BDS_ADDENDUM_REVIEW_REQUIRED", True))
 		self.assertIn("documents", refreshed["tasks"])
 		ws = frappe.db.get_value("Bid Workspace", self.bid, ["definition_version", "current_draft_version", "status"], as_dict=True)
@@ -76,11 +76,11 @@ class TestRefreshForAddendum(AddendumCase):
 		# answers move only as Tenders' identity map says
 		steps = bid_definition.map_bid_definition_addendum(tender=self.name, from_version=1, to_version=2)["steps"]
 		by_key = {c["stable_key"]: c for c in steps[0]["classifications"]}
-		year_now = self.field("company", "Year of registration")
+		year_now = self.field("company", "Authorised representative's address")
 		model_now = self.field("requirements", "Offered make and model")
-		year_row = next(c for k, c in by_key.items() if k.endswith(":RR-SUPPLIER-DETAILS:year_of_registration"))
+		year_row = next(c for k, c in by_key.items() if k.endswith(":RR-SUPPLIER-DETAILS:representative_address"))
 		model_row = next(c for k, c in by_key.items() if k.endswith(":RR-GOODS-OFFER:offered_make_model"))
-		self.assertEqual(year_now["value"], 2011 if year_row["copy_prior_answer"] else None)
+		self.assertEqual(year_now["value"], "11 Riverside Drive, Nairobi" if year_row["copy_prior_answer"] else None)
 		self.assertEqual(model_now["value"], "ApexBook Pro 14" if model_row["copy_prior_answer"] else None)
 		if not model_row["copy_prior_answer"]:
 			# kept in history: "removed" when the Goods line's identity changed (its destination is part of it), else "fresh"
@@ -99,11 +99,11 @@ class TestRefreshForAddendum(AddendumCase):
 				self.assertEqual(tasks[key], "Needs attention", key)
 
 	def test_an_old_handle_after_the_refresh_is_unknown(self):
-		year = self.field("company", "Year of registration")
+		year = self.field("company", "Authorised representative's address")
 		self.issue_addendum()
 		self.at("2027-06-01 12:10:00")
-		self.save("company", {year["handle"]: "2011"})  # refreshes
+		self.save("company", {year["handle"]: "11 Riverside Drive, Nairobi"})  # refreshes
 		self.assertIsNone(addendum.pending(type("Ctx", (), {"workspace": frappe.get_doc("Bid Workspace", self.bid)})()))
 		with self.assertRaises(errors.BidSubmissionError) as ctx:
-			self.save("company", {year["handle"]: "2011"})
+			self.save("company", {year["handle"]: "11 Riverside Drive, Nairobi"})
 		self.assertEqual(ctx.exception.code, "BDS_UNKNOWN_RESPONSE")

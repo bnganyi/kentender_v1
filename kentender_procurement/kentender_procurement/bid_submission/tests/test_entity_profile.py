@@ -137,3 +137,29 @@ class TestCompanyRow(IntegrationTestCase):
 		states = {s.field.key: s for s in readiness.evaluate(ctx)["company"].fields}
 		groups = [g for g in model.groups_of("company") if g.rule_id == "RR-ENTITY-PROFILE"]
 		self.assertEqual([company_view._group_status(g, states) for g in groups], ["Complete", "Needs attention"])
+
+
+class TestYearOfRegistration(IntegrationTestCase):
+	"""The year of registration is a standing fact kept in the Account's business profile; it reaches the
+	bid as part of the organisation's facts, for the lead and for each member."""
+
+	def setUp(self):
+		super().setUp()
+		self.accounts = FakeAccounts()
+		self.accounts.add_org("ORG-A", "Afya Digital Supplies Limited", "PVT-1")
+		self.accounts.add_org("ORG-B", "Kisiwa Tech Limited", "PVT-2")
+		self.accounts.set_profile("ORG-A", {**COMPANY, "year_of_registration": 2014})
+		self.previous = frappe.flags.get("kt_supplier_account_provider")
+		frappe.flags.kt_supplier_account_provider = self.accounts
+		self.addCleanup(setattr, frappe.flags, "kt_supplier_account_provider", self.previous)
+
+	def test_it_is_copied_with_the_organisation_and_each_member(self):
+		value = snapshot.facts("ORG-A", ["ORG-A", "ORG-B"])
+		self.assertEqual(value["organisation"]["year_of_registration"], 2014)
+		self.assertEqual([m["year_of_registration"] for m in value["members"]], [2014, ""])
+		self.assertNotIn("year_of_registration", value["profiles"]["ORG-A"])  # shown once, with the Tenderer information
+
+	def test_a_change_on_the_account_is_a_listed_change(self):
+		before = snapshot.facts("ORG-A", [])
+		self.accounts.set_profile("ORG-A", {**COMPANY, "year_of_registration": 2015})
+		self.assertNotEqual(snapshot.digest(snapshot.facts("ORG-A", [])), snapshot.digest(before))

@@ -162,6 +162,7 @@ def _ensure_suppliers() -> None:
 		_hook("kt_seed_supplier_account")(
 			facts=supplier["facts"], registrant=supplier["registrant"], registrant_name=supplier["registrant_name"], representative=supplier["representative"],
 			representative_name=supplier["representative_name"], namespace=NAMESPACE, key_prefix=NAMESPACE.lower(),
+			profile=_hook("kt_default_supplier_profile")(supplier["registrant_name"]),
 		)
 	for user in SUPPLIER_USERS:
 		update_password(user, PASSWORD)

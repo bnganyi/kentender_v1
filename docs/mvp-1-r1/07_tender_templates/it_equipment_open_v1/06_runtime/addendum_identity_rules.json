@@ -374,10 +374,10 @@
     "display_label",
     "client_identity"
   ],
-  "release_id": "stdr-9b953bcf-fb1e-4e85-b9c1-6ac57218d0e2",
+  "release_id": "stdr-c25e6578-3700-4df8-bbaa-8c2041be2f01",
   "renderer_profile_id": "BDS-GOODS-IT-V1",
   "schema_version": 1,
-  "supported_renderer_version": "1.1.0",
+  "supported_renderer_version": "1.2.0",
   "template_key": "IT-EQUIPMENT-OPEN-V1",
-  "template_release": "1.3"
+  "template_release": "1.4"
 }

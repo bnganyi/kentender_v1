@@ -67,13 +67,14 @@ class TestCompleteCompanyTask(SubmissionCase):
 	def test_every_changed_fact_is_listed_including_the_business_profile(self):
 		# release 1.4: the standing facts are copied into the bid; one that changes on the Account shows too
 		self.accounts.orgs[AFYA]["registered_address"] = "Riverside Drive, Nairobi"
-		self.accounts.set_profile(AFYA, {"business_structure": "Registered company", "directors": [{"name": "Mary Wanjiku", "nationality": "Kenyan", "citizenship": "Kenyan", "shares": "100.00"}]})
+		self.accounts.set_profile(AFYA, {**self.accounts.profiles[AFYA], "business_structure": "Sole proprietor", "directors": []})
 		update = company(self.bid)["organisation"]["update"]
 		self.assertEqual(update["fact"], "Address")  # the first change keeps the board's own table
 		by_fact = {c["fact"]: c for c in update["changes"]}
-		self.assertEqual(by_fact["Afya Digital Supplies Limited — Business structure"]["current"], "Registered company")
-		self.assertEqual(by_fact["Afya Digital Supplies Limited — Business structure"]["this_bid"], "")
-		self.assertEqual(by_fact["Afya Digital Supplies Limited — Directors"]["current"], "Mary Wanjiku · Kenyan · Kenyan · 100.00")
+		structure = by_fact["Afya Digital Supplies Limited — Business structure"]
+		self.assertEqual((structure["this_bid"], structure["current"]), ("Registered company", "Sole proprietor"))
+		directors = by_fact["Afya Digital Supplies Limited — Directors"]
+		self.assertEqual((directors["this_bid"], directors["current"]), ("Mary Wanjiku · Kenyan · Kenyan · 100.00", ""))
 
 
 class TestFormOfTenderPrice(SubmissionCase):
@@ -100,7 +101,9 @@ class TestNewCompanyTask(BidCase):
 		bid = start_bid.start_bid(tender_reference=self.reference, organisation=AFYA, arrangement=self.single(), notice_contact_id=f"{AFYA}-C1", idempotency_key=key(), user=DAVID)["bid_reference"]
 		view = company(bid)
 		self.assertNotEqual(view["badge"]["label"], "Complete")
-		self.assertTrue(all(r["status"] in ("Not started", "In progress") for r in view["declarations"]), [(r["label"], r["status"]) for r in view["declarations"]])
+		# nothing is the bidder's to answer in a business profile copied from the Account, so it is complete at once
+		self.assertTrue(all(r["status"] in ("Not started", "In progress") for r in view["declarations"] if not r["label"].startswith("Business profile")), [(r["label"], r["status"]) for r in view["declarations"]])
+		self.assertEqual([r["status"] for r in view["declarations"] if r["label"].startswith("Business profile")], ["Complete"])
 		self.assertFalse(view["tender_security"]["entered"])
 		self.assertEqual(view["contact"]["notice_email"] != "", True)
 

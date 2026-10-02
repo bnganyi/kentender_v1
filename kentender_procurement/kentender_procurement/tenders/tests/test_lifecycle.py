@@ -72,7 +72,7 @@ class TestStartTender(TenderLifecycleCase):
 		self.assertTrue(root.tender_reference.startswith("TND-"))
 		self.assertEqual((root.overall_status, version.status, version.version_number), ("Draft", "Draft", 1))
 		self.assertTrue(root.template_release_id.startswith("stdr-"))
-		self.assertEqual((root.template_key, root.template_release), ("IT-EQUIPMENT-OPEN-V1", "1.3"))
+		self.assertEqual((root.template_key, root.template_release), ("IT-EQUIPMENT-OPEN-V1", "1.4"))
 		self.assertEqual((version.template_release_id, version.bundle_digest), (root.template_release_id, root.bundle_digest))
 		self.assertEqual(version.prepared_by, fx.OFFICER)
 		handoff = frappe.get_doc("Authorised Requisition Handoff", authorised["handoff"])

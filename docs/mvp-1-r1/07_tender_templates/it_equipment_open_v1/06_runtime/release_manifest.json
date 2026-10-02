@@ -1,5 +1,5 @@
 {
-  "addendum_identity_rules_digest": "959f122969166ab60e3f994572efe7e377f3c6fc01846c2252fd9c4178b26844",
+  "addendum_identity_rules_digest": "c82d186626feee4766e5e36b82ca24b0a5d4618113b2b8ee32a67c674ca81e21",
   "assets": [
     {
       "asset_role": "Source page image",
@@ -745,10 +745,10 @@
     },
     {
       "asset_role": "Document master",
-      "byte_size": 201946,
+      "byte_size": 202003,
       "mime_type": "text/html",
       "path": "02_master/complete_tender.html",
-      "sha256": "9916c83cdfb2306b99daf3fce6e4373a76d43eb25d62792933f47c838440d150"
+      "sha256": "68ec66abf1bf3d1c871390a7a1b7e58510989b02b7430fdf634838ec928cae68"
     },
     {
       "asset_role": "Document master",
@@ -766,17 +766,17 @@
     },
     {
       "asset_role": "Register",
-      "byte_size": 124343,
+      "byte_size": 124664,
       "mime_type": "text/csv",
       "path": "03_registers/coverage_register.csv",
-      "sha256": "f498350e06dbe0a89f9030d6da6cc56dc073f1fb5fd46eb9c8c3b2dd5902738a"
+      "sha256": "b4b6158e9d63ec9bf6fb6f7563fba36a25dcffbf17874603f66f0a540082c4a7"
     },
     {
       "asset_role": "Register",
-      "byte_size": 20429,
+      "byte_size": 20722,
       "mime_type": "text/csv",
       "path": "03_registers/forms_register.csv",
-      "sha256": "80a9267edae43667b177380cd08831168a14ae75466ed16f2b86827e10b1c824"
+      "sha256": "9d7672a58fadc5439ed381105e668d7170be4c1f068f52fbc3876afa7113dac1"
     },
     {
       "asset_role": "Register",
@@ -794,17 +794,17 @@
     },
     {
       "asset_role": "Fixture",
-      "byte_size": 200010,
+      "byte_size": 200067,
       "mime_type": "text/html",
       "path": "04_fixture/moh_expected.html",
-      "sha256": "4d3f94f224bc15572af58cb4a7bb676806c05d678ae343aad34c1f1f01d54a7c"
+      "sha256": "1184fbe52e50bdabb56ebcca17852a3dea17b1db9ad39fac9d2afd31333b88ce"
     },
     {
       "asset_role": "Fixture",
-      "byte_size": 341240,
+      "byte_size": 341313,
       "mime_type": "application/pdf",
       "path": "04_fixture/moh_expected.pdf",
-      "sha256": "500aa4bc5422e0ebe58cbcf20d61624eba7ef4adae093fa595bbe6cdc08d1de2"
+      "sha256": "92ac6fcf06d6f9f25cac6c2bf06b9cdf912d3ad5b11521b2a0eeebc9fd36da63"
     },
     {
       "asset_role": "Fixture",
@@ -825,7 +825,7 @@
       "byte_size": 20186,
       "mime_type": "application/pdf",
       "path": "04_fixture/moh_invitation_expected.pdf",
-      "sha256": "9e15bce982df37cde68b0cac9e7e1f806ad300570c1034572dc822b6b5d9f16b"
+      "sha256": "338e234921b968947daf3b907482e36a785886c16f6d9de9fe2ac46a639961bc"
     },
     {
       "asset_role": "Fixture",
@@ -857,10 +857,10 @@
     },
     {
       "asset_role": "Reservation variant fixture",
-      "byte_size": 1282,
+      "byte_size": 1307,
       "mime_type": "application/json",
       "path": "04_fixture/reservation_variants/none_expected.json",
-      "sha256": "3f49f3718780e3df27803edec8d6214e889b8733d9a163345caab51a97f50c5a"
+      "sha256": "56521043421ab93844b10b780241e3b19df73cadf9dac474ad3b261d2018202d"
     },
     {
       "asset_role": "Reservation variant fixture",
@@ -871,10 +871,10 @@
     },
     {
       "asset_role": "Reservation variant fixture",
-      "byte_size": 2066,
+      "byte_size": 2091,
       "mime_type": "application/json",
       "path": "04_fixture/reservation_variants/persons_with_disabilities_expected.json",
-      "sha256": "177d0349658c6443a781587b9419d529ba87e8f4f5414aa829c50c61a1dc7246"
+      "sha256": "5a4e5da6e27d0406aa43f0cd86d3bc72b3bc65b018e117ecefed96cce05c2177"
     },
     {
       "asset_role": "Reservation variant fixture",
@@ -899,10 +899,10 @@
     },
     {
       "asset_role": "Reservation variant fixture",
-      "byte_size": 2028,
+      "byte_size": 2053,
       "mime_type": "application/json",
       "path": "04_fixture/reservation_variants/women_expected.json",
-      "sha256": "0a155f5a11fb36e56397850994e4709b800c32d7591e1a34065e73eae0527897"
+      "sha256": "c5c99efbfc97f56712be63f35c17b348349351963dbaaf7709e50ba4beff9022"
     },
     {
       "asset_role": "Reservation variant fixture",
@@ -920,80 +920,80 @@
     },
     {
       "asset_role": "Review evidence",
-      "byte_size": 75355,
+      "byte_size": 80621,
       "mime_type": "text/markdown",
       "path": "05_review/open_issues.md",
-      "sha256": "e789e13d25315b3d10809bd9c1f7c61cc9b2a22fdec3cf0eecfbd414117390d0"
+      "sha256": "dcd9150ff6ea97ea0483408c41c917412c6a6dfa6fc55c9466a3d188c6c60963"
     },
     {
       "asset_role": "Review evidence",
-      "byte_size": 43876,
+      "byte_size": 43857,
       "mime_type": "application/json",
       "path": "05_review/preceding_release.json",
-      "sha256": "359d4da27b172441fc382bf62f2c2e9b3f21155eb481b81c553a41db18bc7ce0"
+      "sha256": "b7b92548f8ced888b82c50db76d89d89601c7a2bda6dae1799280ccca8244784"
     },
     {
       "asset_role": "Review evidence",
-      "byte_size": 5726,
+      "byte_size": 5592,
       "mime_type": "application/json",
       "path": "05_review/release_change_report.json",
-      "sha256": "ace51f68a2218ff4fc8dddfb0db3a3f07d6212b7648c02cfbc7b51596e931333"
+      "sha256": "b8fd095abad5a7ed82781bdc3d5871ea7c40bc694ceb543ae252c0904bd31b15"
     },
     {
       "asset_role": "Review evidence",
       "byte_size": 9303,
       "mime_type": "application/json",
       "path": "05_review/release_gates.json",
-      "sha256": "8205eb7d590c693fa3f9ca288473dff2cfb1a00fedbb98b5630030a59d742a85"
+      "sha256": "d92e1524b9a2c72e5ffcbe9765cac6de5e7812acba84eb6b3bf5db9434458cdd"
     },
     {
       "asset_role": "Review evidence",
-      "byte_size": 8246,
+      "byte_size": 8247,
       "mime_type": "application/json",
       "path": "05_review/validation_report.json",
-      "sha256": "b230d924606d2bede37d1fcbd3593af3d40acaf5bfec155008a86b6f669a8470"
+      "sha256": "0dfbfae24430765b193ed69ee9fe2d620ba859c613cf667548c9ed2f7b24faae"
     },
     {
       "asset_role": "Runtime asset",
       "byte_size": 12045,
       "mime_type": "application/json",
       "path": "06_runtime/addendum_identity_rules.json",
-      "sha256": "959f122969166ab60e3f994572efe7e377f3c6fc01846c2252fd9c4178b26844"
+      "sha256": "c82d186626feee4766e5e36b82ca24b0a5d4618113b2b8ee32a67c674ca81e21"
     },
     {
       "asset_role": "Runtime asset",
-      "byte_size": 14970,
+      "byte_size": 15523,
       "mime_type": "application/json",
       "path": "06_runtime/downstream_rules.json",
-      "sha256": "b387f630088f4b167e8657e967a5e178758dc83de610c4086e79683d9de4db6d"
+      "sha256": "caed57cdf8df8a47a670b8c9f1bcd71e5f9ecf03c3fc5a589dcff5665bfb59b3"
     },
     {
       "asset_role": "Runtime asset",
-      "byte_size": 379328,
+      "byte_size": 387966,
       "mime_type": "application/json",
       "path": "06_runtime/moh_published_bid_definition_expected.json",
-      "sha256": "65cd1a4dd1bbcf0d552b7300b7fcbf475b8b27fd04e2323edf98a7a78fe8c86b"
+      "sha256": "c9b6ee17556902a61bc3ac038d2d98bf321ee544008729029ddc371b36e36893"
     },
     {
       "asset_role": "Runtime asset",
-      "byte_size": 23707,
+      "byte_size": 25531,
       "mime_type": "application/json",
       "path": "06_runtime/product_profile.json",
-      "sha256": "a1877534422dd3016c758f99465bab0ec9896d44da91378ba60526529637b421"
+      "sha256": "def2e72ac8dd20444dd27e283ea514612d3bd849d0c10b811d67dece0f517b85"
     },
     {
       "asset_role": "Runtime asset",
-      "byte_size": 102184,
+      "byte_size": 109238,
       "mime_type": "application/json",
       "path": "06_runtime/response_rules.json",
-      "sha256": "95682ae3c0757520e3dd5a5d8b321f1d5270e1cb8d1cbb1f1392f21907a8dd14"
+      "sha256": "4b47e66f70463f30067a8b8cf263f1b80c59eb92784374d1f069ddefe42ff3b7"
     },
     {
       "asset_role": "Runtime asset",
       "byte_size": 42479,
       "mime_type": "text/x-python",
       "path": "06_runtime/validate_release.py",
-      "sha256": "902dccc67d8a38252e284965ee3397d48fbf8552632099b74d5b444d2a1edf1b"
+      "sha256": "e44f3694de1bfd1c3ef49226fb1824c09510a81203b33a5d8844d08d0d6321c2"
     }
   ],
   "blockers": [
@@ -1096,9 +1096,9 @@
       "summary": "Complete the county residents reservation variant. No released County-residents wording, evidence rule or overlap treatment; LAW-REG-001 v1.2 LAW12-AC-005 keeps the county basis blocked (open item 70)."
     }
   ],
-  "built_at": "2026-10-02T18:34:12+03:00",
-  "built_by": "bnganyi",
-  "bundle_digest": "33c5cb0fe8fb5c428c3b0436c31a7255e44c7f9ff3626ddbfc8df9043b8b9247",
+  "built_at": "2026-10-03T08:00:00+03:00",
+  "built_by": "release 1.4 build",
+  "bundle_digest": "0c63ab3b3092c27e7ba91b32e040d2ff20a8b76e5e5543571831ecd5e3c81a1e",
   "contract_summary": {
     "destinations": [
       {
@@ -1177,6 +1177,10 @@
       {
         "reason": "Eligibility-only declaration.",
         "response_rule_id": "RR-DECL-CODE-OF-ETHICS"
+      },
+      {
+        "reason": "Eligibility-only facts.",
+        "response_rule_id": "RR-ENTITY-PROFILE"
       },
       {
         "reason": "Eligibility-only declaration.",
@@ -1365,14 +1369,14 @@
     "review_pack": "Download review pack",
     "schema_version": 1
   },
-  "downstream_rules_digest": "b387f630088f4b167e8657e967a5e178758dc83de610c4086e79683d9de4db6d",
+  "downstream_rules_digest": "caed57cdf8df8a47a670b8c9f1bcd71e5f9ecf03c3fc5a589dcff5665bfb59b3",
   "evaluation_summary": {
     "groups": [
       {
         "evaluation_group_id": "EVG-ELIGIBILITY",
         "label": "Eligibility",
         "purpose": "Submission and eligibility: official declarations, eligibility evidence, Tender Security, qualification evidence and any published reservation eligibility, each pass/fail.",
-        "response_rule_count": 13,
+        "response_rule_count": 14,
         "response_rule_ids": [
           "RR-DECL-CBQ",
           "RR-DECL-CITD",
@@ -1380,6 +1384,7 @@
           "RR-DECL-FORM-OF-TENDER",
           "RR-DECL-SD1",
           "RR-DECL-SD2",
+          "RR-ENTITY-PROFILE",
           "RR-EVIDENCE-AFTER-SALES",
           "RR-EVIDENCE-ELIGIBILITY-DOCUMENTS",
           "RR-EVIDENCE-MANUFACTURER-AUTHORISATION",
@@ -1436,15 +1441,15 @@
         "response_rule_id": "RR-JV-MEMBER"
       }
     ],
-    "rule_count_checked": 25,
+    "rule_count_checked": 26,
     "schema_version": 1,
     "technical_compliance_is_single_gate": true,
     "weighted_criteria": 0
   },
-  "input_bundle_digest": "699a953fa71629493e3303cbc054b9f940130acb20301cdc96d18dd53c01f4c4",
+  "input_bundle_digest": "83d23536685e0788c674a924cfcdfed00373b0a89cd0845d8751727c44d4a99a",
   "official_source_digest": "95726a88642730e85a212389b4257f26970ecf3f23de872578d11172063ae1ee",
   "official_source_title": "PPRA Standard Tender Document for Procurement of Goods",
-  "product_profile_digest": "a1877534422dd3016c758f99465bab0ec9896d44da91378ba60526529637b421",
+  "product_profile_digest": "def2e72ac8dd20444dd27e283ea514612d3bd849d0c10b811d67dece0f517b85",
   "product_profile_id": "GOODS-IT-SIMPLE-V1",
   "rejected_use": [
     {
@@ -1492,11 +1497,11 @@
       "statement": "Any response, validation, composition or mapping the released Bid Workspace renderer does not support"
     }
   ],
-  "release_change_report_digest": "ace51f68a2218ff4fc8dddfb0db3a3f07d6212b7648c02cfbc7b51596e931333",
-  "release_gates_digest": "8205eb7d590c693fa3f9ca288473dff2cfb1a00fedbb98b5630030a59d742a85",
-  "release_id": "stdr-9b953bcf-fb1e-4e85-b9c1-6ac57218d0e2",
+  "release_change_report_digest": "b8fd095abad5a7ed82781bdc3d5871ea7c40bc694ceb543ae252c0904bd31b15",
+  "release_gates_digest": "d92e1524b9a2c72e5ffcbe9765cac6de5e7812acba84eb6b3bf5db9434458cdd",
+  "release_id": "stdr-c25e6578-3700-4df8-bbaa-8c2041be2f01",
   "renderer_profile_id": "BDS-GOODS-IT-V1",
-  "repository_commit": "af5be3cb87e497d47451b9625995be0c9ac42b50",
+  "repository_commit": "128890fa1bbb2388290b0826560f038334ea1c39",
   "reservation_support": {
     "award_reporting_treatment": "Retain the category, rule snapshot and eligibility result for the governed award and statutory reporting handoff",
     "categories": [
@@ -1554,7 +1559,7 @@
       }
     ]
   },
-  "response_rules_digest": "95682ae3c0757520e3dd5a5d8b321f1d5270e1cb8d1cbb1f1392f21907a8dd14",
+  "response_rules_digest": "4b47e66f70463f30067a8b8cf263f1b80c59eb92784374d1f069ddefe42ff3b7",
   "response_summary": {
     "compositions": [
       "Document and addendum acknowledgement",
@@ -1571,7 +1576,8 @@
       "Acceptance confirmation",
       "Evidence list",
       "Goods price schedule",
-      "Review and signature summary"
+      "Review and signature summary",
+      "Business profile of each entity of the bid"
     ],
     "controls": [
       "Confirmation",
@@ -1585,7 +1591,8 @@
       "Money",
       "Date",
       "Evidence reference",
-      "Structured ports list"
+      "Structured ports list",
+      "Table of rows"
     ],
     "declaration_treatment": "7 locked declarations; each repeats the anchored official wording and is affirmed against its exact text version.",
     "evidence_treatment": "12 evidence-reference fields; each states its evidence type, count and link to the exact response.",
@@ -1595,8 +1602,8 @@
       "goods_price_schedules": 1,
       "related_services": 0,
       "requisition_items_grouped": 2,
-      "response_groups": 41,
-      "response_rows": 174,
+      "response_groups": 42,
+      "response_rows": 175,
       "technical_requirements": 11,
       "tender_reference": "TND-MOH-2027-033",
       "warranty_support_facts": 6
@@ -1612,12 +1619,12 @@
       "price_row": 2,
       "related_service": 1,
       "reservation": 1,
-      "supplier": 2,
+      "supplier": 3,
       "technical_requirement": 1,
       "tender_security": 1,
       "warranty_support": 1
     },
-    "response_rule_count": 25,
+    "response_rule_count": 26,
     "schema_version": 1,
     "tasks": [
       {
@@ -1658,7 +1665,7 @@
   "source_checked_by": "bnganyi (product owner)",
   "source_retrieved_at": "2026-08-28",
   "status": "Candidate",
-  "supported_renderer_version": "1.1.0",
+  "supported_renderer_version": "1.2.0",
   "supported_use": {
     "award_packages": 1,
     "county_residents": {
@@ -1706,14 +1713,14 @@
     "technical_evaluation": "Mandatory pass/fail checks feeding one Technical compliance gate"
   },
   "template_key": "IT-EQUIPMENT-OPEN-V1",
-  "template_release": "1.3",
+  "template_release": "1.4",
   "tool_versions": {
     "jinja2": "3.1.6",
     "pdftotext": "pdftotext version 22.02.0",
-    "python": "3.14.6",
+    "python": "3.10.12",
     "wkhtmltopdf": "wkhtmltopdf 0.12.6.1 (with patched qt)"
   },
-  "validation_report_digest": "b230d924606d2bede37d1fcbd3593af3d40acaf5bfec155008a86b6f669a8470",
+  "validation_report_digest": "0dfbfae24430765b193ed69ee9fe2d620ba859c613cf667548c9ed2f7b24faae",
   "verification_results": [
     {
       "check": "Official source",

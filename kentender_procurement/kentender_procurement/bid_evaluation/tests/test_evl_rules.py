@@ -123,6 +123,7 @@ class TestRuleFile(IntegrationTestCase):
 
 
 RELEASE_13 = {"template_release": "1.3", "release_id": "stdr-9b953bcf-fb1e-4e85-b9c1-6ac57218d0e2"}
+RELEASE_14 = {"template_release": "1.4", "release_id": "stdr-c25e6578-3700-4df8-bbaa-8c2041be2f01"}
 ITEM_3 = "Tenderer has the same legal representative as another tenderer"
 
 
@@ -164,6 +165,35 @@ class TestReleaseReadings(IntegrationTestCase):
 		self.assertIsNotNone(rules.rule_for(rules.load("IT-EQUIPMENT-OPEN-V1", **RELEASE), "DM-DECL-CBQ", "ownership_details"))
 		self.assertIsNone(rules.rule_for(rules.load("IT-EQUIPMENT-OPEN-V1", **RELEASE_13), "DM-DECL-CBQ", "ownership_details"))
 		self.assertIsNotNone(rules.rule_for(rules.load("IT-EQUIPMENT-OPEN-V1", **RELEASE_13), "DM-DECL-CBQ", "directors_details"))
+
+
+class TestRelease14Readings(IntegrationTestCase):
+	"""Release 1.4: the standing business facts are each entity's profile, read for every entity; a Yes to a
+	conflict item also contradicts the Form of Tender; a Tender on release 1.3 keeps its own reading."""
+
+	def rule(self, release, mapping, field):
+		return rules.rule_for(rules.load("IT-EQUIPMENT-OPEN-V1", **release), mapping, field)
+
+	def test_a_state_owned_entity_needs_the_committee_in_release_1_4_and_the_form_field_belongs_to_1_3(self):
+		state = self.rule(RELEASE_14, "DM-ENTITY-PROFILE", "state_owned")
+		self.assertEqual((state["kind"], state["polarity"]), ("review-if-yes", "yes-discloses"))
+		self.assertIsNone(self.rule(RELEASE_13, "DM-ENTITY-PROFILE", "state_owned"))
+		self.assertIsNone(self.rule(RELEASE_14, "DM-DECL-FORM-OF-TENDER", "state_owned_enterprise"))
+		self.assertIsNotNone(self.rule(RELEASE_13, "DM-DECL-FORM-OF-TENDER", "state_owned_enterprise"))
+
+	def test_a_disclosed_conflict_also_names_the_form_of_tender_confirmation_from_1_4(self):
+		for release, flagged in ((RELEASE_13, False), (RELEASE_14, True)):
+			loaded = rules.load("IT-EQUIPMENT-OPEN-V1", **release)
+			out = rules.check(loaded, rules.rule_for(loaded, "DM-DECL-CBQ", "conflict_03"), facts={}, value="Yes", group_values={}, evidence_files=0, label="Conflict", field_label=ITEM_3)
+			self.assertEqual(out["result"], "Needs review")
+			self.assertEqual("Form of Tender" in out["reason"], flagged, release)
+
+	def test_item_nine_reads_the_same_in_1_4_and_the_moved_fields_keep_their_rules_for_1_3_only(self):
+		self.assertEqual(self.rule(RELEASE_14, "DM-DECL-CBQ", "conflict_09")["kind"], "review-unless")
+		for field in ("directors_details", "business_structure", "procuring_entity_interest_details"):
+			self.assertIsNotNone(self.rule(RELEASE_13, "DM-DECL-CBQ", field), field)
+			self.assertIsNone(self.rule(RELEASE_14, "DM-DECL-CBQ", field), field)
+		self.assertEqual(self.rule(RELEASE_14, "DM-DECL-CBQ", "procuring_entity_interest_persons")["kind"], "recorded")
 
 
 class TestRuleCoverage(IntegrationTestCase):

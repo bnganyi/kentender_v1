@@ -36,13 +36,13 @@ class SaveCase(BidCase):
 class TestSaveBidTask(SaveCase):
 	def test_david_saves_a_company_answer_and_the_draft_version_advances(self):
 		view = self.task()
-		year = self.field(view, "Year of registration")
-		self.assertEqual((year["kind"], year["editable"], year["value"], year["required"]), ("integer", True, None, True))
-		saved = self.save({year["handle"]: "2011"})
+		year = self.field(view, "Authorised representative's address")
+		self.assertEqual((year["kind"], year["editable"], year["value"], year["required"]), ("long_text", True, None, True))
+		saved = self.save({year["handle"]: "11 Riverside Drive, Nairobi"})
 		self.assertEqual((saved["ok"], saved["draft_version"]), (True, 2))
-		self.assertEqual(self.field(self.task(), "Year of registration")["value"], 2011)
+		self.assertEqual(self.field(self.task(), "Authorised representative's address")["value"], "11 Riverside Drive, Nairobi")
 		change = frappe.get_all("Bid Draft Change", filters={"bid_workspace": self.bid}, fields=["draft_version", "change_kind", "prior_value", "new_value", "actor"])
-		self.assertEqual([(c.draft_version, c.change_kind, c.prior_value, c.new_value, c.actor) for c in change], [(2, "Saved", "null", "2011", DAVID)])
+		self.assertEqual([(c.draft_version, c.change_kind, c.prior_value, c.new_value, c.actor) for c in change], [(2, "Saved", "null", '"11 Riverside Drive, Nairobi"', DAVID)])
 		self.assertEqual(frappe.db.get_value("Bid Section Response", {"bid_workspace": self.bid, "section_key": "company"}, "status"), "In progress")
 
 	def test_supplied_facts_are_shown_from_the_account_and_arrangement_and_never_accepted(self):
@@ -60,10 +60,10 @@ class TestSaveBidTask(SaveCase):
 	def test_a_value_the_published_rule_refuses_is_a_field_error_and_nothing_is_saved(self):
 		view = self.task()
 		amount = self.field(view, "Amount of the instrument")
-		year = self.field(view, "Year of registration")
-		refused = self.save({amount["handle"]: "600000", year["handle"]: "twenty"})
+		year = self.field(view, "Authorised representative's address")
+		refused = self.save({amount["handle"]: "600000", year["handle"]: "Nairobi"})
 		self.assertEqual((refused["ok"], refused["code"]), (False, "BDS_FIELD_INVALID"))
-		self.assertEqual(refused["errors"], {amount["handle"]: "Enter exactly KES 500,000.00.", year["handle"]: "Enter a whole number."})
+		self.assertEqual(refused["errors"], {amount["handle"]: "Enter exactly KES 500,000.00.", year["handle"]: "Enter at least 10 characters."})
 		self.assertEqual((frappe.db.get_value("Bid Workspace", self.bid, "current_draft_version"), frappe.db.count("Bid Draft Change", {"bid_workspace": self.bid})), (1, 0))
 
 	def test_a_conditional_field_follows_its_controlling_answer(self):
@@ -83,19 +83,19 @@ class TestSaveBidTask(SaveCase):
 
 	def test_a_stale_or_replayed_save(self):
 		view = self.task()
-		year = self.field(view, "Year of registration")
+		year = self.field(view, "Authorised representative's address")
 		request, version = key(), self.version()
-		first = self.save({year["handle"]: "2011"}, version=version, request=request)
-		self.assertEqual(self.save({year["handle"]: "2011"}, version=version, request=request), first)
+		first = self.save({year["handle"]: "11 Riverside Drive, Nairobi"}, version=version, request=request)
+		self.assertEqual(self.save({year["handle"]: "11 Riverside Drive, Nairobi"}, version=version, request=request), first)
 		with self.assertRaises(errors.BidSubmissionError) as stale:
-			self.save({year["handle"]: "2012"}, version=version)
+			self.save({year["handle"]: "12 Riverside Drive, Nairobi"}, version=version)
 		self.assertEqual(stale.exception.code, "BDS_STALE_VERSION")
 
 	def test_after_the_deadline_nothing_saves(self):
-		year = self.field(self.task(), "Year of registration")
+		year = self.field(self.task(), "Authorised representative's address")
 		self.at("2027-07-01 09:00:00")
 		with self.assertRaises(errors.BidSubmissionError) as ctx:
-			self.save({year["handle"]: "2011"})
+			self.save({year["handle"]: "11 Riverside Drive, Nairobi"})
 		self.assertEqual(ctx.exception.code, "BDS_TENDER_NOT_OPEN")
 
 
@@ -171,8 +171,8 @@ class TestContentConfidentiality(SaveCase):
 		return email
 
 	def test_no_desk_role_reads_bid_content(self):
-		year = self.field(self.task(), "Year of registration")
-		self.save({year["handle"]: "2011"})
+		year = self.field(self.task(), "Authorised representative's address")
+		self.save({year["handle"]: "11 Riverside Drive, Nairobi"})
 		manager = self.system_manager()
 		for doctype in self.CONTENT:
 			with self.subTest(doctype=doctype):
@@ -187,9 +187,9 @@ class TestContentConfidentiality(SaveCase):
 		self.assertFalse(frappe.has_permission("Bid Section Response", "read", doc=response, user=manager))
 
 	def test_bid_values_never_reach_the_change_log(self):
-		year = self.field(self.task(), "Year of registration")
-		self.save({year["handle"]: "2011"})
-		self.save({year["handle"]: "2012"})
+		year = self.field(self.task(), "Authorised representative's address")
+		self.save({year["handle"]: "11 Riverside Drive, Nairobi"})
+		self.save({year["handle"]: "12 Riverside Drive, Nairobi"})
 		for doctype in self.CONTENT:
 			with self.subTest(doctype=doctype):
 				self.assertFalse(frappe.get_meta(doctype).track_changes)
@@ -199,10 +199,10 @@ class TestContentConfidentiality(SaveCase):
 	def test_a_suspended_account_cannot_edit_its_draft(self):
 		from kentender_procurement.bid_submission.services import evidence, tender_contact
 
-		year = self.field(self.task(), "Year of registration")
+		year = self.field(self.task(), "Authorised representative's address")
 		self.accounts.orgs[AFYA]["account_status"] = "Suspended"
 		for command in (
-			lambda: self.save({year["handle"]: "2011"}),
+			lambda: self.save({year["handle"]: "11 Riverside Drive, Nairobi"}),
 			lambda: evidence.upload_bid_evidence(bid_reference=self.bid, handle=year["handle"], filename="x.pdf", content=b"%PDF-1.4", expected_record_version=self.version(), idempotency_key=key(), user=DAVID),
 			lambda: tender_contact.update_tender_contact(bid_reference=self.bid, email=DAVID, phone="+254 709 555 015", expected_record_version=frappe.db.get_value("Bidder Arrangement", frappe.db.get_value("Bid Workspace", self.bid, "bidder_arrangement"), "record_version"), idempotency_key=key(), user=DAVID),
 		):

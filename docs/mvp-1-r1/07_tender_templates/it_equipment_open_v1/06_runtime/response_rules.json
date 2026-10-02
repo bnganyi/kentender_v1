@@ -1,6 +1,6 @@
 {
   "product_profile_id": "GOODS-IT-SIMPLE-V1",
-  "release_id": "stdr-9b953bcf-fb1e-4e85-b9c1-6ac57218d0e2",
+  "release_id": "stdr-c25e6578-3700-4df8-bbaa-8c2041be2f01",
   "renderer_profile_id": "BDS-GOODS-IT-V1",
   "rules": [
     {
@@ -121,10 +121,14 @@
           "control_id": "CTL-INTEGER",
           "evidence_rule": null,
           "field_key": "year_of_registration",
-          "help_text": "",
+          "help_text": "Held on the supplier Account; change it there.",
           "label": "Year of registration",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
+          },
+          "supplied_value": {
+            "fact": "year_of_registration",
+            "source_id": "SV-ORGANISATION"
           },
           "validation_id": "VAL-INTEGER-RANGE",
           "validation_parameters": {
@@ -255,6 +259,470 @@
       "applicability": {
         "rule_id": "AP-ALWAYS"
       },
+      "composition_id": "COMP-ENTITY-PROFILE",
+      "contract_mapping_id": "DM-ENTITY-PROFILE",
+      "document_anchor": "complete_tender.html#decl-cbq",
+      "evaluation_mapping_id": "DM-ENTITY-PROFILE",
+      "field_definitions": [
+        {
+          "control_id": "CTL-SINGLE-CHOICE",
+          "evidence_rule": null,
+          "field_key": "business_structure",
+          "help_text": "Held on the supplier Account and copied into this bid; change it there.",
+          "label": "Business structure",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "supplied_value": {
+            "fact": "business_structure",
+            "source_id": "SV-ENTITY-PROFILE"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Sole proprietor",
+              "Partnership",
+              "Registered company"
+            ]
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "sole_proprietor_name",
+          "help_text": "Part (b) of the questionnaire.",
+          "label": "Sole proprietor: name in full",
+          "required_rule": {
+            "field_key": "business_structure",
+            "rule_id": "RQ-WHEN-FIELD-EQUALS",
+            "value": "Sole proprietor"
+          },
+          "supplied_value": {
+            "fact": "sole_proprietor_name",
+            "source_id": "SV-ENTITY-PROFILE"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 160,
+            "min_length": 2
+          },
+          "visibility_rule": {
+            "field_key": "business_structure",
+            "rule_id": "VS-WHEN-FIELD-EQUALS",
+            "value": "Sole proprietor"
+          }
+        },
+        {
+          "control_id": "CTL-INTEGER",
+          "evidence_rule": null,
+          "field_key": "sole_proprietor_age",
+          "help_text": "Part (b) of the questionnaire.",
+          "label": "Sole proprietor: age",
+          "required_rule": {
+            "field_key": "business_structure",
+            "rule_id": "RQ-WHEN-FIELD-EQUALS",
+            "value": "Sole proprietor"
+          },
+          "supplied_value": {
+            "fact": "sole_proprietor_age",
+            "source_id": "SV-ENTITY-PROFILE"
+          },
+          "validation_id": "VAL-INTEGER-RANGE",
+          "validation_parameters": {
+            "maximum": 120,
+            "minimum": 18
+          },
+          "visibility_rule": {
+            "field_key": "business_structure",
+            "rule_id": "VS-WHEN-FIELD-EQUALS",
+            "value": "Sole proprietor"
+          }
+        },
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "sole_proprietor_nationality",
+          "help_text": "Part (b) of the questionnaire.",
+          "label": "Sole proprietor: nationality",
+          "required_rule": {
+            "field_key": "business_structure",
+            "rule_id": "RQ-WHEN-FIELD-EQUALS",
+            "value": "Sole proprietor"
+          },
+          "supplied_value": {
+            "fact": "sole_proprietor_nationality",
+            "source_id": "SV-ENTITY-PROFILE"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 80,
+            "min_length": 2
+          },
+          "visibility_rule": {
+            "field_key": "business_structure",
+            "rule_id": "VS-WHEN-FIELD-EQUALS",
+            "value": "Sole proprietor"
+          }
+        },
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "sole_proprietor_country_of_origin",
+          "help_text": "Part (b) of the questionnaire.",
+          "label": "Sole proprietor: country of origin",
+          "required_rule": {
+            "field_key": "business_structure",
+            "rule_id": "RQ-WHEN-FIELD-EQUALS",
+            "value": "Sole proprietor"
+          },
+          "supplied_value": {
+            "fact": "sole_proprietor_country_of_origin",
+            "source_id": "SV-ENTITY-PROFILE"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 80,
+            "min_length": 2
+          },
+          "visibility_rule": {
+            "field_key": "business_structure",
+            "rule_id": "VS-WHEN-FIELD-EQUALS",
+            "value": "Sole proprietor"
+          }
+        },
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "sole_proprietor_citizenship",
+          "help_text": "Part (b) of the questionnaire.",
+          "label": "Sole proprietor: citizenship",
+          "required_rule": {
+            "field_key": "business_structure",
+            "rule_id": "RQ-WHEN-FIELD-EQUALS",
+            "value": "Sole proprietor"
+          },
+          "supplied_value": {
+            "fact": "sole_proprietor_citizenship",
+            "source_id": "SV-ENTITY-PROFILE"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 80,
+            "min_length": 2
+          },
+          "visibility_rule": {
+            "field_key": "business_structure",
+            "rule_id": "VS-WHEN-FIELD-EQUALS",
+            "value": "Sole proprietor"
+          }
+        },
+        {
+          "control_id": "CTL-ROW-GROUP",
+          "evidence_rule": null,
+          "field_key": "partners",
+          "help_text": "Part (c), Partnership.",
+          "label": "Partners, with the nationality, citizenship and percentage of shares owned by each",
+          "required_rule": {
+            "field_key": "business_structure",
+            "rule_id": "RQ-WHEN-FIELD-EQUALS",
+            "value": "Partnership"
+          },
+          "supplied_value": {
+            "fact": "partners",
+            "source_id": "SV-ENTITY-PROFILE"
+          },
+          "validation_id": "VAL-ROW-GROUP",
+          "validation_parameters": {
+            "columns": [
+              {
+                "key": "name",
+                "label": "Name",
+                "max_length": 160,
+                "type": "text"
+              },
+              {
+                "key": "nationality",
+                "label": "Nationality",
+                "max_length": 80,
+                "type": "text"
+              },
+              {
+                "key": "citizenship",
+                "label": "Citizenship",
+                "max_length": 80,
+                "type": "text"
+              },
+              {
+                "key": "shares",
+                "label": "Shares owned (%)",
+                "maximum": "100",
+                "minimum": "0",
+                "scale": 2,
+                "type": "decimal"
+              }
+            ],
+            "maximum_rows": 10,
+            "minimum_rows": 1,
+            "totals": [
+              {
+                "column": "shares",
+                "equals": "100"
+              }
+            ]
+          },
+          "visibility_rule": {
+            "field_key": "business_structure",
+            "rule_id": "VS-WHEN-FIELD-EQUALS",
+            "value": "Partnership"
+          }
+        },
+        {
+          "control_id": "CTL-SINGLE-CHOICE",
+          "evidence_rule": null,
+          "field_key": "company_type",
+          "help_text": "Part (d)(i), registered company.",
+          "label": "Is the company a private or a public company?",
+          "required_rule": {
+            "field_key": "business_structure",
+            "rule_id": "RQ-WHEN-FIELD-EQUALS",
+            "value": "Registered company"
+          },
+          "supplied_value": {
+            "fact": "company_type",
+            "source_id": "SV-ENTITY-PROFILE"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Private company",
+              "Public company"
+            ]
+          },
+          "visibility_rule": {
+            "field_key": "business_structure",
+            "rule_id": "VS-WHEN-FIELD-EQUALS",
+            "value": "Registered company"
+          }
+        },
+        {
+          "control_id": "CTL-MONEY",
+          "evidence_rule": null,
+          "field_key": "nominal_capital",
+          "help_text": "Part (d)(ii), registered company.",
+          "label": "Nominal capital (Kenya Shillings)",
+          "required_rule": {
+            "field_key": "business_structure",
+            "rule_id": "RQ-WHEN-FIELD-EQUALS",
+            "value": "Registered company"
+          },
+          "supplied_value": {
+            "fact": "nominal_capital",
+            "source_id": "SV-ENTITY-PROFILE"
+          },
+          "validation_id": "VAL-MONEY",
+          "validation_parameters": {
+            "currency": "KES",
+            "minimum": "0.00",
+            "scale": 2
+          },
+          "visibility_rule": {
+            "field_key": "business_structure",
+            "rule_id": "VS-WHEN-FIELD-EQUALS",
+            "value": "Registered company"
+          }
+        },
+        {
+          "control_id": "CTL-MONEY",
+          "evidence_rule": null,
+          "field_key": "issued_capital",
+          "help_text": "Part (d)(ii), registered company.",
+          "label": "Issued capital (Kenya Shillings)",
+          "required_rule": {
+            "field_key": "business_structure",
+            "rule_id": "RQ-WHEN-FIELD-EQUALS",
+            "value": "Registered company"
+          },
+          "supplied_value": {
+            "fact": "issued_capital",
+            "source_id": "SV-ENTITY-PROFILE"
+          },
+          "validation_id": "VAL-MONEY",
+          "validation_parameters": {
+            "currency": "KES",
+            "minimum": "0.00",
+            "scale": 2
+          },
+          "visibility_rule": {
+            "field_key": "business_structure",
+            "rule_id": "VS-WHEN-FIELD-EQUALS",
+            "value": "Registered company"
+          }
+        },
+        {
+          "control_id": "CTL-ROW-GROUP",
+          "evidence_rule": null,
+          "field_key": "directors",
+          "help_text": "Part (d)(iii), registered company.",
+          "label": "Directors, with the nationality, citizenship and percentage of shares owned by each",
+          "required_rule": {
+            "field_key": "business_structure",
+            "rule_id": "RQ-WHEN-FIELD-EQUALS",
+            "value": "Registered company"
+          },
+          "supplied_value": {
+            "fact": "directors",
+            "source_id": "SV-ENTITY-PROFILE"
+          },
+          "validation_id": "VAL-ROW-GROUP",
+          "validation_parameters": {
+            "columns": [
+              {
+                "key": "name",
+                "label": "Name",
+                "max_length": 160,
+                "type": "text"
+              },
+              {
+                "key": "nationality",
+                "label": "Nationality",
+                "max_length": 80,
+                "type": "text"
+              },
+              {
+                "key": "citizenship",
+                "label": "Citizenship",
+                "max_length": 80,
+                "type": "text"
+              },
+              {
+                "key": "shares",
+                "label": "Shares owned (%)",
+                "maximum": "100",
+                "minimum": "0",
+                "scale": 2,
+                "type": "decimal"
+              }
+            ],
+            "maximum_rows": 10,
+            "minimum_rows": 1,
+            "totals": [
+              {
+                "column": "shares",
+                "equals": "100"
+              }
+            ]
+          },
+          "visibility_rule": {
+            "field_key": "business_structure",
+            "rule_id": "VS-WHEN-FIELD-EQUALS",
+            "value": "Registered company"
+          }
+        },
+        {
+          "control_id": "CTL-SHORT-TEXT",
+          "evidence_rule": null,
+          "field_key": "trade_licence_number",
+          "help_text": "Table A, item 6.",
+          "label": "Current trade licence number",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "supplied_value": {
+            "fact": "trade_licence_number",
+            "source_id": "SV-ENTITY-PROFILE"
+          },
+          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_parameters": {
+            "max_length": 80,
+            "min_length": 3
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-DATE",
+          "evidence_rule": null,
+          "field_key": "trade_licence_expiry",
+          "help_text": "Table A, item 6.",
+          "label": "Trade licence expiry date",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "supplied_value": {
+            "fact": "trade_licence_expiry",
+            "source_id": "SV-ENTITY-PROFILE"
+          },
+          "validation_id": "VAL-DATE-RANGE",
+          "validation_parameters": {},
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-MONEY",
+          "evidence_rule": null,
+          "field_key": "maximum_business_value",
+          "help_text": "",
+          "label": "Maximum value of business the Tenderer handles",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "supplied_value": {
+            "fact": "maximum_business_value",
+            "source_id": "SV-ENTITY-PROFILE"
+          },
+          "validation_id": "VAL-MONEY",
+          "validation_parameters": {
+            "currency": "KES",
+            "minimum": "0.00",
+            "scale": 2
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        },
+        {
+          "control_id": "CTL-YES-NO",
+          "evidence_rule": null,
+          "field_key": "state_owned",
+          "help_text": "Item (k) of the Form of Tender. If Yes, the Tenderer must meet the requirements of ITT 3.8.",
+          "label": "Is the Tenderer a state-owned enterprise or institution?",
+          "required_rule": {
+            "rule_id": "RQ-ALWAYS"
+          },
+          "supplied_value": {
+            "fact": "state_owned",
+            "source_id": "SV-ENTITY-PROFILE"
+          },
+          "validation_id": "VAL-OPTION-IN-LIST",
+          "validation_parameters": {
+            "options": [
+              "Yes",
+              "No"
+            ]
+          },
+          "visibility_rule": {
+            "rule_id": "VS-ALWAYS"
+          }
+        }
+      ],
+      "identity_suffix": "ENT",
+      "order": 12,
+      "rule_id": "RR-ENTITY-PROFILE",
+      "source_family": "supplier",
+      "source_selector": {
+        "selector": "SEL-ENTITIES"
+      },
+      "task_id": "TASK-COMPANY"
+    },
+    {
+      "applicability": {
+        "rule_id": "AP-ALWAYS"
+      },
       "composition_id": "COMP-JV-MEMBER",
       "contract_mapping_id": "DM-JV-MEMBER",
       "document_anchor": "complete_tender.html#form-jv-members",
@@ -308,10 +776,14 @@
           "control_id": "CTL-INTEGER",
           "evidence_rule": null,
           "field_key": "member_year_of_registration",
-          "help_text": "",
+          "help_text": "Held on the supplier Account; change it there.",
           "label": "JV member's year of registration",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
+          },
+          "supplied_value": {
+            "fact": "year_of_registration",
+            "source_id": "SV-ARRANGEMENT-MEMBER"
           },
           "validation_id": "VAL-INTEGER-RANGE",
           "validation_parameters": {
@@ -474,9 +946,9 @@
         {
           "control_id": "CTL-YES-NO",
           "evidence_rule": null,
-          "field_key": "state_owned_enterprise",
-          "help_text": "Item (k) of the Form of Tender.",
-          "label": "Is the Tenderer a state-owned enterprise or institution?",
+          "field_key": "commissions_paid",
+          "help_text": "Item (l) of the Form of Tender.",
+          "label": "Have you paid, or will you pay, any commissions, gratuities or fees with respect to the Tendering process or execution of the Contract?",
           "required_rule": {
             "rule_id": "RQ-ALWAYS"
           },
@@ -492,21 +964,64 @@
           }
         },
         {
-          "control_id": "CTL-LONG-TEXT",
+          "control_id": "CTL-ROW-GROUP",
           "evidence_rule": null,
-          "field_key": "commissions_gratuities_fees",
-          "help_text": "Item (l) of the Form of Tender. Write one recipient per line: name; address; reason; amount and currency.",
-          "label": "Commissions, gratuities or fees paid or payable: each recipient's complete name, full address, the reason, and the amount and currency (or \"none\")",
+          "field_key": "commission_recipients",
+          "help_text": "Item (l): the recipient's complete name, full address, the reason, and the amount and currency.",
+          "label": "Each recipient of a commission, gratuity or fee",
           "required_rule": {
-            "rule_id": "RQ-ALWAYS"
+            "field_key": "commissions_paid",
+            "rule_id": "RQ-WHEN-FIELD-EQUALS",
+            "value": "Yes"
           },
-          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_id": "VAL-ROW-GROUP",
           "validation_parameters": {
-            "max_length": 1000,
-            "min_length": 4
+            "columns": [
+              {
+                "key": "recipient",
+                "label": "Name of recipient",
+                "max_length": 160,
+                "type": "text"
+              },
+              {
+                "key": "address",
+                "label": "Full address",
+                "max_length": 300,
+                "type": "text"
+              },
+              {
+                "key": "reason",
+                "label": "Reason for the commission, gratuity or fee",
+                "max_length": 300,
+                "type": "text"
+              },
+              {
+                "key": "amount",
+                "label": "Amount",
+                "minimum": "0",
+                "scale": 2,
+                "type": "decimal"
+              },
+              {
+                "key": "currency",
+                "label": "Currency",
+                "options": [
+                  "KES",
+                  "USD",
+                  "EUR",
+                  "GBP"
+                ],
+                "type": "choice"
+              }
+            ],
+            "maximum_rows": 10,
+            "minimum_rows": 1,
+            "totals": []
           },
           "visibility_rule": {
-            "rule_id": "VS-ALWAYS"
+            "field_key": "commissions_paid",
+            "rule_id": "VS-WHEN-FIELD-EQUALS",
+            "value": "Yes"
           }
         },
         {
@@ -526,7 +1041,7 @@
         }
       ],
       "identity_suffix": "FOT",
-      "locked_text": "a) No reservations: We have examined and have no reservations to the Tendering document, including Addenda issued in accordance with Instructions to Tenderers (ITT 7); b) Eligibility: We meet the eligibility requirements and have no conflict of interest in accordance with ITT 3; c) Tender Security: We confirm that we have furnished the Tender Security required in accordance with ITT 18; d) Conformity: We offer to supply in conformity with the Tendering document and in accordance with the Delivery Schedules specified in the Schedule of Requirements the following Goods and Related Services: e) Tender Price: The total price of our Tender, excluding any discounts offered in item (f) below, is: _______________________ (in words and figures, indicating the currency); f) Discounts: The discounts offered and the methodology for their application are: _______________________ (or “none”); g) Tender Validity Period: Our Tender shall be valid for the period specified in TDS ITT 17.1 ({{ tender.validity_days }} days) from the date fixed for the Tender submission deadline specified in TDS ITT 21.1, and it shall remain binding upon us and may be accepted at any time before the expiration of that period; h) Performance Security: If our Tender is accepted, we commit to obtain a performance security in accordance with the Tendering document; i) One Tender per Tenderer: We are not submitting any other Tender(s) as an individual tenderer, and we are not participating in any other Tender(s) as a Joint Venture member, or as a subcontractor, and meet the requirements of ITT 3.9; j) Suspension and Debarment: We, along with any of our subcontractors, suppliers, consultants, manufacturers, or service providers for any part of the contract, are not subject to, and not controlled by any entity or individual that is subject to, a temporary suspension or a debarment imposed by the Procuring Entity. Further, we are not ineligible under the Kenya laws or official regulations or pursuant to a decision of the United Nations Security Council; k) State-owned enterprise or institution: _______________________ (Tenderer states whether or not it is a state-owned enterprise or institution and, if so, confirms that it meets the requirements of ITT 3.8); l) Commissions, gratuities, fees: We have paid, or will pay, the following commissions, gratuities, or fees with respect to the Tendering process or execution of the Contract: _______________________ (or “none”); m) Binding Contract: We understand that this Tender, together with your written acceptance thereof included in your Letter of Acceptance, shall constitute a binding contract between us, until a formal contract is prepared and executed; n) Procuring Entity Not Bound to Accept: We understand that you are not bound to accept the lowest evaluated cost Tender, the Best Evaluated Tender or any other Tender that you may receive; and o) Fraud and Corruption: We hereby certify that we have taken steps to ensure that no person acting for us or on our behalf engages in any type of Fraud and Corruption. p) Code of Ethical Conduct: We undertake to adhere by the Code of Ethics for Persons Participating in Public Procurement and Asset Disposal, copy available from {{ procuring_entity.contact_office }}, during the procurement process and the execution of any resulting contract. q) Collusive practices: We hereby certify and confirm that the tender is genuine, non-collusive and made with the intention of accepting the contract if awarded. To this effect we have signed the “Certificate of Independent Tender Determination” attached below. r) Beneficial Ownership Information: We commit to provide to the procuring entity the Beneficial Ownership Information in conformity with the Beneficial Ownership Disclosure Form upon receipt of notification of intention to enter into a contract in the event we are the successful tenderer in this subject procurement proceeding. s) We, the Tenderer, have duly completed, signed and stamped the following Forms as part of our Tender: i. Tenderer's Eligibility; Confidential Business Questionnaire - to establish we are not in any conflict of interest; ii. Certificate of Independent Tender Determination - to declare that we completed the tender without colluding with other tenderers; iii. Self-Declaration of the Tenderer - to declare that we will, if awarded a contract, not engage in any form of fraud and corruption; and iv. Declaration and Commitment to the Code of Ethics for Persons Participating in Public Procurement. Further, we confirm that we have read and understood the full content and scope of fraud and corruption as informed in “Appendix 1 - Fraud and Corruption” attached to the Form of Tender.",
+      "locked_text": "a) No reservations: We have examined and have no reservations to the Tendering document, including Addenda issued in accordance with Instructions to Tenderers (ITT 7); b) Eligibility: We meet the eligibility requirements and have no conflict of interest in accordance with ITT 3; c) Tender Security: We confirm that we have furnished the Tender Security required in accordance with ITT 18; d) Conformity: We offer to supply in conformity with the Tendering document and in accordance with the Delivery Schedules specified in the Schedule of Requirements the following Goods and Related Services: e) Tender Price: The total price of our Tender, excluding any discounts offered in item (f) below, is: _______________________ (in words and figures, indicating the currency); f) Discounts: The discounts offered and the methodology for their application are: _______________________ (or “none”); g) Tender Validity Period: Our Tender shall be valid for the period specified in TDS ITT 17.1 ({{ tender.validity_days }} days) from the date fixed for the Tender submission deadline specified in TDS ITT 21.1, and it shall remain binding upon us and may be accepted at any time before the expiration of that period; h) Performance Security: If our Tender is accepted, we commit to obtain a performance security in accordance with the Tendering document; i) One Tender per Tenderer: We are not submitting any other Tender(s) as an individual tenderer, and we are not participating in any other Tender(s) as a Joint Venture member, or as a subcontractor, and meet the requirements of ITT 3.9; j) Suspension and Debarment: We, along with any of our subcontractors, suppliers, consultants, manufacturers, or service providers for any part of the contract, are not subject to, and not controlled by any entity or individual that is subject to, a temporary suspension or a debarment imposed by the Procuring Entity. Further, we are not ineligible under the Kenya laws or official regulations or pursuant to a decision of the United Nations Security Council; k) State-owned enterprise or institution: _______________________ (Tenderer states whether or not it is a state-owned enterprise or institution and, if so, confirms that it meets the requirements of ITT 3.8); l) Commissions, gratuities, fees: We have paid, or will pay, the following commissions, gratuities, or fees with respect to the Tendering process or execution of the Contract: _______________________ (or “none”); m) Binding Contract: We understand that this Tender, together with your written acceptance thereof included in your Letter of Acceptance, shall constitute a binding contract between us, until a formal contract is prepared and executed; n) Procuring Entity Not Bound to Accept: We understand that you are not bound to accept the lowest evaluated cost Tender, the Best Evaluated Tender or any other Tender that you may receive; and o) Fraud and Corruption: We hereby certify that we have taken steps to ensure that no person acting for us or on our behalf engages in any type of Fraud and Corruption. p) Code of Ethical Conduct: We undertake to adhere by the Code of Ethics for Persons Participating in Public Procurement and Asset Disposal, copy available from {{ procuring_entity.contact_office }}, during the procurement process and the execution of any resulting contract. q) Collusive practices: We hereby certify and confirm that the tender is genuine, non-collusive and made with the intention of accepting the contract if awarded. To this effect we have signed the “Certificate of Independent Tender Determination” attached below. r) Beneficial Ownership Information: We commit to provide to the procuring entity the Beneficial Ownership Information in conformity with the Beneficial Ownership Disclosure Form upon receipt of notification of intention to enter into a contract in the event we are the successful tenderer in this subject procurement proceeding. s) We, the Tenderer, have duly completed, signed and stamped the following Forms as part of our Tender: i. Tenderer's Eligibility; Confidential Business Questionnaire - to establish we are not in any conflict of interest; ii. Certificate of Independent Tender Determination - to declare that we completed the tender without colluding with other tenderers; iii. Self-Declaration of the Tenderer - to declare that we will, if awarded a contract, not engage in any form of fraud and corruption; and iv. Declaration and Commitment to the Code of Ethics for Persons Participating in Public Procurement and Asset Disposal. Further, we confirm that we have read and understood the full content and scope of fraud and corruption as informed in “Appendix 1 - Fraud and Corruption” attached to the Form of Tender.",
       "order": 20,
       "rule_id": "RR-DECL-FORM-OF-TENDER",
       "source_family": "declaration",
@@ -535,7 +1050,7 @@
         "form_id": "FORM-TENDER",
         "selector": "SEL-DECLARATION"
       },
-      "source_text_digest": "d302495f8639d1e240b6313235d197a8c92cf2c1d5065d3127fce6bb769196af",
+      "source_text_digest": "21e5d9c688f57551f5677f77eb7c2cf5ce103fb92cd6d517d1759044977b9657",
       "task_id": "TASK-COMPANY",
       "text_version": "1"
     },
@@ -791,303 +1306,6 @@
       "evaluation_mapping_id": "DM-DECL-CBQ",
       "field_definitions": [
         {
-          "control_id": "CTL-SINGLE-CHOICE",
-          "evidence_rule": null,
-          "field_key": "business_structure",
-          "help_text": "",
-          "label": "Business structure",
-          "required_rule": {
-            "rule_id": "RQ-ALWAYS"
-          },
-          "validation_id": "VAL-OPTION-IN-LIST",
-          "validation_parameters": {
-            "options": [
-              "Sole proprietor",
-              "Partnership",
-              "Registered company"
-            ]
-          },
-          "visibility_rule": {
-            "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
-          "control_id": "CTL-SHORT-TEXT",
-          "evidence_rule": null,
-          "field_key": "sole_proprietor_name",
-          "help_text": "Part (b) of the questionnaire.",
-          "label": "Sole proprietor: name in full",
-          "required_rule": {
-            "field_key": "business_structure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Sole proprietor"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 160,
-            "min_length": 2
-          },
-          "visibility_rule": {
-            "field_key": "business_structure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Sole proprietor"
-          }
-        },
-        {
-          "control_id": "CTL-INTEGER",
-          "evidence_rule": null,
-          "field_key": "sole_proprietor_age",
-          "help_text": "Part (b) of the questionnaire.",
-          "label": "Sole proprietor: age",
-          "required_rule": {
-            "field_key": "business_structure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Sole proprietor"
-          },
-          "validation_id": "VAL-INTEGER-RANGE",
-          "validation_parameters": {
-            "maximum": 120,
-            "minimum": 18
-          },
-          "visibility_rule": {
-            "field_key": "business_structure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Sole proprietor"
-          }
-        },
-        {
-          "control_id": "CTL-SHORT-TEXT",
-          "evidence_rule": null,
-          "field_key": "sole_proprietor_nationality",
-          "help_text": "Part (b) of the questionnaire.",
-          "label": "Sole proprietor: nationality",
-          "required_rule": {
-            "field_key": "business_structure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Sole proprietor"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 80,
-            "min_length": 2
-          },
-          "visibility_rule": {
-            "field_key": "business_structure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Sole proprietor"
-          }
-        },
-        {
-          "control_id": "CTL-SHORT-TEXT",
-          "evidence_rule": null,
-          "field_key": "sole_proprietor_country_of_origin",
-          "help_text": "Part (b) of the questionnaire.",
-          "label": "Sole proprietor: country of origin",
-          "required_rule": {
-            "field_key": "business_structure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Sole proprietor"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 80,
-            "min_length": 2
-          },
-          "visibility_rule": {
-            "field_key": "business_structure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Sole proprietor"
-          }
-        },
-        {
-          "control_id": "CTL-SHORT-TEXT",
-          "evidence_rule": null,
-          "field_key": "sole_proprietor_citizenship",
-          "help_text": "Part (b) of the questionnaire.",
-          "label": "Sole proprietor: citizenship",
-          "required_rule": {
-            "field_key": "business_structure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Sole proprietor"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 80,
-            "min_length": 2
-          },
-          "visibility_rule": {
-            "field_key": "business_structure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Sole proprietor"
-          }
-        },
-        {
-          "control_id": "CTL-LONG-TEXT",
-          "evidence_rule": null,
-          "field_key": "partners_details",
-          "help_text": "Part (c), Partnership. Write one partner per line: name; nationality; citizenship; % shares owned.",
-          "label": "Names of the partners, with the nationality, citizenship and percentage of shares owned by each",
-          "required_rule": {
-            "field_key": "business_structure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Partnership"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 2000,
-            "min_length": 10
-          },
-          "visibility_rule": {
-            "field_key": "business_structure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Partnership"
-          }
-        },
-        {
-          "control_id": "CTL-SINGLE-CHOICE",
-          "evidence_rule": null,
-          "field_key": "company_type",
-          "help_text": "Part (d)(i), registered company.",
-          "label": "Is the company a private or a public company?",
-          "required_rule": {
-            "field_key": "business_structure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Registered company"
-          },
-          "validation_id": "VAL-OPTION-IN-LIST",
-          "validation_parameters": {
-            "options": [
-              "Private company",
-              "Public company"
-            ]
-          },
-          "visibility_rule": {
-            "field_key": "business_structure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Registered company"
-          }
-        },
-        {
-          "control_id": "CTL-MONEY",
-          "evidence_rule": null,
-          "field_key": "nominal_capital",
-          "help_text": "Part (d)(ii), registered company.",
-          "label": "Nominal capital (Kenya Shillings)",
-          "required_rule": {
-            "field_key": "business_structure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Registered company"
-          },
-          "validation_id": "VAL-MONEY",
-          "validation_parameters": {
-            "currency": "KES",
-            "minimum": "0.00",
-            "scale": 2
-          },
-          "visibility_rule": {
-            "field_key": "business_structure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Registered company"
-          }
-        },
-        {
-          "control_id": "CTL-MONEY",
-          "evidence_rule": null,
-          "field_key": "issued_capital",
-          "help_text": "Part (d)(ii), registered company.",
-          "label": "Issued capital (Kenya Shillings)",
-          "required_rule": {
-            "field_key": "business_structure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Registered company"
-          },
-          "validation_id": "VAL-MONEY",
-          "validation_parameters": {
-            "currency": "KES",
-            "minimum": "0.00",
-            "scale": 2
-          },
-          "visibility_rule": {
-            "field_key": "business_structure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Registered company"
-          }
-        },
-        {
-          "control_id": "CTL-LONG-TEXT",
-          "evidence_rule": null,
-          "field_key": "directors_details",
-          "help_text": "Part (d)(iii), registered company. Write one director per line: name; nationality; citizenship; % shares owned.",
-          "label": "Names of the directors, with the nationality, citizenship and percentage of shares owned by each",
-          "required_rule": {
-            "field_key": "business_structure",
-            "rule_id": "RQ-WHEN-FIELD-EQUALS",
-            "value": "Registered company"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 2000,
-            "min_length": 10
-          },
-          "visibility_rule": {
-            "field_key": "business_structure",
-            "rule_id": "VS-WHEN-FIELD-EQUALS",
-            "value": "Registered company"
-          }
-        },
-        {
-          "control_id": "CTL-SHORT-TEXT",
-          "evidence_rule": null,
-          "field_key": "trade_licence_number",
-          "help_text": "Table A, item 6.",
-          "label": "Current trade licence number",
-          "required_rule": {
-            "rule_id": "RQ-ALWAYS"
-          },
-          "validation_id": "VAL-TEXT-LENGTH",
-          "validation_parameters": {
-            "max_length": 80,
-            "min_length": 3
-          },
-          "visibility_rule": {
-            "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
-          "control_id": "CTL-DATE",
-          "evidence_rule": null,
-          "field_key": "trade_licence_expiry",
-          "help_text": "Table A, item 6.",
-          "label": "Trade licence expiry date",
-          "required_rule": {
-            "rule_id": "RQ-ALWAYS"
-          },
-          "validation_id": "VAL-DATE-RANGE",
-          "validation_parameters": {},
-          "visibility_rule": {
-            "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
-          "control_id": "CTL-MONEY",
-          "evidence_rule": null,
-          "field_key": "maximum_business_value",
-          "help_text": "",
-          "label": "Maximum value of business the Tenderer handles",
-          "required_rule": {
-            "rule_id": "RQ-ALWAYS"
-          },
-          "validation_id": "VAL-MONEY",
-          "validation_parameters": {
-            "currency": "KES",
-            "minimum": "0.00",
-            "scale": 2
-          },
-          "visibility_rule": {
-            "rule_id": "VS-ALWAYS"
-          }
-        },
-        {
           "control_id": "CTL-YES-NO",
           "evidence_rule": null,
           "field_key": "procuring_entity_interest",
@@ -1108,20 +1326,41 @@
           }
         },
         {
-          "control_id": "CTL-LONG-TEXT",
+          "control_id": "CTL-ROW-GROUP",
           "evidence_rule": null,
-          "field_key": "procuring_entity_interest_details",
-          "help_text": "Part (e)(i). Write one person per line: name; designation in the Procuring Entity; interest or relationship.",
-          "label": "Names of the persons in the Procuring Entity who have an interest or relationship in this firm, their designation in the Procuring Entity, and the interest or relationship with the Tenderer",
+          "field_key": "procuring_entity_interest_persons",
+          "help_text": "Part (e)(i): each person's name, designation in the Procuring Entity, and interest or relationship with the Tenderer.",
+          "label": "Persons in the Procuring Entity who have an interest or relationship in this firm",
           "required_rule": {
             "field_key": "procuring_entity_interest",
             "rule_id": "RQ-WHEN-FIELD-EQUALS",
             "value": "Yes"
           },
-          "validation_id": "VAL-TEXT-LENGTH",
+          "validation_id": "VAL-ROW-GROUP",
           "validation_parameters": {
-            "max_length": 2000,
-            "min_length": 10
+            "columns": [
+              {
+                "key": "name",
+                "label": "Name of person",
+                "max_length": 160,
+                "type": "text"
+              },
+              {
+                "key": "designation",
+                "label": "Designation in the Procuring Entity",
+                "max_length": 160,
+                "type": "text"
+              },
+              {
+                "key": "relationship",
+                "label": "Interest or relationship with the Tenderer",
+                "max_length": 500,
+                "type": "text"
+              }
+            ],
+            "maximum_rows": 10,
+            "minimum_rows": 1,
+            "totals": []
           },
           "visibility_rule": {
             "field_key": "procuring_entity_interest",
@@ -2787,7 +3026,7 @@
     }
   ],
   "schema_version": 1,
-  "supported_renderer_version": "1.1.0",
+  "supported_renderer_version": "1.2.0",
   "template_key": "IT-EQUIPMENT-OPEN-V1",
-  "template_release": "1.3"
+  "template_release": "1.4"
 }

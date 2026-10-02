@@ -112,7 +112,7 @@ class TestDefinitionModel(IntegrationTestCase):
 	def test_a_supplied_field_is_never_bidder_editable(self):
 		legal = next(f for f in model().fields_of("company") if f.field_key == "legal_name")
 		self.assertEqual((legal.supplied, legal.editable), ({"source_id": "SV-ARRANGEMENT", "fact": "tenderer_name"}, False))
-		year = next(f for f in model().fields_of("company") if f.field_key == "year_of_registration")
+		year = next(f for f in model().fields_of("company") if f.field_key == "representative_address")
 		self.assertEqual((year.supplied, year.editable), (None, True))
 
 	def test_the_price_rows_name_their_money_inputs(self):

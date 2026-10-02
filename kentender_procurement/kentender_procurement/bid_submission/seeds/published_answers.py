@@ -23,11 +23,10 @@ TEXT = {
 	"support_description": "Escalation and warranty contacts supplied",
 }
 COMPANY = {
-	"state_owned_enterprise": "No",
+	"commissions_paid": "No",  # release 1.4: asked first; a Yes would need a table of recipients
 	"procuring_entity_interest": "No",
 	**{f"conflict_{i:02d}": "No" for i in range(1, 9)},  # item 9 (resolution) stays hidden until item 7 or 8 is Yes
 	"disclosure": "Arrived at the Tender independently",
-	"business_structure": "Registered company",
 }
 
 

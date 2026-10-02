@@ -81,6 +81,10 @@ def _supplied_missing(ctx: BidContext, field: Field) -> str:
 		if field.member == lead:
 			return "Complete the business profile in your Account."
 		return f"{ctx.entity_name(field.member)} must complete its business profile in its own Account."
+	if field.supplied["fact"] == "year_of_registration":  # the Account keeps it in the business profile
+		if field.member and field.member != (ctx.snapshot.get("organisation") or {}).get("organisation_id"):
+			return f"{ctx.entity_name(field.member)} must add its year of registration to its business profile in its own Account."
+		return "Add the year of registration to the business profile in your Account."
 	return _SUPPLIED_MISSING.get(field.supplied["fact"], "This fact is missing from the supplier account.")
 
 

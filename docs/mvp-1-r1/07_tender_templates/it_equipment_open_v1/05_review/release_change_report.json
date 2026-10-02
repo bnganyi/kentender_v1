@@ -81,72 +81,65 @@
       "category": "Response rules",
       "change_kind": "changed",
       "compatibility_effect": "Breaking",
-      "identity": "RR-DECL-CITD",
-      "summary": "Response rule RR-DECL-CITD changed."
-    },
-    {
-      "category": "Response rules",
-      "change_kind": "changed",
-      "compatibility_effect": "Breaking",
       "identity": "RR-DECL-FORM-OF-TENDER",
       "summary": "Response rule RR-DECL-FORM-OF-TENDER changed."
     },
     {
       "category": "Response rules",
-      "change_kind": "changed",
+      "change_kind": "added",
       "compatibility_effect": "Breaking",
-      "identity": "RR-DECL-SD1",
-      "summary": "Response rule RR-DECL-SD1 changed."
+      "identity": "RR-ENTITY-PROFILE",
+      "summary": "Response rule RR-ENTITY-PROFILE added."
     },
     {
       "category": "Response rules",
       "change_kind": "changed",
       "compatibility_effect": "Breaking",
-      "identity": "RR-DECL-SD2",
-      "summary": "Response rule RR-DECL-SD2 changed."
+      "identity": "RR-JV-MEMBER",
+      "summary": "Response rule RR-JV-MEMBER changed."
     },
     {
       "category": "Response rules",
       "change_kind": "changed",
       "compatibility_effect": "Breaking",
-      "identity": "RR-EVIDENCE-ELIGIBILITY-DOCUMENTS",
-      "summary": "Response rule RR-EVIDENCE-ELIGIBILITY-DOCUMENTS changed."
+      "identity": "RR-SUPPLIER-DETAILS",
+      "summary": "Response rule RR-SUPPLIER-DETAILS changed."
     },
     {
       "category": "Locked declarations",
       "change_kind": "changed",
       "compatibility_effect": "Breaking",
-      "identity": "TXT-RR-DECL-CBQ",
-      "summary": "Locked declaration TXT-RR-DECL-CBQ changed."
+      "identity": "TXT-RR-DECL-FORM-OF-TENDER",
+      "summary": "Locked declaration TXT-RR-DECL-FORM-OF-TENDER changed."
     },
     {
-      "category": "Locked declarations",
-      "change_kind": "changed",
+      "category": "Evaluation mappings",
+      "change_kind": "added",
       "compatibility_effect": "Breaking",
-      "identity": "TXT-RR-DECL-CITD",
-      "summary": "Locked declaration TXT-RR-DECL-CITD changed."
+      "identity": "DM-ENTITY-PROFILE",
+      "summary": "Evaluation mapping DM-ENTITY-PROFILE added."
     },
     {
-      "category": "Locked declarations",
-      "change_kind": "changed",
+      "category": "Contract mappings",
+      "change_kind": "added",
       "compatibility_effect": "Breaking",
-      "identity": "TXT-RR-DECL-SD1",
-      "summary": "Locked declaration TXT-RR-DECL-SD1 changed."
+      "identity": "DM-ENTITY-PROFILE",
+      "summary": "Contract mapping DM-ENTITY-PROFILE added."
     },
     {
-      "category": "Locked declarations",
+      "category": "Renderer compatibility",
       "change_kind": "changed",
       "compatibility_effect": "Breaking",
-      "identity": "TXT-RR-DECL-SD2",
-      "summary": "Locked declaration TXT-RR-DECL-SD2 changed."
+      "identity": "renderer",
+      "summary": "Renderer changed from wkhtmltopdf 0.12.6.1 (with patched qt) to BDS-GOODS-IT-V1 1.2.0 (wkhtmltopdf 0.12.6.1 (with patched qt))."
     }
   ],
   "overall_result": "Breaking — not interchangeable with the preceding release",
-  "preceding_release": "1.2",
-  "release_id": "stdr-9b953bcf-fb1e-4e85-b9c1-6ac57218d0e2",
+  "preceding_release": "1.3",
+  "release_id": "stdr-c25e6578-3700-4df8-bbaa-8c2041be2f01",
   "schema_version": 1,
   "template_key": "IT-EQUIPMENT-OPEN-V1",
-  "template_release": "1.3",
+  "template_release": "1.4",
   "totals": {
     "Assets": {
       "added": 0,
@@ -154,7 +147,7 @@
       "removed": 0
     },
     "Contract mappings": {
-      "added": 0,
+      "added": 1,
       "changed": 0,
       "removed": 0
     },
@@ -164,23 +157,23 @@
       "removed": 0
     },
     "Evaluation mappings": {
-      "added": 0,
+      "added": 1,
       "changed": 0,
       "removed": 0
     },
     "Locked declarations": {
       "added": 0,
-      "changed": 4,
+      "changed": 1,
       "removed": 0
     },
     "Renderer compatibility": {
       "added": 0,
-      "changed": 0,
+      "changed": 1,
       "removed": 0
     },
     "Response rules": {
-      "added": 0,
-      "changed": 6,
+      "added": 1,
+      "changed": 4,
       "removed": 0
     },
     "Source treatments": {

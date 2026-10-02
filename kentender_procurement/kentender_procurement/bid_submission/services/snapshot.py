@@ -19,13 +19,12 @@ import frappe
 from kentender_procurement.bid_submission.services import records, supplier_gateway
 
 SNAPSHOT = "Bid Organisation Snapshot"
-ORGANISATION_FACTS = ("organisation_id", "legal_name", "country", "registration_number", "tax_identifier", "registered_address")
-MEMBER_FACTS = ("organisation_id", "legal_name", "country", "registration_number", "registered_address")
+ORGANISATION_FACTS = ("organisation_id", "legal_name", "country", "registration_number", "tax_identifier", "registered_address", "year_of_registration")
+MEMBER_FACTS = ("organisation_id", "legal_name", "country", "registration_number", "registered_address", "year_of_registration")
 #: The standing business facts of an entity's Account profile (release 1.4, `SV-ENTITY-PROFILE`).
 PROFILE_FACTS = (
 	"business_structure", "sole_proprietor_name", "sole_proprietor_age", "sole_proprietor_nationality", "sole_proprietor_country_of_origin", "sole_proprietor_citizenship",
 	"partners", "company_type", "nominal_capital", "issued_capital", "directors", "trade_licence_number", "trade_licence_expiry", "maximum_business_value", "state_owned",
-	"year_of_registration",
 )
 LIST_FACTS = ("partners", "directors")
 PROFILE_LABELS = {
@@ -33,12 +32,20 @@ PROFILE_LABELS = {
 	"sole_proprietor_nationality": "Sole proprietor: nationality", "sole_proprietor_country_of_origin": "Sole proprietor: country of origin",
 	"sole_proprietor_citizenship": "Sole proprietor: citizenship", "partners": "Partners", "company_type": "Company type", "nominal_capital": "Nominal capital",
 	"issued_capital": "Issued capital", "directors": "Directors", "trade_licence_number": "Trade licence number", "trade_licence_expiry": "Trade licence expiry",
-	"maximum_business_value": "Maximum value of business handled", "state_owned": "State-owned", "year_of_registration": "Year of registration",
+	"maximum_business_value": "Maximum value of business handled", "state_owned": "State-owned",
 }
 
 
 def _pick(row: dict[str, Any] | None, keys: tuple[str, ...]) -> dict[str, Any]:
 	return {k: (row or {}).get(k) or "" for k in keys}
+
+
+def _identity(organisation_id: str, keys: tuple[str, ...]) -> dict[str, Any]:
+	"""An organisation's identity facts, with its year of registration, which the Account keeps in the business profile."""
+	picked = _pick(supplier_gateway.organisation(organisation_id=organisation_id), keys)
+	if "year_of_registration" in keys:
+		picked["year_of_registration"] = (supplier_gateway.business_profile(organisation_id=organisation_id) or {}).get("year_of_registration") or ""
+	return picked
 
 
 def _profile(organisation_id: str) -> dict[str, Any]:
@@ -51,8 +58,8 @@ def facts(lead: str, members: list[str]) -> dict[str, Any]:
 	organisation = supplier_gateway.organisation(organisation_id=lead)
 	entities = list(members) or [lead]  # a joint venture's lead is its first member
 	return {
-		"organisation": _pick(organisation, ORGANISATION_FACTS),
-		"members": [_pick(supplier_gateway.organisation(organisation_id=m), MEMBER_FACTS) for m in members],
+		"organisation": _identity(lead, ORGANISATION_FACTS),
+		"members": [_identity(m, MEMBER_FACTS) for m in members],
 		"profiles": {entity: _profile(entity) for entity in entities},
 		"account_record_version": int((organisation or {}).get("record_version") or 0),
 	}

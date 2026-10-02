@@ -1,5 +1,5 @@
 {
-  "definition_digest": "8cecd5240486e4ed7e531e80260b38a9b9abb7e2722dead902ee3eaaffff3894",
+  "definition_digest": "3af04d75b6bc66ee93cdc8774b028ef48d9c5c1c8419e818f8180e6a4ccd8d0b",
   "eligibility_mappings": [
     {
       "evaluation_group_id": "EVG-ELIGIBILITY",
@@ -49,6 +49,7 @@
     "RR-DECL-FORM-OF-TENDER",
     "RR-DECL-SD1",
     "RR-DECL-SD2",
+    "RR-ENTITY-PROFILE",
     "RR-EVIDENCE-AFTER-SALES",
     "RR-EVIDENCE-DATASHEET",
     "RR-EVIDENCE-ELIGIBILITY-DOCUMENTS",

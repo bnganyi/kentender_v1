@@ -37,9 +37,9 @@ class DocumentsCase(IntegrationTestCase):
 class TestTemplateBinding(DocumentsCase):
 	def test_bind_returns_the_installed_release_and_its_digests(self):
 		binding = template_binding.bind()
-		self.assertEqual((binding["template_key"], binding["template_release"]), (template_binding.TEMPLATE_KEY, "1.3"))
+		self.assertEqual((binding["template_key"], binding["template_release"]), (template_binding.TEMPLATE_KEY, "1.4"))
 		self.assertTrue(binding["template_release_id"].startswith("stdr-"))
-		self.assertEqual((binding["renderer_profile_id"], binding["supported_renderer_version"]), ("BDS-GOODS-IT-V1", "1.1.0"))
+		self.assertEqual((binding["renderer_profile_id"], binding["supported_renderer_version"]), ("BDS-GOODS-IT-V1", "1.2.0"))
 		self.assertEqual(len(binding["bundle_digest"]), 64)
 		self.assertIn("Youth", binding["supported_reservation_categories"])
 
