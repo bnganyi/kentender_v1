@@ -20,6 +20,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from kentender_core.utils import row_tables
 from kentender_procurement.std_templates.compiler import locked_text
 from kentender_procurement.std_templates.compiler.canonical import CanonicalError, canonical_json, is_sha256, sha256_bytes
 from kentender_procurement.std_templates.compiler.errors import fail
@@ -85,8 +86,11 @@ FIELD_KEYS: tuple[str, ...] = (
 #: Submission supplies read-only, and named values it puts into the label.
 OPTIONAL_FIELD_KEYS: tuple[str, ...] = ("supplied_value", "label_parameters")
 SUPPLIED_VALUE_KEYS: tuple[str, ...] = ("source_id", "fact")
-REPETITIONS: tuple[str, ...] = ("one", "per_source", "per_arrangement_member")
+REPETITIONS: tuple[str, ...] = ("one", "per_source", "per_arrangement_member", "per_entity")
 PER_MEMBER = "per_arrangement_member"
+PER_ENTITY = "per_entity"
+ROW_GROUP = ("CTL-ROW-GROUP", "VAL-ROW-GROUP")
+ROW_GROUP_PARAMETERS = ("columns", "minimum_rows", "maximum_rows", "totals")
 _PLACEHOLDER = re.compile(r"\{([a-z_]+)\}")
 MAPPING_KEYS: tuple[str, ...] = (
 	"mapping_id", "response_rule_id", "evaluation_treatment", "evaluation_group_id", "evaluation_result_rule",
@@ -224,6 +228,18 @@ def _check_parameters(params: Any, declared: dict[str, str], selector_facts: set
 				fail("STD_DEFINITION_INVALID", f"Source fact {value['source_fact']!r} is not published by this selector.", identity=f"{identity}.{name}")
 
 
+def _check_row_group(control: str, validation: str, params: dict[str, Any], identity: str) -> None:
+	"""A table control and its validation go together, and its definition must be usable:
+	named columns of released types, at most ten rows, totals on numeric columns."""
+	if (control == ROW_GROUP[0]) != (validation == ROW_GROUP[1]):
+		fail("STD_DEFINITION_INVALID", f"{ROW_GROUP[0]} and {ROW_GROUP[1]} are released only together.", identity=identity)
+	if control != ROW_GROUP[0]:
+		return
+	problems = row_tables.check_definition(params.get("columns"), minimum_rows=params.get("minimum_rows", 0), maximum_rows=params.get("maximum_rows", row_tables.MAX_ROWS), totals=params.get("totals", []))
+	if problems:
+		fail("STD_DEFINITION_INVALID", f"The table definition is unusable: {problems[0]}", identity=identity)
+
+
 def _check_named_rule(rule: Any, catalogue: dict[str, dict[str, Any]], identity: str, field_keys: set[str], selector_flags: set[str]) -> None:
 	if not isinstance(rule, dict) or rule.get("rule_id") not in catalogue:
 		fail("STD_DEFINITION_INVALID", "Unknown named rule.", identity=identity)
@@ -248,8 +264,9 @@ def _check_supplied_value(fdef: dict[str, Any], sources: dict[str, dict[str, Any
 	source = sources[value["source_id"]]
 	if value["fact"] not in source["facts"]:
 		fail("STD_DEFINITION_INVALID", f"Supplied-value source {value['source_id']} does not publish {value['fact']!r}.", identity=identity)
-	if source["repetition"] == PER_MEMBER and comp.get("repetition") != PER_MEMBER:
-		fail("STD_DEFINITION_INVALID", "A per-member source is only released inside a per-member composition.", identity=identity)
+	for repetition, noun in ((PER_MEMBER, "per-member"), (PER_ENTITY, "per-entity")):
+		if source["repetition"] == repetition and comp.get("repetition") != repetition:
+			fail("STD_DEFINITION_INVALID", f"A {noun} source is only released inside a {noun} composition.", identity=identity)
 	if is_evidence:
 		fail("STD_DEFINITION_INVALID", "An evidence reference is never a supplied value.", identity=identity)
 
@@ -311,7 +328,7 @@ def validate(assets: ReleaseAssets) -> None:
 			fail("STD_DEFINITION_INVALID", "Characteristic control maps to unknown vocabulary.", identity=kind)
 	supplied_sources = _ids(profile.get("supplied_value_sources", []), "source_id", "supplied-value source")
 	for source_id, source in supplied_sources.items():
-		if set(source) != {"source_id", "meaning", "facts", "repetition"} or not source["facts"] or source["repetition"] not in ("one", PER_MEMBER):
+		if set(source) != {"source_id", "meaning", "facts", "repetition"} or not source["facts"] or source["repetition"] not in ("one", PER_MEMBER, PER_ENTITY):
 			fail("STD_DEFINITION_INVALID", "Supplied-value source keys differ from the released contract.", identity=source_id)
 	label_parameters = _ids(profile.get("label_parameters", []), "parameter", "label parameter")
 	for name, row in label_parameters.items():
@@ -388,6 +405,7 @@ def validate(assets: ReleaseAssets) -> None:
 				if fdef["validation_id"] not in validations:
 					fail("STD_DEFINITION_INVALID", "Unknown validation.", identity=fid)
 				_check_parameters(fdef["validation_parameters"], validations[fdef["validation_id"]]["parameters"], set(spec.facts), fid)
+				_check_row_group(control, fdef["validation_id"], fdef["validation_parameters"], fid)
 			_check_named_rule(fdef["required_rule"], required_rules, f"{fid}.required_rule", field_keys - {fdef["field_key"]}, set(spec.flags))
 			_check_named_rule(fdef["visibility_rule"], visibility_rules, f"{fid}.visibility_rule", field_keys - {fdef["field_key"]}, set(spec.flags))
 			is_evidence = control == "CTL-EVIDENCE-REFERENCE"

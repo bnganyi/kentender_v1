@@ -284,6 +284,10 @@ def compile_published_bid_definition(
 				"source_lineage": copy.deepcopy(instance["lineage"]),
 				"response_ids": list(group_ids.values()),
 			}
+			if repetitions.get(rule["composition_id"]) == "per_entity":
+				# Bid Submission repeats this group once per entity of the bid: the lead
+				# organisation, or each member of the joint-venture arrangement.
+				group["repetition"] = "per_entity"
 			if repetitions.get(rule["composition_id"]) == "per_arrangement_member":
 				# Bid Submission repeats this group once per member of the bidder's
 				# joint-venture arrangement; each copy keeps these response ids plus

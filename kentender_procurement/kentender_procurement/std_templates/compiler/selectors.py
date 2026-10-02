@@ -184,6 +184,13 @@ def _arrangement_members(p: dict[str, Any], _params: dict[str, Any], constants: 
 	return [_instance("JV-MEMBER", {"tender_reference": p["tender"]["reference"]}, {"tender_id": p["tender"]["tender_id"]})]
 
 
+def _entities(p: dict[str, Any], _params: dict[str, Any], constants: dict[str, Any]) -> list[Instance]:
+	"""Release 1.4: the one template group Bid Submission repeats for each entity of
+	the bid (per_entity): the lead organisation of a single bid, or each member of a
+	joint-venture arrangement."""
+	return [_instance("ENTITY", {"tender_reference": p["tender"]["reference"]}, {"tender_id": p["tender"]["tender_id"]})]
+
+
 def _warranty(p: dict[str, Any], _params: dict[str, Any], constants: dict[str, Any]) -> list[Instance]:
 	w = p["warranty_support"]
 	return [_instance("WARRANTY-SUPPORT", dict(w), {"requisition_id": p["requisition"]["requisition_id"]})]
@@ -304,6 +311,7 @@ SELECTORS: dict[str, SelectorSpec] = {
 	),
 	"SEL-EFFECTIVE-ADDENDA": SelectorSpec(("document",), (), ("addendum_id",), (), _effective_addenda),
 	"SEL-ARRANGEMENT-MEMBERS": SelectorSpec(("supplier",), (), ("tender_reference",), (), _arrangement_members),
+	"SEL-ENTITIES": SelectorSpec(("supplier",), (), ("tender_reference",), (), _entities),
 	"SEL-WARRANTY-SUPPORT": SelectorSpec(
 		("warranty_support",), (),
 		("minimum_warranty_months", "onsite_support_required", "maximum_support_response_hours", "manufacturer_support_required", "service_location_constraint", "support_description"),

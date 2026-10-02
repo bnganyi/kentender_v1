@@ -57,6 +57,20 @@ _BDS_GOODS_IT_V1_1_1_0_CAPABILITIES: dict[str, Any] = {
 	"repetitions": ["per_arrangement_member"],
 }
 
+#: 1.2.0 (template release 1.4; the supplier business profile and bounded
+#: tables): 1.1.0 plus the row-group control, the entity-profile composition
+#: repeated per entity (the lead organisation and each joint-venture member),
+#: and the source of each entity's standing business facts.
+_BDS_GOODS_IT_V1_1_2_0_CAPABILITIES: dict[str, Any] = {
+	**_BDS_GOODS_IT_V1_1_1_0_CAPABILITIES,
+	"supported_renderer_version": "1.2.0",
+	"controls": _BDS_GOODS_IT_V1_1_1_0_CAPABILITIES["controls"] + ["CTL-ROW-GROUP"],
+	"compositions": _BDS_GOODS_IT_V1_1_1_0_CAPABILITIES["compositions"] + ["COMP-ENTITY-PROFILE"],
+	"validations": _BDS_GOODS_IT_V1_1_1_0_CAPABILITIES["validations"] + ["VAL-ROW-GROUP"],
+	"supplied_value_sources": _BDS_GOODS_IT_V1_1_1_0_CAPABILITIES["supplied_value_sources"] + ["SV-ENTITY-PROFILE"],
+	"repetitions": _BDS_GOODS_IT_V1_1_1_0_CAPABILITIES["repetitions"] + ["per_entity"],
+}
+
 
 def _document(version: str) -> DocumentAdapter:
 	return DocumentAdapter(
@@ -70,6 +84,7 @@ def _document(version: str) -> DocumentAdapter:
 REGISTRY: dict[tuple[str, str], dict[str, Any]] = {
 	(BDS_GOODS_IT_V1, "1.0.0"): {"document": _document("1.0.0"), "bid_workspace": _BDS_GOODS_IT_V1_1_0_0_CAPABILITIES},
 	(BDS_GOODS_IT_V1, "1.1.0"): {"document": _document("1.1.0"), "bid_workspace": _BDS_GOODS_IT_V1_1_1_0_CAPABILITIES},
+	(BDS_GOODS_IT_V1, "1.2.0"): {"document": _document("1.2.0"), "bid_workspace": _BDS_GOODS_IT_V1_1_2_0_CAPABILITIES},
 }
 
 
