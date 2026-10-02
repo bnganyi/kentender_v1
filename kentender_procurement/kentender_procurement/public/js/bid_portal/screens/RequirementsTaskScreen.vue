@@ -10,6 +10,7 @@
 import { computed, inject, onMounted, onUnmounted, reactive, ref, watch } from "vue";
 import PortalGuidance from "../../../../../../kentender_core/kentender_core/public/js/kt_portal/PortalGuidance.vue";
 import CommonState from "../components/CommonState.vue";
+import AttachmentCount from "../components/AttachmentCount.vue";
 import FieldControl from "../components/FieldControl.vue";
 import ResponseDrawer from "../components/ResponseDrawer.vue";
 import { fixRoute } from "../composables/fixRoute.js";
@@ -37,6 +38,14 @@ const guard = portal.createSequenceGuard();
 const runner = portal.createCommandRunner({ ref }, { onError: (e) => (failure.value = e.message) });
 const pending = computed(() => runner.pending.value);
 const bid = computed(() => (data.value ? { reference: data.value.bid.reference, record_version: data.value.bid.record_version } : null));
+// Column widths in percent, one set per table, so the Status and Action columns
+// share their edges down the page and no header wraps. Each set adds up to 100.
+const COLUMNS = { technical: [22, 26, 17, 15, 11, 9], warranty: [48, 17, 15, 11, 9], acceptance: [80, 11, 9], evidence: [48, 32, 11, 9], experience: [22, 26, 17, 26, 9] };
+// What the person does with a row: respond to it first, edit it after, view it when the bid cannot change
+function actionLabel(row) {
+	if (!canEdit.value) return "View";
+	return row.status === "Not started" ? "Respond" : "Edit";
+}
 const rows = computed(() => (data.value ? [...data.value.technical, ...data.value.warranty, ...(data.value.experience ? data.value.experience.rows : []), ...data.value.acceptance, ...data.value.evidence] : []));
 
 function goodsChanges() {
@@ -160,15 +169,17 @@ onMounted(() => {
 		<div v-if="data[table[0]].length" :id="'bds-region-' + table[0]" class="kt-region">
 			<h2>{{ __(table[1]) }}</h2>
 			<div class="bds-region-body">
-				<table v-if="!narrow" class="kt-table" :data-testid="'bds-' + table[0] + '-table'">
-					<thead><tr><th>{{ __("Requirement") }}</th><th v-if="table[0] === 'technical'">{{ __("Tender requirement") }}</th><th>{{ __("Your response") }}</th><th>{{ __("Evidence") }}</th><th>{{ __("Status") }}</th></tr></thead>
+				<table v-if="!narrow" class="kt-table bds-fixed-table" :data-testid="'bds-' + table[0] + '-table'">
+					<colgroup><col v-for="(w, i) in COLUMNS[table[0]]" :key="i" :style="'width:' + w + '%'" /></colgroup>
+					<thead><tr><th>{{ __("Requirement") }}</th><th v-if="table[0] === 'technical'">{{ __("Tender requirement") }}</th><th>{{ __("Your response") }}</th><th>{{ __("Evidence") }}</th><th>{{ __("Status") }}</th><th>{{ __("Action") }}</th></tr></thead>
 					<tbody>
 						<tr v-for="row in data[table[0]]" :key="row.key" :data-testid="'bds-row-' + row.key">
-							<td class="bds-strong"><button type="button" class="bds-link-button bds-strong" @click="open(row.key)">{{ table[0] === 'warranty' && row.requirement ? row.label + ' ' + row.requirement : row.label }}</button></td>
+							<td><span class="bds-strong">{{ row.label }}</span><div v-if="table[0] === 'warranty' && row.requirement" class="bds-muted">{{ row.requirement }}</div></td>
 							<td v-if="table[0] === 'technical'">{{ row.requirement }}</td>
 							<td>{{ row.response }}</td>
-							<td>{{ row.evidence }}</td>
+							<td><AttachmentCount :count="row.evidence_count" :names="row.evidence_names" :rejected="row.evidence_rejected" /></td>
 							<td><span class="kt-status" :class="'is-' + row.tone">{{ row.status }}</span></td>
+							<td><button type="button" class="bds-link-button" @click="open(row.key)">{{ __(actionLabel(row)) }}</button></td>
 						</tr>
 					</tbody>
 				</table>
@@ -177,9 +188,9 @@ onMounted(() => {
 						<div class="bds-card-title">{{ row.label }}</div>
 						<div v-if="row.requirement" class="bds-card-fact"><span class="kt-label">{{ __("Tender requirement") }}</span><span>{{ row.requirement }}</span></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Your response") }}</span><span>{{ row.response }}</span></div>
-						<div class="bds-card-fact"><span class="kt-label">{{ __("Evidence") }}</span><span>{{ row.evidence }}</span></div>
+						<div class="bds-card-fact"><span class="kt-label">{{ __("Evidence") }}</span><span><AttachmentCount :count="row.evidence_count" :names="row.evidence_names" :rejected="row.evidence_rejected" /></span></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Status") }}</span><span><span class="kt-status" :class="'is-' + row.tone">{{ row.status }}</span></span></div>
-						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="open(row.key)">{{ canEdit ? __("Edit") : __("View") }}</button></div>
+						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="open(row.key)">{{ __(actionLabel(row)) }}</button></div>
 					</div>
 				</div>
 			</div>
@@ -190,14 +201,15 @@ onMounted(() => {
 			<h2>{{ __("Comparable experience") }}</h2>
 			<div class="bds-region-body">
 				<p v-if="data.experience.text" class="bds-muted">{{ data.experience.text }}</p>
-				<table v-if="!narrow" class="kt-table" data-testid="bds-experience-table">
+				<table v-if="!narrow" class="kt-table bds-fixed-table" data-testid="bds-experience-table">
+					<colgroup><col v-for="(w, i) in COLUMNS.experience" :key="i" :style="'width:' + w + '%'" /></colgroup>
 					<thead><tr><th>{{ __("Customer") }}</th><th>{{ __("Supply") }}</th><th>{{ __("Completion date") }}</th><th>{{ __("Evidence") }}</th><th>{{ __("Action") }}</th></tr></thead>
 					<tbody>
 						<tr v-for="row in data.experience.rows" :key="row.key" :data-testid="'bds-row-' + row.key">
 							<td class="bds-strong">{{ row.customer || row.label }}</td>
 							<td>{{ row.supply }}</td>
 							<td>{{ row.completed }}</td>
-							<td>{{ row.evidence }}</td>
+							<td><AttachmentCount :count="row.evidence_count" :names="row.evidence_names" :rejected="row.evidence_rejected" /></td>
 							<td><button type="button" class="bds-link-button" @click="open(row.key)">{{ canEdit ? __("Edit") : __("View") }}</button></td>
 						</tr>
 					</tbody>
@@ -207,7 +219,7 @@ onMounted(() => {
 						<div class="bds-card-title">{{ row.customer || row.label }}</div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Supply") }}</span><span>{{ row.supply }}</span></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Completion date") }}</span><span>{{ row.completed }}</span></div>
-						<div class="bds-card-fact"><span class="kt-label">{{ __("Evidence") }}</span><span>{{ row.evidence }}</span></div>
+						<div class="bds-card-fact"><span class="kt-label">{{ __("Evidence") }}</span><span><AttachmentCount :count="row.evidence_count" :names="row.evidence_names" :rejected="row.evidence_rejected" /></span></div>
 						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="open(row.key)">{{ canEdit ? __("Edit") : __("View") }}</button></div>
 					</div>
 				</div>
@@ -217,10 +229,23 @@ onMounted(() => {
 		<div v-if="data.acceptance.length" id="bds-region-acceptance" class="kt-region" data-testid="bds-acceptance">
 			<h2>{{ __("Acceptance") }}</h2>
 			<div class="bds-region-body">
-				<div v-for="row in data.acceptance" :key="row.key" class="bds-acceptance-row">
-					<span>{{ row.label }}</span>
-					<span class="kt-status" :class="'is-' + row.tone">{{ row.status }}</span>
-					<button type="button" class="bds-link-button" @click="open(row.key)">{{ canEdit ? __("Edit") : __("View") }}</button>
+				<table v-if="!narrow" class="kt-table bds-fixed-table" data-testid="bds-acceptance-table">
+					<colgroup><col v-for="(w, i) in COLUMNS.acceptance" :key="i" :style="'width:' + w + '%'" /></colgroup>
+					<thead><tr><th>{{ __("Requirement") }}</th><th>{{ __("Status") }}</th><th>{{ __("Action") }}</th></tr></thead>
+					<tbody>
+						<tr v-for="row in data.acceptance" :key="row.key" :data-testid="'bds-row-' + row.key">
+							<td class="bds-strong">{{ row.label }}</td>
+							<td><span class="kt-status" :class="'is-' + row.tone">{{ row.status }}</span></td>
+							<td><button type="button" class="bds-link-button" @click="open(row.key)">{{ __(actionLabel(row)) }}</button></td>
+						</tr>
+					</tbody>
+				</table>
+				<div v-else>
+					<div v-for="row in data.acceptance" :key="row.key" class="bds-acceptance-row">
+						<span>{{ row.label }}</span>
+						<span class="kt-status" :class="'is-' + row.tone">{{ row.status }}</span>
+						<button type="button" class="bds-link-button" @click="open(row.key)">{{ __(actionLabel(row)) }}</button>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -228,14 +253,15 @@ onMounted(() => {
 		<div v-if="data.evidence.length" id="bds-region-evidence" class="kt-region">
 			<h2>{{ __("Supporting evidence") }}</h2>
 			<div class="bds-region-body">
-				<table v-if="!narrow" class="kt-table" data-testid="bds-evidence-table">
+				<table v-if="!narrow" class="kt-table bds-fixed-table" data-testid="bds-evidence-table">
+					<colgroup><col v-for="(w, i) in COLUMNS.evidence" :key="i" :style="'width:' + w + '%'" /></colgroup>
 					<thead><tr><th>{{ __("Evidence") }}</th><th>{{ __("File") }}</th><th>{{ __("Status") }}</th><th>{{ __("Action") }}</th></tr></thead>
 					<tbody>
 						<tr v-for="row in data.evidence" :key="row.key" :data-testid="'bds-row-' + row.key">
 							<td class="bds-strong">{{ row.label }}</td>
 							<td>{{ row.file || "—" }}</td>
 							<td><span class="kt-status" :class="'is-' + row.file_tone">{{ row.file_status }}</span></td>
-							<td><button type="button" class="bds-link-button" @click="open(row.key)">{{ !canEdit ? __("View") : row.file ? __("Replace") : __("Upload") }}</button></td>
+							<td><button type="button" class="bds-link-button" @click="open(row.key)">{{ !canEdit ? __("View") : row.file ? __("Edit") : __("Upload") }}</button></td>
 						</tr>
 					</tbody>
 				</table>
@@ -244,7 +270,7 @@ onMounted(() => {
 						<div class="bds-card-title">{{ row.label }}</div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("File") }}</span><span>{{ row.file || "—" }}</span></div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Status") }}</span><span><span class="kt-status" :class="'is-' + row.file_tone">{{ row.file_status }}</span></span></div>
-						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="open(row.key)">{{ !canEdit ? __("View") : row.file ? __("Replace") : __("Upload") }}</button></div>
+						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="open(row.key)">{{ !canEdit ? __("View") : row.file ? __("Edit") : __("Upload") }}</button></div>
 					</div>
 				</div>
 			</div>

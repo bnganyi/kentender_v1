@@ -166,6 +166,15 @@ def link_account_evidence_to_bid(bid_reference: str, handle: str, account_eviden
 
 
 @frappe.whitelist(methods=["POST"])
+def replace_bid_evidence(bid_reference: str, evidence_id: str, expected_record_version=None, organisation: str = "", idempotency_key: str = "") -> dict[str, Any]:
+	"""A file's own Replace — multipart, the new file in the field named `file`; the named current file is retired in the same change."""
+	from kentender_procurement.bid_submission.services import evidence
+
+	filename, content = _upload("file")
+	return evidence.replace_bid_evidence(bid_reference=bid_reference, evidence_id=evidence_id, filename=filename, content=content, expected_record_version=expected_record_version, organisation=organisation, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist(methods=["POST"])
 def remove_bid_evidence(bid_reference: str, evidence_id: str, expected_record_version=None, organisation: str = "", idempotency_key: str = "") -> dict[str, Any]:
 	from kentender_procurement.bid_submission.services import evidence
 

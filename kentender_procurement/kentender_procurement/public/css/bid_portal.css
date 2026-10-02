@@ -109,7 +109,11 @@
 .kt-industry.kt-portal .bds-file-row { display: flex; justify-content: space-between; align-items: center; gap: var(--kt-space-4); padding: var(--kt-space-3) 0; border-top: 1px solid var(--kt-color-divider); border-bottom: 1px solid var(--kt-color-divider); font-size: 14px; flex-wrap: wrap; }
 .kt-industry.kt-portal .bds-file-name { overflow-wrap: anywhere; }
 .kt-industry.kt-portal .bds-file-actions { display: flex; gap: var(--kt-space-4); align-items: center; }
-.kt-industry.kt-portal .bds-link-button { background: none; border: 0; padding: 0; color: var(--kt-color-link, var(--kt-color-accent)); text-decoration: underline; cursor: pointer; font: inherit; }
+.kt-industry.kt-portal .bds-link-button { background: none; border: 0; padding: 0; color: var(--kt-color-link, var(--kt-color-accent)); text-decoration: underline; cursor: pointer; font: inherit; text-align: left; }
+/* Tables whose columns are set in percent, so the Status and Action columns line up from one table to the next */
+.kt-industry.kt-portal .bds-fixed-table { table-layout: fixed; width: 100%; }
+.kt-industry.kt-portal .bds-fixed-table th { white-space: nowrap; }
+.kt-industry.kt-portal .bds-fixed-table td { overflow-wrap: anywhere; }
 .kt-industry.kt-portal .bds-port-row { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: var(--kt-space-3); }
 @media (max-width: 800px) {
 	.kt-industry.kt-portal .bds-drawer { width: 100%; }
@@ -166,3 +170,11 @@
 
 /* BDS-DES-13 / BDS-DES-14-REPLACED receipt (Board D): the replacement's lineage line. */
 .kt-industry.kt-portal .bds-lineage { display: flex; gap: var(--kt-space-4); align-items: center; flex-wrap: wrap; font-size: 14px; }
+
+/* A checkbox choice inside a field: the field's own `label` rule (block, 12px, margin) outranks the checkbox kit's, which
+   left the box an inline span with no size. Restore the kit's layout for the labels that are checkboxes. */
+.kt-industry.kt-portal .kt-field > label.kt-checkbox { display: inline-flex; align-items: flex-start; gap: 8px; margin-bottom: 0; font-size: 14px; color: var(--kt-color-text); min-height: 32px; }
+/* The evidence column: a paperclip and a count, whatever the file names are */
+.kt-industry.kt-portal .bds-attachments { display: inline-flex; align-items: center; gap: 4px; color: var(--kt-color-neutral-800); white-space: nowrap; }
+.kt-industry.kt-portal .bds-attachment-count { font-weight: 600; }
+.kt-industry.kt-portal .bds-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

@@ -174,6 +174,52 @@ def _keep_rejection(ctx, field, *, filename: str, reason: str, source: str, acto
 	return row.name
 
 
+def replace_bid_evidence(*, bid_reference: str, evidence_id: str, filename: str, content: bytes, expected_record_version, organisation: str = "", idempotency_key: str = "", user: str | None = None) -> dict[str, Any]:
+	"""A file's own Replace: the new file takes the place of one of this bid's
+	current files in a single change, so the requirement never holds both and
+	the Draft version moves once. It works where the requirement takes one file
+	(an upload would be refused as over the maximum). A refused new file leaves
+	the old one in place and is kept as a Rejected record, as for an upload."""
+	actor = authz.require_person(cstr(user or frappe.session.user))
+	import hashlib
+
+	payload = {"bid_reference": cstr(bid_reference).strip(), "evidence_id": cstr(evidence_id).strip(), "filename": cstr(filename), "digest": hashlib.sha256(content or b"").hexdigest(), "expected_record_version": expected_record_version, "organisation": cstr(organisation).strip()}
+	return records.idempotent(
+		idempotency_key, "ReplaceBidEvidence", payload,
+		lambda: _replace(actor=actor, bid_reference=payload["bid_reference"], evidence_id=payload["evidence_id"], filename=filename, content=content, expected_record_version=expected_record_version, organisation=payload["organisation"]),
+		actor=actor, organisation=payload["organisation"],
+	)
+
+
+def _replace(*, actor: str, bid_reference: str, evidence_id: str, filename: str, content: bytes, expected_record_version, organisation: str) -> dict[str, Any]:
+	at = clock.now()
+	ctx = bid_context.load(bid_reference, actor=actor, organisation=organisation, at=at)
+	authz.active_account(ctx.workspace.lead_organisation)
+	save.require_open(ctx)
+	records.check_version(ctx.workspace, expected_record_version)
+	from kentender_procurement.bid_submission.services import addendum
+
+	refreshed = addendum.refresh(ctx, actor=actor, at=at)
+	if refreshed:
+		return refreshed
+	old = frappe.db.get_value(EVIDENCE, {"name": evidence_id, "bid_workspace": ctx.workspace.name, "status": "Current"}, ["name", "evidence_requirement", "scan_status"], as_dict=True)
+	field = ctx.model.by_key(old.evidence_requirement) if old and old.scan_status != "Rejected" else None
+	if not field:
+		fail("BDS_UNKNOWN_RESPONSE")
+	before = _accepted(ctx, field.key)
+	try:
+		with records.atomic("replace-bid-evidence"):
+			row, _checked = _store(ctx, field, filename=filename, content=content, actor=actor, at=at)
+			records.save(frappe.get_doc(EVIDENCE, old.name).update({"status": "Replaced", "removed_by": actor, "removed_at": at}))
+			change = _commit_change(ctx, field, before=before, actor=actor, at=at, event="BidEvidenceReplaced", payload={"evidence": row.name, "replaced": old.name, "scan_status": row.scan_status})
+	except _Rejected as rejected:
+		kept = _keep_rejection(ctx, field, filename=filename, reason=str(rejected), source="", actor=actor, at=at)
+		return {"ok": False, "code": "BDS_EVIDENCE_REJECTED", "message": MESSAGES["BDS_EVIDENCE_REJECTED"], "errors": {field.handle: str(rejected)}, "evidence": kept}
+	if row.scan_status == "Accepted":
+		_replace_rejections(ctx.workspace.name, field.key, except_row=row.name)
+	return {"ok": True, "evidence": row.name, "replaced": old.name, "scan_status": row.scan_status, **change}
+
+
 def remove_bid_evidence(*, bid_reference: str, evidence_id: str, expected_record_version, organisation: str = "", idempotency_key: str = "", user: str | None = None) -> dict[str, Any]:
 	actor = authz.require_person(cstr(user or frappe.session.user))
 	payload = {"bid_reference": cstr(bid_reference).strip(), "evidence_id": cstr(evidence_id).strip(), "expected_record_version": expected_record_version, "organisation": cstr(organisation).strip()}

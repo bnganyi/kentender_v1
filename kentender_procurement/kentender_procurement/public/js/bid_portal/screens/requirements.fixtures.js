@@ -18,7 +18,7 @@ const WARRANTY = [["Minimum warranty 36 months", "36 months"], ["On-site support
 const EVIDENCE = ["Manufacturer authorisation", "Product datasheet", "Warranty and support commitment", "Kenya service-centre details"];
 
 function row(key, label, requirement, response, file, status = "Complete") {
-	return { key, label, requirement, response, evidence: file, status, tone: status === "Complete" ? "live" : "attention", facts: [{ label: "Required", value: requirement }], statement: "", fields: [FIELD(`${key}-v`, "short_text", "Offered value", response), FIELD(`${key}-e`, "evidence", "Evidence reference", null, { evidence: { files: [FILE(file)] } })] };
+	return { key, label, requirement, response, evidence: file, evidence_count: file && file !== "—" ? 1 : 0, evidence_names: file && file !== "—" ? [file] : [], status, tone: status === "Complete" ? "live" : "attention", facts: [{ label: "Required", value: requirement }], statement: "", fields: [FIELD(`${key}-v`, "short_text", "Offered value", response), FIELD(`${key}-e`, "evidence", "Evidence reference", null, { evidence: { files: [FILE(file)] } })] };
 }
 
 /** One requirements-task read for a board variant ("", ATTENTION, ADDENDUM). */

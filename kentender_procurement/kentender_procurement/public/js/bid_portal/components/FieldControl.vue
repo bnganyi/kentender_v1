@@ -3,11 +3,14 @@
 // by its control kind from the task read (label, help, options, limits,
 // whether it is editable and the server's issue for it). The value is the
 // caller's own entry until saved; the server checks and canonicalises it.
-// Evidence files are their own commands (upload, remove), run at once.
+// Evidence files are their own commands (upload, replace, remove), run at
+// once. Each file carries its own View, Replace and Remove; the field's one
+// button adds a file, and only while the field has room for one.
 import { computed, inject, ref } from "vue";
 import CommonState from "./CommonState.vue";
 
 const UPLOAD = "kentender_procurement.bid_submission.api.upload_bid_evidence";
+const REPLACE = "kentender_procurement.bid_submission.api.replace_bid_evidence";
 const REMOVE = "kentender_procurement.bid_submission.api.remove_bid_evidence";
 const DOWNLOAD = "/api/method/kentender_procurement.bid_submission.api.download_bid_evidence";
 const props = defineProps({
@@ -30,6 +33,18 @@ const issue = computed(() => props.error || (props.field.issue && props.field.is
 const limits = computed(() => props.field.limits || {});
 const disabled = computed(() => !props.field.editable);
 const files = computed(() => (props.field.evidence && props.field.evidence.files) || []);
+// a refused file is only a record of the refusal: it does not fill the field
+const held = computed(() => files.value.filter((f) => f.status !== "Rejected"));
+const maximum = computed(() => (props.field.evidence && props.field.evidence.maximum) || 0); // 0: the requirement states none
+const addLabel = computed(() => {
+	if (!held.value.length) return "Upload file";
+	return maximum.value && held.value.length >= maximum.value ? "" : "Add another file";
+});
+const replacing = ref(null); // the file the next chosen file takes the place of; null adds one
+function choose(file = null) {
+	replacing.value = file;
+	if (picker.value) picker.value.click();
+}
 
 function set(value) {
 	emit("update:modelValue", value);
@@ -38,16 +53,17 @@ function toggle(option, checked) {
 	const current = Array.isArray(props.modelValue) ? [...props.modelValue] : [];
 	set(checked ? [...current, option] : current.filter((o) => o !== option));
 }
+// A ports answer starts empty: no type chosen and no count, until the bidder gives them.
 function ports() {
-	return Array.isArray(props.modelValue) && props.modelValue.length ? props.modelValue : [{ port_type: (props.field.options || [])[0] || "", count: 1 }];
+	return Array.isArray(props.modelValue) && props.modelValue.length ? props.modelValue : [{ port_type: "", count: null }];
 }
 function setPort(index, key, value) {
 	const rows = ports().map((row) => ({ ...row }));
-	rows[index][key] = key === "count" ? Number(value) : value;
+	rows[index][key] = key === "count" ? (value === "" ? null : Number(value)) : value;
 	set(rows);
 }
 function addPort() {
-	set([...ports(), { port_type: (props.field.options || [])[0] || "", count: 1 }]);
+	set([...ports(), { port_type: "", count: null }]);
 }
 function fileHref(file) {
 	return `${DOWNLOAD}?bid_reference=${encodeURIComponent(props.bid.reference)}&evidence_id=${encodeURIComponent(file.id)}&inline=1`;
@@ -59,9 +75,15 @@ function upload(event) {
 	fileError.value = "";
 	rejection.value = null;
 	return runner.run(async () => {
-		const result = await portal.upload(UPLOAD, { bid_reference: props.bid.reference, handle: props.field.handle, expected_record_version: props.bid.record_version, idempotency_key: `bds-evidence-${Date.now().toString(36)}` }, { file });
-		if (result && result.ok) emit("changed", result);
-		else if (result && result.code === "BDS_EVIDENCE_REJECTED") {
+		const target = replacing.value;
+		const common = { bid_reference: props.bid.reference, expected_record_version: props.bid.record_version, idempotency_key: `bds-evidence-${Date.now().toString(36)}` };
+		const result = target
+			? await portal.upload(REPLACE, { ...common, evidence_id: target.id }, { file })
+			: await portal.upload(UPLOAD, { ...common, handle: props.field.handle }, { file });
+		if (result && result.ok) {
+			replacing.value = null;
+			emit("changed", result);
+		} else if (result && result.code === "BDS_EVIDENCE_REJECTED") {
 			rejection.value = (result.errors && result.errors[props.field.handle]) || "";
 			emit("changed", result); // the refused file is kept as a Rejected record
 		} else if (result && result.errors) fileError.value = result.errors[props.field.handle] || result.message;
@@ -98,12 +120,13 @@ function remove(file) {
 			<span v-else-if="file.status !== 'Accepted'" class="kt-status is-attention">{{ __(file.status) }}</span>
 			<span class="bds-file-actions">
 				<a v-if="file.status !== 'Rejected'" :href="fileHref(file)" target="_blank" rel="noopener">{{ __("View") }}</a>
+				<button v-if="!disabled && file.status !== 'Rejected'" type="button" class="bds-link-button" :disabled="pending" :data-testid="'bds-replace-' + file.id" @click="choose(file)">{{ __("Replace") }}</button>
 				<button v-if="!disabled" type="button" class="bds-link-button" :disabled="pending" @click="remove(file)">{{ __("Remove") }}</button>
 			</span>
 			<p v-if="file.reason" class="bds-muted">{{ file.reason }}</p>
 		</div>
-		<div v-if="!disabled">
-			<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" :data-testid="'bds-upload-' + field.handle" @click="picker && picker.click()">{{ files.length ? __("Replace") : __("Upload file") }}</button>
+		<div v-if="!disabled && addLabel">
+			<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" :data-testid="'bds-upload-' + field.handle" @click="choose()">{{ __(addLabel) }}</button>
 		</div>
 		<CommonState v-if="rejection !== null" inline state="evidence-rejected" :figures="{ reason: rejection }" @action="picker && picker.click()" />
 		<p v-else-if="fileError || issue" class="kt-field-error">{{ fileError || issue }}</p>
@@ -127,9 +150,10 @@ function remove(file) {
 		<label :for="id + '-0'">{{ field.label }}</label>
 		<div v-for="(row, index) in ports()" :key="index" class="bds-port-row">
 			<select :id="id + '-' + index" class="kt-input" :value="row.port_type" :disabled="disabled" @change="setPort(index, 'port_type', $event.target.value)">
+				<option value="" disabled>{{ __("Select") }}</option>
 				<option v-for="option in field.options" :key="option" :value="option">{{ option }}</option>
 			</select>
-			<input class="kt-input" type="number" min="1" :value="row.count" :disabled="disabled" :aria-label="__('Number of ports')" @input="setPort(index, 'count', $event.target.value)" />
+			<input class="kt-input" type="number" min="1" :value="row.count ?? ''" :disabled="disabled" :placeholder="__('Number')" :aria-label="__('Number of ports')" @input="setPort(index, 'count', $event.target.value)" />
 		</div>
 		<button v-if="!disabled" type="button" class="kt-btn kt-btn-ghost" @click="addPort">{{ __("Add port type") }}</button>
 		<p v-if="issue" class="kt-field-error">{{ issue }}</p>

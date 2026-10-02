@@ -40,6 +40,9 @@ class TestCompleteRequirements(SubmissionCase):
 		self.assertTrue(with_required_file)
 		for row in with_required_file:
 			self.assertNotEqual(row["evidence"], "—", row["label"])  # a required file is there
+			# the table shows how many files a row holds, never their names (which can be any length)
+			self.assertGreaterEqual(row["evidence_count"], 1, row["label"])
+			self.assertEqual(row["evidence_count"], len(row["evidence_names"]), row["label"])
 		# requirements read as the Tender states them, from the definition's comparison, value and unit
 		minimums = [r for r in view["technical"] if r["requirement"].startswith("Minimum ")]
 		self.assertTrue(minimums, [r["requirement"] for r in view["technical"]])
@@ -59,6 +62,8 @@ class TestCompleteRequirements(SubmissionCase):
 		view = requirements(self.bid)
 		again = next(r for r in view["technical"] if r["key"] == row["key"])
 		self.assertEqual((again["status"], again["tone"]), ("Needs evidence", "attention"))
+		self.assertTrue(again["evidence_rejected"])  # a refused file is reported, never counted among the held ones
+		self.assertNotIn("datasheet.pdf", again["evidence_names"])
 		self.assertEqual((view["attention"]["tone"], view["attention"]["title"]), ("critical", "Fix 1 item"))
 		self.assertEqual(view["attention"]["items"][0]["key"], row["key"])
 		self.assertEqual(next(s for s in view["sections"] if s["key"] == "technical")["status"], "Needs attention")
@@ -70,6 +75,7 @@ class TestNewRequirements(BidCase):
 		view = requirements(bid)
 		self.assertTrue(view["technical"] and all(r["status"] == "Not started" for r in view["technical"]))
 		self.assertTrue(all(r["evidence"] == "—" for r in view["technical"]))
+		self.assertTrue(all((r["evidence_count"], r["evidence_names"]) == (0, []) for r in view["technical"] + view["warranty"]))
 		events = frappe.db.count("Bid Submission Event")
 		requirements(bid)
 		self.assertEqual(frappe.db.count("Bid Submission Event"), events)

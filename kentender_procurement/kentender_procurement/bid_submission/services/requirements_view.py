@@ -59,6 +59,14 @@ def _files(fields: list[dict[str, Any]]) -> list[dict[str, Any]]:
 	return [f for field in fields if field["kind"] == "evidence" for f in (field.get("evidence") or {}).get("files") or []]
 
 
+def _summary(files: list[dict[str, Any]]) -> dict[str, Any]:
+	"""What a table cell says about a row's files: how many it holds and, for a
+	hover only, their names; a refused file is not held, only reported (a row can
+	hold one file and have another refused)."""
+	held = [f["name"] for f in files if f["status"] != "Rejected"]
+	return {"evidence_count": len(held), "evidence_names": held, "evidence_rejected": any(f["status"] == "Rejected" for f in files)}
+
+
 def _accepted(field: dict[str, Any]) -> bool:
 	return any(x["status"] == "Accepted" for x in (field.get("evidence") or {}).get("files") or [])
 
@@ -124,6 +132,8 @@ def _row(group: dict[str, Any], composition: str, published: dict[str, Any]) -> 
 	return {
 		"key": group["key"], "label": _label(group, published, composition), "requirement": _requirement(published), "response": _response(fields),
 		"evidence": ", ".join(f["name"] for f in files if f["status"] != "Rejected") or ("Rejected file" if files else "—"),
+		# the table shows how many files the row holds; the names are for a hover, never the layout
+		**_summary(files),
 		"status": status, "tone": _tone(status), "facts": group.get("facts") or [], "statement": group.get("statement", ""), "fields": fields,
 	}
 
@@ -148,6 +158,7 @@ def view(ctx, tasks, task_view: dict[str, Any], *, at) -> dict[str, Any]:
 		experience_rows.append({
 			**row, "customer": values.get("Client", ""), "supply": values.get("Contract name or reference", "") or values.get("Description", ""),
 			"completed": values.get("Completion date", ""), "evidence": ", ".join(f["name"] for f in _files(row["fields"])) or "—",
+			**_summary(_files(row["fields"])),
 		})
 	evidence_rows = []
 	for row in by_region["evidence"]:

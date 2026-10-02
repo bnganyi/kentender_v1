@@ -44,6 +44,51 @@ class EvidenceCase(BidCase):
 		return evidence.upload_bid_evidence(bid_reference=self.bid, handle=handle, filename=name, content=pdf() if content is None else content, expected_record_version=self.version(), idempotency_key=key(), user=user)
 
 
+class TestReplaceBidEvidence(EvidenceCase):
+	"""A file's own Replace: the new file takes the old one's place in one
+	change, also where the requirement takes one file and Upload is refused."""
+
+	def replace(self, evidence_id, content=None, name="new-proof.pdf", user=DAVID):
+		return evidence.replace_bid_evidence(bid_reference=self.bid, evidence_id=evidence_id, filename=name, content=pdf("new") if content is None else content, expected_record_version=self.version(), idempotency_key=key(), user=user)
+
+	def test_the_new_file_takes_the_old_ones_place_in_one_change(self):
+		target = self.requirement("company", maximum=1)
+		old = self.upload(target["handle"])
+		self.assertEqual((self.upload(target["handle"])["ok"]), False)  # a second file is refused: that is why Replace exists
+		replaced = self.replace(old["evidence"])
+		self.assertEqual((replaced["ok"], replaced["scan_status"], replaced["replaced"], replaced["draft_version"]), (True, "Accepted", old["evidence"], 3))
+		shown = self.field(target["handle"], "company")
+		self.assertEqual((shown["value"], shown["issue"], [(f["name"], f["status"]) for f in shown["evidence"]["files"]]), ([replaced["evidence"]], None, [("new-proof.pdf", "Accepted")]))
+		self.assertEqual(frappe.db.get_value("Bid Evidence", old["evidence"], ["status", "removed_by"]), ("Replaced", DAVID))
+		change = frappe.get_all("Bid Draft Change", filters={"bid_workspace": self.bid, "draft_version": 3}, fields=["prior_value", "new_value"])
+		self.assertEqual([(json.loads(c.prior_value), json.loads(c.new_value)) for c in change], [([old["evidence"]], [replaced["evidence"]])])
+		self.assertIn("BidEvidenceReplaced", frappe.get_all("Bid Submission Event", filters={"bid_workspace": self.bid}, pluck="event_type"))
+
+	def test_a_refused_new_file_leaves_the_old_one_in_place(self):
+		target = self.requirement("company", maximum=1)
+		old = self.upload(target["handle"])
+		refused = self.replace(old["evidence"], content=b"", name="empty.pdf")
+		self.assertEqual((refused["ok"], refused["code"]), (False, "BDS_EVIDENCE_REJECTED"))
+		self.assertEqual(frappe.db.get_value("Bid Evidence", old["evidence"], "status"), "Current")
+		self.assertEqual(frappe.db.get_value("Bid Workspace", self.bid, "current_draft_version"), 2)
+		shown = self.field(target["handle"], "company")
+		self.assertEqual(shown["value"], [old["evidence"]])
+		self.assertEqual(sorted((f["name"], f["status"]) for f in shown["evidence"]["files"]), [("empty.pdf", "Rejected"), ("proof.pdf", "Accepted")])
+
+	def test_only_a_current_file_of_this_bid_can_be_replaced_and_only_by_its_own_organisation(self):
+		target = self.requirement("company", maximum=1)
+		old = self.upload(target["handle"])
+		with self.assertRaises(frappe.DoesNotExistError):
+			self.replace(old["evidence"], user=PETER)
+		with self.assertRaises(errors.BidSubmissionError) as unknown:
+			self.replace("no-such-file")
+		self.assertEqual(unknown.exception.code, "BDS_UNKNOWN_RESPONSE")
+		evidence.remove_bid_evidence(bid_reference=self.bid, evidence_id=old["evidence"], expected_record_version=self.version(), idempotency_key=key(), user=DAVID)
+		with self.assertRaises(errors.BidSubmissionError) as removed:
+			self.replace(old["evidence"])
+		self.assertEqual(removed.exception.code, "BDS_UNKNOWN_RESPONSE")
+
+
 class TestUploadBidEvidence(EvidenceCase):
 	def test_a_clean_file_is_accepted_and_proves_its_requirement(self):
 		target = self.requirement()

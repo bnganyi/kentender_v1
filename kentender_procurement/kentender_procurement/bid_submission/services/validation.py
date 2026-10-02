@@ -93,6 +93,8 @@ def _ports(params, value):
 		return "Choose port types from the list."
 	if len(set(types)) != len(types):
 		return "List each port type once, with its total count."
+	if any(not isinstance(row.get("count"), int) or isinstance(row.get("count"), bool) or row["count"] < 1 for row in value):
+		return "Enter how many ports of each type, from 1."
 	return None
 
 

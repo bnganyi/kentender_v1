@@ -68,6 +68,11 @@ class TestValidations(IntegrationTestCase):
 		self.assertTrue(bad("VAL-OPTION-IN-LIST", {"options": ["Yes", "No"]}, "Perhaps"))
 		self.assertTrue(bad("VAL-OPTIONS-SUBSET", {"options": ["Ethernet", "5G"]}, ["Ethernet", "6G"]))
 		self.assertTrue(bad("VAL-PORTS", {"port_options": ["USB-A", "HDMI"]}, [{"port_type": "USB-A", "count": 2}, {"port_type": "USB-A", "count": 1}]))
+		# a row left half-filled is named, not saved as an answer
+		self.assertTrue(bad("VAL-PORTS", {"port_options": ["USB-A", "HDMI"]}, [{"port_type": "", "count": None}]))
+		self.assertTrue(bad("VAL-PORTS", {"port_options": ["USB-A", "HDMI"]}, [{"port_type": "USB-A", "count": None}]))
+		self.assertTrue(bad("VAL-PORTS", {"port_options": ["USB-A", "HDMI"]}, [{"port_type": "USB-A", "count": 0}]))
+		self.assertIsNone(ok("VAL-PORTS", {"port_options": ["USB-A", "HDMI"]}, [{"port_type": "USB-A", "count": 2}, {"port_type": "HDMI", "count": 1}]))
 		self.assertTrue(bad("VAL-EVIDENCE-COUNT", {"minimum": 1, "maximum": 1}, ["a", "b"]))
 		self.assertIsNone(ok("VAL-CONFIRMED", {}, True))
 
