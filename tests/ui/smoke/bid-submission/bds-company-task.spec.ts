@@ -143,6 +143,64 @@ test.describe("BDS-DES-08 Company, declarations and tender security", () => {
 		await page.screenshot({ path: "test-results/bds-business-profile-drawer.png", fullPage: false });
 	});
 
+	test("the Form of Tender asks for commission recipients only on a Yes, names a refused cell in place and keeps the saved rows", async ({ page }) => {
+		const world = bdsFixture<World>("reset_my_bids_fixture", { state: "started" });
+		await page.setViewportSize({ width: 1440, height: 1024 });
+		await loginToPortal(page, world.representative, world.password, `/tenders/${world.tender_reference}/bid/company`);
+		const row = page.getByTestId("bds-declarations-table").locator("tr", { hasText: /^Form of Tender/ });
+		await row.getByRole("button", { name: "View declaration" }).click();
+		const drawer = page.getByTestId("bds-response-drawer");
+		const paid = drawer.locator("fieldset", { has: page.locator("legend", { hasText: "commissions, gratuities or fees" }) });
+		const table = drawer.locator("fieldset", { has: page.locator("legend", { hasText: "Each recipient of a commission, gratuity or fee" }) });
+
+		// no recipients are asked for until the question is answered Yes
+		await expect(table).toHaveCount(0);
+		await paid.getByRole("radio", { name: "Yes" }).check();
+		await expect(table).toBeVisible();
+		await table.getByLabel("Name of recipient").fill("Acme Facilitation Agents");
+		await table.getByLabel("Full address").fill("12 Moi Avenue, Nairobi");
+		await table.getByLabel("Reason for the commission, gratuity or fee").fill("Introduction to the Procuring Entity");
+		await table.getByLabel("Amount").fill("ten");
+		await drawer.getByTestId("bds-drawer-save").click();
+		// the refused cell is named at its own cell, the entry is kept and nothing was saved
+		await expect(table.getByLabel("Amount").locator("xpath=..").locator(".kt-field-error")).toHaveText("Enter a number.");
+		await expect(table.getByLabel("Name of recipient")).toHaveValue("Acme Facilitation Agents");
+		// amount and currency are two cells
+		await table.getByLabel("Amount").fill("15000");
+		await table.getByLabel("Currency").selectOption("KES");
+		await drawer.getByTestId("bds-drawer-save").click();
+		await expect(drawer).toHaveCount(0);
+		await expect(row.locator(".kt-status")).toHaveText("In progress"); // the page has re-read what was saved
+
+		// what was saved is there when the form is opened again; a No takes the table away
+		await row.getByRole("button", { name: "View declaration" }).click();
+		await expect(table.getByLabel("Name of recipient")).toHaveValue("Acme Facilitation Agents");
+		await expect(table.getByLabel("Amount")).toHaveValue("15000.00");
+		await expect(table.getByLabel("Currency")).toHaveValue("KES");
+		await paid.getByRole("radio", { name: "No" }).check();
+		await expect(table).toHaveCount(0);
+		await page.screenshot({ path: "test-results/bds-form-of-tender-commissions.png", fullPage: false });
+	});
+
+	test("the persons with an interest are a table, asked only on a Yes, and ten rows are the most", async ({ page }) => {
+		const world = bdsFixture<World>("reset_my_bids_fixture", { state: "started" });
+		await page.setViewportSize({ width: 1440, height: 1024 });
+		await loginToPortal(page, world.representative, world.password, `/tenders/${world.tender_reference}/bid/company`);
+		const row = page.getByTestId("bds-declarations-table").locator("tr", { hasText: /Confidential business questionnaire/i });
+		await row.getByRole("button", { name: "View declaration" }).click();
+		const drawer = page.getByTestId("bds-response-drawer");
+		const question = drawer.locator("fieldset", { has: page.locator("legend", { hasText: "Does any person in the Procuring Entity have an interest" }) });
+		const table = drawer.locator("fieldset", { has: page.locator("legend", { hasText: "Persons in the Procuring Entity who have an interest" }) });
+		await expect(table).toHaveCount(0);
+		await question.getByRole("radio", { name: "Yes" }).check();
+		await expect(table).toBeVisible();
+		for (let i = 0; i < 9; i += 1) await table.getByRole("button", { name: "Add row" }).click();
+		await expect(table.getByTestId(/^bds-rowgroup-row-/)).toHaveCount(10);
+		await expect(table.getByRole("button", { name: "Table is full" })).toBeDisabled();
+		await question.getByRole("radio", { name: "No" }).check();
+		await expect(table).toHaveCount(0);
+	});
+
 	test("another organisation's person is told the bid is not found", async ({ page }) => {
 		const world = bdsFixture<World>("reset_my_bids_fixture", { state: "started" });
 		await page.setViewportSize({ width: 1440, height: 1024 });

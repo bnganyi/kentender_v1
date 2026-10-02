@@ -27,11 +27,11 @@ test.describe("BDS-DES-06 Your bid", () => {
 		const screen = page.getByTestId("bds-workspace");
 		await expect(screen.locator("h1")).toHaveText("Your bid");
 		await expect(page.getByTestId("bds-workspace-refs")).toContainText(`${world.tender_reference} · ${world.bid_reference} · Draft Version`);
-		await expect(page.getByTestId("bds-workspace-action")).toHaveText("Continue bid");
+		await expect(page.getByTestId("bds-workspace-action")).toHaveText("Continue with Company and declarations");
 		await expect(screen.locator(".kt-region h2")).toHaveText(["Deadline", "Current notices", "Bid tasks"]);
 		await expect(page.getByTestId("bds-workspace-deadline")).toContainText(/Closes in/);
-		await expect(page.locator('[data-testid^="bds-task-"]')).toHaveCount(5);
-		await expect(page.getByTestId("bds-task-company")).toContainText("Continue");
+		await expect(page.locator('[data-testid^="bds-task-"]:not([data-testid="bds-task-next"])')).toHaveCount(5);
+		await expect(page.getByTestId("bds-task-company")).toContainText("Start"); // not started yet: its action is Start, and it is marked Next
 		await expect(page.locator('[data-kt="next-step"]')).toBeVisible();
 		await expect(page.locator("body")).not.toContainText(/Submit bid/);
 		await page.goBack({ waitUntil: "domcontentloaded" });
@@ -40,7 +40,7 @@ test.describe("BDS-DES-06 Your bid", () => {
 		await expect(page.getByTestId("bds-workspace")).toBeVisible();
 		await page.reload({ waitUntil: "domcontentloaded" });
 		await waitForPortal(page);
-		await expect(page.getByTestId("bds-workspace-action")).toHaveText("Continue bid");
+		await expect(page.getByTestId("bds-workspace-action")).toHaveText("Continue with Company and declarations");
 		await expectNoFrappeDialog(page);
 		expect(errors, errors.join(" | ")).toEqual([]);
 	});
@@ -50,8 +50,9 @@ test.describe("BDS-DES-06 Your bid", () => {
 		const errors = collectPortalConsoleErrors(page);
 		await page.setViewportSize({ width: 1440, height: 1024 });
 		await loginToPortal(page, world.representative, world.password, `/tenders/${world.tender_reference}/bid`);
-		await expect(page.getByTestId("bds-workspace-action")).toHaveText("Review bid");
-		await expect(page.getByTestId("bds-task-review").getByRole("link", { name: "Review bid" })).toBeVisible();
+		// David prepared the bid and Mary signs it: his header action is the complete view, not a review for submission
+		await expect(page.getByTestId("bds-workspace-action")).toHaveText("View complete bid");
+		await expect(page.getByTestId("bds-task-review").getByRole("link", { name: "View" })).toBeVisible();
 		await expect(page.getByTestId("bds-workspace-saved")).toContainText(/^Saved .* by David Ouma\.$/);
 		const notice = page.getByTestId("bds-workspace-availability");
 		await expect(notice).toContainText("Electronic bid submission is not available yet");

@@ -38,11 +38,11 @@ test.describe("BDS-DES-09 Requirements / BDS-DES-10 Price", () => {
 		await loginToPortal(page, world.representative, world.password, `/tenders/${world.tender_reference}/bid/requirements`);
 		const table = page.getByTestId("bds-technical-table");
 		await expect(table.locator("tr", { hasText: "Memory" })).toContainText("Minimum 16 GB");
-		await expect(page.getByTestId("bds-requirements-nav").getByRole("link")).toHaveCount(6);
+		await expect(page.getByTestId("bds-requirements-nav").getByRole("link")).toHaveCount(7); // the six requirement groups and the Top link
 
 		// one requirement in the drawer, with its file
 		const battery = table.locator("tr", { hasText: "Battery runtime" });
-		await battery.getByRole("button", { name: "Battery runtime" }).click();
+		await battery.getByRole("button").click(); // the row's one action: Respond, then Edit
 		const drawer = page.getByTestId("bds-response-drawer");
 		await expect(drawer.getByRole("dialog")).toHaveAccessibleName("Battery runtime");
 		await drawer.locator("select").first().selectOption({ index: 1 });
@@ -60,7 +60,7 @@ test.describe("BDS-DES-09 Requirements / BDS-DES-10 Price", () => {
 		await drawer.getByTestId("bds-drawer-save").click();
 		await expect(drawer).toHaveCount(0);
 		await expect(battery).toContainText("10");
-		await expect(battery).toContainText("apexbook-datasheet.pdf");
+		await expect(battery.getByTestId("bds-attachments")).toHaveAttribute("title", "apexbook-datasheet.pdf"); // the file count, with the name on hover
 
 		// the offered goods, then Save and continue
 		const goods = page.locator("#bds-region-goods");

@@ -79,7 +79,9 @@ test.describe("BDS-DES-03 / BDS-DES-04 supplier Account", () => {
 		await page.getByTestId("acc-verify-continue").click();
 		await expect(page).toHaveURL(/\/account$/);
 		await expect(page.getByTestId("acc-status")).toHaveText("Active");
-		await expect(page.locator('[data-kt="next-step"]')).toContainText("The supplier account is ready.");
+		// a new Account is Active but its business profile is still to be entered (a bid copies it); not a blocker
+		await expect(page.locator('[data-kt="next-step"]')).toContainText("Complete the business profile.");
+		await expect(page.locator('[data-kt="next-step"]')).toContainText("Choose the business structure");
 		await expect(page.getByTestId("acc-contacts")).toContainText("Verified");
 
 		// the same Account on direct load and after back/forward
@@ -138,6 +140,46 @@ test.describe("BDS-DES-03 / BDS-DES-04 supplier Account", () => {
 		await expect(page.getByTestId("acc-edit-dialog")).toHaveCount(0);
 		await expect(page.getByTestId("acc-account")).toContainText("+254 709 555 201");
 		expect(errors, errors.join(" | ")).toEqual([]);
+	});
+
+	test("the business profile: shares must total 100 and are named in place, ten rows at most, and a save shows after a reload", async ({ page }) => {
+		const world = accountFixture<World>("reset_account_fixture", { state: "active" });
+		const errors = collectPortalConsoleErrors(page);
+		await page.setViewportSize({ width: 1440, height: 1024 });
+		await loginToPortal(page, world.signatory, world.password, "/account");
+		const region = page.getByTestId("acc-profile");
+		await expect(region.locator("h2")).toHaveText("Business profile");
+		await expect(page.getByTestId("acc-profile-fact-business_structure")).toHaveText("Registered company");
+		await expect(page.getByTestId("acc-profile-directors-table")).toContainText("John Kamau");
+
+		await page.getByTestId("acc-edit-profile").click();
+		const dialog = page.getByTestId("acc-profile-dialog");
+		await expect(dialog.getByTestId("acc-profile-directors-total")).toContainText("100");
+		// 60 + 30 is not 100: the table says so, the entry is kept, nothing is saved
+		await dialog.getByTestId("acc-profile-directors-1-shares").fill("30");
+		await dialog.getByTestId("acc-profile-save").click();
+		await expect(dialog.getByTestId("acc-profile-directors-error")).toContainText("must add up to 100");
+		await expect(dialog.getByTestId("acc-profile-directors-1-shares")).toHaveValue("30");
+		// a cell that is not a number is named at its own cell
+		await dialog.getByTestId("acc-profile-directors-1-shares").fill("forty");
+		await dialog.getByTestId("acc-profile-save").click();
+		await expect(dialog.getByTestId("acc-profile-directors-1-shares").locator("xpath=..").locator(".kt-field-error")).toHaveText("Enter a number.");
+		await expectNoFrappeDialog(page);
+		// ten rows at most
+		for (let i = 0; i < 8; i += 1) await dialog.getByTestId("acc-profile-directors-add").click();
+		await expect(dialog.getByTestId("acc-profile-directors-row")).toHaveCount(10);
+		await expect(dialog.getByTestId("acc-profile-directors-add")).toBeDisabled();
+		await page.screenshot({ path: "test-results/acc-profile-dialog-full.png", fullPage: false });
+		// back to two directors totalling 100, with a new second share, and save
+		for (let i = 9; i >= 2; i -= 1) await dialog.getByRole("button", { name: `Remove row ${i + 1}` }).click();
+		await dialog.getByTestId("acc-profile-directors-0-shares").fill("70");
+		await dialog.getByTestId("acc-profile-directors-1-shares").fill("30");
+		await dialog.getByTestId("acc-profile-save").click();
+		await expect(dialog).toHaveCount(0);
+		await page.reload();
+		await waitForPortal(page);
+		await expect(page.getByTestId("acc-profile-directors-table")).toContainText("70.00");
+		expect(errors.filter((e) => !/404 \(Not Found\)/.test(e)), errors.join(" | ")).toEqual([]);
 	});
 
 	test("a pending Account resends its link; a failed read is named with Try again", async ({ page }) => {

@@ -160,11 +160,22 @@ onMounted(() => {
 				<div class="acc-facts">
 					<div v-for="f in profileFacts" :key="f.key" class="acc-fact"><span class="kt-label">{{ __(f.label) }}</span><span class="acc-fact-value" :data-testid="`acc-profile-fact-${f.key}`">{{ profileValues[f.key] || "—" }}</span></div>
 				</div>
-				<table v-if="owners && profileValues[owners].length" class="kt-table acc-owners" :data-testid="`acc-profile-${owners}-table`">
-					<caption class="kt-label">{{ owners === "partners" ? __("Partners") : __("Directors") }}</caption>
-					<thead><tr><th>{{ __("Name") }}</th><th>{{ __("Nationality") }}</th><th>{{ __("Citizenship") }}</th><th>{{ __("Shares owned (%)") }}</th></tr></thead>
-					<tbody><tr v-for="(r, i) in profileValues[owners]" :key="i"><td class="acc-strong">{{ r.name }}</td><td>{{ r.nationality }}</td><td>{{ r.citizenship }}</td><td>{{ r.shares }}</td></tr></tbody>
-				</table>
+				<template v-if="owners && profileValues[owners].length">
+					<table v-if="!narrow" class="kt-table acc-owners" :data-testid="`acc-profile-${owners}-table`">
+						<caption class="kt-label">{{ owners === "partners" ? __("Partners") : __("Directors") }}</caption>
+						<thead><tr><th>{{ __("Name") }}</th><th>{{ __("Nationality") }}</th><th>{{ __("Citizenship") }}</th><th>{{ __("Shares owned (%)") }}</th></tr></thead>
+						<tbody><tr v-for="(r, i) in profileValues[owners]" :key="i"><td class="acc-strong">{{ r.name }}</td><td>{{ r.nationality }}</td><td>{{ r.citizenship }}</td><td>{{ r.shares }}</td></tr></tbody>
+					</table>
+					<div v-else :data-testid="`acc-profile-${owners}-cards`">
+						<div class="kt-label">{{ owners === "partners" ? __("Partners") : __("Directors") }}</div>
+						<div v-for="(r, i) in profileValues[owners]" :key="i" class="acc-card">
+							<div class="acc-card-title">{{ r.name }}</div>
+							<div class="acc-card-fact"><span class="kt-label">{{ __("Nationality") }}</span><span>{{ r.nationality }}</span></div>
+							<div class="acc-card-fact"><span class="kt-label">{{ __("Citizenship") }}</span><span>{{ r.citizenship }}</span></div>
+							<div class="acc-card-fact"><span class="kt-label">{{ __("Shares owned (%)") }}</span><span>{{ r.shares }}</span></div>
+						</div>
+					</div>
+				</template>
 				<p v-if="profile.missing.length" class="acc-muted" data-testid="acc-profile-missing">{{ __("Still needed: {0}.", [profile.missing.map((m) => m.text.toLowerCase()).join("; ")]) }}</p>
 				<p class="acc-muted">{{ __("A bid copies these facts when you start it. Changing them here does not change a bid already prepared until you choose to refresh it.") }}</p>
 				<div v-if="allowed.has('edit_business_profile')">

@@ -170,6 +170,13 @@ describe("Business profile", () => {
 		expect(wrapper.find('[data-testid="acc-profile-missing"]').exists()).toBe(false);
 	});
 
+	it("shows the owners as cards when narrow", () => {
+		globalThis.__narrow = true;
+		const wrapper = mountWith(AccountScreen, { initial: account() }, portalFor());
+		expect(wrapper.find("table.acc-owners").exists()).toBe(false);
+		expect(wrapper.get('[data-testid="acc-profile-directors-cards"]').text()).toContain("John Kamau");
+	});
+
 	it("says what is missing on an empty profile", async () => {
 		const read = { ...account(), business_profile: businessProfile(true) };
 		const wrapper = mountWith(AccountScreen, { initial: read }, portalFor());

@@ -102,7 +102,9 @@ test.describe("BDS-CHG-001 v0.8 — persona release pass", () => {
 		await expect(page.getByTestId("bds-documents-badge")).toHaveText("Needs attention");
 		await page.locator('[data-testid^="bds-acknowledge-"]').click();
 		await page.getByTestId("bds-documents-save").click();
-		await expect(page).toHaveURL(new RegExp(`${base}/bid/company$`));
+		// Save and continue leads to the next task still to do: the addendum left Price needing attention, so Price
+		await expect(page).toHaveURL(new RegExp(`${base}/bid/price$`));
+		await page.goto(`${base}/bid/company`, { waitUntil: "domcontentloaded" });
 		// …and reviews the responses the addendum moved (§13.3 Draft Version 5).
 		bdsFixture("fill_world_bid", { bid_reference: reference, tasks: ["company", "requirements"], at: "2027-06-01 12:10:00" });
 		await page.reload({ waitUntil: "domcontentloaded" });

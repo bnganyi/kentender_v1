@@ -203,7 +203,7 @@
 .kt-industry.kt-portal .bds-section-top { margin-left: auto; font-size: 13px; font-weight: 600; white-space: nowrap; }
 .kt-industry.kt-portal [id^="bds-region-"] { scroll-margin-top: 72px; }
 @media (max-width: 600px) {
-	.kt-industry.kt-portal .bds-section-nav { flex-wrap: nowrap; overflow-x: auto; }
+	.kt-industry.kt-portal .bds-section-nav { flex-wrap: nowrap; overflow-x: auto; width: 0; min-width: 100%; }
 	.kt-industry.kt-portal .bds-section-link { white-space: nowrap; }
 }
 
@@ -214,7 +214,7 @@
 
 /* The bid's task order made visible: a numbered strip on every task page, Previous / Next beneath it, and the same
    numbers and a Next tag on the bid page's task list */
-.kt-industry.kt-portal .bds-stepper { display: grid; gap: var(--kt-space-3); margin-bottom: var(--kt-space-5); }
+.kt-industry.kt-portal .bds-stepper { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--kt-space-3); margin-bottom: var(--kt-space-5); }
 .kt-industry.kt-portal .bds-stepper-list { list-style: none; margin: 0; padding: 0; display: flex; gap: var(--kt-space-2); }
 .kt-industry.kt-portal .bds-stepper-list li { flex: 1 1 0; min-width: 0; }
 .kt-industry.kt-portal .bds-stepper .bds-stepper-list a.bds-stepper-item { display: flex; align-items: center; gap: 8px; padding: 8px 4px 8px 2px; border-bottom: 3px solid var(--kt-color-neutral-300); color: var(--kt-color-neutral-800); font-size: 13px; text-decoration: none; min-width: 0; }

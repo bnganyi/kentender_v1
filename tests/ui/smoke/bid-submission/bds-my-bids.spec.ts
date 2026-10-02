@@ -38,8 +38,9 @@ test.describe("BDS-DES-05 My bids / BDS-DES-17 Receipts", () => {
 		const row = page.getByTestId(`bds-bid-row-${world.bid_reference}`);
 		await expect(row).toContainText("Ready to submit");
 		await expect(row).toContainText(/Draft Version \d+/);
-		await expect(row.getByTestId("bds-bid-action-0")).toHaveText("Review bid");
-		await expect(row.getByTestId("bds-bid-action-0")).toHaveAttribute("href", `/tenders/${world.tender_reference}/bid/review`);
+		// David prepares the bid and the signatory signs it, so his action is the hand-over, not a submission
+		await expect(row.getByTestId("bds-bid-action-0")).toHaveText("Hand over bid");
+		await expect(row.getByTestId("bds-bid-action-0")).toHaveAttribute("href", `/tenders/${world.tender_reference}/bid`); // the bid page says who signs
 		await expect(page.getByTestId("bds-bids-count")).toHaveText("1 bid");
 		await expect(page.locator('[data-kt="journey"]')).toHaveCount(0);
 		await page.getByTestId("bds-bids-status").selectOption("Submitted");
