@@ -392,7 +392,8 @@ SCHEDULE_MILESTONES = (
 # Owner decision 2 Oct 2026 (TPR-CHG-001 v0.16): the verified legal minimum preparation period for an Open Tender is 7 days, kept apart from
 # the 21-day usual period above. The citation is the Project Owner's research (PPADA s.97(1); PPADR 2020 reg. 86); it has not been checked
 # against the primary text by the build, which is why `verification_status` stays at the fixture level.
-LEGAL_PREPARATION_MINIMUMS = {("Open Tender", "bid_opening"): (7, "PPADA s.97(1); PPADR 2020 reg. 86")}
+# The row's basis describes its default (the usual 21 days), which the owner keeps as a planning assumption; the minimum carries its own reference.
+LEGAL_PREPARATION_MINIMUMS = {("Open Tender", "bid_opening"): (7, "PPADA s.97(1); PPADR 2020 reg. 86", "Planning assumption")}
 REMINDER_THRESHOLD_DAYS = 7
 
 # CFG-CHG-002 v0.16 §13 / BDS-CHG-001 v0.8 §10.1 — the Supplier portal
@@ -1396,7 +1397,7 @@ def _seed_schedule_profiles(*, effective: dict | None = None, verification_statu
 						"minimum_days": limits.get(key, (None, None))[0] or (LEGAL_PREPARATION_MINIMUMS.get((method, key)) or (None,))[0],
 						"maximum_days": limits.get(key, (None, None))[1],
 						"default_days": default,
-						"basis": basis,
+						"basis": (LEGAL_PREPARATION_MINIMUMS.get((method, key)) or (None, None, basis))[2],
 						"statutory_reference": (LEGAL_PREPARATION_MINIMUMS.get((method, key)) or (None, ref))[1],
 					}
 					for index, (key, default, basis, ref) in enumerate(SCHEDULE_MILESTONES)

@@ -84,10 +84,27 @@ describe("AuthorisationScreen — TPR-DES-07", () => {
 		expect(w.find('[data-testid="tnd-channel-table"] tbody').text()).toContain("State Portal");
 		expect(w.find('[data-testid="tnd-channel-table"] select, [data-testid="tnd-channel-table"] input').exists()).toBe(false);
 		expect(w.find(".kt-bar").exists()).toBe(false);
-		expect(w.find('[data-testid="tnd-package-digest"]').text()).toContain("aaaa");
+		// v0.16 §10.8: no digest in the approval trail; it is only ever under Technical details
+		expect(w.find('[data-testid="tnd-package-digest"]').exists()).toBe(false);
+		expect(w.text()).not.toMatch(/[0-9a-f]{40,}/);
 		expect(w.find('[data-testid="tnd-authorise-publication"]').text()).toBe("Authorise publication");
 		expect(w.text()).not.toContain("Mark as published");
 		w.unmount();
+	});
+	it("offers a return with a reason beside Authorise, so authorising is never the only move", async () => {
+		const pub = authorisationData();
+		const w = mount(AuthorisationScreen, { props: { pub: { ...pub, allowed_actions: [...(pub.allowed_actions || []), "return_to_hopf"] }, pending: false }, attachTo: document.body });
+		await nextTick();
+		const back = w.find('[data-testid="tnd-return-to-hopf"]');
+		expect(back.text()).toBe("Return to Head of Procurement Function");
+		await back.trigger("click");
+		expect(w.emitted("return")).toHaveLength(1);
+		expect(w.find('[data-testid="tnd-authorise-publication"]').exists()).toBe(true);
+		const without = mount(AuthorisationScreen, { props: { pub: { ...pub, allowed_actions: ["authorise_publication"] }, pending: false }, attachTo: document.body });
+		await nextTick();
+		expect(without.find('[data-testid="tnd-return-to-hopf"]').exists()).toBe(false);
+		w.unmount();
+		without.unmount();
 	});
 	it("segregation hides the decision and explains it in the waiting line", async () => {
 		const w = mount(AuthorisationScreen, { props: { pub: authorisationData("SEGREGATION"), pending: false }, attachTo: document.body });

@@ -1,6 +1,6 @@
 <!-- TPR-DES-07 AO publication authorisation (§10.8), ported class-for-class:
      the header (no awaiting-action badge), the §10.17 guidance region, the
-     approval trail (with the package digest, §10.8 item 2), the review note,
+     approval trail (no digest: TPR-CHG-001 v0.16 §10.8 item 2), the review note,
      key facts (with Tendering period), View Invitation / complete Tender,
      the required channels (read-only: no selector, no edit control, no
      progress bar), the closed "Complete Tender details" disclosure holding
@@ -15,7 +15,6 @@
 				<div class="tnd-fact"><div class="kt-label">Approved by</div><div class="tnd-fact-value">{{ trail.approved_by_name }}</div></div>
 				<div class="tnd-fact"><div class="kt-label">Approved at</div><div class="tnd-fact-value">{{ trail.approved_at_label }}</div></div>
 				<div class="tnd-fact"><div class="kt-label">Version</div><div class="tnd-fact-value">Version {{ trail.version_number }}</div></div>
-				<div v-if="trail.package_digest" class="tnd-fact tnd-span-4" data-testid="tnd-package-digest"><div class="kt-label">Package digest</div><div class="tnd-fact-value tnd-break tnd-mono">{{ trail.package_digest }}</div></div>
 			</div>
 			<ReviewNote :notes="(pub.review || {}).review_notes || []" :linkable="false" />
 			<KeyFacts :facts="pub.key_facts || []" />
@@ -43,7 +42,10 @@
 		</BlueprintCard>
 		<div class="tnd-footer">
 			<a href="#" class="tnd-footer-back" data-testid="tnd-back" @click.prevent="$emit('back')">Back to Tenders</a>
-			<button v-if="canAuthorise" type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="tnd-authorise-publication" @click="$emit('authorise')">Authorise publication</button>
+			<div class="tnd-footer-actions">
+				<button v-if="canReturn" type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="tnd-return-to-hopf" @click="$emit('return')">Return to Head of Procurement Function</button>
+				<button v-if="canAuthorise" type="button" class="kt-btn kt-btn-primary" :disabled="pending" data-testid="tnd-authorise-publication" @click="$emit('authorise')">Authorise publication</button>
+			</div>
 		</div>
 	</div>
 </template>
@@ -62,10 +64,11 @@ const props = defineProps({
 	requisitionReference: { type: String, default: "" },
 	pending: Boolean,
 });
-defineEmits(["authorise", "view-document", "back"]);
+defineEmits(["authorise", "return", "view-document", "back"]);
 
 const detailsOpen = ref(false);
 const refs = computed(() => `${props.pub.tender.tender_reference}${props.requisitionReference ? " · " + props.requisitionReference : ""}`);
 const trail = computed(() => props.pub.approval_trail || {});
 const canAuthorise = computed(() => (props.pub.allowed_actions || []).includes("authorise_publication"));
+const canReturn = computed(() => (props.pub.allowed_actions || []).includes("return_to_hopf"));
 </script>

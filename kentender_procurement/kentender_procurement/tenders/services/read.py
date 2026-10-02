@@ -18,7 +18,7 @@ from frappe.utils import cstr
 
 from kentender_core.services.authorization import is_technical
 from kentender_procurement.std_templates.compiler.errors import STDTemplateError
-from kentender_procurement.tenders.services import clock, compatibility, configuration_gateway, controls, correction, documents, draft_commands, evidence, handoff_gateway, lifecycle, review, serializer, template_binding
+from kentender_procurement.tenders.services import clock, compatibility, configuration_gateway, controls, correction, documents, draft_commands, evidence, handoff_gateway, handoffs, lifecycle, review, serializer, template_binding
 from kentender_procurement.tenders.services import guidance as guide
 from kentender_procurement.tenders.services import snapshot as snap
 from kentender_procurement.tenders.services import tender_authorization as authz
@@ -387,8 +387,11 @@ def allowed_actions(root, version, actor: str, roles: dict[str, bool]) -> list[s
 		if roles["hopf"] and not root.publication:
 			actions.append("reopen_tender")
 		# §5.10: a refused guard is stated up front, not discovered by pressing the button
-		if roles["ao"] and _can(lifecycle.require_segregation, version, actor, blocked_columns=("prepared_by", "submitted_by", "approved_by")) and not period_problem(root, version):
-			actions.append("authorise_publication")
+		if roles["ao"] and not root.publication and not handoffs.open_for(root, handoffs.RETURNED_BY_AO) and _can(lifecycle.require_segregation, version, actor, blocked_columns=("prepared_by", "submitted_by", "approved_by")):
+			# v0.16: the AO can also send the package back with a reason, so authorising is never the only move
+			actions.append("return_to_hopf")
+			if not period_problem(root, version):
+				actions.append("authorise_publication")
 	if status == "Requisition correction requested" and roles["officer"]:
 		if handoff_gateway.successors(plan_item_id=cstr(root.plan_item_id), user=actor):
 			actions.append("start_corrected_tender_version")

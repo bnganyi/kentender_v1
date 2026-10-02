@@ -230,6 +230,41 @@ def withdraw_publication_authorisation(*, tender: str, reason: str, evidence: st
 	return out
 
 
+def return_approved_tender(*, tender: str, reason: str, expected_record_version, idempotency_key: str, user: str | None = None) -> dict[str, Any]:
+	"""v0.16 §§5.1, 7.3 — the Accounting Officer returns an approved package to the Head of Procurement Function instead of authorising it.
+	The approved Version is kept and nothing is published. The HOPF holds a hand-off carrying the reason and uses the existing Reopen
+	(which creates the copied Draft for the officer); the AO's own authorisation task is closed and the AO waits."""
+	actor = authz.actor(user)
+	assignment = authz.require_ao(actor)
+	payload = {"tender": tender, "reason": reason}
+	replay = envelope.replay_or_none(idempotency_key, payload)
+	if replay:
+		return replay
+	reason = " ".join(cstr(reason).split())
+	if not (20 <= len(reason) <= 1000):
+		fail("TND_CONTROL_INVALID", "A reason of 20–1,000 characters is required.", {"fields": {"reason": "Enter a reason of 20–1,000 characters."}})
+	root, version = draft_commands.load(tender)
+	envelope.check_record_version(root, expected_record_version)
+	if root.overall_status == "Cancelled":
+		fail("TND_CANCELLED")
+	if version.status != "Approved" or root.overall_status != "Approved" or root.publication or handoffs.open_for(root, handoffs.RETURNED_BY_AO):
+		fail("TND_STALE_VERSION", "This Tender is not awaiting publication authorisation.")
+	lifecycle.require_segregation(version, actor, blocked_columns=("prepared_by", "submitted_by", "approved_by"))
+	with envelope.atomic("return-approved"):
+		decision = lifecycle.record_decision(root, version, decision="Return approved Tender to Head of Procurement Function", actor=actor, business_role=ROLE_ACCOUNTING_OFFICER, assignment=assignment, idempotency_key=idempotency_key, reason=reason)
+		lifecycle.cancel_open_tasks(root, task_types=(lifecycle.TASK_AO_AUTHORISATION,))
+		task = handoffs.open_task(root, version, task_type=handoffs.RETURNED_BY_AO, sender=actor, comment=reason)
+		envelope.bump(root)
+		events.emit(
+			tender=root.name, event_type="TenderReturnedByAccountingOfficer", command="ReturnApprovedTender", idempotency_key=idempotency_key, actor=actor, assignment_snapshot=authz.authority_snapshot(assignment),
+			previous_status="Approved", resulting_status="Approved", record_version=root.record_version, subject_type="Tender Version", subject_id=version.name, reason=reason,
+			payload={"decision": decision.name, "task": task.name}, fixture_namespace=root.fixture_namespace,
+		)
+	out = {"ok": True, "idempotent": False, "action": "returned", "tender": root.name, "record_version": root.record_version, "task": task.name}
+	envelope.record_command(idempotency_key=idempotency_key, command="ReturnApprovedTender", payload=payload, result=out, document_type="Tender", document_name=root.name, actor=actor, fixture_namespace=root.fixture_namespace)
+	return out
+
+
 # --------------------------------------------------------------------------
 # GetTenderPublication
 # --------------------------------------------------------------------------
@@ -270,7 +305,7 @@ def get_tender_publication(*, tender: str, user: str | None = None) -> dict[str,
 		"outcome": "OK", "mode": mode, "roles": roles,
 		"tender": {"name": root.name, "tender_reference": root.tender_reference, "title": cstr(state.get("tender_title") or root.requirement_title), "overall_status": cstr(root.overall_status), "badge": read.badge_for(root, version, roles), "record_version": int(root.record_version or 0), "published_at_label": serializer.fmt_datetime_short(root.published_at) if root.published_at else "", "submission_deadline_label": serializer.fmt_datetime_short(root.submission_deadline) if root.submission_deadline else ""},
 		"version": read.version_summary(version),
-		"approval_trail": {"prepared_by_name": read.version_summary(version)["prepared_by_name"], "approved_by_name": read.version_summary(version)["approved_by_name"], "approved_at_label": read.version_summary(version)["approved_at_label"], "version_number": int(version.version_number), "package_digest": cstr(version.package_digest)},
+		"approval_trail": {"prepared_by_name": read.version_summary(version)["prepared_by_name"], "approved_by_name": read.version_summary(version)["approved_by_name"], "approved_at_label": read.version_summary(version)["approved_at_label"], "version_number": int(version.version_number)},
 		"review": review.summary(version),
 		# TPR-DES-07 key facts: Purchase … Submission deadline, Tendering period, Reservation
 		"key_facts": _authorisation_facts(root, version, snapshot, tendering_days),

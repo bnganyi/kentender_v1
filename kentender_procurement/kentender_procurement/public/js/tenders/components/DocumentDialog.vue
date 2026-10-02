@@ -10,7 +10,6 @@
 				<span data-testid="tnd-doc-name">{{ fileName }}</span>
 				<span>{{ format }}</span>
 				<span v-if="size">{{ size }}</span>
-				<span v-if="digest" class="tnd-muted">Reference {{ digest.slice(0, 12) }}</span>
 			</div>
 			<div v-if="loading" class="tnd-doc-frame"><div class="kt-skel" style="width: 60%"></div></div>
 			<div v-else-if="error" class="kt-notice is-critical"><div class="kt-notice-body">{{ error }}</div></div>

@@ -6,7 +6,9 @@ period carries a verified legal minimum of 7 days (PPADA s.97(1); PPADR 2020
 reg. 86, the Project Owner's research), separate from the 21-day default. Sites
 seeded before the decision recorded only the default, so Tenders treated 21 as
 a floor. Only a row with no minimum is filled; an administrator's own minimum
-is never overwritten, and the profile's verification status is untouched."""
+is never overwritten, and the profile's verification status is untouched. The
+row's basis, which describes the 21-day default, is moved from Statutory to
+Planning assumption on the rows this patch (or its seed twin) wrote."""
 
 from __future__ import annotations
 
@@ -14,6 +16,7 @@ import frappe
 
 MINIMUM_DAYS = 7
 REFERENCE = "PPADA s.97(1); PPADR 2020 reg. 86"
+DEFAULT_BASIS = "Planning assumption"
 
 
 def execute():
@@ -21,8 +24,12 @@ def execute():
 		return
 	profiles = frappe.get_all("Procedure Schedule Profile", filters={"procurement_method": "Open Tender"}, pluck="name")
 	for row in frappe.get_all(
-		"Schedule Profile Milestone", filters={"parent": ("in", profiles or [""]), "milestone": "bid_opening"}, fields=["name", "minimum_days"], limit_page_length=0,
+		"Schedule Profile Milestone", filters={"parent": ("in", profiles or [""]), "milestone": "bid_opening"}, fields=["name", "minimum_days", "statutory_reference", "basis"], limit_page_length=0,
 	):
-		if int(row.minimum_days or 0):
-			continue
-		frappe.db.set_value("Schedule Profile Milestone", row.name, {"minimum_days": MINIMUM_DAYS, "statutory_reference": REFERENCE}, update_modified=False)
+		values: dict = {}
+		if not int(row.minimum_days or 0):
+			values = {"minimum_days": MINIMUM_DAYS, "statutory_reference": REFERENCE}
+		if (values or (int(row.minimum_days or 0) == MINIMUM_DAYS and row.statutory_reference == REFERENCE)) and row.basis == "Statutory":
+			values["basis"] = DEFAULT_BASIS
+		if values:
+			frappe.db.set_value("Schedule Profile Milestone", row.name, values, update_modified=False)

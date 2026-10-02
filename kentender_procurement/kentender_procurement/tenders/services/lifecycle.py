@@ -298,7 +298,7 @@ def reopen_approved_tender(*, tender: str, reason: str, expected_record_version,
 		decision = record_decision(root, version, decision="Reopen Tender", actor=actor, business_role=ROLE_HEAD_OF_PROCUREMENT_FUNCTION, assignment=assignment, idempotency_key=idempotency_key, reason=reason)
 		draft = copy_draft(root, version, actor=cstr(version.prepared_by) or actor, predecessor_fields={"reopen_reason": reason})
 		cancel_open_tasks(root, task_types=(TASK_AO_AUTHORISATION,))
-		handoffs.close_open(root, task_types=(handoffs.REVIEW_WITHDRAWN,), decision=decision.name)
+		handoffs.close_open(root, task_types=(handoffs.REVIEW_WITHDRAWN, handoffs.RETURNED_BY_AO), decision=decision.name)
 		handoffs.open_task(root, draft, task_type=handoffs.CORRECT_REOPENED, holder=cstr(version.prepared_by), comment=reason)
 		envelope.bump(root, overall_status="Draft", current_version=draft.name, approved_version=None)
 		events.emit(

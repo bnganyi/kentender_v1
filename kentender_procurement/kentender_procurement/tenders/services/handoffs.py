@@ -44,6 +44,7 @@ AO_AUTHORISATION = "AO publication authorisation"
 CORRECT_REOPENED = "Correct reopened Tender"
 CHANNEL_CONFIRMATION = "HOPF channel confirmation"
 REVIEW_WITHDRAWN = "Review withdrawn authorisation"
+RETURNED_BY_AO = "AO returned approved Tender"
 ADDENDUM_ISSUE = "HOPF addendum issue"
 CORRECT_ADDENDUM = "Correct returned addendum"
 CLARIFICATION_RESPONSE = "Clarification response"
@@ -62,6 +63,8 @@ REGISTER: dict[str, tuple[str, str, str | None, str, str]] = {
 	CORRECT_REOPENED: (ROLE_PROCUREMENT_OFFICER, "Correct reopened Tender {ref}", None, "Correct", ""),
 	CHANNEL_CONFIRMATION: (ROLE_HEAD_OF_PROCUREMENT_FUNCTION, "Confirm publication of {subject_label}", "{channel_waiting}", "Complete confirmations", "publication"),
 	REVIEW_WITHDRAWN: (ROLE_HEAD_OF_PROCUREMENT_FUNCTION, "Review withdrawn publication authorisation for {ref}", None, "Review", ""),
+	# v0.16 §5.11: the AO returned the approved package before authorising; the HOPF reopens it, the AO waits
+	RETURNED_BY_AO: (ROLE_HEAD_OF_PROCUREMENT_FUNCTION, "Review Tender {ref} returned by the Accounting Officer", "Waiting for {holder} to reopen Tender {ref}", "Reopen Tender", ""),
 	ADDENDUM_ISSUE: (ROLE_HEAD_OF_PROCUREMENT_FUNCTION, "Decide addendum {subject}", "Waiting for {holder} to decide addendum {subject}", "Review addendum", "addenda"),
 	CORRECT_ADDENDUM: (ROLE_PROCUREMENT_OFFICER, "Correct addendum {subject}", None, "Correct addendum", "addenda"),
 	CLARIFICATION_RESPONSE: (ROLE_PROCUREMENT_OFFICER, "Respond to clarification for {ref}", None, "Respond", "clarifications"),
@@ -156,6 +159,11 @@ def open_task(
 	if notify:
 		_notify(root, task)
 	return task
+
+
+def open_for(root, task_type: str) -> str:
+	"""Name of this Tender's open hand-off of one type, or ''."""
+	return cstr(frappe.db.get_value("Tender Task", {"tender": root.name, "task_type": task_type, "status": "Open"}, "name"))
 
 
 def title_for(root, task) -> str:

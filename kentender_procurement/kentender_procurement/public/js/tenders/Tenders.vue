@@ -33,7 +33,7 @@
 				<EditorScreen v-else-if="screen === 'details' || screen === 'requirements'" ref="editorRef" :record="record" :task="screen" :field-errors="fieldErrors" :error="error" :pending="pending" @open-drawer="drawer = 'context'" @add-evidence="evidenceDialog = { row: null }" @edit-evidence="evidenceDialog = { row: $event }" @remove-evidence="removeEvidenceDialog = $event" @save="onSaveDraft(false)" @continue="onSaveDraft(true)" @back="onEditorBack" @request-correction="correctionDialog = true" @fix="onFix" />
 				<ReviewScreen v-else-if="screen === 'review'" :record="record" :review="review" :pending="pending" @back="goTask('requirements')" @submit="submitDialog = true" @preview="onPreview" @go-finding="onGoFinding" @fix="onFix" />
 				<ApprovalScreen v-else-if="screen === 'approval'" :record="record" :review="review" :pending="pending" @back="go()" @return="returnDialog = true" @approve="approveDialog = true" @preview="onPreview" @request-correction="correctionDialog = true" />
-				<AuthorisationScreen v-else-if="screen === 'authorisation'" :pub="pub" :requisition-reference="record.tender.requisition_reference" :pending="pending" @authorise="authoriseDialog = true" @view-document="onViewDocument" @back="go()" />
+				<AuthorisationScreen v-else-if="screen === 'authorisation'" :pub="pub" :requisition-reference="record.tender.requisition_reference" :pending="pending" @authorise="authoriseDialog = true" @return="returnToHopfDialog = true" @view-document="onViewDocument" @back="go()" />
 				<PublicationScreen v-else-if="screen === 'publication'" :pub="pub" :refusal="refusalAnswer" :conflict="conflictRow" :withdrawn="withdrawnText" :pending="pending" @confirm-channel="channelDialog = { row: $event, subject: 'publication' }" @view-confirmation="confirmationView = $event" @view-document="onViewDocument" @withdraw="withdrawDialog = true" @fix="onFix" />
 				<CorrectionRequestedScreen v-else-if="screen === 'correction'" :record="record" :pending="pending" @start-corrected="onStartCorrected" @view-requisition="onViewRequisition" @history="go(tenderRef, 'history')" @back="go()" @fix="onFix" />
 				<CancelScreen v-else-if="screen === 'cancelled'" :data="cancelData" :pending="pending" :error="dialogError" @back="go()" @record-evidence="obligationDialog = { row: $event }" @fix="onFix" />
@@ -80,6 +80,7 @@
 			<ConfirmDialog v-if="removeEvidenceDialog" testid="tnd-remove-evidence-dialog" title="Remove this evidence?" :facts="[{ label: 'Evidence', value: removeEvidenceDialog.label }, { label: 'Linked requirement', value: removeEvidenceDialog.proves }]" confirm-label="Remove evidence" danger :pending="pending" :error="dialogError" @confirm="onRemoveEvidence(removeEvidenceDialog)" @cancel="closeDialogs" />
 			<ReasonDialog v-if="returnDialog" testid="tnd-return-dialog" title="Return this Tender for correction?" reason-label="Correction required" placeholder="20–2,000 characters" after-label="Affected task" :options="affectedTaskOptions" :initial-choice="affectedTaskOptions[1]" note="The submitted Version will remain in history and a copied Draft will be created." confirm-label="Return for correction" :pending="pending" :error="dialogError" @confirm="onReturnForCorrection" @cancel="closeDialogs" />
 			<ConfirmDialog v-if="approveDialog" testid="tnd-approve-dialog" title="Approve this Tender package?" :facts="approveFacts" note="The Accounting Officer must separately authorise publication. Suppliers cannot see this Tender yet." confirm-label="Approve Tender package" :pending="pending" :error="dialogError" @confirm="onApprove" @cancel="closeDialogs" />
+			<ReasonDialog v-if="returnToHopfDialog" testid="tnd-return-to-hopf-dialog" title="Return this Tender to the Head of Procurement Function?" reason-label="Reason" note="The approved Version stays in history and nothing is published. The Head of Procurement Function will reopen it for correction." confirm-label="Return to Head of Procurement" :pending="pending" :error="dialogError" @confirm="onReturnToHopf" @cancel="closeDialogs" />
 			<ReasonDialog v-if="reopenDialog" testid="tnd-reopen-dialog" title="Reopen this approved Tender for correction?" reason-label="Reason" note="The approved Version stays in history and a copied Draft is created. Publication has not started." confirm-label="Reopen for correction" :pending="pending" :error="dialogError" @confirm="onReopen" @cancel="closeDialogs" />
 			<ReasonDialog v-if="correctionDialog" testid="tnd-correction-dialog" title="Request a requisition correction?" reason-label="Reason" note="This Tender Version will stop and remain in history. Work can continue only from a newly authorised corrected Requisition." confirm-label="Request requisition correction" danger :pending="pending" :error="dialogError" @confirm="onRequestCorrection" @cancel="closeDialogs" />
 			<ConfirmDialog v-if="authoriseDialog" testid="tnd-authorise-dialog" title="Authorise publication of this Tender?" intro="This allows the Head of Procurement Function to publish the exact approved Invitation and Tender through every required channel and confirm the evidence. It does not itself publish the Tender or edit the package." :facts="authoriseFacts" confirm-label="Authorise publication" :pending="pending" :error="dialogError" @confirm="onAuthorise" @cancel="closeDialogs" />
@@ -164,6 +165,7 @@ const submitDialog = ref(false);
 const returnDialog = ref(false);
 const approveDialog = ref(false);
 const reopenDialog = ref(false);
+const returnToHopfDialog = ref(false);
 const correctionDialog = ref(false);
 const authoriseDialog = ref(false);
 const channelDialog = ref(null);
@@ -273,7 +275,7 @@ const continuedRelease = ref((() => {
 		return "";
 	}
 })());
-const dialogOpen = computed(() => !!(reviewRequestDialog.value || reviewCloseDialog.value || discardDialog.value || evidenceDialog.value || removeEvidenceDialog.value || submitDialog.value || returnDialog.value || approveDialog.value || reopenDialog.value || correctionDialog.value || authoriseDialog.value || channelDialog.value || withdrawDialog.value || issueDialog.value || addendumReturnDialog.value || recommendDialog.value || cancelDialog.value || obligationDialog.value));
+const dialogOpen = computed(() => !!(reviewRequestDialog.value || reviewCloseDialog.value || discardDialog.value || evidenceDialog.value || removeEvidenceDialog.value || submitDialog.value || returnDialog.value || approveDialog.value || reopenDialog.value || returnToHopfDialog.value || correctionDialog.value || authoriseDialog.value || channelDialog.value || withdrawDialog.value || issueDialog.value || addendumReturnDialog.value || recommendDialog.value || cancelDialog.value || obligationDialog.value));
 
 function go(...parts) {
 	frappe.set_route(PAGE, ...parts.filter(Boolean));
@@ -447,7 +449,7 @@ function closeDialogs() {
 	reviewCloseDialog.value = null;
 	evidenceDialog.value = null;
 	removeEvidenceDialog.value = null;
-	submitDialog.value = returnDialog.value = approveDialog.value = reopenDialog.value = correctionDialog.value = authoriseDialog.value = withdrawDialog.value = issueDialog.value = addendumReturnDialog.value = false;
+	submitDialog.value = returnDialog.value = approveDialog.value = reopenDialog.value = returnToHopfDialog.value = correctionDialog.value = authoriseDialog.value = withdrawDialog.value = issueDialog.value = addendumReturnDialog.value = false;
 	channelDialog.value = recommendDialog.value = cancelDialog.value = obligationDialog.value = null;
 	dialogError.value = "";
 }
@@ -534,6 +536,16 @@ async function onApprove() {
 async function onReopen({ reason }) {
 	const result = await run(async () => {
 		const r = await api.reopenApprovedTender({ tender: tenderRef.value, reason, expected_record_version: rv(), idempotency_key: api.newIdempotencyKey("reopen") });
+		await load({ quiet: true });
+		return r;
+	}, { dialog: true });
+	if (result) closeDialogs();
+}
+async function onReturnToHopf({ reason }) {
+	const result = await run(async () => {
+		const r = await api.returnApprovedTender({ tender: tenderRef.value, reason, expected_record_version: rv(), idempotency_key: api.newIdempotencyKey("return-to-hopf") });
+		cache.set(screenKey.value, null);
+		cache.set("workspace", null);
 		await load({ quiet: true });
 		return r;
 	}, { dialog: true });
@@ -683,6 +695,10 @@ function onFix(fix) {
 		return;
 	}
 	if (id === "submit_for_approval") submitDialog.value = true;
+	if (id === "return_to_hopf") {
+		returnToHopfDialog.value = true;
+		return;
+	}
 	if (id === "start_corrected_tender_version") {
 		const successor = ((record.value.correction || {}).successor) || null;
 		if (successor) onStartCorrected(successor.handoff);

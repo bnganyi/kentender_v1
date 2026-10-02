@@ -255,6 +255,23 @@ def _decision(root, version, *, actor: str, roles: dict[str, bool], stage: str, 
 
 
 # --------------------------------------------------------------------------
+# AO_AUTHORISATION returned by the Accounting Officer (v0.16 §5.1)
+# --------------------------------------------------------------------------
+
+
+def _returned_by_ao(task, *, actor: str, roles: dict[str, bool]) -> tuple[dict[str, Any], dict[str, Any]]:
+	hopfs = _holders(ROLE_HEAD_OF_PROCUREMENT_FUNCTION)
+	returned_by = _name(cstr(task.sender)) if task.sender else "The Accounting Officer"
+	if roles.get("hopf"):
+		answer = _turn(AO_AUTHORISATION, f"Reopen this Tender: {returned_by} returned it before authorising publication.", holder_users=[actor], role=ROLE_HEAD_OF_PROCUREMENT_FUNCTION, primary="reopen_tender", sentence=cstr(task.comment), since=task.creation)
+		return answer, _journey(AO_AUTHORISATION, holder_display=_name(actor))
+	answer = _waiting(AO_AUTHORISATION, f"{_subject(hopfs, ROLE_HEAD_OF_PROCUREMENT_FUNCTION)} must reopen this Tender after {returned_by} returned it.", holder_users=hopfs, role=ROLE_HEAD_OF_PROCUREMENT_FUNCTION, since=task.creation)
+	answer["sentence"] = cstr(task.comment)
+	return answer, _journey(AO_AUTHORISATION, blocked=True, holder_display=_display(hopfs, ROLE_HEAD_OF_PROCUREMENT_FUNCTION))
+
+
+# --------------------------------------------------------------------------
+# --------------------------------------------------------------------------
 # AO_AUTHORISATION blocked by the minimum preparation period (§5.10 TND_PUBLICATION_PERIOD_INVALID)
 # --------------------------------------------------------------------------
 
@@ -278,11 +295,12 @@ def _period_blocked(problem: dict[str, Any], *, actor: str, roles: dict[str, boo
 		return answer, _journey(AO_AUTHORISATION, holder_display=_name(actor))
 	if roles.get("ao"):
 		fixes = [
-			ns.fix("Reopen Tender", responsibility=ROLE_HEAD_OF_PROCUREMENT_FUNCTION, person=_name(hopfs[0]) if hopfs else "", kind=ns.FIX_TEXT, fix_id="reopen_tender", primary=True),
+			ns.fix("Return to Head of Procurement Function", responsibility=ROLE_ACCOUNTING_OFFICER, kind=ns.FIX_COMMAND, fix_id="return_to_hopf", primary=True),
+			ns.fix("Reopen Tender", responsibility=ROLE_HEAD_OF_PROCUREMENT_FUNCTION, person=_name(hopfs[0]) if hopfs else "", kind=ns.FIX_TEXT, fix_id="reopen_tender"),
 			ns.fix("Review Tender dates", responsibility=ROLE_PROCUREMENT_OFFICER, kind=ns.FIX_TEXT, fix_id="review_tender_dates"),
 		]
 		blocker = ns.blocker(_refusal("TND_PUBLICATION_PERIOD_INVALID", facts, figures=problem, fixes=fixes))
-		answer = _blocked(AO_AUTHORISATION, facts, holder_users=[actor], role=ROLE_ACCOUNTING_OFFICER, blockers=[blocker], sentence="You cannot edit the package. The Head of Procurement Function can reopen this Tender so the Procurement Officer can correct the dates.")
+		answer = _blocked(AO_AUTHORISATION, facts, holder_users=[actor], role=ROLE_ACCOUNTING_OFFICER, blockers=[blocker], sentence="You cannot edit the package. Return it to the Head of Procurement Function, who can reopen it so the Procurement Officer can correct the dates.")
 		return answer, _journey(AO_AUTHORISATION, blocked=True, holder_display=_name(actor))
 	answer = _waiting(AO_AUTHORISATION, f"{_subject(hopfs, ROLE_HEAD_OF_PROCUREMENT_FUNCTION)} must reopen this Tender so the submission deadline can be corrected.", holder_users=hopfs, role=ROLE_HEAD_OF_PROCUREMENT_FUNCTION)
 	answer["sentence"] = facts
@@ -651,7 +669,10 @@ def guidance(root, *, actor: str, roles: dict[str, bool], mode: str, context: st
 	elif status == "Approved":
 		approved = _version(root, cstr(root.approved_version)) or version
 		withdrawn = _open_tasks(root, handoffs.REVIEW_WITHDRAWN)
-		if withdrawn and business.get("hopf"):
+		returned = _open_tasks(root, handoffs.RETURNED_BY_AO)
+		if returned:
+			answer, journey = _returned_by_ao(returned[0], actor=actor, roles=business)
+		elif withdrawn and business.get("hopf"):
 			answer = _turn(AO_AUTHORISATION, "Review the withdrawn publication authorisation and reopen the Tender if it needs correction.", holder_users=[actor], role=ROLE_HEAD_OF_PROCUREMENT_FUNCTION, primary="reopen_tender", since=withdrawn[0].creation)
 			journey = _journey(AO_AUTHORISATION, holder_display=_name(actor))
 		elif (problem := _period_problem(root, approved)):

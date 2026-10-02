@@ -175,6 +175,11 @@ def confirm_publication_channel(tender: str, channel: str, available_at: str, ev
 
 
 @frappe.whitelist()
+def return_approved_tender(tender: str, reason: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
+	return publication.return_approved_tender(tender=tender, reason=reason, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
+
+
+@frappe.whitelist()
 def withdraw_publication_authorisation(tender: str, reason: str, evidence: str, expected_record_version, idempotency_key: str) -> dict[str, Any]:
 	return publication.withdraw_publication_authorisation(tender=tender, reason=reason, evidence=evidence, expected_record_version=expected_record_version, idempotency_key=idempotency_key)
 

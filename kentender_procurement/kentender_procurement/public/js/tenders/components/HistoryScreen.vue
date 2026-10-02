@@ -27,9 +27,13 @@
 			<div v-if="(data.documents || []).length" class="tnd-section">
 				<div class="kt-card-title" style="margin-bottom: 12px">Documents</div>
 				<table class="kt-table" data-testid="tnd-history-documents">
-					<thead><tr><th>Document</th><th>Generated</th><th>Reference</th><th></th></tr></thead>
-					<tbody><tr v-for="d in data.documents" :key="d.document"><td>{{ d.kind }}<div v-if="d.addendum || d.cancellation" class="tnd-sub">{{ d.addendum || d.cancellation }}</div></td><td>{{ d.generated_at_label }}</td><td class="tnd-xs tnd-muted">{{ d.digest.slice(0, 16) }}</td><td><button type="button" class="tnd-link-btn" @click="$emit('view-digest', d)">View</button></td></tr></tbody>
+					<thead><tr><th>Document</th><th>Generated</th><th></th></tr></thead>
+					<tbody><tr v-for="d in data.documents" :key="d.document"><td>{{ d.kind }}<div v-if="d.addendum || d.cancellation" class="tnd-sub">{{ d.addendum || d.cancellation }}</div></td><td>{{ d.generated_at_label }}</td><td><button type="button" class="tnd-link-btn" @click="$emit('view-digest', d)">View</button></td></tr></tbody>
 				</table>
+				<div class="kt-disclosure" style="margin-top: 12px">
+					<div class="kt-disclosure-head" role="button" tabindex="0" :aria-expanded="technicalOpen ? 'true' : 'false'" data-testid="tnd-history-technical" @click="technicalOpen = !technicalOpen" @keydown.enter.prevent="technicalOpen = !technicalOpen"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Technical details</span></div><svg class="kt-disclosure-chevron" :class="{ 'is-open': technicalOpen }" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div>
+					<div v-if="technicalOpen" class="kt-disclosure-body"><table class="kt-table"><thead><tr><th>Document</th><th>Digest</th></tr></thead><tbody><tr v-for="d in data.documents" :key="d.document"><td>{{ d.kind }}<div v-if="d.addendum || d.cancellation" class="tnd-sub">{{ d.addendum || d.cancellation }}</div></td><td class="tnd-mono tnd-break">{{ d.digest }}</td></tr></tbody></table></div>
+				</div>
 			</div>
 			<div v-if="data.publication" class="tnd-section">
 				<div class="kt-card-title" style="margin-bottom: 12px">Publication</div>
@@ -55,11 +59,12 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import BlueprintCard from "./BlueprintCard.vue";
 
 const props = defineProps({ data: { type: Object, default: () => ({ tender: {} }) } });
 defineEmits(["back", "view-digest"]);
+const technicalOpen = ref(false);
 const openPeriod = computed(() => props.data.open_period || null);
 const oversight = computed(() => !!props.data.protected);
 </script>

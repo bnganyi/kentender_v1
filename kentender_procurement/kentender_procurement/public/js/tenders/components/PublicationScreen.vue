@@ -45,7 +45,10 @@
 			<div class="tnd-section tnd-section--content tnd-section--last">
 				<div class="kt-disclosure">
 					<div class="kt-disclosure-head" role="button" tabindex="0" :aria-expanded="ruleOpen ? 'true' : 'false'" data-testid="tnd-rule-disclosure" @click="ruleOpen = !ruleOpen" @keydown.enter.prevent="ruleOpen = !ruleOpen"><div class="kt-disclosure-title-row"><span class="kt-disclosure-title">Publication decision and rule</span></div><svg class="kt-disclosure-chevron" :class="{ 'is-open': ruleOpen }" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg></div>
-					<div v-if="ruleOpen" class="kt-disclosure-body"><p class="tnd-card-body tnd-break" style="margin: 0" data-testid="tnd-rule-line">{{ summary.rule_line }}</p></div>
+					<div v-if="ruleOpen" class="kt-disclosure-body"><p class="tnd-card-body tnd-break" style="margin: 0" data-testid="tnd-rule-line">{{ summary.rule_line }}</p>
+						<div v-if="(summary.technical_facts || []).length" class="tnd-tech" data-testid="tnd-technical-details"><div class="kt-label">Technical details</div>
+							<div v-for="f in summary.technical_facts" :key="f.label" class="tnd-fact"><div class="kt-label">{{ f.label }}</div><div class="tnd-fact-value tnd-break tnd-mono">{{ f.value }}</div></div>
+						</div></div>
 				</div>
 			</div>
 		</BlueprintCard>

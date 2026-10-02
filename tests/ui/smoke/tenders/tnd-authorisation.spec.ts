@@ -19,7 +19,9 @@ test.describe("TPR-DES-07 AO publication authorisation", () => {
 		await expectGuidance(page, "DES-07");
 		await expect(page.locator('[data-testid="tnd-ready-to-authorise"]')).toHaveCount(0);
 		await expect(page.locator('[data-testid="tnd-approval-trail"]')).toContainText("Approved by");
-		await expect(page.locator('[data-testid="tnd-package-digest"]')).toContainText(/[0-9a-f]{64}/);
+		// v0.16 §10.8: no digest in the approval trail or anywhere in the first view
+		await expect(page.locator('[data-testid="tnd-package-digest"]')).toHaveCount(0);
+		await expect(page.locator(".tnd-page")).not.toContainText(/[0-9a-f]{40,}/);
 		await expect(page.locator('[data-testid="tnd-key-facts"] .kt-label')).toHaveText(["Purchase", "Requisition", "Quantity", "Approved value", "Method", "Submission deadline", "Tendering period", "Reservation"]);
 		// the six sections sit closed inside Complete Tender details
 		await expect(page.locator('[data-testid="tnd-content-sections"]')).toHaveCount(0);

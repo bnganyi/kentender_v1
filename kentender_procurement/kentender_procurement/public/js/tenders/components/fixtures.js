@@ -176,7 +176,7 @@ export function authorisationData(variant = "") {
 	return {
 		outcome: "OK", mode: "site",
 		tender: { ...TENDER, overall_status: "Approved" },
-		approval_trail: { prepared_by_name: "Brian Wafula", approved_by_name: "Charles Mutiso", approved_at_label: "20 Apr 2027, 10:00 EAT", version_number: 2, package_digest: "a".repeat(64) },
+		approval_trail: { prepared_by_name: "Brian Wafula", approved_by_name: "Charles Mutiso", approved_at_label: "20 Apr 2027, 10:00 EAT", version_number: 2 },
 		review: review.review,
 		key_facts: [{ label: "Purchase", value: TENDER.title }, ...KEY_FACTS.slice(0, 5), { label: "Tendering period", value: "21 days" }, { label: "Reservation", value: "Youth" }],
 		proposed_channels: ["State Portal", "Ministry website", "Notice board", "Two national newspapers"].map((label, i) => ({ channel: `C${i}`, label, how: "HOPF confirmation with evidence", result: "Not started" })),
@@ -199,7 +199,7 @@ export function publicationData(variant = "") {
 	return {
 		outcome: "OK", mode: "site",
 		tender: { ...TENDER, overall_status: "Publication authorised" },
-		publication: { channels, rule_line: "Authorised by Amina Hassan, 15 May 2027, 07:55 EAT · Publication rule PUB-RULE-MOH-OT-2027-01 · 4 required channels, all evidence based." },
+		publication: { channels, rule_line: "Authorised by Amina Hassan, 15 May 2027, 07:55 EAT · 4 required channels, all evidence based.", technical_facts: [{ label: "Publication rule", value: "PUB-RULE-MOH-OT-2027-01" }, { label: "Package digest", value: "a".repeat(64) }] },
 		allowed_actions: ["confirm_publication_channel", "view_history"],
 		guidance: guidance("D/D/D/C/N", "Charles Mutiso", step("your_turn", "Confirm publication through Notice board and Two national newspapers; 2 of 4 channels are confirmed.")),
 		_refusal: invalid ? guidance("D/D/D/B/N", "Charles Mutiso", blockedStep("State Portal evidence could not be accepted.", ["Choose evidence file", "Confirm publication"], "TND_PUBLICATION_EVIDENCE_INVALID")) : variant === "CONFLICT" ? guidance("D/D/D/C/N", "Charles Mutiso", step("your_turn", "Continue with the channels still awaiting confirmation.")) : null,

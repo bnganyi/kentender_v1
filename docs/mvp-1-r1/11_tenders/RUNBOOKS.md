@@ -4,7 +4,7 @@ Procedures for running, verifying and recovering the Tenders module on
 `kentender.midas.com`, and for supporting it in production. Plain English;
 command blocks are exact. Written for v0.8 on 19 Sep 2026 and updated for
 v0.12 on 26 Sep 2026 (sections 9 and 10 are new; sections 1, 2, 5 and 8
-changed).
+changed). Sections 11 to 13 were added for the proposed v0.16 on 2 Oct 2026.
 
 ## 1. Running the module's gates
 
@@ -415,3 +415,93 @@ request, close and discard as a decision with its actor, time and reason;
 an open "Consider cancellation of …" item in the Accounting Officer's My Work
 means the review is still theirs. There is no administrative override
 that issues a material addendum.
+
+## 11. Setting and checking the submission-period numbers
+
+**What it is:** every Open Tender has two numbers for the time between
+publication and the submission deadline, held in System setup under the
+Open Tender schedule's **Bid opening** interval. The **minimum** (7 days
+since 2 Oct 2026; PPADA s.97(1) and PPADR 2020 reg. 86) blocks: a deadline
+closer than that cannot be submitted, approved or authorised. The **usual
+period** (21 days) never blocks: a shorter deadline needs a stated reason
+that the Head of Procurement Function and Accounting Officer then see. The
+form hints both numbers and pre-fills the deadline from the issue date.
+The 7 comes from the Project Owner's research and is not yet confirmed by
+counsel (FU-37); the schedule's verification status stays "Fixture-verified —
+not production law".
+
+**To read them on a site:**
+```bash
+cd /home/midasuser/frappe-bench
+bench --site kentender.midas.com mariadb -e "select p.profile_reference, m.minimum_days, m.default_days, m.basis, m.statutory_reference from \`tabSchedule Profile Milestone\` m join \`tabProcedure Schedule Profile\` p on p.name=m.parent where m.milestone='bid_opening' and p.procurement_method='Open Tender' order by 1"
+```
+Expect minimum 7, default 21 and basis Planning assumption on the Goods,
+Services and Works rows.
+
+**A site seeded before 2 Oct 2026 shows minimum blank:** Tenders then
+treats the schedule as having no verified minimum and blocks nothing. Run
+the patch (it never overwrites a minimum an administrator entered):
+```bash
+bench --site <site> execute kentender_core.patches.v1_28.open_tender_preparation_minimum.execute
+bench --site <site> clear-cache
+```
+**To change a number:** use System setup, Procurement schedules, create a
+new version of the Open Tender schedule. Do not edit the database. Changing
+the usual period never changes what blocks.
+
+**If an officer asks why a deadline was refused:** a message reading "at
+least 7 days after publication (the legal minimum)" means the minimum;
+"State why the tendering period is N days, shorter than the usual 21" asks
+for the reason and is not a refusal.
+
+## 12. Production support: the Accounting Officer returned an approved Tender
+
+**Symptom:** an Approved Tender shows, to the Accounting Officer, "Waiting
+on … must reopen this Tender after … returned it", with no Authorise and no
+Return action; the Head of Procurement Function has an item "Review Tender
+… returned by the Accounting Officer".
+
+**Why:** the Accounting Officer chose **Return to Head of Procurement
+Function** with a reason. The approved Version is kept, nothing is
+published, and the decision is in History with its reason.
+
+**The procedure:**
+1. The Head of Procurement Function opens the item (it lands on the Tender,
+   which shows the reason) and chooses **Reopen for correction**. A copied
+   Draft is created and the Procurement Officer gets "Correct reopened
+   Tender …".
+2. The officer corrects and resubmits; the Head of Procurement Function
+   approves; the Accounting Officer gets a fresh authorisation task.
+3. Reopening, or a Requisition correction request, clears the return item
+   and the Accounting Officer's waiting line.
+
+**What to check if it looks stuck:** the Head of Procurement Function's My
+Work lists the item until the Tender is reopened. There is no way for the
+Accounting Officer to withdraw a return; only the Head of Procurement
+Function's Reopen clears it (FU-39 asks whether the Draft should appear at
+the moment of return).
+
+## 13. Production support: an approved Tender whose deadline is below the legal minimum
+
+**Symptom:** an Approved Tender shows the Accounting Officer "Your turn,
+blocked" with the deadline, the days it allows, the legal minimum and the
+earliest allowed deadline; **Authorise publication** is absent. The Head of
+Procurement Function's My Work lists "Reopen Tender … — submission deadline
+too short".
+
+**Why:** time passed after approval, or the Tender was approved before the
+minimum was recorded, and the deadline no longer leaves the minimum after
+the earliest publication (the later of the issue date and today). The
+Officer's review and the Head of Procurement Function's approval stop this
+for a new submission; this case is the drift after approval.
+
+**The procedure:** either the Accounting Officer chooses **Return to Head
+of Procurement Function** (section 12), or the Head of Procurement Function
+chooses **Reopen for correction**. The officer then moves the deadline on
+the Tender details page, resubmits, and the Head of Procurement Function
+approves again. Nothing is overridden: authorisation and publication
+confirmation recheck the minimum on the day.
+
+**What to check:** the item clears by itself once the Tender is reopened or
+authorised. If it never appears for a Tender that is blocked, check section
+11 first: a blank minimum means nothing is checked.

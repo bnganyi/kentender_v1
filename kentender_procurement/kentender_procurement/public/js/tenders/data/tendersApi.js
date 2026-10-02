@@ -58,6 +58,7 @@ export const removeTenderEvidenceRequirement = (args) => frappeCall(`${BASE}.rem
 export const submitTenderForApproval = (args) => frappeCall(`${BASE}.submit_tender_for_approval`, args);
 export const returnTenderForCorrection = (args) => frappeCall(`${BASE}.return_tender_for_correction`, args);
 export const approveTenderPackage = (args) => frappeCall(`${BASE}.approve_tender_package`, args);
+export const returnApprovedTender = (args) => frappeCall(`${BASE}.return_approved_tender`, args);
 export const reopenApprovedTender = (args) => frappeCall(`${BASE}.reopen_approved_tender`, args);
 export const requestRequisitionCorrection = (args) => frappeCall(`${BASE}.request_requisition_correction`, args);
 export const startCorrectedTenderVersion = (args) => frappeCall(`${BASE}.start_corrected_tender_version`, args);

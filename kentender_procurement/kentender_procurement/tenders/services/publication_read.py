@@ -71,11 +71,13 @@ def publication_summary(root, *, actor: str, roles: dict[str, bool]) -> dict[str
 		# §10.9 item 4 — the closed "Publication decision and rule" line
 		"rule_line": " · ".join(part for part in (
 			f"Authorised by {_full_name(pub.authorised_by)}, {serializer.fmt_datetime_short(pub.authorised_at)}" if pub.authorised_at else "",
-			f"Publication rule {cstr(pub.rule_snapshot_id)}" if pub.rule_snapshot_id else "",
 			f"{len(channels)} required channel{'s' if len(channels) != 1 else ''}, all evidence based",
 			f"minimum period {int(pub.minimum_preparation_days or 0)} days" if pub.minimum_preparation_days else "",
-			f"package digest {cstr(pub.package_digest)}" if pub.package_digest else "",
 		) if part) + ".",
+		# v0.16 §10.9 item 4: identifiers and digests sit only under a labelled Technical details heading
+		"technical_facts": [{"label": label, "value": value} for label, value in (
+			("Publication rule", cstr(pub.rule_snapshot_id)), ("Package digest", cstr(pub.package_digest)), ("Publication digest", cstr(pub.publication_digest)),
+		) if value],
 	}
 
 

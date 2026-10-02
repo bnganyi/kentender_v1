@@ -5,6 +5,7 @@
 **Predecessor tracking:** `retired/TPR-CHG-001_v0_8_IMPLEMENTATION_TRACKER.md` (v0.8, Phases 0–9 Done 19 Sep 2026). v0.8 evidence proves the kept mechanics only; every v0.12 row needs its own evidence.
 **Status:** Phases 0–13 closed 26 September 2026 (commits `2c741140` … close-out). Open: representative-user sessions (owner, TND12-1304); acceptance rows marked Partial or Planned below, each with its reason; follow-ups FU-28–FU-36.
 **Started:** 26 September 2026.
+**v0.16 cycle (proposed, not approved):** 2 October 2026, built on approved v0.15 (`KenTender_TPR-CHG-001_Tenders_v0_16.md`). See *Work register: TPR-CHG-001 v0.16* and the TPR16 rows in the acceptance and re-implementation maps; follow-ups FU-37–FU-45. Uncommitted work at the time of writing is stated in the register.
 
 ## Tracker rules
 
@@ -26,6 +27,11 @@
 | 2026-09-26 | The stored role `Tender Inquiry Producer` and its producer user keep their names. | Renaming stored identifiers needs a migration; copy and comments say clarification (8bd85d59). FU-32. |
 | 2026-09-26 | BDS-CHG-001 v0.8 (approved 26 Sep 2026) adds strictly additive Tenders seams, built from the Bid Submission plan and recorded below as TND12-B01…B05; it also executes FU-25. No existing Tenders behaviour changes. | BDS-CHG-001 v0.8 plan D3 (`12_bid_submission/BDS-CHG-001_v0_8_Implementation_Plan.md`); the 21 Sep owner answer (v0.4 plan OQ-3) that Tenders tracker addendum rows record such additions. |
 | 2026-09-29 | BOP-CHG-001 v0.10 (approved 29 Sep 2026) adds one read-only Tenders seam for Bid Opening, recorded as TND12-C01. | BOP-CHG-001 v0.10 §3 and plan D8: Bid Opening reads the Tender only through a published seam. |
+| 2026-10-02 | Work-summary counts follow one rule for every persona: a card per status where it is that persona's turn, then In progress for the rest in flight; each card is a toggle filter that keeps focus. | Raised from testing (officer's submitted Tender in no count; HOPF and AO rows uncounted). The v0.15 spec gave HOPF and AO only their own to-do card. |
+| 2026-10-02 | Submission period: a verified legal minimum of 7 days blocks; the 21-day default is a planning assumption that needs a stated reason when shortened, shown to approvers as a Review note, and never blocks; the form pre-fills the usual period. | Project Owner, 2 Oct 2026: “1. To build it as a 7-day verified minimum with a 21-day default”, “2. Shortening below the default to require a stated reason visible to approvers, but not be a blocker”, “3. Also add the pre-filling capability that you suggested”. The legal basis is the owner's research and is not verified by the build (FU-37). |
+| 2026-10-02 | An Approved Tender whose deadline falls below the legal minimum puts a Reopen item on the HOPF's My Work and a waiting item on the AO's; derived at read time. | Project Owner, 2 Oct 2026: “Build it” (answering “a My Work item for the head of procurement, cleared when the tender is reopened”). |
+| 2026-10-02 | Digests, hashes and rule identifiers appear only under a Technical details heading or section, never in a first-view area. | Project Owner, 2 Oct 2026: “Why are digests leaking into primary user view? These type of data are expressly forbidden here and are only ever allowed under a discreet Technical Details section.” Resolves FU-36 (a spec conflict recorded 26 Sep 2026: §10.8 asked for the digest, TPR09-AC-071 and §11.1 rule 15 forbid it). |
+| 2026-10-02 | The AO can return an approved package to the HOPF with a reason before authorising; the HOPF reopens it. | Project Owner's reply “See the attached” carrying the recommendation “Add a Return to Head of Procurement action for the accounting officer…”. Reading to confirm: the copied Draft is created at the HOPF's Reopen, not at the return (FU-39). |
 
 ## Gate register
 
@@ -138,6 +144,28 @@ B01–B04 verification, 26 Sep 2026: `make tenders-services-gate` — 17 modules
 | TND13-001 | TPR13-IMP-001 / TPR13-AC-001: addendum issue on a published Tender whose bound release became Superseded, on the same release, never rebinding | Done | 2026-09-28. `tenders/tests/test_published_release.py::test_superseded_after_publication_still_issues_on_the_same_release` (the successor definition carries the bound release id; the Tender's release unchanged). The release's lifecycle is changed in memory only; the installed rows stayed Available/Verified (checked in the database after the run). |
 | TND13-002 | TPR13-IMP-002 / TPR13-AC-002: Withdrawn after publication blocks addendum issue and keeps the addendum awaiting issue and the current definition | Done | 2026-09-28. `tenders/tests/test_published_release.py::test_withdrawn_after_publication_blocks_the_issue_and_keeps_the_addendum` (`TND_TEMPLATE_RELEASE_WITHDRAWN`; no successor definition). Bid start, Draft submission and replacement: Bid Submission `test_bound_release.py`. |
 | TND13-003 | TPR13-AC-003: the Bid Submission public/supplier variants for Superseded and Withdrawn | Done | 2026-09-28. Built in Bid Submission Phase 13 (BDS-DES-02-SUPERSEDED, BDS-DES-02-WITHDRAWN-RELEASE, BDS-DES-06-WITHDRAWN-RELEASE), compared with boards A and B at both sizes (`bid-portal.fidelity.spec.js`) and driven in a browser (`tests/ui/smoke/bid-submission/bds-bound-release.spec.ts`, 3 passed). |
+
+## Work register: TPR-CHG-001 v0.16 (proposed, 2 Oct 2026)
+
+`KenTender_TPR-CHG-001_Tenders_v0_16.md` is a proposed patch on approved v0.15. It adds TPR16-AC-001–016 and TPR16-IMP-001–008. Nothing below is approved. Everything below was built and checked on 2 October 2026; the first commit (`42bbda1b`) holds the counts, filters, period rule and hand-off, and the Accounting Officer return, its button layout and these documents were uncommitted when this table was written.
+
+| ID | Item | Status | Evidence |
+|---|---|---|---|
+| TND16-001 | TPR16-IMP-001 / AC-001, 002, 006: one counts rule for the Procurement Officer, HOPF and AO | Done | `test_read::test_record_read_per_role_and_state` (HOPF `awaiting_approval, publishing, in_progress`; AO `approved, in_progress`; counts after approval), `test_forbidden_verdict_and_role_queues` (officer four cards; readers and technical none). Live on the dev site as all three personas, 2 Oct. |
+| TND16-002 | TPR16-IMP-002 / AC-003, 004, 005: cards are toggle filters, counts never change under a filter, selected state not colour alone, focus stays | Done (browser gate not run) | `WorkspaceScreen.spec.js` (7); `test_read` asserts counts equal under `status=in_progress` and `status=published`; live Enter and Space select and clear with focus on the card. `ui-tenders-workspace-gate` not run. |
+| TND16-003 | Search field takes the free width of the filter row (§10.2) | Done | Live at 1400 px: field 459 px, Clear filters ends at the panel padding. |
+| TND16-004 | TPR16-AC-008: a deadline below the legal minimum is a Must fix at the officer's review and again at HOPF approval | Done | `test_publication::test_a_deadline_below_the_legal_minimum_is_caught_when_the_officer_reviews_it` (5 days against 7; `TND_MUST_FIX`). |
+| TND16-005 | TPR16-AC-009: the guard is read up front: no Authorise for the AO, blocked next step, HOPF Reopen, officer waiting | Done | `test_a_period_that_ran_short_after_approval_is_stated_up_front_with_the_way_out`. Live on TND-MOH-2027-002 before the minimum was set to 7 (14 days against 21): AO blocked, HOPF Your turn, officer waiting. |
+| TND16-006 | TPR16-IMP-004 / AC-010: Reopen item for the HOPF and waiting item for the AO, derived at read time | Done | `test_a_blocked_authorisation_puts_the_reopen_on_the_head_of_procurements_work_list` (appears only while short, clears on reopen). No in-product alert (FU-41). |
+| TND16-007 | TPR16-IMP-006 / AC-012: legal minimum 7 and usual period 21 held separately; seed and patch `v1_28` | Done (legal basis unverified) | Dev and test sites patched with `bench execute`; `SPR-OPEN-TENDER-{GOODS,SERVICES,WORKS}-V1` read minimum 7, default 21, basis Planning assumption. `kentender_core.tests.test_procurement_settings` 18 tests OK. See FU-37. |
+| TND16-008 | TPR16-IMP-005 / AC-011: the reason field, Must fix only while empty, Review note once given, shown to HOPF and AO, never blocks | Done | `test_a_period_between_the_minimum_and_the_usual_needs_a_reason_but_never_blocks` (15 days; both approvers read the note and the Tender details row; authorisation open). |
+| TND16-009 | TPR16-IMP-007 / AC-013: Tender details hint, pre-fill that never replaces an entry, conditional reason field | Partial | `TaskDetails.spec.js` (6) and `tenders.fidelity.spec.js` green. Not seen in a browser: no requisition was ready to start on the dev site and a draft was not created on the owner's data. Playwright gate not run (FU-44). |
+| TND16-010 | TPR16-IMP-008 / AC-014, 015, 016: the AO returns an approved package; HOPF hand-off; AO waits; Reopen clears it | Done (reading to confirm) | `test_the_accounting_officer_can_return_an_approved_package_to_the_head_of_procurement` (reason, authority mask, replay, one open return, hand-off, waiting item, Authorise absent, Reopen clears and creates the officer's task); `DecisionScreens.spec.js` (button); `test_no_endpoint_declares_kwargs` count moved 41 to 42. Live: both buttons render on the AO page; Return was not pressed on the owner's tender. FU-39, FU-40. |
+| TND16-011 | The Return button sits beside Authorise, right-aligned | Done | Live: 12 px between the buttons, Authorise ends at the footer padding, Back to Tenders alone on the left. |
+| TND16-012 | Boards for TPR-DES-01, -03, -05 to -07 regenerated for the new cards, hint, reason field, note and Return button | Planned | Not started (FU-43). The boards are the fidelity source. |
+| TND16-013 | Playwright gates for the workspace, details, review, approval and authorisation boards | Planned | Not run this cycle (FU-44). |
+| TND16-014 | Controlled documents: CFG-CHG-002 v0.17 and SEED-OPS-001 v1.20 (proposed), register entries | Done (proposed) | CFG-CHG-002 v0.17 (§17.10 change register, §14.9), SEED-OPS-001 v1.20 (§10 change log) and register entries (`proposed_revision` on TPR-CHG-001, CFG-CHG-002 and SEED-OPS-001; decisions DEC-030–DEC-033). Preservation checks pass; consistency errors are unchanged from the predecessors (inherited); none is approved. |
+| TND16-015 | TPR16-IMP-009 / AC-017: no digest or rule identifier in a first-view area; closes FU-36 | Done (browser gate not run) | `test_publication::test_digests_and_rule_identifiers_stay_under_technical_details` (trail keys; publication line free of digest and rule id; both under `technical_facts`); `DecisionScreens.spec.js` (no digest element, no 40-hex text on the AO page). Live as the AO on TND-MOH-2027-002: no digest in the first view; History shows none until its Technical details disclosure is opened. `tnd-authorisation.spec.ts` updated, not run. |
 
 ## Board map
 
@@ -306,6 +334,24 @@ Criterion text is abbreviated; the spec §14 row controls. `Planned` until the n
 | TPR12-AC-011 | At 1440 × 1024 the first working region remains in the first view, using the stated one-line reduced tracker if… | 13 | Partial | Every spec runs at 1440 × 1024 and the evidence screens show the working region in the first view; the 390 px one-line tracker is asserted (persona pass). First-view position is not asserted. |
 | TPR12-AC-012 | A material addendum cannot be issued. Its exact hand-off creates one AO cancellation-review item and a waiting item;… | 7 | Done | test_open_period::test_a_material_change_cannot_be_issued_and_goes_to_a_cancellation_review; `tnd-addendum` › a material change is blocked; the AO considers cancellation and closes the review; the officer discards. |
 
+| TPR16-AC-001 | Counts returned in order for the Procurement Officer, HOPF and AO | v0.16 | Done | TND16-001. |
+| TPR16-AC-002 | In progress counts the other Tenders in flight; each in exactly one card; started-not and finished Tenders in none | v0.16 | Done | TND16-001. |
+| TPR16-AC-003 | A card applies the matching Status filter, syncs the control, toggles; In progress returns what it counts | v0.16 | Done | TND16-002. |
+| TPR16-AC-004 | Cards are keyboard buttons with a text-exposed, not colour-only, selected state | v0.16 | Done | TND16-002 (thicker border and aria-pressed). |
+| TPR16-AC-005 | Counts unchanged by any filter | v0.16 | Done | TND16-002. |
+| TPR16-AC-006 | Readers, Auditor and technical users see no cards; multi-role users see each card then one In progress | v0.16 | Partial | Readers and technical covered; the multi-role case is covered by the shared `turn_keys` code only, with no test of its own. |
+| TPR16-AC-007 | Activating a card keeps focus on it | v0.16 | Done | TND16-002 (live). |
+| TPR16-AC-008 | Below the legal minimum is a Must fix at review and approval | v0.16 | Done | TND16-004. |
+| TPR16-AC-009 | The read states the shortfall; AO has no Authorise; next steps for AO, HOPF, officer | v0.16 | Done | TND16-005. |
+| TPR16-AC-010 | HOPF Reopen item and AO waiting item while short; cleared on reopen or authorisation | v0.16 | Done | TND16-006. |
+| TPR16-AC-011 | Between minimum and usual: reason required, Review note, no block, authorisation does not newly require it | v0.16 | Done | TND16-008. |
+| TPR16-AC-012 | Minimum and usual period held separately; no verified minimum never blocks | v0.16 | Partial | Separate numbers tested; the "no verified minimum never blocks" branch has no test of its own. |
+| TPR16-AC-013 | Form states both numbers, pre-fills without replacing, reason only when shorter | v0.16 | Partial | TND16-009: component tests only. |
+| TPR16-AC-014 | AO returns an approved package with a reason; version kept; nothing published; decision recorded | v0.16 | Done | TND16-010. |
+| TPR16-AC-015 | HOPF hand-off carries the reason; Reopen clears it; AO waits and is offered neither action | v0.16 | Done | TND16-010. |
+| TPR16-AC-016 | Segregation, one open return, replay | v0.16 | Partial | One open return and replay tested; the segregation case has no test of its own beyond the shared rule. |
+| TPR16-AC-017 | No digest, hash or rule identifier in a first-view area; digests only under Technical details | v0.16 | Done | TND16-015. |
+
 ## Re-implementation register map (§19)
 
 | ID | Required implementation (short) | Phase | Status | Evidence |
@@ -406,3 +452,12 @@ Criterion text is abbreviated; the spec §14 row controls. `Planned` until the n
 | TPR12-IMP-005 | Emit §5.11 hand-off My Work and waiting items and clear them only on the underlying state change. | 2 | Partial | See TPR12-AC-010. |
 | TPR12-IMP-006 | Replace the three-part Draft progress row and duplicate status narratives with shared §10.17 components on permitted… | 3 | Done | ProgressRow, FindingsNotices, InquiryScreen, ReleaseNotice deleted; guidance region on every record screen (slices A–J). |
 | TPR12-IMP-007 | Implement the bounded material-addendum cancellation-review hand-off, AO close-with-reason outcome and unissued-draft… | 7 | Done | See TPR12-AC-012; RUNBOOKS §10. |
+| TPR16-IMP-001 | Counts from one rule per persona; count keys as Status filters; counts before filtering | v0.16 | Done | TND16-001, 002. |
+| TPR16-IMP-002 | Toggle buttons with a text-exposed selected state; In progress Status option | v0.16 | Done | TND16-002. |
+| TPR16-IMP-003 | The legal-minimum check made once and used at review, in the read and at authorisation and confirmation | v0.16 | Done | TND16-004, 005. |
+| TPR16-IMP-004 | Derived HOPF Reopen item and AO waiting item | v0.16 | Done | TND16-006. |
+| TPR16-IMP-005 | Reason field, Must fix while empty, Review note, shown to approvers | v0.16 | Done | TND16-008. |
+| TPR16-IMP-006 | Minimum 7 beside default 21 in the canonical seed and patch | v0.16 | Done | TND16-007. |
+| TPR16-IMP-007 | Form hint, pre-fill and conditional reason field | v0.16 | Partial | TND16-009. |
+| TPR16-IMP-008 | `ReturnApprovedTender`, hand-off type, action, dialog, next steps and My Work rows | v0.16 | Done | TND16-010. |
+| TPR16-IMP-009 | Digests removed from the AO approval trail, the publication line, the History table and the document dialog; kept under Technical details | v0.16 | Done | TND16-015. |

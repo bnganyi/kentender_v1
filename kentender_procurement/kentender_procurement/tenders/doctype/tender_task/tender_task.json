@@ -41,7 +41,7 @@
   {
    "fieldname": "task_type",
    "fieldtype": "Select",
-   "options": "HOPF approval\nAO publication authorisation\nHOPF channel confirmation\nHOPF addendum issue\nClarification response\nCorrect returned Tender\nCorrect reopened Tender\nReview withdrawn authorisation\nCorrect returned addendum\nRequisition correction\nAO cancellation review\nCancellation compliance",
+   "options": "HOPF approval\nAO publication authorisation\nHOPF channel confirmation\nHOPF addendum issue\nClarification response\nCorrect returned Tender\nCorrect reopened Tender\nReview withdrawn authorisation\nAO returned approved Tender\nCorrect returned addendum\nRequisition correction\nAO cancellation review\nCancellation compliance",
    "label": "Task type",
    "read_only": 1,
    "in_list_view": 1

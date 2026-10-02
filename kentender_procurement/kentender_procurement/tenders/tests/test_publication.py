@@ -183,8 +183,9 @@ class TestAuthorise(PublicationCase):
 		self.assertEqual({k: ao["period_problem"][k] for k in ("minimum_days", "earliest_deadline")}, {"minimum_days": 7, "earliest_deadline": "2027-06-10"})
 		step = ao["guidance"]["next_step"]
 		self.assertEqual((step["kind"], step["blockers"][0]["reason_code"]), ("your_turn_blocked", "TND_PUBLICATION_PERIOD_INVALID"))
-		fix = step["blockers"][0]["fixes"][0]
-		self.assertEqual((fix["label"], fix["responsibility"]), ("Reopen Tender", "Head of Procurement Function"))
+		fixes = {f["label"]: f for f in step["blockers"][0]["fixes"]}
+		self.assertEqual((fixes["Return to Head of Procurement Function"]["responsibility"], fixes["Return to Head of Procurement Function"]["kind"]), ("Accounting Officer", "command"))
+		self.assertEqual(fixes["Reopen Tender"]["responsibility"], "Head of Procurement Function")
 		hopf = publication.get_tender_publication(tender=name, user=fx.HOPF)
 		self.assertIn("reopen_tender", hopf["allowed_actions"])
 		self.assertEqual((hopf["guidance"]["next_step"]["kind"], hopf["guidance"]["next_step"]["primary_action"]), ("your_turn", "reopen_tender"))
@@ -220,6 +221,66 @@ class TestAuthorise(PublicationCase):
 		lifecycle.reopen_approved_tender(tender=name, reason="The submission deadline must leave 21 days after publication.", expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF)
 		self.assertFalse([r for r in my_work_provider.my_work_rows(user=fx.HOPF)["assigned"] if r["title"] == title])
 		self.assertFalse([r for r in my_work_provider.my_work_rows(user=fx.AO)["waiting"] if "reopen" in r["title"]])
+
+	def test_the_accounting_officer_can_return_an_approved_package_to_the_head_of_procurement(self):
+		name, approved = self._approved()
+		root = frappe.get_doc("Tender", name)
+		ref = root.tender_reference
+		ao = publication.get_tender_publication(tender=name, user=fx.AO)
+		self.assertIn("return_to_hopf", ao["allowed_actions"])
+		self.assertIn("authorise_publication", ao["allowed_actions"])
+		reason = "The delivery location in the package does not match the stores plan; please correct before I authorise."
+		with self.assertRaises(TendersError) as ctx:  # a reason is required
+			publication.return_approved_tender(tender=name, reason="too short", expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AO)
+		self.assertEqual(ctx.exception.code, "TND_CONTROL_INVALID")
+		with self.assertRaises(frappe.DoesNotExistError):  # only an Accounting Officer: masked
+			publication.return_approved_tender(tender=name, reason=reason, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF)
+		key = fx.key()
+		out = publication.return_approved_tender(tender=name, reason=reason, expected_record_version=root.record_version, idempotency_key=key, user=fx.AO)
+		self.assertEqual((out["action"], out["idempotent"]), ("returned", False))
+		root.reload()
+		# the approved Version is kept and nothing is published; the decision is recorded with its reason
+		self.assertEqual((root.overall_status, root.publication), ("Approved", None))
+		self.assertEqual(frappe.db.get_value("Tender Decision", {"tender": name, "decision": "Return approved Tender to Head of Procurement Function"}, ["actor", "reason"], as_dict=True), {"actor": fx.AO, "reason": reason})
+		self.assertEqual(publication.return_approved_tender(tender=name, reason=reason, expected_record_version=root.record_version, idempotency_key=key, user=fx.AO)["idempotent"], True)
+		with self.assertRaises(TendersError) as ctx:  # one open return at a time
+			publication.return_approved_tender(tender=name, reason=reason + " again", expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AO)
+		self.assertEqual(ctx.exception.code, "TND_STALE_VERSION")
+		# hand-off: the head of procurement holds it with the reason; the AO waits; nobody else is offered a decision
+		item = next(r for r in my_work_provider.my_work_rows(user=fx.HOPF)["assigned"] if r["title"] == f"Review Tender {ref} returned by the Accounting Officer")
+		self.assertEqual((item["action_label"], item["comment"]), ("Reopen Tender", reason))
+		waiting = [r["title"] for r in my_work_provider.my_work_rows(user=fx.AO)["waiting"] if "to reopen Tender" in r["title"]]
+		self.assertEqual(len(waiting), 1)
+		self.assertFalse([r for r in my_work_provider.my_work_rows(user=fx.AO)["assigned"] if r["title"].startswith("Authorise publication of Tender " + ref)])
+		after = publication.get_tender_publication(tender=name, user=fx.AO)
+		self.assertNotIn("authorise_publication", after["allowed_actions"])
+		self.assertNotIn("return_to_hopf", after["allowed_actions"])
+		self.assertEqual(after["guidance"]["next_step"]["kind"], "waiting")
+		self.assertEqual(after["guidance"]["next_step"]["holder"]["role"], "Head of Procurement Function")
+		hopf = publication.get_tender_publication(tender=name, user=fx.HOPF)
+		step = hopf["guidance"]["next_step"]
+		self.assertEqual((step["kind"], step["primary_action"]), ("your_turn", "reopen_tender"))
+		self.assertIn(reason, step["sentence"])
+		# the HOPF's Reopen is the existing mechanics: copied Draft, officer correction task, and the return item clears
+		root.reload()
+		lifecycle.reopen_approved_tender(tender=name, reason=reason, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.HOPF)
+		self.assertFalse([r for r in my_work_provider.my_work_rows(user=fx.HOPF)["assigned"] if "returned by the Accounting Officer" in r["title"]])
+		self.assertFalse([r for r in my_work_provider.my_work_rows(user=fx.AO)["waiting"] if "to reopen Tender" in r["title"]])
+		self.assertTrue([r for r in my_work_provider.my_work_rows(user=fx.OFFICER)["assigned"] if r["title"] == f"Correct reopened Tender {ref}"])
+
+	def test_digests_and_rule_identifiers_stay_under_technical_details(self):
+		"""v0.16 §10.8 item 2 and §10.9 item 4 (owner, 2 Oct 2026): no digest or rule identifier in a business-facing line."""
+		name, approved = self._approved()
+		trail = publication.get_tender_publication(tender=name, user=fx.AO)["approval_trail"]
+		self.assertNotIn("package_digest", trail)
+		self.assertEqual(sorted(trail), ["approved_at_label", "approved_by_name", "prepared_by_name", "version_number"])
+		root = frappe.get_doc("Tender", name)
+		out = publication.authorise_tender_publication(tender=name, expected_record_version=root.record_version, idempotency_key=fx.key(), user=fx.AO, task=approved["task"])
+		summary = publication.get_tender_publication(tender=name, user=fx.HOPF)["publication"]
+		self.assertNotRegex(summary["rule_line"], r"digest|PUB-RULE|[0-9a-f]{32}")
+		technical = {f["label"]: f["value"] for f in summary["technical_facts"]}
+		self.assertEqual(technical["Publication rule"], "PUB-RULE-MOH-OT-2027-01")
+		self.assertEqual(technical["Package digest"], frappe.db.get_value("Tender Publication", out["publication"], "package_digest"))
 
 	def test_an_integrated_channel_is_refused(self):
 		name, approved = self._approved()
