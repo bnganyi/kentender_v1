@@ -25,7 +25,7 @@ from typing import Any
 
 from frappe.utils import cstr
 
-from kentender_procurement.bid_submission.services import addendum, company_view, guidance, labels, price, projection, readiness, tender_security, tenders_gateway, workspace_view
+from kentender_procurement.bid_submission.services import addendum, company_view, controls, guidance, labels, price, projection, readiness, tender_security, tenders_gateway, workspace_view
 
 TITLE = "Review bid"
 DESCRIPTION = "Check the complete bid before submitting it to the electronic tender box."
@@ -51,6 +51,8 @@ def _value(ctx, field) -> str:
 		return ""
 	if field.control_id == "CTL-DATE":
 		return labels.date_label(value)
+	if field.control_id == "CTL-ROW-GROUP":
+		return controls.describe_rows(field.validation_parameters.get("columns") or [], value)
 	return ", ".join(cstr(v) for v in value) if isinstance(value, list) else cstr(value)
 
 

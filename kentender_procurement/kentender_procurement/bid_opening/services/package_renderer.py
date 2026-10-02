@@ -68,13 +68,28 @@ def html_of(body: dict[str, Any], *, envelope_id: str, receipt_reference: str, l
 	facts = facts_of(body)
 	labels = labels or {}
 	task_labels, response_labels = labels.get("tasks") or {}, labels.get("responses") or {}
+	columns, entity_responses = labels.get("columns") or {}, set(labels.get("entity_responses") or [])
+	names = {m.get("organisation_id"): cstr(m.get("legal_name")) for m in (body.get("bid") or {}).get("members") or []}
+	lead = ((body.get("organisation_snapshot") or {}).get("facts") or {}).get("organisation") or {}
+	names.setdefault(lead.get("organisation_id"), cstr(lead.get("legal_name")))
 
 	def task_label(task: str) -> str:
 		return task_labels.get(f"TASK-{cstr(task).upper()}") or _label(task)
 
 	def response_label(row: dict[str, Any]) -> str:
 		text = response_labels.get(cstr(row.get("response_id")))
-		return text.replace("{bidder_name}", facts["tenderer_name"]) if text else _label(row.get("field_key"))
+		text = text.replace("{bidder_name}", facts["tenderer_name"]) if text else _label(row.get("field_key"))
+		# a business profile is one per entity of the bid: say whose each answer is
+		entity = names.get(row.get("member")) if cstr(row.get("response_id")) in entity_responses else ""
+		return f"{text} — {entity}" if entity else text
+
+	def cell(row: dict[str, Any]) -> str:
+		heads, value = columns.get(cstr(row.get("response_id"))), row.get("value")
+		if not heads or not isinstance(value, list) or not all(isinstance(r, dict) for r in value):
+			return e(_value(value))
+		head = "".join(f"<th>{e(cstr(h.get('label')))}</th>" for h in heads)
+		body_rows = "".join("<tr>" + "".join(f"<td>{e(cstr(r.get(h['key'])))}</td>" for h in heads) + "</tr>" for r in value)
+		return f"<table><tr>{head}</tr>{body_rows}</table>"
 	parts = [
 		"<html><head><meta charset='utf-8'><style>body{font-family:sans-serif;font-size:11pt}table{border-collapse:collapse;width:100%}"
 		"td,th{border:1px solid #999;padding:3px 5px;text-align:left;vertical-align:top}.page{page-break-before:always}</style></head><body>",
@@ -87,7 +102,7 @@ def html_of(body: dict[str, Any], *, envelope_id: str, receipt_reference: str, l
 		by_task.setdefault(cstr(row.get("task")), []).append(row)
 	for task in sorted(by_task):
 		parts.append(f"<div class='page'><h2>{e(task_label(task))}</h2><table>")
-		parts += [f"<tr><th>{e(response_label(r))}</th><td>{e(_value(r.get('value')))}</td></tr>" for r in by_task[task]]
+		parts += [f"<tr><th>{e(response_label(r))}</th><td>{cell(r)}</td></tr>" for r in by_task[task]]
 		parts.append("</table></div>")
 	price = body.get("price") or {}
 	parts.append(f"<div class='page'><h2>{PRICE_HEADING}</h2><table><tr><th>Line</th><th>Description</th><th>Quantity</th><th>Unit price</th><th>Line total</th></tr>")

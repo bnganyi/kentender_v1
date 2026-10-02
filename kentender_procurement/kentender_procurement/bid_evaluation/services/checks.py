@@ -37,8 +37,37 @@ def _groups(definition: dict[str, Any]) -> dict[str, dict[str, Any]]:
 	return {g["group_key"]: g for s in definition.get("sections") or [] for g in s.get("groups") or []}
 
 
+def _collapse(answers: list[Any]) -> Any:
+	"""One value for a response each entity of the bid answered (release 1.4: a business profile
+	is one per entity): the common value, "Yes" when any entity said Yes, otherwise the distinct values."""
+	distinct = [v for i, v in enumerate(answers) if v not in (None, "", []) and v not in answers[:i]]
+	if not distinct:
+		return None
+	if len(distinct) == 1:
+		return distinct[0]
+	return "Yes" if "Yes" in distinct else distinct
+
+
+def _entity_answers(body: dict[str, Any]) -> dict[str, dict[str, Any]]:
+	"""Response id -> {organisation: value} for the answers an entity of the bid gave."""
+	out: dict[str, dict[str, Any]] = {}
+	for r in body.get("responses") or []:
+		if r.get("member"):
+			out.setdefault(r["response_id"], {})[r["member"]] = r.get("value")
+	return out
+
+
+def _entity_names(body: dict[str, Any]) -> dict[str, str]:
+	names = {m.get("organisation_id"): cstr(m.get("legal_name")) for m in (body.get("bid") or {}).get("members") or []}
+	lead = ((body.get("organisation_snapshot") or {}).get("facts") or {}).get("organisation") or {}
+	names.setdefault(lead.get("organisation_id"), cstr(lead.get("legal_name")))
+	return names
+
+
 def _inputs(body: dict[str, Any]) -> tuple[dict[str, Any], dict[str, int]]:
 	values = {r["response_id"]: r.get("value") for r in body.get("responses") or [] if not r.get("member")}
+	for response_id, answers in _entity_answers(body).items():
+		values.setdefault(response_id, _collapse(list(answers.values())))
 	confirmation = body.get("confirmation") or {}
 	if confirmation.get("response_id"):
 		values[confirmation["response_id"]] = confirmation.get("confirmed")
@@ -57,6 +86,7 @@ def _label(group: dict[str, Any], rule_id: str) -> str:
 def results_for(loaded: dict[str, Any] | None, definition: dict[str, Any], body: dict[str, Any]) -> list[dict[str, Any]]:
 	"""Every automatic result for one bid (pure: same inputs, same results)."""
 	values, files = _inputs(body)
+	entity_answers, names = _entity_answers(body), _entity_names(body)
 	groups = _groups(definition)
 	evaluated = {m["mapping_id"]: m for m in definition.get("evaluation_mappings") or [] if m.get("evaluation_treatment") == "Evaluated"}
 	group_values: dict[str, dict[str, Any]] = {}
@@ -76,6 +106,9 @@ def results_for(loaded: dict[str, Any] | None, definition: dict[str, Any], body:
 		label = _label(group, row["identity"]["rule_id"])
 		res = rules.check(loaded or {"published_comparison": {}}, rule, facts=facts, value=values.get(row["response_id"]), group_values=group_values[row["group_key"]],
 			evidence_files=files.get(row["response_id"], 0), label=label, field_label=row["field"]["label"])
+		if len(entity_answers.get(row["response_id"], {})) > 1:
+			# several entities answered: the committee sees each one's answer, not only the combined reading
+			res["offered_display"] = "; ".join(f"{names.get(org) or org}: {rules.display(value)}" for org, value in entity_answers[row["response_id"]].items())
 		out.append({"group_id": mapping["evaluation_group_id"], "mapping_id": mapping["mapping_id"], "requirement_key": row["group_key"], "requirement_label": label,
 			"response_id": row["response_id"], "field_key": field, "check_kind": res["kind"], "applicable": 0 if res["result"] == rules.NOT_APPLICABLE else 1,
 			"result": res["result"], "reason": res["reason"], "basis": res["basis"], "evidence_assessment_required": 1 if res.get("evidence_assessment") else 0,

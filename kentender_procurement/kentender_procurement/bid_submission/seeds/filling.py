@@ -33,6 +33,25 @@ def pdf(text: str = "") -> bytes:
 	return buffer.getvalue()
 
 
+def _sample_row(table: dict[str, Any]) -> dict[str, Any]:
+	"""One row the table accepts: a total, where one is published, is met by this single row."""
+	totals = {t["column"]: t["equals"] for t in table.get("totals") or []}
+	row: dict[str, Any] = {}
+	for column in table["columns"]:
+		kind = column["type"]
+		if column["key"] in totals:
+			row[column["key"]] = totals[column["key"]]
+		elif kind == "choice":
+			row[column["key"]] = column["options"][0]
+		elif kind == "integer":
+			row[column["key"]] = 1
+		elif kind == "decimal":
+			row[column["key"]] = "1.00"
+		else:
+			row[column["key"]] = "Seeded entry"
+	return row
+
+
 def sample_value(field: dict[str, Any]):
 	"""A value the field's own published limits accept (answers only; the bid
 	does not evaluate them)."""
@@ -45,6 +64,8 @@ def sample_value(field: dict[str, Any]):
 		return [options[0]]
 	if kind == "ports":
 		return [{"port_type": options[0], "count": 1}]
+	if kind == "row_group":
+		return [_sample_row(field["row_group"])]
 	if kind in ("short_text", "long_text"):
 		text = "Seeded answer for the canonical bid."
 		low, high = int(limits.get("min_length", 0)), int(limits.get("max_length", 500))

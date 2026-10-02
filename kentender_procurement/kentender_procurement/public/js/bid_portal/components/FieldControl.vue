@@ -8,6 +8,7 @@
 // button adds a file, and only while the field has room for one.
 import { computed, inject, ref } from "vue";
 import CommonState from "./CommonState.vue";
+import RowGroupControl from "./RowGroupControl.vue";
 
 const UPLOAD = "kentender_procurement.bid_submission.api.upload_bid_evidence";
 const REPLACE = "kentender_procurement.bid_submission.api.replace_bid_evidence";
@@ -18,6 +19,7 @@ const props = defineProps({
 	field: { type: Object, required: true },
 	modelValue: { default: null },
 	error: { type: String, default: "" },
+	errors: { type: Object, default: () => ({}) }, // every refusal of the save, for a table's cells
 	bid: { type: Object, default: null }, // { reference, record_version } for evidence commands
 	idPrefix: { type: String, default: "bds-field" },
 });
@@ -165,6 +167,8 @@ function remove(file) {
 		<p v-else-if="fileError || issue" class="kt-field-error">{{ fileError || issue }}</p>
 		<p v-else-if="field.help" class="bds-help">{{ field.help }}</p>
 	</div>
+
+	<RowGroupControl v-else-if="field.kind === 'row_group'" :model-value="modelValue" :field="field" :disabled="disabled" :issue="issue" :errors="errors" :id-prefix="idPrefix" @update:model-value="set" />
 
 	<fieldset v-else-if="field.kind === 'yes_no'" class="kt-field bds-choice-field" :data-testid="'bds-field-' + field.handle">
 		<legend>{{ field.label }}</legend>

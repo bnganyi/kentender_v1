@@ -42,6 +42,12 @@ class TestReceiptPage(ReceiptCase):
 		self.assertEqual((facts["Receipt reference"], facts["Submitted bid Version"], facts["Submitted by"]), (receipt, "1", "Mary Wanjiku"))
 		self.assertRegex(facts["Accepted into tender box"], r"^\d{1,2} \w{3} \d{4}, \d{2}:\d{2}:\d{2} EAT$")
 		self.assertEqual(labels(view["summary"]), ["Bid total", "Offered item", "Quantity", "Delivery date", "Current deadline"])
+		# the printed receipt also states the total in words (release 1.4), as the Form of Tender does
+		from kentender_procurement.bid_submission.services import receipts
+
+		printed = receipts.receipt_html(receipts.facts(frappe.get_doc(receipts.RECEIPT, receipt)))
+		self.assertIn("<dt>Bid total in words</dt><dd>", printed)
+		self.assertIn("only", printed.split("<dt>Bid total in words</dt><dd>")[1].split("</dd>")[0])
 		self.assertEqual(view["notice"], "This receipt confirms submission only. It is not an opening, evaluation or award result.")
 		self.assertEqual(view["sentence"], "The current submitted bid remains valid until a replacement is accepted or a withdrawal is acknowledged.")
 		self.assertEqual(view["withdrawal"]["receipt_reference"], receipt)

@@ -69,7 +69,9 @@ def _pending_acknowledgements(ctx) -> dict[str, dict[str, Any]]:
 	current = addendum.pending(ctx)
 	if not current:
 		return {}
-	model = DefinitionModel(current["definition"], members=[m.organisation_id for m in ctx.arrangement.members])
+	from kentender_procurement.bid_submission.services.bid_context import entities_of
+
+	model = DefinitionModel(current["definition"], members=[m.organisation_id for m in ctx.arrangement.members], entities=entities_of(ctx.arrangement))
 	out = {}
 	for group in model.groups_of("documents"):
 		addendum_id = cstr((group.published_facts or {}).get("addendum_id"))

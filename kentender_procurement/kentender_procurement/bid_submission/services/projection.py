@@ -33,7 +33,7 @@ DISPLAY_FACTS: tuple[tuple[str, str], ...] = (
 	("check_type", "Check"), ("pass_condition", "Passes when"), ("evidence_type", "Evidence"), ("purpose", "Purpose"), ("requirement_text", "What to provide"),
 )
 _DATE_FACTS = {"latest_delivery_date", "validity_date", "bank_guarantee_expiry_date", "insurance_guarantee_expiry_date", "window_start", "window_end"}
-SUPPLIED_FROM = {"SV-ORGANISATION": "account", "SV-ARRANGEMENT": "arrangement", "SV-ARRANGEMENT-MEMBER": "member_account", "SV-SIGNATORY": "signatory"}
+SUPPLIED_FROM = {"SV-ORGANISATION": "account", "SV-ARRANGEMENT": "arrangement", "SV-ARRANGEMENT-MEMBER": "member_account", "SV-SIGNATORY": "signatory", "SV-ENTITY-PROFILE": "account"}
 
 
 def group_handle(ctx: BidContext, group: Group) -> str:
@@ -97,7 +97,7 @@ def heading(ctx: BidContext, group: Group) -> str:
 def member_name(ctx: BidContext, group: Group) -> str:
 	if not group.member:
 		return ""
-	return next((cstr(m.legal_name) for m in ctx.arrangement.members if m.organisation_id == group.member), "")
+	return ctx.entity_name(group.member)
 
 
 def label(ctx: BidContext, field: Field) -> str:
@@ -155,6 +155,12 @@ def field_view(ctx: BidContext, state: FieldState) -> dict[str, Any]:
 	limits = _limits(field)
 	if limits:
 		view["limits"] = limits
+	if field.kind == "row_group":
+		params = field.validation_parameters
+		view["row_group"] = {
+			"columns": [{k: v for k, v in column.items() if k in ("key", "label", "type", "options", "max_length", "scale", "required")} for column in params.get("columns") or []],
+			"minimum_rows": int(params.get("minimum_rows") or 0), "maximum_rows": int(params.get("maximum_rows") or 10), "totals": list(params.get("totals") or []),
+		}
 	if field.kind == "evidence":
 		rule = field.evidence_rule or {}
 		view["evidence"] = {

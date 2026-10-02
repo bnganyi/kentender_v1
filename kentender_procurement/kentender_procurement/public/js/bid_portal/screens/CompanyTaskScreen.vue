@@ -208,6 +208,16 @@ onMounted(() => {
 					<div v-else>
 						<div v-for="row in org.update.rows" :key="row.label" class="bds-card"><div class="bds-card-title">{{ row.label }}</div><div class="bds-card-fact"><span class="kt-label">{{ __("Value") }}</span><span>{{ row.value }}</span></div></div>
 					</div>
+					<div v-if="org.update.changes && org.update.changes.length > 1" class="bds-also-changed" data-testid="bds-account-changes">
+						<span class="kt-label">{{ __("Everything that changed ({0})", [org.update.changes.length]) }}</span>
+						<table v-if="!narrow" class="kt-table">
+							<thead><tr><th>{{ __("Fact") }}</th><th>{{ __("This bid") }}</th><th>{{ __("Current Account") }}</th></tr></thead>
+							<tbody><tr v-for="c in org.update.changes" :key="c.fact"><td class="bds-strong">{{ c.fact }}</td><td>{{ c.this_bid || "—" }}</td><td>{{ c.current || "—" }}</td></tr></tbody>
+						</table>
+						<div v-else>
+							<div v-for="c in org.update.changes" :key="c.fact" class="bds-card"><div class="bds-card-title">{{ c.fact }}</div><div class="bds-card-fact"><span class="kt-label">{{ __("This bid") }}</span><span>{{ c.this_bid || "—" }}</span></div><div class="bds-card-fact"><span class="kt-label">{{ __("Current Account") }}</span><span>{{ c.current || "—" }}</span></div></div>
+						</div>
+					</div>
 					<div class="bds-row-actions">
 						<button type="button" class="kt-btn kt-btn-secondary" :disabled="pending" data-testid="bds-use-updated" @click="useUpdated">{{ __("Use updated details") }}</button>
 						<button type="button" class="kt-btn kt-btn-ghost" :disabled="pending" data-testid="bds-keep-bid" @click="keepBid = true">{{ __("Keep bid details") }}</button>
@@ -265,7 +275,7 @@ onMounted(() => {
 						<tr v-for="row in data.declarations" :key="row.key" :data-testid="'bds-declaration-' + row.key">
 							<td class="bds-strong">{{ row.label }}</td>
 							<td><span class="kt-status" :class="'is-' + row.tone">{{ row.status }}</span><div v-if="row.confirmed_text" class="kt-label bds-confirmed">{{ row.confirmed_text }}</div></td>
-							<td><button type="button" class="bds-link-button" @click="drawer = row">{{ __("View declaration") }}</button></td>
+							<td><button type="button" class="bds-link-button" @click="drawer = row">{{ __(row.action_label || "View declaration") }}</button><a v-if="row.account_href" :href="row.account_href" class="bds-account-link" data-testid="bds-open-account">{{ __("Open Account") }}</a></td>
 						</tr>
 					</tbody>
 				</table>
@@ -273,7 +283,7 @@ onMounted(() => {
 					<div v-for="row in data.declarations" :key="row.key" class="bds-card" :data-testid="'bds-declaration-' + row.key">
 						<div class="bds-card-title">{{ row.label }}</div>
 						<div class="bds-card-fact"><span class="kt-label">{{ __("Status") }}</span><span><span class="kt-status" :class="'is-' + row.tone">{{ row.status }}</span></span></div>
-						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="drawer = row">{{ __("View declaration") }}</button></div>
+						<div class="bds-card-actions"><button type="button" class="bds-link-button" @click="drawer = row">{{ __(row.action_label || "View declaration") }}</button><a v-if="row.account_href" :href="row.account_href" class="bds-account-link" data-testid="bds-open-account">{{ __("Open Account") }}</a></div>
 					</div>
 				</div>
 			</div>

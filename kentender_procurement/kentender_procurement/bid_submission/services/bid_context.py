@@ -53,6 +53,8 @@ class BidContext:
 		source, fact = field.supplied["source_id"], field.supplied["fact"]
 		if source == "SV-ORGANISATION":
 			return (self.snapshot.get("organisation") or {}).get(fact) or None
+		if source == "SV-ENTITY-PROFILE":
+			return ((self.snapshot.get("profiles") or {}).get(field.member) or {}).get(fact) or None
 		if source == "SV-ARRANGEMENT-MEMBER":
 			member = next((m for m in self.snapshot.get("members") or [] if m.get("organisation_id") == field.member), {})
 			return member.get(fact) or None
@@ -78,9 +80,24 @@ class BidContext:
 	def group_values(self, field: Field) -> dict[str, Any]:
 		return {f.field_key: self.value(f) for f in field.group.fields}
 
+	def entity_name(self, organisation: str) -> str:
+		"""The legal name of one entity of the bid (the lead or a joint-venture member)."""
+		lead = self.snapshot.get("organisation") or {}
+		if organisation == lead.get("organisation_id"):
+			return cstr(lead.get("legal_name")) or organisation
+		member = next((m for m in self.arrangement.members if m.organisation_id == organisation), None)
+		return cstr(member.legal_name) if member and member.legal_name else organisation
+
 	@property
 	def tenderer_name(self) -> str:
 		return cstr(self.arrangement.joint_venture_name) or cstr(self.arrangement.lead_legal_name)
+
+
+def entities_of(arrangement) -> list[str]:
+	"""The organisations a per-entity group repeats for: every member of a joint
+	venture (the lead is its first member), or the lead organisation of a single bid."""
+	members = [m.organisation_id for m in arrangement.members]
+	return members or [cstr(arrangement.lead_organisation)]
 
 
 def _signatory(arrangement) -> dict[str, Any] | None:
@@ -123,6 +140,6 @@ def load(bid_reference: str, *, actor: str, organisation: str = "", at=None) -> 
 		values.update(json.loads(row.values_json or "{}"))
 	snapshot = json.loads(frappe.db.get_value("Bid Organisation Snapshot", workspace.organisation_snapshot, "facts_json") or "{}")
 	return BidContext(
-		workspace=workspace, arrangement=arrangement, model=DefinitionModel(bound["definition"], members=members), values=values, sections=sections,
+		workspace=workspace, arrangement=arrangement, model=DefinitionModel(bound["definition"], members=members, entities=entities_of(arrangement)), values=values, sections=sections,
 		snapshot=snapshot, evidence=evidence_of(workspace.name), signatory=_signatory(arrangement), actor=actor, assignment=assignment,
 	)

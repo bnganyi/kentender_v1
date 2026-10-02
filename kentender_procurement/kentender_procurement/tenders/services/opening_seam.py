@@ -65,8 +65,12 @@ def definition_labels(tender: str, definition_version=None) -> dict[str, Any]:
 		return {"tasks": {}, "responses": {}}
 	definition = stored.get("definition") or {}
 	responses: dict[str, str] = {}
+	columns: dict[str, list[dict[str, str]]] = {}
 	for row in definition.get("response_rows") or []:
 		field = row.get("field") or {}
+		if field.get("control_id") == "CTL-ROW-GROUP" and row.get("response_id"):
+			heads = (row.get("validation") or {}).get("parameters", {}).get("columns") or []
+			columns[cstr(row["response_id"])] = [{"key": cstr(c.get("key")), "label": cstr(c.get("label"))} for c in heads]
 		text = cstr(field.get("label"))
 		if "addendum_reference" in (field.get("label_parameters") or []):
 			addendum = cstr((row.get("identity") or {}).get("immutable_source_id"))
@@ -74,7 +78,14 @@ def definition_labels(tender: str, definition_version=None) -> dict[str, Any]:
 			text = text.replace("{addendum_reference}", reference or "the addendum")
 		if row.get("response_id") and text:
 			responses[cstr(row["response_id"])] = text
-	return {"tasks": {cstr(s.get("section_id")): cstr(s.get("label")) for s in definition.get("sections") or [] if s.get("section_id")}, "responses": responses}
+	out: dict[str, Any] = {"tasks": {cstr(s.get("section_id")): cstr(s.get("label")) for s in definition.get("sections") or [] if s.get("section_id")}, "responses": responses}
+	# release 1.4: the columns of each table answer, and the answers a group repeated per entity holds
+	entity_responses = [rid for s in definition.get("sections") or [] for g in s.get("groups") or [] if g.get("repetition") == "per_entity" for rid in g.get("response_ids") or []]
+	if columns:
+		out["columns"] = columns
+	if entity_responses:
+		out["entity_responses"] = entity_responses
+	return out
 
 
 def processing_actors(tender: str) -> set[str]:

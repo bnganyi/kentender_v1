@@ -28,7 +28,7 @@ from typing import Any
 import frappe
 from frappe.utils import cstr
 
-from kentender_procurement.bid_submission.services import documents_view, gateways, labels, projection, security_matching, supplier_gateway, tenders_gateway
+from kentender_procurement.bid_submission.services import controls, documents_view, gateways, labels, projection, security_matching, snapshot, supplier_gateway, tenders_gateway
 
 TITLE = "Company, declarations and tender security"
 DESCRIPTION = "Confirm who is bidding and complete the required legal forms."
@@ -41,9 +41,33 @@ def _name(user: str) -> str:
 	return cstr(frappe.db.get_value("User", user, "full_name") or user)
 
 
-def organisation(ctx) -> dict[str, Any]:
-	from kentender_procurement.bid_submission.services import snapshot
+def _shown(key: str, value: Any) -> str:
+	"""A fact's value for the comparison: a table as one line, anything else as text."""
+	if key in snapshot.LIST_FACTS:
+		columns = [{"key": k} for k in ("name", "nationality", "citizenship", "shares")]
+		return controls.describe_rows(columns, value or [])
+	return cstr(value)
 
+
+def _change(ctx, key: str, compared: dict[str, Any]) -> dict[str, str]:
+	"""One changed fact between this bid's snapshot and the Account now, named for the person:
+	the organisation's own facts, a joint-venture member's, or an entity's business profile."""
+	current, latest = compared["current"], compared["latest"]
+	parts = key.split(".")
+	if parts[0] == "members":
+		index, fact = int(parts[1]), parts[2]
+		before = (current.get("members") or [])
+		member = latest["members"][index]
+		label = f"{cstr(member.get('legal_name'))} — {dict(SNAPSHOT_FACTS).get(fact, fact.replace('_', ' ').capitalize())}"
+		return {"fact": label, "this_bid": cstr((before[index] if index < len(before) else {}).get(fact)), "current": cstr(member.get(fact))}
+	if parts[0] == "profiles":
+		entity, fact = parts[1], parts[2]
+		label = f"{ctx.entity_name(entity)} — {snapshot.PROFILE_LABELS[fact]}"
+		return {"fact": label, "this_bid": _shown(fact, (current.get("profiles") or {}).get(entity, {}).get(fact)), "current": _shown(fact, latest["profiles"][entity].get(fact))}
+	return {"fact": dict(SNAPSHOT_FACTS).get(key, key.replace("_", " ").capitalize()), "this_bid": cstr((current.get("organisation") or {}).get(key)), "current": cstr(latest["organisation"].get(key))}
+
+
+def organisation(ctx) -> dict[str, Any]:
 	ws, arrangement = ctx.workspace, ctx.arrangement
 	row = frappe.db.get_value("Bid Organisation Snapshot", ws.organisation_snapshot, ["facts_json", "taken_at"], as_dict=True) or {}
 	facts = json.loads(row.get("facts_json") or "{}").get("organisation") or {}
@@ -61,13 +85,13 @@ def organisation(ctx) -> dict[str, Any]:
 		out["facts"] = [{"label": label, "value": cstr(facts.get(key))} for key, label in SNAPSHOT_FACTS] + [{"label": "Arrangement", "value": "Single organisation"}]
 	out["snapshot_text"] = f"From your Account · copied to this bid on {labels.datetime_label(row.get('taken_at'))}" if row.get("taken_at") else ""
 	compared = snapshot.compare(ws)
-	changed = [k for k in compared["changed"] if not k.startswith("members.")]
-	if changed:
-		key = changed[0]
-		label = dict(SNAPSHOT_FACTS).get(key, key.replace("_", " ").capitalize())
+	changes = [_change(ctx, key, compared) for key in compared["changed"]]
+	if changes:
+		first = changes[0]
 		out["update"] = {
-			"fact": label, "rows": [{"label": "This bid", "value": cstr(compared["current"].get("organisation", {}).get(key))}, {"label": "Current Account", "value": cstr(compared["latest"]["organisation"].get(key))}],
-			"note": ACCOUNT_UPDATE_NOTE, "record_version": int(ws.record_version or 0),
+			"fact": first["fact"], "rows": [{"label": "This bid", "value": first["this_bid"]}, {"label": "Current Account", "value": first["current"]}],
+			# every changed fact, so the bidder sees what "Use updated details" will bring in
+			"changes": changes, "note": ACCOUNT_UPDATE_NOTE, "record_version": int(ws.record_version or 0),
 		}
 		out["current_text"] = ""
 	else:
@@ -102,6 +126,11 @@ def _confirmed(ctx, group, states) -> str:
 
 
 def _group_status(group, states) -> str:
+	visible = [states[f.key] for f in group.fields if f.key in states and states[f.key].visible]
+	if visible and not any(f.editable for f in group.fields if f.key in states and states[f.key].visible):
+		# nothing here is the bidder's to answer (an entity's business profile, copied from its Account):
+		# it is complete when the Account holds every fact, and says so when it does not
+		return "Needs attention" if any(s.issue and s.issue.get("severity") == "Must fix" for s in visible) else "Complete"
 	shown = [states[f.key] for f in group.fields if f.key in states and states[f.key].visible and f.editable]
 	if any(s.issue and s.issue.get("severity") == "Must fix" and s.value not in (None, "", []) for s in shown):
 		return "Needs attention"
@@ -122,7 +151,11 @@ def declarations(ctx, tasks, view_groups: list[dict[str, Any]]) -> list[dict[str
 		status = _group_status(group, states)
 		confirmed = _confirmed(ctx, group, states) if group.composition_id == "COMP-LOCKED-DECLARATION" and status == "Complete" else ""
 		label = "Confirmed" if confirmed else status
+		profile = group.composition_id == "COMP-ENTITY-PROFILE"
+		# the lead's own profile is completed in the Account the bidder is signed in to; a member's is not theirs to change
+		fix_here = profile and label == "Needs attention" and group.member == (ctx.snapshot.get("organisation") or {}).get("organisation_id")
 		rows.append({
+			"action_label": "View business profile" if profile else "View declaration", "account_href": "/account" if fix_here else "",
 			"key": shown["key"], "label": f"{shown['heading']} — {shown['member']}" if shown.get("member") else shown["heading"], "status": label, "tone": "live" if label in ("Complete", "Confirmed") else ("attention" if label == "Needs attention" else "draft"),
 			"confirmed_text": confirmed if confirmed != "Confirmed" else "", "statement": shown.get("statement", ""), "facts": shown.get("facts") or [], "fields": shown["fields"],
 		})

@@ -5,7 +5,9 @@
 §8.2): one canonical form per control, so the server stores and compares the
 same value whatever the browser sent. `canonical(control, raw, parameters)`
 returns `(value, None)`, `(None, None)` for "not answered", or
-`(None, message)` when the input cannot be read as that control. Range and
+`(None, problem)` when the input cannot be read as that control: a message, or for
+a table `{"table": [message], "rows": {position: {column: message}}}` (`flatten`
+turns either into field errors). Range and
 option checks are the named validations' job (`validation.py`)."""
 
 from __future__ import annotations
@@ -17,7 +19,8 @@ from typing import Any, Callable
 
 from frappe.utils import cstr
 
-Result = tuple[Any, "str | None"]
+Problem = "str | dict[str, Any] | None"
+Result = tuple[Any, Problem]
 _BLANK = (None, None)
 
 
@@ -136,6 +139,40 @@ def _ports(raw, _params) -> Result:
 	return rows, None
 
 
+def _row_group(raw, params) -> Result:
+	"""A bounded table (release 1.4): rows in column order, blank rows dropped. The
+	table's own rules (minimum rows, totals) are its named validation's job."""
+	from kentender_core.utils import row_tables
+
+	if raw in (None, "", []):
+		return _BLANK
+	result = row_tables.normalise(params["columns"], raw, maximum_rows=int(params.get("maximum_rows", row_tables.MAX_ROWS)))
+	if result.problems:
+		return None, result.problems
+	return (result.rows, None) if result.rows else _BLANK
+
+
+def describe_rows(columns: list[dict[str, Any]], rows: Any) -> str:
+	"""A table's rows as one line for a summary: each row's cells in column order, rows
+	separated by a semicolon (the Review page and the receipt summary)."""
+	if not isinstance(rows, list):
+		return _text(rows)
+	return "; ".join(" · ".join(_text(row.get(c["key"])) for c in columns if _text(row.get(c["key"]))) for row in rows if isinstance(row, dict))
+
+
+def flatten(handle: str, problem: Problem) -> dict[str, str]:
+	"""Field errors for one field: its own message, and `handle.position.column` for a table cell."""
+	if isinstance(problem, str):
+		return {handle: problem}
+	out: dict[str, str] = {}
+	if problem.get("table"):
+		out[handle] = " ".join(problem["table"])
+	for position, cells in (problem.get("rows") or {}).items():
+		for column, message in cells.items():
+			out[f"{handle}.{position}.{column}"] = message
+	return out
+
+
 CANONICALISERS: dict[str, Callable[[Any, dict], Result]] = {
 	"CTL-CONFIRMATION": _confirmation,
 	"CTL-YES-NO": _yes_no,
@@ -149,6 +186,7 @@ CANONICALISERS: dict[str, Callable[[Any, dict], Result]] = {
 	"CTL-DATE": _date,
 	"CTL-EVIDENCE-REFERENCE": _evidence,
 	"CTL-PORTS-LIST": _ports,
+	"CTL-ROW-GROUP": _row_group,
 }
 
 #: What the portal renders; never a released control identity (plan D11).
@@ -156,6 +194,7 @@ KINDS: dict[str, str] = {
 	"CTL-CONFIRMATION": "confirmation", "CTL-YES-NO": "yes_no", "CTL-SINGLE-CHOICE": "single_choice", "CTL-MULTI-SELECT": "multi_select",
 	"CTL-SHORT-TEXT": "short_text", "CTL-LONG-TEXT": "long_text", "CTL-INTEGER": "integer", "CTL-DECIMAL": "decimal", "CTL-MONEY": "money",
 	"CTL-DATE": "date", "CTL-EVIDENCE-REFERENCE": "evidence", "CTL-PORTS-LIST": "ports",
+	"CTL-ROW-GROUP": "row_group",
 }
 
 

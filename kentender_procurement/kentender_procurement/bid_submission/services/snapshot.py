@@ -21,17 +21,39 @@ from kentender_procurement.bid_submission.services import records, supplier_gate
 SNAPSHOT = "Bid Organisation Snapshot"
 ORGANISATION_FACTS = ("organisation_id", "legal_name", "country", "registration_number", "tax_identifier", "registered_address")
 MEMBER_FACTS = ("organisation_id", "legal_name", "country", "registration_number", "registered_address")
+#: The standing business facts of an entity's Account profile (release 1.4, `SV-ENTITY-PROFILE`).
+PROFILE_FACTS = (
+	"business_structure", "sole_proprietor_name", "sole_proprietor_age", "sole_proprietor_nationality", "sole_proprietor_country_of_origin", "sole_proprietor_citizenship",
+	"partners", "company_type", "nominal_capital", "issued_capital", "directors", "trade_licence_number", "trade_licence_expiry", "maximum_business_value", "state_owned",
+	"year_of_registration",
+)
+LIST_FACTS = ("partners", "directors")
+PROFILE_LABELS = {
+	"business_structure": "Business structure", "sole_proprietor_name": "Sole proprietor: name in full", "sole_proprietor_age": "Sole proprietor: age",
+	"sole_proprietor_nationality": "Sole proprietor: nationality", "sole_proprietor_country_of_origin": "Sole proprietor: country of origin",
+	"sole_proprietor_citizenship": "Sole proprietor: citizenship", "partners": "Partners", "company_type": "Company type", "nominal_capital": "Nominal capital",
+	"issued_capital": "Issued capital", "directors": "Directors", "trade_licence_number": "Trade licence number", "trade_licence_expiry": "Trade licence expiry",
+	"maximum_business_value": "Maximum value of business handled", "state_owned": "State-owned", "year_of_registration": "Year of registration",
+}
 
 
 def _pick(row: dict[str, Any] | None, keys: tuple[str, ...]) -> dict[str, Any]:
 	return {k: (row or {}).get(k) or "" for k in keys}
 
 
+def _profile(organisation_id: str) -> dict[str, Any]:
+	"""One entity's profile facts as its Account holds them now (blank where nothing is saved)."""
+	row = supplier_gateway.business_profile(organisation_id=organisation_id) or {}
+	return {k: (list(row.get(k) or []) if k in LIST_FACTS else (row.get(k) or "")) for k in PROFILE_FACTS}
+
+
 def facts(lead: str, members: list[str]) -> dict[str, Any]:
 	organisation = supplier_gateway.organisation(organisation_id=lead)
+	entities = list(members) or [lead]  # a joint venture's lead is its first member
 	return {
 		"organisation": _pick(organisation, ORGANISATION_FACTS),
 		"members": [_pick(supplier_gateway.organisation(organisation_id=m), MEMBER_FACTS) for m in members],
+		"profiles": {entity: _profile(entity) for entity in entities},
 		"account_record_version": int((organisation or {}).get("record_version") or 0),
 	}
 
@@ -59,6 +81,10 @@ def compare(workspace) -> dict[str, Any]:
 	for index, member in enumerate(latest["members"]):
 		before = members_before[index] if index < len(members_before) else {}
 		changed += [f"members.{index}.{k}" for k in MEMBER_FACTS if before.get(k) != member.get(k)]
+	profiles_before = current.get("profiles") or {}
+	for entity, profile in latest["profiles"].items():
+		before = profiles_before.get(entity) or {}
+		changed += [f"profiles.{entity}.{k}" for k in PROFILE_FACTS if before.get(k, [] if k in LIST_FACTS else "") != profile.get(k)]
 	return {"changed": changed, "current": current, "latest": latest}
 
 

@@ -8,7 +8,7 @@ Tasks come from the published sections in order, groups from their published
 compositions, and fields from the published response rows; nothing is
 inferred from labels or positions. A composition repeated per arrangement
 member (template release 1.2) becomes one group instance per member of the
-bid's arrangement, each field keyed by its published response identity plus
+bid's arrangement, and one repeated per entity (release 1.4) one per entity of the bid, each field keyed by its published response identity plus
 the member's organisation (STD-TPL-001 §13.6). The portal sees a field only
 by its handle: an opaque token derived from the definition digest and the
 field key, so no published identity leaves the server."""
@@ -22,6 +22,7 @@ from typing import Any
 from kentender_procurement.bid_submission.services.controls import KINDS
 
 PER_MEMBER = "per_arrangement_member"
+PER_ENTITY = "per_entity"
 
 
 def task_key(section_id: str) -> str:
@@ -86,7 +87,7 @@ def _handle(digest: str, key: str) -> str:
 
 
 class DefinitionModel:
-	def __init__(self, definition: dict[str, Any], *, members: list[str] | tuple[str, ...] = ()):
+	def __init__(self, definition: dict[str, Any], *, members: list[str] | tuple[str, ...] = (), entities: list[str] | tuple[str, ...] = ()):
 		self.definition = definition
 		self.digest = definition["definition_digest"]
 		rows = {r["response_id"]: r for r in definition.get("response_rows") or []}
@@ -100,7 +101,9 @@ class DefinitionModel:
 			self.tasks.append(Task(key=key, label=section.get("label", ""), purpose=section.get("purpose", ""), order=int(section.get("order") or 0)))
 			self._groups[key], self._fields[key] = [], []
 			for published in section.get("groups") or []:
-				instances = list(members) if published.get("repetition") == PER_MEMBER else [None]
+				# a group repeats per joint-venture member, or per entity: the lead organisation of
+				# a single bid, or every member of a joint venture (release 1.4)
+				instances = {PER_MEMBER: list(members), PER_ENTITY: list(entities)}.get(published.get("repetition"), [None])
 				for member in instances:
 					group = Group(
 						key=f"{published['group_key']}#{member}" if member else published["group_key"], group_key=published["group_key"], rule_id=published.get("rule_id", ""),

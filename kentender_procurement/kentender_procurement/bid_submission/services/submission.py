@@ -193,7 +193,7 @@ def _accept(attempt, answer: dict[str, Any], at) -> None:
 		"tender_reference": workspace.tender_reference, "tender_title": summary.get("tender_title") or workspace.tender_reference, "bid_workspace": workspace.name,
 		"bidder_name": cstr(arrangement.joint_venture_name) or cstr(arrangement.lead_legal_name), "submission_version": version_id, "version_number": number,
 		"submitted_by": attempt.signed_by, "submitted_by_name": summary.get("signatory_name") or attempt.signed_by, "received_at": attempt.received_at, "accepted_at": accepted_at,
-		"deadline_at": frappe.db.get_value("Tender", workspace.tender, "submission_deadline"), "summary_json": json.dumps({k: summary.get(k, "") for k in ("bid_total", "offered_item", "quantity", "delivery_date")}, sort_keys=True),
+		"deadline_at": frappe.db.get_value("Tender", workspace.tender, "submission_deadline"), "summary_json": json.dumps({k: summary.get(k, "") for k in ("bid_total", "bid_total_words", "offered_item", "quantity", "delivery_date")}, sort_keys=True),
 		"predecessor_receipt": predecessor.receipt if predecessor else None, "simulation": attempt.simulation,
 	}))
 	records.insert(frappe.get_doc({

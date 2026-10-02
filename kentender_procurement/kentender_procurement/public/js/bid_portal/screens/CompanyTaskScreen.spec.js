@@ -153,6 +153,20 @@ describe("Company, declarations and tender security", () => {
 		expect(portal.call.mock.calls[0][1]).toMatchObject({ confirm: 1, expected_record_version: 20 });
 	});
 
+	it("lists every changed fact when more than one changed, so Use updated details brings in nothing unseen", () => {
+		const read = companyTask("ACCOUNT-UPDATE");
+		read.organisation.update.changes = [
+			{ fact: "Address", this_bid: "Westlands", current: "Riverside Drive" },
+			{ fact: "Afya Digital Supplies Limited — Directors", this_bid: "", current: "Mary Wanjiku · Kenyan · Kenyan · 100.00" },
+		];
+		const wrapper = mountWith(read, portalFor());
+		const list = wrapper.get('[data-testid="bds-account-changes"]');
+		expect(list.text()).toContain("Everything that changed (2)");
+		expect(list.text()).toContain("Afya Digital Supplies Limited — Directors");
+		expect(list.text()).toContain("Mary Wanjiku · Kenyan · Kenyan · 100.00");
+		expect(mountWith(companyTask("ACCOUNT-UPDATE"), portalFor()).find('[data-testid="bds-account-changes"]').exists()).toBe(false); // one change: the board's own table only
+	});
+
 	it("keeps unsaved security entries when a file command re-reads the page", async () => {
 		const portal = portalFor({ call: vi.fn(async (m) => (m.endsWith("get_bid_task") ? companyTask("JV") : { ok: true })) });
 		const wrapper = mountWith(companyTask("JV"), portal);
@@ -176,5 +190,18 @@ describe("Company, declarations and tender security", () => {
 		await flushPromises();
 		const [m, fields, files] = portal.upload.mock.calls[0];
 		expect([m.split(".").pop(), fields.handle, fields.expected_record_version, files.file]).toEqual(["upload_bid_evidence", "h-sec-proof", 20, file]);
+	});
+});
+
+describe("A business profile row", () => {
+	it("names its own action and offers Open Account only when it is the lead's and incomplete", () => {
+		const read = companyTask();
+		const row = (extra) => ({ ...read.declarations[0], key: "gprofile", label: "Business profile — Afya", status: "Needs attention", tone: "attention", action_label: "View business profile", account_href: "", ...extra });
+		read.declarations = [row({ account_href: "/account" }), row({ key: "gmember", label: "Business profile — Kisiwa" })];
+		const wrapper = mountWith(read, portalFor());
+		const lead = wrapper.get('[data-testid="bds-declaration-gprofile"]');
+		expect(lead.text()).toContain("View business profile");
+		expect(lead.get('[data-testid="bds-open-account"]').attributes("href")).toBe("/account");
+		expect(wrapper.get('[data-testid="bds-declaration-gmember"]').find('[data-testid="bds-open-account"]').exists()).toBe(false);
 	});
 });

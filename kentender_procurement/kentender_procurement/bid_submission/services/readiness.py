@@ -39,7 +39,9 @@ _MISSING = {
 	"yes_no": "Choose Yes or No.",
 	"multi_select": "Choose at least one option.",
 	"ports": "Add each port type and how many.",
+	"row_group": "Add the rows this table asks for.",
 }
+_ENTITY_PROFILE = "SV-ENTITY-PROFILE"
 _SUPPLIED_MISSING = {
 	"tender_contact_phone": "Add the Tender contact's telephone number.",
 	"tender_contact_email": "Add the Tender contact's email address.",
@@ -71,6 +73,17 @@ def _blank(value) -> bool:
 REJECTED_FILE = "Replace the rejected file."
 
 
+def _supplied_missing(ctx: BidContext, field: Field) -> str:
+	"""What to do about a supplied fact the Account does not hold. An entity's business
+	profile is kept on that entity's own Account, so the text says whose it is."""
+	if field.supplied["source_id"] == _ENTITY_PROFILE:
+		lead = (ctx.snapshot.get("organisation") or {}).get("organisation_id")
+		if field.member == lead:
+			return "Complete the business profile in your Account."
+		return f"{ctx.entity_name(field.member)} must complete its business profile in its own Account."
+	return _SUPPLIED_MISSING.get(field.supplied["fact"], "This fact is missing from the supplier account.")
+
+
 def field_state(ctx: BidContext, field: Field) -> FieldState:
 	group = ctx.group_values(field)
 	visible = validation.rule_holds(field.visibility_rule, group)
@@ -81,7 +94,7 @@ def field_state(ctx: BidContext, field: Field) -> FieldState:
 		return state
 	if field.supplied:
 		if _blank(value) and required and field.supplied["source_id"] not in AT_SUBMISSION:
-			state.issue = {"severity": MUST_FIX, "text": _SUPPLIED_MISSING.get(field.supplied["fact"], "This fact is missing from the supplier account.")}
+			state.issue = {"severity": MUST_FIX, "text": _supplied_missing(ctx, field)}
 		return state
 	if _blank(value):
 		if required:

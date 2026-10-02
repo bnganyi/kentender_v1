@@ -87,6 +87,8 @@ def _summary(ctx: BidContext, calc: dict[str, Any], responses: list[dict[str, An
 	lines = calc["lines"]
 	return {
 		"bid_total": labels.money_label(calc["total"], calc["currency"]) if calc["total"] is not None else "",
+		# the total in words, so the record states the amount both ways as the Form of Tender does
+		"bid_total_words": cstr(frappe.utils.money_in_words(calc["total"], calc["currency"])) if calc["total"] is not None else "",
 		"offered_item": "; ".join(values("offered_make_model")),
 		"quantity": "; ".join(f"{line['quantity']} {line['unit']}".strip() for line in lines),
 		"delivery_date": "; ".join(labels.date_label(v) for v in values("offered_delivery_date")),

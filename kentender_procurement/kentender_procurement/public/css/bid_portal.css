@@ -123,6 +123,15 @@
 .kt-industry.kt-portal .bds-fixed-table { table-layout: fixed; width: 100%; }
 .kt-industry.kt-portal .bds-fixed-table th { white-space: nowrap; }
 .kt-industry.kt-portal .bds-fixed-table td { overflow-wrap: anywhere; }
+/* Row-group control (release 1.4): a row is a grid of labelled cells, one column on a narrow screen. */
+.kt-industry.kt-portal .bds-rowgroup { border: 0; padding: 0; margin: 0; display: grid; gap: var(--kt-space-3); }
+.kt-industry.kt-portal .bds-rowgroup legend { font-size: 13px; font-weight: 600; margin-bottom: 4px; padding: 0; }
+.kt-industry.kt-portal .bds-rg-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) auto; gap: var(--kt-space-3); align-items: start; padding-bottom: var(--kt-space-3); border-bottom: 1px solid var(--kt-color-neutral-200); }
+.kt-industry.kt-portal .bds-rg-remove { margin-top: 22px; }
+@media (max-width: 800px) {
+	.kt-industry.kt-portal .bds-rg-row { grid-template-columns: minmax(0, 1fr); }
+	.kt-industry.kt-portal .bds-rg-remove { margin-top: 0; justify-self: start; }
+}
 .kt-industry.kt-portal .bds-port-row { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: var(--kt-space-3); }
 @media (max-width: 800px) {
 	.kt-industry.kt-portal .bds-drawer { width: 100%; }

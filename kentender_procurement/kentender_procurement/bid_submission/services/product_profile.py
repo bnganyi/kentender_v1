@@ -16,6 +16,7 @@ from kentender_procurement.bid_submission.services.errors import fail
 SUPPORTED: dict[tuple[str, str, str], int] = {
 	("IT-EQUIPMENT-OPEN-V1", "BDS-GOODS-IT-V1", "1.0.0"): 5,
 	("IT-EQUIPMENT-OPEN-V1", "BDS-GOODS-IT-V1", "1.1.0"): 5,
+	("IT-EQUIPMENT-OPEN-V1", "BDS-GOODS-IT-V1", "1.2.0"): 5,
 }
 
 
@@ -45,6 +46,7 @@ COMPOSITION_HEADINGS: dict[str, str] = {
 	"COMP-DOC-ACK": "Addendum acknowledgement",
 	"COMP-SUPPLIER-DETAILS": "Tenderer information",
 	"COMP-JV-MEMBER": "Joint-venture member",
+	"COMP-ENTITY-PROFILE": "Business profile",
 	"COMP-LOCKED-DECLARATION": "Declaration",
 	"COMP-RESERVATION-ELIGIBILITY": "Reservation eligibility",
 	"COMP-TENDER-SECURITY": "Tender security",

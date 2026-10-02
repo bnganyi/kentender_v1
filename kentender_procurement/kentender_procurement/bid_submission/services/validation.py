@@ -108,6 +108,15 @@ def _evidence_count(params, value):
 	return None
 
 
+def _row_group(params, value):
+	"""The table's own rules over rows already in canonical form: the minimum number
+	of rows and any total ("shares add up to 100")."""
+	from kentender_core.utils import row_tables
+
+	result = row_tables.normalise(params["columns"], value, minimum_rows=int(params.get("minimum_rows", 0)), maximum_rows=int(params.get("maximum_rows", row_tables.MAX_ROWS)), totals=params.get("totals") or [])
+	return " ".join((result.problems.get("table") or [])) or None
+
+
 VALIDATIONS: dict[str, Callable[[dict, Any], "str | None"]] = {
 	"VAL-NONE": _none,
 	"VAL-CONFIRMED": _confirmed,
@@ -120,6 +129,7 @@ VALIDATIONS: dict[str, Callable[[dict, Any], "str | None"]] = {
 	"VAL-OPTIONS-SUBSET": _options_subset,
 	"VAL-PORTS": _ports,
 	"VAL-EVIDENCE-COUNT": _evidence_count,
+	"VAL-ROW-GROUP": _row_group,
 }
 
 

@@ -64,6 +64,17 @@ class TestCompleteCompanyTask(SubmissionCase):
 		self.assertEqual((org["update"]["fact"], org["current_text"]), ("Address", ""))
 		self.assertEqual(frappe.db.count("Bid Submission Event"), events)
 
+	def test_every_changed_fact_is_listed_including_the_business_profile(self):
+		# release 1.4: the standing facts are copied into the bid; one that changes on the Account shows too
+		self.accounts.orgs[AFYA]["registered_address"] = "Riverside Drive, Nairobi"
+		self.accounts.set_profile(AFYA, {"business_structure": "Registered company", "directors": [{"name": "Mary Wanjiku", "nationality": "Kenyan", "citizenship": "Kenyan", "shares": "100.00"}]})
+		update = company(self.bid)["organisation"]["update"]
+		self.assertEqual(update["fact"], "Address")  # the first change keeps the board's own table
+		by_fact = {c["fact"]: c for c in update["changes"]}
+		self.assertEqual(by_fact["Afya Digital Supplies Limited — Business structure"]["current"], "Registered company")
+		self.assertEqual(by_fact["Afya Digital Supplies Limited — Business structure"]["this_bid"], "")
+		self.assertEqual(by_fact["Afya Digital Supplies Limited — Directors"]["current"], "Mary Wanjiku · Kenyan · Kenyan · 100.00")
+
 
 class TestFormOfTenderPrice(SubmissionCase):
 	def test_the_form_of_tender_states_the_calculated_bid_total(self):

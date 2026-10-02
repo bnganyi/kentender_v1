@@ -52,7 +52,7 @@ def facts(receipt) -> dict[str, Any]:
 		"bid_reference": receipt.bid_workspace, "submitted_version": f"Submitted bid Version {int(receipt.version_number)}", "submitted_by": receipt.submitted_by_name,
 		"received_at": labels.datetime_seconds_label(receipt.received_at), "accepted_at": labels.datetime_seconds_label(receipt.accepted_at), "status": _status(receipt),
 		"replaces_receipt": predecessor,
-		"summary": {"bid_total": cstr(summary.get("bid_total")), "offered_item": cstr(summary.get("offered_item")), "quantity": cstr(summary.get("quantity")), "delivery_date": cstr(summary.get("delivery_date"))},
+		"summary": {"bid_total": cstr(summary.get("bid_total")), "bid_total_words": cstr(summary.get("bid_total_words")), "offered_item": cstr(summary.get("offered_item")), "quantity": cstr(summary.get("quantity")), "delivery_date": cstr(summary.get("delivery_date"))},
 		"deadline": labels.datetime_label(frappe.db.get_value("Tender", receipt.tender, "submission_deadline")),
 		"notice": NOT_A_RESULT, "simulation_note": SIMULATION_NOTE if receipt.simulation else "",
 	}
@@ -75,7 +75,7 @@ ROWS = (
 	("Submitted bid version", "submitted_version"), ("Submitted by", "submitted_by"), ("Received by tender-box service", "received_at"),
 	("Accepted into tender box", "accepted_at"), ("Status", "status"), ("Replaces receipt", "replaces_receipt"),
 )
-SUMMARY_ROWS = (("Bid total", "bid_total"), ("Offered item", "offered_item"), ("Quantity", "quantity"), ("Delivery date", "delivery_date"))
+SUMMARY_ROWS = (("Bid total", "bid_total"), ("Bid total in words", "bid_total_words"), ("Offered item", "offered_item"), ("Quantity", "quantity"), ("Delivery date", "delivery_date"))
 
 
 def receipt_html(data: dict[str, Any]) -> str:

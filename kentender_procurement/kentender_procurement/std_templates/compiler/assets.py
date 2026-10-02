@@ -20,10 +20,28 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
-from kentender_core.utils import row_tables
 from kentender_procurement.std_templates.compiler import locked_text
 from kentender_procurement.std_templates.compiler.canonical import CanonicalError, canonical_json, is_sha256, sha256_bytes
 from kentender_procurement.std_templates.compiler.errors import fail
+
+def _row_tables():
+	"""The shared table checker (`kentender_core.utils.row_tables`, pure Python). The release
+	tooling runs without Frappe, where importing the kentender_core package would pull
+	Frappe in, so the module is then read from its file in the same repository."""
+	try:
+		from kentender_core.utils import row_tables
+
+		return row_tables
+	except ImportError:
+		import importlib.util
+		from pathlib import Path
+
+		path = Path(__file__).resolve().parents[4] / "kentender_core" / "kentender_core" / "utils" / "row_tables.py"
+		spec = importlib.util.spec_from_file_location("kt_row_tables", path)
+		module = importlib.util.module_from_spec(spec)
+		spec.loader.exec_module(module)
+		return module
+
 
 ENVELOPE: tuple[str, ...] = (
 	"schema_version",
@@ -235,6 +253,7 @@ def _check_row_group(control: str, validation: str, params: dict[str, Any], iden
 		fail("STD_DEFINITION_INVALID", f"{ROW_GROUP[0]} and {ROW_GROUP[1]} are released only together.", identity=identity)
 	if control != ROW_GROUP[0]:
 		return
+	row_tables = _row_tables()
 	problems = row_tables.check_definition(params.get("columns"), minimum_rows=params.get("minimum_rows", 0), maximum_rows=params.get("maximum_rows", row_tables.MAX_ROWS), totals=params.get("totals", []))
 	if problems:
 		fail("STD_DEFINITION_INVALID", f"The table definition is unusable: {problems[0]}", identity=identity)

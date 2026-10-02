@@ -25,7 +25,7 @@ from typing import Any
 
 from frappe.utils import cstr
 
-from kentender_procurement.bid_submission.services import labels
+from kentender_procurement.bid_submission.services import controls, labels
 
 TITLE = "Requirements and supporting evidence"
 DESCRIPTION = "State what you are offering and attach the evidence requested by the Tender."
@@ -46,6 +46,8 @@ def _display(field: dict[str, Any]) -> str:
 		return ""
 	if field["kind"] == "ports" and isinstance(value, list):
 		return "; ".join(f"{cstr(p.get('port_type'))} ×{p.get('count')}" for p in value)
+	if field["kind"] == "row_group":
+		return controls.describe_rows((field.get("row_group") or {}).get("columns") or [], value)
 	if isinstance(value, list):
 		return ", ".join(cstr(v) for v in value)
 	if field["kind"] == "date":

@@ -54,7 +54,7 @@ onMounted(() => nextTick(() => panel.value && panel.value.focus()));
 				<div v-for="fact in group.facts || []" :key="fact.label" class="bds-drawer-fact"><span class="kt-label">{{ fact.label }}</span><span>{{ fact.value }}</span></div>
 				<div v-if="group.statement" class="bds-statement" data-testid="bds-drawer-statement">{{ group.statement }}</div>
 				<template v-for="field in group.fields" :key="field.handle">
-					<FieldControl v-if="visible(field)" v-model="values[field.handle]" :field="field" :error="errors[field.handle] || ''" :bid="bid" id-prefix="bds-drawer" @changed="emit('changed', $event)" />
+					<FieldControl v-if="visible(field)" v-model="values[field.handle]" :field="field" :error="errors[field.handle] || ''" :errors="errors" :bid="bid" id-prefix="bds-drawer" @changed="emit('changed', $event)" />
 				</template>
 				<div v-if="failure" class="kt-notice is-critical" role="alert"><div class="kt-notice-body">{{ failure }}</div></div>
 			</div>

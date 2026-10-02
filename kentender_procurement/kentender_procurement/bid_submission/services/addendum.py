@@ -89,7 +89,9 @@ def refresh(ctx, *, actor: str, at) -> dict[str, Any] | None:
 		for name, key in list(evidence_keys.items()):
 			new_key, _row = _remap(key, by_prior) if key else (None, None)
 			evidence_keys[name] = new_key
-	model = DefinitionModel(current["definition"], members=[m.organisation_id for m in ctx.arrangement.members])
+	from kentender_procurement.bid_submission.services.bid_context import entities_of
+
+	model = DefinitionModel(current["definition"], members=[m.organisation_id for m in ctx.arrangement.members], entities=entities_of(ctx.arrangement))
 	version = int(ws.current_draft_version or 0) + 1
 	with records.atomic("refresh-bid-for-addendum"):
 		for task in model.tasks:

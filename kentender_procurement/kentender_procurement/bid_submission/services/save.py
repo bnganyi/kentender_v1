@@ -78,7 +78,7 @@ def _save(*, actor: str, bid_reference: str, task: str, values: dict, expected_r
 	for key, (field, raw) in submitted.items():
 		value, problem = controls.canonical(field.control_id, raw, field.validation_parameters)
 		if problem:
-			problems[field.handle] = problem
+			problems.update(controls.flatten(field.handle, problem))
 		else:
 			canonical[key] = value
 	before = dict(ctx.values)

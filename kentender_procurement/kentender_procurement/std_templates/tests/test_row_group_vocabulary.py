@@ -99,23 +99,27 @@ class TestRowGroupControl(IntegrationTestCase):
 		self.assertEqual(ctx.exception.code, "STD_RENDERER_UNSUPPORTED")
 
 
+def entity_rule(docs, fact="business_structure"):
+	profile = docs["product_profile"]
+	profile["source_selectors"].append("SEL-ENTITIES")
+	profile["compositions"].append({"composition_id": "COMP-ENTITY-PROFILE", "label": "Entity business profile", "permitted_controls": ["CTL-SINGLE-CHOICE", "CTL-ROW-GROUP"], "repetition": "per_entity", "task_id": "TASK-COMPANY"})
+	base = copy.deepcopy(rule(docs, "RR-SUPPLIER-DETAILS"))
+	base.update({"rule_id": "RR-ENTITY-PROFILE", "composition_id": "COMP-ENTITY-PROFILE", "source_selector": {"selector": "SEL-ENTITIES"}, "identity_suffix": "ENT", "order": 16, "evaluation_mapping_id": "DM-ENTITY-PROFILE", "contract_mapping_id": "DM-ENTITY-PROFILE"})
+	structure = {
+		"field_key": "business_structure", "label": "Business structure", "control_id": "CTL-SINGLE-CHOICE", "required_rule": {"rule_id": "RQ-ALWAYS"}, "visibility_rule": {"rule_id": "VS-ALWAYS"},
+		"validation_id": "VAL-OPTION-IN-LIST", "validation_parameters": {"options": ["Sole proprietor", "Partnership", "Registered company"]}, "evidence_rule": None, "help_text": "",
+		"supplied_value": {"source_id": "SV-ENTITY-PROFILE", "fact": fact},
+	}
+	base["field_definitions"] = [structure]
+	docs["response_rules"]["rules"].append(base)
+	mapping = copy.deepcopy(next(m for m in docs["downstream_rules"]["mappings"] if m["mapping_id"] == "DM-SUPPLIER-DETAILS"))
+	mapping.update({"mapping_id": "DM-ENTITY-PROFILE", "response_rule_id": "RR-ENTITY-PROFILE"})
+	docs["downstream_rules"]["mappings"].append(mapping)
+
+
 class TestPerEntityRepetition(IntegrationTestCase):
 	def entity_rule(self, docs, fact="business_structure"):
-		profile = docs["product_profile"]
-		profile["source_selectors"].append("SEL-ENTITIES")
-		profile["compositions"].append({"composition_id": "COMP-ENTITY-PROFILE", "label": "Entity business profile", "permitted_controls": ["CTL-SINGLE-CHOICE", "CTL-ROW-GROUP"], "repetition": "per_entity", "task_id": "TASK-COMPANY"})
-		base = copy.deepcopy(rule(docs, "RR-SUPPLIER-DETAILS"))
-		base.update({"rule_id": "RR-ENTITY-PROFILE", "composition_id": "COMP-ENTITY-PROFILE", "source_selector": {"selector": "SEL-ENTITIES"}, "identity_suffix": "ENT", "order": 16, "evaluation_mapping_id": "DM-ENTITY-PROFILE", "contract_mapping_id": "DM-ENTITY-PROFILE"})
-		structure = {
-			"field_key": "business_structure", "label": "Business structure", "control_id": "CTL-SINGLE-CHOICE", "required_rule": {"rule_id": "RQ-ALWAYS"}, "visibility_rule": {"rule_id": "VS-ALWAYS"},
-			"validation_id": "VAL-OPTION-IN-LIST", "validation_parameters": {"options": ["Sole proprietor", "Partnership", "Registered company"]}, "evidence_rule": None, "help_text": "",
-			"supplied_value": {"source_id": "SV-ENTITY-PROFILE", "fact": fact},
-		}
-		base["field_definitions"] = [structure]
-		docs["response_rules"]["rules"].append(base)
-		mapping = copy.deepcopy(next(m for m in docs["downstream_rules"]["mappings"] if m["mapping_id"] == "DM-SUPPLIER-DETAILS"))
-		mapping.update({"mapping_id": "DM-ENTITY-PROFILE", "response_rule_id": "RR-ENTITY-PROFILE"})
-		docs["downstream_rules"]["mappings"].append(mapping)
+		entity_rule(docs, fact)
 
 	def test_a_per_entity_composition_marks_its_group_for_repetition_by_entity(self):
 		definition = compile_with(extended(self.entity_rule), version=V)
