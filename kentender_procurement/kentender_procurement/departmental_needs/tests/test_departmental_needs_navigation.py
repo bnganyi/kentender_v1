@@ -161,7 +161,7 @@ class DepartmentalNeedsMenuTest(IntegrationTestCase):
 		"""§10 placement in the business-flow rail."""
 		budget = self.labels.index("Budget & Funding")
 		needs = self.labels.index("Departmental Needs")
-		planning = self.labels.index("Procurement Plans")
+		planning = self.labels.index("Procurement Planning")
 		self.assertLess(budget, needs, msg="Departmental Needs follows Budget & Funding")
 		self.assertLess(needs, planning, msg="Departmental Needs precedes Procurement Planning")
 
@@ -292,10 +292,12 @@ class DepartmentalNeedsSurfaceRegistryTest(IntegrationTestCase):
 			pluck="name",
 		)
 		self.assertEqual(sorted(pages), ["departmental-needs"])
+		# Only routes of this Page: the Departmental Procurement Plan Page is a
+		# different surface that merely shares the word.
 		nds_page_js = {
 			route: path
 			for route, path in (hooks.page_js or {}).items()
-			if "departmental" in route
+			if route.startswith("departmental-needs")
 		}
 		self.assertEqual(
 			nds_page_js,
@@ -333,14 +335,34 @@ class DepartmentalNeedsPageRolesTest(IntegrationTestCase):
 		return {row.role for row in frappe.get_doc("Page", "departmental-needs").roles}
 
 	def test_every_section_6_business_role_may_open_the_page(self):
-		for role in (
-			ROLE_DEPARTMENTAL_AUTHOR,
-			ROLE_HEAD_OF_USER_DEPARTMENT,
-			ROLE_PROCUREMENT_PLANNER,
-			"Auditor",
-		):
-			with self.subTest(role=role):
-				self.assertIn(role, self.page_roles())
+		"""The Page carries no role list on purpose (b81f5ccc): a role gate makes
+		Frappe raise its 403 popup before the app can draw its own Forbidden
+		panel, so every signed-in holder of a business role opens the Page and
+		the server decides what they see. This used to assert the four roles were
+		listed and went red when the list was emptied deliberately."""
+		self.assertEqual(self.page_roles(), set(), "a role list on the Page brings back the framework 403 popup")
+		page = frappe.get_doc("Page", "departmental-needs")
+		original_user = frappe.session.user
+		try:
+			for role in (
+				ROLE_DEPARTMENTAL_AUTHOR,
+				ROLE_HEAD_OF_USER_DEPARTMENT,
+				ROLE_PROCUREMENT_PLANNER,
+				"Auditor",
+			):
+				holders = frappe.get_all(
+					"Has Role",
+					filters={"role": role, "parenttype": "User", "parent": ["not in", ["Administrator", "Guest"]]},
+					pluck="parent",
+					limit_page_length=1,
+				)
+				with self.subTest(role=role):
+					if not holders:
+						self.skipTest(f"no user holds {role} on this site")
+					frappe.set_user(holders[0])
+					self.assertTrue(page.is_permitted(), f"{holders[0]} ({role}) cannot open the Page")
+		finally:
+			frappe.set_user(original_user)
 
 	def test_the_page_admits_no_role_section_1_1_removed(self):
 		"""NDS-AC-023 — Budget Officer and Accounting Officer get no surface."""
