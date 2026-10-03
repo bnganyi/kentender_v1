@@ -75,3 +75,17 @@ class TestSeedClock(IntegrationTestCase):
 			self.assertTrue(active(), "inside the acting window")
 		with clock.at("2026-12-01 09:00:00"):
 			self.assertFalse(active(), "expired")
+
+	def test_a_slow_block_never_leaves_the_fixture_second(self):
+		"""Found 3 Oct 2026: the clock ticked with real time, so a command that
+		took two seconds under load signed the canonical plan at 10:00:02 and
+		the canonical validation failed. Each reading advances the clock by a
+		microsecond instead, so stamps stay distinct and in the fixture second."""
+		import time
+
+		with clock.at("2026-12-07 10:00:00"):
+			first = now()
+			time.sleep(1.5)
+			second = now()
+		self.assertLess(first, second)
+		self.assertEqual(second[:19], "2026-12-07 10:00:00")

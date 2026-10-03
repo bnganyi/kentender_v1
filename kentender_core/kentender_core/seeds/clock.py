@@ -53,14 +53,17 @@ def _to_utc(instant: str | _dt.datetime) -> _dt.datetime:
 def at(instant: str | _dt.datetime) -> Iterator[None]:
 	"""Run the block with the process clock set to `instant` (site-local).
 
-	Time *ticks* from that instant (so consecutive saves inside one block get
-	distinct `modified` stamps, as they would in production) but never leaves
-	the fixture second before the block ends."""
+	Each reading of the clock advances it by one microsecond (so consecutive
+	saves inside one block get distinct `modified` stamps, as they would in
+	production) and real time does not move it, so the block never leaves the
+	fixture second however long its commands take. (Until 3 Oct 2026 it
+	ticked with real time: a command that took two seconds under load signed
+	the canonical plan at 10:00:02 and the canonical validation failed.)"""
 	if freeze_time is None:
 		frappe.throw("freezegun is required to run seeds at fixture instants (plan D19).")
 	frappe.flags.kt_frozen_clock = str(get_datetime(instant))
 	try:
-		with freeze_time(_to_utc(instant), tick=True):
+		with freeze_time(_to_utc(instant), auto_tick_seconds=0.000001):
 			yield
 	finally:
 		frappe.flags.kt_frozen_clock = None
