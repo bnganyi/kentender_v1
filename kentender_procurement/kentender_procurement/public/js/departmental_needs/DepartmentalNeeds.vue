@@ -88,7 +88,7 @@
 				:partial-submit="partialSubmit"
 				:submit-unknown="submitUnknown"
 				@save="onSaveDraft"
-				@submit="onSubmit"
+				@submit="askSubmit"
 				@cancel="onEditorCancel"
 			/>
 
@@ -825,6 +825,20 @@ function waitForLoad(key, timeoutMs = 20000) {
 	});
 }
 
+// UAT #30 — Submit asks first. The editor's Submit only opens the question;
+// the save-then-submit runs from the dialog's own confirm, with the form as it
+// stood when Submit was clicked (the backdrop keeps it from changing).
+const pendingSubmitForm = ref(null);
+function askSubmit(form) {
+	pendingSubmitForm.value = form;
+	dialog.value = "submit";
+}
+function confirmSubmit() {
+	const form = pendingSubmitForm.value;
+	closeDialog();
+	return onSubmit(form);
+}
+
 async function onSubmit(form) {
 	const wasNew = !needReference.value;
 	const saved = await saveDraftCommand("save-before-submit", form);
@@ -1018,6 +1032,7 @@ async function refreshPlanningStatus() {
 // --- dialogs ---------------------------------------------------------------
 
 function closeDialog() {
+	pendingSubmitForm.value = null;
 	dialog.value = "";
 	reason.value = "";
 	reasonError.value = "";
@@ -1110,6 +1125,25 @@ const REASON_DIALOGS = {
 const reasonDialog = computed(() => REASON_DIALOGS[dialog.value] || null);
 
 const confirmDialog = computed(() => {
+	if (dialog.value === "submit") {
+		const mode = editorMode.value;
+		const label =
+			mode === "correct"
+				? "Resubmit for review"
+				: mode === "successor"
+					? "Submit update for review"
+					: "Submit for review";
+		return {
+			title: `${label}?`,
+			subject: (pendingSubmitForm.value || {}).title || "",
+			message:
+				mode === "successor"
+					? "This sends the proposed changes for review. The previously accepted requirement stays in effect until they are accepted."
+					: "This sends the requirement to the Head of User Department for review. You cannot edit it while it is under review unless it is returned to you.",
+			confirmLabel: label,
+			onConfirm: () => confirmSubmit(),
+		};
+	}
 	if (dialog.value === "accept") {
 		const revision = task.value.revision || {};
 		return {

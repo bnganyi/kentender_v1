@@ -189,6 +189,7 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		await page.locator('[data-testid="nds-save-draft"]').click();
 		await expect(page.locator('[data-testid="nds-save-draft"]')).toBeEnabled();
 		await page.locator('[data-testid="nds-submit"]').click();
+		await page.locator('[data-testid="nds-dialog-confirm"]').click();
 
 		await expect(page.locator('[data-testid="nds-error-summary"]')).toHaveCount(0);
 		await expect(page).toHaveURL(new RegExp(`/departmental-needs/${NEED}$`), { timeout: 30_000 });
@@ -245,6 +246,29 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		await expect(page).toHaveURL(/\/departmental-needs\/new$/);
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
+	test("Submit for review asks first; Cancel sends nothing", async ({ page }) => {
+		/**
+		 * UAT #30: Submit saved and submitted straight from the button. It now
+		 * opens "Submit for review?" first; Cancel changes nothing.
+		 */
+		await loginAsNdsFixtureAuthor(page);
+		const sent: string[] = [];
+		page.on("request", (request) => {
+			if (/save_need_draft|submit_need_revision/.test(request.url())) sent.push(request.url());
+		});
+		await gotoNeeds(page, "/new");
+		await expectScreen(page, "editor");
+		await page.locator('[data-testid="nds-title"]').fill("Submit asks first");
+		await page.locator('[data-testid="nds-submit"]').click();
+		const dialog = page.locator('[data-testid="nds-dialog"]');
+		await expect(dialog).toContainText("Submit for review?");
+		await expect(dialog).toContainText("Submit asks first");
+		await page.locator('[data-testid="nds-dialog-cancel"]').click();
+		await expect(dialog).toHaveCount(0);
+		expect(sent, "Cancel must not save or submit").toEqual([]);
+		await expect(page).toHaveURL(/\/departmental-needs\/new$/);
+		await expect(page.locator('[data-testid="nds-title"]')).toHaveValue("Submit asks first");
+	});
 	test("a failed Unit list leaves the editor usable and Try again fills it", async ({ page }) => {
 		/**
 		 * UAT #29: the unit call failed on a half-deployed server and the whole
@@ -300,6 +324,7 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 			// Title only: the save goes through, the submit is refused server-side.
 			await page.locator('[data-testid="nds-title"]').fill("Refused-then-corrected submit");
 			await page.locator('[data-testid="nds-submit"]').click();
+			await page.locator('[data-testid="nds-dialog-confirm"]').click();
 			// §8.4 "Save succeeds, Submit fails": the saved draft is reported with
 			// the server's actual reason, and Submit stays available to retry.
 			const notice = page.locator('[data-testid="nds-partial-submit"]');
@@ -315,6 +340,7 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 			// A second attempt must target the Need the first save created.
 			await page.locator('[data-testid="nds-description"]').fill("Corrected description for the retry.");
 			await page.locator('[data-testid="nds-submit"]').click();
+			await page.locator('[data-testid="nds-dialog-confirm"]').click();
 			await expect.poll(() => saves.length).toBe(2);
 			expect(saves[1], "the retry must update the Need the first save created").toBe(reference);
 		} finally {

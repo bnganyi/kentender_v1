@@ -398,6 +398,7 @@ test.describe("Departmental Needs — design fidelity", () => {
 		await expectScreen(page, "editor");
 		await page.locator('[data-testid="nds-required-by"]').fill("2028-04-30");
 		await page.locator('[data-testid="nds-submit"]').click();
+		await page.locator('[data-testid="nds-dialog-confirm"]').click();
 		await expectScreen(page, "detail");
 
 		const errors = collectPageErrors(page);
@@ -462,6 +463,7 @@ test.describe("Departmental Needs — design fidelity", () => {
 		await expectScreen(page, "editor");
 		await page.locator('[data-testid="nds-required-by"]').fill("2028-04-30");
 		await page.locator('[data-testid="nds-submit"]').click();
+		await page.locator('[data-testid="nds-dialog-confirm"]').click();
 		await expectScreen(page, "detail");
 
 		const errors = collectPageErrors(page);
@@ -501,6 +503,7 @@ test.describe("Departmental Needs — design fidelity", () => {
 		await expectScreen(page, "editor");
 		await page.locator('[data-testid="nds-required-by"]').fill("2028-04-30");
 		await page.locator('[data-testid="nds-submit"]').click();
+		await page.locator('[data-testid="nds-dialog-confirm"]').click();
 		await expectScreen(page, "detail");
 
 		const errors = collectPageErrors(page);
@@ -1241,6 +1244,7 @@ test.describe("Departmental Needs — design fidelity", () => {
 		// rejection message.
 		await mockCallFailure(page, "submit_need_revision", "Departmental Needs submission is not open for this financial year.");
 		await page.locator('[data-testid="nds-submit"]').click();
+		await page.locator('[data-testid="nds-dialog-confirm"]').click();
 		await expect(page.getByTestId("nds-partial-submit")).toContainText("Your draft was saved, but it was not submitted.");
 		await expect(page.getByTestId("nds-partial-submit")).toContainText("Reference");
 		await expect(page.getByTestId("nds-partial-submit")).toContainText("Revision");
@@ -1275,6 +1279,7 @@ test.describe("Departmental Needs — design fidelity", () => {
 		// nothing is created, unlike PARTIAL-SUBMIT above.
 		await page.route("**/api/method/*.save_need_draft", (route) => route.abort());
 		await page.locator('[data-testid="nds-submit"]').click();
+		await page.locator('[data-testid="nds-dialog-confirm"]').click();
 		await expect(page.getByTestId("nds-submit-unknown")).toContainText(
 			"We could not confirm whether submission succeeded. Checking the existing request…",
 		);
