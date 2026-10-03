@@ -203,6 +203,15 @@
 .kt-tnd .tnd-ws-head { padding: 28px 24px 20px; border-bottom: 1px solid var(--color-divider); }
 .kt-tnd .tnd-ws-head .tnd-title-row { margin-bottom: 8px; }
 .kt-tnd .tnd-ws-counts { padding: 20px 24px; border-bottom: 1px solid var(--color-divider); }
+/* Compact count cards (v0.16 §10.2): value and icon on one line, label beneath, one column per card so a persona's whole row stays on one line. */
+.kt-tnd .tnd-ws-counts { padding: 12px 24px; }
+.kt-tnd .tnd-ws-counts .tnd-kpi-row { grid-template-columns: repeat(var(--tnd-cards, 4), minmax(0, 1fr)); gap: 8px; }
+.kt-tnd .tnd-ws-counts .tnd-kpi-btn { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "value icon" "label label"; align-items: center; gap: 2px 8px; padding: 10px 12px; }
+.kt-tnd .tnd-ws-counts .tnd-kpi-btn .kt-kpi-value { grid-area: value; font-size: 24px; }
+.kt-tnd .tnd-ws-counts .tnd-kpi-btn .kt-kpi-icon { grid-area: icon; justify-self: end; }
+.kt-tnd .tnd-ws-counts .tnd-kpi-btn .tnd-kpi-label { grid-area: label; font-size: 11px; line-height: 1.25; letter-spacing: 0.04em; }
+.kt-tnd .tnd-ws-counts .tnd-kpi-btn.is-selected { padding: 9px 11px; }
+@media (max-width: 899px) { .kt-tnd .tnd-ws-counts .tnd-kpi-row { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); } }
 .kt-tnd .tnd-kpi-btn { font: inherit; color: inherit; text-align: left; width: 100%; cursor: pointer; }
 .kt-tnd .tnd-kpi-btn:hover { border-color: var(--color-accent-700); }
 .kt-tnd .tnd-kpi-btn:focus-visible { outline: 2px solid var(--color-accent-700); outline-offset: 2px; }

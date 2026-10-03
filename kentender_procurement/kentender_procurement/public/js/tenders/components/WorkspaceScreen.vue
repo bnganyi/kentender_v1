@@ -24,7 +24,7 @@
 
 			<template v-else>
 				<div v-if="showCounts" class="tnd-ws-counts" data-testid="tnd-counts">
-					<div class="kt-kpi-row">
+					<div class="kt-kpi-row tnd-kpi-row" :style="{ '--tnd-cards': counts.length }">
 						<button v-for="c in counts" :key="c.key" type="button" class="kt-kpi-card tnd-kpi-btn" :class="[kpiClass(c), { 'is-selected': filters.status === c.key }]" :aria-pressed="filters.status === c.key ? 'true' : 'false'" :data-testid="`tnd-count-${c.key}`" @click="pickCount(c.key)">
 							<svg class="kt-kpi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path v-for="(d, i) in icon(c.key)" :key="i" :d="d"></path></svg>
 							<div class="kt-kpi-value">{{ c.value }}</div>

@@ -387,8 +387,8 @@ export function workspaceData(variant = "READY") {
 		READY: officer.map(([key, label], i) => ({ key, label, value: i === 0 ? 1 : 0 })),
 		DRAFT: officer.map(([key, label], i) => ({ key, label, value: i === 1 ? 1 : 0 })),
 		RETURNED: officer.map(([key, label], i) => ({ key, label, value: i === 2 ? 1 : 0 })),
-		HOPF: [{ key: "awaiting_approval", label: "Awaiting procurement approval", value: 1 }],
-		AO: [{ key: "approved", label: "Awaiting publication authorisation", value: 1 }],
+		HOPF: [{ key: "awaiting_approval", label: "Awaiting approval", value: 1 }],
+		AO: [{ key: "approved", label: "Awaiting authorisation", value: 1 }],
 	}[variant] || [];
 	return {
 		outcome: "OK", mode: variant === "READER" ? "reader" : "actor", counts, rows: variant === "EMPTY" ? [] : [row],

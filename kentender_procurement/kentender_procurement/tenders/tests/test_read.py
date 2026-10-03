@@ -150,7 +150,7 @@ class TestRecordReview(TenderReadCase):
 		ws = read.get_tenders_workspace(user=fx.HOPF)
 		row = next(r for r in ws["rows"] if r.get("tender") == root.name)
 		self.assertEqual((row["status_label"], row["action_label"]), ("Awaiting your approval", "Review"))
-		self.assertEqual(ws["counts"][0], {"key": "awaiting_approval", "label": "Awaiting procurement approval", "value": 1, "sub": "Tenders submitted for procurement approval"})
+		self.assertEqual(ws["counts"][0], {"key": "awaiting_approval", "label": "Awaiting approval", "value": 1, "sub": "Tenders submitted for procurement approval"})
 		# one rule for every persona: a card for each status where it is that persona's turn, then In progress for the rest in flight
 		self.assertEqual([c["key"] for c in ws["counts"]], ["awaiting_approval", "publishing", "ready", "in_progress", "published", "closed"])
 		self.assertEqual((ws["counts"][0]["value"], ws["counts"][1]["value"], ws["counts"][3]["value"]), (1, 0, 0))
@@ -237,6 +237,12 @@ class TestCountsAddUp(IntegrationTestCase):
 			counts = self._counts(**roles)
 			self.assertEqual(sum(c["value"] for c in counts), len(self.STATUSES), roles)
 			self.assertEqual(len({c["key"] for c in counts}), len(counts), roles)
+
+	def test_card_labels_are_short_enough_to_stay_on_a_compact_card(self):
+		# owner, 3 Oct 2026: long labels wrapped to three lines; the table and filter keep the full status names
+		labels = {c["key"]: c["label"] for c in self._counts(officer=True, hopf=True, ao=True)} | {c["key"]: c["label"] for c in self._counts(hopf=True)}
+		self.assertTrue(all(len(label) <= 24 for label in labels.values()), {k: v for k, v in labels.items() if len(v) > 24})
+		self.assertEqual((labels["awaiting_approval"], labels["approved"], labels["publishing"]), ("Awaiting approval", "Awaiting authorisation", "Confirm publication"))
 
 	def test_finished_and_stopped_tenders_have_a_card(self):
 		hopf = {c["key"]: c["value"] for c in self._counts(hopf=True)}

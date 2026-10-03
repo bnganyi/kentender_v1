@@ -34,14 +34,15 @@ STATUS_FILTERS = (
 # Work-summary cards (TPR-CHG-001 v0.16 §10.2). One rule for every persona, and one invariant: the cards always add up to the queue below
 # them. A card for each status where it is that persona's turn (lifecycle order); Ready to start for a persona that sees unstarted
 # requisitions but cannot start one; In progress for every other Tender in flight, which is waiting on someone else (including one
-# stopped for a Requisition correction); Published — open; and Closed (Submission period ended or Cancelled).
+# stopped for a Requisition correction); Published — open; and Closed (Submission period ended or Cancelled). Card labels stay short (24
+# characters at most) so a compact card never wraps its label past two lines; the table and the Status filter keep the full status names.
 COUNT_CARDS = (
 	("ready", "Ready to start", "Approved requisitions awaiting a tender"),
 	("draft", "Drafts", "Started, not yet submitted"),
 	("returned", "Returned to me", "Sent back for correction"),
-	("awaiting_approval", "Awaiting procurement approval", "Tenders submitted for procurement approval"),
-	("approved", "Awaiting publication authorisation", "Approved tenders awaiting a publication decision"),
-	("publishing", "Publication confirmation required", "Authorised tenders awaiting channel confirmation"),
+	("awaiting_approval", "Awaiting approval", "Tenders submitted for procurement approval"),
+	("approved", "Awaiting authorisation", "Approved tenders awaiting a publication decision"),
+	("publishing", "Confirm publication", "Authorised tenders awaiting channel confirmation"),
 )
 TURN_KEYS = {"officer": ("ready", "draft", "returned"), "hopf": ("awaiting_approval", "publishing"), "ao": ("approved",)}
 CLOSED_KEYS = ("ended", "cancelled")
