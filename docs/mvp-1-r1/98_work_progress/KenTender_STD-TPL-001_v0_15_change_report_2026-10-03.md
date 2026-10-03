@@ -51,14 +51,20 @@ Changed original line, verbatim: `| Version | 0.14 |` (now `| Version | 0.15 |`)
 - Quotations: §18.7 quotes the 2 October working-session answers as recorded in the change request. The 3 October answers to the planning questions are recorded as the recommended option each time, **from the session summary, not as the exact words of the options**.
 - Built behaviour that is not in any approved document (BDS-CHG-001 needs the amendments in §9): the Account business profile and its command, the per-entity profile in the bid snapshot, the table control's error keys, saved Account documents in a bid, the total in words on the printed receipt.
 
-## 7. Decisions needed
+## 7. Decisions
 
-1. **State-owned status moves to the entity's profile** (TPL15-CHG-004, open issue 118). Built as recommended: the question leaves the Form of Tender; the Form's locked text (k) is unchanged; evaluation reads every entity's answer. Recommendation: confirm.
-2. **Form of Tender item (p)**: the official form asks for a website, the template prints the Procuring Entity's contact office. No website fact exists. Recommendation: the owner supplies the website as a constant, or accepts the contact office.
-3. **Commissions question and currency list** (new wording). Recommendation: accept; the alternative is the official "or none" free text.
-4. **Missing profile does not block starting a bid, but blocks submission** (built as written in the plan). Recommendation: accept.
-5. **Per-entity evaluation display**: committee members see each entity's answer in one line ("Afya: No; Kisiwa: Yes"). Recommendation: accept for now; a block per entity is a larger change.
-6. **Approve v0.15** (and so v0.14, which it carries). Recommendation: approve. Nothing in it changes releases 1.1 to 1.3 or a Tender bound to them.
+Project Owner, 3 October 2026, on items 1 to 5 of the report as first issued (quoted):
+
+| # | Decision | Owner instruction |
+|---|---|---|
+| 1 | State-owned status moves to the entity's profile (TPL15-CHG-004, open issue 118). Decided. | "State-owned status: confirmed" |
+| 2 | The commissions question and the currency list (KES, USD, EUR, GBP) are accepted (open issue 116). Decided. | "Commissions question and currencies: accepted" |
+| 3 | Form of Tender item (p) stays as is (open issue 120). Decided. | "Form of Tender item (p): leave it as is" |
+| 4 | The per-entity evaluation display is a follow-up (open issue 124); no change now. | "Evaluation display: mark it as a follow-up" |
+
+TPL15-CHG-004 in v0.15 still says the owner "has not yet confirmed" the state-owned move; that sentence is superseded by this record, and v0.15 is not edited here because it is proposed text awaiting approval (a corrected sentence belongs in the next version). The ruling on a missing profile (it does not block starting a bid but blocks submission) was not separately answered and remains as built; recommendation: accept.
+
+Still open: **approve v0.15** (and so v0.14, which it carries). Recommendation: approve. Nothing in it changes releases 1.1 to 1.3 or a Tender bound to them.
 
 ## 8. Required corrections elsewhere
 
