@@ -43,7 +43,9 @@ test.describe("BOP release evidence — the canonical opening, person by person"
 			await expectNextStep(page, "done", /after the last signature\.$/);
 			await expect(page.locator('[data-testid="bop-signatures"] tbody tr')).toHaveCount(3);
 			await expect(page.locator('[data-testid="bop-signatures"] .kt-status')).toHaveText(["Signed", "Signed", "Signed"]);
-			await expect(page.locator('[data-testid="bop-register"] tbody tr')).toHaveCount(1);
+			// the canonical Tender's four bids (SEED-OPS-001 v1.21), in the order the tender box accepted them
+			await expect(page.locator('[data-testid="bop-register"] tbody tr')).toHaveCount(4);
+			await expect(page.locator('[data-testid="bop-register"] tbody tr').first()).toContainText("Afya Digital Supplies Limited");
 			await expect(page.locator('[data-testid="bop-correct-open"]')).toHaveCount(local === "charles.mutiso" ? 1 : 0);
 		}
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
@@ -88,8 +90,11 @@ test.describe("BOP release evidence — the canonical opening, person by person"
 		await page.goto(`/tenders/${REFERENCE}/opening`, { waitUntil: "domcontentloaded" });
 		await waitForPortal(page);
 		await expect(page.locator('[data-testid="bop-public"]')).toHaveAttribute("data-phase", "complete");
-		await expect(page.locator('[data-testid="bop-public-readout"] tbody tr')).toHaveCount(1);
-		await expect(page.locator('[data-testid="bop-public-readout"]')).toContainText("KES 46,400,000.00");
+		// all four bids' read-aloud totals are public (SEED-OPS-001 v1.21)
+		await expect(page.locator('[data-testid="bop-public-readout"] tbody tr')).toHaveCount(4);
+		for (const total of ["KES 46,400,000.00", "KES 48,720,000.00", "KES 43,500,000.00", "KES 46,980,000.00"]) {
+			await expect(page.locator('[data-testid="bop-public-readout"]')).toContainText(total);
+		}
 		await expect(page.locator('[data-testid="bop-public-register"]')).toHaveAttribute("data-state", "not-a-submitter");
 		// Jane Wanjiku, signed in: a member of the public, no request control
 		await loginToPortal(page, "jane.wanjiku@observer.example", PASSWORD, `/tenders/${REFERENCE}/opening`);

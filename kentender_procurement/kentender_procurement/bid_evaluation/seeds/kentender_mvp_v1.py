@@ -8,8 +8,14 @@ Phase 13): the canonical Tender's evaluation, told the way §11.1 tells it.
               09:00  Amina Hassan appoints Grace Wambui (chair), Peter Mugo
                      and Ruth Achieng; 09:05 Charles Mutiso assigns Brian
                      Wafula as secretary; 09:10–09:14 each member declares
-  12 Jun 2027 11:10:33  the completed opening is taken up and checked
-  14 Jun 2027 08:45–08:50  Ruth and Peter review the evidence; Peter leaves
+  12 Jun 2027 11:10:33  the completed opening (four bids) is taken up and
+                     checked: Pwani Tech Distributors Limited's 8 GB offer
+                     fails the 16 GB memory requirement automatically
+  14 Jun 2027 08:10–08:35  Ruth and Peter review the other bids' evidence:
+                     Jirani's meets; Mlima's eligibility documents do not
+                     (an expired tax compliance certificate), so Mlima is
+                     not responsive either
+              08:45–08:50  Ruth and Peter review Afya's evidence; Peter leaves
                      the service location as Needs review
               09:00–09:06  Grace starts the discussion, the members and Brian
                      join, Brian notes, Grace authorises the clarification
@@ -62,7 +68,24 @@ NOTE = "Ask the bidder to identify the service address already recorded in its s
 REASON = "The offered location meets the stated country requirement, but the supporting document is unclear."
 OUTCOME = "The address is present in the original submitted document and is within Kenya."
 BASIS = "No additional exercise undertaken; no separate exercise required by the published tender and no outstanding verification concern recorded by the committee."
-SUMMARY = "The only bid received meets the published requirements. The submitted service-location evidence was clarified without changing the offer."
+SUMMARY = ("Four bids were received. Afya Digital Supplies Limited's is the lowest evaluated responsive bid; Jirani Office Supplies Limited's is also responsive "
+	"and ranked second. Pwani Tech Distributors Limited's bid offers 8 GB of memory against the required 16 GB, and Mlima Computer Solutions Limited's eligibility "
+	"documents include an expired tax compliance certificate, so neither is responsive. Afya's submitted service-location evidence was clarified without changing the offer.")
+AFYA = "Afya Digital Supplies Limited"
+#: The other bids' evidence reviews: (tenderer, eligibility instant by Ruth Achieng, technical instant by Peter Mugo, the requirement mapping that
+#: fails with its reason, or None). Every other row awaiting review meets.
+REVIEWS = (
+	("Jirani Office Supplies Limited", "2027-06-14 08:10:00", "2027-06-14 08:15:00", None),
+	("Pwani Tech Distributors Limited", "2027-06-14 08:20:00", "2027-06-14 08:25:00", None),
+	("Mlima Computer Solutions Limited", "2027-06-14 08:30:00", "2027-06-14 08:35:00",
+		("DM-EVIDENCE-ELIGIBILITY-DOCUMENTS", "The tax compliance certificate in the eligibility documents expired on 30 April 2027, before the submission deadline.")),
+)
+#: The ranking the comparison must show: (tenderer, position, evaluated total).
+RANKING = (
+	(AFYA, 1, "46400000.00"), ("Jirani Office Supplies Limited", 2, "48720000.00"),
+	("Pwani Tech Distributors Limited", "Not ranked", "Not assessed — mandatory requirement not met"),
+	("Mlima Computer Solutions Limited", "Not ranked", "Not assessed — mandatory requirement not met"),
+)
 ELIGIBILITY = "EVG-ELIGIBILITY"
 CLOCKS = ("kt_evl_clock", "kt_bop_clock", "kt_prc_clock", "kt_bds_clock", "kt_tenders_clock")
 
@@ -106,8 +129,30 @@ class _Story:
 	def version(self) -> int:
 		return int(frappe.db.get_value("Evaluation Case", self.case(), "record_version"))
 
-	def bid(self) -> str:
-		return cstr(frappe.db.get_value("Evaluation Bid", {"evaluation_case": self.case()}, "name"))
+	def bid(self, tenderer: str = AFYA) -> str:
+		return cstr(frappe.db.get_value("Evaluation Bid", {"evaluation_case": self.case(), "tenderer_name": tenderer}, "name"))
+
+	def review(self, tenderer: str, eligibility_at: str, technical_at: str, failing: tuple[str, str] | None) -> None:
+		"""Ruth reviews a bid's eligibility evidence and Peter its technical
+		evidence: every row awaiting review meets, except `failing`."""
+		from kentender_procurement.bid_evaluation.services import aggregate, checks, findings
+
+		case, bid = self.case(), self.bid(tenderer)
+		failed = False
+		for r in sorted(aggregate.bid_results(case, checks.current_run(case), bid)["requirements"], key=lambda r: r["group_id"] != ELIGIBILITY):
+			if r["result"] != "Needs review":
+				continue
+			eligibility = r["group_id"] == ELIGIBILITY
+			fails = bool(failing) and r["mapping_id"] == failing[0] and not failed
+			failed = failed or fails
+			service = r["label"] == "Service location"
+			_at(eligibility_at if eligibility else technical_at)
+			_ok(findings.record_evidence_finding(tender=self.tender, bid=bid, requirement_key=r["requirement_key"], result="Does not meet" if fails else "Meets",
+				reason=failing[1] if fails else ("The submitted evidence identifies a service address in Kenya." if service else "Required evidence reviewed."),
+				evidence_reference="Kenya service-centre details" if service else "Submitted evidence", idempotency_key=_key("finding"),
+				user=MEMBER_2 if eligibility else MEMBER), f"review {tenderer}'s {r['label']}")
+		if failing and not failed:
+			frappe.throw(f"{tenderer}'s bid had no {failing[0]} row awaiting review to record as not met.")
 
 	def request(self) -> str:
 		return cstr(frappe.db.get_value("Evaluation Clarification", {"evaluation_case": self.case()}, "name", order_by="creation desc"))
@@ -142,6 +187,8 @@ class _Story:
 				user=user), f"declare as {user}")
 		_at(CLOCK["intake"])
 		_ok(intake.receive_opening_package(tender=self.tender), "take up the completed opening")
+		for tenderer, eligibility_at, technical_at, failing in REVIEWS:
+			self.review(tenderer, eligibility_at, technical_at, failing)
 		# 14 Jun: Ruth reviews the eligibility evidence, Peter the technical; the service location stays with the committee
 		case = self.case()
 		for r in aggregate.bid_results(case, checks.current_run(case), self.bid())["requirements"]:
@@ -249,8 +296,14 @@ def validate_bid_evaluation_seed() -> list[dict[str, Any]]:
 	check(bool(doc.source_intake), "the completed opening was taken up")
 	table = comparison.compare(doc.name, with_funding=False)
 	recommended = table.get("recommended") or {}
-	check(table.get("outcome") == "Recommendation" and recommended.get("bidder") == "Afya Digital Supplies Limited",
-		"the comparison recommends Afya Digital Supplies Limited")
+	check(table.get("outcome") == "Recommendation" and recommended.get("bidder") == AFYA, "the comparison recommends Afya Digital Supplies Limited")
+	by_bidder = {r["bidder"]: r for r in table.get("rows") or []}
+	check(len(by_bidder) == len(RANKING), f"{len(RANKING)} bids were evaluated (got {len(by_bidder)})")
+	for tenderer, position, total in RANKING:
+		row = by_bidder.get(tenderer) or {}
+		amount = cstr(row.get("evaluated_total"))
+		same = amount == total or (amount.replace(".", "", 1).isdigit() and total.replace(".", "", 1).isdigit() and float(amount) == float(total))
+		check(row.get("position") == position and same, f"{tenderer}: {position if position == 'Not ranked' else 'position ' + str(position)}, {total}")
 	check(cstr(recommended.get("evaluated_total")) in ("46400000", "46400000.00", "46400000.0"), "at an evaluated total of KES 46,400,000.00")
 	request = frappe.db.get_value("Evaluation Clarification", {"evaluation_case": doc.name}, ["status", "disposition", "disposition_result"], as_dict=True)
 	check(bool(request) and (request.status, request.disposition, request.disposition_result) == ("Closed", "Considered", "Meets"),

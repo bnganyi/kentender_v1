@@ -387,9 +387,28 @@ class OpeningWorld:
 		self.at(190)
 
 	# -- the record -------------------------------------------------------------
+	def _read_remaining(self) -> None:
+		"""Open and read out every envelope still waiting, before the end: the
+		canonical Tender has four bids (its demo profiles walk this world on
+		it); a browser-test Tender has one, so this does nothing there."""
+		from kentender_procurement.bid_opening.services import ceremony, readout
+
+		offset = 150
+		while offset <= 225:
+			doc = self.case()
+			if any(e.status == "Opened" for e in ceremony.entries(doc.name)) or ceremony._next_envelope(doc) is None:
+				return
+			self.at(offset)
+			entry = _ok(ceremony.open_next_tender(tender=self.tender, expected_version=self.version(), idempotency_key=_key(), user=self.chair), "open the next bid")["entry"]
+			self.at(offset + 10)
+			_ok(readout.record_readout(tender=self.tender, entry=entry, speaker=self.member, designated_pages=[1], expected_version=self.version(),
+				idempotency_key=_key(), user=self.chair, reported_speech_at=self._clock(offset + 5)), "record the readout")
+			offset += 25
+
 	def stage_ended(self) -> None:
 		from kentender_procurement.bid_opening.services import finish
 
+		self._read_remaining()
 		self.at(240)
 		_ok(finish.finish_ceremony(tender=self.tender, expected_version=self.version(), idempotency_key=_key(), user=self.chair), "end")
 		self.at(270)

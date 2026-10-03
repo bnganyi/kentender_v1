@@ -14,7 +14,11 @@ Phase 10): the canonical Tender's opening, told the way the boards tell it
               11:00:12  Charles starts the opening; 11:01 the bid is opened
               11:01:45  what Brian read aloud at 11:01:30 is recorded
               11:02:20  David's 11:02:00 request to repeat the total, answered
-              11:04  the opening ends; 11:07 the record is finished
+              11:02:40–11:04:45  the other three bids, in the order the
+                     tender box accepted them (Jirani, Pwani, Mlima), each
+                     opened and its read-aloud total recorded
+              11:05:30  the opening ends (11:04 while the Tender had one
+                     bid); 11:07 the record is finished
               11:08–11:10:30  Brian, Beatrice and Charles sign; the last
                      signature completes the opening and hands the bid to
                      Evaluation
@@ -49,12 +53,19 @@ CLOCK = {
 	"prepare": "2027-06-10 10:10:00", "appoint": "2027-06-10 10:15:00", "publish": "2027-06-10 10:20:00",
 	"join_chair": "2027-06-12 10:55:10", "join_member": "2027-06-12 10:56:00", "join_independent": "2027-06-12 10:57:00", "join_david": "2027-06-12 10:58:00", "join_jane": "2027-06-12 10:59:00",
 	"receive": "2027-06-12 11:00:05", "begin": "2027-06-12 11:00:12", "open": "2027-06-12 11:01:00", "spoken": "2027-06-12 11:01:30",
-	"readout": "2027-06-12 11:01:45", "asked": "2027-06-12 11:02:00", "answered": "2027-06-12 11:02:20", "end": "2027-06-12 11:04:00",
+	"readout": "2027-06-12 11:01:45", "asked": "2027-06-12 11:02:00", "answered": "2027-06-12 11:02:20", "end": "2027-06-12 11:05:30",
 	"freeze": "2027-06-12 11:07:00", "sign_member": "2027-06-12 11:08:00", "sign_independent": "2027-06-12 11:09:00", "sign_chair": "2027-06-12 11:10:30",
 }
 ARRANGEMENTS = {"attendance_method": "Attend the public bid opening online",
 	"access_instructions": "Select Join public opening on this Tender’s page from 10:55 EAT on 12 Jun 2027. You can listen, ask for a figure to be repeated, "
 		"or make a procedural comment."}
+#: The other bids, read aloud after Afya's in the tender box's acceptance order:
+#: (open, spoken, recorded) instants and the total each register row shows.
+OTHERS = (
+	("Jirani Office Supplies Limited", ("2027-06-12 11:02:40", "2027-06-12 11:03:05", "2027-06-12 11:03:15"), "KES 48,720,000.00"),
+	("Pwani Tech Distributors Limited", ("2027-06-12 11:03:30", "2027-06-12 11:03:50", "2027-06-12 11:04:00"), "KES 43,500,000.00"),
+	("Mlima Computer Solutions Limited", ("2027-06-12 11:04:15", "2027-06-12 11:04:35", "2027-06-12 11:04:45"), "KES 46,980,000.00"),
+)
 REQUEST = {"exception_class": "Repeat request", "speaker_name": "David Ouma", "what": "Asked for the submitted total to be repeated",
 	"response": "Charles Mutiso asked Brian Wafula to repeat it. Brian Wafula repeated KES 46,400,000.00 at 11:02:15."}
 
@@ -149,6 +160,14 @@ def _build(tender: str) -> dict[str, Any]:
 	clock.at(CLOCK["answered"])
 	_ok(interventions.record_intervention(tender=tender, idempotency_key=_key("request"), user=CHAIR, entry=entry, reported_at=CLOCK["asked"], **REQUEST),
 		"record the request")
+	others = []
+	for name, (opened, spoken, recorded), _total in OTHERS:
+		clock.at(opened)
+		other = _ok(ceremony.open_next_tender(tender=tender, expected_version=_version(tender), idempotency_key=_key(f"open-{name}"), user=CHAIR), f"open {name}'s bid")["entry"]
+		clock.at(recorded)
+		_ok(readout.record_readout(tender=tender, entry=other, speaker=MEMBER, designated_pages=[1], expected_version=_version(tender), idempotency_key=_key(f"readout-{name}"),
+			user=CHAIR, reported_speech_at=spoken), f"record what was read aloud for {name}")
+		others.append(other)
 	clock.at(CLOCK["end"])
 	_ok(finish.finish_ceremony(tender=tender, expected_version=_version(tender), idempotency_key=_key("end"), user=CHAIR), "end the opening")
 	clock.present = []
@@ -160,7 +179,7 @@ def _build(tender: str) -> dict[str, Any]:
 		version, mine = signing.my_targets(doc, user)
 		_ok(signing.sign_opening_record(tender=tender, minutes_version=version, targets=[{"target_id": t["target_id"], "target_digest": t["target_digest"]}
 			for t in mine], idempotency_key=_key(f"sign-{user}"), user=user), f"sign as {user}")
-	return {"entry": entry}
+	return {"entry": entry, "others": others}
 
 
 def lifecycle_complete(tender: str) -> bool:
@@ -223,8 +242,11 @@ def validate_bid_opening_seed() -> list[dict[str, Any]]:
 	check(cstr(published) == CLOCK["publish"], "how to attend was published at 10 Jun 2027, 10:20 EAT")
 	check(cstr(doc.started_at) == CLOCK["begin"], "the opening started at 12 Jun 2027, 11:00:12 EAT")
 	register = finish.register_rows(doc.name)
-	check(len(register) == 1 and cstr(register[0]["recorded_at"]) == CLOCK["readout"], "one bid was read aloud and recorded at 11:01:45 EAT")
-	check(len(register) == 1 and register[0]["submitted_total"] == "KES 46,400,000.00", "the register shows KES 46,400,000.00")
+	expected = [("Afya Digital Supplies Limited", CLOCK["readout"], "KES 46,400,000.00")] + [(name, times[2], total) for name, times, total in OTHERS]
+	check(len(register) == len(expected), f"{len(expected)} bids were read aloud (got {len(register)})")
+	for row, (name, recorded, total) in zip(register, expected):
+		check(row["tenderer"] == name and cstr(row["recorded_at"]) == recorded and row["submitted_total"] == total,
+			f"{name}'s bid was read aloud at {recorded[11:]} EAT: {total}")
 	check(frappe.db.count("Opening Exception", {"opening_case": doc.name, "exception_class": "Repeat request", "outcome": "Answered during opening"}) == 1,
 		"David Ouma's request to repeat the total was answered during the opening")
 	david = frappe.db.get_value("Proceeding Attendance", {"proceeding": doc.proceeding, "user": bds_canonical.DAVID, "movement": "Arrival"},
@@ -235,7 +257,7 @@ def validate_bid_opening_seed() -> list[dict[str, Any]]:
 	check(bool(jane) and jane.capacity == "Public observer" and cstr(jane.occurred_at) == CLOCK["join_jane"], "Jane Wanjiku joined as a public observer at 10:59 EAT")
 	check(SUPPORT in frappe.get_all("User Responsibility Assignment", filters={"business_role": "Technical Operator", "status": "Enabled"}, pluck="user"),
 		"Daniel Otieno holds Opening access support (Technical Operator)")
-	check(cstr(doc.ended_at) == CLOCK["end"], "the opening ended at 11:04 EAT")
+	check(cstr(doc.ended_at) == CLOCK["end"], "the opening ended at 11:05:30 EAT")
 	check(frappe.db.get_value("Proceeding Minutes Version", {"proceeding": doc.proceeding, "version_number": 1}, "state") == "Finalized", "opening record version 1 is final")
 	check(cstr(doc.completed_at) == CLOCK["sign_chair"], "the last signature completed the opening at 11:10:30 EAT")
 	# Pending until Bid Evaluation takes it up (EVL-CHG-001 v0.4: the bid_evaluation stage), Delivered after

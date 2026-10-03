@@ -53,13 +53,17 @@ class TestRealSeams(IntegrationTestCase):
 	def test_the_bidder_audience_and_authority(self):
 		p = sources.EvaluationSource()
 		audience = p.audience(self.tender)
-		self.assertEqual([(a["organisation_name"], a["status"]) for a in audience], [("Afya Digital Supplies Limited", "Submitted")])
-		self.assertEqual(audience[0]["contact_email"], "tenders@afyadigital.example")
-		org = audience[0]["organisation"]
+		# the canonical Tender's four bidders (SEED-OPS-001 v1.21, DEC-038), each notified at its official address
+		self.assertEqual(sorted((a["organisation_name"], a["status"], a["contact_email"]) for a in audience), [
+			("Afya Digital Supplies Limited", "Submitted", "tenders@afyadigital.example"), ("Jirani Office Supplies Limited", "Submitted", "tenders@jirani.example"),
+			("Mlima Computer Solutions Limited", "Submitted", "tenders@mlimacomputers.example"), ("Pwani Tech Distributors Limited", "Submitted", "tenders@pwanitech.example"),
+		])
+		afya = next(a for a in audience if a["organisation_name"] == "Afya Digital Supplies Limited")
+		org = afya["organisation"]
 		self.assertTrue(p.signatory(MARY, org, at=AT))
 		self.assertIsNone(p.signatory(DAVID, org, at=AT))
 		self.assertEqual(p.acting_for(DAVID, org, at=AT)["responsibility"], "Supplier Representative")
-		self.assertEqual(p.notice_contact(audience[0]["bidder_arrangement"])["email"], "tenders@afyadigital.example")
+		self.assertEqual(p.notice_contact(afya["bidder_arrangement"])["email"], "tenders@afyadigital.example")
 
 	def test_tender_status_and_decision_status(self):
 		from kentender_procurement.tenders.services import evaluation_seam

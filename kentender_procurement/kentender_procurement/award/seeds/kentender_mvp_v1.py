@@ -4,7 +4,9 @@
 """The canonical `award` stage (AWD-CHG-001 v0.4 §13; plan Phase 11; tracker
 AWD4-1101).
 
-The §13 ordinary path on the canonical Tender (TND-MOH-2027-002), told with
+The §13 ordinary path on the canonical Tender (TND-MOH-2027-002; four bids
+since 3 Oct 2026, so Jirani, Pwani and Mlima receive unsuccessful notices in
+the same batch), told with
 the same commands as production on the real Evaluation delivery of 16 Jun
 2027 14:07:01 — no direct lifecycle writes: receipt; Charles Mutiso signs
 Professional opinion 1 at 17 Jun 09:10; Amina Hassan records Award and
@@ -32,6 +34,12 @@ DANIEL = "daniel.otieno@moh.example.test"
 D02R = ("The signed report identifies Afya Digital Supplies Limited as the lowest evaluated responsive tenderer. No unresolved issue prevents the "
 	"proposed award.")
 DECR = "I accept the recommendation in the signed evaluation report and professional opinion."
+#: The unsuccessful bidders and the reason each letter gives (the evaluation's ranking).
+UNSUCCESSFUL = {
+	"Jirani Office Supplies Limited": "Your tender met the requirements. Another responsive tender had a lower evaluated price.",
+	"Pwani Tech Distributors Limited": "Your tender did not meet the published requirements recorded in the signed evaluation report.",
+	"Mlima Computer Solutions Limited": "Your tender did not meet the published requirements recorded in the signed evaluation report.",
+}
 STEPS = ("received", "signed", "notified", "accepted", "delivered")
 CLOCK = {"opinion": "2027-06-17 09:00:00", "sign": "2027-06-17 09:10:00", "decide": "2027-06-17 10:00:00", "accept": "2027-06-18 09:00:00",
 	"deliver": "2027-07-02 09:00:00"}
@@ -157,9 +165,17 @@ def validate_award_seed() -> list[dict[str, Any]]:
 		("Award", AO, CLOCK["decide"], "Afya Digital Supplies Limited", "46400000.00"), "Amina Hassan awarded Afya Digital Supplies Limited KES 46,400,000 at 10:00")
 	batch = state.current_batch(doc)
 	notices = state.notices(batch)
-	check(len(notices) == 1 and notices[0].status == "Given" and cstr(notices[0].reply_deadline) == "2027-06-24 17:00:00",
-		"Award notice 1 was given, reply by 24 Jun 2027, 17:00 EAT")
-	response = state.operative_response(notices[0]) if notices else None
+	successful = state.successful_notice(batch)
+	check(bool(successful) and successful.organisation_name == "Afya Digital Supplies Limited" and successful.status == "Given"
+		and cstr(successful.reply_deadline) == "2027-06-24 17:00:00", "Afya's successful notice was given, reply by 24 Jun 2027, 17:00 EAT")
+	# the other three bidders are told too, each with its own reason
+	unsuccessful = {n.organisation_name: n for n in notices if n.result == "Unsuccessful"}
+	check(len(notices) == 1 + len(UNSUCCESSFUL) and set(unsuccessful) == set(UNSUCCESSFUL), f"{1 + len(UNSUCCESSFUL)} notices: one successful, {len(UNSUCCESSFUL)} unsuccessful")
+	for name, reason in UNSUCCESSFUL.items():
+		n = unsuccessful.get(name)
+		content = frappe.parse_json(n.content_json) if n and n.content_json else {}
+		check(bool(n) and n.status == "Given" and content.get("reason") == reason, f"{name} was told it was unsuccessful: {reason}")
+	response = state.operative_response(successful) if successful else None
 	check(bool(response) and (response.response, response.responder, cstr(response.received_at)) == ("Accept", MARY, CLOCK["accept"]),
 		"Mary Wanjiku accepted at 18 Jun 2027, 09:00 EAT")
 	pkg = eligibility.current_package(doc)

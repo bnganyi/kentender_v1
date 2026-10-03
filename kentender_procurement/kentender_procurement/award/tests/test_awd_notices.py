@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import frappe
+from frappe.tests import IntegrationTestCase
 
 from kentender_procurement.award.services import checks, clocks, decision, issues, notices, simulation, state
 from kentender_procurement.award.services.errors import AwardError
@@ -94,3 +95,19 @@ class TestProfile(AwardCase):
 		simulation.set_controls(rule_unverified=0)
 		checks.sync(self.case())
 		self.assertEqual(issues.open_issues(self.case(), subtype=checks.RULES_UNVERIFIED), [])
+
+
+class TestNonResponsiveLetter(IntegrationTestCase):
+	"""Found 1 Oct 2026: an unsuccessful bidder whose bid failed a mandatory
+	requirement has no evaluated price — Evaluation sends "Not assessed —
+	mandatory requirement not met" — and the letter read it as an amount, so
+	preparing the notices (and the award record view) crashed."""
+
+	def test_an_unsuccessful_letter_keeps_not_assessed_as_words(self):
+		from kentender_procurement.award.services import letters
+		from kentender_procurement.bid_evaluation.services.comparison import NOT_ASSESSED
+
+		self.assertEqual(letters.money(NOT_ASSESSED), NOT_ASSESSED)
+		self.assertEqual(letters.money("46980000.00"), "KES 46,980,000")
+		row = {"responsiveness": "Not responsive", "submitted_total": "43500000.00", "evaluated_total": NOT_ASSESSED}
+		self.assertEqual(letters.unsuccessful_reason(row), "Your tender did not meet the published requirements recorded in the signed evaluation report.")

@@ -127,6 +127,17 @@ PY
 	mkdir -p "sites/$TEST_SITE/private/files" "sites/$TEST_SITE/public/files"
 	rsync -a --delete "sites/$DEV_SITE/private/files/" "sites/$TEST_SITE/private/files/"
 	rsync -a --delete "sites/$DEV_SITE/public/files/" "sites/$TEST_SITE/public/files/"
+	# The simulated services keep their state beside the database: the test
+	# tender box holds every sealed bid package, the test mailbox the delivered
+	# notices, the opening renders the record pages. Without them the copied
+	# rows point at packages the test site does not have, and a retold opening
+	# cannot start ("Opening access is not ready yet"; found 3 Oct 2026).
+	for state in kt_test_tender_box kt_test_mailbox kt_bop_renders; do
+		mkdir -p "sites/$TEST_SITE/private/$state"
+		if [ -d "sites/$DEV_SITE/private/$state" ]; then
+			rsync -a --delete "sites/$DEV_SITE/private/$state/" "sites/$TEST_SITE/private/$state/"
+		fi
+	done
 
 	# No `migrate`: the copy is already at the dev site's schema, and migrate
 	# rewrites tracked files (workspace_sidebar/*.json timestamps), so every

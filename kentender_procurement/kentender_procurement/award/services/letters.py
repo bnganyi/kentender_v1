@@ -13,7 +13,7 @@ Officer authorised."""
 from __future__ import annotations
 
 import html
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from frappe.utils import cstr
@@ -25,7 +25,12 @@ REVIEW_INFO = ("You may ask the procuring entity to explain this result. A reque
 def money(value, currency: str = "KES") -> str:
 	if value in (None, ""):
 		return ""
-	amount = Decimal(cstr(value))
+	try:
+		amount = Decimal(cstr(value))
+	except InvalidOperation:
+		# A bid that failed a mandatory requirement has no evaluated price:
+		# Evaluation sends its words ("Not assessed — mandatory requirement not met").
+		return cstr(value)
 	return f"{currency} {amount:,.0f}" if amount == amount.to_integral() else f"{currency} {amount:,.2f}"
 
 

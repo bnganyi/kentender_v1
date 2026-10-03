@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "register_id": "KT-DOC-CTRL-001",
   "title": "KenTender Requirements and Delivery Baseline Register",
-  "as_of": "2026-10-02",
+  "as_of": "2026-10-03",
   "purpose": "Canonical machine-readable record of the current requirements baseline, cross-module contracts, decisions, implementation handoffs, future work and unresolved control findings.",
   "governance": {
     "source_of_truth": "This file is the canonical source for the companion Documentation Control Register workbook.",
@@ -270,27 +270,28 @@
     {
       "document_id": "KT-STD-001",
       "title": "Document, Design and Verification Standards",
-      "version": "1.13",
+      "version": "1.14",
       "category": "Cross-cutting standard",
       "module": "All",
       "requirement_status": "Approved requirement",
-      "approval_date": "2026-10-01",
-      "supersedes": "v1.12; prior approvals retained",
+      "approval_date": "2026-10-03",
+      "supersedes": "v1.13 and earlier",
       "implementation_status": "Not applicable",
       "verification_status": "Passed",
       "release_status": "Not applicable",
       "normative": "Yes",
-      "library_file_id": "libfile_d876cfb801d081918a934d19cb507568",
-      "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_13.md",
-      "scope": "Current cross-cutting standard, including plain language, minimum steps, Scheduled next step and actor/state/event conformance; v1.11 adds the §8.3 fixture actors Daniel Otieno (technical operator) and Jane Wanjiku (public observer), and v1.12 adds Nadia Kamau (release operator); retains earlier design and verification rules.",
+      "library_file_id": "",
+      "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_14.md",
+      "scope": "Current cross-cutting standard, including plain language, minimum steps, Scheduled next step and actor/state/event conformance; v1.11 adds the §8.3 fixture actors Daniel Otieno (technical operator) and Jane Wanjiku (public observer), and v1.12 adds Nadia Kamau (release operator); retains earlier design and verification rules. v1.14 adds eight supplier people: Afya's Mary Wanjiku and David Ouma, and the people of Jirani, Pwani and Mlima.",
       "dependencies": "Workflow Guidance Standard; all controlled change documents",
-      "action": "Approved 1 October 2026. Implement and verify the approved contract; retain existing release gates and open substantive findings.",
+      "action": "Approved 3 October 2026 (Project Owner: \"All docs approved.\"). Apply to future and revised contracts; use its registered actors, including the eight supplier people in §8.3. Repository file only (no library file).",
       "prior_approved_baseline": {
         "version": "1.12",
         "approval_date": "2026-09-30",
         "library_file_id": "libfile_4f7bf3bc8c0c8191b1e3ff2e2f3916da",
         "filename": "KenTender_KT-STD-001_Document_Design_and_Verification_Standards_v1_12.md"
-      }
+      },
+      "proposed_revision": null
     },
     {
       "document_id": "AUTH-ADR-001",
@@ -352,22 +353,22 @@
     {
       "document_id": "SEED-OPS-001",
       "title": "Canonical Site Seed Runbook",
-      "version": "1.19",
+      "version": "1.21",
       "category": "Operational runbook",
       "module": "Cross-module",
       "requirement_status": "Approved reference",
-      "approval_date": "2026-10-01",
-      "supersedes": "v1.18; v1.17 retained separately; earlier version history retained",
+      "approval_date": "2026-10-03",
+      "supersedes": "v1.20 and v1.19; v1.0–v1.15 retained in KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_0.md",
       "implementation_status": "Implemented",
       "verification_status": "Passed",
       "release_status": "Not applicable",
       "normative": "No",
       "library_file_id": "libfile_59689abd7c808191b1dfb20b3cc1c13b",
-      "filename": "KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_19.md",
+      "filename": "KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_21.md",
       "scope": "Resetting a site to the canonical seed world (KT-STD-001 §8 and SEED-001), stage by stage from site to award: options, what the clear removes, validation, demo profiles and troubleshooting.",
       "dependencies": "KT-STD-001 v1.12 approved; supplied v1.13 proposed fixture amendment used under recorded owner direction; SEED-001 v1.3 pending reconciliation; EVL v0.4 approved; AWD v0.4 proposed",
-      "action": "Approved 1 October 2026. Implement and verify the approved contract; retain existing release gates and open substantive findings. Seed test success remains reported evidence only; full module evidence is tracked under AUD-020.",
-      "proposed_revision": "v1.20 — KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_20.md; not approved; not yet in the document library; records the seeded Open Tender bid-opening minimum"
+      "action": "Approved 3 October 2026 with v1.20 (Project Owner: \"All docs approved.\"). Keep in step with the seed code; the canonical Tender has four bids (DEC-038). Seed test success is reported evidence only; full module evidence is tracked under AUD-020.",
+      "proposed_revision": null
     },
     {
       "document_id": "G1-REG-001",
@@ -1179,6 +1180,14 @@
       "owner_doc": "TPR-CHG-001 proposed v0.16 §10.2 and TPR16-AC-019; owner: “The pattern of incomplete status card info still persists. See the attached. This is worse than if we did not have cards at all”, 3 October 2026. Supersedes the 2 October rule that counted only Tenders in flight.",
       "implementation_effect": "One function maps every row to one card for both the counts and the card filters. Tracker row TND16-017.",
       "design_effect": "TPR-DES-01 card sets per persona and a Closed variant. Boards not yet regenerated (TPR-CHG-001 FU-43)."
+    },
+    {
+      "decision_id": "DEC-038",
+      "decision": "The canonical Tender receives four bids: Afya Digital Supplies Limited (wins), Jirani Office Supplies Limited (responsive, ranked second), Pwani Tech Distributors Limited (cheapest, fails technical compliance automatically) and Mlima Computer Solutions Limited (fails eligibility on the committee's evidence finding).",
+      "status": "Approved",
+      "owner_doc": "SEED-OPS-001 v1.21 §11 D23; Project Owner, 2026-10-03: \"Four bids\"",
+      "implementation_effect": "Bid Submission, Bid Opening, Bid Evaluation and Award seeds build and validate four bids; every unsuccessful bidder receives a notice. BDS-CHG-001 §13.3, BOP-CHG-001 §10, EVL-CHG-001 §11.1, AWD-CHG-001 §13 and SEED-001's successor state the four-bid story in their next versions. New supplier names are proposed in KT-STD-001 v1.14.",
+      "design_effect": "None."
     }
   ],
   "delivery_items": [
@@ -1979,7 +1988,7 @@
       "finding": "SEED-001 v1.3 predates the final reservation, Gate 1 public/vendor and approved workflow-guidance changes in PLN v1.27, BUD v1.11, REQ v1.12 and KT-STD v1.8.",
       "status": "Open",
       "owner": "Requirements owner",
-      "action": "Issue a reconciled fixture version before integrated verification. Also state that the canonical seed covers every module stage as it is built (DEC-028), replacing v1.3 §5.2's \"No opening/evaluation/award actual generated by this seed\". Carry forward SEED-OPS §11 decisions D1–D4, D7–D8 and D19–D20 into their named document successors. Keep unresolved D5–D6 and D9–D18 open; KT-STD v1.13 is approved; remaining fixture amendments stay open. Generated references are authoritative under DEC-027; static examples must not become alternate seeded tenders.",
+      "action": "Issue a reconciled fixture version before integrated verification. Also state that the canonical seed covers every module stage as it is built (DEC-028), replacing v1.3 §5.2's \"No opening/evaluation/award actual generated by this seed\". Carry forward SEED-OPS §11 decisions D1–D4, D7–D8 and D19–D20 into their named document successors. Keep unresolved D5–D6 and D9–D18 open; KT-STD v1.13 is approved; remaining fixture amendments stay open. Generated references are authoritative under DEC-027; static examples must not become alternate seeded tenders. Also tell the four-bid canonical story (DEC-038).",
       "blocks": "Reliable end-to-end seed tests",
       "evidence": "SEED-001 v1.3 compared with current baseline"
     },

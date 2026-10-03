@@ -92,9 +92,9 @@ PROFILES: dict[str, dict[str, Any]] = {
 		"expect": {BRIAN: "Read these details aloud", CHARLES: "Record what was read aloud"},
 	},
 	"BOP-DEMO-REQUESTS": {
-		"title": "Bid read out; a request answered; ready to end", "stage": "answered", "boards": "c7, c8, c13, c9",
+		"title": "Bids read out; a request answered; ready to end", "stage": "answered", "boards": "c7, c8, c13, c9", "read_rest": True,
 		"steps": [(CHARLES, "Record a request or a comment for Evaluation; End opening."), (BEATRICE, "Record my differing account."),
-			(JANE, f"Public page {_public('{ref}')}: the bid appears as read aloud.")],
+			(JANE, f"Public page {_public('{ref}')}: the four bids appear as read aloud.")],
 		"expect": {CHARLES: "End the opening"},
 	},
 	"BOP-DEMO-MEMBER-LEFT": {
@@ -140,7 +140,9 @@ def list_profiles() -> list[dict[str, str]]:
 
 
 def loaded_profile() -> str:
-	return cstr(frappe.db.get_default(LOADED_KEY))
+	# straight from the table, not the shared defaults cache: another process can
+	# refill that cache with the previous value while a load is still uncommitted
+	return cstr(frappe.db.get_value("DefaultValue", {"parent": "__default", "defkey": LOADED_KEY}, "defvalue"))
 
 
 def _canonical() -> tuple[str, str]:
@@ -217,6 +219,11 @@ def load_profile(*, profile: str, commit: bool = True) -> dict[str, Any]:
 	frappe.flags.kt_bop_fixture_namespace = frappe.flags.kt_prc_fixture_namespace = base.NAMESPACE  # canonical rows: the canonical clear keeps them
 	try:
 		walker.run(spec["stage"])
+		if spec.get("read_rest"):
+			# the canonical Tender has four bids: the other three are opened and
+			# read out too, so the opening is ready to end
+			walker._read_remaining()
+			walker.at(230)
 		if spec.get("at") is not None:
 			walker.at(spec["at"])
 	finally:

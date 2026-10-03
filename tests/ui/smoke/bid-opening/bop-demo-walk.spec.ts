@@ -142,6 +142,15 @@ test.describe("Bid Opening demo profiles, walked from the menu", () => {
 		await openFromMenu(page);
 		await page.locator('[data-testid="bop-readout-by"]').selectOption(BRIAN);
 		await page.locator('[data-testid="bop-record-readout"]').click();
+		// the canonical Tender has four bids (SEED-OPS-001 v1.21): Charles opens
+		// and records each of the other three before he can end the opening
+		for (let n = 0; n < 3; n++) {
+			await expectNextStep(page, "your_turn", "Open the next bid");
+			await page.locator('[data-testid="bop-open-next"]').click();
+			await expectNextStep(page, "your_turn", "Record what was read aloud");
+			await page.locator('[data-testid="bop-readout-by"]').selectOption(BRIAN);
+			await page.locator('[data-testid="bop-record-readout"]').click();
+		}
 		await expectNextStep(page, "your_turn", "End the opening");
 		await page.locator('[data-testid="bop-end"]').click();
 		await expectScreen(page, "record");
