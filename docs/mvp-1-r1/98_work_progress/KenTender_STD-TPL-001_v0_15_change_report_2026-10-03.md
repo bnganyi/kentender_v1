@@ -62,6 +62,8 @@ Project Owner, 3 October 2026, on items 1 to 5 of the report as first issued (qu
 | 3 | Form of Tender item (p) stays as is (open issue 120). Decided. | "Form of Tender item (p): leave it as is" |
 | 4 | The per-entity evaluation display is a follow-up (open issue 124); no change now. | "Evaluation display: mark it as a follow-up" |
 
+`open_issues.md` items 116, 118 and 120 still read "for review" and item 124 (the evaluation-display follow-up) is not yet written there: the file is part of the release's bundle digest, so editing it now would no longer match the installed release. They are updated at the next release rebuild, as items 97 and 108 were for release 1.3; this table is the record until then.
+
 TPL15-CHG-004 in v0.15 still says the owner "has not yet confirmed" the state-owned move; that sentence is superseded by this record, and v0.15 is not edited here because it is proposed text awaiting approval (a corrected sentence belongs in the next version). The ruling on a missing profile (it does not block starting a bid but blocks submission) was not separately answered and remains as built; recommendation: accept.
 
 Still open: **approve v0.15** (and so v0.14, which it carries). Recommendation: approve. Nothing in it changes releases 1.1 to 1.3 or a Tender bound to them.
