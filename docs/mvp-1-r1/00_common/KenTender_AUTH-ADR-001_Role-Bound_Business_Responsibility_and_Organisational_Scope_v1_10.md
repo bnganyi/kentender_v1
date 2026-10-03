@@ -1,12 +1,14 @@
 # AUTH-ADR-001 — Role-Bound Business Responsibility and Organisational Scope
 
+**Current approval record — 1 October 2026.** The Project Owner instructed: “Mark all the proposed documents as approved”. This approves AUTH-ADR-001 v1.10 in full, including its incorporated amendments. This record supersedes earlier pending/proposed approval wording and conditional predecessor-authority statements retained below as drafting history. Earlier versions remain historical. Approval does not establish implementation completion, test success, legal verification or production release; existing operating gates and substantive follow-ups remain in force.
+
 | Control | Value |
 |---|---|
 | Document ID | AUTH-ADR-001 |
 | Version | 1.10 |
 | Date | 25 September 2026 |
-| Approved | Pending |
-| Status | **Proposed for approval** |
+| Approved on | 1 October 2026; prior approvals retained in history |
+| Status | **Approved requirement — Project Owner approved 1 October 2026** |
 | Supersedes | v1.9 after approval; v1.9 remains effective until then |
 | Change type | Narrow successor adding module-specific, non-authoritative STD-template inspection and concern reporting for Procurement Officer and HOPF. It does not alter assignments, scope, business authority, template ownership or technical-read rights. Active standards references move to KT-STD-001 v1.8 and CFG-CHG-002 v0.16. |
 | Applies to | Every KenTender module, list, count, detail, task, file, export, report, screen and business command |

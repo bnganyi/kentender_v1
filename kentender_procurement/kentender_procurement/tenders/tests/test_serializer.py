@@ -145,6 +145,22 @@ class TestRenderContextAndDigests(SerializerCase):
 		self.assertEqual(len(digest.sha256_hex({"a": 1})), 64)
 
 
+	def test_a_package_digested_before_the_reason_field_still_verifies(self):
+		"""v0.16: the optional shortened-period reason must not change the digest of a package that does not use it, so a Version
+		submitted or approved before the field existed still verifies at approval and authorisation. A package that does use it is
+		digested with it, so the reason cannot be altered after approval."""
+		tender, version = self._pair()
+		material = serializer.content_material(tender, version, snap.load(version))["officer_values"]
+		self.assertNotIn("shortened_period_reason", material)
+		without = serializer.package_digest(tender, version, snap.load(version))
+		version.officer_payload_json = json.dumps({**json.loads(version.officer_payload_json), "shortened_period_reason": "Needed before the October training."})
+		with_reason = serializer.package_digest(tender, version, snap.load(version))
+		self.assertNotEqual(without, with_reason)
+		self.assertIn("shortened_period_reason", serializer.content_material(tender, version, snap.load(version))["officer_values"])
+		version.officer_payload_json = json.dumps({k: v for k, v in json.loads(version.officer_payload_json).items() if k != "shortened_period_reason"})
+		self.assertEqual(serializer.package_digest(tender, version, snap.load(version)), without)
+
+
 class TestControls(IntegrationTestCase):
 	def test_defaults_and_task_vocabulary(self):
 		snapshot, _ = sample.sample_snapshot()

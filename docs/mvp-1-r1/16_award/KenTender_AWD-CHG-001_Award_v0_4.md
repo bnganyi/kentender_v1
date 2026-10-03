@@ -1,18 +1,20 @@
 # AWD-CHG-001 — Award
 
+**Current approval record — 1 October 2026.** The Project Owner instructed: “Mark all the proposed documents as approved”. This approves AWD-CHG-001 v0.4 in full, including its incorporated amendments. This record supersedes earlier pending/proposed approval wording and conditional predecessor-authority statements retained below as drafting history. Earlier versions remain historical. Approval does not establish implementation completion, test success, legal verification or production release; existing operating gates and substantive follow-ups remain in force.
+
 | Control | Value |
 |---|---|
 | Version | 0.4 |
 | Date | 30 September 2026 |
-| Status | **Proposed requirements — Project Owner review** |
+| Status | **Approved requirement — Project Owner approved 1 October 2026** |
 | Supersedes | v0.3; prior versions retained |
 | Revision | Resolves the reviewed workflow, dialog, language and ownership gaps; change records in §§18.1–18.3 |
-| Basis | Award scope accepted in the conversation on 30 September 2026; this detailed document is not yet approved |
+| Basis | Award scope accepted in the conversation on 30 September 2026; detailed v0.4 approved 1 October 2026 |
 | Product | MVP 1: Open Tender for straightforward IT goods; one lot; KES; fixed price; lowest evaluated responsive tender |
 | Starts with | The exact signed Evaluation report and supporting record delivered to the Head of Procurement |
 | Ends with | A recorded no-award outcome, or delivery of the Award package to Contracting when the applicable conditions permit |
 | Standards | KT-STD-001 v1.12 approved; TRUST-ADR-001 v0.1 approved; source and proposed interface versions identified in §17 |
-| Implementation / verification / release | Not started / Not started / Not approved |
+| Implementation / verification / release | In progress / Pending / Not approved |
 
 ## 1. Governing decision and disposition
 
@@ -525,7 +527,7 @@ The issued tender and applicable law control the procurement. Source owners reta
 
 Approval of this version would establish the MVP 1 Award requirements and authorise controlled design and implementation against them. It would not approve a real procurement, certify the legal operating profile, approve pending counterpart revisions, activate production signing/notices or establish that Contracting is implemented.
 
-The accepted high-level basis is retained. This detailed v0.4 remains **Proposed** until the Project Owner approves it. Implementation, verification and release must be recorded separately.
+The accepted high-level basis is retained. This detailed v0.4 is **Approved** by the Project Owner on 1 October 2026. Implementation, verification and release must be recorded separately.
 
 
 ### 18.1 v0.2 change and preservation record

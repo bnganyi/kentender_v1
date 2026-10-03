@@ -165,6 +165,7 @@ B01–B04 verification, 26 Sep 2026: `make tenders-services-gate` — 17 modules
 | TND16-012 | Boards for TPR-DES-01, -03, -05 to -07 regenerated for the new cards, hint, reason field, note and Return button | Planned | Not started (FU-43). The boards are the fidelity source. |
 | TND16-013 | Playwright gates for the workspace, details, review, approval and authorisation boards | Planned | Not run this cycle (FU-44). |
 | TND16-014 | Controlled documents: CFG-CHG-002 v0.17 and SEED-OPS-001 v1.20 (proposed), register entries | Done (proposed) | CFG-CHG-002 v0.17 (§17.10 change register, §14.9), SEED-OPS-001 v1.20 (§10 change log) and register entries (`proposed_revision` on TPR-CHG-001, CFG-CHG-002 and SEED-OPS-001; decisions DEC-030–DEC-033). Preservation checks pass; consistency errors are unchanged from the predecessors (inherited); none is approved. |
+| TND16-016 | TPR16-IMP-010 / AC-018: the new reason control must not change the digest of packages that do not use it | Done | Regression found live on 2 Oct 2026: the AO's Authorise returned “The approved package no longer matches its digest.” because the new field added an empty entry to the digested officer values, failing every Version digested earlier. `test_serializer::test_a_package_digested_before_the_reason_field_still_verifies` (red, then green); on TND-MOH-2027-002 stored and recomputed digests are equal for both Versions; a read-only replay of every check Authorise makes passes (template, compatibility, findings, digest, rule, period, bid definition). The AO's Authorise was not pressed. |
 | TND16-015 | TPR16-IMP-009 / AC-017: no digest or rule identifier in a first-view area; closes FU-36 | Done (browser gate not run) | `test_publication::test_digests_and_rule_identifiers_stay_under_technical_details` (trail keys; publication line free of digest and rule id; both under `technical_facts`); `DecisionScreens.spec.js` (no digest element, no 40-hex text on the AO page). Live as the AO on TND-MOH-2027-002: no digest in the first view; History shows none until its Technical details disclosure is opened. `tnd-authorisation.spec.ts` updated, not run. |
 
 ## Board map
@@ -351,6 +352,7 @@ Criterion text is abbreviated; the spec §14 row controls. `Planned` until the n
 | TPR16-AC-015 | HOPF hand-off carries the reason; Reopen clears it; AO waits and is offered neither action | v0.16 | Done | TND16-010. |
 | TPR16-AC-016 | Segregation, one open return, replay | v0.16 | Partial | One open return and replay tested; the segregation case has no test of its own beyond the shared rule. |
 | TPR16-AC-017 | No digest, hash or rule identifier in a first-view area; digests only under Technical details | v0.16 | Done | TND16-015. |
+| TPR16-AC-018 | A control added later is left out of the package digest while empty; earlier Versions still verify | v0.16 | Done | TND16-016. |
 
 ## Re-implementation register map (§19)
 
@@ -461,3 +463,4 @@ Criterion text is abbreviated; the spec §14 row controls. `Planned` until the n
 | TPR16-IMP-007 | Form hint, pre-fill and conditional reason field | v0.16 | Partial | TND16-009. |
 | TPR16-IMP-008 | `ReturnApprovedTender`, hand-off type, action, dialog, next steps and My Work rows | v0.16 | Done | TND16-010. |
 | TPR16-IMP-009 | Digests removed from the AO approval trail, the publication line, the History table and the document dialog; kept under Technical details | v0.16 | Done | TND16-015. |
+| TPR16-IMP-010 | Leave an empty shortened-period reason out of the package digest material | v0.16 | Done | TND16-016. |

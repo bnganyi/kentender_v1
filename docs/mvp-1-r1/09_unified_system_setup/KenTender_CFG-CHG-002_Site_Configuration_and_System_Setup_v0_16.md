@@ -1,12 +1,14 @@
 # CFG-CHG-002 — Site Configuration and System Setup
 
+**Current approval record — 1 October 2026.** The Project Owner instructed: “Mark all the proposed documents as approved”. This approves CFG-CHG-002 v0.16 in full, including its incorporated amendments. This record supersedes earlier pending/proposed approval wording and conditional predecessor-authority statements retained below as drafting history. Earlier versions remain historical. Approval does not establish implementation completion, test success, legal verification or production release; existing operating gates and substantive follow-ups remain in force.
+
 | Control | Value |
 |---|---|
 | Document ID | CFG-CHG-002 |
 | Version | 0.16 |
 | Date | 25 September 2026 |
-| Status | **Proposed for approval** |
-| Approval record | Not yet approved. |
+| Status | **Approved requirement — Project Owner approved 1 October 2026** |
+| Approval record | Project Owner, 1 October 2026: “Mark all the proposed documents as approved”. |
 | Approval basis | Retains the complete CFG v0.15 ownership correction and adds the minimum public portal support/legal-link configuration required by TPR v0.10 and BDS v0.7. |
 | Predecessor | CFG v0.15, proposed 24 September 2026; retained unchanged as historical evidence. |
 | Module / implementation owner | Configuration and Governance / `kentender_core`, with native ERPNext/Frappe records where they exist. |

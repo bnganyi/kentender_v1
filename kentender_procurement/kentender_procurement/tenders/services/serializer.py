@@ -448,6 +448,9 @@ def content_material(tender, version, snapshot: dict[str, Any]) -> dict[str, Any
 	from kentender_procurement.tenders.services import evidence as ev
 
 	state = officer_state(version)
+	for field in controls.DIGEST_OMIT_WHEN_EMPTY:
+		if state.get(field) is None:
+			state.pop(field, None)
 	evidence_rows = ev.rows_as_dicts(version)
 	return {
 		"binding": {

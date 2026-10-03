@@ -1,11 +1,13 @@
 # G1-REG-001 — Public/Vendor MVP Closure and Implementation Handoff
 
+**Current approval record — 1 October 2026.** The Project Owner instructed: “Mark all the proposed documents as approved”. This approves G1-REG-001 v1.1 in full, including its incorporated amendments. This record supersedes earlier pending/proposed approval wording and conditional predecessor-authority statements retained below as drafting history. Earlier versions remain historical. Approval does not establish implementation completion, test success, legal verification or production release; existing operating gates and substantive follow-ups remain in force.
+
 | Control | Value |
 |---|---|
 | Document ID | G1-REG-001 |
 | Version | 1.1 |
 | Date | 25 September 2026 |
-| Status | **Proposed for approval** |
+| Status | **Approved requirement — Project Owner approved 1 October 2026** |
 | Closed requirements slice | Public Tender discovery through sealed electronic Bid Submission handoff |
 | Controlling documents | CFG-CHG-002 v0.16; TPR-CHG-001 v0.11; BDS-CHG-001 v0.7; STD-TPL-001 v0.10; STD-TPL-IMP-001 v1.0; REQ-CHG-001 v1.12 |
 | Upstream governed context | PLN-CHG-001 v1.27; BUD-CHG-001 v1.11; LAW-REG-001 v1.2; AUTH-ADR-001 v1.10; KT-STD-001 v1.8; SEED-001 v1.3 |

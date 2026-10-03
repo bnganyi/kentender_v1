@@ -1,11 +1,13 @@
 # RES-IMP-001 — Reservation Correction Implementation Handoff
 
+**Current approval record — 1 October 2026.** The Project Owner instructed: “Mark all the proposed documents as approved”. This approves RES-IMP-001 v1.0 in full, including its incorporated amendments. This record supersedes earlier pending/proposed approval wording and conditional predecessor-authority statements retained below as drafting history. Earlier versions remain historical. Approval does not establish implementation completion, test success, legal verification or production release; existing operating gates and substantive follow-ups remain in force.
+
 | Control | Value |
 |---|---|
 | Document ID | RES-IMP-001 |
 | Version | 1.0 |
 | Date | 24 September 2026 |
-| Status | **Proposed for Project Owner review** |
+| Status | **Approved requirement — Project Owner approved 1 October 2026** |
 | Purpose | One focused functional-and-design correction scope for Claude Design and Claude Code |
 | Approved governing baselines | LAW-REG-001 v1.2; BUD-CHG-001 v1.10; PLN-CHG-001 v1.25; CFG-CHG-002 v0.14 |
 | Coordinated downstream drafts | REQ-CHG-001 v1.10; TPR-CHG-001 v0.9; STD-TPL-001 v0.7; BDS-CHG-001 v0.6 |

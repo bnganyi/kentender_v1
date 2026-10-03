@@ -1,14 +1,16 @@
 # KT-STD-001 — Document, Design and Verification Standards
 
+**Current approval record — 1 October 2026.** The Project Owner instructed: “Mark all the proposed documents as approved”. This approves KT-STD-001 v1.13 in full, including its incorporated amendments. This record supersedes earlier pending/proposed approval wording and conditional predecessor-authority statements retained below as drafting history. Earlier versions remain historical. Approval does not establish implementation completion, test success, legal verification or production release; existing operating gates and substantive follow-ups remain in force.
+
 | Control | Value |
 |---|---|
 | Document ID | KT-STD-001 |
 | Version | 1.13 |
-| Status | **Approved** — Project Owner, 1 October 2026 |
-| Approved on | 1 October 2026 — Project Owner (v1.12: 30 September 2026 — Project Owner; proposed text read: v1.13 pending; v1.12 approved 30 September 2026) |
-| Prior approval record | Project Owner approved v1.9 on 26 September 2026 and v1.8 on 25 September 2026; v1.10 approved 29 September 2026. v1.11 approved 30 September 2026; Project Owner instruction, verbatim: "Register approval: approve". v1.12 approved 30 September 2026; Project Owner instruction, verbatim: "approve v1.12". v1.13 approved 1 October 2026; Project Owner instruction, verbatim: "Approved". |
+| Status | **Approved requirement — Project Owner approved 1 October 2026** |
+| Approved on | 1 October 2026; prior approvals retained in history |
+| Prior approval record | Project Owner approved v1.9 on 26 September 2026 and v1.8 on 25 September 2026; v1.10 approved 29 September 2026. v1.11 approved 30 September 2026; Project Owner instruction, verbatim: "Register approval: approve". v1.12 approved 30 September 2026; Project Owner instruction, verbatim: "approve v1.12". |
 | Date | 30 September 2026 |
-| Supersedes | v1.12 approved 30 September 2026; its approval and earlier history remain retained below (proposed text read: On approval, v1.12; its approval and earlier history remain retained below) |
+| Supersedes | On approval, v1.12; its approval and earlier history remain retained below |
 | Applies to | Every KenTender change unit, architecture decision record and module requirements document |
 | v1.13 change type | Register four Evaluation fixture actors and Brian’s separately appointed secretary capacity; no new workflow, automatic appointment, privileges or design rules. |
 | v1.12 change type | Fixture register addition only: one actor in §8.3, Nadia Kamau (release operator), added at the Project Owner's instruction of 30 September 2026 for the BDS-CHG-001 v0.8 production-submission gate scenario. No rule, component, contract or verification requirement changes. |
@@ -694,7 +696,7 @@ These apply to every document and every layer, not only to artboards. Section 2.
 
 ## 12. Approval effect
 
-**Approved v1.13 effect — 1 October 2026.** v1.13 is approved by the Project Owner and supersedes v1.12 as the governing standard. The four named actors and Brian’s separate secretary capacity are part of the shared fixture register. (Proposed text read: "On approval, the four named actors and Brian’s separate secretary capacity become part of the shared fixture register.") EVL appointment, conflict, declaration and technical-access guards remain authoritative. This change does not mark seeds executed or grant production authority.
+**v1.13 proposed effect.** On approval, the four named actors and Brian’s separate secretary capacity become part of the shared fixture register. EVL appointment, conflict, declaration and technical-access guards remain authoritative. This change does not mark seeds executed or grant production authority.
 
 **Approved v1.12 effect
 
@@ -763,4 +765,4 @@ Version history addition: v1.11 proposed 29 September 2026 adds two §8.3 fixtur
 
 Version history addition: v1.12 proposed 30 September 2026 adds one §8.3 fixture actor, Nadia Kamau (release operator), at the Project Owner's instruction. Awaiting approval; v1.11 remains the governing standard until then. Approved 30 September 2026 by the Project Owner; v1.12 is now the governing standard.
 
-Version history addition: v1.13, 30 September 2026, proposed coordinated fixture amendment for approved EVL v0.4. v1.12 remains the approved standard. Approved 1 October 2026 by the Project Owner; v1.13 is now the governing standard.
+Version history addition: v1.13, 30 September 2026, proposed coordinated fixture amendment for approved EVL v0.4. v1.12 remains the approved standard.

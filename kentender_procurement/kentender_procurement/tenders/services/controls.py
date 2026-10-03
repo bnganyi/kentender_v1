@@ -36,6 +36,9 @@ AFTER_SALES_OPTIONS = (
 	"Both",
 )
 DEFAULT_VALIDITY_DAYS = 120
+# Controls added after packages already existed. While one is empty it is left out of the package digest, so a Version submitted or
+# approved before the control existed still verifies; once it holds a value it is part of the digest like any other officer value.
+DIGEST_OMIT_WHEN_EMPTY = ("shortened_period_reason",)
 # v0.16 §5.2: the time of day the pre-filled submission deadline takes (new content, for owner review; the §10.1 fixtures close at 11:00)
 DEFAULT_CLOSING_TIME = "11:00"
 
