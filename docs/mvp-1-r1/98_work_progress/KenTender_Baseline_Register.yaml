@@ -1171,6 +1171,14 @@
       "owner_doc": "KenTender_STD-TPL-001_Change_Request_Template_Walkthrough_2026-10-02.md §§8 and 13; Project Owner, 2 October 2026: \"1. Both 2. Full-screen route 3. Yes\" and \"This is approved, together with your recommendations. Update the documents appropriately with care\"; carried into STD-TPL-001 proposed v0.14",
       "implementation_effect": "Compile the release fixture at installation; reuse the shared compiler for an unpublished-Tender preview; run the registered renderer in a walkthrough mode; add validator checks 22 and 23 with the release carrying Part A (R5).",
       "design_effect": "New STD-DES-03 walkthrough route; Walk through supplier bid action on STD Templates and Tender review, approval, authorisation and published records; not a gate (OD5)."
+    },
+    {
+      "decision_id": "DEC-037",
+      "decision": "The Tenders work-summary cards always add up to the queue below them: finished and stopped Tenders have cards (Published — open, Closed), the Head of Procurement Function has Ready to start, and a status with no card of its own counts as In progress.",
+      "status": "Approved",
+      "owner_doc": "TPR-CHG-001 proposed v0.16 §10.2 and TPR16-AC-019; owner: “The pattern of incomplete status card info still persists. See the attached. This is worse than if we did not have cards at all”, 3 October 2026. Supersedes the 2 October rule that counted only Tenders in flight.",
+      "implementation_effect": "One function maps every row to one card for both the counts and the card filters. Tracker row TND16-017.",
+      "design_effect": "TPR-DES-01 card sets per persona and a Closed variant. Boards not yet regenerated (TPR-CHG-001 FU-43)."
     }
   ],
   "delivery_items": [

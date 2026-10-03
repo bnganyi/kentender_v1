@@ -29,10 +29,12 @@ PAGE = "tenders"
 STATUS_FILTERS = (
 	("ready", "Ready to start"), ("draft", "Draft"), ("returned", "Returned"), ("in_progress", "In progress"), ("awaiting_approval", "Awaiting procurement approval"),
 	("approved", "Awaiting publication authorisation"), ("publishing", "Publication confirmation required"), ("published", "Published — open"),
-	("ended", "Submission period ended"), ("cancelled", "Cancelled"), ("correction", "Requisition correction requested"),
+	("ended", "Submission period ended"), ("cancelled", "Cancelled"), ("correction", "Requisition correction requested"), ("closed", "Closed (ended or cancelled)"),
 )
-# Work-summary cards, one rule for every persona: a card for each status where it is that persona's turn (lifecycle order), then
-# In progress for the other Tenders in flight, which are waiting on someone else. A requisition not yet started is not a Tender.
+# Work-summary cards (TPR-CHG-001 v0.16 §10.2). One rule for every persona, and one invariant: the cards always add up to the queue below
+# them. A card for each status where it is that persona's turn (lifecycle order); Ready to start for a persona that sees unstarted
+# requisitions but cannot start one; In progress for every other Tender in flight, which is waiting on someone else (including one
+# stopped for a Requisition correction); Published — open; and Closed (Submission period ended or Cancelled).
 COUNT_CARDS = (
 	("ready", "Ready to start", "Approved requisitions awaiting a tender"),
 	("draft", "Drafts", "Started, not yet submitted"),
@@ -41,8 +43,8 @@ COUNT_CARDS = (
 	("approved", "Awaiting publication authorisation", "Approved tenders awaiting a publication decision"),
 	("publishing", "Publication confirmation required", "Authorised tenders awaiting channel confirmation"),
 )
-IN_FLIGHT_KEYS = ("draft", "returned", "awaiting_approval", "approved", "publishing")
 TURN_KEYS = {"officer": ("ready", "draft", "returned"), "hopf": ("awaiting_approval", "publishing"), "ao": ("approved",)}
+CLOSED_KEYS = ("ended", "cancelled")
 TENDER_FIELDS = [
 	"name", "tender_reference", "requirement_title", "requisition_reference", "requisition_handoff", "plan_item_id", "fiscal_year", "overall_status",
 	"current_version", "approved_version", "publication", "published_at", "submission_deadline", "lead_org_unit", "contributing_org_unit_ids", "record_version", "modified",
@@ -183,19 +185,39 @@ def turn_keys(roles: dict[str, bool]) -> tuple[str, ...]:
 	return tuple(k for k, _label, _sub in COUNT_CARDS if k in held)
 
 
-def in_progress_keys(roles: dict[str, bool]) -> tuple[str, ...]:
-	return tuple(k for k in IN_FLIGHT_KEYS if k not in turn_keys(roles))
+def card_keys(roles: dict[str, bool]) -> tuple[str, ...]:
+	"""The persona's cards in order. Ready to start is shown to a persona that sees unstarted requisitions without owning them."""
+	turn = turn_keys(roles)
+	return (*turn, *(("ready",) if "ready" not in turn and (roles["officer"] or roles["hopf"]) else ()), "in_progress", "published", "closed")
+
+
+def card_of(status_key: str, roles: dict[str, bool]) -> str:
+	"""The one card that counts a row with this status. Anything without a card of its own (including an unknown status) is In progress,
+	so no row can go uncounted."""
+	cards = card_keys(roles)
+	if status_key == "published":
+		return "published"
+	if status_key in CLOSED_KEYS:
+		return "closed"
+	return status_key if status_key in cards and status_key not in ("in_progress", "published", "closed") else "in_progress"
+
+
+def rows_for_card(rows: list[dict[str, Any]], key: str, roles: dict[str, bool]) -> list[dict[str, Any]]:
+	"""What selecting a card shows: exactly the rows it counts."""
+	return [r for r in rows if card_of(r["status_key"], roles) == key]
 
 
 def _counts(rows: list[dict[str, Any]], roles: dict[str, bool]) -> list[dict[str, Any]]:
-	by_key: dict[str, int] = {}
+	by_card: dict[str, int] = {}
 	for row in rows:
-		by_key[row["status_key"]] = by_key.get(row["status_key"], 0) + 1
-	turn = turn_keys(roles)
-	out = [{"key": k, "label": label, "value": by_key.get(k, 0), "sub": sub} for k, label, sub in COUNT_CARDS if k in turn]
-	waiting = in_progress_keys(roles)
-	out.append({"key": "in_progress", "label": "In progress", "value": sum(by_key.get(k, 0) for k in waiting), "sub": "With someone else, not yet published"})
-	return out
+		card = card_of(row["status_key"], roles)
+		by_card[card] = by_card.get(card, 0) + 1
+	described = {k: (label, sub) for k, label, sub in COUNT_CARDS}
+	described["ready"] = ("Ready to start", "Approved requisitions awaiting a tender") if roles["officer"] else ("Ready to start", "Approved requisitions waiting for the Procurement Officer to start")
+	described["in_progress"] = ("In progress", "With someone else, not yet published")
+	described["published"] = ("Published — open", "Open for supplier submissions")
+	described["closed"] = ("Closed", "Submission period ended or cancelled")
+	return [{"key": k, "label": described[k][0], "value": by_card.get(k, 0), "sub": described[k][1]} for k in card_keys(roles)]
 
 
 def get_tenders_workspace(*, search: str = "", status: str = "", fiscal_year: str = "", user: str | None = None) -> dict[str, Any]:
@@ -221,7 +243,8 @@ def get_tenders_workspace(*, search: str = "", status: str = "", fiscal_year: st
 		rows = [r for r in rows if needle in f"{r['tender_reference']} {r['requisition_reference']} {r['purchase']}".lower()]
 	if cstr(status).strip():
 		wanted = cstr(status).strip()
-		rows = [r for r in rows if r["status_key"] in in_progress_keys(roles)] if wanted == "in_progress" else [r for r in rows if r["status_key"] == wanted]
+		# In progress and Closed are card groups; every other value is one status
+		rows = rows_for_card(rows, wanted, roles) if wanted in ("in_progress", "closed") else [r for r in rows if r["status_key"] == wanted]
 	if cstr(fiscal_year).strip():
 		rows = [r for r in rows if r["fiscal_year"] == cstr(fiscal_year).strip()]
 	return {

@@ -67,16 +67,19 @@ class TestWorkspaceAndStart(TenderReadCase):
 		self.assertEqual(ws["outcome"], "OK")
 		start = next(r for r in ws["rows"] if r["kind"] == "start" and r["handoff"] == authorised["handoff"])
 		self.assertEqual((start["tender_reference"], start["status_label"], start["action_label"], start["route"][:2]), ("Not started", "Ready to start", "Start Tender", ["tenders", "new"]))
-		self.assertEqual([c["label"] for c in ws["counts"]], ["Ready to start", "Drafts", "Returned to me", "In progress"])
+		self.assertEqual([c["label"] for c in ws["counts"]], ["Ready to start", "Drafts", "Returned to me", "In progress", "Published — open", "Closed"])
 		self.assertEqual(ws["counts"][0]["value"], 1)
 		reader = read.get_tenders_workspace(user=fx.AUDITOR)
 		self.assertEqual((reader["mode"], reader["counts"]), ("reader", []))
 		self.assertFalse(any(r["kind"] == "start" for r in reader["rows"]))
 		technical = read.get_tenders_workspace(user="Administrator")
 		self.assertEqual((technical["mode"], technical["counts"]), ("technical", []))
-		self.assertEqual(read.get_tenders_workspace(user=fx.OFFICER, status="published")["rows"], [])
-		self.assertEqual(read.get_tenders_workspace(user=fx.OFFICER, status="published")["counts"], ws["counts"])
-		self.assertEqual(read.get_tenders_workspace(user=fx.OFFICER, status="published")["empty_text"], "No Tenders match these filters.")
+		# the site may hold published Tenders of its own, so assert what the filter does rather than that nothing is published
+		published = read.get_tenders_workspace(user=fx.OFFICER, status="published")
+		self.assertTrue(all(r["status_key"] == "published" for r in published["rows"]))
+		self.assertEqual(published["counts"], ws["counts"])
+		nothing = read.get_tenders_workspace(user=fx.OFFICER, fiscal_year="1999-2000")
+		self.assertEqual((nothing["rows"], nothing["empty_text"]), ([], "No Tenders match these filters."))
 
 	def test_the_start_read_creates_nothing_and_reports_the_three_outcomes(self):
 		authorised = fx.authorised_handoff()
@@ -149,8 +152,13 @@ class TestRecordReview(TenderReadCase):
 		self.assertEqual((row["status_label"], row["action_label"]), ("Awaiting your approval", "Review"))
 		self.assertEqual(ws["counts"][0], {"key": "awaiting_approval", "label": "Awaiting procurement approval", "value": 1, "sub": "Tenders submitted for procurement approval"})
 		# one rule for every persona: a card for each status where it is that persona's turn, then In progress for the rest in flight
-		self.assertEqual([(c["key"], c["value"]) for c in ws["counts"]], [("awaiting_approval", 1), ("publishing", 0), ("in_progress", 0)])
-		self.assertEqual([(c["key"], c["value"]) for c in read.get_tenders_workspace(user=fx.AO)["counts"]], [("approved", 0), ("in_progress", 1)])
+		self.assertEqual([c["key"] for c in ws["counts"]], ["awaiting_approval", "publishing", "ready", "in_progress", "published", "closed"])
+		self.assertEqual((ws["counts"][0]["value"], ws["counts"][1]["value"], ws["counts"][3]["value"]), (1, 0, 0))
+		self.assertEqual(sum(c["value"] for c in ws["counts"]), len(ws["rows"]))  # the cards always add up to the table
+		ao_ws = read.get_tenders_workspace(user=fx.AO)
+		self.assertEqual([c["key"] for c in ao_ws["counts"]], ["approved", "in_progress", "published", "closed"])
+		self.assertEqual((ao_ws["counts"][0]["value"], ao_ws["counts"][1]["value"]), (0, 1))
+		self.assertEqual(sum(c["value"] for c in ao_ws["counts"]), len(ao_ws["rows"]))
 		# the officer's own submitted Tender must stay visible in a card, not drop out of the work summary
 		officer_counts = {c["key"]: c["value"] for c in read.get_tenders_workspace(user=fx.OFFICER)["counts"]}
 		self.assertEqual((officer_counts["in_progress"], officer_counts["draft"]), (1, 0))
@@ -173,8 +181,11 @@ class TestRecordReview(TenderReadCase):
 		ws = read.get_tenders_workspace(user=fx.AO)
 		row = next(r for r in ws["rows"] if r.get("tender") == root.name)
 		self.assertEqual((row["status_label"], row["action_label"]), ("Awaiting your publication decision", "Review publication"))
-		self.assertEqual([(c["key"], c["value"]) for c in ws["counts"]], [("approved", 1), ("in_progress", 0)])
-		self.assertEqual([(c["key"], c["value"]) for c in read.get_tenders_workspace(user=fx.HOPF)["counts"]], [("awaiting_approval", 0), ("publishing", 0), ("in_progress", 1)])
+		self.assertEqual([(c["key"], c["value"]) for c in ws["counts"] if c["key"] in ("approved", "in_progress")], [("approved", 1), ("in_progress", 0)])
+		self.assertEqual(sum(c["value"] for c in ws["counts"]), len(ws["rows"]))
+		hopf_ws = read.get_tenders_workspace(user=fx.HOPF)
+		self.assertEqual([(c["key"], c["value"]) for c in hopf_ws["counts"] if c["key"] in ("awaiting_approval", "publishing", "in_progress")], [("awaiting_approval", 0), ("publishing", 0), ("in_progress", 1)])
+		self.assertEqual(sum(c["value"] for c in hopf_ws["counts"]), len(hopf_ws["rows"]))
 		self.assertEqual([r["tender"] for r in read.get_tenders_workspace(user=fx.HOPF, status="in_progress")["rows"]], [root.name])
 		self.assertEqual(my_work_provider.my_work_rows(user=fx.AO)["assigned"][0]["action_label"], "Review publication")
 		hist = history.get_tender_history(tender=root.name, user=fx.AUDITOR)
@@ -210,6 +221,36 @@ class TestRecordReview(TenderReadCase):
 		self.assertEqual(record["returned"]["affected_task"], "requirements")
 		self.assertEqual(record["returned"]["comment"], "Confirm whether manufacturer authorisation is necessary and update the supplier evidence requirement.")
 		self.assertEqual(record["version"]["version_number"], 2)
+
+
+class TestCountsAddUp(IntegrationTestCase):
+	"""The work-summary cards always add up to the queue below them, for every persona and every status (owner, 3 Oct 2026)."""
+
+	STATUSES = ("ready", "draft", "returned", "awaiting_approval", "approved", "publishing", "published", "ended", "cancelled", "correction", "")
+	BASE = {"officer": False, "hopf": False, "ao": False, "auditor": False, "technical": False}
+
+	def _counts(self, **roles):
+		return read._counts([{"status_key": k} for k in self.STATUSES], {**self.BASE, **roles})
+
+	def test_every_persona_counts_every_row_exactly_once(self):
+		for roles in ({"officer": True}, {"hopf": True}, {"ao": True}, {"officer": True, "hopf": True}, {"hopf": True, "ao": True}, {"officer": True, "hopf": True, "ao": True}):
+			counts = self._counts(**roles)
+			self.assertEqual(sum(c["value"] for c in counts), len(self.STATUSES), roles)
+			self.assertEqual(len({c["key"] for c in counts}), len(counts), roles)
+
+	def test_finished_and_stopped_tenders_have_a_card(self):
+		hopf = {c["key"]: c["value"] for c in self._counts(hopf=True)}
+		self.assertEqual(hopf, {"awaiting_approval": 1, "publishing": 1, "ready": 1, "in_progress": 5, "published": 1, "closed": 2})
+		officer = {c["key"]: c["value"] for c in self._counts(officer=True)}
+		self.assertEqual(officer, {"ready": 1, "draft": 1, "returned": 1, "in_progress": 5, "published": 1, "closed": 2})
+		ao = {c["key"]: c["value"] for c in self._counts(ao=True)}
+		self.assertEqual(ao, {"approved": 1, "in_progress": 7, "published": 1, "closed": 2})  # an AO never sees an unstarted requisition: it falls into in progress
+
+	def test_the_closed_and_in_progress_cards_filter_to_exactly_what_they_count(self):
+		rows = [{"status_key": k} for k in self.STATUSES]
+		roles = {**self.BASE, "hopf": True}
+		self.assertEqual(sorted(r["status_key"] for r in read.rows_for_card(rows, "closed", roles)), ["cancelled", "ended"])
+		self.assertEqual(sorted(r["status_key"] for r in read.rows_for_card(rows, "in_progress", roles)), ["", "approved", "correction", "draft", "returned"])
 
 
 class TestApiSurface(TenderReadCase):

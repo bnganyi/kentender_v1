@@ -102,7 +102,7 @@ const STATUS_CLASS = { ready: "is-pending", draft: "is-draft", returned: "is-att
 function statusClass(key) {
 	return STATUS_CLASS[key] || "is-draft";
 }
-const COUNT_STATE = { ready: "live", returned: "attention", awaiting_approval: "attention", approved: "attention", publishing: "attention" };
+const COUNT_STATE = { ready: "live", published: "live", returned: "attention", awaiting_approval: "attention", approved: "attention", publishing: "attention" };
 function kpiClass(c) {
 	const state = COUNT_STATE[c.key];
 	return c.value > 0 && state ? `is-${state}` : "";
@@ -112,6 +112,8 @@ const ICON = {
 	draft: ["M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", "M14 2v5h5"],
 	returned: ["M9 14 4 9l5-5", "M4 9h10.5A5.5 5.5 0 0 1 20 14.5v0A5.5 5.5 0 0 1 14.5 20H11"],
 	in_progress: ["M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20", "M12 6v6l4 2"],
+	published: ["M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20", "M2 12h20", "M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"],
+	closed: ["M21 8v13H3V8", "M1 3h22v5H1z", "M10 12h4"],
 	awaiting_approval: ["M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20", "M12 6v6l4 2"],
 	approved: ["M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20", "M12 6v6l4 2"],
 	publishing: ["M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", "M14 2v5h5", "m9 15 2 2 4-4"],

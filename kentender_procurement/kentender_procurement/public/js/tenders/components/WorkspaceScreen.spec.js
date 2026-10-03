@@ -43,6 +43,16 @@ describe("WorkspaceScreen — TPR-DES-01", () => {
 		expect(active.emitted("filter")[0][0]).toEqual({ search: "laptop", status: "", fiscal_year: "" });
 	});
 
+	it("draws a card and an icon for finished tenders too, and selecting it filters", async () => {
+		const counts = [{ key: "in_progress", label: "In progress", value: 1, sub: "" }, { key: "published", label: "Published — open", value: 2, sub: "" }, { key: "closed", label: "Closed", value: 3, sub: "" }];
+		const w = make({ workspace: { ...WS, counts } });
+		expect(w.findAll(".kt-kpi-card")).toHaveLength(3);
+		expect(w.find('[data-testid="tnd-count-closed"] svg path').exists()).toBe(true);
+		expect(w.find('[data-testid="tnd-count-published"]').classes()).toContain("is-live");
+		await w.find('[data-testid="tnd-count-closed"]').trigger("click");
+		expect(w.emitted("filter")[0][0]).toEqual({ search: "", status: "closed", fiscal_year: "" });
+	});
+
 	it("shows no count cards for a reader and a secondary View action", () => {
 		const w = make({ workspace: { ...WS, counts: [], rows: [{ ...ROW, status_key: "published", status_label: "Published — open", action_key: "view", action_label: "View" }] } });
 		expect(w.find('[data-testid="tnd-counts"]').exists()).toBe(false);
