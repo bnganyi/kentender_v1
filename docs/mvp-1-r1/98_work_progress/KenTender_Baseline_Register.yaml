@@ -363,11 +363,11 @@
       "verification_status": "Passed",
       "release_status": "Not applicable",
       "normative": "No",
-      "library_file_id": "libfile_59689abd7c808191b1dfb20b3cc1c13b",
+      "library_file_id": "",
       "filename": "KenTender_SEED-OPS-001_Canonical_Site_Seed_Runbook_v1_21.md",
       "scope": "Resetting a site to the canonical seed world (KT-STD-001 §8 and SEED-001), stage by stage from site to award: options, what the clear removes, validation, demo profiles and troubleshooting.",
       "dependencies": "KT-STD-001 v1.12 approved; supplied v1.13 proposed fixture amendment used under recorded owner direction; SEED-001 v1.3 pending reconciliation; EVL v0.4 approved; AWD v0.4 proposed",
-      "action": "Approved 3 October 2026 with v1.20 (Project Owner: \"All docs approved.\"). Keep in step with the seed code; the canonical Tender has four bids (DEC-038). Seed test success is reported evidence only; full module evidence is tracked under AUD-020.",
+      "action": "Approved 3 October 2026 with v1.20 (Project Owner: \"All docs approved.\"). Keep in step with the seed code; the canonical Tender has four bids (DEC-038). Seed test success is reported evidence only; full module evidence is tracked under AUD-020. Repository file only (the library holds v1.19).",
       "proposed_revision": null
     },
     {
