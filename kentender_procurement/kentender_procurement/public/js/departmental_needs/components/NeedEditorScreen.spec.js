@@ -251,3 +251,19 @@ describe("NeedEditorScreen — Required by stays inside the financial year", () 
 		expect(w.emitted("save")).toHaveLength(1);
 	});
 });
+
+// A failed unit load must not take the editor down (UAT #29).
+describe("NeedEditorScreen — the Unit list could not be loaded", () => {
+	it("says so beside the Unit field and offers Try again, leaving the form usable", async () => {
+		const w = make({ units: [], unitsError: true });
+		expect(w.get('[data-testid="nds-units-error"]').text()).toContain("The list of units could not be loaded.");
+		expect(w.get('[data-testid="nds-title"]').attributes("disabled")).toBeUndefined();
+		expect(w.get('[data-testid="nds-save-draft"]').attributes("disabled")).toBeUndefined();
+		await w.get('[data-testid="nds-units-retry"]').trigger("click");
+		expect(w.emitted("retry-units")).toHaveLength(1);
+	});
+
+	it("shows no message when the units loaded", () => {
+		expect(make().find('[data-testid="nds-units-error"]').exists()).toBe(false);
+	});
+});

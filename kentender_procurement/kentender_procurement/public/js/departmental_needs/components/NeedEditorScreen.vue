@@ -209,7 +209,11 @@
 							+ New
 						</button>
 					</div>
-					<div class="text-muted" style="font-size: 12px; margin-top: 5px">
+					<div v-if="unitsError" class="kt-field-error" data-testid="nds-units-error" style="margin-top: 5px">
+						The list of units could not be loaded.
+						<button type="button" class="kt-btn kt-btn-ghost" style="padding: 0 4px" data-testid="nds-units-retry" @click="emit('retry-units')">Try again</button>
+					</div>
+					<div v-else class="text-muted" style="font-size: 12px; margin-top: 5px">
 						Select the unit that describes the quantity.
 					</div>
 				</div>
@@ -353,8 +357,11 @@ const props = defineProps({
 	// NDS-DES-14-SUBMIT-UNKNOWN — a network-level failure with no
 	// interpretable server answer; writes stay disabled until the next load.
 	submitUnknown: Boolean,
+	// UAT #29 — the Unit list could not be read. The form stays usable; the
+	// field says so and offers Try again instead of the whole screen failing.
+	unitsError: Boolean,
 });
-const emit = defineEmits(["save", "submit", "cancel", "unit-created", "select-department"]);
+const emit = defineEmits(["save", "submit", "cancel", "unit-created", "select-department", "retry-units"]);
 
 async function createUnit() {
 	const doc = await quickCreate("UOM");

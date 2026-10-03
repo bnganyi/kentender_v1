@@ -245,6 +245,35 @@ test.describe("NDS-UI-01 workspace and NDS-UI-03 editor", () => {
 		await expect(page).toHaveURL(/\/departmental-needs\/new$/);
 		expect(errors, `page console errors: ${errors.join(" | ")}`).toEqual([]);
 	});
+	test("a failed Unit list leaves the editor usable and Try again fills it", async ({ page }) => {
+		/**
+		 * UAT #29: the unit call failed on a half-deployed server and the whole
+		 * editor was replaced by "Departmental Needs could not be loaded". The
+		 * form now stays, says the list could not be loaded, and retries in place.
+		 */
+		await loginAsNdsFixtureAuthor(page);
+		const unitsCall = "**/api/method/kentender_procurement.departmental_needs.api.list_need_units";
+		await page.route(unitsCall, (route) =>
+			route.fulfill({
+				status: 417,
+				contentType: "application/json",
+				body: JSON.stringify({ exc_type: "AttributeError", exception: "no attribute list_need_units" }),
+			}),
+		);
+		await gotoNeeds(page, "/new");
+		await expectScreen(page, "editor");
+		await expect(page.locator('[data-testid="nds-title"]')).toBeVisible();
+		await expect(page.getByText("Departmental Needs could not be loaded")).toHaveCount(0);
+		await expect(page.locator('[data-testid="nds-units-error"]')).toContainText("The list of units could not be loaded.");
+		await page.locator('[data-testid="nds-title"]').fill("Typed while units were unavailable");
+
+		await page.unroute(unitsCall);
+		await page.locator('[data-testid="nds-units-retry"]').click();
+		await expect(page.locator('[data-testid="nds-units-error"]')).toHaveCount(0);
+		expect(await page.locator('[data-testid="nds-unit"] option').count()).toBeGreaterThan(1);
+		// What was typed in the meantime is still there.
+		await expect(page.locator('[data-testid="nds-title"]')).toHaveValue("Typed while units were unavailable");
+	});
 	test("a refused first submit lands on the saved draft and the retry updates it", async ({ page }) => {
 		/**
 		 * Reported live 2026-09-25: the first Submit for review on /new saved a

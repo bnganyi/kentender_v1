@@ -75,6 +75,8 @@
 				:department-choices="editorDepartmentChoices"
 				:selected-department="selectedDepartment"
 				:units="units"
+				:units-error="unitsError"
+				@retry-units="loadUnits"
 				@unit-created="(unit) => units.push(unit)"
 				@select-department="onSelectDepartment"
 				:return-reason="needReference ? detail.latest_return : null"
@@ -276,6 +278,8 @@ const planningCheckedAt = ref("");
 const dependency = ref({});
 const dependencyChecking = ref(false);
 const units = ref([]);
+// UAT #29 — a failed unit read marks the field, never the whole screen.
+const unitsError = ref(false);
 const acceptedBy = ref({});
 const dialog = ref("");
 const reason = ref("");
@@ -651,7 +655,12 @@ async function loadUnits() {
 	// enabled only, read on the server: a direct `frappe.db.get_list("UOM")`
 	// enforces the caller's own UOM permission and failed live with
 	// "Insufficient Permission for UOM" (UAT issue #24).
-	units.value = await api.listNeedUnits();
+	try {
+		units.value = await api.listNeedUnits();
+		unitsError.value = false;
+	} catch (e) {
+		unitsError.value = true;
+	}
 }
 
 
