@@ -4,6 +4,7 @@
 |---|---|
 | Date | 4 October 2026 |
 | Status | Phase 1 deliverable of `KenTender_Two_Year_Seed_World_Proposal_2026-10-04.md`, for the Project Owner to apply in their own copies of KT-STD-001 and SEED-001 (decision D7). Neither document is changed here. |
+| Owner answers | 4 October 2026, verbatim "1. Accepted 2. Accepted 3. Accepted", answering: (1) the planned-dates approach of §1–§2; (2) T6 title **Supply of medical-grade tablets**; (3) the three Year 2 Need titles in §6. |
 | Basis | Proposal §9 D1–D7, accepted by the Project Owner on 4 October 2026, verbatim: "Decisions for the owner: recommendations accepted". |
 | Targets | KT-STD-001 v1.22 §8.4 and §8.4A (approved 4 October 2026); SEED-001 v1.4 (approved 3 October 2026). The next versions would be KT-STD-001 v1.23 and SEED-001 v1.5, unless the owner's library already holds later ones. |
 | Read in full | KT-STD-001 v1.22 §8; SEED-001 v1.4; the proposal. |
